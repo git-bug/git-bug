@@ -55,7 +55,7 @@ func newBug(repo repository.Repo, args []string) error {
 		Message: *newMessage,
 	}
 
-	bug := bug.Bug{
+	bug := bug.Snapshot{
 		Title:    title,
 		Comments: []bug.Comment{comment},
 	}
