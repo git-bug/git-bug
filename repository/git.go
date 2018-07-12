@@ -78,6 +78,11 @@ func (repo *GitRepo) GetRepoStateHash() (string, error) {
 	return fmt.Sprintf("%x", sha1.Sum([]byte(stateSummary))), err
 }
 
+// GetUserName returns the name the the user has used to configure git
+func (repo *GitRepo) GetUserName() (string, error) {
+	return repo.runGitCommand("config", "user.name")
+}
+
 // GetUserEmail returns the email address that the user has used to configure git.
 func (repo *GitRepo) GetUserEmail() (string, error) {
 	return repo.runGitCommand("config", "user.email")
@@ -88,30 +93,25 @@ func (repo *GitRepo) GetCoreEditor() (string, error) {
 	return repo.runGitCommand("var", "GIT_EDITOR")
 }
 
-
 // PullRefs pull git refs from a remote
 func (repo *GitRepo) PullRefs(remote string, refPattern string) error {
-	refspec := fmt.Sprintf("%s:%s", refPattern, refPattern)
+	fetchRefSpec := fmt.Sprintf("+%s:%s", refPattern, refPattern)
+	err := repo.runGitCommandInline("fetch", remote, fetchRefSpec)
 
-	// The push is liable to fail if the user forgot to do a pull first, so
-	// we treat errors as user errors rather than fatal errors.
-	err := repo.runGitCommandInline("push", remote, refspec)
-	if err != nil {
-		return fmt.Errorf("failed to push to the remote '%s': %v", remote, err)
-	}
-	return nil
+	// TODO: merge new data
+
+	return err
 }
 
 // PushRefs push git refs to a remote
 func (repo *GitRepo) PushRefs(remote string, refPattern string) error {
-	remoteNotesRefPattern := getRemoteNotesRef(remote, refPattern)
-	fetchRefSpec := fmt.Sprintf("+%s:%s", refPattern, remoteNotesRefPattern)
-	err := repo.runGitCommandInline("fetch", remote, fetchRefSpec)
+	// The push is liable to fail if the user forgot to do a pull first, so
+	// we treat errors as user errors rather than fatal errors.
+	err := repo.runGitCommandInline("push", remote, refPattern)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to push to the remote '%s': %v", remote, err)
 	}
-
-	return repo.mergeRemoteNotes(remote, notesRefPattern)
+	return nil
 }
 
 /*

@@ -7,7 +7,7 @@ import (
 )
 
 // mockRepoForTest defines an instance of Repo that can be used for testing.
-type mockRepoForTest struct {}
+type mockRepoForTest struct{}
 
 // GetPath returns the path to the repo.
 func (r *mockRepoForTest) GetPath() string { return "~/mockRepo/" }

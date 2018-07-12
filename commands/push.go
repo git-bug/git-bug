@@ -1,14 +1,14 @@
-package  commands
+package commands
 
 import (
+	"errors"
 	"fmt"
 	"github.com/MichaelMure/git-bug/repository"
-	"errors"
 )
 
 func push(repo repository.Repo, args []string) error {
 	if len(args) > 1 {
-		return errors.New("only pushing to one remote at a time is supported")
+		return errors.New("Only pushing to one remote at a time is supported")
 	}
 
 	remote := "origin"
@@ -27,7 +27,5 @@ var pushCmd = &Command{
 	Usage: func(arg0 string) {
 		fmt.Printf("Usage: %s push [<remote>]\n", arg0)
 	},
-	RunMethod: func(repo repository.Repo, args []string) error {
-		return push(repo, args)
-	},
+	RunMethod: push,
 }

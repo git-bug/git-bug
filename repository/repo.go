@@ -6,6 +6,9 @@ type Repo interface {
 	// GetPath returns the path to the repo.
 	GetPath() string
 
+	// GetUserName returns the name the the user has used to configure git
+	GetUserName() (string, error)
+
 	// GetUserEmail returns the email address that the user has used to configure git.
 	GetUserEmail() (string, error)
 

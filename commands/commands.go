@@ -6,6 +6,7 @@ import (
 )
 
 const bugsRefPattern = "refs/bugs/*"
+const messageFilename = "BUG_MESSAGE_EDITMSG"
 
 // Command represents the definition of a single command.
 type Command struct {
@@ -23,6 +24,7 @@ func (cmd *Command) Run(repo repository.Repo, args []string) error {
 
 // CommandMap defines all of the available (sub)commands.
 var CommandMap = map[string]*Command{
+	"new":  newCmd,
 	"pull": pullCmd,
 	"push": pushCmd,
 
