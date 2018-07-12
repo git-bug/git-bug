@@ -1,15 +1,17 @@
 package bug
 
 import (
+	"encoding/json"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/pkg/errors"
 )
 
 type Person struct {
-	Name  string
-	Email string
+	Name  string `json:"name"`
+	Email string `json:"email"`
 }
 
+// GetUser will query the repository for user detail and build the corresponding Person
 func GetUser(repo repository.Repo) (Person, error) {
 	name, err := repo.GetUserName()
 	if err != nil {
@@ -28,4 +30,17 @@ func GetUser(repo repository.Repo) (Person, error) {
 	}
 
 	return Person{Name: name, Email: email}, nil
+}
+
+// Store will convert the Person to JSON and store it in the internal git datastore
+// Return the git hash handle of the data
+func (person *Person) Store(repo repository.Repo) (repository.Hash, error) {
+
+	data, err := json.Marshal(person)
+
+	if err != nil {
+		return "", err
+	}
+
+	return repo.StoreData(data)
 }

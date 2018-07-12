@@ -62,6 +62,8 @@ func newBug(repo repository.Repo, args []string) error {
 
 	fmt.Println(bug)
 
+	author.Store(repo)
+
 	return nil
 
 }

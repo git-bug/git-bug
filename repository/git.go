@@ -114,6 +114,17 @@ func (repo *GitRepo) PushRefs(remote string, refPattern string) error {
 	return nil
 }
 
+// StoreData will store arbitrary data and return the corresponding hash
+func (repo *GitRepo) StoreData(data []byte) (Hash, error) {
+	var stdin = bytes.NewReader(data)
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	err := repo.runGitCommandWithIO(stdin, &stdout, &stderr, "hash-object", "--stdin", "-w")
+
+	return Hash(stdout.String()), err
+}
+
 /*
 //
 //// GetSubmitStrategy returns the way in which a review is submitted

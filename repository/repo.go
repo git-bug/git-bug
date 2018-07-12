@@ -1,6 +1,8 @@
 // Package repository contains helper methods for working with a Git repo.
 package repository
 
+type Hash string
+
 // Repo represents a source code repository.
 type Repo interface {
 	// GetPath returns the path to the repo.
@@ -20,4 +22,7 @@ type Repo interface {
 
 	// PushRefs push git refs to a remote
 	PushRefs(remote string, refPattern string) error
+
+	// StoreData will store arbitrary data and return the corresponding hash
+	StoreData([]byte) (Hash, error)
 }
