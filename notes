@@ -1,0 +1,47 @@
+echo "dnkqslnokqe" | git hash-object --stdin -w
+bca2068e9b221d47154d1e3eaebf8c9abd86951f
+
+git cat-file -p bca2068e9b221d47154d1e3eaebf8c9abd86951f
+dnkqslnokqe
+
+
+git update-ref refs/bug/HEAD bca2068e9b221d47154d1e3eaebf8c9abd86951f
+
+git show refs/bug/HEAD
+
+git push origin "refs/bug/*"
+
+git fetch origin "refs/bug/*:refs/bug/*"
+
+
+
+
+
+
+Bug operations:
+- create bug
+- change title
+- add comment
+- edit text comment
+- hide/unhide/delete comment
+- (?) reply to comment
+- add/remove [label, assignee, project, milestone, ...]
+
+
+G-Set (append only log)
+-----
+
+- create bug
+- change title
+- add/edit/hide/unhide/delete comment
+
+
+LWW-e-Set (add + remove, based on timestamp)
+---------
+
+- label
+- assignee
+- project
+- milestone
+
+
