@@ -1,7 +1,7 @@
 // Package repository contains helper methods for working with a Git repo.
 package repository
 
-type Hash string
+import "github.com/MichaelMure/git-bug/util"
 
 // Repo represents a source code repository.
 type Repo interface {
@@ -24,5 +24,5 @@ type Repo interface {
 	PushRefs(remote string, refPattern string) error
 
 	// StoreData will store arbitrary data and return the corresponding hash
-	StoreData([]byte) (Hash, error)
+	StoreData([]byte) (util.Hash, error)
 }

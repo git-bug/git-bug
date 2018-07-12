@@ -3,6 +3,7 @@ package bug
 import (
 	"encoding/json"
 	"github.com/MichaelMure/git-bug/repository"
+	"github.com/MichaelMure/git-bug/util"
 	"github.com/pkg/errors"
 )
 
@@ -34,7 +35,7 @@ func GetUser(repo repository.Repo) (Person, error) {
 
 // Store will convert the Person to JSON and store it in the internal git datastore
 // Return the git hash handle of the data
-func (person *Person) Store(repo repository.Repo) (repository.Hash, error) {
+func (person *Person) Store(repo repository.Repo) (util.Hash, error) {
 
 	data, err := json.Marshal(person)
 

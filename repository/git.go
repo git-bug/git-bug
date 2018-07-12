@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"crypto/sha1"
 	"fmt"
+	"github.com/MichaelMure/git-bug/util"
 	"io"
 	"os"
 	"os/exec"
@@ -115,14 +116,14 @@ func (repo *GitRepo) PushRefs(remote string, refPattern string) error {
 }
 
 // StoreData will store arbitrary data and return the corresponding hash
-func (repo *GitRepo) StoreData(data []byte) (Hash, error) {
+func (repo *GitRepo) StoreData(data []byte) (util.Hash, error) {
 	var stdin = bytes.NewReader(data)
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
 	err := repo.runGitCommandWithIO(stdin, &stdout, &stderr, "hash-object", "--stdin", "-w")
 
-	return Hash(stdout.String()), err
+	return util.Hash(stdout.String()), err
 }
 
 /*
