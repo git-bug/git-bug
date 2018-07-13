@@ -37,7 +37,7 @@ func NewBug() (*Bug, error) {
 // IsValid check if the Bug data is valid
 func (bug *Bug) IsValid() bool {
 	// non-empty
-	if len(bug.Packs) == 0 {
+	if len(bug.Packs) == 0 && bug.Staging.IsEmpty() {
 		return false
 	}
 
@@ -48,9 +48,16 @@ func (bug *Bug) IsValid() bool {
 		}
 	}
 
+	// check if Staging is valid if needed
+	if !bug.Staging.IsEmpty() {
+		if !bug.Staging.IsValid() {
+			return false
+		}
+	}
+
 	// The very first Op should be a CREATE
-	firstOp := bug.Packs[0].Operations[0]
-	if firstOp.OpType() != CREATE {
+	firstOp := bug.firstOp()
+	if firstOp == nil || firstOp.OpType() != CREATE {
 		return false
 	}
 
@@ -81,4 +88,18 @@ func (bug *Bug) Commit() {
 
 func (bug *Bug) HumanId() string {
 	return bug.Id.String()
+}
+
+func (bug *Bug) firstOp() Operation {
+	for _, pack := range bug.Packs {
+		for _, op := range pack.Operations {
+			return op
+		}
+	}
+
+	if !bug.Staging.IsEmpty() {
+		return bug.Staging.Operations[0]
+	}
+
+	return nil
 }

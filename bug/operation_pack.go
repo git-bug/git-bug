@@ -15,6 +15,10 @@ func (opp *OperationPack) Append(op Operation) {
 	opp.Operations = append(opp.Operations, op)
 }
 
+func (opp *OperationPack) IsEmpty() bool {
+	return len(opp.Operations) == 0
+}
+
 func (opp *OperationPack) IsValid() bool {
-	return len(opp.Operations) > 0
+	return !opp.IsEmpty()
 }

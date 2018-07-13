@@ -16,7 +16,7 @@ func NewOperationIterator(bug *Bug) *OperationIterator {
 
 func (it *OperationIterator) Next() bool {
 	// Special case of the staging area
-	if it.packIndex == len(it.bug.Packs)+1 {
+	if it.packIndex == len(it.bug.Packs) {
 		pack := it.bug.Staging
 		it.opIndex++
 		return it.opIndex < len(pack.Operations)
@@ -39,7 +39,7 @@ func (it *OperationIterator) Next() bool {
 	it.packIndex++
 
 	// Special case of the non-empty staging area
-	if it.packIndex == len(it.bug.Packs)+1 && len(it.bug.Staging.Operations) > 0 {
+	if it.packIndex == len(it.bug.Packs) && len(it.bug.Staging.Operations) > 0 {
 		return true
 	}
 
@@ -48,7 +48,7 @@ func (it *OperationIterator) Next() bool {
 
 func (it *OperationIterator) Value() Operation {
 	// Special case of the staging area
-	if it.packIndex == len(it.bug.Packs)+1 {
+	if it.packIndex == len(it.bug.Packs) {
 		pack := it.bug.Staging
 
 		if it.opIndex >= len(pack.Operations) {

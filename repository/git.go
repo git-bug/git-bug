@@ -12,8 +12,6 @@ import (
 	"strings"
 )
 
-const branchRefPrefix = "refs/heads/"
-
 // GitRepo represents an instance of a (local) git repository.
 type GitRepo struct {
 	Path string
