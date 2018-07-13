@@ -1,4 +1,4 @@
-package test
+package tests
 
 import (
 	"github.com/MichaelMure/git-bug/bug"
@@ -6,14 +6,17 @@ import (
 	"testing"
 )
 
-func TestOpIterator(t *testing.T) {
-	var rene = bug.Person{
+var (
+	rene = bug.Person{
 		Name:  "René Descartes",
 		Email: "rene@descartes.fr",
 	}
 
-	var createOp = operations.NewCreateOp(rene, "title", "message")
-	var setTitleOp = operations.NewSetTitleOp("title2")
+	createOp   = operations.NewCreateOp(rene, "title", "message")
+	setTitleOp = operations.NewSetTitleOp("title2")
+)
+
+func TestOpIterator(t *testing.T) {
 
 	bug1, err := bug.NewBug()
 

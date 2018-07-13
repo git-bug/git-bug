@@ -1,21 +1,23 @@
-package test
+package tests
 
 import (
 	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/bug/operations"
 	"testing"
 )
 
-func TestBug(t *testing.T) {
-	var rene = bug.Person{
-		Name:  "René Descartes",
-		Email: "rene@descartes.fr",
+func TestBugId(t *testing.T) {
+	bug1, err := bug.NewBug()
+	if err != nil {
+		t.Error(err)
 	}
 
-	var createOp = operations.NewCreateOp(rene, "title", "message")
+	if len(bug1.HumanId()) == 0 {
+		t.Fatal("Bug doesn't have a human readable identifier")
+	}
+}
 
+func TestBugValidity(t *testing.T) {
 	bug1, err := bug.NewBug()
-
 	if err != nil {
 		t.Error(err)
 	}
