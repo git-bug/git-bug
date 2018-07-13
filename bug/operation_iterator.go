@@ -16,17 +16,17 @@ func NewOperationIterator(bug *Bug) *OperationIterator {
 
 func (it *OperationIterator) Next() bool {
 	// Special case of the staging area
-	if it.packIndex == len(it.bug.Packs) {
-		pack := it.bug.Staging
+	if it.packIndex == len(it.bug.packs) {
+		pack := it.bug.staging
 		it.opIndex++
 		return it.opIndex < len(pack.Operations)
 	}
 
-	if it.packIndex >= len(it.bug.Packs) {
+	if it.packIndex >= len(it.bug.packs) {
 		return false
 	}
 
-	pack := it.bug.Packs[it.packIndex]
+	pack := it.bug.packs[it.packIndex]
 
 	it.opIndex++
 
@@ -39,17 +39,17 @@ func (it *OperationIterator) Next() bool {
 	it.packIndex++
 
 	// Special case of the non-empty staging area
-	if it.packIndex == len(it.bug.Packs) && len(it.bug.Staging.Operations) > 0 {
+	if it.packIndex == len(it.bug.packs) && len(it.bug.staging.Operations) > 0 {
 		return true
 	}
 
-	return it.packIndex < len(it.bug.Packs)
+	return it.packIndex < len(it.bug.packs)
 }
 
 func (it *OperationIterator) Value() Operation {
 	// Special case of the staging area
-	if it.packIndex == len(it.bug.Packs) {
-		pack := it.bug.Staging
+	if it.packIndex == len(it.bug.packs) {
+		pack := it.bug.staging
 
 		if it.opIndex >= len(pack.Operations) {
 			panic("Iterator is not valid anymore")
@@ -58,11 +58,11 @@ func (it *OperationIterator) Value() Operation {
 		return pack.Operations[it.opIndex]
 	}
 
-	if it.packIndex >= len(it.bug.Packs) {
+	if it.packIndex >= len(it.bug.packs) {
 		panic("Iterator is not valid anymore")
 	}
 
-	pack := it.bug.Packs[it.packIndex]
+	pack := it.bug.packs[it.packIndex]
 
 	if it.opIndex >= len(pack.Operations) {
 		panic("Iterator is not valid anymore")

@@ -5,7 +5,6 @@ import (
 	"github.com/MichaelMure/git-bug/repository"
 )
 
-const bugsRefPattern = "refs/bugs/*"
 const messageFilename = "BUG_MESSAGE_EDITMSG"
 
 // Command represents the definition of a single command.

@@ -3,6 +3,7 @@ package commands
 import (
 	"errors"
 	"fmt"
+	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
@@ -16,7 +17,7 @@ func push(repo repository.Repo, args []string) error {
 		remote = args[0]
 	}
 
-	if err := repo.PushRefs(remote, bugsRefPattern); err != nil {
+	if err := repo.PushRefs(remote, bug.BugsRefPattern+"*"); err != nil {
 		return err
 	}
 	return nil

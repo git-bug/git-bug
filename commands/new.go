@@ -59,7 +59,7 @@ func RunNewBug(repo repository.Repo, args []string) error {
 	createOp := operations.NewCreateOp(author, title, *newMessage)
 
 	newbug.Append(createOp)
-	newbug.Commit()
+	newbug.Commit(repo)
 
 	return nil
 

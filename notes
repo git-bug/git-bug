@@ -17,6 +17,8 @@ git fetch origin "refs/bug/*:refs/bug/*"
 git show-ref refs/bug
 
 
+git update-index --add --cacheinfo 100644 83baae61804e65cc73a7201a7252750c76066a30 test.txt
+
 
 
 Bug operations:

@@ -24,5 +24,17 @@ type Repo interface {
 	PushRefs(remote string, refPattern string) error
 
 	// StoreData will store arbitrary data and return the corresponding hash
-	StoreData([]byte) (util.Hash, error)
+	StoreData(data []byte) (util.Hash, error)
+
+	// StoreTree will store a mapping key-->Hash as a Git tree
+	StoreTree(mapping map[string]util.Hash) (util.Hash, error)
+
+	// StoreCommit will store a Git commit with the given Git tree
+	StoreCommit(treeHash util.Hash) (util.Hash, error)
+
+	// StoreCommit will store a Git commit with the given Git tree
+	StoreCommitWithParent(treeHash util.Hash, parent util.Hash) (util.Hash, error)
+
+	// UpdateRef will create or update a Git reference
+	UpdateRef(ref string, hash util.Hash) error
 }

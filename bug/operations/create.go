@@ -10,22 +10,24 @@ import (
 var _ bug.Operation = CreateOperation{}
 
 type CreateOperation struct {
-	Title   string
-	Message string
-	Author  bug.Person
+	bug.OpBase
+	Title   string     `json:"t"`
+	Message string     `json:"m"`
+	Author  bug.Person `json:"a"`
 }
 
 func NewCreateOp(author bug.Person, title, message string) CreateOperation {
 	return CreateOperation{
+		OpBase:  bug.OpBase{OperationType: bug.CREATE},
 		Title:   title,
 		Message: message,
 		Author:  author,
 	}
 }
 
-func (op CreateOperation) OpType() bug.OperationType {
-	return bug.CREATE
-}
+//func (op CreateOperation) OpType() bug.OperationType {
+//	return bug.CREATE
+//}
 
 func (op CreateOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {
 	empty := bug.Snapshot{}

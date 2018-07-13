@@ -3,6 +3,7 @@ package tests
 import (
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/bug/operations"
+	"github.com/MichaelMure/git-bug/repository"
 	"testing"
 )
 
@@ -14,6 +15,7 @@ var (
 
 	createOp   = operations.NewCreateOp(rene, "title", "message")
 	setTitleOp = operations.NewSetTitleOp("title2")
+	mockRepo   = repository.NewMockRepoForTest()
 )
 
 func TestOpIterator(t *testing.T) {
@@ -26,12 +28,12 @@ func TestOpIterator(t *testing.T) {
 
 	bug1.Append(createOp)
 	bug1.Append(setTitleOp)
-	bug1.Commit()
+	bug1.Commit(mockRepo)
 
 	bug1.Append(setTitleOp)
 	bug1.Append(setTitleOp)
 	bug1.Append(setTitleOp)
-	bug1.Commit()
+	bug1.Commit(mockRepo)
 
 	bug1.Append(setTitleOp)
 	bug1.Append(setTitleOp)

@@ -3,6 +3,7 @@ package commands
 import (
 	"errors"
 	"fmt"
+	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
@@ -16,7 +17,7 @@ func pull(repo repository.Repo, args []string) error {
 		remote = args[0]
 	}
 
-	if err := repo.PullRefs(remote, bugsRefPattern); err != nil {
+	if err := repo.PullRefs(remote, bug.BugsRefPattern+"*"); err != nil {
 		return err
 	}
 	return nil

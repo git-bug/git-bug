@@ -38,7 +38,7 @@ func TestBugValidity(t *testing.T) {
 		t.Fatal("Bug with multiple CREATE should be invalid")
 	}
 
-	bug1.Commit()
+	bug1.Commit(mockRepo)
 
 	if bug1.IsValid() {
 		t.Fatal("Bug with multiple CREATE should be invalid")

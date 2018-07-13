@@ -43,7 +43,7 @@ func main() {
 
 	// git bug
 	if len(args) == 1 {
-		fmt.Println("Not implemented")
+		fmt.Println("Will list bugs, not implemented yet")
 		//TODO: list bugs
 		return
 	}

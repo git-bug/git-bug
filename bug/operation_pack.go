@@ -1,5 +1,11 @@
 package bug
 
+import (
+	"encoding/json"
+	"github.com/MichaelMure/git-bug/repository"
+	"github.com/MichaelMure/git-bug/util"
+)
+
 // OperationPack represent an ordered set of operation to apply
 // to a Bug. These operations are stored in a single Git commit.
 //
@@ -7,7 +13,22 @@ package bug
 // inside Git to form the complete ordered chain of operation to
 // apply to get the final state of the Bug
 type OperationPack struct {
-	Operations []Operation
+	Operations []Operation `json:"ops"`
+	hash       util.Hash
+}
+
+func Parse() (OperationPack, error) {
+	// TODO
+	return OperationPack{}, nil
+}
+
+func (opp *OperationPack) Serialize() ([]byte, error) {
+	jsonBytes, err := json.Marshal(*opp)
+	if err != nil {
+		return nil, err
+	}
+
+	return jsonBytes, nil
 }
 
 // Append a new operation to the pack
@@ -21,4 +42,20 @@ func (opp *OperationPack) IsEmpty() bool {
 
 func (opp *OperationPack) IsValid() bool {
 	return !opp.IsEmpty()
+}
+
+func (opp *OperationPack) Write(repo repository.Repo) (util.Hash, error) {
+	data, err := opp.Serialize()
+
+	if err != nil {
+		return "", err
+	}
+
+	hash, err := repo.StoreData(data)
+
+	if err != nil {
+		return "", err
+	}
+
+	return hash, nil
 }
