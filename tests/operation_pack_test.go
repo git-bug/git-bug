@@ -13,6 +13,7 @@ func TestOperationPackSerialize(t *testing.T) {
 
 	opp.Append(createOp)
 	opp.Append(setTitleOp)
+	opp.Append(addCommentOp)
 
 	jsonBytes, err := opp.Serialize()
 

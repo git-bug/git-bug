@@ -12,10 +12,6 @@ import (
 	"strings"
 )
 
-// This is used to have a different staging area than the regular git index
-// when creating data in git
-const gitEnvConfig = "GIT_INDEX_FILE=BUG_STAGING_INDEX"
-
 // GitRepo represents an instance of a (local) git repository.
 type GitRepo struct {
 	Path string
@@ -28,8 +24,6 @@ func (repo *GitRepo) runGitCommandWithIO(stdin io.Reader, stdout, stderr io.Writ
 	cmd.Stdin = stdin
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
-
-	//cmd.Env = append(cmd.Env, gitEnvConfig)
 
 	return cmd.Run()
 }

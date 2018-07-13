@@ -13,9 +13,10 @@ var (
 		Email: "rene@descartes.fr",
 	}
 
-	createOp   = operations.NewCreateOp(rene, "title", "message")
-	setTitleOp = operations.NewSetTitleOp("title2")
-	mockRepo   = repository.NewMockRepoForTest()
+	createOp     = operations.NewCreateOp(rene, "title", "message")
+	setTitleOp   = operations.NewSetTitleOp("title2")
+	addCommentOp = operations.NewAddCommentOp(rene, "message2")
+	mockRepo     = repository.NewMockRepoForTest()
 )
 
 func TestOpIterator(t *testing.T) {

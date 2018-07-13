@@ -25,10 +25,6 @@ func NewCreateOp(author bug.Person, title, message string) CreateOperation {
 	}
 }
 
-//func (op CreateOperation) OpType() bug.OperationType {
-//	return bug.CREATE
-//}
-
 func (op CreateOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {
 	empty := bug.Snapshot{}
 
