@@ -1,8 +1,4 @@
-package operations
-
-import (
-	"github.com/MichaelMure/git-bug/bug"
-)
+package bug
 
 type OperationType int
 
@@ -15,5 +11,5 @@ const (
 
 type Operation interface {
 	OpType() OperationType
-	Apply(snapshot bug.Snapshot) bug.Snapshot
+	Apply(snapshot Snapshot) Snapshot
 }

@@ -14,6 +14,7 @@ git push origin "refs/bug/*"
 git fetch origin "refs/bug/*:refs/bug/*"
 
 
+git show-ref refs/bug
 
 
 

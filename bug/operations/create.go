@@ -7,7 +7,7 @@ import (
 
 // CreateOperation define the initial creation of a bug
 
-var _ Operation = CreateOperation{}
+var _ bug.Operation = CreateOperation{}
 
 type CreateOperation struct {
 	Title   string
@@ -23,8 +23,8 @@ func NewCreateOp(author bug.Person, title, message string) CreateOperation {
 	}
 }
 
-func (op CreateOperation) OpType() OperationType {
-	return CREATE
+func (op CreateOperation) OpType() bug.OperationType {
+	return bug.CREATE
 }
 
 func (op CreateOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {

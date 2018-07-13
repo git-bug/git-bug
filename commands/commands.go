@@ -27,16 +27,4 @@ var CommandMap = map[string]*Command{
 	"new":  newCmd,
 	"pull": pullCmd,
 	"push": pushCmd,
-
-	/*"abandon": abandonCmd,
-	"accept":  acceptCmd,
-	"comment": commentCmd,
-	"list":    listCmd,
-	"pull":    pullCmd,
-	"push":    pushCmd,
-	"rebase":  rebaseCmd,
-	"reject":  rejectCmd,
-	"request": requestCmd,
-	"show":    showCmd,
-	"submit":  submitCmd,*/
 }

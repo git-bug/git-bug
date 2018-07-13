@@ -11,8 +11,8 @@ type CreateOperation2 struct {
 	Message string
 }
 
-func (op CreateOperation2) OpType() OperationType {
-	return UNKNOW
+func (op CreateOperation2) OpType() bug.OperationType {
+	return bug.UNKNOW
 }
 
 func (op CreateOperation2) Apply(snapshot bug.Snapshot) bug.Snapshot {
@@ -26,16 +26,16 @@ func TestOperationsEquality(t *testing.T) {
 		Email: "rene@descartes.fr",
 	}
 
-	var A Operation = NewCreateOp(rene, "title", "message")
-	var B Operation = NewCreateOp(rene, "title", "message")
-	var C Operation = NewCreateOp(rene, "title", "different message")
+	var A bug.Operation = NewCreateOp(rene, "title", "message")
+	var B bug.Operation = NewCreateOp(rene, "title", "message")
+	var C bug.Operation = NewCreateOp(rene, "title", "different message")
 
 	if A != B {
-		t.Fatal("Equal value operations should be tested equals")
+		t.Fatal("Equal value ops should be tested equals")
 	}
 
 	if A == C {
-		t.Fatal("Different value operations should be tested different")
+		t.Fatal("Different value ops should be tested different")
 	}
 
 	D := CreateOperation2{Title: "title", Message: "message"}
@@ -49,7 +49,7 @@ func TestOperationsEquality(t *testing.T) {
 		Email: "isaac@newton.uk",
 	}
 
-	var E Operation = NewCreateOp(isaac, "title", "message")
+	var E bug.Operation = NewCreateOp(isaac, "title", "message")
 
 	if A == E {
 		t.Fatal("Operation equality should handle the author")

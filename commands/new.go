@@ -1,12 +1,13 @@
 package commands
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/bug/operations"
 	"github.com/MichaelMure/git-bug/commands/input"
 	"github.com/MichaelMure/git-bug/repository"
-	"github.com/pkg/errors"
 )
 
 var newFlagSet = flag.NewFlagSet("new", flag.ExitOnError)
@@ -16,7 +17,7 @@ var (
 	newMessage     = newFlagSet.String("m", "", "Provide a message to describe the issue")
 )
 
-func newBug(repo repository.Repo, args []string) error {
+func RunNewBug(repo repository.Repo, args []string) error {
 	newFlagSet.Parse(args)
 	args = newFlagSet.Args()
 
@@ -50,19 +51,15 @@ func newBug(repo repository.Repo, args []string) error {
 		return err
 	}
 
-	comment := bug.Comment{
-		Author:  author,
-		Message: *newMessage,
+	newbug, err := bug.NewBug()
+	if err != nil {
+		return err
 	}
 
-	bug := bug.Snapshot{
-		Title:    title,
-		Comments: []bug.Comment{comment},
-	}
+	createOp := operations.NewCreateOp(author, title, *newMessage)
 
-	fmt.Println(bug)
-
-	author.Store(repo)
+	newbug.Append(createOp)
+	newbug.Commit()
 
 	return nil
 
@@ -73,5 +70,5 @@ var newCmd = &Command{
 		fmt.Printf("Usage: %s new <title> [<option>...]\n\nOptions:\n", arg0)
 		newFlagSet.PrintDefaults()
 	},
-	RunMethod: newBug,
+	RunMethod: RunNewBug,
 }

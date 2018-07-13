@@ -2,9 +2,9 @@ package bug
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util"
-	"github.com/pkg/errors"
 )
 
 type Person struct {
