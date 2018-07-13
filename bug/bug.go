@@ -8,6 +8,7 @@ import (
 )
 
 const BugsRefPattern = "refs/bugs/"
+const BugsRemoteRefPattern = "refs/remote/%s/bugs/"
 
 // Bug hold the data of a bug thread, organized in a way close to
 // how it will be persisted inside Git. This is the datastructure

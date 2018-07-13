@@ -35,7 +35,7 @@ func (r *mockRepoForTest) PushRefs(remote string, refPattern string) error {
 	return nil
 }
 
-func (r *mockRepoForTest) PullRefs(remote string, refPattern string) error {
+func (r *mockRepoForTest) PullRefs(remote string, refPattern string, remoteRefPattern string) error {
 	return nil
 }
 

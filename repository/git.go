@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/MichaelMure/git-bug/util"
 	"io"
+	"os"
 	"os/exec"
 	"strings"
 )
@@ -58,6 +59,11 @@ func (repo *GitRepo) runGitCommand(args ...string) (string, error) {
 	return repo.runGitCommandWithStdin(nil, args...)
 }
 
+// Run the given git command using the same stdin, stdout, and stderr as the review tool.
+func (repo *GitRepo) runGitCommandInline(args ...string) error {
+	return repo.runGitCommandWithIO(os.Stdin, os.Stdout, os.Stderr, args...)
+}
+
 // NewGitRepo determines if the given working directory is inside of a git repository,
 // and returns the corresponding GitRepo instance if it is.
 func NewGitRepo(path string) (*GitRepo, error) {
@@ -99,9 +105,14 @@ func (repo *GitRepo) GetCoreEditor() (string, error) {
 }
 
 // PullRefs pull git refs from a remote
-func (repo *GitRepo) PullRefs(remote string, refPattern string) error {
-	fetchRefSpec := fmt.Sprintf("+%s:%s", refPattern, refPattern)
-	_, err := repo.runGitCommand("fetch", remote, fetchRefSpec)
+func (repo *GitRepo) PullRefs(remote, refPattern, remoteRefPattern string) error {
+	remoteRefSpec := fmt.Sprintf(remoteRefPattern, remote)
+	fetchRefSpec := fmt.Sprintf("%s:%s", refPattern, remoteRefSpec)
+	err := repo.runGitCommandInline("fetch", remote, fetchRefSpec)
+
+	if err != nil {
+		return fmt.Errorf("failed to pull from the remote '%s': %v", remote, err)
+	}
 
 	// TODO: merge new data
 
@@ -112,7 +123,8 @@ func (repo *GitRepo) PullRefs(remote string, refPattern string) error {
 func (repo *GitRepo) PushRefs(remote string, refPattern string) error {
 	// The push is liable to fail if the user forgot to do a pull first, so
 	// we treat errors as user errors rather than fatal errors.
-	_, err := repo.runGitCommand("push", remote, refPattern)
+	err := repo.runGitCommandInline("push", remote, refPattern)
+
 	if err != nil {
 		return fmt.Errorf("failed to push to the remote '%s': %v", remote, err)
 	}

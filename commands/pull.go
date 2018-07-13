@@ -17,7 +17,7 @@ func pull(repo repository.Repo, args []string) error {
 		remote = args[0]
 	}
 
-	if err := repo.PullRefs(remote, bug.BugsRefPattern+"*"); err != nil {
+	if err := repo.PullRefs(remote, bug.BugsRefPattern+"*", bug.BugsRemoteRefPattern+"*"); err != nil {
 		return err
 	}
 	return nil

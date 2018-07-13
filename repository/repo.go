@@ -18,7 +18,7 @@ type Repo interface {
 	GetCoreEditor() (string, error)
 
 	// PullRefs pull git refs from a remote
-	PullRefs(remote string, refPattern string) error
+	PullRefs(remote string, refPattern string, remoteRefPattern string) error
 
 	// PushRefs push git refs to a remote
 	PushRefs(remote string, refPattern string) error
