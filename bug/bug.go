@@ -1,6 +1,7 @@
 package bug
 
 import (
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"github.com/MichaelMure/git-bug/repository"
@@ -18,7 +19,7 @@ const RootEntryName = "root"
 // used for merge of two different version.
 type Bug struct {
 	// Id used as unique identifier
-	id uuid.UUID
+	id string
 
 	lastCommit util.Hash
 	root       util.Hash
@@ -33,15 +34,20 @@ type Bug struct {
 // Create a new Bug
 func NewBug() (*Bug, error) {
 	// Creating UUID Version 4
-	id, err := uuid.ID4()
+	unique, err := uuid.ID4()
 
 	if err != nil {
 		return nil, err
 	}
 
+	// Use it as source of uniqueness
+	hash := sha256.New().Sum(unique.Bytes())
+
+	// format in hex and truncate to 40 char
+	id := fmt.Sprintf("%.40s", fmt.Sprintf("%x", hash))
+
 	return &Bug{
-		id:         id,
-		lastCommit: "",
+		id: id,
 	}, nil
 }
 
@@ -53,14 +59,8 @@ func ReadBug(repo repository.Repo, id string) (*Bug, error) {
 		return nil, err
 	}
 
-	parsedId, err := uuid.FromString(id)
-
-	if err != nil {
-		return nil, err
-	}
-
 	bug := Bug{
-		id: parsedId,
+		id: id,
 	}
 
 	for _, hash := range hashes {
@@ -207,7 +207,7 @@ func (bug *Bug) Commit(repo repository.Repo) error {
 	bug.lastCommit = hash
 
 	// Create or update the Git reference for this bug
-	ref := fmt.Sprintf("%s%s", BugsRefPattern, bug.id.String())
+	ref := fmt.Sprintf("%s%s", BugsRefPattern, bug.id)
 	err = repo.UpdateRef(ref, hash)
 
 	if err != nil {
@@ -221,11 +221,11 @@ func (bug *Bug) Commit(repo repository.Repo) error {
 }
 
 func (bug *Bug) Id() string {
-	return fmt.Sprintf("%x", bug.id)
+	return bug.id
 }
 
 func (bug *Bug) HumanId() string {
-	return fmt.Sprintf("%.8s", bug.Id())
+	return fmt.Sprintf("%.8s", bug.id)
 }
 
 func (bug *Bug) firstOp() Operation {
