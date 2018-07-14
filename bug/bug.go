@@ -18,6 +18,7 @@ type Bug struct {
 	id uuid.UUID
 
 	lastCommit util.Hash
+	root       util.Hash
 
 	// TODO: need a way to order bugs, probably a Lamport clock
 
@@ -88,7 +89,7 @@ func (bug *Bug) Append(op Operation) {
 	bug.staging.Append(op)
 }
 
-// Write the staging area in Git move the operations to the packs
+// Write the staging area in Git and move the operations to the packs
 func (bug *Bug) Commit(repo repository.Repo) error {
 	if bug.staging.IsEmpty() {
 		return nil
@@ -100,9 +101,15 @@ func (bug *Bug) Commit(repo repository.Repo) error {
 		return err
 	}
 
+	root := bug.root
+	if root == "" {
+		root = hash
+	}
+
 	// Write a Git tree referencing this blob
 	hash, err = repo.StoreTree(map[string]util.Hash{
-		"ops": hash,
+		"ops":  hash, // the last pack of ops
+		"root": root, // always the first pack of ops (might be the same)
 	})
 	if err != nil {
 		return err
