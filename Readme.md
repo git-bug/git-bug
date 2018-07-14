@@ -44,6 +44,14 @@ And pull for updates:
 git bug pull [<remote>]
 ```
 
+## Planned features
+
+- interactive CLI UI
+- rich web UI
+- media embedding
+- import/export of github issue
+- inflatable raptor
+
 ## Contribute
 
 PRs accepted.
