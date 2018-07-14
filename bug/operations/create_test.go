@@ -26,6 +26,6 @@ func TestCreate(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(snapshot, expected) {
-		t.Fatalf("%s different than %s", snapshot, expected)
+		t.Fatalf("%v different than %v", snapshot, expected)
 	}
 }

@@ -6,7 +6,7 @@ var _ bug.Operation = SetTitleOperation{}
 
 type SetTitleOperation struct {
 	bug.OpBase
-	Title string `json:"t"`
+	Title string
 }
 
 func NewSetTitleOp(title string) SetTitleOperation {

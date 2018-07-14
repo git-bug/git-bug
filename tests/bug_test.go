@@ -68,6 +68,6 @@ func TestBugSerialisation(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(bug1, bug2) {
-		t.Fatalf("%s different than %s", bug1, bug2)
+		t.Fatalf("%v different than %v", bug1, bug2)
 	}
 }
