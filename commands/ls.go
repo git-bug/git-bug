@@ -6,7 +6,7 @@ import (
 	"github.com/MichaelMure/git-bug/repository"
 )
 
-func RunListBug(repo repository.Repo, args []string) error {
+func RunLsBug(repo repository.Repo, args []string) error {
 	refs, err := repo.ListRefs(b.BugsRefPattern)
 
 	if err != nil {
@@ -28,9 +28,9 @@ func RunListBug(repo repository.Repo, args []string) error {
 	return nil
 }
 
-var listCmd = &Command{
+var lsCmd = &Command{
 	Usage: func(arg0 string) {
 		fmt.Printf("Usage: %s\n", arg0)
 	},
-	RunMethod: RunListBug,
+	RunMethod: RunLsBug,
 }
