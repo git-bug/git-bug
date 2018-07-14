@@ -21,11 +21,11 @@ func TestCreate(t *testing.T) {
 	expected := bug.Snapshot{
 		Title: "title",
 		Comments: []bug.Comment{
-			{Author: rene, Message: "message"},
+			{Author: rene, Message: "message", Time: create.Time},
 		},
 	}
 
 	if !reflect.DeepEqual(snapshot, expected) {
-		t.Fail()
+		t.Fatalf("%s different than %s", snapshot, expected)
 	}
 }

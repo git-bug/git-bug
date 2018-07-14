@@ -3,6 +3,7 @@ package operations
 import (
 	"github.com/MichaelMure/git-bug/bug"
 	"reflect"
+	"time"
 )
 
 // CreateOperation define the initial creation of a bug
@@ -14,6 +15,7 @@ type CreateOperation struct {
 	Title   string
 	Message string
 	Author  bug.Person
+	Time    time.Time
 }
 
 func NewCreateOp(author bug.Person, title, message string) CreateOperation {
@@ -22,6 +24,7 @@ func NewCreateOp(author bug.Person, title, message string) CreateOperation {
 		Title:   title,
 		Message: message,
 		Author:  author,
+		Time:    time.Now(),
 	}
 }
 
@@ -37,6 +40,7 @@ func (op CreateOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {
 		{
 			Message: op.Message,
 			Author:  op.Author,
+			Time:    op.Time,
 		},
 	}
 	return snapshot
