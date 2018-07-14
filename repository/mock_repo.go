@@ -1,14 +1,32 @@
 package repository
 
 import (
+	"crypto/sha1"
+	"fmt"
 	"github.com/MichaelMure/git-bug/util"
+	"github.com/pkg/errors"
 )
 
 // mockRepoForTest defines an instance of Repo that can be used for testing.
-type mockRepoForTest struct{}
+type mockRepoForTest struct {
+	blobs   map[util.Hash][]byte
+	trees   map[util.Hash]string
+	commits map[util.Hash]commit
+	refs    map[string]util.Hash
+}
+
+type commit struct {
+	treeHash util.Hash
+	parent   util.Hash
+}
 
 func NewMockRepoForTest() Repo {
-	return &mockRepoForTest{}
+	return &mockRepoForTest{
+		blobs:   make(map[util.Hash][]byte),
+		trees:   make(map[util.Hash]string),
+		commits: make(map[util.Hash]commit),
+		refs:    make(map[string]util.Hash),
+	}
 }
 
 // GetPath returns the path to the repo.
@@ -39,22 +57,106 @@ func (r *mockRepoForTest) PullRefs(remote string, refPattern string, remoteRefPa
 	return nil
 }
 
-func (r *mockRepoForTest) StoreData([]byte) (util.Hash, error) {
-	return "", nil
+func (r *mockRepoForTest) StoreData(data []byte) (util.Hash, error) {
+	rawHash := sha1.Sum(data)
+	hash := util.Hash(fmt.Sprintf("%x", rawHash))
+	r.blobs[hash] = data
+	return hash, nil
 }
 
-func (r *mockRepoForTest) StoreTree(mapping map[string]util.Hash) (util.Hash, error) {
-	return "", nil
+func (r *mockRepoForTest) ReadData(hash util.Hash) ([]byte, error) {
+	data, ok := r.blobs[hash]
+
+	if !ok {
+		return nil, errors.New("unknown hash")
+	}
+
+	return data, nil
+}
+
+func (r *mockRepoForTest) StoreTree(entries []TreeEntry) (util.Hash, error) {
+	buffer := prepareTreeEntries(entries)
+	rawHash := sha1.Sum(buffer.Bytes())
+	hash := util.Hash(fmt.Sprintf("%x", rawHash))
+	r.trees[hash] = buffer.String()
+
+	return hash, nil
 }
 
 func (r *mockRepoForTest) StoreCommit(treeHash util.Hash) (util.Hash, error) {
-	return "", nil
+	rawHash := sha1.Sum([]byte(treeHash))
+	hash := util.Hash(fmt.Sprintf("%x", rawHash))
+	r.commits[hash] = commit{
+		treeHash: treeHash,
+	}
+	return hash, nil
 }
 
 func (r *mockRepoForTest) StoreCommitWithParent(treeHash util.Hash, parent util.Hash) (util.Hash, error) {
-	return "", nil
+	rawHash := sha1.Sum([]byte(treeHash + parent))
+	hash := util.Hash(fmt.Sprintf("%x", rawHash))
+	r.commits[hash] = commit{
+		treeHash: treeHash,
+		parent:   parent,
+	}
+	return hash, nil
 }
 
 func (r *mockRepoForTest) UpdateRef(ref string, hash util.Hash) error {
+	r.refs[ref] = hash
 	return nil
+}
+
+func (r *mockRepoForTest) ListRefs(refspec string) ([]string, error) {
+	keys := make([]string, len(r.refs))
+
+	i := 0
+	for k := range r.refs {
+		keys[i] = k
+		i++
+	}
+
+	return keys, nil
+}
+
+func (r *mockRepoForTest) ListCommits(ref string) ([]util.Hash, error) {
+	var hashes []util.Hash
+
+	hash := r.refs[ref]
+
+	for {
+		commit, ok := r.commits[hash]
+
+		if !ok {
+			break
+		}
+
+		hashes = append([]util.Hash{hash}, hashes...)
+		hash = commit.parent
+	}
+
+	return hashes, nil
+}
+
+func (r *mockRepoForTest) ListEntries(hash util.Hash) ([]TreeEntry, error) {
+	var data string
+
+	data, ok := r.trees[hash]
+
+	if !ok {
+		// Git will understand a commit hash to reach a tree
+		commit, ok := r.commits[hash]
+
+		if !ok {
+			return nil, errors.New("unknown hash")
+		}
+
+		data, ok = r.trees[commit.treeHash]
+
+		if !ok {
+			return nil, errors.New("unknown hash")
+		}
+	}
+
+	return readTreeEntries(data)
 }

@@ -11,9 +11,9 @@ var _ bug.Operation = CreateOperation{}
 
 type CreateOperation struct {
 	bug.OpBase
-	Title   string     `json:"t"`
-	Message string     `json:"m"`
-	Author  bug.Person `json:"a"`
+	Title   string
+	Message string
+	Author  bug.Person
 }
 
 func NewCreateOp(author bug.Person, title, message string) CreateOperation {

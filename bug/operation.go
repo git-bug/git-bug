@@ -3,7 +3,7 @@ package bug
 type OperationType int
 
 const (
-	UNKNOW OperationType = iota
+	UNKNOWN OperationType = iota
 	CREATE
 	SET_TITLE
 	ADD_COMMENT
@@ -15,7 +15,7 @@ type Operation interface {
 }
 
 type OpBase struct {
-	OperationType OperationType `json:"op"`
+	OperationType OperationType
 }
 
 func (op OpBase) OpType() OperationType {

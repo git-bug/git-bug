@@ -1,6 +1,7 @@
 package bug
 
 import (
+	"errors"
 	"fmt"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util"
@@ -9,6 +10,8 @@ import (
 
 const BugsRefPattern = "refs/bugs/"
 const BugsRemoteRefPattern = "refs/remote/%s/bugs/"
+const OpsEntryName = "ops"
+const RootEntryName = "root"
 
 // Bug hold the data of a bug thread, organized in a way close to
 // how it will be persisted inside Git. This is the datastructure
@@ -40,6 +43,80 @@ func NewBug() (*Bug, error) {
 		id:         id,
 		lastCommit: "",
 	}, nil
+}
+
+// Read and parse a Bug from git
+func ReadBug(repo repository.Repo, id string) (*Bug, error) {
+	hashes, err := repo.ListCommits(BugsRefPattern + id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	parsedId, err := uuid.FromString(id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	bug := Bug{
+		id: parsedId,
+	}
+
+	for _, hash := range hashes {
+		entries, err := repo.ListEntries(hash)
+
+		bug.lastCommit = hash
+
+		if err != nil {
+			return nil, err
+		}
+
+		var opsEntry repository.TreeEntry
+		opsFound := false
+		var rootEntry repository.TreeEntry
+		rootFound := false
+
+		for _, entry := range entries {
+			if entry.Name == OpsEntryName {
+				opsEntry = entry
+				opsFound = true
+				continue
+			}
+			if entry.Name == RootEntryName {
+				rootEntry = entry
+				rootFound = true
+			}
+		}
+
+		if !opsFound {
+			return nil, errors.New("Invalid tree, missing the ops entry")
+		}
+
+		if !rootFound {
+			return nil, errors.New("Invalid tree, missing the root entry")
+		}
+
+		if bug.root == "" {
+			bug.root = rootEntry.Hash
+		}
+
+		data, err := repo.ReadData(opsEntry.Hash)
+
+		if err != nil {
+			return nil, err
+		}
+
+		op, err := ParseOperationPack(data)
+
+		if err != nil {
+			return nil, err
+		}
+
+		bug.packs = append(bug.packs, *op)
+	}
+
+	return &bug, nil
 }
 
 // IsValid check if the Bug data is valid
@@ -104,12 +181,13 @@ func (bug *Bug) Commit(repo repository.Repo) error {
 	root := bug.root
 	if root == "" {
 		root = hash
+		bug.root = hash
 	}
 
 	// Write a Git tree referencing this blob
-	hash, err = repo.StoreTree(map[string]util.Hash{
-		"ops":  hash, // the last pack of ops
-		"root": root, // always the first pack of ops (might be the same)
+	hash, err = repo.StoreTree([]repository.TreeEntry{
+		{repository.Blob, hash, OpsEntryName},  // the last pack of ops
+		{repository.Blob, root, RootEntryName}, // always the first pack of ops (might be the same)
 	})
 	if err != nil {
 		return err
@@ -126,6 +204,8 @@ func (bug *Bug) Commit(repo repository.Repo) error {
 		return err
 	}
 
+	bug.lastCommit = hash
+
 	// Create or update the Git reference for this bug
 	ref := fmt.Sprintf("%s%s", BugsRefPattern, bug.id.String())
 	err = repo.UpdateRef(ref, hash)
@@ -140,8 +220,12 @@ func (bug *Bug) Commit(repo repository.Repo) error {
 	return nil
 }
 
+func (bug *Bug) Id() string {
+	return fmt.Sprintf("%x", bug.id)
+}
+
 func (bug *Bug) HumanId() string {
-	return bug.id.String()
+	return fmt.Sprintf("%.8s", bug.Id())
 }
 
 func (bug *Bug) firstOp() Operation {
@@ -156,4 +240,17 @@ func (bug *Bug) firstOp() Operation {
 	}
 
 	return nil
+}
+
+// Compile a bug in a easily usable snapshot
+func (bug *Bug) Compile() Snapshot {
+	snap := Snapshot{}
+
+	it := NewOperationIterator(bug)
+
+	for it.Next() {
+		snap = it.Value().Apply(snap)
+	}
+
+	return snap
 }

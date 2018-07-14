@@ -19,6 +19,9 @@ git show-ref refs/bug
 
 git update-index --add --cacheinfo 100644 83baae61804e65cc73a7201a7252750c76066a30 test.txt
 
+git show-ref --hash refs/bugs/4ef19f8a-2e6a-45f7-910e-52e3c639cd86
+
+git for-each-ref --format="%(refname)" "refs/bugs/*"
 
 
 Bug operations:

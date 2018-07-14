@@ -134,15 +134,26 @@ func (repo *GitRepo) StoreData(data []byte) (util.Hash, error) {
 	return util.Hash(stdout), err
 }
 
-// StoreTree will store a mapping key-->Hash as a Git tree
-func (repo *GitRepo) StoreTree(mapping map[string]util.Hash) (util.Hash, error) {
-	var buffer bytes.Buffer
+// ReadData will attempt to read arbitrary data from the given hash
+func (repo *GitRepo) ReadData(hash util.Hash) ([]byte, error) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
 
-	for key, hash := range mapping {
-		buffer.WriteString(fmt.Sprintf("100644 blob %s\t%s\n", hash, key))
+	err := repo.runGitCommandWithIO(nil, &stdout, &stderr, "cat-file", "-p", string(hash))
+
+	if err != nil {
+		return []byte{}, err
 	}
 
+	return stdout.Bytes(), nil
+}
+
+// StoreTree will store a mapping key-->Hash as a Git tree
+func (repo *GitRepo) StoreTree(entries []TreeEntry) (util.Hash, error) {
+	buffer := prepareTreeEntries(entries)
+
 	stdout, err := repo.runGitCommandWithStdin(&buffer, "mktree")
+
 	if err != nil {
 		return "", err
 	}
@@ -178,4 +189,52 @@ func (repo *GitRepo) UpdateRef(ref string, hash util.Hash) error {
 	_, err := repo.runGitCommand("update-ref", ref, string(hash))
 
 	return err
+}
+
+// ListRefs will return a list of Git ref matching the given refspec
+func (repo *GitRepo) ListRefs(refspec string) ([]string, error) {
+	// the format option will strip the ref name to keep only the last part (ie, the bug id)
+	stdout, err := repo.runGitCommand("for-each-ref", "--format=%(refname:lstrip=-1)", refspec)
+
+	if err != nil {
+		return nil, err
+	}
+
+	splitted := strings.Split(stdout, "\n")
+
+	if len(splitted) == 1 && splitted[0] == "" {
+		return []string{}, nil
+	}
+
+	return splitted, nil
+}
+
+// ListCommits will return the list of commit hashes of a ref, in chronological order
+func (repo *GitRepo) ListCommits(ref string) ([]util.Hash, error) {
+	stdout, err := repo.runGitCommand("rev-list", "--first-parent", "--reverse", ref)
+
+	if err != nil {
+		return nil, err
+	}
+
+	splitted := strings.Split(stdout, "\n")
+
+	casted := make([]util.Hash, len(splitted))
+	for i, line := range splitted {
+		casted[i] = util.Hash(line)
+	}
+
+	return casted, nil
+
+}
+
+// ListEntries will return the list of entries in a Git tree
+func (repo *GitRepo) ListEntries(hash util.Hash) ([]TreeEntry, error) {
+	stdout, err := repo.runGitCommand("ls-tree", string(hash))
+
+	if err != nil {
+		return nil, err
+	}
+
+	return readTreeEntries(stdout)
 }

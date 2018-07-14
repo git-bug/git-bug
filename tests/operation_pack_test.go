@@ -1,9 +1,6 @@
 package tests
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
 	"github.com/MichaelMure/git-bug/bug"
 	"testing"
 )
@@ -15,24 +12,19 @@ func TestOperationPackSerialize(t *testing.T) {
 	opp.Append(setTitleOp)
 	opp.Append(addCommentOp)
 
-	jsonBytes, err := opp.Serialize()
+	data, err := opp.Serialize()
 
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if len(jsonBytes) == 0 {
-		t.Fatal("empty json")
+	if len(data) == 0 {
+		t.Fatal("empty serialized data")
 	}
 
-	fmt.Println(prettyPrintJSON(jsonBytes))
-}
+	_, err = bug.ParseOperationPack(data)
 
-func prettyPrintJSON(jsonBytes []byte) (string, error) {
-	var prettyBytes bytes.Buffer
-	err := json.Indent(&prettyBytes, jsonBytes, "", "  ")
 	if err != nil {
-		return "", err
+		t.Fatal(err)
 	}
-	return prettyBytes.String(), nil
 }

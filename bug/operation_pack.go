@@ -1,7 +1,8 @@
 package bug
 
 import (
-	"encoding/json"
+	"bytes"
+	"encoding/gob"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util"
 )
@@ -13,22 +14,35 @@ import (
 // inside Git to form the complete ordered chain of operation to
 // apply to get the final state of the Bug
 type OperationPack struct {
-	Operations []Operation `json:"ops"`
-	hash       util.Hash
+	Operations []Operation
 }
 
-func Parse() (OperationPack, error) {
-	// TODO
-	return OperationPack{}, nil
-}
+func ParseOperationPack(data []byte) (*OperationPack, error) {
+	reader := bytes.NewReader(data)
+	decoder := gob.NewDecoder(reader)
 
-func (opp *OperationPack) Serialize() ([]byte, error) {
-	jsonBytes, err := json.Marshal(*opp)
+	var opp OperationPack
+
+	err := decoder.Decode(&opp)
+
 	if err != nil {
 		return nil, err
 	}
 
-	return jsonBytes, nil
+	return &opp, nil
+}
+
+func (opp *OperationPack) Serialize() ([]byte, error) {
+	var data bytes.Buffer
+
+	encoder := gob.NewEncoder(&data)
+	err := encoder.Encode(*opp)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return data.Bytes(), nil
 }
 
 // Append a new operation to the pack
