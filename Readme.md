@@ -8,6 +8,8 @@ Would it be nice to be able to browse and edit bug report offline ?
 
 `git-bug` is a bugtracker embedded in `git`. It use the same internal storage so it doesn't pollute your project. As you would do with commits and branches, you can push your bugs to the same git remote your are already using to collaborate with other peoples.
 
+:construction: This is for now a proof of concept. Expect dragons and unfinished business. :construction:
+
 ## Install
 
 ```shell
