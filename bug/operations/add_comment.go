@@ -11,7 +11,7 @@ type AddCommentOperation struct {
 	bug.OpBase
 	Message string
 	Author  bug.Person
-	Time    time.Time
+	Time    int64
 }
 
 func NewAddCommentOp(author bug.Person, message string) AddCommentOperation {
@@ -19,7 +19,7 @@ func NewAddCommentOp(author bug.Person, message string) AddCommentOperation {
 		OpBase:  bug.OpBase{OperationType: bug.ADD_COMMENT},
 		Message: message,
 		Author:  author,
-		Time:    time.Now(),
+		Time:    time.Now().Unix(),
 	}
 }
 

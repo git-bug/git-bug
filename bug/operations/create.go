@@ -15,7 +15,7 @@ type CreateOperation struct {
 	Title   string
 	Message string
 	Author  bug.Person
-	Time    time.Time
+	Time    int64
 }
 
 func NewCreateOp(author bug.Person, title, message string) CreateOperation {
@@ -24,7 +24,7 @@ func NewCreateOp(author bug.Person, title, message string) CreateOperation {
 		Title:   title,
 		Message: message,
 		Author:  author,
-		Time:    time.Now(),
+		Time:    time.Now().Unix(),
 	}
 }
 
