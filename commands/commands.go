@@ -23,8 +23,9 @@ func (cmd *Command) Run(repo repository.Repo, args []string) error {
 
 // CommandMap defines all of the available (sub)commands.
 var CommandMap = map[string]*Command{
-	"ls":   lsCmd,
-	"new":  newCmd,
-	"pull": pullCmd,
-	"push": pushCmd,
+	"comment": commentCmd,
+	"ls":      lsCmd,
+	"new":     newCmd,
+	"pull":    pullCmd,
+	"push":    pushCmd,
 }

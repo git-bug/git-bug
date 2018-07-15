@@ -7,7 +7,7 @@ import (
 	"github.com/MichaelMure/git-bug/repository"
 )
 
-func push(repo repository.Repo, args []string) error {
+func runPush(repo repository.Repo, args []string) error {
 	if len(args) > 1 {
 		return errors.New("Only pushing to one remote at a time is supported")
 	}
@@ -28,5 +28,5 @@ var pushCmd = &Command{
 	Usage: func(arg0 string) {
 		fmt.Printf("Usage: %s push [<remote>]\n", arg0)
 	},
-	RunMethod: push,
+	RunMethod: runPush,
 }

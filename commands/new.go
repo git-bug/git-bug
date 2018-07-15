@@ -17,7 +17,7 @@ var (
 	newMessage     = newFlagSet.String("m", "", "Provide a message to describe the issue")
 )
 
-func RunNewBug(repo repository.Repo, args []string) error {
+func runNewBug(repo repository.Repo, args []string) error {
 	newFlagSet.Parse(args)
 	args = newFlagSet.Args()
 
@@ -45,7 +45,6 @@ func RunNewBug(repo repository.Repo, args []string) error {
 		}
 	}
 
-	// Note: this is very primitive for now
 	author, err := bug.GetUser(repo)
 	if err != nil {
 		return err
@@ -71,5 +70,5 @@ var newCmd = &Command{
 		fmt.Printf("Usage: %s new <title> [<option>...]\n\nOptions:\n", arg0)
 		newFlagSet.PrintDefaults()
 	},
-	RunMethod: RunNewBug,
+	RunMethod: runNewBug,
 }

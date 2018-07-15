@@ -7,7 +7,7 @@ import (
 	"github.com/MichaelMure/git-bug/repository"
 )
 
-func pull(repo repository.Repo, args []string) error {
+func runPull(repo repository.Repo, args []string) error {
 	if len(args) > 1 {
 		return errors.New("Only pulling from one remote at a time is supported")
 	}
@@ -28,5 +28,5 @@ var pullCmd = &Command{
 	Usage: func(arg0 string) {
 		fmt.Printf("Usage: %s pull [<remote>]\n", arg0)
 	},
-	RunMethod: pull,
+	RunMethod: runPull,
 }
