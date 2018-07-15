@@ -7,6 +7,7 @@ import (
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util"
 	"github.com/kevinburke/go.uuid"
+	"strings"
 )
 
 const BugsRefPattern = "refs/bugs/"
@@ -33,6 +34,8 @@ type Bug struct {
 
 // Create a new Bug
 func NewBug() (*Bug, error) {
+	// TODO: replace with simple random bytes + hash
+
 	// Creating UUID Version 4
 	unique, err := uuid.ID4()
 
@@ -49,6 +52,34 @@ func NewBug() (*Bug, error) {
 	return &Bug{
 		id: id,
 	}, nil
+}
+
+// Find an existing Bug matching a prefix
+func FindBug(repo repository.Repo, prefix string) (*Bug, error) {
+	refs, err := repo.ListRefs(BugsRefPattern)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// preallocate but empty
+	matching := make([]string, 0, 5)
+
+	for _, ref := range refs {
+		if strings.HasPrefix(ref, prefix) {
+			matching = append(matching, ref)
+		}
+	}
+
+	if len(matching) == 0 {
+		return nil, errors.New("No matching bug found.")
+	}
+
+	if len(matching) > 1 {
+		return nil, fmt.Errorf("Multiple matching bug found:\n%s", strings.Join(matching, "\n"))
+	}
+
+	return ReadBug(repo, matching[0])
 }
 
 // Read and parse a Bug from git
