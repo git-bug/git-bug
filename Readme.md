@@ -44,6 +44,28 @@ And pull for updates:
 git bug pull [<remote>]
 ```
 
+## All commands
+
+```bash
+# Display available commands
+git bug commands [<option>...]
+
+# Add a new comment to a bug
+git bug comment [<options>...] <id>
+
+# Display a summary of all bugs
+git bug ls 
+
+# Create a new bug
+git bug new [<option>...] <title>
+
+# Pull bugs update from a git remote
+git bug pull [<remote>]
+
+# Push bugs update to a git remote
+git bug push [<remote>]
+```
+
 ## Internals
 
 Interested by how it works ? Have a look at the [data model](doc/model.md).
