@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/MichaelMure/git-bug/repository"
+	"sort"
 )
 
 var commandsFlagSet = flag.NewFlagSet("commands", flag.ExitOnError)
@@ -18,19 +19,29 @@ func runCommands(repo repository.Repo, args []string) error {
 
 	first := true
 
-	for name, cmd := range CommandMap {
+	keys := make([]string, 0, len(CommandMap))
+
+	for key := range CommandMap {
+		keys = append(keys, key)
+	}
+
+	sort.Strings(keys)
+
+	for _, key := range keys {
 		if !first {
 			fmt.Println()
 		}
 
 		first = false
 
+		cmd := CommandMap[key]
+
 		if *commandsDesc {
 			fmt.Printf("# %s\n", cmd.Description)
 		}
 
 		// TODO: the root name command ("git bug") should be passed from git-bug.go but well ...
-		fmt.Printf("%s %s %s\n", "git bug", name, cmd.Usage)
+		fmt.Printf("%s %s %s\n", "git bug", key, cmd.Usage)
 	}
 
 	return nil

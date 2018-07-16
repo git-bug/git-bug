@@ -64,6 +64,9 @@ git bug pull [<remote>]
 
 # Push bugs update to a git remote
 git bug push [<remote>]
+
+# Launch the web UI
+git bug webui 
 ```
 
 ## Internals
