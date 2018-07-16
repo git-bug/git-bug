@@ -8,4 +8,7 @@ install:
 	go generate
 	go install -tags=deploy_build .
 
-.PHONY: build install
+test: build
+	go test ./...
+
+.PHONY: build install test

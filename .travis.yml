@@ -3,3 +3,9 @@ language: go
 go:
   - "1.8"
   - "1.10.x"
+
+install:
+  - make install
+
+script:
+  - make test
