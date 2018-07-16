@@ -50,5 +50,6 @@ func init() {
 		"new":      newCmd,
 		"pull":     pullCmd,
 		"push":     pushCmd,
+		"webui":    webUICmd,
 	}
 }
