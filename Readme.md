@@ -22,7 +22,7 @@ If it's not done already, add golang binary directory in your PATH:
 export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 ```
 
-That's all !
+That's all ! In the future, pre-compiled binary will be provided for convenience.
 
 ## Usage
 
