@@ -3,7 +3,6 @@ package commands
 import (
 	"errors"
 	"flag"
-	"fmt"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/bug/operations"
 	"github.com/MichaelMure/git-bug/commands/input"
@@ -66,9 +65,8 @@ func runNewBug(repo repository.Repo, args []string) error {
 }
 
 var newCmd = &Command{
-	Usage: func(arg0 string) {
-		fmt.Printf("Usage: %s new <title> [<option>...]\n\nOptions:\n", arg0)
-		newFlagSet.PrintDefaults()
-	},
-	RunMethod: runNewBug,
+	Description: "Create a new bug",
+	Usage:       "[<option>...] <title>",
+	flagSet:     newFlagSet,
+	RunMethod:   runNewBug,
 }

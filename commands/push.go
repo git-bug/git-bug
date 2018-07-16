@@ -25,8 +25,7 @@ func runPush(repo repository.Repo, args []string) error {
 
 // showCmd defines the "push" subcommand.
 var pushCmd = &Command{
-	Usage: func(arg0 string) {
-		fmt.Printf("Usage: %s push [<remote>]\n", arg0)
-	},
-	RunMethod: runPush,
+	Description: "Push bugs update to a git remote",
+	Usage:       "[<remote>]",
+	RunMethod:   runPush,
 }

@@ -25,8 +25,7 @@ func runPull(repo repository.Repo, args []string) error {
 
 // showCmd defines the "push" subcommand.
 var pullCmd = &Command{
-	Usage: func(arg0 string) {
-		fmt.Printf("Usage: %s pull [<remote>]\n", arg0)
-	},
-	RunMethod: runPull,
+	Description: "Pull bugs update from a git remote",
+	Usage:       "[<remote>]",
+	RunMethod:   runPull,
 }

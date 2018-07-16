@@ -34,7 +34,7 @@ type Bug struct {
 
 // Create a new Bug
 func NewBug() (*Bug, error) {
-	// TODO: replace with simple random bytes + hash
+	// TODO: replace with commit hash of (first commit + some random)
 
 	// Creating UUID Version 4
 	unique, err := uuid.ID4()

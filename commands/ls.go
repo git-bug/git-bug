@@ -29,8 +29,7 @@ func runLsBug(repo repository.Repo, args []string) error {
 }
 
 var lsCmd = &Command{
-	Usage: func(arg0 string) {
-		fmt.Printf("Usage: %s ls\n", arg0)
-	},
-	RunMethod: runLsBug,
+	Description: "Display a summary of all bugs",
+	Usage:       "",
+	RunMethod:   runLsBug,
 }

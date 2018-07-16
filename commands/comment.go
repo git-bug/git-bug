@@ -3,7 +3,6 @@ package commands
 import (
 	"errors"
 	"flag"
-	"fmt"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/bug/operations"
 	"github.com/MichaelMure/git-bug/commands/input"
@@ -50,24 +49,23 @@ func runComment(repo repository.Repo, args []string) error {
 		return err
 	}
 
-	bug, err := bug.FindBug(repo, prefix)
+	b, err := bug.FindBug(repo, prefix)
 	if err != nil {
 		return err
 	}
 
 	addCommentOp := operations.NewAddCommentOp(author, *commentMessage)
 
-	bug.Append(addCommentOp)
+	b.Append(addCommentOp)
 
-	err = bug.Commit(repo)
+	err = b.Commit(repo)
 
 	return err
 }
 
 var commentCmd = &Command{
-	Usage: func(arg0 string) {
-		fmt.Printf("Usage: %s comment <id> [<option>...]\n\nOptions:\n", arg0)
-		commentFlagSet.PrintDefaults()
-	},
-	RunMethod: runComment,
+	Description: "Add a new comment to a bug",
+	Usage:       "[<options>...] <id>",
+	flagSet:     commentFlagSet,
+	RunMethod:   runComment,
 }
