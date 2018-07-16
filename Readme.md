@@ -44,6 +44,10 @@ And pull for updates:
 git bug pull [<remote>]
 ```
 
+## Internals
+
+Interested by how it works ? Have a look at the [data model](doc/model.md).
+
 ## Planned features
 
 - interactive CLI UI
