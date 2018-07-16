@@ -23,6 +23,8 @@ git show-ref --hash refs/bugs/4ef19f8a-2e6a-45f7-910e-52e3c639cd86
 
 git for-each-ref --format="%(refname)" "refs/bugs/*"
 
+-- delete all remote bug refs
+git for-each-ref refs/remote/origin/bugs/* --format="%(refname:lstrip=-1)"  | xargs -i git push origin :refs/bugs/{}
 
 Bug operations:
 - create bug

@@ -7,14 +7,14 @@ import (
 )
 
 func runLsBug(repo repository.Repo, args []string) error {
-	refs, err := repo.ListRefs(b.BugsRefPattern)
+	ids, err := repo.ListRefs(b.BugsRefPattern)
 
 	if err != nil {
 		return err
 	}
 
-	for _, ref := range refs {
-		bug, err := b.ReadBug(repo, ref)
+	for _, ref := range ids {
+		bug, err := b.ReadBug(repo, b.BugsRefPattern+ref)
 
 		if err != nil {
 			return err

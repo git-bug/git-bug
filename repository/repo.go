@@ -21,8 +21,8 @@ type Repo interface {
 	// GetCoreEditor returns the name of the editor that the user has used to configure git.
 	GetCoreEditor() (string, error)
 
-	// PullRefs pull git refs from a remote
-	PullRefs(remote string, refPattern string, remoteRefPattern string) error
+	// FetchRefs fetch git refs from a remote
+	FetchRefs(remote string, refPattern string, remoteRefPattern string) error
 
 	// PushRefs push git refs to a remote
 	PushRefs(remote string, refPattern string) error
@@ -48,11 +48,23 @@ type Repo interface {
 	// ListRefs will return a list of Git ref matching the given refspec
 	ListRefs(refspec string) ([]string, error)
 
+	// RefExist will check if a reference exist in Git
+	RefExist(ref string) (bool, error)
+
+	// CopyRef will create a new reference with the same value as another one
+	CopyRef(source string, dest string) error
+
 	// ListCommits will return the list of tree hashes of a ref, in chronological order
 	ListCommits(ref string) ([]util.Hash, error)
 
 	// ListEntries will return the list of entries in a Git tree
 	ListEntries(hash util.Hash) ([]TreeEntry, error)
+
+	// FindCommonAncestor will return the last common ancestor of two chain of commit
+	FindCommonAncestor(hash1 util.Hash, hash2 util.Hash) (util.Hash, error)
+
+	// Return the git tree hash referenced in a commit
+	GetTreeHash(commit util.Hash) (util.Hash, error)
 }
 
 func prepareTreeEntries(entries []TreeEntry) bytes.Buffer {

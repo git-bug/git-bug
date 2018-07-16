@@ -56,7 +56,7 @@ func NewBug() (*Bug, error) {
 
 // Find an existing Bug matching a prefix
 func FindBug(repo repository.Repo, prefix string) (*Bug, error) {
-	refs, err := repo.ListRefs(BugsRefPattern)
+	ids, err := repo.ListRefs(BugsRefPattern)
 
 	if err != nil {
 		return nil, err
@@ -65,9 +65,9 @@ func FindBug(repo repository.Repo, prefix string) (*Bug, error) {
 	// preallocate but empty
 	matching := make([]string, 0, 5)
 
-	for _, ref := range refs {
-		if strings.HasPrefix(ref, prefix) {
-			matching = append(matching, ref)
+	for _, id := range ids {
+		if strings.HasPrefix(id, prefix) {
+			matching = append(matching, id)
 		}
 	}
 
@@ -79,21 +79,25 @@ func FindBug(repo repository.Repo, prefix string) (*Bug, error) {
 		return nil, fmt.Errorf("Multiple matching bug found:\n%s", strings.Join(matching, "\n"))
 	}
 
-	return ReadBug(repo, matching[0])
+	return ReadBug(repo, BugsRefPattern+matching[0])
 }
 
 // Read and parse a Bug from git
-func ReadBug(repo repository.Repo, id string) (*Bug, error) {
-	hashes, err := repo.ListCommits(BugsRefPattern + id)
+func ReadBug(repo repository.Repo, ref string) (*Bug, error) {
+	hashes, err := repo.ListCommits(ref)
 
 	if err != nil {
 		return nil, err
 	}
 
+	refSplitted := strings.Split(ref, "/")
+	id := refSplitted[len(refSplitted)-1]
+
 	bug := Bug{
 		id: id,
 	}
 
+	// Load each OperationPack
 	for _, hash := range hashes {
 		entries, err := repo.ListEntries(hash)
 
@@ -139,6 +143,13 @@ func ReadBug(repo repository.Repo, id string) (*Bug, error) {
 		}
 
 		op, err := ParseOperationPack(data)
+
+		if err != nil {
+			return nil, err
+		}
+
+		// tag the pack with the commit hash
+		op.commitHash = hash
 
 		if err != nil {
 			return nil, err
@@ -251,14 +262,96 @@ func (bug *Bug) Commit(repo repository.Repo) error {
 	return nil
 }
 
+// Merge a different version of the same bug by rebasing operations of this bug
+// that are not present in the other on top of the chain of operations of the
+// other version.
+func (bug *Bug) Merge(repo repository.Repo, other *Bug) (bool, error) {
+
+	if bug.id != other.id {
+		return false, errors.New("merging unrelated bugs is not supported")
+	}
+
+	if len(other.staging.Operations) > 0 {
+		return false, errors.New("merging a bug with a non-empty staging is not supported")
+	}
+
+	if bug.lastCommit == "" || other.lastCommit == "" {
+		return false, errors.New("can't merge a bug that has never been stored")
+	}
+
+	ancestor, err := repo.FindCommonAncestor(bug.lastCommit, other.lastCommit)
+
+	if err != nil {
+		return false, err
+	}
+
+	rebaseStarted := false
+	updated := false
+
+	for i, pack := range bug.packs {
+		if pack.commitHash == ancestor {
+			rebaseStarted = true
+
+			// get other bug's extra pack
+			for j := i + 1; j < len(other.packs); j++ {
+				// clone is probably not necessary
+				newPack := other.packs[j].Clone()
+
+				bug.packs = append(bug.packs, newPack)
+				bug.lastCommit = newPack.commitHash
+				updated = true
+			}
+
+			continue
+		}
+
+		if !rebaseStarted {
+			continue
+		}
+
+		updated = true
+
+		// get the referenced git tree
+		treeHash, err := repo.GetTreeHash(pack.commitHash)
+
+		if err != nil {
+			return false, err
+		}
+
+		// create a new commit with the correct ancestor
+		hash, err := repo.StoreCommitWithParent(treeHash, bug.lastCommit)
+
+		// replace the pack
+		bug.packs[i] = pack.Clone()
+		bug.packs[i].commitHash = hash
+
+		// update the bug
+		bug.lastCommit = hash
+	}
+
+	// Update the git ref
+	if updated {
+		err := repo.UpdateRef(BugsRefPattern+bug.id, bug.lastCommit)
+		if err != nil {
+			return false, err
+		}
+	}
+
+	return updated, nil
+}
+
+// Return the Bug identifier
 func (bug *Bug) Id() string {
 	return bug.id
 }
 
+// Return the Bug identifier truncated for human consumption
 func (bug *Bug) HumanId() string {
 	return fmt.Sprintf("%.8s", bug.id)
 }
 
+// Lookup for the very first operation of the bug.
+// For a valid Bug, this operation should be a CREATE
 func (bug *Bug) firstOp() Operation {
 	for _, pack := range bug.packs {
 		for _, op := range pack.Operations {

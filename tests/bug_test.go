@@ -62,7 +62,7 @@ func TestBugSerialisation(t *testing.T) {
 
 	bug1.Commit(repo)
 
-	bug2, err := bug.ReadBug(repo, bug1.Id())
+	bug2, err := bug.ReadBug(repo, bug.BugsRefPattern+bug1.Id())
 	if err != nil {
 		t.Error(err)
 	}

@@ -98,25 +98,21 @@ func (repo *GitRepo) GetCoreEditor() (string, error) {
 	return repo.runGitCommand("var", "GIT_EDITOR")
 }
 
-// PullRefs pull git refs from a remote
-func (repo *GitRepo) PullRefs(remote, refPattern, remoteRefPattern string) error {
+// FetchRefs fetch git refs from a remote
+func (repo *GitRepo) FetchRefs(remote, refPattern, remoteRefPattern string) error {
 	remoteRefSpec := fmt.Sprintf(remoteRefPattern, remote)
 	fetchRefSpec := fmt.Sprintf("%s:%s", refPattern, remoteRefSpec)
 	err := repo.runGitCommandInline("fetch", remote, fetchRefSpec)
 
 	if err != nil {
-		return fmt.Errorf("failed to pull from the remote '%s': %v", remote, err)
+		return fmt.Errorf("failed to fetch from the remote '%s': %v", remote, err)
 	}
-
-	// TODO: merge new data
 
 	return err
 }
 
 // PushRefs push git refs to a remote
 func (repo *GitRepo) PushRefs(remote string, refPattern string) error {
-	// The push is liable to fail if the user forgot to do a pull first, so
-	// we treat errors as user errors rather than fatal errors.
 	err := repo.runGitCommandInline("push", remote, refPattern)
 
 	if err != nil {
@@ -209,6 +205,24 @@ func (repo *GitRepo) ListRefs(refspec string) ([]string, error) {
 	return splitted, nil
 }
 
+// RefExist will check if a reference exist in Git
+func (repo *GitRepo) RefExist(ref string) (bool, error) {
+	stdout, err := repo.runGitCommand("for-each-ref", ref)
+
+	if err != nil {
+		return false, err
+	}
+
+	return stdout != "", nil
+}
+
+// CopyRef will create a new reference with the same value as another one
+func (repo *GitRepo) CopyRef(source string, dest string) error {
+	_, err := repo.runGitCommand("update-ref", dest, source)
+
+	return err
+}
+
 // ListCommits will return the list of commit hashes of a ref, in chronological order
 func (repo *GitRepo) ListCommits(ref string) ([]util.Hash, error) {
 	stdout, err := repo.runGitCommand("rev-list", "--first-parent", "--reverse", ref)
@@ -237,4 +251,26 @@ func (repo *GitRepo) ListEntries(hash util.Hash) ([]TreeEntry, error) {
 	}
 
 	return readTreeEntries(stdout)
+}
+
+// FindCommonAncestor will return the last common ancestor of two chain of commit
+func (repo *GitRepo) FindCommonAncestor(hash1 util.Hash, hash2 util.Hash) (util.Hash, error) {
+	stdout, err := repo.runGitCommand("merge-base", string(hash1), string(hash2))
+
+	if err != nil {
+		return "", nil
+	}
+
+	return util.Hash(stdout), nil
+}
+
+// Return the git tree hash referenced in a commit
+func (repo *GitRepo) GetTreeHash(commit util.Hash) (util.Hash, error) {
+	stdout, err := repo.runGitCommand("rev-parse", string(commit)+"^{tree}")
+
+	if err != nil {
+		return "", nil
+	}
+
+	return util.Hash(stdout), nil
 }

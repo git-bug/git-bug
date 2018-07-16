@@ -15,6 +15,9 @@ import (
 // apply to get the final state of the Bug
 type OperationPack struct {
 	Operations []Operation
+
+	// Private field so not serialized by gob
+	commitHash util.Hash
 }
 
 func ParseOperationPack(data []byte) (*OperationPack, error) {
@@ -72,4 +75,19 @@ func (opp *OperationPack) Write(repo repository.Repo) (util.Hash, error) {
 	}
 
 	return hash, nil
+}
+
+// Make a deep copy
+func (opp *OperationPack) Clone() OperationPack {
+
+	clone := OperationPack{
+		Operations: make([]Operation, len(opp.Operations)),
+		commitHash: opp.commitHash,
+	}
+
+	for i, op := range opp.Operations {
+		clone.Operations[i] = op
+	}
+
+	return clone
 }

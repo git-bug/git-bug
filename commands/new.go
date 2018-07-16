@@ -3,6 +3,7 @@ package commands
 import (
 	"errors"
 	"flag"
+	"fmt"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/bug/operations"
 	"github.com/MichaelMure/git-bug/commands/input"
@@ -59,6 +60,8 @@ func runNewBug(repo repository.Repo, args []string) error {
 	newbug.Append(createOp)
 
 	err = newbug.Commit(repo)
+
+	fmt.Println(newbug.HumanId())
 
 	return err
 

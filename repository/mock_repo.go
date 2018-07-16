@@ -53,7 +53,7 @@ func (r *mockRepoForTest) PushRefs(remote string, refPattern string) error {
 	return nil
 }
 
-func (r *mockRepoForTest) PullRefs(remote string, refPattern string, remoteRefPattern string) error {
+func (r *mockRepoForTest) FetchRefs(remote string, refPattern string, remoteRefPattern string) error {
 	return nil
 }
 
@@ -104,6 +104,22 @@ func (r *mockRepoForTest) StoreCommitWithParent(treeHash util.Hash, parent util.
 
 func (r *mockRepoForTest) UpdateRef(ref string, hash util.Hash) error {
 	r.refs[ref] = hash
+	return nil
+}
+
+func (r *mockRepoForTest) RefExist(ref string) (bool, error) {
+	_, exist := r.refs[ref]
+	return exist, nil
+}
+
+func (r *mockRepoForTest) CopyRef(source string, dest string) error {
+	hash, exist := r.refs[source]
+
+	if !exist {
+		return errors.New("Unknown ref")
+	}
+
+	r.refs[dest] = hash
 	return nil
 }
 
@@ -159,4 +175,12 @@ func (r *mockRepoForTest) ListEntries(hash util.Hash) ([]TreeEntry, error) {
 	}
 
 	return readTreeEntries(data)
+}
+
+func (r *mockRepoForTest) FindCommonAncestor(hash1 util.Hash, hash2 util.Hash) (util.Hash, error) {
+	panic("implement me")
+}
+
+func (r *mockRepoForTest) GetTreeHash(commit util.Hash) (util.Hash, error) {
+	panic("implement me")
 }
