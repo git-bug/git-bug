@@ -59,4 +59,4 @@ PRs accepted.
 ## License
 
 
-GPLv3 © Michael Muré
+GPLv3 or later © Michael Muré
