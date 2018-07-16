@@ -35,7 +35,7 @@ func help(command string) {
 		rootUsage()
 		return
 	}
-	subcommand.Usage(rootCommandName)
+	subcommand.PrintUsage(rootCommandName, command)
 }
 
 func main() {
