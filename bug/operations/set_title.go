@@ -1,6 +1,10 @@
 package operations
 
-import "github.com/MichaelMure/git-bug/bug"
+import (
+	"github.com/MichaelMure/git-bug/bug"
+)
+
+// SetTitleOperation will change the title of a bug
 
 var _ bug.Operation = SetTitleOperation{}
 
@@ -9,14 +13,15 @@ type SetTitleOperation struct {
 	Title string
 }
 
-func NewSetTitleOp(title string) SetTitleOperation {
+func NewSetTitleOp(author bug.Person, title string) SetTitleOperation {
 	return SetTitleOperation{
-		OpBase: bug.OpBase{OperationType: bug.SetTitleOp},
+		OpBase: bug.NewOpBase(bug.SetTitleOp, author),
 		Title:  title,
 	}
 }
 
 func (op SetTitleOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {
 	snapshot.Title = op.Title
+
 	return snapshot
 }

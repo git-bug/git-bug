@@ -23,7 +23,12 @@ func runCloseBug(repo repository.Repo, args []string) error {
 		return err
 	}
 
-	op := operations.NewSetStatusOp(bug.ClosedStatus)
+	author, err := bug.GetUser(repo)
+	if err != nil {
+		return err
+	}
+
+	op := operations.NewSetStatusOp(author, bug.ClosedStatus)
 
 	b.Append(op)
 

@@ -2,32 +2,29 @@ package operations
 
 import (
 	"github.com/MichaelMure/git-bug/bug"
-	"time"
 )
+
+// AddCommentOperation will add a new comment in the bug
 
 var _ bug.Operation = AddCommentOperation{}
 
 type AddCommentOperation struct {
 	bug.OpBase
 	Message string
-	Author  bug.Person
-	Time    int64
 }
 
 func NewAddCommentOp(author bug.Person, message string) AddCommentOperation {
 	return AddCommentOperation{
-		OpBase:  bug.OpBase{OperationType: bug.AddCommentOp},
+		OpBase:  bug.NewOpBase(bug.AddCommentOp, author),
 		Message: message,
-		Author:  author,
-		Time:    time.Now().Unix(),
 	}
 }
 
 func (op AddCommentOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {
 	comment := bug.Comment{
-		Message: op.Message,
-		Author:  op.Author,
-		Time:    op.Time,
+		Message:  op.Message,
+		Author:   op.Author,
+		UnixTime: op.UnixTime,
 	}
 
 	snapshot.Comments = append(snapshot.Comments, comment)

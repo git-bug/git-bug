@@ -13,11 +13,11 @@ var (
 		Email: "rene@descartes.fr",
 	}
 
-	createOp     = operations.NewCreateOp(rene, "title", "message")
-	setTitleOp   = operations.NewSetTitleOp("title2")
-	addCommentOp = operations.NewAddCommentOp(rene, "message2")
-	SetStatusOp  = operations.NewSetStatusOp(bug.ClosedStatus)
-	mockRepo     = repository.NewMockRepoForTest()
+	createOp      = operations.NewCreateOp(rene, "title", "message")
+	setTitleOp    = operations.NewSetTitleOp(rene, "title2")
+	addCommentOp  = operations.NewAddCommentOp(rene, "message2")
+	setStatusOp   = operations.NewSetStatusOp(rene, bug.ClosedStatus)
+	mockRepo      = repository.NewMockRepoForTest()
 )
 
 func TestOpIterator(t *testing.T) {
@@ -30,7 +30,7 @@ func TestOpIterator(t *testing.T) {
 
 	bug1.Append(createOp)
 	bug1.Append(setTitleOp)
-	bug1.Append(SetStatusOp)
+	bug1.Append(setStatusOp)
 	bug1.Commit(mockRepo)
 
 	bug1.Append(setTitleOp)

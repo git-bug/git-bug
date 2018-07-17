@@ -376,7 +376,9 @@ func (bug *Bug) Compile() Snapshot {
 	it := NewOperationIterator(bug)
 
 	for it.Next() {
-		snap = it.Value().Apply(snap)
+		op := it.Value()
+		snap = op.Apply(snap)
+		snap.Operations = append(snap.Operations, op)
 	}
 
 	return snap
