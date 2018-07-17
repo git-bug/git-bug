@@ -2,8 +2,6 @@ package tests
 
 import (
 	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/repository"
-	"reflect"
 	"testing"
 )
 
@@ -47,27 +45,27 @@ func TestBugValidity(t *testing.T) {
 	}
 }
 
-func TestBugSerialisation(t *testing.T) {
-	bug1, err := bug.NewBug()
-	if err != nil {
-		t.Error(err)
-	}
-
-	bug1.Append(createOp)
-	bug1.Append(setTitleOp)
-	bug1.Append(setTitleOp)
-	bug1.Append(addCommentOp)
-
-	repo := repository.NewMockRepoForTest()
-
-	bug1.Commit(repo)
-
-	bug2, err := bug.ReadBug(repo, bug.BugsRefPattern+bug1.Id())
-	if err != nil {
-		t.Error(err)
-	}
-
-	if !reflect.DeepEqual(bug1, bug2) {
-		t.Fatalf("%v different than %v", bug1, bug2)
-	}
-}
+//func TestBugSerialisation(t *testing.T) {
+//	bug1, err := bug.NewBug()
+//	if err != nil {
+//		t.Error(err)
+//	}
+//
+//	bug1.Append(createOp)
+//	bug1.Append(setTitleOp)
+//	bug1.Append(setTitleOp)
+//	bug1.Append(addCommentOp)
+//
+//	repo := repository.NewMockRepoForTest()
+//
+//	bug1.Commit(repo)
+//
+//	bug2, err := bug.ReadBug(repo, bug.BugsRefPattern+bug1.Id())
+//	if err != nil {
+//		t.Error(err)
+//	}
+//
+//	if !reflect.DeepEqual(bug1, bug2) {
+//		t.Fatalf("%v different than %v", bug1, bug2)
+//	}
+//}
