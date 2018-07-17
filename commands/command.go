@@ -52,6 +52,7 @@ func init() {
 		"open":     openCmd,
 		"pull":     pullCmd,
 		"push":     pushCmd,
+		"show":     showCmd,
 		"webui":    webUICmd,
 	}
 }

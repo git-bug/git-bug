@@ -33,6 +33,9 @@ func (snap Snapshot) Summary() string {
 }
 
 func (snap Snapshot) LastEdit() time.Time {
+	if len(snap.Comments) == 0 {
+		return time.Unix(0, 0)
+	}
 	lastEditTimestamp := snap.Comments[len(snap.Comments)-1].Time
 	return time.Unix(lastEditTimestamp, 0)
 }

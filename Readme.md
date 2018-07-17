@@ -73,6 +73,9 @@ git bug pull [<remote>]
 # Push bugs update to a git remote
 git bug push [<remote>]
 
+# Display the details of a bug
+git bug show <id>
+
 # Launch the web UI
 git bug webui 
 ```
