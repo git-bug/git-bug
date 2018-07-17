@@ -11,4 +11,7 @@ install:
 test: build
 	go test ./...
 
+webui:
+	npm run --prefix webui build
+
 .PHONY: build install test
