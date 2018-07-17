@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  name = "github.com/fatih/color"
+  packages = ["."]
+  revision = "5b77d2a35fb0ede96d138fc9a99f5c9b6aef11b4"
+  version = "v1.7.0"
+
+[[projects]]
   name = "github.com/gorilla/context"
   packages = ["."]
   revision = "08b5f424b9271eedf6f9f0ce86cb9396ed337a42"
@@ -18,6 +24,18 @@
   packages = ["."]
   revision = "24443c65ec63d9e040fd4cedf0f1048b5d3544f7"
   version = "v1.2.0"
+
+[[projects]]
+  name = "github.com/mattn/go-colorable"
+  packages = ["."]
+  revision = "167de6bfdfba052fa6b2d3664c8f5272e23c9072"
+  version = "v0.0.9"
+
+[[projects]]
+  name = "github.com/mattn/go-isatty"
+  packages = ["."]
+  revision = "0360b2af4f38e8d38c7fce2a9f4e702702d73a39"
+  version = "v0.0.3"
 
 [[projects]]
   name = "github.com/phayes/freeport"
@@ -49,9 +67,15 @@
   packages = ["open"]
   revision = "75fb7ed4208cf72d323d7d02fd1a5964a7a9073c"
 
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/sys"
+  packages = ["unix"]
+  revision = "ac767d655b305d4e9612f5f6e33120b9176c4ad4"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a0d327f452c5e53832c0ba4fb5528ab05715858c6036dbd8aca975f5ce87dae8"
+  inputs-digest = "c72c9ba592c5dae56b0ca48216a393c9664d7d275fd67304bf85003ceaac4c0b"
   solver-name = "gps-cdcl"
   solver-version = 1

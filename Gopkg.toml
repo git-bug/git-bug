@@ -52,3 +52,7 @@
 [prune]
   go-tests = true
   unused-packages = true
+
+[[constraint]]
+  name = "github.com/fatih/color"
+  version = "1.7.0"

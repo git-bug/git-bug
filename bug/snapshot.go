@@ -25,7 +25,7 @@ func (snap Snapshot) HumanId() string {
 }
 
 func (snap Snapshot) Summary() string {
-	return fmt.Sprintf("c:%d l:%d %s",
+	return fmt.Sprintf("C:%d L:%d %s",
 		len(snap.Comments)-1,
 		len(snap.Labels),
 		snap.LastEdit().Format(time.RFC822),

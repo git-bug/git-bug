@@ -4,6 +4,7 @@ import (
 	"fmt"
 	b "github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/repository"
+	"github.com/MichaelMure/git-bug/util"
 )
 
 func runLsBug(repo repository.Repo, args []string) error {
@@ -22,7 +23,24 @@ func runLsBug(repo repository.Repo, args []string) error {
 
 		snapshot := bug.Compile()
 
-		fmt.Printf("%s %s\t%s\t%s\n", bug.HumanId(), snapshot.Status, snapshot.Title, snapshot.Summary())
+		var author b.Person
+
+		if len(snapshot.Comments) > 0 {
+			create := snapshot.Comments[0]
+			author = create.Author
+		}
+
+		// truncate + pad if needed
+		titleFmt := fmt.Sprintf("%-50.50s", snapshot.Title)
+		authorFmt := fmt.Sprintf("%-15.15s", author.Name)
+
+		fmt.Printf("%s %s\t%s\t%s\t%s\n",
+			util.Cyan(bug.HumanId()),
+			util.Yellow(snapshot.Status),
+			titleFmt,
+			util.Magenta(authorFmt),
+			snapshot.Summary(),
+		)
 	}
 
 	return nil
