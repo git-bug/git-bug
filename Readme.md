@@ -44,9 +44,14 @@ And pull for updates:
 git bug pull [<remote>]
 ```
 
+You can now use commands like `show`, `comment`, `open` or `close` to display and modify bugs.
+
 ## All commands
 
 ```bash
+# Mark the bug as closed
+git bug close <id>
+
 # Display available commands
 git bug commands [<option>...]
 
@@ -58,6 +63,9 @@ git bug ls
 
 # Create a new bug
 git bug new [<option>...] <title>
+
+# Mark the bug as open
+git bug open <id>
 
 # Pull bugs update from a git remote
 git bug pull [<remote>]
