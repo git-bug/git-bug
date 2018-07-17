@@ -22,7 +22,7 @@ func runLsBug(repo repository.Repo, args []string) error {
 
 		snapshot := bug.Compile()
 
-		fmt.Printf("%s %s\t%s\n", bug.HumanId(), snapshot.Title, snapshot.Summary())
+		fmt.Printf("%s %s\t%s\t%s\n", bug.HumanId(), snapshot.Status, snapshot.Title, snapshot.Summary())
 	}
 
 	return nil

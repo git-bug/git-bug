@@ -3,10 +3,11 @@ package bug
 type OperationType int
 
 const (
-	UNKNOWN OperationType = iota
-	CREATE
-	SET_TITLE
-	ADD_COMMENT
+	_ OperationType = iota
+	CreateOp
+	SetTitleOp
+	AddCommentOp
+	SetStatusOp
 )
 
 type Operation interface {

@@ -182,17 +182,17 @@ func (bug *Bug) IsValid() bool {
 		}
 	}
 
-	// The very first Op should be a CREATE
+	// The very first Op should be a CreateOp
 	firstOp := bug.firstOp()
-	if firstOp == nil || firstOp.OpType() != CREATE {
+	if firstOp == nil || firstOp.OpType() != CreateOp {
 		return false
 	}
 
-	// Check that there is no more CREATE op
+	// Check that there is no more CreateOp op
 	it := NewOperationIterator(bug)
 	createCount := 0
 	for it.Next() {
-		if it.Value().OpType() == CREATE {
+		if it.Value().OpType() == CreateOp {
 			createCount++
 		}
 	}
@@ -351,7 +351,7 @@ func (bug *Bug) HumanId() string {
 }
 
 // Lookup for the very first operation of the bug.
-// For a valid Bug, this operation should be a CREATE
+// For a valid Bug, this operation should be a CreateOp
 func (bug *Bug) firstOp() Operation {
 	for _, pack := range bug.packs {
 		for _, op := range pack.Operations {
@@ -368,7 +368,10 @@ func (bug *Bug) firstOp() Operation {
 
 // Compile a bug in a easily usable snapshot
 func (bug *Bug) Compile() Snapshot {
-	snap := Snapshot{}
+	snap := Snapshot{
+		id:     bug.id,
+		Status: OpenStatus,
+	}
 
 	it := NewOperationIterator(bug)
 

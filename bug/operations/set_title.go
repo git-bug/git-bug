@@ -11,7 +11,7 @@ type SetTitleOperation struct {
 
 func NewSetTitleOp(title string) SetTitleOperation {
 	return SetTitleOperation{
-		OpBase: bug.OpBase{OperationType: bug.SET_TITLE},
+		OpBase: bug.OpBase{OperationType: bug.SetTitleOp},
 		Title:  title,
 	}
 }

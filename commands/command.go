@@ -44,10 +44,12 @@ var CommandMap map[string]*Command
 // We use init() to avoid a cycle in the data initialization because of the "commands" command
 func init() {
 	CommandMap = map[string]*Command{
+		"close":    closeCmd,
 		"commands": commandsCmd,
 		"comment":  commentCmd,
 		"ls":       lsCmd,
 		"new":      newCmd,
+		"open":     openCmd,
 		"pull":     pullCmd,
 		"push":     pushCmd,
 		"webui":    webUICmd,

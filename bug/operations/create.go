@@ -2,7 +2,6 @@ package operations
 
 import (
 	"github.com/MichaelMure/git-bug/bug"
-	"reflect"
 	"time"
 )
 
@@ -20,7 +19,7 @@ type CreateOperation struct {
 
 func NewCreateOp(author bug.Person, title, message string) CreateOperation {
 	return CreateOperation{
-		OpBase:  bug.OpBase{OperationType: bug.CREATE},
+		OpBase:  bug.OpBase{OperationType: bug.CreateOp},
 		Title:   title,
 		Message: message,
 		Author:  author,
@@ -29,12 +28,6 @@ func NewCreateOp(author bug.Person, title, message string) CreateOperation {
 }
 
 func (op CreateOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {
-	empty := bug.Snapshot{}
-
-	if !reflect.DeepEqual(snapshot, empty) {
-		panic("Create operation should never be applied on a non-empty snapshot")
-	}
-
 	snapshot.Title = op.Title
 	snapshot.Comments = []bug.Comment{
 		{

@@ -7,4 +7,5 @@ func init() {
 	gob.Register(AddCommentOperation{})
 	gob.Register(CreateOperation{})
 	gob.Register(SetTitleOperation{})
+	gob.Register(SetStatusOperation{})
 }

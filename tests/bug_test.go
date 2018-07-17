@@ -29,19 +29,19 @@ func TestBugValidity(t *testing.T) {
 	bug1.Append(createOp)
 
 	if !bug1.IsValid() {
-		t.Fatal("Bug with just a CREATE should be valid")
+		t.Fatal("Bug with just a CreateOp should be valid")
 	}
 
 	bug1.Append(createOp)
 
 	if bug1.IsValid() {
-		t.Fatal("Bug with multiple CREATE should be invalid")
+		t.Fatal("Bug with multiple CreateOp should be invalid")
 	}
 
 	bug1.Commit(mockRepo)
 
 	if bug1.IsValid() {
-		t.Fatal("Bug with multiple CREATE should be invalid")
+		t.Fatal("Bug with multiple CreateOp should be invalid")
 	}
 }
 

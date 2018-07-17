@@ -16,6 +16,7 @@ var (
 	createOp     = operations.NewCreateOp(rene, "title", "message")
 	setTitleOp   = operations.NewSetTitleOp("title2")
 	addCommentOp = operations.NewAddCommentOp(rene, "message2")
+	SetStatusOp  = operations.NewSetStatusOp(bug.ClosedStatus)
 	mockRepo     = repository.NewMockRepoForTest()
 )
 
@@ -29,6 +30,7 @@ func TestOpIterator(t *testing.T) {
 
 	bug1.Append(createOp)
 	bug1.Append(setTitleOp)
+	bug1.Append(SetStatusOp)
 	bug1.Commit(mockRepo)
 
 	bug1.Append(setTitleOp)

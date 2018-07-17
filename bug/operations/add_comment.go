@@ -16,7 +16,7 @@ type AddCommentOperation struct {
 
 func NewAddCommentOp(author bug.Person, message string) AddCommentOperation {
 	return AddCommentOperation{
-		OpBase:  bug.OpBase{OperationType: bug.ADD_COMMENT},
+		OpBase:  bug.OpBase{OperationType: bug.AddCommentOp},
 		Message: message,
 		Author:  author,
 		Time:    time.Now().Unix(),

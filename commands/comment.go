@@ -22,11 +22,12 @@ func runComment(repo repository.Repo, args []string) error {
 
 	var err error
 
-	if len(args) == 0 {
-		return errors.New("No bug id provided")
-	}
 	if len(args) > 1 {
-		return errors.New("Only accepting one bug id is supported")
+		return errors.New("Only one bug id is supported")
+	}
+
+	if len(args) == 0 {
+		return errors.New("You must provide a bug id")
 	}
 
 	prefix := args[0]

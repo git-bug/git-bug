@@ -7,9 +7,21 @@ import (
 
 // Snapshot is a compiled form of the Bug data structure used for storage and merge
 type Snapshot struct {
+	id       string
+	Status   Status
 	Title    string
 	Comments []Comment
 	Labels   []Label
+}
+
+// Return the Bug identifier
+func (snap Snapshot) Id() string {
+	return snap.id
+}
+
+// Return the Bug identifier truncated for human consumption
+func (snap Snapshot) HumanId() string {
+	return fmt.Sprintf("%.8s", snap.id)
 }
 
 func (snap Snapshot) Summary() string {
