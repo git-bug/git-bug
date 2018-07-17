@@ -50,7 +50,7 @@ func TestOpIterator(t *testing.T) {
 		counter++
 	}
 
-	if counter != 8 {
+	if counter != 9 {
 		t.Fatalf("Wrong count of value iterated (%d instead of 8)", counter)
 	}
 }
