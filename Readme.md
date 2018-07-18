@@ -58,6 +58,9 @@ git bug commands [<option>...]
 # Add a new comment to a bug
 git bug comment [<options>...] <id>
 
+# Manipulate bug's label
+git bug label <id> [<option>...] [<label>...]
+
 # Display a summary of all bugs
 git bug ls 
 
