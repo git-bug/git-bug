@@ -17,6 +17,7 @@ var (
 	setTitleOp    = operations.NewSetTitleOp(rene, "title2")
 	addCommentOp  = operations.NewAddCommentOp(rene, "message2")
 	setStatusOp   = operations.NewSetStatusOp(rene, bug.ClosedStatus)
+	labelChangeOp = operations.NewLabelChangeOperation(rene, []bug.Label{"added"}, []bug.Label{"removed"})
 	mockRepo      = repository.NewMockRepoForTest()
 )
 
@@ -30,7 +31,9 @@ func TestOpIterator(t *testing.T) {
 
 	bug1.Append(createOp)
 	bug1.Append(setTitleOp)
+	bug1.Append(addCommentOp)
 	bug1.Append(setStatusOp)
+	bug1.Append(labelChangeOp)
 	bug1.Commit(mockRepo)
 
 	bug1.Append(setTitleOp)
@@ -50,7 +53,7 @@ func TestOpIterator(t *testing.T) {
 		counter++
 	}
 
-	if counter != 9 {
+	if counter != 11 {
 		t.Fatalf("Wrong count of value iterated (%d instead of 8)", counter)
 	}
 }

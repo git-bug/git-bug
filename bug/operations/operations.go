@@ -8,4 +8,5 @@ func init() {
 	gob.Register(CreateOperation{})
 	gob.Register(SetTitleOperation{})
 	gob.Register(SetStatusOperation{})
+	gob.Register(LabelChangeOperation{})
 }

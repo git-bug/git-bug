@@ -9,8 +9,6 @@ import (
 	"strings"
 )
 
-var line = strings.Repeat("-", 50)
-
 func runShowBug(repo repository.Repo, args []string) error {
 	if len(args) > 1 {
 		return errors.New("Only showing one bug at a time is supported")
@@ -45,6 +43,15 @@ func runShowBug(repo repository.Repo, args []string) error {
 	fmt.Printf("%s opened this issue %s\n\n",
 		util.Magenta(firstComment.Author.Name),
 		firstComment.FormatTime(),
+	)
+
+	var labels = make([]string, len(snapshot.Labels))
+	for i := range snapshot.Labels {
+		labels[i] = string(snapshot.Labels[i])
+	}
+
+	fmt.Printf("labels: %s\n\n",
+		strings.Join(labels, ", "),
 	)
 
 	// Comments

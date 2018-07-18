@@ -47,6 +47,7 @@ func init() {
 		"close":    closeCmd,
 		"commands": commandsCmd,
 		"comment":  commentCmd,
+		"label":    labelCmd,
 		"ls":       lsCmd,
 		"new":      newCmd,
 		"open":     openCmd,

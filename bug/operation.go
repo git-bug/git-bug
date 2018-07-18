@@ -10,6 +10,7 @@ const (
 	SetTitleOp
 	AddCommentOp
 	SetStatusOp
+	LabelChangeOp
 )
 
 type Operation interface {
