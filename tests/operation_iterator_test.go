@@ -23,11 +23,7 @@ var (
 
 func TestOpIterator(t *testing.T) {
 
-	bug1, err := bug.NewBug()
-
-	if err != nil {
-		t.Fatal(err)
-	}
+	bug1 := bug.NewBug()
 
 	bug1.Append(createOp)
 	bug1.Append(setTitleOp)

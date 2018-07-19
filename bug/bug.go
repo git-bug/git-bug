@@ -34,9 +34,9 @@ type Bug struct {
 }
 
 // Create a new Bug
-func NewBug() (*Bug, error) {
+func NewBug() *Bug {
 	// No id yet
-	return &Bug{}, nil
+	return &Bug{}
 }
 
 // Find an existing Bug matching a prefix
@@ -216,9 +216,9 @@ func (bug *Bug) Commit(repo repository.Repo) error {
 	// Write a Git tree referencing this blob
 	hash, err = repo.StoreTree([]repository.TreeEntry{
 		// the last pack of ops
-		{repository.Blob, hash, OpsEntryName},
+		{ObjectType: repository.Blob, Hash: hash, Name: OpsEntryName},
 		// always the first pack of ops (might be the same)
-		{repository.Blob, bug.rootPack, RootEntryName},
+		{ObjectType: repository.Blob, Hash: bug.rootPack, Name: RootEntryName},
 	})
 
 	if err != nil {

@@ -44,10 +44,7 @@ func runNewBug(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	newBug, err := bug.NewBug()
-	if err != nil {
-		return err
-	}
+	newBug := bug.NewBug()
 
 	createOp := operations.NewCreateOp(author, title, newMessage)
 

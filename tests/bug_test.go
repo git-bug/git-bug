@@ -6,14 +6,11 @@ import (
 )
 
 func TestBugId(t *testing.T) {
-	bug1, err := bug.NewBug()
-	if err != nil {
-		t.Error(err)
-	}
+	bug1 := bug.NewBug()
 
 	bug1.Append(createOp)
 
-	err = bug1.Commit(mockRepo)
+	err := bug1.Commit(mockRepo)
 
 	if err != nil {
 		t.Fatal(err)
@@ -23,10 +20,7 @@ func TestBugId(t *testing.T) {
 }
 
 func TestBugValidity(t *testing.T) {
-	bug1, err := bug.NewBug()
-	if err != nil {
-		t.Error(err)
-	}
+	bug1 := bug.NewBug()
 
 	if bug1.IsValid() {
 		t.Fatal("Empty bug should be invalid")
@@ -44,7 +38,7 @@ func TestBugValidity(t *testing.T) {
 		t.Fatal("Bug with multiple CreateOp should be invalid")
 	}
 
-	err = bug1.Commit(mockRepo)
+	err := bug1.Commit(mockRepo)
 
 	if err != nil {
 		t.Fatal(err)
