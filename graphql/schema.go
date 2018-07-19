@@ -2,7 +2,7 @@ package graphql
 
 import "github.com/graphql-go/graphql"
 
-func graphqlSchema() (graphql.Schema, error) {
+func newGraphqlSchema() (graphql.Schema, error) {
 
 	rootQuery := graphql.ObjectConfig{
 		Name: "RootQuery",

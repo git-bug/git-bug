@@ -55,7 +55,7 @@ func runNewBug(cmd *cobra.Command, args []string) error {
 
 	err = newBug.Commit(repo)
 
-	fmt.Println(newBug.HumanId())
+	fmt.Printf("%s created\n", newBug.HumanId())
 
 	return err
 
