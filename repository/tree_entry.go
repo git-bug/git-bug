@@ -3,7 +3,6 @@ package repository
 import (
 	"fmt"
 	"github.com/MichaelMure/git-bug/util"
-	"github.com/pkg/errors"
 	"strings"
 )
 
@@ -25,7 +24,7 @@ func ParseTreeEntry(line string) (TreeEntry, error) {
 	fields := strings.Fields(line)
 
 	if len(fields) < 4 {
-		return TreeEntry{}, errors.New("Invalid input to parse as a TreeEntry")
+		return TreeEntry{}, fmt.Errorf("Invalid input to parse as a TreeEntry")
 	}
 
 	objType, err := ParseObjectType(fields[0], fields[1])
@@ -67,6 +66,6 @@ func ParseObjectType(mode, objType string) (ObjectType, error) {
 	case mode == "040000" && objType == "tree":
 		return Tree, nil
 	default:
-		return Unknown, errors.Errorf("Unknown git object type %s %s", mode, objType)
+		return Unknown, fmt.Errorf("Unknown git object type %s %s", mode, objType)
 	}
 }

@@ -38,10 +38,6 @@
   version = "1.0.2"
 
 [[constraint]]
-  name = "github.com/pkg/errors"
-  version = "0.8.0"
-
-[[constraint]]
   branch = "master"
   name = "github.com/shurcooL/vfsgen"
 
@@ -49,10 +45,19 @@
   branch = "master"
   name = "github.com/skratchdot/open-golang"
 
-[prune]
-  go-tests = true
-  unused-packages = true
-
 [[constraint]]
   name = "github.com/fatih/color"
   version = "1.7.0"
+
+[[constraint]]
+  name = "github.com/spf13/cobra"
+  version = "v0.0.3"
+
+# required for test on travis with go 1.8
+[[override]]
+  name = "github.com/spf13/viper"
+  version = "1.0.2"
+
+[prune]
+  go-tests = true
+  unused-packages = true

@@ -4,7 +4,6 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"github.com/MichaelMure/git-bug/util"
-	"github.com/pkg/errors"
 )
 
 // mockRepoForTest defines an instance of Repo that can be used for testing.
@@ -68,7 +67,7 @@ func (r *mockRepoForTest) ReadData(hash util.Hash) ([]byte, error) {
 	data, ok := r.blobs[hash]
 
 	if !ok {
-		return nil, errors.New("unknown hash")
+		return nil, fmt.Errorf("unknown hash")
 	}
 
 	return data, nil
@@ -116,7 +115,7 @@ func (r *mockRepoForTest) CopyRef(source string, dest string) error {
 	hash, exist := r.refs[source]
 
 	if !exist {
-		return errors.New("Unknown ref")
+		return fmt.Errorf("Unknown ref")
 	}
 
 	r.refs[dest] = hash
@@ -164,13 +163,13 @@ func (r *mockRepoForTest) ListEntries(hash util.Hash) ([]TreeEntry, error) {
 		commit, ok := r.commits[hash]
 
 		if !ok {
-			return nil, errors.New("unknown hash")
+			return nil, fmt.Errorf("unknown hash")
 		}
 
 		data, ok = r.trees[commit.treeHash]
 
 		if !ok {
-			return nil, errors.New("unknown hash")
+			return nil, fmt.Errorf("unknown hash")
 		}
 	}
 

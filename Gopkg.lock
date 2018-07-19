@@ -50,12 +50,6 @@
   version = "1.0.2"
 
 [[projects]]
-  name = "github.com/pkg/errors"
-  packages = ["."]
-  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
-  version = "v0.8.0"
-
-[[projects]]
   branch = "master"
   name = "github.com/shurcooL/httpfs"
   packages = ["vfsutil"]
@@ -94,6 +88,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e0a170d986fb6962f504dbab544ba4dd2b61efc0762b2aff042c47110339fd80"
+  inputs-digest = "412a40943b853e1f7488ac4facf6b87893c3b3dc91a94a3838632b40db5ade79"
   solver-name = "gps-cdcl"
   solver-version = 1
