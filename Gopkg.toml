@@ -24,6 +24,9 @@
 #   go-tests = true
 #   unused-packages = true
 
+[prune]
+  go-tests = true
+  unused-packages = true
 
 [[constraint]]
   name = "github.com/gorilla/mux"
@@ -57,6 +60,6 @@
   name = "github.com/graphql-go/handler"
   version = "v0.2.1"
 
-[prune]
-  go-tests = true
-  unused-packages = true
+[[constraint]]
+  branch = "master"
+  name = "github.com/dustin/go-humanize"

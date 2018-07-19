@@ -1,6 +1,9 @@
 package bug
 
-import "time"
+import (
+	"github.com/dustin/go-humanize"
+	"time"
+)
 
 type Comment struct {
 	Author  Person
@@ -12,5 +15,6 @@ type Comment struct {
 }
 
 func (c Comment) FormatTime() string {
-	return time.Unix(c.UnixTime, 0).Format(time.RFC822)
+	t := time.Unix(c.UnixTime, 0)
+	return humanize.Time(t)
 }
