@@ -61,11 +61,6 @@
   name = "github.com/graphql-go/handler"
   version = "v0.2.1"
 
-# required for test on travis with go 1.8
-[[override]]
-  name = "github.com/spf13/viper"
-  version = "1.0.2"
-
 [prune]
   go-tests = true
   unused-packages = true
