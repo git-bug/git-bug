@@ -30,10 +30,6 @@
   version = "1.6.2"
 
 [[constraint]]
-  name = "github.com/kevinburke/go.uuid"
-  version = "1.2.0"
-
-[[constraint]]
   name = "github.com/phayes/freeport"
   version = "1.0.2"
 

@@ -11,9 +11,15 @@ func TestBugId(t *testing.T) {
 		t.Error(err)
 	}
 
-	if len(bug1.Id()) == 0 {
-		t.Fatal("Bug doesn't have a human readable identifier")
+	bug1.Append(createOp)
+
+	err = bug1.Commit(mockRepo)
+
+	if err != nil {
+		t.Fatal(err)
 	}
+
+	bug1.Id()
 }
 
 func TestBugValidity(t *testing.T) {
@@ -38,7 +44,11 @@ func TestBugValidity(t *testing.T) {
 		t.Fatal("Bug with multiple CreateOp should be invalid")
 	}
 
-	bug1.Commit(mockRepo)
+	err = bug1.Commit(mockRepo)
+
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	if bug1.IsValid() {
 		t.Fatal("Bug with multiple CreateOp should be invalid")

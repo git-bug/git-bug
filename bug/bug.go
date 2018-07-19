@@ -1,12 +1,10 @@
 package bug
 
 import (
-	"crypto/sha256"
 	"errors"
 	"fmt"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util"
-	"github.com/kevinburke/go.uuid"
 	"strings"
 )
 
@@ -14,6 +12,8 @@ const BugsRefPattern = "refs/bugs/"
 const BugsRemoteRefPattern = "refs/remote/%s/bugs/"
 const OpsEntryName = "ops"
 const RootEntryName = "root"
+
+const IdLength = 40
 const HumanIdLength = 7
 
 // Bug hold the data of a bug thread, organized in a way close to
@@ -24,7 +24,7 @@ type Bug struct {
 	id string
 
 	lastCommit util.Hash
-	root       util.Hash
+	rootPack   util.Hash
 
 	// TODO: need a way to order bugs, probably a Lamport clock
 
@@ -35,24 +35,8 @@ type Bug struct {
 
 // Create a new Bug
 func NewBug() (*Bug, error) {
-	// TODO: replace with commit hash of (first commit + some random)
-
-	// Creating UUID Version 4
-	unique, err := uuid.ID4()
-
-	if err != nil {
-		return nil, err
-	}
-
-	// Use it as source of uniqueness
-	hash := sha256.New().Sum(unique.Bytes())
-
-	// format in hex and truncate to 40 char
-	id := fmt.Sprintf("%.40s", fmt.Sprintf("%x", hash))
-
-	return &Bug{
-		id: id,
-	}, nil
+	// No id yet
+	return &Bug{}, nil
 }
 
 // Find an existing Bug matching a prefix
@@ -94,6 +78,10 @@ func ReadBug(repo repository.Repo, ref string) (*Bug, error) {
 	refSplitted := strings.Split(ref, "/")
 	id := refSplitted[len(refSplitted)-1]
 
+	if len(id) != IdLength {
+		return nil, fmt.Errorf("Invalid ref length")
+	}
+
 	bug := Bug{
 		id: id,
 	}
@@ -133,8 +121,8 @@ func ReadBug(repo repository.Repo, ref string) (*Bug, error) {
 			return nil, errors.New("Invalid tree, missing the root entry")
 		}
 
-		if bug.root == "" {
-			bug.root = rootEntry.Hash
+		if bug.rootPack == "" {
+			bug.rootPack = rootEntry.Hash
 		}
 
 		data, err := repo.ReadData(opsEntry.Hash)
@@ -212,7 +200,7 @@ func (bug *Bug) Append(op Operation) {
 // Write the staging area in Git and move the operations to the packs
 func (bug *Bug) Commit(repo repository.Repo) error {
 	if bug.staging.IsEmpty() {
-		return nil
+		return fmt.Errorf("can't commit an empty bug")
 	}
 
 	// Write the Ops as a Git blob containing the serialized array
@@ -221,17 +209,18 @@ func (bug *Bug) Commit(repo repository.Repo) error {
 		return err
 	}
 
-	root := bug.root
-	if root == "" {
-		root = hash
-		bug.root = hash
+	if bug.rootPack == "" {
+		bug.rootPack = hash
 	}
 
 	// Write a Git tree referencing this blob
 	hash, err = repo.StoreTree([]repository.TreeEntry{
-		{repository.Blob, hash, OpsEntryName},  // the last pack of ops
-		{repository.Blob, root, RootEntryName}, // always the first pack of ops (might be the same)
+		// the last pack of ops
+		{repository.Blob, hash, OpsEntryName},
+		// always the first pack of ops (might be the same)
+		{repository.Blob, bug.rootPack, RootEntryName},
 	})
+
 	if err != nil {
 		return err
 	}
@@ -248,6 +237,11 @@ func (bug *Bug) Commit(repo repository.Repo) error {
 	}
 
 	bug.lastCommit = hash
+
+	// if it was the first commit, use the commit hash as bug id
+	if bug.id == "" {
+		bug.id = string(hash)
+	}
 
 	// Create or update the Git reference for this bug
 	ref := fmt.Sprintf("%s%s", BugsRefPattern, bug.id)
@@ -343,13 +337,18 @@ func (bug *Bug) Merge(repo repository.Repo, other *Bug) (bool, error) {
 
 // Return the Bug identifier
 func (bug *Bug) Id() string {
+	if bug.id == "" {
+		// simply panic as it would be a coding error
+		// (using an id of a bug not stored yet)
+		panic("no id yet")
+	}
 	return bug.id
 }
 
 // Return the Bug identifier truncated for human consumption
 func (bug *Bug) HumanId() string {
 	format := fmt.Sprintf("%%.%ds", HumanIdLength)
-	return fmt.Sprintf(format, bug.id)
+	return fmt.Sprintf(format, bug.Id())
 }
 
 // Lookup for the very first operation of the bug.
