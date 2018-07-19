@@ -23,7 +23,7 @@ func runWebUI(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("Web UI available at %s\n", webUiAddr)
 
-	graphqlHandler, err := graphql.NewHandler()
+	graphqlHandler, err := graphql.NewHandler(repo)
 
 	if err != nil {
 		return err
