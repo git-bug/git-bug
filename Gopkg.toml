@@ -53,6 +53,14 @@
   name = "github.com/spf13/cobra"
   version = "v0.0.3"
 
+[[constraint]]
+  name = "github.com/graphql-go/graphql"
+  version = "v0.7.5"
+
+[[constraint]]
+  name = "github.com/graphql-go/handler"
+  version = "v0.2.1"
+
 # required for test on travis with go 1.8
 [[override]]
   name = "github.com/spf13/viper"
