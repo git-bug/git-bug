@@ -6,8 +6,8 @@ import (
 )
 
 type Comment struct {
-	Author  Person
-	Message string
+	Author  Person `json:"author"`
+	Message string `json:"message"`
 
 	// Creation time of the comment.
 	// Should be used only for human display, never for ordering as we can't rely on it in a distributed system.
