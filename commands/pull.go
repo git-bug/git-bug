@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/spf13/cobra"
 )
 
-func runPull(repo repository.Repo, args []string) error {
+func runPull(cmd *cobra.Command, args []string) error {
 	if len(args) > 1 {
 		return errors.New("Only pulling from one remote at a time is supported")
 	}
@@ -82,8 +82,12 @@ func runPull(repo repository.Repo, args []string) error {
 }
 
 // showCmd defines the "push" subcommand.
-var pullCmd = &Command{
-	Description: "Pull bugs update from a git remote",
-	Usage:       "[<remote>]",
-	RunMethod:   runPull,
+var pullCmd = &cobra.Command{
+	Use:   "pull [<remote>]",
+	Short: "Pull bugs update from a git remote",
+	RunE:  runPull,
+}
+
+func init() {
+	rootCmd.AddCommand(pullCmd)
 }

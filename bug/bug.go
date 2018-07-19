@@ -14,6 +14,7 @@ const BugsRefPattern = "refs/bugs/"
 const BugsRemoteRefPattern = "refs/remote/%s/bugs/"
 const OpsEntryName = "ops"
 const RootEntryName = "root"
+const HumanIdLength = 7
 
 // Bug hold the data of a bug thread, organized in a way close to
 // how it will be persisted inside Git. This is the datastructure
@@ -347,7 +348,8 @@ func (bug *Bug) Id() string {
 
 // Return the Bug identifier truncated for human consumption
 func (bug *Bug) HumanId() string {
-	return fmt.Sprintf("%.8s", bug.id)
+	format := fmt.Sprintf("%%.%ds", HumanIdLength)
+	return fmt.Sprintf(format, bug.id)
 }
 
 // Lookup for the very first operation of the bug.

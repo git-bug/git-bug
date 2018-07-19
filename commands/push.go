@@ -3,10 +3,10 @@ package commands
 import (
 	"errors"
 	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/spf13/cobra"
 )
 
-func runPush(repo repository.Repo, args []string) error {
+func runPush(cmd *cobra.Command, args []string) error {
 	if len(args) > 1 {
 		return errors.New("Only pushing to one remote at a time is supported")
 	}
@@ -23,8 +23,12 @@ func runPush(repo repository.Repo, args []string) error {
 }
 
 // showCmd defines the "push" subcommand.
-var pushCmd = &Command{
-	Description: "Push bugs update to a git remote",
-	Usage:       "[<remote>]",
-	RunMethod:   runPush,
+var pushCmd = &cobra.Command{
+	Use:   "push [<remote>]",
+	Short: "Push bugs update to a git remote",
+	RunE:  runPush,
+}
+
+func init() {
+	rootCmd.AddCommand(pushCmd)
 }

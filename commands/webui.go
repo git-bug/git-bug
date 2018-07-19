@@ -2,16 +2,16 @@ package commands
 
 import (
 	"fmt"
-	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/webui"
 	"github.com/gorilla/mux"
 	"github.com/phayes/freeport"
 	"github.com/skratchdot/open-golang/open"
+	"github.com/spf13/cobra"
 	"log"
 	"net/http"
 )
 
-func runWebUI(repo repository.Repo, args []string) error {
+func runWebUI(cmd *cobra.Command, args []string) error {
 	port, err := freeport.GetFreePort()
 	if err != nil {
 		log.Fatal(err)
@@ -29,9 +29,12 @@ func runWebUI(repo repository.Repo, args []string) error {
 	return nil
 }
 
-var webUICmd = &Command{
-	Description: "Launch the web UI",
-	Usage:       "",
-	flagSet:     nil,
-	RunMethod:   runWebUI,
+var webUICmd = &cobra.Command{
+	Use:   "webui",
+	Short: "Launch the web UI",
+	RunE:  runWebUI,
+}
+
+func init() {
+	rootCmd.AddCommand(webUICmd)
 }

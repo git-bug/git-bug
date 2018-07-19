@@ -4,10 +4,10 @@ import (
 	"errors"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/bug/operations"
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/spf13/cobra"
 )
 
-func runCloseBug(repo repository.Repo, args []string) error {
+func runCloseBug(cmd *cobra.Command, args []string) error {
 	if len(args) > 1 {
 		return errors.New("Only closing one bug at a time is supported")
 	}
@@ -37,8 +37,12 @@ func runCloseBug(repo repository.Repo, args []string) error {
 	return err
 }
 
-var closeCmd = &Command{
-	Description: "Mark the bug as closed",
-	Usage:       "<id>",
-	RunMethod:   runCloseBug,
+var closeCmd = &cobra.Command{
+	Use:   "close <id>",
+	Short: "Mark the bug as closed",
+	RunE:  runCloseBug,
+}
+
+func init() {
+	rootCmd.AddCommand(closeCmd)
 }

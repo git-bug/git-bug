@@ -4,12 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util"
+	"github.com/spf13/cobra"
 	"strings"
 )
 
-func runShowBug(repo repository.Repo, args []string) error {
+func runShowBug(cmd *cobra.Command, args []string) error {
 	if len(args) > 1 {
 		return errors.New("Only showing one bug at a time is supported")
 	}
@@ -74,8 +74,12 @@ func runShowBug(repo repository.Repo, args []string) error {
 	return nil
 }
 
-var showCmd = &Command{
-	Description: "Display the details of a bug",
-	Usage:       "<id>",
-	RunMethod:   runShowBug,
+var showCmd = &cobra.Command{
+	Use:   "show <id>",
+	Short: "Display the details of a bug",
+	RunE:  runShowBug,
+}
+
+func init() {
+	rootCmd.AddCommand(showCmd)
 }

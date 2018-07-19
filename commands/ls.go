@@ -3,11 +3,11 @@ package commands
 import (
 	"fmt"
 	b "github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util"
+	"github.com/spf13/cobra"
 )
 
-func runLsBug(repo repository.Repo, args []string) error {
+func runLsBug(cmd *cobra.Command, args []string) error {
 	ids, err := repo.ListRefs(b.BugsRefPattern)
 
 	if err != nil {
@@ -46,8 +46,12 @@ func runLsBug(repo repository.Repo, args []string) error {
 	return nil
 }
 
-var lsCmd = &Command{
-	Description: "Display a summary of all bugs",
-	Usage:       "",
-	RunMethod:   runLsBug,
+var lsCmd = &cobra.Command{
+	Use:   "ls",
+	Short: "Display a summary of all bugs",
+	RunE:  runLsBug,
+}
+
+func init() {
+	rootCmd.AddCommand(lsCmd)
 }

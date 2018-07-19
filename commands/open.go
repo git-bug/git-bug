@@ -4,10 +4,10 @@ import (
 	"errors"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/bug/operations"
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/spf13/cobra"
 )
 
-func runOpenBug(repo repository.Repo, args []string) error {
+func runOpenBug(cmd *cobra.Command, args []string) error {
 	if len(args) > 1 {
 		return errors.New("Only opening one bug at a time is supported")
 	}
@@ -37,8 +37,12 @@ func runOpenBug(repo repository.Repo, args []string) error {
 	return err
 }
 
-var openCmd = &Command{
-	Description: "Mark the bug as open",
-	Usage:       "<id>",
-	RunMethod:   runOpenBug,
+var openCmd = &cobra.Command{
+	Use:   "open <id>",
+	Short: "Mark the bug as open",
+	RunE:  runOpenBug,
+}
+
+func init() {
+	rootCmd.AddCommand(openCmd)
 }

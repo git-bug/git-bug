@@ -2,23 +2,15 @@ package commands
 
 import (
 	"errors"
-	"flag"
 	"fmt"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/bug/operations"
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/spf13/cobra"
 )
 
-var labelFlagSet = flag.NewFlagSet("label", flag.ExitOnError)
+var labelRemove bool
 
-var (
-	labelRemove = newFlagSet.Bool("r", false, "Remove a label")
-)
-
-func runLabel(repo repository.Repo, args []string) error {
-	labelFlagSet.Parse(args)
-	args = labelFlagSet.Args()
-
+func runLabel(cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
 		return errors.New("You must provide a bug id")
 	}
@@ -46,7 +38,7 @@ func runLabel(repo repository.Repo, args []string) error {
 	for _, arg := range args[1:] {
 		label := bug.Label(arg)
 
-		if *labelRemove {
+		if labelRemove {
 			// check for duplicate
 			if labelExist(removed, label) {
 				fmt.Printf("label \"%s\" is a duplicate\n", arg)
@@ -100,9 +92,16 @@ func labelExist(labels []bug.Label, label bug.Label) bool {
 	return false
 }
 
-var labelCmd = &Command{
-	Description: "Manipulate bug's label",
-	Usage:       "<id> [<option>...] [<label>...]",
-	flagSet:     labelFlagSet,
-	RunMethod:   runLabel,
+var labelCmd = &cobra.Command{
+	Use:   "label [<option>...] <id> [<label>...]",
+	Short: "Manipulate bug's label",
+	RunE:  runLabel,
+}
+
+func init() {
+	rootCmd.AddCommand(labelCmd)
+
+	labelCmd.Flags().BoolVarP(&labelRemove, "remove", "r", false,
+		"Remove a label",
+	)
 }
