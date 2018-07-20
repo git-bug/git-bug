@@ -33,6 +33,8 @@ It use the same internal storage so it doesn't pollute your project. As you woul
 	// Load the repo before any command execution
 	// Note, this concern only commands that actually have a Run function
 	PersistentPreRunE: loadRepo,
+
+	DisableAutoGenTag: true,
 }
 
 func Execute() {
