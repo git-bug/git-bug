@@ -1,4 +1,5 @@
 //go:generate go run pack_webui.go
+//go:generate go run doc/gen_markdown.go
 
 package main
 

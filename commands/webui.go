@@ -49,5 +49,5 @@ var webUICmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(webUICmd)
+	RootCmd.AddCommand(webUICmd)
 }

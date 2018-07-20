@@ -3,6 +3,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -15,6 +16,8 @@ func main() {
 	var cwd, _ = os.Getwd()
 
 	webUIAssets := http.Dir(filepath.Join(cwd, "webui/build"))
+
+	fmt.Println("Packing Web UI files ...")
 
 	err := vfsgen.Generate(webUIAssets, vfsgen.Options{
 		Filename:     "webui/packed_assets.go",

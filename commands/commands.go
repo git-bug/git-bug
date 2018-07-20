@@ -47,7 +47,7 @@ var commandsCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(commandsCmd)
+	RootCmd.AddCommand(commandsCmd)
 
 	commandsCmd.Flags().BoolVarP(&commandsDesc, "pretty", "p", false,
 		"Output the command description as well as Markdown compatible comment",

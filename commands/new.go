@@ -65,7 +65,7 @@ var newCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(newCmd)
+	RootCmd.AddCommand(newCmd)
 
 	newCmd.Flags().StringVarP(&newMessageFile, "file", "F", "",
 		"Take the message from the given file. Use - to read the message from the standard input",

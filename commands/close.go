@@ -44,5 +44,5 @@ var closeCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(closeCmd)
+	RootCmd.AddCommand(closeCmd)
 }
