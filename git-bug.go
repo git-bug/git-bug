@@ -1,6 +1,7 @@
 //go:generate go run pack_webui.go
 //go:generate go run doc/gen_markdown.go
 //go:generate go run doc/gen_manpage.go
+//go:generate go run doc/gen_bash_completion.go
 
 package main
 
