@@ -1,0 +1,20 @@
+#compdef git-bug
+
+_arguments \
+  '1: :->level1' \
+  '2: :_files'
+case $state in
+  level1)
+    case $words[1] in
+      git-bug)
+        _arguments '1: :(close commands comment label ls new open pull push show webui)'
+      ;;
+      *)
+        _arguments '*: :_files'
+      ;;
+    esac
+  ;;
+  *)
+    _arguments '*: :_files'
+  ;;
+esac
