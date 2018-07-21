@@ -475,6 +475,9 @@ _git-bug_webui()
     flags_with_completion=()
     flags_completion=()
 
+    flags+=("--port=")
+    two_word_flags+=("-p")
+    local_nonpersistent_flags+=("--port=")
 
     must_have_one_flag=()
     must_have_one_noun=()

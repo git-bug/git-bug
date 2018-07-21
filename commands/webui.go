@@ -12,10 +12,15 @@ import (
 	"net/http"
 )
 
+var port int
+
 func runWebUI(cmd *cobra.Command, args []string) error {
-	port, err := freeport.GetFreePort()
-	if err != nil {
-		log.Fatal(err)
+	if port == 0 {
+		var err error
+		port, err = freeport.GetFreePort()
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	addr := fmt.Sprintf("127.0.0.1:%d", port)
@@ -50,4 +55,5 @@ var webUICmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(webUICmd)
+	webUICmd.Flags().IntVarP(&port, "port", "p", 0, "Port to listen to")
 }

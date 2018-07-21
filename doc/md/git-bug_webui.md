@@ -13,7 +13,8 @@ git-bug webui [flags]
 ### Options
 
 ```
-  -h, --help   help for webui
+  -h, --help       help for webui
+  -p, --port int   Port to listen to
 ```
 
 ### SEE ALSO
