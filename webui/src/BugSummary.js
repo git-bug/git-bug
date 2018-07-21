@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import gql from "graphql-tag";
 import { withStyles } from "@material-ui/core/styles";
 
@@ -28,7 +29,8 @@ const BugSummary = ({ bug, classes }) => (
         {bug.title}
       </Typography>
       <Typography variant="subheading" component="h3" title={bug.id}>
-        #{bug.id.slice(0, 8)} • {bug.status.toUpperCase()}
+        <Link to={"/bug/" + bug.id.slice(0, 8)}>#{bug.id.slice(0, 8)}</Link> •{" "}
+        {bug.status.toUpperCase()}
       </Typography>
       <div className={classes.labelList}>
         {bug.labels.map(label => (

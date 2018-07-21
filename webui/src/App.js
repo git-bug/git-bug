@@ -1,5 +1,7 @@
 import React from "react";
 import { withRouter, Switch, Route } from "react-router";
+import { Link } from "react-router-dom";
+import { withStyles } from "@material-ui/core/styles";
 
 import AppBar from "@material-ui/core/AppBar";
 import CssBaseline from "@material-ui/core/CssBaseline";
@@ -7,24 +9,32 @@ import Toolbar from "@material-ui/core/Toolbar";
 import Typography from "@material-ui/core/Typography";
 
 import BugPage from "./BugPage";
+import ListPage from "./ListPage";
 
-const Home = () => <h1>Home</h1>;
+const styles = theme => ({
+  appTitle: {
+    color: "white",
+    textDecoration: "none"
+  }
+});
 
-const App = ({ location }) => (
+const App = ({ location, classes }) => (
   <React.Fragment>
     <CssBaseline />
     <AppBar position="static" color="primary">
       <Toolbar>
-        <Typography variant="title" color="inherit">
-          git-bug-webui(1)
-        </Typography>
+        <Link to="/" className={classes.appTitle}>
+          <Typography variant="title" color="inherit">
+            git-bug-webui(1)
+          </Typography>
+        </Link>
       </Toolbar>
     </AppBar>
     <Switch>
-      <Route path="/" exact component={Home} />
+      <Route path="/" exact component={ListPage} />
       <Route path="/bug/:id" exact component={BugPage} />
     </Switch>
   </React.Fragment>
 );
 
-export default withRouter(App);
+export default withStyles(styles)(withRouter(App));
