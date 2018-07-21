@@ -6,7 +6,7 @@ import CssBaseline from "@material-ui/core/CssBaseline";
 import Toolbar from "@material-ui/core/Toolbar";
 import Typography from "@material-ui/core/Typography";
 
-import Bug from "./Bug";
+import BugPage from "./BugPage";
 
 const Home = () => <h1>Home</h1>;
 
@@ -22,7 +22,7 @@ const App = ({ location }) => (
     </AppBar>
     <Switch>
       <Route path="/" exact component={Home} />
-      <Route path="/bug/:id" exact component={Bug} />
+      <Route path="/bug/:id" exact component={BugPage} />
     </Switch>
   </React.Fragment>
 );
