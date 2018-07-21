@@ -28,6 +28,32 @@ func graphqlSchema() (graphql.Schema, error) {
 				return snapshot, nil
 			},
 		},
+		// TODO: provide a relay-like schema with pagination
+		"allBugs": &graphql.Field{
+			Type: graphql.NewList(bugType),
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				repo := p.Context.Value("repo").(repository.Repo)
+				ids, err := repo.ListRefs(bug.BugsRefPattern)
+
+				if err != nil {
+					return nil, err
+				}
+
+				var snapshots []bug.Snapshot
+
+				for _, ref := range ids {
+					bug, err := bug.ReadBug(repo, bug.BugsRefPattern+ref)
+
+					if err != nil {
+						return nil, err
+					}
+
+					snapshots = append(snapshots, bug.Compile())
+				}
+
+				return snapshots, nil
+			},
+		},
 	}
 	rootQuery := graphql.ObjectConfig{Name: "RootQuery", Fields: fields}
 	schemaConfig := graphql.SchemaConfig{Query: graphql.NewObject(rootQuery)}
