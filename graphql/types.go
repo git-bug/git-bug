@@ -43,6 +43,9 @@ var bugType = graphql.NewObject(graphql.ObjectConfig{
 		"status": &graphql.Field{
 			Type: graphql.String,
 		},
+		"title": &graphql.Field{
+			Type: graphql.String,
+		},
 		"comments": &graphql.Field{
 			Type: graphql.NewList(commentType),
 		},

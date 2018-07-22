@@ -1,19 +1,40 @@
-import React, { Component } from 'react'
-import './App.css'
+import React from "react";
+import { withRouter, Switch, Route } from "react-router";
+import { Link } from "react-router-dom";
+import { withStyles } from "@material-ui/core/styles";
 
-class App extends Component {
-  render() {
-    return (
-      <div className="App">
-        <header className="App-header">
-          <h1 className="App-title">Git bug</h1>
-        </header>
-        <p className="App-intro">
-          Here will appear a Web UI !
-        </p>
-      </div>
-    );
+import AppBar from "@material-ui/core/AppBar";
+import CssBaseline from "@material-ui/core/CssBaseline";
+import Toolbar from "@material-ui/core/Toolbar";
+import Typography from "@material-ui/core/Typography";
+
+import BugPage from "./BugPage";
+import ListPage from "./ListPage";
+
+const styles = theme => ({
+  appTitle: {
+    color: "white",
+    textDecoration: "none"
   }
-}
+});
 
-export default App;
+const App = ({ location, classes }) => (
+  <React.Fragment>
+    <CssBaseline />
+    <AppBar position="static" color="primary">
+      <Toolbar>
+        <Link to="/" className={classes.appTitle}>
+          <Typography variant="title" color="inherit">
+            git-bug-webui(1)
+          </Typography>
+        </Link>
+      </Toolbar>
+    </AppBar>
+    <Switch>
+      <Route path="/" exact component={ListPage} />
+      <Route path="/bug/:id" exact component={BugPage} />
+    </Switch>
+  </React.Fragment>
+);
+
+export default withStyles(styles)(withRouter(App));
