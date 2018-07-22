@@ -21,7 +21,7 @@ func runLabel(cmd *cobra.Command, args []string) error {
 
 	prefix := args[0]
 
-	b, err := bug.FindBug(repo, prefix)
+	b, err := bug.FindLocalBug(repo, prefix)
 	if err != nil {
 		return err
 	}

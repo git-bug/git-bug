@@ -22,10 +22,10 @@ type Repo interface {
 	GetCoreEditor() (string, error)
 
 	// FetchRefs fetch git refs from a remote
-	FetchRefs(remote string, refPattern string, remoteRefPattern string) error
+	FetchRefs(remote string, refSpec string) error
 
 	// PushRefs push git refs to a remote
-	PushRefs(remote string, refPattern string) error
+	PushRefs(remote string, refSpec string) error
 
 	// StoreData will store arbitrary data and return the corresponding hash
 	StoreData(data []byte) (util.Hash, error)

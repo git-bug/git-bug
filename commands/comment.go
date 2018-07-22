@@ -44,7 +44,7 @@ func runComment(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	b, err := bug.FindBug(repo, prefix)
+	b, err := bug.FindLocalBug(repo, prefix)
 	if err != nil {
 		return err
 	}

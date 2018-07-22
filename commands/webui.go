@@ -19,7 +19,7 @@ func runWebUI(cmd *cobra.Command, args []string) error {
 		var err error
 		port, err = freeport.GetFreePort()
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 	}
 

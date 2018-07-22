@@ -18,12 +18,12 @@ func graphqlSchema() (graphql.Schema, error) {
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 				repo := p.Context.Value("repo").(repository.Repo)
 				id, _ := p.Args["id"].(string)
-				bug, err := bug.FindBug(repo, id)
+				b, err := bug.FindLocalBug(repo, id)
 				if err != nil {
 					return nil, err
 				}
 
-				snapshot := bug.Compile()
+				snapshot := b.Compile()
 
 				return snapshot, nil
 			},
@@ -33,22 +33,15 @@ func graphqlSchema() (graphql.Schema, error) {
 			Type: graphql.NewList(bugType),
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 				repo := p.Context.Value("repo").(repository.Repo)
-				ids, err := repo.ListRefs(bug.BugsRefPattern)
-
-				if err != nil {
-					return nil, err
-				}
 
 				var snapshots []bug.Snapshot
 
-				for _, ref := range ids {
-					bug, err := bug.ReadBug(repo, bug.BugsRefPattern+ref)
-
-					if err != nil {
-						return nil, err
+				for sb := range bug.ReadAllLocalBugs(repo) {
+					if sb.Err != nil {
+						return nil, sb.Err
 					}
 
-					snapshots = append(snapshots, bug.Compile())
+					snapshots = append(snapshots, sb.Bug.Compile())
 				}
 
 				return snapshots, nil

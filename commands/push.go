@@ -16,9 +16,10 @@ func runPush(cmd *cobra.Command, args []string) error {
 		remote = args[0]
 	}
 
-	if err := repo.PushRefs(remote, bug.BugsRefPattern+"*"); err != nil {
+	if err := bug.Push(repo, remote); err != nil {
 		return err
 	}
+
 	return nil
 }
 

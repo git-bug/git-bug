@@ -19,6 +19,8 @@ type GitRepo struct {
 
 // Run the given git command with the given I/O reader/writers, returning an error if it fails.
 func (repo *GitRepo) runGitCommandWithIO(stdin io.Reader, stdout, stderr io.Writer, args ...string) error {
+	fmt.Println("Running git", strings.Join(args, " "))
+
 	cmd := exec.Command("git", args...)
 	cmd.Dir = repo.Path
 	cmd.Stdin = stdin
@@ -99,10 +101,8 @@ func (repo *GitRepo) GetCoreEditor() (string, error) {
 }
 
 // FetchRefs fetch git refs from a remote
-func (repo *GitRepo) FetchRefs(remote, refPattern, remoteRefPattern string) error {
-	remoteRefSpec := fmt.Sprintf(remoteRefPattern, remote)
-	fetchRefSpec := fmt.Sprintf("%s:%s", refPattern, remoteRefSpec)
-	err := repo.runGitCommandInline("fetch", remote, fetchRefSpec)
+func (repo *GitRepo) FetchRefs(remote, refSpec string) error {
+	err := repo.runGitCommandInline("fetch", remote, "\""+refSpec+"\"")
 
 	if err != nil {
 		return fmt.Errorf("failed to fetch from the remote '%s': %v", remote, err)
@@ -112,8 +112,8 @@ func (repo *GitRepo) FetchRefs(remote, refPattern, remoteRefPattern string) erro
 }
 
 // PushRefs push git refs to a remote
-func (repo *GitRepo) PushRefs(remote string, refPattern string) error {
-	err := repo.runGitCommandInline("push", remote, refPattern)
+func (repo *GitRepo) PushRefs(remote string, refSpec string) error {
+	err := repo.runGitCommandInline("push", remote, refSpec)
 
 	if err != nil {
 		return fmt.Errorf("failed to push to the remote '%s': %v", remote, err)

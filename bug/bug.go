@@ -8,16 +8,16 @@ import (
 	"strings"
 )
 
-const BugsRefPattern = "refs/bugs/"
-const BugsRemoteRefPattern = "refs/remote/%s/bugs/"
-const OpsEntryName = "ops"
-const RootEntryName = "root"
+const bugsRefPattern = "refs/bugs/"
+const bugsRemoteRefPattern = "refs/remote/%s/bugs/"
+const opsEntryName = "ops"
+const rootEntryName = "root"
 
-const IdLength = 40
-const HumanIdLength = 7
+const idLength = 40
+const humanIdLength = 7
 
 // Bug hold the data of a bug thread, organized in a way close to
-// how it will be persisted inside Git. This is the datastructure
+// how it will be persisted inside Git. This is the data structure
 // used for merge of two different version.
 type Bug struct {
 	// Id used as unique identifier
@@ -40,8 +40,8 @@ func NewBug() *Bug {
 }
 
 // Find an existing Bug matching a prefix
-func FindBug(repo repository.Repo, prefix string) (*Bug, error) {
-	ids, err := repo.ListRefs(BugsRefPattern)
+func FindLocalBug(repo repository.Repo, prefix string) (*Bug, error) {
+	ids, err := repo.ListRefs(bugsRefPattern)
 
 	if err != nil {
 		return nil, err
@@ -64,11 +64,21 @@ func FindBug(repo repository.Repo, prefix string) (*Bug, error) {
 		return nil, fmt.Errorf("Multiple matching bug found:\n%s", strings.Join(matching, "\n"))
 	}
 
-	return ReadBug(repo, BugsRefPattern+matching[0])
+	return ReadLocalBug(repo, matching[0])
+}
+
+func ReadLocalBug(repo repository.Repo, id string) (*Bug, error) {
+	ref := bugsRefPattern + id
+	return readBug(repo, ref)
+}
+
+func ReadRemoteBug(repo repository.Repo, remote string, id string) (*Bug, error) {
+	ref := fmt.Sprintf(bugsRemoteRefPattern, remote) + id
+	return readBug(repo, ref)
 }
 
 // Read and parse a Bug from git
-func ReadBug(repo repository.Repo, ref string) (*Bug, error) {
+func readBug(repo repository.Repo, ref string) (*Bug, error) {
 	hashes, err := repo.ListCommits(ref)
 
 	if err != nil {
@@ -78,7 +88,7 @@ func ReadBug(repo repository.Repo, ref string) (*Bug, error) {
 	refSplitted := strings.Split(ref, "/")
 	id := refSplitted[len(refSplitted)-1]
 
-	if len(id) != IdLength {
+	if len(id) != idLength {
 		return nil, fmt.Errorf("Invalid ref length")
 	}
 
@@ -102,12 +112,12 @@ func ReadBug(repo repository.Repo, ref string) (*Bug, error) {
 		rootFound := false
 
 		for _, entry := range entries {
-			if entry.Name == OpsEntryName {
+			if entry.Name == opsEntryName {
 				opsEntry = entry
 				opsFound = true
 				continue
 			}
-			if entry.Name == RootEntryName {
+			if entry.Name == rootEntryName {
 				rootEntry = entry
 				rootFound = true
 			}
@@ -148,6 +158,50 @@ func ReadBug(repo repository.Repo, ref string) (*Bug, error) {
 	}
 
 	return &bug, nil
+}
+
+type StreamedBug struct {
+	Bug *Bug
+	Err error
+}
+
+// Read and parse all local bugs
+func ReadAllLocalBugs(repo repository.Repo) <-chan StreamedBug {
+	return readAllBugs(repo, bugsRefPattern)
+}
+
+// Read and parse all remote bugs for a given remote
+func ReadAllRemoteBugs(repo repository.Repo, remote string) <-chan StreamedBug {
+	refPrefix := fmt.Sprintf(bugsRemoteRefPattern, remote)
+	return readAllBugs(repo, refPrefix)
+}
+
+// Read and parse all available bug with a given ref prefix
+func readAllBugs(repo repository.Repo, refPrefix string) <-chan StreamedBug {
+	out := make(chan StreamedBug)
+
+	go func() {
+		defer close(out)
+
+		refs, err := repo.ListRefs(refPrefix)
+		if err != nil {
+			out <- StreamedBug{Err: err}
+			return
+		}
+
+		for _, ref := range refs {
+			b, err := readBug(repo, ref)
+
+			if err != nil {
+				out <- StreamedBug{Err: err}
+				return
+			}
+
+			out <- StreamedBug{Bug: b}
+		}
+	}()
+
+	return out
 }
 
 // IsValid check if the Bug data is valid
@@ -216,9 +270,9 @@ func (bug *Bug) Commit(repo repository.Repo) error {
 	// Write a Git tree referencing this blob
 	hash, err = repo.StoreTree([]repository.TreeEntry{
 		// the last pack of ops
-		{ObjectType: repository.Blob, Hash: hash, Name: OpsEntryName},
+		{ObjectType: repository.Blob, Hash: hash, Name: opsEntryName},
 		// always the first pack of ops (might be the same)
-		{ObjectType: repository.Blob, Hash: bug.rootPack, Name: RootEntryName},
+		{ObjectType: repository.Blob, Hash: bug.rootPack, Name: rootEntryName},
 	})
 
 	if err != nil {
@@ -244,7 +298,7 @@ func (bug *Bug) Commit(repo repository.Repo) error {
 	}
 
 	// Create or update the Git reference for this bug
-	ref := fmt.Sprintf("%s%s", BugsRefPattern, bug.id)
+	ref := fmt.Sprintf("%s%s", bugsRefPattern, bug.id)
 	err = repo.UpdateRef(ref, hash)
 
 	if err != nil {
@@ -326,7 +380,7 @@ func (bug *Bug) Merge(repo repository.Repo, other *Bug) (bool, error) {
 
 	// Update the git ref
 	if updated {
-		err := repo.UpdateRef(BugsRefPattern+bug.id, bug.lastCommit)
+		err := repo.UpdateRef(bugsRefPattern+bug.id, bug.lastCommit)
 		if err != nil {
 			return false, err
 		}
@@ -347,8 +401,12 @@ func (bug *Bug) Id() string {
 
 // Return the Bug identifier truncated for human consumption
 func (bug *Bug) HumanId() string {
-	format := fmt.Sprintf("%%.%ds", HumanIdLength)
-	return fmt.Sprintf(format, bug.Id())
+	return formatHumanId(bug.Id())
+}
+
+func formatHumanId(id string) string {
+	format := fmt.Sprintf("%%.%ds", humanIdLength)
+	return fmt.Sprintf(format, id)
 }
 
 // Lookup for the very first operation of the bug.

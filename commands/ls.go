@@ -2,28 +2,22 @@ package commands
 
 import (
 	"fmt"
-	b "github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/util"
 	"github.com/spf13/cobra"
 )
 
 func runLsBug(cmd *cobra.Command, args []string) error {
-	ids, err := repo.ListRefs(b.BugsRefPattern)
+	bugs := bug.ReadAllLocalBugs(repo)
 
-	if err != nil {
-		return err
-	}
-
-	for _, ref := range ids {
-		bug, err := b.ReadBug(repo, b.BugsRefPattern+ref)
-
-		if err != nil {
-			return err
+	for b := range bugs {
+		if b.Err != nil {
+			return b.Err
 		}
 
-		snapshot := bug.Compile()
+		snapshot := b.Bug.Compile()
 
-		var author b.Person
+		var author bug.Person
 
 		if len(snapshot.Comments) > 0 {
 			create := snapshot.Comments[0]
@@ -35,7 +29,7 @@ func runLsBug(cmd *cobra.Command, args []string) error {
 		authorFmt := fmt.Sprintf("%-15.15s", author.Name)
 
 		fmt.Printf("%s %s\t%s\t%s\t%s\n",
-			util.Cyan(bug.HumanId()),
+			util.Cyan(b.Bug.HumanId()),
 			util.Yellow(snapshot.Status),
 			titleFmt,
 			util.Magenta(authorFmt),

@@ -48,11 +48,11 @@ func (r *mockRepoForTest) GetCoreEditor() (string, error) {
 }
 
 // PushRefs push git refs to a remote
-func (r *mockRepoForTest) PushRefs(remote string, refPattern string) error {
+func (r *mockRepoForTest) PushRefs(remote string, refSpec string) error {
 	return nil
 }
 
-func (r *mockRepoForTest) FetchRefs(remote string, refPattern string, remoteRefPattern string) error {
+func (r *mockRepoForTest) FetchRefs(remote string, refSpec string) error {
 	return nil
 }
 
