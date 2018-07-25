@@ -28,13 +28,9 @@ func runCloseBug(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	op := operations.NewSetStatusOp(author, bug.ClosedStatus)
+	operations.Close(b, author)
 
-	b.Append(op)
-
-	err = b.Commit(repo)
-
-	return err
+	return b.Commit(repo)
 }
 
 var closeCmd = &cobra.Command{

@@ -49,13 +49,9 @@ func runComment(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	addCommentOp := operations.NewAddCommentOp(author, commentMessage)
+	operations.Comment(b, author, commentMessage)
 
-	b.Append(addCommentOp)
-
-	err = b.Commit(repo)
-
-	return err
+	return b.Commit(repo)
 }
 
 var commentCmd = &cobra.Command{

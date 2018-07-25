@@ -2,10 +2,10 @@ package commands
 
 import (
 	"errors"
-	"fmt"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/bug/operations"
 	"github.com/spf13/cobra"
+	"os"
 )
 
 var labelRemove bool
@@ -21,6 +21,14 @@ func runLabel(cmd *cobra.Command, args []string) error {
 
 	prefix := args[0]
 
+	var add, remove []string
+
+	if labelRemove {
+		remove = args[1:]
+	} else {
+		add = args[1:]
+	}
+
 	b, err := bug.FindLocalBug(repo, prefix)
 	if err != nil {
 		return err
@@ -31,65 +39,13 @@ func runLabel(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var added, removed []bug.Label
+	err = operations.ChangeLabels(os.Stdout, b, author, add, remove)
 
-	snap := b.Compile()
-
-	for _, arg := range args[1:] {
-		label := bug.Label(arg)
-
-		if labelRemove {
-			// check for duplicate
-			if labelExist(removed, label) {
-				fmt.Printf("label \"%s\" is a duplicate\n", arg)
-				continue
-			}
-
-			// check that the label actually exist
-			if !labelExist(snap.Labels, label) {
-				fmt.Printf("label \"%s\" doesn't exist on this bug\n", arg)
-				continue
-			}
-
-			removed = append(removed, label)
-		} else {
-			// check for duplicate
-			if labelExist(added, label) {
-				fmt.Printf("label \"%s\" is a duplicate\n", arg)
-				continue
-			}
-
-			// check that the label doesn't already exist
-			if labelExist(snap.Labels, label) {
-				fmt.Printf("label \"%s\" is already set on this bug\n", arg)
-				continue
-			}
-
-			added = append(added, label)
-		}
+	if err != nil {
+		return err
 	}
 
-	if len(added) == 0 && len(removed) == 0 {
-		return errors.New("no label added or removed")
-	}
-
-	labelOp := operations.NewLabelChangeOperation(author, added, removed)
-
-	b.Append(labelOp)
-
-	err = b.Commit(repo)
-
-	return err
-}
-
-func labelExist(labels []bug.Label, label bug.Label) bool {
-	for _, l := range labels {
-		if l == label {
-			return true
-		}
-	}
-
-	return false
+	return b.Commit(repo)
 }
 
 var labelCmd = &cobra.Command{

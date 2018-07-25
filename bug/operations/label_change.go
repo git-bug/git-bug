@@ -1,7 +1,9 @@
 package operations
 
 import (
+	"fmt"
 	"github.com/MichaelMure/git-bug/bug"
+	"io"
 	"sort"
 )
 
@@ -53,4 +55,66 @@ AddLoop:
 	})
 
 	return snapshot
+}
+
+func ChangeLabels(out io.Writer, b *bug.Bug, author bug.Person, add, remove []string) error {
+	var added, removed []bug.Label
+
+	snap := b.Compile()
+
+	for _, str := range add {
+		label := bug.Label(str)
+
+		// check for duplicate
+		if labelExist(added, label) {
+			fmt.Fprintf(out, "label \"%s\" is a duplicate\n", str)
+			continue
+		}
+
+		// check that the label doesn't already exist
+		if labelExist(snap.Labels, label) {
+			fmt.Fprintf(out, "label \"%s\" is already set on this bug\n", str)
+			continue
+		}
+
+		added = append(added, label)
+	}
+
+	for _, str := range remove {
+		label := bug.Label(str)
+
+		// check for duplicate
+		if labelExist(removed, label) {
+			fmt.Fprintf(out, "label \"%s\" is a duplicate\n", str)
+			continue
+		}
+
+		// check that the label actually exist
+		if !labelExist(snap.Labels, label) {
+			fmt.Fprintf(out, "label \"%s\" doesn't exist on this bug\n", str)
+			continue
+		}
+
+		removed = append(removed, label)
+	}
+
+	if len(added) == 0 && len(removed) == 0 {
+		return fmt.Errorf("no label added or removed")
+	}
+
+	labelOp := NewLabelChangeOperation(author, added, removed)
+
+	b.Append(labelOp)
+
+	return nil
+}
+
+func labelExist(labels []bug.Label, label bug.Label) bool {
+	for _, l := range labels {
+		if l == label {
+			return true
+		}
+	}
+
+	return false
 }

@@ -28,13 +28,9 @@ func runOpenBug(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	op := operations.NewSetStatusOp(author, bug.OpenStatus)
+	operations.Open(b, author)
 
-	b.Append(op)
-
-	err = b.Commit(repo)
-
-	return err
+	return b.Commit(repo)
 }
 
 var openCmd = &cobra.Command{

@@ -3,7 +3,6 @@ package repository
 
 import (
 	"bytes"
-	"crypto/sha1"
 	"fmt"
 	"github.com/MichaelMure/git-bug/util"
 	"io"
@@ -19,7 +18,7 @@ type GitRepo struct {
 
 // Run the given git command with the given I/O reader/writers, returning an error if it fails.
 func (repo *GitRepo) runGitCommandWithIO(stdin io.Reader, stdout, stderr io.Writer, args ...string) error {
-	fmt.Println("Running git", strings.Join(args, " "))
+	//fmt.Println("Running git", strings.Join(args, " "))
 
 	cmd := exec.Command("git", args...)
 	cmd.Dir = repo.Path
@@ -74,15 +73,27 @@ func NewGitRepo(path string) (*GitRepo, error) {
 	return nil, err
 }
 
+func InitGitRepo(path string) (*GitRepo, error) {
+	repo := &GitRepo{Path: path}
+	_, err := repo.runGitCommand("init", path)
+	if err != nil {
+		return nil, err
+	}
+	return repo, nil
+}
+
+func InitBareGitRepo(path string) (*GitRepo, error) {
+	repo := &GitRepo{Path: path}
+	_, err := repo.runGitCommand("init", "--bare", path)
+	if err != nil {
+		return nil, err
+	}
+	return repo, nil
+}
+
 // GetPath returns the path to the repo.
 func (repo *GitRepo) GetPath() string {
 	return repo.Path
-}
-
-// GetRepoStateHash returns a hash which embodies the entire current state of a repository.
-func (repo *GitRepo) GetRepoStateHash() (string, error) {
-	stateSummary, err := repo.runGitCommand("show-ref")
-	return fmt.Sprintf("%x", sha1.Sum([]byte(stateSummary))), err
 }
 
 // GetUserName returns the name the the user has used to configure git
@@ -189,6 +200,24 @@ func (repo *GitRepo) UpdateRef(ref string, hash util.Hash) error {
 
 // ListRefs will return a list of Git ref matching the given refspec
 func (repo *GitRepo) ListRefs(refspec string) ([]string, error) {
+	stdout, err := repo.runGitCommand("for-each-ref", "--format=%(refname)", refspec)
+
+	if err != nil {
+		return nil, err
+	}
+
+	splitted := strings.Split(stdout, "\n")
+
+	if len(splitted) == 1 && splitted[0] == "" {
+		return []string{}, nil
+	}
+
+	return splitted, nil
+}
+
+// ListIds will return a list of Git ref matching the given refspec,
+// stripped to only the last part of the ref
+func (repo *GitRepo) ListIds(refspec string) ([]string, error) {
 	// the format option will strip the ref name to keep only the last part (ie, the bug id)
 	stdout, err := repo.runGitCommand("for-each-ref", "--format=%(refname:lstrip=-1)", refspec)
 
@@ -273,4 +302,11 @@ func (repo *GitRepo) GetTreeHash(commit util.Hash) (util.Hash, error) {
 	}
 
 	return util.Hash(stdout), nil
+}
+
+// Add a new remote to the repository
+func (repo *GitRepo) AddRemote(name string, url string) error {
+	_, err := repo.runGitCommand("remote", "add", name, url)
+
+	return err
 }

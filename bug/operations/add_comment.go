@@ -31,3 +31,8 @@ func (op AddCommentOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {
 
 	return snapshot
 }
+
+func Comment(b *bug.Bug, author bug.Person, message string) {
+	addCommentOp := NewAddCommentOp(author, message)
+	b.Append(addCommentOp)
+}

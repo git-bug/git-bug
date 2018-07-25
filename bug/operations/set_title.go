@@ -25,3 +25,8 @@ func (op SetTitleOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {
 
 	return snapshot
 }
+
+func SetTitle(b *bug.Bug, author bug.Person, title string) {
+	setTitleOp := NewSetTitleOp(author, title)
+	b.Append(setTitleOp)
+}

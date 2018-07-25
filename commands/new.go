@@ -44,18 +44,20 @@ func runNewBug(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	newBug := bug.NewBug()
-
-	createOp := operations.NewCreateOp(author, title, newMessage)
-
-	newBug.Append(createOp)
+	newBug, err := operations.Create(author, title, newMessage)
+	if err != nil {
+		return err
+	}
 
 	err = newBug.Commit(repo)
 
+	if err != nil {
+		return err
+	}
+
 	fmt.Printf("%s created\n", newBug.HumanId())
 
-	return err
-
+	return nil
 }
 
 var newCmd = &cobra.Command{

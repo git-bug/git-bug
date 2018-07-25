@@ -25,3 +25,13 @@ func (op SetStatusOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {
 
 	return snapshot
 }
+
+func Open(b *bug.Bug, author bug.Person) {
+	op := NewSetStatusOp(author, bug.OpenStatus)
+	b.Append(op)
+}
+
+func Close(b *bug.Bug, author bug.Person) {
+	op := NewSetStatusOp(author, bug.ClosedStatus)
+	b.Append(op)
+}

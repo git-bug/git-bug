@@ -41,7 +41,7 @@ func NewBug() *Bug {
 
 // Find an existing Bug matching a prefix
 func FindLocalBug(repo repository.Repo, prefix string) (*Bug, error) {
-	ids, err := repo.ListRefs(bugsRefPattern)
+	ids, err := repo.ListIds(bugsRefPattern)
 
 	if err != nil {
 		return nil, err

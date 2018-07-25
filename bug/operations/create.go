@@ -33,3 +33,11 @@ func (op CreateOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {
 	}
 	return snapshot
 }
+
+func Create(author bug.Person, title, message string) (*bug.Bug, error) {
+	newBug := bug.NewBug()
+	createOp := NewCreateOp(author, title, message)
+	newBug.Append(createOp)
+
+	return newBug, nil
+}

@@ -3,13 +3,14 @@ package bug
 import (
 	"fmt"
 	"github.com/MichaelMure/git-bug/repository"
+	"io"
 	"strings"
 )
 
-const MsgNew = "new"
-const MsgInvalid = "invalid data"
-const MsgUpdated = "updated"
-const MsgNothing = "nothing to do"
+const MsgMergeNew = "new"
+const MsgMergeInvalid = "invalid data"
+const MsgMergeUpdated = "updated"
+const MsgMergeNothing = "nothing to do"
 
 func Fetch(repo repository.Repo, remote string) error {
 	remoteRefSpec := fmt.Sprintf(bugsRemoteRefPattern, remote)
@@ -20,6 +21,27 @@ func Fetch(repo repository.Repo, remote string) error {
 
 func Push(repo repository.Repo, remote string) error {
 	return repo.PushRefs(remote, bugsRefPattern+"*")
+}
+
+func Pull(repo repository.Repo, out io.Writer, remote string) error {
+	fmt.Fprintf(out, "Fetching remote ...\n")
+
+	if err := Fetch(repo, remote); err != nil {
+		return err
+	}
+
+	fmt.Fprintf(out, "\nMerging data ...\n")
+
+	for merge := range MergeAll(repo, remote) {
+		if merge.Err != nil {
+			return merge.Err
+		}
+
+		if merge.Status != MsgMergeNothing {
+			fmt.Fprintf(out, "%s: %s\n", merge.HumanId, merge.Status)
+		}
+	}
+	return nil
 }
 
 type MergeResult struct {
@@ -73,7 +95,7 @@ func MergeAll(repo repository.Repo, remote string) <-chan MergeResult {
 
 			// Check for error in remote data
 			if !remoteBug.IsValid() {
-				out <- newMergeStatus(id, MsgInvalid)
+				out <- newMergeStatus(id, MsgMergeInvalid)
 				continue
 			}
 
@@ -89,7 +111,7 @@ func MergeAll(repo repository.Repo, remote string) <-chan MergeResult {
 					return
 				}
 
-				out <- newMergeStatus(id, MsgNew)
+				out <- newMergeStatus(id, MsgMergeNew)
 				continue
 			}
 
@@ -108,12 +130,14 @@ func MergeAll(repo repository.Repo, remote string) <-chan MergeResult {
 			}
 
 			if updated {
-				out <- newMergeStatus(id, MsgUpdated)
+				out <- newMergeStatus(id, MsgMergeUpdated)
 			} else {
-				out <- newMergeStatus(id, MsgNothing)
+				out <- newMergeStatus(id, MsgMergeNothing)
 			}
 		}
 	}()
 
 	return out
 }
+
+
