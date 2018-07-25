@@ -315,6 +315,10 @@ func (bug *Bug) Commit(repo repository.Repo) error {
 // that are not present in the other on top of the chain of operations of the
 // other version.
 func (bug *Bug) Merge(repo repository.Repo, other *Bug) (bool, error) {
+	// Note: a faster merge should be possible without actually reading and parsing
+	// all operations pack of our side.
+	// Reading the other side is still necessary to validate remote data, at least
+	// for new operations
 
 	if bug.id != other.id {
 		return false, errors.New("merging unrelated bugs is not supported")
@@ -334,31 +338,36 @@ func (bug *Bug) Merge(repo repository.Repo, other *Bug) (bool, error) {
 		return false, err
 	}
 
-	rebaseStarted := false
-	updated := false
+	ancestorIndex := 0
+	newPacks := make([]OperationPack, 0, len(bug.packs))
 
+	// Find the root of the rebase
 	for i, pack := range bug.packs {
+		newPacks = append(newPacks, pack)
+
 		if pack.commitHash == ancestor {
-			rebaseStarted = true
-
-			// get other bug's extra pack
-			for j := i + 1; j < len(other.packs); j++ {
-				// clone is probably not necessary
-				newPack := other.packs[j].Clone()
-
-				bug.packs = append(bug.packs, newPack)
-				bug.lastCommit = newPack.commitHash
-				updated = true
-			}
-
-			continue
+			ancestorIndex = i
+			break
 		}
+	}
 
-		if !rebaseStarted {
-			continue
-		}
+	if len(other.packs) == ancestorIndex+1 {
+		// Nothing to rebase, return early
+		return false, nil
+	}
 
-		updated = true
+	// get other bug's extra packs
+	for i := ancestorIndex + 1; i < len(other.packs); i++ {
+		// clone is probably not necessary
+		newPack := other.packs[i].Clone()
+
+		newPacks = append(newPacks, newPack)
+		bug.lastCommit = newPack.commitHash
+	}
+
+	// rebase our extra packs
+	for i := ancestorIndex + 1; i < len(bug.packs); i++ {
+		pack := bug.packs[i]
 
 		// get the referenced git tree
 		treeHash, err := repo.GetTreeHash(pack.commitHash)
@@ -371,22 +380,21 @@ func (bug *Bug) Merge(repo repository.Repo, other *Bug) (bool, error) {
 		hash, err := repo.StoreCommitWithParent(treeHash, bug.lastCommit)
 
 		// replace the pack
-		bug.packs[i] = pack.Clone()
-		bug.packs[i].commitHash = hash
+		newPack := pack.Clone()
+		newPack.commitHash = hash
+		newPacks = append(newPacks, newPack)
 
 		// update the bug
 		bug.lastCommit = hash
 	}
 
 	// Update the git ref
-	if updated {
-		err := repo.UpdateRef(bugsRefPattern+bug.id, bug.lastCommit)
-		if err != nil {
-			return false, err
-		}
+	err = repo.UpdateRef(bugsRefPattern+bug.id, bug.lastCommit)
+	if err != nil {
+		return false, err
 	}
 
-	return updated, nil
+	return true, nil
 }
 
 // Return the Bug identifier
