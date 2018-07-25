@@ -102,7 +102,7 @@ func (repo *GitRepo) GetCoreEditor() (string, error) {
 
 // FetchRefs fetch git refs from a remote
 func (repo *GitRepo) FetchRefs(remote, refSpec string) error {
-	err := repo.runGitCommandInline("fetch", remote, "\""+refSpec+"\"")
+	err := repo.runGitCommandInline("fetch", remote, refSpec)
 
 	if err != nil {
 		return fmt.Errorf("failed to fetch from the remote '%s': %v", remote, err)
