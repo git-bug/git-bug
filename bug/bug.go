@@ -9,7 +9,7 @@ import (
 )
 
 const bugsRefPattern = "refs/bugs/"
-const bugsRemoteRefPattern = "refs/remote/%s/bugs/"
+const bugsRemoteRefPattern = "refs/remotes/%s/bugs/"
 const opsEntryName = "ops"
 const rootEntryName = "root"
 
