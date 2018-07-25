@@ -17,14 +17,6 @@ type LabelChangeOperation struct {
 	Removed []bug.Label
 }
 
-func NewLabelChangeOperation(author bug.Person, added, removed []bug.Label) LabelChangeOperation {
-	return LabelChangeOperation{
-		OpBase:  bug.NewOpBase(bug.LabelChangeOp, author),
-		Added:   added,
-		Removed: removed,
-	}
-}
-
 func (op LabelChangeOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {
 	// Add in the set
 AddLoop:
@@ -57,6 +49,15 @@ AddLoop:
 	return snapshot
 }
 
+func NewLabelChangeOperation(author bug.Person, added, removed []bug.Label) LabelChangeOperation {
+	return LabelChangeOperation{
+		OpBase:  bug.NewOpBase(bug.LabelChangeOp, author),
+		Added:   added,
+		Removed: removed,
+	}
+}
+
+// Convenience function to apply the operation
 func ChangeLabels(out io.Writer, b *bug.Bug, author bug.Person, add, remove []string) error {
 	var added, removed []bug.Label
 

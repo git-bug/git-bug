@@ -13,6 +13,12 @@ type SetTitleOperation struct {
 	Title string
 }
 
+func (op SetTitleOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {
+	snapshot.Title = op.Title
+
+	return snapshot
+}
+
 func NewSetTitleOp(author bug.Person, title string) SetTitleOperation {
 	return SetTitleOperation{
 		OpBase: bug.NewOpBase(bug.SetTitleOp, author),
@@ -20,12 +26,7 @@ func NewSetTitleOp(author bug.Person, title string) SetTitleOperation {
 	}
 }
 
-func (op SetTitleOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {
-	snapshot.Title = op.Title
-
-	return snapshot
-}
-
+// Convenience function to apply the operation
 func SetTitle(b *bug.Bug, author bug.Person, title string) {
 	setTitleOp := NewSetTitleOp(author, title)
 	b.Append(setTitleOp)

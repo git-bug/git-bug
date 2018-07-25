@@ -14,14 +14,6 @@ type CreateOperation struct {
 	Message string
 }
 
-func NewCreateOp(author bug.Person, title, message string) CreateOperation {
-	return CreateOperation{
-		OpBase:  bug.NewOpBase(bug.CreateOp, author),
-		Title:   title,
-		Message: message,
-	}
-}
-
 func (op CreateOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {
 	snapshot.Title = op.Title
 	snapshot.Comments = []bug.Comment{
@@ -34,6 +26,15 @@ func (op CreateOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {
 	return snapshot
 }
 
+func NewCreateOp(author bug.Person, title, message string) CreateOperation {
+	return CreateOperation{
+		OpBase:  bug.NewOpBase(bug.CreateOp, author),
+		Title:   title,
+		Message: message,
+	}
+}
+
+// Convenience function to apply the operation
 func Create(author bug.Person, title, message string) (*bug.Bug, error) {
 	newBug := bug.NewBug()
 	createOp := NewCreateOp(author, title, message)
