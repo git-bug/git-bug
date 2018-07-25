@@ -11,8 +11,13 @@ import (
 type Cache interface {
 	RegisterRepository(ref string, repo repository.Repo)
 	RegisterDefaultRepository(repo repository.Repo)
+
 	ResolveRepo(ref string) (CachedRepo, error)
 	DefaultRepo() (CachedRepo, error)
+
+	// Shortcut to resolve on the default repo for convenience
+	DefaultResolveBug(id string) (CachedBug, error)
+	DefaultResolveBugPrefix(prefix string) (CachedBug, error)
 }
 
 type CachedRepo interface {
@@ -64,6 +69,26 @@ func (c *DefaultCache) ResolveRepo(ref string) (CachedRepo, error) {
 		return nil, fmt.Errorf("unknown repo")
 	}
 	return r, nil
+}
+
+func (c *DefaultCache) DefaultResolveBug(id string) (CachedBug, error) {
+	repo, err := c.DefaultRepo()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return repo.ResolveBug(id)
+}
+
+func (c *DefaultCache) DefaultResolveBugPrefix(prefix string) (CachedBug, error) {
+	repo, err := c.DefaultRepo()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return repo.ResolveBugPrefix(prefix)
 }
 
 // Repo ------------------------
