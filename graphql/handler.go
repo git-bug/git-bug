@@ -4,18 +4,19 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/repository"
-	"github.com/graphql-go/handler"
+	graphqlHandler "github.com/graphql-go/handler"
 )
 
 type Handler struct {
-	Handler *handler.Handler
-	Repo    repository.Repo
+	handler *graphqlHandler.Handler
+	cache   cache.Cache
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := context.WithValue(r.Context(), "repo", h.Repo)
-	h.Handler.ContextHandler(ctx, w, r)
+	ctx := context.WithValue(r.Context(), "cache", h.cache)
+	h.handler.ContextHandler(ctx, w, r)
 }
 
 func NewHandler(repo repository.Repo) (*Handler, error) {
@@ -25,12 +26,17 @@ func NewHandler(repo repository.Repo) (*Handler, error) {
 		return nil, err
 	}
 
+	h := graphqlHandler.New(&graphqlHandler.Config{
+		Schema:   &schema,
+		Pretty:   true,
+		GraphiQL: true,
+	})
+
+	c := cache.NewDefaultCache()
+	c.RegisterDefaultRepository(repo)
+
 	return &Handler{
-		Handler: handler.New(&handler.Config{
-			Schema:   &schema,
-			Pretty:   true,
-			GraphiQL: true,
-		}),
-		Repo: repo,
+		handler: h,
+		cache:   c,
 	}, nil
 }
