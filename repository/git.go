@@ -63,14 +63,16 @@ func (repo *GitRepo) runGitCommandInline(args ...string) error {
 // and returns the corresponding GitRepo instance if it is.
 func NewGitRepo(path string) (*GitRepo, error) {
 	repo := &GitRepo{Path: path}
-	_, err := repo.runGitCommand("rev-parse")
-	if err == nil {
-		return repo, nil
-	}
-	if _, ok := err.(*exec.ExitError); ok {
+	stdout, err := repo.runGitCommand("rev-parse", "--show-toplevel")
+
+	if err != nil {
 		return nil, err
 	}
-	return nil, err
+
+	// Fix the path to be sure we are at the root
+	repo.Path = stdout
+
+	return repo, nil
 }
 
 func InitGitRepo(path string) (*GitRepo, error) {
