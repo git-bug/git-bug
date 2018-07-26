@@ -11,7 +11,7 @@ import (
 
 type Handler struct {
 	handler *graphqlHandler.Handler
-	cache   cache.Cache
+	cache   cache.Cacher
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -32,7 +32,7 @@ func NewHandler(repo repository.Repo) (*Handler, error) {
 		GraphiQL: true,
 	})
 
-	c := cache.NewDefaultCache()
+	c := cache.NewCache()
 	c.RegisterDefaultRepository(repo)
 
 	return &Handler{

@@ -8,50 +8,50 @@ import (
 	"github.com/MichaelMure/git-bug/repository"
 )
 
-type Cache interface {
+type Cacher interface {
 	RegisterRepository(ref string, repo repository.Repo)
 	RegisterDefaultRepository(repo repository.Repo)
 
-	ResolveRepo(ref string) (CachedRepo, error)
-	DefaultRepo() (CachedRepo, error)
+	ResolveRepo(ref string) (RepoCacher, error)
+	DefaultRepo() (RepoCacher, error)
 
 	// Shortcut to resolve on the default repo for convenience
-	DefaultResolveBug(id string) (CachedBug, error)
-	DefaultResolveBugPrefix(prefix string) (CachedBug, error)
+	DefaultResolveBug(id string) (BugCacher, error)
+	DefaultResolveBugPrefix(prefix string) (BugCacher, error)
 }
 
-type CachedRepo interface {
-	ResolveBug(id string) (CachedBug, error)
-	ResolveBugPrefix(prefix string) (CachedBug, error)
+type RepoCacher interface {
+	ResolveBug(id string) (BugCacher, error)
+	ResolveBugPrefix(prefix string) (BugCacher, error)
 	ClearAllBugs()
 }
 
-type CachedBug interface {
+type BugCacher interface {
 	Snapshot() bug.Snapshot
 	ClearSnapshot()
 }
 
-// Cache ------------------------
+// Cacher ------------------------
 
-type DefaultCache struct {
-	repos map[string]CachedRepo
+type RootCache struct {
+	repos map[string]RepoCacher
 }
 
-func NewDefaultCache() Cache {
-	return &DefaultCache{
-		repos: make(map[string]CachedRepo),
+func NewCache() Cacher {
+	return &RootCache{
+		repos: make(map[string]RepoCacher),
 	}
 }
 
-func (c *DefaultCache) RegisterRepository(ref string, repo repository.Repo) {
-	c.repos[ref] = NewCachedRepo(repo)
+func (c *RootCache) RegisterRepository(ref string, repo repository.Repo) {
+	c.repos[ref] = NewRepoCache(repo)
 }
 
-func (c *DefaultCache) RegisterDefaultRepository(repo repository.Repo) {
-	c.repos[""] = NewCachedRepo(repo)
+func (c *RootCache) RegisterDefaultRepository(repo repository.Repo) {
+	c.repos[""] = NewRepoCache(repo)
 }
 
-func (c *DefaultCache) DefaultRepo() (CachedRepo, error) {
+func (c *RootCache) DefaultRepo() (RepoCacher, error) {
 	if len(c.repos) != 1 {
 		return nil, fmt.Errorf("repository is not unique")
 	}
@@ -63,7 +63,7 @@ func (c *DefaultCache) DefaultRepo() (CachedRepo, error) {
 	panic("unreachable")
 }
 
-func (c *DefaultCache) ResolveRepo(ref string) (CachedRepo, error) {
+func (c *RootCache) ResolveRepo(ref string) (RepoCacher, error) {
 	r, ok := c.repos[ref]
 	if !ok {
 		return nil, fmt.Errorf("unknown repo")
@@ -71,7 +71,7 @@ func (c *DefaultCache) ResolveRepo(ref string) (CachedRepo, error) {
 	return r, nil
 }
 
-func (c *DefaultCache) DefaultResolveBug(id string) (CachedBug, error) {
+func (c *RootCache) DefaultResolveBug(id string) (BugCacher, error) {
 	repo, err := c.DefaultRepo()
 
 	if err != nil {
@@ -81,7 +81,7 @@ func (c *DefaultCache) DefaultResolveBug(id string) (CachedBug, error) {
 	return repo.ResolveBug(id)
 }
 
-func (c *DefaultCache) DefaultResolveBugPrefix(prefix string) (CachedBug, error) {
+func (c *RootCache) DefaultResolveBugPrefix(prefix string) (BugCacher, error) {
 	repo, err := c.DefaultRepo()
 
 	if err != nil {
@@ -93,19 +93,19 @@ func (c *DefaultCache) DefaultResolveBugPrefix(prefix string) (CachedBug, error)
 
 // Repo ------------------------
 
-type CachedRepoImpl struct {
+type RepoCache struct {
 	repo repository.Repo
-	bugs map[string]CachedBug
+	bugs map[string]BugCacher
 }
 
-func NewCachedRepo(r repository.Repo) CachedRepo {
-	return &CachedRepoImpl{
+func NewRepoCache(r repository.Repo) RepoCacher {
+	return &RepoCache{
 		repo: r,
-		bugs: make(map[string]CachedBug),
+		bugs: make(map[string]BugCacher),
 	}
 }
 
-func (c CachedRepoImpl) ResolveBug(id string) (CachedBug, error) {
+func (c RepoCache) ResolveBug(id string) (BugCacher, error) {
 	cached, ok := c.bugs[id]
 	if ok {
 		return cached, nil
@@ -116,13 +116,13 @@ func (c CachedRepoImpl) ResolveBug(id string) (CachedBug, error) {
 		return nil, err
 	}
 
-	cached = NewCachedBug(b)
+	cached = NewBugCache(b)
 	c.bugs[id] = cached
 
 	return cached, nil
 }
 
-func (c CachedRepoImpl) ResolveBugPrefix(prefix string) (CachedBug, error) {
+func (c RepoCache) ResolveBugPrefix(prefix string) (BugCacher, error) {
 	// preallocate but empty
 	matching := make([]string, 0, 5)
 
@@ -149,30 +149,30 @@ func (c CachedRepoImpl) ResolveBugPrefix(prefix string) (CachedBug, error) {
 		return nil, err
 	}
 
-	cached := NewCachedBug(b)
+	cached := NewBugCache(b)
 	c.bugs[b.Id()] = cached
 
 	return cached, nil
 }
 
-func (c CachedRepoImpl) ClearAllBugs() {
-	c.bugs = make(map[string]CachedBug)
+func (c RepoCache) ClearAllBugs() {
+	c.bugs = make(map[string]BugCacher)
 }
 
 // Bug ------------------------
 
-type CachedBugImpl struct {
+type BugCache struct {
 	bug  *bug.Bug
 	snap *bug.Snapshot
 }
 
-func NewCachedBug(b *bug.Bug) CachedBug {
-	return &CachedBugImpl{
+func NewBugCache(b *bug.Bug) BugCacher {
+	return &BugCache{
 		bug: b,
 	}
 }
 
-func (c CachedBugImpl) Snapshot() bug.Snapshot {
+func (c BugCache) Snapshot() bug.Snapshot {
 	if c.snap == nil {
 		snap := c.bug.Compile()
 		c.snap = &snap
@@ -180,6 +180,6 @@ func (c CachedBugImpl) Snapshot() bug.Snapshot {
 	return *c.snap
 }
 
-func (c CachedBugImpl) ClearSnapshot() {
+func (c BugCache) ClearSnapshot() {
 	c.snap = nil
 }
