@@ -1,0 +1,233 @@
+schema {
+  query: RootQuery
+}
+
+scalar Time
+scalar Label
+
+# Information about pagination in a connection.
+type PageInfo {
+  # When paginating forwards, are there more items?
+  hasNextPage: Boolean!
+
+  # When paginating backwards, are there more items?
+  hasPreviousPage: Boolean!
+
+  # When paginating backwards, the cursor to continue.
+  startCursor: String
+
+  # When paginating forwards, the cursor to continue.
+  endCursor: String
+}
+
+# Represents an person in a git object.
+type Person {
+  # The email of the person.
+  email: String
+
+  # The name of the person.
+  name: String
+}
+
+
+type CommentConnection {
+  edges: [CommentEdge]
+  nodes: [Comment]
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type CommentEdge {
+  cursor: String!
+  node: Comment!
+}
+
+interface Commentable {
+  # A list of comments associated with the object.
+  comments(
+    # Returns the elements in the list that come after the specified cursor.
+    after: String
+
+    # Returns the elements in the list that come before the specified cursor.
+    before: String
+
+    # Returns the first _n_ elements from the list.
+    first: Int
+
+    # Returns the last _n_ elements from the list.
+    last: Int
+  ): CommentConnection!
+}
+
+# Represents a comment on a bug.
+type Comment implements Authored {
+  # The author of this comment.
+  author: Person!
+
+  # The message of this comment.
+  message: String!
+}
+
+enum Status {
+  OPEN
+  CLOSED
+}
+
+# An object that has an author.
+interface Authored {
+  # The author of this object.
+  author: Person!
+}
+
+type OperationConnection {
+  edges: [OperationEdge]!
+  nodes: [OperationUnion]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type OperationEdge {
+  cursor: String!
+  node: OperationUnion
+}
+
+# An operation applied to a bug.
+interface Operation {
+  # The operations author.
+  author: Person!
+
+  # The datetime when this operation was issued.
+  date: Time!
+}
+
+type CreateOperation implements Operation, Authored {
+  author: Person!
+  date: Time!
+
+  title: String!
+  message: String!
+}
+
+type SetTitleOperation implements Operation, Authored {
+  author: Person!
+  date: Time!
+
+  title: String!
+}
+
+type AddCommentOperation implements Operation, Authored {
+  author: Person!
+  date: Time!
+
+  message: String!
+}
+
+type SetStatusOperation implements Operation, Authored {
+  author: Person!
+  date: Time!
+
+  status: Status!
+}
+
+type LabelChangeOperation implements Operation, Authored {
+  author: Person!
+  date: Time!
+
+  added: [Label]!
+  removed: [Label]!
+}
+
+union OperationUnion =
+    CreateOperation
+  | SetTitleOperation
+  | AddCommentOperation
+  | SetStatusOperation
+  | LabelChangeOperation
+
+# The connection type for Label.
+type BugConnection {
+  # A list of edges.
+  edges: [BugEdge]!
+
+  # A list of nodes.
+  nodes: [Bug]!
+
+  # Information to aid in pagination.
+  pageInfo: PageInfo!
+
+  # Identifies the total count of items in the connection.
+  totalCount: Int!
+}
+
+# An edge in a connection.
+type BugEdge {
+  # A cursor for use in pagination.
+  cursor: String!
+
+  # The item at the end of the edge.
+  node: Bug
+}
+
+type Bug implements Authored, Commentable {
+  id: String!
+  humanId: String!
+  title: String!
+  status: Status!
+
+  # A list of labels associated with the repository.
+  labels: [Label]!
+
+  comments(
+    # Returns the elements in the list that come after the specified cursor.
+    after: String
+
+    # Returns the elements in the list that come before the specified cursor.
+    before: String
+
+    # Returns the first _n_ elements from the list.
+    first: Int
+
+    # Returns the last _n_ elements from the list.
+    last: Int
+
+    # If provided, searches comments by name and description.
+    query: String
+  ): CommentConnection!
+
+  operations(
+    # Returns the elements in the list that come after the specified cursor.
+    after: String
+
+    # Returns the elements in the list that come before the specified cursor.
+    before: String
+
+    # Returns the first _n_ elements from the list.
+    first: Int
+
+    # Returns the last _n_ elements from the list.
+    last: Int
+
+    # If provided, searches operations by name and description.
+    query: String
+  ): OperationConnection!
+}
+
+type RootQuery {
+  allBugs(
+    # Returns the elements in the list that come after the specified cursor.
+    after: String
+
+    # Returns the elements in the list that come before the specified cursor.
+    before: String
+
+    # Returns the first _n_ elements from the list.
+    first: Int
+
+    # Returns the last _n_ elements from the list.
+    last: Int
+
+    # If provided, searches labels by name and description.
+    query: String
+  ): BugConnection!
+  bug(id: String!): Bug
+}
