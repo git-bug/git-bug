@@ -27,7 +27,9 @@ func runWebUI(cmd *cobra.Command, args []string) error {
 	addr := fmt.Sprintf("127.0.0.1:%d", port)
 	webUiAddr := fmt.Sprintf("http://%s", addr)
 
-	fmt.Printf("Web UI available at %s\n", webUiAddr)
+	fmt.Printf("Web UI: %s\n", webUiAddr)
+	fmt.Printf("Graphql API: http://%s/graphql\n", addr)
+	fmt.Printf("Graphql Playground: http://%s/playground\n", addr)
 
 	router := mux.NewRouter()
 
