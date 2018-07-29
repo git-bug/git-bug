@@ -7,6 +7,8 @@ model:
 models:
   Repository:
     model: github.com/MichaelMure/git-bug/graphql/models.Repository
+  RepositoryMutation:
+    model: github.com/MichaelMure/git-bug/graphql/models.RepositoryMutation
   Bug:
     model: github.com/MichaelMure/git-bug/bug.Snapshot
   Comment:

@@ -48,3 +48,7 @@ func (Backend) SetStatusOperation() graph.SetStatusOperationResolver {
 func (Backend) SetTitleOperation() graph.SetTitleOperationResolver {
 	return &setTitleOperationResolver{}
 }
+
+func (r Backend) RepositoryMutation() graph.RepositoryMutationResolver {
+	return &repoMutationResolver{}
+}

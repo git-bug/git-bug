@@ -64,3 +64,10 @@ func (repoResolver) Bug(ctx context.Context, obj *models.Repository, prefix stri
 
 	return b.Snapshot(), nil
 }
+
+func (repoResolver) Mutation(ctx context.Context, obj *models.Repository) (models.RepositoryMutation, error) {
+	return models.RepositoryMutation{
+		Repo:  obj.Repo,
+		Cache: obj.Cache,
+	}, nil
+}

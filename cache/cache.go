@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/bug/operations"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
@@ -25,6 +26,10 @@ type RepoCacher interface {
 	ResolveBugPrefix(prefix string) (BugCacher, error)
 	AllBugIds() ([]string, error)
 	ClearAllBugs()
+
+	// Mutations
+
+	NewBug(title string, message string) (BugCacher, error)
 }
 
 type BugCacher interface {
@@ -162,6 +167,28 @@ func (c RepoCache) AllBugIds() ([]string, error) {
 
 func (c RepoCache) ClearAllBugs() {
 	c.bugs = make(map[string]BugCacher)
+}
+
+func (c RepoCache) NewBug(title string, message string) (BugCacher, error) {
+	author, err := bug.GetUser(c.repo)
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := operations.Create(author, title, message)
+	if err != nil {
+		return nil, err
+	}
+
+	err = b.Commit(c.repo)
+	if err != nil {
+		return nil, err
+	}
+
+	cached := NewBugCache(b)
+	c.bugs[b.Id()] = cached
+
+	return cached, nil
 }
 
 // Bug ------------------------

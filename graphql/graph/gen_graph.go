@@ -45,6 +45,8 @@ type Resolvers interface {
 
 	Repository_allBugs(ctx context.Context, obj *models.Repository, input models.ConnectionInput) (models.BugConnection, error)
 	Repository_bug(ctx context.Context, obj *models.Repository, prefix string) (*bug.Snapshot, error)
+	Repository_mutation(ctx context.Context, obj *models.Repository) (models.RepositoryMutation, error)
+	RepositoryMutation_newBug(ctx context.Context, obj *models.RepositoryMutation, title string, message string) (bug.Snapshot, error)
 
 	SetStatusOperation_date(ctx context.Context, obj *operations.SetStatusOperation) (time.Time, error)
 	SetStatusOperation_status(ctx context.Context, obj *operations.SetStatusOperation) (models.Status, error)
@@ -59,6 +61,7 @@ type ResolverRoot interface {
 	LabelChangeOperation() LabelChangeOperationResolver
 	Query() QueryResolver
 	Repository() RepositoryResolver
+	RepositoryMutation() RepositoryMutationResolver
 	SetStatusOperation() SetStatusOperationResolver
 	SetTitleOperation() SetTitleOperationResolver
 }
@@ -84,6 +87,10 @@ type QueryResolver interface {
 type RepositoryResolver interface {
 	AllBugs(ctx context.Context, obj *models.Repository, input models.ConnectionInput) (models.BugConnection, error)
 	Bug(ctx context.Context, obj *models.Repository, prefix string) (*bug.Snapshot, error)
+	Mutation(ctx context.Context, obj *models.Repository) (models.RepositoryMutation, error)
+}
+type RepositoryMutationResolver interface {
+	NewBug(ctx context.Context, obj *models.RepositoryMutation, title string, message string) (bug.Snapshot, error)
 }
 type SetStatusOperationResolver interface {
 	Date(ctx context.Context, obj *operations.SetStatusOperation) (time.Time, error)
@@ -135,6 +142,14 @@ func (s shortMapper) Repository_allBugs(ctx context.Context, obj *models.Reposit
 
 func (s shortMapper) Repository_bug(ctx context.Context, obj *models.Repository, prefix string) (*bug.Snapshot, error) {
 	return s.r.Repository().Bug(ctx, obj, prefix)
+}
+
+func (s shortMapper) Repository_mutation(ctx context.Context, obj *models.Repository) (models.RepositoryMutation, error) {
+	return s.r.Repository().Mutation(ctx, obj)
+}
+
+func (s shortMapper) RepositoryMutation_newBug(ctx context.Context, obj *models.RepositoryMutation, title string, message string) (bug.Snapshot, error) {
+	return s.r.RepositoryMutation().NewBug(ctx, obj, title, message)
 }
 
 func (s shortMapper) SetStatusOperation_date(ctx context.Context, obj *operations.SetStatusOperation) (time.Time, error) {
@@ -1323,6 +1338,8 @@ func (ec *executionContext) _Repository(ctx context.Context, sel []query.Selecti
 			out.Values[i] = ec._Repository_allBugs(ctx, field, obj)
 		case "bug":
 			out.Values[i] = ec._Repository_bug(ctx, field, obj)
+		case "mutation":
+			out.Values[i] = ec._Repository_mutation(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -1413,6 +1430,110 @@ func (ec *executionContext) _Repository_bug(ctx context.Context, field graphql.C
 			return graphql.Null
 		}
 		return ec._Bug(ctx, field.Selections, res)
+	})
+}
+
+func (ec *executionContext) _Repository_mutation(ctx context.Context, field graphql.CollectedField, obj *models.Repository) graphql.Marshaler {
+	ctx = graphql.WithResolverContext(ctx, &graphql.ResolverContext{
+		Object: "Repository",
+		Args:   nil,
+		Field:  field,
+	})
+	return graphql.Defer(func() (ret graphql.Marshaler) {
+		defer func() {
+			if r := recover(); r != nil {
+				userErr := ec.Recover(ctx, r)
+				ec.Error(ctx, userErr)
+				ret = graphql.Null
+			}
+		}()
+
+		resTmp, err := ec.ResolverMiddleware(ctx, func(ctx context.Context) (interface{}, error) {
+			return ec.resolvers.Repository_mutation(ctx, obj)
+		})
+		if err != nil {
+			ec.Error(ctx, err)
+			return graphql.Null
+		}
+		if resTmp == nil {
+			return graphql.Null
+		}
+		res := resTmp.(models.RepositoryMutation)
+		return ec._RepositoryMutation(ctx, field.Selections, &res)
+	})
+}
+
+var repositoryMutationImplementors = []string{"RepositoryMutation"}
+
+// nolint: gocyclo, errcheck, gas, goconst
+func (ec *executionContext) _RepositoryMutation(ctx context.Context, sel []query.Selection, obj *models.RepositoryMutation) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.Doc, sel, repositoryMutationImplementors, ec.Variables)
+
+	out := graphql.NewOrderedMap(len(fields))
+	for i, field := range fields {
+		out.Keys[i] = field.Alias
+
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RepositoryMutation")
+		case "newBug":
+			out.Values[i] = ec._RepositoryMutation_newBug(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+
+	return out
+}
+
+func (ec *executionContext) _RepositoryMutation_newBug(ctx context.Context, field graphql.CollectedField, obj *models.RepositoryMutation) graphql.Marshaler {
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := field.Args["title"]; ok {
+		var err error
+		arg0, err = graphql.UnmarshalString(tmp)
+		if err != nil {
+			ec.Error(ctx, err)
+			return graphql.Null
+		}
+	}
+	args["title"] = arg0
+	var arg1 string
+	if tmp, ok := field.Args["message"]; ok {
+		var err error
+		arg1, err = graphql.UnmarshalString(tmp)
+		if err != nil {
+			ec.Error(ctx, err)
+			return graphql.Null
+		}
+	}
+	args["message"] = arg1
+	ctx = graphql.WithResolverContext(ctx, &graphql.ResolverContext{
+		Object: "RepositoryMutation",
+		Args:   args,
+		Field:  field,
+	})
+	return graphql.Defer(func() (ret graphql.Marshaler) {
+		defer func() {
+			if r := recover(); r != nil {
+				userErr := ec.Recover(ctx, r)
+				ec.Error(ctx, userErr)
+				ret = graphql.Null
+			}
+		}()
+
+		resTmp, err := ec.ResolverMiddleware(ctx, func(ctx context.Context) (interface{}, error) {
+			return ec.resolvers.RepositoryMutation_newBug(ctx, obj, args["title"].(string), args["message"].(string))
+		})
+		if err != nil {
+			ec.Error(ctx, err)
+			return graphql.Null
+		}
+		if resTmp == nil {
+			return graphql.Null
+		}
+		res := resTmp.(bug.Snapshot)
+		return ec._Bug(ctx, field.Selections, &res)
 	})
 }
 
@@ -2581,10 +2702,16 @@ type Bug {
 type Repository {
   allBugs(input: ConnectionInput!): BugConnection!
   bug(prefix: String!): Bug
+
+  mutation: RepositoryMutation!
 }
 
 type Query {
   defaultRepository: Repository
   repository(id: String!): Repository
 }
-`)
+
+
+type RepositoryMutation {
+  newBug(title: String!, message: String!): Bug!
+}`)

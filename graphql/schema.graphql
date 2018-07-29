@@ -166,9 +166,16 @@ type Bug {
 type Repository {
   allBugs(input: ConnectionInput!): BugConnection!
   bug(prefix: String!): Bug
+
+  mutation: RepositoryMutation!
 }
 
 type Query {
   defaultRepository: Repository
   repository(id: String!): Repository
+}
+
+
+type RepositoryMutation {
+  newBug(title: String!, message: String!): Bug!
 }
