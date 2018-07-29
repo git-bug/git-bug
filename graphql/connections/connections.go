@@ -1,4 +1,4 @@
-//go:generate genny -in=connection_template.go -out=gen_bug.go gen "NodeType=bug.Snapshot EdgeType=models.BugEdge ConnectionType=models.BugConnection"
+//go:generate genny -in=connection_template.go -out=gen_bug.go gen "NodeType=string EdgeType=LazyBugEdge ConnectionType=models.BugConnection"
 //go:generate genny -in=connection_template.go -out=gen_operation.go gen "NodeType=bug.Operation EdgeType=models.OperationEdge ConnectionType=models.OperationConnection"
 //go:generate genny -in=connection_template.go -out=gen_comment.go gen "NodeType=bug.Comment EdgeType=models.CommentEdge ConnectionType=models.CommentConnection"
 

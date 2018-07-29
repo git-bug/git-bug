@@ -204,6 +204,11 @@ func readAllBugs(repo repository.Repo, refPrefix string) <-chan StreamedBug {
 	return out
 }
 
+// List all the available local bug ids
+func ListLocalIds(repo repository.Repo) ([]string, error) {
+	return repo.ListIds(bugsRefPattern)
+}
+
 // IsValid check if the Bug data is valid
 func (bug *Bug) IsValid() bool {
 	// non-empty

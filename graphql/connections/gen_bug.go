@@ -7,18 +7,17 @@ package connections
 import (
 	"fmt"
 
-	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/graphql/models"
 )
 
-type BugSnapshotEdger func(value bug.Snapshot, offset int) Edge
-type BugSnapshotConMaker func(edges []models.BugEdge, info models.PageInfo, totalCount int) models.BugConnection
+type StringEdger func(value string, offset int) Edge
+type StringConMaker func(edges []LazyBugEdge, info models.PageInfo, totalCount int) (models.BugConnection, error)
 
-func BugSnapshotCon(source []bug.Snapshot, edger BugSnapshotEdger, conMaker BugSnapshotConMaker, input models.ConnectionInput) (models.BugConnection, error) {
-	var edges []models.BugEdge
+func StringCon(source []string, edger StringEdger, conMaker StringConMaker, input models.ConnectionInput) (models.BugConnection, error) {
+	var edges []LazyBugEdge
 	var pageInfo models.PageInfo
 
-	emptyCon := conMaker(edges, pageInfo, 0)
+	emptyCon, _ := conMaker(edges, pageInfo, 0)
 
 	offset := 0
 
@@ -43,13 +42,13 @@ func BugSnapshotCon(source []bug.Snapshot, edger BugSnapshotEdger, conMaker BugS
 				break
 			}
 
-			edges = append(edges, edge.(models.BugEdge))
+			edges = append(edges, edge.(LazyBugEdge))
 		}
 	} else {
-		edges = make([]models.BugEdge, len(source))
+		edges = make([]LazyBugEdge, len(source))
 
 		for i, value := range source {
-			edges[i] = edger(value, i+offset).(models.BugEdge)
+			edges[i] = edger(value, i+offset).(LazyBugEdge)
 		}
 	}
 
@@ -77,7 +76,5 @@ func BugSnapshotCon(source []bug.Snapshot, edger BugSnapshotEdger, conMaker BugS
 		}
 	}
 
-	con := conMaker(edges, pageInfo, len(source))
-
-	return con, nil
+	return conMaker(edges, pageInfo, len(source))
 }

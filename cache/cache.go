@@ -23,6 +23,7 @@ type Cacher interface {
 type RepoCacher interface {
 	ResolveBug(id string) (BugCacher, error)
 	ResolveBugPrefix(prefix string) (BugCacher, error)
+	AllBugIds() ([]string, error)
 	ClearAllBugs()
 }
 
@@ -153,6 +154,10 @@ func (c RepoCache) ResolveBugPrefix(prefix string) (BugCacher, error) {
 	c.bugs[b.Id()] = cached
 
 	return cached, nil
+}
+
+func (c RepoCache) AllBugIds() ([]string, error) {
+	return bug.ListLocalIds(c.repo)
 }
 
 func (c RepoCache) ClearAllBugs() {

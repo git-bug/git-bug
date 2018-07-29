@@ -11,13 +11,13 @@ type EdgeType generic.Type
 type ConnectionType generic.Type
 
 type NodeTypeEdger func(value NodeType, offset int) Edge
-type NodeTypeConMaker func(edges []EdgeType, info models.PageInfo, totalCount int) ConnectionType
+type NodeTypeConMaker func(edges []EdgeType, info models.PageInfo, totalCount int) (ConnectionType, error)
 
 func NodeTypeCon(source []NodeType, edger NodeTypeEdger, conMaker NodeTypeConMaker, input models.ConnectionInput) (ConnectionType, error) {
 	var edges []EdgeType
 	var pageInfo models.PageInfo
 
-	emptyCon := conMaker(edges, pageInfo, 0)
+	emptyCon, _ := conMaker(edges, pageInfo, 0)
 
 	offset := 0
 
@@ -76,7 +76,5 @@ func NodeTypeCon(source []NodeType, edger NodeTypeEdger, conMaker NodeTypeConMak
 		}
 	}
 
-	con := conMaker(edges, pageInfo, len(source))
-
-	return con, nil
+	return conMaker(edges, pageInfo, len(source))
 }
