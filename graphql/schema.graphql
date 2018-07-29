@@ -138,7 +138,7 @@ union OperationUnion =
 # The connection type for Bug.
 type BugConnection {
   # A list of edges.
-  edges: [BugEdge]!
+  edges: [BugEdge!]!
 
   # Information to aid in pagination.
   pageInfo: PageInfo!

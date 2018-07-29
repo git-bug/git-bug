@@ -4,58 +4,52 @@ import (
 	"context"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/graphql/connections"
+	"github.com/MichaelMure/git-bug/graphql/models"
 )
 
 type bugResolver struct {
 	cache cache.Cacher
 }
 
-func (bugResolver) Status(ctx context.Context, obj *bug.Snapshot) (Status, error) {
+func (bugResolver) Status(ctx context.Context, obj *bug.Snapshot) (models.Status, error) {
 	return convertStatus(obj.Status)
 }
 
-func (bugResolver) Comments(ctx context.Context, obj *bug.Snapshot, input ConnectionInput) (CommentConnection, error) {
-	var connection CommentConnection
-
-	edger := func(comment bug.Comment, offset int) Edge {
-		return CommentEdge{
+func (bugResolver) Comments(ctx context.Context, obj *bug.Snapshot, input models.ConnectionInput) (models.CommentConnection, error) {
+	edger := func(comment bug.Comment, offset int) connections.Edge {
+		return models.CommentEdge{
 			Node:   comment,
-			Cursor: offsetToCursor(offset),
+			Cursor: connections.OffsetToCursor(offset),
 		}
 	}
 
-	edges, pageInfo, err := BugCommentPaginate(obj.Comments, edger, input)
-
-	if err != nil {
-		return connection, err
+	conMaker := func(edges []models.CommentEdge, info models.PageInfo, totalCount int) models.CommentConnection {
+		return models.CommentConnection{
+			Edges:      edges,
+			PageInfo:   info,
+			TotalCount: totalCount,
+		}
 	}
 
-	connection.Edges = edges
-	connection.PageInfo = pageInfo
-	connection.TotalCount = len(obj.Comments)
-
-	return connection, nil
+	return connections.BugCommentCon(obj.Comments, edger, conMaker, input)
 }
 
-func (bugResolver) Operations(ctx context.Context, obj *bug.Snapshot, input ConnectionInput) (OperationConnection, error) {
-	var connection OperationConnection
-
-	edger := func(op bug.Operation, offset int) Edge {
-		return OperationEdge{
-			Node:   op.(OperationUnion),
-			Cursor: offsetToCursor(offset),
+func (bugResolver) Operations(ctx context.Context, obj *bug.Snapshot, input models.ConnectionInput) (models.OperationConnection, error) {
+	edger := func(op bug.Operation, offset int) connections.Edge {
+		return models.OperationEdge{
+			Node:   op.(models.OperationUnion),
+			Cursor: connections.OffsetToCursor(offset),
 		}
 	}
 
-	edges, pageInfo, err := BugOperationPaginate(obj.Operations, edger, input)
-
-	if err != nil {
-		return connection, err
+	conMaker := func(edges []models.OperationEdge, info models.PageInfo, totalCount int) models.OperationConnection {
+		return models.OperationConnection{
+			Edges:      edges,
+			PageInfo:   info,
+			TotalCount: totalCount,
+		}
 	}
 
-	connection.Edges = edges
-	connection.PageInfo = pageInfo
-	connection.TotalCount = len(obj.Operations)
-
-	return connection, nil
+	return connections.BugOperationCon(obj.Operations, edger, conMaker, input)
 }

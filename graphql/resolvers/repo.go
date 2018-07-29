@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/graphql/models"
 )
 
 type repoResolver struct {
@@ -11,7 +12,7 @@ type repoResolver struct {
 	repo  cache.RepoCacher
 }
 
-func (repoResolver) AllBugs(ctx context.Context, obj *repoResolver, input ConnectionInput) (BugConnection, error) {
+func (repoResolver) AllBugs(ctx context.Context, obj *repoResolver, input models.ConnectionInput) (models.BugConnection, error) {
 	panic("implement me")
 }
 

@@ -6,6 +6,7 @@ import (
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/bug/operations"
 	"time"
+	"github.com/MichaelMure/git-bug/graphql/models"
 )
 
 type addCommentOperationResolver struct{}
@@ -32,7 +33,7 @@ func (setStatusOperationResolver) Date(ctx context.Context, obj *operations.SetS
 	return obj.Time(), nil
 }
 
-func (setStatusOperationResolver) Status(ctx context.Context, obj *operations.SetStatusOperation) (Status, error) {
+func (setStatusOperationResolver) Status(ctx context.Context, obj *operations.SetStatusOperation) (models.Status, error) {
 	return convertStatus(obj.Status)
 }
 
@@ -42,12 +43,12 @@ func (setTitleOperationResolver) Date(ctx context.Context, obj *operations.SetTi
 	return obj.Time(), nil
 }
 
-func convertStatus(status bug.Status) (Status, error) {
+func convertStatus(status bug.Status) (models.Status, error) {
 	switch status {
 	case bug.OpenStatus:
-		return StatusOpen, nil
+		return models.StatusOpen, nil
 	case bug.ClosedStatus:
-		return StatusClosed, nil
+		return models.StatusClosed, nil
 	}
 
 	return "", fmt.Errorf("Unknown status")
