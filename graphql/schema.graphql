@@ -166,8 +166,6 @@ type Bug {
 type Repository {
   allBugs(input: ConnectionInput!): BugConnection!
   bug(prefix: String!): Bug
-
-  mutation: RepositoryMutation!
 }
 
 type Query {
@@ -175,7 +173,6 @@ type Query {
   repository(id: String!): Repository
 }
 
-
-type RepositoryMutation {
-  newBug(title: String!, message: String!): Bug!
+type Mutation {
+  newBug(repoRef: String, title: String!, message: String!): Bug!
 }

@@ -21,6 +21,12 @@ func (r Backend) Query() graph.QueryResolver {
 	}
 }
 
+func (r Backend) Mutation() graph.MutationResolver {
+	return &mutationResolver{
+		cache: &r.RootCache,
+	}
+}
+
 func (Backend) AddCommentOperation() graph.AddCommentOperationResolver {
 	return &addCommentOperationResolver{}
 }
@@ -47,8 +53,4 @@ func (Backend) SetStatusOperation() graph.SetStatusOperationResolver {
 
 func (Backend) SetTitleOperation() graph.SetTitleOperationResolver {
 	return &setTitleOperationResolver{}
-}
-
-func (r Backend) RepositoryMutation() graph.RepositoryMutationResolver {
-	return &repoMutationResolver{}
 }
