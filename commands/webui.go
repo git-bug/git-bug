@@ -2,7 +2,7 @@ package commands
 
 import (
 	"fmt"
-	"github.com/MichaelMure/git-bug/graphql2"
+	"github.com/MichaelMure/git-bug/graphql"
 	"github.com/MichaelMure/git-bug/webui"
 	"github.com/gorilla/mux"
 	"github.com/phayes/freeport"
@@ -33,7 +33,7 @@ func runWebUI(cmd *cobra.Command, args []string) error {
 
 	// Routes
 	router.Path("/playground").Handler(handler.Playground("git-bug", "/graphql"))
-	router.Path("/graphql").Handler(graphql2.NewHandler(repo))
+	router.Path("/graphql").Handler(graphql.NewHandler(repo))
 	router.PathPrefix("/").Handler(http.FileServer(webui.WebUIAssets))
 
 	open.Run(webUiAddr)

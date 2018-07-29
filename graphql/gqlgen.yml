@@ -1,17 +1,12 @@
 schema: schema.graphql
 exec:
-  filename: resolvers/generated_graph.go
+  filename: resolvers/gen_graph.go
 model:
-  filename: resolvers/generated_model.go
+  filename: resolvers/gen_model.go
 
 models:
   Repository:
-    fields:
-        bug:
-          resolver: true
-        allBugs:
-          resolver: true
-#    model: github.com/MichaelMure/git-bug/graphql2/resolvers.repoResolver
+    model: github.com/MichaelMure/git-bug/graphql/resolvers.repoResolver
   Bug:
     model: github.com/MichaelMure/git-bug/bug.Snapshot
   Comment:

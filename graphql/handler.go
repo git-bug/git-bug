@@ -1,42 +1,18 @@
+//go:generate gorunpkg github.com/vektah/gqlgen
+
 package graphql
 
 import (
-	"context"
-	"net/http"
-
-	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/graphql/resolvers"
 	"github.com/MichaelMure/git-bug/repository"
-	graphqlHandler "github.com/graphql-go/handler"
+	"github.com/vektah/gqlgen/handler"
+	"net/http"
 )
 
-type Handler struct {
-	handler *graphqlHandler.Handler
-	cache   cache.Cacher
-}
+func NewHandler(repo repository.Repo) http.Handler {
+	backend := resolvers.NewRootResolver()
 
-func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := context.WithValue(r.Context(), "cache", h.cache)
-	h.handler.ContextHandler(ctx, w, r)
-}
+	backend.RegisterDefaultRepository(repo)
 
-func NewHandler(repo repository.Repo) (*Handler, error) {
-	schema, err := graphqlSchema()
-
-	if err != nil {
-		return nil, err
-	}
-
-	h := graphqlHandler.New(&graphqlHandler.Config{
-		Schema:   &schema,
-		Pretty:   true,
-		GraphiQL: true,
-	})
-
-	c := cache.NewCache()
-	c.RegisterDefaultRepository(repo)
-
-	return &Handler{
-		handler: h,
-		cache:   c,
-	}, nil
+	return handler.GraphQL(resolvers.NewExecutableSchema(backend))
 }

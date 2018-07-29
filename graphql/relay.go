@@ -1,4 +1,4 @@
-package graphql2
+package graphql
 
 import (
 	"encoding/base64"
