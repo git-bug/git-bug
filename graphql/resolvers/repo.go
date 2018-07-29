@@ -13,7 +13,9 @@ type repoResolver struct {
 	repo  cache.RepoCacher
 }
 
-func (repoResolver) AllBugs(ctx context.Context, obj *repoResolver, input models.ConnectionInput) (models.BugConnection, error) {
+
+
+func (repoResolver) AllBugs(ctx context.Context, obj *models.Repository, input models.ConnectionInput) (models.BugConnection, error) {
 
 	// Simply pass a []string with the ids to the pagination algorithm
 	source, err := obj.repo.AllBugIds()
@@ -59,7 +61,7 @@ func (repoResolver) AllBugs(ctx context.Context, obj *repoResolver, input models
 	return connections.StringCon(source, edger, conMaker, input)
 }
 
-func (repoResolver) Bug(ctx context.Context, obj *repoResolver, prefix string) (*bug.Snapshot, error) {
+func (repoResolver) Bug(ctx context.Context, obj *models.Repository, prefix string) (*models.Bug, error) {
 	b, err := obj.repo.ResolveBugPrefix(prefix)
 
 	if err != nil {

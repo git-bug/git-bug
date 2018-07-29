@@ -6,28 +6,26 @@ import (
 	fmt "fmt"
 	io "io"
 	strconv "strconv"
-
-	bug "github.com/MichaelMure/git-bug/bug"
+	time "time"
 )
 
+type AddCommentOperation struct {
+	Author  Person    `json:"author"`
+	Date    time.Time `json:"date"`
+	Message string    `json:"message"`
+}
 type Authored interface{}
-type BugConnection struct {
-	Edges      []BugEdge `json:"edges"`
-	PageInfo   PageInfo  `json:"pageInfo"`
-	TotalCount int       `json:"totalCount"`
-}
 type BugEdge struct {
-	Cursor string       `json:"cursor"`
-	Node   bug.Snapshot `json:"node"`
+	Cursor string `json:"cursor"`
+	Node   Bug    `json:"node"`
 }
-type CommentConnection struct {
-	Edges      []CommentEdge `json:"edges"`
-	PageInfo   PageInfo      `json:"pageInfo"`
-	TotalCount int           `json:"totalCount"`
+type Comment struct {
+	Author  Person `json:"author"`
+	Message string `json:"message"`
 }
 type CommentEdge struct {
-	Cursor string      `json:"cursor"`
-	Node   bug.Comment `json:"node"`
+	Cursor string  `json:"cursor"`
+	Node   Comment `json:"node"`
 }
 type ConnectionInput struct {
 	After  *string `json:"after"`
@@ -35,12 +33,19 @@ type ConnectionInput struct {
 	First  *int    `json:"first"`
 	Last   *int    `json:"last"`
 }
-type Operation interface{}
-type OperationConnection struct {
-	Edges      []OperationEdge `json:"edges"`
-	PageInfo   PageInfo        `json:"pageInfo"`
-	TotalCount int             `json:"totalCount"`
+type CreateOperation struct {
+	Author  Person    `json:"author"`
+	Date    time.Time `json:"date"`
+	Title   string    `json:"title"`
+	Message string    `json:"message"`
 }
+type LabelChangeOperation struct {
+	Author  Person    `json:"author"`
+	Date    time.Time `json:"date"`
+	Added   []string  `json:"added"`
+	Removed []string  `json:"removed"`
+}
+type Operation interface{}
 type OperationEdge struct {
 	Cursor string         `json:"cursor"`
 	Node   OperationUnion `json:"node"`
@@ -49,6 +54,20 @@ type OperationUnion interface{}
 type PageInfo struct {
 	HasNextPage     bool `json:"hasNextPage"`
 	HasPreviousPage bool `json:"hasPreviousPage"`
+}
+type Person struct {
+	Email *string `json:"email"`
+	Name  *string `json:"name"`
+}
+type SetStatusOperation struct {
+	Author Person    `json:"author"`
+	Date   time.Time `json:"date"`
+	Status Status    `json:"status"`
+}
+type SetTitleOperation struct {
+	Author Person    `json:"author"`
+	Date   time.Time `json:"date"`
+	Title  string    `json:"title"`
 }
 
 type Status string
