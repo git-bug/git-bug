@@ -3,6 +3,7 @@
 package graphql
 
 import (
+	"github.com/MichaelMure/git-bug/graphql/graph"
 	"github.com/MichaelMure/git-bug/graphql/resolvers"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/vektah/gqlgen/handler"
@@ -10,9 +11,9 @@ import (
 )
 
 func NewHandler(repo repository.Repo) http.Handler {
-	backend := resolvers.NewRootResolver()
+	backend := resolvers.NewBackend()
 
 	backend.RegisterDefaultRepository(repo)
 
-	return handler.GraphQL(resolvers.NewExecutableSchema(backend))
+	return handler.GraphQL(graph.NewExecutableSchema(backend))
 }

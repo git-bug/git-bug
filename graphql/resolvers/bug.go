@@ -3,14 +3,11 @@ package resolvers
 import (
 	"context"
 	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/graphql/connections"
 	"github.com/MichaelMure/git-bug/graphql/models"
 )
 
-type bugResolver struct {
-	cache cache.Cacher
-}
+type bugResolver struct{}
 
 func (bugResolver) Status(ctx context.Context, obj *bug.Snapshot) (models.Status, error) {
 	return convertStatus(obj.Status)

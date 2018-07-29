@@ -1,16 +1,12 @@
 schema: schema.graphql
 exec:
-  filename: resolvers/gen_graph.go
+  filename: graph/gen_graph.go
 model:
   filename: models/gen_models.go
 
 models:
-  # Hack: here, we define the Repository model as a struct we control to trick gqlgen into
-  # generating an empty resolver instead of a struct with data
-  # Hopefully in the future, gqlgen support this case and we can clean that, as well as
-  # moving gen_graph.go into it's own package
   Repository:
-    model: github.com/MichaelMure/git-bug/graphql/resolvers.repoResolver
+    model: github.com/MichaelMure/git-bug/graphql/models.Repository
   Bug:
     model: github.com/MichaelMure/git-bug/bug.Snapshot
   Comment:

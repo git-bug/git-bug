@@ -1,3 +1,4 @@
 git-bug
 !/doc/bash_completion/git-bug
 !/doc/zsh_completion/git-bug
+.gitkeep

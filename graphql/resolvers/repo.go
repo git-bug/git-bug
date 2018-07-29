@@ -3,20 +3,16 @@ package resolvers
 import (
 	"context"
 	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/graphql/connections"
 	"github.com/MichaelMure/git-bug/graphql/models"
 )
 
-type repoResolver struct {
-	cache cache.Cacher
-	repo  cache.RepoCacher
-}
+type repoResolver struct{}
 
-func (repoResolver) AllBugs(ctx context.Context, obj *repoResolver, input models.ConnectionInput) (models.BugConnection, error) {
+func (repoResolver) AllBugs(ctx context.Context, obj *models.Repository, input models.ConnectionInput) (models.BugConnection, error) {
 
 	// Simply pass a []string with the ids to the pagination algorithm
-	source, err := obj.repo.AllBugIds()
+	source, err := obj.Repo.AllBugIds()
 
 	if err != nil {
 		return models.BugConnection{}, err
@@ -35,7 +31,7 @@ func (repoResolver) AllBugs(ctx context.Context, obj *repoResolver, input models
 		edges := make([]models.BugEdge, len(lazyBugEdges))
 
 		for i, lazyBugEdge := range lazyBugEdges {
-			b, err := obj.repo.ResolveBug(lazyBugEdge.Id)
+			b, err := obj.Repo.ResolveBug(lazyBugEdge.Id)
 
 			if err != nil {
 				return models.BugConnection{}, err
@@ -59,8 +55,8 @@ func (repoResolver) AllBugs(ctx context.Context, obj *repoResolver, input models
 	return connections.StringCon(source, edger, conMaker, input)
 }
 
-func (repoResolver) Bug(ctx context.Context, obj *repoResolver, prefix string) (*bug.Snapshot, error) {
-	b, err := obj.repo.ResolveBugPrefix(prefix)
+func (repoResolver) Bug(ctx context.Context, obj *models.Repository, prefix string) (*bug.Snapshot, error) {
+	b, err := obj.Repo.ResolveBugPrefix(prefix)
 
 	if err != nil {
 		return nil, err

@@ -2,52 +2,49 @@ package resolvers
 
 import (
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/graphql/graph"
 )
 
-type RootResolver struct {
+type Backend struct {
 	cache.RootCache
 }
 
-func NewRootResolver() *RootResolver {
-	return &RootResolver{
+func NewBackend() *Backend {
+	return &Backend{
 		RootCache: cache.NewCache(),
 	}
 }
 
-func (r RootResolver) Query() QueryResolver {
+func (r Backend) Query() graph.QueryResolver {
 	return &rootQueryResolver{
 		cache: &r.RootCache,
 	}
 }
 
-func (RootResolver) AddCommentOperation() AddCommentOperationResolver {
+func (Backend) AddCommentOperation() graph.AddCommentOperationResolver {
 	return &addCommentOperationResolver{}
 }
 
-func (r RootResolver) Bug() BugResolver {
-	return &bugResolver{
-		cache: &r.RootCache,
-	}
+func (r Backend) Bug() graph.BugResolver {
+	return &bugResolver{}
 }
 
-func (RootResolver) CreateOperation() CreateOperationResolver {
+func (Backend) CreateOperation() graph.CreateOperationResolver {
 	return &createOperationResolver{}
 }
 
-func (RootResolver) LabelChangeOperation() LabelChangeOperationResolver {
+func (Backend) LabelChangeOperation() graph.LabelChangeOperationResolver {
 	return &labelChangeOperation{}
 }
 
-func (r RootResolver) Repository() RepositoryResolver {
-	return &repoResolver{
-		cache: &r.RootCache,
-	}
+func (r Backend) Repository() graph.RepositoryResolver {
+	return &repoResolver{}
 }
 
-func (RootResolver) SetStatusOperation() SetStatusOperationResolver {
+func (Backend) SetStatusOperation() graph.SetStatusOperationResolver {
 	return &setStatusOperationResolver{}
 }
 
-func (RootResolver) SetTitleOperation() SetTitleOperationResolver {
+func (Backend) SetTitleOperation() graph.SetTitleOperationResolver {
 	return &setTitleOperationResolver{}
 }
