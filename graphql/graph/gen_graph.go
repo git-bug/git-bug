@@ -1060,7 +1060,7 @@ func (ec *executionContext) _OperationEdge_node(ctx context.Context, field graph
 	rctx.PushField(field.Alias)
 	defer rctx.Pop()
 	res := obj.Node
-	return ec._OperationUnion(ctx, field.Selections, &res)
+	return ec._Operation(ctx, field.Selections, &res)
 }
 
 var pageInfoImplementors = []string{"PageInfo"}
@@ -2345,35 +2345,6 @@ func (ec *executionContext) _Operation(ctx context.Context, sel []query.Selectio
 	}
 }
 
-func (ec *executionContext) _OperationUnion(ctx context.Context, sel []query.Selection, obj *models.OperationUnion) graphql.Marshaler {
-	switch obj := (*obj).(type) {
-	case nil:
-		return graphql.Null
-	case operations.CreateOperation:
-		return ec._CreateOperation(ctx, sel, &obj)
-	case *operations.CreateOperation:
-		return ec._CreateOperation(ctx, sel, obj)
-	case operations.SetTitleOperation:
-		return ec._SetTitleOperation(ctx, sel, &obj)
-	case *operations.SetTitleOperation:
-		return ec._SetTitleOperation(ctx, sel, obj)
-	case operations.AddCommentOperation:
-		return ec._AddCommentOperation(ctx, sel, &obj)
-	case *operations.AddCommentOperation:
-		return ec._AddCommentOperation(ctx, sel, obj)
-	case operations.SetStatusOperation:
-		return ec._SetStatusOperation(ctx, sel, &obj)
-	case *operations.SetStatusOperation:
-		return ec._SetStatusOperation(ctx, sel, obj)
-	case operations.LabelChangeOperation:
-		return ec._LabelChangeOperation(ctx, sel, &obj)
-	case *operations.LabelChangeOperation:
-		return ec._LabelChangeOperation(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
 func UnmarshalConnectionInput(v interface{}) (models.ConnectionInput, error) {
 	var it models.ConnectionInput
 	var asMap = v.(map[string]interface{})
@@ -2523,7 +2494,7 @@ type OperationConnection {
 
 type OperationEdge {
   cursor: String!
-  node: OperationUnion!
+  node: Operation!
 }
 
 # An operation applied to a bug.
@@ -2571,13 +2542,6 @@ type LabelChangeOperation implements Operation, Authored {
   added: [Label!]!
   removed: [Label!]!
 }
-
-union OperationUnion =
-    CreateOperation
-  | SetTitleOperation
-  | AddCommentOperation
-  | SetStatusOperation
-  | LabelChangeOperation
 
 # The connection type for Bug.
 type BugConnection {

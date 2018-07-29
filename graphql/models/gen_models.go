@@ -42,10 +42,9 @@ type OperationConnection struct {
 	TotalCount int             `json:"totalCount"`
 }
 type OperationEdge struct {
-	Cursor string         `json:"cursor"`
-	Node   OperationUnion `json:"node"`
+	Cursor string    `json:"cursor"`
+	Node   Operation `json:"node"`
 }
-type OperationUnion interface{}
 type PageInfo struct {
 	HasNextPage     bool `json:"hasNextPage"`
 	HasPreviousPage bool `json:"hasPreviousPage"`

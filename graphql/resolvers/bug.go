@@ -35,7 +35,7 @@ func (bugResolver) Comments(ctx context.Context, obj *bug.Snapshot, input models
 func (bugResolver) Operations(ctx context.Context, obj *bug.Snapshot, input models.ConnectionInput) (models.OperationConnection, error) {
 	edger := func(op bug.Operation, offset int) connections.Edge {
 		return models.OperationEdge{
-			Node:   op.(models.OperationUnion),
+			Node:   op.(models.Operation),
 			Cursor: connections.OffsetToCursor(offset),
 		}
 	}
