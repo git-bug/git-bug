@@ -27,7 +27,7 @@ type RepoCacher interface {
 }
 
 type BugCacher interface {
-	Snapshot() bug.Snapshot
+	Snapshot() *bug.Snapshot
 	ClearSnapshot()
 }
 
@@ -37,8 +37,8 @@ type RootCache struct {
 	repos map[string]RepoCacher
 }
 
-func NewCache() Cacher {
-	return &RootCache{
+func NewCache() RootCache {
+	return RootCache{
 		repos: make(map[string]RepoCacher),
 	}
 }
@@ -172,12 +172,12 @@ func NewBugCache(b *bug.Bug) BugCacher {
 	}
 }
 
-func (c BugCache) Snapshot() bug.Snapshot {
+func (c BugCache) Snapshot() *bug.Snapshot {
 	if c.snap == nil {
 		snap := c.bug.Compile()
 		c.snap = &snap
 	}
-	return *c.snap
+	return c.snap
 }
 
 func (c BugCache) ClearSnapshot() {

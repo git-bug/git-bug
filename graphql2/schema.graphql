@@ -1,7 +1,3 @@
-schema {
-  query: RootQuery
-}
-
 scalar Time
 scalar Label
 
@@ -14,10 +10,24 @@ type PageInfo {
   hasPreviousPage: Boolean!
 
   # When paginating backwards, the cursor to continue.
-  startCursor: String
+#  startCursor: String
 
   # When paginating forwards, the cursor to continue.
-  endCursor: String
+#  endCursor: String
+}
+
+input ConnectionInput {
+  # Returns the elements in the list that come after the specified cursor.
+  after: String
+
+  # Returns the elements in the list that come before the specified cursor.
+  before: String
+
+  # Returns the first _n_ elements from the list.
+  first: Int
+
+  # Returns the last _n_ elements from the list.
+  last: Int
 }
 
 # Represents an person in a git object.
@@ -31,8 +41,7 @@ type Person {
 
 
 type CommentConnection {
-  edges: [CommentEdge]
-  nodes: [Comment]
+  edges: [CommentEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
@@ -40,23 +49,6 @@ type CommentConnection {
 type CommentEdge {
   cursor: String!
   node: Comment!
-}
-
-interface Commentable {
-  # A list of comments associated with the object.
-  comments(
-    # Returns the elements in the list that come after the specified cursor.
-    after: String
-
-    # Returns the elements in the list that come before the specified cursor.
-    before: String
-
-    # Returns the first _n_ elements from the list.
-    first: Int
-
-    # Returns the last _n_ elements from the list.
-    last: Int
-  ): CommentConnection!
 }
 
 # Represents a comment on a bug.
@@ -80,15 +72,14 @@ interface Authored {
 }
 
 type OperationConnection {
-  edges: [OperationEdge]!
-  nodes: [OperationUnion]!
+  edges: [OperationEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
 type OperationEdge {
   cursor: String!
-  node: OperationUnion
+  node: OperationUnion!
 }
 
 # An operation applied to a bug.
@@ -133,8 +124,8 @@ type LabelChangeOperation implements Operation, Authored {
   author: Person!
   date: Time!
 
-  added: [Label]!
-  removed: [Label]!
+  added: [Label!]!
+  removed: [Label!]!
 }
 
 union OperationUnion =
@@ -144,13 +135,10 @@ union OperationUnion =
   | SetStatusOperation
   | LabelChangeOperation
 
-# The connection type for Label.
+# The connection type for Bug.
 type BugConnection {
   # A list of edges.
   edges: [BugEdge]!
-
-  # A list of nodes.
-  nodes: [Bug]!
 
   # Information to aid in pagination.
   pageInfo: PageInfo!
@@ -165,69 +153,29 @@ type BugEdge {
   cursor: String!
 
   # The item at the end of the edge.
-  node: Bug
+  node: Bug!
 }
 
-type Bug implements Authored, Commentable {
+type Bug {
   id: String!
   humanId: String!
   title: String!
   status: Status!
 
   # A list of labels associated with the repository.
-  labels: [Label]!
+  labels: [Label!]!
 
-  comments(
-    # Returns the elements in the list that come after the specified cursor.
-    after: String
+  comments(input: ConnectionInput!): CommentConnection!
 
-    # Returns the elements in the list that come before the specified cursor.
-    before: String
-
-    # Returns the first _n_ elements from the list.
-    first: Int
-
-    # Returns the last _n_ elements from the list.
-    last: Int
-
-    # If provided, searches comments by name and description.
-    query: String
-  ): CommentConnection!
-
-  operations(
-    # Returns the elements in the list that come after the specified cursor.
-    after: String
-
-    # Returns the elements in the list that come before the specified cursor.
-    before: String
-
-    # Returns the first _n_ elements from the list.
-    first: Int
-
-    # Returns the last _n_ elements from the list.
-    last: Int
-
-    # If provided, searches operations by name and description.
-    query: String
-  ): OperationConnection!
+  operations(input: ConnectionInput!): OperationConnection!
 }
 
-type RootQuery {
-  allBugs(
-    # Returns the elements in the list that come after the specified cursor.
-    after: String
+type Repository {
+  allBugs(input: ConnectionInput!): BugConnection!
+  bug(prefix: String!): Bug
+}
 
-    # Returns the elements in the list that come before the specified cursor.
-    before: String
-
-    # Returns the first _n_ elements from the list.
-    first: Int
-
-    # Returns the last _n_ elements from the list.
-    last: Int
-
-    # If provided, searches labels by name and description.
-    query: String
-  ): BugConnection!
-  bug(id: String!): Bug
+type Query {
+  defaultRepository: Repository
+  repository(id: String!): Repository
 }
