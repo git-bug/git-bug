@@ -50,6 +50,12 @@
   version = "v1.0"
 
 [[projects]]
+  name = "github.com/jroimartin/gocui"
+  packages = ["."]
+  revision = "4e9ce9a8e26f2ef33dfe297dbdfca148733b6b9b"
+  version = "v0.3.0"
+
+[[projects]]
   name = "github.com/mattn/go-colorable"
   packages = ["."]
   revision = "167de6bfdfba052fa6b2d3664c8f5272e23c9072"
@@ -60,6 +66,18 @@
   packages = ["."]
   revision = "0360b2af4f38e8d38c7fce2a9f4e702702d73a39"
   version = "v0.0.3"
+
+[[projects]]
+  name = "github.com/mattn/go-runewidth"
+  packages = ["."]
+  revision = "9e777a8366cce605130a531d2cd6363d07ad7317"
+  version = "v0.0.2"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/nsf/termbox-go"
+  packages = ["."]
+  revision = "5c94acc5e6eb520f1bcd183974e01171cc4c23b3"
 
 [[projects]]
   name = "github.com/phayes/freeport"
@@ -136,6 +154,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8eef4e36cf2c25bf253e53fb2a2a276a39715a847a6a05bb329870fe39af15a7"
+  inputs-digest = "793e41ab4418f9961ea3328a0233107af12a470e5237888891a7d52bd125c001"
   solver-name = "gps-cdcl"
   solver-version = 1
