@@ -7,7 +7,7 @@ case $state in
   level1)
     case $words[1] in
       git-bug)
-        _arguments '1: :(close commands comment label ls new open pull push show webui)'
+        _arguments '1: :(close commands comment label ls new open pull push show termui webui)'
       ;;
       *)
         _arguments '*: :_files'
