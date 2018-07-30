@@ -7,9 +7,11 @@ import CircularProgress from "@material-ui/core/CircularProgress";
 import Bug from "./Bug";
 
 const QUERY = gql`
-  query GetBug($id: BugID!) {
-    bug(id: $id) {
-      ...Bug
+  query GetBug($id: String!) {
+    defaultRepository {
+      bug(prefix: $id) {
+        ...Bug
+      }
     }
   }
 
@@ -21,7 +23,7 @@ const BugPage = ({ match }) => (
     {({ loading, error, data }) => {
       if (loading) return <CircularProgress />;
       if (error) return <p>Error.</p>;
-      return <Bug bug={data.bug} />;
+      return <Bug bug={data.defaultRepository.bug} />;
     }}
   </Query>
 );

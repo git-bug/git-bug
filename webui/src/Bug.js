@@ -17,8 +17,8 @@ const Bug = ({ bug, classes }) => (
   <main className={classes.main}>
     <BugSummary bug={bug} />
 
-    {bug.comments.map((comment, index) => (
-      <Comment key={index} comment={comment} />
+    {bug.comments.edges.map(({ cursor, node }) => (
+      <Comment key={cursor} comment={node} />
     ))}
   </main>
 );
@@ -26,8 +26,13 @@ const Bug = ({ bug, classes }) => (
 Bug.fragment = gql`
   fragment Bug on Bug {
     ...BugSummary
-    comments {
-      ...Comment
+    comments(input: { first: 10 }) {
+      edges {
+        cursor
+        node {
+          ...Comment
+        }
+      }
     }
   }
 

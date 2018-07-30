@@ -9,8 +9,15 @@ import BugSummary from "./BugSummary";
 
 const QUERY = gql`
   {
-    bugs: allBugs {
-      ...BugSummary
+    defaultRepository {
+      bugs: allBugs(input: { first: 10 }) {
+        edges {
+          cursor
+          node {
+            ...BugSummary
+          }
+        }
+      }
     }
   }
 
@@ -27,8 +34,8 @@ const styles = theme => ({
 
 const List = withStyles(styles)(({ bugs, classes }) => (
   <main className={classes.main}>
-    {bugs.map(bug => (
-      <BugSummary bug={bug} key={bug.id} />
+    {bugs.edges.map(({ cursor, node }) => (
+      <BugSummary bug={node} key={cursor} />
     ))}
   </main>
 ));
@@ -38,7 +45,7 @@ const ListPage = () => (
     {({ loading, error, data }) => {
       if (loading) return <CircularProgress />;
       if (error) return <p>Error.</p>;
-      return <List bugs={data.bugs} />;
+      return <List bugs={data.defaultRepository.bugs} />;
     }}
   </Query>
 );
