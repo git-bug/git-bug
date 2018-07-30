@@ -37,12 +37,12 @@
   version = "1.0.2"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/shurcooL/vfsgen"
+  branch = "master"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/skratchdot/open-golang"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/fatih/color"
@@ -53,9 +53,13 @@
   version = "v0.0.3"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/dustin/go-humanize"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/vektah/gqlgen"
   version = "0.3.0"
+
+[[constraint]]
+  name = "github.com/jroimartin/gocui"
+  branch = "master"

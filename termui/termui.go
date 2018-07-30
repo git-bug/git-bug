@@ -84,10 +84,16 @@ func keybindings(g *gocui.Gui) error {
 	if err := g.SetKeybinding("bugTable", gocui.KeyArrowLeft, gocui.ModNone, previousPage); err != nil {
 		return err
 	}
+	if err := g.SetKeybinding("bugTable", gocui.KeyPgup, gocui.ModNone, previousPage); err != nil {
+		return err
+	}
 	if err := g.SetKeybinding("bugTable", 'l', gocui.ModNone, nextPage); err != nil {
 		return err
 	}
 	if err := g.SetKeybinding("bugTable", gocui.KeyArrowRight, gocui.ModNone, nextPage); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding("bugTable", gocui.KeyPgup, gocui.ModNone, nextPage); err != nil {
 		return err
 	}
 

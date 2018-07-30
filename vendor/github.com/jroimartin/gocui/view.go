@@ -41,6 +41,11 @@ type View struct {
 	// buffer at the cursor position.
 	Editable bool
 
+	// Editor allows to define the editor that manages the edition mode,
+	// including keybindings or cursor behaviour. DefaultEditor is used by
+	// default.
+	Editor Editor
+
 	// Overwrite enables or disables the overwrite mode of the view.
 	Overwrite bool
 
@@ -90,7 +95,7 @@ func (l lineType) String() string {
 }
 
 // newView returns a new View object.
-func newView(name string, x0, y0, x1, y1 int) *View {
+func newView(name string, x0, y0, x1, y1 int, mode OutputMode) *View {
 	v := &View{
 		name:    name,
 		x0:      x0,
@@ -98,8 +103,9 @@ func newView(name string, x0, y0, x1, y1 int) *View {
 		x1:      x1,
 		y1:      y1,
 		Frame:   true,
+		Editor:  DefaultEditor,
 		tainted: true,
-		ei:      newEscapeInterpreter(),
+		ei:      newEscapeInterpreter(mode),
 	}
 	return v
 }
@@ -292,22 +298,19 @@ func (v *View) draw() error {
 		v.viewLines = nil
 		for i, line := range v.lines {
 			if v.Wrap {
-				if len(line) <= maxX {
+				if len(line) < maxX {
 					vline := viewLine{linesX: 0, linesY: i, line: line}
 					v.viewLines = append(v.viewLines, vline)
 					continue
 				} else {
-					vline := viewLine{linesX: 0, linesY: i, line: line[:maxX]}
-					v.viewLines = append(v.viewLines, vline)
-				}
-				// Append remaining lines
-				for n := maxX; n < len(line); n += maxX {
-					if len(line[n:]) <= maxX {
-						vline := viewLine{linesX: n, linesY: i, line: line[n:]}
-						v.viewLines = append(v.viewLines, vline)
-					} else {
-						vline := viewLine{linesX: n, linesY: i, line: line[n : n+maxX]}
-						v.viewLines = append(v.viewLines, vline)
+					for n := 0; n <= len(line); n += maxX {
+						if len(line[n:]) <= maxX {
+							vline := viewLine{linesX: n, linesY: i, line: line[n:]}
+							v.viewLines = append(v.viewLines, vline)
+						} else {
+							vline := viewLine{linesX: n, linesY: i, line: line[n : n+maxX]}
+							v.viewLines = append(v.viewLines, vline)
+						}
 					}
 				}
 			} else {
@@ -389,6 +392,8 @@ func (v *View) Clear() {
 	v.tainted = true
 
 	v.lines = nil
+	v.viewLines = nil
+	v.readOffset = 0
 	v.clearRunes()
 }
 
@@ -403,6 +408,18 @@ func (v *View) clearRunes() {
 	}
 }
 
+// BufferLines returns the lines in the view's internal
+// buffer.
+func (v *View) BufferLines() []string {
+	lines := make([]string, len(v.lines))
+	for i, l := range v.lines {
+		str := lineType(l).String()
+		str = strings.Replace(str, "\x00", " ", -1)
+		lines[i] = str
+	}
+	return lines
+}
+
 // Buffer returns a string with the contents of the view's internal
 // buffer.
 func (v *View) Buffer() string {
@@ -411,6 +428,18 @@ func (v *View) Buffer() string {
 		str += lineType(l).String() + "\n"
 	}
 	return strings.Replace(str, "\x00", " ", -1)
+}
+
+// ViewBufferLines returns the lines in the view's internal
+// buffer that is shown to the user.
+func (v *View) ViewBufferLines() []string {
+	lines := make([]string, len(v.viewLines))
+	for i, l := range v.viewLines {
+		str := lineType(l.line).String()
+		str = strings.Replace(str, "\x00", " ", -1)
+		lines[i] = str
+	}
+	return lines
 }
 
 // ViewBuffer returns a string with the contents of the view's buffer that is

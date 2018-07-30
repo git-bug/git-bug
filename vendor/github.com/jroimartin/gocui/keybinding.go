@@ -6,19 +6,42 @@ package gocui
 
 import "github.com/nsf/termbox-go"
 
-type (
-	// Key represents special keys or keys combinations.
-	Key termbox.Key
+// Keybidings are used to link a given key-press event with a handler.
+type keybinding struct {
+	viewName string
+	key      Key
+	ch       rune
+	mod      Modifier
+	handler  func(*Gui, *View) error
+}
 
-	// Modifier allows to define special keys combinations. They can be used
-	// in combination with Keys or Runes when a new keybinding is defined.
-	Modifier termbox.Modifier
+// newKeybinding returns a new Keybinding object.
+func newKeybinding(viewname string, key Key, ch rune, mod Modifier, handler func(*Gui, *View) error) (kb *keybinding) {
+	kb = &keybinding{
+		viewName: viewname,
+		key:      key,
+		ch:       ch,
+		mod:      mod,
+		handler:  handler,
+	}
+	return kb
+}
 
-	// KeybindingHandler represents the handler linked to a specific
-	// keybindings. The handler is called when a key-press event satisfies a
-	// configured keybinding.
-	KeybindingHandler func(*Gui, *View) error
-)
+// matchKeypress returns if the keybinding matches the keypress.
+func (kb *keybinding) matchKeypress(key Key, ch rune, mod Modifier) bool {
+	return kb.key == key && kb.ch == ch && kb.mod == mod
+}
+
+// matchView returns if the keybinding matches the current view.
+func (kb *keybinding) matchView(v *View) bool {
+	if kb.viewName == "" {
+		return true
+	}
+	return v != nil && kb.viewName == v.name
+}
+
+// Key represents special keys or keys combinations.
+type Key termbox.Key
 
 // Special keys.
 const (
@@ -45,9 +68,12 @@ const (
 	KeyArrowLeft      = Key(termbox.KeyArrowLeft)
 	KeyArrowRight     = Key(termbox.KeyArrowRight)
 
-	MouseLeft   = Key(termbox.MouseLeft)
-	MouseMiddle = Key(termbox.MouseMiddle)
-	MouseRight  = Key(termbox.MouseRight)
+	MouseLeft      = Key(termbox.MouseLeft)
+	MouseMiddle    = Key(termbox.MouseMiddle)
+	MouseRight     = Key(termbox.MouseRight)
+	MouseRelease   = Key(termbox.MouseRelease)
+	MouseWheelUp   = Key(termbox.MouseWheelUp)
+	MouseWheelDown = Key(termbox.MouseWheelDown)
 )
 
 // Keys combinations.
@@ -100,42 +126,12 @@ const (
 	KeyCtrl8              = Key(termbox.KeyCtrl8)
 )
 
+// Modifier allows to define special keys combinations. They can be used
+// in combination with Keys or Runes when a new keybinding is defined.
+type Modifier termbox.Modifier
+
 // Modifiers.
 const (
 	ModNone Modifier = Modifier(0)
 	ModAlt           = Modifier(termbox.ModAlt)
 )
-
-// Keybidings are used to link a given key-press event with a handler.
-type keybinding struct {
-	viewName string
-	key      Key
-	ch       rune
-	mod      Modifier
-	h        KeybindingHandler
-}
-
-// newKeybinding returns a new Keybinding object.
-func newKeybinding(viewname string, key Key, ch rune, mod Modifier, h KeybindingHandler) (kb *keybinding) {
-	kb = &keybinding{
-		viewName: viewname,
-		key:      key,
-		ch:       ch,
-		mod:      mod,
-		h:        h,
-	}
-	return kb
-}
-
-// matchKeypress returns if the keybinding matches the keypress.
-func (kb *keybinding) matchKeypress(key Key, ch rune, mod Modifier) bool {
-	return kb.key == key && kb.ch == ch && kb.mod == mod
-}
-
-// matchView returns if the keybinding matches the current view.
-func (kb *keybinding) matchView(v *View) bool {
-	if kb.viewName == "" {
-		return true
-	}
-	return v != nil && kb.viewName == v.name
-}

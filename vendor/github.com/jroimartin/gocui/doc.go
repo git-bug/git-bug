@@ -7,28 +7,29 @@ Package gocui allows to create console user interfaces.
 
 Create a new GUI:
 
-	g := gocui.NewGui()
-	if err := g.Init(); err != nil {
+	g, err := gocui.NewGui(gocui.OutputNormal)
+	if err != nil {
 		// handle error
 	}
 	defer g.Close()
 
-	// Set layout and key bindings
+	// Set GUI managers and key bindings
 	// ...
 
 	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
 		// handle error
 	}
 
-Set the layout function:
+Set GUI managers:
 
-	g.SetLayout(fcn)
+	g.SetManager(mgr1, mgr2)
 
-On each iteration of the GUI's main loop, the "layout function" is executed.
-These layout functions can be used to set-up and update the application's main
-views, being possible to freely switch between them. Also, it is important to
-mention that a main loop iteration is executed on each reported event
-(key-press, mouse event, window resize, etc).
+Managers are in charge of GUI's layout and can be used to build widgets. On
+each iteration of the GUI's main loop, the Layout function of each configured
+manager is executed. Managers are used to set-up and update the application's
+main views, being possible to freely change them during execution. Also, it is
+important to mention that a main loop iteration is executed on each reported
+event (key-press, mouse event, window resize, etc).
 
 GUIs are composed by Views, you can think of it as buffers. Views implement the
 io.ReadWriter interface, so you can just write to them if you want to modify
@@ -68,11 +69,12 @@ Mouse events are handled like any other keybinding:
 	}
 
 IMPORTANT: Views can only be created, destroyed or updated in three ways: from
-layout functions, from keybinding callbacks or via *Gui.Execute(). The reason
-for this is that it allows gocui to be conccurent-safe. So, if you want to
-update your GUI from a goroutine, you must use *Gui.Execute(). For example:
+the Layout function within managers, from keybinding callbacks or via
+*Gui.Update(). The reason for this is that it allows gocui to be
+concurrent-safe. So, if you want to update your GUI from a goroutine, you must
+use *Gui.Update(). For example:
 
-	g.Execute(func(g *gocui.Gui) error {
+	g.Update(func(g *gocui.Gui) error {
 		v, err := g.View("viewname")
 		if err != nil {
 			// handle error
@@ -83,7 +85,7 @@ update your GUI from a goroutine, you must use *Gui.Execute(). For example:
 	})
 
 By default, gocui provides a basic edition mode. This mode can be extended
-and customized creating a new Editor and assigning it to *Gui.Editor:
+and customized creating a new Editor and assigning it to *View.Editor:
 
 	type Editor interface {
 		Edit(v *View, key Key, ch rune, mod Modifier)
