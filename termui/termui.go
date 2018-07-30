@@ -93,7 +93,7 @@ func keybindings(g *gocui.Gui) error {
 	if err := g.SetKeybinding("bugTable", gocui.KeyArrowRight, gocui.ModNone, nextPage); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding("bugTable", gocui.KeyPgup, gocui.ModNone, nextPage); err != nil {
+	if err := g.SetKeybinding("bugTable", gocui.KeyPgdn, gocui.ModNone, nextPage); err != nil {
 		return err
 	}
 

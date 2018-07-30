@@ -6,7 +6,6 @@ import (
 )
 
 func runTermUI(cmd *cobra.Command, args []string) error {
-	//time.Sleep(10 * time.Second)
 	return termui.Run(repo)
 }
 
