@@ -51,7 +51,7 @@ func layout(g *gocui.Gui) error {
 
 	ui.bugTable.layout(g)
 
-	v, err := g.View("table")
+	v, err := g.View("bugTable")
 	if err != nil {
 		return err
 	}
@@ -65,26 +65,35 @@ func keybindings(g *gocui.Gui) error {
 	if err := g.SetKeybinding("", 'q', gocui.ModNone, quit); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding("table", 'j', gocui.ModNone, cursorDown); err != nil {
+	if err := g.SetKeybinding("bugTable", 'j', gocui.ModNone, cursorDown); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding("table", gocui.KeyArrowDown, gocui.ModNone, cursorDown); err != nil {
+	if err := g.SetKeybinding("bugTable", gocui.KeyArrowDown, gocui.ModNone, cursorDown); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding("table", 'k', gocui.ModNone, cursorUp); err != nil {
+	if err := g.SetKeybinding("bugTable", 'k', gocui.ModNone, cursorUp); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding("table", gocui.KeyArrowUp, gocui.ModNone, cursorUp); err != nil {
+	if err := g.SetKeybinding("bugTable", gocui.KeyArrowUp, gocui.ModNone, cursorUp); err != nil {
 		return err
 	}
 
-	//err = g.SetKeybinding("table", 'h', gocui.ModNone, popTable)
-	//err = g.SetKeybinding("table", gocui.KeyArrowLeft, gocui.ModNone, popTable)
-	//err = g.SetKeybinding("table", 'l', gocui.ModNone, pushTable)
-	//err = g.SetKeybinding("table", gocui.KeyArrowRight, gocui.ModNone, pushTable)
-	//err = g.SetKeybinding("table", 'p', gocui.ModNone, playSelected)
-	//err = g.SetKeybinding("table", gocui.KeyEnter, gocui.ModNone, playSelectedAndExit)
-	//err = g.SetKeybinding("table", 'm', gocui.ModNone, loadNextRecords)
+	if err := g.SetKeybinding("bugTable", 'h', gocui.ModNone, previousPage); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding("bugTable", gocui.KeyArrowLeft, gocui.ModNone, previousPage); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding("bugTable", 'l', gocui.ModNone, nextPage); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding("bugTable", gocui.KeyArrowRight, gocui.ModNone, nextPage); err != nil {
+		return err
+	}
+
+	//err = g.SetKeybinding("bugTable", 'p', gocui.ModNone, playSelected)
+	//err = g.SetKeybinding("bugTable", gocui.KeyEnter, gocui.ModNone, playSelectedAndExit)
+	//err = g.SetKeybinding("bugTable", 'm', gocui.ModNone, loadNextRecords)
 
 	return nil
 }
@@ -129,4 +138,14 @@ func cursorClamp(v *gocui.View) error {
 	}
 
 	return nil
+}
+
+func nextPage(g *gocui.Gui, v *gocui.View) error {
+	_, maxY := v.Size()
+	return ui.bugTable.nextPage(maxY)
+}
+
+func previousPage(g *gocui.Gui, v *gocui.View) error {
+	_, maxY := v.Size()
+	return ui.bugTable.previousPage(maxY)
 }

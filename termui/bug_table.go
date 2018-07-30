@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/util"
 	"github.com/jroimartin/gocui"
 )
 
 type bugTable struct {
 	cache  cache.RepoCacher
+	allIds []string
 	bugs   []*bug.Snapshot
 	cursor int
 }
@@ -26,6 +28,8 @@ func (bt *bugTable) paginate(max int) error {
 		return err
 	}
 
+	bt.allIds = allIds
+
 	return bt.doPaginate(allIds, max)
 }
 
@@ -35,7 +39,9 @@ func (bt *bugTable) nextPage(max int) error {
 		return err
 	}
 
-	if bt.cursor+max > len(allIds) {
+	bt.allIds = allIds
+
+	if bt.cursor+max >= len(allIds) {
 		return nil
 	}
 
@@ -50,6 +56,8 @@ func (bt *bugTable) previousPage(max int) error {
 		return err
 	}
 
+	bt.allIds = allIds
+
 	bt.cursor = maxInt(0, bt.cursor-max)
 
 	return bt.doPaginate(allIds, max)
@@ -60,10 +68,10 @@ func (bt *bugTable) doPaginate(allIds []string, max int) error {
 	bt.cursor = maxInt(bt.cursor, 0)
 	bt.cursor = minInt(bt.cursor, len(allIds)-1)
 
-	// slice the data
 	nb := minInt(len(allIds)-bt.cursor, max)
 
-	ids := allIds[bt.cursor:nb]
+	// slice the data
+	ids := allIds[bt.cursor : bt.cursor+nb]
 
 	bt.bugs = make([]*bug.Snapshot, len(ids))
 
@@ -95,7 +103,7 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 	v.Clear()
 	ui.bugTable.renderHeader(v, maxX)
 
-	v, err = g.SetView("table", -1, 1, maxX, maxY-2)
+	v, err = g.SetView("bugTable", -1, 1, maxX, maxY-2)
 
 	if err != nil {
 		if err != gocui.ErrUnknownView {
@@ -107,7 +115,7 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 		v.SelBgColor = gocui.ColorWhite
 		v.SelFgColor = gocui.ColorBlack
 
-		_, err = g.SetCurrentView("table")
+		_, err = g.SetCurrentView("bugTable")
 
 		if err != nil {
 			return err
@@ -146,7 +154,7 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 		v.Frame = false
 		v.BgColor = gocui.ColorBlue
 
-		fmt.Fprintf(v, "[q] Quit [h] Go back [j] Down [k] Up [l] Go forward [m] Load Additional [p] Play [enter] Play and Exit")
+		fmt.Fprintf(v, "[q] Quit [h] Previous page [j] Down [k] Up [l] Next page [enter] Open bug")
 	}
 
 	return nil
@@ -156,19 +164,58 @@ func (bt *bugTable) getTableLength() int {
 	return len(bt.bugs)
 }
 
+func (bt *bugTable) getColumnWidths(maxX int) map[string]int {
+	m := make(map[string]int)
+	m["id"] = 10
+	m["status"] = 8
+
+	left := maxX - m["id"] - m["status"]
+
+	m["summary"] = maxInt(30, left/3)
+	left -= m["summary"]
+
+	m["author"] = maxInt(left*2/5, 15)
+	m["title"] = maxInt(left-m["author"], 10)
+
+	return m
+}
+
 func (bt *bugTable) render(v *gocui.View, maxX int) {
+	columnWidths := bt.getColumnWidths(maxX)
+
 	for _, b := range bt.bugs {
-		fmt.Fprintln(v, b.Title)
+		person := bug.Person{}
+		if len(b.Comments) > 0 {
+			create := b.Comments[0]
+			person = create.Author
+		}
+
+		id := util.LeftPaddedString(b.HumanId(), columnWidths["id"], 2)
+		status := util.LeftPaddedString(b.Status.String(), columnWidths["status"], 2)
+		title := util.LeftPaddedString(b.Title, columnWidths["title"], 2)
+		author := util.LeftPaddedString(person.Name, columnWidths["author"], 2)
+		summary := util.LeftPaddedString(b.Summary(), columnWidths["summary"], 2)
+
+		fmt.Fprintf(v, "%s %s %s %s %s\n", id, status, title, author, summary)
 	}
 }
 
 func (bt *bugTable) renderHeader(v *gocui.View, maxX int) {
-	fmt.Fprintf(v, "header")
+	columnWidths := bt.getColumnWidths(maxX)
+
+	id := util.LeftPaddedString("ID", columnWidths["id"], 2)
+	status := util.LeftPaddedString("STATUS", columnWidths["status"], 2)
+	title := util.LeftPaddedString("TITLE", columnWidths["title"], 2)
+	author := util.LeftPaddedString("AUTHOR", columnWidths["author"], 2)
+	summary := util.LeftPaddedString("SUMMARY", columnWidths["summary"], 2)
+
+	fmt.Fprintf(v, "\n")
+	fmt.Fprintf(v, "%s %s %s %s %s\n", id, status, title, author, summary)
 
 }
 
 func (bt *bugTable) renderFooter(v *gocui.View, maxX int) {
-	fmt.Fprintf(v, "footer")
+	fmt.Fprintf(v, "Showing %d of %d bugs", len(bt.bugs), len(bt.allIds))
 }
 
 func maxInt(a, b int) int {
