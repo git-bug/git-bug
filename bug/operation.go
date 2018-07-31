@@ -17,6 +17,9 @@ type Operation interface {
 	OpType() OperationType
 	Time() time.Time
 	Apply(snapshot Snapshot) Snapshot
+
+	// TODO: data validation (ex: a title is a single line)
+	// Validate() bool
 }
 
 type OpBase struct {

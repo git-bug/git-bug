@@ -1,4 +1,4 @@
-// Taken from the git-appraise project
+// Originally taken from the git-appraise project
 
 package input
 
@@ -7,10 +7,110 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/MichaelMure/git-bug/repository"
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"strings"
 )
+
+var ErrEmptyMessage = errors.New("empty message")
+var ErrEmptyTitle = errors.New("empty title")
+
+const bugTitleCommentTemplate = `%s%s
+
+# Please enter the title and comment message. The first non-empty line will be
+# used as the title. Lines starting with '#' will be ignored.
+# An empty title aborts the operation.
+`
+
+func BugCreateEditorInput(repo repository.Repo, fileName string, preTitle string, preMessage string) (string, string, error) {
+	if preMessage != "" {
+		preMessage = "\n\n" + preMessage
+	}
+
+	template := fmt.Sprintf(bugTitleCommentTemplate, preTitle, preMessage)
+
+	raw, err := LaunchEditorWithTemplate(repo, fileName, template)
+
+	if err != nil {
+		return "", "", err
+	}
+
+	lines := strings.Split(raw, "\n")
+
+	var title string
+	var b strings.Builder
+	for _, line := range lines {
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		if title == "" {
+			trimmed := strings.TrimSpace(line)
+			if trimmed != "" {
+				title = trimmed
+			}
+			continue
+		}
+
+		b.WriteString(line)
+		b.WriteString("\n")
+	}
+
+	if title == "" {
+		return "", "", ErrEmptyTitle
+	}
+
+	message := strings.TrimSpace(b.String())
+
+	return title, message, nil
+}
+
+const bugCommentTemplate = `
+
+# Please enter the comment message. Lines starting with '#' will be ignored,
+# and an empty message aborts the operation.
+`
+
+func BugCommentEditorInput(repo repository.Repo, fileName string) (string, error) {
+	raw, err := LaunchEditorWithTemplate(repo, fileName, bugCommentTemplate)
+
+	if err != nil {
+		return "", err
+	}
+
+	lines := strings.Split(raw, "\n")
+
+	var b strings.Builder
+	for _, line := range lines {
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
+		b.WriteString(line)
+		b.WriteString("\n")
+	}
+
+	message := strings.TrimSpace(b.String())
+
+	if message == "" {
+		return "", ErrEmptyMessage
+	}
+
+	return message, nil
+}
+
+func LaunchEditorWithTemplate(repo repository.Repo, fileName string, template string) (string, error) {
+	path := fmt.Sprintf("%s/.git/%s", repo.GetPath(), fileName)
+
+	err := ioutil.WriteFile(path, []byte(template), 0644)
+
+	if err != nil {
+		return "", err
+	}
+
+	return LaunchEditor(repo, fileName)
+}
 
 // LaunchEditor launches the default editor configured for the given repo. This
 // method blocks until the editor command has returned.
@@ -22,12 +122,13 @@ import (
 // This method returns the text that was read from the temporary file, or
 // an error if any step in the process failed.
 func LaunchEditor(repo repository.Repo, fileName string) (string, error) {
+	path := fmt.Sprintf("%s/.git/%s", repo.GetPath(), fileName)
+	defer os.Remove(path)
+
 	editor, err := repo.GetCoreEditor()
 	if err != nil {
 		return "", fmt.Errorf("Unable to detect default git editor: %v\n", err)
 	}
-
-	path := fmt.Sprintf("%s/.git/%s", repo.GetPath(), fileName)
 
 	cmd, err := startInlineCommand(editor, path)
 	if err != nil {
@@ -50,11 +151,11 @@ func LaunchEditor(repo repository.Repo, fileName string) (string, error) {
 	}
 
 	output, err := ioutil.ReadFile(path)
+
 	if err != nil {
-		os.Remove(path)
 		return "", fmt.Errorf("Error reading edited file: %v\n", err)
 	}
-	os.Remove(path)
+
 	return string(output), err
 }
 

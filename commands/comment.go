@@ -2,9 +2,10 @@ package commands
 
 import (
 	"errors"
+	"fmt"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/bug/operations"
-	"github.com/MichaelMure/git-bug/commands/input"
+	"github.com/MichaelMure/git-bug/input"
 	"github.com/spf13/cobra"
 )
 
@@ -32,8 +33,13 @@ func runComment(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
-	if commentMessageFile == "" && commentMessage == "" {
-		commentMessage, err = input.LaunchEditor(repo, messageFilename)
+
+	if commentMessage == "" {
+		commentMessage, err = input.BugCommentEditorInput(repo, messageFilename)
+		if err == input.ErrEmptyMessage {
+			fmt.Println("Empty message, aborting.")
+			return nil
+		}
 		if err != nil {
 			return err
 		}
