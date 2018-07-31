@@ -16,7 +16,8 @@ type termUI struct {
 	cache        cache.RepoCacher
 	activeWindow window
 
-	bugTable *bugTable
+	bugTable   *bugTable
+	errorPopup *errorPopup
 }
 
 var ui *termUI
@@ -30,9 +31,10 @@ func Run(repo repository.Repo) error {
 	c := cache.NewRepoCache(repo)
 
 	ui = &termUI{
-		gError:   make(chan error, 1),
-		cache:    c,
-		bugTable: newBugTable(c),
+		gError:     make(chan error, 1),
+		cache:      c,
+		bugTable:   newBugTable(c),
+		errorPopup: newErrorPopup(),
 	}
 
 	ui.activeWindow = ui.bugTable
@@ -64,6 +66,7 @@ func initGui() {
 
 	if err != nil {
 		ui.g.Close()
+		ui.g = nil
 		ui.gError <- err
 		return
 	}
@@ -71,7 +74,9 @@ func initGui() {
 	err = g.MainLoop()
 
 	if err != nil && err != errTerminateMainloop {
-		ui.g.Close()
+		if ui.g != nil {
+			ui.g.Close()
+		}
 		ui.gError <- err
 	}
 
@@ -79,11 +84,13 @@ func initGui() {
 }
 
 func layout(g *gocui.Gui) error {
-	//maxX, maxY := g.Size()
-
 	g.Cursor = false
 
 	if err := ui.activeWindow.layout(g); err != nil {
+		return err
+	}
+
+	if err := ui.errorPopup.layout(g); err != nil {
 		return err
 	}
 
@@ -97,6 +104,10 @@ func keybindings(g *gocui.Gui) error {
 	}
 
 	if err := ui.bugTable.keybindings(g); err != nil {
+		return err
+	}
+
+	if err := ui.errorPopup.keybindings(g); err != nil {
 		return err
 	}
 
@@ -118,20 +129,21 @@ func newBugWithEditor(g *gocui.Gui, v *gocui.View) error {
 	//		instance's mainLoop. This error is then filtered.
 
 	ui.g.Close()
+	ui.g = nil
 
 	title, message, err := input.BugCreateEditorInput(ui.cache.Repository(), "", "")
 
-	if err == input.ErrEmptyTitle {
-		// TODO: display proper error
-		return err
-	}
-	if err != nil {
+	if err != nil && err != input.ErrEmptyTitle {
 		return err
 	}
 
-	_, err = ui.cache.NewBug(title, message)
-	if err != nil {
-		return err
+	if err == input.ErrEmptyTitle {
+		ui.errorPopup.err = err.Error()
+	} else {
+		_, err = ui.cache.NewBug(title, message)
+		if err != nil {
+			return err
+		}
 	}
 
 	initGui()

@@ -27,6 +27,11 @@ func newBugTable(cache cache.RepoCacher) *bugTable {
 func (bt *bugTable) layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
 
+	if maxY < 4 {
+		// window too small !
+		return nil
+	}
+
 	v, err := g.SetView("header", -1, -1, maxX, 3)
 
 	if err != nil {
@@ -51,12 +56,6 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 		v.Highlight = true
 		v.SelBgColor = gocui.ColorWhite
 		v.SelFgColor = gocui.ColorBlack
-
-		_, err = g.SetCurrentView(bugTableView)
-
-		if err != nil {
-			return err
-		}
 	}
 
 	_, viewHeight := v.Size()
@@ -97,6 +96,12 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 		v.BgColor = gocui.ColorBlue
 
 		fmt.Fprintf(v, "[q] Quit [←,h] Previous page [↓,j] Down [↑,k] Up [→,l] Next page [enter] Open bug [n] New bug")
+	}
+
+	_, err = g.SetCurrentView(bugTableView)
+
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -181,6 +186,11 @@ func (bt *bugTable) doPaginate(allIds []string, max int) error {
 
 	nb := minInt(len(allIds)-bt.cursor, max)
 
+	if nb < 0 {
+		bt.bugs = []*bug.Snapshot{}
+		return nil
+	}
+
 	// slice the data
 	ids := allIds[bt.cursor : bt.cursor+nb]
 
@@ -260,10 +270,8 @@ func (bt *bugTable) cursorDown(g *gocui.Gui, v *gocui.View) error {
 	_, y := v.Cursor()
 	y = minInt(y+1, bt.getTableLength()-1)
 
-	err := v.SetCursor(0, y)
-	if err != nil {
-		return err
-	}
+	// window is too small to set the cursor properly, ignoring the error
+	_ = v.SetCursor(0, y)
 
 	return nil
 }
@@ -272,10 +280,8 @@ func (bt *bugTable) cursorUp(g *gocui.Gui, v *gocui.View) error {
 	_, y := v.Cursor()
 	y = maxInt(y-1, 0)
 
-	err := v.SetCursor(0, y)
-	if err != nil {
-		return err
-	}
+	// window is too small to set the cursor properly, ignoring the error
+	_ = v.SetCursor(0, y)
 
 	return nil
 }
@@ -286,10 +292,8 @@ func (bt *bugTable) cursorClamp(v *gocui.View) error {
 	y = minInt(y, bt.getTableLength()-1)
 	y = maxInt(y, 0)
 
-	err := v.SetCursor(0, y)
-	if err != nil {
-		return err
-	}
+	// window is too small to set the cursor properly, ignoring the error
+	_ = v.SetCursor(0, y)
 
 	return nil
 }
