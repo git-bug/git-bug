@@ -35,7 +35,7 @@ func runComment(cmd *cobra.Command, args []string) error {
 	}
 
 	if commentMessage == "" {
-		commentMessage, err = input.BugCommentEditorInput(repo, messageFilename)
+		commentMessage, err = input.BugCommentEditorInput(repo)
 		if err == input.ErrEmptyMessage {
 			fmt.Println("Empty message, aborting.")
 			return nil

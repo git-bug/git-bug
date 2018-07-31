@@ -25,7 +25,7 @@ func runNewBug(cmd *cobra.Command, args []string) error {
 	}
 
 	if newMessage == "" || newTitle == "" {
-		newTitle, newMessage, err = input.BugCreateEditorInput(repo, messageFilename, newTitle, newMessage)
+		newTitle, newMessage, err = input.BugCreateEditorInput(repo, newTitle, newMessage)
 
 		if err == input.ErrEmptyTitle {
 			fmt.Println("Empty title, aborting.")

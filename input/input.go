@@ -14,6 +14,8 @@ import (
 	"strings"
 )
 
+const messageFilename = "BUG_MESSAGE_EDITMSG"
+
 var ErrEmptyMessage = errors.New("empty message")
 var ErrEmptyTitle = errors.New("empty title")
 
@@ -24,14 +26,14 @@ const bugTitleCommentTemplate = `%s%s
 # An empty title aborts the operation.
 `
 
-func BugCreateEditorInput(repo repository.Repo, fileName string, preTitle string, preMessage string) (string, string, error) {
+func BugCreateEditorInput(repo repository.Repo, preTitle string, preMessage string) (string, string, error) {
 	if preMessage != "" {
 		preMessage = "\n\n" + preMessage
 	}
 
 	template := fmt.Sprintf(bugTitleCommentTemplate, preTitle, preMessage)
 
-	raw, err := LaunchEditorWithTemplate(repo, fileName, template)
+	raw, err := LaunchEditorWithTemplate(repo, messageFilename, template)
 
 	if err != nil {
 		return "", "", err
@@ -73,8 +75,8 @@ const bugCommentTemplate = `
 # and an empty message aborts the operation.
 `
 
-func BugCommentEditorInput(repo repository.Repo, fileName string) (string, error) {
-	raw, err := LaunchEditorWithTemplate(repo, fileName, bugCommentTemplate)
+func BugCommentEditorInput(repo repository.Repo) (string, error) {
+	raw, err := LaunchEditorWithTemplate(repo, messageFilename, bugCommentTemplate)
 
 	if err != nil {
 		return "", err

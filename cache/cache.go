@@ -22,6 +22,7 @@ type Cacher interface {
 }
 
 type RepoCacher interface {
+	Repository() repository.Repo
 	ResolveBug(id string) (BugCacher, error)
 	ResolveBugPrefix(prefix string) (BugCacher, error)
 	AllBugIds() ([]string, error)
@@ -111,7 +112,11 @@ func NewRepoCache(r repository.Repo) RepoCacher {
 	}
 }
 
-func (c RepoCache) ResolveBug(id string) (BugCacher, error) {
+func (c *RepoCache) Repository() repository.Repo {
+	return c.repo
+}
+
+func (c *RepoCache) ResolveBug(id string) (BugCacher, error) {
 	cached, ok := c.bugs[id]
 	if ok {
 		return cached, nil
@@ -128,7 +133,7 @@ func (c RepoCache) ResolveBug(id string) (BugCacher, error) {
 	return cached, nil
 }
 
-func (c RepoCache) ResolveBugPrefix(prefix string) (BugCacher, error) {
+func (c *RepoCache) ResolveBugPrefix(prefix string) (BugCacher, error) {
 	// preallocate but empty
 	matching := make([]string, 0, 5)
 
@@ -161,15 +166,15 @@ func (c RepoCache) ResolveBugPrefix(prefix string) (BugCacher, error) {
 	return cached, nil
 }
 
-func (c RepoCache) AllBugIds() ([]string, error) {
+func (c *RepoCache) AllBugIds() ([]string, error) {
 	return bug.ListLocalIds(c.repo)
 }
 
-func (c RepoCache) ClearAllBugs() {
+func (c *RepoCache) ClearAllBugs() {
 	c.bugs = make(map[string]BugCacher)
 }
 
-func (c RepoCache) NewBug(title string, message string) (BugCacher, error) {
+func (c *RepoCache) NewBug(title string, message string) (BugCacher, error) {
 	author, err := bug.GetUser(c.repo)
 	if err != nil {
 		return nil, err
@@ -204,7 +209,7 @@ func NewBugCache(b *bug.Bug) BugCacher {
 	}
 }
 
-func (c BugCache) Snapshot() *bug.Snapshot {
+func (c *BugCache) Snapshot() *bug.Snapshot {
 	if c.snap == nil {
 		snap := c.bug.Compile()
 		c.snap = &snap
@@ -212,6 +217,6 @@ func (c BugCache) Snapshot() *bug.Snapshot {
 	return c.snap
 }
 
-func (c BugCache) ClearSnapshot() {
+func (c *BugCache) ClearSnapshot() {
 	c.snap = nil
 }

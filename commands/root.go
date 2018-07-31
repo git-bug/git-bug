@@ -12,7 +12,6 @@ import (
 // It's used to avoid cobra to split the Use string at the first space to get the root command name
 //const rootCommandName = "git\u00A0bug"
 const rootCommandName = "git-bug"
-const messageFilename = "BUG_MESSAGE_EDITMSG"
 
 // package scoped var to hold the repo after the PreRun execution
 var repo repository.Repo
