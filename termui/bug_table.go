@@ -45,7 +45,7 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 	v.Clear()
 	bt.renderHeader(v, maxX)
 
-	v, err = g.SetView(bugTableView, -1, 1, maxX, maxY-2)
+	v, err = g.SetView(bugTableView, -1, 1, maxX, maxY-3)
 
 	if err != nil {
 		if err != gocui.ErrUnknownView {
@@ -59,7 +59,7 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 	}
 
 	_, viewHeight := v.Size()
-	err = bt.paginate(viewHeight - 1)
+	err = bt.paginate(viewHeight)
 	if err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 	v.Clear()
 	bt.render(v, maxX)
 
-	v, err = g.SetView("footer", -1, maxY-3, maxX, maxY)
+	v, err = g.SetView("footer", -1, maxY-4, maxX, maxY)
 
 	if err != nil {
 		if err != gocui.ErrUnknownView {
@@ -263,7 +263,7 @@ func (bt *bugTable) renderHeader(v *gocui.View, maxX int) {
 }
 
 func (bt *bugTable) renderFooter(v *gocui.View, maxX int) {
-	fmt.Fprintf(v, "Showing %d of %d bugs", len(bt.bugs), len(bt.allIds))
+	fmt.Fprintf(v, " \nShowing %d of %d bugs", len(bt.bugs), len(bt.allIds))
 }
 
 func (bt *bugTable) cursorDown(g *gocui.Gui, v *gocui.View) error {
