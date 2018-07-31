@@ -86,6 +86,12 @@
   version = "1.0.2"
 
 [[projects]]
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
+
+[[projects]]
   name = "github.com/russross/blackfriday"
   packages = ["."]
   revision = "55d61fa8aa702f59229e6cff85793c22e580eaf5"
@@ -154,6 +160,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b6a56afc16a3bcbab693a8ca7ddd3112c489f2ed6b7528e7d7369fa657d188f6"
+  inputs-digest = "54e8fe5732d80162815e1b82e5b526e94e945d1f9b77152419b35b0a3d4cc2af"
   solver-name = "gps-cdcl"
   solver-version = 1
