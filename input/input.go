@@ -42,7 +42,7 @@ func BugCreateEditorInput(repo repository.Repo, preTitle string, preMessage stri
 	lines := strings.Split(raw, "\n")
 
 	var title string
-	var b strings.Builder
+	var buffer bytes.Buffer
 	for _, line := range lines {
 		if strings.HasPrefix(line, "#") {
 			continue
@@ -56,15 +56,15 @@ func BugCreateEditorInput(repo repository.Repo, preTitle string, preMessage stri
 			continue
 		}
 
-		b.WriteString(line)
-		b.WriteString("\n")
+		buffer.WriteString(line)
+		buffer.WriteString("\n")
 	}
 
 	if title == "" {
 		return "", "", ErrEmptyTitle
 	}
 
-	message := strings.TrimSpace(b.String())
+	message := strings.TrimSpace(buffer.String())
 
 	return title, message, nil
 }
@@ -84,16 +84,16 @@ func BugCommentEditorInput(repo repository.Repo) (string, error) {
 
 	lines := strings.Split(raw, "\n")
 
-	var b strings.Builder
+	var buffer bytes.Buffer
 	for _, line := range lines {
 		if strings.HasPrefix(line, "#") {
 			continue
 		}
-		b.WriteString(line)
-		b.WriteString("\n")
+		buffer.WriteString(line)
+		buffer.WriteString("\n")
 	}
 
-	message := strings.TrimSpace(b.String())
+	message := strings.TrimSpace(buffer.String())
 
 	if message == "" {
 		return "", ErrEmptyMessage
