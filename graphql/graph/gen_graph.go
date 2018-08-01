@@ -41,6 +41,12 @@ type Resolvers interface {
 	LabelChangeOperation_date(ctx context.Context, obj *operations.LabelChangeOperation) (time.Time, error)
 
 	Mutation_newBug(ctx context.Context, repoRef *string, title string, message string) (bug.Snapshot, error)
+	Mutation_addComment(ctx context.Context, repoRef *string, prefix string, message string) (bug.Snapshot, error)
+	Mutation_changeLabels(ctx context.Context, repoRef *string, prefix string, added []string, removed []string) (bug.Snapshot, error)
+	Mutation_open(ctx context.Context, repoRef *string, prefix string) (bug.Snapshot, error)
+	Mutation_close(ctx context.Context, repoRef *string, prefix string) (bug.Snapshot, error)
+	Mutation_setTitle(ctx context.Context, repoRef *string, prefix string, title string) (bug.Snapshot, error)
+	Mutation_commit(ctx context.Context, repoRef *string, prefix string) (bug.Snapshot, error)
 
 	Query_defaultRepository(ctx context.Context) (*models.Repository, error)
 	Query_repository(ctx context.Context, id string) (*models.Repository, error)
@@ -82,6 +88,12 @@ type LabelChangeOperationResolver interface {
 }
 type MutationResolver interface {
 	NewBug(ctx context.Context, repoRef *string, title string, message string) (bug.Snapshot, error)
+	AddComment(ctx context.Context, repoRef *string, prefix string, message string) (bug.Snapshot, error)
+	ChangeLabels(ctx context.Context, repoRef *string, prefix string, added []string, removed []string) (bug.Snapshot, error)
+	Open(ctx context.Context, repoRef *string, prefix string) (bug.Snapshot, error)
+	Close(ctx context.Context, repoRef *string, prefix string) (bug.Snapshot, error)
+	SetTitle(ctx context.Context, repoRef *string, prefix string, title string) (bug.Snapshot, error)
+	Commit(ctx context.Context, repoRef *string, prefix string) (bug.Snapshot, error)
 }
 type QueryResolver interface {
 	DefaultRepository(ctx context.Context) (*models.Repository, error)
@@ -129,6 +141,30 @@ func (s shortMapper) LabelChangeOperation_date(ctx context.Context, obj *operati
 
 func (s shortMapper) Mutation_newBug(ctx context.Context, repoRef *string, title string, message string) (bug.Snapshot, error) {
 	return s.r.Mutation().NewBug(ctx, repoRef, title, message)
+}
+
+func (s shortMapper) Mutation_addComment(ctx context.Context, repoRef *string, prefix string, message string) (bug.Snapshot, error) {
+	return s.r.Mutation().AddComment(ctx, repoRef, prefix, message)
+}
+
+func (s shortMapper) Mutation_changeLabels(ctx context.Context, repoRef *string, prefix string, added []string, removed []string) (bug.Snapshot, error) {
+	return s.r.Mutation().ChangeLabels(ctx, repoRef, prefix, added, removed)
+}
+
+func (s shortMapper) Mutation_open(ctx context.Context, repoRef *string, prefix string) (bug.Snapshot, error) {
+	return s.r.Mutation().Open(ctx, repoRef, prefix)
+}
+
+func (s shortMapper) Mutation_close(ctx context.Context, repoRef *string, prefix string) (bug.Snapshot, error) {
+	return s.r.Mutation().Close(ctx, repoRef, prefix)
+}
+
+func (s shortMapper) Mutation_setTitle(ctx context.Context, repoRef *string, prefix string, title string) (bug.Snapshot, error) {
+	return s.r.Mutation().SetTitle(ctx, repoRef, prefix, title)
+}
+
+func (s shortMapper) Mutation_commit(ctx context.Context, repoRef *string, prefix string) (bug.Snapshot, error) {
+	return s.r.Mutation().Commit(ctx, repoRef, prefix)
 }
 
 func (s shortMapper) Query_defaultRepository(ctx context.Context) (*models.Repository, error) {
@@ -1132,6 +1168,18 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel []query.Selection
 			out.Values[i] = graphql.MarshalString("Mutation")
 		case "newBug":
 			out.Values[i] = ec._Mutation_newBug(ctx, field)
+		case "addComment":
+			out.Values[i] = ec._Mutation_addComment(ctx, field)
+		case "changeLabels":
+			out.Values[i] = ec._Mutation_changeLabels(ctx, field)
+		case "open":
+			out.Values[i] = ec._Mutation_open(ctx, field)
+		case "close":
+			out.Values[i] = ec._Mutation_close(ctx, field)
+		case "setTitle":
+			out.Values[i] = ec._Mutation_setTitle(ctx, field)
+		case "commit":
+			out.Values[i] = ec._Mutation_commit(ctx, field)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -1185,6 +1233,346 @@ func (ec *executionContext) _Mutation_newBug(ctx context.Context, field graphql.
 	defer rctx.Pop()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(ctx context.Context) (interface{}, error) {
 		return ec.resolvers.Mutation_newBug(ctx, args["repoRef"].(*string), args["title"].(string), args["message"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(bug.Snapshot)
+	return ec._Bug(ctx, field.Selections, &res)
+}
+
+func (ec *executionContext) _Mutation_addComment(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
+	args := map[string]interface{}{}
+	var arg0 *string
+	if tmp, ok := field.Args["repoRef"]; ok {
+		var err error
+		var ptr1 string
+		if tmp != nil {
+			ptr1, err = graphql.UnmarshalString(tmp)
+			arg0 = &ptr1
+		}
+
+		if err != nil {
+			ec.Error(ctx, err)
+			return graphql.Null
+		}
+	}
+	args["repoRef"] = arg0
+	var arg1 string
+	if tmp, ok := field.Args["prefix"]; ok {
+		var err error
+		arg1, err = graphql.UnmarshalString(tmp)
+		if err != nil {
+			ec.Error(ctx, err)
+			return graphql.Null
+		}
+	}
+	args["prefix"] = arg1
+	var arg2 string
+	if tmp, ok := field.Args["message"]; ok {
+		var err error
+		arg2, err = graphql.UnmarshalString(tmp)
+		if err != nil {
+			ec.Error(ctx, err)
+			return graphql.Null
+		}
+	}
+	args["message"] = arg2
+	rctx := graphql.GetResolverContext(ctx)
+	rctx.Object = "Mutation"
+	rctx.Args = args
+	rctx.Field = field
+	rctx.PushField(field.Alias)
+	defer rctx.Pop()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(ctx context.Context) (interface{}, error) {
+		return ec.resolvers.Mutation_addComment(ctx, args["repoRef"].(*string), args["prefix"].(string), args["message"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(bug.Snapshot)
+	return ec._Bug(ctx, field.Selections, &res)
+}
+
+func (ec *executionContext) _Mutation_changeLabels(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
+	args := map[string]interface{}{}
+	var arg0 *string
+	if tmp, ok := field.Args["repoRef"]; ok {
+		var err error
+		var ptr1 string
+		if tmp != nil {
+			ptr1, err = graphql.UnmarshalString(tmp)
+			arg0 = &ptr1
+		}
+
+		if err != nil {
+			ec.Error(ctx, err)
+			return graphql.Null
+		}
+	}
+	args["repoRef"] = arg0
+	var arg1 string
+	if tmp, ok := field.Args["prefix"]; ok {
+		var err error
+		arg1, err = graphql.UnmarshalString(tmp)
+		if err != nil {
+			ec.Error(ctx, err)
+			return graphql.Null
+		}
+	}
+	args["prefix"] = arg1
+	var arg2 []string
+	if tmp, ok := field.Args["added"]; ok {
+		var err error
+		var rawIf1 []interface{}
+		if tmp != nil {
+			if tmp1, ok := tmp.([]interface{}); ok {
+				rawIf1 = tmp1
+			}
+		}
+		arg2 = make([]string, len(rawIf1))
+		for idx1 := range rawIf1 {
+			arg2[idx1], err = graphql.UnmarshalString(rawIf1[idx1])
+		}
+		if err != nil {
+			ec.Error(ctx, err)
+			return graphql.Null
+		}
+	}
+	args["added"] = arg2
+	var arg3 []string
+	if tmp, ok := field.Args["removed"]; ok {
+		var err error
+		var rawIf1 []interface{}
+		if tmp != nil {
+			if tmp1, ok := tmp.([]interface{}); ok {
+				rawIf1 = tmp1
+			}
+		}
+		arg3 = make([]string, len(rawIf1))
+		for idx1 := range rawIf1 {
+			arg3[idx1], err = graphql.UnmarshalString(rawIf1[idx1])
+		}
+		if err != nil {
+			ec.Error(ctx, err)
+			return graphql.Null
+		}
+	}
+	args["removed"] = arg3
+	rctx := graphql.GetResolverContext(ctx)
+	rctx.Object = "Mutation"
+	rctx.Args = args
+	rctx.Field = field
+	rctx.PushField(field.Alias)
+	defer rctx.Pop()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(ctx context.Context) (interface{}, error) {
+		return ec.resolvers.Mutation_changeLabels(ctx, args["repoRef"].(*string), args["prefix"].(string), args["added"].([]string), args["removed"].([]string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(bug.Snapshot)
+	return ec._Bug(ctx, field.Selections, &res)
+}
+
+func (ec *executionContext) _Mutation_open(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
+	args := map[string]interface{}{}
+	var arg0 *string
+	if tmp, ok := field.Args["repoRef"]; ok {
+		var err error
+		var ptr1 string
+		if tmp != nil {
+			ptr1, err = graphql.UnmarshalString(tmp)
+			arg0 = &ptr1
+		}
+
+		if err != nil {
+			ec.Error(ctx, err)
+			return graphql.Null
+		}
+	}
+	args["repoRef"] = arg0
+	var arg1 string
+	if tmp, ok := field.Args["prefix"]; ok {
+		var err error
+		arg1, err = graphql.UnmarshalString(tmp)
+		if err != nil {
+			ec.Error(ctx, err)
+			return graphql.Null
+		}
+	}
+	args["prefix"] = arg1
+	rctx := graphql.GetResolverContext(ctx)
+	rctx.Object = "Mutation"
+	rctx.Args = args
+	rctx.Field = field
+	rctx.PushField(field.Alias)
+	defer rctx.Pop()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(ctx context.Context) (interface{}, error) {
+		return ec.resolvers.Mutation_open(ctx, args["repoRef"].(*string), args["prefix"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(bug.Snapshot)
+	return ec._Bug(ctx, field.Selections, &res)
+}
+
+func (ec *executionContext) _Mutation_close(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
+	args := map[string]interface{}{}
+	var arg0 *string
+	if tmp, ok := field.Args["repoRef"]; ok {
+		var err error
+		var ptr1 string
+		if tmp != nil {
+			ptr1, err = graphql.UnmarshalString(tmp)
+			arg0 = &ptr1
+		}
+
+		if err != nil {
+			ec.Error(ctx, err)
+			return graphql.Null
+		}
+	}
+	args["repoRef"] = arg0
+	var arg1 string
+	if tmp, ok := field.Args["prefix"]; ok {
+		var err error
+		arg1, err = graphql.UnmarshalString(tmp)
+		if err != nil {
+			ec.Error(ctx, err)
+			return graphql.Null
+		}
+	}
+	args["prefix"] = arg1
+	rctx := graphql.GetResolverContext(ctx)
+	rctx.Object = "Mutation"
+	rctx.Args = args
+	rctx.Field = field
+	rctx.PushField(field.Alias)
+	defer rctx.Pop()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(ctx context.Context) (interface{}, error) {
+		return ec.resolvers.Mutation_close(ctx, args["repoRef"].(*string), args["prefix"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(bug.Snapshot)
+	return ec._Bug(ctx, field.Selections, &res)
+}
+
+func (ec *executionContext) _Mutation_setTitle(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
+	args := map[string]interface{}{}
+	var arg0 *string
+	if tmp, ok := field.Args["repoRef"]; ok {
+		var err error
+		var ptr1 string
+		if tmp != nil {
+			ptr1, err = graphql.UnmarshalString(tmp)
+			arg0 = &ptr1
+		}
+
+		if err != nil {
+			ec.Error(ctx, err)
+			return graphql.Null
+		}
+	}
+	args["repoRef"] = arg0
+	var arg1 string
+	if tmp, ok := field.Args["prefix"]; ok {
+		var err error
+		arg1, err = graphql.UnmarshalString(tmp)
+		if err != nil {
+			ec.Error(ctx, err)
+			return graphql.Null
+		}
+	}
+	args["prefix"] = arg1
+	var arg2 string
+	if tmp, ok := field.Args["title"]; ok {
+		var err error
+		arg2, err = graphql.UnmarshalString(tmp)
+		if err != nil {
+			ec.Error(ctx, err)
+			return graphql.Null
+		}
+	}
+	args["title"] = arg2
+	rctx := graphql.GetResolverContext(ctx)
+	rctx.Object = "Mutation"
+	rctx.Args = args
+	rctx.Field = field
+	rctx.PushField(field.Alias)
+	defer rctx.Pop()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(ctx context.Context) (interface{}, error) {
+		return ec.resolvers.Mutation_setTitle(ctx, args["repoRef"].(*string), args["prefix"].(string), args["title"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(bug.Snapshot)
+	return ec._Bug(ctx, field.Selections, &res)
+}
+
+func (ec *executionContext) _Mutation_commit(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
+	args := map[string]interface{}{}
+	var arg0 *string
+	if tmp, ok := field.Args["repoRef"]; ok {
+		var err error
+		var ptr1 string
+		if tmp != nil {
+			ptr1, err = graphql.UnmarshalString(tmp)
+			arg0 = &ptr1
+		}
+
+		if err != nil {
+			ec.Error(ctx, err)
+			return graphql.Null
+		}
+	}
+	args["repoRef"] = arg0
+	var arg1 string
+	if tmp, ok := field.Args["prefix"]; ok {
+		var err error
+		arg1, err = graphql.UnmarshalString(tmp)
+		if err != nil {
+			ec.Error(ctx, err)
+			return graphql.Null
+		}
+	}
+	args["prefix"] = arg1
+	rctx := graphql.GetResolverContext(ctx)
+	rctx.Object = "Mutation"
+	rctx.Args = args
+	rctx.Field = field
+	rctx.PushField(field.Alias)
+	defer rctx.Pop()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(ctx context.Context) (interface{}, error) {
+		return ec.resolvers.Mutation_commit(ctx, args["repoRef"].(*string), args["prefix"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2864,5 +3252,13 @@ type Query {
 
 type Mutation {
   newBug(repoRef: String, title: String!, message: String!): Bug!
+
+  addComment(repoRef: String, prefix: String!, message: String!): Bug!
+  changeLabels(repoRef: String, prefix: String!, added: [String!], removed: [String!]): Bug!
+  open(repoRef: String, prefix: String!): Bug!
+  close(repoRef: String, prefix: String!): Bug!
+  setTitle(repoRef: String, prefix: String!, title: String!): Bug!
+
+  commit(repoRef: String, prefix: String!): Bug!
 }
 `)

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/MichaelMure/git-bug/bug"
 	"io"
+	"io/ioutil"
 	"sort"
 )
 
@@ -60,6 +61,10 @@ func NewLabelChangeOperation(author bug.Person, added, removed []bug.Label) Labe
 // Convenience function to apply the operation
 func ChangeLabels(out io.Writer, b *bug.Bug, author bug.Person, add, remove []string) error {
 	var added, removed []bug.Label
+
+	if out == nil {
+		out = ioutil.Discard
+	}
 
 	snap := b.Compile()
 

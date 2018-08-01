@@ -27,15 +27,23 @@ type RepoCacher interface {
 	ResolveBugPrefix(prefix string) (BugCacher, error)
 	AllBugIds() ([]string, error)
 	ClearAllBugs()
+	Commit(bug BugCacher) error
 
 	// Mutations
 
 	NewBug(title string, message string) (BugCacher, error)
+
+	AddComment(repoRef *string, prefix string, message string) (BugCacher, error)
+	ChangeLabels(repoRef *string, prefix string, added []string, removed []string) (BugCacher, error)
+	Open(repoRef *string, prefix string) (BugCacher, error)
+	Close(repoRef *string, prefix string) (BugCacher, error)
+	SetTitle(repoRef *string, prefix string, title string) (BugCacher, error)
 }
 
 type BugCacher interface {
 	Snapshot() *bug.Snapshot
 	ClearSnapshot()
+	bug() *bug.Bug
 }
 
 // Cacher ------------------------
@@ -174,6 +182,14 @@ func (c *RepoCache) ClearAllBugs() {
 	c.bugs = make(map[string]BugCacher)
 }
 
+func (c *RepoCache) Commit(bug BugCacher) error {
+	err := bug.bug().Commit(c.repo)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *RepoCache) NewBug(title string, message string) (BugCacher, error) {
 	author, err := bug.GetUser(c.repo)
 	if err != nil {
@@ -196,22 +212,120 @@ func (c *RepoCache) NewBug(title string, message string) (BugCacher, error) {
 	return cached, nil
 }
 
+func (c *RepoCache) AddComment(repoRef *string, prefix string, message string) (BugCacher, error) {
+	author, err := bug.GetUser(c.repo)
+	if err != nil {
+		return nil, err
+	}
+
+	cached, err := c.ResolveBugPrefix(prefix)
+	if err != nil {
+		return nil, err
+	}
+
+	operations.Comment(cached.bug(), author, message)
+
+	// TODO: perf --> the snapshot could simply be updated with the new op
+	cached.ClearSnapshot()
+
+	return cached, nil
+}
+
+func (c *RepoCache) ChangeLabels(repoRef *string, prefix string, added []string, removed []string) (BugCacher, error) {
+	author, err := bug.GetUser(c.repo)
+	if err != nil {
+		return nil, err
+	}
+
+	cached, err := c.ResolveBugPrefix(prefix)
+	if err != nil {
+		return nil, err
+	}
+
+	err = operations.ChangeLabels(nil, cached.bug(), author, added, removed)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: perf --> the snapshot could simply be updated with the new op
+	cached.ClearSnapshot()
+
+	return cached, nil
+}
+
+func (c *RepoCache) Open(repoRef *string, prefix string) (BugCacher, error) {
+	author, err := bug.GetUser(c.repo)
+	if err != nil {
+		return nil, err
+	}
+
+	cached, err := c.ResolveBugPrefix(prefix)
+	if err != nil {
+		return nil, err
+	}
+
+	operations.Open(cached.bug(), author)
+
+	// TODO: perf --> the snapshot could simply be updated with the new op
+	cached.ClearSnapshot()
+
+	return cached, nil
+}
+
+func (c *RepoCache) Close(repoRef *string, prefix string) (BugCacher, error) {
+	author, err := bug.GetUser(c.repo)
+	if err != nil {
+		return nil, err
+	}
+
+	cached, err := c.ResolveBugPrefix(prefix)
+	if err != nil {
+		return nil, err
+	}
+
+	operations.Close(cached.bug(), author)
+
+	// TODO: perf --> the snapshot could simply be updated with the new op
+	cached.ClearSnapshot()
+
+	return cached, nil
+}
+
+func (c *RepoCache) SetTitle(repoRef *string, prefix string, title string) (BugCacher, error) {
+	author, err := bug.GetUser(c.repo)
+	if err != nil {
+		return nil, err
+	}
+
+	cached, err := c.ResolveBugPrefix(prefix)
+	if err != nil {
+		return nil, err
+	}
+
+	operations.SetTitle(cached.bug(), author, title)
+
+	// TODO: perf --> the snapshot could simply be updated with the new op
+	cached.ClearSnapshot()
+
+	return cached, nil
+}
+
 // Bug ------------------------
 
 type BugCache struct {
-	bug  *bug.Bug
+	b    *bug.Bug
 	snap *bug.Snapshot
 }
 
 func NewBugCache(b *bug.Bug) BugCacher {
 	return &BugCache{
-		bug: b,
+		b: b,
 	}
 }
 
 func (c *BugCache) Snapshot() *bug.Snapshot {
 	if c.snap == nil {
-		snap := c.bug.Compile()
+		snap := c.b.Compile()
 		c.snap = &snap
 	}
 	return c.snap
@@ -219,4 +333,8 @@ func (c *BugCache) Snapshot() *bug.Snapshot {
 
 func (c *BugCache) ClearSnapshot() {
 	c.snap = nil
+}
+
+func (c *BugCache) bug() *bug.Bug {
+	return c.b
 }

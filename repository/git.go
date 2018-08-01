@@ -4,11 +4,12 @@ package repository
 import (
 	"bytes"
 	"fmt"
-	"github.com/MichaelMure/git-bug/util"
 	"io"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/MichaelMure/git-bug/util"
 )
 
 // GitRepo represents an instance of a (local) git repository.

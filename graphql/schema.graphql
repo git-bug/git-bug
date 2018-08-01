@@ -183,4 +183,12 @@ type Query {
 
 type Mutation {
   newBug(repoRef: String, title: String!, message: String!): Bug!
+
+  addComment(repoRef: String, prefix: String!, message: String!): Bug!
+  changeLabels(repoRef: String, prefix: String!, added: [String!], removed: [String!]): Bug!
+  open(repoRef: String, prefix: String!): Bug!
+  close(repoRef: String, prefix: String!): Bug!
+  setTitle(repoRef: String, prefix: String!, title: String!): Bug!
+
+  commit(repoRef: String, prefix: String!): Bug!
 }
