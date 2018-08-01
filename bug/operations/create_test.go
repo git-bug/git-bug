@@ -23,6 +23,8 @@ func TestCreate(t *testing.T) {
 		Comments: []bug.Comment{
 			{Author: rene, Message: "message", UnixTime: create.UnixTime},
 		},
+		Author:    rene,
+		CreatedAt: create.Time(),
 	}
 
 	if !reflect.DeepEqual(snapshot, expected) {

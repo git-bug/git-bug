@@ -62,8 +62,7 @@ func (ep *errorPopup) layout(g *gocui.Gui) error {
 
 func (ep *errorPopup) close(g *gocui.Gui, v *gocui.View) error {
 	ep.err = ""
-	g.DeleteView(errorPopupView)
-	return nil
+	return g.DeleteView(errorPopupView)
 }
 
 func (ep *errorPopup) isActive() bool {

@@ -23,6 +23,8 @@ func (op CreateOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {
 			UnixTime: op.UnixTime,
 		},
 	}
+	snapshot.Author = op.Author
+	snapshot.CreatedAt = op.Time()
 	return snapshot
 }
 

@@ -10,10 +10,12 @@ import (
 type Snapshot struct {
 	id string
 
-	Status   Status    `json:"status"`
-	Title    string    `json:"title"`
-	Comments []Comment `json:"comments"`
-	Labels   []Label   `json:"labels"`
+	Status    Status
+	Title     string
+	Comments  []Comment
+	Labels    []Label
+	Author    Person
+	CreatedAt time.Time
 
 	Operations []Operation
 }

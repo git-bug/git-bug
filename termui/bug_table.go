@@ -9,18 +9,23 @@ import (
 )
 
 const bugTableView = "bugTableView"
+const bugTableHeaderView = "bugTableHeaderView"
+const bugTableFooterView = "bugTableFooterView"
+const bugTableInstructionView = "bugTableInstructionView"
 
 type bugTable struct {
-	cache  cache.RepoCacher
-	allIds []string
-	bugs   []*bug.Snapshot
-	cursor int
+	cache        cache.RepoCacher
+	allIds       []string
+	bugs         []*bug.Snapshot
+	pageCursor   int
+	selectCursor int
 }
 
 func newBugTable(cache cache.RepoCacher) *bugTable {
 	return &bugTable{
-		cache:  cache,
-		cursor: 0,
+		cache:        cache,
+		pageCursor:   0,
+		selectCursor: 0,
 	}
 }
 
@@ -32,7 +37,7 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 		return nil
 	}
 
-	v, err := g.SetView("header", -1, -1, maxX, 3)
+	v, err := g.SetView(bugTableHeaderView, -1, -1, maxX, 3)
 
 	if err != nil {
 		if err != gocui.ErrUnknownView {
@@ -56,6 +61,10 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 		v.Highlight = true
 		v.SelBgColor = gocui.ColorWhite
 		v.SelFgColor = gocui.ColorBlack
+
+		// restore the cursor
+		// window is too small to set the cursor properly, ignoring the error
+		_ = v.SetCursor(0, bt.selectCursor)
 	}
 
 	_, viewHeight := v.Size()
@@ -72,7 +81,7 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 	v.Clear()
 	bt.render(v, maxX)
 
-	v, err = g.SetView("footer", -1, maxY-4, maxX, maxY)
+	v, err = g.SetView(bugTableFooterView, -1, maxY-4, maxX, maxY)
 
 	if err != nil {
 		if err != gocui.ErrUnknownView {
@@ -85,7 +94,7 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 	v.Clear()
 	bt.renderFooter(v, maxX)
 
-	v, err = g.SetView("instructions", -1, maxY-2, maxX, maxY)
+	v, err = g.SetView(bugTableInstructionView, -1, maxY-2, maxX, maxY)
 
 	if err != nil {
 		if err != gocui.ErrUnknownView {
@@ -99,12 +108,7 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 	}
 
 	_, err = g.SetCurrentView(bugTableView)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func (bt *bugTable) keybindings(g *gocui.Gui) error {
@@ -165,6 +169,28 @@ func (bt *bugTable) keybindings(g *gocui.Gui) error {
 		return err
 	}
 
+	// Open bug
+	if err := g.SetKeybinding(bugTableView, gocui.KeyEnter, gocui.ModNone,
+		bt.openBug); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (bt *bugTable) disable(g *gocui.Gui) error {
+	if err := g.DeleteView(bugTableView); err != nil {
+		return err
+	}
+	if err := g.DeleteView(bugTableHeaderView); err != nil {
+		return err
+	}
+	if err := g.DeleteView(bugTableFooterView); err != nil {
+		return err
+	}
+	if err := g.DeleteView(bugTableInstructionView); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -181,10 +207,10 @@ func (bt *bugTable) paginate(max int) error {
 
 func (bt *bugTable) doPaginate(allIds []string, max int) error {
 	// clamp the cursor
-	bt.cursor = maxInt(bt.cursor, 0)
-	bt.cursor = minInt(bt.cursor, len(allIds)-1)
+	bt.pageCursor = maxInt(bt.pageCursor, 0)
+	bt.pageCursor = minInt(bt.pageCursor, len(allIds)-1)
 
-	nb := minInt(len(allIds)-bt.cursor, max)
+	nb := minInt(len(allIds)-bt.pageCursor, max)
 
 	if nb < 0 {
 		bt.bugs = []*bug.Snapshot{}
@@ -192,7 +218,7 @@ func (bt *bugTable) doPaginate(allIds []string, max int) error {
 	}
 
 	// slice the data
-	ids := allIds[bt.cursor : bt.cursor+nb]
+	ids := allIds[bt.pageCursor : bt.pageCursor+nb]
 
 	bt.bugs = make([]*bug.Snapshot, len(ids))
 
@@ -217,7 +243,7 @@ func (bt *bugTable) getColumnWidths(maxX int) map[string]int {
 	m["id"] = 10
 	m["status"] = 8
 
-	left := maxX - m["id"] - m["status"]
+	left := maxX - 4 - m["id"] - m["status"]
 
 	m["summary"] = maxInt(30, left/3)
 	left -= m["summary"]
@@ -272,6 +298,7 @@ func (bt *bugTable) cursorDown(g *gocui.Gui, v *gocui.View) error {
 
 	// window is too small to set the cursor properly, ignoring the error
 	_ = v.SetCursor(0, y)
+	bt.selectCursor = y
 
 	return nil
 }
@@ -282,6 +309,7 @@ func (bt *bugTable) cursorUp(g *gocui.Gui, v *gocui.View) error {
 
 	// window is too small to set the cursor properly, ignoring the error
 	_ = v.SetCursor(0, y)
+	bt.selectCursor = y
 
 	return nil
 }
@@ -294,6 +322,7 @@ func (bt *bugTable) cursorClamp(v *gocui.View) error {
 
 	// window is too small to set the cursor properly, ignoring the error
 	_ = v.SetCursor(0, y)
+	bt.selectCursor = y
 
 	return nil
 }
@@ -308,11 +337,11 @@ func (bt *bugTable) nextPage(g *gocui.Gui, v *gocui.View) error {
 
 	bt.allIds = allIds
 
-	if bt.cursor+max >= len(allIds) {
+	if bt.pageCursor+max >= len(allIds) {
 		return nil
 	}
 
-	bt.cursor += max
+	bt.pageCursor += max
 
 	return bt.doPaginate(allIds, max)
 }
@@ -326,7 +355,13 @@ func (bt *bugTable) previousPage(g *gocui.Gui, v *gocui.View) error {
 
 	bt.allIds = allIds
 
-	bt.cursor = maxInt(0, bt.cursor-max)
+	bt.pageCursor = maxInt(0, bt.pageCursor-max)
 
 	return bt.doPaginate(allIds, max)
+}
+
+func (bt *bugTable) openBug(g *gocui.Gui, v *gocui.View) error {
+	_, y := v.Cursor()
+	ui.showBug.bug = bt.bugs[bt.pageCursor+y]
+	return ui.activateWindow(ui.showBug)
 }

@@ -6,8 +6,8 @@ import (
 )
 
 type Person struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	Name  string
+	Email string
 }
 
 // GetUser will query the repository for user detail and build the corresponding Person

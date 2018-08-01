@@ -11,13 +11,25 @@ import (
 var errTerminateMainloop = errors.New("terminate gocui mainloop")
 
 type termUI struct {
-	g            *gocui.Gui
-	gError       chan error
-	cache        cache.RepoCacher
+	g      *gocui.Gui
+	gError chan error
+	cache  cache.RepoCacher
+
 	activeWindow window
 
 	bugTable   *bugTable
+	showBug    *showBug
 	errorPopup *errorPopup
+}
+
+func (tui *termUI) activateWindow(window window) error {
+	if err := tui.activeWindow.disable(tui.g); err != nil {
+		return err
+	}
+
+	tui.activeWindow = window
+
+	return nil
 }
 
 var ui *termUI
@@ -25,6 +37,7 @@ var ui *termUI
 type window interface {
 	keybindings(g *gocui.Gui) error
 	layout(g *gocui.Gui) error
+	disable(g *gocui.Gui) error
 }
 
 func Run(repo repository.Repo) error {
@@ -34,6 +47,7 @@ func Run(repo repository.Repo) error {
 		gError:     make(chan error, 1),
 		cache:      c,
 		bugTable:   newBugTable(c),
+		showBug:    newShowBug(c),
 		errorPopup: newErrorPopup(),
 	}
 
@@ -104,6 +118,10 @@ func keybindings(g *gocui.Gui) error {
 	}
 
 	if err := ui.bugTable.keybindings(g); err != nil {
+		return err
+	}
+
+	if err := ui.showBug.keybindings(g); err != nil {
 		return err
 	}
 
