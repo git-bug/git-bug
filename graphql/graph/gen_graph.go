@@ -33,8 +33,8 @@ type Resolvers interface {
 
 	Bug_status(ctx context.Context, obj *bug.Snapshot) (models.Status, error)
 
-	Bug_comments(ctx context.Context, obj *bug.Snapshot, input models.ConnectionInput) (models.CommentConnection, error)
-	Bug_operations(ctx context.Context, obj *bug.Snapshot, input models.ConnectionInput) (models.OperationConnection, error)
+	Bug_comments(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (models.CommentConnection, error)
+	Bug_operations(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (models.OperationConnection, error)
 
 	CreateOperation_date(ctx context.Context, obj *operations.CreateOperation) (time.Time, error)
 
@@ -45,7 +45,7 @@ type Resolvers interface {
 	Query_defaultRepository(ctx context.Context) (*models.Repository, error)
 	Query_repository(ctx context.Context, id string) (*models.Repository, error)
 
-	Repository_allBugs(ctx context.Context, obj *models.Repository, input models.ConnectionInput) (models.BugConnection, error)
+	Repository_allBugs(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int) (models.BugConnection, error)
 	Repository_bug(ctx context.Context, obj *models.Repository, prefix string) (*bug.Snapshot, error)
 
 	SetStatusOperation_date(ctx context.Context, obj *operations.SetStatusOperation) (time.Time, error)
@@ -71,8 +71,8 @@ type AddCommentOperationResolver interface {
 type BugResolver interface {
 	Status(ctx context.Context, obj *bug.Snapshot) (models.Status, error)
 
-	Comments(ctx context.Context, obj *bug.Snapshot, input models.ConnectionInput) (models.CommentConnection, error)
-	Operations(ctx context.Context, obj *bug.Snapshot, input models.ConnectionInput) (models.OperationConnection, error)
+	Comments(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (models.CommentConnection, error)
+	Operations(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (models.OperationConnection, error)
 }
 type CreateOperationResolver interface {
 	Date(ctx context.Context, obj *operations.CreateOperation) (time.Time, error)
@@ -88,7 +88,7 @@ type QueryResolver interface {
 	Repository(ctx context.Context, id string) (*models.Repository, error)
 }
 type RepositoryResolver interface {
-	AllBugs(ctx context.Context, obj *models.Repository, input models.ConnectionInput) (models.BugConnection, error)
+	AllBugs(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int) (models.BugConnection, error)
 	Bug(ctx context.Context, obj *models.Repository, prefix string) (*bug.Snapshot, error)
 }
 type SetStatusOperationResolver interface {
@@ -111,12 +111,12 @@ func (s shortMapper) Bug_status(ctx context.Context, obj *bug.Snapshot) (models.
 	return s.r.Bug().Status(ctx, obj)
 }
 
-func (s shortMapper) Bug_comments(ctx context.Context, obj *bug.Snapshot, input models.ConnectionInput) (models.CommentConnection, error) {
-	return s.r.Bug().Comments(ctx, obj, input)
+func (s shortMapper) Bug_comments(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (models.CommentConnection, error) {
+	return s.r.Bug().Comments(ctx, obj, after, before, first, last)
 }
 
-func (s shortMapper) Bug_operations(ctx context.Context, obj *bug.Snapshot, input models.ConnectionInput) (models.OperationConnection, error) {
-	return s.r.Bug().Operations(ctx, obj, input)
+func (s shortMapper) Bug_operations(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (models.OperationConnection, error) {
+	return s.r.Bug().Operations(ctx, obj, after, before, first, last)
 }
 
 func (s shortMapper) CreateOperation_date(ctx context.Context, obj *operations.CreateOperation) (time.Time, error) {
@@ -139,8 +139,8 @@ func (s shortMapper) Query_repository(ctx context.Context, id string) (*models.R
 	return s.r.Query().Repository(ctx, id)
 }
 
-func (s shortMapper) Repository_allBugs(ctx context.Context, obj *models.Repository, input models.ConnectionInput) (models.BugConnection, error) {
-	return s.r.Repository().AllBugs(ctx, obj, input)
+func (s shortMapper) Repository_allBugs(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int) (models.BugConnection, error) {
+	return s.r.Repository().AllBugs(ctx, obj, after, before, first, last)
 }
 
 func (s shortMapper) Repository_bug(ctx context.Context, obj *models.Repository, prefix string) (*bug.Snapshot, error) {
@@ -408,16 +408,66 @@ func (ec *executionContext) _Bug_labels(ctx context.Context, field graphql.Colle
 
 func (ec *executionContext) _Bug_comments(ctx context.Context, field graphql.CollectedField, obj *bug.Snapshot) graphql.Marshaler {
 	args := map[string]interface{}{}
-	var arg0 models.ConnectionInput
-	if tmp, ok := field.Args["input"]; ok {
+	var arg0 *string
+	if tmp, ok := field.Args["after"]; ok {
 		var err error
-		arg0, err = UnmarshalConnectionInput(tmp)
+		var ptr1 string
+		if tmp != nil {
+			ptr1, err = graphql.UnmarshalString(tmp)
+			arg0 = &ptr1
+		}
+
 		if err != nil {
 			ec.Error(ctx, err)
 			return graphql.Null
 		}
 	}
-	args["input"] = arg0
+	args["after"] = arg0
+	var arg1 *string
+	if tmp, ok := field.Args["before"]; ok {
+		var err error
+		var ptr1 string
+		if tmp != nil {
+			ptr1, err = graphql.UnmarshalString(tmp)
+			arg1 = &ptr1
+		}
+
+		if err != nil {
+			ec.Error(ctx, err)
+			return graphql.Null
+		}
+	}
+	args["before"] = arg1
+	var arg2 *int
+	if tmp, ok := field.Args["first"]; ok {
+		var err error
+		var ptr1 int
+		if tmp != nil {
+			ptr1, err = graphql.UnmarshalInt(tmp)
+			arg2 = &ptr1
+		}
+
+		if err != nil {
+			ec.Error(ctx, err)
+			return graphql.Null
+		}
+	}
+	args["first"] = arg2
+	var arg3 *int
+	if tmp, ok := field.Args["last"]; ok {
+		var err error
+		var ptr1 int
+		if tmp != nil {
+			ptr1, err = graphql.UnmarshalInt(tmp)
+			arg3 = &ptr1
+		}
+
+		if err != nil {
+			ec.Error(ctx, err)
+			return graphql.Null
+		}
+	}
+	args["last"] = arg3
 	ctx = graphql.WithResolverContext(ctx, &graphql.ResolverContext{
 		Object: "Bug",
 		Args:   args,
@@ -433,7 +483,7 @@ func (ec *executionContext) _Bug_comments(ctx context.Context, field graphql.Col
 		}()
 
 		resTmp, err := ec.ResolverMiddleware(ctx, func(ctx context.Context) (interface{}, error) {
-			return ec.resolvers.Bug_comments(ctx, obj, args["input"].(models.ConnectionInput))
+			return ec.resolvers.Bug_comments(ctx, obj, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int))
 		})
 		if err != nil {
 			ec.Error(ctx, err)
@@ -449,16 +499,66 @@ func (ec *executionContext) _Bug_comments(ctx context.Context, field graphql.Col
 
 func (ec *executionContext) _Bug_operations(ctx context.Context, field graphql.CollectedField, obj *bug.Snapshot) graphql.Marshaler {
 	args := map[string]interface{}{}
-	var arg0 models.ConnectionInput
-	if tmp, ok := field.Args["input"]; ok {
+	var arg0 *string
+	if tmp, ok := field.Args["after"]; ok {
 		var err error
-		arg0, err = UnmarshalConnectionInput(tmp)
+		var ptr1 string
+		if tmp != nil {
+			ptr1, err = graphql.UnmarshalString(tmp)
+			arg0 = &ptr1
+		}
+
 		if err != nil {
 			ec.Error(ctx, err)
 			return graphql.Null
 		}
 	}
-	args["input"] = arg0
+	args["after"] = arg0
+	var arg1 *string
+	if tmp, ok := field.Args["before"]; ok {
+		var err error
+		var ptr1 string
+		if tmp != nil {
+			ptr1, err = graphql.UnmarshalString(tmp)
+			arg1 = &ptr1
+		}
+
+		if err != nil {
+			ec.Error(ctx, err)
+			return graphql.Null
+		}
+	}
+	args["before"] = arg1
+	var arg2 *int
+	if tmp, ok := field.Args["first"]; ok {
+		var err error
+		var ptr1 int
+		if tmp != nil {
+			ptr1, err = graphql.UnmarshalInt(tmp)
+			arg2 = &ptr1
+		}
+
+		if err != nil {
+			ec.Error(ctx, err)
+			return graphql.Null
+		}
+	}
+	args["first"] = arg2
+	var arg3 *int
+	if tmp, ok := field.Args["last"]; ok {
+		var err error
+		var ptr1 int
+		if tmp != nil {
+			ptr1, err = graphql.UnmarshalInt(tmp)
+			arg3 = &ptr1
+		}
+
+		if err != nil {
+			ec.Error(ctx, err)
+			return graphql.Null
+		}
+	}
+	args["last"] = arg3
 	ctx = graphql.WithResolverContext(ctx, &graphql.ResolverContext{
 		Object: "Bug",
 		Args:   args,
@@ -474,7 +574,7 @@ func (ec *executionContext) _Bug_operations(ctx context.Context, field graphql.C
 		}()
 
 		resTmp, err := ec.ResolverMiddleware(ctx, func(ctx context.Context) (interface{}, error) {
-			return ec.resolvers.Bug_operations(ctx, obj, args["input"].(models.ConnectionInput))
+			return ec.resolvers.Bug_operations(ctx, obj, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int))
 		})
 		if err != nil {
 			ec.Error(ctx, err)
@@ -503,6 +603,8 @@ func (ec *executionContext) _BugConnection(ctx context.Context, sel []query.Sele
 			out.Values[i] = graphql.MarshalString("BugConnection")
 		case "edges":
 			out.Values[i] = ec._BugConnection_edges(ctx, field, obj)
+		case "nodes":
+			out.Values[i] = ec._BugConnection_nodes(ctx, field, obj)
 		case "pageInfo":
 			out.Values[i] = ec._BugConnection_pageInfo(ctx, field, obj)
 		case "totalCount":
@@ -530,6 +632,26 @@ func (ec *executionContext) _BugConnection_edges(ctx context.Context, field grap
 			rctx.PushIndex(idx1)
 			defer rctx.Pop()
 			return ec._BugEdge(ctx, field.Selections, &res[idx1])
+		}())
+	}
+	return arr1
+}
+
+func (ec *executionContext) _BugConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *models.BugConnection) graphql.Marshaler {
+	rctx := graphql.GetResolverContext(ctx)
+	rctx.Object = "BugConnection"
+	rctx.Args = nil
+	rctx.Field = field
+	rctx.PushField(field.Alias)
+	defer rctx.Pop()
+	res := obj.Nodes
+	arr1 := graphql.Array{}
+	for idx1 := range res {
+		arr1 = append(arr1, func() graphql.Marshaler {
+			rctx := graphql.GetResolverContext(ctx)
+			rctx.PushIndex(idx1)
+			defer rctx.Pop()
+			return ec._Bug(ctx, field.Selections, &res[idx1])
 		}())
 	}
 	return arr1
@@ -666,6 +788,8 @@ func (ec *executionContext) _CommentConnection(ctx context.Context, sel []query.
 			out.Values[i] = graphql.MarshalString("CommentConnection")
 		case "edges":
 			out.Values[i] = ec._CommentConnection_edges(ctx, field, obj)
+		case "nodes":
+			out.Values[i] = ec._CommentConnection_nodes(ctx, field, obj)
 		case "pageInfo":
 			out.Values[i] = ec._CommentConnection_pageInfo(ctx, field, obj)
 		case "totalCount":
@@ -693,6 +817,26 @@ func (ec *executionContext) _CommentConnection_edges(ctx context.Context, field 
 			rctx.PushIndex(idx1)
 			defer rctx.Pop()
 			return ec._CommentEdge(ctx, field.Selections, &res[idx1])
+		}())
+	}
+	return arr1
+}
+
+func (ec *executionContext) _CommentConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *models.CommentConnection) graphql.Marshaler {
+	rctx := graphql.GetResolverContext(ctx)
+	rctx.Object = "CommentConnection"
+	rctx.Args = nil
+	rctx.Field = field
+	rctx.PushField(field.Alias)
+	defer rctx.Pop()
+	res := obj.Nodes
+	arr1 := graphql.Array{}
+	for idx1 := range res {
+		arr1 = append(arr1, func() graphql.Marshaler {
+			rctx := graphql.GetResolverContext(ctx)
+			rctx.PushIndex(idx1)
+			defer rctx.Pop()
+			return ec._Comment(ctx, field.Selections, &res[idx1])
 		}())
 	}
 	return arr1
@@ -1068,6 +1212,8 @@ func (ec *executionContext) _OperationConnection(ctx context.Context, sel []quer
 			out.Values[i] = graphql.MarshalString("OperationConnection")
 		case "edges":
 			out.Values[i] = ec._OperationConnection_edges(ctx, field, obj)
+		case "nodes":
+			out.Values[i] = ec._OperationConnection_nodes(ctx, field, obj)
 		case "pageInfo":
 			out.Values[i] = ec._OperationConnection_pageInfo(ctx, field, obj)
 		case "totalCount":
@@ -1095,6 +1241,26 @@ func (ec *executionContext) _OperationConnection_edges(ctx context.Context, fiel
 			rctx.PushIndex(idx1)
 			defer rctx.Pop()
 			return ec._OperationEdge(ctx, field.Selections, &res[idx1])
+		}())
+	}
+	return arr1
+}
+
+func (ec *executionContext) _OperationConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *models.OperationConnection) graphql.Marshaler {
+	rctx := graphql.GetResolverContext(ctx)
+	rctx.Object = "OperationConnection"
+	rctx.Args = nil
+	rctx.Field = field
+	rctx.PushField(field.Alias)
+	defer rctx.Pop()
+	res := obj.Nodes
+	arr1 := graphql.Array{}
+	for idx1 := range res {
+		arr1 = append(arr1, func() graphql.Marshaler {
+			rctx := graphql.GetResolverContext(ctx)
+			rctx.PushIndex(idx1)
+			defer rctx.Pop()
+			return ec._Operation(ctx, field.Selections, &res[idx1])
 		}())
 	}
 	return arr1
@@ -1439,16 +1605,66 @@ func (ec *executionContext) _Repository(ctx context.Context, sel []query.Selecti
 
 func (ec *executionContext) _Repository_allBugs(ctx context.Context, field graphql.CollectedField, obj *models.Repository) graphql.Marshaler {
 	args := map[string]interface{}{}
-	var arg0 models.ConnectionInput
-	if tmp, ok := field.Args["input"]; ok {
+	var arg0 *string
+	if tmp, ok := field.Args["after"]; ok {
 		var err error
-		arg0, err = UnmarshalConnectionInput(tmp)
+		var ptr1 string
+		if tmp != nil {
+			ptr1, err = graphql.UnmarshalString(tmp)
+			arg0 = &ptr1
+		}
+
 		if err != nil {
 			ec.Error(ctx, err)
 			return graphql.Null
 		}
 	}
-	args["input"] = arg0
+	args["after"] = arg0
+	var arg1 *string
+	if tmp, ok := field.Args["before"]; ok {
+		var err error
+		var ptr1 string
+		if tmp != nil {
+			ptr1, err = graphql.UnmarshalString(tmp)
+			arg1 = &ptr1
+		}
+
+		if err != nil {
+			ec.Error(ctx, err)
+			return graphql.Null
+		}
+	}
+	args["before"] = arg1
+	var arg2 *int
+	if tmp, ok := field.Args["first"]; ok {
+		var err error
+		var ptr1 int
+		if tmp != nil {
+			ptr1, err = graphql.UnmarshalInt(tmp)
+			arg2 = &ptr1
+		}
+
+		if err != nil {
+			ec.Error(ctx, err)
+			return graphql.Null
+		}
+	}
+	args["first"] = arg2
+	var arg3 *int
+	if tmp, ok := field.Args["last"]; ok {
+		var err error
+		var ptr1 int
+		if tmp != nil {
+			ptr1, err = graphql.UnmarshalInt(tmp)
+			arg3 = &ptr1
+		}
+
+		if err != nil {
+			ec.Error(ctx, err)
+			return graphql.Null
+		}
+	}
+	args["last"] = arg3
 	ctx = graphql.WithResolverContext(ctx, &graphql.ResolverContext{
 		Object: "Repository",
 		Args:   args,
@@ -1464,7 +1680,7 @@ func (ec *executionContext) _Repository_allBugs(ctx context.Context, field graph
 		}()
 
 		resTmp, err := ec.ResolverMiddleware(ctx, func(ctx context.Context) (interface{}, error) {
-			return ec.resolvers.Repository_allBugs(ctx, obj, args["input"].(models.ConnectionInput))
+			return ec.resolvers.Repository_allBugs(ctx, obj, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int))
 		})
 		if err != nil {
 			ec.Error(ctx, err)
@@ -2422,7 +2638,7 @@ func (ec *executionContext) _Authored(ctx context.Context, sel []query.Selection
 	}
 }
 
-func (ec *executionContext) _Operation(ctx context.Context, sel []query.Selection, obj *models.Operation) graphql.Marshaler {
+func (ec *executionContext) _Operation(ctx context.Context, sel []query.Selection, obj *bug.Operation) graphql.Marshaler {
 	switch obj := (*obj).(type) {
 	case nil:
 		return graphql.Null
@@ -2451,62 +2667,6 @@ func (ec *executionContext) _Operation(ctx context.Context, sel []query.Selectio
 	}
 }
 
-func UnmarshalConnectionInput(v interface{}) (models.ConnectionInput, error) {
-	var it models.ConnectionInput
-	var asMap = v.(map[string]interface{})
-
-	for k, v := range asMap {
-		switch k {
-		case "after":
-			var err error
-			var ptr1 string
-			if v != nil {
-				ptr1, err = graphql.UnmarshalString(v)
-				it.After = &ptr1
-			}
-
-			if err != nil {
-				return it, err
-			}
-		case "before":
-			var err error
-			var ptr1 string
-			if v != nil {
-				ptr1, err = graphql.UnmarshalString(v)
-				it.Before = &ptr1
-			}
-
-			if err != nil {
-				return it, err
-			}
-		case "first":
-			var err error
-			var ptr1 int
-			if v != nil {
-				ptr1, err = graphql.UnmarshalInt(v)
-				it.First = &ptr1
-			}
-
-			if err != nil {
-				return it, err
-			}
-		case "last":
-			var err error
-			var ptr1 int
-			if v != nil {
-				ptr1, err = graphql.UnmarshalInt(v)
-				it.Last = &ptr1
-			}
-
-			if err != nil {
-				return it, err
-			}
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) introspectSchema() *introspection.Schema {
 	return introspection.WrapSchema(parsedSchema)
 }
@@ -2526,29 +2686,12 @@ scalar Label
 type PageInfo {
   # When paginating forwards, are there more items?
   hasNextPage: Boolean!
-
   # When paginating backwards, are there more items?
   hasPreviousPage: Boolean!
-
   # When paginating backwards, the cursor to continue.
 #  startCursor: String
-
   # When paginating forwards, the cursor to continue.
 #  endCursor: String
-}
-
-input ConnectionInput {
-  # Returns the elements in the list that come after the specified cursor.
-  after: String
-
-  # Returns the elements in the list that come before the specified cursor.
-  before: String
-
-  # Returns the first _n_ elements from the list.
-  first: Int
-
-  # Returns the last _n_ elements from the list.
-  last: Int
 }
 
 # Represents an person in a git object.
@@ -2560,9 +2703,9 @@ type Person {
   name: String
 }
 
-
 type CommentConnection {
   edges: [CommentEdge!]!
+  nodes: [Comment!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
@@ -2594,6 +2737,7 @@ interface Authored {
 
 type OperationConnection {
   edges: [OperationEdge!]!
+  nodes: [Operation!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
@@ -2607,7 +2751,6 @@ type OperationEdge {
 interface Operation {
   # The operations author.
   author: Person!
-
   # The datetime when this operation was issued.
   date: Time!
 }
@@ -2653,10 +2796,9 @@ type LabelChangeOperation implements Operation, Authored {
 type BugConnection {
   # A list of edges.
   edges: [BugEdge!]!
-
+  nodes: [Bug!]!
   # Information to aid in pagination.
   pageInfo: PageInfo!
-
   # Identifies the total count of items in the connection.
   totalCount: Int!
 }
@@ -2665,7 +2807,6 @@ type BugConnection {
 type BugEdge {
   # A cursor for use in pagination.
   cursor: String!
-
   # The item at the end of the edge.
   node: Bug!
 }
@@ -2679,13 +2820,40 @@ type Bug {
   # A list of labels associated with the repository.
   labels: [Label!]!
 
-  comments(input: ConnectionInput!): CommentConnection!
+  comments(
+    # Returns the elements in the list that come after the specified cursor.
+    after: String
+    # Returns the elements in the list that come before the specified cursor.
+    before: String
+    # Returns the first _n_ elements from the list.
+    first: Int
+    # Returns the last _n_ elements from the list.
+    last: Int
+  ): CommentConnection!
 
-  operations(input: ConnectionInput!): OperationConnection!
+  operations(
+    # Returns the elements in the list that come after the specified cursor.
+    after: String
+    # Returns the elements in the list that come before the specified cursor.
+    before: String
+    # Returns the first _n_ elements from the list.
+    first: Int
+    # Returns the last _n_ elements from the list.
+    last: Int
+  ): OperationConnection!
 }
 
 type Repository {
-  allBugs(input: ConnectionInput!): BugConnection!
+  allBugs(
+    # Returns the elements in the list that come after the specified cursor.
+    after: String
+    # Returns the elements in the list that come before the specified cursor.
+    before: String
+    # Returns the first _n_ elements from the list.
+    first: Int
+    # Returns the last _n_ elements from the list.
+    last: Int
+  ): BugConnection!
   bug(prefix: String!): Bug
 }
 

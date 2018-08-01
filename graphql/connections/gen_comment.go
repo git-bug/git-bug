@@ -12,13 +12,19 @@ import (
 )
 
 type BugCommentEdger func(value bug.Comment, offset int) Edge
-type BugCommentConMaker func(edges []models.CommentEdge, info models.PageInfo, totalCount int) models.CommentConnection
+
+type BugCommentConMaker func(
+	edges []models.CommentEdge,
+	nodes []bug.Comment,
+	info models.PageInfo,
+	totalCount int) (models.CommentConnection, error)
 
 func BugCommentCon(source []bug.Comment, edger BugCommentEdger, conMaker BugCommentConMaker, input models.ConnectionInput) (models.CommentConnection, error) {
+	var nodes []bug.Comment
 	var edges []models.CommentEdge
 	var pageInfo models.PageInfo
 
-	emptyCon := conMaker(edges, pageInfo, 0)
+	emptyCon, _ := conMaker(edges, nodes, pageInfo, 0)
 
 	offset := 0
 
@@ -44,9 +50,11 @@ func BugCommentCon(source []bug.Comment, edger BugCommentEdger, conMaker BugComm
 			}
 
 			edges = append(edges, edge.(models.CommentEdge))
+			nodes = append(nodes, value)
 		}
 	} else {
 		edges = make([]models.CommentEdge, len(source))
+		nodes = source
 
 		for i, value := range source {
 			edges[i] = edger(value, i+offset).(models.CommentEdge)
@@ -61,6 +69,7 @@ func BugCommentCon(source []bug.Comment, edger BugCommentEdger, conMaker BugComm
 		if len(edges) > *input.First {
 			// Slice result to be of length first by removing edges from the end
 			edges = edges[:*input.First]
+			nodes = nodes[:*input.First]
 			pageInfo.HasNextPage = true
 		}
 	}
@@ -73,11 +82,10 @@ func BugCommentCon(source []bug.Comment, edger BugCommentEdger, conMaker BugComm
 		if len(edges) > *input.Last {
 			// Slice result to be of length last by removing edges from the start
 			edges = edges[len(edges)-*input.Last:]
+			nodes = nodes[len(nodes)-*input.Last:]
 			pageInfo.HasPreviousPage = true
 		}
 	}
 
-	con := conMaker(edges, pageInfo, len(source))
-
-	return con, nil
+	return conMaker(edges, nodes, pageInfo, len(source))
 }

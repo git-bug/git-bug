@@ -12,13 +12,19 @@ import (
 )
 
 type BugOperationEdger func(value bug.Operation, offset int) Edge
-type BugOperationConMaker func(edges []models.OperationEdge, info models.PageInfo, totalCount int) models.OperationConnection
+
+type BugOperationConMaker func(
+	edges []models.OperationEdge,
+	nodes []bug.Operation,
+	info models.PageInfo,
+	totalCount int) (models.OperationConnection, error)
 
 func BugOperationCon(source []bug.Operation, edger BugOperationEdger, conMaker BugOperationConMaker, input models.ConnectionInput) (models.OperationConnection, error) {
+	var nodes []bug.Operation
 	var edges []models.OperationEdge
 	var pageInfo models.PageInfo
 
-	emptyCon := conMaker(edges, pageInfo, 0)
+	emptyCon, _ := conMaker(edges, nodes, pageInfo, 0)
 
 	offset := 0
 
@@ -44,9 +50,11 @@ func BugOperationCon(source []bug.Operation, edger BugOperationEdger, conMaker B
 			}
 
 			edges = append(edges, edge.(models.OperationEdge))
+			nodes = append(nodes, value)
 		}
 	} else {
 		edges = make([]models.OperationEdge, len(source))
+		nodes = source
 
 		for i, value := range source {
 			edges[i] = edger(value, i+offset).(models.OperationEdge)
@@ -61,6 +69,7 @@ func BugOperationCon(source []bug.Operation, edger BugOperationEdger, conMaker B
 		if len(edges) > *input.First {
 			// Slice result to be of length first by removing edges from the end
 			edges = edges[:*input.First]
+			nodes = nodes[:*input.First]
 			pageInfo.HasNextPage = true
 		}
 	}
@@ -73,11 +82,10 @@ func BugOperationCon(source []bug.Operation, edger BugOperationEdger, conMaker B
 		if len(edges) > *input.Last {
 			// Slice result to be of length last by removing edges from the start
 			edges = edges[len(edges)-*input.Last:]
+			nodes = nodes[len(nodes)-*input.Last:]
 			pageInfo.HasPreviousPage = true
 		}
 	}
 
-	con := conMaker(edges, pageInfo, len(source))
-
-	return con, nil
+	return conMaker(edges, nodes, pageInfo, len(source))
 }

@@ -5,29 +5,12 @@ scalar Label
 type PageInfo {
   # When paginating forwards, are there more items?
   hasNextPage: Boolean!
-
   # When paginating backwards, are there more items?
   hasPreviousPage: Boolean!
-
   # When paginating backwards, the cursor to continue.
 #  startCursor: String
-
   # When paginating forwards, the cursor to continue.
 #  endCursor: String
-}
-
-input ConnectionInput {
-  # Returns the elements in the list that come after the specified cursor.
-  after: String
-
-  # Returns the elements in the list that come before the specified cursor.
-  before: String
-
-  # Returns the first _n_ elements from the list.
-  first: Int
-
-  # Returns the last _n_ elements from the list.
-  last: Int
 }
 
 # Represents an person in a git object.
@@ -39,9 +22,9 @@ type Person {
   name: String
 }
 
-
 type CommentConnection {
   edges: [CommentEdge!]!
+  nodes: [Comment!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
@@ -73,6 +56,7 @@ interface Authored {
 
 type OperationConnection {
   edges: [OperationEdge!]!
+  nodes: [Operation!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
@@ -86,7 +70,6 @@ type OperationEdge {
 interface Operation {
   # The operations author.
   author: Person!
-
   # The datetime when this operation was issued.
   date: Time!
 }
@@ -132,10 +115,9 @@ type LabelChangeOperation implements Operation, Authored {
 type BugConnection {
   # A list of edges.
   edges: [BugEdge!]!
-
+  nodes: [Bug!]!
   # Information to aid in pagination.
   pageInfo: PageInfo!
-
   # Identifies the total count of items in the connection.
   totalCount: Int!
 }
@@ -144,7 +126,6 @@ type BugConnection {
 type BugEdge {
   # A cursor for use in pagination.
   cursor: String!
-
   # The item at the end of the edge.
   node: Bug!
 }
@@ -158,13 +139,40 @@ type Bug {
   # A list of labels associated with the repository.
   labels: [Label!]!
 
-  comments(input: ConnectionInput!): CommentConnection!
+  comments(
+    # Returns the elements in the list that come after the specified cursor.
+    after: String
+    # Returns the elements in the list that come before the specified cursor.
+    before: String
+    # Returns the first _n_ elements from the list.
+    first: Int
+    # Returns the last _n_ elements from the list.
+    last: Int
+  ): CommentConnection!
 
-  operations(input: ConnectionInput!): OperationConnection!
+  operations(
+    # Returns the elements in the list that come after the specified cursor.
+    after: String
+    # Returns the elements in the list that come before the specified cursor.
+    before: String
+    # Returns the first _n_ elements from the list.
+    first: Int
+    # Returns the last _n_ elements from the list.
+    last: Int
+  ): OperationConnection!
 }
 
 type Repository {
-  allBugs(input: ConnectionInput!): BugConnection!
+  allBugs(
+    # Returns the elements in the list that come after the specified cursor.
+    after: String
+    # Returns the elements in the list that come before the specified cursor.
+    before: String
+    # Returns the first _n_ elements from the list.
+    first: Int
+    # Returns the last _n_ elements from the list.
+    last: Int
+  ): BugConnection!
   bug(prefix: String!): Bug
 }
 

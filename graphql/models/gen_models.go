@@ -12,9 +12,10 @@ import (
 
 type Authored interface{}
 type BugConnection struct {
-	Edges      []BugEdge `json:"edges"`
-	PageInfo   PageInfo  `json:"pageInfo"`
-	TotalCount int       `json:"totalCount"`
+	Edges      []BugEdge      `json:"edges"`
+	Nodes      []bug.Snapshot `json:"nodes"`
+	PageInfo   PageInfo       `json:"pageInfo"`
+	TotalCount int            `json:"totalCount"`
 }
 type BugEdge struct {
 	Cursor string       `json:"cursor"`
@@ -22,6 +23,7 @@ type BugEdge struct {
 }
 type CommentConnection struct {
 	Edges      []CommentEdge `json:"edges"`
+	Nodes      []bug.Comment `json:"nodes"`
 	PageInfo   PageInfo      `json:"pageInfo"`
 	TotalCount int           `json:"totalCount"`
 }
@@ -29,21 +31,15 @@ type CommentEdge struct {
 	Cursor string      `json:"cursor"`
 	Node   bug.Comment `json:"node"`
 }
-type ConnectionInput struct {
-	After  *string `json:"after"`
-	Before *string `json:"before"`
-	First  *int    `json:"first"`
-	Last   *int    `json:"last"`
-}
-type Operation interface{}
 type OperationConnection struct {
 	Edges      []OperationEdge `json:"edges"`
+	Nodes      []bug.Operation `json:"nodes"`
 	PageInfo   PageInfo        `json:"pageInfo"`
 	TotalCount int             `json:"totalCount"`
 }
 type OperationEdge struct {
-	Cursor string    `json:"cursor"`
-	Node   Operation `json:"node"`
+	Cursor string        `json:"cursor"`
+	Node   bug.Operation `json:"node"`
 }
 type PageInfo struct {
 	HasNextPage     bool `json:"hasNextPage"`

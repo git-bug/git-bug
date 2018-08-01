@@ -9,7 +9,13 @@ import (
 
 type repoResolver struct{}
 
-func (repoResolver) AllBugs(ctx context.Context, obj *models.Repository, input models.ConnectionInput) (models.BugConnection, error) {
+func (repoResolver) AllBugs(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int) (models.BugConnection, error) {
+	input := models.ConnectionInput{
+		Before: before,
+		After:  after,
+		First:  first,
+		Last:   last,
+	}
 
 	// Simply pass a []string with the ids to the pagination algorithm
 	source, err := obj.Repo.AllBugIds()
@@ -27,8 +33,9 @@ func (repoResolver) AllBugs(ctx context.Context, obj *models.Repository, input m
 	}
 
 	// The conMaker will finally load and compile bugs from git to replace the selected edges
-	conMaker := func(lazyBugEdges []connections.LazyBugEdge, info models.PageInfo, totalCount int) (models.BugConnection, error) {
+	conMaker := func(lazyBugEdges []connections.LazyBugEdge, lazyNode []string, info models.PageInfo, totalCount int) (models.BugConnection, error) {
 		edges := make([]models.BugEdge, len(lazyBugEdges))
+		nodes := make([]bug.Snapshot, len(lazyBugEdges))
 
 		for i, lazyBugEdge := range lazyBugEdges {
 			b, err := obj.Repo.ResolveBug(lazyBugEdge.Id)
@@ -43,10 +50,12 @@ func (repoResolver) AllBugs(ctx context.Context, obj *models.Repository, input m
 				Cursor: lazyBugEdge.Cursor,
 				Node:   *snap,
 			}
+			nodes[i] = *snap
 		}
 
 		return models.BugConnection{
 			Edges:      edges,
+			Nodes:      nodes,
 			PageInfo:   info,
 			TotalCount: totalCount,
 		}, nil
@@ -63,11 +72,4 @@ func (repoResolver) Bug(ctx context.Context, obj *models.Repository, prefix stri
 	}
 
 	return b.Snapshot(), nil
-}
-
-func (repoResolver) Mutation(ctx context.Context, obj *models.Repository) (models.RepositoryMutation, error) {
-	return models.RepositoryMutation{
-		Repo:  obj.Repo,
-		Cache: obj.Cache,
-	}, nil
 }

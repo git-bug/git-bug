@@ -11,13 +11,19 @@ import (
 )
 
 type StringEdger func(value string, offset int) Edge
-type StringConMaker func(edges []LazyBugEdge, info models.PageInfo, totalCount int) (models.BugConnection, error)
+
+type StringConMaker func(
+	edges []LazyBugEdge,
+	nodes []string,
+	info models.PageInfo,
+	totalCount int) (models.BugConnection, error)
 
 func StringCon(source []string, edger StringEdger, conMaker StringConMaker, input models.ConnectionInput) (models.BugConnection, error) {
+	var nodes []string
 	var edges []LazyBugEdge
 	var pageInfo models.PageInfo
 
-	emptyCon, _ := conMaker(edges, pageInfo, 0)
+	emptyCon, _ := conMaker(edges, nodes, pageInfo, 0)
 
 	offset := 0
 
@@ -43,9 +49,11 @@ func StringCon(source []string, edger StringEdger, conMaker StringConMaker, inpu
 			}
 
 			edges = append(edges, edge.(LazyBugEdge))
+			nodes = append(nodes, value)
 		}
 	} else {
 		edges = make([]LazyBugEdge, len(source))
+		nodes = source
 
 		for i, value := range source {
 			edges[i] = edger(value, i+offset).(LazyBugEdge)
@@ -60,6 +68,7 @@ func StringCon(source []string, edger StringEdger, conMaker StringConMaker, inpu
 		if len(edges) > *input.First {
 			// Slice result to be of length first by removing edges from the end
 			edges = edges[:*input.First]
+			nodes = nodes[:*input.First]
 			pageInfo.HasNextPage = true
 		}
 	}
@@ -72,9 +81,10 @@ func StringCon(source []string, edger StringEdger, conMaker StringConMaker, inpu
 		if len(edges) > *input.Last {
 			// Slice result to be of length last by removing edges from the start
 			edges = edges[len(edges)-*input.Last:]
+			nodes = nodes[len(nodes)-*input.Last:]
 			pageInfo.HasPreviousPage = true
 		}
 	}
 
-	return conMaker(edges, pageInfo, len(source))
+	return conMaker(edges, nodes, pageInfo, len(source))
 }

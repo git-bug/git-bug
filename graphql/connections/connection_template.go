@@ -11,13 +11,19 @@ type EdgeType generic.Type
 type ConnectionType generic.Type
 
 type NodeTypeEdger func(value NodeType, offset int) Edge
-type NodeTypeConMaker func(edges []EdgeType, info models.PageInfo, totalCount int) (ConnectionType, error)
+
+type NodeTypeConMaker func(
+	edges []EdgeType,
+	nodes []NodeType,
+	info models.PageInfo,
+	totalCount int) (ConnectionType, error)
 
 func NodeTypeCon(source []NodeType, edger NodeTypeEdger, conMaker NodeTypeConMaker, input models.ConnectionInput) (ConnectionType, error) {
+	var nodes []NodeType
 	var edges []EdgeType
 	var pageInfo models.PageInfo
 
-	emptyCon, _ := conMaker(edges, pageInfo, 0)
+	emptyCon, _ := conMaker(edges, nodes, pageInfo, 0)
 
 	offset := 0
 
@@ -43,9 +49,11 @@ func NodeTypeCon(source []NodeType, edger NodeTypeEdger, conMaker NodeTypeConMak
 			}
 
 			edges = append(edges, edge.(EdgeType))
+			nodes = append(nodes, value)
 		}
 	} else {
 		edges = make([]EdgeType, len(source))
+		nodes = source
 
 		for i, value := range source {
 			edges[i] = edger(value, i+offset).(EdgeType)
@@ -60,6 +68,7 @@ func NodeTypeCon(source []NodeType, edger NodeTypeEdger, conMaker NodeTypeConMak
 		if len(edges) > *input.First {
 			// Slice result to be of length first by removing edges from the end
 			edges = edges[:*input.First]
+			nodes = nodes[:*input.First]
 			pageInfo.HasNextPage = true
 		}
 	}
@@ -72,9 +81,10 @@ func NodeTypeCon(source []NodeType, edger NodeTypeEdger, conMaker NodeTypeConMak
 		if len(edges) > *input.Last {
 			// Slice result to be of length last by removing edges from the start
 			edges = edges[len(edges)-*input.Last:]
+			nodes = nodes[len(nodes)-*input.Last:]
 			pageInfo.HasPreviousPage = true
 		}
 	}
 
-	return conMaker(edges, pageInfo, len(source))
+	return conMaker(edges, nodes, pageInfo, len(source))
 }

@@ -13,7 +13,14 @@ func (bugResolver) Status(ctx context.Context, obj *bug.Snapshot) (models.Status
 	return convertStatus(obj.Status)
 }
 
-func (bugResolver) Comments(ctx context.Context, obj *bug.Snapshot, input models.ConnectionInput) (models.CommentConnection, error) {
+func (bugResolver) Comments(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (models.CommentConnection, error) {
+	input := models.ConnectionInput{
+		Before: before,
+		After:  after,
+		First:  first,
+		Last:   last,
+	}
+
 	edger := func(comment bug.Comment, offset int) connections.Edge {
 		return models.CommentEdge{
 			Node:   comment,
@@ -21,31 +28,40 @@ func (bugResolver) Comments(ctx context.Context, obj *bug.Snapshot, input models
 		}
 	}
 
-	conMaker := func(edges []models.CommentEdge, info models.PageInfo, totalCount int) models.CommentConnection {
+	conMaker := func(edges []models.CommentEdge, nodes []bug.Comment, info models.PageInfo, totalCount int) (models.CommentConnection, error) {
 		return models.CommentConnection{
 			Edges:      edges,
+			Nodes:      nodes,
 			PageInfo:   info,
 			TotalCount: totalCount,
-		}
+		}, nil
 	}
 
 	return connections.BugCommentCon(obj.Comments, edger, conMaker, input)
 }
 
-func (bugResolver) Operations(ctx context.Context, obj *bug.Snapshot, input models.ConnectionInput) (models.OperationConnection, error) {
+func (bugResolver) Operations(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (models.OperationConnection, error) {
+	input := models.ConnectionInput{
+		Before: before,
+		After:  after,
+		First:  first,
+		Last:   last,
+	}
+
 	edger := func(op bug.Operation, offset int) connections.Edge {
 		return models.OperationEdge{
-			Node:   op.(models.Operation),
+			Node:   op,
 			Cursor: connections.OffsetToCursor(offset),
 		}
 	}
 
-	conMaker := func(edges []models.OperationEdge, info models.PageInfo, totalCount int) models.OperationConnection {
+	conMaker := func(edges []models.OperationEdge, nodes []bug.Operation, info models.PageInfo, totalCount int) (models.OperationConnection, error) {
 		return models.OperationConnection{
 			Edges:      edges,
+			Nodes:      nodes,
 			PageInfo:   info,
 			TotalCount: totalCount,
-		}
+		}, nil
 	}
 
 	return connections.BugOperationCon(obj.Operations, edger, conMaker, input)
