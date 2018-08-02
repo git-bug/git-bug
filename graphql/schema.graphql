@@ -1,5 +1,6 @@
 scalar Time
 scalar Label
+scalar Hash
 
 # Information about pagination in a connection.
 type PageInfo {
@@ -41,6 +42,9 @@ type Comment implements Authored {
 
   # The message of this comment.
   message: String!
+
+  # All media's hash referenced in this comment
+  files: [Hash!]!
 }
 
 enum Status {
@@ -80,6 +84,7 @@ type CreateOperation implements Operation, Authored {
 
   title: String!
   message: String!
+  files: [Hash!]!
 }
 
 type SetTitleOperation implements Operation, Authored {
@@ -94,6 +99,7 @@ type AddCommentOperation implements Operation, Authored {
   date: Time!
 
   message: String!
+  files: [Hash!]!
 }
 
 type SetStatusOperation implements Operation, Authored {
@@ -183,9 +189,9 @@ type Query {
 }
 
 type Mutation {
-  newBug(repoRef: String, title: String!, message: String!): Bug!
+  newBug(repoRef: String, title: String!, message: String!, files: [Hash!]): Bug!
 
-  addComment(repoRef: String, prefix: String!, message: String!): Bug!
+  addComment(repoRef: String, prefix: String!, message: String!, files: [Hash!]): Bug!
   changeLabels(repoRef: String, prefix: String!, added: [String!], removed: [String!]): Bug!
   open(repoRef: String, prefix: String!): Bug!
   close(repoRef: String, prefix: String!): Bug!

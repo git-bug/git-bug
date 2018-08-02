@@ -11,7 +11,7 @@ func (l Label) String() string {
 	return string(l)
 }
 
-// UnmarshalGQL implements the graphql.Marshaler interface
+// UnmarshalGQL implements the graphql.Unmarshaler interface
 func (l *Label) UnmarshalGQL(v interface{}) error {
 	_, ok := v.(string)
 	if !ok {

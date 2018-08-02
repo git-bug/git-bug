@@ -12,6 +12,7 @@ import (
 	bug "github.com/MichaelMure/git-bug/bug"
 	operations "github.com/MichaelMure/git-bug/bug/operations"
 	models "github.com/MichaelMure/git-bug/graphql/models"
+	util "github.com/MichaelMure/git-bug/util"
 	graphql "github.com/vektah/gqlgen/graphql"
 	introspection "github.com/vektah/gqlgen/neelance/introspection"
 	query "github.com/vektah/gqlgen/neelance/query"
@@ -40,8 +41,8 @@ type Resolvers interface {
 
 	LabelChangeOperation_date(ctx context.Context, obj *operations.LabelChangeOperation) (time.Time, error)
 
-	Mutation_newBug(ctx context.Context, repoRef *string, title string, message string) (bug.Snapshot, error)
-	Mutation_addComment(ctx context.Context, repoRef *string, prefix string, message string) (bug.Snapshot, error)
+	Mutation_newBug(ctx context.Context, repoRef *string, title string, message string, files []util.Hash) (bug.Snapshot, error)
+	Mutation_addComment(ctx context.Context, repoRef *string, prefix string, message string, files []util.Hash) (bug.Snapshot, error)
 	Mutation_changeLabels(ctx context.Context, repoRef *string, prefix string, added []string, removed []string) (bug.Snapshot, error)
 	Mutation_open(ctx context.Context, repoRef *string, prefix string) (bug.Snapshot, error)
 	Mutation_close(ctx context.Context, repoRef *string, prefix string) (bug.Snapshot, error)
@@ -87,8 +88,8 @@ type LabelChangeOperationResolver interface {
 	Date(ctx context.Context, obj *operations.LabelChangeOperation) (time.Time, error)
 }
 type MutationResolver interface {
-	NewBug(ctx context.Context, repoRef *string, title string, message string) (bug.Snapshot, error)
-	AddComment(ctx context.Context, repoRef *string, prefix string, message string) (bug.Snapshot, error)
+	NewBug(ctx context.Context, repoRef *string, title string, message string, files []util.Hash) (bug.Snapshot, error)
+	AddComment(ctx context.Context, repoRef *string, prefix string, message string, files []util.Hash) (bug.Snapshot, error)
 	ChangeLabels(ctx context.Context, repoRef *string, prefix string, added []string, removed []string) (bug.Snapshot, error)
 	Open(ctx context.Context, repoRef *string, prefix string) (bug.Snapshot, error)
 	Close(ctx context.Context, repoRef *string, prefix string) (bug.Snapshot, error)
@@ -139,12 +140,12 @@ func (s shortMapper) LabelChangeOperation_date(ctx context.Context, obj *operati
 	return s.r.LabelChangeOperation().Date(ctx, obj)
 }
 
-func (s shortMapper) Mutation_newBug(ctx context.Context, repoRef *string, title string, message string) (bug.Snapshot, error) {
-	return s.r.Mutation().NewBug(ctx, repoRef, title, message)
+func (s shortMapper) Mutation_newBug(ctx context.Context, repoRef *string, title string, message string, files []util.Hash) (bug.Snapshot, error) {
+	return s.r.Mutation().NewBug(ctx, repoRef, title, message, files)
 }
 
-func (s shortMapper) Mutation_addComment(ctx context.Context, repoRef *string, prefix string, message string) (bug.Snapshot, error) {
-	return s.r.Mutation().AddComment(ctx, repoRef, prefix, message)
+func (s shortMapper) Mutation_addComment(ctx context.Context, repoRef *string, prefix string, message string, files []util.Hash) (bug.Snapshot, error) {
+	return s.r.Mutation().AddComment(ctx, repoRef, prefix, message, files)
 }
 
 func (s shortMapper) Mutation_changeLabels(ctx context.Context, repoRef *string, prefix string, added []string, removed []string) (bug.Snapshot, error) {
@@ -264,6 +265,8 @@ func (ec *executionContext) _AddCommentOperation(ctx context.Context, sel []quer
 			out.Values[i] = ec._AddCommentOperation_date(ctx, field, obj)
 		case "message":
 			out.Values[i] = ec._AddCommentOperation_message(ctx, field, obj)
+		case "files":
+			out.Values[i] = ec._AddCommentOperation_files(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -322,6 +325,26 @@ func (ec *executionContext) _AddCommentOperation_message(ctx context.Context, fi
 	defer rctx.Pop()
 	res := obj.Message
 	return graphql.MarshalString(res)
+}
+
+func (ec *executionContext) _AddCommentOperation_files(ctx context.Context, field graphql.CollectedField, obj *operations.AddCommentOperation) graphql.Marshaler {
+	rctx := graphql.GetResolverContext(ctx)
+	rctx.Object = "AddCommentOperation"
+	rctx.Args = nil
+	rctx.Field = field
+	rctx.PushField(field.Alias)
+	defer rctx.Pop()
+	res := obj.Files()
+	arr1 := graphql.Array{}
+	for idx1 := range res {
+		arr1 = append(arr1, func() graphql.Marshaler {
+			rctx := graphql.GetResolverContext(ctx)
+			rctx.PushIndex(idx1)
+			defer rctx.Pop()
+			return res[idx1]
+		}())
+	}
+	return arr1
 }
 
 var bugImplementors = []string{"Bug"}
@@ -818,6 +841,8 @@ func (ec *executionContext) _Comment(ctx context.Context, sel []query.Selection,
 			out.Values[i] = ec._Comment_author(ctx, field, obj)
 		case "message":
 			out.Values[i] = ec._Comment_message(ctx, field, obj)
+		case "files":
+			out.Values[i] = ec._Comment_files(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -846,6 +871,26 @@ func (ec *executionContext) _Comment_message(ctx context.Context, field graphql.
 	defer rctx.Pop()
 	res := obj.Message
 	return graphql.MarshalString(res)
+}
+
+func (ec *executionContext) _Comment_files(ctx context.Context, field graphql.CollectedField, obj *bug.Comment) graphql.Marshaler {
+	rctx := graphql.GetResolverContext(ctx)
+	rctx.Object = "Comment"
+	rctx.Args = nil
+	rctx.Field = field
+	rctx.PushField(field.Alias)
+	defer rctx.Pop()
+	res := obj.Files
+	arr1 := graphql.Array{}
+	for idx1 := range res {
+		arr1 = append(arr1, func() graphql.Marshaler {
+			rctx := graphql.GetResolverContext(ctx)
+			rctx.PushIndex(idx1)
+			defer rctx.Pop()
+			return res[idx1]
+		}())
+	}
+	return arr1
 }
 
 var commentConnectionImplementors = []string{"CommentConnection"}
@@ -1007,6 +1052,8 @@ func (ec *executionContext) _CreateOperation(ctx context.Context, sel []query.Se
 			out.Values[i] = ec._CreateOperation_title(ctx, field, obj)
 		case "message":
 			out.Values[i] = ec._CreateOperation_message(ctx, field, obj)
+		case "files":
+			out.Values[i] = ec._CreateOperation_files(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -1076,6 +1123,26 @@ func (ec *executionContext) _CreateOperation_message(ctx context.Context, field 
 	defer rctx.Pop()
 	res := obj.Message
 	return graphql.MarshalString(res)
+}
+
+func (ec *executionContext) _CreateOperation_files(ctx context.Context, field graphql.CollectedField, obj *operations.CreateOperation) graphql.Marshaler {
+	rctx := graphql.GetResolverContext(ctx)
+	rctx.Object = "CreateOperation"
+	rctx.Args = nil
+	rctx.Field = field
+	rctx.PushField(field.Alias)
+	defer rctx.Pop()
+	res := obj.Files()
+	arr1 := graphql.Array{}
+	for idx1 := range res {
+		arr1 = append(arr1, func() graphql.Marshaler {
+			rctx := graphql.GetResolverContext(ctx)
+			rctx.PushIndex(idx1)
+			defer rctx.Pop()
+			return res[idx1]
+		}())
+	}
+	return arr1
 }
 
 var labelChangeOperationImplementors = []string{"LabelChangeOperation", "Operation", "Authored"}
@@ -1264,6 +1331,25 @@ func (ec *executionContext) _Mutation_newBug(ctx context.Context, field graphql.
 		}
 	}
 	args["message"] = arg2
+	var arg3 []util.Hash
+	if tmp, ok := field.Args["files"]; ok {
+		var err error
+		var rawIf1 []interface{}
+		if tmp != nil {
+			if tmp1, ok := tmp.([]interface{}); ok {
+				rawIf1 = tmp1
+			}
+		}
+		arg3 = make([]util.Hash, len(rawIf1))
+		for idx1 := range rawIf1 {
+			err = (&arg3[idx1]).UnmarshalGQL(rawIf1[idx1])
+		}
+		if err != nil {
+			ec.Error(ctx, err)
+			return graphql.Null
+		}
+	}
+	args["files"] = arg3
 	rctx := graphql.GetResolverContext(ctx)
 	rctx.Object = "Mutation"
 	rctx.Args = args
@@ -1271,7 +1357,7 @@ func (ec *executionContext) _Mutation_newBug(ctx context.Context, field graphql.
 	rctx.PushField(field.Alias)
 	defer rctx.Pop()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(ctx context.Context) (interface{}, error) {
-		return ec.resolvers.Mutation_newBug(ctx, args["repoRef"].(*string), args["title"].(string), args["message"].(string))
+		return ec.resolvers.Mutation_newBug(ctx, args["repoRef"].(*string), args["title"].(string), args["message"].(string), args["files"].([]util.Hash))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1321,6 +1407,25 @@ func (ec *executionContext) _Mutation_addComment(ctx context.Context, field grap
 		}
 	}
 	args["message"] = arg2
+	var arg3 []util.Hash
+	if tmp, ok := field.Args["files"]; ok {
+		var err error
+		var rawIf1 []interface{}
+		if tmp != nil {
+			if tmp1, ok := tmp.([]interface{}); ok {
+				rawIf1 = tmp1
+			}
+		}
+		arg3 = make([]util.Hash, len(rawIf1))
+		for idx1 := range rawIf1 {
+			err = (&arg3[idx1]).UnmarshalGQL(rawIf1[idx1])
+		}
+		if err != nil {
+			ec.Error(ctx, err)
+			return graphql.Null
+		}
+	}
+	args["files"] = arg3
 	rctx := graphql.GetResolverContext(ctx)
 	rctx.Object = "Mutation"
 	rctx.Args = args
@@ -1328,7 +1433,7 @@ func (ec *executionContext) _Mutation_addComment(ctx context.Context, field grap
 	rctx.PushField(field.Alias)
 	defer rctx.Pop()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(ctx context.Context) (interface{}, error) {
-		return ec.resolvers.Mutation_addComment(ctx, args["repoRef"].(*string), args["prefix"].(string), args["message"].(string))
+		return ec.resolvers.Mutation_addComment(ctx, args["repoRef"].(*string), args["prefix"].(string), args["message"].(string), args["files"].([]util.Hash))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3108,6 +3213,7 @@ func (ec *executionContext) introspectType(name string) *introspection.Type {
 
 var parsedSchema = schema.MustParse(`scalar Time
 scalar Label
+scalar Hash
 
 # Information about pagination in a connection.
 type PageInfo {
@@ -3149,6 +3255,9 @@ type Comment implements Authored {
 
   # The message of this comment.
   message: String!
+
+  # All media's hash referenced in this comment
+  files: [Hash!]!
 }
 
 enum Status {
@@ -3188,6 +3297,7 @@ type CreateOperation implements Operation, Authored {
 
   title: String!
   message: String!
+  files: [Hash!]!
 }
 
 type SetTitleOperation implements Operation, Authored {
@@ -3202,6 +3312,7 @@ type AddCommentOperation implements Operation, Authored {
   date: Time!
 
   message: String!
+  files: [Hash!]!
 }
 
 type SetStatusOperation implements Operation, Authored {
@@ -3291,9 +3402,9 @@ type Query {
 }
 
 type Mutation {
-  newBug(repoRef: String, title: String!, message: String!): Bug!
+  newBug(repoRef: String, title: String!, message: String!, files: [Hash!]): Bug!
 
-  addComment(repoRef: String, prefix: String!, message: String!): Bug!
+  addComment(repoRef: String, prefix: String!, message: String!, files: [Hash!]): Bug!
   changeLabels(repoRef: String, prefix: String!, added: [String!], removed: [String!]): Bug!
   open(repoRef: String, prefix: String!): Bug!
   close(repoRef: String, prefix: String!): Bug!

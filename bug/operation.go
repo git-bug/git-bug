@@ -1,6 +1,9 @@
 package bug
 
-import "time"
+import (
+	"github.com/MichaelMure/git-bug/util"
+	"time"
+)
 
 type OperationType int
 
@@ -17,6 +20,7 @@ type Operation interface {
 	OpType() OperationType
 	Time() time.Time
 	Apply(snapshot Snapshot) Snapshot
+	Files() []util.Hash
 
 	// TODO: data validation (ex: a title is a single line)
 	// Validate() bool

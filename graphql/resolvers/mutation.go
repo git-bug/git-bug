@@ -5,6 +5,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/util"
 )
 
 type mutationResolver struct {
@@ -19,13 +20,13 @@ func (r mutationResolver) getRepo(repoRef *string) (cache.RepoCacher, error) {
 	return r.cache.DefaultRepo()
 }
 
-func (r mutationResolver) NewBug(ctx context.Context, repoRef *string, title string, message string) (bug.Snapshot, error) {
+func (r mutationResolver) NewBug(ctx context.Context, repoRef *string, title string, message string, files []util.Hash) (bug.Snapshot, error) {
 	repo, err := r.getRepo(repoRef)
 	if err != nil {
 		return bug.Snapshot{}, err
 	}
 
-	b, err := repo.NewBug(title, message)
+	b, err := repo.NewBugWithFiles(title, message, files)
 	if err != nil {
 		return bug.Snapshot{}, err
 	}
@@ -56,7 +57,7 @@ func (r mutationResolver) Commit(ctx context.Context, repoRef *string, prefix st
 	return *snap, nil
 }
 
-func (r mutationResolver) AddComment(ctx context.Context, repoRef *string, prefix string, message string) (bug.Snapshot, error) {
+func (r mutationResolver) AddComment(ctx context.Context, repoRef *string, prefix string, message string, files []util.Hash) (bug.Snapshot, error) {
 	repo, err := r.getRepo(repoRef)
 	if err != nil {
 		return bug.Snapshot{}, err
@@ -67,7 +68,7 @@ func (r mutationResolver) AddComment(ctx context.Context, repoRef *string, prefi
 		return bug.Snapshot{}, err
 	}
 
-	err = b.AddComment(message)
+	err = b.AddCommentWithFiles(message, files)
 	if err != nil {
 		return bug.Snapshot{}, err
 	}

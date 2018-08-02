@@ -259,7 +259,7 @@ func (bug *Bug) Append(op Operation) {
 // Write the staging area in Git and move the operations to the packs
 func (bug *Bug) Commit(repo repository.Repo) error {
 	if bug.staging.IsEmpty() {
-		return fmt.Errorf("can't commit an empty bug")
+		return fmt.Errorf("can't commit a bug with no pending operation")
 	}
 
 	// Write the Ops as a Git blob containing the serialized array
@@ -272,14 +272,31 @@ func (bug *Bug) Commit(repo repository.Repo) error {
 		bug.rootPack = hash
 	}
 
-	// Write a Git tree referencing this blob
-	hash, err = repo.StoreTree([]repository.TreeEntry{
+	// Make a Git tree referencing this blob and all needed files
+	tree := []repository.TreeEntry{
 		// the last pack of ops
 		{ObjectType: repository.Blob, Hash: hash, Name: opsEntryName},
 		// always the first pack of ops (might be the same)
 		{ObjectType: repository.Blob, Hash: bug.rootPack, Name: rootEntryName},
-	})
+	}
 
+	counter := 0
+	added := make(map[util.Hash]interface{})
+	for _, ops := range bug.staging.Operations {
+		for _, file := range ops.Files() {
+			if _, has := added[file]; !has {
+				tree = append(tree, repository.TreeEntry{
+					ObjectType: repository.Blob,
+					Hash:       file,
+					Name:       fmt.Sprintf("file%d", counter),
+				})
+				counter++
+				added[file] = struct{}{}
+			}
+		}
+	}
+
+	hash, err = repo.StoreTree(tree)
 	if err != nil {
 		return err
 	}

@@ -17,6 +17,8 @@ models:
     model: github.com/MichaelMure/git-bug/bug.Person
   Label:
     model: github.com/MichaelMure/git-bug/bug.Label
+  Hash:
+    model: github.com/MichaelMure/git-bug/util.Hash
   Operation:
     model: github.com/MichaelMure/git-bug/bug.Operation
   CreateOperation:

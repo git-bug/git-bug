@@ -64,7 +64,7 @@ func (sb *showBug) layout(g *gocui.Gui) error {
 		v.Frame = false
 		v.BgColor = gocui.ColorBlue
 
-		fmt.Fprintf(v, "[q] Return [c] Add comment [t] Change title")
+		fmt.Fprintf(v, "[q] Return [c] Comment [t] Change title")
 	}
 
 	_, err = g.SetCurrentView(showBugView)

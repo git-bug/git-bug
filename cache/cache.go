@@ -7,6 +7,7 @@ import (
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/bug/operations"
 	"github.com/MichaelMure/git-bug/repository"
+	"github.com/MichaelMure/git-bug/util"
 )
 
 type Cacher interface {
@@ -26,6 +27,7 @@ type RepoCacher interface {
 
 	// Mutations
 	NewBug(title string, message string) (BugCacher, error)
+	NewBugWithFiles(title string, message string, files []util.Hash) (BugCacher, error)
 }
 
 type BugCacher interface {
@@ -34,6 +36,7 @@ type BugCacher interface {
 
 	// Mutations
 	AddComment(message string) error
+	AddCommentWithFiles(message string, files []util.Hash) error
 	ChangeLabels(added []string, removed []string) error
 	Open() error
 	Close() error
@@ -159,12 +162,16 @@ func (c *RepoCache) ClearAllBugs() {
 }
 
 func (c *RepoCache) NewBug(title string, message string) (BugCacher, error) {
+	return c.NewBugWithFiles(title, message, nil)
+}
+
+func (c *RepoCache) NewBugWithFiles(title string, message string, files []util.Hash) (BugCacher, error) {
 	author, err := bug.GetUser(c.repo)
 	if err != nil {
 		return nil, err
 	}
 
-	b, err := operations.Create(author, title, message)
+	b, err := operations.CreateWithFiles(author, title, message, files)
 	if err != nil {
 		return nil, err
 	}
@@ -208,12 +215,16 @@ func (c *BugCache) ClearSnapshot() {
 }
 
 func (c *BugCache) AddComment(message string) error {
+	return c.AddCommentWithFiles(message, nil)
+}
+
+func (c *BugCache) AddCommentWithFiles(message string, files []util.Hash) error {
 	author, err := bug.GetUser(c.repo)
 	if err != nil {
 		return err
 	}
 
-	operations.Comment(c.bug, author, message)
+	operations.CommentWithFiles(c.bug, author, message, files)
 
 	// TODO: perf --> the snapshot could simply be updated with the new op
 	c.ClearSnapshot()

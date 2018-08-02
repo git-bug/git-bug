@@ -3,6 +3,7 @@ package operations
 import (
 	"fmt"
 	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/util"
 	"io"
 	"io/ioutil"
 	"sort"
@@ -48,6 +49,10 @@ AddLoop:
 	})
 
 	return snapshot
+}
+
+func (op LabelChangeOperation) Files() []util.Hash {
+	return nil
 }
 
 func NewLabelChangeOperation(author bug.Person, added, removed []bug.Label) LabelChangeOperation {

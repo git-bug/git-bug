@@ -64,9 +64,9 @@ func newGitFileHandler(repo repository.Repo) http.Handler {
 }
 
 func (gfh *gitFileHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	hash := mux.Vars(r)["hash"]
+	hash := util.Hash(mux.Vars(r)["hash"])
 
-	if !isGitHash(hash) {
+	if !hash.IsValid() {
 		http.Error(rw, "invalid git hash", http.StatusBadRequest)
 		return
 	}
@@ -142,18 +142,6 @@ func (gufh *gitUploadFileHandler) ServeHTTP(rw http.ResponseWriter, r *http.Requ
 
 	rw.Header().Set("Content-Type", "application/json")
 	rw.Write(js)
-}
-
-func isGitHash(s string) bool {
-	if len(s) != 40 {
-		return false
-	}
-	for _, r := range s {
-		if (r < 'a' || r > 'z') && (r < '0' || r > '9') {
-			return false
-		}
-	}
-	return true
 }
 
 var webUICmd = &cobra.Command{
