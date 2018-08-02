@@ -156,7 +156,7 @@ func newBugWithEditor(g *gocui.Gui, v *gocui.View) error {
 	}
 
 	if err == input.ErrEmptyTitle {
-		ui.errorPopup.err = err.Error()
+		ui.errorPopup.activate("Empty title, aborting.")
 	} else {
 		_, err = ui.cache.NewBug(title, message)
 		if err != nil {

@@ -9,12 +9,12 @@ import (
 const errorPopupView = "errorPopupView"
 
 type errorPopup struct {
-	err string
+	message string
 }
 
 func newErrorPopup() *errorPopup {
 	return &errorPopup{
-		err: "",
+		message: "",
 	}
 }
 
@@ -30,14 +30,14 @@ func (ep *errorPopup) keybindings(g *gocui.Gui) error {
 }
 
 func (ep *errorPopup) layout(g *gocui.Gui) error {
-	if ep.err == "" {
+	if ep.message == "" {
 		return nil
 	}
 
 	maxX, maxY := g.Size()
 
 	width := minInt(30, maxX)
-	wrapped, nblines := word_wrap(ep.err, width-2)
+	wrapped, nblines := word_wrap(ep.message, width-2)
 	height := minInt(nblines+2, maxY)
 	x0 := (maxX - width) / 2
 	y0 := (maxY - height) / 2
@@ -49,6 +49,7 @@ func (ep *errorPopup) layout(g *gocui.Gui) error {
 		}
 
 		v.Frame = true
+		v.Title = "Error"
 
 		fmt.Fprintf(v, wrapped)
 	}
@@ -61,12 +62,12 @@ func (ep *errorPopup) layout(g *gocui.Gui) error {
 }
 
 func (ep *errorPopup) close(g *gocui.Gui, v *gocui.View) error {
-	ep.err = ""
+	ep.message = ""
 	return g.DeleteView(errorPopupView)
 }
 
-func (ep *errorPopup) isActive() bool {
-	return ep.err != ""
+func (ep *errorPopup) activate(message string) {
+	ep.message = message
 }
 
 func word_wrap(text string, lineWidth int) (string, int) {

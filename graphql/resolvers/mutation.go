@@ -46,7 +46,7 @@ func (r mutationResolver) Commit(ctx context.Context, repoRef *string, prefix st
 		return bug.Snapshot{}, err
 	}
 
-	err = repo.Commit(b)
+	b, err = b.Commit()
 	if err != nil {
 		return bug.Snapshot{}, err
 	}
@@ -62,7 +62,12 @@ func (r mutationResolver) AddComment(ctx context.Context, repoRef *string, prefi
 		return bug.Snapshot{}, err
 	}
 
-	b, err := repo.AddComment(repoRef, prefix, message)
+	b, err := repo.ResolveBugPrefix(prefix)
+	if err != nil {
+		return bug.Snapshot{}, err
+	}
+
+	b, err = b.AddComment(message)
 	if err != nil {
 		return bug.Snapshot{}, err
 	}
@@ -78,7 +83,12 @@ func (r mutationResolver) ChangeLabels(ctx context.Context, repoRef *string, pre
 		return bug.Snapshot{}, err
 	}
 
-	b, err := repo.ChangeLabels(repoRef, prefix, added, removed)
+	b, err := repo.ResolveBugPrefix(prefix)
+	if err != nil {
+		return bug.Snapshot{}, err
+	}
+
+	b, err = b.ChangeLabels(added, removed)
 	if err != nil {
 		return bug.Snapshot{}, err
 	}
@@ -94,7 +104,12 @@ func (r mutationResolver) Open(ctx context.Context, repoRef *string, prefix stri
 		return bug.Snapshot{}, err
 	}
 
-	b, err := repo.Open(repoRef, prefix)
+	b, err := repo.ResolveBugPrefix(prefix)
+	if err != nil {
+		return bug.Snapshot{}, err
+	}
+
+	b, err = b.Open()
 	if err != nil {
 		return bug.Snapshot{}, err
 	}
@@ -110,7 +125,12 @@ func (r mutationResolver) Close(ctx context.Context, repoRef *string, prefix str
 		return bug.Snapshot{}, err
 	}
 
-	b, err := repo.Close(repoRef, prefix)
+	b, err := repo.ResolveBugPrefix(prefix)
+	if err != nil {
+		return bug.Snapshot{}, err
+	}
+
+	b, err = b.Close()
 	if err != nil {
 		return bug.Snapshot{}, err
 	}
@@ -126,7 +146,12 @@ func (r mutationResolver) SetTitle(ctx context.Context, repoRef *string, prefix 
 		return bug.Snapshot{}, err
 	}
 
-	b, err := repo.SetTitle(repoRef, prefix, title)
+	b, err := repo.ResolveBugPrefix(prefix)
+	if err != nil {
+		return bug.Snapshot{}, err
+	}
+
+	b, err = b.SetTitle(title)
 	if err != nil {
 		return bug.Snapshot{}, err
 	}
