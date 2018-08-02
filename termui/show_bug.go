@@ -2,7 +2,6 @@ package termui
 
 import (
 	"fmt"
-	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/bug/operations"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util"
@@ -17,7 +16,7 @@ const timeLayout = "Jan _2 2006"
 
 type showBug struct {
 	cache cache.RepoCacher
-	bug   *bug.Snapshot
+	bug   cache.BugCacher
 }
 
 func newShowBug(cache cache.RepoCacher) *showBug {
@@ -65,7 +64,7 @@ func (sb *showBug) layout(g *gocui.Gui) error {
 		v.Frame = false
 		v.BgColor = gocui.ColorBlue
 
-		fmt.Fprintf(v, "[q] Return")
+		fmt.Fprintf(v, "[q] Return [c] Add comment [t] Change title")
 	}
 
 	_, err = g.SetCurrentView(showBugView)
@@ -78,6 +77,7 @@ func (sb *showBug) keybindings(g *gocui.Gui) error {
 		return err
 	}
 
+	// Scrolling
 	if err := g.SetKeybinding(showBugView, gocui.KeyPgup, gocui.ModNone,
 		sb.scrollUp); err != nil {
 		return err
@@ -86,6 +86,20 @@ func (sb *showBug) keybindings(g *gocui.Gui) error {
 		sb.scrollDown); err != nil {
 		return err
 	}
+
+	// Comment
+	if err := g.SetKeybinding(showBugView, 'c', gocui.ModNone,
+		sb.comment); err != nil {
+		return err
+	}
+
+	// Title
+	if err := g.SetKeybinding(showBugView, 't', gocui.ModNone,
+		sb.title); err != nil {
+		return err
+	}
+
+	// Labels
 
 	return nil
 }
@@ -105,15 +119,16 @@ func (sb *showBug) disable(g *gocui.Gui) error {
 
 func (sb *showBug) renderMain(v *gocui.View) {
 	maxX, _ := v.Size()
+	snap := sb.bug.Snapshot()
 
-	header1 := fmt.Sprintf("[%s] %s", sb.bug.HumanId(), sb.bug.Title)
+	header1 := fmt.Sprintf("[%s] %s", snap.HumanId(), snap.Title)
 	fmt.Fprintf(v, util.LeftPaddedString(header1, maxX, 2)+"\n\n")
 
 	header2 := fmt.Sprintf("[%s] %s opened this bug on %s",
-		sb.bug.Status, sb.bug.Author.Name, sb.bug.CreatedAt.Format(timeLayout))
+		snap.Status, snap.Author.Name, snap.CreatedAt.Format(timeLayout))
 	fmt.Fprintf(v, util.LeftPaddedString(header2, maxX, 2)+"\n\n")
 
-	for _, op := range sb.bug.Operations {
+	for _, op := range snap.Operations {
 		switch op.(type) {
 
 		case operations.CreateOperation:
@@ -133,11 +148,12 @@ func (sb *showBug) renderMain(v *gocui.View) {
 
 func (sb *showBug) renderSidebar(v *gocui.View) {
 	maxX, _ := v.Size()
+	snap := sb.bug.Snapshot()
 
 	title := util.LeftPaddedString("LABEL", maxX, 2)
 	fmt.Fprintf(v, title+"\n\n")
 
-	for _, label := range sb.bug.Labels {
+	for _, label := range snap.Labels {
 		fmt.Fprintf(v, util.LeftPaddedString(label.String(), maxX, 2))
 		fmt.Fprintln(v)
 	}
@@ -155,4 +171,12 @@ func (sb *showBug) scrollUp(g *gocui.Gui, v *gocui.View) error {
 
 func (sb *showBug) scrollDown(g *gocui.Gui, v *gocui.View) error {
 	return nil
+}
+
+func (sb *showBug) comment(g *gocui.Gui, v *gocui.View) error {
+	return addCommentWithEditor(sb.bug)
+}
+
+func (sb *showBug) title(g *gocui.Gui, v *gocui.View) error {
+	return setTitleWithEditor(sb.bug)
 }

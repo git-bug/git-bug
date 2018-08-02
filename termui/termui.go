@@ -136,9 +136,9 @@ func quit(g *gocui.Gui, v *gocui.View) error {
 	return gocui.ErrQuit
 }
 
-func newBugWithEditor(g *gocui.Gui, v *gocui.View) error {
+func newBugWithEditor(repo cache.RepoCacher) error {
 	// This is somewhat hacky.
-	// As there is no way to pause gocui, run the editor, restart gocui,
+	// As there is no way to pause gocui, run the editor and restart gocui,
 	// we have to stop it entirely and start a new one later.
 	//
 	// - an error channel is used to route the returned error of this new
@@ -158,7 +158,73 @@ func newBugWithEditor(g *gocui.Gui, v *gocui.View) error {
 	if err == input.ErrEmptyTitle {
 		ui.errorPopup.activate("Empty title, aborting.")
 	} else {
-		_, err = ui.cache.NewBug(title, message)
+		_, err := repo.NewBug(title, message)
+		if err != nil {
+			return err
+		}
+	}
+
+	initGui()
+
+	return errTerminateMainloop
+}
+
+func addCommentWithEditor(bug cache.BugCacher) error {
+	// This is somewhat hacky.
+	// As there is no way to pause gocui, run the editor and restart gocui,
+	// we have to stop it entirely and start a new one later.
+	//
+	// - an error channel is used to route the returned error of this new
+	// 		instance into the original launch function
+	// - a custom error (errTerminateMainloop) is used to terminate the original
+	//		instance's mainLoop. This error is then filtered.
+
+	ui.g.Close()
+	ui.g = nil
+
+	message, err := input.BugCommentEditorInput(ui.cache.Repository())
+
+	if err != nil && err != input.ErrEmptyMessage {
+		return err
+	}
+
+	if err == input.ErrEmptyMessage {
+		ui.errorPopup.activate("Empty message, aborting.")
+	} else {
+		err := bug.AddComment(message)
+		if err != nil {
+			return err
+		}
+	}
+
+	initGui()
+
+	return errTerminateMainloop
+}
+
+func setTitleWithEditor(bug cache.BugCacher) error {
+	// This is somewhat hacky.
+	// As there is no way to pause gocui, run the editor and restart gocui,
+	// we have to stop it entirely and start a new one later.
+	//
+	// - an error channel is used to route the returned error of this new
+	// 		instance into the original launch function
+	// - a custom error (errTerminateMainloop) is used to terminate the original
+	//		instance's mainLoop. This error is then filtered.
+
+	ui.g.Close()
+	ui.g = nil
+
+	title, err := input.BugTitleEditorInput(ui.cache.Repository())
+
+	if err != nil && err != input.ErrEmptyTitle {
+		return err
+	}
+
+	if err == input.ErrEmptyTitle {
+		ui.errorPopup.activate("Empty title, aborting.")
+	} else {
+		err := bug.SetTitle(title)
 		if err != nil {
 			return err
 		}

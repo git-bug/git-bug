@@ -14,16 +14,16 @@ const bugTableFooterView = "bugTableFooterView"
 const bugTableInstructionView = "bugTableInstructionView"
 
 type bugTable struct {
-	cache        cache.RepoCacher
+	repo         cache.RepoCacher
 	allIds       []string
-	bugs         []*bug.Snapshot
+	bugs         []cache.BugCacher
 	pageCursor   int
 	selectCursor int
 }
 
 func newBugTable(cache cache.RepoCacher) *bugTable {
 	return &bugTable{
-		cache:        cache,
+		repo:         cache,
 		pageCursor:   0,
 		selectCursor: 0,
 	}
@@ -165,7 +165,7 @@ func (bt *bugTable) keybindings(g *gocui.Gui) error {
 
 	// New bug
 	if err := g.SetKeybinding(bugTableView, 'n', gocui.ModNone,
-		newBugWithEditor); err != nil {
+		bt.newBug); err != nil {
 		return err
 	}
 
@@ -195,7 +195,7 @@ func (bt *bugTable) disable(g *gocui.Gui) error {
 }
 
 func (bt *bugTable) paginate(max int) error {
-	allIds, err := bt.cache.AllBugIds()
+	allIds, err := bt.repo.AllBugIds()
 	if err != nil {
 		return err
 	}
@@ -213,22 +213,22 @@ func (bt *bugTable) doPaginate(allIds []string, max int) error {
 	nb := minInt(len(allIds)-bt.pageCursor, max)
 
 	if nb < 0 {
-		bt.bugs = []*bug.Snapshot{}
+		bt.bugs = []cache.BugCacher{}
 		return nil
 	}
 
 	// slice the data
 	ids := allIds[bt.pageCursor : bt.pageCursor+nb]
 
-	bt.bugs = make([]*bug.Snapshot, len(ids))
+	bt.bugs = make([]cache.BugCacher, len(ids))
 
 	for i, id := range ids {
-		b, err := bt.cache.ResolveBug(id)
+		b, err := bt.repo.ResolveBug(id)
 		if err != nil {
 			return err
 		}
 
-		bt.bugs[i] = b.Snapshot()
+		bt.bugs[i] = b
 	}
 
 	return nil
@@ -259,16 +259,17 @@ func (bt *bugTable) render(v *gocui.View, maxX int) {
 
 	for _, b := range bt.bugs {
 		person := bug.Person{}
-		if len(b.Comments) > 0 {
-			create := b.Comments[0]
+		snap := b.Snapshot()
+		if len(snap.Comments) > 0 {
+			create := snap.Comments[0]
 			person = create.Author
 		}
 
-		id := util.LeftPaddedString(b.HumanId(), columnWidths["id"], 2)
-		status := util.LeftPaddedString(b.Status.String(), columnWidths["status"], 2)
-		title := util.LeftPaddedString(b.Title, columnWidths["title"], 2)
+		id := util.LeftPaddedString(snap.HumanId(), columnWidths["id"], 2)
+		status := util.LeftPaddedString(snap.Status.String(), columnWidths["status"], 2)
+		title := util.LeftPaddedString(snap.Title, columnWidths["title"], 2)
 		author := util.LeftPaddedString(person.Name, columnWidths["author"], 2)
-		summary := util.LeftPaddedString(b.Summary(), columnWidths["summary"], 2)
+		summary := util.LeftPaddedString(snap.Summary(), columnWidths["summary"], 2)
 
 		fmt.Fprintf(v, "%s %s %s %s %s\n", id, status, title, author, summary)
 	}
@@ -330,7 +331,7 @@ func (bt *bugTable) cursorClamp(v *gocui.View) error {
 func (bt *bugTable) nextPage(g *gocui.Gui, v *gocui.View) error {
 	_, max := v.Size()
 
-	allIds, err := bt.cache.AllBugIds()
+	allIds, err := bt.repo.AllBugIds()
 	if err != nil {
 		return err
 	}
@@ -348,7 +349,7 @@ func (bt *bugTable) nextPage(g *gocui.Gui, v *gocui.View) error {
 
 func (bt *bugTable) previousPage(g *gocui.Gui, v *gocui.View) error {
 	_, max := v.Size()
-	allIds, err := bt.cache.AllBugIds()
+	allIds, err := bt.repo.AllBugIds()
 	if err != nil {
 		return err
 	}
@@ -358,6 +359,10 @@ func (bt *bugTable) previousPage(g *gocui.Gui, v *gocui.View) error {
 	bt.pageCursor = maxInt(0, bt.pageCursor-max)
 
 	return bt.doPaginate(allIds, max)
+}
+
+func (bt *bugTable) newBug(g *gocui.Gui, v *gocui.View) error {
+	return newBugWithEditor(bt.repo)
 }
 
 func (bt *bugTable) openBug(g *gocui.Gui, v *gocui.View) error {

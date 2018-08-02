@@ -102,6 +102,41 @@ func BugCommentEditorInput(repo repository.Repo) (string, error) {
 	return message, nil
 }
 
+const bugTitleTemplate = `
+
+# Please enter the new title. Only one line will used.
+# Lines starting with '#' will be ignored, and an empty title aborts the operation.
+`
+
+func BugTitleEditorInput(repo repository.Repo) (string, error) {
+	raw, err := LaunchEditorWithTemplate(repo, messageFilename, bugTitleTemplate)
+
+	if err != nil {
+		return "", err
+	}
+
+	lines := strings.Split(raw, "\n")
+
+	var title string
+	for _, line := range lines {
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" {
+			continue
+		}
+		title = trimmed
+		break
+	}
+
+	if title == "" {
+		return "", ErrEmptyTitle
+	}
+
+	return title, nil
+}
+
 func LaunchEditorWithTemplate(repo repository.Repo, fileName string, template string) (string, error) {
 	path := fmt.Sprintf("%s/.git/%s", repo.GetPath(), fileName)
 

@@ -15,10 +15,6 @@ type Cacher interface {
 
 	ResolveRepo(ref string) (RepoCacher, error)
 	DefaultRepo() (RepoCacher, error)
-
-	// Shortcut to resolve on the default repo for convenience
-	DefaultResolveBug(id string) (BugCacher, error)
-	DefaultResolveBugPrefix(prefix string) (BugCacher, error)
 }
 
 type RepoCacher interface {
@@ -37,13 +33,13 @@ type BugCacher interface {
 	ClearSnapshot()
 
 	// Mutations
-	AddComment(message string) (BugCacher, error)
-	ChangeLabels(added []string, removed []string) (BugCacher, error)
-	Open() (BugCacher, error)
-	Close() (BugCacher, error)
-	SetTitle(title string) (BugCacher, error)
+	AddComment(message string) error
+	ChangeLabels(added []string, removed []string) error
+	Open() error
+	Close() error
+	SetTitle(title string) error
 
-	Commit() (BugCacher, error)
+	Commit() error
 }
 
 // Cacher ------------------------
@@ -84,26 +80,6 @@ func (c *RootCache) ResolveRepo(ref string) (RepoCacher, error) {
 		return nil, fmt.Errorf("unknown repo")
 	}
 	return r, nil
-}
-
-func (c *RootCache) DefaultResolveBug(id string) (BugCacher, error) {
-	repo, err := c.DefaultRepo()
-
-	if err != nil {
-		return nil, err
-	}
-
-	return repo.ResolveBug(id)
-}
-
-func (c *RootCache) DefaultResolveBugPrefix(prefix string) (BugCacher, error) {
-	repo, err := c.DefaultRepo()
-
-	if err != nil {
-		return nil, err
-	}
-
-	return repo.ResolveBugPrefix(prefix)
 }
 
 // Repo ------------------------
@@ -231,10 +207,10 @@ func (c *BugCache) ClearSnapshot() {
 	c.snap = nil
 }
 
-func (c *BugCache) AddComment(message string) (BugCacher, error) {
+func (c *BugCache) AddComment(message string) error {
 	author, err := bug.GetUser(c.repo)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	operations.Comment(c.bug, author, message)
@@ -242,30 +218,30 @@ func (c *BugCache) AddComment(message string) (BugCacher, error) {
 	// TODO: perf --> the snapshot could simply be updated with the new op
 	c.ClearSnapshot()
 
-	return c, nil
+	return nil
 }
 
-func (c *BugCache) ChangeLabels(added []string, removed []string) (BugCacher, error) {
+func (c *BugCache) ChangeLabels(added []string, removed []string) error {
 	author, err := bug.GetUser(c.repo)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	err = operations.ChangeLabels(nil, c.bug, author, added, removed)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// TODO: perf --> the snapshot could simply be updated with the new op
 	c.ClearSnapshot()
 
-	return c, nil
+	return nil
 }
 
-func (c *BugCache) Open() (BugCacher, error) {
+func (c *BugCache) Open() error {
 	author, err := bug.GetUser(c.repo)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	operations.Open(c.bug, author)
@@ -273,13 +249,13 @@ func (c *BugCache) Open() (BugCacher, error) {
 	// TODO: perf --> the snapshot could simply be updated with the new op
 	c.ClearSnapshot()
 
-	return c, nil
+	return nil
 }
 
-func (c *BugCache) Close() (BugCacher, error) {
+func (c *BugCache) Close() error {
 	author, err := bug.GetUser(c.repo)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	operations.Close(c.bug, author)
@@ -287,13 +263,13 @@ func (c *BugCache) Close() (BugCacher, error) {
 	// TODO: perf --> the snapshot could simply be updated with the new op
 	c.ClearSnapshot()
 
-	return c, nil
+	return nil
 }
 
-func (c *BugCache) SetTitle(title string) (BugCacher, error) {
+func (c *BugCache) SetTitle(title string) error {
 	author, err := bug.GetUser(c.repo)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	operations.SetTitle(c.bug, author, title)
@@ -301,13 +277,9 @@ func (c *BugCache) SetTitle(title string) (BugCacher, error) {
 	// TODO: perf --> the snapshot could simply be updated with the new op
 	c.ClearSnapshot()
 
-	return c, nil
+	return nil
 }
 
-func (c *BugCache) Commit() (BugCacher, error) {
-	err := c.bug.Commit(c.repo)
-	if err != nil {
-		return nil, err
-	}
-	return c, nil
+func (c *BugCache) Commit() error {
+	return c.bug.Commit(c.repo)
 }
