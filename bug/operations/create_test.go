@@ -14,7 +14,7 @@ func TestCreate(t *testing.T) {
 		Email: "rene@descartes.fr",
 	}
 
-	create := NewCreateOp(rene, "title", "message")
+	create := NewCreateOp(rene, "title", "message", nil)
 
 	snapshot = create.Apply(snapshot)
 
