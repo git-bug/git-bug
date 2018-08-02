@@ -341,12 +341,18 @@ func (ec *executionContext) _Bug(ctx context.Context, sel []query.Selection, obj
 			out.Values[i] = ec._Bug_id(ctx, field, obj)
 		case "humanId":
 			out.Values[i] = ec._Bug_humanId(ctx, field, obj)
-		case "title":
-			out.Values[i] = ec._Bug_title(ctx, field, obj)
 		case "status":
 			out.Values[i] = ec._Bug_status(ctx, field, obj)
+		case "title":
+			out.Values[i] = ec._Bug_title(ctx, field, obj)
 		case "labels":
 			out.Values[i] = ec._Bug_labels(ctx, field, obj)
+		case "author":
+			out.Values[i] = ec._Bug_author(ctx, field, obj)
+		case "createdAt":
+			out.Values[i] = ec._Bug_createdAt(ctx, field, obj)
+		case "lastEdit":
+			out.Values[i] = ec._Bug_lastEdit(ctx, field, obj)
 		case "comments":
 			out.Values[i] = ec._Bug_comments(ctx, field, obj)
 		case "operations":
@@ -381,17 +387,6 @@ func (ec *executionContext) _Bug_humanId(ctx context.Context, field graphql.Coll
 	return graphql.MarshalString(res)
 }
 
-func (ec *executionContext) _Bug_title(ctx context.Context, field graphql.CollectedField, obj *bug.Snapshot) graphql.Marshaler {
-	rctx := graphql.GetResolverContext(ctx)
-	rctx.Object = "Bug"
-	rctx.Args = nil
-	rctx.Field = field
-	rctx.PushField(field.Alias)
-	defer rctx.Pop()
-	res := obj.Title
-	return graphql.MarshalString(res)
-}
-
 func (ec *executionContext) _Bug_status(ctx context.Context, field graphql.CollectedField, obj *bug.Snapshot) graphql.Marshaler {
 	ctx = graphql.WithResolverContext(ctx, &graphql.ResolverContext{
 		Object: "Bug",
@@ -422,6 +417,17 @@ func (ec *executionContext) _Bug_status(ctx context.Context, field graphql.Colle
 	})
 }
 
+func (ec *executionContext) _Bug_title(ctx context.Context, field graphql.CollectedField, obj *bug.Snapshot) graphql.Marshaler {
+	rctx := graphql.GetResolverContext(ctx)
+	rctx.Object = "Bug"
+	rctx.Args = nil
+	rctx.Field = field
+	rctx.PushField(field.Alias)
+	defer rctx.Pop()
+	res := obj.Title
+	return graphql.MarshalString(res)
+}
+
 func (ec *executionContext) _Bug_labels(ctx context.Context, field graphql.CollectedField, obj *bug.Snapshot) graphql.Marshaler {
 	rctx := graphql.GetResolverContext(ctx)
 	rctx.Object = "Bug"
@@ -440,6 +446,39 @@ func (ec *executionContext) _Bug_labels(ctx context.Context, field graphql.Colle
 		}())
 	}
 	return arr1
+}
+
+func (ec *executionContext) _Bug_author(ctx context.Context, field graphql.CollectedField, obj *bug.Snapshot) graphql.Marshaler {
+	rctx := graphql.GetResolverContext(ctx)
+	rctx.Object = "Bug"
+	rctx.Args = nil
+	rctx.Field = field
+	rctx.PushField(field.Alias)
+	defer rctx.Pop()
+	res := obj.Author
+	return ec._Person(ctx, field.Selections, &res)
+}
+
+func (ec *executionContext) _Bug_createdAt(ctx context.Context, field graphql.CollectedField, obj *bug.Snapshot) graphql.Marshaler {
+	rctx := graphql.GetResolverContext(ctx)
+	rctx.Object = "Bug"
+	rctx.Args = nil
+	rctx.Field = field
+	rctx.PushField(field.Alias)
+	defer rctx.Pop()
+	res := obj.CreatedAt
+	return graphql.MarshalTime(res)
+}
+
+func (ec *executionContext) _Bug_lastEdit(ctx context.Context, field graphql.CollectedField, obj *bug.Snapshot) graphql.Marshaler {
+	rctx := graphql.GetResolverContext(ctx)
+	rctx.Object = "Bug"
+	rctx.Args = nil
+	rctx.Field = field
+	rctx.PushField(field.Alias)
+	defer rctx.Pop()
+	res := obj.LastEdit()
+	return graphql.MarshalTime(res)
 }
 
 func (ec *executionContext) _Bug_comments(ctx context.Context, field graphql.CollectedField, obj *bug.Snapshot) graphql.Marshaler {
@@ -3202,11 +3241,12 @@ type BugEdge {
 type Bug {
   id: String!
   humanId: String!
-  title: String!
   status: Status!
-
-  # A list of labels associated with the repository.
+  title: String!
   labels: [Label!]!
+  author: Person!
+  createdAt: Time!
+  lastEdit: Time!
 
   comments(
     # Returns the elements in the list that come after the specified cursor.

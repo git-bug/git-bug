@@ -5,6 +5,7 @@ import (
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util"
+	"github.com/dustin/go-humanize"
 	"github.com/jroimartin/gocui"
 )
 
@@ -243,10 +244,13 @@ func (bt *bugTable) getColumnWidths(maxX int) map[string]int {
 	m["id"] = 10
 	m["status"] = 8
 
-	left := maxX - 4 - m["id"] - m["status"]
+	left := maxX - 5 - m["id"] - m["status"]
 
-	m["summary"] = maxInt(30, left/3)
+	m["summary"] = maxInt(11, left/6)
 	left -= m["summary"]
+
+	m["lastEdit"] = maxInt(19, left/6)
+	left -= m["lastEdit"]
 
 	m["author"] = maxInt(left*2/5, 15)
 	m["title"] = maxInt(left-m["author"], 10)
@@ -270,8 +274,9 @@ func (bt *bugTable) render(v *gocui.View, maxX int) {
 		title := util.LeftPaddedString(snap.Title, columnWidths["title"], 2)
 		author := util.LeftPaddedString(person.Name, columnWidths["author"], 2)
 		summary := util.LeftPaddedString(snap.Summary(), columnWidths["summary"], 2)
+		lastEdit := util.LeftPaddedString(humanize.Time(snap.LastEdit()), columnWidths["lastEdit"], 2)
 
-		fmt.Fprintf(v, "%s %s %s %s %s\n", id, status, title, author, summary)
+		fmt.Fprintf(v, "%s %s %s %s %s %s\n", id, status, title, author, summary, lastEdit)
 	}
 }
 
@@ -283,9 +288,10 @@ func (bt *bugTable) renderHeader(v *gocui.View, maxX int) {
 	title := util.LeftPaddedString("TITLE", columnWidths["title"], 2)
 	author := util.LeftPaddedString("AUTHOR", columnWidths["author"], 2)
 	summary := util.LeftPaddedString("SUMMARY", columnWidths["summary"], 2)
+	lastEdit := util.LeftPaddedString("LAST EDIT", columnWidths["lastEdit"], 2)
 
 	fmt.Fprintf(v, "\n")
-	fmt.Fprintf(v, "%s %s %s %s %s\n", id, status, title, author, summary)
+	fmt.Fprintf(v, "%s %s %s %s %s %s\n", id, status, title, author, summary, lastEdit)
 
 }
 

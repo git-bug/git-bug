@@ -2,7 +2,6 @@ package bug
 
 import (
 	"fmt"
-	"github.com/dustin/go-humanize"
 	"time"
 )
 
@@ -31,10 +30,9 @@ func (snap Snapshot) HumanId() string {
 }
 
 func (snap Snapshot) Summary() string {
-	return fmt.Sprintf("C:%d L:%d   %s",
+	return fmt.Sprintf("C:%d L:%d",
 		len(snap.Comments)-1,
 		len(snap.Labels),
-		humanize.Time(snap.LastEdit()),
 	)
 }
 

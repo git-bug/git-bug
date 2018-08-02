@@ -133,11 +133,12 @@ type BugEdge {
 type Bug {
   id: String!
   humanId: String!
-  title: String!
   status: Status!
-
-  # A list of labels associated with the repository.
+  title: String!
   labels: [Label!]!
+  author: Person!
+  createdAt: Time!
+  lastEdit: Time!
 
   comments(
     # Returns the elements in the list that come after the specified cursor.
