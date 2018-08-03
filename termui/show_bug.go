@@ -15,8 +15,9 @@ const showBugInstructionView = "showBugInstructionView"
 const timeLayout = "Jan _2 2006"
 
 type showBug struct {
-	cache cache.RepoCacher
-	bug   cache.BugCacher
+	cache      cache.RepoCacher
+	bug        cache.BugCacher
+	childViews []string
 }
 
 func newShowBug(cache cache.RepoCacher) *showBug {
@@ -28,18 +29,22 @@ func newShowBug(cache cache.RepoCacher) *showBug {
 func (sb *showBug) layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
 
-	v, err := g.SetView(showBugView, 0, 0, maxX*2/3, maxY-2)
+	v, err := g.SetView(showBugView, 2, 0, maxX*2/3, maxY-2)
 
 	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
 
+		sb.childViews = append(sb.childViews, showBugView)
 		v.Frame = false
 	}
 
 	v.Clear()
-	sb.renderMain(v)
+	err = sb.renderMain(g, v)
+	if err != nil {
+		return err
+	}
 
 	v, err = g.SetView(showBugSidebarView, maxX*2/3+1, 0, maxX-1, maxY-2)
 
@@ -48,7 +53,8 @@ func (sb *showBug) layout(g *gocui.Gui) error {
 			return err
 		}
 
-		v.Frame = false
+		sb.childViews = append(sb.childViews, showBugSidebarView)
+		v.Frame = true
 	}
 
 	v.Clear()
@@ -61,6 +67,7 @@ func (sb *showBug) layout(g *gocui.Gui) error {
 			return err
 		}
 
+		sb.childViews = append(sb.childViews, showBugInstructionView)
 		v.Frame = false
 		v.BgColor = gocui.ColorBlue
 
@@ -105,45 +112,91 @@ func (sb *showBug) keybindings(g *gocui.Gui) error {
 }
 
 func (sb *showBug) disable(g *gocui.Gui) error {
-	if err := g.DeleteView(showBugView); err != nil {
-		return err
-	}
-	if err := g.DeleteView(showBugSidebarView); err != nil {
-		return err
-	}
-	if err := g.DeleteView(showBugInstructionView); err != nil {
-		return err
+	for _, view := range sb.childViews {
+		if err := g.DeleteView(view); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
-func (sb *showBug) renderMain(v *gocui.View) {
-	maxX, _ := v.Size()
+func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
+	maxX, _ := mainView.Size()
+	x0, y0, _, _, _ := g.ViewPosition(mainView.Name())
 	snap := sb.bug.Snapshot()
 
+	v, err := g.SetView("showBugHeader", x0, y0, maxX+1, y0+4)
+
+	if err != nil {
+		if err != gocui.ErrUnknownView {
+			return err
+		}
+
+		sb.childViews = append(sb.childViews, "showBugHeader")
+		v.Frame = false
+	}
+	y0 += 4
+
+	v.Clear()
 	header1 := fmt.Sprintf("[%s] %s", snap.HumanId(), snap.Title)
-	fmt.Fprintf(v, util.LeftPaddedString(header1, maxX, 2)+"\n\n")
+	fmt.Fprintf(v, util.LeftPaddedString(header1, maxX, 0)+"\n\n")
 
 	header2 := fmt.Sprintf("[%s] %s opened this bug on %s",
 		snap.Status, snap.Author.Name, snap.CreatedAt.Format(timeLayout))
-	fmt.Fprintf(v, util.LeftPaddedString(header2, maxX, 2)+"\n\n")
+	fmt.Fprintf(v, util.LeftPaddedString(header2, maxX, 0))
 
-	for _, op := range snap.Operations {
+	for i, op := range snap.Operations {
+		viewName := fmt.Sprintf("op%d", i)
+
 		switch op.(type) {
 
 		case operations.CreateOperation:
 			create := op.(operations.CreateOperation)
-			fmt.Fprintf(v, util.LeftPaddedString(create.Message, maxX, 6)+"\n\n\n")
+			content, lines := util.TextWrap(create.Message, maxX)
+
+			v, err := sb.createOpView(g, viewName, x0, y0, maxX, lines)
+			if err != nil {
+				return err
+			}
+			fmt.Fprint(v, content)
+			y0 += lines + 2
 
 		case operations.AddCommentOperation:
 			comment := op.(operations.AddCommentOperation)
+
 			header := fmt.Sprintf("%s commented on %s",
 				comment.Author.Name, comment.Time().Format(timeLayout))
-			fmt.Fprintf(v, util.LeftPaddedString(header, maxX, 6)+"\n\n")
-			fmt.Fprintf(v, util.LeftPaddedString(comment.Message, maxX, 6)+"\n\n\n")
+			header = util.LeftPaddedString(header, maxX, 6)
+			message, lines := util.TextWrap(comment.Message, maxX)
+
+			v, err := sb.createOpView(g, viewName, x0, y0, maxX, lines+2)
+			if err != nil {
+				return err
+			}
+			fmt.Fprint(v, header, "\n\n", message)
+			y0 += lines + 3
 		}
 	}
 
+	return nil
+
+}
+
+func (sb *showBug) createOpView(g *gocui.Gui, name string, x0 int, y0 int, maxX int, height int) (*gocui.View, error) {
+	v, err := g.SetView(name, x0, y0, maxX+3, y0+height+1)
+
+	if err != nil {
+		if err != gocui.ErrUnknownView {
+			return nil, err
+		}
+
+		sb.childViews = append(sb.childViews, name)
+		v.Frame = false
+	}
+
+	v.Clear()
+
+	return v, nil
 }
 
 func (sb *showBug) renderSidebar(v *gocui.View) {
@@ -160,7 +213,6 @@ func (sb *showBug) renderSidebar(v *gocui.View) {
 }
 
 func (sb *showBug) back(g *gocui.Gui, v *gocui.View) error {
-	sb.bug = nil
 	ui.activateWindow(ui.bugTable)
 	return nil
 }
