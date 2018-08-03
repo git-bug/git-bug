@@ -2,8 +2,8 @@ package termui
 
 import (
 	"fmt"
+	"github.com/MichaelMure/git-bug/util"
 	"github.com/jroimartin/gocui"
-	"strings"
 )
 
 const errorPopupView = "errorPopupView"
@@ -37,7 +37,7 @@ func (ep *errorPopup) layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
 
 	width := minInt(30, maxX)
-	wrapped, nblines := word_wrap(ep.message, width-2)
+	wrapped, nblines := util.WordWrap(ep.message, width-2)
 	height := minInt(nblines+2, maxY)
 	x0 := (maxX - width) / 2
 	y0 := (maxY - height) / 2
@@ -68,26 +68,4 @@ func (ep *errorPopup) close(g *gocui.Gui, v *gocui.View) error {
 
 func (ep *errorPopup) activate(message string) {
 	ep.message = message
-}
-
-func word_wrap(text string, lineWidth int) (string, int) {
-	words := strings.Fields(strings.TrimSpace(text))
-	if len(words) == 0 {
-		return text, 1
-	}
-	lines := 1
-	wrapped := words[0]
-	spaceLeft := lineWidth - len(wrapped)
-	for _, word := range words[1:] {
-		if len(word)+1 > spaceLeft {
-			wrapped += "\n" + word
-			spaceLeft = lineWidth - len(word)
-			lines++
-		} else {
-			wrapped += " " + word
-			spaceLeft -= 1 + len(word)
-		}
-	}
-
-	return wrapped, lines
 }
