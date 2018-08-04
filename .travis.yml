@@ -4,8 +4,28 @@ go:
   - "1.9"
   - "1.10.x"
 
+before_install:
+  - go get github.com/mitchellh/gox
+
 install:
   - make install
 
 script:
   - make test
+  - go test -race -coverprofile=coverage.txt -covermode=atomic ./...
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+  - gox -tags=deploy_build -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}"
+
+deploy:
+  provider: releases
+  skip_cleanup: true
+  api_key:
+    secure: fLW37YkuY7KhVGpS6kgAAZPxgnePkLJG6AhWArOdVjgF0LMpps3PdvmfLkt+UUwjN0B+7l5NZSNU6c7F7R9AtJG5sfI7glFYxhQj3SdDr3rJCM1jqiJoCpkMGNHaJXsuGN1T/fWyfhHkhhyucbPv0d16llOsw98h7dIR1tCEFqMbfyA2G0182uKlOgZ/cjQGTRvU2hFgRpVHWCPcZkG+d0anLyCHtECXAwVQO5cijwNa4a7BEvIIYKRK6/j/GTrn9SqTisww3n1wxaItmEL91HbR6oqKrU9lUCJ6dTI/3JszKfLxrxGSSmwgtxa2tccV8AfmiqMXk4dISsHWwMthFzCp+I0htbdm5d1hbx9Jfq+5zJjV5Vka5ewfpWwSMOKkZpsEspjSy7iQPLk8IvkDq8t7NQ8kU2j5Z//nEEFa1Rym+sWsKhzas6fs09hv5V9p5iCU0bCnrncavhD6u1NN6FaYlZtBz8a0p2SyOrgW2Yglg37IKsZPW805e+6L7L515+jQ5OkdbrGsHr9ko3YG0OX1UkMfJ7ntQXfNeADHP90TmML8t7t+O8pNFFRiQUDPO0rbytXwneQoE/Jhdmj10Rhqi/OEm5A5uV5smItc7eg2OE6lBWYOeIQyGpQrh6eTx9cO+osX0o5ROMr4IVhJ0e/rRuR+PCm/2f8JUzHAfsk=
+  file_glob: true
+  file: dist/**/*
+  on:
+    repo: MichaelMure/git-bug
+    go: 1.10.x
+    tags: true
