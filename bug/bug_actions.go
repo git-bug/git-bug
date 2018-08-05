@@ -2,9 +2,10 @@ package bug
 
 import (
 	"fmt"
-	"github.com/MichaelMure/git-bug/repository"
 	"io"
 	"strings"
+
+	"github.com/MichaelMure/git-bug/repository"
 )
 
 const MsgMergeNew = "new"
@@ -139,5 +140,3 @@ func MergeAll(repo repository.Repo, remote string) <-chan MergeResult {
 
 	return out
 }
-
-

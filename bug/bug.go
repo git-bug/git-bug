@@ -3,15 +3,17 @@ package bug
 import (
 	"errors"
 	"fmt"
+	"strings"
+
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util"
-	"strings"
 )
 
 const bugsRefPattern = "refs/bugs/"
 const bugsRemoteRefPattern = "refs/remotes/%s/bugs/"
 const opsEntryName = "ops"
 const rootEntryName = "root"
+const mediaEntryName = "media"
 
 const idLength = 40
 const humanIdLength = 7
@@ -28,8 +30,11 @@ type Bug struct {
 
 	// TODO: need a way to order bugs, probably a Lamport clock
 
+	// all the commited operations
 	packs []OperationPack
 
+	// a temporary pack of operations used for convenience to pile up new operations
+	// before a commit
 	staging OperationPack
 }
 
@@ -252,6 +257,7 @@ func (bug *Bug) IsValid() bool {
 	return true
 }
 
+// Append an operation into the staging area, to be commited later
 func (bug *Bug) Append(op Operation) {
 	bug.staging.Append(op)
 }
@@ -272,7 +278,7 @@ func (bug *Bug) Commit(repo repository.Repo) error {
 		bug.rootPack = hash
 	}
 
-	// Make a Git tree referencing this blob and all needed files
+	// Make a Git tree referencing this blob
 	tree := []repository.TreeEntry{
 		// the last pack of ops
 		{ObjectType: repository.Blob, Hash: hash, Name: opsEntryName},
@@ -280,22 +286,23 @@ func (bug *Bug) Commit(repo repository.Repo) error {
 		{ObjectType: repository.Blob, Hash: bug.rootPack, Name: rootEntryName},
 	}
 
-	counter := 0
-	added := make(map[util.Hash]interface{})
-	for _, ops := range bug.staging.Operations {
-		for _, file := range ops.Files() {
-			if _, has := added[file]; !has {
-				tree = append(tree, repository.TreeEntry{
-					ObjectType: repository.Blob,
-					Hash:       file,
-					Name:       fmt.Sprintf("file%d", counter),
-				})
-				counter++
-				added[file] = struct{}{}
-			}
+	// Also reference if any all the files required by the ops
+	// Git will check that they actually exist in the storage and will make sure
+	// to push/pull them as needed.
+	mediaTree := makeMediaTree(bug.staging)
+	if len(mediaTree) > 0 {
+		mediaTreeHash, err := repo.StoreTree(mediaTree)
+		if err != nil {
+			return err
 		}
+		tree = append(tree, repository.TreeEntry{
+			ObjectType: repository.Tree,
+			Hash:       mediaTreeHash,
+			Name:       mediaEntryName,
+		})
 	}
 
+	// Store the tree
 	hash, err = repo.StoreTree(tree)
 	if err != nil {
 		return err
@@ -320,6 +327,8 @@ func (bug *Bug) Commit(repo repository.Repo) error {
 	}
 
 	// Create or update the Git reference for this bug
+	// When pushing later, the remote will ensure that this ref update
+	// is fast-forward, that is no data has been overwritten
 	ref := fmt.Sprintf("%s%s", bugsRefPattern, bug.id)
 	err = repo.UpdateRef(ref, hash)
 
@@ -331,6 +340,30 @@ func (bug *Bug) Commit(repo repository.Repo) error {
 	bug.staging = OperationPack{}
 
 	return nil
+}
+
+func makeMediaTree(pack OperationPack) []repository.TreeEntry {
+	var tree []repository.TreeEntry
+	counter := 0
+	added := make(map[util.Hash]interface{})
+
+	for _, ops := range pack.Operations {
+		for _, file := range ops.Files() {
+			if _, has := added[file]; !has {
+				tree = append(tree, repository.TreeEntry{
+					ObjectType: repository.Blob,
+					Hash:       file,
+					// The name is not important here, we only need to
+					// reference the blob.
+					Name: fmt.Sprintf("file%d", counter),
+				})
+				counter++
+				added[file] = struct{}{}
+			}
+		}
+	}
+
+	return tree
 }
 
 // Merge a different version of the same bug by rebasing operations of this bug
