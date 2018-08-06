@@ -10,10 +10,12 @@ import (
 
 // mockRepoForTest defines an instance of Repo that can be used for testing.
 type mockRepoForTest struct {
-	blobs   map[util.Hash][]byte
-	trees   map[util.Hash]string
-	commits map[util.Hash]commit
-	refs    map[string]util.Hash
+	blobs       map[util.Hash][]byte
+	trees       map[util.Hash]string
+	commits     map[util.Hash]commit
+	refs        map[string]util.Hash
+	createClock util.LamportClock
+	editClock   util.LamportClock
 }
 
 type commit struct {
@@ -23,10 +25,12 @@ type commit struct {
 
 func NewMockRepoForTest() Repo {
 	return &mockRepoForTest{
-		blobs:   make(map[util.Hash][]byte),
-		trees:   make(map[util.Hash]string),
-		commits: make(map[util.Hash]commit),
-		refs:    make(map[string]util.Hash),
+		blobs:       make(map[util.Hash][]byte),
+		trees:       make(map[util.Hash]string),
+		commits:     make(map[util.Hash]commit),
+		refs:        make(map[string]util.Hash),
+		createClock: util.NewLamportClock(),
+		editClock:   util.NewLamportClock(),
 	}
 }
 
@@ -199,4 +203,30 @@ func (r *mockRepoForTest) FindCommonAncestor(hash1 util.Hash, hash2 util.Hash) (
 
 func (r *mockRepoForTest) GetTreeHash(commit util.Hash) (util.Hash, error) {
 	panic("implement me")
+}
+
+func (r *mockRepoForTest) LoadClocks() error {
+	return nil
+}
+
+func (r *mockRepoForTest) WriteClocks() error {
+	return nil
+}
+
+func (r *mockRepoForTest) CreateTimeIncrement() (util.LamportTime, error) {
+	return r.createClock.Increment(), nil
+}
+
+func (r *mockRepoForTest) EditTimeIncrement() (util.LamportTime, error) {
+	return r.editClock.Increment(), nil
+}
+
+func (r *mockRepoForTest) CreateWitness(time util.LamportTime) error {
+	r.createClock.Witness(time)
+	return nil
+}
+
+func (r *mockRepoForTest) EditWitness(time util.LamportTime) error {
+	r.editClock.Witness(time)
+	return nil
 }

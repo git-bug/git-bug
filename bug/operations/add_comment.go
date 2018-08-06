@@ -12,7 +12,8 @@ var _ bug.Operation = AddCommentOperation{}
 type AddCommentOperation struct {
 	bug.OpBase
 	Message string
-	files   []util.Hash
+	// TODO: change for a map[string]util.hash to store the filename ?
+	files []util.Hash
 }
 
 func (op AddCommentOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {

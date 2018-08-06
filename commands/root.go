@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/spf13/cobra"
 	"os"
@@ -49,10 +50,13 @@ func loadRepo(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("Unable to get the current working directory: %q\n", err)
 	}
 
-	repo, err = repository.NewGitRepo(cwd)
-	if err != nil {
+	repo, err = repository.NewGitRepo(cwd, bug.Witnesser)
+	if err == repository.ErrNotARepo {
 		return fmt.Errorf("%s must be run from within a git repo.\n", rootCommandName)
+	}
 
+	if err != nil {
+		return err
 	}
 
 	return nil

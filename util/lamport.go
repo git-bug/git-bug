@@ -58,9 +58,9 @@ func (l *LamportClock) Time() LamportTime {
 	return LamportTime(atomic.LoadUint64(&l.counter))
 }
 
-// Increment is used to increment and return the value of the lamport clock
+// Increment is used to return the value of the lamport clock and increment it afterwards
 func (l *LamportClock) Increment() LamportTime {
-	return LamportTime(atomic.AddUint64(&l.counter, 1))
+	return LamportTime(atomic.AddUint64(&l.counter, 1) - 1)
 }
 
 // Witness is called to update our local clock if necessary after

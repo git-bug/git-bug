@@ -38,7 +38,7 @@ func TestLamportClock(t *testing.T) {
 		t.Fatalf("bad time value")
 	}
 
-	if l.Increment() != 1 {
+	if l.Increment() != 0 {
 		t.Fatalf("bad time value")
 	}
 

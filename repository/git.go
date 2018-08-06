@@ -3,18 +3,27 @@ package repository
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
+	"path"
 	"strings"
 
 	"github.com/MichaelMure/git-bug/util"
 )
 
+const createClockFile = "/.git/git-bug/create-clock"
+const editClockFile = "/.git/git-bug/edit-clock"
+
+var ErrNotARepo = errors.New("not a git repository")
+
 // GitRepo represents an instance of a (local) git repository.
 type GitRepo struct {
-	Path string
+	Path        string
+	createClock *util.PersistedLamport
+	editClock   *util.PersistedLamport
 }
 
 // Run the given git command with the given I/O reader/writers, returning an error if it fails.
@@ -62,35 +71,62 @@ func (repo *GitRepo) runGitCommandInline(args ...string) error {
 
 // NewGitRepo determines if the given working directory is inside of a git repository,
 // and returns the corresponding GitRepo instance if it is.
-func NewGitRepo(path string) (*GitRepo, error) {
+func NewGitRepo(path string, witnesser func(repo *GitRepo) error) (*GitRepo, error) {
 	repo := &GitRepo{Path: path}
+
+	// Check the repo and retrieve the root path
 	stdout, err := repo.runGitCommand("rev-parse", "--show-toplevel")
 
 	if err != nil {
-		return nil, err
+		return nil, ErrNotARepo
 	}
 
 	// Fix the path to be sure we are at the root
 	repo.Path = stdout
+
+	err = repo.LoadClocks()
+
+	if err != nil {
+		// No clock yet, trying to initialize them
+		repo.createClocks()
+
+		err = witnesser(repo)
+		if err != nil {
+			return nil, err
+		}
+
+		err = repo.WriteClocks()
+		if err != nil {
+			return nil, err
+		}
+
+		return repo, nil
+	}
 
 	return repo, nil
 }
 
 func InitGitRepo(path string) (*GitRepo, error) {
 	repo := &GitRepo{Path: path}
+	repo.createClocks()
+
 	_, err := repo.runGitCommand("init", path)
 	if err != nil {
 		return nil, err
 	}
+
 	return repo, nil
 }
 
 func InitBareGitRepo(path string) (*GitRepo, error) {
 	repo := &GitRepo{Path: path}
+	repo.createClocks()
+
 	_, err := repo.runGitCommand("init", "--bare", path)
 	if err != nil {
 		return nil, err
 	}
+
 	return repo, nil
 }
 
@@ -308,8 +344,63 @@ func (repo *GitRepo) GetTreeHash(commit util.Hash) (util.Hash, error) {
 }
 
 // Add a new remote to the repository
+// Not in the interface because it's only used for testing
 func (repo *GitRepo) AddRemote(name string, url string) error {
 	_, err := repo.runGitCommand("remote", "add", name, url)
 
 	return err
+}
+
+func (repo *GitRepo) createClocks() {
+	createPath := path.Join(repo.Path, createClockFile)
+	repo.createClock = util.NewPersistedLamport(createPath)
+
+	editPath := path.Join(repo.Path, editClockFile)
+	repo.editClock = util.NewPersistedLamport(editPath)
+}
+
+func (repo *GitRepo) LoadClocks() error {
+	createClock, err := util.LoadPersistedLamport(repo.GetPath() + createClockFile)
+	if err != nil {
+		return err
+	}
+
+	editClock, err := util.LoadPersistedLamport(repo.GetPath() + editClockFile)
+	if err != nil {
+		return err
+	}
+
+	repo.createClock = createClock
+	repo.editClock = editClock
+	return nil
+}
+
+func (repo *GitRepo) WriteClocks() error {
+	err := repo.createClock.Write()
+	if err != nil {
+		return err
+	}
+
+	err = repo.editClock.Write()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (repo *GitRepo) CreateTimeIncrement() (util.LamportTime, error) {
+	return repo.createClock.Increment()
+}
+
+func (repo *GitRepo) EditTimeIncrement() (util.LamportTime, error) {
+	return repo.editClock.Increment()
+}
+
+func (repo *GitRepo) CreateWitness(time util.LamportTime) error {
+	return repo.createClock.Witness(time)
+}
+
+func (repo *GitRepo) EditWitness(time util.LamportTime) error {
+	return repo.editClock.Witness(time)
 }

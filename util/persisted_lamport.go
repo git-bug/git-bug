@@ -14,7 +14,8 @@ type PersistedLamport struct {
 
 func NewPersistedLamport(filePath string) *PersistedLamport {
 	clock := &PersistedLamport{
-		filePath: filePath,
+		LamportClock: NewLamportClock(),
+		filePath:     filePath,
 	}
 	return clock
 }
@@ -32,19 +33,15 @@ func LoadPersistedLamport(filePath string) (*PersistedLamport, error) {
 	return clock, nil
 }
 
-func (c *PersistedLamport) Witness(time LamportTime) error {
-	c.LamportClock.Witness(time)
-	return c.Write()
+func (c *PersistedLamport) Increment() (LamportTime, error) {
+	time := c.LamportClock.Increment()
+	return time, c.Write()
 }
 
-func (c *PersistedLamport) Time() LamportTime {
-	// Equivalent to:
-	//
-	// res = c.LamportClock.Time()
-	// bugClock.Increment()
-	//
-	// ... but thread safe
-	return c.Increment() - 1
+func (c *PersistedLamport) Witness(time LamportTime) error {
+	// TODO: rework so that we write only when the clock was actually updated
+	c.LamportClock.Witness(time)
+	return c.Write()
 }
 
 func (c *PersistedLamport) read() error {
@@ -76,6 +73,6 @@ func (c *PersistedLamport) Write() error {
 		return err
 	}
 
-	data := []byte(fmt.Sprintf("%d", c.LamportClock.Time()))
+	data := []byte(fmt.Sprintf("%d", c.counter))
 	return ioutil.WriteFile(c.filePath, data, 0644)
 }

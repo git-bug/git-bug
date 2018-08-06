@@ -47,3 +47,7 @@ func (op OpBase) OpType() OperationType {
 func (op OpBase) Time() time.Time {
 	return time.Unix(op.UnixTime, 0)
 }
+
+func (op OpBase) Files() []util.Hash {
+	return nil
+}

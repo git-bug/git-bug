@@ -69,6 +69,18 @@ type Repo interface {
 
 	// Return the git tree hash referenced in a commit
 	GetTreeHash(commit util.Hash) (util.Hash, error)
+
+	LoadClocks() error
+
+	WriteClocks() error
+
+	CreateTimeIncrement() (util.LamportTime, error)
+
+	EditTimeIncrement() (util.LamportTime, error)
+
+	CreateWitness(time util.LamportTime) error
+
+	EditWitness(time util.LamportTime) error
 }
 
 func prepareTreeEntries(entries []TreeEntry) bytes.Buffer {

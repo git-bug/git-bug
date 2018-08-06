@@ -2,7 +2,6 @@ package operations
 
 import (
 	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/util"
 )
 
 // SetStatusOperation will change the status of a bug
@@ -18,10 +17,6 @@ func (op SetStatusOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {
 	snapshot.Status = op.Status
 
 	return snapshot
-}
-
-func (op SetStatusOperation) Files() []util.Hash {
-	return nil
 }
 
 func NewSetStatusOp(author bug.Person, status bug.Status) SetStatusOperation {
