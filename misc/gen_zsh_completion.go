@@ -12,11 +12,11 @@ import (
 
 func main() {
 	cwd, _ := os.Getwd()
-	filepath := path.Join(cwd, "doc", "bash_completion", "git-bug")
+	filepath := path.Join(cwd, "misc", "zsh_completion", "git-bug")
 
-	fmt.Println("Generating bash completion file ...")
+	fmt.Println("Generating zsh completion file ...")
 
-	err := commands.RootCmd.GenBashCompletionFile(filepath)
+	err := commands.RootCmd.GenZshCompletionFile(filepath)
 	if err != nil {
 		log.Fatal(err)
 	}
