@@ -75,8 +75,6 @@ This web UI is entirely packed inside the same go binary and serve static conten
 
 The web UI interact with the backend through a GraphQL API. The schema is available [here](graphql/schema.graphql).
 
-Note: the compiled web UI is not commited in git for now so you will have to install npm packages and build it before compiling the go binary.
-
 ## Internals
 
 Interested by how it works ? Have a look at the [data model](doc/model.md).

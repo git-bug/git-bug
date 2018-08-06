@@ -11,7 +11,8 @@ install:
 test: build
 	go test ./...
 
-webui:
+pack-webui:
 	npm run --prefix webui build
+	go run webui/pack_webui.go
 
 .PHONY: build install test
