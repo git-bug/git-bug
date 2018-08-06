@@ -10,7 +10,9 @@ Would it be nice to not have to rely on a web service somewhere to deal with bug
 
 Would it be nice to be able to browse and edit bug report offline ?
 
-`git-bug` is a bugtracker embedded in `git`. It use the same internal storage so it doesn't pollute your project. As you would do with commits and branches, you can push your bugs to the same git remote your are already using to collaborate with other peoples.
+`git-bug` is a bugtracker embedded in `git`. It use git's internal storage so **no files are added in your project**.
+
+As you would do with commits and branches, you can push your bugs to the same git remote your are already using to collaborate with other peoples. 
 
 :construction: This is for now a proof of concept. Expect dragons and unfinished business. :construction:
 
