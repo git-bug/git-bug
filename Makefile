@@ -15,4 +15,4 @@ pack-webui:
 	npm run --prefix webui build
 	go run webui/pack_webui.go
 
-.PHONY: build install test
+.PHONY: build install test pack-webui

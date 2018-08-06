@@ -1,4 +1,3 @@
-//go:generate go run webui/pack_webui.go
 //go:generate go run doc/gen_markdown.go
 //go:generate go run doc/gen_manpage.go
 //go:generate go run misc/gen_bash_completion.go
