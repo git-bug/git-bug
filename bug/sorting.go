@@ -18,7 +18,7 @@ func (b BugsByCreationTime) Less(i, j int) bool {
 	// When the logical clocks are identical, that means we had a concurrent
 	// edition. In this case we rely on the timestamp. While the timestamp might
 	// be incorrect due to a badly set clock, the drift in sorting is bounded
-	// by the first sorting using the logical clock. That means that if user
+	// by the first sorting using the logical clock. That means that if users
 	// synchronize their bugs regularly, the timestamp will rarely be used, and
 	// should still provide a kinda accurate sorting when needed.
 	return b[i].firstOp().Time().Before(b[j].firstOp().Time())
@@ -46,7 +46,7 @@ func (b BugsByEditTime) Less(i, j int) bool {
 	// When the logical clocks are identical, that means we had a concurrent
 	// edition. In this case we rely on the timestamp. While the timestamp might
 	// be incorrect due to a badly set clock, the drift in sorting is bounded
-	// by the first sorting using the logical clock. That means that if user
+	// by the first sorting using the logical clock. That means that if users
 	// synchronize their bugs regularly, the timestamp will rarely be used, and
 	// should still provide a kinda accurate sorting when needed.
 	return b[i].lastOp().Time().Before(b[j].lastOp().Time())
