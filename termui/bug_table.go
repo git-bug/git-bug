@@ -276,7 +276,14 @@ func (bt *bugTable) render(v *gocui.View, maxX int) {
 		summary := util.LeftPaddedString(snap.Summary(), columnWidths["summary"], 2)
 		lastEdit := util.LeftPaddedString(humanize.Time(snap.LastEdit()), columnWidths["lastEdit"], 2)
 
-		fmt.Fprintf(v, "%s %s %s %s %s %s\n", id, status, title, author, summary, lastEdit)
+		fmt.Fprintf(v, "%s %s %s %s %s %s\n",
+			util.Cyan(id),
+			util.Yellow(status),
+			title,
+			util.Magenta(author),
+			summary,
+			lastEdit,
+		)
 	}
 }
 
