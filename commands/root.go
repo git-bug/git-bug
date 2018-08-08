@@ -35,6 +35,12 @@ It use the same internal storage so it doesn't pollute your project. As you woul
 	PersistentPreRunE: loadRepo,
 
 	DisableAutoGenTag: true,
+
+	BashCompletionFunction: `
+_git_bug() {
+    __start_git-bug "$@"
+}
+`,
 }
 
 func Execute() {

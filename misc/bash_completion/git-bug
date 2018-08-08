@@ -243,6 +243,11 @@ __git-bug_handle_word()
     __git-bug_handle_word
 }
 
+
+_git_bug() {
+    __start_git-bug "$@"
+}
+
 _git-bug_close()
 {
     last_command="git-bug_close"
