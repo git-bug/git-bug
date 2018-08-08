@@ -209,7 +209,7 @@ func (bt *bugTable) paginate(max int) error {
 func (bt *bugTable) doPaginate(allIds []string, max int) error {
 	// clamp the cursor
 	bt.pageCursor = maxInt(bt.pageCursor, 0)
-	bt.pageCursor = minInt(bt.pageCursor, len(allIds)-1)
+	bt.pageCursor = minInt(bt.pageCursor, len(allIds))
 
 	nb := minInt(len(allIds)-bt.pageCursor, max)
 
