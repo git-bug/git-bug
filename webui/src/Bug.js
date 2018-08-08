@@ -26,7 +26,7 @@ const Bug = ({ bug, classes }) => (
 Bug.fragment = gql`
   fragment Bug on Bug {
     ...BugSummary
-    comments(input: { first: 10 }) {
+    comments(first: 10) {
       edges {
         cursor
         node {

@@ -10,7 +10,7 @@ import BugSummary from "./BugSummary";
 const QUERY = gql`
   {
     defaultRepository {
-      bugs: allBugs(input: { first: 10 }) {
+      bugs: allBugs(first: 10) {
         edges {
           cursor
           node {
