@@ -30,7 +30,7 @@ export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 
 That's all ! In the future, pre-compiled binary will be provided for convenience.
 
-## CLI usage
+## CLI usage (status: working but need UX improvement)
 
 Create a new bug:
 
@@ -57,17 +57,17 @@ git bug ls
 
 You can now use commands like `show`, `comment`, `open` or `close` to display and modify bugs. For more details about each command, you can run `git bug <command> --help` or read the [command's documentation](doc/md/git-bug.md).
 
-## Interactive terminal UI
+## Interactive terminal UI (status: WIP)
 
-An interactive (WIP) terminal UI is available using the command `git bug termui` to browse and edit bugs.
+An interactive terminal UI is available using the command `git bug termui` to browse and edit bugs.
 
 ![terminal UI](doc/termui.png)
 
 // TODO: replace with less test data ;-)
 
-## Web UI
+## Web UI (status: terribly WIP)
 
-You can launch a rich Web UI (terribly WIP) with `git bug webui`.
+You can launch a rich Web UI with `git bug webui`.
 
 ![Web UI](doc/webui.png)
 
@@ -87,11 +87,10 @@ Interested by how it works ? Have a look at the [data model](doc/model.md).
 
 ## Planned features
 
-- [ ] interactive CLI UI
-- [ ] rich web UI
-- [ ] media embedding
-- [ ] import/export of github issue
-- [ ] inflatable raptor
+- media embedding
+- import/export of github issue
+- extendable data model to support arbitrary bug tracker
+- inflatable raptor
 
 ## Contribute
 
