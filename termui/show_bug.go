@@ -12,6 +12,7 @@ import (
 const showBugView = "showBugView"
 const showBugSidebarView = "showBugSidebarView"
 const showBugInstructionView = "showBugInstructionView"
+const showBugHeaderView = "showBugHeaderView"
 
 const timeLayout = "Jan _2 2006"
 
@@ -21,6 +22,7 @@ type showBug struct {
 	childViews     []string
 	selectableView []string
 	selected       string
+	scroll         int
 }
 
 func newShowBug(cache cache.RepoCacher) *showBug {
@@ -124,7 +126,7 @@ func (sb *showBug) keybindings(g *gocui.Gui) error {
 
 	// Title
 	if err := g.SetKeybinding(showBugView, 't', gocui.ModNone,
-		sb.title); err != nil {
+		sb.setTitle); err != nil {
 		return err
 	}
 
@@ -145,18 +147,25 @@ func (sb *showBug) disable(g *gocui.Gui) error {
 func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 	maxX, _ := mainView.Size()
 	x0, y0, _, _, _ := g.ViewPosition(mainView.Name())
+
+	y0 -= sb.scroll
+
 	snap := sb.bug.Snapshot()
 
-	v, err := g.SetView("showBugHeader", x0, y0, maxX+1, y0+4)
+	sb.childViews = nil
+	sb.selectableView = nil
+
+	v, err := g.SetView(showBugHeaderView, x0, y0, maxX+1, y0+4)
 
 	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
 
-		sb.childViews = append(sb.childViews, "showBugHeader")
 		v.Frame = false
 	}
+	sb.childViews = append(sb.childViews, showBugHeaderView)
+
 	y0 += 4
 
 	v.Clear()
@@ -206,16 +215,14 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 func (sb *showBug) createOpView(g *gocui.Gui, name string, x0 int, y0 int, maxX int, height int, selectable bool) (*gocui.View, error) {
 	v, err := g.SetView(name, x0, y0, maxX, y0+height+1)
 
-	if err != nil {
-		if err != gocui.ErrUnknownView {
-			return nil, err
-		}
+	if err != nil && err != gocui.ErrUnknownView {
+		return nil, err
+	}
 
-		sb.childViews = append(sb.childViews, name)
+	sb.childViews = append(sb.childViews, name)
 
-		if selectable {
-			sb.selectableView = append(sb.selectableView, name)
-		}
+	if selectable {
+		sb.selectableView = append(sb.selectableView, name)
 	}
 
 	v.Frame = sb.selected == name
@@ -256,8 +263,15 @@ func (sb *showBug) selectPrevious(g *gocui.Gui, v *gocui.View) error {
 		return nil
 	}
 
+	defer sb.focusView(g)
+
 	for i, name := range sb.selectableView {
 		if name == sb.selected {
+			// special case to scroll up to the top
+			if i == 0 {
+				sb.scroll = 0
+			}
+
 			sb.selected = sb.selectableView[maxInt(i-1, 0)]
 			return nil
 		}
@@ -275,9 +289,11 @@ func (sb *showBug) selectNext(g *gocui.Gui, v *gocui.View) error {
 		return nil
 	}
 
+	defer sb.focusView(g)
+
 	for i, name := range sb.selectableView {
 		if name == sb.selected {
-			sb.selected = sb.selectableView[minInt(i+1, len(sb.childViews)-1)]
+			sb.selected = sb.selectableView[minInt(i+1, len(sb.selectableView)-1)]
 			return nil
 		}
 	}
@@ -289,10 +305,44 @@ func (sb *showBug) selectNext(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
+func (sb *showBug) focusView(g *gocui.Gui) error {
+	mainView, err := g.View(showBugView)
+	if err != nil {
+		return err
+	}
+
+	_, maxY := mainView.Size()
+
+	_, vy0, _, _, err := g.ViewPosition(sb.selected)
+	if err != nil {
+		return err
+	}
+
+	v, err := g.View(sb.selected)
+	if err != nil {
+		return err
+	}
+
+	_, vMaxY := v.Size()
+
+	vy1 := vy0 + vMaxY
+
+	if vy0 < 0 {
+		sb.scroll += vy0
+		return nil
+	}
+
+	if vy1 > maxY {
+		sb.scroll -= maxY - vy1
+	}
+
+	return nil
+}
+
 func (sb *showBug) comment(g *gocui.Gui, v *gocui.View) error {
 	return addCommentWithEditor(sb.bug)
 }
 
-func (sb *showBug) title(g *gocui.Gui, v *gocui.View) error {
+func (sb *showBug) setTitle(g *gocui.Gui, v *gocui.View) error {
 	return setTitleWithEditor(sb.bug)
 }
