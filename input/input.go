@@ -102,14 +102,15 @@ func BugCommentEditorInput(repo repository.Repo) (string, error) {
 	return message, nil
 }
 
-const bugTitleTemplate = `
+const bugTitleTemplate = `%s
 
 # Please enter the new title. Only one line will used.
 # Lines starting with '#' will be ignored, and an empty title aborts the operation.
 `
 
-func BugTitleEditorInput(repo repository.Repo) (string, error) {
-	raw, err := LaunchEditorWithTemplate(repo, messageFilename, bugTitleTemplate)
+func BugTitleEditorInput(repo repository.Repo, preTitle string) (string, error) {
+	template := fmt.Sprintf(bugTitleTemplate, preTitle)
+	raw, err := LaunchEditorWithTemplate(repo, messageFilename, template)
 
 	if err != nil {
 		return "", err

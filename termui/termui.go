@@ -215,7 +215,7 @@ func setTitleWithEditor(bug cache.BugCacher) error {
 	ui.g.Close()
 	ui.g = nil
 
-	title, err := input.BugTitleEditorInput(ui.cache.Repository())
+	title, err := input.BugTitleEditorInput(ui.cache.Repository(), bug.Snapshot().Title)
 
 	if err != nil && err != input.ErrEmptyTitle {
 		return err
