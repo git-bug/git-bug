@@ -2,6 +2,7 @@ package termui
 
 import (
 	"fmt"
+
 	"github.com/MichaelMure/git-bug/bug/operations"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util"
@@ -15,9 +16,11 @@ const showBugInstructionView = "showBugInstructionView"
 const timeLayout = "Jan _2 2006"
 
 type showBug struct {
-	cache      cache.RepoCacher
-	bug        cache.BugCacher
-	childViews []string
+	cache          cache.RepoCacher
+	bug            cache.BugCacher
+	childViews     []string
+	selectableView []string
+	selected       string
 }
 
 func newShowBug(cache cache.RepoCacher) *showBug {
@@ -29,7 +32,7 @@ func newShowBug(cache cache.RepoCacher) *showBug {
 func (sb *showBug) layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
 
-	v, err := g.SetView(showBugView, 2, 0, maxX*2/3, maxY-2)
+	v, err := g.SetView(showBugView, 0, 0, maxX*2/3, maxY-2)
 
 	if err != nil {
 		if err != gocui.ErrUnknownView {
@@ -71,7 +74,7 @@ func (sb *showBug) layout(g *gocui.Gui) error {
 		v.Frame = false
 		v.BgColor = gocui.ColorBlue
 
-		fmt.Fprintf(v, "[q] Return [c] Comment [t] Change title")
+		fmt.Fprintf(v, "[q] Return [c] Comment [t] Change title [↓,j] Down [↑,k] Up")
 	}
 
 	_, err = g.SetCurrentView(showBugView)
@@ -91,6 +94,25 @@ func (sb *showBug) keybindings(g *gocui.Gui) error {
 	}
 	if err := g.SetKeybinding(showBugView, gocui.KeyPgdn, gocui.ModNone,
 		sb.scrollDown); err != nil {
+		return err
+	}
+
+	// Down
+	if err := g.SetKeybinding(showBugView, 'j', gocui.ModNone,
+		sb.selectNext); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding(showBugView, gocui.KeyArrowDown, gocui.ModNone,
+		sb.selectNext); err != nil {
+		return err
+	}
+	// Up
+	if err := g.SetKeybinding(showBugView, 'k', gocui.ModNone,
+		sb.selectPrevious); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding(showBugView, gocui.KeyArrowUp, gocui.ModNone,
+		sb.selectPrevious); err != nil {
 		return err
 	}
 
@@ -139,11 +161,11 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 
 	v.Clear()
 	header1 := fmt.Sprintf("[%s] %s", snap.HumanId(), snap.Title)
-	fmt.Fprintf(v, util.LeftPaddedString(header1, maxX, 0)+"\n\n")
+	fmt.Fprintf(v, util.LeftPaddedString(header1, maxX-1, 0)+"\n\n")
 
 	header2 := fmt.Sprintf("[%s] %s opened this bug on %s",
 		snap.Status, snap.Author.Name, snap.CreatedAt.Format(timeLayout))
-	fmt.Fprintf(v, util.LeftPaddedString(header2, maxX, 0))
+	fmt.Fprintf(v, util.LeftPaddedString(header2, maxX-1, 0))
 
 	for i, op := range snap.Operations {
 		viewName := fmt.Sprintf("op%d", i)
@@ -154,7 +176,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 			create := op.(operations.CreateOperation)
 			content, lines := util.TextWrap(create.Message, maxX)
 
-			v, err := sb.createOpView(g, viewName, x0, y0, maxX, lines)
+			v, err := sb.createOpView(g, viewName, x0, y0, maxX+1, lines, true)
 			if err != nil {
 				return err
 			}
@@ -169,7 +191,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 			header = util.LeftPaddedString(header, maxX, 6)
 			message, lines := util.TextWrap(comment.Message, maxX)
 
-			v, err := sb.createOpView(g, viewName, x0, y0, maxX, lines+2)
+			v, err := sb.createOpView(g, viewName, x0, y0, maxX+1, lines+2, true)
 			if err != nil {
 				return err
 			}
@@ -179,11 +201,10 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 	}
 
 	return nil
-
 }
 
-func (sb *showBug) createOpView(g *gocui.Gui, name string, x0 int, y0 int, maxX int, height int) (*gocui.View, error) {
-	v, err := g.SetView(name, x0, y0, maxX+3, y0+height+1)
+func (sb *showBug) createOpView(g *gocui.Gui, name string, x0 int, y0 int, maxX int, height int, selectable bool) (*gocui.View, error) {
+	v, err := g.SetView(name, x0, y0, maxX, y0+height+1)
 
 	if err != nil {
 		if err != gocui.ErrUnknownView {
@@ -191,8 +212,13 @@ func (sb *showBug) createOpView(g *gocui.Gui, name string, x0 int, y0 int, maxX 
 		}
 
 		sb.childViews = append(sb.childViews, name)
-		v.Frame = false
+
+		if selectable {
+			sb.selectableView = append(sb.selectableView, name)
+		}
 	}
+
+	v.Frame = sb.selected == name
 
 	v.Clear()
 
@@ -222,6 +248,44 @@ func (sb *showBug) scrollUp(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (sb *showBug) scrollDown(g *gocui.Gui, v *gocui.View) error {
+	return nil
+}
+
+func (sb *showBug) selectPrevious(g *gocui.Gui, v *gocui.View) error {
+	if len(sb.selectableView) == 0 {
+		return nil
+	}
+
+	for i, name := range sb.selectableView {
+		if name == sb.selected {
+			sb.selected = sb.selectableView[maxInt(i-1, 0)]
+			return nil
+		}
+	}
+
+	if sb.selected == "" {
+		sb.selected = sb.selectableView[0]
+	}
+
+	return nil
+}
+
+func (sb *showBug) selectNext(g *gocui.Gui, v *gocui.View) error {
+	if len(sb.selectableView) == 0 {
+		return nil
+	}
+
+	for i, name := range sb.selectableView {
+		if name == sb.selected {
+			sb.selected = sb.selectableView[minInt(i+1, len(sb.childViews)-1)]
+			return nil
+		}
+	}
+
+	if sb.selected == "" {
+		sb.selected = sb.selectableView[0]
+	}
+
 	return nil
 }
 
