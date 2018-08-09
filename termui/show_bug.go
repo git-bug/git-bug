@@ -86,6 +86,11 @@ func (sb *showBug) layout(g *gocui.Gui) error {
 		fmt.Fprintf(v, "[q] Save and return [c] Comment [t] Change title [↓,j] Down [↑,k] Up")
 	}
 
+	_, err = g.SetViewOnTop(showBugInstructionView)
+	if err != nil {
+		return err
+	}
+
 	_, err = g.SetCurrentView(showBugView)
 	return err
 }
