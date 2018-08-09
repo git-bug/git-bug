@@ -18,3 +18,14 @@ func (s Status) String() string {
 		return "unknown status"
 	}
 }
+
+func (s Status) Action() string {
+	switch s {
+	case OpenStatus:
+		return "opened"
+	case ClosedStatus:
+		return "closed"
+	default:
+		return "unknown status"
+	}
+}

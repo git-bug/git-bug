@@ -1,7 +1,9 @@
 package termui
 
 import (
+	"bytes"
 	"fmt"
+	"strings"
 
 	"github.com/MichaelMure/git-bug/bug/operations"
 	"github.com/MichaelMure/git-bug/cache"
@@ -221,6 +223,72 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 				util.Magenta(setTitle.Author.Name),
 				util.Bold(setTitle.Title),
 				setTitle.Time().Format(timeLayout),
+			)
+			content, lines := util.TextWrap(content, maxX)
+
+			v, err := sb.createOpView(g, viewName, x0, y0, maxX+1, lines, true)
+			if err != nil {
+				return err
+			}
+			fmt.Fprint(v, content)
+			y0 += lines + 2
+
+		case operations.SetStatusOperation:
+			setStatus := op.(operations.SetStatusOperation)
+
+			content := fmt.Sprintf("%s %s the bug on %s",
+				util.Magenta(setStatus.Author.Name),
+				util.Bold(setStatus.Status.Action()),
+				setStatus.Time().Format(timeLayout),
+			)
+			content, lines := util.TextWrap(content, maxX)
+
+			v, err := sb.createOpView(g, viewName, x0, y0, maxX+1, lines, true)
+			if err != nil {
+				return err
+			}
+			fmt.Fprint(v, content)
+			y0 += lines + 2
+
+		case operations.LabelChangeOperation:
+			labelChange := op.(operations.LabelChangeOperation)
+
+			var added []string
+			for _, label := range labelChange.Added {
+				added = append(added, util.Bold("\""+label+"\""))
+			}
+
+			var removed []string
+			for _, label := range labelChange.Removed {
+				removed = append(removed, util.Bold("\""+label+"\""))
+			}
+
+			var action bytes.Buffer
+
+			if len(added) > 0 {
+				action.WriteString("added ")
+				action.WriteString(strings.Join(added, " "))
+
+				if len(removed) > 0 {
+					action.WriteString(" and ")
+				}
+			}
+
+			if len(removed) > 0 {
+				action.WriteString("removed ")
+				action.WriteString(strings.Join(removed, " "))
+			}
+
+			if len(added)+len(removed) > 1 {
+				action.WriteString(" labels")
+			} else {
+				action.WriteString(" label")
+			}
+
+			content := fmt.Sprintf("%s %s on %s",
+				util.Magenta(labelChange.Author.Name),
+				action.String(),
+				labelChange.Time().Format(timeLayout),
 			)
 			content, lines := util.TextWrap(content, maxX)
 
