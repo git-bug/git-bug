@@ -155,26 +155,22 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 	sb.childViews = nil
 	sb.selectableView = nil
 
-	v, err := g.SetView(showBugHeaderView, x0, y0, maxX+1, y0+4)
+	header := fmt.Sprintf("[ %s ] %s\n\n[ %s ] %s opened this bug on %s",
+		util.Cyan(snap.HumanId()),
+		util.Bold(snap.Title),
+		util.Yellow(snap.Status),
+		util.Magenta(snap.Author.Name),
+		snap.CreatedAt.Format(timeLayout),
+	)
+	content, lines := util.TextWrap(header, maxX)
 
+	v, err := sb.createOpView(g, showBugHeaderView, x0, y0, maxX+1, lines, false)
 	if err != nil {
-		if err != gocui.ErrUnknownView {
-			return err
-		}
-
-		v.Frame = false
+		return err
 	}
-	sb.childViews = append(sb.childViews, showBugHeaderView)
 
-	y0 += 4
-
-	v.Clear()
-	header1 := fmt.Sprintf("[%s] %s", snap.HumanId(), snap.Title)
-	fmt.Fprintf(v, util.LeftPaddedString(header1, maxX-1, 0)+"\n\n")
-
-	header2 := fmt.Sprintf("[%s] %s opened this bug on %s",
-		snap.Status, snap.Author.Name, snap.CreatedAt.Format(timeLayout))
-	fmt.Fprintf(v, util.LeftPaddedString(header2, maxX-1, 0))
+	fmt.Fprint(v, content)
+	y0 += lines + 1
 
 	for i, op := range snap.Operations {
 		viewName := fmt.Sprintf("op%d", i)
@@ -198,17 +194,36 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 		case operations.AddCommentOperation:
 			comment := op.(operations.AddCommentOperation)
 
-			header := fmt.Sprintf("%s commented on %s",
-				comment.Author.Name, comment.Time().Format(timeLayout))
-			header = util.LeftPaddedString(header, maxX, 6)
-			message, lines := util.TextWrap(comment.Message, maxX)
+			content := fmt.Sprintf("%s commented on %s\n\n%s",
+				util.Magenta(comment.Author.Name),
+				comment.Time().Format(timeLayout),
+				comment.Message,
+			)
+			content, lines := util.TextWrapPadded(content, maxX, 6)
 
-			v, err := sb.createOpView(g, viewName, x0, y0, maxX+1, lines+2, true)
+			v, err := sb.createOpView(g, viewName, x0, y0, maxX+1, lines, true)
 			if err != nil {
 				return err
 			}
-			fmt.Fprint(v, header, "\n\n", message)
-			y0 += lines + 3
+			fmt.Fprint(v, content)
+			y0 += lines + 2
+
+		case operations.SetTitleOperation:
+			setTitle := op.(operations.SetTitleOperation)
+
+			content := fmt.Sprintf("%s changed the title to %s on %s",
+				util.Magenta(setTitle.Author.Name),
+				util.Bold(setTitle.Title),
+				setTitle.Time().Format(timeLayout),
+			)
+			content, lines := util.TextWrap(content, maxX)
+
+			v, err := sb.createOpView(g, viewName, x0, y0, maxX+1, lines, true)
+			if err != nil {
+				return err
+			}
+			fmt.Fprint(v, content)
+			y0 += lines + 2
 		}
 	}
 
