@@ -2,6 +2,7 @@ package util
 
 import (
 	"bytes"
+	"regexp"
 	"strings"
 )
 
@@ -36,6 +37,8 @@ func TextWrap(text string, lineWidth int) (string, int) {
 	// tabs are formatted as 4 spaces
 	text = strings.Replace(text, "\t", "    ", 4)
 
+	re := regexp.MustCompile(`(\x1b\[\d+m)?([^\x1b]*)(\x1b\[\d+m)?`)
+
 	for _, line := range strings.Split(text, "\n") {
 		spaceLeft := lineWidth
 
@@ -47,19 +50,31 @@ func TextWrap(text string, lineWidth int) (string, int) {
 		firstWord := true
 
 		for _, word := range strings.Split(line, " ") {
+			prefix := ""
+			suffix := ""
+
+			matches := re.FindStringSubmatch(word)
+			if matches != nil && (matches[1] != "" || matches[3] != "") {
+				// we have a color escape sequence
+				prefix = matches[1]
+				word = matches[2]
+				suffix = matches[3]
+			}
+
 			if spaceLeft > len(word) {
 				if !firstWord {
 					lineBuffer.WriteString(" ")
 					spaceLeft -= 1
 				}
-				lineBuffer.WriteString(word)
+				lineBuffer.WriteString(prefix + word + suffix)
 				spaceLeft -= len(word)
 				firstWord = false
 			} else {
 				if len(word) > lineWidth {
 					for len(word) > 0 {
 						l := minInt(spaceLeft, len(word))
-						part := word[:l]
+						part := prefix + word[:l]
+						prefix = ""
 						word = word[l:]
 
 						lineBuffer.WriteString(part)
@@ -77,7 +92,7 @@ func TextWrap(text string, lineWidth int) (string, int) {
 					textBuffer.WriteString(strings.TrimRight(lineBuffer.String(), " "))
 					textBuffer.WriteString("\n")
 					lineBuffer.Reset()
-					lineBuffer.WriteString(word)
+					lineBuffer.WriteString(prefix + word + suffix)
 					firstWord = false
 					spaceLeft = lineWidth - len(word)
 					nbLine++

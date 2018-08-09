@@ -65,6 +65,12 @@ func TestTextWrap(t *testing.T) {
 			"\nfoo\nbar\n\n\nbaz\n",
 			4,
 		},
+		// Ignore complete words with terminal color sequence
+		{
+			"foo \x1b[31mbar\x1b[0m baz",
+			"foo\n\x1b[31mbar\x1b[0m\nbaz",
+			4,
+		},
 		// Complete example:
 		{
 			" This is a list: \n\n\t* foo\n\t* bar\n\n\n\t* baz  \nBAM    ",
