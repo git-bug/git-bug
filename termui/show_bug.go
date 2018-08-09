@@ -14,7 +14,7 @@ const showBugSidebarView = "showBugSidebarView"
 const showBugInstructionView = "showBugInstructionView"
 const showBugHeaderView = "showBugHeaderView"
 
-const timeLayout = "Jan _2 2006"
+const timeLayout = "Jan 2 2006"
 
 type showBug struct {
 	cache          cache.RepoCacher
@@ -179,6 +179,9 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 	for i, op := range snap.Operations {
 		viewName := fmt.Sprintf("op%d", i)
 
+		// TODO: me might skip the rendering of blocks that are outside of the view
+		// but to do that we need to rework how sb.selectableView is maintained
+
 		switch op.(type) {
 
 		case operations.CreateOperation:
@@ -251,10 +254,43 @@ func (sb *showBug) back(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (sb *showBug) scrollUp(g *gocui.Gui, v *gocui.View) error {
+	mainView, err := g.View(showBugView)
+	if err != nil {
+		return err
+	}
+
+	_, maxY := mainView.Size()
+
+	sb.scroll -= maxY / 2
+
+	sb.scroll = maxInt(sb.scroll, 0)
+
 	return nil
 }
 
 func (sb *showBug) scrollDown(g *gocui.Gui, v *gocui.View) error {
+	_, maxY := v.Size()
+
+	lastViewName := sb.childViews[len(sb.childViews)-1]
+
+	lastView, err := g.View(lastViewName)
+	if err != nil {
+		return err
+	}
+
+	_, vMaxY := lastView.Size()
+
+	_, vy0, _, _, err := g.ViewPosition(lastViewName)
+	if err != nil {
+		return err
+	}
+
+	maxScroll := vy0 + sb.scroll + vMaxY - maxY
+
+	sb.scroll += maxY / 2
+
+	sb.scroll = minInt(sb.scroll, maxScroll)
+
 	return nil
 }
 
