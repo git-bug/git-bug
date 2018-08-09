@@ -29,10 +29,15 @@ func WordWrap(text string, lineWidth int) (string, int) {
 }
 
 func TextWrap(text string, lineWidth int) (string, int) {
+	return TextWrapPadded(text, lineWidth, 0)
+}
+
+func TextWrapPadded(text string, lineWidth int, leftPad int) (string, int) {
 	var textBuffer bytes.Buffer
 	var lineBuffer bytes.Buffer
 	nbLine := 1
 	firstLine := true
+	pad := strings.Repeat(" ", leftPad)
 
 	// tabs are formatted as 4 spaces
 	text = strings.Replace(text, "\t", "    ", 4)
@@ -40,7 +45,7 @@ func TextWrap(text string, lineWidth int) (string, int) {
 	re := regexp.MustCompile(`(\x1b\[\d+m)?([^\x1b]*)(\x1b\[\d+m)?`)
 
 	for _, line := range strings.Split(text, "\n") {
-		spaceLeft := lineWidth
+		spaceLeft := lineWidth - leftPad
 
 		if !firstLine {
 			textBuffer.WriteString("\n")
@@ -78,6 +83,7 @@ func TextWrap(text string, lineWidth int) (string, int) {
 						word = word[l:]
 
 						lineBuffer.WriteString(part)
+						textBuffer.WriteString(pad)
 						textBuffer.Write(lineBuffer.Bytes())
 						lineBuffer.Reset()
 
@@ -86,10 +92,10 @@ func TextWrap(text string, lineWidth int) (string, int) {
 							nbLine++
 						}
 
-						spaceLeft = lineWidth
+						spaceLeft = lineWidth - leftPad
 					}
 				} else {
-					textBuffer.WriteString(strings.TrimRight(lineBuffer.String(), " "))
+					textBuffer.WriteString(pad + strings.TrimRight(lineBuffer.String(), " "))
 					textBuffer.WriteString("\n")
 					lineBuffer.Reset()
 					lineBuffer.WriteString(prefix + word + suffix)
@@ -99,7 +105,7 @@ func TextWrap(text string, lineWidth int) (string, int) {
 				}
 			}
 		}
-		textBuffer.WriteString(strings.TrimRight(lineBuffer.String(), " "))
+		textBuffer.WriteString(pad + strings.TrimRight(lineBuffer.String(), " "))
 		lineBuffer.Reset()
 		firstLine = false
 	}
