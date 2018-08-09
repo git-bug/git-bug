@@ -299,9 +299,14 @@ func (bug *Bug) IsValid() bool {
 	return true
 }
 
-// Append an operation into the staging area, to be commited later
+// Append an operation into the staging area, to be committed later
 func (bug *Bug) Append(op Operation) {
 	bug.staging.Append(op)
+}
+
+// Return if the bug need to be committed
+func (bug *Bug) HasPendingOp() bool {
+	return !bug.staging.IsEmpty()
 }
 
 // Write the staging area in Git and move the operations to the packs

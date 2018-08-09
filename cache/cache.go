@@ -43,6 +43,7 @@ type BugCacher interface {
 	SetTitle(title string) error
 
 	Commit() error
+	CommitAsNeeded() error
 }
 
 // Cacher ------------------------
@@ -293,4 +294,11 @@ func (c *BugCache) SetTitle(title string) error {
 
 func (c *BugCache) Commit() error {
 	return c.bug.Commit(c.repo)
+}
+
+func (c *BugCache) CommitAsNeeded() error {
+	if c.bug.HasPendingOp() {
+		return c.bug.Commit(c.repo)
+	}
+	return nil
 }

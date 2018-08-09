@@ -76,7 +76,7 @@ func (sb *showBug) layout(g *gocui.Gui) error {
 		v.Frame = false
 		v.BgColor = gocui.ColorBlue
 
-		fmt.Fprintf(v, "[q] Return [c] Comment [t] Change title [↓,j] Down [↑,k] Up")
+		fmt.Fprintf(v, "[q] Save and return [c] Comment [t] Change title [↓,j] Down [↑,k] Up")
 	}
 
 	_, err = g.SetCurrentView(showBugView)
@@ -85,7 +85,7 @@ func (sb *showBug) layout(g *gocui.Gui) error {
 
 func (sb *showBug) keybindings(g *gocui.Gui) error {
 	// Return
-	if err := g.SetKeybinding(showBugView, 'q', gocui.ModNone, sb.back); err != nil {
+	if err := g.SetKeybinding(showBugView, 'q', gocui.ModNone, sb.saveAndBack); err != nil {
 		return err
 	}
 
@@ -263,7 +263,11 @@ func (sb *showBug) renderSidebar(v *gocui.View) {
 	}
 }
 
-func (sb *showBug) back(g *gocui.Gui, v *gocui.View) error {
+func (sb *showBug) saveAndBack(g *gocui.Gui, v *gocui.View) error {
+	err := sb.bug.CommitAsNeeded()
+	if err != nil {
+		return err
+	}
 	ui.activateWindow(ui.bugTable)
 	return nil
 }

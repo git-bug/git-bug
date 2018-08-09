@@ -3,6 +3,7 @@ package util
 import "github.com/fatih/color"
 
 var (
+	Bold       = color.New(color.Bold).SprintFunc()
 	Black      = color.New(color.FgBlack).SprintFunc()
 	BlackBg    = color.New(color.BgBlack, color.FgWhite).SprintFunc()
 	White      = color.New(color.FgWhite).SprintFunc()
