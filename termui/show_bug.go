@@ -31,6 +31,11 @@ func newShowBug(cache cache.RepoCacher) *showBug {
 	}
 }
 
+func (sb *showBug) SetBug(bug cache.BugCacher) {
+	sb.bug = bug
+	sb.scroll = 0
+}
+
 func (sb *showBug) layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
 
@@ -155,21 +160,21 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 	sb.childViews = nil
 	sb.selectableView = nil
 
-	header := fmt.Sprintf("[ %s ] %s\n\n[ %s ] %s opened this bug on %s",
+	bugHeader := fmt.Sprintf("[ %s ] %s\n\n[ %s ] %s opened this bug on %s",
 		util.Cyan(snap.HumanId()),
 		util.Bold(snap.Title),
 		util.Yellow(snap.Status),
 		util.Magenta(snap.Author.Name),
 		snap.CreatedAt.Format(timeLayout),
 	)
-	content, lines := util.TextWrap(header, maxX)
+	bugHeader, lines := util.TextWrap(bugHeader, maxX)
 
 	v, err := sb.createOpView(g, showBugHeaderView, x0, y0, maxX+1, lines, false)
 	if err != nil {
 		return err
 	}
 
-	fmt.Fprint(v, content)
+	fmt.Fprint(v, bugHeader)
 	y0 += lines + 1
 
 	for i, op := range snap.Operations {
@@ -182,7 +187,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 
 		case operations.CreateOperation:
 			create := op.(operations.CreateOperation)
-			content, lines := util.TextWrap(create.Message, maxX)
+			content, lines := util.TextWrapPadded(create.Message, maxX, 4)
 
 			v, err := sb.createOpView(g, viewName, x0, y0, maxX+1, lines, true)
 			if err != nil {
@@ -194,12 +199,13 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 		case operations.AddCommentOperation:
 			comment := op.(operations.AddCommentOperation)
 
+			message, _ := util.TextWrapPadded(comment.Message, maxX, 4)
 			content := fmt.Sprintf("%s commented on %s\n\n%s",
 				util.Magenta(comment.Author.Name),
 				comment.Time().Format(timeLayout),
-				comment.Message,
+				message,
 			)
-			content, lines := util.TextWrapPadded(content, maxX, 6)
+			content, lines = util.TextWrap(content, maxX)
 
 			v, err := sb.createOpView(g, viewName, x0, y0, maxX+1, lines, true)
 			if err != nil {
