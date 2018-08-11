@@ -19,12 +19,14 @@ const showBugHeaderView = "showBugHeaderView"
 const timeLayout = "Jan 2 2006"
 
 type showBug struct {
-	cache          cache.RepoCacher
-	bug            cache.BugCacher
-	childViews     []string
-	selectableView []string
-	selected       string
-	scroll         int
+	cache              cache.RepoCacher
+	bug                cache.BugCacher
+	childViews         []string
+	mainSelectableView []string
+	sideSelectableView []string
+	selected           string
+	isOnSide           bool
+	scroll             int
 }
 
 func newShowBug(cache cache.RepoCacher) *showBug {
@@ -36,10 +38,13 @@ func newShowBug(cache cache.RepoCacher) *showBug {
 func (sb *showBug) SetBug(bug cache.BugCacher) {
 	sb.bug = bug
 	sb.scroll = 0
+	sb.selected = ""
+	sb.isOnSide = false
 }
 
 func (sb *showBug) layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
+	sb.childViews = nil
 
 	v, err := g.SetView(showBugView, 0, 0, maxX*2/3, maxY-2)
 
@@ -66,11 +71,14 @@ func (sb *showBug) layout(g *gocui.Gui) error {
 		}
 
 		sb.childViews = append(sb.childViews, showBugSidebarView)
-		v.Frame = true
+		v.Frame = false
 	}
 
 	v.Clear()
-	sb.renderSidebar(v)
+	err = sb.renderSidebar(g, v)
+	if err != nil {
+		return err
+	}
 
 	v, err = g.SetView(showBugInstructionView, -1, maxY-2, maxX, maxY)
 
@@ -130,6 +138,25 @@ func (sb *showBug) keybindings(g *gocui.Gui) error {
 		return err
 	}
 
+	// Left
+	if err := g.SetKeybinding(showBugView, 'h', gocui.ModNone,
+		sb.left); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding(showBugView, gocui.KeyArrowLeft, gocui.ModNone,
+		sb.left); err != nil {
+		return err
+	}
+	// Right
+	if err := g.SetKeybinding(showBugView, 'l', gocui.ModNone,
+		sb.right); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding(showBugView, gocui.KeyArrowRight, gocui.ModNone,
+		sb.right); err != nil {
+		return err
+	}
+
 	// Comment
 	if err := g.SetKeybinding(showBugView, 'c', gocui.ModNone,
 		sb.comment); err != nil {
@@ -164,8 +191,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 
 	snap := sb.bug.Snapshot()
 
-	sb.childViews = nil
-	sb.selectableView = nil
+	sb.mainSelectableView = nil
 
 	bugHeader := fmt.Sprintf("[%s] %s\n\n[%s] %s opened this bug on %s",
 		util.Cyan(snap.HumanId()),
@@ -188,7 +214,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 		viewName := fmt.Sprintf("op%d", i)
 
 		// TODO: me might skip the rendering of blocks that are outside of the view
-		// but to do that we need to rework how sb.selectableView is maintained
+		// but to do that we need to rework how sb.mainSelectableView is maintained
 
 		switch op.(type) {
 
@@ -319,7 +345,7 @@ func (sb *showBug) createOpView(g *gocui.Gui, name string, x0 int, y0 int, maxX 
 	sb.childViews = append(sb.childViews, name)
 
 	if selectable {
-		sb.selectableView = append(sb.selectableView, name)
+		sb.mainSelectableView = append(sb.mainSelectableView, name)
 	}
 
 	v.Frame = sb.selected == name
@@ -329,17 +355,50 @@ func (sb *showBug) createOpView(g *gocui.Gui, name string, x0 int, y0 int, maxX 
 	return v, nil
 }
 
-func (sb *showBug) renderSidebar(v *gocui.View) {
-	maxX, _ := v.Size()
+func (sb *showBug) createSideView(g *gocui.Gui, name string, x0 int, y0 int, maxX int, height int) (*gocui.View, error) {
+	v, err := g.SetView(name, x0, y0, maxX, y0+height+1)
+
+	if err != nil && err != gocui.ErrUnknownView {
+		return nil, err
+	}
+
+	sb.childViews = append(sb.childViews, name)
+	sb.sideSelectableView = append(sb.sideSelectableView, name)
+
+	v.Frame = sb.selected == name
+
+	v.Clear()
+
+	return v, nil
+}
+
+func (sb *showBug) renderSidebar(g *gocui.Gui, sideView *gocui.View) error {
+	maxX, _ := sideView.Size()
+	x0, y0, _, _, _ := g.ViewPosition(sideView.Name())
+	maxX += x0
+
 	snap := sb.bug.Snapshot()
 
-	title := util.LeftPaddedString("LABEL", maxX, 2)
-	fmt.Fprintf(v, title+"\n\n")
+	sb.sideSelectableView = nil
 
-	for _, label := range snap.Labels {
-		fmt.Fprintf(v, util.LeftPaddedString(label.String(), maxX, 2))
-		fmt.Fprintln(v)
+	labelStr := make([]string, len(snap.Labels))
+	for i, l := range snap.Labels {
+		labelStr[i] = string(l)
 	}
+
+	labels := strings.Join(labelStr, "\n")
+	labels, lines := util.TextWrapPadded(labels, maxX, 2)
+
+	content := fmt.Sprintf("%s\n\n%s", util.Bold("Labels"), labels)
+
+	v, err := sb.createSideView(g, "sideLabels", x0, y0, maxX, lines+2)
+	if err != nil {
+		return err
+	}
+
+	fmt.Fprint(v, content)
+
+	return nil
 }
 
 func (sb *showBug) saveAndBack(g *gocui.Gui, v *gocui.View) error {
@@ -393,50 +452,74 @@ func (sb *showBug) scrollDown(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (sb *showBug) selectPrevious(g *gocui.Gui, v *gocui.View) error {
-	if len(sb.selectableView) == 0 {
-		return nil
-	}
-
 	defer sb.focusView(g)
 
-	for i, name := range sb.selectableView {
+	var selectable []string
+	if sb.isOnSide {
+		selectable = sb.sideSelectableView
+	} else {
+		selectable = sb.mainSelectableView
+	}
+
+	for i, name := range selectable {
 		if name == sb.selected {
 			// special case to scroll up to the top
 			if i == 0 {
 				sb.scroll = 0
 			}
 
-			sb.selected = sb.selectableView[maxInt(i-1, 0)]
+			sb.selected = selectable[maxInt(i-1, 0)]
 			return nil
 		}
 	}
 
-	if sb.selected == "" {
-		sb.selected = sb.selectableView[0]
+	if sb.selected == "" && len(selectable) > 0 {
+		sb.selected = selectable[0]
 	}
 
 	return nil
 }
 
 func (sb *showBug) selectNext(g *gocui.Gui, v *gocui.View) error {
-	if len(sb.selectableView) == 0 {
-		return nil
-	}
-
 	defer sb.focusView(g)
 
-	for i, name := range sb.selectableView {
+	var selectable []string
+	if sb.isOnSide {
+		selectable = sb.sideSelectableView
+	} else {
+		selectable = sb.mainSelectableView
+	}
+
+	for i, name := range selectable {
 		if name == sb.selected {
-			sb.selected = sb.selectableView[minInt(i+1, len(sb.selectableView)-1)]
+			sb.selected = selectable[minInt(i+1, len(selectable)-1)]
 			return nil
 		}
 	}
 
-	if sb.selected == "" {
-		sb.selected = sb.selectableView[0]
+	if sb.selected == "" && len(selectable) > 0 {
+		sb.selected = selectable[0]
 	}
 
 	return nil
+}
+
+func (sb *showBug) left(g *gocui.Gui, v *gocui.View) error {
+	if sb.isOnSide {
+		sb.isOnSide = false
+		sb.selected = ""
+	}
+
+	return sb.selectNext(g, v)
+}
+
+func (sb *showBug) right(g *gocui.Gui, v *gocui.View) error {
+	if !sb.isOnSide {
+		sb.isOnSide = true
+		sb.selected = ""
+	}
+
+	return sb.selectNext(g, v)
 }
 
 func (sb *showBug) focusView(g *gocui.Gui) error {
