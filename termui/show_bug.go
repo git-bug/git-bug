@@ -167,7 +167,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 	sb.childViews = nil
 	sb.selectableView = nil
 
-	bugHeader := fmt.Sprintf("[ %s ] %s\n\n[ %s ] %s opened this bug on %s",
+	bugHeader := fmt.Sprintf("[%s] %s\n\n[%s] %s opened this bug on %s",
 		util.Cyan(snap.HumanId()),
 		util.Bold(snap.Title),
 		util.Yellow(snap.Status),
@@ -272,7 +272,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 
 			if len(added) > 0 {
 				action.WriteString("added ")
-				action.WriteString(strings.Join(added, " "))
+				action.WriteString(strings.Join(added, ", "))
 
 				if len(removed) > 0 {
 					action.WriteString(" and ")
@@ -281,7 +281,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 
 			if len(removed) > 0 {
 				action.WriteString("removed ")
-				action.WriteString(strings.Join(removed, " "))
+				action.WriteString(strings.Join(removed, ", "))
 			}
 
 			if len(added)+len(removed) > 1 {

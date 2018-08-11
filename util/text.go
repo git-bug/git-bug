@@ -2,7 +2,6 @@ package util
 
 import (
 	"bytes"
-	"regexp"
 	"strings"
 )
 
@@ -28,10 +27,14 @@ func WordWrap(text string, lineWidth int) (string, int) {
 	return wrapped, lines
 }
 
+// Wrap a text for an exact line size
+// Handle properly terminal color escape code
 func TextWrap(text string, lineWidth int) (string, int) {
 	return TextWrapPadded(text, lineWidth, 0)
 }
 
+// Wrap a text for an exact line size with a left padding
+// Handle properly terminal color escape code
 func TextWrapPadded(text string, lineWidth int, leftPad int) (string, int) {
 	var textBuffer bytes.Buffer
 	var lineBuffer bytes.Buffer
@@ -41,8 +44,6 @@ func TextWrapPadded(text string, lineWidth int, leftPad int) (string, int) {
 
 	// tabs are formatted as 4 spaces
 	text = strings.Replace(text, "\t", "    ", 4)
-
-	re := regexp.MustCompile(`(\x1b\[\d+m)?([^\x1b]*)(\x1b\[\d+m)?`)
 
 	for _, line := range strings.Split(text, "\n") {
 		spaceLeft := lineWidth - leftPad
@@ -55,62 +56,122 @@ func TextWrapPadded(text string, lineWidth int, leftPad int) (string, int) {
 		firstWord := true
 
 		for _, word := range strings.Split(line, " ") {
-			prefix := ""
-			suffix := ""
+			wordLength := wordLen(word)
 
-			matches := re.FindStringSubmatch(word)
-			if matches != nil && (matches[1] != "" || matches[3] != "") {
-				// we have a color escape sequence
-				prefix = matches[1]
-				word = matches[2]
-				suffix = matches[3]
+			if !firstWord {
+				lineBuffer.WriteString(" ")
+				spaceLeft -= 1
+
+				if spaceLeft <= 0 {
+					textBuffer.WriteString(pad + strings.TrimRight(lineBuffer.String(), " "))
+					textBuffer.WriteString("\n")
+					lineBuffer.Reset()
+					spaceLeft = lineWidth - leftPad
+					nbLine++
+					firstLine = false
+				}
 			}
 
-			if spaceLeft > len(word) {
-				if !firstWord {
-					lineBuffer.WriteString(" ")
-					spaceLeft -= 1
-				}
-				lineBuffer.WriteString(prefix + word + suffix)
-				spaceLeft -= len(word)
+			// Word fit in the current line
+			if spaceLeft >= wordLength {
+				lineBuffer.WriteString(word)
+				spaceLeft -= wordLength
 				firstWord = false
 			} else {
-				if len(word) > lineWidth {
-					for len(word) > 0 {
-						l := minInt(spaceLeft, len(word))
-						part := prefix + word[:l]
-						prefix = ""
-						word = word[l:]
+				// Break a word longer than a line
+				if wordLength > lineWidth {
+					for wordLength > 0 && len(word) > 0 {
+						l := minInt(spaceLeft, wordLength)
+						part, leftover := splitWord(word, l)
+						word = leftover
+						wordLength = wordLen(word)
 
 						lineBuffer.WriteString(part)
 						textBuffer.WriteString(pad)
 						textBuffer.Write(lineBuffer.Bytes())
 						lineBuffer.Reset()
 
-						if len(word) > 0 {
+						spaceLeft -= l
+
+						if spaceLeft <= 0 {
 							textBuffer.WriteString("\n")
 							nbLine++
+							spaceLeft = lineWidth - leftPad
 						}
-
-						spaceLeft = lineWidth - leftPad
 					}
 				} else {
+					// Normal break
 					textBuffer.WriteString(pad + strings.TrimRight(lineBuffer.String(), " "))
 					textBuffer.WriteString("\n")
 					lineBuffer.Reset()
-					lineBuffer.WriteString(prefix + word + suffix)
+					lineBuffer.WriteString(word)
 					firstWord = false
-					spaceLeft = lineWidth - len(word)
+					spaceLeft = lineWidth - wordLength
 					nbLine++
 				}
 			}
 		}
+
 		textBuffer.WriteString(pad + strings.TrimRight(lineBuffer.String(), " "))
 		lineBuffer.Reset()
 		firstLine = false
 	}
 
 	return textBuffer.String(), nbLine
+}
+
+func wordLen(word string) int {
+	length := 0
+	escape := false
+
+	for _, char := range word {
+		if char == '\x1b' {
+			escape = true
+		}
+
+		if !escape {
+			length++
+		}
+
+		if char == 'm' {
+			escape = false
+		}
+	}
+
+	return length
+}
+
+func splitWord(word string, length int) (string, string) {
+	result := ""
+	added := 0
+	escape := false
+
+	if length == 0 {
+		return "", word
+	}
+
+	for _, char := range word {
+		if char == '\x1b' {
+			escape = true
+		}
+
+		result += string(char)
+
+		if !escape {
+			added++
+			if added == length {
+				break
+			}
+		}
+
+		if char == 'm' {
+			escape = false
+		}
+	}
+
+	leftover := word[len(result):]
+
+	return result, leftover
 }
 
 func minInt(a, b int) int {

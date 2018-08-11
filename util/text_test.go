@@ -43,7 +43,7 @@ func TestTextWrap(t *testing.T) {
 		// A tab counts as 4 characters.
 		{
 			"foo\nb\t r\n baz",
-			"foo\nb\n r\n baz",
+			"foo\nb\n  r\n baz",
 			4,
 		},
 		// Trailing whitespace is removed after used for wrapping.
@@ -71,10 +71,22 @@ func TestTextWrap(t *testing.T) {
 			"foo\n\x1b[31mbar\x1b[0m\nbaz",
 			4,
 		},
+		// Handle words with colors sequence inside the word
+		{
+			"foo b\x1b[31mbar\x1b[0mr baz",
+			"foo\nb\x1b[31mbar\n\x1b[0mr\nbaz",
+			4,
+		},
+		// Break words with colors sequence inside the word
+		{
+			"foo bb\x1b[31mbar\x1b[0mr baz",
+			"foo\nbb\x1b[31mba\nr\x1b[0mr\nbaz",
+			4,
+		},
 		// Complete example:
 		{
 			" This is a list: \n\n\t* foo\n\t* bar\n\n\n\t* baz  \nBAM    ",
-			" This\nis a\nlist:\n\n    *\nfoo\n    *\nbar\n\n\n    *\nbaz\nBAM\n",
+			" This\nis a\nlist:\n\n\n    *\nfoo\n    *\nbar\n\n\n    *\nbaz\nBAM\n",
 			6,
 		},
 	}
@@ -88,8 +100,92 @@ func TestTextWrap(t *testing.T) {
 
 		expected := len(strings.Split(tc.Output, "\n"))
 		if expected != lines {
-			t.Fatalf("Nb lines mismatch\nExpected:%d\nActual:%d",
-				expected, lines)
+			t.Fatalf("Case %d Nb lines mismatch\nExpected:%d\nActual:%d",
+				i, expected, lines)
+		}
+	}
+}
+
+func TestWordLen(t *testing.T) {
+	cases := []struct {
+		Input  string
+		Length int
+	}{
+		// A simple word
+		{
+			"foo",
+			3,
+		},
+		// A simple word with colors
+		{
+			"\x1b[31mbar\x1b[0m",
+			3,
+		},
+		// Handle prefix and suffix properly
+		{
+			"foo\x1b[31mfoobarHoy\x1b[0mbaaar",
+			17,
+		},
+	}
+
+	for i, tc := range cases {
+		l := wordLen(tc.Input)
+		if l != tc.Length {
+			t.Fatalf("Case %d Input:\n\n`%s`\n\nExpected Output:\n\n`%d`\n\nActual Output:\n\n`%d`",
+				i, tc.Input, tc.Length, l)
+		}
+	}
+}
+
+func TestSplitWord(t *testing.T) {
+	cases := []struct {
+		Input            string
+		Length           int
+		Result, Leftover string
+	}{
+		// A simple word passes through.
+		{
+			"foo",
+			4,
+			"foo", "",
+		},
+		// Cut at the right place
+		{
+			"foobarHoy",
+			4,
+			"foob", "arHoy",
+		},
+		// A simple word passes through with colors
+		{
+			"\x1b[31mbar\x1b[0m",
+			4,
+			"\x1b[31mbar\x1b[0m", "",
+		},
+		// Cut at the right place with colors
+		{
+			"\x1b[31mfoobarHoy\x1b[0m",
+			4,
+			"\x1b[31mfoob", "arHoy\x1b[0m",
+		},
+		// Handle prefix and suffix properly
+		{
+			"foo\x1b[31mfoobarHoy\x1b[0mbaaar",
+			4,
+			"foo\x1b[31mf", "oobarHoy\x1b[0mbaaar",
+		},
+		// Cut properly with length = 0
+		{
+			"foo",
+			0,
+			"", "foo",
+		},
+	}
+
+	for i, tc := range cases {
+		result, leftover := splitWord(tc.Input, tc.Length)
+		if result != tc.Result || leftover != tc.Leftover {
+			t.Fatalf("Case %d Input:\n\n`%s`\n\nExpected Output:\n\n`%s` - `%s`\n\nActual Output:\n\n`%s` - `%s`",
+				i, tc.Input, tc.Result, tc.Leftover, result, leftover)
 		}
 	}
 }
