@@ -443,7 +443,7 @@ func (sb *showBug) scrollUp(g *gocui.Gui, v *gocui.View) error {
 func (sb *showBug) scrollDown(g *gocui.Gui, v *gocui.View) error {
 	_, maxY := v.Size()
 
-	lastViewName := sb.childViews[len(sb.childViews)-1]
+	lastViewName := sb.mainSelectableView[len(sb.mainSelectableView)-1]
 
 	lastView, err := g.View(lastViewName)
 	if err != nil {
