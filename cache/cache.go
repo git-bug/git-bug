@@ -2,6 +2,7 @@ package cache
 
 import (
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/MichaelMure/git-bug/bug"
@@ -28,6 +29,10 @@ type RepoCacher interface {
 	// Mutations
 	NewBug(title string, message string) (BugCacher, error)
 	NewBugWithFiles(title string, message string, files []util.Hash) (BugCacher, error)
+	Fetch(remote string) (string, error)
+	MergeAll(remote string) <-chan bug.MergeResult
+	Pull(remote string, out io.Writer) error
+	Push(remote string) (string, error)
 }
 
 type BugCacher interface {
@@ -186,6 +191,22 @@ func (c *RepoCache) NewBugWithFiles(title string, message string, files []util.H
 	c.bugs[b.Id()] = cached
 
 	return cached, nil
+}
+
+func (c *RepoCache) Fetch(remote string) (string, error) {
+	return bug.Fetch(c.repo, remote)
+}
+
+func (c *RepoCache) MergeAll(remote string) <-chan bug.MergeResult {
+	return bug.MergeAll(c.repo, remote)
+}
+
+func (c *RepoCache) Pull(remote string, out io.Writer) error {
+	return bug.Pull(c.repo, out, remote)
+}
+
+func (c *RepoCache) Push(remote string) (string, error) {
+	return bug.Push(c.repo, remote)
 }
 
 // Bug ------------------------

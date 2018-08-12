@@ -2,6 +2,8 @@ package commands
 
 import (
 	"errors"
+	"fmt"
+
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/spf13/cobra"
 )
@@ -16,9 +18,12 @@ func runPush(cmd *cobra.Command, args []string) error {
 		remote = args[0]
 	}
 
-	if err := bug.Push(repo, remote); err != nil {
+	stdout, err := bug.Push(repo, remote)
+	if err != nil {
 		return err
 	}
+
+	fmt.Println(stdout)
 
 	return nil
 }

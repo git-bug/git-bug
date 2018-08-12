@@ -151,24 +151,24 @@ func (repo *GitRepo) GetCoreEditor() (string, error) {
 }
 
 // FetchRefs fetch git refs from a remote
-func (repo *GitRepo) FetchRefs(remote, refSpec string) error {
-	err := repo.runGitCommandInline("fetch", remote, refSpec)
+func (repo *GitRepo) FetchRefs(remote, refSpec string) (string, error) {
+	stdout, err := repo.runGitCommand("fetch", remote, refSpec)
 
 	if err != nil {
-		return fmt.Errorf("failed to fetch from the remote '%s': %v", remote, err)
+		return stdout, fmt.Errorf("failed to fetch from the remote '%s': %v", remote, err)
 	}
 
-	return err
+	return stdout, err
 }
 
 // PushRefs push git refs to a remote
-func (repo *GitRepo) PushRefs(remote string, refSpec string) error {
-	err := repo.runGitCommandInline("push", remote, refSpec)
+func (repo *GitRepo) PushRefs(remote string, refSpec string) (string, error) {
+	stdout, stderr, err := repo.runGitCommandRaw(nil, "push", remote, refSpec)
 
 	if err != nil {
-		return fmt.Errorf("failed to push to the remote '%s': %v", remote, err)
+		return stdout + stderr, fmt.Errorf("failed to push to the remote '%s': %v", remote, err)
 	}
-	return nil
+	return stdout + stderr, nil
 }
 
 // StoreData will store arbitrary data and return the corresponding hash

@@ -13,25 +13,28 @@ const MsgMergeInvalid = "invalid data"
 const MsgMergeUpdated = "updated"
 const MsgMergeNothing = "nothing to do"
 
-func Fetch(repo repository.Repo, remote string) error {
+func Fetch(repo repository.Repo, remote string) (string, error) {
 	remoteRefSpec := fmt.Sprintf(bugsRemoteRefPattern, remote)
 	fetchRefSpec := fmt.Sprintf("%s*:%s*", bugsRefPattern, remoteRefSpec)
 
 	return repo.FetchRefs(remote, fetchRefSpec)
 }
 
-func Push(repo repository.Repo, remote string) error {
+func Push(repo repository.Repo, remote string) (string, error) {
 	return repo.PushRefs(remote, bugsRefPattern+"*")
 }
 
 func Pull(repo repository.Repo, out io.Writer, remote string) error {
 	fmt.Fprintf(out, "Fetching remote ...\n")
 
-	if err := Fetch(repo, remote); err != nil {
+	stdout, err := Fetch(repo, remote)
+	if err != nil {
 		return err
 	}
 
-	fmt.Fprintf(out, "\nMerging data ...\n")
+	out.Write([]byte(stdout))
+
+	fmt.Fprintf(out, "Merging data ...\n")
 
 	for merge := range MergeAll(repo, remote) {
 		if merge.Err != nil {
@@ -42,6 +45,7 @@ func Pull(repo repository.Repo, out io.Writer, remote string) error {
 			fmt.Fprintf(out, "%s: %s\n", merge.HumanId, merge.Status)
 		}
 	}
+
 	return nil
 }
 

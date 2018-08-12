@@ -93,7 +93,7 @@ func (sb *showBug) layout(g *gocui.Gui) error {
 	}
 
 	v.Clear()
-	fmt.Fprintf(v, "[q] Save and return [←,h] Left [↓,j] Down [↑,k] Up [→,l] Right ")
+	fmt.Fprintf(v, "[q] Save and return [←↓↑→,hjkl] Navigation ")
 
 	if sb.isOnSide {
 		fmt.Fprint(v, "[a] Add label [r] Remove label")
@@ -591,7 +591,7 @@ func (sb *showBug) addLabel(g *gocui.Gui, v *gocui.View) error {
 
 		err := sb.bug.ChangeLabels(trimLabels(labels), nil)
 		if err != nil {
-			ui.errorPopup.Activate(err.Error())
+			ui.msgPopup.Activate(msgPopupErrorTitle, err.Error())
 		}
 
 		g.Update(func(gui *gocui.Gui) error {
@@ -614,7 +614,7 @@ func (sb *showBug) removeLabel(g *gocui.Gui, v *gocui.View) error {
 
 		err := sb.bug.ChangeLabels(nil, trimLabels(labels))
 		if err != nil {
-			ui.errorPopup.Activate(err.Error())
+			ui.msgPopup.Activate(msgPopupErrorTitle, err.Error())
 		}
 
 		g.Update(func(gui *gocui.Gui) error {

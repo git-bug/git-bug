@@ -1,7 +1,9 @@
 package termui
 
 import (
+	"bytes"
 	"fmt"
+
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util"
@@ -13,6 +15,8 @@ const bugTableView = "bugTableView"
 const bugTableHeaderView = "bugTableHeaderView"
 const bugTableFooterView = "bugTableFooterView"
 const bugTableInstructionView = "bugTableInstructionView"
+
+const remote = "origin"
 
 type bugTable struct {
 	repo         cache.RepoCacher
@@ -105,7 +109,7 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 		v.Frame = false
 		v.BgColor = gocui.ColorBlue
 
-		fmt.Fprintf(v, "[q] Quit [←,h] Previous page [↓,j] Down [↑,k] Up [→,l] Next page [enter] Open bug [n] New bug")
+		fmt.Fprintf(v, "[q] Quit [←↓↑→,hjkl] Navigation [enter] Open bug [n] New bug [i] Pull [o] Push")
 	}
 
 	_, err = g.SetCurrentView(bugTableView)
@@ -173,6 +177,18 @@ func (bt *bugTable) keybindings(g *gocui.Gui) error {
 	// Open bug
 	if err := g.SetKeybinding(bugTableView, gocui.KeyEnter, gocui.ModNone,
 		bt.openBug); err != nil {
+		return err
+	}
+
+	// Pull
+	if err := g.SetKeybinding(bugTableView, 'i', gocui.ModNone,
+		bt.pull); err != nil {
+		return err
+	}
+
+	// Push
+	if err := g.SetKeybinding(bugTableView, 'o', gocui.ModNone,
+		bt.push); err != nil {
 		return err
 	}
 
@@ -382,4 +398,86 @@ func (bt *bugTable) openBug(g *gocui.Gui, v *gocui.View) error {
 	_, y := v.Cursor()
 	ui.showBug.SetBug(bt.bugs[bt.pageCursor+y])
 	return ui.activateWindow(ui.showBug)
+}
+
+func (bt *bugTable) pull(g *gocui.Gui, v *gocui.View) error {
+	// Note: this is very hacky
+
+	ui.msgPopup.Activate("Pull from remote "+remote, "...")
+
+	go func() {
+		stdout, err := bt.repo.Fetch(remote)
+
+		if err != nil {
+			g.Update(func(gui *gocui.Gui) error {
+				ui.msgPopup.Activate(msgPopupErrorTitle, err.Error())
+				return nil
+			})
+		} else {
+			g.Update(func(gui *gocui.Gui) error {
+				ui.msgPopup.UpdateMessage(stdout)
+				return nil
+			})
+		}
+
+		var buffer bytes.Buffer
+		beginLine := ""
+
+		for merge := range bt.repo.MergeAll(remote) {
+			if merge.Status == bug.MsgMergeNothing {
+				continue
+			}
+
+			if merge.Err != nil {
+				g.Update(func(gui *gocui.Gui) error {
+					ui.msgPopup.Activate(msgPopupErrorTitle, err.Error())
+					return nil
+				})
+			} else {
+				fmt.Fprintf(&buffer, "%s%s: %s",
+					beginLine, util.Cyan(merge.HumanId), merge.Status,
+				)
+
+				beginLine = "\n"
+
+				g.Update(func(gui *gocui.Gui) error {
+					ui.msgPopup.UpdateMessage(buffer.String())
+					return nil
+				})
+			}
+		}
+
+		fmt.Fprintf(&buffer, "%sdone", beginLine)
+
+		g.Update(func(gui *gocui.Gui) error {
+			ui.msgPopup.UpdateMessage(buffer.String())
+			return nil
+		})
+
+	}()
+
+	return nil
+}
+
+func (bt *bugTable) push(g *gocui.Gui, v *gocui.View) error {
+	ui.msgPopup.Activate("Push to remote "+remote, "...")
+
+	go func() {
+		// TODO: make the remote configurable
+		stdout, err := bt.repo.Push(remote)
+
+		if err != nil {
+			g.Update(func(gui *gocui.Gui) error {
+				ui.msgPopup.Activate(msgPopupErrorTitle, err.Error())
+				return nil
+			})
+		} else {
+			g.Update(func(gui *gocui.Gui) error {
+				ui.msgPopup.UpdateMessage(stdout)
+				return nil
+			})
+		}
+	}()
+
+	return nil
 }
