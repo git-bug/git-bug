@@ -19,6 +19,7 @@ As you would do with commits and branches, you can push your bugs to the same gi
 
 ## Install
 
+### Go get
 ```shell
 go get github.com/MichaelMure/git-bug
 ```
@@ -28,8 +29,13 @@ If it's not done already, add golang binary directory in your PATH:
 ```bash
 export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 ```
+### Pre-compiled binaries
 
-That's all ! In the future, pre-compiled binary will be provided for convenience.
+1. Go to the [release page](https://github.com/MichaelMure/git-bug/releases/latest) and download the appropriate binary for your system.
+2. Copy the binary anywhere in your PATH
+3. Rename the binary to `git-bug` (or `git-bug.exe` on windows)
+
+That's all !
 
 ## CLI usage (status: working but need UX improvement)
 
