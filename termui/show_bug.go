@@ -90,8 +90,15 @@ func (sb *showBug) layout(g *gocui.Gui) error {
 		sb.childViews = append(sb.childViews, showBugInstructionView)
 		v.Frame = false
 		v.BgColor = gocui.ColorBlue
+	}
 
-		fmt.Fprintf(v, "[q] Save and return [c] Comment [t] Change title [↓,j] Down [↑,k] Up")
+	v.Clear()
+	fmt.Fprintf(v, "[q] Save and return [←,h] Left [↓,j] Down [↑,k] Up [→,l] Right ")
+
+	if sb.isOnSide {
+		fmt.Fprint(v, "[a] Add label [r] Remove label")
+	} else {
+		fmt.Fprint(v, "[c] Comment [t] Change title")
 	}
 
 	_, err = g.SetViewOnTop(showBugInstructionView)
@@ -170,6 +177,14 @@ func (sb *showBug) keybindings(g *gocui.Gui) error {
 	}
 
 	// Labels
+	if err := g.SetKeybinding(showBugView, 'a', gocui.ModNone,
+		sb.addLabel); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding(showBugView, 'r', gocui.ModNone,
+		sb.removeLabel); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -562,4 +577,62 @@ func (sb *showBug) comment(g *gocui.Gui, v *gocui.View) error {
 
 func (sb *showBug) setTitle(g *gocui.Gui, v *gocui.View) error {
 	return setTitleWithEditor(sb.bug)
+}
+
+func (sb *showBug) addLabel(g *gocui.Gui, v *gocui.View) error {
+	c := ui.inputPopup.Activate("Add labels")
+
+	go func() {
+		input := <-c
+
+		labels := strings.FieldsFunc(input, func(r rune) bool {
+			return r == ' ' || r == ','
+		})
+
+		err := sb.bug.ChangeLabels(trimLabels(labels), nil)
+		if err != nil {
+			ui.errorPopup.Activate(err.Error())
+		}
+
+		g.Update(func(gui *gocui.Gui) error {
+			return nil
+		})
+	}()
+
+	return nil
+}
+
+func (sb *showBug) removeLabel(g *gocui.Gui, v *gocui.View) error {
+	c := ui.inputPopup.Activate("Remove labels")
+
+	go func() {
+		input := <-c
+
+		labels := strings.FieldsFunc(input, func(r rune) bool {
+			return r == ' ' || r == ','
+		})
+
+		err := sb.bug.ChangeLabels(nil, trimLabels(labels))
+		if err != nil {
+			ui.errorPopup.Activate(err.Error())
+		}
+
+		g.Update(func(gui *gocui.Gui) error {
+			return nil
+		})
+	}()
+
+	return nil
+}
+
+func trimLabels(labels []string) []string {
+	var result []string
+
+	for _, label := range labels {
+		trimmed := strings.TrimSpace(label)
+		if len(trimmed) > 0 {
+			result = append(result, trimmed)
+		}
+	}
+	return result
 }

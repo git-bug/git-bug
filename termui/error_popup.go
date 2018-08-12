@@ -2,6 +2,7 @@ package termui
 
 import (
 	"fmt"
+
 	"github.com/MichaelMure/git-bug/util"
 	"github.com/jroimartin/gocui"
 )
@@ -38,7 +39,7 @@ func (ep *errorPopup) layout(g *gocui.Gui) error {
 
 	width := minInt(30, maxX)
 	wrapped, nblines := util.WordWrap(ep.message, width-2)
-	height := minInt(nblines+2, maxY)
+	height := minInt(nblines+1, maxY)
 	x0 := (maxX - width) / 2
 	y0 := (maxY - height) / 2
 
@@ -66,6 +67,6 @@ func (ep *errorPopup) close(g *gocui.Gui, v *gocui.View) error {
 	return g.DeleteView(errorPopupView)
 }
 
-func (ep *errorPopup) activate(message string) {
+func (ep *errorPopup) Activate(message string) {
 	ep.message = message
 }

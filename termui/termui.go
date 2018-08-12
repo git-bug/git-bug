@@ -20,6 +20,7 @@ type termUI struct {
 	bugTable   *bugTable
 	showBug    *showBug
 	errorPopup *errorPopup
+	inputPopup *inputPopup
 }
 
 func (tui *termUI) activateWindow(window window) error {
@@ -49,6 +50,7 @@ func Run(repo repository.Repo) error {
 		bugTable:   newBugTable(c),
 		showBug:    newShowBug(c),
 		errorPopup: newErrorPopup(),
+		inputPopup: newInputPopup(),
 	}
 
 	ui.activeWindow = ui.bugTable
@@ -108,6 +110,10 @@ func layout(g *gocui.Gui) error {
 		return err
 	}
 
+	if err := ui.inputPopup.layout(g); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -126,6 +132,10 @@ func keybindings(g *gocui.Gui) error {
 	}
 
 	if err := ui.errorPopup.keybindings(g); err != nil {
+		return err
+	}
+
+	if err := ui.inputPopup.keybindings(g); err != nil {
 		return err
 	}
 
@@ -156,7 +166,7 @@ func newBugWithEditor(repo cache.RepoCacher) error {
 	}
 
 	if err == input.ErrEmptyTitle {
-		ui.errorPopup.activate("Empty title, aborting.")
+		ui.errorPopup.Activate("Empty title, aborting.")
 	} else {
 		_, err := repo.NewBug(title, message)
 		if err != nil {
@@ -189,7 +199,7 @@ func addCommentWithEditor(bug cache.BugCacher) error {
 	}
 
 	if err == input.ErrEmptyMessage {
-		ui.errorPopup.activate("Empty message, aborting.")
+		ui.errorPopup.Activate("Empty message, aborting.")
 	} else {
 		err := bug.AddComment(message)
 		if err != nil {
@@ -222,7 +232,7 @@ func setTitleWithEditor(bug cache.BugCacher) error {
 	}
 
 	if err == input.ErrEmptyTitle {
-		ui.errorPopup.activate("Empty title, aborting.")
+		ui.errorPopup.Activate("Empty title, aborting.")
 	} else {
 		err := bug.SetTitle(title)
 		if err != nil {
