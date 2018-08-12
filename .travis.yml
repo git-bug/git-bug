@@ -14,10 +14,7 @@ script:
   - make test
 
 after_success:
-  - if [ ! -z "$TRAVIS_TAG" ]; then
-      gox -tags=deploy_build -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}"
-    fi
-
+  - if [ ! -z "$TRAVIS_TAG" ]; then gox -tags=deploy_build -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}"; fi
 
 deploy:
   provider: releases
