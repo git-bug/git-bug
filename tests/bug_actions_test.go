@@ -41,11 +41,7 @@ func cleanupRepo(repo repository.Repo) error {
 	return os.RemoveAll(path)
 }
 
-var repoA *repository.GitRepo
-var repoB *repository.GitRepo
-var remote *repository.GitRepo
-
-func setupRepos(t *testing.T) {
+func setupRepos(t *testing.T) (repoA, repoB, remote *repository.GitRepo) {
 	repoA = createRepo(false)
 	repoB = createRepo(false)
 	remote = createRepo(true)
@@ -61,17 +57,19 @@ func setupRepos(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	return repoA, repoB, remote
 }
 
-func cleanupRepos() {
+func cleanupRepos(repoA, repoB, remote *repository.GitRepo) {
 	cleanupRepo(repoA)
 	cleanupRepo(repoB)
 	cleanupRepo(remote)
 }
 
 func TestPushPull(t *testing.T) {
-	setupRepos(t)
-	defer cleanupRepos()
+	repoA, repoB, remote := setupRepos(t)
+	defer cleanupRepos(repoA, repoB, remote)
 
 	bug1, err := operations.Create(rene, "bug1", "message")
 	checkErr(t, err)
@@ -79,7 +77,7 @@ func TestPushPull(t *testing.T) {
 	checkErr(t, err)
 
 	// A --> remote --> B
-	err = bug.Push(repoA, "origin")
+	_, err = bug.Push(repoA, "origin")
 	checkErr(t, err)
 
 	err = bug.Pull(repoB, os.Stdout, "origin")
@@ -97,7 +95,7 @@ func TestPushPull(t *testing.T) {
 	bug2.Commit(repoB)
 	checkErr(t, err)
 
-	err = bug.Push(repoB, "origin")
+	_, err = bug.Push(repoB, "origin")
 	checkErr(t, err)
 
 	err = bug.Pull(repoA, os.Stdout, "origin")
@@ -128,8 +126,8 @@ func allBugs(t *testing.T, bugs <-chan bug.StreamedBug) []*bug.Bug {
 }
 
 func TestRebaseTheirs(t *testing.T) {
-	setupRepos(t)
-	defer cleanupRepos()
+	repoA, repoB, remote := setupRepos(t)
+	defer cleanupRepos(repoA, repoB, remote)
 
 	bug1, err := operations.Create(rene, "bug1", "message")
 	checkErr(t, err)
@@ -137,7 +135,7 @@ func TestRebaseTheirs(t *testing.T) {
 	checkErr(t, err)
 
 	// A --> remote
-	err = bug.Push(repoA, "origin")
+	_, err = bug.Push(repoA, "origin")
 	checkErr(t, err)
 
 	// remote --> B
@@ -154,7 +152,7 @@ func TestRebaseTheirs(t *testing.T) {
 	checkErr(t, err)
 
 	// B --> remote
-	err = bug.Push(repoB, "origin")
+	_, err = bug.Push(repoB, "origin")
 	checkErr(t, err)
 
 	// remote --> A
@@ -176,8 +174,8 @@ func TestRebaseTheirs(t *testing.T) {
 }
 
 func TestRebaseOurs(t *testing.T) {
-	setupRepos(t)
-	defer cleanupRepos()
+	repoA, repoB, remote := setupRepos(t)
+	defer cleanupRepos(repoA, repoB, remote)
 
 	bug1, err := operations.Create(rene, "bug1", "message")
 	checkErr(t, err)
@@ -185,7 +183,7 @@ func TestRebaseOurs(t *testing.T) {
 	checkErr(t, err)
 
 	// A --> remote
-	err = bug.Push(repoA, "origin")
+	_, err = bug.Push(repoA, "origin")
 	checkErr(t, err)
 
 	// remote --> B
@@ -238,8 +236,8 @@ func nbOps(b *bug.Bug) int {
 }
 
 func TestRebaseConflict(t *testing.T) {
-	setupRepos(t)
-	defer cleanupRepos()
+	repoA, repoB, remote := setupRepos(t)
+	defer cleanupRepos(repoA, repoB, remote)
 
 	bug1, err := operations.Create(rene, "bug1", "message")
 	checkErr(t, err)
@@ -247,7 +245,7 @@ func TestRebaseConflict(t *testing.T) {
 	checkErr(t, err)
 
 	// A --> remote
-	err = bug.Push(repoA, "origin")
+	_, err = bug.Push(repoA, "origin")
 	checkErr(t, err)
 
 	// remote --> B
@@ -294,7 +292,7 @@ func TestRebaseConflict(t *testing.T) {
 	checkErr(t, err)
 
 	// A --> remote
-	err = bug.Push(repoA, "origin")
+	_, err = bug.Push(repoA, "origin")
 	checkErr(t, err)
 
 	// remote --> B
@@ -315,7 +313,7 @@ func TestRebaseConflict(t *testing.T) {
 	}
 
 	// B --> remote
-	err = bug.Push(repoB, "origin")
+	_, err = bug.Push(repoB, "origin")
 	checkErr(t, err)
 
 	// remote --> A
