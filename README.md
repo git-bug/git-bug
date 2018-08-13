@@ -37,7 +37,7 @@ export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 
 That's all !
 
-## CLI usage (status: working but need UX improvement)
+## CLI usage
 
 Create a new bug:
 
@@ -64,7 +64,7 @@ git bug ls
 
 You can now use commands like `show`, `comment`, `open` or `close` to display and modify bugs. For more details about each command, you can run `git bug <command> --help` or read the [command's documentation](doc/md/git-bug.md).
 
-## Interactive terminal UI (status: WIP)
+## Interactive terminal UI
 
 An interactive terminal UI is available using the command `git bug termui` to browse and edit bugs.
 
