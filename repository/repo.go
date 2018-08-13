@@ -67,7 +67,7 @@ type Repo interface {
 	// FindCommonAncestor will return the last common ancestor of two chain of commit
 	FindCommonAncestor(hash1 util.Hash, hash2 util.Hash) (util.Hash, error)
 
-	// Return the git tree hash referenced in a commit
+	// GetTreeHash return the git tree hash referenced in a commit
 	GetTreeHash(commit util.Hash) (util.Hash, error)
 
 	LoadClocks() error

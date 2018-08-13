@@ -17,6 +17,7 @@ import (
 const createClockFile = "/.git/git-bug/create-clock"
 const editClockFile = "/.git/git-bug/edit-clock"
 
+// ErrNotARepo is the error returned when the git repo root wan't be found
 var ErrNotARepo = errors.New("not a git repository")
 
 // GitRepo represents an instance of a (local) git repository.
@@ -106,6 +107,7 @@ func NewGitRepo(path string, witnesser func(repo *GitRepo) error) (*GitRepo, err
 	return repo, nil
 }
 
+// InitGitRepo create a new empty git repo at the given path
 func InitGitRepo(path string) (*GitRepo, error) {
 	repo := &GitRepo{Path: path}
 	repo.createClocks()
@@ -118,6 +120,7 @@ func InitGitRepo(path string) (*GitRepo, error) {
 	return repo, nil
 }
 
+// InitBareGitRepo create a new --bare empty git repo at the given path
 func InitBareGitRepo(path string) (*GitRepo, error) {
 	repo := &GitRepo{Path: path}
 	repo.createClocks()
@@ -332,7 +335,7 @@ func (repo *GitRepo) FindCommonAncestor(hash1 util.Hash, hash2 util.Hash) (util.
 	return util.Hash(stdout), nil
 }
 
-// Return the git tree hash referenced in a commit
+// GetTreeHash return the git tree hash referenced in a commit
 func (repo *GitRepo) GetTreeHash(commit util.Hash) (util.Hash, error) {
 	stdout, err := repo.runGitCommand("rev-parse", string(commit)+"^{tree}")
 
@@ -343,7 +346,7 @@ func (repo *GitRepo) GetTreeHash(commit util.Hash) (util.Hash, error) {
 	return util.Hash(stdout), nil
 }
 
-// Add a new remote to the repository
+// AddRemote add a new remote to the repository
 // Not in the interface because it's only used for testing
 func (repo *GitRepo) AddRemote(name string, url string) error {
 	_, err := repo.runGitCommand("remote", "add", name, url)

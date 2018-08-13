@@ -11,14 +11,18 @@ import (
 	"github.com/MichaelMure/git-bug/graphql/models"
 )
 
+// BugCommentEdger define a function that take a bug.Comment and an offset and
+// create an Edge.
 type BugCommentEdger func(value bug.Comment, offset int) Edge
 
+// BugCommentConMaker define a function that create a models.CommentConnection
 type BugCommentConMaker func(
 	edges []models.CommentEdge,
 	nodes []bug.Comment,
 	info models.PageInfo,
 	totalCount int) (models.CommentConnection, error)
 
+// BugCommentCon will paginate a source according to the input of a relay connection
 func BugCommentCon(source []bug.Comment, edger BugCommentEdger, conMaker BugCommentConMaker, input models.ConnectionInput) (models.CommentConnection, error) {
 	var nodes []bug.Comment
 	var edges []models.CommentEdge

@@ -5,12 +5,14 @@ import (
 	"io"
 )
 
+// Hash is a git hash
 type Hash string
 
 func (h Hash) String() string {
 	return string(h)
 }
 
+// UnmarshalGQL implement the Unmarshaler interface for gqlgen
 func (h *Hash) UnmarshalGQL(v interface{}) error {
 	_, ok := v.(string)
 	if !ok {
@@ -26,10 +28,12 @@ func (h *Hash) UnmarshalGQL(v interface{}) error {
 	return nil
 }
 
+// MarshalGQL implement the Marshaler interface for gqlgen
 func (h Hash) MarshalGQL(w io.Writer) {
 	w.Write([]byte(`"` + h.String() + `"`))
 }
 
+// IsValid tell if the hash is valid
 func (h *Hash) IsValid() bool {
 	if len(*h) != 40 {
 		return false

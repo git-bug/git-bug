@@ -41,6 +41,7 @@ type window interface {
 	disable(g *gocui.Gui) error
 }
 
+// Run will launch the termUI in the terminal
 func Run(repo repository.Repo) error {
 	c := cache.NewRepoCache(repo)
 

@@ -2,22 +2,32 @@ package connections
 
 import (
 	"fmt"
+
 	"github.com/MichaelMure/git-bug/graphql/models"
 	"github.com/cheekybits/genny/generic"
 )
 
+// NodeType define the node type handled by this relay connection
 type NodeType generic.Type
+
+// EdgeType define the edge type handled by this relay connection
 type EdgeType generic.Type
+
+// ConnectionType define the connection type handled by this relay connection
 type ConnectionType generic.Type
 
+// NodeTypeEdger define a function that take a NodeType and an offset and
+// create an Edge.
 type NodeTypeEdger func(value NodeType, offset int) Edge
 
+// NodeTypeConMaker define a function that create a ConnectionType
 type NodeTypeConMaker func(
 	edges []EdgeType,
 	nodes []NodeType,
 	info models.PageInfo,
 	totalCount int) (ConnectionType, error)
 
+// NodeTypeCon will paginate a source according to the input of a relay connection
 func NodeTypeCon(source []NodeType, edger NodeTypeEdger, conMaker NodeTypeConMaker, input models.ConnectionInput) (ConnectionType, error) {
 	var nodes []NodeType
 	var edges []EdgeType

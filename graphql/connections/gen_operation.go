@@ -11,14 +11,18 @@ import (
 	"github.com/MichaelMure/git-bug/graphql/models"
 )
 
+// BugOperationEdger define a function that take a bug.Operation and an offset and
+// create an Edge.
 type BugOperationEdger func(value bug.Operation, offset int) Edge
 
+// BugOperationConMaker define a function that create a models.OperationConnection
 type BugOperationConMaker func(
 	edges []models.OperationEdge,
 	nodes []bug.Operation,
 	info models.PageInfo,
 	totalCount int) (models.OperationConnection, error)
 
+// BugOperationCon will paginate a source according to the input of a relay connection
 func BugOperationCon(source []bug.Operation, edger BugOperationEdger, conMaker BugOperationConMaker, input models.ConnectionInput) (models.OperationConnection, error) {
 	var nodes []bug.Operation
 	var edges []models.OperationEdge

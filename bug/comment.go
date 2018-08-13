@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// Comment represent a comment in a Bug
 type Comment struct {
 	Author  Person
 	Message string
@@ -16,6 +17,7 @@ type Comment struct {
 	UnixTime int64
 }
 
+// FormatTime format the UnixTime of the comment for human consumption
 func (c Comment) FormatTime() string {
 	t := time.Unix(c.UnixTime, 0)
 	return humanize.Time(t)

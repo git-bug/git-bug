@@ -10,14 +10,18 @@ import (
 	"github.com/MichaelMure/git-bug/graphql/models"
 )
 
+// StringEdger define a function that take a string and an offset and
+// create an Edge.
 type StringEdger func(value string, offset int) Edge
 
+// StringConMaker define a function that create a models.BugConnection
 type StringConMaker func(
 	edges []LazyBugEdge,
 	nodes []string,
 	info models.PageInfo,
 	totalCount int) (models.BugConnection, error)
 
+// StringCon will paginate a source according to the input of a relay connection
 func StringCon(source []string, edger StringEdger, conMaker StringConMaker, input models.ConnectionInput) (models.BugConnection, error) {
 	var nodes []string
 	var edges []LazyBugEdge

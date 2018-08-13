@@ -107,6 +107,11 @@ func MergeAll(repo repository.Repo, remote string) <-chan MergeResult {
 			localRef := bugsRefPattern + remoteBug.Id()
 			localExist, err := repo.RefExist(localRef)
 
+			if err != nil {
+				out <- newMergeError(id, err)
+				continue
+			}
+
 			// the bug is not local yet, simply create the reference
 			if !localExist {
 				err := repo.CopyRef(remoteRef, localRef)

@@ -9,16 +9,16 @@ import (
 	"github.com/MichaelMure/git-bug/bug"
 )
 
-// LabelChangeOperation will add or remove a set of labels
-
 var _ bug.Operation = LabelChangeOperation{}
 
+// LabelChangeOperation define a Bug operation to add or remove labels
 type LabelChangeOperation struct {
 	bug.OpBase
 	Added   []bug.Label
 	Removed []bug.Label
 }
 
+// Apply apply the operation
 func (op LabelChangeOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {
 	// Add in the set
 AddLoop:
@@ -59,7 +59,7 @@ func NewLabelChangeOperation(author bug.Person, added, removed []bug.Label) Labe
 	}
 }
 
-// Convenience function to apply the operation
+// ChangeLabels is a convenience function to apply the operation
 func ChangeLabels(out io.Writer, b *bug.Bug, author bug.Person, add, remove []string) error {
 	var added, removed []bug.Label
 

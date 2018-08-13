@@ -5,7 +5,6 @@ import (
 	"strings"
 )
 
-
 type ResolvedGlobalID struct {
 	Type string `json:"type"`
 	ID   string `json:"id"`
@@ -36,4 +35,3 @@ func FromGlobalID(globalID string) *ResolvedGlobalID {
 		ID:   tokens[1],
 	}
 }
-

@@ -26,7 +26,7 @@ const humanIdLength = 7
 
 // Bug hold the data of a bug thread, organized in a way close to
 // how it will be persisted inside Git. This is the data structure
-// used for merge of two different version.
+// used to merge two different version of the same Bug.
 type Bug struct {
 
 	// A Lamport clock is a logical clock that allow to order event
@@ -41,7 +41,7 @@ type Bug struct {
 	lastCommit util.Hash
 	rootPack   util.Hash
 
-	// all the commited operations
+	// all the committed operations
 	packs []OperationPack
 
 	// a temporary pack of operations used for convenience to pile up new operations
@@ -49,14 +49,14 @@ type Bug struct {
 	staging OperationPack
 }
 
-// Create a new Bug
+// NewBug create a new Bug
 func NewBug() *Bug {
 	// No id yet
 	// No logical clock yet
 	return &Bug{}
 }
 
-// Find an existing Bug matching a prefix
+// FindLocalBug find an existing Bug matching a prefix
 func FindLocalBug(repo repository.Repo, prefix string) (*Bug, error) {
 	ids, err := repo.ListIds(bugsRefPattern)
 
@@ -84,17 +84,19 @@ func FindLocalBug(repo repository.Repo, prefix string) (*Bug, error) {
 	return ReadLocalBug(repo, matching[0])
 }
 
+// ReadLocalBug will read a local bug from its hash
 func ReadLocalBug(repo repository.Repo, id string) (*Bug, error) {
 	ref := bugsRefPattern + id
 	return readBug(repo, ref)
 }
 
+// ReadRemoteBug will read a remote bug from its hash
 func ReadRemoteBug(repo repository.Repo, remote string, id string) (*Bug, error) {
 	ref := fmt.Sprintf(bugsRemoteRefPattern, remote) + id
 	return readBug(repo, ref)
 }
 
-// Read and parse a Bug from git
+// readBug will read and parse a Bug from git
 func readBug(repo repository.Repo, ref string) (*Bug, error) {
 	hashes, err := repo.ListCommits(ref)
 
@@ -212,12 +214,12 @@ type StreamedBug struct {
 	Err error
 }
 
-// Read and parse all local bugs
+// ReadAllLocalBugs read and parse all local bugs
 func ReadAllLocalBugs(repo repository.Repo) <-chan StreamedBug {
 	return readAllBugs(repo, bugsRefPattern)
 }
 
-// Read and parse all remote bugs for a given remote
+// ReadAllRemoteBugs read and parse all remote bugs for a given remote
 func ReadAllRemoteBugs(repo repository.Repo, remote string) <-chan StreamedBug {
 	refPrefix := fmt.Sprintf(bugsRemoteRefPattern, remote)
 	return readAllBugs(repo, refPrefix)
@@ -251,7 +253,7 @@ func readAllBugs(repo repository.Repo, refPrefix string) <-chan StreamedBug {
 	return out
 }
 
-// List all the available local bug ids
+// ListLocalIds list all the available local bug ids
 func ListLocalIds(repo repository.Repo) ([]string, error) {
 	return repo.ListIds(bugsRefPattern)
 }
@@ -304,12 +306,12 @@ func (bug *Bug) Append(op Operation) {
 	bug.staging.Append(op)
 }
 
-// Return if the bug need to be committed
+// HasPendingOp tell if the bug need to be committed
 func (bug *Bug) HasPendingOp() bool {
 	return !bug.staging.IsEmpty()
 }
 
-// Write the staging area in Git and move the operations to the packs
+// Commit write the staging area in Git and move the operations to the packs
 func (bug *Bug) Commit(repo repository.Repo) error {
 	if bug.staging.IsEmpty() {
 		return fmt.Errorf("can't commit a bug with no pending operation")
@@ -515,6 +517,10 @@ func (bug *Bug) Merge(repo repository.Repo, other *Bug) (bool, error) {
 		// create a new commit with the correct ancestor
 		hash, err := repo.StoreCommitWithParent(treeHash, bug.lastCommit)
 
+		if err != nil {
+			return false, err
+		}
+
 		// replace the pack
 		newPack := pack.Clone()
 		newPack.commitHash = hash
@@ -533,7 +539,7 @@ func (bug *Bug) Merge(repo repository.Repo, other *Bug) (bool, error) {
 	return true, nil
 }
 
-// Return the Bug identifier
+// Id return the Bug identifier
 func (bug *Bug) Id() string {
 	if bug.id == "" {
 		// simply panic as it would be a coding error
@@ -543,7 +549,7 @@ func (bug *Bug) Id() string {
 	return bug.id
 }
 
-// Return the Bug identifier truncated for human consumption
+// HumanId return the Bug identifier truncated for human consumption
 func (bug *Bug) HumanId() string {
 	return formatHumanId(bug.Id())
 }

@@ -13,17 +13,18 @@ import (
 
 const cursorPrefix = "cursor:"
 
+// Edge define the contract for an edge in a relay connection
 type Edge interface {
 	GetCursor() string
 }
 
-// Creates the cursor string from an offset
+// OffsetToCursor create the cursor string from an offset
 func OffsetToCursor(offset int) string {
 	str := fmt.Sprintf("%v%v", cursorPrefix, offset)
 	return base64.StdEncoding.EncodeToString([]byte(str))
 }
 
-// Re-derives the offset from the cursor string.
+// CursorToOffset re-derives the offset from the cursor string.
 func CursorToOffset(cursor string) (int, error) {
 	str := ""
 	b, err := base64.StdEncoding.DecodeString(cursor)
