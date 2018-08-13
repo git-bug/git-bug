@@ -6,12 +6,13 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/MichaelMure/git-bug/repository"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/MichaelMure/git-bug/repository"
+	"github.com/pkg/errors"
 )
 
 const messageFilename = "BUG_MESSAGE_EDITMSG"

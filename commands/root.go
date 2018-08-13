@@ -2,10 +2,11 @@ package commands
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 // Will display "git bug"

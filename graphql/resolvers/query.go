@@ -2,6 +2,7 @@ package resolvers
 
 import (
 	"context"
+
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/graphql/models"
 )

@@ -2,9 +2,10 @@ package commands
 
 import (
 	"errors"
+	"os"
+
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 func runPull(cmd *cobra.Command, args []string) error {

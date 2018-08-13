@@ -2,6 +2,7 @@ package bug
 
 import (
 	"errors"
+
 	"github.com/MichaelMure/git-bug/repository"
 )
 

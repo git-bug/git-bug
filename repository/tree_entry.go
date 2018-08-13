@@ -2,8 +2,9 @@ package repository
 
 import (
 	"fmt"
-	"github.com/MichaelMure/git-bug/util"
 	"strings"
+
+	"github.com/MichaelMure/git-bug/util"
 )
 
 type TreeEntry struct {

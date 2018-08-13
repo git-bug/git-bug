@@ -3,8 +3,9 @@ package repository
 
 import (
 	"bytes"
-	"github.com/MichaelMure/git-bug/util"
 	"strings"
+
+	"github.com/MichaelMure/git-bug/util"
 )
 
 // Repo represents a source code repository.

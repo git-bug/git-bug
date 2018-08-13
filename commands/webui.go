@@ -4,6 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"time"
+
 	"github.com/MichaelMure/git-bug/graphql"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util"
@@ -13,10 +18,6 @@ import (
 	"github.com/skratchdot/open-golang/open"
 	"github.com/spf13/cobra"
 	"github.com/vektah/gqlgen/handler"
-	"io/ioutil"
-	"log"
-	"net/http"
-	"time"
 )
 
 var port int

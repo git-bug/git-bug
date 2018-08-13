@@ -2,6 +2,7 @@ package commands
 
 import (
 	"errors"
+
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/bug/operations"
 	"github.com/spf13/cobra"

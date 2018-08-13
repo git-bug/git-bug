@@ -2,10 +2,11 @@ package commands
 
 import (
 	"errors"
+	"os"
+
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/bug/operations"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 var labelRemove bool

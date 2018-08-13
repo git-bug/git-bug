@@ -3,10 +3,11 @@ package resolvers
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/bug/operations"
 	"github.com/MichaelMure/git-bug/graphql/models"
-	"time"
 )
 
 type addCommentOperationResolver struct{}

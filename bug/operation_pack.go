@@ -3,6 +3,7 @@ package bug
 import (
 	"bytes"
 	"encoding/gob"
+
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util"
 )

@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/util"
 	"github.com/spf13/cobra"

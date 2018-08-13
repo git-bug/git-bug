@@ -3,10 +3,11 @@ package commands
 import (
 	"errors"
 	"fmt"
+	"strings"
+
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/util"
 	"github.com/spf13/cobra"
-	"strings"
 )
 
 func runShowBug(cmd *cobra.Command, args []string) error {

@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/bug/operations"
 	"github.com/MichaelMure/git-bug/input"

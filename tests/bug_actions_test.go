@@ -2,13 +2,14 @@ package tests
 
 import (
 	"fmt"
-	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/bug/operations"
-	"github.com/MichaelMure/git-bug/repository"
 	"io/ioutil"
 	"log"
 	"os"
 	"testing"
+
+	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/bug/operations"
+	"github.com/MichaelMure/git-bug/repository"
 )
 
 func createRepo(bare bool) *repository.GitRepo {
