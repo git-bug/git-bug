@@ -1,0 +1,80 @@
+{{ $field := . }}
+{{ $object := $field.Object }}
+
+{{- if $object.Stream }}
+	func (ec *executionContext) _{{$object.GQLType}}_{{$field.GQLName}}(ctx context.Context, field graphql.CollectedField) func() graphql.Marshaler {
+		{{- template "args.gotpl" $field.Args }}
+		ctx = graphql.WithResolverContext(ctx, &graphql.ResolverContext{Field: field})
+		results, err := ec.resolvers.{{ $object.GQLType }}_{{ $field.GQLName }}({{ $field.CallArgs }})
+		if err != nil {
+			ec.Error(ctx, err)
+			return nil
+		}
+		return func() graphql.Marshaler {
+			res, ok := <-results
+			if !ok {
+				return nil
+			}
+			var out graphql.OrderedMap
+			out.Add(field.Alias, func() graphql.Marshaler { {{ $field.WriteJson }} }())
+			return &out
+		}
+	}
+{{ else }}
+	func (ec *executionContext) _{{$object.GQLType}}_{{$field.GQLName}}(ctx context.Context, field graphql.CollectedField, {{if not $object.Root}}obj *{{$object.FullName}}{{end}}) graphql.Marshaler {
+		{{- template "args.gotpl" $field.Args }}
+
+		{{- if $field.IsConcurrent }}
+			ctx = graphql.WithResolverContext(ctx, &graphql.ResolverContext{
+				Object: {{$object.GQLType|quote}},
+				Args: {{if $field.Args }}args{{else}}nil{{end}},
+				Field: field,
+			})
+			return graphql.Defer(func() (ret graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						userErr := ec.Recover(ctx, r)
+						ec.Error(ctx, userErr)
+						ret = graphql.Null
+					}
+				}()
+		{{ else }}
+			rctx := graphql.GetResolverContext(ctx)
+			rctx.Object = {{$object.GQLType|quote}}
+			rctx.Args = {{if $field.Args }}args{{else}}nil{{end}}
+			rctx.Field = field
+			rctx.PushField(field.Alias)
+			defer rctx.Pop()
+		{{- end }}
+
+			{{- if $field.IsResolver }}
+				resTmp, err := ec.ResolverMiddleware(ctx, func(ctx context.Context) (interface{}, error) {
+					return ec.resolvers.{{ $object.GQLType }}_{{ $field.GQLName }}({{ $field.CallArgs }})
+				})
+				if err != nil {
+					ec.Error(ctx, err)
+					return graphql.Null
+				}
+				if resTmp == nil {
+					return graphql.Null
+				}
+				res := resTmp.({{$field.Signature}})
+			{{- else if $field.GoVarName }}
+				res := obj.{{$field.GoVarName}}
+			{{- else if $field.GoMethodName }}
+				{{- if $field.NoErr }}
+					res := {{$field.GoMethodName}}({{ $field.CallArgs }})
+				{{- else }}
+					res, err := {{$field.GoMethodName}}({{ $field.CallArgs }})
+					if err != nil {
+						ec.Error(ctx, err)
+						return graphql.Null
+					}
+				{{- end }}
+			{{- end }}
+			{{ $field.WriteJson }}
+		{{- if $field.IsConcurrent }}
+			})
+		{{- end }}
+	}
+{{ end }}

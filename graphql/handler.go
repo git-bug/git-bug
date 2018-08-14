@@ -1,4 +1,4 @@
-//go:generate gorunpkg github.com/vektah/gqlgen
+//go:generate go run gen_graphql.go
 
 package graphql
 

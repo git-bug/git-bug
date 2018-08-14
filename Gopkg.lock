@@ -176,9 +176,11 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:cbfd0c8c3c00ce6337ef2c7c0284a589dcdc9efd98c69f4606c55459bbfef83e"
+  digest = "1:d1ef15a6bc267ffb9e3ac790591103e99d4662f5867a99f9182c43a2016884e2"
   name = "github.com/vektah/gqlgen"
   packages = [
+    "codegen",
+    "codegen/templates",
     "graphql",
     "handler",
     "neelance/common",
@@ -199,6 +201,21 @@
   packages = ["unix"]
   pruneopts = "UT"
   revision = "ac767d655b305d4e9612f5f6e33120b9176c4ad4"
+
+[[projects]]
+  branch = "master"
+  digest = "1:d22891f2d4a24a531ae01994abae377ec9d8a45ec8849aa95c27dc36014b8c24"
+  name = "golang.org/x/tools"
+  packages = [
+    "go/ast/astutil",
+    "go/buildutil",
+    "go/internal/cgo",
+    "go/loader",
+    "imports",
+    "internal/fastwalk",
+  ]
+  pruneopts = "UT"
+  revision = "a434f64ace81347eff0fb4a32bc80a235e0ad762"
 
 [[projects]]
   digest = "1:342378ac4dcb378a5448dd723f0784ae519383532f5e70ade24132c4c8693202"
@@ -224,6 +241,7 @@
     "github.com/skratchdot/open-golang/open",
     "github.com/spf13/cobra",
     "github.com/spf13/cobra/doc",
+    "github.com/vektah/gqlgen/codegen",
     "github.com/vektah/gqlgen/graphql",
     "github.com/vektah/gqlgen/handler",
     "github.com/vektah/gqlgen/neelance/introspection",
