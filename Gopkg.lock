@@ -131,9 +131,12 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:7ca2584fa7da0520cd2d1136a10194fe5a5b220bdb215074ab6f7b5ad91115f4"
+  digest = "1:9d29b003dc5f98647a5dd6754d65c07171fcd35761102ea56ecd3d6993adee7f"
   name = "github.com/shurcooL/httpfs"
-  packages = ["vfsutil"]
+  packages = [
+    "filter",
+    "vfsutil",
+  ]
   pruneopts = "UT"
   revision = "809beceb23714880abc4a382a00c05f89d13b1cc"
 
@@ -216,6 +219,7 @@
     "github.com/jroimartin/gocui",
     "github.com/phayes/freeport",
     "github.com/pkg/errors",
+    "github.com/shurcooL/httpfs/filter",
     "github.com/shurcooL/vfsgen",
     "github.com/skratchdot/open-golang/open",
     "github.com/spf13/cobra",

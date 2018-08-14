@@ -9,13 +9,19 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/shurcooL/httpfs/filter"
 	"github.com/shurcooL/vfsgen"
 )
 
 func main() {
 	var cwd, _ = os.Getwd()
 
-	webUIAssets := http.Dir(filepath.Join(cwd, "webui/build"))
+	webUIAssets := filter.Skip(
+		http.Dir(filepath.Join(cwd, "webui/build")),
+		func(path string, fi os.FileInfo) bool {
+			return filter.FilesWithExtensions(".map")(path, fi)
+		},
+	)
 
 	fmt.Println("Packing Web UI files ...")
 
