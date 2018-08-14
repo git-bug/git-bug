@@ -1884,6 +1884,10 @@ func (ec *executionContext) _PageInfo(ctx context.Context, sel []query.Selection
 			out.Values[i] = ec._PageInfo_hasNextPage(ctx, field, obj)
 		case "hasPreviousPage":
 			out.Values[i] = ec._PageInfo_hasPreviousPage(ctx, field, obj)
+		case "startCursor":
+			out.Values[i] = ec._PageInfo_startCursor(ctx, field, obj)
+		case "endCursor":
+			out.Values[i] = ec._PageInfo_endCursor(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -1912,6 +1916,28 @@ func (ec *executionContext) _PageInfo_hasPreviousPage(ctx context.Context, field
 	defer rctx.Pop()
 	res := obj.HasPreviousPage
 	return graphql.MarshalBoolean(res)
+}
+
+func (ec *executionContext) _PageInfo_startCursor(ctx context.Context, field graphql.CollectedField, obj *models.PageInfo) graphql.Marshaler {
+	rctx := graphql.GetResolverContext(ctx)
+	rctx.Object = "PageInfo"
+	rctx.Args = nil
+	rctx.Field = field
+	rctx.PushField(field.Alias)
+	defer rctx.Pop()
+	res := obj.StartCursor
+	return graphql.MarshalString(res)
+}
+
+func (ec *executionContext) _PageInfo_endCursor(ctx context.Context, field graphql.CollectedField, obj *models.PageInfo) graphql.Marshaler {
+	rctx := graphql.GetResolverContext(ctx)
+	rctx.Object = "PageInfo"
+	rctx.Args = nil
+	rctx.Field = field
+	rctx.PushField(field.Alias)
+	defer rctx.Pop()
+	res := obj.EndCursor
+	return graphql.MarshalString(res)
 }
 
 var personImplementors = []string{"Person"}
@@ -3222,9 +3248,9 @@ type PageInfo {
   # When paginating backwards, are there more items?
   hasPreviousPage: Boolean!
   # When paginating backwards, the cursor to continue.
-#  startCursor: String
+  startCursor: String!
   # When paginating forwards, the cursor to continue.
-#  endCursor: String
+  endCursor: String!
 }
 
 # Represents an person in a git object.

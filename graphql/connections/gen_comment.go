@@ -11,9 +11,9 @@ import (
 	"github.com/MichaelMure/git-bug/graphql/models"
 )
 
-// BugCommentEdger define a function that take a bug.Comment and an offset and
+// BugCommentEdgeMaker define a function that take a bug.Comment and an offset and
 // create an Edge.
-type BugCommentEdger func(value bug.Comment, offset int) Edge
+type BugCommentEdgeMaker func(value bug.Comment, offset int) Edge
 
 // BugCommentConMaker define a function that create a models.CommentConnection
 type BugCommentConMaker func(
@@ -23,9 +23,10 @@ type BugCommentConMaker func(
 	totalCount int) (models.CommentConnection, error)
 
 // BugCommentCon will paginate a source according to the input of a relay connection
-func BugCommentCon(source []bug.Comment, edger BugCommentEdger, conMaker BugCommentConMaker, input models.ConnectionInput) (models.CommentConnection, error) {
+func BugCommentCon(source []bug.Comment, edgeMaker BugCommentEdgeMaker, conMaker BugCommentConMaker, input models.ConnectionInput) (models.CommentConnection, error) {
 	var nodes []bug.Comment
 	var edges []models.CommentEdge
+	var cursors []string
 	var pageInfo models.PageInfo
 
 	emptyCon, _ := conMaker(edges, nodes, pageInfo, 0)
@@ -34,7 +35,7 @@ func BugCommentCon(source []bug.Comment, edger BugCommentEdger, conMaker BugComm
 
 	if input.After != nil {
 		for i, value := range source {
-			edge := edger(value, i)
+			edge := edgeMaker(value, i)
 			if edge.GetCursor() == *input.After {
 				// remove all previous element including the "after" one
 				source = source[i+1:]
@@ -46,7 +47,7 @@ func BugCommentCon(source []bug.Comment, edger BugCommentEdger, conMaker BugComm
 
 	if input.Before != nil {
 		for i, value := range source {
-			edge := edger(value, i+offset)
+			edge := edgeMaker(value, i+offset)
 
 			if edge.GetCursor() == *input.Before {
 				// remove all after element including the "before" one
@@ -54,14 +55,18 @@ func BugCommentCon(source []bug.Comment, edger BugCommentEdger, conMaker BugComm
 			}
 
 			edges = append(edges, edge.(models.CommentEdge))
+			cursors = append(cursors, edge.GetCursor())
 			nodes = append(nodes, value)
 		}
 	} else {
 		edges = make([]models.CommentEdge, len(source))
+		cursors = make([]string, len(source))
 		nodes = source
 
 		for i, value := range source {
-			edges[i] = edger(value, i+offset).(models.CommentEdge)
+			edge := edgeMaker(value, i+offset)
+			edges[i] = edge.(models.CommentEdge)
+			cursors[i] = edge.GetCursor()
 		}
 	}
 
@@ -73,6 +78,7 @@ func BugCommentCon(source []bug.Comment, edger BugCommentEdger, conMaker BugComm
 		if len(edges) > *input.First {
 			// Slice result to be of length first by removing edges from the end
 			edges = edges[:*input.First]
+			cursors = cursors[:*input.First]
 			nodes = nodes[:*input.First]
 			pageInfo.HasNextPage = true
 		}
@@ -86,9 +92,16 @@ func BugCommentCon(source []bug.Comment, edger BugCommentEdger, conMaker BugComm
 		if len(edges) > *input.Last {
 			// Slice result to be of length last by removing edges from the start
 			edges = edges[len(edges)-*input.Last:]
+			cursors = cursors[len(cursors)-*input.Last:]
 			nodes = nodes[len(nodes)-*input.Last:]
 			pageInfo.HasPreviousPage = true
 		}
+	}
+
+	// Fill up pageInfo cursors
+	if len(cursors) > 0 {
+		pageInfo.StartCursor = cursors[0]
+		pageInfo.EndCursor = cursors[len(cursors)-1]
 	}
 
 	return conMaker(edges, nodes, pageInfo, len(source))

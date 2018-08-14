@@ -10,9 +10,9 @@ import (
 	"github.com/MichaelMure/git-bug/graphql/models"
 )
 
-// StringEdger define a function that take a string and an offset and
+// StringEdgeMaker define a function that take a string and an offset and
 // create an Edge.
-type StringEdger func(value string, offset int) Edge
+type StringEdgeMaker func(value string, offset int) Edge
 
 // StringConMaker define a function that create a models.BugConnection
 type StringConMaker func(
@@ -22,9 +22,10 @@ type StringConMaker func(
 	totalCount int) (models.BugConnection, error)
 
 // StringCon will paginate a source according to the input of a relay connection
-func StringCon(source []string, edger StringEdger, conMaker StringConMaker, input models.ConnectionInput) (models.BugConnection, error) {
+func StringCon(source []string, edgeMaker StringEdgeMaker, conMaker StringConMaker, input models.ConnectionInput) (models.BugConnection, error) {
 	var nodes []string
 	var edges []LazyBugEdge
+	var cursors []string
 	var pageInfo models.PageInfo
 
 	emptyCon, _ := conMaker(edges, nodes, pageInfo, 0)
@@ -33,7 +34,7 @@ func StringCon(source []string, edger StringEdger, conMaker StringConMaker, inpu
 
 	if input.After != nil {
 		for i, value := range source {
-			edge := edger(value, i)
+			edge := edgeMaker(value, i)
 			if edge.GetCursor() == *input.After {
 				// remove all previous element including the "after" one
 				source = source[i+1:]
@@ -45,7 +46,7 @@ func StringCon(source []string, edger StringEdger, conMaker StringConMaker, inpu
 
 	if input.Before != nil {
 		for i, value := range source {
-			edge := edger(value, i+offset)
+			edge := edgeMaker(value, i+offset)
 
 			if edge.GetCursor() == *input.Before {
 				// remove all after element including the "before" one
@@ -53,14 +54,18 @@ func StringCon(source []string, edger StringEdger, conMaker StringConMaker, inpu
 			}
 
 			edges = append(edges, edge.(LazyBugEdge))
+			cursors = append(cursors, edge.GetCursor())
 			nodes = append(nodes, value)
 		}
 	} else {
 		edges = make([]LazyBugEdge, len(source))
+		cursors = make([]string, len(source))
 		nodes = source
 
 		for i, value := range source {
-			edges[i] = edger(value, i+offset).(LazyBugEdge)
+			edge := edgeMaker(value, i+offset)
+			edges[i] = edge.(LazyBugEdge)
+			cursors[i] = edge.GetCursor()
 		}
 	}
 
@@ -72,6 +77,7 @@ func StringCon(source []string, edger StringEdger, conMaker StringConMaker, inpu
 		if len(edges) > *input.First {
 			// Slice result to be of length first by removing edges from the end
 			edges = edges[:*input.First]
+			cursors = cursors[:*input.First]
 			nodes = nodes[:*input.First]
 			pageInfo.HasNextPage = true
 		}
@@ -85,9 +91,16 @@ func StringCon(source []string, edger StringEdger, conMaker StringConMaker, inpu
 		if len(edges) > *input.Last {
 			// Slice result to be of length last by removing edges from the start
 			edges = edges[len(edges)-*input.Last:]
+			cursors = cursors[len(cursors)-*input.Last:]
 			nodes = nodes[len(nodes)-*input.Last:]
 			pageInfo.HasPreviousPage = true
 		}
+	}
+
+	// Fill up pageInfo cursors
+	if len(cursors) > 0 {
+		pageInfo.StartCursor = cursors[0]
+		pageInfo.EndCursor = cursors[len(cursors)-1]
 	}
 
 	return conMaker(edges, nodes, pageInfo, len(source))

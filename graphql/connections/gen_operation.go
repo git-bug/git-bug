@@ -11,9 +11,9 @@ import (
 	"github.com/MichaelMure/git-bug/graphql/models"
 )
 
-// BugOperationEdger define a function that take a bug.Operation and an offset and
+// BugOperationEdgeMaker define a function that take a bug.Operation and an offset and
 // create an Edge.
-type BugOperationEdger func(value bug.Operation, offset int) Edge
+type BugOperationEdgeMaker func(value bug.Operation, offset int) Edge
 
 // BugOperationConMaker define a function that create a models.OperationConnection
 type BugOperationConMaker func(
@@ -23,9 +23,10 @@ type BugOperationConMaker func(
 	totalCount int) (models.OperationConnection, error)
 
 // BugOperationCon will paginate a source according to the input of a relay connection
-func BugOperationCon(source []bug.Operation, edger BugOperationEdger, conMaker BugOperationConMaker, input models.ConnectionInput) (models.OperationConnection, error) {
+func BugOperationCon(source []bug.Operation, edgeMaker BugOperationEdgeMaker, conMaker BugOperationConMaker, input models.ConnectionInput) (models.OperationConnection, error) {
 	var nodes []bug.Operation
 	var edges []models.OperationEdge
+	var cursors []string
 	var pageInfo models.PageInfo
 
 	emptyCon, _ := conMaker(edges, nodes, pageInfo, 0)
@@ -34,7 +35,7 @@ func BugOperationCon(source []bug.Operation, edger BugOperationEdger, conMaker B
 
 	if input.After != nil {
 		for i, value := range source {
-			edge := edger(value, i)
+			edge := edgeMaker(value, i)
 			if edge.GetCursor() == *input.After {
 				// remove all previous element including the "after" one
 				source = source[i+1:]
@@ -46,7 +47,7 @@ func BugOperationCon(source []bug.Operation, edger BugOperationEdger, conMaker B
 
 	if input.Before != nil {
 		for i, value := range source {
-			edge := edger(value, i+offset)
+			edge := edgeMaker(value, i+offset)
 
 			if edge.GetCursor() == *input.Before {
 				// remove all after element including the "before" one
@@ -54,14 +55,18 @@ func BugOperationCon(source []bug.Operation, edger BugOperationEdger, conMaker B
 			}
 
 			edges = append(edges, edge.(models.OperationEdge))
+			cursors = append(cursors, edge.GetCursor())
 			nodes = append(nodes, value)
 		}
 	} else {
 		edges = make([]models.OperationEdge, len(source))
+		cursors = make([]string, len(source))
 		nodes = source
 
 		for i, value := range source {
-			edges[i] = edger(value, i+offset).(models.OperationEdge)
+			edge := edgeMaker(value, i+offset)
+			edges[i] = edge.(models.OperationEdge)
+			cursors[i] = edge.GetCursor()
 		}
 	}
 
@@ -73,6 +78,7 @@ func BugOperationCon(source []bug.Operation, edger BugOperationEdger, conMaker B
 		if len(edges) > *input.First {
 			// Slice result to be of length first by removing edges from the end
 			edges = edges[:*input.First]
+			cursors = cursors[:*input.First]
 			nodes = nodes[:*input.First]
 			pageInfo.HasNextPage = true
 		}
@@ -86,9 +92,16 @@ func BugOperationCon(source []bug.Operation, edger BugOperationEdger, conMaker B
 		if len(edges) > *input.Last {
 			// Slice result to be of length last by removing edges from the start
 			edges = edges[len(edges)-*input.Last:]
+			cursors = cursors[len(cursors)-*input.Last:]
 			nodes = nodes[len(nodes)-*input.Last:]
 			pageInfo.HasPreviousPage = true
 		}
+	}
+
+	// Fill up pageInfo cursors
+	if len(cursors) > 0 {
+		pageInfo.StartCursor = cursors[0]
+		pageInfo.EndCursor = cursors[len(cursors)-1]
 	}
 
 	return conMaker(edges, nodes, pageInfo, len(source))
