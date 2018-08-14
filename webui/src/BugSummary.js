@@ -1,53 +1,93 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import gql from "graphql-tag";
-import { withStyles } from "@material-ui/core/styles";
+import { withStyles } from '@material-ui/core/styles'
+import TableCell from '@material-ui/core/TableCell/TableCell'
+import TableRow from '@material-ui/core/TableRow/TableRow'
+import Tooltip from '@material-ui/core/Tooltip/Tooltip'
+import Typography from '@material-ui/core/Typography'
+import ErrorOutline from '@material-ui/icons/ErrorOutline'
+import gql from 'graphql-tag'
+import React from 'react'
+import { Link } from 'react-router-dom'
+import * as moment from 'moment'
 
-import Card from "@material-ui/core/Card";
-import CardContent from "@material-ui/core/CardContent";
-import Chip from "@material-ui/core/Chip";
-import Typography from "@material-ui/core/Typography";
+const Open = ({className}) => <Tooltip title="Open">
+  <ErrorOutline nativeColor='#28a745' className={className}/>
+</Tooltip>
+
+const Closed = ({className}) => <Tooltip title="Closed">
+  <ErrorOutline nativeColor='#cb2431' className={className}/>
+</Tooltip>
+
+const Status = ({status, className}) => {
+    switch(status) {
+      case 'OPEN': return <Open className={className}/>
+      case 'CLOSED': return <Closed className={className}/>
+      default: return 'unknown status ' + status
+    }
+}
 
 const styles = theme => ({
-  labelList: {
-    display: "flex",
-    flexWrap: "wrap",
-    marginTop: theme.spacing.unit
+  cell: {
+    display: 'flex',
+    alignItems: 'center'
   },
-  label: {
-    marginRight: theme.spacing.unit
+  status: {
+    margin: 10
   },
-  summary: {
-    marginBottom: theme.spacing.unit * 2
-  }
-});
+  title: {
+    display: 'inline-block',
+    textDecoration: 'none'
+  },
+  labels: {
+    display: 'inline-block',
+    paddingLeft: theme.spacing.unit,
+    '&>span': {
+      padding: '0 4px',
+      margin: '0 1px',
+      backgroundColor: '#da9898',
+      borderRadius: '3px',
+    }
+  },
+})
 
-const BugSummary = ({ bug, classes }) => (
-  <Card className={classes.summary}>
-    <CardContent>
-      <Typography variant="headline" component="h2">
-        {bug.title}
-      </Typography>
-      <Typography variant="subheading" component="h3" title={bug.id}>
-        <Link to={"/bug/" + bug.id.slice(0, 8)}>#{bug.id.slice(0, 8)}</Link> •{" "}
-        {bug.status.toUpperCase()}
-      </Typography>
-      <div className={classes.labelList}>
-        {bug.labels.map(label => (
-          <Chip key={label} label={label} className={classes.label} />
-        ))}
+const BugSummary = ({bug, classes}) => (
+  <TableRow hover>
+    <TableCell className={classes.cell}>
+      <Status status={bug.status} className={classes.status}/>
+      <div>
+        <Link to={'bug/'+bug.humanId}>
+          <Typography variant={'title'} className={classes.title}>
+            {bug.title}
+          </Typography>
+        </Link>
+        <span className={classes.labels}>
+          {bug.labels.map(l => (
+            <span key={l}>{l}</span>)
+          )}
+        </span>
+        <Typography color={'textSecondary'}>
+          {bug.humanId} opened
+          <Tooltip title={moment(bug.createdAt).format('MMMM D, YYYY, h:mm a')}>
+            <span> {moment(bug.createdAt).fromNow()} </span>
+          </Tooltip>
+          by {bug.author.name}
+        </Typography>
       </div>
-    </CardContent>
-  </Card>
-);
+    </TableCell>
+  </TableRow>
+)
 
 BugSummary.fragment = gql`
   fragment BugSummary on Bug {
     id
+    humanId
     title
     status
+    createdAt
     labels
+    author {
+      name
+    }
   }
-`;
+`
 
-export default withStyles(styles)(BugSummary);
+export default withStyles(styles)(BugSummary)

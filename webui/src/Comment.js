@@ -1,20 +1,19 @@
-import React from "react";
-import gql from "graphql-tag";
-import { withStyles } from "@material-ui/core/styles";
-
-import Avatar from "@material-ui/core/Avatar";
-import Card from "@material-ui/core/Card";
-import CardContent from "@material-ui/core/CardContent";
-import CardHeader from "@material-ui/core/CardHeader";
-import Typography from "@material-ui/core/Typography";
+import Avatar from '@material-ui/core/Avatar'
+import Card from '@material-ui/core/Card'
+import CardContent from '@material-ui/core/CardContent'
+import CardHeader from '@material-ui/core/CardHeader'
+import { withStyles } from '@material-ui/core/styles'
+import Typography from '@material-ui/core/Typography'
+import gql from 'graphql-tag'
+import React from 'react'
 
 const styles = theme => ({
   comment: {
     marginBottom: theme.spacing.unit
   }
-});
+})
 
-const Comment = withStyles(styles)(({ comment, classes }) => (
+const Comment = withStyles(styles)(({comment, classes}) => (
   <Card className={classes.comment}>
     <CardHeader
       avatar={
@@ -29,7 +28,7 @@ const Comment = withStyles(styles)(({ comment, classes }) => (
       <Typography component="p">{comment.message}</Typography>
     </CardContent>
   </Card>
-));
+))
 
 Comment.fragment = gql`
   fragment Comment on Comment {
@@ -39,6 +38,6 @@ Comment.fragment = gql`
       email
     }
   }
-`;
+`
 
-export default withStyles(styles)(Comment);
+export default withStyles(styles)(Comment)

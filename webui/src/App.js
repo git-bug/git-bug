@@ -1,40 +1,39 @@
-import React from "react";
-import { withRouter, Switch, Route } from "react-router";
-import { Link } from "react-router-dom";
-import { withStyles } from "@material-ui/core/styles";
+import AppBar from '@material-ui/core/AppBar'
+import CssBaseline from '@material-ui/core/CssBaseline'
+import { withStyles } from '@material-ui/core/styles'
+import Toolbar from '@material-ui/core/Toolbar'
+import Typography from '@material-ui/core/Typography'
+import React from 'react'
+import { Route, Switch, withRouter } from 'react-router'
+import { Link } from 'react-router-dom'
 
-import AppBar from "@material-ui/core/AppBar";
-import CssBaseline from "@material-ui/core/CssBaseline";
-import Toolbar from "@material-ui/core/Toolbar";
-import Typography from "@material-ui/core/Typography";
-
-import BugPage from "./BugPage";
-import ListPage from "./ListPage";
+import BugPage from './BugPage'
+import ListPage from './ListPage'
 
 const styles = theme => ({
   appTitle: {
-    color: "white",
-    textDecoration: "none"
+    color: 'white',
+    textDecoration: 'none'
   }
-});
+})
 
-const App = ({ location, classes }) => (
+const App = ({location, classes}) => (
   <React.Fragment>
-    <CssBaseline />
+    <CssBaseline/>
     <AppBar position="static" color="primary">
       <Toolbar>
         <Link to="/" className={classes.appTitle}>
           <Typography variant="title" color="inherit">
-            git-bug-webui(1)
+            git-bug webui
           </Typography>
         </Link>
       </Toolbar>
     </AppBar>
     <Switch>
-      <Route path="/" exact component={ListPage} />
-      <Route path="/bug/:id" exact component={BugPage} />
+      <Route path="/" exact component={ListPage}/>
+      <Route path="/bug/:id" exact component={BugPage}/>
     </Switch>
   </React.Fragment>
-);
+)
 
-export default withStyles(styles)(withRouter(App));
+export default withStyles(styles)(withRouter(App))
