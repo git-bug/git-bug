@@ -7,8 +7,8 @@ import React from 'react'
 import { Route, Switch, withRouter } from 'react-router'
 import { Link } from 'react-router-dom'
 
-import BugPage from './BugPage'
-import ListPage from './ListPage'
+import BugPage from './bug/BugPage'
+import ListPage from './list/ListPage'
 
 const styles = theme => ({
   appTitle: {

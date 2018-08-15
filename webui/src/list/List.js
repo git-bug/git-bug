@@ -1,39 +1,9 @@
-// @flow
-import CircularProgress from '@material-ui/core/CircularProgress'
 import { withStyles } from '@material-ui/core/styles'
 import Table from '@material-ui/core/Table/Table'
 import TableBody from '@material-ui/core/TableBody/TableBody'
 import TablePagination from '@material-ui/core/TablePagination/TablePagination'
-import gql from 'graphql-tag'
 import React from 'react'
-import { Query } from 'react-apollo'
-
-import BugSummary from './BugSummary'
-
-const QUERY = gql`
-  query($first: Int = 10, $last: Int, $after: String, $before: String) {
-    defaultRepository {
-      bugs: allBugs(first: $first, last: $last, after: $after, before: $before) {
-        totalCount
-        edges {
-          cursor
-          node {
-            ...BugSummary
-          }
-        }
-        pageInfo{
-          hasNextPage
-          hasPreviousPage
-          startCursor
-          endCursor
-        }
-      }
-    }
-  }
-
-
-  ${BugSummary.fragment}
-`
+import BugRow from './BugRow'
 
 const styles = theme => ({
   main: {
@@ -43,7 +13,7 @@ const styles = theme => ({
   }
 })
 
-const List = withStyles(styles)(class List extends React.Component {
+class List extends React.Component {
 
   props: {
     bugs: Array,
@@ -100,7 +70,7 @@ const List = withStyles(styles)(class List extends React.Component {
       return
     }
 
-    throw 'non neighbour page pagination is not supported'
+    throw new Error('non neighbour page pagination is not supported')
   }
 
   handleChangeRowsPerPage = event => {
@@ -127,7 +97,6 @@ const List = withStyles(styles)(class List extends React.Component {
   }
 
   updateQuery = (previousResult, {fetchMoreResult}) => {
-    console.log(fetchMoreResult)
     return fetchMoreResult ? fetchMoreResult : previousResult
   }
 
@@ -140,7 +109,7 @@ const List = withStyles(styles)(class List extends React.Component {
         <Table className={classes.table}>
           <TableBody>
             {bugs.edges.map(({cursor, node}) => (
-              <BugSummary bug={node} key={cursor}/>
+              <BugRow bug={node} key={cursor}/>
             ))}
           </TableBody>
         </Table>
@@ -161,16 +130,6 @@ const List = withStyles(styles)(class List extends React.Component {
       </main>
     )
   }
-})
+}
 
-const ListPage = () => (
-  <Query query={QUERY}>
-    {({loading, error, data, fetchMore}) => {
-      if (loading) return <CircularProgress/>
-      if (error) return <p>Error.</p>
-      return <List bugs={data.defaultRepository.bugs} fetchMore={fetchMore}/>
-    }}
-  </Query>
-)
-
-export default ListPage
+export default withStyles(styles)(List)

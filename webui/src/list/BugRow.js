@@ -5,9 +5,9 @@ import Tooltip from '@material-ui/core/Tooltip/Tooltip'
 import Typography from '@material-ui/core/Typography'
 import ErrorOutline from '@material-ui/icons/ErrorOutline'
 import gql from 'graphql-tag'
+import * as moment from 'moment'
 import React from 'react'
 import { Link } from 'react-router-dom'
-import * as moment from 'moment'
 
 const Open = ({className}) => <Tooltip title="Open">
   <ErrorOutline nativeColor='#28a745' className={className}/>
@@ -18,11 +18,14 @@ const Closed = ({className}) => <Tooltip title="Closed">
 </Tooltip>
 
 const Status = ({status, className}) => {
-    switch(status) {
-      case 'OPEN': return <Open className={className}/>
-      case 'CLOSED': return <Closed className={className}/>
-      default: return 'unknown status ' + status
-    }
+  switch (status) {
+    case 'OPEN':
+      return <Open className={className}/>
+    case 'CLOSED':
+      return <Closed className={className}/>
+    default:
+      return 'unknown status ' + status
+  }
 }
 
 const styles = theme => ({
@@ -32,6 +35,9 @@ const styles = theme => ({
   },
   status: {
     margin: 10
+  },
+  expand: {
+    width: '100%'
   },
   title: {
     display: 'inline-block',
@@ -44,26 +50,29 @@ const styles = theme => ({
       padding: '0 4px',
       margin: '0 1px',
       backgroundColor: '#da9898',
-      borderRadius: '3px',
+      borderRadius: '3px'
     }
-  },
+  }
 })
 
-const BugSummary = ({bug, classes}) => (
+const BugRow = ({bug, classes}) => (
   <TableRow hover>
     <TableCell className={classes.cell}>
       <Status status={bug.status} className={classes.status}/>
-      <div>
-        <Link to={'bug/'+bug.humanId}>
-          <Typography variant={'title'} className={classes.title}>
-            {bug.title}
-          </Typography>
+      <div className={classes.expand}>
+        <Link to={'bug/' + bug.humanId}>
+          <div className={classes.expand}>
+
+            <Typography variant={'title'} className={classes.title}>
+              {bug.title}
+            </Typography>
+            <span className={classes.labels}>
+              {bug.labels.map(l => (
+                <span key={l}>{l}</span>)
+              )}
+            </span>
+          </div>
         </Link>
-        <span className={classes.labels}>
-          {bug.labels.map(l => (
-            <span key={l}>{l}</span>)
-          )}
-        </span>
         <Typography color={'textSecondary'}>
           {bug.humanId} opened
           <Tooltip title={moment(bug.createdAt).format('MMMM D, YYYY, h:mm a')}>
@@ -76,8 +85,8 @@ const BugSummary = ({bug, classes}) => (
   </TableRow>
 )
 
-BugSummary.fragment = gql`
-  fragment BugSummary on Bug {
+BugRow.fragment = gql`
+  fragment BugRow on Bug {
     id
     humanId
     title
@@ -90,4 +99,4 @@ BugSummary.fragment = gql`
   }
 `
 
-export default withStyles(styles)(BugSummary)
+export default withStyles(styles)(BugRow)
