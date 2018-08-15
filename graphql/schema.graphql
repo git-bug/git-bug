@@ -92,6 +92,7 @@ type SetTitleOperation implements Operation, Authored {
   date: Time!
 
   title: String!
+  was: String!
 }
 
 type AddCommentOperation implements Operation, Authored {

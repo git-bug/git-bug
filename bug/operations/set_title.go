@@ -11,6 +11,7 @@ var _ bug.Operation = SetTitleOperation{}
 type SetTitleOperation struct {
 	bug.OpBase
 	Title string
+	Was   string
 }
 
 func (op SetTitleOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {
@@ -19,15 +20,33 @@ func (op SetTitleOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {
 	return snapshot
 }
 
-func NewSetTitleOp(author bug.Person, title string) SetTitleOperation {
+func NewSetTitleOp(author bug.Person, title string, was string) SetTitleOperation {
 	return SetTitleOperation{
 		OpBase: bug.NewOpBase(bug.SetTitleOp, author),
 		Title:  title,
+		Was:    was,
 	}
 }
 
 // Convenience function to apply the operation
 func SetTitle(b *bug.Bug, author bug.Person, title string) {
-	setTitleOp := NewSetTitleOp(author, title)
+	it := bug.NewOperationIterator(b)
+
+	var lastTitleOp bug.Operation
+	for it.Next() {
+		op := it.Value()
+		if op.OpType() == bug.SetTitleOp {
+			lastTitleOp = op
+		}
+	}
+
+	var was string
+	if lastTitleOp != nil {
+		was = lastTitleOp.(SetTitleOperation).Title
+	} else {
+		was = b.FirstOp().(CreateOperation).Title
+	}
+
+	setTitleOp := NewSetTitleOp(author, title, was)
 	b.Append(setTitleOp)
 }

@@ -21,7 +21,7 @@ func (b BugsByCreationTime) Less(i, j int) bool {
 	// by the first sorting using the logical clock. That means that if users
 	// synchronize their bugs regularly, the timestamp will rarely be used, and
 	// should still provide a kinda accurate sorting when needed.
-	return b[i].firstOp().Time().Before(b[j].firstOp().Time())
+	return b[i].FirstOp().Time().Before(b[j].FirstOp().Time())
 }
 
 func (b BugsByCreationTime) Swap(i, j int) {
@@ -49,7 +49,7 @@ func (b BugsByEditTime) Less(i, j int) bool {
 	// by the first sorting using the logical clock. That means that if users
 	// synchronize their bugs regularly, the timestamp will rarely be used, and
 	// should still provide a kinda accurate sorting when needed.
-	return b[i].lastOp().Time().Before(b[j].lastOp().Time())
+	return b[i].LastOp().Time().Before(b[j].LastOp().Time())
 }
 
 func (b BugsByEditTime) Swap(i, j int) {

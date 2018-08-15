@@ -280,7 +280,7 @@ func (bug *Bug) IsValid() bool {
 	}
 
 	// The very first Op should be a CreateOp
-	firstOp := bug.firstOp()
+	firstOp := bug.FirstOp()
 	if firstOp == nil || firstOp.OpType() != CreateOp {
 		return false
 	}
@@ -561,7 +561,7 @@ func formatHumanId(id string) string {
 
 // Lookup for the very first operation of the bug.
 // For a valid Bug, this operation should be a CreateOp
-func (bug *Bug) firstOp() Operation {
+func (bug *Bug) FirstOp() Operation {
 	for _, pack := range bug.packs {
 		for _, op := range pack.Operations {
 			return op
@@ -577,7 +577,7 @@ func (bug *Bug) firstOp() Operation {
 
 // Lookup for the very last operation of the bug.
 // For a valid Bug, should never be nil
-func (bug *Bug) lastOp() Operation {
+func (bug *Bug) LastOp() Operation {
 	if !bug.staging.IsEmpty() {
 		return bug.staging.Operations[len(bug.staging.Operations)-1]
 	}

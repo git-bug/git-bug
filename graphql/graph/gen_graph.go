@@ -2413,6 +2413,8 @@ func (ec *executionContext) _SetTitleOperation(ctx context.Context, sel []query.
 			out.Values[i] = ec._SetTitleOperation_date(ctx, field, obj)
 		case "title":
 			out.Values[i] = ec._SetTitleOperation_title(ctx, field, obj)
+		case "was":
+			out.Values[i] = ec._SetTitleOperation_was(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -2470,6 +2472,17 @@ func (ec *executionContext) _SetTitleOperation_title(ctx context.Context, field 
 	rctx.PushField(field.Alias)
 	defer rctx.Pop()
 	res := obj.Title
+	return graphql.MarshalString(res)
+}
+
+func (ec *executionContext) _SetTitleOperation_was(ctx context.Context, field graphql.CollectedField, obj *operations.SetTitleOperation) graphql.Marshaler {
+	rctx := graphql.GetResolverContext(ctx)
+	rctx.Object = "SetTitleOperation"
+	rctx.Args = nil
+	rctx.Field = field
+	rctx.PushField(field.Alias)
+	defer rctx.Pop()
+	res := obj.Was
 	return graphql.MarshalString(res)
 }
 
@@ -3331,6 +3344,7 @@ type SetTitleOperation implements Operation, Authored {
   date: Time!
 
   title: String!
+  was: String!
 }
 
 type AddCommentOperation implements Operation, Authored {
