@@ -3,7 +3,6 @@ import CircularProgress from '@material-ui/core/CircularProgress'
 import gql from 'graphql-tag'
 import React from 'react'
 import { Query } from 'react-apollo'
-
 import BugRow from './BugRow'
 import List from './List'
 
@@ -32,14 +31,14 @@ const QUERY = gql`
   ${BugRow.fragment}
 `
 
-const ListPage = () => (
+const ListQuery = () => (
   <Query query={QUERY}>
     {({loading, error, data, fetchMore}) => {
       if (loading) return <CircularProgress/>
-      if (error) return <p>Error.</p>
+      if (error) return <p>Error: {error}</p>
       return <List bugs={data.defaultRepository.bugs} fetchMore={fetchMore}/>
     }}
   </Query>
 )
 
-export default ListPage
+export default ListQuery

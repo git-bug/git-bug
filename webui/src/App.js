@@ -7,8 +7,8 @@ import React from 'react'
 import { Route, Switch, withRouter } from 'react-router'
 import { Link } from 'react-router-dom'
 
-import BugPage from './bug/BugPage'
-import ListPage from './list/ListPage'
+import BugQuery from './bug/BugQuery'
+import ListQuery from './list/ListQuery'
 
 const styles = theme => ({
   appTitle: {
@@ -30,8 +30,8 @@ const App = ({location, classes}) => (
       </Toolbar>
     </AppBar>
     <Switch>
-      <Route path="/" exact component={ListPage}/>
-      <Route path="/bug/:id" exact component={BugPage}/>
+      <Route path="/" exact component={ListQuery}/>
+      <Route path="/bug/:id" exact component={BugQuery}/>
     </Switch>
   </React.Fragment>
 )
