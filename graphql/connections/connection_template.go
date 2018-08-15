@@ -33,6 +33,7 @@ func NodeTypeCon(source []NodeType, edgeMaker NodeTypeEdgeMaker, conMaker NodeTy
 	var edges []EdgeType
 	var cursors []string
 	var pageInfo models.PageInfo
+	var totalCount = len(source)
 
 	emptyCon, _ := conMaker(edges, nodes, pageInfo, 0)
 
@@ -45,6 +46,7 @@ func NodeTypeCon(source []NodeType, edgeMaker NodeTypeEdgeMaker, conMaker NodeTy
 				// remove all previous element including the "after" one
 				source = source[i+1:]
 				offset = i + 1
+				pageInfo.HasPreviousPage = true
 				break
 			}
 		}
@@ -56,6 +58,7 @@ func NodeTypeCon(source []NodeType, edgeMaker NodeTypeEdgeMaker, conMaker NodeTy
 
 			if edge.GetCursor() == *input.Before {
 				// remove all after element including the "before" one
+				pageInfo.HasNextPage = true
 				break
 			}
 
@@ -109,5 +112,5 @@ func NodeTypeCon(source []NodeType, edgeMaker NodeTypeEdgeMaker, conMaker NodeTy
 		pageInfo.EndCursor = cursors[len(cursors)-1]
 	}
 
-	return conMaker(edges, nodes, pageInfo, len(source))
+	return conMaker(edges, nodes, pageInfo, totalCount)
 }

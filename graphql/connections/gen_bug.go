@@ -27,6 +27,7 @@ func StringCon(source []string, edgeMaker StringEdgeMaker, conMaker StringConMak
 	var edges []LazyBugEdge
 	var cursors []string
 	var pageInfo models.PageInfo
+	var totalCount = len(source)
 
 	emptyCon, _ := conMaker(edges, nodes, pageInfo, 0)
 
@@ -39,6 +40,7 @@ func StringCon(source []string, edgeMaker StringEdgeMaker, conMaker StringConMak
 				// remove all previous element including the "after" one
 				source = source[i+1:]
 				offset = i + 1
+				pageInfo.HasPreviousPage = true
 				break
 			}
 		}
@@ -50,6 +52,7 @@ func StringCon(source []string, edgeMaker StringEdgeMaker, conMaker StringConMak
 
 			if edge.GetCursor() == *input.Before {
 				// remove all after element including the "before" one
+				pageInfo.HasNextPage = true
 				break
 			}
 
@@ -103,5 +106,5 @@ func StringCon(source []string, edgeMaker StringEdgeMaker, conMaker StringConMak
 		pageInfo.EndCursor = cursors[len(cursors)-1]
 	}
 
-	return conMaker(edges, nodes, pageInfo, len(source))
+	return conMaker(edges, nodes, pageInfo, totalCount)
 }
