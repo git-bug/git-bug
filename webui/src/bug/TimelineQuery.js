@@ -3,6 +3,7 @@ import gql from 'graphql-tag'
 import React from 'react'
 import { Query } from 'react-apollo'
 import LabelChange from './LabelChange'
+import SetStatus from './SetStatus'
 import SetTitle from './SetTitle'
 import Timeline from './Timeline'
 import Message from './Message'
@@ -17,6 +18,7 @@ const QUERY = gql`
             ...Comment
             ...LabelChange
             ...SetTitle
+            ...SetStatus
           }
           pageInfo {
             hasNextPage
@@ -30,6 +32,7 @@ const QUERY = gql`
   ${Message.commentFragment}
   ${LabelChange.fragment}
   ${SetTitle.fragment}
+  ${SetStatus.fragment}
 `
 
 const TimelineQuery = ({id}) => (
