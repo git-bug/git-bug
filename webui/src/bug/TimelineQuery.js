@@ -2,6 +2,7 @@ import CircularProgress from '@material-ui/core/CircularProgress'
 import gql from 'graphql-tag'
 import React from 'react'
 import { Query } from 'react-apollo'
+import LabelChange from './LabelChange'
 import Timeline from './Timeline'
 import Message from './Message'
 
@@ -13,6 +14,7 @@ const QUERY = gql`
           nodes {
             ...Create
             ...Comment
+            ...LabelChange
           }
           pageInfo {
             hasNextPage
@@ -24,10 +26,11 @@ const QUERY = gql`
   }
   ${Message.createFragment}
   ${Message.commentFragment}
+  ${LabelChange.fragment}
 `
 
 const TimelineQuery = ({id}) => (
-  <Query query={QUERY} variables={{id}}>
+  <Query query={QUERY} variables={{id, first: 100}}>
     {({loading, error, data, fetchMore}) => {
       if (loading) return <CircularProgress/>
       if (error) return <p>Error: {error}</p>

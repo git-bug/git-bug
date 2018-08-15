@@ -5,9 +5,10 @@ import Tooltip from '@material-ui/core/Tooltip/Tooltip'
 import Typography from '@material-ui/core/Typography'
 import ErrorOutline from '@material-ui/icons/ErrorOutline'
 import gql from 'graphql-tag'
-import * as moment from 'moment'
 import React from 'react'
 import { Link } from 'react-router-dom'
+import Date from '../Date'
+import Label from '../Label'
 
 const Open = ({className}) => <Tooltip title="Open">
   <ErrorOutline nativeColor='#28a745' className={className}/>
@@ -46,12 +47,6 @@ const styles = theme => ({
   labels: {
     display: 'inline-block',
     paddingLeft: theme.spacing.unit,
-    '&>span': {
-      padding: '0 4px',
-      margin: '0 1px',
-      backgroundColor: '#da9898',
-      borderRadius: '3px'
-    }
   }
 })
 
@@ -68,16 +63,14 @@ const BugRow = ({bug, classes}) => (
             </Typography>
             <span className={classes.labels}>
               {bug.labels.map(l => (
-                <span key={l}>{l}</span>)
-              )}
+                <Label key={l} label={l}/>
+              ))}
             </span>
           </div>
         </Link>
         <Typography color={'textSecondary'}>
           {bug.humanId} opened
-          <Tooltip title={moment(bug.createdAt).format('MMMM D, YYYY, h:mm a')}>
-            <span> {moment(bug.createdAt).fromNow()} </span>
-          </Tooltip>
+          <Date date={bug.createdAt} />
           by {bug.author.name}
         </Typography>
       </div>

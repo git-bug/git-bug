@@ -1,9 +1,9 @@
 import { withStyles } from '@material-ui/core/styles'
-import Tooltip from '@material-ui/core/Tooltip/Tooltip'
 import Typography from '@material-ui/core/Typography/Typography'
 import gql from 'graphql-tag'
-import * as moment from 'moment'
 import React from 'react'
+import Author from '../Author'
+import Date from '../Date'
 import TimelineQuery from './TimelineQuery'
 
 const styles = theme => ({
@@ -21,7 +21,8 @@ const styles = theme => ({
     marginLeft: 15,
   },
   container: {
-    display: 'flex'
+    display: 'flex',
+    marginBottom: 30
   },
   timeline: {
     width: '70%',
@@ -47,11 +48,9 @@ const Bug = ({bug, classes}) => (
       <span className={classes.id}>{bug.humanId}</span>
 
       <Typography color={'textSecondary'}>
-        <Tooltip title={bug.author.email}><span>{bug.author.name}</span></Tooltip>
+        <Author author={bug.author}/>
         <span> opened this bug </span>
-        <Tooltip title={moment(bug.createdAt).format('MMMM D, YYYY, h:mm a')}>
-          <span> {moment(bug.createdAt).fromNow()} </span>
-        </Tooltip>
+        <Date date={bug.createdAt} />
       </Typography>
     </div>
 

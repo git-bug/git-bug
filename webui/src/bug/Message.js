@@ -1,9 +1,9 @@
 import { withStyles } from '@material-ui/core/styles'
-import Tooltip from '@material-ui/core/Tooltip/Tooltip'
 import Typography from '@material-ui/core/Typography'
 import gql from 'graphql-tag'
-import * as moment from 'moment'
 import React from 'react'
+import Author from '../Author'
+import Date from '../Date'
 
 const styles = theme => ({
   header: {
@@ -14,10 +14,6 @@ const styles = theme => ({
     borderTopLeftRadius: 3,
     borderTopRightRadius: 3,
   },
-  author: {
-    ...theme.typography.body2,
-    fontWeight: 'bold'
-  },
   message: {
     borderLeft: '1px solid #d1d5da',
     borderRight: '1px solid #d1d5da',
@@ -25,23 +21,20 @@ const styles = theme => ({
     borderBottomLeftRadius: 3,
     borderBottomRightRadius: 3,
     backgroundColor: '#fff',
-    minHeight: 50
+    minHeight: 50,
+    padding: 5,
   }
 })
 
-const Message = ({message, classes}) => (
+const Message = ({op, classes}) => (
   <div>
     <div className={classes.header}>
-      <Tooltip title={message.author.email}>
-        <span className={classes.author}>{message.author.name}</span>
-      </Tooltip>
+      <Author className={classes.author} author={op.author} bold />
       <span> commented </span>
-      <Tooltip title={moment(message.date).format('MMMM D, YYYY, h:mm a')}>
-        <span> {moment(message.date).fromNow()} </span>
-      </Tooltip>
+      <Date date={op.date} />
     </div>
     <div className={classes.message}>
-      <Typography>{message.message}</Typography>
+      <Typography>{op.message}</Typography>
     </div>
   </div>
 )
