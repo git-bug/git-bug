@@ -2,6 +2,7 @@ import { withStyles } from '@material-ui/core/styles'
 import React from 'react'
 import LabelChange from './LabelChange'
 import Message from './Message'
+import SetTitle from './SetTitle'
 
 const styles = theme => ({
   main: {
@@ -32,6 +33,8 @@ class Timeline extends React.Component {
               return <Message key={index} op={op}/>
             case 'LabelChangeOperation':
               return <LabelChange key={index} op={op}/>
+            case 'SetTitleOperation':
+              return <SetTitle key={index} op={op}/>
 
             default:
               console.log('unsupported operation type ' + op.__typename)
