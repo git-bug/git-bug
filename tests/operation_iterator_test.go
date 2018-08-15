@@ -14,7 +14,7 @@ var (
 	}
 
 	createOp      = operations.NewCreateOp(rene, "title", "message", nil)
-	setTitleOp    = operations.NewSetTitleOp(rene, "title2")
+	setTitleOp    = operations.NewSetTitleOp(rene, "title2", "title1")
 	addCommentOp  = operations.NewAddCommentOp(rene, "message2", nil)
 	setStatusOp   = operations.NewSetStatusOp(rene, bug.ClosedStatus)
 	labelChangeOp = operations.NewLabelChangeOperation(rene, []bug.Label{"added"}, []bug.Label{"removed"})
