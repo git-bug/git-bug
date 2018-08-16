@@ -32,7 +32,10 @@ const Status = ({status, className}) => {
 const styles = theme => ({
   cell: {
     display: 'flex',
-    alignItems: 'center'
+    alignItems: 'center',
+    '& a': {
+      textDecoration: 'none'
+    }
   },
   status: {
     margin: 10
@@ -41,11 +44,11 @@ const styles = theme => ({
     width: '100%'
   },
   title: {
-    display: 'inline-block',
-    textDecoration: 'none'
+    display: 'inline',
   },
   labels: {
-    display: 'inline-block',
+    ...theme.typography.body2,
+    display: 'inline',
     paddingLeft: theme.spacing.unit,
   }
 })
@@ -57,15 +60,16 @@ const BugRow = ({bug, classes}) => (
       <div className={classes.expand}>
         <Link to={'bug/' + bug.humanId}>
           <div className={classes.expand}>
-
             <Typography variant={'title'} className={classes.title}>
               {bug.title}
             </Typography>
-            <span className={classes.labels}>
-              {bug.labels.map(l => (
-                <Label key={l} label={l}/>
-              ))}
-            </span>
+            { bug.labels.length > 0 && (
+              <span className={classes.labels}>
+                {bug.labels.map(l => (
+                  <Label key={l} label={l}/>
+                ))}
+              </span>
+            )}
           </div>
         </Link>
         <Typography color={'textSecondary'}>

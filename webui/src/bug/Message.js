@@ -23,6 +23,7 @@ const styles = theme => ({
     backgroundColor: '#fff',
     minHeight: 50,
     padding: 5,
+    whiteSpace: 'pre-wrap',
   }
 })
 
