@@ -15,4 +15,8 @@ pack-webui:
 	npm run --prefix webui build
 	go run webui/pack_webui.go
 
-.PHONY: build install test pack-webui
+clean-local-bugs:
+	git for-each-ref refs/bugs/ | cut -f 2 | xargs -r -n 1 git update-ref -d
+	git for-each-ref refs/remotes/origin/bugs/ | cut -f 2 | xargs -r -n 1 git update-ref -d
+
+.PHONY: build install test pack-webui clean-local-bugs
