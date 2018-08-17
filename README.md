@@ -72,8 +72,6 @@ An interactive terminal UI is available using the command `git bug termui` to br
     <img src="https://cdn.rawgit.com/MichaelMure/git-bug/55ab9631/doc/termui_recording.svg">
 </p>
 
-![terminal UI](doc/termui_recording.svg)
-
 ## Web UI (status: WIP)
 
 You can launch a rich Web UI with `git bug webui`.
