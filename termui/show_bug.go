@@ -523,18 +523,28 @@ func (sb *showBug) left(g *gocui.Gui, v *gocui.View) error {
 	if sb.isOnSide {
 		sb.isOnSide = false
 		sb.selected = ""
+		return sb.selectNext(g, v)
 	}
 
-	return sb.selectNext(g, v)
+	if sb.selected == "" {
+		return sb.selectNext(g, v)
+	}
+
+	return nil
 }
 
 func (sb *showBug) right(g *gocui.Gui, v *gocui.View) error {
 	if !sb.isOnSide {
 		sb.isOnSide = true
 		sb.selected = ""
+		return sb.selectNext(g, v)
 	}
 
-	return sb.selectNext(g, v)
+	if sb.selected == "" {
+		return sb.selectNext(g, v)
+	}
+
+	return nil
 }
 
 func (sb *showBug) focusView(g *gocui.Gui) error {
