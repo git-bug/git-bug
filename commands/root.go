@@ -20,7 +20,7 @@ var repo repository.Repo
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
-	Version: "0.1.0",
+	Version: "0.2.0",
 
 	Use:   rootCommandName,
 	Short: "A bugtracker embedded in Git",
