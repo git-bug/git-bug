@@ -196,16 +196,16 @@ func (bt *bugTable) keybindings(g *gocui.Gui) error {
 }
 
 func (bt *bugTable) disable(g *gocui.Gui) error {
-	if err := g.DeleteView(bugTableView); err != nil {
+	if err := g.DeleteView(bugTableView); err != nil && err != gocui.ErrUnknownView {
 		return err
 	}
-	if err := g.DeleteView(bugTableHeaderView); err != nil {
+	if err := g.DeleteView(bugTableHeaderView); err != nil && err != gocui.ErrUnknownView {
 		return err
 	}
-	if err := g.DeleteView(bugTableFooterView); err != nil {
+	if err := g.DeleteView(bugTableFooterView); err != nil && err != gocui.ErrUnknownView {
 		return err
 	}
-	if err := g.DeleteView(bugTableInstructionView); err != nil {
+	if err := g.DeleteView(bugTableInstructionView); err != nil && err != gocui.ErrUnknownView {
 		return err
 	}
 	return nil

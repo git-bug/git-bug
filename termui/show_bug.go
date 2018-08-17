@@ -191,7 +191,7 @@ func (sb *showBug) keybindings(g *gocui.Gui) error {
 
 func (sb *showBug) disable(g *gocui.Gui) error {
 	for _, view := range sb.childViews {
-		if err := g.DeleteView(view); err != nil {
+		if err := g.DeleteView(view); err != nil && err != gocui.ErrUnknownView {
 			return err
 		}
 	}

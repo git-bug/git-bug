@@ -56,7 +56,7 @@ func Run(repo repository.Repo) error {
 
 	ui.activeWindow = ui.bugTable
 
-	initGui()
+	initGui(nil)
 
 	err := <-ui.gError
 
@@ -67,7 +67,7 @@ func Run(repo repository.Repo) error {
 	return nil
 }
 
-func initGui() {
+func initGui(action func(ui *termUI) error) {
 	g, err := gocui.NewGui(gocui.OutputNormal)
 
 	if err != nil {
@@ -86,6 +86,16 @@ func initGui() {
 		ui.g = nil
 		ui.gError <- err
 		return
+	}
+
+	if action != nil {
+		err = action(ui)
+		if err != nil {
+			ui.g.Close()
+			ui.g = nil
+			ui.gError <- err
+			return
+		}
 	}
 
 	err = g.MainLoop()
@@ -166,16 +176,20 @@ func newBugWithEditor(repo cache.RepoCacher) error {
 		return err
 	}
 
+	var b cache.BugCacher
 	if err == input.ErrEmptyTitle {
 		ui.msgPopup.Activate(msgPopupErrorTitle, "Empty title, aborting.")
 	} else {
-		_, err := repo.NewBug(title, message)
+		b, err = repo.NewBug(title, message)
 		if err != nil {
 			return err
 		}
 	}
 
-	initGui()
+	initGui(func(ui *termUI) error {
+		ui.showBug.SetBug(b)
+		return ui.activateWindow(ui.showBug)
+	})
 
 	return errTerminateMainloop
 }
@@ -208,7 +222,7 @@ func addCommentWithEditor(bug cache.BugCacher) error {
 		}
 	}
 
-	initGui()
+	initGui(nil)
 
 	return errTerminateMainloop
 }
@@ -241,7 +255,7 @@ func setTitleWithEditor(bug cache.BugCacher) error {
 		}
 	}
 
-	initGui()
+	initGui(nil)
 
 	return errTerminateMainloop
 }
