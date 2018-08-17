@@ -68,6 +68,10 @@ You can now use commands like `show`, `comment`, `open` or `close` to display an
 
 An interactive terminal UI is available using the command `git bug termui` to browse and edit bugs.
 
+<p align="center">
+    <img src="https://cdn.rawgit.com/MichaelMure/git-bug/55ab9631/doc/termui_recording.svg">
+</p>
+
 ![terminal UI](doc/termui_recording.svg)
 
 ## Web UI (status: WIP)
