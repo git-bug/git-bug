@@ -1,6 +1,6 @@
 # Data model
 
-The biggest problem when creating a distributed bug tracker is that there is no central authoritative server (doh!). This imply some constraint.
+The biggest problem when creating a distributed bug tracker is that there is no central authoritative server (doh!). This implies some constraints.
 
 ## Anybody can create and edit bugs at the same time as you
 
