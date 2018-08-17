@@ -179,19 +179,22 @@ func newBugWithEditor(repo cache.RepoCacher) error {
 	var b cache.BugCacher
 	if err == input.ErrEmptyTitle {
 		ui.msgPopup.Activate(msgPopupErrorTitle, "Empty title, aborting.")
+		initGui(nil)
+
+		return errTerminateMainloop
 	} else {
 		b, err = repo.NewBug(title, message)
 		if err != nil {
 			return err
 		}
+
+		initGui(func(ui *termUI) error {
+			ui.showBug.SetBug(b)
+			return ui.activateWindow(ui.showBug)
+		})
+
+		return errTerminateMainloop
 	}
-
-	initGui(func(ui *termUI) error {
-		ui.showBug.SetBug(b)
-		return ui.activateWindow(ui.showBug)
-	})
-
-	return errTerminateMainloop
 }
 
 func addCommentWithEditor(bug cache.BugCacher) error {
