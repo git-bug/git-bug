@@ -14,10 +14,10 @@ import (
 	"github.com/icrowley/fake"
 )
 
-const bugNumber = 40
+const bugNumber = 15
 const personNumber = 5
 const minOp = 3
-const maxOp = 40
+const maxOp = 20
 
 type opsGenerator func(*bug.Bug, bug.Person)
 
