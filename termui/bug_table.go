@@ -396,7 +396,7 @@ func (bt *bugTable) newBug(g *gocui.Gui, v *gocui.View) error {
 
 func (bt *bugTable) openBug(g *gocui.Gui, v *gocui.View) error {
 	_, y := v.Cursor()
-	ui.showBug.SetBug(bt.bugs[bt.pageCursor+y])
+	ui.showBug.SetBug(bt.bugs[y])
 	return ui.activateWindow(ui.showBug)
 }
 
