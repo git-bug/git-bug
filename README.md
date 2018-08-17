@@ -5,13 +5,13 @@
 [![GoDoc](https://godoc.org/github.com/MichaelMure/git-bug?status.svg)](https://godoc.org/github.com/MichaelMure/git-bug)
 [![Go Report Card](https://goreportcard.com/badge/github.com/MichaelMure/git-bug)](https://goreportcard.com/report/github.com/MichaelMure/git-bug)
 
-> Bugtracker embedded in Git
+> Distributed bug tracker embedded in Git
 
 Would it be nice to not have to rely on a web service somewhere to deal with bugs ?
 
 Would it be nice to be able to browse and edit bug report offline ?
 
-`git-bug` is a bugtracker embedded in `git`. It use git's internal storage so **no files are added in your project**.
+`git-bug` is a distributed bug tracker embedded in `git`. It use git's internal storage so **no files are added in your project**.
 
 As you would do with commits and branches, you can push your bugs to the same git remote your are already using to collaborate with other peoples. 
 
@@ -68,15 +68,14 @@ You can now use commands like `show`, `comment`, `open` or `close` to display an
 
 An interactive terminal UI is available using the command `git bug termui` to browse and edit bugs.
 
-![terminal UI](doc/termui.png)
+![terminal UI](doc/termui_recording.svg)
 
-// TODO: replace with less test data ;-)
-
-## Web UI (status: terribly WIP)
+## Web UI (status: WIP)
 
 You can launch a rich Web UI with `git bug webui`.
 
-![Web UI](doc/webui.png)
+![Web UI screenshot 1](doc/webui1.png)
+![Web UI screenshot 2](doc/webui2.png)
 
 This web UI is entirely packed inside the same go binary and serve static content through a localhost http server.
 
