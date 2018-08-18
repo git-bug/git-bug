@@ -1,9 +1,9 @@
-import { withStyles } from '@material-ui/core/styles'
-import Typography from '@material-ui/core/Typography'
-import gql from 'graphql-tag'
-import React from 'react'
-import Author from '../Author'
-import Date from '../Date'
+import { withStyles } from '@material-ui/core/styles';
+import Typography from '@material-ui/core/Typography';
+import gql from 'graphql-tag';
+import React from 'react';
+import Author from '../Author';
+import Date from '../Date';
 
 const styles = theme => ({
   header: {
@@ -24,10 +24,10 @@ const styles = theme => ({
     minHeight: 50,
     padding: 5,
     whiteSpace: 'pre-wrap',
-  }
-})
+  },
+});
 
-const Message = ({op, classes}) => (
+const Message = ({ op, classes }) => (
   <div>
     <div className={classes.header}>
       <Author className={classes.author} author={op.author} bold />
@@ -38,7 +38,7 @@ const Message = ({op, classes}) => (
       <Typography>{op.message}</Typography>
     </div>
   </div>
-)
+);
 
 Message.createFragment = gql`
   fragment Create on Operation {
@@ -51,7 +51,7 @@ Message.createFragment = gql`
       message
     }
   }
-`
+`;
 
 Message.commentFragment = gql`
   fragment Comment on Operation {
@@ -64,6 +64,6 @@ Message.commentFragment = gql`
       message
     }
   }
-`
+`;
 
-export default withStyles(styles)(Message)
+export default withStyles(styles)(Message);
