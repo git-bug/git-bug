@@ -1,17 +1,23 @@
-language: go
-
-go:
-  - "1.9"
-  - "1.10.x"
-
-before_install:
-  - go get github.com/mitchellh/gox
+matrix:
+  include:
+  - language: go
+    go: "1.9"
+  - language: go
+    go: "1.10.x"
+  - language: node_js
+    node_js: 8
+    before_install:
+      - cd webui
+    after_success: []
 
 install:
   - make install
 
 script:
   - make test
+
+before_install:
+  - go get github.com/mitchellh/gox
 
 after_success:
   - if [ ! -z "$TRAVIS_TAG" ]; then gox -tags=deploy_build -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}"; fi
