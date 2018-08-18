@@ -103,7 +103,7 @@ Interested by how it works ? Have a look at the [data model](doc/model.md).
 
 ## Contribute
 
-PRs accepted.
+PRs accepted. Drop by the [Gitter lobby](https://gitter.im/the-git-bug/Lobby) for a chat.
 
 ## License
 
