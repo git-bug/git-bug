@@ -7,7 +7,7 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 
 const client = new ApolloClient({
-  uri: "/graphql",
+  uri: '/graphql',
   connectToDevTools: true
 })
 
@@ -15,7 +15,7 @@ ReactDOM.render(
   <ApolloProvider client={client}>
     <BrowserRouter>
       <React.Fragment>
-        <App/>
+        <App />
       </React.Fragment>
     </BrowserRouter>
   </ApolloProvider>,

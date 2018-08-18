@@ -13,7 +13,7 @@ const styles = theme => ({
   }
 })
 
-const SetTitle = ({op, classes}) => {
+const SetTitle = ({ op, classes }) => {
   return (
     <div className={classes.main}>
       <Author author={op.author} bold />

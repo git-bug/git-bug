@@ -14,11 +14,10 @@ const styles = theme => ({
 })
 
 class List extends React.Component {
-
   props: {
     bugs: Array,
-    fetchMore: (any) => any,
-    classes: any,
+    fetchMore: any => any,
+    classes: any
   }
 
   state = {
@@ -28,8 +27,8 @@ class List extends React.Component {
   }
 
   handleChangePage = (event, page) => {
-    const {bugs, fetchMore} = this.props
-    const {rowsPerPage} = this.state
+    const { bugs, fetchMore } = this.props
+    const { rowsPerPage } = this.state
     const pageInfo = bugs.pageInfo
 
     if (page === this.state.page + 1) {
@@ -44,10 +43,10 @@ class List extends React.Component {
 
       fetchMore({
         variables,
-        updateQuery: this.updateQuery,
+        updateQuery: this.updateQuery
       })
 
-      this.setState({page, lastQuery: variables})
+      this.setState({ page, lastQuery: variables })
       return
     }
 
@@ -63,10 +62,10 @@ class List extends React.Component {
 
       fetchMore({
         variables,
-        updateQuery: this.updateQuery,
+        updateQuery: this.updateQuery
       })
 
-      this.setState({page, lastQuery: variables})
+      this.setState({ page, lastQuery: variables })
       return
     }
 
@@ -74,8 +73,8 @@ class List extends React.Component {
   }
 
   handleChangeRowsPerPage = event => {
-    const {fetchMore} = this.props
-    const {lastQuery} = this.state
+    const { fetchMore } = this.props
+    const { lastQuery } = this.state
     const rowsPerPage = event.target.value
 
     const variables = lastQuery
@@ -90,26 +89,26 @@ class List extends React.Component {
 
     fetchMore({
       variables,
-      updateQuery: this.updateQuery,
+      updateQuery: this.updateQuery
     })
 
-    this.setState({rowsPerPage, lastQuery: variables})
+    this.setState({ rowsPerPage, lastQuery: variables })
   }
 
-  updateQuery = (previousResult, {fetchMoreResult}) => {
+  updateQuery = (previousResult, { fetchMoreResult }) => {
     return fetchMoreResult ? fetchMoreResult : previousResult
   }
 
   render() {
-    const {classes, bugs} = this.props
-    const {page, rowsPerPage} = this.state
+    const { classes, bugs } = this.props
+    const { page, rowsPerPage } = this.state
 
     return (
       <main className={classes.main}>
         <Table className={classes.table}>
           <TableBody>
-            {bugs.edges.map(({cursor, node}) => (
-              <BugRow bug={node} key={cursor}/>
+            {bugs.edges.map(({ cursor, node }) => (
+              <BugRow bug={node} key={cursor} />
             ))}
           </TableBody>
         </Table>

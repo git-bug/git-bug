@@ -1,16 +1,16 @@
-import { withStyles } from "@material-ui/core/styles";
-import Typography from "@material-ui/core/Typography/Typography";
-import gql from "graphql-tag";
-import React from "react";
-import Author from "../Author";
-import Date from "../Date";
-import TimelineQuery from "./TimelineQuery";
-import Label from "../Label";
+import { withStyles } from '@material-ui/core/styles'
+import Typography from '@material-ui/core/Typography/Typography'
+import gql from 'graphql-tag'
+import React from 'react'
+import Author from '../Author'
+import Date from '../Date'
+import Label from '../Label'
+import TimelineQuery from './TimelineQuery'
 
 const styles = theme => ({
   main: {
     maxWidth: 600,
-    margin: "auto",
+    margin: 'auto',
     marginTop: theme.spacing.unit * 4
   },
   header: {},
@@ -22,29 +22,29 @@ const styles = theme => ({
     marginLeft: 15
   },
   container: {
-    display: "flex",
+    display: 'flex',
     marginBottom: 30
   },
   timeline: {
-    width: "70%",
+    width: '70%',
     marginTop: 20,
     marginRight: 20
   },
   sidebar: {
-    width: "30%"
+    width: '30%'
   },
   labelList: {
-    listStyle: "none",
+    listStyle: 'none',
     padding: 0,
     margin: 0
   },
   label: {
-    margin: "4px 0",
-    "& > *": {
-      display: "block"
+    margin: '4px 0',
+    '& > *': {
+      display: 'block'
     }
   }
-});
+})
 
 const Bug = ({ bug, classes }) => (
   <main className={classes.main}>
@@ -52,7 +52,7 @@ const Bug = ({ bug, classes }) => (
       <span className={classes.title}>{bug.title}</span>
       <span className={classes.id}>{bug.humanId}</span>
 
-      <Typography color={"textSecondary"}>
+      <Typography color={'textSecondary'}>
         <Author author={bug.author} />
         <span> opened this bug </span>
         <Date date={bug.createdAt} />
@@ -64,7 +64,7 @@ const Bug = ({ bug, classes }) => (
         <TimelineQuery id={bug.id} />
       </div>
       <div className={classes.sidebar}>
-        <Typography variant={"subheading"}>Labels</Typography>
+        <Typography variant={'subheading'}>Labels</Typography>
         <ul className={classes.labelList}>
           {bug.labels.map(l => (
             <li className={classes.label}>
@@ -75,7 +75,7 @@ const Bug = ({ bug, classes }) => (
       </div>
     </div>
   </main>
-);
+)
 
 Bug.fragment = gql`
   fragment Bug on Bug {
@@ -90,6 +90,6 @@ Bug.fragment = gql`
       name
     }
   }
-`;
+`
 
-export default withStyles(styles)(Bug);
+export default withStyles(styles)(Bug)
