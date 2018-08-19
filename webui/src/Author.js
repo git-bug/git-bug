@@ -4,14 +4,14 @@ import { withStyles } from '@material-ui/core/styles'
 
 const styles = theme => ({
   author: {
-    ...theme.typography.body2,
+    ...theme.typography.body2
   },
   bold: {
     fontWeight: 'bold'
   }
 })
 
-const Author = ({author, bold, classes}) => {
+const Author = ({ author, bold, classes }) => {
   const klass = bold ? [classes.author, classes.bold] : [classes.author]
 
   return (

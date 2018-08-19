@@ -12,7 +12,7 @@ const styles = theme => ({
     backgroundColor: '#f1f8ff',
     border: '1px solid #d1d5da',
     borderTopLeftRadius: 3,
-    borderTopRightRadius: 3,
+    borderTopRightRadius: 3
   },
   message: {
     borderLeft: '1px solid #d1d5da',
@@ -23,11 +23,11 @@ const styles = theme => ({
     backgroundColor: '#fff',
     minHeight: 50,
     padding: 5,
-    whiteSpace: 'pre-wrap',
+    whiteSpace: 'pre-wrap'
   }
 })
 
-const Message = ({op, classes}) => (
+const Message = ({ op, classes }) => (
   <div>
     <div className={classes.header}>
       <Author className={classes.author} author={op.author} bold />

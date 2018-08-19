@@ -35,12 +35,17 @@ const QUERY = gql`
   ${SetStatus.fragment}
 `
 
-const TimelineQuery = ({id}) => (
-  <Query query={QUERY} variables={{id, first: 100}}>
-    {({loading, error, data, fetchMore}) => {
-      if (loading) return <CircularProgress/>
+const TimelineQuery = ({ id }) => (
+  <Query query={QUERY} variables={{ id, first: 100 }}>
+    {({ loading, error, data, fetchMore }) => {
+      if (loading) return <CircularProgress />
       if (error) return <p>Error: {error}</p>
-      return <Timeline ops={data.defaultRepository.bug.operations.nodes} fetchMore={fetchMore}/>
+      return (
+        <Timeline
+          ops={data.defaultRepository.bug.operations.nodes}
+          fetchMore={fetchMore}
+        />
+      )
     }}
   </Query>
 )

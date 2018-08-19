@@ -17,9 +17,9 @@ const styles = theme => ({
   }
 })
 
-const App = ({location, classes}) => (
+const App = ({ location, classes }) => (
   <React.Fragment>
-    <CssBaseline/>
+    <CssBaseline />
     <AppBar position="static" color="primary">
       <Toolbar>
         <Link to="/" className={classes.appTitle}>
@@ -30,8 +30,8 @@ const App = ({location, classes}) => (
       </Toolbar>
     </AppBar>
     <Switch>
-      <Route path="/" exact component={ListQuery}/>
-      <Route path="/bug/:id" exact component={BugQuery}/>
+      <Route path="/" exact component={ListQuery} />
+      <Route path="/bug/:id" exact component={BugQuery} />
     </Switch>
   </React.Fragment>
 )

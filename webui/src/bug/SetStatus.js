@@ -7,11 +7,10 @@ import Date from '../Date'
 const styles = theme => ({
   main: {
     ...theme.typography.body2
-  },
+  }
 })
 
-const SetStatus = ({op, classes}) => {
-
+const SetStatus = ({ op, classes }) => {
   return (
     <div className={classes.main}>
       <Author author={op.author} bold />

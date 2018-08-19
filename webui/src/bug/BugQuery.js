@@ -17,12 +17,12 @@ const QUERY = gql`
   ${Bug.fragment}
 `
 
-const BugQuery = ({match}) => (
-  <Query query={QUERY} variables={{id: match.params.id}}>
-    {({loading, error, data}) => {
-      if (loading) return <CircularProgress/>
+const BugQuery = ({ match }) => (
+  <Query query={QUERY} variables={{ id: match.params.id }}>
+    {({ loading, error, data }) => {
+      if (loading) return <CircularProgress />
       if (error) return <p>Error: {error}</p>
-      return <Bug bug={data.defaultRepository.bug}/>
+      return <Bug bug={data.defaultRepository.bug} />
     }}
   </Query>
 )
