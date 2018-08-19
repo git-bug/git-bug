@@ -257,25 +257,6 @@ func (repo *GitRepo) ListRefs(refspec string) ([]string, error) {
 	return splitted, nil
 }
 
-// ListIds will return a list of Git ref matching the given refspec,
-// stripped to only the last part of the ref
-func (repo *GitRepo) ListIds(refspec string) ([]string, error) {
-	// the format option will strip the ref name to keep only the last part (ie, the bug id)
-	stdout, err := repo.runGitCommand("for-each-ref", "--format=%(refname:lstrip=-1)", refspec)
-
-	if err != nil {
-		return nil, err
-	}
-
-	splitted := strings.Split(stdout, "\n")
-
-	if len(splitted) == 1 && splitted[0] == "" {
-		return []string{}, nil
-	}
-
-	return splitted, nil
-}
-
 // RefExist will check if a reference exist in Git
 func (repo *GitRepo) RefExist(ref string) (bool, error) {
 	stdout, err := repo.runGitCommand("for-each-ref", ref)

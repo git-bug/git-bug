@@ -58,7 +58,7 @@ func NewBug() *Bug {
 
 // FindLocalBug find an existing Bug matching a prefix
 func FindLocalBug(repo repository.Repo, prefix string) (*Bug, error) {
-	ids, err := repo.ListIds(bugsRefPattern)
+	ids, err := ListLocalIds(repo)
 
 	if err != nil {
 		return nil, err
@@ -255,7 +255,23 @@ func readAllBugs(repo repository.Repo, refPrefix string) <-chan StreamedBug {
 
 // ListLocalIds list all the available local bug ids
 func ListLocalIds(repo repository.Repo) ([]string, error) {
-	return repo.ListIds(bugsRefPattern)
+	refs, err := repo.ListRefs(bugsRefPattern)
+	if err != nil {
+		return nil, err
+	}
+
+	return refsToIds(refs), nil
+}
+
+func refsToIds(refs []string) []string {
+	ids := make([]string, len(refs))
+
+	for i, ref := range refs {
+		splitted := strings.Split(ref, "/")
+		ids[i] = splitted[len(splitted)-1]
+	}
+
+	return ids
 }
 
 // IsValid check if the Bug data is valid

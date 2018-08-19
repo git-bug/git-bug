@@ -49,10 +49,6 @@ type Repo interface {
 	// ListRefs will return a list of Git ref matching the given refspec
 	ListRefs(refspec string) ([]string, error)
 
-	// ListIds will return a list of Git ref matching the given refspec,
-	// stripped to only the last part of the ref
-	ListIds(refspec string) ([]string, error)
-
 	// RefExist will check if a reference exist in Git
 	RefExist(ref string) (bool, error)
 

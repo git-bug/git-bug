@@ -3,7 +3,6 @@ package repository
 import (
 	"crypto/sha1"
 	"fmt"
-	"strings"
 
 	"github.com/MichaelMure/git-bug/util"
 )
@@ -134,21 +133,6 @@ func (r *mockRepoForTest) ListRefs(refspec string) ([]string, error) {
 	i := 0
 	for k := range r.refs {
 		keys[i] = k
-		i++
-	}
-
-	return keys, nil
-}
-
-// ListIds will return a list of Git ref matching the given refspec,
-// stripped to only the last part of the ref
-func (r *mockRepoForTest) ListIds(refspec string) ([]string, error) {
-	keys := make([]string, len(r.refs))
-
-	i := 0
-	for k := range r.refs {
-		splitted := strings.Split(k, "/")
-		keys[i] = splitted[len(splitted)-1]
 		i++
 	}
 
