@@ -1,10 +1,7 @@
-// +build ignore
-
-package main
+package random_bugs
 
 import (
 	"math/rand"
-	"os"
 	"strings"
 	"time"
 
@@ -14,17 +11,31 @@ import (
 	"github.com/icrowley/fake"
 )
 
-const bugNumber = 15
-const personNumber = 5
-const minOp = 3
-const maxOp = 20
-
 type opsGenerator func(*bug.Bug, bug.Person)
 
-// This program will randomly generate a collection of bugs in the repository
-// of the current path
-func main() {
-	rand.Seed(time.Now().UnixNano())
+type Options struct {
+	BugNumber    int
+	PersonNumber int
+	MinOp        int
+	MaxOp        int
+}
+
+func DefaultOptions() Options {
+	return Options{
+		BugNumber:    15,
+		PersonNumber: 5,
+		MinOp:        3,
+		MaxOp:        20,
+	}
+}
+
+func GenerateRandomBugs(repo repository.Repo, opts Options) {
+	GenerateRandomBugsWithSeed(repo, opts, time.Now().UnixNano())
+}
+
+func GenerateRandomBugsWithSeed(repo repository.Repo, opts Options, seed int64) {
+	rand.Seed(seed)
+	fake.Seed(seed)
 
 	opsGenerators := []opsGenerator{
 		comment,
@@ -35,31 +46,19 @@ func main() {
 		operations.Close,
 	}
 
-	dir, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-
-	repo, err := repository.NewGitRepo(dir, func(repo *repository.GitRepo) error {
-		return nil
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	for i := 0; i < bugNumber; i++ {
+	for i := 0; i < opts.BugNumber; i++ {
 		addedLabels = []string{}
 
-		b, err := operations.Create(randomPerson(), fake.Sentence(), paragraphs())
+		b, err := operations.Create(randomPerson(opts.PersonNumber), fake.Sentence(), paragraphs())
 
 		if err != nil {
 			panic(err)
 		}
 
-		nOps := minOp + rand.Intn(maxOp-minOp)
+		nOps := opts.MinOp + rand.Intn(opts.MaxOp-opts.MinOp)
 		for j := 0; j < nOps; j++ {
 			index := rand.Intn(len(opsGenerators))
-			opsGenerators[index](b, randomPerson())
+			opsGenerators[index](b, randomPerson(opts.PersonNumber))
 		}
 
 		err = b.Commit(repo)
@@ -78,7 +77,7 @@ func person() bug.Person {
 
 var persons []bug.Person
 
-func randomPerson() bug.Person {
+func randomPerson(personNumber int) bug.Person {
 	if len(persons) == 0 {
 		persons = make([]bug.Person, personNumber)
 		for i := range persons {
