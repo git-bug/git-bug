@@ -3,6 +3,7 @@ package bug
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"strings"
 
 	"github.com/MichaelMure/git-bug/repository"
@@ -25,6 +26,10 @@ func Push(repo repository.Repo, remote string) (string, error) {
 }
 
 func Pull(repo repository.Repo, out io.Writer, remote string) error {
+	if out == nil {
+		out = ioutil.Discard
+	}
+
 	fmt.Fprintf(out, "Fetching remote ...\n")
 
 	stdout, err := Fetch(repo, remote)

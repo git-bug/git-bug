@@ -8,8 +8,8 @@ install:
 	go generate
 	go install -tags=deploy_build .
 
-test: build
-	go test ./...
+test:
+	go test -bench=. ./...
 
 pack-webui:
 	npm run --prefix webui build

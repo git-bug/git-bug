@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -18,7 +17,7 @@ func createRepo(bare bool) *repository.GitRepo {
 		log.Fatal(err)
 	}
 
-	fmt.Println("Creating repo:", dir)
+	// fmt.Println("Creating repo:", dir)
 
 	var creator func(string) (*repository.GitRepo, error)
 
@@ -38,11 +37,11 @@ func createRepo(bare bool) *repository.GitRepo {
 
 func cleanupRepo(repo repository.Repo) error {
 	path := repo.GetPath()
-	fmt.Println("Cleaning repo:", path)
+	// fmt.Println("Cleaning repo:", path)
 	return os.RemoveAll(path)
 }
 
-func setupRepos(t *testing.T) (repoA, repoB, remote *repository.GitRepo) {
+func setupRepos(t testing.TB) (repoA, repoB, remote *repository.GitRepo) {
 	repoA = createRepo(false)
 	repoB = createRepo(false)
 	remote = createRepo(true)
@@ -81,7 +80,7 @@ func TestPushPull(t *testing.T) {
 	_, err = bug.Push(repoA, "origin")
 	checkErr(t, err)
 
-	err = bug.Pull(repoB, os.Stdout, "origin")
+	err = bug.Pull(repoB, nil, "origin")
 	checkErr(t, err)
 
 	bugs := allBugs(t, bug.ReadAllLocalBugs(repoB))
@@ -99,7 +98,7 @@ func TestPushPull(t *testing.T) {
 	_, err = bug.Push(repoB, "origin")
 	checkErr(t, err)
 
-	err = bug.Pull(repoA, os.Stdout, "origin")
+	err = bug.Pull(repoA, nil, "origin")
 	checkErr(t, err)
 
 	bugs = allBugs(t, bug.ReadAllLocalBugs(repoA))
@@ -109,13 +108,13 @@ func TestPushPull(t *testing.T) {
 	}
 }
 
-func checkErr(t *testing.T, err error) {
+func checkErr(t testing.TB, err error) {
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
-func allBugs(t *testing.T, bugs <-chan bug.StreamedBug) []*bug.Bug {
+func allBugs(t testing.TB, bugs <-chan bug.StreamedBug) []*bug.Bug {
 	var result []*bug.Bug
 	for streamed := range bugs {
 		if streamed.Err != nil {
@@ -127,6 +126,16 @@ func allBugs(t *testing.T, bugs <-chan bug.StreamedBug) []*bug.Bug {
 }
 
 func TestRebaseTheirs(t *testing.T) {
+	_RebaseTheirs(t)
+}
+
+func BenchmarkRebaseTheirs(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		_RebaseTheirs(b)
+	}
+}
+
+func _RebaseTheirs(t testing.TB) {
 	repoA, repoB, remote := setupRepos(t)
 	defer cleanupRepos(repoA, repoB, remote)
 
@@ -140,7 +149,7 @@ func TestRebaseTheirs(t *testing.T) {
 	checkErr(t, err)
 
 	// remote --> B
-	err = bug.Pull(repoB, os.Stdout, "origin")
+	err = bug.Pull(repoB, nil, "origin")
 	checkErr(t, err)
 
 	bug2, err := bug.ReadLocalBug(repoB, bug1.Id())
@@ -157,7 +166,7 @@ func TestRebaseTheirs(t *testing.T) {
 	checkErr(t, err)
 
 	// remote --> A
-	err = bug.Pull(repoA, os.Stdout, "origin")
+	err = bug.Pull(repoA, nil, "origin")
 	checkErr(t, err)
 
 	bugs := allBugs(t, bug.ReadAllLocalBugs(repoB))
@@ -175,6 +184,16 @@ func TestRebaseTheirs(t *testing.T) {
 }
 
 func TestRebaseOurs(t *testing.T) {
+	_RebaseOurs(t)
+}
+
+func BenchmarkRebaseOurs(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		_RebaseOurs(b)
+	}
+}
+
+func _RebaseOurs(t testing.TB) {
 	repoA, repoB, remote := setupRepos(t)
 	defer cleanupRepos(repoA, repoB, remote)
 
@@ -188,7 +207,7 @@ func TestRebaseOurs(t *testing.T) {
 	checkErr(t, err)
 
 	// remote --> B
-	err = bug.Pull(repoB, os.Stdout, "origin")
+	err = bug.Pull(repoB, nil, "origin")
 	checkErr(t, err)
 
 	operations.Comment(bug1, rene, "message2")
@@ -210,7 +229,7 @@ func TestRebaseOurs(t *testing.T) {
 	checkErr(t, err)
 
 	// remote --> A
-	err = bug.Pull(repoA, os.Stdout, "origin")
+	err = bug.Pull(repoA, nil, "origin")
 	checkErr(t, err)
 
 	bugs := allBugs(t, bug.ReadAllLocalBugs(repoA))
@@ -237,6 +256,16 @@ func nbOps(b *bug.Bug) int {
 }
 
 func TestRebaseConflict(t *testing.T) {
+	_RebaseConflict(t)
+}
+
+func BenchmarkRebaseConflict(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		_RebaseConflict(b)
+	}
+}
+
+func _RebaseConflict(t testing.TB) {
 	repoA, repoB, remote := setupRepos(t)
 	defer cleanupRepos(repoA, repoB, remote)
 
@@ -250,7 +279,7 @@ func TestRebaseConflict(t *testing.T) {
 	checkErr(t, err)
 
 	// remote --> B
-	err = bug.Pull(repoB, os.Stdout, "origin")
+	err = bug.Pull(repoB, nil, "origin")
 	checkErr(t, err)
 
 	operations.Comment(bug1, rene, "message2")
@@ -297,7 +326,7 @@ func TestRebaseConflict(t *testing.T) {
 	checkErr(t, err)
 
 	// remote --> B
-	err = bug.Pull(repoB, os.Stdout, "origin")
+	err = bug.Pull(repoB, nil, "origin")
 	checkErr(t, err)
 
 	bugs := allBugs(t, bug.ReadAllLocalBugs(repoB))
@@ -318,7 +347,7 @@ func TestRebaseConflict(t *testing.T) {
 	checkErr(t, err)
 
 	// remote --> A
-	err = bug.Pull(repoA, os.Stdout, "origin")
+	err = bug.Pull(repoA, nil, "origin")
 	checkErr(t, err)
 
 	bugs = allBugs(t, bug.ReadAllLocalBugs(repoA))
