@@ -38,6 +38,10 @@ export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 
 That's all !
 
+### Linux packages
+
+* [Archlinux (AUR)](https://aur.archlinux.org/packages/?K=git-bug)
+
 ## CLI usage
 
 Create a new bug:
