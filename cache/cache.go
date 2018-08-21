@@ -3,55 +3,31 @@ package cache
 import (
 	"fmt"
 	"io"
-	"strings"
+	"io/ioutil"
+	"os"
+	"path"
+	"strconv"
 
-	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/bug/operations"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util"
 )
 
+const lockfile = "lock"
+
 type Cacher interface {
-	RegisterRepository(ref string, repo repository.Repo)
-	RegisterDefaultRepository(repo repository.Repo)
+	// RegisterRepository register a named repository. Use this for multi-repo setup
+	RegisterRepository(ref string, repo repository.Repo) error
+	// RegisterDefaultRepository register a unnamed repository. Use this for mono-repo setup
+	RegisterDefaultRepository(repo repository.Repo) error
 
+	// ResolveRepo retrieve a repository by name
 	ResolveRepo(ref string) (RepoCacher, error)
+	// DefaultRepo retrieve the default repository
 	DefaultRepo() (RepoCacher, error)
-}
 
-type RepoCacher interface {
-	Repository() repository.Repo
-	ResolveBug(id string) (BugCacher, error)
-	ResolveBugPrefix(prefix string) (BugCacher, error)
-	AllBugIds() ([]string, error)
-	ClearAllBugs()
-
-	// Mutations
-	NewBug(title string, message string) (BugCacher, error)
-	NewBugWithFiles(title string, message string, files []util.Hash) (BugCacher, error)
-	Fetch(remote string) (string, error)
-	MergeAll(remote string) <-chan bug.MergeResult
-	Pull(remote string, out io.Writer) error
-	Push(remote string) (string, error)
-}
-
-type BugCacher interface {
-	Snapshot() *bug.Snapshot
-	ClearSnapshot()
-
-	// Mutations
-	AddComment(message string) error
-	AddCommentWithFiles(message string, files []util.Hash) error
-	ChangeLabels(added []string, removed []string) error
-	Open() error
+	// Close will do anything that is needed to close the cache properly
 	Close() error
-	SetTitle(title string) error
-
-	Commit() error
-	CommitAsNeeded() error
 }
-
-// Cacher ------------------------
 
 type RootCache struct {
 	repos map[string]RepoCacher
@@ -63,14 +39,51 @@ func NewCache() RootCache {
 	}
 }
 
-func (c *RootCache) RegisterRepository(ref string, repo repository.Repo) {
+// RegisterRepository register a named repository. Use this for multi-repo setup
+func (c *RootCache) RegisterRepository(ref string, repo repository.Repo) error {
+	err := c.lockRepository(repo)
+	if err != nil {
+		return err
+	}
+
 	c.repos[ref] = NewRepoCache(repo)
+	return nil
 }
 
-func (c *RootCache) RegisterDefaultRepository(repo repository.Repo) {
+// RegisterDefaultRepository register a unnamed repository. Use this for mono-repo setup
+func (c *RootCache) RegisterDefaultRepository(repo repository.Repo) error {
+	err := c.lockRepository(repo)
+	if err != nil {
+		return err
+	}
+
 	c.repos[""] = NewRepoCache(repo)
+	return nil
 }
 
+func (c *RootCache) lockRepository(repo repository.Repo) error {
+	lockPath := repoLockFilePath(repo)
+
+	err := RepoIsAvailable(repo)
+	if err != nil {
+		return err
+	}
+
+	f, err := os.Create(lockPath)
+	if err != nil {
+		return err
+	}
+
+	pid := fmt.Sprintf("%d", os.Getpid())
+	_, err = f.WriteString(pid)
+	if err != nil {
+		return err
+	}
+
+	return f.Close()
+}
+
+// ResolveRepo retrieve a repository by name
 func (c *RootCache) DefaultRepo() (RepoCacher, error) {
 	if len(c.repos) != 1 {
 		return nil, fmt.Errorf("repository is not unique")
@@ -83,6 +96,7 @@ func (c *RootCache) DefaultRepo() (RepoCacher, error) {
 	panic("unreachable")
 }
 
+// DefaultRepo retrieve the default repository
 func (c *RootCache) ResolveRepo(ref string) (RepoCacher, error) {
 	r, ok := c.repos[ref]
 	if !ok {
@@ -91,235 +105,73 @@ func (c *RootCache) ResolveRepo(ref string) (RepoCacher, error) {
 	return r, nil
 }
 
-// Repo ------------------------
-
-type RepoCache struct {
-	repo repository.Repo
-	bugs map[string]BugCacher
-}
-
-func NewRepoCache(r repository.Repo) RepoCacher {
-	return &RepoCache{
-		repo: r,
-		bugs: make(map[string]BugCacher),
+func (c *RootCache) Close() error {
+	for _, cachedRepo := range c.repos {
+		lockPath := repoLockFilePath(cachedRepo.Repository())
+		err := os.Remove(lockPath)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
-func (c *RepoCache) Repository() repository.Repo {
-	return c.repo
-}
+func RepoIsAvailable(repo repository.Repo) error {
+	lockPath := repoLockFilePath(repo)
 
-func (c *RepoCache) ResolveBug(id string) (BugCacher, error) {
-	cached, ok := c.bugs[id]
-	if ok {
-		return cached, nil
+	// Todo: this leave way for a racey access to the repo between the test
+	// if the file exist and the actual write. It's probably not a problem in
+	// practice because using a repository will be done from user interaction
+	// or in a context where a single instance of git-bug is already guaranteed
+	// (say, a server with the web UI running). But still, that might be nice to
+	// have a mutex or something to guard that.
+
+	// Todo: this will fail if somehow the filesystem is shared with another
+	// computer. Should add a configuration that prevent the cleaning of the
+	// lock file
+
+	f, err := os.Open(lockPath)
+
+	if err != nil && !os.IsNotExist(err) {
+		return err
 	}
 
-	b, err := bug.ReadLocalBug(c.repo, id)
-	if err != nil {
-		return nil, err
-	}
+	if err == nil {
+		// lock file already exist
+		buf, err := ioutil.ReadAll(io.LimitReader(f, 10))
+		if err != nil {
+			return err
+		}
+		if len(buf) == 10 {
+			return fmt.Errorf("The lock file should be < 10 bytes")
+		}
 
-	cached = NewBugCache(c.repo, b)
-	c.bugs[id] = cached
+		pid, err := strconv.Atoi(string(buf))
+		if err != nil {
+			return err
+		}
 
-	return cached, nil
-}
+		if util.ProcessIsRunning(pid) {
+			return fmt.Errorf("The repository you want to access is already locked by the process pid %d", pid)
+		}
 
-func (c *RepoCache) ResolveBugPrefix(prefix string) (BugCacher, error) {
-	// preallocate but empty
-	matching := make([]string, 0, 5)
+		// The lock file is just laying there after a crash, clean it
 
-	for id := range c.bugs {
-		if strings.HasPrefix(id, prefix) {
-			matching = append(matching, id)
+		fmt.Println("A lock file is present but the corresponding process is not, removing it.")
+		err = f.Close()
+		if err != nil {
+			return err
+		}
+
+		os.Remove(lockPath)
+		if err != nil {
+			return err
 		}
 	}
 
-	// TODO: should check matching bug in the repo as well
-
-	if len(matching) > 1 {
-		return nil, fmt.Errorf("Multiple matching bug found:\n%s", strings.Join(matching, "\n"))
-	}
-
-	if len(matching) == 1 {
-		b := c.bugs[matching[0]]
-		return b, nil
-	}
-
-	b, err := bug.FindLocalBug(c.repo, prefix)
-
-	if err != nil {
-		return nil, err
-	}
-
-	cached := NewBugCache(c.repo, b)
-	c.bugs[b.Id()] = cached
-
-	return cached, nil
-}
-
-func (c *RepoCache) AllBugIds() ([]string, error) {
-	return bug.ListLocalIds(c.repo)
-}
-
-func (c *RepoCache) ClearAllBugs() {
-	c.bugs = make(map[string]BugCacher)
-}
-
-func (c *RepoCache) NewBug(title string, message string) (BugCacher, error) {
-	return c.NewBugWithFiles(title, message, nil)
-}
-
-func (c *RepoCache) NewBugWithFiles(title string, message string, files []util.Hash) (BugCacher, error) {
-	author, err := bug.GetUser(c.repo)
-	if err != nil {
-		return nil, err
-	}
-
-	b, err := operations.CreateWithFiles(author, title, message, files)
-	if err != nil {
-		return nil, err
-	}
-
-	err = b.Commit(c.repo)
-	if err != nil {
-		return nil, err
-	}
-
-	cached := NewBugCache(c.repo, b)
-	c.bugs[b.Id()] = cached
-
-	return cached, nil
-}
-
-func (c *RepoCache) Fetch(remote string) (string, error) {
-	return bug.Fetch(c.repo, remote)
-}
-
-func (c *RepoCache) MergeAll(remote string) <-chan bug.MergeResult {
-	return bug.MergeAll(c.repo, remote)
-}
-
-func (c *RepoCache) Pull(remote string, out io.Writer) error {
-	return bug.Pull(c.repo, out, remote)
-}
-
-func (c *RepoCache) Push(remote string) (string, error) {
-	return bug.Push(c.repo, remote)
-}
-
-// Bug ------------------------
-
-type BugCache struct {
-	repo repository.Repo
-	bug  *bug.Bug
-	snap *bug.Snapshot
-}
-
-func NewBugCache(repo repository.Repo, b *bug.Bug) BugCacher {
-	return &BugCache{
-		repo: repo,
-		bug:  b,
-	}
-}
-
-func (c *BugCache) Snapshot() *bug.Snapshot {
-	if c.snap == nil {
-		snap := c.bug.Compile()
-		c.snap = &snap
-	}
-	return c.snap
-}
-
-func (c *BugCache) ClearSnapshot() {
-	c.snap = nil
-}
-
-func (c *BugCache) AddComment(message string) error {
-	return c.AddCommentWithFiles(message, nil)
-}
-
-func (c *BugCache) AddCommentWithFiles(message string, files []util.Hash) error {
-	author, err := bug.GetUser(c.repo)
-	if err != nil {
-		return err
-	}
-
-	operations.CommentWithFiles(c.bug, author, message, files)
-
-	// TODO: perf --> the snapshot could simply be updated with the new op
-	c.ClearSnapshot()
-
 	return nil
 }
 
-func (c *BugCache) ChangeLabels(added []string, removed []string) error {
-	author, err := bug.GetUser(c.repo)
-	if err != nil {
-		return err
-	}
-
-	err = operations.ChangeLabels(nil, c.bug, author, added, removed)
-	if err != nil {
-		return err
-	}
-
-	// TODO: perf --> the snapshot could simply be updated with the new op
-	c.ClearSnapshot()
-
-	return nil
-}
-
-func (c *BugCache) Open() error {
-	author, err := bug.GetUser(c.repo)
-	if err != nil {
-		return err
-	}
-
-	operations.Open(c.bug, author)
-
-	// TODO: perf --> the snapshot could simply be updated with the new op
-	c.ClearSnapshot()
-
-	return nil
-}
-
-func (c *BugCache) Close() error {
-	author, err := bug.GetUser(c.repo)
-	if err != nil {
-		return err
-	}
-
-	operations.Close(c.bug, author)
-
-	// TODO: perf --> the snapshot could simply be updated with the new op
-	c.ClearSnapshot()
-
-	return nil
-}
-
-func (c *BugCache) SetTitle(title string) error {
-	author, err := bug.GetUser(c.repo)
-	if err != nil {
-		return err
-	}
-
-	operations.SetTitle(c.bug, author, title)
-
-	// TODO: perf --> the snapshot could simply be updated with the new op
-	c.ClearSnapshot()
-
-	return nil
-}
-
-func (c *BugCache) Commit() error {
-	return c.bug.Commit(c.repo)
-}
-
-func (c *BugCache) CommitAsNeeded() error {
-	if c.bug.HasPendingOp() {
-		return c.bug.Commit(c.repo)
-	}
-	return nil
+func repoLockFilePath(repo repository.Repo) string {
+	return path.Join(repo.GetPath(), ".git", "git-bug", lockfile)
 }

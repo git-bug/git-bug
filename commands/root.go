@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/spf13/cobra"
 )
@@ -64,6 +65,14 @@ func loadRepo(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("%s must be run from within a git repo.\n", rootCommandName)
 	}
 
+	if err != nil {
+		return err
+	}
+
+	// Prevent the command from running when the cache has locked the repo
+	// Todo: make it more fine-grained at first
+	// Todo: make the running cache available for other processes
+	err = cache.RepoIsAvailable(repo)
 	if err != nil {
 		return err
 	}

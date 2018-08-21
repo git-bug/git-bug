@@ -2,11 +2,14 @@ package commands
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
 	"time"
 
 	"github.com/MichaelMure/git-bug/graphql"
@@ -34,23 +37,66 @@ func runWebUI(cmd *cobra.Command, args []string) error {
 	addr := fmt.Sprintf("127.0.0.1:%d", port)
 	webUiAddr := fmt.Sprintf("http://%s", addr)
 
-	fmt.Printf("Web UI: %s\n", webUiAddr)
-	fmt.Printf("Graphql API: http://%s/graphql\n", addr)
-	fmt.Printf("Graphql Playground: http://%s/playground\n", addr)
-
 	router := mux.NewRouter()
+
+	graphqlHandler, err := graphql.NewHandler(repo)
+	if err != nil {
+		return err
+	}
 
 	// Routes
 	router.Path("/playground").Handler(handler.Playground("git-bug", "/graphql"))
-	router.Path("/graphql").Handler(graphql.NewHandler(repo))
+	router.Path("/graphql").Handler(graphqlHandler)
 	router.Path("/gitfile/{hash}").Handler(newGitFileHandler(repo))
 	router.Path("/upload").Methods("POST").Handler(newGitUploadFileHandler(repo))
 	router.PathPrefix("/").Handler(http.FileServer(webui.WebUIAssets))
 
+	srv := &http.Server{
+		Addr:    addr,
+		Handler: router,
+	}
+
+	done := make(chan bool)
+	quit := make(chan os.Signal, 1)
+
+	// register as handler of the interrupt signal to trigger the teardown
+	signal.Notify(quit, os.Interrupt)
+
+	go func() {
+		<-quit
+		fmt.Println("WebUI is shutting down...")
+
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		srv.SetKeepAlivesEnabled(false)
+		if err := srv.Shutdown(ctx); err != nil {
+			log.Fatalf("Could not gracefully shutdown the WebUI: %v\n", err)
+		}
+
+		// Teardown
+		err := graphqlHandler.Close()
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		close(done)
+	}()
+
+	fmt.Printf("Web UI: %s\n", webUiAddr)
+	fmt.Printf("Graphql API: http://%s/graphql\n", addr)
+	fmt.Printf("Graphql Playground: http://%s/playground\n", addr)
+
 	open.Run(webUiAddr)
 
-	log.Fatal(http.ListenAndServe(addr, router))
+	err = srv.ListenAndServe()
+	if err != nil && err != http.ErrServerClosed {
+		return err
+	}
 
+	<-done
+
+	fmt.Println("WebUI stopped")
 	return nil
 }
 

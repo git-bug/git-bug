@@ -10,10 +10,22 @@ import (
 	"net/http"
 )
 
-func NewHandler(repo repository.Repo) http.Handler {
-	backend := resolvers.NewBackend()
+type Handler struct {
+	http.HandlerFunc
+	*resolvers.Backend
+}
 
-	backend.RegisterDefaultRepository(repo)
+func NewHandler(repo repository.Repo) (Handler, error) {
+	h := Handler{
+		Backend: resolvers.NewBackend(),
+	}
 
-	return handler.GraphQL(graph.NewExecutableSchema(backend))
+	err := h.Backend.RegisterDefaultRepository(repo)
+	if err != nil {
+		return Handler{}, err
+	}
+
+	h.HandlerFunc = handler.GraphQL(graph.NewExecutableSchema(h.Backend))
+
+	return h, nil
 }
