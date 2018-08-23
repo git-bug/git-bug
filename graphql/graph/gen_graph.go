@@ -34,6 +34,7 @@ type Resolvers interface {
 
 	Bug_status(ctx context.Context, obj *bug.Snapshot) (models.Status, error)
 
+	Bug_lastEdit(ctx context.Context, obj *bug.Snapshot) (time.Time, error)
 	Bug_comments(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (models.CommentConnection, error)
 	Bug_operations(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (models.OperationConnection, error)
 
@@ -78,6 +79,7 @@ type AddCommentOperationResolver interface {
 type BugResolver interface {
 	Status(ctx context.Context, obj *bug.Snapshot) (models.Status, error)
 
+	LastEdit(ctx context.Context, obj *bug.Snapshot) (time.Time, error)
 	Comments(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (models.CommentConnection, error)
 	Operations(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (models.OperationConnection, error)
 }
@@ -122,6 +124,10 @@ func (s shortMapper) AddCommentOperation_date(ctx context.Context, obj *operatio
 
 func (s shortMapper) Bug_status(ctx context.Context, obj *bug.Snapshot) (models.Status, error) {
 	return s.r.Bug().Status(ctx, obj)
+}
+
+func (s shortMapper) Bug_lastEdit(ctx context.Context, obj *bug.Snapshot) (time.Time, error) {
+	return s.r.Bug().LastEdit(ctx, obj)
 }
 
 func (s shortMapper) Bug_comments(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (models.CommentConnection, error) {
@@ -494,14 +500,33 @@ func (ec *executionContext) _Bug_createdAt(ctx context.Context, field graphql.Co
 }
 
 func (ec *executionContext) _Bug_lastEdit(ctx context.Context, field graphql.CollectedField, obj *bug.Snapshot) graphql.Marshaler {
-	rctx := graphql.GetResolverContext(ctx)
-	rctx.Object = "Bug"
-	rctx.Args = nil
-	rctx.Field = field
-	rctx.PushField(field.Alias)
-	defer rctx.Pop()
-	res := obj.LastEdit()
-	return graphql.MarshalTime(res)
+	ctx = graphql.WithResolverContext(ctx, &graphql.ResolverContext{
+		Object: "Bug",
+		Args:   nil,
+		Field:  field,
+	})
+	return graphql.Defer(func() (ret graphql.Marshaler) {
+		defer func() {
+			if r := recover(); r != nil {
+				userErr := ec.Recover(ctx, r)
+				ec.Error(ctx, userErr)
+				ret = graphql.Null
+			}
+		}()
+
+		resTmp, err := ec.ResolverMiddleware(ctx, func(ctx context.Context) (interface{}, error) {
+			return ec.resolvers.Bug_lastEdit(ctx, obj)
+		})
+		if err != nil {
+			ec.Error(ctx, err)
+			return graphql.Null
+		}
+		if resTmp == nil {
+			return graphql.Null
+		}
+		res := resTmp.(time.Time)
+		return graphql.MarshalTime(res)
+	})
 }
 
 func (ec *executionContext) _Bug_comments(ctx context.Context, field graphql.CollectedField, obj *bug.Snapshot) graphql.Marshaler {

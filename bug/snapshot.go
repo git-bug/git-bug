@@ -37,10 +37,19 @@ func (snap Snapshot) Summary() string {
 }
 
 // Return the last time a bug was modified
-func (snap Snapshot) LastEdit() time.Time {
+func (snap Snapshot) LastEditTime() time.Time {
 	if len(snap.Operations) == 0 {
 		return time.Unix(0, 0)
 	}
 
 	return snap.Operations[len(snap.Operations)-1].Time()
+}
+
+// Return the last timestamp a bug was modified
+func (snap Snapshot) LastEditUnix() int64 {
+	if len(snap.Operations) == 0 {
+		return 0
+	}
+
+	return snap.Operations[len(snap.Operations)-1].UnixTime()
 }

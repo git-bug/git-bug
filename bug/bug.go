@@ -579,6 +579,16 @@ func formatHumanId(id string) string {
 	return fmt.Sprintf(format, id)
 }
 
+// CreateLamportTime return the Lamport time of creation
+func (bug *Bug) CreateLamportTime() util.LamportTime {
+	return bug.createTime
+}
+
+// EditLamportTime return the Lamport time of the last edit
+func (bug *Bug) EditLamportTime() util.LamportTime {
+	return bug.editTime
+}
+
 // Lookup for the very first operation of the bug.
 // For a valid Bug, this operation should be a CreateOp
 func (bug *Bug) FirstOp() Operation {

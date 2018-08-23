@@ -2,6 +2,7 @@ package resolvers
 
 import (
 	"context"
+	"time"
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/graphql/connections"
@@ -66,4 +67,8 @@ func (bugResolver) Operations(ctx context.Context, obj *bug.Snapshot, after *str
 	}
 
 	return connections.BugOperationCon(obj.Operations, edger, conMaker, input)
+}
+
+func (bugResolver) LastEdit(ctx context.Context, obj *bug.Snapshot) (time.Time, error) {
+	return obj.LastEditTime(), nil
 }
