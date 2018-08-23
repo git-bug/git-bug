@@ -1,6 +1,8 @@
 package cache
 
 import (
+	"encoding/gob"
+
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/util"
 )
@@ -19,7 +21,7 @@ type BugExcerpt struct {
 	Author bug.Person
 }
 
-func NewBugExcerpt(b *bug.Bug, snap bug.Snapshot) BugExcerpt {
+func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) BugExcerpt {
 	return BugExcerpt{
 		Id:                b.Id(),
 		CreateLamportTime: b.CreateLamportTime(),
@@ -29,6 +31,11 @@ func NewBugExcerpt(b *bug.Bug, snap bug.Snapshot) BugExcerpt {
 		Status:            snap.Status,
 		Author:            snap.Author,
 	}
+}
+
+// Package initialisation used to register the type for (de)serialization
+func init() {
+	gob.Register(BugExcerpt{})
 }
 
 /*

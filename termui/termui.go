@@ -13,7 +13,7 @@ var errTerminateMainloop = errors.New("terminate gocui mainloop")
 type termUI struct {
 	g      *gocui.Gui
 	gError chan error
-	cache  cache.RepoCacher
+	cache  *cache.RepoCache
 
 	activeWindow window
 
@@ -43,7 +43,11 @@ type window interface {
 
 // Run will launch the termUI in the terminal
 func Run(repo repository.Repo) error {
-	c := cache.NewRepoCache(repo)
+	c, err := cache.NewRepoCache(repo)
+
+	if err != nil {
+		return err
+	}
 
 	ui = &termUI{
 		gError:     make(chan error, 1),
@@ -58,7 +62,7 @@ func Run(repo repository.Repo) error {
 
 	initGui(nil)
 
-	err := <-ui.gError
+	err = <-ui.gError
 
 	if err != nil && err != gocui.ErrQuit {
 		return err
@@ -157,7 +161,7 @@ func quit(g *gocui.Gui, v *gocui.View) error {
 	return gocui.ErrQuit
 }
 
-func newBugWithEditor(repo cache.RepoCacher) error {
+func newBugWithEditor(repo *cache.RepoCache) error {
 	// This is somewhat hacky.
 	// As there is no way to pause gocui, run the editor and restart gocui,
 	// we have to stop it entirely and start a new one later.
@@ -176,7 +180,7 @@ func newBugWithEditor(repo cache.RepoCacher) error {
 		return err
 	}
 
-	var b cache.BugCacher
+	var b *cache.BugCache
 	if err == input.ErrEmptyTitle {
 		ui.msgPopup.Activate(msgPopupErrorTitle, "Empty title, aborting.")
 		initGui(nil)
@@ -197,7 +201,7 @@ func newBugWithEditor(repo cache.RepoCacher) error {
 	}
 }
 
-func addCommentWithEditor(bug cache.BugCacher) error {
+func addCommentWithEditor(bug *cache.BugCache) error {
 	// This is somewhat hacky.
 	// As there is no way to pause gocui, run the editor and restart gocui,
 	// we have to stop it entirely and start a new one later.
@@ -230,7 +234,7 @@ func addCommentWithEditor(bug cache.BugCacher) error {
 	return errTerminateMainloop
 }
 
-func setTitleWithEditor(bug cache.BugCacher) error {
+func setTitleWithEditor(bug *cache.BugCache) error {
 	// This is somewhat hacky.
 	// As there is no way to pause gocui, run the editor and restart gocui,
 	// we have to stop it entirely and start a new one later.

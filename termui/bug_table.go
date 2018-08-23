@@ -19,14 +19,14 @@ const bugTableInstructionView = "bugTableInstructionView"
 const remote = "origin"
 
 type bugTable struct {
-	repo         cache.RepoCacher
+	repo         *cache.RepoCache
 	allIds       []string
-	bugs         []cache.BugCacher
+	bugs         []*cache.BugCache
 	pageCursor   int
 	selectCursor int
 }
 
-func newBugTable(cache cache.RepoCacher) *bugTable {
+func newBugTable(cache *cache.RepoCache) *bugTable {
 	return &bugTable{
 		repo:         cache,
 		pageCursor:   0,
@@ -230,14 +230,14 @@ func (bt *bugTable) doPaginate(allIds []string, max int) error {
 	nb := minInt(len(allIds)-bt.pageCursor, max)
 
 	if nb < 0 {
-		bt.bugs = []cache.BugCacher{}
+		bt.bugs = []*cache.BugCache{}
 		return nil
 	}
 
 	// slice the data
 	ids := allIds[bt.pageCursor : bt.pageCursor+nb]
 
-	bt.bugs = make([]cache.BugCacher, len(ids))
+	bt.bugs = make([]*cache.BugCache, len(ids))
 
 	for i, id := range ids {
 		b, err := bt.repo.ResolveBug(id)

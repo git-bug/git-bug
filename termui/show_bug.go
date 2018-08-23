@@ -19,8 +19,8 @@ const showBugHeaderView = "showBugHeaderView"
 const timeLayout = "Jan 2 2006"
 
 type showBug struct {
-	cache              cache.RepoCacher
-	bug                cache.BugCacher
+	cache              *cache.RepoCache
+	bug                *cache.BugCache
 	childViews         []string
 	mainSelectableView []string
 	sideSelectableView []string
@@ -29,13 +29,13 @@ type showBug struct {
 	scroll             int
 }
 
-func newShowBug(cache cache.RepoCacher) *showBug {
+func newShowBug(cache *cache.RepoCache) *showBug {
 	return &showBug{
 		cache: cache,
 	}
 }
 
-func (sb *showBug) SetBug(bug cache.BugCacher) {
+func (sb *showBug) SetBug(bug *cache.BugCache) {
 	sb.bug = bug
 	sb.scroll = 0
 	sb.selected = ""

@@ -12,11 +12,11 @@ type ConnectionInput struct {
 }
 
 type Repository struct {
-	Cache cache.Cacher
-	Repo  cache.RepoCacher
+	Cache *cache.RootCache
+	Repo  *cache.RepoCache
 }
 
 type RepositoryMutation struct {
-	Cache cache.Cacher
-	Repo  cache.RepoCacher
+	Cache *cache.RootCache
+	Repo  *cache.RepoCache
 }

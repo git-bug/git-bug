@@ -13,29 +13,15 @@ import (
 )
 
 const lockfile = "lock"
-
-type Cacher interface {
-	// RegisterRepository register a named repository. Use this for multi-repo setup
-	RegisterRepository(ref string, repo repository.Repo) error
-	// RegisterDefaultRepository register a unnamed repository. Use this for mono-repo setup
-	RegisterDefaultRepository(repo repository.Repo) error
-
-	// ResolveRepo retrieve a repository by name
-	ResolveRepo(ref string) (RepoCacher, error)
-	// DefaultRepo retrieve the default repository
-	DefaultRepo() (RepoCacher, error)
-
-	// Close will do anything that is needed to close the cache properly
-	Close() error
-}
+const excerptsFile = "excerpts"
 
 type RootCache struct {
-	repos map[string]RepoCacher
+	repos map[string]*RepoCache
 }
 
 func NewCache() RootCache {
 	return RootCache{
-		repos: make(map[string]RepoCacher),
+		repos: make(map[string]*RepoCache),
 	}
 }
 
@@ -46,7 +32,12 @@ func (c *RootCache) RegisterRepository(ref string, repo repository.Repo) error {
 		return err
 	}
 
-	c.repos[ref] = NewRepoCache(repo)
+	r, err := NewRepoCache(repo)
+	if err != nil {
+		return err
+	}
+
+	c.repos[ref] = r
 	return nil
 }
 
@@ -57,7 +48,12 @@ func (c *RootCache) RegisterDefaultRepository(repo repository.Repo) error {
 		return err
 	}
 
-	c.repos[""] = NewRepoCache(repo)
+	r, err := NewRepoCache(repo)
+	if err != nil {
+		return err
+	}
+
+	c.repos[""] = r
 	return nil
 }
 
@@ -84,7 +80,7 @@ func (c *RootCache) lockRepository(repo repository.Repo) error {
 }
 
 // ResolveRepo retrieve a repository by name
-func (c *RootCache) DefaultRepo() (RepoCacher, error) {
+func (c *RootCache) DefaultRepo() (*RepoCache, error) {
 	if len(c.repos) != 1 {
 		return nil, fmt.Errorf("repository is not unique")
 	}
@@ -97,7 +93,7 @@ func (c *RootCache) DefaultRepo() (RepoCacher, error) {
 }
 
 // DefaultRepo retrieve the default repository
-func (c *RootCache) ResolveRepo(ref string) (RepoCacher, error) {
+func (c *RootCache) ResolveRepo(ref string) (*RepoCache, error) {
 	r, ok := c.repos[ref]
 	if !ok {
 		return nil, fmt.Errorf("unknown repo")
@@ -105,9 +101,10 @@ func (c *RootCache) ResolveRepo(ref string) (RepoCacher, error) {
 	return r, nil
 }
 
+// Close will do anything that is needed to close the cache properly
 func (c *RootCache) Close() error {
 	for _, cachedRepo := range c.repos {
-		lockPath := repoLockFilePath(cachedRepo.Repository())
+		lockPath := repoLockFilePath(cachedRepo.repo)
 		err := os.Remove(lockPath)
 		if err != nil {
 			return err
@@ -116,6 +113,10 @@ func (c *RootCache) Close() error {
 	return nil
 }
 
+// RepoIsAvailable check is the given repository is locked by a Cache.
+// Note: this is a smart function that will cleanup the lock file if the
+// corresponding process is not there anymore.
+// If no error is returned, the repo is free to edit.
 func RepoIsAvailable(repo repository.Repo) error {
 	lockPath := repoLockFilePath(repo)
 

@@ -9,10 +9,10 @@ import (
 )
 
 type mutationResolver struct {
-	cache cache.Cacher
+	cache *cache.RootCache
 }
 
-func (r mutationResolver) getRepo(repoRef *string) (cache.RepoCacher, error) {
+func (r mutationResolver) getRepo(repoRef *string) (*cache.RepoCache, error) {
 	if repoRef != nil {
 		return r.cache.ResolveRepo(*repoRef)
 	}
