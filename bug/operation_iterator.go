@@ -6,9 +6,9 @@ type OperationIterator struct {
 	opIndex   int
 }
 
-func NewOperationIterator(bug *Bug) *OperationIterator {
+func NewOperationIterator(bug Interface) *OperationIterator {
 	return &OperationIterator{
-		bug:       bug,
+		bug:       bugFromInterface(bug),
 		packIndex: 0,
 		opIndex:   -1,
 	}

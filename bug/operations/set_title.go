@@ -29,7 +29,7 @@ func NewSetTitleOp(author bug.Person, title string, was string) SetTitleOperatio
 }
 
 // Convenience function to apply the operation
-func SetTitle(b *bug.Bug, author bug.Person, title string) {
+func SetTitle(b bug.Interface, author bug.Person, title string) {
 	it := bug.NewOperationIterator(b)
 
 	var lastTitleOp bug.Operation

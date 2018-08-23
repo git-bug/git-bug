@@ -60,7 +60,7 @@ func NewLabelChangeOperation(author bug.Person, added, removed []bug.Label) Labe
 }
 
 // ChangeLabels is a convenience function to apply the operation
-func ChangeLabels(out io.Writer, b *bug.Bug, author bug.Person, add, remove []string) error {
+func ChangeLabels(out io.Writer, b bug.Interface, author bug.Person, add, remove []string) error {
 	var added, removed []bug.Label
 
 	if out == nil {

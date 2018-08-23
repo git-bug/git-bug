@@ -27,13 +27,13 @@ func NewSetStatusOp(author bug.Person, status bug.Status) SetStatusOperation {
 }
 
 // Convenience function to apply the operation
-func Open(b *bug.Bug, author bug.Person) {
+func Open(b bug.Interface, author bug.Person) {
 	op := NewSetStatusOp(author, bug.OpenStatus)
 	b.Append(op)
 }
 
 // Convenience function to apply the operation
-func Close(b *bug.Bug, author bug.Person) {
+func Close(b bug.Interface, author bug.Person) {
 	op := NewSetStatusOp(author, bug.ClosedStatus)
 	b.Append(op)
 }

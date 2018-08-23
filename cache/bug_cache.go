@@ -9,7 +9,6 @@ import (
 
 type BugCacher interface {
 	Snapshot() *bug.Snapshot
-	ClearSnapshot()
 
 	// Mutations
 	AddComment(message string) error
@@ -25,27 +24,18 @@ type BugCacher interface {
 
 type BugCache struct {
 	repo repository.Repo
-	bug  *bug.Bug
-	snap *bug.Snapshot
+	bug  *bug.WithSnapshot
 }
 
 func NewBugCache(repo repository.Repo, b *bug.Bug) BugCacher {
 	return &BugCache{
 		repo: repo,
-		bug:  b,
+		bug:  &bug.WithSnapshot{Bug: b},
 	}
 }
 
 func (c *BugCache) Snapshot() *bug.Snapshot {
-	if c.snap == nil {
-		snap := c.bug.Compile()
-		c.snap = &snap
-	}
-	return c.snap
-}
-
-func (c *BugCache) ClearSnapshot() {
-	c.snap = nil
+	return c.bug.Snapshot()
 }
 
 func (c *BugCache) AddComment(message string) error {
@@ -59,9 +49,6 @@ func (c *BugCache) AddCommentWithFiles(message string, files []util.Hash) error 
 	}
 
 	operations.CommentWithFiles(c.bug, author, message, files)
-
-	// TODO: perf --> the snapshot could simply be updated with the new op
-	c.ClearSnapshot()
 
 	return nil
 }
@@ -77,9 +64,6 @@ func (c *BugCache) ChangeLabels(added []string, removed []string) error {
 		return err
 	}
 
-	// TODO: perf --> the snapshot could simply be updated with the new op
-	c.ClearSnapshot()
-
 	return nil
 }
 
@@ -90,9 +74,6 @@ func (c *BugCache) Open() error {
 	}
 
 	operations.Open(c.bug, author)
-
-	// TODO: perf --> the snapshot could simply be updated with the new op
-	c.ClearSnapshot()
 
 	return nil
 }
@@ -105,9 +86,6 @@ func (c *BugCache) Close() error {
 
 	operations.Close(c.bug, author)
 
-	// TODO: perf --> the snapshot could simply be updated with the new op
-	c.ClearSnapshot()
-
 	return nil
 }
 
@@ -118,9 +96,6 @@ func (c *BugCache) SetTitle(title string) error {
 	}
 
 	operations.SetTitle(c.bug, author, title)
-
-	// TODO: perf --> the snapshot could simply be updated with the new op
-	c.ClearSnapshot()
 
 	return nil
 }

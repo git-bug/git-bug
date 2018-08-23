@@ -42,11 +42,11 @@ func NewAddCommentOp(author bug.Person, message string, files []util.Hash) AddCo
 }
 
 // Convenience function to apply the operation
-func Comment(b *bug.Bug, author bug.Person, message string) {
+func Comment(b bug.Interface, author bug.Person, message string) {
 	CommentWithFiles(b, author, message, nil)
 }
 
-func CommentWithFiles(b *bug.Bug, author bug.Person, message string, files []util.Hash) {
+func CommentWithFiles(b bug.Interface, author bug.Person, message string, files []util.Hash) {
 	addCommentOp := NewAddCommentOp(author, message, files)
 	b.Append(addCommentOp)
 }

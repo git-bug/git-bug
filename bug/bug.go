@@ -24,6 +24,8 @@ const editClockEntryPattern = "edit-clock-%d"
 const idLength = 40
 const humanIdLength = 7
 
+var _ Interface = &Bug{}
+
 // Bug hold the data of a bug thread, organized in a way close to
 // how it will be persisted inside Git. This is the data structure
 // used to merge two different version of the same Bug.
@@ -468,25 +470,27 @@ func makeMediaTree(pack OperationPack) []repository.TreeEntry {
 // Merge a different version of the same bug by rebasing operations of this bug
 // that are not present in the other on top of the chain of operations of the
 // other version.
-func (bug *Bug) Merge(repo repository.Repo, other *Bug) (bool, error) {
+func (bug *Bug) Merge(repo repository.Repo, other Interface) (bool, error) {
+	var otherBug = bugFromInterface(other)
+
 	// Note: a faster merge should be possible without actually reading and parsing
 	// all operations pack of our side.
 	// Reading the other side is still necessary to validate remote data, at least
 	// for new operations
 
-	if bug.id != other.id {
+	if bug.id != otherBug.id {
 		return false, errors.New("merging unrelated bugs is not supported")
 	}
 
-	if len(other.staging.Operations) > 0 {
+	if len(otherBug.staging.Operations) > 0 {
 		return false, errors.New("merging a bug with a non-empty staging is not supported")
 	}
 
-	if bug.lastCommit == "" || other.lastCommit == "" {
+	if bug.lastCommit == "" || otherBug.lastCommit == "" {
 		return false, errors.New("can't merge a bug that has never been stored")
 	}
 
-	ancestor, err := repo.FindCommonAncestor(bug.lastCommit, other.lastCommit)
+	ancestor, err := repo.FindCommonAncestor(bug.lastCommit, otherBug.lastCommit)
 
 	if err != nil {
 		return false, err
@@ -505,15 +509,15 @@ func (bug *Bug) Merge(repo repository.Repo, other *Bug) (bool, error) {
 		}
 	}
 
-	if len(other.packs) == ancestorIndex+1 {
+	if len(otherBug.packs) == ancestorIndex+1 {
 		// Nothing to rebase, return early
 		return false, nil
 	}
 
 	// get other bug's extra packs
-	for i := ancestorIndex + 1; i < len(other.packs); i++ {
+	for i := ancestorIndex + 1; i < len(otherBug.packs); i++ {
 		// clone is probably not necessary
-		newPack := other.packs[i].Clone()
+		newPack := otherBug.packs[i].Clone()
 
 		newPacks = append(newPacks, newPack)
 		bug.lastCommit = newPack.commitHash

@@ -11,7 +11,7 @@ import (
 	"github.com/icrowley/fake"
 )
 
-type opsGenerator func(*bug.Bug, bug.Person)
+type opsGenerator func(bug.Interface, bug.Person)
 
 type Options struct {
 	BugNumber    int
@@ -94,17 +94,17 @@ func paragraphs() string {
 	return strings.Replace(p, "\t", "\n\n", -1)
 }
 
-func comment(b *bug.Bug, p bug.Person) {
+func comment(b bug.Interface, p bug.Person) {
 	operations.Comment(b, p, paragraphs())
 }
 
-func title(b *bug.Bug, p bug.Person) {
+func title(b bug.Interface, p bug.Person) {
 	operations.SetTitle(b, p, fake.Sentence())
 }
 
 var addedLabels []string
 
-func labels(b *bug.Bug, p bug.Person) {
+func labels(b bug.Interface, p bug.Person) {
 	var removed []string
 	nbRemoved := rand.Intn(3)
 	for nbRemoved > 0 && len(addedLabels) > 0 {
