@@ -12,20 +12,20 @@ import (
 
 type Handler struct {
 	http.HandlerFunc
-	*resolvers.Backend
+	*resolvers.RootResolver
 }
 
 func NewHandler(repo repository.Repo) (Handler, error) {
 	h := Handler{
-		Backend: resolvers.NewBackend(),
+		RootResolver: resolvers.NewRootResolver(),
 	}
 
-	err := h.Backend.RegisterDefaultRepository(repo)
+	err := h.RootResolver.RegisterDefaultRepository(repo)
 	if err != nil {
 		return Handler{}, err
 	}
 
-	h.HandlerFunc = handler.GraphQL(graph.NewExecutableSchema(h.Backend))
+	h.HandlerFunc = handler.GraphQL(graph.NewExecutableSchema(h.RootResolver))
 
 	return h, nil
 }
