@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "git-bug",
+  "name": "git-bug webui",
   "icons": [
     {
       "src": "favicon.ico",
