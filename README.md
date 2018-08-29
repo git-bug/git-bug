@@ -1,3 +1,6 @@
+<p align="center">
+    <img width="64px" src="logo/git-bug--logo--alpha--flat--bg.svg">
+</p>
 <h1 align="center">git-bug</h1>
 
 <div align="center">
