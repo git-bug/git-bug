@@ -3,8 +3,7 @@ package commands
 import (
 	"fmt"
 
-	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/bug/operations"
+	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/input"
 	"github.com/spf13/cobra"
 )
@@ -25,8 +24,14 @@ func runNewBug(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	backend, err := cache.NewRepoCache(repo)
+	if err != nil {
+		return err
+	}
+	defer backend.Close()
+
 	if newMessage == "" || newTitle == "" {
-		newTitle, newMessage, err = input.BugCreateEditorInput(repo, newTitle, newMessage)
+		newTitle, newMessage, err = input.BugCreateEditorInput(backend.Repository(), newTitle, newMessage)
 
 		if err == input.ErrEmptyTitle {
 			fmt.Println("Empty title, aborting.")
@@ -37,23 +42,12 @@ func runNewBug(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	author, err := bug.GetUser(repo)
+	b, err := backend.NewBug(newTitle, newMessage)
 	if err != nil {
 		return err
 	}
 
-	newBug, err := operations.Create(author, newTitle, newMessage)
-	if err != nil {
-		return err
-	}
-
-	err = newBug.Commit(repo)
-
-	if err != nil {
-		return err
-	}
-
-	fmt.Printf("%s created\n", newBug.HumanId())
+	fmt.Printf("%s created\n", b.HumanId())
 
 	return nil
 }

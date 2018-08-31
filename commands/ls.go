@@ -9,6 +9,13 @@ import (
 )
 
 func runLsBug(cmd *cobra.Command, args []string) error {
+	//backend, err := cache.NewRepoCache(repo)
+	//if err != nil {
+	//	return err
+	//}
+
+	// Todo: read bugs from backend
+
 	bugs := bug.ReadAllLocalBugs(repo)
 
 	for b := range bugs {

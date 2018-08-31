@@ -25,6 +25,7 @@ func Push(repo repository.Repo, remote string) (string, error) {
 	return repo.PushRefs(remote, bugsRefPattern+"*")
 }
 
+// TODO: return a chan of changes for the cache to be updated properly
 func Pull(repo repository.Repo, out io.Writer, remote string) error {
 	if out == nil {
 		out = ioutil.Discard

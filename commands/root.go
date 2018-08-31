@@ -5,15 +5,10 @@ import (
 	"os"
 
 	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/spf13/cobra"
 )
 
-// Will display "git bug"
-// \u00A0 is a non-breaking space
-// It's used to avoid cobra to split the Use string at the first space to get the root command name
-//const rootCommandName = "git\u00A0bug"
 const rootCommandName = "git-bug"
 
 // package scoped var to hold the repo after the PreRun execution
@@ -65,14 +60,6 @@ func loadRepo(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("%s must be run from within a git repo.\n", rootCommandName)
 	}
 
-	if err != nil {
-		return err
-	}
-
-	// Prevent the command from running when the cache has locked the repo
-	// Todo: make it more fine-grained at first
-	// Todo: make the running cache available for other processes
-	err = cache.RepoIsAvailable(repo)
 	if err != nil {
 		return err
 	}
