@@ -1,4 +1,4 @@
-// +build !deploy_build
+// +build debugwebui
 
 package webui
 
