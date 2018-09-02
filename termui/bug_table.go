@@ -212,22 +212,17 @@ func (bt *bugTable) disable(g *gocui.Gui) error {
 }
 
 func (bt *bugTable) paginate(max int) error {
-	allIds, err := bt.repo.AllBugIds()
-	if err != nil {
-		return err
-	}
+	bt.allIds = bt.repo.AllBugsOrderByCreation()
 
-	bt.allIds = allIds
-
-	return bt.doPaginate(allIds, max)
+	return bt.doPaginate(max)
 }
 
-func (bt *bugTable) doPaginate(allIds []string, max int) error {
+func (bt *bugTable) doPaginate(max int) error {
 	// clamp the cursor
 	bt.pageCursor = maxInt(bt.pageCursor, 0)
-	bt.pageCursor = minInt(bt.pageCursor, len(allIds))
+	bt.pageCursor = minInt(bt.pageCursor, len(bt.allIds))
 
-	nb := minInt(len(allIds)-bt.pageCursor, max)
+	nb := minInt(len(bt.allIds)-bt.pageCursor, max)
 
 	if nb < 0 {
 		bt.bugs = []*cache.BugCache{}
@@ -235,7 +230,7 @@ func (bt *bugTable) doPaginate(allIds []string, max int) error {
 	}
 
 	// slice the data
-	ids := allIds[bt.pageCursor : bt.pageCursor+nb]
+	ids := bt.allIds[bt.pageCursor : bt.pageCursor+nb]
 
 	bt.bugs = make([]*cache.BugCache, len(ids))
 
@@ -360,34 +355,25 @@ func (bt *bugTable) cursorClamp(v *gocui.View) error {
 func (bt *bugTable) nextPage(g *gocui.Gui, v *gocui.View) error {
 	_, max := v.Size()
 
-	allIds, err := bt.repo.AllBugIds()
-	if err != nil {
-		return err
-	}
+	bt.allIds = bt.repo.AllBugsOrderByCreation()
 
-	bt.allIds = allIds
-
-	if bt.pageCursor+max >= len(allIds) {
+	if bt.pageCursor+max >= len(bt.allIds) {
 		return nil
 	}
 
 	bt.pageCursor += max
 
-	return bt.doPaginate(allIds, max)
+	return bt.doPaginate(max)
 }
 
 func (bt *bugTable) previousPage(g *gocui.Gui, v *gocui.View) error {
 	_, max := v.Size()
-	allIds, err := bt.repo.AllBugIds()
-	if err != nil {
-		return err
-	}
 
-	bt.allIds = allIds
+	bt.allIds = bt.repo.AllBugsOrderByCreation()
 
 	bt.pageCursor = maxInt(0, bt.pageCursor-max)
 
-	return bt.doPaginate(allIds, max)
+	return bt.doPaginate(max)
 }
 
 func (bt *bugTable) newBug(g *gocui.Gui, v *gocui.View) error {

@@ -4,26 +4,26 @@ import (
 	"fmt"
 
 	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util"
 	"github.com/spf13/cobra"
 )
 
 func runLsBug(cmd *cobra.Command, args []string) error {
-	//backend, err := cache.NewRepoCache(repo)
-	//if err != nil {
-	//	return err
-	//}
+	backend, err := cache.NewRepoCache(repo)
+	if err != nil {
+		return err
+	}
 
-	// Todo: read bugs from backend
+	allIds := backend.AllBugsOrderByCreation()
 
-	bugs := bug.ReadAllLocalBugs(repo)
-
-	for b := range bugs {
-		if b.Err != nil {
-			return b.Err
+	for _, id := range allIds {
+		b, err := backend.ResolveBug(id)
+		if err != nil {
+			return err
 		}
 
-		snapshot := b.Bug.Compile()
+		snapshot := b.Snapshot()
 
 		var author bug.Person
 
@@ -37,7 +37,7 @@ func runLsBug(cmd *cobra.Command, args []string) error {
 		authorFmt := fmt.Sprintf("%-15.15s", author.Name)
 
 		fmt.Printf("%s %s\t%s\t%s\t%s\n",
-			util.Cyan(b.Bug.HumanId()),
+			util.Cyan(b.HumanId()),
 			util.Yellow(snapshot.Status),
 			titleFmt,
 			util.Magenta(authorFmt),
