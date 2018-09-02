@@ -9,7 +9,7 @@ import (
 )
 
 type mutationResolver struct {
-	cache *cache.RootCache
+	cache *cache.MultiRepoCache
 }
 
 func (r mutationResolver) getRepo(repoRef *string) (*cache.RepoCache, error) {

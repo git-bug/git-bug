@@ -9,18 +9,18 @@ import (
 const lockfile = "lock"
 const excerptsFile = "excerpts"
 
-type RootCache struct {
+type MultiRepoCache struct {
 	repos map[string]*RepoCache
 }
 
-func NewCache() RootCache {
-	return RootCache{
+func NewMultiRepoCache() MultiRepoCache {
+	return MultiRepoCache{
 		repos: make(map[string]*RepoCache),
 	}
 }
 
 // RegisterRepository register a named repository. Use this for multi-repo setup
-func (c *RootCache) RegisterRepository(ref string, repo repository.Repo) error {
+func (c *MultiRepoCache) RegisterRepository(ref string, repo repository.Repo) error {
 	r, err := NewRepoCache(repo)
 	if err != nil {
 		return err
@@ -31,7 +31,7 @@ func (c *RootCache) RegisterRepository(ref string, repo repository.Repo) error {
 }
 
 // RegisterDefaultRepository register a unnamed repository. Use this for mono-repo setup
-func (c *RootCache) RegisterDefaultRepository(repo repository.Repo) error {
+func (c *MultiRepoCache) RegisterDefaultRepository(repo repository.Repo) error {
 	r, err := NewRepoCache(repo)
 	if err != nil {
 		return err
@@ -42,7 +42,7 @@ func (c *RootCache) RegisterDefaultRepository(repo repository.Repo) error {
 }
 
 // ResolveRepo retrieve a repository by name
-func (c *RootCache) DefaultRepo() (*RepoCache, error) {
+func (c *MultiRepoCache) DefaultRepo() (*RepoCache, error) {
 	if len(c.repos) != 1 {
 		return nil, fmt.Errorf("repository is not unique")
 	}
@@ -55,7 +55,7 @@ func (c *RootCache) DefaultRepo() (*RepoCache, error) {
 }
 
 // DefaultRepo retrieve the default repository
-func (c *RootCache) ResolveRepo(ref string) (*RepoCache, error) {
+func (c *MultiRepoCache) ResolveRepo(ref string) (*RepoCache, error) {
 	r, ok := c.repos[ref]
 	if !ok {
 		return nil, fmt.Errorf("unknown repo")
@@ -64,7 +64,7 @@ func (c *RootCache) ResolveRepo(ref string) (*RepoCache, error) {
 }
 
 // Close will do anything that is needed to close the cache properly
-func (c *RootCache) Close() error {
+func (c *MultiRepoCache) Close() error {
 	for _, cachedRepo := range c.repos {
 		err := cachedRepo.Close()
 		if err != nil {

@@ -8,7 +8,7 @@ import (
 )
 
 type rootQueryResolver struct {
-	cache *cache.RootCache
+	cache *cache.MultiRepoCache
 }
 
 func (r rootQueryResolver) DefaultRepository(ctx context.Context) (*models.Repository, error) {
