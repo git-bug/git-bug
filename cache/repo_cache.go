@@ -44,6 +44,8 @@ func NewRepoCache(r repository.Repo) (*RepoCache, error) {
 	return c, c.writeExcerpts()
 }
 
+// Repository return the underlying repository.
+// If you use this, make sure to never change the repo state.
 func (c *RepoCache) Repository() repository.Repo {
 	return c.repo
 }
@@ -205,14 +207,19 @@ func (c *RepoCache) AllBugIds() ([]string, error) {
 	return bug.ListLocalIds(c.repo)
 }
 
+// ClearAllBugs clear all bugs kept in memory
 func (c *RepoCache) ClearAllBugs() {
 	c.bugs = make(map[string]*BugCache)
 }
 
+// NewBug create a new bug
+// The new bug is written in the repository (commit)
 func (c *RepoCache) NewBug(title string, message string) (*BugCache, error) {
 	return c.NewBugWithFiles(title, message, nil)
 }
 
+// NewBugWithFiles create a new bug with attached files for the message
+// The new bug is written in the repository (commit)
 func (c *RepoCache) NewBugWithFiles(title string, message string, files []util.Hash) (*BugCache, error) {
 	author, err := bug.GetUser(c.repo)
 	if err != nil {
@@ -235,6 +242,8 @@ func (c *RepoCache) NewBugWithFiles(title string, message string, files []util.H
 	return cached, nil
 }
 
+// Fetch retrieve update from a remote
+// This does not change the local bugs state
 func (c *RepoCache) Fetch(remote string) (string, error) {
 	return bug.Fetch(c.repo, remote)
 }
@@ -243,10 +252,12 @@ func (c *RepoCache) MergeAll(remote string) <-chan bug.MergeResult {
 	return bug.MergeAll(c.repo, remote)
 }
 
+// Pull does a Fetch and merge the updates into the local bug states
 func (c *RepoCache) Pull(remote string, out io.Writer) error {
 	return bug.Pull(c.repo, out, remote)
 }
 
+// Push update a remote with the local changes
 func (c *RepoCache) Push(remote string) (string, error) {
 	return bug.Push(c.repo, remote)
 }
@@ -259,7 +270,6 @@ func repoLockFilePath(repo repository.Repo) string {
 // Note: this is a smart function that will cleanup the lock file if the
 // corresponding process is not there anymore.
 // If no error is returned, the repo is free to edit.
-// @Deprecated
 func repoIsAvailable(repo repository.Repo) error {
 	lockPath := repoLockFilePath(repo)
 
