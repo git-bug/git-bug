@@ -212,7 +212,7 @@ func (bt *bugTable) disable(g *gocui.Gui) error {
 }
 
 func (bt *bugTable) paginate(max int) error {
-	bt.allIds = bt.repo.AllBugsOrderByCreation()
+	bt.allIds = bt.repo.AllBugsId(cache.OrderByCreation, cache.OrderAscending)
 
 	return bt.doPaginate(max)
 }
@@ -355,8 +355,6 @@ func (bt *bugTable) cursorClamp(v *gocui.View) error {
 func (bt *bugTable) nextPage(g *gocui.Gui, v *gocui.View) error {
 	_, max := v.Size()
 
-	bt.allIds = bt.repo.AllBugsOrderByCreation()
-
 	if bt.pageCursor+max >= len(bt.allIds) {
 		return nil
 	}
@@ -368,8 +366,6 @@ func (bt *bugTable) nextPage(g *gocui.Gui, v *gocui.View) error {
 
 func (bt *bugTable) previousPage(g *gocui.Gui, v *gocui.View) error {
 	_, max := v.Size()
-
-	bt.allIds = bt.repo.AllBugsOrderByCreation()
 
 	bt.pageCursor = maxInt(0, bt.pageCursor-max)
 

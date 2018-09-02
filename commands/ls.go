@@ -15,7 +15,7 @@ func runLsBug(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	allIds := backend.AllBugsOrderByCreation()
+	allIds := backend.AllBugsId(cache.OrderByCreation, cache.OrderAscending)
 
 	for _, id := range allIds {
 		b, err := backend.ResolveBug(id)

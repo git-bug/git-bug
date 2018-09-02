@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -154,6 +153,18 @@ func (c *RepoCache) buildAllExcerpt() {
 	}
 }
 
+func (c *RepoCache) allExcerpt() []BugExcerpt {
+	result := make([]BugExcerpt, len(c.excerpts))
+
+	i := 0
+	for _, val := range c.excerpts {
+		result[i] = val
+		i++
+	}
+
+	return result
+}
+
 func (c *RepoCache) ResolveBug(id string) (*BugCache, error) {
 	cached, ok := c.bugs[id]
 	if ok {
@@ -202,60 +213,6 @@ func (c *RepoCache) ResolveBugPrefix(prefix string) (*BugCache, error) {
 	c.bugs[b.Id()] = cached
 
 	return cached, nil
-}
-
-func (c *RepoCache) AllBugOrderById() []string {
-	result := make([]string, len(c.excerpts))
-
-	i := 0
-	for key := range c.excerpts {
-		result[i] = key
-		i++
-	}
-
-	sort.Strings(result)
-
-	return result
-}
-
-func (c *RepoCache) AllBugsOrderByEdit() []string {
-	excerpts := make([]BugExcerpt, len(c.excerpts))
-
-	i := 0
-	for _, val := range c.excerpts {
-		excerpts[i] = val
-		i++
-	}
-
-	sort.Sort(BugsByEditTime(excerpts))
-
-	result := make([]string, len(excerpts))
-
-	for i, val := range excerpts {
-		result[i] = val.Id
-	}
-
-	return result
-}
-
-func (c *RepoCache) AllBugsOrderByCreation() []string {
-	excerpts := make([]BugExcerpt, len(c.excerpts))
-
-	i := 0
-	for _, val := range c.excerpts {
-		excerpts[i] = val
-		i++
-	}
-
-	sort.Sort(BugsByCreationTime(excerpts))
-
-	result := make([]string, len(excerpts))
-
-	for i, val := range excerpts {
-		result[i] = val.Id
-	}
-
-	return result
 }
 
 // ClearAllBugs clear all bugs kept in memory
