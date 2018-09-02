@@ -19,6 +19,7 @@ func main() {
 	header := &doc.GenManHeader{
 		Title:   "GIT-BUG",
 		Section: "1",
+		Source:  "Generated from git-bug's source code",
 	}
 
 	fmt.Println("Generating manpage ...")
