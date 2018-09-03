@@ -1,5 +1,5 @@
 <p align="center">
-    <img width="150px" src="https://cdn.rawgit.com/MichaelMure/git-bug/logo/misc/logo/logo-alpha-flat-bg.svg">
+    <img width="150px" src="misc/logo/logo-flat-bg.svg">
 </p>
 <h1 align="center">git-bug</h1>
 
