@@ -1,6 +1,6 @@
-<p align="center">
-    <img width="64px" src="logo/git-bug--logo--alpha--flat--bg.svg">
-</p>
+<div align="center">
+    <img height="96px" src="logo/git-bug--logotype--shadow.svg">
+</div>
 <h1 align="center">git-bug</h1>
 
 <div align="center">
