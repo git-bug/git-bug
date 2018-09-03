@@ -6,24 +6,24 @@ import (
 )
 
 type RootResolver struct {
-	cache.RootCache
+	cache.MultiRepoCache
 }
 
 func NewRootResolver() *RootResolver {
 	return &RootResolver{
-		RootCache: cache.NewCache(),
+		MultiRepoCache: cache.NewMultiRepoCache(),
 	}
 }
 
 func (r RootResolver) Query() graph.QueryResolver {
 	return &rootQueryResolver{
-		cache: &r.RootCache,
+		cache: &r.MultiRepoCache,
 	}
 }
 
 func (r RootResolver) Mutation() graph.MutationResolver {
 	return &mutationResolver{
-		cache: &r.RootCache,
+		cache: &r.MultiRepoCache,
 	}
 }
 

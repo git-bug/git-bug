@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util"
 	"github.com/spf13/cobra"
 )
@@ -19,14 +19,20 @@ func runShowBug(cmd *cobra.Command, args []string) error {
 		return errors.New("You must provide a bug id")
 	}
 
+	backend, err := cache.NewRepoCache(repo)
+	if err != nil {
+		return err
+	}
+	defer backend.Close()
+
 	prefix := args[0]
 
-	b, err := bug.FindLocalBug(repo, prefix)
+	b, err := backend.ResolveBugPrefix(prefix)
 	if err != nil {
 		return err
 	}
 
-	snapshot := b.Compile()
+	snapshot := b.Snapshot()
 
 	if len(snapshot.Comments) == 0 {
 		return errors.New("Invalid bug: no comment")

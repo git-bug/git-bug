@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/cache"
 	"github.com/spf13/cobra"
 )
 
@@ -18,7 +18,13 @@ func runPush(cmd *cobra.Command, args []string) error {
 		remote = args[0]
 	}
 
-	stdout, err := bug.Push(repo, remote)
+	backend, err := cache.NewRepoCache(repo)
+	if err != nil {
+		return err
+	}
+	defer backend.Close()
+
+	stdout, err := backend.Push(remote)
 	if err != nil {
 		return err
 	}

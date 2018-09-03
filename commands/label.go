@@ -4,8 +4,7 @@ import (
 	"errors"
 	"os"
 
-	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/bug/operations"
+	"github.com/MichaelMure/git-bug/cache"
 	"github.com/spf13/cobra"
 )
 
@@ -20,6 +19,12 @@ func runLabel(cmd *cobra.Command, args []string) error {
 		return errors.New("You must provide a label")
 	}
 
+	backend, err := cache.NewRepoCache(repo)
+	if err != nil {
+		return err
+	}
+	defer backend.Close()
+
 	prefix := args[0]
 
 	var add, remove []string
@@ -30,23 +35,17 @@ func runLabel(cmd *cobra.Command, args []string) error {
 		add = args[1:]
 	}
 
-	b, err := bug.FindLocalBug(repo, prefix)
+	b, err := backend.ResolveBugPrefix(prefix)
 	if err != nil {
 		return err
 	}
 
-	author, err := bug.GetUser(repo)
+	err = b.ChangeLabels(os.Stdout, add, remove)
 	if err != nil {
 		return err
 	}
 
-	err = operations.ChangeLabels(os.Stdout, b, author, add, remove)
-
-	if err != nil {
-		return err
-	}
-
-	return b.Commit(repo)
+	return b.Commit()
 }
 
 var labelCmd = &cobra.Command{

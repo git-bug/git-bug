@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/graphql/connections"
 	"github.com/MichaelMure/git-bug/graphql/models"
 )
@@ -19,11 +20,7 @@ func (repoResolver) AllBugs(ctx context.Context, obj *models.Repository, after *
 	}
 
 	// Simply pass a []string with the ids to the pagination algorithm
-	source, err := obj.Repo.AllBugIds()
-
-	if err != nil {
-		return models.BugConnection{}, err
-	}
+	source := obj.Repo.AllBugsId(cache.OrderByCreation, cache.OrderAscending)
 
 	// The edger create a custom edge holding just the id
 	edger := func(id string, offset int) connections.Edge {
