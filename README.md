@@ -1,11 +1,10 @@
 <div align="center">
     <img height="96px" src="logo/git-bug--logotype--shadow.svg">
 </div>
-<h1 align="center">git-bug</h1>
-
+<p align="center">
+	Distributed bug tracker embedded in Git.
+</p>
 <div align="center">
-
-Distributed bug tracker embedded in Git.
 
 [![Build Status](https://travis-ci.org/MichaelMure/git-bug.svg?branch=master)](https://travis-ci.org/MichaelMure/git-bug)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3+-blue.svg)](http://www.gnu.org/licenses/gpl-3.0)
