@@ -380,7 +380,7 @@ func (bug *Bug) Commit(repo repository.Repo) error {
 		return err
 	}
 
-	editTime, err := repo.EditTimeIncrement()
+	bug.editTime, err = repo.EditTimeIncrement()
 	if err != nil {
 		return err
 	}
@@ -388,10 +388,10 @@ func (bug *Bug) Commit(repo repository.Repo) error {
 	tree = append(tree, repository.TreeEntry{
 		ObjectType: repository.Blob,
 		Hash:       emptyBlobHash,
-		Name:       fmt.Sprintf(editClockEntryPattern, editTime),
+		Name:       fmt.Sprintf(editClockEntryPattern, bug.editTime),
 	})
 	if bug.lastCommit == "" {
-		createTime, err := repo.CreateTimeIncrement()
+		bug.createTime, err = repo.CreateTimeIncrement()
 		if err != nil {
 			return err
 		}
@@ -399,7 +399,7 @@ func (bug *Bug) Commit(repo repository.Repo) error {
 		tree = append(tree, repository.TreeEntry{
 			ObjectType: repository.Blob,
 			Hash:       emptyBlobHash,
-			Name:       fmt.Sprintf(createClockEntryPattern, createTime),
+			Name:       fmt.Sprintf(createClockEntryPattern, bug.createTime),
 		})
 	}
 
