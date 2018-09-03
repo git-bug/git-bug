@@ -14,6 +14,8 @@ const MsgMergeInvalid = "invalid data"
 const MsgMergeUpdated = "updated"
 const MsgMergeNothing = "nothing to do"
 
+// Fetch retrieve update from a remote
+// This does not change the local bugs state
 func Fetch(repo repository.Repo, remote string) (string, error) {
 	remoteRefSpec := fmt.Sprintf(bugsRemoteRefPattern, remote)
 	fetchRefSpec := fmt.Sprintf("%s*:%s*", bugsRefPattern, remoteRefSpec)
@@ -21,11 +23,15 @@ func Fetch(repo repository.Repo, remote string) (string, error) {
 	return repo.FetchRefs(remote, fetchRefSpec)
 }
 
+// Push update a remote with the local changes
 func Push(repo repository.Repo, remote string) (string, error) {
 	return repo.PushRefs(remote, bugsRefPattern+"*")
 }
 
+// Pull does a Fetch and merge the updates into the local bug states
 func Pull(repo repository.Repo, out io.Writer, remote string) error {
+	// TODO: return a chan of changes for the cache to be updated properly
+
 	if out == nil {
 		out = ioutil.Discard
 	}

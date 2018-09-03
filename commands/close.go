@@ -3,8 +3,7 @@ package commands
 import (
 	"errors"
 
-	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/bug/operations"
+	"github.com/MichaelMure/git-bug/cache"
 	"github.com/spf13/cobra"
 )
 
@@ -17,21 +16,25 @@ func runCloseBug(cmd *cobra.Command, args []string) error {
 		return errors.New("You must provide a bug id")
 	}
 
+	backend, err := cache.NewRepoCache(repo)
+	if err != nil {
+		return err
+	}
+	defer backend.Close()
+
 	prefix := args[0]
 
-	b, err := bug.FindLocalBug(repo, prefix)
+	b, err := backend.ResolveBugPrefix(prefix)
 	if err != nil {
 		return err
 	}
 
-	author, err := bug.GetUser(repo)
+	err = b.Close()
 	if err != nil {
 		return err
 	}
 
-	operations.Close(b, author)
-
-	return b.Commit(repo)
+	return b.Commit()
 }
 
 var closeCmd = &cobra.Command{

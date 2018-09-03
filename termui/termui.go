@@ -3,7 +3,6 @@ package termui
 import (
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/input"
-	"github.com/MichaelMure/git-bug/repository"
 	"github.com/jroimartin/gocui"
 	"github.com/pkg/errors"
 )
@@ -42,18 +41,12 @@ type window interface {
 }
 
 // Run will launch the termUI in the terminal
-func Run(repo repository.Repo) error {
-	c, err := cache.NewRepoCache(repo)
-
-	if err != nil {
-		return err
-	}
-
+func Run(cache *cache.RepoCache) error {
 	ui = &termUI{
 		gError:     make(chan error, 1),
-		cache:      c,
-		bugTable:   newBugTable(c),
-		showBug:    newShowBug(c),
+		cache:      cache,
+		bugTable:   newBugTable(cache),
+		showBug:    newShowBug(cache),
 		msgPopup:   newMsgPopup(),
 		inputPopup: newInputPopup(),
 	}
@@ -62,7 +55,7 @@ func Run(repo repository.Repo) error {
 
 	initGui(nil)
 
-	err = <-ui.gError
+	err := <-ui.gError
 
 	if err != nil && err != gocui.ErrQuit {
 		return err

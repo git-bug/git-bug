@@ -1,10 +1,11 @@
-<div align="center">
-    <img height="96px" src="logo/git-bug--logotype--shadow.svg">
-</div>
 <p align="center">
-	Distributed bug tracker embedded in Git.
+    <img width="150px" src="https://cdn.rawgit.com/MichaelMure/git-bug/logo/misc/logo/logo-alpha-flat-bg.svg">
 </p>
+<h1 align="center">git-bug</h1>
+
 <div align="center">
+
+Distributed bug tracker embedded in Git.
 
 [![Build Status](https://travis-ci.org/MichaelMure/git-bug.svg?branch=master)](https://travis-ci.org/MichaelMure/git-bug)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3+-blue.svg)](http://www.gnu.org/licenses/gpl-3.0)
@@ -117,4 +118,6 @@ PRs accepted. Drop by the [Gitter lobby](https://gitter.im/the-git-bug/Lobby) fo
 
 ## License
 
-GPLv3 or later © Michael Muré
+Unless otherwise stated, this project is released under the [GPLv3](LICENSE) or later license © Michael Muré
+
+The git-bug logo by [Viktor Teplov](https://github.com/vandesign) is released under the [Creative Commons Attribution 4.0 International (CC BY 4.0)](misc/logo/LICENSE) license © Viktor Teplov.

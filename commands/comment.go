@@ -4,8 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/bug/operations"
+	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/input"
 	"github.com/spf13/cobra"
 )
@@ -26,6 +25,12 @@ func runComment(cmd *cobra.Command, args []string) error {
 		return errors.New("You must provide a bug id")
 	}
 
+	backend, err := cache.NewRepoCache(repo)
+	if err != nil {
+		return err
+	}
+	defer backend.Close()
+
 	prefix := args[0]
 
 	if commentMessageFile != "" && commentMessage == "" {
@@ -36,7 +41,7 @@ func runComment(cmd *cobra.Command, args []string) error {
 	}
 
 	if commentMessage == "" {
-		commentMessage, err = input.BugCommentEditorInput(repo)
+		commentMessage, err = input.BugCommentEditorInput(backend.Repository())
 		if err == input.ErrEmptyMessage {
 			fmt.Println("Empty message, aborting.")
 			return nil
@@ -46,19 +51,17 @@ func runComment(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	author, err := bug.GetUser(repo)
+	b, err := backend.ResolveBugPrefix(prefix)
 	if err != nil {
 		return err
 	}
 
-	b, err := bug.FindLocalBug(repo, prefix)
+	err = b.AddComment(commentMessage)
 	if err != nil {
 		return err
 	}
 
-	operations.Comment(b, author, commentMessage)
-
-	return b.Commit(repo)
+	return b.Commit()
 }
 
 var commentCmd = &cobra.Command{

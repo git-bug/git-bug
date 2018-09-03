@@ -42,7 +42,7 @@ func init() {
  * Sorting
  */
 
-type BugsByCreationTime []*BugExcerpt
+type BugsByCreationTime []BugExcerpt
 
 func (b BugsByCreationTime) Len() int {
 	return len(b)
@@ -70,7 +70,7 @@ func (b BugsByCreationTime) Swap(i, j int) {
 	b[i], b[j] = b[j], b[i]
 }
 
-type BugsByEditTime []*BugExcerpt
+type BugsByEditTime []BugExcerpt
 
 func (b BugsByEditTime) Len() int {
 	return len(b)
