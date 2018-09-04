@@ -28,6 +28,8 @@ func (b *WithSnapshot) Append(op Operation) {
 	}
 
 	snap := op.Apply(*b.snap)
+	snap.Operations = append(snap.Operations, op)
+
 	b.snap = &snap
 }
 
