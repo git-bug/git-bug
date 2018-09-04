@@ -14,6 +14,7 @@ func runLsBug(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	defer backend.Close()
 
 	allIds := backend.AllBugsId(cache.OrderByCreation, cache.OrderAscending)
 

@@ -247,6 +247,11 @@ func (c *RepoCache) NewBugWithFiles(title string, message string, files []util.H
 	cached := NewBugCache(c, b)
 	c.bugs[b.Id()] = cached
 
+	err = c.bugUpdated(b.Id())
+	if err != nil {
+		return nil, err
+	}
+
 	return cached, nil
 }
 
@@ -257,11 +262,13 @@ func (c *RepoCache) Fetch(remote string) (string, error) {
 }
 
 func (c *RepoCache) MergeAll(remote string) <-chan bug.MergeResult {
+	// Todo: update the cache properly
 	return bug.MergeAll(c.repo, remote)
 }
 
 // Pull does a Fetch and merge the updates into the local bug states
 func (c *RepoCache) Pull(remote string, out io.Writer) error {
+	// Todo: update the cache properly
 	return bug.Pull(c.repo, out, remote)
 }
 
