@@ -1,3 +1,6 @@
+<p align="center">
+    <img width="150px" src="misc/logo/logo-flat-bg.svg">
+</p>
 <h1 align="center">git-bug</h1>
 
 <div align="center">
@@ -115,4 +118,6 @@ PRs accepted. Drop by the [Gitter lobby](https://gitter.im/the-git-bug/Lobby) fo
 
 ## License
 
-GPLv3 or later © Michael Muré
+Unless otherwise stated, this project is released under the [GPLv3](LICENSE) or later license © Michael Muré.
+
+The git-bug logo by [Viktor Teplov](https://github.com/vandesign) is released under the [Creative Commons Attribution 4.0 International (CC BY 4.0)](misc/logo/LICENSE) license © Viktor Teplov.
