@@ -65,7 +65,7 @@ func runComment(cmd *cobra.Command, args []string) error {
 }
 
 var commentCmd = &cobra.Command{
-	Use:   "comment <id> [<options>...]",
+	Use:   "comment <id>",
 	Short: "Add a new comment to a bug",
 	RunE:  runComment,
 }

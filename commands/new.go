@@ -53,7 +53,7 @@ func runNewBug(cmd *cobra.Command, args []string) error {
 }
 
 var newCmd = &cobra.Command{
-	Use:   "new [<option>...]",
+	Use:   "new",
 	Short: "Create a new bug",
 	RunE:  runNewBug,
 }

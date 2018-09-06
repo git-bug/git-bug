@@ -7,7 +7,7 @@ Create a new bug
 Create a new bug
 
 ```
-git-bug new [<option>...] [flags]
+git-bug new [flags]
 ```
 
 ### Options

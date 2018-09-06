@@ -169,7 +169,7 @@ func (repo *GitRepo) PushRefs(remote string, refSpec string) (string, error) {
 	stdout, stderr, err := repo.runGitCommandRaw(nil, "push", remote, refSpec)
 
 	if err != nil {
-		return stdout + stderr, fmt.Errorf("failed to push to the remote '%s': %v", remote, err)
+		return stdout + stderr, fmt.Errorf("failed to push to the remote '%s': %v", remote, stderr)
 	}
 	return stdout + stderr, nil
 }

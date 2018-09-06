@@ -49,7 +49,7 @@ func runLabel(cmd *cobra.Command, args []string) error {
 }
 
 var labelCmd = &cobra.Command{
-	Use:   "label [<option>...] <id> [<label>...]",
+	Use:   "label <id> [<label>...]",
 	Short: "Manipulate bug's label",
 	RunE:  runLabel,
 }

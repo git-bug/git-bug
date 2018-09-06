@@ -7,7 +7,7 @@ Manipulate bug's label
 Manipulate bug's label
 
 ```
-git-bug label [<option>...] <id> [<label>...] [flags]
+git-bug label <id> [<label>...] [flags]
 ```
 
 ### Options
