@@ -29,7 +29,7 @@ As you would do with commits and branches, you can push your bugs to the same gi
 
 ### Go get
 ```shell
-go get github.com/MichaelMure/git-bug
+go get -u github.com/MichaelMure/git-bug
 ```
 
 If it's not done already, add golang binary directory in your PATH:
