@@ -46,6 +46,7 @@ func main() {
 	}
 
 	for _, testcase := range testCases {
+		fmt.Println()
 		fmt.Println(testcase.name)
 
 		total := int64(0)

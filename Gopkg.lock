@@ -192,6 +192,14 @@
   version = "v1.0.1"
 
 [[projects]]
+  digest = "1:03aa6e485e528acb119fb32901cf99582c380225fc7d5a02758e08b180cb56c3"
+  name = "github.com/ugorji/go"
+  packages = ["codec"]
+  pruneopts = "UT"
+  revision = "b4c50a2b199d93b13dc15e78929cfb23bfdf21ab"
+  version = "v1.1.1"
+
+[[projects]]
   digest = "1:d1ef15a6bc267ffb9e3ac790591103e99d4662f5867a99f9182c43a2016884e2"
   name = "github.com/vektah/gqlgen"
   packages = [
@@ -258,6 +266,7 @@
     "github.com/skratchdot/open-golang/open",
     "github.com/spf13/cobra",
     "github.com/spf13/cobra/doc",
+    "github.com/ugorji/go/codec",
     "github.com/vektah/gqlgen/codegen",
     "github.com/vektah/gqlgen/graphql",
     "github.com/vektah/gqlgen/handler",
