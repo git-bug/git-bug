@@ -16,7 +16,7 @@ func createFilledRepo(bugNumber int) repository.Repo {
 
 	options.BugNumber = bugNumber
 
-	random_bugs.GenerateRandomBugsWithSeed(repo, options, seed)
+	random_bugs.CommitRandomBugsWithSeed(repo, options, seed)
 	return repo
 }
 

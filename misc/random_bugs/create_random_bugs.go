@@ -29,11 +29,26 @@ func DefaultOptions() Options {
 	}
 }
 
-func GenerateRandomBugs(repo repository.Repo, opts Options) {
-	GenerateRandomBugsWithSeed(repo, opts, time.Now().UnixNano())
+func CommitRandomBugs(repo repository.Repo, opts Options) {
+	CommitRandomBugsWithSeed(repo, opts, time.Now().UnixNano())
 }
 
-func GenerateRandomBugsWithSeed(repo repository.Repo, opts Options, seed int64) {
+func CommitRandomBugsWithSeed(repo repository.Repo, opts Options, seed int64) {
+	bugs := GenerateRandomBugsWithSeed(opts, seed)
+
+	for _, b := range bugs {
+		err := b.Commit(repo)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
+func GenerateRandomBugs(opts Options) []*bug.Bug {
+	return GenerateRandomBugsWithSeed(opts, time.Now().UnixNano())
+}
+
+func GenerateRandomBugsWithSeed(opts Options, seed int64) []*bug.Bug {
 	rand.Seed(seed)
 	fake.Seed(seed)
 
@@ -45,6 +60,8 @@ func GenerateRandomBugsWithSeed(repo repository.Repo, opts Options, seed int64) 
 		operations.Open,
 		operations.Close,
 	}
+
+	result := make([]*bug.Bug, opts.BugNumber)
 
 	for i := 0; i < opts.BugNumber; i++ {
 		addedLabels = []string{}
@@ -61,11 +78,42 @@ func GenerateRandomBugsWithSeed(repo repository.Repo, opts Options, seed int64) 
 			opsGenerators[index](b, randomPerson(opts.PersonNumber))
 		}
 
-		err = b.Commit(repo)
-		if err != nil {
-			panic(err)
-		}
+		result[i] = b
 	}
+
+	return result
+}
+
+func GenerateRandomOperationPacks(packNumber int, opNumber int) []*bug.OperationPack {
+	return GenerateRandomOperationPacksWithSeed(packNumber, opNumber, time.Now().UnixNano())
+}
+
+func GenerateRandomOperationPacksWithSeed(packNumber int, opNumber int, seed int64) []*bug.OperationPack {
+	// Note: this is a bit crude, only generate a Create + Comments
+
+	rand.Seed(seed)
+	fake.Seed(seed)
+
+	result := make([]*bug.OperationPack, packNumber)
+
+	for i := 0; i < packNumber; i++ {
+		opp := &bug.OperationPack{}
+
+		var op bug.Operation
+
+		op = operations.NewCreateOp(randomPerson(5), fake.Sentence(), paragraphs(), nil)
+
+		opp.Append(op)
+
+		for j := 0; j < opNumber-1; j++ {
+			op = operations.NewAddCommentOp(randomPerson(5), paragraphs(), nil)
+			opp.Append(op)
+		}
+
+		result[i] = opp
+	}
+
+	return result
 }
 
 func person() bug.Person {

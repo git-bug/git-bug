@@ -24,5 +24,5 @@ func main() {
 		panic(err)
 	}
 
-	rb.GenerateRandomBugs(repo, rb.DefaultOptions())
+	rb.CommitRandomBugs(repo, rb.DefaultOptions())
 }
