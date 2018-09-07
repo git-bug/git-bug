@@ -80,7 +80,7 @@ func TestPushPull(t *testing.T) {
 	_, err = bug.Push(repoA, "origin")
 	checkErr(t, err)
 
-	err = bug.Pull(repoB, nil, "origin")
+	err = bug.Pull(repoB, "origin")
 	checkErr(t, err)
 
 	bugs := allBugs(t, bug.ReadAllLocalBugs(repoB))
@@ -98,7 +98,7 @@ func TestPushPull(t *testing.T) {
 	_, err = bug.Push(repoB, "origin")
 	checkErr(t, err)
 
-	err = bug.Pull(repoA, nil, "origin")
+	err = bug.Pull(repoA, "origin")
 	checkErr(t, err)
 
 	bugs = allBugs(t, bug.ReadAllLocalBugs(repoA))
@@ -149,7 +149,7 @@ func _RebaseTheirs(t testing.TB) {
 	checkErr(t, err)
 
 	// remote --> B
-	err = bug.Pull(repoB, nil, "origin")
+	err = bug.Pull(repoB, "origin")
 	checkErr(t, err)
 
 	bug2, err := bug.ReadLocalBug(repoB, bug1.Id())
@@ -166,7 +166,7 @@ func _RebaseTheirs(t testing.TB) {
 	checkErr(t, err)
 
 	// remote --> A
-	err = bug.Pull(repoA, nil, "origin")
+	err = bug.Pull(repoA, "origin")
 	checkErr(t, err)
 
 	bugs := allBugs(t, bug.ReadAllLocalBugs(repoB))
@@ -207,7 +207,7 @@ func _RebaseOurs(t testing.TB) {
 	checkErr(t, err)
 
 	// remote --> B
-	err = bug.Pull(repoB, nil, "origin")
+	err = bug.Pull(repoB, "origin")
 	checkErr(t, err)
 
 	operations.Comment(bug1, rene, "message2")
@@ -229,7 +229,7 @@ func _RebaseOurs(t testing.TB) {
 	checkErr(t, err)
 
 	// remote --> A
-	err = bug.Pull(repoA, nil, "origin")
+	err = bug.Pull(repoA, "origin")
 	checkErr(t, err)
 
 	bugs := allBugs(t, bug.ReadAllLocalBugs(repoA))
@@ -279,7 +279,7 @@ func _RebaseConflict(t testing.TB) {
 	checkErr(t, err)
 
 	// remote --> B
-	err = bug.Pull(repoB, nil, "origin")
+	err = bug.Pull(repoB, "origin")
 	checkErr(t, err)
 
 	operations.Comment(bug1, rene, "message2")
@@ -326,7 +326,7 @@ func _RebaseConflict(t testing.TB) {
 	checkErr(t, err)
 
 	// remote --> B
-	err = bug.Pull(repoB, nil, "origin")
+	err = bug.Pull(repoB, "origin")
 	checkErr(t, err)
 
 	bugs := allBugs(t, bug.ReadAllLocalBugs(repoB))
@@ -347,7 +347,7 @@ func _RebaseConflict(t testing.TB) {
 	checkErr(t, err)
 
 	// remote --> A
-	err = bug.Pull(repoA, nil, "origin")
+	err = bug.Pull(repoA, "origin")
 	checkErr(t, err)
 
 	bugs = allBugs(t, bug.ReadAllLocalBugs(repoA))

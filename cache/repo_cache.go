@@ -266,12 +266,6 @@ func (c *RepoCache) MergeAll(remote string) <-chan bug.MergeResult {
 	return bug.MergeAll(c.repo, remote)
 }
 
-// Pull does a Fetch and merge the updates into the local bug states
-func (c *RepoCache) Pull(remote string, out io.Writer) error {
-	// Todo: update the cache properly
-	return bug.Pull(c.repo, out, remote)
-}
-
 // Push update a remote with the local changes
 func (c *RepoCache) Push(remote string) (string, error) {
 	return bug.Push(c.repo, remote)

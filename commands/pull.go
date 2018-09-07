@@ -2,8 +2,9 @@ package commands
 
 import (
 	"errors"
-	"os"
+	"fmt"
 
+	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/spf13/cobra"
 )
@@ -24,7 +25,28 @@ func runPull(cmd *cobra.Command, args []string) error {
 	}
 	defer backend.Close()
 
-	return backend.Pull(remote, os.Stdout)
+	fmt.Println("Fetching remote ...")
+
+	stdout, err := backend.Fetch(remote)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(stdout)
+
+	fmt.Println("Merging data ...")
+
+	for merge := range backend.MergeAll(remote) {
+		if merge.Err != nil {
+			return merge.Err
+		}
+
+		if merge.Status != bug.MsgMergeNothing {
+			fmt.Printf("%s: %s\n", merge.HumanId, merge.Status)
+		}
+	}
+
+	return nil
 }
 
 // showCmd defines the "push" subcommand.

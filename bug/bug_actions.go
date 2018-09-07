@@ -2,8 +2,6 @@ package bug
 
 import (
 	"fmt"
-	"io"
-	"io/ioutil"
 	"strings"
 
 	"github.com/MichaelMure/git-bug/repository"
@@ -28,32 +26,18 @@ func Push(repo repository.Repo, remote string) (string, error) {
 	return repo.PushRefs(remote, bugsRefPattern+"*")
 }
 
-// Pull does a Fetch and merge the updates into the local bug states
-func Pull(repo repository.Repo, out io.Writer, remote string) error {
-	// TODO: return a chan of changes for the cache to be updated properly
-
-	if out == nil {
-		out = ioutil.Discard
-	}
-
-	fmt.Fprintf(out, "Fetching remote ...\n")
-
-	stdout, err := Fetch(repo, remote)
+// Pull will do a Fetch + MergeAll
+// This function won't give details on the underlying process. If you need more
+// use Fetch and MergeAll separately.
+func Pull(repo repository.Repo, remote string) error {
+	_, err := Fetch(repo, remote)
 	if err != nil {
 		return err
 	}
 
-	out.Write([]byte(stdout))
-
-	fmt.Fprintf(out, "Merging data ...\n")
-
 	for merge := range MergeAll(repo, remote) {
 		if merge.Err != nil {
 			return merge.Err
-		}
-
-		if merge.Status != MsgMergeNothing {
-			fmt.Fprintf(out, "%s: %s\n", merge.HumanId, merge.Status)
 		}
 	}
 

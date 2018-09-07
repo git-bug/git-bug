@@ -61,6 +61,7 @@ func NewLabelChangeOperation(author bug.Person, added, removed []bug.Label) Labe
 
 // ChangeLabels is a convenience function to apply the operation
 func ChangeLabels(out io.Writer, b bug.Interface, author bug.Person, add, remove []string) error {
+	// TODO: return a channel of result (like MergeAll) instead of formatting the result for the upper layers
 	var added, removed []bug.Label
 
 	if out == nil {
