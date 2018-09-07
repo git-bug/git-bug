@@ -20,7 +20,7 @@ before_install:
   - go get github.com/mitchellh/gox
 
 after_success:
-  - if [ ! -z "$TRAVIS_TAG" ]; then gox -tags=deploy_build -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}"; fi
+  - if [ ! -z "$TRAVIS_TAG" ]; then gox -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}"; fi
 
 deploy:
   provider: releases
