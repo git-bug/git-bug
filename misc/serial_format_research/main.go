@@ -6,11 +6,13 @@ import (
 	"log"
 	"os"
 	"path"
+	"path/filepath"
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/misc/random_bugs"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util"
+	"github.com/dustin/go-humanize"
 	"github.com/ugorji/go/codec"
 )
 
@@ -22,9 +24,7 @@ type testCase struct {
 }
 
 func main() {
-	packs := random_bugs.GenerateRandomOperationPacks(10, 5)
-
-	repo := createRepo(false)
+	packs := random_bugs.GenerateRandomOperationPacks(1000, 5)
 
 	testCases := []testCase{
 		{
@@ -49,8 +49,15 @@ func main() {
 		fmt.Println()
 		fmt.Println(testcase.name)
 
-		total := int64(0)
-		for _, opp := range packs {
+		repo := createRepo(false)
+
+		sizeEmpty, err := dirSize(repo.GetPath())
+		if err != nil {
+			panic(err)
+		}
+
+		// total := int64(0)
+		for i, opp := range packs {
 			rawSize, hash, err := testcase.writer(opp, repo)
 			if err != nil {
 				panic(err)
@@ -58,13 +65,46 @@ func main() {
 
 			size := blobSize(hash, repo)
 
-			total += size
+			// total += size
 
-			ratio := float32(size) / float32(rawSize) * 100.0
-			fmt.Printf("raw: %v, git: %v, ratio: %v%%\n", rawSize, size, ratio)
+			if i < 10 {
+				ratio := float32(size) / float32(rawSize) * 100.0
+				fmt.Printf("raw: %v, git: %v, ratio: %v%%\n", rawSize, size, ratio)
+			}
 		}
 
-		fmt.Printf("total: %v\n", total)
+		fmt.Println("...")
+
+		sizeFilled, err := dirSize(repo.GetPath())
+		if err != nil {
+			panic(err)
+		}
+
+		err = repo.GC()
+		if err != nil {
+			panic(err)
+		}
+
+		sizePacked, err := dirSize(repo.GetPath())
+		if err != nil {
+			panic(err)
+		}
+
+		err = repo.GCAggressive()
+		if err != nil {
+			panic(err)
+		}
+
+		sizeAggressive, err := dirSize(repo.GetPath())
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Printf("Unpacked: %v\n", humanize.Bytes(uint64(sizeFilled-sizeEmpty)))
+		fmt.Printf("GC packed: %v\n", humanize.Bytes(uint64(sizePacked-sizeEmpty)))
+		fmt.Printf("Packing diff: %v\n", sizePacked-sizeFilled)
+		fmt.Printf("GC packed aggressive: %v\n", humanize.Bytes(uint64(sizeAggressive-sizeEmpty)))
+		fmt.Printf("Packing diff: %v\n", sizeAggressive-sizePacked)
 	}
 }
 
@@ -116,6 +156,17 @@ func blobSize(hash util.Hash, repo *repository.GitRepo) int64 {
 	}
 
 	return fi.Size()
+}
+
+func dirSize(path string) (int64, error) {
+	var size int64
+	err := filepath.Walk(path, func(_ string, info os.FileInfo, err error) error {
+		if !info.IsDir() {
+			size += info.Size()
+		}
+		return err
+	})
+	return size, err
 }
 
 func writeGOB(opp *bug.OperationPack, repo repository.Repo) (int, util.Hash, error) {

@@ -388,3 +388,15 @@ func (repo *GitRepo) CreateWitness(time util.LamportTime) error {
 func (repo *GitRepo) EditWitness(time util.LamportTime) error {
 	return repo.editClock.Witness(time)
 }
+
+func (repo *GitRepo) GC() error {
+	_, err := repo.runGitCommand("gc")
+
+	return err
+}
+
+func (repo *GitRepo) GCAggressive() error {
+	_, err := repo.runGitCommand("gc", "--aggressive")
+
+	return err
+}
