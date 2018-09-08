@@ -571,12 +571,8 @@ func (bug *Bug) Id() string {
 
 // HumanId return the Bug identifier truncated for human consumption
 func (bug *Bug) HumanId() string {
-	return formatHumanId(bug.Id())
-}
-
-func formatHumanId(id string) string {
 	format := fmt.Sprintf("%%.%ds", humanIdLength)
-	return fmt.Sprintf(format, id)
+	return fmt.Sprintf(format, bug.Id())
 }
 
 // CreateLamportTime return the Lamport time of creation

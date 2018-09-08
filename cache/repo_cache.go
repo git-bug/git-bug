@@ -261,9 +261,43 @@ func (c *RepoCache) Fetch(remote string) (string, error) {
 	return bug.Fetch(c.repo, remote)
 }
 
+// MergeAll will merge all the available remote bug
 func (c *RepoCache) MergeAll(remote string) <-chan bug.MergeResult {
-	// Todo: update the cache properly
-	return bug.MergeAll(c.repo, remote)
+	out := make(chan bug.MergeResult)
+
+	// Intercept merge results to update the cache properly
+	go func() {
+		defer close(out)
+
+		results := bug.MergeAll(c.repo, remote)
+		for result := range results {
+			if result.Err != nil {
+				continue
+			}
+
+			id := result.Id
+
+			switch result.Status {
+			case bug.MsgMergeNew, bug.MsgMergeUpdated:
+				b := result.Bug
+				snap := b.Compile()
+				c.excerpts[id] = NewBugExcerpt(b, &snap)
+
+			default:
+			}
+
+			out <- result
+		}
+
+		err := c.writeExcerpts()
+
+		// No easy way out here ..
+		if err != nil {
+			panic(err)
+		}
+	}()
+
+	return out
 }
 
 // Push update a remote with the local changes

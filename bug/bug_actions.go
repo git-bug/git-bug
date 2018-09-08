@@ -45,29 +45,32 @@ func Pull(repo repository.Repo, remote string) error {
 }
 
 type MergeResult struct {
+	// Err is set when a terminal error occur in the process
 	Err error
 
-	Id      string
-	HumanId string
-	Status  string
+	Id     string
+	Status string
+	Bug    *Bug
 }
 
-func newMergeError(id string, err error) MergeResult {
+func newMergeError(err error, id string) MergeResult {
 	return MergeResult{
-		Id:      id,
-		HumanId: formatHumanId(id),
-		Status:  err.Error(),
+		Err: err,
+		Id:  id,
 	}
 }
 
-func newMergeStatus(id string, status string) MergeResult {
+func newMergeStatus(status string, id string, bug *Bug) MergeResult {
 	return MergeResult{
-		Id:      id,
-		HumanId: formatHumanId(id),
-		Status:  status,
+		Id:     id,
+		Status: status,
+
+		// Bug is not set for an invalid merge result
+		Bug: bug,
 	}
 }
 
+// MergeAll will merge all the available remote bug
 func MergeAll(repo repository.Repo, remote string) <-chan MergeResult {
 	out := make(chan MergeResult)
 
@@ -89,13 +92,13 @@ func MergeAll(repo repository.Repo, remote string) <-chan MergeResult {
 			remoteBug, err := readBug(repo, remoteRef)
 
 			if err != nil {
-				out <- newMergeError(id, err)
+				out <- newMergeError(err, id)
 				continue
 			}
 
 			// Check for error in remote data
 			if !remoteBug.IsValid() {
-				out <- newMergeStatus(id, MsgMergeInvalid)
+				out <- newMergeStatus(MsgMergeInvalid, id, nil)
 				continue
 			}
 
@@ -103,7 +106,7 @@ func MergeAll(repo repository.Repo, remote string) <-chan MergeResult {
 			localExist, err := repo.RefExist(localRef)
 
 			if err != nil {
-				out <- newMergeError(id, err)
+				out <- newMergeError(err, id)
 				continue
 			}
 
@@ -112,32 +115,32 @@ func MergeAll(repo repository.Repo, remote string) <-chan MergeResult {
 				err := repo.CopyRef(remoteRef, localRef)
 
 				if err != nil {
-					out <- newMergeError(id, err)
+					out <- newMergeError(err, id)
 					return
 				}
 
-				out <- newMergeStatus(id, MsgMergeNew)
+				out <- newMergeStatus(MsgMergeNew, id, remoteBug)
 				continue
 			}
 
 			localBug, err := readBug(repo, localRef)
 
 			if err != nil {
-				out <- newMergeError(id, err)
+				out <- newMergeError(err, id)
 				return
 			}
 
 			updated, err := localBug.Merge(repo, remoteBug)
 
 			if err != nil {
-				out <- newMergeError(id, err)
+				out <- newMergeError(err, id)
 				return
 			}
 
 			if updated {
-				out <- newMergeStatus(id, MsgMergeUpdated)
+				out <- newMergeStatus(MsgMergeUpdated, id, localBug)
 			} else {
-				out <- newMergeStatus(id, MsgMergeNothing)
+				out <- newMergeStatus(MsgMergeNothing, id, localBug)
 			}
 		}
 	}()
