@@ -55,7 +55,7 @@ You can filter bugs based on the absence of something.
 
 You can sort results by adding a `sort:` qualifier to your query.
 
-### Sort by Id 
+### Sort by Id
 
 | Qualifier                  | Example                                              |
 | ---                        | ---                                                  |
