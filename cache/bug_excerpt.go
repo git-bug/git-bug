@@ -22,8 +22,8 @@ type BugExcerpt struct {
 	Labels []bug.Label
 }
 
-func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) BugExcerpt {
-	return BugExcerpt{
+func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
+	return &BugExcerpt{
 		Id:                b.Id(),
 		CreateLamportTime: b.CreateLamportTime(),
 		EditLamportTime:   b.EditLamportTime(),
@@ -44,7 +44,21 @@ func init() {
  * Sorting
  */
 
-type BugsByCreationTime []BugExcerpt
+type BugsById []*BugExcerpt
+
+func (b BugsById) Len() int {
+	return len(b)
+}
+
+func (b BugsById) Less(i, j int) bool {
+	return b[i].Id < b[j].Id
+}
+
+func (b BugsById) Swap(i, j int) {
+	b[i], b[j] = b[j], b[i]
+}
+
+type BugsByCreationTime []*BugExcerpt
 
 func (b BugsByCreationTime) Len() int {
 	return len(b)
@@ -72,7 +86,7 @@ func (b BugsByCreationTime) Swap(i, j int) {
 	b[i], b[j] = b[j], b[i]
 }
 
-type BugsByEditTime []BugExcerpt
+type BugsByEditTime []*BugExcerpt
 
 func (b BugsByEditTime) Len() int {
 	return len(b)

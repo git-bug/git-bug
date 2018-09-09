@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -19,7 +20,7 @@ import (
 
 type RepoCache struct {
 	repo     repository.Repo
-	excerpts map[string]BugExcerpt
+	excerpts map[string]*BugExcerpt
 	bugs     map[string]*BugCache
 }
 
@@ -101,7 +102,7 @@ func (c *RepoCache) loadExcerpts() error {
 
 	decoder := gob.NewDecoder(f)
 
-	var excerpts map[string]BugExcerpt
+	var excerpts map[string]*BugExcerpt
 
 	err = decoder.Decode(&excerpts)
 	if err != nil {
@@ -143,7 +144,9 @@ func repoExcerptsFilePath(repo repository.Repo) string {
 }
 
 func (c *RepoCache) buildAllExcerpt() {
-	c.excerpts = make(map[string]BugExcerpt)
+	fmt.Printf("Building bug cache... ")
+
+	c.excerpts = make(map[string]*BugExcerpt)
 
 	allBugs := bug.ReadAllLocalBugs(c.repo)
 
@@ -151,18 +154,8 @@ func (c *RepoCache) buildAllExcerpt() {
 		snap := b.Bug.Compile()
 		c.excerpts[b.Bug.Id()] = NewBugExcerpt(b.Bug, &snap)
 	}
-}
 
-func (c *RepoCache) allExcerpt() []BugExcerpt {
-	result := make([]BugExcerpt, len(c.excerpts))
-
-	i := 0
-	for _, val := range c.excerpts {
-		result[i] = val
-		i++
-	}
-
-	return result
+	fmt.Println("Done.")
 }
 
 func (c *RepoCache) ResolveBug(id string) (*BugCache, error) {
@@ -213,6 +206,60 @@ func (c *RepoCache) ResolveBugPrefix(prefix string) (*BugCache, error) {
 	c.bugs[b.Id()] = cached
 
 	return cached, nil
+}
+
+func (c *RepoCache) QueryBugs(query *Query) []string {
+	if query == nil {
+		return c.AllBugsIds()
+	}
+
+	var filtered []*BugExcerpt
+
+	for _, excerpt := range c.excerpts {
+		if query.Match(excerpt) {
+			filtered = append(filtered, excerpt)
+		}
+	}
+
+	var sorter sort.Interface
+
+	switch query.OrderBy {
+	case OrderById:
+		sorter = BugsById(filtered)
+	case OrderByCreation:
+		sorter = BugsByCreationTime(filtered)
+	case OrderByEdit:
+		sorter = BugsByEditTime(filtered)
+	default:
+		panic("missing sort type")
+	}
+
+	if query.OrderDirection == OrderDescending {
+		sorter = sort.Reverse(sorter)
+	}
+
+	sort.Sort(sorter)
+
+	result := make([]string, len(filtered))
+
+	for i, val := range filtered {
+		result[i] = val.Id
+	}
+
+	return result
+}
+
+// AllBugsIds return all known bug ids
+func (c *RepoCache) AllBugsIds() []string {
+	result := make([]string, len(c.excerpts))
+
+	i := 0
+	for _, excerpt := range c.excerpts {
+		result[i] = excerpt.Id
+		i++
+	}
+
+	return result
 }
 
 // ClearAllBugs clear all bugs kept in memory

@@ -20,15 +20,20 @@ const remote = "origin"
 
 type bugTable struct {
 	repo         *cache.RepoCache
+	query        *cache.Query
 	allIds       []string
 	bugs         []*cache.BugCache
 	pageCursor   int
 	selectCursor int
 }
 
-func newBugTable(cache *cache.RepoCache) *bugTable {
+func newBugTable(c *cache.RepoCache) *bugTable {
 	return &bugTable{
-		repo:         cache,
+		repo: c,
+		query: &cache.Query{
+			OrderBy:        cache.OrderByCreation,
+			OrderDirection: cache.OrderAscending,
+		},
 		pageCursor:   0,
 		selectCursor: 0,
 	}
@@ -212,7 +217,7 @@ func (bt *bugTable) disable(g *gocui.Gui) error {
 }
 
 func (bt *bugTable) paginate(max int) error {
-	bt.allIds = bt.repo.AllBugsId(cache.OrderByCreation, cache.OrderAscending)
+	bt.allIds = bt.repo.QueryBugs(bt.query)
 
 	return bt.doPaginate(max)
 }

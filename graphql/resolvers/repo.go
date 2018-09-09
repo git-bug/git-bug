@@ -20,7 +20,10 @@ func (repoResolver) AllBugs(ctx context.Context, obj *models.Repository, after *
 	}
 
 	// Simply pass a []string with the ids to the pagination algorithm
-	source := obj.Repo.AllBugsId(cache.OrderByCreation, cache.OrderAscending)
+	source := obj.Repo.QueryBugs(&cache.Query{
+		OrderBy:        cache.OrderByCreation,
+		OrderDirection: cache.OrderAscending,
+	})
 
 	// The edger create a custom edge holding just the id
 	edger := func(id string, offset int) connections.Edge {
