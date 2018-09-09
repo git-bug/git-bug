@@ -10,7 +10,7 @@ A few tips:
 
 - queries are case insensitive.
 - you can combine as many qualifiers as you want.
-- you can use double quotes for multi-word search terms. For example, use `author:"René Descartes"` to search for a complete name.
+- you can use double quotes for multi-word search terms. For example, `author:"René Descartes"` searches for bugs opened by René Descartes, whereas `author:René Descartes` looks for issues opened by anyone named René containing “Descartes” in their content.
 
 
 ## Filtering
@@ -53,7 +53,7 @@ You can filter bugs based on the absence of something.
 
 ## Sorting
 
-You can sort results by adding a `sort:` qualifier to your query.
+You can sort results by adding a `sort:` qualifier to your query. “Descending” means most recent time or largest ID first, whereas “Ascending” means oldest time or smallest ID first.
 
 ### Sort by Id
 
