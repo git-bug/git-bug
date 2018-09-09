@@ -66,7 +66,7 @@ You can sort results by adding a `sort:` qualifier to your query.
 
 You can sort bugs by their creation time.
 
-Note: to deal with badly set clocks in a distributed system, `git-bug` uses a logical clock internally rather than timestamps to order bugs edition over time. That means that the timestamps recorded might not match the returned ordering. More on that in [the documentation](model.md#you-cant-rely-on-the-time-provided-by-other-people-their-clock-might-by-off-for-anything-other-than-just-display)
+Note: to deal with differently-set clocks on distributed computers, `git-bug` uses a logical clock internally rather than timestamps to order bug changes over time. That means that the timestamps recorded might not match the returned ordering. More on that in [the documentation](model.md#you-cant-rely-on-the-time-provided-by-other-people-their-clock-might-by-off-for-anything-other-than-just-display)
 
 | Qualifier                               | Example                                                            |
 | ---                                     | ---                                                                |
@@ -77,7 +77,7 @@ Note: to deal with badly set clocks in a distributed system, `git-bug` uses a lo
 
 You can sort bugs by their edit time.
 
-Note: to deal with badly set clocks in a distributed system, `git-bug` uses a logical clock internally rather than timestamps to order bugs edition over time. That means that the timestamps recorded might not match the returned ordering. More on that in [the documentation](model.md#you-cant-rely-on-the-time-provided-by-other-people-their-clock-might-by-off-for-anything-other-than-just-display)
+Note: to deal with differently-set clocks on distributed computers, `git-bug` uses a logical clock internally rather than timestamps to order bug changes over time. That means that the timestamps recorded might not match the returned ordering. More on that in [the documentation](model.md#you-cant-rely-on-the-time-provided-by-other-people-their-clock-might-by-off-for-anything-other-than-just-display)
 
 | Qualifier                       | Example                                                            |
 | ---                             | ---                                                                |
