@@ -15,14 +15,7 @@ type Query struct {
 //
 // Ex: "status:open author:descartes sort:edit-asc"
 //
-// Supported filter fields are:
-// - status:
-// - author:
-// - label:
-// - no:
-//
-// Sorting is done with:
-// - sort:
+// Supported filter fields and syntax are described in docs/queries.md
 //
 // Todo: write a complete doc
 func ParseQuery(query string) (*Query, error) {
