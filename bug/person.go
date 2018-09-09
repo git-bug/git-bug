@@ -2,6 +2,7 @@ package bug
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/MichaelMure/git-bug/repository"
 )
@@ -30,4 +31,9 @@ func GetUser(repo repository.Repo) (Person, error) {
 	}
 
 	return Person{Name: name, Email: email}, nil
+}
+
+// Match tell is the Person match the given query string
+func (p Person) Match(query string) bool {
+	return strings.Contains(strings.ToLower(p.Name), strings.ToLower(query))
 }
