@@ -19,6 +19,7 @@ type BugExcerpt struct {
 
 	Status bug.Status
 	Author bug.Person
+	Labels []bug.Label
 }
 
 func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) BugExcerpt {
@@ -30,6 +31,7 @@ func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) BugExcerpt {
 		EditUnixTime:      snap.LastEditUnix(),
 		Status:            snap.Status,
 		Author:            snap.Author,
+		Labels:            snap.Labels,
 	}
 }
 
