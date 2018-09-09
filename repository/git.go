@@ -248,13 +248,13 @@ func (repo *GitRepo) ListRefs(refspec string) ([]string, error) {
 		return nil, err
 	}
 
-	splitted := strings.Split(stdout, "\n")
+	split := strings.Split(stdout, "\n")
 
-	if len(splitted) == 1 && splitted[0] == "" {
+	if len(split) == 1 && split[0] == "" {
 		return []string{}, nil
 	}
 
-	return splitted, nil
+	return split, nil
 }
 
 // RefExist will check if a reference exist in Git
@@ -283,10 +283,10 @@ func (repo *GitRepo) ListCommits(ref string) ([]util.Hash, error) {
 		return nil, err
 	}
 
-	splitted := strings.Split(stdout, "\n")
+	split := strings.Split(stdout, "\n")
 
-	casted := make([]util.Hash, len(splitted))
-	for i, line := range splitted {
+	casted := make([]util.Hash, len(split))
+	for i, line := range split {
 		casted[i] = util.Hash(line)
 	}
 

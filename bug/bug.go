@@ -106,8 +106,8 @@ func readBug(repo repository.Repo, ref string) (*Bug, error) {
 		return nil, err
 	}
 
-	refSplitted := strings.Split(ref, "/")
-	id := refSplitted[len(refSplitted)-1]
+	refSplit := strings.Split(ref, "/")
+	id := refSplit[len(refSplit)-1]
 
 	if len(id) != idLength {
 		return nil, fmt.Errorf("Invalid ref length")
@@ -269,8 +269,8 @@ func refsToIds(refs []string) []string {
 	ids := make([]string, len(refs))
 
 	for i, ref := range refs {
-		splitted := strings.Split(ref, "/")
-		ids[i] = splitted[len(splitted)-1]
+		split := strings.Split(ref, "/")
+		ids[i] = split[len(split)-1]
 	}
 
 	return ids

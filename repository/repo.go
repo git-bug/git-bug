@@ -91,10 +91,10 @@ func prepareTreeEntries(entries []TreeEntry) bytes.Buffer {
 }
 
 func readTreeEntries(s string) ([]TreeEntry, error) {
-	splitted := strings.Split(s, "\n")
+	split := strings.Split(s, "\n")
 
-	casted := make([]TreeEntry, len(splitted))
-	for i, line := range splitted {
+	casted := make([]TreeEntry, len(split))
+	for i, line := range split {
 		if line == "" {
 			continue
 		}
