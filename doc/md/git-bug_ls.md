@@ -7,7 +7,7 @@ Display a summary of all bugs
 Display a summary of all bugs
 
 ```
-git-bug ls [flags]
+git-bug ls <query> [flags]
 ```
 
 ### Options

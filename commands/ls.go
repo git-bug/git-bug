@@ -16,7 +16,17 @@ func runLsBug(cmd *cobra.Command, args []string) error {
 	}
 	defer backend.Close()
 
-	allIds := backend.AllBugsId(cache.OrderByCreation, cache.OrderAscending)
+	var query *cache.Query
+	if len(args) >= 1 {
+		fmt.Println("Query", args[0])
+		query, err = cache.ParseQuery(args[0])
+
+		if err != nil {
+			return err
+		}
+	}
+
+	allIds := backend.QueryBugs(query)
 
 	for _, id := range allIds {
 		b, err := backend.ResolveBug(id)
@@ -50,7 +60,7 @@ func runLsBug(cmd *cobra.Command, args []string) error {
 }
 
 var lsCmd = &cobra.Command{
-	Use:   "ls",
+	Use:   "ls <query>",
 	Short: "Display a summary of all bugs",
 	RunE:  runLsBug,
 }
