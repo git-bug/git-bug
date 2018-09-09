@@ -1,6 +1,6 @@
 # Searching bugs
 
-You can search bugs using a micro query language for both filtering and sorting. A query could looks like this:
+You can search bugs using a micro query language for both filtering and sorting. A query could look like this:
 
 ```
 status:open sort:edit
@@ -8,9 +8,9 @@ status:open sort:edit
 
 A few tips:
 
-- query are case insensitive.
-- you can combine as much qualifier as you want.
-- you can use quotation for multi-word search term. For example, use `author:"René Descartes"` to search with a complete name.
+- queries are case insensitive.
+- you can combine as many qualifiers as you want.
+- you can use double quotes for multi-word search terms. For example, use `author:"René Descartes"` to search for a complete name.
 
 
 ## Filtering
@@ -35,7 +35,7 @@ You can filter based on the person who opened the bug.
 
 ### Filtering by label
 
-You can filter based on bug's label.
+You can filter based on the bug's label.
 
 | Qualifier     | Example                                                                   |
 | ---           | ---                                                                       |
@@ -53,7 +53,7 @@ You can filter bugs based on the absence of something.
 
 ## Sorting
 
-You can sort result by adding a `sort:` qualifier to your query.
+You can sort results by adding a `sort:` qualifier to your query.
 
 ### Sort by Id 
 
@@ -66,18 +66,18 @@ You can sort result by adding a `sort:` qualifier to your query.
 
 You can sort bugs by their creation time.
 
-Note: to deal with badly set clocks in a distributed system, `git-bug` use a logical clock internally rather than timestamp to order bugs edition over time. That means that the timestamps recorded might not match the returned ordering. More on that in [the documentation](model.md#you-cant-rely-on-the-time-provided-by-other-people-their-clock-might-by-off-for-anything-other-than-just-display)
+Note: to deal with badly set clocks in a distributed system, `git-bug` uses a logical clock internally rather than timestamps to order bugs edition over time. That means that the timestamps recorded might not match the returned ordering. More on that in [the documentation](model.md#you-cant-rely-on-the-time-provided-by-other-people-their-clock-might-by-off-for-anything-other-than-just-display)
 
 | Qualifier                               | Example                                                            |
 | ---                                     | ---                                                                |
 | `sort:creation` or `sort:creation-desc` | `sor:creation` will sort bugs by their descending creation time    |
 | `sort:creation-asc`                     | `sor:creation-asc` will sort bugs by their ascending creation time |
 
-### Sort by Edition time
+### Sort by Edit time
 
-You can sort bugs by their edition time.
+You can sort bugs by their edit time.
 
-Note: to deal with badly set clocks in a distributed system, `git-bug` use a logical clock internally rather than timestamp to order bugs edition over time. That means that the timestamps recorded might not match the returned ordering. More on that in [the documentation](model.md#you-cant-rely-on-the-time-provided-by-other-people-their-clock-might-by-off-for-anything-other-than-just-display)
+Note: to deal with badly set clocks in a distributed system, `git-bug` uses a logical clock internally rather than timestamps to order bugs edition over time. That means that the timestamps recorded might not match the returned ordering. More on that in [the documentation](model.md#you-cant-rely-on-the-time-provided-by-other-people-their-clock-might-by-off-for-anything-other-than-just-display)
 
 | Qualifier                       | Example                                                            |
 | ---                             | ---                                                                |
