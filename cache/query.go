@@ -37,7 +37,7 @@ func ParseQuery(query string) (*Query, error) {
 		qualifierQuery := removeQuote(split[1])
 
 		switch qualifierName {
-		case "status":
+		case "status", "state":
 			f, err := StatusFilter(qualifierQuery)
 			if err != nil {
 				return nil, err
