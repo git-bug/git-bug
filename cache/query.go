@@ -12,6 +12,11 @@ type Query struct {
 	OrderDirection
 }
 
+// Return an identity query
+func NewQuery() *Query {
+	return &Query{}
+}
+
 // ParseQuery parse a query DSL
 //
 // Ex: "status:open author:descartes sort:edit-asc"
@@ -112,7 +117,7 @@ func (q *Query) parseNoFilter(query string) error {
 	case "label":
 		q.NoFilters = append(q.NoFilters, NoLabelFilter())
 	default:
-		return fmt.Errorf("unknown \"no\" filter")
+		return fmt.Errorf("unknown \"no\" filter %s", query)
 	}
 
 	return nil

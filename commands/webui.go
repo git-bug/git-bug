@@ -199,5 +199,8 @@ var webUICmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(webUICmd)
+
+	webUICmd.Flags().SortFlags = false
+
 	webUICmd.Flags().IntVarP(&port, "port", "p", 0, "Port to listen to")
 }

@@ -14,8 +14,8 @@ git-bug comment <id> [flags]
 
 ```
   -F, --file string      Take the message from the given file. Use - to read the message from the standard input
-  -h, --help             help for comment
   -m, --message string   Provide the new message from the command line
+  -h, --help             help for comment
 ```
 
 ### SEE ALSO

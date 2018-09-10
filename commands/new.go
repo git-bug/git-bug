@@ -61,6 +61,8 @@ var newCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(newCmd)
 
+	newCmd.Flags().SortFlags = false
+
 	newCmd.Flags().StringVarP(&newTitle, "title", "t", "",
 		"Provide a title to describe the issue",
 	)

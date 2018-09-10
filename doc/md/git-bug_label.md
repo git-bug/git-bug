@@ -13,8 +13,8 @@ git-bug label <id> [<label>...] [flags]
 ### Options
 
 ```
-  -h, --help     help for label
   -r, --remove   Remove a label
+  -h, --help     help for label
 ```
 
 ### SEE ALSO

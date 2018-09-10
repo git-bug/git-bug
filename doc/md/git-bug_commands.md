@@ -13,8 +13,8 @@ git-bug commands [<option>...] [flags]
 ### Options
 
 ```
-  -h, --help     help for commands
   -p, --pretty   Output the command description as well as Markdown compatible comment
+  -h, --help     help for commands
 ```
 
 ### SEE ALSO

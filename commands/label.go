@@ -57,6 +57,8 @@ var labelCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(labelCmd)
 
+	labelCmd.Flags().SortFlags = false
+
 	labelCmd.Flags().BoolVarP(&labelRemove, "remove", "r", false,
 		"Remove a label",
 	)
