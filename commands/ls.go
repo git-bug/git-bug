@@ -18,7 +18,6 @@ func runLsBug(cmd *cobra.Command, args []string) error {
 
 	var query *cache.Query
 	if len(args) >= 1 {
-		fmt.Println("Query", args[0])
 		query, err = cache.ParseQuery(args[0])
 
 		if err != nil {

@@ -3,6 +3,7 @@ package cache
 import (
 	"fmt"
 	"strings"
+	"unicode"
 )
 
 type Query struct {
@@ -16,10 +17,8 @@ type Query struct {
 // Ex: "status:open author:descartes sort:edit-asc"
 //
 // Supported filter fields and syntax are described in docs/queries.md
-//
-// Todo: write a complete doc
 func ParseQuery(query string) (*Query, error) {
-	fields := strings.Fields(query)
+	fields := splitQuery(query)
 
 	result := &Query{
 		OrderBy:        OrderByCreation,
@@ -34,24 +33,27 @@ func ParseQuery(query string) (*Query, error) {
 			return nil, fmt.Errorf("can't parse \"%s\"", field)
 		}
 
-		switch split[0] {
+		qualifierName := split[0]
+		qualifierQuery := removeQuote(split[1])
+
+		switch qualifierName {
 		case "status":
-			f, err := StatusFilter(split[1])
+			f, err := StatusFilter(qualifierQuery)
 			if err != nil {
 				return nil, err
 			}
 			result.Status = append(result.Status, f)
 
 		case "author":
-			f := AuthorFilter(split[1])
+			f := AuthorFilter(qualifierQuery)
 			result.Author = append(result.Author, f)
 
 		case "label":
-			f := LabelFilter(split[1])
+			f := LabelFilter(qualifierQuery)
 			result.Label = append(result.Label, f)
 
 		case "no":
-			err := result.parseNoFilter(split[1])
+			err := result.parseNoFilter(qualifierQuery)
 			if err != nil {
 				return nil, err
 			}
@@ -61,7 +63,7 @@ func ParseQuery(query string) (*Query, error) {
 				return nil, fmt.Errorf("multiple sorting")
 			}
 
-			err := result.parseSorting(split[1])
+			err := result.parseSorting(qualifierQuery)
 			if err != nil {
 				return nil, err
 			}
@@ -69,11 +71,40 @@ func ParseQuery(query string) (*Query, error) {
 			sortingDone = true
 
 		default:
-			return nil, fmt.Errorf("unknow query field %s", split[0])
+			return nil, fmt.Errorf("unknow qualifier name %s", qualifierName)
 		}
 	}
 
 	return result, nil
+}
+
+func splitQuery(query string) []string {
+	lastQuote := rune(0)
+	f := func(c rune) bool {
+		switch {
+		case c == lastQuote:
+			lastQuote = rune(0)
+			return false
+		case lastQuote != rune(0):
+			return false
+		case unicode.In(c, unicode.Quotation_Mark):
+			lastQuote = c
+			return false
+		default:
+			return unicode.IsSpace(c)
+		}
+	}
+
+	return strings.FieldsFunc(query, f)
+}
+
+func removeQuote(field string) string {
+	if len(field) >= 2 {
+		if field[0] == '"' && field[len(field)-1] == '"' {
+			return field[1 : len(field)-1]
+		}
+	}
+	return field
 }
 
 func (q *Query) parseNoFilter(query string) error {

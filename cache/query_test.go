@@ -16,9 +16,13 @@ func TestQueryParse(t *testing.T) {
 		{"status:unknown", false},
 
 		{"author:rene", true},
-		// Todo: fix parsing
-		// {"author:\"Rene Descartes\"", true},
+		{"author:\"René Descartes\"", true},
 
+		{"label:hello", true},
+		{"label:\"Good first issue\"", true},
+
+		{"sort:edit", true},
+		{"sort:unknown", false},
 	}
 
 	for _, test := range tests {
