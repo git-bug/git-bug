@@ -6,8 +6,10 @@ import (
 	"github.com/MichaelMure/git-bug/bug"
 )
 
+// Filter is a functor that match a subset of bugs
 type Filter func(excerpt *BugExcerpt) bool
 
+// StatusFilter return a Filter that match a bug status
 func StatusFilter(query string) (Filter, error) {
 	status, err := bug.StatusFromString(query)
 	if err != nil {
@@ -19,6 +21,7 @@ func StatusFilter(query string) (Filter, error) {
 	}, nil
 }
 
+// AuthorFilter return a Filter that match a bug author
 func AuthorFilter(query string) Filter {
 	cleaned := strings.TrimFunc(query, func(r rune) bool {
 		return r == '"' || r == '\''
@@ -29,6 +32,7 @@ func AuthorFilter(query string) Filter {
 	}
 }
 
+// LabelFilter return a Filter that match a label
 func LabelFilter(label string) Filter {
 	return func(excerpt *BugExcerpt) bool {
 		for _, l := range excerpt.Labels {
@@ -40,12 +44,14 @@ func LabelFilter(label string) Filter {
 	}
 }
 
+// NoLabelFilter return a Filter that match the absence of labels
 func NoLabelFilter() Filter {
 	return func(excerpt *BugExcerpt) bool {
 		return len(excerpt.Labels) == 0
 	}
 }
 
+// Filters is a collection of Filter that implement a complex filter
 type Filters struct {
 	Status    []Filter
 	Author    []Filter

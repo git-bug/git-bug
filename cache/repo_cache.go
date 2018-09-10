@@ -387,7 +387,7 @@ func repoIsAvailable(repo repository.Repo) error {
 			return err
 		}
 		if len(buf) == 10 {
-			return fmt.Errorf("The lock file should be < 10 bytes")
+			return fmt.Errorf("the lock file should be < 10 bytes")
 		}
 
 		pid, err := strconv.Atoi(string(buf))
@@ -396,7 +396,7 @@ func repoIsAvailable(repo repository.Repo) error {
 		}
 
 		if util.ProcessIsRunning(pid) {
-			return fmt.Errorf("The repository you want to access is already locked by the process pid %d", pid)
+			return fmt.Errorf("the repository you want to access is already locked by the process pid %d", pid)
 		}
 
 		// The lock file is just laying there after a crash, clean it

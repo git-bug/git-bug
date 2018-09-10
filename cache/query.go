@@ -16,7 +16,7 @@ type Query struct {
 //
 // Ex: "status:open author:descartes sort:edit-asc"
 //
-// Supported filter fields and syntax are described in docs/queries.md
+// Supported filter qualifiers and syntax are described in docs/queries.md
 func ParseQuery(query string) (*Query, error) {
 	fields := splitQuery(query)
 

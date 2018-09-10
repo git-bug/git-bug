@@ -3,6 +3,7 @@ package cache
 import "testing"
 
 func TestQueryParse(t *testing.T) {
+
 	var tests = []struct {
 		input string
 		ok    bool
@@ -16,10 +17,10 @@ func TestQueryParse(t *testing.T) {
 		{"status:unknown", false},
 
 		{"author:rene", true},
-		{"author:\"René Descartes\"", true},
+		{`author:"René Descartes"`, true},
 
 		{"label:hello", true},
-		{"label:\"Good first issue\"", true},
+		{`label:"Good first issue"`, true},
 
 		{"sort:edit", true},
 		{"sort:unknown", false},
