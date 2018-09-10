@@ -10,7 +10,7 @@ A few tips:
 
 - queries are case insensitive.
 - you can combine as many qualifiers as you want.
-- you can use double quotes for multi-word search terms. For example, `author:"René Descartes"` searches for bugs opened by René Descartes, whereas `author:René Descartes` looks for issues opened by anyone named René and containing the text “Descartes” somewhere in the issue body.
+- you can use double quotes for multi-word search terms. For example, `author:"René Descartes"` searches for bugs opened by René Descartes, whereas `author:René Descartes` will throw an error since full-text search is not yet supported.
 
 
 ## Filtering
