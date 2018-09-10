@@ -22,7 +22,7 @@ func (op CreateOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {
 		{
 			Message:  op.Message,
 			Author:   op.Author,
-			UnixTime: op.UnixTime(),
+			UnixTime: op.UnixTime,
 		},
 	}
 	snapshot.Author = op.Author

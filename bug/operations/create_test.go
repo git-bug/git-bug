@@ -21,7 +21,7 @@ func TestCreate(t *testing.T) {
 	expected := bug.Snapshot{
 		Title: "title",
 		Comments: []bug.Comment{
-			{Author: rene, Message: "message", UnixTime: create.UnixTime()},
+			{Author: rene, Message: "message", UnixTime: create.UnixTime},
 		},
 		Author:    rene,
 		CreatedAt: create.Time(),

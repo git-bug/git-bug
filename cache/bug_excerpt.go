@@ -27,7 +27,7 @@ func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
 		Id:                b.Id(),
 		CreateLamportTime: b.CreateLamportTime(),
 		EditLamportTime:   b.EditLamportTime(),
-		CreateUnixTime:    b.FirstOp().UnixTime(),
+		CreateUnixTime:    b.FirstOp().GetUnixTime(),
 		EditUnixTime:      snap.LastEditUnix(),
 		Status:            snap.Status,
 		Author:            snap.Author,

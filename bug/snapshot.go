@@ -51,5 +51,5 @@ func (snap Snapshot) LastEditUnix() int64 {
 		return 0
 	}
 
-	return snap.Operations[len(snap.Operations)-1].UnixTime()
+	return snap.Operations[len(snap.Operations)-1].GetUnixTime()
 }

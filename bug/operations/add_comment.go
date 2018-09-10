@@ -21,7 +21,7 @@ func (op AddCommentOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {
 		Message:  op.Message,
 		Author:   op.Author,
 		Files:    op.files,
-		UnixTime: op.UnixTime(),
+		UnixTime: op.UnixTime,
 	}
 
 	snapshot.Comments = append(snapshot.Comments, comment)
