@@ -53,7 +53,7 @@ type Resolvers interface {
 	Query_defaultRepository(ctx context.Context) (*models.Repository, error)
 	Query_repository(ctx context.Context, id string) (*models.Repository, error)
 
-	Repository_allBugs(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int) (models.BugConnection, error)
+	Repository_allBugs(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int, query *string) (models.BugConnection, error)
 	Repository_bug(ctx context.Context, obj *models.Repository, prefix string) (*bug.Snapshot, error)
 
 	SetStatusOperation_date(ctx context.Context, obj *operations.SetStatusOperation) (time.Time, error)
@@ -103,7 +103,7 @@ type QueryResolver interface {
 	Repository(ctx context.Context, id string) (*models.Repository, error)
 }
 type RepositoryResolver interface {
-	AllBugs(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int) (models.BugConnection, error)
+	AllBugs(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int, query *string) (models.BugConnection, error)
 	Bug(ctx context.Context, obj *models.Repository, prefix string) (*bug.Snapshot, error)
 }
 type SetStatusOperationResolver interface {
@@ -182,8 +182,8 @@ func (s shortMapper) Query_repository(ctx context.Context, id string) (*models.R
 	return s.r.Query().Repository(ctx, id)
 }
 
-func (s shortMapper) Repository_allBugs(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int) (models.BugConnection, error) {
-	return s.r.Repository().AllBugs(ctx, obj, after, before, first, last)
+func (s shortMapper) Repository_allBugs(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int, query *string) (models.BugConnection, error) {
+	return s.r.Repository().AllBugs(ctx, obj, after, before, first, last, query)
 }
 
 func (s shortMapper) Repository_bug(ctx context.Context, obj *models.Repository, prefix string) (*bug.Snapshot, error) {
@@ -2248,6 +2248,21 @@ func (ec *executionContext) _Repository_allBugs(ctx context.Context, field graph
 		}
 	}
 	args["last"] = arg3
+	var arg4 *string
+	if tmp, ok := field.Args["query"]; ok {
+		var err error
+		var ptr1 string
+		if tmp != nil {
+			ptr1, err = graphql.UnmarshalString(tmp)
+			arg4 = &ptr1
+		}
+
+		if err != nil {
+			ec.Error(ctx, err)
+			return graphql.Null
+		}
+	}
+	args["query"] = arg4
 	ctx = graphql.WithResolverContext(ctx, &graphql.ResolverContext{
 		Object: "Repository",
 		Args:   args,
@@ -2263,7 +2278,7 @@ func (ec *executionContext) _Repository_allBugs(ctx context.Context, field graph
 		}()
 
 		resTmp, err := ec.ResolverMiddleware(ctx, func(ctx context.Context) (interface{}, error) {
-			return ec.resolvers.Repository_allBugs(ctx, obj, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int))
+			return ec.resolvers.Repository_allBugs(ctx, obj, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int), args["query"].(*string))
 		})
 		if err != nil {
 			ec.Error(ctx, err)
@@ -3457,6 +3472,8 @@ type Repository {
     first: Int
     # Returns the last _n_ elements from the list.
     last: Int
+    # A query to select and order bugs
+    query: String
   ): BugConnection!
   bug(prefix: String!): Bug
 }

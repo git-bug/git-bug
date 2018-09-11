@@ -12,9 +12,12 @@ type Query struct {
 	OrderDirection
 }
 
-// Return an identity query
+// Return an identity query with default sorting (creation-desc)
 func NewQuery() *Query {
-	return &Query{}
+	return &Query{
+		OrderBy:        OrderByCreation,
+		OrderDirection: OrderDescending,
+	}
 }
 
 // ParseQuery parse a query DSL
