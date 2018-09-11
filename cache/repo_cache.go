@@ -179,33 +179,17 @@ func (c *RepoCache) ResolveBugPrefix(prefix string) (*BugCache, error) {
 	// preallocate but empty
 	matching := make([]string, 0, 5)
 
-	for id := range c.bugs {
+	for id := range c.excerpts {
 		if strings.HasPrefix(id, prefix) {
 			matching = append(matching, id)
 		}
 	}
 
-	// TODO: should check matching bug in the repo as well
-
 	if len(matching) > 1 {
 		return nil, fmt.Errorf("Multiple matching bug found:\n%s", strings.Join(matching, "\n"))
 	}
 
-	if len(matching) == 1 {
-		b := c.bugs[matching[0]]
-		return b, nil
-	}
-
-	b, err := bug.FindLocalBug(c.repo, prefix)
-
-	if err != nil {
-		return nil, err
-	}
-
-	cached := NewBugCache(c, b)
-	c.bugs[b.Id()] = cached
-
-	return cached, nil
+	return c.ResolveBug(matching[0])
 }
 
 func (c *RepoCache) QueryBugs(query *Query) []string {
