@@ -149,6 +149,38 @@ func BugTitleEditorInput(repo repository.Repo, preTitle string) (string, error) 
 	return title, nil
 }
 
+const queryTemplate = `%s
+
+# Please edit the bug query.
+# Lines starting with '#' will be ignored, and an empty query aborts the operation.
+`
+
+// QueryEditorInput will open the default editor in the terminal with a
+// template for the user to fill. The file is then processed to extract a query.
+func QueryEditorInput(repo repository.Repo, preQuery string) (string, error) {
+	template := fmt.Sprintf(queryTemplate, preQuery)
+	raw, err := launchEditorWithTemplate(repo, messageFilename, template)
+
+	if err != nil {
+		return "", err
+	}
+
+	lines := strings.Split(raw, "\n")
+
+	for _, line := range lines {
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" {
+			continue
+		}
+		return trimmed, nil
+	}
+
+	return "", nil
+}
+
 // launchEditorWithTemplate will launch an editor as launchEditor do, but with a
 // provided template.
 func launchEditorWithTemplate(repo repository.Repo, fileName string, template string) (string, error) {

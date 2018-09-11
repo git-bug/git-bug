@@ -262,6 +262,40 @@ func setTitleWithEditor(bug *cache.BugCache) error {
 	return errTerminateMainloop
 }
 
+func editQueryWithEditor(bt *bugTable) error {
+	// This is somewhat hacky.
+	// As there is no way to pause gocui, run the editor and restart gocui,
+	// we have to stop it entirely and start a new one later.
+	//
+	// - an error channel is used to route the returned error of this new
+	// 		instance into the original launch function
+	// - a custom error (errTerminateMainloop) is used to terminate the original
+	//		instance's mainLoop. This error is then filtered.
+
+	ui.g.Close()
+	ui.g = nil
+
+	queryStr, err := input.QueryEditorInput(bt.repo.Repository(), bt.queryStr)
+
+	if err != nil {
+		return err
+	}
+
+	bt.queryStr = queryStr
+
+	query, err := cache.ParseQuery(queryStr)
+
+	if err != nil {
+		ui.msgPopup.Activate(msgPopupErrorTitle, err.Error())
+	} else {
+		bt.query = query
+	}
+
+	initGui(nil)
+
+	return errTerminateMainloop
+}
+
 func maxInt(a, b int) int {
 	if a > b {
 		return a

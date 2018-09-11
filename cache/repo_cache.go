@@ -19,9 +19,12 @@ import (
 )
 
 type RepoCache struct {
-	repo     repository.Repo
+	// the underlying repo
+	repo repository.Repo
+	// excerpt of bugs data for all bugs
 	excerpts map[string]*BugExcerpt
-	bugs     map[string]*BugCache
+	// bug loaded in memory
+	bugs map[string]*BugCache
 }
 
 func NewRepoCache(r repository.Repo) (*RepoCache, error) {

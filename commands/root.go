@@ -24,7 +24,9 @@ var RootCmd = &cobra.Command{
 
 It use the same internal storage so it doesn't pollute your project. As you would do with commits and branches, you can push your bugs to the same git remote your are already using to collaborate with other peoples.`,
 
-	// Force the execution of the PreRun while still displaying the help
+	// For the root command, force the execution of the PreRun
+	// even if we just display the help. This is to make sure that we check
+	// the repository and give the user early feedback.
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Help()
 	},
@@ -35,6 +37,8 @@ It use the same internal storage so it doesn't pollute your project. As you woul
 
 	DisableAutoGenTag: true,
 
+	// Custom bash code to connect the git completion for "git bug" to the
+	// git-bug completion for "git-bug"
 	BashCompletionFunction: `
 _git_bug() {
     __start_git-bug "$@"

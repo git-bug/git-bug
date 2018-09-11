@@ -16,10 +16,12 @@ const bugTableHeaderView = "bugTableHeaderView"
 const bugTableFooterView = "bugTableFooterView"
 const bugTableInstructionView = "bugTableInstructionView"
 
-const remote = "origin"
+const defaultRemote = "origin"
+const defaultQuery = "status:open"
 
 type bugTable struct {
 	repo         *cache.RepoCache
+	queryStr     string
 	query        *cache.Query
 	allIds       []string
 	bugs         []*cache.BugCache
@@ -28,12 +30,15 @@ type bugTable struct {
 }
 
 func newBugTable(c *cache.RepoCache) *bugTable {
+	query, err := cache.ParseQuery(defaultQuery)
+	if err != nil {
+		panic(err)
+	}
+
 	return &bugTable{
-		repo: c,
-		query: &cache.Query{
-			OrderBy:        cache.OrderByCreation,
-			OrderDirection: cache.OrderAscending,
-		},
+		repo:         c,
+		query:        query,
+		queryStr:     defaultQuery,
 		pageCursor:   0,
 		selectCursor: 0,
 	}
@@ -194,6 +199,12 @@ func (bt *bugTable) keybindings(g *gocui.Gui) error {
 	// Push
 	if err := g.SetKeybinding(bugTableView, 'o', gocui.ModNone,
 		bt.push); err != nil {
+		return err
+	}
+
+	// Query
+	if err := g.SetKeybinding(bugTableView, 'q', gocui.ModNone,
+		bt.changeQuery); err != nil {
 		return err
 	}
 
@@ -390,10 +401,10 @@ func (bt *bugTable) openBug(g *gocui.Gui, v *gocui.View) error {
 func (bt *bugTable) pull(g *gocui.Gui, v *gocui.View) error {
 	// Note: this is very hacky
 
-	ui.msgPopup.Activate("Pull from remote "+remote, "...")
+	ui.msgPopup.Activate("Pull from remote "+defaultRemote, "...")
 
 	go func() {
-		stdout, err := bt.repo.Fetch(remote)
+		stdout, err := bt.repo.Fetch(defaultRemote)
 
 		if err != nil {
 			g.Update(func(gui *gocui.Gui) error {
@@ -410,7 +421,7 @@ func (bt *bugTable) pull(g *gocui.Gui, v *gocui.View) error {
 		var buffer bytes.Buffer
 		beginLine := ""
 
-		for merge := range bt.repo.MergeAll(remote) {
+		for merge := range bt.repo.MergeAll(defaultRemote) {
 			if merge.Status == bug.MsgMergeNothing {
 				continue
 			}
@@ -447,11 +458,11 @@ func (bt *bugTable) pull(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (bt *bugTable) push(g *gocui.Gui, v *gocui.View) error {
-	ui.msgPopup.Activate("Push to remote "+remote, "...")
+	ui.msgPopup.Activate("Push to remote "+defaultRemote, "...")
 
 	go func() {
 		// TODO: make the remote configurable
-		stdout, err := bt.repo.Push(remote)
+		stdout, err := bt.repo.Push(defaultRemote)
 
 		if err != nil {
 			g.Update(func(gui *gocui.Gui) error {
@@ -467,4 +478,8 @@ func (bt *bugTable) push(g *gocui.Gui, v *gocui.View) error {
 	}()
 
 	return nil
+}
+
+func (bt *bugTable) changeQuery(g *gocui.Gui, v *gocui.View) error {
+	return editQueryWithEditor(bt)
 }

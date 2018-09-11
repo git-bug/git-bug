@@ -8,10 +8,12 @@ import (
 
 const inputPopupView = "inputPopupView"
 
+// inputPopup is a simple popup with an input field
 type inputPopup struct {
-	active bool
-	title  string
-	c      chan string
+	active  bool
+	title   string
+	preload string
+	c       chan string
 }
 
 func newInputPopup() *inputPopup {
@@ -53,6 +55,7 @@ func (ip *inputPopup) layout(g *gocui.Gui) error {
 		v.Frame = true
 		v.Title = ip.title
 		v.Editable = true
+		v.Write([]byte(ip.preload))
 	}
 
 	if _, err := g.SetCurrentView(inputPopupView); err != nil {
@@ -86,6 +89,11 @@ func (ip *inputPopup) validate(g *gocui.Gui, v *gocui.View) error {
 	ip.c <- string(content)
 
 	return nil
+}
+
+func (ip *inputPopup) ActivateWithContent(title string, content string) <-chan string {
+	ip.preload = content
+	return ip.Activate(title)
 }
 
 func (ip *inputPopup) Activate(title string) <-chan string {
