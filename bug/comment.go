@@ -1,7 +1,7 @@
 package bug
 
 import (
-	"github.com/MichaelMure/git-bug/util"
+	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/dustin/go-humanize"
 	"time"
 )
@@ -10,7 +10,7 @@ import (
 type Comment struct {
 	Author  Person
 	Message string
-	Files   []util.Hash
+	Files   []git.Hash
 
 	// Creation time of the comment.
 	// Should be used only for human display, never for ordering as we can't rely on it in a distributed system.

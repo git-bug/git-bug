@@ -5,7 +5,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/util"
+	"github.com/MichaelMure/git-bug/util/git"
 )
 
 type mutationResolver struct {
@@ -20,7 +20,7 @@ func (r mutationResolver) getRepo(repoRef *string) (*cache.RepoCache, error) {
 	return r.cache.DefaultRepo()
 }
 
-func (r mutationResolver) NewBug(ctx context.Context, repoRef *string, title string, message string, files []util.Hash) (bug.Snapshot, error) {
+func (r mutationResolver) NewBug(ctx context.Context, repoRef *string, title string, message string, files []git.Hash) (bug.Snapshot, error) {
 	repo, err := r.getRepo(repoRef)
 	if err != nil {
 		return bug.Snapshot{}, err
@@ -57,7 +57,7 @@ func (r mutationResolver) Commit(ctx context.Context, repoRef *string, prefix st
 	return *snap, nil
 }
 
-func (r mutationResolver) AddComment(ctx context.Context, repoRef *string, prefix string, message string, files []util.Hash) (bug.Snapshot, error) {
+func (r mutationResolver) AddComment(ctx context.Context, repoRef *string, prefix string, message string, files []git.Hash) (bug.Snapshot, error) {
 	repo, err := r.getRepo(repoRef)
 	if err != nil {
 		return bug.Snapshot{}, err

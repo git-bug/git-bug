@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/util"
+	"github.com/MichaelMure/git-bug/util/colors"
 	"github.com/spf13/cobra"
 )
 
@@ -42,13 +42,13 @@ func runShowBug(cmd *cobra.Command, args []string) error {
 
 	// Header
 	fmt.Printf("[%s] %s %s\n\n",
-		util.Yellow(snapshot.Status),
-		util.Cyan(snapshot.HumanId()),
+		colors.Yellow(snapshot.Status),
+		colors.Cyan(snapshot.HumanId()),
 		snapshot.Title,
 	)
 
 	fmt.Printf("%s opened this issue %s\n\n",
-		util.Magenta(firstComment.Author.Name),
+		colors.Magenta(firstComment.Author.Name),
 		firstComment.FormatTime(),
 	)
 

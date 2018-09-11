@@ -10,9 +10,9 @@ import (
 	time "time"
 
 	bug "github.com/MichaelMure/git-bug/bug"
-	operations "github.com/MichaelMure/git-bug/bug/operations"
 	models "github.com/MichaelMure/git-bug/graphql/models"
-	util "github.com/MichaelMure/git-bug/util"
+	operations "github.com/MichaelMure/git-bug/operations"
+	git "github.com/MichaelMure/git-bug/util/git"
 	graphql "github.com/vektah/gqlgen/graphql"
 	introspection "github.com/vektah/gqlgen/neelance/introspection"
 	query "github.com/vektah/gqlgen/neelance/query"
@@ -42,8 +42,8 @@ type Resolvers interface {
 
 	LabelChangeOperation_date(ctx context.Context, obj *operations.LabelChangeOperation) (time.Time, error)
 
-	Mutation_newBug(ctx context.Context, repoRef *string, title string, message string, files []util.Hash) (bug.Snapshot, error)
-	Mutation_addComment(ctx context.Context, repoRef *string, prefix string, message string, files []util.Hash) (bug.Snapshot, error)
+	Mutation_newBug(ctx context.Context, repoRef *string, title string, message string, files []git.Hash) (bug.Snapshot, error)
+	Mutation_addComment(ctx context.Context, repoRef *string, prefix string, message string, files []git.Hash) (bug.Snapshot, error)
 	Mutation_changeLabels(ctx context.Context, repoRef *string, prefix string, added []string, removed []string) (bug.Snapshot, error)
 	Mutation_open(ctx context.Context, repoRef *string, prefix string) (bug.Snapshot, error)
 	Mutation_close(ctx context.Context, repoRef *string, prefix string) (bug.Snapshot, error)
@@ -90,8 +90,8 @@ type LabelChangeOperationResolver interface {
 	Date(ctx context.Context, obj *operations.LabelChangeOperation) (time.Time, error)
 }
 type MutationResolver interface {
-	NewBug(ctx context.Context, repoRef *string, title string, message string, files []util.Hash) (bug.Snapshot, error)
-	AddComment(ctx context.Context, repoRef *string, prefix string, message string, files []util.Hash) (bug.Snapshot, error)
+	NewBug(ctx context.Context, repoRef *string, title string, message string, files []git.Hash) (bug.Snapshot, error)
+	AddComment(ctx context.Context, repoRef *string, prefix string, message string, files []git.Hash) (bug.Snapshot, error)
 	ChangeLabels(ctx context.Context, repoRef *string, prefix string, added []string, removed []string) (bug.Snapshot, error)
 	Open(ctx context.Context, repoRef *string, prefix string) (bug.Snapshot, error)
 	Close(ctx context.Context, repoRef *string, prefix string) (bug.Snapshot, error)
@@ -146,11 +146,11 @@ func (s shortMapper) LabelChangeOperation_date(ctx context.Context, obj *operati
 	return s.r.LabelChangeOperation().Date(ctx, obj)
 }
 
-func (s shortMapper) Mutation_newBug(ctx context.Context, repoRef *string, title string, message string, files []util.Hash) (bug.Snapshot, error) {
+func (s shortMapper) Mutation_newBug(ctx context.Context, repoRef *string, title string, message string, files []git.Hash) (bug.Snapshot, error) {
 	return s.r.Mutation().NewBug(ctx, repoRef, title, message, files)
 }
 
-func (s shortMapper) Mutation_addComment(ctx context.Context, repoRef *string, prefix string, message string, files []util.Hash) (bug.Snapshot, error) {
+func (s shortMapper) Mutation_addComment(ctx context.Context, repoRef *string, prefix string, message string, files []git.Hash) (bug.Snapshot, error) {
 	return s.r.Mutation().AddComment(ctx, repoRef, prefix, message, files)
 }
 
@@ -1356,7 +1356,7 @@ func (ec *executionContext) _Mutation_newBug(ctx context.Context, field graphql.
 		}
 	}
 	args["message"] = arg2
-	var arg3 []util.Hash
+	var arg3 []git.Hash
 	if tmp, ok := field.Args["files"]; ok {
 		var err error
 		var rawIf1 []interface{}
@@ -1365,7 +1365,7 @@ func (ec *executionContext) _Mutation_newBug(ctx context.Context, field graphql.
 				rawIf1 = tmp1
 			}
 		}
-		arg3 = make([]util.Hash, len(rawIf1))
+		arg3 = make([]git.Hash, len(rawIf1))
 		for idx1 := range rawIf1 {
 			err = (&arg3[idx1]).UnmarshalGQL(rawIf1[idx1])
 		}
@@ -1382,7 +1382,7 @@ func (ec *executionContext) _Mutation_newBug(ctx context.Context, field graphql.
 	rctx.PushField(field.Alias)
 	defer rctx.Pop()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(ctx context.Context) (interface{}, error) {
-		return ec.resolvers.Mutation_newBug(ctx, args["repoRef"].(*string), args["title"].(string), args["message"].(string), args["files"].([]util.Hash))
+		return ec.resolvers.Mutation_newBug(ctx, args["repoRef"].(*string), args["title"].(string), args["message"].(string), args["files"].([]git.Hash))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1432,7 +1432,7 @@ func (ec *executionContext) _Mutation_addComment(ctx context.Context, field grap
 		}
 	}
 	args["message"] = arg2
-	var arg3 []util.Hash
+	var arg3 []git.Hash
 	if tmp, ok := field.Args["files"]; ok {
 		var err error
 		var rawIf1 []interface{}
@@ -1441,7 +1441,7 @@ func (ec *executionContext) _Mutation_addComment(ctx context.Context, field grap
 				rawIf1 = tmp1
 			}
 		}
-		arg3 = make([]util.Hash, len(rawIf1))
+		arg3 = make([]git.Hash, len(rawIf1))
 		for idx1 := range rawIf1 {
 			err = (&arg3[idx1]).UnmarshalGQL(rawIf1[idx1])
 		}
@@ -1458,7 +1458,7 @@ func (ec *executionContext) _Mutation_addComment(ctx context.Context, field grap
 	rctx.PushField(field.Alias)
 	defer rctx.Pop()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(ctx context.Context) (interface{}, error) {
-		return ec.resolvers.Mutation_addComment(ctx, args["repoRef"].(*string), args["prefix"].(string), args["message"].(string), args["files"].([]util.Hash))
+		return ec.resolvers.Mutation_addComment(ctx, args["repoRef"].(*string), args["prefix"].(string), args["message"].(string), args["files"].([]git.Hash))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

@@ -4,7 +4,7 @@ import (
 	"encoding/gob"
 
 	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/util"
+	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
 // BugExcerpt hold a subset of the bug values to be able to sort and filter bugs
@@ -12,8 +12,8 @@ import (
 type BugExcerpt struct {
 	Id string
 
-	CreateLamportTime util.LamportTime
-	EditLamportTime   util.LamportTime
+	CreateLamportTime lamport.Time
+	EditLamportTime   lamport.Time
 	CreateUnixTime    int64
 	EditUnixTime      int64
 

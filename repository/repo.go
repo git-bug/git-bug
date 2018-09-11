@@ -5,7 +5,8 @@ import (
 	"bytes"
 	"strings"
 
-	"github.com/MichaelMure/git-bug/util"
+	"github.com/MichaelMure/git-bug/util/git"
+	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
 // Repo represents a source code repository.
@@ -29,22 +30,22 @@ type Repo interface {
 	PushRefs(remote string, refSpec string) (string, error)
 
 	// StoreData will store arbitrary data and return the corresponding hash
-	StoreData(data []byte) (util.Hash, error)
+	StoreData(data []byte) (git.Hash, error)
 
 	// ReadData will attempt to read arbitrary data from the given hash
-	ReadData(hash util.Hash) ([]byte, error)
+	ReadData(hash git.Hash) ([]byte, error)
 
 	// StoreTree will store a mapping key-->Hash as a Git tree
-	StoreTree(mapping []TreeEntry) (util.Hash, error)
+	StoreTree(mapping []TreeEntry) (git.Hash, error)
 
 	// StoreCommit will store a Git commit with the given Git tree
-	StoreCommit(treeHash util.Hash) (util.Hash, error)
+	StoreCommit(treeHash git.Hash) (git.Hash, error)
 
 	// StoreCommit will store a Git commit with the given Git tree
-	StoreCommitWithParent(treeHash util.Hash, parent util.Hash) (util.Hash, error)
+	StoreCommitWithParent(treeHash git.Hash, parent git.Hash) (git.Hash, error)
 
 	// UpdateRef will create or update a Git reference
-	UpdateRef(ref string, hash util.Hash) error
+	UpdateRef(ref string, hash git.Hash) error
 
 	// ListRefs will return a list of Git ref matching the given refspec
 	ListRefs(refspec string) ([]string, error)
@@ -56,28 +57,28 @@ type Repo interface {
 	CopyRef(source string, dest string) error
 
 	// ListCommits will return the list of tree hashes of a ref, in chronological order
-	ListCommits(ref string) ([]util.Hash, error)
+	ListCommits(ref string) ([]git.Hash, error)
 
 	// ListEntries will return the list of entries in a Git tree
-	ListEntries(hash util.Hash) ([]TreeEntry, error)
+	ListEntries(hash git.Hash) ([]TreeEntry, error)
 
 	// FindCommonAncestor will return the last common ancestor of two chain of commit
-	FindCommonAncestor(hash1 util.Hash, hash2 util.Hash) (util.Hash, error)
+	FindCommonAncestor(hash1 git.Hash, hash2 git.Hash) (git.Hash, error)
 
 	// GetTreeHash return the git tree hash referenced in a commit
-	GetTreeHash(commit util.Hash) (util.Hash, error)
+	GetTreeHash(commit git.Hash) (git.Hash, error)
 
 	LoadClocks() error
 
 	WriteClocks() error
 
-	CreateTimeIncrement() (util.LamportTime, error)
+	CreateTimeIncrement() (lamport.Time, error)
 
-	EditTimeIncrement() (util.LamportTime, error)
+	EditTimeIncrement() (lamport.Time, error)
 
-	CreateWitness(time util.LamportTime) error
+	CreateWitness(time lamport.Time) error
 
-	EditWitness(time util.LamportTime) error
+	EditWitness(time lamport.Time) error
 }
 
 func prepareTreeEntries(entries []TreeEntry) bytes.Buffer {

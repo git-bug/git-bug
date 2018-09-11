@@ -1,41 +1,19 @@
-package util
+package text
 
 import (
 	"bytes"
 	"strings"
 )
 
-func WordWrap(text string, lineWidth int) (string, int) {
-	words := strings.Fields(strings.TrimSpace(text))
-	if len(words) == 0 {
-		return "", 1
-	}
-	lines := 1
-	wrapped := words[0]
-	spaceLeft := lineWidth - len(wrapped)
-	for _, word := range words[1:] {
-		if len(word)+1 > spaceLeft {
-			wrapped += "\n" + word
-			spaceLeft = lineWidth - len(word)
-			lines++
-		} else {
-			wrapped += " " + word
-			spaceLeft -= 1 + len(word)
-		}
-	}
-
-	return wrapped, lines
-}
-
 // Wrap a text for an exact line size
 // Handle properly terminal color escape code
-func TextWrap(text string, lineWidth int) (string, int) {
-	return TextWrapPadded(text, lineWidth, 0)
+func Wrap(text string, lineWidth int) (string, int) {
+	return WrapLeftPadded(text, lineWidth, 0)
 }
 
 // Wrap a text for an exact line size with a left padding
 // Handle properly terminal color escape code
-func TextWrapPadded(text string, lineWidth int, leftPad int) (string, int) {
+func WrapLeftPadded(text string, lineWidth int, leftPad int) (string, int) {
 	var textBuffer bytes.Buffer
 	var lineBuffer bytes.Buffer
 	nbLine := 1

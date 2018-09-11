@@ -25,47 +25,47 @@
 
 */
 
-package util
+package lamport
 
 import (
 	"sync/atomic"
 )
 
-// LamportClock is a thread safe implementation of a lamport clock. It
+// Clock is a thread safe implementation of a lamport clock. It
 // uses efficient atomic operations for all of its functions, falling back
 // to a heavy lock only if there are enough CAS failures.
-type LamportClock struct {
+type Clock struct {
 	counter uint64
 }
 
-// LamportTime is the value of a LamportClock.
-type LamportTime uint64
+// Time is the value of a Clock.
+type Time uint64
 
-func NewLamportClock() LamportClock {
-	return LamportClock{
+func NewClock() Clock {
+	return Clock{
 		counter: 1,
 	}
 }
 
-func NewLamportClockWithTime(time uint64) LamportClock {
-	return LamportClock{
+func NewClockWithTime(time uint64) Clock {
+	return Clock{
 		counter: time,
 	}
 }
 
 // Time is used to return the current value of the lamport clock
-func (l *LamportClock) Time() LamportTime {
-	return LamportTime(atomic.LoadUint64(&l.counter))
+func (l *Clock) Time() Time {
+	return Time(atomic.LoadUint64(&l.counter))
 }
 
 // Increment is used to return the value of the lamport clock and increment it afterwards
-func (l *LamportClock) Increment() LamportTime {
-	return LamportTime(atomic.AddUint64(&l.counter, 1) - 1)
+func (l *Clock) Increment() Time {
+	return Time(atomic.AddUint64(&l.counter, 1) - 1)
 }
 
 // Witness is called to update our local clock if necessary after
 // witnessing a clock value received from another process
-func (l *LamportClock) Witness(v LamportTime) {
+func (l *Clock) Witness(v Time) {
 WITNESS:
 	// If the other value is old, we do not need to do anything
 	cur := atomic.LoadUint64(&l.counter)

@@ -1,15 +1,15 @@
 package repository
 
 import (
-	"github.com/MichaelMure/git-bug/util"
+	"github.com/MichaelMure/git-bug/util/git"
 	"testing"
 )
 
 func TestTreeEntryFormat(t *testing.T) {
 
 	entries := []TreeEntry{
-		{Blob, util.Hash("a85730cf5287d40a1e32d3a671ba2296c73387cb"), "name"},
-		{Tree, util.Hash("a85730cf5287d40a1e32d3a671ba2296c73387cb"), "name"},
+		{Blob, git.Hash("a85730cf5287d40a1e32d3a671ba2296c73387cb"), "name"},
+		{Tree, git.Hash("a85730cf5287d40a1e32d3a671ba2296c73387cb"), "name"},
 	}
 
 	for _, entry := range entries {

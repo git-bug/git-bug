@@ -1,4 +1,4 @@
-package util
+package lamport
 
 import (
 	"fmt"
@@ -7,21 +7,21 @@ import (
 	"path/filepath"
 )
 
-type PersistedLamport struct {
-	LamportClock
+type Persisted struct {
+	Clock
 	filePath string
 }
 
-func NewPersistedLamport(filePath string) *PersistedLamport {
-	clock := &PersistedLamport{
-		LamportClock: NewLamportClock(),
-		filePath:     filePath,
+func NewPersisted(filePath string) *Persisted {
+	clock := &Persisted{
+		Clock:    NewClock(),
+		filePath: filePath,
 	}
 	return clock
 }
 
-func LoadPersistedLamport(filePath string) (*PersistedLamport, error) {
-	clock := &PersistedLamport{
+func LoadPersisted(filePath string) (*Persisted, error) {
+	clock := &Persisted{
 		filePath: filePath,
 	}
 
@@ -33,18 +33,18 @@ func LoadPersistedLamport(filePath string) (*PersistedLamport, error) {
 	return clock, nil
 }
 
-func (c *PersistedLamport) Increment() (LamportTime, error) {
-	time := c.LamportClock.Increment()
+func (c *Persisted) Increment() (Time, error) {
+	time := c.Clock.Increment()
 	return time, c.Write()
 }
 
-func (c *PersistedLamport) Witness(time LamportTime) error {
+func (c *Persisted) Witness(time Time) error {
 	// TODO: rework so that we write only when the clock was actually updated
-	c.LamportClock.Witness(time)
+	c.Clock.Witness(time)
 	return c.Write()
 }
 
-func (c *PersistedLamport) read() error {
+func (c *Persisted) read() error {
 	content, err := ioutil.ReadFile(c.filePath)
 	if err != nil {
 		return err
@@ -61,12 +61,12 @@ func (c *PersistedLamport) read() error {
 		return fmt.Errorf("could not read the clock")
 	}
 
-	c.LamportClock = NewLamportClockWithTime(value)
+	c.Clock = NewClockWithTime(value)
 
 	return nil
 }
 
-func (c *PersistedLamport) Write() error {
+func (c *Persisted) Write() error {
 	dir := filepath.Dir(c.filePath)
 	err := os.MkdirAll(dir, 0777)
 	if err != nil {

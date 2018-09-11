@@ -4,8 +4,8 @@ import (
 	"io"
 
 	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/bug/operations"
-	"github.com/MichaelMure/git-bug/util"
+	"github.com/MichaelMure/git-bug/operations"
+	"github.com/MichaelMure/git-bug/util/git"
 )
 
 type BugCache struct {
@@ -40,7 +40,7 @@ func (c *BugCache) AddComment(message string) error {
 	return c.notifyUpdated()
 }
 
-func (c *BugCache) AddCommentWithFiles(message string, files []util.Hash) error {
+func (c *BugCache) AddCommentWithFiles(message string, files []git.Hash) error {
 	author, err := bug.GetUser(c.repoCache.repo)
 	if err != nil {
 		return err
