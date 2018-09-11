@@ -93,7 +93,7 @@ func (sb *showBug) layout(g *gocui.Gui) error {
 	}
 
 	v.Clear()
-	fmt.Fprintf(v, "[q] Save and return [←↓↑→,hjkl] Navigation ")
+	fmt.Fprintf(v, "[Esc] Save and return [←↓↑→,hjkl] Navigation ")
 
 	if sb.isOnSide {
 		fmt.Fprint(v, "[a] Add label [r] Remove label")
@@ -112,7 +112,7 @@ func (sb *showBug) layout(g *gocui.Gui) error {
 
 func (sb *showBug) keybindings(g *gocui.Gui) error {
 	// Return
-	if err := g.SetKeybinding(showBugView, 'q', gocui.ModNone, sb.saveAndBack); err != nil {
+	if err := g.SetKeybinding(showBugView, gocui.KeyEsc, gocui.ModNone, sb.saveAndBack); err != nil {
 		return err
 	}
 

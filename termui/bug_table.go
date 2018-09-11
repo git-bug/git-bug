@@ -114,7 +114,7 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 		v.Frame = false
 		v.BgColor = gocui.ColorBlue
 
-		fmt.Fprintf(v, "[q] Quit [←↓↑→,hjkl] Navigation [enter] Open bug [n] New bug [i] Pull [o] Push")
+		fmt.Fprintf(v, "[Esc] Quit [←↓↑→,hjkl] Navigation [enter] Open bug [n] New bug [i] Pull [o] Push")
 	}
 
 	_, err = g.SetCurrentView(bugTableView)
@@ -123,7 +123,7 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 
 func (bt *bugTable) keybindings(g *gocui.Gui) error {
 	// Quit
-	if err := g.SetKeybinding(bugTableView, 'q', gocui.ModNone, quit); err != nil {
+	if err := g.SetKeybinding(bugTableView, gocui.KeyEsc, gocui.ModNone, quit); err != nil {
 		return err
 	}
 

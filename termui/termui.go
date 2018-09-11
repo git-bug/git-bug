@@ -76,6 +76,8 @@ func initGui(action func(ui *termUI) error) {
 
 	ui.g.SetManagerFunc(layout)
 
+	ui.g.InputEsc = true
+
 	err = keybindings(ui.g)
 
 	if err != nil {
