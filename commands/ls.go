@@ -5,7 +5,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/util"
+	"github.com/MichaelMure/git-bug/util/colors"
 	"github.com/spf13/cobra"
 )
 
@@ -61,10 +61,10 @@ func runLsBug(cmd *cobra.Command, args []string) error {
 		authorFmt := fmt.Sprintf("%-15.15s", author.Name)
 
 		fmt.Printf("%s %s\t%s\t%s\t%s\n",
-			util.Cyan(b.HumanId()),
-			util.Yellow(snapshot.Status),
+			colors.Cyan(b.HumanId()),
+			colors.Yellow(snapshot.Status),
 			titleFmt,
-			util.Magenta(authorFmt),
+			colors.Magenta(authorFmt),
 			snapshot.Summary(),
 		)
 	}

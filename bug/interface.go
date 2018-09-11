@@ -2,7 +2,7 @@ package bug
 
 import (
 	"github.com/MichaelMure/git-bug/repository"
-	"github.com/MichaelMure/git-bug/util"
+	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
 type Interface interface {
@@ -41,10 +41,10 @@ type Interface interface {
 	Compile() Snapshot
 
 	// CreateLamportTime return the Lamport time of creation
-	CreateLamportTime() util.LamportTime
+	CreateLamportTime() lamport.Time
 
 	// EditLamportTime return the Lamport time of the last edit
-	EditLamportTime() util.LamportTime
+	EditLamportTime() lamport.Time
 }
 
 func bugFromInterface(bug Interface) *Bug {

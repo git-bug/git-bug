@@ -25,14 +25,14 @@
 
 */
 
-package util
+package lamport
 
 import (
 	"testing"
 )
 
-func TestLamportClock(t *testing.T) {
-	l := &LamportClock{}
+func TestClock(t *testing.T) {
+	l := &Clock{}
 
 	if l.Time() != 0 {
 		t.Fatalf("bad time value")

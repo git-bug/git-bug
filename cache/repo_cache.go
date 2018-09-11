@@ -13,9 +13,10 @@ import (
 	"strings"
 
 	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/bug/operations"
+	"github.com/MichaelMure/git-bug/operations"
 	"github.com/MichaelMure/git-bug/repository"
-	"github.com/MichaelMure/git-bug/util"
+	"github.com/MichaelMure/git-bug/util/git"
+	"github.com/MichaelMure/git-bug/util/process"
 )
 
 type RepoCache struct {
@@ -262,7 +263,7 @@ func (c *RepoCache) NewBug(title string, message string) (*BugCache, error) {
 
 // NewBugWithFiles create a new bug with attached files for the message
 // The new bug is written in the repository (commit)
-func (c *RepoCache) NewBugWithFiles(title string, message string, files []util.Hash) (*BugCache, error) {
+func (c *RepoCache) NewBugWithFiles(title string, message string, files []git.Hash) (*BugCache, error) {
 	author, err := bug.GetUser(c.repo)
 	if err != nil {
 		return nil, err
@@ -382,7 +383,7 @@ func repoIsAvailable(repo repository.Repo) error {
 			return err
 		}
 
-		if util.ProcessIsRunning(pid) {
+		if process.IsRunning(pid) {
 			return fmt.Errorf("the repository you want to access is already locked by the process pid %d", pid)
 		}
 

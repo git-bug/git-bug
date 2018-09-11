@@ -1,11 +1,11 @@
-package util
+package text
 
 import (
 	"strings"
 	"testing"
 )
 
-func TestTextWrap(t *testing.T) {
+func TestWrap(t *testing.T) {
 	cases := []struct {
 		Input, Output string
 		Lim           int
@@ -92,7 +92,7 @@ func TestTextWrap(t *testing.T) {
 	}
 
 	for i, tc := range cases {
-		actual, lines := TextWrap(tc.Input, tc.Lim)
+		actual, lines := Wrap(tc.Input, tc.Lim)
 		if actual != tc.Output {
 			t.Fatalf("Case %d Input:\n\n`%s`\n\nExpected Output:\n\n`%s`\n\nActual Output:\n\n`%s`",
 				i, tc.Input, tc.Output, actual)

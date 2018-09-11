@@ -18,16 +18,16 @@ models:
   Label:
     model: github.com/MichaelMure/git-bug/bug.Label
   Hash:
-    model: github.com/MichaelMure/git-bug/util.Hash
+    model: github.com/MichaelMure/git-bug/util/git.Hash
   Operation:
     model: github.com/MichaelMure/git-bug/bug.Operation
   CreateOperation:
-    model: github.com/MichaelMure/git-bug/bug/operations.CreateOperation
+    model: github.com/MichaelMure/git-bug/operations.CreateOperation
   SetTitleOperation:
-    model: github.com/MichaelMure/git-bug/bug/operations.SetTitleOperation
+    model: github.com/MichaelMure/git-bug/operations.SetTitleOperation
   AddCommentOperation:
-    model: github.com/MichaelMure/git-bug/bug/operations.AddCommentOperation
+    model: github.com/MichaelMure/git-bug/operations.AddCommentOperation
   SetStatusOperation:
-    model: github.com/MichaelMure/git-bug/bug/operations.SetStatusOperation
+    model: github.com/MichaelMure/git-bug/operations.SetStatusOperation
   LabelChangeOperation:
-    model: github.com/MichaelMure/git-bug/bug/operations.LabelChangeOperation
+    model: github.com/MichaelMure/git-bug/operations.LabelChangeOperation

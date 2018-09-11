@@ -6,7 +6,8 @@ import (
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/util"
+	"github.com/MichaelMure/git-bug/util/colors"
+	"github.com/MichaelMure/git-bug/util/text"
 	"github.com/dustin/go-humanize"
 	"github.com/jroimartin/gocui"
 )
@@ -296,18 +297,18 @@ func (bt *bugTable) render(v *gocui.View, maxX int) {
 			person = create.Author
 		}
 
-		id := util.LeftPaddedString(snap.HumanId(), columnWidths["id"], 2)
-		status := util.LeftPaddedString(snap.Status.String(), columnWidths["status"], 2)
-		title := util.LeftPaddedString(snap.Title, columnWidths["title"], 2)
-		author := util.LeftPaddedString(person.Name, columnWidths["author"], 2)
-		summary := util.LeftPaddedString(snap.Summary(), columnWidths["summary"], 2)
-		lastEdit := util.LeftPaddedString(humanize.Time(snap.LastEditTime()), columnWidths["lastEdit"], 2)
+		id := text.LeftPaddedString(snap.HumanId(), columnWidths["id"], 2)
+		status := text.LeftPaddedString(snap.Status.String(), columnWidths["status"], 2)
+		title := text.LeftPaddedString(snap.Title, columnWidths["title"], 2)
+		author := text.LeftPaddedString(person.Name, columnWidths["author"], 2)
+		summary := text.LeftPaddedString(snap.Summary(), columnWidths["summary"], 2)
+		lastEdit := text.LeftPaddedString(humanize.Time(snap.LastEditTime()), columnWidths["lastEdit"], 2)
 
 		fmt.Fprintf(v, "%s %s %s %s %s %s\n",
-			util.Cyan(id),
-			util.Yellow(status),
+			colors.Cyan(id),
+			colors.Yellow(status),
 			title,
-			util.Magenta(author),
+			colors.Magenta(author),
 			summary,
 			lastEdit,
 		)
@@ -317,12 +318,12 @@ func (bt *bugTable) render(v *gocui.View, maxX int) {
 func (bt *bugTable) renderHeader(v *gocui.View, maxX int) {
 	columnWidths := bt.getColumnWidths(maxX)
 
-	id := util.LeftPaddedString("ID", columnWidths["id"], 2)
-	status := util.LeftPaddedString("STATUS", columnWidths["status"], 2)
-	title := util.LeftPaddedString("TITLE", columnWidths["title"], 2)
-	author := util.LeftPaddedString("AUTHOR", columnWidths["author"], 2)
-	summary := util.LeftPaddedString("SUMMARY", columnWidths["summary"], 2)
-	lastEdit := util.LeftPaddedString("LAST EDIT", columnWidths["lastEdit"], 2)
+	id := text.LeftPaddedString("ID", columnWidths["id"], 2)
+	status := text.LeftPaddedString("STATUS", columnWidths["status"], 2)
+	title := text.LeftPaddedString("TITLE", columnWidths["title"], 2)
+	author := text.LeftPaddedString("AUTHOR", columnWidths["author"], 2)
+	summary := text.LeftPaddedString("SUMMARY", columnWidths["summary"], 2)
+	lastEdit := text.LeftPaddedString("LAST EDIT", columnWidths["lastEdit"], 2)
 
 	fmt.Fprintf(v, "\n")
 	fmt.Fprintf(v, "%s %s %s %s %s %s\n", id, status, title, author, summary, lastEdit)
@@ -433,7 +434,7 @@ func (bt *bugTable) pull(g *gocui.Gui, v *gocui.View) error {
 				})
 			} else {
 				fmt.Fprintf(&buffer, "%s%s: %s",
-					beginLine, util.Cyan(merge.Bug.HumanId()), merge.Status,
+					beginLine, colors.Cyan(merge.Bug.HumanId()), merge.Status,
 				)
 
 				beginLine = "\n"

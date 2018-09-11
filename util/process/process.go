@@ -1,12 +1,12 @@
-package util
+package process
 
 import (
 	"os"
 	"syscall"
 )
 
-// ProcessIsRunning tell is a process is running
-func ProcessIsRunning(pid int) bool {
+// IsRunning tell is a process is running
+func IsRunning(pid int) bool {
 	// never return no error in a unix system
 	process, err := os.FindProcess(pid)
 

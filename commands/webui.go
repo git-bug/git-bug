@@ -14,7 +14,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/graphql"
 	"github.com/MichaelMure/git-bug/repository"
-	"github.com/MichaelMure/git-bug/util"
+	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/webui"
 	"github.com/gorilla/mux"
 	"github.com/phayes/freeport"
@@ -111,7 +111,7 @@ func newGitFileHandler(repo repository.Repo) http.Handler {
 }
 
 func (gfh *gitFileHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	hash := util.Hash(mux.Vars(r)["hash"])
+	hash := git.Hash(mux.Vars(r)["hash"])
 
 	if !hash.IsValid() {
 		http.Error(rw, "invalid git hash", http.StatusBadRequest)
@@ -122,7 +122,7 @@ func (gfh *gitFileHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	// This can be a problem for big files. There might be a way around
 	// that by implementing a io.ReadSeeker that would read and discard
 	// data when a seek is called.
-	data, err := gfh.repo.ReadData(util.Hash(hash))
+	data, err := gfh.repo.ReadData(git.Hash(hash))
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return

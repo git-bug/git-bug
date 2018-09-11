@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/MichaelMure/git-bug/bug/operations"
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/util"
+	"github.com/MichaelMure/git-bug/operations"
+	"github.com/MichaelMure/git-bug/util/colors"
+	"github.com/MichaelMure/git-bug/util/text"
 	"github.com/jroimartin/gocui"
 )
 
@@ -209,13 +210,13 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 	sb.mainSelectableView = nil
 
 	bugHeader := fmt.Sprintf("[%s] %s\n\n[%s] %s opened this bug on %s",
-		util.Cyan(snap.HumanId()),
-		util.Bold(snap.Title),
-		util.Yellow(snap.Status),
-		util.Magenta(snap.Author.Name),
+		colors.Cyan(snap.HumanId()),
+		colors.Bold(snap.Title),
+		colors.Yellow(snap.Status),
+		colors.Magenta(snap.Author.Name),
 		snap.CreatedAt.Format(timeLayout),
 	)
-	bugHeader, lines := util.TextWrap(bugHeader, maxX)
+	bugHeader, lines := text.Wrap(bugHeader, maxX)
 
 	v, err := sb.createOpView(g, showBugHeaderView, x0, y0, maxX+1, lines, false)
 	if err != nil {
@@ -235,7 +236,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 
 		case operations.CreateOperation:
 			create := op.(operations.CreateOperation)
-			content, lines := util.TextWrapPadded(create.Message, maxX, 4)
+			content, lines := text.WrapLeftPadded(create.Message, maxX, 4)
 
 			v, err := sb.createOpView(g, viewName, x0, y0, maxX+1, lines, true)
 			if err != nil {
@@ -247,13 +248,13 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 		case operations.AddCommentOperation:
 			comment := op.(operations.AddCommentOperation)
 
-			message, _ := util.TextWrapPadded(comment.Message, maxX, 4)
+			message, _ := text.WrapLeftPadded(comment.Message, maxX, 4)
 			content := fmt.Sprintf("%s commented on %s\n\n%s",
-				util.Magenta(comment.Author.Name),
+				colors.Magenta(comment.Author.Name),
 				comment.Time().Format(timeLayout),
 				message,
 			)
-			content, lines = util.TextWrap(content, maxX)
+			content, lines = text.Wrap(content, maxX)
 
 			v, err := sb.createOpView(g, viewName, x0, y0, maxX+1, lines, true)
 			if err != nil {
@@ -266,11 +267,11 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 			setTitle := op.(operations.SetTitleOperation)
 
 			content := fmt.Sprintf("%s changed the title to %s on %s",
-				util.Magenta(setTitle.Author.Name),
-				util.Bold(setTitle.Title),
+				colors.Magenta(setTitle.Author.Name),
+				colors.Bold(setTitle.Title),
 				setTitle.Time().Format(timeLayout),
 			)
-			content, lines := util.TextWrap(content, maxX)
+			content, lines := text.Wrap(content, maxX)
 
 			v, err := sb.createOpView(g, viewName, x0, y0, maxX+1, lines, true)
 			if err != nil {
@@ -283,11 +284,11 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 			setStatus := op.(operations.SetStatusOperation)
 
 			content := fmt.Sprintf("%s %s the bug on %s",
-				util.Magenta(setStatus.Author.Name),
-				util.Bold(setStatus.Status.Action()),
+				colors.Magenta(setStatus.Author.Name),
+				colors.Bold(setStatus.Status.Action()),
 				setStatus.Time().Format(timeLayout),
 			)
-			content, lines := util.TextWrap(content, maxX)
+			content, lines := text.Wrap(content, maxX)
 
 			v, err := sb.createOpView(g, viewName, x0, y0, maxX+1, lines, true)
 			if err != nil {
@@ -301,12 +302,12 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 
 			var added []string
 			for _, label := range labelChange.Added {
-				added = append(added, util.Bold("\""+label+"\""))
+				added = append(added, colors.Bold("\""+label+"\""))
 			}
 
 			var removed []string
 			for _, label := range labelChange.Removed {
-				removed = append(removed, util.Bold("\""+label+"\""))
+				removed = append(removed, colors.Bold("\""+label+"\""))
 			}
 
 			var action bytes.Buffer
@@ -332,11 +333,11 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 			}
 
 			content := fmt.Sprintf("%s %s on %s",
-				util.Magenta(labelChange.Author.Name),
+				colors.Magenta(labelChange.Author.Name),
 				action.String(),
 				labelChange.Time().Format(timeLayout),
 			)
-			content, lines := util.TextWrap(content, maxX)
+			content, lines := text.Wrap(content, maxX)
 
 			v, err := sb.createOpView(g, viewName, x0, y0, maxX+1, lines, true)
 			if err != nil {
@@ -402,9 +403,9 @@ func (sb *showBug) renderSidebar(g *gocui.Gui, sideView *gocui.View) error {
 	}
 
 	labels := strings.Join(labelStr, "\n")
-	labels, lines := util.TextWrapPadded(labels, maxX, 2)
+	labels, lines := text.WrapLeftPadded(labels, maxX, 2)
 
-	content := fmt.Sprintf("%s\n\n%s", util.Bold("Labels"), labels)
+	content := fmt.Sprintf("%s\n\n%s", colors.Bold("Labels"), labels)
 
 	v, err := sb.createSideView(g, "sideLabels", x0, y0, maxX, lines+2)
 	if err != nil {

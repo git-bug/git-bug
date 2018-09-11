@@ -1,7 +1,7 @@
 package bug
 
 import (
-	"github.com/MichaelMure/git-bug/util"
+	"github.com/MichaelMure/git-bug/util/git"
 	"time"
 )
 
@@ -28,7 +28,7 @@ type Operation interface {
 	// Apply the operation to a Snapshot to create the final state
 	Apply(snapshot Snapshot) Snapshot
 	// Files return the files needed by this operation
-	Files() []util.Hash
+	Files() []git.Hash
 
 	// TODO: data validation (ex: a title is a single line)
 	// Validate() bool
@@ -66,6 +66,6 @@ func (op OpBase) GetUnixTime() int64 {
 }
 
 // Files return the files needed by this operation
-func (op OpBase) Files() []util.Hash {
+func (op OpBase) Files() []git.Hash {
 	return nil
 }

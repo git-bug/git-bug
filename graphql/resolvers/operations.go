@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/bug/operations"
 	"github.com/MichaelMure/git-bug/graphql/models"
+	"github.com/MichaelMure/git-bug/operations"
 )
 
 type addCommentOperationResolver struct{}

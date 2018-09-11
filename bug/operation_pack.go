@@ -5,7 +5,7 @@ import (
 	"encoding/gob"
 
 	"github.com/MichaelMure/git-bug/repository"
-	"github.com/MichaelMure/git-bug/util"
+	"github.com/MichaelMure/git-bug/util/git"
 )
 
 // OperationPack represent an ordered set of operation to apply
@@ -18,7 +18,7 @@ type OperationPack struct {
 	Operations []Operation
 
 	// Private field so not serialized by gob
-	commitHash util.Hash
+	commitHash git.Hash
 }
 
 // ParseOperationPack will deserialize an OperationPack from raw bytes
@@ -68,7 +68,7 @@ func (opp *OperationPack) IsValid() bool {
 
 // Write will serialize and store the OperationPack as a git blob and return
 // its hash
-func (opp *OperationPack) Write(repo repository.Repo) (util.Hash, error) {
+func (opp *OperationPack) Write(repo repository.Repo) (git.Hash, error) {
 	data, err := opp.Serialize()
 
 	if err != nil {

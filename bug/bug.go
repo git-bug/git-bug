@@ -6,7 +6,8 @@ import (
 	"strings"
 
 	"github.com/MichaelMure/git-bug/repository"
-	"github.com/MichaelMure/git-bug/util"
+	"github.com/MichaelMure/git-bug/util/git"
+	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
 const bugsRefPattern = "refs/bugs/"
@@ -34,14 +35,14 @@ type Bug struct {
 	// A Lamport clock is a logical clock that allow to order event
 	// inside a distributed system.
 	// It must be the first field in this struct due to https://github.com/golang/go/issues/599
-	createTime util.LamportTime
-	editTime   util.LamportTime
+	createTime lamport.Time
+	editTime   lamport.Time
 
 	// Id used as unique identifier
 	id string
 
-	lastCommit util.Hash
-	rootPack   util.Hash
+	lastCommit git.Hash
+	rootPack   git.Hash
 
 	// all the committed operations
 	packs []OperationPack
@@ -173,10 +174,10 @@ func readBug(repo repository.Repo, ref string) (*Bug, error) {
 
 		if bug.rootPack == "" {
 			bug.rootPack = rootEntry.Hash
-			bug.createTime = util.LamportTime(createTime)
+			bug.createTime = lamport.Time(createTime)
 		}
 
-		bug.editTime = util.LamportTime(editTime)
+		bug.editTime = lamport.Time(editTime)
 
 		// Update the clocks
 		if err := repo.CreateWitness(bug.createTime); err != nil {
@@ -446,7 +447,7 @@ func (bug *Bug) Commit(repo repository.Repo) error {
 func makeMediaTree(pack OperationPack) []repository.TreeEntry {
 	var tree []repository.TreeEntry
 	counter := 0
-	added := make(map[util.Hash]interface{})
+	added := make(map[git.Hash]interface{})
 
 	for _, ops := range pack.Operations {
 		for _, file := range ops.Files() {
@@ -576,12 +577,12 @@ func (bug *Bug) HumanId() string {
 }
 
 // CreateLamportTime return the Lamport time of creation
-func (bug *Bug) CreateLamportTime() util.LamportTime {
+func (bug *Bug) CreateLamportTime() lamport.Time {
 	return bug.createTime
 }
 
 // EditLamportTime return the Lamport time of the last edit
-func (bug *Bug) EditLamportTime() util.LamportTime {
+func (bug *Bug) EditLamportTime() lamport.Time {
 	return bug.editTime
 }
 
