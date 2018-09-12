@@ -27,8 +27,8 @@ type Operation interface {
 	GetUnixTime() int64
 	// Apply the operation to a Snapshot to create the final state
 	Apply(snapshot Snapshot) Snapshot
-	// Files return the files needed by this operation
-	Files() []git.Hash
+	// GetFiles return the files needed by this operation
+	GetFiles() []git.Hash
 
 	// TODO: data validation (ex: a title is a single line)
 	// Validate() bool
@@ -36,9 +36,9 @@ type Operation interface {
 
 // OpBase implement the common code for all operations
 type OpBase struct {
-	OperationType OperationType
-	Author        Person
-	UnixTime      int64
+	OperationType OperationType `json:"type"`
+	Author        Person        `json:"author"`
+	UnixTime      int64         `json:"timestamp"`
 }
 
 // NewOpBase is the constructor for an OpBase
@@ -65,7 +65,7 @@ func (op OpBase) GetUnixTime() int64 {
 	return op.UnixTime
 }
 
-// Files return the files needed by this operation
-func (op OpBase) Files() []git.Hash {
+// GetFiles return the files needed by this operation
+func (op OpBase) GetFiles() []git.Hash {
 	return nil
 }

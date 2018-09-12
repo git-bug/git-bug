@@ -1,6 +1,7 @@
 package bug
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -193,20 +194,21 @@ func readBug(repo repository.Repo, ref string) (*Bug, error) {
 			return nil, err
 		}
 
-		op, err := ParseOperationPack(data)
+		opp := &OperationPack{}
+		err = json.Unmarshal(data, &opp)
 
 		if err != nil {
 			return nil, err
 		}
 
 		// tag the pack with the commit hash
-		op.commitHash = hash
+		opp.commitHash = hash
 
 		if err != nil {
 			return nil, err
 		}
 
-		bug.packs = append(bug.packs, *op)
+		bug.packs = append(bug.packs, *opp)
 	}
 
 	return &bug, nil
@@ -450,7 +452,7 @@ func makeMediaTree(pack OperationPack) []repository.TreeEntry {
 	added := make(map[git.Hash]interface{})
 
 	for _, ops := range pack.Operations {
-		for _, file := range ops.Files() {
+		for _, file := range ops.GetFiles() {
 			if _, has := added[file]; !has {
 				tree = append(tree, repository.TreeEntry{
 					ObjectType: repository.Blob,

@@ -10,8 +10,8 @@ var _ bug.Operation = SetTitleOperation{}
 
 type SetTitleOperation struct {
 	bug.OpBase
-	Title string
-	Was   string
+	Title string `json:"title"`
+	Was   string `json:"was"`
 }
 
 func (op SetTitleOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {

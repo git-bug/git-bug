@@ -340,7 +340,7 @@ func (ec *executionContext) _AddCommentOperation_files(ctx context.Context, fiel
 	rctx.Field = field
 	rctx.PushField(field.Alias)
 	defer rctx.Pop()
-	res := obj.Files()
+	res := obj.Files
 	arr1 := graphql.Array{}
 	for idx1 := range res {
 		arr1 = append(arr1, func() graphql.Marshaler {
@@ -1157,7 +1157,7 @@ func (ec *executionContext) _CreateOperation_files(ctx context.Context, field gr
 	rctx.Field = field
 	rctx.PushField(field.Alias)
 	defer rctx.Pop()
-	res := obj.Files()
+	res := obj.Files
 	arr1 := graphql.Array{}
 	for idx1 := range res {
 		arr1 = append(arr1, func() graphql.Marshaler {

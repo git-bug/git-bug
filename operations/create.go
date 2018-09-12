@@ -11,9 +11,9 @@ var _ bug.Operation = CreateOperation{}
 
 type CreateOperation struct {
 	bug.OpBase
-	Title   string
-	Message string
-	files   []git.Hash
+	Title   string     `json:"title"`
+	Message string     `json:"message"`
+	Files   []git.Hash `json:"files"`
 }
 
 func (op CreateOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {
@@ -30,8 +30,8 @@ func (op CreateOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {
 	return snapshot
 }
 
-func (op CreateOperation) Files() []git.Hash {
-	return op.files
+func (op CreateOperation) GetFiles() []git.Hash {
+	return op.Files
 }
 
 func NewCreateOp(author bug.Person, title, message string, files []git.Hash) CreateOperation {
@@ -39,7 +39,7 @@ func NewCreateOp(author bug.Person, title, message string, files []git.Hash) Cre
 		OpBase:  bug.NewOpBase(bug.CreateOp, author),
 		Title:   title,
 		Message: message,
-		files:   files,
+		Files:   files,
 	}
 }
 

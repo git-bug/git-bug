@@ -1,12 +1,15 @@
 package bug
 
 import (
-	"bytes"
-	"encoding/gob"
+	"encoding/json"
+	"fmt"
+	"reflect"
 
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/git"
 )
+
+const formatVersion = 1
 
 // OperationPack represent an ordered set of operation to apply
 // to a Bug. These operations are stored in a single Git commit.
@@ -21,34 +24,65 @@ type OperationPack struct {
 	commitHash git.Hash
 }
 
-// ParseOperationPack will deserialize an OperationPack from raw bytes
-func ParseOperationPack(data []byte) (*OperationPack, error) {
-	reader := bytes.NewReader(data)
-	decoder := gob.NewDecoder(reader)
+var operations map[OperationType]reflect.Type
 
-	var opp OperationPack
-
-	err := decoder.Decode(&opp)
-
-	if err != nil {
-		return nil, err
+func Register(t OperationType, op interface{}) {
+	if operations == nil {
+		operations = make(map[OperationType]reflect.Type)
 	}
-
-	return &opp, nil
+	operations[t] = reflect.TypeOf(op)
 }
 
-// Serialize will serialise an OperationPack into raw bytes
-func (opp *OperationPack) Serialize() ([]byte, error) {
-	var data bytes.Buffer
+func (opp *OperationPack) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Version    uint        `json:"version"`
+		Operations []Operation `json:"ops"`
+	}{
+		Version:    formatVersion,
+		Operations: opp.Operations,
+	})
+}
 
-	encoder := gob.NewEncoder(&data)
-	err := encoder.Encode(*opp)
+func (opp *OperationPack) UnmarshalJSON(data []byte) error {
+	aux := struct {
+		Version    uint              `json:"version"`
+		Operations []json.RawMessage `json:"ops"`
+	}{}
 
-	if err != nil {
-		return nil, err
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
 	}
 
-	return data.Bytes(), nil
+	if aux.Version != formatVersion {
+		return fmt.Errorf("unknown format version %v", aux.Version)
+	}
+
+	for _, raw := range aux.Operations {
+		var t struct {
+			OperationType OperationType `json:"type"`
+		}
+
+		if err := json.Unmarshal(raw, &t); err != nil {
+			return err
+		}
+
+		opType, ok := operations[t.OperationType]
+		if !ok {
+			return fmt.Errorf("unknown operation type %v", t.OperationType)
+		}
+
+		op := reflect.New(opType).Interface()
+
+		if err := json.Unmarshal(raw, op); err != nil {
+			return err
+		}
+
+		deref := reflect.ValueOf(op).Elem().Interface()
+
+		opp.Operations = append(opp.Operations, deref.(Operation))
+	}
+
+	return nil
 }
 
 // Append a new operation to the pack
@@ -69,7 +103,7 @@ func (opp *OperationPack) IsValid() bool {
 // Write will serialize and store the OperationPack as a git blob and return
 // its hash
 func (opp *OperationPack) Write(repo repository.Repo) (git.Hash, error) {
-	data, err := opp.Serialize()
+	data, err := json.Marshal(opp)
 
 	if err != nil {
 		return "", err

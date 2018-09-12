@@ -1,12 +1,14 @@
 package operations
 
-import "encoding/gob"
+import (
+	"github.com/MichaelMure/git-bug/bug"
+)
 
 // Package initialisation used to register operation's type for (de)serialization
 func init() {
-	gob.Register(AddCommentOperation{})
-	gob.Register(CreateOperation{})
-	gob.Register(SetTitleOperation{})
-	gob.Register(SetStatusOperation{})
-	gob.Register(LabelChangeOperation{})
+	bug.Register(bug.CreateOp, CreateOperation{})
+	bug.Register(bug.SetTitleOp, SetTitleOperation{})
+	bug.Register(bug.AddCommentOp, AddCommentOperation{})
+	bug.Register(bug.SetStatusOp, SetStatusOperation{})
+	bug.Register(bug.LabelChangeOp, LabelChangeOperation{})
 }

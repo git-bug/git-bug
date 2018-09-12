@@ -10,7 +10,7 @@ var _ bug.Operation = SetStatusOperation{}
 
 type SetStatusOperation struct {
 	bug.OpBase
-	Status bug.Status
+	Status bug.Status `json:"status"`
 }
 
 func (op SetStatusOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {

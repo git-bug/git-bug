@@ -11,16 +11,16 @@ var _ bug.Operation = AddCommentOperation{}
 
 type AddCommentOperation struct {
 	bug.OpBase
-	Message string
+	Message string `json:"message"`
 	// TODO: change for a map[string]util.hash to store the filename ?
-	files []git.Hash
+	Files []git.Hash `json:"files"`
 }
 
 func (op AddCommentOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {
 	comment := bug.Comment{
 		Message:  op.Message,
 		Author:   op.Author,
-		Files:    op.files,
+		Files:    op.Files,
 		UnixTime: op.UnixTime,
 	}
 
@@ -29,15 +29,15 @@ func (op AddCommentOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {
 	return snapshot
 }
 
-func (op AddCommentOperation) Files() []git.Hash {
-	return op.files
+func (op AddCommentOperation) GetFiles() []git.Hash {
+	return op.Files
 }
 
 func NewAddCommentOp(author bug.Person, message string, files []git.Hash) AddCommentOperation {
 	return AddCommentOperation{
 		OpBase:  bug.NewOpBase(bug.AddCommentOp, author),
 		Message: message,
-		files:   files,
+		Files:   files,
 	}
 }
 
