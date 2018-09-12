@@ -72,7 +72,12 @@ func GenerateRandomBugsWithSeed(opts Options, seed int64) []*bug.Bug {
 			panic(err)
 		}
 
-		nOps := opts.MinOp + rand.Intn(opts.MaxOp-opts.MinOp)
+		nOps := opts.MinOp
+
+		if opts.MaxOp > opts.MinOp {
+			nOps += rand.Intn(opts.MaxOp - opts.MinOp)
+		}
+
 		for j := 0; j < nOps; j++ {
 			index := rand.Intn(len(opsGenerators))
 			opsGenerators[index](b, randomPerson(opts.PersonNumber))
