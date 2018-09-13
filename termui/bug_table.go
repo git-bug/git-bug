@@ -120,7 +120,7 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 		v.Frame = false
 		v.BgColor = gocui.ColorBlue
 
-		fmt.Fprintf(v, "[Esc] Quit [←↓↑→,hjkl] Navigation [enter] Open bug [n] New bug [i] Pull [o] Push")
+		fmt.Fprintf(v, "[Esc] Quit [q] Query [←↓↑→,hjkl] Navigation [enter] Open bug [n] New bug [i] Pull [o] Push")
 	}
 
 	_, err = g.SetCurrentView(bugTableView)
