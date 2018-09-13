@@ -73,7 +73,7 @@ func TestPushPull(t *testing.T) {
 
 	bug1, err := operations.Create(rene, "bug1", "message")
 	checkErr(t, err)
-	bug1.Commit(repoA)
+	err = bug1.Commit(repoA)
 	checkErr(t, err)
 
 	// A --> remote --> B
@@ -92,7 +92,7 @@ func TestPushPull(t *testing.T) {
 	// B --> remote --> A
 	bug2, err := operations.Create(rene, "bug2", "message")
 	checkErr(t, err)
-	bug2.Commit(repoB)
+	err = bug2.Commit(repoB)
 	checkErr(t, err)
 
 	_, err = bug.Push(repoB, "origin")
@@ -141,7 +141,7 @@ func _RebaseTheirs(t testing.TB) {
 
 	bug1, err := operations.Create(rene, "bug1", "message")
 	checkErr(t, err)
-	bug1.Commit(repoA)
+	err = bug1.Commit(repoA)
 	checkErr(t, err)
 
 	// A --> remote
@@ -158,7 +158,7 @@ func _RebaseTheirs(t testing.TB) {
 	operations.Comment(bug2, rene, "message2")
 	operations.Comment(bug2, rene, "message3")
 	operations.Comment(bug2, rene, "message4")
-	bug2.Commit(repoB)
+	err = bug2.Commit(repoB)
 	checkErr(t, err)
 
 	// B --> remote
@@ -199,7 +199,7 @@ func _RebaseOurs(t testing.TB) {
 
 	bug1, err := operations.Create(rene, "bug1", "message")
 	checkErr(t, err)
-	bug1.Commit(repoA)
+	err = bug1.Commit(repoA)
 	checkErr(t, err)
 
 	// A --> remote
@@ -213,19 +213,19 @@ func _RebaseOurs(t testing.TB) {
 	operations.Comment(bug1, rene, "message2")
 	operations.Comment(bug1, rene, "message3")
 	operations.Comment(bug1, rene, "message4")
-	bug1.Commit(repoA)
+	err = bug1.Commit(repoA)
 	checkErr(t, err)
 
 	operations.Comment(bug1, rene, "message5")
 	operations.Comment(bug1, rene, "message6")
 	operations.Comment(bug1, rene, "message7")
-	bug1.Commit(repoA)
+	err = bug1.Commit(repoA)
 	checkErr(t, err)
 
 	operations.Comment(bug1, rene, "message8")
 	operations.Comment(bug1, rene, "message9")
 	operations.Comment(bug1, rene, "message10")
-	bug1.Commit(repoA)
+	err = bug1.Commit(repoA)
 	checkErr(t, err)
 
 	// remote --> A
@@ -271,7 +271,7 @@ func _RebaseConflict(t testing.TB) {
 
 	bug1, err := operations.Create(rene, "bug1", "message")
 	checkErr(t, err)
-	bug1.Commit(repoA)
+	err = bug1.Commit(repoA)
 	checkErr(t, err)
 
 	// A --> remote
@@ -285,19 +285,19 @@ func _RebaseConflict(t testing.TB) {
 	operations.Comment(bug1, rene, "message2")
 	operations.Comment(bug1, rene, "message3")
 	operations.Comment(bug1, rene, "message4")
-	bug1.Commit(repoA)
+	err = bug1.Commit(repoA)
 	checkErr(t, err)
 
 	operations.Comment(bug1, rene, "message5")
 	operations.Comment(bug1, rene, "message6")
 	operations.Comment(bug1, rene, "message7")
-	bug1.Commit(repoA)
+	err = bug1.Commit(repoA)
 	checkErr(t, err)
 
 	operations.Comment(bug1, rene, "message8")
 	operations.Comment(bug1, rene, "message9")
 	operations.Comment(bug1, rene, "message10")
-	bug1.Commit(repoA)
+	err = bug1.Commit(repoA)
 	checkErr(t, err)
 
 	bug2, err := bug.ReadLocalBug(repoB, bug1.Id())
@@ -306,19 +306,19 @@ func _RebaseConflict(t testing.TB) {
 	operations.Comment(bug2, rene, "message11")
 	operations.Comment(bug2, rene, "message12")
 	operations.Comment(bug2, rene, "message13")
-	bug2.Commit(repoB)
+	err = bug2.Commit(repoB)
 	checkErr(t, err)
 
 	operations.Comment(bug2, rene, "message14")
 	operations.Comment(bug2, rene, "message15")
 	operations.Comment(bug2, rene, "message16")
-	bug2.Commit(repoB)
+	err = bug2.Commit(repoB)
 	checkErr(t, err)
 
 	operations.Comment(bug2, rene, "message17")
 	operations.Comment(bug2, rene, "message18")
 	operations.Comment(bug2, rene, "message19")
-	bug2.Commit(repoB)
+	err = bug2.Commit(repoB)
 	checkErr(t, err)
 
 	// A --> remote

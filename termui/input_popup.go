@@ -55,7 +55,10 @@ func (ip *inputPopup) layout(g *gocui.Gui) error {
 		v.Frame = true
 		v.Title = ip.title
 		v.Editable = true
-		v.Write([]byte(ip.preload))
+		_, err = v.Write([]byte(ip.preload))
+		if err != nil {
+			return err
+		}
 	}
 
 	if _, err := g.SetCurrentView(inputPopupView); err != nil {

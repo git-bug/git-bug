@@ -87,7 +87,10 @@ func runWebUI(cmd *cobra.Command, args []string) error {
 	fmt.Printf("Graphql API: http://%s/graphql\n", addr)
 	fmt.Printf("Graphql Playground: http://%s/playground\n", addr)
 
-	open.Run(webUiAddr)
+	err = open.Run(webUiAddr)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	err = srv.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
@@ -188,7 +191,11 @@ func (gufh *gitUploadFileHandler) ServeHTTP(rw http.ResponseWriter, r *http.Requ
 	}
 
 	rw.Header().Set("Content-Type", "application/json")
-	rw.Write(js)
+	_, err = rw.Write(js)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 var webUICmd = &cobra.Command{

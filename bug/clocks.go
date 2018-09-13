@@ -12,8 +12,15 @@ func Witnesser(repo *repository.GitRepo) error {
 			return b.Err
 		}
 
-		repo.CreateWitness(b.Bug.createTime)
-		repo.EditWitness(b.Bug.editTime)
+		err := repo.CreateWitness(b.Bug.createTime)
+		if err != nil {
+			return err
+		}
+
+		err = repo.EditWitness(b.Bug.editTime)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

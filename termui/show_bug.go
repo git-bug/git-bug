@@ -422,7 +422,10 @@ func (sb *showBug) saveAndBack(g *gocui.Gui, v *gocui.View) error {
 	if err != nil {
 		return err
 	}
-	ui.activateWindow(ui.bugTable)
+	err = ui.activateWindow(ui.bugTable)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -468,8 +471,6 @@ func (sb *showBug) scrollDown(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (sb *showBug) selectPrevious(g *gocui.Gui, v *gocui.View) error {
-	defer sb.focusView(g)
-
 	var selectable []string
 	if sb.isOnSide {
 		selectable = sb.sideSelectableView
@@ -485,7 +486,7 @@ func (sb *showBug) selectPrevious(g *gocui.Gui, v *gocui.View) error {
 			}
 
 			sb.selected = selectable[maxInt(i-1, 0)]
-			return nil
+			return sb.focusView(g)
 		}
 	}
 
@@ -493,12 +494,10 @@ func (sb *showBug) selectPrevious(g *gocui.Gui, v *gocui.View) error {
 		sb.selected = selectable[0]
 	}
 
-	return nil
+	return sb.focusView(g)
 }
 
 func (sb *showBug) selectNext(g *gocui.Gui, v *gocui.View) error {
-	defer sb.focusView(g)
-
 	var selectable []string
 	if sb.isOnSide {
 		selectable = sb.sideSelectableView
@@ -509,7 +508,7 @@ func (sb *showBug) selectNext(g *gocui.Gui, v *gocui.View) error {
 	for i, name := range selectable {
 		if name == sb.selected {
 			sb.selected = selectable[minInt(i+1, len(selectable)-1)]
-			return nil
+			return sb.focusView(g)
 		}
 	}
 
@@ -517,7 +516,7 @@ func (sb *showBug) selectNext(g *gocui.Gui, v *gocui.View) error {
 		sb.selected = selectable[0]
 	}
 
-	return nil
+	return sb.focusView(g)
 }
 
 func (sb *showBug) left(g *gocui.Gui, v *gocui.View) error {

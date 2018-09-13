@@ -28,7 +28,9 @@ It use the same internal storage so it doesn't pollute your project. As you woul
 	// even if we just display the help. This is to make sure that we check
 	// the repository and give the user early feedback.
 	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Help()
+		if err := cmd.Help(); err != nil {
+			os.Exit(1)
+		}
 	},
 
 	// Load the repo before any command execution
