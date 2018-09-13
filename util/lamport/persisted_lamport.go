@@ -12,12 +12,19 @@ type Persisted struct {
 	filePath string
 }
 
-func NewPersisted(filePath string) *Persisted {
+func NewPersisted(filePath string) (*Persisted, error) {
 	clock := &Persisted{
 		Clock:    NewClock(),
 		filePath: filePath,
 	}
-	return clock
+
+	dir := filepath.Dir(filePath)
+	err := os.MkdirAll(dir, 0777)
+	if err != nil {
+		return nil, err
+	}
+
+	return clock, nil
 }
 
 func LoadPersisted(filePath string) (*Persisted, error) {
@@ -67,12 +74,6 @@ func (c *Persisted) read() error {
 }
 
 func (c *Persisted) Write() error {
-	dir := filepath.Dir(c.filePath)
-	err := os.MkdirAll(dir, 0777)
-	if err != nil {
-		return err
-	}
-
 	data := []byte(fmt.Sprintf("%d", c.counter))
 	return ioutil.WriteFile(c.filePath, data, 0644)
 }

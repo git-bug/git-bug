@@ -90,7 +90,10 @@ func NewGitRepo(path string, witnesser func(repo *GitRepo) error) (*GitRepo, err
 
 	if err != nil {
 		// No clock yet, trying to initialize them
-		repo.createClocks()
+		err = repo.createClocks()
+		if err != nil {
+			return nil, err
+		}
 
 		err = witnesser(repo)
 		if err != nil {
@@ -111,9 +114,12 @@ func NewGitRepo(path string, witnesser func(repo *GitRepo) error) (*GitRepo, err
 // InitGitRepo create a new empty git repo at the given path
 func InitGitRepo(path string) (*GitRepo, error) {
 	repo := &GitRepo{Path: path}
-	repo.createClocks()
+	err := repo.createClocks()
+	if err != nil {
+		return nil, err
+	}
 
-	_, err := repo.runGitCommand("init", path)
+	_, err = repo.runGitCommand("init", path)
 	if err != nil {
 		return nil, err
 	}
@@ -124,9 +130,12 @@ func InitGitRepo(path string) (*GitRepo, error) {
 // InitBareGitRepo create a new --bare empty git repo at the given path
 func InitBareGitRepo(path string) (*GitRepo, error) {
 	repo := &GitRepo{Path: path}
-	repo.createClocks()
+	err := repo.createClocks()
+	if err != nil {
+		return nil, err
+	}
 
-	_, err := repo.runGitCommand("init", "--bare", path)
+	_, err = repo.runGitCommand("init", "--bare", path)
 	if err != nil {
 		return nil, err
 	}
@@ -336,12 +345,23 @@ func (repo *GitRepo) AddRemote(name string, url string) error {
 	return err
 }
 
-func (repo *GitRepo) createClocks() {
+func (repo *GitRepo) createClocks() error {
 	createPath := path.Join(repo.Path, createClockFile)
-	repo.createClock = lamport.NewPersisted(createPath)
+	createClock, err := lamport.NewPersisted(createPath)
+	if err != nil {
+		return err
+	}
 
 	editPath := path.Join(repo.Path, editClockFile)
-	repo.editClock = lamport.NewPersisted(editPath)
+	editClock, err := lamport.NewPersisted(editPath)
+	if err != nil {
+		return err
+	}
+
+	repo.createClock = createClock
+	repo.editClock = editClock
+
+	return nil
 }
 
 func (repo *GitRepo) LoadClocks() error {
