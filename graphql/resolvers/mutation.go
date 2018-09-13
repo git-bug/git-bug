@@ -89,7 +89,7 @@ func (r mutationResolver) ChangeLabels(ctx context.Context, repoRef *string, pre
 		return bug.Snapshot{}, err
 	}
 
-	err = b.ChangeLabels(nil, added, removed)
+	_, err = b.ChangeLabels(added, removed)
 	if err != nil {
 		return bug.Snapshot{}, err
 	}

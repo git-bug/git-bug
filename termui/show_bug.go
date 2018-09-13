@@ -600,7 +600,7 @@ func (sb *showBug) addLabel(g *gocui.Gui, v *gocui.View) error {
 			return r == ' ' || r == ','
 		})
 
-		err := sb.bug.ChangeLabels(nil, trimLabels(labels), nil)
+		_, err := sb.bug.ChangeLabels(trimLabels(labels), nil)
 		if err != nil {
 			ui.msgPopup.Activate(msgPopupErrorTitle, err.Error())
 		}
@@ -623,7 +623,7 @@ func (sb *showBug) removeLabel(g *gocui.Gui, v *gocui.View) error {
 			return r == ' ' || r == ','
 		})
 
-		err := sb.bug.ChangeLabels(nil, nil, trimLabels(labels))
+		_, err := sb.bug.ChangeLabels(nil, trimLabels(labels))
 		if err != nil {
 			ui.msgPopup.Activate(msgPopupErrorTitle, err.Error())
 		}

@@ -165,6 +165,7 @@ func labels(b bug.Interface, p bug.Person) {
 		removed = append(removed, addedLabels[index])
 		addedLabels[index] = addedLabels[len(addedLabels)-1]
 		addedLabels = addedLabels[:len(addedLabels)-1]
+		nbRemoved--
 	}
 
 	var added []string
@@ -175,5 +176,8 @@ func labels(b bug.Interface, p bug.Person) {
 		addedLabels = append(addedLabels, label)
 	}
 
-	operations.ChangeLabels(nil, b, p, added, removed)
+	// ignore error
+	// if the randomisation produce no changes, no op
+	// is added to the bug
+	operations.ChangeLabels(b, p, added, removed)
 }

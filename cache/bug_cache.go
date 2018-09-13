@@ -1,8 +1,6 @@
 package cache
 
 import (
-	"io"
-
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/operations"
 	"github.com/MichaelMure/git-bug/util/git"
@@ -51,18 +49,23 @@ func (c *BugCache) AddCommentWithFiles(message string, files []git.Hash) error {
 	return c.notifyUpdated()
 }
 
-func (c *BugCache) ChangeLabels(out io.Writer, added []string, removed []string) error {
+func (c *BugCache) ChangeLabels(added []string, removed []string) ([]operations.LabelChangeResult, error) {
 	author, err := bug.GetUser(c.repoCache.repo)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	err = operations.ChangeLabels(out, c.bug, author, added, removed)
+	changes, err := operations.ChangeLabels(c.bug, author, added, removed)
 	if err != nil {
-		return err
+		return changes, err
 	}
 
-	return c.notifyUpdated()
+	err = c.notifyUpdated()
+	if err != nil {
+		return nil, err
+	}
+
+	return changes, nil
 }
 
 func (c *BugCache) Open() error {

@@ -2,9 +2,10 @@ package commands
 
 import (
 	"errors"
-	"os"
+	"fmt"
 
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/operations"
 	"github.com/spf13/cobra"
 )
 
@@ -40,7 +41,25 @@ func runLabel(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	err = b.ChangeLabels(os.Stdout, add, remove)
+	changes, err := b.ChangeLabels(add, remove)
+
+	for _, change := range changes {
+		switch change.Status {
+		case operations.LabelChangeAdded:
+			fmt.Printf("label %s added\n", change.Label)
+		case operations.LabelChangeRemoved:
+			fmt.Printf("label %s removed\n", change.Label)
+		case operations.LabelChangeDuplicateInOp:
+			fmt.Printf("label %s is a duplicate\n", change.Label)
+		case operations.LabelChangeAlreadySet:
+			fmt.Printf("label %s was already set\n", change.Label)
+		case operations.LabelChangeDoesntExist:
+			fmt.Printf("label %s doesn't exist on this bug\n", change.Label)
+		default:
+			panic(fmt.Sprintf("unknown label change status %v", change.Status))
+		}
+	}
+
 	if err != nil {
 		return err
 	}

@@ -2,8 +2,6 @@ package operations
 
 import (
 	"fmt"
-	"io"
-	"io/ioutil"
 	"sort"
 
 	"github.com/MichaelMure/git-bug/bug"
@@ -60,13 +58,9 @@ func NewLabelChangeOperation(author bug.Person, added, removed []bug.Label) Labe
 }
 
 // ChangeLabels is a convenience function to apply the operation
-func ChangeLabels(out io.Writer, b bug.Interface, author bug.Person, add, remove []string) error {
-	// TODO: return a channel of result (like MergeAll) instead of formatting the result for the upper layers
+func ChangeLabels(b bug.Interface, author bug.Person, add, remove []string) ([]LabelChangeResult, error) {
 	var added, removed []bug.Label
-
-	if out == nil {
-		out = ioutil.Discard
-	}
+	var results []LabelChangeResult
 
 	snap := b.Compile()
 
@@ -75,17 +69,18 @@ func ChangeLabels(out io.Writer, b bug.Interface, author bug.Person, add, remove
 
 		// check for duplicate
 		if labelExist(added, label) {
-			fmt.Fprintf(out, "label \"%s\" is a duplicate\n", str)
+			results = append(results, LabelChangeResult{Label: label, Status: LabelChangeDuplicateInOp})
 			continue
 		}
 
 		// check that the label doesn't already exist
 		if labelExist(snap.Labels, label) {
-			fmt.Fprintf(out, "label \"%s\" is already set on this bug\n", str)
+			results = append(results, LabelChangeResult{Label: label, Status: LabelChangeAlreadySet})
 			continue
 		}
 
 		added = append(added, label)
+		results = append(results, LabelChangeResult{Label: label, Status: LabelChangeAdded})
 	}
 
 	for _, str := range remove {
@@ -93,28 +88,29 @@ func ChangeLabels(out io.Writer, b bug.Interface, author bug.Person, add, remove
 
 		// check for duplicate
 		if labelExist(removed, label) {
-			fmt.Fprintf(out, "label \"%s\" is a duplicate\n", str)
+			results = append(results, LabelChangeResult{Label: label, Status: LabelChangeDuplicateInOp})
 			continue
 		}
 
 		// check that the label actually exist
 		if !labelExist(snap.Labels, label) {
-			fmt.Fprintf(out, "label \"%s\" doesn't exist on this bug\n", str)
+			results = append(results, LabelChangeResult{Label: label, Status: LabelChangeDoesntExist})
 			continue
 		}
 
 		removed = append(removed, label)
+		results = append(results, LabelChangeResult{Label: label, Status: LabelChangeRemoved})
 	}
 
 	if len(added) == 0 && len(removed) == 0 {
-		return fmt.Errorf("no label added or removed")
+		return results, fmt.Errorf("no label added or removed")
 	}
 
 	labelOp := NewLabelChangeOperation(author, added, removed)
 
 	b.Append(labelOp)
 
-	return nil
+	return results, nil
 }
 
 func labelExist(labels []bug.Label, label bug.Label) bool {
@@ -125,4 +121,20 @@ func labelExist(labels []bug.Label, label bug.Label) bool {
 	}
 
 	return false
+}
+
+type LabelChangeStatus int
+
+const (
+	_ LabelChangeStatus = iota
+	LabelChangeAdded
+	LabelChangeRemoved
+	LabelChangeDuplicateInOp
+	LabelChangeAlreadySet
+	LabelChangeDoesntExist
+)
+
+type LabelChangeResult struct {
+	Label  bug.Label
+	Status LabelChangeStatus
 }
