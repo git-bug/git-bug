@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// OperationType is an identifier
+// OperationType is an operation type identifier
 type OperationType int
 
 const (

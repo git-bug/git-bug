@@ -313,7 +313,7 @@ func (c *RepoCache) MergeAll(remote string) <-chan bug.MergeResult {
 			id := result.Id
 
 			switch result.Status {
-			case bug.MsgMergeNew, bug.MsgMergeUpdated:
+			case bug.MergeStatusNew, bug.MergeStatusUpdated:
 				b := result.Bug
 				snap := b.Compile()
 				c.excerpts[id] = NewBugExcerpt(b, &snap)

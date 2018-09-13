@@ -423,7 +423,7 @@ func (bt *bugTable) pull(g *gocui.Gui, v *gocui.View) error {
 		beginLine := ""
 
 		for merge := range bt.repo.MergeAll(defaultRemote) {
-			if merge.Status == bug.MsgMergeNothing {
+			if merge.Status == bug.MergeStatusNothing {
 				continue
 			}
 

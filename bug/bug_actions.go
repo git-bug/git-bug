@@ -7,11 +7,6 @@ import (
 	"github.com/MichaelMure/git-bug/repository"
 )
 
-const MsgMergeNew = "new"
-const MsgMergeInvalid = "invalid data"
-const MsgMergeUpdated = "updated"
-const MsgMergeNothing = "nothing to do"
-
 // Fetch retrieve update from a remote
 // This does not change the local bugs state
 func Fetch(repo repository.Repo, remote string) (string, error) {
@@ -44,32 +39,6 @@ func Pull(repo repository.Repo, remote string) error {
 	return nil
 }
 
-type MergeResult struct {
-	// Err is set when a terminal error occur in the process
-	Err error
-
-	Id     string
-	Status string
-	Bug    *Bug
-}
-
-func newMergeError(err error, id string) MergeResult {
-	return MergeResult{
-		Err: err,
-		Id:  id,
-	}
-}
-
-func newMergeStatus(status string, id string, bug *Bug) MergeResult {
-	return MergeResult{
-		Id:     id,
-		Status: status,
-
-		// Bug is not set for an invalid merge result
-		Bug: bug,
-	}
-}
-
 // MergeAll will merge all the available remote bug
 func MergeAll(repo repository.Repo, remote string) <-chan MergeResult {
 	out := make(chan MergeResult)
@@ -98,7 +67,7 @@ func MergeAll(repo repository.Repo, remote string) <-chan MergeResult {
 
 			// Check for error in remote data
 			if !remoteBug.IsValid() {
-				out <- newMergeStatus(MsgMergeInvalid, id, nil)
+				out <- newMergeStatus(MergeStatusInvalid, id, nil)
 				continue
 			}
 
@@ -119,7 +88,7 @@ func MergeAll(repo repository.Repo, remote string) <-chan MergeResult {
 					return
 				}
 
-				out <- newMergeStatus(MsgMergeNew, id, remoteBug)
+				out <- newMergeStatus(MergeStatusNew, id, remoteBug)
 				continue
 			}
 
@@ -138,12 +107,64 @@ func MergeAll(repo repository.Repo, remote string) <-chan MergeResult {
 			}
 
 			if updated {
-				out <- newMergeStatus(MsgMergeUpdated, id, localBug)
+				out <- newMergeStatus(MergeStatusUpdated, id, localBug)
 			} else {
-				out <- newMergeStatus(MsgMergeNothing, id, localBug)
+				out <- newMergeStatus(MergeStatusNothing, id, localBug)
 			}
 		}
 	}()
 
 	return out
+}
+
+// MergeStatus represent the result of a merge operation of a bug
+type MergeStatus int
+
+const (
+	_ MergeStatus = iota
+	MergeStatusNew
+	MergeStatusInvalid
+	MergeStatusUpdated
+	MergeStatusNothing
+)
+
+func (ms MergeStatus) String() string {
+	switch ms {
+	case MergeStatusNew:
+		return "new"
+	case MergeStatusInvalid:
+		return "invalid data"
+	case MergeStatusUpdated:
+		return "updated"
+	case MergeStatusNothing:
+		return "nothing to do"
+	default:
+		panic("unknown merge status")
+	}
+}
+
+type MergeResult struct {
+	// Err is set when a terminal error occur in the process
+	Err error
+
+	Id     string
+	Status MergeStatus
+	Bug    *Bug
+}
+
+func newMergeError(err error, id string) MergeResult {
+	return MergeResult{
+		Err: err,
+		Id:  id,
+	}
+}
+
+func newMergeStatus(status MergeStatus, id string, bug *Bug) MergeResult {
+	return MergeResult{
+		Id:     id,
+		Status: status,
+
+		// Bug is not set for an invalid merge result
+		Bug: bug,
+	}
 }
