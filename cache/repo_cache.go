@@ -19,6 +19,9 @@ import (
 	"github.com/MichaelMure/git-bug/util/process"
 )
 
+const cacheFile = "cache"
+const formatVersion = 1
+
 type RepoCache struct {
 	// the underlying repo
 	repo repository.Repo
@@ -39,14 +42,14 @@ func NewRepoCache(r repository.Repo) (*RepoCache, error) {
 		return &RepoCache{}, err
 	}
 
-	err = c.loadExcerpts()
+	err = c.load()
 	if err == nil {
 		return c, nil
 	}
 
-	c.buildAllExcerpt()
+	c.buildCache()
 
-	return c, c.writeExcerpts()
+	return c, c.write()
 }
 
 // Repository return the underlying repository.
@@ -92,45 +95,56 @@ func (c *RepoCache) bugUpdated(id string) error {
 
 	c.excerpts[id] = NewBugExcerpt(b.bug, b.Snapshot())
 
-	return c.writeExcerpts()
+	return c.write()
 }
 
-// loadExcerpts will try to read from the disk the bug excerpt file
-func (c *RepoCache) loadExcerpts() error {
-	excerptsPath := repoExcerptsFilePath(c.repo)
-
-	f, err := os.Open(excerptsPath)
+// load will try to read from the disk the bug cache file
+func (c *RepoCache) load() error {
+	f, err := os.Open(cacheFilePath(c.repo))
 	if err != nil {
 		return err
 	}
 
 	decoder := gob.NewDecoder(f)
 
-	var excerpts map[string]*BugExcerpt
+	aux := struct {
+		Version  uint
+		Excerpts map[string]*BugExcerpt
+	}{}
 
-	err = decoder.Decode(&excerpts)
+	err = decoder.Decode(&aux)
 	if err != nil {
 		return err
 	}
 
-	c.excerpts = excerpts
+	if aux.Version != 1 {
+		return fmt.Errorf("unknown cache format version %v", aux.Version)
+	}
+
+	c.excerpts = aux.Excerpts
 	return nil
 }
 
-// writeExcerpts will serialize on disk the BugExcerpt array
-func (c *RepoCache) writeExcerpts() error {
+// write will serialize on disk the bug cache file
+func (c *RepoCache) write() error {
 	var data bytes.Buffer
+
+	aux := struct {
+		Version  uint
+		Excerpts map[string]*BugExcerpt
+	}{
+		Version:  formatVersion,
+		Excerpts: c.excerpts,
+	}
 
 	encoder := gob.NewEncoder(&data)
 
-	err := encoder.Encode(c.excerpts)
+	err := encoder.Encode(aux)
 	if err != nil {
 		return err
 	}
 
-	excerptsPath := repoExcerptsFilePath(c.repo)
-
-	f, err := os.Create(excerptsPath)
+	f, err := os.Create(cacheFilePath(c.repo))
 	if err != nil {
 		return err
 	}
@@ -143,11 +157,11 @@ func (c *RepoCache) writeExcerpts() error {
 	return f.Close()
 }
 
-func repoExcerptsFilePath(repo repository.Repo) string {
-	return path.Join(repo.GetPath(), ".git", "git-bug", excerptsFile)
+func cacheFilePath(repo repository.Repo) string {
+	return path.Join(repo.GetPath(), ".git", "git-bug", cacheFile)
 }
 
-func (c *RepoCache) buildAllExcerpt() {
+func (c *RepoCache) buildCache() {
 	fmt.Printf("Building bug cache... ")
 
 	c.excerpts = make(map[string]*BugExcerpt)
@@ -324,7 +338,7 @@ func (c *RepoCache) MergeAll(remote string) <-chan bug.MergeResult {
 			out <- result
 		}
 
-		err := c.writeExcerpts()
+		err := c.write()
 
 		// No easy way out here ..
 		if err != nil {

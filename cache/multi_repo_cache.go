@@ -7,7 +7,6 @@ import (
 )
 
 const lockfile = "lock"
-const excerptsFile = "excerpts"
 
 type MultiRepoCache struct {
 	repos map[string]*RepoCache
