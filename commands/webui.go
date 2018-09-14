@@ -12,6 +12,7 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/99designs/gqlgen/handler"
 	"github.com/MichaelMure/git-bug/graphql"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/git"
@@ -20,7 +21,6 @@ import (
 	"github.com/phayes/freeport"
 	"github.com/skratchdot/open-golang/open"
 	"github.com/spf13/cobra"
-	"github.com/vektah/gqlgen/handler"
 )
 
 var port int

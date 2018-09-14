@@ -3,10 +3,10 @@
 package graphql
 
 import (
+	"github.com/99designs/gqlgen/handler"
 	"github.com/MichaelMure/git-bug/graphql/graph"
 	"github.com/MichaelMure/git-bug/graphql/resolvers"
 	"github.com/MichaelMure/git-bug/repository"
-	"github.com/vektah/gqlgen/handler"
 	"net/http"
 )
 
@@ -25,7 +25,11 @@ func NewHandler(repo repository.Repo) (Handler, error) {
 		return Handler{}, err
 	}
 
-	h.HandlerFunc = handler.GraphQL(graph.NewExecutableSchema(h.RootResolver))
+	config := graph.Config{
+		Resolvers: h.RootResolver,
+	}
+
+	h.HandlerFunc = handler.GraphQL(graph.NewExecutableSchema(config))
 
 	return h, nil
 }

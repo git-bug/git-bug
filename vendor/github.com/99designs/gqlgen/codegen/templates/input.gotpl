@@ -1,0 +1,28 @@
+	{{- if .IsMarshaled }}
+	func Unmarshal{{ .GQLType }}(v interface{}) ({{.FullName}}, error) {
+		var it {{.FullName}}
+		var asMap = v.(map[string]interface{})
+		{{ range $field := .Fields}}
+			{{- if $field.Default}}
+				if _, present := asMap[{{$field.GQLName|quote}}] ; !present {
+					asMap[{{$field.GQLName|quote}}] = {{ $field.Default | dump }}
+				}
+			{{- end}}
+		{{- end }}
+
+		for k, v := range asMap {
+			switch k {
+			{{- range $field := .Fields }}
+			case {{$field.GQLName|quote}}:
+				var err error
+				{{ $field.Unmarshal (print "it." $field.GoFieldName) "v" }}
+				if err != nil {
+					return it, err
+				}
+			{{- end }}
+			}
+		}
+
+		return it, nil
+	}
+	{{- end }}

@@ -2,6 +2,30 @@
 
 
 [[projects]]
+  digest = "1:2af7a7a1fcb231f9cac066e51c629370834819ac3a776dc0a3f577d28cb1fc28"
+  name = "github.com/99designs/gqlgen"
+  packages = [
+    "codegen",
+    "codegen/templates",
+    "complexity",
+    "graphql",
+    "graphql/introspection",
+    "handler",
+    "internal/gopath",
+  ]
+  pruneopts = "UT"
+  revision = "636435b68700211441303f1a5ed92f3768ba5774"
+  version = "v0.5.1"
+
+[[projects]]
+  digest = "1:897d91c431ce469d35a5e6030e60e617dccd9a0e95bdffa6a80594f5c5800d29"
+  name = "github.com/agnivade/levenshtein"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "3d21ba515fe27b856f230847e856431ae1724adc"
+  version = "v1.0.0"
+
+[[projects]]
   branch = "master"
   digest = "1:f438d91be142877c3ad83157992c91de787ddfbddcc2a7da1ef6ef61606cadc4"
   name = "github.com/cheekybits/genny"
@@ -64,6 +88,17 @@
   pruneopts = "UT"
   revision = "ea4d1f681babbce9545c9c5f3d5194a789c89f5b"
   version = "v1.2.0"
+
+[[projects]]
+  digest = "1:8ec8d88c248041a6df5f6574b87bc00e7e0b493881dad2e7ef47b11dc69093b5"
+  name = "github.com/hashicorp/golang-lru"
+  packages = [
+    ".",
+    "simplelru",
+  ]
+  pruneopts = "UT"
+  revision = "20f1fb78b0740ba8c3cb143a61e86ba5c8669768"
+  version = "v0.5.0"
 
 [[projects]]
   branch = "master"
@@ -192,23 +227,20 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:d1ef15a6bc267ffb9e3ac790591103e99d4662f5867a99f9182c43a2016884e2"
-  name = "github.com/vektah/gqlgen"
+  branch = "master"
+  digest = "1:8150271279cc160a41e9aabfee8118c20a0e88894a25b2577f93e7c868e5259c"
+  name = "github.com/vektah/gqlparser"
   packages = [
-    "codegen",
-    "codegen/templates",
-    "graphql",
-    "handler",
-    "neelance/common",
-    "neelance/errors",
-    "neelance/introspection",
-    "neelance/query",
-    "neelance/schema",
-    "neelance/validation",
+    ".",
+    "ast",
+    "gqlerror",
+    "lexer",
+    "parser",
+    "validator",
+    "validator/rules",
   ]
   pruneopts = "UT"
-  revision = "381b34691fd93829e50ba8821412dc3467ec4821"
-  version = "0.3.0"
+  revision = "14e83ae06ec152e6d0afb9766a00e0c0918aa8fc"
 
 [[projects]]
   branch = "master"
@@ -245,6 +277,10 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/99designs/gqlgen/codegen",
+    "github.com/99designs/gqlgen/graphql",
+    "github.com/99designs/gqlgen/graphql/introspection",
+    "github.com/99designs/gqlgen/handler",
     "github.com/cheekybits/genny/generic",
     "github.com/dustin/go-humanize",
     "github.com/fatih/color",
@@ -258,12 +294,8 @@
     "github.com/skratchdot/open-golang/open",
     "github.com/spf13/cobra",
     "github.com/spf13/cobra/doc",
-    "github.com/vektah/gqlgen/codegen",
-    "github.com/vektah/gqlgen/graphql",
-    "github.com/vektah/gqlgen/handler",
-    "github.com/vektah/gqlgen/neelance/introspection",
-    "github.com/vektah/gqlgen/neelance/query",
-    "github.com/vektah/gqlgen/neelance/schema",
+    "github.com/vektah/gqlparser",
+    "github.com/vektah/gqlparser/ast",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

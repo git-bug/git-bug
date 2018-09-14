@@ -9,7 +9,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/vektah/gqlgen/codegen"
+	"github.com/99designs/gqlgen/codegen"
 )
 
 func main() {
@@ -22,9 +22,9 @@ func main() {
 
 	fmt.Println("Generating graphql code ...")
 
-	log.SetOutput(ioutil.Discard)
+	log.SetOutput(os.Stdout)
 
-	config, err := codegen.LoadDefaultConfig()
+	config, err := codegen.LoadConfigFromDefaultLocations()
 	if err != nil {
 		log.Fatal(err)
 	}

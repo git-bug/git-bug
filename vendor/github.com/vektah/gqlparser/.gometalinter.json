@@ -1,0 +1,13 @@
+{
+  "sort": ["path"],
+  "Deadline": "5m",
+  "Linters": {
+    "errcheck": {
+      "Command":           "errcheck -abspath -ignore '[rR]ead|[wW]rite|Close'",
+      "Pattern":           "PATH:LINE:COL:MESSAGE",
+      "InstallFrom":       "github.com/kisielk/errcheck",
+      "PartitionStrategy": "packages"
+    }
+  },
+  "Disable": ["golint","gocyclo", "goconst", "gas", "interfacer", "vet","gosec"]
+}

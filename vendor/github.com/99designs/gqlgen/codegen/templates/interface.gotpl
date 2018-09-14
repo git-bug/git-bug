@@ -1,0 +1,18 @@
+{{- $interface := . }}
+
+func (ec *executionContext) _{{$interface.GQLType}}(ctx context.Context, sel ast.SelectionSet, obj *{{$interface.FullName}}) graphql.Marshaler {
+	switch obj := (*obj).(type) {
+	case nil:
+		return graphql.Null
+	{{- range $implementor := $interface.Implementors }}
+		{{- if $implementor.ValueReceiver }}
+			case {{$implementor.FullName}}:
+				return ec._{{$implementor.GQLType}}(ctx, sel, &obj)
+		{{- end}}
+		case *{{$implementor.FullName}}:
+			return ec._{{$implementor.GQLType}}(ctx, sel, obj)
+	{{- end }}
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}

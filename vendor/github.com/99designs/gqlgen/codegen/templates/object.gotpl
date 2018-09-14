@@ -1,0 +1,69 @@
+{{ $object := . }}
+
+var {{ $object.GQLType|lcFirst}}Implementors = {{$object.Implementors}}
+
+// nolint: gocyclo, errcheck, gas, goconst
+{{- if .Stream }}
+func (ec *executionContext) _{{$object.GQLType}}(ctx context.Context, sel ast.SelectionSet) func() graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, {{$object.GQLType|lcFirst}}Implementors)
+	ctx = graphql.WithResolverContext(ctx, &graphql.ResolverContext{
+		Object: {{$object.GQLType|quote}},
+	})
+	if len(fields) != 1 {
+		ec.Errorf(ctx, "must subscribe to exactly one stream")
+		return nil
+	}
+
+	switch fields[0].Name {
+	{{- range $field := $object.Fields }}
+	case "{{$field.GQLName}}":
+		return ec._{{$object.GQLType}}_{{$field.GQLName}}(ctx, fields[0])
+	{{- end }}
+	default:
+		panic("unknown field " + strconv.Quote(fields[0].Name))
+	}
+}
+{{- else }}
+func (ec *executionContext) _{{$object.GQLType}}(ctx context.Context, sel ast.SelectionSet{{if not $object.Root}}, obj *{{$object.FullName}} {{end}}) graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, {{$object.GQLType|lcFirst}}Implementors)
+	{{if $object.Root}}
+		ctx = graphql.WithResolverContext(ctx, &graphql.ResolverContext{
+			Object: {{$object.GQLType|quote}},
+		})
+	{{end}}
+
+	{{if $object.IsConcurrent}} var wg sync.WaitGroup {{end}}
+	out := graphql.NewOrderedMap(len(fields))
+	invalid := false
+	for i, field := range fields {
+		out.Keys[i] = field.Alias
+
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString({{$object.GQLType|quote}})
+		{{- range $field := $object.Fields }}
+		case "{{$field.GQLName}}":
+			{{- if $field.IsConcurrent }}
+				wg.Add(1)
+				go func(i int, field graphql.CollectedField) {
+			{{- end }}
+				out.Values[i] = ec._{{$object.GQLType}}_{{$field.GQLName}}(ctx, field{{if not $object.Root}}, obj{{end}})
+				{{- if $field.ASTType.NonNull }}
+					if out.Values[i] == graphql.Null {
+						invalid = true
+					}
+				{{- end }}
+			{{- if $field.IsConcurrent }}
+					wg.Done()
+				}(i, field)
+			{{- end }}
+		{{- end }}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	{{if $object.IsConcurrent}} wg.Wait() {{end}}
+	if invalid { return graphql.Null }
+	return out
+}
+{{- end }}
