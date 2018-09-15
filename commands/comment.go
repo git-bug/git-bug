@@ -4,14 +4,11 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/input"
+	"github.com/MichaelMure/git-bug/util/colors"
+	"github.com/MichaelMure/git-bug/util/text"
 	"github.com/spf13/cobra"
-)
-
-var (
-	commentMessageFile string
-	commentMessage     string
 )
 
 func runComment(cmd *cobra.Command, args []string) error {
@@ -33,40 +30,33 @@ func runComment(cmd *cobra.Command, args []string) error {
 
 	prefix := args[0]
 
-	if commentMessageFile != "" && commentMessage == "" {
-		commentMessage, err = input.FromFile(commentMessageFile)
-		if err != nil {
-			return err
-		}
-	}
-
-	if commentMessage == "" {
-		commentMessage, err = input.BugCommentEditorInput(backend.Repository())
-		if err == input.ErrEmptyMessage {
-			fmt.Println("Empty message, aborting.")
-			return nil
-		}
-		if err != nil {
-			return err
-		}
-	}
-
 	b, err := backend.ResolveBugPrefix(prefix)
 	if err != nil {
 		return err
 	}
 
-	err = b.AddComment(commentMessage)
-	if err != nil {
-		return err
-	}
+	snap := b.Snapshot()
 
-	return b.Commit()
+	commentsTextOutput(snap.Comments)
+
+	return nil
+}
+
+func commentsTextOutput(comments []bug.Comment) {
+	for i, comment := range comments {
+		if i != 0 {
+			fmt.Println()
+		}
+
+		fmt.Printf("Author: %s\n", colors.Magenta(comment.Author))
+		fmt.Printf("Date: %s\n\n", comment.FormatTime())
+		fmt.Println(text.LeftPad(comment.Message, 4))
+	}
 }
 
 var commentCmd = &cobra.Command{
 	Use:   "comment <id>",
-	Short: "Add a new comment to a bug",
+	Short: "Show a bug's comments",
 	RunE:  runComment,
 }
 
@@ -74,12 +64,4 @@ func init() {
 	RootCmd.AddCommand(commentCmd)
 
 	commentCmd.Flags().SortFlags = false
-
-	commentCmd.Flags().StringVarP(&commentMessageFile, "file", "F", "",
-		"Take the message from the given file. Use - to read the message from the standard input",
-	)
-
-	commentCmd.Flags().StringVarP(&commentMessage, "message", "m", "",
-		"Provide the new message from the command line",
-	)
 }

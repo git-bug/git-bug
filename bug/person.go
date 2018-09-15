@@ -63,3 +63,7 @@ func (p Person) Validate() error {
 
 	return nil
 }
+
+func (p Person) String() string {
+	return fmt.Sprintf("%s <%s>", p.Name, p.Email)
+}

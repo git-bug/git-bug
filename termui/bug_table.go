@@ -297,12 +297,12 @@ func (bt *bugTable) render(v *gocui.View, maxX int) {
 			person = create.Author
 		}
 
-		id := text.LeftPaddedString(snap.HumanId(), columnWidths["id"], 2)
-		status := text.LeftPaddedString(snap.Status.String(), columnWidths["status"], 2)
-		title := text.LeftPaddedString(snap.Title, columnWidths["title"], 2)
-		author := text.LeftPaddedString(person.Name, columnWidths["author"], 2)
-		summary := text.LeftPaddedString(snap.Summary(), columnWidths["summary"], 2)
-		lastEdit := text.LeftPaddedString(humanize.Time(snap.LastEditTime()), columnWidths["lastEdit"], 2)
+		id := text.LeftPadMaxLine(snap.HumanId(), columnWidths["id"], 2)
+		status := text.LeftPadMaxLine(snap.Status.String(), columnWidths["status"], 2)
+		title := text.LeftPadMaxLine(snap.Title, columnWidths["title"], 2)
+		author := text.LeftPadMaxLine(person.Name, columnWidths["author"], 2)
+		summary := text.LeftPadMaxLine(snap.Summary(), columnWidths["summary"], 2)
+		lastEdit := text.LeftPadMaxLine(humanize.Time(snap.LastEditTime()), columnWidths["lastEdit"], 2)
 
 		fmt.Fprintf(v, "%s %s %s %s %s %s\n",
 			colors.Cyan(id),
@@ -318,12 +318,12 @@ func (bt *bugTable) render(v *gocui.View, maxX int) {
 func (bt *bugTable) renderHeader(v *gocui.View, maxX int) {
 	columnWidths := bt.getColumnWidths(maxX)
 
-	id := text.LeftPaddedString("ID", columnWidths["id"], 2)
-	status := text.LeftPaddedString("STATUS", columnWidths["status"], 2)
-	title := text.LeftPaddedString("TITLE", columnWidths["title"], 2)
-	author := text.LeftPaddedString("AUTHOR", columnWidths["author"], 2)
-	summary := text.LeftPaddedString("SUMMARY", columnWidths["summary"], 2)
-	lastEdit := text.LeftPaddedString("LAST EDIT", columnWidths["lastEdit"], 2)
+	id := text.LeftPadMaxLine("ID", columnWidths["id"], 2)
+	status := text.LeftPadMaxLine("STATUS", columnWidths["status"], 2)
+	title := text.LeftPadMaxLine("TITLE", columnWidths["title"], 2)
+	author := text.LeftPadMaxLine("AUTHOR", columnWidths["author"], 2)
+	summary := text.LeftPadMaxLine("SUMMARY", columnWidths["summary"], 2)
+	lastEdit := text.LeftPadMaxLine("LAST EDIT", columnWidths["lastEdit"], 2)
 
 	fmt.Fprintf(v, "\n")
 	fmt.Fprintf(v, "%s %s %s %s %s %s\n", id, status, title, author, summary, lastEdit)

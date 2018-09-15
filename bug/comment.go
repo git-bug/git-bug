@@ -17,8 +17,13 @@ type Comment struct {
 	UnixTime int64
 }
 
-// FormatTime format the UnixTime of the comment for human consumption
-func (c Comment) FormatTime() string {
+// FormatTimeRel format the UnixTime of the comment for human consumption
+func (c Comment) FormatTimeRel() string {
 	t := time.Unix(c.UnixTime, 0)
 	return humanize.Time(t)
+}
+
+func (c Comment) FormatTime() string {
+	t := time.Unix(c.UnixTime, 0)
+	return t.Format("Mon Jan 2 15:04:05 2006 +0200")
 }

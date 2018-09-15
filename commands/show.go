@@ -49,7 +49,7 @@ func runShowBug(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("%s opened this issue %s\n\n",
 		colors.Magenta(firstComment.Author.Name),
-		firstComment.FormatTime(),
+		firstComment.FormatTimeRel(),
 	)
 
 	var labels = make([]string, len(snapshot.Labels))
