@@ -20,12 +20,12 @@ git-bug [flags]
 
 ### SEE ALSO
 
+* [git-bug add](git-bug_add.md)	 - Create a new bug
 * [git-bug close](git-bug_close.md)	 - Mark the bug as closed
 * [git-bug commands](git-bug_commands.md)	 - Display available commands
-* [git-bug comment](git-bug_comment.md)	 - Add a new comment to a bug
+* [git-bug comment](git-bug_comment.md)	 - Show a bug's comments
 * [git-bug label](git-bug_label.md)	 - Manipulate bug's label
 * [git-bug ls](git-bug_ls.md)	 - List bugs
-* [git-bug new](git-bug_new.md)	 - Create a new bug
 * [git-bug open](git-bug_open.md)	 - Mark the bug as open
 * [git-bug pull](git-bug_pull.md)	 - Pull bugs update from a git remote
 * [git-bug push](git-bug_push.md)	 - Push bugs update to a git remote

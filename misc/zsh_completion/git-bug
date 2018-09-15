@@ -2,12 +2,23 @@
 
 _arguments \
   '1: :->level1' \
-  '2: :_files'
+  '2: :->level2' \
+  '3: :_files'
 case $state in
   level1)
     case $words[1] in
       git-bug)
-        _arguments '1: :(close commands comment label ls new open pull push show termui webui)'
+        _arguments '1: :(add close commands comment label ls open pull push show termui webui)'
+      ;;
+      *)
+        _arguments '*: :_files'
+      ;;
+    esac
+  ;;
+  level2)
+    case $words[2] in
+      comment)
+        _arguments '2: :(add)'
       ;;
       *)
         _arguments '*: :_files'

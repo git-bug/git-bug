@@ -248,6 +248,35 @@ _git_bug() {
     __start_git-bug "$@"
 }
 
+_git-bug_add()
+{
+    last_command="git-bug_add"
+
+    command_aliases=()
+
+    commands=()
+
+    flags=()
+    two_word_flags=()
+    local_nonpersistent_flags=()
+    flags_with_completion=()
+    flags_completion=()
+
+    flags+=("--title=")
+    two_word_flags+=("-t")
+    local_nonpersistent_flags+=("--title=")
+    flags+=("--message=")
+    two_word_flags+=("-m")
+    local_nonpersistent_flags+=("--message=")
+    flags+=("--file=")
+    two_word_flags+=("-F")
+    local_nonpersistent_flags+=("--file=")
+
+    must_have_one_flag=()
+    must_have_one_noun=()
+    noun_aliases=()
+}
+
 _git-bug_close()
 {
     last_command="git-bug_close"
@@ -291,6 +320,26 @@ _git-bug_commands()
     noun_aliases=()
 }
 
+_git-bug_comment_add()
+{
+    last_command="git-bug_comment_add"
+
+    command_aliases=()
+
+    commands=()
+
+    flags=()
+    two_word_flags=()
+    local_nonpersistent_flags=()
+    flags_with_completion=()
+    flags_completion=()
+
+
+    must_have_one_flag=()
+    must_have_one_noun=()
+    noun_aliases=()
+}
+
 _git-bug_comment()
 {
     last_command="git-bug_comment"
@@ -298,6 +347,7 @@ _git-bug_comment()
     command_aliases=()
 
     commands=()
+    commands+=("add")
 
     flags=()
     two_word_flags=()
@@ -372,35 +422,6 @@ _git-bug_ls()
     flags+=("--direction=")
     two_word_flags+=("-d")
     local_nonpersistent_flags+=("--direction=")
-
-    must_have_one_flag=()
-    must_have_one_noun=()
-    noun_aliases=()
-}
-
-_git-bug_new()
-{
-    last_command="git-bug_new"
-
-    command_aliases=()
-
-    commands=()
-
-    flags=()
-    two_word_flags=()
-    local_nonpersistent_flags=()
-    flags_with_completion=()
-    flags_completion=()
-
-    flags+=("--title=")
-    two_word_flags+=("-t")
-    local_nonpersistent_flags+=("--title=")
-    flags+=("--message=")
-    two_word_flags+=("-m")
-    local_nonpersistent_flags+=("--message=")
-    flags+=("--file=")
-    two_word_flags+=("-F")
-    local_nonpersistent_flags+=("--file=")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -537,12 +558,12 @@ _git-bug_root_command()
     command_aliases=()
 
     commands=()
+    commands+=("add")
     commands+=("close")
     commands+=("commands")
     commands+=("comment")
     commands+=("label")
     commands+=("ls")
-    commands+=("new")
     commands+=("open")
     commands+=("pull")
     commands+=("push")

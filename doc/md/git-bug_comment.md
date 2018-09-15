@@ -1,10 +1,10 @@
 ## git-bug comment
 
-Add a new comment to a bug
+Show a bug's comments
 
 ### Synopsis
 
-Add a new comment to a bug
+Show a bug's comments
 
 ```
 git-bug comment <id> [flags]
@@ -21,4 +21,5 @@ git-bug comment <id> [flags]
 ### SEE ALSO
 
 * [git-bug](git-bug.md)	 - A bugtracker embedded in Git
+* [git-bug comment add](git-bug_comment_add.md)	 - Add a new comment to a bug
 
