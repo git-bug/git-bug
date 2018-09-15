@@ -2,10 +2,14 @@ package tests
 
 import (
 	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/repository"
+
 	"testing"
 )
 
 func TestBugId(t *testing.T) {
+	mockRepo := repository.NewMockRepoForTest()
+
 	bug1 := bug.NewBug()
 
 	bug1.Append(createOp)
@@ -20,32 +24,34 @@ func TestBugId(t *testing.T) {
 }
 
 func TestBugValidity(t *testing.T) {
+	mockRepo := repository.NewMockRepoForTest()
+
 	bug1 := bug.NewBug()
 
-	if bug1.IsValid() {
+	if bug1.Validate() == nil {
 		t.Fatal("Empty bug should be invalid")
 	}
 
 	bug1.Append(createOp)
 
-	if !bug1.IsValid() {
+	if bug1.Validate() != nil {
 		t.Fatal("Bug with just a CreateOp should be valid")
 	}
 
-	bug1.Append(createOp)
-
-	if bug1.IsValid() {
-		t.Fatal("Bug with multiple CreateOp should be invalid")
-	}
-
 	err := bug1.Commit(mockRepo)
-
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if bug1.IsValid() {
+	bug1.Append(createOp)
+
+	if bug1.Validate() == nil {
 		t.Fatal("Bug with multiple CreateOp should be invalid")
+	}
+
+	err = bug1.Commit(mockRepo)
+	if err == nil {
+		t.Fatal("Invalid bug should not commit")
 	}
 }
 

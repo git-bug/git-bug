@@ -44,7 +44,10 @@ func (c *BugCache) AddCommentWithFiles(message string, files []git.Hash) error {
 		return err
 	}
 
-	operations.CommentWithFiles(c.bug, author, message, files)
+	err = operations.CommentWithFiles(c.bug, author, message, files)
+	if err != nil {
+		return err
+	}
 
 	return c.notifyUpdated()
 }
@@ -74,7 +77,10 @@ func (c *BugCache) Open() error {
 		return err
 	}
 
-	operations.Open(c.bug, author)
+	err = operations.Open(c.bug, author)
+	if err != nil {
+		return err
+	}
 
 	return c.notifyUpdated()
 }
@@ -85,7 +91,10 @@ func (c *BugCache) Close() error {
 		return err
 	}
 
-	operations.Close(c.bug, author)
+	err = operations.Close(c.bug, author)
+	if err != nil {
+		return err
+	}
 
 	return c.notifyUpdated()
 }
@@ -96,7 +105,10 @@ func (c *BugCache) SetTitle(title string) error {
 		return err
 	}
 
-	operations.SetTitle(c.bug, author, title)
+	err = operations.SetTitle(c.bug, author, title)
+	if err != nil {
+		return err
+	}
 
 	return c.notifyUpdated()
 }

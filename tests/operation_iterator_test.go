@@ -18,10 +18,10 @@ var (
 	addCommentOp  = operations.NewAddCommentOp(rene, "message2", nil)
 	setStatusOp   = operations.NewSetStatusOp(rene, bug.ClosedStatus)
 	labelChangeOp = operations.NewLabelChangeOperation(rene, []bug.Label{"added"}, []bug.Label{"removed"})
-	mockRepo      = repository.NewMockRepoForTest()
 )
 
 func TestOpIterator(t *testing.T) {
+	mockRepo := repository.NewMockRepoForTest()
 
 	bug1 := bug.NewBug()
 

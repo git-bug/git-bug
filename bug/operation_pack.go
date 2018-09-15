@@ -7,6 +7,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/git"
+	"github.com/pkg/errors"
 )
 
 const formatVersion = 1
@@ -24,8 +25,10 @@ type OperationPack struct {
 	commitHash git.Hash
 }
 
+// hold the different operation type to instantiate to parse JSON
 var operations map[OperationType]reflect.Type
 
+// Register will register a new type of Operation to be able to parse the corresponding JSON
 func Register(t OperationType, op interface{}) {
 	if operations == nil {
 		operations = make(map[OperationType]reflect.Type)
@@ -96,8 +99,18 @@ func (opp *OperationPack) IsEmpty() bool {
 }
 
 // IsValid tell if the OperationPack is considered valid
-func (opp *OperationPack) IsValid() bool {
-	return !opp.IsEmpty()
+func (opp *OperationPack) Validate() error {
+	if opp.IsEmpty() {
+		return fmt.Errorf("empty")
+	}
+
+	for _, op := range opp.Operations {
+		if err := op.Validate(); err != nil {
+			return errors.Wrap(err, "op")
+		}
+	}
+
+	return nil
 }
 
 // Write will serialize and store the OperationPack as a git blob and return

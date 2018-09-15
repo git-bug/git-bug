@@ -2,9 +2,11 @@ package bug
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/MichaelMure/git-bug/repository"
+	"github.com/MichaelMure/git-bug/util/text"
 )
 
 type Person struct {
@@ -36,4 +38,28 @@ func GetUser(repo repository.Repo) (Person, error) {
 // Match tell is the Person match the given query string
 func (p Person) Match(query string) bool {
 	return strings.Contains(strings.ToLower(p.Name), strings.ToLower(query))
+}
+
+func (p Person) Validate() error {
+	if text.Empty(p.Name) {
+		return fmt.Errorf("name is not set")
+	}
+
+	if strings.Contains(p.Name, "\n") {
+		return fmt.Errorf("name should be a single line")
+	}
+
+	if !text.Safe(p.Name) {
+		return fmt.Errorf("name is not fully printable")
+	}
+
+	if strings.Contains(p.Email, "\n") {
+		return fmt.Errorf("email should be a single line")
+	}
+
+	if !text.Safe(p.Email) {
+		return fmt.Errorf("email is not fully printable")
+	}
+
+	return nil
 }

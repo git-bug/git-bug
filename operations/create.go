@@ -1,8 +1,12 @@
 package operations
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/util/git"
+	"github.com/MichaelMure/git-bug/util/text"
 )
 
 // CreateOperation define the initial creation of a bug
@@ -34,6 +38,30 @@ func (op CreateOperation) GetFiles() []git.Hash {
 	return op.Files
 }
 
+func (op CreateOperation) Validate() error {
+	if err := bug.OpBaseValidate(op, bug.CreateOp); err != nil {
+		return err
+	}
+
+	if text.Empty(op.Title) {
+		return fmt.Errorf("title is empty")
+	}
+
+	if strings.Contains(op.Title, "\n") {
+		return fmt.Errorf("title should be a single line")
+	}
+
+	if !text.Safe(op.Title) {
+		return fmt.Errorf("title is not fully printable")
+	}
+
+	if !text.Safe(op.Message) {
+		return fmt.Errorf("message is not fully printable")
+	}
+
+	return nil
+}
+
 func NewCreateOp(author bug.Person, title, message string, files []git.Hash) CreateOperation {
 	return CreateOperation{
 		OpBase:  bug.NewOpBase(bug.CreateOp, author),
@@ -51,6 +79,11 @@ func Create(author bug.Person, title, message string) (*bug.Bug, error) {
 func CreateWithFiles(author bug.Person, title, message string, files []git.Hash) (*bug.Bug, error) {
 	newBug := bug.NewBug()
 	createOp := NewCreateOp(author, title, message, files)
+
+	if err := createOp.Validate(); err != nil {
+		return nil, err
+	}
+
 	newBug.Append(createOp)
 
 	return newBug, nil

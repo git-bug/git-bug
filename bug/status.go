@@ -47,3 +47,11 @@ func StatusFromString(str string) (Status, error) {
 		return 0, fmt.Errorf("unknow status")
 	}
 }
+
+func (s Status) Validate() error {
+	if s != OpenStatus && s != ClosedStatus {
+		return fmt.Errorf("invalid")
+	}
+
+	return nil
+}

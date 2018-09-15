@@ -57,8 +57,8 @@ func GenerateRandomBugsWithSeed(opts Options, seed int64) []*bug.Bug {
 		comment,
 		title,
 		labels,
-		operations.Open,
-		operations.Close,
+		open,
+		close,
 	}
 
 	result := make([]*bug.Bug, opts.BugNumber)
@@ -148,11 +148,19 @@ func paragraphs() string {
 }
 
 func comment(b bug.Interface, p bug.Person) {
-	operations.Comment(b, p, paragraphs())
+	_ = operations.Comment(b, p, paragraphs())
 }
 
 func title(b bug.Interface, p bug.Person) {
-	operations.SetTitle(b, p, fake.Sentence())
+	_ = operations.SetTitle(b, p, fake.Sentence())
+}
+
+func open(b bug.Interface, p bug.Person) {
+	_ = operations.Open(b, p)
+}
+
+func close(b bug.Interface, p bug.Person) {
+	_ = operations.Close(b, p)
 }
 
 var addedLabels []string
@@ -179,5 +187,5 @@ func labels(b bug.Interface, p bug.Person) {
 	// ignore error
 	// if the randomisation produce no changes, no op
 	// is added to the bug
-	operations.ChangeLabels(b, p, added, removed)
+	_, _ = operations.ChangeLabels(b, p, added, removed)
 }

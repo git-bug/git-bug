@@ -2,6 +2,7 @@ package operations
 
 import (
 	"github.com/MichaelMure/git-bug/bug"
+	"github.com/pkg/errors"
 )
 
 // SetStatusOperation will change the status of a bug
@@ -19,6 +20,18 @@ func (op SetStatusOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {
 	return snapshot
 }
 
+func (op SetStatusOperation) Validate() error {
+	if err := bug.OpBaseValidate(op, bug.SetStatusOp); err != nil {
+		return err
+	}
+
+	if err := op.Status.Validate(); err != nil {
+		return errors.Wrap(err, "status")
+	}
+
+	return nil
+}
+
 func NewSetStatusOp(author bug.Person, status bug.Status) SetStatusOperation {
 	return SetStatusOperation{
 		OpBase: bug.NewOpBase(bug.SetStatusOp, author),
@@ -27,13 +40,21 @@ func NewSetStatusOp(author bug.Person, status bug.Status) SetStatusOperation {
 }
 
 // Convenience function to apply the operation
-func Open(b bug.Interface, author bug.Person) {
+func Open(b bug.Interface, author bug.Person) error {
 	op := NewSetStatusOp(author, bug.OpenStatus)
+	if err := op.Validate(); err != nil {
+		return err
+	}
 	b.Append(op)
+	return nil
 }
 
 // Convenience function to apply the operation
-func Close(b bug.Interface, author bug.Person) {
+func Close(b bug.Interface, author bug.Person) error {
 	op := NewSetStatusOp(author, bug.ClosedStatus)
+	if err := op.Validate(); err != nil {
+		return err
+	}
 	b.Append(op)
+	return nil
 }

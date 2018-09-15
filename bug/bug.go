@@ -2,13 +2,13 @@ package bug
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/lamport"
+	"github.com/pkg/errors"
 )
 
 const bugsRefPattern = "refs/bugs/"
@@ -279,31 +279,31 @@ func refsToIds(refs []string) []string {
 	return ids
 }
 
-// IsValid check if the Bug data is valid
-func (bug *Bug) IsValid() bool {
+// Validate check if the Bug data is valid
+func (bug *Bug) Validate() error {
 	// non-empty
 	if len(bug.packs) == 0 && bug.staging.IsEmpty() {
-		return false
+		return fmt.Errorf("bug has no operations")
 	}
 
-	// check if each pack is valid
+	// check if each pack and operations are valid
 	for _, pack := range bug.packs {
-		if !pack.IsValid() {
-			return false
+		if err := pack.Validate(); err != nil {
+			return err
 		}
 	}
 
 	// check if staging is valid if needed
 	if !bug.staging.IsEmpty() {
-		if !bug.staging.IsValid() {
-			return false
+		if err := bug.staging.Validate(); err != nil {
+			return errors.Wrap(err, "staging")
 		}
 	}
 
 	// The very first Op should be a CreateOp
 	firstOp := bug.FirstOp()
 	if firstOp == nil || firstOp.OpType() != CreateOp {
-		return false
+		return fmt.Errorf("first operation should be a Create op")
 	}
 
 	// Check that there is no more CreateOp op
@@ -316,10 +316,10 @@ func (bug *Bug) IsValid() bool {
 	}
 
 	if createCount != 1 {
-		return false
+		return fmt.Errorf("only one Create op allowed")
 	}
 
-	return true
+	return nil
 }
 
 // Append an operation into the staging area, to be committed later
@@ -336,6 +336,10 @@ func (bug *Bug) HasPendingOp() bool {
 func (bug *Bug) Commit(repo repository.Repo) error {
 	if bug.staging.IsEmpty() {
 		return fmt.Errorf("can't commit a bug with no pending operation")
+	}
+
+	if err := bug.Validate(); err != nil {
+		return errors.Wrap(err, "can't commit a bug with invalid data")
 	}
 
 	// Write the Ops as a Git blob containing the serialized array

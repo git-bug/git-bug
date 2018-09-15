@@ -2,6 +2,9 @@ package bug
 
 import (
 	"github.com/MichaelMure/git-bug/util/git"
+	"github.com/pkg/errors"
+
+	"fmt"
 	"time"
 )
 
@@ -25,13 +28,14 @@ type Operation interface {
 	Time() time.Time
 	// GetUnixTime return the unix timestamp when the operation was added
 	GetUnixTime() int64
-	// Apply the operation to a Snapshot to create the final state
-	Apply(snapshot Snapshot) Snapshot
+	// GetAuthor return the author of the operation
+	GetAuthor() Person
 	// GetFiles return the files needed by this operation
 	GetFiles() []git.Hash
-
-	// TODO: data validation (ex: a title is a single line)
-	// Validate() bool
+	// Apply the operation to a Snapshot to create the final state
+	Apply(snapshot Snapshot) Snapshot
+	// Validate check if the operation is valid (ex: a title is a single line)
+	Validate() error
 }
 
 // OpBase implement the common code for all operations
@@ -65,7 +69,35 @@ func (op OpBase) GetUnixTime() int64 {
 	return op.UnixTime
 }
 
+// GetAuthor return the author of the operation
+func (op OpBase) GetAuthor() Person {
+	return op.Author
+}
+
 // GetFiles return the files needed by this operation
 func (op OpBase) GetFiles() []git.Hash {
+	return nil
+}
+
+// Validate check the OpBase for errors
+func OpBaseValidate(op Operation, opType OperationType) error {
+	if op.OpType() != opType {
+		return fmt.Errorf("incorrect operation type (expected: %v, actual: %v)", opType, op.OpType())
+	}
+
+	if op.GetUnixTime() == 0 {
+		return fmt.Errorf("time not set")
+	}
+
+	if err := op.GetAuthor().Validate(); err != nil {
+		return errors.Wrap(err, "author")
+	}
+
+	for _, hash := range op.GetFiles() {
+		if !hash.IsValid() {
+			return fmt.Errorf("file with invalid hash %v", hash)
+		}
+	}
+
 	return nil
 }

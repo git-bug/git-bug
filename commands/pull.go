@@ -42,7 +42,7 @@ func runPull(cmd *cobra.Command, args []string) error {
 		}
 
 		if merge.Status != bug.MergeStatusNothing {
-			fmt.Printf("%s: %s\n", merge.Bug.HumanId(), merge.Status)
+			fmt.Printf("%s: %s\n", merge.Bug.HumanId(), merge)
 		}
 	}
 

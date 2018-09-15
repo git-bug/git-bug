@@ -66,8 +66,8 @@ func MergeAll(repo repository.Repo, remote string) <-chan MergeResult {
 			}
 
 			// Check for error in remote data
-			if !remoteBug.IsValid() {
-				out <- newMergeStatus(MergeStatusInvalid, id, nil)
+			if err := remoteBug.Validate(); err != nil {
+				out <- newMergeInvalidStatus(id, err.Error())
 				continue
 			}
 
@@ -128,12 +128,26 @@ const (
 	MergeStatusNothing
 )
 
-func (ms MergeStatus) String() string {
-	switch ms {
+type MergeResult struct {
+	// Err is set when a terminal error occur in the process
+	Err error
+
+	Id     string
+	Status MergeStatus
+
+	// Only set for invalid status
+	Reason string
+
+	// Not set for invalid status
+	Bug *Bug
+}
+
+func (mr MergeResult) String() string {
+	switch mr.Status {
 	case MergeStatusNew:
 		return "new"
 	case MergeStatusInvalid:
-		return "invalid data"
+		return fmt.Sprintf("invalid data: %s", mr.Reason)
 	case MergeStatusUpdated:
 		return "updated"
 	case MergeStatusNothing:
@@ -141,15 +155,6 @@ func (ms MergeStatus) String() string {
 	default:
 		panic("unknown merge status")
 	}
-}
-
-type MergeResult struct {
-	// Err is set when a terminal error occur in the process
-	Err error
-
-	Id     string
-	Status MergeStatus
-	Bug    *Bug
 }
 
 func newMergeError(err error, id string) MergeResult {
@@ -166,5 +171,13 @@ func newMergeStatus(status MergeStatus, id string, bug *Bug) MergeResult {
 
 		// Bug is not set for an invalid merge result
 		Bug: bug,
+	}
+}
+
+func newMergeInvalidStatus(id string, reason string) MergeResult {
+	return MergeResult{
+		Id:     id,
+		Status: MergeStatusInvalid,
+		Reason: reason,
 	}
 }

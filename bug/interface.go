@@ -12,8 +12,8 @@ type Interface interface {
 	// HumanId return the Bug identifier truncated for human consumption
 	HumanId() string
 
-	// IsValid check if the Bug data is valid
-	IsValid() bool
+	// Validate check if the Bug data is valid
+	Validate() error
 
 	// Append an operation into the staging area, to be committed later
 	Append(op Operation)

@@ -1,8 +1,11 @@
 package operations
 
 import (
+	"fmt"
+
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/util/git"
+	"github.com/MichaelMure/git-bug/util/text"
 )
 
 // AddCommentOperation will add a new comment in the bug
@@ -33,6 +36,22 @@ func (op AddCommentOperation) GetFiles() []git.Hash {
 	return op.Files
 }
 
+func (op AddCommentOperation) Validate() error {
+	if err := bug.OpBaseValidate(op, bug.AddCommentOp); err != nil {
+		return err
+	}
+
+	if text.Empty(op.Message) {
+		return fmt.Errorf("message is empty")
+	}
+
+	if !text.Safe(op.Message) {
+		return fmt.Errorf("message is not fully printable")
+	}
+
+	return nil
+}
+
 func NewAddCommentOp(author bug.Person, message string, files []git.Hash) AddCommentOperation {
 	return AddCommentOperation{
 		OpBase:  bug.NewOpBase(bug.AddCommentOp, author),
@@ -42,11 +61,15 @@ func NewAddCommentOp(author bug.Person, message string, files []git.Hash) AddCom
 }
 
 // Convenience function to apply the operation
-func Comment(b bug.Interface, author bug.Person, message string) {
-	CommentWithFiles(b, author, message, nil)
+func Comment(b bug.Interface, author bug.Person, message string) error {
+	return CommentWithFiles(b, author, message, nil)
 }
 
-func CommentWithFiles(b bug.Interface, author bug.Person, message string, files []git.Hash) {
+func CommentWithFiles(b bug.Interface, author bug.Person, message string, files []git.Hash) error {
 	addCommentOp := NewAddCommentOp(author, message, files)
+	if err := addCommentOp.Validate(); err != nil {
+		return err
+	}
 	b.Append(addCommentOp)
+	return nil
 }

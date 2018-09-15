@@ -434,7 +434,7 @@ func (bt *bugTable) pull(g *gocui.Gui, v *gocui.View) error {
 				})
 			} else {
 				fmt.Fprintf(&buffer, "%s%s: %s",
-					beginLine, colors.Cyan(merge.Bug.HumanId()), merge.Status,
+					beginLine, colors.Cyan(merge.Bug.HumanId()), merge,
 				)
 
 				beginLine = "\n"

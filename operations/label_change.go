@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/MichaelMure/git-bug/bug"
+	"github.com/pkg/errors"
 )
 
 var _ bug.Operation = LabelChangeOperation{}
@@ -47,6 +48,30 @@ AddLoop:
 	})
 
 	return snapshot
+}
+
+func (op LabelChangeOperation) Validate() error {
+	if err := bug.OpBaseValidate(op, bug.LabelChangeOp); err != nil {
+		return err
+	}
+
+	for _, l := range op.Added {
+		if err := l.Validate(); err != nil {
+			return errors.Wrap(err, "added label")
+		}
+	}
+
+	for _, l := range op.Removed {
+		if err := l.Validate(); err != nil {
+			return errors.Wrap(err, "removed label")
+		}
+	}
+
+	if len(op.Added)+len(op.Removed) <= 0 {
+		return fmt.Errorf("no label change")
+	}
+
+	return nil
 }
 
 func NewLabelChangeOperation(author bug.Person, added, removed []bug.Label) LabelChangeOperation {
@@ -107,6 +132,10 @@ func ChangeLabels(b bug.Interface, author bug.Person, add, remove []string) ([]L
 	}
 
 	labelOp := NewLabelChangeOperation(author, added, removed)
+
+	if err := labelOp.Validate(); err != nil {
+		return nil, err
+	}
 
 	b.Append(labelOp)
 
