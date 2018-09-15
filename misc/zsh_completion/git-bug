@@ -20,6 +20,9 @@ case $state in
       comment)
         _arguments '2: :(add)'
       ;;
+      title)
+        _arguments '2: :(edit)'
+      ;;
       *)
         _arguments '*: :_files'
       ;;

@@ -48,5 +48,5 @@ var titleCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(titleCmd)
 
-	commentCmd.Flags().SortFlags = false
+	titleCmd.Flags().SortFlags = false
 }

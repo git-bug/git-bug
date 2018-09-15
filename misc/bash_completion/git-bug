@@ -528,6 +528,29 @@ _git-bug_termui()
     noun_aliases=()
 }
 
+_git-bug_title_edit()
+{
+    last_command="git-bug_title_edit"
+
+    command_aliases=()
+
+    commands=()
+
+    flags=()
+    two_word_flags=()
+    local_nonpersistent_flags=()
+    flags_with_completion=()
+    flags_completion=()
+
+    flags+=("--title=")
+    two_word_flags+=("-t")
+    local_nonpersistent_flags+=("--title=")
+
+    must_have_one_flag=()
+    must_have_one_noun=()
+    noun_aliases=()
+}
+
 _git-bug_title()
 {
     last_command="git-bug_title"
@@ -535,6 +558,7 @@ _git-bug_title()
     command_aliases=()
 
     commands=()
+    commands+=("edit")
 
     flags=()
     two_word_flags=()
