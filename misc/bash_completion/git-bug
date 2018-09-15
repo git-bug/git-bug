@@ -528,6 +528,26 @@ _git-bug_termui()
     noun_aliases=()
 }
 
+_git-bug_title()
+{
+    last_command="git-bug_title"
+
+    command_aliases=()
+
+    commands=()
+
+    flags=()
+    two_word_flags=()
+    local_nonpersistent_flags=()
+    flags_with_completion=()
+    flags_completion=()
+
+
+    must_have_one_flag=()
+    must_have_one_noun=()
+    noun_aliases=()
+}
+
 _git-bug_webui()
 {
     last_command="git-bug_webui"
@@ -569,6 +589,7 @@ _git-bug_root_command()
     commands+=("push")
     commands+=("show")
     commands+=("termui")
+    commands+=("title")
     commands+=("webui")
 
     flags=()

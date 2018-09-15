@@ -31,5 +31,6 @@ git-bug [flags]
 * [git-bug push](git-bug_push.md)	 - Push bugs update to a git remote
 * [git-bug show](git-bug_show.md)	 - Display the details of a bug
 * [git-bug termui](git-bug_termui.md)	 - Launch the terminal UI
+* [git-bug title](git-bug_title.md)	 - Show a bug's title
 * [git-bug webui](git-bug_webui.md)	 - Launch the web UI
 
