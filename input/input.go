@@ -153,6 +153,27 @@ const queryTemplate = `%s
 
 # Please edit the bug query.
 # Lines starting with '#' will be ignored, and an empty query aborts the operation.
+#
+# Example: status:open author:"rené descartes" sort:edit
+#
+# Valid filters are:
+#
+# - status:open, status:closed
+# - author:<query>
+# - label:<label>
+# - no:label
+#
+# Sorting
+#
+# - sort:id, sort:id-desc, sort:id-asc
+# - sort:creation, sort:creation-desc, sort:creation-asc
+# - sort:edit, sort:edit-desc, sort:edit-asc
+#
+# Notes
+# 
+# - queries are case insensitive.
+# - you can combine as many qualifiers as you want.
+# - you can use double quotes for multi-word search terms (ex: author:"René Descartes")
 `
 
 // QueryEditorInput will open the default editor in the terminal with a
