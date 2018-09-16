@@ -30,6 +30,7 @@ git-bug [flags]
 * [git-bug pull](git-bug_pull.md)	 - Pull bugs update from a git remote
 * [git-bug push](git-bug_push.md)	 - Push bugs update to a git remote
 * [git-bug show](git-bug_show.md)	 - Display the details of a bug
+* [git-bug status](git-bug_status.md)	 - Show the bug status
 * [git-bug termui](git-bug_termui.md)	 - Launch the terminal UI
 * [git-bug title](git-bug_title.md)	 - Display a bug's title
 * [git-bug webui](git-bug_webui.md)	 - Launch the web UI
