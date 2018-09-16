@@ -277,26 +277,6 @@ _git-bug_add()
     noun_aliases=()
 }
 
-_git-bug_close()
-{
-    last_command="git-bug_close"
-
-    command_aliases=()
-
-    commands=()
-
-    flags=()
-    two_word_flags=()
-    local_nonpersistent_flags=()
-    flags_with_completion=()
-    flags_completion=()
-
-
-    must_have_one_flag=()
-    must_have_one_noun=()
-    noun_aliases=()
-}
-
 _git-bug_commands()
 {
     last_command="git-bug_commands"
@@ -428,26 +408,6 @@ _git-bug_ls()
     noun_aliases=()
 }
 
-_git-bug_open()
-{
-    last_command="git-bug_open"
-
-    command_aliases=()
-
-    commands=()
-
-    flags=()
-    two_word_flags=()
-    local_nonpersistent_flags=()
-    flags_with_completion=()
-    flags_completion=()
-
-
-    must_have_one_flag=()
-    must_have_one_noun=()
-    noun_aliases=()
-}
-
 _git-bug_pull()
 {
     last_command="git-bug_pull"
@@ -508,6 +468,46 @@ _git-bug_show()
     noun_aliases=()
 }
 
+_git-bug_status_close()
+{
+    last_command="git-bug_status_close"
+
+    command_aliases=()
+
+    commands=()
+
+    flags=()
+    two_word_flags=()
+    local_nonpersistent_flags=()
+    flags_with_completion=()
+    flags_completion=()
+
+
+    must_have_one_flag=()
+    must_have_one_noun=()
+    noun_aliases=()
+}
+
+_git-bug_status_open()
+{
+    last_command="git-bug_status_open"
+
+    command_aliases=()
+
+    commands=()
+
+    flags=()
+    two_word_flags=()
+    local_nonpersistent_flags=()
+    flags_with_completion=()
+    flags_completion=()
+
+
+    must_have_one_flag=()
+    must_have_one_noun=()
+    noun_aliases=()
+}
+
 _git-bug_status()
 {
     last_command="git-bug_status"
@@ -515,6 +515,8 @@ _git-bug_status()
     command_aliases=()
 
     commands=()
+    commands+=("close")
+    commands+=("open")
 
     flags=()
     two_word_flags=()
@@ -623,12 +625,10 @@ _git-bug_root_command()
 
     commands=()
     commands+=("add")
-    commands+=("close")
     commands+=("commands")
     commands+=("comment")
     commands+=("label")
     commands+=("ls")
-    commands+=("open")
     commands+=("pull")
     commands+=("push")
     commands+=("show")

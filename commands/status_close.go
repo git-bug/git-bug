@@ -7,9 +7,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func runOpenBug(cmd *cobra.Command, args []string) error {
+func runStatusClose(cmd *cobra.Command, args []string) error {
 	if len(args) > 1 {
-		return errors.New("Only opening one bug at a time is supported")
+		return errors.New("Only closing one bug at a time is supported")
 	}
 
 	if len(args) == 0 {
@@ -29,7 +29,7 @@ func runOpenBug(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	err = b.Open()
+	err = b.Close()
 	if err != nil {
 		return err
 	}
@@ -37,12 +37,12 @@ func runOpenBug(cmd *cobra.Command, args []string) error {
 	return b.Commit()
 }
 
-var openCmd = &cobra.Command{
-	Use:   "open <id>",
-	Short: "Mark the bug as open",
-	RunE:  runOpenBug,
+var closeCmd = &cobra.Command{
+	Use:   "close <id>",
+	Short: "Mark the bug as closed",
+	RunE:  runStatusClose,
 }
 
 func init() {
-	RootCmd.AddCommand(openCmd)
+	statusCmd.AddCommand(closeCmd)
 }
