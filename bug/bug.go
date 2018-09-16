@@ -1,3 +1,4 @@
+// Package bug contains the bug data model and low-level related functions
 package bug
 
 import (

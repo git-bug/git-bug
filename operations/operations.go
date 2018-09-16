@@ -1,3 +1,6 @@
+// Package operations contains the various bug operations. A bug operation is
+// an atomic edit operation of a bug state. These operations are applied
+// sequentially to compile the current state of the bug.
 package operations
 
 import (

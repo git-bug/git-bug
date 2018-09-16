@@ -2,6 +2,7 @@
 //go:generate genny -in=connection_template.go -out=gen_operation.go gen "NodeType=bug.Operation EdgeType=models.OperationEdge ConnectionType=models.OperationConnection"
 //go:generate genny -in=connection_template.go -out=gen_comment.go gen "NodeType=bug.Comment EdgeType=models.CommentEdge ConnectionType=models.CommentConnection"
 
+// Package connections implement a generic GraphQL relay connection
 package connections
 
 import (

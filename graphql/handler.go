@@ -1,5 +1,6 @@
 //go:generate go run gen_graphql.go
 
+// Package graphql contains the root GraphQL http handler
 package graphql
 
 import (
@@ -10,6 +11,7 @@ import (
 	"net/http"
 )
 
+// Handler is the root GraphQL http handler
 type Handler struct {
 	http.HandlerFunc
 	*resolvers.RootResolver

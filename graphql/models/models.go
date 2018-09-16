@@ -1,3 +1,4 @@
+// Package models contains the various GraphQL data models
 package models
 
 import (

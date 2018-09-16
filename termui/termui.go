@@ -1,3 +1,4 @@
+// Package termui contains the interactive terminal UI
 package termui
 
 import (

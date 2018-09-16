@@ -1,3 +1,4 @@
+// Package commands contains the CLI commands
 package commands
 
 import (

@@ -1,5 +1,7 @@
-// Originally taken from the git-appraise project
+// Inspired by the git-appraise project
 
+// Package input contains helpers to use a text editor as an input for
+// various field of a bug
 package input
 
 import (
