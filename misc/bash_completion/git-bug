@@ -347,6 +347,26 @@ _git-bug_comment()
     noun_aliases=()
 }
 
+_git-bug_label_add()
+{
+    last_command="git-bug_label_add"
+
+    command_aliases=()
+
+    commands=()
+
+    flags=()
+    two_word_flags=()
+    local_nonpersistent_flags=()
+    flags_with_completion=()
+    flags_completion=()
+
+
+    must_have_one_flag=()
+    must_have_one_noun=()
+    noun_aliases=()
+}
+
 _git-bug_label()
 {
     last_command="git-bug_label"
@@ -354,6 +374,7 @@ _git-bug_label()
     command_aliases=()
 
     commands=()
+    commands+=("add")
 
     flags=()
     two_word_flags=()

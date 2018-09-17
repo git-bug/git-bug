@@ -20,6 +20,9 @@ case $state in
       comment)
         _arguments '2: :(add)'
       ;;
+      label)
+        _arguments '2: :(add)'
+      ;;
       status)
         _arguments '2: :(close open)'
       ;;

@@ -46,5 +46,5 @@ var labelAddCmd = &cobra.Command{
 }
 
 func init() {
-	// labelCmd.AddCommand(labelAddCmd)
+	labelCmd.AddCommand(labelAddCmd)
 }

@@ -167,3 +167,20 @@ type LabelChangeResult struct {
 	Label  bug.Label
 	Status LabelChangeStatus
 }
+
+func (l LabelChangeResult) String() string {
+	switch l.Status {
+	case LabelChangeAdded:
+		return fmt.Sprintf("label %s added", l.Label)
+	case LabelChangeRemoved:
+		return fmt.Sprintf("label %s removed", l.Label)
+	case LabelChangeDuplicateInOp:
+		return fmt.Sprintf("label %s is a duplicate", l.Label)
+	case LabelChangeAlreadySet:
+		return fmt.Sprintf("label %s was already set", l.Label)
+	case LabelChangeDoesntExist:
+		return fmt.Sprintf("label %s doesn't exist on this bug", l.Label)
+	default:
+		panic(fmt.Sprintf("unknown label change status %v", l.Status))
+	}
+}
