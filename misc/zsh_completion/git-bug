@@ -21,7 +21,7 @@ case $state in
         _arguments '2: :(add)'
       ;;
       label)
-        _arguments '2: :(add)'
+        _arguments '2: :(add rm)'
       ;;
       status)
         _arguments '2: :(close open)'

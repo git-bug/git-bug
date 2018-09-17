@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func runLabelAdd(cmd *cobra.Command, args []string) error {
+func runLabelRm(cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
 		return errors.New("You must provide a bug id")
 	}
@@ -20,14 +20,14 @@ func runLabelAdd(cmd *cobra.Command, args []string) error {
 	defer backend.Close()
 
 	prefix := args[0]
-	add := args[1:]
+	remove := args[1:]
 
 	b, err := backend.ResolveBugPrefix(prefix)
 	if err != nil {
 		return err
 	}
 
-	changes, err := b.ChangeLabels(add, nil)
+	changes, err := b.ChangeLabels(nil, remove)
 
 	for _, change := range changes {
 		fmt.Println(change)
@@ -40,12 +40,12 @@ func runLabelAdd(cmd *cobra.Command, args []string) error {
 	return b.Commit()
 }
 
-var labelAddCmd = &cobra.Command{
-	Use:   "add <id> [<label>...]",
-	Short: "Add a label to a bug",
-	RunE:  runLabelAdd,
+var labelRmCmd = &cobra.Command{
+	Use:   "rm <id> [<label>...]",
+	Short: "Remove a label from a bug",
+	RunE:  runLabelRm,
 }
 
 func init() {
-	labelCmd.AddCommand(labelAddCmd)
+	labelCmd.AddCommand(labelRmCmd)
 }

@@ -20,4 +20,5 @@ git-bug label <id> [flags]
 
 * [git-bug](git-bug.md)	 - A bugtracker embedded in Git
 * [git-bug label add](git-bug_label_add.md)	 - Add a label to a bug
+* [git-bug label rm](git-bug_label_rm.md)	 - Remove a label from a bug
 
