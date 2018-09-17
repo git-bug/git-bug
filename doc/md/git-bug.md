@@ -23,7 +23,7 @@ git-bug [flags]
 * [git-bug add](git-bug_add.md)	 - Create a new bug
 * [git-bug commands](git-bug_commands.md)	 - Display available commands
 * [git-bug comment](git-bug_comment.md)	 - Show a bug's comments
-* [git-bug label](git-bug_label.md)	 - Manipulate bug's label
+* [git-bug label](git-bug_label.md)	 - Display a bug labels
 * [git-bug ls](git-bug_ls.md)	 - List bugs
 * [git-bug pull](git-bug_pull.md)	 - Pull bugs update from a git remote
 * [git-bug push](git-bug_push.md)	 - Push bugs update to a git remote

@@ -361,9 +361,6 @@ _git-bug_label()
     flags_with_completion=()
     flags_completion=()
 
-    flags+=("--remove")
-    flags+=("-r")
-    local_nonpersistent_flags+=("--remove")
 
     must_have_one_flag=()
     must_have_one_noun=()

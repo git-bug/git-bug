@@ -1,20 +1,19 @@
 ## git-bug label
 
-Manipulate bug's label
+Display a bug labels
 
 ### Synopsis
 
-Manipulate bug's label
+Display a bug labels
 
 ```
-git-bug label <id> [<label>...] [flags]
+git-bug label <id> [flags]
 ```
 
 ### Options
 
 ```
-  -r, --remove   Remove a label
-  -h, --help     help for label
+  -h, --help   help for label
 ```
 
 ### SEE ALSO
