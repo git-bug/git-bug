@@ -7,7 +7,7 @@ Display a bug's title
 Display a bug's title
 
 ```
-git-bug title <id> [flags]
+git-bug title [<id>] [flags]
 ```
 
 ### Options

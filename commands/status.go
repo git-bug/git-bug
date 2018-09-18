@@ -4,30 +4,18 @@ import (
 	"fmt"
 
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/pkg/errors"
+	"github.com/MichaelMure/git-bug/commands/select"
 	"github.com/spf13/cobra"
 )
 
 func runStatus(cmd *cobra.Command, args []string) error {
-	var err error
-
-	if len(args) > 1 {
-		return errors.New("Only one bug id is supported")
-	}
-
-	if len(args) == 0 {
-		return errors.New("You must provide a bug id")
-	}
-
 	backend, err := cache.NewRepoCache(repo)
 	if err != nil {
 		return err
 	}
 	defer backend.Close()
 
-	prefix := args[0]
-
-	b, err := backend.ResolveBugPrefix(prefix)
+	b, args, err := _select.ResolveBug(backend, args)
 	if err != nil {
 		return err
 	}
@@ -40,7 +28,7 @@ func runStatus(cmd *cobra.Command, args []string) error {
 }
 
 var statusCmd = &cobra.Command{
-	Use:   "status <id>",
+	Use:   "status [<id>]",
 	Short: "Show the bug status",
 	RunE:  runStatus,
 }

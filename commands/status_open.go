@@ -1,30 +1,19 @@
 package commands
 
 import (
-	"errors"
-
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/commands/select"
 	"github.com/spf13/cobra"
 )
 
 func runStatusOpen(cmd *cobra.Command, args []string) error {
-	if len(args) > 1 {
-		return errors.New("Only opening one bug at a time is supported")
-	}
-
-	if len(args) == 0 {
-		return errors.New("You must provide a bug id")
-	}
-
 	backend, err := cache.NewRepoCache(repo)
 	if err != nil {
 		return err
 	}
 	defer backend.Close()
 
-	prefix := args[0]
-
-	b, err := backend.ResolveBugPrefix(prefix)
+	b, args, err := _select.ResolveBug(backend, args)
 	if err != nil {
 		return err
 	}
@@ -38,7 +27,7 @@ func runStatusOpen(cmd *cobra.Command, args []string) error {
 }
 
 var openCmd = &cobra.Command{
-	Use:   "open <id>",
+	Use:   "open [<id>]",
 	Short: "Mark the bug as open",
 	RunE:  runStatusOpen,
 }

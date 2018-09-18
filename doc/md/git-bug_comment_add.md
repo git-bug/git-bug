@@ -7,7 +7,7 @@ Add a new comment to a bug
 Add a new comment to a bug
 
 ```
-git-bug comment add <id> [flags]
+git-bug comment add [<id>] [flags]
 ```
 
 ### Options

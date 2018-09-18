@@ -6,28 +6,19 @@ import (
 	"strings"
 
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/commands/select"
 	"github.com/MichaelMure/git-bug/util/colors"
 	"github.com/spf13/cobra"
 )
 
 func runShowBug(cmd *cobra.Command, args []string) error {
-	if len(args) > 1 {
-		return errors.New("Only showing one bug at a time is supported")
-	}
-
-	if len(args) == 0 {
-		return errors.New("You must provide a bug id")
-	}
-
 	backend, err := cache.NewRepoCache(repo)
 	if err != nil {
 		return err
 	}
 	defer backend.Close()
 
-	prefix := args[0]
-
-	b, err := backend.ResolveBugPrefix(prefix)
+	b, args, err := _select.ResolveBug(backend, args)
 	if err != nil {
 		return err
 	}
@@ -82,7 +73,7 @@ func runShowBug(cmd *cobra.Command, args []string) error {
 }
 
 var showCmd = &cobra.Command{
-	Use:   "show <id>",
+	Use:   "show [<id>]",
 	Short: "Display the details of a bug",
 	RunE:  runShowBug,
 }

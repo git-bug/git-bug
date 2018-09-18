@@ -7,7 +7,7 @@ Select a bug for implicit use in future commands
 Select a bug for implicit use in future commands
 
 ```
-git-bug select [<id>] [flags]
+git-bug select <id> [flags]
 ```
 
 ### Examples

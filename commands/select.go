@@ -35,7 +35,7 @@ func runSelect(cmd *cobra.Command, args []string) error {
 }
 
 var selectCmd = &cobra.Command{
-	Use:   "select [<id>]",
+	Use:   "select <id>",
 	Short: "Select a bug for implicit use in future commands",
 	Example: `git bug select 2f15
 git bug comment

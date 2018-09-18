@@ -7,7 +7,7 @@ Display a bug labels
 Display a bug labels
 
 ```
-git-bug label <id> [flags]
+git-bug label [<id>] [flags]
 ```
 
 ### Options

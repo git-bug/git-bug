@@ -1,33 +1,26 @@
 package commands
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/commands/select"
 	"github.com/spf13/cobra"
 )
 
 func runLabelAdd(cmd *cobra.Command, args []string) error {
-	if len(args) == 0 {
-		return errors.New("You must provide a bug id")
-	}
-
 	backend, err := cache.NewRepoCache(repo)
 	if err != nil {
 		return err
 	}
 	defer backend.Close()
 
-	prefix := args[0]
-	add := args[1:]
-
-	b, err := backend.ResolveBugPrefix(prefix)
+	b, args, err := _select.ResolveBug(backend, args)
 	if err != nil {
 		return err
 	}
 
-	changes, err := b.ChangeLabels(add, nil)
+	changes, err := b.ChangeLabels(args, nil)
 
 	for _, change := range changes {
 		fmt.Println(change)
@@ -41,7 +34,7 @@ func runLabelAdd(cmd *cobra.Command, args []string) error {
 }
 
 var labelAddCmd = &cobra.Command{
-	Use:   "add <id> [<label>...]",
+	Use:   "add [<id>] <label>[...]",
 	Short: "Add a label to a bug",
 	RunE:  runLabelAdd,
 }

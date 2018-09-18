@@ -7,7 +7,7 @@ Show the bug status
 Show the bug status
 
 ```
-git-bug status <id> [flags]
+git-bug status [<id>] [flags]
 ```
 
 ### Options
