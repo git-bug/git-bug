@@ -27,6 +27,7 @@ git-bug [flags]
 * [git-bug ls](git-bug_ls.md)	 - List bugs
 * [git-bug pull](git-bug_pull.md)	 - Pull bugs update from a git remote
 * [git-bug push](git-bug_push.md)	 - Push bugs update to a git remote
+* [git-bug select](git-bug_select.md)	 - Select a bug for implicit use in future commands
 * [git-bug show](git-bug_show.md)	 - Display the details of a bug
 * [git-bug status](git-bug_status.md)	 - Show the bug status
 * [git-bug termui](git-bug_termui.md)	 - Launch the terminal UI

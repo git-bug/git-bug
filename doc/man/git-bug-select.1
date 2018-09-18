@@ -1,0 +1,43 @@
+.TH "GIT-BUG" "1" "Sep 2018" "Generated from git-bug's source code" "" 
+.nh
+.ad l
+
+
+.SH NAME
+.PP
+git\-bug\-select \- Select a bug for implicit use in future commands
+
+
+.SH SYNOPSIS
+.PP
+\fBgit\-bug select [<id>] [flags]\fP
+
+
+.SH DESCRIPTION
+.PP
+Select a bug for implicit use in future commands
+
+
+.SH OPTIONS
+.PP
+\fB\-h\fP, \fB\-\-help\fP[=false]
+    help for select
+
+
+.SH EXAMPLE
+.PP
+.RS
+
+.nf
+git bug select 2f15
+git bug comment
+git bug status
+
+
+.fi
+.RE
+
+
+.SH SEE ALSO
+.PP
+\fBgit\-bug(1)\fP
