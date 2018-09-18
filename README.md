@@ -12,6 +12,7 @@ Distributed bug tracker embedded in Git.
 [![GoDoc](https://godoc.org/github.com/MichaelMure/git-bug?status.svg)](https://godoc.org/github.com/MichaelMure/git-bug)
 [![Go Report Card](https://goreportcard.com/badge/github.com/MichaelMure/git-bug)](https://goreportcard.com/report/github.com/MichaelMure/git-bug)
 [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/the-git-bug/Lobby)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2FMichaelMure%2Fgit-bug.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2FMichaelMure%2Fgit-bug?ref=badge_shield)
 
 </div>
 
@@ -156,3 +157,6 @@ Support this project by becoming a sponsor. Your logo will show up here with a l
 Unless otherwise stated, this project is released under the [GPLv3](LICENSE) or later license © Michael Muré.
 
 The git-bug logo by [Viktor Teplov](https://github.com/vandesign) is released under the [Creative Commons Attribution 4.0 International (CC BY 4.0)](misc/logo/LICENSE) license © Viktor Teplov.
+
+
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2FMichaelMure%2Fgit-bug.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2FMichaelMure%2Fgit-bug?ref=badge_large)
