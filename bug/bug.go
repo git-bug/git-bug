@@ -107,6 +107,7 @@ func ReadRemoteBug(repo repository.Repo, remote string, id string) (*Bug, error)
 func readBug(repo repository.Repo, ref string) (*Bug, error) {
 	hashes, err := repo.ListCommits(ref)
 
+	// TODO: this is not perfect, it might be a command invoke error
 	if err != nil {
 		return nil, ErrBugNotExist
 	}
@@ -115,7 +116,7 @@ func readBug(repo repository.Repo, ref string) (*Bug, error) {
 	id := refSplit[len(refSplit)-1]
 
 	if len(id) != idLength {
-		return nil, fmt.Errorf("Invalid ref length")
+		return nil, fmt.Errorf("invalid ref length")
 	}
 
 	bug := Bug{
@@ -126,7 +127,7 @@ func readBug(repo repository.Repo, ref string) (*Bug, error) {
 	for _, hash := range hashes {
 		entries, err := repo.ListEntries(hash)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "can't list git tree entries")
 		}
 
 		bug.lastCommit = hash
@@ -151,7 +152,7 @@ func readBug(repo repository.Repo, ref string) (*Bug, error) {
 			if strings.HasPrefix(entry.Name, createClockEntryPrefix) {
 				n, err := fmt.Sscanf(string(entry.Name), createClockEntryPattern, &createTime)
 				if err != nil {
-					return nil, err
+					return nil, errors.Wrap(err, "can't read create lamport time")
 				}
 				if n != 1 {
 					return nil, fmt.Errorf("could not parse create time lamport value")
@@ -160,7 +161,7 @@ func readBug(repo repository.Repo, ref string) (*Bug, error) {
 			if strings.HasPrefix(entry.Name, editClockEntryPrefix) {
 				n, err := fmt.Sscanf(string(entry.Name), editClockEntryPattern, &editTime)
 				if err != nil {
-					return nil, err
+					return nil, errors.Wrap(err, "can't read edit lamport time")
 				}
 				if n != 1 {
 					return nil, fmt.Errorf("could not parse edit time lamport value")
@@ -169,10 +170,10 @@ func readBug(repo repository.Repo, ref string) (*Bug, error) {
 		}
 
 		if !opsFound {
-			return nil, errors.New("Invalid tree, missing the ops entry")
+			return nil, errors.New("invalid tree, missing the ops entry")
 		}
 		if !rootFound {
-			return nil, errors.New("Invalid tree, missing the root entry")
+			return nil, errors.New("invalid tree, missing the root entry")
 		}
 
 		if bug.rootPack == "" {
@@ -184,31 +185,26 @@ func readBug(repo repository.Repo, ref string) (*Bug, error) {
 
 		// Update the clocks
 		if err := repo.CreateWitness(bug.createTime); err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "failed to update create lamport clock")
 		}
 		if err := repo.EditWitness(bug.editTime); err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "failed to update edit lamport clock")
 		}
 
 		data, err := repo.ReadData(opsEntry.Hash)
-
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "failed to read git blob data")
 		}
 
 		opp := &OperationPack{}
 		err = json.Unmarshal(data, &opp)
 
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "failed to decode OperationPack json")
 		}
 
 		// tag the pack with the commit hash
 		opp.commitHash = hash
-
-		if err != nil {
-			return nil, err
-		}
 
 		bug.packs = append(bug.packs, *opp)
 	}
