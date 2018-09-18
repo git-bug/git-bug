@@ -27,6 +27,8 @@ const editClockEntryPattern = "edit-clock-%d"
 const idLength = 40
 const humanIdLength = 7
 
+var ErrBugNotExist = errors.New("bug doesn't exist")
+
 var _ Interface = &Bug{}
 
 // Bug hold the data of a bug thread, organized in a way close to
@@ -106,7 +108,7 @@ func readBug(repo repository.Repo, ref string) (*Bug, error) {
 	hashes, err := repo.ListCommits(ref)
 
 	if err != nil {
-		return nil, err
+		return nil, ErrBugNotExist
 	}
 
 	refSplit := strings.Split(ref, "/")
@@ -123,12 +125,11 @@ func readBug(repo repository.Repo, ref string) (*Bug, error) {
 	// Load each OperationPack
 	for _, hash := range hashes {
 		entries, err := repo.ListEntries(hash)
-
-		bug.lastCommit = hash
-
 		if err != nil {
 			return nil, err
 		}
+
+		bug.lastCommit = hash
 
 		var opsEntry repository.TreeEntry
 		opsFound := false

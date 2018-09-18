@@ -22,6 +22,10 @@ func (c *BugCache) Snapshot() *bug.Snapshot {
 	return c.bug.Snapshot()
 }
 
+func (c *BugCache) Id() string {
+	return c.bug.Id()
+}
+
 func (c *BugCache) HumanId() string {
 	return c.bug.HumanId()
 }

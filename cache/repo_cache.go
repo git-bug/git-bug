@@ -207,6 +207,10 @@ func (c *RepoCache) ResolveBugPrefix(prefix string) (*BugCache, error) {
 		return nil, fmt.Errorf("Multiple matching bug found:\n%s", strings.Join(matching, "\n"))
 	}
 
+	if len(matching) == 0 {
+		return nil, bug.ErrBugNotExist
+	}
+
 	return c.ResolveBug(matching[0])
 }
 
