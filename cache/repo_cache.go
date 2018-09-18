@@ -47,7 +47,10 @@ func NewRepoCache(r repository.Repo) (*RepoCache, error) {
 		return c, nil
 	}
 
-	c.buildCache()
+	err = c.buildCache()
+	if err != nil {
+		return nil, err
+	}
 
 	return c, c.write()
 }
@@ -161,7 +164,7 @@ func cacheFilePath(repo repository.Repo) string {
 	return path.Join(repo.GetPath(), ".git", "git-bug", cacheFile)
 }
 
-func (c *RepoCache) buildCache() {
+func (c *RepoCache) buildCache() error {
 	fmt.Printf("Building bug cache... ")
 
 	c.excerpts = make(map[string]*BugExcerpt)
@@ -169,11 +172,16 @@ func (c *RepoCache) buildCache() {
 	allBugs := bug.ReadAllLocalBugs(c.repo)
 
 	for b := range allBugs {
+		if b.Err != nil {
+			return b.Err
+		}
+
 		snap := b.Bug.Compile()
 		c.excerpts[b.Bug.Id()] = NewBugExcerpt(b.Bug, &snap)
 	}
 
 	fmt.Println("Done.")
+	return nil
 }
 
 func (c *RepoCache) ResolveBug(id string) (*BugCache, error) {
