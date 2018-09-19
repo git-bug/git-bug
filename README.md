@@ -35,8 +35,9 @@ go get -u github.com/MichaelMure/git-bug
 If it's not done already, add golang binary directory in your PATH:
 
 ```bash
-export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
+export PATH=$PATH:$(go env GOROOT)/bin:$(go env GOPATH)/bin
 ```
+
 ### Pre-compiled binaries
 
 1. Go to the [release page](https://github.com/MichaelMure/git-bug/releases/latest) and download the appropriate binary for your system.
