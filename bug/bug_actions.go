@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/MichaelMure/git-bug/repository"
+	"github.com/pkg/errors"
 )
 
 // Fetch retrieve update from a remote
@@ -61,13 +62,13 @@ func MergeAll(repo repository.Repo, remote string) <-chan MergeResult {
 			remoteBug, err := readBug(repo, remoteRef)
 
 			if err != nil {
-				out <- newMergeError(err, id)
+				out <- newMergeInvalidStatus(id, errors.Wrap(err, "remote bug is not readable").Error())
 				continue
 			}
 
 			// Check for error in remote data
 			if err := remoteBug.Validate(); err != nil {
-				out <- newMergeInvalidStatus(id, err.Error())
+				out <- newMergeInvalidStatus(id, errors.Wrap(err, "remote bug is invalid").Error())
 				continue
 			}
 
@@ -95,14 +96,14 @@ func MergeAll(repo repository.Repo, remote string) <-chan MergeResult {
 			localBug, err := readBug(repo, localRef)
 
 			if err != nil {
-				out <- newMergeError(err, id)
+				out <- newMergeError(errors.Wrap(err, "local bug is not readable"), id)
 				return
 			}
 
 			updated, err := localBug.Merge(repo, remoteBug)
 
 			if err != nil {
-				out <- newMergeError(err, id)
+				out <- newMergeInvalidStatus(id, errors.Wrap(err, "merge failed").Error())
 				return
 			}
 
