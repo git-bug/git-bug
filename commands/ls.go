@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
@@ -27,7 +28,7 @@ func runLsBug(cmd *cobra.Command, args []string) error {
 
 	var query *cache.Query
 	if len(args) >= 1 {
-		query, err = cache.ParseQuery(args[0])
+		query, err = cache.ParseQuery(strings.Join(args, " "))
 
 		if err != nil {
 			return err
@@ -133,7 +134,7 @@ var lsCmd = &cobra.Command{
 
 You can pass an additional query to filter and order the list. This query can be expressed either with a simple query language or with flags.`,
 	Example: `List open bugs sorted by last edition with a query:
-git bug ls "status:open sort:edit-desc"
+git bug ls status:open sort:edit-desc
 
 List closed bugs sorted by creation with flags:
 git bug ls --status closed --by creation

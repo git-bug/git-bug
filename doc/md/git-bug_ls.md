@@ -16,7 +16,7 @@ git-bug ls [<query>] [flags]
 
 ```
 List open bugs sorted by last edition with a query:
-git bug ls "status:open sort:edit-desc"
+git bug ls status:open sort:edit-desc
 
 List closed bugs sorted by creation with flags:
 git bug ls --status closed --by creation
