@@ -332,6 +332,8 @@ func (c *RepoCache) MergeAll(remote string) <-chan bug.MergeResult {
 
 		results := bug.MergeAll(c.repo, remote)
 		for result := range results {
+			out <- result
+
 			if result.Err != nil {
 				continue
 			}
@@ -343,11 +345,7 @@ func (c *RepoCache) MergeAll(remote string) <-chan bug.MergeResult {
 				b := result.Bug
 				snap := b.Compile()
 				c.excerpts[id] = NewBugExcerpt(b, &snap)
-
-			default:
 			}
-
-			out <- result
 		}
 
 		err := c.write()
