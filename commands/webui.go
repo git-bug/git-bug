@@ -86,6 +86,7 @@ func runWebUI(cmd *cobra.Command, args []string) error {
 	fmt.Printf("Web UI: %s\n", webUiAddr)
 	fmt.Printf("Graphql API: http://%s/graphql\n", addr)
 	fmt.Printf("Graphql Playground: http://%s/playground\n", addr)
+	fmt.Println("Press Ctrl+c to quit")
 
 	err = open.Run(webUiAddr)
 	if err != nil {
