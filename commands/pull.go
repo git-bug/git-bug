@@ -38,7 +38,7 @@ func runPull(cmd *cobra.Command, args []string) error {
 
 	for merge := range backend.MergeAll(remote) {
 		if merge.Err != nil {
-			return merge.Err
+			fmt.Println(merge.Err)
 		}
 
 		if merge.Status != bug.MergeStatusNothing {
