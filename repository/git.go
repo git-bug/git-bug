@@ -79,7 +79,9 @@ func NewGitRepo(path string, witnesser func(repo *GitRepo) error) (*GitRepo, err
 	// Check the repo and retrieve the root path
 	stdout, err := repo.runGitCommand("rev-parse", "--show-toplevel")
 
-	if err != nil {
+	// for some reason, "git rev-parse --show-toplevel" return nothing
+	// and no error when inside a ".git" dir
+	if err != nil || stdout == "" {
 		return nil, ErrNotARepo
 	}
 
