@@ -10,24 +10,35 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 	"syscall"
 	"time"
 
+	"github.com/MichaelMure/git-bug/bridge/core"
+	"github.com/MichaelMure/git-bug/repository"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
-const githubV3Url = "https://api.github.com"
+const githubV3Url = "https://api.Github.com"
+const keyUser = "user"
+const keyProject = "project"
+const keyToken = "token"
 
-func Configure() (map[string]string, error) {
+func (*Github) Configure(repo repository.RepoCommon) (core.Configuration, error) {
+	conf := make(core.Configuration)
+
 	fmt.Println("git-bug will generate an access token in your Github profile.")
 	// fmt.Println("The token will have the \"repo\" permission, giving it read/write access to your repositories and issues. There is no narrower scope available, sorry :-|")
 	fmt.Println()
 
-	tokenName, err := promptTokenName()
+	projectUser, projectName, err := promptURL()
 	if err != nil {
 		return nil, err
 	}
+
+	conf[keyUser] = projectUser
+	conf[keyProject] = projectName
 
 	fmt.Println()
 
@@ -47,12 +58,7 @@ func Configure() (map[string]string, error) {
 
 	// Attempt to authenticate and create a token
 
-	var note string
-	if tokenName == "" {
-		note = "git-bug"
-	} else {
-		note = fmt.Sprintf("git-bug - %s", tokenName)
-	}
+	note := fmt.Sprintf("git-bug - %s/%s", projectUser, projectName)
 
 	resp, err := requestToken(note, username, password)
 	if err != nil {
@@ -60,10 +66,6 @@ func Configure() (map[string]string, error) {
 	}
 
 	defer resp.Body.Close()
-
-	if resp.StatusCode == http.StatusCreated {
-		return decodeBody(resp.Body)
-	}
 
 	// Handle 2FA is needed
 	OTPHeader := resp.Header.Get("X-GitHub-OTP")
@@ -79,10 +81,15 @@ func Configure() (map[string]string, error) {
 		}
 
 		defer resp.Body.Close()
+	}
 
-		if resp.StatusCode == http.StatusCreated {
-			return decodeBody(resp.Body)
+	if resp.StatusCode == http.StatusCreated {
+		token, err := decodeBody(resp.Body)
+		if err != nil {
+			return nil, err
 		}
+		conf[keyToken] = token
+		return conf, nil
 	}
 
 	b, _ := ioutil.ReadAll(resp.Body)
@@ -129,7 +136,7 @@ func requestTokenWith2FA(note, username, password, otpCode string) (*http.Respon
 	return client.Do(req)
 }
 
-func decodeBody(body io.ReadCloser) (map[string]string, error) {
+func decodeBody(body io.ReadCloser) (string, error) {
 	data, _ := ioutil.ReadAll(body)
 
 	aux := struct {
@@ -138,12 +145,14 @@ func decodeBody(body io.ReadCloser) (map[string]string, error) {
 
 	err := json.Unmarshal(data, &aux)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	return map[string]string{
-		"token": aux.Token,
-	}, nil
+	if aux.Token == "" {
+		return "", fmt.Errorf("no token found in response: %s", string(data))
+	}
+
+	return aux.Token, nil
 }
 
 func randomFingerprint() string {
@@ -180,17 +189,46 @@ func promptUsername() (string, error) {
 	}
 }
 
-func promptTokenName() (string, error) {
-	fmt.Println("To help distinguish the token, you can optionally provide a description")
-	fmt.Println("The token will be named \"git-bug - <description>\"")
-	fmt.Println("description:")
+func promptURL() (string, string, error) {
+	for {
+		fmt.Println("Github project URL:")
 
-	line, err := bufio.NewReader(os.Stdin).ReadString('\n')
+		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
+		if err != nil {
+			return "", "", err
+		}
+
+		line = strings.TrimRight(line, "\n")
+
+		if line == "" {
+			fmt.Println("URL is empty")
+			continue
+		}
+
+		projectUser, projectName, err := splitURL(line)
+
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		return projectUser, projectName, nil
+	}
+}
+
+func splitURL(url string) (string, string, error) {
+	re, err := regexp.Compile(`github\.com\/([^\/]*)\/([^\/]*)`)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return strings.TrimRight(line, "\n"), nil
+	res := re.FindStringSubmatch(url)
+
+	if res == nil {
+		return "", "", fmt.Errorf("bad github project url")
+	}
+
+	return res[1], res[2], nil
 }
 
 func validateUsername(username string) (bool, error) {
