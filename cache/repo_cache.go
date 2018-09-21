@@ -281,6 +281,36 @@ func (c *RepoCache) ClearAllBugs() {
 	c.bugs = make(map[string]*BugCache)
 }
 
+// ValidLabels list valid labels
+//
+// Note: in the future, a proper label policy could be implemented where valid
+// labels are defined in a configuration file. Until that, the default behavior
+// is to return the list of labels already used.
+func (c *RepoCache) ValidLabels() []bug.Label {
+	set := map[bug.Label]interface{}{}
+
+	for _, excerpt := range c.excerpts {
+		for _, l := range excerpt.Labels {
+			set[l] = nil
+		}
+	}
+
+	result := make([]bug.Label, len(set))
+
+	i := 0
+	for l := range set {
+		result[i] = l
+		i++
+	}
+
+	// Sort
+	sort.Slice(result, func(i, j int) bool {
+		return string(result[i]) < string(result[j])
+	})
+
+	return result
+}
+
 // NewBug create a new bug
 // The new bug is written in the repository (commit)
 func (c *RepoCache) NewBug(title string, message string) (*BugCache, error) {
