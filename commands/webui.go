@@ -44,12 +44,17 @@ func runWebUI(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	assetsHandler := &fileSystemWithDefault{
+		FileSystem:  webui.WebUIAssets,
+		defaultFile: "index.html",
+	}
+
 	// Routes
 	router.Path("/playground").Handler(handler.Playground("git-bug", "/graphql"))
 	router.Path("/graphql").Handler(graphqlHandler)
 	router.Path("/gitfile/{hash}").Handler(newGitFileHandler(repo))
 	router.Path("/upload").Methods("POST").Handler(newGitUploadFileHandler(repo))
-	router.PathPrefix("/").Handler(http.FileServer(webui.WebUIAssets))
+	router.PathPrefix("/").Handler(http.FileServer(assetsHandler))
 
 	srv := &http.Server{
 		Addr:    addr,
@@ -104,6 +109,23 @@ func runWebUI(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+// implement a http.FileSystem that will serve a default file when the looked up
+// file doesn't exist. Useful for Single-Page App that implement routing client
+// side, where the server has to return the root index.html file for every route.
+type fileSystemWithDefault struct {
+	http.FileSystem
+	defaultFile string
+}
+
+func (fswd *fileSystemWithDefault) Open(name string) (http.File, error) {
+	f, err := fswd.FileSystem.Open(name)
+	if os.IsNotExist(err) {
+		return fswd.FileSystem.Open(fswd.defaultFile)
+	}
+	return f, err
+}
+
+// implement a http.Handler that will read and server git blob.
 type gitFileHandler struct {
 	repo repository.Repo
 }
@@ -135,6 +157,7 @@ func (gfh *gitFileHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	http.ServeContent(rw, r, "", time.Now(), bytes.NewReader(data))
 }
 
+// implement a http.Handler that will accept and store content into git blob.
 type gitUploadFileHandler struct {
 	repo repository.Repo
 }
