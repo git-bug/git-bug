@@ -21,7 +21,7 @@ const githubV3Url = "https://api.github.com"
 
 func Configure() (map[string]string, error) {
 	fmt.Println("git-bug will generate an access token in your Github profile.")
-	fmt.Println("TODO: describe token")
+	// fmt.Println("The token will have the \"repo\" permission, giving it read/write access to your repositories and issues. There is no narrower scope available, sorry :-|")
 	fmt.Println()
 
 	tokenName, err := promptTokenName()
@@ -54,31 +54,7 @@ func Configure() (map[string]string, error) {
 		note = fmt.Sprintf("git-bug - %s", tokenName)
 	}
 
-	url := fmt.Sprintf("%s/authorizations", githubV3Url)
-	params := struct {
-		Scopes      []string `json:"scopes"`
-		Note        string   `json:"note"`
-		Fingerprint string   `json:"fingerprint"`
-	}{
-		Scopes:      []string{"repo"},
-		Note:        note,
-		Fingerprint: randomFingerprint(),
-	}
-
-	data, err := json.Marshal(params)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
-	if err != nil {
-		return nil, err
-	}
-	req.SetBasicAuth(username, password)
-	req.Header.Set("Content-Type", "application/json")
-	client := http.Client{}
-
-	resp, err := client.Do(req)
+	resp, err := requestToken(note, username, password)
 	if err != nil {
 		return nil, err
 	}
@@ -97,16 +73,14 @@ func Configure() (map[string]string, error) {
 			return nil, err
 		}
 
-		req.Header.Set("X-GitHub-OTP", otpCode)
-
-		resp2, err := client.Do(req)
+		resp, err = requestTokenWith2FA(note, username, password, otpCode)
 		if err != nil {
 			return nil, err
 		}
 
-		defer resp2.Body.Close()
+		defer resp.Body.Close()
 
-		if resp2.StatusCode == http.StatusCreated {
+		if resp.StatusCode == http.StatusCreated {
 			return decodeBody(resp.Body)
 		}
 	}
@@ -115,6 +89,44 @@ func Configure() (map[string]string, error) {
 	fmt.Printf("Error %v: %v\n", resp.StatusCode, string(b))
 
 	return nil, nil
+}
+
+func requestToken(note, username, password string) (*http.Response, error) {
+	return requestTokenWith2FA(note, username, password, "")
+}
+
+func requestTokenWith2FA(note, username, password, otpCode string) (*http.Response, error) {
+	url := fmt.Sprintf("%s/authorizations", githubV3Url)
+	params := struct {
+		Scopes      []string `json:"scopes"`
+		Note        string   `json:"note"`
+		Fingerprint string   `json:"fingerprint"`
+	}{
+		// Scopes:      []string{"repo"},
+		Note:        note,
+		Fingerprint: randomFingerprint(),
+	}
+
+	data, err := json.Marshal(params)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
+	if err != nil {
+		return nil, err
+	}
+
+	req.SetBasicAuth(username, password)
+	req.Header.Set("Content-Type", "application/json")
+
+	if otpCode != "" {
+		req.Header.Set("X-GitHub-OTP", otpCode)
+	}
+
+	client := http.Client{}
+
+	return client.Do(req)
 }
 
 func decodeBody(body io.ReadCloser) (map[string]string, error) {
@@ -147,7 +159,7 @@ func randomFingerprint() string {
 
 func promptUsername() (string, error) {
 	for {
-		fmt.Println("Username:")
+		fmt.Println("username:")
 
 		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
 		if err != nil {
@@ -170,7 +182,8 @@ func promptUsername() (string, error) {
 
 func promptTokenName() (string, error) {
 	fmt.Println("To help distinguish the token, you can optionally provide a description")
-	fmt.Println("Token name:")
+	fmt.Println("The token will be named \"git-bug - <description>\"")
+	fmt.Println("description:")
 
 	line, err := bufio.NewReader(os.Stdin).ReadString('\n')
 	if err != nil {
@@ -198,7 +211,7 @@ func validateUsername(username string) (bool, error) {
 
 func promptPassword() (string, error) {
 	for {
-		fmt.Println("Password:")
+		fmt.Println("password:")
 
 		bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
 		if err != nil {
@@ -215,7 +228,7 @@ func promptPassword() (string, error) {
 
 func prompt2FA() (string, error) {
 	for {
-		fmt.Println("Two-factor authentication code:")
+		fmt.Println("two-factor authentication code:")
 
 		byte2fa, err := terminal.ReadPassword(int(syscall.Stdin))
 		if err != nil {
