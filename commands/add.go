@@ -31,7 +31,7 @@ func runAddBug(cmd *cobra.Command, args []string) error {
 	defer backend.Close()
 
 	if addMessage == "" || addTitle == "" {
-		addTitle, addMessage, err = input.BugCreateEditorInput(backend.Repository(), addTitle, addMessage)
+		addTitle, addMessage, err = input.BugCreateEditorInput(backend, addTitle, addMessage)
 
 		if err == input.ErrEmptyTitle {
 			fmt.Println("Empty title, aborting.")

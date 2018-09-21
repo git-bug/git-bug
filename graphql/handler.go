@@ -17,7 +17,7 @@ type Handler struct {
 	*resolvers.RootResolver
 }
 
-func NewHandler(repo repository.Repo) (Handler, error) {
+func NewHandler(repo repository.ClockedRepo) (Handler, error) {
 	h := Handler{
 		RootResolver: resolvers.NewRootResolver(),
 	}

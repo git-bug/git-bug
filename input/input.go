@@ -35,7 +35,7 @@ const bugTitleCommentTemplate = `%s%s
 // BugCreateEditorInput will open the default editor in the terminal with a
 // template for the user to fill. The file is then processed to extract title
 // and message.
-func BugCreateEditorInput(repo repository.Repo, preTitle string, preMessage string) (string, string, error) {
+func BugCreateEditorInput(repo repository.RepoCommon, preTitle string, preMessage string) (string, string, error) {
 	if preMessage != "" {
 		preMessage = "\n\n" + preMessage
 	}
@@ -86,7 +86,7 @@ const bugCommentTemplate = `
 
 // BugCommentEditorInput will open the default editor in the terminal with a
 // template for the user to fill. The file is then processed to extract a comment.
-func BugCommentEditorInput(repo repository.Repo) (string, error) {
+func BugCommentEditorInput(repo repository.RepoCommon) (string, error) {
 	raw, err := launchEditorWithTemplate(repo, messageFilename, bugCommentTemplate)
 
 	if err != nil {
@@ -121,7 +121,7 @@ const bugTitleTemplate = `%s
 
 // BugTitleEditorInput will open the default editor in the terminal with a
 // template for the user to fill. The file is then processed to extract a title.
-func BugTitleEditorInput(repo repository.Repo, preTitle string) (string, error) {
+func BugTitleEditorInput(repo repository.RepoCommon, preTitle string) (string, error) {
 	template := fmt.Sprintf(bugTitleTemplate, preTitle)
 	raw, err := launchEditorWithTemplate(repo, messageFilename, template)
 
@@ -180,7 +180,7 @@ const queryTemplate = `%s
 
 // QueryEditorInput will open the default editor in the terminal with a
 // template for the user to fill. The file is then processed to extract a query.
-func QueryEditorInput(repo repository.Repo, preQuery string) (string, error) {
+func QueryEditorInput(repo repository.RepoCommon, preQuery string) (string, error) {
 	template := fmt.Sprintf(queryTemplate, preQuery)
 	raw, err := launchEditorWithTemplate(repo, messageFilename, template)
 
@@ -206,7 +206,7 @@ func QueryEditorInput(repo repository.Repo, preQuery string) (string, error) {
 
 // launchEditorWithTemplate will launch an editor as launchEditor do, but with a
 // provided template.
-func launchEditorWithTemplate(repo repository.Repo, fileName string, template string) (string, error) {
+func launchEditorWithTemplate(repo repository.RepoCommon, fileName string, template string) (string, error) {
 	path := fmt.Sprintf("%s/.git/%s", repo.GetPath(), fileName)
 
 	err := ioutil.WriteFile(path, []byte(template), 0644)
@@ -227,7 +227,7 @@ func launchEditorWithTemplate(repo repository.Repo, fileName string, template st
 //
 // This method returns the text that was read from the temporary file, or
 // an error if any step in the process failed.
-func launchEditor(repo repository.Repo, fileName string) (string, error) {
+func launchEditor(repo repository.RepoCommon, fileName string) (string, error) {
 	path := fmt.Sprintf("%s/.git/%s", repo.GetPath(), fileName)
 	defer os.Remove(path)
 

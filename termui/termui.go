@@ -170,7 +170,7 @@ func newBugWithEditor(repo *cache.RepoCache) error {
 	ui.g.Close()
 	ui.g = nil
 
-	title, message, err := input.BugCreateEditorInput(ui.cache.Repository(), "", "")
+	title, message, err := input.BugCreateEditorInput(ui.cache, "", "")
 
 	if err != nil && err != input.ErrEmptyTitle {
 		return err
@@ -210,7 +210,7 @@ func addCommentWithEditor(bug *cache.BugCache) error {
 	ui.g.Close()
 	ui.g = nil
 
-	message, err := input.BugCommentEditorInput(ui.cache.Repository())
+	message, err := input.BugCommentEditorInput(ui.cache)
 
 	if err != nil && err != input.ErrEmptyMessage {
 		return err
@@ -243,7 +243,7 @@ func setTitleWithEditor(bug *cache.BugCache) error {
 	ui.g.Close()
 	ui.g = nil
 
-	title, err := input.BugTitleEditorInput(ui.cache.Repository(), bug.Snapshot().Title)
+	title, err := input.BugTitleEditorInput(ui.cache, bug.Snapshot().Title)
 
 	if err != nil && err != input.ErrEmptyTitle {
 		return err
@@ -276,7 +276,7 @@ func editQueryWithEditor(bt *bugTable) error {
 	ui.g.Close()
 	ui.g = nil
 
-	queryStr, err := input.QueryEditorInput(bt.repo.Repository(), bt.queryStr)
+	queryStr, err := input.QueryEditorInput(bt.repo, bt.queryStr)
 
 	if err != nil {
 		return err

@@ -29,11 +29,11 @@ func DefaultOptions() Options {
 	}
 }
 
-func CommitRandomBugs(repo repository.Repo, opts Options) {
+func CommitRandomBugs(repo repository.ClockedRepo, opts Options) {
 	CommitRandomBugsWithSeed(repo, opts, time.Now().UnixNano())
 }
 
-func CommitRandomBugsWithSeed(repo repository.Repo, opts Options, seed int64) {
+func CommitRandomBugsWithSeed(repo repository.ClockedRepo, opts Options, seed int64) {
 	bugs := GenerateRandomBugsWithSeed(opts, seed)
 
 	for _, b := range bugs {

@@ -9,8 +9,7 @@ import (
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
-// Repo represents a source code repository.
-type Repo interface {
+type RepoCommon interface {
 	// GetPath returns the path to the repo.
 	GetPath() string
 
@@ -22,6 +21,11 @@ type Repo interface {
 
 	// GetCoreEditor returns the name of the editor that the user has used to configure git.
 	GetCoreEditor() (string, error)
+}
+
+// Repo represents a source code repository.
+type Repo interface {
+	RepoCommon
 
 	// FetchRefs fetch git refs from a remote
 	FetchRefs(remote string, refSpec string) (string, error)
@@ -67,6 +71,10 @@ type Repo interface {
 
 	// GetTreeHash return the git tree hash referenced in a commit
 	GetTreeHash(commit git.Hash) (git.Hash, error)
+}
+
+type ClockedRepo interface {
+	Repo
 
 	LoadClocks() error
 

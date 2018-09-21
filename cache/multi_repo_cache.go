@@ -19,7 +19,7 @@ func NewMultiRepoCache() MultiRepoCache {
 }
 
 // RegisterRepository register a named repository. Use this for multi-repo setup
-func (c *MultiRepoCache) RegisterRepository(ref string, repo repository.Repo) error {
+func (c *MultiRepoCache) RegisterRepository(ref string, repo repository.ClockedRepo) error {
 	r, err := NewRepoCache(repo)
 	if err != nil {
 		return err
@@ -30,7 +30,7 @@ func (c *MultiRepoCache) RegisterRepository(ref string, repo repository.Repo) er
 }
 
 // RegisterDefaultRepository register a unnamed repository. Use this for mono-repo setup
-func (c *MultiRepoCache) RegisterDefaultRepository(repo repository.Repo) error {
+func (c *MultiRepoCache) RegisterDefaultRepository(repo repository.ClockedRepo) error {
 	r, err := NewRepoCache(repo)
 	if err != nil {
 		return err

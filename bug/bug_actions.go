@@ -25,7 +25,7 @@ func Push(repo repository.Repo, remote string) (string, error) {
 // Pull will do a Fetch + MergeAll
 // This function won't give details on the underlying process. If you need more
 // use Fetch and MergeAll separately.
-func Pull(repo repository.Repo, remote string) error {
+func Pull(repo repository.ClockedRepo, remote string) error {
 	_, err := Fetch(repo, remote)
 	if err != nil {
 		return err
@@ -41,7 +41,7 @@ func Pull(repo repository.Repo, remote string) error {
 }
 
 // MergeAll will merge all the available remote bug
-func MergeAll(repo repository.Repo, remote string) <-chan MergeResult {
+func MergeAll(repo repository.ClockedRepo, remote string) <-chan MergeResult {
 	out := make(chan MergeResult)
 
 	go func() {

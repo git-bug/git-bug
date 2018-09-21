@@ -22,7 +22,7 @@ type Interface interface {
 	HasPendingOp() bool
 
 	// Commit write the staging area in Git and move the operations to the packs
-	Commit(repo repository.Repo) error
+	Commit(repo repository.ClockedRepo) error
 
 	// Merge a different version of the same bug by rebasing operations of this bug
 	// that are not present in the other on top of the chain of operations of the

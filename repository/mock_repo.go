@@ -23,7 +23,7 @@ type commit struct {
 	parent   git.Hash
 }
 
-func NewMockRepoForTest() Repo {
+func NewMockRepoForTest() *mockRepoForTest {
 	return &mockRepoForTest{
 		blobs:       make(map[git.Hash][]byte),
 		trees:       make(map[git.Hash]string),

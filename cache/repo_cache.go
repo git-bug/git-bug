@@ -24,14 +24,14 @@ const formatVersion = 1
 
 type RepoCache struct {
 	// the underlying repo
-	repo repository.Repo
+	repo repository.ClockedRepo
 	// excerpt of bugs data for all bugs
 	excerpts map[string]*BugExcerpt
 	// bug loaded in memory
 	bugs map[string]*BugCache
 }
 
-func NewRepoCache(r repository.Repo) (*RepoCache, error) {
+func NewRepoCache(r repository.ClockedRepo) (*RepoCache, error) {
 	c := &RepoCache{
 		repo: r,
 		bugs: make(map[string]*BugCache),
@@ -55,10 +55,24 @@ func NewRepoCache(r repository.Repo) (*RepoCache, error) {
 	return c, c.write()
 }
 
-// Repository return the underlying repository.
-// If you use this, make sure to never change the repo state.
-func (c *RepoCache) Repository() repository.Repo {
-	return c.repo
+// GetPath returns the path to the repo.
+func (c *RepoCache) GetPath() string {
+	return c.repo.GetPath()
+}
+
+// GetPath returns the path to the repo.
+func (c *RepoCache) GetCoreEditor() (string, error) {
+	return c.repo.GetCoreEditor()
+}
+
+// GetUserName returns the name the the user has used to configure git
+func (c *RepoCache) GetUserName() (string, error) {
+	return c.repo.GetUserName()
+}
+
+// GetUserEmail returns the email address that the user has used to configure git.
+func (c *RepoCache) GetUserEmail() (string, error) {
+	return c.repo.GetUserEmail()
 }
 
 func (c *RepoCache) lock() error {

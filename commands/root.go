@@ -13,7 +13,7 @@ import (
 const rootCommandName = "git-bug"
 
 // package scoped var to hold the repo after the PreRun execution
-var repo repository.Repo
+var repo repository.ClockedRepo
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{

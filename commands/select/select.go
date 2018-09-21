@@ -55,7 +55,7 @@ func ResolveBug(repo *cache.RepoCache, args []string) (*cache.BugCache, []string
 
 // Select will select a bug for future use
 func Select(repo *cache.RepoCache, id string) error {
-	selectPath := selectFilePath(repo.Repository())
+	selectPath := selectFilePath(repo)
 
 	f, err := os.OpenFile(selectPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
@@ -72,13 +72,13 @@ func Select(repo *cache.RepoCache, id string) error {
 
 // Clear will clear the selected bug, if any
 func Clear(repo *cache.RepoCache) error {
-	selectPath := selectFilePath(repo.Repository())
+	selectPath := selectFilePath(repo)
 
 	return os.Remove(selectPath)
 }
 
 func selected(repo *cache.RepoCache) (*cache.BugCache, error) {
-	selectPath := selectFilePath(repo.Repository())
+	selectPath := selectFilePath(repo)
 
 	f, err := os.Open(selectPath)
 	if err != nil {
@@ -120,6 +120,6 @@ func selected(repo *cache.RepoCache) (*cache.BugCache, error) {
 	return b, nil
 }
 
-func selectFilePath(repo repository.Repo) string {
+func selectFilePath(repo repository.RepoCommon) string {
 	return path.Join(repo.GetPath(), ".git", "git-bug", selectFile)
 }

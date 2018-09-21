@@ -64,7 +64,7 @@ func NewBug() *Bug {
 }
 
 // FindLocalBug find an existing Bug matching a prefix
-func FindLocalBug(repo repository.Repo, prefix string) (*Bug, error) {
+func FindLocalBug(repo repository.ClockedRepo, prefix string) (*Bug, error) {
 	ids, err := ListLocalIds(repo)
 
 	if err != nil {
@@ -92,19 +92,19 @@ func FindLocalBug(repo repository.Repo, prefix string) (*Bug, error) {
 }
 
 // ReadLocalBug will read a local bug from its hash
-func ReadLocalBug(repo repository.Repo, id string) (*Bug, error) {
+func ReadLocalBug(repo repository.ClockedRepo, id string) (*Bug, error) {
 	ref := bugsRefPattern + id
 	return readBug(repo, ref)
 }
 
 // ReadRemoteBug will read a remote bug from its hash
-func ReadRemoteBug(repo repository.Repo, remote string, id string) (*Bug, error) {
+func ReadRemoteBug(repo repository.ClockedRepo, remote string, id string) (*Bug, error) {
 	ref := fmt.Sprintf(bugsRemoteRefPattern, remote) + id
 	return readBug(repo, ref)
 }
 
 // readBug will read and parse a Bug from git
-func readBug(repo repository.Repo, ref string) (*Bug, error) {
+func readBug(repo repository.ClockedRepo, ref string) (*Bug, error) {
 	hashes, err := repo.ListCommits(ref)
 
 	// TODO: this is not perfect, it might be a command invoke error
@@ -218,18 +218,18 @@ type StreamedBug struct {
 }
 
 // ReadAllLocalBugs read and parse all local bugs
-func ReadAllLocalBugs(repo repository.Repo) <-chan StreamedBug {
+func ReadAllLocalBugs(repo repository.ClockedRepo) <-chan StreamedBug {
 	return readAllBugs(repo, bugsRefPattern)
 }
 
 // ReadAllRemoteBugs read and parse all remote bugs for a given remote
-func ReadAllRemoteBugs(repo repository.Repo, remote string) <-chan StreamedBug {
+func ReadAllRemoteBugs(repo repository.ClockedRepo, remote string) <-chan StreamedBug {
 	refPrefix := fmt.Sprintf(bugsRemoteRefPattern, remote)
 	return readAllBugs(repo, refPrefix)
 }
 
 // Read and parse all available bug with a given ref prefix
-func readAllBugs(repo repository.Repo, refPrefix string) <-chan StreamedBug {
+func readAllBugs(repo repository.ClockedRepo, refPrefix string) <-chan StreamedBug {
 	out := make(chan StreamedBug)
 
 	go func() {
@@ -331,7 +331,7 @@ func (bug *Bug) HasPendingOp() bool {
 }
 
 // Commit write the staging area in Git and move the operations to the packs
-func (bug *Bug) Commit(repo repository.Repo) error {
+func (bug *Bug) Commit(repo repository.ClockedRepo) error {
 	if bug.staging.IsEmpty() {
 		return fmt.Errorf("can't commit a bug with no pending operation")
 	}

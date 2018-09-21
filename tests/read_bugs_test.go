@@ -8,7 +8,7 @@ import (
 	"github.com/MichaelMure/git-bug/repository"
 )
 
-func createFilledRepo(bugNumber int) repository.Repo {
+func createFilledRepo(bugNumber int) repository.ClockedRepo {
 	repo := createRepo(false)
 
 	var seed int64 = 42

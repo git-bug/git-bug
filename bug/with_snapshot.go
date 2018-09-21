@@ -34,7 +34,7 @@ func (b *WithSnapshot) Append(op Operation) {
 }
 
 // Commit intercept Bug.Commit() to update the snapshot efficiently
-func (b *WithSnapshot) Commit(repo repository.Repo) error {
+func (b *WithSnapshot) Commit(repo repository.ClockedRepo) error {
 	err := b.Bug.Commit(repo)
 
 	if err != nil {
