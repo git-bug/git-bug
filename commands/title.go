@@ -29,7 +29,7 @@ func runTitle(cmd *cobra.Command, args []string) error {
 
 var titleCmd = &cobra.Command{
 	Use:   "title [<id>]",
-	Short: "Display a bug's title",
+	Short: "Display or change a title",
 	RunE:  runTitle,
 }
 

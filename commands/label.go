@@ -31,7 +31,7 @@ func runLabel(cmd *cobra.Command, args []string) error {
 
 var labelCmd = &cobra.Command{
 	Use:   "label [<id>]",
-	Short: "Display a bug labels",
+	Short: "Display, add or remove labels",
 	RunE:  runLabel,
 }
 

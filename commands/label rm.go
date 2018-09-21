@@ -35,7 +35,7 @@ func runLabelRm(cmd *cobra.Command, args []string) error {
 
 var labelRmCmd = &cobra.Command{
 	Use:   "rm [<id>] <label>[...]",
-	Short: "Remove a label from a bug",
+	Short: "Remove a label",
 	RunE:  runLabelRm,
 }
 

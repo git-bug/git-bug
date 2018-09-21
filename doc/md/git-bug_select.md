@@ -27,5 +27,5 @@ git bug status
 
 ### SEE ALSO
 
-* [git-bug](git-bug.md)	 - A bugtracker embedded in Git
+* [git-bug](git-bug.md)	 - A bug tracker embedded in Git
 

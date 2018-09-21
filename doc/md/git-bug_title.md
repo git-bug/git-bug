@@ -1,10 +1,10 @@
 ## git-bug title
 
-Display a bug's title
+Display or change a title
 
 ### Synopsis
 
-Display a bug's title
+Display or change a title
 
 ```
 git-bug title [<id>] [flags]
@@ -18,6 +18,6 @@ git-bug title [<id>] [flags]
 
 ### SEE ALSO
 
-* [git-bug](git-bug.md)	 - A bugtracker embedded in Git
-* [git-bug title edit](git-bug_title_edit.md)	 - Edit a bug title
+* [git-bug](git-bug.md)	 - A bug tracker embedded in Git
+* [git-bug title edit](git-bug_title_edit.md)	 - Edit a title
 

@@ -1,10 +1,10 @@
 ## git-bug label add
 
-Add a label to a bug
+Add a label
 
 ### Synopsis
 
-Add a label to a bug
+Add a label
 
 ```
 git-bug label add [<id>] <label>[...] [flags]
@@ -18,5 +18,5 @@ git-bug label add [<id>] <label>[...] [flags]
 
 ### SEE ALSO
 
-* [git-bug label](git-bug_label.md)	 - Display a bug labels
+* [git-bug label](git-bug_label.md)	 - Display, add or remove labels
 

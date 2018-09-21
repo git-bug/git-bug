@@ -28,7 +28,7 @@ func runStatusOpen(cmd *cobra.Command, args []string) error {
 
 var openCmd = &cobra.Command{
 	Use:   "open [<id>]",
-	Short: "Mark the bug as open",
+	Short: "Mark a bug as open",
 	RunE:  runStatusOpen,
 }
 

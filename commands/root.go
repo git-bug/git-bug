@@ -20,8 +20,8 @@ var RootCmd = &cobra.Command{
 	Version: "0.3.0",
 
 	Use:   rootCommandName,
-	Short: "A bugtracker embedded in Git",
-	Long: `git-bug is a bugtracker embedded in git.
+	Short: "A bug tracker embedded in Git",
+	Long: `git-bug is a bug tracker embedded in git.
 
 It use the same internal storage so it doesn't pollute your project. As you would do with commits and branches, you can push your bugs to the same git remote your are already using to collaborate with other peoples.`,
 

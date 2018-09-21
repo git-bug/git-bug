@@ -1,10 +1,10 @@
 ## git-bug status open
 
-Mark the bug as open
+Mark a bug as open
 
 ### Synopsis
 
-Mark the bug as open
+Mark a bug as open
 
 ```
 git-bug status open [<id>] [flags]
@@ -18,5 +18,5 @@ git-bug status open [<id>] [flags]
 
 ### SEE ALSO
 
-* [git-bug status](git-bug_status.md)	 - Show the bug status
+* [git-bug status](git-bug_status.md)	 - Display or change a bug status
 
