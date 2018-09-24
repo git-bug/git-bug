@@ -20,7 +20,7 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
-const githubV3Url = "https://api.Github.com"
+const githubV3Url = "https://api.github.com"
 const keyUser = "user"
 const keyProject = "project"
 const keyToken = "token"
@@ -28,6 +28,7 @@ const keyToken = "token"
 func (*Github) Configure(repo repository.RepoCommon) (core.Configuration, error) {
 	conf := make(core.Configuration)
 
+	fmt.Println()
 	fmt.Println("git-bug will generate an access token in your Github profile.")
 	// fmt.Println("The token will have the \"repo\" permission, giving it read/write access to your repositories and issues. There is no narrower scope available, sorry :-|")
 	fmt.Println()
@@ -40,21 +41,15 @@ func (*Github) Configure(repo repository.RepoCommon) (core.Configuration, error)
 	conf[keyUser] = projectUser
 	conf[keyProject] = projectName
 
-	fmt.Println()
-
 	username, err := promptUsername()
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Println()
-
 	password, err := promptPassword()
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println()
 
 	// Attempt to authenticate and create a token
 
@@ -168,7 +163,7 @@ func randomFingerprint() string {
 
 func promptUsername() (string, error) {
 	for {
-		fmt.Println("username:")
+		fmt.Print("username: ")
 
 		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
 		if err != nil {
@@ -191,7 +186,7 @@ func promptUsername() (string, error) {
 
 func promptURL() (string, string, error) {
 	for {
-		fmt.Println("Github project URL:")
+		fmt.Print("Github project URL: ")
 
 		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
 		if err != nil {
@@ -249,9 +244,13 @@ func validateUsername(username string) (bool, error) {
 
 func promptPassword() (string, error) {
 	for {
-		fmt.Println("password:")
+		fmt.Print("password: ")
 
 		bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
+		// new line for coherent formatting, ReadPassword clip the normal new line
+		// entered by the user
+		fmt.Println()
+
 		if err != nil {
 			return "", err
 		}
@@ -266,7 +265,7 @@ func promptPassword() (string, error) {
 
 func prompt2FA() (string, error) {
 	for {
-		fmt.Println("two-factor authentication code:")
+		fmt.Print("two-factor authentication code: ")
 
 		byte2fa, err := terminal.ReadPassword(int(syscall.Stdin))
 		if err != nil {

@@ -2,7 +2,8 @@ package core
 
 import (
 	"fmt"
-	"os/exec"
+	"reflect"
+	"regexp"
 	"strings"
 
 	"github.com/MichaelMure/git-bug/cache"
@@ -13,48 +14,130 @@ import (
 var ErrImportNorSupported = errors.New("import is not supported")
 var ErrExportNorSupported = errors.New("export is not supported")
 
+var bridgeImpl map[string]reflect.Type
+
 // Bridge is a wrapper around a BridgeImpl that will bind low-level
 // implementation with utility code to provide high-level functions.
 type Bridge struct {
+	Name string
+	repo *cache.RepoCache
 	impl BridgeImpl
 	conf Configuration
 }
 
-func NewBridge(impl BridgeImpl) *Bridge {
-	return &Bridge{
-		impl: impl,
+// Register will register a new BridgeImpl
+func Register(impl BridgeImpl) {
+	if bridgeImpl == nil {
+		bridgeImpl = make(map[string]reflect.Type)
 	}
+	bridgeImpl[impl.Target()] = reflect.TypeOf(impl)
 }
 
-func (b *Bridge) Configure(repo repository.RepoCommon) error {
-	conf, err := b.impl.Configure(repo)
+// Targets return all known bridge implementation target
+func Targets() []string {
+	var result []string
+
+	for key := range bridgeImpl {
+		result = append(result, key)
+	}
+
+	return result
+}
+
+func NewBridge(repo *cache.RepoCache, target string, name string) (*Bridge, error) {
+	implType, ok := bridgeImpl[target]
+	if !ok {
+		return nil, fmt.Errorf("unknown bridge target %v", target)
+	}
+
+	impl := reflect.New(implType).Elem().Interface().(BridgeImpl)
+
+	bridge := &Bridge{
+		Name: name,
+		repo: repo,
+		impl: impl,
+	}
+
+	return bridge, nil
+}
+
+func ConfiguredBridges(repo repository.RepoCommon) ([]string, error) {
+	configs, err := repo.ReadConfigs("git-bug.")
+	if err != nil {
+		return nil, errors.Wrap(err, "can't read configured bridges")
+	}
+
+	re, err := regexp.Compile(`git-bug.([^\.]+\.[^\.]+)`)
+	if err != nil {
+		return nil, err
+	}
+
+	set := make(map[string]interface{})
+
+	for key := range configs {
+		res := re.FindStringSubmatch(key)
+
+		if res == nil {
+			continue
+		}
+
+		set[res[1]] = nil
+	}
+
+	result := make([]string, len(set))
+
+	i := 0
+	for key := range set {
+		result[i] = key
+		i++
+	}
+
+	return result, nil
+}
+
+func (b *Bridge) String() string {
+	var _type string
+	if b.impl.Importer() != nil && b.impl.Exporter() != nil {
+		_type = "import/export"
+	} else if b.impl.Importer() != nil {
+		_type = "import"
+	} else if b.impl.Exporter() != nil {
+		_type = "export"
+	} else {
+		panic("bad bridge impl, neither import nor export")
+	}
+
+	return fmt.Sprintf("%s.%s: %s", b.impl.Target(), b.Name, _type)
+}
+
+func (b *Bridge) Configure() error {
+	conf, err := b.impl.Configure(b.repo)
 	if err != nil {
 		return err
 	}
 
-	return b.storeConfig(repo, conf)
+	b.conf = conf
+
+	return b.storeConfig(conf)
 }
 
-func (b *Bridge) storeConfig(repo repository.RepoCommon, conf Configuration) error {
+func (b *Bridge) storeConfig(conf Configuration) error {
 	for key, val := range conf {
-		storeKey := fmt.Sprintf("git-bug.%s.%s", b.impl.Name(), key)
+		storeKey := fmt.Sprintf("git-bug.%s.%s.%s", b.impl.Target(), b.Name, key)
 
-		cmd := exec.Command("git", "config", "--replace-all", storeKey, val)
-		cmd.Dir = repo.GetPath()
-
-		out, err := cmd.CombinedOutput()
+		err := b.repo.StoreConfig(storeKey, val)
 		if err != nil {
-			return fmt.Errorf("error while storing bridge configuration: %s", out)
+			return errors.Wrap(err, "error while storing bridge configuration")
 		}
 	}
 
 	return nil
 }
 
-func (b Bridge) getConfig(repo repository.RepoCommon) (Configuration, error) {
+func (b Bridge) getConfig() (Configuration, error) {
 	var err error
 	if b.conf == nil {
-		b.conf, err = b.loadConfig(repo)
+		b.conf, err = b.loadConfig()
 		if err != nil {
 			return nil, err
 		}
@@ -63,87 +146,75 @@ func (b Bridge) getConfig(repo repository.RepoCommon) (Configuration, error) {
 	return b.conf, nil
 }
 
-func (b Bridge) loadConfig(repo repository.RepoCommon) (Configuration, error) {
-	key := fmt.Sprintf("git-bug.%s", b.impl.Name())
-	cmd := exec.Command("git", "config", "--get-regexp", key)
-	cmd.Dir = repo.GetPath()
+func (b Bridge) loadConfig() (Configuration, error) {
+	keyPrefix := fmt.Sprintf("git-bug.%s.%s.", b.impl.Target(), b.Name)
 
-	out, err := cmd.CombinedOutput()
+	pairs, err := b.repo.ReadConfigs(keyPrefix)
 	if err != nil {
-		return nil, fmt.Errorf("error while reading bridge configuration: %s", out)
+		return nil, errors.Wrap(err, "error while reading bridge configuration")
 	}
 
-	lines := strings.Split(string(out), "\n")
-
-	result := make(Configuration, len(lines))
-	for _, line := range lines {
-		if strings.TrimSpace(line) == "" {
-			continue
-		}
-
-		parts := strings.Fields(line)
-		if len(parts) != 2 {
-			return nil, fmt.Errorf("bad bridge configuration: %s", line)
-		}
-
-		result[parts[0]] = parts[1]
+	result := make(Configuration, len(pairs))
+	for key, value := range pairs {
+		key := strings.TrimPrefix(key, keyPrefix)
+		result[key] = value
 	}
 
 	return result, nil
 }
 
-func (b Bridge) ImportAll(repo *cache.RepoCache) error {
+func (b Bridge) ImportAll() error {
 	importer := b.impl.Importer()
 	if importer == nil {
 		return ErrImportNorSupported
 	}
 
-	conf, err := b.getConfig(repo)
+	conf, err := b.getConfig()
 	if err != nil {
 		return err
 	}
 
-	return b.impl.Importer().ImportAll(repo, conf)
+	return b.impl.Importer().ImportAll(b.repo, conf)
 }
 
-func (b Bridge) Import(repo *cache.RepoCache, id string) error {
+func (b Bridge) Import(id string) error {
 	importer := b.impl.Importer()
 	if importer == nil {
 		return ErrImportNorSupported
 	}
 
-	conf, err := b.getConfig(repo)
+	conf, err := b.getConfig()
 	if err != nil {
 		return err
 	}
 
-	return b.impl.Importer().Import(repo, conf, id)
+	return b.impl.Importer().Import(b.repo, conf, id)
 }
 
-func (b Bridge) ExportAll(repo *cache.RepoCache) error {
+func (b Bridge) ExportAll() error {
 	exporter := b.impl.Exporter()
 	if exporter == nil {
 		return ErrExportNorSupported
 	}
 
-	conf, err := b.getConfig(repo)
+	conf, err := b.getConfig()
 	if err != nil {
 		return err
 	}
 
-	return b.impl.Exporter().ExportAll(repo, conf)
+	return b.impl.Exporter().ExportAll(b.repo, conf)
 }
 
-func (b Bridge) Export(repo *cache.RepoCache, id string) error {
+func (b Bridge) Export(id string) error {
 	exporter := b.impl.Exporter()
 	if exporter == nil {
 		return ErrExportNorSupported
 	}
 
-	conf, err := b.getConfig(repo)
+	conf, err := b.getConfig()
 	if err != nil {
 		return err
 	}
 
-	return b.impl.Exporter().Export(repo, conf, id)
+	return b.impl.Exporter().Export(b.repo, conf, id)
 }

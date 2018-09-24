@@ -2,12 +2,15 @@ package bridge
 
 import (
 	"github.com/MichaelMure/git-bug/bridge/core"
-	"github.com/MichaelMure/git-bug/bridge/github"
+	_ "github.com/MichaelMure/git-bug/bridge/github"
+	"github.com/MichaelMure/git-bug/repository"
 )
 
-// Bridges return all known bridges
-func Bridges() []*core.Bridge {
-	return []*core.Bridge{
-		core.NewBridge(&github.Github{}),
-	}
+// Targets return all known bridge implementation target
+func Targets() []string {
+	return core.Targets()
+}
+
+func ConfiguredBridges(repo repository.RepoCommon) ([]string, error) {
+	return core.ConfiguredBridges(repo)
 }
