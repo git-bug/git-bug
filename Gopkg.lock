@@ -66,6 +66,14 @@
   version = "v1.7.0"
 
 [[projects]]
+  digest = "1:97df918963298c287643883209a2c3f642e6593379f97ab400c2a2e219ab647d"
+  name = "github.com/golang/protobuf"
+  packages = ["proto"]
+  pruneopts = "UT"
+  revision = "aa810b61a9c79d51363740d207bb46cf8e620ed5"
+  version = "v1.2.0"
+
+[[projects]]
   digest = "1:c79fb010be38a59d657c48c6ba1d003a8aa651fa56b579d959d74573b7dff8e1"
   name = "github.com/gorilla/context"
   packages = ["."]
@@ -182,6 +190,34 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:a1562fb3021983f533a27d02ebf36f1bc1ab327660d611d6e948970b54087792"
+  name = "github.com/shurcooL/githubv4"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "b5f70540eee0ebfb6a27b52fc5b131be76415539"
+
+[[projects]]
+  branch = "master"
+  digest = "1:ddaa79b37808fbd09a1c3f484bba6320c884664dfc25ccc5f2d7d5a82222177c"
+  name = "github.com/shurcooL/go"
+  packages = ["ctxhttp"]
+  pruneopts = "UT"
+  revision = "9e1955d9fb6e1ee2345ba1f5e71669263e719e27"
+
+[[projects]]
+  branch = "master"
+  digest = "1:b69bc7c0c0489f6f3467b737e243620b1a545dbeaf7623a9432b658f7b7ecc58"
+  name = "github.com/shurcooL/graphql"
+  packages = [
+    ".",
+    "ident",
+    "internal/jsonutil",
+  ]
+  pruneopts = "UT"
+  revision = "365899397c9ad12805631fe4c9b2a64be9d74818"
+
+[[projects]]
+  branch = "master"
   digest = "1:9d29b003dc5f98647a5dd6754d65c07171fcd35761102ea56ecd3d6993adee7f"
   name = "github.com/shurcooL/httpfs"
   packages = [
@@ -252,6 +288,28 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:d6b719875cf8091fbab38527d81d34e71f4521b9ee9ccfbd4a32cff2ac5af96e"
+  name = "golang.org/x/net"
+  packages = [
+    "context",
+    "context/ctxhttp",
+  ]
+  pruneopts = "UT"
+  revision = "2f5d2388922f370f4355f327fcf4cfe9f5583908"
+
+[[projects]]
+  branch = "master"
+  digest = "1:363b547c971a2b07474c598b6e9ebcb238d556d8a27f37b3895ad20cd50e7281"
+  name = "golang.org/x/oauth2"
+  packages = [
+    ".",
+    "internal",
+  ]
+  pruneopts = "UT"
+  revision = "d2e6202438beef2727060aa7cabdd924d92ebfd9"
+
+[[projects]]
+  branch = "master"
   digest = "1:3364d01296ce7eeca363e3d530ae63a2092d6f8efb85fb3d101e8f6d7de83452"
   name = "golang.org/x/sys"
   packages = [
@@ -277,6 +335,22 @@
   revision = "a434f64ace81347eff0fb4a32bc80a235e0ad762"
 
 [[projects]]
+  digest = "1:6247f76e55a1e1a5c19a81e2d4b4dff6730461eeb5bbb0a16dd4a8ec8637ee93"
+  name = "google.golang.org/appengine"
+  packages = [
+    "internal",
+    "internal/base",
+    "internal/datastore",
+    "internal/log",
+    "internal/remote_api",
+    "internal/urlfetch",
+    "urlfetch",
+  ]
+  pruneopts = "UT"
+  revision = "ae0ab99deb4dc413a2b4bd6c8bdd0eb67f1e4d06"
+  version = "v1.2.0"
+
+[[projects]]
   digest = "1:342378ac4dcb378a5448dd723f0784ae519383532f5e70ade24132c4c8693202"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
@@ -300,6 +374,7 @@
     "github.com/jroimartin/gocui",
     "github.com/phayes/freeport",
     "github.com/pkg/errors",
+    "github.com/shurcooL/githubv4",
     "github.com/shurcooL/httpfs/filter",
     "github.com/shurcooL/vfsgen",
     "github.com/skratchdot/open-golang/open",
@@ -308,6 +383,7 @@
     "github.com/vektah/gqlparser",
     "github.com/vektah/gqlparser/ast",
     "golang.org/x/crypto/ssh/terminal",
+    "golang.org/x/oauth2",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
