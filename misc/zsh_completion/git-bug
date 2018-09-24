@@ -17,8 +17,11 @@ case $state in
   ;;
   level2)
     case $words[2] in
+      title)
+        _arguments '2: :(edit)'
+      ;;
       bridge)
-        _arguments '2: :(configure)'
+        _arguments '2: :(configure rm)'
       ;;
       comment)
         _arguments '2: :(add)'
@@ -28,9 +31,6 @@ case $state in
       ;;
       status)
         _arguments '2: :(close open)'
-      ;;
-      title)
-        _arguments '2: :(edit)'
       ;;
       *)
         _arguments '*: :_files'

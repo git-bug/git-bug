@@ -28,6 +28,9 @@ type RepoCommon interface {
 
 	// ReadConfigs read all key/value pair matching the key prefix
 	ReadConfigs(keyPrefix string) (map[string]string, error)
+
+	// RmConfigs remove all key/value pair matching the key prefix
+	RmConfigs(keyPrefix string) error
 }
 
 // Repo represents a source code repository.

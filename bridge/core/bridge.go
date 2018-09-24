@@ -62,14 +62,14 @@ func NewBridge(repo *cache.RepoCache, target string, name string) (*Bridge, erro
 }
 
 func ConfiguredBridges(repo repository.RepoCommon) ([]string, error) {
-	configs, err := repo.ReadConfigs("git-bug.")
+	configs, err := repo.ReadConfigs("git-bug.bridge.")
 	if err != nil {
 		return nil, errors.Wrap(err, "can't read configured bridges")
 	}
 
-	re, err := regexp.Compile(`git-bug.([^\.]+\.[^\.]+)`)
+	re, err := regexp.Compile(`git-bug.bridge.([^\.]+\.[^\.]+)`)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	set := make(map[string]interface{})
@@ -95,19 +95,18 @@ func ConfiguredBridges(repo repository.RepoCommon) ([]string, error) {
 	return result, nil
 }
 
-func (b *Bridge) String() string {
-	var _type string
-	if b.impl.Importer() != nil && b.impl.Exporter() != nil {
-		_type = "import/export"
-	} else if b.impl.Importer() != nil {
-		_type = "import"
-	} else if b.impl.Exporter() != nil {
-		_type = "export"
-	} else {
-		panic("bad bridge impl, neither import nor export")
+func RemoveBridge(repo repository.RepoCommon, fullName string) error {
+	re, err := regexp.Compile(`^[^\.]+\.[^\.]+$`)
+	if err != nil {
+		panic(err)
 	}
 
-	return fmt.Sprintf("%s.%s: %s", b.impl.Target(), b.Name, _type)
+	if !re.MatchString(fullName) {
+		return fmt.Errorf("bad bridge fullname: %s", fullName)
+	}
+
+	keyPrefix := fmt.Sprintf("git-bug.bridge.%s", fullName)
+	return repo.RmConfigs(keyPrefix)
 }
 
 func (b *Bridge) Configure() error {
@@ -123,7 +122,7 @@ func (b *Bridge) Configure() error {
 
 func (b *Bridge) storeConfig(conf Configuration) error {
 	for key, val := range conf {
-		storeKey := fmt.Sprintf("git-bug.%s.%s.%s", b.impl.Target(), b.Name, key)
+		storeKey := fmt.Sprintf("git-bug.bridge.%s.%s.%s", b.impl.Target(), b.Name, key)
 
 		err := b.repo.StoreConfig(storeKey, val)
 		if err != nil {
@@ -147,7 +146,7 @@ func (b Bridge) getConfig() (Configuration, error) {
 }
 
 func (b Bridge) loadConfig() (Configuration, error) {
-	keyPrefix := fmt.Sprintf("git-bug.%s.%s.", b.impl.Target(), b.Name)
+	keyPrefix := fmt.Sprintf("git-bug.bridge.%s.%s.", b.impl.Target(), b.Name)
 
 	pairs, err := b.repo.ReadConfigs(keyPrefix)
 	if err != nil {

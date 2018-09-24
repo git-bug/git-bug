@@ -73,6 +73,15 @@ func (r *mockRepoForTest) ReadConfigs(keyPrefix string) (map[string]string, erro
 	return result, nil
 }
 
+func (r *mockRepoForTest) RmConfigs(keyPrefix string) error {
+	for key := range r.config {
+		if strings.HasPrefix(key, keyPrefix) {
+			delete(r.config, key)
+		}
+	}
+	return nil
+}
+
 // PushRefs push git refs to a remote
 func (r *mockRepoForTest) PushRefs(remote string, refSpec string) (string, error) {
 	return "", nil

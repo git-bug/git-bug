@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/MichaelMure/git-bug/bridge"
-	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/spf13/cobra"
 )
@@ -29,7 +28,7 @@ func runBridgeConfigure(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	b, err := core.NewBridge(backend, target, name)
+	b, err := bridge.NewBridge(backend, target, name)
 	if err != nil {
 		return err
 	}

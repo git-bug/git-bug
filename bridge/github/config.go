@@ -214,7 +214,7 @@ func promptURL() (string, string, error) {
 func splitURL(url string) (string, string, error) {
 	re, err := regexp.Compile(`github\.com\/([^\/]*)\/([^\/]*)`)
 	if err != nil {
-		return "", "", err
+		panic(err)
 	}
 
 	res := re.FindStringSubmatch(url)

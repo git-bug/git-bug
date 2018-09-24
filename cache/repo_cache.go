@@ -75,12 +75,19 @@ func (c *RepoCache) GetUserEmail() (string, error) {
 	return c.repo.GetUserEmail()
 }
 
+// StoreConfig store a single key/value pair in the config of the repo
 func (c *RepoCache) StoreConfig(key string, value string) error {
 	return c.repo.StoreConfig(key, value)
 }
 
+// ReadConfigs read all key/value pair matching the key prefix
 func (c *RepoCache) ReadConfigs(keyPrefix string) (map[string]string, error) {
 	return c.repo.ReadConfigs(keyPrefix)
+}
+
+// RmConfigs remove all key/value pair matching the key prefix
+func (c *RepoCache) RmConfigs(keyPrefix string) error {
+	return c.repo.RmConfigs(keyPrefix)
 }
 
 func (c *RepoCache) lock() error {

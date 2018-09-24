@@ -170,8 +170,14 @@ func (repo *GitRepo) StoreConfig(key string, value string) error {
 func (repo *GitRepo) ReadConfigs(keyPrefix string) (map[string]string, error) {
 	stdout, err := repo.runGitCommand("config", "--get-regexp", keyPrefix)
 
+	//   / \
+	//  / ! \
+	// -------
+	//
+	// There can be a legitimate error here, but I see no portable way to
+	// distinguish them from the git error that say "no matching value exist"
 	if err != nil {
-		return nil, err
+		return nil, nil
 	}
 
 	lines := strings.Split(stdout, "\n")
@@ -192,6 +198,13 @@ func (repo *GitRepo) ReadConfigs(keyPrefix string) (map[string]string, error) {
 	}
 
 	return result, nil
+}
+
+// RmConfigs remove all key/value pair matching the key prefix
+func (repo *GitRepo) RmConfigs(keyPrefix string) error {
+	_, err := repo.runGitCommand("config", "--remove-section", keyPrefix)
+
+	return err
 }
 
 // FetchRefs fetch git refs from a remote
