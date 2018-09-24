@@ -75,6 +75,14 @@ func (c *RepoCache) GetUserEmail() (string, error) {
 	return c.repo.GetUserEmail()
 }
 
+func (c *RepoCache) StoreConfig(key string, value string) error {
+	return c.repo.StoreConfig(key, value)
+}
+
+func (c *RepoCache) ReadConfigs(keyPrefix string) (map[string]string, error) {
+	return c.repo.ReadConfigs(keyPrefix)
+}
+
 func (c *RepoCache) lock() error {
 	lockPath := repoLockFilePath(c.repo)
 

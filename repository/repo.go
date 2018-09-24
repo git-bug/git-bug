@@ -9,6 +9,7 @@ import (
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
+// RepoCommon represent the common function the we want all the repo to implement
 type RepoCommon interface {
 	// GetPath returns the path to the repo.
 	GetPath() string
@@ -21,6 +22,12 @@ type RepoCommon interface {
 
 	// GetCoreEditor returns the name of the editor that the user has used to configure git.
 	GetCoreEditor() (string, error)
+
+	// StoreConfig store a single key/value pair in the config of the repo
+	StoreConfig(key string, value string) error
+
+	// ReadConfigs read all key/value pair matching the key prefix
+	ReadConfigs(keyPrefix string) (map[string]string, error)
 }
 
 // Repo represents a source code repository.

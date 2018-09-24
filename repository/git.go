@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"os/exec"
 	"path"
 	"strings"
@@ -64,11 +63,6 @@ func (repo *GitRepo) runGitCommandWithStdin(stdin io.Reader, args ...string) (st
 // Run the given git command and return its stdout, or an error if the command fails.
 func (repo *GitRepo) runGitCommand(args ...string) (string, error) {
 	return repo.runGitCommandWithStdin(nil, args...)
-}
-
-// Run the given git command using the same stdin, stdout, and stderr as the review tool.
-func (repo *GitRepo) runGitCommandInline(args ...string) error {
-	return repo.runGitCommandWithIO(os.Stdin, os.Stdout, os.Stderr, args...)
 }
 
 // NewGitRepo determines if the given working directory is inside of a git repository,
@@ -163,6 +157,41 @@ func (repo *GitRepo) GetUserEmail() (string, error) {
 // GetCoreEditor returns the name of the editor that the user has used to configure git.
 func (repo *GitRepo) GetCoreEditor() (string, error) {
 	return repo.runGitCommand("var", "GIT_EDITOR")
+}
+
+// StoreConfig store a single key/value pair in the config of the repo
+func (repo *GitRepo) StoreConfig(key string, value string) error {
+	_, err := repo.runGitCommand("config", "--replace-all", key, value)
+
+	return err
+}
+
+// ReadConfigs read all key/value pair matching the key prefix
+func (repo *GitRepo) ReadConfigs(keyPrefix string) (map[string]string, error) {
+	stdout, err := repo.runGitCommand("config", "--get-regexp", keyPrefix)
+
+	if err != nil {
+		return nil, err
+	}
+
+	lines := strings.Split(stdout, "\n")
+
+	result := make(map[string]string, len(lines))
+
+	for _, line := range lines {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+
+		parts := strings.Fields(line)
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("bad git config: %s", line)
+		}
+
+		result[parts[0]] = parts[1]
+	}
+
+	return result, nil
 }
 
 // FetchRefs fetch git refs from a remote

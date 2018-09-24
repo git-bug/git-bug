@@ -3,6 +3,7 @@ package repository
 import (
 	"crypto/sha1"
 	"fmt"
+	"strings"
 
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/lamport"
@@ -10,6 +11,7 @@ import (
 
 // mockRepoForTest defines an instance of Repo that can be used for testing.
 type mockRepoForTest struct {
+	config      map[string]string
 	blobs       map[git.Hash][]byte
 	trees       map[git.Hash]string
 	commits     map[git.Hash]commit
@@ -25,6 +27,7 @@ type commit struct {
 
 func NewMockRepoForTest() *mockRepoForTest {
 	return &mockRepoForTest{
+		config:      make(map[string]string),
 		blobs:       make(map[git.Hash][]byte),
 		trees:       make(map[git.Hash]string),
 		commits:     make(map[git.Hash]commit),
@@ -51,6 +54,23 @@ func (r *mockRepoForTest) GetUserEmail() (string, error) {
 // GetCoreEditor returns the name of the editor that the user has used to configure git.
 func (r *mockRepoForTest) GetCoreEditor() (string, error) {
 	return "vi", nil
+}
+
+func (r *mockRepoForTest) StoreConfig(key string, value string) error {
+	r.config[key] = value
+	return nil
+}
+
+func (r *mockRepoForTest) ReadConfigs(keyPrefix string) (map[string]string, error) {
+	result := make(map[string]string)
+
+	for key, val := range r.config {
+		if strings.HasPrefix(key, keyPrefix) {
+			result[key] = val
+		}
+	}
+
+	return result, nil
 }
 
 // PushRefs push git refs to a remote
