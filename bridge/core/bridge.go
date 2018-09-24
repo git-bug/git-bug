@@ -200,6 +200,11 @@ func (b Bridge) loadConfig() (Configuration, error) {
 		result[key] = value
 	}
 
+	err = b.impl.ValidateConfig(result)
+	if err != nil {
+		return nil, errors.Wrap(err, "invalid configuration")
+	}
+
 	return result, nil
 }
 

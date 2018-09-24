@@ -93,6 +93,22 @@ func (*Github) Configure(repo repository.RepoCommon) (core.Configuration, error)
 	return nil, nil
 }
 
+func (*Github) ValidateConfig(conf core.Configuration) error {
+	if _, ok := conf[keyToken]; !ok {
+		return fmt.Errorf("missing %s key", keyToken)
+	}
+
+	if _, ok := conf[keyUser]; !ok {
+		return fmt.Errorf("missing %s key", keyUser)
+	}
+
+	if _, ok := conf[keyProject]; !ok {
+		return fmt.Errorf("missing %s key", keyProject)
+	}
+
+	return nil
+}
+
 func requestToken(note, username, password string) (*http.Response, error) {
 	return requestTokenWith2FA(note, username, password, "")
 }

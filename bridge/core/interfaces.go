@@ -15,6 +15,9 @@ type BridgeImpl interface {
 	// for future use
 	Configure(repo repository.RepoCommon) (Configuration, error)
 
+	// ValidateConfig check the configuration for error
+	ValidateConfig(conf Configuration) error
+
 	// Importer return an Importer implementation if the import is supported
 	Importer() Importer
 
