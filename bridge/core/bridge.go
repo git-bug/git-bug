@@ -61,6 +61,47 @@ func NewBridge(repo *cache.RepoCache, target string, name string) (*Bridge, erro
 	return bridge, nil
 }
 
+func NewBridgeFullName(repo *cache.RepoCache, fullName string) (*Bridge, error) {
+	target, name, err := splitFullName(fullName)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewBridge(repo, target, name)
+}
+
+func DefaultBridge(repo *cache.RepoCache) (*Bridge, error) {
+	bridges, err := ConfiguredBridges(repo)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(bridges) == 0 {
+		return nil, fmt.Errorf("no configured bridge")
+	}
+
+	if len(bridges) > 1 {
+		return nil, fmt.Errorf("multiple bridge configured")
+	}
+
+	target, name, err := splitFullName(bridges[0])
+	if err != nil {
+		return nil, err
+	}
+
+	return NewBridge(repo, target, name)
+}
+
+func splitFullName(fullName string) (string, string, error) {
+	split := strings.Split(fullName, ".")
+
+	if len(split) != 2 {
+		return "", "", fmt.Errorf("bad bridge fullname: %s", fullName)
+	}
+
+	return split[0], split[1], nil
+}
+
 func ConfiguredBridges(repo repository.RepoCommon) ([]string, error) {
 	configs, err := repo.ReadConfigs("git-bug.bridge.")
 	if err != nil {

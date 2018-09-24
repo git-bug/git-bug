@@ -16,6 +16,14 @@ func NewBridge(repo *cache.RepoCache, target string, name string) (*core.Bridge,
 	return core.NewBridge(repo, target, name)
 }
 
+func NewBridgeFullName(repo *cache.RepoCache, fullName string) (*core.Bridge, error) {
+	return core.NewBridgeFullName(repo, fullName)
+}
+
+func DefaultBridge(repo *cache.RepoCache) (*core.Bridge, error) {
+	return core.DefaultBridge(repo)
+}
+
 func ConfiguredBridges(repo repository.RepoCommon) ([]string, error) {
 	return core.ConfiguredBridges(repo)
 }
