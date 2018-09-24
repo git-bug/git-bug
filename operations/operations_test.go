@@ -34,7 +34,7 @@ func TestValidate(t *testing.T) {
 		NewSetStatusOp(bug.Person{Name: "René Descartes", Email: "rene@descartes.fr\u001b"}, bug.ClosedStatus),
 		NewSetStatusOp(bug.Person{Name: "René \nDescartes", Email: "rene@descartes.fr"}, bug.ClosedStatus),
 		NewSetStatusOp(bug.Person{Name: "René Descartes", Email: "rene@\ndescartes.fr"}, bug.ClosedStatus),
-		CreateOperation{OpBase: bug.OpBase{
+		CreateOperation{OpBase: &bug.OpBase{
 			Author:        rene,
 			UnixTime:      0,
 			OperationType: bug.CreateOp,

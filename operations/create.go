@@ -14,7 +14,7 @@ import (
 var _ bug.Operation = CreateOperation{}
 
 type CreateOperation struct {
-	bug.OpBase
+	*bug.OpBase
 	Title   string     `json:"title"`
 	Message string     `json:"message"`
 	Files   []git.Hash `json:"files"`

@@ -25,6 +25,7 @@ func TestOpIterator(t *testing.T) {
 
 	bug1 := bug.NewBug()
 
+	// first pack
 	bug1.Append(createOp)
 	bug1.Append(setTitleOp)
 	bug1.Append(addCommentOp)
@@ -32,11 +33,13 @@ func TestOpIterator(t *testing.T) {
 	bug1.Append(labelChangeOp)
 	bug1.Commit(mockRepo)
 
+	// second pack
 	bug1.Append(setTitleOp)
 	bug1.Append(setTitleOp)
 	bug1.Append(setTitleOp)
 	bug1.Commit(mockRepo)
 
+	// staging
 	bug1.Append(setTitleOp)
 	bug1.Append(setTitleOp)
 	bug1.Append(setTitleOp)

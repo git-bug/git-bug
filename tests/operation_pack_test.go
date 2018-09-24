@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/operations"
+	"github.com/MichaelMure/git-bug/util/git"
 )
 
 func TestOperationPackSerialize(t *testing.T) {
@@ -16,6 +18,24 @@ func TestOperationPackSerialize(t *testing.T) {
 	opp.Append(addCommentOp)
 	opp.Append(setStatusOp)
 	opp.Append(labelChangeOp)
+
+	opMeta := operations.NewCreateOp(rene, "title", "message", nil)
+	opMeta.SetMetadata("key", "value")
+	opp.Append(opMeta)
+
+	if len(opMeta.Metadata) != 1 {
+		t.Fatal()
+	}
+
+	opFile := operations.NewCreateOp(rene, "title", "message", []git.Hash{
+		"abcdef",
+		"ghijkl",
+	})
+	opp.Append(opFile)
+
+	if len(opFile.Files) != 2 {
+		t.Fatal()
+	}
 
 	data, err := json.Marshal(opp)
 	if err != nil {

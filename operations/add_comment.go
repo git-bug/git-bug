@@ -13,7 +13,7 @@ import (
 var _ bug.Operation = AddCommentOperation{}
 
 type AddCommentOperation struct {
-	bug.OpBase
+	*bug.OpBase
 	Message string `json:"message"`
 	// TODO: change for a map[string]util.hash to store the filename ?
 	Files []git.Hash `json:"files"`

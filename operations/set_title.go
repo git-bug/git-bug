@@ -13,7 +13,7 @@ import (
 var _ bug.Operation = SetTitleOperation{}
 
 type SetTitleOperation struct {
-	bug.OpBase
+	*bug.OpBase
 	Title string `json:"title"`
 	Was   string `json:"was"`
 }

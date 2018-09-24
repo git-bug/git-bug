@@ -36,18 +36,23 @@ type Operation interface {
 	Apply(snapshot Snapshot) Snapshot
 	// Validate check if the operation is valid (ex: a title is a single line)
 	Validate() error
+	// SetMetadata store arbitrary metadata about the operation
+	SetMetadata(key string, value string)
+	// GetMetadata retrieve arbitrary metadata about the operation
+	GetMetadata(key string) (string, bool)
 }
 
 // OpBase implement the common code for all operations
 type OpBase struct {
-	OperationType OperationType `json:"type"`
-	Author        Person        `json:"author"`
-	UnixTime      int64         `json:"timestamp"`
+	OperationType OperationType     `json:"type"`
+	Author        Person            `json:"author"`
+	UnixTime      int64             `json:"timestamp"`
+	Metadata      map[string]string `json:"metadata,omitempty"`
 }
 
 // NewOpBase is the constructor for an OpBase
-func NewOpBase(opType OperationType, author Person) OpBase {
-	return OpBase{
+func NewOpBase(opType OperationType, author Person) *OpBase {
+	return &OpBase{
 		OperationType: opType,
 		Author:        author,
 		UnixTime:      time.Now().Unix(),
@@ -55,27 +60,27 @@ func NewOpBase(opType OperationType, author Person) OpBase {
 }
 
 // OpType return the type of operation
-func (op OpBase) OpType() OperationType {
+func (op *OpBase) OpType() OperationType {
 	return op.OperationType
 }
 
 // Time return the time when the operation was added
-func (op OpBase) Time() time.Time {
+func (op *OpBase) Time() time.Time {
 	return time.Unix(op.UnixTime, 0)
 }
 
 // GetUnixTime return the unix timestamp when the operation was added
-func (op OpBase) GetUnixTime() int64 {
+func (op *OpBase) GetUnixTime() int64 {
 	return op.UnixTime
 }
 
 // GetAuthor return the author of the operation
-func (op OpBase) GetAuthor() Person {
+func (op *OpBase) GetAuthor() Person {
 	return op.Author
 }
 
 // GetFiles return the files needed by this operation
-func (op OpBase) GetFiles() []git.Hash {
+func (op *OpBase) GetFiles() []git.Hash {
 	return nil
 }
 
@@ -100,4 +105,19 @@ func OpBaseValidate(op Operation, opType OperationType) error {
 	}
 
 	return nil
+}
+
+// SetMetadata store arbitrary metadata about the operation
+func (op *OpBase) SetMetadata(key string, value string) {
+	if op.Metadata == nil {
+		op.Metadata = make(map[string]string)
+	}
+
+	op.Metadata[key] = value
+}
+
+// GetMetadata retrieve arbitrary metadata about the operation
+func (op *OpBase) GetMetadata(key string) (string, bool) {
+	val, ok := op.Metadata[key]
+	return val, ok
 }

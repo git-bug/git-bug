@@ -12,7 +12,7 @@ var _ bug.Operation = LabelChangeOperation{}
 
 // LabelChangeOperation define a Bug operation to add or remove labels
 type LabelChangeOperation struct {
-	bug.OpBase
+	*bug.OpBase
 	Added   []bug.Label `json:"added"`
 	Removed []bug.Label `json:"removed"`
 }

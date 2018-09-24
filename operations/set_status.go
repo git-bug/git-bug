@@ -10,7 +10,7 @@ import (
 var _ bug.Operation = SetStatusOperation{}
 
 type SetStatusOperation struct {
-	bug.OpBase
+	*bug.OpBase
 	Status bug.Status `json:"status"`
 }
 
