@@ -76,16 +76,24 @@ type Repo interface {
 type ClockedRepo interface {
 	Repo
 
+	// LoadClocks read the clocks values from the on-disk repo
 	LoadClocks() error
 
+	// WriteClocks write the clocks values into the repo
 	WriteClocks() error
 
+	// CreateTimeIncrement increment the creation clock and return the new value.
 	CreateTimeIncrement() (lamport.Time, error)
 
+	// EditTimeIncrement increment the edit clock and return the new value.
 	EditTimeIncrement() (lamport.Time, error)
 
+	// CreateWitness witness another create time and increment the corresponding
+	// clock if needed.
 	CreateWitness(time lamport.Time) error
 
+	// EditWitness witness another edition time and increment the corresponding
+	// clock if needed.
 	EditWitness(time lamport.Time) error
 }
 

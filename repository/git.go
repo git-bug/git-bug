@@ -366,6 +366,7 @@ func (repo *GitRepo) createClocks() error {
 	return nil
 }
 
+// LoadClocks read the clocks values from the on-disk repo
 func (repo *GitRepo) LoadClocks() error {
 	createClock, err := lamport.LoadPersisted(repo.GetPath() + createClockFile)
 	if err != nil {
@@ -382,6 +383,7 @@ func (repo *GitRepo) LoadClocks() error {
 	return nil
 }
 
+// WriteClocks write the clocks values into the repo
 func (repo *GitRepo) WriteClocks() error {
 	err := repo.createClock.Write()
 	if err != nil {
@@ -396,18 +398,24 @@ func (repo *GitRepo) WriteClocks() error {
 	return nil
 }
 
+// CreateTimeIncrement increment the creation clock and return the new value.
 func (repo *GitRepo) CreateTimeIncrement() (lamport.Time, error) {
 	return repo.createClock.Increment()
 }
 
+// EditTimeIncrement increment the edit clock and return the new value.
 func (repo *GitRepo) EditTimeIncrement() (lamport.Time, error) {
 	return repo.editClock.Increment()
 }
 
+// CreateWitness witness another create time and increment the corresponding clock
+// if needed.
 func (repo *GitRepo) CreateWitness(time lamport.Time) error {
 	return repo.createClock.Witness(time)
 }
 
+// EditWitness witness another edition time and increment the corresponding clock
+// if needed.
 func (repo *GitRepo) EditWitness(time lamport.Time) error {
 	return repo.editClock.Witness(time)
 }

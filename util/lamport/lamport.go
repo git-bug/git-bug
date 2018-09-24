@@ -41,12 +41,15 @@ type Clock struct {
 // Time is the value of a Clock.
 type Time uint64
 
+// NewClock create a new clock with the value 1.
+// Value 0 is considered as invalid.
 func NewClock() Clock {
 	return Clock{
 		counter: 1,
 	}
 }
 
+// NewClockWithTime create a new clock with a value.
 func NewClockWithTime(time uint64) Clock {
 	return Clock{
 		counter: time,

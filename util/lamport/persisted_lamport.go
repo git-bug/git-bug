@@ -12,6 +12,7 @@ type Persisted struct {
 	filePath string
 }
 
+// NewPersisted create a new persisted Lamport clock
 func NewPersisted(filePath string) (*Persisted, error) {
 	clock := &Persisted{
 		Clock:    NewClock(),
@@ -27,6 +28,7 @@ func NewPersisted(filePath string) (*Persisted, error) {
 	return clock, nil
 }
 
+// LoadPersisted load a persisted Lamport clock from a file
 func LoadPersisted(filePath string) (*Persisted, error) {
 	clock := &Persisted{
 		filePath: filePath,
@@ -40,11 +42,14 @@ func LoadPersisted(filePath string) (*Persisted, error) {
 	return clock, nil
 }
 
+// Increment is used to return the value of the lamport clock and increment it afterwards
 func (c *Persisted) Increment() (Time, error) {
 	time := c.Clock.Increment()
 	return time, c.Write()
 }
 
+// Witness is called to update our local clock if necessary after
+// witnessing a clock value received from another process
 func (c *Persisted) Witness(time Time) error {
 	// TODO: rework so that we write only when the clock was actually updated
 	c.Clock.Witness(time)
