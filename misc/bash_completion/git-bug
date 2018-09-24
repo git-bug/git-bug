@@ -277,6 +277,47 @@ _git-bug_add()
     noun_aliases=()
 }
 
+_git-bug_bridge_configure()
+{
+    last_command="git-bug_bridge_configure"
+
+    command_aliases=()
+
+    commands=()
+
+    flags=()
+    two_word_flags=()
+    local_nonpersistent_flags=()
+    flags_with_completion=()
+    flags_completion=()
+
+
+    must_have_one_flag=()
+    must_have_one_noun=()
+    noun_aliases=()
+}
+
+_git-bug_bridge()
+{
+    last_command="git-bug_bridge"
+
+    command_aliases=()
+
+    commands=()
+    commands+=("configure")
+
+    flags=()
+    two_word_flags=()
+    local_nonpersistent_flags=()
+    flags_with_completion=()
+    flags_completion=()
+
+
+    must_have_one_flag=()
+    must_have_one_noun=()
+    noun_aliases=()
+}
+
 _git-bug_commands()
 {
     last_command="git-bug_commands"
@@ -704,6 +745,7 @@ _git-bug_root_command()
 
     commands=()
     commands+=("add")
+    commands+=("bridge")
     commands+=("commands")
     commands+=("comment")
     commands+=("label")

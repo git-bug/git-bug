@@ -21,6 +21,7 @@ git-bug [flags]
 ### SEE ALSO
 
 * [git-bug add](git-bug_add.md)	 - Create a new bug
+* [git-bug bridge](git-bug_bridge.md)	 - Configure and use bridges to other bug trackers
 * [git-bug commands](git-bug_commands.md)	 - Display available commands
 * [git-bug comment](git-bug_comment.md)	 - Display or add comments
 * [git-bug label](git-bug_label.md)	 - Display, add or remove labels

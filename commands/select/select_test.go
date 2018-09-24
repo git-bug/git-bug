@@ -1,7 +1,6 @@
 package _select
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"testing"
@@ -91,8 +90,6 @@ func createRepo() *repository.GitRepo {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	fmt.Println("Creating repo:", dir)
 
 	repo, err := repository.InitGitRepo(dir)
 	if err != nil {
