@@ -4,6 +4,11 @@ build:
 	go generate
 	go build .
 
+# produce a build debugger friendly
+debug-build:
+	go generate
+	go build -gcflags=all="-N -l" .
+
 install:
 	go generate
 	go install .
