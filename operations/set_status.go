@@ -32,16 +32,16 @@ func (op SetStatusOperation) Validate() error {
 	return nil
 }
 
-func NewSetStatusOp(author bug.Person, status bug.Status) SetStatusOperation {
+func NewSetStatusOp(author bug.Person, unixTime int64, status bug.Status) SetStatusOperation {
 	return SetStatusOperation{
-		OpBase: bug.NewOpBase(bug.SetStatusOp, author),
+		OpBase: bug.NewOpBase(bug.SetStatusOp, author, unixTime),
 		Status: status,
 	}
 }
 
 // Convenience function to apply the operation
-func Open(b bug.Interface, author bug.Person) error {
-	op := NewSetStatusOp(author, bug.OpenStatus)
+func Open(b bug.Interface, author bug.Person, unixTime int64) error {
+	op := NewSetStatusOp(author, unixTime, bug.OpenStatus)
 	if err := op.Validate(); err != nil {
 		return err
 	}
@@ -50,8 +50,8 @@ func Open(b bug.Interface, author bug.Person) error {
 }
 
 // Convenience function to apply the operation
-func Close(b bug.Interface, author bug.Person) error {
-	op := NewSetStatusOp(author, bug.ClosedStatus)
+func Close(b bug.Interface, author bug.Person, unixTime int64) error {
+	op := NewSetStatusOp(author, unixTime, bug.ClosedStatus)
 	if err := op.Validate(); err != nil {
 		return err
 	}

@@ -51,11 +51,11 @@ type OpBase struct {
 }
 
 // NewOpBase is the constructor for an OpBase
-func NewOpBase(opType OperationType, author Person) *OpBase {
+func NewOpBase(opType OperationType, author Person, unixTime int64) *OpBase {
 	return &OpBase{
 		OperationType: opType,
 		Author:        author,
-		UnixTime:      time.Now().Unix(),
+		UnixTime:      unixTime,
 	}
 }
 

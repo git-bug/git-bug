@@ -62,9 +62,9 @@ func (op CreateOperation) Validate() error {
 	return nil
 }
 
-func NewCreateOp(author bug.Person, title, message string, files []git.Hash) CreateOperation {
+func NewCreateOp(author bug.Person, unixTime int64, title, message string, files []git.Hash) CreateOperation {
 	return CreateOperation{
-		OpBase:  bug.NewOpBase(bug.CreateOp, author),
+		OpBase:  bug.NewOpBase(bug.CreateOp, author, unixTime),
 		Title:   title,
 		Message: message,
 		Files:   files,
@@ -72,13 +72,13 @@ func NewCreateOp(author bug.Person, title, message string, files []git.Hash) Cre
 }
 
 // Convenience function to apply the operation
-func Create(author bug.Person, title, message string) (*bug.Bug, error) {
-	return CreateWithFiles(author, title, message, nil)
+func Create(author bug.Person, unixTime int64, title, message string) (*bug.Bug, error) {
+	return CreateWithFiles(author, unixTime, title, message, nil)
 }
 
-func CreateWithFiles(author bug.Person, title, message string, files []git.Hash) (*bug.Bug, error) {
+func CreateWithFiles(author bug.Person, unixTime int64, title, message string, files []git.Hash) (*bug.Bug, error) {
 	newBug := bug.NewBug()
-	createOp := NewCreateOp(author, title, message, files)
+	createOp := NewCreateOp(author, unixTime, title, message, files)
 
 	if err := createOp.Validate(); err != nil {
 		return nil, err

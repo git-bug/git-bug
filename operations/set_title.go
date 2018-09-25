@@ -52,16 +52,16 @@ func (op SetTitleOperation) Validate() error {
 	return nil
 }
 
-func NewSetTitleOp(author bug.Person, title string, was string) SetTitleOperation {
+func NewSetTitleOp(author bug.Person, unixTime int64, title string, was string) SetTitleOperation {
 	return SetTitleOperation{
-		OpBase: bug.NewOpBase(bug.SetTitleOp, author),
+		OpBase: bug.NewOpBase(bug.SetTitleOp, author, unixTime),
 		Title:  title,
 		Was:    was,
 	}
 }
 
 // Convenience function to apply the operation
-func SetTitle(b bug.Interface, author bug.Person, title string) error {
+func SetTitle(b bug.Interface, author bug.Person, unixTime int64, title string) error {
 	it := bug.NewOperationIterator(b)
 
 	var lastTitleOp bug.Operation
@@ -79,7 +79,7 @@ func SetTitle(b bug.Interface, author bug.Person, title string) error {
 		was = b.FirstOp().(CreateOperation).Title
 	}
 
-	setTitleOp := NewSetTitleOp(author, title, was)
+	setTitleOp := NewSetTitleOp(author, unixTime, title, was)
 
 	if err := setTitleOp.Validate(); err != nil {
 		return err

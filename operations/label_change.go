@@ -74,16 +74,16 @@ func (op LabelChangeOperation) Validate() error {
 	return nil
 }
 
-func NewLabelChangeOperation(author bug.Person, added, removed []bug.Label) LabelChangeOperation {
+func NewLabelChangeOperation(author bug.Person, unixTime int64, added, removed []bug.Label) LabelChangeOperation {
 	return LabelChangeOperation{
-		OpBase:  bug.NewOpBase(bug.LabelChangeOp, author),
+		OpBase:  bug.NewOpBase(bug.LabelChangeOp, author, unixTime),
 		Added:   added,
 		Removed: removed,
 	}
 }
 
 // ChangeLabels is a convenience function to apply the operation
-func ChangeLabels(b bug.Interface, author bug.Person, add, remove []string) ([]LabelChangeResult, error) {
+func ChangeLabels(b bug.Interface, author bug.Person, unixTime int64, add, remove []string) ([]LabelChangeResult, error) {
 	var added, removed []bug.Label
 	var results []LabelChangeResult
 
@@ -131,7 +131,7 @@ func ChangeLabels(b bug.Interface, author bug.Person, add, remove []string) ([]L
 		return results, fmt.Errorf("no label added or removed")
 	}
 
-	labelOp := NewLabelChangeOperation(author, added, removed)
+	labelOp := NewLabelChangeOperation(author, unixTime, added, removed)
 
 	if err := labelOp.Validate(); err != nil {
 		return nil, err

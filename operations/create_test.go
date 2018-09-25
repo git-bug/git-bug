@@ -4,6 +4,7 @@ import (
 	"github.com/MichaelMure/git-bug/bug"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestCreate(t *testing.T) {
@@ -14,7 +15,9 @@ func TestCreate(t *testing.T) {
 		Email: "rene@descartes.fr",
 	}
 
-	create := NewCreateOp(rene, "title", "message", nil)
+	unix := time.Now().Unix()
+
+	create := NewCreateOp(rene, unix, "title", "message", nil)
 
 	snapshot = create.Apply(snapshot)
 

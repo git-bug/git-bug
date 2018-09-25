@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/operations"
@@ -354,9 +355,20 @@ func (c *RepoCache) NewBugWithFiles(title string, message string, files []git.Ha
 		return nil, err
 	}
 
-	b, err := operations.CreateWithFiles(author, title, message, files)
+	return c.NewBugRaw(author, time.Now().Unix(), title, message, files, nil)
+}
+
+// NewBugWithFilesMeta create a new bug with attached files for the message, as
+// well as metadata for the Create operation.
+// The new bug is written in the repository (commit)
+func (c *RepoCache) NewBugRaw(author bug.Person, unixTime int64, title string, message string, files []git.Hash, metadata map[string]string) (*BugCache, error) {
+	b, err := operations.CreateWithFiles(author, unixTime, title, message, files)
 	if err != nil {
 		return nil, err
+	}
+
+	for key, value := range metadata {
+		b.FirstOp().SetMetadata(key, value)
 	}
 
 	err = b.Commit(c.repo)

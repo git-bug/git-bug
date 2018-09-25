@@ -19,7 +19,7 @@ func TestOperationPackSerialize(t *testing.T) {
 	opp.Append(setStatusOp)
 	opp.Append(labelChangeOp)
 
-	opMeta := operations.NewCreateOp(rene, "title", "message", nil)
+	opMeta := operations.NewCreateOp(rene, unix, "title", "message", nil)
 	opMeta.SetMetadata("key", "value")
 	opp.Append(opMeta)
 
@@ -27,7 +27,7 @@ func TestOperationPackSerialize(t *testing.T) {
 		t.Fatal()
 	}
 
-	opFile := operations.NewCreateOp(rene, "title", "message", []git.Hash{
+	opFile := operations.NewCreateOp(rene, unix, "title", "message", []git.Hash{
 		"abcdef",
 		"ghijkl",
 	})

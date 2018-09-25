@@ -5,6 +5,7 @@ import (
 	"github.com/MichaelMure/git-bug/operations"
 	"github.com/MichaelMure/git-bug/repository"
 	"testing"
+	"time"
 )
 
 var (
@@ -13,11 +14,13 @@ var (
 		Email: "rene@descartes.fr",
 	}
 
-	createOp      = operations.NewCreateOp(rene, "title", "message", nil)
-	setTitleOp    = operations.NewSetTitleOp(rene, "title2", "title1")
-	addCommentOp  = operations.NewAddCommentOp(rene, "message2", nil)
-	setStatusOp   = operations.NewSetStatusOp(rene, bug.ClosedStatus)
-	labelChangeOp = operations.NewLabelChangeOperation(rene, []bug.Label{"added"}, []bug.Label{"removed"})
+	unix = time.Now().Unix()
+
+	createOp      = operations.NewCreateOp(rene, unix, "title", "message", nil)
+	setTitleOp    = operations.NewSetTitleOp(rene, unix, "title2", "title1")
+	addCommentOp  = operations.NewAddCommentOp(rene, unix, "message2", nil)
+	setStatusOp   = operations.NewSetStatusOp(rene, unix, bug.ClosedStatus)
+	labelChangeOp = operations.NewLabelChangeOperation(rene, unix, []bug.Label{"added"}, []bug.Label{"removed"})
 )
 
 func TestOpIterator(t *testing.T) {

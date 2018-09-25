@@ -66,7 +66,12 @@ func GenerateRandomBugsWithSeed(opts Options, seed int64) []*bug.Bug {
 	for i := 0; i < opts.BugNumber; i++ {
 		addedLabels = []string{}
 
-		b, err := operations.Create(randomPerson(opts.PersonNumber), fake.Sentence(), paragraphs())
+		b, err := operations.Create(
+			randomPerson(opts.PersonNumber),
+			time.Now().Unix(),
+			fake.Sentence(),
+			paragraphs(),
+		)
 
 		if err != nil {
 			panic(err)
@@ -106,12 +111,23 @@ func GenerateRandomOperationPacksWithSeed(packNumber int, opNumber int, seed int
 
 		var op bug.Operation
 
-		op = operations.NewCreateOp(randomPerson(5), fake.Sentence(), paragraphs(), nil)
+		op = operations.NewCreateOp(
+			randomPerson(5),
+			time.Now().Unix(),
+			fake.Sentence(),
+			paragraphs(),
+			nil,
+		)
 
 		opp.Append(op)
 
 		for j := 0; j < opNumber-1; j++ {
-			op = operations.NewAddCommentOp(randomPerson(5), paragraphs(), nil)
+			op = operations.NewAddCommentOp(
+				randomPerson(5),
+				time.Now().Unix(),
+				paragraphs(),
+				nil,
+			)
 			opp.Append(op)
 		}
 
@@ -148,19 +164,19 @@ func paragraphs() string {
 }
 
 func comment(b bug.Interface, p bug.Person) {
-	_ = operations.Comment(b, p, paragraphs())
+	_ = operations.Comment(b, p, time.Now().Unix(), paragraphs())
 }
 
 func title(b bug.Interface, p bug.Person) {
-	_ = operations.SetTitle(b, p, fake.Sentence())
+	_ = operations.SetTitle(b, p, time.Now().Unix(), fake.Sentence())
 }
 
 func open(b bug.Interface, p bug.Person) {
-	_ = operations.Open(b, p)
+	_ = operations.Open(b, p, time.Now().Unix())
 }
 
 func close(b bug.Interface, p bug.Person) {
-	_ = operations.Close(b, p)
+	_ = operations.Close(b, p, time.Now().Unix())
 }
 
 var addedLabels []string
@@ -187,5 +203,5 @@ func labels(b bug.Interface, p bug.Person) {
 	// ignore error
 	// if the randomisation produce no changes, no op
 	// is added to the bug
-	_, _ = operations.ChangeLabels(b, p, added, removed)
+	_, _ = operations.ChangeLabels(b, p, time.Now().Unix(), added, removed)
 }

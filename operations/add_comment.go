@@ -52,21 +52,21 @@ func (op AddCommentOperation) Validate() error {
 	return nil
 }
 
-func NewAddCommentOp(author bug.Person, message string, files []git.Hash) AddCommentOperation {
+func NewAddCommentOp(author bug.Person, unixTime int64, message string, files []git.Hash) AddCommentOperation {
 	return AddCommentOperation{
-		OpBase:  bug.NewOpBase(bug.AddCommentOp, author),
+		OpBase:  bug.NewOpBase(bug.AddCommentOp, author, unixTime),
 		Message: message,
 		Files:   files,
 	}
 }
 
 // Convenience function to apply the operation
-func Comment(b bug.Interface, author bug.Person, message string) error {
-	return CommentWithFiles(b, author, message, nil)
+func Comment(b bug.Interface, author bug.Person, unixTime int64, message string) error {
+	return CommentWithFiles(b, author, unixTime, message, nil)
 }
 
-func CommentWithFiles(b bug.Interface, author bug.Person, message string, files []git.Hash) error {
-	addCommentOp := NewAddCommentOp(author, message, files)
+func CommentWithFiles(b bug.Interface, author bug.Person, unixTime int64, message string, files []git.Hash) error {
+	addCommentOp := NewAddCommentOp(author, unixTime, message, files)
 	if err := addCommentOp.Validate(); err != nil {
 		return err
 	}
