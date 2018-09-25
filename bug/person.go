@@ -10,8 +10,9 @@ import (
 )
 
 type Person struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	Name      string `json:"name"`
+	Email     string `json:"email"`
+	AvatarUrl string `json:"avatar_url"`
 }
 
 // GetUser will query the repository for user detail and build the corresponding Person
@@ -59,6 +60,10 @@ func (p Person) Validate() error {
 
 	if !text.Safe(p.Email) {
 		return fmt.Errorf("email is not fully printable")
+	}
+
+	if p.AvatarUrl != "" && !text.ValidUrl(p.AvatarUrl) {
+		return fmt.Errorf("avatarUrl is not a valid URL")
 	}
 
 	return nil

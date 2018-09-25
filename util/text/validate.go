@@ -1,6 +1,7 @@
 package text
 
 import (
+	"net/url"
 	"strings"
 	"unicode"
 )
@@ -30,4 +31,14 @@ func Safe(s string) bool {
 	}
 
 	return true
+}
+
+// ValidUrl will tell if the string contains what seems to be a valid URL
+func ValidUrl(s string) bool {
+	if strings.Contains(s, "\n") {
+		return false
+	}
+
+	_, err := url.ParseRequestURI(s)
+	return err == nil
 }

@@ -146,8 +146,9 @@ type ComplexityRoot struct {
 	}
 
 	Person struct {
-		Email func(childComplexity int) int
-		Name  func(childComplexity int) int
+		Email     func(childComplexity int) int
+		Name      func(childComplexity int) int
+		AvatarUrl func(childComplexity int) int
 	}
 
 	Query struct {
@@ -175,6 +176,7 @@ type ComplexityRoot struct {
 }
 
 type AddCommentOperationResolver interface {
+	Author(ctx context.Context, obj *operations.AddCommentOperation) (bug.Person, error)
 	Date(ctx context.Context, obj *operations.AddCommentOperation) (time.Time, error)
 }
 type BugResolver interface {
@@ -185,9 +187,11 @@ type BugResolver interface {
 	Operations(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (models.OperationConnection, error)
 }
 type CreateOperationResolver interface {
+	Author(ctx context.Context, obj *operations.CreateOperation) (bug.Person, error)
 	Date(ctx context.Context, obj *operations.CreateOperation) (time.Time, error)
 }
 type LabelChangeOperationResolver interface {
+	Author(ctx context.Context, obj *operations.LabelChangeOperation) (bug.Person, error)
 	Date(ctx context.Context, obj *operations.LabelChangeOperation) (time.Time, error)
 }
 type MutationResolver interface {
@@ -208,10 +212,12 @@ type RepositoryResolver interface {
 	Bug(ctx context.Context, obj *models.Repository, prefix string) (*bug.Snapshot, error)
 }
 type SetStatusOperationResolver interface {
+	Author(ctx context.Context, obj *operations.SetStatusOperation) (bug.Person, error)
 	Date(ctx context.Context, obj *operations.SetStatusOperation) (time.Time, error)
 	Status(ctx context.Context, obj *operations.SetStatusOperation) (models.Status, error)
 }
 type SetTitleOperationResolver interface {
+	Author(ctx context.Context, obj *operations.SetTitleOperation) (bug.Person, error)
 	Date(ctx context.Context, obj *operations.SetTitleOperation) (time.Time, error)
 }
 
@@ -1257,6 +1263,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Person.Name(childComplexity), true
 
+	case "Person.avatarUrl":
+		if e.complexity.Person.AvatarUrl == nil {
+			break
+		}
+
+		return e.complexity.Person.AvatarUrl(childComplexity), true
+
 	case "Query.defaultRepository":
 		if e.complexity.Query.DefaultRepository == nil {
 			break
@@ -1410,10 +1423,14 @@ func (ec *executionContext) _AddCommentOperation(ctx context.Context, sel ast.Se
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("AddCommentOperation")
 		case "author":
-			out.Values[i] = ec._AddCommentOperation_author(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalid = true
-			}
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._AddCommentOperation_author(ctx, field, obj)
+				if out.Values[i] == graphql.Null {
+					invalid = true
+				}
+				wg.Done()
+			}(i, field)
 		case "date":
 			wg.Add(1)
 			go func(i int, field graphql.CollectedField) {
@@ -1453,7 +1470,7 @@ func (ec *executionContext) _AddCommentOperation_author(ctx context.Context, fie
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
-		return obj.Author, nil
+		return ec.resolvers.AddCommentOperation().Author(ctx, obj)
 	})
 	if resTmp == nil {
 		if !ec.HasError(rctx) {
@@ -2570,10 +2587,14 @@ func (ec *executionContext) _CreateOperation(ctx context.Context, sel ast.Select
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("CreateOperation")
 		case "author":
-			out.Values[i] = ec._CreateOperation_author(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalid = true
-			}
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._CreateOperation_author(ctx, field, obj)
+				if out.Values[i] == graphql.Null {
+					invalid = true
+				}
+				wg.Done()
+			}(i, field)
 		case "date":
 			wg.Add(1)
 			go func(i int, field graphql.CollectedField) {
@@ -2618,7 +2639,7 @@ func (ec *executionContext) _CreateOperation_author(ctx context.Context, field g
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
-		return obj.Author, nil
+		return ec.resolvers.CreateOperation().Author(ctx, obj)
 	})
 	if resTmp == nil {
 		if !ec.HasError(rctx) {
@@ -2745,10 +2766,14 @@ func (ec *executionContext) _LabelChangeOperation(ctx context.Context, sel ast.S
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("LabelChangeOperation")
 		case "author":
-			out.Values[i] = ec._LabelChangeOperation_author(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalid = true
-			}
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._LabelChangeOperation_author(ctx, field, obj)
+				if out.Values[i] == graphql.Null {
+					invalid = true
+				}
+				wg.Done()
+			}(i, field)
 		case "date":
 			wg.Add(1)
 			go func(i int, field graphql.CollectedField) {
@@ -2788,7 +2813,7 @@ func (ec *executionContext) _LabelChangeOperation_author(ctx context.Context, fi
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
-		return obj.Author, nil
+		return ec.resolvers.LabelChangeOperation().Author(ctx, obj)
 	})
 	if resTmp == nil {
 		if !ec.HasError(rctx) {
@@ -3584,6 +3609,11 @@ func (ec *executionContext) _Person(ctx context.Context, sel ast.SelectionSet, o
 			out.Values[i] = ec._Person_email(ctx, field, obj)
 		case "name":
 			out.Values[i] = ec._Person_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "avatarUrl":
+			out.Values[i] = ec._Person_avatarUrl(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3624,6 +3654,28 @@ func (ec *executionContext) _Person_name(ctx context.Context, field graphql.Coll
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
 		return obj.Name, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	return graphql.MarshalString(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Person_avatarUrl(ctx context.Context, field graphql.CollectedField, obj *bug.Person) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "Person",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.AvatarUrl, nil
 	})
 	if resTmp == nil {
 		return graphql.Null
@@ -3903,10 +3955,14 @@ func (ec *executionContext) _SetStatusOperation(ctx context.Context, sel ast.Sel
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("SetStatusOperation")
 		case "author":
-			out.Values[i] = ec._SetStatusOperation_author(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalid = true
-			}
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._SetStatusOperation_author(ctx, field, obj)
+				if out.Values[i] == graphql.Null {
+					invalid = true
+				}
+				wg.Done()
+			}(i, field)
 		case "date":
 			wg.Add(1)
 			go func(i int, field graphql.CollectedField) {
@@ -3945,7 +4001,7 @@ func (ec *executionContext) _SetStatusOperation_author(ctx context.Context, fiel
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
-		return obj.Author, nil
+		return ec.resolvers.SetStatusOperation().Author(ctx, obj)
 	})
 	if resTmp == nil {
 		if !ec.HasError(rctx) {
@@ -4019,10 +4075,14 @@ func (ec *executionContext) _SetTitleOperation(ctx context.Context, sel ast.Sele
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("SetTitleOperation")
 		case "author":
-			out.Values[i] = ec._SetTitleOperation_author(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalid = true
-			}
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._SetTitleOperation_author(ctx, field, obj)
+				if out.Values[i] == graphql.Null {
+					invalid = true
+				}
+				wg.Done()
+			}(i, field)
 		case "date":
 			wg.Add(1)
 			go func(i int, field graphql.CollectedField) {
@@ -4062,7 +4122,7 @@ func (ec *executionContext) _SetTitleOperation_author(ctx context.Context, field
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
-		return obj.Author, nil
+		return ec.resolvers.SetTitleOperation().Author(ctx, obj)
 	})
 	if resTmp == nil {
 		if !ec.HasError(rctx) {
@@ -5456,24 +5516,14 @@ func (ec *executionContext) _Operation(ctx context.Context, sel ast.SelectionSet
 	switch obj := (*obj).(type) {
 	case nil:
 		return graphql.Null
-	case operations.CreateOperation:
-		return ec._CreateOperation(ctx, sel, &obj)
 	case *operations.CreateOperation:
 		return ec._CreateOperation(ctx, sel, obj)
-	case operations.SetTitleOperation:
-		return ec._SetTitleOperation(ctx, sel, &obj)
 	case *operations.SetTitleOperation:
 		return ec._SetTitleOperation(ctx, sel, obj)
-	case operations.AddCommentOperation:
-		return ec._AddCommentOperation(ctx, sel, &obj)
 	case *operations.AddCommentOperation:
 		return ec._AddCommentOperation(ctx, sel, obj)
-	case operations.SetStatusOperation:
-		return ec._SetStatusOperation(ctx, sel, &obj)
 	case *operations.SetStatusOperation:
 		return ec._SetStatusOperation(ctx, sel, obj)
-	case operations.LabelChangeOperation:
-		return ec._LabelChangeOperation(ctx, sel, &obj)
 	case *operations.LabelChangeOperation:
 		return ec._LabelChangeOperation(ctx, sel, obj)
 	default:
@@ -5527,7 +5577,10 @@ type Person {
   email: String
 
   """The name of the person."""
-  name: String
+  name: String!
+
+  """An url to an avatar"""
+  avatarUrl: String
 }
 
 type CommentConnection {

@@ -20,7 +20,10 @@ type Person {
   email: String
 
   """The name of the person."""
-  name: String
+  name: String!
+
+  """An url to an avatar"""
+  avatarUrl: String
 }
 
 type CommentConnection {
