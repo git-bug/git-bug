@@ -274,13 +274,12 @@ func (bt *bugTable) getColumnWidths(maxX int) map[string]int {
 
 	left := maxX - 5 - m["id"] - m["status"]
 
-	m["summary"] = maxInt(11, left/6)
+	m["summary"] = 14
 	left -= m["summary"]
-
-	m["lastEdit"] = maxInt(19, left/6)
+	m["lastEdit"] = 19
 	left -= m["lastEdit"]
 
-	m["author"] = maxInt(left*2/5, 15)
+	m["author"] = minInt(maxInt(left/3, 15), 10+left/8)
 	m["title"] = maxInt(left-m["author"], 10)
 
 	return m
