@@ -38,6 +38,10 @@ func runTitleEdit(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	if titleEditTitle == snap.Title {
+		fmt.Println("No change, aborting.")
+	}
+
 	err = b.SetTitle(titleEditTitle)
 	if err != nil {
 		return err
