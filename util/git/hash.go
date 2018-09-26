@@ -35,7 +35,7 @@ func (h Hash) MarshalGQL(w io.Writer) {
 
 // IsValid tell if the hash is valid
 func (h *Hash) IsValid() bool {
-	if len(*h) != 40 {
+	if len(*h) != 40 && len(*h) != 64 {
 		return false
 	}
 	for _, r := range *h {
