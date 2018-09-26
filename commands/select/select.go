@@ -27,6 +27,7 @@ var ErrNoValidId = errors.New("you must provide a bug id")
 //   has been used
 // - an error if the process failed
 func ResolveBug(repo *cache.RepoCache, args []string) (*cache.BugCache, []string, error) {
+	// At first, try to use the first argument as a bug prefix
 	if len(args) > 0 {
 		b, err := repo.ResolveBugPrefix(args[0])
 
@@ -39,17 +40,31 @@ func ResolveBug(repo *cache.RepoCache, args []string) (*cache.BugCache, []string
 		}
 	}
 
-	// first arg is not a valid bug prefix
+	// first arg is not a valid bug prefix, we can safely use the preselected bug if any
 
 	b, err := selected(repo)
+
+	// selected bug is invalid
+	if err == bug.ErrBugNotExist {
+		// we clear the selected bug
+		err = Clear(repo)
+		if err != nil {
+			return nil, nil, err
+		}
+		return nil, nil, ErrNoValidId
+	}
+
+	// another error when reading the bug
 	if err != nil {
 		return nil, nil, err
 	}
 
+	// bug is successfully retrieved
 	if b != nil {
 		return b, args, nil
 	}
 
+	// no selected bug and no valid first argument
 	return nil, nil, ErrNoValidId
 }
 
