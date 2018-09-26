@@ -243,7 +243,9 @@ func setTitleWithEditor(bug *cache.BugCache) error {
 	ui.g.Close()
 	ui.g = nil
 
-	title, err := input.BugTitleEditorInput(ui.cache, bug.Snapshot().Title)
+	snap := bug.Snapshot()
+
+	title, err := input.BugTitleEditorInput(ui.cache, snap.Title)
 
 	if err != nil && err != input.ErrEmptyTitle {
 		return err
@@ -251,6 +253,8 @@ func setTitleWithEditor(bug *cache.BugCache) error {
 
 	if err == input.ErrEmptyTitle {
 		ui.msgPopup.Activate(msgPopupErrorTitle, "Empty title, aborting.")
+	} else if title == snap.Title {
+		ui.msgPopup.Activate(msgPopupErrorTitle, "No change, aborting.")
 	} else {
 		err := bug.SetTitle(title)
 		if err != nil {
