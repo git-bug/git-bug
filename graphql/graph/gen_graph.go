@@ -5516,16 +5516,16 @@ func (ec *executionContext) _Operation(ctx context.Context, sel ast.SelectionSet
 	switch obj := (*obj).(type) {
 	case nil:
 		return graphql.Null
-	case *operations.CreateOperation:
-		return ec._CreateOperation(ctx, sel, obj)
-	case *operations.SetTitleOperation:
-		return ec._SetTitleOperation(ctx, sel, obj)
-	case *operations.AddCommentOperation:
-		return ec._AddCommentOperation(ctx, sel, obj)
-	case *operations.SetStatusOperation:
-		return ec._SetStatusOperation(ctx, sel, obj)
-	case *operations.LabelChangeOperation:
-		return ec._LabelChangeOperation(ctx, sel, obj)
+	case operations.CreateOperation:
+		return ec._CreateOperation(ctx, sel, &obj)
+	case operations.SetTitleOperation:
+		return ec._SetTitleOperation(ctx, sel, &obj)
+	case operations.AddCommentOperation:
+		return ec._AddCommentOperation(ctx, sel, &obj)
+	case operations.SetStatusOperation:
+		return ec._SetStatusOperation(ctx, sel, &obj)
+	case operations.LabelChangeOperation:
+		return ec._LabelChangeOperation(ctx, sel, &obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
