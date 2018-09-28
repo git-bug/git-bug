@@ -111,7 +111,7 @@ func TestQueries(t *testing.T) {
 				Nodes    []struct {
 					Author    Person
 					CreatedAt string `json:"createdAt"`
-					HumandId  string `json:"humanId"`
+					HumanId   string `json:"humanId"`
 					Id        string
 					LastEdit  string `json:"lastEdit"`
 					Status    string

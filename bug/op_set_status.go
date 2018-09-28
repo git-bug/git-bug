@@ -1,6 +1,7 @@
 package bug
 
 import (
+	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/pkg/errors"
 )
 
@@ -15,6 +16,10 @@ type SetStatusOperation struct {
 
 func (op SetStatusOperation) base() *OpBase {
 	return op.OpBase
+}
+
+func (op SetStatusOperation) Hash() (git.Hash, error) {
+	return hashOperation(op)
 }
 
 func (op SetStatusOperation) Apply(snapshot Snapshot) Snapshot {

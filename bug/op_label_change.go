@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/pkg/errors"
 )
 
@@ -18,6 +19,10 @@ type LabelChangeOperation struct {
 
 func (op LabelChangeOperation) base() *OpBase {
 	return op.OpBase
+}
+
+func (op LabelChangeOperation) Hash() (git.Hash, error) {
+	return hashOperation(op)
 }
 
 // Apply apply the operation

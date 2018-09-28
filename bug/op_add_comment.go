@@ -22,6 +22,10 @@ func (op AddCommentOperation) base() *OpBase {
 	return op.OpBase
 }
 
+func (op AddCommentOperation) Hash() (git.Hash, error) {
+	return hashOperation(op)
+}
+
 func (op AddCommentOperation) Apply(snapshot Snapshot) Snapshot {
 	comment := Comment{
 		Message:  op.Message,

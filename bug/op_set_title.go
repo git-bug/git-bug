@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
@@ -19,6 +20,10 @@ type SetTitleOperation struct {
 
 func (op SetTitleOperation) base() *OpBase {
 	return op.OpBase
+}
+
+func (op SetTitleOperation) Hash() (git.Hash, error) {
+	return hashOperation(op)
 }
 
 func (op SetTitleOperation) Apply(snapshot Snapshot) Snapshot {

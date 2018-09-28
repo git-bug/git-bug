@@ -23,6 +23,10 @@ func (op CreateOperation) base() *OpBase {
 	return op.OpBase
 }
 
+func (op CreateOperation) Hash() (git.Hash, error) {
+	return hashOperation(op)
+}
+
 func (op CreateOperation) Apply(snapshot Snapshot) Snapshot {
 	snapshot.Title = op.Title
 	snapshot.Comments = []Comment{

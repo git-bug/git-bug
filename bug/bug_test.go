@@ -74,6 +74,9 @@ func TestBugSerialisation(t *testing.T) {
 
 	// ignore some fields
 	bug2.packs[0].commitHash = bug1.packs[0].commitHash
+	for i := range bug1.packs[0].Operations {
+		bug2.packs[0].Operations[i].base().hash = bug1.packs[0].Operations[i].base().hash
+	}
 
 	deep.CompareUnexportedFields = true
 	if diff := deep.Equal(bug1, bug2); diff != nil {

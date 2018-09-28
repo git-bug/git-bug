@@ -1,11 +1,13 @@
 package bug
 
 import (
-	"github.com/MichaelMure/git-bug/util/git"
-	"github.com/pkg/errors"
-
+	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"time"
+
+	"github.com/MichaelMure/git-bug/util/git"
+	"github.com/pkg/errors"
 )
 
 // OperationType is an operation type identifier
@@ -24,6 +26,8 @@ const (
 type Operation interface {
 	// base return the OpBase of the Operation, for package internal use
 	base() *OpBase
+	// Hash return the hash of the operation
+	Hash() (git.Hash, error)
 	// Time return the time when the operation was added
 	Time() time.Time
 	// GetUnixTime return the unix timestamp when the operation was added
@@ -40,11 +44,35 @@ type Operation interface {
 	GetMetadata(key string) (string, bool)
 }
 
+func hashRaw(data []byte) git.Hash {
+	hasher := sha256.New()
+	return git.Hash(fmt.Sprintf("%x", hasher.Sum(data)))
+}
+
+// hash compute the hash of the serialized operation
+func hashOperation(op Operation) (git.Hash, error) {
+	base := op.base()
+
+	if base.hash != "" {
+		return base.hash, nil
+	}
+
+	data, err := json.Marshal(op)
+	if err != nil {
+		return "", err
+	}
+
+	base.hash = hashRaw(data)
+
+	return base.hash, nil
+}
+
 // OpBase implement the common code for all operations
 type OpBase struct {
-	OperationType OperationType     `json:"type"`
-	Author        Person            `json:"author"`
-	UnixTime      int64             `json:"timestamp"`
+	OperationType OperationType `json:"type"`
+	Author        Person        `json:"author"`
+	UnixTime      int64         `json:"timestamp"`
+	hash          git.Hash
 	Metadata      map[string]string `json:"metadata,omitempty"`
 }
 
