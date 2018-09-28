@@ -1,16 +1,15 @@
-package operations
+package bug
 
 import (
-	"github.com/MichaelMure/git-bug/bug"
 	"reflect"
 	"testing"
 	"time"
 )
 
 func TestCreate(t *testing.T) {
-	snapshot := bug.Snapshot{}
+	snapshot := Snapshot{}
 
-	var rene = bug.Person{
+	var rene = Person{
 		Name:  "René Descartes",
 		Email: "rene@descartes.fr",
 	}
@@ -21,9 +20,9 @@ func TestCreate(t *testing.T) {
 
 	snapshot = create.Apply(snapshot)
 
-	expected := bug.Snapshot{
+	expected := Snapshot{
 		Title: "title",
-		Comments: []bug.Comment{
+		Comments: []Comment{
 			{Author: rene, Message: "message", UnixTime: create.UnixTime},
 		},
 		Author:    rene,

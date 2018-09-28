@@ -1,17 +1,15 @@
-package tests
+package bug
 
 import (
 	"encoding/json"
-	"reflect"
 	"testing"
 
-	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/operations"
 	"github.com/MichaelMure/git-bug/util/git"
+	"github.com/go-test/deep"
 )
 
 func TestOperationPackSerialize(t *testing.T) {
-	opp := &bug.OperationPack{}
+	opp := &OperationPack{}
 
 	opp.Append(createOp)
 	opp.Append(setTitleOp)
@@ -19,7 +17,7 @@ func TestOperationPackSerialize(t *testing.T) {
 	opp.Append(setStatusOp)
 	opp.Append(labelChangeOp)
 
-	opMeta := operations.NewCreateOp(rene, unix, "title", "message", nil)
+	opMeta := NewCreateOp(rene, unix, "title", "message", nil)
 	opMeta.SetMetadata("key", "value")
 	opp.Append(opMeta)
 
@@ -27,7 +25,7 @@ func TestOperationPackSerialize(t *testing.T) {
 		t.Fatal()
 	}
 
-	opFile := operations.NewCreateOp(rene, unix, "title", "message", []git.Hash{
+	opFile := NewCreateOp(rene, unix, "title", "message", []git.Hash{
 		"abcdef",
 		"ghijkl",
 	})
@@ -42,13 +40,14 @@ func TestOperationPackSerialize(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var opp2 *bug.OperationPack
+	var opp2 *OperationPack
 	err = json.Unmarshal(data, &opp2)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if !reflect.DeepEqual(opp, opp2) {
-		t.Fatalf("%v and %v are different", opp, opp2)
+	deep.CompareUnexportedFields = false
+	if diff := deep.Equal(opp, opp2); diff != nil {
+		t.Fatal(diff)
 	}
 }

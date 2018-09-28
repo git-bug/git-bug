@@ -22,14 +22,12 @@ const (
 
 // Operation define the interface to fulfill for an edit operation of a Bug
 type Operation interface {
-	// OpType return the type of operation
-	OpType() OperationType
+	// base return the OpBase of the Operation, for package internal use
+	base() *OpBase
 	// Time return the time when the operation was added
 	Time() time.Time
 	// GetUnixTime return the unix timestamp when the operation was added
 	GetUnixTime() int64
-	// GetAuthor return the author of the operation
-	GetAuthor() Person
 	// GetFiles return the files needed by this operation
 	GetFiles() []git.Hash
 	// Apply the operation to a Snapshot to create the final state
@@ -50,18 +48,13 @@ type OpBase struct {
 	Metadata      map[string]string `json:"metadata,omitempty"`
 }
 
-// NewOpBase is the constructor for an OpBase
-func NewOpBase(opType OperationType, author Person, unixTime int64) *OpBase {
+// newOpBase is the constructor for an OpBase
+func newOpBase(opType OperationType, author Person, unixTime int64) *OpBase {
 	return &OpBase{
 		OperationType: opType,
 		Author:        author,
 		UnixTime:      unixTime,
 	}
-}
-
-// OpType return the type of operation
-func (op *OpBase) OpType() OperationType {
-	return op.OperationType
 }
 
 // Time return the time when the operation was added
@@ -74,27 +67,22 @@ func (op *OpBase) GetUnixTime() int64 {
 	return op.UnixTime
 }
 
-// GetAuthor return the author of the operation
-func (op *OpBase) GetAuthor() Person {
-	return op.Author
-}
-
 // GetFiles return the files needed by this operation
 func (op *OpBase) GetFiles() []git.Hash {
 	return nil
 }
 
 // Validate check the OpBase for errors
-func OpBaseValidate(op Operation, opType OperationType) error {
-	if op.OpType() != opType {
-		return fmt.Errorf("incorrect operation type (expected: %v, actual: %v)", opType, op.OpType())
+func opBaseValidate(op Operation, opType OperationType) error {
+	if op.base().OperationType != opType {
+		return fmt.Errorf("incorrect operation type (expected: %v, actual: %v)", opType, op.base().OperationType)
 	}
 
 	if op.GetUnixTime() == 0 {
 		return fmt.Errorf("time not set")
 	}
 
-	if err := op.GetAuthor().Validate(); err != nil {
+	if err := op.base().Author.Validate(); err != nil {
 		return errors.Wrap(err, "author")
 	}
 

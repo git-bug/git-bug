@@ -1,27 +1,26 @@
-package operations
+package bug
 
 import (
 	"testing"
 	"time"
 
-	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/util/git"
 )
 
 func TestValidate(t *testing.T) {
-	rene := bug.Person{
+	rene := Person{
 		Name:  "René Descartes",
 		Email: "rene@descartes.fr",
 	}
 
 	unix := time.Now().Unix()
 
-	good := []bug.Operation{
+	good := []Operation{
 		NewCreateOp(rene, unix, "title", "message", nil),
 		NewSetTitleOp(rene, unix, "title2", "title1"),
 		NewAddCommentOp(rene, unix, "message2", nil),
-		NewSetStatusOp(rene, unix, bug.ClosedStatus),
-		NewLabelChangeOperation(rene, unix, []bug.Label{"added"}, []bug.Label{"removed"}),
+		NewSetStatusOp(rene, unix, ClosedStatus),
+		NewLabelChangeOperation(rene, unix, []Label{"added"}, []Label{"removed"}),
 	}
 
 	for _, op := range good {
@@ -30,17 +29,17 @@ func TestValidate(t *testing.T) {
 		}
 	}
 
-	bad := []bug.Operation{
+	bad := []Operation{
 		// opbase
-		NewSetStatusOp(bug.Person{Name: "", Email: "rene@descartes.fr"}, unix, bug.ClosedStatus),
-		NewSetStatusOp(bug.Person{Name: "René Descartes\u001b", Email: "rene@descartes.fr"}, unix, bug.ClosedStatus),
-		NewSetStatusOp(bug.Person{Name: "René Descartes", Email: "rene@descartes.fr\u001b"}, unix, bug.ClosedStatus),
-		NewSetStatusOp(bug.Person{Name: "René \nDescartes", Email: "rene@descartes.fr"}, unix, bug.ClosedStatus),
-		NewSetStatusOp(bug.Person{Name: "René Descartes", Email: "rene@\ndescartes.fr"}, unix, bug.ClosedStatus),
-		CreateOperation{OpBase: &bug.OpBase{
+		NewSetStatusOp(Person{Name: "", Email: "rene@descartes.fr"}, unix, ClosedStatus),
+		NewSetStatusOp(Person{Name: "René Descartes\u001b", Email: "rene@descartes.fr"}, unix, ClosedStatus),
+		NewSetStatusOp(Person{Name: "René Descartes", Email: "rene@descartes.fr\u001b"}, unix, ClosedStatus),
+		NewSetStatusOp(Person{Name: "René \nDescartes", Email: "rene@descartes.fr"}, unix, ClosedStatus),
+		NewSetStatusOp(Person{Name: "René Descartes", Email: "rene@\ndescartes.fr"}, unix, ClosedStatus),
+		CreateOperation{OpBase: &OpBase{
 			Author:        rene,
 			UnixTime:      0,
-			OperationType: bug.CreateOp,
+			OperationType: CreateOp,
 		},
 			Title:   "title",
 			Message: "message",
@@ -59,8 +58,8 @@ func TestValidate(t *testing.T) {
 		NewAddCommentOp(rene, unix, "message", []git.Hash{git.Hash("invalid")}),
 		NewSetStatusOp(rene, unix, 1000),
 		NewSetStatusOp(rene, unix, 0),
-		NewLabelChangeOperation(rene, unix, []bug.Label{}, []bug.Label{}),
-		NewLabelChangeOperation(rene, unix, []bug.Label{"multi\nline"}, []bug.Label{}),
+		NewLabelChangeOperation(rene, unix, []Label{}, []Label{}),
+		NewLabelChangeOperation(rene, unix, []Label{"multi\nline"}, []Label{}),
 	}
 
 	for i, op := range bad {
@@ -68,5 +67,4 @@ func TestValidate(t *testing.T) {
 			t.Fatal("validation should have failed", i, op)
 		}
 	}
-
 }

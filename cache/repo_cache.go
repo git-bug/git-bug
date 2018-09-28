@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/operations"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/process"
@@ -362,7 +361,7 @@ func (c *RepoCache) NewBugWithFiles(title string, message string, files []git.Ha
 // well as metadata for the Create operation.
 // The new bug is written in the repository (commit)
 func (c *RepoCache) NewBugRaw(author bug.Person, unixTime int64, title string, message string, files []git.Hash, metadata map[string]string) (*BugCache, error) {
-	b, err := operations.CreateWithFiles(author, unixTime, title, message, files)
+	b, err := bug.CreateWithFiles(author, unixTime, title, message, files)
 	if err != nil {
 		return nil, err
 	}

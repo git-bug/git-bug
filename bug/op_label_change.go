@@ -1,24 +1,27 @@
-package operations
+package bug
 
 import (
 	"fmt"
 	"sort"
 
-	"github.com/MichaelMure/git-bug/bug"
 	"github.com/pkg/errors"
 )
 
-var _ bug.Operation = LabelChangeOperation{}
+var _ Operation = LabelChangeOperation{}
 
 // LabelChangeOperation define a Bug operation to add or remove labels
 type LabelChangeOperation struct {
-	*bug.OpBase
-	Added   []bug.Label `json:"added"`
-	Removed []bug.Label `json:"removed"`
+	*OpBase
+	Added   []Label `json:"added"`
+	Removed []Label `json:"removed"`
+}
+
+func (op LabelChangeOperation) base() *OpBase {
+	return op.OpBase
 }
 
 // Apply apply the operation
-func (op LabelChangeOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {
+func (op LabelChangeOperation) Apply(snapshot Snapshot) Snapshot {
 	// Add in the set
 AddLoop:
 	for _, added := range op.Added {
@@ -51,7 +54,7 @@ AddLoop:
 }
 
 func (op LabelChangeOperation) Validate() error {
-	if err := bug.OpBaseValidate(op, bug.LabelChangeOp); err != nil {
+	if err := opBaseValidate(op, LabelChangeOp); err != nil {
 		return err
 	}
 
@@ -74,23 +77,23 @@ func (op LabelChangeOperation) Validate() error {
 	return nil
 }
 
-func NewLabelChangeOperation(author bug.Person, unixTime int64, added, removed []bug.Label) LabelChangeOperation {
+func NewLabelChangeOperation(author Person, unixTime int64, added, removed []Label) LabelChangeOperation {
 	return LabelChangeOperation{
-		OpBase:  bug.NewOpBase(bug.LabelChangeOp, author, unixTime),
+		OpBase:  newOpBase(LabelChangeOp, author, unixTime),
 		Added:   added,
 		Removed: removed,
 	}
 }
 
 // ChangeLabels is a convenience function to apply the operation
-func ChangeLabels(b bug.Interface, author bug.Person, unixTime int64, add, remove []string) ([]LabelChangeResult, error) {
-	var added, removed []bug.Label
+func ChangeLabels(b Interface, author Person, unixTime int64, add, remove []string) ([]LabelChangeResult, error) {
+	var added, removed []Label
 	var results []LabelChangeResult
 
 	snap := b.Compile()
 
 	for _, str := range add {
-		label := bug.Label(str)
+		label := Label(str)
 
 		// check for duplicate
 		if labelExist(added, label) {
@@ -109,7 +112,7 @@ func ChangeLabels(b bug.Interface, author bug.Person, unixTime int64, add, remov
 	}
 
 	for _, str := range remove {
-		label := bug.Label(str)
+		label := Label(str)
 
 		// check for duplicate
 		if labelExist(removed, label) {
@@ -142,7 +145,7 @@ func ChangeLabels(b bug.Interface, author bug.Person, unixTime int64, add, remov
 	return results, nil
 }
 
-func labelExist(labels []bug.Label, label bug.Label) bool {
+func labelExist(labels []Label, label Label) bool {
 	for _, l := range labels {
 		if l == label {
 			return true
@@ -164,7 +167,7 @@ const (
 )
 
 type LabelChangeResult struct {
-	Label  bug.Label
+	Label  Label
 	Status LabelChangeStatus
 }
 

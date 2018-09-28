@@ -22,12 +22,12 @@ models:
   Operation:
     model: github.com/MichaelMure/git-bug/bug.Operation
   CreateOperation:
-    model: github.com/MichaelMure/git-bug/operations.CreateOperation
+    model: github.com/MichaelMure/git-bug/bug.CreateOperation
   SetTitleOperation:
-    model: github.com/MichaelMure/git-bug/operations.SetTitleOperation
+    model: github.com/MichaelMure/git-bug/bug.SetTitleOperation
   AddCommentOperation:
-    model: github.com/MichaelMure/git-bug/operations.AddCommentOperation
+    model: github.com/MichaelMure/git-bug/bug.AddCommentOperation
   SetStatusOperation:
-    model: github.com/MichaelMure/git-bug/operations.SetStatusOperation
+    model: github.com/MichaelMure/git-bug/bug.SetStatusOperation
   LabelChangeOperation:
-    model: github.com/MichaelMure/git-bug/operations.LabelChangeOperation
+    model: github.com/MichaelMure/git-bug/bug.LabelChangeOperation

@@ -1,12 +1,38 @@
 package tests
 
 import (
+	"io/ioutil"
+	"log"
 	"testing"
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/misc/random_bugs"
 	"github.com/MichaelMure/git-bug/repository"
 )
+
+func createRepo(bare bool) *repository.GitRepo {
+	dir, err := ioutil.TempDir("", "")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// fmt.Println("Creating repo:", dir)
+
+	var creator func(string) (*repository.GitRepo, error)
+
+	if bare {
+		creator = repository.InitBareGitRepo
+	} else {
+		creator = repository.InitGitRepo
+	}
+
+	repo, err := creator(dir)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return repo
+}
 
 func createFilledRepo(bugNumber int) repository.ClockedRepo {
 	repo := createRepo(false)

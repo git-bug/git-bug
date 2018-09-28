@@ -1,31 +1,34 @@
-package operations
+package bug
 
 import (
 	"fmt"
 	"strings"
 
-	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
 // SetTitleOperation will change the title of a bug
 
-var _ bug.Operation = SetTitleOperation{}
+var _ Operation = SetTitleOperation{}
 
 type SetTitleOperation struct {
-	*bug.OpBase
+	*OpBase
 	Title string `json:"title"`
 	Was   string `json:"was"`
 }
 
-func (op SetTitleOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {
+func (op SetTitleOperation) base() *OpBase {
+	return op.OpBase
+}
+
+func (op SetTitleOperation) Apply(snapshot Snapshot) Snapshot {
 	snapshot.Title = op.Title
 
 	return snapshot
 }
 
 func (op SetTitleOperation) Validate() error {
-	if err := bug.OpBaseValidate(op, bug.SetTitleOp); err != nil {
+	if err := opBaseValidate(op, SetTitleOp); err != nil {
 		return err
 	}
 
@@ -52,22 +55,22 @@ func (op SetTitleOperation) Validate() error {
 	return nil
 }
 
-func NewSetTitleOp(author bug.Person, unixTime int64, title string, was string) SetTitleOperation {
+func NewSetTitleOp(author Person, unixTime int64, title string, was string) SetTitleOperation {
 	return SetTitleOperation{
-		OpBase: bug.NewOpBase(bug.SetTitleOp, author, unixTime),
+		OpBase: newOpBase(SetTitleOp, author, unixTime),
 		Title:  title,
 		Was:    was,
 	}
 }
 
 // Convenience function to apply the operation
-func SetTitle(b bug.Interface, author bug.Person, unixTime int64, title string) error {
-	it := bug.NewOperationIterator(b)
+func SetTitle(b Interface, author Person, unixTime int64, title string) error {
+	it := NewOperationIterator(b)
 
-	var lastTitleOp bug.Operation
+	var lastTitleOp Operation
 	for it.Next() {
 		op := it.Value()
-		if op.OpType() == bug.SetTitleOp {
+		if op.base().OperationType == SetTitleOp {
 			lastTitleOp = op
 		}
 	}

@@ -66,6 +66,14 @@
   version = "v1.7.0"
 
 [[projects]]
+  digest = "1:7f89e0c888fb99c61055c646f5678aae645b0b0a1443d9b2dcd9964d850827ce"
+  name = "github.com/go-test/deep"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "6592d9cc0a499ad2d5f574fde80a2b5c5cc3b4f5"
+  version = "v1.0.1"
+
+[[projects]]
   digest = "1:97df918963298c287643883209a2c3f642e6593379f97ab400c2a2e219ab647d"
   name = "github.com/golang/protobuf"
   packages = ["proto"]
@@ -385,6 +393,7 @@
     "github.com/cheekybits/genny/generic",
     "github.com/dustin/go-humanize",
     "github.com/fatih/color",
+    "github.com/go-test/deep",
     "github.com/gorilla/mux",
     "github.com/icrowley/fake",
     "github.com/jroimartin/gocui",

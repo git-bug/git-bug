@@ -1,14 +1,11 @@
-package tests
+package bug
 
 import (
+	"github.com/MichaelMure/git-bug/repository"
 	"io/ioutil"
 	"log"
 	"os"
 	"testing"
-
-	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/operations"
-	"github.com/MichaelMure/git-bug/repository"
 )
 
 func createRepo(bare bool) *repository.GitRepo {
@@ -71,37 +68,37 @@ func TestPushPull(t *testing.T) {
 	repoA, repoB, remote := setupRepos(t)
 	defer cleanupRepos(repoA, repoB, remote)
 
-	bug1, err := operations.Create(rene, unix, "bug1", "message")
+	bug1, err := Create(rene, unix, "bug1", "message")
 	checkErr(t, err)
 	err = bug1.Commit(repoA)
 	checkErr(t, err)
 
 	// A --> remote --> B
-	_, err = bug.Push(repoA, "origin")
+	_, err = Push(repoA, "origin")
 	checkErr(t, err)
 
-	err = bug.Pull(repoB, "origin")
+	err = Pull(repoB, "origin")
 	checkErr(t, err)
 
-	bugs := allBugs(t, bug.ReadAllLocalBugs(repoB))
+	bugs := allBugs(t, ReadAllLocalBugs(repoB))
 
 	if len(bugs) != 1 {
 		t.Fatal("Unexpected number of bugs")
 	}
 
 	// B --> remote --> A
-	bug2, err := operations.Create(rene, unix, "bug2", "message")
+	bug2, err := Create(rene, unix, "bug2", "message")
 	checkErr(t, err)
 	err = bug2.Commit(repoB)
 	checkErr(t, err)
 
-	_, err = bug.Push(repoB, "origin")
+	_, err = Push(repoB, "origin")
 	checkErr(t, err)
 
-	err = bug.Pull(repoA, "origin")
+	err = Pull(repoA, "origin")
 	checkErr(t, err)
 
-	bugs = allBugs(t, bug.ReadAllLocalBugs(repoA))
+	bugs = allBugs(t, ReadAllLocalBugs(repoA))
 
 	if len(bugs) != 2 {
 		t.Fatal("Unexpected number of bugs")
@@ -114,8 +111,8 @@ func checkErr(t testing.TB, err error) {
 	}
 }
 
-func allBugs(t testing.TB, bugs <-chan bug.StreamedBug) []*bug.Bug {
-	var result []*bug.Bug
+func allBugs(t testing.TB, bugs <-chan StreamedBug) []*Bug {
+	var result []*Bug
 	for streamed := range bugs {
 		if streamed.Err != nil {
 			t.Fatal(streamed.Err)
@@ -139,43 +136,43 @@ func _RebaseTheirs(t testing.TB) {
 	repoA, repoB, remote := setupRepos(t)
 	defer cleanupRepos(repoA, repoB, remote)
 
-	bug1, err := operations.Create(rene, unix, "bug1", "message")
+	bug1, err := Create(rene, unix, "bug1", "message")
 	checkErr(t, err)
 	err = bug1.Commit(repoA)
 	checkErr(t, err)
 
 	// A --> remote
-	_, err = bug.Push(repoA, "origin")
+	_, err = Push(repoA, "origin")
 	checkErr(t, err)
 
 	// remote --> B
-	err = bug.Pull(repoB, "origin")
+	err = Pull(repoB, "origin")
 	checkErr(t, err)
 
-	bug2, err := bug.ReadLocalBug(repoB, bug1.Id())
+	bug2, err := ReadLocalBug(repoB, bug1.Id())
 	checkErr(t, err)
 
-	operations.Comment(bug2, rene, unix, "message2")
-	operations.Comment(bug2, rene, unix, "message3")
-	operations.Comment(bug2, rene, unix, "message4")
+	AddComment(bug2, rene, unix, "message2")
+	AddComment(bug2, rene, unix, "message3")
+	AddComment(bug2, rene, unix, "message4")
 	err = bug2.Commit(repoB)
 	checkErr(t, err)
 
 	// B --> remote
-	_, err = bug.Push(repoB, "origin")
+	_, err = Push(repoB, "origin")
 	checkErr(t, err)
 
 	// remote --> A
-	err = bug.Pull(repoA, "origin")
+	err = Pull(repoA, "origin")
 	checkErr(t, err)
 
-	bugs := allBugs(t, bug.ReadAllLocalBugs(repoB))
+	bugs := allBugs(t, ReadAllLocalBugs(repoB))
 
 	if len(bugs) != 1 {
 		t.Fatal("Unexpected number of bugs")
 	}
 
-	bug3, err := bug.ReadLocalBug(repoA, bug1.Id())
+	bug3, err := ReadLocalBug(repoA, bug1.Id())
 	checkErr(t, err)
 
 	if nbOps(bug3) != 4 {
@@ -197,48 +194,48 @@ func _RebaseOurs(t testing.TB) {
 	repoA, repoB, remote := setupRepos(t)
 	defer cleanupRepos(repoA, repoB, remote)
 
-	bug1, err := operations.Create(rene, unix, "bug1", "message")
+	bug1, err := Create(rene, unix, "bug1", "message")
 	checkErr(t, err)
 	err = bug1.Commit(repoA)
 	checkErr(t, err)
 
 	// A --> remote
-	_, err = bug.Push(repoA, "origin")
+	_, err = Push(repoA, "origin")
 	checkErr(t, err)
 
 	// remote --> B
-	err = bug.Pull(repoB, "origin")
+	err = Pull(repoB, "origin")
 	checkErr(t, err)
 
-	operations.Comment(bug1, rene, unix, "message2")
-	operations.Comment(bug1, rene, unix, "message3")
-	operations.Comment(bug1, rene, unix, "message4")
+	AddComment(bug1, rene, unix, "message2")
+	AddComment(bug1, rene, unix, "message3")
+	AddComment(bug1, rene, unix, "message4")
 	err = bug1.Commit(repoA)
 	checkErr(t, err)
 
-	operations.Comment(bug1, rene, unix, "message5")
-	operations.Comment(bug1, rene, unix, "message6")
-	operations.Comment(bug1, rene, unix, "message7")
+	AddComment(bug1, rene, unix, "message5")
+	AddComment(bug1, rene, unix, "message6")
+	AddComment(bug1, rene, unix, "message7")
 	err = bug1.Commit(repoA)
 	checkErr(t, err)
 
-	operations.Comment(bug1, rene, unix, "message8")
-	operations.Comment(bug1, rene, unix, "message9")
-	operations.Comment(bug1, rene, unix, "message10")
+	AddComment(bug1, rene, unix, "message8")
+	AddComment(bug1, rene, unix, "message9")
+	AddComment(bug1, rene, unix, "message10")
 	err = bug1.Commit(repoA)
 	checkErr(t, err)
 
 	// remote --> A
-	err = bug.Pull(repoA, "origin")
+	err = Pull(repoA, "origin")
 	checkErr(t, err)
 
-	bugs := allBugs(t, bug.ReadAllLocalBugs(repoA))
+	bugs := allBugs(t, ReadAllLocalBugs(repoA))
 
 	if len(bugs) != 1 {
 		t.Fatal("Unexpected number of bugs")
 	}
 
-	bug2, err := bug.ReadLocalBug(repoA, bug1.Id())
+	bug2, err := ReadLocalBug(repoA, bug1.Id())
 	checkErr(t, err)
 
 	if nbOps(bug2) != 10 {
@@ -246,8 +243,8 @@ func _RebaseOurs(t testing.TB) {
 	}
 }
 
-func nbOps(b *bug.Bug) int {
-	it := bug.NewOperationIterator(b)
+func nbOps(b *Bug) int {
+	it := NewOperationIterator(b)
 	counter := 0
 	for it.Next() {
 		counter++
@@ -269,73 +266,73 @@ func _RebaseConflict(t testing.TB) {
 	repoA, repoB, remote := setupRepos(t)
 	defer cleanupRepos(repoA, repoB, remote)
 
-	bug1, err := operations.Create(rene, unix, "bug1", "message")
+	bug1, err := Create(rene, unix, "bug1", "message")
 	checkErr(t, err)
 	err = bug1.Commit(repoA)
 	checkErr(t, err)
 
 	// A --> remote
-	_, err = bug.Push(repoA, "origin")
+	_, err = Push(repoA, "origin")
 	checkErr(t, err)
 
 	// remote --> B
-	err = bug.Pull(repoB, "origin")
+	err = Pull(repoB, "origin")
 	checkErr(t, err)
 
-	operations.Comment(bug1, rene, unix, "message2")
-	operations.Comment(bug1, rene, unix, "message3")
-	operations.Comment(bug1, rene, unix, "message4")
+	AddComment(bug1, rene, unix, "message2")
+	AddComment(bug1, rene, unix, "message3")
+	AddComment(bug1, rene, unix, "message4")
 	err = bug1.Commit(repoA)
 	checkErr(t, err)
 
-	operations.Comment(bug1, rene, unix, "message5")
-	operations.Comment(bug1, rene, unix, "message6")
-	operations.Comment(bug1, rene, unix, "message7")
+	AddComment(bug1, rene, unix, "message5")
+	AddComment(bug1, rene, unix, "message6")
+	AddComment(bug1, rene, unix, "message7")
 	err = bug1.Commit(repoA)
 	checkErr(t, err)
 
-	operations.Comment(bug1, rene, unix, "message8")
-	operations.Comment(bug1, rene, unix, "message9")
-	operations.Comment(bug1, rene, unix, "message10")
+	AddComment(bug1, rene, unix, "message8")
+	AddComment(bug1, rene, unix, "message9")
+	AddComment(bug1, rene, unix, "message10")
 	err = bug1.Commit(repoA)
 	checkErr(t, err)
 
-	bug2, err := bug.ReadLocalBug(repoB, bug1.Id())
+	bug2, err := ReadLocalBug(repoB, bug1.Id())
 	checkErr(t, err)
 
-	operations.Comment(bug2, rene, unix, "message11")
-	operations.Comment(bug2, rene, unix, "message12")
-	operations.Comment(bug2, rene, unix, "message13")
+	AddComment(bug2, rene, unix, "message11")
+	AddComment(bug2, rene, unix, "message12")
+	AddComment(bug2, rene, unix, "message13")
 	err = bug2.Commit(repoB)
 	checkErr(t, err)
 
-	operations.Comment(bug2, rene, unix, "message14")
-	operations.Comment(bug2, rene, unix, "message15")
-	operations.Comment(bug2, rene, unix, "message16")
+	AddComment(bug2, rene, unix, "message14")
+	AddComment(bug2, rene, unix, "message15")
+	AddComment(bug2, rene, unix, "message16")
 	err = bug2.Commit(repoB)
 	checkErr(t, err)
 
-	operations.Comment(bug2, rene, unix, "message17")
-	operations.Comment(bug2, rene, unix, "message18")
-	operations.Comment(bug2, rene, unix, "message19")
+	AddComment(bug2, rene, unix, "message17")
+	AddComment(bug2, rene, unix, "message18")
+	AddComment(bug2, rene, unix, "message19")
 	err = bug2.Commit(repoB)
 	checkErr(t, err)
 
 	// A --> remote
-	_, err = bug.Push(repoA, "origin")
+	_, err = Push(repoA, "origin")
 	checkErr(t, err)
 
 	// remote --> B
-	err = bug.Pull(repoB, "origin")
+	err = Pull(repoB, "origin")
 	checkErr(t, err)
 
-	bugs := allBugs(t, bug.ReadAllLocalBugs(repoB))
+	bugs := allBugs(t, ReadAllLocalBugs(repoB))
 
 	if len(bugs) != 1 {
 		t.Fatal("Unexpected number of bugs")
 	}
 
-	bug3, err := bug.ReadLocalBug(repoB, bug1.Id())
+	bug3, err := ReadLocalBug(repoB, bug1.Id())
 	checkErr(t, err)
 
 	if nbOps(bug3) != 19 {
@@ -343,20 +340,20 @@ func _RebaseConflict(t testing.TB) {
 	}
 
 	// B --> remote
-	_, err = bug.Push(repoB, "origin")
+	_, err = Push(repoB, "origin")
 	checkErr(t, err)
 
 	// remote --> A
-	err = bug.Pull(repoA, "origin")
+	err = Pull(repoA, "origin")
 	checkErr(t, err)
 
-	bugs = allBugs(t, bug.ReadAllLocalBugs(repoA))
+	bugs = allBugs(t, ReadAllLocalBugs(repoA))
 
 	if len(bugs) != 1 {
 		t.Fatal("Unexpected number of bugs")
 	}
 
-	bug4, err := bug.ReadLocalBug(repoA, bug1.Id())
+	bug4, err := ReadLocalBug(repoA, bug1.Id())
 	checkErr(t, err)
 
 	if nbOps(bug4) != 19 {

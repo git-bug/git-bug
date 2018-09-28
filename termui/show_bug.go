@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/operations"
 	"github.com/MichaelMure/git-bug/util/colors"
 	"github.com/MichaelMure/git-bug/util/text"
 	"github.com/jroimartin/gocui"
@@ -234,8 +234,8 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 
 		switch op.(type) {
 
-		case operations.CreateOperation:
-			create := op.(operations.CreateOperation)
+		case bug.CreateOperation:
+			create := op.(bug.CreateOperation)
 			content, lines := text.WrapLeftPadded(create.Message, maxX, 4)
 
 			v, err := sb.createOpView(g, viewName, x0, y0, maxX+1, lines, true)
@@ -245,8 +245,8 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 			fmt.Fprint(v, content)
 			y0 += lines + 2
 
-		case operations.AddCommentOperation:
-			comment := op.(operations.AddCommentOperation)
+		case bug.AddCommentOperation:
+			comment := op.(bug.AddCommentOperation)
 
 			message, _ := text.WrapLeftPadded(comment.Message, maxX, 4)
 			content := fmt.Sprintf("%s commented on %s\n\n%s",
@@ -263,8 +263,8 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 			fmt.Fprint(v, content)
 			y0 += lines + 2
 
-		case operations.SetTitleOperation:
-			setTitle := op.(operations.SetTitleOperation)
+		case bug.SetTitleOperation:
+			setTitle := op.(bug.SetTitleOperation)
 
 			content := fmt.Sprintf("%s changed the title to %s on %s",
 				colors.Magenta(setTitle.Author.Name),
@@ -280,8 +280,8 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 			fmt.Fprint(v, content)
 			y0 += lines + 2
 
-		case operations.SetStatusOperation:
-			setStatus := op.(operations.SetStatusOperation)
+		case bug.SetStatusOperation:
+			setStatus := op.(bug.SetStatusOperation)
 
 			content := fmt.Sprintf("%s %s the bug on %s",
 				colors.Magenta(setStatus.Author.Name),
@@ -297,8 +297,8 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 			fmt.Fprint(v, content)
 			y0 += lines + 2
 
-		case operations.LabelChangeOperation:
-			labelChange := op.(operations.LabelChangeOperation)
+		case bug.LabelChangeOperation:
+			labelChange := op.(bug.LabelChangeOperation)
 
 			var added []string
 			for _, label := range labelChange.Added {

@@ -1,32 +1,30 @@
-package tests
+package bug
 
 import (
-	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/operations"
 	"github.com/MichaelMure/git-bug/repository"
 	"testing"
 	"time"
 )
 
 var (
-	rene = bug.Person{
+	rene = Person{
 		Name:  "René Descartes",
 		Email: "rene@descartes.fr",
 	}
 
 	unix = time.Now().Unix()
 
-	createOp      = operations.NewCreateOp(rene, unix, "title", "message", nil)
-	setTitleOp    = operations.NewSetTitleOp(rene, unix, "title2", "title1")
-	addCommentOp  = operations.NewAddCommentOp(rene, unix, "message2", nil)
-	setStatusOp   = operations.NewSetStatusOp(rene, unix, bug.ClosedStatus)
-	labelChangeOp = operations.NewLabelChangeOperation(rene, unix, []bug.Label{"added"}, []bug.Label{"removed"})
+	createOp      = NewCreateOp(rene, unix, "title", "message", nil)
+	setTitleOp    = NewSetTitleOp(rene, unix, "title2", "title1")
+	addCommentOp  = NewAddCommentOp(rene, unix, "message2", nil)
+	setStatusOp   = NewSetStatusOp(rene, unix, ClosedStatus)
+	labelChangeOp = NewLabelChangeOperation(rene, unix, []Label{"added"}, []Label{"removed"})
 )
 
 func TestOpIterator(t *testing.T) {
 	mockRepo := repository.NewMockRepoForTest()
 
-	bug1 := bug.NewBug()
+	bug1 := NewBug()
 
 	// first pack
 	bug1.Append(createOp)
@@ -47,7 +45,7 @@ func TestOpIterator(t *testing.T) {
 	bug1.Append(setTitleOp)
 	bug1.Append(setTitleOp)
 
-	it := bug.NewOperationIterator(bug1)
+	it := NewOperationIterator(bug1)
 
 	counter := 0
 	for it.Next() {

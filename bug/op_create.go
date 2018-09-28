@@ -1,28 +1,31 @@
-package operations
+package bug
 
 import (
 	"fmt"
 	"strings"
 
-	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
 // CreateOperation define the initial creation of a bug
 
-var _ bug.Operation = CreateOperation{}
+var _ Operation = CreateOperation{}
 
 type CreateOperation struct {
-	*bug.OpBase
+	*OpBase
 	Title   string     `json:"title"`
 	Message string     `json:"message"`
 	Files   []git.Hash `json:"files"`
 }
 
-func (op CreateOperation) Apply(snapshot bug.Snapshot) bug.Snapshot {
+func (op CreateOperation) base() *OpBase {
+	return op.OpBase
+}
+
+func (op CreateOperation) Apply(snapshot Snapshot) Snapshot {
 	snapshot.Title = op.Title
-	snapshot.Comments = []bug.Comment{
+	snapshot.Comments = []Comment{
 		{
 			Message:  op.Message,
 			Author:   op.Author,
@@ -39,7 +42,7 @@ func (op CreateOperation) GetFiles() []git.Hash {
 }
 
 func (op CreateOperation) Validate() error {
-	if err := bug.OpBaseValidate(op, bug.CreateOp); err != nil {
+	if err := opBaseValidate(op, CreateOp); err != nil {
 		return err
 	}
 
@@ -62,9 +65,9 @@ func (op CreateOperation) Validate() error {
 	return nil
 }
 
-func NewCreateOp(author bug.Person, unixTime int64, title, message string, files []git.Hash) CreateOperation {
+func NewCreateOp(author Person, unixTime int64, title, message string, files []git.Hash) CreateOperation {
 	return CreateOperation{
-		OpBase:  bug.NewOpBase(bug.CreateOp, author, unixTime),
+		OpBase:  newOpBase(CreateOp, author, unixTime),
 		Title:   title,
 		Message: message,
 		Files:   files,
@@ -72,12 +75,12 @@ func NewCreateOp(author bug.Person, unixTime int64, title, message string, files
 }
 
 // Convenience function to apply the operation
-func Create(author bug.Person, unixTime int64, title, message string) (*bug.Bug, error) {
+func Create(author Person, unixTime int64, title, message string) (*Bug, error) {
 	return CreateWithFiles(author, unixTime, title, message, nil)
 }
 
-func CreateWithFiles(author bug.Person, unixTime int64, title, message string, files []git.Hash) (*bug.Bug, error) {
-	newBug := bug.NewBug()
+func CreateWithFiles(author Person, unixTime int64, title, message string, files []git.Hash) (*Bug, error) {
+	newBug := NewBug()
 	createOp := NewCreateOp(author, unixTime, title, message, files)
 
 	if err := createOp.Validate(); err != nil {

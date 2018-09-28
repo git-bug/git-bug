@@ -14,7 +14,6 @@ import (
 	introspection "github.com/99designs/gqlgen/graphql/introspection"
 	bug "github.com/MichaelMure/git-bug/bug"
 	models "github.com/MichaelMure/git-bug/graphql/models"
-	operations "github.com/MichaelMure/git-bug/operations"
 	git "github.com/MichaelMure/git-bug/util/git"
 	gqlparser "github.com/vektah/gqlparser"
 	ast "github.com/vektah/gqlparser/ast"
@@ -176,8 +175,8 @@ type ComplexityRoot struct {
 }
 
 type AddCommentOperationResolver interface {
-	Author(ctx context.Context, obj *operations.AddCommentOperation) (bug.Person, error)
-	Date(ctx context.Context, obj *operations.AddCommentOperation) (time.Time, error)
+	Author(ctx context.Context, obj *bug.AddCommentOperation) (bug.Person, error)
+	Date(ctx context.Context, obj *bug.AddCommentOperation) (time.Time, error)
 }
 type BugResolver interface {
 	Status(ctx context.Context, obj *bug.Snapshot) (models.Status, error)
@@ -187,12 +186,12 @@ type BugResolver interface {
 	Operations(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (models.OperationConnection, error)
 }
 type CreateOperationResolver interface {
-	Author(ctx context.Context, obj *operations.CreateOperation) (bug.Person, error)
-	Date(ctx context.Context, obj *operations.CreateOperation) (time.Time, error)
+	Author(ctx context.Context, obj *bug.CreateOperation) (bug.Person, error)
+	Date(ctx context.Context, obj *bug.CreateOperation) (time.Time, error)
 }
 type LabelChangeOperationResolver interface {
-	Author(ctx context.Context, obj *operations.LabelChangeOperation) (bug.Person, error)
-	Date(ctx context.Context, obj *operations.LabelChangeOperation) (time.Time, error)
+	Author(ctx context.Context, obj *bug.LabelChangeOperation) (bug.Person, error)
+	Date(ctx context.Context, obj *bug.LabelChangeOperation) (time.Time, error)
 }
 type MutationResolver interface {
 	NewBug(ctx context.Context, repoRef *string, title string, message string, files []git.Hash) (bug.Snapshot, error)
@@ -212,13 +211,13 @@ type RepositoryResolver interface {
 	Bug(ctx context.Context, obj *models.Repository, prefix string) (*bug.Snapshot, error)
 }
 type SetStatusOperationResolver interface {
-	Author(ctx context.Context, obj *operations.SetStatusOperation) (bug.Person, error)
-	Date(ctx context.Context, obj *operations.SetStatusOperation) (time.Time, error)
-	Status(ctx context.Context, obj *operations.SetStatusOperation) (models.Status, error)
+	Author(ctx context.Context, obj *bug.SetStatusOperation) (bug.Person, error)
+	Date(ctx context.Context, obj *bug.SetStatusOperation) (time.Time, error)
+	Status(ctx context.Context, obj *bug.SetStatusOperation) (models.Status, error)
 }
 type SetTitleOperationResolver interface {
-	Author(ctx context.Context, obj *operations.SetTitleOperation) (bug.Person, error)
-	Date(ctx context.Context, obj *operations.SetTitleOperation) (time.Time, error)
+	Author(ctx context.Context, obj *bug.SetTitleOperation) (bug.Person, error)
+	Date(ctx context.Context, obj *bug.SetTitleOperation) (time.Time, error)
 }
 
 func field_Bug_comments_args(rawArgs map[string]interface{}) (map[string]interface{}, error) {
@@ -1410,7 +1409,7 @@ type executionContext struct {
 var addCommentOperationImplementors = []string{"AddCommentOperation", "Operation", "Authored"}
 
 // nolint: gocyclo, errcheck, gas, goconst
-func (ec *executionContext) _AddCommentOperation(ctx context.Context, sel ast.SelectionSet, obj *operations.AddCommentOperation) graphql.Marshaler {
+func (ec *executionContext) _AddCommentOperation(ctx context.Context, sel ast.SelectionSet, obj *bug.AddCommentOperation) graphql.Marshaler {
 	fields := graphql.CollectFields(ctx, sel, addCommentOperationImplementors)
 
 	var wg sync.WaitGroup
@@ -1462,7 +1461,7 @@ func (ec *executionContext) _AddCommentOperation(ctx context.Context, sel ast.Se
 }
 
 // nolint: vetshadow
-func (ec *executionContext) _AddCommentOperation_author(ctx context.Context, field graphql.CollectedField, obj *operations.AddCommentOperation) graphql.Marshaler {
+func (ec *executionContext) _AddCommentOperation_author(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentOperation) graphql.Marshaler {
 	rctx := &graphql.ResolverContext{
 		Object: "AddCommentOperation",
 		Args:   nil,
@@ -1485,7 +1484,7 @@ func (ec *executionContext) _AddCommentOperation_author(ctx context.Context, fie
 }
 
 // nolint: vetshadow
-func (ec *executionContext) _AddCommentOperation_date(ctx context.Context, field graphql.CollectedField, obj *operations.AddCommentOperation) graphql.Marshaler {
+func (ec *executionContext) _AddCommentOperation_date(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentOperation) graphql.Marshaler {
 	rctx := &graphql.ResolverContext{
 		Object: "AddCommentOperation",
 		Args:   nil,
@@ -1507,7 +1506,7 @@ func (ec *executionContext) _AddCommentOperation_date(ctx context.Context, field
 }
 
 // nolint: vetshadow
-func (ec *executionContext) _AddCommentOperation_message(ctx context.Context, field graphql.CollectedField, obj *operations.AddCommentOperation) graphql.Marshaler {
+func (ec *executionContext) _AddCommentOperation_message(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentOperation) graphql.Marshaler {
 	rctx := &graphql.ResolverContext{
 		Object: "AddCommentOperation",
 		Args:   nil,
@@ -1529,7 +1528,7 @@ func (ec *executionContext) _AddCommentOperation_message(ctx context.Context, fi
 }
 
 // nolint: vetshadow
-func (ec *executionContext) _AddCommentOperation_files(ctx context.Context, field graphql.CollectedField, obj *operations.AddCommentOperation) graphql.Marshaler {
+func (ec *executionContext) _AddCommentOperation_files(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentOperation) graphql.Marshaler {
 	rctx := &graphql.ResolverContext{
 		Object: "AddCommentOperation",
 		Args:   nil,
@@ -2574,7 +2573,7 @@ func (ec *executionContext) _CommentEdge_node(ctx context.Context, field graphql
 var createOperationImplementors = []string{"CreateOperation", "Operation", "Authored"}
 
 // nolint: gocyclo, errcheck, gas, goconst
-func (ec *executionContext) _CreateOperation(ctx context.Context, sel ast.SelectionSet, obj *operations.CreateOperation) graphql.Marshaler {
+func (ec *executionContext) _CreateOperation(ctx context.Context, sel ast.SelectionSet, obj *bug.CreateOperation) graphql.Marshaler {
 	fields := graphql.CollectFields(ctx, sel, createOperationImplementors)
 
 	var wg sync.WaitGroup
@@ -2631,7 +2630,7 @@ func (ec *executionContext) _CreateOperation(ctx context.Context, sel ast.Select
 }
 
 // nolint: vetshadow
-func (ec *executionContext) _CreateOperation_author(ctx context.Context, field graphql.CollectedField, obj *operations.CreateOperation) graphql.Marshaler {
+func (ec *executionContext) _CreateOperation_author(ctx context.Context, field graphql.CollectedField, obj *bug.CreateOperation) graphql.Marshaler {
 	rctx := &graphql.ResolverContext{
 		Object: "CreateOperation",
 		Args:   nil,
@@ -2654,7 +2653,7 @@ func (ec *executionContext) _CreateOperation_author(ctx context.Context, field g
 }
 
 // nolint: vetshadow
-func (ec *executionContext) _CreateOperation_date(ctx context.Context, field graphql.CollectedField, obj *operations.CreateOperation) graphql.Marshaler {
+func (ec *executionContext) _CreateOperation_date(ctx context.Context, field graphql.CollectedField, obj *bug.CreateOperation) graphql.Marshaler {
 	rctx := &graphql.ResolverContext{
 		Object: "CreateOperation",
 		Args:   nil,
@@ -2676,7 +2675,7 @@ func (ec *executionContext) _CreateOperation_date(ctx context.Context, field gra
 }
 
 // nolint: vetshadow
-func (ec *executionContext) _CreateOperation_title(ctx context.Context, field graphql.CollectedField, obj *operations.CreateOperation) graphql.Marshaler {
+func (ec *executionContext) _CreateOperation_title(ctx context.Context, field graphql.CollectedField, obj *bug.CreateOperation) graphql.Marshaler {
 	rctx := &graphql.ResolverContext{
 		Object: "CreateOperation",
 		Args:   nil,
@@ -2698,7 +2697,7 @@ func (ec *executionContext) _CreateOperation_title(ctx context.Context, field gr
 }
 
 // nolint: vetshadow
-func (ec *executionContext) _CreateOperation_message(ctx context.Context, field graphql.CollectedField, obj *operations.CreateOperation) graphql.Marshaler {
+func (ec *executionContext) _CreateOperation_message(ctx context.Context, field graphql.CollectedField, obj *bug.CreateOperation) graphql.Marshaler {
 	rctx := &graphql.ResolverContext{
 		Object: "CreateOperation",
 		Args:   nil,
@@ -2720,7 +2719,7 @@ func (ec *executionContext) _CreateOperation_message(ctx context.Context, field 
 }
 
 // nolint: vetshadow
-func (ec *executionContext) _CreateOperation_files(ctx context.Context, field graphql.CollectedField, obj *operations.CreateOperation) graphql.Marshaler {
+func (ec *executionContext) _CreateOperation_files(ctx context.Context, field graphql.CollectedField, obj *bug.CreateOperation) graphql.Marshaler {
 	rctx := &graphql.ResolverContext{
 		Object: "CreateOperation",
 		Args:   nil,
@@ -2753,7 +2752,7 @@ func (ec *executionContext) _CreateOperation_files(ctx context.Context, field gr
 var labelChangeOperationImplementors = []string{"LabelChangeOperation", "Operation", "Authored"}
 
 // nolint: gocyclo, errcheck, gas, goconst
-func (ec *executionContext) _LabelChangeOperation(ctx context.Context, sel ast.SelectionSet, obj *operations.LabelChangeOperation) graphql.Marshaler {
+func (ec *executionContext) _LabelChangeOperation(ctx context.Context, sel ast.SelectionSet, obj *bug.LabelChangeOperation) graphql.Marshaler {
 	fields := graphql.CollectFields(ctx, sel, labelChangeOperationImplementors)
 
 	var wg sync.WaitGroup
@@ -2805,7 +2804,7 @@ func (ec *executionContext) _LabelChangeOperation(ctx context.Context, sel ast.S
 }
 
 // nolint: vetshadow
-func (ec *executionContext) _LabelChangeOperation_author(ctx context.Context, field graphql.CollectedField, obj *operations.LabelChangeOperation) graphql.Marshaler {
+func (ec *executionContext) _LabelChangeOperation_author(ctx context.Context, field graphql.CollectedField, obj *bug.LabelChangeOperation) graphql.Marshaler {
 	rctx := &graphql.ResolverContext{
 		Object: "LabelChangeOperation",
 		Args:   nil,
@@ -2828,7 +2827,7 @@ func (ec *executionContext) _LabelChangeOperation_author(ctx context.Context, fi
 }
 
 // nolint: vetshadow
-func (ec *executionContext) _LabelChangeOperation_date(ctx context.Context, field graphql.CollectedField, obj *operations.LabelChangeOperation) graphql.Marshaler {
+func (ec *executionContext) _LabelChangeOperation_date(ctx context.Context, field graphql.CollectedField, obj *bug.LabelChangeOperation) graphql.Marshaler {
 	rctx := &graphql.ResolverContext{
 		Object: "LabelChangeOperation",
 		Args:   nil,
@@ -2850,7 +2849,7 @@ func (ec *executionContext) _LabelChangeOperation_date(ctx context.Context, fiel
 }
 
 // nolint: vetshadow
-func (ec *executionContext) _LabelChangeOperation_added(ctx context.Context, field graphql.CollectedField, obj *operations.LabelChangeOperation) graphql.Marshaler {
+func (ec *executionContext) _LabelChangeOperation_added(ctx context.Context, field graphql.CollectedField, obj *bug.LabelChangeOperation) graphql.Marshaler {
 	rctx := &graphql.ResolverContext{
 		Object: "LabelChangeOperation",
 		Args:   nil,
@@ -2881,7 +2880,7 @@ func (ec *executionContext) _LabelChangeOperation_added(ctx context.Context, fie
 }
 
 // nolint: vetshadow
-func (ec *executionContext) _LabelChangeOperation_removed(ctx context.Context, field graphql.CollectedField, obj *operations.LabelChangeOperation) graphql.Marshaler {
+func (ec *executionContext) _LabelChangeOperation_removed(ctx context.Context, field graphql.CollectedField, obj *bug.LabelChangeOperation) graphql.Marshaler {
 	rctx := &graphql.ResolverContext{
 		Object: "LabelChangeOperation",
 		Args:   nil,
@@ -3942,7 +3941,7 @@ func (ec *executionContext) _Repository_bug(ctx context.Context, field graphql.C
 var setStatusOperationImplementors = []string{"SetStatusOperation", "Operation", "Authored"}
 
 // nolint: gocyclo, errcheck, gas, goconst
-func (ec *executionContext) _SetStatusOperation(ctx context.Context, sel ast.SelectionSet, obj *operations.SetStatusOperation) graphql.Marshaler {
+func (ec *executionContext) _SetStatusOperation(ctx context.Context, sel ast.SelectionSet, obj *bug.SetStatusOperation) graphql.Marshaler {
 	fields := graphql.CollectFields(ctx, sel, setStatusOperationImplementors)
 
 	var wg sync.WaitGroup
@@ -3993,7 +3992,7 @@ func (ec *executionContext) _SetStatusOperation(ctx context.Context, sel ast.Sel
 }
 
 // nolint: vetshadow
-func (ec *executionContext) _SetStatusOperation_author(ctx context.Context, field graphql.CollectedField, obj *operations.SetStatusOperation) graphql.Marshaler {
+func (ec *executionContext) _SetStatusOperation_author(ctx context.Context, field graphql.CollectedField, obj *bug.SetStatusOperation) graphql.Marshaler {
 	rctx := &graphql.ResolverContext{
 		Object: "SetStatusOperation",
 		Args:   nil,
@@ -4016,7 +4015,7 @@ func (ec *executionContext) _SetStatusOperation_author(ctx context.Context, fiel
 }
 
 // nolint: vetshadow
-func (ec *executionContext) _SetStatusOperation_date(ctx context.Context, field graphql.CollectedField, obj *operations.SetStatusOperation) graphql.Marshaler {
+func (ec *executionContext) _SetStatusOperation_date(ctx context.Context, field graphql.CollectedField, obj *bug.SetStatusOperation) graphql.Marshaler {
 	rctx := &graphql.ResolverContext{
 		Object: "SetStatusOperation",
 		Args:   nil,
@@ -4038,7 +4037,7 @@ func (ec *executionContext) _SetStatusOperation_date(ctx context.Context, field 
 }
 
 // nolint: vetshadow
-func (ec *executionContext) _SetStatusOperation_status(ctx context.Context, field graphql.CollectedField, obj *operations.SetStatusOperation) graphql.Marshaler {
+func (ec *executionContext) _SetStatusOperation_status(ctx context.Context, field graphql.CollectedField, obj *bug.SetStatusOperation) graphql.Marshaler {
 	rctx := &graphql.ResolverContext{
 		Object: "SetStatusOperation",
 		Args:   nil,
@@ -4062,7 +4061,7 @@ func (ec *executionContext) _SetStatusOperation_status(ctx context.Context, fiel
 var setTitleOperationImplementors = []string{"SetTitleOperation", "Operation", "Authored"}
 
 // nolint: gocyclo, errcheck, gas, goconst
-func (ec *executionContext) _SetTitleOperation(ctx context.Context, sel ast.SelectionSet, obj *operations.SetTitleOperation) graphql.Marshaler {
+func (ec *executionContext) _SetTitleOperation(ctx context.Context, sel ast.SelectionSet, obj *bug.SetTitleOperation) graphql.Marshaler {
 	fields := graphql.CollectFields(ctx, sel, setTitleOperationImplementors)
 
 	var wg sync.WaitGroup
@@ -4114,7 +4113,7 @@ func (ec *executionContext) _SetTitleOperation(ctx context.Context, sel ast.Sele
 }
 
 // nolint: vetshadow
-func (ec *executionContext) _SetTitleOperation_author(ctx context.Context, field graphql.CollectedField, obj *operations.SetTitleOperation) graphql.Marshaler {
+func (ec *executionContext) _SetTitleOperation_author(ctx context.Context, field graphql.CollectedField, obj *bug.SetTitleOperation) graphql.Marshaler {
 	rctx := &graphql.ResolverContext{
 		Object: "SetTitleOperation",
 		Args:   nil,
@@ -4137,7 +4136,7 @@ func (ec *executionContext) _SetTitleOperation_author(ctx context.Context, field
 }
 
 // nolint: vetshadow
-func (ec *executionContext) _SetTitleOperation_date(ctx context.Context, field graphql.CollectedField, obj *operations.SetTitleOperation) graphql.Marshaler {
+func (ec *executionContext) _SetTitleOperation_date(ctx context.Context, field graphql.CollectedField, obj *bug.SetTitleOperation) graphql.Marshaler {
 	rctx := &graphql.ResolverContext{
 		Object: "SetTitleOperation",
 		Args:   nil,
@@ -4159,7 +4158,7 @@ func (ec *executionContext) _SetTitleOperation_date(ctx context.Context, field g
 }
 
 // nolint: vetshadow
-func (ec *executionContext) _SetTitleOperation_title(ctx context.Context, field graphql.CollectedField, obj *operations.SetTitleOperation) graphql.Marshaler {
+func (ec *executionContext) _SetTitleOperation_title(ctx context.Context, field graphql.CollectedField, obj *bug.SetTitleOperation) graphql.Marshaler {
 	rctx := &graphql.ResolverContext{
 		Object: "SetTitleOperation",
 		Args:   nil,
@@ -4181,7 +4180,7 @@ func (ec *executionContext) _SetTitleOperation_title(ctx context.Context, field 
 }
 
 // nolint: vetshadow
-func (ec *executionContext) _SetTitleOperation_was(ctx context.Context, field graphql.CollectedField, obj *operations.SetTitleOperation) graphql.Marshaler {
+func (ec *executionContext) _SetTitleOperation_was(ctx context.Context, field graphql.CollectedField, obj *bug.SetTitleOperation) graphql.Marshaler {
 	rctx := &graphql.ResolverContext{
 		Object: "SetTitleOperation",
 		Args:   nil,
@@ -5487,25 +5486,25 @@ func (ec *executionContext) _Authored(ctx context.Context, sel ast.SelectionSet,
 		return ec._Comment(ctx, sel, &obj)
 	case *bug.Comment:
 		return ec._Comment(ctx, sel, obj)
-	case operations.CreateOperation:
+	case bug.CreateOperation:
 		return ec._CreateOperation(ctx, sel, &obj)
-	case *operations.CreateOperation:
+	case *bug.CreateOperation:
 		return ec._CreateOperation(ctx, sel, obj)
-	case operations.SetTitleOperation:
+	case bug.SetTitleOperation:
 		return ec._SetTitleOperation(ctx, sel, &obj)
-	case *operations.SetTitleOperation:
+	case *bug.SetTitleOperation:
 		return ec._SetTitleOperation(ctx, sel, obj)
-	case operations.AddCommentOperation:
+	case bug.AddCommentOperation:
 		return ec._AddCommentOperation(ctx, sel, &obj)
-	case *operations.AddCommentOperation:
+	case *bug.AddCommentOperation:
 		return ec._AddCommentOperation(ctx, sel, obj)
-	case operations.SetStatusOperation:
+	case bug.SetStatusOperation:
 		return ec._SetStatusOperation(ctx, sel, &obj)
-	case *operations.SetStatusOperation:
+	case *bug.SetStatusOperation:
 		return ec._SetStatusOperation(ctx, sel, obj)
-	case operations.LabelChangeOperation:
+	case bug.LabelChangeOperation:
 		return ec._LabelChangeOperation(ctx, sel, &obj)
-	case *operations.LabelChangeOperation:
+	case *bug.LabelChangeOperation:
 		return ec._LabelChangeOperation(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
@@ -5516,15 +5515,15 @@ func (ec *executionContext) _Operation(ctx context.Context, sel ast.SelectionSet
 	switch obj := (*obj).(type) {
 	case nil:
 		return graphql.Null
-	case operations.CreateOperation:
+	case bug.CreateOperation:
 		return ec._CreateOperation(ctx, sel, &obj)
-	case operations.SetTitleOperation:
+	case bug.SetTitleOperation:
 		return ec._SetTitleOperation(ctx, sel, &obj)
-	case operations.AddCommentOperation:
+	case bug.AddCommentOperation:
 		return ec._AddCommentOperation(ctx, sel, &obj)
-	case operations.SetStatusOperation:
+	case bug.SetStatusOperation:
 		return ec._SetStatusOperation(ctx, sel, &obj)
-	case operations.LabelChangeOperation:
+	case bug.LabelChangeOperation:
 		return ec._LabelChangeOperation(ctx, sel, &obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))

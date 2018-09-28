@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/operations"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/icrowley/fake"
 )
@@ -66,7 +65,7 @@ func GenerateRandomBugsWithSeed(opts Options, seed int64) []*bug.Bug {
 	for i := 0; i < opts.BugNumber; i++ {
 		addedLabels = []string{}
 
-		b, err := operations.Create(
+		b, err := bug.Create(
 			randomPerson(opts.PersonNumber),
 			time.Now().Unix(),
 			fake.Sentence(),
@@ -111,7 +110,7 @@ func GenerateRandomOperationPacksWithSeed(packNumber int, opNumber int, seed int
 
 		var op bug.Operation
 
-		op = operations.NewCreateOp(
+		op = bug.NewCreateOp(
 			randomPerson(5),
 			time.Now().Unix(),
 			fake.Sentence(),
@@ -122,7 +121,7 @@ func GenerateRandomOperationPacksWithSeed(packNumber int, opNumber int, seed int
 		opp.Append(op)
 
 		for j := 0; j < opNumber-1; j++ {
-			op = operations.NewAddCommentOp(
+			op = bug.NewAddCommentOp(
 				randomPerson(5),
 				time.Now().Unix(),
 				paragraphs(),
@@ -164,19 +163,19 @@ func paragraphs() string {
 }
 
 func comment(b bug.Interface, p bug.Person) {
-	_ = operations.Comment(b, p, time.Now().Unix(), paragraphs())
+	_ = bug.AddComment(b, p, time.Now().Unix(), paragraphs())
 }
 
 func title(b bug.Interface, p bug.Person) {
-	_ = operations.SetTitle(b, p, time.Now().Unix(), fake.Sentence())
+	_ = bug.SetTitle(b, p, time.Now().Unix(), fake.Sentence())
 }
 
 func open(b bug.Interface, p bug.Person) {
-	_ = operations.Open(b, p, time.Now().Unix())
+	_ = bug.Open(b, p, time.Now().Unix())
 }
 
 func close(b bug.Interface, p bug.Person) {
-	_ = operations.Close(b, p, time.Now().Unix())
+	_ = bug.Close(b, p, time.Now().Unix())
 }
 
 var addedLabels []string
@@ -203,5 +202,5 @@ func labels(b bug.Interface, p bug.Person) {
 	// ignore error
 	// if the randomisation produce no changes, no op
 	// is added to the bug
-	_, _ = operations.ChangeLabels(b, p, time.Now().Unix(), added, removed)
+	_, _ = bug.ChangeLabels(b, p, time.Now().Unix(), added, removed)
 }
