@@ -67,6 +67,7 @@ type ComplexityRoot struct {
 		CreatedAt  func(childComplexity int) int
 		LastEdit   func(childComplexity int) int
 		Comments   func(childComplexity int, after *string, before *string, first *int, last *int) int
+		Timeline   func(childComplexity int, after *string, before *string, first *int, last *int) int
 		Operations func(childComplexity int, after *string, before *string, first *int, last *int) int
 	}
 
@@ -100,6 +101,12 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	CommentTimelineItem struct {
+		Hash      func(childComplexity int) int
+		LastState func(childComplexity int) int
+		History   func(childComplexity int) int
+	}
+
 	CreateOperation struct {
 		Author  func(childComplexity int) int
 		Date    func(childComplexity int) int
@@ -108,7 +115,14 @@ type ComplexityRoot struct {
 		Files   func(childComplexity int) int
 	}
 
+	CreateTimelineItem struct {
+		Hash      func(childComplexity int) int
+		LastState func(childComplexity int) int
+		History   func(childComplexity int) int
+	}
+
 	LabelChangeOperation struct {
+		Hash    func(childComplexity int) int
 		Author  func(childComplexity int) int
 		Date    func(childComplexity int) int
 		Added   func(childComplexity int) int
@@ -161,16 +175,30 @@ type ComplexityRoot struct {
 	}
 
 	SetStatusOperation struct {
+		Hash   func(childComplexity int) int
 		Author func(childComplexity int) int
 		Date   func(childComplexity int) int
 		Status func(childComplexity int) int
 	}
 
 	SetTitleOperation struct {
+		Hash   func(childComplexity int) int
 		Author func(childComplexity int) int
 		Date   func(childComplexity int) int
 		Title  func(childComplexity int) int
 		Was    func(childComplexity int) int
+	}
+
+	TimelineItemConnection struct {
+		Edges      func(childComplexity int) int
+		Nodes      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	TimelineItemEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 }
 
@@ -183,6 +211,7 @@ type BugResolver interface {
 
 	LastEdit(ctx context.Context, obj *bug.Snapshot) (time.Time, error)
 	Comments(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (models.CommentConnection, error)
+	Timeline(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (models.TimelineItemConnection, error)
 	Operations(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (models.OperationConnection, error)
 }
 type CreateOperationResolver interface {
@@ -221,6 +250,68 @@ type SetTitleOperationResolver interface {
 }
 
 func field_Bug_comments_args(rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	args := map[string]interface{}{}
+	var arg0 *string
+	if tmp, ok := rawArgs["after"]; ok {
+		var err error
+		var ptr1 string
+		if tmp != nil {
+			ptr1, err = graphql.UnmarshalString(tmp)
+			arg0 = &ptr1
+		}
+
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg0
+	var arg1 *string
+	if tmp, ok := rawArgs["before"]; ok {
+		var err error
+		var ptr1 string
+		if tmp != nil {
+			ptr1, err = graphql.UnmarshalString(tmp)
+			arg1 = &ptr1
+		}
+
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["before"] = arg1
+	var arg2 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		var err error
+		var ptr1 int
+		if tmp != nil {
+			ptr1, err = graphql.UnmarshalInt(tmp)
+			arg2 = &ptr1
+		}
+
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg2
+	var arg3 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		var err error
+		var ptr1 int
+		if tmp != nil {
+			ptr1, err = graphql.UnmarshalInt(tmp)
+			arg3 = &ptr1
+		}
+
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["last"] = arg3
+	return args, nil
+
+}
+
+func field_Bug_timeline_args(rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	args := map[string]interface{}{}
 	var arg0 *string
 	if tmp, ok := rawArgs["after"]; ok {
@@ -914,6 +1005,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Bug.Comments(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
 
+	case "Bug.timeline":
+		if e.complexity.Bug.Timeline == nil {
+			break
+		}
+
+		args, err := field_Bug_timeline_args(rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Bug.Timeline(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
+
 	case "Bug.operations":
 		if e.complexity.Bug.Operations == nil {
 			break
@@ -1031,6 +1134,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.CommentEdge.Node(childComplexity), true
 
+	case "CommentTimelineItem.hash":
+		if e.complexity.CommentTimelineItem.Hash == nil {
+			break
+		}
+
+		return e.complexity.CommentTimelineItem.Hash(childComplexity), true
+
+	case "CommentTimelineItem.lastState":
+		if e.complexity.CommentTimelineItem.LastState == nil {
+			break
+		}
+
+		return e.complexity.CommentTimelineItem.LastState(childComplexity), true
+
+	case "CommentTimelineItem.history":
+		if e.complexity.CommentTimelineItem.History == nil {
+			break
+		}
+
+		return e.complexity.CommentTimelineItem.History(childComplexity), true
+
 	case "CreateOperation.author":
 		if e.complexity.CreateOperation.Author == nil {
 			break
@@ -1065,6 +1189,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.CreateOperation.Files(childComplexity), true
+
+	case "CreateTimelineItem.hash":
+		if e.complexity.CreateTimelineItem.Hash == nil {
+			break
+		}
+
+		return e.complexity.CreateTimelineItem.Hash(childComplexity), true
+
+	case "CreateTimelineItem.lastState":
+		if e.complexity.CreateTimelineItem.LastState == nil {
+			break
+		}
+
+		return e.complexity.CreateTimelineItem.LastState(childComplexity), true
+
+	case "CreateTimelineItem.history":
+		if e.complexity.CreateTimelineItem.History == nil {
+			break
+		}
+
+		return e.complexity.CreateTimelineItem.History(childComplexity), true
+
+	case "LabelChangeOperation.hash":
+		if e.complexity.LabelChangeOperation.Hash == nil {
+			break
+		}
+
+		return e.complexity.LabelChangeOperation.Hash(childComplexity), true
 
 	case "LabelChangeOperation.author":
 		if e.complexity.LabelChangeOperation.Author == nil {
@@ -1312,6 +1464,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Repository.Bug(childComplexity, args["prefix"].(string)), true
 
+	case "SetStatusOperation.hash":
+		if e.complexity.SetStatusOperation.Hash == nil {
+			break
+		}
+
+		return e.complexity.SetStatusOperation.Hash(childComplexity), true
+
 	case "SetStatusOperation.author":
 		if e.complexity.SetStatusOperation.Author == nil {
 			break
@@ -1332,6 +1491,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.SetStatusOperation.Status(childComplexity), true
+
+	case "SetTitleOperation.hash":
+		if e.complexity.SetTitleOperation.Hash == nil {
+			break
+		}
+
+		return e.complexity.SetTitleOperation.Hash(childComplexity), true
 
 	case "SetTitleOperation.author":
 		if e.complexity.SetTitleOperation.Author == nil {
@@ -1360,6 +1526,48 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.SetTitleOperation.Was(childComplexity), true
+
+	case "TimelineItemConnection.edges":
+		if e.complexity.TimelineItemConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.TimelineItemConnection.Edges(childComplexity), true
+
+	case "TimelineItemConnection.nodes":
+		if e.complexity.TimelineItemConnection.Nodes == nil {
+			break
+		}
+
+		return e.complexity.TimelineItemConnection.Nodes(childComplexity), true
+
+	case "TimelineItemConnection.pageInfo":
+		if e.complexity.TimelineItemConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.TimelineItemConnection.PageInfo(childComplexity), true
+
+	case "TimelineItemConnection.totalCount":
+		if e.complexity.TimelineItemConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.TimelineItemConnection.TotalCount(childComplexity), true
+
+	case "TimelineItemEdge.cursor":
+		if e.complexity.TimelineItemEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.TimelineItemEdge.Cursor(childComplexity), true
+
+	case "TimelineItemEdge.node":
+		if e.complexity.TimelineItemEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.TimelineItemEdge.Node(childComplexity), true
 
 	}
 	return 0, false
@@ -1630,6 +1838,15 @@ func (ec *executionContext) _Bug(ctx context.Context, sel ast.SelectionSet, obj 
 				}
 				wg.Done()
 			}(i, field)
+		case "timeline":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._Bug_timeline(ctx, field, obj)
+				if out.Values[i] == graphql.Null {
+					invalid = true
+				}
+				wg.Done()
+			}(i, field)
 		case "operations":
 			wg.Add(1)
 			go func(i int, field graphql.CollectedField) {
@@ -1863,6 +2080,35 @@ func (ec *executionContext) _Bug_comments(ctx context.Context, field graphql.Col
 	rctx.Result = res
 
 	return ec._CommentConnection(ctx, field.Selections, &res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Bug_timeline(ctx context.Context, field graphql.CollectedField, obj *bug.Snapshot) graphql.Marshaler {
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := field_Bug_timeline_args(rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx := &graphql.ResolverContext{
+		Object: "Bug",
+		Args:   args,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return ec.resolvers.Bug().Timeline(ctx, obj, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int))
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(models.TimelineItemConnection)
+	rctx.Result = res
+
+	return ec._TimelineItemConnection(ctx, field.Selections, &res)
 }
 
 // nolint: vetshadow
@@ -2570,6 +2816,146 @@ func (ec *executionContext) _CommentEdge_node(ctx context.Context, field graphql
 	return ec._Comment(ctx, field.Selections, &res)
 }
 
+var commentTimelineItemImplementors = []string{"CommentTimelineItem", "TimelineItem"}
+
+// nolint: gocyclo, errcheck, gas, goconst
+func (ec *executionContext) _CommentTimelineItem(ctx context.Context, sel ast.SelectionSet, obj *bug.CommentTimelineItem) graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, commentTimelineItemImplementors)
+
+	out := graphql.NewOrderedMap(len(fields))
+	invalid := false
+	for i, field := range fields {
+		out.Keys[i] = field.Alias
+
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CommentTimelineItem")
+		case "hash":
+			out.Values[i] = ec._CommentTimelineItem_hash(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "lastState":
+			out.Values[i] = ec._CommentTimelineItem_lastState(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "history":
+			out.Values[i] = ec._CommentTimelineItem_history(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+
+	if invalid {
+		return graphql.Null
+	}
+	return out
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _CommentTimelineItem_hash(ctx context.Context, field graphql.CollectedField, obj *bug.CommentTimelineItem) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "CommentTimelineItem",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.Hash()
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(git.Hash)
+	rctx.Result = res
+	return res
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _CommentTimelineItem_lastState(ctx context.Context, field graphql.CollectedField, obj *bug.CommentTimelineItem) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "CommentTimelineItem",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.LastState(), nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bug.Comment)
+	rctx.Result = res
+
+	return ec._Comment(ctx, field.Selections, &res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _CommentTimelineItem_history(ctx context.Context, field graphql.CollectedField, obj *bug.CommentTimelineItem) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "CommentTimelineItem",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.History, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]bug.Comment)
+	rctx.Result = res
+
+	arr1 := make(graphql.Array, len(res))
+	var wg sync.WaitGroup
+
+	isLen1 := len(res) == 1
+	if !isLen1 {
+		wg.Add(len(res))
+	}
+
+	for idx1 := range res {
+		idx1 := idx1
+		rctx := &graphql.ResolverContext{
+			Index:  &idx1,
+			Result: &res[idx1],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(idx1 int) {
+			if !isLen1 {
+				defer wg.Done()
+			}
+			arr1[idx1] = func() graphql.Marshaler {
+
+				return ec._Comment(ctx, field.Selections, &res[idx1])
+			}()
+		}
+		if isLen1 {
+			f(idx1)
+		} else {
+			go f(idx1)
+		}
+
+	}
+	wg.Wait()
+	return arr1
+}
+
 var createOperationImplementors = []string{"CreateOperation", "Operation", "Authored"}
 
 // nolint: gocyclo, errcheck, gas, goconst
@@ -2749,7 +3135,147 @@ func (ec *executionContext) _CreateOperation_files(ctx context.Context, field gr
 	return arr1
 }
 
-var labelChangeOperationImplementors = []string{"LabelChangeOperation", "Operation", "Authored"}
+var createTimelineItemImplementors = []string{"CreateTimelineItem", "TimelineItem"}
+
+// nolint: gocyclo, errcheck, gas, goconst
+func (ec *executionContext) _CreateTimelineItem(ctx context.Context, sel ast.SelectionSet, obj *bug.CreateTimelineItem) graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, createTimelineItemImplementors)
+
+	out := graphql.NewOrderedMap(len(fields))
+	invalid := false
+	for i, field := range fields {
+		out.Keys[i] = field.Alias
+
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CreateTimelineItem")
+		case "hash":
+			out.Values[i] = ec._CreateTimelineItem_hash(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "lastState":
+			out.Values[i] = ec._CreateTimelineItem_lastState(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "history":
+			out.Values[i] = ec._CreateTimelineItem_history(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+
+	if invalid {
+		return graphql.Null
+	}
+	return out
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _CreateTimelineItem_hash(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "CreateTimelineItem",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.Hash()
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(git.Hash)
+	rctx.Result = res
+	return res
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _CreateTimelineItem_lastState(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "CreateTimelineItem",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.LastState(), nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bug.Comment)
+	rctx.Result = res
+
+	return ec._Comment(ctx, field.Selections, &res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _CreateTimelineItem_history(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "CreateTimelineItem",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.History, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]bug.Comment)
+	rctx.Result = res
+
+	arr1 := make(graphql.Array, len(res))
+	var wg sync.WaitGroup
+
+	isLen1 := len(res) == 1
+	if !isLen1 {
+		wg.Add(len(res))
+	}
+
+	for idx1 := range res {
+		idx1 := idx1
+		rctx := &graphql.ResolverContext{
+			Index:  &idx1,
+			Result: &res[idx1],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(idx1 int) {
+			if !isLen1 {
+				defer wg.Done()
+			}
+			arr1[idx1] = func() graphql.Marshaler {
+
+				return ec._Comment(ctx, field.Selections, &res[idx1])
+			}()
+		}
+		if isLen1 {
+			f(idx1)
+		} else {
+			go f(idx1)
+		}
+
+	}
+	wg.Wait()
+	return arr1
+}
+
+var labelChangeOperationImplementors = []string{"LabelChangeOperation", "Operation", "Authored", "TimelineItem"}
 
 // nolint: gocyclo, errcheck, gas, goconst
 func (ec *executionContext) _LabelChangeOperation(ctx context.Context, sel ast.SelectionSet, obj *bug.LabelChangeOperation) graphql.Marshaler {
@@ -2764,6 +3290,11 @@ func (ec *executionContext) _LabelChangeOperation(ctx context.Context, sel ast.S
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("LabelChangeOperation")
+		case "hash":
+			out.Values[i] = ec._LabelChangeOperation_hash(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
 		case "author":
 			wg.Add(1)
 			go func(i int, field graphql.CollectedField) {
@@ -2801,6 +3332,28 @@ func (ec *executionContext) _LabelChangeOperation(ctx context.Context, sel ast.S
 		return graphql.Null
 	}
 	return out
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _LabelChangeOperation_hash(ctx context.Context, field graphql.CollectedField, obj *bug.LabelChangeOperation) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "LabelChangeOperation",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.Hash()
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(git.Hash)
+	rctx.Result = res
+	return res
 }
 
 // nolint: vetshadow
@@ -3938,7 +4491,7 @@ func (ec *executionContext) _Repository_bug(ctx context.Context, field graphql.C
 	return ec._Bug(ctx, field.Selections, res)
 }
 
-var setStatusOperationImplementors = []string{"SetStatusOperation", "Operation", "Authored"}
+var setStatusOperationImplementors = []string{"SetStatusOperation", "Operation", "Authored", "TimelineItem"}
 
 // nolint: gocyclo, errcheck, gas, goconst
 func (ec *executionContext) _SetStatusOperation(ctx context.Context, sel ast.SelectionSet, obj *bug.SetStatusOperation) graphql.Marshaler {
@@ -3953,6 +4506,11 @@ func (ec *executionContext) _SetStatusOperation(ctx context.Context, sel ast.Sel
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("SetStatusOperation")
+		case "hash":
+			out.Values[i] = ec._SetStatusOperation_hash(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
 		case "author":
 			wg.Add(1)
 			go func(i int, field graphql.CollectedField) {
@@ -3989,6 +4547,28 @@ func (ec *executionContext) _SetStatusOperation(ctx context.Context, sel ast.Sel
 		return graphql.Null
 	}
 	return out
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _SetStatusOperation_hash(ctx context.Context, field graphql.CollectedField, obj *bug.SetStatusOperation) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "SetStatusOperation",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.Hash()
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(git.Hash)
+	rctx.Result = res
+	return res
 }
 
 // nolint: vetshadow
@@ -4058,7 +4638,7 @@ func (ec *executionContext) _SetStatusOperation_status(ctx context.Context, fiel
 	return res
 }
 
-var setTitleOperationImplementors = []string{"SetTitleOperation", "Operation", "Authored"}
+var setTitleOperationImplementors = []string{"SetTitleOperation", "Operation", "Authored", "TimelineItem"}
 
 // nolint: gocyclo, errcheck, gas, goconst
 func (ec *executionContext) _SetTitleOperation(ctx context.Context, sel ast.SelectionSet, obj *bug.SetTitleOperation) graphql.Marshaler {
@@ -4073,6 +4653,11 @@ func (ec *executionContext) _SetTitleOperation(ctx context.Context, sel ast.Sele
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("SetTitleOperation")
+		case "hash":
+			out.Values[i] = ec._SetTitleOperation_hash(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
 		case "author":
 			wg.Add(1)
 			go func(i int, field graphql.CollectedField) {
@@ -4110,6 +4695,28 @@ func (ec *executionContext) _SetTitleOperation(ctx context.Context, sel ast.Sele
 		return graphql.Null
 	}
 	return out
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _SetTitleOperation_hash(ctx context.Context, field graphql.CollectedField, obj *bug.SetTitleOperation) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "SetTitleOperation",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.Hash()
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(git.Hash)
+	rctx.Result = res
+	return res
 }
 
 // nolint: vetshadow
@@ -4199,6 +4806,286 @@ func (ec *executionContext) _SetTitleOperation_was(ctx context.Context, field gr
 	res := resTmp.(string)
 	rctx.Result = res
 	return graphql.MarshalString(res)
+}
+
+var timelineItemConnectionImplementors = []string{"TimelineItemConnection"}
+
+// nolint: gocyclo, errcheck, gas, goconst
+func (ec *executionContext) _TimelineItemConnection(ctx context.Context, sel ast.SelectionSet, obj *models.TimelineItemConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, timelineItemConnectionImplementors)
+
+	out := graphql.NewOrderedMap(len(fields))
+	invalid := false
+	for i, field := range fields {
+		out.Keys[i] = field.Alias
+
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TimelineItemConnection")
+		case "edges":
+			out.Values[i] = ec._TimelineItemConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "nodes":
+			out.Values[i] = ec._TimelineItemConnection_nodes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "pageInfo":
+			out.Values[i] = ec._TimelineItemConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "totalCount":
+			out.Values[i] = ec._TimelineItemConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+
+	if invalid {
+		return graphql.Null
+	}
+	return out
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _TimelineItemConnection_edges(ctx context.Context, field graphql.CollectedField, obj *models.TimelineItemConnection) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "TimelineItemConnection",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.Edges, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]models.TimelineItemEdge)
+	rctx.Result = res
+
+	arr1 := make(graphql.Array, len(res))
+	var wg sync.WaitGroup
+
+	isLen1 := len(res) == 1
+	if !isLen1 {
+		wg.Add(len(res))
+	}
+
+	for idx1 := range res {
+		idx1 := idx1
+		rctx := &graphql.ResolverContext{
+			Index:  &idx1,
+			Result: &res[idx1],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(idx1 int) {
+			if !isLen1 {
+				defer wg.Done()
+			}
+			arr1[idx1] = func() graphql.Marshaler {
+
+				return ec._TimelineItemEdge(ctx, field.Selections, &res[idx1])
+			}()
+		}
+		if isLen1 {
+			f(idx1)
+		} else {
+			go f(idx1)
+		}
+
+	}
+	wg.Wait()
+	return arr1
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _TimelineItemConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *models.TimelineItemConnection) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "TimelineItemConnection",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.Nodes, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]bug.TimelineItem)
+	rctx.Result = res
+
+	arr1 := make(graphql.Array, len(res))
+	var wg sync.WaitGroup
+
+	isLen1 := len(res) == 1
+	if !isLen1 {
+		wg.Add(len(res))
+	}
+
+	for idx1 := range res {
+		idx1 := idx1
+		rctx := &graphql.ResolverContext{
+			Index:  &idx1,
+			Result: &res[idx1],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(idx1 int) {
+			if !isLen1 {
+				defer wg.Done()
+			}
+			arr1[idx1] = func() graphql.Marshaler {
+
+				return ec._TimelineItem(ctx, field.Selections, &res[idx1])
+			}()
+		}
+		if isLen1 {
+			f(idx1)
+		} else {
+			go f(idx1)
+		}
+
+	}
+	wg.Wait()
+	return arr1
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _TimelineItemConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *models.TimelineItemConnection) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "TimelineItemConnection",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.PageInfo, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(models.PageInfo)
+	rctx.Result = res
+
+	return ec._PageInfo(ctx, field.Selections, &res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _TimelineItemConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *models.TimelineItemConnection) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "TimelineItemConnection",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.TotalCount, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	rctx.Result = res
+	return graphql.MarshalInt(res)
+}
+
+var timelineItemEdgeImplementors = []string{"TimelineItemEdge"}
+
+// nolint: gocyclo, errcheck, gas, goconst
+func (ec *executionContext) _TimelineItemEdge(ctx context.Context, sel ast.SelectionSet, obj *models.TimelineItemEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, timelineItemEdgeImplementors)
+
+	out := graphql.NewOrderedMap(len(fields))
+	invalid := false
+	for i, field := range fields {
+		out.Keys[i] = field.Alias
+
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TimelineItemEdge")
+		case "cursor":
+			out.Values[i] = ec._TimelineItemEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "node":
+			out.Values[i] = ec._TimelineItemEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+
+	if invalid {
+		return graphql.Null
+	}
+	return out
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _TimelineItemEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *models.TimelineItemEdge) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "TimelineItemEdge",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.Cursor, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	return graphql.MarshalString(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _TimelineItemEdge_node(ctx context.Context, field graphql.CollectedField, obj *models.TimelineItemEdge) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "TimelineItemEdge",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.Node, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bug.TimelineItem)
+	rctx.Result = res
+
+	return ec._TimelineItem(ctx, field.Selections, &res)
 }
 
 var __DirectiveImplementors = []string{"__Directive"}
@@ -5515,16 +6402,35 @@ func (ec *executionContext) _Operation(ctx context.Context, sel ast.SelectionSet
 	switch obj := (*obj).(type) {
 	case nil:
 		return graphql.Null
-	case bug.CreateOperation:
-		return ec._CreateOperation(ctx, sel, &obj)
-	case bug.SetTitleOperation:
-		return ec._SetTitleOperation(ctx, sel, &obj)
-	case bug.AddCommentOperation:
-		return ec._AddCommentOperation(ctx, sel, &obj)
-	case bug.SetStatusOperation:
-		return ec._SetStatusOperation(ctx, sel, &obj)
-	case bug.LabelChangeOperation:
-		return ec._LabelChangeOperation(ctx, sel, &obj)
+	case *bug.CreateOperation:
+		return ec._CreateOperation(ctx, sel, obj)
+	case *bug.SetTitleOperation:
+		return ec._SetTitleOperation(ctx, sel, obj)
+	case *bug.AddCommentOperation:
+		return ec._AddCommentOperation(ctx, sel, obj)
+	case *bug.SetStatusOperation:
+		return ec._SetStatusOperation(ctx, sel, obj)
+	case *bug.LabelChangeOperation:
+		return ec._LabelChangeOperation(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
+
+func (ec *executionContext) _TimelineItem(ctx context.Context, sel ast.SelectionSet, obj *bug.TimelineItem) graphql.Marshaler {
+	switch obj := (*obj).(type) {
+	case nil:
+		return graphql.Null
+	case *bug.SetTitleOperation:
+		return ec._SetTitleOperation(ctx, sel, obj)
+	case *bug.SetStatusOperation:
+		return ec._SetStatusOperation(ctx, sel, obj)
+	case *bug.LabelChangeOperation:
+		return ec._LabelChangeOperation(ctx, sel, obj)
+	case *bug.CreateTimelineItem:
+		return ec._CreateTimelineItem(ctx, sel, obj)
+	case *bug.CommentTimelineItem:
+		return ec._CommentTimelineItem(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -5629,6 +6535,11 @@ type OperationEdge {
   node: Operation!
 }
 
+"""An item in the timeline of events"""
+interface TimelineItem {
+  hash: Hash!
+}
+
 """An operation applied to a bug."""
 interface Operation {
   """The operations author."""
@@ -5646,7 +6557,8 @@ type CreateOperation implements Operation & Authored {
   files: [Hash!]!
 }
 
-type SetTitleOperation implements Operation & Authored {
+type SetTitleOperation implements Operation & Authored & TimelineItem {
+  hash: Hash!
   author: Person!
   date: Time!
 
@@ -5662,19 +6574,45 @@ type AddCommentOperation implements Operation & Authored {
   files: [Hash!]!
 }
 
-type SetStatusOperation implements Operation & Authored {
+type SetStatusOperation implements Operation & Authored & TimelineItem {
+  hash: Hash!
   author: Person!
   date: Time!
 
   status: Status!
 }
 
-type LabelChangeOperation implements Operation & Authored {
+type LabelChangeOperation implements Operation & Authored & TimelineItem {
+  hash: Hash!
   author: Person!
   date: Time!
 
   added: [Label!]!
   removed: [Label!]!
+}
+
+type TimelineItemConnection {
+  edges: [TimelineItemEdge!]!
+  nodes: [TimelineItem!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type TimelineItemEdge {
+  cursor: String!
+  node: TimelineItem!
+}
+
+type CreateTimelineItem implements TimelineItem {
+  hash: Hash!
+  lastState: Comment!
+  history: [Comment!]!
+}
+
+type CommentTimelineItem implements TimelineItem {
+  hash: Hash!
+  lastState: Comment!
+  history: [Comment!]!
 }
 
 """The connection type for Bug."""
@@ -5716,6 +6654,17 @@ type Bug {
     """Returns the last _n_ elements from the list."""
     last: Int
   ): CommentConnection!
+
+  timeline(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+    """Returns the elements in the list that come before the specified cursor."""
+    before: String
+    """Returns the first _n_ elements from the list."""
+    first: Int
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): TimelineItemConnection!
 
   operations(
     """Returns the elements in the list that come after the specified cursor."""

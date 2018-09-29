@@ -59,6 +59,18 @@ type PageInfo struct {
 	EndCursor       string `json:"endCursor"`
 }
 
+type TimelineItemConnection struct {
+	Edges      []TimelineItemEdge `json:"edges"`
+	Nodes      []bug.TimelineItem `json:"nodes"`
+	PageInfo   PageInfo           `json:"pageInfo"`
+	TotalCount int                `json:"totalCount"`
+}
+
+type TimelineItemEdge struct {
+	Cursor string           `json:"cursor"`
+	Node   bug.TimelineItem `json:"node"`
+}
+
 type Status string
 
 const (

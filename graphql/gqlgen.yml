@@ -31,3 +31,9 @@ models:
     model: github.com/MichaelMure/git-bug/bug.SetStatusOperation
   LabelChangeOperation:
     model: github.com/MichaelMure/git-bug/bug.LabelChangeOperation
+  TimelineItem:
+    model: github.com/MichaelMure/git-bug/bug.TimelineItem
+  CreateTimelineItem:
+    model: github.com/MichaelMure/git-bug/bug.CreateTimelineItem
+  CommentTimelineItem:
+    model: github.com/MichaelMure/git-bug/bug.CommentTimelineItem

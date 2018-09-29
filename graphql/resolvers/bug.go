@@ -69,6 +69,33 @@ func (bugResolver) Operations(ctx context.Context, obj *bug.Snapshot, after *str
 	return connections.BugOperationCon(obj.Operations, edger, conMaker, input)
 }
 
+func (bugResolver) Timeline(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (models.TimelineItemConnection, error) {
+	input := models.ConnectionInput{
+		Before: before,
+		After:  after,
+		First:  first,
+		Last:   last,
+	}
+
+	edger := func(op bug.TimelineItem, offset int) connections.Edge {
+		return models.TimelineItemEdge{
+			Node:   op,
+			Cursor: connections.OffsetToCursor(offset),
+		}
+	}
+
+	conMaker := func(edges []models.TimelineItemEdge, nodes []bug.TimelineItem, info models.PageInfo, totalCount int) (models.TimelineItemConnection, error) {
+		return models.TimelineItemConnection{
+			Edges:      edges,
+			Nodes:      nodes,
+			PageInfo:   info,
+			TotalCount: totalCount,
+		}, nil
+	}
+
+	return connections.BugTimelineItemCon(obj.Timeline, edger, conMaker, input)
+}
+
 func (bugResolver) LastEdit(ctx context.Context, obj *bug.Snapshot) (time.Time, error) {
 	return obj.LastEditTime(), nil
 }
