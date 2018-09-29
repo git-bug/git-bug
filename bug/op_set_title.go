@@ -8,29 +8,29 @@ import (
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
+var _ Operation = &SetTitleOperation{}
+
 // SetTitleOperation will change the title of a bug
-
-var _ Operation = SetTitleOperation{}
-
 type SetTitleOperation struct {
 	*OpBase
 	Title string `json:"title"`
 	Was   string `json:"was"`
 }
 
-func (op SetTitleOperation) base() *OpBase {
+func (op *SetTitleOperation) base() *OpBase {
 	return op.OpBase
 }
 
-func (op SetTitleOperation) Hash() (git.Hash, error) {
+func (op *SetTitleOperation) Hash() (git.Hash, error) {
 	return hashOperation(op)
 }
 
-func (op SetTitleOperation) Apply(snapshot *Snapshot) {
+func (op *SetTitleOperation) Apply(snapshot *Snapshot) {
 	snapshot.Title = op.Title
+	snapshot.Timeline = append(snapshot.Timeline, op)
 }
 
-func (op SetTitleOperation) Validate() error {
+func (op *SetTitleOperation) Validate() error {
 	if err := opBaseValidate(op, SetTitleOp); err != nil {
 		return err
 	}
@@ -58,8 +58,8 @@ func (op SetTitleOperation) Validate() error {
 	return nil
 }
 
-func NewSetTitleOp(author Person, unixTime int64, title string, was string) SetTitleOperation {
-	return SetTitleOperation{
+func NewSetTitleOp(author Person, unixTime int64, title string, was string) *SetTitleOperation {
+	return &SetTitleOperation{
 		OpBase: newOpBase(SetTitleOp, author, unixTime),
 		Title:  title,
 		Was:    was,
@@ -80,9 +80,9 @@ func SetTitle(b Interface, author Person, unixTime int64, title string) error {
 
 	var was string
 	if lastTitleOp != nil {
-		was = lastTitleOp.(SetTitleOperation).Title
+		was = lastTitleOp.(*SetTitleOperation).Title
 	} else {
-		was = b.FirstOp().(CreateOperation).Title
+		was = b.FirstOp().(*CreateOperation).Title
 	}
 
 	setTitleOp := NewSetTitleOp(author, unixTime, title, was)

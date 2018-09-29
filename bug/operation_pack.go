@@ -74,23 +74,27 @@ func (opp *OperationPack) UnmarshalJSON(data []byte) error {
 func (opp *OperationPack) unmarshalOp(raw []byte, _type OperationType) (Operation, error) {
 	switch _type {
 	case CreateOp:
-		op := CreateOperation{}
+		op := &CreateOperation{}
 		err := json.Unmarshal(raw, &op)
 		return op, err
 	case SetTitleOp:
-		op := SetTitleOperation{}
+		op := &SetTitleOperation{}
 		err := json.Unmarshal(raw, &op)
 		return op, err
 	case AddCommentOp:
-		op := AddCommentOperation{}
+		op := &AddCommentOperation{}
 		err := json.Unmarshal(raw, &op)
 		return op, err
 	case SetStatusOp:
-		op := SetStatusOperation{}
+		op := &SetStatusOperation{}
 		err := json.Unmarshal(raw, &op)
 		return op, err
 	case LabelChangeOp:
-		op := LabelChangeOperation{}
+		op := &LabelChangeOperation{}
+		err := json.Unmarshal(raw, &op)
+		return op, err
+	case EditCommentOp:
+		op := &EditCommentOperation{}
 		err := json.Unmarshal(raw, &op)
 		return op, err
 	default:

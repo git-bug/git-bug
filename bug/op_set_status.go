@@ -5,28 +5,28 @@ import (
 	"github.com/pkg/errors"
 )
 
+var _ Operation = &SetStatusOperation{}
+
 // SetStatusOperation will change the status of a bug
-
-var _ Operation = SetStatusOperation{}
-
 type SetStatusOperation struct {
 	*OpBase
 	Status Status `json:"status"`
 }
 
-func (op SetStatusOperation) base() *OpBase {
+func (op *SetStatusOperation) base() *OpBase {
 	return op.OpBase
 }
 
-func (op SetStatusOperation) Hash() (git.Hash, error) {
+func (op *SetStatusOperation) Hash() (git.Hash, error) {
 	return hashOperation(op)
 }
 
-func (op SetStatusOperation) Apply(snapshot *Snapshot) {
+func (op *SetStatusOperation) Apply(snapshot *Snapshot) {
 	snapshot.Status = op.Status
+	snapshot.Timeline = append(snapshot.Timeline, op)
 }
 
-func (op SetStatusOperation) Validate() error {
+func (op *SetStatusOperation) Validate() error {
 	if err := opBaseValidate(op, SetStatusOp); err != nil {
 		return err
 	}
@@ -38,8 +38,8 @@ func (op SetStatusOperation) Validate() error {
 	return nil
 }
 
-func NewSetStatusOp(author Person, unixTime int64, status Status) SetStatusOperation {
-	return SetStatusOperation{
+func NewSetStatusOp(author Person, unixTime int64, status Status) *SetStatusOperation {
+	return &SetStatusOperation{
 		OpBase: newOpBase(SetStatusOp, author, unixTime),
 		Status: status,
 	}

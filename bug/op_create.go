@@ -8,10 +8,9 @@ import (
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
+var _ Operation = &CreateOperation{}
+
 // CreateOperation define the initial creation of a bug
-
-var _ Operation = CreateOperation{}
-
 type CreateOperation struct {
 	*OpBase
 	Title   string     `json:"title"`
@@ -19,32 +18,44 @@ type CreateOperation struct {
 	Files   []git.Hash `json:"files"`
 }
 
-func (op CreateOperation) base() *OpBase {
+func (op *CreateOperation) base() *OpBase {
 	return op.OpBase
 }
 
-func (op CreateOperation) Hash() (git.Hash, error) {
+func (op *CreateOperation) Hash() (git.Hash, error) {
 	return hashOperation(op)
 }
 
-func (op CreateOperation) Apply(snapshot *Snapshot) {
+func (op *CreateOperation) Apply(snapshot *Snapshot) {
 	snapshot.Title = op.Title
-	snapshot.Comments = []Comment{
-		{
-			Message:  op.Message,
-			Author:   op.Author,
-			UnixTime: op.UnixTime,
-		},
+
+	comment := Comment{
+		Message:  op.Message,
+		Author:   op.Author,
+		UnixTime: op.UnixTime,
 	}
+
+	snapshot.Comments = []Comment{comment}
 	snapshot.Author = op.Author
 	snapshot.CreatedAt = op.Time()
+
+	hash, err := op.Hash()
+	if err != nil {
+		// Should never error unless a programming error happened
+		// (covered in OpBase.Validate())
+		panic(err)
+	}
+
+	snapshot.Timeline = []TimelineItem{
+		NewCreateTimelineItem(hash, comment),
+	}
 }
 
-func (op CreateOperation) GetFiles() []git.Hash {
+func (op *CreateOperation) GetFiles() []git.Hash {
 	return op.Files
 }
 
-func (op CreateOperation) Validate() error {
+func (op *CreateOperation) Validate() error {
 	if err := opBaseValidate(op, CreateOp); err != nil {
 		return err
 	}
@@ -68,8 +79,8 @@ func (op CreateOperation) Validate() error {
 	return nil
 }
 
-func NewCreateOp(author Person, unixTime int64, title, message string, files []git.Hash) CreateOperation {
-	return CreateOperation{
+func NewCreateOp(author Person, unixTime int64, title, message string, files []git.Hash) *CreateOperation {
+	return &CreateOperation{
 		OpBase:  newOpBase(CreateOp, author, unixTime),
 		Title:   title,
 		Message: message,

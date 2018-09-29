@@ -78,6 +78,13 @@ func TestBugSerialisation(t *testing.T) {
 		bug2.packs[0].Operations[i].base().hash = bug1.packs[0].Operations[i].base().hash
 	}
 
+	// check hashes
+	for i := range bug1.packs[0].Operations {
+		if !bug2.packs[0].Operations[i].base().hash.IsValid() {
+			t.Fatal("invalid hash")
+		}
+	}
+
 	deep.CompareUnexportedFields = true
 	if diff := deep.Equal(bug1, bug2); diff != nil {
 		t.Fatal(diff)

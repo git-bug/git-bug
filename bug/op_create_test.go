@@ -1,9 +1,10 @@
 package bug
 
 import (
-	"reflect"
 	"testing"
 	"time"
+
+	"github.com/go-test/deep"
 )
 
 func TestCreate(t *testing.T) {
@@ -20,16 +21,27 @@ func TestCreate(t *testing.T) {
 
 	create.Apply(&snapshot)
 
+	hash, err := create.Hash()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	comment := Comment{Author: rene, Message: "message", UnixTime: create.UnixTime}
+
 	expected := Snapshot{
 		Title: "title",
 		Comments: []Comment{
-			{Author: rene, Message: "message", UnixTime: create.UnixTime},
+			comment,
 		},
 		Author:    rene,
 		CreatedAt: create.Time(),
+		Timeline: []TimelineItem{
+			NewCreateTimelineItem(hash, comment),
+		},
 	}
 
-	if !reflect.DeepEqual(snapshot, expected) {
-		t.Fatalf("%v different than %v", snapshot, expected)
+	deep.CompareUnexportedFields = true
+	if diff := deep.Equal(snapshot, expected); diff != nil {
+		t.Fatal(diff)
 	}
 }

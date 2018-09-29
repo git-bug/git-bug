@@ -7,10 +7,9 @@ import (
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
+var _ Operation = &AddCommentOperation{}
+
 // AddCommentOperation will add a new comment in the bug
-
-var _ Operation = AddCommentOperation{}
-
 type AddCommentOperation struct {
 	*OpBase
 	Message string `json:"message"`
@@ -18,15 +17,15 @@ type AddCommentOperation struct {
 	Files []git.Hash `json:"files"`
 }
 
-func (op AddCommentOperation) base() *OpBase {
+func (op *AddCommentOperation) base() *OpBase {
 	return op.OpBase
 }
 
-func (op AddCommentOperation) Hash() (git.Hash, error) {
+func (op *AddCommentOperation) Hash() (git.Hash, error) {
 	return hashOperation(op)
 }
 
-func (op AddCommentOperation) Apply(snapshot *Snapshot) {
+func (op *AddCommentOperation) Apply(snapshot *Snapshot) {
 	comment := Comment{
 		Message:  op.Message,
 		Author:   op.Author,
@@ -35,13 +34,22 @@ func (op AddCommentOperation) Apply(snapshot *Snapshot) {
 	}
 
 	snapshot.Comments = append(snapshot.Comments, comment)
+
+	hash, err := op.Hash()
+	if err != nil {
+		// Should never error unless a programming error happened
+		// (covered in OpBase.Validate())
+		panic(err)
+	}
+
+	snapshot.Timeline = append(snapshot.Timeline, NewCommentTimelineItem(hash, comment))
 }
 
-func (op AddCommentOperation) GetFiles() []git.Hash {
+func (op *AddCommentOperation) GetFiles() []git.Hash {
 	return op.Files
 }
 
-func (op AddCommentOperation) Validate() error {
+func (op *AddCommentOperation) Validate() error {
 	if err := opBaseValidate(op, AddCommentOp); err != nil {
 		return err
 	}
@@ -57,8 +65,8 @@ func (op AddCommentOperation) Validate() error {
 	return nil
 }
 
-func NewAddCommentOp(author Person, unixTime int64, message string, files []git.Hash) AddCommentOperation {
-	return AddCommentOperation{
+func NewAddCommentOp(author Person, unixTime int64, message string, files []git.Hash) *AddCommentOperation {
+	return &AddCommentOperation{
 		OpBase:  newOpBase(AddCommentOp, author, unixTime),
 		Message: message,
 		Files:   files,

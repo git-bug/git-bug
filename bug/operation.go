@@ -20,13 +20,14 @@ const (
 	AddCommentOp
 	SetStatusOp
 	LabelChangeOp
+	EditCommentOp
 )
 
 // Operation define the interface to fulfill for an edit operation of a Bug
 type Operation interface {
 	// base return the OpBase of the Operation, for package internal use
 	base() *OpBase
-	// Hash return the hash of the operation
+	// Hash return the hash of the operation, to be used for back references
 	Hash() (git.Hash, error)
 	// Time return the time when the operation was added
 	Time() time.Time
@@ -46,7 +47,8 @@ type Operation interface {
 
 func hashRaw(data []byte) git.Hash {
 	hasher := sha256.New()
-	return git.Hash(fmt.Sprintf("%x", hasher.Sum(data)))
+	hasher.Write(data)
+	return git.Hash(fmt.Sprintf("%x", hasher.Sum(nil)))
 }
 
 // hash compute the hash of the serialized operation
@@ -104,6 +106,10 @@ func (op *OpBase) GetFiles() []git.Hash {
 func opBaseValidate(op Operation, opType OperationType) error {
 	if op.base().OperationType != opType {
 		return fmt.Errorf("incorrect operation type (expected: %v, actual: %v)", opType, op.base().OperationType)
+	}
+
+	if _, err := op.Hash(); err != nil {
+		return errors.Wrap(err, "op is not serializable")
 	}
 
 	if op.GetUnixTime() == 0 {

@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var _ Operation = LabelChangeOperation{}
+var _ Operation = &LabelChangeOperation{}
 
 // LabelChangeOperation define a Bug operation to add or remove labels
 type LabelChangeOperation struct {
@@ -17,16 +17,16 @@ type LabelChangeOperation struct {
 	Removed []Label `json:"removed"`
 }
 
-func (op LabelChangeOperation) base() *OpBase {
+func (op *LabelChangeOperation) base() *OpBase {
 	return op.OpBase
 }
 
-func (op LabelChangeOperation) Hash() (git.Hash, error) {
+func (op *LabelChangeOperation) Hash() (git.Hash, error) {
 	return hashOperation(op)
 }
 
 // Apply apply the operation
-func (op LabelChangeOperation) Apply(snapshot *Snapshot) {
+func (op *LabelChangeOperation) Apply(snapshot *Snapshot) {
 	// Add in the set
 AddLoop:
 	for _, added := range op.Added {
@@ -54,9 +54,11 @@ AddLoop:
 	sort.Slice(snapshot.Labels, func(i, j int) bool {
 		return string(snapshot.Labels[i]) < string(snapshot.Labels[j])
 	})
+
+	snapshot.Timeline = append(snapshot.Timeline, op)
 }
 
-func (op LabelChangeOperation) Validate() error {
+func (op *LabelChangeOperation) Validate() error {
 	if err := opBaseValidate(op, LabelChangeOp); err != nil {
 		return err
 	}
@@ -80,8 +82,8 @@ func (op LabelChangeOperation) Validate() error {
 	return nil
 }
 
-func NewLabelChangeOperation(author Person, unixTime int64, added, removed []Label) LabelChangeOperation {
-	return LabelChangeOperation{
+func NewLabelChangeOperation(author Person, unixTime int64, added, removed []Label) *LabelChangeOperation {
+	return &LabelChangeOperation{
 		OpBase:  newOpBase(LabelChangeOp, author, unixTime),
 		Added:   added,
 		Removed: removed,
