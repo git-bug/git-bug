@@ -27,10 +27,8 @@ func (b *WithSnapshot) Append(op Operation) {
 		return
 	}
 
-	snap := op.Apply(*b.snap)
-	snap.Operations = append(snap.Operations, op)
-
-	b.snap = &snap
+	op.Apply(b.snap)
+	b.snap.Operations = append(b.snap.Operations, op)
 }
 
 // Commit intercept Bug.Commit() to update the snapshot efficiently

@@ -641,7 +641,7 @@ func (bug *Bug) Compile() Snapshot {
 
 	for it.Next() {
 		op := it.Value()
-		snap = op.Apply(snap)
+		op.Apply(&snap)
 		snap.Operations = append(snap.Operations, op)
 	}
 

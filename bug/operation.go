@@ -35,7 +35,7 @@ type Operation interface {
 	// GetFiles return the files needed by this operation
 	GetFiles() []git.Hash
 	// Apply the operation to a Snapshot to create the final state
-	Apply(snapshot Snapshot) Snapshot
+	Apply(snapshot *Snapshot)
 	// Validate check if the operation is valid (ex: a title is a single line)
 	Validate() error
 	// SetMetadata store arbitrary metadata about the operation

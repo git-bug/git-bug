@@ -27,7 +27,7 @@ func (op CreateOperation) Hash() (git.Hash, error) {
 	return hashOperation(op)
 }
 
-func (op CreateOperation) Apply(snapshot Snapshot) Snapshot {
+func (op CreateOperation) Apply(snapshot *Snapshot) {
 	snapshot.Title = op.Title
 	snapshot.Comments = []Comment{
 		{
@@ -38,7 +38,6 @@ func (op CreateOperation) Apply(snapshot Snapshot) Snapshot {
 	}
 	snapshot.Author = op.Author
 	snapshot.CreatedAt = op.Time()
-	return snapshot
 }
 
 func (op CreateOperation) GetFiles() []git.Hash {

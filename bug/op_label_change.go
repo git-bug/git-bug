@@ -26,7 +26,7 @@ func (op LabelChangeOperation) Hash() (git.Hash, error) {
 }
 
 // Apply apply the operation
-func (op LabelChangeOperation) Apply(snapshot Snapshot) Snapshot {
+func (op LabelChangeOperation) Apply(snapshot *Snapshot) {
 	// Add in the set
 AddLoop:
 	for _, added := range op.Added {
@@ -54,8 +54,6 @@ AddLoop:
 	sort.Slice(snapshot.Labels, func(i, j int) bool {
 		return string(snapshot.Labels[i]) < string(snapshot.Labels[j])
 	})
-
-	return snapshot
 }
 
 func (op LabelChangeOperation) Validate() error {

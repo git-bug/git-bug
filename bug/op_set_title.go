@@ -26,10 +26,8 @@ func (op SetTitleOperation) Hash() (git.Hash, error) {
 	return hashOperation(op)
 }
 
-func (op SetTitleOperation) Apply(snapshot Snapshot) Snapshot {
+func (op SetTitleOperation) Apply(snapshot *Snapshot) {
 	snapshot.Title = op.Title
-
-	return snapshot
 }
 
 func (op SetTitleOperation) Validate() error {

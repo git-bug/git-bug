@@ -22,10 +22,8 @@ func (op SetStatusOperation) Hash() (git.Hash, error) {
 	return hashOperation(op)
 }
 
-func (op SetStatusOperation) Apply(snapshot Snapshot) Snapshot {
+func (op SetStatusOperation) Apply(snapshot *Snapshot) {
 	snapshot.Status = op.Status
-
-	return snapshot
 }
 
 func (op SetStatusOperation) Validate() error {

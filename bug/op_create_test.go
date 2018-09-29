@@ -18,7 +18,7 @@ func TestCreate(t *testing.T) {
 
 	create := NewCreateOp(rene, unix, "title", "message", nil)
 
-	snapshot = create.Apply(snapshot)
+	create.Apply(&snapshot)
 
 	expected := Snapshot{
 		Title: "title",

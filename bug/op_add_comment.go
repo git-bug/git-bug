@@ -26,7 +26,7 @@ func (op AddCommentOperation) Hash() (git.Hash, error) {
 	return hashOperation(op)
 }
 
-func (op AddCommentOperation) Apply(snapshot Snapshot) Snapshot {
+func (op AddCommentOperation) Apply(snapshot *Snapshot) {
 	comment := Comment{
 		Message:  op.Message,
 		Author:   op.Author,
@@ -35,8 +35,6 @@ func (op AddCommentOperation) Apply(snapshot Snapshot) Snapshot {
 	}
 
 	snapshot.Comments = append(snapshot.Comments, comment)
-
-	return snapshot
 }
 
 func (op AddCommentOperation) GetFiles() []git.Hash {
