@@ -3,6 +3,7 @@ package bug
 import (
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/go-test/deep"
+	"github.com/stretchr/testify/assert"
 
 	"testing"
 )
@@ -65,7 +66,8 @@ func TestBugSerialisation(t *testing.T) {
 
 	repo := repository.NewMockRepoForTest()
 
-	bug1.Commit(repo)
+	err := bug1.Commit(repo)
+	assert.Nil(t, err)
 
 	bug2, err := ReadLocalBug(repo, bug1.Id())
 	if err != nil {

@@ -2,6 +2,8 @@ package bug
 
 import (
 	"github.com/MichaelMure/git-bug/repository"
+	"github.com/stretchr/testify/assert"
+
 	"io/ioutil"
 	"log"
 	"os"
@@ -69,16 +71,16 @@ func TestPushPull(t *testing.T) {
 	defer cleanupRepos(repoA, repoB, remote)
 
 	bug1, err := Create(rene, unix, "bug1", "message")
-	checkErr(t, err)
+	assert.Nil(t, err)
 	err = bug1.Commit(repoA)
-	checkErr(t, err)
+	assert.Nil(t, err)
 
 	// A --> remote --> B
 	_, err = Push(repoA, "origin")
-	checkErr(t, err)
+	assert.Nil(t, err)
 
 	err = Pull(repoB, "origin")
-	checkErr(t, err)
+	assert.Nil(t, err)
 
 	bugs := allBugs(t, ReadAllLocalBugs(repoB))
 
@@ -88,26 +90,20 @@ func TestPushPull(t *testing.T) {
 
 	// B --> remote --> A
 	bug2, err := Create(rene, unix, "bug2", "message")
-	checkErr(t, err)
+	assert.Nil(t, err)
 	err = bug2.Commit(repoB)
-	checkErr(t, err)
+	assert.Nil(t, err)
 
 	_, err = Push(repoB, "origin")
-	checkErr(t, err)
+	assert.Nil(t, err)
 
 	err = Pull(repoA, "origin")
-	checkErr(t, err)
+	assert.Nil(t, err)
 
 	bugs = allBugs(t, ReadAllLocalBugs(repoA))
 
 	if len(bugs) != 2 {
 		t.Fatal("Unexpected number of bugs")
-	}
-}
-
-func checkErr(t testing.TB, err error) {
-	if err != nil {
-		t.Fatal(err)
 	}
 }
 
@@ -137,34 +133,37 @@ func _RebaseTheirs(t testing.TB) {
 	defer cleanupRepos(repoA, repoB, remote)
 
 	bug1, err := Create(rene, unix, "bug1", "message")
-	checkErr(t, err)
+	assert.Nil(t, err)
 	err = bug1.Commit(repoA)
-	checkErr(t, err)
+	assert.Nil(t, err)
 
 	// A --> remote
 	_, err = Push(repoA, "origin")
-	checkErr(t, err)
+	assert.Nil(t, err)
 
 	// remote --> B
 	err = Pull(repoB, "origin")
-	checkErr(t, err)
+	assert.Nil(t, err)
 
 	bug2, err := ReadLocalBug(repoB, bug1.Id())
-	checkErr(t, err)
+	assert.Nil(t, err)
 
-	AddComment(bug2, rene, unix, "message2")
-	AddComment(bug2, rene, unix, "message3")
-	AddComment(bug2, rene, unix, "message4")
+	err = AddComment(bug2, rene, unix, "message2")
+	assert.Nil(t, err)
+	err = AddComment(bug2, rene, unix, "message3")
+	assert.Nil(t, err)
+	err = AddComment(bug2, rene, unix, "message4")
+	assert.Nil(t, err)
 	err = bug2.Commit(repoB)
-	checkErr(t, err)
+	assert.Nil(t, err)
 
 	// B --> remote
 	_, err = Push(repoB, "origin")
-	checkErr(t, err)
+	assert.Nil(t, err)
 
 	// remote --> A
 	err = Pull(repoA, "origin")
-	checkErr(t, err)
+	assert.Nil(t, err)
 
 	bugs := allBugs(t, ReadAllLocalBugs(repoB))
 
@@ -173,7 +172,7 @@ func _RebaseTheirs(t testing.TB) {
 	}
 
 	bug3, err := ReadLocalBug(repoA, bug1.Id())
-	checkErr(t, err)
+	assert.Nil(t, err)
 
 	if nbOps(bug3) != 4 {
 		t.Fatal("Unexpected number of operations")
@@ -195,39 +194,48 @@ func _RebaseOurs(t testing.TB) {
 	defer cleanupRepos(repoA, repoB, remote)
 
 	bug1, err := Create(rene, unix, "bug1", "message")
-	checkErr(t, err)
+	assert.Nil(t, err)
 	err = bug1.Commit(repoA)
-	checkErr(t, err)
+	assert.Nil(t, err)
 
 	// A --> remote
 	_, err = Push(repoA, "origin")
-	checkErr(t, err)
+	assert.Nil(t, err)
 
 	// remote --> B
 	err = Pull(repoB, "origin")
-	checkErr(t, err)
+	assert.Nil(t, err)
 
-	AddComment(bug1, rene, unix, "message2")
-	AddComment(bug1, rene, unix, "message3")
-	AddComment(bug1, rene, unix, "message4")
+	err = AddComment(bug1, rene, unix, "message2")
+	assert.Nil(t, err)
+	err = AddComment(bug1, rene, unix, "message3")
+	assert.Nil(t, err)
+	err = AddComment(bug1, rene, unix, "message4")
+	assert.Nil(t, err)
 	err = bug1.Commit(repoA)
-	checkErr(t, err)
+	assert.Nil(t, err)
 
-	AddComment(bug1, rene, unix, "message5")
-	AddComment(bug1, rene, unix, "message6")
-	AddComment(bug1, rene, unix, "message7")
+	err = AddComment(bug1, rene, unix, "message5")
+	assert.Nil(t, err)
+	err = AddComment(bug1, rene, unix, "message6")
+	assert.Nil(t, err)
+	err = AddComment(bug1, rene, unix, "message7")
+	assert.Nil(t, err)
 	err = bug1.Commit(repoA)
-	checkErr(t, err)
+	assert.Nil(t, err)
 
-	AddComment(bug1, rene, unix, "message8")
-	AddComment(bug1, rene, unix, "message9")
-	AddComment(bug1, rene, unix, "message10")
+	err = AddComment(bug1, rene, unix, "message8")
+	assert.Nil(t, err)
+	err = AddComment(bug1, rene, unix, "message9")
+	assert.Nil(t, err)
+	err = AddComment(bug1, rene, unix, "message10")
+	assert.Nil(t, err)
 	err = bug1.Commit(repoA)
-	checkErr(t, err)
+	assert.Nil(t, err)
 
 	// remote --> A
 	err = Pull(repoA, "origin")
-	checkErr(t, err)
+	assert.Nil(t, err)
 
 	bugs := allBugs(t, ReadAllLocalBugs(repoA))
 
@@ -236,7 +244,7 @@ func _RebaseOurs(t testing.TB) {
 	}
 
 	bug2, err := ReadLocalBug(repoA, bug1.Id())
-	checkErr(t, err)
+	assert.Nil(t, err)
 
 	if nbOps(bug2) != 10 {
 		t.Fatal("Unexpected number of operations")
@@ -267,64 +275,82 @@ func _RebaseConflict(t testing.TB) {
 	defer cleanupRepos(repoA, repoB, remote)
 
 	bug1, err := Create(rene, unix, "bug1", "message")
-	checkErr(t, err)
+	assert.Nil(t, err)
 	err = bug1.Commit(repoA)
-	checkErr(t, err)
+	assert.Nil(t, err)
 
 	// A --> remote
 	_, err = Push(repoA, "origin")
-	checkErr(t, err)
+	assert.Nil(t, err)
 
 	// remote --> B
 	err = Pull(repoB, "origin")
-	checkErr(t, err)
+	assert.Nil(t, err)
 
-	AddComment(bug1, rene, unix, "message2")
-	AddComment(bug1, rene, unix, "message3")
-	AddComment(bug1, rene, unix, "message4")
+	err = AddComment(bug1, rene, unix, "message2")
+	assert.Nil(t, err)
+	err = AddComment(bug1, rene, unix, "message3")
+	assert.Nil(t, err)
+	err = AddComment(bug1, rene, unix, "message4")
+	assert.Nil(t, err)
 	err = bug1.Commit(repoA)
-	checkErr(t, err)
+	assert.Nil(t, err)
 
-	AddComment(bug1, rene, unix, "message5")
-	AddComment(bug1, rene, unix, "message6")
-	AddComment(bug1, rene, unix, "message7")
+	err = AddComment(bug1, rene, unix, "message5")
+	assert.Nil(t, err)
+	err = AddComment(bug1, rene, unix, "message6")
+	assert.Nil(t, err)
+	err = AddComment(bug1, rene, unix, "message7")
+	assert.Nil(t, err)
 	err = bug1.Commit(repoA)
-	checkErr(t, err)
+	assert.Nil(t, err)
 
-	AddComment(bug1, rene, unix, "message8")
-	AddComment(bug1, rene, unix, "message9")
-	AddComment(bug1, rene, unix, "message10")
+	err = AddComment(bug1, rene, unix, "message8")
+	assert.Nil(t, err)
+	err = AddComment(bug1, rene, unix, "message9")
+	assert.Nil(t, err)
+	err = AddComment(bug1, rene, unix, "message10")
+	assert.Nil(t, err)
 	err = bug1.Commit(repoA)
-	checkErr(t, err)
+	assert.Nil(t, err)
 
 	bug2, err := ReadLocalBug(repoB, bug1.Id())
-	checkErr(t, err)
+	assert.Nil(t, err)
 
-	AddComment(bug2, rene, unix, "message11")
-	AddComment(bug2, rene, unix, "message12")
-	AddComment(bug2, rene, unix, "message13")
+	err = AddComment(bug2, rene, unix, "message11")
+	assert.Nil(t, err)
+	err = AddComment(bug2, rene, unix, "message12")
+	assert.Nil(t, err)
+	err = AddComment(bug2, rene, unix, "message13")
+	assert.Nil(t, err)
 	err = bug2.Commit(repoB)
-	checkErr(t, err)
+	assert.Nil(t, err)
 
-	AddComment(bug2, rene, unix, "message14")
-	AddComment(bug2, rene, unix, "message15")
-	AddComment(bug2, rene, unix, "message16")
+	err = AddComment(bug2, rene, unix, "message14")
+	assert.Nil(t, err)
+	err = AddComment(bug2, rene, unix, "message15")
+	assert.Nil(t, err)
+	err = AddComment(bug2, rene, unix, "message16")
+	assert.Nil(t, err)
 	err = bug2.Commit(repoB)
-	checkErr(t, err)
+	assert.Nil(t, err)
 
-	AddComment(bug2, rene, unix, "message17")
-	AddComment(bug2, rene, unix, "message18")
-	AddComment(bug2, rene, unix, "message19")
+	err = AddComment(bug2, rene, unix, "message17")
+	assert.Nil(t, err)
+	err = AddComment(bug2, rene, unix, "message18")
+	assert.Nil(t, err)
+	err = AddComment(bug2, rene, unix, "message19")
+	assert.Nil(t, err)
 	err = bug2.Commit(repoB)
-	checkErr(t, err)
+	assert.Nil(t, err)
 
 	// A --> remote
 	_, err = Push(repoA, "origin")
-	checkErr(t, err)
+	assert.Nil(t, err)
 
 	// remote --> B
 	err = Pull(repoB, "origin")
-	checkErr(t, err)
+	assert.Nil(t, err)
 
 	bugs := allBugs(t, ReadAllLocalBugs(repoB))
 
@@ -333,7 +359,7 @@ func _RebaseConflict(t testing.TB) {
 	}
 
 	bug3, err := ReadLocalBug(repoB, bug1.Id())
-	checkErr(t, err)
+	assert.Nil(t, err)
 
 	if nbOps(bug3) != 19 {
 		t.Fatal("Unexpected number of operations")
@@ -341,11 +367,11 @@ func _RebaseConflict(t testing.TB) {
 
 	// B --> remote
 	_, err = Push(repoB, "origin")
-	checkErr(t, err)
+	assert.Nil(t, err)
 
 	// remote --> A
 	err = Pull(repoA, "origin")
-	checkErr(t, err)
+	assert.Nil(t, err)
 
 	bugs = allBugs(t, ReadAllLocalBugs(repoA))
 
@@ -354,7 +380,7 @@ func _RebaseConflict(t testing.TB) {
 	}
 
 	bug4, err := ReadLocalBug(repoA, bug1.Id())
-	checkErr(t, err)
+	assert.Nil(t, err)
 
 	if nbOps(bug4) != 19 {
 		t.Fatal("Unexpected number of operations")

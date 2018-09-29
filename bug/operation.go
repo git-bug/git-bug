@@ -47,7 +47,8 @@ type Operation interface {
 
 func hashRaw(data []byte) git.Hash {
 	hasher := sha256.New()
-	hasher.Write(data)
+	// Write can't fail
+	_, _ = hasher.Write(data)
 	return git.Hash(fmt.Sprintf("%x", hasher.Sum(nil)))
 }
 
