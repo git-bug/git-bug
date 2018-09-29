@@ -234,8 +234,8 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 
 		switch op.(type) {
 
-		case bug.CreateOperation:
-			create := op.(bug.CreateOperation)
+		case *bug.CreateOperation:
+			create := op.(*bug.CreateOperation)
 			content, lines := text.WrapLeftPadded(create.Message, maxX, 4)
 
 			v, err := sb.createOpView(g, viewName, x0, y0, maxX+1, lines, true)
@@ -245,8 +245,8 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 			fmt.Fprint(v, content)
 			y0 += lines + 2
 
-		case bug.AddCommentOperation:
-			comment := op.(bug.AddCommentOperation)
+		case *bug.AddCommentOperation:
+			comment := op.(*bug.AddCommentOperation)
 
 			message, _ := text.WrapLeftPadded(comment.Message, maxX, 4)
 			content := fmt.Sprintf("%s commented on %s\n\n%s",
@@ -263,8 +263,8 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 			fmt.Fprint(v, content)
 			y0 += lines + 2
 
-		case bug.SetTitleOperation:
-			setTitle := op.(bug.SetTitleOperation)
+		case *bug.SetTitleOperation:
+			setTitle := op.(*bug.SetTitleOperation)
 
 			content := fmt.Sprintf("%s changed the title to %s on %s",
 				colors.Magenta(setTitle.Author.Name),
@@ -280,8 +280,8 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 			fmt.Fprint(v, content)
 			y0 += lines + 2
 
-		case bug.SetStatusOperation:
-			setStatus := op.(bug.SetStatusOperation)
+		case *bug.SetStatusOperation:
+			setStatus := op.(*bug.SetStatusOperation)
 
 			content := fmt.Sprintf("%s %s the bug on %s",
 				colors.Magenta(setStatus.Author.Name),
@@ -297,8 +297,8 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 			fmt.Fprint(v, content)
 			y0 += lines + 2
 
-		case bug.LabelChangeOperation:
-			labelChange := op.(bug.LabelChangeOperation)
+		case *bug.LabelChangeOperation:
+			labelChange := op.(*bug.LabelChangeOperation)
 
 			var added []string
 			for _, label := range labelChange.Added {
