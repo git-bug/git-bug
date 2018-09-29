@@ -125,7 +125,7 @@ PRs accepted. Drop by the [Gitter lobby](https://gitter.im/the-git-bug/Lobby) fo
 ## Contributors
 
 This project exists thanks to all the people who contribute. 
-<a href="https://github.com/undefined/undefinedgraphs/contributors"><img src="https://opencollective.com/git-bug/contributors.svg?width=890&button=false" /></a>
+<a href="https://github.com/MichaelMure/git-bug/graphs/contributors"><img src="https://opencollective.com/git-bug/contributors.svg?width=890&button=false" /></a>
 
 
 ## Backers
