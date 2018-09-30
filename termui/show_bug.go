@@ -209,12 +209,20 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 
 	sb.mainSelectableView = nil
 
-	bugHeader := fmt.Sprintf("[%s] %s\n\n[%s] %s opened this bug on %s",
+	createTimelineItem := snap.Timeline[0].(*bug.CreateTimelineItem)
+
+	edited := ""
+	if createTimelineItem.Edited() {
+		edited = " (edited)"
+	}
+
+	bugHeader := fmt.Sprintf("[%s] %s\n\n[%s] %s opened this bug on %s%s",
 		colors.Cyan(snap.HumanId()),
 		colors.Bold(snap.Title),
 		colors.Yellow(snap.Status),
 		colors.Magenta(snap.Author.Name),
 		snap.CreatedAt.Format(timeLayout),
+		edited,
 	)
 	bugHeader, lines := text.Wrap(bugHeader, maxX)
 
@@ -226,7 +234,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 	fmt.Fprint(v, bugHeader)
 	y0 += lines + 1
 
-	for i, op := range snap.Operations {
+	for i, op := range snap.Timeline {
 		viewName := fmt.Sprintf("op%d", i)
 
 		// TODO: me might skip the rendering of blocks that are outside of the view
@@ -234,8 +242,8 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 
 		switch op.(type) {
 
-		case *bug.CreateOperation:
-			create := op.(*bug.CreateOperation)
+		case *bug.CreateTimelineItem:
+			create := op.(*bug.CreateTimelineItem)
 			content, lines := text.WrapLeftPadded(create.Message, maxX, 4)
 
 			v, err := sb.createOpView(g, viewName, x0, y0, maxX+1, lines, true)
@@ -245,13 +253,19 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 			fmt.Fprint(v, content)
 			y0 += lines + 2
 
-		case *bug.AddCommentOperation:
-			comment := op.(*bug.AddCommentOperation)
+		case *bug.CommentTimelineItem:
+			comment := op.(*bug.CommentTimelineItem)
+
+			edited := ""
+			if comment.Edited() {
+				edited = " (edited)"
+			}
 
 			message, _ := text.WrapLeftPadded(comment.Message, maxX, 4)
-			content := fmt.Sprintf("%s commented on %s\n\n%s",
+			content := fmt.Sprintf("%s commented on %s%s\n\n%s",
 				colors.Magenta(comment.Author.Name),
-				comment.Time().Format(timeLayout),
+				comment.CreatedAt.Time().Format(timeLayout),
+				edited,
 				message,
 			)
 			content, lines = text.Wrap(content, maxX)
