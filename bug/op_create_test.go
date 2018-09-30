@@ -26,7 +26,7 @@ func TestCreate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	comment := Comment{Author: rene, Message: "message", UnixTime: create.UnixTime}
+	comment := Comment{Author: rene, Message: "message", UnixTime: Timestamp(create.UnixTime)}
 
 	expected := Snapshot{
 		Title: "title",

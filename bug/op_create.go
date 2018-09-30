@@ -32,7 +32,7 @@ func (op *CreateOperation) Apply(snapshot *Snapshot) {
 	comment := Comment{
 		Message:  op.Message,
 		Author:   op.Author,
-		UnixTime: op.UnixTime,
+		UnixTime: Timestamp(op.UnixTime),
 	}
 
 	snapshot.Comments = []Comment{comment}

@@ -33,6 +33,8 @@ models:
     model: github.com/MichaelMure/git-bug/bug.LabelChangeOperation
   TimelineItem:
     model: github.com/MichaelMure/git-bug/bug.TimelineItem
+  CommentHistoryStep:
+    model: github.com/MichaelMure/git-bug/bug.CommentHistoryStep
   CreateTimelineItem:
     model: github.com/MichaelMure/git-bug/bug.CreateTimelineItem
   CommentTimelineItem:

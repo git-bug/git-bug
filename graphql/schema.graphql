@@ -141,16 +141,31 @@ type TimelineItemEdge {
   node: TimelineItem!
 }
 
+type CommentHistoryStep {
+  message: String!
+  date: Time!
+}
+
 type CreateTimelineItem implements TimelineItem {
   hash: Hash!
-  lastState: Comment!
-  history: [Comment!]!
+  author: Person!
+  message: String!
+  files: [Hash!]!
+  createdAt: Time!
+  lastEdit: Time!
+  edited: Boolean!
+  history: [CommentHistoryStep!]!
 }
 
 type CommentTimelineItem implements TimelineItem {
   hash: Hash!
-  lastState: Comment!
-  history: [Comment!]!
+  author: Person!
+  message: String!
+  files: [Hash!]!
+  createdAt: Time!
+  lastEdit: Time!
+  edited: Boolean!
+  history: [CommentHistoryStep!]!
 }
 
 """The connection type for Bug."""

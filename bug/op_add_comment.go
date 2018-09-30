@@ -30,7 +30,7 @@ func (op *AddCommentOperation) Apply(snapshot *Snapshot) {
 		Message:  op.Message,
 		Author:   op.Author,
 		Files:    op.Files,
-		UnixTime: op.UnixTime,
+		UnixTime: Timestamp(op.UnixTime),
 	}
 
 	snapshot.Comments = append(snapshot.Comments, comment)

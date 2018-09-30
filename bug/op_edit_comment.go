@@ -57,18 +57,20 @@ func (op *EditCommentOperation) Apply(snapshot *Snapshot) {
 		return
 	}
 
+	comment := Comment{
+		Message:  op.Message,
+		Files:    op.Files,
+		UnixTime: Timestamp(op.UnixTime),
+	}
+
 	switch target.(type) {
 	case *CreateTimelineItem:
 		item := target.(*CreateTimelineItem)
-		newComment := item.LastState()
-		newComment.Message = op.Message
-		item.History = append(item.History, newComment)
+		item.Append(comment)
 
 	case *CommentTimelineItem:
 		item := target.(*CommentTimelineItem)
-		newComment := item.LastState()
-		newComment.Message = op.Message
-		item.History = append(item.History, newComment)
+		item.Append(comment)
 	}
 
 	snapshot.Comments[commentIndex].Message = op.Message

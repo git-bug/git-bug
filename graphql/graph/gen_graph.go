@@ -37,7 +37,10 @@ type Config struct {
 type ResolverRoot interface {
 	AddCommentOperation() AddCommentOperationResolver
 	Bug() BugResolver
+	CommentHistoryStep() CommentHistoryStepResolver
+	CommentTimelineItem() CommentTimelineItemResolver
 	CreateOperation() CreateOperationResolver
+	CreateTimelineItem() CreateTimelineItemResolver
 	LabelChangeOperation() LabelChangeOperationResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
@@ -101,9 +104,19 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	CommentHistoryStep struct {
+		Message func(childComplexity int) int
+		Date    func(childComplexity int) int
+	}
+
 	CommentTimelineItem struct {
 		Hash      func(childComplexity int) int
-		LastState func(childComplexity int) int
+		Author    func(childComplexity int) int
+		Message   func(childComplexity int) int
+		Files     func(childComplexity int) int
+		CreatedAt func(childComplexity int) int
+		LastEdit  func(childComplexity int) int
+		Edited    func(childComplexity int) int
 		History   func(childComplexity int) int
 	}
 
@@ -117,7 +130,12 @@ type ComplexityRoot struct {
 
 	CreateTimelineItem struct {
 		Hash      func(childComplexity int) int
-		LastState func(childComplexity int) int
+		Author    func(childComplexity int) int
+		Message   func(childComplexity int) int
+		Files     func(childComplexity int) int
+		CreatedAt func(childComplexity int) int
+		LastEdit  func(childComplexity int) int
+		Edited    func(childComplexity int) int
 		History   func(childComplexity int) int
 	}
 
@@ -214,9 +232,20 @@ type BugResolver interface {
 	Timeline(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (models.TimelineItemConnection, error)
 	Operations(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (models.OperationConnection, error)
 }
+type CommentHistoryStepResolver interface {
+	Date(ctx context.Context, obj *bug.CommentHistoryStep) (time.Time, error)
+}
+type CommentTimelineItemResolver interface {
+	CreatedAt(ctx context.Context, obj *bug.CommentTimelineItem) (time.Time, error)
+	LastEdit(ctx context.Context, obj *bug.CommentTimelineItem) (time.Time, error)
+}
 type CreateOperationResolver interface {
 	Author(ctx context.Context, obj *bug.CreateOperation) (bug.Person, error)
 	Date(ctx context.Context, obj *bug.CreateOperation) (time.Time, error)
+}
+type CreateTimelineItemResolver interface {
+	CreatedAt(ctx context.Context, obj *bug.CreateTimelineItem) (time.Time, error)
+	LastEdit(ctx context.Context, obj *bug.CreateTimelineItem) (time.Time, error)
 }
 type LabelChangeOperationResolver interface {
 	Author(ctx context.Context, obj *bug.LabelChangeOperation) (bug.Person, error)
@@ -1134,6 +1163,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.CommentEdge.Node(childComplexity), true
 
+	case "CommentHistoryStep.message":
+		if e.complexity.CommentHistoryStep.Message == nil {
+			break
+		}
+
+		return e.complexity.CommentHistoryStep.Message(childComplexity), true
+
+	case "CommentHistoryStep.date":
+		if e.complexity.CommentHistoryStep.Date == nil {
+			break
+		}
+
+		return e.complexity.CommentHistoryStep.Date(childComplexity), true
+
 	case "CommentTimelineItem.hash":
 		if e.complexity.CommentTimelineItem.Hash == nil {
 			break
@@ -1141,12 +1184,47 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.CommentTimelineItem.Hash(childComplexity), true
 
-	case "CommentTimelineItem.lastState":
-		if e.complexity.CommentTimelineItem.LastState == nil {
+	case "CommentTimelineItem.author":
+		if e.complexity.CommentTimelineItem.Author == nil {
 			break
 		}
 
-		return e.complexity.CommentTimelineItem.LastState(childComplexity), true
+		return e.complexity.CommentTimelineItem.Author(childComplexity), true
+
+	case "CommentTimelineItem.message":
+		if e.complexity.CommentTimelineItem.Message == nil {
+			break
+		}
+
+		return e.complexity.CommentTimelineItem.Message(childComplexity), true
+
+	case "CommentTimelineItem.files":
+		if e.complexity.CommentTimelineItem.Files == nil {
+			break
+		}
+
+		return e.complexity.CommentTimelineItem.Files(childComplexity), true
+
+	case "CommentTimelineItem.createdAt":
+		if e.complexity.CommentTimelineItem.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.CommentTimelineItem.CreatedAt(childComplexity), true
+
+	case "CommentTimelineItem.lastEdit":
+		if e.complexity.CommentTimelineItem.LastEdit == nil {
+			break
+		}
+
+		return e.complexity.CommentTimelineItem.LastEdit(childComplexity), true
+
+	case "CommentTimelineItem.edited":
+		if e.complexity.CommentTimelineItem.Edited == nil {
+			break
+		}
+
+		return e.complexity.CommentTimelineItem.Edited(childComplexity), true
 
 	case "CommentTimelineItem.history":
 		if e.complexity.CommentTimelineItem.History == nil {
@@ -1197,12 +1275,47 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.CreateTimelineItem.Hash(childComplexity), true
 
-	case "CreateTimelineItem.lastState":
-		if e.complexity.CreateTimelineItem.LastState == nil {
+	case "CreateTimelineItem.author":
+		if e.complexity.CreateTimelineItem.Author == nil {
 			break
 		}
 
-		return e.complexity.CreateTimelineItem.LastState(childComplexity), true
+		return e.complexity.CreateTimelineItem.Author(childComplexity), true
+
+	case "CreateTimelineItem.message":
+		if e.complexity.CreateTimelineItem.Message == nil {
+			break
+		}
+
+		return e.complexity.CreateTimelineItem.Message(childComplexity), true
+
+	case "CreateTimelineItem.files":
+		if e.complexity.CreateTimelineItem.Files == nil {
+			break
+		}
+
+		return e.complexity.CreateTimelineItem.Files(childComplexity), true
+
+	case "CreateTimelineItem.createdAt":
+		if e.complexity.CreateTimelineItem.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.CreateTimelineItem.CreatedAt(childComplexity), true
+
+	case "CreateTimelineItem.lastEdit":
+		if e.complexity.CreateTimelineItem.LastEdit == nil {
+			break
+		}
+
+		return e.complexity.CreateTimelineItem.LastEdit(childComplexity), true
+
+	case "CreateTimelineItem.edited":
+		if e.complexity.CreateTimelineItem.Edited == nil {
+			break
+		}
+
+		return e.complexity.CreateTimelineItem.Edited(childComplexity), true
 
 	case "CreateTimelineItem.history":
 		if e.complexity.CreateTimelineItem.History == nil {
@@ -2816,12 +2929,97 @@ func (ec *executionContext) _CommentEdge_node(ctx context.Context, field graphql
 	return ec._Comment(ctx, field.Selections, &res)
 }
 
+var commentHistoryStepImplementors = []string{"CommentHistoryStep"}
+
+// nolint: gocyclo, errcheck, gas, goconst
+func (ec *executionContext) _CommentHistoryStep(ctx context.Context, sel ast.SelectionSet, obj *bug.CommentHistoryStep) graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, commentHistoryStepImplementors)
+
+	var wg sync.WaitGroup
+	out := graphql.NewOrderedMap(len(fields))
+	invalid := false
+	for i, field := range fields {
+		out.Keys[i] = field.Alias
+
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CommentHistoryStep")
+		case "message":
+			out.Values[i] = ec._CommentHistoryStep_message(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "date":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._CommentHistoryStep_date(ctx, field, obj)
+				if out.Values[i] == graphql.Null {
+					invalid = true
+				}
+				wg.Done()
+			}(i, field)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	wg.Wait()
+	if invalid {
+		return graphql.Null
+	}
+	return out
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _CommentHistoryStep_message(ctx context.Context, field graphql.CollectedField, obj *bug.CommentHistoryStep) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "CommentHistoryStep",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.Message, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	return graphql.MarshalString(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _CommentHistoryStep_date(ctx context.Context, field graphql.CollectedField, obj *bug.CommentHistoryStep) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "CommentHistoryStep",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return ec.resolvers.CommentHistoryStep().Date(ctx, obj)
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	rctx.Result = res
+	return graphql.MarshalTime(res)
+}
+
 var commentTimelineItemImplementors = []string{"CommentTimelineItem", "TimelineItem"}
 
 // nolint: gocyclo, errcheck, gas, goconst
 func (ec *executionContext) _CommentTimelineItem(ctx context.Context, sel ast.SelectionSet, obj *bug.CommentTimelineItem) graphql.Marshaler {
 	fields := graphql.CollectFields(ctx, sel, commentTimelineItemImplementors)
 
+	var wg sync.WaitGroup
 	out := graphql.NewOrderedMap(len(fields))
 	invalid := false
 	for i, field := range fields {
@@ -2835,8 +3033,41 @@ func (ec *executionContext) _CommentTimelineItem(ctx context.Context, sel ast.Se
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}
-		case "lastState":
-			out.Values[i] = ec._CommentTimelineItem_lastState(ctx, field, obj)
+		case "author":
+			out.Values[i] = ec._CommentTimelineItem_author(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "message":
+			out.Values[i] = ec._CommentTimelineItem_message(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "files":
+			out.Values[i] = ec._CommentTimelineItem_files(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "createdAt":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._CommentTimelineItem_createdAt(ctx, field, obj)
+				if out.Values[i] == graphql.Null {
+					invalid = true
+				}
+				wg.Done()
+			}(i, field)
+		case "lastEdit":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._CommentTimelineItem_lastEdit(ctx, field, obj)
+				if out.Values[i] == graphql.Null {
+					invalid = true
+				}
+				wg.Done()
+			}(i, field)
+		case "edited":
+			out.Values[i] = ec._CommentTimelineItem_edited(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}
@@ -2849,7 +3080,7 @@ func (ec *executionContext) _CommentTimelineItem(ctx context.Context, sel ast.Se
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-
+	wg.Wait()
 	if invalid {
 		return graphql.Null
 	}
@@ -2879,7 +3110,7 @@ func (ec *executionContext) _CommentTimelineItem_hash(ctx context.Context, field
 }
 
 // nolint: vetshadow
-func (ec *executionContext) _CommentTimelineItem_lastState(ctx context.Context, field graphql.CollectedField, obj *bug.CommentTimelineItem) graphql.Marshaler {
+func (ec *executionContext) _CommentTimelineItem_author(ctx context.Context, field graphql.CollectedField, obj *bug.CommentTimelineItem) graphql.Marshaler {
 	rctx := &graphql.ResolverContext{
 		Object: "CommentTimelineItem",
 		Args:   nil,
@@ -2887,7 +3118,7 @@ func (ec *executionContext) _CommentTimelineItem_lastState(ctx context.Context, 
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
-		return obj.LastState(), nil
+		return obj.Author, nil
 	})
 	if resTmp == nil {
 		if !ec.HasError(rctx) {
@@ -2895,10 +3126,129 @@ func (ec *executionContext) _CommentTimelineItem_lastState(ctx context.Context, 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bug.Comment)
+	res := resTmp.(bug.Person)
 	rctx.Result = res
 
-	return ec._Comment(ctx, field.Selections, &res)
+	return ec._Person(ctx, field.Selections, &res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _CommentTimelineItem_message(ctx context.Context, field graphql.CollectedField, obj *bug.CommentTimelineItem) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "CommentTimelineItem",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.Message, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	return graphql.MarshalString(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _CommentTimelineItem_files(ctx context.Context, field graphql.CollectedField, obj *bug.CommentTimelineItem) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "CommentTimelineItem",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.Files, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]git.Hash)
+	rctx.Result = res
+
+	arr1 := make(graphql.Array, len(res))
+
+	for idx1 := range res {
+		arr1[idx1] = func() graphql.Marshaler {
+			return res[idx1]
+		}()
+	}
+
+	return arr1
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _CommentTimelineItem_createdAt(ctx context.Context, field graphql.CollectedField, obj *bug.CommentTimelineItem) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "CommentTimelineItem",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return ec.resolvers.CommentTimelineItem().CreatedAt(ctx, obj)
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	rctx.Result = res
+	return graphql.MarshalTime(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _CommentTimelineItem_lastEdit(ctx context.Context, field graphql.CollectedField, obj *bug.CommentTimelineItem) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "CommentTimelineItem",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return ec.resolvers.CommentTimelineItem().LastEdit(ctx, obj)
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	rctx.Result = res
+	return graphql.MarshalTime(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _CommentTimelineItem_edited(ctx context.Context, field graphql.CollectedField, obj *bug.CommentTimelineItem) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "CommentTimelineItem",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.Edited(), nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	rctx.Result = res
+	return graphql.MarshalBoolean(res)
 }
 
 // nolint: vetshadow
@@ -2918,7 +3268,7 @@ func (ec *executionContext) _CommentTimelineItem_history(ctx context.Context, fi
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]bug.Comment)
+	res := resTmp.([]bug.CommentHistoryStep)
 	rctx.Result = res
 
 	arr1 := make(graphql.Array, len(res))
@@ -2942,7 +3292,7 @@ func (ec *executionContext) _CommentTimelineItem_history(ctx context.Context, fi
 			}
 			arr1[idx1] = func() graphql.Marshaler {
 
-				return ec._Comment(ctx, field.Selections, &res[idx1])
+				return ec._CommentHistoryStep(ctx, field.Selections, &res[idx1])
 			}()
 		}
 		if isLen1 {
@@ -3141,6 +3491,7 @@ var createTimelineItemImplementors = []string{"CreateTimelineItem", "TimelineIte
 func (ec *executionContext) _CreateTimelineItem(ctx context.Context, sel ast.SelectionSet, obj *bug.CreateTimelineItem) graphql.Marshaler {
 	fields := graphql.CollectFields(ctx, sel, createTimelineItemImplementors)
 
+	var wg sync.WaitGroup
 	out := graphql.NewOrderedMap(len(fields))
 	invalid := false
 	for i, field := range fields {
@@ -3154,8 +3505,41 @@ func (ec *executionContext) _CreateTimelineItem(ctx context.Context, sel ast.Sel
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}
-		case "lastState":
-			out.Values[i] = ec._CreateTimelineItem_lastState(ctx, field, obj)
+		case "author":
+			out.Values[i] = ec._CreateTimelineItem_author(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "message":
+			out.Values[i] = ec._CreateTimelineItem_message(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "files":
+			out.Values[i] = ec._CreateTimelineItem_files(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "createdAt":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._CreateTimelineItem_createdAt(ctx, field, obj)
+				if out.Values[i] == graphql.Null {
+					invalid = true
+				}
+				wg.Done()
+			}(i, field)
+		case "lastEdit":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._CreateTimelineItem_lastEdit(ctx, field, obj)
+				if out.Values[i] == graphql.Null {
+					invalid = true
+				}
+				wg.Done()
+			}(i, field)
+		case "edited":
+			out.Values[i] = ec._CreateTimelineItem_edited(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}
@@ -3168,7 +3552,7 @@ func (ec *executionContext) _CreateTimelineItem(ctx context.Context, sel ast.Sel
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-
+	wg.Wait()
 	if invalid {
 		return graphql.Null
 	}
@@ -3198,7 +3582,7 @@ func (ec *executionContext) _CreateTimelineItem_hash(ctx context.Context, field 
 }
 
 // nolint: vetshadow
-func (ec *executionContext) _CreateTimelineItem_lastState(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) graphql.Marshaler {
+func (ec *executionContext) _CreateTimelineItem_author(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) graphql.Marshaler {
 	rctx := &graphql.ResolverContext{
 		Object: "CreateTimelineItem",
 		Args:   nil,
@@ -3206,7 +3590,7 @@ func (ec *executionContext) _CreateTimelineItem_lastState(ctx context.Context, f
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
-		return obj.LastState(), nil
+		return obj.Author, nil
 	})
 	if resTmp == nil {
 		if !ec.HasError(rctx) {
@@ -3214,10 +3598,129 @@ func (ec *executionContext) _CreateTimelineItem_lastState(ctx context.Context, f
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bug.Comment)
+	res := resTmp.(bug.Person)
 	rctx.Result = res
 
-	return ec._Comment(ctx, field.Selections, &res)
+	return ec._Person(ctx, field.Selections, &res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _CreateTimelineItem_message(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "CreateTimelineItem",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.Message, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	return graphql.MarshalString(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _CreateTimelineItem_files(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "CreateTimelineItem",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.Files, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]git.Hash)
+	rctx.Result = res
+
+	arr1 := make(graphql.Array, len(res))
+
+	for idx1 := range res {
+		arr1[idx1] = func() graphql.Marshaler {
+			return res[idx1]
+		}()
+	}
+
+	return arr1
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _CreateTimelineItem_createdAt(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "CreateTimelineItem",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return ec.resolvers.CreateTimelineItem().CreatedAt(ctx, obj)
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	rctx.Result = res
+	return graphql.MarshalTime(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _CreateTimelineItem_lastEdit(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "CreateTimelineItem",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return ec.resolvers.CreateTimelineItem().LastEdit(ctx, obj)
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	rctx.Result = res
+	return graphql.MarshalTime(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _CreateTimelineItem_edited(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "CreateTimelineItem",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.Edited(), nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	rctx.Result = res
+	return graphql.MarshalBoolean(res)
 }
 
 // nolint: vetshadow
@@ -3237,7 +3740,7 @@ func (ec *executionContext) _CreateTimelineItem_history(ctx context.Context, fie
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]bug.Comment)
+	res := resTmp.([]bug.CommentHistoryStep)
 	rctx.Result = res
 
 	arr1 := make(graphql.Array, len(res))
@@ -3261,7 +3764,7 @@ func (ec *executionContext) _CreateTimelineItem_history(ctx context.Context, fie
 			}
 			arr1[idx1] = func() graphql.Marshaler {
 
-				return ec._Comment(ctx, field.Selections, &res[idx1])
+				return ec._CommentHistoryStep(ctx, field.Selections, &res[idx1])
 			}()
 		}
 		if isLen1 {
@@ -6603,16 +7106,31 @@ type TimelineItemEdge {
   node: TimelineItem!
 }
 
+type CommentHistoryStep {
+  message: String!
+  date: Time!
+}
+
 type CreateTimelineItem implements TimelineItem {
   hash: Hash!
-  lastState: Comment!
-  history: [Comment!]!
+  author: Person!
+  message: String!
+  files: [Hash!]!
+  createdAt: Time!
+  lastEdit: Time!
+  edited: Boolean!
+  history: [CommentHistoryStep!]!
 }
 
 type CommentTimelineItem implements TimelineItem {
   hash: Hash!
-  lastState: Comment!
-  history: [Comment!]!
+  author: Person!
+  message: String!
+  files: [Hash!]!
+  createdAt: Time!
+  lastEdit: Time!
+  edited: Boolean!
+  history: [CommentHistoryStep!]!
 }
 
 """The connection type for Bug."""
