@@ -3,7 +3,6 @@ package bug
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
 
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/git"
@@ -23,17 +22,6 @@ type OperationPack struct {
 
 	// Private field so not serialized by gob
 	commitHash git.Hash
-}
-
-// hold the different operation type to instantiate to parse JSON
-var operations map[OperationType]reflect.Type
-
-// Register will register a new type of Operation to be able to parse the corresponding JSON
-func Register(t OperationType, op interface{}) {
-	if operations == nil {
-		operations = make(map[OperationType]reflect.Type)
-	}
-	operations[t] = reflect.TypeOf(op)
 }
 
 func (opp *OperationPack) MarshalJSON() ([]byte, error) {
@@ -69,23 +57,49 @@ func (opp *OperationPack) UnmarshalJSON(data []byte) error {
 			return err
 		}
 
-		opType, ok := operations[t.OperationType]
-		if !ok {
-			return fmt.Errorf("unknown operation type %v", t.OperationType)
-		}
-
-		op := reflect.New(opType).Interface()
-
-		if err := json.Unmarshal(raw, op); err != nil {
+		op, err := opp.unmarshalOp(raw, t.OperationType)
+		if err != nil {
 			return err
 		}
 
-		deref := reflect.ValueOf(op).Elem().Interface()
+		// Compute the hash of the operation
+		op.base().hash = hashRaw(raw)
 
-		opp.Operations = append(opp.Operations, deref.(Operation))
+		opp.Operations = append(opp.Operations, op)
 	}
 
 	return nil
+}
+
+func (opp *OperationPack) unmarshalOp(raw []byte, _type OperationType) (Operation, error) {
+	switch _type {
+	case CreateOp:
+		op := &CreateOperation{}
+		err := json.Unmarshal(raw, &op)
+		return op, err
+	case SetTitleOp:
+		op := &SetTitleOperation{}
+		err := json.Unmarshal(raw, &op)
+		return op, err
+	case AddCommentOp:
+		op := &AddCommentOperation{}
+		err := json.Unmarshal(raw, &op)
+		return op, err
+	case SetStatusOp:
+		op := &SetStatusOperation{}
+		err := json.Unmarshal(raw, &op)
+		return op, err
+	case LabelChangeOp:
+		op := &LabelChangeOperation{}
+		err := json.Unmarshal(raw, &op)
+		return op, err
+	case EditCommentOp:
+		op := &EditCommentOperation{}
+		err := json.Unmarshal(raw, &op)
+		return op, err
+	default:
+		return nil, fmt.Errorf("unknown operation type %v", _type)
+	}
 }
 
 // Append a new operation to the pack

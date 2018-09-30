@@ -3,7 +3,6 @@ package bug
 import (
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/dustin/go-humanize"
-	"time"
 )
 
 // Comment represent a comment in a Bug
@@ -14,16 +13,14 @@ type Comment struct {
 
 	// Creation time of the comment.
 	// Should be used only for human display, never for ordering as we can't rely on it in a distributed system.
-	UnixTime int64
+	UnixTime Timestamp
 }
 
 // FormatTimeRel format the UnixTime of the comment for human consumption
 func (c Comment) FormatTimeRel() string {
-	t := time.Unix(c.UnixTime, 0)
-	return humanize.Time(t)
+	return humanize.Time(c.UnixTime.Time())
 }
 
 func (c Comment) FormatTime() string {
-	t := time.Unix(c.UnixTime, 0)
-	return t.Format("Mon Jan 2 15:04:05 2006 +0200")
+	return c.UnixTime.Time().Format("Mon Jan 2 15:04:05 2006 +0200")
 }

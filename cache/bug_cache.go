@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/operations"
 	"github.com/MichaelMure/git-bug/util/git"
 )
 
@@ -50,7 +49,7 @@ func (c *BugCache) AddCommentWithFiles(message string, files []git.Hash) error {
 }
 
 func (c *BugCache) AddCommentRaw(author bug.Person, unixTime int64, message string, files []git.Hash, metadata map[string]string) error {
-	err := operations.CommentWithFiles(c.bug, author, unixTime, message, files)
+	err := bug.AddCommentWithFiles(c.bug, author, unixTime, message, files)
 	if err != nil {
 		return err
 	}
@@ -58,7 +57,7 @@ func (c *BugCache) AddCommentRaw(author bug.Person, unixTime int64, message stri
 	return c.notifyUpdated()
 }
 
-func (c *BugCache) ChangeLabels(added []string, removed []string) ([]operations.LabelChangeResult, error) {
+func (c *BugCache) ChangeLabels(added []string, removed []string) ([]bug.LabelChangeResult, error) {
 	author, err := bug.GetUser(c.repoCache.repo)
 	if err != nil {
 		return nil, err
@@ -67,8 +66,8 @@ func (c *BugCache) ChangeLabels(added []string, removed []string) ([]operations.
 	return c.ChangeLabelsRaw(author, time.Now().Unix(), added, removed)
 }
 
-func (c *BugCache) ChangeLabelsRaw(author bug.Person, unixTime int64, added []string, removed []string) ([]operations.LabelChangeResult, error) {
-	changes, err := operations.ChangeLabels(c.bug, author, unixTime, added, removed)
+func (c *BugCache) ChangeLabelsRaw(author bug.Person, unixTime int64, added []string, removed []string) ([]bug.LabelChangeResult, error) {
+	changes, err := bug.ChangeLabels(c.bug, author, unixTime, added, removed)
 	if err != nil {
 		return changes, err
 	}
@@ -91,7 +90,7 @@ func (c *BugCache) Open() error {
 }
 
 func (c *BugCache) OpenRaw(author bug.Person, unixTime int64) error {
-	err := operations.Open(c.bug, author, unixTime)
+	err := bug.Open(c.bug, author, unixTime)
 	if err != nil {
 		return err
 	}
@@ -109,7 +108,7 @@ func (c *BugCache) Close() error {
 }
 
 func (c *BugCache) CloseRaw(author bug.Person, unixTime int64) error {
-	err := operations.Close(c.bug, author, unixTime)
+	err := bug.Close(c.bug, author, unixTime)
 	if err != nil {
 		return err
 	}
@@ -127,7 +126,7 @@ func (c *BugCache) SetTitle(title string) error {
 }
 
 func (c *BugCache) SetTitleRaw(author bug.Person, unixTime int64, title string) error {
-	err := operations.SetTitle(c.bug, author, unixTime, title)
+	err := bug.SetTitle(c.bug, author, unixTime, title)
 	if err != nil {
 		return err
 	}

@@ -300,7 +300,7 @@ func (bug *Bug) Validate() error {
 
 	// The very first Op should be a CreateOp
 	firstOp := bug.FirstOp()
-	if firstOp == nil || firstOp.OpType() != CreateOp {
+	if firstOp == nil || firstOp.base().OperationType != CreateOp {
 		return fmt.Errorf("first operation should be a Create op")
 	}
 
@@ -308,7 +308,7 @@ func (bug *Bug) Validate() error {
 	it := NewOperationIterator(bug)
 	createCount := 0
 	for it.Next() {
-		if it.Value().OpType() == CreateOp {
+		if it.Value().base().OperationType == CreateOp {
 			createCount++
 		}
 	}
@@ -641,7 +641,7 @@ func (bug *Bug) Compile() Snapshot {
 
 	for it.Next() {
 		op := it.Value()
-		snap = op.Apply(snap)
+		op.Apply(&snap)
 		snap.Operations = append(snap.Operations, op)
 	}
 

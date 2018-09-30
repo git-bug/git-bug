@@ -14,3 +14,8 @@ func (e BugEdge) GetCursor() string {
 func (e CommentEdge) GetCursor() string {
 	return e.Cursor
 }
+
+// GetCursor return the cursor entry of an edge
+func (e TimelineItemEdge) GetCursor() string {
+	return e.Cursor
+}

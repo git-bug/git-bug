@@ -32,8 +32,20 @@ func (RootResolver) AddCommentOperation() graph.AddCommentOperationResolver {
 	return &addCommentOperationResolver{}
 }
 
-func (r RootResolver) Bug() graph.BugResolver {
+func (RootResolver) Bug() graph.BugResolver {
 	return &bugResolver{}
+}
+
+func (RootResolver) CommentHistoryStep() graph.CommentHistoryStepResolver {
+	return &commentHistoryStepResolver{}
+}
+
+func (RootResolver) CommentTimelineItem() graph.CommentTimelineItemResolver {
+	return &commentTimelineItemResolver{}
+}
+
+func (RootResolver) CreateTimelineItem() graph.CreateTimelineItemResolver {
+	return &createTimelineItemResolver{}
 }
 
 func (RootResolver) CreateOperation() graph.CreateOperationResolver {
@@ -44,7 +56,7 @@ func (RootResolver) LabelChangeOperation() graph.LabelChangeOperationResolver {
 	return &labelChangeOperation{}
 }
 
-func (r RootResolver) Repository() graph.RepositoryResolver {
+func (RootResolver) Repository() graph.RepositoryResolver {
 	return &repoResolver{}
 }
 

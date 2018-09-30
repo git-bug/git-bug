@@ -1,6 +1,7 @@
 //go:generate genny -in=connection_template.go -out=gen_bug.go gen "NodeType=string EdgeType=LazyBugEdge ConnectionType=models.BugConnection"
 //go:generate genny -in=connection_template.go -out=gen_operation.go gen "NodeType=bug.Operation EdgeType=models.OperationEdge ConnectionType=models.OperationConnection"
 //go:generate genny -in=connection_template.go -out=gen_comment.go gen "NodeType=bug.Comment EdgeType=models.CommentEdge ConnectionType=models.CommentConnection"
+//go:generate genny -in=connection_template.go -out=gen_timeline.go gen "NodeType=bug.TimelineItem EdgeType=models.TimelineItemEdge ConnectionType=models.TimelineItemConnection"
 
 // Package connections implement a generic GraphQL relay connection
 package connections
