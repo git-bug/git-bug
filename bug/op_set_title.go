@@ -27,7 +27,23 @@ func (op *SetTitleOperation) Hash() (git.Hash, error) {
 
 func (op *SetTitleOperation) Apply(snapshot *Snapshot) {
 	snapshot.Title = op.Title
-	snapshot.Timeline = append(snapshot.Timeline, op)
+
+	hash, err := op.Hash()
+	if err != nil {
+		// Should never error unless a programming error happened
+		// (covered in OpBase.Validate())
+		panic(err)
+	}
+
+	item := &SetTitleTimelineItem{
+		hash:     hash,
+		Author:   op.Author,
+		UnixTime: Timestamp(op.UnixTime),
+		Title:    op.Title,
+		Was:      op.Was,
+	}
+
+	snapshot.Timeline = append(snapshot.Timeline, item)
 }
 
 func (op *SetTitleOperation) Validate() error {
@@ -64,6 +80,18 @@ func NewSetTitleOp(author Person, unixTime int64, title string, was string) *Set
 		Title:  title,
 		Was:    was,
 	}
+}
+
+type SetTitleTimelineItem struct {
+	hash     git.Hash
+	Author   Person
+	UnixTime Timestamp
+	Title    string
+	Was      string
+}
+
+func (s SetTitleTimelineItem) Hash() git.Hash {
+	return s.hash
 }
 
 // Convenience function to apply the operation

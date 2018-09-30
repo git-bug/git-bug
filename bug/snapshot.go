@@ -61,12 +61,7 @@ func (snap *Snapshot) LastEditUnix() int64 {
 // SearchTimelineItem will search in the timeline for an item matching the given hash
 func (snap *Snapshot) SearchTimelineItem(hash git.Hash) (TimelineItem, error) {
 	for i := range snap.Timeline {
-		h, err := snap.Timeline[i].Hash()
-		if err != nil {
-			return nil, err
-		}
-
-		if h == hash {
+		if snap.Timeline[i].Hash() == hash {
 			return snap.Timeline[i], nil
 		}
 	}

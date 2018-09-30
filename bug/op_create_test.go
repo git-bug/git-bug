@@ -36,7 +36,9 @@ func TestCreate(t *testing.T) {
 		Author:    rene,
 		CreatedAt: create.Time(),
 		Timeline: []TimelineItem{
-			NewCreateTimelineItem(hash, comment),
+			&CreateTimelineItem{
+				CommentTimelineItem: NewCommentTimelineItem(hash, comment),
+			},
 		},
 	}
 

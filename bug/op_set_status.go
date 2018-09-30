@@ -23,7 +23,22 @@ func (op *SetStatusOperation) Hash() (git.Hash, error) {
 
 func (op *SetStatusOperation) Apply(snapshot *Snapshot) {
 	snapshot.Status = op.Status
-	snapshot.Timeline = append(snapshot.Timeline, op)
+
+	hash, err := op.Hash()
+	if err != nil {
+		// Should never error unless a programming error happened
+		// (covered in OpBase.Validate())
+		panic(err)
+	}
+
+	item := &SetStatusTimelineItem{
+		hash:     hash,
+		Author:   op.Author,
+		UnixTime: Timestamp(op.UnixTime),
+		Status:   op.Status,
+	}
+
+	snapshot.Timeline = append(snapshot.Timeline, item)
 }
 
 func (op *SetStatusOperation) Validate() error {
@@ -43,6 +58,17 @@ func NewSetStatusOp(author Person, unixTime int64, status Status) *SetStatusOper
 		OpBase: newOpBase(SetStatusOp, author, unixTime),
 		Status: status,
 	}
+}
+
+type SetStatusTimelineItem struct {
+	hash     git.Hash
+	Author   Person
+	UnixTime Timestamp
+	Status   Status
+}
+
+func (s SetStatusTimelineItem) Hash() git.Hash {
+	return s.hash
 }
 
 // Convenience function to apply the operation

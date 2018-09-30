@@ -40,12 +40,24 @@ func (RootResolver) CommentHistoryStep() graph.CommentHistoryStepResolver {
 	return &commentHistoryStepResolver{}
 }
 
-func (RootResolver) CommentTimelineItem() graph.CommentTimelineItemResolver {
-	return &commentTimelineItemResolver{}
+func (RootResolver) AddCommentTimelineItem() graph.AddCommentTimelineItemResolver {
+	return &addCommentTimelineItemResolver{}
 }
 
 func (RootResolver) CreateTimelineItem() graph.CreateTimelineItemResolver {
 	return &createTimelineItemResolver{}
+}
+
+func (r RootResolver) LabelChangeTimelineItem() graph.LabelChangeTimelineItemResolver {
+	return &labelChangeTimelineItem{}
+}
+
+func (r RootResolver) SetStatusTimelineItem() graph.SetStatusTimelineItemResolver {
+	return &setStatusTimelineItem{}
+}
+
+func (r RootResolver) SetTitleTimelineItem() graph.SetTitleTimelineItemResolver {
+	return &setTitleTimelineItem{}
 }
 
 func (RootResolver) CreateOperation() graph.CreateOperationResolver {

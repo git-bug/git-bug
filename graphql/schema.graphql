@@ -95,7 +95,7 @@ type CreateOperation implements Operation & Authored {
   files: [Hash!]!
 }
 
-type SetTitleOperation implements Operation & Authored & TimelineItem {
+type SetTitleOperation implements Operation & Authored {
   hash: Hash!
   author: Person!
   date: Time!
@@ -112,7 +112,7 @@ type AddCommentOperation implements Operation & Authored {
   files: [Hash!]!
 }
 
-type SetStatusOperation implements Operation & Authored & TimelineItem {
+type SetStatusOperation implements Operation & Authored {
   hash: Hash!
   author: Person!
   date: Time!
@@ -120,7 +120,7 @@ type SetStatusOperation implements Operation & Authored & TimelineItem {
   status: Status!
 }
 
-type LabelChangeOperation implements Operation & Authored & TimelineItem {
+type LabelChangeOperation implements Operation & Authored {
   hash: Hash!
   author: Person!
   date: Time!
@@ -157,7 +157,7 @@ type CreateTimelineItem implements TimelineItem {
   history: [CommentHistoryStep!]!
 }
 
-type CommentTimelineItem implements TimelineItem {
+type AddCommentTimelineItem implements TimelineItem {
   hash: Hash!
   author: Person!
   message: String!
@@ -166,6 +166,29 @@ type CommentTimelineItem implements TimelineItem {
   lastEdit: Time!
   edited: Boolean!
   history: [CommentHistoryStep!]!
+}
+
+type LabelChangeTimelineItem implements TimelineItem {
+  hash: Hash!
+  author: Person!
+  date: Time!
+  added: [Label!]!
+  removed: [Label!]!
+}
+
+type SetStatusTimelineItem implements TimelineItem {
+  hash: Hash!
+  author: Person!
+  date: Time!
+  status: Status!
+}
+
+type SetTitleTimelineItem implements TimelineItem {
+  hash: Hash!
+  author: Person!
+  date: Time!
+  title: String!
+  was: String!
 }
 
 """The connection type for Bug."""

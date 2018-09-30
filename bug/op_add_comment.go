@@ -42,7 +42,11 @@ func (op *AddCommentOperation) Apply(snapshot *Snapshot) {
 		panic(err)
 	}
 
-	snapshot.Timeline = append(snapshot.Timeline, NewCommentTimelineItem(hash, comment))
+	item := &AddCommentTimelineItem{
+		CommentTimelineItem: NewCommentTimelineItem(hash, comment),
+	}
+
+	snapshot.Timeline = append(snapshot.Timeline, item)
 }
 
 func (op *AddCommentOperation) GetFiles() []git.Hash {
@@ -71,6 +75,11 @@ func NewAddCommentOp(author Person, unixTime int64, message string, files []git.
 		Message: message,
 		Files:   files,
 	}
+}
+
+// CreateTimelineItem replace a AddComment operation in the Timeline and hold its edition history
+type AddCommentTimelineItem struct {
+	CommentTimelineItem
 }
 
 // Convenience function to apply the operation

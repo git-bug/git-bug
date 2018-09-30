@@ -38,7 +38,7 @@ func TestEdit(t *testing.T) {
 
 	assert.Equal(t, len(snapshot.Timeline), 2)
 	assert.Equal(t, len(snapshot.Timeline[0].(*CreateTimelineItem).History), 2)
-	assert.Equal(t, len(snapshot.Timeline[1].(*CommentTimelineItem).History), 1)
+	assert.Equal(t, len(snapshot.Timeline[1].(*AddCommentTimelineItem).History), 1)
 	assert.Equal(t, snapshot.Comments[0].Message, "create edited")
 	assert.Equal(t, snapshot.Comments[1].Message, "comment")
 
@@ -47,7 +47,7 @@ func TestEdit(t *testing.T) {
 
 	assert.Equal(t, len(snapshot.Timeline), 2)
 	assert.Equal(t, len(snapshot.Timeline[0].(*CreateTimelineItem).History), 2)
-	assert.Equal(t, len(snapshot.Timeline[1].(*CommentTimelineItem).History), 2)
+	assert.Equal(t, len(snapshot.Timeline[1].(*AddCommentTimelineItem).History), 2)
 	assert.Equal(t, snapshot.Comments[0].Message, "create edited")
 	assert.Equal(t, snapshot.Comments[1].Message, "comment edited")
 }

@@ -6,7 +6,7 @@ import (
 
 type TimelineItem interface {
 	// Hash return the hash of the item
-	Hash() (git.Hash, error)
+	Hash() git.Hash
 }
 
 type CommentHistoryStep struct {
@@ -14,31 +14,7 @@ type CommentHistoryStep struct {
 	UnixTime Timestamp
 }
 
-// CreateTimelineItem replace a Create operation in the Timeline and hold its edition history
-type CreateTimelineItem struct {
-	CommentTimelineItem
-}
-
-func NewCreateTimelineItem(hash git.Hash, comment Comment) *CreateTimelineItem {
-	return &CreateTimelineItem{
-		CommentTimelineItem: CommentTimelineItem{
-			hash:      hash,
-			Author:    comment.Author,
-			Message:   comment.Message,
-			Files:     comment.Files,
-			CreatedAt: comment.UnixTime,
-			LastEdit:  comment.UnixTime,
-			History: []CommentHistoryStep{
-				{
-					Message:  comment.Message,
-					UnixTime: comment.UnixTime,
-				},
-			},
-		},
-	}
-}
-
-// CommentTimelineItem replace a Comment in the Timeline and hold its edition history
+// CommentTimelineItem is a TimelineItem that holds a Comment and its edition history
 type CommentTimelineItem struct {
 	hash      git.Hash
 	Author    Person
@@ -49,8 +25,8 @@ type CommentTimelineItem struct {
 	History   []CommentHistoryStep
 }
 
-func NewCommentTimelineItem(hash git.Hash, comment Comment) *CommentTimelineItem {
-	return &CommentTimelineItem{
+func NewCommentTimelineItem(hash git.Hash, comment Comment) CommentTimelineItem {
+	return CommentTimelineItem{
 		hash:      hash,
 		Author:    comment.Author,
 		Message:   comment.Message,
@@ -66,8 +42,8 @@ func NewCommentTimelineItem(hash git.Hash, comment Comment) *CommentTimelineItem
 	}
 }
 
-func (c *CommentTimelineItem) Hash() (git.Hash, error) {
-	return c.hash, nil
+func (c *CommentTimelineItem) Hash() git.Hash {
+	return c.hash
 }
 
 // Append will append a new comment in the history and update the other values

@@ -37,5 +37,11 @@ models:
     model: github.com/MichaelMure/git-bug/bug.CommentHistoryStep
   CreateTimelineItem:
     model: github.com/MichaelMure/git-bug/bug.CreateTimelineItem
-  CommentTimelineItem:
-    model: github.com/MichaelMure/git-bug/bug.CommentTimelineItem
+  AddCommentTimelineItem:
+    model: github.com/MichaelMure/git-bug/bug.AddCommentTimelineItem
+  LabelChangeTimelineItem:
+    model: github.com/MichaelMure/git-bug/bug.LabelChangeTimelineItem
+  SetStatusTimelineItem:
+    model: github.com/MichaelMure/git-bug/bug.SetStatusTimelineItem
+  SetTitleTimelineItem:
+    model: github.com/MichaelMure/git-bug/bug.SetTitleTimelineItem

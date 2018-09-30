@@ -47,7 +47,9 @@ func (op *CreateOperation) Apply(snapshot *Snapshot) {
 	}
 
 	snapshot.Timeline = []TimelineItem{
-		NewCreateTimelineItem(hash, comment),
+		&CreateTimelineItem{
+			CommentTimelineItem: NewCommentTimelineItem(hash, comment),
+		},
 	}
 }
 
@@ -86,6 +88,11 @@ func NewCreateOp(author Person, unixTime int64, title, message string, files []g
 		Message: message,
 		Files:   files,
 	}
+}
+
+// CreateTimelineItem replace a Create operation in the Timeline and hold its edition history
+type CreateTimelineItem struct {
+	CommentTimelineItem
 }
 
 // Convenience function to apply the operation

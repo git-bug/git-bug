@@ -55,7 +55,22 @@ AddLoop:
 		return string(snapshot.Labels[i]) < string(snapshot.Labels[j])
 	})
 
-	snapshot.Timeline = append(snapshot.Timeline, op)
+	hash, err := op.Hash()
+	if err != nil {
+		// Should never error unless a programming error happened
+		// (covered in OpBase.Validate())
+		panic(err)
+	}
+
+	item := &LabelChangeTimelineItem{
+		hash:     hash,
+		Author:   op.Author,
+		UnixTime: Timestamp(op.UnixTime),
+		Added:    op.Added,
+		Removed:  op.Removed,
+	}
+
+	snapshot.Timeline = append(snapshot.Timeline, item)
 }
 
 func (op *LabelChangeOperation) Validate() error {
@@ -88,6 +103,18 @@ func NewLabelChangeOperation(author Person, unixTime int64, added, removed []Lab
 		Added:   added,
 		Removed: removed,
 	}
+}
+
+type LabelChangeTimelineItem struct {
+	hash     git.Hash
+	Author   Person
+	UnixTime Timestamp
+	Added    []Label
+	Removed  []Label
+}
+
+func (l LabelChangeTimelineItem) Hash() git.Hash {
+	return l.hash
 }
 
 // ChangeLabels is a convenience function to apply the operation

@@ -33,12 +33,7 @@ func (op *EditCommentOperation) Apply(snapshot *Snapshot) {
 	var commentIndex int
 
 	for i, item := range snapshot.Timeline {
-		h, err := item.Hash()
-
-		if err != nil {
-			// Should never happen, we control what goes into the timeline
-			panic(err)
-		}
+		h := item.Hash()
 
 		if h == op.Target {
 			target = snapshot.Timeline[i]
@@ -68,8 +63,8 @@ func (op *EditCommentOperation) Apply(snapshot *Snapshot) {
 		item := target.(*CreateTimelineItem)
 		item.Append(comment)
 
-	case *CommentTimelineItem:
-		item := target.(*CommentTimelineItem)
+	case *AddCommentTimelineItem:
+		item := target.(*AddCommentTimelineItem)
 		item.Append(comment)
 	}
 

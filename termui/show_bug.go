@@ -253,8 +253,8 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 			fmt.Fprint(v, content)
 			y0 += lines + 2
 
-		case *bug.CommentTimelineItem:
-			comment := op.(*bug.CommentTimelineItem)
+		case *bug.AddCommentTimelineItem:
+			comment := op.(*bug.AddCommentTimelineItem)
 
 			edited := ""
 			if comment.Edited() {
@@ -277,13 +277,13 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 			fmt.Fprint(v, content)
 			y0 += lines + 2
 
-		case *bug.SetTitleOperation:
-			setTitle := op.(*bug.SetTitleOperation)
+		case *bug.SetTitleTimelineItem:
+			setTitle := op.(*bug.SetTitleTimelineItem)
 
 			content := fmt.Sprintf("%s changed the title to %s on %s",
 				colors.Magenta(setTitle.Author.Name),
 				colors.Bold(setTitle.Title),
-				setTitle.Time().Format(timeLayout),
+				setTitle.UnixTime.Time().Format(timeLayout),
 			)
 			content, lines := text.Wrap(content, maxX)
 
@@ -294,13 +294,13 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 			fmt.Fprint(v, content)
 			y0 += lines + 2
 
-		case *bug.SetStatusOperation:
-			setStatus := op.(*bug.SetStatusOperation)
+		case *bug.SetStatusTimelineItem:
+			setStatus := op.(*bug.SetStatusTimelineItem)
 
 			content := fmt.Sprintf("%s %s the bug on %s",
 				colors.Magenta(setStatus.Author.Name),
 				colors.Bold(setStatus.Status.Action()),
-				setStatus.Time().Format(timeLayout),
+				setStatus.UnixTime.Time().Format(timeLayout),
 			)
 			content, lines := text.Wrap(content, maxX)
 
@@ -311,8 +311,8 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 			fmt.Fprint(v, content)
 			y0 += lines + 2
 
-		case *bug.LabelChangeOperation:
-			labelChange := op.(*bug.LabelChangeOperation)
+		case *bug.LabelChangeTimelineItem:
+			labelChange := op.(*bug.LabelChangeTimelineItem)
 
 			var added []string
 			for _, label := range labelChange.Added {
@@ -349,7 +349,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 			content := fmt.Sprintf("%s %s on %s",
 				colors.Magenta(labelChange.Author.Name),
 				action.String(),
-				labelChange.Time().Format(timeLayout),
+				labelChange.UnixTime.Time().Format(timeLayout),
 			)
 			content, lines := text.Wrap(content, maxX)
 
