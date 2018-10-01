@@ -29,6 +29,14 @@ const humanIdLength = 7
 
 var ErrBugNotExist = errors.New("bug doesn't exist")
 
+type ErrMultipleMatch struct {
+	Matching []string
+}
+
+func (e ErrMultipleMatch) Error() string {
+	return fmt.Sprintf("Multiple matching bug found:\n%s", strings.Join(e.Matching, "\n"))
+}
+
 var _ Interface = &Bug{}
 
 // Bug hold the data of a bug thread, organized in a way close to
@@ -81,11 +89,11 @@ func FindLocalBug(repo repository.ClockedRepo, prefix string) (*Bug, error) {
 	}
 
 	if len(matching) == 0 {
-		return nil, errors.New("No matching bug found.")
+		return nil, errors.New("no matching bug found.")
 	}
 
 	if len(matching) > 1 {
-		return nil, fmt.Errorf("Multiple matching bug found:\n%s", strings.Join(matching, "\n"))
+		return nil, ErrMultipleMatch{Matching: matching}
 	}
 
 	return ReadLocalBug(repo, matching[0])
