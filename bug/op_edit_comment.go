@@ -85,10 +85,6 @@ func (op *EditCommentOperation) Validate() error {
 		return fmt.Errorf("target hash is invalid")
 	}
 
-	if text.Empty(op.Message) {
-		return fmt.Errorf("message is empty")
-	}
-
 	if !text.Safe(op.Message) {
 		return fmt.Errorf("message is not fully printable")
 	}
