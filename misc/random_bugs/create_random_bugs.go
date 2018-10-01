@@ -65,7 +65,7 @@ func GenerateRandomBugsWithSeed(opts Options, seed int64) []*bug.Bug {
 	for i := 0; i < opts.BugNumber; i++ {
 		addedLabels = []string{}
 
-		b, err := bug.Create(
+		b, _, err := bug.Create(
 			randomPerson(opts.PersonNumber),
 			time.Now().Unix(),
 			fake.Sentence(),
@@ -163,19 +163,19 @@ func paragraphs() string {
 }
 
 func comment(b bug.Interface, p bug.Person) {
-	_ = bug.AddComment(b, p, time.Now().Unix(), paragraphs())
+	_, _ = bug.AddComment(b, p, time.Now().Unix(), paragraphs())
 }
 
 func title(b bug.Interface, p bug.Person) {
-	_ = bug.SetTitle(b, p, time.Now().Unix(), fake.Sentence())
+	_, _ = bug.SetTitle(b, p, time.Now().Unix(), fake.Sentence())
 }
 
 func open(b bug.Interface, p bug.Person) {
-	_ = bug.Open(b, p, time.Now().Unix())
+	_, _ = bug.Open(b, p, time.Now().Unix())
 }
 
 func close(b bug.Interface, p bug.Person) {
-	_ = bug.Close(b, p, time.Now().Unix())
+	_, _ = bug.Close(b, p, time.Now().Unix())
 }
 
 var addedLabels []string
@@ -202,5 +202,5 @@ func labels(b bug.Interface, p bug.Person) {
 	// ignore error
 	// if the randomisation produce no changes, no op
 	// is added to the bug
-	_, _ = bug.ChangeLabels(b, p, time.Now().Unix(), added, removed)
+	_, _, _ = bug.ChangeLabels(b, p, time.Now().Unix(), added, removed)
 }

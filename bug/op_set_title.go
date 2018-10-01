@@ -95,7 +95,7 @@ func (s SetTitleTimelineItem) Hash() git.Hash {
 }
 
 // Convenience function to apply the operation
-func SetTitle(b Interface, author Person, unixTime int64, title string) error {
+func SetTitle(b Interface, author Person, unixTime int64, title string) (*SetTitleOperation, error) {
 	it := NewOperationIterator(b)
 
 	var lastTitleOp Operation
@@ -116,9 +116,9 @@ func SetTitle(b Interface, author Person, unixTime int64, title string) error {
 	setTitleOp := NewSetTitleOp(author, unixTime, title, was)
 
 	if err := setTitleOp.Validate(); err != nil {
-		return err
+		return nil, err
 	}
 
 	b.Append(setTitleOp)
-	return nil
+	return setTitleOp, nil
 }

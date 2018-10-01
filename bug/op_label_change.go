@@ -118,7 +118,7 @@ func (l LabelChangeTimelineItem) Hash() git.Hash {
 }
 
 // ChangeLabels is a convenience function to apply the operation
-func ChangeLabels(b Interface, author Person, unixTime int64, add, remove []string) ([]LabelChangeResult, error) {
+func ChangeLabels(b Interface, author Person, unixTime int64, add, remove []string) ([]LabelChangeResult, *LabelChangeOperation, error) {
 	var added, removed []Label
 	var results []LabelChangeResult
 
@@ -163,18 +163,18 @@ func ChangeLabels(b Interface, author Person, unixTime int64, add, remove []stri
 	}
 
 	if len(added) == 0 && len(removed) == 0 {
-		return results, fmt.Errorf("no label added or removed")
+		return results, nil, fmt.Errorf("no label added or removed")
 	}
 
 	labelOp := NewLabelChangeOperation(author, unixTime, added, removed)
 
 	if err := labelOp.Validate(); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	b.Append(labelOp)
 
-	return results, nil
+	return results, labelOp, nil
 }
 
 func labelExist(labels []Label, label Label) bool {

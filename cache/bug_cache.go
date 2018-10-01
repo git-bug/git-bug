@@ -49,9 +49,13 @@ func (c *BugCache) AddCommentWithFiles(message string, files []git.Hash) error {
 }
 
 func (c *BugCache) AddCommentRaw(author bug.Person, unixTime int64, message string, files []git.Hash, metadata map[string]string) error {
-	err := bug.AddCommentWithFiles(c.bug, author, unixTime, message, files)
+	op, err := bug.AddCommentWithFiles(c.bug, author, unixTime, message, files)
 	if err != nil {
 		return err
+	}
+
+	for key, value := range metadata {
+		op.SetMetadata(key, value)
 	}
 
 	return c.notifyUpdated()
@@ -63,13 +67,17 @@ func (c *BugCache) ChangeLabels(added []string, removed []string) ([]bug.LabelCh
 		return nil, err
 	}
 
-	return c.ChangeLabelsRaw(author, time.Now().Unix(), added, removed)
+	return c.ChangeLabelsRaw(author, time.Now().Unix(), added, removed, nil)
 }
 
-func (c *BugCache) ChangeLabelsRaw(author bug.Person, unixTime int64, added []string, removed []string) ([]bug.LabelChangeResult, error) {
-	changes, err := bug.ChangeLabels(c.bug, author, unixTime, added, removed)
+func (c *BugCache) ChangeLabelsRaw(author bug.Person, unixTime int64, added []string, removed []string, metadata map[string]string) ([]bug.LabelChangeResult, error) {
+	changes, op, err := bug.ChangeLabels(c.bug, author, unixTime, added, removed)
 	if err != nil {
 		return changes, err
+	}
+
+	for key, value := range metadata {
+		op.SetMetadata(key, value)
 	}
 
 	err = c.notifyUpdated()
@@ -86,13 +94,17 @@ func (c *BugCache) Open() error {
 		return err
 	}
 
-	return c.OpenRaw(author, time.Now().Unix())
+	return c.OpenRaw(author, time.Now().Unix(), nil)
 }
 
-func (c *BugCache) OpenRaw(author bug.Person, unixTime int64) error {
-	err := bug.Open(c.bug, author, unixTime)
+func (c *BugCache) OpenRaw(author bug.Person, unixTime int64, metadata map[string]string) error {
+	op, err := bug.Open(c.bug, author, unixTime)
 	if err != nil {
 		return err
+	}
+
+	for key, value := range metadata {
+		op.SetMetadata(key, value)
 	}
 
 	return c.notifyUpdated()
@@ -104,13 +116,17 @@ func (c *BugCache) Close() error {
 		return err
 	}
 
-	return c.CloseRaw(author, time.Now().Unix())
+	return c.CloseRaw(author, time.Now().Unix(), nil)
 }
 
-func (c *BugCache) CloseRaw(author bug.Person, unixTime int64) error {
-	err := bug.Close(c.bug, author, unixTime)
+func (c *BugCache) CloseRaw(author bug.Person, unixTime int64, metadata map[string]string) error {
+	op, err := bug.Close(c.bug, author, unixTime)
 	if err != nil {
 		return err
+	}
+
+	for key, value := range metadata {
+		op.SetMetadata(key, value)
 	}
 
 	return c.notifyUpdated()
@@ -122,13 +138,39 @@ func (c *BugCache) SetTitle(title string) error {
 		return err
 	}
 
-	return c.SetTitleRaw(author, time.Now().Unix(), title)
+	return c.SetTitleRaw(author, time.Now().Unix(), title, nil)
 }
 
-func (c *BugCache) SetTitleRaw(author bug.Person, unixTime int64, title string) error {
-	err := bug.SetTitle(c.bug, author, unixTime, title)
+func (c *BugCache) SetTitleRaw(author bug.Person, unixTime int64, title string, metadata map[string]string) error {
+	op, err := bug.SetTitle(c.bug, author, unixTime, title)
 	if err != nil {
 		return err
+	}
+
+	for key, value := range metadata {
+		op.SetMetadata(key, value)
+	}
+
+	return c.notifyUpdated()
+}
+
+func (c *BugCache) EditComment(target git.Hash, message string) error {
+	author, err := bug.GetUser(c.repoCache.repo)
+	if err != nil {
+		return err
+	}
+
+	return c.EditCommentRaw(author, time.Now().Unix(), target, message, nil)
+}
+
+func (c *BugCache) EditCommentRaw(author bug.Person, unixTime int64, target git.Hash, message string, metadata map[string]string) error {
+	op, err := bug.EditComment(c.bug, author, unixTime, target, message)
+	if err != nil {
+		return err
+	}
+
+	for key, value := range metadata {
+		op.SetMetadata(key, value)
 	}
 
 	return c.notifyUpdated()

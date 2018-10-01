@@ -83,15 +83,15 @@ type AddCommentTimelineItem struct {
 }
 
 // Convenience function to apply the operation
-func AddComment(b Interface, author Person, unixTime int64, message string) error {
+func AddComment(b Interface, author Person, unixTime int64, message string) (*AddCommentOperation, error) {
 	return AddCommentWithFiles(b, author, unixTime, message, nil)
 }
 
-func AddCommentWithFiles(b Interface, author Person, unixTime int64, message string, files []git.Hash) error {
+func AddCommentWithFiles(b Interface, author Person, unixTime int64, message string, files []git.Hash) (*AddCommentOperation, error) {
 	addCommentOp := NewAddCommentOp(author, unixTime, message, files)
 	if err := addCommentOp.Validate(); err != nil {
-		return err
+		return nil, err
 	}
 	b.Append(addCommentOp)
-	return nil
+	return addCommentOp, nil
 }

@@ -72,21 +72,21 @@ func (s SetStatusTimelineItem) Hash() git.Hash {
 }
 
 // Convenience function to apply the operation
-func Open(b Interface, author Person, unixTime int64) error {
+func Open(b Interface, author Person, unixTime int64) (*SetStatusOperation, error) {
 	op := NewSetStatusOp(author, unixTime, OpenStatus)
 	if err := op.Validate(); err != nil {
-		return err
+		return nil, err
 	}
 	b.Append(op)
-	return nil
+	return op, nil
 }
 
 // Convenience function to apply the operation
-func Close(b Interface, author Person, unixTime int64) error {
+func Close(b Interface, author Person, unixTime int64) (*SetStatusOperation, error) {
 	op := NewSetStatusOp(author, unixTime, ClosedStatus)
 	if err := op.Validate(); err != nil {
-		return err
+		return nil, err
 	}
 	b.Append(op)
-	return nil
+	return op, nil
 }

@@ -96,19 +96,19 @@ type CreateTimelineItem struct {
 }
 
 // Convenience function to apply the operation
-func Create(author Person, unixTime int64, title, message string) (*Bug, error) {
+func Create(author Person, unixTime int64, title, message string) (*Bug, *CreateOperation, error) {
 	return CreateWithFiles(author, unixTime, title, message, nil)
 }
 
-func CreateWithFiles(author Person, unixTime int64, title, message string, files []git.Hash) (*Bug, error) {
+func CreateWithFiles(author Person, unixTime int64, title, message string, files []git.Hash) (*Bug, *CreateOperation, error) {
 	newBug := NewBug()
 	createOp := NewCreateOp(author, unixTime, title, message, files)
 
 	if err := createOp.Validate(); err != nil {
-		return nil, err
+		return nil, createOp, err
 	}
 
 	newBug.Append(createOp)
 
-	return newBug, nil
+	return newBug, createOp, nil
 }

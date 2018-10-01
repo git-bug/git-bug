@@ -106,15 +106,15 @@ func NewEditCommentOp(author Person, unixTime int64, target git.Hash, message st
 }
 
 // Convenience function to apply the operation
-func EditComment(b Interface, author Person, unixTime int64, target git.Hash, message string) error {
+func EditComment(b Interface, author Person, unixTime int64, target git.Hash, message string) (*EditCommentOperation, error) {
 	return EditCommentWithFiles(b, author, unixTime, target, message, nil)
 }
 
-func EditCommentWithFiles(b Interface, author Person, unixTime int64, target git.Hash, message string, files []git.Hash) error {
+func EditCommentWithFiles(b Interface, author Person, unixTime int64, target git.Hash, message string, files []git.Hash) (*EditCommentOperation, error) {
 	editCommentOp := NewEditCommentOp(author, unixTime, target, message, files)
 	if err := editCommentOp.Validate(); err != nil {
-		return err
+		return nil, err
 	}
 	b.Append(editCommentOp)
-	return nil
+	return editCommentOp, nil
 }
