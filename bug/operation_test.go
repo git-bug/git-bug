@@ -2,19 +2,12 @@ package bug
 
 import (
 	"testing"
-	"time"
 
 	"github.com/MichaelMure/git-bug/util/git"
+	"github.com/stretchr/testify/require"
 )
 
 func TestValidate(t *testing.T) {
-	rene := Person{
-		Name:  "René Descartes",
-		Email: "rene@descartes.fr",
-	}
-
-	unix := time.Now().Unix()
-
 	good := []Operation{
 		NewCreateOp(rene, unix, "title", "message", nil),
 		NewSetTitleOp(rene, unix, "title2", "title1"),
@@ -67,4 +60,14 @@ func TestValidate(t *testing.T) {
 			t.Fatal("validation should have failed", i, op)
 		}
 	}
+}
+
+func TestMetadata(t *testing.T) {
+	op := NewCreateOp(rene, unix, "title", "message", nil)
+
+	op.SetMetadata("key", "value")
+
+	val, ok := op.GetMetadata("key")
+	require.True(t, ok)
+	require.Equal(t, val, "value")
 }
