@@ -20,6 +20,8 @@ type BugExcerpt struct {
 	Status bug.Status
 	Author bug.Person
 	Labels []bug.Label
+
+	CreateMetadata map[string]string
 }
 
 func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
@@ -32,6 +34,7 @@ func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
 		Status:            snap.Status,
 		Author:            snap.Author,
 		Labels:            snap.Labels,
+		CreateMetadata:    b.FirstOp().AllMetadata(),
 	}
 }
 
