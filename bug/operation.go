@@ -21,6 +21,7 @@ const (
 	SetStatusOp
 	LabelChangeOp
 	EditCommentOp
+	NoOpOp
 )
 
 // Operation define the interface to fulfill for an edit operation of a Bug
@@ -43,6 +44,8 @@ type Operation interface {
 	SetMetadata(key string, value string)
 	// GetMetadata retrieve arbitrary metadata about the operation
 	GetMetadata(key string) (string, bool)
+	// AllMetadata return all metadata for this operation
+	AllMetadata() map[string]string
 }
 
 func hashRaw(data []byte) git.Hash {
@@ -144,4 +147,9 @@ func (op *OpBase) SetMetadata(key string, value string) {
 func (op *OpBase) GetMetadata(key string) (string, bool) {
 	val, ok := op.Metadata[key]
 	return val, ok
+}
+
+// AllMetadata return all metadata for this operation
+func (op *OpBase) AllMetadata() map[string]string {
+	return op.Metadata
 }

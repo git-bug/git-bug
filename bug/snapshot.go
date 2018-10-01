@@ -33,6 +33,7 @@ func (snap *Snapshot) HumanId() string {
 	return fmt.Sprintf("%.8s", snap.id)
 }
 
+// Deprecated:should be moved in UI code
 func (snap *Snapshot) Summary() string {
 	return fmt.Sprintf("C:%d L:%d",
 		len(snap.Comments)-1,

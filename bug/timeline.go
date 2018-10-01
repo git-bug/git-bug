@@ -56,6 +56,7 @@ func (c *CommentTimelineItem) Append(comment Comment) {
 	c.Files = comment.Files
 	c.LastEdit = comment.UnixTime
 	c.History = append(c.History, CommentHistoryStep{
+		Author:   comment.Author,
 		Message:  comment.Message,
 		UnixTime: comment.UnixTime,
 	})

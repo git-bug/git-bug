@@ -244,7 +244,31 @@ func (c *RepoCache) ResolveBugPrefix(prefix string) (*BugCache, error) {
 	}
 
 	if len(matching) > 1 {
-		return nil, fmt.Errorf("Multiple matching bug found:\n%s", strings.Join(matching, "\n"))
+		return nil, bug.ErrMultipleMatch{Matching: matching}
+	}
+
+	if len(matching) == 0 {
+		return nil, bug.ErrBugNotExist
+	}
+
+	return c.ResolveBug(matching[0])
+}
+
+// ResolveBugCreateMetadata retrieve a bug that has the exact given metadata on
+// its Create operation, that is, the first operation. It fails if multiple bugs
+// match.
+func (c *RepoCache) ResolveBugCreateMetadata(key string, value string) (*BugCache, error) {
+	// preallocate but empty
+	matching := make([]string, 0, 5)
+
+	for id, excerpt := range c.excerpts {
+		if excerpt.CreateMetadata[key] == value {
+			matching = append(matching, id)
+		}
+	}
+
+	if len(matching) > 1 {
+		return nil, bug.ErrMultipleMatch{Matching: matching}
 	}
 
 	if len(matching) == 0 {
