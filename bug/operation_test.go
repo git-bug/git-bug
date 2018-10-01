@@ -3,6 +3,7 @@ package bug
 import (
 	"testing"
 
+	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/stretchr/testify/require"
 )
@@ -70,4 +71,39 @@ func TestMetadata(t *testing.T) {
 	val, ok := op.GetMetadata("key")
 	require.True(t, ok)
 	require.Equal(t, val, "value")
+}
+
+func TestHash(t *testing.T) {
+	repos := []repository.ClockedRepo{
+		repository.NewMockRepoForTest(),
+		createRepo(false),
+	}
+
+	for _, repo := range repos {
+		b, op, err := Create(rene, unix, "title", "message")
+		require.Nil(t, err)
+
+		h1, err := op.Hash()
+		require.Nil(t, err)
+
+		err = b.Commit(repo)
+		require.Nil(t, err)
+
+		op2 := b.FirstOp()
+
+		h2, err := op2.Hash()
+		require.Nil(t, err)
+
+		require.Equal(t, h1, h2)
+
+		b2, err := ReadLocalBug(repo, b.id)
+		require.Nil(t, err)
+
+		op3 := b2.FirstOp()
+
+		h3, err := op3.Hash()
+		require.Nil(t, err)
+
+		require.Equal(t, h1, h3)
+	}
 }
