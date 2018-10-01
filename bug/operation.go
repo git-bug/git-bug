@@ -80,8 +80,8 @@ type OpBase struct {
 }
 
 // newOpBase is the constructor for an OpBase
-func newOpBase(opType OperationType, author Person, unixTime int64) *OpBase {
-	return &OpBase{
+func newOpBase(opType OperationType, author Person, unixTime int64) OpBase {
+	return OpBase{
 		OperationType: opType,
 		Author:        author,
 		UnixTime:      unixTime,

@@ -12,13 +12,13 @@ var _ Operation = &SetTitleOperation{}
 
 // SetTitleOperation will change the title of a bug
 type SetTitleOperation struct {
-	*OpBase
+	OpBase
 	Title string `json:"title"`
 	Was   string `json:"was"`
 }
 
 func (op *SetTitleOperation) base() *OpBase {
-	return op.OpBase
+	return &op.OpBase
 }
 
 func (op *SetTitleOperation) Hash() (git.Hash, error) {

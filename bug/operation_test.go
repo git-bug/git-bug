@@ -36,7 +36,7 @@ func TestValidate(t *testing.T) {
 		NewSetStatusOp(Person{Name: "René Descartes", Email: "rene@descartes.fr\u001b"}, unix, ClosedStatus),
 		NewSetStatusOp(Person{Name: "René \nDescartes", Email: "rene@descartes.fr"}, unix, ClosedStatus),
 		NewSetStatusOp(Person{Name: "René Descartes", Email: "rene@\ndescartes.fr"}, unix, ClosedStatus),
-		&CreateOperation{OpBase: &OpBase{
+		&CreateOperation{OpBase: OpBase{
 			Author:        rene,
 			UnixTime:      0,
 			OperationType: CreateOp,

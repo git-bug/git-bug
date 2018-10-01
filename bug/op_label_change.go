@@ -12,13 +12,13 @@ var _ Operation = &LabelChangeOperation{}
 
 // LabelChangeOperation define a Bug operation to add or remove labels
 type LabelChangeOperation struct {
-	*OpBase
+	OpBase
 	Added   []Label `json:"added"`
 	Removed []Label `json:"removed"`
 }
 
 func (op *LabelChangeOperation) base() *OpBase {
-	return op.OpBase
+	return &op.OpBase
 }
 
 func (op *LabelChangeOperation) Hash() (git.Hash, error) {

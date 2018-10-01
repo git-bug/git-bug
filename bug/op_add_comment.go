@@ -11,14 +11,14 @@ var _ Operation = &AddCommentOperation{}
 
 // AddCommentOperation will add a new comment in the bug
 type AddCommentOperation struct {
-	*OpBase
+	OpBase
 	Message string `json:"message"`
 	// TODO: change for a map[string]util.hash to store the filename ?
 	Files []git.Hash `json:"files"`
 }
 
 func (op *AddCommentOperation) base() *OpBase {
-	return op.OpBase
+	return &op.OpBase
 }
 
 func (op *AddCommentOperation) Hash() (git.Hash, error) {

@@ -9,12 +9,12 @@ var _ Operation = &SetStatusOperation{}
 
 // SetStatusOperation will change the status of a bug
 type SetStatusOperation struct {
-	*OpBase
+	OpBase
 	Status Status `json:"status"`
 }
 
 func (op *SetStatusOperation) base() *OpBase {
-	return op.OpBase
+	return &op.OpBase
 }
 
 func (op *SetStatusOperation) Hash() (git.Hash, error) {

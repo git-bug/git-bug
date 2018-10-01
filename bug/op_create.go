@@ -12,14 +12,14 @@ var _ Operation = &CreateOperation{}
 
 // CreateOperation define the initial creation of a bug
 type CreateOperation struct {
-	*OpBase
+	OpBase
 	Title   string     `json:"title"`
 	Message string     `json:"message"`
 	Files   []git.Hash `json:"files"`
 }
 
 func (op *CreateOperation) base() *OpBase {
-	return op.OpBase
+	return &op.OpBase
 }
 
 func (op *CreateOperation) Hash() (git.Hash, error) {

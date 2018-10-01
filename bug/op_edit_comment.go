@@ -11,14 +11,14 @@ var _ Operation = &EditCommentOperation{}
 
 // EditCommentOperation will change a comment in the bug
 type EditCommentOperation struct {
-	*OpBase
+	OpBase
 	Target  git.Hash   `json:"target"`
 	Message string     `json:"message"`
 	Files   []git.Hash `json:"files"`
 }
 
 func (op *EditCommentOperation) base() *OpBase {
-	return op.OpBase
+	return &op.OpBase
 }
 
 func (op *EditCommentOperation) Hash() (git.Hash, error) {
