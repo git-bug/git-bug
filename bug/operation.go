@@ -137,6 +137,7 @@ func (op *OpBase) SetMetadata(key string, value string) {
 	}
 
 	op.Metadata[key] = value
+	op.hash = ""
 }
 
 // GetMetadata retrieve arbitrary metadata about the operation
