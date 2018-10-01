@@ -31,6 +31,7 @@ var bridgeCmd = &cobra.Command{
 	Use:   "bridge",
 	Short: "Configure and use bridges to other bug trackers",
 	RunE:  runBridge,
+	Args:  cobra.NoArgs,
 }
 
 func init() {
