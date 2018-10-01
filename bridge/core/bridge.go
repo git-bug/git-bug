@@ -1,3 +1,4 @@
+// Package core contains the target-agnostic code to define and run a bridge
 package core
 
 import (
@@ -44,6 +45,7 @@ func Targets() []string {
 	return result
 }
 
+// Instantiate a new Bridge for a repo, from the given target and name
 func NewBridge(repo *cache.RepoCache, target string, name string) (*Bridge, error) {
 	implType, ok := bridgeImpl[target]
 	if !ok {
@@ -61,6 +63,8 @@ func NewBridge(repo *cache.RepoCache, target string, name string) (*Bridge, erro
 	return bridge, nil
 }
 
+// Instantiate a new bridge for a repo, from the combined target and name contained
+// in the full name
 func NewBridgeFullName(repo *cache.RepoCache, fullName string) (*Bridge, error) {
 	target, name, err := splitFullName(fullName)
 	if err != nil {
@@ -70,6 +74,8 @@ func NewBridgeFullName(repo *cache.RepoCache, fullName string) (*Bridge, error) 
 	return NewBridge(repo, target, name)
 }
 
+// Attempt to retrieve a default bridge for the given repo. If zero or multiple
+// bridge exist, it fails.
 func DefaultBridge(repo *cache.RepoCache) (*Bridge, error) {
 	bridges, err := ConfiguredBridges(repo)
 	if err != nil {
@@ -102,6 +108,8 @@ func splitFullName(fullName string) (string, string, error) {
 	return split[0], split[1], nil
 }
 
+// ConfiguredBridges return the list of bridge that are configured for the given
+// repo
 func ConfiguredBridges(repo repository.RepoCommon) ([]string, error) {
 	configs, err := repo.ReadConfigs("git-bug.bridge.")
 	if err != nil {
@@ -136,6 +144,7 @@ func ConfiguredBridges(repo repository.RepoCommon) ([]string, error) {
 	return result, nil
 }
 
+// Remove a configured bridge
 func RemoveBridge(repo repository.RepoCommon, fullName string) error {
 	re, err := regexp.Compile(`^[^\.]+\.[^\.]+$`)
 	if err != nil {
@@ -150,6 +159,7 @@ func RemoveBridge(repo repository.RepoCommon, fullName string) error {
 	return repo.RmConfigs(keyPrefix)
 }
 
+// Configure run the target specific configuration process
 func (b *Bridge) Configure() error {
 	conf, err := b.impl.Configure(b.repo)
 	if err != nil {

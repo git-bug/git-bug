@@ -213,6 +213,7 @@ func (c *RepoCache) buildCache() error {
 	return nil
 }
 
+// ResolveBug retrieve a bug matching the exact given id
 func (c *RepoCache) ResolveBug(id string) (*BugCache, error) {
 	cached, ok := c.bugs[id]
 	if ok {
@@ -230,6 +231,8 @@ func (c *RepoCache) ResolveBug(id string) (*BugCache, error) {
 	return cached, nil
 }
 
+// ResolveBugPrefix retrieve a bug matching an id prefix. It fails if multiple
+// bugs match.
 func (c *RepoCache) ResolveBugPrefix(prefix string) (*BugCache, error) {
 	// preallocate but empty
 	matching := make([]string, 0, 5)

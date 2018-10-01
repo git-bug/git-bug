@@ -10,6 +10,10 @@ type TimelineItem interface {
 }
 
 type CommentHistoryStep struct {
+	// The author of the edition, not necessarily the same as the author of the
+	// original comment
+	Author Person
+	// The new message
 	Message  string
 	UnixTime Timestamp
 }

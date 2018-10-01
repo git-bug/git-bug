@@ -1,3 +1,4 @@
+// Package github contains the Github bridge implementation
 package github
 
 import (
