@@ -3,8 +3,10 @@ package github
 import "github.com/shurcooL/githubv4"
 
 type pageInfo struct {
-	EndCursor   githubv4.String
-	HasNextPage bool
+	EndCursor       githubv4.String
+	HasNextPage     bool
+	StartCursor     githubv4.String
+	HasPreviousPage bool
 }
 
 type actor struct {
@@ -43,7 +45,7 @@ type issueComment struct {
 	UserContentEdits struct {
 		Nodes    []userContentEdit
 		PageInfo pageInfo
-	} `graphql:"userContentEdits(first: $commentEditFirst, after: $commentEditAfter)"`
+	} `graphql:"userContentEdits(last: $commentEditLast, before: $commentEditBefore)"`
 }
 
 type timelineItem struct {
@@ -92,7 +94,10 @@ type issueTimeline struct {
 	Url   githubv4.URI
 
 	Timeline struct {
-		Nodes    []timelineItem
+		Edges []struct {
+			Cursor githubv4.String
+			Node   timelineItem
+		}
 		PageInfo pageInfo
 	} `graphql:"timeline(first: $timelineFirst, after: $timelineAfter)"`
 
@@ -123,6 +128,25 @@ type issueEditQuery struct {
 		Issues struct {
 			Nodes    []issueEdit
 			PageInfo pageInfo
+		} `graphql:"issues(first: $issueFirst, after: $issueAfter, orderBy: {field: CREATED_AT, direction: ASC})"`
+	} `graphql:"repository(owner: $owner, name: $name)"`
+}
+
+type commentEditQuery struct {
+	Repository struct {
+		Issues struct {
+			Nodes []struct {
+				Timeline struct {
+					Nodes []struct {
+						IssueComment struct {
+							UserContentEdits struct {
+								Nodes    []userContentEdit
+								PageInfo pageInfo
+							} `graphql:"userContentEdits(last: $commentEditLast, before: $commentEditBefore)"`
+						} `graphql:"... on IssueComment"`
+					}
+				} `graphql:"timeline(first: $timelineFirst, after: $timelineAfter)"`
+			}
 		} `graphql:"issues(first: $issueFirst, after: $issueAfter, orderBy: {field: CREATED_AT, direction: ASC})"`
 	} `graphql:"repository(owner: $owner, name: $name)"`
 }
