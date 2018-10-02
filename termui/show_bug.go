@@ -94,12 +94,12 @@ func (sb *showBug) layout(g *gocui.Gui) error {
 	}
 
 	v.Clear()
-	fmt.Fprintf(v, "[q] Save and return [←↓↑→,hjkl] Navigation [o] Toggle open/close ")
+	fmt.Fprintf(v, "[q] Save and return [←↓↑→,hjkl] Navigation ")
 
 	if sb.isOnSide {
 		fmt.Fprint(v, "[a] Add label [r] Remove label")
 	} else {
-		fmt.Fprint(v, "[c] Comment [t] Change title")
+		fmt.Fprint(v, "[o] Toggle open/close [c] Comment [t] Change title")
 	}
 
 	_, err = g.SetViewOnTop(showBugInstructionView)
@@ -610,10 +610,13 @@ func (sb *showBug) setTitle(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (sb *showBug) toggleOpenClose(g *gocui.Gui, v *gocui.View) error {
-	if sb.bug.Snapshot().Status.String() == "open" {
+	switch sb.bug.Snapshot().Status {
+	case bug.OpenStatus:
 		return sb.bug.Close()
-	} else {
-	return sb.bug.Open()		
+	case bug.ClosedStatus:
+		return sb.bug.Open()
+	default:
+		return nil
 	}
 }
 
