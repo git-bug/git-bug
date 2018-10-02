@@ -94,7 +94,7 @@ func (sb *showBug) layout(g *gocui.Gui) error {
 	}
 
 	v.Clear()
-	fmt.Fprintf(v, "[q] Save and return [←↓↑→,hjkl] Navigation ")
+	fmt.Fprintf(v, "[q] Save and return [←↓↑→,hjkl] Navigation [o] Toggle open/close ")
 
 	if sb.isOnSide {
 		fmt.Fprint(v, "[a] Add label [r] Remove label")
@@ -168,6 +168,12 @@ func (sb *showBug) keybindings(g *gocui.Gui) error {
 	// Comment
 	if err := g.SetKeybinding(showBugView, 'c', gocui.ModNone,
 		sb.comment); err != nil {
+		return err
+	}
+
+	// Open/close
+	if err := g.SetKeybinding(showBugView, 'o', gocui.ModNone,
+		sb.toggleOpenClose); err != nil {
 		return err
 	}
 
@@ -601,6 +607,14 @@ func (sb *showBug) comment(g *gocui.Gui, v *gocui.View) error {
 
 func (sb *showBug) setTitle(g *gocui.Gui, v *gocui.View) error {
 	return setTitleWithEditor(sb.bug)
+}
+
+func (sb *showBug) toggleOpenClose(g *gocui.Gui, v *gocui.View) error {
+	if sb.bug.Snapshot().Status.String() == "open" {
+		return sb.bug.Close()
+	} else {
+	return sb.bug.Open()		
+	}
 }
 
 func (sb *showBug) addLabel(g *gocui.Gui, v *gocui.View) error {
