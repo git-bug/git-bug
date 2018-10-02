@@ -237,49 +237,74 @@ func ensureTimelineItem(b *cache.BugCache, cursor githubv4.String, item timeline
 		return ensureComment(b, cursor, item.IssueComment, client, rootVariables)
 
 	case "LabeledEvent":
-		_, err := b.ChangeLabelsRaw(
+		id := parseId(item.LabeledEvent.Id)
+		_, err := b.ResolveTargetWithMetadata(keyGithubId, id)
+		if err != cache.ErrNoMatchingOp {
+			return err
+		}
+		_, err = b.ChangeLabelsRaw(
 			makePerson(item.LabeledEvent.Actor),
 			item.LabeledEvent.CreatedAt.Unix(),
 			[]string{
 				string(item.LabeledEvent.Label.Name),
 			},
 			nil,
-			nil,
+			map[string]string{keyGithubId: id},
 		)
 		return err
 
 	case "UnlabeledEvent":
-		_, err := b.ChangeLabelsRaw(
+		id := parseId(item.UnlabeledEvent.Id)
+		_, err := b.ResolveTargetWithMetadata(keyGithubId, id)
+		if err != cache.ErrNoMatchingOp {
+			return err
+		}
+		_, err = b.ChangeLabelsRaw(
 			makePerson(item.UnlabeledEvent.Actor),
 			item.UnlabeledEvent.CreatedAt.Unix(),
 			nil,
 			[]string{
 				string(item.UnlabeledEvent.Label.Name),
 			},
-			nil,
+			map[string]string{keyGithubId: id},
 		)
 		return err
 
 	case "ClosedEvent":
+		id := parseId(item.ClosedEvent.Id)
+		_, err := b.ResolveTargetWithMetadata(keyGithubId, id)
+		if err != cache.ErrNoMatchingOp {
+			return err
+		}
 		return b.CloseRaw(
 			makePerson(item.ClosedEvent.Actor),
 			item.ClosedEvent.CreatedAt.Unix(),
-			nil,
+			map[string]string{keyGithubId: id},
 		)
 
 	case "ReopenedEvent":
+		id := parseId(item.ReopenedEvent.Id)
+		_, err := b.ResolveTargetWithMetadata(keyGithubId, id)
+		if err != cache.ErrNoMatchingOp {
+			return err
+		}
 		return b.OpenRaw(
 			makePerson(item.ReopenedEvent.Actor),
 			item.ReopenedEvent.CreatedAt.Unix(),
-			nil,
+			map[string]string{keyGithubId: id},
 		)
 
 	case "RenamedTitleEvent":
+		id := parseId(item.RenamedTitleEvent.Id)
+		_, err := b.ResolveTargetWithMetadata(keyGithubId, id)
+		if err != cache.ErrNoMatchingOp {
+			return err
+		}
 		return b.SetTitleRaw(
 			makePerson(item.RenamedTitleEvent.Actor),
 			item.RenamedTitleEvent.CreatedAt.Unix(),
 			string(item.RenamedTitleEvent.CurrentTitle),
-			nil,
+			map[string]string{keyGithubId: id},
 		)
 
 	default:
@@ -478,7 +503,10 @@ func parseId(id githubv4.ID) string {
 
 func cleanupText(text string) string {
 	// windows new line, Github, really ?
-	return strings.Replace(text, "\r\n", "\n", -1)
+	text = strings.Replace(text, "\r\n", "\n", -1)
+
+	// trim extra new line not displayed in the github UI but still present in the data
+	return strings.TrimSpace(text)
 }
 
 func reverseEdits(edits []userContentEdit) []userContentEdit {
