@@ -29,14 +29,12 @@ func (sp *selectPopup) keybindings(g *gocui.Gui) error {
 	if err := g.SetKeybinding(selectPopupView, gocui.KeyEsc, gocui.ModNone, sp.close); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding(selectPopupView, 'q', gocui.ModNone, sp.close); err != nil {
+
+	// Validate
+	if err := g.SetKeybinding(selectPopupView, 'q', gocui.ModNone, sp.validate); err != nil {
 		return err
 	}
 
-	// Validate
-	if err := g.SetKeybinding(selectPopupView, gocui.KeyEnter, gocui.ModNone, sp.validate); err != nil {
-		return err
-	}
 
 	// Up
 	if err := g.SetKeybinding(selectPopupView, gocui.KeyArrowUp, gocui.ModNone, sp.selectPrevious); err != nil {
@@ -59,6 +57,9 @@ func (sp *selectPopup) keybindings(g *gocui.Gui) error {
 		return err
 	}
 	if err := g.SetKeybinding(selectPopupView, 'x', gocui.ModNone, sp.selectItem); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding(selectPopupView, gocui.KeyEnter, gocui.ModNone, sp.selectItem); err != nil {
 		return err
 	}
 
@@ -124,7 +125,7 @@ func (sp *selectPopup) layout(g *gocui.Gui) error {
 	}
 
 	v.Clear()
-	fmt.Fprint(v, "[↓↑,jk] Nav [a] Add item")
+	fmt.Fprint(v, "[↓↑,jk] Nav [a] Add item [q] Save and close")
 
 	if _, err = g.SetViewOnTop(showSelectInstructions); err != nil {
 		return err
@@ -165,6 +166,8 @@ func (sp *selectPopup) addItem(g *gocui.Gui, v *gocui.View) error {
 
 		sp.options = append(sp.options, input)
 		sp.optionSelect = append(sp.optionSelect, true)
+
+		sp.selected = len(sp.options) - 1
 	}()
 
 	return nil

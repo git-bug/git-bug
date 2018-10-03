@@ -95,13 +95,7 @@ func (sb *showBug) layout(g *gocui.Gui) error {
 	}
 
 	v.Clear()
-	fmt.Fprintf(v, "[q] Save and return [←↓↑→,hjkl] Navigation ")
-
-	if sb.isOnSide {
-		fmt.Fprint(v, "[a] Add label [r] Remove label")
-	} else {
-		fmt.Fprint(v, "[c] Comment [t] Change title")
-	}
+	fmt.Fprintf(v, "[q] Save and return [←↓↑→,hjkl] Navigation [e] Edit selection [c] Comment [t] Change title")
 
 	_, err = g.SetViewOnTop(showBugInstructionView)
 	if err != nil {
@@ -652,7 +646,7 @@ func (sb *showBug) edit(g *gocui.Gui, v *gocui.View) error {
 	if sb.isOnSide {
 		return sb.editLabels(g, v, snap)
 	}
-	
+
 	index := sb.getTimelineIndex()
 
 	if index == -1 {
