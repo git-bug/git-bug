@@ -211,7 +211,7 @@ func addCommentWithEditor(bug *cache.BugCache) error {
 	ui.g.Close()
 	ui.g = nil
 
-	message, err := input.BugCommentEditorInput(ui.cache)
+	message, err := input.BugCommentEditorInput(ui.cache, "")
 
 	if err != nil && err != input.ErrEmptyMessage {
 		return err
@@ -231,7 +231,7 @@ func addCommentWithEditor(bug *cache.BugCache) error {
 	return errTerminateMainloop
 }
 
-func editCommentWithEditor(bug *cache.BugCache, target git.Hash, message string) error {
+func editCommentWithEditor(bug *cache.BugCache, target git.Hash, preMessage string) error {
 	// This is somewhat hacky.
 	// As there is no way to pause gocui, run the editor and restart gocui,
 	// we have to stop it entirely and start a new one later.
@@ -244,16 +244,17 @@ func editCommentWithEditor(bug *cache.BugCache, target git.Hash, message string)
 	ui.g.Close()
 	ui.g = nil
 
-	message, err := input.BugEditCommentEditorInput(ui.cache, message)
+	message, err := input.BugCommentEditorInput(ui.cache, preMessage)
 
 	if err != nil && err != input.ErrEmptyMessage {
 		return err
 	}
 
 	if err == input.ErrEmptyMessage {
-		// This doesn't really make sense for editing a comment because
-		// an empty message is a valid comment.
+		// TODO: Allow comments to be deleted?
 		ui.msgPopup.Activate(msgPopupErrorTitle, "Empty message, aborting.")
+	} else if message == preMessage {
+		ui.msgPopup.Activate(msgPopupErrorTitle, "No changes found, aborting.")
 	} else {
 		err := bug.EditComment(target, message)
 		if err != nil {
