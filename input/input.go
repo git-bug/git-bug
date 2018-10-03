@@ -113,6 +113,42 @@ func BugCommentEditorInput(repo repository.RepoCommon) (string, error) {
 	return message, nil
 }
 
+const bugEditCommentTemplate = `%s
+
+# Please enter the comment message. Lines starting with '#' will be ignored,
+# and an empty message aborts the operation.
+`
+
+// BugEditCommentEditorInput will open the default editor in the terminal with a
+// template for the user to fill. The file is then processed to extract a comment.
+func BugEditCommentEditorInput(repo repository.RepoCommon, preMessage string) (string, error) {
+	template := fmt.Sprintf(bugEditCommentTemplate, preMessage)
+	raw, err := launchEditorWithTemplate(repo, messageFilename, template)
+
+	if err != nil {
+		return "", err
+	}
+
+	lines := strings.Split(raw, "\n")
+
+	var buffer bytes.Buffer
+	for _, line := range lines {
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
+		buffer.WriteString(line)
+		buffer.WriteString("\n")
+	}
+
+	message := strings.TrimSpace(buffer.String())
+
+	if message == "" {
+		return "", ErrEmptyMessage
+	}
+
+	return message, nil
+}
+
 const bugTitleTemplate = `%s
 
 # Please enter the new title. Only one line will used.

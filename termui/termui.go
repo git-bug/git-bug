@@ -4,6 +4,7 @@ package termui
 import (
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/input"
+	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/jroimartin/gocui"
 	"github.com/pkg/errors"
 )
@@ -220,6 +221,41 @@ func addCommentWithEditor(bug *cache.BugCache) error {
 		ui.msgPopup.Activate(msgPopupErrorTitle, "Empty message, aborting.")
 	} else {
 		err := bug.AddComment(message)
+		if err != nil {
+			return err
+		}
+	}
+
+	initGui(nil)
+
+	return errTerminateMainloop
+}
+
+func editCommentWithEditor(bug *cache.BugCache, target git.Hash, message string) error {
+	// This is somewhat hacky.
+	// As there is no way to pause gocui, run the editor and restart gocui,
+	// we have to stop it entirely and start a new one later.
+	//
+	// - an error channel is used to route the returned error of this new
+	// 		instance into the original launch function
+	// - a custom error (errTerminateMainloop) is used to terminate the original
+	//		instance's mainLoop. This error is then filtered.
+
+	ui.g.Close()
+	ui.g = nil
+
+	message, err := input.BugEditCommentEditorInput(ui.cache, message)
+
+	if err != nil && err != input.ErrEmptyMessage {
+		return err
+	}
+
+	if err == input.ErrEmptyMessage {
+		// This doesn't really make sense for editing a comment because
+		// an empty message is a valid comment.
+		ui.msgPopup.Activate(msgPopupErrorTitle, "Empty message, aborting.")
+	} else {
+		err := bug.EditComment(target, message)
 		if err != nil {
 			return err
 		}
