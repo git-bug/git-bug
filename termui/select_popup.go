@@ -98,7 +98,10 @@ func (sp *selectPopup) layout(g *gocui.Gui) error {
 
 	for i, name := range sp.options {
 		viewname := fmt.Sprintf("view%d", i)
-		v, err = g.SetView(viewname, x0+2, y0, x0+width-2, y0+2)
+		v, err := g.SetView(viewname, x0+2, y0, x0+width-2, y0+2)
+		if err != nil && err != gocui.ErrUnknownView {
+			return err
+		}
 		sp.childViews = append(sp.childViews, viewname)
 		v.Frame = i == sp.selected
 		v.Clear()
