@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/MichaelMure/git-bug/bridge"
@@ -45,7 +46,10 @@ func promptTarget() (string, error) {
 	targets := bridge.Targets()
 
 	for {
-		fmt.Printf("target (%s): ", strings.Join(targets, ","))
+		for i, target := range targets {
+			fmt.Printf("[%d]: %s\n", i+1, target)
+		}
+		fmt.Printf("target: ")
 
 		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
 		if err != nil {
@@ -54,13 +58,13 @@ func promptTarget() (string, error) {
 
 		line = strings.TrimRight(line, "\n")
 
-		for _, t := range targets {
-			if t == line {
-				return t, nil
-			}
+		index, err := strconv.Atoi(line)
+		if err != nil || index <= 0 || index > len(targets) {
+			fmt.Println("invalid input")
+			continue
 		}
 
-		fmt.Println("invalid target")
+		return targets[index-1], nil
 	}
 }
 
