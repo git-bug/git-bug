@@ -18,10 +18,11 @@ type termUI struct {
 
 	activeWindow window
 
-	bugTable   *bugTable
-	showBug    *showBug
-	msgPopup   *msgPopup
-	inputPopup *inputPopup
+	bugTable    *bugTable
+	showBug     *showBug
+	msgPopup    *msgPopup
+	inputPopup  *inputPopup
+	selectPopup *selectPopup
 }
 
 func (tui *termUI) activateWindow(window window) error {
@@ -45,12 +46,13 @@ type window interface {
 // Run will launch the termUI in the terminal
 func Run(cache *cache.RepoCache) error {
 	ui = &termUI{
-		gError:     make(chan error, 1),
-		cache:      cache,
-		bugTable:   newBugTable(cache),
-		showBug:    newShowBug(cache),
-		msgPopup:   newMsgPopup(),
-		inputPopup: newInputPopup(),
+		gError:      make(chan error, 1),
+		cache:       cache,
+		bugTable:    newBugTable(cache),
+		showBug:     newShowBug(cache),
+		msgPopup:    newMsgPopup(),
+		inputPopup:  newInputPopup(),
+		selectPopup: newSelectPopup(),
 	}
 
 	ui.activeWindow = ui.bugTable
@@ -118,6 +120,10 @@ func layout(g *gocui.Gui) error {
 		return err
 	}
 
+	if err := ui.selectPopup.layout(g); err != nil {
+		return err
+	}
+
 	if err := ui.msgPopup.layout(g); err != nil {
 		return err
 	}
@@ -140,6 +146,10 @@ func keybindings(g *gocui.Gui) error {
 	}
 
 	if err := ui.showBug.keybindings(g); err != nil {
+		return err
+	}
+
+	if err := ui.selectPopup.keybindings(g); err != nil {
 		return err
 	}
 

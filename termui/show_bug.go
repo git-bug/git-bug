@@ -184,16 +184,6 @@ func (sb *showBug) keybindings(g *gocui.Gui) error {
 		return err
 	}
 
-	// Labels
-	if err := g.SetKeybinding(showBugView, 'a', gocui.ModNone,
-		sb.addLabel); err != nil {
-		return err
-	}
-	if err := g.SetKeybinding(showBugView, 'r', gocui.ModNone,
-		sb.removeLabel); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -608,7 +598,61 @@ func (sb *showBug) comment(g *gocui.Gui, v *gocui.View) error {
 	return addCommentWithEditor(sb.bug)
 }
 
+func (sb *showBug) editLabels(g *gocui.Gui, v *gocui.View, snap *bug.Snapshot) error {
+	preLabels := make([]string, len(snap.Labels))
+	for i, l := range snap.Labels {
+		preLabels[i] = string(l)
+	}
+
+	c := ui.selectPopup.Activate("Select labels", preLabels, true)
+
+	go func() {
+		labels := <- c
+
+		// Find the new and removed labels. This makes use of the fact that the first elements
+		// of labels are the not-removed labels in preLabels
+		newLabels := []string{}
+		rmLabels := []string{}
+		i := 0	// Index for preLabels
+		j := 0	// Index for labels
+		for {
+			if j == len(labels) {
+				// No more labels to consider
+				break
+			} else if i == len(preLabels) {
+				// Remaining labels are all new
+				newLabels = append(newLabels, labels[j])
+				j += 1
+			} else if preLabels[i] == labels[j] {
+				// Labels match. Move to next pair
+				i += 1
+				j += 1
+			} else {
+				// Labels don't match. Prelabel must have been removed
+				rmLabels = append(rmLabels, preLabels[i])
+				i += 1
+			}
+		}
+
+		if _, err := sb.bug.ChangeLabels(newLabels, rmLabels); err != nil {
+			ui.msgPopup.Activate(msgPopupErrorTitle, err.Error())
+		}
+
+		g.Update(func(gui *gocui.Gui) error {
+			return nil
+		})
+	}()
+
+	return nil
+}
+
 func (sb *showBug) edit(g *gocui.Gui, v *gocui.View) error {
+	snap := sb.bug.Snapshot()
+
+	if sb.isOnSide {
+		return sb.editLabels(g, v, snap)
+	}
+	
 	index := sb.getTimelineIndex()
 
 	if index == -1 {
@@ -616,12 +660,17 @@ func (sb *showBug) edit(g *gocui.Gui, v *gocui.View) error {
 		return nil
 	}
 
-	op := sb.bug.Snapshot().Timeline[index]
+	op := snap.Timeline[index]
 
 	switch op.(type) {
 	case *bug.AddCommentTimelineItem:
-		message := op.(*bug.AddCommentTimelineItem).Message
-		return editCommentWithEditor(sb.bug, op.Hash(), message)
+		preMessage := op.(*bug.AddCommentTimelineItem).Message
+		return editCommentWithEditor(sb.bug, op.Hash(), preMessage)
+	case *bug.CreateTimelineItem:
+		preMessage := op.(*bug.CreateTimelineItem).Message
+		return editCommentWithEditor(sb.bug, op.Hash(), preMessage)
+	case *bug.LabelChangeTimelineItem:
+		return sb.editLabels(g, v, snap)
 	}
 
 	ui.msgPopup.Activate(msgPopupErrorTitle, "Selected field is not editable.")
@@ -631,64 +680,6 @@ func (sb *showBug) edit(g *gocui.Gui, v *gocui.View) error {
 
 func (sb *showBug) setTitle(g *gocui.Gui, v *gocui.View) error {
 	return setTitleWithEditor(sb.bug)
-}
-
-func (sb *showBug) addLabel(g *gocui.Gui, v *gocui.View) error {
-	c := ui.inputPopup.Activate("Add labels")
-
-	go func() {
-		input := <-c
-
-		labels := strings.FieldsFunc(input, func(r rune) bool {
-			return r == ' ' || r == ','
-		})
-
-		_, err := sb.bug.ChangeLabels(trimLabels(labels), nil)
-		if err != nil {
-			ui.msgPopup.Activate(msgPopupErrorTitle, err.Error())
-		}
-
-		g.Update(func(gui *gocui.Gui) error {
-			return nil
-		})
-	}()
-
-	return nil
-}
-
-func (sb *showBug) removeLabel(g *gocui.Gui, v *gocui.View) error {
-	c := ui.inputPopup.Activate("Remove labels")
-
-	go func() {
-		input := <-c
-
-		labels := strings.FieldsFunc(input, func(r rune) bool {
-			return r == ' ' || r == ','
-		})
-
-		_, err := sb.bug.ChangeLabels(nil, trimLabels(labels))
-		if err != nil {
-			ui.msgPopup.Activate(msgPopupErrorTitle, err.Error())
-		}
-
-		g.Update(func(gui *gocui.Gui) error {
-			return nil
-		})
-	}()
-
-	return nil
-}
-
-func trimLabels(labels []string) []string {
-	var result []string
-
-	for _, label := range labels {
-		trimmed := strings.TrimSpace(label)
-		if len(trimmed) > 0 {
-			result = append(result, trimmed)
-		}
-	}
-	return result
 }
 
 func (sb *showBug) getTimelineIndex() int {
