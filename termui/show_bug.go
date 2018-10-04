@@ -9,6 +9,7 @@ import (
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util/colors"
 	"github.com/MichaelMure/git-bug/util/text"
+	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/jroimartin/gocui"
 )
 
@@ -240,8 +241,8 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 	fmt.Fprint(v, bugHeader)
 	y0 += lines + 1
 
-	for i, op := range snap.Timeline {
-		viewName := fmt.Sprintf("op%d", i)
+	for _, op := range snap.Timeline {
+		viewName := op.Hash().String()
 
 		// TODO: me might skip the rendering of blocks that are outside of the view
 		// but to do that we need to rework how sb.mainSelectableView is maintained
