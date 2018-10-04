@@ -184,6 +184,12 @@ func (sb *showBug) keybindings(g *gocui.Gui) error {
 		return err
 	}
 
+	// Edit
+	if err := g.SetKeybinding(showBugView, 'e', gocui.ModNone,
+		sb.edit); err != nil {
+		return err
+	}
+
 	// Labels
 	if err := g.SetKeybinding(showBugView, 'a', gocui.ModNone,
 		sb.addLabel); err != nil {
@@ -619,6 +625,32 @@ func (sb *showBug) toggleOpenClose(g *gocui.Gui, v *gocui.View) error {
 	default:
 		return nil
 	}
+}
+
+func (sb *showBug) edit(g *gocui.Gui, v *gocui.View) error {
+	if sb.isOnSide {
+		ui.msgPopup.Activate(msgPopupErrorTitle, "Selected field is not editable.")
+		return nil
+	}
+
+	snap := sb.bug.Snapshot()
+
+	op, err := snap.SearchTimelineItem(git.Hash(sb.selected))
+	if err != nil {
+		return err
+	}
+
+	switch op.(type) {
+	case *bug.AddCommentTimelineItem:
+		message := op.(*bug.AddCommentTimelineItem).Message
+		return editCommentWithEditor(sb.bug, op.Hash(), message)
+	case *bug.CreateTimelineItem:
+		preMessage := op.(*bug.CreateTimelineItem).Message
+		return editCommentWithEditor(sb.bug, op.Hash(), preMessage)
+	}
+
+	ui.msgPopup.Activate(msgPopupErrorTitle, "Selected field is not editable.")
+	return nil
 }
 
 func (sb *showBug) addLabel(g *gocui.Gui, v *gocui.View) error {
