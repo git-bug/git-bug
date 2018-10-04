@@ -9,6 +9,7 @@ import (
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util/colors"
 	"github.com/MichaelMure/git-bug/util/text"
+	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/jroimartin/gocui"
 )
 
@@ -227,7 +228,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 	y0 += lines + 1
 
 	for i, op := range snap.Timeline {
-		viewName := fmt.Sprintf("op%d", i)
+		viewName := op.Hash().String()
 
 		// TODO: me might skip the rendering of blocks that are outside of the view
 		// but to do that we need to rework how sb.mainSelectableView is maintained
@@ -368,7 +369,6 @@ func (sb *showBug) createOpView(g *gocui.Gui, name string, index int, x0 int, y0
 
 	if selectable {
 		sb.mainSelectableView = append(sb.mainSelectableView, name)
-		sb.mainTimelineIndex = append(sb.mainTimelineIndex, index)
 	}
 
 	v.Frame = sb.selected == name
@@ -647,14 +647,11 @@ func (sb *showBug) edit(g *gocui.Gui, v *gocui.View) error {
 		return sb.editLabels(g, v, snap)
 	}
 
-	index := sb.getTimelineIndex()
-
-	if index == -1 {
+	op, err := snap.SearchTimelineItem(git.Hash(sb.selected))
+	if err != nil {
 		ui.msgPopup.Activate(msgPopupErrorTitle, "Selected field is not editable.")
 		return nil
 	}
-
-	op := snap.Timeline[index]
 
 	switch op.(type) {
 	case *bug.AddCommentTimelineItem:
@@ -674,18 +671,4 @@ func (sb *showBug) edit(g *gocui.Gui, v *gocui.View) error {
 
 func (sb *showBug) setTitle(g *gocui.Gui, v *gocui.View) error {
 	return setTitleWithEditor(sb.bug)
-}
-
-func (sb *showBug) getTimelineIndex() int {
-	if sb.isOnSide {
-		return -1
-	}
-
-	for i, name := range sb.mainSelectableView {
-		if name == sb.selected {
-			return i
-		}
-	}
-
-	return -1
 }
