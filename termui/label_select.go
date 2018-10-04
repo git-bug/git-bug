@@ -179,6 +179,10 @@ func (ls *labelSelect) addItem(g *gocui.Gui, v *gocui.View) error {
 			if input == label.String() {
 				ls.labelSelect[i] = true
 				ls.selected = i
+
+				g.Update(func(gui *gocui.Gui) error {
+					return nil
+				})
 				return
 			}
 		}
@@ -187,6 +191,10 @@ func (ls *labelSelect) addItem(g *gocui.Gui, v *gocui.View) error {
 		ls.labels = append(ls.labels, bug.Label(input))
 		ls.labelSelect = append(ls.labelSelect, true)
 		ls.selected = len(ls.labels) - 1
+
+		g.Update(func(gui *gocui.Gui) error {
+			return nil
+		})
 	}()
 	return nil
 }
@@ -235,11 +243,3 @@ func (ls *labelSelect) saveAndReturn(g *gocui.Gui, v *gocui.View) error {
 
 	return ui.activateWindow(ui.showBug)
 }
-
-// func (ls *labelSelect) Activate(labels []bug.Label, sel []bool) <-chan []bug.Label {
-// 	ls.labels = labels
-// 	ls.labelSelect = sel
-// 	ls.selected = 0
-// 	ls.c = make(chan []bug.Label)
-// 	return ls.c
-// }
