@@ -210,7 +210,7 @@ func addCommentWithEditor(bug *cache.BugCache) error {
 	ui.g.Close()
 	ui.g = nil
 
-	message, err := input.BugCommentEditorInput(ui.cache)
+	message, err := input.BugCommentEditorInput(ui.cache, "")
 
 	if err != nil && err != input.ErrEmptyMessage {
 		return err
