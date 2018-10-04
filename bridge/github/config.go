@@ -29,7 +29,7 @@ func (*Github) Configure(repo repository.RepoCommon) (core.Configuration, error)
 	conf := make(core.Configuration)
 
 	fmt.Println()
-	fmt.Println("git-bug will generate an access token in your Github profile.")
+	fmt.Println("git-bug will generate an access token in your Github profile. Your credential are not stored and are only used to generate the token. The token is stored in the repository git config.")
 	// fmt.Println("The token will have the \"repo\" permission, giving it read/write access to your repositories and issues. There is no narrower scope available, sorry :-|")
 	fmt.Println()
 

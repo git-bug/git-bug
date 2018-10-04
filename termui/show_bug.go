@@ -95,7 +95,8 @@ func (sb *showBug) layout(g *gocui.Gui) error {
 	}
 
 	v.Clear()
-	fmt.Fprintf(v, "[q] Save and return [←↓↑→,hjkl] Navigation [e] Edit selection [c] Comment [t] Change title")
+	fmt.Fprintf(v, "[q] Save and return [←↓↑→,hjkl] Navigation [o] Toggle open/close [e] Edit selection [c] Comment [t] Change title")
+
 
 	_, err = g.SetViewOnTop(showBugInstructionView)
 	if err != nil {
@@ -169,6 +170,12 @@ func (sb *showBug) keybindings(g *gocui.Gui) error {
 	// Comment
 	if err := g.SetKeybinding(showBugView, 'c', gocui.ModNone,
 		sb.comment); err != nil {
+		return err
+	}
+
+	// Open/close
+	if err := g.SetKeybinding(showBugView, 'o', gocui.ModNone,
+		sb.toggleOpenClose); err != nil {
 		return err
 	}
 
@@ -686,4 +693,15 @@ func (sb *showBug) edit(g *gocui.Gui, v *gocui.View) error {
 
 func (sb *showBug) setTitle(g *gocui.Gui, v *gocui.View) error {
 	return setTitleWithEditor(sb.bug)
+}
+  
+  func (sb *showBug) toggleOpenClose(g *gocui.Gui, v *gocui.View) error {
+	switch sb.bug.Snapshot().Status {
+	case bug.OpenStatus:
+		return sb.bug.Close()
+	case bug.ClosedStatus:
+		return sb.bug.Open()
+	default:
+		return nil
+	}
 }
