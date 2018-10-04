@@ -100,7 +100,7 @@ func (sb *showBug) layout(g *gocui.Gui) error {
 	if sb.isOnSide {
 		fmt.Fprint(v, "[a] Add label [r] Remove label")
 	} else {
-		fmt.Fprint(v, "[o] Toggle open/close [c] Comment [t] Change title")
+		fmt.Fprint(v, "[o] Toggle open/close [e] Edit [c] Comment [t] Change title")
 	}
 
 	_, err = g.SetViewOnTop(showBugInstructionView)
