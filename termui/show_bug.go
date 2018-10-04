@@ -628,12 +628,11 @@ func (sb *showBug) toggleOpenClose(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (sb *showBug) edit(g *gocui.Gui, v *gocui.View) error {
-	if sb.isOnSide {
-		ui.msgPopup.Activate(msgPopupErrorTitle, "Selected field is not editable.")
-		return nil
-	}
-
 	snap := sb.bug.Snapshot()
+
+	if sb.isOnSide {
+		return sb.editLabels(g, snap)
+	}
 
 	op, err := snap.SearchTimelineItem(git.Hash(sb.selected))
 	if err != nil {
@@ -647,10 +646,17 @@ func (sb *showBug) edit(g *gocui.Gui, v *gocui.View) error {
 	case *bug.CreateTimelineItem:
 		preMessage := op.(*bug.CreateTimelineItem).Message
 		return editCommentWithEditor(sb.bug, op.Hash(), preMessage)
+	case *bug.LabelChangeTimelineItem:
+		return sb.editLabels(g, snap)
 	}
 
 	ui.msgPopup.Activate(msgPopupErrorTitle, "Selected field is not editable.")
 	return nil
+}
+
+func (sb *showBug) editLabels(g *gocui.Gui, snap *bug.Snapshot) error {
+	ui.labelSelect.SetBug(sb.cache, sb.bug)
+	return ui.activateWindow(ui.labelSelect)
 }
 
 func (sb *showBug) addLabel(g *gocui.Gui, v *gocui.View) error {
