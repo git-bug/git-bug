@@ -593,37 +593,54 @@ func (sb *showBug) comment(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (sb *showBug) editLabels(g *gocui.Gui, v *gocui.View, snap *bug.Snapshot) error {
-	preLabels := make([]string, len(snap.Labels))
-	for i, l := range snap.Labels {
-		preLabels[i] = string(l)
+	repoLabels := sb.bug.Repo().ValidLabels()
+	bugLabels := snap.Labels
+	labelStrings := make([]string, len(repoLabels))
+	labelSelect := make([]bool, len(repoLabels))
+	for i, repoLabel := range repoLabels {
+		labelStrings[i] = string(repoLabel)
+		labelOnBug := false
+		
+		for _, bugLabel := range bugLabels {
+			if repoLabel == bugLabel {
+				labelOnBug = true
+				break
+			}
+		}
+
+		if labelOnBug {
+			labelSelect[i] = true
+		} else {
+			labelSelect[i] = false
+		}
 	}
 
-	c := ui.selectPopup.Activate("Select labels", preLabels, true)
+	c := ui.selectPopup.Activate("Select labels", labelStrings, labelSelect)
 
 	go func() {
 		labels := <- c
 
 		// Find the new and removed labels. This makes use of the fact that the first elements
-		// of labels are the not-removed labels in preLabels
+		// of labels are the not-removed labels in bugLabels
 		newLabels := []string{}
 		rmLabels := []string{}
-		i := 0	// Index for preLabels
+		i := 0	// Index for bugLabels
 		j := 0	// Index for labels
 		for {
 			if j == len(labels) {
 				// No more labels to consider
 				break
-			} else if i == len(preLabels) {
+			} else if i == len(bugLabels) {
 				// Remaining labels are all new
 				newLabels = append(newLabels, labels[j])
 				j += 1
-			} else if preLabels[i] == labels[j] {
+			} else if bugLabels[i].String() == labels[j] {
 				// Labels match. Move to next pair
 				i += 1
 				j += 1
 			} else {
 				// Labels don't match. Prelabel must have been removed
-				rmLabels = append(rmLabels, preLabels[i])
+				rmLabels = append(rmLabels, bugLabels[i].String())
 				i += 1
 			}
 		}

@@ -208,13 +208,10 @@ func (sp *selectPopup) validate(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
-func (sp *selectPopup) Activate(title string, options []string, sel bool) <-chan []string {
+func (sp *selectPopup) Activate(title string, options []string, sel []bool) <-chan []string {
 	sp.title = title
 	sp.options = options
-	sp.optionSelect = make([]bool, len(options))
-	for i, _ := range sp.optionSelect {
-		sp.optionSelect[i] = sel
-	}
+	sp.optionSelect = sel
 	sp.selected = 0
 	sp.active = true
 	sp.c = make(chan []string)
