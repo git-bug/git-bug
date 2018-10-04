@@ -9,6 +9,7 @@ import (
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util/colors"
 	"github.com/MichaelMure/git-bug/util/text"
+	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/jroimartin/gocui"
 )
 
@@ -94,13 +95,8 @@ func (sb *showBug) layout(g *gocui.Gui) error {
 	}
 
 	v.Clear()
-	fmt.Fprintf(v, "[q] Save and return [←↓↑→,hjkl] Navigation ")
+	fmt.Fprintf(v, "[q] Save and return [←↓↑→,hjkl] Navigation [o] Toggle open/close [e] Edit selection [c] Comment [t] Change title")
 
-	if sb.isOnSide {
-		fmt.Fprint(v, "[a] Add label [r] Remove label")
-	} else {
-		fmt.Fprint(v, "[o] Toggle open/close [c] Comment [t] Change title")
-	}
 
 	_, err = g.SetViewOnTop(showBugInstructionView)
 	if err != nil {
@@ -165,6 +161,12 @@ func (sb *showBug) keybindings(g *gocui.Gui) error {
 		return err
 	}
 
+	// Edit
+	if err := g.SetKeybinding(showBugView, 'e', gocui.ModNone,
+		sb.edit); err != nil {
+		return err
+	}
+
 	// Comment
 	if err := g.SetKeybinding(showBugView, 'c', gocui.ModNone,
 		sb.comment); err != nil {
@@ -180,16 +182,6 @@ func (sb *showBug) keybindings(g *gocui.Gui) error {
 	// Title
 	if err := g.SetKeybinding(showBugView, 't', gocui.ModNone,
 		sb.setTitle); err != nil {
-		return err
-	}
-
-	// Labels
-	if err := g.SetKeybinding(showBugView, 'a', gocui.ModNone,
-		sb.addLabel); err != nil {
-		return err
-	}
-	if err := g.SetKeybinding(showBugView, 'r', gocui.ModNone,
-		sb.removeLabel); err != nil {
 		return err
 	}
 
@@ -241,7 +233,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 	y0 += lines + 1
 
 	for i, op := range snap.Timeline {
-		viewName := fmt.Sprintf("op%d", i)
+		viewName := op.Hash().String()
 
 		// TODO: me might skip the rendering of blocks that are outside of the view
 		// but to do that we need to rework how sb.mainSelectableView is maintained
@@ -605,11 +597,105 @@ func (sb *showBug) comment(g *gocui.Gui, v *gocui.View) error {
 	return addCommentWithEditor(sb.bug)
 }
 
+func (sb *showBug) editLabels(g *gocui.Gui, v *gocui.View, snap *bug.Snapshot) error {
+	repoLabels := sb.bug.Repo().ValidLabels()
+	bugLabels := snap.Labels
+	labelStrings := make([]string, len(repoLabels))
+	labelSelect := make([]bool, len(repoLabels))
+	for i, repoLabel := range repoLabels {
+		labelStrings[i] = string(repoLabel)
+		labelOnBug := false
+		
+		for _, bugLabel := range bugLabels {
+			if repoLabel == bugLabel {
+				labelOnBug = true
+				break
+			}
+		}
+
+		if labelOnBug {
+			labelSelect[i] = true
+		} else {
+			labelSelect[i] = false
+		}
+	}
+
+	c := ui.selectPopup.Activate("Select labels", labelStrings, labelSelect)
+
+	go func() {
+		labels := <- c
+
+		// Find the new and removed labels. This makes use of the fact that the first elements
+		// of labels are the not-removed labels in bugLabels
+		newLabels := []string{}
+		rmLabels := []string{}
+		i := 0	// Index for bugLabels
+		j := 0	// Index for labels
+		for {
+			if j == len(labels) {
+				// No more labels to consider
+				break
+			} else if i == len(bugLabels) {
+				// Remaining labels are all new
+				newLabels = append(newLabels, labels[j])
+				j += 1
+			} else if bugLabels[i].String() == labels[j] {
+				// Labels match. Move to next pair
+				i += 1
+				j += 1
+			} else {
+				// Labels don't match. Prelabel must have been removed
+				rmLabels = append(rmLabels, bugLabels[i].String())
+				i += 1
+			}
+		}
+
+		if _, err := sb.bug.ChangeLabels(newLabels, rmLabels); err != nil {
+			ui.msgPopup.Activate(msgPopupErrorTitle, err.Error())
+		}
+
+		g.Update(func(gui *gocui.Gui) error {
+			return nil
+		})
+	}()
+
+	return nil
+}
+
+func (sb *showBug) edit(g *gocui.Gui, v *gocui.View) error {
+	snap := sb.bug.Snapshot()
+
+	if sb.isOnSide {
+		return sb.editLabels(g, v, snap)
+	}
+
+	op, err := snap.SearchTimelineItem(git.Hash(sb.selected))
+	if err != nil {
+		ui.msgPopup.Activate(msgPopupErrorTitle, "Selected field is not editable.")
+		return nil
+	}
+
+	switch op.(type) {
+	case *bug.AddCommentTimelineItem:
+		preMessage := op.(*bug.AddCommentTimelineItem).Message
+		return editCommentWithEditor(sb.bug, op.Hash(), preMessage)
+	case *bug.CreateTimelineItem:
+		preMessage := op.(*bug.CreateTimelineItem).Message
+		return editCommentWithEditor(sb.bug, op.Hash(), preMessage)
+	case *bug.LabelChangeTimelineItem:
+		return sb.editLabels(g, v, snap)
+	}
+
+	ui.msgPopup.Activate(msgPopupErrorTitle, "Selected field is not editable.")
+
+	return nil
+}
+
 func (sb *showBug) setTitle(g *gocui.Gui, v *gocui.View) error {
 	return setTitleWithEditor(sb.bug)
 }
-
-func (sb *showBug) toggleOpenClose(g *gocui.Gui, v *gocui.View) error {
+  
+  func (sb *showBug) toggleOpenClose(g *gocui.Gui, v *gocui.View) error {
 	switch sb.bug.Snapshot().Status {
 	case bug.OpenStatus:
 		return sb.bug.Close()
@@ -618,62 +704,4 @@ func (sb *showBug) toggleOpenClose(g *gocui.Gui, v *gocui.View) error {
 	default:
 		return nil
 	}
-}
-
-func (sb *showBug) addLabel(g *gocui.Gui, v *gocui.View) error {
-	c := ui.inputPopup.Activate("Add labels")
-
-	go func() {
-		input := <-c
-
-		labels := strings.FieldsFunc(input, func(r rune) bool {
-			return r == ' ' || r == ','
-		})
-
-		_, err := sb.bug.ChangeLabels(trimLabels(labels), nil)
-		if err != nil {
-			ui.msgPopup.Activate(msgPopupErrorTitle, err.Error())
-		}
-
-		g.Update(func(gui *gocui.Gui) error {
-			return nil
-		})
-	}()
-
-	return nil
-}
-
-func (sb *showBug) removeLabel(g *gocui.Gui, v *gocui.View) error {
-	c := ui.inputPopup.Activate("Remove labels")
-
-	go func() {
-		input := <-c
-
-		labels := strings.FieldsFunc(input, func(r rune) bool {
-			return r == ' ' || r == ','
-		})
-
-		_, err := sb.bug.ChangeLabels(nil, trimLabels(labels))
-		if err != nil {
-			ui.msgPopup.Activate(msgPopupErrorTitle, err.Error())
-		}
-
-		g.Update(func(gui *gocui.Gui) error {
-			return nil
-		})
-	}()
-
-	return nil
-}
-
-func trimLabels(labels []string) []string {
-	var result []string
-
-	for _, label := range labels {
-		trimmed := strings.TrimSpace(label)
-		if len(trimmed) > 0 {
-			result = append(result, trimmed)
-		}
-	}
-	return result
 }

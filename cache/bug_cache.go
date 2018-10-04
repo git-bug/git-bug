@@ -233,3 +233,7 @@ func (c *BugCache) CommitAsNeeded() error {
 	}
 	return nil
 }
+
+func (c *BugCache) Repo() *RepoCache {
+	return c.repoCache
+}

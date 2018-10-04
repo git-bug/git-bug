@@ -4,6 +4,7 @@ package termui
 import (
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/input"
+	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/jroimartin/gocui"
 	"github.com/pkg/errors"
 )
@@ -17,10 +18,11 @@ type termUI struct {
 
 	activeWindow window
 
-	bugTable   *bugTable
-	showBug    *showBug
-	msgPopup   *msgPopup
-	inputPopup *inputPopup
+	bugTable    *bugTable
+	showBug     *showBug
+	msgPopup    *msgPopup
+	inputPopup  *inputPopup
+	selectPopup *selectPopup
 }
 
 func (tui *termUI) activateWindow(window window) error {
@@ -44,12 +46,13 @@ type window interface {
 // Run will launch the termUI in the terminal
 func Run(cache *cache.RepoCache) error {
 	ui = &termUI{
-		gError:     make(chan error, 1),
-		cache:      cache,
-		bugTable:   newBugTable(cache),
-		showBug:    newShowBug(cache),
-		msgPopup:   newMsgPopup(),
-		inputPopup: newInputPopup(),
+		gError:      make(chan error, 1),
+		cache:       cache,
+		bugTable:    newBugTable(cache),
+		showBug:     newShowBug(cache),
+		msgPopup:    newMsgPopup(),
+		inputPopup:  newInputPopup(),
+		selectPopup: newSelectPopup(),
 	}
 
 	ui.activeWindow = ui.bugTable
@@ -117,6 +120,10 @@ func layout(g *gocui.Gui) error {
 		return err
 	}
 
+	if err := ui.selectPopup.layout(g); err != nil {
+		return err
+	}
+
 	if err := ui.msgPopup.layout(g); err != nil {
 		return err
 	}
@@ -139,6 +146,10 @@ func keybindings(g *gocui.Gui) error {
 	}
 
 	if err := ui.showBug.keybindings(g); err != nil {
+		return err
+	}
+
+	if err := ui.selectPopup.keybindings(g); err != nil {
 		return err
 	}
 
@@ -210,7 +221,7 @@ func addCommentWithEditor(bug *cache.BugCache) error {
 	ui.g.Close()
 	ui.g = nil
 
-	message, err := input.BugCommentEditorInput(ui.cache)
+	message, err := input.BugCommentEditorInput(ui.cache, "")
 
 	if err != nil && err != input.ErrEmptyMessage {
 		return err
@@ -220,6 +231,42 @@ func addCommentWithEditor(bug *cache.BugCache) error {
 		ui.msgPopup.Activate(msgPopupErrorTitle, "Empty message, aborting.")
 	} else {
 		err := bug.AddComment(message)
+		if err != nil {
+			return err
+		}
+	}
+
+	initGui(nil)
+
+	return errTerminateMainloop
+}
+
+func editCommentWithEditor(bug *cache.BugCache, target git.Hash, preMessage string) error {
+	// This is somewhat hacky.
+	// As there is no way to pause gocui, run the editor and restart gocui,
+	// we have to stop it entirely and start a new one later.
+	//
+	// - an error channel is used to route the returned error of this new
+	// 		instance into the original launch function
+	// - a custom error (errTerminateMainloop) is used to terminate the original
+	//		instance's mainLoop. This error is then filtered.
+
+	ui.g.Close()
+	ui.g = nil
+
+	message, err := input.BugCommentEditorInput(ui.cache, preMessage)
+
+	if err != nil && err != input.ErrEmptyMessage {
+		return err
+	}
+
+	if err == input.ErrEmptyMessage {
+		// TODO: Allow comments to be deleted?
+		ui.msgPopup.Activate(msgPopupErrorTitle, "Empty message, aborting.")
+	} else if message == preMessage {
+		ui.msgPopup.Activate(msgPopupErrorTitle, "No changes found, aborting.")
+	} else {
+		err := bug.EditComment(target, message)
 		if err != nil {
 			return err
 		}

@@ -78,7 +78,7 @@ func BugCreateEditorInput(repo repository.RepoCommon, preTitle string, preMessag
 	return title, message, nil
 }
 
-const bugCommentTemplate = `
+const bugCommentTemplate = `%s
 
 # Please enter the comment message. Lines starting with '#' will be ignored,
 # and an empty message aborts the operation.
@@ -86,8 +86,9 @@ const bugCommentTemplate = `
 
 // BugCommentEditorInput will open the default editor in the terminal with a
 // template for the user to fill. The file is then processed to extract a comment.
-func BugCommentEditorInput(repo repository.RepoCommon) (string, error) {
-	raw, err := launchEditorWithTemplate(repo, messageFilename, bugCommentTemplate)
+func BugCommentEditorInput(repo repository.RepoCommon, preMessage string) (string, error) {
+	template := fmt.Sprintf(bugCommentTemplate, preMessage)
+	raw, err := launchEditorWithTemplate(repo, messageFilename, template)
 
 	if err != nil {
 		return "", err
