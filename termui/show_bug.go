@@ -9,6 +9,7 @@ import (
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util/colors"
 	"github.com/MichaelMure/git-bug/util/text"
+	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/jroimartin/gocui"
 )
 
@@ -99,7 +100,7 @@ func (sb *showBug) layout(g *gocui.Gui) error {
 	if sb.isOnSide {
 		fmt.Fprint(v, "[a] Add label [r] Remove label")
 	} else {
-		fmt.Fprint(v, "[o] Toggle open/close [c] Comment [t] Change title")
+		fmt.Fprint(v, "[o] Toggle open/close [e] Edit [c] Comment [t] Change title")
 	}
 
 	_, err = g.SetViewOnTop(showBugInstructionView)
@@ -183,6 +184,12 @@ func (sb *showBug) keybindings(g *gocui.Gui) error {
 		return err
 	}
 
+	// Edit
+	if err := g.SetKeybinding(showBugView, 'e', gocui.ModNone,
+		sb.edit); err != nil {
+		return err
+	}
+
 	// Labels
 	if err := g.SetKeybinding(showBugView, 'a', gocui.ModNone,
 		sb.addLabel); err != nil {
@@ -240,8 +247,8 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 	fmt.Fprint(v, bugHeader)
 	y0 += lines + 1
 
-	for i, op := range snap.Timeline {
-		viewName := fmt.Sprintf("op%d", i)
+	for _, op := range snap.Timeline {
+		viewName := op.Hash().String()
 
 		// TODO: me might skip the rendering of blocks that are outside of the view
 		// but to do that we need to rework how sb.mainSelectableView is maintained
@@ -618,6 +625,32 @@ func (sb *showBug) toggleOpenClose(g *gocui.Gui, v *gocui.View) error {
 	default:
 		return nil
 	}
+}
+
+func (sb *showBug) edit(g *gocui.Gui, v *gocui.View) error {
+	if sb.isOnSide {
+		ui.msgPopup.Activate(msgPopupErrorTitle, "Selected field is not editable.")
+		return nil
+	}
+
+	snap := sb.bug.Snapshot()
+
+	op, err := snap.SearchTimelineItem(git.Hash(sb.selected))
+	if err != nil {
+		return err
+	}
+
+	switch op.(type) {
+	case *bug.AddCommentTimelineItem:
+		message := op.(*bug.AddCommentTimelineItem).Message
+		return editCommentWithEditor(sb.bug, op.Hash(), message)
+	case *bug.CreateTimelineItem:
+		preMessage := op.(*bug.CreateTimelineItem).Message
+		return editCommentWithEditor(sb.bug, op.Hash(), preMessage)
+	}
+
+	ui.msgPopup.Activate(msgPopupErrorTitle, "Selected field is not editable.")
+	return nil
 }
 
 func (sb *showBug) addLabel(g *gocui.Gui, v *gocui.View) error {

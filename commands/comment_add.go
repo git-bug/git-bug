@@ -29,7 +29,7 @@ func runCommentAdd(cmd *cobra.Command, args []string) error {
 	}
 
 	if commentAddMessage == "" {
-		commentAddMessage, err = input.BugCommentEditorInput(backend)
+		commentAddMessage, err = input.BugCommentEditorInput(backend, "")
 		if err == input.ErrEmptyMessage {
 			fmt.Println("Empty message, aborting.")
 			return nil
