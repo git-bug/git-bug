@@ -25,7 +25,6 @@ type showBug struct {
 	bug                *cache.BugCache
 	childViews         []string
 	mainSelectableView []string
-	mainTimelineIndex  []int
 	sideSelectableView []string
 	selected           string
 	isOnSide           bool
@@ -200,7 +199,6 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 	snap := sb.bug.Snapshot()
 
 	sb.mainSelectableView = nil
-	sb.mainTimelineIndex = nil
 
 	createTimelineItem := snap.Timeline[0].(*bug.CreateTimelineItem)
 
@@ -219,7 +217,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 	)
 	bugHeader, lines := text.Wrap(bugHeader, maxX)
 
-	v, err := sb.createOpView(g, showBugHeaderView, -1, x0, y0, maxX+1, lines, false)
+	v, err := sb.createOpView(g, showBugHeaderView, x0, y0, maxX+1, lines, false)
 	if err != nil {
 		return err
 	}
@@ -239,7 +237,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 			create := op.(*bug.CreateTimelineItem)
 			content, lines := text.WrapLeftPadded(create.Message, maxX, 4)
 
-			v, err := sb.createOpView(g, viewName, i, x0, y0, maxX+1, lines, true)
+			v, err := sb.createOpView(g, viewName, x0, y0, maxX+1, lines, true)
 			if err != nil {
 				return err
 			}
@@ -263,7 +261,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 			)
 			content, lines = text.Wrap(content, maxX)
 
-			v, err := sb.createOpView(g, viewName, i, x0, y0, maxX+1, lines, true)
+			v, err := sb.createOpView(g, viewName, x0, y0, maxX+1, lines, true)
 			if err != nil {
 				return err
 			}
@@ -280,7 +278,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 			)
 			content, lines := text.Wrap(content, maxX)
 
-			v, err := sb.createOpView(g, viewName, i, x0, y0, maxX+1, lines, true)
+			v, err := sb.createOpView(g, viewName, x0, y0, maxX+1, lines, true)
 			if err != nil {
 				return err
 			}
@@ -297,7 +295,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 			)
 			content, lines := text.Wrap(content, maxX)
 
-			v, err := sb.createOpView(g, viewName, i, x0, y0, maxX+1, lines, true)
+			v, err := sb.createOpView(g, viewName, x0, y0, maxX+1, lines, true)
 			if err != nil {
 				return err
 			}
@@ -346,7 +344,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 			)
 			content, lines := text.Wrap(content, maxX)
 
-			v, err := sb.createOpView(g, viewName, i, x0, y0, maxX+1, lines, true)
+			v, err := sb.createOpView(g, viewName, x0, y0, maxX+1, lines, true)
 			if err != nil {
 				return err
 			}
@@ -358,7 +356,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 	return nil
 }
 
-func (sb *showBug) createOpView(g *gocui.Gui, name string, index int, x0 int, y0 int, maxX int, height int, selectable bool) (*gocui.View, error) {
+func (sb *showBug) createOpView(g *gocui.Gui, name string, x0 int, y0 int, maxX int, height int, selectable bool) (*gocui.View, error) {
 	v, err := g.SetView(name, x0, y0, maxX, y0+height+1)
 
 	if err != nil && err != gocui.ErrUnknownView {
