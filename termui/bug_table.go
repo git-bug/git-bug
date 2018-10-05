@@ -8,6 +8,7 @@ import (
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util/colors"
 	"github.com/MichaelMure/git-bug/util/text"
+	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/dustin/go-humanize"
 	"github.com/jroimartin/gocui"
 )
@@ -17,7 +18,6 @@ const bugTableHeaderView = "bugTableHeaderView"
 const bugTableFooterView = "bugTableFooterView"
 const bugTableInstructionView = "bugTableInstructionView"
 
-const defaultRemote = "origin"
 const defaultQuery = "status:open"
 
 type bugTable struct {
@@ -401,6 +401,15 @@ func (bt *bugTable) openBug(g *gocui.Gui, v *gocui.View) error {
 func (bt *bugTable) pull(g *gocui.Gui, v *gocui.View) error {
 	// Note: this is very hacky
 
+	defaultRemote, err := git.GetConfig("gitbug.defaultremote")
+	if err != nil {
+		if _, ok := err.(*git.ErrNotFound); ok {
+			ui.msgPopup.Activate(msgPopupErrorTitle, "No default remote configured")
+		} else {
+			return err
+		}
+	}
+
 	ui.msgPopup.Activate("Pull from remote "+defaultRemote, "...")
 
 	go func() {
@@ -458,6 +467,15 @@ func (bt *bugTable) pull(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (bt *bugTable) push(g *gocui.Gui, v *gocui.View) error {
+	defaultRemote, err := git.GetConfig("gitbug.defaultremote")
+	if err != nil {
+		if _, ok := err.(*git.ErrNotFound); ok {
+			ui.msgPopup.Activate(msgPopupErrorTitle, "No default remote configured")
+		} else {
+			return err
+		}
+	}
+
 	ui.msgPopup.Activate("Push to remote "+defaultRemote, "...")
 
 	go func() {
