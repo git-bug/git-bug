@@ -90,7 +90,7 @@ func (ls *labelSelect) layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
 	ls.childViews = nil
 
-	width := 0
+	width := 5
 	for _, label := range ls.labels {
 		width = maxInt(width, len(label))
 	}
