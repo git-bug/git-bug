@@ -5,7 +5,12 @@ import (
 	"fmt"
 
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/spf13/cobra"
+)
+
+var (
+	defaultRemote bool
 )
 
 func runPush(cmd *cobra.Command, args []string) error {
@@ -13,9 +18,31 @@ func runPush(cmd *cobra.Command, args []string) error {
 		return errors.New("Only pushing to one remote at a time is supported")
 	}
 
-	remote := "origin"
+	if len(args) == 0 && defaultRemote {
+		str, err := git.GetConfig("gitbug.defaultremote")
+		if _, ok := err.(*git.ErrNotFound); ok {
+			return errors.New("No default remote set")
+		} else {
+			return err
+		}
+
+		fmt.Println("Default remote: ", str)
+		return nil
+	}
+
+	remote := ""
 	if len(args) == 1 {
 		remote = args[0]
+	} else if str, err := git.GetConfig("gitbug.defaultremote"); err == nil {
+		remote = str
+	} else {
+		return errors.New("No remote provided, and no defaults specified.")
+	}
+
+	if defaultRemote {
+		if err := git.SetConfig("gitbug.defaultremote", remote); err != nil {
+			return err
+		}
 	}
 
 	backend, err := cache.NewRepoCache(repo)
@@ -43,4 +70,9 @@ var pushCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(pushCmd)
+
+	pushCmd.Flags().SortFlags = false
+
+	pushCmd.Flags().BoolVarP(&defaultRemote, "default", "d", false,
+		"If a remote is provided, set the default remote for future pushes. Otherwise list the default remote if one exists.")
 }
