@@ -166,10 +166,11 @@ func (ls *labelSelect) disable(g *gocui.Gui) error {
 }
 
 func (ls *labelSelect) focusView(g *gocui.Gui) error {
-	// lsx0, lsy0, lsx1, lsy1, err := g.ViewPosition(labelSelectView)
 	_, lsy0, _, lsy1, err := g.ViewPosition(labelSelectView)
+	if err != nil {
+		return err
+	}
 
-	// vx0, vy0, vx1, vy1, err := g.ViewPosition(fmt.Sprintf("view%d", ls.selected))
 	_, vy0, _, vy1, err := g.ViewPosition(fmt.Sprintf("view%d", ls.selected))
 	if err != nil {
 		return err
@@ -207,7 +208,7 @@ func(ls *labelSelect) selectItem(g *gocui.Gui, v *gocui.View) error {
 func (ls *labelSelect) addItem(g *gocui.Gui, v *gocui.View) error {
 	c := ui.inputPopup.Activate("Add a new label")
 
-	go func() error {
+	go func() {
 		input := <-c
 		
 		// Standardize label format
@@ -220,10 +221,15 @@ func (ls *labelSelect) addItem(g *gocui.Gui, v *gocui.View) error {
 				ls.labelSelect[i] = true
 				ls.selected = i
 
+				if err := ls.focusView(g); err != nil {
+					panic(err)
+				}
+
 				g.Update(func(gui *gocui.Gui) error {
 					return nil
 				})
-				return ls.focusView(g)
+
+				return
 			}
 		}
 
@@ -232,7 +238,9 @@ func (ls *labelSelect) addItem(g *gocui.Gui, v *gocui.View) error {
 		ls.labelSelect = append(ls.labelSelect, true)
 		ls.selected = len(ls.labels) - 1
 
-		ls.layout(g)
+		if err := ls.layout(g); err != nil {
+			panic(err)
+		}
 
 		if err := ls.focusView(g); err != nil {
 			panic(err)
@@ -241,8 +249,6 @@ func (ls *labelSelect) addItem(g *gocui.Gui, v *gocui.View) error {
 		g.Update(func(gui *gocui.Gui) error {
 			return nil
 		})
-
-		return nil
 	}()
 
 	return nil
