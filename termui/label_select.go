@@ -5,6 +5,7 @@ import (
 	"github.com/jroimartin/gocui"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/util/colors"
 )
 const labelSelectView = "labelSelectView"
 const labelSelectInstructionsView = "labelSelectInstructionsView"
@@ -89,11 +90,15 @@ func (ls *labelSelect) layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
 	ls.childViews = nil
 
-	// TODO: Make width adaptive
-	width := 30
+	width := 0
+	for _, label := range ls.labels {
+		width = maxInt(width, len(label))
+	}
+	width += 10
 	x0 := 1
+	y0 := 2 - ls.scroll
 
-	v, err := g.SetView(labelSelectView, x0, 0, x0+width, maxY-2)
+	v, err := g.SetView("labelTitleView", x0, 0, x0 + width, 2)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
@@ -101,9 +106,18 @@ func (ls *labelSelect) layout(g *gocui.Gui) error {
 
 		v.Frame = false
 	}
+	ls.childViews = append(ls.childViews, "labelTitleView")
 	v.Clear()
-	fmt.Fprintln(v, ls.scroll)
-	y0 := 1 - ls.scroll
+	fmt.Fprint(v, "   ", colors.Bold("Add Labels"))
+
+	v, err = g.SetView(labelSelectView, x0, 2, x0+width, maxY-2)
+	if err != nil {
+		if err != gocui.ErrUnknownView {
+			return err
+		}
+
+		v.Frame = false
+	}
 
 	for i, label := range ls.labels {
 		viewname := fmt.Sprintf("view%d", i)
@@ -152,34 +166,24 @@ func (ls *labelSelect) disable(g *gocui.Gui) error {
 }
 
 func (ls *labelSelect) focusView(g *gocui.Gui) error {
-	mainView, err := g.View(labelSelectView)
+	// lsx0, lsy0, lsx1, lsy1, err := g.ViewPosition(labelSelectView)
+	_, lsy0, _, lsy1, err := g.ViewPosition(labelSelectView)
+
+	// vx0, vy0, vx1, vy1, err := g.ViewPosition(fmt.Sprintf("view%d", ls.selected))
+	_, vy0, _, vy1, err := g.ViewPosition(fmt.Sprintf("view%d", ls.selected))
 	if err != nil {
 		return err
 	}
 
-	_, maxY := mainView.Size()
-
-	_, vy0, _, _, err := g.ViewPosition(fmt.Sprintf("view%d", ls.selected))
-	if err != nil {
-		return err
-	}
-
-	v, err := g.View(fmt.Sprintf("view%d", ls.selected))
-	if err != nil {
-		return err
-	}
-
-	_, vMaxY := v.Size()
-
-	vy1 := vy0 + vMaxY
-
-	if vy0 < 0 {
-		ls.scroll += vy0
+	// Below bottom of frame
+	if vy1 > lsy1 {
+		ls.scroll += vy1 - lsy1
 		return nil
 	}
 
-	if vy1 > maxY {
-		ls.scroll -= maxY - vy1
+	// Above top of frame
+	if vy0 < lsy0 {
+		ls.scroll -= lsy0 - vy0
 	}
 
 	return nil
