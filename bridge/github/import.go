@@ -103,10 +103,14 @@ func ensureIssue(repo *cache.RepoCache, issue issueTimeline, client *githubv4.Cl
 
 	// if there is no edit, the UserContentEdits given by github is empty. That
 	// means that the original message is given by the issue message.
-
+	//
 	// if there is edits, the UserContentEdits given by github contains both the
 	// original message and the following edits. The issue message give the last
 	// version so we don't care about that.
+	//
+	// the tricky part: for an issue older than the UserContentEdits API, github
+	// doesn't have the previous message version anymore and give an edition
+	// with .Diff == nil. We have to filter them.
 
 	if len(issue.UserContentEdits.Nodes) == 0 {
 		if err == bug.ErrBugNotExist {
@@ -135,49 +139,66 @@ func ensureIssue(repo *cache.RepoCache, issue issueTimeline, client *githubv4.Cl
 	// reverse the order, because github
 	reverseEdits(issue.UserContentEdits.Nodes)
 
-	if err == bug.ErrBugNotExist {
-		firstEdit := issue.UserContentEdits.Nodes[0]
-
-		if firstEdit.Diff == nil {
-			return nil, fmt.Errorf("no diff")
-		}
-
-		b, err = repo.NewBugRaw(
-			makePerson(issue.Author),
-			issue.CreatedAt.Unix(),
-			// Todo: this might not be the initial title, we need to query the
-			// timeline to be sure
-			issue.Title,
-			cleanupText(string(*firstEdit.Diff)),
-			nil,
-			map[string]string{
-				keyGithubId:  parseId(issue.Id),
-				keyGithubUrl: issue.Url.String(),
-			},
-		)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	target, err := b.ResolveTargetWithMetadata(keyGithubId, parseId(issue.Id))
-	if err != nil {
-		return nil, err
-	}
-
 	for i, edit := range issue.UserContentEdits.Nodes {
-		if i == 0 {
+		if b != nil && i == 0 {
 			// The first edit in the github result is the creation itself, we already have that
 			continue
 		}
 
-		err := ensureCommentEdit(b, target, edit)
+		if b == nil {
+			if edit.Diff == nil {
+				// not enough data given by github for old edit, ignore them
+				continue
+			}
+
+			// we create the bug as soon as we have a legit first edition
+			b, err = repo.NewBugRaw(
+				makePerson(issue.Author),
+				issue.CreatedAt.Unix(),
+				// Todo: this might not be the initial title, we need to query the
+				// timeline to be sure
+				issue.Title,
+				cleanupText(string(*edit.Diff)),
+				nil,
+				map[string]string{
+					keyGithubId:  parseId(issue.Id),
+					keyGithubUrl: issue.Url.String(),
+				},
+			)
+			if err != nil {
+				return nil, err
+			}
+			continue
+		}
+
+		target, err := b.ResolveTargetWithMetadata(keyGithubId, parseId(issue.Id))
+		if err != nil {
+			return nil, err
+		}
+
+		err = ensureCommentEdit(b, target, edit)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	if !issue.UserContentEdits.PageInfo.HasNextPage {
+		// if we still didn't get a legit edit, create the bug from the issue data
+		if b == nil {
+			return repo.NewBugRaw(
+				makePerson(issue.Author),
+				issue.CreatedAt.Unix(),
+				// Todo: this might not be the initial title, we need to query the
+				// timeline to be sure
+				issue.Title,
+				cleanupText(string(issue.Body)),
+				nil,
+				map[string]string{
+					keyGithubId:  parseId(issue.Id),
+					keyGithubUrl: issue.Url.String(),
+				},
+			)
+		}
 		return b, nil
 	}
 
@@ -205,13 +226,39 @@ func ensureIssue(repo *cache.RepoCache, issue issueTimeline, client *githubv4.Cl
 			return b, nil
 		}
 
-		for i, edit := range edits.Nodes {
-			if i == 0 {
-				// The first edit in the github result is the creation itself, we already have that
+		for _, edit := range edits.Nodes {
+			if b == nil {
+				if edit.Diff == nil {
+					// not enough data given by github for old edit, ignore them
+					continue
+				}
+
+				// we create the bug as soon as we have a legit first edition
+				b, err = repo.NewBugRaw(
+					makePerson(issue.Author),
+					issue.CreatedAt.Unix(),
+					// Todo: this might not be the initial title, we need to query the
+					// timeline to be sure
+					issue.Title,
+					cleanupText(string(*edit.Diff)),
+					nil,
+					map[string]string{
+						keyGithubId:  parseId(issue.Id),
+						keyGithubUrl: issue.Url.String(),
+					},
+				)
+				if err != nil {
+					return nil, err
+				}
 				continue
 			}
 
-			err := ensureCommentEdit(b, target, edit)
+			target, err := b.ResolveTargetWithMetadata(keyGithubId, parseId(issue.Id))
+			if err != nil {
+				return nil, err
+			}
+
+			err = ensureCommentEdit(b, target, edit)
 			if err != nil {
 				return nil, err
 			}
@@ -225,6 +272,23 @@ func ensureIssue(repo *cache.RepoCache, issue issueTimeline, client *githubv4.Cl
 	}
 
 	// TODO: check + import files
+
+	// if we still didn't get a legit edit, create the bug from the issue data
+	if b == nil {
+		return repo.NewBugRaw(
+			makePerson(issue.Author),
+			issue.CreatedAt.Unix(),
+			// Todo: this might not be the initial title, we need to query the
+			// timeline to be sure
+			issue.Title,
+			cleanupText(string(issue.Body)),
+			nil,
+			map[string]string{
+				keyGithubId:  parseId(issue.Id),
+				keyGithubUrl: issue.Url.String(),
+			},
+		)
+	}
 
 	return b, nil
 }
@@ -323,10 +387,14 @@ func ensureComment(b *cache.BugCache, cursor githubv4.String, comment issueComme
 
 	// if there is no edit, the UserContentEdits given by github is empty. That
 	// means that the original message is given by the comment message.
-
+	//
 	// if there is edits, the UserContentEdits given by github contains both the
 	// original message and the following edits. The comment message give the last
 	// version so we don't care about that.
+	//
+	// the tricky part: for a comment older than the UserContentEdits API, github
+	// doesn't have the previous message version anymore and give an edition
+	// with .Diff == nil. We have to filter them.
 
 	if len(comment.UserContentEdits.Nodes) == 0 {
 		if err == cache.ErrNoMatchingOp {
@@ -351,37 +419,31 @@ func ensureComment(b *cache.BugCache, cursor githubv4.String, comment issueComme
 	// reverse the order, because github
 	reverseEdits(comment.UserContentEdits.Nodes)
 
-	if err == cache.ErrNoMatchingOp {
-		firstEdit := comment.UserContentEdits.Nodes[0]
-
-		if firstEdit.Diff == nil {
-			return fmt.Errorf("no diff")
-		}
-
-		err = b.AddCommentRaw(
-			makePerson(comment.Author),
-			comment.CreatedAt.Unix(),
-			cleanupText(string(*firstEdit.Diff)),
-			nil,
-			map[string]string{
-				keyGithubId:  parseId(comment.Id),
-				keyGithubUrl: comment.Url.String(),
-			},
-		)
-		if err != nil {
-			return err
-		}
-
-		target, err = b.ResolveTargetWithMetadata(keyGithubId, parseId(comment.Id))
-		if err != nil {
-			return err
-		}
-	}
-
 	for i, edit := range comment.UserContentEdits.Nodes {
-		if i == 0 {
+		if target != "" && i == 0 {
 			// The first edit in the github result is the comment creation itself, we already have that
 			continue
+		}
+
+		if target == "" {
+			if edit.Diff == nil {
+				// not enough data given by github for old edit, ignore them
+				continue
+			}
+
+			err = b.AddCommentRaw(
+				makePerson(comment.Author),
+				comment.CreatedAt.Unix(),
+				cleanupText(string(*edit.Diff)),
+				nil,
+				map[string]string{
+					keyGithubId:  parseId(comment.Id),
+					keyGithubUrl: comment.Url.String(),
+				},
+			)
+			if err != nil {
+				return err
+			}
 		}
 
 		err := ensureCommentEdit(b, target, edit)
@@ -445,12 +507,14 @@ func ensureComment(b *cache.BugCache, cursor githubv4.String, comment issueComme
 }
 
 func ensureCommentEdit(b *cache.BugCache, target git.Hash, edit userContentEdit) error {
-	if edit.Editor == nil {
-		return fmt.Errorf("no editor")
+	if edit.Diff == nil {
+		// this happen if the event is older than early 2018, Github doesn't have the data before that.
+		// Best we can do is to ignore the event.
+		return nil
 	}
 
-	if edit.Diff == nil {
-		return fmt.Errorf("no diff")
+	if edit.Editor == nil {
+		return fmt.Errorf("no editor")
 	}
 
 	_, err := b.ResolveTargetWithMetadata(keyGithubId, parseId(edit.Id))
@@ -463,7 +527,7 @@ func ensureCommentEdit(b *cache.BugCache, target git.Hash, edit userContentEdit)
 		return err
 	}
 
-	fmt.Printf("import edition\n")
+	fmt.Println("import edition")
 
 	switch {
 	case edit.DeletedAt != nil:
