@@ -228,8 +228,10 @@ func (ls *labelSelect) addItem(g *gocui.Gui, v *gocui.View) error {
 		ls.labelSelect = append(ls.labelSelect, true)
 		ls.selected = len(ls.labels) - 1
 
+		ls.layout(g)
+
 		if err := ls.focusView(g); err != nil {
-			return err
+			panic(err)
 		}
 
 		g.Update(func(gui *gocui.Gui) error {
