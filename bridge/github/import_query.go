@@ -17,13 +17,13 @@ type actor struct {
 type actorEvent struct {
 	Id        githubv4.ID
 	CreatedAt githubv4.DateTime
-	Actor     actor
+	Actor     *actor
 }
 
 type authorEvent struct {
 	Id        githubv4.ID
 	CreatedAt githubv4.DateTime
-	Author    actor
+	Author    *actor
 }
 
 type userContentEdit struct {
@@ -149,4 +149,8 @@ type commentEditQuery struct {
 			}
 		} `graphql:"issues(first: $issueFirst, after: $issueAfter, orderBy: {field: CREATED_AT, direction: ASC})"`
 	} `graphql:"repository(owner: $owner, name: $name)"`
+}
+
+type userQuery struct {
+	User actor `graphql:"user(login: $login)"`
 }

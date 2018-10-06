@@ -19,11 +19,11 @@ func (*Github) Target() string {
 	return "github"
 }
 
-func (*Github) Importer() core.Importer {
+func (*Github) NewImporter() core.Importer {
 	return &githubImporter{}
 }
 
-func (*Github) Exporter() core.Exporter {
+func (*Github) NewExporter() core.Exporter {
 	return nil
 }
 

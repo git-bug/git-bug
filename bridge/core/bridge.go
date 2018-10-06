@@ -20,10 +20,13 @@ var bridgeImpl map[string]reflect.Type
 // Bridge is a wrapper around a BridgeImpl that will bind low-level
 // implementation with utility code to provide high-level functions.
 type Bridge struct {
-	Name string
-	repo *cache.RepoCache
-	impl BridgeImpl
-	conf Configuration
+	Name     string
+	repo     *cache.RepoCache
+	impl     BridgeImpl
+	importer Importer
+	exporter Exporter
+	conf     Configuration
+	initDone bool
 }
 
 // Register will register a new BridgeImpl
@@ -65,7 +68,7 @@ func NewBridge(repo *cache.RepoCache, target string, name string) (*Bridge, erro
 
 // Instantiate a new bridge for a repo, from the combined target and name contained
 // in the full name
-func NewBridgeFullName(repo *cache.RepoCache, fullName string) (*Bridge, error) {
+func NewBridgeFromFullName(repo *cache.RepoCache, fullName string) (*Bridge, error) {
 	target, name, err := splitFullName(fullName)
 	if err != nil {
 		return nil, err
@@ -184,19 +187,19 @@ func (b *Bridge) storeConfig(conf Configuration) error {
 	return nil
 }
 
-func (b Bridge) getConfig() (Configuration, error) {
-	var err error
+func (b *Bridge) ensureConfig() error {
 	if b.conf == nil {
-		b.conf, err = b.loadConfig()
+		conf, err := b.loadConfig()
 		if err != nil {
-			return nil, err
+			return err
 		}
+		b.conf = conf
 	}
 
-	return b.conf, nil
+	return nil
 }
 
-func (b Bridge) loadConfig() (Configuration, error) {
+func (b *Bridge) loadConfig() (Configuration, error) {
 	keyPrefix := fmt.Sprintf("git-bug.bridge.%s.%s.", b.impl.Target(), b.Name)
 
 	pairs, err := b.repo.ReadConfigs(keyPrefix)
@@ -218,58 +221,120 @@ func (b Bridge) loadConfig() (Configuration, error) {
 	return result, nil
 }
 
-func (b Bridge) ImportAll() error {
-	importer := b.impl.Importer()
+func (b *Bridge) getImporter() Importer {
+	if b.importer == nil {
+		b.importer = b.impl.NewImporter()
+	}
+
+	return b.importer
+}
+
+func (b *Bridge) getExporter() Exporter {
+	if b.exporter == nil {
+		b.exporter = b.impl.NewExporter()
+	}
+
+	return b.exporter
+}
+
+func (b *Bridge) ensureInit() error {
+	if b.initDone {
+		return nil
+	}
+
+	importer := b.getImporter()
+	if importer != nil {
+		err := importer.Init(b.conf)
+		if err != nil {
+			return err
+		}
+	}
+
+	exporter := b.getExporter()
+	if exporter != nil {
+		err := exporter.Init(b.conf)
+		if err != nil {
+			return err
+		}
+	}
+
+	b.initDone = true
+
+	return nil
+}
+
+func (b *Bridge) ImportAll() error {
+	importer := b.getImporter()
 	if importer == nil {
 		return ErrImportNorSupported
 	}
 
-	conf, err := b.getConfig()
+	err := b.ensureConfig()
 	if err != nil {
 		return err
 	}
 
-	return b.impl.Importer().ImportAll(b.repo, conf)
+	err = b.ensureInit()
+	if err != nil {
+		return err
+	}
+
+	return importer.ImportAll(b.repo)
 }
 
-func (b Bridge) Import(id string) error {
-	importer := b.impl.Importer()
+func (b *Bridge) Import(id string) error {
+	importer := b.getImporter()
 	if importer == nil {
 		return ErrImportNorSupported
 	}
 
-	conf, err := b.getConfig()
+	err := b.ensureConfig()
 	if err != nil {
 		return err
 	}
 
-	return b.impl.Importer().Import(b.repo, conf, id)
+	err = b.ensureInit()
+	if err != nil {
+		return err
+	}
+
+	return importer.Import(b.repo, id)
 }
 
-func (b Bridge) ExportAll() error {
-	exporter := b.impl.Exporter()
+func (b *Bridge) ExportAll() error {
+	exporter := b.getExporter()
 	if exporter == nil {
 		return ErrExportNorSupported
 	}
 
-	conf, err := b.getConfig()
+	err := b.ensureConfig()
 	if err != nil {
 		return err
 	}
 
-	return b.impl.Exporter().ExportAll(b.repo, conf)
+	err = b.ensureInit()
+	if err != nil {
+		return err
+	}
+
+	return exporter.ExportAll(b.repo)
 }
 
-func (b Bridge) Export(id string) error {
-	exporter := b.impl.Exporter()
+func (b *Bridge) Export(id string) error {
+	exporter := b.getExporter()
 	if exporter == nil {
 		return ErrExportNorSupported
 	}
 
-	conf, err := b.getConfig()
+	err := b.ensureConfig()
 	if err != nil {
 		return err
 	}
 
-	return b.impl.Exporter().Export(b.repo, conf, id)
+	err = b.ensureInit()
+	if err != nil {
+		return err
+	}
+
+	return exporter.Export(b.repo, id)
 }

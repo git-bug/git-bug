@@ -18,19 +18,21 @@ type BridgeImpl interface {
 	// ValidateConfig check the configuration for error
 	ValidateConfig(conf Configuration) error
 
-	// Importer return an Importer implementation if the import is supported
-	Importer() Importer
+	// NewImporter return an Importer implementation if the import is supported
+	NewImporter() Importer
 
-	// Exporter return an Exporter implementation if the export is supported
-	Exporter() Exporter
+	// NewExporter return an Exporter implementation if the export is supported
+	NewExporter() Exporter
 }
 
 type Importer interface {
-	ImportAll(repo *cache.RepoCache, conf Configuration) error
-	Import(repo *cache.RepoCache, conf Configuration, id string) error
+	Init(conf Configuration) error
+	ImportAll(repo *cache.RepoCache) error
+	Import(repo *cache.RepoCache, id string) error
 }
 
 type Exporter interface {
-	ExportAll(repo *cache.RepoCache, conf Configuration) error
-	Export(repo *cache.RepoCache, conf Configuration, id string) error
+	Init(conf Configuration) error
+	ExportAll(repo *cache.RepoCache) error
+	Export(repo *cache.RepoCache, id string) error
 }

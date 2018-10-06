@@ -20,8 +20,8 @@ func NewBridge(repo *cache.RepoCache, target string, name string) (*core.Bridge,
 
 // Instantiate a new bridge for a repo, from the combined target and name contained
 // in the full name
-func NewBridgeFullName(repo *cache.RepoCache, fullName string) (*core.Bridge, error) {
-	return core.NewBridgeFullName(repo, fullName)
+func NewBridgeFromFullName(repo *cache.RepoCache, fullName string) (*core.Bridge, error) {
+	return core.NewBridgeFromFullName(repo, fullName)
 }
 
 // Attempt to retrieve a default bridge for the given repo. If zero or multiple
