@@ -9,15 +9,21 @@ import (
 	"github.com/MichaelMure/git-bug/graphql/models"
 )
 
+type createOperationResolver struct{}
+
+func (createOperationResolver) Date(ctx context.Context, obj *bug.CreateOperation) (time.Time, error) {
+	return obj.Time(), nil
+}
+
 type addCommentOperationResolver struct{}
 
 func (addCommentOperationResolver) Date(ctx context.Context, obj *bug.AddCommentOperation) (time.Time, error) {
 	return obj.Time(), nil
 }
 
-type createOperationResolver struct{}
+type editCommentOperationResolver struct{}
 
-func (createOperationResolver) Date(ctx context.Context, obj *bug.CreateOperation) (time.Time, error) {
+func (editCommentOperationResolver) Date(ctx context.Context, obj *bug.EditCommentOperation) (time.Time, error) {
 	return obj.Time(), nil
 }
 

@@ -41,6 +41,7 @@ type ResolverRoot interface {
 	CommentHistoryStep() CommentHistoryStepResolver
 	CreateOperation() CreateOperationResolver
 	CreateTimelineItem() CreateTimelineItemResolver
+	EditCommentOperation() EditCommentOperationResolver
 	LabelChangeOperation() LabelChangeOperationResolver
 	LabelChangeTimelineItem() LabelChangeTimelineItemResolver
 	Mutation() MutationResolver
@@ -57,6 +58,7 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	AddCommentOperation struct {
+		Hash    func(childComplexity int) int
 		Author  func(childComplexity int) int
 		Date    func(childComplexity int) int
 		Message func(childComplexity int) int
@@ -124,6 +126,7 @@ type ComplexityRoot struct {
 	}
 
 	CreateOperation struct {
+		Hash    func(childComplexity int) int
 		Author  func(childComplexity int) int
 		Date    func(childComplexity int) int
 		Title   func(childComplexity int) int
@@ -140,6 +143,15 @@ type ComplexityRoot struct {
 		LastEdit  func(childComplexity int) int
 		Edited    func(childComplexity int) int
 		History   func(childComplexity int) int
+	}
+
+	EditCommentOperation struct {
+		Hash    func(childComplexity int) int
+		Author  func(childComplexity int) int
+		Date    func(childComplexity int) int
+		Target  func(childComplexity int) int
+		Message func(childComplexity int) int
+		Files   func(childComplexity int) int
 	}
 
 	LabelChangeOperation struct {
@@ -270,6 +282,9 @@ type CreateOperationResolver interface {
 type CreateTimelineItemResolver interface {
 	CreatedAt(ctx context.Context, obj *bug.CreateTimelineItem) (time.Time, error)
 	LastEdit(ctx context.Context, obj *bug.CreateTimelineItem) (time.Time, error)
+}
+type EditCommentOperationResolver interface {
+	Date(ctx context.Context, obj *bug.EditCommentOperation) (time.Time, error)
 }
 type LabelChangeOperationResolver interface {
 	Date(ctx context.Context, obj *bug.LabelChangeOperation) (time.Time, error)
@@ -969,6 +984,13 @@ func (e *executableSchema) Schema() *ast.Schema {
 func (e *executableSchema) Complexity(typeName, field string, childComplexity int, rawArgs map[string]interface{}) (int, bool) {
 	switch typeName + "." + field {
 
+	case "AddCommentOperation.hash":
+		if e.complexity.AddCommentOperation.Hash == nil {
+			break
+		}
+
+		return e.complexity.AddCommentOperation.Hash(childComplexity), true
+
 	case "AddCommentOperation.author":
 		if e.complexity.AddCommentOperation.Author == nil {
 			break
@@ -1264,6 +1286,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.CommentHistoryStep.Date(childComplexity), true
 
+	case "CreateOperation.hash":
+		if e.complexity.CreateOperation.Hash == nil {
+			break
+		}
+
+		return e.complexity.CreateOperation.Hash(childComplexity), true
+
 	case "CreateOperation.author":
 		if e.complexity.CreateOperation.Author == nil {
 			break
@@ -1354,6 +1383,48 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.CreateTimelineItem.History(childComplexity), true
+
+	case "EditCommentOperation.hash":
+		if e.complexity.EditCommentOperation.Hash == nil {
+			break
+		}
+
+		return e.complexity.EditCommentOperation.Hash(childComplexity), true
+
+	case "EditCommentOperation.author":
+		if e.complexity.EditCommentOperation.Author == nil {
+			break
+		}
+
+		return e.complexity.EditCommentOperation.Author(childComplexity), true
+
+	case "EditCommentOperation.date":
+		if e.complexity.EditCommentOperation.Date == nil {
+			break
+		}
+
+		return e.complexity.EditCommentOperation.Date(childComplexity), true
+
+	case "EditCommentOperation.target":
+		if e.complexity.EditCommentOperation.Target == nil {
+			break
+		}
+
+		return e.complexity.EditCommentOperation.Target(childComplexity), true
+
+	case "EditCommentOperation.message":
+		if e.complexity.EditCommentOperation.Message == nil {
+			break
+		}
+
+		return e.complexity.EditCommentOperation.Message(childComplexity), true
+
+	case "EditCommentOperation.files":
+		if e.complexity.EditCommentOperation.Files == nil {
+			break
+		}
+
+		return e.complexity.EditCommentOperation.Files(childComplexity), true
 
 	case "LabelChangeOperation.hash":
 		if e.complexity.LabelChangeOperation.Hash == nil {
@@ -1871,6 +1942,11 @@ func (ec *executionContext) _AddCommentOperation(ctx context.Context, sel ast.Se
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("AddCommentOperation")
+		case "hash":
+			out.Values[i] = ec._AddCommentOperation_hash(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
 		case "author":
 			out.Values[i] = ec._AddCommentOperation_author(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -1904,6 +1980,28 @@ func (ec *executionContext) _AddCommentOperation(ctx context.Context, sel ast.Se
 		return graphql.Null
 	}
 	return out
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _AddCommentOperation_hash(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentOperation) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "AddCommentOperation",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.Hash()
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(git.Hash)
+	rctx.Result = res
+	return res
 }
 
 // nolint: vetshadow
@@ -3446,6 +3544,11 @@ func (ec *executionContext) _CreateOperation(ctx context.Context, sel ast.Select
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("CreateOperation")
+		case "hash":
+			out.Values[i] = ec._CreateOperation_hash(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
 		case "author":
 			out.Values[i] = ec._CreateOperation_author(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -3484,6 +3587,28 @@ func (ec *executionContext) _CreateOperation(ctx context.Context, sel ast.Select
 		return graphql.Null
 	}
 	return out
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _CreateOperation_hash(ctx context.Context, field graphql.CollectedField, obj *bug.CreateOperation) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "CreateOperation",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.Hash()
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(git.Hash)
+	rctx.Result = res
+	return res
 }
 
 // nolint: vetshadow
@@ -3896,6 +4021,208 @@ func (ec *executionContext) _CreateTimelineItem_history(ctx context.Context, fie
 
 	}
 	wg.Wait()
+	return arr1
+}
+
+var editCommentOperationImplementors = []string{"EditCommentOperation", "Operation", "Authored"}
+
+// nolint: gocyclo, errcheck, gas, goconst
+func (ec *executionContext) _EditCommentOperation(ctx context.Context, sel ast.SelectionSet, obj *bug.EditCommentOperation) graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, editCommentOperationImplementors)
+
+	var wg sync.WaitGroup
+	out := graphql.NewOrderedMap(len(fields))
+	invalid := false
+	for i, field := range fields {
+		out.Keys[i] = field.Alias
+
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EditCommentOperation")
+		case "hash":
+			out.Values[i] = ec._EditCommentOperation_hash(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "author":
+			out.Values[i] = ec._EditCommentOperation_author(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "date":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._EditCommentOperation_date(ctx, field, obj)
+				if out.Values[i] == graphql.Null {
+					invalid = true
+				}
+				wg.Done()
+			}(i, field)
+		case "target":
+			out.Values[i] = ec._EditCommentOperation_target(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "message":
+			out.Values[i] = ec._EditCommentOperation_message(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "files":
+			out.Values[i] = ec._EditCommentOperation_files(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	wg.Wait()
+	if invalid {
+		return graphql.Null
+	}
+	return out
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _EditCommentOperation_hash(ctx context.Context, field graphql.CollectedField, obj *bug.EditCommentOperation) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "EditCommentOperation",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.Hash()
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(git.Hash)
+	rctx.Result = res
+	return res
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _EditCommentOperation_author(ctx context.Context, field graphql.CollectedField, obj *bug.EditCommentOperation) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "EditCommentOperation",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.Author, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bug.Person)
+	rctx.Result = res
+
+	return ec._Person(ctx, field.Selections, &res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _EditCommentOperation_date(ctx context.Context, field graphql.CollectedField, obj *bug.EditCommentOperation) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "EditCommentOperation",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return ec.resolvers.EditCommentOperation().Date(ctx, obj)
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	rctx.Result = res
+	return graphql.MarshalTime(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _EditCommentOperation_target(ctx context.Context, field graphql.CollectedField, obj *bug.EditCommentOperation) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "EditCommentOperation",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.Target, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(git.Hash)
+	rctx.Result = res
+	return res
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _EditCommentOperation_message(ctx context.Context, field graphql.CollectedField, obj *bug.EditCommentOperation) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "EditCommentOperation",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.Message, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	return graphql.MarshalString(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _EditCommentOperation_files(ctx context.Context, field graphql.CollectedField, obj *bug.EditCommentOperation) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "EditCommentOperation",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.Files, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]git.Hash)
+	rctx.Result = res
+
+	arr1 := make(graphql.Array, len(res))
+
+	for idx1 := range res {
+		arr1[idx1] = func() graphql.Marshaler {
+			return res[idx1]
+		}()
+	}
+
 	return arr1
 }
 
@@ -7490,6 +7817,10 @@ func (ec *executionContext) _Authored(ctx context.Context, sel ast.SelectionSet,
 		return ec._AddCommentOperation(ctx, sel, &obj)
 	case *bug.AddCommentOperation:
 		return ec._AddCommentOperation(ctx, sel, obj)
+	case bug.EditCommentOperation:
+		return ec._EditCommentOperation(ctx, sel, &obj)
+	case *bug.EditCommentOperation:
+		return ec._EditCommentOperation(ctx, sel, obj)
 	case bug.SetStatusOperation:
 		return ec._SetStatusOperation(ctx, sel, &obj)
 	case *bug.SetStatusOperation:
@@ -7513,6 +7844,8 @@ func (ec *executionContext) _Operation(ctx context.Context, sel ast.SelectionSet
 		return ec._SetTitleOperation(ctx, sel, obj)
 	case *bug.AddCommentOperation:
 		return ec._AddCommentOperation(ctx, sel, obj)
+	case *bug.EditCommentOperation:
+		return ec._EditCommentOperation(ctx, sel, obj)
 	case *bug.SetStatusOperation:
 		return ec._SetStatusOperation(ctx, sel, obj)
 	case *bug.LabelChangeOperation:
@@ -7648,11 +7981,14 @@ type OperationEdge {
 
 """An item in the timeline of events"""
 interface TimelineItem {
+  """The hash of the source operation"""
   hash: Hash!
 }
 
 """An operation applied to a bug."""
 interface Operation {
+  """The hash of the operation"""
+  hash: Hash!
   """The operations author."""
   author: Person!
   """The datetime when this operation was issued."""
@@ -7660,7 +7996,11 @@ interface Operation {
 }
 
 type CreateOperation implements Operation & Authored {
+  """The hash of the operation"""
+  hash: Hash!
+  """The author of this object."""
   author: Person!
+  """The datetime when this operation was issued."""
   date: Time!
 
   title: String!
@@ -7669,8 +8009,11 @@ type CreateOperation implements Operation & Authored {
 }
 
 type SetTitleOperation implements Operation & Authored {
+  """The hash of the operation"""
   hash: Hash!
+  """The author of this object."""
   author: Person!
+  """The datetime when this operation was issued."""
   date: Time!
 
   title: String!
@@ -7678,24 +8021,47 @@ type SetTitleOperation implements Operation & Authored {
 }
 
 type AddCommentOperation implements Operation & Authored {
+  """The hash of the operation"""
+  hash: Hash!
+  """The author of this object."""
   author: Person!
+  """The datetime when this operation was issued."""
   date: Time!
 
   message: String!
   files: [Hash!]!
 }
 
-type SetStatusOperation implements Operation & Authored {
+type EditCommentOperation implements Operation & Authored {
+  """The hash of the operation"""
   hash: Hash!
+  """The author of this object."""
   author: Person!
+  """The datetime when this operation was issued."""
+  date: Time!
+
+  target: Hash!
+  message: String!
+  files: [Hash!]!
+}
+
+type SetStatusOperation implements Operation & Authored {
+  """The hash of the operation"""
+  hash: Hash!
+  """The author of this object."""
+  author: Person!
+  """The datetime when this operation was issued."""
   date: Time!
 
   status: Status!
 }
 
 type LabelChangeOperation implements Operation & Authored {
+  """The hash of the operation"""
   hash: Hash!
+  """The author of this object."""
   author: Person!
+  """The datetime when this operation was issued."""
   date: Time!
 
   added: [Label!]!
@@ -7720,6 +8086,7 @@ type CommentHistoryStep {
 }
 
 type CreateTimelineItem implements TimelineItem {
+  """The hash of the source operation"""
   hash: Hash!
   author: Person!
   message: String!
@@ -7731,6 +8098,7 @@ type CreateTimelineItem implements TimelineItem {
 }
 
 type AddCommentTimelineItem implements TimelineItem {
+  """The hash of the source operation"""
   hash: Hash!
   author: Person!
   message: String!
@@ -7742,6 +8110,7 @@ type AddCommentTimelineItem implements TimelineItem {
 }
 
 type LabelChangeTimelineItem implements TimelineItem {
+  """The hash of the source operation"""
   hash: Hash!
   author: Person!
   date: Time!
@@ -7750,6 +8119,7 @@ type LabelChangeTimelineItem implements TimelineItem {
 }
 
 type SetStatusTimelineItem implements TimelineItem {
+  """The hash of the source operation"""
   hash: Hash!
   author: Person!
   date: Time!
@@ -7757,6 +8127,7 @@ type SetStatusTimelineItem implements TimelineItem {
 }
 
 type SetTitleTimelineItem implements TimelineItem {
+  """The hash of the source operation"""
   hash: Hash!
   author: Person!
   date: Time!

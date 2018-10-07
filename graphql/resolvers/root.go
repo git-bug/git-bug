@@ -28,10 +28,6 @@ func (r RootResolver) Mutation() graph.MutationResolver {
 	}
 }
 
-func (RootResolver) AddCommentOperation() graph.AddCommentOperationResolver {
-	return &addCommentOperationResolver{}
-}
-
 func (RootResolver) Bug() graph.BugResolver {
 	return &bugResolver{}
 }
@@ -62,6 +58,14 @@ func (r RootResolver) SetTitleTimelineItem() graph.SetTitleTimelineItemResolver 
 
 func (RootResolver) CreateOperation() graph.CreateOperationResolver {
 	return &createOperationResolver{}
+}
+
+func (RootResolver) AddCommentOperation() graph.AddCommentOperationResolver {
+	return &addCommentOperationResolver{}
+}
+
+func (r RootResolver) EditCommentOperation() graph.EditCommentOperationResolver {
+	return &editCommentOperationResolver{}
 }
 
 func (RootResolver) LabelChangeOperation() graph.LabelChangeOperationResolver {

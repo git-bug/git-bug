@@ -75,11 +75,14 @@ type OperationEdge {
 
 """An item in the timeline of events"""
 interface TimelineItem {
+  """The hash of the source operation"""
   hash: Hash!
 }
 
 """An operation applied to a bug."""
 interface Operation {
+  """The hash of the operation"""
+  hash: Hash!
   """The operations author."""
   author: Person!
   """The datetime when this operation was issued."""
@@ -87,7 +90,11 @@ interface Operation {
 }
 
 type CreateOperation implements Operation & Authored {
+  """The hash of the operation"""
+  hash: Hash!
+  """The author of this object."""
   author: Person!
+  """The datetime when this operation was issued."""
   date: Time!
 
   title: String!
@@ -96,8 +103,11 @@ type CreateOperation implements Operation & Authored {
 }
 
 type SetTitleOperation implements Operation & Authored {
+  """The hash of the operation"""
   hash: Hash!
+  """The author of this object."""
   author: Person!
+  """The datetime when this operation was issued."""
   date: Time!
 
   title: String!
@@ -105,24 +115,47 @@ type SetTitleOperation implements Operation & Authored {
 }
 
 type AddCommentOperation implements Operation & Authored {
+  """The hash of the operation"""
+  hash: Hash!
+  """The author of this object."""
   author: Person!
+  """The datetime when this operation was issued."""
   date: Time!
 
   message: String!
   files: [Hash!]!
 }
 
-type SetStatusOperation implements Operation & Authored {
+type EditCommentOperation implements Operation & Authored {
+  """The hash of the operation"""
   hash: Hash!
+  """The author of this object."""
   author: Person!
+  """The datetime when this operation was issued."""
+  date: Time!
+
+  target: Hash!
+  message: String!
+  files: [Hash!]!
+}
+
+type SetStatusOperation implements Operation & Authored {
+  """The hash of the operation"""
+  hash: Hash!
+  """The author of this object."""
+  author: Person!
+  """The datetime when this operation was issued."""
   date: Time!
 
   status: Status!
 }
 
 type LabelChangeOperation implements Operation & Authored {
+  """The hash of the operation"""
   hash: Hash!
+  """The author of this object."""
   author: Person!
+  """The datetime when this operation was issued."""
   date: Time!
 
   added: [Label!]!
@@ -147,6 +180,7 @@ type CommentHistoryStep {
 }
 
 type CreateTimelineItem implements TimelineItem {
+  """The hash of the source operation"""
   hash: Hash!
   author: Person!
   message: String!
@@ -158,6 +192,7 @@ type CreateTimelineItem implements TimelineItem {
 }
 
 type AddCommentTimelineItem implements TimelineItem {
+  """The hash of the source operation"""
   hash: Hash!
   author: Person!
   message: String!
@@ -169,6 +204,7 @@ type AddCommentTimelineItem implements TimelineItem {
 }
 
 type LabelChangeTimelineItem implements TimelineItem {
+  """The hash of the source operation"""
   hash: Hash!
   author: Person!
   date: Time!
@@ -177,6 +213,7 @@ type LabelChangeTimelineItem implements TimelineItem {
 }
 
 type SetStatusTimelineItem implements TimelineItem {
+  """The hash of the source operation"""
   hash: Hash!
   author: Person!
   date: Time!
@@ -184,6 +221,7 @@ type SetStatusTimelineItem implements TimelineItem {
 }
 
 type SetTitleTimelineItem implements TimelineItem {
+  """The hash of the source operation"""
   hash: Hash!
   author: Person!
   date: Time!
