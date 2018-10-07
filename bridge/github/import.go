@@ -565,9 +565,29 @@ func (gi *githubImporter) makePerson(actor *actor) bug.Person {
 	if actor == nil {
 		return gi.ghost
 	}
+	var name string
+	var email string
+
+	switch actor.Typename {
+	case "User":
+		if actor.User.Name != nil {
+			name = string(*(actor.User.Name))
+		}
+		email = string(actor.User.Email)
+	case "Organization":
+		if actor.Organization.Name != nil {
+			name = string(*(actor.Organization.Name))
+		}
+		if actor.Organization.Email != nil {
+			email = string(*(actor.Organization.Email))
+		}
+	case "Bot":
+	}
 
 	return bug.Person{
-		Name:      string(actor.Login),
+		Name:      name,
+		Email:     email,
+		Login:     string(actor.Login),
 		AvatarUrl: string(actor.AvatarUrl),
 	}
 }
@@ -584,9 +604,16 @@ func (gi *githubImporter) fetchGhost() error {
 		return err
 	}
 
+	var name string
+	if q.User.Name != nil {
+		name = string(*q.User.Name)
+	}
+
 	gi.ghost = bug.Person{
-		Name:      string(q.User.Login),
+		Name:      name,
+		Login:     string(q.User.Login),
 		AvatarUrl: string(q.User.AvatarUrl),
+		Email:     string(q.User.Email),
 	}
 
 	return nil

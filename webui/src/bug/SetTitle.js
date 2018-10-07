@@ -33,6 +33,7 @@ SetTitle.fragment = gql`
       author {
         name
         email
+        displayName
       }
       title
       was

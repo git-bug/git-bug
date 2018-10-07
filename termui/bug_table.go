@@ -299,7 +299,7 @@ func (bt *bugTable) render(v *gocui.View, maxX int) {
 		id := text.LeftPadMaxLine(snap.HumanId(), columnWidths["id"], 2)
 		status := text.LeftPadMaxLine(snap.Status.String(), columnWidths["status"], 2)
 		title := text.LeftPadMaxLine(snap.Title, columnWidths["title"], 2)
-		author := text.LeftPadMaxLine(person.Name, columnWidths["author"], 2)
+		author := text.LeftPadMaxLine(person.DisplayName(), columnWidths["author"], 2)
 		summary := text.LeftPadMaxLine(snap.Summary(), columnWidths["summary"], 2)
 		lastEdit := text.LeftPadMaxLine(humanize.Time(snap.LastEditTime()), columnWidths["lastEdit"], 2)
 

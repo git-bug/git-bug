@@ -77,7 +77,7 @@ const BugRow = ({ bug, classes }) => (
         <Typography color={'textSecondary'}>
           {bug.humanId} opened
           <Date date={bug.createdAt} />
-          by {bug.author.name}
+          by {bug.author.displayName}
         </Typography>
       </div>
     </TableCell>
@@ -94,6 +94,7 @@ BugRow.fragment = gql`
     labels
     author {
       name
+      displayName
     }
   }
 `;

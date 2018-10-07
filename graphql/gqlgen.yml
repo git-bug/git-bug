@@ -15,6 +15,15 @@ models:
     model: github.com/MichaelMure/git-bug/bug.Comment
   Person:
     model: github.com/MichaelMure/git-bug/bug.Person
+    fields:
+      name:
+        resolver: true
+      email:
+        resolver: true
+      login:
+        resolver: true
+      avatarUrl:
+        resolver: true
   Label:
     model: github.com/MichaelMure/git-bug/bug.Label
   Hash:
@@ -27,6 +36,8 @@ models:
     model: github.com/MichaelMure/git-bug/bug.SetTitleOperation
   AddCommentOperation:
     model: github.com/MichaelMure/git-bug/bug.AddCommentOperation
+  EditCommentOperation:
+    model: github.com/MichaelMure/git-bug/bug.EditCommentOperation
   SetStatusOperation:
     model: github.com/MichaelMure/git-bug/bug.SetStatusOperation
   LabelChangeOperation:

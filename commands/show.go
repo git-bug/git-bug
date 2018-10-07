@@ -39,7 +39,7 @@ func runShowBug(cmd *cobra.Command, args []string) error {
 	)
 
 	fmt.Printf("%s opened this issue %s\n\n",
-		colors.Magenta(firstComment.Author.Name),
+		colors.Magenta(firstComment.Author.DisplayName()),
 		firstComment.FormatTimeRel(),
 	)
 
@@ -59,7 +59,7 @@ func runShowBug(cmd *cobra.Command, args []string) error {
 		fmt.Printf("%s#%d %s <%s>\n\n",
 			indent,
 			i,
-			comment.Author.Name,
+			comment.Author.DisplayName(),
 			comment.Author.Email,
 		)
 

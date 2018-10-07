@@ -10,8 +10,17 @@ type pageInfo struct {
 }
 
 type actor struct {
+	Typename  githubv4.String `graphql:"__typename"`
 	Login     githubv4.String
 	AvatarUrl githubv4.String
+	User      struct {
+		Name  *githubv4.String
+		Email githubv4.String
+	} `graphql:"... on User"`
+	Organization struct {
+		Name  *githubv4.String
+		Email *githubv4.String
+	} `graphql:"... on Organization"`
 }
 
 type actorEvent struct {
@@ -152,5 +161,10 @@ type commentEditQuery struct {
 }
 
 type userQuery struct {
-	User actor `graphql:"user(login: $login)"`
+	User struct {
+		Login     githubv4.String
+		AvatarUrl githubv4.String
+		Name      *githubv4.String
+		Email     githubv4.String
+	} `graphql:"user(login: $login)"`
 }

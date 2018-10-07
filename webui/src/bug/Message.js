@@ -47,6 +47,7 @@ Message.createFragment = gql`
       author {
         name
         email
+        displayName
       }
       message
     }
@@ -60,6 +61,7 @@ Message.commentFragment = gql`
       author {
         name
         email
+        displayName
       }
       message
     }

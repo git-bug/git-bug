@@ -59,7 +59,7 @@ func runLsBug(cmd *cobra.Command, args []string) error {
 
 		// truncate + pad if needed
 		titleFmt := fmt.Sprintf("%-50.50s", snapshot.Title)
-		authorFmt := fmt.Sprintf("%-15.15s", author.Name)
+		authorFmt := fmt.Sprintf("%-15.15s", author.DisplayName())
 
 		fmt.Printf("%s %s\t%s\t%s\t%s\n",
 			colors.Cyan(b.HumanId()),

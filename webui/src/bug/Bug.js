@@ -88,6 +88,7 @@ Bug.fragment = gql`
     author {
       email
       name
+      displayName
     }
   }
 `;

@@ -12,6 +12,7 @@ import (
 type Person struct {
 	Name      string `json:"name"`
 	Email     string `json:"email"`
+	Login     string `json:"login"`
 	AvatarUrl string `json:"avatar_url"`
 }
 
@@ -38,12 +39,15 @@ func GetUser(repo repository.Repo) (Person, error) {
 
 // Match tell is the Person match the given query string
 func (p Person) Match(query string) bool {
-	return strings.Contains(strings.ToLower(p.Name), strings.ToLower(query))
+	query = strings.ToLower(query)
+
+	return strings.Contains(strings.ToLower(p.Name), query) ||
+		strings.Contains(strings.ToLower(p.Login), query)
 }
 
 func (p Person) Validate() error {
-	if text.Empty(p.Name) {
-		return fmt.Errorf("name is not set")
+	if text.Empty(p.Name) && text.Empty(p.Login) {
+		return fmt.Errorf("either name or login should be set")
 	}
 
 	if strings.Contains(p.Name, "\n") {
@@ -52,6 +56,14 @@ func (p Person) Validate() error {
 
 	if !text.Safe(p.Name) {
 		return fmt.Errorf("name is not fully printable")
+	}
+
+	if strings.Contains(p.Login, "\n") {
+		return fmt.Errorf("login should be a single line")
+	}
+
+	if !text.Safe(p.Login) {
+		return fmt.Errorf("login is not fully printable")
 	}
 
 	if strings.Contains(p.Email, "\n") {
@@ -69,6 +81,15 @@ func (p Person) Validate() error {
 	return nil
 }
 
-func (p Person) String() string {
-	return fmt.Sprintf("%s <%s>", p.Name, p.Email)
+func (p Person) DisplayName() string {
+	switch {
+	case p.Name == "" && p.Login != "":
+		return p.Login
+	case p.Name != "" && p.Login == "":
+		return p.Name
+	case p.Name != "" && p.Login != "":
+		return fmt.Sprintf("%s (%s)", p.Name, p.Login)
+	}
+
+	panic("invalid person data")
 }

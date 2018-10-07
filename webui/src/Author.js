@@ -14,9 +14,13 @@ const styles = theme => ({
 const Author = ({ author, bold, classes }) => {
   const klass = bold ? [classes.author, classes.bold] : [classes.author];
 
+  if(!author.email) {
+    return <span className={klass.join(' ')}>{author.displayName}</span>
+  }
+
   return (
     <Tooltip title={author.email}>
-      <span className={klass.join(' ')}>{author.name}</span>
+      <span className={klass.join(' ')}>{author.displayName}</span>
     </Tooltip>
   );
 };

@@ -8,8 +8,8 @@ import (
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util/colors"
-	"github.com/MichaelMure/git-bug/util/text"
 	"github.com/MichaelMure/git-bug/util/git"
+	"github.com/MichaelMure/git-bug/util/text"
 	"github.com/jroimartin/gocui"
 )
 
@@ -233,7 +233,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 		colors.Cyan(snap.HumanId()),
 		colors.Bold(snap.Title),
 		colors.Yellow(snap.Status),
-		colors.Magenta(snap.Author.Name),
+		colors.Magenta(snap.Author.DisplayName()),
 		snap.CreatedAt.Format(timeLayout),
 		edited,
 	)
@@ -276,7 +276,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 
 			message, _ := text.WrapLeftPadded(comment.Message, maxX, 4)
 			content := fmt.Sprintf("%s commented on %s%s\n\n%s",
-				colors.Magenta(comment.Author.Name),
+				colors.Magenta(comment.Author.DisplayName()),
 				comment.CreatedAt.Time().Format(timeLayout),
 				edited,
 				message,
@@ -294,7 +294,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 			setTitle := op.(*bug.SetTitleTimelineItem)
 
 			content := fmt.Sprintf("%s changed the title to %s on %s",
-				colors.Magenta(setTitle.Author.Name),
+				colors.Magenta(setTitle.Author.DisplayName()),
 				colors.Bold(setTitle.Title),
 				setTitle.UnixTime.Time().Format(timeLayout),
 			)
@@ -311,7 +311,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 			setStatus := op.(*bug.SetStatusTimelineItem)
 
 			content := fmt.Sprintf("%s %s the bug on %s",
-				colors.Magenta(setStatus.Author.Name),
+				colors.Magenta(setStatus.Author.DisplayName()),
 				colors.Bold(setStatus.Status.Action()),
 				setStatus.UnixTime.Time().Format(timeLayout),
 			)
@@ -360,7 +360,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 			}
 
 			content := fmt.Sprintf("%s %s on %s",
-				colors.Magenta(labelChange.Author.Name),
+				colors.Magenta(labelChange.Author.DisplayName()),
 				action.String(),
 				labelChange.UnixTime.Time().Format(timeLayout),
 			)

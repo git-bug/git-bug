@@ -27,6 +27,7 @@ SetStatus.fragment = gql`
       author {
         name
         email
+        displayName
       }
       status
     }

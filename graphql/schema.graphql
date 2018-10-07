@@ -16,11 +16,17 @@ type PageInfo {
 
 """Represents an person in a git object."""
 type Person {
-  """The email of the person."""
+  """The name of the person, if known."""
+  name: String
+
+  """The email of the person, if known."""
   email: String
 
-  """The name of the person."""
-  name: String!
+  """The login of the person, if known."""
+  login: String
+
+  """A string containing the either the name of the person, its login or both"""
+  displayName: String!
 
   """An url to an avatar"""
   avatarUrl: String

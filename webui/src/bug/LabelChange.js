@@ -42,6 +42,7 @@ LabelChange.fragment = gql`
       author {
         name
         email
+        displayName
       }
       added
       removed

@@ -29,7 +29,10 @@ func (*Github) Configure(repo repository.RepoCommon) (core.Configuration, error)
 	conf := make(core.Configuration)
 
 	fmt.Println()
-	fmt.Println("git-bug will generate an access token in your Github profile. Your credential are not stored and are only used to generate the token. The token is stored in the repository git config.")
+	fmt.Println("git-bug will now generate an access token in your Github profile. Your credential are not stored and are only used to generate the token. The token is stored in the repository git config.")
+	fmt.Println()
+	fmt.Println("The token will have the following scopes:")
+	fmt.Println("  - user:email: to be able to read public-only users email")
 	// fmt.Println("The token will have the \"repo\" permission, giving it read/write access to your repositories and issues. There is no narrower scope available, sorry :-|")
 	fmt.Println()
 
@@ -120,7 +123,9 @@ func requestTokenWith2FA(note, username, password, otpCode string) (*http.Respon
 		Note        string   `json:"note"`
 		Fingerprint string   `json:"fingerprint"`
 	}{
-		// Scopes:      []string{"repo"},
+		// user:email is requested to be able to read public emails
+		//     - a private email will stay private, even with this token
+		Scopes:      []string{"user:email"},
 		Note:        note,
 		Fingerprint: randomFingerprint(),
 	}

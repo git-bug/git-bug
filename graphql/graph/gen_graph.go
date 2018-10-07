@@ -45,6 +45,7 @@ type ResolverRoot interface {
 	LabelChangeOperation() LabelChangeOperationResolver
 	LabelChangeTimelineItem() LabelChangeTimelineItemResolver
 	Mutation() MutationResolver
+	Person() PersonResolver
 	Query() QueryResolver
 	Repository() RepositoryResolver
 	SetStatusOperation() SetStatusOperationResolver
@@ -200,9 +201,11 @@ type ComplexityRoot struct {
 	}
 
 	Person struct {
-		Email     func(childComplexity int) int
-		Name      func(childComplexity int) int
-		AvatarUrl func(childComplexity int) int
+		Name        func(childComplexity int) int
+		Email       func(childComplexity int) int
+		Login       func(childComplexity int) int
+		DisplayName func(childComplexity int) int
+		AvatarUrl   func(childComplexity int) int
 	}
 
 	Query struct {
@@ -300,6 +303,13 @@ type MutationResolver interface {
 	Close(ctx context.Context, repoRef *string, prefix string) (bug.Snapshot, error)
 	SetTitle(ctx context.Context, repoRef *string, prefix string, title string) (bug.Snapshot, error)
 	Commit(ctx context.Context, repoRef *string, prefix string) (bug.Snapshot, error)
+}
+type PersonResolver interface {
+	Name(ctx context.Context, obj *bug.Person) (*string, error)
+	Email(ctx context.Context, obj *bug.Person) (*string, error)
+	Login(ctx context.Context, obj *bug.Person) (*string, error)
+
+	AvatarURL(ctx context.Context, obj *bug.Person) (*string, error)
 }
 type QueryResolver interface {
 	DefaultRepository(ctx context.Context) (*models.Repository, error)
@@ -1650,6 +1660,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PageInfo.EndCursor(childComplexity), true
 
+	case "Person.name":
+		if e.complexity.Person.Name == nil {
+			break
+		}
+
+		return e.complexity.Person.Name(childComplexity), true
+
 	case "Person.email":
 		if e.complexity.Person.Email == nil {
 			break
@@ -1657,12 +1674,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Person.Email(childComplexity), true
 
-	case "Person.name":
-		if e.complexity.Person.Name == nil {
+	case "Person.login":
+		if e.complexity.Person.Login == nil {
 			break
 		}
 
-		return e.complexity.Person.Name(childComplexity), true
+		return e.complexity.Person.Login(childComplexity), true
+
+	case "Person.displayName":
+		if e.complexity.Person.DisplayName == nil {
+			break
+		}
+
+		return e.complexity.Person.DisplayName(childComplexity), true
 
 	case "Person.avatarUrl":
 		if e.complexity.Person.AvatarUrl == nil {
@@ -5280,6 +5304,7 @@ var personImplementors = []string{"Person"}
 func (ec *executionContext) _Person(ctx context.Context, sel ast.SelectionSet, obj *bug.Person) graphql.Marshaler {
 	fields := graphql.CollectFields(ctx, sel, personImplementors)
 
+	var wg sync.WaitGroup
 	out := graphql.NewOrderedMap(len(fields))
 	invalid := false
 	for i, field := range fields {
@@ -5288,43 +5313,44 @@ func (ec *executionContext) _Person(ctx context.Context, sel ast.SelectionSet, o
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Person")
-		case "email":
-			out.Values[i] = ec._Person_email(ctx, field, obj)
 		case "name":
-			out.Values[i] = ec._Person_name(ctx, field, obj)
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._Person_name(ctx, field, obj)
+				wg.Done()
+			}(i, field)
+		case "email":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._Person_email(ctx, field, obj)
+				wg.Done()
+			}(i, field)
+		case "login":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._Person_login(ctx, field, obj)
+				wg.Done()
+			}(i, field)
+		case "displayName":
+			out.Values[i] = ec._Person_displayName(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}
 		case "avatarUrl":
-			out.Values[i] = ec._Person_avatarUrl(ctx, field, obj)
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._Person_avatarUrl(ctx, field, obj)
+				wg.Done()
+			}(i, field)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-
+	wg.Wait()
 	if invalid {
 		return graphql.Null
 	}
 	return out
-}
-
-// nolint: vetshadow
-func (ec *executionContext) _Person_email(ctx context.Context, field graphql.CollectedField, obj *bug.Person) graphql.Marshaler {
-	rctx := &graphql.ResolverContext{
-		Object: "Person",
-		Args:   nil,
-		Field:  field,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
-		return obj.Email, nil
-	})
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	rctx.Result = res
-	return graphql.MarshalString(res)
 }
 
 // nolint: vetshadow
@@ -5336,7 +5362,76 @@ func (ec *executionContext) _Person_name(ctx context.Context, field graphql.Coll
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
-		return obj.Name, nil
+		return ec.resolvers.Person().Name(ctx, obj)
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	rctx.Result = res
+
+	if res == nil {
+		return graphql.Null
+	}
+	return graphql.MarshalString(*res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Person_email(ctx context.Context, field graphql.CollectedField, obj *bug.Person) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "Person",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return ec.resolvers.Person().Email(ctx, obj)
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	rctx.Result = res
+
+	if res == nil {
+		return graphql.Null
+	}
+	return graphql.MarshalString(*res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Person_login(ctx context.Context, field graphql.CollectedField, obj *bug.Person) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "Person",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return ec.resolvers.Person().Login(ctx, obj)
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	rctx.Result = res
+
+	if res == nil {
+		return graphql.Null
+	}
+	return graphql.MarshalString(*res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Person_displayName(ctx context.Context, field graphql.CollectedField, obj *bug.Person) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "Person",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.DisplayName(), nil
 	})
 	if resTmp == nil {
 		if !ec.HasError(rctx) {
@@ -5358,14 +5453,18 @@ func (ec *executionContext) _Person_avatarUrl(ctx context.Context, field graphql
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
-		return obj.AvatarUrl, nil
+		return ec.resolvers.Person().AvatarURL(ctx, obj)
 	})
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	rctx.Result = res
-	return graphql.MarshalString(res)
+
+	if res == nil {
+		return graphql.Null
+	}
+	return graphql.MarshalString(*res)
 }
 
 var queryImplementors = []string{"Query"}
@@ -7922,11 +8021,17 @@ type PageInfo {
 
 """Represents an person in a git object."""
 type Person {
-  """The email of the person."""
+  """The name of the person, if known."""
+  name: String
+
+  """The email of the person, if known."""
   email: String
 
-  """The name of the person."""
-  name: String!
+  """The login of the person, if known."""
+  login: String
+
+  """A string containing the either the name of the person, its login or both"""
+  displayName: String!
 
   """An url to an avatar"""
   avatarUrl: String
