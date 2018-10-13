@@ -1,6 +1,6 @@
+import { withStyles } from '@material-ui/core/styles';
 import Tooltip from '@material-ui/core/Tooltip/Tooltip';
 import React from 'react';
-import { withStyles } from '@material-ui/core/styles';
 
 const styles = theme => ({
   author: {
@@ -14,8 +14,8 @@ const styles = theme => ({
 const Author = ({ author, bold, classes }) => {
   const klass = bold ? [classes.author, classes.bold] : [classes.author];
 
-  if(!author.email) {
-    return <span className={klass.join(' ')}>{author.displayName}</span>
+  if (!author.email) {
+    return <span className={klass.join(' ')}>{author.displayName}</span>;
   }
 
   return (
