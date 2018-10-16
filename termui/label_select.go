@@ -42,7 +42,12 @@ func (ls *labelSelect) SetBug(cache *cache.RepoCache, bug *cache.BugCache) {
 	}
 
 	ls.labelSelect = labelSelect
-	ls.selected = 0
+	if len(labelSelect) > 0 {
+		ls.selected = 0
+	} else {
+		ls.selected = -1
+	}
+
 	ls.scroll = 0
 }
 
@@ -166,6 +171,10 @@ func (ls *labelSelect) disable(g *gocui.Gui) error {
 }
 
 func (ls *labelSelect) focusView(g *gocui.Gui) error {
+	if ls.selected < 0 {
+		return nil
+	}
+
 	_, lsy0, _, lsy1, err := g.ViewPosition(labelSelectView)
 	if err != nil {
 		return err
@@ -191,16 +200,28 @@ func (ls *labelSelect) focusView(g *gocui.Gui) error {
 }
 
 func (ls *labelSelect) selectPrevious(g *gocui.Gui, v *gocui.View) error {
+	if ls.selected < 0 {
+		return nil
+	}
+
 	ls.selected = maxInt(0, ls.selected-1)
 	return ls.focusView(g)
 }
 
 func (ls *labelSelect) selectNext(g *gocui.Gui, v *gocui.View) error {
+	if ls.selected < 0 {
+		return nil
+	}
+
 	ls.selected = minInt(len(ls.labels)-1, ls.selected+1)
 	return ls.focusView(g)
 }
 
 func(ls *labelSelect) selectItem(g *gocui.Gui, v *gocui.View) error {
+	if ls.selected < 0 {
+		return nil
+	}
+
 	ls.labelSelect[ls.selected] = !ls.labelSelect[ls.selected]
 	return nil
 }
