@@ -5,7 +5,6 @@ import (
 	"github.com/jroimartin/gocui"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/util/colors"
 )
 const labelSelectView = "labelSelectView"
 const labelSelectInstructionsView = "labelSelectInstructionsView"
@@ -101,21 +100,9 @@ func (ls *labelSelect) layout(g *gocui.Gui) error {
 	}
 	width += 10
 	x0 := 1
-	y0 := 2 - ls.scroll
+	y0 := 0 - ls.scroll
 
-	v, err := g.SetView("labelTitleView", x0, 0, x0 + width, 2)
-	if err != nil {
-		if err != gocui.ErrUnknownView {
-			return err
-		}
-
-		v.Frame = false
-	}
-	ls.childViews = append(ls.childViews, "labelTitleView")
-	v.Clear()
-	fmt.Fprint(v, "   ", colors.Bold("Add Labels"))
-
-	v, err = g.SetView(labelSelectView, x0, 2, x0+width, maxY-2)
+	v, err := g.SetView(labelSelectView, x0, 0, x0+width, maxY-2)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
@@ -151,7 +138,7 @@ func (ls *labelSelect) layout(g *gocui.Gui) error {
 		v.BgColor = gocui.ColorBlue
 	}
 	v.Clear()
-	fmt.Fprint(v, "[q] Save and close [↓↑,jk] Nav [a] Add item")
+	fmt.Fprint(v, "[q] Save and close [↓↑,jk] Nav [a] Add item", " - ", ls.scroll, " - ", ls.selected)
 	if _, err = g.SetViewOnTop(labelSelectInstructionsView); err != nil {
 		return err
 	}
@@ -242,32 +229,20 @@ func (ls *labelSelect) addItem(g *gocui.Gui, v *gocui.View) error {
 				ls.labelSelect[i] = true
 				ls.selected = i
 
-				if err := ls.focusView(g); err != nil {
-					panic(err)
-				}
-
 				g.Update(func(gui *gocui.Gui) error {
-					return nil
+					return ls.focusView(g)
 				})
 
 				return
 			}
 		}
 
-		// Add new label, make it selected, and move frame
+		// Add new label, make it selected, and focus
 		ls.labels = append(ls.labels, bug.Label(input))
 		ls.labelSelect = append(ls.labelSelect, true)
 		ls.selected = len(ls.labels) - 1
 
-		if err := ls.layout(g); err != nil {
-			panic(err)
-		}
-
-		if err := ls.focusView(g); err != nil {
-			panic(err)
-		}
-
-		g.Update(func(gui *gocui.Gui) error {
+		g.Update(func(g *gocui.Gui) error {
 			return nil
 		})
 	}()
