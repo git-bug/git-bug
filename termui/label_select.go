@@ -288,28 +288,33 @@ func (ls *labelSelect) saveAndReturn(g *gocui.Gui, v *gocui.View) error {
 		}
 	}
 
-	// Find the new and removed labels. This makes use of the fact that the first elements
-	// of selectedLabels are the not-removed labels in bugLabels
+	// Find the new and removed labels. This could be implemented more efficiently...
 	newLabels := []string{}
 	rmLabels := []string{}
-	i := 0	// Index for bugLabels
-	j := 0	// Index for selectedLabels
-	for {
-		if j == len(selectedLabels) {
-			// No more labels to consider
-			break
-		} else if i == len(bugLabels) {
-			// Remaining labels are all new
-			newLabels = append(newLabels, selectedLabels[j].String())
-			j += 1
-		} else if bugLabels[i] == selectedLabels[j] {
-			// Labels match. Move to next pair
-			i += 1
-			j += 1
-		} else {
-			// Labels don't match. Prelabel must have been removed
-			rmLabels = append(rmLabels, bugLabels[i].String())
-			i += 1
+
+	for _, selectedLabel := range selectedLabels {
+		found := false
+		for _, bugLabel := range bugLabels {
+			if selectedLabel == bugLabel {
+				found = true
+			}
+		}
+
+		if !found {
+			newLabels = append(newLabels, string(selectedLabel))
+		}
+	}
+
+	for _, bugLabel := range bugLabels {
+		found := false
+		for _, selectedLabel := range selectedLabels {
+			if bugLabel == selectedLabel {
+				found = true
+			}
+		}
+
+		if !found {
+			rmLabels = append(rmLabels, string(bugLabel))
 		}
 	}
 
