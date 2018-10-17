@@ -62,13 +62,13 @@ var commentAddCmd = &cobra.Command{
 func init() {
 	commentCmd.AddCommand(commentAddCmd)
 
-	commentCmd.Flags().SortFlags = false
+	commentAddCmd.Flags().SortFlags = false
 
-	commentCmd.Flags().StringVarP(&commentAddMessageFile, "file", "F", "",
+	commentAddCmd.Flags().StringVarP(&commentAddMessageFile, "file", "F", "",
 		"Take the message from the given file. Use - to read the message from the standard input",
 	)
 
-	commentCmd.Flags().StringVarP(&commentAddMessage, "message", "m", "",
+	commentAddCmd.Flags().StringVarP(&commentAddMessage, "message", "m", "",
 		"Provide the new message from the command line",
 	)
 }
