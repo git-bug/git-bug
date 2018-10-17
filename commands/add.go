@@ -17,20 +17,20 @@ var (
 func runAddBug(cmd *cobra.Command, args []string) error {
 	var err error
 
-	if addMessageFile != "" && addMessage == "" {
-		addMessage, err = input.FromFile(addMessageFile)
-		if err != nil {
-			return err
-		}
-	}
-
 	backend, err := cache.NewRepoCache(repo)
 	if err != nil {
 		return err
 	}
 	defer backend.Close()
 
-	if addMessage == "" || addTitle == "" {
+	if addMessageFile != "" && addMessage == "" {
+		addTitle, addMessage, err = input.BugCreateFileInput(addMessageFile)
+		if err != nil {
+			return err
+		}
+	}
+
+	if addMessageFile == "" && (addMessage == "" || addTitle == "") {
 		addTitle, addMessage, err = input.BugCreateEditorInput(backend, addTitle, addMessage)
 
 		if err == input.ErrEmptyTitle {

@@ -27,13 +27,13 @@ func runCommentAdd(cmd *cobra.Command, args []string) error {
 	}
 
 	if commentAddMessageFile != "" && commentAddMessage == "" {
-		commentAddMessage, err = input.FromFile(commentAddMessageFile)
+		commentAddMessage, err = input.BugCommentFileInput(commentAddMessageFile)
 		if err != nil {
 			return err
 		}
 	}
 
-	if commentAddMessage == "" {
+	if commentAddMessageFile == "" && commentAddMessage == "" {
 		commentAddMessage, err = input.BugCommentEditorInput(backend, "")
 		if err == input.ErrEmptyMessage {
 			fmt.Println("Empty message, aborting.")

@@ -48,6 +48,21 @@ func BugCreateEditorInput(repo repository.RepoCommon, preTitle string, preMessag
 		return "", "", err
 	}
 
+	return processCreate(raw)
+}
+
+// BugCreateFileInput read from either from a file or from the standard input
+// and extract a title and a message
+func BugCreateFileInput(fileName string) (string, string, error) {
+	raw, err := fromFile(fileName)
+	if err != nil {
+		return "", "", err
+	}
+
+	return processCreate(raw)
+}
+
+func processCreate(raw string) (string, string, error) {
 	lines := strings.Split(raw, "\n")
 
 	var title string
@@ -94,6 +109,21 @@ func BugCommentEditorInput(repo repository.RepoCommon, preMessage string) (strin
 		return "", err
 	}
 
+	return processComment(raw)
+}
+
+// BugCommentFileInput read from either from a file or from the standard input
+// and extract a message
+func BugCommentFileInput(fileName string) (string, error) {
+	raw, err := fromFile(fileName)
+	if err != nil {
+		return "", err
+	}
+
+	return processComment(raw)
+}
+
+func processComment(raw string) (string, error) {
 	lines := strings.Split(raw, "\n")
 
 	var buffer bytes.Buffer
@@ -266,11 +296,11 @@ func launchEditor(repo repository.RepoCommon, fileName string) (string, error) {
 	return string(output), err
 }
 
-// FromFile loads and returns the contents of a given file. If - is passed
+// fromFile loads and returns the contents of a given file. If - is passed
 // through, much like git, it will read from stdin. This can be piped data,
 // unless there is a tty in which case the user will be prompted to enter a
 // message.
-func FromFile(fileName string) (string, error) {
+func fromFile(fileName string) (string, error) {
 	if fileName == "-" {
 		stat, err := os.Stdin.Stat()
 		if err != nil {
