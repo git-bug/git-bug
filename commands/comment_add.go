@@ -21,6 +21,11 @@ func runCommentAdd(cmd *cobra.Command, args []string) error {
 	}
 	defer backend.Close()
 
+	b, args, err := _select.ResolveBug(backend, args)
+	if err != nil {
+		return err
+	}
+
 	if commentAddMessageFile != "" && commentAddMessage == "" {
 		commentAddMessage, err = input.FromFile(commentAddMessageFile)
 		if err != nil {
@@ -37,11 +42,6 @@ func runCommentAdd(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-	}
-
-	b, args, err := _select.ResolveBug(backend, args)
-	if err != nil {
-		return err
 	}
 
 	err = b.AddComment(commentAddMessage)
