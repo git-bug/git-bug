@@ -1,11 +1,14 @@
 package termui
+
 import (
 	"fmt"
 	"strings"
-	"github.com/jroimartin/gocui"
+
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/jroimartin/gocui"
 )
+
 const labelSelectView = "labelSelectView"
 const labelSelectInstructionsView = "labelSelectInstructionsView"
 
@@ -131,14 +134,14 @@ func (ls *labelSelect) layout(g *gocui.Gui) error {
 	v, err = g.SetView(labelSelectInstructionsView, -1, maxY-2, maxX, maxY)
 	ls.childViews = append(ls.childViews, labelSelectInstructionsView)
 	if err != nil {
-		if err != gocui.ErrUnknownView{
+		if err != gocui.ErrUnknownView {
 			return err
 		}
 		v.Frame = false
 		v.BgColor = gocui.ColorBlue
 	}
 	v.Clear()
-	fmt.Fprint(v, "[q] Save and close [↓↑,jk] Nav [a] Add item", " - ", ls.scroll, " - ", ls.selected)
+	fmt.Fprint(v, "[q] Save and close [↓↑,jk] Nav [a] Add item")
 	if _, err = g.SetViewOnTop(labelSelectInstructionsView); err != nil {
 		return err
 	}
@@ -204,7 +207,7 @@ func (ls *labelSelect) selectNext(g *gocui.Gui, v *gocui.View) error {
 	return ls.focusView(g)
 }
 
-func(ls *labelSelect) selectItem(g *gocui.Gui, v *gocui.View) error {
+func (ls *labelSelect) selectItem(g *gocui.Gui, v *gocui.View) error {
 	if ls.selected < 0 {
 		return nil
 	}
@@ -218,7 +221,7 @@ func (ls *labelSelect) addItem(g *gocui.Gui, v *gocui.View) error {
 
 	go func() {
 		input := <-c
-		
+
 		// Standardize label format
 		input = strings.TrimSuffix(input, "\n")
 		input = strings.Replace(input, " ", "-", -1)
@@ -256,7 +259,7 @@ func (ls *labelSelect) abort(g *gocui.Gui, v *gocui.View) error {
 
 func (ls *labelSelect) saveAndReturn(g *gocui.Gui, v *gocui.View) error {
 	bugLabels := ls.bug.Snapshot().Labels
-	selectedLabels := []bug.Label{}
+	var selectedLabels []bug.Label
 	for i, label := range ls.labels {
 		if ls.labelSelect[i] {
 			selectedLabels = append(selectedLabels, label)
@@ -264,8 +267,8 @@ func (ls *labelSelect) saveAndReturn(g *gocui.Gui, v *gocui.View) error {
 	}
 
 	// Find the new and removed labels. This could be implemented more efficiently...
-	newLabels := []string{}
-	rmLabels := []string{}
+	var newLabels []string
+	var rmLabels []string
 
 	for _, selectedLabel := range selectedLabels {
 		found := false
