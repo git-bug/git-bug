@@ -73,9 +73,10 @@ func runShowBug(cmd *cobra.Command, args []string) error {
 }
 
 var showCmd = &cobra.Command{
-	Use:   "show [<id>]",
-	Short: "Display the details of a bug",
-	RunE:  runShowBug,
+	Use:     "show [<id>]",
+	Short:   "Display the details of a bug",
+	PreRunE: loadRepo,
+	RunE:    runShowBug,
 }
 
 func init() {

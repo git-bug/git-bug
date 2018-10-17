@@ -28,9 +28,10 @@ func runStatus(cmd *cobra.Command, args []string) error {
 }
 
 var statusCmd = &cobra.Command{
-	Use:   "status [<id>]",
-	Short: "Display or change a bug status",
-	RunE:  runStatus,
+	Use:     "status [<id>]",
+	Short:   "Display or change a bug status",
+	PreRunE: loadRepo,
+	RunE:    runStatus,
 }
 
 func init() {

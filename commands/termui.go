@@ -17,9 +17,10 @@ func runTermUI(cmd *cobra.Command, args []string) error {
 }
 
 var termUICmd = &cobra.Command{
-	Use:   "termui",
-	Short: "Launch the terminal UI",
-	RunE:  runTermUI,
+	Use:     "termui",
+	Short:   "Launch the terminal UI",
+	PreRunE: loadRepo,
+	RunE:    runTermUI,
 }
 
 func init() {

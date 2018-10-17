@@ -35,9 +35,10 @@ func runBridgePull(cmd *cobra.Command, args []string) error {
 }
 
 var bridgePullCmd = &cobra.Command{
-	Use:   "pull [<name>]",
-	Short: "Pull updates",
-	RunE:  runBridgePull,
+	Use:     "pull [<name>]",
+	Short:   "Pull updates",
+	PreRunE: loadRepo,
+	RunE:    runBridgePull,
 }
 
 func init() {

@@ -34,9 +34,10 @@ func runLabelAdd(cmd *cobra.Command, args []string) error {
 }
 
 var labelAddCmd = &cobra.Command{
-	Use:   "add [<id>] <label>[...]",
-	Short: "Add a label",
-	RunE:  runLabelAdd,
+	Use:     "add [<id>] <label>[...]",
+	Short:   "Add a label",
+	PreRunE: loadRepo,
+	RunE:    runLabelAdd,
 }
 
 func init() {

@@ -223,9 +223,10 @@ func (gufh *gitUploadFileHandler) ServeHTTP(rw http.ResponseWriter, r *http.Requ
 }
 
 var webUICmd = &cobra.Command{
-	Use:   "webui",
-	Short: "Launch the web UI",
-	RunE:  runWebUI,
+	Use:     "webui",
+	Short:   "Launch the web UI",
+	PreRunE: loadRepo,
+	RunE:    runWebUI,
 }
 
 func init() {

@@ -28,9 +28,10 @@ func runTitle(cmd *cobra.Command, args []string) error {
 }
 
 var titleCmd = &cobra.Command{
-	Use:   "title [<id>]",
-	Short: "Display or change a title",
-	RunE:  runTitle,
+	Use:     "title [<id>]",
+	Short:   "Display or change a title",
+	PreRunE: loadRepo,
+	RunE:    runTitle,
 }
 
 func init() {

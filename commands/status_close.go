@@ -27,9 +27,10 @@ func runStatusClose(cmd *cobra.Command, args []string) error {
 }
 
 var closeCmd = &cobra.Command{
-	Use:   "close [<id>]",
-	Short: "Mark a bug as closed",
-	RunE:  runStatusClose,
+	Use:     "close [<id>]",
+	Short:   "Mark a bug as closed",
+	PreRunE: loadRepo,
+	RunE:    runStatusClose,
 }
 
 func init() {

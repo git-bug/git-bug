@@ -53,9 +53,10 @@ func runAddBug(cmd *cobra.Command, args []string) error {
 }
 
 var addCmd = &cobra.Command{
-	Use:   "add",
-	Short: "Create a new bug",
-	RunE:  runAddBug,
+	Use:     "add",
+	Short:   "Create a new bug",
+	PreRunE: loadRepo,
+	RunE:    runAddBug,
 }
 
 func init() {

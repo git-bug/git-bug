@@ -29,7 +29,8 @@ git bug comment
 git bug status
 git bug deselect
 `,
-	RunE: runDeselect,
+	PreRunE: loadRepo,
+	RunE:    runDeselect,
 }
 
 func init() {

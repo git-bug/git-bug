@@ -38,10 +38,6 @@ the same git remote your are already using to collaborate with other peoples.
 		}
 	},
 
-	// Load the repo before any command execution
-	// Note, this concern only commands that actually have a Run function
-	PersistentPreRunE: loadRepo,
-
 	DisableAutoGenTag: true,
 
 	// Custom bash code to connect the git completion for "git bug" to the

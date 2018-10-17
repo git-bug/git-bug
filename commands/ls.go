@@ -139,7 +139,8 @@ git bug ls status:open sort:edit-desc
 List closed bugs sorted by creation with flags:
 git bug ls --status closed --by creation
 `,
-	RunE: runLsBug,
+	PreRunE: loadRepo,
+	RunE:    runLsBug,
 }
 
 func init() {

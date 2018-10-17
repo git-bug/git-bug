@@ -51,9 +51,10 @@ func runTitleEdit(cmd *cobra.Command, args []string) error {
 }
 
 var titleEditCmd = &cobra.Command{
-	Use:   "edit [<id>]",
-	Short: "Edit a title",
-	RunE:  runTitleEdit,
+	Use:     "edit [<id>]",
+	Short:   "Edit a title",
+	PreRunE: loadRepo,
+	RunE:    runTitleEdit,
 }
 
 func init() {

@@ -44,7 +44,8 @@ var selectCmd = &cobra.Command{
 git bug comment
 git bug status
 `,
-	RunE: runSelect,
+	PreRunE: loadRepo,
+	RunE:    runSelect,
 }
 
 func init() {

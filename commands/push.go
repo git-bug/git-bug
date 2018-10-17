@@ -36,9 +36,10 @@ func runPush(cmd *cobra.Command, args []string) error {
 
 // showCmd defines the "push" subcommand.
 var pushCmd = &cobra.Command{
-	Use:   "push [<remote>]",
-	Short: "Push bugs update to a git remote",
-	RunE:  runPush,
+	Use:     "push [<remote>]",
+	Short:   "Push bugs update to a git remote",
+	PreRunE: loadRepo,
+	RunE:    runPush,
 }
 
 func init() {

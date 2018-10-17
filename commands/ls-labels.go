@@ -29,7 +29,8 @@ var lsLabelCmd = &cobra.Command{
 	Long: `List valid labels.
 
 Note: in the future, a proper label policy could be implemented where valid labels are defined in a configuration file. Until that, the default behavior is to return the list of labels already used.`,
-	RunE: runLsLabel,
+	PreRunE: loadRepo,
+	RunE:    runLsLabel,
 }
 
 func init() {
