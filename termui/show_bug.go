@@ -95,13 +95,7 @@ func (sb *showBug) layout(g *gocui.Gui) error {
 	}
 
 	v.Clear()
-	fmt.Fprintf(v, "[q] Save and return [←↓↑→,hjkl] Navigation ")
-
-	if sb.isOnSide {
-		fmt.Fprint(v, "[a] Add label [r] Remove label")
-	} else {
-		fmt.Fprint(v, "[o] Toggle open/close [e] Edit [c] Comment [t] Change title")
-	}
+	fmt.Fprintf(v, "[q] Save and return [←↓↑→,hjkl] Navigation [o] Toggle open/close [e] Edit [c] Comment [t] Change title")
 
 	_, err = g.SetViewOnTop(showBugInstructionView)
 	if err != nil {
@@ -187,16 +181,6 @@ func (sb *showBug) keybindings(g *gocui.Gui) error {
 	// Edit
 	if err := g.SetKeybinding(showBugView, 'e', gocui.ModNone,
 		sb.edit); err != nil {
-		return err
-	}
-
-	// Labels
-	if err := g.SetKeybinding(showBugView, 'a', gocui.ModNone,
-		sb.addLabel); err != nil {
-		return err
-	}
-	if err := g.SetKeybinding(showBugView, 'r', gocui.ModNone,
-		sb.removeLabel); err != nil {
 		return err
 	}
 
@@ -628,12 +612,11 @@ func (sb *showBug) toggleOpenClose(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (sb *showBug) edit(g *gocui.Gui, v *gocui.View) error {
-	if sb.isOnSide {
-		ui.msgPopup.Activate(msgPopupErrorTitle, "Selected field is not editable.")
-		return nil
-	}
-
 	snap := sb.bug.Snapshot()
+
+	if sb.isOnSide {
+		return sb.editLabels(g, snap)
+	}
 
 	op, err := snap.SearchTimelineItem(git.Hash(sb.selected))
 	if err != nil {
@@ -647,66 +630,15 @@ func (sb *showBug) edit(g *gocui.Gui, v *gocui.View) error {
 	case *bug.CreateTimelineItem:
 		preMessage := op.(*bug.CreateTimelineItem).Message
 		return editCommentWithEditor(sb.bug, op.Hash(), preMessage)
+	case *bug.LabelChangeTimelineItem:
+		return sb.editLabels(g, snap)
 	}
 
 	ui.msgPopup.Activate(msgPopupErrorTitle, "Selected field is not editable.")
 	return nil
 }
 
-func (sb *showBug) addLabel(g *gocui.Gui, v *gocui.View) error {
-	c := ui.inputPopup.Activate("Add labels")
-
-	go func() {
-		input := <-c
-
-		labels := strings.FieldsFunc(input, func(r rune) bool {
-			return r == ' ' || r == ','
-		})
-
-		_, err := sb.bug.ChangeLabels(trimLabels(labels), nil)
-		if err != nil {
-			ui.msgPopup.Activate(msgPopupErrorTitle, err.Error())
-		}
-
-		g.Update(func(gui *gocui.Gui) error {
-			return nil
-		})
-	}()
-
-	return nil
-}
-
-func (sb *showBug) removeLabel(g *gocui.Gui, v *gocui.View) error {
-	c := ui.inputPopup.Activate("Remove labels")
-
-	go func() {
-		input := <-c
-
-		labels := strings.FieldsFunc(input, func(r rune) bool {
-			return r == ' ' || r == ','
-		})
-
-		_, err := sb.bug.ChangeLabels(nil, trimLabels(labels))
-		if err != nil {
-			ui.msgPopup.Activate(msgPopupErrorTitle, err.Error())
-		}
-
-		g.Update(func(gui *gocui.Gui) error {
-			return nil
-		})
-	}()
-
-	return nil
-}
-
-func trimLabels(labels []string) []string {
-	var result []string
-
-	for _, label := range labels {
-		trimmed := strings.TrimSpace(label)
-		if len(trimmed) > 0 {
-			result = append(result, trimmed)
-		}
-	}
-	return result
+func (sb *showBug) editLabels(g *gocui.Gui, snap *bug.Snapshot) error {
+	ui.labelSelect.SetBug(sb.cache, sb.bug)
+	return ui.activateWindow(ui.labelSelect)
 }
