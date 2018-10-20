@@ -22,6 +22,7 @@ const (
 	LabelChangeOp
 	EditCommentOp
 	NoOpOp
+	SetMetadataOp
 )
 
 // Operation define the interface to fulfill for an edit operation of a Bug
@@ -75,11 +76,15 @@ func hashOperation(op Operation) (git.Hash, error) {
 
 // OpBase implement the common code for all operations
 type OpBase struct {
-	OperationType OperationType `json:"type"`
-	Author        Person        `json:"author"`
-	UnixTime      int64         `json:"timestamp"`
-	hash          git.Hash
+	OperationType OperationType     `json:"type"`
+	Author        Person            `json:"author"`
+	UnixTime      int64             `json:"timestamp"`
 	Metadata      map[string]string `json:"metadata,omitempty"`
+	// Not serialized. Store the op's hash in memory.
+	hash git.Hash
+	// Not serialized. Store the extra metadata compiled from SetMetadataOperation
+	// in memory.
+	extraMetadata map[string]string
 }
 
 // newOpBase is the constructor for an OpBase
@@ -146,10 +151,29 @@ func (op *OpBase) SetMetadata(key string, value string) {
 // GetMetadata retrieve arbitrary metadata about the operation
 func (op *OpBase) GetMetadata(key string) (string, bool) {
 	val, ok := op.Metadata[key]
+
+	if ok {
+		return val, true
+	}
+
+	// extraMetadata can't replace the original operations value if any
+	val, ok = op.extraMetadata[key]
+
 	return val, ok
 }
 
 // AllMetadata return all metadata for this operation
 func (op *OpBase) AllMetadata() map[string]string {
-	return op.Metadata
+	result := make(map[string]string)
+
+	for key, val := range op.extraMetadata {
+		result[key] = val
+	}
+
+	// Original metadata take precedence
+	for key, val := range op.Metadata {
+		result[key] = val
+	}
+
+	return result
 }
