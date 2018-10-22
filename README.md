@@ -55,7 +55,7 @@ That's all !
 Create a new bug:
 
 ```
-git bug new
+git bug add
 ```
 
 Your favorite editor will open to write a title and a message.
