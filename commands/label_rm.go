@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/cleaner"
 	"github.com/MichaelMure/git-bug/commands/select"
 	"github.com/spf13/cobra"
 )
@@ -14,6 +15,7 @@ func runLabelRm(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	defer backend.Close()
+	cleaner.Register(backend.Close)
 
 	b, args, err := _select.ResolveBug(backend, args)
 	if err != nil {

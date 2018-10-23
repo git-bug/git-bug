@@ -3,6 +3,7 @@ package commands
 import (
 	"github.com/MichaelMure/git-bug/bridge"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/cleaner"
 	"github.com/spf13/cobra"
 )
 
@@ -12,6 +13,7 @@ func runBridgeRm(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	defer backend.Close()
+	cleaner.Register(backend.Close)
 
 	err = bridge.RemoveBridges(backend, args[0])
 	if err != nil {

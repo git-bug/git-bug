@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/cleaner"
 	"github.com/MichaelMure/git-bug/input"
 	"github.com/spf13/cobra"
 )
@@ -22,6 +23,7 @@ func runAddBug(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	defer backend.Close()
+	cleaner.Register(backend.Close)
 
 	if addMessageFile != "" && addMessage == "" {
 		addTitle, addMessage, err = input.BugCreateFileInput(addMessageFile)
