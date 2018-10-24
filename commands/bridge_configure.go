@@ -9,7 +9,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/bridge"
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/cleaner"
+	"github.com/MichaelMure/git-bug/util/interrupt"
 	"github.com/spf13/cobra"
 )
 
@@ -19,7 +19,7 @@ func runBridgeConfigure(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	defer backend.Close()
-	cleaner.Register(backend.Close)
+	interrupt.RegisterCleaner(backend.Close)
 
 	target, err := promptTarget()
 	if err != nil {

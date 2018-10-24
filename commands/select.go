@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/cleaner"
 	"github.com/MichaelMure/git-bug/commands/select"
+	"github.com/MichaelMure/git-bug/util/interrupt"
 	"github.com/spf13/cobra"
 )
 
@@ -20,7 +20,7 @@ func runSelect(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	defer backend.Close()
-	cleaner.Register(backend.Close)
+	interrupt.RegisterCleaner(backend.Close)
 
 	prefix := args[0]
 

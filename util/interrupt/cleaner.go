@@ -1,4 +1,4 @@
-package cleaner
+package interrupt
 
 import (
 	"fmt"
@@ -12,8 +12,8 @@ type Cleaner func() error
 var cleaners []Cleaner
 var inactive bool
 
-// Register a cleaner function. When a function is registered, the Signal watcher is started in a goroutine.
-func Register(f Cleaner) {
+// RegisterCleaner is responsible for regisreting a cleaner function. When a function is registered, the Signal watcher is started in a goroutine.
+func RegisterCleaner(f Cleaner) {
 	cleaners = append(cleaners, f)
 	if !inactive {
 		inactive = false
