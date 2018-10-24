@@ -21,7 +21,8 @@ func Register(f t) {
 			ch := make(chan os.Signal, 1)
 			signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 			<-ch
-			fmt.Println("")
+                        // Prevent un-terminated ^C character in terminal
+			fmt.Println()
 			clean()
 			os.Exit(1)
 		}()
