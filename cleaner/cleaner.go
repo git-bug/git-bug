@@ -7,7 +7,7 @@ import (
 	"syscall"
 )
 
-type t func() error
+type Cleaner func() error
 
 var cleaners []t
 var inactive bool
