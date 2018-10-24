@@ -9,11 +9,11 @@ import (
 
 type Cleaner func() error
 
-var cleaners []t
+var cleaners []Cleaner
 var inactive bool
 
 // Register a cleaner function. When a function is registered, the Signal watcher is started in a goroutine.
-func Register(f t) {
+func Register(f Cleaner) {
 	cleaners = append(cleaners, f)
 	if !inactive {
 		inactive = false
@@ -21,7 +21,7 @@ func Register(f t) {
 			ch := make(chan os.Signal, 1)
 			signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 			<-ch
-                        // Prevent un-terminated ^C character in terminal
+			// Prevent un-terminated ^C character in terminal
 			fmt.Println()
 			clean()
 			os.Exit(1)
@@ -35,5 +35,5 @@ func clean() {
 	for _, f := range cleaners {
 		_ = f()
 	}
-	cleaners = []t{}
+	cleaners = []Cleaner{}
 }
