@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/util/interrupt"
 	"github.com/spf13/cobra"
 )
 
@@ -23,6 +24,7 @@ func runPush(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	defer backend.Close()
+	interrupt.RegisterCleaner(backend.Close)
 
 	stdout, err := backend.Push(remote)
 	if err != nil {

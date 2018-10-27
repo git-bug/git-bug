@@ -3,6 +3,7 @@ package commands
 import (
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/commands/select"
+	"github.com/MichaelMure/git-bug/util/interrupt"
 	"github.com/spf13/cobra"
 )
 
@@ -12,6 +13,7 @@ func runStatusOpen(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	defer backend.Close()
+	interrupt.RegisterCleaner(backend.Close)
 
 	b, args, err := _select.ResolveBug(backend, args)
 	if err != nil {
