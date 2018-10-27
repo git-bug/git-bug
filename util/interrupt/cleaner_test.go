@@ -22,7 +22,7 @@ func TestRegisterAndErrorAtCleaning(t *testing.T) {
 	RegisterCleaner(f2, f3)
 	// count := 0
 
-	errl := Clean()
+	errl := clean()
 	if len(errl) != 2 {
 		t.Fatalf("unexpected error count")
 	}
@@ -43,7 +43,7 @@ func TestRegisterAndClean(t *testing.T) {
 	}
 	RegisterCleaner(f, f2)
 
-	errl := Clean()
+	errl := clean()
 	if len(errl) != 0 {
 		t.Fatalf("unexpected error count")
 	}

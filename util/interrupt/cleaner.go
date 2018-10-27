@@ -7,13 +7,13 @@ import (
 	"syscall"
 )
 
-// Cleaner type referes to a function with no inputs that returns an error
+// Cleaner type refers to a function with no inputs that returns an error
 type Cleaner func() error
 
 var cleaners []Cleaner
 var active = false
 
-// RegisterCleaner is responsible for regisreting a cleaner function. When a function is registered, the Signal watcher is started in a goroutine.
+// RegisterCleaner is responsible for registering a cleaner function. When a function is registered, the Signal watcher is started in a goroutine.
 func RegisterCleaner(f ...Cleaner) {
 	for _, fn := range f {
 		cleaners = append([]Cleaner{fn}, cleaners...)
@@ -25,8 +25,7 @@ func RegisterCleaner(f ...Cleaner) {
 				<-ch
 				// Prevent un-terminated ^C character in terminal
 				fmt.Println()
-				fmt.Println("Cleaning")
-				errl := Clean()
+				errl := clean()
 				for _, err := range errl {
 					fmt.Println(err)
 				}
@@ -36,8 +35,8 @@ func RegisterCleaner(f ...Cleaner) {
 	}
 }
 
-// Clean invokes all registered cleanup functions, and returns a list of errors, if they exist.
-func Clean() (errorlist []error) {
+// clean invokes all registered cleanup functions, and returns a list of errors, if they exist.
+func clean() (errorlist []error) {
 	for _, f := range cleaners {
 		err := f()
 		if err != nil {
