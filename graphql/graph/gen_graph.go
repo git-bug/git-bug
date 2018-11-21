@@ -15,6 +15,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/introspection"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/graphql/models"
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/vektah/gqlparser"
 	"github.com/vektah/gqlparser/ast"
@@ -46,7 +47,6 @@ type ResolverRoot interface {
 	LabelChangeOperation() LabelChangeOperationResolver
 	LabelChangeTimelineItem() LabelChangeTimelineItemResolver
 	Mutation() MutationResolver
-	Person() PersonResolver
 	Query() QueryResolver
 	Repository() RepositoryResolver
 	SetStatusOperation() SetStatusOperationResolver
@@ -158,6 +158,14 @@ type ComplexityRoot struct {
 		Files   func(childComplexity int) int
 	}
 
+	Identity struct {
+		Name        func(childComplexity int) int
+		Email       func(childComplexity int) int
+		Login       func(childComplexity int) int
+		DisplayName func(childComplexity int) int
+		AvatarUrl   func(childComplexity int) int
+	}
+
 	LabelChangeOperation struct {
 		Hash    func(childComplexity int) int
 		Author  func(childComplexity int) int
@@ -201,14 +209,6 @@ type ComplexityRoot struct {
 		HasPreviousPage func(childComplexity int) int
 		StartCursor     func(childComplexity int) int
 		EndCursor       func(childComplexity int) int
-	}
-
-	Person struct {
-		Name        func(childComplexity int) int
-		Email       func(childComplexity int) int
-		Login       func(childComplexity int) int
-		DisplayName func(childComplexity int) int
-		AvatarUrl   func(childComplexity int) int
 	}
 
 	Query struct {
@@ -306,13 +306,6 @@ type MutationResolver interface {
 	Close(ctx context.Context, repoRef *string, prefix string) (bug.Snapshot, error)
 	SetTitle(ctx context.Context, repoRef *string, prefix string, title string) (bug.Snapshot, error)
 	Commit(ctx context.Context, repoRef *string, prefix string) (bug.Snapshot, error)
-}
-type PersonResolver interface {
-	Name(ctx context.Context, obj *bug.Person) (*string, error)
-	Email(ctx context.Context, obj *bug.Person) (*string, error)
-	Login(ctx context.Context, obj *bug.Person) (*string, error)
-
-	AvatarURL(ctx context.Context, obj *bug.Person) (*string, error)
 }
 type QueryResolver interface {
 	DefaultRepository(ctx context.Context) (*models.Repository, error)
@@ -1453,6 +1446,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.EditCommentOperation.Files(childComplexity), true
 
+	case "Identity.name":
+		if e.complexity.Identity.Name == nil {
+			break
+		}
+
+		return e.complexity.Identity.Name(childComplexity), true
+
+	case "Identity.email":
+		if e.complexity.Identity.Email == nil {
+			break
+		}
+
+		return e.complexity.Identity.Email(childComplexity), true
+
+	case "Identity.login":
+		if e.complexity.Identity.Login == nil {
+			break
+		}
+
+		return e.complexity.Identity.Login(childComplexity), true
+
+	case "Identity.displayName":
+		if e.complexity.Identity.DisplayName == nil {
+			break
+		}
+
+		return e.complexity.Identity.DisplayName(childComplexity), true
+
+	case "Identity.avatarUrl":
+		if e.complexity.Identity.AvatarUrl == nil {
+			break
+		}
+
+		return e.complexity.Identity.AvatarUrl(childComplexity), true
+
 	case "LabelChangeOperation.hash":
 		if e.complexity.LabelChangeOperation.Hash == nil {
 			break
@@ -1676,41 +1704,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.PageInfo.EndCursor(childComplexity), true
-
-	case "Person.name":
-		if e.complexity.Person.Name == nil {
-			break
-		}
-
-		return e.complexity.Person.Name(childComplexity), true
-
-	case "Person.email":
-		if e.complexity.Person.Email == nil {
-			break
-		}
-
-		return e.complexity.Person.Email(childComplexity), true
-
-	case "Person.login":
-		if e.complexity.Person.Login == nil {
-			break
-		}
-
-		return e.complexity.Person.Login(childComplexity), true
-
-	case "Person.displayName":
-		if e.complexity.Person.DisplayName == nil {
-			break
-		}
-
-		return e.complexity.Person.DisplayName(childComplexity), true
-
-	case "Person.avatarUrl":
-		if e.complexity.Person.AvatarUrl == nil {
-			break
-		}
-
-		return e.complexity.Person.AvatarUrl(childComplexity), true
 
 	case "Query.defaultRepository":
 		if e.complexity.Query.DefaultRepository == nil {
@@ -2072,11 +2065,18 @@ func (ec *executionContext) _AddCommentOperation_author(ctx context.Context, fie
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bug.Person)
+	res := resTmp.(*identity.Identity)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 
-	return ec._Person(ctx, field.Selections, &res)
+	if res == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+
+	return ec._Identity(ctx, field.Selections, res)
 }
 
 // nolint: vetshadow
@@ -2296,11 +2296,18 @@ func (ec *executionContext) _AddCommentTimelineItem_author(ctx context.Context, 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bug.Person)
+	res := resTmp.(*identity.Identity)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 
-	return ec._Person(ctx, field.Selections, &res)
+	if res == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+
+	return ec._Identity(ctx, field.Selections, res)
 }
 
 // nolint: vetshadow
@@ -2800,11 +2807,18 @@ func (ec *executionContext) _Bug_author(ctx context.Context, field graphql.Colle
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bug.Person)
+	res := resTmp.(*identity.Identity)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 
-	return ec._Person(ctx, field.Selections, &res)
+	if res == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+
+	return ec._Identity(ctx, field.Selections, res)
 }
 
 // nolint: vetshadow
@@ -3334,11 +3348,18 @@ func (ec *executionContext) _Comment_author(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bug.Person)
+	res := resTmp.(*identity.Identity)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 
-	return ec._Person(ctx, field.Selections, &res)
+	if res == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+
+	return ec._Identity(ctx, field.Selections, res)
 }
 
 // nolint: vetshadow
@@ -3916,11 +3937,18 @@ func (ec *executionContext) _CreateOperation_author(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bug.Person)
+	res := resTmp.(*identity.Identity)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 
-	return ec._Person(ctx, field.Selections, &res)
+	if res == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+
+	return ec._Identity(ctx, field.Selections, res)
 }
 
 // nolint: vetshadow
@@ -4167,11 +4195,18 @@ func (ec *executionContext) _CreateTimelineItem_author(ctx context.Context, fiel
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bug.Person)
+	res := resTmp.(*identity.Identity)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 
-	return ec._Person(ctx, field.Selections, &res)
+	if res == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+
+	return ec._Identity(ctx, field.Selections, res)
 }
 
 // nolint: vetshadow
@@ -4513,11 +4548,18 @@ func (ec *executionContext) _EditCommentOperation_author(ctx context.Context, fi
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bug.Person)
+	res := resTmp.(*identity.Identity)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 
-	return ec._Person(ctx, field.Selections, &res)
+	if res == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+
+	return ec._Identity(ctx, field.Selections, res)
 }
 
 // nolint: vetshadow
@@ -4637,6 +4679,167 @@ func (ec *executionContext) _EditCommentOperation_files(ctx context.Context, fie
 	return arr1
 }
 
+var identityImplementors = []string{"Identity"}
+
+// nolint: gocyclo, errcheck, gas, goconst
+func (ec *executionContext) _Identity(ctx context.Context, sel ast.SelectionSet, obj *identity.Identity) graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, identityImplementors)
+
+	out := graphql.NewOrderedMap(len(fields))
+	invalid := false
+	for i, field := range fields {
+		out.Keys[i] = field.Alias
+
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Identity")
+		case "name":
+			out.Values[i] = ec._Identity_name(ctx, field, obj)
+		case "email":
+			out.Values[i] = ec._Identity_email(ctx, field, obj)
+		case "login":
+			out.Values[i] = ec._Identity_login(ctx, field, obj)
+		case "displayName":
+			out.Values[i] = ec._Identity_displayName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "avatarUrl":
+			out.Values[i] = ec._Identity_avatarUrl(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+
+	if invalid {
+		return graphql.Null
+	}
+	return out
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Identity_name(ctx context.Context, field graphql.CollectedField, obj *identity.Identity) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Identity",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name(), nil
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return graphql.MarshalString(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Identity_email(ctx context.Context, field graphql.CollectedField, obj *identity.Identity) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Identity",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Email(), nil
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return graphql.MarshalString(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Identity_login(ctx context.Context, field graphql.CollectedField, obj *identity.Identity) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Identity",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Login(), nil
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return graphql.MarshalString(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Identity_displayName(ctx context.Context, field graphql.CollectedField, obj *identity.Identity) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Identity",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DisplayName(), nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return graphql.MarshalString(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Identity_avatarUrl(ctx context.Context, field graphql.CollectedField, obj *identity.Identity) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Identity",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AvatarURL(), nil
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return graphql.MarshalString(res)
+}
+
 var labelChangeOperationImplementors = []string{"LabelChangeOperation", "Operation", "Authored"}
 
 // nolint: gocyclo, errcheck, gas, goconst
@@ -4740,11 +4943,18 @@ func (ec *executionContext) _LabelChangeOperation_author(ctx context.Context, fi
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bug.Person)
+	res := resTmp.(*identity.Identity)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 
-	return ec._Person(ctx, field.Selections, &res)
+	if res == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+
+	return ec._Identity(ctx, field.Selections, res)
 }
 
 // nolint: vetshadow
@@ -4949,11 +5159,18 @@ func (ec *executionContext) _LabelChangeTimelineItem_author(ctx context.Context,
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bug.Person)
+	res := resTmp.(*identity.Identity)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 
-	return ec._Person(ctx, field.Selections, &res)
+	if res == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+
+	return ec._Identity(ctx, field.Selections, res)
 }
 
 // nolint: vetshadow
@@ -5820,200 +6037,6 @@ func (ec *executionContext) _PageInfo_endCursor(ctx context.Context, field graph
 	return graphql.MarshalString(res)
 }
 
-var personImplementors = []string{"Person"}
-
-// nolint: gocyclo, errcheck, gas, goconst
-func (ec *executionContext) _Person(ctx context.Context, sel ast.SelectionSet, obj *bug.Person) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, personImplementors)
-
-	var wg sync.WaitGroup
-	out := graphql.NewOrderedMap(len(fields))
-	invalid := false
-	for i, field := range fields {
-		out.Keys[i] = field.Alias
-
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Person")
-		case "name":
-			wg.Add(1)
-			go func(i int, field graphql.CollectedField) {
-				out.Values[i] = ec._Person_name(ctx, field, obj)
-				wg.Done()
-			}(i, field)
-		case "email":
-			wg.Add(1)
-			go func(i int, field graphql.CollectedField) {
-				out.Values[i] = ec._Person_email(ctx, field, obj)
-				wg.Done()
-			}(i, field)
-		case "login":
-			wg.Add(1)
-			go func(i int, field graphql.CollectedField) {
-				out.Values[i] = ec._Person_login(ctx, field, obj)
-				wg.Done()
-			}(i, field)
-		case "displayName":
-			out.Values[i] = ec._Person_displayName(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalid = true
-			}
-		case "avatarUrl":
-			wg.Add(1)
-			go func(i int, field graphql.CollectedField) {
-				out.Values[i] = ec._Person_avatarUrl(ctx, field, obj)
-				wg.Done()
-			}(i, field)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	wg.Wait()
-	if invalid {
-		return graphql.Null
-	}
-	return out
-}
-
-// nolint: vetshadow
-func (ec *executionContext) _Person_name(ctx context.Context, field graphql.CollectedField, obj *bug.Person) graphql.Marshaler {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
-	rctx := &graphql.ResolverContext{
-		Object: "Person",
-		Args:   nil,
-		Field:  field,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Person().Name(rctx, obj)
-	})
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-
-	if res == nil {
-		return graphql.Null
-	}
-	return graphql.MarshalString(*res)
-}
-
-// nolint: vetshadow
-func (ec *executionContext) _Person_email(ctx context.Context, field graphql.CollectedField, obj *bug.Person) graphql.Marshaler {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
-	rctx := &graphql.ResolverContext{
-		Object: "Person",
-		Args:   nil,
-		Field:  field,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Person().Email(rctx, obj)
-	})
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-
-	if res == nil {
-		return graphql.Null
-	}
-	return graphql.MarshalString(*res)
-}
-
-// nolint: vetshadow
-func (ec *executionContext) _Person_login(ctx context.Context, field graphql.CollectedField, obj *bug.Person) graphql.Marshaler {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
-	rctx := &graphql.ResolverContext{
-		Object: "Person",
-		Args:   nil,
-		Field:  field,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Person().Login(rctx, obj)
-	})
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-
-	if res == nil {
-		return graphql.Null
-	}
-	return graphql.MarshalString(*res)
-}
-
-// nolint: vetshadow
-func (ec *executionContext) _Person_displayName(ctx context.Context, field graphql.CollectedField, obj *bug.Person) graphql.Marshaler {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
-	rctx := &graphql.ResolverContext{
-		Object: "Person",
-		Args:   nil,
-		Field:  field,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.DisplayName(), nil
-	})
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return graphql.MarshalString(res)
-}
-
-// nolint: vetshadow
-func (ec *executionContext) _Person_avatarUrl(ctx context.Context, field graphql.CollectedField, obj *bug.Person) graphql.Marshaler {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
-	rctx := &graphql.ResolverContext{
-		Object: "Person",
-		Args:   nil,
-		Field:  field,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Person().AvatarURL(rctx, obj)
-	})
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-
-	if res == nil {
-		return graphql.Null
-	}
-	return graphql.MarshalString(*res)
-}
-
 var queryImplementors = []string{"Query"}
 
 // nolint: gocyclo, errcheck, gas, goconst
@@ -6400,11 +6423,18 @@ func (ec *executionContext) _SetStatusOperation_author(ctx context.Context, fiel
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bug.Person)
+	res := resTmp.(*identity.Identity)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 
-	return ec._Person(ctx, field.Selections, &res)
+	if res == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+
+	return ec._Identity(ctx, field.Selections, res)
 }
 
 // nolint: vetshadow
@@ -6563,11 +6593,18 @@ func (ec *executionContext) _SetStatusTimelineItem_author(ctx context.Context, f
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bug.Person)
+	res := resTmp.(*identity.Identity)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 
-	return ec._Person(ctx, field.Selections, &res)
+	if res == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+
+	return ec._Identity(ctx, field.Selections, res)
 }
 
 // nolint: vetshadow
@@ -6727,11 +6764,18 @@ func (ec *executionContext) _SetTitleOperation_author(ctx context.Context, field
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bug.Person)
+	res := resTmp.(*identity.Identity)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 
-	return ec._Person(ctx, field.Selections, &res)
+	if res == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+
+	return ec._Identity(ctx, field.Selections, res)
 }
 
 // nolint: vetshadow
@@ -6918,11 +6962,18 @@ func (ec *executionContext) _SetTitleTimelineItem_author(ctx context.Context, fi
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bug.Person)
+	res := resTmp.(*identity.Identity)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 
-	return ec._Person(ctx, field.Selections, &res)
+	if res == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+
+	return ec._Identity(ctx, field.Selections, res)
 }
 
 // nolint: vetshadow
@@ -8862,24 +8913,10 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var parsedSchema = gqlparser.MustLoadSchema(
-	&ast.Source{Name: "bug.graphql", Input: `"""Represents an person"""
-type Person {
-  """The name of the person, if known."""
-  name: String
-  """The email of the person, if known."""
-  email: String
-  """The login of the person, if known."""
-  login: String
-  """A string containing the either the name of the person, its login or both"""
-  displayName: String!
-  """An url to an avatar"""
-  avatarUrl: String
-}
-
-"""Represents a comment on a bug."""
+	&ast.Source{Name: "schema/bug.graphql", Input: `"""Represents a comment on a bug."""
 type Comment implements Authored {
   """The author of this comment."""
-  author: Person!
+  author: Identity!
 
   """The message of this comment."""
   message: String!
@@ -8911,7 +8948,7 @@ type Bug {
   status: Status!
   title: String!
   labels: [Label!]!
-  author: Person!
+  author: Identity!
   createdAt: Time!
   lastEdit: Time!
 
@@ -8985,12 +9022,25 @@ type Repository {
 }
 
 `},
-	&ast.Source{Name: "operations.graphql", Input: `"""An operation applied to a bug."""
+	&ast.Source{Name: "schema/identity.graphql", Input: `"""Represents an identity"""
+type Identity {
+    """The name of the person, if known."""
+    name: String
+    """The email of the person, if known."""
+    email: String
+    """The login of the person, if known."""
+    login: String
+    """A string containing the either the name of the person, its login or both"""
+    displayName: String!
+    """An url to an avatar"""
+    avatarUrl: String
+}`},
+	&ast.Source{Name: "schema/operations.graphql", Input: `"""An operation applied to a bug."""
 interface Operation {
     """The hash of the operation"""
     hash: Hash!
     """The operations author."""
-    author: Person!
+    author: Identity!
     """The datetime when this operation was issued."""
     date: Time!
 }
@@ -9017,7 +9067,7 @@ type CreateOperation implements Operation & Authored {
     """The hash of the operation"""
     hash: Hash!
     """The author of this object."""
-    author: Person!
+    author: Identity!
     """The datetime when this operation was issued."""
     date: Time!
 
@@ -9030,7 +9080,7 @@ type SetTitleOperation implements Operation & Authored {
     """The hash of the operation"""
     hash: Hash!
     """The author of this object."""
-    author: Person!
+    author: Identity!
     """The datetime when this operation was issued."""
     date: Time!
 
@@ -9042,7 +9092,7 @@ type AddCommentOperation implements Operation & Authored {
     """The hash of the operation"""
     hash: Hash!
     """The author of this object."""
-    author: Person!
+    author: Identity!
     """The datetime when this operation was issued."""
     date: Time!
 
@@ -9054,7 +9104,7 @@ type EditCommentOperation implements Operation & Authored {
     """The hash of the operation"""
     hash: Hash!
     """The author of this object."""
-    author: Person!
+    author: Identity!
     """The datetime when this operation was issued."""
     date: Time!
 
@@ -9067,7 +9117,7 @@ type SetStatusOperation implements Operation & Authored {
     """The hash of the operation"""
     hash: Hash!
     """The author of this object."""
-    author: Person!
+    author: Identity!
     """The datetime when this operation was issued."""
     date: Time!
 
@@ -9078,14 +9128,14 @@ type LabelChangeOperation implements Operation & Authored {
     """The hash of the operation"""
     hash: Hash!
     """The author of this object."""
-    author: Person!
+    author: Identity!
     """The datetime when this operation was issued."""
     date: Time!
 
     added: [Label!]!
     removed: [Label!]!
 }`},
-	&ast.Source{Name: "root.graphql", Input: `scalar Time
+	&ast.Source{Name: "schema/root.graphql", Input: `scalar Time
 scalar Label
 scalar Hash
 
@@ -9104,7 +9154,7 @@ type PageInfo {
 """An object that has an author."""
 interface Authored {
     """The author of this object."""
-    author: Person!
+    author: Identity!
 }
 
 type Query {
@@ -9123,7 +9173,7 @@ type Mutation {
 
     commit(repoRef: String, prefix: String!): Bug!
 }`},
-	&ast.Source{Name: "timeline.graphql", Input: `"""An item in the timeline of events"""
+	&ast.Source{Name: "schema/timeline.graphql", Input: `"""An item in the timeline of events"""
 interface TimelineItem {
     """The hash of the source operation"""
     hash: Hash!
@@ -9157,7 +9207,7 @@ type TimelineItemEdge {
 type CreateTimelineItem implements TimelineItem {
     """The hash of the source operation"""
     hash: Hash!
-    author: Person!
+    author: Identity!
     message: String!
     messageIsEmpty: Boolean!
     files: [Hash!]!
@@ -9171,7 +9221,7 @@ type CreateTimelineItem implements TimelineItem {
 type AddCommentTimelineItem implements TimelineItem {
     """The hash of the source operation"""
     hash: Hash!
-    author: Person!
+    author: Identity!
     message: String!
     messageIsEmpty: Boolean!
     files: [Hash!]!
@@ -9185,7 +9235,7 @@ type AddCommentTimelineItem implements TimelineItem {
 type LabelChangeTimelineItem implements TimelineItem {
     """The hash of the source operation"""
     hash: Hash!
-    author: Person!
+    author: Identity!
     date: Time!
     added: [Label!]!
     removed: [Label!]!
@@ -9195,7 +9245,7 @@ type LabelChangeTimelineItem implements TimelineItem {
 type SetStatusTimelineItem implements TimelineItem {
     """The hash of the source operation"""
     hash: Hash!
-    author: Person!
+    author: Identity!
     date: Time!
     status: Status!
 }
@@ -9204,7 +9254,7 @@ type SetStatusTimelineItem implements TimelineItem {
 type SetTitleTimelineItem implements TimelineItem {
     """The hash of the source operation"""
     hash: Hash!
-    author: Person!
+    author: Identity!
     date: Time!
     title: String!
     was: String!

@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/process"
@@ -376,7 +377,7 @@ func (c *RepoCache) NewBug(title string, message string) (*BugCache, error) {
 // NewBugWithFiles create a new bug with attached files for the message
 // The new bug is written in the repository (commit)
 func (c *RepoCache) NewBugWithFiles(title string, message string, files []git.Hash) (*BugCache, error) {
-	author, err := bug.GetUser(c.repo)
+	author, err := identity.GetIdentity(c.repo)
 	if err != nil {
 		return nil, err
 	}
@@ -387,7 +388,7 @@ func (c *RepoCache) NewBugWithFiles(title string, message string, files []git.Ha
 // NewBugWithFilesMeta create a new bug with attached files for the message, as
 // well as metadata for the Create operation.
 // The new bug is written in the repository (commit)
-func (c *RepoCache) NewBugRaw(author bug.Person, unixTime int64, title string, message string, files []git.Hash, metadata map[string]string) (*BugCache, error) {
+func (c *RepoCache) NewBugRaw(author *identity.Identity, unixTime int64, title string, message string, files []git.Hash, metadata map[string]string) (*BugCache, error) {
 	b, op, err := bug.CreateWithFiles(author, unixTime, title, message, files)
 	if err != nil {
 		return nil, err

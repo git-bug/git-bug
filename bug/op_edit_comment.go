@@ -3,6 +3,8 @@ package bug
 import (
 	"fmt"
 
+	"github.com/MichaelMure/git-bug/identity"
+
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/text"
 )
@@ -95,7 +97,7 @@ func (op *EditCommentOperation) Validate() error {
 // Sign post method for gqlgen
 func (op *EditCommentOperation) IsAuthored() {}
 
-func NewEditCommentOp(author Person, unixTime int64, target git.Hash, message string, files []git.Hash) *EditCommentOperation {
+func NewEditCommentOp(author identity.Interface, unixTime int64, target git.Hash, message string, files []git.Hash) *EditCommentOperation {
 	return &EditCommentOperation{
 		OpBase:  newOpBase(EditCommentOp, author, unixTime),
 		Target:  target,
@@ -105,11 +107,11 @@ func NewEditCommentOp(author Person, unixTime int64, target git.Hash, message st
 }
 
 // Convenience function to apply the operation
-func EditComment(b Interface, author Person, unixTime int64, target git.Hash, message string) (*EditCommentOperation, error) {
+func EditComment(b Interface, author identity.Interface, unixTime int64, target git.Hash, message string) (*EditCommentOperation, error) {
 	return EditCommentWithFiles(b, author, unixTime, target, message, nil)
 }
 
-func EditCommentWithFiles(b Interface, author Person, unixTime int64, target git.Hash, message string, files []git.Hash) (*EditCommentOperation, error) {
+func EditCommentWithFiles(b Interface, author identity.Interface, unixTime int64, target git.Hash, message string, files []git.Hash) (*EditCommentOperation, error) {
 	editCommentOp := NewEditCommentOp(author, unixTime, target, message, files)
 	if err := editCommentOp.Validate(); err != nil {
 		return nil, err

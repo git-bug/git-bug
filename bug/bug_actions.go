@@ -35,6 +35,11 @@ func Pull(repo repository.ClockedRepo, remote string) error {
 		if merge.Err != nil {
 			return merge.Err
 		}
+		if merge.Status == MergeStatusInvalid {
+			// Not awesome: simply output the merge failure here as this function
+			// is only used in tests for now.
+			fmt.Println(merge)
+		}
 	}
 
 	return nil

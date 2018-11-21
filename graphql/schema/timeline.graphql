@@ -32,7 +32,7 @@ type TimelineItemEdge {
 type CreateTimelineItem implements TimelineItem {
     """The hash of the source operation"""
     hash: Hash!
-    author: Person!
+    author: Identity!
     message: String!
     messageIsEmpty: Boolean!
     files: [Hash!]!
@@ -46,7 +46,7 @@ type CreateTimelineItem implements TimelineItem {
 type AddCommentTimelineItem implements TimelineItem {
     """The hash of the source operation"""
     hash: Hash!
-    author: Person!
+    author: Identity!
     message: String!
     messageIsEmpty: Boolean!
     files: [Hash!]!
@@ -60,7 +60,7 @@ type AddCommentTimelineItem implements TimelineItem {
 type LabelChangeTimelineItem implements TimelineItem {
     """The hash of the source operation"""
     hash: Hash!
-    author: Person!
+    author: Identity!
     date: Time!
     added: [Label!]!
     removed: [Label!]!
@@ -70,7 +70,7 @@ type LabelChangeTimelineItem implements TimelineItem {
 type SetStatusTimelineItem implements TimelineItem {
     """The hash of the source operation"""
     hash: Hash!
-    author: Person!
+    author: Identity!
     date: Time!
     status: Status!
 }
@@ -79,7 +79,7 @@ type SetStatusTimelineItem implements TimelineItem {
 type SetTitleTimelineItem implements TimelineItem {
     """The hash of the source operation"""
     hash: Hash!
-    author: Person!
+    author: Identity!
     date: Time!
     title: String!
     was: String!

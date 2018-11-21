@@ -4,16 +4,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestSetMetadata(t *testing.T) {
 	snapshot := Snapshot{}
 
-	var rene = Person{
-		Name:  "René Descartes",
-		Email: "rene@descartes.fr",
-	}
+	var rene = identity.NewBare("René Descartes", "rene@descartes.fr")
 
 	unix := time.Now().Unix()
 

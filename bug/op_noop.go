@@ -1,6 +1,9 @@
 package bug
 
-import "github.com/MichaelMure/git-bug/util/git"
+import (
+	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/util/git"
+)
 
 var _ Operation = &NoOpOperation{}
 
@@ -30,14 +33,14 @@ func (op *NoOpOperation) Validate() error {
 // Sign post method for gqlgen
 func (op *NoOpOperation) IsAuthored() {}
 
-func NewNoOpOp(author Person, unixTime int64) *NoOpOperation {
+func NewNoOpOp(author identity.Interface, unixTime int64) *NoOpOperation {
 	return &NoOpOperation{
 		OpBase: newOpBase(NoOpOp, author, unixTime),
 	}
 }
 
 // Convenience function to apply the operation
-func NoOp(b Interface, author Person, unixTime int64, metadata map[string]string) (*NoOpOperation, error) {
+func NoOp(b Interface, author identity.Interface, unixTime int64, metadata map[string]string) (*NoOpOperation, error) {
 	op := NewNoOpOp(author, unixTime)
 
 	for key, value := range metadata {

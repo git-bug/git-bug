@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/MichaelMure/git-bug/identity"
+
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/text"
 )
@@ -77,7 +79,7 @@ func (op *SetTitleOperation) Validate() error {
 // Sign post method for gqlgen
 func (op *SetTitleOperation) IsAuthored() {}
 
-func NewSetTitleOp(author Person, unixTime int64, title string, was string) *SetTitleOperation {
+func NewSetTitleOp(author identity.Interface, unixTime int64, title string, was string) *SetTitleOperation {
 	return &SetTitleOperation{
 		OpBase: newOpBase(SetTitleOp, author, unixTime),
 		Title:  title,
@@ -87,7 +89,7 @@ func NewSetTitleOp(author Person, unixTime int64, title string, was string) *Set
 
 type SetTitleTimelineItem struct {
 	hash     git.Hash
-	Author   Person
+	Author   identity.Interface
 	UnixTime Timestamp
 	Title    string
 	Was      string
@@ -98,7 +100,7 @@ func (s SetTitleTimelineItem) Hash() git.Hash {
 }
 
 // Convenience function to apply the operation
-func SetTitle(b Interface, author Person, unixTime int64, title string) (*SetTitleOperation, error) {
+func SetTitle(b Interface, author identity.Interface, unixTime int64, title string) (*SetTitleOperation, error) {
 	it := NewOperationIterator(b)
 
 	var lastTitleOp Operation

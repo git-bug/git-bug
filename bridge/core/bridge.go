@@ -15,6 +15,8 @@ import (
 var ErrImportNorSupported = errors.New("import is not supported")
 var ErrExportNorSupported = errors.New("export is not supported")
 
+const bridgeConfigKeyPrefix = "git-bug.bridge"
+
 var bridgeImpl map[string]reflect.Type
 
 // Bridge is a wrapper around a BridgeImpl that will bind low-level
@@ -114,12 +116,12 @@ func splitFullName(fullName string) (string, string, error) {
 // ConfiguredBridges return the list of bridge that are configured for the given
 // repo
 func ConfiguredBridges(repo repository.RepoCommon) ([]string, error) {
-	configs, err := repo.ReadConfigs("git-bug.bridge.")
+	configs, err := repo.ReadConfigs(bridgeConfigKeyPrefix + ".")
 	if err != nil {
 		return nil, errors.Wrap(err, "can't read configured bridges")
 	}
 
-	re, err := regexp.Compile(`git-bug.bridge.([^.]+\.[^.]+)`)
+	re, err := regexp.Compile(bridgeConfigKeyPrefix + `.([^.]+\.[^.]+)`)
 	if err != nil {
 		panic(err)
 	}

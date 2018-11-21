@@ -3,6 +3,7 @@ package bug
 import (
 	"testing"
 
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/stretchr/testify/require"
@@ -25,11 +26,11 @@ func TestValidate(t *testing.T) {
 
 	bad := []Operation{
 		// opbase
-		NewSetStatusOp(Person{Name: "", Email: "rene@descartes.fr"}, unix, ClosedStatus),
-		NewSetStatusOp(Person{Name: "René Descartes\u001b", Email: "rene@descartes.fr"}, unix, ClosedStatus),
-		NewSetStatusOp(Person{Name: "René Descartes", Email: "rene@descartes.fr\u001b"}, unix, ClosedStatus),
-		NewSetStatusOp(Person{Name: "René \nDescartes", Email: "rene@descartes.fr"}, unix, ClosedStatus),
-		NewSetStatusOp(Person{Name: "René Descartes", Email: "rene@\ndescartes.fr"}, unix, ClosedStatus),
+		NewSetStatusOp(identity.NewBare("", "rene@descartes.fr"), unix, ClosedStatus),
+		NewSetStatusOp(identity.NewBare("René Descartes\u001b", "rene@descartes.fr"), unix, ClosedStatus),
+		NewSetStatusOp(identity.NewBare("René Descartes", "rene@descartes.fr\u001b"), unix, ClosedStatus),
+		NewSetStatusOp(identity.NewBare("René \nDescartes", "rene@descartes.fr"), unix, ClosedStatus),
+		NewSetStatusOp(identity.NewBare("René Descartes", "rene@\ndescartes.fr"), unix, ClosedStatus),
 		&CreateOperation{OpBase: OpBase{
 			Author:        rene,
 			UnixTime:      0,

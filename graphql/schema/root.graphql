@@ -17,7 +17,7 @@ type PageInfo {
 """An object that has an author."""
 interface Authored {
     """The author of this object."""
-    author: Person!
+    author: Identity!
 }
 
 type Query {

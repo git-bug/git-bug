@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/MichaelMure/git-bug/identity"
+
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/pkg/errors"
 )
@@ -74,26 +76,56 @@ func hashOperation(op Operation) (git.Hash, error) {
 	return base.hash, nil
 }
 
+// TODO: serialization with identity
+
 // OpBase implement the common code for all operations
 type OpBase struct {
-	OperationType OperationType     `json:"type"`
-	Author        Person            `json:"author"`
-	UnixTime      int64             `json:"timestamp"`
-	Metadata      map[string]string `json:"metadata,omitempty"`
+	OperationType OperationType
+	Author        identity.Interface
+	UnixTime      int64
+	Metadata      map[string]string
 	// Not serialized. Store the op's hash in memory.
 	hash git.Hash
-	// Not serialized. Store the extra metadata compiled from SetMetadataOperation
-	// in memory.
+	// Not serialized. Store the extra metadata in memory,
+	// compiled from SetMetadataOperation.
 	extraMetadata map[string]string
 }
 
 // newOpBase is the constructor for an OpBase
-func newOpBase(opType OperationType, author Person, unixTime int64) OpBase {
+func newOpBase(opType OperationType, author identity.Interface, unixTime int64) OpBase {
 	return OpBase{
 		OperationType: opType,
 		Author:        author,
 		UnixTime:      unixTime,
 	}
+}
+
+type opBaseJson struct {
+	OperationType OperationType     `json:"type"`
+	UnixTime      int64             `json:"timestamp"`
+	Metadata      map[string]string `json:"metadata,omitempty"`
+}
+
+func (op *OpBase) MarshalJSON() ([]byte, error) {
+	return json.Marshal(opBaseJson{
+		OperationType: op.OperationType,
+		UnixTime:      op.UnixTime,
+		Metadata:      op.Metadata,
+	})
+}
+
+func (op *OpBase) UnmarshalJSON(data []byte) error {
+	aux := opBaseJson{}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	op.OperationType = aux.OperationType
+	op.UnixTime = aux.UnixTime
+	op.Metadata = aux.Metadata
+
+	return nil
 }
 
 // Time return the time when the operation was added
@@ -123,6 +155,10 @@ func opBaseValidate(op Operation, opType OperationType) error {
 
 	if op.GetUnixTime() == 0 {
 		return fmt.Errorf("time not set")
+	}
+
+	if op.base().Author == nil {
+		return fmt.Errorf("author not set")
 	}
 
 	if err := op.base().Author.Validate(); err != nil {

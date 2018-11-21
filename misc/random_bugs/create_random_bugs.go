@@ -6,11 +6,12 @@ import (
 	"time"
 
 	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/icrowley/fake"
 )
 
-type opsGenerator func(bug.Interface, bug.Person)
+type opsGenerator func(bug.Interface, identity.Interface)
 
 type Options struct {
 	BugNumber    int
@@ -136,18 +137,15 @@ func GenerateRandomOperationPacksWithSeed(packNumber int, opNumber int, seed int
 	return result
 }
 
-func person() bug.Person {
-	return bug.Person{
-		Name:  fake.FullName(),
-		Email: fake.EmailAddress(),
-	}
+func person() identity.Interface {
+	return identity.NewBare(fake.FullName(), fake.EmailAddress())
 }
 
-var persons []bug.Person
+var persons []identity.Interface
 
-func randomPerson(personNumber int) bug.Person {
+func randomPerson(personNumber int) identity.Interface {
 	if len(persons) == 0 {
-		persons = make([]bug.Person, personNumber)
+		persons = make([]identity.Interface, personNumber)
 		for i := range persons {
 			persons[i] = person()
 		}
@@ -162,25 +160,25 @@ func paragraphs() string {
 	return strings.Replace(p, "\t", "\n\n", -1)
 }
 
-func comment(b bug.Interface, p bug.Person) {
+func comment(b bug.Interface, p identity.Interface) {
 	_, _ = bug.AddComment(b, p, time.Now().Unix(), paragraphs())
 }
 
-func title(b bug.Interface, p bug.Person) {
+func title(b bug.Interface, p identity.Interface) {
 	_, _ = bug.SetTitle(b, p, time.Now().Unix(), fake.Sentence())
 }
 
-func open(b bug.Interface, p bug.Person) {
+func open(b bug.Interface, p identity.Interface) {
 	_, _ = bug.Open(b, p, time.Now().Unix())
 }
 
-func close(b bug.Interface, p bug.Person) {
+func close(b bug.Interface, p identity.Interface) {
 	_, _ = bug.Close(b, p, time.Now().Unix())
 }
 
 var addedLabels []string
 
-func labels(b bug.Interface, p bug.Person) {
+func labels(b bug.Interface, p identity.Interface) {
 	var removed []string
 	nbRemoved := rand.Intn(3)
 	for nbRemoved > 0 && len(addedLabels) > 0 {

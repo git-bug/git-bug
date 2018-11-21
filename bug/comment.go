@@ -1,13 +1,14 @@
 package bug
 
 import (
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/dustin/go-humanize"
 )
 
 // Comment represent a comment in a Bug
 type Comment struct {
-	Author  Person
+	Author  identity.Interface
 	Message string
 	Files   []git.Hash
 

@@ -3,7 +3,7 @@ interface Operation {
     """The hash of the operation"""
     hash: Hash!
     """The operations author."""
-    author: Person!
+    author: Identity!
     """The datetime when this operation was issued."""
     date: Time!
 }
@@ -30,7 +30,7 @@ type CreateOperation implements Operation & Authored {
     """The hash of the operation"""
     hash: Hash!
     """The author of this object."""
-    author: Person!
+    author: Identity!
     """The datetime when this operation was issued."""
     date: Time!
 
@@ -43,7 +43,7 @@ type SetTitleOperation implements Operation & Authored {
     """The hash of the operation"""
     hash: Hash!
     """The author of this object."""
-    author: Person!
+    author: Identity!
     """The datetime when this operation was issued."""
     date: Time!
 
@@ -55,7 +55,7 @@ type AddCommentOperation implements Operation & Authored {
     """The hash of the operation"""
     hash: Hash!
     """The author of this object."""
-    author: Person!
+    author: Identity!
     """The datetime when this operation was issued."""
     date: Time!
 
@@ -67,7 +67,7 @@ type EditCommentOperation implements Operation & Authored {
     """The hash of the operation"""
     hash: Hash!
     """The author of this object."""
-    author: Person!
+    author: Identity!
     """The datetime when this operation was issued."""
     date: Time!
 
@@ -80,7 +80,7 @@ type SetStatusOperation implements Operation & Authored {
     """The hash of the operation"""
     hash: Hash!
     """The author of this object."""
-    author: Person!
+    author: Identity!
     """The datetime when this operation was issued."""
     date: Time!
 
@@ -91,7 +91,7 @@ type LabelChangeOperation implements Operation & Authored {
     """The hash of the operation"""
     hash: Hash!
     """The author of this object."""
-    author: Person!
+    author: Identity!
     """The datetime when this operation was issued."""
     date: Time!
 

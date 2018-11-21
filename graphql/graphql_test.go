@@ -1,18 +1,18 @@
-package tests
+package graphql
 
 import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/MichaelMure/git-bug/graphql"
 	"github.com/MichaelMure/git-bug/graphql/models"
+	"github.com/MichaelMure/git-bug/util/test"
 	"github.com/vektah/gqlgen/client"
 )
 
 func TestQueries(t *testing.T) {
-	repo := createFilledRepo(10)
+	repo := test.CreateFilledRepo(10)
 
-	handler, err := graphql.NewHandler(repo)
+	handler, err := NewHandler(repo)
 	if err != nil {
 		t.Fatal(err)
 	}

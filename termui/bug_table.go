@@ -6,6 +6,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/colors"
 	"github.com/MichaelMure/git-bug/util/text"
 	"github.com/MichaelMure/gocui"
@@ -289,7 +290,7 @@ func (bt *bugTable) render(v *gocui.View, maxX int) {
 	columnWidths := bt.getColumnWidths(maxX)
 
 	for _, b := range bt.bugs {
-		person := bug.Person{}
+		person := &identity.Identity{}
 		snap := b.Snapshot()
 		if len(snap.Comments) > 0 {
 			create := snap.Comments[0]

@@ -20,7 +20,7 @@ const formatVersion = 1
 type OperationPack struct {
 	Operations []Operation
 
-	// Private field so not serialized by gob
+	// Private field so not serialized
 	commitHash git.Hash
 }
 
@@ -57,6 +57,7 @@ func (opp *OperationPack) UnmarshalJSON(data []byte) error {
 			return err
 		}
 
+		// delegate to specialized unmarshal function
 		op, err := opp.unmarshalOp(raw, t.OperationType)
 		if err != nil {
 			return err
@@ -73,28 +74,36 @@ func (opp *OperationPack) UnmarshalJSON(data []byte) error {
 
 func (opp *OperationPack) unmarshalOp(raw []byte, _type OperationType) (Operation, error) {
 	switch _type {
-	case CreateOp:
-		op := &CreateOperation{}
-		err := json.Unmarshal(raw, &op)
-		return op, err
-	case SetTitleOp:
-		op := &SetTitleOperation{}
-		err := json.Unmarshal(raw, &op)
-		return op, err
 	case AddCommentOp:
 		op := &AddCommentOperation{}
 		err := json.Unmarshal(raw, &op)
 		return op, err
-	case SetStatusOp:
-		op := &SetStatusOperation{}
+	case CreateOp:
+		op := &CreateOperation{}
+		err := json.Unmarshal(raw, &op)
+		return op, err
+	case EditCommentOp:
+		op := &EditCommentOperation{}
 		err := json.Unmarshal(raw, &op)
 		return op, err
 	case LabelChangeOp:
 		op := &LabelChangeOperation{}
 		err := json.Unmarshal(raw, &op)
 		return op, err
-	case EditCommentOp:
-		op := &EditCommentOperation{}
+	case NoOpOp:
+		op := &NoOpOperation{}
+		err := json.Unmarshal(raw, &op)
+		return op, err
+	case SetMetadataOp:
+		op := &SetMetadataOperation{}
+		err := json.Unmarshal(raw, &op)
+		return op, err
+	case SetStatusOp:
+		op := &SetStatusOperation{}
+		err := json.Unmarshal(raw, &op)
+		return op, err
+	case SetTitleOp:
+		op := &SetTitleOperation{}
 		err := json.Unmarshal(raw, &op)
 		return op, err
 	default:

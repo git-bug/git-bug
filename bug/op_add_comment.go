@@ -3,6 +3,8 @@ package bug
 import (
 	"fmt"
 
+	"github.com/MichaelMure/git-bug/identity"
+
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/text"
 )
@@ -68,7 +70,7 @@ func (op *AddCommentOperation) Validate() error {
 // Sign post method for gqlgen
 func (op *AddCommentOperation) IsAuthored() {}
 
-func NewAddCommentOp(author Person, unixTime int64, message string, files []git.Hash) *AddCommentOperation {
+func NewAddCommentOp(author identity.Interface, unixTime int64, message string, files []git.Hash) *AddCommentOperation {
 	return &AddCommentOperation{
 		OpBase:  newOpBase(AddCommentOp, author, unixTime),
 		Message: message,
@@ -82,11 +84,11 @@ type AddCommentTimelineItem struct {
 }
 
 // Convenience function to apply the operation
-func AddComment(b Interface, author Person, unixTime int64, message string) (*AddCommentOperation, error) {
+func AddComment(b Interface, author identity.Interface, unixTime int64, message string) (*AddCommentOperation, error) {
 	return AddCommentWithFiles(b, author, unixTime, message, nil)
 }
 
-func AddCommentWithFiles(b Interface, author Person, unixTime int64, message string, files []git.Hash) (*AddCommentOperation, error) {
+func AddCommentWithFiles(b Interface, author identity.Interface, unixTime int64, message string, files []git.Hash) (*AddCommentOperation, error) {
 	addCommentOp := NewAddCommentOp(author, unixTime, message, files)
 	if err := addCommentOp.Validate(); err != nil {
 		return nil, err

@@ -1,17 +1,14 @@
 package bug
 
 import (
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"testing"
 	"time"
 )
 
 var (
-	rene = Person{
-		Name:  "René Descartes",
-		Email: "rene@descartes.fr",
-	}
-
+	rene = identity.NewBare("René Descartes", "rene@descartes.fr")
 	unix = time.Now().Unix()
 
 	createOp      = NewCreateOp(rene, unix, "title", "message", nil)

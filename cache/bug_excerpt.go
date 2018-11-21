@@ -3,6 +3,8 @@ package cache
 import (
 	"encoding/gob"
 
+	"github.com/MichaelMure/git-bug/identity"
+
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
@@ -18,7 +20,7 @@ type BugExcerpt struct {
 	EditUnixTime      int64
 
 	Status bug.Status
-	Author bug.Person
+	Author *identity.Identity
 	Labels []bug.Label
 
 	CreateMetadata map[string]string
