@@ -4,3 +4,4 @@ git-bug
 .gitkeep
 dist
 coverage.txt
+.idea/
