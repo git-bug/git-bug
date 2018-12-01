@@ -269,12 +269,12 @@ func (bt *bugTable) getTableLength() int {
 
 func (bt *bugTable) getColumnWidths(maxX int) map[string]int {
 	m := make(map[string]int)
-	m["id"] = 10
-	m["status"] = 8
+	m["id"] = 9
+	m["status"] = 7
 
 	left := maxX - 5 - m["id"] - m["status"]
 
-	m["summary"] = 14
+	m["summary"] = 10
 	left -= m["summary"]
 	m["lastEdit"] = 19
 	left -= m["lastEdit"]
@@ -296,14 +296,19 @@ func (bt *bugTable) render(v *gocui.View, maxX int) {
 			person = create.Author
 		}
 
-		id := text.LeftPadMaxLine(snap.HumanId(), columnWidths["id"], 2)
-		status := text.LeftPadMaxLine(snap.Status.String(), columnWidths["status"], 2)
-		title := text.LeftPadMaxLine(snap.Title, columnWidths["title"], 2)
-		author := text.LeftPadMaxLine(person.DisplayName(), columnWidths["author"], 2)
-		summary := text.LeftPadMaxLine(snap.Summary(), columnWidths["summary"], 2)
-		lastEdit := text.LeftPadMaxLine(humanize.Time(snap.LastEditTime()), columnWidths["lastEdit"], 2)
+		summaryTxt := fmt.Sprintf("C:%-2d L:%-2d",
+			len(snap.Comments)-1,
+			len(snap.Labels),
+		)
 
-		fmt.Fprintf(v, "%s %s %s %s %s %s\n",
+		id := text.LeftPadMaxLine(snap.HumanId(), columnWidths["id"], 1)
+		status := text.LeftPadMaxLine(snap.Status.String(), columnWidths["status"], 1)
+		title := text.LeftPadMaxLine(snap.Title, columnWidths["title"], 1)
+		author := text.LeftPadMaxLine(person.DisplayName(), columnWidths["author"], 1)
+		summary := text.LeftPadMaxLine(summaryTxt, columnWidths["summary"], 1)
+		lastEdit := text.LeftPadMaxLine(humanize.Time(snap.LastEditTime()), columnWidths["lastEdit"], 1)
+
+		_, _ = fmt.Fprintf(v, "%s %s %s %s %s %s\n",
 			colors.Cyan(id),
 			colors.Yellow(status),
 			title,
@@ -317,20 +322,20 @@ func (bt *bugTable) render(v *gocui.View, maxX int) {
 func (bt *bugTable) renderHeader(v *gocui.View, maxX int) {
 	columnWidths := bt.getColumnWidths(maxX)
 
-	id := text.LeftPadMaxLine("ID", columnWidths["id"], 2)
-	status := text.LeftPadMaxLine("STATUS", columnWidths["status"], 2)
-	title := text.LeftPadMaxLine("TITLE", columnWidths["title"], 2)
-	author := text.LeftPadMaxLine("AUTHOR", columnWidths["author"], 2)
-	summary := text.LeftPadMaxLine("SUMMARY", columnWidths["summary"], 2)
-	lastEdit := text.LeftPadMaxLine("LAST EDIT", columnWidths["lastEdit"], 2)
+	id := text.LeftPadMaxLine("ID", columnWidths["id"], 1)
+	status := text.LeftPadMaxLine("STATUS", columnWidths["status"], 1)
+	title := text.LeftPadMaxLine("TITLE", columnWidths["title"], 1)
+	author := text.LeftPadMaxLine("AUTHOR", columnWidths["author"], 1)
+	summary := text.LeftPadMaxLine("SUMMARY", columnWidths["summary"], 1)
+	lastEdit := text.LeftPadMaxLine("LAST EDIT", columnWidths["lastEdit"], 1)
 
-	fmt.Fprintf(v, "\n")
-	fmt.Fprintf(v, "%s %s %s %s %s %s\n", id, status, title, author, summary, lastEdit)
+	_, _ = fmt.Fprintf(v, "\n")
+	_, _ = fmt.Fprintf(v, "%s %s %s %s %s %s\n", id, status, title, author, summary, lastEdit)
 
 }
 
 func (bt *bugTable) renderFooter(v *gocui.View, maxX int) {
-	fmt.Fprintf(v, " \nShowing %d of %d bugs", len(bt.bugs), len(bt.allIds))
+	_, _ = fmt.Fprintf(v, " \nShowing %d of %d bugs", len(bt.bugs), len(bt.allIds))
 }
 
 func (bt *bugTable) cursorDown(g *gocui.Gui, v *gocui.View) error {
@@ -432,7 +437,7 @@ func (bt *bugTable) pull(g *gocui.Gui, v *gocui.View) error {
 					return nil
 				})
 			} else {
-				fmt.Fprintf(&buffer, "%s%s: %s",
+				_, _ = fmt.Fprintf(&buffer, "%s%s: %s",
 					beginLine, colors.Cyan(merge.Bug.HumanId()), merge,
 				)
 
@@ -445,7 +450,7 @@ func (bt *bugTable) pull(g *gocui.Gui, v *gocui.View) error {
 			}
 		}
 
-		fmt.Fprintf(&buffer, "%sdone", beginLine)
+		_, _ = fmt.Fprintf(&buffer, "%sdone", beginLine)
 
 		g.Update(func(gui *gocui.Gui) error {
 			ui.msgPopup.UpdateMessage(buffer.String())
