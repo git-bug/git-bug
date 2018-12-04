@@ -86,9 +86,7 @@ You can now use commands like `show`, `comment`, `open` or `close` to display an
 
 An interactive terminal UI is available using the command `git bug termui` to browse and edit bugs.
 
-<p align="center">
-    <img src="https://cdn.rawgit.com/MichaelMure/git-bug/master/doc/termui_recording.svg">
-</p>
+![Termui recording](doc/termui_recording.gif)
 
 ## Web UI (status: WIP)
 
@@ -114,7 +112,7 @@ Interested by how it works ? Have a look at the [data model](doc/model.md).
 ## Planned features
 
 - media embedding
-- import/export of github issue
+- exporter to github issue
 - extendable data model to support arbitrary bug tracker
 - inflatable raptor
 
