@@ -119,7 +119,7 @@ func ConfiguredBridges(repo repository.RepoCommon) ([]string, error) {
 		return nil, errors.Wrap(err, "can't read configured bridges")
 	}
 
-	re, err := regexp.Compile(`git-bug.bridge.([^\.]+\.[^\.]+)`)
+	re, err := regexp.Compile(`git-bug.bridge.([^.]+\.[^.]+)`)
 	if err != nil {
 		panic(err)
 	}
@@ -149,7 +149,7 @@ func ConfiguredBridges(repo repository.RepoCommon) ([]string, error) {
 
 // Remove a configured bridge
 func RemoveBridge(repo repository.RepoCommon, fullName string) error {
-	re, err := regexp.Compile(`^[^\.]+\.[^\.]+$`)
+	re, err := regexp.Compile(`^[^.]+\.[^.]+$`)
 	if err != nil {
 		panic(err)
 	}
