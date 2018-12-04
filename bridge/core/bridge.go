@@ -90,7 +90,7 @@ func DefaultBridge(repo *cache.RepoCache) (*Bridge, error) {
 	}
 
 	if len(bridges) > 1 {
-		return nil, fmt.Errorf("multiple bridge configured")
+		return nil, fmt.Errorf("multiple bridge are configured, you need to select one explicitely")
 	}
 
 	target, name, err := splitFullName(bridges[0])
