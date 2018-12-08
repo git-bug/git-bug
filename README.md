@@ -118,6 +118,20 @@ Interested by how it works ? Have a look at the [data model](doc/model.md).
 
 ## Contribute
 
+Developers unfamiliar with Go may try to clone the repository using "git clone".
+Instead, one should use:
+
+```shell
+go get -u github.com/MichaelMure/git-bug
+```
+
+The git repository will then be available:
+
+```shell
+# Note that $GOPATH defaults to $HOME/go
+$ cd $GOPATH/src/github.com/MichaelMure/git-bug/
+```
+
 PRs accepted. Drop by the [Gitter lobby](https://gitter.im/the-git-bug/Lobby) for a chat.
 
 ## Contributors
