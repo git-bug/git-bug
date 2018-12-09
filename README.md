@@ -118,8 +118,9 @@ Interested by how it works ? Have a look at the [data model](doc/model.md).
 
 ## Contribute
 
-Developers unfamiliar with Go may try to clone the repository using "git clone".
-Instead, one should use:
+PRs accepted. Drop by the [Gitter lobby](https://gitter.im/the-git-bug/Lobby) for a chat or browse the issues to see what is worked on or discussed.
+
+Developers unfamiliar with Go may try to clone the repository using "git clone". Instead, one should use:
 
 ```shell
 go get -u github.com/MichaelMure/git-bug
@@ -132,7 +133,10 @@ The git repository will then be available:
 $ cd $GOPATH/src/github.com/MichaelMure/git-bug/
 ```
 
-PRs accepted. Drop by the [Gitter lobby](https://gitter.im/the-git-bug/Lobby) for a chat.
+You can now run `make` to build the project, or `make install` to install the binary in `$GOPATH/bin/`.
+
+To work on the web UI, have a look at [the dedicated Readme.](webui/Readme.md)
+
 
 ## Contributors
 
