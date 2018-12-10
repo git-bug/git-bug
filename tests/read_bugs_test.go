@@ -31,6 +31,13 @@ func createRepo(bare bool) *repository.GitRepo {
 		log.Fatal(err)
 	}
 
+	if err := repo.StoreConfig("user.name", "testuser"); err != nil {
+		log.Fatal("failed to set user.name for test repository: ", err)
+	}
+	if err := repo.StoreConfig("user.email", "testuser@example.com"); err != nil {
+		log.Fatal("failed to set user.email for test repository: ", err)
+	}
+
 	return repo
 }
 
