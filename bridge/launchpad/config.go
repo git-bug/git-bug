@@ -25,6 +25,14 @@ func (*Launchpad) Configure(repo repository.RepoCommon) (core.Configuration, err
 	return conf, nil
 }
 
+func (*Launchpad) ValidateConfig(conf core.Configuration) error {
+	if _, ok := conf[keyProject]; !ok {
+		return fmt.Errorf("missing %s key", keyProject)
+	}
+
+	return nil
+}
+
 func promptProjectName() (string, error) {
 	for {
 		fmt.Print("Launchpad project name: ")
@@ -43,8 +51,4 @@ func promptProjectName() (string, error) {
 
 		return line, nil
 	}
-}
-
-func (*Launchpad) ValidateConfig(conf core.Configuration) error {
-	return nil
 }

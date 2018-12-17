@@ -129,11 +129,12 @@ func (lapi *launchpadAPI) SearchTasks(project string) ([]LPBug, error) {
 			return nil, err
 		}
 
-		defer resp.Body.Close()
-
 		var result launchpadAnswer
 
-		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		err = json.NewDecoder(resp.Body).Decode(&result)
+		_ = resp.Body.Close()
+
+		if err != nil {
 			return nil, err
 		}
 
