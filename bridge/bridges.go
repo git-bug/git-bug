@@ -4,6 +4,7 @@ package bridge
 import (
 	"github.com/MichaelMure/git-bug/bridge/core"
 	_ "github.com/MichaelMure/git-bug/bridge/github"
+	_ "github.com/MichaelMure/git-bug/bridge/launchpad"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/repository"
 )
