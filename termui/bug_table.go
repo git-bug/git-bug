@@ -391,6 +391,8 @@ func (bt *bugTable) nextPage(g *gocui.Gui, v *gocui.View) error {
 	}
 
 	bt.pageCursor += max
+	bt.selectCursor = 0
+	_ = v.SetCursor(0, bt.selectCursor)
 
 	return bt.doPaginate(max)
 }
@@ -398,7 +400,12 @@ func (bt *bugTable) nextPage(g *gocui.Gui, v *gocui.View) error {
 func (bt *bugTable) previousPage(g *gocui.Gui, v *gocui.View) error {
 	_, max := v.Size()
 
+	if bt.pageCursor == 0 {
+		return nil
+	}
 	bt.pageCursor = maxInt(0, bt.pageCursor-max)
+	bt.selectCursor = max - 1
+	_ = v.SetCursor(0, bt.selectCursor)
 
 	return bt.doPaginate(max)
 }
