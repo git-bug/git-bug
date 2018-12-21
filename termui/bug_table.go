@@ -340,8 +340,13 @@ func (bt *bugTable) renderFooter(v *gocui.View, maxX int) {
 
 func (bt *bugTable) cursorDown(g *gocui.Gui, v *gocui.View) error {
 	_, y := v.Cursor()
-	y = minInt(y+1, bt.getTableLength()-1)
 
+	// If we are at the bottom of the page, switch to the next one.
+	if y+1 > bt.getTableLength()-1 {
+		return bt.nextPage(g, v)
+	}
+
+	y = minInt(y+1, bt.getTableLength()-1)
 	// window is too small to set the cursor properly, ignoring the error
 	_ = v.SetCursor(0, y)
 	bt.selectCursor = y
@@ -351,8 +356,13 @@ func (bt *bugTable) cursorDown(g *gocui.Gui, v *gocui.View) error {
 
 func (bt *bugTable) cursorUp(g *gocui.Gui, v *gocui.View) error {
 	_, y := v.Cursor()
-	y = maxInt(y-1, 0)
 
+	// If we are at the top of the page, switch to the previous one.
+	if y-1 < 0 {
+		return bt.previousPage(g, v)
+	}
+
+	y = maxInt(y-1, 0)
 	// window is too small to set the cursor properly, ignoring the error
 	_ = v.SetCursor(0, y)
 	bt.selectCursor = y
