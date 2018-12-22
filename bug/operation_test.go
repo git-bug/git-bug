@@ -47,7 +47,6 @@ func TestValidate(t *testing.T) {
 		NewSetTitleOp(rene, unix, "title", "multi\nline"),
 		NewSetTitleOp(rene, unix, "title\u001b", "title2"),
 		NewSetTitleOp(rene, unix, "title", "title2\u001b"),
-		NewAddCommentOp(rene, unix, "", nil),
 		NewAddCommentOp(rene, unix, "message\u001b", nil),
 		NewAddCommentOp(rene, unix, "message", []git.Hash{git.Hash("invalid")}),
 		NewSetStatusOp(rene, unix, 1000),
