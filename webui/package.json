@@ -3,21 +3,21 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@material-ui/core": "^1.4.2",
-    "@material-ui/icons": "^2.0.2",
-    "apollo-boost": "^0.1.10",
-    "graphql": "^0.13.2",
-    "moment": "^2.22.2",
-    "react": "^16.4.1",
-    "react-apollo": "^2.1.9",
-    "react-dom": "^16.4.1",
+    "@material-ui/core": "^1.5.1",
+    "@material-ui/icons": "^2.0.3",
+    "apollo-boost": "^0.1.23",
+    "graphql": "^14.0.2",
+    "moment": "^2.23.0",
+    "react": "^16.7.0",
+    "react-apollo": "^2.3.3",
+    "react-dom": "^16.7.0",
     "react-router": "^4.3.1",
     "react-router-dom": "^4.3.1",
-    "react-scripts": "1.1.4"
+    "react-scripts": "2.1.1"
   },
   "devDependencies": {
-    "eslint-config-prettier": "^3.0.1",
-    "eslint-plugin-prettier": "^2.6.2",
+    "eslint-config-prettier": "^3.3.0",
+    "eslint-plugin-prettier": "^2.7.0",
     "prettier": "1.14.2"
   },
   "scripts": {
@@ -27,5 +27,11 @@
     "eject": "react-scripts eject",
     "lint": "eslint src/"
   },
-  "proxy": "http://localhost:3001"
+  "proxy": "http://localhost:3001",
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ]
 }
