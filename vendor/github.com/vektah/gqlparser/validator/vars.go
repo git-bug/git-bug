@@ -73,12 +73,19 @@ type varValidator struct {
 }
 
 func (v *varValidator) validateVarType(typ *ast.Type, val reflect.Value) *gqlerror.Error {
+	currentPath := v.path
+	resetPath := func() {
+		v.path = currentPath
+	}
+	defer resetPath()
+
 	if typ.Elem != nil {
 		if val.Kind() != reflect.Slice {
 			return gqlerror.ErrorPathf(v.path, "must be an array")
 		}
 
 		for i := 0; i < val.Len(); i++ {
+			resetPath()
 			v.path = append(v.path, i)
 			field := val.Index(i)
 
@@ -92,8 +99,6 @@ func (v *varValidator) validateVarType(typ *ast.Type, val reflect.Value) *gqlerr
 			if err := v.validateVarType(typ.Elem, field); err != nil {
 				return err
 			}
-
-			v.path = v.path[0 : len(v.path)-1]
 		}
 
 		return nil
@@ -150,15 +155,16 @@ func (v *varValidator) validateVarType(typ *ast.Type, val reflect.Value) *gqlerr
 		for _, name := range val.MapKeys() {
 			val.MapIndex(name)
 			fieldDef := def.Fields.ForName(name.String())
-			v.path = append(v.path, name)
+			resetPath()
+			v.path = append(v.path, name.String())
 
 			if fieldDef == nil {
 				return gqlerror.ErrorPathf(v.path, "unknown field")
 			}
-			v.path = v.path[0 : len(v.path)-1]
 		}
 
 		for _, fieldDef := range def.Fields {
+			resetPath()
 			v.path = append(v.path, fieldDef.Name)
 
 			field := val.MapIndex(reflect.ValueOf(fieldDef.Name))
@@ -184,8 +190,6 @@ func (v *varValidator) validateVarType(typ *ast.Type, val reflect.Value) *gqlerr
 			if err != nil {
 				return err
 			}
-
-			v.path = v.path[0 : len(v.path)-1]
 		}
 	default:
 		panic(fmt.Errorf("unsupported type %s", def.Kind))

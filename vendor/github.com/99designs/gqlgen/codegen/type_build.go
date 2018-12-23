@@ -27,7 +27,7 @@ func (cfg *Config) buildNamedTypes() NamedTypes {
 	return types
 }
 
-func (cfg *Config) bindTypes(imports *Imports, namedTypes NamedTypes, destDir string, prog *loader.Program) {
+func (cfg *Config) bindTypes(namedTypes NamedTypes, destDir string, prog *loader.Program) {
 	for _, t := range namedTypes {
 		if t.Package == "" {
 			continue
@@ -41,7 +41,6 @@ func (cfg *Config) bindTypes(imports *Imports, namedTypes NamedTypes, destDir st
 			t.Marshaler = &cpy
 
 			t.Package, t.GoType = pkgAndType(sig.Params().At(0).Type().String())
-			t.Import = imports.add(t.Package)
 		}
 	}
 }

@@ -46,7 +46,7 @@ func (p *parser) parseOperationDefinition() *OperationDefinition {
 		return &OperationDefinition{
 			Position:     p.peekPos(),
 			Operation:    Query,
-			SelectionSet: p.parseSelectionSet(),
+			SelectionSet: p.parseRequiredSelectionSet(),
 		}
 	}
 
@@ -60,7 +60,7 @@ func (p *parser) parseOperationDefinition() *OperationDefinition {
 
 	od.VariableDefinitions = p.parseVariableDefinitions()
 	od.Directives = p.parseDirectives(false)
-	od.SelectionSet = p.parseSelectionSet()
+	od.SelectionSet = p.parseRequiredSelectionSet()
 
 	return &od
 }
@@ -109,9 +109,23 @@ func (p *parser) parseVariable() string {
 	return p.parseName()
 }
 
-func (p *parser) parseSelectionSet() SelectionSet {
+func (p *parser) parseOptionalSelectionSet() SelectionSet {
 	var selections []Selection
-	p.many(lexer.BraceL, lexer.BraceR, func() {
+	p.some(lexer.BraceL, lexer.BraceR, func() {
+		selections = append(selections, p.parseSelection())
+	})
+
+	return SelectionSet(selections)
+}
+
+func (p *parser) parseRequiredSelectionSet() SelectionSet {
+	if p.peek().Kind != lexer.BraceL {
+		p.error(p.peek(), "Expected %s, found %s", lexer.BraceL, p.peek().Kind.String())
+		return nil
+	}
+
+	var selections []Selection
+	p.some(lexer.BraceL, lexer.BraceR, func() {
 		selections = append(selections, p.parseSelection())
 	})
 
@@ -139,7 +153,7 @@ func (p *parser) parseField() *Field {
 	field.Arguments = p.parseArguments(false)
 	field.Directives = p.parseDirectives(false)
 	if p.peek().Kind == lexer.BraceL {
-		field.SelectionSet = p.parseSelectionSet()
+		field.SelectionSet = p.parseOptionalSelectionSet()
 	}
 
 	return &field
@@ -184,7 +198,7 @@ func (p *parser) parseFragment() Selection {
 	}
 
 	def.Directives = p.parseDirectives(false)
-	def.SelectionSet = p.parseSelectionSet()
+	def.SelectionSet = p.parseRequiredSelectionSet()
 	return &def
 }
 
@@ -200,7 +214,7 @@ func (p *parser) parseFragmentDefinition() *FragmentDefinition {
 
 	def.TypeCondition = p.parseName()
 	def.Directives = p.parseDirectives(false)
-	def.SelectionSet = p.parseSelectionSet()
+	def.SelectionSet = p.parseRequiredSelectionSet()
 	return &def
 }
 

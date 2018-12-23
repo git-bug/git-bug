@@ -43,6 +43,8 @@ type wsConnection struct {
 	active map[string]context.CancelFunc
 	mu     sync.Mutex
 	cfg    *Config
+
+	initPayload InitPayload
 }
 
 func connectWs(exec graphql.ExecutableSchema, w http.ResponseWriter, r *http.Request, cfg *Config) {
@@ -79,6 +81,14 @@ func (c *wsConnection) init() bool {
 
 	switch message.Type {
 	case connectionInitMsg:
+		if len(message.Payload) > 0 {
+			c.initPayload = make(InitPayload)
+			err := json.Unmarshal(message.Payload, &c.initPayload)
+			if err != nil {
+				return false
+			}
+		}
+
 		c.write(&operationMessage{Type: connectionAckMsg})
 	case connectionTerminateMsg:
 		c.close(websocket.CloseNormalClosure, "terminated")
@@ -155,8 +165,12 @@ func (c *wsConnection) subscribe(message *operationMessage) bool {
 		c.sendError(message.ID, err)
 		return true
 	}
-	reqCtx := c.cfg.newRequestContext(doc, reqParams.Query, vars)
+	reqCtx := c.cfg.newRequestContext(c.exec, doc, op, reqParams.Query, vars)
 	ctx := graphql.WithRequestContext(c.ctx, reqCtx)
+
+	if c.initPayload != nil {
+		ctx = withInitPayload(ctx, c.initPayload)
+	}
 
 	if op.Operation != ast.Subscription {
 		var result *graphql.Response

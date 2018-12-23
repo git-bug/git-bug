@@ -53,6 +53,9 @@ func (op *SetMetadataOperation) Validate() error {
 	return nil
 }
 
+// Sign post method for gqlgen
+func (op *SetMetadataOperation) IsAuthored() {}
+
 func NewSetMetadataOp(author Person, unixTime int64, target git.Hash, newMetadata map[string]string) *SetMetadataOperation {
 	return &SetMetadataOperation{
 		OpBase:      newOpBase(SetMetadataOp, author, unixTime),

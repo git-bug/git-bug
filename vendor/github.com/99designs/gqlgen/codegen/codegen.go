@@ -151,8 +151,13 @@ func (cfg *Config) normalize() error {
 		}
 	}
 
+	var sources []*ast.Source
+	for _, filename := range cfg.SchemaFilename {
+		sources = append(sources, &ast.Source{Name: filename, Input: cfg.SchemaStr[filename]})
+	}
+
 	var err *gqlerror.Error
-	cfg.schema, err = gqlparser.LoadSchema(&ast.Source{Name: cfg.SchemaFilename, Input: cfg.SchemaStr})
+	cfg.schema, err = gqlparser.LoadSchema(sources...)
 	if err != nil {
 		return err
 	}

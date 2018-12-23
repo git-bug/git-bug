@@ -9,7 +9,7 @@ func init() {
 	AddRule("KnownArgumentNames", func(observers *Events, addError AddErrFunc) {
 		// A GraphQL field is only valid if all supplied arguments are defined by that field.
 		observers.OnField(func(walker *Walker, field *ast.Field) {
-			if field.Definition == nil {
+			if field.Definition == nil || field.ObjectDefinition == nil {
 				return
 			}
 			for _, arg := range field.Arguments {

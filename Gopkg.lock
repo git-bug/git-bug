@@ -2,9 +2,10 @@
 
 
 [[projects]]
-  digest = "1:2af7a7a1fcb231f9cac066e51c629370834819ac3a776dc0a3f577d28cb1fc28"
+  digest = "1:cc0bbbf01f9f639555f9a9d4d5ff9c72da4c4c4bfe71f02fd318d37498270d80"
   name = "github.com/99designs/gqlgen"
   packages = [
+    "cmd",
     "codegen",
     "codegen/templates",
     "complexity",
@@ -12,10 +13,11 @@
     "graphql/introspection",
     "handler",
     "internal/gopath",
+    "internal/imports",
   ]
   pruneopts = "UT"
-  revision = "636435b68700211441303f1a5ed92f3768ba5774"
-  version = "v0.5.1"
+  revision = "3a7f37c7e22a8fedce430c4d340ad5c1351198f4"
+  version = "v0.7.1"
 
 [[projects]]
   digest = "1:897d91c431ce469d35a5e6030e60e617dccd9a0e95bdffa6a80594f5c5800d29"
@@ -319,6 +321,14 @@
   version = "v1.2.2"
 
 [[projects]]
+  digest = "1:b24d38b282bacf9791408a080f606370efa3d364e4b5fd9ba0f7b87786d3b679"
+  name = "github.com/urfave/cli"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "cfb38830724cc34fedffe9a2a29fb54fa9169cd1"
+  version = "v1.20.0"
+
+[[projects]]
   digest = "1:895fa0f564003de2498fbaf00be596fa814655ab445ce7cc215f7724bb6831ae"
   name = "github.com/vektah/gqlgen"
   packages = ["client"]
@@ -327,8 +337,7 @@
   version = "v0.5.1"
 
 [[projects]]
-  branch = "master"
-  digest = "1:8150271279cc160a41e9aabfee8118c20a0e88894a25b2577f93e7c868e5259c"
+  digest = "1:ed6a41de3eedd8d4868eea057837860453ebbe08c5e385fd50d4c24e5642ec18"
   name = "github.com/vektah/gqlparser"
   packages = [
     ".",
@@ -340,7 +349,8 @@
     "validator/rules",
   ]
   pruneopts = "UT"
-  revision = "14e83ae06ec152e6d0afb9766a00e0c0918aa8fc"
+  revision = "e805d08bb209b1accdea76bd2327811858d81985"
+  version = "v1.0.0"
 
 [[projects]]
   branch = "master"
@@ -440,7 +450,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/99designs/gqlgen/codegen",
+    "github.com/99designs/gqlgen/cmd",
     "github.com/99designs/gqlgen/graphql",
     "github.com/99designs/gqlgen/graphql/introspection",
     "github.com/99designs/gqlgen/handler",

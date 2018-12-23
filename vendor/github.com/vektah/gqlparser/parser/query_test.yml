@@ -504,4 +504,17 @@ large queries:
                     Value: $b
                 - <Argument>
                     Name: "obj"
-                    Value: {"key":"value","block":"block string uses \"\"\""}
+                    Value: {key:"value",block:"block string uses \"\"\""}
+
+fuzzer:
+- name: 01
+  input: '{__typename{...}}'
+  error:
+    message: 'Expected {, found }'
+    locations: [{ line: 1, column: 16 }]
+
+- name: 02
+  input: '{...{__typename{...{}}}}'
+  error:
+    message: 'expected at least one definition, found }'
+    locations: [{ line: 1, column: 21 }]

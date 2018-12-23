@@ -12,19 +12,17 @@ type (
 	}
 
 	EnumValue struct {
-		Name              string
-		Description       string
-		IsDeprecated      bool
-		DeprecationReason string
+		Name        string
+		Description string
+		deprecation *ast.Directive
 	}
 
 	Field struct {
-		Name              string
-		Description       string
-		Type              *Type
-		Args              []InputValue
-		IsDeprecated      bool
-		DeprecationReason string
+		Name        string
+		Description string
+		Type        *Type
+		Args        []InputValue
+		deprecation *ast.Directive
 	}
 
 	InputValue struct {
@@ -39,20 +37,36 @@ func WrapSchema(schema *ast.Schema) *Schema {
 	return &Schema{schema: schema}
 }
 
-func isDeprecated(directives ast.DirectiveList) bool {
-	return directives.ForName("deprecated") != nil
+func (f *EnumValue) IsDeprecated() bool {
+	return f.deprecation != nil
 }
 
-func deprecationReason(directives ast.DirectiveList) string {
-	deprecation := directives.ForName("deprecated")
-	if deprecation == nil {
-		return ""
+func (f *EnumValue) DeprecationReason() *string {
+	if f.deprecation == nil {
+		return nil
 	}
 
-	reason := deprecation.Arguments.ForName("reason")
+	reason := f.deprecation.Arguments.ForName("reason")
 	if reason == nil {
-		return ""
+		return nil
 	}
 
-	return reason.Value.Raw
+	return &reason.Value.Raw
+}
+
+func (f *Field) IsDeprecated() bool {
+	return f.deprecation != nil
+}
+
+func (f *Field) DeprecationReason() *string {
+	if f.deprecation == nil {
+		return nil
+	}
+
+	reason := f.deprecation.Arguments.ForName("reason")
+	if reason == nil {
+		return nil
+	}
+
+	return &reason.Value.Raw
 }

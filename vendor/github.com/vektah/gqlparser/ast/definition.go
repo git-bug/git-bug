@@ -30,6 +30,7 @@ type Definition struct {
 	EnumValues  EnumValueList // enum
 
 	Position *Position `dump:"-"`
+	BuiltIn  bool      `dump:"-"`
 }
 
 func (d *Definition) IsLeafType() bool {

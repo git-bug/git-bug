@@ -3,9 +3,21 @@
 package {{ .PackageName }}
 
 import (
-{{- range $import := .Imports }}
-	{{- $import.Write }}
-{{ end }}
+	%%%IMPORTS%%%
+
+	{{ reserveImport "context"  }}
+	{{ reserveImport "fmt"  }}
+	{{ reserveImport "io"  }}
+	{{ reserveImport "strconv"  }}
+	{{ reserveImport "time"  }}
+	{{ reserveImport "sync"  }}
+	{{ reserveImport "errors"  }}
+	{{ reserveImport "bytes"  }}
+
+	{{ reserveImport "github.com/vektah/gqlparser" }}
+	{{ reserveImport "github.com/vektah/gqlparser/ast" }}
+	{{ reserveImport "github.com/99designs/gqlgen/graphql" }}
+	{{ reserveImport "github.com/99designs/gqlgen/graphql/introspection" }}
 )
 
 // NewExecutableSchema creates an ExecutableSchema from the ResolverRoot interface.
@@ -126,9 +138,9 @@ func (e *executableSchema) Query(ctx context.Context, op *ast.OperationDefinitio
 		})
 
 		return &graphql.Response{
-			Data:   buf,
-			Errors: ec.Errors,
-		}
+			Data:       buf,
+			Errors:     ec.Errors,
+			Extensions: ec.Extensions,		}
 	{{- else }}
 		return graphql.ErrorResponse(ctx, "queries are not supported")
 	{{- end }}
@@ -146,8 +158,9 @@ func (e *executableSchema) Mutation(ctx context.Context, op *ast.OperationDefini
 		})
 
 		return &graphql.Response{
-			Data:   buf,
-			Errors: ec.Errors,
+			Data:       buf,
+			Errors:     ec.Errors,
+			Extensions: ec.Extensions,
 		}
 	{{- else }}
 		return graphql.ErrorResponse(ctx, "mutations are not supported")
@@ -181,8 +194,9 @@ func (e *executableSchema) Subscription(ctx context.Context, op *ast.OperationDe
 			}
 
 			return &graphql.Response{
-				Data:   buf,
-				Errors: ec.Errors,
+				Data:       buf,
+				Errors:     ec.Errors,
+				Extensions: ec.Extensions,
 			}
 		}
 	{{- else }}
@@ -250,14 +264,22 @@ func (ec *executionContext) FieldMiddleware(ctx context.Context, obj interface{}
 	return res
 }
 
-func (ec *executionContext) introspectSchema() *introspection.Schema {
-	return introspection.WrapSchema(parsedSchema)
+func (ec *executionContext) introspectSchema() (*introspection.Schema, error) {
+	if ec.DisableIntrospection {
+		return nil, errors.New("introspection disabled")
+	}
+	return introspection.WrapSchema(parsedSchema), nil
 }
 
-func (ec *executionContext) introspectType(name string) *introspection.Type {
-	return introspection.WrapTypeFromDef(parsedSchema, parsedSchema.Types[name])
+func (ec *executionContext) introspectType(name string) (*introspection.Type, error) {
+	if ec.DisableIntrospection {
+		return nil, errors.New("introspection disabled")
+	}
+	return introspection.WrapTypeFromDef(parsedSchema, parsedSchema.Types[name]), nil
 }
 
 var parsedSchema = gqlparser.MustLoadSchema(
-	&ast.Source{Name: {{.SchemaFilename|quote}}, Input: {{.SchemaRaw|rawQuote}}},
+	{{- range $filename, $schema := .SchemaRaw }}
+		&ast.Source{Name: {{$filename|quote}}, Input: {{$schema|rawQuote}}},
+	{{- end }}
 )

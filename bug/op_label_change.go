@@ -97,6 +97,9 @@ func (op *LabelChangeOperation) Validate() error {
 	return nil
 }
 
+// Sign post method for gqlgen
+func (op *LabelChangeOperation) IsAuthored() {}
+
 func NewLabelChangeOperation(author Person, unixTime int64, added, removed []Label) *LabelChangeOperation {
 	return &LabelChangeOperation{
 		OpBase:  newOpBase(LabelChangeOp, author, unixTime),

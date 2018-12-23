@@ -107,7 +107,7 @@ func (v *Value) String() string {
 	case ObjectValue:
 		var val []string
 		for _, elem := range v.Children {
-			val = append(val, strconv.Quote(elem.Name)+":"+elem.Value.String())
+			val = append(val, elem.Name+":"+elem.Value.String())
 		}
 		return "{" + strings.Join(val, ",") + "}"
 	default:

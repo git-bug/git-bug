@@ -1,8 +1,9 @@
 package ast
 
 type Source struct {
-	Name  string
-	Input string
+	Name    string
+	Input   string
+	BuiltIn bool
 }
 
 type Position struct {

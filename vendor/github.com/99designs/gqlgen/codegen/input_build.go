@@ -9,7 +9,7 @@ import (
 	"golang.org/x/tools/go/loader"
 )
 
-func (cfg *Config) buildInputs(namedTypes NamedTypes, prog *loader.Program, imports *Imports) (Objects, error) {
+func (cfg *Config) buildInputs(namedTypes NamedTypes, prog *loader.Program) (Objects, error) {
 	var inputs Objects
 
 	for _, typ := range cfg.schema.Types {
@@ -26,7 +26,7 @@ func (cfg *Config) buildInputs(namedTypes NamedTypes, prog *loader.Program, impo
 			}
 			if def != nil {
 				input.Marshaler = buildInputMarshaler(typ, def)
-				bindErrs := bindObject(def.Type(), input, imports, cfg.StructTag)
+				bindErrs := bindObject(def.Type(), input, cfg.StructTag)
 				if len(bindErrs) > 0 {
 					return nil, bindErrs
 				}

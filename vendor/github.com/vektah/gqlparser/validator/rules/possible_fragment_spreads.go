@@ -20,7 +20,7 @@ func init() {
 			case ast.Interface, ast.Union:
 				parentDefs = walker.Schema.GetPossibleTypes(parentDef)
 			default:
-				panic("unexpected type")
+				return
 			}
 
 			fragmentDefType := walker.Schema.Types[fragmentName]

@@ -69,6 +69,9 @@ func (op *AddCommentOperation) Validate() error {
 	return nil
 }
 
+// Sign post method for gqlgen
+func (op *AddCommentOperation) IsAuthored() {}
+
 func NewAddCommentOp(author Person, unixTime int64, message string, files []git.Hash) *AddCommentOperation {
 	return &AddCommentOperation{
 		OpBase:  newOpBase(AddCommentOp, author, unixTime),

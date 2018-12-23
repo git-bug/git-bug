@@ -81,6 +81,9 @@ func (op *CreateOperation) Validate() error {
 	return nil
 }
 
+// Sign post method for gqlgen
+func (op *CreateOperation) IsAuthored() {}
+
 func NewCreateOp(author Person, unixTime int64, title, message string, files []git.Hash) *CreateOperation {
 	return &CreateOperation{
 		OpBase:  newOpBase(CreateOp, author, unixTime),

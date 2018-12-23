@@ -27,6 +27,9 @@ func (op *NoOpOperation) Validate() error {
 	return opBaseValidate(op, NoOpOp)
 }
 
+// Sign post method for gqlgen
+func (op *NoOpOperation) IsAuthored() {}
+
 func NewNoOpOp(author Person, unixTime int64) *NoOpOperation {
 	return &NoOpOperation{
 		OpBase: newOpBase(NoOpOp, author, unixTime),

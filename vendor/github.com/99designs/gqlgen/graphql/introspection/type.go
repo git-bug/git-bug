@@ -81,12 +81,11 @@ func (t *Type) Fields(includeDeprecated bool) []Field {
 		}
 
 		fields = append(fields, Field{
-			Name:              f.Name,
-			Description:       f.Description,
-			Args:              args,
-			Type:              WrapTypeFromType(t.schema, f.Type),
-			IsDeprecated:      isDeprecated(f.Directives),
-			DeprecationReason: deprecationReason(f.Directives),
+			Name:        f.Name,
+			Description: f.Description,
+			Args:        args,
+			Type:        WrapTypeFromType(t.schema, f.Type),
+			deprecation: f.Directives.ForName("deprecated"),
 		})
 	}
 	return fields
@@ -150,10 +149,9 @@ func (t *Type) EnumValues(includeDeprecated bool) []EnumValue {
 	var res []EnumValue
 	for _, val := range t.def.EnumValues {
 		res = append(res, EnumValue{
-			Name:              val.Name,
-			Description:       val.Description,
-			IsDeprecated:      isDeprecated(val.Directives),
-			DeprecationReason: deprecationReason(val.Directives),
+			Name:        val.Name,
+			Description: val.Description,
+			deprecation: val.Directives.ForName("deprecated"),
 		})
 	}
 	return res

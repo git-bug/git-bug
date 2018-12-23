@@ -82,6 +82,10 @@ func (p *parser) expect(kind lexer.Type) lexer.Token {
 }
 
 func (p *parser) skip(kind lexer.Type) bool {
+	if p.err != nil {
+		return false
+	}
+
 	tok := p.peek()
 
 	if tok.Kind != kind {
@@ -108,5 +112,25 @@ func (p *parser) many(start lexer.Type, end lexer.Type, cb func()) {
 	for p.peek().Kind != end && p.err == nil {
 		cb()
 	}
+	p.next()
+}
+
+func (p *parser) some(start lexer.Type, end lexer.Type, cb func()) {
+	hasDef := p.skip(start)
+	if !hasDef {
+		return
+	}
+
+	called := false
+	for p.peek().Kind != end && p.err == nil {
+		called = true
+		cb()
+	}
+
+	if !called {
+		p.error(p.peek(), "expected at least one definition, found %s", p.peek().Kind.String())
+		return
+	}
+
 	p.next()
 }

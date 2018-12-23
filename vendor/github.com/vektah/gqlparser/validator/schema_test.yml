@@ -10,6 +10,84 @@ types:
     error:
       message: "Cannot redeclare type A."
       locations: [{line: 4, column: 6}]
+  - name: cannot be duplicated field at same definition 1
+    input: |
+      type A {
+        name: String
+        name: String
+      }
+    error:
+      message: "Field A.name can only be defined once."
+      locations: [{line: 3, column: 3}]
+  - name: cannot be duplicated field at same definition 2
+    input: |
+      type A {
+        name: String
+      }
+      extend type A {
+        name: String
+      }
+    error:
+      message: "Field A.name can only be defined once."
+      locations: [{line: 5, column: 3}]
+  - name: cannot be duplicated field at same definition 3
+    input: |
+      type A {
+        name: String
+      }
+      extend type A {
+        age: Int
+        age: Int
+      }
+    error:
+      message: "Field A.age can only be defined once."
+      locations: [{line: 6, column: 3}]
+
+object types:
+  - name: must define one or more fields
+    input: |
+      directive @D on OBJECT
+
+      # This pattern rejected by parser
+      # type InvalidObject1 {}
+
+      type InvalidObject2 @D
+
+      type ValidObject {
+        id: ID
+      }
+      extend type ValidObject @D
+      extend type ValidObject {
+        b: Int
+      }
+    error:
+      message: 'OBJECT must define one or more fields.'
+      locations: [{line: 6, column: 6}]
+  - name: check reserved names on type name
+    input: |
+      type __FooBar {
+        id: ID
+      }
+    error:
+      message: 'Name "__FooBar" must not begin with "__", which is reserved by GraphQL introspection.'
+      locations: [{line: 1, column: 6}]
+  - name: check reserved names on type field
+    input: |
+      type FooBar {
+        __id: ID
+      }
+    error:
+      message: 'Name "__id" must not begin with "__", which is reserved by GraphQL introspection.'
+      locations: [{line: 2, column: 3}]
+
+  - name: check reserved names on type field argument
+    input: |
+      type FooBar {
+        foo(__bar: ID): ID
+      }
+    error:
+      message: 'Name "__bar" must not begin with "__", which is reserved by GraphQL introspection.'
+      locations: [{line: 2, column: 7}]
 
 interfaces:
   - name: must exist
@@ -40,6 +118,93 @@ interfaces:
       }
     error:
       message: '"Object" is a non interface type OBJECT.'
+      locations: [{line: 1, column: 6}]
+
+  - name: must define one or more fields
+    input: |
+      directive @D on INTERFACE
+
+      # This pattern rejected by parser
+      # interface InvalidInterface1 {}
+
+      interface InvalidInterface2 @D
+
+      interface ValidInterface {
+        id: ID
+      }
+      extend interface ValidInterface @D
+      extend interface ValidInterface {
+        b: Int
+      }
+    error:
+      message: 'INTERFACE must define one or more fields.'
+      locations: [{line: 6, column: 11}]
+  - name: check reserved names on type name
+    input: |
+      interface __FooBar {
+        id: ID
+      }
+    error:
+      message: 'Name "__FooBar" must not begin with "__", which is reserved by GraphQL introspection.'
+      locations: [{line: 1, column: 11}]
+
+inputs:
+  - name: must define one or more input fields
+    input: |
+      directive @D on INPUT_OBJECT
+
+      # This pattern rejected by parser
+      # input InvalidInput1 {}
+
+      input InvalidInput2 @D
+
+      input ValidInput {
+        id: ID
+      }
+      extend input ValidInput @D
+      extend input ValidInput {
+        b: Int
+      }
+    error:
+      message: 'INPUT_OBJECT must define one or more input fields.'
+      locations: [{line: 6, column: 7}]
+  - name: check reserved names on type name
+    input: |
+      input __FooBar {
+        id: ID
+      }
+    error:
+      message: 'Name "__FooBar" must not begin with "__", which is reserved by GraphQL introspection.'
+      locations: [{line: 1, column: 7}]
+
+enums:
+  - name: must define one or more unique enum values
+    input: |
+      directive @D on ENUM
+
+      # This pattern rejected by parser
+      # enum InvalidEmum1 {}
+
+      enum InvalidEnum2 @D
+
+      enum ValidEnum {
+        FOO
+      }
+      extend enum ValidEnum @D
+      extend enum ValidEnum {
+        BAR
+      }
+    error:
+      message: 'ENUM must define one or more unique enum values.'
+      locations: [{line: 6, column: 6}]
+  - name: check reserved names on type name
+    input: |
+      enum __FooBar {
+        A
+        B
+      }
+    error:
+      message: 'Name "__FooBar" must not begin with "__", which is reserved by GraphQL introspection.'
       locations: [{line: 1, column: 6}]
 
 type extensions:
@@ -86,6 +251,12 @@ directives:
     error:
       message: "Directive A cannot refer to itself."
       locations: [{line: 1, column: 25}]
+  - name: check reserved names on type name
+    input: |
+      directive @__A on FIELD_DEFINITION
+    error:
+      message: 'Name "__A" must not begin with "__", which is reserved by GraphQL introspection.'
+      locations: [{line: 1, column: 12}]
 
 entry points:
   - name: multiple schema entry points

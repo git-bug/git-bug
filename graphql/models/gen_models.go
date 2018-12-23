@@ -3,15 +3,17 @@
 package models
 
 import (
-	fmt "fmt"
-	io "io"
-	strconv "strconv"
+	"fmt"
+	"io"
+	"strconv"
 
-	bug "github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/bug"
 )
 
 // An object that has an author.
-type Authored interface{}
+type Authored interface {
+	IsAuthored()
+}
 
 // The connection type for Bug.
 type BugConnection struct {

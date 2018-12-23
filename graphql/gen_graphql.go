@@ -4,43 +4,12 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
-	"log"
-	"os"
-	"path"
 
-	"github.com/99designs/gqlgen/codegen"
+	"github.com/99designs/gqlgen/cmd"
 )
 
 func main() {
-	current, err := os.Getwd()
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	os.Chdir(path.Join(current, "graphql"))
-
 	fmt.Println("Generating graphql code ...")
 
-	log.SetOutput(os.Stdout)
-
-	config, err := codegen.LoadConfigFromDefaultLocations()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	schemaRaw, err := ioutil.ReadFile(config.SchemaFilename)
-	if err != nil {
-		log.Fatal("unable to open schema: " + err.Error())
-	}
-	config.SchemaStr = string(schemaRaw)
-
-	if err = config.Check(); err != nil {
-		log.Fatal("invalid config format: " + err.Error())
-	}
-
-	err = codegen.Generate(*config)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
+	cmd.Execute()
 }

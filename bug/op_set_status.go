@@ -53,6 +53,9 @@ func (op *SetStatusOperation) Validate() error {
 	return nil
 }
 
+// Sign post method for gqlgen
+func (op *SetStatusOperation) IsAuthored() {}
+
 func NewSetStatusOp(author Person, unixTime int64, status Status) *SetStatusOperation {
 	return &SetStatusOperation{
 		OpBase: newOpBase(SetStatusOp, author, unixTime),

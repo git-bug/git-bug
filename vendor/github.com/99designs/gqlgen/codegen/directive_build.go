@@ -32,7 +32,6 @@ func (cfg *Config) buildDirectives(types NamedTypes) ([]*Directive, error) {
 				if err != nil {
 					return nil, errors.Errorf("default value for directive argument %s(%s) is not valid: %s", dir.Name, arg.Name, err.Error())
 				}
-				newArg.StripPtr()
 			}
 			args = append(args, newArg)
 		}

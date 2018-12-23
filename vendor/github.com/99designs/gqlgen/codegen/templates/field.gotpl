@@ -14,6 +14,9 @@
 		ctx = graphql.WithResolverContext(ctx, &graphql.ResolverContext{
 			Field: field,
 		})
+		// FIXME: subscriptions are missing request middleware stack https://github.com/99designs/gqlgen/issues/259
+		//          and Tracer stack
+		rctx := ctx
 		results, err := ec.resolvers.{{ $field.ShortInvocation }}
 		if err != nil {
 			ec.Error(ctx, err)
@@ -32,6 +35,8 @@
 {{ else }}
 	// nolint: vetshadow
 	func (ec *executionContext) _{{$object.GQLType}}_{{$field.GQLName}}(ctx context.Context, field graphql.CollectedField, {{if not $object.Root}}obj *{{$object.FullName}}{{end}}) graphql.Marshaler {
+		ctx = ec.Tracer.StartFieldExecution(ctx, field)
+		defer func () { ec.Tracer.EndFieldExecution(ctx) }()
 		{{- if $field.Args }}
 			rawArgs := field.ArgumentMap(ec.Variables)
 			args, err := {{ $field.ArgsFunc }}(rawArgs)
@@ -46,7 +51,9 @@
 			Field: field,
 		}
 		ctx = graphql.WithResolverContext(ctx, rctx)
-		resTmp := ec.FieldMiddleware(ctx, {{if $object.Root}}nil{{else}}obj{{end}}, func(ctx context.Context) (interface{}, error) {
+		ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+		resTmp := ec.FieldMiddleware(ctx, {{if $object.Root}}nil{{else}}obj{{end}}, func(rctx context.Context) (interface{}, error) {
+			ctx = rctx  // use context from middleware stack in children
 			{{- if $field.IsResolver }}
 				return ec.resolvers.{{ $field.ShortInvocation }}
 			{{- else if $field.IsMethod }}
@@ -69,6 +76,7 @@
 		}
 		res := resTmp.({{$field.Signature}})
 		rctx.Result = res
+		ctx = ec.Tracer.StartFieldChildExecution(ctx)
 		{{ $field.WriteJson }}
 	}
 {{ end }}

@@ -1,11 +1,22 @@
-//go:generate gorunpkg github.com/99designs/gqlgen
-
 package {{ .PackageName }}
 
 import (
-{{- range $import := .Imports }}
-	{{- $import.Write }}
-{{ end }}
+	%%%IMPORTS%%%
+
+	{{ reserveImport "context"  }}
+	{{ reserveImport "fmt"  }}
+	{{ reserveImport "io"  }}
+	{{ reserveImport "strconv"  }}
+	{{ reserveImport "time"  }}
+	{{ reserveImport "sync"  }}
+	{{ reserveImport "errors"  }}
+	{{ reserveImport "bytes"  }}
+
+	{{ reserveImport "github.com/99designs/gqlgen/handler" }}
+	{{ reserveImport "github.com/vektah/gqlparser" }}
+	{{ reserveImport "github.com/vektah/gqlparser/ast" }}
+	{{ reserveImport "github.com/99designs/gqlgen/graphql" }}
+	{{ reserveImport "github.com/99designs/gqlgen/graphql/introspection" }}
 )
 
 type {{.ResolverType}} struct {}

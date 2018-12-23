@@ -4,6 +4,7 @@ type Model struct {
 	*NamedType
 	Description string
 	Fields      []ModelField
+	Implements  []*NamedType
 }
 
 type ModelField struct {

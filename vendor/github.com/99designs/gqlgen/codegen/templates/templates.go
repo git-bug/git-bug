@@ -14,21 +14,25 @@ import (
 	"text/template"
 	"unicode"
 
-	"log"
+	"github.com/99designs/gqlgen/internal/imports"
 
 	"github.com/pkg/errors"
-	"golang.org/x/tools/imports"
 )
+
+// this is done with a global because subtemplates currently get called in functions. Lets aim to remove this eventually.
+var CurrentImports *Imports
 
 func Run(name string, tpldata interface{}) (*bytes.Buffer, error) {
 	t := template.New("").Funcs(template.FuncMap{
-		"ucFirst":     ucFirst,
-		"lcFirst":     lcFirst,
-		"quote":       strconv.Quote,
-		"rawQuote":    rawQuote,
-		"toCamel":     ToCamel,
-		"dump":        dump,
-		"prefixLines": prefixLines,
+		"ucFirst":       ucFirst,
+		"lcFirst":       lcFirst,
+		"quote":         strconv.Quote,
+		"rawQuote":      rawQuote,
+		"toCamel":       ToCamel,
+		"dump":          dump,
+		"prefixLines":   prefixLines,
+		"reserveImport": CurrentImports.Reserve,
+		"lookupImport":  CurrentImports.Lookup,
 	})
 
 	for filename, data := range data {
@@ -149,27 +153,21 @@ func prefixLines(prefix, s string) string {
 }
 
 func RenderToFile(tpl string, filename string, data interface{}) error {
+	if CurrentImports != nil {
+		panic(fmt.Errorf("recursive or concurrent call to RenderToFile detected"))
+	}
+	CurrentImports = &Imports{destDir: filepath.Dir(filename)}
+
 	var buf *bytes.Buffer
 	buf, err := Run(tpl, data)
 	if err != nil {
 		return errors.Wrap(err, filename+" generation failed")
 	}
 
-	if err := write(filename, buf.Bytes()); err != nil {
-		return err
-	}
+	b := bytes.Replace(buf.Bytes(), []byte("%%%IMPORTS%%%"), []byte(CurrentImports.String()), -1)
+	CurrentImports = nil
 
-	log.Println(filename)
-
-	return nil
-}
-
-func gofmt(filename string, b []byte) ([]byte, error) {
-	out, err := imports.Process(filename, b, nil)
-	if err != nil {
-		return b, errors.Wrap(err, "unable to gofmt")
-	}
-	return out, nil
+	return write(filename, b)
 }
 
 func write(filename string, b []byte) error {
@@ -178,9 +176,9 @@ func write(filename string, b []byte) error {
 		return errors.Wrap(err, "failed to create directory")
 	}
 
-	formatted, err := gofmt(filename, b)
+	formatted, err := imports.Prune(filename, b)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "gofmt failed: %s\n", err.Error())
+		fmt.Fprintf(os.Stderr, "gofmt failed on %s: %s\n", filepath.Base(filename), err.Error())
 		formatted = b
 	}
 

@@ -136,6 +136,12 @@ object types:
                     Name: "argTwo"
                     Type: Int
                 Type: String
+  - name: must define one or more fields
+    input: |
+      type Hello {}
+    error:
+      message: "expected at least one definition, found }"
+      locations: [{ line: 1, column: 13 }]
 
 type extensions:
   - name: Object extension
@@ -378,6 +384,12 @@ enums:
                 Name: "WO"
             - <EnumValueDefinition>
                 Name: "RLD"
+  - name: must define one or more unique enum values
+    input: |
+      enum Hello {}
+    error:
+      message: "expected at least one definition, found }"
+      locations: [{ line: 1, column: 13 }]
 
 interface:
   - name: simple
@@ -395,6 +407,12 @@ interface:
             - <FieldDefinition>
                 Name: "world"
                 Type: String
+  - name: must define one or more fields
+    input: |
+      interface Hello {}
+    error:
+      message: "expected at least one definition, found }"
+      locations: [{ line: 1, column: 18 }]
 
 unions:
   - name: simple
@@ -485,6 +503,12 @@ input object:
     error:
       message: "Expected :, found ("
       locations: [{ line: 2, column: 8 }]
+  - name: must define one or more input fields
+    input: |
+      input Hello {}
+    error:
+      message: "expected at least one definition, found }"
+      locations: [{ line: 1, column: 14 }]
 
 directives:
   - name: simple
@@ -503,3 +527,14 @@ directives:
       message: 'Unexpected Name "INCORRECT_LOCATION"'
       locations: [{ line: 1, column: 27 }]
 
+fuzzer:
+  - name: 1
+    input: "type o{d(g:["
+    error:
+      message: 'Expected Name, found <EOF>'
+      locations: [{ line: 1, column: 13 }]
+  - name: 2
+    input: "\"\"\"\r"
+    error:
+      message: 'Unexpected <Invalid>'
+      locations: [{ line: 1, column: 5 }]

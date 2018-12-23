@@ -448,7 +448,7 @@ func (s *Lexer) readBlockString() (Token, *gqlerror.Error) {
 			s.end += 4
 			s.endRunes += 4
 		} else if r == '\r' {
-			if s.end+1 <= inputLen && s.Input[s.end+1] == '\n' {
+			if s.end+1 < inputLen && s.Input[s.end+1] == '\n' {
 				s.end++
 				s.endRunes++
 			}

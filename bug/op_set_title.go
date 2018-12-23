@@ -74,6 +74,9 @@ func (op *SetTitleOperation) Validate() error {
 	return nil
 }
 
+// Sign post method for gqlgen
+func (op *SetTitleOperation) IsAuthored() {}
+
 func NewSetTitleOp(author Person, unixTime int64, title string, was string) *SetTitleOperation {
 	return &SetTitleOperation{
 		OpBase: newOpBase(SetTitleOp, author, unixTime),

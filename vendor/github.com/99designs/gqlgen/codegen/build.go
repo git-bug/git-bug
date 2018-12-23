@@ -15,25 +15,22 @@ type Build struct {
 	Objects          Objects
 	Inputs           Objects
 	Interfaces       []*Interface
-	Imports          []*Import
 	QueryRoot        *Object
 	MutationRoot     *Object
 	SubscriptionRoot *Object
-	SchemaRaw        string
-	SchemaFilename   string
+	SchemaRaw        map[string]string
+	SchemaFilename   SchemaFilenames
 	Directives       []*Directive
 }
 
 type ModelBuild struct {
 	PackageName string
-	Imports     []*Import
 	Models      []Model
 	Enums       []Enum
 }
 
 type ResolverBuild struct {
 	PackageName   string
-	Imports       []*Import
 	ResolverType  string
 	Objects       Objects
 	ResolverFound bool
@@ -41,7 +38,6 @@ type ResolverBuild struct {
 
 type ServerBuild struct {
 	PackageName         string
-	Imports             []*Import
 	ExecPackageName     string
 	ResolverPackageName string
 }
@@ -50,16 +46,16 @@ type ServerBuild struct {
 func (cfg *Config) models() (*ModelBuild, error) {
 	namedTypes := cfg.buildNamedTypes()
 
-	progLoader := newLoader(namedTypes, true)
+	progLoader := cfg.newLoaderWithoutErrors()
+
 	prog, err := progLoader.Load()
 	if err != nil {
 		return nil, errors.Wrap(err, "loading failed")
 	}
-	imports := buildImports(namedTypes, cfg.Model.Dir())
 
-	cfg.bindTypes(imports, namedTypes, cfg.Model.Dir(), prog)
+	cfg.bindTypes(namedTypes, cfg.Model.Dir(), prog)
 
-	models, err := cfg.buildModels(namedTypes, prog, imports)
+	models, err := cfg.buildModels(namedTypes, prog)
 	if err != nil {
 		return nil, err
 	}
@@ -67,13 +63,12 @@ func (cfg *Config) models() (*ModelBuild, error) {
 		PackageName: cfg.Model.Package,
 		Models:      models,
 		Enums:       cfg.buildEnums(namedTypes),
-		Imports:     imports.finalize(),
 	}, nil
 }
 
 // bind a schema together with some code to generate a Build
 func (cfg *Config) resolver() (*ResolverBuild, error) {
-	progLoader := newLoader(cfg.buildNamedTypes(), true)
+	progLoader := cfg.newLoaderWithoutErrors()
 	progLoader.Import(cfg.Resolver.ImportPath())
 
 	prog, err := progLoader.Load()
@@ -84,13 +79,10 @@ func (cfg *Config) resolver() (*ResolverBuild, error) {
 	destDir := cfg.Resolver.Dir()
 
 	namedTypes := cfg.buildNamedTypes()
-	imports := buildImports(namedTypes, destDir)
-	imports.add(cfg.Exec.ImportPath())
-	imports.add("github.com/99designs/gqlgen/handler") // avoid import github.com/vektah/gqlgen/handler
 
-	cfg.bindTypes(imports, namedTypes, destDir, prog)
+	cfg.bindTypes(namedTypes, destDir, prog)
 
-	objects, err := cfg.buildObjects(namedTypes, prog, imports)
+	objects, err := cfg.buildObjects(namedTypes, prog)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +92,6 @@ func (cfg *Config) resolver() (*ResolverBuild, error) {
 
 	return &ResolverBuild{
 		PackageName:   cfg.Resolver.Package,
-		Imports:       imports.finalize(),
 		Objects:       objects,
 		ResolverType:  cfg.Resolver.Type,
 		ResolverFound: resolverFound,
@@ -108,15 +99,10 @@ func (cfg *Config) resolver() (*ResolverBuild, error) {
 }
 
 func (cfg *Config) server(destDir string) *ServerBuild {
-	imports := buildImports(NamedTypes{}, destDir)
-	imports.add(cfg.Exec.ImportPath())
-	imports.add(cfg.Resolver.ImportPath())
-
 	return &ServerBuild{
 		PackageName:         cfg.Resolver.Package,
-		Imports:             imports.finalize(),
-		ExecPackageName:     cfg.Exec.Package,
-		ResolverPackageName: cfg.Resolver.Package,
+		ExecPackageName:     cfg.Exec.ImportPath(),
+		ResolverPackageName: cfg.Resolver.ImportPath(),
 	}
 }
 
@@ -124,21 +110,20 @@ func (cfg *Config) server(destDir string) *ServerBuild {
 func (cfg *Config) bind() (*Build, error) {
 	namedTypes := cfg.buildNamedTypes()
 
-	progLoader := newLoader(namedTypes, true)
+	progLoader := cfg.newLoaderWithoutErrors()
 	prog, err := progLoader.Load()
 	if err != nil {
 		return nil, errors.Wrap(err, "loading failed")
 	}
 
-	imports := buildImports(namedTypes, cfg.Exec.Dir())
-	cfg.bindTypes(imports, namedTypes, cfg.Exec.Dir(), prog)
+	cfg.bindTypes(namedTypes, cfg.Exec.Dir(), prog)
 
-	objects, err := cfg.buildObjects(namedTypes, prog, imports)
+	objects, err := cfg.buildObjects(namedTypes, prog)
 	if err != nil {
 		return nil, err
 	}
 
-	inputs, err := cfg.buildInputs(namedTypes, prog, imports)
+	inputs, err := cfg.buildInputs(namedTypes, prog)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +137,6 @@ func (cfg *Config) bind() (*Build, error) {
 		Objects:        objects,
 		Interfaces:     cfg.buildInterfaces(namedTypes, prog),
 		Inputs:         inputs,
-		Imports:        imports.finalize(),
 		SchemaRaw:      cfg.SchemaStr,
 		SchemaFilename: cfg.SchemaFilename,
 		Directives:     directives,
@@ -175,29 +159,25 @@ func (cfg *Config) bind() (*Build, error) {
 }
 
 func (cfg *Config) validate() error {
-	progLoader := newLoader(cfg.buildNamedTypes(), false)
+	progLoader := cfg.newLoaderWithErrors()
 	_, err := progLoader.Load()
 	return err
 }
 
-func newLoader(namedTypes NamedTypes, allowErrors bool) loader.Config {
+func (cfg *Config) newLoaderWithErrors() loader.Config {
 	conf := loader.Config{}
-	if allowErrors {
-		conf = loader.Config{
-			AllowErrors: true,
-			TypeChecker: types.Config{
-				Error: func(e error) {},
-			},
-		}
-	}
-	for _, imp := range ambientImports {
-		conf.Import(imp)
-	}
 
-	for _, imp := range namedTypes {
-		if imp.Package != "" {
-			conf.Import(imp.Package)
-		}
+	for _, pkg := range cfg.Models.referencedPackages() {
+		conf.Import(pkg)
+	}
+	return conf
+}
+
+func (cfg *Config) newLoaderWithoutErrors() loader.Config {
+	conf := cfg.newLoaderWithErrors()
+	conf.AllowErrors = true
+	conf.TypeChecker = types.Config{
+		Error: func(e error) {},
 	}
 	return conf
 }

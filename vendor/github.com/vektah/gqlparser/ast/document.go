@@ -32,6 +32,7 @@ type Schema struct {
 	Directives map[string]*DirectiveDefinition
 
 	PossibleTypes map[string][]*Definition
+	Implements    map[string][]*Definition
 }
 
 func (s *Schema) AddPossibleType(name string, def *Definition) {
@@ -40,15 +41,16 @@ func (s *Schema) AddPossibleType(name string, def *Definition) {
 
 // GetPossibleTypes will enumerate all the definitions for a given interface or union
 func (s *Schema) GetPossibleTypes(def *Definition) []*Definition {
-	if def.Kind == Union {
-		var defs []*Definition
-		for _, t := range def.Types {
-			defs = append(defs, s.Types[t])
-		}
-		return defs
-	}
-
 	return s.PossibleTypes[def.Name]
+}
+
+func (s *Schema) AddImplements(name string, iface *Definition) {
+	s.Implements[name] = append(s.Implements[name], iface)
+}
+
+// GetImplements returns all the interface and union definitions that the given definition satisfies
+func (s *Schema) GetImplements(def *Definition) []*Definition {
+	return s.Implements[def.Name]
 }
 
 type SchemaDefinition struct {
