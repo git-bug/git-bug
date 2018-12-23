@@ -1,0 +1,9 @@
+This package is released under two software licenses (MIT | Public Domain):
+
+* The `scripts/` directory is released under the MIT License. This license can
+  be found in the `LICENSES` directory as mit.txt [1].
+* All other files are released to the Public Domain using The Unlicense . This
+  license can be found in the `LICENSES` directory as unlicense.txt [2].
+
+[1] https://github.com/theckman/goconstraint/blob/master/LICENSES/mit.txt
+[2] https://github.com/theckman/goconstraint/blob/master/LICENSES/unlicense.txt

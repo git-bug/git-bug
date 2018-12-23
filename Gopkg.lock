@@ -321,6 +321,14 @@
   version = "v1.2.2"
 
 [[projects]]
+  digest = "1:0ec412b28282c10ac6ce56039120741bb738814e4874d23c15fdff37f6aa7a62"
+  name = "github.com/theckman/goconstraint"
+  packages = ["go1.8/gte"]
+  pruneopts = "UT"
+  revision = "93babf24513d0e8277635da8169fcc5a46ae3f6a"
+  version = "v1.11.0"
+
+[[projects]]
   digest = "1:b24d38b282bacf9791408a080f606370efa3d364e4b5fd9ba0f7b87786d3b679"
   name = "github.com/urfave/cli"
   packages = ["."]
@@ -471,6 +479,7 @@
     "github.com/spf13/cobra/doc",
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/require",
+    "github.com/theckman/goconstraint/go1.8/gte",
     "github.com/vektah/gqlgen/client",
     "github.com/vektah/gqlparser",
     "github.com/vektah/gqlparser/ast",

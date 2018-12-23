@@ -5,7 +5,12 @@
 
 package main
 
-import "github.com/MichaelMure/git-bug/commands"
+import (
+	"github.com/MichaelMure/git-bug/commands"
+
+	// minimal go version is 1.8
+	_ "github.com/theckman/goconstraint/go1.8/gte"
+)
 
 func main() {
 	commands.Execute()
