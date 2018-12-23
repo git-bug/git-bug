@@ -126,9 +126,18 @@ func TestWrapLeftPadded(t *testing.T) {
 		{
 			"The Lorem ipsum text is typically composed of pseudo-Latin words. It is commonly used as placeholder text to examine or demonstrate the visual effects of various graphic design.",
 			`    The Lorem ipsum text is typically composed of
-		pseudo-Latin words. It is commonly used as placeholder
-		text to examine or demonstrate the visual effects of
-		various graphic design.`,
+    pseudo-Latin words. It is commonly used as placeholder
+    text to examine or demonstrate the visual effects of
+    various graphic design.`,
+			59, 4,
+		},
+		// Handle Chinese
+		{
+			"婞一枳郲逴靲屮蜧曀殳，掫乇峔掮傎溒兀緉冘仜。郼牪艽螗媷錵朸一詅掜豗怙刉笀丌，楀棶乇矹迡搦囷圣亍昄漚粁仈祂。覂一洳袶揙楱亍滻瘯毌，掗屮柅軡菵腩乜榵毌夯。勼哻怌婇怤灟葠雺奷朾恦扰衪岨坋誁乇芚誙腞。冇笉妺悆浂鱦賌廌灱灱觓坋佫呬耴跣兀枔蓔輈。嵅咍犴膰痭瘰机一靬涽捊矷尒玶乇，煚塈丌岰陊鉖怞戉兀甿跾觓夬侄。棩岧汌橩僁螗玎一逭舴圂衪扐衲兀，嵲媕亍衩衿溽昃夯丌侄蒰扂丱呤。毰侘妅錣廇螉仴一暀淖蚗佶庂咺丌，輀鈁乇彽洢溦洰氶乇构碨洐巿阹。",
+			`    婞一枳郲逴靲屮蜧曀殳，掫乇峔掮傎溒兀緉冘仜。郼牪艽螗媷錵朸一詅掜豗怙刉笀丌，楀棶乇矹迡搦囷圣亍昄漚粁仈祂。覂一
+    洳袶揙楱亍滻瘯毌，掗屮柅軡菵腩乜榵毌夯。勼哻怌婇怤灟葠雺奷朾恦扰衪岨坋誁乇芚誙腞。冇笉妺悆浂鱦賌廌灱灱觓坋佫呬
+    耴跣兀枔蓔輈。嵅咍犴膰痭瘰机一靬涽捊矷尒玶乇，煚塈丌岰陊鉖怞戉兀甿跾觓夬侄。棩岧汌橩僁螗玎一逭舴圂衪扐衲兀，嵲
+    媕亍衩衿溽昃夯丌侄蒰扂丱呤。毰侘妅錣廇螉仴一暀淖蚗佶庂咺丌，輀鈁乇彽洢溦洰氶乇构碨洐巿阹。`,
 			59, 4,
 		},
 	}
@@ -238,6 +247,11 @@ func TestSplitWord(t *testing.T) {
 			"快檢什麼望對",
 			2,
 			"快檢", "什麼望對",
+		},
+		{
+			"快檢什麼望對",
+			3,
+			"快檢什", "麼望對",
 		},
 		// Handle chinese with colors
 		{

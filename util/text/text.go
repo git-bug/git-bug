@@ -58,7 +58,7 @@ func WrapLeftPadded(text string, lineWidth int, leftPad int) (string, int) {
 			} else {
 				// Break a word longer than a line
 				if wordLength > lineWidth {
-					for wordLength > 0 && len(word) > 0 {
+					for wordLength > 0 && wordLen(word) > 0 {
 						l := minInt(spaceLeft, wordLength)
 						part, leftover := splitWord(word, l)
 						word = leftover
@@ -76,6 +76,10 @@ func WrapLeftPadded(text string, lineWidth int, leftPad int) (string, int) {
 							nbLine++
 							spaceLeft = lineWidth - leftPad
 						}
+
+						if wordLength <= 0 {
+							break
+						}
 					}
 				} else {
 					// Normal break
@@ -90,8 +94,11 @@ func WrapLeftPadded(text string, lineWidth int, leftPad int) (string, int) {
 			}
 		}
 
-		textBuffer.WriteString(pad + strings.TrimRight(lineBuffer.String(), " "))
-		lineBuffer.Reset()
+		if lineBuffer.Len() > 0 {
+			textBuffer.WriteString(pad + strings.TrimRight(lineBuffer.String(), " "))
+			lineBuffer.Reset()
+		}
+
 		firstLine = false
 	}
 
