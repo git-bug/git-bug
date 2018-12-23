@@ -84,7 +84,7 @@ func WrapLeftPadded(text string, lineWidth int, leftPad int) (string, int) {
 					lineBuffer.Reset()
 					lineBuffer.WriteString(word)
 					firstWord = false
-					spaceLeft = lineWidth - wordLength
+					spaceLeft = lineWidth - leftPad - wordLength
 					nbLine++
 				}
 			}

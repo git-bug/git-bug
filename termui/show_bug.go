@@ -241,7 +241,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 
 		case *bug.CreateTimelineItem:
 			create := op.(*bug.CreateTimelineItem)
-			content, lines := text.WrapLeftPadded(create.Message, maxX, 4)
+			content, lines := text.WrapLeftPadded(create.Message, maxX-1, 4)
 
 			v, err := sb.createOpView(g, viewName, x0, y0, maxX+1, lines, true)
 			if err != nil {
@@ -258,7 +258,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 				edited = " (edited)"
 			}
 
-			message, _ := text.WrapLeftPadded(comment.Message, maxX, 4)
+			message, _ := text.WrapLeftPadded(comment.Message, maxX-1, 4)
 			content := fmt.Sprintf("%s commented on %s%s\n\n%s",
 				colors.Magenta(comment.Author.DisplayName()),
 				comment.CreatedAt.Time().Format(timeLayout),

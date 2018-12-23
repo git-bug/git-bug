@@ -106,11 +106,43 @@ func TestWrap(t *testing.T) {
 	for i, tc := range cases {
 		actual, lines := Wrap(tc.Input, tc.Lim)
 		if actual != tc.Output {
-			t.Fatalf("Case %d Input:\n\n`%s`\n\nExpected Output:\n\n`%s`\n\nActual Output:\n\n`%s`",
+			t.Fatalf("Case %d Input:\n\n`%s`\n\nExpected Output:\n\n`%s`\n\nActual Output:\n`\n%s`",
 				i, tc.Input, tc.Output, actual)
 		}
 
 		expected := len(strings.Split(tc.Output, "\n"))
+		if expected != lines {
+			t.Fatalf("Case %d Nb lines mismatch\nExpected:%d\nActual:%d",
+				i, expected, lines)
+		}
+	}
+}
+
+func TestWrapLeftPadded(t *testing.T) {
+	cases := []struct {
+		input, output string
+		lim, pad      int
+	}{
+		{
+			"The Lorem ipsum text is typically composed of pseudo-Latin words. It is commonly used as placeholder text to examine or demonstrate the visual effects of various graphic design.",
+			`    The Lorem ipsum text is typically composed of
+		pseudo-Latin words. It is commonly used as placeholder
+		text to examine or demonstrate the visual effects of
+		various graphic design.`,
+			59, 4,
+		},
+	}
+
+	for i, tc := range cases {
+		actual, lines := WrapLeftPadded(tc.input, tc.lim, tc.pad)
+		if actual != tc.output {
+			t.Fatalf("Case %d Input:\n\n`%s`\n\nExpected Output:\n`\n%s`\n\nActual Output:\n`\n%s\n%s`",
+				i, tc.input, tc.output,
+				"|"+strings.Repeat("-", tc.lim-2)+"|",
+				actual)
+		}
+
+		expected := len(strings.Split(tc.output, "\n"))
 		if expected != lines {
 			t.Fatalf("Case %d Nb lines mismatch\nExpected:%d\nActual:%d",
 				i, expected, lines)
