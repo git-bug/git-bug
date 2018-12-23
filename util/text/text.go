@@ -98,6 +98,7 @@ func WrapLeftPadded(text string, lineWidth int, leftPad int) (string, int) {
 	return textBuffer.String(), nbLine
 }
 
+// wordLen return the length of a word, while ignoring the terminal escape sequences
 func wordLen(word string) int {
 	length := 0
 	escape := false
@@ -119,8 +120,10 @@ func wordLen(word string) int {
 	return length
 }
 
+// splitWord split a word at the given length, while ignoring the terminal escape sequences
 func splitWord(word string, length int) (string, string) {
-	result := ""
+	runes := []rune(word)
+	var result []rune
 	added := 0
 	escape := false
 
@@ -128,12 +131,12 @@ func splitWord(word string, length int) (string, string) {
 		return "", word
 	}
 
-	for _, char := range word {
-		if char == '\x1b' {
+	for _, r := range runes {
+		if r == '\x1b' {
 			escape = true
 		}
 
-		result += string(char)
+		result = append(result, r)
 
 		if !escape {
 			added++
@@ -142,14 +145,14 @@ func splitWord(word string, length int) (string, string) {
 			}
 		}
 
-		if char == 'm' {
+		if r == 'm' {
 			escape = false
 		}
 	}
 
-	leftover := word[len(result):]
+	leftover := runes[len(result):]
 
-	return result, leftover
+	return string(result), string(leftover)
 }
 
 func minInt(a, b int) int {

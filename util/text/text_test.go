@@ -89,6 +89,18 @@ func TestWrap(t *testing.T) {
 			" This\nis a\nlist:\n\n\n    *\nfoo\n    *\nbar\n\n\n    *\nbaz\nBAM\n",
 			6,
 		},
+		// Handle chinese
+		{
+			"婞一枳郲逴靲屮蜧曀殳，掫乇峔掮傎溒兀緉冘仜。",
+			"婞一枳郲逴靲屮蜧曀殳，掫\n乇峔掮傎溒兀緉冘仜。",
+			12,
+		},
+		// Handle chinese with colors
+		{
+			"婞一枳郲逴\x1b[31m靲屮蜧曀殳，掫乇峔掮傎溒\x1b[0m兀緉冘仜。",
+			"婞一枳郲逴\x1b[31m靲屮蜧曀殳，掫\n乇峔掮傎溒\x1b[0m兀緉冘仜。",
+			12,
+		},
 	}
 
 	for i, tc := range cases {
@@ -125,6 +137,16 @@ func TestWordLen(t *testing.T) {
 		{
 			"foo\x1b[31mfoobarHoy\x1b[0mbaaar",
 			17,
+		},
+		// Handle chinese
+		{
+			"快檢什麼望對",
+			6,
+		},
+		// Handle chinese with colors
+		{
+			"快\x1b[31m檢什麼\x1b[0m望對",
+			6,
 		},
 	}
 
@@ -178,6 +200,18 @@ func TestSplitWord(t *testing.T) {
 			"foo",
 			0,
 			"", "foo",
+		},
+		// Handle chinese
+		{
+			"快檢什麼望對",
+			2,
+			"快檢", "什麼望對",
+		},
+		// Handle chinese with colors
+		{
+			"快\x1b[31m檢什麼\x1b[0m望對",
+			2,
+			"快\x1b[31m檢", "什麼\x1b[0m望對",
 		},
 	}
 
