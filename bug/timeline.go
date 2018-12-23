@@ -9,6 +9,7 @@ type TimelineItem interface {
 	Hash() git.Hash
 }
 
+// CommentHistoryStep hold one version of a message in the history
 type CommentHistoryStep struct {
 	// The author of the edition, not necessarily the same as the author of the
 	// original comment

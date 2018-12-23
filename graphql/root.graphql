@@ -1,0 +1,38 @@
+scalar Time
+scalar Label
+scalar Hash
+
+"""Information about pagination in a connection."""
+type PageInfo {
+    """When paginating forwards, are there more items?"""
+    hasNextPage: Boolean!
+    """When paginating backwards, are there more items?"""
+    hasPreviousPage: Boolean!
+    """When paginating backwards, the cursor to continue."""
+    startCursor: String!
+    """When paginating forwards, the cursor to continue."""
+    endCursor: String!
+}
+
+"""An object that has an author."""
+interface Authored {
+    """The author of this object."""
+    author: Person!
+}
+
+type Query {
+    defaultRepository: Repository
+    repository(id: String!): Repository
+}
+
+type Mutation {
+    newBug(repoRef: String, title: String!, message: String!, files: [Hash!]): Bug!
+
+    addComment(repoRef: String, prefix: String!, message: String!, files: [Hash!]): Bug!
+    changeLabels(repoRef: String, prefix: String!, added: [String!], removed: [String!]): Bug!
+    open(repoRef: String, prefix: String!): Bug!
+    close(repoRef: String, prefix: String!): Bug!
+    setTitle(repoRef: String, prefix: String!, title: String!): Bug!
+
+    commit(repoRef: String, prefix: String!): Bug!
+}

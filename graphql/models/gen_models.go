@@ -41,6 +41,7 @@ type CommentEdge struct {
 	Node   bug.Comment `json:"node"`
 }
 
+// The connection type for an Operation
 type OperationConnection struct {
 	Edges      []OperationEdge `json:"edges"`
 	Nodes      []bug.Operation `json:"nodes"`
@@ -48,6 +49,7 @@ type OperationConnection struct {
 	TotalCount int             `json:"totalCount"`
 }
 
+// Represent an Operation
 type OperationEdge struct {
 	Cursor string        `json:"cursor"`
 	Node   bug.Operation `json:"node"`
@@ -61,6 +63,7 @@ type PageInfo struct {
 	EndCursor       string `json:"endCursor"`
 }
 
+// The connection type for TimelineItem
 type TimelineItemConnection struct {
 	Edges      []TimelineItemEdge `json:"edges"`
 	Nodes      []bug.TimelineItem `json:"nodes"`
@@ -68,6 +71,7 @@ type TimelineItemConnection struct {
 	TotalCount int                `json:"totalCount"`
 }
 
+// Represent a TimelineItem
 type TimelineItemEdge struct {
 	Cursor string           `json:"cursor"`
 	Node   bug.TimelineItem `json:"node"`

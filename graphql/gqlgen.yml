@@ -1,4 +1,4 @@
-schema: schema.graphql
+schema: "*.graphql"
 exec:
   filename: graph/gen_graph.go
 model:

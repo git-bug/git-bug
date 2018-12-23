@@ -1,0 +1,100 @@
+"""An operation applied to a bug."""
+interface Operation {
+    """The hash of the operation"""
+    hash: Hash!
+    """The operations author."""
+    author: Person!
+    """The datetime when this operation was issued."""
+    date: Time!
+}
+
+# Connection
+
+"""The connection type for an Operation"""
+type OperationConnection {
+    edges: [OperationEdge!]!
+    nodes: [Operation!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+"""Represent an Operation"""
+type OperationEdge {
+    cursor: String!
+    node: Operation!
+}
+
+# Operations
+
+type CreateOperation implements Operation & Authored {
+    """The hash of the operation"""
+    hash: Hash!
+    """The author of this object."""
+    author: Person!
+    """The datetime when this operation was issued."""
+    date: Time!
+
+    title: String!
+    message: String!
+    files: [Hash!]!
+}
+
+type SetTitleOperation implements Operation & Authored {
+    """The hash of the operation"""
+    hash: Hash!
+    """The author of this object."""
+    author: Person!
+    """The datetime when this operation was issued."""
+    date: Time!
+
+    title: String!
+    was: String!
+}
+
+type AddCommentOperation implements Operation & Authored {
+    """The hash of the operation"""
+    hash: Hash!
+    """The author of this object."""
+    author: Person!
+    """The datetime when this operation was issued."""
+    date: Time!
+
+    message: String!
+    files: [Hash!]!
+}
+
+type EditCommentOperation implements Operation & Authored {
+    """The hash of the operation"""
+    hash: Hash!
+    """The author of this object."""
+    author: Person!
+    """The datetime when this operation was issued."""
+    date: Time!
+
+    target: Hash!
+    message: String!
+    files: [Hash!]!
+}
+
+type SetStatusOperation implements Operation & Authored {
+    """The hash of the operation"""
+    hash: Hash!
+    """The author of this object."""
+    author: Person!
+    """The datetime when this operation was issued."""
+    date: Time!
+
+    status: Status!
+}
+
+type LabelChangeOperation implements Operation & Authored {
+    """The hash of the operation"""
+    hash: Hash!
+    """The author of this object."""
+    author: Person!
+    """The datetime when this operation was issued."""
+    date: Time!
+
+    added: [Label!]!
+    removed: [Label!]!
+}

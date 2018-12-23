@@ -8685,6 +8685,8 @@ func (ec *executionContext) _Authored(ctx context.Context, sel ast.SelectionSet,
 	switch obj := (*obj).(type) {
 	case nil:
 		return graphql.Null
+	case bug.Comment:
+		return ec._Comment(ctx, sel, &obj)
 	case *bug.Comment:
 		return ec._Comment(ctx, sel, obj)
 	case *bug.CreateOperation:
@@ -8780,50 +8782,18 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var parsedSchema = gqlparser.MustLoadSchema(
-	&ast.Source{Name: "schema.graphql", Input: `scalar Time
-scalar Label
-scalar Hash
-
-"""Information about pagination in a connection."""
-type PageInfo {
-  """When paginating forwards, are there more items?"""
-  hasNextPage: Boolean!
-  """When paginating backwards, are there more items?"""
-  hasPreviousPage: Boolean!
-  """When paginating backwards, the cursor to continue."""
-  startCursor: String!
-  """When paginating forwards, the cursor to continue."""
-  endCursor: String!
-}
-
-"""Represents an person in a git object."""
+	&ast.Source{Name: "bug.graphql", Input: `"""Represents an person"""
 type Person {
   """The name of the person, if known."""
   name: String
-
   """The email of the person, if known."""
   email: String
-
   """The login of the person, if known."""
   login: String
-
   """A string containing the either the name of the person, its login or both"""
   displayName: String!
-
   """An url to an avatar"""
   avatarUrl: String
-}
-
-type CommentConnection {
-  edges: [CommentEdge!]!
-  nodes: [Comment!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
-type CommentEdge {
-  cursor: String!
-  node: Comment!
 }
 
 """Represents a comment on a bug."""
@@ -8838,202 +8808,21 @@ type Comment implements Authored {
   files: [Hash!]!
 }
 
+type CommentConnection {
+  edges: [CommentEdge!]!
+  nodes: [Comment!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type CommentEdge {
+  cursor: String!
+  node: Comment!
+}
+
 enum Status {
   OPEN
   CLOSED
-}
-
-"""An object that has an author."""
-interface Authored {
-  """The author of this object."""
-  author: Person!
-}
-
-type OperationConnection {
-  edges: [OperationEdge!]!
-  nodes: [Operation!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
-type OperationEdge {
-  cursor: String!
-  node: Operation!
-}
-
-"""An item in the timeline of events"""
-interface TimelineItem {
-  """The hash of the source operation"""
-  hash: Hash!
-}
-
-"""An operation applied to a bug."""
-interface Operation {
-  """The hash of the operation"""
-  hash: Hash!
-  """The operations author."""
-  author: Person!
-  """The datetime when this operation was issued."""
-  date: Time!
-}
-
-type CreateOperation implements Operation & Authored {
-  """The hash of the operation"""
-  hash: Hash!
-  """The author of this object."""
-  author: Person!
-  """The datetime when this operation was issued."""
-  date: Time!
-
-  title: String!
-  message: String!
-  files: [Hash!]!
-}
-
-type SetTitleOperation implements Operation & Authored {
-  """The hash of the operation"""
-  hash: Hash!
-  """The author of this object."""
-  author: Person!
-  """The datetime when this operation was issued."""
-  date: Time!
-
-  title: String!
-  was: String!
-}
-
-type AddCommentOperation implements Operation & Authored {
-  """The hash of the operation"""
-  hash: Hash!
-  """The author of this object."""
-  author: Person!
-  """The datetime when this operation was issued."""
-  date: Time!
-
-  message: String!
-  files: [Hash!]!
-}
-
-type EditCommentOperation implements Operation & Authored {
-  """The hash of the operation"""
-  hash: Hash!
-  """The author of this object."""
-  author: Person!
-  """The datetime when this operation was issued."""
-  date: Time!
-
-  target: Hash!
-  message: String!
-  files: [Hash!]!
-}
-
-type SetStatusOperation implements Operation & Authored {
-  """The hash of the operation"""
-  hash: Hash!
-  """The author of this object."""
-  author: Person!
-  """The datetime when this operation was issued."""
-  date: Time!
-
-  status: Status!
-}
-
-type LabelChangeOperation implements Operation & Authored {
-  """The hash of the operation"""
-  hash: Hash!
-  """The author of this object."""
-  author: Person!
-  """The datetime when this operation was issued."""
-  date: Time!
-
-  added: [Label!]!
-  removed: [Label!]!
-}
-
-type TimelineItemConnection {
-  edges: [TimelineItemEdge!]!
-  nodes: [TimelineItem!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
-type TimelineItemEdge {
-  cursor: String!
-  node: TimelineItem!
-}
-
-type CommentHistoryStep {
-  message: String!
-  date: Time!
-}
-
-type CreateTimelineItem implements TimelineItem {
-  """The hash of the source operation"""
-  hash: Hash!
-  author: Person!
-  message: String!
-  files: [Hash!]!
-  createdAt: Time!
-  lastEdit: Time!
-  edited: Boolean!
-  history: [CommentHistoryStep!]!
-}
-
-type AddCommentTimelineItem implements TimelineItem {
-  """The hash of the source operation"""
-  hash: Hash!
-  author: Person!
-  message: String!
-  files: [Hash!]!
-  createdAt: Time!
-  lastEdit: Time!
-  edited: Boolean!
-  history: [CommentHistoryStep!]!
-}
-
-type LabelChangeTimelineItem implements TimelineItem {
-  """The hash of the source operation"""
-  hash: Hash!
-  author: Person!
-  date: Time!
-  added: [Label!]!
-  removed: [Label!]!
-}
-
-type SetStatusTimelineItem implements TimelineItem {
-  """The hash of the source operation"""
-  hash: Hash!
-  author: Person!
-  date: Time!
-  status: Status!
-}
-
-type SetTitleTimelineItem implements TimelineItem {
-  """The hash of the source operation"""
-  hash: Hash!
-  author: Person!
-  date: Time!
-  title: String!
-  was: String!
-}
-
-"""The connection type for Bug."""
-type BugConnection {
-  """A list of edges."""
-  edges: [BugEdge!]!
-  nodes: [Bug!]!
-  """Information to aid in pagination."""
-  pageInfo: PageInfo!
-  """Identifies the total count of items in the connection."""
-  totalCount: Int!
-}
-
-"""An edge in a connection."""
-type BugEdge {
-  """A cursor for use in pagination."""
-  cursor: String!
-  """The item at the end of the edge."""
-  node: Bug!
 }
 
 type Bug {
@@ -9080,6 +8869,25 @@ type Bug {
   ): OperationConnection!
 }
 
+"""The connection type for Bug."""
+type BugConnection {
+  """A list of edges."""
+  edges: [BugEdge!]!
+  nodes: [Bug!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+  """Identifies the total count of items in the connection."""
+  totalCount: Int!
+}
+
+"""An edge in a connection."""
+type BugEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+  """The item at the end of the edge."""
+  node: Bug!
+}
+
 type Repository {
   allBugs(
     """Returns the elements in the list that come after the specified cursor."""
@@ -9096,21 +8904,227 @@ type Repository {
   bug(prefix: String!): Bug
 }
 
+`},
+	&ast.Source{Name: "operations.graphql", Input: `"""An operation applied to a bug."""
+interface Operation {
+    """The hash of the operation"""
+    hash: Hash!
+    """The operations author."""
+    author: Person!
+    """The datetime when this operation was issued."""
+    date: Time!
+}
+
+# Connection
+
+"""The connection type for an Operation"""
+type OperationConnection {
+    edges: [OperationEdge!]!
+    nodes: [Operation!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+"""Represent an Operation"""
+type OperationEdge {
+    cursor: String!
+    node: Operation!
+}
+
+# Operations
+
+type CreateOperation implements Operation & Authored {
+    """The hash of the operation"""
+    hash: Hash!
+    """The author of this object."""
+    author: Person!
+    """The datetime when this operation was issued."""
+    date: Time!
+
+    title: String!
+    message: String!
+    files: [Hash!]!
+}
+
+type SetTitleOperation implements Operation & Authored {
+    """The hash of the operation"""
+    hash: Hash!
+    """The author of this object."""
+    author: Person!
+    """The datetime when this operation was issued."""
+    date: Time!
+
+    title: String!
+    was: String!
+}
+
+type AddCommentOperation implements Operation & Authored {
+    """The hash of the operation"""
+    hash: Hash!
+    """The author of this object."""
+    author: Person!
+    """The datetime when this operation was issued."""
+    date: Time!
+
+    message: String!
+    files: [Hash!]!
+}
+
+type EditCommentOperation implements Operation & Authored {
+    """The hash of the operation"""
+    hash: Hash!
+    """The author of this object."""
+    author: Person!
+    """The datetime when this operation was issued."""
+    date: Time!
+
+    target: Hash!
+    message: String!
+    files: [Hash!]!
+}
+
+type SetStatusOperation implements Operation & Authored {
+    """The hash of the operation"""
+    hash: Hash!
+    """The author of this object."""
+    author: Person!
+    """The datetime when this operation was issued."""
+    date: Time!
+
+    status: Status!
+}
+
+type LabelChangeOperation implements Operation & Authored {
+    """The hash of the operation"""
+    hash: Hash!
+    """The author of this object."""
+    author: Person!
+    """The datetime when this operation was issued."""
+    date: Time!
+
+    added: [Label!]!
+    removed: [Label!]!
+}`},
+	&ast.Source{Name: "root.graphql", Input: `scalar Time
+scalar Label
+scalar Hash
+
+"""Information about pagination in a connection."""
+type PageInfo {
+    """When paginating forwards, are there more items?"""
+    hasNextPage: Boolean!
+    """When paginating backwards, are there more items?"""
+    hasPreviousPage: Boolean!
+    """When paginating backwards, the cursor to continue."""
+    startCursor: String!
+    """When paginating forwards, the cursor to continue."""
+    endCursor: String!
+}
+
+"""An object that has an author."""
+interface Authored {
+    """The author of this object."""
+    author: Person!
+}
+
 type Query {
-  defaultRepository: Repository
-  repository(id: String!): Repository
+    defaultRepository: Repository
+    repository(id: String!): Repository
 }
 
 type Mutation {
-  newBug(repoRef: String, title: String!, message: String!, files: [Hash!]): Bug!
+    newBug(repoRef: String, title: String!, message: String!, files: [Hash!]): Bug!
 
-  addComment(repoRef: String, prefix: String!, message: String!, files: [Hash!]): Bug!
-  changeLabels(repoRef: String, prefix: String!, added: [String!], removed: [String!]): Bug!
-  open(repoRef: String, prefix: String!): Bug!
-  close(repoRef: String, prefix: String!): Bug!
-  setTitle(repoRef: String, prefix: String!, title: String!): Bug!
+    addComment(repoRef: String, prefix: String!, message: String!, files: [Hash!]): Bug!
+    changeLabels(repoRef: String, prefix: String!, added: [String!], removed: [String!]): Bug!
+    open(repoRef: String, prefix: String!): Bug!
+    close(repoRef: String, prefix: String!): Bug!
+    setTitle(repoRef: String, prefix: String!, title: String!): Bug!
 
-  commit(repoRef: String, prefix: String!): Bug!
+    commit(repoRef: String, prefix: String!): Bug!
+}`},
+	&ast.Source{Name: "timeline.graphql", Input: `"""An item in the timeline of events"""
+interface TimelineItem {
+    """The hash of the source operation"""
+    hash: Hash!
 }
-`},
+
+"""CommentHistoryStep hold one version of a message in the history"""
+type CommentHistoryStep {
+    message: String!
+    date: Time!
+}
+
+# Connection
+
+"""The connection type for TimelineItem"""
+type TimelineItemConnection {
+    edges: [TimelineItemEdge!]!
+    nodes: [TimelineItem!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+"""Represent a TimelineItem"""
+type TimelineItemEdge {
+    cursor: String!
+    node: TimelineItem!
+}
+
+# Items
+
+"""CreateTimelineItem is a TimelineItem that represent the creation of a bug and its message edition history"""
+type CreateTimelineItem implements TimelineItem {
+    """The hash of the source operation"""
+    hash: Hash!
+    author: Person!
+    message: String!
+    files: [Hash!]!
+    createdAt: Time!
+    lastEdit: Time!
+    edited: Boolean!
+    history: [CommentHistoryStep!]!
+}
+
+"""AddCommentTimelineItem is a TimelineItem that represent a Comment and its edition history"""
+type AddCommentTimelineItem implements TimelineItem {
+    """The hash of the source operation"""
+    hash: Hash!
+    author: Person!
+    message: String!
+    files: [Hash!]!
+    createdAt: Time!
+    lastEdit: Time!
+    edited: Boolean!
+    history: [CommentHistoryStep!]!
+}
+
+"""LabelChangeTimelineItem is a TimelineItem that represent a change in the labels of a bug"""
+type LabelChangeTimelineItem implements TimelineItem {
+    """The hash of the source operation"""
+    hash: Hash!
+    author: Person!
+    date: Time!
+    added: [Label!]!
+    removed: [Label!]!
+}
+
+"""SetStatusTimelineItem is a TimelineItem that represent a change in the status of a bug"""
+type SetStatusTimelineItem implements TimelineItem {
+    """The hash of the source operation"""
+    hash: Hash!
+    author: Person!
+    date: Time!
+    status: Status!
+}
+
+"""LabelChangeTimelineItem is a TimelineItem that represent a change in the title of a bug"""
+type SetTitleTimelineItem implements TimelineItem {
+    """The hash of the source operation"""
+    hash: Hash!
+    author: Person!
+    date: Time!
+    title: String!
+    was: String!
+}`},
 )
