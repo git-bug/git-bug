@@ -1,6 +1,8 @@
 package bug
 
 import (
+	"strings"
+
 	"github.com/MichaelMure/git-bug/util/git"
 )
 
@@ -66,4 +68,9 @@ func (c *CommentTimelineItem) Append(comment Comment) {
 // Edited say if the comment was edited
 func (c *CommentTimelineItem) Edited() bool {
 	return len(c.History) > 1
+}
+
+// MessageIsEmpty return true is the message is empty or only made of spaces
+func (c *CommentTimelineItem) MessageIsEmpty() bool {
+	return len(strings.TrimSpace(c.Message)) == 0
 }

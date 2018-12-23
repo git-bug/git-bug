@@ -34,6 +34,7 @@ type CreateTimelineItem implements TimelineItem {
     hash: Hash!
     author: Person!
     message: String!
+    messageIsEmpty: Boolean!
     files: [Hash!]!
     createdAt: Time!
     lastEdit: Time!
@@ -47,6 +48,7 @@ type AddCommentTimelineItem implements TimelineItem {
     hash: Hash!
     author: Person!
     message: String!
+    messageIsEmpty: Boolean!
     files: [Hash!]!
     createdAt: Time!
     lastEdit: Time!

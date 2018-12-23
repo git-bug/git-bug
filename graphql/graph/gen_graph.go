@@ -68,14 +68,15 @@ type ComplexityRoot struct {
 	}
 
 	AddCommentTimelineItem struct {
-		Hash      func(childComplexity int) int
-		Author    func(childComplexity int) int
-		Message   func(childComplexity int) int
-		Files     func(childComplexity int) int
-		CreatedAt func(childComplexity int) int
-		LastEdit  func(childComplexity int) int
-		Edited    func(childComplexity int) int
-		History   func(childComplexity int) int
+		Hash           func(childComplexity int) int
+		Author         func(childComplexity int) int
+		Message        func(childComplexity int) int
+		MessageIsEmpty func(childComplexity int) int
+		Files          func(childComplexity int) int
+		CreatedAt      func(childComplexity int) int
+		LastEdit       func(childComplexity int) int
+		Edited         func(childComplexity int) int
+		History        func(childComplexity int) int
 	}
 
 	Bug struct {
@@ -137,14 +138,15 @@ type ComplexityRoot struct {
 	}
 
 	CreateTimelineItem struct {
-		Hash      func(childComplexity int) int
-		Author    func(childComplexity int) int
-		Message   func(childComplexity int) int
-		Files     func(childComplexity int) int
-		CreatedAt func(childComplexity int) int
-		LastEdit  func(childComplexity int) int
-		Edited    func(childComplexity int) int
-		History   func(childComplexity int) int
+		Hash           func(childComplexity int) int
+		Author         func(childComplexity int) int
+		Message        func(childComplexity int) int
+		MessageIsEmpty func(childComplexity int) int
+		Files          func(childComplexity int) int
+		CreatedAt      func(childComplexity int) int
+		LastEdit       func(childComplexity int) int
+		Edited         func(childComplexity int) int
+		History        func(childComplexity int) int
 	}
 
 	EditCommentOperation struct {
@@ -1051,6 +1053,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.AddCommentTimelineItem.Message(childComplexity), true
 
+	case "AddCommentTimelineItem.messageIsEmpty":
+		if e.complexity.AddCommentTimelineItem.MessageIsEmpty == nil {
+			break
+		}
+
+		return e.complexity.AddCommentTimelineItem.MessageIsEmpty(childComplexity), true
+
 	case "AddCommentTimelineItem.files":
 		if e.complexity.AddCommentTimelineItem.Files == nil {
 			break
@@ -1359,6 +1368,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.CreateTimelineItem.Message(childComplexity), true
+
+	case "CreateTimelineItem.messageIsEmpty":
+		if e.complexity.CreateTimelineItem.MessageIsEmpty == nil {
+			break
+		}
+
+		return e.complexity.CreateTimelineItem.MessageIsEmpty(childComplexity), true
 
 	case "CreateTimelineItem.files":
 		if e.complexity.CreateTimelineItem.Files == nil {
@@ -2183,6 +2199,11 @@ func (ec *executionContext) _AddCommentTimelineItem(ctx context.Context, sel ast
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}
+		case "messageIsEmpty":
+			out.Values[i] = ec._AddCommentTimelineItem_messageIsEmpty(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
 		case "files":
 			out.Values[i] = ec._AddCommentTimelineItem_files(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -2307,6 +2328,33 @@ func (ec *executionContext) _AddCommentTimelineItem_message(ctx context.Context,
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return graphql.MarshalString(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _AddCommentTimelineItem_messageIsEmpty(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentTimelineItem) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "AddCommentTimelineItem",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MessageIsEmpty(), nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return graphql.MarshalBoolean(res)
 }
 
 // nolint: vetshadow
@@ -4022,6 +4070,11 @@ func (ec *executionContext) _CreateTimelineItem(ctx context.Context, sel ast.Sel
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}
+		case "messageIsEmpty":
+			out.Values[i] = ec._CreateTimelineItem_messageIsEmpty(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
 		case "files":
 			out.Values[i] = ec._CreateTimelineItem_files(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -4146,6 +4199,33 @@ func (ec *executionContext) _CreateTimelineItem_message(ctx context.Context, fie
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return graphql.MarshalString(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _CreateTimelineItem_messageIsEmpty(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "CreateTimelineItem",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MessageIsEmpty(), nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return graphql.MarshalBoolean(res)
 }
 
 // nolint: vetshadow
@@ -9079,6 +9159,7 @@ type CreateTimelineItem implements TimelineItem {
     hash: Hash!
     author: Person!
     message: String!
+    messageIsEmpty: Boolean!
     files: [Hash!]!
     createdAt: Time!
     lastEdit: Time!
@@ -9092,6 +9173,7 @@ type AddCommentTimelineItem implements TimelineItem {
     hash: Hash!
     author: Person!
     message: String!
+    messageIsEmpty: Boolean!
     files: [Hash!]!
     createdAt: Time!
     lastEdit: Time!

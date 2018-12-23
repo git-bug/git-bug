@@ -13,6 +13,7 @@ var (
 	YellowBg   = color.New(color.BgYellow, color.FgBlack).SprintFunc()
 	Green      = color.New(color.FgGreen).SprintFunc()
 	GreenBg    = color.New(color.BgGreen, color.FgBlack).SprintFunc()
+	GreyBold   = color.New(color.BgBlack, color.Bold).SprintfFunc()
 	Red        = color.New(color.FgRed).SprintFunc()
 	Cyan       = color.New(color.FgCyan).SprintFunc()
 	CyanBg     = color.New(color.BgCyan, color.FgBlack).SprintFunc()

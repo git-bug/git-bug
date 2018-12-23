@@ -95,7 +95,7 @@ func (sb *showBug) layout(g *gocui.Gui) error {
 	}
 
 	v.Clear()
-	fmt.Fprintf(v, "[q] Save and return [←↓↑→,hjkl] Navigation [o] Toggle open/close [e] Edit [c] Comment [t] Change title")
+	_, _ = fmt.Fprintf(v, "[q] Save and return [←↓↑→,hjkl] Navigation [o] Toggle open/close [e] Edit [c] Comment [t] Change title")
 
 	_, err = g.SetViewOnTop(showBugInstructionView)
 	if err != nil {
@@ -228,7 +228,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 		return err
 	}
 
-	fmt.Fprint(v, bugHeader)
+	_, _ = fmt.Fprint(v, bugHeader)
 	y0 += lines + 1
 
 	for _, op := range snap.Timeline {
@@ -241,13 +241,21 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 
 		case *bug.CreateTimelineItem:
 			create := op.(*bug.CreateTimelineItem)
-			content, lines := text.WrapLeftPadded(create.Message, maxX-1, 4)
+
+			var content string
+			var lines int
+
+			if create.MessageIsEmpty() {
+				content, lines = text.WrapLeftPadded(emptyMessagePlaceholder(), maxX-1, 4)
+			} else {
+				content, lines = text.WrapLeftPadded(create.Message, maxX-1, 4)
+			}
 
 			v, err := sb.createOpView(g, viewName, x0, y0, maxX+1, lines, true)
 			if err != nil {
 				return err
 			}
-			fmt.Fprint(v, content)
+			_, _ = fmt.Fprint(v, content)
 			y0 += lines + 2
 
 		case *bug.AddCommentTimelineItem:
@@ -258,7 +266,13 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 				edited = " (edited)"
 			}
 
-			message, _ := text.WrapLeftPadded(comment.Message, maxX-1, 4)
+			var message string
+			if comment.MessageIsEmpty() {
+				message, _ = text.WrapLeftPadded(emptyMessagePlaceholder(), maxX-1, 4)
+			} else {
+				message, _ = text.WrapLeftPadded(comment.Message, maxX-1, 4)
+			}
+
 			content := fmt.Sprintf("%s commented on %s%s\n\n%s",
 				colors.Magenta(comment.Author.DisplayName()),
 				comment.CreatedAt.Time().Format(timeLayout),
@@ -271,7 +285,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 			if err != nil {
 				return err
 			}
-			fmt.Fprint(v, content)
+			_, _ = fmt.Fprint(v, content)
 			y0 += lines + 2
 
 		case *bug.SetTitleTimelineItem:
@@ -288,7 +302,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 			if err != nil {
 				return err
 			}
-			fmt.Fprint(v, content)
+			_, _ = fmt.Fprint(v, content)
 			y0 += lines + 2
 
 		case *bug.SetStatusTimelineItem:
@@ -305,7 +319,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 			if err != nil {
 				return err
 			}
-			fmt.Fprint(v, content)
+			_, _ = fmt.Fprint(v, content)
 			y0 += lines + 2
 
 		case *bug.LabelChangeTimelineItem:
@@ -354,12 +368,17 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 			if err != nil {
 				return err
 			}
-			fmt.Fprint(v, content)
+			_, _ = fmt.Fprint(v, content)
 			y0 += lines + 2
 		}
 	}
 
 	return nil
+}
+
+// emptyMessagePlaceholder return a formatted placeholder for an empty message
+func emptyMessagePlaceholder() string {
+	return colors.GreyBold("No description provided.")
 }
 
 func (sb *showBug) createOpView(g *gocui.Gui, name string, x0 int, y0 int, maxX int, height int, selectable bool) (*gocui.View, error) {
@@ -423,7 +442,7 @@ func (sb *showBug) renderSidebar(g *gocui.Gui, sideView *gocui.View) error {
 		return err
 	}
 
-	fmt.Fprint(v, content)
+	_, _ = fmt.Fprint(v, content)
 
 	return nil
 }
