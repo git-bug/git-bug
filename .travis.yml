@@ -1,11 +1,30 @@
 matrix:
   include:
   - language: go
+    go: "1.8"
+  - language: go
     go: "1.9"
   - language: go
-    go: "1.10.x"
+    go: "1.10"
+  - language: go
+    go: "1.11"
   - language: node_js
     node_js: 8
+    before_install:
+      - cd webui
+    after_success: []
+  - language: node_js
+    node_js: 9
+    before_install:
+      - cd webui
+    after_success: []
+  - language: node_js
+    node_js: 10
+    before_install:
+      - cd webui
+    after_success: []
+  - language: node_js
+    node_js: 11
     before_install:
       - cd webui
     after_success: []
