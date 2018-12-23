@@ -343,7 +343,17 @@ func (bt *bugTable) cursorDown(g *gocui.Gui, v *gocui.View) error {
 
 	// If we are at the bottom of the page, switch to the next one.
 	if y+1 > bt.getTableLength()-1 {
-		return bt.nextPage(g, v)
+		_, max := v.Size()
+
+		if bt.pageCursor+max >= len(bt.allIds) {
+			return nil
+		}
+
+		bt.pageCursor += max
+		bt.selectCursor = 0
+		_ = v.SetCursor(0, bt.selectCursor)
+
+		return bt.doPaginate(max)
 	}
 
 	y = minInt(y+1, bt.getTableLength()-1)
@@ -359,7 +369,17 @@ func (bt *bugTable) cursorUp(g *gocui.Gui, v *gocui.View) error {
 
 	// If we are at the top of the page, switch to the previous one.
 	if y-1 < 0 {
-		return bt.previousPage(g, v)
+		_, max := v.Size()
+
+		if bt.pageCursor == 0 {
+			return nil
+		}
+
+		bt.pageCursor = maxInt(0, bt.pageCursor-max)
+		bt.selectCursor = max - 1
+		_ = v.SetCursor(0, bt.selectCursor)
+
+		return bt.doPaginate(max)
 	}
 
 	y = maxInt(y-1, 0)
@@ -391,8 +411,6 @@ func (bt *bugTable) nextPage(g *gocui.Gui, v *gocui.View) error {
 	}
 
 	bt.pageCursor += max
-	bt.selectCursor = 0
-	_ = v.SetCursor(0, bt.selectCursor)
 
 	return bt.doPaginate(max)
 }
@@ -403,9 +421,8 @@ func (bt *bugTable) previousPage(g *gocui.Gui, v *gocui.View) error {
 	if bt.pageCursor == 0 {
 		return nil
 	}
+
 	bt.pageCursor = maxInt(0, bt.pageCursor-max)
-	bt.selectCursor = max - 1
-	_ = v.SetCursor(0, bt.selectCursor)
 
 	return bt.doPaginate(max)
 }
