@@ -340,8 +340,23 @@ func (bt *bugTable) renderFooter(v *gocui.View, maxX int) {
 
 func (bt *bugTable) cursorDown(g *gocui.Gui, v *gocui.View) error {
 	_, y := v.Cursor()
-	y = minInt(y+1, bt.getTableLength()-1)
 
+	// If we are at the bottom of the page, switch to the next one.
+	if y+1 > bt.getTableLength()-1 {
+		_, max := v.Size()
+
+		if bt.pageCursor+max >= len(bt.allIds) {
+			return nil
+		}
+
+		bt.pageCursor += max
+		bt.selectCursor = 0
+		_ = v.SetCursor(0, bt.selectCursor)
+
+		return bt.doPaginate(max)
+	}
+
+	y = minInt(y+1, bt.getTableLength()-1)
 	// window is too small to set the cursor properly, ignoring the error
 	_ = v.SetCursor(0, y)
 	bt.selectCursor = y
@@ -351,8 +366,23 @@ func (bt *bugTable) cursorDown(g *gocui.Gui, v *gocui.View) error {
 
 func (bt *bugTable) cursorUp(g *gocui.Gui, v *gocui.View) error {
 	_, y := v.Cursor()
-	y = maxInt(y-1, 0)
 
+	// If we are at the top of the page, switch to the previous one.
+	if y-1 < 0 {
+		_, max := v.Size()
+
+		if bt.pageCursor == 0 {
+			return nil
+		}
+
+		bt.pageCursor = maxInt(0, bt.pageCursor-max)
+		bt.selectCursor = max - 1
+		_ = v.SetCursor(0, bt.selectCursor)
+
+		return bt.doPaginate(max)
+	}
+
+	y = maxInt(y-1, 0)
 	// window is too small to set the cursor properly, ignoring the error
 	_ = v.SetCursor(0, y)
 	bt.selectCursor = y
@@ -387,6 +417,10 @@ func (bt *bugTable) nextPage(g *gocui.Gui, v *gocui.View) error {
 
 func (bt *bugTable) previousPage(g *gocui.Gui, v *gocui.View) error {
 	_, max := v.Size()
+
+	if bt.pageCursor == 0 {
+		return nil
+	}
 
 	bt.pageCursor = maxInt(0, bt.pageCursor-max)
 
