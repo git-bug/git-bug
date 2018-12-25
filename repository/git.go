@@ -67,7 +67,7 @@ func (repo *GitRepo) runGitCommand(args ...string) (string, error) {
 
 // NewGitRepo determines if the given working directory is inside of a git repository,
 // and returns the corresponding GitRepo instance if it is.
-func NewGitRepo(path string, witnesser func(repo *GitRepo) error) (*GitRepo, error) {
+func NewGitRepo(path string, witnesser Witnesser) (*GitRepo, error) {
 	repo := &GitRepo{Path: path}
 
 	// Check the repo and retrieve the root path

@@ -6,7 +6,7 @@ import (
 
 // Witnesser will read all the available Bug to recreate the different logical
 // clocks
-func Witnesser(repo *repository.GitRepo) error {
+func Witnesser(repo repository.ClockedRepo) error {
 	for b := range ReadAllLocalBugs(repo) {
 		if b.Err != nil {
 			return b.Err

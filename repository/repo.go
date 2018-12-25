@@ -107,6 +107,10 @@ type ClockedRepo interface {
 	EditWitness(time lamport.Time) error
 }
 
+// Witnesser is a function that will initialize the clocks of a repo
+// from scratch
+type Witnesser func(repo ClockedRepo) error
+
 func prepareTreeEntries(entries []TreeEntry) bytes.Buffer {
 	var buffer bytes.Buffer
 
