@@ -3,7 +3,7 @@ package termui
 import (
 	"io/ioutil"
 
-	"github.com/jroimartin/gocui"
+	"github.com/MichaelMure/gocui"
 )
 
 const inputPopupView = "inputPopupView"

@@ -20,6 +20,14 @@
   version = "v0.7.1"
 
 [[projects]]
+  branch = "master"
+  digest = "1:38a84d9b4cf50b3e8eb2b54f218413ac163076e3a7763afe5fa15a4eb15fbda6"
+  name = "github.com/MichaelMure/gocui"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "d753c235dd8582d55e99bbb7f7fe453fb3fd3a19"
+
+[[projects]]
   digest = "1:897d91c431ce469d35a5e6030e60e617dccd9a0e95bdffa6a80594f5c5800d29"
   name = "github.com/agnivade/levenshtein"
   packages = ["."]
@@ -154,14 +162,6 @@
   pruneopts = "UT"
   revision = "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75"
   version = "v1.0"
-
-[[projects]]
-  branch = "master"
-  digest = "1:114ecad51af93a73ae6781fd0d0bc28e52b433c852b84ab4b4c109c15e6c6b6d"
-  name = "github.com/jroimartin/gocui"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "c055c87ae801372cd74a0839b972db4f7697ae5f"
 
 [[projects]]
   digest = "1:c658e84ad3916da105a761660dcaeb01e63416c8ec7bc62256a9b411a05fcd67"
@@ -462,13 +462,13 @@
     "github.com/99designs/gqlgen/graphql",
     "github.com/99designs/gqlgen/graphql/introspection",
     "github.com/99designs/gqlgen/handler",
+    "github.com/MichaelMure/gocui",
     "github.com/cheekybits/genny/generic",
     "github.com/dustin/go-humanize",
     "github.com/fatih/color",
     "github.com/go-test/deep",
     "github.com/gorilla/mux",
     "github.com/icrowley/fake",
-    "github.com/jroimartin/gocui",
     "github.com/phayes/freeport",
     "github.com/pkg/errors",
     "github.com/shurcooL/githubv4",

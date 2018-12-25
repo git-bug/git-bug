@@ -10,7 +10,7 @@ import (
 	"github.com/MichaelMure/git-bug/util/colors"
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/text"
-	"github.com/jroimartin/gocui"
+	"github.com/MichaelMure/gocui"
 )
 
 const showBugView = "showBugView"

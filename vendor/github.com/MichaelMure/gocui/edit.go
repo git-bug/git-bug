@@ -4,7 +4,11 @@
 
 package gocui
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/mattn/go-runewidth"
+)
 
 const maxInt = int(^uint(0) >> 1)
 
@@ -55,7 +59,7 @@ func simpleEditor(v *View, key Key, ch rune, mod Modifier) {
 // EditWrite writes a rune at the cursor position.
 func (v *View) EditWrite(ch rune) {
 	v.writeRune(v.cx, v.cy, ch)
-	v.MoveCursor(1, 0, true)
+	v.MoveCursor(runewidth.RuneWidth(ch), 0, true)
 }
 
 // EditDelete deletes a rune at the cursor position. back determines the
@@ -89,12 +93,12 @@ func (v *View) EditDelete(back bool) {
 					v.MoveCursor(-1, 0, true)
 				}
 			} else { // wrapped line
-				v.deleteRune(len(v.viewLines[y-1].line)-1, v.cy-1)
-				v.MoveCursor(-1, 0, true)
+				ch, _ := v.deleteRune(len(v.viewLines[y-1].line)-1, v.cy-1)
+				v.MoveCursor(0-runewidth.RuneWidth(ch), 0, true)
 			}
 		} else { // middle/end of the line
-			v.deleteRune(v.cx-1, v.cy)
-			v.MoveCursor(-1, 0, true)
+			ch, _ := v.deleteRune(v.cx-1, v.cy)
+			v.MoveCursor(0-runewidth.RuneWidth(ch), 0, true)
 		}
 	} else {
 		if x == len(v.viewLines[y].line) { // end of the line
@@ -275,19 +279,20 @@ func (v *View) writeRune(x, y int, ch rune) error {
 
 // deleteRune removes a rune from the view's internal buffer, at the
 // position corresponding to the point (x, y).
-func (v *View) deleteRune(x, y int) error {
+func (v *View) deleteRune(x, y int) (ch rune, err error) {
 	v.tainted = true
 
-	x, y, err := v.realPosition(x, y)
+	x, y, err = v.realPosition(x, y)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	if x < 0 || y < 0 || y >= len(v.lines) || x >= len(v.lines[y]) {
-		return errors.New("invalid point")
+		return 0, errors.New("invalid point")
 	}
+	chx := v.lines[y][x]
 	v.lines[y] = append(v.lines[y][:x], v.lines[y][x+1:]...)
-	return nil
+	return chx.chr, nil
 }
 
 // mergeLines merges the lines "y" and "y+1" if possible.

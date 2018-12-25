@@ -8,8 +8,8 @@ import (
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util/colors"
 	"github.com/MichaelMure/git-bug/util/text"
+	"github.com/MichaelMure/gocui"
 	"github.com/dustin/go-humanize"
-	"github.com/jroimartin/gocui"
 )
 
 const bugTableView = "bugTableView"

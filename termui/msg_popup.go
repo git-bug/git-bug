@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/MichaelMure/git-bug/util/text"
-	"github.com/jroimartin/gocui"
+	"github.com/MichaelMure/gocui"
 )
 
 const msgPopupView = "msgPopupView"

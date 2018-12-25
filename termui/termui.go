@@ -5,7 +5,7 @@ import (
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/input"
 	"github.com/MichaelMure/git-bug/util/git"
-	"github.com/jroimartin/gocui"
+	"github.com/MichaelMure/gocui"
 	"github.com/pkg/errors"
 )
 

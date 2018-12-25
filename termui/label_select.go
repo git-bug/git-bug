@@ -6,7 +6,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/jroimartin/gocui"
+	"github.com/MichaelMure/gocui"
 )
 
 const labelSelectView = "labelSelectView"
