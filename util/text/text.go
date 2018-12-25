@@ -3,6 +3,8 @@ package text
 import (
 	"bytes"
 	"strings"
+
+	"github.com/mattn/go-runewidth"
 )
 
 // Wrap a text for an exact line size
@@ -116,7 +118,7 @@ func wordLen(word string) int {
 		}
 
 		if !escape {
-			length++
+			length += runewidth.RuneWidth(rune(char))
 		}
 
 		if char == 'm' {
@@ -143,11 +145,17 @@ func splitWord(word string, length int) (string, string) {
 			escape = true
 		}
 
+		width := runewidth.RuneWidth(r)
+		if width+added > length {
+			// wide character made the length overflow
+			break
+		}
+
 		result = append(result, r)
 
 		if !escape {
-			added++
-			if added == length {
+			added += width
+			if added >= length {
 				break
 			}
 		}
