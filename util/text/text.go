@@ -2,6 +2,7 @@ package text
 
 import (
 	"bytes"
+	"github.com/mattn/go-runewidth"
 	"strings"
 )
 
@@ -15,156 +16,114 @@ func Wrap(text string, lineWidth int) (string, int) {
 // Handle properly terminal color escape code
 func WrapLeftPadded(text string, lineWidth int, leftPad int) (string, int) {
 	var textBuffer bytes.Buffer
-	var lineBuffer bytes.Buffer
-	nbLine := 1
-	firstLine := true
+	nbLine := 0
 	pad := strings.Repeat(" ", leftPad)
 
 	// tabs are formatted as 4 spaces
 	text = strings.Replace(text, "\t", "    ", 4)
-
-	for _, line := range strings.Split(text, "\n") {
-		spaceLeft := lineWidth - leftPad
-
-		if !firstLine {
-			textBuffer.WriteString("\n")
-			nbLine++
-		}
-
-		firstWord := true
-
-		for _, word := range strings.Split(line, " ") {
-			wordLength := wordLen(word)
-
-			if !firstWord {
-				lineBuffer.WriteString(" ")
-				spaceLeft -= 1
-
-				if spaceLeft <= 0 {
-					textBuffer.WriteString(pad + strings.TrimRight(lineBuffer.String(), " "))
-					textBuffer.WriteString("\n")
-					lineBuffer.Reset()
-					spaceLeft = lineWidth - leftPad
-					nbLine++
-					firstLine = false
-				}
-			}
-
-			// Word fit in the current line
-			if spaceLeft >= wordLength {
-				lineBuffer.WriteString(word)
-				spaceLeft -= wordLength
-				firstWord = false
-			} else {
-				// Break a word longer than a line
-				if wordLength > lineWidth {
-					for wordLength > 0 && wordLen(word) > 0 {
-						l := minInt(spaceLeft, wordLength)
-						part, leftover := splitWord(word, l)
-						word = leftover
-						wordLength = wordLen(word)
-
-						lineBuffer.WriteString(part)
-						textBuffer.WriteString(pad)
-						textBuffer.Write(lineBuffer.Bytes())
-						lineBuffer.Reset()
-
-						spaceLeft -= l
-
-						if spaceLeft <= 0 {
-							textBuffer.WriteString("\n")
-							nbLine++
-							spaceLeft = lineWidth - leftPad
-						}
-
-						if wordLength <= 0 {
-							break
-						}
-					}
-				} else {
-					// Normal break
-					textBuffer.WriteString(pad + strings.TrimRight(lineBuffer.String(), " "))
-					textBuffer.WriteString("\n")
-					lineBuffer.Reset()
-					lineBuffer.WriteString(word)
-					firstWord = false
-					spaceLeft = lineWidth - leftPad - wordLength
-					nbLine++
-				}
-			}
-		}
-
-		if lineBuffer.Len() > 0 {
-			textBuffer.WriteString(pad + strings.TrimRight(lineBuffer.String(), " "))
-			lineBuffer.Reset()
-		}
-
-		firstLine = false
+	wrapped := wrapText(text, lineWidth-leftPad)
+	for _, line := range strings.Split(wrapped, "\n") {
+		textBuffer.WriteString(pad + line)
+		textBuffer.WriteString("\n")
+		nbLine++
 	}
-
 	return textBuffer.String(), nbLine
 }
 
-// wordLen return the length of a word, while ignoring the terminal escape sequences
+// Wrap text so that each line fills at most w cells. Lines break at word
+// boundary or multibyte chars.
+//
+// Wrapping Algorithm: Treat the text as a sequence of words, with each word be
+// an alphanumeric word, or a multibyte char. We scan through the text and
+// construct the word, and flush the word into the paragraph once a word is
+// ready. A word is ready when a word boundary is detected: a boundary char such
+// as '\n', '\t', and ' ' is encountered; a multibyte char is found; or a
+// multibyte to single-byte switch is encountered. '\n' is handled in a special
+// manner.
+func wrapText(s string, w int) string {
+	word := ""
+	out := ""
+
+	width := 0
+	firstWord := true
+	isMultibyteWord := false
+
+	flushWord := func() {
+		wl := wordLen(word)
+		if isMultibyteWord {
+			if width+wl > w {
+				out += "\n" + word
+				width = wl
+			} else {
+				out += word
+				width += wl
+			}
+		} else {
+			if width == 0 {
+				out += word
+				width += wl
+			} else if width+wl+1 > w {
+				out += "\n" + word
+				width = wl
+			} else {
+				out += " " + word
+				width += wl + 1
+			}
+		}
+		word = ""
+	}
+
+	for _, r := range []rune(s) {
+		cw := runewidth.RuneWidth(r)
+		if firstWord {
+			word = string(r)
+			isMultibyteWord = cw > 1
+			firstWord = false
+			continue
+		}
+		if r == '\n' {
+			flushWord()
+			out += "\n"
+			width = 0
+		} else if r == ' ' || r == '\t' {
+			flushWord()
+		} else if cw > 1 {
+			flushWord()
+			word = string(r)
+			isMultibyteWord = true
+			word = string(r)
+		} else if cw == 1 && isMultibyteWord {
+			flushWord()
+			word = string(r)
+			isMultibyteWord = false
+		} else {
+			word += string(r)
+		}
+	}
+  // The text may end without newlines, ensure flushing it or we can lose the
+  // last word.
+  flushWord()
+
+	return out
+}
+
+// wordLen return the length of a word, while ignoring the terminal escape
+// sequences
 func wordLen(word string) int {
 	length := 0
 	escape := false
 
-	for _, char := range word {
+	for _, char := range []rune(word) {
 		if char == '\x1b' {
 			escape = true
 		}
-
 		if !escape {
-			length++
+			length += runewidth.RuneWidth(char)
 		}
-
 		if char == 'm' {
 			escape = false
 		}
 	}
 
 	return length
-}
-
-// splitWord split a word at the given length, while ignoring the terminal escape sequences
-func splitWord(word string, length int) (string, string) {
-	runes := []rune(word)
-	var result []rune
-	added := 0
-	escape := false
-
-	if length == 0 {
-		return "", word
-	}
-
-	for _, r := range runes {
-		if r == '\x1b' {
-			escape = true
-		}
-
-		result = append(result, r)
-
-		if !escape {
-			added++
-			if added == length {
-				break
-			}
-		}
-
-		if r == 'm' {
-			escape = false
-		}
-	}
-
-	leftover := runes[len(result):]
-
-	return string(result), string(leftover)
-}
-
-func minInt(a, b int) int {
-	if a > b {
-		return b
-	}
-	return a
 }
