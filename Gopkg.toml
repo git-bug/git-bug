@@ -61,5 +61,5 @@
   version = "0.7.1"
 
 [[constraint]]
-  name = "github.com/MichaelMure/gocui"
+  name = "github.com/jesseduffield/gocui"
   branch = "master"

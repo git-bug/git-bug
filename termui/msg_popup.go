@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/MichaelMure/git-bug/util/text"
-	"github.com/MichaelMure/gocui"
+	"github.com/jesseduffield/gocui"
 )
 
 const msgPopupView = "msgPopupView"
@@ -50,7 +50,7 @@ func (ep *msgPopup) layout(g *gocui.Gui) error {
 	x0 := (maxX - width) / 2
 	y0 := (maxY - height) / 2
 
-	v, err := g.SetView(msgPopupView, x0, y0, x0+width, y0+height)
+	v, err := g.SetView(msgPopupView, x0, y0, x0+width, y0+height, 0)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return err

@@ -3,7 +3,7 @@ package termui
 import (
 	"io/ioutil"
 
-	"github.com/MichaelMure/gocui"
+	"github.com/jesseduffield/gocui"
 )
 
 const inputPopupView = "inputPopupView"
@@ -46,7 +46,7 @@ func (ip *inputPopup) layout(g *gocui.Gui) error {
 	x0 := (maxX - width) / 2
 	y0 := (maxY - height) / 2
 
-	v, err := g.SetView(inputPopupView, x0, y0, x0+width, y0+height)
+	v, err := g.SetView(inputPopupView, x0, y0, x0+width, y0+height, 0)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
