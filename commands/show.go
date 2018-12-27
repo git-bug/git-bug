@@ -58,6 +58,7 @@ func runShowBug(cmd *cobra.Command, args []string) error {
 	indent := "  "
 
 	for i, comment := range snapshot.Comments {
+		var message string
 		fmt.Printf("%s#%d %s <%s>\n\n",
 			indent,
 			i,
@@ -65,9 +66,15 @@ func runShowBug(cmd *cobra.Command, args []string) error {
 			comment.Author.Email,
 		)
 
+		if comment.Message == "" {
+			message = colors.GreyBold("No description provided.")
+		} else {
+			message = comment.Message
+		}
+
 		fmt.Printf("%s%s\n\n\n",
 			indent,
-			comment.Message,
+			message,
 		)
 	}
 

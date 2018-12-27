@@ -58,10 +58,6 @@ func (op *AddCommentOperation) Validate() error {
 		return err
 	}
 
-	if text.Empty(op.Message) {
-		return fmt.Errorf("message is empty")
-	}
-
 	if !text.Safe(op.Message) {
 		return fmt.Errorf("message is not fully printable")
 	}
