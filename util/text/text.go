@@ -127,3 +127,51 @@ func wordLen(word string) int {
 
 	return length
 }
+
+// splitWord split a word at the given length, while ignoring the terminal escape sequences
+func splitWord(word string, length int) (string, string) {
+	runes := []rune(word)
+	var result []rune
+	added := 0
+	escape := false
+
+	if length == 0 {
+		return "", word
+	}
+
+	for _, r := range runes {
+		if r == '\x1b' {
+			escape = true
+		}
+
+		width := runewidth.RuneWidth(r)
+		if width+added > length {
+			// wide character made the length overflow
+			break
+		}
+
+		result = append(result, r)
+
+		if !escape {
+			added += width
+			if added >= length {
+				break
+			}
+		}
+
+		if r == 'm' {
+			escape = false
+		}
+	}
+
+	leftover := runes[len(result):]
+
+	return string(result), string(leftover)
+}
+
+func minInt(a, b int) int {
+	if a > b {
+		return b
+	}
+	return a
+}
