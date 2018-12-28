@@ -8,8 +8,8 @@ import (
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util/colors"
 	"github.com/MichaelMure/git-bug/util/text"
+	"github.com/MichaelMure/gocui"
 	"github.com/dustin/go-humanize"
-	"github.com/jesseduffield/gocui"
 )
 
 const bugTableView = "bugTableView"
@@ -53,7 +53,7 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 		return nil
 	}
 
-	v, err := g.SetView(bugTableHeaderView, -1, -1, maxX, 3, 0)
+	v, err := g.SetView(bugTableHeaderView, -1, -1, maxX, 3)
 
 	if err != nil {
 		if err != gocui.ErrUnknownView {
@@ -66,7 +66,7 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 	v.Clear()
 	bt.renderHeader(v, maxX)
 
-	v, err = g.SetView(bugTableView, -1, 1, maxX, maxY-3, 0)
+	v, err = g.SetView(bugTableView, -1, 1, maxX, maxY-3)
 
 	if err != nil {
 		if err != gocui.ErrUnknownView {
@@ -97,7 +97,7 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 	v.Clear()
 	bt.render(v, maxX)
 
-	v, err = g.SetView(bugTableFooterView, -1, maxY-4, maxX, maxY, 0)
+	v, err = g.SetView(bugTableFooterView, -1, maxY-4, maxX, maxY)
 
 	if err != nil {
 		if err != gocui.ErrUnknownView {
@@ -110,7 +110,7 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 	v.Clear()
 	bt.renderFooter(v, maxX)
 
-	v, err = g.SetView(bugTableInstructionView, -1, maxY-2, maxX, maxY, 0)
+	v, err = g.SetView(bugTableInstructionView, -1, maxY-2, maxX, maxY)
 
 	if err != nil {
 		if err != gocui.ErrUnknownView {

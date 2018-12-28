@@ -5,7 +5,7 @@ import (
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/input"
 	"github.com/MichaelMure/git-bug/util/git"
-	"github.com/jesseduffield/gocui"
+	"github.com/MichaelMure/gocui"
 	"github.com/pkg/errors"
 )
 
@@ -69,7 +69,7 @@ func Run(cache *cache.RepoCache) error {
 }
 
 func initGui(action func(ui *termUI) error) {
-	g, err := gocui.NewGui(gocui.OutputNormal, false)
+	g, err := gocui.NewGui(gocui.OutputNormal)
 
 	if err != nil {
 		ui.gError <- err
