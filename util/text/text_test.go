@@ -5,6 +5,7 @@ import (
 	"testing"
 )
 
+
 func TestWrap(t *testing.T) {
 	cases := []struct {
 		Input, Output string
@@ -43,7 +44,7 @@ func TestWrap(t *testing.T) {
 		// A tab counts as 4 characters.
 		{
 			"foo\nb\t r\n baz",
-			"foo\nb\n  r\n baz",
+			"foo\nb\nr\n baz",
 			4,
 		},
 		// Trailing whitespace is removed after used for wrapping.
@@ -86,19 +87,19 @@ func TestWrap(t *testing.T) {
 		// Complete example:
 		{
 			" This is a list: \n\n\t* foo\n\t* bar\n\n\n\t* baz  \nBAM    ",
-			" This\nis a\nlist:\n\n\n    *\nfoo\n    *\nbar\n\n\n    *\nbaz\nBAM\n",
+			" This\nis a\nlist:\n\n    *\nfoo\n    *\nbar\n\n\n    *\nbaz\nBAM\n",
 			6,
 		},
 		// Handle chinese (wide characters)
 		{
-			"婞一枳郲逴靲屮蜧曀殳，掫乇峔掮傎溒兀緉冘仜。",
-			"婞一枳郲逴靲\n屮蜧曀殳，掫\n乇峔掮傎溒兀\n緉冘仜。",
+			"一只敏捷的狐狸跳过了一只懒狗。",
+			"一只敏捷的狐\n狸跳过了一只\n懒狗。",
 			12,
 		},
 		// Handle chinese with colors
 		{
-			"婞一枳郲逴\x1b[31m靲屮蜧曀殳，掫乇峔掮傎溒\x1b[0m兀緉冘仜。",
-			"婞一枳郲逴\x1b[31m靲\n屮蜧曀殳，掫\n乇峔掮傎溒\x1b[0m兀\n緉冘仜。",
+			"一只敏捷的\x1b[31m狐狸跳过\x1b[0m了一只懒狗。",
+			"一只敏捷的\x1b[31m狐\n狸跳过\x1b[0m了一只\n懒狗。",
 			12,
 		},
 	}
@@ -106,7 +107,7 @@ func TestWrap(t *testing.T) {
 	for i, tc := range cases {
 		actual, lines := Wrap(tc.Input, tc.Lim)
 		if actual != tc.Output {
-			t.Fatalf("Case %d Input:\n\n`%s`\n\nExpected Output:\n\n`%s`\n\nActual Output:\n`\n%s`",
+			t.Fatalf("Case %d Input:\n\n`%s`\n\nExpected Output:\n\n`%s`\n\nActual Output:\n\n`%s`",
 				i, tc.Input, tc.Output, actual)
 		}
 
