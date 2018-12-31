@@ -151,10 +151,18 @@ func softwrapLine(s string, w int) string {
 	var chunks []string
 	var word string
 	wordType := NONE
+	flushWord := func() {
+		chunks = append(chunks, word)
+		word = ""
+		wordType = NONE
+	}
 	for _, r := range []rune(newStr) {
 		// A WIDE_CHAR itself constitutes a group.
 		thisType := runeType(r)
 		if thisType == WIDE_CHAR {
+			if wordType != NONE {
+				flushWord()
+			}
 			chunks = append(chunks, string(r))
 			continue
 		}
@@ -162,7 +170,7 @@ func softwrapLine(s string, w int) string {
 		// char with different type or end of string.
 		if thisType != wordType {
 			if wordType != NONE {
-				chunks = append(chunks, word)
+				flushWord()
 			}
 			word = string(r)
 			wordType = thisType
@@ -171,7 +179,7 @@ func softwrapLine(s string, w int) string {
 		}
 	}
 	if word != "" {
-		chunks = append(chunks, word)
+		flushWord()
 	}
 
 	var line string = ""
@@ -187,7 +195,7 @@ func softwrapLine(s string, w int) string {
 			line += chunks[len(chunks)-1]
 			chunks = chunks[:len(chunks)-1]
 			width += wl
-			if width == w && len(chunks) > 0{
+			if width == w && len(chunks) > 0 {
 				line += "\n"
 				width = 0
 			}

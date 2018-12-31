@@ -5,7 +5,6 @@ import (
 	"testing"
 )
 
-
 func TestWrap(t *testing.T) {
 	cases := []struct {
 		Input, Output string
@@ -100,6 +99,18 @@ func TestWrap(t *testing.T) {
 		{
 			"一只敏捷的\x1b[31m狐狸跳过\x1b[0m了一只懒狗。",
 			"一只敏捷的\x1b[31m狐\n狸跳过\x1b[0m了一只\n懒狗。",
+			12,
+		},
+		// Handle mixed wide and short characters
+		{
+			"敏捷 A quick 的狐狸 fox 跳过 jumps over a lazy 了一只懒狗 dog。",
+			"敏捷 A quick\n的狐狸 fox\n跳过 jumps\nover a lazy\n了一只懒狗\ndog。",
+			12,
+		},
+		// Handle mixed wide and short characters with color
+		{
+			"敏捷 A \x1b31mquick 的狐狸 fox 跳\x1b0m过 jumps over a lazy 了一只懒狗 dog。",
+			"敏捷 A \x1b31mquick\n的狐狸 fox\n跳\x1b0m过 jumps\nover a lazy\n了一只懒狗\ndog。",
 			12,
 		},
 	}
