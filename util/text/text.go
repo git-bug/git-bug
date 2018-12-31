@@ -15,12 +15,13 @@ func Wrap(text string, lineWidth int) (string, int) {
 // Wrap a text for an exact line size with a left padding
 // Handle properly terminal color escape code
 func WrapLeftPadded(text string, lineWidth int, leftPad int) (string, int) {
-	pad := strings.Repeat(" ", leftPad)
 	var lines []string
 	nbLine := 0
+	pad := strings.Repeat(" ", leftPad)
 
 	// tabs are formatted as 4 spaces
 	text = strings.Replace(text, "\t", "    ", -1)
+	// NOTE: text is first segmented into lines so that softwrapLine can handle.
 	for _, line := range strings.Split(text, "\n") {
 		if line == "" || strings.TrimSpace(line) == "" {
 			lines = append(lines, "")
@@ -42,20 +43,83 @@ func WrapLeftPadded(text string, lineWidth int, leftPad int) (string, int) {
 	return strings.Join(lines, "\n"), nbLine
 }
 
+// Break a line into several lines so that each line consumes at most
+// 'textWidth' cells.  Lines break at groups of white spaces and multibyte
+// chars. Nothing is removed from the original text so that it behaves like a
+// softwrap.
+//
+// Required: The line shall not contain '\n'
+//
+// WRAPPING ALGORITHM: The line is broken into non-breakable chunks, then line
+// breaks ("\n") are inserted between these groups so that the total length
+// between breaks does not exceed the required width. Words that are longer than
+// the textWidth are broen into pieces no longer than textWidth.
+//
+func softwrapLine(line string, textWidth int) string {
+	// NOTE: terminal escapes are stripped out of the line so the algorithm is
+	// simpler. Do not try to mix them in the wrapping algorithm, as it can get
+	// complicated quickly.
+	line1, termEscapes := extractTermEscapes(line)
+
+	chunks := segmentLine(line1)
+	// Reverse the chunk array so we can use it as a stack.
+	for i, j := 0, len(chunks)-1; i < j; i, j = i+1, j-1 {
+		chunks[i], chunks[j] = chunks[j], chunks[i]
+	}
+	var line2 string = ""
+	var width int = 0
+	for len(chunks) > 0 {
+		thisWord := chunks[len(chunks)-1]
+		wl := wordLen(thisWord)
+		if width+wl <= textWidth {
+			line2 += chunks[len(chunks)-1]
+			chunks = chunks[:len(chunks)-1]
+			width += wl
+			if width == textWidth && len(chunks) > 0 {
+				// NOTE: new line begins when current line is full and there are more
+				// chunks to come.
+				line2 += "\n"
+				width = 0
+			}
+		} else if wl > textWidth {
+			left, right := splitWord(chunks[len(chunks)-1], textWidth)
+			line2 += left + "\n"
+			chunks[len(chunks)-1] = right
+			width = 0
+		} else {
+			line2 += "\n"
+			width = 0
+		}
+	}
+
+	line3 := applyTermEscapes(line2, termEscapes)
+	return line3
+}
+
+// EscapeItem: Storage of terminal escapes in a line. 'item' is the actural
+// escape command, and 'pos' is the index in the rune array where the 'item'
+// shall be inserted back. For example, the escape item in "F\x1b33mox" is
+// {"\x1b33m", 1}.
 type EscapeItem struct {
 	item string
 	pos  int
 }
 
-func recordTermEscape(s string) (string, []EscapeItem) {
-	var result []EscapeItem
-	var newStr string
+// Extract terminal escapes out of a line, returns a new line without terminal
+// escapes and a slice of escape items. The terminal escapes can be inserted
+// back into the new line at rune index 'item.pos' to recover the original line.
+//
+// Required: The line shall not contain "\n"
+//
+func extractTermEscapes(line string) (string, []EscapeItem) {
+	var termEscapes []EscapeItem
+	var line1 string
 
 	pos := 0
 	item := ""
 	occupiedRuneCount := 0
 	inEscape := false
-	for i, r := range []rune(s) {
+	for i, r := range []rune(line) {
 		if r == '\x1b' {
 			pos = i
 			item = string(r)
@@ -65,35 +129,39 @@ func recordTermEscape(s string) (string, []EscapeItem) {
 		if inEscape {
 			item += string(r)
 			if r == 'm' {
-				result = append(result, EscapeItem{item: item, pos: pos - occupiedRuneCount})
+				termEscapes = append(termEscapes, EscapeItem{item, pos - occupiedRuneCount})
 				occupiedRuneCount += utf8.RuneCountInString(item)
 				inEscape = false
 			}
 			continue
 		}
-		newStr += string(r)
+		line1 += string(r)
 	}
 
-	return newStr, result
+	return line1, termEscapes
 }
 
-func replayTermEscape(s string, sequence []EscapeItem) string {
-	if len(sequence) == 0 {
-		return string(s)
+// Apply the extracted terminal escapes to the edited line. The only edit
+// allowed is to insert "\n" like that in softwrapLine. Callers shall ensure
+// this since this function is not able to check it.
+func applyTermEscapes(line string, escapes []EscapeItem) string {
+	if len(escapes) == 0 {
+		return line
 	}
-	// Assume the original string contains no new line and the wrapped only insert
-	// new lines. So that we can recover the position where we insert the term
-	// escapes.
+
 	var out string = ""
 
 	currPos := 0
 	currItem := 0
-	for _, r := range s {
-		if currItem < len(sequence) && currPos == sequence[currItem].pos {
+	for _, r := range line {
+		if currItem < len(escapes) && currPos == escapes[currItem].pos {
+			// NOTE: We avoid terminal escapes at the end of a line by move them one
+			// pass the end of line, so that algorithms who trim right spaces are
+			// happy. But algorithms who trim left spaces are still unhappy.
 			if r == '\n' {
-				out += "\n" + sequence[currItem].item
+				out += "\n" + escapes[currItem].item
 			} else {
-				out += sequence[currItem].item + string(r)
+				out += escapes[currItem].item + string(r)
 				currPos++
 			}
 			currItem++
@@ -108,47 +176,11 @@ func replayTermEscape(s string, sequence []EscapeItem) string {
 	return out
 }
 
-// Break a line into several lines so that each line consumes at most 'w' cells.
-// Lines break at group of white spaces and multibyte chars. Nothing is removed
-// from the line so that it behaves like a softwrap.
-//
-// Required: The line shall not contain '\n' (so it is a single line).
-//
-// WRAPPING ALGORITHM: The line is broken into non-breakable groups, then line
-// breaks ("\n") is inserted between these groups so that the total length
-// between breaks does not exceed the required width. Words that are longer than
-// the width is broken into several words as `M+M+...+N`.
-func softwrapLine(s string, w int) string {
-	newStr, termSeqs := recordTermEscape(s)
-
-	const (
-		WIDE_CHAR     = iota
-		INVISIBLE     = iota
-		SHORT_UNICODE = iota
-		SPACE         = iota
-		VISIBLE_ASCII = iota
-		NONE          = iota
-	)
-
-	// In order to simplify the terminal color sequence handling, we first strip
-	// them out of the text and record their position, then do the wrap. After
-	// that, we insert back these sequences.
-	runeType := func(r rune) int {
-		rw := runewidth.RuneWidth(r)
-		if rw > 1 {
-			return WIDE_CHAR
-		} else if rw == 0 {
-			return INVISIBLE
-		} else if r > 127 {
-			return SHORT_UNICODE
-		} else if r == ' ' {
-			return SPACE
-		} else {
-			return VISIBLE_ASCII
-		}
-	}
-
+// Segment a line into chunks, where each chunk consists of chars with the same
+// type and is not breakable.
+func segmentLine(s string) []string {
 	var chunks []string
+
 	var word string
 	wordType := NONE
 	flushWord := func() {
@@ -156,8 +188,9 @@ func softwrapLine(s string, w int) string {
 		word = ""
 		wordType = NONE
 	}
-	for _, r := range newStr {
-		// A WIDE_CHAR itself constitutes a group.
+
+	for _, r := range s {
+		// A WIDE_CHAR itself constitutes a chunk.
 		thisType := runeType(r)
 		if thisType == WIDE_CHAR {
 			if wordType != NONE {
@@ -166,7 +199,7 @@ func softwrapLine(s string, w int) string {
 			chunks = append(chunks, string(r))
 			continue
 		}
-		// Other type of groups starts with a char of that type, and ends with a
+		// Other type of chunks starts with a char of that type, and ends with a
 		// char with different type or end of string.
 		if thisType != wordType {
 			if wordType != NONE {
@@ -182,36 +215,37 @@ func softwrapLine(s string, w int) string {
 		flushWord()
 	}
 
-	var line string = ""
-	var width int = 0
-	// Reverse the chunk array so we can use it as a stack.
-	for i, j := 0, len(chunks)-1; i < j; i, j = i+1, j-1 {
-		chunks[i], chunks[j] = chunks[j], chunks[i]
-	}
-	for len(chunks) > 0 {
-		thisWord := chunks[len(chunks)-1]
-		wl := wordLen(thisWord)
-		if width+wl <= w {
-			line += chunks[len(chunks)-1]
-			chunks = chunks[:len(chunks)-1]
-			width += wl
-			if width == w && len(chunks) > 0 {
-				line += "\n"
-				width = 0
-			}
-		} else if wl > w {
-			left, right := splitWord(chunks[len(chunks)-1], w)
-			line += left + "\n"
-			chunks[len(chunks)-1] = right
-			width = 0
-		} else {
-			line += "\n"
-			width = 0
-		}
-	}
+	return chunks
+}
 
-	line = replayTermEscape(line, termSeqs)
-	return line
+// Rune categories
+//
+// These categories are so defined that each category forms a non-breakable
+// chunk. It IS NOT the same as unicode code point categories.
+//
+const (
+	NONE          = -1
+	WIDE_CHAR     = iota
+	INVISIBLE     = iota
+	SHORT_UNICODE = iota
+	SPACE         = iota
+	VISIBLE_ASCII = iota
+)
+
+// Determine the category of a rune.
+func runeType(r rune) int {
+	rw := runewidth.RuneWidth(r)
+	if rw > 1 {
+		return WIDE_CHAR
+	} else if rw == 0 {
+		return INVISIBLE
+	} else if r > 127 {
+		return SHORT_UNICODE
+	} else if r == ' ' {
+		return SPACE
+	} else {
+		return VISIBLE_ASCII
+	}
 }
 
 // wordLen return the length of a word, while ignoring the terminal escape
