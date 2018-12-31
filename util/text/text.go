@@ -88,7 +88,7 @@ func replayTermEscape(s string, sequence []EscapeItem) string {
 
 	currPos := 0
 	currItem := 0
-	for _, r := range []rune(s) {
+	for _, r := range s {
 		if currItem < len(sequence) && currPos == sequence[currItem].pos {
 			if r == '\n' {
 				out += "\n" + sequence[currItem].item
@@ -156,7 +156,7 @@ func softwrapLine(s string, w int) string {
 		word = ""
 		wordType = NONE
 	}
-	for _, r := range []rune(newStr) {
+	for _, r := range newStr {
 		// A WIDE_CHAR itself constitutes a group.
 		thisType := runeType(r)
 		if thisType == WIDE_CHAR {
