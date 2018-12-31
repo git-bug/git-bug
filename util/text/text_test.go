@@ -1,6 +1,7 @@
 package text
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -282,6 +283,80 @@ func TestSplitWord(t *testing.T) {
 		if result != tc.Result || leftover != tc.Leftover {
 			t.Fatalf("Case %d Input:\n\n`%s`\n\nExpected Output:\n\n`%s` - `%s`\n\nActual Output:\n\n`%s` - `%s`",
 				i, tc.Input, tc.Result, tc.Leftover, result, leftover)
+		}
+	}
+}
+
+func TestExtractApplyTermEscapes(t *testing.T) {
+	cases := []struct {
+		Input       string
+		Output      string
+		TermEscapes []EscapeItem
+	}{
+		// A plain ascii line with escapes.
+		{
+			"This \x1b[31mis an\x1b[0m example.",
+			"This is an example.",
+			[]EscapeItem{{"\x1b[31m", 5}, {"\x1b[0m", 10}},
+		},
+		// A plain wide line with escapes.
+		{
+			"一只敏捷\x1b[31m的狐狸\x1b[0m跳过了一只懒狗。",
+			"一只敏捷的狐狸跳过了一只懒狗。",
+			[]EscapeItem{{"\x1b[31m", 4}, {"\x1b[0m", 7}},
+		},
+		// A normal-wide mixed line with escapes.
+		{
+			"一只 A Quick 敏捷\x1b[31m的狐 Fox 狸\x1b[0m跳过了Dog一只懒狗。",
+			"一只 A Quick 敏捷的狐 Fox 狸跳过了Dog一只懒狗。",
+			[]EscapeItem{{"\x1b[31m", 13}, {"\x1b[0m", 21}},
+		},
+	}
+
+	for i, tc := range cases {
+		line2, escapes := extractTermEscapes(tc.Input)
+		if line2 != tc.Output || !reflect.DeepEqual(escapes, tc.TermEscapes) {
+			t.Fatalf("Case %d Input:\n\n`%s`\n\nExpected Output:\n\nLine: `%s`\nEscapes: `%+v`\n\nActual Output:\n\nLine: `%s`\nEscapes: `%+v`\n\n",
+				i, tc.Input, tc.Output, tc.TermEscapes, line2, escapes)
+		}
+		line3 := applyTermEscapes(line2, escapes)
+		if line3 != tc.Input {
+			t.Fatalf("Case %d Input:\n\n`%s`\n\nExpected Result:\n\n`%s`\n\nActual Result:\n\n`%s`\n\n",
+				i, tc.Input, tc.Input, line3)
+		}
+	}
+}
+
+func TestSegmentLines(t *testing.T) {
+	cases := []struct {
+		Input  string
+		Output []string
+	}{
+		// A plain ascii line with escapes.
+		{
+			"This is an example.",
+			[]string{"This", " ", "is", " ", "an", " ", "example."},
+		},
+		// A plain wide line with escapes.
+		{
+			"一只敏捷的狐狸跳过了一只懒狗。",
+			[]string{"一", "只", "敏", "捷", "的", "狐", "狸", "跳", "过",
+				"了", "一", "只", "懒", "狗", "。"},
+		},
+		// A complex stentence.
+		{
+			"This is a 'complex' example, where   一只 and English 混合了。",
+			[]string{"This", " ", "is", " ", "a", " ", "'complex'", " ", "example,",
+				" ", "where", "   ", "一", "只", " ", "and", " ", "English", " ", "混",
+				"合", "了", "。"},
+		},
+	}
+
+	for i, tc := range cases {
+		chunks := segmentLine(tc.Input)
+		if !reflect.DeepEqual(chunks, tc.Output) {
+			t.Fatalf("Case %d Input:\n\n`%s`\n\nExpected Output:\n\n`[%s]`\n\nActual Output:\n\n`[%s]`\n\n",
+				i, tc.Input, strings.Join(tc.Output, ", "), strings.Join(chunks, ", "))
 		}
 	}
 }
