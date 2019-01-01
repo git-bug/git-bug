@@ -16,7 +16,7 @@ func TestLeftPadMaxLine(t *testing.T) {
 		},
 		{
 			"foofoofoo",
-			"f...",
+			"foo…",
 			4,
 			0,
 		},
@@ -28,13 +28,13 @@ func TestLeftPadMaxLine(t *testing.T) {
 		},
 		{
 			"foo",
-			"  ...",
+			"  f…",
 			4,
 			2,
 		},
 		{
 			"foofoofoo",
-			"  f...",
+			"  foo…",
 			6,
 			2,
 		},

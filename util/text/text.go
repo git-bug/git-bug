@@ -6,6 +6,13 @@ import (
 	"unicode/utf8"
 )
 
+// Force runewidth not to treat ambiguous runes as wide chars, so that things
+// like unicode ellipsis/up/down/left/right glyphs can have correct runewidth
+// and can be displayed correctly in terminals.
+func init() {
+	runewidth.DefaultCondition.EastAsianWidth = false
+}
+
 // Wrap a text for an exact line size
 // Handle properly terminal color escape code
 func Wrap(text string, lineWidth int) (string, int) {
