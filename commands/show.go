@@ -12,6 +12,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	showId	bool
+)
 func runShowBug(cmd *cobra.Command, args []string) error {
 	backend, err := cache.NewRepoCache(repo)
 	if err != nil {
@@ -27,6 +30,10 @@ func runShowBug(cmd *cobra.Command, args []string) error {
 
 	snapshot := b.Snapshot()
 
+	if showId {
+		fmt.Printf("%s\n",snapshot.HumanId())
+		return nil
+	}
 	if len(snapshot.Comments) == 0 {
 		return errors.New("Invalid bug: no comment")
 	}
@@ -90,4 +97,5 @@ var showCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(showCmd)
+	showCmd.Flags().BoolVarP(&showId,"id","i",false,"Select field to display: id")
 }
