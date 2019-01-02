@@ -7,13 +7,6 @@ import (
 	"strings"
 )
 
-// Force runewidth not to treat ambiguous runes as wide chars, so that things
-// like unicode ellipsis/up/down/left/right glyphs can have correct runewidth
-// and can be displayed correctly in terminals.
-func init() {
-	runewidth.DefaultCondition.EastAsianWidth = false
-}
-
 // LeftPadMaxLine pads a string on the left by a specified amount and pads the
 // string on the right to fill the maxLength
 func LeftPadMaxLine(text string, length, leftPad int) string {
