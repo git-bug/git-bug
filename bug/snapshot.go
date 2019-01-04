@@ -30,7 +30,7 @@ func (snap *Snapshot) Id() string {
 
 // Return the Bug identifier truncated for human consumption
 func (snap *Snapshot) HumanId() string {
-	return fmt.Sprintf("%.7s", snap.id)
+	return fmt.Sprintf("%.8s", snap.id)
 }
 
 // Deprecated:should be moved in UI code
