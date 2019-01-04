@@ -104,7 +104,7 @@ func runShowBug(cmd *cobra.Command, args []string) error {
 		}
 		fmt.Printf("\n")
 		if err {
-			return errors.New(fmt.Sprintf("Unsupported fields requested: %s\n",unknownFields))
+			return fmt.Errorf("Unsupported fields requested: %s\n",unknownFields)
 		}
 	}
 
