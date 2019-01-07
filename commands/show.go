@@ -83,8 +83,6 @@ func runShowBug(cmd *cobra.Command, args []string) error {
 			)
 		}
 	} else {
-		unknownFields:=""
-		err:=false
 		for _, field := range showFieldsQuery {
 			switch field {
 				case "author": fmt.Printf("%s ",firstComment.Author.DisplayName())
@@ -98,14 +96,10 @@ func runShowBug(cmd *cobra.Command, args []string) error {
 				case "status": fmt.Printf("%s ",snapshot.Status)
 				case "title": fmt.Printf("%s ",snapshot.Title)
 				default:
-					unknownFields+=field+" "
-					err=true
+					return fmt.Errorf("\nUnsupported field: %s\n",field)
 			}
 		}
 		fmt.Printf("\n")
-		if err {
-			return fmt.Errorf("Unsupported fields requested: %s\n",unknownFields)
-		}
 	}
 
 	return nil
