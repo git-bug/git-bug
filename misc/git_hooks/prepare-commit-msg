@@ -14,7 +14,7 @@ then
 	hashChar=":"
 fi
 
-ISSUE=`git bug show --fields shortId`
+ISSUE=`git bug show --field shortId`
 if [ "$ISSUE" = "" ]
 then
 	echo "$cmtChar !!!!! insert $hashChar<issue_id> in your comment, pick one in list below." >> "$1"
