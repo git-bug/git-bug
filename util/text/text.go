@@ -107,7 +107,7 @@ func softwrapLine(line string, textWidth int) string {
 // escape command, and 'pos' is the index in the rune array where the 'item'
 // shall be inserted back. For example, the escape item in "F\x1b33mox" is
 // {"\x1b33m", 1}.
-type EscapeItem struct {
+type escapeItem struct {
 	item string
 	pos  int
 }
@@ -118,8 +118,8 @@ type EscapeItem struct {
 //
 // Required: The line shall not contain "\n"
 //
-func extractTermEscapes(line string) (string, []EscapeItem) {
-	var termEscapes []EscapeItem
+func extractTermEscapes(line string) (string, []escapeItem) {
+	var termEscapes []escapeItem
 	var line1 string
 
 	pos := 0
@@ -136,7 +136,7 @@ func extractTermEscapes(line string) (string, []EscapeItem) {
 		if inEscape {
 			item += string(r)
 			if r == 'm' {
-				termEscapes = append(termEscapes, EscapeItem{item, pos - occupiedRuneCount})
+				termEscapes = append(termEscapes, escapeItem{item, pos - occupiedRuneCount})
 				occupiedRuneCount += utf8.RuneCountInString(item)
 				inEscape = false
 			}
@@ -151,7 +151,7 @@ func extractTermEscapes(line string) (string, []EscapeItem) {
 // Apply the extracted terminal escapes to the edited line. The only edit
 // allowed is to insert "\n" like that in softwrapLine. Callers shall ensure
 // this since this function is not able to check it.
-func applyTermEscapes(line string, escapes []EscapeItem) string {
+func applyTermEscapes(line string, escapes []escapeItem) string {
 	if len(escapes) == 0 {
 		return line
 	}
@@ -189,18 +189,18 @@ func segmentLine(s string) []string {
 	var chunks []string
 
 	var word string
-	wordType := NONE
+	wordType := none
 	flushWord := func() {
 		chunks = append(chunks, word)
 		word = ""
-		wordType = NONE
+		wordType = none
 	}
 
 	for _, r := range s {
 		// A WIDE_CHAR itself constitutes a chunk.
 		thisType := runeType(r)
-		if thisType == WIDE_CHAR {
-			if wordType != NONE {
+		if thisType == wideChar {
+			if wordType != none {
 				flushWord()
 			}
 			chunks = append(chunks, string(r))
@@ -209,7 +209,7 @@ func segmentLine(s string) []string {
 		// Other type of chunks starts with a char of that type, and ends with a
 		// char with different type or end of string.
 		if thisType != wordType {
-			if wordType != NONE {
+			if wordType != none {
 				flushWord()
 			}
 			word = string(r)
@@ -231,27 +231,27 @@ func segmentLine(s string) []string {
 // chunk. It IS NOT the same as unicode code point categories.
 //
 const (
-	NONE          = -1
-	WIDE_CHAR     = iota
-	INVISIBLE     = iota
-	SHORT_UNICODE = iota
-	SPACE         = iota
-	VISIBLE_ASCII = iota
+	none int = iota
+	wideChar
+	invisible
+	shortUnicode
+	space
+	visibleAscii
 )
 
 // Determine the category of a rune.
 func runeType(r rune) int {
 	rw := runewidth.RuneWidth(r)
 	if rw > 1 {
-		return WIDE_CHAR
+		return wideChar
 	} else if rw == 0 {
-		return INVISIBLE
+		return invisible
 	} else if r > 127 {
-		return SHORT_UNICODE
+		return shortUnicode
 	} else if r == ' ' {
-		return SPACE
+		return space
 	} else {
-		return VISIBLE_ASCII
+		return visibleAscii
 	}
 }
 

@@ -291,25 +291,25 @@ func TestExtractApplyTermEscapes(t *testing.T) {
 	cases := []struct {
 		Input       string
 		Output      string
-		TermEscapes []EscapeItem
+		TermEscapes []escapeItem
 	}{
 		// A plain ascii line with escapes.
 		{
 			"This \x1b[31mis an\x1b[0m example.",
 			"This is an example.",
-			[]EscapeItem{{"\x1b[31m", 5}, {"\x1b[0m", 10}},
+			[]escapeItem{{"\x1b[31m", 5}, {"\x1b[0m", 10}},
 		},
 		// A plain wide line with escapes.
 		{
 			"一只敏捷\x1b[31m的狐狸\x1b[0m跳过了一只懒狗。",
 			"一只敏捷的狐狸跳过了一只懒狗。",
-			[]EscapeItem{{"\x1b[31m", 4}, {"\x1b[0m", 7}},
+			[]escapeItem{{"\x1b[31m", 4}, {"\x1b[0m", 7}},
 		},
 		// A normal-wide mixed line with escapes.
 		{
 			"一只 A Quick 敏捷\x1b[31m的狐 Fox 狸\x1b[0m跳过了Dog一只懒狗。",
 			"一只 A Quick 敏捷的狐 Fox 狸跳过了Dog一只懒狗。",
-			[]EscapeItem{{"\x1b[31m", 13}, {"\x1b[0m", 21}},
+			[]escapeItem{{"\x1b[31m", 13}, {"\x1b[0m", 21}},
 		},
 	}
 
