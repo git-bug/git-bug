@@ -12,6 +12,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	showFieldsQuery string
+)
+
 func runShowBug(cmd *cobra.Command, args []string) error {
 	backend, err := cache.NewRepoCache(repo)
 	if err != nil {
@@ -32,6 +36,32 @@ func runShowBug(cmd *cobra.Command, args []string) error {
 	}
 
 	firstComment := snapshot.Comments[0]
+
+	if showFieldsQuery != "" {
+		switch showFieldsQuery {
+		case "author":
+			fmt.Printf("%s\n", firstComment.Author.DisplayName())
+		case "authorEmail":
+			fmt.Printf("%s\n", firstComment.Author.Email)
+		case "createTime":
+			fmt.Printf("%s\n", firstComment.FormatTime())
+		case "id":
+			fmt.Printf("%s\n", snapshot.Id())
+		case "labels":
+			var labels = make([]string, len(snapshot.Labels))
+			fmt.Printf("%s\n", strings.Join(labels, ", "))
+		case "shortId":
+			fmt.Printf("%s\n", snapshot.HumanId())
+		case "status":
+			fmt.Printf("%s\n", snapshot.Status)
+		case "title":
+			fmt.Printf("%s\n", snapshot.Title)
+		default:
+			return fmt.Errorf("\nUnsupported field: %s\n", showFieldsQuery)
+		}
+
+		return nil
+	}
 
 	// Header
 	fmt.Printf("[%s] %s %s\n\n",
@@ -90,4 +120,6 @@ var showCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(showCmd)
+	showCmd.Flags().StringVarP(&showFieldsQuery, "field", "f", "",
+		"Select field to display. Valid values are [author,authorEmail,createTime,id,labels,shortId,status,title]")
 }
