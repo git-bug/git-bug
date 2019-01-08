@@ -157,6 +157,14 @@ func TestWrapLeftPadded(t *testing.T) {
     蚗佶庂咺丌，輀鈁乇彽洢溦洰氶乇构碨洐巿阹。`,
 			59, 4,
 		},
+		// Handle long unbreakable words in a full stentence
+		{
+			"OT: there are alternatives to maintainer-/user-set priority, e.g. \"[user pain](http://www.lostgarden.com/2008/05/improving-bug-triage-with-user-pain.html)\".",
+			`    OT: there are alternatives to maintainer-/user-set
+    priority, e.g. "[user pain](http://www.lostgarden.com/
+    2008/05/improving-bug-triage-with-user-pain.html)".`,
+			58, 4,
+		},
 	}
 
 	for i, tc := range cases {

@@ -89,9 +89,16 @@ func softwrapLine(line string, textWidth int) string {
 				width = 0
 			}
 		} else if wl > textWidth {
-			left, right := splitWord(chunks[len(chunks)-1], textWidth)
-			line2 += left + "\n"
+			// NOTE: By default, long words are splited to fill the remaining space.
+			// But if the long words is the first non-space word in the middle of the
+			// line, preceeding spaces shall not be counted in word spliting.
+			splitWidth := textWidth - width
+			if strings.HasSuffix(line2, "\n"+strings.Repeat(" ", width)) {
+				splitWidth += width
+			}
+			left, right := splitWord(chunks[len(chunks)-1], splitWidth)
 			chunks[len(chunks)-1] = right
+			line2 += left + "\n"
 			width = 0
 		} else {
 			line2 += "\n"
