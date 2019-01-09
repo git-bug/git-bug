@@ -1,6 +1,7 @@
 package text
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -43,7 +44,7 @@ func TestWrap(t *testing.T) {
 		// A tab counts as 4 characters.
 		{
 			"foo\nb\t r\n baz",
-			"foo\nb\n  r\n baz",
+			"foo\nb\nr\n baz",
 			4,
 		},
 		// Trailing whitespace is removed after used for wrapping.
@@ -86,19 +87,31 @@ func TestWrap(t *testing.T) {
 		// Complete example:
 		{
 			" This is a list: \n\n\t* foo\n\t* bar\n\n\n\t* baz  \nBAM    ",
-			" This\nis a\nlist:\n\n\n    *\nfoo\n    *\nbar\n\n\n    *\nbaz\nBAM\n",
+			" This\nis a\nlist:\n\n    *\nfoo\n    *\nbar\n\n\n    *\nbaz\nBAM\n",
 			6,
 		},
 		// Handle chinese (wide characters)
 		{
-			"婞一枳郲逴靲屮蜧曀殳，掫乇峔掮傎溒兀緉冘仜。",
-			"婞一枳郲逴靲\n屮蜧曀殳，掫\n乇峔掮傎溒兀\n緉冘仜。",
+			"一只敏捷的狐狸跳过了一只懒狗。",
+			"一只敏捷的狐\n狸跳过了一只\n懒狗。",
 			12,
 		},
 		// Handle chinese with colors
 		{
-			"婞一枳郲逴\x1b[31m靲屮蜧曀殳，掫乇峔掮傎溒\x1b[0m兀緉冘仜。",
-			"婞一枳郲逴\x1b[31m靲\n屮蜧曀殳，掫\n乇峔掮傎溒\x1b[0m兀\n緉冘仜。",
+			"一只敏捷的\x1b[31m狐狸跳过\x1b[0m了一只懒狗。",
+			"一只敏捷的\x1b[31m狐\n狸跳过\x1b[0m了一只\n懒狗。",
+			12,
+		},
+		// Handle mixed wide and short characters
+		{
+			"敏捷 A quick 的狐狸 fox 跳过 jumps over a lazy 了一只懒狗 dog。",
+			"敏捷 A quick\n的狐狸 fox\n跳过 jumps\nover a lazy\n了一只懒狗\ndog。",
+			12,
+		},
+		// Handle mixed wide and short characters with color
+		{
+			"敏捷 A \x1b31mquick 的狐狸 fox 跳\x1b0m过 jumps over a lazy 了一只懒狗 dog。",
+			"敏捷 A \x1b31mquick\n的狐狸 fox\n跳\x1b0m过 jumps\nover a lazy\n了一只懒狗\ndog。",
 			12,
 		},
 	}
@@ -106,7 +119,7 @@ func TestWrap(t *testing.T) {
 	for i, tc := range cases {
 		actual, lines := Wrap(tc.Input, tc.Lim)
 		if actual != tc.Output {
-			t.Fatalf("Case %d Input:\n\n`%s`\n\nExpected Output:\n\n`%s`\n\nActual Output:\n`\n%s`",
+			t.Fatalf("Case %d Input:\n\n`%s`\n\nExpected Output:\n\n`%s`\n\nActual Output:\n\n`%s`",
 				i, tc.Input, tc.Output, actual)
 		}
 
@@ -143,6 +156,14 @@ func TestWrapLeftPadded(t *testing.T) {
     兀，嵲媕亍衩衿溽昃夯丌侄蒰扂丱呤。毰侘妅錣廇螉仴一暀淖
     蚗佶庂咺丌，輀鈁乇彽洢溦洰氶乇构碨洐巿阹。`,
 			59, 4,
+		},
+		// Handle long unbreakable words in a full stentence
+		{
+			"OT: there are alternatives to maintainer-/user-set priority, e.g. \"[user pain](http://www.lostgarden.com/2008/05/improving-bug-triage-with-user-pain.html)\".",
+			`    OT: there are alternatives to maintainer-/user-set
+    priority, e.g. "[user pain](http://www.lostgarden.com/
+    2008/05/improving-bug-triage-with-user-pain.html)".`,
+			58, 4,
 		},
 	}
 
@@ -270,6 +291,80 @@ func TestSplitWord(t *testing.T) {
 		if result != tc.Result || leftover != tc.Leftover {
 			t.Fatalf("Case %d Input:\n\n`%s`\n\nExpected Output:\n\n`%s` - `%s`\n\nActual Output:\n\n`%s` - `%s`",
 				i, tc.Input, tc.Result, tc.Leftover, result, leftover)
+		}
+	}
+}
+
+func TestExtractApplyTermEscapes(t *testing.T) {
+	cases := []struct {
+		Input       string
+		Output      string
+		TermEscapes []escapeItem
+	}{
+		// A plain ascii line with escapes.
+		{
+			"This \x1b[31mis an\x1b[0m example.",
+			"This is an example.",
+			[]escapeItem{{"\x1b[31m", 5}, {"\x1b[0m", 10}},
+		},
+		// A plain wide line with escapes.
+		{
+			"一只敏捷\x1b[31m的狐狸\x1b[0m跳过了一只懒狗。",
+			"一只敏捷的狐狸跳过了一只懒狗。",
+			[]escapeItem{{"\x1b[31m", 4}, {"\x1b[0m", 7}},
+		},
+		// A normal-wide mixed line with escapes.
+		{
+			"一只 A Quick 敏捷\x1b[31m的狐 Fox 狸\x1b[0m跳过了Dog一只懒狗。",
+			"一只 A Quick 敏捷的狐 Fox 狸跳过了Dog一只懒狗。",
+			[]escapeItem{{"\x1b[31m", 13}, {"\x1b[0m", 21}},
+		},
+	}
+
+	for i, tc := range cases {
+		line2, escapes := extractTermEscapes(tc.Input)
+		if line2 != tc.Output || !reflect.DeepEqual(escapes, tc.TermEscapes) {
+			t.Fatalf("Case %d Input:\n\n`%s`\n\nExpected Output:\n\nLine: `%s`\nEscapes: `%+v`\n\nActual Output:\n\nLine: `%s`\nEscapes: `%+v`\n\n",
+				i, tc.Input, tc.Output, tc.TermEscapes, line2, escapes)
+		}
+		line3 := applyTermEscapes(line2, escapes)
+		if line3 != tc.Input {
+			t.Fatalf("Case %d Input:\n\n`%s`\n\nExpected Result:\n\n`%s`\n\nActual Result:\n\n`%s`\n\n",
+				i, tc.Input, tc.Input, line3)
+		}
+	}
+}
+
+func TestSegmentLines(t *testing.T) {
+	cases := []struct {
+		Input  string
+		Output []string
+	}{
+		// A plain ascii line with escapes.
+		{
+			"This is an example.",
+			[]string{"This", " ", "is", " ", "an", " ", "example."},
+		},
+		// A plain wide line with escapes.
+		{
+			"一只敏捷的狐狸跳过了一只懒狗。",
+			[]string{"一", "只", "敏", "捷", "的", "狐", "狸", "跳", "过",
+				"了", "一", "只", "懒", "狗", "。"},
+		},
+		// A complex stentence.
+		{
+			"This is a 'complex' example, where   一只 and English 混合了。",
+			[]string{"This", " ", "is", " ", "a", " ", "'complex'", " ", "example,",
+				" ", "where", "   ", "一", "只", " ", "and", " ", "English", " ", "混",
+				"合", "了", "。"},
+		},
+	}
+
+	for i, tc := range cases {
+		chunks := segmentLine(tc.Input)
+		if !reflect.DeepEqual(chunks, tc.Output) {
+			t.Fatalf("Case %d Input:\n\n`%s`\n\nExpected Output:\n\n`[%s]`\n\nActual Output:\n\n`[%s]`\n\n",
+				i, tc.Input, strings.Join(tc.Output, ", "), strings.Join(chunks, ", "))
 		}
 	}
 }
