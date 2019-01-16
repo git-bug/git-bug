@@ -9,6 +9,11 @@ import (
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
+// Bare is a very minimal identity, designed to be fully embedded directly along
+// other data.
+//
+// in particular, this identity is designed to be compatible with the handling of
+// identities in the early version of git-bug.
 type Bare struct {
 	name      string
 	email     string
@@ -71,10 +76,12 @@ func (i Bare) AvatarUrl() string {
 	return i.avatarUrl
 }
 
+// Keys return the last version of the valid keys
 func (i Bare) Keys() []Key {
 	return []Key{}
 }
 
+// ValidKeysAtTime return the set of keys valid at a given lamport time
 func (i Bare) ValidKeysAtTime(time lamport.Time) []Key {
 	return []Key{}
 }
@@ -139,6 +146,8 @@ func (i Bare) Validate() error {
 	return nil
 }
 
+// IsProtected return true if the chain of git commits started to be signed.
+// If that's the case, only signed commit with a valid key for this identity can be added.
 func (i Bare) IsProtected() bool {
 	return false
 }

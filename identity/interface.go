@@ -1,6 +1,8 @@
 package identity
 
-import "github.com/MichaelMure/git-bug/util/lamport"
+import (
+	"github.com/MichaelMure/git-bug/util/lamport"
+)
 
 type Interface interface {
 	Name() string
@@ -8,7 +10,7 @@ type Interface interface {
 	Login() string
 	AvatarUrl() string
 
-	// Login return the last version of the valid keys
+	// Keys return the last version of the valid keys
 	Keys() []Key
 
 	// ValidKeysAtTime return the set of keys valid at a given lamport time

@@ -2,17 +2,21 @@
 package identity
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/lamport"
+	"github.com/pkg/errors"
 )
 
 const identityRefPattern = "refs/identities/"
 const versionEntryName = "version"
 const identityConfigKey = "git-bug.identity"
+
+var ErrIdentityNotExist = errors.New("identity doesn't exist")
 
 type Identity struct {
 	id       string
@@ -35,22 +39,106 @@ type identityJson struct {
 	Id string `json:"id"`
 }
 
-// TODO: marshal/unmarshal identity + load/write from OpBase
+// MarshalJSON will only serialize the id
+func (i *Identity) MarshalJSON() ([]byte, error) {
+	return json.Marshal(identityJson{
+		Id: i.Id(),
+	})
+}
 
+// UnmarshalJSON will only read the id
+// Users of this package are expected to run Load() to load
+// the remaining data from the identities data in git.
+func (i *Identity) UnmarshalJSON(data []byte) error {
+	aux := identityJson{}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	i.id = aux.Id
+
+	return nil
+}
+
+// TODO: load/write from OpBase
+
+// Read load an Identity from the identities data available in git
 func Read(repo repository.Repo, id string) (*Identity, error) {
-	// Todo
-	return &Identity{}, nil
+	i := &Identity{
+		id: id,
+	}
+
+	err := i.Load(repo)
+	if err != nil {
+		return nil, err
+	}
+
+	return i, nil
+}
+
+// Load will read the corresponding identity data from git and replace any
+// data already loaded if any.
+func (i *Identity) Load(repo repository.Repo) error {
+	ref := fmt.Sprintf("%s%s", identityRefPattern, i.Id())
+
+	hashes, err := repo.ListCommits(ref)
+
+	var versions []Version
+
+	// TODO: this is not perfect, it might be a command invoke error
+	if err != nil {
+		return ErrIdentityNotExist
+	}
+
+	for _, hash := range hashes {
+		entries, err := repo.ListEntries(hash)
+		if err != nil {
+			return errors.Wrap(err, "can't list git tree entries")
+		}
+
+		if len(entries) != 1 {
+			return fmt.Errorf("invalid identity data at hash %s", hash)
+		}
+
+		entry := entries[0]
+
+		if entry.Name != versionEntryName {
+			return fmt.Errorf("invalid identity data at hash %s", hash)
+		}
+
+		data, err := repo.ReadData(entry.Hash)
+		if err != nil {
+			return errors.Wrap(err, "failed to read git blob data")
+		}
+
+		var version Version
+		err = json.Unmarshal(data, &version)
+
+		if err != nil {
+			return errors.Wrapf(err, "failed to decode Identity version json %s", hash)
+		}
+
+		// tag the version with the commit hash
+		version.commitHash = hash
+
+		versions = append(versions, version)
+	}
+
+	i.Versions = versions
+
+	return nil
 }
 
 // NewFromGitUser will query the repository for user detail and
 // build the corresponding Identity
-/*func NewFromGitUser(repo repository.Repo) (*Identity, error) {
+func NewFromGitUser(repo repository.Repo) (*Identity, error) {
 	name, err := repo.GetUserName()
 	if err != nil {
 		return nil, err
 	}
 	if name == "" {
-		return nil, errors.New("User name is not configured in git yet. Please use `git config --global user.name \"John Doe\"`")
+		return nil, errors.New("user name is not configured in git yet. Please use `git config --global user.name \"John Doe\"`")
 	}
 
 	email, err := repo.GetUserEmail()
@@ -58,14 +146,15 @@ func Read(repo repository.Repo, id string) (*Identity, error) {
 		return nil, err
 	}
 	if email == "" {
-		return nil, errors.New("User name is not configured in git yet. Please use `git config --global user.email johndoe@example.com`")
+		return nil, errors.New("user name is not configured in git yet. Please use `git config --global user.email johndoe@example.com`")
 	}
 
 	return NewIdentity(name, email)
-}*/
+}
 
-//
-func BuildFromGit(repo repository.Repo) *Identity {
+// BuildFromGit will query the repository for user detail and
+// build the corresponding Identity
+/*func BuildFromGit(repo repository.Repo) *Identity {
 	version := Version{}
 
 	name, err := repo.GetUserName()
@@ -83,7 +172,7 @@ func BuildFromGit(repo repository.Repo) *Identity {
 			version,
 		},
 	}
-}
+}*/
 
 // SetIdentity store the user identity's id in the git config
 func SetIdentity(repo repository.RepoCommon, identity Identity) error {

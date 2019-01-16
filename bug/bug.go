@@ -113,18 +113,18 @@ func ReadRemoteBug(repo repository.ClockedRepo, remote string, id string) (*Bug,
 
 // readBug will read and parse a Bug from git
 func readBug(repo repository.ClockedRepo, ref string) (*Bug, error) {
-	hashes, err := repo.ListCommits(ref)
-
-	// TODO: this is not perfect, it might be a command invoke error
-	if err != nil {
-		return nil, ErrBugNotExist
-	}
-
 	refSplit := strings.Split(ref, "/")
 	id := refSplit[len(refSplit)-1]
 
 	if len(id) != idLength {
 		return nil, fmt.Errorf("invalid ref length")
+	}
+
+	hashes, err := repo.ListCommits(ref)
+
+	// TODO: this is not perfect, it might be a command invoke error
+	if err != nil {
+		return nil, ErrBugNotExist
 	}
 
 	bug := Bug{

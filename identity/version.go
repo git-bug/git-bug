@@ -8,11 +8,11 @@ import (
 
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/git"
-
 	"github.com/MichaelMure/git-bug/util/lamport"
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
+// Version is a complete set of informations about an Identity at a point in time.
 type Version struct {
 	// Private field so not serialized
 	commitHash git.Hash
