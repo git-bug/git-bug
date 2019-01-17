@@ -20,19 +20,33 @@ var ErrIdentityNotExist = errors.New("identity doesn't exist")
 
 type Identity struct {
 	id       string
-	Versions []Version
+	Versions []*Version
 }
 
-func NewIdentity(name string, email string) (*Identity, error) {
+func NewIdentity(name string, email string) *Identity {
 	return &Identity{
-		Versions: []Version{
+		Versions: []*Version{
 			{
 				Name:  name,
 				Email: email,
 				Nonce: makeNonce(20),
 			},
 		},
-	}, nil
+	}
+}
+
+func NewIdentityFull(name string, email string, login string, avatarUrl string) *Identity {
+	return &Identity{
+		Versions: []*Version{
+			{
+				Name:      name,
+				Email:     email,
+				Login:     login,
+				AvatarUrl: avatarUrl,
+				Nonce:     makeNonce(20),
+			},
+		},
+	}
 }
 
 type identityJson struct {
@@ -84,7 +98,7 @@ func (i *Identity) Load(repo repository.Repo) error {
 
 	hashes, err := repo.ListCommits(ref)
 
-	var versions []Version
+	var versions []*Version
 
 	// TODO: this is not perfect, it might be a command invoke error
 	if err != nil {
@@ -122,7 +136,7 @@ func (i *Identity) Load(repo repository.Repo) error {
 		// tag the version with the commit hash
 		version.commitHash = hash
 
-		versions = append(versions, version)
+		versions = append(versions, &version)
 	}
 
 	i.Versions = versions
@@ -149,7 +163,7 @@ func NewFromGitUser(repo repository.Repo) (*Identity, error) {
 		return nil, errors.New("user name is not configured in git yet. Please use `git config --global user.email johndoe@example.com`")
 	}
 
-	return NewIdentity(name, email)
+	return NewIdentity(name, email), nil
 }
 
 // BuildFromGit will query the repository for user detail and
@@ -202,7 +216,7 @@ func GetIdentity(repo repository.Repo) (*Identity, error) {
 	return Read(repo, id)
 }
 
-func (i *Identity) AddVersion(version Version) {
+func (i *Identity) AddVersion(version *Version) {
 	i.Versions = append(i.Versions, version)
 }
 
@@ -285,7 +299,15 @@ func (i *Identity) Validate() error {
 	return nil
 }
 
-func (i *Identity) LastVersion() Version {
+func (i *Identity) firstVersion() *Version {
+	if len(i.Versions) <= 0 {
+		panic("no version at all")
+	}
+
+	return i.Versions[0]
+}
+
+func (i *Identity) lastVersion() *Version {
 	if len(i.Versions) <= 0 {
 		panic("no version at all")
 	}
@@ -305,27 +327,27 @@ func (i *Identity) Id() string {
 
 // Name return the last version of the name
 func (i *Identity) Name() string {
-	return i.LastVersion().Name
+	return i.lastVersion().Name
 }
 
 // Email return the last version of the email
 func (i *Identity) Email() string {
-	return i.LastVersion().Email
+	return i.lastVersion().Email
 }
 
 // Login return the last version of the login
 func (i *Identity) Login() string {
-	return i.LastVersion().Login
+	return i.lastVersion().Login
 }
 
 // Login return the last version of the Avatar URL
 func (i *Identity) AvatarUrl() string {
-	return i.LastVersion().AvatarUrl
+	return i.lastVersion().AvatarUrl
 }
 
 // Login return the last version of the valid keys
 func (i *Identity) Keys() []Key {
-	return i.LastVersion().Keys
+	return i.lastVersion().Keys
 }
 
 // IsProtected return true if the chain of git commits started to be signed.
@@ -371,4 +393,40 @@ func (i *Identity) DisplayName() string {
 	}
 
 	panic("invalid person data")
+}
+
+// SetMetadata store arbitrary metadata along the last defined Version.
+// If the Version has been commit to git already, it won't be overwritten.
+func (i *Identity) SetMetadata(key string, value string) {
+	i.lastVersion().SetMetadata(key, value)
+}
+
+// ImmutableMetadata return all metadata for this Identity, accumulated from each Version.
+// If multiple value are found, the first defined takes precedence.
+func (i *Identity) ImmutableMetadata() map[string]string {
+	metadata := make(map[string]string)
+
+	for _, version := range i.Versions {
+		for key, value := range version.Metadata {
+			if _, has := metadata[key]; !has {
+				metadata[key] = value
+			}
+		}
+	}
+
+	return metadata
+}
+
+// MutableMetadata return all metadata for this Identity, accumulated from each Version.
+// If multiple value are found, the last defined takes precedence.
+func (i *Identity) MutableMetadata() map[string]string {
+	metadata := make(map[string]string)
+
+	for _, version := range i.Versions {
+		for key, value := range version.Metadata {
+			metadata[key] = value
+		}
+	}
+
+	return metadata
 }

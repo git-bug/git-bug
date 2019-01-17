@@ -5,6 +5,8 @@ import (
 )
 
 type Interface interface {
+	Id() string
+
 	Name() string
 	Email() string
 	Login() string

@@ -12,7 +12,7 @@ import (
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
-// Version is a complete set of informations about an Identity at a point in time.
+// Version is a complete set of information about an Identity at a point in time.
 type Version struct {
 	// Private field so not serialized
 	commitHash git.Hash
@@ -35,6 +35,9 @@ type Version struct {
 	// It has no functional purpose and should be ignored.
 	// It is advised to fill this array if there is not enough entropy, e.g. if there is no keys.
 	Nonce []byte `json:"nonce,omitempty"`
+
+	// A set of arbitrary key/value to store metadata about a version or about an Identity in general.
+	Metadata map[string]string `json:"metadata,omitempty"`
 }
 
 func (v *Version) Validate() error {
@@ -102,4 +105,25 @@ func makeNonce(len int) []byte {
 		panic(err)
 	}
 	return result
+}
+
+// SetMetadata store arbitrary metadata about a version or an Identity in general
+// If the Version has been commit to git already, it won't be overwritten.
+func (v *Version) SetMetadata(key string, value string) {
+	if v.Metadata == nil {
+		v.Metadata = make(map[string]string)
+	}
+
+	v.Metadata[key] = value
+}
+
+// GetMetadata retrieve arbitrary metadata about the Version
+func (v *Version) GetMetadata(key string) (string, bool) {
+	val, ok := v.Metadata[key]
+	return val, ok
+}
+
+// AllMetadata return all metadata for this Identity
+func (v *Version) AllMetadata() map[string]string {
+	return v.Metadata
 }

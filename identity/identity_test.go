@@ -5,15 +5,16 @@ import (
 
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestIdentityCommit(t *testing.T) {
+func TestIdentityCommitLoad(t *testing.T) {
 	mockRepo := repository.NewMockRepoForTest()
 
 	// single version
 
 	identity := Identity{
-		Versions: []Version{
+		Versions: []*Version{
 			{
 				Name:  "René Descartes",
 				Email: "rene.descartes@example.com",
@@ -26,10 +27,15 @@ func TestIdentityCommit(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotEmpty(t, identity.id)
 
+	loaded, err := Read(mockRepo, identity.id)
+	assert.Nil(t, err)
+	commitsAreSet(t, loaded)
+	equivalentIdentity(t, &identity, loaded)
+
 	// multiple version
 
 	identity = Identity{
-		Versions: []Version{
+		Versions: []*Version{
 			{
 				Time:  100,
 				Name:  "René Descartes",
@@ -62,9 +68,14 @@ func TestIdentityCommit(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotEmpty(t, identity.id)
 
+	loaded, err = Read(mockRepo, identity.id)
+	assert.Nil(t, err)
+	commitsAreSet(t, loaded)
+	equivalentIdentity(t, &identity, loaded)
+
 	// add more version
 
-	identity.AddVersion(Version{
+	identity.AddVersion(&Version{
 		Time:  201,
 		Name:  "René Descartes",
 		Email: "rene.descartes@example.com",
@@ -73,7 +84,7 @@ func TestIdentityCommit(t *testing.T) {
 		},
 	})
 
-	identity.AddVersion(Version{
+	identity.AddVersion(&Version{
 		Time:  300,
 		Name:  "René Descartes",
 		Email: "rene.descartes@example.com",
@@ -86,11 +97,32 @@ func TestIdentityCommit(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.NotEmpty(t, identity.id)
+
+	loaded, err = Read(mockRepo, identity.id)
+	assert.Nil(t, err)
+	commitsAreSet(t, loaded)
+	equivalentIdentity(t, &identity, loaded)
+}
+
+func commitsAreSet(t *testing.T, identity *Identity) {
+	for _, version := range identity.Versions {
+		assert.NotEmpty(t, version.commitHash)
+	}
+}
+
+func equivalentIdentity(t *testing.T, expected, actual *Identity) {
+	require.Equal(t, len(expected.Versions), len(actual.Versions))
+
+	for i, version := range expected.Versions {
+		actual.Versions[i].commitHash = version.commitHash
+	}
+
+	assert.Equal(t, expected, actual)
 }
 
 func TestIdentity_ValidKeysAtTime(t *testing.T) {
 	identity := Identity{
-		Versions: []Version{
+		Versions: []*Version{
 			{
 				Time:  100,
 				Name:  "René Descartes",
@@ -142,4 +174,46 @@ func TestIdentity_ValidKeysAtTime(t *testing.T) {
 	assert.Equal(t, identity.ValidKeysAtTime(202), []Key{{PubKey: "pubkeyD"}})
 	assert.Equal(t, identity.ValidKeysAtTime(300), []Key{{PubKey: "pubkeyE"}})
 	assert.Equal(t, identity.ValidKeysAtTime(3000), []Key{{PubKey: "pubkeyE"}})
+}
+
+func TestMetadata(t *testing.T) {
+	mockRepo := repository.NewMockRepoForTest()
+
+	identity := NewIdentity("René Descartes", "rene.descartes@example.com")
+
+	identity.SetMetadata("key1", "value1")
+	assertHasKeyValue(t, identity.ImmutableMetadata(), "key1", "value1")
+	assertHasKeyValue(t, identity.MutableMetadata(), "key1", "value1")
+
+	err := identity.Commit(mockRepo)
+	assert.NoError(t, err)
+
+	assertHasKeyValue(t, identity.ImmutableMetadata(), "key1", "value1")
+	assertHasKeyValue(t, identity.MutableMetadata(), "key1", "value1")
+
+	// try override
+	identity.AddVersion(&Version{
+		Name:  "René Descartes",
+		Email: "rene.descartes@example.com",
+	})
+
+	identity.SetMetadata("key1", "value2")
+	assertHasKeyValue(t, identity.ImmutableMetadata(), "key1", "value1")
+	assertHasKeyValue(t, identity.MutableMetadata(), "key1", "value2")
+
+	err = identity.Commit(mockRepo)
+	assert.NoError(t, err)
+
+	// reload
+	loaded, err := Read(mockRepo, identity.id)
+	assert.Nil(t, err)
+
+	assertHasKeyValue(t, loaded.ImmutableMetadata(), "key1", "value1")
+	assertHasKeyValue(t, loaded.MutableMetadata(), "key1", "value2")
+}
+
+func assertHasKeyValue(t *testing.T, metadata map[string]string, key, value string) {
+	val, ok := metadata[key]
+	assert.True(t, ok)
+	assert.Equal(t, val, value)
 }
