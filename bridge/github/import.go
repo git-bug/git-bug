@@ -8,18 +8,20 @@ import (
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/shurcooL/githubv4"
 )
 
 const keyGithubId = "github-id"
 const keyGithubUrl = "github-url"
+const keyGithubLogin = "github-login"
 
 // githubImporter implement the Importer interface
 type githubImporter struct {
 	client *githubv4.Client
 	conf   core.Configuration
-	ghost  bug.Person
+	ghost  identity.Interface
 }
 
 func (gi *githubImporter) Init(conf core.Configuration) error {
@@ -69,7 +71,10 @@ func (gi *githubImporter) ImportAll(repo *cache.RepoCache) error {
 		}
 
 		for _, itemEdge := range q.Repository.Issues.Nodes[0].Timeline.Edges {
-			gi.ensureTimelineItem(b, itemEdge.Cursor, itemEdge.Node, variables)
+			err = gi.ensureTimelineItem(b, itemEdge.Cursor, itemEdge.Node, variables)
+			if err != nil {
+				return err
+			}
 		}
 
 		if !issue.Timeline.PageInfo.HasNextPage {
@@ -561,7 +566,7 @@ func (gi *githubImporter) ensureCommentEdit(b *cache.BugCache, target git.Hash, 
 }
 
 // makePerson create a bug.Person from the Github data
-func (gi *githubImporter) makePerson(actor *actor) bug.Person {
+func (gi *githubImporter) makePerson(actor *actor) identity.Interface {
 	if actor == nil {
 		return gi.ghost
 	}
@@ -609,12 +614,12 @@ func (gi *githubImporter) fetchGhost() error {
 		name = string(*q.User.Name)
 	}
 
-	gi.ghost = bug.Person{
-		Name:      name,
-		Login:     string(q.User.Login),
-		AvatarUrl: string(q.User.AvatarUrl),
-		Email:     string(q.User.Email),
-	}
+	gi.ghost = identity.NewIdentityFull(
+		name,
+		string(q.User.Login),
+		string(q.User.AvatarUrl),
+		string(q.User.Email),
+	)
 
 	return nil
 }

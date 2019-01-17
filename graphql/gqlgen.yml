@@ -14,7 +14,7 @@ models:
   Comment:
     model: github.com/MichaelMure/git-bug/bug.Comment
   Identity:
-    model: github.com/MichaelMure/git-bug/identity.Identity
+    model: github.com/MichaelMure/git-bug/identity.Interface
   Label:
     model: github.com/MichaelMure/git-bug/bug.Label
   Hash:

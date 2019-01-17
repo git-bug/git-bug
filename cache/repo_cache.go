@@ -30,6 +30,8 @@ type RepoCache struct {
 	excerpts map[string]*BugExcerpt
 	// bug loaded in memory
 	bugs map[string]*BugCache
+	// identities loaded in memory
+	identities map[string]*identity.Identity
 }
 
 func NewRepoCache(r repository.ClockedRepo) (*RepoCache, error) {
@@ -279,6 +281,7 @@ func (c *RepoCache) ResolveBugCreateMetadata(key string, value string) (*BugCach
 	return c.ResolveBug(matching[0])
 }
 
+// QueryBugs return the id of all Bug matching the given Query
 func (c *RepoCache) QueryBugs(query *Query) []string {
 	if query == nil {
 		return c.AllBugsIds()
@@ -524,4 +527,71 @@ func repoIsAvailable(repo repository.Repo) error {
 	}
 
 	return nil
+}
+
+// ResolveIdentity retrieve an identity matching the exact given id
+func (c *RepoCache) ResolveIdentity(id string) (*identity.Identity, error) {
+	cached, ok := c.identities[id]
+	if ok {
+		return cached, nil
+	}
+
+	i, err := identity.Read(c.repo, id)
+	if err != nil {
+		return nil, err
+	}
+
+	c.identities[id] = i
+
+	return i, nil
+}
+
+// ResolveIdentityPrefix retrieve an Identity matching an id prefix. It fails if multiple
+// bugs match.
+// func (c *RepoCache) ResolveIdentityPrefix(prefix string) (*BugCache, error) {
+// 	// preallocate but empty
+// 	matching := make([]string, 0, 5)
+//
+// 	for id := range c.excerpts {
+// 		if strings.HasPrefix(id, prefix) {
+// 			matching = append(matching, id)
+// 		}
+// 	}
+//
+// 	if len(matching) > 1 {
+// 		return nil, bug.ErrMultipleMatch{Matching: matching}
+// 	}
+//
+// 	if len(matching) == 0 {
+// 		return nil, bug.ErrBugNotExist
+// 	}
+//
+// 	return c.ResolveBug(matching[0])
+// }
+
+// ResolveIdentityImmutableMetadata retrieve an Identity that has the exact given metadata on
+// one of it's version. If multiple version have the same key, the first defined take precedence.
+func (c *RepoCache) ResolveIdentityImmutableMetadata(key string, value string) (*BugCache, error) {
+	// // preallocate but empty
+	// matching := make([]string, 0, 5)
+	//
+	// for id, excerpt := range c.excerpts {
+	// 	if excerpt.CreateMetadata[key] == value {
+	// 		matching = append(matching, id)
+	// 	}
+	// }
+	//
+	// if len(matching) > 1 {
+	// 	return nil, bug.ErrMultipleMatch{Matching: matching}
+	// }
+	//
+	// if len(matching) == 0 {
+	// 	return nil, bug.ErrBugNotExist
+	// }
+	//
+	// return c.ResolveBug(matching[0])
+
+	// TODO
+
+	return nil, nil
 }

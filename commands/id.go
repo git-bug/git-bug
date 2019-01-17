@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/MichaelMure/git-bug/identity"
@@ -8,7 +9,19 @@ import (
 )
 
 func runId(cmd *cobra.Command, args []string) error {
-	id, err := identity.GetIdentity(repo)
+	if len(args) > 1 {
+		return errors.New("only one identity can be displayed at a time")
+	}
+
+	var id *identity.Identity
+	var err error
+
+	if len(args) == 1 {
+		id, err = identity.Read(repo, args[0])
+	} else {
+		id, err = identity.GetIdentity(repo)
+	}
+
 	if err != nil {
 		return err
 	}
@@ -24,7 +37,7 @@ func runId(cmd *cobra.Command, args []string) error {
 }
 
 var idCmd = &cobra.Command{
-	Use:     "id",
+	Use:     "id [<id>]",
 	Short:   "Display or change the user identity",
 	PreRunE: loadRepo,
 	RunE:    runId,
@@ -32,4 +45,5 @@ var idCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(idCmd)
+	selectCmd.Flags().SortFlags = false
 }

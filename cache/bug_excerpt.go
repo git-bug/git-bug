@@ -20,7 +20,7 @@ type BugExcerpt struct {
 	EditUnixTime      int64
 
 	Status bug.Status
-	Author *identity.Identity
+	Author identity.Interface
 	Labels []bug.Label
 
 	CreateMetadata map[string]string

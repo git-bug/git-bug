@@ -6,7 +6,6 @@ import (
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/colors"
 	"github.com/MichaelMure/git-bug/util/text"
 	"github.com/MichaelMure/gocui"
@@ -290,12 +289,9 @@ func (bt *bugTable) render(v *gocui.View, maxX int) {
 	columnWidths := bt.getColumnWidths(maxX)
 
 	for _, b := range bt.bugs {
-		person := &identity.Identity{}
 		snap := b.Snapshot()
-		if len(snap.Comments) > 0 {
-			create := snap.Comments[0]
-			person = create.Author
-		}
+		create := snap.Comments[0]
+		authorIdentity := create.Author
 
 		summaryTxt := fmt.Sprintf("C:%-2d L:%-2d",
 			len(snap.Comments)-1,
@@ -305,7 +301,7 @@ func (bt *bugTable) render(v *gocui.View, maxX int) {
 		id := text.LeftPadMaxLine(snap.HumanId(), columnWidths["id"], 1)
 		status := text.LeftPadMaxLine(snap.Status.String(), columnWidths["status"], 1)
 		title := text.LeftPadMaxLine(snap.Title, columnWidths["title"], 1)
-		author := text.LeftPadMaxLine(person.DisplayName(), columnWidths["author"], 1)
+		author := text.LeftPadMaxLine(authorIdentity.DisplayName(), columnWidths["author"], 1)
 		summary := text.LeftPadMaxLine(summaryTxt, columnWidths["summary"], 1)
 		lastEdit := text.LeftPadMaxLine(humanize.Time(snap.LastEditTime()), columnWidths["lastEdit"], 1)
 

@@ -122,7 +122,7 @@ func prepareTreeEntries(entries []TreeEntry) bytes.Buffer {
 }
 
 func readTreeEntries(s string) ([]TreeEntry, error) {
-	split := strings.Split(s, "\n")
+	split := strings.Split(strings.TrimSpace(s), "\n")
 
 	casted := make([]TreeEntry, len(split))
 	for i, line := range split {

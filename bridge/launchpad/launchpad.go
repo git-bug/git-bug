@@ -1,4 +1,4 @@
-// Package launchad contains the Launchpad bridge implementation
+// Package launchpad contains the Launchpad bridge implementation
 package launchpad
 
 import (
