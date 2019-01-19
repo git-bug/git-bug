@@ -1,6 +1,8 @@
 package bug
 
 import (
+	"encoding/json"
+
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/pkg/errors"
@@ -11,7 +13,7 @@ var _ Operation = &SetStatusOperation{}
 // SetStatusOperation will change the status of a bug
 type SetStatusOperation struct {
 	OpBase
-	Status Status `json:"status"`
+	Status Status
 }
 
 func (op *SetStatusOperation) base() *OpBase {
@@ -50,6 +52,51 @@ func (op *SetStatusOperation) Validate() error {
 	if err := op.Status.Validate(); err != nil {
 		return errors.Wrap(err, "status")
 	}
+
+	return nil
+}
+
+// Workaround to avoid the inner OpBase.MarshalJSON overriding the outer op
+// MarshalJSON
+func (op *SetStatusOperation) MarshalJSON() ([]byte, error) {
+	base, err := json.Marshal(op.OpBase)
+	if err != nil {
+		return nil, err
+	}
+
+	// revert back to a flat map to be able to add our own fields
+	var data map[string]interface{}
+	if err := json.Unmarshal(base, &data); err != nil {
+		return nil, err
+	}
+
+	data["status"] = op.Status
+
+	return json.Marshal(data)
+}
+
+// Workaround to avoid the inner OpBase.MarshalJSON overriding the outer op
+// MarshalJSON
+func (op *SetStatusOperation) UnmarshalJSON(data []byte) error {
+	// Unmarshal OpBase and the op separately
+
+	base := OpBase{}
+	err := json.Unmarshal(data, &base)
+	if err != nil {
+		return err
+	}
+
+	aux := struct {
+		Status Status `json:"status"`
+	}{}
+
+	err = json.Unmarshal(data, &aux)
+	if err != nil {
+		return err
+	}
+
+	op.OpBase = base
+	op.Status = aux.Status
 
 	return nil
 }

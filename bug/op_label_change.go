@@ -1,6 +1,7 @@
 package bug
 
 import (
+	"encoding/json"
 	"fmt"
 	"sort"
 
@@ -15,8 +16,8 @@ var _ Operation = &LabelChangeOperation{}
 // LabelChangeOperation define a Bug operation to add or remove labels
 type LabelChangeOperation struct {
 	OpBase
-	Added   []Label `json:"added"`
-	Removed []Label `json:"removed"`
+	Added   []Label
+	Removed []Label
 }
 
 func (op *LabelChangeOperation) base() *OpBase {
@@ -95,6 +96,54 @@ func (op *LabelChangeOperation) Validate() error {
 	if len(op.Added)+len(op.Removed) <= 0 {
 		return fmt.Errorf("no label change")
 	}
+
+	return nil
+}
+
+// Workaround to avoid the inner OpBase.MarshalJSON overriding the outer op
+// MarshalJSON
+func (op *LabelChangeOperation) MarshalJSON() ([]byte, error) {
+	base, err := json.Marshal(op.OpBase)
+	if err != nil {
+		return nil, err
+	}
+
+	// revert back to a flat map to be able to add our own fields
+	var data map[string]interface{}
+	if err := json.Unmarshal(base, &data); err != nil {
+		return nil, err
+	}
+
+	data["added"] = op.Added
+	data["removed"] = op.Removed
+
+	return json.Marshal(data)
+}
+
+// Workaround to avoid the inner OpBase.MarshalJSON overriding the outer op
+// MarshalJSON
+func (op *LabelChangeOperation) UnmarshalJSON(data []byte) error {
+	// Unmarshal OpBase and the op separately
+
+	base := OpBase{}
+	err := json.Unmarshal(data, &base)
+	if err != nil {
+		return err
+	}
+
+	aux := struct {
+		Added   []Label `json:"added"`
+		Removed []Label `json:"removed"`
+	}{}
+
+	err = json.Unmarshal(data, &aux)
+	if err != nil {
+		return err
+	}
+
+	op.OpBase = base
+	op.Added = aux.Added
+	op.Removed = aux.Removed
 
 	return nil
 }

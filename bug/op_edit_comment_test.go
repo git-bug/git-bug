@@ -1,11 +1,12 @@
 package bug
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
 	"github.com/MichaelMure/git-bug/identity"
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestEdit(t *testing.T) {
@@ -48,4 +49,19 @@ func TestEdit(t *testing.T) {
 	assert.Equal(t, len(snapshot.Timeline[1].(*AddCommentTimelineItem).History), 2)
 	assert.Equal(t, snapshot.Comments[0].Message, "create edited")
 	assert.Equal(t, snapshot.Comments[1].Message, "comment edited")
+}
+
+func TestEditCommentSerialize(t *testing.T) {
+	var rene = identity.NewBare("René Descartes", "rene@descartes.fr")
+	unix := time.Now().Unix()
+	before := NewEditCommentOp(rene, unix, "target", "message", nil)
+
+	data, err := json.Marshal(before)
+	assert.NoError(t, err)
+
+	var after EditCommentOperation
+	err = json.Unmarshal(data, &after)
+	assert.NoError(t, err)
+
+	assert.Equal(t, before, &after)
 }

@@ -16,16 +16,6 @@ const identityRefPattern = "refs/identities/"
 const versionEntryName = "version"
 const identityConfigKey = "git-bug.identity"
 
-var ErrIdentityNotExist = errors.New("identity doesn't exist")
-
-type ErrMultipleMatch struct {
-	Matching []string
-}
-
-func (e ErrMultipleMatch) Error() string {
-	return fmt.Sprintf("Multiple matching identities found:\n%s", strings.Join(e.Matching, "\n"))
-}
-
 var _ Interface = &Identity{}
 
 type Identity struct {
@@ -84,8 +74,6 @@ func (i *Identity) UnmarshalJSON(data []byte) error {
 
 	return nil
 }
-
-// TODO: load/write from OpBase
 
 // Read load an Identity from the identities data available in git
 func Read(repo repository.Repo, id string) (*Identity, error) {
@@ -230,7 +218,9 @@ func (i *Identity) AddVersion(version *Version) {
 	i.Versions = append(i.Versions, version)
 }
 
-func (i *Identity) Commit(repo repository.ClockedRepo) error {
+// Write the identity into the Repository. In particular, this ensure that
+// the Id is properly set.
+func (i *Identity) Commit(repo repository.Repo) error {
 	// Todo: check for mismatch between memory and commited data
 
 	var lastCommit git.Hash = ""

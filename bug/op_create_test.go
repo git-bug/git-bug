@@ -1,11 +1,13 @@
 package bug
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/go-test/deep"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCreate(t *testing.T) {
@@ -44,4 +46,19 @@ func TestCreate(t *testing.T) {
 	if diff := deep.Equal(snapshot, expected); diff != nil {
 		t.Fatal(diff)
 	}
+}
+
+func TestCreateSerialize(t *testing.T) {
+	var rene = identity.NewBare("René Descartes", "rene@descartes.fr")
+	unix := time.Now().Unix()
+	before := NewCreateOp(rene, unix, "title", "message", nil)
+
+	data, err := json.Marshal(before)
+	assert.NoError(t, err)
+
+	var after CreateOperation
+	err = json.Unmarshal(data, &after)
+	assert.NoError(t, err)
+
+	assert.Equal(t, before, &after)
 }

@@ -3,6 +3,8 @@ package bug
 import (
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
+	"github.com/stretchr/testify/assert"
+
 	"testing"
 	"time"
 )
@@ -29,13 +31,15 @@ func TestOpIterator(t *testing.T) {
 	bug1.Append(addCommentOp)
 	bug1.Append(setStatusOp)
 	bug1.Append(labelChangeOp)
-	bug1.Commit(mockRepo)
+	err := bug1.Commit(mockRepo)
+	assert.NoError(t, err)
 
 	// second pack
 	bug1.Append(setTitleOp)
 	bug1.Append(setTitleOp)
 	bug1.Append(setTitleOp)
-	bug1.Commit(mockRepo)
+	err = bug1.Commit(mockRepo)
+	assert.NoError(t, err)
 
 	// staging
 	bug1.Append(setTitleOp)

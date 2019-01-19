@@ -1,6 +1,7 @@
 package bug
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -15,8 +16,8 @@ var _ Operation = &SetTitleOperation{}
 // SetTitleOperation will change the title of a bug
 type SetTitleOperation struct {
 	OpBase
-	Title string `json:"title"`
-	Was   string `json:"was"`
+	Title string
+	Was   string
 }
 
 func (op *SetTitleOperation) base() *OpBase {
@@ -72,6 +73,54 @@ func (op *SetTitleOperation) Validate() error {
 	if !text.Safe(op.Was) {
 		return fmt.Errorf("previous title should be fully printable")
 	}
+
+	return nil
+}
+
+// Workaround to avoid the inner OpBase.MarshalJSON overriding the outer op
+// MarshalJSON
+func (op *SetTitleOperation) MarshalJSON() ([]byte, error) {
+	base, err := json.Marshal(op.OpBase)
+	if err != nil {
+		return nil, err
+	}
+
+	// revert back to a flat map to be able to add our own fields
+	var data map[string]interface{}
+	if err := json.Unmarshal(base, &data); err != nil {
+		return nil, err
+	}
+
+	data["title"] = op.Title
+	data["was"] = op.Was
+
+	return json.Marshal(data)
+}
+
+// Workaround to avoid the inner OpBase.MarshalJSON overriding the outer op
+// MarshalJSON
+func (op *SetTitleOperation) UnmarshalJSON(data []byte) error {
+	// Unmarshal OpBase and the op separately
+
+	base := OpBase{}
+	err := json.Unmarshal(data, &base)
+	if err != nil {
+		return err
+	}
+
+	aux := struct {
+		Title string `json:"title"`
+		Was   string `json:"was"`
+	}{}
+
+	err = json.Unmarshal(data, &aux)
+	if err != nil {
+		return err
+	}
+
+	op.OpBase = base
+	op.Title = aux.Title
+	op.Was = aux.Was
 
 	return nil
 }

@@ -76,8 +76,6 @@ func hashOperation(op Operation) (git.Hash, error) {
 	return base.hash, nil
 }
 
-// TODO: serialization with identity
-
 // OpBase implement the common code for all operations
 type OpBase struct {
 	OperationType OperationType
@@ -100,28 +98,40 @@ func newOpBase(opType OperationType, author identity.Interface, unixTime int64) 
 	}
 }
 
-type opBaseJson struct {
-	OperationType OperationType     `json:"type"`
-	UnixTime      int64             `json:"timestamp"`
-	Metadata      map[string]string `json:"metadata,omitempty"`
-}
-
-func (op *OpBase) MarshalJSON() ([]byte, error) {
-	return json.Marshal(opBaseJson{
+func (op OpBase) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		OperationType OperationType      `json:"type"`
+		Author        identity.Interface `json:"author"`
+		UnixTime      int64              `json:"timestamp"`
+		Metadata      map[string]string  `json:"metadata,omitempty"`
+	}{
 		OperationType: op.OperationType,
+		Author:        op.Author,
 		UnixTime:      op.UnixTime,
 		Metadata:      op.Metadata,
 	})
 }
 
 func (op *OpBase) UnmarshalJSON(data []byte) error {
-	aux := opBaseJson{}
+	aux := struct {
+		OperationType OperationType     `json:"type"`
+		Author        json.RawMessage   `json:"author"`
+		UnixTime      int64             `json:"timestamp"`
+		Metadata      map[string]string `json:"metadata,omitempty"`
+	}{}
 
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
 	}
 
+	// delegate the decoding of the identity
+	author, err := identity.UnmarshalJSON(aux.Author)
+	if err != nil {
+		return err
+	}
+
 	op.OperationType = aux.OperationType
+	op.Author = author
 	op.UnixTime = aux.UnixTime
 	op.Metadata = aux.Metadata
 
@@ -147,10 +157,6 @@ func (op *OpBase) GetFiles() []git.Hash {
 func opBaseValidate(op Operation, opType OperationType) error {
 	if op.base().OperationType != opType {
 		return fmt.Errorf("incorrect operation type (expected: %v, actual: %v)", opType, op.base().OperationType)
-	}
-
-	if _, err := op.Hash(); err != nil {
-		return errors.Wrap(err, "op is not serializable")
 	}
 
 	if op.GetUnixTime() == 0 {

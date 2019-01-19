@@ -1,6 +1,7 @@
 package bug
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -93,4 +94,22 @@ func TestSetMetadata(t *testing.T) {
 	assert.Equal(t, len(commentMetadata), 2)
 	assert.Equal(t, commentMetadata["key2"], "value2")
 	assert.Equal(t, commentMetadata["key3"], "value3")
+}
+
+func TestSetMetadataSerialize(t *testing.T) {
+	var rene = identity.NewBare("René Descartes", "rene@descartes.fr")
+	unix := time.Now().Unix()
+	before := NewSetMetadataOp(rene, unix, "message", map[string]string{
+		"key1": "value1",
+		"key2": "value2",
+	})
+
+	data, err := json.Marshal(before)
+	assert.NoError(t, err)
+
+	var after SetMetadataOperation
+	err = json.Unmarshal(data, &after)
+	assert.NoError(t, err)
+
+	assert.Equal(t, before, &after)
 }

@@ -2,7 +2,6 @@ package bug
 
 import (
 	"github.com/MichaelMure/git-bug/repository"
-	"github.com/go-test/deep"
 	"github.com/stretchr/testify/assert"
 
 	"testing"
@@ -87,8 +86,5 @@ func TestBugSerialisation(t *testing.T) {
 		}
 	}
 
-	deep.CompareUnexportedFields = true
-	if diff := deep.Equal(bug1, bug2); diff != nil {
-		t.Fatal(diff)
-	}
+	assert.Equal(t, bug1, bug2)
 }

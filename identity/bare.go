@@ -1,13 +1,17 @@
 package identity
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"strings"
 
+	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/lamport"
 	"github.com/MichaelMure/git-bug/util/text"
 )
+
+var _ Interface = &Bare{}
 
 // Bare is a very minimal identity, designed to be fully embedded directly along
 // other data.
@@ -15,6 +19,7 @@ import (
 // in particular, this identity is designed to be compatible with the handling of
 // identities in the early version of git-bug.
 type Bare struct {
+	id        string
 	name      string
 	email     string
 	login     string
@@ -36,7 +41,7 @@ type bareIdentityJson struct {
 	AvatarUrl string `json:"avatar_url,omitempty"`
 }
 
-func (i Bare) MarshalJSON() ([]byte, error) {
+func (i *Bare) MarshalJSON() ([]byte, error) {
 	return json.Marshal(bareIdentityJson{
 		Name:      i.name,
 		Email:     i.email,
@@ -45,7 +50,7 @@ func (i Bare) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (i Bare) UnmarshalJSON(data []byte) error {
+func (i *Bare) UnmarshalJSON(data []byte) error {
 	aux := bareIdentityJson{}
 
 	if err := json.Unmarshal(data, &aux); err != nil {
@@ -60,35 +65,54 @@ func (i Bare) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (i Bare) Name() string {
+func (i *Bare) Id() string {
+	// We don't have a proper ID at hand, so let's hash all the data to get one.
+	// Hopefully the
+
+	if i.id != "" {
+		return i.id
+	}
+
+	data, err := json.Marshal(i)
+	if err != nil {
+		panic(err)
+	}
+
+	h := fmt.Sprintf("%x", sha256.New().Sum(data)[:16])
+	i.id = string(h)
+
+	return i.id
+}
+
+func (i *Bare) Name() string {
 	return i.name
 }
 
-func (i Bare) Email() string {
+func (i *Bare) Email() string {
 	return i.email
 }
 
-func (i Bare) Login() string {
+func (i *Bare) Login() string {
 	return i.login
 }
 
-func (i Bare) AvatarUrl() string {
+func (i *Bare) AvatarUrl() string {
 	return i.avatarUrl
 }
 
 // Keys return the last version of the valid keys
-func (i Bare) Keys() []Key {
+func (i *Bare) Keys() []Key {
 	return []Key{}
 }
 
 // ValidKeysAtTime return the set of keys valid at a given lamport time
-func (i Bare) ValidKeysAtTime(time lamport.Time) []Key {
+func (i *Bare) ValidKeysAtTime(time lamport.Time) []Key {
 	return []Key{}
 }
 
 // DisplayName return a non-empty string to display, representing the
 // identity, based on the non-empty values.
-func (i Bare) DisplayName() string {
+func (i *Bare) DisplayName() string {
 	switch {
 	case i.name == "" && i.login != "":
 		return i.login
@@ -102,7 +126,7 @@ func (i Bare) DisplayName() string {
 }
 
 // Match tell is the Person match the given query string
-func (i Bare) Match(query string) bool {
+func (i *Bare) Match(query string) bool {
 	query = strings.ToLower(query)
 
 	return strings.Contains(strings.ToLower(i.name), query) ||
@@ -110,7 +134,7 @@ func (i Bare) Match(query string) bool {
 }
 
 // Validate check if the Identity data is valid
-func (i Bare) Validate() error {
+func (i *Bare) Validate() error {
 	if text.Empty(i.name) && text.Empty(i.login) {
 		return fmt.Errorf("either name or login should be set")
 	}
@@ -146,8 +170,15 @@ func (i Bare) Validate() error {
 	return nil
 }
 
+// Write the identity into the Repository. In particular, this ensure that
+// the Id is properly set.
+func (i *Bare) Commit(repo repository.Repo) error {
+	// Nothing to do, everything is directly embedded
+	return nil
+}
+
 // IsProtected return true if the chain of git commits started to be signed.
 // If that's the case, only signed commit with a valid key for this identity can be added.
-func (i Bare) IsProtected() bool {
+func (i *Bare) IsProtected() bool {
 	return false
 }

@@ -30,7 +30,7 @@ func (h *Hash) UnmarshalGQL(v interface{}) error {
 
 // MarshalGQL implement the Marshaler interface for gqlgen
 func (h Hash) MarshalGQL(w io.Writer) {
-	w.Write([]byte(`"` + h.String() + `"`))
+	_, _ = w.Write([]byte(`"` + h.String() + `"`))
 }
 
 // IsValid tell if the hash is valid
