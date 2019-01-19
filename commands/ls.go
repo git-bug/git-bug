@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/colors"
 	"github.com/MichaelMure/git-bug/util/interrupt"
 	"github.com/spf13/cobra"
@@ -52,7 +52,7 @@ func runLsBug(cmd *cobra.Command, args []string) error {
 
 		snapshot := b.Snapshot()
 
-		var author bug.Person
+		var author identity.Interface
 
 		if len(snapshot.Comments) > 0 {
 			create := snapshot.Comments[0]

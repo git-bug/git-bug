@@ -23,6 +23,20 @@ import (
 const cacheFile = "cache"
 const formatVersion = 1
 
+// RepoCache is a cache for a Repository. This cache has multiple functions:
+//
+// 1. After being loaded, a Bug is kept in memory in the cache, allowing for fast
+// 		access later.
+// 2. The cache maintain on memory and on disk a pre-digested excerpt for each bug,
+// 		allowing for fast querying the whole set of bugs without having to load
+//		them individually.
+// 3. The cache guarantee that a single instance of a Bug is loaded at once, avoiding
+// 		loss of data that we could have with multiple copies in the same process.
+// 4. The same way, the cache maintain in memory a single copy of the loaded identities.
+//
+// The cache also protect the on-disk data by locking the git repository for its
+// own usage, by writing a lock file. Of course, normal git operations are not
+// affected, only git-bug related one.
 type RepoCache struct {
 	// the underlying repo
 	repo repository.ClockedRepo
@@ -406,9 +420,14 @@ func (c *RepoCache) NewBugRaw(author *identity.Identity, unixTime int64, title s
 		return nil, err
 	}
 
+	if _, has := c.bugs[b.Id()]; has {
+		return nil, fmt.Errorf("bug %s already exist in the cache", b.Id())
+	}
+
 	cached := NewBugCache(c, b)
 	c.bugs[b.Id()] = cached
 
+	// force the write of the excerpt
 	err = c.bugUpdated(b.Id())
 	if err != nil {
 		return nil, err
@@ -546,52 +565,81 @@ func (c *RepoCache) ResolveIdentity(id string) (*identity.Identity, error) {
 	return i, nil
 }
 
-// ResolveIdentityPrefix retrieve an Identity matching an id prefix. It fails if multiple
-// bugs match.
-// func (c *RepoCache) ResolveIdentityPrefix(prefix string) (*BugCache, error) {
-// 	// preallocate but empty
-// 	matching := make([]string, 0, 5)
-//
-// 	for id := range c.excerpts {
-// 		if strings.HasPrefix(id, prefix) {
-// 			matching = append(matching, id)
-// 		}
-// 	}
-//
-// 	if len(matching) > 1 {
-// 		return nil, bug.ErrMultipleMatch{Matching: matching}
-// 	}
-//
-// 	if len(matching) == 0 {
-// 		return nil, bug.ErrBugNotExist
-// 	}
-//
-// 	return c.ResolveBug(matching[0])
-// }
+// ResolveIdentityPrefix retrieve an Identity matching an id prefix.
+// It fails if multiple identities match.
+func (c *RepoCache) ResolveIdentityPrefix(prefix string) (*identity.Identity, error) {
+	// preallocate but empty
+	matching := make([]string, 0, 5)
+
+	for id := range c.identities {
+		if strings.HasPrefix(id, prefix) {
+			matching = append(matching, id)
+		}
+	}
+
+	if len(matching) > 1 {
+		return nil, identity.ErrMultipleMatch{Matching: matching}
+	}
+
+	if len(matching) == 0 {
+		return nil, identity.ErrIdentityNotExist
+	}
+
+	return c.ResolveIdentity(matching[0])
+}
 
 // ResolveIdentityImmutableMetadata retrieve an Identity that has the exact given metadata on
 // one of it's version. If multiple version have the same key, the first defined take precedence.
-func (c *RepoCache) ResolveIdentityImmutableMetadata(key string, value string) (*BugCache, error) {
-	// // preallocate but empty
-	// matching := make([]string, 0, 5)
-	//
-	// for id, excerpt := range c.excerpts {
-	// 	if excerpt.CreateMetadata[key] == value {
-	// 		matching = append(matching, id)
-	// 	}
-	// }
-	//
-	// if len(matching) > 1 {
-	// 	return nil, bug.ErrMultipleMatch{Matching: matching}
-	// }
-	//
-	// if len(matching) == 0 {
-	// 	return nil, bug.ErrBugNotExist
-	// }
-	//
-	// return c.ResolveBug(matching[0])
+func (c *RepoCache) ResolveIdentityImmutableMetadata(key string, value string) (*identity.Identity, error) {
+	// preallocate but empty
+	matching := make([]string, 0, 5)
 
-	// TODO
+	for id, i := range c.identities {
+		if i.ImmutableMetadata()[key] == value {
+			matching = append(matching, id)
+		}
+	}
 
-	return nil, nil
+	if len(matching) > 1 {
+		return nil, identity.ErrMultipleMatch{Matching: matching}
+	}
+
+	if len(matching) == 0 {
+		return nil, identity.ErrIdentityNotExist
+	}
+
+	return c.ResolveIdentity(matching[0])
+}
+
+// NewIdentity create a new identity
+// The new identity is written in the repository (commit)
+func (c *RepoCache) NewIdentity(name string, email string) (*identity.Identity, error) {
+	return c.NewIdentityRaw(name, email, "", "", nil)
+}
+
+// NewIdentityFull create a new identity
+// The new identity is written in the repository (commit)
+func (c *RepoCache) NewIdentityFull(name string, email string, login string, avatarUrl string) (*identity.Identity, error) {
+	return c.NewIdentityRaw(name, email, login, avatarUrl, nil)
+}
+
+func (c *RepoCache) NewIdentityRaw(name string, email string, login string, avatarUrl string, metadata map[string]string) (*identity.Identity, error) {
+	i := identity.NewIdentityFull(name, email, login, avatarUrl)
+
+	for key, value := range metadata {
+		i.SetMetadata(key, value)
+	}
+
+	err := i.Commit(c.repo)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, has := c.identities[i.Id()]; has {
+		return nil, fmt.Errorf("identity %s already exist in the cache", i.Id())
+	}
+
+	c.identities[i.Id()] = i
+
+	return i, nil
 }

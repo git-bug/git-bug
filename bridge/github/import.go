@@ -21,14 +21,13 @@ const keyGithubLogin = "github-login"
 type githubImporter struct {
 	client *githubv4.Client
 	conf   core.Configuration
-	ghost  identity.Interface
 }
 
 func (gi *githubImporter) Init(conf core.Configuration) error {
 	gi.conf = conf
 	gi.client = buildClient(conf)
 
-	return gi.fetchGhost()
+	return nil
 }
 
 func (gi *githubImporter) ImportAll(repo *cache.RepoCache) error {
@@ -71,7 +70,7 @@ func (gi *githubImporter) ImportAll(repo *cache.RepoCache) error {
 		}
 
 		for _, itemEdge := range q.Repository.Issues.Nodes[0].Timeline.Edges {
-			err = gi.ensureTimelineItem(b, itemEdge.Cursor, itemEdge.Node, variables)
+			err = gi.ensureTimelineItem(repo, b, itemEdge.Cursor, itemEdge.Node, variables)
 			if err != nil {
 				return err
 			}
@@ -114,6 +113,11 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 		return nil, err
 	}
 
+	author, err := gi.makePerson(repo, issue.Author)
+	if err != nil {
+		return nil, err
+	}
+
 	// if there is no edit, the UserContentEdits given by github is empty. That
 	// means that the original message is given by the issue message.
 	//
@@ -128,7 +132,7 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 	if len(issue.UserContentEdits.Nodes) == 0 {
 		if err == bug.ErrBugNotExist {
 			b, err = repo.NewBugRaw(
-				gi.makePerson(issue.Author),
+				author,
 				issue.CreatedAt.Unix(),
 				// Todo: this might not be the initial title, we need to query the
 				// timeline to be sure
@@ -140,7 +144,6 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 					keyGithubUrl: issue.Url.String(),
 				},
 			)
-
 			if err != nil {
 				return nil, err
 			}
@@ -166,7 +169,7 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 
 			// we create the bug as soon as we have a legit first edition
 			b, err = repo.NewBugRaw(
-				gi.makePerson(issue.Author),
+				author,
 				issue.CreatedAt.Unix(),
 				// Todo: this might not be the initial title, we need to query the
 				// timeline to be sure
@@ -189,7 +192,7 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 			return nil, err
 		}
 
-		err = gi.ensureCommentEdit(b, target, edit)
+		err = gi.ensureCommentEdit(repo, b, target, edit)
 		if err != nil {
 			return nil, err
 		}
@@ -199,7 +202,7 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 		// if we still didn't get a legit edit, create the bug from the issue data
 		if b == nil {
 			return repo.NewBugRaw(
-				gi.makePerson(issue.Author),
+				author,
 				issue.CreatedAt.Unix(),
 				// Todo: this might not be the initial title, we need to query the
 				// timeline to be sure
@@ -248,7 +251,7 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 
 				// we create the bug as soon as we have a legit first edition
 				b, err = repo.NewBugRaw(
-					gi.makePerson(issue.Author),
+					author,
 					issue.CreatedAt.Unix(),
 					// Todo: this might not be the initial title, we need to query the
 					// timeline to be sure
@@ -271,7 +274,7 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 				return nil, err
 			}
 
-			err = gi.ensureCommentEdit(b, target, edit)
+			err = gi.ensureCommentEdit(repo, b, target, edit)
 			if err != nil {
 				return nil, err
 			}
@@ -289,7 +292,7 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 	// if we still didn't get a legit edit, create the bug from the issue data
 	if b == nil {
 		return repo.NewBugRaw(
-			gi.makePerson(issue.Author),
+			author,
 			issue.CreatedAt.Unix(),
 			// Todo: this might not be the initial title, we need to query the
 			// timeline to be sure
@@ -306,12 +309,12 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 	return b, nil
 }
 
-func (gi *githubImporter) ensureTimelineItem(b *cache.BugCache, cursor githubv4.String, item timelineItem, rootVariables map[string]interface{}) error {
+func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.BugCache, cursor githubv4.String, item timelineItem, rootVariables map[string]interface{}) error {
 	fmt.Printf("import %s\n", item.Typename)
 
 	switch item.Typename {
 	case "IssueComment":
-		return gi.ensureComment(b, cursor, item.IssueComment, rootVariables)
+		return gi.ensureComment(repo, b, cursor, item.IssueComment, rootVariables)
 
 	case "LabeledEvent":
 		id := parseId(item.LabeledEvent.Id)
@@ -319,8 +322,12 @@ func (gi *githubImporter) ensureTimelineItem(b *cache.BugCache, cursor githubv4.
 		if err != cache.ErrNoMatchingOp {
 			return err
 		}
+		author, err := gi.makePerson(repo, item.LabeledEvent.Actor)
+		if err != nil {
+			return err
+		}
 		_, err = b.ChangeLabelsRaw(
-			gi.makePerson(item.LabeledEvent.Actor),
+			author,
 			item.LabeledEvent.CreatedAt.Unix(),
 			[]string{
 				string(item.LabeledEvent.Label.Name),
@@ -336,8 +343,12 @@ func (gi *githubImporter) ensureTimelineItem(b *cache.BugCache, cursor githubv4.
 		if err != cache.ErrNoMatchingOp {
 			return err
 		}
+		author, err := gi.makePerson(repo, item.UnlabeledEvent.Actor)
+		if err != nil {
+			return err
+		}
 		_, err = b.ChangeLabelsRaw(
-			gi.makePerson(item.UnlabeledEvent.Actor),
+			author,
 			item.UnlabeledEvent.CreatedAt.Unix(),
 			nil,
 			[]string{
@@ -353,8 +364,12 @@ func (gi *githubImporter) ensureTimelineItem(b *cache.BugCache, cursor githubv4.
 		if err != cache.ErrNoMatchingOp {
 			return err
 		}
+		author, err := gi.makePerson(repo, item.ClosedEvent.Actor)
+		if err != nil {
+			return err
+		}
 		return b.CloseRaw(
-			gi.makePerson(item.ClosedEvent.Actor),
+			author,
 			item.ClosedEvent.CreatedAt.Unix(),
 			map[string]string{keyGithubId: id},
 		)
@@ -365,8 +380,12 @@ func (gi *githubImporter) ensureTimelineItem(b *cache.BugCache, cursor githubv4.
 		if err != cache.ErrNoMatchingOp {
 			return err
 		}
+		author, err := gi.makePerson(repo, item.ReopenedEvent.Actor)
+		if err != nil {
+			return err
+		}
 		return b.OpenRaw(
-			gi.makePerson(item.ReopenedEvent.Actor),
+			author,
 			item.ReopenedEvent.CreatedAt.Unix(),
 			map[string]string{keyGithubId: id},
 		)
@@ -377,8 +396,12 @@ func (gi *githubImporter) ensureTimelineItem(b *cache.BugCache, cursor githubv4.
 		if err != cache.ErrNoMatchingOp {
 			return err
 		}
+		author, err := gi.makePerson(repo, item.RenamedTitleEvent.Actor)
+		if err != nil {
+			return err
+		}
 		return b.SetTitleRaw(
-			gi.makePerson(item.RenamedTitleEvent.Actor),
+			author,
 			item.RenamedTitleEvent.CreatedAt.Unix(),
 			string(item.RenamedTitleEvent.CurrentTitle),
 			map[string]string{keyGithubId: id},
@@ -391,10 +414,15 @@ func (gi *githubImporter) ensureTimelineItem(b *cache.BugCache, cursor githubv4.
 	return nil
 }
 
-func (gi *githubImporter) ensureComment(b *cache.BugCache, cursor githubv4.String, comment issueComment, rootVariables map[string]interface{}) error {
+func (gi *githubImporter) ensureComment(repo *cache.RepoCache, b *cache.BugCache, cursor githubv4.String, comment issueComment, rootVariables map[string]interface{}) error {
 	target, err := b.ResolveTargetWithMetadata(keyGithubId, parseId(comment.Id))
 	if err != nil && err != cache.ErrNoMatchingOp {
 		// real error
+		return err
+	}
+
+	author, err := gi.makePerson(repo, comment.Author)
+	if err != nil {
 		return err
 	}
 
@@ -412,7 +440,7 @@ func (gi *githubImporter) ensureComment(b *cache.BugCache, cursor githubv4.Strin
 	if len(comment.UserContentEdits.Nodes) == 0 {
 		if err == cache.ErrNoMatchingOp {
 			err = b.AddCommentRaw(
-				gi.makePerson(comment.Author),
+				author,
 				comment.CreatedAt.Unix(),
 				cleanupText(string(comment.Body)),
 				nil,
@@ -445,7 +473,7 @@ func (gi *githubImporter) ensureComment(b *cache.BugCache, cursor githubv4.Strin
 			}
 
 			err = b.AddCommentRaw(
-				gi.makePerson(comment.Author),
+				author,
 				comment.CreatedAt.Unix(),
 				cleanupText(string(*edit.Diff)),
 				nil,
@@ -459,7 +487,7 @@ func (gi *githubImporter) ensureComment(b *cache.BugCache, cursor githubv4.Strin
 			}
 		}
 
-		err := gi.ensureCommentEdit(b, target, edit)
+		err := gi.ensureCommentEdit(repo, b, target, edit)
 		if err != nil {
 			return err
 		}
@@ -501,7 +529,7 @@ func (gi *githubImporter) ensureComment(b *cache.BugCache, cursor githubv4.Strin
 				continue
 			}
 
-			err := gi.ensureCommentEdit(b, target, edit)
+			err := gi.ensureCommentEdit(repo, b, target, edit)
 			if err != nil {
 				return err
 			}
@@ -519,7 +547,7 @@ func (gi *githubImporter) ensureComment(b *cache.BugCache, cursor githubv4.Strin
 	return nil
 }
 
-func (gi *githubImporter) ensureCommentEdit(b *cache.BugCache, target git.Hash, edit userContentEdit) error {
+func (gi *githubImporter) ensureCommentEdit(repo *cache.RepoCache, b *cache.BugCache, target git.Hash, edit userContentEdit) error {
 	if edit.Diff == nil {
 		// this happen if the event is older than early 2018, Github doesn't have the data before that.
 		// Best we can do is to ignore the event.
@@ -542,6 +570,11 @@ func (gi *githubImporter) ensureCommentEdit(b *cache.BugCache, target git.Hash, 
 
 	fmt.Println("import edition")
 
+	editor, err := gi.makePerson(repo, edit.Editor)
+	if err != nil {
+		return err
+	}
+
 	switch {
 	case edit.DeletedAt != nil:
 		// comment deletion, not supported yet
@@ -549,7 +582,7 @@ func (gi *githubImporter) ensureCommentEdit(b *cache.BugCache, target git.Hash, 
 	case edit.DeletedAt == nil:
 		// comment edition
 		err := b.EditCommentRaw(
-			gi.makePerson(edit.Editor),
+			editor,
 			edit.CreatedAt.Unix(),
 			target,
 			cleanupText(string(*edit.Diff)),
@@ -566,10 +599,22 @@ func (gi *githubImporter) ensureCommentEdit(b *cache.BugCache, target git.Hash, 
 }
 
 // makePerson create a bug.Person from the Github data
-func (gi *githubImporter) makePerson(actor *actor) identity.Interface {
+func (gi *githubImporter) makePerson(repo *cache.RepoCache, actor *actor) (*identity.Identity, error) {
+	// When a user has been deleted, Github return a null actor, while displaying a profile named "ghost"
+	// in it's UI. So we need a special case to get it.
 	if actor == nil {
-		return gi.ghost
+		return gi.getGhost(repo)
 	}
+
+	// Look first in the cache
+	i, err := repo.ResolveIdentityImmutableMetadata(keyGithubLogin, string(actor.Login))
+	if err == nil {
+		return i, nil
+	}
+	if _, ok := err.(identity.ErrMultipleMatch); ok {
+		return nil, err
+	}
+
 	var name string
 	var email string
 
@@ -589,24 +634,36 @@ func (gi *githubImporter) makePerson(actor *actor) identity.Interface {
 	case "Bot":
 	}
 
-	return bug.Person{
-		Name:      name,
-		Email:     email,
-		Login:     string(actor.Login),
-		AvatarUrl: string(actor.AvatarUrl),
-	}
+	return repo.NewIdentityRaw(
+		name,
+		email,
+		string(actor.Login),
+		string(actor.AvatarUrl),
+		map[string]string{
+			keyGithubLogin: string(actor.Login),
+		},
+	)
 }
 
-func (gi *githubImporter) fetchGhost() error {
+func (gi *githubImporter) getGhost(repo *cache.RepoCache) (*identity.Identity, error) {
+	// Look first in the cache
+	i, err := repo.ResolveIdentityImmutableMetadata(keyGithubLogin, "ghost")
+	if err == nil {
+		return i, nil
+	}
+	if _, ok := err.(identity.ErrMultipleMatch); ok {
+		return nil, err
+	}
+
 	var q userQuery
 
 	variables := map[string]interface{}{
 		"login": githubv4.String("ghost"),
 	}
 
-	err := gi.client.Query(context.TODO(), &q, variables)
+	err = gi.client.Query(context.TODO(), &q, variables)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var name string
@@ -614,14 +671,15 @@ func (gi *githubImporter) fetchGhost() error {
 		name = string(*q.User.Name)
 	}
 
-	gi.ghost = identity.NewIdentityFull(
+	return repo.NewIdentityRaw(
 		name,
+		string(q.User.Email),
 		string(q.User.Login),
 		string(q.User.AvatarUrl),
-		string(q.User.Email),
+		map[string]string{
+			keyGithubLogin: string(q.User.Login),
+		},
 	)
-
-	return nil
 }
 
 // parseId convert the unusable githubv4.ID (an interface{}) into a string

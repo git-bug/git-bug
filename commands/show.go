@@ -93,7 +93,7 @@ func runShowBug(cmd *cobra.Command, args []string) error {
 			indent,
 			i,
 			comment.Author.DisplayName(),
-			comment.Author.Email,
+			comment.Author.Email(),
 		)
 
 		if comment.Message == "" {

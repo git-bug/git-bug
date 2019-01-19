@@ -8,6 +8,7 @@ import (
 
 const lockfile = "lock"
 
+// MultiRepoCache is the root cache, holding multiple RepoCache.
 type MultiRepoCache struct {
 	repos map[string]*RepoCache
 }

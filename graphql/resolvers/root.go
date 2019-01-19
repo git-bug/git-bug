@@ -32,6 +32,10 @@ func (RootResolver) Bug() graph.BugResolver {
 	return &bugResolver{}
 }
 
+func (r RootResolver) Identity() graph.IdentityResolver {
+	return &identityResolver{}
+}
+
 func (RootResolver) CommentHistoryStep() graph.CommentHistoryStepResolver {
 	return &commentHistoryStepResolver{}
 }

@@ -18,6 +18,16 @@ const identityConfigKey = "git-bug.identity"
 
 var ErrIdentityNotExist = errors.New("identity doesn't exist")
 
+type ErrMultipleMatch struct {
+	Matching []string
+}
+
+func (e ErrMultipleMatch) Error() string {
+	return fmt.Sprintf("Multiple matching identities found:\n%s", strings.Join(e.Matching, "\n"))
+}
+
+var _ Interface = &Identity{}
+
 type Identity struct {
 	id       string
 	Versions []*Version

@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	rene = identity.NewBare("René Descartes", "rene@descartes.fr")
+	rene = identity.NewIdentity("René Descartes", "rene@descartes.fr")
 	unix = time.Now().Unix()
 
 	createOp      = NewCreateOp(rene, unix, "title", "message", nil)

@@ -11,7 +11,7 @@ import (
 func TestEdit(t *testing.T) {
 	snapshot := Snapshot{}
 
-	var rene = identity.NewBare("René Descartes", "rene@descartes.fr")
+	var rene = identity.NewIdentity("René Descartes", "rene@descartes.fr")
 
 	unix := time.Now().Unix()
 

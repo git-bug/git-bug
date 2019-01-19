@@ -138,7 +138,7 @@ func GenerateRandomOperationPacksWithSeed(packNumber int, opNumber int, seed int
 }
 
 func person() identity.Interface {
-	return identity.NewBare(fake.FullName(), fake.EmailAddress())
+	return identity.NewIdentity(fake.FullName(), fake.EmailAddress())
 }
 
 var persons []identity.Interface

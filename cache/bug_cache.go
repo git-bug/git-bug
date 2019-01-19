@@ -11,6 +11,10 @@ import (
 	"github.com/MichaelMure/git-bug/util/git"
 )
 
+// BugCache is a wrapper around a Bug. It provide multiple functions:
+//
+// 1. Provide a higher level API to use than the raw API from Bug.
+// 2. Maintain an up to date Snapshot available.
 type BugCache struct {
 	repoCache *RepoCache
 	bug       *bug.WithSnapshot

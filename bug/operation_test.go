@@ -26,11 +26,11 @@ func TestValidate(t *testing.T) {
 
 	bad := []Operation{
 		// opbase
-		NewSetStatusOp(identity.NewBare("", "rene@descartes.fr"), unix, ClosedStatus),
-		NewSetStatusOp(identity.NewBare("René Descartes\u001b", "rene@descartes.fr"), unix, ClosedStatus),
-		NewSetStatusOp(identity.NewBare("René Descartes", "rene@descartes.fr\u001b"), unix, ClosedStatus),
-		NewSetStatusOp(identity.NewBare("René \nDescartes", "rene@descartes.fr"), unix, ClosedStatus),
-		NewSetStatusOp(identity.NewBare("René Descartes", "rene@\ndescartes.fr"), unix, ClosedStatus),
+		NewSetStatusOp(identity.NewIdentity("", "rene@descartes.fr"), unix, ClosedStatus),
+		NewSetStatusOp(identity.NewIdentity("René Descartes\u001b", "rene@descartes.fr"), unix, ClosedStatus),
+		NewSetStatusOp(identity.NewIdentity("René Descartes", "rene@descartes.fr\u001b"), unix, ClosedStatus),
+		NewSetStatusOp(identity.NewIdentity("René \nDescartes", "rene@descartes.fr"), unix, ClosedStatus),
+		NewSetStatusOp(identity.NewIdentity("René Descartes", "rene@\ndescartes.fr"), unix, ClosedStatus),
 		&CreateOperation{OpBase: OpBase{
 			Author:        rene,
 			UnixTime:      0,

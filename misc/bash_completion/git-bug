@@ -450,6 +450,26 @@ _git-bug_deselect()
     noun_aliases=()
 }
 
+_git-bug_id()
+{
+    last_command="git-bug_id"
+
+    command_aliases=()
+
+    commands=()
+
+    flags=()
+    two_word_flags=()
+    local_nonpersistent_flags=()
+    flags_with_completion=()
+    flags_completion=()
+
+
+    must_have_one_flag=()
+    must_have_one_noun=()
+    noun_aliases=()
+}
+
 _git-bug_label_add()
 {
     last_command="git-bug_label_add"
@@ -863,6 +883,7 @@ _git-bug_root_command()
     commands+=("commands")
     commands+=("comment")
     commands+=("deselect")
+    commands+=("id")
     commands+=("label")
     commands+=("ls")
     commands+=("ls-id")
