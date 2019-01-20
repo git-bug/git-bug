@@ -93,7 +93,7 @@ func (c *BugCache) AddComment(message string) error {
 }
 
 func (c *BugCache) AddCommentWithFiles(message string, files []git.Hash) error {
-	author, err := identity.GetIdentity(c.repoCache.repo)
+	author, err := identity.GetUserIdentity(c.repoCache.repo)
 	if err != nil {
 		return err
 	}
@@ -115,7 +115,7 @@ func (c *BugCache) AddCommentRaw(author *identity.Identity, unixTime int64, mess
 }
 
 func (c *BugCache) ChangeLabels(added []string, removed []string) ([]bug.LabelChangeResult, error) {
-	author, err := identity.GetIdentity(c.repoCache.repo)
+	author, err := identity.GetUserIdentity(c.repoCache.repo)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +142,7 @@ func (c *BugCache) ChangeLabelsRaw(author *identity.Identity, unixTime int64, ad
 }
 
 func (c *BugCache) Open() error {
-	author, err := identity.GetIdentity(c.repoCache.repo)
+	author, err := identity.GetUserIdentity(c.repoCache.repo)
 	if err != nil {
 		return err
 	}
@@ -164,7 +164,7 @@ func (c *BugCache) OpenRaw(author *identity.Identity, unixTime int64, metadata m
 }
 
 func (c *BugCache) Close() error {
-	author, err := identity.GetIdentity(c.repoCache.repo)
+	author, err := identity.GetUserIdentity(c.repoCache.repo)
 	if err != nil {
 		return err
 	}
@@ -186,7 +186,7 @@ func (c *BugCache) CloseRaw(author *identity.Identity, unixTime int64, metadata 
 }
 
 func (c *BugCache) SetTitle(title string) error {
-	author, err := identity.GetIdentity(c.repoCache.repo)
+	author, err := identity.GetUserIdentity(c.repoCache.repo)
 	if err != nil {
 		return err
 	}
@@ -208,7 +208,7 @@ func (c *BugCache) SetTitleRaw(author *identity.Identity, unixTime int64, title 
 }
 
 func (c *BugCache) EditComment(target git.Hash, message string) error {
-	author, err := identity.GetIdentity(c.repoCache.repo)
+	author, err := identity.GetUserIdentity(c.repoCache.repo)
 	if err != nil {
 		return err
 	}

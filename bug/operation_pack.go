@@ -139,6 +139,12 @@ func (opp *OperationPack) Validate() error {
 // Write will serialize and store the OperationPack as a git blob and return
 // its hash
 func (opp *OperationPack) Write(repo repository.Repo) (git.Hash, error) {
+	// make sure we don't write invalid data
+	err := opp.Validate()
+	if err != nil {
+		return "", errors.Wrap(err, "validation error")
+	}
+
 	// First, make sure that all the identities are properly Commit as well
 	for _, op := range opp.Operations {
 		err := op.base().Author.Commit(repo)

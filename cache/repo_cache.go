@@ -394,7 +394,7 @@ func (c *RepoCache) NewBug(title string, message string) (*BugCache, error) {
 // NewBugWithFiles create a new bug with attached files for the message
 // The new bug is written in the repository (commit)
 func (c *RepoCache) NewBugWithFiles(title string, message string, files []git.Hash) (*BugCache, error) {
-	author, err := identity.GetIdentity(c.repo)
+	author, err := identity.GetUserIdentity(c.repo)
 	if err != nil {
 		return nil, err
 	}

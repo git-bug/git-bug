@@ -19,7 +19,7 @@ func runId(cmd *cobra.Command, args []string) error {
 	if len(args) == 1 {
 		id, err = identity.Read(repo, args[0])
 	} else {
-		id, err = identity.GetIdentity(repo)
+		id, err = identity.GetUserIdentity(repo)
 	}
 
 	if err != nil {

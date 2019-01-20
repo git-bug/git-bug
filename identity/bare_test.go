@@ -3,7 +3,7 @@ package identity
 import (
 	"testing"
 
-	"github.com/magiconair/properties/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBare_Id(t *testing.T) {

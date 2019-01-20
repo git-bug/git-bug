@@ -4,7 +4,6 @@ package identity
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/git"
@@ -49,13 +48,13 @@ func NewIdentityFull(name string, email string, login string, avatarUrl string) 
 	}
 }
 
-type identityJson struct {
+type identityJSON struct {
 	Id string `json:"id"`
 }
 
 // MarshalJSON will only serialize the id
 func (i *Identity) MarshalJSON() ([]byte, error) {
-	return json.Marshal(identityJson{
+	return json.Marshal(identityJSON{
 		Id: i.Id(),
 	})
 }
@@ -64,7 +63,7 @@ func (i *Identity) MarshalJSON() ([]byte, error) {
 // Users of this package are expected to run Load() to load
 // the remaining data from the identities data in git.
 func (i *Identity) UnmarshalJSON(data []byte) error {
-	aux := identityJson{}
+	aux := identityJSON{}
 
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
@@ -164,35 +163,13 @@ func NewFromGitUser(repo repository.Repo) (*Identity, error) {
 	return NewIdentity(name, email), nil
 }
 
-// BuildFromGit will query the repository for user detail and
-// build the corresponding Identity
-/*func BuildFromGit(repo repository.Repo) *Identity {
-	version := Version{}
-
-	name, err := repo.GetUserName()
-	if err == nil {
-		version.Name = name
-	}
-
-	email, err := repo.GetUserEmail()
-	if err == nil {
-		version.Email = email
-	}
-
-	return &Identity{
-		Versions: []Version{
-			version,
-		},
-	}
-}*/
-
-// SetIdentity store the user identity's id in the git config
-func SetIdentity(repo repository.RepoCommon, identity Identity) error {
+// SetUserIdentity store the user identity's id in the git config
+func SetUserIdentity(repo repository.RepoCommon, identity Identity) error {
 	return repo.StoreConfig(identityConfigKey, identity.Id())
 }
 
-// GetIdentity read the current user identity, set with a git config entry
-func GetIdentity(repo repository.Repo) (*Identity, error) {
+// GetUserIdentity read the current user identity, set with a git config entry
+func GetUserIdentity(repo repository.Repo) (*Identity, error) {
 	configs, err := repo.ReadConfigs(identityConfigKey)
 	if err != nil {
 		return nil, err
@@ -299,14 +276,6 @@ func (i *Identity) Validate() error {
 	return nil
 }
 
-func (i *Identity) firstVersion() *Version {
-	if len(i.Versions) <= 0 {
-		panic("no version at all")
-	}
-
-	return i.Versions[0]
-}
-
 func (i *Identity) lastVersion() *Version {
 	if len(i.Versions) <= 0 {
 		panic("no version at all")
@@ -370,14 +339,6 @@ func (i *Identity) ValidKeysAtTime(time lamport.Time) []Key {
 	}
 
 	return result
-}
-
-// Match tell is the Identity match the given query string
-func (i *Identity) Match(query string) bool {
-	query = strings.ToLower(query)
-
-	return strings.Contains(strings.ToLower(i.Name()), query) ||
-		strings.Contains(strings.ToLower(i.Login()), query)
 }
 
 // DisplayName return a non-empty string to display, representing the

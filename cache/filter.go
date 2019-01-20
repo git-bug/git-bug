@@ -1,6 +1,8 @@
 package cache
 
 import (
+	"strings"
+
 	"github.com/MichaelMure/git-bug/bug"
 )
 
@@ -22,7 +24,10 @@ func StatusFilter(query string) (Filter, error) {
 // AuthorFilter return a Filter that match a bug author
 func AuthorFilter(query string) Filter {
 	return func(excerpt *BugExcerpt) bool {
-		return excerpt.Author.Match(query)
+		query = strings.ToLower(query)
+
+		return strings.Contains(strings.ToLower(excerpt.Author.Name), query) ||
+			strings.Contains(strings.ToLower(excerpt.Author.Login), query)
 	}
 }
 

@@ -23,9 +23,6 @@ type Interface interface {
 	// identity, based on the non-empty values.
 	DisplayName() string
 
-	// Match tell is the Person match the given query string
-	Match(query string) bool
-
 	// Validate check if the Identity data is valid
 	Validate() error
 

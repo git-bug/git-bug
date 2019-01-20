@@ -50,7 +50,7 @@ func cleanupRepo(repo repository.Repo) error {
 func setupRepos(t testing.TB) (repoA, repoB, remote *repository.GitRepo) {
 	repoA = createRepo(false)
 	repoB = createRepo(false)
-	remote = createRepo(false)
+	remote = createRepo(true)
 
 	remoteAddr := "file://" + remote.GetPath()
 

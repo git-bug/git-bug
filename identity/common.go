@@ -51,3 +51,7 @@ func UnmarshalJSON(raw json.RawMessage) (Interface, error) {
 
 	return nil, fmt.Errorf("unknown identity type")
 }
+
+type Resolver interface {
+	ResolveIdentity(id string) (Interface, error)
+}

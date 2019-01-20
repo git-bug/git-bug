@@ -105,4 +105,3 @@ type Repository {
   ): BugConnection!
   bug(prefix: String!): Bug
 }
-

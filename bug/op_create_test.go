@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/MichaelMure/git-bug/identity"
-	"github.com/go-test/deep"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,9 +21,7 @@ func TestCreate(t *testing.T) {
 	create.Apply(&snapshot)
 
 	hash, err := create.Hash()
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 
 	comment := Comment{Author: rene, Message: "message", UnixTime: Timestamp(create.UnixTime)}
 
@@ -42,10 +39,7 @@ func TestCreate(t *testing.T) {
 		},
 	}
 
-	deep.CompareUnexportedFields = true
-	if diff := deep.Equal(snapshot, expected); diff != nil {
-		t.Fatal(diff)
-	}
+	assert.Equal(t, expected, snapshot)
 }
 
 func TestCreateSerialize(t *testing.T) {

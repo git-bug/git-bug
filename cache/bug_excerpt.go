@@ -3,8 +3,6 @@ package cache
 import (
 	"encoding/gob"
 
-	"github.com/MichaelMure/git-bug/identity"
-
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
@@ -20,10 +18,15 @@ type BugExcerpt struct {
 	EditUnixTime      int64
 
 	Status bug.Status
-	Author identity.Interface
+	Author AuthorExcerpt
 	Labels []bug.Label
 
 	CreateMetadata map[string]string
+}
+
+type AuthorExcerpt struct {
+	Name  string
+	Login string
 }
 
 func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
@@ -34,9 +37,12 @@ func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
 		CreateUnixTime:    b.FirstOp().GetUnixTime(),
 		EditUnixTime:      snap.LastEditUnix(),
 		Status:            snap.Status,
-		Author:            snap.Author,
-		Labels:            snap.Labels,
-		CreateMetadata:    b.FirstOp().AllMetadata(),
+		Author: AuthorExcerpt{
+			Login: snap.Author.Login(),
+			Name:  snap.Author.Name(),
+		},
+		Labels:         snap.Labels,
+		CreateMetadata: b.FirstOp().AllMetadata(),
 	}
 }
 

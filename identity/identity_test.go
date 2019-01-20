@@ -8,12 +8,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Test the commit and load of an Identity with multiple versions
 func TestIdentityCommitLoad(t *testing.T) {
 	mockRepo := repository.NewMockRepoForTest()
 
 	// single version
 
-	identity := Identity{
+	identity := &Identity{
 		Versions: []*Version{
 			{
 				Name:  "René Descartes",
@@ -30,11 +31,11 @@ func TestIdentityCommitLoad(t *testing.T) {
 	loaded, err := Read(mockRepo, identity.id)
 	assert.Nil(t, err)
 	commitsAreSet(t, loaded)
-	equivalentIdentity(t, &identity, loaded)
+	equivalentIdentity(t, identity, loaded)
 
 	// multiple version
 
-	identity = Identity{
+	identity = &Identity{
 		Versions: []*Version{
 			{
 				Time:  100,
@@ -71,7 +72,7 @@ func TestIdentityCommitLoad(t *testing.T) {
 	loaded, err = Read(mockRepo, identity.id)
 	assert.Nil(t, err)
 	commitsAreSet(t, loaded)
-	equivalentIdentity(t, &identity, loaded)
+	equivalentIdentity(t, identity, loaded)
 
 	// add more version
 
@@ -101,7 +102,7 @@ func TestIdentityCommitLoad(t *testing.T) {
 	loaded, err = Read(mockRepo, identity.id)
 	assert.Nil(t, err)
 	commitsAreSet(t, loaded)
-	equivalentIdentity(t, &identity, loaded)
+	equivalentIdentity(t, identity, loaded)
 }
 
 func commitsAreSet(t *testing.T, identity *Identity) {
@@ -120,6 +121,7 @@ func equivalentIdentity(t *testing.T, expected, actual *Identity) {
 	assert.Equal(t, expected, actual)
 }
 
+// Test that the correct crypto keys are returned for a given lamport time
 func TestIdentity_ValidKeysAtTime(t *testing.T) {
 	identity := Identity{
 		Versions: []*Version{
@@ -176,6 +178,7 @@ func TestIdentity_ValidKeysAtTime(t *testing.T) {
 	assert.Equal(t, identity.ValidKeysAtTime(3000), []Key{{PubKey: "pubkeyE"}})
 }
 
+// Test the immutable or mutable metadata search
 func TestMetadata(t *testing.T) {
 	mockRepo := repository.NewMockRepoForTest()
 

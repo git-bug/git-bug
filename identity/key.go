@@ -5,3 +5,9 @@ type Key struct {
 	Fingerprint string `json:"fingerprint"`
 	PubKey      string `json:"pub_key"`
 }
+
+func (k *Key) Validate() error {
+	// Todo
+
+	return nil
+}

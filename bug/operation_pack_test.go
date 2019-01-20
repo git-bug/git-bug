@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/MichaelMure/git-bug/util/git"
-	"github.com/go-test/deep"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestOperationPackSerialize(t *testing.T) {
@@ -21,9 +21,7 @@ func TestOperationPackSerialize(t *testing.T) {
 	opMeta.SetMetadata("key", "value")
 	opp.Append(opMeta)
 
-	if len(opMeta.Metadata) != 1 {
-		t.Fatal()
-	}
+	assert.Equal(t, 1, len(opMeta.Metadata))
 
 	opFile := NewCreateOp(rene, unix, "title", "message", []git.Hash{
 		"abcdef",
@@ -31,23 +29,14 @@ func TestOperationPackSerialize(t *testing.T) {
 	})
 	opp.Append(opFile)
 
-	if len(opFile.Files) != 2 {
-		t.Fatal()
-	}
+	assert.Equal(t, 2, len(opFile.Files))
 
 	data, err := json.Marshal(opp)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 
 	var opp2 *OperationPack
 	err = json.Unmarshal(data, &opp2)
-	if err != nil {
-		t.Fatal(err)
-	}
 
-	deep.CompareUnexportedFields = false
-	if diff := deep.Equal(opp, opp2); diff != nil {
-		t.Fatal(diff)
-	}
+	assert.NoError(t, err)
+	assert.Equal(t, opp, opp2)
 }

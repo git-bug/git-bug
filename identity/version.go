@@ -10,34 +10,88 @@ import (
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/lamport"
 	"github.com/MichaelMure/git-bug/util/text"
+	"github.com/pkg/errors"
 )
+
+const formatVersion = 1
 
 // Version is a complete set of information about an Identity at a point in time.
 type Version struct {
-	// Private field so not serialized
+	// Not serialized
 	commitHash git.Hash
 
 	// The lamport time at which this version become effective
 	// The reference time is the bug edition lamport clock
-	Time lamport.Time `json:"time"`
+	Time lamport.Time
 
-	Name      string `json:"name"`
-	Email     string `json:"email"`
-	Login     string `json:"login"`
-	AvatarUrl string `json:"avatar_url"`
+	Name      string
+	Email     string
+	Login     string
+	AvatarUrl string
 
 	// The set of keys valid at that time, from this version onward, until they get removed
 	// in a new version. This allow to have multiple key for the same identity (e.g. one per
 	// device) as well as revoke key.
-	Keys []Key `json:"pub_keys"`
+	Keys []Key
 
 	// This optional array is here to ensure a better randomness of the identity id to avoid collisions.
 	// It has no functional purpose and should be ignored.
 	// It is advised to fill this array if there is not enough entropy, e.g. if there is no keys.
-	Nonce []byte `json:"nonce,omitempty"`
+	Nonce []byte
 
 	// A set of arbitrary key/value to store metadata about a version or about an Identity in general.
-	Metadata map[string]string `json:"metadata,omitempty"`
+	Metadata map[string]string
+}
+
+type VersionJSON struct {
+	// Additional field to version the data
+	FormatVersion uint `json:"version"`
+
+	Time      lamport.Time      `json:"time"`
+	Name      string            `json:"name"`
+	Email     string            `json:"email"`
+	Login     string            `json:"login"`
+	AvatarUrl string            `json:"avatar_url"`
+	Keys      []Key             `json:"pub_keys"`
+	Nonce     []byte            `json:"nonce,omitempty"`
+	Metadata  map[string]string `json:"metadata,omitempty"`
+}
+
+func (v *Version) MarshalJSON() ([]byte, error) {
+	return json.Marshal(VersionJSON{
+		FormatVersion: formatVersion,
+		Time:          v.Time,
+		Name:          v.Name,
+		Email:         v.Email,
+		Login:         v.Login,
+		AvatarUrl:     v.AvatarUrl,
+		Keys:          v.Keys,
+		Nonce:         v.Nonce,
+		Metadata:      v.Metadata,
+	})
+}
+
+func (v *Version) UnmarshalJSON(data []byte) error {
+	var aux VersionJSON
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	if aux.FormatVersion != formatVersion {
+		return fmt.Errorf("unknown format version %v", aux.FormatVersion)
+	}
+
+	v.Time = aux.Time
+	v.Name = aux.Name
+	v.Email = aux.Email
+	v.Login = aux.Login
+	v.AvatarUrl = aux.AvatarUrl
+	v.Keys = aux.Keys
+	v.Nonce = aux.Nonce
+	v.Metadata = aux.Metadata
+
+	return nil
 }
 
 func (v *Version) Validate() error {
@@ -77,12 +131,24 @@ func (v *Version) Validate() error {
 		return fmt.Errorf("nonce is too big")
 	}
 
+	for _, k := range v.Keys {
+		if err := k.Validate(); err != nil {
+			return errors.Wrap(err, "invalid key")
+		}
+	}
+
 	return nil
 }
 
 // Write will serialize and store the Version as a git blob and return
 // its hash
 func (v *Version) Write(repo repository.Repo) (git.Hash, error) {
+	// make sure we don't write invalid data
+	err := v.Validate()
+	if err != nil {
+		return "", errors.Wrap(err, "validation error")
+	}
+
 	data, err := json.Marshal(v)
 
 	if err != nil {

@@ -34,7 +34,7 @@ func NewBareFull(name string, email string, login string, avatarUrl string) *Bar
 	return &Bare{name: name, email: email, login: login, avatarUrl: avatarUrl}
 }
 
-type bareIdentityJson struct {
+type bareIdentityJSON struct {
 	Name      string `json:"name,omitempty"`
 	Email     string `json:"email,omitempty"`
 	Login     string `json:"login,omitempty"`
@@ -42,7 +42,7 @@ type bareIdentityJson struct {
 }
 
 func (i *Bare) MarshalJSON() ([]byte, error) {
-	return json.Marshal(bareIdentityJson{
+	return json.Marshal(bareIdentityJSON{
 		Name:      i.name,
 		Email:     i.email,
 		Login:     i.login,
@@ -51,7 +51,7 @@ func (i *Bare) MarshalJSON() ([]byte, error) {
 }
 
 func (i *Bare) UnmarshalJSON(data []byte) error {
-	aux := bareIdentityJson{}
+	aux := bareIdentityJSON{}
 
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
@@ -123,14 +123,6 @@ func (i *Bare) DisplayName() string {
 	}
 
 	panic("invalid person data")
-}
-
-// Match tell is the Person match the given query string
-func (i *Bare) Match(query string) bool {
-	query = strings.ToLower(query)
-
-	return strings.Contains(strings.ToLower(i.name), query) ||
-		strings.Contains(strings.ToLower(i.login), query)
 }
 
 // Validate check if the Identity data is valid
