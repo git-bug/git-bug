@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -36,7 +37,7 @@ func (*Github) Configure(repo repository.RepoCommon) (core.Configuration, error)
 	// fmt.Println("The token will have the \"repo\" permission, giving it read/write access to your repositories and issues. There is no narrower scope available, sorry :-|")
 	fmt.Println()
 
-	projectUser, projectName, err := promptURL()
+	projectUser, projectName, err := promptURL(repo)
 	if err != nil {
 		return nil, err
 	}
@@ -205,13 +206,69 @@ func promptUsername() (string, error) {
 	}
 }
 
-func promptURL() (string, string, error) {
+func promptURL(repo repository.RepoCommon) (string, string, error) {
 	for {
-		fmt.Print("Github project URL: ")
 
-		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
+		fmt.Println("Detected Projects:")
+
+		repos, err := repo.ListRemotes()
+
 		if err != nil {
 			return "", "", err
+		}
+
+		reposMap := make(map[int]string)
+		i := 1
+		for _, value := range repos {
+
+			if checkGithubURL(value) {
+				shortenedURL, err := shortenedURL(value)
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
+				fmt.Printf("[%d]: %s\n", i, shortenedURL)
+				reposMap[i] = value
+				i++
+			}
+		}
+
+		if len(reposMap) == 0 {
+			fmt.Printf("No github projects found\n")
+		}
+
+		fmt.Printf("\n[0]: Another project\n")
+		fmt.Println()
+		output, err := bufio.NewReader(os.Stdin).ReadString('\n')
+		if err != nil {
+			fmt.Println(err)
+			return "", "", fmt.Errorf("input error")
+		}
+		output = strings.TrimRight(output, "\n")
+
+		outputInteger, err := strconv.Atoi(output)
+		var line string
+		if err != nil {
+			fmt.Println(err)
+			return "", "", fmt.Errorf("error in string conversion")
+		}
+
+		if outputInteger == 0 {
+			fmt.Println("Enter Project URL:")
+			line, err = bufio.NewReader(os.Stdin).ReadString('\n')
+			if err != nil {
+				return "", "", fmt.Errorf("input error")
+			}
+			line = strings.TrimRight(line, "\n")
+
+			if !checkGithubURL(line) {
+				fmt.Printf("Please Enter valid github URL\n")
+				fmt.Println()
+				continue
+			}
+
+		} else {
+			line = reposMap[outputInteger]
 		}
 
 		line = strings.TrimRight(line, "\n")
@@ -232,8 +289,20 @@ func promptURL() (string, string, error) {
 	}
 }
 
+func checkGithubURL(url string) bool {
+
+	re, err := regexp.Compile(`^[a-z]*\W*github\.com[a-z]*.*$`)
+
+	if err != nil {
+		panic(err)
+	}
+	res := re.FindStringSubmatch(url)
+	return !(len(res) == 0)
+
+}
+
 func splitURL(url string) (string, string, error) {
-	re, err := regexp.Compile(`github\.com\/([^\/]*)\/([^\/]*)`)
+	re, err := regexp.Compile(`github\.com[\/:]([^\/]*)\/([^\/]*)`)
 	if err != nil {
 		panic(err)
 	}
@@ -245,6 +314,23 @@ func splitURL(url string) (string, string, error) {
 	}
 
 	return res[1], res[2], nil
+}
+
+func shortenedURL(url string) (string, error) {
+
+	re, err := regexp.Compile(`github\.com[\/:][^\/]*\/[^\/]*`)
+	if err != nil {
+		panic(err)
+	}
+
+	res := re.FindStringSubmatch(url)
+
+	if res == nil {
+		return "", fmt.Errorf("bad github project url")
+	}
+
+	return res[0], nil
+
 }
 
 func validateUsername(username string) (bool, error) {

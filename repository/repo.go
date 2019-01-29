@@ -31,6 +31,9 @@ type RepoCommon interface {
 
 	// RmConfigs remove all key/value pair matching the key prefix
 	RmConfigs(keyPrefix string) error
+
+	//ListRemotes lists all the remotes configured in the current repository
+	ListRemotes() (map[string]string, error)
 }
 
 // Repo represents a source code repository.

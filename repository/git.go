@@ -209,6 +209,34 @@ func (repo *GitRepo) RmConfigs(keyPrefix string) error {
 	return err
 }
 
+//ListRemotes lists all the local remotes
+func (repo *GitRepo) ListRemotes() (map[string]string, error) {
+	out, err := repo.runGitCommand("remote", "--verbose")
+
+	if err != nil {
+		return nil, err
+	}
+
+	splitRemotes := strings.Split(out, "\n")
+
+	remotesMap := make(map[string]string, len(splitRemotes))
+
+	for _, line := range splitRemotes {
+
+		remoteValues := strings.Fields(line)
+		if len(remoteValues) != 3 {
+			return nil, fmt.Errorf("error in parsing remote: %s", line)
+		}
+
+		if _, ok := remotesMap[remoteValues[0]]; ok {
+			continue
+		}
+		remotesMap[remoteValues[0]] = remoteValues[1]
+
+	}
+	return remotesMap, nil
+}
+
 // FetchRefs fetch git refs from a remote
 func (repo *GitRepo) FetchRefs(remote, refSpec string) (string, error) {
 	stdout, err := repo.runGitCommand("fetch", remote, refSpec)

@@ -130,6 +130,11 @@ func (c *RepoCache) RmConfigs(keyPrefix string) error {
 	return c.repo.RmConfigs(keyPrefix)
 }
 
+// ListRemotes lists all the local remotes
+func (c *RepoCache) ListRemotes() (map[string]string, error) {
+	return c.repo.ListRemotes()
+}
+
 func (c *RepoCache) lock() error {
 	lockPath := repoLockFilePath(c.repo)
 

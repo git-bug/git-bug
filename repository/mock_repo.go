@@ -84,6 +84,15 @@ func (r *mockRepoForTest) RmConfigs(keyPrefix string) error {
 	return nil
 }
 
+func (r *mockRepoForTest) ListRemotes() (map[string]string, error) {
+
+	remotesMap := make(map[string]string)
+	for key, value := range r.config {
+		remotesMap[key] = value
+	}
+	return remotesMap, nil
+}
+
 // PushRefs push git refs to a remote
 func (r *mockRepoForTest) PushRefs(remote string, refSpec string) (string, error) {
 	return "", nil
