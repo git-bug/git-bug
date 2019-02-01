@@ -48,14 +48,10 @@ func NewIdentityFull(name string, email string, login string, avatarUrl string) 
 	}
 }
 
-type identityJSON struct {
-	Id string `json:"id"`
-}
-
 // MarshalJSON will only serialize the id
 func (i *Identity) MarshalJSON() ([]byte, error) {
-	return json.Marshal(identityJSON{
-		Id: i.Id(),
+	return json.Marshal(&IdentityStub{
+		id: i.Id(),
 	})
 }
 
@@ -63,35 +59,12 @@ func (i *Identity) MarshalJSON() ([]byte, error) {
 // Users of this package are expected to run Load() to load
 // the remaining data from the identities data in git.
 func (i *Identity) UnmarshalJSON(data []byte) error {
-	aux := identityJSON{}
-
-	if err := json.Unmarshal(data, &aux); err != nil {
-		return err
-	}
-
-	i.id = aux.Id
-
-	return nil
+	panic("identity should be loaded with identity.UnmarshalJSON")
 }
 
 // Read load an Identity from the identities data available in git
 func Read(repo repository.Repo, id string) (*Identity, error) {
-	i := &Identity{
-		id: id,
-	}
-
-	err := i.Load(repo)
-	if err != nil {
-		return nil, err
-	}
-
-	return i, nil
-}
-
-// Load will read the corresponding identity data from git and replace any
-// data already loaded if any.
-func (i *Identity) Load(repo repository.Repo) error {
-	ref := fmt.Sprintf("%s%s", identityRefPattern, i.Id())
+	ref := fmt.Sprintf("%s%s", identityRefPattern, id)
 
 	hashes, err := repo.ListCommits(ref)
 
@@ -99,35 +72,35 @@ func (i *Identity) Load(repo repository.Repo) error {
 
 	// TODO: this is not perfect, it might be a command invoke error
 	if err != nil {
-		return ErrIdentityNotExist
+		return nil, ErrIdentityNotExist
 	}
 
 	for _, hash := range hashes {
 		entries, err := repo.ListEntries(hash)
 		if err != nil {
-			return errors.Wrap(err, "can't list git tree entries")
+			return nil, errors.Wrap(err, "can't list git tree entries")
 		}
 
 		if len(entries) != 1 {
-			return fmt.Errorf("invalid identity data at hash %s", hash)
+			return nil, fmt.Errorf("invalid identity data at hash %s", hash)
 		}
 
 		entry := entries[0]
 
 		if entry.Name != versionEntryName {
-			return fmt.Errorf("invalid identity data at hash %s", hash)
+			return nil, fmt.Errorf("invalid identity data at hash %s", hash)
 		}
 
 		data, err := repo.ReadData(entry.Hash)
 		if err != nil {
-			return errors.Wrap(err, "failed to read git blob data")
+			return nil, errors.Wrap(err, "failed to read git blob data")
 		}
 
 		var version Version
 		err = json.Unmarshal(data, &version)
 
 		if err != nil {
-			return errors.Wrapf(err, "failed to decode Identity version json %s", hash)
+			return nil, errors.Wrapf(err, "failed to decode Identity version json %s", hash)
 		}
 
 		// tag the version with the commit hash
@@ -136,9 +109,10 @@ func (i *Identity) Load(repo repository.Repo) error {
 		versions = append(versions, &version)
 	}
 
-	i.Versions = versions
-
-	return nil
+	return &Identity{
+		id:       id,
+		Versions: versions,
+	}, nil
 }
 
 // NewFromGitUser will query the repository for user detail and

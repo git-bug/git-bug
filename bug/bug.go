@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/MichaelMure/git-bug/identity"
+
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/lamport"
@@ -215,6 +217,13 @@ func readBug(repo repository.ClockedRepo, ref string) (*Bug, error) {
 		opp.commitHash = hash
 
 		bug.packs = append(bug.packs, *opp)
+	}
+
+	// Make sure that the identities are properly loaded
+	resolver := identity.NewSimpleResolver(repo)
+	err = bug.EnsureIdentities(resolver)
+	if err != nil {
+		return nil, err
 	}
 
 	return &bug, nil

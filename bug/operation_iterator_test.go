@@ -20,6 +20,19 @@ var (
 	labelChangeOp = NewLabelChangeOperation(rene, unix, []Label{"added"}, []Label{"removed"})
 )
 
+func ExampleOperationIterator() {
+	b := NewBug()
+
+	// add operations
+
+	it := NewOperationIterator(b)
+
+	for it.Next() {
+		// do something with each operations
+		_ = it.Value()
+	}
+}
+
 func TestOpIterator(t *testing.T) {
 	mockRepo := repository.NewMockRepoForTest()
 

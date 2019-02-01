@@ -1,6 +1,7 @@
 package identity
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/MichaelMure/git-bug/repository"
@@ -219,4 +220,36 @@ func assertHasKeyValue(t *testing.T, metadata map[string]string, key, value stri
 	val, ok := metadata[key]
 	assert.True(t, ok)
 	assert.Equal(t, val, value)
+}
+
+func TestJSON(t *testing.T) {
+	mockRepo := repository.NewMockRepoForTest()
+
+	identity := &Identity{
+		Versions: []*Version{
+			{
+				Name:  "René Descartes",
+				Email: "rene.descartes@example.com",
+			},
+		},
+	}
+
+	// commit to make sure we have an ID
+	err := identity.Commit(mockRepo)
+	assert.Nil(t, err)
+	assert.NotEmpty(t, identity.id)
+
+	// serialize
+	data, err := json.Marshal(identity)
+	assert.NoError(t, err)
+
+	// deserialize, got a IdentityStub with the same id
+	var i Interface
+	i, err = UnmarshalJSON(data)
+	assert.NoError(t, err)
+	assert.Equal(t, identity.id, i.Id())
+
+	// make sure we can load the identity properly
+	i, err = Read(mockRepo, i.Id())
+	assert.NoError(t, err)
 }

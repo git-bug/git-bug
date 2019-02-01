@@ -34,7 +34,9 @@ func CommitRandomBugs(repo repository.ClockedRepo, opts Options) {
 }
 
 func CommitRandomBugsWithSeed(repo repository.ClockedRepo, opts Options, seed int64) {
-	bugs := GenerateRandomBugsWithSeed(opts, seed)
+	generateRandomPersons(repo, opts.PersonNumber)
+
+	bugs := generateRandomBugsWithSeed(opts, seed)
 
 	for _, b := range bugs {
 		err := b.Commit(repo)
@@ -44,11 +46,7 @@ func CommitRandomBugsWithSeed(repo repository.ClockedRepo, opts Options, seed in
 	}
 }
 
-func GenerateRandomBugs(opts Options) []*bug.Bug {
-	return GenerateRandomBugsWithSeed(opts, time.Now().UnixNano())
-}
-
-func GenerateRandomBugsWithSeed(opts Options, seed int64) []*bug.Bug {
+func generateRandomBugsWithSeed(opts Options, seed int64) []*bug.Bug {
 	rand.Seed(seed)
 	fake.Seed(seed)
 
@@ -67,7 +65,7 @@ func GenerateRandomBugsWithSeed(opts Options, seed int64) []*bug.Bug {
 		addedLabels = []string{}
 
 		b, _, err := bug.Create(
-			randomPerson(opts.PersonNumber),
+			randomPerson(),
 			time.Now().Unix(),
 			fake.Sentence(),
 			paragraphs(),
@@ -85,7 +83,7 @@ func GenerateRandomBugsWithSeed(opts Options, seed int64) []*bug.Bug {
 
 		for j := 0; j < nOps; j++ {
 			index := rand.Intn(len(opsGenerators))
-			opsGenerators[index](b, randomPerson(opts.PersonNumber))
+			opsGenerators[index](b, randomPerson())
 		}
 
 		result[i] = b
@@ -101,6 +99,9 @@ func GenerateRandomOperationPacks(packNumber int, opNumber int) []*bug.Operation
 func GenerateRandomOperationPacksWithSeed(packNumber int, opNumber int, seed int64) []*bug.OperationPack {
 	// Note: this is a bit crude, only generate a Create + Comments
 
+	panic("this piece of code needs to be updated to make sure that the identities " +
+		"are properly commit before usage. That is, generateRandomPersons() need to be called.")
+
 	rand.Seed(seed)
 	fake.Seed(seed)
 
@@ -112,7 +113,7 @@ func GenerateRandomOperationPacksWithSeed(packNumber int, opNumber int, seed int
 		var op bug.Operation
 
 		op = bug.NewCreateOp(
-			randomPerson(5),
+			randomPerson(),
 			time.Now().Unix(),
 			fake.Sentence(),
 			paragraphs(),
@@ -123,7 +124,7 @@ func GenerateRandomOperationPacksWithSeed(packNumber int, opNumber int, seed int
 
 		for j := 0; j < opNumber-1; j++ {
 			op = bug.NewAddCommentOp(
-				randomPerson(5),
+				randomPerson(),
 				time.Now().Unix(),
 				paragraphs(),
 				nil,
@@ -143,15 +144,20 @@ func person() identity.Interface {
 
 var persons []identity.Interface
 
-func randomPerson(personNumber int) identity.Interface {
-	if len(persons) == 0 {
-		persons = make([]identity.Interface, personNumber)
-		for i := range persons {
-			persons[i] = person()
+func generateRandomPersons(repo repository.ClockedRepo, n int) {
+	persons = make([]identity.Interface, n)
+	for i := range persons {
+		p := person()
+		err := p.Commit(repo)
+		if err != nil {
+			panic(err)
 		}
+		persons[i] = p
 	}
+}
 
-	index := rand.Intn(personNumber)
+func randomPerson() identity.Interface {
+	index := rand.Intn(len(persons))
 	return persons[index]
 }
 

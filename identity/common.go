@@ -23,12 +23,13 @@ func (e ErrMultipleMatch) Error() string {
 //
 // If the given message has a "id" field, it's considered being a proper Identity.
 func UnmarshalJSON(raw json.RawMessage) (Interface, error) {
-	// First try to decode as a normal Identity
-	var i Identity
+	aux := &IdentityStub{}
 
-	err := json.Unmarshal(raw, &i)
-	if err == nil && i.id != "" {
-		return &i, nil
+	// First try to decode and load as a normal Identity
+	err := json.Unmarshal(raw, &aux)
+	if err == nil && aux.Id() != "" {
+		return aux, nil
+		// return identityResolver.ResolveIdentity(aux.Id)
 	}
 
 	// abort if we have an error other than the wrong type
@@ -50,8 +51,4 @@ func UnmarshalJSON(raw json.RawMessage) (Interface, error) {
 	}
 
 	return nil, fmt.Errorf("unknown identity type")
-}
-
-type Resolver interface {
-	ResolveIdentity(id string) (Interface, error)
 }
