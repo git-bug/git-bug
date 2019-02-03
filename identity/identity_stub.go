@@ -45,41 +45,41 @@ func (i *IdentityStub) Id() string {
 }
 
 func (IdentityStub) Name() string {
-	panic("identities needs to be properly loaded with identity.Read()")
+	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 
 func (IdentityStub) Email() string {
-	panic("identities needs to be properly loaded with identity.Read()")
+	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 
 func (IdentityStub) Login() string {
-	panic("identities needs to be properly loaded with identity.Read()")
+	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 
 func (IdentityStub) AvatarUrl() string {
-	panic("identities needs to be properly loaded with identity.Read()")
+	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 
 func (IdentityStub) Keys() []Key {
-	panic("identities needs to be properly loaded with identity.Read()")
+	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 
 func (IdentityStub) ValidKeysAtTime(time lamport.Time) []Key {
-	panic("identities needs to be properly loaded with identity.Read()")
+	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 
 func (IdentityStub) DisplayName() string {
-	panic("identities needs to be properly loaded with identity.Read()")
+	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 
 func (IdentityStub) Validate() error {
-	panic("identities needs to be properly loaded with identity.Read()")
+	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 
 func (IdentityStub) Commit(repo repository.Repo) error {
-	panic("identities needs to be properly loaded with identity.Read()")
+	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 
 func (IdentityStub) IsProtected() bool {
-	panic("identities needs to be properly loaded with identity.Read()")
+	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }

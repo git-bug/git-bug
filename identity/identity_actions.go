@@ -1,4 +1,4 @@
-package bug
+package identity
 
 import (
 	"fmt"
@@ -9,17 +9,17 @@ import (
 )
 
 // Fetch retrieve updates from a remote
-// This does not change the local bugs state
+// This does not change the local identities state
 func Fetch(repo repository.Repo, remote string) (string, error) {
-	remoteRefSpec := fmt.Sprintf(bugsRemoteRefPattern, remote)
-	fetchRefSpec := fmt.Sprintf("%s*:%s*", bugsRefPattern, remoteRefSpec)
+	remoteRefSpec := fmt.Sprintf(identityRemoteRefPattern, remote)
+	fetchRefSpec := fmt.Sprintf("%s:%s*", identityRefPattern, remoteRefSpec)
 
 	return repo.FetchRefs(remote, fetchRefSpec)
 }
 
 // Push update a remote with the local changes
 func Push(repo repository.Repo, remote string) (string, error) {
-	return repo.PushRefs(remote, bugsRefPattern+"*")
+	return repo.PushRefs(remote, identityRefPattern+"*")
 }
 
 // Pull will do a Fetch + MergeAll
@@ -45,20 +45,34 @@ func Pull(repo repository.ClockedRepo, remote string) error {
 	return nil
 }
 
-// MergeAll will merge all the available remote bug:
+// MergeAll will merge all the available remote identity
+// To make sure that an Identity history can't be altered, a strict fast-forward
+// only policy is applied here. As an Identity should be tied to a single user, this
+// should work in practice but it does leave a possibility that a user would edit his
+// Identity from two different repo concurrently and push the changes in a non-centralized
+// network of repositories. In this case, it would result some of the repo accepting one
+// version, some other accepting another, preventing the network in general to converge
+// to the same result. This would create a sort of partition of the network, and manual
+// cleaning would be required.
 //
-// - If the remote has new commit, the local bug is updated to match the same history
-//   (fast-forward update)
-// - if the local bug has new commits but the remote don't, nothing is changed
-// - if both local and remote bug have new commits (that is, we have a concurrent edition),
-//   new local commits are rewritten at the head of the remote history (that is, a rebase)
+// An alternative approach would be to have a determinist rebase:
+// - any commits present in both local and remote version would be kept, never changed.
+// - newer commits would be merged in a linear chain of commits, ordered based on the
+//   Lamport time
+//
+// However, this approach leave the possibility, in the case of a compromised crypto keys,
+// of forging a new version with a bogus Lamport time to be inserted before a legit version,
+// invalidating the correct version and hijacking the Identity. There would only be a short
+// period of time where this would be possible (before the network converge) but I'm not
+// confident enough to implement that. I choose the strict fast-forward only approach,
+// despite it's potential problem with two different version as mentioned above.
 func MergeAll(repo repository.ClockedRepo, remote string) <-chan MergeResult {
 	out := make(chan MergeResult)
 
 	go func() {
 		defer close(out)
 
-		remoteRefSpec := fmt.Sprintf(bugsRemoteRefPattern, remote)
+		remoteRefSpec := fmt.Sprintf(identityRemoteRefPattern, remote)
 		remoteRefs, err := repo.ListRefs(remoteRefSpec)
 
 		if err != nil {
@@ -70,6 +84,7 @@ func MergeAll(repo repository.ClockedRepo, remote string) <-chan MergeResult {
 			refSplitted := strings.Split(remoteRef, "/")
 			id := refSplitted[len(refSplitted)-1]
 
+			remoteIdentity, err := ReadLocal(repo, remoteRef)
 			remoteBug, err := readBug(repo, remoteRef)
 
 			if err != nil {
@@ -140,6 +155,7 @@ const (
 	MergeStatusNothing
 )
 
+// Todo: share a generalized MergeResult with the bug package ?
 type MergeResult struct {
 	// Err is set when a terminal error occur in the process
 	Err error
@@ -151,7 +167,7 @@ type MergeResult struct {
 	Reason string
 
 	// Not set for invalid status
-	Bug *Bug
+	Identity *Identity
 }
 
 func (mr MergeResult) String() string {
@@ -176,13 +192,13 @@ func newMergeError(err error, id string) MergeResult {
 	}
 }
 
-func newMergeStatus(status MergeStatus, id string, bug *Bug) MergeResult {
+func newMergeStatus(status MergeStatus, id string, identity *Identity) MergeResult {
 	return MergeResult{
 		Id:     id,
 		Status: status,
 
-		// Bug is not set for an invalid merge result
-		Bug: bug,
+		// Identity is not set for an invalid merge result
+		Identity: identity,
 	}
 }
 

@@ -18,5 +18,5 @@ func NewSimpleResolver(repo repository.Repo) *SimpleResolver {
 }
 
 func (r *SimpleResolver) ResolveIdentity(id string) (Interface, error) {
-	return Read(r.repo, id)
+	return ReadLocal(r.repo, id)
 }

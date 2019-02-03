@@ -17,7 +17,7 @@ func runId(cmd *cobra.Command, args []string) error {
 	var err error
 
 	if len(args) == 1 {
-		id, err = identity.Read(repo, args[0])
+		id, err = identity.ReadLocal(repo, args[0])
 	} else {
 		id, err = identity.GetUserIdentity(repo)
 	}

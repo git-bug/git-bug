@@ -555,7 +555,7 @@ func (c *RepoCache) ResolveIdentity(id string) (*identity.Identity, error) {
 		return cached, nil
 	}
 
-	i, err := identity.Read(c.repo, id)
+	i, err := identity.ReadLocal(c.repo, id)
 	if err != nil {
 		return nil, err
 	}

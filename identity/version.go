@@ -20,6 +20,8 @@ type Version struct {
 	// Not serialized
 	commitHash git.Hash
 
+	// Todo: add unix timestamp for ordering with identical lamport time ?
+
 	// The lamport time at which this version become effective
 	// The reference time is the bug edition lamport clock
 	Time lamport.Time

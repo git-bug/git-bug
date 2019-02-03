@@ -4,14 +4,17 @@ package identity
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+
+	"github.com/pkg/errors"
 
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/lamport"
-	"github.com/pkg/errors"
 )
 
 const identityRefPattern = "refs/identities/"
+const identityRemoteRefPattern = "refs/remotes/%s/identities/"
 const versionEntryName = "version"
 const identityConfigKey = "git-bug.identity"
 
@@ -62,9 +65,22 @@ func (i *Identity) UnmarshalJSON(data []byte) error {
 	panic("identity should be loaded with identity.UnmarshalJSON")
 }
 
-// Read load an Identity from the identities data available in git
-func Read(repo repository.Repo, id string) (*Identity, error) {
+// ReadLocal load a local Identity from the identities data available in git
+func ReadLocal(repo repository.Repo, id string) (*Identity, error) {
 	ref := fmt.Sprintf("%s%s", identityRefPattern, id)
+	return read(repo, ref)
+}
+
+// ReadRemote load a remote Identity from the identities data available in git
+func ReadRemote(repo repository.Repo, remote string, id string) (*Identity, error) {
+	ref := fmt.Sprintf(identityRemoteRefPattern, remote) + id
+	return read(repo, ref)
+}
+
+// read will load and parse an identity frdm git
+func read(repo repository.Repo, ref string) (*Identity, error) {
+	refSplit := strings.Split(ref, "/")
+	id := refSplit[len(refSplit)-1]
 
 	hashes, err := repo.ListCommits(ref)
 
@@ -162,7 +178,7 @@ func GetUserIdentity(repo repository.Repo) (*Identity, error) {
 		id = val
 	}
 
-	return Read(repo, id)
+	return ReadLocal(repo, id)
 }
 
 func (i *Identity) AddVersion(version *Version) {

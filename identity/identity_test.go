@@ -29,7 +29,7 @@ func TestIdentityCommitLoad(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotEmpty(t, identity.id)
 
-	loaded, err := Read(mockRepo, identity.id)
+	loaded, err := ReadLocal(mockRepo, identity.id)
 	assert.Nil(t, err)
 	commitsAreSet(t, loaded)
 	equivalentIdentity(t, identity, loaded)
@@ -70,7 +70,7 @@ func TestIdentityCommitLoad(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotEmpty(t, identity.id)
 
-	loaded, err = Read(mockRepo, identity.id)
+	loaded, err = ReadLocal(mockRepo, identity.id)
 	assert.Nil(t, err)
 	commitsAreSet(t, loaded)
 	equivalentIdentity(t, identity, loaded)
@@ -100,7 +100,7 @@ func TestIdentityCommitLoad(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotEmpty(t, identity.id)
 
-	loaded, err = Read(mockRepo, identity.id)
+	loaded, err = ReadLocal(mockRepo, identity.id)
 	assert.Nil(t, err)
 	commitsAreSet(t, loaded)
 	equivalentIdentity(t, identity, loaded)
@@ -209,7 +209,7 @@ func TestMetadata(t *testing.T) {
 	assert.NoError(t, err)
 
 	// reload
-	loaded, err := Read(mockRepo, identity.id)
+	loaded, err := ReadLocal(mockRepo, identity.id)
 	assert.Nil(t, err)
 
 	assertHasKeyValue(t, loaded.ImmutableMetadata(), "key1", "value1")
@@ -250,6 +250,6 @@ func TestJSON(t *testing.T) {
 	assert.Equal(t, identity.id, i.Id())
 
 	// make sure we can load the identity properly
-	i, err = Read(mockRepo, i.Id())
+	i, err = ReadLocal(mockRepo, i.Id())
 	assert.NoError(t, err)
 }

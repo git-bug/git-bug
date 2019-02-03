@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/MichaelMure/git-bug/identity"
+	"github.com/pkg/errors"
 
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/lamport"
-	"github.com/pkg/errors"
 )
 
 const bugsRefPattern = "refs/bugs/"
