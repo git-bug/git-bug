@@ -46,26 +46,6 @@ func Pull(repo repository.ClockedRepo, remote string) error {
 }
 
 // MergeAll will merge all the available remote identity
-// To make sure that an Identity history can't be altered, a strict fast-forward
-// only policy is applied here. As an Identity should be tied to a single user, this
-// should work in practice but it does leave a possibility that a user would edit his
-// Identity from two different repo concurrently and push the changes in a non-centralized
-// network of repositories. In this case, it would result some of the repo accepting one
-// version, some other accepting another, preventing the network in general to converge
-// to the same result. This would create a sort of partition of the network, and manual
-// cleaning would be required.
-//
-// An alternative approach would be to have a determinist rebase:
-// - any commits present in both local and remote version would be kept, never changed.
-// - newer commits would be merged in a linear chain of commits, ordered based on the
-//   Lamport time
-//
-// However, this approach leave the possibility, in the case of a compromised crypto keys,
-// of forging a new version with a bogus Lamport time to be inserted before a legit version,
-// invalidating the correct version and hijacking the Identity. There would only be a short
-// period of time where this would be possible (before the network converge) but I'm not
-// confident enough to implement that. I choose the strict fast-forward only approach,
-// despite it's potential problem with two different version as mentioned above.
 func MergeAll(repo repository.ClockedRepo, remote string) <-chan MergeResult {
 	out := make(chan MergeResult)
 
@@ -85,20 +65,19 @@ func MergeAll(repo repository.ClockedRepo, remote string) <-chan MergeResult {
 			id := refSplitted[len(refSplitted)-1]
 
 			remoteIdentity, err := ReadLocal(repo, remoteRef)
-			remoteBug, err := readBug(repo, remoteRef)
 
 			if err != nil {
-				out <- newMergeInvalidStatus(id, errors.Wrap(err, "remote bug is not readable").Error())
+				out <- newMergeInvalidStatus(id, errors.Wrap(err, "remote identity is not readable").Error())
 				continue
 			}
 
 			// Check for error in remote data
-			if err := remoteBug.Validate(); err != nil {
-				out <- newMergeInvalidStatus(id, errors.Wrap(err, "remote bug is invalid").Error())
+			if err := remoteIdentity.Validate(); err != nil {
+				out <- newMergeInvalidStatus(id, errors.Wrap(err, "remote identity is invalid").Error())
 				continue
 			}
 
-			localRef := bugsRefPattern + remoteBug.Id()
+			localRef := identityRefPattern + remoteIdentity.Id()
 			localExist, err := repo.RefExist(localRef)
 
 			if err != nil {
@@ -106,7 +85,7 @@ func MergeAll(repo repository.ClockedRepo, remote string) <-chan MergeResult {
 				continue
 			}
 
-			// the bug is not local yet, simply create the reference
+			// the identity is not local yet, simply create the reference
 			if !localExist {
 				err := repo.CopyRef(remoteRef, localRef)
 
@@ -115,18 +94,18 @@ func MergeAll(repo repository.ClockedRepo, remote string) <-chan MergeResult {
 					return
 				}
 
-				out <- newMergeStatus(MergeStatusNew, id, remoteBug)
+				out <- newMergeStatus(MergeStatusNew, id, remoteIdentity)
 				continue
 			}
 
-			localBug, err := readBug(repo, localRef)
+			localIdentity, err := read(repo, localRef)
 
 			if err != nil {
-				out <- newMergeError(errors.Wrap(err, "local bug is not readable"), id)
+				out <- newMergeError(errors.Wrap(err, "local identity is not readable"), id)
 				return
 			}
 
-			updated, err := localBug.Merge(repo, remoteBug)
+			updated, err := localIdentity.Merge(repo, remoteIdentity)
 
 			if err != nil {
 				out <- newMergeInvalidStatus(id, errors.Wrap(err, "merge failed").Error())
@@ -134,9 +113,9 @@ func MergeAll(repo repository.ClockedRepo, remote string) <-chan MergeResult {
 			}
 
 			if updated {
-				out <- newMergeStatus(MergeStatusUpdated, id, localBug)
+				out <- newMergeStatus(MergeStatusUpdated, id, localIdentity)
 			} else {
-				out <- newMergeStatus(MergeStatusNothing, id, localBug)
+				out <- newMergeStatus(MergeStatusNothing, id, localIdentity)
 			}
 		}
 	}()

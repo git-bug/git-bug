@@ -21,17 +21,22 @@ const identityConfigKey = "git-bug.identity"
 var _ Interface = &Identity{}
 
 type Identity struct {
-	id       string
-	Versions []*Version
+	// Id used as unique identifier
+	id string
+
+	lastCommit git.Hash
+
+	// all the successive version of the identity
+	versions []*Version
 }
 
 func NewIdentity(name string, email string) *Identity {
 	return &Identity{
-		Versions: []*Version{
+		versions: []*Version{
 			{
-				Name:  name,
-				Email: email,
-				Nonce: makeNonce(20),
+				name:  name,
+				email: email,
+				nonce: makeNonce(20),
 			},
 		},
 	}
@@ -39,13 +44,13 @@ func NewIdentity(name string, email string) *Identity {
 
 func NewIdentityFull(name string, email string, login string, avatarUrl string) *Identity {
 	return &Identity{
-		Versions: []*Version{
+		versions: []*Version{
 			{
-				Name:      name,
-				Email:     email,
-				Login:     login,
-				AvatarUrl: avatarUrl,
-				Nonce:     makeNonce(20),
+				name:      name,
+				email:     email,
+				login:     login,
+				avatarURL: avatarUrl,
+				nonce:     makeNonce(20),
 			},
 		},
 	}
@@ -84,11 +89,13 @@ func read(repo repository.Repo, ref string) (*Identity, error) {
 
 	hashes, err := repo.ListCommits(ref)
 
-	var versions []*Version
-
 	// TODO: this is not perfect, it might be a command invoke error
 	if err != nil {
 		return nil, ErrIdentityNotExist
+	}
+
+	i := &Identity{
+		id: id,
 	}
 
 	for _, hash := range hashes {
@@ -121,14 +128,12 @@ func read(repo repository.Repo, ref string) (*Identity, error) {
 
 		// tag the version with the commit hash
 		version.commitHash = hash
+		i.lastCommit = hash
 
-		versions = append(versions, &version)
+		i.versions = append(i.versions, &version)
 	}
 
-	return &Identity{
-		id:       id,
-		Versions: versions,
-	}, nil
+	return i, nil
 }
 
 // NewFromGitUser will query the repository for user detail and
@@ -182,7 +187,7 @@ func GetUserIdentity(repo repository.Repo) (*Identity, error) {
 }
 
 func (i *Identity) AddVersion(version *Version) {
-	i.Versions = append(i.Versions, version)
+	i.versions = append(i.versions, version)
 }
 
 // Write the identity into the Repository. In particular, this ensure that
@@ -190,11 +195,9 @@ func (i *Identity) AddVersion(version *Version) {
 func (i *Identity) Commit(repo repository.Repo) error {
 	// Todo: check for mismatch between memory and commited data
 
-	var lastCommit git.Hash = ""
-
-	for _, v := range i.Versions {
+	for _, v := range i.versions {
 		if v.commitHash != "" {
-			lastCommit = v.commitHash
+			i.lastCommit = v.commitHash
 			// ignore already commited versions
 			continue
 		}
@@ -215,8 +218,8 @@ func (i *Identity) Commit(repo repository.Repo) error {
 		}
 
 		var commitHash git.Hash
-		if lastCommit != "" {
-			commitHash, err = repo.StoreCommitWithParent(treeHash, lastCommit)
+		if i.lastCommit != "" {
+			commitHash, err = repo.StoreCommitWithParent(treeHash, i.lastCommit)
 		} else {
 			commitHash, err = repo.StoreCommit(treeHash)
 		}
@@ -225,7 +228,8 @@ func (i *Identity) Commit(repo repository.Repo) error {
 			return err
 		}
 
-		lastCommit = commitHash
+		i.lastCommit = commitHash
+		v.commitHash = commitHash
 
 		// if it was the first commit, use the commit hash as the Identity id
 		if i.id == "" {
@@ -238,7 +242,7 @@ func (i *Identity) Commit(repo repository.Repo) error {
 	}
 
 	ref := fmt.Sprintf("%s%s", identityRefPattern, i.id)
-	err := repo.UpdateRef(ref, lastCommit)
+	err := repo.UpdateRef(ref, i.lastCommit)
 
 	if err != nil {
 		return err
@@ -247,31 +251,93 @@ func (i *Identity) Commit(repo repository.Repo) error {
 	return nil
 }
 
+// Merge will merge a different version of the same Identity
+//
+// To make sure that an Identity history can't be altered, a strict fast-forward
+// only policy is applied here. As an Identity should be tied to a single user, this
+// should work in practice but it does leave a possibility that a user would edit his
+// Identity from two different repo concurrently and push the changes in a non-centralized
+// network of repositories. In this case, it would result in some of the repo accepting one
+// version and some other accepting another, preventing the network in general to converge
+// to the same result. This would create a sort of partition of the network, and manual
+// cleaning would be required.
+//
+// An alternative approach would be to have a determinist rebase:
+// - any commits present in both local and remote version would be kept, never changed.
+// - newer commits would be merged in a linear chain of commits, ordered based on the
+//   Lamport time
+//
+// However, this approach leave the possibility, in the case of a compromised crypto keys,
+// of forging a new version with a bogus Lamport time to be inserted before a legit version,
+// invalidating the correct version and hijacking the Identity. There would only be a short
+// period of time where this would be possible (before the network converge) but I'm not
+// confident enough to implement that. I choose the strict fast-forward only approach,
+// despite it's potential problem with two different version as mentioned above.
+func (i *Identity) Merge(repo repository.Repo, other *Identity) (bool, error) {
+	if i.id != other.id {
+		return false, errors.New("merging unrelated identities is not supported")
+	}
+
+	if i.lastCommit == "" || other.lastCommit == "" {
+		return false, errors.New("can't merge identities that has never been stored")
+	}
+
+	/*ancestor, err := repo.FindCommonAncestor(i.lastCommit, other.lastCommit)
+	if err != nil {
+		return false, errors.Wrap(err, "can't find common ancestor")
+	}*/
+
+	modified := false
+	for j, otherVersion := range other.versions {
+		// if there is more version in other, take them
+		if len(i.versions) == j {
+			i.versions = append(i.versions, otherVersion)
+			i.lastCommit = otherVersion.commitHash
+			modified = true
+		}
+
+		// we have a non fast-forward merge.
+		// as explained in the doc above, refusing to merge
+		if i.versions[j].commitHash != otherVersion.commitHash {
+			return false, errors.New("non fast-forward identity merge")
+		}
+	}
+
+	if modified {
+		err := repo.UpdateRef(identityRefPattern+i.id, i.lastCommit)
+		if err != nil {
+			return false, err
+		}
+	}
+
+	return false, nil
+}
+
 // Validate check if the Identity data is valid
 func (i *Identity) Validate() error {
 	lastTime := lamport.Time(0)
 
-	for _, v := range i.Versions {
+	for _, v := range i.versions {
 		if err := v.Validate(); err != nil {
 			return err
 		}
 
-		if v.Time < lastTime {
-			return fmt.Errorf("non-chronological version (%d --> %d)", lastTime, v.Time)
+		if v.time < lastTime {
+			return fmt.Errorf("non-chronological version (%d --> %d)", lastTime, v.time)
 		}
 
-		lastTime = v.Time
+		lastTime = v.time
 	}
 
 	return nil
 }
 
 func (i *Identity) lastVersion() *Version {
-	if len(i.Versions) <= 0 {
+	if len(i.versions) <= 0 {
 		panic("no version at all")
 	}
 
-	return i.Versions[len(i.Versions)-1]
+	return i.versions[len(i.versions)-1]
 }
 
 // Id return the Identity identifier
@@ -286,27 +352,27 @@ func (i *Identity) Id() string {
 
 // Name return the last version of the name
 func (i *Identity) Name() string {
-	return i.lastVersion().Name
+	return i.lastVersion().name
 }
 
 // Email return the last version of the email
 func (i *Identity) Email() string {
-	return i.lastVersion().Email
+	return i.lastVersion().email
 }
 
 // Login return the last version of the login
 func (i *Identity) Login() string {
-	return i.lastVersion().Login
+	return i.lastVersion().login
 }
 
-// Login return the last version of the Avatar URL
+// AvatarUrl return the last version of the Avatar URL
 func (i *Identity) AvatarUrl() string {
-	return i.lastVersion().AvatarUrl
+	return i.lastVersion().avatarURL
 }
 
-// Login return the last version of the valid keys
+// Keys return the last version of the valid keys
 func (i *Identity) Keys() []Key {
-	return i.lastVersion().Keys
+	return i.lastVersion().keys
 }
 
 // IsProtected return true if the chain of git commits started to be signed.
@@ -320,12 +386,12 @@ func (i *Identity) IsProtected() bool {
 func (i *Identity) ValidKeysAtTime(time lamport.Time) []Key {
 	var result []Key
 
-	for _, v := range i.Versions {
-		if v.Time > time {
+	for _, v := range i.versions {
+		if v.time > time {
 			return result
 		}
 
-		result = v.Keys
+		result = v.keys
 	}
 
 	return result
@@ -357,8 +423,8 @@ func (i *Identity) SetMetadata(key string, value string) {
 func (i *Identity) ImmutableMetadata() map[string]string {
 	metadata := make(map[string]string)
 
-	for _, version := range i.Versions {
-		for key, value := range version.Metadata {
+	for _, version := range i.versions {
+		for key, value := range version.metadata {
 			if _, has := metadata[key]; !has {
 				metadata[key] = value
 			}
@@ -373,8 +439,8 @@ func (i *Identity) ImmutableMetadata() map[string]string {
 func (i *Identity) MutableMetadata() map[string]string {
 	metadata := make(map[string]string)
 
-	for _, version := range i.Versions {
-		for key, value := range version.Metadata {
+	for _, version := range i.versions {
+		for key, value := range version.metadata {
 			metadata[key] = value
 		}
 	}

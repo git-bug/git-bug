@@ -24,25 +24,25 @@ type Version struct {
 
 	// The lamport time at which this version become effective
 	// The reference time is the bug edition lamport clock
-	Time lamport.Time
+	time lamport.Time
 
-	Name      string
-	Email     string
-	Login     string
-	AvatarUrl string
+	name      string
+	email     string
+	login     string
+	avatarURL string
 
 	// The set of keys valid at that time, from this version onward, until they get removed
 	// in a new version. This allow to have multiple key for the same identity (e.g. one per
 	// device) as well as revoke key.
-	Keys []Key
+	keys []Key
 
 	// This optional array is here to ensure a better randomness of the identity id to avoid collisions.
 	// It has no functional purpose and should be ignored.
 	// It is advised to fill this array if there is not enough entropy, e.g. if there is no keys.
-	Nonce []byte
+	nonce []byte
 
 	// A set of arbitrary key/value to store metadata about a version or about an Identity in general.
-	Metadata map[string]string
+	metadata map[string]string
 }
 
 type VersionJSON struct {
@@ -62,14 +62,14 @@ type VersionJSON struct {
 func (v *Version) MarshalJSON() ([]byte, error) {
 	return json.Marshal(VersionJSON{
 		FormatVersion: formatVersion,
-		Time:          v.Time,
-		Name:          v.Name,
-		Email:         v.Email,
-		Login:         v.Login,
-		AvatarUrl:     v.AvatarUrl,
-		Keys:          v.Keys,
-		Nonce:         v.Nonce,
-		Metadata:      v.Metadata,
+		Time:          v.time,
+		Name:          v.name,
+		Email:         v.email,
+		Login:         v.login,
+		AvatarUrl:     v.avatarURL,
+		Keys:          v.keys,
+		Nonce:         v.nonce,
+		Metadata:      v.metadata,
 	})
 }
 
@@ -84,56 +84,56 @@ func (v *Version) UnmarshalJSON(data []byte) error {
 		return fmt.Errorf("unknown format version %v", aux.FormatVersion)
 	}
 
-	v.Time = aux.Time
-	v.Name = aux.Name
-	v.Email = aux.Email
-	v.Login = aux.Login
-	v.AvatarUrl = aux.AvatarUrl
-	v.Keys = aux.Keys
-	v.Nonce = aux.Nonce
-	v.Metadata = aux.Metadata
+	v.time = aux.Time
+	v.name = aux.Name
+	v.email = aux.Email
+	v.login = aux.Login
+	v.avatarURL = aux.AvatarUrl
+	v.keys = aux.Keys
+	v.nonce = aux.Nonce
+	v.metadata = aux.Metadata
 
 	return nil
 }
 
 func (v *Version) Validate() error {
-	if text.Empty(v.Name) && text.Empty(v.Login) {
+	if text.Empty(v.name) && text.Empty(v.login) {
 		return fmt.Errorf("either name or login should be set")
 	}
 
-	if strings.Contains(v.Name, "\n") {
+	if strings.Contains(v.name, "\n") {
 		return fmt.Errorf("name should be a single line")
 	}
 
-	if !text.Safe(v.Name) {
+	if !text.Safe(v.name) {
 		return fmt.Errorf("name is not fully printable")
 	}
 
-	if strings.Contains(v.Login, "\n") {
+	if strings.Contains(v.login, "\n") {
 		return fmt.Errorf("login should be a single line")
 	}
 
-	if !text.Safe(v.Login) {
+	if !text.Safe(v.login) {
 		return fmt.Errorf("login is not fully printable")
 	}
 
-	if strings.Contains(v.Email, "\n") {
+	if strings.Contains(v.email, "\n") {
 		return fmt.Errorf("email should be a single line")
 	}
 
-	if !text.Safe(v.Email) {
+	if !text.Safe(v.email) {
 		return fmt.Errorf("email is not fully printable")
 	}
 
-	if v.AvatarUrl != "" && !text.ValidUrl(v.AvatarUrl) {
+	if v.avatarURL != "" && !text.ValidUrl(v.avatarURL) {
 		return fmt.Errorf("avatarUrl is not a valid URL")
 	}
 
-	if len(v.Nonce) > 64 {
+	if len(v.nonce) > 64 {
 		return fmt.Errorf("nonce is too big")
 	}
 
-	for _, k := range v.Keys {
+	for _, k := range v.keys {
 		if err := k.Validate(); err != nil {
 			return errors.Wrap(err, "invalid key")
 		}
@@ -178,20 +178,20 @@ func makeNonce(len int) []byte {
 // SetMetadata store arbitrary metadata about a version or an Identity in general
 // If the Version has been commit to git already, it won't be overwritten.
 func (v *Version) SetMetadata(key string, value string) {
-	if v.Metadata == nil {
-		v.Metadata = make(map[string]string)
+	if v.metadata == nil {
+		v.metadata = make(map[string]string)
 	}
 
-	v.Metadata[key] = value
+	v.metadata[key] = value
 }
 
 // GetMetadata retrieve arbitrary metadata about the Version
 func (v *Version) GetMetadata(key string) (string, bool) {
-	val, ok := v.Metadata[key]
+	val, ok := v.metadata[key]
 	return val, ok
 }
 
 // AllMetadata return all metadata for this Identity
 func (v *Version) AllMetadata() map[string]string {
-	return v.Metadata
+	return v.metadata
 }

@@ -6,7 +6,6 @@ import (
 
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 // Test the commit and load of an Identity with multiple versions
@@ -16,10 +15,10 @@ func TestIdentityCommitLoad(t *testing.T) {
 	// single version
 
 	identity := &Identity{
-		Versions: []*Version{
+		versions: []*Version{
 			{
-				Name:  "René Descartes",
-				Email: "rene.descartes@example.com",
+				name:  "René Descartes",
+				email: "rene.descartes@example.com",
 			},
 		},
 	}
@@ -32,33 +31,33 @@ func TestIdentityCommitLoad(t *testing.T) {
 	loaded, err := ReadLocal(mockRepo, identity.id)
 	assert.Nil(t, err)
 	commitsAreSet(t, loaded)
-	equivalentIdentity(t, identity, loaded)
+	assert.Equal(t, identity, loaded)
 
 	// multiple version
 
 	identity = &Identity{
-		Versions: []*Version{
+		versions: []*Version{
 			{
-				Time:  100,
-				Name:  "René Descartes",
-				Email: "rene.descartes@example.com",
-				Keys: []Key{
+				time:  100,
+				name:  "René Descartes",
+				email: "rene.descartes@example.com",
+				keys: []Key{
 					{PubKey: "pubkeyA"},
 				},
 			},
 			{
-				Time:  200,
-				Name:  "René Descartes",
-				Email: "rene.descartes@example.com",
-				Keys: []Key{
+				time:  200,
+				name:  "René Descartes",
+				email: "rene.descartes@example.com",
+				keys: []Key{
 					{PubKey: "pubkeyB"},
 				},
 			},
 			{
-				Time:  201,
-				Name:  "René Descartes",
-				Email: "rene.descartes@example.com",
-				Keys: []Key{
+				time:  201,
+				name:  "René Descartes",
+				email: "rene.descartes@example.com",
+				keys: []Key{
 					{PubKey: "pubkeyC"},
 				},
 			},
@@ -73,24 +72,24 @@ func TestIdentityCommitLoad(t *testing.T) {
 	loaded, err = ReadLocal(mockRepo, identity.id)
 	assert.Nil(t, err)
 	commitsAreSet(t, loaded)
-	equivalentIdentity(t, identity, loaded)
+	assert.Equal(t, identity, loaded)
 
 	// add more version
 
 	identity.AddVersion(&Version{
-		Time:  201,
-		Name:  "René Descartes",
-		Email: "rene.descartes@example.com",
-		Keys: []Key{
+		time:  201,
+		name:  "René Descartes",
+		email: "rene.descartes@example.com",
+		keys: []Key{
 			{PubKey: "pubkeyD"},
 		},
 	})
 
 	identity.AddVersion(&Version{
-		Time:  300,
-		Name:  "René Descartes",
-		Email: "rene.descartes@example.com",
-		Keys: []Key{
+		time:  300,
+		name:  "René Descartes",
+		email: "rene.descartes@example.com",
+		keys: []Key{
 			{PubKey: "pubkeyE"},
 		},
 	})
@@ -103,66 +102,56 @@ func TestIdentityCommitLoad(t *testing.T) {
 	loaded, err = ReadLocal(mockRepo, identity.id)
 	assert.Nil(t, err)
 	commitsAreSet(t, loaded)
-	equivalentIdentity(t, identity, loaded)
+	assert.Equal(t, identity, loaded)
 }
 
 func commitsAreSet(t *testing.T, identity *Identity) {
-	for _, version := range identity.Versions {
+	for _, version := range identity.versions {
 		assert.NotEmpty(t, version.commitHash)
 	}
-}
-
-func equivalentIdentity(t *testing.T, expected, actual *Identity) {
-	require.Equal(t, len(expected.Versions), len(actual.Versions))
-
-	for i, version := range expected.Versions {
-		actual.Versions[i].commitHash = version.commitHash
-	}
-
-	assert.Equal(t, expected, actual)
 }
 
 // Test that the correct crypto keys are returned for a given lamport time
 func TestIdentity_ValidKeysAtTime(t *testing.T) {
 	identity := Identity{
-		Versions: []*Version{
+		versions: []*Version{
 			{
-				Time:  100,
-				Name:  "René Descartes",
-				Email: "rene.descartes@example.com",
-				Keys: []Key{
+				time:  100,
+				name:  "René Descartes",
+				email: "rene.descartes@example.com",
+				keys: []Key{
 					{PubKey: "pubkeyA"},
 				},
 			},
 			{
-				Time:  200,
-				Name:  "René Descartes",
-				Email: "rene.descartes@example.com",
-				Keys: []Key{
+				time:  200,
+				name:  "René Descartes",
+				email: "rene.descartes@example.com",
+				keys: []Key{
 					{PubKey: "pubkeyB"},
 				},
 			},
 			{
-				Time:  201,
-				Name:  "René Descartes",
-				Email: "rene.descartes@example.com",
-				Keys: []Key{
+				time:  201,
+				name:  "René Descartes",
+				email: "rene.descartes@example.com",
+				keys: []Key{
 					{PubKey: "pubkeyC"},
 				},
 			},
 			{
-				Time:  201,
-				Name:  "René Descartes",
-				Email: "rene.descartes@example.com",
-				Keys: []Key{
+				time:  201,
+				name:  "René Descartes",
+				email: "rene.descartes@example.com",
+				keys: []Key{
 					{PubKey: "pubkeyD"},
 				},
 			},
 			{
-				Time:  300,
-				Name:  "René Descartes",
-				Email: "rene.descartes@example.com",
-				Keys: []Key{
+				time:  300,
+				name:  "René Descartes",
+				email: "rene.descartes@example.com",
+				keys: []Key{
 					{PubKey: "pubkeyE"},
 				},
 			},
@@ -197,8 +186,8 @@ func TestMetadata(t *testing.T) {
 
 	// try override
 	identity.AddVersion(&Version{
-		Name:  "René Descartes",
-		Email: "rene.descartes@example.com",
+		name:  "René Descartes",
+		email: "rene.descartes@example.com",
 	})
 
 	identity.SetMetadata("key1", "value2")
@@ -226,10 +215,10 @@ func TestJSON(t *testing.T) {
 	mockRepo := repository.NewMockRepoForTest()
 
 	identity := &Identity{
-		Versions: []*Version{
+		versions: []*Version{
 			{
-				Name:  "René Descartes",
-				Email: "rene.descartes@example.com",
+				name:  "René Descartes",
+				email: "rene.descartes@example.com",
 			},
 		},
 	}

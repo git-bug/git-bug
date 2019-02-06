@@ -55,7 +55,7 @@ func TestBugValidity(t *testing.T) {
 	}
 }
 
-func TestBugSerialisation(t *testing.T) {
+func TestBugCommitLoad(t *testing.T) {
 	bug1 := NewBug()
 
 	bug1.Append(createOp)
@@ -69,22 +69,30 @@ func TestBugSerialisation(t *testing.T) {
 	assert.Nil(t, err)
 
 	bug2, err := ReadLocalBug(repo, bug1.Id())
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
+	equivalentBug(t, bug1, bug2)
 
-	// ignore some fields
-	bug2.packs[0].commitHash = bug1.packs[0].commitHash
-	for i := range bug1.packs[0].Operations {
-		bug2.packs[0].Operations[i].base().hash = bug1.packs[0].Operations[i].base().hash
-	}
+	// add more op
 
-	// check hashes
-	for i := range bug1.packs[0].Operations {
-		if !bug2.packs[0].Operations[i].base().hash.IsValid() {
-			t.Fatal("invalid hash")
+	bug1.Append(setTitleOp)
+	bug1.Append(addCommentOp)
+
+	err = bug1.Commit(repo)
+	assert.Nil(t, err)
+
+	bug3, err := ReadLocalBug(repo, bug1.Id())
+	assert.NoError(t, err)
+	equivalentBug(t, bug1, bug3)
+}
+
+func equivalentBug(t *testing.T, expected, actual *Bug) {
+	assert.Equal(t, len(expected.packs), len(actual.packs))
+
+	for i := range expected.packs {
+		for j := range expected.packs[i].Operations {
+			actual.packs[i].Operations[j].base().hash = expected.packs[i].Operations[j].base().hash
 		}
 	}
 
-	assert.Equal(t, bug1, bug2)
+	assert.Equal(t, expected, actual)
 }

@@ -459,6 +459,7 @@ func (bug *Bug) Commit(repo repository.ClockedRepo) error {
 		return err
 	}
 
+	bug.staging.commitHash = hash
 	bug.packs = append(bug.packs, bug.staging)
 	bug.staging = OperationPack{}
 
@@ -513,9 +514,8 @@ func (bug *Bug) Merge(repo repository.Repo, other Interface) (bool, error) {
 	}
 
 	ancestor, err := repo.FindCommonAncestor(bug.lastCommit, otherBug.lastCommit)
-
 	if err != nil {
-		return false, err
+		return false, errors.Wrap(err, "can't find common ancestor")
 	}
 
 	ancestorIndex := 0
