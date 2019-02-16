@@ -23,8 +23,7 @@ func Push(repo repository.Repo, remote string) (string, error) {
 }
 
 // Pull will do a Fetch + MergeAll
-// This function won't give details on the underlying process. If you need more,
-// use Fetch and MergeAll separately.
+// This function will return an error if a merge fail
 func Pull(repo repository.ClockedRepo, remote string) error {
 	_, err := Fetch(repo, remote)
 	if err != nil {
@@ -36,9 +35,7 @@ func Pull(repo repository.ClockedRepo, remote string) error {
 			return merge.Err
 		}
 		if merge.Status == MergeStatusInvalid {
-			// Not awesome: simply output the merge failure here as this function
-			// is only used in tests for now.
-			fmt.Println(merge)
+			return errors.Errorf("merge failure: %s", merge.Reason)
 		}
 	}
 

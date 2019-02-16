@@ -6,6 +6,7 @@ import (
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/git"
+	"github.com/MichaelMure/git-bug/util/test"
 	"github.com/stretchr/testify/require"
 )
 
@@ -76,7 +77,7 @@ func TestMetadata(t *testing.T) {
 func TestHash(t *testing.T) {
 	repos := []repository.ClockedRepo{
 		repository.NewMockRepoForTest(),
-		createRepo(false),
+		test.CreateRepo(false),
 	}
 
 	for _, repo := range repos {

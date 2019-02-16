@@ -18,6 +18,8 @@ const identityRemoteRefPattern = "refs/remotes/%s/identities/"
 const versionEntryName = "version"
 const identityConfigKey = "git-bug.identity"
 
+var ErrNonFastForwardMerge = errors.New("non fast-forward identity merge")
+
 var _ Interface = &Identity{}
 
 type Identity struct {
@@ -136,6 +138,50 @@ func read(repo repository.Repo, ref string) (*Identity, error) {
 	return i, nil
 }
 
+type StreamedIdentity struct {
+	Identity *Identity
+	Err      error
+}
+
+// ReadAllLocalIdentities read and parse all local Identity
+func ReadAllLocalIdentities(repo repository.ClockedRepo) <-chan StreamedIdentity {
+	return readAllIdentities(repo, identityRefPattern)
+}
+
+// ReadAllRemoteIdentities read and parse all remote Identity for a given remote
+func ReadAllRemoteIdentities(repo repository.ClockedRepo, remote string) <-chan StreamedIdentity {
+	refPrefix := fmt.Sprintf(identityRemoteRefPattern, remote)
+	return readAllIdentities(repo, refPrefix)
+}
+
+// Read and parse all available bug with a given ref prefix
+func readAllIdentities(repo repository.ClockedRepo, refPrefix string) <-chan StreamedIdentity {
+	out := make(chan StreamedIdentity)
+
+	go func() {
+		defer close(out)
+
+		refs, err := repo.ListRefs(refPrefix)
+		if err != nil {
+			out <- StreamedIdentity{Err: err}
+			return
+		}
+
+		for _, ref := range refs {
+			b, err := read(repo, ref)
+
+			if err != nil {
+				out <- StreamedIdentity{Err: err}
+				return
+			}
+
+			out <- StreamedIdentity{Identity: b}
+		}
+	}()
+
+	return out
+}
+
 // NewFromGitUser will query the repository for user detail and
 // build the corresponding Identity
 func NewFromGitUser(repo repository.Repo) (*Identity, error) {
@@ -194,6 +240,22 @@ func (i *Identity) AddVersion(version *Version) {
 // the Id is properly set.
 func (i *Identity) Commit(repo repository.Repo) error {
 	// Todo: check for mismatch between memory and commited data
+
+	needCommit := false
+	for _, v := range i.versions {
+		if v.commitHash == "" {
+			needCommit = true
+			break
+		}
+	}
+
+	if !needCommit {
+		return fmt.Errorf("can't commit an identity with no pending version")
+	}
+
+	if err := i.Validate(); err != nil {
+		return errors.Wrap(err, "can't commit an identity with invalid data")
+	}
 
 	for _, v := range i.versions {
 		if v.commitHash != "" {
@@ -299,7 +361,7 @@ func (i *Identity) Merge(repo repository.Repo, other *Identity) (bool, error) {
 		// we have a non fast-forward merge.
 		// as explained in the doc above, refusing to merge
 		if i.versions[j].commitHash != otherVersion.commitHash {
-			return false, errors.New("non fast-forward identity merge")
+			return false, ErrNonFastForwardMerge
 		}
 	}
 

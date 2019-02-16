@@ -1,81 +1,15 @@
 package bug
 
 import (
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/MichaelMure/git-bug/util/test"
 	"github.com/stretchr/testify/assert"
 
-	"io/ioutil"
-	"log"
-	"os"
 	"testing"
 )
 
-func createRepo(bare bool) *repository.GitRepo {
-	dir, err := ioutil.TempDir("", "")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// fmt.Println("Creating repo:", dir)
-
-	var creator func(string) (*repository.GitRepo, error)
-
-	if bare {
-		creator = repository.InitBareGitRepo
-	} else {
-		creator = repository.InitGitRepo
-	}
-
-	repo, err := creator(dir)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if err := repo.StoreConfig("user.name", "testuser"); err != nil {
-		log.Fatal("failed to set user.name for test repository: ", err)
-	}
-	if err := repo.StoreConfig("user.email", "testuser@example.com"); err != nil {
-		log.Fatal("failed to set user.email for test repository: ", err)
-	}
-
-	return repo
-}
-
-func cleanupRepo(repo repository.Repo) error {
-	path := repo.GetPath()
-	// fmt.Println("Cleaning repo:", path)
-	return os.RemoveAll(path)
-}
-
-func setupRepos(t testing.TB) (repoA, repoB, remote *repository.GitRepo) {
-	repoA = createRepo(false)
-	repoB = createRepo(false)
-	remote = createRepo(true)
-
-	remoteAddr := "file://" + remote.GetPath()
-
-	err := repoA.AddRemote("origin", remoteAddr)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = repoB.AddRemote("origin", remoteAddr)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return repoA, repoB, remote
-}
-
-func cleanupRepos(repoA, repoB, remote *repository.GitRepo) {
-	cleanupRepo(repoA)
-	cleanupRepo(repoB)
-	cleanupRepo(remote)
-}
-
 func TestPushPull(t *testing.T) {
-	repoA, repoB, remote := setupRepos(t)
-	defer cleanupRepos(repoA, repoB, remote)
+	repoA, repoB, remote := test.SetupReposAndRemote(t)
+	defer test.CleanupRepos(repoA, repoB, remote)
 
 	err := rene.Commit(repoA)
 	assert.NoError(t, err)
@@ -139,8 +73,8 @@ func BenchmarkRebaseTheirs(b *testing.B) {
 }
 
 func _RebaseTheirs(t testing.TB) {
-	repoA, repoB, remote := setupRepos(t)
-	defer cleanupRepos(repoA, repoB, remote)
+	repoA, repoB, remote := test.SetupReposAndRemote(t)
+	defer test.CleanupRepos(repoA, repoB, remote)
 
 	bug1, _, err := Create(rene, unix, "bug1", "message")
 	assert.NoError(t, err)
@@ -200,8 +134,8 @@ func BenchmarkRebaseOurs(b *testing.B) {
 }
 
 func _RebaseOurs(t testing.TB) {
-	repoA, repoB, remote := setupRepos(t)
-	defer cleanupRepos(repoA, repoB, remote)
+	repoA, repoB, remote := test.SetupReposAndRemote(t)
+	defer test.CleanupRepos(repoA, repoB, remote)
 
 	bug1, _, err := Create(rene, unix, "bug1", "message")
 	assert.NoError(t, err)
@@ -281,8 +215,8 @@ func BenchmarkRebaseConflict(b *testing.B) {
 }
 
 func _RebaseConflict(t testing.TB) {
-	repoA, repoB, remote := setupRepos(t)
-	defer cleanupRepos(repoA, repoB, remote)
+	repoA, repoB, remote := test.SetupReposAndRemote(t)
+	defer test.CleanupRepos(repoA, repoB, remote)
 
 	bug1, _, err := Create(rene, unix, "bug1", "message")
 	assert.NoError(t, err)

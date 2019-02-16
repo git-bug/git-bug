@@ -3,8 +3,9 @@ package test
 import (
 	"io/ioutil"
 	"log"
+	"os"
+	"testing"
 
-	"github.com/MichaelMure/git-bug/misc/random_bugs"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
@@ -39,14 +40,40 @@ func CreateRepo(bare bool) *repository.GitRepo {
 	return repo
 }
 
-func CreateFilledRepo(bugNumber int) repository.ClockedRepo {
-	repo := CreateRepo(false)
+func CleanupRepo(repo repository.Repo) error {
+	path := repo.GetPath()
+	// fmt.Println("Cleaning repo:", path)
+	return os.RemoveAll(path)
+}
 
-	var seed int64 = 42
-	options := random_bugs.DefaultOptions()
+func SetupReposAndRemote(t testing.TB) (repoA, repoB, remote *repository.GitRepo) {
+	repoA = CreateRepo(false)
+	repoB = CreateRepo(false)
+	remote = CreateRepo(true)
 
-	options.BugNumber = bugNumber
+	remoteAddr := "file://" + remote.GetPath()
 
-	random_bugs.CommitRandomBugsWithSeed(repo, options, seed)
-	return repo
+	err := repoA.AddRemote("origin", remoteAddr)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = repoB.AddRemote("origin", remoteAddr)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return repoA, repoB, remote
+}
+
+func CleanupRepos(repoA, repoB, remote *repository.GitRepo) {
+	if err := CleanupRepo(repoA); err != nil {
+		log.Println(err)
+	}
+	if err := CleanupRepo(repoB); err != nil {
+		log.Println(err)
+	}
+	if err := CleanupRepo(remote); err != nil {
+		log.Println(err)
+	}
 }
