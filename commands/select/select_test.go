@@ -2,15 +2,16 @@ package _select
 
 import (
 	"testing"
+	"time"
 
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/test"
 	"github.com/stretchr/testify/require"
 )
 
 func TestSelect(t *testing.T) {
 	repo := test.CreateRepo(false)
-	defer test.CleanupRepo(repo)
 
 	repoCache, err := cache.NewRepoCache(repo)
 	require.NoError(t, err)
@@ -26,15 +27,18 @@ func TestSelect(t *testing.T) {
 	require.Error(t, err)
 
 	// generate a bunch of bugs
+
+	rene := identity.NewBare("René Descartes", "rene@descartes.fr")
+
 	for i := 0; i < 10; i++ {
-		_, err := repoCache.NewBug("title", "message")
+		_, err := repoCache.NewBugRaw(rene, time.Now().Unix(), "title", "message", nil, nil)
 		require.NoError(t, err)
 	}
 
 	// and two more for testing
-	b1, err := repoCache.NewBug("title", "message")
+	b1, err := repoCache.NewBugRaw(rene, time.Now().Unix(), "title", "message", nil, nil)
 	require.NoError(t, err)
-	b2, err := repoCache.NewBug("title", "message")
+	b2, err := repoCache.NewBugRaw(rene, time.Now().Unix(), "title", "message", nil, nil)
 	require.NoError(t, err)
 
 	err = Select(repoCache, b1.Id())
@@ -71,4 +75,6 @@ func TestSelect(t *testing.T) {
 	// Resolve without a pattern should error again after clearing the selected bug
 	_, _, err = ResolveBug(repoCache, []string{})
 	require.Error(t, err)
+
+	require.NoError(t, test.CleanupRepo(repo))
 }

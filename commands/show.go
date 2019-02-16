@@ -42,7 +42,7 @@ func runShowBug(cmd *cobra.Command, args []string) error {
 		case "author":
 			fmt.Printf("%s\n", firstComment.Author.DisplayName())
 		case "authorEmail":
-			fmt.Printf("%s\n", firstComment.Author.Email)
+			fmt.Printf("%s\n", firstComment.Author.Email())
 		case "createTime":
 			fmt.Printf("%s\n", firstComment.FormatTime())
 		case "id":

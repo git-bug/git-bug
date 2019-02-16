@@ -405,7 +405,7 @@ func (c *RepoCache) NewBugWithFiles(title string, message string, files []git.Ha
 // NewBugWithFilesMeta create a new bug with attached files for the message, as
 // well as metadata for the Create operation.
 // The new bug is written in the repository (commit)
-func (c *RepoCache) NewBugRaw(author *identity.Identity, unixTime int64, title string, message string, files []git.Hash, metadata map[string]string) (*BugCache, error) {
+func (c *RepoCache) NewBugRaw(author identity.Interface, unixTime int64, title string, message string, files []git.Hash, metadata map[string]string) (*BugCache, error) {
 	b, op, err := bug.CreateWithFiles(author, unixTime, title, message, files)
 	if err != nil {
 		return nil, err
