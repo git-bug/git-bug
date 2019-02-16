@@ -30,6 +30,10 @@ type Interface interface {
 	// the Id is properly set.
 	Commit(repo repository.Repo) error
 
+	// If needed, write the identity into the Repository. In particular, this
+	// ensure that the Id is properly set.
+	CommitAsNeeded(repo repository.Repo) error
+
 	// IsProtected return true if the chain of git commits started to be signed.
 	// If that's the case, only signed commit with a valid key for this identity can be added.
 	IsProtected() bool

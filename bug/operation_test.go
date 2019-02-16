@@ -2,6 +2,7 @@ package bug
 
 import (
 	"testing"
+	"time"
 
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
@@ -11,6 +12,9 @@ import (
 )
 
 func TestValidate(t *testing.T) {
+	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
+	unix := time.Now().Unix()
+
 	good := []Operation{
 		NewCreateOp(rene, unix, "title", "message", nil),
 		NewSetTitleOp(rene, unix, "title2", "title1"),
@@ -65,7 +69,8 @@ func TestValidate(t *testing.T) {
 }
 
 func TestMetadata(t *testing.T) {
-	op := NewCreateOp(rene, unix, "title", "message", nil)
+	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
+	op := NewCreateOp(rene, time.Now().Unix(), "title", "message", nil)
 
 	op.SetMetadata("key", "value")
 
@@ -81,7 +86,9 @@ func TestHash(t *testing.T) {
 	}
 
 	for _, repo := range repos {
-		b, op, err := Create(rene, unix, "title", "message")
+		rene := identity.NewBare("René Descartes", "rene@descartes.fr")
+
+		b, op, err := Create(rene, time.Now().Unix(), "title", "message")
 		require.Nil(t, err)
 
 		h1, err := op.Hash()

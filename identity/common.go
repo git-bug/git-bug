@@ -29,7 +29,6 @@ func UnmarshalJSON(raw json.RawMessage) (Interface, error) {
 	err := json.Unmarshal(raw, &aux)
 	if err == nil && aux.Id() != "" {
 		return aux, nil
-		// return identityResolver.ResolveIdentity(aux.Id)
 	}
 
 	// abort if we have an error other than the wrong type

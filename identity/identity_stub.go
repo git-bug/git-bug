@@ -80,6 +80,10 @@ func (IdentityStub) Commit(repo repository.Repo) error {
 	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 
+func (i *IdentityStub) CommitAsNeeded(repo repository.Repo) error {
+	panic("identities needs to be properly loaded with identity.ReadLocal()")
+}
+
 func (IdentityStub) IsProtected() bool {
 	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }

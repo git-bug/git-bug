@@ -234,8 +234,5 @@ func (c *BugCache) Commit() error {
 }
 
 func (c *BugCache) CommitAsNeeded() error {
-	if c.bug.HasPendingOp() {
-		return c.bug.Commit(c.repoCache.repo)
-	}
-	return nil
+	return c.bug.CommitAsNeeded(c.repoCache.repo)
 }

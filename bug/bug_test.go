@@ -1,6 +1,9 @@
 package bug
 
 import (
+	"time"
+
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/stretchr/testify/assert"
 
@@ -11,6 +14,9 @@ func TestBugId(t *testing.T) {
 	mockRepo := repository.NewMockRepoForTest()
 
 	bug1 := NewBug()
+
+	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
+	createOp := NewCreateOp(rene, time.Now().Unix(), "title", "message", nil)
 
 	bug1.Append(createOp)
 
@@ -27,6 +33,9 @@ func TestBugValidity(t *testing.T) {
 	mockRepo := repository.NewMockRepoForTest()
 
 	bug1 := NewBug()
+
+	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
+	createOp := NewCreateOp(rene, time.Now().Unix(), "title", "message", nil)
 
 	if bug1.Validate() == nil {
 		t.Fatal("Empty bug should be invalid")
@@ -57,6 +66,11 @@ func TestBugValidity(t *testing.T) {
 
 func TestBugCommitLoad(t *testing.T) {
 	bug1 := NewBug()
+
+	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
+	createOp := NewCreateOp(rene, time.Now().Unix(), "title", "message", nil)
+	setTitleOp := NewSetTitleOp(rene, time.Now().Unix(), "title2", "title1")
+	addCommentOp := NewAddCommentOp(rene, time.Now().Unix(), "message2", nil)
 
 	bug1.Append(createOp)
 	bug1.Append(setTitleOp)

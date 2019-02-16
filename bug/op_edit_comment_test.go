@@ -7,30 +7,26 @@ import (
 
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestEdit(t *testing.T) {
 	snapshot := Snapshot{}
 
-	var rene = identity.NewIdentity("René Descartes", "rene@descartes.fr")
-
+	rene := identity.NewBare("René Descartes", "rene@descartes.fr")
 	unix := time.Now().Unix()
 
 	create := NewCreateOp(rene, unix, "title", "create", nil)
 	create.Apply(&snapshot)
 
 	hash1, err := create.Hash()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	comment := NewAddCommentOp(rene, unix, "comment", nil)
 	comment.Apply(&snapshot)
 
 	hash2, err := comment.Hash()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	edit := NewEditCommentOp(rene, unix, hash1, "create edited", nil)
 	edit.Apply(&snapshot)

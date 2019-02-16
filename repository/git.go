@@ -29,7 +29,7 @@ type GitRepo struct {
 
 // Run the given git command with the given I/O reader/writers, returning an error if it fails.
 func (repo *GitRepo) runGitCommandWithIO(stdin io.Reader, stdout, stderr io.Writer, args ...string) error {
-	//fmt.Println("Running git", strings.Join(args, " "))
+	// fmt.Printf("[%s] Running git %s\n", repo.Path, strings.Join(args, " "))
 
 	cmd := exec.Command("git", args...)
 	cmd.Dir = repo.Path

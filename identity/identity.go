@@ -241,15 +241,7 @@ func (i *Identity) AddVersion(version *Version) {
 func (i *Identity) Commit(repo repository.Repo) error {
 	// Todo: check for mismatch between memory and commited data
 
-	needCommit := false
-	for _, v := range i.versions {
-		if v.commitHash == "" {
-			needCommit = true
-			break
-		}
-	}
-
-	if !needCommit {
+	if !i.NeedCommit() {
 		return fmt.Errorf("can't commit an identity with no pending version")
 	}
 
@@ -311,6 +303,23 @@ func (i *Identity) Commit(repo repository.Repo) error {
 	}
 
 	return nil
+}
+
+func (i *Identity) CommitAsNeeded(repo repository.Repo) error {
+	if !i.NeedCommit() {
+		return nil
+	}
+	return i.Commit(repo)
+}
+
+func (i *Identity) NeedCommit() bool {
+	for _, v := range i.versions {
+		if v.commitHash == "" {
+			return true
+		}
+	}
+
+	return false
 }
 
 // Merge will merge a different version of the same Identity
@@ -379,6 +388,10 @@ func (i *Identity) Merge(repo repository.Repo, other *Identity) (bool, error) {
 func (i *Identity) Validate() error {
 	lastTime := lamport.Time(0)
 
+	if len(i.versions) == 0 {
+		return fmt.Errorf("no version")
+	}
+
 	for _, v := range i.versions {
 		if err := v.Validate(); err != nil {
 			return err
@@ -389,6 +402,11 @@ func (i *Identity) Validate() error {
 		}
 
 		lastTime = v.time
+	}
+
+	// The identity ID should be the hash of the first commit
+	if i.versions[0].commitHash != "" && string(i.versions[0].commitHash) != i.id {
+		return fmt.Errorf("identity id should be the first commit hash")
 	}
 
 	return nil

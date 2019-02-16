@@ -12,8 +12,7 @@ import (
 func TestCreate(t *testing.T) {
 	snapshot := Snapshot{}
 
-	var rene = identity.NewIdentity("René Descartes", "rene@descartes.fr")
-
+	rene := identity.NewBare("René Descartes", "rene@descartes.fr")
 	unix := time.Now().Unix()
 
 	create := NewCreateOp(rene, unix, "title", "message", nil)

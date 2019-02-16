@@ -7,13 +7,13 @@ import (
 
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSetMetadata(t *testing.T) {
 	snapshot := Snapshot{}
 
-	var rene = identity.NewIdentity("René Descartes", "rene@descartes.fr")
-
+	rene := identity.NewBare("René Descartes", "rene@descartes.fr")
 	unix := time.Now().Unix()
 
 	create := NewCreateOp(rene, unix, "title", "create", nil)
@@ -22,9 +22,7 @@ func TestSetMetadata(t *testing.T) {
 	snapshot.Operations = append(snapshot.Operations, create)
 
 	hash1, err := create.Hash()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	comment := NewAddCommentOp(rene, unix, "comment", nil)
 	comment.SetMetadata("key2", "value2")
@@ -32,9 +30,7 @@ func TestSetMetadata(t *testing.T) {
 	snapshot.Operations = append(snapshot.Operations, comment)
 
 	hash2, err := comment.Hash()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	op1 := NewSetMetadataOp(rene, unix, hash1, map[string]string{
 		"key":  "override",

@@ -169,6 +169,11 @@ func (i *Bare) Commit(repo repository.Repo) error {
 	return nil
 }
 
+func (i *Bare) CommitAsNeeded(repo repository.Repo) error {
+	// Nothing to do, everything is directly embedded
+	return nil
+}
+
 // IsProtected return true if the chain of git commits started to be signed.
 // If that's the case, only signed commit with a valid key for this identity can be added.
 func (i *Bare) IsProtected() bool {

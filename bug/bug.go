@@ -321,6 +321,11 @@ func (bug *Bug) Validate() error {
 		return fmt.Errorf("first operation should be a Create op")
 	}
 
+	// The bug ID should be the hash of the first commit
+	if len(bug.packs) > 0 && string(bug.packs[0].commitHash) != bug.id {
+		return fmt.Errorf("bug id should be the first commit hash")
+	}
+
 	// Check that there is no more CreateOp op
 	it := NewOperationIterator(bug)
 	createCount := 0
@@ -349,7 +354,8 @@ func (bug *Bug) HasPendingOp() bool {
 
 // Commit write the staging area in Git and move the operations to the packs
 func (bug *Bug) Commit(repo repository.ClockedRepo) error {
-	if bug.staging.IsEmpty() {
+
+	if !bug.NeedCommit() {
 		return fmt.Errorf("can't commit a bug with no pending operation")
 	}
 
@@ -464,6 +470,17 @@ func (bug *Bug) Commit(repo repository.ClockedRepo) error {
 	bug.staging = OperationPack{}
 
 	return nil
+}
+
+func (bug *Bug) CommitAsNeeded(repo repository.ClockedRepo) error {
+	if !bug.NeedCommit() {
+		return nil
+	}
+	return bug.Commit(repo)
+}
+
+func (bug *Bug) NeedCommit() bool {
+	return !bug.staging.IsEmpty()
 }
 
 func makeMediaTree(pack OperationPack) []repository.TreeEntry {

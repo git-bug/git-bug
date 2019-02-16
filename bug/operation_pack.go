@@ -147,7 +147,7 @@ func (opp *OperationPack) Write(repo repository.Repo) (git.Hash, error) {
 
 	// First, make sure that all the identities are properly Commit as well
 	for _, op := range opp.Operations {
-		err := op.base().Author.Commit(repo)
+		err := op.base().Author.CommitAsNeeded(repo)
 		if err != nil {
 			return "", err
 		}

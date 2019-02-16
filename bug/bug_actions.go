@@ -4,28 +4,68 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/pkg/errors"
 )
 
+// Note:
+//
+// For the actions (fetch/push/pull/merge), this package act as a master for
+// the identity package and will also drive the needed identity actions. That is,
+// if bug.Push() is called, identity.Push will also be called to make sure that
+// the dependant identities are also present and up to date on the remote.
+//
+// I'm not entirely sure this is the correct way to do it, as it might introduce
+// too much complexity and hard coupling, but it does make this package easier
+// to use.
+
 // Fetch retrieve updates from a remote
 // This does not change the local bugs state
 func Fetch(repo repository.Repo, remote string) (string, error) {
+	stdout, err := identity.Fetch(repo, remote)
+	if err != nil {
+		return stdout, err
+	}
+
 	remoteRefSpec := fmt.Sprintf(bugsRemoteRefPattern, remote)
 	fetchRefSpec := fmt.Sprintf("%s*:%s*", bugsRefPattern, remoteRefSpec)
 
-	return repo.FetchRefs(remote, fetchRefSpec)
+	stdout2, err := repo.FetchRefs(remote, fetchRefSpec)
+
+	return stdout + "\n" + stdout2, err
 }
 
 // Push update a remote with the local changes
 func Push(repo repository.Repo, remote string) (string, error) {
-	return repo.PushRefs(remote, bugsRefPattern+"*")
+	stdout, err := identity.Push(repo, remote)
+	if err != nil {
+		return stdout, err
+	}
+
+	stdout2, err := repo.PushRefs(remote, bugsRefPattern+"*")
+
+	return stdout + "\n" + stdout2, err
 }
 
 // Pull will do a Fetch + MergeAll
 // This function will return an error if a merge fail
 func Pull(repo repository.ClockedRepo, remote string) error {
-	_, err := Fetch(repo, remote)
+	_, err := identity.Fetch(repo, remote)
+	if err != nil {
+		return err
+	}
+
+	for merge := range identity.MergeAll(repo, remote) {
+		if merge.Err != nil {
+			return merge.Err
+		}
+		if merge.Status == identity.MergeStatusInvalid {
+			return errors.Errorf("merge failure: %s", merge.Reason)
+		}
+	}
+
+	_, err = Fetch(repo, remote)
 	if err != nil {
 		return err
 	}

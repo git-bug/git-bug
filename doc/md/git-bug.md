@@ -29,6 +29,7 @@ git-bug [flags]
 * [git-bug commands](git-bug_commands.md)	 - Display available commands
 * [git-bug comment](git-bug_comment.md)	 - Display or add comments
 * [git-bug deselect](git-bug_deselect.md)	 - Clear the implicitly selected bug
+* [git-bug id](git-bug_id.md)	 - Display or change the user identity
 * [git-bug label](git-bug_label.md)	 - Display, add or remove labels
 * [git-bug ls](git-bug_ls.md)	 - List bugs
 * [git-bug ls-id](git-bug_ls-id.md)	 - List Bug Id

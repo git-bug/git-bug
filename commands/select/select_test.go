@@ -1,113 +1,74 @@
 package _select
 
 import (
-	"io/ioutil"
-	"log"
 	"testing"
 
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/MichaelMure/git-bug/util/test"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSelect(t *testing.T) {
-	repo, err := cache.NewRepoCache(createRepo())
-	checkErr(t, err)
+	repo := test.CreateRepo(false)
+	defer test.CleanupRepo(repo)
 
-	_, _, err = ResolveBug(repo, []string{})
-	if err != ErrNoValidId {
-		t.Fatal("expected no valid id error, got", err)
-	}
+	repoCache, err := cache.NewRepoCache(repo)
+	require.NoError(t, err)
 
-	err = Select(repo, "invalid")
-	checkErr(t, err)
+	_, _, err = ResolveBug(repoCache, []string{})
+	require.Equal(t, ErrNoValidId, err)
 
-	_, _, err = ResolveBug(repo, []string{})
-	if err == nil {
-		t.Fatal("expected invalid bug error")
-	}
+	err = Select(repoCache, "invalid")
+	require.NoError(t, err)
+
+	// Resolve without a pattern should fail when no bug is selected
+	_, _, err = ResolveBug(repoCache, []string{})
+	require.Error(t, err)
 
 	// generate a bunch of bugs
 	for i := 0; i < 10; i++ {
-		_, err := repo.NewBug("title", "message")
-		checkErr(t, err)
+		_, err := repoCache.NewBug("title", "message")
+		require.NoError(t, err)
 	}
 
-	// two more for testing
-	b1, err := repo.NewBug("title", "message")
-	checkErr(t, err)
-	b2, err := repo.NewBug("title", "message")
-	checkErr(t, err)
+	// and two more for testing
+	b1, err := repoCache.NewBug("title", "message")
+	require.NoError(t, err)
+	b2, err := repoCache.NewBug("title", "message")
+	require.NoError(t, err)
 
-	err = Select(repo, b1.Id())
-	checkErr(t, err)
+	err = Select(repoCache, b1.Id())
+	require.NoError(t, err)
 
 	// normal select without args
-	b3, _, err := ResolveBug(repo, []string{})
-	checkErr(t, err)
-	if b3.Id() != b1.Id() {
-		t.Fatal("incorrect bug returned")
-	}
+	b3, _, err := ResolveBug(repoCache, []string{})
+	require.NoError(t, err)
+	require.Equal(t, b1.Id(), b3.Id())
 
 	// override selection with same id
-	b4, _, err := ResolveBug(repo, []string{b1.Id()})
-	checkErr(t, err)
-	if b4.Id() != b1.Id() {
-		t.Fatal("incorrect bug returned")
-	}
+	b4, _, err := ResolveBug(repoCache, []string{b1.Id()})
+	require.NoError(t, err)
+	require.Equal(t, b1.Id(), b4.Id())
 
 	// override selection with a prefix
-	b5, _, err := ResolveBug(repo, []string{b1.HumanId()})
-	checkErr(t, err)
-	if b5.Id() != b1.Id() {
-		t.Fatal("incorrect bug returned")
-	}
+	b5, _, err := ResolveBug(repoCache, []string{b1.HumanId()})
+	require.NoError(t, err)
+	require.Equal(t, b1.Id(), b5.Id())
 
 	// args that shouldn't override
-	b6, _, err := ResolveBug(repo, []string{"arg"})
-	checkErr(t, err)
-	if b6.Id() != b1.Id() {
-		t.Fatal("incorrect bug returned")
-	}
+	b6, _, err := ResolveBug(repoCache, []string{"arg"})
+	require.NoError(t, err)
+	require.Equal(t, b1.Id(), b6.Id())
 
 	// override with a different id
-	b7, _, err := ResolveBug(repo, []string{b2.Id()})
-	checkErr(t, err)
-	if b7.Id() != b2.Id() {
-		t.Fatal("incorrect bug returned")
-	}
+	b7, _, err := ResolveBug(repoCache, []string{b2.Id()})
+	require.NoError(t, err)
+	require.Equal(t, b2.Id(), b7.Id())
 
-	err = Clear(repo)
-	checkErr(t, err)
+	err = Clear(repoCache)
+	require.NoError(t, err)
 
-	_, _, err = ResolveBug(repo, []string{})
-	if err == nil {
-		t.Fatal("expected invalid bug error")
-	}
-}
-
-func createRepo() *repository.GitRepo {
-	dir, err := ioutil.TempDir("", "")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	repo, err := repository.InitGitRepo(dir)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if err := repo.StoreConfig("user.name", "testuser"); err != nil {
-		log.Fatal("failed to set user.name for test repository: ", err)
-	}
-	if err := repo.StoreConfig("user.email", "testuser@example.com"); err != nil {
-		log.Fatal("failed to set user.email for test repository: ", err)
-	}
-
-	return repo
-}
-
-func checkErr(t testing.TB, err error) {
-	if err != nil {
-		t.Fatal(err)
-	}
+	// Resolve without a pattern should error again after clearing the selected bug
+	_, _, err = ResolveBug(repoCache, []string{})
+	require.Error(t, err)
 }
