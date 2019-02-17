@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/test"
 	"github.com/stretchr/testify/require"
 )
@@ -28,7 +27,8 @@ func TestSelect(t *testing.T) {
 
 	// generate a bunch of bugs
 
-	rene := identity.NewBare("René Descartes", "rene@descartes.fr")
+	rene, err := repoCache.NewIdentity("René Descartes", "rene@descartes.fr")
+	require.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
 		_, err := repoCache.NewBugRaw(rene, time.Now().Unix(), "title", "message", nil, nil)
