@@ -45,13 +45,16 @@ type RepoCache struct {
 	// bug loaded in memory
 	bugs map[string]*BugCache
 	// identities loaded in memory
-	identities map[string]*identity.Identity
+	identities map[string]*IdentityCache
+	// the user identity's id, if known
+	userIdentityId string
 }
 
 func NewRepoCache(r repository.ClockedRepo) (*RepoCache, error) {
 	c := &RepoCache{
-		repo: r,
-		bugs: make(map[string]*BugCache),
+		repo:       r,
+		bugs:       make(map[string]*BugCache),
+		identities: make(map[string]*IdentityCache),
 	}
 
 	err := c.lock()
@@ -394,7 +397,7 @@ func (c *RepoCache) NewBug(title string, message string) (*BugCache, error) {
 // NewBugWithFiles create a new bug with attached files for the message
 // The new bug is written in the repository (commit)
 func (c *RepoCache) NewBugWithFiles(title string, message string, files []git.Hash) (*BugCache, error) {
-	author, err := identity.GetUserIdentity(c.repo)
+	author, err := c.GetUserIdentity()
 	if err != nil {
 		return nil, err
 	}
@@ -405,8 +408,8 @@ func (c *RepoCache) NewBugWithFiles(title string, message string, files []git.Ha
 // NewBugWithFilesMeta create a new bug with attached files for the message, as
 // well as metadata for the Create operation.
 // The new bug is written in the repository (commit)
-func (c *RepoCache) NewBugRaw(author identity.Interface, unixTime int64, title string, message string, files []git.Hash, metadata map[string]string) (*BugCache, error) {
-	b, op, err := bug.CreateWithFiles(author, unixTime, title, message, files)
+func (c *RepoCache) NewBugRaw(author *IdentityCache, unixTime int64, title string, message string, files []git.Hash, metadata map[string]string) (*BugCache, error) {
+	b, op, err := bug.CreateWithFiles(author.Identity, unixTime, title, message, files)
 	if err != nil {
 		return nil, err
 	}
@@ -549,7 +552,7 @@ func repoIsAvailable(repo repository.Repo) error {
 }
 
 // ResolveIdentity retrieve an identity matching the exact given id
-func (c *RepoCache) ResolveIdentity(id string) (*identity.Identity, error) {
+func (c *RepoCache) ResolveIdentity(id string) (*IdentityCache, error) {
 	cached, ok := c.identities[id]
 	if ok {
 		return cached, nil
@@ -560,14 +563,15 @@ func (c *RepoCache) ResolveIdentity(id string) (*identity.Identity, error) {
 		return nil, err
 	}
 
-	c.identities[id] = i
+	cached = NewIdentityCache(c, i)
+	c.identities[id] = cached
 
-	return i, nil
+	return cached, nil
 }
 
 // ResolveIdentityPrefix retrieve an Identity matching an id prefix.
 // It fails if multiple identities match.
-func (c *RepoCache) ResolveIdentityPrefix(prefix string) (*identity.Identity, error) {
+func (c *RepoCache) ResolveIdentityPrefix(prefix string) (*IdentityCache, error) {
 	// preallocate but empty
 	matching := make([]string, 0, 5)
 
@@ -590,7 +594,7 @@ func (c *RepoCache) ResolveIdentityPrefix(prefix string) (*identity.Identity, er
 
 // ResolveIdentityImmutableMetadata retrieve an Identity that has the exact given metadata on
 // one of it's version. If multiple version have the same key, the first defined take precedence.
-func (c *RepoCache) ResolveIdentityImmutableMetadata(key string, value string) (*identity.Identity, error) {
+func (c *RepoCache) ResolveIdentityImmutableMetadata(key string, value string) (*IdentityCache, error) {
 	// preallocate but empty
 	matching := make([]string, 0, 5)
 
@@ -611,19 +615,50 @@ func (c *RepoCache) ResolveIdentityImmutableMetadata(key string, value string) (
 	return c.ResolveIdentity(matching[0])
 }
 
+func (c *RepoCache) SetUserIdentity(i *IdentityCache) error {
+	err := identity.SetUserIdentity(c.repo, i.Identity)
+	if err != nil {
+		return err
+	}
+
+	c.userIdentityId = i.Id()
+
+	return nil
+}
+
+func (c *RepoCache) GetUserIdentity() (*IdentityCache, error) {
+	if c.userIdentityId != "" {
+		i, ok := c.identities[c.userIdentityId]
+		if ok {
+			return i, nil
+		}
+	}
+
+	i, err := identity.GetUserIdentity(c.repo)
+	if err != nil {
+		return nil, err
+	}
+
+	cached := NewIdentityCache(c, i)
+	c.identities[i.Id()] = cached
+	c.userIdentityId = i.Id()
+
+	return cached, nil
+}
+
 // NewIdentity create a new identity
 // The new identity is written in the repository (commit)
-func (c *RepoCache) NewIdentity(name string, email string) (*identity.Identity, error) {
+func (c *RepoCache) NewIdentity(name string, email string) (*IdentityCache, error) {
 	return c.NewIdentityRaw(name, email, "", "", nil)
 }
 
 // NewIdentityFull create a new identity
 // The new identity is written in the repository (commit)
-func (c *RepoCache) NewIdentityFull(name string, email string, login string, avatarUrl string) (*identity.Identity, error) {
+func (c *RepoCache) NewIdentityFull(name string, email string, login string, avatarUrl string) (*IdentityCache, error) {
 	return c.NewIdentityRaw(name, email, login, avatarUrl, nil)
 }
 
-func (c *RepoCache) NewIdentityRaw(name string, email string, login string, avatarUrl string, metadata map[string]string) (*identity.Identity, error) {
+func (c *RepoCache) NewIdentityRaw(name string, email string, login string, avatarUrl string, metadata map[string]string) (*IdentityCache, error) {
 	i := identity.NewIdentityFull(name, email, login, avatarUrl)
 
 	for key, value := range metadata {
@@ -639,7 +674,8 @@ func (c *RepoCache) NewIdentityRaw(name string, email string, login string, avat
 		return nil, fmt.Errorf("identity %s already exist in the cache", i.Id())
 	}
 
-	c.identities[i.Id()] = i
+	cached := NewIdentityCache(c, i)
+	c.identities[i.Id()] = cached
 
-	return i, nil
+	return cached, nil
 }

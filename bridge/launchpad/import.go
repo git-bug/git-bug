@@ -23,7 +23,7 @@ func (li *launchpadImporter) Init(conf core.Configuration) error {
 const keyLaunchpadID = "launchpad-id"
 const keyLaunchpadLogin = "launchpad-login"
 
-func (li *launchpadImporter) makePerson(repo *cache.RepoCache, owner LPPerson) (*identity.Identity, error) {
+func (li *launchpadImporter) makePerson(repo *cache.RepoCache, owner LPPerson) (*cache.IdentityCache, error) {
 	// Look first in the cache
 	i, err := repo.ResolveIdentityImmutableMetadata(keyLaunchpadLogin, owner.Login)
 	if err == nil {

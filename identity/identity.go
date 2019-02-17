@@ -204,8 +204,22 @@ func NewFromGitUser(repo repository.Repo) (*Identity, error) {
 	return NewIdentity(name, email), nil
 }
 
+// IsUserIdentitySet tell if the user identity is correctly set.
+func IsUserIdentitySet(repo repository.RepoCommon) (bool, error) {
+	configs, err := repo.ReadConfigs(identityConfigKey)
+	if err != nil {
+		return false, err
+	}
+
+	if len(configs) > 1 {
+		return false, fmt.Errorf("multiple identity config exist")
+	}
+
+	return len(configs) == 1, nil
+}
+
 // SetUserIdentity store the user identity's id in the git config
-func SetUserIdentity(repo repository.RepoCommon, identity Identity) error {
+func SetUserIdentity(repo repository.RepoCommon, identity *Identity) error {
 	return repo.StoreConfig(identityConfigKey, identity.Id())
 }
 

@@ -599,7 +599,7 @@ func (gi *githubImporter) ensureCommentEdit(repo *cache.RepoCache, b *cache.BugC
 }
 
 // makePerson create a bug.Person from the Github data
-func (gi *githubImporter) makePerson(repo *cache.RepoCache, actor *actor) (*identity.Identity, error) {
+func (gi *githubImporter) makePerson(repo *cache.RepoCache, actor *actor) (*cache.IdentityCache, error) {
 	// When a user has been deleted, Github return a null actor, while displaying a profile named "ghost"
 	// in it's UI. So we need a special case to get it.
 	if actor == nil {
@@ -645,7 +645,7 @@ func (gi *githubImporter) makePerson(repo *cache.RepoCache, actor *actor) (*iden
 	)
 }
 
-func (gi *githubImporter) getGhost(repo *cache.RepoCache) (*identity.Identity, error) {
+func (gi *githubImporter) getGhost(repo *cache.RepoCache) (*cache.IdentityCache, error) {
 	// Look first in the cache
 	i, err := repo.ResolveIdentityImmutableMetadata(keyGithubLogin, "ghost")
 	if err == nil {

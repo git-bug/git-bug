@@ -1,4 +1,4 @@
-## git-bug id
+## git-bug user
 
 Display or change the user identity
 
@@ -7,16 +7,17 @@ Display or change the user identity
 Display or change the user identity
 
 ```
-git-bug id [<id>] [flags]
+git-bug user [<id>] [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for id
+  -h, --help   help for user
 ```
 
 ### SEE ALSO
 
 * [git-bug](git-bug.md)	 - A bug tracker embedded in Git
+* [git-bug user create](git-bug_user_create.md)	 - Create a new identity
 
