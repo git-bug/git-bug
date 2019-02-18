@@ -84,7 +84,7 @@ func ReadRemote(repo repository.Repo, remote string, id string) (*Identity, erro
 	return read(repo, ref)
 }
 
-// read will load and parse an identity frdm git
+// read will load and parse an identity from git
 func read(repo repository.Repo, ref string) (*Identity, error) {
 	refSplit := strings.Split(ref, "/")
 	id := refSplit[len(refSplit)-1]

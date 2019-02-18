@@ -38,7 +38,7 @@ func runUser(cmd *cobra.Command, args []string) error {
 	fmt.Printf("Name: %s\n", id.Name())
 	fmt.Printf("Login: %s\n", id.Login())
 	fmt.Printf("Email: %s\n", id.Email())
-	fmt.Printf("Protected: %v\n", id.IsProtected())
+	// fmt.Printf("Protected: %v\n", id.IsProtected())
 
 	return nil
 }

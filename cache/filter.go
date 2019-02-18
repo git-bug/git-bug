@@ -7,7 +7,7 @@ import (
 )
 
 // Filter is a functor that match a subset of bugs
-type Filter func(excerpt *BugExcerpt) bool
+type Filter func(repoCache *RepoCache, excerpt *BugExcerpt) bool
 
 // StatusFilter return a Filter that match a bug status
 func StatusFilter(query string) (Filter, error) {
@@ -16,24 +16,36 @@ func StatusFilter(query string) (Filter, error) {
 		return nil, err
 	}
 
-	return func(excerpt *BugExcerpt) bool {
+	return func(repoCache *RepoCache, excerpt *BugExcerpt) bool {
 		return excerpt.Status == status
 	}, nil
 }
 
 // AuthorFilter return a Filter that match a bug author
 func AuthorFilter(query string) Filter {
-	return func(excerpt *BugExcerpt) bool {
+	return func(repoCache *RepoCache, excerpt *BugExcerpt) bool {
 		query = strings.ToLower(query)
 
-		return strings.Contains(strings.ToLower(excerpt.Author.Name), query) ||
-			strings.Contains(strings.ToLower(excerpt.Author.Login), query)
+		// Normal identity
+		if excerpt.AuthorId != "" {
+			author, ok := repoCache.identitiesExcerpts[excerpt.AuthorId]
+			if !ok {
+				panic("missing identity in the cache")
+			}
+
+			return strings.Contains(strings.ToLower(author.Name), query) ||
+				strings.Contains(strings.ToLower(author.Login), query)
+		}
+
+		// Legacy identity support
+		return strings.Contains(strings.ToLower(excerpt.LegacyAuthor.Name), query) ||
+			strings.Contains(strings.ToLower(excerpt.LegacyAuthor.Login), query)
 	}
 }
 
 // LabelFilter return a Filter that match a label
 func LabelFilter(label string) Filter {
-	return func(excerpt *BugExcerpt) bool {
+	return func(repoCache *RepoCache, excerpt *BugExcerpt) bool {
 		for _, l := range excerpt.Labels {
 			if string(l) == label {
 				return true
@@ -45,7 +57,7 @@ func LabelFilter(label string) Filter {
 
 // NoLabelFilter return a Filter that match the absence of labels
 func NoLabelFilter() Filter {
-	return func(excerpt *BugExcerpt) bool {
+	return func(repoCache *RepoCache, excerpt *BugExcerpt) bool {
 		return len(excerpt.Labels) == 0
 	}
 }
@@ -59,20 +71,20 @@ type Filters struct {
 }
 
 // Match check if a bug match the set of filters
-func (f *Filters) Match(excerpt *BugExcerpt) bool {
-	if match := f.orMatch(f.Status, excerpt); !match {
+func (f *Filters) Match(repoCache *RepoCache, excerpt *BugExcerpt) bool {
+	if match := f.orMatch(f.Status, repoCache, excerpt); !match {
 		return false
 	}
 
-	if match := f.orMatch(f.Author, excerpt); !match {
+	if match := f.orMatch(f.Author, repoCache, excerpt); !match {
 		return false
 	}
 
-	if match := f.orMatch(f.Label, excerpt); !match {
+	if match := f.orMatch(f.Label, repoCache, excerpt); !match {
 		return false
 	}
 
-	if match := f.andMatch(f.NoFilters, excerpt); !match {
+	if match := f.andMatch(f.NoFilters, repoCache, excerpt); !match {
 		return false
 	}
 
@@ -80,28 +92,28 @@ func (f *Filters) Match(excerpt *BugExcerpt) bool {
 }
 
 // Check if any of the filters provided match the bug
-func (*Filters) orMatch(filters []Filter, excerpt *BugExcerpt) bool {
+func (*Filters) orMatch(filters []Filter, repoCache *RepoCache, excerpt *BugExcerpt) bool {
 	if len(filters) == 0 {
 		return true
 	}
 
 	match := false
 	for _, f := range filters {
-		match = match || f(excerpt)
+		match = match || f(repoCache, excerpt)
 	}
 
 	return match
 }
 
 // Check if all of the filters provided match the bug
-func (*Filters) andMatch(filters []Filter, excerpt *BugExcerpt) bool {
+func (*Filters) andMatch(filters []Filter, repoCache *RepoCache, excerpt *BugExcerpt) bool {
 	if len(filters) == 0 {
 		return true
 	}
 
 	match := true
 	for _, f := range filters {
-		match = match && f(excerpt)
+		match = match && f(repoCache, excerpt)
 	}
 
 	return match

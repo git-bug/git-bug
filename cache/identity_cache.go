@@ -21,10 +21,23 @@ func (i *IdentityCache) notifyUpdated() error {
 	return i.repoCache.identityUpdated(i.Identity.Id())
 }
 
+func (i *IdentityCache) AddVersion(version *identity.Version) error {
+	i.Identity.AddVersion(version)
+	return i.notifyUpdated()
+}
+
 func (i *IdentityCache) Commit() error {
-	return i.Identity.Commit(i.repoCache.repo)
+	err := i.Identity.Commit(i.repoCache.repo)
+	if err != nil {
+		return err
+	}
+	return i.notifyUpdated()
 }
 
 func (i *IdentityCache) CommitAsNeeded() error {
-	return i.Identity.CommitAsNeeded(i.repoCache.repo)
+	err := i.Identity.CommitAsNeeded(i.repoCache.repo)
+	if err != nil {
+		return err
+	}
+	return i.notifyUpdated()
 }

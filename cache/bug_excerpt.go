@@ -4,6 +4,7 @@ import (
 	"encoding/gob"
 
 	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
@@ -17,25 +18,49 @@ type BugExcerpt struct {
 	CreateUnixTime    int64
 	EditUnixTime      int64
 
-	Status   bug.Status
-	AuthorId string
-	Labels   []bug.Label
+	Status bug.Status
+	Labels []bug.Label
+
+	// If author is identity.Bare, LegacyAuthor is set
+	// If author is identity.Identity, AuthorId is set and data is deported
+	// in a IdentityExcerpt
+	LegacyAuthor LegacyAuthorExcerpt
+	AuthorId     string
 
 	CreateMetadata map[string]string
 }
 
+// identity.Bare data are directly embedded in the bug excerpt
+type LegacyAuthorExcerpt struct {
+	Name  string
+	Login string
+}
+
 func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
-	return &BugExcerpt{
+	e := &BugExcerpt{
 		Id:                b.Id(),
 		CreateLamportTime: b.CreateLamportTime(),
 		EditLamportTime:   b.EditLamportTime(),
 		CreateUnixTime:    b.FirstOp().GetUnixTime(),
 		EditUnixTime:      snap.LastEditUnix(),
 		Status:            snap.Status,
-		AuthorId:          snap.Author.Id(),
 		Labels:            snap.Labels,
 		CreateMetadata:    b.FirstOp().AllMetadata(),
 	}
+
+	switch snap.Author.(type) {
+	case *identity.Identity:
+		e.AuthorId = snap.Author.Id()
+	case *identity.Bare:
+		e.LegacyAuthor = LegacyAuthorExcerpt{
+			Login: snap.Author.Login(),
+			Name:  snap.Author.Name(),
+		}
+	default:
+		panic("unhandled identity type")
+	}
+
+	return e
 }
 
 // Package initialisation used to register the type for (de)serialization

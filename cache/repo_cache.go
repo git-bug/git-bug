@@ -27,6 +27,14 @@ const identityCacheFile = "identity-cache"
 // 2: added cache for identities with a reference in the bug cache
 const formatVersion = 2
 
+type ErrInvalidCacheFormat struct {
+	message string
+}
+
+func (e ErrInvalidCacheFormat) Error() string {
+	return e.message
+}
+
 // RepoCache is a cache for a Repository. This cache has multiple functions:
 //
 // 1. After being loaded, a Bug is kept in memory in the cache, allowing for fast
@@ -74,6 +82,9 @@ func NewRepoCache(r repository.ClockedRepo) (*RepoCache, error) {
 	err = c.load()
 	if err == nil {
 		return c, nil
+	}
+	if _, ok := err.(ErrInvalidCacheFormat); ok {
+		return nil, err
 	}
 
 	err = c.buildCache()
@@ -156,7 +167,8 @@ func (c *RepoCache) bugUpdated(id string) error {
 
 	c.bugExcerpts[id] = NewBugExcerpt(b.bug, b.Snapshot())
 
-	return c.write()
+	// we only need to write the bug cache
+	return c.writeBugCache()
 }
 
 // identityUpdated is a callback to trigger when the excerpt of an identity
@@ -169,11 +181,21 @@ func (c *RepoCache) identityUpdated(id string) error {
 
 	c.identitiesExcerpts[id] = NewIdentityExcerpt(i.Identity)
 
-	return c.write()
+	// we only need to write the identity cache
+	return c.writeIdentityCache()
+}
+
+// load will try to read from the disk all the cache files
+func (c *RepoCache) load() error {
+	err := c.loadBugCache()
+	if err != nil {
+		return err
+	}
+	return c.loadIdentityCache()
 }
 
 // load will try to read from the disk the bug cache file
-func (c *RepoCache) load() error {
+func (c *RepoCache) loadBugCache() error {
 	f, err := os.Open(bugCacheFilePath(c.repo))
 	if err != nil {
 		return err
@@ -191,16 +213,56 @@ func (c *RepoCache) load() error {
 		return err
 	}
 
-	if aux.Version != 1 {
-		return fmt.Errorf("unknown cache format version %v", aux.Version)
+	if aux.Version != 2 {
+		return ErrInvalidCacheFormat{
+			message: fmt.Sprintf("unknown cache format version %v", aux.Version),
+		}
 	}
 
 	c.bugExcerpts = aux.Excerpts
 	return nil
 }
 
-// write will serialize on disk the bug cache file
+// load will try to read from the disk the identity cache file
+func (c *RepoCache) loadIdentityCache() error {
+	f, err := os.Open(identityCacheFilePath(c.repo))
+	if err != nil {
+		return err
+	}
+
+	decoder := gob.NewDecoder(f)
+
+	aux := struct {
+		Version  uint
+		Excerpts map[string]*IdentityExcerpt
+	}{}
+
+	err = decoder.Decode(&aux)
+	if err != nil {
+		return err
+	}
+
+	if aux.Version != 2 {
+		return ErrInvalidCacheFormat{
+			message: fmt.Sprintf("unknown cache format version %v", aux.Version),
+		}
+	}
+
+	c.identitiesExcerpts = aux.Excerpts
+	return nil
+}
+
+// write will serialize on disk all the cache files
 func (c *RepoCache) write() error {
+	err := c.writeBugCache()
+	if err != nil {
+		return err
+	}
+	return c.writeIdentityCache()
+}
+
+// write will serialize on disk the bug cache file
+func (c *RepoCache) writeBugCache() error {
 	var data bytes.Buffer
 
 	aux := struct {
@@ -231,15 +293,63 @@ func (c *RepoCache) write() error {
 	return f.Close()
 }
 
+// write will serialize on disk the identity cache file
+func (c *RepoCache) writeIdentityCache() error {
+	var data bytes.Buffer
+
+	aux := struct {
+		Version  uint
+		Excerpts map[string]*IdentityExcerpt
+	}{
+		Version:  formatVersion,
+		Excerpts: c.identitiesExcerpts,
+	}
+
+	encoder := gob.NewEncoder(&data)
+
+	err := encoder.Encode(aux)
+	if err != nil {
+		return err
+	}
+
+	f, err := os.Create(identityCacheFilePath(c.repo))
+	if err != nil {
+		return err
+	}
+
+	_, err = f.Write(data.Bytes())
+	if err != nil {
+		return err
+	}
+
+	return f.Close()
+}
+
 func bugCacheFilePath(repo repository.Repo) string {
 	return path.Join(repo.GetPath(), ".git", "git-bug", bugCacheFile)
 }
 
 func identityCacheFilePath(repo repository.Repo) string {
-	return path.Join(repo.GetPath(), ".git", "git-bug", bugCacheFile)
+	return path.Join(repo.GetPath(), ".git", "git-bug", identityCacheFile)
 }
 
 func (c *RepoCache) buildCache() error {
+	_, _ = fmt.Fprintf(os.Stderr, "Building identity cache... ")
+
+	c.identitiesExcerpts = make(map[string]*IdentityExcerpt)
+
+	allIdentities := identity.ReadAllLocalIdentities(c.repo)
+
+	for i := range allIdentities {
+		if i.Err != nil {
+			return i.Err
+		}
+
+		c.identitiesExcerpts[i.Identity.Id()] = NewIdentityExcerpt(i.Identity)
+	}
+
+	_, _ = fmt.Fprintln(os.Stderr, "Done.")
+
 	_, _ = fmt.Fprintf(os.Stderr, "Building bug cache... ")
 
 	c.bugExcerpts = make(map[string]*BugExcerpt)
@@ -333,7 +443,7 @@ func (c *RepoCache) QueryBugs(query *Query) []string {
 	var filtered []*BugExcerpt
 
 	for _, excerpt := range c.bugExcerpts {
-		if query.Match(excerpt) {
+		if query.Match(c, excerpt) {
 			filtered = append(filtered, excerpt)
 		}
 	}
@@ -463,11 +573,15 @@ func (c *RepoCache) NewBugRaw(author *IdentityCache, unixTime int64, title strin
 // Fetch retrieve update from a remote
 // This does not change the local bugs state
 func (c *RepoCache) Fetch(remote string) (string, error) {
+	// TODO: add identities
+
 	return bug.Fetch(c.repo, remote)
 }
 
 // MergeAll will merge all the available remote bug
 func (c *RepoCache) MergeAll(remote string) <-chan bug.MergeResult {
+	// TODO: add identities
+
 	out := make(chan bug.MergeResult)
 
 	// Intercept merge results to update the cache properly
@@ -505,6 +619,8 @@ func (c *RepoCache) MergeAll(remote string) <-chan bug.MergeResult {
 
 // Push update a remote with the local changes
 func (c *RepoCache) Push(remote string) (string, error) {
+	// TODO: add identities
+
 	return bug.Push(c.repo, remote)
 }
 
@@ -653,6 +769,11 @@ func (c *RepoCache) SetUserIdentity(i *IdentityCache) error {
 	err := identity.SetUserIdentity(c.repo, i.Identity)
 	if err != nil {
 		return err
+	}
+
+	// Make sure that everything is fine
+	if _, ok := c.identities[i.Id()]; !ok {
+		panic("SetUserIdentity while the identity is not from the cache, something is wrong")
 	}
 
 	c.userIdentityId = i.Id()
