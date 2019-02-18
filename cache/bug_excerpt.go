@@ -17,16 +17,11 @@ type BugExcerpt struct {
 	CreateUnixTime    int64
 	EditUnixTime      int64
 
-	Status bug.Status
-	Author AuthorExcerpt
-	Labels []bug.Label
+	Status   bug.Status
+	AuthorId string
+	Labels   []bug.Label
 
 	CreateMetadata map[string]string
-}
-
-type AuthorExcerpt struct {
-	Name  string
-	Login string
 }
 
 func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
@@ -37,12 +32,9 @@ func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
 		CreateUnixTime:    b.FirstOp().GetUnixTime(),
 		EditUnixTime:      snap.LastEditUnix(),
 		Status:            snap.Status,
-		Author: AuthorExcerpt{
-			Login: snap.Author.Login(),
-			Name:  snap.Author.Name(),
-		},
-		Labels:         snap.Labels,
-		CreateMetadata: b.FirstOp().AllMetadata(),
+		AuthorId:          snap.Author.Id(),
+		Labels:            snap.Labels,
+		CreateMetadata:    b.FirstOp().AllMetadata(),
 	}
 }
 

@@ -4,7 +4,7 @@ import (
 	"github.com/MichaelMure/git-bug/identity"
 )
 
-// IdentityCache is a wrapper around an Identity. It provide multiple functions:
+// IdentityCache is a wrapper around an Identity for caching.
 type IdentityCache struct {
 	*identity.Identity
 	repoCache *RepoCache
@@ -15,6 +15,10 @@ func NewIdentityCache(repoCache *RepoCache, id *identity.Identity) *IdentityCach
 		Identity:  id,
 		repoCache: repoCache,
 	}
+}
+
+func (i *IdentityCache) notifyUpdated() error {
+	return i.repoCache.identityUpdated(i.Identity.Id())
 }
 
 func (i *IdentityCache) Commit() error {

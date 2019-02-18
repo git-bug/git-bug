@@ -228,9 +228,17 @@ func (c *BugCache) EditCommentRaw(author *IdentityCache, unixTime int64, target 
 }
 
 func (c *BugCache) Commit() error {
-	return c.bug.Commit(c.repoCache.repo)
+	err := c.bug.Commit(c.repoCache.repo)
+	if err != nil {
+		return err
+	}
+	return c.notifyUpdated()
 }
 
 func (c *BugCache) CommitAsNeeded() error {
-	return c.bug.CommitAsNeeded(c.repoCache.repo)
+	err := c.bug.CommitAsNeeded(c.repoCache.repo)
+	if err != nil {
+		return err
+	}
+	return c.notifyUpdated()
 }

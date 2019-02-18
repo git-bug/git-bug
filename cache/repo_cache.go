@@ -20,8 +20,12 @@ import (
 	"github.com/MichaelMure/git-bug/util/process"
 )
 
-const cacheFile = "cache"
-const formatVersion = 1
+const bugCacheFile = "bug-cache"
+const identityCacheFile = "identity-cache"
+
+// 1: original format
+// 2: added cache for identities with a reference in the bug cache
+const formatVersion = 2
 
 // RepoCache is a cache for a Repository. This cache has multiple functions:
 //
@@ -40,12 +44,17 @@ const formatVersion = 1
 type RepoCache struct {
 	// the underlying repo
 	repo repository.ClockedRepo
+
 	// excerpt of bugs data for all bugs
-	excerpts map[string]*BugExcerpt
+	bugExcerpts map[string]*BugExcerpt
 	// bug loaded in memory
 	bugs map[string]*BugCache
+
+	// excerpt of identities data for all identities
+	identitiesExcerpts map[string]*IdentityExcerpt
 	// identities loaded in memory
 	identities map[string]*IdentityCache
+
 	// the user identity's id, if known
 	userIdentityId string
 }
@@ -145,14 +154,27 @@ func (c *RepoCache) bugUpdated(id string) error {
 		panic("missing bug in the cache")
 	}
 
-	c.excerpts[id] = NewBugExcerpt(b.bug, b.Snapshot())
+	c.bugExcerpts[id] = NewBugExcerpt(b.bug, b.Snapshot())
+
+	return c.write()
+}
+
+// identityUpdated is a callback to trigger when the excerpt of an identity
+// changed, that is each time an identity is updated
+func (c *RepoCache) identityUpdated(id string) error {
+	i, ok := c.identities[id]
+	if !ok {
+		panic("missing identity in the cache")
+	}
+
+	c.identitiesExcerpts[id] = NewIdentityExcerpt(i.Identity)
 
 	return c.write()
 }
 
 // load will try to read from the disk the bug cache file
 func (c *RepoCache) load() error {
-	f, err := os.Open(cacheFilePath(c.repo))
+	f, err := os.Open(bugCacheFilePath(c.repo))
 	if err != nil {
 		return err
 	}
@@ -173,7 +195,7 @@ func (c *RepoCache) load() error {
 		return fmt.Errorf("unknown cache format version %v", aux.Version)
 	}
 
-	c.excerpts = aux.Excerpts
+	c.bugExcerpts = aux.Excerpts
 	return nil
 }
 
@@ -186,7 +208,7 @@ func (c *RepoCache) write() error {
 		Excerpts map[string]*BugExcerpt
 	}{
 		Version:  formatVersion,
-		Excerpts: c.excerpts,
+		Excerpts: c.bugExcerpts,
 	}
 
 	encoder := gob.NewEncoder(&data)
@@ -196,7 +218,7 @@ func (c *RepoCache) write() error {
 		return err
 	}
 
-	f, err := os.Create(cacheFilePath(c.repo))
+	f, err := os.Create(bugCacheFilePath(c.repo))
 	if err != nil {
 		return err
 	}
@@ -209,14 +231,18 @@ func (c *RepoCache) write() error {
 	return f.Close()
 }
 
-func cacheFilePath(repo repository.Repo) string {
-	return path.Join(repo.GetPath(), ".git", "git-bug", cacheFile)
+func bugCacheFilePath(repo repository.Repo) string {
+	return path.Join(repo.GetPath(), ".git", "git-bug", bugCacheFile)
+}
+
+func identityCacheFilePath(repo repository.Repo) string {
+	return path.Join(repo.GetPath(), ".git", "git-bug", bugCacheFile)
 }
 
 func (c *RepoCache) buildCache() error {
 	_, _ = fmt.Fprintf(os.Stderr, "Building bug cache... ")
 
-	c.excerpts = make(map[string]*BugExcerpt)
+	c.bugExcerpts = make(map[string]*BugExcerpt)
 
 	allBugs := bug.ReadAllLocalBugs(c.repo)
 
@@ -226,7 +252,7 @@ func (c *RepoCache) buildCache() error {
 		}
 
 		snap := b.Bug.Compile()
-		c.excerpts[b.Bug.Id()] = NewBugExcerpt(b.Bug, &snap)
+		c.bugExcerpts[b.Bug.Id()] = NewBugExcerpt(b.Bug, &snap)
 	}
 
 	_, _ = fmt.Fprintln(os.Stderr, "Done.")
@@ -257,7 +283,7 @@ func (c *RepoCache) ResolveBugPrefix(prefix string) (*BugCache, error) {
 	// preallocate but empty
 	matching := make([]string, 0, 5)
 
-	for id := range c.excerpts {
+	for id := range c.bugExcerpts {
 		if strings.HasPrefix(id, prefix) {
 			matching = append(matching, id)
 		}
@@ -281,7 +307,7 @@ func (c *RepoCache) ResolveBugCreateMetadata(key string, value string) (*BugCach
 	// preallocate but empty
 	matching := make([]string, 0, 5)
 
-	for id, excerpt := range c.excerpts {
+	for id, excerpt := range c.bugExcerpts {
 		if excerpt.CreateMetadata[key] == value {
 			matching = append(matching, id)
 		}
@@ -306,7 +332,7 @@ func (c *RepoCache) QueryBugs(query *Query) []string {
 
 	var filtered []*BugExcerpt
 
-	for _, excerpt := range c.excerpts {
+	for _, excerpt := range c.bugExcerpts {
 		if query.Match(excerpt) {
 			filtered = append(filtered, excerpt)
 		}
@@ -342,20 +368,15 @@ func (c *RepoCache) QueryBugs(query *Query) []string {
 
 // AllBugsIds return all known bug ids
 func (c *RepoCache) AllBugsIds() []string {
-	result := make([]string, len(c.excerpts))
+	result := make([]string, len(c.bugExcerpts))
 
 	i := 0
-	for _, excerpt := range c.excerpts {
+	for _, excerpt := range c.bugExcerpts {
 		result[i] = excerpt.Id
 		i++
 	}
 
 	return result
-}
-
-// ClearAllBugs clear all bugs kept in memory
-func (c *RepoCache) ClearAllBugs() {
-	c.bugs = make(map[string]*BugCache)
 }
 
 // ValidLabels list valid labels
@@ -366,7 +387,7 @@ func (c *RepoCache) ClearAllBugs() {
 func (c *RepoCache) ValidLabels() []bug.Label {
 	set := map[bug.Label]interface{}{}
 
-	for _, excerpt := range c.excerpts {
+	for _, excerpt := range c.bugExcerpts {
 		for _, l := range excerpt.Labels {
 			set[l] = nil
 		}
@@ -467,7 +488,7 @@ func (c *RepoCache) MergeAll(remote string) <-chan bug.MergeResult {
 			case bug.MergeStatusNew, bug.MergeStatusUpdated:
 				b := result.Bug
 				snap := b.Compile()
-				c.excerpts[id] = NewBugExcerpt(b, &snap)
+				c.bugExcerpts[id] = NewBugExcerpt(b, &snap)
 			}
 		}
 
@@ -615,6 +636,19 @@ func (c *RepoCache) ResolveIdentityImmutableMetadata(key string, value string) (
 	return c.ResolveIdentity(matching[0])
 }
 
+// AllIdentityIds return all known identity ids
+func (c *RepoCache) AllIdentityIds() []string {
+	result := make([]string, len(c.identitiesExcerpts))
+
+	i := 0
+	for _, excerpt := range c.identitiesExcerpts {
+		result[i] = excerpt.Id
+		i++
+	}
+
+	return result
+}
+
 func (c *RepoCache) SetUserIdentity(i *IdentityCache) error {
 	err := identity.SetUserIdentity(c.repo, i.Identity)
 	if err != nil {
@@ -676,6 +710,12 @@ func (c *RepoCache) NewIdentityRaw(name string, email string, login string, avat
 
 	cached := NewIdentityCache(c, i)
 	c.identities[i.Id()] = cached
+
+	// force the write of the excerpt
+	err = c.identityUpdated(i.Id())
+	if err != nil {
+		return nil, err
+	}
 
 	return cached, nil
 }
