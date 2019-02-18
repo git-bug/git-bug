@@ -160,11 +160,13 @@ type ComplexityRoot struct {
 	}
 
 	Identity struct {
+		Id          func(childComplexity int) int
 		Name        func(childComplexity int) int
 		Email       func(childComplexity int) int
 		Login       func(childComplexity int) int
 		DisplayName func(childComplexity int) int
 		AvatarUrl   func(childComplexity int) int
+		IsProtected func(childComplexity int) int
 	}
 
 	LabelChangeOperation struct {
@@ -294,11 +296,13 @@ type EditCommentOperationResolver interface {
 	Date(ctx context.Context, obj *bug.EditCommentOperation) (time.Time, error)
 }
 type IdentityResolver interface {
+	ID(ctx context.Context, obj *identity.Interface) (string, error)
 	Name(ctx context.Context, obj *identity.Interface) (*string, error)
 	Email(ctx context.Context, obj *identity.Interface) (*string, error)
 	Login(ctx context.Context, obj *identity.Interface) (*string, error)
 	DisplayName(ctx context.Context, obj *identity.Interface) (string, error)
 	AvatarURL(ctx context.Context, obj *identity.Interface) (*string, error)
+	IsProtected(ctx context.Context, obj *identity.Interface) (bool, error)
 }
 type LabelChangeOperationResolver interface {
 	Date(ctx context.Context, obj *bug.LabelChangeOperation) (time.Time, error)
@@ -1454,6 +1458,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.EditCommentOperation.Files(childComplexity), true
 
+	case "Identity.id":
+		if e.complexity.Identity.Id == nil {
+			break
+		}
+
+		return e.complexity.Identity.Id(childComplexity), true
+
 	case "Identity.name":
 		if e.complexity.Identity.Name == nil {
 			break
@@ -1488,6 +1499,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Identity.AvatarUrl(childComplexity), true
+
+	case "Identity.isProtected":
+		if e.complexity.Identity.IsProtected == nil {
+			break
+		}
+
+		return e.complexity.Identity.IsProtected(childComplexity), true
 
 	case "LabelChangeOperation.hash":
 		if e.complexity.LabelChangeOperation.Hash == nil {
@@ -4653,6 +4671,15 @@ func (ec *executionContext) _Identity(ctx context.Context, sel ast.SelectionSet,
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Identity")
+		case "id":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._Identity_id(ctx, field, obj)
+				if out.Values[i] == graphql.Null {
+					invalid = true
+				}
+				wg.Done()
+			}(i, field)
 		case "name":
 			wg.Add(1)
 			go func(i int, field graphql.CollectedField) {
@@ -4686,6 +4713,15 @@ func (ec *executionContext) _Identity(ctx context.Context, sel ast.SelectionSet,
 				out.Values[i] = ec._Identity_avatarUrl(ctx, field, obj)
 				wg.Done()
 			}(i, field)
+		case "isProtected":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._Identity_isProtected(ctx, field, obj)
+				if out.Values[i] == graphql.Null {
+					invalid = true
+				}
+				wg.Done()
+			}(i, field)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4695,6 +4731,33 @@ func (ec *executionContext) _Identity(ctx context.Context, sel ast.SelectionSet,
 		return graphql.Null
 	}
 	return out
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Identity_id(ctx context.Context, field graphql.CollectedField, obj *identity.Interface) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Identity",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Identity().ID(rctx, obj)
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return graphql.MarshalString(res)
 }
 
 // nolint: vetshadow
@@ -4834,6 +4897,33 @@ func (ec *executionContext) _Identity_avatarUrl(ctx context.Context, field graph
 		return graphql.Null
 	}
 	return graphql.MarshalString(*res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Identity_isProtected(ctx context.Context, field graphql.CollectedField, obj *identity.Interface) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Identity",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Identity().IsProtected(rctx, obj)
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return graphql.MarshalBoolean(res)
 }
 
 var labelChangeOperationImplementors = []string{"LabelChangeOperation", "Operation", "Authored"}
@@ -8974,10 +9064,11 @@ type Repository {
   ): BugConnection!
   bug(prefix: String!): Bug
 }
-
 `},
 	&ast.Source{Name: "schema/identity.graphql", Input: `"""Represents an identity"""
 type Identity {
+    """The identifier for this identity"""
+    id: String!
     """The name of the person, if known."""
     name: String
     """The email of the person, if known."""
@@ -8988,6 +9079,9 @@ type Identity {
     displayName: String!
     """An url to an avatar"""
     avatarUrl: String
+    """isProtected is true if the chain of git commits started to be signed.
+    If that's the case, only signed commit with a valid key for this identity can be added."""
+    isProtected: Boolean!
 }`},
 	&ast.Source{Name: "schema/operations.graphql", Input: `"""An operation applied to a bug."""
 interface Operation {
@@ -9088,7 +9182,8 @@ type LabelChangeOperation implements Operation & Authored {
 
     added: [Label!]!
     removed: [Label!]!
-}`},
+}
+`},
 	&ast.Source{Name: "schema/root.graphql", Input: `scalar Time
 scalar Label
 scalar Hash
@@ -9126,7 +9221,8 @@ type Mutation {
     setTitle(repoRef: String, prefix: String!, title: String!): Bug!
 
     commit(repoRef: String, prefix: String!): Bug!
-}`},
+}
+`},
 	&ast.Source{Name: "schema/timeline.graphql", Input: `"""An item in the timeline of events"""
 interface TimelineItem {
     """The hash of the source operation"""
@@ -9212,5 +9308,6 @@ type SetTitleTimelineItem implements TimelineItem {
     date: Time!
     title: String!
     was: String!
-}`},
+}
+`},
 )

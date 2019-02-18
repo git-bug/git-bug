@@ -8,6 +8,10 @@ import (
 
 type identityResolver struct{}
 
+func (identityResolver) ID(ctx context.Context, obj *identity.Interface) (string, error) {
+	return (*obj).Id(), nil
+}
+
 func (identityResolver) Name(ctx context.Context, obj *identity.Interface) (*string, error) {
 	return nilIfEmpty((*obj).Name())
 }
@@ -26,6 +30,10 @@ func (identityResolver) DisplayName(ctx context.Context, obj *identity.Interface
 
 func (identityResolver) AvatarURL(ctx context.Context, obj *identity.Interface) (*string, error) {
 	return nilIfEmpty((*obj).AvatarUrl())
+}
+
+func (identityResolver) IsProtected(ctx context.Context, obj *identity.Interface) (bool, error) {
+	return (*obj).IsProtected(), nil
 }
 
 func nilIfEmpty(s string) (*string, error) {
