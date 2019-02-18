@@ -65,6 +65,7 @@ func (i *Bare) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// Id return the Identity identifier
 func (i *Bare) Id() string {
 	// We don't have a proper ID at hand, so let's hash all the data to get one.
 	// Hopefully the
@@ -84,18 +85,22 @@ func (i *Bare) Id() string {
 	return i.id
 }
 
+// Name return the last version of the name
 func (i *Bare) Name() string {
 	return i.name
 }
 
+// Email return the last version of the email
 func (i *Bare) Email() string {
 	return i.email
 }
 
+// Login return the last version of the login
 func (i *Bare) Login() string {
 	return i.login
 }
 
+// AvatarUrl return the last version of the Avatar URL
 func (i *Bare) AvatarUrl() string {
 	return i.avatarUrl
 }
@@ -164,12 +169,14 @@ func (i *Bare) Validate() error {
 
 // Write the identity into the Repository. In particular, this ensure that
 // the Id is properly set.
-func (i *Bare) Commit(repo repository.Repo) error {
+func (i *Bare) Commit(repo repository.ClockedRepo) error {
 	// Nothing to do, everything is directly embedded
 	return nil
 }
 
-func (i *Bare) CommitAsNeeded(repo repository.Repo) error {
+// If needed, write the identity into the Repository. In particular, this
+// ensure that the Id is properly set.
+func (i *Bare) CommitAsNeeded(repo repository.ClockedRepo) error {
 	// Nothing to do, everything is directly embedded
 	return nil
 }

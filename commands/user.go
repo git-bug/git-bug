@@ -23,8 +23,6 @@ func runUser(cmd *cobra.Command, args []string) error {
 
 	var id *cache.IdentityCache
 	if len(args) == 1 {
-		// TODO
-		return errors.New("this is not working yet, cache need to be hacked on")
 		id, err = backend.ResolveIdentityPrefix(args[0])
 	} else {
 		id, err = backend.GetUserIdentity()

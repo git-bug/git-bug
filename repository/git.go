@@ -20,6 +20,8 @@ const editClockFile = "/.git/git-bug/edit-clock"
 // ErrNotARepo is the error returned when the git repo root wan't be found
 var ErrNotARepo = errors.New("not a git repository")
 
+var _ ClockedRepo = &GitRepo{}
+
 // GitRepo represents an instance of a (local) git repository.
 type GitRepo struct {
 	Path        string
@@ -440,9 +442,19 @@ func (repo *GitRepo) WriteClocks() error {
 	return nil
 }
 
+// CreateTime return the current value of the creation clock
+func (repo *GitRepo) CreateTime() lamport.Time {
+	return repo.createClock.Time()
+}
+
 // CreateTimeIncrement increment the creation clock and return the new value.
 func (repo *GitRepo) CreateTimeIncrement() (lamport.Time, error) {
 	return repo.createClock.Increment()
+}
+
+// EditTime return the current value of the edit clock
+func (repo *GitRepo) EditTime() lamport.Time {
+	return repo.editClock.Time()
 }
 
 // EditTimeIncrement increment the edit clock and return the new value.

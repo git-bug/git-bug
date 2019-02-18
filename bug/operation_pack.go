@@ -138,7 +138,7 @@ func (opp *OperationPack) Validate() error {
 
 // Write will serialize and store the OperationPack as a git blob and return
 // its hash
-func (opp *OperationPack) Write(repo repository.Repo) (git.Hash, error) {
+func (opp *OperationPack) Write(repo repository.ClockedRepo) (git.Hash, error) {
 	// make sure we don't write invalid data
 	err := opp.Validate()
 	if err != nil {

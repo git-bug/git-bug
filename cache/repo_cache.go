@@ -712,7 +712,7 @@ func (c *RepoCache) ResolveIdentityPrefix(prefix string) (*IdentityCache, error)
 	// preallocate but empty
 	matching := make([]string, 0, 5)
 
-	for id := range c.identities {
+	for id := range c.identitiesExcerpts {
 		if strings.HasPrefix(id, prefix) {
 			matching = append(matching, id)
 		}

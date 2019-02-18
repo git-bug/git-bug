@@ -76,11 +76,11 @@ func (IdentityStub) Validate() error {
 	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 
-func (IdentityStub) Commit(repo repository.Repo) error {
+func (IdentityStub) Commit(repo repository.ClockedRepo) error {
 	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 
-func (i *IdentityStub) CommitAsNeeded(repo repository.Repo) error {
+func (i *IdentityStub) CommitAsNeeded(repo repository.ClockedRepo) error {
 	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 

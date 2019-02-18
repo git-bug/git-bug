@@ -17,14 +17,11 @@ const formatVersion = 1
 
 // Version is a complete set of information about an Identity at a point in time.
 type Version struct {
-	// Not serialized
-	commitHash git.Hash
-
-	// Todo: add unix timestamp for ordering with identical lamport time ?
-
 	// The lamport time at which this version become effective
 	// The reference time is the bug edition lamport clock
-	time lamport.Time
+	// It must be the first field in this struct due to https://github.com/golang/go/issues/599
+	time     lamport.Time
+	unixTime int64
 
 	name      string
 	email     string
@@ -43,6 +40,9 @@ type Version struct {
 
 	// A set of arbitrary key/value to store metadata about a version or about an Identity in general.
 	metadata map[string]string
+
+	// Not serialized
+	commitHash git.Hash
 }
 
 type VersionJSON struct {
@@ -50,6 +50,7 @@ type VersionJSON struct {
 	FormatVersion uint `json:"version"`
 
 	Time      lamport.Time      `json:"time"`
+	UnixTime  int64             `json:"unix_time"`
 	Name      string            `json:"name"`
 	Email     string            `json:"email"`
 	Login     string            `json:"login"`
@@ -63,6 +64,7 @@ func (v *Version) MarshalJSON() ([]byte, error) {
 	return json.Marshal(VersionJSON{
 		FormatVersion: formatVersion,
 		Time:          v.time,
+		UnixTime:      v.unixTime,
 		Name:          v.name,
 		Email:         v.email,
 		Login:         v.login,
@@ -85,6 +87,7 @@ func (v *Version) UnmarshalJSON(data []byte) error {
 	}
 
 	v.time = aux.Time
+	v.unixTime = aux.UnixTime
 	v.name = aux.Name
 	v.email = aux.Email
 	v.login = aux.Login
@@ -97,6 +100,10 @@ func (v *Version) UnmarshalJSON(data []byte) error {
 }
 
 func (v *Version) Validate() error {
+	if v.unixTime == 0 {
+		return fmt.Errorf("unix time not set")
+	}
+
 	if text.Empty(v.name) && text.Empty(v.login) {
 		return fmt.Errorf("either name or login should be set")
 	}

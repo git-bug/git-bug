@@ -9,6 +9,8 @@ import (
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
+var _ ClockedRepo = &mockRepoForTest{}
+
 // mockRepoForTest defines an instance of Repo that can be used for testing.
 type mockRepoForTest struct {
 	config      map[string]string
@@ -227,8 +229,16 @@ func (r *mockRepoForTest) WriteClocks() error {
 	return nil
 }
 
+func (r *mockRepoForTest) CreateTime() lamport.Time {
+	return r.createClock.Time()
+}
+
 func (r *mockRepoForTest) CreateTimeIncrement() (lamport.Time, error) {
 	return r.createClock.Increment(), nil
+}
+
+func (r *mockRepoForTest) EditTime() lamport.Time {
+	return r.editClock.Time()
 }
 
 func (r *mockRepoForTest) EditTimeIncrement() (lamport.Time, error) {

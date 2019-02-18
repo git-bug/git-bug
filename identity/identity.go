@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -252,8 +253,8 @@ func (i *Identity) AddVersion(version *Version) {
 
 // Write the identity into the Repository. In particular, this ensure that
 // the Id is properly set.
-func (i *Identity) Commit(repo repository.Repo) error {
-	// Todo: check for mismatch between memory and commited data
+func (i *Identity) Commit(repo repository.ClockedRepo) error {
+	// Todo: check for mismatch between memory and commit data
 
 	if !i.NeedCommit() {
 		return fmt.Errorf("can't commit an identity with no pending version")
@@ -266,9 +267,13 @@ func (i *Identity) Commit(repo repository.Repo) error {
 	for _, v := range i.versions {
 		if v.commitHash != "" {
 			i.lastCommit = v.commitHash
-			// ignore already commited versions
+			// ignore already commit versions
 			continue
 		}
+
+		// get the times where new versions starts to be valid
+		v.time = repo.EditTime()
+		v.unixTime = time.Now().Unix()
 
 		blobHash, err := v.Write(repo)
 		if err != nil {
@@ -319,7 +324,7 @@ func (i *Identity) Commit(repo repository.Repo) error {
 	return nil
 }
 
-func (i *Identity) CommitAsNeeded(repo repository.Repo) error {
+func (i *Identity) CommitAsNeeded(repo repository.ClockedRepo) error {
 	if !i.NeedCommit() {
 		return nil
 	}
