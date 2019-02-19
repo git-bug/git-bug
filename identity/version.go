@@ -100,8 +100,12 @@ func (v *Version) UnmarshalJSON(data []byte) error {
 }
 
 func (v *Version) Validate() error {
-	if v.unixTime == 0 {
+	// time must be set after a commit
+	if v.commitHash != "" && v.unixTime == 0 {
 		return fmt.Errorf("unix time not set")
+	}
+	if v.commitHash != "" && v.time == 0 {
+		return fmt.Errorf("lamport time not set")
 	}
 
 	if text.Empty(v.name) && text.Empty(v.login) {

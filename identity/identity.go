@@ -416,7 +416,7 @@ func (i *Identity) Validate() error {
 			return err
 		}
 
-		if v.time < lastTime {
+		if v.commitHash != "" && v.time < lastTime {
 			return fmt.Errorf("non-chronological version (%d --> %d)", lastTime, v.time)
 		}
 
