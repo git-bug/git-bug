@@ -194,7 +194,7 @@ func cacheFilePath(repo repository.Repo) string {
 }
 
 func (c *RepoCache) buildCache() error {
-	fmt.Printf("Building bug cache... ")
+	_, _ = fmt.Fprintf(os.Stderr, "Building bug cache... ")
 
 	c.excerpts = make(map[string]*BugExcerpt)
 
@@ -209,7 +209,7 @@ func (c *RepoCache) buildCache() error {
 		c.excerpts[b.Bug.Id()] = NewBugExcerpt(b.Bug, &snap)
 	}
 
-	fmt.Println("Done.")
+	_, _ = fmt.Fprintln(os.Stderr, "Done.")
 	return nil
 }
 
