@@ -17,8 +17,6 @@ var repo repository.ClockedRepo
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
-	Version: "0.4.0",
-
 	Use:   rootCommandName,
 	Short: "A bug tracker embedded in Git",
 	Long: `git-bug is a bug tracker embedded in git.

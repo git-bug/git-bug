@@ -39,5 +39,6 @@ git-bug [flags]
 * [git-bug status](git-bug_status.md)	 - Display or change a bug status
 * [git-bug termui](git-bug_termui.md)	 - Launch the terminal UI
 * [git-bug title](git-bug_title.md)	 - Display or change a title
+* [git-bug version](git-bug_version.md)	 - Show git-bug version information
 * [git-bug webui](git-bug_webui.md)	 - Launch the web UI
 

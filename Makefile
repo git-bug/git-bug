@@ -1,13 +1,21 @@
 all: build
 
+GIT_COMMIT:=$(shell git rev-list -1 HEAD)
+GIT_LAST_TAG:=$(shell git describe --abbrev=0 --tags)
+GIT_EXACT_TAG:=$(shell git name-rev --name-only --tags HEAD)
+COMMANDS_PATH:=github.com/MichaelMure/git-bug/commands
+LDFLAGS:=-X ${COMMANDS_PATH}.GitCommit=${GIT_COMMIT} \
+	-X ${COMMANDS_PATH}.GitLastTag=${GIT_LAST_TAG} \
+	-X ${COMMANDS_PATH}.GitExactTag=${GIT_EXACT_TAG}
+
 build:
 	go generate
-	go build .
+	go build -ldflags "$(LDFLAGS)" .
 
 # produce a build debugger friendly
 debug-build:
 	go generate
-	go build -gcflags=all="-N -l" .
+	go build -ldflags "$(LDFLAGS)" -gcflags=all="-N -l" .
 
 install:
 	go generate

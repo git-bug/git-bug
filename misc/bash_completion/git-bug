@@ -779,6 +779,35 @@ _git-bug_title()
     noun_aliases=()
 }
 
+_git-bug_version()
+{
+    last_command="git-bug_version"
+
+    command_aliases=()
+
+    commands=()
+
+    flags=()
+    two_word_flags=()
+    local_nonpersistent_flags=()
+    flags_with_completion=()
+    flags_completion=()
+
+    flags+=("--number")
+    flags+=("-n")
+    local_nonpersistent_flags+=("--number")
+    flags+=("--commit")
+    flags+=("-c")
+    local_nonpersistent_flags+=("--commit")
+    flags+=("--all")
+    flags+=("-a")
+    local_nonpersistent_flags+=("--all")
+
+    must_have_one_flag=()
+    must_have_one_noun=()
+    noun_aliases=()
+}
+
 _git-bug_webui()
 {
     last_command="git-bug_webui"
@@ -824,6 +853,7 @@ _git-bug_root_command()
     commands+=("status")
     commands+=("termui")
     commands+=("title")
+    commands+=("version")
     commands+=("webui")
 
     flags=()
