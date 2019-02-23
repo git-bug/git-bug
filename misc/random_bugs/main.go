@@ -17,7 +17,7 @@ func main() {
 		panic(err)
 	}
 
-	repo, err := repository.NewGitRepo(dir, func(repo *repository.GitRepo) error {
+	repo, err := repository.NewGitRepo(dir, func(repo repository.ClockedRepo) error {
 		return nil
 	})
 	if err != nil {
