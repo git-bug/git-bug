@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/input"
@@ -57,7 +58,7 @@ func runUserCreate(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Println()
+	_, _ = fmt.Fprintln(os.Stderr)
 	fmt.Println(id.Id())
 
 	return nil

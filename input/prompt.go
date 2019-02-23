@@ -18,9 +18,9 @@ func PromptValueRequired(name string, preValue string) (string, error) {
 func promptValue(name string, preValue string, required bool) (string, error) {
 	for {
 		if preValue != "" {
-			fmt.Printf("%s [%s]: ", name, preValue)
+			_, _ = fmt.Fprintf(os.Stderr, "%s [%s]: ", name, preValue)
 		} else {
-			fmt.Printf("%s: ", name)
+			_, _ = fmt.Fprintf(os.Stderr, "%s: ", name)
 		}
 
 		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
@@ -35,7 +35,7 @@ func promptValue(name string, preValue string, required bool) (string, error) {
 		}
 
 		if required && line == "" {
-			fmt.Printf("%s is empty\n", name)
+			_, _ = fmt.Fprintf(os.Stderr, "%s is empty\n", name)
 			continue
 		}
 

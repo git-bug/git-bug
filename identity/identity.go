@@ -4,6 +4,7 @@ package identity
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -20,6 +21,8 @@ const versionEntryName = "version"
 const identityConfigKey = "git-bug.identity"
 
 var ErrNonFastForwardMerge = errors.New("non fast-forward identity merge")
+var ErrNoIdentitySet = errors.New("user identity first needs to be created using \"git bug user create\"")
+var ErrMultipleIdentitiesSet = errors.New("multiple user identities set")
 
 var _ Interface = &Identity{}
 
@@ -213,7 +216,7 @@ func IsUserIdentitySet(repo repository.RepoCommon) (bool, error) {
 	}
 
 	if len(configs) > 1 {
-		return false, fmt.Errorf("multiple identity config exist")
+		return false, ErrMultipleIdentitiesSet
 	}
 
 	return len(configs) == 1, nil
@@ -232,11 +235,11 @@ func GetUserIdentity(repo repository.Repo) (*Identity, error) {
 	}
 
 	if len(configs) == 0 {
-		return nil, fmt.Errorf("no identity set")
+		return nil, ErrNoIdentitySet
 	}
 
 	if len(configs) > 1 {
-		return nil, fmt.Errorf("multiple identity config exist")
+		return nil, ErrMultipleIdentitiesSet
 	}
 
 	var id string
@@ -244,7 +247,16 @@ func GetUserIdentity(repo repository.Repo) (*Identity, error) {
 		id = val
 	}
 
-	return ReadLocal(repo, id)
+	i, err := ReadLocal(repo, id)
+	if err == ErrIdentityNotExist {
+		innerErr := repo.RmConfigs(identityConfigKey)
+		if innerErr != nil {
+			_, _ = fmt.Fprintln(os.Stderr, errors.Wrap(innerErr, "can't clear user identity").Error())
+		}
+		return nil, err
+	}
+
+	return i, nil
 }
 
 func (i *Identity) AddVersion(version *Version) {

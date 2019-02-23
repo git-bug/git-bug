@@ -6,7 +6,7 @@ import (
 	"github.com/MichaelMure/git-bug/bug"
 )
 
-// Filter is a functor that match a subset of bugs
+// Filter is a predicate that match a subset of bugs
 type Filter func(repoCache *RepoCache, excerpt *BugExcerpt) bool
 
 // StatusFilter return a Filter that match a bug status

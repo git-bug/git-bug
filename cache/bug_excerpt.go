@@ -8,6 +8,11 @@ import (
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
+// Package initialisation used to register the type for (de)serialization
+func init() {
+	gob.Register(BugExcerpt{})
+}
+
 // BugExcerpt hold a subset of the bug values to be able to sort and filter bugs
 // efficiently without having to read and compile each raw bugs.
 type BugExcerpt struct {
@@ -61,11 +66,6 @@ func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
 	}
 
 	return e
-}
-
-// Package initialisation used to register the type for (de)serialization
-func init() {
-	gob.Register(BugExcerpt{})
 }
 
 /*
