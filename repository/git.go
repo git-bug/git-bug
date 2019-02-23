@@ -204,7 +204,7 @@ func (repo *GitRepo) ReadConfigs(keyPrefix string) (map[string]string, error) {
 
 // RmConfigs remove all key/value pair matching the key prefix
 func (repo *GitRepo) RmConfigs(keyPrefix string) error {
-	_, err := repo.runGitCommand("config", "--remove-section", keyPrefix)
+	_, err := repo.runGitCommand("config", "--unset-all", keyPrefix)
 
 	return err
 }
