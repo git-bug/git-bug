@@ -819,6 +819,29 @@ _git-bug_user_create()
     noun_aliases=()
 }
 
+_git-bug_user_ls()
+{
+    last_command="git-bug_user_ls"
+
+    command_aliases=()
+
+    commands=()
+
+    flags=()
+    two_word_flags=()
+    local_nonpersistent_flags=()
+    flags_with_completion=()
+    flags_completion=()
+
+    flags+=("--verbose")
+    flags+=("-v")
+    local_nonpersistent_flags+=("--verbose")
+
+    must_have_one_flag=()
+    must_have_one_noun=()
+    noun_aliases=()
+}
+
 _git-bug_user()
 {
     last_command="git-bug_user"
@@ -827,6 +850,7 @@ _git-bug_user()
 
     commands=()
     commands+=("create")
+    commands+=("ls")
 
     flags=()
     two_word_flags=()

@@ -85,6 +85,11 @@ func (i *Bare) Id() string {
 	return i.id
 }
 
+// HumanId return the Identity identifier truncated for human consumption
+func (i *Bare) HumanId() string {
+	return FormatHumanID(i.Id())
+}
+
 // Name return the last version of the name
 func (i *Bare) Name() string {
 	return i.name

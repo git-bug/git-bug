@@ -20,6 +20,9 @@ const identityRemoteRefPattern = "refs/remotes/%s/identities/"
 const versionEntryName = "version"
 const identityConfigKey = "git-bug.identity"
 
+const idLength = 40
+const humanIdLength = 7
+
 var ErrNonFastForwardMerge = errors.New("non fast-forward identity merge")
 var ErrNoIdentitySet = errors.New("user identity first needs to be created using \"git bug user create\"")
 var ErrMultipleIdentitiesSet = errors.New("multiple user identities set")
@@ -92,6 +95,10 @@ func ReadRemote(repo repository.Repo, remote string, id string) (*Identity, erro
 func read(repo repository.Repo, ref string) (*Identity, error) {
 	refSplit := strings.Split(ref, "/")
 	id := refSplit[len(refSplit)-1]
+
+	if len(id) != idLength {
+		return nil, fmt.Errorf("invalid ref length")
+	}
 
 	hashes, err := repo.ListCommits(ref)
 
@@ -459,6 +466,16 @@ func (i *Identity) Id() string {
 		panic("no id yet")
 	}
 	return i.id
+}
+
+// HumanId return the Identity identifier truncated for human consumption
+func (i *Identity) HumanId() string {
+	return FormatHumanID(i.Id())
+}
+
+func FormatHumanID(id string) string {
+	format := fmt.Sprintf("%%.%ds", humanIdLength)
+	return fmt.Sprintf(format, id)
 }
 
 // Name return the last version of the name

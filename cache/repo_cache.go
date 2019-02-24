@@ -489,6 +489,12 @@ func (c *RepoCache) AllBugsIds() []string {
 	return result
 }
 
+// AllBugExcerpt return all known bug excerpt.
+// This maps is read-only.
+func (c *RepoCache) AllBugExcerpt() map[string]*BugExcerpt {
+	return c.bugExcerpts
+}
+
 // ValidLabels list valid labels
 //
 // Note: in the future, a proper label policy could be implemented where valid
@@ -763,6 +769,12 @@ func (c *RepoCache) AllIdentityIds() []string {
 	}
 
 	return result
+}
+
+// AllIdentityExcerpt return all known identities excerpt.
+// This maps is read-only.
+func (c *RepoCache) AllIdentityExcerpt() map[string]*IdentityExcerpt {
+	return c.identitiesExcerpts
 }
 
 func (c *RepoCache) SetUserIdentity(i *IdentityCache) error {

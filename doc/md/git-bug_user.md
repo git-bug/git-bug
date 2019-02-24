@@ -20,4 +20,5 @@ git-bug user [<id>] [flags]
 
 * [git-bug](git-bug.md)	 - A bug tracker embedded in Git
 * [git-bug user create](git-bug_user_create.md)	 - Create a new identity
+* [git-bug user ls](git-bug_user_ls.md)	 - List identities
 

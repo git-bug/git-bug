@@ -68,6 +68,10 @@ func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
 	return e
 }
 
+func (b *BugExcerpt) HumanId() string {
+	return bug.FormatHumanID(b.Id)
+}
+
 /*
  * Sorting
  */

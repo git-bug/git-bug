@@ -9,6 +9,9 @@ type Interface interface {
 	// Id return the Identity identifier
 	Id() string
 
+	// HumanId return the Identity identifier truncated for human consumption
+	HumanId() string
+
 	// Name return the last version of the name
 	Name() string
 	// Email return the last version of the email

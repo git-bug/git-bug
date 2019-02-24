@@ -44,6 +44,10 @@ func (i *IdentityStub) Id() string {
 	return i.id
 }
 
+func (i *IdentityStub) HumanId() string {
+	return FormatHumanID(i.Id())
+}
+
 func (IdentityStub) Name() string {
 	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }

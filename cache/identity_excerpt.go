@@ -2,9 +2,15 @@ package cache
 
 import (
 	"encoding/gob"
+	"fmt"
 
 	"github.com/MichaelMure/git-bug/identity"
 )
+
+// Package initialisation used to register the type for (de)serialization
+func init() {
+	gob.Register(IdentityExcerpt{})
+}
 
 // IdentityExcerpt hold a subset of the identity values to be able to sort and
 // filter identities efficiently without having to read and compile each raw
@@ -26,9 +32,23 @@ func NewIdentityExcerpt(i *identity.Identity) *IdentityExcerpt {
 	}
 }
 
-// Package initialisation used to register the type for (de)serialization
-func init() {
-	gob.Register(IdentityExcerpt{})
+func (i *IdentityExcerpt) HumanId() string {
+	return identity.FormatHumanID(i.Id)
+}
+
+// DisplayName return a non-empty string to display, representing the
+// identity, based on the non-empty values.
+func (i *IdentityExcerpt) DisplayName() string {
+	switch {
+	case i.Name == "" && i.Login != "":
+		return i.Login
+	case i.Name != "" && i.Login == "":
+		return i.Name
+	case i.Name != "" && i.Login != "":
+		return fmt.Sprintf("%s (%s)", i.Name, i.Login)
+	}
+
+	panic("invalid person data")
 }
 
 /*
