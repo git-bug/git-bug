@@ -1,13 +1,12 @@
 package bug
 
 import (
+	"testing"
 	"time"
 
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/stretchr/testify/assert"
-
-	"testing"
 )
 
 func TestBugId(t *testing.T) {

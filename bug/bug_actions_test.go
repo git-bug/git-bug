@@ -1,13 +1,12 @@
 package bug
 
 import (
+	"testing"
 	"time"
 
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/test"
 	"github.com/stretchr/testify/require"
-
-	"testing"
 )
 
 func TestPushPull(t *testing.T) {

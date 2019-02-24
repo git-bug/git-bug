@@ -19,7 +19,7 @@ debug-build:
 
 install:
 	go generate
-	go install .
+	go install -ldflags "$(LDFLAGS)" .
 
 test:
 	go test -bench=. ./...
@@ -30,7 +30,7 @@ pack-webui:
 
 # produce a build that will fetch the web UI from the filesystem instead of from the binary
 debug-webui:
-	go build -tags=debugwebui
+	go build -ldflags "$(LDFLAGS)" -tags=debugwebui
 
 clean-local-bugs:
 	git for-each-ref refs/bugs/ | cut -f 2 | xargs -r -n 1 git update-ref -d
