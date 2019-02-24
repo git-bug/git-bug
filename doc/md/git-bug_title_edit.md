@@ -1,10 +1,10 @@
 ## git-bug title edit
 
-Edit a title
+Edit a title.
 
 ### Synopsis
 
-Edit a title
+Edit a title.
 
 ```
 git-bug title edit [<id>] [flags]
@@ -19,5 +19,5 @@ git-bug title edit [<id>] [flags]
 
 ### SEE ALSO
 
-* [git-bug title](git-bug_title.md)	 - Display or change a title
+* [git-bug title](git-bug_title.md)	 - Display or change a title.
 

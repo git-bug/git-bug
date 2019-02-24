@@ -1,10 +1,10 @@
 ## git-bug deselect
 
-Clear the implicitly selected bug
+Clear the implicitly selected bug.
 
 ### Synopsis
 
-Clear the implicitly selected bug
+Clear the implicitly selected bug.
 
 ```
 git-bug deselect [flags]
@@ -28,5 +28,5 @@ git bug deselect
 
 ### SEE ALSO
 
-* [git-bug](git-bug.md)	 - A bug tracker embedded in Git
+* [git-bug](git-bug.md)	 - A bug tracker embedded in Git.
 

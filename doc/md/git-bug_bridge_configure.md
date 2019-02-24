@@ -1,10 +1,10 @@
 ## git-bug bridge configure
 
-Configure a new bridge
+Configure a new bridge.
 
 ### Synopsis
 
-Configure a new bridge
+Configure a new bridge.
 
 ```
 git-bug bridge configure [flags]
@@ -18,5 +18,5 @@ git-bug bridge configure [flags]
 
 ### SEE ALSO
 
-* [git-bug bridge](git-bug_bridge.md)	 - Configure and use bridges to other bug trackers
+* [git-bug bridge](git-bug_bridge.md)	 - Configure and use bridges to other bug trackers.
 

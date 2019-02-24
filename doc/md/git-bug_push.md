@@ -1,10 +1,10 @@
 ## git-bug push
 
-Push bugs update to a git remote
+Push bugs update to a git remote.
 
 ### Synopsis
 
-Push bugs update to a git remote
+Push bugs update to a git remote.
 
 ```
 git-bug push [<remote>] [flags]
@@ -18,5 +18,5 @@ git-bug push [<remote>] [flags]
 
 ### SEE ALSO
 
-* [git-bug](git-bug.md)	 - A bug tracker embedded in Git
+* [git-bug](git-bug.md)	 - A bug tracker embedded in Git.
 

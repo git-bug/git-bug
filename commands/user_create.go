@@ -70,7 +70,7 @@ func runUserCreate(cmd *cobra.Command, args []string) error {
 
 var userCreateCmd = &cobra.Command{
 	Use:     "create",
-	Short:   "Create a new identity",
+	Short:   "Create a new identity.",
 	PreRunE: loadRepo,
 	RunE:    runUserCreate,
 }

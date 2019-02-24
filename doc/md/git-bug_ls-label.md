@@ -1,6 +1,6 @@
 ## git-bug ls-label
 
-List valid labels
+List valid labels.
 
 ### Synopsis
 
@@ -20,5 +20,5 @@ git-bug ls-label [flags]
 
 ### SEE ALSO
 
-* [git-bug](git-bug.md)	 - A bug tracker embedded in Git
+* [git-bug](git-bug.md)	 - A bug tracker embedded in Git.
 

@@ -27,7 +27,7 @@ func runLsLabel(cmd *cobra.Command, args []string) error {
 
 var lsLabelCmd = &cobra.Command{
 	Use:   "ls-label",
-	Short: "List valid labels",
+	Short: "List valid labels.",
 	Long: `List valid labels.
 
 Note: in the future, a proper label policy could be implemented where valid labels are defined in a configuration file. Until that, the default behavior is to return the list of labels already used.`,

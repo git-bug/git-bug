@@ -1,10 +1,10 @@
 ## git-bug user ls
 
-List identities
+List identities.
 
 ### Synopsis
 
-List identities
+List identities.
 
 ```
 git-bug user ls [flags]
@@ -19,5 +19,5 @@ git-bug user ls [flags]
 
 ### SEE ALSO
 
-* [git-bug user](git-bug_user.md)	 - Display or change the user identity
+* [git-bug user](git-bug_user.md)	 - Display or change the user identity.
 

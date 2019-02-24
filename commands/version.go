@@ -41,7 +41,7 @@ func runVersionCmd(cmd *cobra.Command, args []string) {
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "Show git-bug version information",
+	Short: "Show git-bug version information.",
 	Run:   runVersionCmd,
 }
 

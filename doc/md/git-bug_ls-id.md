@@ -1,19 +1,19 @@
-## git-bug termui
+## git-bug ls-id
 
-Launch the terminal UI.
+List Bug Id
 
 ### Synopsis
 
-Launch the terminal UI.
+List Bug Id
 
 ```
-git-bug termui [flags]
+git-bug ls-id [<prefix>] [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for termui
+  -h, --help   help for ls-id
 ```
 
 ### SEE ALSO

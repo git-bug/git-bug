@@ -25,7 +25,7 @@ func runBridgeRm(cmd *cobra.Command, args []string) error {
 
 var bridgeRmCmd = &cobra.Command{
 	Use:     "rm name <name>",
-	Short:   "Delete a configured bridge",
+	Short:   "Delete a configured bridge.",
 	PreRunE: loadRepo,
 	RunE:    runBridgeRm,
 	Args:    cobra.ExactArgs(1),

@@ -46,7 +46,7 @@ func commentsTextOutput(comments []bug.Comment) {
 
 var commentCmd = &cobra.Command{
 	Use:     "comment [<id>]",
-	Short:   "Display or add comments",
+	Short:   "Display or add comments.",
 	PreRunE: loadRepo,
 	RunE:    runComment,
 }

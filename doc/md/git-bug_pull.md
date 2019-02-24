@@ -1,10 +1,10 @@
 ## git-bug pull
 
-Pull bugs update from a git remote
+Pull bugs update from a git remote.
 
 ### Synopsis
 
-Pull bugs update from a git remote
+Pull bugs update from a git remote.
 
 ```
 git-bug pull [<remote>] [flags]
@@ -18,5 +18,5 @@ git-bug pull [<remote>] [flags]
 
 ### SEE ALSO
 
-* [git-bug](git-bug.md)	 - A bug tracker embedded in Git
+* [git-bug](git-bug.md)	 - A bug tracker embedded in Git.
 

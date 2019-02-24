@@ -33,7 +33,7 @@ func runUserLs(cmd *cobra.Command, args []string) error {
 
 var userLsCmd = &cobra.Command{
 	Use:     "ls",
-	Short:   "List identities",
+	Short:   "List identities.",
 	PreRunE: loadRepo,
 	RunE:    runUserLs,
 }

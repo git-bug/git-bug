@@ -61,7 +61,7 @@ func runCommands(cmd *cobra.Command, args []string) error {
 
 var commandsCmd = &cobra.Command{
 	Use:   "commands [<option>...]",
-	Short: "Display available commands",
+	Short: "Display available commands.",
 	RunE:  runCommands,
 }
 

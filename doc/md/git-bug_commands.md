@@ -1,10 +1,10 @@
 ## git-bug commands
 
-Display available commands
+Display available commands.
 
 ### Synopsis
 
-Display available commands
+Display available commands.
 
 ```
 git-bug commands [<option>...] [flags]
@@ -19,5 +19,5 @@ git-bug commands [<option>...] [flags]
 
 ### SEE ALSO
 
-* [git-bug](git-bug.md)	 - A bug tracker embedded in Git
+* [git-bug](git-bug.md)	 - A bug tracker embedded in Git.
 
