@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/util/timestamp"
 
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/text"
@@ -41,7 +42,7 @@ func (op *SetTitleOperation) Apply(snapshot *Snapshot) {
 	item := &SetTitleTimelineItem{
 		hash:     hash,
 		Author:   op.Author,
-		UnixTime: Timestamp(op.UnixTime),
+		UnixTime: timestamp.Timestamp(op.UnixTime),
 		Title:    op.Title,
 		Was:      op.Was,
 	}
@@ -139,7 +140,7 @@ func NewSetTitleOp(author identity.Interface, unixTime int64, title string, was 
 type SetTitleTimelineItem struct {
 	hash     git.Hash
 	Author   identity.Interface
-	UnixTime Timestamp
+	UnixTime timestamp.Timestamp
 	Title    string
 	Was      string
 }

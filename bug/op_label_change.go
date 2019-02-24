@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/util/timestamp"
 
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/pkg/errors"
@@ -68,7 +69,7 @@ AddLoop:
 	item := &LabelChangeTimelineItem{
 		hash:     hash,
 		Author:   op.Author,
-		UnixTime: Timestamp(op.UnixTime),
+		UnixTime: timestamp.Timestamp(op.UnixTime),
 		Added:    op.Added,
 		Removed:  op.Removed,
 	}
@@ -162,7 +163,7 @@ func NewLabelChangeOperation(author identity.Interface, unixTime int64, added, r
 type LabelChangeTimelineItem struct {
 	hash     git.Hash
 	Author   identity.Interface
-	UnixTime Timestamp
+	UnixTime timestamp.Timestamp
 	Added    []Label
 	Removed  []Label
 }

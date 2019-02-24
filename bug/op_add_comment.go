@@ -7,6 +7,7 @@ import (
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/text"
+	"github.com/MichaelMure/git-bug/util/timestamp"
 )
 
 var _ Operation = &AddCommentOperation{}
@@ -32,7 +33,7 @@ func (op *AddCommentOperation) Apply(snapshot *Snapshot) {
 		Message:  op.Message,
 		Author:   op.Author,
 		Files:    op.Files,
-		UnixTime: Timestamp(op.UnixTime),
+		UnixTime: timestamp.Timestamp(op.UnixTime),
 	}
 
 	snapshot.Comments = append(snapshot.Comments, comment)

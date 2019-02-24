@@ -11,7 +11,7 @@ var _ Operation = &NoOpOperation{}
 
 // NoOpOperation is an operation that does not change the bug state. It can
 // however be used to store arbitrary metadata in the bug history, for example
-// to support a bridge feature
+// to support a bridge feature.
 type NoOpOperation struct {
 	OpBase
 }

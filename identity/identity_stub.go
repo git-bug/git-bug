@@ -5,6 +5,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/lamport"
+	"github.com/MichaelMure/git-bug/util/timestamp"
 )
 
 var _ Interface = &IdentityStub{}
@@ -91,5 +92,13 @@ func (i *IdentityStub) CommitAsNeeded(repo repository.ClockedRepo) error {
 }
 
 func (IdentityStub) IsProtected() bool {
+	panic("identities needs to be properly loaded with identity.ReadLocal()")
+}
+
+func (i *IdentityStub) LastModificationLamport() lamport.Time {
+	panic("identities needs to be properly loaded with identity.ReadLocal()")
+}
+
+func (i *IdentityStub) LastModification() timestamp.Timestamp {
 	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }

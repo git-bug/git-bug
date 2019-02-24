@@ -3,6 +3,7 @@ package bug
 import (
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/git"
+	"github.com/MichaelMure/git-bug/util/timestamp"
 	"github.com/dustin/go-humanize"
 )
 
@@ -14,7 +15,7 @@ type Comment struct {
 
 	// Creation time of the comment.
 	// Should be used only for human display, never for ordering as we can't rely on it in a distributed system.
-	UnixTime Timestamp
+	UnixTime timestamp.Timestamp
 }
 
 // FormatTimeRel format the UnixTime of the comment for human consumption

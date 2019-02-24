@@ -3,6 +3,7 @@ package identity
 import (
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/lamport"
+	"github.com/MichaelMure/git-bug/util/timestamp"
 )
 
 type Interface interface {
@@ -48,4 +49,10 @@ type Interface interface {
 	// IsProtected return true if the chain of git commits started to be signed.
 	// If that's the case, only signed commit with a valid key for this identity can be added.
 	IsProtected() bool
+
+	// LastModificationLamportTime return the Lamport time at which the last version of the identity became valid.
+	LastModificationLamport() lamport.Time
+
+	// LastModification return the timestamp at which the last version of the identity became valid.
+	LastModification() timestamp.Timestamp
 }

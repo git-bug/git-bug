@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/util/timestamp"
 
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/text"
@@ -58,7 +59,7 @@ func (op *EditCommentOperation) Apply(snapshot *Snapshot) {
 	comment := Comment{
 		Message:  op.Message,
 		Files:    op.Files,
-		UnixTime: Timestamp(op.UnixTime),
+		UnixTime: timestamp.Timestamp(op.UnixTime),
 	}
 
 	switch target.(type) {

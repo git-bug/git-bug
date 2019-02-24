@@ -2,6 +2,7 @@ package bug
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/git"
@@ -53,6 +54,10 @@ func (op *SetMetadataOperation) Apply(snapshot *Snapshot) {
 func (op *SetMetadataOperation) Validate() error {
 	if err := opBaseValidate(op, SetMetadataOp); err != nil {
 		return err
+	}
+
+	if !op.Target.IsValid() {
+		return fmt.Errorf("target hash is invalid")
 	}
 
 	return nil

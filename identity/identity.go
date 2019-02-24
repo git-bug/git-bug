@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/MichaelMure/git-bug/util/timestamp"
 	"github.com/pkg/errors"
 
 	"github.com/MichaelMure/git-bug/repository"
@@ -33,10 +34,11 @@ type Identity struct {
 	// Id used as unique identifier
 	id string
 
-	lastCommit git.Hash
-
 	// all the successive version of the identity
 	versions []*Version
+
+	// not serialized
+	lastCommit git.Hash
 }
 
 func NewIdentity(name string, email string) *Identity {
@@ -498,13 +500,6 @@ func (i *Identity) Keys() []Key {
 	return i.lastVersion().keys
 }
 
-// IsProtected return true if the chain of git commits started to be signed.
-// If that's the case, only signed commit with a valid key for this identity can be added.
-func (i *Identity) IsProtected() bool {
-	// Todo
-	return false
-}
-
 // ValidKeysAtTime return the set of keys valid at a given lamport time
 func (i *Identity) ValidKeysAtTime(time lamport.Time) []Key {
 	var result []Key
@@ -533,6 +528,23 @@ func (i *Identity) DisplayName() string {
 	}
 
 	panic("invalid person data")
+}
+
+// IsProtected return true if the chain of git commits started to be signed.
+// If that's the case, only signed commit with a valid key for this identity can be added.
+func (i *Identity) IsProtected() bool {
+	// Todo
+	return false
+}
+
+// LastModificationLamportTime return the Lamport time at which the last version of the identity became valid.
+func (i *Identity) LastModificationLamport() lamport.Time {
+	return i.lastVersion().time
+}
+
+// LastModification return the timestamp at which the last version of the identity became valid.
+func (i *Identity) LastModification() timestamp.Timestamp {
+	return timestamp.Timestamp(i.lastVersion().unixTime)
 }
 
 // SetMetadata store arbitrary metadata along the last defined Version.

@@ -1,4 +1,4 @@
-package bug
+package timestamp
 
 import "time"
 

@@ -5,6 +5,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/git"
+	"github.com/MichaelMure/git-bug/util/timestamp"
 )
 
 type TimelineItem interface {
@@ -19,7 +20,7 @@ type CommentHistoryStep struct {
 	Author identity.Interface
 	// The new message
 	Message  string
-	UnixTime Timestamp
+	UnixTime timestamp.Timestamp
 }
 
 // CommentTimelineItem is a TimelineItem that holds a Comment and its edition history
@@ -28,8 +29,8 @@ type CommentTimelineItem struct {
 	Author    identity.Interface
 	Message   string
 	Files     []git.Hash
-	CreatedAt Timestamp
-	LastEdit  Timestamp
+	CreatedAt timestamp.Timestamp
+	LastEdit  timestamp.Timestamp
 	History   []CommentHistoryStep
 }
 

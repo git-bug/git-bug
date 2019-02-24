@@ -9,6 +9,7 @@ import (
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/lamport"
 	"github.com/MichaelMure/git-bug/util/text"
+	"github.com/MichaelMure/git-bug/util/timestamp"
 )
 
 var _ Interface = &Bare{}
@@ -190,4 +191,14 @@ func (i *Bare) CommitAsNeeded(repo repository.ClockedRepo) error {
 // If that's the case, only signed commit with a valid key for this identity can be added.
 func (i *Bare) IsProtected() bool {
 	return false
+}
+
+// LastModificationLamportTime return the Lamport time at which the last version of the identity became valid.
+func (i *Bare) LastModificationLamport() lamport.Time {
+	return 0
+}
+
+// LastModification return the timestamp at which the last version of the identity became valid.
+func (i *Bare) LastModification() timestamp.Timestamp {
+	return 0
 }

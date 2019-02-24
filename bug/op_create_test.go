@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/util/timestamp"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,7 +23,7 @@ func TestCreate(t *testing.T) {
 	hash, err := create.Hash()
 	assert.NoError(t, err)
 
-	comment := Comment{Author: rene, Message: "message", UnixTime: Timestamp(create.UnixTime)}
+	comment := Comment{Author: rene, Message: "message", UnixTime: timestamp.Timestamp(create.UnixTime)}
 
 	expected := Snapshot{
 		Title: "title",

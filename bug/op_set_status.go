@@ -5,6 +5,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/git"
+	"github.com/MichaelMure/git-bug/util/timestamp"
 	"github.com/pkg/errors"
 )
 
@@ -37,7 +38,7 @@ func (op *SetStatusOperation) Apply(snapshot *Snapshot) {
 	item := &SetStatusTimelineItem{
 		hash:     hash,
 		Author:   op.Author,
-		UnixTime: Timestamp(op.UnixTime),
+		UnixTime: timestamp.Timestamp(op.UnixTime),
 		Status:   op.Status,
 	}
 
@@ -114,7 +115,7 @@ func NewSetStatusOp(author identity.Interface, unixTime int64, status Status) *S
 type SetStatusTimelineItem struct {
 	hash     git.Hash
 	Author   identity.Interface
-	UnixTime Timestamp
+	UnixTime timestamp.Timestamp
 	Status   Status
 }
 

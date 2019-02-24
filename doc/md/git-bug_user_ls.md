@@ -13,8 +13,7 @@ git-bug user ls [flags]
 ### Options
 
 ```
-  -v, --verbose   Print extra information
-  -h, --help      help for ls
+  -h, --help   help for ls
 ```
 
 ### SEE ALSO

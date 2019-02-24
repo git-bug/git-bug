@@ -8,6 +8,7 @@ import (
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/text"
+	"github.com/MichaelMure/git-bug/util/timestamp"
 )
 
 var _ Operation = &CreateOperation{}
@@ -34,7 +35,7 @@ func (op *CreateOperation) Apply(snapshot *Snapshot) {
 	comment := Comment{
 		Message:  op.Message,
 		Author:   op.Author,
-		UnixTime: Timestamp(op.UnixTime),
+		UnixTime: timestamp.Timestamp(op.UnixTime),
 	}
 
 	snapshot.Comments = []Comment{comment}
