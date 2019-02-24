@@ -516,7 +516,7 @@ func repoIsAvailable(repo repository.Repo) error {
 			return err
 		}
 
-		os.Remove(lockPath)
+		err = os.Remove(lockPath)
 		if err != nil {
 			return err
 		}
