@@ -12,8 +12,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-var ErrImportNorSupported = errors.New("import is not supported")
-var ErrExportNorSupported = errors.New("export is not supported")
+var ErrImportNotSupported = errors.New("import is not supported")
+var ErrExportNotSupported = errors.New("export is not supported")
 
 const bridgeConfigKeyPrefix = "git-bug.bridge"
 
@@ -268,7 +268,7 @@ func (b *Bridge) ensureInit() error {
 func (b *Bridge) ImportAll() error {
 	importer := b.getImporter()
 	if importer == nil {
-		return ErrImportNorSupported
+		return ErrImportNotSupported
 	}
 
 	err := b.ensureConfig()
@@ -287,7 +287,7 @@ func (b *Bridge) ImportAll() error {
 func (b *Bridge) Import(id string) error {
 	importer := b.getImporter()
 	if importer == nil {
-		return ErrImportNorSupported
+		return ErrImportNotSupported
 	}
 
 	err := b.ensureConfig()
@@ -306,7 +306,7 @@ func (b *Bridge) Import(id string) error {
 func (b *Bridge) ExportAll() error {
 	exporter := b.getExporter()
 	if exporter == nil {
-		return ErrExportNorSupported
+		return ErrExportNotSupported
 	}
 
 	err := b.ensureConfig()
@@ -325,7 +325,7 @@ func (b *Bridge) ExportAll() error {
 func (b *Bridge) Export(id string) error {
 	exporter := b.getExporter()
 	if exporter == nil {
-		return ErrExportNorSupported
+		return ErrExportNotSupported
 	}
 
 	err := b.ensureConfig()
