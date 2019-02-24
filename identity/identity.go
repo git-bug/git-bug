@@ -24,7 +24,7 @@ const idLength = 40
 const humanIdLength = 7
 
 var ErrNonFastForwardMerge = errors.New("non fast-forward identity merge")
-var ErrNoIdentitySet = errors.New("user identity first needs to be created using \"git bug user create\"")
+var ErrNoIdentitySet = errors.New("user identity first needs to be created using \"git bug user create\" or \"git bug user adopt\"")
 var ErrMultipleIdentitiesSet = errors.New("multiple user identities set")
 
 var _ Interface = &Identity{}
@@ -390,11 +390,6 @@ func (i *Identity) Merge(repo repository.Repo, other *Identity) (bool, error) {
 	if i.lastCommit == "" || other.lastCommit == "" {
 		return false, errors.New("can't merge identities that has never been stored")
 	}
-
-	/*ancestor, err := repo.FindCommonAncestor(i.lastCommit, other.lastCommit)
-	if err != nil {
-		return false, errors.Wrap(err, "can't find common ancestor")
-	}*/
 
 	modified := false
 	for j, otherVersion := range other.versions {

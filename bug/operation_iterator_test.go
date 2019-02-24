@@ -9,20 +9,6 @@ import (
 	"time"
 )
 
-var (
-// Beware, don't those test data in multi-repo situation !
-// As an example, the Identity would be considered commited after a commit
-// in one repo,
-// rene = identity.NewIdentity("René Descartes", "rene@descartes.fr")
-// unix = time.Now().Unix()
-
-// createOp      = NewCreateOp(rene, unix, "title", "message", nil)
-// setTitleOp    = NewSetTitleOp(rene, unix, "title2", "title1")
-// addCommentOp  = NewAddCommentOp(rene, unix, "message2", nil)
-// setStatusOp   = NewSetStatusOp(rene, unix, ClosedStatus)
-// labelChangeOp = NewLabelChangeOperation(rene, unix, []Label{"added"}, []Label{"removed"})
-)
-
 func ExampleOperationIterator() {
 	b := NewBug()
 

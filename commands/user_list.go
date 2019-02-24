@@ -9,10 +9,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	userLsVerbose bool
-)
-
 func runUserLs(cmd *cobra.Command, args []string) error {
 	backend, err := cache.NewRepoCache(repo)
 	if err != nil {
@@ -41,7 +37,4 @@ var userLsCmd = &cobra.Command{
 func init() {
 	userCmd.AddCommand(userLsCmd)
 	userLsCmd.Flags().SortFlags = false
-
-	userLsCmd.Flags().BoolVarP(&userLsVerbose, "verbose", "v", false,
-		"Print extra information")
 }

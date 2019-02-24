@@ -40,10 +40,12 @@ func (i *IdentityStub) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// Id return the Identity identifier
 func (i *IdentityStub) Id() string {
 	return i.id
 }
 
+// HumanId return the Identity identifier truncated for human consumption
 func (i *IdentityStub) HumanId() string {
 	return FormatHumanID(i.Id())
 }

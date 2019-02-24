@@ -11,7 +11,7 @@ import (
 
 // Note:
 //
-// For the actions (fetch/push/pull/merge), this package act as a master for
+// For the actions (fetch/push/pull/merge/commit), this package act as a master for
 // the identity package and will also drive the needed identity actions. That is,
 // if bug.Push() is called, identity.Push will also be called to make sure that
 // the dependant identities are also present and up to date on the remote.

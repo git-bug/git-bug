@@ -51,11 +51,11 @@ type VersionJSON struct {
 
 	Time      lamport.Time      `json:"time"`
 	UnixTime  int64             `json:"unix_time"`
-	Name      string            `json:"name"`
-	Email     string            `json:"email"`
-	Login     string            `json:"login"`
-	AvatarUrl string            `json:"avatar_url"`
-	Keys      []Key             `json:"pub_keys"`
+	Name      string            `json:"name,omitempty"`
+	Email     string            `json:"email,omitempty"`
+	Login     string            `json:"login,omitempty"`
+	AvatarUrl string            `json:"avatar_url,omitempty"`
+	Keys      []Key             `json:"pub_keys,omitempty"`
 	Nonce     []byte            `json:"nonce,omitempty"`
 	Metadata  map[string]string `json:"metadata,omitempty"`
 }

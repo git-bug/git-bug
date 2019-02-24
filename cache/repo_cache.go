@@ -579,8 +579,6 @@ func (c *RepoCache) NewBugRaw(author *IdentityCache, unixTime int64, title strin
 // Fetch retrieve update from a remote
 // This does not change the local bugs state
 func (c *RepoCache) Fetch(remote string) (string, error) {
-	// TODO: add identities
-
 	return bug.Fetch(c.repo, remote)
 }
 
@@ -625,8 +623,6 @@ func (c *RepoCache) MergeAll(remote string) <-chan bug.MergeResult {
 
 // Push update a remote with the local changes
 func (c *RepoCache) Push(remote string) (string, error) {
-	// TODO: add identities
-
 	return bug.Push(c.repo, remote)
 }
 

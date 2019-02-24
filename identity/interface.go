@@ -14,12 +14,16 @@ type Interface interface {
 
 	// Name return the last version of the name
 	Name() string
+
 	// Email return the last version of the email
 	Email() string
+
 	// Login return the last version of the login
 	Login() string
+
 	// AvatarUrl return the last version of the Avatar URL
 	AvatarUrl() string
+
 	// Keys return the last version of the valid keys
 	Keys() []Key
 
