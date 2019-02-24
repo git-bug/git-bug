@@ -20,7 +20,7 @@ func runStatusOpen(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	err = b.Open()
+	_, err = b.Open()
 	if err != nil {
 		return err
 	}

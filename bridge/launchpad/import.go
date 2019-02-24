@@ -23,7 +23,7 @@ func (li *launchpadImporter) Init(conf core.Configuration) error {
 const keyLaunchpadID = "launchpad-id"
 const keyLaunchpadLogin = "launchpad-login"
 
-func (li *launchpadImporter) makePerson(repo *cache.RepoCache, owner LPPerson) (*cache.IdentityCache, error) {
+func (li *launchpadImporter) ensurePerson(repo *cache.RepoCache, owner LPPerson) (*cache.IdentityCache, error) {
 	// Look first in the cache
 	i, err := repo.ResolveIdentityImmutableMetadata(keyLaunchpadLogin, owner.Login)
 	if err == nil {
@@ -67,7 +67,7 @@ func (li *launchpadImporter) ImportAll(repo *cache.RepoCache) error {
 			return err
 		}
 
-		owner, err := li.makePerson(repo, lpBug.Owner)
+		owner, err := li.ensurePerson(repo, lpBug.Owner)
 		if err != nil {
 			return err
 		}
@@ -100,7 +100,7 @@ func (li *launchpadImporter) ImportAll(repo *cache.RepoCache) error {
 		// The Launchpad API returns the bug description as the first
 		// comment, so skip it.
 		for _, lpMessage := range lpBug.Messages[1:] {
-			_, err := b.ResolveTargetWithMetadata(keyLaunchpadID, lpMessage.ID)
+			_, err := b.ResolveOperationWithMetadata(keyLaunchpadID, lpMessage.ID)
 			if err != nil && err != cache.ErrNoMatchingOp {
 				return errors.Wrapf(err, "failed to fetch comments for bug #%s", lpBugID)
 			}
@@ -113,14 +113,14 @@ func (li *launchpadImporter) ImportAll(repo *cache.RepoCache) error {
 				continue
 			}
 
-			owner, err := li.makePerson(repo, lpMessage.Owner)
+			owner, err := li.ensurePerson(repo, lpMessage.Owner)
 			if err != nil {
 				return err
 			}
 
 			// This is a new comment, we can add it.
 			createdAt, _ := time.Parse(time.RFC3339, lpMessage.CreatedAt)
-			err = b.AddCommentRaw(
+			_, err = b.AddCommentRaw(
 				owner,
 				createdAt.Unix(),
 				lpMessage.Content,

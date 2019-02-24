@@ -22,7 +22,7 @@ func runLabelAdd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	changes, err := b.ChangeLabels(args, nil)
+	changes, _, err := b.ChangeLabels(args, nil)
 
 	for _, change := range changes {
 		fmt.Println(change)

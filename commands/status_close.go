@@ -20,7 +20,7 @@ func runStatusClose(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	err = b.Close()
+	_, err = b.Close()
 	if err != nil {
 		return err
 	}

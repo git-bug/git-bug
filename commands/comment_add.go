@@ -46,7 +46,7 @@ func runCommentAdd(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	err = b.AddComment(commentAddMessage)
+	_, err = b.AddComment(commentAddMessage)
 	if err != nil {
 		return err
 	}

@@ -226,7 +226,7 @@ func addCommentWithEditor(bug *cache.BugCache) error {
 	if err == input.ErrEmptyMessage {
 		ui.msgPopup.Activate(msgPopupErrorTitle, "Empty message, aborting.")
 	} else {
-		err := bug.AddComment(message)
+		_, err := bug.AddComment(message)
 		if err != nil {
 			return err
 		}
@@ -261,7 +261,7 @@ func editCommentWithEditor(bug *cache.BugCache, target git.Hash, preMessage stri
 	} else if message == preMessage {
 		ui.msgPopup.Activate(msgPopupErrorTitle, "No changes found, aborting.")
 	} else {
-		err := bug.EditComment(target, message)
+		_, err := bug.EditComment(target, message)
 		if err != nil {
 			return err
 		}
@@ -298,7 +298,7 @@ func setTitleWithEditor(bug *cache.BugCache) error {
 	} else if title == snap.Title {
 		ui.msgPopup.Activate(msgPopupErrorTitle, "No change, aborting.")
 	} else {
-		err := bug.SetTitle(title)
+		_, err := bug.SetTitle(title)
 		if err != nil {
 			return err
 		}
