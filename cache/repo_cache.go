@@ -735,8 +735,8 @@ func (c *RepoCache) ResolveIdentityImmutableMetadata(key string, value string) (
 	// preallocate but empty
 	matching := make([]string, 0, 5)
 
-	for id, i := range c.identities {
-		if i.ImmutableMetadata()[key] == value {
+	for id, i := range c.identitiesExcerpts {
+		if i.ImmutableMetadata[key] == value {
 			matching = append(matching, id)
 		}
 	}

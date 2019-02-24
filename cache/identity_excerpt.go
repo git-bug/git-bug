@@ -12,15 +12,17 @@ import (
 type IdentityExcerpt struct {
 	Id string
 
-	Name  string
-	Login string
+	Name              string
+	Login             string
+	ImmutableMetadata map[string]string
 }
 
 func NewIdentityExcerpt(i *identity.Identity) *IdentityExcerpt {
 	return &IdentityExcerpt{
-		Id:    i.Id(),
-		Name:  i.Name(),
-		Login: i.Login(),
+		Id:                i.Id(),
+		Name:              i.Name(),
+		Login:             i.Login(),
+		ImmutableMetadata: i.ImmutableMetadata(),
 	}
 }
 
