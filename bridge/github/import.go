@@ -578,18 +578,9 @@ func (gi *githubImporter) ensureCommentEdit(repo *cache.RepoCache, b *cache.BugC
 
 	fmt.Println("import edition")
 
-	var editor *cache.IdentityCache
-	if edit.Editor == nil {
-		// user account has been deleted, replacing it with the ghost
-		editor, err = gi.getGhost(repo)
-		if err != nil {
-			return err
-		}
-	} else {
-		editor, err = gi.ensurePerson(repo, edit.Editor)
-		if err != nil {
-			return err
-		}
+	editor, err := gi.ensurePerson(repo, edit.Editor)
+	if err != nil {
+		return err
 	}
 
 	switch {
