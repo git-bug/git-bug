@@ -33,7 +33,7 @@ case $state in
         _arguments '2: :(edit)'
       ;;
       user)
-        _arguments '2: :(create ls)'
+        _arguments '2: :(adopt create ls)'
       ;;
       *)
         _arguments '*: :_files'
