@@ -17,7 +17,12 @@ func runUserLs(cmd *cobra.Command, args []string) error {
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
 
-	for _, i := range backend.AllIdentityExcerpt() {
+	for _, id := range backend.AllIdentityIds() {
+		i, err := backend.ResolveIdentityExcerpt(id)
+		if err != nil {
+			return err
+		}
+
 		fmt.Printf("%s %s\n",
 			colors.Cyan(i.HumanId()),
 			i.DisplayName(),

@@ -387,6 +387,16 @@ func (c *RepoCache) ResolveBug(id string) (*BugCache, error) {
 	return cached, nil
 }
 
+// ResolveBugExcerpt retrieve a BugExcerpt matching the exact given id
+func (c *RepoCache) ResolveBugExcerpt(id string) (*BugExcerpt, error) {
+	e, ok := c.bugExcerpts[id]
+	if !ok {
+		return nil, bug.ErrBugNotExist
+	}
+
+	return e, nil
+}
+
 // ResolveBugPrefix retrieve a bug matching an id prefix. It fails if multiple
 // bugs match.
 func (c *RepoCache) ResolveBugPrefix(prefix string) (*BugCache, error) {
@@ -487,12 +497,6 @@ func (c *RepoCache) AllBugsIds() []string {
 	}
 
 	return result
-}
-
-// AllBugExcerpt return all known bug excerpt.
-// This maps is read-only.
-func (c *RepoCache) AllBugExcerpt() map[string]*BugExcerpt {
-	return c.bugExcerpts
 }
 
 // ValidLabels list valid labels
@@ -708,6 +712,16 @@ func (c *RepoCache) ResolveIdentity(id string) (*IdentityCache, error) {
 	return cached, nil
 }
 
+// ResolveIdentityExcerpt retrieve a IdentityExcerpt matching the exact given id
+func (c *RepoCache) ResolveIdentityExcerpt(id string) (*IdentityExcerpt, error) {
+	e, ok := c.identitiesExcerpts[id]
+	if !ok {
+		return nil, identity.ErrIdentityNotExist
+	}
+
+	return e, nil
+}
+
 // ResolveIdentityPrefix retrieve an Identity matching an id prefix.
 // It fails if multiple identities match.
 func (c *RepoCache) ResolveIdentityPrefix(prefix string) (*IdentityCache, error) {
@@ -765,12 +779,6 @@ func (c *RepoCache) AllIdentityIds() []string {
 	}
 
 	return result
-}
-
-// AllIdentityExcerpt return all known identities excerpt.
-// This maps is read-only.
-func (c *RepoCache) AllIdentityExcerpt() map[string]*IdentityExcerpt {
-	return c.identitiesExcerpts
 }
 
 func (c *RepoCache) SetUserIdentity(i *IdentityCache) error {
