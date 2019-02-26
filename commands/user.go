@@ -39,6 +39,10 @@ func runUser(cmd *cobra.Command, args []string) error {
 	fmt.Printf("Last modification: %s (lamport %d)\n",
 		id.LastModification().Time().Format("Mon Jan 2 15:04:05 2006 +0200"),
 		id.LastModificationLamport())
+	fmt.Println("Metadata:")
+	for key, value := range id.ImmutableMetadata() {
+		fmt.Printf("    %s --> %s\n", key, value)
+	}
 	// fmt.Printf("Protected: %v\n", id.IsProtected())
 
 	return nil
