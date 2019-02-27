@@ -5,7 +5,6 @@ package launchpad
  * https://launchpad.net/+apidoc/devel.html
  *
  * TODO:
- * - Retrieve all messages associated to bugs
  * - Retrieve bug status
  * - Retrieve activity log
  * - SearchTasks should yield bugs one by one
@@ -78,6 +77,15 @@ type LPBug struct {
 	Owner       LPPerson `json:"owner_link"`
 	Description string   `json:"description"`
 	CreatedAt   string   `json:"date_created"`
+	Messages    []LPMessage
+}
+
+// LPMessage describes a comment on a bug report
+type LPMessage struct {
+	Content   string   `json:"content"`
+	CreatedAt string   `json:"date_created"`
+	Owner     LPPerson `json:"owner_link"`
+	ID        string   `json:"self_link"`
 }
 
 type launchpadBugEntry struct {
@@ -89,6 +97,11 @@ type launchpadAnswer struct {
 	Entries  []launchpadBugEntry `json:"entries"`
 	Start    int                 `json:"start"`
 	NextLink string              `json:"next_collection_link"`
+}
+
+type launchpadMessageAnswer struct {
+	Entries  []LPMessage `json:"entries"`
+	NextLink string      `json:"next_collection_link"`
 }
 
 type launchpadAPI struct {
@@ -113,6 +126,7 @@ func (lapi *launchpadAPI) SearchTasks(project string) ([]LPBug, error) {
 	}
 	queryParams := url.Values{}
 	queryParams.Add("ws.op", "searchTasks")
+	queryParams.Add("order_by", "-date_last_updated")
 	for _, validStatus := range validStatuses {
 		queryParams.Add("status", validStatus)
 	}
@@ -175,5 +189,48 @@ func (lapi *launchpadAPI) queryBug(url string) (LPBug, error) {
 		return bug, err
 	}
 
+	/* Fetch messages */
+	messagesCollectionLink := fmt.Sprintf("%s/bugs/%d/messages", apiRoot, bug.ID)
+	messages, err := lapi.queryMessages(messagesCollectionLink)
+	if err != nil {
+		return bug, err
+	}
+	bug.Messages = messages
+
 	return bug, nil
+}
+
+func (lapi *launchpadAPI) queryMessages(messagesURL string) ([]LPMessage, error) {
+	var messages []LPMessage
+
+	for {
+		req, err := http.NewRequest("GET", messagesURL, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		resp, err := lapi.client.Do(req)
+		if err != nil {
+			return nil, err
+		}
+
+		var result launchpadMessageAnswer
+
+		err = json.NewDecoder(resp.Body).Decode(&result)
+		_ = resp.Body.Close()
+
+		if err != nil {
+			return nil, err
+		}
+
+		messages = append(messages, result.Entries...)
+
+		// Launchpad only returns 75 results at a time. We get the next
+		// page and run another query, unless there is no other page.
+		messagesURL = result.NextLink
+		if messagesURL == "" {
+			break
+		}
+	}
+	return messages, nil
 }
