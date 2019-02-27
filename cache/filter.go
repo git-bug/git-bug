@@ -55,6 +55,17 @@ func LabelFilter(label string) Filter {
 	}
 }
 
+// TitleFilter return a Filter that match a title
+func TitleFilter(title string) Filter {
+	return func(excerpt *BugExcerpt) bool {
+		if strings.Contains(excerpt.Title, title) {
+			return true
+		}
+		return false
+	}
+
+}
+
 // NoLabelFilter return a Filter that match the absence of labels
 func NoLabelFilter() Filter {
 	return func(repoCache *RepoCache, excerpt *BugExcerpt) bool {
@@ -67,6 +78,7 @@ type Filters struct {
 	Status    []Filter
 	Author    []Filter
 	Label     []Filter
+	Title     []Filter
 	NoFilters []Filter
 }
 
@@ -85,6 +97,10 @@ func (f *Filters) Match(repoCache *RepoCache, excerpt *BugExcerpt) bool {
 	}
 
 	if match := f.andMatch(f.NoFilters, repoCache, excerpt); !match {
+		return false
+	}
+
+	if match := f.andMatch(f.Title, excerpt); !match {
 		return false
 	}
 

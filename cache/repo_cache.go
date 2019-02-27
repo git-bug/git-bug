@@ -386,6 +386,15 @@ func (c *RepoCache) ResolveBug(id string) (*BugCache, error) {
 
 	return cached, nil
 }
+// ResolveBugExcerpt retrieve a BugExcerpt matching the exact given id
+func (c *RepoCache) ResolveBugExcerpt(id string) (*BugExcerpt, error) {
+	e, ok := c.excerpts[id]
+	if !ok {
+		return nil, bug.ErrBugNotExist
+	}
+
+ 	return e, nil
+}
 
 // ResolveBugExcerpt retrieve a BugExcerpt matching the exact given id
 func (c *RepoCache) ResolveBugExcerpt(id string) (*BugExcerpt, error) {

@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/colors"
 	"github.com/MichaelMure/git-bug/util/interrupt"
 	"github.com/spf13/cobra"
@@ -14,6 +13,7 @@ import (
 var (
 	lsStatusQuery   []string
 	lsAuthorQuery   []string
+	lsTitleQuery    []string
 	lsLabelQuery    []string
 	lsNoQuery       []string
 	lsSortBy        string
@@ -45,30 +45,22 @@ func runLsBug(cmd *cobra.Command, args []string) error {
 	allIds := backend.QueryBugs(query)
 
 	for _, id := range allIds {
-		b, err := backend.ResolveBug(id)
+		b, err := backend.ResolveBugExcerpt(id)
 		if err != nil {
 			return err
 		}
 
-		snapshot := b.Snapshot()
-
-		var author identity.Interface
-
-		if len(snapshot.Comments) > 0 {
-			create := snapshot.Comments[0]
-			author = create.Author
-		}
-
 		// truncate + pad if needed
-		titleFmt := fmt.Sprintf("%-50.50s", snapshot.Title)
-		authorFmt := fmt.Sprintf("%-15.15s", author.DisplayName())
+		titleFmt := fmt.Sprintf("%-50.50s", b.Title)
+		authorFmt := fmt.Sprintf("%-15.15s", b.Author.Name)
 
-		fmt.Printf("%s %s\t%s\t%s\t%s\n",
+		fmt.Printf("%s %s\t%s\t%s\tC:%d L:%d\n",
 			colors.Cyan(b.HumanId()),
-			colors.Yellow(snapshot.Status),
+			colors.Yellow(b.Status),
 			titleFmt,
 			colors.Magenta(authorFmt),
-			snapshot.Summary(),
+			b.NoOfComments,
+			len(b.Labels),
 		)
 	}
 
@@ -85,6 +77,11 @@ func lsQueryFromFlags() (*cache.Query, error) {
 			return nil, err
 		}
 		query.Status = append(query.Status, f)
+	}
+
+	for _, title := range lsTitleQuery {
+		f := cache.TitleFilter(title)
+		query.Title = append(query.Title, f)
 	}
 
 	for _, author := range lsAuthorQuery {
@@ -156,6 +153,8 @@ func init() {
 		"Filter by author")
 	lsCmd.Flags().StringSliceVarP(&lsLabelQuery, "label", "l", nil,
 		"Filter by label")
+	lsCmd.Flags().StringSliceVarP(&lsTitleQuery, "title", "t", nil,
+		"Filter by title")
 	lsCmd.Flags().StringSliceVarP(&lsNoQuery, "no", "n", nil,
 		"Filter by absence of something. Valid values are [label]")
 	lsCmd.Flags().StringVarP(&lsSortBy, "by", "b", "creation",
