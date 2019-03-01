@@ -28,7 +28,7 @@ func (l *Label) UnmarshalGQL(v interface{}) error {
 
 // MarshalGQL implements the graphql.Marshaler interface
 func (l Label) MarshalGQL(w io.Writer) {
-	w.Write([]byte(`"` + l.String() + `"`))
+	_, _ = w.Write([]byte(`"` + l.String() + `"`))
 }
 
 func (l Label) Validate() error {

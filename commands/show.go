@@ -42,7 +42,7 @@ func runShowBug(cmd *cobra.Command, args []string) error {
 		case "author":
 			fmt.Printf("%s\n", firstComment.Author.DisplayName())
 		case "authorEmail":
-			fmt.Printf("%s\n", firstComment.Author.Email)
+			fmt.Printf("%s\n", firstComment.Author.Email())
 		case "createTime":
 			fmt.Printf("%s\n", firstComment.FormatTime())
 		case "id":
@@ -93,7 +93,7 @@ func runShowBug(cmd *cobra.Command, args []string) error {
 			indent,
 			i,
 			comment.Author.DisplayName(),
-			comment.Author.Email,
+			comment.Author.Email(),
 		)
 
 		if comment.Message == "" {
@@ -113,7 +113,7 @@ func runShowBug(cmd *cobra.Command, args []string) error {
 
 var showCmd = &cobra.Command{
 	Use:     "show [<id>]",
-	Short:   "Display the details of a bug",
+	Short:   "Display the details of a bug.",
 	PreRunE: loadRepo,
 	RunE:    runShowBug,
 }

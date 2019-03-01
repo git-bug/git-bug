@@ -20,8 +20,8 @@ func runTermUI(cmd *cobra.Command, args []string) error {
 
 var termUICmd = &cobra.Command{
 	Use:     "termui",
-	Short:   "Launch the terminal UI",
-	PreRunE: loadRepo,
+	Short:   "Launch the terminal UI.",
+	PreRunE: loadRepoEnsureUser,
 	RunE:    runTermUI,
 }
 

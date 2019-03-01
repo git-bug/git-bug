@@ -9,6 +9,10 @@ import (
 	"github.com/MichaelMure/git-bug/util/git"
 )
 
+// BugCache is a wrapper around a Bug. It provide multiple functions:
+//
+// 1. Provide a higher level API to use than the raw API from Bug.
+// 2. Maintain an up to date Snapshot available.
 type BugCache struct {
 	repoCache *RepoCache
 	bug       *bug.WithSnapshot
@@ -53,8 +57,8 @@ func (e ErrMultipleMatchOp) Error() string {
 	return fmt.Sprintf("Multiple matching operation found:\n%s", strings.Join(casted, "\n"))
 }
 
-// ResolveTargetWithMetadata will find an operation that has the matching metadata
-func (c *BugCache) ResolveTargetWithMetadata(key string, value string) (git.Hash, error) {
+// ResolveOperationWithMetadata will find an operation that has the matching metadata
+func (c *BugCache) ResolveOperationWithMetadata(key string, value string) (git.Hash, error) {
 	// preallocate but empty
 	matching := make([]git.Hash, 0, 5)
 
@@ -82,45 +86,45 @@ func (c *BugCache) ResolveTargetWithMetadata(key string, value string) (git.Hash
 	return matching[0], nil
 }
 
-func (c *BugCache) AddComment(message string) error {
+func (c *BugCache) AddComment(message string) (*bug.AddCommentOperation, error) {
 	return c.AddCommentWithFiles(message, nil)
 }
 
-func (c *BugCache) AddCommentWithFiles(message string, files []git.Hash) error {
-	author, err := bug.GetUser(c.repoCache.repo)
+func (c *BugCache) AddCommentWithFiles(message string, files []git.Hash) (*bug.AddCommentOperation, error) {
+	author, err := c.repoCache.GetUserIdentity()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	return c.AddCommentRaw(author, time.Now().Unix(), message, files, nil)
 }
 
-func (c *BugCache) AddCommentRaw(author bug.Person, unixTime int64, message string, files []git.Hash, metadata map[string]string) error {
-	op, err := bug.AddCommentWithFiles(c.bug, author, unixTime, message, files)
+func (c *BugCache) AddCommentRaw(author *IdentityCache, unixTime int64, message string, files []git.Hash, metadata map[string]string) (*bug.AddCommentOperation, error) {
+	op, err := bug.AddCommentWithFiles(c.bug, author.Identity, unixTime, message, files)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	for key, value := range metadata {
 		op.SetMetadata(key, value)
 	}
 
-	return c.notifyUpdated()
+	return op, c.notifyUpdated()
 }
 
-func (c *BugCache) ChangeLabels(added []string, removed []string) ([]bug.LabelChangeResult, error) {
-	author, err := bug.GetUser(c.repoCache.repo)
+func (c *BugCache) ChangeLabels(added []string, removed []string) ([]bug.LabelChangeResult, *bug.LabelChangeOperation, error) {
+	author, err := c.repoCache.GetUserIdentity()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	return c.ChangeLabelsRaw(author, time.Now().Unix(), added, removed, nil)
 }
 
-func (c *BugCache) ChangeLabelsRaw(author bug.Person, unixTime int64, added []string, removed []string, metadata map[string]string) ([]bug.LabelChangeResult, error) {
-	changes, op, err := bug.ChangeLabels(c.bug, author, unixTime, added, removed)
+func (c *BugCache) ChangeLabelsRaw(author *IdentityCache, unixTime int64, added []string, removed []string, metadata map[string]string) ([]bug.LabelChangeResult, *bug.LabelChangeOperation, error) {
+	changes, op, err := bug.ChangeLabels(c.bug, author.Identity, unixTime, added, removed)
 	if err != nil {
-		return changes, err
+		return changes, nil, err
 	}
 
 	for key, value := range metadata {
@@ -129,107 +133,112 @@ func (c *BugCache) ChangeLabelsRaw(author bug.Person, unixTime int64, added []st
 
 	err = c.notifyUpdated()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return changes, nil
+	return changes, op, nil
 }
 
-func (c *BugCache) Open() error {
-	author, err := bug.GetUser(c.repoCache.repo)
+func (c *BugCache) Open() (*bug.SetStatusOperation, error) {
+	author, err := c.repoCache.GetUserIdentity()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	return c.OpenRaw(author, time.Now().Unix(), nil)
 }
 
-func (c *BugCache) OpenRaw(author bug.Person, unixTime int64, metadata map[string]string) error {
-	op, err := bug.Open(c.bug, author, unixTime)
+func (c *BugCache) OpenRaw(author *IdentityCache, unixTime int64, metadata map[string]string) (*bug.SetStatusOperation, error) {
+	op, err := bug.Open(c.bug, author.Identity, unixTime)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	for key, value := range metadata {
 		op.SetMetadata(key, value)
 	}
 
-	return c.notifyUpdated()
+	return op, c.notifyUpdated()
 }
 
-func (c *BugCache) Close() error {
-	author, err := bug.GetUser(c.repoCache.repo)
+func (c *BugCache) Close() (*bug.SetStatusOperation, error) {
+	author, err := c.repoCache.GetUserIdentity()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	return c.CloseRaw(author, time.Now().Unix(), nil)
 }
 
-func (c *BugCache) CloseRaw(author bug.Person, unixTime int64, metadata map[string]string) error {
-	op, err := bug.Close(c.bug, author, unixTime)
+func (c *BugCache) CloseRaw(author *IdentityCache, unixTime int64, metadata map[string]string) (*bug.SetStatusOperation, error) {
+	op, err := bug.Close(c.bug, author.Identity, unixTime)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	for key, value := range metadata {
 		op.SetMetadata(key, value)
 	}
 
-	return c.notifyUpdated()
+	return op, c.notifyUpdated()
 }
 
-func (c *BugCache) SetTitle(title string) error {
-	author, err := bug.GetUser(c.repoCache.repo)
+func (c *BugCache) SetTitle(title string) (*bug.SetTitleOperation, error) {
+	author, err := c.repoCache.GetUserIdentity()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	return c.SetTitleRaw(author, time.Now().Unix(), title, nil)
 }
 
-func (c *BugCache) SetTitleRaw(author bug.Person, unixTime int64, title string, metadata map[string]string) error {
-	op, err := bug.SetTitle(c.bug, author, unixTime, title)
+func (c *BugCache) SetTitleRaw(author *IdentityCache, unixTime int64, title string, metadata map[string]string) (*bug.SetTitleOperation, error) {
+	op, err := bug.SetTitle(c.bug, author.Identity, unixTime, title)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	for key, value := range metadata {
 		op.SetMetadata(key, value)
 	}
 
-	return c.notifyUpdated()
+	return op, c.notifyUpdated()
 }
 
-func (c *BugCache) EditComment(target git.Hash, message string) error {
-	author, err := bug.GetUser(c.repoCache.repo)
+func (c *BugCache) EditComment(target git.Hash, message string) (*bug.EditCommentOperation, error) {
+	author, err := c.repoCache.GetUserIdentity()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	return c.EditCommentRaw(author, time.Now().Unix(), target, message, nil)
 }
 
-func (c *BugCache) EditCommentRaw(author bug.Person, unixTime int64, target git.Hash, message string, metadata map[string]string) error {
-	op, err := bug.EditComment(c.bug, author, unixTime, target, message)
+func (c *BugCache) EditCommentRaw(author *IdentityCache, unixTime int64, target git.Hash, message string, metadata map[string]string) (*bug.EditCommentOperation, error) {
+	op, err := bug.EditComment(c.bug, author.Identity, unixTime, target, message)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	for key, value := range metadata {
 		op.SetMetadata(key, value)
 	}
 
-	return c.notifyUpdated()
+	return op, c.notifyUpdated()
 }
 
 func (c *BugCache) Commit() error {
-	return c.bug.Commit(c.repoCache.repo)
+	err := c.bug.Commit(c.repoCache.repo)
+	if err != nil {
+		return err
+	}
+	return c.notifyUpdated()
 }
 
 func (c *BugCache) CommitAsNeeded() error {
-	if c.bug.HasPendingOp() {
-		return c.bug.Commit(c.repoCache.repo)
+	err := c.bug.CommitAsNeeded(c.repoCache.repo)
+	if err != nil {
+		return err
 	}
-	return nil
+	return c.notifyUpdated()
 }

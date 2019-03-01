@@ -83,6 +83,7 @@ type Repo interface {
 	GetTreeHash(commit git.Hash) (git.Hash, error)
 }
 
+// ClockedRepo is a Repo that also has Lamport clocks
 type ClockedRepo interface {
 	Repo
 
@@ -92,8 +93,14 @@ type ClockedRepo interface {
 	// WriteClocks write the clocks values into the repo
 	WriteClocks() error
 
+	// CreateTime return the current value of the creation clock
+	CreateTime() lamport.Time
+
 	// CreateTimeIncrement increment the creation clock and return the new value.
 	CreateTimeIncrement() (lamport.Time, error)
+
+	// EditTime return the current value of the edit clock
+	EditTime() lamport.Time
 
 	// EditTimeIncrement increment the edit clock and return the new value.
 	EditTimeIncrement() (lamport.Time, error)
@@ -122,7 +129,7 @@ func prepareTreeEntries(entries []TreeEntry) bytes.Buffer {
 }
 
 func readTreeEntries(s string) ([]TreeEntry, error) {
-	split := strings.Split(s, "\n")
+	split := strings.Split(strings.TrimSpace(s), "\n")
 
 	casted := make([]TreeEntry, len(split))
 	for i, line := range split {

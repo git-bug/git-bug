@@ -3,7 +3,9 @@ package bug
 import (
 	"strings"
 
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/git"
+	"github.com/MichaelMure/git-bug/util/timestamp"
 )
 
 type TimelineItem interface {
@@ -15,20 +17,20 @@ type TimelineItem interface {
 type CommentHistoryStep struct {
 	// The author of the edition, not necessarily the same as the author of the
 	// original comment
-	Author Person
+	Author identity.Interface
 	// The new message
 	Message  string
-	UnixTime Timestamp
+	UnixTime timestamp.Timestamp
 }
 
 // CommentTimelineItem is a TimelineItem that holds a Comment and its edition history
 type CommentTimelineItem struct {
 	hash      git.Hash
-	Author    Person
+	Author    identity.Interface
 	Message   string
 	Files     []git.Hash
-	CreatedAt Timestamp
-	LastEdit  Timestamp
+	CreatedAt timestamp.Timestamp
+	LastEdit  timestamp.Timestamp
 	History   []CommentHistoryStep
 }
 

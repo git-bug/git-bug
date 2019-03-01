@@ -3,13 +3,23 @@ package bug
 import (
 	"encoding/json"
 	"testing"
+	"time"
 
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/git"
-	"github.com/go-test/deep"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestOperationPackSerialize(t *testing.T) {
 	opp := &OperationPack{}
+
+	rene := identity.NewBare("René Descartes", "rene@descartes.fr")
+	createOp := NewCreateOp(rene, time.Now().Unix(), "title", "message", nil)
+	setTitleOp := NewSetTitleOp(rene, time.Now().Unix(), "title2", "title1")
+	addCommentOp := NewAddCommentOp(rene, time.Now().Unix(), "message2", nil)
+	setStatusOp := NewSetStatusOp(rene, time.Now().Unix(), ClosedStatus)
+	labelChangeOp := NewLabelChangeOperation(rene, time.Now().Unix(), []Label{"added"}, []Label{"removed"})
 
 	opp.Append(createOp)
 	opp.Append(setTitleOp)
@@ -17,37 +27,35 @@ func TestOperationPackSerialize(t *testing.T) {
 	opp.Append(setStatusOp)
 	opp.Append(labelChangeOp)
 
-	opMeta := NewCreateOp(rene, unix, "title", "message", nil)
+	opMeta := NewSetTitleOp(rene, time.Now().Unix(), "title3", "title2")
 	opMeta.SetMetadata("key", "value")
 	opp.Append(opMeta)
 
-	if len(opMeta.Metadata) != 1 {
-		t.Fatal()
-	}
+	assert.Equal(t, 1, len(opMeta.Metadata))
 
-	opFile := NewCreateOp(rene, unix, "title", "message", []git.Hash{
+	opFile := NewAddCommentOp(rene, time.Now().Unix(), "message", []git.Hash{
 		"abcdef",
 		"ghijkl",
 	})
 	opp.Append(opFile)
 
-	if len(opFile.Files) != 2 {
-		t.Fatal()
-	}
+	assert.Equal(t, 2, len(opFile.Files))
 
 	data, err := json.Marshal(opp)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 
 	var opp2 *OperationPack
 	err = json.Unmarshal(data, &opp2)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 
-	deep.CompareUnexportedFields = false
-	if diff := deep.Equal(opp, opp2); diff != nil {
-		t.Fatal(diff)
+	ensureHash(t, opp)
+
+	assert.Equal(t, opp, opp2)
+}
+
+func ensureHash(t *testing.T, opp *OperationPack) {
+	for _, op := range opp.Operations {
+		_, err := op.Hash()
+		require.NoError(t, err)
 	}
 }

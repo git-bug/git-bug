@@ -1,8 +1,12 @@
 package bug
 
 import (
+	"encoding/json"
 	"fmt"
 	"sort"
+
+	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/util/timestamp"
 
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/pkg/errors"
@@ -13,8 +17,8 @@ var _ Operation = &LabelChangeOperation{}
 // LabelChangeOperation define a Bug operation to add or remove labels
 type LabelChangeOperation struct {
 	OpBase
-	Added   []Label `json:"added"`
-	Removed []Label `json:"removed"`
+	Added   []Label
+	Removed []Label
 }
 
 func (op *LabelChangeOperation) base() *OpBase {
@@ -65,7 +69,7 @@ AddLoop:
 	item := &LabelChangeTimelineItem{
 		hash:     hash,
 		Author:   op.Author,
-		UnixTime: Timestamp(op.UnixTime),
+		UnixTime: timestamp.Timestamp(op.UnixTime),
 		Added:    op.Added,
 		Removed:  op.Removed,
 	}
@@ -97,10 +101,58 @@ func (op *LabelChangeOperation) Validate() error {
 	return nil
 }
 
+// Workaround to avoid the inner OpBase.MarshalJSON overriding the outer op
+// MarshalJSON
+func (op *LabelChangeOperation) MarshalJSON() ([]byte, error) {
+	base, err := json.Marshal(op.OpBase)
+	if err != nil {
+		return nil, err
+	}
+
+	// revert back to a flat map to be able to add our own fields
+	var data map[string]interface{}
+	if err := json.Unmarshal(base, &data); err != nil {
+		return nil, err
+	}
+
+	data["added"] = op.Added
+	data["removed"] = op.Removed
+
+	return json.Marshal(data)
+}
+
+// Workaround to avoid the inner OpBase.MarshalJSON overriding the outer op
+// MarshalJSON
+func (op *LabelChangeOperation) UnmarshalJSON(data []byte) error {
+	// Unmarshal OpBase and the op separately
+
+	base := OpBase{}
+	err := json.Unmarshal(data, &base)
+	if err != nil {
+		return err
+	}
+
+	aux := struct {
+		Added   []Label `json:"added"`
+		Removed []Label `json:"removed"`
+	}{}
+
+	err = json.Unmarshal(data, &aux)
+	if err != nil {
+		return err
+	}
+
+	op.OpBase = base
+	op.Added = aux.Added
+	op.Removed = aux.Removed
+
+	return nil
+}
+
 // Sign post method for gqlgen
 func (op *LabelChangeOperation) IsAuthored() {}
 
-func NewLabelChangeOperation(author Person, unixTime int64, added, removed []Label) *LabelChangeOperation {
+func NewLabelChangeOperation(author identity.Interface, unixTime int64, added, removed []Label) *LabelChangeOperation {
 	return &LabelChangeOperation{
 		OpBase:  newOpBase(LabelChangeOp, author, unixTime),
 		Added:   added,
@@ -110,8 +162,8 @@ func NewLabelChangeOperation(author Person, unixTime int64, added, removed []Lab
 
 type LabelChangeTimelineItem struct {
 	hash     git.Hash
-	Author   Person
-	UnixTime Timestamp
+	Author   identity.Interface
+	UnixTime timestamp.Timestamp
 	Added    []Label
 	Removed  []Label
 }
@@ -121,7 +173,7 @@ func (l LabelChangeTimelineItem) Hash() git.Hash {
 }
 
 // ChangeLabels is a convenience function to apply the operation
-func ChangeLabels(b Interface, author Person, unixTime int64, add, remove []string) ([]LabelChangeResult, *LabelChangeOperation, error) {
+func ChangeLabels(b Interface, author identity.Interface, unixTime int64, add, remove []string) ([]LabelChangeResult, *LabelChangeOperation, error) {
 	var added, removed []Label
 	var results []LabelChangeResult
 

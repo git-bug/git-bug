@@ -20,6 +20,8 @@ const editClockFile = "/.git/git-bug/edit-clock"
 // ErrNotARepo is the error returned when the git repo root wan't be found
 var ErrNotARepo = errors.New("not a git repository")
 
+var _ ClockedRepo = &GitRepo{}
+
 // GitRepo represents an instance of a (local) git repository.
 type GitRepo struct {
 	Path        string
@@ -29,7 +31,7 @@ type GitRepo struct {
 
 // Run the given git command with the given I/O reader/writers, returning an error if it fails.
 func (repo *GitRepo) runGitCommandWithIO(stdin io.Reader, stdout, stderr io.Writer, args ...string) error {
-	//fmt.Println("Running git", strings.Join(args, " "))
+	// fmt.Printf("[%s] Running git %s\n", repo.Path, strings.Join(args, " "))
 
 	cmd := exec.Command("git", args...)
 	cmd.Dir = repo.Path
@@ -202,7 +204,7 @@ func (repo *GitRepo) ReadConfigs(keyPrefix string) (map[string]string, error) {
 
 // RmConfigs remove all key/value pair matching the key prefix
 func (repo *GitRepo) RmConfigs(keyPrefix string) error {
-	_, err := repo.runGitCommand("config", "--remove-section", keyPrefix)
+	_, err := repo.runGitCommand("config", "--unset-all", keyPrefix)
 
 	return err
 }
@@ -440,9 +442,19 @@ func (repo *GitRepo) WriteClocks() error {
 	return nil
 }
 
+// CreateTime return the current value of the creation clock
+func (repo *GitRepo) CreateTime() lamport.Time {
+	return repo.createClock.Time()
+}
+
 // CreateTimeIncrement increment the creation clock and return the new value.
 func (repo *GitRepo) CreateTimeIncrement() (lamport.Time, error) {
 	return repo.createClock.Increment()
+}
+
+// EditTime return the current value of the edit clock
+func (repo *GitRepo) EditTime() lamport.Time {
+	return repo.editClock.Time()
 }
 
 // EditTimeIncrement increment the edit clock and return the new value.

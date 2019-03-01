@@ -1,17 +1,21 @@
 package bug
 
 import (
-	"github.com/MichaelMure/git-bug/repository"
-	"github.com/go-test/deep"
-	"github.com/stretchr/testify/assert"
-
 	"testing"
+	"time"
+
+	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/repository"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBugId(t *testing.T) {
 	mockRepo := repository.NewMockRepoForTest()
 
 	bug1 := NewBug()
+
+	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
+	createOp := NewCreateOp(rene, time.Now().Unix(), "title", "message", nil)
 
 	bug1.Append(createOp)
 
@@ -28,6 +32,9 @@ func TestBugValidity(t *testing.T) {
 	mockRepo := repository.NewMockRepoForTest()
 
 	bug1 := NewBug()
+
+	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
+	createOp := NewCreateOp(rene, time.Now().Unix(), "title", "message", nil)
 
 	if bug1.Validate() == nil {
 		t.Fatal("Empty bug should be invalid")
@@ -56,8 +63,13 @@ func TestBugValidity(t *testing.T) {
 	}
 }
 
-func TestBugSerialisation(t *testing.T) {
+func TestBugCommitLoad(t *testing.T) {
 	bug1 := NewBug()
+
+	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
+	createOp := NewCreateOp(rene, time.Now().Unix(), "title", "message", nil)
+	setTitleOp := NewSetTitleOp(rene, time.Now().Unix(), "title2", "title1")
+	addCommentOp := NewAddCommentOp(rene, time.Now().Unix(), "message2", nil)
 
 	bug1.Append(createOp)
 	bug1.Append(setTitleOp)
@@ -70,25 +82,30 @@ func TestBugSerialisation(t *testing.T) {
 	assert.Nil(t, err)
 
 	bug2, err := ReadLocalBug(repo, bug1.Id())
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
+	equivalentBug(t, bug1, bug2)
 
-	// ignore some fields
-	bug2.packs[0].commitHash = bug1.packs[0].commitHash
-	for i := range bug1.packs[0].Operations {
-		bug2.packs[0].Operations[i].base().hash = bug1.packs[0].Operations[i].base().hash
-	}
+	// add more op
 
-	// check hashes
-	for i := range bug1.packs[0].Operations {
-		if !bug2.packs[0].Operations[i].base().hash.IsValid() {
-			t.Fatal("invalid hash")
+	bug1.Append(setTitleOp)
+	bug1.Append(addCommentOp)
+
+	err = bug1.Commit(repo)
+	assert.Nil(t, err)
+
+	bug3, err := ReadLocalBug(repo, bug1.Id())
+	assert.NoError(t, err)
+	equivalentBug(t, bug1, bug3)
+}
+
+func equivalentBug(t *testing.T, expected, actual *Bug) {
+	assert.Equal(t, len(expected.packs), len(actual.packs))
+
+	for i := range expected.packs {
+		for j := range expected.packs[i].Operations {
+			actual.packs[i].Operations[j].base().hash = expected.packs[i].Operations[j].base().hash
 		}
 	}
 
-	deep.CompareUnexportedFields = true
-	if diff := deep.Equal(bug1, bug2); diff != nil {
-		t.Fatal(diff)
-	}
+	assert.Equal(t, expected, actual)
 }

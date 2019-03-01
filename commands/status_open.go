@@ -20,7 +20,7 @@ func runStatusOpen(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	err = b.Open()
+	_, err = b.Open()
 	if err != nil {
 		return err
 	}
@@ -30,7 +30,7 @@ func runStatusOpen(cmd *cobra.Command, args []string) error {
 
 var openCmd = &cobra.Command{
 	Use:     "open [<id>]",
-	Short:   "Mark a bug as open",
+	Short:   "Mark a bug as open.",
 	PreRunE: loadRepo,
 	RunE:    runStatusOpen,
 }

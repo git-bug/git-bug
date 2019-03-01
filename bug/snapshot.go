@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/git"
 )
 
@@ -15,7 +16,7 @@ type Snapshot struct {
 	Title     string
 	Comments  []Comment
 	Labels    []Label
-	Author    Person
+	Author    identity.Interface
 	CreatedAt time.Time
 
 	Timeline []TimelineItem

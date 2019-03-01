@@ -1,4 +1,4 @@
-schema: "*.graphql"
+schema: "schema/*.graphql"
 exec:
   filename: graph/gen_graph.go
 model:
@@ -13,17 +13,8 @@ models:
     model: github.com/MichaelMure/git-bug/bug.Snapshot
   Comment:
     model: github.com/MichaelMure/git-bug/bug.Comment
-  Person:
-    model: github.com/MichaelMure/git-bug/bug.Person
-    fields:
-      name:
-        resolver: true
-      email:
-        resolver: true
-      login:
-        resolver: true
-      avatarUrl:
-        resolver: true
+  Identity:
+    model: github.com/MichaelMure/git-bug/identity.Interface
   Label:
     model: github.com/MichaelMure/git-bug/bug.Label
   Hash:

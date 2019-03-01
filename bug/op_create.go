@@ -1,11 +1,14 @@
 package bug
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/text"
+	"github.com/MichaelMure/git-bug/util/timestamp"
 )
 
 var _ Operation = &CreateOperation{}
@@ -13,9 +16,9 @@ var _ Operation = &CreateOperation{}
 // CreateOperation define the initial creation of a bug
 type CreateOperation struct {
 	OpBase
-	Title   string     `json:"title"`
-	Message string     `json:"message"`
-	Files   []git.Hash `json:"files"`
+	Title   string
+	Message string
+	Files   []git.Hash
 }
 
 func (op *CreateOperation) base() *OpBase {
@@ -32,7 +35,7 @@ func (op *CreateOperation) Apply(snapshot *Snapshot) {
 	comment := Comment{
 		Message:  op.Message,
 		Author:   op.Author,
-		UnixTime: Timestamp(op.UnixTime),
+		UnixTime: timestamp.Timestamp(op.UnixTime),
 	}
 
 	snapshot.Comments = []Comment{comment}
@@ -81,10 +84,61 @@ func (op *CreateOperation) Validate() error {
 	return nil
 }
 
+// Workaround to avoid the inner OpBase.MarshalJSON overriding the outer op
+// MarshalJSON
+func (op *CreateOperation) MarshalJSON() ([]byte, error) {
+	base, err := json.Marshal(op.OpBase)
+	if err != nil {
+		return nil, err
+	}
+
+	// revert back to a flat map to be able to add our own fields
+	var data map[string]interface{}
+	if err := json.Unmarshal(base, &data); err != nil {
+		return nil, err
+	}
+
+	data["title"] = op.Title
+	data["message"] = op.Message
+	data["files"] = op.Files
+
+	return json.Marshal(data)
+}
+
+// Workaround to avoid the inner OpBase.MarshalJSON overriding the outer op
+// MarshalJSON
+func (op *CreateOperation) UnmarshalJSON(data []byte) error {
+	// Unmarshal OpBase and the op separately
+
+	base := OpBase{}
+	err := json.Unmarshal(data, &base)
+	if err != nil {
+		return err
+	}
+
+	aux := struct {
+		Title   string     `json:"title"`
+		Message string     `json:"message"`
+		Files   []git.Hash `json:"files"`
+	}{}
+
+	err = json.Unmarshal(data, &aux)
+	if err != nil {
+		return err
+	}
+
+	op.OpBase = base
+	op.Title = aux.Title
+	op.Message = aux.Message
+	op.Files = aux.Files
+
+	return nil
+}
+
 // Sign post method for gqlgen
 func (op *CreateOperation) IsAuthored() {}
 
-func NewCreateOp(author Person, unixTime int64, title, message string, files []git.Hash) *CreateOperation {
+func NewCreateOp(author identity.Interface, unixTime int64, title, message string, files []git.Hash) *CreateOperation {
 	return &CreateOperation{
 		OpBase:  newOpBase(CreateOp, author, unixTime),
 		Title:   title,
@@ -99,11 +153,11 @@ type CreateTimelineItem struct {
 }
 
 // Convenience function to apply the operation
-func Create(author Person, unixTime int64, title, message string) (*Bug, *CreateOperation, error) {
+func Create(author identity.Interface, unixTime int64, title, message string) (*Bug, *CreateOperation, error) {
 	return CreateWithFiles(author, unixTime, title, message, nil)
 }
 
-func CreateWithFiles(author Person, unixTime int64, title, message string, files []git.Hash) (*Bug, *CreateOperation, error) {
+func CreateWithFiles(author identity.Interface, unixTime int64, title, message string, files []git.Hash) (*Bug, *CreateOperation, error) {
 	newBug := NewBug()
 	createOp := NewCreateOp(author, unixTime, title, message, files)
 

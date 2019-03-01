@@ -1,48 +1,16 @@
 package tests
 
 import (
-	"io/ioutil"
-	"log"
 	"testing"
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/misc/random_bugs"
 	"github.com/MichaelMure/git-bug/repository"
+	"github.com/MichaelMure/git-bug/util/test"
 )
 
-func createRepo(bare bool) *repository.GitRepo {
-	dir, err := ioutil.TempDir("", "")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// fmt.Println("Creating repo:", dir)
-
-	var creator func(string) (*repository.GitRepo, error)
-
-	if bare {
-		creator = repository.InitBareGitRepo
-	} else {
-		creator = repository.InitGitRepo
-	}
-
-	repo, err := creator(dir)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if err := repo.StoreConfig("user.name", "testuser"); err != nil {
-		log.Fatal("failed to set user.name for test repository: ", err)
-	}
-	if err := repo.StoreConfig("user.email", "testuser@example.com"); err != nil {
-		log.Fatal("failed to set user.email for test repository: ", err)
-	}
-
-	return repo
-}
-
-func createFilledRepo(bugNumber int) repository.ClockedRepo {
-	repo := createRepo(false)
+func CreateFilledRepo(bugNumber int) repository.ClockedRepo {
+	repo := test.CreateRepo(false)
 
 	var seed int64 = 42
 	options := random_bugs.DefaultOptions()
@@ -54,7 +22,7 @@ func createFilledRepo(bugNumber int) repository.ClockedRepo {
 }
 
 func TestReadBugs(t *testing.T) {
-	repo := createFilledRepo(15)
+	repo := CreateFilledRepo(15)
 	bugs := bug.ReadAllLocalBugs(repo)
 	for b := range bugs {
 		if b.Err != nil {
@@ -64,7 +32,7 @@ func TestReadBugs(t *testing.T) {
 }
 
 func benchmarkReadBugs(bugNumber int, t *testing.B) {
-	repo := createFilledRepo(bugNumber)
+	repo := CreateFilledRepo(bugNumber)
 	t.ResetTimer()
 
 	for n := 0; n < t.N; n++ {

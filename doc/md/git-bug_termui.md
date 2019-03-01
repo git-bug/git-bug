@@ -1,10 +1,10 @@
 ## git-bug termui
 
-Launch the terminal UI
+Launch the terminal UI.
 
 ### Synopsis
 
-Launch the terminal UI
+Launch the terminal UI.
 
 ```
 git-bug termui [flags]
@@ -18,5 +18,5 @@ git-bug termui [flags]
 
 ### SEE ALSO
 
-* [git-bug](git-bug.md)	 - A bug tracker embedded in Git
+* [git-bug](git-bug.md)	 - A bug tracker embedded in Git.
 

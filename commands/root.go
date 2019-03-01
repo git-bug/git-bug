@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/spf13/cobra"
 )
@@ -18,7 +19,7 @@ var repo repository.ClockedRepo
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   rootCommandName,
-	Short: "A bug tracker embedded in Git",
+	Short: "A bug tracker embedded in Git.",
 	Long: `git-bug is a bug tracker embedded in git.
 
 git-bug use git objects to store the bug tracking separated from the files
@@ -53,6 +54,7 @@ func Execute() {
 	}
 }
 
+// loadRepo is a pre-run function that load the repository for use in a command
 func loadRepo(cmd *cobra.Command, args []string) error {
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -66,6 +68,27 @@ func loadRepo(cmd *cobra.Command, args []string) error {
 
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// loadRepoEnsureUser is the same as loadRepo, but also ensure that the user has configured
+// an identity. Use this pre-run function when an error after using the configured user won't
+// do.
+func loadRepoEnsureUser(cmd *cobra.Command, args []string) error {
+	err := loadRepo(cmd, args)
+	if err != nil {
+		return err
+	}
+
+	set, err := identity.IsUserIdentitySet(repo)
+	if err != nil {
+		return err
+	}
+
+	if !set {
+		return identity.ErrNoIdentitySet
 	}
 
 	return nil

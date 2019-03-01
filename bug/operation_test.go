@@ -2,13 +2,19 @@ package bug
 
 import (
 	"testing"
+	"time"
 
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/git"
+	"github.com/MichaelMure/git-bug/util/test"
 	"github.com/stretchr/testify/require"
 )
 
 func TestValidate(t *testing.T) {
+	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
+	unix := time.Now().Unix()
+
 	good := []Operation{
 		NewCreateOp(rene, unix, "title", "message", nil),
 		NewSetTitleOp(rene, unix, "title2", "title1"),
@@ -25,11 +31,11 @@ func TestValidate(t *testing.T) {
 
 	bad := []Operation{
 		// opbase
-		NewSetStatusOp(Person{Name: "", Email: "rene@descartes.fr"}, unix, ClosedStatus),
-		NewSetStatusOp(Person{Name: "René Descartes\u001b", Email: "rene@descartes.fr"}, unix, ClosedStatus),
-		NewSetStatusOp(Person{Name: "René Descartes", Email: "rene@descartes.fr\u001b"}, unix, ClosedStatus),
-		NewSetStatusOp(Person{Name: "René \nDescartes", Email: "rene@descartes.fr"}, unix, ClosedStatus),
-		NewSetStatusOp(Person{Name: "René Descartes", Email: "rene@\ndescartes.fr"}, unix, ClosedStatus),
+		NewSetStatusOp(identity.NewIdentity("", "rene@descartes.fr"), unix, ClosedStatus),
+		NewSetStatusOp(identity.NewIdentity("René Descartes\u001b", "rene@descartes.fr"), unix, ClosedStatus),
+		NewSetStatusOp(identity.NewIdentity("René Descartes", "rene@descartes.fr\u001b"), unix, ClosedStatus),
+		NewSetStatusOp(identity.NewIdentity("René \nDescartes", "rene@descartes.fr"), unix, ClosedStatus),
+		NewSetStatusOp(identity.NewIdentity("René Descartes", "rene@\ndescartes.fr"), unix, ClosedStatus),
 		&CreateOperation{OpBase: OpBase{
 			Author:        rene,
 			UnixTime:      0,
@@ -63,7 +69,8 @@ func TestValidate(t *testing.T) {
 }
 
 func TestMetadata(t *testing.T) {
-	op := NewCreateOp(rene, unix, "title", "message", nil)
+	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
+	op := NewCreateOp(rene, time.Now().Unix(), "title", "message", nil)
 
 	op.SetMetadata("key", "value")
 
@@ -75,11 +82,13 @@ func TestMetadata(t *testing.T) {
 func TestHash(t *testing.T) {
 	repos := []repository.ClockedRepo{
 		repository.NewMockRepoForTest(),
-		createRepo(false),
+		test.CreateRepo(false),
 	}
 
 	for _, repo := range repos {
-		b, op, err := Create(rene, unix, "title", "message")
+		rene := identity.NewBare("René Descartes", "rene@descartes.fr")
+
+		b, op, err := Create(rene, time.Now().Unix(), "title", "message")
 		require.Nil(t, err)
 
 		h1, err := op.Hash()

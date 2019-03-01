@@ -4,10 +4,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/MichaelMure/git-bug/commands"
 	"log"
 	"os"
 	"path"
+
+	"github.com/MichaelMure/git-bug/commands"
 )
 
 func main() {

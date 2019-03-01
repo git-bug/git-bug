@@ -4,20 +4,32 @@ package main
 
 import (
 	"fmt"
-	"github.com/MichaelMure/git-bug/commands"
-	"github.com/spf13/cobra/doc"
 	"log"
 	"os"
 	"path"
+	"path/filepath"
+
+	"github.com/MichaelMure/git-bug/commands"
+	"github.com/spf13/cobra/doc"
 )
 
 func main() {
 	cwd, _ := os.Getwd()
-	filepath := path.Join(cwd, "doc", "md")
+	dir := path.Join(cwd, "doc", "md")
 
 	fmt.Println("Generating Markdown documentation ...")
 
-	err := doc.GenMarkdownTree(commands.RootCmd, filepath)
+	files, err := filepath.Glob(dir + "/*.md")
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, f := range files {
+		if err := os.Remove(f); err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	err = doc.GenMarkdownTree(commands.RootCmd, dir)
 	if err != nil {
 		log.Fatal(err)
 	}

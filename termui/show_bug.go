@@ -622,9 +622,11 @@ func (sb *showBug) setTitle(g *gocui.Gui, v *gocui.View) error {
 func (sb *showBug) toggleOpenClose(g *gocui.Gui, v *gocui.View) error {
 	switch sb.bug.Snapshot().Status {
 	case bug.OpenStatus:
-		return sb.bug.Close()
+		_, err := sb.bug.Close()
+		return err
 	case bug.ClosedStatus:
-		return sb.bug.Open()
+		_, err := sb.bug.Open()
+		return err
 	default:
 		return nil
 	}

@@ -1,0 +1,18 @@
+"""Represents an identity"""
+type Identity {
+    """The identifier for this identity"""
+    id: String!
+    """The name of the person, if known."""
+    name: String
+    """The email of the person, if known."""
+    email: String
+    """The login of the person, if known."""
+    login: String
+    """A string containing the either the name of the person, its login or both"""
+    displayName: String!
+    """An url to an avatar"""
+    avatarUrl: String
+    """isProtected is true if the chain of git commits started to be signed.
+    If that's the case, only signed commit with a valid key for this identity can be added."""
+    isProtected: Boolean!
+}

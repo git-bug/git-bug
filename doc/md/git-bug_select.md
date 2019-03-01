@@ -1,10 +1,10 @@
 ## git-bug select
 
-Select a bug for implicit use in future commands
+Select a bug for implicit use in future commands.
 
 ### Synopsis
 
-Select a bug for implicit use in future commands
+Select a bug for implicit use in future commands.
 
 ```
 git-bug select <id> [flags]
@@ -27,5 +27,5 @@ git bug status
 
 ### SEE ALSO
 
-* [git-bug](git-bug.md)	 - A bug tracker embedded in Git
+* [git-bug](git-bug.md)	 - A bug tracker embedded in Git.
 

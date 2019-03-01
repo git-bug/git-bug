@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/pkg/errors"
+
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/lamport"
-	"github.com/pkg/errors"
 )
 
 const bugsRefPattern = "refs/bugs/"
@@ -113,18 +115,18 @@ func ReadRemoteBug(repo repository.ClockedRepo, remote string, id string) (*Bug,
 
 // readBug will read and parse a Bug from git
 func readBug(repo repository.ClockedRepo, ref string) (*Bug, error) {
-	hashes, err := repo.ListCommits(ref)
-
-	// TODO: this is not perfect, it might be a command invoke error
-	if err != nil {
-		return nil, ErrBugNotExist
-	}
-
 	refSplit := strings.Split(ref, "/")
 	id := refSplit[len(refSplit)-1]
 
 	if len(id) != idLength {
 		return nil, fmt.Errorf("invalid ref length")
+	}
+
+	hashes, err := repo.ListCommits(ref)
+
+	// TODO: this is not perfect, it might be a command invoke error
+	if err != nil {
+		return nil, ErrBugNotExist
 	}
 
 	bug := Bug{
@@ -215,6 +217,13 @@ func readBug(repo repository.ClockedRepo, ref string) (*Bug, error) {
 		opp.commitHash = hash
 
 		bug.packs = append(bug.packs, *opp)
+	}
+
+	// Make sure that the identities are properly loaded
+	resolver := identity.NewSimpleResolver(repo)
+	err = bug.EnsureIdentities(resolver)
+	if err != nil {
+		return nil, err
 	}
 
 	return &bug, nil
@@ -312,6 +321,11 @@ func (bug *Bug) Validate() error {
 		return fmt.Errorf("first operation should be a Create op")
 	}
 
+	// The bug ID should be the hash of the first commit
+	if len(bug.packs) > 0 && string(bug.packs[0].commitHash) != bug.id {
+		return fmt.Errorf("bug id should be the first commit hash")
+	}
+
 	// Check that there is no more CreateOp op
 	it := NewOperationIterator(bug)
 	createCount := 0
@@ -340,7 +354,8 @@ func (bug *Bug) HasPendingOp() bool {
 
 // Commit write the staging area in Git and move the operations to the packs
 func (bug *Bug) Commit(repo repository.ClockedRepo) error {
-	if bug.staging.IsEmpty() {
+
+	if !bug.NeedCommit() {
 		return fmt.Errorf("can't commit a bug with no pending operation")
 	}
 
@@ -450,10 +465,22 @@ func (bug *Bug) Commit(repo repository.ClockedRepo) error {
 		return err
 	}
 
+	bug.staging.commitHash = hash
 	bug.packs = append(bug.packs, bug.staging)
 	bug.staging = OperationPack{}
 
 	return nil
+}
+
+func (bug *Bug) CommitAsNeeded(repo repository.ClockedRepo) error {
+	if !bug.NeedCommit() {
+		return nil
+	}
+	return bug.Commit(repo)
+}
+
+func (bug *Bug) NeedCommit() bool {
+	return !bug.staging.IsEmpty()
 }
 
 func makeMediaTree(pack OperationPack) []repository.TreeEntry {
@@ -504,9 +531,8 @@ func (bug *Bug) Merge(repo repository.Repo, other Interface) (bool, error) {
 	}
 
 	ancestor, err := repo.FindCommonAncestor(bug.lastCommit, otherBug.lastCommit)
-
 	if err != nil {
-		return false, err
+		return false, errors.Wrap(err, "can't find common ancestor")
 	}
 
 	ancestorIndex := 0

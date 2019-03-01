@@ -91,7 +91,7 @@ func promptName() (string, error) {
 
 var bridgeConfigureCmd = &cobra.Command{
 	Use:     "configure",
-	Short:   "Configure a new bridge",
+	Short:   "Configure a new bridge.",
 	PreRunE: loadRepo,
 	RunE:    runBridgeConfigure,
 }

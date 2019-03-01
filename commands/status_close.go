@@ -20,7 +20,7 @@ func runStatusClose(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	err = b.Close()
+	_, err = b.Close()
 	if err != nil {
 		return err
 	}
@@ -30,7 +30,7 @@ func runStatusClose(cmd *cobra.Command, args []string) error {
 
 var closeCmd = &cobra.Command{
 	Use:     "close [<id>]",
-	Short:   "Mark a bug as closed",
+	Short:   "Mark a bug as closed.",
 	PreRunE: loadRepo,
 	RunE:    runStatusClose,
 }

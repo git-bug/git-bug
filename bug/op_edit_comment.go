@@ -1,7 +1,11 @@
 package bug
 
 import (
+	"encoding/json"
 	"fmt"
+
+	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/util/timestamp"
 
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/text"
@@ -12,9 +16,9 @@ var _ Operation = &EditCommentOperation{}
 // EditCommentOperation will change a comment in the bug
 type EditCommentOperation struct {
 	OpBase
-	Target  git.Hash   `json:"target"`
-	Message string     `json:"message"`
-	Files   []git.Hash `json:"files"`
+	Target  git.Hash
+	Message string
+	Files   []git.Hash
 }
 
 func (op *EditCommentOperation) base() *OpBase {
@@ -55,7 +59,7 @@ func (op *EditCommentOperation) Apply(snapshot *Snapshot) {
 	comment := Comment{
 		Message:  op.Message,
 		Files:    op.Files,
-		UnixTime: Timestamp(op.UnixTime),
+		UnixTime: timestamp.Timestamp(op.UnixTime),
 	}
 
 	switch target.(type) {
@@ -92,10 +96,61 @@ func (op *EditCommentOperation) Validate() error {
 	return nil
 }
 
+// Workaround to avoid the inner OpBase.MarshalJSON overriding the outer op
+// MarshalJSON
+func (op *EditCommentOperation) MarshalJSON() ([]byte, error) {
+	base, err := json.Marshal(op.OpBase)
+	if err != nil {
+		return nil, err
+	}
+
+	// revert back to a flat map to be able to add our own fields
+	var data map[string]interface{}
+	if err := json.Unmarshal(base, &data); err != nil {
+		return nil, err
+	}
+
+	data["target"] = op.Target
+	data["message"] = op.Message
+	data["files"] = op.Files
+
+	return json.Marshal(data)
+}
+
+// Workaround to avoid the inner OpBase.MarshalJSON overriding the outer op
+// MarshalJSON
+func (op *EditCommentOperation) UnmarshalJSON(data []byte) error {
+	// Unmarshal OpBase and the op separately
+
+	base := OpBase{}
+	err := json.Unmarshal(data, &base)
+	if err != nil {
+		return err
+	}
+
+	aux := struct {
+		Target  git.Hash   `json:"target"`
+		Message string     `json:"message"`
+		Files   []git.Hash `json:"files"`
+	}{}
+
+	err = json.Unmarshal(data, &aux)
+	if err != nil {
+		return err
+	}
+
+	op.OpBase = base
+	op.Target = aux.Target
+	op.Message = aux.Message
+	op.Files = aux.Files
+
+	return nil
+}
+
 // Sign post method for gqlgen
 func (op *EditCommentOperation) IsAuthored() {}
 
-func NewEditCommentOp(author Person, unixTime int64, target git.Hash, message string, files []git.Hash) *EditCommentOperation {
+func NewEditCommentOp(author identity.Interface, unixTime int64, target git.Hash, message string, files []git.Hash) *EditCommentOperation {
 	return &EditCommentOperation{
 		OpBase:  newOpBase(EditCommentOp, author, unixTime),
 		Target:  target,
@@ -105,11 +160,11 @@ func NewEditCommentOp(author Person, unixTime int64, target git.Hash, message st
 }
 
 // Convenience function to apply the operation
-func EditComment(b Interface, author Person, unixTime int64, target git.Hash, message string) (*EditCommentOperation, error) {
+func EditComment(b Interface, author identity.Interface, unixTime int64, target git.Hash, message string) (*EditCommentOperation, error) {
 	return EditCommentWithFiles(b, author, unixTime, target, message, nil)
 }
 
-func EditCommentWithFiles(b Interface, author Person, unixTime int64, target git.Hash, message string, files []git.Hash) (*EditCommentOperation, error) {
+func EditCommentWithFiles(b Interface, author identity.Interface, unixTime int64, target git.Hash, message string, files []git.Hash) (*EditCommentOperation, error) {
 	editCommentOp := NewEditCommentOp(author, unixTime, target, message, files)
 	if err := editCommentOp.Validate(); err != nil {
 		return nil, err

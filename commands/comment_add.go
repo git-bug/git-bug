@@ -46,7 +46,7 @@ func runCommentAdd(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	err = b.AddComment(commentAddMessage)
+	_, err = b.AddComment(commentAddMessage)
 	if err != nil {
 		return err
 	}
@@ -56,7 +56,7 @@ func runCommentAdd(cmd *cobra.Command, args []string) error {
 
 var commentAddCmd = &cobra.Command{
 	Use:     "add [<id>]",
-	Short:   "Add a new comment",
+	Short:   "Add a new comment.",
 	PreRunE: loadRepo,
 	RunE:    runCommentAdd,
 }

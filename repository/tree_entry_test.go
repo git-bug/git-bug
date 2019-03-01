@@ -1,8 +1,9 @@
 package repository
 
 import (
-	"github.com/MichaelMure/git-bug/util/git"
 	"testing"
+
+	"github.com/MichaelMure/git-bug/util/git"
 )
 
 func TestTreeEntryFormat(t *testing.T) {

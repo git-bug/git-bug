@@ -1,20 +1,19 @@
 package bug
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
-	"github.com/go-test/deep"
+	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/util/timestamp"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCreate(t *testing.T) {
 	snapshot := Snapshot{}
 
-	var rene = Person{
-		Name:  "René Descartes",
-		Email: "rene@descartes.fr",
-	}
-
+	rene := identity.NewBare("René Descartes", "rene@descartes.fr")
 	unix := time.Now().Unix()
 
 	create := NewCreateOp(rene, unix, "title", "message", nil)
@@ -22,11 +21,9 @@ func TestCreate(t *testing.T) {
 	create.Apply(&snapshot)
 
 	hash, err := create.Hash()
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 
-	comment := Comment{Author: rene, Message: "message", UnixTime: Timestamp(create.UnixTime)}
+	comment := Comment{Author: rene, Message: "message", UnixTime: timestamp.Timestamp(create.UnixTime)}
 
 	expected := Snapshot{
 		Title: "title",
@@ -42,8 +39,20 @@ func TestCreate(t *testing.T) {
 		},
 	}
 
-	deep.CompareUnexportedFields = true
-	if diff := deep.Equal(snapshot, expected); diff != nil {
-		t.Fatal(diff)
-	}
+	assert.Equal(t, expected, snapshot)
+}
+
+func TestCreateSerialize(t *testing.T) {
+	var rene = identity.NewBare("René Descartes", "rene@descartes.fr")
+	unix := time.Now().Unix()
+	before := NewCreateOp(rene, unix, "title", "message", nil)
+
+	data, err := json.Marshal(before)
+	assert.NoError(t, err)
+
+	var after CreateOperation
+	err = json.Unmarshal(data, &after)
+	assert.NoError(t, err)
+
+	assert.Equal(t, before, &after)
 }

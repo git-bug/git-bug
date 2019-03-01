@@ -1,20 +1,19 @@
 package bug
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSetMetadata(t *testing.T) {
 	snapshot := Snapshot{}
 
-	var rene = Person{
-		Name:  "René Descartes",
-		Email: "rene@descartes.fr",
-	}
-
+	rene := identity.NewBare("René Descartes", "rene@descartes.fr")
 	unix := time.Now().Unix()
 
 	create := NewCreateOp(rene, unix, "title", "create", nil)
@@ -23,9 +22,7 @@ func TestSetMetadata(t *testing.T) {
 	snapshot.Operations = append(snapshot.Operations, create)
 
 	hash1, err := create.Hash()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	comment := NewAddCommentOp(rene, unix, "comment", nil)
 	comment.SetMetadata("key2", "value2")
@@ -33,9 +30,7 @@ func TestSetMetadata(t *testing.T) {
 	snapshot.Operations = append(snapshot.Operations, comment)
 
 	hash2, err := comment.Hash()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	op1 := NewSetMetadataOp(rene, unix, hash1, map[string]string{
 		"key":  "override",
@@ -95,4 +90,22 @@ func TestSetMetadata(t *testing.T) {
 	assert.Equal(t, len(commentMetadata), 2)
 	assert.Equal(t, commentMetadata["key2"], "value2")
 	assert.Equal(t, commentMetadata["key3"], "value3")
+}
+
+func TestSetMetadataSerialize(t *testing.T) {
+	var rene = identity.NewBare("René Descartes", "rene@descartes.fr")
+	unix := time.Now().Unix()
+	before := NewSetMetadataOp(rene, unix, "message", map[string]string{
+		"key1": "value1",
+		"key2": "value2",
+	})
+
+	data, err := json.Marshal(before)
+	assert.NoError(t, err)
+
+	var after SetMetadataOperation
+	err = json.Unmarshal(data, &after)
+	assert.NoError(t, err)
+
+	assert.Equal(t, before, &after)
 }

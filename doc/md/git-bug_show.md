@@ -1,10 +1,10 @@
 ## git-bug show
 
-Display the details of a bug
+Display the details of a bug.
 
 ### Synopsis
 
-Display the details of a bug
+Display the details of a bug.
 
 ```
 git-bug show [<id>] [flags]
@@ -19,5 +19,5 @@ git-bug show [<id>] [flags]
 
 ### SEE ALSO
 
-* [git-bug](git-bug.md)	 - A bug tracker embedded in Git
+* [git-bug](git-bug.md)	 - A bug tracker embedded in Git.
 

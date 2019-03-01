@@ -6,11 +6,12 @@ import (
 	"time"
 
 	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/icrowley/fake"
 )
 
-type opsGenerator func(bug.Interface, bug.Person)
+type opsGenerator func(bug.Interface, identity.Interface)
 
 type Options struct {
 	BugNumber    int
@@ -33,7 +34,9 @@ func CommitRandomBugs(repo repository.ClockedRepo, opts Options) {
 }
 
 func CommitRandomBugsWithSeed(repo repository.ClockedRepo, opts Options, seed int64) {
-	bugs := GenerateRandomBugsWithSeed(opts, seed)
+	generateRandomPersons(repo, opts.PersonNumber)
+
+	bugs := generateRandomBugsWithSeed(opts, seed)
 
 	for _, b := range bugs {
 		err := b.Commit(repo)
@@ -43,11 +46,7 @@ func CommitRandomBugsWithSeed(repo repository.ClockedRepo, opts Options, seed in
 	}
 }
 
-func GenerateRandomBugs(opts Options) []*bug.Bug {
-	return GenerateRandomBugsWithSeed(opts, time.Now().UnixNano())
-}
-
-func GenerateRandomBugsWithSeed(opts Options, seed int64) []*bug.Bug {
+func generateRandomBugsWithSeed(opts Options, seed int64) []*bug.Bug {
 	rand.Seed(seed)
 	fake.Seed(seed)
 
@@ -66,7 +65,7 @@ func GenerateRandomBugsWithSeed(opts Options, seed int64) []*bug.Bug {
 		addedLabels = []string{}
 
 		b, _, err := bug.Create(
-			randomPerson(opts.PersonNumber),
+			randomPerson(),
 			time.Now().Unix(),
 			fake.Sentence(),
 			paragraphs(),
@@ -84,7 +83,7 @@ func GenerateRandomBugsWithSeed(opts Options, seed int64) []*bug.Bug {
 
 		for j := 0; j < nOps; j++ {
 			index := rand.Intn(len(opsGenerators))
-			opsGenerators[index](b, randomPerson(opts.PersonNumber))
+			opsGenerators[index](b, randomPerson())
 		}
 
 		result[i] = b
@@ -100,6 +99,9 @@ func GenerateRandomOperationPacks(packNumber int, opNumber int) []*bug.Operation
 func GenerateRandomOperationPacksWithSeed(packNumber int, opNumber int, seed int64) []*bug.OperationPack {
 	// Note: this is a bit crude, only generate a Create + Comments
 
+	panic("this piece of code needs to be updated to make sure that the identities " +
+		"are properly commit before usage. That is, generateRandomPersons() need to be called.")
+
 	rand.Seed(seed)
 	fake.Seed(seed)
 
@@ -111,7 +113,7 @@ func GenerateRandomOperationPacksWithSeed(packNumber int, opNumber int, seed int
 		var op bug.Operation
 
 		op = bug.NewCreateOp(
-			randomPerson(5),
+			randomPerson(),
 			time.Now().Unix(),
 			fake.Sentence(),
 			paragraphs(),
@@ -122,7 +124,7 @@ func GenerateRandomOperationPacksWithSeed(packNumber int, opNumber int, seed int
 
 		for j := 0; j < opNumber-1; j++ {
 			op = bug.NewAddCommentOp(
-				randomPerson(5),
+				randomPerson(),
 				time.Now().Unix(),
 				paragraphs(),
 				nil,
@@ -136,24 +138,26 @@ func GenerateRandomOperationPacksWithSeed(packNumber int, opNumber int, seed int
 	return result
 }
 
-func person() bug.Person {
-	return bug.Person{
-		Name:  fake.FullName(),
-		Email: fake.EmailAddress(),
+func person() identity.Interface {
+	return identity.NewIdentity(fake.FullName(), fake.EmailAddress())
+}
+
+var persons []identity.Interface
+
+func generateRandomPersons(repo repository.ClockedRepo, n int) {
+	persons = make([]identity.Interface, n)
+	for i := range persons {
+		p := person()
+		err := p.Commit(repo)
+		if err != nil {
+			panic(err)
+		}
+		persons[i] = p
 	}
 }
 
-var persons []bug.Person
-
-func randomPerson(personNumber int) bug.Person {
-	if len(persons) == 0 {
-		persons = make([]bug.Person, personNumber)
-		for i := range persons {
-			persons[i] = person()
-		}
-	}
-
-	index := rand.Intn(personNumber)
+func randomPerson() identity.Interface {
+	index := rand.Intn(len(persons))
 	return persons[index]
 }
 
@@ -162,25 +166,25 @@ func paragraphs() string {
 	return strings.Replace(p, "\t", "\n\n", -1)
 }
 
-func comment(b bug.Interface, p bug.Person) {
+func comment(b bug.Interface, p identity.Interface) {
 	_, _ = bug.AddComment(b, p, time.Now().Unix(), paragraphs())
 }
 
-func title(b bug.Interface, p bug.Person) {
+func title(b bug.Interface, p identity.Interface) {
 	_, _ = bug.SetTitle(b, p, time.Now().Unix(), fake.Sentence())
 }
 
-func open(b bug.Interface, p bug.Person) {
+func open(b bug.Interface, p identity.Interface) {
 	_, _ = bug.Open(b, p, time.Now().Unix())
 }
 
-func close(b bug.Interface, p bug.Person) {
+func close(b bug.Interface, p identity.Interface) {
 	_, _ = bug.Close(b, p, time.Now().Unix())
 }
 
 var addedLabels []string
 
-func labels(b bug.Interface, p bug.Person) {
+func labels(b bug.Interface, p identity.Interface) {
 	var removed []string
 	nbRemoved := rand.Intn(3)
 	for nbRemoved > 0 && len(addedLabels) > 0 {

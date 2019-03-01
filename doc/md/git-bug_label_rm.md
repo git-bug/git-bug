@@ -1,10 +1,10 @@
 ## git-bug label rm
 
-Remove a label
+Remove a label.
 
 ### Synopsis
 
-Remove a label
+Remove a label.
 
 ```
 git-bug label rm [<id>] <label>[...] [flags]
@@ -18,5 +18,5 @@ git-bug label rm [<id>] <label>[...] [flags]
 
 ### SEE ALSO
 
-* [git-bug label](git-bug_label.md)	 - Display, add or remove labels
+* [git-bug label](git-bug_label.md)	 - Display, add or remove labels.
 

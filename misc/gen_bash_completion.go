@@ -4,19 +4,20 @@ package main
 
 import (
 	"fmt"
-	"github.com/MichaelMure/git-bug/commands"
 	"log"
 	"os"
 	"path"
+
+	"github.com/MichaelMure/git-bug/commands"
 )
 
 func main() {
 	cwd, _ := os.Getwd()
-	filepath := path.Join(cwd, "misc", "bash_completion", "git-bug")
+	dir := path.Join(cwd, "misc", "bash_completion", "git-bug")
 
 	fmt.Println("Generating bash completion file ...")
 
-	err := commands.RootCmd.GenBashCompletionFile(filepath)
+	err := commands.RootCmd.GenBashCompletionFile(dir)
 	if err != nil {
 		log.Fatal(err)
 	}

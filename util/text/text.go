@@ -323,10 +323,3 @@ func splitWord(word string, length int) (string, string) {
 
 	return string(result), string(leftover)
 }
-
-func minInt(a, b int) int {
-	if a > b {
-		return b
-	}
-	return a
-}

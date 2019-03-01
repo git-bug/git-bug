@@ -22,7 +22,7 @@ func runLabelAdd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	changes, err := b.ChangeLabels(args, nil)
+	changes, _, err := b.ChangeLabels(args, nil)
 
 	for _, change := range changes {
 		fmt.Println(change)
@@ -37,7 +37,7 @@ func runLabelAdd(cmd *cobra.Command, args []string) error {
 
 var labelAddCmd = &cobra.Command{
 	Use:     "add [<id>] <label>[...]",
-	Short:   "Add a label",
+	Short:   "Add a label.",
 	PreRunE: loadRepo,
 	RunE:    runLabelAdd,
 }

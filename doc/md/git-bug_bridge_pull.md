@@ -1,10 +1,10 @@
 ## git-bug bridge pull
 
-Pull updates
+Pull updates.
 
 ### Synopsis
 
-Pull updates
+Pull updates.
 
 ```
 git-bug bridge pull [<name>] [flags]
@@ -18,5 +18,5 @@ git-bug bridge pull [<name>] [flags]
 
 ### SEE ALSO
 
-* [git-bug bridge](git-bug_bridge.md)	 - Configure and use bridges to other bug trackers
+* [git-bug bridge](git-bug_bridge.md)	 - Configure and use bridges to other bug trackers.
 

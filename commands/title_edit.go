@@ -44,7 +44,7 @@ func runTitleEdit(cmd *cobra.Command, args []string) error {
 		fmt.Println("No change, aborting.")
 	}
 
-	err = b.SetTitle(titleEditTitle)
+	_, err = b.SetTitle(titleEditTitle)
 	if err != nil {
 		return err
 	}
@@ -54,7 +54,7 @@ func runTitleEdit(cmd *cobra.Command, args []string) error {
 
 var titleEditCmd = &cobra.Command{
 	Use:     "edit [<id>]",
-	Short:   "Edit a title",
+	Short:   "Edit a title.",
 	PreRunE: loadRepo,
 	RunE:    runTitleEdit,
 }

@@ -799,6 +799,89 @@ _git-bug_title()
     noun_aliases=()
 }
 
+_git-bug_user_adopt()
+{
+    last_command="git-bug_user_adopt"
+
+    command_aliases=()
+
+    commands=()
+
+    flags=()
+    two_word_flags=()
+    local_nonpersistent_flags=()
+    flags_with_completion=()
+    flags_completion=()
+
+
+    must_have_one_flag=()
+    must_have_one_noun=()
+    noun_aliases=()
+}
+
+_git-bug_user_create()
+{
+    last_command="git-bug_user_create"
+
+    command_aliases=()
+
+    commands=()
+
+    flags=()
+    two_word_flags=()
+    local_nonpersistent_flags=()
+    flags_with_completion=()
+    flags_completion=()
+
+
+    must_have_one_flag=()
+    must_have_one_noun=()
+    noun_aliases=()
+}
+
+_git-bug_user_ls()
+{
+    last_command="git-bug_user_ls"
+
+    command_aliases=()
+
+    commands=()
+
+    flags=()
+    two_word_flags=()
+    local_nonpersistent_flags=()
+    flags_with_completion=()
+    flags_completion=()
+
+
+    must_have_one_flag=()
+    must_have_one_noun=()
+    noun_aliases=()
+}
+
+_git-bug_user()
+{
+    last_command="git-bug_user"
+
+    command_aliases=()
+
+    commands=()
+    commands+=("adopt")
+    commands+=("create")
+    commands+=("ls")
+
+    flags=()
+    two_word_flags=()
+    local_nonpersistent_flags=()
+    flags_with_completion=()
+    flags_completion=()
+
+
+    must_have_one_flag=()
+    must_have_one_noun=()
+    noun_aliases=()
+}
+
 _git-bug_version()
 {
     last_command="git-bug_version"
@@ -874,6 +957,7 @@ _git-bug_root_command()
     commands+=("status")
     commands+=("termui")
     commands+=("title")
+    commands+=("user")
     commands+=("version")
     commands+=("webui")
 

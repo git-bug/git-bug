@@ -12,8 +12,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-var ErrImportNorSupported = errors.New("import is not supported")
-var ErrExportNorSupported = errors.New("export is not supported")
+var ErrImportNotSupported = errors.New("import is not supported")
+var ErrExportNotSupported = errors.New("export is not supported")
+
+const bridgeConfigKeyPrefix = "git-bug.bridge"
 
 var bridgeImpl map[string]reflect.Type
 
@@ -114,12 +116,12 @@ func splitFullName(fullName string) (string, string, error) {
 // ConfiguredBridges return the list of bridge that are configured for the given
 // repo
 func ConfiguredBridges(repo repository.RepoCommon) ([]string, error) {
-	configs, err := repo.ReadConfigs("git-bug.bridge.")
+	configs, err := repo.ReadConfigs(bridgeConfigKeyPrefix + ".")
 	if err != nil {
 		return nil, errors.Wrap(err, "can't read configured bridges")
 	}
 
-	re, err := regexp.Compile(`git-bug.bridge.([^.]+\.[^.]+)`)
+	re, err := regexp.Compile(bridgeConfigKeyPrefix + `.([^.]+\.[^.]+)`)
 	if err != nil {
 		panic(err)
 	}
@@ -266,7 +268,7 @@ func (b *Bridge) ensureInit() error {
 func (b *Bridge) ImportAll() error {
 	importer := b.getImporter()
 	if importer == nil {
-		return ErrImportNorSupported
+		return ErrImportNotSupported
 	}
 
 	err := b.ensureConfig()
@@ -285,7 +287,7 @@ func (b *Bridge) ImportAll() error {
 func (b *Bridge) Import(id string) error {
 	importer := b.getImporter()
 	if importer == nil {
-		return ErrImportNorSupported
+		return ErrImportNotSupported
 	}
 
 	err := b.ensureConfig()
@@ -304,7 +306,7 @@ func (b *Bridge) Import(id string) error {
 func (b *Bridge) ExportAll() error {
 	exporter := b.getExporter()
 	if exporter == nil {
-		return ErrExportNorSupported
+		return ErrExportNotSupported
 	}
 
 	err := b.ensureConfig()
@@ -323,7 +325,7 @@ func (b *Bridge) ExportAll() error {
 func (b *Bridge) Export(id string) error {
 	exporter := b.getExporter()
 	if exporter == nil {
-		return ErrExportNorSupported
+		return ErrExportNotSupported
 	}
 
 	err := b.ensureConfig()

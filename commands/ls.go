@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/colors"
 	"github.com/MichaelMure/git-bug/util/interrupt"
 	"github.com/spf13/cobra"
@@ -52,7 +52,7 @@ func runLsBug(cmd *cobra.Command, args []string) error {
 
 		snapshot := b.Snapshot()
 
-		var author bug.Person
+		var author identity.Interface
 
 		if len(snapshot.Comments) > 0 {
 			create := snapshot.Comments[0]
@@ -131,7 +131,7 @@ func lsQueryFromFlags() (*cache.Query, error) {
 
 var lsCmd = &cobra.Command{
 	Use:   "ls [<query>]",
-	Short: "List bugs",
+	Short: "List bugs.",
 	Long: `Display a summary of each bugs.
 
 You can pass an additional query to filter and order the list. This query can be expressed either with a simple query language or with flags.`,
