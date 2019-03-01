@@ -58,12 +58,8 @@ func LabelFilter(label string) Filter {
 // TitleFilter return a Filter that match a title
 func TitleFilter(title string) Filter {
 	return func(excerpt *BugExcerpt) bool {
-		if strings.Contains(excerpt.Title, title) {
-			return true
-		}
-		return false
+		return strings.Contains(excerpt.Title, title)
 	}
-
 }
 
 // NoLabelFilter return a Filter that match the absence of labels
