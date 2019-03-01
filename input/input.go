@@ -193,6 +193,7 @@ const queryTemplate = `%s
 #
 # - status:open, status:closed
 # - author:<query>
+# - title:<title>
 # - label:<label>
 # - no:label
 #

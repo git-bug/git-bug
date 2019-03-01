@@ -55,11 +55,15 @@ func runLsBug(cmd *cobra.Command, args []string) error {
 		authorFmt := fmt.Sprintf("%-15.15s", b.Author.Name)
 
 		fmt.Printf("%s %s\t%s\t%s\tC:%d L:%d\n",
+<<<<<<< HEAD
 			colors.Cyan(b.HumanId()),
+=======
+			colors.Cyan(b.Id),
+>>>>>>> Made requested changes
 			colors.Yellow(b.Status),
 			titleFmt,
 			colors.Magenta(authorFmt),
-			b.NoOfComments,
+			b.LenComments,
 			len(b.Labels),
 		)
 	}

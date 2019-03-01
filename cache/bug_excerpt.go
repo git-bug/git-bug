@@ -23,16 +23,11 @@ type BugExcerpt struct {
 	CreateUnixTime    int64
 	EditUnixTime      int64
 
-	Title        string
-	Status       bug.Status
-	NoOfComments int
-	Labels       []bug.Label
-
-	// If author is identity.Bare, LegacyAuthor is set
-	// If author is identity.Identity, AuthorId is set and data is deported
-	// in a IdentityExcerpt
-	LegacyAuthor LegacyAuthorExcerpt
-	AuthorId     string
+	Title       string
+	Status      bug.Status
+	Author      identity.Interface
+	LenComments int
+	Labels      []bug.Label
 
 	CreateMetadata map[string]string
 }
@@ -53,20 +48,8 @@ func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
 		Title:             snap.Title,
 		Status:            snap.Status,
 		Labels:            snap.Labels,
-		NoOfComments:      len(snap.Comments),
+		LenComments:       len(snap.Comments),
 		CreateMetadata:    b.FirstOp().AllMetadata(),
-	}
-
-	switch snap.Author.(type) {
-	case *identity.Identity:
-		e.AuthorId = snap.Author.Id()
-	case *identity.Bare:
-		e.LegacyAuthor = LegacyAuthorExcerpt{
-			Login: snap.Author.Login(),
-			Name:  snap.Author.Name(),
-		}
-	default:
-		panic("unhandled identity type")
 	}
 
 	return e

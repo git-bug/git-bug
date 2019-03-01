@@ -60,6 +60,10 @@ func ParseQuery(query string) (*Query, error) {
 			f := LabelFilter(qualifierQuery)
 			result.Label = append(result.Label, f)
 
+		case "title":
+			f := TitleFilter(qualifierQuery)
+			result.Label = append(result.Title, f)
+
 		case "no":
 			err := result.parseNoFilter(qualifierQuery)
 			if err != nil {

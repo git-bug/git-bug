@@ -22,6 +22,9 @@ func TestQueryParse(t *testing.T) {
 		{"label:hello", true},
 		{`label:"Good first issue"`, true},
 
+		{"title:Bug titleOne", true},
+		{`title:"Bug titleTwo"`, true},
+
 		{"sort:edit", true},
 		{"sort:unknown", false},
 	}
