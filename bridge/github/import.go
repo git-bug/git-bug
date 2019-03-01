@@ -423,7 +423,8 @@ func (gi *githubImporter) ensureComment(repo *cache.RepoCache, b *cache.BugCache
 		return err
 	}
 
-	target, err := b.ResolveOperationWithMetadata(keyGithubId, parseId(comment.Id))
+	var target git.Hash
+	target, err = b.ResolveOperationWithMetadata(keyGithubId, parseId(comment.Id))
 	if err != nil && err != cache.ErrNoMatchingOp {
 		// real error
 		return err
