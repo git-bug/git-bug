@@ -52,14 +52,10 @@ func runLsBug(cmd *cobra.Command, args []string) error {
 
 		// truncate + pad if needed
 		titleFmt := fmt.Sprintf("%-50.50s", b.Title)
-		authorFmt := fmt.Sprintf("%-15.15s", b.Author.Name)
+		authorFmt := fmt.Sprintf("%-15.15s", b.LegacyAuthor.Name)
 
 		fmt.Printf("%s %s\t%s\t%s\tC:%d L:%d\n",
-<<<<<<< HEAD
 			colors.Cyan(b.HumanId()),
-=======
-			colors.Cyan(b.Id),
->>>>>>> Made requested changes
 			colors.Yellow(b.Status),
 			titleFmt,
 			colors.Magenta(authorFmt),
