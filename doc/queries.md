@@ -46,10 +46,10 @@ You can filter based on the bug's label.
 
 You can filter based on the bug's title.
 
-| Qualifier     | Example                                                                   |
-| ---           | ---                                                                       |
-| `title:TITLE` | `title:Critical` matches bugs with the title `Critical`                   |
-|               | `title:"Typo in string"` matches bugs with the title `Typo in string`     |
+| Qualifier     | Example                                                                        |
+| ---           | ---                                                                            |
+| `title:TITLE` | `title:Critical` matches bugs with a title containing `Critical`               |
+|               | `title:"Typo in string"` matches bugs with a title containing `Typo in string` |
 
 
 ### Filtering by missing feature
