@@ -23,8 +23,10 @@ type BugExcerpt struct {
 	CreateUnixTime    int64
 	EditUnixTime      int64
 
-	Status bug.Status
-	Labels []bug.Label
+	Status      bug.Status
+	Labels      []bug.Label
+	Title       string
+	LenComments int
 
 	// If author is identity.Bare, LegacyAuthor is set
 	// If author is identity.Identity, AuthorId is set and data is deported
@@ -50,6 +52,8 @@ func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
 		EditUnixTime:      snap.LastEditUnix(),
 		Status:            snap.Status,
 		Labels:            snap.Labels,
+		Title:             snap.Title,
+		LenComments:       len(snap.Comments),
 		CreateMetadata:    b.FirstOp().AllMetadata(),
 	}
 

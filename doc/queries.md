@@ -42,6 +42,16 @@ You can filter based on the bug's label.
 | `label:LABEL` | `label:prod` matches bugs with the label `prod`                           |
 |               | `label:"Good first issue"` matches bugs with the label `Good first issue` |
 
+### Filtering by title
+
+You can filter based on the bug's title.
+
+| Qualifier     | Example                                                                        |
+| ---           | ---                                                                            |
+| `title:TITLE` | `title:Critical` matches bugs with a title containing `Critical`               |
+|               | `title:"Typo in string"` matches bugs with a title containing `Typo in string` |
+
+
 ### Filtering by missing feature
 
 You can filter bugs based on the absence of something.

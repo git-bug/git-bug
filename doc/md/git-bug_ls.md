@@ -29,6 +29,7 @@ git bug ls --status closed --by creation
   -s, --status strings     Filter by status. Valid values are [open,closed]
   -a, --author strings     Filter by author
   -l, --label strings      Filter by label
+  -t, --title strings      Filter by title
   -n, --no strings         Filter by absence of something. Valid values are [label]
   -b, --by string          Sort the results by a characteristic. Valid values are [id,creation,edit] (default "creation")
   -d, --direction string   Select the sorting direction. Valid values are [asc,desc] (default "asc")

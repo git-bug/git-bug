@@ -34,14 +34,6 @@ func (snap *Snapshot) HumanId() string {
 	return FormatHumanID(snap.id)
 }
 
-// Deprecated:should be moved in UI code
-func (snap *Snapshot) Summary() string {
-	return fmt.Sprintf("C:%d L:%d",
-		len(snap.Comments)-1,
-		len(snap.Labels),
-	)
-}
-
 // Return the last time a bug was modified
 func (snap *Snapshot) LastEditTime() time.Time {
 	if len(snap.Operations) == 0 {
