@@ -55,10 +55,13 @@ func LabelFilter(label string) Filter {
 	}
 }
 
-// TitleFilter return a Filter that match if the title contains the given pattern
-func TitleFilter(title string) Filter {
+// TitleFilter return a Filter that match if the title contains the given query
+func TitleFilter(query string) Filter {
 	return func(repo *RepoCache, excerpt *BugExcerpt) bool {
-		return strings.Contains(excerpt.Title, title)
+		return strings.Contains(
+			strings.ToLower(excerpt.Title),
+			strings.ToLower(query),
+		)
 	}
 }
 
