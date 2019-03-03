@@ -55,7 +55,7 @@ func LabelFilter(label string) Filter {
 	}
 }
 
-// TitleFilter return a Filter that match a title
+// TitleFilter return a Filter that match if the title contains the given pattern
 func TitleFilter(title string) Filter {
 	return func(repo *RepoCache, excerpt *BugExcerpt) bool {
 		return strings.Contains(excerpt.Title, title)
