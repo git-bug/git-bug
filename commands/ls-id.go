@@ -16,8 +16,7 @@ func runLsID(cmd *cobra.Command, args []string) error {
 	}
 	defer backend.Close()
 
-	var prefix string
-	prefix = ""
+	var prefix = ""
 	if len(args) != 0 {
 		prefix = args[0]
 	}
