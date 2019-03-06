@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/util/interrupt"
 	"github.com/spf13/cobra"
 )
 
@@ -15,6 +16,7 @@ func runLsID(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	defer backend.Close()
+	interrupt.RegisterCleaner(backend.Close)
 
 	var prefix = ""
 	if len(args) != 0 {
