@@ -68,6 +68,10 @@ func ParseQuery(query string) (*Query, error) {
 			f := LabelFilter(qualifierQuery)
 			result.Label = append(result.Label, f)
 
+		case "inverselabel":
+			f := InverseLabelFilter(qualifierQuery)
+			result.InverseLabel = append(result.InverseLabel, f) // ERROR?
+
 		case "title":
 			f := TitleFilter(qualifierQuery)
 			result.Title = append(result.Title, f)

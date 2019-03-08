@@ -16,6 +16,7 @@ var (
 	lsAuthorQuery      []string
 	lsParticipantQuery []string
 	lsLabelQuery       []string
+	lsInverseLabelQuery []string
 	lsTitleQuery       []string
 	lsActorQuery       []string
 	lsNoQuery          []string
@@ -118,6 +119,10 @@ func lsQueryFromFlags() (*cache.Query, error) {
 		f := cache.LabelFilter(label)
 		query.Label = append(query.Label, f)
 	}
+	for _, inverselabel := range lsInverseLabelQuery {
+		f := cache.InverseLabelFilter(inverselabel)
+		query.InverseLabel = append(query.InverseLabel, f)
+	}
 
 	for _, no := range lsNoQuery {
 		switch no {
@@ -182,6 +187,8 @@ func init() {
 		"Filter by actor")
 	lsCmd.Flags().StringSliceVarP(&lsLabelQuery, "label", "l", nil,
 		"Filter by label")
+	lsCmd.Flags().StringSliceVarP(&lsInverseLabelQuery, "not-label", "L", nil,
+		"Filter out by label")
 	lsCmd.Flags().StringSliceVarP(&lsTitleQuery, "title", "t", nil,
 		"Filter by title")
 	lsCmd.Flags().StringSliceVarP(&lsNoQuery, "no", "n", nil,

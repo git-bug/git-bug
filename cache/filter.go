@@ -42,16 +42,34 @@ func AuthorFilter(query string) Filter {
 	}
 }
 
-// LabelFilter return a Filter that match a label
-func LabelFilter(label string) Filter {
+// LabelFilterGeneric return a Filter that matches/not matches a label
+// depending on inverse
+func LabelFilterGeneric(label string, inverse bool) Filter {
+	match := true
+	if inverse {
+            match = false
+	}
+
+
 	return func(repoCache *RepoCache, excerpt *BugExcerpt) bool {
 		for _, l := range excerpt.Labels {
 			if string(l) == label {
-				return true
+				return match
 			}
 		}
-		return false
+		return !match
 	}
+}
+
+
+// LabelFilter return a Filter that match a label
+func LabelFilter(label string) Filter {
+    return LabelFilterGeneric(label , false)
+}
+
+// InverseLabelFilter return a Filter that returns false if it matches a label
+func InverseLabelFilter(label string) Filter {
+    return LabelFilterGeneric(label , true)
 }
 
 // ActorFilter return a Filter that match a bug actor
@@ -116,6 +134,7 @@ type Filters struct {
 	Actor       []Filter
 	Participant []Filter
 	Label       []Filter
+	InverseLabel  []Filter
 	Title       []Filter
 	NoFilters   []Filter
 }
@@ -139,6 +158,9 @@ func (f *Filters) Match(repoCache *RepoCache, excerpt *BugExcerpt) bool {
 	}
 
 	if match := f.andMatch(f.Label, repoCache, excerpt); !match {
+		return false
+	}
+	if match := f.andMatch(f.InverseLabel, repoCache, excerpt); !match {
 		return false
 	}
 

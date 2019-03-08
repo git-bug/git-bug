@@ -195,6 +195,7 @@ const queryTemplate = `%s
 # - author:<query>
 # - title:<title>
 # - label:<label>
+# - inverselabel:<label>
 # - no:label
 #
 # Sorting
