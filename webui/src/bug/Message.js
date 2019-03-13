@@ -32,7 +32,7 @@ const Message = ({ op, classes }) => (
     <div className={classes.header}>
       <Author className={classes.author} author={op.author} bold />
       <span> commented </span>
-      <Date date={op.date} />
+      <Date date={op.createdAt} />
     </div>
     <div className={classes.message}>
       <Typography>{op.message}</Typography>
@@ -41,9 +41,9 @@ const Message = ({ op, classes }) => (
 );
 
 Message.createFragment = gql`
-  fragment Create on Operation {
-    ... on CreateOperation {
-      date
+  fragment Create on TimelineItem {
+    ... on CreateTimelineItem {
+      createdAt
       author {
         name
         email
@@ -55,9 +55,9 @@ Message.createFragment = gql`
 `;
 
 Message.commentFragment = gql`
-  fragment Comment on Operation {
-    ... on AddCommentOperation {
-      date
+  fragment AddComment on TimelineItem {
+    ... on AddCommentTimelineItem {
+      createdAt
       author {
         name
         email

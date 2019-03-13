@@ -12,13 +12,13 @@ const QUERY = gql`
   query($id: String!, $first: Int = 10, $after: String) {
     defaultRepository {
       bug(prefix: $id) {
-        operations(first: $first, after: $after) {
+        timeline(first: $first, after: $after) {
           nodes {
-            ...Create
-            ...Comment
             ...LabelChange
-            ...SetTitle
             ...SetStatus
+            ...SetTitle
+            ...AddComment
+            ...Create
           }
           pageInfo {
             hasNextPage
@@ -42,7 +42,7 @@ const TimelineQuery = ({ id }) => (
       if (error) return <p>Error: {error}</p>;
       return (
         <Timeline
-          ops={data.defaultRepository.bug.operations.nodes}
+          ops={data.defaultRepository.bug.timeline.nodes}
           fetchMore={fetchMore}
         />
       );

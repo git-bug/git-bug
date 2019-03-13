@@ -21,8 +21,8 @@ const SetStatus = ({ op, classes }) => {
 };
 
 SetStatus.fragment = gql`
-  fragment SetStatus on Operation {
-    ... on SetStatusOperation {
+  fragment SetStatus on TimelineItem {
+    ... on SetStatusTimelineItem {
       date
       author {
         name

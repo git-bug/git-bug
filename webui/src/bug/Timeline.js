@@ -27,15 +27,15 @@ class Timeline extends React.Component {
       <div className={classes.main}>
         {ops.map((op, index) => {
           switch (op.__typename) {
-            case 'CreateOperation':
+            case 'CreateTimelineItem':
               return <Message key={index} op={op} />;
-            case 'AddCommentOperation':
+            case 'AddCommentTimelineItem':
               return <Message key={index} op={op} />;
-            case 'LabelChangeOperation':
+            case 'LabelChangeTimelineItem':
               return <LabelChange key={index} op={op} />;
-            case 'SetTitleOperation':
+            case 'SetTitleTimelineItem':
               return <SetTitle key={index} op={op} />;
-            case 'SetStatusOperation':
+            case 'SetStatusTimelineItem':
               return <SetStatus key={index} op={op} />;
 
             default:

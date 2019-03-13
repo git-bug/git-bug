@@ -36,8 +36,8 @@ const LabelChange = ({ op, classes }) => {
 };
 
 LabelChange.fragment = gql`
-  fragment LabelChange on Operation {
-    ... on LabelChangeOperation {
+  fragment LabelChange on TimelineItem {
+    ... on LabelChangeTimelineItem {
       date
       author {
         name

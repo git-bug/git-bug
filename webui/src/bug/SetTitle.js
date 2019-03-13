@@ -27,8 +27,8 @@ const SetTitle = ({ op, classes }) => {
 };
 
 SetTitle.fragment = gql`
-  fragment SetTitle on Operation {
-    ... on SetTitleOperation {
+  fragment SetTitle on TimelineItem {
+    ... on SetTitleTimelineItem {
       date
       author {
         name
