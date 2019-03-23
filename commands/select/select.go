@@ -16,7 +16,7 @@ import (
 
 const selectFile = "select"
 
-var ErrNoValidId = errors.New("you must provide a bug id")
+var ErrNoValidId = errors.New("you must provide a bug id or use the \"select\" command first")
 
 // ResolveBug first try to resolve a bug using the first argument of the command
 // line. If it fails, it fallback to the select mechanism.

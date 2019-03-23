@@ -35,7 +35,7 @@ func runUserAdopt(cmd *cobra.Command, args []string) error {
 }
 
 var userAdoptCmd = &cobra.Command{
-	Use:     "adopt <id>",
+	Use:     "adopt <user-id>",
 	Short:   "Adopt an existing identity as your own.",
 	PreRunE: loadRepo,
 	RunE:    runUserAdopt,

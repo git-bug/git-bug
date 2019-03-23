@@ -49,7 +49,7 @@ func runUser(cmd *cobra.Command, args []string) error {
 }
 
 var userCmd = &cobra.Command{
-	Use:     "user [<id>]",
+	Use:     "user [<user-id>]",
 	Short:   "Display or change the user identity.",
 	PreRunE: loadRepo,
 	RunE:    runUser,
