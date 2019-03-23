@@ -48,12 +48,10 @@ git bug status
 `,
 	Long: `Select a bug for implicit use in future commands.
 
-This command allows you to omit any bug <id> argument for the following commands:
-  - git bug comment
-  - git bug label
-  - git bug show
-  - git bug status
-  - git bug title
+This command allows you to omit any bug <id> argument, for example:
+  git bug show
+instead of
+  git bug show 2f153ca
 
 The complementary command is "git bug deselect" performing the opposite operation.
 `,
