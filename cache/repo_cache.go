@@ -153,6 +153,19 @@ func (c *RepoCache) lock() error {
 }
 
 func (c *RepoCache) Close() error {
+	for id := range c.identities {
+		delete(c.identities, id)
+	}
+	for id := range c.identitiesExcerpts {
+		delete(c.identitiesExcerpts, id)
+	}
+	for id := range c.bugs {
+		delete(c.bugs, id)
+	}
+	for id := range c.bugExcerpts {
+		delete(c.bugExcerpts, id)
+	}
+
 	lockPath := repoLockFilePath(c.repo)
 	return os.Remove(lockPath)
 }
