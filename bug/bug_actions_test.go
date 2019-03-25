@@ -20,6 +20,12 @@ func TestPushPull(t *testing.T) {
 	err = bug1.Commit(repoA)
 	require.NoError(t, err)
 
+	// distribute the identity
+	_, err = identity.Push(repoA, "origin")
+	require.NoError(t, err)
+	err = identity.Pull(repoB, "origin")
+	require.NoError(t, err)
+
 	// A --> remote --> B
 	_, err = Push(repoA, "origin")
 	require.NoError(t, err)
@@ -87,7 +93,14 @@ func _RebaseTheirs(t testing.TB) {
 	err = bug1.Commit(repoA)
 	require.NoError(t, err)
 
+	// distribute the identity
+	_, err = identity.Push(repoA, "origin")
+	require.NoError(t, err)
+	err = identity.Pull(repoB, "origin")
+	require.NoError(t, err)
+
 	// A --> remote
+
 	_, err = Push(repoA, "origin")
 	require.NoError(t, err)
 
@@ -151,6 +164,12 @@ func _RebaseOurs(t testing.TB) {
 	bug1, _, err := Create(reneA, time.Now().Unix(), "bug1", "message")
 	require.NoError(t, err)
 	err = bug1.Commit(repoA)
+	require.NoError(t, err)
+
+	// distribute the identity
+	_, err = identity.Push(repoA, "origin")
+	require.NoError(t, err)
+	err = identity.Pull(repoB, "origin")
 	require.NoError(t, err)
 
 	// A --> remote
@@ -234,6 +253,12 @@ func _RebaseConflict(t testing.TB) {
 	bug1, _, err := Create(reneA, time.Now().Unix(), "bug1", "message")
 	require.NoError(t, err)
 	err = bug1.Commit(repoA)
+	require.NoError(t, err)
+
+	// distribute the identity
+	_, err = identity.Push(repoA, "origin")
+	require.NoError(t, err)
+	err = identity.Pull(repoB, "origin")
 	require.NoError(t, err)
 
 	// A --> remote
