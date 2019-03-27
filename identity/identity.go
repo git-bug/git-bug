@@ -25,7 +25,7 @@ const idLength = 40
 const humanIdLength = 7
 
 var ErrNonFastForwardMerge = errors.New("non fast-forward identity merge")
-var ErrNoIdentitySet = errors.New("user identity first needs to be created using \"git bug user create\" or \"git bug user adopt\"")
+var ErrNoIdentitySet = errors.New("to interact with bugs, an identity first needs to be created using \"git bug user create\" or \"git bug user adopt\"")
 var ErrMultipleIdentitiesSet = errors.New("multiple user identities set")
 
 var _ Interface = &Identity{}
