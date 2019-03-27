@@ -7,7 +7,7 @@ Adopt an existing identity as your own.
 Adopt an existing identity as your own.
 
 ```
-git-bug user adopt <id> [flags]
+git-bug user adopt <user-id> [flags]
 ```
 
 ### Options
