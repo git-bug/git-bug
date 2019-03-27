@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/pkg/errors"
 )
@@ -34,7 +35,7 @@ func Pull(repo repository.ClockedRepo, remote string) error {
 		if merge.Err != nil {
 			return merge.Err
 		}
-		if merge.Status == MergeStatusInvalid {
+		if merge.Status == entity.MergeStatusInvalid {
 			return errors.Errorf("merge failure: %s", merge.Reason)
 		}
 	}
@@ -43,8 +44,8 @@ func Pull(repo repository.ClockedRepo, remote string) error {
 }
 
 // MergeAll will merge all the available remote identity
-func MergeAll(repo repository.ClockedRepo, remote string) <-chan MergeResult {
-	out := make(chan MergeResult)
+func MergeAll(repo repository.ClockedRepo, remote string) <-chan entity.MergeResult {
+	out := make(chan entity.MergeResult)
 
 	go func() {
 		defer close(out)
@@ -53,7 +54,7 @@ func MergeAll(repo repository.ClockedRepo, remote string) <-chan MergeResult {
 		remoteRefs, err := repo.ListRefs(remoteRefSpec)
 
 		if err != nil {
-			out <- MergeResult{Err: err}
+			out <- entity.MergeResult{Err: err}
 			return
 		}
 
@@ -64,13 +65,13 @@ func MergeAll(repo repository.ClockedRepo, remote string) <-chan MergeResult {
 			remoteIdentity, err := read(repo, remoteRef)
 
 			if err != nil {
-				out <- newMergeInvalidStatus(id, errors.Wrap(err, "remote identity is not readable").Error())
+				out <- entity.NewMergeInvalidStatus(id, errors.Wrap(err, "remote identity is not readable").Error())
 				continue
 			}
 
 			// Check for error in remote data
 			if err := remoteIdentity.Validate(); err != nil {
-				out <- newMergeInvalidStatus(id, errors.Wrap(err, "remote identity is invalid").Error())
+				out <- entity.NewMergeInvalidStatus(id, errors.Wrap(err, "remote identity is invalid").Error())
 				continue
 			}
 
@@ -78,7 +79,7 @@ func MergeAll(repo repository.ClockedRepo, remote string) <-chan MergeResult {
 			localExist, err := repo.RefExist(localRef)
 
 			if err != nil {
-				out <- newMergeError(err, id)
+				out <- entity.NewMergeError(err, id)
 				continue
 			}
 
@@ -87,101 +88,35 @@ func MergeAll(repo repository.ClockedRepo, remote string) <-chan MergeResult {
 				err := repo.CopyRef(remoteRef, localRef)
 
 				if err != nil {
-					out <- newMergeError(err, id)
+					out <- entity.NewMergeError(err, id)
 					return
 				}
 
-				out <- newMergeStatus(MergeStatusNew, id, remoteIdentity)
+				out <- entity.NewMergeStatus(entity.MergeStatusNew, id, remoteIdentity)
 				continue
 			}
 
 			localIdentity, err := read(repo, localRef)
 
 			if err != nil {
-				out <- newMergeError(errors.Wrap(err, "local identity is not readable"), id)
+				out <- entity.NewMergeError(errors.Wrap(err, "local identity is not readable"), id)
 				return
 			}
 
 			updated, err := localIdentity.Merge(repo, remoteIdentity)
 
 			if err != nil {
-				out <- newMergeInvalidStatus(id, errors.Wrap(err, "merge failed").Error())
+				out <- entity.NewMergeInvalidStatus(id, errors.Wrap(err, "merge failed").Error())
 				return
 			}
 
 			if updated {
-				out <- newMergeStatus(MergeStatusUpdated, id, localIdentity)
+				out <- entity.NewMergeStatus(entity.MergeStatusUpdated, id, localIdentity)
 			} else {
-				out <- newMergeStatus(MergeStatusNothing, id, localIdentity)
+				out <- entity.NewMergeStatus(entity.MergeStatusNothing, id, localIdentity)
 			}
 		}
 	}()
 
 	return out
-}
-
-// MergeStatus represent the result of a merge operation of a bug
-type MergeStatus int
-
-const (
-	_ MergeStatus = iota
-	MergeStatusNew
-	MergeStatusInvalid
-	MergeStatusUpdated
-	MergeStatusNothing
-)
-
-// Todo: share a generalized MergeResult with the bug package ?
-type MergeResult struct {
-	// Err is set when a terminal error occur in the process
-	Err error
-
-	Id     string
-	Status MergeStatus
-
-	// Only set for invalid status
-	Reason string
-
-	// Not set for invalid status
-	Identity *Identity
-}
-
-func (mr MergeResult) String() string {
-	switch mr.Status {
-	case MergeStatusNew:
-		return "new"
-	case MergeStatusInvalid:
-		return fmt.Sprintf("invalid data: %s", mr.Reason)
-	case MergeStatusUpdated:
-		return "updated"
-	case MergeStatusNothing:
-		return "nothing to do"
-	default:
-		panic("unknown merge status")
-	}
-}
-
-func newMergeError(err error, id string) MergeResult {
-	return MergeResult{
-		Err: err,
-		Id:  id,
-	}
-}
-
-func newMergeStatus(status MergeStatus, id string, identity *Identity) MergeResult {
-	return MergeResult{
-		Id:     id,
-		Status: status,
-
-		// Identity is not set for an invalid merge result
-		Identity: identity,
-	}
-}
-
-func newMergeInvalidStatus(id string, reason string) MergeResult {
-	return MergeResult{
-		Id:     id,
-		Status: MergeStatusInvalid,
-		Reason: reason,
-	}
 }

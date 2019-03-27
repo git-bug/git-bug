@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/util/colors"
 	"github.com/MichaelMure/git-bug/util/text"
 	"github.com/MichaelMure/gocui"
@@ -435,8 +435,6 @@ func (bt *bugTable) openBug(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (bt *bugTable) pull(g *gocui.Gui, v *gocui.View) error {
-	// Note: this is very hacky
-
 	ui.msgPopup.Activate("Pull from remote "+defaultRemote, "...")
 
 	go func() {
@@ -457,19 +455,19 @@ func (bt *bugTable) pull(g *gocui.Gui, v *gocui.View) error {
 		var buffer bytes.Buffer
 		beginLine := ""
 
-		for merge := range bt.repo.MergeAll(defaultRemote) {
-			if merge.Status == bug.MergeStatusNothing {
+		for result := range bt.repo.MergeAll(defaultRemote) {
+			if result.Status == entity.MergeStatusNothing {
 				continue
 			}
 
-			if merge.Err != nil {
+			if result.Err != nil {
 				g.Update(func(gui *gocui.Gui) error {
 					ui.msgPopup.Activate(msgPopupErrorTitle, err.Error())
 					return nil
 				})
 			} else {
 				_, _ = fmt.Fprintf(&buffer, "%s%s: %s",
-					beginLine, colors.Cyan(merge.Bug.HumanId()), merge,
+					beginLine, colors.Cyan(result.Entity.HumanId()), result,
 				)
 
 				beginLine = "\n"

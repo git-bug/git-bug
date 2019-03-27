@@ -6,6 +6,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/util/interrupt"
 	"github.com/spf13/cobra"
 )
@@ -38,13 +39,13 @@ func runPull(cmd *cobra.Command, args []string) error {
 
 	fmt.Println("Merging data ...")
 
-	for merge := range backend.MergeAll(remote) {
-		if merge.Err != nil {
-			fmt.Println(merge.Err)
+	for result := range backend.MergeAll(remote) {
+		if result.Err != nil {
+			fmt.Println(result.Err)
 		}
 
-		if merge.Status != bug.MergeStatusNothing {
-			fmt.Printf("%s: %s\n", bug.FormatHumanID(merge.Id), merge)
+		if result.Status != entity.MergeStatusNothing {
+			fmt.Printf("%s: %s\n", bug.FormatHumanID(result.Id), result)
 		}
 	}
 

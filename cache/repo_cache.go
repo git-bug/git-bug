@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/git"
@@ -593,23 +594,31 @@ func (c *RepoCache) NewBugRaw(author *IdentityCache, unixTime int64, title strin
 	return cached, nil
 }
 
-// Fetch retrieve update from a remote
-// This does not change the local bugs state
+// Fetch retrieve updates from a remote
+// This does not change the local bugs or identities state
 func (c *RepoCache) Fetch(remote string) (string, error) {
-	return bug.Fetch(c.repo, remote)
+	stdout1, err := identity.Fetch(c.repo, remote)
+	if err != nil {
+		return stdout1, err
+	}
+
+	stdout2, err := bug.Fetch(c.repo, remote)
+	if err != nil {
+		return stdout2, err
+	}
+
+	return stdout1 + stdout2, nil
 }
 
-// MergeAll will merge all the available remote bug
-func (c *RepoCache) MergeAll(remote string) <-chan bug.MergeResult {
-	// TODO: add identities
-
-	out := make(chan bug.MergeResult)
+// MergeAll will merge all the available remote bug and identities
+func (c *RepoCache) MergeAll(remote string) <-chan entity.MergeResult {
+	out := make(chan entity.MergeResult)
 
 	// Intercept merge results to update the cache properly
 	go func() {
 		defer close(out)
 
-		results := bug.MergeAll(c.repo, remote)
+		results := identity.MergeAll(c.repo, remote)
 		for result := range results {
 			out <- result
 
@@ -617,13 +626,26 @@ func (c *RepoCache) MergeAll(remote string) <-chan bug.MergeResult {
 				continue
 			}
 
-			id := result.Id
+			switch result.Status {
+			case entity.MergeStatusNew, entity.MergeStatusUpdated:
+				i := result.Entity.(*identity.Identity)
+				c.identitiesExcerpts[result.Id] = NewIdentityExcerpt(i)
+			}
+		}
+
+		results = bug.MergeAll(c.repo, remote)
+		for result := range results {
+			out <- result
+
+			if result.Err != nil {
+				continue
+			}
 
 			switch result.Status {
-			case bug.MergeStatusNew, bug.MergeStatusUpdated:
-				b := result.Bug
+			case entity.MergeStatusNew, entity.MergeStatusUpdated:
+				b := result.Entity.(*bug.Bug)
 				snap := b.Compile()
-				c.bugExcerpts[id] = NewBugExcerpt(b, &snap)
+				c.bugExcerpts[result.Id] = NewBugExcerpt(b, &snap)
 			}
 		}
 
@@ -640,7 +662,17 @@ func (c *RepoCache) MergeAll(remote string) <-chan bug.MergeResult {
 
 // Push update a remote with the local changes
 func (c *RepoCache) Push(remote string) (string, error) {
-	return bug.Push(c.repo, remote)
+	stdout1, err := identity.Push(c.repo, remote)
+	if err != nil {
+		return stdout1, err
+	}
+
+	stdout2, err := bug.Push(c.repo, remote)
+	if err != nil {
+		return stdout2, err
+	}
+
+	return stdout1 + stdout2, nil
 }
 
 func repoLockFilePath(repo repository.Repo) string {
