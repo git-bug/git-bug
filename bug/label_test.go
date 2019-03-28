@@ -1,60 +1,35 @@
 package bug
 
-import "testing"
+import (
+	"testing"
 
-func TestLabelColorClassic(t *testing.T) {
-	label := Label("test")
-	color := label.Color()
-	expected := Color{red: 244, green: 67, blue: 54}
+	"github.com/stretchr/testify/require"
+)
 
-	if color != expected {
-		t.Errorf(
-			"Got (R=%d, G=%d, B=%d) instead of (R=%d, G=%d, B=%d).",
-			color.red, color.green, color.blue,
-			expected.red, expected.green, expected.blue,
-		)
-	}
+func TestLabelRGBColor(t *testing.T) {
+	color := Label("test").RGBColor()
+	expected := RGBColor{red: 255, green: 87, blue: 34}
+
+	require.Equal(t, expected, color)
 }
 
-func TestLabelColorSimilar(t *testing.T) {
-	label := Label("test1")
-	color := label.Color()
-	expected := Color{red: 121, green: 85, blue: 72}
+func TestLabelRGBColorSimilar(t *testing.T) {
+	color := Label("test1").RGBColor()
+	expected := RGBColor{red: 0, green: 188, blue: 212}
 
-	if color != expected {
-		t.Errorf(
-			"Got (R=%d, G=%d, B=%d) instead of (R=%d, G=%d, B=%d).",
-			color.red, color.green, color.blue,
-			expected.red, expected.green, expected.blue,
-		)
-	}
+	require.Equal(t, expected, color)
 }
 
-func TestLabelColorReverse(t *testing.T) {
-	label := Label("tset")
-	color := label.Color()
-	expected := Color{red: 158, green: 158, blue: 158}
+func TestLabelRGBColorReverse(t *testing.T) {
+	color := Label("tset").RGBColor()
+	expected := RGBColor{red: 233, green: 30, blue: 99}
 
-	if color != expected {
-		t.Errorf(
-			"Got (R=%d, G=%d, B=%d) instead of (R=%d, G=%d, B=%d).",
-			color.red, color.green, color.blue,
-			expected.red, expected.green, expected.blue,
-		)
-	}
+	require.Equal(t, expected, color)
 }
 
-func TestLabelColorEqual(t *testing.T) {
-	label1 := Label("test")
-	color1 := label1.Color()
-	label2 := Label("test")
-	color2 := label2.Color()
+func TestLabelRGBColorEqual(t *testing.T) {
+	color1 := Label("test").RGBColor()
+	color2 := Label("test").RGBColor()
 
-	if color1 != color2 {
-		t.Errorf(
-			"(R=%d, G=%d, B=%d) should be equal to (R=%d, G=%d, B=%d).",
-			color1.red, color1.green, color1.blue,
-			color2.red, color2.green, color2.blue,
-		)
-	}
+	require.Equal(t, color1, color2)
 }
