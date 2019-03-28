@@ -38,7 +38,7 @@ func commentsTextOutput(comments []bug.Comment) {
 			fmt.Println()
 		}
 
-		fmt.Printf("Author: %s\n", colors.Magenta(comment.Author))
+		fmt.Printf("Author: %s\n", colors.Magenta(comment.Author.DisplayName()))
 		fmt.Printf("Date: %s\n\n", comment.FormatTime())
 		fmt.Println(text.LeftPad(comment.Message, 4))
 	}
