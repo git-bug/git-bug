@@ -29,7 +29,15 @@ func (op *AddCommentOperation) Hash() (git.Hash, error) {
 }
 
 func (op *AddCommentOperation) Apply(snapshot *Snapshot) {
+	hash, err := op.Hash()
+	if err != nil {
+		// Should never error unless a programming error happened
+		// (covered in OpBase.Validate())
+		panic(err)
+	}
+
 	comment := Comment{
+		id:       string(hash),
 		Message:  op.Message,
 		Author:   op.Author,
 		Files:    op.Files,
@@ -37,13 +45,6 @@ func (op *AddCommentOperation) Apply(snapshot *Snapshot) {
 	}
 
 	snapshot.Comments = append(snapshot.Comments, comment)
-
-	hash, err := op.Hash()
-	if err != nil {
-		// Should never error unless a programming error happened
-		// (covered in OpBase.Validate())
-		panic(err)
-	}
 
 	item := &AddCommentTimelineItem{
 		CommentTimelineItem: NewCommentTimelineItem(hash, comment),

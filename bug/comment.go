@@ -9,6 +9,7 @@ import (
 
 // Comment represent a comment in a Bug
 type Comment struct {
+	id      string
 	Author  identity.Interface
 	Message string
 	Files   []git.Hash
@@ -16,6 +17,21 @@ type Comment struct {
 	// Creation time of the comment.
 	// Should be used only for human display, never for ordering as we can't rely on it in a distributed system.
 	UnixTime timestamp.Timestamp
+}
+
+// Id return the Comment identifier
+func (c Comment) Id() string {
+	if c.id == "" {
+		// simply panic as it would be a coding error
+		// (using an id of an identity not stored yet)
+		panic("no id yet")
+	}
+	return c.id
+}
+
+// HumanId return the Comment identifier truncated for human consumption
+func (c Comment) HumanId() string {
+	return FormatHumanID(c.Id())
 }
 
 // FormatTimeRel format the UnixTime of the comment for human consumption

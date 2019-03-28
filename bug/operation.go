@@ -60,6 +60,9 @@ func hashRaw(data []byte) git.Hash {
 
 // hash compute the hash of the serialized operation
 func hashOperation(op Operation) (git.Hash, error) {
+	// TODO: this might not be the best idea: if a single bit change in the output of json.Marshal, this will break.
+	// Idea: hash the segment of serialized data (= immutable) instead of the go object in memory
+
 	base := op.base()
 
 	if base.hash != "" {

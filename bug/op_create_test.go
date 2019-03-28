@@ -23,7 +23,12 @@ func TestCreate(t *testing.T) {
 	hash, err := create.Hash()
 	assert.NoError(t, err)
 
-	comment := Comment{Author: rene, Message: "message", UnixTime: timestamp.Timestamp(create.UnixTime)}
+	comment := Comment{
+		id:       string(hash),
+		Author:   rene,
+		Message:  "message",
+		UnixTime: timestamp.Timestamp(create.UnixTime),
+	}
 
 	expected := Snapshot{
 		Title: "title",

@@ -30,9 +30,17 @@ func (op *CreateOperation) Hash() (git.Hash, error) {
 }
 
 func (op *CreateOperation) Apply(snapshot *Snapshot) {
+	hash, err := op.Hash()
+	if err != nil {
+		// Should never error unless a programming error happened
+		// (covered in OpBase.Validate())
+		panic(err)
+	}
+
 	snapshot.Title = op.Title
 
 	comment := Comment{
+		id:       string(hash),
 		Message:  op.Message,
 		Author:   op.Author,
 		UnixTime: timestamp.Timestamp(op.UnixTime),
@@ -41,13 +49,6 @@ func (op *CreateOperation) Apply(snapshot *Snapshot) {
 	snapshot.Comments = []Comment{comment}
 	snapshot.Author = op.Author
 	snapshot.CreatedAt = op.Time()
-
-	hash, err := op.Hash()
-	if err != nil {
-		// Should never error unless a programming error happened
-		// (covered in OpBase.Validate())
-		panic(err)
-	}
 
 	snapshot.Timeline = []TimelineItem{
 		&CreateTimelineItem{

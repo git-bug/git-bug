@@ -20,6 +20,7 @@ type IdentityStub struct {
 }
 
 func (i *IdentityStub) MarshalJSON() ([]byte, error) {
+	// TODO: add a type marker
 	return json.Marshal(struct {
 		Id string `json:"id"`
 	}{
