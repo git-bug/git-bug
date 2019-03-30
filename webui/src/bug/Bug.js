@@ -9,29 +9,32 @@ import Label from '../Label';
 
 const styles = theme => ({
   main: {
-    maxWidth: 600,
+    maxWidth: 800,
     margin: 'auto',
     marginTop: theme.spacing.unit * 4,
   },
-  header: {},
+  header: {
+    marginLeft: theme.spacing.unit + 40,
+  },
   title: {
     ...theme.typography.headline,
   },
   id: {
     ...theme.typography.subheading,
-    marginLeft: 15,
+    marginLeft: theme.spacing.unit,
   },
   container: {
     display: 'flex',
-    marginBottom: 30,
+    marginBottom: theme.spacing.unit,
   },
   timeline: {
-    width: '70%',
-    marginTop: 20,
-    marginRight: 20,
+    flex: 1,
+    marginTop: theme.spacing.unit * 2,
+    marginRight: theme.spacing.unit * 2,
   },
   sidebar: {
-    width: '30%',
+    marginTop: theme.spacing.unit * 2,
+    flex: '0 0 200px',
   },
   labelList: {
     listStyle: 'none',
@@ -39,7 +42,8 @@ const styles = theme => ({
     margin: 0,
   },
   label: {
-    margin: '4px 0',
+    marginTop: theme.spacing.unit,
+    marginBottom: theme.spacing.unit,
     '& > *': {
       display: 'block',
     },
@@ -54,7 +58,7 @@ const Bug = ({ bug, classes }) => (
 
       <Typography color={'textSecondary'}>
         <Author author={bug.author} />
-        <span> opened this bug </span>
+        {' opened this bug '}
         <Date date={bug.createdAt} />
       </Typography>
     </div>

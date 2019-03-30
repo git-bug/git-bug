@@ -8,7 +8,7 @@ import SetTitle from './SetTitle';
 const styles = theme => ({
   main: {
     '& > *:not(:last-child)': {
-      marginBottom: 10,
+      marginBottom: theme.spacing.unit * 2,
     },
   },
 });

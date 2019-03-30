@@ -7,6 +7,7 @@ import Date from '../Date';
 const styles = theme => ({
   main: {
     ...theme.typography.body2,
+    marginLeft: theme.spacing.unit + 40,
   },
   bold: {
     fontWeight: 'bold',
@@ -16,7 +17,7 @@ const styles = theme => ({
 const SetTitle = ({ op, classes }) => {
   return (
     <div className={classes.main}>
-      <Author author={op.author} bold />
+      <Author author={op.author} className={classes.bold} />
       <span> changed the title from </span>
       <span className={classes.bold}>{op.was}</span>
       <span> to </span>
