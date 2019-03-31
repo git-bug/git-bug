@@ -8,6 +8,10 @@ import Label from '../Label';
 const styles = theme => ({
   main: {
     ...theme.typography.body2,
+    marginLeft: theme.spacing.unit + 40,
+  },
+  author: {
+    fontWeight: 'bold',
   },
 });
 
@@ -15,7 +19,7 @@ const LabelChange = ({ op, classes }) => {
   const { added, removed } = op;
   return (
     <div className={classes.main}>
-      <Author author={op.author} bold />
+      <Author author={op.author} className={classes.author} />
       {added.length > 0 && <span> added the </span>}
       {added.map((label, index) => (
         <Label key={index} label={label} />
@@ -36,8 +40,8 @@ const LabelChange = ({ op, classes }) => {
 };
 
 LabelChange.fragment = gql`
-  fragment LabelChange on Operation {
-    ... on LabelChangeOperation {
+  fragment LabelChange on TimelineItem {
+    ... on LabelChangeTimelineItem {
       date
       author {
         name

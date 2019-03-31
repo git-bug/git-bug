@@ -7,6 +7,7 @@ import Date from '../Date';
 const styles = theme => ({
   main: {
     ...theme.typography.body2,
+    marginLeft: theme.spacing.unit + 40,
   },
 });
 
@@ -21,8 +22,8 @@ const SetStatus = ({ op, classes }) => {
 };
 
 SetStatus.fragment = gql`
-  fragment SetStatus on Operation {
-    ... on SetStatusOperation {
+  fragment SetStatus on TimelineItem {
+    ... on SetStatusTimelineItem {
       date
       author {
         name
