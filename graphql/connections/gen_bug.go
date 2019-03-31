@@ -12,17 +12,17 @@ import (
 
 // StringEdgeMaker define a function that take a string and an offset and
 // create an Edge.
-type StringEdgeMaker func(value string, offset int) Edge
+type LazyBugEdgeMaker func(value string, offset int) Edge
 
-// StringConMaker define a function that create a models.BugConnection
-type StringConMaker func(
+// LazyBugConMaker define a function that create a models.BugConnection
+type LazyBugConMaker func(
 	edges []LazyBugEdge,
 	nodes []string,
 	info models.PageInfo,
 	totalCount int) (models.BugConnection, error)
 
-// StringCon will paginate a source according to the input of a relay connection
-func StringCon(source []string, edgeMaker StringEdgeMaker, conMaker StringConMaker, input models.ConnectionInput) (models.BugConnection, error) {
+// LazyBugCon will paginate a source according to the input of a relay connection
+func LazyBugCon(source []string, edgeMaker LazyBugEdgeMaker, conMaker LazyBugConMaker, input models.ConnectionInput) (models.BugConnection, error) {
 	var nodes []string
 	var edges []LazyBugEdge
 	var cursors []string

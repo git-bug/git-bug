@@ -6,6 +6,8 @@ import (
 	"github.com/MichaelMure/git-bug/graphql/graph"
 )
 
+var _ graph.ResolverRoot = &RootResolver{}
+
 type RootResolver struct {
 	cache.MultiRepoCache
 }

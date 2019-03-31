@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/identity"
 )
 
 // An object that has an author.
@@ -39,6 +40,18 @@ type CommentConnection struct {
 type CommentEdge struct {
 	Cursor string      `json:"cursor"`
 	Node   bug.Comment `json:"node"`
+}
+
+type IdentityConnection struct {
+	Edges      []IdentityEdge       `json:"edges"`
+	Nodes      []identity.Interface `json:"nodes"`
+	PageInfo   PageInfo             `json:"pageInfo"`
+	TotalCount int                  `json:"totalCount"`
+}
+
+type IdentityEdge struct {
+	Cursor string             `json:"cursor"`
+	Node   identity.Interface `json:"node"`
 }
 
 // The connection type for an Operation

@@ -13,17 +13,17 @@ import (
 
 // BugCommentEdgeMaker define a function that take a bug.Comment and an offset and
 // create an Edge.
-type BugCommentEdgeMaker func(value bug.Comment, offset int) Edge
+type CommentEdgeMaker func(value bug.Comment, offset int) Edge
 
-// BugCommentConMaker define a function that create a models.CommentConnection
-type BugCommentConMaker func(
+// CommentConMaker define a function that create a models.CommentConnection
+type CommentConMaker func(
 	edges []models.CommentEdge,
 	nodes []bug.Comment,
 	info models.PageInfo,
 	totalCount int) (models.CommentConnection, error)
 
-// BugCommentCon will paginate a source according to the input of a relay connection
-func BugCommentCon(source []bug.Comment, edgeMaker BugCommentEdgeMaker, conMaker BugCommentConMaker, input models.ConnectionInput) (models.CommentConnection, error) {
+// CommentCon will paginate a source according to the input of a relay connection
+func CommentCon(source []bug.Comment, edgeMaker CommentEdgeMaker, conMaker CommentConMaker, input models.ConnectionInput) (models.CommentConnection, error) {
 	var nodes []bug.Comment
 	var edges []models.CommentEdge
 	var cursors []string

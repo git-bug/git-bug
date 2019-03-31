@@ -6,8 +6,11 @@ import (
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/graphql/connections"
+	"github.com/MichaelMure/git-bug/graphql/graph"
 	"github.com/MichaelMure/git-bug/graphql/models"
 )
+
+var _ graph.BugResolver = &bugResolver{}
 
 type bugResolver struct{}
 
@@ -39,7 +42,7 @@ func (bugResolver) Comments(ctx context.Context, obj *bug.Snapshot, after *strin
 		}, nil
 	}
 
-	return connections.BugCommentCon(obj.Comments, edger, conMaker, input)
+	return connections.CommentCon(obj.Comments, edger, conMaker, input)
 }
 
 func (bugResolver) Operations(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (models.OperationConnection, error) {
@@ -66,7 +69,7 @@ func (bugResolver) Operations(ctx context.Context, obj *bug.Snapshot, after *str
 		}, nil
 	}
 
-	return connections.BugOperationCon(obj.Operations, edger, conMaker, input)
+	return connections.OperationCon(obj.Operations, edger, conMaker, input)
 }
 
 func (bugResolver) Timeline(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (models.TimelineItemConnection, error) {
@@ -93,7 +96,7 @@ func (bugResolver) Timeline(ctx context.Context, obj *bug.Snapshot, after *strin
 		}, nil
 	}
 
-	return connections.BugTimelineItemCon(obj.Timeline, edger, conMaker, input)
+	return connections.TimelineItemCon(obj.Timeline, edger, conMaker, input)
 }
 
 func (bugResolver) LastEdit(ctx context.Context, obj *bug.Snapshot) (time.Time, error) {

@@ -5,8 +5,11 @@ import (
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/graphql/graph"
 	"github.com/MichaelMure/git-bug/util/git"
 )
+
+var _ graph.MutationResolver = &mutationResolver{}
 
 type mutationResolver struct {
 	cache *cache.MultiRepoCache

@@ -2,6 +2,8 @@
 type Identity {
     """The identifier for this identity"""
     id: String!
+    """The human version (truncated) identifier for this identity"""
+    humanId: String!
     """The name of the person, if known."""
     name: String
     """The email of the person, if known."""
@@ -15,4 +17,16 @@ type Identity {
     """isProtected is true if the chain of git commits started to be signed.
     If that's the case, only signed commit with a valid key for this identity can be added."""
     isProtected: Boolean!
+}
+
+type IdentityConnection {
+    edges: [IdentityEdge!]!
+    nodes: [Identity!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type IdentityEdge {
+    cursor: String!
+    node: Identity!
 }

@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/99designs/gqlgen/complexity"
 	"github.com/99designs/gqlgen/graphql"
@@ -25,15 +26,16 @@ type params struct {
 }
 
 type Config struct {
-	cacheSize            int
-	upgrader             websocket.Upgrader
-	recover              graphql.RecoverFunc
-	errorPresenter       graphql.ErrorPresenterFunc
-	resolverHook         graphql.FieldMiddleware
-	requestHook          graphql.RequestMiddleware
-	tracer               graphql.Tracer
-	complexityLimit      int
-	disableIntrospection bool
+	cacheSize                       int
+	upgrader                        websocket.Upgrader
+	recover                         graphql.RecoverFunc
+	errorPresenter                  graphql.ErrorPresenterFunc
+	resolverHook                    graphql.FieldMiddleware
+	requestHook                     graphql.RequestMiddleware
+	tracer                          graphql.Tracer
+	complexityLimit                 int
+	disableIntrospection            bool
+	connectionKeepAlivePingInterval time.Duration
 }
 
 func (c *Config) newRequestContext(es graphql.ExecutableSchema, doc *ast.QueryDocument, op *ast.OperationDefinition, query string, variables map[string]interface{}) *graphql.RequestContext {
@@ -242,6 +244,14 @@ func CacheSize(size int) Option {
 }
 
 const DefaultCacheSize = 1000
+
+// WebsocketKeepAliveDuration allows you to reconfigure the keepAlive behavior.
+// By default, keep-alive is disabled.
+func WebsocketKeepAliveDuration(duration time.Duration) Option {
+	return func(cfg *Config) {
+		cfg.connectionKeepAlivePingInterval = duration
+	}
+}
 
 func GraphQL(exec graphql.ExecutableSchema, options ...Option) http.HandlerFunc {
 	cfg := &Config{

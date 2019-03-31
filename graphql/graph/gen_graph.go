@@ -161,12 +161,25 @@ type ComplexityRoot struct {
 
 	Identity struct {
 		Id          func(childComplexity int) int
+		HumanId     func(childComplexity int) int
 		Name        func(childComplexity int) int
 		Email       func(childComplexity int) int
 		Login       func(childComplexity int) int
 		DisplayName func(childComplexity int) int
 		AvatarUrl   func(childComplexity int) int
 		IsProtected func(childComplexity int) int
+	}
+
+	IdentityConnection struct {
+		Edges      func(childComplexity int) int
+		Nodes      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	IdentityEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 
 	LabelChangeOperation struct {
@@ -220,8 +233,11 @@ type ComplexityRoot struct {
 	}
 
 	Repository struct {
-		AllBugs func(childComplexity int, after *string, before *string, first *int, last *int, query *string) int
-		Bug     func(childComplexity int, prefix string) int
+		AllBugs       func(childComplexity int, after *string, before *string, first *int, last *int, query *string) int
+		Bug           func(childComplexity int, prefix string) int
+		AllIdentities func(childComplexity int, after *string, before *string, first *int, last *int) int
+		Identity      func(childComplexity int, prefix string) int
+		UserIdentity  func(childComplexity int) int
 	}
 
 	SetStatusOperation struct {
@@ -297,6 +313,7 @@ type EditCommentOperationResolver interface {
 }
 type IdentityResolver interface {
 	ID(ctx context.Context, obj *identity.Interface) (string, error)
+	HumanID(ctx context.Context, obj *identity.Interface) (string, error)
 	Name(ctx context.Context, obj *identity.Interface) (*string, error)
 	Email(ctx context.Context, obj *identity.Interface) (*string, error)
 	Login(ctx context.Context, obj *identity.Interface) (*string, error)
@@ -326,6 +343,9 @@ type QueryResolver interface {
 type RepositoryResolver interface {
 	AllBugs(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int, query *string) (models.BugConnection, error)
 	Bug(ctx context.Context, obj *models.Repository, prefix string) (*bug.Snapshot, error)
+	AllIdentities(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int) (models.IdentityConnection, error)
+	Identity(ctx context.Context, obj *models.Repository, prefix string) (*identity.Interface, error)
+	UserIdentity(ctx context.Context, obj *models.Repository) (*identity.Interface, error)
 }
 type SetStatusOperationResolver interface {
 	Date(ctx context.Context, obj *bug.SetStatusOperation) (time.Time, error)
@@ -959,6 +979,83 @@ func field_Repository_bug_args(rawArgs map[string]interface{}) (map[string]inter
 
 }
 
+func field_Repository_allIdentities_args(rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	args := map[string]interface{}{}
+	var arg0 *string
+	if tmp, ok := rawArgs["after"]; ok {
+		var err error
+		var ptr1 string
+		if tmp != nil {
+			ptr1, err = graphql.UnmarshalString(tmp)
+			arg0 = &ptr1
+		}
+
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg0
+	var arg1 *string
+	if tmp, ok := rawArgs["before"]; ok {
+		var err error
+		var ptr1 string
+		if tmp != nil {
+			ptr1, err = graphql.UnmarshalString(tmp)
+			arg1 = &ptr1
+		}
+
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["before"] = arg1
+	var arg2 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		var err error
+		var ptr1 int
+		if tmp != nil {
+			ptr1, err = graphql.UnmarshalInt(tmp)
+			arg2 = &ptr1
+		}
+
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg2
+	var arg3 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		var err error
+		var ptr1 int
+		if tmp != nil {
+			ptr1, err = graphql.UnmarshalInt(tmp)
+			arg3 = &ptr1
+		}
+
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["last"] = arg3
+	return args, nil
+
+}
+
+func field_Repository_identity_args(rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["prefix"]; ok {
+		var err error
+		arg0, err = graphql.UnmarshalString(tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["prefix"] = arg0
+	return args, nil
+
+}
+
 func field___Type_fields_args(rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	args := map[string]interface{}{}
 	var arg0 bool
@@ -1465,6 +1562,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Identity.Id(childComplexity), true
 
+	case "Identity.humanId":
+		if e.complexity.Identity.HumanId == nil {
+			break
+		}
+
+		return e.complexity.Identity.HumanId(childComplexity), true
+
 	case "Identity.name":
 		if e.complexity.Identity.Name == nil {
 			break
@@ -1506,6 +1610,48 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Identity.IsProtected(childComplexity), true
+
+	case "IdentityConnection.edges":
+		if e.complexity.IdentityConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.IdentityConnection.Edges(childComplexity), true
+
+	case "IdentityConnection.nodes":
+		if e.complexity.IdentityConnection.Nodes == nil {
+			break
+		}
+
+		return e.complexity.IdentityConnection.Nodes(childComplexity), true
+
+	case "IdentityConnection.pageInfo":
+		if e.complexity.IdentityConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.IdentityConnection.PageInfo(childComplexity), true
+
+	case "IdentityConnection.totalCount":
+		if e.complexity.IdentityConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.IdentityConnection.TotalCount(childComplexity), true
+
+	case "IdentityEdge.cursor":
+		if e.complexity.IdentityEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.IdentityEdge.Cursor(childComplexity), true
+
+	case "IdentityEdge.node":
+		if e.complexity.IdentityEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.IdentityEdge.Node(childComplexity), true
 
 	case "LabelChangeOperation.hash":
 		if e.complexity.LabelChangeOperation.Hash == nil {
@@ -1773,6 +1919,37 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Repository.Bug(childComplexity, args["prefix"].(string)), true
+
+	case "Repository.allIdentities":
+		if e.complexity.Repository.AllIdentities == nil {
+			break
+		}
+
+		args, err := field_Repository_allIdentities_args(rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Repository.AllIdentities(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
+
+	case "Repository.identity":
+		if e.complexity.Repository.Identity == nil {
+			break
+		}
+
+		args, err := field_Repository_identity_args(rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Repository.Identity(childComplexity, args["prefix"].(string)), true
+
+	case "Repository.userIdentity":
+		if e.complexity.Repository.UserIdentity == nil {
+			break
+		}
+
+		return e.complexity.Repository.UserIdentity(childComplexity), true
 
 	case "SetStatusOperation.hash":
 		if e.complexity.SetStatusOperation.Hash == nil {
@@ -4680,6 +4857,15 @@ func (ec *executionContext) _Identity(ctx context.Context, sel ast.SelectionSet,
 				}
 				wg.Done()
 			}(i, field)
+		case "humanId":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._Identity_humanId(ctx, field, obj)
+				if out.Values[i] == graphql.Null {
+					invalid = true
+				}
+				wg.Done()
+			}(i, field)
 		case "name":
 			wg.Add(1)
 			go func(i int, field graphql.CollectedField) {
@@ -4747,6 +4933,33 @@ func (ec *executionContext) _Identity_id(ctx context.Context, field graphql.Coll
 	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Identity().ID(rctx, obj)
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return graphql.MarshalString(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Identity_humanId(ctx context.Context, field graphql.CollectedField, obj *identity.Interface) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Identity",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Identity().HumanID(rctx, obj)
 	})
 	if resTmp == nil {
 		if !ec.HasError(rctx) {
@@ -4924,6 +5137,316 @@ func (ec *executionContext) _Identity_isProtected(ctx context.Context, field gra
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return graphql.MarshalBoolean(res)
+}
+
+var identityConnectionImplementors = []string{"IdentityConnection"}
+
+// nolint: gocyclo, errcheck, gas, goconst
+func (ec *executionContext) _IdentityConnection(ctx context.Context, sel ast.SelectionSet, obj *models.IdentityConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, identityConnectionImplementors)
+
+	out := graphql.NewOrderedMap(len(fields))
+	invalid := false
+	for i, field := range fields {
+		out.Keys[i] = field.Alias
+
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("IdentityConnection")
+		case "edges":
+			out.Values[i] = ec._IdentityConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "nodes":
+			out.Values[i] = ec._IdentityConnection_nodes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "pageInfo":
+			out.Values[i] = ec._IdentityConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "totalCount":
+			out.Values[i] = ec._IdentityConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+
+	if invalid {
+		return graphql.Null
+	}
+	return out
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _IdentityConnection_edges(ctx context.Context, field graphql.CollectedField, obj *models.IdentityConnection) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "IdentityConnection",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]models.IdentityEdge)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+
+	arr1 := make(graphql.Array, len(res))
+	var wg sync.WaitGroup
+
+	isLen1 := len(res) == 1
+	if !isLen1 {
+		wg.Add(len(res))
+	}
+
+	for idx1 := range res {
+		idx1 := idx1
+		rctx := &graphql.ResolverContext{
+			Index:  &idx1,
+			Result: &res[idx1],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(idx1 int) {
+			if !isLen1 {
+				defer wg.Done()
+			}
+			arr1[idx1] = func() graphql.Marshaler {
+
+				return ec._IdentityEdge(ctx, field.Selections, &res[idx1])
+			}()
+		}
+		if isLen1 {
+			f(idx1)
+		} else {
+			go f(idx1)
+		}
+
+	}
+	wg.Wait()
+	return arr1
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _IdentityConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *models.IdentityConnection) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "IdentityConnection",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Nodes, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]identity.Interface)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+
+	arr1 := make(graphql.Array, len(res))
+	var wg sync.WaitGroup
+
+	isLen1 := len(res) == 1
+	if !isLen1 {
+		wg.Add(len(res))
+	}
+
+	for idx1 := range res {
+		idx1 := idx1
+		rctx := &graphql.ResolverContext{
+			Index:  &idx1,
+			Result: &res[idx1],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(idx1 int) {
+			if !isLen1 {
+				defer wg.Done()
+			}
+			arr1[idx1] = func() graphql.Marshaler {
+
+				return ec._Identity(ctx, field.Selections, &res[idx1])
+			}()
+		}
+		if isLen1 {
+			f(idx1)
+		} else {
+			go f(idx1)
+		}
+
+	}
+	wg.Wait()
+	return arr1
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _IdentityConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *models.IdentityConnection) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "IdentityConnection",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(models.PageInfo)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+
+	return ec._PageInfo(ctx, field.Selections, &res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _IdentityConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *models.IdentityConnection) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "IdentityConnection",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return graphql.MarshalInt(res)
+}
+
+var identityEdgeImplementors = []string{"IdentityEdge"}
+
+// nolint: gocyclo, errcheck, gas, goconst
+func (ec *executionContext) _IdentityEdge(ctx context.Context, sel ast.SelectionSet, obj *models.IdentityEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, identityEdgeImplementors)
+
+	out := graphql.NewOrderedMap(len(fields))
+	invalid := false
+	for i, field := range fields {
+		out.Keys[i] = field.Alias
+
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("IdentityEdge")
+		case "cursor":
+			out.Values[i] = ec._IdentityEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "node":
+			out.Values[i] = ec._IdentityEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+
+	if invalid {
+		return graphql.Null
+	}
+	return out
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _IdentityEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *models.IdentityEdge) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "IdentityEdge",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return graphql.MarshalString(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _IdentityEdge_node(ctx context.Context, field graphql.CollectedField, obj *models.IdentityEdge) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "IdentityEdge",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(identity.Interface)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+
+	return ec._Identity(ctx, field.Selections, &res)
 }
 
 var labelChangeOperationImplementors = []string{"LabelChangeOperation", "Operation", "Authored"}
@@ -6313,6 +6836,27 @@ func (ec *executionContext) _Repository(ctx context.Context, sel ast.SelectionSe
 				out.Values[i] = ec._Repository_bug(ctx, field, obj)
 				wg.Done()
 			}(i, field)
+		case "allIdentities":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._Repository_allIdentities(ctx, field, obj)
+				if out.Values[i] == graphql.Null {
+					invalid = true
+				}
+				wg.Done()
+			}(i, field)
+		case "identity":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._Repository_identity(ctx, field, obj)
+				wg.Done()
+			}(i, field)
+		case "userIdentity":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._Repository_userIdentity(ctx, field, obj)
+				wg.Done()
+			}(i, field)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6391,6 +6935,104 @@ func (ec *executionContext) _Repository_bug(ctx context.Context, field graphql.C
 	}
 
 	return ec._Bug(ctx, field.Selections, res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Repository_allIdentities(ctx context.Context, field graphql.CollectedField, obj *models.Repository) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := field_Repository_allIdentities_args(rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx := &graphql.ResolverContext{
+		Object: "Repository",
+		Args:   args,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Repository().AllIdentities(rctx, obj, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int))
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(models.IdentityConnection)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+
+	return ec._IdentityConnection(ctx, field.Selections, &res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Repository_identity(ctx context.Context, field graphql.CollectedField, obj *models.Repository) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := field_Repository_identity_args(rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx := &graphql.ResolverContext{
+		Object: "Repository",
+		Args:   args,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Repository().Identity(rctx, obj, args["prefix"].(string))
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*identity.Interface)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+
+	if res == nil {
+		return graphql.Null
+	}
+
+	return ec._Identity(ctx, field.Selections, res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Repository_userIdentity(ctx context.Context, field graphql.CollectedField, obj *models.Repository) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Repository",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Repository().UserIdentity(rctx, obj)
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*identity.Interface)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+
+	if res == nil {
+		return graphql.Null
+	}
+
+	return ec._Identity(ctx, field.Selections, res)
 }
 
 var setStatusOperationImplementors = []string{"SetStatusOperation", "Operation", "Authored"}
@@ -8987,7 +9629,9 @@ enum Status {
 }
 
 type Bug {
+  """The identifier for this bug"""
   id: String!
+  """The human version (truncated) identifier for this bug"""
   humanId: String!
   status: Status!
   title: String!
@@ -9049,26 +9693,13 @@ type BugEdge {
   node: Bug!
 }
 
-type Repository {
-  allBugs(
-    """Returns the elements in the list that come after the specified cursor."""
-    after: String
-    """Returns the elements in the list that come before the specified cursor."""
-    before: String
-    """Returns the first _n_ elements from the list."""
-    first: Int
-    """Returns the last _n_ elements from the list."""
-    last: Int
-    """A query to select and order bugs"""
-    query: String
-  ): BugConnection!
-  bug(prefix: String!): Bug
-}
 `},
 	&ast.Source{Name: "schema/identity.graphql", Input: `"""Represents an identity"""
 type Identity {
     """The identifier for this identity"""
     id: String!
+    """The human version (truncated) identifier for this identity"""
+    humanId: String!
     """The name of the person, if known."""
     name: String
     """The email of the person, if known."""
@@ -9082,6 +9713,18 @@ type Identity {
     """isProtected is true if the chain of git commits started to be signed.
     If that's the case, only signed commit with a valid key for this identity can be added."""
     isProtected: Boolean!
+}
+
+type IdentityConnection {
+    edges: [IdentityEdge!]!
+    nodes: [Identity!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type IdentityEdge {
+    cursor: String!
+    node: Identity!
 }`},
 	&ast.Source{Name: "schema/operations.graphql", Input: `"""An operation applied to a bug."""
 interface Operation {
@@ -9184,29 +9827,42 @@ type LabelChangeOperation implements Operation & Authored {
     removed: [Label!]!
 }
 `},
-	&ast.Source{Name: "schema/root.graphql", Input: `scalar Time
-scalar Label
-scalar Hash
+	&ast.Source{Name: "schema/repository.graphql", Input: `
+type Repository {
+    """All the bugs"""
+    allBugs(
+        """Returns the elements in the list that come after the specified cursor."""
+        after: String
+        """Returns the elements in the list that come before the specified cursor."""
+        before: String
+        """Returns the first _n_ elements from the list."""
+        first: Int
+        """Returns the last _n_ elements from the list."""
+        last: Int
+        """A query to select and order bugs"""
+        query: String
+    ): BugConnection!
 
-"""Information about pagination in a connection."""
-type PageInfo {
-    """When paginating forwards, are there more items?"""
-    hasNextPage: Boolean!
-    """When paginating backwards, are there more items?"""
-    hasPreviousPage: Boolean!
-    """When paginating backwards, the cursor to continue."""
-    startCursor: String!
-    """When paginating forwards, the cursor to continue."""
-    endCursor: String!
-}
+    bug(prefix: String!): Bug
 
-"""An object that has an author."""
-interface Authored {
-    """The author of this object."""
-    author: Identity!
-}
+    """All the identities"""
+    allIdentities(
+        """Returns the elements in the list that come after the specified cursor."""
+        after: String
+        """Returns the elements in the list that come before the specified cursor."""
+        before: String
+        """Returns the first _n_ elements from the list."""
+        first: Int
+        """Returns the last _n_ elements from the list."""
+        last: Int
+    ): IdentityConnection!
 
-type Query {
+    identity(prefix: String!):Identity
+
+    """The identity created or selected by the user as its own"""
+    userIdentity:Identity
+}`},
+	&ast.Source{Name: "schema/root.graphql", Input: `type Query {
     defaultRepository: Repository
     repository(id: String!): Repository
 }
@@ -9310,4 +9966,25 @@ type SetTitleTimelineItem implements TimelineItem {
     was: String!
 }
 `},
+	&ast.Source{Name: "schema/types.graphql", Input: `scalar Time
+scalar Label
+scalar Hash
+
+"""Information about pagination in a connection."""
+type PageInfo {
+    """When paginating forwards, are there more items?"""
+    hasNextPage: Boolean!
+    """When paginating backwards, are there more items?"""
+    hasPreviousPage: Boolean!
+    """When paginating backwards, the cursor to continue."""
+    startCursor: String!
+    """When paginating forwards, the cursor to continue."""
+    endCursor: String!
+}
+
+"""An object that has an author."""
+interface Authored {
+    """The author of this object."""
+    author: Identity!
+}`},
 )

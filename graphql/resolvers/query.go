@@ -4,8 +4,11 @@ import (
 	"context"
 
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/graphql/graph"
 	"github.com/MichaelMure/git-bug/graphql/models"
 )
+
+var _ graph.QueryResolver = &rootQueryResolver{}
 
 type rootQueryResolver struct {
 	cache *cache.MultiRepoCache

@@ -7,25 +7,24 @@ package connections
 import (
 	"fmt"
 
-	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/graphql/models"
 )
 
-// BugTimelineItemEdgeMaker define a function that take a bug.TimelineItem and an offset and
+// StringEdgeMaker define a function that take a string and an offset and
 // create an Edge.
-type TimelineItemEdgeMaker func(value bug.TimelineItem, offset int) Edge
+type LazyIdentityEdgeMaker func(value string, offset int) Edge
 
-// TimelineItemConMaker define a function that create a models.TimelineItemConnection
-type TimelineItemConMaker func(
-	edges []models.TimelineItemEdge,
-	nodes []bug.TimelineItem,
+// LazyIdentityConMaker define a function that create a models.IdentityConnection
+type LazyIdentityConMaker func(
+	edges []LazyIdentityEdge,
+	nodes []string,
 	info models.PageInfo,
-	totalCount int) (models.TimelineItemConnection, error)
+	totalCount int) (models.IdentityConnection, error)
 
-// TimelineItemCon will paginate a source according to the input of a relay connection
-func TimelineItemCon(source []bug.TimelineItem, edgeMaker TimelineItemEdgeMaker, conMaker TimelineItemConMaker, input models.ConnectionInput) (models.TimelineItemConnection, error) {
-	var nodes []bug.TimelineItem
-	var edges []models.TimelineItemEdge
+// LazyIdentityCon will paginate a source according to the input of a relay connection
+func LazyIdentityCon(source []string, edgeMaker LazyIdentityEdgeMaker, conMaker LazyIdentityConMaker, input models.ConnectionInput) (models.IdentityConnection, error) {
+	var nodes []string
+	var edges []LazyIdentityEdge
 	var cursors []string
 	var pageInfo models.PageInfo
 	var totalCount = len(source)
@@ -57,18 +56,18 @@ func TimelineItemCon(source []bug.TimelineItem, edgeMaker TimelineItemEdgeMaker,
 				break
 			}
 
-			edges = append(edges, edge.(models.TimelineItemEdge))
+			edges = append(edges, edge.(LazyIdentityEdge))
 			cursors = append(cursors, edge.GetCursor())
 			nodes = append(nodes, value)
 		}
 	} else {
-		edges = make([]models.TimelineItemEdge, len(source))
+		edges = make([]LazyIdentityEdge, len(source))
 		cursors = make([]string, len(source))
 		nodes = source
 
 		for i, value := range source {
 			edge := edgeMaker(value, i+offset)
-			edges[i] = edge.(models.TimelineItemEdge)
+			edges[i] = edge.(LazyIdentityEdge)
 			cursors[i] = edge.GetCursor()
 		}
 	}

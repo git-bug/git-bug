@@ -7,6 +7,9 @@ import (
 	"github.com/cheekybits/genny/generic"
 )
 
+// Name define the name of the connection
+type Name generic.Type
+
 // NodeType define the node type handled by this relay connection
 type NodeType generic.Type
 
@@ -18,17 +21,17 @@ type ConnectionType generic.Type
 
 // NodeTypeEdgeMaker define a function that take a NodeType and an offset and
 // create an Edge.
-type NodeTypeEdgeMaker func(value NodeType, offset int) Edge
+type NameEdgeMaker func(value NodeType, offset int) Edge
 
-// NodeTypeConMaker define a function that create a ConnectionType
-type NodeTypeConMaker func(
+// NameConMaker define a function that create a ConnectionType
+type NameConMaker func(
 	edges []EdgeType,
 	nodes []NodeType,
 	info models.PageInfo,
 	totalCount int) (ConnectionType, error)
 
-// NodeTypeCon will paginate a source according to the input of a relay connection
-func NodeTypeCon(source []NodeType, edgeMaker NodeTypeEdgeMaker, conMaker NodeTypeConMaker, input models.ConnectionInput) (ConnectionType, error) {
+// NameCon will paginate a source according to the input of a relay connection
+func NameCon(source []NodeType, edgeMaker NameEdgeMaker, conMaker NameConMaker, input models.ConnectionInput) (ConnectionType, error) {
 	var nodes []NodeType
 	var edges []EdgeType
 	var cursors []string

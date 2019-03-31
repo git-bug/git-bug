@@ -2,7 +2,7 @@
 
 
 [[projects]]
-  digest = "1:cc0bbbf01f9f639555f9a9d4d5ff9c72da4c4c4bfe71f02fd318d37498270d80"
+  digest = "1:e8f6639eaa399c8595b9a2dee175514a9f3842888dc080e2776360dc604150dc"
   name = "github.com/99designs/gqlgen"
   packages = [
     "cmd",
@@ -16,8 +16,8 @@
     "internal/imports",
   ]
   pruneopts = "UT"
-  revision = "3a7f37c7e22a8fedce430c4d340ad5c1351198f4"
-  version = "v0.7.1"
+  revision = "da1e07f5876c0fb79cbad19006f7135be08590d6"
+  version = "v0.7.2"
 
 [[projects]]
   branch = "master"

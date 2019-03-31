@@ -13,17 +13,17 @@ import (
 
 // BugOperationEdgeMaker define a function that take a bug.Operation and an offset and
 // create an Edge.
-type BugOperationEdgeMaker func(value bug.Operation, offset int) Edge
+type OperationEdgeMaker func(value bug.Operation, offset int) Edge
 
-// BugOperationConMaker define a function that create a models.OperationConnection
-type BugOperationConMaker func(
+// OperationConMaker define a function that create a models.OperationConnection
+type OperationConMaker func(
 	edges []models.OperationEdge,
 	nodes []bug.Operation,
 	info models.PageInfo,
 	totalCount int) (models.OperationConnection, error)
 
-// BugOperationCon will paginate a source according to the input of a relay connection
-func BugOperationCon(source []bug.Operation, edgeMaker BugOperationEdgeMaker, conMaker BugOperationConMaker, input models.ConnectionInput) (models.OperationConnection, error) {
+// OperationCon will paginate a source according to the input of a relay connection
+func OperationCon(source []bug.Operation, edgeMaker OperationEdgeMaker, conMaker OperationConMaker, input models.ConnectionInput) (models.OperationConnection, error) {
 	var nodes []bug.Operation
 	var edges []models.OperationEdge
 	var cursors []string
