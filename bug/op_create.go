@@ -30,6 +30,9 @@ func (op *CreateOperation) Hash() (git.Hash, error) {
 }
 
 func (op *CreateOperation) Apply(snapshot *Snapshot) {
+	snapshot.addActor(op.Author)
+	snapshot.addParticipant(op.Author)
+
 	hash, err := op.Hash()
 	if err != nil {
 		// Should never error unless a programming error happened

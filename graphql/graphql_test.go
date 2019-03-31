@@ -50,6 +50,16 @@ func TestQueries(t *testing.T) {
                 email
                 avatarUrl
               }
+              actors {
+                name
+                email
+                avatarUrl
+              }
+              participants {
+                name
+                email
+                avatarUrl
+              }
       
               createdAt
               humanId
@@ -112,7 +122,7 @@ func TestQueries(t *testing.T) {
         }
       }`
 
-	type Person struct {
+	type Identity struct {
 		Name      string `json:"name"`
 		Email     string `json:"email"`
 		AvatarUrl string `json:"avatarUrl"`
@@ -123,13 +133,15 @@ func TestQueries(t *testing.T) {
 			AllBugs struct {
 				PageInfo models.PageInfo
 				Nodes    []struct {
-					Author    Person
-					CreatedAt string `json:"createdAt"`
-					HumanId   string `json:"humanId"`
-					Id        string
-					LastEdit  string `json:"lastEdit"`
-					Status    string
-					Title     string
+					Author       Identity
+					Actors       []Identity
+					Participants []Identity
+					CreatedAt    string `json:"createdAt"`
+					HumanId      string `json:"humanId"`
+					Id           string
+					LastEdit     string `json:"lastEdit"`
+					Status       string
+					Title        string
 
 					Comments struct {
 						PageInfo models.PageInfo
@@ -142,7 +154,7 @@ func TestQueries(t *testing.T) {
 					Operations struct {
 						PageInfo models.PageInfo
 						Nodes    []struct {
-							Author  Person
+							Author  Identity
 							Date    string
 							Title   string
 							Files   []string

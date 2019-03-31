@@ -81,17 +81,19 @@ type ComplexityRoot struct {
 	}
 
 	Bug struct {
-		Id         func(childComplexity int) int
-		HumanId    func(childComplexity int) int
-		Status     func(childComplexity int) int
-		Title      func(childComplexity int) int
-		Labels     func(childComplexity int) int
-		Author     func(childComplexity int) int
-		CreatedAt  func(childComplexity int) int
-		LastEdit   func(childComplexity int) int
-		Comments   func(childComplexity int, after *string, before *string, first *int, last *int) int
-		Timeline   func(childComplexity int, after *string, before *string, first *int, last *int) int
-		Operations func(childComplexity int, after *string, before *string, first *int, last *int) int
+		Id           func(childComplexity int) int
+		HumanId      func(childComplexity int) int
+		Status       func(childComplexity int) int
+		Title        func(childComplexity int) int
+		Labels       func(childComplexity int) int
+		Author       func(childComplexity int) int
+		Actors       func(childComplexity int) int
+		Participants func(childComplexity int) int
+		CreatedAt    func(childComplexity int) int
+		LastEdit     func(childComplexity int) int
+		Comments     func(childComplexity int, after *string, before *string, first *int, last *int) int
+		Timeline     func(childComplexity int, after *string, before *string, first *int, last *int) int
+		Operations   func(childComplexity int, after *string, before *string, first *int, last *int) int
 	}
 
 	BugConnection struct {
@@ -292,6 +294,9 @@ type AddCommentTimelineItemResolver interface {
 }
 type BugResolver interface {
 	Status(ctx context.Context, obj *bug.Snapshot) (models.Status, error)
+
+	Actors(ctx context.Context, obj *bug.Snapshot) ([]*identity.Interface, error)
+	Participants(ctx context.Context, obj *bug.Snapshot) ([]*identity.Interface, error)
 
 	LastEdit(ctx context.Context, obj *bug.Snapshot) (time.Time, error)
 	Comments(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (models.CommentConnection, error)
@@ -1238,6 +1243,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Bug.Author(childComplexity), true
+
+	case "Bug.actors":
+		if e.complexity.Bug.Actors == nil {
+			break
+		}
+
+		return e.complexity.Bug.Actors(childComplexity), true
+
+	case "Bug.participants":
+		if e.complexity.Bug.Participants == nil {
+			break
+		}
+
+		return e.complexity.Bug.Participants(childComplexity), true
 
 	case "Bug.createdAt":
 		if e.complexity.Bug.CreatedAt == nil {
@@ -2779,6 +2798,24 @@ func (ec *executionContext) _Bug(ctx context.Context, sel ast.SelectionSet, obj 
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}
+		case "actors":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._Bug_actors(ctx, field, obj)
+				if out.Values[i] == graphql.Null {
+					invalid = true
+				}
+				wg.Done()
+			}(i, field)
+		case "participants":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._Bug_participants(ctx, field, obj)
+				if out.Values[i] == graphql.Null {
+					invalid = true
+				}
+				wg.Done()
+			}(i, field)
 		case "createdAt":
 			out.Values[i] = ec._Bug_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -3001,6 +3038,134 @@ func (ec *executionContext) _Bug_author(ctx context.Context, field graphql.Colle
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 
 	return ec._Identity(ctx, field.Selections, &res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Bug_actors(ctx context.Context, field graphql.CollectedField, obj *bug.Snapshot) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Bug",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Bug().Actors(rctx, obj)
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*identity.Interface)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+
+	arr1 := make(graphql.Array, len(res))
+	var wg sync.WaitGroup
+
+	isLen1 := len(res) == 1
+	if !isLen1 {
+		wg.Add(len(res))
+	}
+
+	for idx1 := range res {
+		idx1 := idx1
+		rctx := &graphql.ResolverContext{
+			Index:  &idx1,
+			Result: res[idx1],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(idx1 int) {
+			if !isLen1 {
+				defer wg.Done()
+			}
+			arr1[idx1] = func() graphql.Marshaler {
+
+				if res[idx1] == nil {
+					return graphql.Null
+				}
+
+				return ec._Identity(ctx, field.Selections, res[idx1])
+			}()
+		}
+		if isLen1 {
+			f(idx1)
+		} else {
+			go f(idx1)
+		}
+
+	}
+	wg.Wait()
+	return arr1
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Bug_participants(ctx context.Context, field graphql.CollectedField, obj *bug.Snapshot) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Bug",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Bug().Participants(rctx, obj)
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*identity.Interface)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+
+	arr1 := make(graphql.Array, len(res))
+	var wg sync.WaitGroup
+
+	isLen1 := len(res) == 1
+	if !isLen1 {
+		wg.Add(len(res))
+	}
+
+	for idx1 := range res {
+		idx1 := idx1
+		rctx := &graphql.ResolverContext{
+			Index:  &idx1,
+			Result: res[idx1],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(idx1 int) {
+			if !isLen1 {
+				defer wg.Done()
+			}
+			arr1[idx1] = func() graphql.Marshaler {
+
+				if res[idx1] == nil {
+					return graphql.Null
+				}
+
+				return ec._Identity(ctx, field.Selections, res[idx1])
+			}()
+		}
+		if isLen1 {
+			f(idx1)
+		} else {
+			go f(idx1)
+		}
+
+	}
+	wg.Wait()
+	return arr1
 }
 
 // nolint: vetshadow
@@ -9637,6 +9802,8 @@ type Bug {
   title: String!
   labels: [Label!]!
   author: Identity!
+  actors: [Identity]!
+  participants: [Identity]!
   createdAt: Time!
   lastEdit: Time!
 

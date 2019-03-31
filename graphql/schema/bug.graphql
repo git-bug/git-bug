@@ -36,6 +36,8 @@ type Bug {
   title: String!
   labels: [Label!]!
   author: Identity!
+  actors: [Identity]!
+  participants: [Identity]!
   createdAt: Time!
   lastEdit: Time!
 

@@ -8,6 +8,7 @@ import (
 	"github.com/MichaelMure/git-bug/graphql/connections"
 	"github.com/MichaelMure/git-bug/graphql/graph"
 	"github.com/MichaelMure/git-bug/graphql/models"
+	"github.com/MichaelMure/git-bug/identity"
 )
 
 var _ graph.BugResolver = &bugResolver{}
@@ -101,4 +102,24 @@ func (bugResolver) Timeline(ctx context.Context, obj *bug.Snapshot, after *strin
 
 func (bugResolver) LastEdit(ctx context.Context, obj *bug.Snapshot) (time.Time, error) {
 	return obj.LastEditTime(), nil
+}
+
+func (bugResolver) Actors(ctx context.Context, obj *bug.Snapshot) ([]*identity.Interface, error) {
+	actorsp := make([]*identity.Interface, len(obj.Actors))
+
+	for i, actor := range obj.Actors {
+		actorsp[i] = &actor
+	}
+
+	return actorsp, nil
+}
+
+func (bugResolver) Participants(ctx context.Context, obj *bug.Snapshot) ([]*identity.Interface, error) {
+	participantsp := make([]*identity.Interface, len(obj.Participants))
+
+	for i, participant := range obj.Participants {
+		participantsp[i] = &participant
+	}
+
+	return participantsp, nil
 }

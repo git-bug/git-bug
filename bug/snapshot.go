@@ -12,12 +12,14 @@ import (
 type Snapshot struct {
 	id string
 
-	Status    Status
-	Title     string
-	Comments  []Comment
-	Labels    []Label
-	Author    identity.Interface
-	CreatedAt time.Time
+	Status       Status
+	Title        string
+	Comments     []Comment
+	Labels       []Label
+	Author       identity.Interface
+	Actors       []identity.Interface
+	Participants []identity.Interface
+	CreatedAt    time.Time
 
 	Timeline []TimelineItem
 
@@ -61,4 +63,26 @@ func (snap *Snapshot) SearchTimelineItem(hash git.Hash) (TimelineItem, error) {
 	}
 
 	return nil, fmt.Errorf("timeline item not found")
+}
+
+// append the operation author to the actors list
+func (snap *Snapshot) addActor(actor identity.Interface) {
+	for _, a := range snap.Actors {
+		if actor.Id() == a.Id() {
+			return
+		}
+	}
+
+	snap.Actors = append(snap.Actors, actor)
+}
+
+// append the operation author to the participants list
+func (snap *Snapshot) addParticipant(participant identity.Interface) {
+	for _, p := range snap.Participants {
+		if participant.Id() == p.Id() {
+			return
+		}
+	}
+
+	snap.Participants = append(snap.Participants, participant)
 }

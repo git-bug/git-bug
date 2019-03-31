@@ -56,13 +56,21 @@ func ParseQuery(query string) (*Query, error) {
 			f := AuthorFilter(qualifierQuery)
 			result.Author = append(result.Author, f)
 
+		case "actor":
+			f := ActorFilter(qualifierQuery)
+			result.Actor = append(result.Actor, f)
+
+		case "participant":
+			f := ParticipantFilter(qualifierQuery)
+			result.Participant = append(result.Participant, f)
+
 		case "label":
 			f := LabelFilter(qualifierQuery)
 			result.Label = append(result.Label, f)
 
 		case "title":
 			f := TitleFilter(qualifierQuery)
-			result.Label = append(result.Title, f)
+			result.Title = append(result.Title, f)
 
 		case "no":
 			err := result.parseNoFilter(qualifierQuery)

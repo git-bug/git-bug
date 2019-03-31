@@ -33,6 +33,27 @@ You can filter based on the person who opened the bug.
 | `author:QUERY` | `author:descartes` matches bugs opened by `René Descartes` or `Robert Descartes` |
 |                | `author:"rené descartes"` matches bugs opened by `René Descartes`                |
 
+### Filtering by participant
+
+You can filter based on the person who participated in the bug (Opened the bug or added a comment).
+
+| Qualifier           | Example                                                                                            |
+| ---                 | ---                                                                                                |
+| `participant:QUERY` | `participant:descartes` matches bugs opened or commented by `René Descartes` or `Robert Descartes` |
+|                     | `participant:"rené descartes"` matches bugs opened or commented by `René Descartes`                |
+
+### Filtering by actor
+
+You can filter based on the person who interacted with the bug.
+
+| Qualifier     | Example                                                                         |
+| ---           | ---                                                                             |
+| `actor:QUERY` | `actor:descartes` matches bugs edited by `René Descartes` or `Robert Descartes` |
+|               | `actor:"rené descartes"` matches bugs edited by `René Descartes`                |
+| `
+
+**NOTE**: interaction with bugs include: opening the bug, adding comments, adding/removing labels etc...
+
 ### Filtering by label
 
 You can filter based on the bug's label.

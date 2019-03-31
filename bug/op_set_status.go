@@ -27,6 +27,7 @@ func (op *SetStatusOperation) Hash() (git.Hash, error) {
 
 func (op *SetStatusOperation) Apply(snapshot *Snapshot) {
 	snapshot.Status = op.Status
+	snapshot.addActor(op.Author)
 
 	hash, err := op.Hash()
 	if err != nil {
