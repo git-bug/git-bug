@@ -91,7 +91,7 @@ func (f *Filters) Match(repoCache *RepoCache, excerpt *BugExcerpt) bool {
 		return false
 	}
 
-	if match := f.orMatch(f.Label, repoCache, excerpt); !match {
+	if match := f.andMatch(f.Label, repoCache, excerpt); !match {
 		return false
 	}
 
