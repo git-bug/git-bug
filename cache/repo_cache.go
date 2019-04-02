@@ -19,6 +19,7 @@ import (
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/process"
+	"github.com/pkg/errors"
 )
 
 const bugCacheFile = "bug-cache"
@@ -673,6 +674,26 @@ func (c *RepoCache) Push(remote string) (string, error) {
 	}
 
 	return stdout1 + stdout2, nil
+}
+
+// Pull will do a Fetch + MergeAll
+// This function will return an error if a merge fail
+func (c *RepoCache) Pull(remote string) error {
+	_, err := c.Fetch(remote)
+	if err != nil {
+		return err
+	}
+
+	for merge := range c.MergeAll(remote) {
+		if merge.Err != nil {
+			return merge.Err
+		}
+		if merge.Status == entity.MergeStatusInvalid {
+			return errors.Errorf("merge failure: %s", merge.Reason)
+		}
+	}
+
+	return nil
 }
 
 func repoLockFilePath(repo repository.Repo) string {

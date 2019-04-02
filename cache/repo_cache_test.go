@@ -99,3 +99,58 @@ func TestCache(t *testing.T) {
 	_, err = cache.ResolveBugPrefix(bug1.Id()[:10])
 	require.NoError(t, err)
 }
+
+func TestPushPull(t *testing.T) {
+	repoA, repoB, remote := test.SetupReposAndRemote(t)
+	defer test.CleanupRepos(repoA, repoB, remote)
+
+	cacheA, err := NewRepoCache(repoA)
+	require.NoError(t, err)
+
+	cacheB, err := NewRepoCache(repoB)
+	require.NoError(t, err)
+
+	// Create, set and get user identity
+	reneA, err := cacheA.NewIdentity("René Descartes", "rene@descartes.fr")
+	require.NoError(t, err)
+	err = cacheA.SetUserIdentity(reneA)
+	require.NoError(t, err)
+
+	// distribute the identity
+	_, err = cacheA.Push("origin")
+	require.NoError(t, err)
+	err = cacheB.Pull("origin")
+	require.NoError(t, err)
+
+	// Create a bug in A
+	_, err = cacheA.NewBug("bug1", "message")
+	require.NoError(t, err)
+
+	// A --> remote --> B
+	_, err = cacheA.Push("origin")
+	require.NoError(t, err)
+
+	err = cacheB.Pull("origin")
+	require.NoError(t, err)
+
+	require.Len(t, cacheB.AllBugsIds(), 1)
+
+	// retrieve and set identity
+	reneB, err := cacheB.ResolveIdentity(reneA.Id())
+	require.NoError(t, err)
+
+	err = cacheB.SetUserIdentity(reneB)
+	require.NoError(t, err)
+
+	// B --> remote --> A
+	_, err = cacheB.NewBug("bug2", "message")
+	require.NoError(t, err)
+
+	_, err = cacheB.Push("origin")
+	require.NoError(t, err)
+
+	err = cacheA.Pull("origin")
+	require.NoError(t, err)
+
+	require.Len(t, cacheA.AllBugsIds(), 2)
+}
