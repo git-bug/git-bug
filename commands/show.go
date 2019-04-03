@@ -32,7 +32,7 @@ func runShowBug(cmd *cobra.Command, args []string) error {
 	snapshot := b.Snapshot()
 
 	if len(snapshot.Comments) == 0 {
-		return errors.New("Invalid bug: no comment")
+		return errors.New("invalid bug: no comment")
 	}
 
 	firstComment := snapshot.Comments[0]
@@ -49,7 +49,10 @@ func runShowBug(cmd *cobra.Command, args []string) error {
 			fmt.Printf("%s\n", snapshot.Id())
 		case "labels":
 			var labels = make([]string, len(snapshot.Labels))
-			fmt.Printf("%s\n", strings.Join(labels, ", "))
+			for i, l := range snapshot.Labels {
+				labels[i] = string(l)
+			}
+			fmt.Printf("%s\n", strings.Join(labels, "\n"))
 		case "shortId":
 			fmt.Printf("%s\n", snapshot.HumanId())
 		case "status":
