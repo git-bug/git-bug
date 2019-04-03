@@ -13,7 +13,8 @@ git-bug user [<user-id>] [flags]
 ### Options
 
 ```
-  -h, --help   help for user
+  -f, --field string   Select field to display. Valid values are [email,humanId,id,lastModification,lastModificationLamport,login,metadata,name]
+  -h, --help           help for user
 ```
 
 ### SEE ALSO

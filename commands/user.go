@@ -9,6 +9,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	userFieldsQuery string
+)
+
 func runUser(cmd *cobra.Command, args []string) error {
 	backend, err := cache.NewRepoCache(repo)
 	if err != nil {
@@ -30,6 +34,35 @@ func runUser(cmd *cobra.Command, args []string) error {
 
 	if err != nil {
 		return err
+	}
+
+	if userFieldsQuery != "" {
+		switch userFieldsQuery {
+		case "email":
+			fmt.Printf("%s\n", id.Email())
+		case "humanId":
+			fmt.Printf("%s\n", id.HumanId())
+		case "id":
+			fmt.Printf("%s\n", id.Id())
+		case "lastModification":
+			fmt.Printf("%s\n", id.LastModification().
+				Time().Format("Mon Jan 2 15:04:05 2006 +0200"))
+		case "lastModificationLamport":
+			fmt.Printf("%d\n", id.LastModificationLamport())
+		case "login":
+			fmt.Printf("%s\n", id.Login())
+		case "metadata":
+			for key, value := range id.ImmutableMetadata() {
+				fmt.Printf("%s\n%s\n", key, value)
+			}
+		case "name":
+			fmt.Printf("%s\n", id.Name())
+
+		default:
+			return fmt.Errorf("\nUnsupported field: %s\n", userFieldsQuery)
+		}
+
+		return nil
 	}
 
 	fmt.Printf("Id: %s\n", id.Id())
@@ -58,4 +91,7 @@ var userCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(userCmd)
 	userCmd.Flags().SortFlags = false
+
+	userCmd.Flags().StringVarP(&userFieldsQuery, "field", "f", "",
+		"Select field to display. Valid values are [email,humanId,id,lastModification,lastModificationLamport,login,metadata,name]")
 }
