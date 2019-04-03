@@ -45,6 +45,8 @@ func runShowBug(cmd *cobra.Command, args []string) error {
 			fmt.Printf("%s\n", firstComment.Author.Email())
 		case "createTime":
 			fmt.Printf("%s\n", firstComment.FormatTime())
+		case "humanId":
+			fmt.Printf("%s\n", snapshot.HumanId())
 		case "id":
 			fmt.Printf("%s\n", snapshot.Id())
 		case "labels":
@@ -124,5 +126,5 @@ var showCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(showCmd)
 	showCmd.Flags().StringVarP(&showFieldsQuery, "field", "f", "",
-		"Select field to display. Valid values are [author,authorEmail,createTime,id,labels,shortId,status,title]")
+		"Select field to display. Valid values are [author,authorEmail,createTime,humanId,id,labels,shortId,status,title]")
 }

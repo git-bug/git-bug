@@ -13,7 +13,7 @@ git-bug show [<id>] [flags]
 ### Options
 
 ```
-  -f, --field string   Select field to display. Valid values are [author,authorEmail,createTime,id,labels,shortId,status,title]
+  -f, --field string   Select field to display. Valid values are [author,authorEmail,createTime,humanId,id,labels,shortId,status,title]
   -h, --help           help for show
 ```
 
