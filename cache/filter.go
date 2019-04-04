@@ -66,12 +66,12 @@ func ActorFilter(query string) Filter {
 				panic("missing identity in the cache")
 			}
 
-			if strings.Contains(strings.ToLower(identityExcerpt.Name), query) ||
-				query == identityExcerpt.Id || query == strings.ToLower(identityExcerpt.Login) {
+			if query == identityExcerpt.Id ||
+				strings.Contains(strings.ToLower(identityExcerpt.Name), query) ||
+				query == strings.ToLower(identityExcerpt.Login) {
 				return true
 			}
 		}
-
 		return false
 	}
 }
@@ -87,12 +87,12 @@ func ParticipantFilter(query string) Filter {
 				panic("missing identity in the cache")
 			}
 
-			if strings.Contains(strings.ToLower(identityExcerpt.Name), query) ||
-				query == identityExcerpt.Id || query == strings.ToLower(identityExcerpt.Login) {
+			if query == identityExcerpt.Id ||
+				strings.Contains(strings.ToLower(identityExcerpt.Name), query) ||
+				query == strings.ToLower(identityExcerpt.Login) {
 				return true
 			}
 		}
-
 		return false
 	}
 }

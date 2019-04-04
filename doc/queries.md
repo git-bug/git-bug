@@ -35,7 +35,7 @@ You can filter based on the person who opened the bug.
 
 ### Filtering by participant
 
-You can filter based on the person who participated in the bug (Opened the bug or added a comment).
+You can filter based on the person who participated in any activity related to the bug (Opened bug or added a comment).
 
 | Qualifier           | Example                                                                                            |
 | ---                 | ---                                                                                                |
