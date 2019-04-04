@@ -29,6 +29,9 @@ func (op *AddCommentOperation) Hash() (git.Hash, error) {
 }
 
 func (op *AddCommentOperation) Apply(snapshot *Snapshot) {
+	snapshot.addActor(op.Author)
+	snapshot.addParticipant(op.Author)
+
 	hash, err := op.Hash()
 	if err != nil {
 		// Should never error unless a programming error happened

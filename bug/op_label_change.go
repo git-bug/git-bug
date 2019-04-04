@@ -31,6 +31,8 @@ func (op *LabelChangeOperation) Hash() (git.Hash, error) {
 
 // Apply apply the operation
 func (op *LabelChangeOperation) Apply(snapshot *Snapshot) {
+	snapshot.addActor(op.Author)
+
 	// Add in the set
 AddLoop:
 	for _, added := range op.Added {

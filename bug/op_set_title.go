@@ -31,6 +31,7 @@ func (op *SetTitleOperation) Hash() (git.Hash, error) {
 
 func (op *SetTitleOperation) Apply(snapshot *Snapshot) {
 	snapshot.Title = op.Title
+	snapshot.addActor(op.Author)
 
 	hash, err := op.Hash()
 	if err != nil {

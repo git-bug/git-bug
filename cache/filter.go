@@ -55,6 +55,48 @@ func LabelFilter(label string) Filter {
 	}
 }
 
+// ActorFilter return a Filter that match a bug actor
+func ActorFilter(query string) Filter {
+	return func(repoCache *RepoCache, excerpt *BugExcerpt) bool {
+		query = strings.ToLower(query)
+
+		for _, id := range excerpt.Actors {
+			identityExcerpt, ok := repoCache.identitiesExcerpts[id]
+			if !ok {
+				panic("missing identity in the cache")
+			}
+
+			if query == identityExcerpt.Id ||
+				strings.Contains(strings.ToLower(identityExcerpt.Name), query) ||
+				query == strings.ToLower(identityExcerpt.Login) {
+				return true
+			}
+		}
+		return false
+	}
+}
+
+// ParticipantFilter return a Filter that match a bug participant
+func ParticipantFilter(query string) Filter {
+	return func(repoCache *RepoCache, excerpt *BugExcerpt) bool {
+		query = strings.ToLower(query)
+
+		for _, id := range excerpt.Participants {
+			identityExcerpt, ok := repoCache.identitiesExcerpts[id]
+			if !ok {
+				panic("missing identity in the cache")
+			}
+
+			if query == identityExcerpt.Id ||
+				strings.Contains(strings.ToLower(identityExcerpt.Name), query) ||
+				query == strings.ToLower(identityExcerpt.Login) {
+				return true
+			}
+		}
+		return false
+	}
+}
+
 // TitleFilter return a Filter that match if the title contains the given query
 func TitleFilter(query string) Filter {
 	return func(repo *RepoCache, excerpt *BugExcerpt) bool {
@@ -74,11 +116,13 @@ func NoLabelFilter() Filter {
 
 // Filters is a collection of Filter that implement a complex filter
 type Filters struct {
-	Status    []Filter
-	Author    []Filter
-	Label     []Filter
-	Title     []Filter
-	NoFilters []Filter
+	Status      []Filter
+	Author      []Filter
+	Actor       []Filter
+	Participant []Filter
+	Label       []Filter
+	Title       []Filter
+	NoFilters   []Filter
 }
 
 // Match check if a bug match the set of filters
@@ -88,6 +132,14 @@ func (f *Filters) Match(repoCache *RepoCache, excerpt *BugExcerpt) bool {
 	}
 
 	if match := f.orMatch(f.Author, repoCache, excerpt); !match {
+		return false
+	}
+
+	if match := f.orMatch(f.Participant, repoCache, excerpt); !match {
+		return false
+	}
+
+	if match := f.orMatch(f.Actor, repoCache, excerpt); !match {
 		return false
 	}
 

@@ -23,10 +23,12 @@ type BugExcerpt struct {
 	CreateUnixTime    int64
 	EditUnixTime      int64
 
-	Status      bug.Status
-	Labels      []bug.Label
-	Title       string
-	LenComments int
+	Status       bug.Status
+	Labels       []bug.Label
+	Title        string
+	LenComments  int
+	Actors       []string
+	Participants []string
 
 	// If author is identity.Bare, LegacyAuthor is set
 	// If author is identity.Identity, AuthorId is set and data is deported
@@ -44,6 +46,16 @@ type LegacyAuthorExcerpt struct {
 }
 
 func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
+	participantsIds := make([]string, len(snap.Participants))
+	for i, participant := range snap.Participants {
+		participantsIds[i] = participant.Id()
+	}
+
+	actorsIds := make([]string, len(snap.Actors))
+	for i, actor := range snap.Actors {
+		actorsIds[i] = actor.Id()
+	}
+
 	e := &BugExcerpt{
 		Id:                b.Id(),
 		CreateLamportTime: b.CreateLamportTime(),
@@ -52,6 +64,8 @@ func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
 		EditUnixTime:      snap.LastEditUnix(),
 		Status:            snap.Status,
 		Labels:            snap.Labels,
+		Actors:            actorsIds,
+		Participants:      participantsIds,
 		Title:             snap.Title,
 		LenComments:       len(snap.Comments),
 		CreateMetadata:    b.FirstOp().AllMetadata(),

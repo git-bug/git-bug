@@ -33,6 +33,8 @@ func (op *EditCommentOperation) Apply(snapshot *Snapshot) {
 	// Todo: currently any message can be edited, even by a different author
 	// crypto signature are needed.
 
+	snapshot.addActor(op.Author)
+
 	var target TimelineItem
 	var commentIndex int
 

@@ -35,8 +35,10 @@ func TestCreate(t *testing.T) {
 		Comments: []Comment{
 			comment,
 		},
-		Author:    rene,
-		CreatedAt: create.Time(),
+		Author:       rene,
+		Participants: []identity.Interface{rene},
+		Actors:       []identity.Interface{rene},
+		CreatedAt:    create.Time(),
 		Timeline: []TimelineItem{
 			&CreateTimelineItem{
 				CommentTimelineItem: NewCommentTimelineItem(hash, comment),

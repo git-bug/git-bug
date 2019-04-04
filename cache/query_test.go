@@ -19,6 +19,9 @@ func TestQueryParse(t *testing.T) {
 		{"author:rene", true},
 		{`author:"René Descartes"`, true},
 
+		{"actor:bernhard", true},
+		{"participant:leonhard", true},
+
 		{"label:hello", true},
 		{`label:"Good first issue"`, true},
 
