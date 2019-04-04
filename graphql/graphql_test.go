@@ -50,16 +50,6 @@ func TestQueries(t *testing.T) {
                 email
                 avatarUrl
               }
-              actors {
-                name
-                email
-                avatarUrl
-              }
-              participants {
-                name
-                email
-                avatarUrl
-              }
       
               createdAt
               humanId
@@ -67,6 +57,36 @@ func TestQueries(t *testing.T) {
               lastEdit
               status
               title
+
+              actors(first: 10) {
+                pageInfo {
+                  endCursor
+                  hasNextPage
+                  startCursor
+                  hasPreviousPage
+                }
+				nodes {
+				  id
+				  humanId
+				  name
+				  displayName
+				}
+			  }
+
+			  participants(first: 10) {
+                pageInfo {
+                  endCursor
+                  hasNextPage
+                  startCursor
+                  hasPreviousPage
+                }
+				nodes {
+				  id
+				  humanId
+				  name
+				  displayName
+				}
+			  }
       
               comments(first: 2) {
                 pageInfo {
@@ -123,9 +143,12 @@ func TestQueries(t *testing.T) {
       }`
 
 	type Identity struct {
-		Name      string `json:"name"`
-		Email     string `json:"email"`
-		AvatarUrl string `json:"avatarUrl"`
+		Id          string `json:"id"`
+		HumanId     string `json:"humanId"`
+		Name        string `json:"name"`
+		Email       string `json:"email"`
+		AvatarUrl   string `json:"avatarUrl"`
+		DisplayName string `json:"displayName"`
 	}
 
 	var resp struct {
@@ -133,15 +156,23 @@ func TestQueries(t *testing.T) {
 			AllBugs struct {
 				PageInfo models.PageInfo
 				Nodes    []struct {
-					Author       Identity
-					Actors       []Identity
-					Participants []Identity
-					CreatedAt    string `json:"createdAt"`
-					HumanId      string `json:"humanId"`
-					Id           string
-					LastEdit     string `json:"lastEdit"`
-					Status       string
-					Title        string
+					Author    Identity
+					CreatedAt string `json:"createdAt"`
+					HumanId   string `json:"humanId"`
+					Id        string
+					LastEdit  string `json:"lastEdit"`
+					Status    string
+					Title     string
+
+					Actors struct {
+						PageInfo models.PageInfo
+						Nodes    []Identity
+					}
+
+					Participants struct {
+						PageInfo models.PageInfo
+						Nodes    []Identity
+					}
 
 					Comments struct {
 						PageInfo models.PageInfo

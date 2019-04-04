@@ -104,22 +104,56 @@ func (bugResolver) LastEdit(ctx context.Context, obj *bug.Snapshot) (time.Time, 
 	return obj.LastEditTime(), nil
 }
 
-func (bugResolver) Actors(ctx context.Context, obj *bug.Snapshot) ([]*identity.Interface, error) {
-	actorsp := make([]*identity.Interface, len(obj.Actors))
-
-	for i, actor := range obj.Actors {
-		actorsp[i] = &actor
+func (bugResolver) Actors(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (models.IdentityConnection, error) {
+	input := models.ConnectionInput{
+		Before: before,
+		After:  after,
+		First:  first,
+		Last:   last,
 	}
 
-	return actorsp, nil
+	edger := func(actor identity.Interface, offset int) connections.Edge {
+		return models.IdentityEdge{
+			Node:   actor,
+			Cursor: connections.OffsetToCursor(offset),
+		}
+	}
+
+	conMaker := func(edges []models.IdentityEdge, nodes []identity.Interface, info models.PageInfo, totalCount int) (models.IdentityConnection, error) {
+		return models.IdentityConnection{
+			Edges:      edges,
+			Nodes:      nodes,
+			PageInfo:   info,
+			TotalCount: totalCount,
+		}, nil
+	}
+
+	return connections.IdentityCon(obj.Actors, edger, conMaker, input)
 }
 
-func (bugResolver) Participants(ctx context.Context, obj *bug.Snapshot) ([]*identity.Interface, error) {
-	participantsp := make([]*identity.Interface, len(obj.Participants))
-
-	for i, participant := range obj.Participants {
-		participantsp[i] = &participant
+func (bugResolver) Participants(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (models.IdentityConnection, error) {
+	input := models.ConnectionInput{
+		Before: before,
+		After:  after,
+		First:  first,
+		Last:   last,
 	}
 
-	return participantsp, nil
+	edger := func(participant identity.Interface, offset int) connections.Edge {
+		return models.IdentityEdge{
+			Node:   participant,
+			Cursor: connections.OffsetToCursor(offset),
+		}
+	}
+
+	conMaker := func(edges []models.IdentityEdge, nodes []identity.Interface, info models.PageInfo, totalCount int) (models.IdentityConnection, error) {
+		return models.IdentityConnection{
+			Edges:      edges,
+			Nodes:      nodes,
+			PageInfo:   info,
+			TotalCount: totalCount,
+		}, nil
+	}
+
+	return connections.IdentityCon(obj.Participants, edger, conMaker, input)
 }

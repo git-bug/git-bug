@@ -8,24 +8,23 @@ import (
 	"fmt"
 
 	"github.com/MichaelMure/git-bug/graphql/models"
-	"github.com/MichaelMure/git-bug/identity"
 )
 
-// IdentityInterfaceEdgeMaker define a function that take a identity.Interface and an offset and
+// StringEdgeMaker define a function that take a string and an offset and
 // create an Edge.
-type IdentityEdgeMaker func(value identity.Interface, offset int) Edge
+type LazyIdentityEdgeMaker func(value string, offset int) Edge
 
-// IdentityConMaker define a function that create a models.IdentityConnection
-type IdentityConMaker func(
-	edges []models.IdentityEdge,
-	nodes []identity.Interface,
+// LazyIdentityConMaker define a function that create a models.IdentityConnection
+type LazyIdentityConMaker func(
+	edges []LazyIdentityEdge,
+	nodes []string,
 	info models.PageInfo,
 	totalCount int) (models.IdentityConnection, error)
 
-// IdentityCon will paginate a source according to the input of a relay connection
-func IdentityCon(source []identity.Interface, edgeMaker IdentityEdgeMaker, conMaker IdentityConMaker, input models.ConnectionInput) (models.IdentityConnection, error) {
-	var nodes []identity.Interface
-	var edges []models.IdentityEdge
+// LazyIdentityCon will paginate a source according to the input of a relay connection
+func LazyIdentityCon(source []string, edgeMaker LazyIdentityEdgeMaker, conMaker LazyIdentityConMaker, input models.ConnectionInput) (models.IdentityConnection, error) {
+	var nodes []string
+	var edges []LazyIdentityEdge
 	var cursors []string
 	var pageInfo models.PageInfo
 	var totalCount = len(source)
@@ -57,18 +56,18 @@ func IdentityCon(source []identity.Interface, edgeMaker IdentityEdgeMaker, conMa
 				break
 			}
 
-			edges = append(edges, edge.(models.IdentityEdge))
+			edges = append(edges, edge.(LazyIdentityEdge))
 			cursors = append(cursors, edge.GetCursor())
 			nodes = append(nodes, value)
 		}
 	} else {
-		edges = make([]models.IdentityEdge, len(source))
+		edges = make([]LazyIdentityEdge, len(source))
 		cursors = make([]string, len(source))
 		nodes = source
 
 		for i, value := range source {
 			edge := edgeMaker(value, i+offset)
-			edges[i] = edge.(models.IdentityEdge)
+			edges[i] = edge.(LazyIdentityEdge)
 			cursors[i] = edge.GetCursor()
 		}
 	}

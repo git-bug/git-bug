@@ -3,8 +3,9 @@ package connections
 import (
 	"fmt"
 
-	"github.com/MichaelMure/git-bug/graphql/models"
 	"github.com/cheekybits/genny/generic"
+
+	"github.com/MichaelMure/git-bug/graphql/models"
 )
 
 // Name define the name of the connection
