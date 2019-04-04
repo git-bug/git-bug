@@ -4,11 +4,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/vektah/gqlgen/client"
+
 	"github.com/MichaelMure/git-bug/graphql/models"
 	"github.com/MichaelMure/git-bug/misc/random_bugs"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/test"
-	"github.com/vektah/gqlgen/client"
 )
 
 func CreateFilledRepo(bugNumber int) repository.ClockedRepo {
@@ -35,7 +36,7 @@ func TestQueries(t *testing.T) {
 	c := client.New(srv.URL)
 
 	query := `
-      query {
+     query {
         defaultRepository {
           allBugs(first: 2) {
             pageInfo {
@@ -65,28 +66,28 @@ func TestQueries(t *testing.T) {
                   startCursor
                   hasPreviousPage
                 }
-				nodes {
-				  id
-				  humanId
-				  name
-				  displayName
-				}
-			  }
+                nodes {
+                  id
+                  humanId
+                  name
+                  displayName
+                }
+              }
 
-			  participants(first: 10) {
+              participants(first: 10) {
                 pageInfo {
                   endCursor
                   hasNextPage
                   startCursor
                   hasPreviousPage
                 }
-				nodes {
-				  id
-				  humanId
-				  name
-				  displayName
-				}
-			  }
+                nodes {
+                  id
+                  humanId
+                  name
+                  displayName
+                }
+              }
       
               comments(first: 2) {
                 pageInfo {
