@@ -56,35 +56,43 @@ func LabelFilter(label string) Filter {
 }
 
 // ActorFilter return a Filter that match a bug actor
-func ActorFilter(actor string) Filter {
+func ActorFilter(query string) Filter {
 	return func(repoCache *RepoCache, excerpt *BugExcerpt) bool {
-		for _, identityExcerpt := range repoCache.identitiesExcerpts {
-			if strings.Contains(strings.ToLower(identityExcerpt.Name), actor) ||
-				actor == identityExcerpt.Id || actor == identityExcerpt.Login {
-				for _, actorId := range excerpt.Actors {
-					if identityExcerpt.Id == actorId {
-						return true
-					}
-				}
+		query = strings.ToLower(query)
+
+		for _, id := range excerpt.Actors {
+			identityExcerpt, ok := repoCache.identitiesExcerpts[id]
+			if !ok {
+				panic("missing identity in the cache")
+			}
+
+			if strings.Contains(strings.ToLower(identityExcerpt.Name), query) ||
+				query == identityExcerpt.Id || query == strings.ToLower(identityExcerpt.Login) {
+				return true
 			}
 		}
+
 		return false
 	}
 }
 
 // ParticipantFilter return a Filter that match a bug participant
-func ParticipantFilter(participant string) Filter {
+func ParticipantFilter(query string) Filter {
 	return func(repoCache *RepoCache, excerpt *BugExcerpt) bool {
-		for _, identityExcerpt := range repoCache.identitiesExcerpts {
-			if strings.Contains(strings.ToLower(identityExcerpt.Name), participant) ||
-				participant == identityExcerpt.Id || participant == identityExcerpt.Login {
-				for _, participantId := range excerpt.Participants {
-					if identityExcerpt.Id == participantId {
-						return true
-					}
-				}
+		query = strings.ToLower(query)
+
+		for _, id := range excerpt.Participants {
+			identityExcerpt, ok := repoCache.identitiesExcerpts[id]
+			if !ok {
+				panic("missing identity in the cache")
+			}
+
+			if strings.Contains(strings.ToLower(identityExcerpt.Name), query) ||
+				query == identityExcerpt.Id || query == strings.ToLower(identityExcerpt.Login) {
+				return true
 			}
 		}
+
 		return false
 	}
 }
