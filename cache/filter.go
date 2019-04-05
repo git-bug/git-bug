@@ -33,8 +33,7 @@ func AuthorFilter(query string) Filter {
 				panic("missing identity in the cache")
 			}
 
-			return strings.Contains(strings.ToLower(author.Name), query) ||
-				strings.Contains(strings.ToLower(author.Login), query)
+			return author.Match(query)
 		}
 
 		// Legacy identity support
@@ -66,9 +65,7 @@ func ActorFilter(query string) Filter {
 				panic("missing identity in the cache")
 			}
 
-			if query == identityExcerpt.Id ||
-				strings.Contains(strings.ToLower(identityExcerpt.Name), query) ||
-				query == strings.ToLower(identityExcerpt.Login) {
+			if identityExcerpt.Match(query) {
 				return true
 			}
 		}
@@ -87,9 +84,7 @@ func ParticipantFilter(query string) Filter {
 				panic("missing identity in the cache")
 			}
 
-			if query == identityExcerpt.Id ||
-				strings.Contains(strings.ToLower(identityExcerpt.Name), query) ||
-				query == strings.ToLower(identityExcerpt.Login) {
+			if identityExcerpt.Match(query) {
 				return true
 			}
 		}
