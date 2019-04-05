@@ -11,13 +11,15 @@ import (
 )
 
 var (
-	lsStatusQuery   []string
-	lsAuthorQuery   []string
-	lsTitleQuery    []string
-	lsLabelQuery    []string
-	lsNoQuery       []string
-	lsSortBy        string
-	lsSortDirection string
+	lsStatusQuery      []string
+	lsAuthorQuery      []string
+	lsParticipantQuery []string
+	lsLabelQuery       []string
+	lsTitleQuery       []string
+	lsActorQuery       []string
+	lsNoQuery          []string
+	lsSortBy           string
+	lsSortDirection    string
 )
 
 func runLsBug(cmd *cobra.Command, args []string) error {
@@ -89,6 +91,16 @@ func lsQueryFromFlags() (*cache.Query, error) {
 		query.Author = append(query.Author, f)
 	}
 
+	for _, actor := range lsActorQuery {
+		f := cache.ActorFilter(actor)
+		query.Actor = append(query.Actor, f)
+	}
+
+	for _, participant := range lsParticipantQuery {
+		f := cache.ParticipantFilter(participant)
+		query.Participant = append(query.Participant, f)
+	}
+
 	for _, label := range lsLabelQuery {
 		f := cache.LabelFilter(label)
 		query.Label = append(query.Label, f)
@@ -151,6 +163,10 @@ func init() {
 		"Filter by status. Valid values are [open,closed]")
 	lsCmd.Flags().StringSliceVarP(&lsAuthorQuery, "author", "a", nil,
 		"Filter by author")
+	lsCmd.Flags().StringSliceVarP(&lsParticipantQuery, "participant", "p", nil,
+		"Filter by participant")
+	lsCmd.Flags().StringSliceVarP(&lsActorQuery, "actor", "A", nil,
+		"Filter by actor")
 	lsCmd.Flags().StringSliceVarP(&lsLabelQuery, "label", "l", nil,
 		"Filter by label")
 	lsCmd.Flags().StringSliceVarP(&lsTitleQuery, "title", "t", nil,

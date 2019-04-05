@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/commands/select"
+	_select "github.com/MichaelMure/git-bug/commands/select"
 	"github.com/MichaelMure/git-bug/util/colors"
 	"github.com/MichaelMure/git-bug/util/interrupt"
 	"github.com/spf13/cobra"
@@ -50,11 +50,17 @@ func runShowBug(cmd *cobra.Command, args []string) error {
 		case "id":
 			fmt.Printf("%s\n", snapshot.Id())
 		case "labels":
-			var labels = make([]string, len(snapshot.Labels))
-			for i, l := range snapshot.Labels {
-				labels[i] = string(l)
+			for _, l := range snapshot.Labels {
+				fmt.Printf("%s\n", l.String())
 			}
-			fmt.Printf("%s\n", strings.Join(labels, "\n"))
+		case "actors":
+			for _, a := range snapshot.Actors {
+				fmt.Printf("%s\n", a.DisplayName())
+			}
+		case "participants":
+			for _, p := range snapshot.Participants {
+				fmt.Printf("%s\n", p.DisplayName())
+			}
 		case "shortId":
 			fmt.Printf("%s\n", snapshot.HumanId())
 		case "status":
@@ -80,13 +86,34 @@ func runShowBug(cmd *cobra.Command, args []string) error {
 		firstComment.FormatTimeRel(),
 	)
 
+	// Labels
 	var labels = make([]string, len(snapshot.Labels))
 	for i := range snapshot.Labels {
 		labels[i] = string(snapshot.Labels[i])
 	}
 
-	fmt.Printf("labels: %s\n\n",
+	fmt.Printf("labels: %s\n",
 		strings.Join(labels, ", "),
+	)
+
+	// Actors
+	var actors = make([]string, len(snapshot.Actors))
+	for i := range snapshot.Actors {
+		actors[i] = snapshot.Actors[i].DisplayName()
+	}
+
+	fmt.Printf("actors: %s\n",
+		strings.Join(actors, ", "),
+	)
+
+	// Participants
+	var participants = make([]string, len(snapshot.Participants))
+	for i := range snapshot.Participants {
+		participants[i] = snapshot.Participants[i].DisplayName()
+	}
+
+	fmt.Printf("participants: %s\n\n",
+		strings.Join(participants, ", "),
 	)
 
 	// Comments
@@ -126,5 +153,5 @@ var showCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(showCmd)
 	showCmd.Flags().StringVarP(&showFieldsQuery, "field", "f", "",
-		"Select field to display. Valid values are [author,authorEmail,createTime,humanId,id,labels,shortId,status,title]")
+		"Select field to display. Valid values are [author,authorEmail,createTime,humanId,id,labels,shortId,status,title,actors,participants]")
 }
