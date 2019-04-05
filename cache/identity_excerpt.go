@@ -3,6 +3,7 @@ package cache
 import (
 	"encoding/gob"
 	"fmt"
+	"strings"
 
 	"github.com/MichaelMure/git-bug/identity"
 )
@@ -49,6 +50,13 @@ func (i *IdentityExcerpt) DisplayName() string {
 	}
 
 	panic("invalid person data")
+}
+
+// Match matches a query with the identity name, login and ID prefixes
+func (i *IdentityExcerpt) Match(query string) bool {
+	return strings.HasPrefix(i.Id, query) ||
+		strings.Contains(strings.ToLower(i.Name), query) ||
+		strings.Contains(strings.ToLower(i.Login), query)
 }
 
 /*
