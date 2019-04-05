@@ -91,8 +91,8 @@ Note: to deal with differently-set clocks on distributed computers, `git-bug` us
 
 | Qualifier                  | Example                                              |
 | ---                        | ---                                                  |
-| `sort:id-desc`             | `sor:id-desc` will sort bugs by their descending Ids |
-| `sort:id` or `sort:id-asc` | `sor:id` will sort bugs by their ascending Ids       |
+| `sort:id-desc`             | `sort:id-desc` will sort bugs by their descending Ids |
+| `sort:id` or `sort:id-asc` | `sort:id` will sort bugs by their ascending Ids       |
 
 ### Sort by Creation time
 
@@ -100,8 +100,8 @@ You can sort bugs by their creation time.
 
 | Qualifier                               | Example                                                            |
 | ---                                     | ---                                                                |
-| `sort:creation` or `sort:creation-desc` | `sor:creation` will sort bugs by their descending creation time    |
-| `sort:creation-asc`                     | `sor:creation-asc` will sort bugs by their ascending creation time |
+| `sort:creation` or `sort:creation-desc` | `sort:creation` will sort bugs by their descending creation time    |
+| `sort:creation-asc`                     | `sort:creation-asc` will sort bugs by their ascending creation time |
 
 ### Sort by Edit time
 
@@ -109,5 +109,5 @@ You can sort bugs by their edit time.
 
 | Qualifier                       | Example                                                            |
 | ---                             | ---                                                                |
-| `sort:edit` or `sort:edit-desc` | `sor:edit` will sort bugs by their descending last edition time    |
-| `sort:edit-asc`                 | `sor:edit-asc` will sort bugs by their ascending last edition time |
+| `sort:edit` or `sort:edit-desc` | `sort:edit` will sort bugs by their descending last edition time    |
+| `sort:edit-asc`                 | `sort:edit-asc` will sort bugs by their ascending last edition time |
