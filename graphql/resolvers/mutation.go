@@ -23,144 +23,130 @@ func (r mutationResolver) getRepo(repoRef *string) (*cache.RepoCache, error) {
 	return r.cache.DefaultRepo()
 }
 
-func (r mutationResolver) NewBug(ctx context.Context, repoRef *string, title string, message string, files []git.Hash) (bug.Snapshot, error) {
+func (r mutationResolver) NewBug(ctx context.Context, repoRef *string, title string, message string, files []git.Hash) (*bug.Snapshot, error) {
 	repo, err := r.getRepo(repoRef)
 	if err != nil {
-		return bug.Snapshot{}, err
+		return nil, err
 	}
 
 	b, err := repo.NewBugWithFiles(title, message, files)
 	if err != nil {
-		return bug.Snapshot{}, err
+		return nil, err
 	}
 
-	snap := b.Snapshot()
-
-	return *snap, nil
+	return b.Snapshot(), nil
 }
 
-func (r mutationResolver) Commit(ctx context.Context, repoRef *string, prefix string) (bug.Snapshot, error) {
+func (r mutationResolver) Commit(ctx context.Context, repoRef *string, prefix string) (*bug.Snapshot, error) {
 	repo, err := r.getRepo(repoRef)
 	if err != nil {
-		return bug.Snapshot{}, err
+		return nil, err
 	}
 
 	b, err := repo.ResolveBugPrefix(prefix)
 	if err != nil {
-		return bug.Snapshot{}, err
+		return nil, err
 	}
 
 	err = b.Commit()
 	if err != nil {
-		return bug.Snapshot{}, err
+		return nil, err
 	}
 
-	snap := b.Snapshot()
-
-	return *snap, nil
+	return b.Snapshot(), nil
 }
 
-func (r mutationResolver) AddComment(ctx context.Context, repoRef *string, prefix string, message string, files []git.Hash) (bug.Snapshot, error) {
+func (r mutationResolver) AddComment(ctx context.Context, repoRef *string, prefix string, message string, files []git.Hash) (*bug.Snapshot, error) {
 	repo, err := r.getRepo(repoRef)
 	if err != nil {
-		return bug.Snapshot{}, err
+		return nil, err
 	}
 
 	b, err := repo.ResolveBugPrefix(prefix)
 	if err != nil {
-		return bug.Snapshot{}, err
+		return nil, err
 	}
 
 	_, err = b.AddCommentWithFiles(message, files)
 	if err != nil {
-		return bug.Snapshot{}, err
+		return nil, err
 	}
 
-	snap := b.Snapshot()
-
-	return *snap, nil
+	return b.Snapshot(), nil
 }
 
-func (r mutationResolver) ChangeLabels(ctx context.Context, repoRef *string, prefix string, added []string, removed []string) (bug.Snapshot, error) {
+func (r mutationResolver) ChangeLabels(ctx context.Context, repoRef *string, prefix string, added []string, removed []string) (*bug.Snapshot, error) {
 	repo, err := r.getRepo(repoRef)
 	if err != nil {
-		return bug.Snapshot{}, err
+		return nil, err
 	}
 
 	b, err := repo.ResolveBugPrefix(prefix)
 	if err != nil {
-		return bug.Snapshot{}, err
+		return nil, err
 	}
 
 	_, _, err = b.ChangeLabels(added, removed)
 	if err != nil {
-		return bug.Snapshot{}, err
+		return nil, err
 	}
 
-	snap := b.Snapshot()
-
-	return *snap, nil
+	return b.Snapshot(), nil
 }
 
-func (r mutationResolver) Open(ctx context.Context, repoRef *string, prefix string) (bug.Snapshot, error) {
+func (r mutationResolver) Open(ctx context.Context, repoRef *string, prefix string) (*bug.Snapshot, error) {
 	repo, err := r.getRepo(repoRef)
 	if err != nil {
-		return bug.Snapshot{}, err
+		return nil, err
 	}
 
 	b, err := repo.ResolveBugPrefix(prefix)
 	if err != nil {
-		return bug.Snapshot{}, err
+		return nil, err
 	}
 
 	_, err = b.Open()
 	if err != nil {
-		return bug.Snapshot{}, err
+		return nil, err
 	}
 
-	snap := b.Snapshot()
-
-	return *snap, nil
+	return b.Snapshot(), nil
 }
 
-func (r mutationResolver) Close(ctx context.Context, repoRef *string, prefix string) (bug.Snapshot, error) {
+func (r mutationResolver) Close(ctx context.Context, repoRef *string, prefix string) (*bug.Snapshot, error) {
 	repo, err := r.getRepo(repoRef)
 	if err != nil {
-		return bug.Snapshot{}, err
+		return nil, err
 	}
 
 	b, err := repo.ResolveBugPrefix(prefix)
 	if err != nil {
-		return bug.Snapshot{}, err
+		return nil, err
 	}
 
 	_, err = b.Close()
 	if err != nil {
-		return bug.Snapshot{}, err
+		return nil, err
 	}
 
-	snap := b.Snapshot()
-
-	return *snap, nil
+	return b.Snapshot(), nil
 }
 
-func (r mutationResolver) SetTitle(ctx context.Context, repoRef *string, prefix string, title string) (bug.Snapshot, error) {
+func (r mutationResolver) SetTitle(ctx context.Context, repoRef *string, prefix string, title string) (*bug.Snapshot, error) {
 	repo, err := r.getRepo(repoRef)
 	if err != nil {
-		return bug.Snapshot{}, err
+		return nil, err
 	}
 
 	b, err := repo.ResolveBugPrefix(prefix)
 	if err != nil {
-		return bug.Snapshot{}, err
+		return nil, err
 	}
 
 	_, err = b.SetTitle(title)
 	if err != nil {
-		return bug.Snapshot{}, err
+		return nil, err
 	}
 
-	snap := b.Snapshot()
-
-	return *snap, nil
+	return b.Snapshot(), nil
 }

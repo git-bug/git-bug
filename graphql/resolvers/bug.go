@@ -19,7 +19,7 @@ func (bugResolver) Status(ctx context.Context, obj *bug.Snapshot) (models.Status
 	return convertStatus(obj.Status)
 }
 
-func (bugResolver) Comments(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (models.CommentConnection, error) {
+func (bugResolver) Comments(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (*models.CommentConnection, error) {
 	input := models.ConnectionInput{
 		Before: before,
 		After:  after,
@@ -34,8 +34,8 @@ func (bugResolver) Comments(ctx context.Context, obj *bug.Snapshot, after *strin
 		}
 	}
 
-	conMaker := func(edges []models.CommentEdge, nodes []bug.Comment, info models.PageInfo, totalCount int) (models.CommentConnection, error) {
-		return models.CommentConnection{
+	conMaker := func(edges []models.CommentEdge, nodes []bug.Comment, info models.PageInfo, totalCount int) (*models.CommentConnection, error) {
+		return &models.CommentConnection{
 			Edges:      edges,
 			Nodes:      nodes,
 			PageInfo:   info,
@@ -46,7 +46,7 @@ func (bugResolver) Comments(ctx context.Context, obj *bug.Snapshot, after *strin
 	return connections.CommentCon(obj.Comments, edger, conMaker, input)
 }
 
-func (bugResolver) Operations(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (models.OperationConnection, error) {
+func (bugResolver) Operations(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (*models.OperationConnection, error) {
 	input := models.ConnectionInput{
 		Before: before,
 		After:  after,
@@ -61,8 +61,8 @@ func (bugResolver) Operations(ctx context.Context, obj *bug.Snapshot, after *str
 		}
 	}
 
-	conMaker := func(edges []models.OperationEdge, nodes []bug.Operation, info models.PageInfo, totalCount int) (models.OperationConnection, error) {
-		return models.OperationConnection{
+	conMaker := func(edges []models.OperationEdge, nodes []bug.Operation, info models.PageInfo, totalCount int) (*models.OperationConnection, error) {
+		return &models.OperationConnection{
 			Edges:      edges,
 			Nodes:      nodes,
 			PageInfo:   info,
@@ -73,7 +73,7 @@ func (bugResolver) Operations(ctx context.Context, obj *bug.Snapshot, after *str
 	return connections.OperationCon(obj.Operations, edger, conMaker, input)
 }
 
-func (bugResolver) Timeline(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (models.TimelineItemConnection, error) {
+func (bugResolver) Timeline(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (*models.TimelineItemConnection, error) {
 	input := models.ConnectionInput{
 		Before: before,
 		After:  after,
@@ -88,8 +88,8 @@ func (bugResolver) Timeline(ctx context.Context, obj *bug.Snapshot, after *strin
 		}
 	}
 
-	conMaker := func(edges []models.TimelineItemEdge, nodes []bug.TimelineItem, info models.PageInfo, totalCount int) (models.TimelineItemConnection, error) {
-		return models.TimelineItemConnection{
+	conMaker := func(edges []models.TimelineItemEdge, nodes []bug.TimelineItem, info models.PageInfo, totalCount int) (*models.TimelineItemConnection, error) {
+		return &models.TimelineItemConnection{
 			Edges:      edges,
 			Nodes:      nodes,
 			PageInfo:   info,
@@ -100,11 +100,12 @@ func (bugResolver) Timeline(ctx context.Context, obj *bug.Snapshot, after *strin
 	return connections.TimelineItemCon(obj.Timeline, edger, conMaker, input)
 }
 
-func (bugResolver) LastEdit(ctx context.Context, obj *bug.Snapshot) (time.Time, error) {
-	return obj.LastEditTime(), nil
+func (bugResolver) LastEdit(ctx context.Context, obj *bug.Snapshot) (*time.Time, error) {
+	t := obj.LastEditTime()
+	return &t, nil
 }
 
-func (bugResolver) Actors(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (models.IdentityConnection, error) {
+func (bugResolver) Actors(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (*models.IdentityConnection, error) {
 	input := models.ConnectionInput{
 		Before: before,
 		After:  after,
@@ -119,8 +120,8 @@ func (bugResolver) Actors(ctx context.Context, obj *bug.Snapshot, after *string,
 		}
 	}
 
-	conMaker := func(edges []models.IdentityEdge, nodes []identity.Interface, info models.PageInfo, totalCount int) (models.IdentityConnection, error) {
-		return models.IdentityConnection{
+	conMaker := func(edges []models.IdentityEdge, nodes []identity.Interface, info models.PageInfo, totalCount int) (*models.IdentityConnection, error) {
+		return &models.IdentityConnection{
 			Edges:      edges,
 			Nodes:      nodes,
 			PageInfo:   info,
@@ -131,7 +132,7 @@ func (bugResolver) Actors(ctx context.Context, obj *bug.Snapshot, after *string,
 	return connections.IdentityCon(obj.Actors, edger, conMaker, input)
 }
 
-func (bugResolver) Participants(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (models.IdentityConnection, error) {
+func (bugResolver) Participants(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (*models.IdentityConnection, error) {
 	input := models.ConnectionInput{
 		Before: before,
 		After:  after,
@@ -146,8 +147,8 @@ func (bugResolver) Participants(ctx context.Context, obj *bug.Snapshot, after *s
 		}
 	}
 
-	conMaker := func(edges []models.IdentityEdge, nodes []identity.Interface, info models.PageInfo, totalCount int) (models.IdentityConnection, error) {
-		return models.IdentityConnection{
+	conMaker := func(edges []models.IdentityEdge, nodes []identity.Interface, info models.PageInfo, totalCount int) (*models.IdentityConnection, error) {
+		return &models.IdentityConnection{
 			Edges:      edges,
 			Nodes:      nodes,
 			PageInfo:   info,

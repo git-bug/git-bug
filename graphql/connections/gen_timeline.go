@@ -20,10 +20,10 @@ type TimelineItemConMaker func(
 	edges []models.TimelineItemEdge,
 	nodes []bug.TimelineItem,
 	info models.PageInfo,
-	totalCount int) (models.TimelineItemConnection, error)
+	totalCount int) (*models.TimelineItemConnection, error)
 
 // TimelineItemCon will paginate a source according to the input of a relay connection
-func TimelineItemCon(source []bug.TimelineItem, edgeMaker TimelineItemEdgeMaker, conMaker TimelineItemConMaker, input models.ConnectionInput) (models.TimelineItemConnection, error) {
+func TimelineItemCon(source []bug.TimelineItem, edgeMaker TimelineItemEdgeMaker, conMaker TimelineItemConMaker, input models.ConnectionInput) (*models.TimelineItemConnection, error) {
 	var nodes []bug.TimelineItem
 	var edges []models.TimelineItemEdge
 	var cursors []string

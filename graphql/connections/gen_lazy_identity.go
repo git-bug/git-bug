@@ -19,10 +19,10 @@ type LazyIdentityConMaker func(
 	edges []LazyIdentityEdge,
 	nodes []string,
 	info models.PageInfo,
-	totalCount int) (models.IdentityConnection, error)
+	totalCount int) (*models.IdentityConnection, error)
 
 // LazyIdentityCon will paginate a source according to the input of a relay connection
-func LazyIdentityCon(source []string, edgeMaker LazyIdentityEdgeMaker, conMaker LazyIdentityConMaker, input models.ConnectionInput) (models.IdentityConnection, error) {
+func LazyIdentityCon(source []string, edgeMaker LazyIdentityEdgeMaker, conMaker LazyIdentityConMaker, input models.ConnectionInput) (*models.IdentityConnection, error) {
 	var nodes []string
 	var edges []LazyIdentityEdge
 	var cursors []string

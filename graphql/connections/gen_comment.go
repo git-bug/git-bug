@@ -20,10 +20,10 @@ type CommentConMaker func(
 	edges []models.CommentEdge,
 	nodes []bug.Comment,
 	info models.PageInfo,
-	totalCount int) (models.CommentConnection, error)
+	totalCount int) (*models.CommentConnection, error)
 
 // CommentCon will paginate a source according to the input of a relay connection
-func CommentCon(source []bug.Comment, edgeMaker CommentEdgeMaker, conMaker CommentConMaker, input models.ConnectionInput) (models.CommentConnection, error) {
+func CommentCon(source []bug.Comment, edgeMaker CommentEdgeMaker, conMaker CommentConMaker, input models.ConnectionInput) (*models.CommentConnection, error) {
 	var nodes []bug.Comment
 	var edges []models.CommentEdge
 	var cursors []string

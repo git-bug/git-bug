@@ -19,10 +19,10 @@ type LazyBugConMaker func(
 	edges []LazyBugEdge,
 	nodes []string,
 	info models.PageInfo,
-	totalCount int) (models.BugConnection, error)
+	totalCount int) (*models.BugConnection, error)
 
 // LazyBugCon will paginate a source according to the input of a relay connection
-func LazyBugCon(source []string, edgeMaker LazyBugEdgeMaker, conMaker LazyBugConMaker, input models.ConnectionInput) (models.BugConnection, error) {
+func LazyBugCon(source []string, edgeMaker LazyBugEdgeMaker, conMaker LazyBugConMaker, input models.ConnectionInput) (*models.BugConnection, error) {
 	var nodes []string
 	var edges []LazyBugEdge
 	var cursors []string
