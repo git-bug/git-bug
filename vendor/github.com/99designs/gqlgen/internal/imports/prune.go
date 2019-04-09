@@ -5,16 +5,15 @@ package imports
 import (
 	"bytes"
 	"go/ast"
-	"go/build"
 	"go/parser"
 	"go/printer"
 	"go/token"
-	"path/filepath"
 	"strings"
 
-	"golang.org/x/tools/imports"
+	"github.com/99designs/gqlgen/internal/code"
 
 	"golang.org/x/tools/go/ast/astutil"
+	"golang.org/x/tools/imports"
 )
 
 type visitFn func(node ast.Node)
@@ -54,12 +53,6 @@ func getUnusedImports(file ast.Node, filename string) (map[string]string, error)
 	imported := map[string]*ast.ImportSpec{}
 	used := map[string]bool{}
 
-	abs, err := filepath.Abs(filename)
-	if err != nil {
-		return nil, err
-	}
-	srcDir := filepath.Dir(abs)
-
 	ast.Walk(visitFn(func(node ast.Node) {
 		if node == nil {
 			return
@@ -75,7 +68,7 @@ func getUnusedImports(file ast.Node, filename string) (map[string]string, error)
 				break
 			}
 
-			local := importPathToName(ipath, srcDir)
+			local := code.NameForPackage(ipath)
 
 			imported[local] = v
 		case *ast.SelectorExpr:
@@ -107,13 +100,4 @@ func getUnusedImports(file ast.Node, filename string) (map[string]string, error)
 	}
 
 	return unusedImport, nil
-}
-
-func importPathToName(importPath, srcDir string) (packageName string) {
-	pkg, err := build.Default.Import(importPath, srcDir, 0)
-	if err != nil {
-		return ""
-	}
-
-	return pkg.Name
 }

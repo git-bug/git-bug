@@ -20,10 +20,10 @@ type IdentityConMaker func(
 	edges []models.IdentityEdge,
 	nodes []identity.Interface,
 	info models.PageInfo,
-	totalCount int) (models.IdentityConnection, error)
+	totalCount int) (*models.IdentityConnection, error)
 
 // IdentityCon will paginate a source according to the input of a relay connection
-func IdentityCon(source []identity.Interface, edgeMaker IdentityEdgeMaker, conMaker IdentityConMaker, input models.ConnectionInput) (models.IdentityConnection, error) {
+func IdentityCon(source []identity.Interface, edgeMaker IdentityEdgeMaker, conMaker IdentityConMaker, input models.ConnectionInput) (*models.IdentityConnection, error) {
 	var nodes []identity.Interface
 	var edges []models.IdentityEdge
 	var cursors []string

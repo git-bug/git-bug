@@ -18,16 +18,21 @@ type Authored interface {
 
 // The connection type for Bug.
 type BugConnection struct {
-	Edges      []BugEdge      `json:"edges"`
-	Nodes      []bug.Snapshot `json:"nodes"`
-	PageInfo   PageInfo       `json:"pageInfo"`
-	TotalCount int            `json:"totalCount"`
+	// A list of edges.
+	Edges []BugEdge      `json:"edges"`
+	Nodes []bug.Snapshot `json:"nodes"`
+	// Information to aid in pagination.
+	PageInfo PageInfo `json:"pageInfo"`
+	// Identifies the total count of items in the connection.
+	TotalCount int `json:"totalCount"`
 }
 
 // An edge in a connection.
 type BugEdge struct {
-	Cursor string       `json:"cursor"`
-	Node   bug.Snapshot `json:"node"`
+	// A cursor for use in pagination.
+	Cursor string `json:"cursor"`
+	// The item at the end of the edge.
+	Node bug.Snapshot `json:"node"`
 }
 
 type CommentConnection struct {
@@ -70,10 +75,14 @@ type OperationEdge struct {
 
 // Information about pagination in a connection.
 type PageInfo struct {
-	HasNextPage     bool   `json:"hasNextPage"`
-	HasPreviousPage bool   `json:"hasPreviousPage"`
-	StartCursor     string `json:"startCursor"`
-	EndCursor       string `json:"endCursor"`
+	// When paginating forwards, are there more items?
+	HasNextPage bool `json:"hasNextPage"`
+	// When paginating backwards, are there more items?
+	HasPreviousPage bool `json:"hasPreviousPage"`
+	// When paginating backwards, the cursor to continue.
+	StartCursor string `json:"startCursor"`
+	// When paginating forwards, the cursor to continue.
+	EndCursor string `json:"endCursor"`
 }
 
 // The connection type for TimelineItem
@@ -96,6 +105,11 @@ const (
 	StatusOpen   Status = "OPEN"
 	StatusClosed Status = "CLOSED"
 )
+
+var AllStatus = []Status{
+	StatusOpen,
+	StatusClosed,
+}
 
 func (e Status) IsValid() bool {
 	switch e {

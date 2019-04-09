@@ -15,7 +15,7 @@ var _ graph.RepositoryResolver = &repoResolver{}
 
 type repoResolver struct{}
 
-func (repoResolver) AllBugs(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int, queryStr *string) (models.BugConnection, error) {
+func (repoResolver) AllBugs(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int, queryStr *string) (*models.BugConnection, error) {
 	input := models.ConnectionInput{
 		Before: before,
 		After:  after,
@@ -27,7 +27,7 @@ func (repoResolver) AllBugs(ctx context.Context, obj *models.Repository, after *
 	if queryStr != nil {
 		query2, err := cache.ParseQuery(*queryStr)
 		if err != nil {
-			return models.BugConnection{}, err
+			return nil, err
 		}
 		query = query2
 	} else {
@@ -46,7 +46,7 @@ func (repoResolver) AllBugs(ctx context.Context, obj *models.Repository, after *
 	}
 
 	// The conMaker will finally load and compile bugs from git to replace the selected edges
-	conMaker := func(lazyBugEdges []connections.LazyBugEdge, lazyNode []string, info models.PageInfo, totalCount int) (models.BugConnection, error) {
+	conMaker := func(lazyBugEdges []connections.LazyBugEdge, lazyNode []string, info models.PageInfo, totalCount int) (*models.BugConnection, error) {
 		edges := make([]models.BugEdge, len(lazyBugEdges))
 		nodes := make([]bug.Snapshot, len(lazyBugEdges))
 
@@ -54,7 +54,7 @@ func (repoResolver) AllBugs(ctx context.Context, obj *models.Repository, after *
 			b, err := obj.Repo.ResolveBug(lazyBugEdge.Id)
 
 			if err != nil {
-				return models.BugConnection{}, err
+				return nil, err
 			}
 
 			snap := b.Snapshot()
@@ -66,7 +66,7 @@ func (repoResolver) AllBugs(ctx context.Context, obj *models.Repository, after *
 			nodes[i] = *snap
 		}
 
-		return models.BugConnection{
+		return &models.BugConnection{
 			Edges:      edges,
 			Nodes:      nodes,
 			PageInfo:   info,
@@ -87,7 +87,7 @@ func (repoResolver) Bug(ctx context.Context, obj *models.Repository, prefix stri
 	return b.Snapshot(), nil
 }
 
-func (repoResolver) AllIdentities(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int) (models.IdentityConnection, error) {
+func (repoResolver) AllIdentities(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int) (*models.IdentityConnection, error) {
 	input := models.ConnectionInput{
 		Before: before,
 		After:  after,
@@ -107,7 +107,7 @@ func (repoResolver) AllIdentities(ctx context.Context, obj *models.Repository, a
 	}
 
 	// The conMaker will finally load and compile identities from git to replace the selected edges
-	conMaker := func(lazyIdentityEdges []connections.LazyIdentityEdge, lazyNode []string, info models.PageInfo, totalCount int) (models.IdentityConnection, error) {
+	conMaker := func(lazyIdentityEdges []connections.LazyIdentityEdge, lazyNode []string, info models.PageInfo, totalCount int) (*models.IdentityConnection, error) {
 		edges := make([]models.IdentityEdge, len(lazyIdentityEdges))
 		nodes := make([]identity.Interface, len(lazyIdentityEdges))
 
@@ -115,7 +115,7 @@ func (repoResolver) AllIdentities(ctx context.Context, obj *models.Repository, a
 			i, err := obj.Repo.ResolveIdentity(lazyIdentityEdge.Id)
 
 			if err != nil {
-				return models.IdentityConnection{}, err
+				return nil, err
 			}
 
 			ii := identity.Interface(i.Identity)
@@ -127,7 +127,7 @@ func (repoResolver) AllIdentities(ctx context.Context, obj *models.Repository, a
 			nodes[k] = ii
 		}
 
-		return models.IdentityConnection{
+		return &models.IdentityConnection{
 			Edges:      edges,
 			Nodes:      nodes,
 			PageInfo:   info,
@@ -138,26 +138,22 @@ func (repoResolver) AllIdentities(ctx context.Context, obj *models.Repository, a
 	return connections.LazyIdentityCon(source, edger, conMaker, input)
 }
 
-func (repoResolver) Identity(ctx context.Context, obj *models.Repository, prefix string) (*identity.Interface, error) {
+func (repoResolver) Identity(ctx context.Context, obj *models.Repository, prefix string) (identity.Interface, error) {
 	i, err := obj.Repo.ResolveIdentityPrefix(prefix)
 
 	if err != nil {
 		return nil, err
 	}
 
-	ii := identity.Interface(i.Identity)
-
-	return &ii, nil
+	return i.Identity, nil
 }
 
-func (repoResolver) UserIdentity(ctx context.Context, obj *models.Repository) (*identity.Interface, error) {
+func (repoResolver) UserIdentity(ctx context.Context, obj *models.Repository) (identity.Interface, error) {
 	i, err := obj.Repo.GetUserIdentity()
 
 	if err != nil {
 		return nil, err
 	}
 
-	ii := identity.Interface(i.Identity)
-
-	return &ii, nil
+	return i.Identity, nil
 }

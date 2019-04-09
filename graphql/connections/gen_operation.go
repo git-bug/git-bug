@@ -20,10 +20,10 @@ type OperationConMaker func(
 	edges []models.OperationEdge,
 	nodes []bug.Operation,
 	info models.PageInfo,
-	totalCount int) (models.OperationConnection, error)
+	totalCount int) (*models.OperationConnection, error)
 
 // OperationCon will paginate a source according to the input of a relay connection
-func OperationCon(source []bug.Operation, edgeMaker OperationEdgeMaker, conMaker OperationConMaker, input models.ConnectionInput) (models.OperationConnection, error) {
+func OperationCon(source []bug.Operation, edgeMaker OperationEdgeMaker, conMaker OperationConMaker, input models.ConnectionInput) (*models.OperationConnection, error) {
 	var nodes []bug.Operation
 	var edges []models.OperationEdge
 	var cursors []string

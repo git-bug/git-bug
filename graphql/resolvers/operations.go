@@ -11,32 +11,37 @@ import (
 
 type createOperationResolver struct{}
 
-func (createOperationResolver) Date(ctx context.Context, obj *bug.CreateOperation) (time.Time, error) {
-	return obj.Time(), nil
+func (createOperationResolver) Date(ctx context.Context, obj *bug.CreateOperation) (*time.Time, error) {
+	t := obj.Time()
+	return &t, nil
 }
 
 type addCommentOperationResolver struct{}
 
-func (addCommentOperationResolver) Date(ctx context.Context, obj *bug.AddCommentOperation) (time.Time, error) {
-	return obj.Time(), nil
+func (addCommentOperationResolver) Date(ctx context.Context, obj *bug.AddCommentOperation) (*time.Time, error) {
+	t := obj.Time()
+	return &t, nil
 }
 
 type editCommentOperationResolver struct{}
 
-func (editCommentOperationResolver) Date(ctx context.Context, obj *bug.EditCommentOperation) (time.Time, error) {
-	return obj.Time(), nil
+func (editCommentOperationResolver) Date(ctx context.Context, obj *bug.EditCommentOperation) (*time.Time, error) {
+	t := obj.Time()
+	return &t, nil
 }
 
 type labelChangeOperation struct{}
 
-func (labelChangeOperation) Date(ctx context.Context, obj *bug.LabelChangeOperation) (time.Time, error) {
-	return obj.Time(), nil
+func (labelChangeOperation) Date(ctx context.Context, obj *bug.LabelChangeOperation) (*time.Time, error) {
+	t := obj.Time()
+	return &t, nil
 }
 
 type setStatusOperationResolver struct{}
 
-func (setStatusOperationResolver) Date(ctx context.Context, obj *bug.SetStatusOperation) (time.Time, error) {
-	return obj.Time(), nil
+func (setStatusOperationResolver) Date(ctx context.Context, obj *bug.SetStatusOperation) (*time.Time, error) {
+	t := obj.Time()
+	return &t, nil
 }
 
 func (setStatusOperationResolver) Status(ctx context.Context, obj *bug.SetStatusOperation) (models.Status, error) {
@@ -45,8 +50,9 @@ func (setStatusOperationResolver) Status(ctx context.Context, obj *bug.SetStatus
 
 type setTitleOperationResolver struct{}
 
-func (setTitleOperationResolver) Date(ctx context.Context, obj *bug.SetTitleOperation) (time.Time, error) {
-	return obj.Time(), nil
+func (setTitleOperationResolver) Date(ctx context.Context, obj *bug.SetTitleOperation) (*time.Time, error) {
+	t := obj.Time()
+	return &t, nil
 }
 
 func convertStatus(status bug.Status) (models.Status, error) {

@@ -29,10 +29,10 @@ type NameConMaker func(
 	edges []EdgeType,
 	nodes []NodeType,
 	info models.PageInfo,
-	totalCount int) (ConnectionType, error)
+	totalCount int) (*ConnectionType, error)
 
 // NameCon will paginate a source according to the input of a relay connection
-func NameCon(source []NodeType, edgeMaker NameEdgeMaker, conMaker NameConMaker, input models.ConnectionInput) (ConnectionType, error) {
+func NameCon(source []NodeType, edgeMaker NameEdgeMaker, conMaker NameConMaker, input models.ConnectionInput) (*ConnectionType, error) {
 	var nodes []NodeType
 	var edges []EdgeType
 	var cursors []string

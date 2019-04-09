@@ -8,8 +8,8 @@ package main
 import (
 	"github.com/MichaelMure/git-bug/commands"
 
-	// minimal go version is 1.8
-	_ "github.com/theckman/goconstraint/go1.8/gte"
+	// minimal go version is 1.9
+	_ "github.com/theckman/goconstraint/go1.9/gte"
 )
 
 func main() {

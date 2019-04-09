@@ -12,6 +12,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/gorilla/websocket"
+	"github.com/hashicorp/golang-lru"
 	"github.com/vektah/gqlparser"
 	"github.com/vektah/gqlparser/ast"
 	"github.com/vektah/gqlparser/gqlerror"
@@ -44,12 +45,13 @@ type wsConnection struct {
 	active          map[string]context.CancelFunc
 	mu              sync.Mutex
 	cfg             *Config
+	cache           *lru.Cache
 	keepAliveTicker *time.Ticker
 
 	initPayload InitPayload
 }
 
-func connectWs(exec graphql.ExecutableSchema, w http.ResponseWriter, r *http.Request, cfg *Config) {
+func connectWs(exec graphql.ExecutableSchema, w http.ResponseWriter, r *http.Request, cfg *Config, cache *lru.Cache) {
 	ws, err := cfg.upgrader.Upgrade(w, r, http.Header{
 		"Sec-Websocket-Protocol": []string{"graphql-ws"},
 	})
@@ -65,6 +67,7 @@ func connectWs(exec graphql.ExecutableSchema, w http.ResponseWriter, r *http.Req
 		conn:   ws,
 		ctx:    r.Context(),
 		cfg:    cfg,
+		cache:  cache,
 	}
 
 	if !conn.init() {
@@ -176,10 +179,27 @@ func (c *wsConnection) subscribe(message *operationMessage) bool {
 		return false
 	}
 
-	doc, qErr := gqlparser.LoadQuery(c.exec.Schema(), reqParams.Query)
-	if qErr != nil {
-		c.sendError(message.ID, qErr...)
-		return true
+	var (
+		doc      *ast.QueryDocument
+		cacheHit bool
+	)
+	if c.cache != nil {
+		val, ok := c.cache.Get(reqParams.Query)
+		if ok {
+			doc = val.(*ast.QueryDocument)
+			cacheHit = true
+		}
+	}
+	if !cacheHit {
+		var qErr gqlerror.List
+		doc, qErr = gqlparser.LoadQuery(c.exec.Schema(), reqParams.Query)
+		if qErr != nil {
+			c.sendError(message.ID, qErr...)
+			return true
+		}
+		if c.cache != nil {
+			c.cache.Add(reqParams.Query, doc)
+		}
 	}
 
 	op := doc.Operations.ForName(reqParams.OperationName)
