@@ -2,22 +2,28 @@
 
 
 [[projects]]
-  digest = "1:e8f6639eaa399c8595b9a2dee175514a9f3842888dc080e2776360dc604150dc"
+  digest = "1:d28d302ab337b9ea3af38c04429e198ab422c1e026592aebcf7aec66ebbc4645"
   name = "github.com/99designs/gqlgen"
   packages = [
+    "api",
     "cmd",
     "codegen",
+    "codegen/config",
     "codegen/templates",
     "complexity",
     "graphql",
     "graphql/introspection",
     "handler",
-    "internal/gopath",
+    "internal/code",
     "internal/imports",
+    "plugin",
+    "plugin/modelgen",
+    "plugin/resolvergen",
+    "plugin/servergen",
   ]
   pruneopts = "UT"
-  revision = "da1e07f5876c0fb79cbad19006f7135be08590d6"
-  version = "v0.7.2"
+  revision = "010a79b66f08732cb70d133dcab297a8ee895572"
+  version = "v0.8.3"
 
 [[projects]]
   branch = "master"
@@ -382,13 +388,15 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:d22891f2d4a24a531ae01994abae377ec9d8a45ec8849aa95c27dc36014b8c24"
+  digest = "1:090a56ffcfac7f9095b601438e520f4b3609f3442afbaf151f750e2e377c3508"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
-    "go/buildutil",
+    "go/gcexportdata",
     "go/internal/cgo",
-    "go/loader",
+    "go/internal/gcimporter",
+    "go/packages",
+    "go/types/typeutil",
     "imports",
     "internal/fastwalk",
   ]

@@ -7,10 +7,13 @@ import (
 	"os"
 	"strings"
 
-	"github.com/99designs/gqlgen/codegen"
+	"github.com/99designs/gqlgen/api"
+	"github.com/99designs/gqlgen/plugin/servergen"
+
+	"github.com/99designs/gqlgen/codegen/config"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 )
 
 var configComment = `
@@ -68,46 +71,27 @@ var initCmd = cli.Command{
 	},
 }
 
-func GenerateGraphServer(config *codegen.Config, serverFilename string) {
-	for _, filename := range config.SchemaFilename {
-		schemaRaw, err := ioutil.ReadFile(filename)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, "unable to open schema: "+err.Error())
-			os.Exit(1)
-		}
-		config.SchemaStr[filename] = string(schemaRaw)
-	}
-
-	if err := config.Check(); err != nil {
-		fmt.Fprintln(os.Stderr, "invalid config format: "+err.Error())
-		os.Exit(1)
-	}
-
-	if err := codegen.Generate(*config); err != nil {
+func GenerateGraphServer(cfg *config.Config, serverFilename string) {
+	err := api.Generate(cfg, api.AddPlugin(servergen.New(serverFilename)))
+	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
-		os.Exit(1)
-	}
-
-	if err := codegen.GenerateServer(*config, serverFilename); err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
-		os.Exit(1)
 	}
 
 	fmt.Fprintf(os.Stdout, "Exec \"go run ./%s\" to start GraphQL server\n", serverFilename)
 }
 
-func initConfig(ctx *cli.Context) *codegen.Config {
-	var config *codegen.Config
+func initConfig(ctx *cli.Context) *config.Config {
+	var cfg *config.Config
 	var err error
 	configFilename := ctx.String("config")
 	if configFilename != "" {
-		config, err = codegen.LoadConfig(configFilename)
+		cfg, err = config.LoadConfig(configFilename)
 	} else {
-		config, err = codegen.LoadConfigFromDefaultLocations()
+		cfg, err = config.LoadConfigFromDefaultLocations()
 	}
 
-	if config != nil {
-		fmt.Fprintf(os.Stderr, "init failed: a configuration file already exists at %s\n", config.FilePath)
+	if cfg != nil {
+		fmt.Fprintf(os.Stderr, "init failed: a configuration file already exists\n")
 		os.Exit(1)
 	}
 
@@ -119,9 +103,9 @@ func initConfig(ctx *cli.Context) *codegen.Config {
 	if configFilename == "" {
 		configFilename = "gqlgen.yml"
 	}
-	config = codegen.DefaultConfig()
+	cfg = config.DefaultConfig()
 
-	config.Resolver = codegen.PackageConfig{
+	cfg.Resolver = config.PackageConfig{
 		Filename: "resolver.go",
 		Type:     "Resolver",
 	}
@@ -129,23 +113,21 @@ func initConfig(ctx *cli.Context) *codegen.Config {
 	var buf bytes.Buffer
 	buf.WriteString(strings.TrimSpace(configComment))
 	buf.WriteString("\n\n")
-	{
-		var b []byte
-		b, err = yaml.Marshal(config)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, "unable to marshal yaml: "+err.Error())
-			os.Exit(1)
-		}
-		buf.Write(b)
+	var b []byte
+	b, err = yaml.Marshal(cfg)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "unable to marshal yaml: "+err.Error())
+		os.Exit(1)
 	}
+	buf.Write(b)
 
 	err = ioutil.WriteFile(configFilename, buf.Bytes(), 0644)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "unable to write config file: "+err.Error())
+		fmt.Fprintln(os.Stderr, "unable to write cfg file: "+err.Error())
 		os.Exit(1)
 	}
 
-	return config
+	return cfg
 }
 
 func initSchema(schemaFilename string) {

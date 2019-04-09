@@ -2,10 +2,10 @@ package templates
 
 import (
 	"fmt"
-	"go/build"
+	"go/types"
 	"strconv"
 
-	"github.com/99designs/gqlgen/internal/gopath"
+	"github.com/99designs/gqlgen/internal/code"
 )
 
 type Import struct {
@@ -38,43 +38,42 @@ func (s *Imports) String() string {
 	return res
 }
 
-func (s *Imports) Reserve(path string, aliases ...string) string {
+func (s *Imports) Reserve(path string, aliases ...string) (string, error) {
 	if path == "" {
 		panic("empty ambient import")
 	}
 
 	// if we are referencing our own package we dont need an import
-	if gopath.MustDir2Import(s.destDir) == path {
-		return ""
+	if code.ImportPathForDir(s.destDir) == path {
+		return "", nil
 	}
 
-	pkg, err := build.Default.Import(path, s.destDir, 0)
-	if err != nil {
-		panic(err)
-	}
-
+	name := code.NameForPackage(path)
 	var alias string
 	if len(aliases) != 1 {
-		alias = pkg.Name
+		alias = name
 	} else {
 		alias = aliases[0]
 	}
 
 	if existing := s.findByPath(path); existing != nil {
-		panic("ambient import already exists")
+		if existing.Alias == alias {
+			return "", nil
+		}
+		return "", fmt.Errorf("ambient import already exists")
 	}
 
 	if alias := s.findByAlias(alias); alias != nil {
-		panic("ambient import collides on an alias")
+		return "", fmt.Errorf("ambient import collides on an alias")
 	}
 
 	s.imports = append(s.imports, &Import{
-		Name:  pkg.Name,
+		Name:  name,
 		Path:  path,
 		Alias: alias,
 	})
 
-	return ""
+	return "", nil
 }
 
 func (s *Imports) Lookup(path string) string {
@@ -82,8 +81,10 @@ func (s *Imports) Lookup(path string) string {
 		return ""
 	}
 
+	path = code.NormalizeVendor(path)
+
 	// if we are referencing our own package we dont need an import
-	if gopath.MustDir2Import(s.destDir) == path {
+	if code.ImportPathForDir(s.destDir) == path {
 		return ""
 	}
 
@@ -91,13 +92,8 @@ func (s *Imports) Lookup(path string) string {
 		return existing.Alias
 	}
 
-	pkg, err := build.Default.Import(path, s.destDir, 0)
-	if err != nil {
-		panic(err)
-	}
-
 	imp := &Import{
-		Name: pkg.Name,
+		Name: code.NameForPackage(path),
 		Path: path,
 	}
 	s.imports = append(s.imports, imp)
@@ -114,6 +110,12 @@ func (s *Imports) Lookup(path string) string {
 	imp.Alias = alias
 
 	return imp.Alias
+}
+
+func (s *Imports) LookupType(t types.Type) string {
+	return types.TypeString(t, func(i *types.Package) string {
+		return s.Lookup(i.Path())
+	})
 }
 
 func (s Imports) findByPath(importPath string) *Import {

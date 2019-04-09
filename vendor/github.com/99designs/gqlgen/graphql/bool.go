@@ -19,7 +19,7 @@ func MarshalBoolean(b bool) Marshaler {
 func UnmarshalBoolean(v interface{}) (bool, error) {
 	switch v := v.(type) {
 	case string:
-		return "true" == strings.ToLower(v), nil
+		return strings.ToLower(v) == "true", nil
 	case int:
 		return v != 0, nil
 	case bool:
