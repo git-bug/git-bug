@@ -1,11 +1,11 @@
-import { withStyles } from '@material-ui/core/styles';
+import { makeStyles } from '@material-ui/styles';
 import gql from 'graphql-tag';
 import React from 'react';
 import Author from '../Author';
 import Date from '../Date';
 import Label from '../Label';
 
-const styles = theme => ({
+const useStyles = makeStyles(theme => ({
   main: {
     ...theme.typography.body2,
     marginLeft: theme.spacing.unit + 40,
@@ -13,10 +13,11 @@ const styles = theme => ({
   author: {
     fontWeight: 'bold',
   },
-});
+}));
 
-const LabelChange = ({ op, classes }) => {
+function LabelChange({ op }) {
   const { added, removed } = op;
+  const classes = useStyles();
   return (
     <div className={classes.main}>
       <Author author={op.author} className={classes.author} />
@@ -37,7 +38,7 @@ const LabelChange = ({ op, classes }) => {
       <Date date={op.date} />
     </div>
   );
-};
+}
 
 LabelChange.fragment = gql`
   fragment LabelChange on TimelineItem {
@@ -54,4 +55,4 @@ LabelChange.fragment = gql`
   }
 `;
 
-export default withStyles(styles)(LabelChange);
+export default LabelChange;

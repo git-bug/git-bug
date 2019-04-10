@@ -1,17 +1,18 @@
-import { withStyles } from '@material-ui/core/styles';
+import { makeStyles } from '@material-ui/styles';
 import gql from 'graphql-tag';
 import React from 'react';
 import Author from '../Author';
 import Date from '../Date';
 
-const styles = theme => ({
+const useStyles = makeStyles(theme => ({
   main: {
     ...theme.typography.body2,
     marginLeft: theme.spacing.unit + 40,
   },
-});
+}));
 
-const SetStatus = ({ op, classes }) => {
+function SetStatus({ op }) {
+  const classes = useStyles();
   return (
     <div className={classes.main}>
       <Author author={op.author} bold />
@@ -19,7 +20,7 @@ const SetStatus = ({ op, classes }) => {
       <Date date={op.date} />
     </div>
   );
-};
+}
 
 SetStatus.fragment = gql`
   fragment SetStatus on TimelineItem {
@@ -35,4 +36,4 @@ SetStatus.fragment = gql`
   }
 `;
 
-export default withStyles(styles)(SetStatus);
+export default SetStatus;

@@ -1,4 +1,4 @@
-import { withStyles } from '@material-ui/core/styles';
+import { makeStyles } from '@material-ui/styles';
 import Typography from '@material-ui/core/Typography/Typography';
 import gql from 'graphql-tag';
 import React from 'react';
@@ -7,7 +7,7 @@ import Date from '../Date';
 import TimelineQuery from './TimelineQuery';
 import Label from '../Label';
 
-const styles = theme => ({
+const useStyles = makeStyles(theme => ({
   main: {
     maxWidth: 800,
     margin: 'auto',
@@ -48,38 +48,41 @@ const styles = theme => ({
       display: 'block',
     },
   },
-});
+}));
 
-const Bug = ({ bug, classes }) => (
-  <main className={classes.main}>
-    <div className={classes.header}>
-      <span className={classes.title}>{bug.title}</span>
-      <span className={classes.id}>{bug.humanId}</span>
+function Bug({ bug }) {
+  const classes = useStyles();
+  return (
+    <main className={classes.main}>
+      <div className={classes.header}>
+        <span className={classes.title}>{bug.title}</span>
+        <span className={classes.id}>{bug.humanId}</span>
 
-      <Typography color={'textSecondary'}>
-        <Author author={bug.author} />
-        {' opened this bug '}
-        <Date date={bug.createdAt} />
-      </Typography>
-    </div>
-
-    <div className={classes.container}>
-      <div className={classes.timeline}>
-        <TimelineQuery id={bug.id} />
+        <Typography color={'textSecondary'}>
+          <Author author={bug.author} />
+          {' opened this bug '}
+          <Date date={bug.createdAt} />
+        </Typography>
       </div>
-      <div className={classes.sidebar}>
-        <Typography variant={'subheading'}>Labels</Typography>
-        <ul className={classes.labelList}>
-          {bug.labels.map(l => (
-            <li className={classes.label}>
-              <Label label={l} key={l} />
-            </li>
-          ))}
-        </ul>
+
+      <div className={classes.container}>
+        <div className={classes.timeline}>
+          <TimelineQuery id={bug.id} />
+        </div>
+        <div className={classes.sidebar}>
+          <Typography variant={'subheading'}>Labels</Typography>
+          <ul className={classes.labelList}>
+            {bug.labels.map(l => (
+              <li className={classes.label}>
+                <Label label={l} key={l} />
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
-    </div>
-  </main>
-);
+    </main>
+  );
+}
 
 Bug.fragment = gql`
   fragment Bug on Bug {
@@ -97,4 +100,4 @@ Bug.fragment = gql`
   }
 `;
 
-export default withStyles(styles)(Bug);
+export default Bug;

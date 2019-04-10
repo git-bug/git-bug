@@ -1,4 +1,4 @@
-import { withStyles } from '@material-ui/core/styles';
+import { makeStyles } from '@material-ui/styles';
 import Paper from '@material-ui/core/Paper';
 import gql from 'graphql-tag';
 import React from 'react';
@@ -6,7 +6,7 @@ import Author from '../Author';
 import { Avatar } from '../Author';
 import Date from '../Date';
 
-const styles = theme => ({
+const useStyles = makeStyles(theme => ({
   author: {
     fontWeight: 'bold',
   },
@@ -44,24 +44,27 @@ const styles = theme => ({
     padding: '1rem',
     whiteSpace: 'pre-wrap',
   },
-});
+}));
 
-const Message = ({ op, classes }) => (
-  <article className={classes.container}>
-    <Avatar author={op.author} className={classes.avatar} />
-    <Paper elevation={1} className={classes.bubble}>
-      <header className={classes.header}>
-        <div className={classes.title}>
-          <Author className={classes.author} author={op.author} />
-          <span> commented </span>
-          <Date date={op.createdAt} />
-        </div>
-        {op.edited && <div className={classes.tag}>Edited</div>}
-      </header>
-      <section className={classes.body}>{op.message}</section>
-    </Paper>
-  </article>
-);
+function Message({ op }) {
+  const classes = useStyles();
+  return (
+    <article className={classes.container}>
+      <Avatar author={op.author} className={classes.avatar} />
+      <Paper elevation={1} className={classes.bubble}>
+        <header className={classes.header}>
+          <div className={classes.title}>
+            <Author className={classes.author} author={op.author} />
+            <span> commented </span>
+            <Date date={op.createdAt} />
+          </div>
+          {op.edited && <div className={classes.tag}>Edited</div>}
+        </header>
+        <section className={classes.body}>{op.message}</section>
+      </Paper>
+    </article>
+  );
+}
 
 Message.createFragment = gql`
   fragment Create on TimelineItem {
@@ -95,4 +98,4 @@ Message.commentFragment = gql`
   }
 `;
 
-export default withStyles(styles)(Message);
+export default Message;

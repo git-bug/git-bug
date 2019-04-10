@@ -1,4 +1,4 @@
-import { withStyles } from '@material-ui/core/styles';
+import { makeStyles } from '@material-ui/styles';
 import TableCell from '@material-ui/core/TableCell/TableCell';
 import TableRow from '@material-ui/core/TableRow/TableRow';
 import Tooltip from '@material-ui/core/Tooltip/Tooltip';
@@ -33,7 +33,7 @@ const Status = ({ status, className }) => {
   }
 };
 
-const styles = theme => ({
+const useStyles = makeStyles(theme => ({
   cell: {
     display: 'flex',
     alignItems: 'center',
@@ -53,36 +53,39 @@ const styles = theme => ({
   labels: {
     paddingLeft: theme.spacing.unit,
   },
-});
+}));
 
-const BugRow = ({ bug, classes }) => (
-  <TableRow hover>
-    <TableCell className={classes.cell}>
-      <Status status={bug.status} className={classes.status} />
-      <div className={classes.expand}>
-        <Link to={'bug/' + bug.humanId}>
-          <div className={classes.expand}>
-            <Typography variant={'title'} className={classes.title}>
-              {bug.title}
-            </Typography>
-            {bug.labels.length > 0 && (
-              <span className={classes.labels}>
-                {bug.labels.map(l => (
-                  <Label key={l} label={l} />
-                ))}
-              </span>
-            )}
-          </div>
-        </Link>
-        <Typography color={'textSecondary'}>
-          {bug.humanId} opened
-          <Date date={bug.createdAt} />
-          by {bug.author.displayName}
-        </Typography>
-      </div>
-    </TableCell>
-  </TableRow>
-);
+function BugRow({ bug }) {
+  const classes = useStyles();
+  return (
+    <TableRow hover>
+      <TableCell className={classes.cell}>
+        <Status status={bug.status} className={classes.status} />
+        <div className={classes.expand}>
+          <Link to={'bug/' + bug.humanId}>
+            <div className={classes.expand}>
+              <Typography variant={'title'} className={classes.title}>
+                {bug.title}
+              </Typography>
+              {bug.labels.length > 0 && (
+                <span className={classes.labels}>
+                  {bug.labels.map(l => (
+                    <Label key={l} label={l} />
+                  ))}
+                </span>
+              )}
+            </div>
+          </Link>
+          <Typography color={'textSecondary'}>
+            {bug.humanId} opened
+            <Date date={bug.createdAt} />
+            by {bug.author.displayName}
+          </Typography>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+}
 
 BugRow.fragment = gql`
   fragment BugRow on Bug {
@@ -99,4 +102,4 @@ BugRow.fragment = gql`
   }
 `;
 
-export default withStyles(styles)(BugRow);
+export default BugRow;
