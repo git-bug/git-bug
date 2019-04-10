@@ -28,8 +28,11 @@ type Repository {
         last: Int
     ): IdentityConnection!
 
-    identity(prefix: String!):Identity
+    identity(prefix: String!): Identity
 
     """The identity created or selected by the user as its own"""
-    userIdentity:Identity
+    userIdentity: Identity
+
+    """List of valid labels."""
+    validLabels: [Label!]!
 }

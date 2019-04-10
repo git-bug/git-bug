@@ -157,3 +157,7 @@ func (repoResolver) UserIdentity(ctx context.Context, obj *models.Repository) (i
 
 	return i.Identity, nil
 }
+
+func (repoResolver) ValidLabels(ctx context.Context, obj *models.Repository) ([]bug.Label, error) {
+	return obj.Repo.ValidLabels(), nil
+}
