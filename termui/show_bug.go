@@ -639,6 +639,10 @@ func (sb *showBug) edit(g *gocui.Gui, v *gocui.View) error {
 		return sb.editLabels(g, snap)
 	}
 
+	if sb.selected == "" {
+		return nil
+	}
+
 	op, err := snap.SearchTimelineItem(git.Hash(sb.selected))
 	if err != nil {
 		return err
