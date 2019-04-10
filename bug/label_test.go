@@ -1,35 +1,36 @@
 package bug
 
 import (
+	"image/color"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
-func TestLabelRGBColor(t *testing.T) {
-	color := Label("test").RGBColor()
-	expected := RGBColor{red: 255, green: 87, blue: 34}
+func TestLabelRGBA(t *testing.T) {
+	rgba := Label("test").RGBA()
+	expected := color.RGBA{R: 255, G: 87, B: 34, A: 255}
 
-	require.Equal(t, expected, color)
+	require.Equal(t, expected, rgba)
 }
 
-func TestLabelRGBColorSimilar(t *testing.T) {
-	color := Label("test1").RGBColor()
-	expected := RGBColor{red: 0, green: 188, blue: 212}
+func TestLabelRGBASimilar(t *testing.T) {
+	rgba := Label("test1").RGBA()
+	expected := color.RGBA{R: 0, G: 188, B: 212, A: 255}
 
-	require.Equal(t, expected, color)
+	require.Equal(t, expected, rgba)
 }
 
-func TestLabelRGBColorReverse(t *testing.T) {
-	color := Label("tset").RGBColor()
-	expected := RGBColor{red: 233, green: 30, blue: 99}
+func TestLabelRGBAReverse(t *testing.T) {
+	rgba := Label("tset").RGBA()
+	expected := color.RGBA{R: 233, G: 30, B: 99, A: 255}
 
-	require.Equal(t, expected, color)
+	require.Equal(t, expected, rgba)
 }
 
-func TestLabelRGBColorEqual(t *testing.T) {
-	color1 := Label("test").RGBColor()
-	color2 := Label("test").RGBColor()
+func TestLabelRGBAEqual(t *testing.T) {
+	color1 := Label("test").RGBA()
+	color2 := Label("test").RGBA()
 
 	require.Equal(t, color1, color2)
 }
