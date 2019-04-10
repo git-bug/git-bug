@@ -1,6 +1,23 @@
 scalar Time
-scalar Label
 scalar Hash
+
+"""Defines a color by red, green and blue components."""
+type Color {
+    """Red component of the color."""
+    R: Int!
+    """Green component of the color."""
+    G: Int!
+    """Blue component of the color."""
+    B: Int!
+}
+
+"""Label for a bug."""
+type Label {
+    """The name of the label."""
+    name: String!
+    """Color of the label."""
+    color: Color!
+}
 
 """Information about pagination in a connection."""
 type PageInfo {

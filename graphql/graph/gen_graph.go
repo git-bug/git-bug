@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"image/color"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -43,11 +44,13 @@ type ResolverRoot interface {
 	AddCommentOperation() AddCommentOperationResolver
 	AddCommentTimelineItem() AddCommentTimelineItemResolver
 	Bug() BugResolver
+	Color() ColorResolver
 	CommentHistoryStep() CommentHistoryStepResolver
 	CreateOperation() CreateOperationResolver
 	CreateTimelineItem() CreateTimelineItemResolver
 	EditCommentOperation() EditCommentOperationResolver
 	Identity() IdentityResolver
+	Label() LabelResolver
 	LabelChangeOperation() LabelChangeOperationResolver
 	LabelChangeTimelineItem() LabelChangeTimelineItemResolver
 	Mutation() MutationResolver
@@ -109,6 +112,12 @@ type ComplexityRoot struct {
 	BugEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
+	}
+
+	Color struct {
+		B func(childComplexity int) int
+		G func(childComplexity int) int
+		R func(childComplexity int) int
 	}
 
 	Comment struct {
@@ -185,6 +194,11 @@ type ComplexityRoot struct {
 	IdentityEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
+	}
+
+	Label struct {
+		Color func(childComplexity int) int
+		Name  func(childComplexity int) int
 	}
 
 	LabelChangeOperation struct {
@@ -306,6 +320,11 @@ type BugResolver interface {
 	Timeline(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (*models.TimelineItemConnection, error)
 	Operations(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (*models.OperationConnection, error)
 }
+type ColorResolver interface {
+	R(ctx context.Context, obj *color.RGBA) (int, error)
+	G(ctx context.Context, obj *color.RGBA) (int, error)
+	B(ctx context.Context, obj *color.RGBA) (int, error)
+}
 type CommentHistoryStepResolver interface {
 	Date(ctx context.Context, obj *bug.CommentHistoryStep) (*time.Time, error)
 }
@@ -328,6 +347,10 @@ type IdentityResolver interface {
 	DisplayName(ctx context.Context, obj *identity.Interface) (string, error)
 	AvatarURL(ctx context.Context, obj *identity.Interface) (*string, error)
 	IsProtected(ctx context.Context, obj *identity.Interface) (bool, error)
+}
+type LabelResolver interface {
+	Name(ctx context.Context, obj *bug.Label) (string, error)
+	Color(ctx context.Context, obj *bug.Label) (*color.RGBA, error)
 }
 type LabelChangeOperationResolver interface {
 	Date(ctx context.Context, obj *bug.LabelChangeOperation) (*time.Time, error)
@@ -642,7 +665,28 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.BugEdge.Node(childComplexity), true
 
-	case "Comment.author":
+	case "Color.B":
+		if e.complexity.Color.B == nil {
+			break
+		}
+
+		return e.complexity.Color.B(childComplexity), true
+
+	case "Color.G":
+		if e.complexity.Color.G == nil {
+			break
+		}
+
+		return e.complexity.Color.G(childComplexity), true
+
+	case "Color.R":
+		if e.complexity.Color.R == nil {
+			break
+		}
+
+		return e.complexity.Color.R(childComplexity), true
+
+	case "Comment.Author":
 		if e.complexity.Comment.Author == nil {
 			break
 		}
@@ -964,7 +1008,21 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.IdentityEdge.Node(childComplexity), true
 
-	case "LabelChangeOperation.added":
+	case "Label.Color":
+		if e.complexity.Label.Color == nil {
+			break
+		}
+
+		return e.complexity.Label.Color(childComplexity), true
+
+	case "Label.Name":
+		if e.complexity.Label.Name == nil {
+			break
+		}
+
+		return e.complexity.Label.Name(childComplexity), true
+
+	case "LabelChangeOperation.Added":
 		if e.complexity.LabelChangeOperation.Added == nil {
 			break
 		}
@@ -1910,8 +1968,25 @@ type SetTitleTimelineItem implements TimelineItem {
 }
 `},
 	&ast.Source{Name: "schema/types.graphql", Input: `scalar Time
-scalar Label
 scalar Hash
+
+"""Defines a color by red, green and blue components."""
+type Color {
+    """Red component of the color."""
+    R: Int!
+    """Green component of the color."""
+    G: Int!
+    """Blue component of the color."""
+    B: Int!
+}
+
+"""Label for a bug."""
+type Label {
+    """The name of the label."""
+    name: String!
+    """Color of the label."""
+    color: Color!
+}
 
 """Information about pagination in a connection."""
 type PageInfo {
@@ -3434,6 +3509,87 @@ func (ec *executionContext) _BugEdge_node(ctx context.Context, field graphql.Col
 	return ec.marshalNBug2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐSnapshot(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Color_R(ctx context.Context, field graphql.CollectedField, obj *color.RGBA) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object:   "Color",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Color().R(rctx, obj)
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Color_G(ctx context.Context, field graphql.CollectedField, obj *color.RGBA) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object:   "Color",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Color().G(rctx, obj)
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Color_B(ctx context.Context, field graphql.CollectedField, obj *color.RGBA) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object:   "Color",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Color().B(rctx, obj)
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Comment_author(ctx context.Context, field graphql.CollectedField, obj *bug.Comment) graphql.Marshaler {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
@@ -4662,6 +4818,60 @@ func (ec *executionContext) _IdentityEdge_node(ctx context.Context, field graphq
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋidentityᚐInterface(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Label_name(ctx context.Context, field graphql.CollectedField, obj *bug.Label) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object:   "Label",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Label().Name(rctx, obj)
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Label_color(ctx context.Context, field graphql.CollectedField, obj *bug.Label) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object:   "Label",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Label().Color(rctx, obj)
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*color.RGBA)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNColor2ᚖimageᚋcolorᚐRGBA(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _LabelChangeOperation_hash(ctx context.Context, field graphql.CollectedField, obj *bug.LabelChangeOperation) graphql.Marshaler {
@@ -7656,6 +7866,70 @@ func (ec *executionContext) _BugEdge(ctx context.Context, sel ast.SelectionSet, 
 	return out
 }
 
+var colorImplementors = []string{"Color"}
+
+func (ec *executionContext) _Color(ctx context.Context, sel ast.SelectionSet, obj *color.RGBA) graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, colorImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	invalid := false
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Color")
+		case "R":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Color_R(ctx, field, obj)
+				if res == graphql.Null {
+					invalid = true
+				}
+				return res
+			})
+		case "G":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Color_G(ctx, field, obj)
+				if res == graphql.Null {
+					invalid = true
+				}
+				return res
+			})
+		case "B":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Color_B(ctx, field, obj)
+				if res == graphql.Null {
+					invalid = true
+				}
+				return res
+			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalid {
+		return graphql.Null
+	}
+	return out
+}
+
 var commentImplementors = []string{"Comment", "Authored"}
 
 func (ec *executionContext) _Comment(ctx context.Context, sel ast.SelectionSet, obj *bug.Comment) graphql.Marshaler {
@@ -8206,6 +8480,56 @@ func (ec *executionContext) _IdentityEdge(ctx context.Context, sel ast.Selection
 	}
 	out.Dispatch()
 	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var labelImplementors = []string{"Label"}
+
+func (ec *executionContext) _Label(ctx context.Context, sel ast.SelectionSet, obj *bug.Label) graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, labelImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	invalid := false
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Label")
+		case "name":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Label_name(ctx, field, obj)
+				if res == graphql.Null {
+					invalid = true
+				}
+				return res
+			})
+		case "color":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Label_color(ctx, field, obj)
+				if res == graphql.Null {
+					invalid = true
+				}
+				return res
+			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalid {
 		return graphql.Null
 	}
 	return out
@@ -9645,41 +9969,44 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) unmarshalNLabel2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐLabel(ctx context.Context, v interface{}) (bug.Label, error) {
-	var res bug.Label
-	return res, res.UnmarshalGQL(v)
-}
-
 func (ec *executionContext) marshalNLabel2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐLabel(ctx context.Context, sel ast.SelectionSet, v bug.Label) graphql.Marshaler {
-	return v
-}
-
-func (ec *executionContext) unmarshalNLabel2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐLabel(ctx context.Context, v interface{}) ([]bug.Label, error) {
-	var vSlice []interface{}
-	if v != nil {
-		if tmp1, ok := v.([]interface{}); ok {
-			vSlice = tmp1
-		} else {
-			vSlice = []interface{}{v}
-		}
-	}
-	var err error
-	res := make([]bug.Label, len(vSlice))
-	for i := range vSlice {
-		res[i], err = ec.unmarshalNLabel2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐLabel(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
+	return graphql.MarshalString(string(v))
 }
 
 func (ec *executionContext) marshalNLabel2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐLabel(ctx context.Context, sel ast.SelectionSet, v []bug.Label) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
-	for i := range v {
-		ret[i] = ec.marshalNLabel2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐLabel(ctx, sel, v[i])
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
 	}
+	for i := range v {
+		i := i
+		rctx := &graphql.ResolverContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNLabel2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐLabel(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
 
+	}
+	wg.Wait()
 	return ret
 }
 

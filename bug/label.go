@@ -4,7 +4,6 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"image/color"
-	"io"
 	"strings"
 
 	"github.com/MichaelMure/git-bug/util/text"
@@ -49,23 +48,6 @@ func (l Label) RGBA() color.RGBA {
 	}
 
 	return colors[id]
-}
-
-// UnmarshalGQL implements the graphql.Unmarshaler interface
-func (l *Label) UnmarshalGQL(v interface{}) error {
-	_, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("labels must be strings")
-	}
-
-	*l = v.(Label)
-
-	return nil
-}
-
-// MarshalGQL implements the graphql.Marshaler interface
-func (l Label) MarshalGQL(w io.Writer) {
-	_, _ = w.Write([]byte(`"` + l.String() + `"`))
 }
 
 func (l Label) Validate() error {
