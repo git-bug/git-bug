@@ -127,10 +127,10 @@ func BExportData(fset *token.FileSet, pkg *types.Package) (b []byte, err error) 
 	// --- generic export data ---
 
 	// populate type map with predeclared "known" types
-	for index, typ := range predeclared {
+	for index, typ := range predeclared() {
 		p.typIndex[typ] = index
 	}
-	if len(p.typIndex) != len(predeclared) {
+	if len(p.typIndex) != len(predeclared()) {
 		return nil, internalError("duplicate entries in type map?")
 	}
 
@@ -209,7 +209,7 @@ func (p *exporter) obj(obj types.Object) {
 		p.value(obj.Val())
 
 	case *types.TypeName:
-		if isAlias(obj) {
+		if obj.IsAlias() {
 			p.tag(aliasTag)
 			p.pos(obj)
 			p.qualifiedName(obj)

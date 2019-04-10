@@ -5,18 +5,28 @@
 /*
 Package packages loads Go packages for inspection and analysis.
 
-NOTE: THIS PACKAGE IS NOT YET READY FOR WIDESPREAD USE:
- - The interface is still being revised and is likely to change.
- - The implementation depends on the Go 1.11 go command.
- - We intend to finalize the API before Go 1.11 is released.
-
 The Load function takes as input a list of patterns and return a list of Package
 structs describing individual packages matched by those patterns.
-The LoadMode controls the amounts of detail about the loaded packages.
+The LoadMode controls the amount of detail in the loaded packages.
 
-The patterns are used as arguments to the underlying build tool,
-such as the go command or Bazel, and are interpreted according to
-that tool's conventions.
+Load passes most patterns directly to the underlying build tool,
+but all patterns with the prefix "query=", where query is a
+non-empty string of letters from [a-z], are reserved and may be
+interpreted as query operators.
+
+Two query operators are currently supported: "file" and "pattern".
+
+The query "file=path/to/file.go" matches the package or packages enclosing
+the Go source file path/to/file.go.  For example "file=~/go/src/fmt/print.go"
+might return the packages "fmt" and "fmt [fmt.test]".
+
+The query "pattern=string" causes "string" to be passed directly to
+the underlying build tool. In most cases this is unnecessary,
+but an application can use Load("pattern=" + x) as an escaping mechanism
+to ensure that x is not interpreted as a query operator if it contains '='.
+
+All other query operators are reserved for future use and currently
+cause Load to report an error.
 
 The Package struct provides basic information about the package, including
 
@@ -40,47 +50,25 @@ can match multiple packages and that a package might be matched by
 multiple patterns: in general it is not possible to determine which
 packages correspond to which patterns.
 
-Note that the list returned by Load (LoadAllSyntax in this case)
-only contains the packages matched by the patterns. Their dependencies
-can be found by walking the import graph using the Imports fields.
+Note that the list returned by Load contains only the packages matched
+by the patterns. Their dependencies can be found by walking the import
+graph using the Imports fields.
 
-The Load function can be configured by passing a non-nil Config struct as
-the first argument. If you pass nil for the Config Load will
-run in LoadAllSyntax mode, collecting the maximal amount of information
-it can.
+The Load function can be configured by passing a pointer to a Config as
+the first argument. A nil Config is equivalent to the zero Config, which
+causes Load to run in LoadFiles mode, collecting minimal information.
 See the documentation for type Config for details.
 
-As noted earlier, the Config.Mode controls increasing amounts of detail
-about the loaded packages, with each mode returning all the data of the
+As noted earlier, the Config.Mode controls the amount of detail
+reported about the loaded packages, with each mode returning all the data of the
 previous mode with some extra added. See the documentation for type LoadMode
 for details.
 
 Most tools should pass their command-line arguments (after any flags)
 uninterpreted to the loader, so that the loader can interpret them
 according to the conventions of the underlying build system.
-For example, this program prints the names of the source files
-for each package listed on the command line:
+See the Example function for typical usage.
 
-	package main
-
-	import (
-		"flag"
-		"fmt"
-		"log"
-
-		"golang.org/x/tools/go/packages"
-	)
-
-	func main() {
-		flag.Parse()
-		pkgs, err := packages.Load(nil, flag.Args()...)
-		if err != nil {
-			log.Fatal(err)
-		}
-		for _, pkg := range pkgs {
-			fmt.Print(pkg.ID, pkg.GoFiles)
-		}
-	}
 */
 package packages // import "golang.org/x/tools/go/packages"
 
@@ -113,12 +101,6 @@ blaze/bazel aspect-based query) cannot provide detailed information
 about one package without visiting all its dependencies too, so there is
 no additional asymptotic cost to providing transitive information.
 (This property might not be true of a hypothetical 5th build system.)
-
-This package provides no parse-but-don't-typecheck operation because most tools
-that need only untyped syntax (such as gofmt, goimports, and golint)
-seem not to care about any files other than the ones they are directly
-instructed to look at.  Also, it is trivial for a client to supplement
-this functionality on top of a Metadata query.
 
 In calls to TypeCheck, all initial packages, and any package that
 transitively depends on one of them, must be loaded from source.
@@ -169,15 +151,13 @@ type-check again. This two-phase approach had four major problems:
    in several times in sequence as is now possible in WholeProgram mode.
    (TypeCheck mode has a similar one-shot restriction for a different reason.)
 
-Early drafts of this package supported "multi-shot" operation
-in the Metadata and WholeProgram modes, although this feature is not exposed
-through the API and will likely be removed.
+Early drafts of this package supported "multi-shot" operation.
 Although it allowed clients to make a sequence of calls (or concurrent
 calls) to Load, building up the graph of Packages incrementally,
 it was of marginal value: it complicated the API
 (since it allowed some options to vary across calls but not others),
 it complicated the implementation,
-it cannot be made to work in TypeCheck mode, as explained above,
+it cannot be made to work in Types mode, as explained above,
 and it was less efficient than making one combined call (when this is possible).
 Among the clients we have inspected, none made multiple calls to load
 but could not be easily and satisfactorily modified to make only a single call.
@@ -190,22 +170,13 @@ Instead, ssadump no longer requests the runtime package,
 but seeks it among the dependencies of the user-specified packages,
 and emits an error if it is not found.
 
-Overlays: the ParseFile hook in the API permits clients to vary the way
-in which ASTs are obtained from filenames; the default implementation is
-based on parser.ParseFile. This features enables editor-integrated tools
-that analyze the contents of modified but unsaved buffers: rather than
-read from the file system, a tool can read from an archive of modified
-buffers provided by the editor.
-This approach has its limits. Because package metadata is obtained by
-fork/execing an external query command for each build system, we can
-fake only the file contents seen by the parser, type-checker, and
-application, but not by the metadata query, so, for example:
-- additional imports in the fake file will not be described by the
-  metadata, so the type checker will fail to load imports that create
-  new dependencies.
-- in TypeCheck mode, because export data is produced by the query
-  command, it will not reflect the fake file contents.
-- this mechanism cannot add files to a package without first saving them.
+Overlays: The Overlay field in the Config allows providing alternate contents
+for Go source files, by providing a mapping from file path to contents.
+go/packages will pull in new imports added in overlay files when go/packages
+is run in LoadImports mode or greater.
+Overlay support for the go list driver isn't complete yet: if the file doesn't
+exist on disk, it will only be recognized in an overlay if it is a non-test file
+and the package would be reported even without the overlay.
 
 Questions & Tasks
 
@@ -227,10 +198,6 @@ Questions & Tasks
   failed builds, import failures, import cycles, and so on, in a call to
   Load?
 
-- Do we need a GeneratedBy map that maps the name of each generated Go
-  source file in GoFiles to that of the original file, if known, or "" otherwise?
-  Or are //line directives and "Generated" comments in those files enough?
-
 - Support bazel, blaze, and go1.10 list, not just go1.11 list.
 
 - Handle (and test) various partial success cases, e.g.
@@ -251,19 +218,5 @@ Questions & Tasks
 - "undeclared name" errors (for example) are reported out of source file
   order. I suspect this is due to the breadth-first resolution now used
   by go/types. Is that a bug? Discuss with gri.
-
-- https://github.com/golang/go/issues/25980 causes these commands to crash:
-  $ GOPATH=/none ./gopackages -all all
-  due to:
-  $ GOPATH=/none go list -e -test -json all
-  and:
-  $ go list -e -test ./relative/path
-
-- Modify stringer to use go/packages, perhaps initially under flag control.
-
-- Bug: "gopackages fmt a.go" doesn't produce an error.
-
-- If necessary, add back an IsTest boolean or expose ForTests on the Package struct.
-  IsTest was removed because we couldn't agree on a useful definition.
 
 */
