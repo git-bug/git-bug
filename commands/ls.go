@@ -52,9 +52,21 @@ func runLsBug(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
+		var name string
+		if b.AuthorId != "" {
+			author, err := backend.ResolveIdentityExcerpt(b.AuthorId)
+			if err != nil {
+				name = "<missing author data>"
+			} else {
+				name = author.DisplayName()
+			}
+		} else {
+			name = b.LegacyAuthor.DisplayName()
+		}
+
 		// truncate + pad if needed
 		titleFmt := fmt.Sprintf("%-50.50s", b.Title)
-		authorFmt := fmt.Sprintf("%-15.15s", b.LegacyAuthor.Name)
+		authorFmt := fmt.Sprintf("%-15.15s", name)
 
 		fmt.Printf("%s %s\t%s\t%s\tC:%d L:%d\n",
 			colors.Cyan(b.HumanId()),

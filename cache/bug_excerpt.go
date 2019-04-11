@@ -2,6 +2,7 @@ package cache
 
 import (
 	"encoding/gob"
+	"fmt"
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/identity"
@@ -43,6 +44,19 @@ type BugExcerpt struct {
 type LegacyAuthorExcerpt struct {
 	Name  string
 	Login string
+}
+
+func (l LegacyAuthorExcerpt) DisplayName() string {
+	switch {
+	case l.Name == "" && l.Login != "":
+		return l.Login
+	case l.Name != "" && l.Login == "":
+		return l.Name
+	case l.Name != "" && l.Login != "":
+		return fmt.Sprintf("%s (%s)", l.Name, l.Login)
+	}
+
+	panic("invalid person data")
 }
 
 func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
