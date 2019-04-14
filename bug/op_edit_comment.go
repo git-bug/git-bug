@@ -48,7 +48,7 @@ func (op *EditCommentOperation) Apply(snapshot *Snapshot) {
 
 		// Track the index in the []Comment
 		switch item.(type) {
-		case *CreateTimelineItem, *CommentTimelineItem:
+		case *CreateTimelineItem, *AddCommentTimelineItem:
 			commentIndex++
 		}
 	}
