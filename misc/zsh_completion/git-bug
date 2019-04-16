@@ -21,7 +21,7 @@ case $state in
         _arguments '2: :(configure pull rm)'
       ;;
       comment)
-        _arguments '2: :(add)'
+        _arguments '2: :(add edit)'
       ;;
       label)
         _arguments '2: :(add rm)'

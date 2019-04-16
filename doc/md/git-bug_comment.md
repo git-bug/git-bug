@@ -20,4 +20,5 @@ git-bug comment [<id>] [flags]
 
 * [git-bug](git-bug.md)	 - A bug tracker embedded in Git.
 * [git-bug comment add](git-bug_comment_add.md)	 - Add a new comment to a bug.
+* [git-bug comment edit](git-bug_comment_edit.md)	 - Edit a comment of a bug.
 

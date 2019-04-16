@@ -409,6 +409,26 @@ _git-bug_comment_add()
     noun_aliases=()
 }
 
+_git-bug_comment_edit()
+{
+    last_command="git-bug_comment_edit"
+
+    command_aliases=()
+
+    commands=()
+
+    flags=()
+    two_word_flags=()
+    local_nonpersistent_flags=()
+    flags_with_completion=()
+    flags_completion=()
+
+
+    must_have_one_flag=()
+    must_have_one_noun=()
+    noun_aliases=()
+}
+
 _git-bug_comment()
 {
     last_command="git-bug_comment"
@@ -417,6 +437,7 @@ _git-bug_comment()
 
     commands=()
     commands+=("add")
+    commands+=("edit")
 
     flags=()
     two_word_flags=()
