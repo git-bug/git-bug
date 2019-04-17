@@ -36,7 +36,6 @@ func (op *EditCommentOperation) Apply(snapshot *Snapshot) {
 	snapshot.addActor(op.Author)
 
 	var target TimelineItem
-	var commentIndex int
 
 	for i, item := range snapshot.Timeline {
 		h := item.Hash()
@@ -44,12 +43,6 @@ func (op *EditCommentOperation) Apply(snapshot *Snapshot) {
 		if h == op.Target {
 			target = snapshot.Timeline[i]
 			break
-		}
-
-		// Track the index in the []Comment
-		switch item.(type) {
-		case *CreateTimelineItem, *AddCommentTimelineItem:
-			commentIndex++
 		}
 	}
 
@@ -75,8 +68,15 @@ func (op *EditCommentOperation) Apply(snapshot *Snapshot) {
 		item.Append(comment)
 	}
 
-	snapshot.Comments[commentIndex].Message = op.Message
-	snapshot.Comments[commentIndex].Files = op.Files
+	// Updating the corresponding comment
+
+	for i := range snapshot.Comments {
+		if snapshot.Comments[i].Id() == string(op.Target) {
+			snapshot.Comments[i].Message = op.Message
+			snapshot.Comments[i].Files = op.Files
+			break
+		}
+	}
 }
 
 func (op *EditCommentOperation) GetFiles() []git.Hash {
