@@ -14,13 +14,12 @@ This documentation only provide a bird-eye view of git-bug's internals. For more
     |   .----------------------------------------------------------.   |
     |   |                          cache                           |   |
     |   |----------------------------------------------------------|   |
-    |   | BugCache,BugExcerpt,IdentityCache,IdentityExcerpt        |   |
-    |   |                                                          |   |
+    |   |    BugCache,BugExcerpt,IdentityCache,IdentityExcerpt     |   |
     |   '----------------------------------------------------------'   |
     |   .-----------------------------..---------------------------.   |
     |   |             bug             ||         identity          |   |
     |   |-----------------------------||---------------------------|   |
-    |   | Bug,Operation,Snapshot      || Identity,Version          |   |
+    |   |   Bug,Operation,Snapshot    ||     Identity,Version      |   |
     |   '-----------------------------''---------------------------'   |
     |   .----------------------------------------------------------.   |
     v   |                        repository                        |   v
