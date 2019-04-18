@@ -52,6 +52,12 @@ That's all !
 
 ## CLI usage
 
+Create a new identity:
+
+```
+git bug user create
+```
+
 Create a new bug:
 
 ```
