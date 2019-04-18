@@ -107,7 +107,7 @@ The web UI interact with the backend through a GraphQL API. The schema is availa
 
 ## Internals
 
-Interested by how it works ? Have a look at the [data model](doc/model.md).
+Interested by how it works ? Have a look at the [data model](doc/model.md) and the [internal bird-view](doc/architecture.md).
 
 ## Misc
 

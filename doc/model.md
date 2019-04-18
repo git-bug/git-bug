@@ -12,8 +12,7 @@ Instead of storing directly the final bug data, we store a series of edit `Opera
 {
   "type": "SET_TITLE",
   "author": {
-    "name": "René Descartes",
-    "email": "rene@descartes.fr"
+    "id": "5034cd36acf1a2dadb52b2db17f620cc050eb65c"
   },
   "timestamp": 1533640589,
   "title": "This title is better"
