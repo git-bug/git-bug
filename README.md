@@ -105,6 +105,27 @@ This web UI is entirely packed inside the same go binary and serve static conten
 
 The web UI interact with the backend through a GraphQL API. The schema is available [here](graphql/).
 
+## Bridges
+
+### Importer implementations
+
+|                                                 | Github        | Launchpad     |
+| ----------------------------------------------- | :-----------: | :-----------: |
+| **incremental**<br/>(can import more than once) | :green_apple: | :tomato:      |
+| **with resume**<br/>(download only new data)    | :tomato:      | :tomato:      |
+| **identities**                                  | :green_apple: | :green_apple: |
+| **identities update**                           | :tomato:      | :tomato:      |
+| **bug**                                         | :green_apple: | :green_apple: |
+| **comments**                                    | :green_apple: | :green_apple: |
+| **comment editions**                            | :green_apple: | :tomato:      |
+| **labels**                                      | :green_apple: | :tomato:      |
+| **status**                                      | :green_apple: | :tomato:      |
+| **title edition**                               | :green_apple: | :tomato:      |
+
+### Exporter implementations
+
+Todo !
+
 ## Internals
 
 Interested by how it works ? Have a look at the [data model](doc/model.md) and the [internal bird-view](doc/architecture.md).
