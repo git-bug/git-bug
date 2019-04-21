@@ -128,7 +128,7 @@ type issueTimelineQuery struct {
 		Issues struct {
 			Nodes    []issueTimeline
 			PageInfo pageInfo
-		} `graphql:"issues(first: $issueFirst, after: $issueAfter, orderBy: {field: CREATED_AT, direction: ASC})"`
+		} `graphql:"issues(first: $issueFirst, after: $issueAfter, orderBy: {field: CREATED_AT, direction: ASC}, filterBy: {since: $issueSince})"`
 	} `graphql:"repository(owner: $owner, name: $name)"`
 }
 
@@ -137,7 +137,7 @@ type issueEditQuery struct {
 		Issues struct {
 			Nodes    []issueEdit
 			PageInfo pageInfo
-		} `graphql:"issues(first: $issueFirst, after: $issueAfter, orderBy: {field: CREATED_AT, direction: ASC})"`
+		} `graphql:"issues(first: $issueFirst, after: $issueAfter, orderBy: {field: CREATED_AT, direction: ASC}, filterBy: {since: $issueSince})"`
 	} `graphql:"repository(owner: $owner, name: $name)"`
 }
 
@@ -156,7 +156,7 @@ type commentEditQuery struct {
 					}
 				} `graphql:"timeline(first: $timelineFirst, after: $timelineAfter)"`
 			}
-		} `graphql:"issues(first: $issueFirst, after: $issueAfter, orderBy: {field: CREATED_AT, direction: ASC})"`
+		} `graphql:"issues(first: $issueFirst, after: $issueAfter, orderBy: {field: CREATED_AT, direction: ASC}, filterBy: {since: $issueSince})"`
 	} `graphql:"repository(owner: $owner, name: $name)"`
 }
 
