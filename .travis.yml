@@ -6,6 +6,8 @@ matrix:
     go: "1.10"
   - language: go
     go: "1.11"
+  - language: go
+    go: "1.12"
   - language: node_js
     node_js: 8
     before_install:
@@ -48,5 +50,5 @@ deploy:
   file: dist/**/*
   on:
     repo: MichaelMure/git-bug
-    go: 1.10.x
+    go: 1.11
     tags: true
