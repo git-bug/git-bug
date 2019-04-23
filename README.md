@@ -107,6 +107,9 @@ The web UI interact with the backend through a GraphQL API. The schema is availa
 
 ## Bridges
 
+:green_apple: Working!
+:tomato: Not working yet
+
 ### Importer implementations
 
 |                                                 | Github        | Launchpad     |
