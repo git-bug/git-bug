@@ -107,23 +107,23 @@ The web UI interact with the backend through a GraphQL API. The schema is availa
 
 ## Bridges
 
-:green_apple: Working!
-:tomato: Not working yet
+:heavy_check_mark: Working!
+:x: Not working yet
 
 ### Importer implementations
 
-|                                                 | Github        | Launchpad     |
-| ----------------------------------------------- | :-----------: | :-----------: |
-| **incremental**<br/>(can import more than once) | :green_apple: | :tomato:      |
-| **with resume**<br/>(download only new data)    | :tomato:      | :tomato:      |
-| **identities**                                  | :green_apple: | :green_apple: |
-| **identities update**                           | :tomato:      | :tomato:      |
-| **bug**                                         | :green_apple: | :green_apple: |
-| **comments**                                    | :green_apple: | :green_apple: |
-| **comment editions**                            | :green_apple: | :tomato:      |
-| **labels**                                      | :green_apple: | :tomato:      |
-| **status**                                      | :green_apple: | :tomato:      |
-| **title edition**                               | :green_apple: | :tomato:      |
+|                                                 | Github             | Launchpad          |
+| ----------------------------------------------- | :----------------: | :----------------: |
+| **incremental**<br/>(can import more than once) | :heavy_check_mark: | :x:                |
+| **with resume**<br/>(download only new data)    | :x:                | :x:                |
+| **identities**                                  | :heavy_check_mark: | :heavy_check_mark: |
+| **identities update**                           | :x:                | :x:                |
+| **bug**                                         | :heavy_check_mark: | :heavy_check_mark: |
+| **comments**                                    | :heavy_check_mark: | :heavy_check_mark: |
+| **comment editions**                            | :heavy_check_mark: | :x:                |
+| **labels**                                      | :heavy_check_mark: | :x:                |
+| **status**                                      | :heavy_check_mark: | :x:                |
+| **title edition**                               | :heavy_check_mark: | :x:                |
 
 ### Exporter implementations
 
