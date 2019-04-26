@@ -16,11 +16,12 @@ func Test_Iterator(t *testing.T) {
 		keyToken:  token,
 		"user":    user,
 		"project": project,
-	}, time.Now().Add(-14*24*time.Hour))
+	}, time.Time{})
+	//time.Now().Add(-14*24*time.Hour))
 
 	for i.NextIssue() {
 		v := i.IssueValue()
-		fmt.Printf("issue = id:%v title:%v\n", v.Id, v.Title)
+		fmt.Printf("   issue = id:%v title:%v\n", v.Id, v.Title)
 
 		for i.NextIssueEdit() {
 			v := i.IssueEditValue()
@@ -33,12 +34,15 @@ func Test_Iterator(t *testing.T) {
 
 			if v.Typename == "IssueComment" {
 				for i.NextCommentEdit() {
+
 					_ = i.CommentEditValue()
 
-					//fmt.Printf("comment edit: %v\n", *v.Diff)
 					fmt.Printf("comment edit\n")
 				}
 			}
 		}
 	}
+
+	fmt.Println(i.Error())
+	fmt.Println(i.Count())
 }

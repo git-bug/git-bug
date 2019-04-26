@@ -46,6 +46,8 @@ type timelineIterator struct {
 
 	issueEdit   indexer
 	commentEdit indexer
+
+	lastEndCursor githubv4.String // storing timeline end cursor for future use
 }
 
 type iterator struct {
@@ -81,9 +83,8 @@ func newIterator(conf core.Configuration, since time.Time) *iterator {
 	return &iterator{
 		since:    since,
 		gc:       buildClient(conf),
-		capacity: 8,
-		count:    -1,
-
+		capacity: 10,
+		count:    0,
 		timeline: timelineIterator{
 			index:       -1,
 			issueEdit:   indexer{-1},
@@ -154,19 +155,20 @@ func (i *iterator) reverseTimelineEditNodes() {
 	}
 }
 
-// Error .
+// Error return last encountered error
 func (i *iterator) Error() error {
 	return i.err
 }
 
-// Count .
+// Count return number of issues we iterated over
 func (i *iterator) Count() int {
 	return i.count
 }
 
+// Next issue
 func (i *iterator) NextIssue() bool {
 	// we make the first move
-	if i.count == -1 {
+	if i.count == 0 {
 
 		// init variables and goto queryIssue block
 		i.initTimelineQueryVariables()
@@ -181,10 +183,13 @@ func (i *iterator) NextIssue() bool {
 		return false
 	}
 
-	// if we have more pages updates variables and query them
+	// if we have more issues, query them
 	i.timeline.variables["timelineAfter"] = (*githubv4.String)(nil)
 	i.timeline.variables["issueAfter"] = i.timeline.query.Repository.Issues.PageInfo.EndCursor
 	i.timeline.index = -1
+
+	// store cursor for future use
+	i.timeline.lastEndCursor = i.timeline.query.Repository.Issues.Nodes[0].Timeline.PageInfo.EndCursor
 
 	// query issue block
 queryIssue:
@@ -224,6 +229,8 @@ func (i *iterator) NextTimeline() bool {
 		return false
 	}
 
+	i.timeline.lastEndCursor = i.timeline.query.Repository.Issues.Nodes[0].Timeline.PageInfo.EndCursor
+
 	// more timelines, query them
 	i.timeline.variables["timelineAfter"] = i.timeline.query.Repository.Issues.Nodes[0].Timeline.PageInfo.EndCursor
 	if err := i.gc.Query(context.TODO(), &i.timeline.query, i.timeline.variables); err != nil {
@@ -238,10 +245,6 @@ func (i *iterator) NextTimeline() bool {
 
 func (i *iterator) TimelineValue() timelineItem {
 	return i.timeline.query.Repository.Issues.Nodes[0].Timeline.Edges[i.timeline.index].Node
-}
-
-func (i *iterator) timelineCursor() string {
-	return ""
 }
 
 func (i *iterator) NextIssueEdit() bool {
@@ -359,11 +362,9 @@ func (i *iterator) NextCommentEdit() bool {
 		return false
 	}
 
-	// if there is more comment edits, query them
-
 	i.initCommentEditQueryVariables()
 	if i.timeline.index == 0 {
-		i.commentEdit.variables["timelineAfter"] = i.timeline.query.Repository.Issues.Nodes[0].Timeline.PageInfo.EndCursor
+		i.commentEdit.variables["timelineAfter"] = i.timeline.lastEndCursor
 	} else {
 		i.commentEdit.variables["timelineAfter"] = i.timeline.query.Repository.Issues.Nodes[0].Timeline.Edges[i.timeline.index-1].Cursor
 	}

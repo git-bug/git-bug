@@ -20,10 +20,12 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
-const githubV3Url = "https://api.github.com"
-const keyUser = "user"
-const keyProject = "project"
-const keyToken = "token"
+const (
+	githubV3Url = "https://api.github.com"
+	keyUser     = "user"
+	keyProject  = "project"
+	keyToken    = "token"
+)
 
 func (*Github) Configure(repo repository.RepoCommon) (core.Configuration, error) {
 	conf := make(core.Configuration)
