@@ -107,9 +107,6 @@ The web UI interact with the backend through a GraphQL API. The schema is availa
 
 ## Bridges
 
-:heavy_check_mark: Working!
-:x: Not working yet
-
 ### Importer implementations
 
 |                                                 | Github             | Launchpad          |
@@ -117,13 +114,14 @@ The web UI interact with the backend through a GraphQL API. The schema is availa
 | **incremental**<br/>(can import more than once) | :heavy_check_mark: | :x:                |
 | **with resume**<br/>(download only new data)    | :x:                | :x:                |
 | **identities**                                  | :heavy_check_mark: | :heavy_check_mark: |
-| **identities update**                           | :x:                | :x:                |
+| identities update                               | :x:                | :x:                |
 | **bug**                                         | :heavy_check_mark: | :heavy_check_mark: |
-| **comments**                                    | :heavy_check_mark: | :heavy_check_mark: |
-| **comment editions**                            | :heavy_check_mark: | :x:                |
-| **labels**                                      | :heavy_check_mark: | :x:                |
-| **status**                                      | :heavy_check_mark: | :x:                |
-| **title edition**                               | :heavy_check_mark: | :x:                |
+| comments                                        | :heavy_check_mark: | :heavy_check_mark: |
+| comment editions                                | :heavy_check_mark: | :x:                |
+| labels                                          | :heavy_check_mark: | :x:                |
+| status                                          | :heavy_check_mark: | :x:                |
+| title edition                                   | :heavy_check_mark: | :x:                |
+| **automated test suite**                        | :x:                | :x:                |
 
 ### Exporter implementations
 
