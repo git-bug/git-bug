@@ -1,6 +1,8 @@
 package core
 
 import (
+	"time"
+
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/repository"
 )
@@ -27,12 +29,10 @@ type BridgeImpl interface {
 
 type Importer interface {
 	Init(conf Configuration) error
-	ImportAll(repo *cache.RepoCache) error
-	Import(repo *cache.RepoCache, id string) error
+	ImportAll(repo *cache.RepoCache, since time.Time) error
 }
 
 type Exporter interface {
 	Init(conf Configuration) error
-	ExportAll(repo *cache.RepoCache) error
-	Export(repo *cache.RepoCache, id string) error
+	ExportAll(repo *cache.RepoCache, since time.Time) error
 }

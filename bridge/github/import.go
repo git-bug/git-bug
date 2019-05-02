@@ -27,237 +27,157 @@ type githubImporter struct {
 }
 
 func (gi *githubImporter) Init(conf core.Configuration) error {
-	var since time.Time
-
-	// parse since value from configuration
-	if value, ok := conf["since"]; ok && value != "" {
-		s, err := time.Parse(time.RFC3339, value)
-		if err != nil {
-			return err
-		}
-
-		since = s
-	}
-
-	gi.iterator = newIterator(conf, since)
+	gi.conf = conf
+	gi.iterator = newIterator(conf)
 	return nil
 }
 
-func (gi *githubImporter) ImportAll(repo *cache.RepoCache) error {
-	// Loop over all available issues
+// ImportAll .
+func (gi *githubImporter) ImportAll(repo *cache.RepoCache, since time.Time) error {
+	gi.iterator.since = since
+
+	// Loop over all matching issues
 	for gi.iterator.NextIssue() {
 		issue := gi.iterator.IssueValue()
-		fmt.Printf("importing issue: %v\n", issue.Title)
 
-		// In each iteration create a new bug
-		var b *cache.BugCache
-
-		// ensure issue author
-		author, err := gi.ensurePerson(repo, issue.Author)
-		if err != nil {
-			return err
-		}
-
-		// resolve bug
-		b, err = repo.ResolveBugCreateMetadata(keyGithubId, parseId(issue.Id))
-		if err != nil && err != bug.ErrBugNotExist {
-			return err
-		}
-
+		fmt.Printf("importing issue: %v\n", gi.iterator.count)
 		// get issue edits
 		issueEdits := []userContentEdit{}
 		for gi.iterator.NextIssueEdit() {
-			// append only edits with non empty diff
-			if issueEdit := gi.iterator.IssueEditValue(); issueEdit.Diff != nil {
+			if issueEdit := gi.iterator.IssueEditValue(); issueEdit.Diff != nil && string(*issueEdit.Diff) != "" {
 				issueEdits = append(issueEdits, issueEdit)
 			}
 		}
 
-		// if issueEdits is empty
-		if len(issueEdits) == 0 {
-			if err == bug.ErrBugNotExist {
-				// create bug
-				b, err = repo.NewBugRaw(
-					author,
-					issue.CreatedAt.Unix(),
-					issue.Title,
-					cleanupText(string(issue.Body)),
-					nil,
-					map[string]string{
-						keyGithubId:  parseId(issue.Id),
-						keyGithubUrl: issue.Url.String(),
-					})
-				if err != nil {
-					return err
-				}
-			}
-		} else {
-			// create bug from given issueEdits
-			for _, edit := range issueEdits {
-				// if the bug doesn't exist
-				if b == nil {
-					// we create the bug as soon as we have a legit first edition
-					b, err = repo.NewBugRaw(
-						author,
-						issue.CreatedAt.Unix(),
-						issue.Title,
-						cleanupText(string(*edit.Diff)),
-						nil,
-						map[string]string{
-							keyGithubId:  parseId(issue.Id),
-							keyGithubUrl: issue.Url.String(),
-						},
-					)
-
-					if err != nil {
-						return err
-					}
-
-					continue
-				}
-
-				// other edits will be added as CommentEdit operations
-
-				target, err := b.ResolveOperationWithMetadata(keyGithubId, parseId(issue.Id))
-				if err != nil {
-					return err
-				}
-
-				err = gi.ensureCommentEdit(repo, b, target, edit)
-				if err != nil {
-					return err
-				}
-			}
+		// create issue
+		b, err := gi.ensureIssue(repo, issue, issueEdits)
+		if err != nil {
+			return fmt.Errorf("issue creation: %v", err)
 		}
 
-		// check timeline items
+		// loop over timeline items
 		for gi.iterator.NextTimeline() {
 			item := gi.iterator.TimelineValue()
 
-			// if item is not a comment (label, unlabel, rename, close, open ...)
-			if item.Typename != "IssueComment" {
-				if err := gi.ensureTimelineItem(repo, b, item); err != nil {
-					return err
-				}
-			} else { // if item is comment
-
-				// ensure person
-				author, err := gi.ensurePerson(repo, item.IssueComment.Author)
-				if err != nil {
-					return err
-				}
-
-				var target git.Hash
-				target, err = b.ResolveOperationWithMetadata(keyGithubId, parseId(item.IssueComment.Id))
-				if err != nil && err != cache.ErrNoMatchingOp {
-					// real error
-					return err
-				}
-
+			// if item is comment
+			if item.Typename == "IssueComment" {
 				// collect all edits
 				commentEdits := []userContentEdit{}
 				for gi.iterator.NextCommentEdit() {
-					if commentEdit := gi.iterator.CommentEditValue(); commentEdit.Diff != nil {
+					if commentEdit := gi.iterator.CommentEditValue(); commentEdit.Diff != nil && string(*commentEdit.Diff) != "" {
 						commentEdits = append(commentEdits, commentEdit)
 					}
 				}
 
-				// if no edits are given we create the comment
-				if len(commentEdits) == 0 {
-
-					// if comment doesn't exist
-					if err == cache.ErrNoMatchingOp {
-
-						// add comment operation
-						op, err := b.AddCommentRaw(
-							author,
-							item.IssueComment.CreatedAt.Unix(),
-							cleanupText(string(item.IssueComment.Body)),
-							nil,
-							map[string]string{
-								keyGithubId: parseId(item.IssueComment.Id),
-							},
-						)
-						if err != nil {
-							return err
-						}
-
-						// set hash
-						target, err = op.Hash()
-						if err != nil {
-							return err
-						}
-					}
-				} else {
-					// if we have some edits
-					for _, edit := range item.IssueComment.UserContentEdits.Nodes {
-
-						// create comment when target is an empty string
-						if target == "" {
-							op, err := b.AddCommentRaw(
-								author,
-								item.IssueComment.CreatedAt.Unix(),
-								cleanupText(string(*edit.Diff)),
-								nil,
-								map[string]string{
-									keyGithubId:  parseId(item.IssueComment.Id),
-									keyGithubUrl: item.IssueComment.Url.String(),
-								},
-							)
-							if err != nil {
-								return err
-							}
-
-							// set hash
-							target, err = op.Hash()
-							if err != nil {
-								return err
-							}
-						}
-
-						err := gi.ensureCommentEdit(repo, b, target, edit)
-						if err != nil {
-							return err
-						}
-
-					}
+				err := gi.ensureTimelineComment(repo, b, item.IssueComment, commentEdits)
+				if err != nil {
+					return fmt.Errorf("timeline event creation: %v", err)
 				}
 
+			} else {
+				if err := gi.ensureTimelineItem(repo, b, item); err != nil {
+					return fmt.Errorf("timeline comment creation: %v", err)
+				}
 			}
-
-		}
-
-		if err := gi.iterator.Error(); err != nil {
-			fmt.Printf("error importing issue %v\n", issue.Id)
-			return err
 		}
 
 		// commit bug state
-		err = b.CommitAsNeeded()
-		if err != nil {
-			return err
+		if err := b.CommitAsNeeded(); err != nil {
+			return fmt.Errorf("bug commit: %v", err)
 		}
 	}
 
 	if err := gi.iterator.Error(); err != nil {
 		fmt.Printf("import error: %v\n", err)
+		return err
 	}
 
 	fmt.Printf("Successfully imported %v issues from Github\n", gi.iterator.Count())
 	return nil
 }
 
-func (gi *githubImporter) Import(repo *cache.RepoCache, id string) error {
-	fmt.Println("IMPORT")
-	return nil
+func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline, issueEdits []userContentEdit) (*cache.BugCache, error) {
+	// ensure issue author
+	author, err := gi.ensurePerson(repo, issue.Author)
+	if err != nil {
+		return nil, err
+	}
+
+	// resolve bug
+	b, err := repo.ResolveBugCreateMetadata(keyGithubUrl, issue.Url.String())
+	if err != nil && err != bug.ErrBugNotExist {
+		return nil, err
+	}
+
+	// if issueEdits is empty
+	if len(issueEdits) == 0 {
+		if err == bug.ErrBugNotExist {
+			// create bug
+			b, err = repo.NewBugRaw(
+				author,
+				issue.CreatedAt.Unix(),
+				issue.Title,
+				cleanupText(string(issue.Body)),
+				nil,
+				map[string]string{
+					keyGithubId:  parseId(issue.Id),
+					keyGithubUrl: issue.Url.String(),
+				})
+			if err != nil {
+				return nil, err
+			}
+		}
+
+	} else {
+		// create bug from given issueEdits
+		for i, edit := range issueEdits {
+			if i == 0 && b != nil {
+				continue
+			}
+
+			// if the bug doesn't exist
+			if b == nil {
+				// we create the bug as soon as we have a legit first edition
+				b, err = repo.NewBugRaw(
+					author,
+					issue.CreatedAt.Unix(),
+					issue.Title,
+					cleanupText(string(*edit.Diff)),
+					nil,
+					map[string]string{
+						keyGithubId:  parseId(issue.Id),
+						keyGithubUrl: issue.Url.String(),
+					},
+				)
+
+				if err != nil {
+					return nil, err
+				}
+
+				continue
+			}
+
+			// other edits will be added as CommentEdit operations
+			target, err := b.ResolveOperationWithMetadata(keyGithubUrl, issue.Url.String())
+			if err != nil {
+				return nil, err
+			}
+
+			err = gi.ensureCommentEdit(repo, b, target, edit)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return b, nil
 }
 
 func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.BugCache, item timelineItem) error {
-	fmt.Printf("import item: %s\n", item.Typename)
+	fmt.Printf("import event item: %s\n", item.Typename)
 
 	switch item.Typename {
 	case "IssueComment":
-		//return gi.ensureComment(repo, b, cursor, item.IssueComment, rootVariables)
 
 	case "LabeledEvent":
 		id := parseId(item.LabeledEvent.Id)
@@ -290,6 +210,7 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 		if err != nil {
 			return err
 		}
+
 		_, _, err = b.ChangeLabelsRaw(
 			author,
 			item.UnlabeledEvent.CreatedAt.Unix(),
@@ -360,6 +281,92 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 	return nil
 }
 
+func (gi *githubImporter) ensureTimelineComment(repo *cache.RepoCache, b *cache.BugCache, item issueComment, edits []userContentEdit) error {
+	// ensure person
+	author, err := gi.ensurePerson(repo, item.Author)
+	if err != nil {
+		return err
+	}
+
+	var target git.Hash
+	target, err = b.ResolveOperationWithMetadata(keyGithubId, parseId(item.Id))
+	if err != nil && err != cache.ErrNoMatchingOp {
+		// real error
+		return err
+	}
+	// if no edits are given we create the comment
+	if len(edits) == 0 {
+
+		// if comment doesn't exist
+		if err == cache.ErrNoMatchingOp {
+
+			// add comment operation
+			op, err := b.AddCommentRaw(
+				author,
+				item.CreatedAt.Unix(),
+				cleanupText(string(item.Body)),
+				nil,
+				map[string]string{
+					keyGithubId:  parseId(item.Id),
+					keyGithubUrl: parseId(item.Url.String()),
+				},
+			)
+			if err != nil {
+				return err
+			}
+
+			// set hash
+			target, err = op.Hash()
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		for i, edit := range item.UserContentEdits.Nodes {
+			if i == 0 && target != "" {
+				continue
+			}
+
+			// ensure editor identity
+			editor, err := gi.ensurePerson(repo, edit.Editor)
+			if err != nil {
+				return err
+			}
+
+			// create comment when target is empty
+			if target == "" {
+				op, err := b.AddCommentRaw(
+					editor,
+					edit.CreatedAt.Unix(),
+					cleanupText(string(*edit.Diff)),
+					nil,
+					map[string]string{
+						keyGithubId:  parseId(item.Id),
+						keyGithubUrl: item.Url.String(),
+					},
+				)
+				if err != nil {
+					return err
+				}
+
+				// set hash
+				target, err = op.Hash()
+				if err != nil {
+					return err
+				}
+
+				continue
+			}
+
+			err = gi.ensureCommentEdit(repo, b, target, edit)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 func (gi *githubImporter) ensureCommentEdit(repo *cache.RepoCache, b *cache.BugCache, target git.Hash, edit userContentEdit) error {
 	_, err := b.ResolveOperationWithMetadata(keyGithubId, parseId(edit.Id))
 	if err == nil {
@@ -381,8 +388,10 @@ func (gi *githubImporter) ensureCommentEdit(repo *cache.RepoCache, b *cache.BugC
 	switch {
 	case edit.DeletedAt != nil:
 		// comment deletion, not supported yet
+		fmt.Println("comment deletion ....")
 
 	case edit.DeletedAt == nil:
+
 		// comment edition
 		_, err := b.EditCommentRaw(
 			editor,
@@ -393,6 +402,7 @@ func (gi *githubImporter) ensureCommentEdit(repo *cache.RepoCache, b *cache.BugC
 				keyGithubId: parseId(edit.Id),
 			},
 		)
+
 		if err != nil {
 			return err
 		}

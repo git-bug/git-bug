@@ -8,23 +8,6 @@ import (
 	"github.com/shurcooL/githubv4"
 )
 
-/**
-type iterator interface {
-	Count() int
-	Error() error
-
-	NextIssue() bool
-	NextIssueEdit() bool
-	NextTimeline() bool
-	NextCommentEdit() bool
-
-	IssueValue() issueTimeline
-	IssueEditValue() userContentEdit
-	TimelineValue() timelineItem
-	CommentEditValue() userContentEdit
-}
-*/
-
 type indexer struct{ index int }
 
 type issueEditIterator struct {
@@ -47,7 +30,8 @@ type timelineIterator struct {
 	issueEdit   indexer
 	commentEdit indexer
 
-	lastEndCursor githubv4.String // storing timeline end cursor for future use
+	// lastEndCursor cache the timeline end cursor for one iteration
+	lastEndCursor githubv4.String
 }
 
 type iterator struct {
@@ -59,7 +43,7 @@ type iterator struct {
 	since time.Time
 
 	// number of timelines/userEditcontent/issueEdit to query
-	// at a time more capacity = more used memory = less queries
+	// at a time, more capacity = more used memory = less queries
 	// to make
 	capacity int
 
@@ -79,9 +63,8 @@ type iterator struct {
 	commentEdit commentEditIterator
 }
 
-func newIterator(conf core.Configuration, since time.Time) *iterator {
+func newIterator(conf core.Configuration) *iterator {
 	return &iterator{
-		since:    since,
 		gc:       buildClient(conf),
 		capacity: 10,
 		count:    0,
