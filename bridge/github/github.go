@@ -27,9 +27,9 @@ func (*Github) NewExporter() core.Exporter {
 	return nil
 }
 
-func buildClient(conf core.Configuration) *githubv4.Client {
+func buildClient(token string) *githubv4.Client {
 	src := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: conf[keyToken]},
+		&oauth2.Token{AccessToken: token},
 	)
 	httpClient := oauth2.NewClient(context.TODO(), src)
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/shurcooL/githubv4"
 )
 
@@ -50,8 +49,8 @@ type iterator struct {
 	// sticky error
 	err error
 
-	// count to keep track of the number of imported issues
-	count int
+	// number of imported issues
+	importedIssues int
 
 	// timeline iterator
 	timeline timelineIterator
@@ -63,32 +62,32 @@ type iterator struct {
 	commentEdit commentEditIterator
 }
 
-func newIterator(conf core.Configuration) *iterator {
+func NewIterator(user, project, token string, since time.Time) *iterator {
 	return &iterator{
-		gc:       buildClient(conf),
+		gc:       buildClient(token),
+		since:    since,
 		capacity: 10,
-		count:    0,
 		timeline: timelineIterator{
 			index:       -1,
 			issueEdit:   indexer{-1},
 			commentEdit: indexer{-1},
 			variables: map[string]interface{}{
-				"owner": githubv4.String(conf["user"]),
-				"name":  githubv4.String(conf["project"]),
+				"owner": githubv4.String(user),
+				"name":  githubv4.String(project),
 			},
 		},
 		commentEdit: commentEditIterator{
 			index: -1,
 			variables: map[string]interface{}{
-				"owner": githubv4.String(conf["user"]),
-				"name":  githubv4.String(conf["project"]),
+				"owner": githubv4.String(user),
+				"name":  githubv4.String(project),
 			},
 		},
 		issueEdit: issueEditIterator{
 			index: -1,
 			variables: map[string]interface{}{
-				"owner": githubv4.String(conf["user"]),
-				"name":  githubv4.String(conf["project"]),
+				"owner": githubv4.String(user),
+				"name":  githubv4.String(project),
 			},
 		},
 	}
@@ -130,10 +129,11 @@ func (i *iterator) initCommentEditQueryVariables() {
 // reverse UserContentEdits arrays in both of the issue and
 // comment timelines
 func (i *iterator) reverseTimelineEditNodes() {
-	reverseEdits(i.timeline.query.Repository.Issues.Nodes[0].UserContentEdits.Nodes)
-	for index, ce := range i.timeline.query.Repository.Issues.Nodes[0].Timeline.Edges {
-		if ce.Node.Typename == "IssueComment" && len(i.timeline.query.Repository.Issues.Nodes[0].Timeline.Edges) != 0 {
-			reverseEdits(i.timeline.query.Repository.Issues.Nodes[0].Timeline.Edges[index].Node.IssueComment.UserContentEdits.Nodes)
+	node := i.timeline.query.Repository.Issues.Nodes[0]
+	reverseEdits(node.UserContentEdits.Nodes)
+	for index, ce := range node.Timeline.Edges {
+		if ce.Node.Typename == "IssueComment" && len(node.Timeline.Edges) != 0 {
+			reverseEdits(node.Timeline.Edges[index].Node.IssueComment.UserContentEdits.Nodes)
 		}
 	}
 }
@@ -143,19 +143,34 @@ func (i *iterator) Error() error {
 	return i.err
 }
 
-// Count return number of issues we iterated over
-func (i *iterator) Count() int {
-	return i.count
+// ImportedIssues return the number of issues we iterated over
+func (i *iterator) ImportedIssues() int {
+	return i.importedIssues
+}
+
+func (i *iterator) queryIssue() bool {
+	if err := i.gc.Query(context.TODO(), &i.timeline.query, i.timeline.variables); err != nil {
+		i.err = err
+		return false
+	}
+
+	if len(i.timeline.query.Repository.Issues.Nodes) == 0 {
+		return false
+	}
+
+	i.reverseTimelineEditNodes()
+	i.importedIssues++
+	return true
 }
 
 // Next issue
 func (i *iterator) NextIssue() bool {
 	// we make the first move
-	if i.count == 0 {
+	if i.importedIssues == 0 {
 
 		// init variables and goto queryIssue block
 		i.initTimelineQueryVariables()
-		goto queryIssue
+		return i.queryIssue()
 	}
 
 	if i.err != nil {
@@ -175,19 +190,7 @@ func (i *iterator) NextIssue() bool {
 	i.timeline.lastEndCursor = i.timeline.query.Repository.Issues.Nodes[0].Timeline.PageInfo.EndCursor
 
 	// query issue block
-queryIssue:
-	if err := i.gc.Query(context.TODO(), &i.timeline.query, i.timeline.variables); err != nil {
-		i.err = err
-		return false
-	}
-
-	if len(i.timeline.query.Repository.Issues.Nodes) == 0 {
-		return false
-	}
-
-	i.reverseTimelineEditNodes()
-	i.count++
-	return true
+	return i.queryIssue()
 }
 
 func (i *iterator) IssueValue() issueTimeline {
@@ -230,6 +233,27 @@ func (i *iterator) TimelineValue() timelineItem {
 	return i.timeline.query.Repository.Issues.Nodes[0].Timeline.Edges[i.timeline.index].Node
 }
 
+func (i *iterator) queryIssueEdit() bool {
+	if err := i.gc.Query(context.TODO(), &i.issueEdit.query, i.issueEdit.variables); err != nil {
+		i.err = err
+		//i.timeline.issueEdit.index = -1
+		return false
+	}
+
+	// reverse issue edits because github
+	reverseEdits(i.issueEdit.query.Repository.Issues.Nodes[0].UserContentEdits.Nodes)
+
+	// this is not supposed to happen
+	if len(i.issueEdit.query.Repository.Issues.Nodes[0].UserContentEdits.Nodes) == 0 {
+		i.timeline.issueEdit.index = -1
+		return false
+	}
+
+	i.issueEdit.index = 0
+	i.timeline.issueEdit.index = -2
+	return true
+}
+
 func (i *iterator) NextIssueEdit() bool {
 	if i.err != nil {
 		return false
@@ -251,7 +275,7 @@ func (i *iterator) NextIssueEdit() bool {
 
 		// if there is more edits, query them
 		i.issueEdit.variables["issueEditBefore"] = i.issueEdit.query.Repository.Issues.Nodes[0].UserContentEdits.PageInfo.StartCursor
-		goto queryIssueEdit
+		return i.queryIssueEdit()
 	}
 
 	// if there is no edits
@@ -273,26 +297,7 @@ func (i *iterator) NextIssueEdit() bool {
 	// if there is more edits, query them
 	i.initIssueEditQueryVariables()
 	i.issueEdit.variables["issueEditBefore"] = i.timeline.query.Repository.Issues.Nodes[0].UserContentEdits.PageInfo.StartCursor
-
-queryIssueEdit:
-	if err := i.gc.Query(context.TODO(), &i.issueEdit.query, i.issueEdit.variables); err != nil {
-		i.err = err
-		//i.timeline.issueEdit.index = -1
-		return false
-	}
-
-	// reverse issue edits because github
-	reverseEdits(i.issueEdit.query.Repository.Issues.Nodes[0].UserContentEdits.Nodes)
-
-	// this is not supposed to happen
-	if len(i.issueEdit.query.Repository.Issues.Nodes[0].UserContentEdits.Nodes) == 0 {
-		i.timeline.issueEdit.index = -1
-		return false
-	}
-
-	i.issueEdit.index = 0
-	i.timeline.issueEdit.index = -2
-	return true
+	return i.queryIssueEdit()
 }
 
 func (i *iterator) IssueEditValue() userContentEdit {
@@ -303,6 +308,25 @@ func (i *iterator) IssueEditValue() userContentEdit {
 
 	// else get it from timeline issue edit query
 	return i.timeline.query.Repository.Issues.Nodes[0].UserContentEdits.Nodes[i.timeline.issueEdit.index]
+}
+
+func (i *iterator) queryCommentEdit() bool {
+	if err := i.gc.Query(context.TODO(), &i.commentEdit.query, i.commentEdit.variables); err != nil {
+		i.err = err
+		return false
+	}
+
+	// this is not supposed to happen
+	if len(i.commentEdit.query.Repository.Issues.Nodes[0].Timeline.Nodes[0].IssueComment.UserContentEdits.Nodes) == 0 {
+		i.timeline.commentEdit.index = -1
+		return false
+	}
+
+	reverseEdits(i.commentEdit.query.Repository.Issues.Nodes[0].Timeline.Nodes[0].IssueComment.UserContentEdits.Nodes)
+
+	i.commentEdit.index = 0
+	i.timeline.commentEdit.index = -2
+	return true
 }
 
 func (i *iterator) NextCommentEdit() bool {
@@ -326,7 +350,7 @@ func (i *iterator) NextCommentEdit() bool {
 
 		// if there is more comment edits, query them
 		i.commentEdit.variables["commentEditBefore"] = i.commentEdit.query.Repository.Issues.Nodes[0].Timeline.Nodes[0].IssueComment.UserContentEdits.PageInfo.StartCursor
-		goto queryCommentEdit
+		return i.queryCommentEdit()
 	}
 
 	// if there is no comment edits
@@ -354,23 +378,7 @@ func (i *iterator) NextCommentEdit() bool {
 
 	i.commentEdit.variables["commentEditBefore"] = i.timeline.query.Repository.Issues.Nodes[0].Timeline.Edges[i.timeline.index].Node.IssueComment.UserContentEdits.PageInfo.StartCursor
 
-queryCommentEdit:
-	if err := i.gc.Query(context.TODO(), &i.commentEdit.query, i.commentEdit.variables); err != nil {
-		i.err = err
-		return false
-	}
-
-	// this is not supposed to happen
-	if len(i.commentEdit.query.Repository.Issues.Nodes[0].Timeline.Nodes[0].IssueComment.UserContentEdits.Nodes) == 0 {
-		i.timeline.commentEdit.index = -1
-		return false
-	}
-
-	reverseEdits(i.commentEdit.query.Repository.Issues.Nodes[0].Timeline.Nodes[0].IssueComment.UserContentEdits.Nodes)
-
-	i.commentEdit.index = 0
-	i.timeline.commentEdit.index = -2
-	return true
+	return i.queryCommentEdit()
 }
 
 func (i *iterator) CommentEditValue() userContentEdit {

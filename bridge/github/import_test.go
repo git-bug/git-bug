@@ -18,15 +18,13 @@ import (
 func Test_Importer(t *testing.T) {
 	author := identity.NewIdentity("Michael Muré", "batolettre@gmail.com")
 	tests := []struct {
-		name  string
-		exist bool
-		url   string
-		bug   *bug.Snapshot
+		name string
+		url  string
+		bug  *bug.Snapshot
 	}{
 		{
-			name:  "simple issue",
-			exist: true,
-			url:   "https://github.com/MichaelMure/git-but-test-github-bridge/issues/1",
+			name: "simple issue",
+			url:  "https://github.com/MichaelMure/git-but-test-github-bridge/issues/1",
 			bug: &bug.Snapshot{
 				Operations: []bug.Operation{
 					bug.NewCreateOp(author, 0, "simple issue", "initial comment", nil),
@@ -35,9 +33,8 @@ func Test_Importer(t *testing.T) {
 			},
 		},
 		{
-			name:  "empty issue",
-			exist: true,
-			url:   "https://github.com/MichaelMure/git-but-test-github-bridge/issues/2",
+			name: "empty issue",
+			url:  "https://github.com/MichaelMure/git-but-test-github-bridge/issues/2",
 			bug: &bug.Snapshot{
 				Operations: []bug.Operation{
 					bug.NewCreateOp(author, 0, "empty issue", "", nil),
@@ -45,9 +42,8 @@ func Test_Importer(t *testing.T) {
 			},
 		},
 		{
-			name:  "complex issue",
-			exist: true,
-			url:   "https://github.com/MichaelMure/git-but-test-github-bridge/issues/3",
+			name: "complex issue",
+			url:  "https://github.com/MichaelMure/git-but-test-github-bridge/issues/3",
 			bug: &bug.Snapshot{
 				Operations: []bug.Operation{
 					bug.NewCreateOp(author, 0, "complex issue", "initial comment", nil),
@@ -63,9 +59,8 @@ func Test_Importer(t *testing.T) {
 			},
 		},
 		{
-			name:  "editions",
-			exist: true,
-			url:   "https://github.com/MichaelMure/git-but-test-github-bridge/issues/4",
+			name: "editions",
+			url:  "https://github.com/MichaelMure/git-but-test-github-bridge/issues/4",
 			bug: &bug.Snapshot{
 				Operations: []bug.Operation{
 					bug.NewCreateOp(author, 0, "editions", "initial comment edited", nil),
@@ -76,9 +71,8 @@ func Test_Importer(t *testing.T) {
 			},
 		},
 		{
-			name:  "comment deletion",
-			exist: true,
-			url:   "https://github.com/MichaelMure/git-but-test-github-bridge/issues/5",
+			name: "comment deletion",
+			url:  "https://github.com/MichaelMure/git-but-test-github-bridge/issues/5",
 			bug: &bug.Snapshot{
 				Operations: []bug.Operation{
 					bug.NewCreateOp(author, 0, "comment deletion", "", nil),
@@ -86,9 +80,8 @@ func Test_Importer(t *testing.T) {
 			},
 		},
 		{
-			name:  "edition deletion",
-			exist: true,
-			url:   "https://github.com/MichaelMure/git-but-test-github-bridge/issues/6",
+			name: "edition deletion",
+			url:  "https://github.com/MichaelMure/git-but-test-github-bridge/issues/6",
 			bug: &bug.Snapshot{
 				Operations: []bug.Operation{
 					bug.NewCreateOp(author, 0, "edition deletion", "initial comment", nil),
@@ -99,9 +92,8 @@ func Test_Importer(t *testing.T) {
 			},
 		},
 		{
-			name:  "hidden comment",
-			exist: true,
-			url:   "https://github.com/MichaelMure/git-but-test-github-bridge/issues/7",
+			name: "hidden comment",
+			url:  "https://github.com/MichaelMure/git-but-test-github-bridge/issues/7",
 			bug: &bug.Snapshot{
 				Operations: []bug.Operation{
 					bug.NewCreateOp(author, 0, "hidden comment", "initial comment", nil),
@@ -110,9 +102,8 @@ func Test_Importer(t *testing.T) {
 			},
 		},
 		{
-			name:  "transfered issue",
-			exist: true,
-			url:   "https://github.com/MichaelMure/git-but-test-github-bridge/issues/8",
+			name: "transfered issue",
+			url:  "https://github.com/MichaelMure/git-but-test-github-bridge/issues/8",
 			bug: &bug.Snapshot{
 				Operations: []bug.Operation{
 					bug.NewCreateOp(author, 0, "transfered issue", "", nil),
@@ -139,11 +130,16 @@ func Test_Importer(t *testing.T) {
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
 
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		t.Skip("Env var GITHUB_TOKEN missing")
+	}
+
 	importer := &githubImporter{}
 	err = importer.Init(core.Configuration{
 		"user":    "MichaelMure",
 		"project": "git-but-test-github-bridge",
-		"token":   os.Getenv("GITHUB_TOKEN"),
+		"token":   token,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -165,59 +161,53 @@ func Test_Importer(t *testing.T) {
 			}
 
 			ops := b.Snapshot().Operations
-			if tt.exist {
-				assert.Equal(t, len(tt.bug.Operations), len(b.Snapshot().Operations))
+			assert.Equal(t, len(tt.bug.Operations), len(b.Snapshot().Operations))
 
-				for i, op := range tt.bug.Operations {
-					switch op.(type) {
-					case *bug.CreateOperation:
-						if op2, ok := ops[i].(*bug.CreateOperation); ok {
-							assert.Equal(t, op2.Title, op.(*bug.CreateOperation).Title)
-							assert.Equal(t, op2.Message, op.(*bug.CreateOperation).Message)
-							continue
-						}
-						t.Errorf("bad operation type index = %d expected = CreationOperation", i)
-					case *bug.SetStatusOperation:
-						if op2, ok := ops[i].(*bug.SetStatusOperation); ok {
-							assert.Equal(t, op2.Status, op.(*bug.SetStatusOperation).Status)
-							continue
-						}
-						t.Errorf("bad operation type index = %d expected = SetStatusOperation", i)
-					case *bug.SetTitleOperation:
-						if op2, ok := ops[i].(*bug.SetTitleOperation); ok {
-							assert.Equal(t, op.(*bug.SetTitleOperation).Was, op2.Was)
-							assert.Equal(t, op.(*bug.SetTitleOperation).Title, op2.Title)
-							continue
-						}
-						t.Errorf("bad operation type index = %d expected = SetTitleOperation", i)
-					case *bug.LabelChangeOperation:
-						if op2, ok := ops[i].(*bug.LabelChangeOperation); ok {
-							assert.ElementsMatch(t, op.(*bug.LabelChangeOperation).Added, op2.Added)
-							assert.ElementsMatch(t, op.(*bug.LabelChangeOperation).Removed, op2.Removed)
-							continue
-						}
-						t.Errorf("bad operation type index = %d expected = ChangeLabelOperation", i)
-					case *bug.AddCommentOperation:
-						if op2, ok := ops[i].(*bug.AddCommentOperation); ok {
-							assert.Equal(t, op.(*bug.AddCommentOperation).Message, op2.Message)
-							continue
-						}
-						t.Errorf("bad operation type index = %d expected = AddCommentOperation", i)
-					case *bug.EditCommentOperation:
-						if op2, ok := ops[i].(*bug.EditCommentOperation); ok {
-							assert.Equal(t, op.(*bug.EditCommentOperation).Message, op2.Message)
-							continue
-						}
-						t.Errorf("bad operation type index = %d expected = EditCommentOperation", i)
-					default:
-
+			for i, op := range tt.bug.Operations {
+				switch op.(type) {
+				case *bug.CreateOperation:
+					if op2, ok := ops[i].(*bug.CreateOperation); ok {
+						assert.Equal(t, op2.Title, op.(*bug.CreateOperation).Title)
+						assert.Equal(t, op2.Message, op.(*bug.CreateOperation).Message)
+						continue
 					}
+					t.Errorf("bad operation type index = %d expected = CreationOperation", i)
+				case *bug.SetStatusOperation:
+					if op2, ok := ops[i].(*bug.SetStatusOperation); ok {
+						assert.Equal(t, op2.Status, op.(*bug.SetStatusOperation).Status)
+						continue
+					}
+					t.Errorf("bad operation type index = %d expected = SetStatusOperation", i)
+				case *bug.SetTitleOperation:
+					if op2, ok := ops[i].(*bug.SetTitleOperation); ok {
+						assert.Equal(t, op.(*bug.SetTitleOperation).Was, op2.Was)
+						assert.Equal(t, op.(*bug.SetTitleOperation).Title, op2.Title)
+						continue
+					}
+					t.Errorf("bad operation type index = %d expected = SetTitleOperation", i)
+				case *bug.LabelChangeOperation:
+					if op2, ok := ops[i].(*bug.LabelChangeOperation); ok {
+						assert.ElementsMatch(t, op.(*bug.LabelChangeOperation).Added, op2.Added)
+						assert.ElementsMatch(t, op.(*bug.LabelChangeOperation).Removed, op2.Removed)
+						continue
+					}
+					t.Errorf("bad operation type index = %d expected = ChangeLabelOperation", i)
+				case *bug.AddCommentOperation:
+					if op2, ok := ops[i].(*bug.AddCommentOperation); ok {
+						assert.Equal(t, op.(*bug.AddCommentOperation).Message, op2.Message)
+						continue
+					}
+					t.Errorf("bad operation type index = %d expected = AddCommentOperation", i)
+				case *bug.EditCommentOperation:
+					if op2, ok := ops[i].(*bug.EditCommentOperation); ok {
+						assert.Equal(t, op.(*bug.EditCommentOperation).Message, op2.Message)
+						continue
+					}
+					t.Errorf("bad operation type index = %d expected = EditCommentOperation", i)
+				default:
+					panic("Unknown operation type")
 				}
-
-			} else {
-				assert.Equal(t, b, nil)
 			}
 		})
 	}
-
 }

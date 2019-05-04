@@ -22,29 +22,27 @@ const (
 
 // githubImporter implement the Importer interface
 type githubImporter struct {
-	iterator *iterator
-	conf     core.Configuration
+	conf core.Configuration
 }
 
 func (gi *githubImporter) Init(conf core.Configuration) error {
 	gi.conf = conf
-	gi.iterator = newIterator(conf)
 	return nil
 }
 
 // ImportAll .
 func (gi *githubImporter) ImportAll(repo *cache.RepoCache, since time.Time) error {
-	gi.iterator.since = since
+	iterator := NewIterator(gi.conf[keyUser], gi.conf[keyProject], gi.conf[keyToken], since)
 
 	// Loop over all matching issues
-	for gi.iterator.NextIssue() {
-		issue := gi.iterator.IssueValue()
+	for iterator.NextIssue() {
+		issue := iterator.IssueValue()
 
-		fmt.Printf("importing issue: %v %v\n", gi.iterator.count, issue.Title)
+		fmt.Printf("importing issue: %v %v\n", iterator.importedIssues, issue.Title)
 		// get issue edits
 		issueEdits := []userContentEdit{}
-		for gi.iterator.NextIssueEdit() {
-			if issueEdit := gi.iterator.IssueEditValue(); issueEdit.Diff != nil && string(*issueEdit.Diff) != "" {
+		for iterator.NextIssueEdit() {
+			if issueEdit := iterator.IssueEditValue(); issueEdit.Diff != nil && string(*issueEdit.Diff) != "" {
 				issueEdits = append(issueEdits, issueEdit)
 			}
 		}
@@ -56,15 +54,15 @@ func (gi *githubImporter) ImportAll(repo *cache.RepoCache, since time.Time) erro
 		}
 
 		// loop over timeline items
-		for gi.iterator.NextTimeline() {
-			item := gi.iterator.TimelineValue()
+		for iterator.NextTimeline() {
+			item := iterator.TimelineValue()
 
 			// if item is comment
 			if item.Typename == "IssueComment" {
 				// collect all edits
 				commentEdits := []userContentEdit{}
-				for gi.iterator.NextCommentEdit() {
-					if commentEdit := gi.iterator.CommentEditValue(); commentEdit.Diff != nil && string(*commentEdit.Diff) != "" {
+				for iterator.NextCommentEdit() {
+					if commentEdit := iterator.CommentEditValue(); commentEdit.Diff != nil && string(*commentEdit.Diff) != "" {
 						commentEdits = append(commentEdits, commentEdit)
 					}
 				}
@@ -87,12 +85,12 @@ func (gi *githubImporter) ImportAll(repo *cache.RepoCache, since time.Time) erro
 		}
 	}
 
-	if err := gi.iterator.Error(); err != nil {
+	if err := iterator.Error(); err != nil {
 		fmt.Printf("import error: %v\n", err)
 		return err
 	}
 
-	fmt.Printf("Successfully imported %v issues from Github\n", gi.iterator.Count())
+	fmt.Printf("Successfully imported %v issues from Github\n", iterator.ImportedIssues())
 	return nil
 }
 
@@ -389,7 +387,7 @@ func (gi *githubImporter) ensureCommentEdit(repo *cache.RepoCache, b *cache.BugC
 	switch {
 	case edit.DeletedAt != nil:
 		// comment deletion, not supported yet
-		fmt.Println("comment deletion ....")
+		fmt.Println("comment deletion is not supported yet")
 
 	case edit.DeletedAt == nil:
 
@@ -475,7 +473,9 @@ func (gi *githubImporter) getGhost(repo *cache.RepoCache) (*cache.IdentityCache,
 		"login": githubv4.String("ghost"),
 	}
 
-	err = gi.iterator.gc.Query(context.TODO(), &q, variables)
+	gc := buildClient(gi.conf[keyToken])
+
+	err = gc.Query(context.TODO(), &q, variables)
 	if err != nil {
 		return nil, err
 	}
