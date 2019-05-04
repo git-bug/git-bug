@@ -34,7 +34,7 @@ func runLsID(cmd *cobra.Command, args []string) error {
 
 var listBugIDCmd = &cobra.Command{
 	Use:     "ls-id [<prefix>]",
-	Short:   "List Bug Id",
+	Short:   "List bug identifiers.",
 	PreRunE: loadRepo,
 	RunE:    runLsID,
 }
