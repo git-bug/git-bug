@@ -139,6 +139,33 @@ func (c *BugCache) ChangeLabelsRaw(author *IdentityCache, unixTime int64, added 
 	return changes, op, nil
 }
 
+func (c *BugCache) ForceChangeLabels(added []string, removed []string) (*bug.LabelChangeOperation, error) {
+	author, err := c.repoCache.GetUserIdentity()
+	if err != nil {
+		return nil, err
+	}
+
+	return c.ForceChangeLabelsRaw(author, time.Now().Unix(), added, removed, nil)
+}
+
+func (c *BugCache) ForceChangeLabelsRaw(author *IdentityCache, unixTime int64, added []string, removed []string, metadata map[string]string) (*bug.LabelChangeOperation, error) {
+	op, err := bug.ForceChangeLabels(c.bug, author.Identity, unixTime, added, removed)
+	if err != nil {
+		return nil, err
+	}
+
+	for key, value := range metadata {
+		op.SetMetadata(key, value)
+	}
+
+	err = c.notifyUpdated()
+	if err != nil {
+		return nil, err
+	}
+
+	return op, nil
+}
+
 func (c *BugCache) Open() (*bug.SetStatusOperation, error) {
 	author, err := c.repoCache.GetUserIdentity()
 	if err != nil {

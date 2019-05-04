@@ -40,7 +40,7 @@ func (gi *githubImporter) ImportAll(repo *cache.RepoCache, since time.Time) erro
 	for gi.iterator.NextIssue() {
 		issue := gi.iterator.IssueValue()
 
-		fmt.Printf("importing issue: %v\n", gi.iterator.count)
+		fmt.Printf("importing issue: %v %v\n", gi.iterator.count, issue.Title)
 		// get issue edits
 		issueEdits := []userContentEdit{}
 		for gi.iterator.NextIssueEdit() {
@@ -71,12 +71,12 @@ func (gi *githubImporter) ImportAll(repo *cache.RepoCache, since time.Time) erro
 
 				err := gi.ensureTimelineComment(repo, b, item.IssueComment, commentEdits)
 				if err != nil {
-					return fmt.Errorf("timeline event creation: %v", err)
+					return fmt.Errorf("timeline comment creation: %v", err)
 				}
 
 			} else {
 				if err := gi.ensureTimelineItem(repo, b, item); err != nil {
-					return fmt.Errorf("timeline comment creation: %v", err)
+					return fmt.Errorf("timeline event creation: %v", err)
 				}
 			}
 		}
@@ -189,7 +189,7 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 		if err != nil {
 			return err
 		}
-		_, _, err = b.ChangeLabelsRaw(
+		_, err = b.ForceChangeLabelsRaw(
 			author,
 			item.LabeledEvent.CreatedAt.Unix(),
 			[]string{
@@ -198,6 +198,7 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 			nil,
 			map[string]string{keyGithubId: id},
 		)
+
 		return err
 
 	case "UnlabeledEvent":
@@ -211,7 +212,7 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 			return err
 		}
 
-		_, _, err = b.ChangeLabelsRaw(
+		_, err = b.ForceChangeLabelsRaw(
 			author,
 			item.UnlabeledEvent.CreatedAt.Unix(),
 			nil,
