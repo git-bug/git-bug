@@ -1,18 +1,20 @@
 package github
 
 import (
+	"fmt"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/identity"
-	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/interrupt"
+	"github.com/MichaelMure/git-bug/util/test"
 )
 
 func Test_Importer(t *testing.T) {
@@ -112,20 +114,10 @@ func Test_Importer(t *testing.T) {
 		},
 	}
 
-	cwd, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	repo, err := repository.NewGitRepo(cwd, bug.Witnesser)
-	if err != nil {
-		t.Fatal(err)
-	}
+	repo := test.CreateRepo(false)
 
 	backend, err := cache.NewRepoCache(repo)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
@@ -141,69 +133,44 @@ func Test_Importer(t *testing.T) {
 		"project": "git-but-test-github-bridge",
 		"token":   token,
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
+
+	start := time.Now()
 
 	err = importer.ImportAll(backend, time.Time{})
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
-	ids := backend.AllBugsIds()
-	assert.Equal(t, len(ids), 8)
+	fmt.Printf("test repository imported in %f seconds\n", time.Since(start).Seconds())
+
+	require.Len(t, backend.AllBugsIds(), 8)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			b, err := backend.ResolveBugCreateMetadata(keyGithubUrl, tt.url)
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			ops := b.Snapshot().Operations
-			assert.Equal(t, len(tt.bug.Operations), len(b.Snapshot().Operations))
+			assert.Len(t, tt.bug.Operations, len(b.Snapshot().Operations))
 
 			for i, op := range tt.bug.Operations {
+				assert.IsType(t, ops[i], op)
+
 				switch op.(type) {
 				case *bug.CreateOperation:
-					if op2, ok := ops[i].(*bug.CreateOperation); ok {
-						assert.Equal(t, op2.Title, op.(*bug.CreateOperation).Title)
-						assert.Equal(t, op2.Message, op.(*bug.CreateOperation).Message)
-						continue
-					}
-					t.Errorf("bad operation type index = %d expected = CreationOperation", i)
+					assert.Equal(t, ops[i].(*bug.CreateOperation).Title, op.(*bug.CreateOperation).Title)
+					assert.Equal(t, ops[i].(*bug.CreateOperation).Message, op.(*bug.CreateOperation).Message)
 				case *bug.SetStatusOperation:
-					if op2, ok := ops[i].(*bug.SetStatusOperation); ok {
-						assert.Equal(t, op2.Status, op.(*bug.SetStatusOperation).Status)
-						continue
-					}
-					t.Errorf("bad operation type index = %d expected = SetStatusOperation", i)
+					assert.Equal(t, ops[i].(*bug.SetStatusOperation).Status, op.(*bug.SetStatusOperation).Status)
 				case *bug.SetTitleOperation:
-					if op2, ok := ops[i].(*bug.SetTitleOperation); ok {
-						assert.Equal(t, op.(*bug.SetTitleOperation).Was, op2.Was)
-						assert.Equal(t, op.(*bug.SetTitleOperation).Title, op2.Title)
-						continue
-					}
-					t.Errorf("bad operation type index = %d expected = SetTitleOperation", i)
+					assert.Equal(t, ops[i].(*bug.SetTitleOperation).Was, op.(*bug.SetTitleOperation).Was)
+					assert.Equal(t, ops[i].(*bug.SetTitleOperation).Title, op.(*bug.SetTitleOperation).Title)
 				case *bug.LabelChangeOperation:
-					if op2, ok := ops[i].(*bug.LabelChangeOperation); ok {
-						assert.ElementsMatch(t, op.(*bug.LabelChangeOperation).Added, op2.Added)
-						assert.ElementsMatch(t, op.(*bug.LabelChangeOperation).Removed, op2.Removed)
-						continue
-					}
-					t.Errorf("bad operation type index = %d expected = ChangeLabelOperation", i)
+					assert.ElementsMatch(t, ops[i].(*bug.LabelChangeOperation).Added, op.(*bug.LabelChangeOperation).Added)
+					assert.ElementsMatch(t, ops[i].(*bug.LabelChangeOperation).Removed, op.(*bug.LabelChangeOperation).Removed)
 				case *bug.AddCommentOperation:
-					if op2, ok := ops[i].(*bug.AddCommentOperation); ok {
-						assert.Equal(t, op.(*bug.AddCommentOperation).Message, op2.Message)
-						continue
-					}
-					t.Errorf("bad operation type index = %d expected = AddCommentOperation", i)
+					assert.Equal(t, ops[i].(*bug.AddCommentOperation).Message, op.(*bug.AddCommentOperation).Message)
 				case *bug.EditCommentOperation:
-					if op2, ok := ops[i].(*bug.EditCommentOperation); ok {
-						assert.Equal(t, op.(*bug.EditCommentOperation).Message, op2.Message)
-						continue
-					}
-					t.Errorf("bad operation type index = %d expected = EditCommentOperation", i)
+					assert.Equal(t, ops[i].(*bug.EditCommentOperation).Message, op.(*bug.EditCommentOperation).Message)
 				default:
 					panic("Unknown operation type")
 				}
