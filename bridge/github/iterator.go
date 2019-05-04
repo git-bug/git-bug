@@ -100,6 +100,8 @@ func (i *iterator) initTimelineQueryVariables() {
 	i.timeline.variables["issueSince"] = githubv4.DateTime{Time: i.since}
 	i.timeline.variables["timelineFirst"] = githubv4.Int(i.capacity)
 	i.timeline.variables["timelineAfter"] = (*githubv4.String)(nil)
+	// Fun fact, github provide the comment edition in reverse chronological
+	// order, because haha. Look at me, I'm dying of laughter.
 	i.timeline.variables["issueEditLast"] = githubv4.Int(i.capacity)
 	i.timeline.variables["issueEditBefore"] = (*githubv4.String)(nil)
 	i.timeline.variables["commentEditLast"] = githubv4.Int(i.capacity)
@@ -278,7 +280,16 @@ func (i *iterator) NextIssueEdit() bool {
 		return i.queryIssueEdit()
 	}
 
-	// if there is no edits
+	// if there is no edit, the UserContentEdits given by github is empty. That
+	// means that the original message is given by the issue message.
+	//
+	// if there is edits, the UserContentEdits given by github contains both the
+	// original message and the following edits. The issue message give the last
+	// version so we don't care about that.
+	//
+	// the tricky part: for an issue older than the UserContentEdits API, github
+	// doesn't have the previous message version anymore and give an edition
+	// with .Diff == nil. We have to filter them.
 	if len(i.timeline.query.Repository.Issues.Nodes[0].UserContentEdits.Nodes) == 0 {
 		return false
 	}

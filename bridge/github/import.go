@@ -42,6 +42,8 @@ func (gi *githubImporter) ImportAll(repo *cache.RepoCache, since time.Time) erro
 		// get issue edits
 		issueEdits := []userContentEdit{}
 		for iterator.NextIssueEdit() {
+			// issueEdit.Diff == nil happen if the event is older than early 2018, Github doesn't have the data before that.
+			// Best we can do is to ignore the event.
 			if issueEdit := iterator.IssueEditValue(); issueEdit.Diff != nil && string(*issueEdit.Diff) != "" {
 				issueEdits = append(issueEdits, issueEdit)
 			}
@@ -130,6 +132,7 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 		// create bug from given issueEdits
 		for i, edit := range issueEdits {
 			if i == 0 && b != nil {
+				// The first edit in the github result is the issue creation itself, we already have that
 				continue
 			}
 
@@ -323,6 +326,7 @@ func (gi *githubImporter) ensureTimelineComment(repo *cache.RepoCache, b *cache.
 	} else {
 		for i, edit := range item.UserContentEdits.Nodes {
 			if i == 0 && target != "" {
+				// The first edit in the github result is the comment creation itself, we already have that
 				continue
 			}
 

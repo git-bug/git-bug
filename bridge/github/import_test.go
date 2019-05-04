@@ -26,7 +26,7 @@ func Test_Importer(t *testing.T) {
 	}{
 		{
 			name: "simple issue",
-			url:  "https://github.com/MichaelMure/git-but-test-github-bridge/issues/1",
+			url:  "https://github.com/MichaelMure/git-bug-test-github-bridge/issues/1",
 			bug: &bug.Snapshot{
 				Operations: []bug.Operation{
 					bug.NewCreateOp(author, 0, "simple issue", "initial comment", nil),
@@ -36,7 +36,7 @@ func Test_Importer(t *testing.T) {
 		},
 		{
 			name: "empty issue",
-			url:  "https://github.com/MichaelMure/git-but-test-github-bridge/issues/2",
+			url:  "https://github.com/MichaelMure/git-bug-test-github-bridge/issues/2",
 			bug: &bug.Snapshot{
 				Operations: []bug.Operation{
 					bug.NewCreateOp(author, 0, "empty issue", "", nil),
@@ -45,7 +45,7 @@ func Test_Importer(t *testing.T) {
 		},
 		{
 			name: "complex issue",
-			url:  "https://github.com/MichaelMure/git-but-test-github-bridge/issues/3",
+			url:  "https://github.com/MichaelMure/git-bug-test-github-bridge/issues/3",
 			bug: &bug.Snapshot{
 				Operations: []bug.Operation{
 					bug.NewCreateOp(author, 0, "complex issue", "initial comment", nil),
@@ -62,7 +62,7 @@ func Test_Importer(t *testing.T) {
 		},
 		{
 			name: "editions",
-			url:  "https://github.com/MichaelMure/git-but-test-github-bridge/issues/4",
+			url:  "https://github.com/MichaelMure/git-bug-test-github-bridge/issues/4",
 			bug: &bug.Snapshot{
 				Operations: []bug.Operation{
 					bug.NewCreateOp(author, 0, "editions", "initial comment edited", nil),
@@ -74,7 +74,7 @@ func Test_Importer(t *testing.T) {
 		},
 		{
 			name: "comment deletion",
-			url:  "https://github.com/MichaelMure/git-but-test-github-bridge/issues/5",
+			url:  "https://github.com/MichaelMure/git-bug-test-github-bridge/issues/5",
 			bug: &bug.Snapshot{
 				Operations: []bug.Operation{
 					bug.NewCreateOp(author, 0, "comment deletion", "", nil),
@@ -83,7 +83,7 @@ func Test_Importer(t *testing.T) {
 		},
 		{
 			name: "edition deletion",
-			url:  "https://github.com/MichaelMure/git-but-test-github-bridge/issues/6",
+			url:  "https://github.com/MichaelMure/git-bug-test-github-bridge/issues/6",
 			bug: &bug.Snapshot{
 				Operations: []bug.Operation{
 					bug.NewCreateOp(author, 0, "edition deletion", "initial comment", nil),
@@ -95,7 +95,7 @@ func Test_Importer(t *testing.T) {
 		},
 		{
 			name: "hidden comment",
-			url:  "https://github.com/MichaelMure/git-but-test-github-bridge/issues/7",
+			url:  "https://github.com/MichaelMure/git-bug-test-github-bridge/issues/7",
 			bug: &bug.Snapshot{
 				Operations: []bug.Operation{
 					bug.NewCreateOp(author, 0, "hidden comment", "initial comment", nil),
@@ -105,7 +105,7 @@ func Test_Importer(t *testing.T) {
 		},
 		{
 			name: "transfered issue",
-			url:  "https://github.com/MichaelMure/git-but-test-github-bridge/issues/8",
+			url:  "https://github.com/MichaelMure/git-bug-test-github-bridge/issues/8",
 			bug: &bug.Snapshot{
 				Operations: []bug.Operation{
 					bug.NewCreateOp(author, 0, "transfered issue", "", nil),
@@ -130,7 +130,7 @@ func Test_Importer(t *testing.T) {
 	importer := &githubImporter{}
 	err = importer.Init(core.Configuration{
 		"user":    "MichaelMure",
-		"project": "git-but-test-github-bridge",
+		"project": "git-bug-test-github-bridge",
 		"token":   token,
 	})
 	require.NoError(t, err)
@@ -153,24 +153,31 @@ func Test_Importer(t *testing.T) {
 			assert.Len(t, tt.bug.Operations, len(b.Snapshot().Operations))
 
 			for i, op := range tt.bug.Operations {
-				assert.IsType(t, ops[i], op)
+				require.IsType(t, ops[i], op)
 
 				switch op.(type) {
 				case *bug.CreateOperation:
 					assert.Equal(t, ops[i].(*bug.CreateOperation).Title, op.(*bug.CreateOperation).Title)
 					assert.Equal(t, ops[i].(*bug.CreateOperation).Message, op.(*bug.CreateOperation).Message)
+					assert.Equal(t, ops[i].(*bug.CreateOperation).Author.Name(), op.(*bug.CreateOperation).Author.Name())
 				case *bug.SetStatusOperation:
 					assert.Equal(t, ops[i].(*bug.SetStatusOperation).Status, op.(*bug.SetStatusOperation).Status)
+					assert.Equal(t, ops[i].(*bug.SetStatusOperation).Author.Name(), op.(*bug.SetStatusOperation).Author.Name())
 				case *bug.SetTitleOperation:
 					assert.Equal(t, ops[i].(*bug.SetTitleOperation).Was, op.(*bug.SetTitleOperation).Was)
 					assert.Equal(t, ops[i].(*bug.SetTitleOperation).Title, op.(*bug.SetTitleOperation).Title)
+					assert.Equal(t, ops[i].(*bug.SetTitleOperation).Author.Name(), op.(*bug.SetTitleOperation).Author.Name())
 				case *bug.LabelChangeOperation:
 					assert.ElementsMatch(t, ops[i].(*bug.LabelChangeOperation).Added, op.(*bug.LabelChangeOperation).Added)
 					assert.ElementsMatch(t, ops[i].(*bug.LabelChangeOperation).Removed, op.(*bug.LabelChangeOperation).Removed)
+					assert.Equal(t, ops[i].(*bug.LabelChangeOperation).Author.Name(), op.(*bug.LabelChangeOperation).Author.Name())
 				case *bug.AddCommentOperation:
 					assert.Equal(t, ops[i].(*bug.AddCommentOperation).Message, op.(*bug.AddCommentOperation).Message)
+					assert.Equal(t, ops[i].(*bug.AddCommentOperation).Author.Name(), op.(*bug.AddCommentOperation).Author.Name())
 				case *bug.EditCommentOperation:
 					assert.Equal(t, ops[i].(*bug.EditCommentOperation).Message, op.(*bug.EditCommentOperation).Message)
+					assert.Equal(t, ops[i].(*bug.EditCommentOperation).Author.Name(), op.(*bug.EditCommentOperation).Author.Name())
+
 				default:
 					panic("Unknown operation type")
 				}
