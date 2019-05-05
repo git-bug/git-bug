@@ -324,7 +324,7 @@ func (gi *githubImporter) ensureTimelineComment(repo *cache.RepoCache, b *cache.
 			}
 		}
 	} else {
-		for i, edit := range item.UserContentEdits.Nodes {
+		for i, edit := range edits {
 			if i == 0 && target != "" {
 				// The first edit in the github result is the comment creation itself, we already have that
 				continue
