@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"time"
+
 	"github.com/MichaelMure/git-bug/bridge"
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/cache"
@@ -28,7 +30,8 @@ func runBridgePull(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	err = b.ImportAll()
+	// TODO: by default import only new events
+	err = b.ImportAll(time.Time{})
 	if err != nil {
 		return err
 	}

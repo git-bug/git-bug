@@ -387,6 +387,17 @@
   revision = "ac767d655b305d4e9612f5f6e33120b9176c4ad4"
 
 [[projects]]
+  digest = "1:86cb348528a842f96e651ca3f8197070e9ebc315f8c73e71d0df7a60e92a6db1"
+  name = "golang.org/x/text"
+  packages = [
+    "runes",
+    "transform",
+  ]
+  pruneopts = "UT"
+  revision = "342b2e1fbaa52c93f31447ad2c6abc048c63e475"
+  version = "v0.3.2"
+
+[[projects]]
   digest = "1:71850ac10bbeb4d8dd06ce0743fe57654daf28510b0f6cbd9692aaf0d269360e"
   name = "golang.org/x/tools"
   packages = [
@@ -460,6 +471,8 @@
     "github.com/vektah/gqlparser/ast",
     "golang.org/x/crypto/ssh/terminal",
     "golang.org/x/oauth2",
+    "golang.org/x/text/runes",
+    "golang.org/x/text/transform",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

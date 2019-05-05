@@ -44,7 +44,7 @@ func (li *launchpadImporter) ensurePerson(repo *cache.RepoCache, owner LPPerson)
 	)
 }
 
-func (li *launchpadImporter) ImportAll(repo *cache.RepoCache) error {
+func (li *launchpadImporter) ImportAll(repo *cache.RepoCache, since time.Time) error {
 	lpAPI := new(launchpadAPI)
 
 	err := lpAPI.Init()
@@ -137,10 +137,5 @@ func (li *launchpadImporter) ImportAll(repo *cache.RepoCache) error {
 			return err
 		}
 	}
-	return nil
-}
-
-func (li *launchpadImporter) Import(repo *cache.RepoCache, id string) error {
-	fmt.Println("IMPORT")
 	return nil
 }

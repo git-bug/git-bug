@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/repository"
@@ -265,7 +266,7 @@ func (b *Bridge) ensureInit() error {
 	return nil
 }
 
-func (b *Bridge) ImportAll() error {
+func (b *Bridge) ImportAll(since time.Time) error {
 	importer := b.getImporter()
 	if importer == nil {
 		return ErrImportNotSupported
@@ -281,29 +282,10 @@ func (b *Bridge) ImportAll() error {
 		return err
 	}
 
-	return importer.ImportAll(b.repo)
+	return importer.ImportAll(b.repo, since)
 }
 
-func (b *Bridge) Import(id string) error {
-	importer := b.getImporter()
-	if importer == nil {
-		return ErrImportNotSupported
-	}
-
-	err := b.ensureConfig()
-	if err != nil {
-		return err
-	}
-
-	err = b.ensureInit()
-	if err != nil {
-		return err
-	}
-
-	return importer.Import(b.repo, id)
-}
-
-func (b *Bridge) ExportAll() error {
+func (b *Bridge) ExportAll(since time.Time) error {
 	exporter := b.getExporter()
 	if exporter == nil {
 		return ErrExportNotSupported
@@ -319,24 +301,5 @@ func (b *Bridge) ExportAll() error {
 		return err
 	}
 
-	return exporter.ExportAll(b.repo)
-}
-
-func (b *Bridge) Export(id string) error {
-	exporter := b.getExporter()
-	if exporter == nil {
-		return ErrExportNotSupported
-	}
-
-	err := b.ensureConfig()
-	if err != nil {
-		return err
-	}
-
-	err = b.ensureInit()
-	if err != nil {
-		return err
-	}
-
-	return exporter.Export(b.repo, id)
+	return exporter.ExportAll(b.repo, since)
 }

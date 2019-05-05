@@ -3,273 +3,173 @@ package github
 import (
 	"context"
 	"fmt"
-	"strings"
+	"time"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/git"
+	"github.com/MichaelMure/git-bug/util/text"
 	"github.com/shurcooL/githubv4"
 )
 
-const keyGithubId = "github-id"
-const keyGithubUrl = "github-url"
-const keyGithubLogin = "github-login"
+const (
+	keyGithubId    = "github-id"
+	keyGithubUrl   = "github-url"
+	keyGithubLogin = "github-login"
+)
 
 // githubImporter implement the Importer interface
 type githubImporter struct {
-	client *githubv4.Client
-	conf   core.Configuration
+	conf core.Configuration
 }
 
 func (gi *githubImporter) Init(conf core.Configuration) error {
 	gi.conf = conf
-	gi.client = buildClient(conf)
-
 	return nil
 }
 
-func (gi *githubImporter) ImportAll(repo *cache.RepoCache) error {
-	q := &issueTimelineQuery{}
-	variables := map[string]interface{}{
-		"owner":         githubv4.String(gi.conf[keyUser]),
-		"name":          githubv4.String(gi.conf[keyProject]),
-		"issueFirst":    githubv4.Int(1),
-		"issueAfter":    (*githubv4.String)(nil),
-		"timelineFirst": githubv4.Int(10),
-		"timelineAfter": (*githubv4.String)(nil),
+// ImportAll .
+func (gi *githubImporter) ImportAll(repo *cache.RepoCache, since time.Time) error {
+	iterator := NewIterator(gi.conf[keyUser], gi.conf[keyProject], gi.conf[keyToken], since)
 
-		// Fun fact, github provide the comment edition in reverse chronological
-		// order, because haha. Look at me, I'm dying of laughter.
-		"issueEditLast":     githubv4.Int(10),
-		"issueEditBefore":   (*githubv4.String)(nil),
-		"commentEditLast":   githubv4.Int(10),
-		"commentEditBefore": (*githubv4.String)(nil),
-	}
+	// Loop over all matching issues
+	for iterator.NextIssue() {
+		issue := iterator.IssueValue()
 
-	var b *cache.BugCache
+		fmt.Printf("importing issue: %v %v\n", iterator.importedIssues, issue.Title)
+		// get issue edits
+		issueEdits := []userContentEdit{}
+		for iterator.NextIssueEdit() {
+			// issueEdit.Diff == nil happen if the event is older than early 2018, Github doesn't have the data before that.
+			// Best we can do is to ignore the event.
+			if issueEdit := iterator.IssueEditValue(); issueEdit.Diff != nil && string(*issueEdit.Diff) != "" {
+				issueEdits = append(issueEdits, issueEdit)
+			}
+		}
 
-	for {
-		err := gi.client.Query(context.TODO(), &q, variables)
+		// create issue
+		b, err := gi.ensureIssue(repo, issue, issueEdits)
 		if err != nil {
-			return err
+			return fmt.Errorf("issue creation: %v", err)
 		}
 
-		if len(q.Repository.Issues.Nodes) == 0 {
-			return nil
-		}
+		// loop over timeline items
+		for iterator.NextTimeline() {
+			item := iterator.TimelineValue()
 
-		issue := q.Repository.Issues.Nodes[0]
+			// if item is comment
+			if item.Typename == "IssueComment" {
+				// collect all edits
+				commentEdits := []userContentEdit{}
+				for iterator.NextCommentEdit() {
+					if commentEdit := iterator.CommentEditValue(); commentEdit.Diff != nil && string(*commentEdit.Diff) != "" {
+						commentEdits = append(commentEdits, commentEdit)
+					}
+				}
 
-		if b == nil {
-			b, err = gi.ensureIssue(repo, issue, variables)
-			if err != nil {
-				return err
+				err := gi.ensureTimelineComment(repo, b, item.IssueComment, commentEdits)
+				if err != nil {
+					return fmt.Errorf("timeline comment creation: %v", err)
+				}
+
+			} else {
+				if err := gi.ensureTimelineItem(repo, b, item); err != nil {
+					return fmt.Errorf("timeline event creation: %v", err)
+				}
 			}
 		}
 
-		for _, itemEdge := range q.Repository.Issues.Nodes[0].Timeline.Edges {
-			err = gi.ensureTimelineItem(repo, b, itemEdge.Cursor, itemEdge.Node, variables)
-			if err != nil {
-				return err
-			}
+		// commit bug state
+		if err := b.CommitAsNeeded(); err != nil {
+			return fmt.Errorf("bug commit: %v", err)
 		}
-
-		if !issue.Timeline.PageInfo.HasNextPage {
-			err = b.CommitAsNeeded()
-			if err != nil {
-				return err
-			}
-
-			b = nil
-
-			if !q.Repository.Issues.PageInfo.HasNextPage {
-				break
-			}
-
-			variables["issueAfter"] = githubv4.NewString(q.Repository.Issues.PageInfo.EndCursor)
-			variables["timelineAfter"] = (*githubv4.String)(nil)
-			continue
-		}
-
-		variables["timelineAfter"] = githubv4.NewString(issue.Timeline.PageInfo.EndCursor)
 	}
 
+	if err := iterator.Error(); err != nil {
+		fmt.Printf("import error: %v\n", err)
+		return err
+	}
+
+	fmt.Printf("Successfully imported %v issues from Github\n", iterator.ImportedIssues())
 	return nil
 }
 
-func (gi *githubImporter) Import(repo *cache.RepoCache, id string) error {
-	fmt.Println("IMPORT")
-
-	return nil
-}
-
-func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline, rootVariables map[string]interface{}) (*cache.BugCache, error) {
-	fmt.Printf("import issue: %s\n", issue.Title)
-
+func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline, issueEdits []userContentEdit) (*cache.BugCache, error) {
+	// ensure issue author
 	author, err := gi.ensurePerson(repo, issue.Author)
 	if err != nil {
 		return nil, err
 	}
 
-	b, err := repo.ResolveBugCreateMetadata(keyGithubId, parseId(issue.Id))
+	// resolve bug
+	b, err := repo.ResolveBugCreateMetadata(keyGithubUrl, issue.Url.String())
 	if err != nil && err != bug.ErrBugNotExist {
 		return nil, err
 	}
 
-	// if there is no edit, the UserContentEdits given by github is empty. That
-	// means that the original message is given by the issue message.
-	//
-	// if there is edits, the UserContentEdits given by github contains both the
-	// original message and the following edits. The issue message give the last
-	// version so we don't care about that.
-	//
-	// the tricky part: for an issue older than the UserContentEdits API, github
-	// doesn't have the previous message version anymore and give an edition
-	// with .Diff == nil. We have to filter them.
-
-	if len(issue.UserContentEdits.Nodes) == 0 {
+	// if issueEdits is empty
+	if len(issueEdits) == 0 {
 		if err == bug.ErrBugNotExist {
+			cleanText, err := text.Cleanup(string(issue.Body))
+			if err != nil {
+				return nil, err
+			}
+
+			// create bug
 			b, err = repo.NewBugRaw(
 				author,
 				issue.CreatedAt.Unix(),
-				// Todo: this might not be the initial title, we need to query the
-				// timeline to be sure
 				issue.Title,
-				cleanupText(string(issue.Body)),
+				cleanText,
 				nil,
 				map[string]string{
 					keyGithubId:  parseId(issue.Id),
 					keyGithubUrl: issue.Url.String(),
-				},
-			)
+				})
 			if err != nil {
 				return nil, err
 			}
 		}
 
-		return b, nil
-	}
-
-	// reverse the order, because github
-	reverseEdits(issue.UserContentEdits.Nodes)
-
-	for i, edit := range issue.UserContentEdits.Nodes {
-		if b != nil && i == 0 {
-			// The first edit in the github result is the creation itself, we already have that
-			continue
-		}
-
-		if b == nil {
-			if edit.Diff == nil {
-				// not enough data given by github for old edit, ignore them
+	} else {
+		// create bug from given issueEdits
+		for i, edit := range issueEdits {
+			if i == 0 && b != nil {
+				// The first edit in the github result is the issue creation itself, we already have that
 				continue
 			}
 
-			// we create the bug as soon as we have a legit first edition
-			b, err = repo.NewBugRaw(
-				author,
-				issue.CreatedAt.Unix(),
-				// Todo: this might not be the initial title, we need to query the
-				// timeline to be sure
-				issue.Title,
-				cleanupText(string(*edit.Diff)),
-				nil,
-				map[string]string{
-					keyGithubId:  parseId(issue.Id),
-					keyGithubUrl: issue.Url.String(),
-				},
-			)
+			cleanText, err := text.Cleanup(string(*edit.Diff))
 			if err != nil {
 				return nil, err
 			}
-			continue
-		}
 
-		target, err := b.ResolveOperationWithMetadata(keyGithubId, parseId(issue.Id))
-		if err != nil {
-			return nil, err
-		}
-
-		err = gi.ensureCommentEdit(repo, b, target, edit)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if !issue.UserContentEdits.PageInfo.HasNextPage {
-		// if we still didn't get a legit edit, create the bug from the issue data
-		if b == nil {
-			return repo.NewBugRaw(
-				author,
-				issue.CreatedAt.Unix(),
-				// Todo: this might not be the initial title, we need to query the
-				// timeline to be sure
-				issue.Title,
-				cleanupText(string(issue.Body)),
-				nil,
-				map[string]string{
-					keyGithubId:  parseId(issue.Id),
-					keyGithubUrl: issue.Url.String(),
-				},
-			)
-		}
-		return b, nil
-	}
-
-	// We have more edit, querying them
-
-	q := &issueEditQuery{}
-	variables := map[string]interface{}{
-		"owner":           rootVariables["owner"],
-		"name":            rootVariables["name"],
-		"issueFirst":      rootVariables["issueFirst"],
-		"issueAfter":      rootVariables["issueAfter"],
-		"issueEditLast":   githubv4.Int(10),
-		"issueEditBefore": issue.UserContentEdits.PageInfo.StartCursor,
-	}
-
-	for {
-		err := gi.client.Query(context.TODO(), &q, variables)
-		if err != nil {
-			return nil, err
-		}
-
-		edits := q.Repository.Issues.Nodes[0].UserContentEdits
-
-		if len(edits.Nodes) == 0 {
-			return b, nil
-		}
-
-		for _, edit := range edits.Nodes {
+			// if the bug doesn't exist
 			if b == nil {
-				if edit.Diff == nil {
-					// not enough data given by github for old edit, ignore them
-					continue
-				}
-
 				// we create the bug as soon as we have a legit first edition
 				b, err = repo.NewBugRaw(
 					author,
 					issue.CreatedAt.Unix(),
-					// Todo: this might not be the initial title, we need to query the
-					// timeline to be sure
 					issue.Title,
-					cleanupText(string(*edit.Diff)),
+					cleanText,
 					nil,
 					map[string]string{
 						keyGithubId:  parseId(issue.Id),
 						keyGithubUrl: issue.Url.String(),
 					},
 				)
+
 				if err != nil {
 					return nil, err
 				}
+
 				continue
 			}
 
-			target, err := b.ResolveOperationWithMetadata(keyGithubId, parseId(issue.Id))
+			// other edits will be added as CommentEdit operations
+			target, err := b.ResolveOperationWithMetadata(keyGithubUrl, issue.Url.String())
 			if err != nil {
 				return nil, err
 			}
@@ -279,42 +179,16 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 				return nil, err
 			}
 		}
-
-		if !edits.PageInfo.HasNextPage {
-			break
-		}
-
-		variables["issueEditBefore"] = edits.PageInfo.StartCursor
-	}
-
-	// TODO: check + import files
-
-	// if we still didn't get a legit edit, create the bug from the issue data
-	if b == nil {
-		return repo.NewBugRaw(
-			author,
-			issue.CreatedAt.Unix(),
-			// Todo: this might not be the initial title, we need to query the
-			// timeline to be sure
-			issue.Title,
-			cleanupText(string(issue.Body)),
-			nil,
-			map[string]string{
-				keyGithubId:  parseId(issue.Id),
-				keyGithubUrl: issue.Url.String(),
-			},
-		)
 	}
 
 	return b, nil
 }
 
-func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.BugCache, cursor githubv4.String, item timelineItem, rootVariables map[string]interface{}) error {
-	fmt.Printf("import %s\n", item.Typename)
+func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.BugCache, item timelineItem) error {
+	fmt.Printf("import event item: %s\n", item.Typename)
 
 	switch item.Typename {
 	case "IssueComment":
-		return gi.ensureComment(repo, b, cursor, item.IssueComment, rootVariables)
 
 	case "LabeledEvent":
 		id := parseId(item.LabeledEvent.Id)
@@ -326,7 +200,7 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 		if err != nil {
 			return err
 		}
-		_, _, err = b.ChangeLabelsRaw(
+		_, err = b.ForceChangeLabelsRaw(
 			author,
 			item.LabeledEvent.CreatedAt.Unix(),
 			[]string{
@@ -335,6 +209,7 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 			nil,
 			map[string]string{keyGithubId: id},
 		)
+
 		return err
 
 	case "UnlabeledEvent":
@@ -347,7 +222,8 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 		if err != nil {
 			return err
 		}
-		_, _, err = b.ChangeLabelsRaw(
+
+		_, err = b.ForceChangeLabelsRaw(
 			author,
 			item.UnlabeledEvent.CreatedAt.Unix(),
 			nil,
@@ -411,162 +287,109 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 		return err
 
 	default:
-		fmt.Println("ignore event ", item.Typename)
+		fmt.Printf("ignore event: %v\n", item.Typename)
 	}
 
 	return nil
 }
 
-func (gi *githubImporter) ensureComment(repo *cache.RepoCache, b *cache.BugCache, cursor githubv4.String, comment issueComment, rootVariables map[string]interface{}) error {
-	author, err := gi.ensurePerson(repo, comment.Author)
+func (gi *githubImporter) ensureTimelineComment(repo *cache.RepoCache, b *cache.BugCache, item issueComment, edits []userContentEdit) error {
+	// ensure person
+	author, err := gi.ensurePerson(repo, item.Author)
 	if err != nil {
 		return err
 	}
 
 	var target git.Hash
-	target, err = b.ResolveOperationWithMetadata(keyGithubId, parseId(comment.Id))
+	target, err = b.ResolveOperationWithMetadata(keyGithubId, parseId(item.Id))
 	if err != nil && err != cache.ErrNoMatchingOp {
 		// real error
 		return err
 	}
+	// if no edits are given we create the comment
+	if len(edits) == 0 {
 
-	// if there is no edit, the UserContentEdits given by github is empty. That
-	// means that the original message is given by the comment message.
-	//
-	// if there is edits, the UserContentEdits given by github contains both the
-	// original message and the following edits. The comment message give the last
-	// version so we don't care about that.
-	//
-	// the tricky part: for a comment older than the UserContentEdits API, github
-	// doesn't have the previous message version anymore and give an edition
-	// with .Diff == nil. We have to filter them.
-
-	if len(comment.UserContentEdits.Nodes) == 0 {
+		// if comment doesn't exist
 		if err == cache.ErrNoMatchingOp {
+			cleanText, err := text.Cleanup(string(item.Body))
+			if err != nil {
+				return err
+			}
+
+			// add comment operation
 			op, err := b.AddCommentRaw(
 				author,
-				comment.CreatedAt.Unix(),
-				cleanupText(string(comment.Body)),
+				item.CreatedAt.Unix(),
+				cleanText,
 				nil,
 				map[string]string{
-					keyGithubId: parseId(comment.Id),
+					keyGithubId:  parseId(item.Id),
+					keyGithubUrl: parseId(item.Url.String()),
 				},
 			)
 			if err != nil {
 				return err
 			}
 
+			// set hash
 			target, err = op.Hash()
 			if err != nil {
 				return err
 			}
 		}
-
-		return nil
-	}
-
-	// reverse the order, because github
-	reverseEdits(comment.UserContentEdits.Nodes)
-
-	for i, edit := range comment.UserContentEdits.Nodes {
-		if target != "" && i == 0 {
-			// The first edit in the github result is the comment creation itself, we already have that
-			continue
-		}
-
-		if target == "" {
-			if edit.Diff == nil {
-				// not enough data given by github for old edit, ignore them
+	} else {
+		for i, edit := range edits {
+			if i == 0 && target != "" {
+				// The first edit in the github result is the comment creation itself, we already have that
 				continue
 			}
 
-			op, err := b.AddCommentRaw(
-				author,
-				comment.CreatedAt.Unix(),
-				cleanupText(string(*edit.Diff)),
-				nil,
-				map[string]string{
-					keyGithubId:  parseId(comment.Id),
-					keyGithubUrl: comment.Url.String(),
-				},
-			)
+			// ensure editor identity
+			editor, err := gi.ensurePerson(repo, edit.Editor)
 			if err != nil {
 				return err
 			}
 
-			target, err = op.Hash()
-			if err != nil {
-				return err
-			}
-		}
+			// create comment when target is empty
+			if target == "" {
+				cleanText, err := text.Cleanup(string(*edit.Diff))
+				if err != nil {
+					return err
+				}
 
-		err := gi.ensureCommentEdit(repo, b, target, edit)
-		if err != nil {
-			return err
-		}
-	}
+				op, err := b.AddCommentRaw(
+					editor,
+					edit.CreatedAt.Unix(),
+					cleanText,
+					nil,
+					map[string]string{
+						keyGithubId:  parseId(item.Id),
+						keyGithubUrl: item.Url.String(),
+					},
+				)
+				if err != nil {
+					return err
+				}
 
-	if !comment.UserContentEdits.PageInfo.HasNextPage {
-		return nil
-	}
+				// set hash
+				target, err = op.Hash()
+				if err != nil {
+					return err
+				}
 
-	// We have more edit, querying them
-
-	q := &commentEditQuery{}
-	variables := map[string]interface{}{
-		"owner":             rootVariables["owner"],
-		"name":              rootVariables["name"],
-		"issueFirst":        rootVariables["issueFirst"],
-		"issueAfter":        rootVariables["issueAfter"],
-		"timelineFirst":     githubv4.Int(1),
-		"timelineAfter":     cursor,
-		"commentEditLast":   githubv4.Int(10),
-		"commentEditBefore": comment.UserContentEdits.PageInfo.StartCursor,
-	}
-
-	for {
-		err := gi.client.Query(context.TODO(), &q, variables)
-		if err != nil {
-			return err
-		}
-
-		edits := q.Repository.Issues.Nodes[0].Timeline.Nodes[0].IssueComment.UserContentEdits
-
-		if len(edits.Nodes) == 0 {
-			return nil
-		}
-
-		for i, edit := range edits.Nodes {
-			if i == 0 {
-				// The first edit in the github result is the creation itself, we already have that
 				continue
 			}
 
-			err := gi.ensureCommentEdit(repo, b, target, edit)
+			err = gi.ensureCommentEdit(repo, b, target, edit)
 			if err != nil {
 				return err
 			}
 		}
-
-		if !edits.PageInfo.HasNextPage {
-			break
-		}
-
-		variables["commentEditBefore"] = edits.PageInfo.StartCursor
 	}
-
-	// TODO: check + import files
-
 	return nil
 }
 
 func (gi *githubImporter) ensureCommentEdit(repo *cache.RepoCache, b *cache.BugCache, target git.Hash, edit userContentEdit) error {
-	if edit.Diff == nil {
-		// this happen if the event is older than early 2018, Github doesn't have the data before that.
-		// Best we can do is to ignore the event.
-		return nil
-	}
-
 	_, err := b.ResolveOperationWithMetadata(keyGithubId, parseId(edit.Id))
 	if err == nil {
 		// already imported
@@ -587,18 +410,26 @@ func (gi *githubImporter) ensureCommentEdit(repo *cache.RepoCache, b *cache.BugC
 	switch {
 	case edit.DeletedAt != nil:
 		// comment deletion, not supported yet
+		fmt.Println("comment deletion is not supported yet")
 
 	case edit.DeletedAt == nil:
+
+		cleanText, err := text.Cleanup(string(*edit.Diff))
+		if err != nil {
+			return err
+		}
+
 		// comment edition
-		_, err := b.EditCommentRaw(
+		_, err = b.EditCommentRaw(
 			editor,
 			edit.CreatedAt.Unix(),
 			target,
-			cleanupText(string(*edit.Diff)),
+			cleanText,
 			map[string]string{
 				keyGithubId: parseId(edit.Id),
 			},
 		)
+
 		if err != nil {
 			return err
 		}
@@ -670,7 +501,9 @@ func (gi *githubImporter) getGhost(repo *cache.RepoCache) (*cache.IdentityCache,
 		"login": githubv4.String("ghost"),
 	}
 
-	err = gi.client.Query(context.TODO(), &q, variables)
+	gc := buildClient(gi.conf[keyToken])
+
+	err = gc.Query(context.TODO(), &q, variables)
 	if err != nil {
 		return nil, err
 	}
@@ -694,14 +527,6 @@ func (gi *githubImporter) getGhost(repo *cache.RepoCache) (*cache.IdentityCache,
 // parseId convert the unusable githubv4.ID (an interface{}) into a string
 func parseId(id githubv4.ID) string {
 	return fmt.Sprintf("%v", id)
-}
-
-func cleanupText(text string) string {
-	// windows new line, Github, really ?
-	text = strings.Replace(text, "\r\n", "\n", -1)
-
-	// trim extra new line not displayed in the github UI but still present in the data
-	return strings.TrimSpace(text)
 }
 
 func reverseEdits(edits []userContentEdit) []userContentEdit {
