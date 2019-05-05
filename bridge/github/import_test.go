@@ -31,7 +31,8 @@ func Test_Importer(t *testing.T) {
 				Operations: []bug.Operation{
 					bug.NewCreateOp(author, 0, "simple issue", "initial comment", nil),
 					bug.NewAddCommentOp(author, 0, "first comment", nil),
-					bug.NewAddCommentOp(author, 0, "second comment", nil)},
+					bug.NewAddCommentOp(author, 0, "second comment", nil),
+				},
 			},
 		},
 		{
@@ -112,6 +113,15 @@ func Test_Importer(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "unicode control characters",
+			url:  "https://github.com/MichaelMure/git-bug-test-github-bridge/issues/10",
+			bug: &bug.Snapshot{
+				Operations: []bug.Operation{
+					bug.NewCreateOp(author, 0, "unicode control characters", "u0000: \nu0001: \nu0002: \nu0003: \nu0004: \nu0005: \nu0006: \nu0007: \nu0008: \nu0009: \t\nu0010: \nu0011: \nu0012: \nu0013: \nu0014: \nu0015: \nu0016: \nu0017: \nu0018: \nu0019:", nil),
+				},
+			},
+		},
 	}
 
 	repo := test.CreateRepo(false)
@@ -142,7 +152,7 @@ func Test_Importer(t *testing.T) {
 
 	fmt.Printf("test repository imported in %f seconds\n", time.Since(start).Seconds())
 
-	require.Len(t, backend.AllBugsIds(), 8)
+	require.Len(t, backend.AllBugsIds(), 9)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -157,26 +167,26 @@ func Test_Importer(t *testing.T) {
 
 				switch op.(type) {
 				case *bug.CreateOperation:
-					assert.Equal(t, ops[i].(*bug.CreateOperation).Title, op.(*bug.CreateOperation).Title)
-					assert.Equal(t, ops[i].(*bug.CreateOperation).Message, op.(*bug.CreateOperation).Message)
-					assert.Equal(t, ops[i].(*bug.CreateOperation).Author.Name(), op.(*bug.CreateOperation).Author.Name())
+					assert.Equal(t, op.(*bug.CreateOperation).Title, ops[i].(*bug.CreateOperation).Title)
+					assert.Equal(t, op.(*bug.CreateOperation).Message, ops[i].(*bug.CreateOperation).Message)
+					assert.Equal(t, op.(*bug.CreateOperation).Author.Name(), ops[i].(*bug.CreateOperation).Author.Name())
 				case *bug.SetStatusOperation:
-					assert.Equal(t, ops[i].(*bug.SetStatusOperation).Status, op.(*bug.SetStatusOperation).Status)
-					assert.Equal(t, ops[i].(*bug.SetStatusOperation).Author.Name(), op.(*bug.SetStatusOperation).Author.Name())
+					assert.Equal(t, op.(*bug.SetStatusOperation).Status, ops[i].(*bug.SetStatusOperation).Status)
+					assert.Equal(t, op.(*bug.SetStatusOperation).Author.Name(), ops[i].(*bug.SetStatusOperation).Author.Name())
 				case *bug.SetTitleOperation:
-					assert.Equal(t, ops[i].(*bug.SetTitleOperation).Was, op.(*bug.SetTitleOperation).Was)
-					assert.Equal(t, ops[i].(*bug.SetTitleOperation).Title, op.(*bug.SetTitleOperation).Title)
-					assert.Equal(t, ops[i].(*bug.SetTitleOperation).Author.Name(), op.(*bug.SetTitleOperation).Author.Name())
+					assert.Equal(t, op.(*bug.SetTitleOperation).Was, ops[i].(*bug.SetTitleOperation).Was)
+					assert.Equal(t, op.(*bug.SetTitleOperation).Title, ops[i].(*bug.SetTitleOperation).Title)
+					assert.Equal(t, op.(*bug.SetTitleOperation).Author.Name(), ops[i].(*bug.SetTitleOperation).Author.Name())
 				case *bug.LabelChangeOperation:
-					assert.ElementsMatch(t, ops[i].(*bug.LabelChangeOperation).Added, op.(*bug.LabelChangeOperation).Added)
-					assert.ElementsMatch(t, ops[i].(*bug.LabelChangeOperation).Removed, op.(*bug.LabelChangeOperation).Removed)
-					assert.Equal(t, ops[i].(*bug.LabelChangeOperation).Author.Name(), op.(*bug.LabelChangeOperation).Author.Name())
+					assert.ElementsMatch(t, op.(*bug.LabelChangeOperation).Added, ops[i].(*bug.LabelChangeOperation).Added)
+					assert.ElementsMatch(t, op.(*bug.LabelChangeOperation).Removed, ops[i].(*bug.LabelChangeOperation).Removed)
+					assert.Equal(t, op.(*bug.LabelChangeOperation).Author.Name(), ops[i].(*bug.LabelChangeOperation).Author.Name())
 				case *bug.AddCommentOperation:
-					assert.Equal(t, ops[i].(*bug.AddCommentOperation).Message, op.(*bug.AddCommentOperation).Message)
-					assert.Equal(t, ops[i].(*bug.AddCommentOperation).Author.Name(), op.(*bug.AddCommentOperation).Author.Name())
+					assert.Equal(t, op.(*bug.AddCommentOperation).Message, ops[i].(*bug.AddCommentOperation).Message)
+					assert.Equal(t, op.(*bug.AddCommentOperation).Author.Name(), ops[i].(*bug.AddCommentOperation).Author.Name())
 				case *bug.EditCommentOperation:
-					assert.Equal(t, ops[i].(*bug.EditCommentOperation).Message, op.(*bug.EditCommentOperation).Message)
-					assert.Equal(t, ops[i].(*bug.EditCommentOperation).Author.Name(), op.(*bug.EditCommentOperation).Author.Name())
+					assert.Equal(t, op.(*bug.EditCommentOperation).Message, ops[i].(*bug.EditCommentOperation).Message)
+					assert.Equal(t, op.(*bug.EditCommentOperation).Author.Name(), ops[i].(*bug.EditCommentOperation).Author.Name())
 
 				default:
 					panic("Unknown operation type")

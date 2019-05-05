@@ -3,7 +3,6 @@ package github
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
@@ -11,6 +10,7 @@ import (
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/git"
+	"github.com/MichaelMure/git-bug/util/text"
 	"github.com/shurcooL/githubv4"
 )
 
@@ -112,12 +112,17 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 	// if issueEdits is empty
 	if len(issueEdits) == 0 {
 		if err == bug.ErrBugNotExist {
+			cleanText, err := text.Cleanup(string(issue.Body))
+			if err != nil {
+				return nil, err
+			}
+
 			// create bug
 			b, err = repo.NewBugRaw(
 				author,
 				issue.CreatedAt.Unix(),
 				issue.Title,
-				cleanupText(string(issue.Body)),
+				cleanText,
 				nil,
 				map[string]string{
 					keyGithubId:  parseId(issue.Id),
@@ -136,6 +141,11 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 				continue
 			}
 
+			cleanText, err := text.Cleanup(string(*edit.Diff))
+			if err != nil {
+				return nil, err
+			}
+
 			// if the bug doesn't exist
 			if b == nil {
 				// we create the bug as soon as we have a legit first edition
@@ -143,7 +153,7 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 					author,
 					issue.CreatedAt.Unix(),
 					issue.Title,
-					cleanupText(string(*edit.Diff)),
+					cleanText,
 					nil,
 					map[string]string{
 						keyGithubId:  parseId(issue.Id),
@@ -301,12 +311,16 @@ func (gi *githubImporter) ensureTimelineComment(repo *cache.RepoCache, b *cache.
 
 		// if comment doesn't exist
 		if err == cache.ErrNoMatchingOp {
+			cleanText, err := text.Cleanup(string(item.Body))
+			if err != nil {
+				return err
+			}
 
 			// add comment operation
 			op, err := b.AddCommentRaw(
 				author,
 				item.CreatedAt.Unix(),
-				cleanupText(string(item.Body)),
+				cleanText,
 				nil,
 				map[string]string{
 					keyGithubId:  parseId(item.Id),
@@ -338,10 +352,15 @@ func (gi *githubImporter) ensureTimelineComment(repo *cache.RepoCache, b *cache.
 
 			// create comment when target is empty
 			if target == "" {
+				cleanText, err := text.Cleanup(string(*edit.Diff))
+				if err != nil {
+					return err
+				}
+
 				op, err := b.AddCommentRaw(
 					editor,
 					edit.CreatedAt.Unix(),
-					cleanupText(string(*edit.Diff)),
+					cleanText,
 					nil,
 					map[string]string{
 						keyGithubId:  parseId(item.Id),
@@ -395,12 +414,17 @@ func (gi *githubImporter) ensureCommentEdit(repo *cache.RepoCache, b *cache.BugC
 
 	case edit.DeletedAt == nil:
 
+		cleanText, err := text.Cleanup(string(*edit.Diff))
+		if err != nil {
+			return err
+		}
+
 		// comment edition
-		_, err := b.EditCommentRaw(
+		_, err = b.EditCommentRaw(
 			editor,
 			edit.CreatedAt.Unix(),
 			target,
-			cleanupText(string(*edit.Diff)),
+			cleanText,
 			map[string]string{
 				keyGithubId: parseId(edit.Id),
 			},
@@ -503,14 +527,6 @@ func (gi *githubImporter) getGhost(repo *cache.RepoCache) (*cache.IdentityCache,
 // parseId convert the unusable githubv4.ID (an interface{}) into a string
 func parseId(id githubv4.ID) string {
 	return fmt.Sprintf("%v", id)
-}
-
-func cleanupText(text string) string {
-	// windows new line, Github, really ?
-	text = strings.Replace(text, "\r\n", "\n", -1)
-
-	// trim extra new line not displayed in the github UI but still present in the data
-	return strings.TrimSpace(text)
 }
 
 func reverseEdits(edits []userContentEdit) []userContentEdit {
