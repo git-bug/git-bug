@@ -5,8 +5,6 @@
 
 <div align="center">
 
-Distributed bug tracker embedded in Git.
-
 [![Build Status](https://travis-ci.org/MichaelMure/git-bug.svg?branch=master)](https://travis-ci.org/MichaelMure/git-bug)
 [![Backers on Open Collective](https://opencollective.com/git-bug/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/git-bug/sponsors/badge.svg)](#sponsors) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3+-blue.svg)](http://www.gnu.org/licenses/gpl-3.0)
 [![GoDoc](https://godoc.org/github.com/MichaelMure/git-bug?status.svg)](https://godoc.org/github.com/MichaelMure/git-bug)
@@ -15,19 +13,22 @@ Distributed bug tracker embedded in Git.
 
 </div>
 
-Would it be nice to not have to rely on a web service somewhere to deal with bugs ?
+`git-bug` is a bug tracker that:
+- **fully embed in git**: you only need your git repository to have a bug tracker
+- **is distributed**: use your normal git remote to collaborate, push and pull your bugs !
+- **works offline**: in a plane or under the sea ? keep reading and writing bugs
+- **prevent vendor locking**: your usual service is down or went bad ? you already have a full backup
+- **is fast**: listing bugs or opening them is a matter of milliseconds
+- **doesn't pollute your project**: no files are added in your project
+- **integrate with your tooling**: use the UI you like (CLI, terminal, web) or integrate with your existing tools through the CLI or the GraphQL API
+- **bridge with other bug trackers**: [bridges](#bridges) exist to import and soon export to other trackers.
 
-Would it be nice to be able to browse and edit bug reports offline?
-
-`git-bug` is a distributed bug tracker embedded in `git`. It uses git's internal storage so **no files are added in your project**.
-
-As you would do with commits and branches, you can push your bugs to the same git remote you are already using to collaborate with other people.
-
-:construction: This is for now a proof of concept. Expect dragons and unfinished business. :construction:
+:construction: This is now more than a proof of concept, but still not fully stable. Expect dragons and unfinished business. :construction:
 
 ## Install
 
-### Go get
+<details><summary>go get</summary>
+
 ```shell
 go get -u github.com/MichaelMure/git-bug
 ```
@@ -38,7 +39,9 @@ If it's not done already, add golang binary directory in your PATH:
 export PATH=$PATH:$(go env GOROOT)/bin:$(go env GOPATH)/bin
 ```
 
-### Pre-compiled binaries
+</details>
+
+<details><summary>Pre-compiled binaries</summary>
 
 1. Go to the [release page](https://github.com/MichaelMure/git-bug/releases/latest) and download the appropriate binary for your system.
 2. Copy the binary anywhere in your PATH
@@ -46,9 +49,13 @@ export PATH=$PATH:$(go env GOROOT)/bin:$(go env GOPATH)/bin
 
 That's all !
 
-### Linux packages
+</details>
+
+<details><summary>Linux packages</summary>
 
 * [Archlinux (AUR)](https://aur.archlinux.org/packages/?K=git-bug)
+
+</details>
 
 ## CLI usage
 
@@ -166,7 +173,7 @@ You can now run `make` to build the project, or `make install` to install the bi
 To work on the web UI, have a look at [the dedicated Readme.](webui/Readme.md)
 
 
-## Contributors
+## Contributors :heart:
 
 This project exists thanks to all the people who contribute.
 <a href="https://github.com/MichaelMure/git-bug/graphs/contributors"><img src="https://opencollective.com/git-bug/contributors.svg?width=890&button=false" /></a>
