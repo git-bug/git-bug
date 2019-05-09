@@ -307,6 +307,12 @@ func TestExtractApplyTermEscapes(t *testing.T) {
 			"This is an example.",
 			[]escapeItem{{"\x1b[31m", 5}, {"\x1b[0m", 10}},
 		},
+		// Escape at the end
+		{
+			"This \x1b[31mis an example.\x1b[0m",
+			"This is an example.",
+			[]escapeItem{{"\x1b[31m", 5}, {"\x1b[0m", 19}},
+		},
 		// A plain wide line with escapes.
 		{
 			"一只敏捷\x1b[31m的狐狸\x1b[0m跳过了一只懒狗。",

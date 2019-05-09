@@ -60,7 +60,7 @@ func WrapLeftPadded(text string, lineWidth int, leftPad int) (string, int) {
 // WRAPPING ALGORITHM: The line is broken into non-breakable chunks, then line
 // breaks ("\n") are inserted between these groups so that the total length
 // between breaks does not exceed the required width. Words that are longer than
-// the textWidth are broen into pieces no longer than textWidth.
+// the textWidth are broken into pieces no longer than textWidth.
 //
 func softwrapLine(line string, textWidth int) string {
 	// NOTE: terminal escapes are stripped out of the line so the algorithm is
@@ -185,6 +185,11 @@ func applyTermEscapes(line string, escapes []escapeItem) string {
 			}
 			out += string(r)
 		}
+	}
+
+	// Don't forget the trailing escape, if any.
+	if currItem == len(escapes)-1 && currPos == escapes[currItem].pos {
+		out += escapes[currItem].item
 	}
 
 	return out
