@@ -54,22 +54,15 @@ func (gi *githubImporter) ImportAll(repo *cache.RepoCache, since time.Time) erro
 		fmt.Printf("importing issue: %v %v\n", gi.importedIssues+1, issue.Title)
 		gi.importedIssues++
 
-		// get issue edits
-		issueEdits := []userContentEdit{}
-		for gi.iterator.NextIssueEdit() {
-			issueEdits = append(issueEdits, gi.iterator.IssueEditValue())
-		}
-
 		// create issue
-		b, err := gi.ensureIssue(repo, issue, issueEdits)
+		b, err := gi.ensureIssue(repo, issue)
 		if err != nil {
 			return fmt.Errorf("issue creation: %v", err)
 		}
 
 		// loop over timeline items
 		for gi.iterator.NextTimeline() {
-			item := gi.iterator.TimelineValue()
-			if err := gi.ensureTimelineItem(repo, b, item); err != nil {
+			if err := gi.ensureTimelineItem(repo, b, gi.iterator.TimelineValue()); err != nil {
 				return fmt.Errorf("timeline event creation: %v", err)
 			}
 		}
@@ -90,7 +83,7 @@ func (gi *githubImporter) ImportAll(repo *cache.RepoCache, since time.Time) erro
 	return nil
 }
 
-func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline, issueEdits []userContentEdit) (*cache.BugCache, error) {
+func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline) (*cache.BugCache, error) {
 	// ensure issue author
 	author, err := gi.ensurePerson(repo, issue.Author)
 	if err != nil {
@@ -101,6 +94,12 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 	b, err := repo.ResolveBugCreateMetadata(keyGithubUrl, issue.Url.String())
 	if err != nil && err != bug.ErrBugNotExist {
 		return nil, err
+	}
+
+	// get issue edits
+	issueEdits := []userContentEdit{}
+	for gi.iterator.NextIssueEdit() {
+		issueEdits = append(issueEdits, gi.iterator.IssueEditValue())
 	}
 
 	// if issueEdits is empty
