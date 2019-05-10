@@ -23,6 +23,15 @@ const (
 // githubImporter implement the Importer interface
 type githubImporter struct {
 	conf core.Configuration
+
+	// iterator
+	iterator *iterator
+
+	// number of imported issues
+	importedIssues int
+
+	// number of imported identities
+	importedIdentities int
 }
 
 func (gi *githubImporter) Init(conf core.Configuration) error {
@@ -30,23 +39,25 @@ func (gi *githubImporter) Init(conf core.Configuration) error {
 	return nil
 }
 
+func (gi *githubImporter) Reset() {
+	gi.importedIssues = 0
+	gi.importedIdentities = 0
+}
+
 // ImportAll .
 func (gi *githubImporter) ImportAll(repo *cache.RepoCache, since time.Time) error {
-	iterator := NewIterator(gi.conf[keyUser], gi.conf[keyProject], gi.conf[keyToken], since)
+	gi.iterator = NewIterator(gi.conf[keyUser], gi.conf[keyProject], gi.conf[keyToken], since)
 
 	// Loop over all matching issues
-	for iterator.NextIssue() {
-		issue := iterator.IssueValue()
+	for gi.iterator.NextIssue() {
+		issue := gi.iterator.IssueValue()
+		fmt.Printf("importing issue: %v %v\n", gi.importedIssues+1, issue.Title)
+		gi.importedIssues++
 
-		fmt.Printf("importing issue: %v %v\n", iterator.importedIssues, issue.Title)
 		// get issue edits
 		issueEdits := []userContentEdit{}
-		for iterator.NextIssueEdit() {
-			// issueEdit.Diff == nil happen if the event is older than early 2018, Github doesn't have the data before that.
-			// Best we can do is to ignore the event.
-			if issueEdit := iterator.IssueEditValue(); issueEdit.Diff != nil && string(*issueEdit.Diff) != "" {
-				issueEdits = append(issueEdits, issueEdit)
-			}
+		for gi.iterator.NextIssueEdit() {
+			issueEdits = append(issueEdits, gi.iterator.IssueEditValue())
 		}
 
 		// create issue
@@ -56,28 +67,10 @@ func (gi *githubImporter) ImportAll(repo *cache.RepoCache, since time.Time) erro
 		}
 
 		// loop over timeline items
-		for iterator.NextTimeline() {
-			item := iterator.TimelineValue()
-
-			// if item is comment
-			if item.Typename == "IssueComment" {
-				// collect all edits
-				commentEdits := []userContentEdit{}
-				for iterator.NextCommentEdit() {
-					if commentEdit := iterator.CommentEditValue(); commentEdit.Diff != nil && string(*commentEdit.Diff) != "" {
-						commentEdits = append(commentEdits, commentEdit)
-					}
-				}
-
-				err := gi.ensureTimelineComment(repo, b, item.IssueComment, commentEdits)
-				if err != nil {
-					return fmt.Errorf("timeline comment creation: %v", err)
-				}
-
-			} else {
-				if err := gi.ensureTimelineItem(repo, b, item); err != nil {
-					return fmt.Errorf("timeline event creation: %v", err)
-				}
+		for gi.iterator.NextTimeline() {
+			item := gi.iterator.TimelineValue()
+			if err := gi.ensureTimelineItem(repo, b, item); err != nil {
+				return fmt.Errorf("timeline event creation: %v", err)
 			}
 		}
 
@@ -87,12 +80,13 @@ func (gi *githubImporter) ImportAll(repo *cache.RepoCache, since time.Time) erro
 		}
 	}
 
-	if err := iterator.Error(); err != nil {
+	if err := gi.iterator.Error(); err != nil {
 		fmt.Printf("import error: %v\n", err)
 		return err
 	}
 
-	fmt.Printf("Successfully imported %v issues from Github\n", iterator.ImportedIssues())
+	fmt.Printf("Successfully imported %d issues from Github\n", gi.importedIssues)
+	fmt.Printf("Total imported identities: %d\n", gi.importedIdentities)
 	return nil
 }
 
@@ -189,6 +183,16 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 
 	switch item.Typename {
 	case "IssueComment":
+		// collect all comment edits
+		commentEdits := []userContentEdit{}
+		for gi.iterator.NextCommentEdit() {
+			commentEdits = append(commentEdits, gi.iterator.CommentEditValue())
+		}
+
+		err := gi.ensureTimelineComment(repo, b, item.IssueComment, commentEdits)
+		if err != nil {
+			return fmt.Errorf("timeline comment creation: %v", err)
+		}
 
 	case "LabeledEvent":
 		id := parseId(item.LabeledEvent.Id)
@@ -455,6 +459,9 @@ func (gi *githubImporter) ensurePerson(repo *cache.RepoCache, actor *actor) (*ca
 		return nil, err
 	}
 
+	// importing a new identity
+	gi.importedIdentities++
+
 	var name string
 	var email string
 
@@ -527,11 +534,4 @@ func (gi *githubImporter) getGhost(repo *cache.RepoCache) (*cache.IdentityCache,
 // parseId convert the unusable githubv4.ID (an interface{}) into a string
 func parseId(id githubv4.ID) string {
 	return fmt.Sprintf("%v", id)
-}
-
-func reverseEdits(edits []userContentEdit) []userContentEdit {
-	for i, j := 0, len(edits)-1; i < j; i, j = i+1, j-1 {
-		edits[i], edits[j] = edits[j], edits[i]
-	}
-	return edits
 }

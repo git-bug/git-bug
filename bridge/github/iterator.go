@@ -49,8 +49,8 @@ type iterator struct {
 	// sticky error
 	err error
 
-	// number of imported issues
-	importedIssues int
+	// started
+	started bool
 
 	// timeline iterator
 	timeline timelineIterator
@@ -145,11 +145,6 @@ func (i *iterator) Error() error {
 	return i.err
 }
 
-// ImportedIssues return the number of issues we iterated over
-func (i *iterator) ImportedIssues() int {
-	return i.importedIssues
-}
-
 func (i *iterator) queryIssue() bool {
 	if err := i.gc.Query(context.TODO(), &i.timeline.query, i.timeline.variables); err != nil {
 		i.err = err
@@ -161,17 +156,16 @@ func (i *iterator) queryIssue() bool {
 	}
 
 	i.reverseTimelineEditNodes()
-	i.importedIssues++
 	return true
 }
 
 // Next issue
 func (i *iterator) NextIssue() bool {
 	// we make the first move
-	if i.importedIssues == 0 {
-
+	if !i.started {
 		// init variables and goto queryIssue block
 		i.initTimelineQueryVariables()
+		i.started = true
 		return i.queryIssue()
 	}
 
@@ -266,6 +260,9 @@ func (i *iterator) NextIssueEdit() bool {
 	if i.timeline.issueEdit.index == -2 {
 		if i.issueEdit.index < min(i.capacity, len(i.issueEdit.query.Repository.Issues.Nodes[0].UserContentEdits.Nodes))-1 {
 			i.issueEdit.index++
+			if issueEdit := i.IssueEditValue(); issueEdit.Diff == nil || string(*issueEdit.Diff) == "" {
+				return i.NextIssueEdit()
+			}
 			return true
 		}
 
@@ -297,6 +294,11 @@ func (i *iterator) NextIssueEdit() bool {
 	// loop over them timeline comment edits
 	if i.timeline.issueEdit.index < min(i.capacity, len(i.timeline.query.Repository.Issues.Nodes[0].UserContentEdits.Nodes))-1 {
 		i.timeline.issueEdit.index++
+		// issueEdit.Diff == nil happen if the event is older than early 2018, Github doesn't have the data before that.
+		// Best we can do is to ignore the event.
+		if issueEdit := i.IssueEditValue(); issueEdit.Diff == nil || string(*issueEdit.Diff) == "" {
+			return i.NextIssueEdit()
+		}
 		return true
 	}
 
@@ -350,6 +352,9 @@ func (i *iterator) NextCommentEdit() bool {
 
 		if i.commentEdit.index < min(i.capacity, len(i.commentEdit.query.Repository.Issues.Nodes[0].Timeline.Nodes[0].IssueComment.UserContentEdits.Nodes))-1 {
 			i.commentEdit.index++
+			if commentEdit := i.CommentEditValue(); commentEdit.Diff == nil || string(*commentEdit.Diff) == "" {
+				return i.NextCommentEdit()
+			}
 			return true
 		}
 
@@ -372,6 +377,10 @@ func (i *iterator) NextCommentEdit() bool {
 	// loop over them timeline comment edits
 	if i.timeline.commentEdit.index < min(i.capacity, len(i.timeline.query.Repository.Issues.Nodes[0].Timeline.Edges[i.timeline.index].Node.IssueComment.UserContentEdits.Nodes))-1 {
 		i.timeline.commentEdit.index++
+		// if comment edit diff is nil or point to an empty string look for next value
+		if commentEdit := i.CommentEditValue(); commentEdit.Diff == nil || string(*commentEdit.Diff) == "" {
+			return i.NextCommentEdit()
+		}
 		return true
 	}
 
@@ -406,4 +415,10 @@ func min(a, b int) int {
 	}
 
 	return a
+}
+
+func reverseEdits(edits []userContentEdit) {
+	for i, j := 0, len(edits)-1; i < j; i, j = i+1, j-1 {
+		edits[i], edits[j] = edits[j], edits[i]
+	}
 }
