@@ -247,6 +247,15 @@ func (i *iterator) queryIssueEdit() bool {
 
 	i.issueEdit.index = 0
 	i.timeline.issueEdit.index = -2
+	return i.nextValidIssueEdit()
+}
+
+func (i *iterator) nextValidIssueEdit() bool {
+	// issueEdit.Diff == nil happen if the event is older than early 2018, Github doesn't have the data before that.
+	// Best we can do is to ignore the event.
+	if issueEdit := i.IssueEditValue(); issueEdit.Diff == nil || string(*issueEdit.Diff) == "" {
+		return i.NextIssueEdit()
+	}
 	return true
 }
 
@@ -260,10 +269,7 @@ func (i *iterator) NextIssueEdit() bool {
 	if i.timeline.issueEdit.index == -2 {
 		if i.issueEdit.index < min(i.capacity, len(i.issueEdit.query.Repository.Issues.Nodes[0].UserContentEdits.Nodes))-1 {
 			i.issueEdit.index++
-			if issueEdit := i.IssueEditValue(); issueEdit.Diff == nil || string(*issueEdit.Diff) == "" {
-				return i.NextIssueEdit()
-			}
-			return true
+			return i.nextValidIssueEdit()
 		}
 
 		if !i.issueEdit.query.Repository.Issues.Nodes[0].UserContentEdits.PageInfo.HasPreviousPage {
@@ -294,12 +300,7 @@ func (i *iterator) NextIssueEdit() bool {
 	// loop over them timeline comment edits
 	if i.timeline.issueEdit.index < min(i.capacity, len(i.timeline.query.Repository.Issues.Nodes[0].UserContentEdits.Nodes))-1 {
 		i.timeline.issueEdit.index++
-		// issueEdit.Diff == nil happen if the event is older than early 2018, Github doesn't have the data before that.
-		// Best we can do is to ignore the event.
-		if issueEdit := i.IssueEditValue(); issueEdit.Diff == nil || string(*issueEdit.Diff) == "" {
-			return i.NextIssueEdit()
-		}
-		return true
+		return i.nextValidIssueEdit()
 	}
 
 	if !i.timeline.query.Repository.Issues.Nodes[0].UserContentEdits.PageInfo.HasPreviousPage {
@@ -339,6 +340,14 @@ func (i *iterator) queryCommentEdit() bool {
 
 	i.commentEdit.index = 0
 	i.timeline.commentEdit.index = -2
+	return i.nextValidCommentEdit()
+}
+
+func (i *iterator) nextValidCommentEdit() bool {
+	// if comment edit diff is a nil pointer or points to an empty string look for next value
+	if commentEdit := i.CommentEditValue(); commentEdit.Diff == nil || string(*commentEdit.Diff) == "" {
+		return i.NextCommentEdit()
+	}
 	return true
 }
 
@@ -352,10 +361,7 @@ func (i *iterator) NextCommentEdit() bool {
 
 		if i.commentEdit.index < min(i.capacity, len(i.commentEdit.query.Repository.Issues.Nodes[0].Timeline.Nodes[0].IssueComment.UserContentEdits.Nodes))-1 {
 			i.commentEdit.index++
-			if commentEdit := i.CommentEditValue(); commentEdit.Diff == nil || string(*commentEdit.Diff) == "" {
-				return i.NextCommentEdit()
-			}
-			return true
+			return i.nextValidCommentEdit()
 		}
 
 		if !i.commentEdit.query.Repository.Issues.Nodes[0].Timeline.Nodes[0].IssueComment.UserContentEdits.PageInfo.HasPreviousPage {
@@ -377,11 +383,7 @@ func (i *iterator) NextCommentEdit() bool {
 	// loop over them timeline comment edits
 	if i.timeline.commentEdit.index < min(i.capacity, len(i.timeline.query.Repository.Issues.Nodes[0].Timeline.Edges[i.timeline.index].Node.IssueComment.UserContentEdits.Nodes))-1 {
 		i.timeline.commentEdit.index++
-		// if comment edit diff is nil or point to an empty string look for next value
-		if commentEdit := i.CommentEditValue(); commentEdit.Diff == nil || string(*commentEdit.Diff) == "" {
-			return i.NextCommentEdit()
-		}
-		return true
+		return i.nextValidCommentEdit()
 	}
 
 	if !i.timeline.query.Repository.Issues.Nodes[0].Timeline.Edges[i.timeline.index].Node.IssueComment.UserContentEdits.PageInfo.HasPreviousPage {
