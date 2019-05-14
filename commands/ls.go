@@ -7,6 +7,7 @@ import (
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util/colors"
 	"github.com/MichaelMure/git-bug/util/interrupt"
+	"github.com/MichaelMure/git-bug/util/text"
 	"github.com/spf13/cobra"
 )
 
@@ -65,8 +66,8 @@ func runLsBug(cmd *cobra.Command, args []string) error {
 		}
 
 		// truncate + pad if needed
-		titleFmt := fmt.Sprintf("%-50.50s", b.Title)
-		authorFmt := fmt.Sprintf("%-15.15s", name)
+		titleFmt := text.LeftPadMaxLine(b.Title, 50, 0)
+		authorFmt := text.LeftPadMaxLine(name, 15, 0)
 
 		fmt.Printf("%s %s\t%s\t%s\tC:%d L:%d\n",
 			colors.Cyan(b.HumanId()),
