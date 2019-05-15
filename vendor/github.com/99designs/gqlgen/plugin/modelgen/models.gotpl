@@ -31,7 +31,7 @@
 	}
 
 	{{- range $iface := .Implements }}
-		func ({{ $model.Name|go }}) Is{{ $iface }}() {}
+		func ({{ $model.Name|go }}) Is{{ $iface|go }}() {}
 	{{- end }}
 {{- end}}
 

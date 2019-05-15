@@ -136,7 +136,7 @@ func (c *PackageConfig) normalize() error {
 	// If Package is not set, first attempt to load the package at the output dir. If that fails
 	// fallback to just the base dir name of the output filename.
 	if c.Package == "" {
-		c.Package = code.NameForPackage(c.ImportPath())
+		c.Package = code.NameForDir(c.Dir())
 	}
 
 	return nil
@@ -363,8 +363,10 @@ func (c *Config) InjectBuiltins(s *ast.Schema) {
 
 	// These are additional types that are injected if defined in the schema as scalars.
 	extraBuiltins := TypeMap{
-		"Time": {Model: StringList{"github.com/99designs/gqlgen/graphql.Time"}},
-		"Map":  {Model: StringList{"github.com/99designs/gqlgen/graphql.Map"}},
+		"Time":   {Model: StringList{"github.com/99designs/gqlgen/graphql.Time"}},
+		"Map":    {Model: StringList{"github.com/99designs/gqlgen/graphql.Map"}},
+		"Upload": {Model: StringList{"github.com/99designs/gqlgen/graphql.Upload"}},
+		"Any":    {Model: StringList{"github.com/99designs/gqlgen/graphql.Any"}},
 	}
 
 	for typeName, entry := range extraBuiltins {
