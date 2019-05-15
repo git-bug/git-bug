@@ -686,7 +686,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Color.R(childComplexity), true
 
-	case "Comment.Author":
+	case "Comment.author":
 		if e.complexity.Comment.Author == nil {
 			break
 		}
@@ -1008,21 +1008,21 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.IdentityEdge.Node(childComplexity), true
 
-	case "Label.Color":
+	case "Label.color":
 		if e.complexity.Label.Color == nil {
 			break
 		}
 
 		return e.complexity.Label.Color(childComplexity), true
 
-	case "Label.Name":
+	case "Label.name":
 		if e.complexity.Label.Name == nil {
 			break
 		}
 
 		return e.complexity.Label.Name(childComplexity), true
 
-	case "LabelChangeOperation.Added":
+	case "LabelChangeOperation.added":
 		if e.complexity.LabelChangeOperation.Added == nil {
 			break
 		}
@@ -7869,10 +7869,10 @@ func (ec *executionContext) _BugEdge(ctx context.Context, sel ast.SelectionSet, 
 var colorImplementors = []string{"Color"}
 
 func (ec *executionContext) _Color(ctx context.Context, sel ast.SelectionSet, obj *color.RGBA) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, colorImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, colorImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -7887,7 +7887,7 @@ func (ec *executionContext) _Color(ctx context.Context, sel ast.SelectionSet, ob
 				}()
 				res = ec._Color_R(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
@@ -7901,7 +7901,7 @@ func (ec *executionContext) _Color(ctx context.Context, sel ast.SelectionSet, ob
 				}()
 				res = ec._Color_G(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
@@ -7915,7 +7915,7 @@ func (ec *executionContext) _Color(ctx context.Context, sel ast.SelectionSet, ob
 				}()
 				res = ec._Color_B(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
@@ -7924,7 +7924,7 @@ func (ec *executionContext) _Color(ctx context.Context, sel ast.SelectionSet, ob
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -8488,10 +8488,10 @@ func (ec *executionContext) _IdentityEdge(ctx context.Context, sel ast.Selection
 var labelImplementors = []string{"Label"}
 
 func (ec *executionContext) _Label(ctx context.Context, sel ast.SelectionSet, obj *bug.Label) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, labelImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, labelImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -8506,7 +8506,7 @@ func (ec *executionContext) _Label(ctx context.Context, sel ast.SelectionSet, ob
 				}()
 				res = ec._Label_name(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
@@ -8520,7 +8520,7 @@ func (ec *executionContext) _Label(ctx context.Context, sel ast.SelectionSet, ob
 				}()
 				res = ec._Label_color(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
@@ -8529,7 +8529,7 @@ func (ec *executionContext) _Label(ctx context.Context, sel ast.SelectionSet, ob
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -9654,6 +9654,20 @@ func (ec *executionContext) marshalNBugEdge2ᚖgithubᚗcomᚋMichaelMureᚋgit�
 	return ec._BugEdge(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNColor2imageᚋcolorᚐRGBA(ctx context.Context, sel ast.SelectionSet, v color.RGBA) graphql.Marshaler {
+	return ec._Color(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNColor2ᚖimageᚋcolorᚐRGBA(ctx context.Context, sel ast.SelectionSet, v *color.RGBA) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Color(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNComment2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐComment(ctx context.Context, sel ast.SelectionSet, v bug.Comment) graphql.Marshaler {
 	return ec._Comment(ctx, sel, &v)
 }
@@ -9970,7 +9984,7 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 }
 
 func (ec *executionContext) marshalNLabel2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐLabel(ctx context.Context, sel ast.SelectionSet, v bug.Label) graphql.Marshaler {
-	return graphql.MarshalString(string(v))
+	return ec._Label(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNLabel2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐLabel(ctx context.Context, sel ast.SelectionSet, v []bug.Label) graphql.Marshaler {
