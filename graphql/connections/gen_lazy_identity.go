@@ -16,17 +16,17 @@ type LazyIdentityEdgeMaker func(value string, offset int) Edge
 
 // LazyIdentityConMaker define a function that create a models.IdentityConnection
 type LazyIdentityConMaker func(
-	edges []LazyIdentityEdge,
+	edges []*LazyIdentityEdge,
 	nodes []string,
-	info models.PageInfo,
+	info *models.PageInfo,
 	totalCount int) (*models.IdentityConnection, error)
 
 // LazyIdentityCon will paginate a source according to the input of a relay connection
 func LazyIdentityCon(source []string, edgeMaker LazyIdentityEdgeMaker, conMaker LazyIdentityConMaker, input models.ConnectionInput) (*models.IdentityConnection, error) {
 	var nodes []string
-	var edges []LazyIdentityEdge
+	var edges []*LazyIdentityEdge
 	var cursors []string
-	var pageInfo models.PageInfo
+	var pageInfo = &models.PageInfo{}
 	var totalCount = len(source)
 
 	emptyCon, _ := conMaker(edges, nodes, pageInfo, 0)
@@ -56,18 +56,20 @@ func LazyIdentityCon(source []string, edgeMaker LazyIdentityEdgeMaker, conMaker 
 				break
 			}
 
-			edges = append(edges, edge.(LazyIdentityEdge))
+			e := edge.(LazyIdentityEdge)
+			edges = append(edges, &e)
 			cursors = append(cursors, edge.GetCursor())
 			nodes = append(nodes, value)
 		}
 	} else {
-		edges = make([]LazyIdentityEdge, len(source))
+		edges = make([]*LazyIdentityEdge, len(source))
 		cursors = make([]string, len(source))
 		nodes = source
 
 		for i, value := range source {
 			edge := edgeMaker(value, i+offset)
-			edges[i] = edge.(LazyIdentityEdge)
+			e := edge.(LazyIdentityEdge)
+			edges[i] = &e
 			cursors[i] = edge.GetCursor()
 		}
 	}

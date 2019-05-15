@@ -4,6 +4,7 @@
 {{ reserveImport "strconv"  }}
 {{ reserveImport "time"  }}
 {{ reserveImport "sync"  }}
+{{ reserveImport "sync/atomic" }}
 {{ reserveImport "errors"  }}
 {{ reserveImport "bytes"  }}
 
@@ -46,7 +47,8 @@ type ComplexityRoot struct {
 {{ range $object := .Objects }}
 	{{ if not $object.IsReserved -}}
 		{{ $object.Name|go }} struct {
-		{{ range $field := $object.UniqueFields -}}
+		{{ range $_, $fields := $object.UniqueFields }}
+			{{- $field := index $fields 0 -}}
 			{{ if not $field.IsReserved -}}
 				{{ $field.GoFieldName }} {{ $field.ComplexitySignature }}
 			{{ end }}
@@ -84,20 +86,25 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	switch typeName + "." + field {
 	{{ range $object := .Objects }}
 		{{ if not $object.IsReserved }}
-			{{ range $field := $object.UniqueFields }}
-				{{ if not $field.IsReserved }}
-					case "{{$object.Name}}.{{$field.GoFieldName}}":
-						if e.complexity.{{$object.Name|go}}.{{$field.GoFieldName}} == nil {
-							break
-						}
-						{{ if $field.Args }}
-							args, err := ec.{{ $field.ArgsFunc }}(context.TODO(),rawArgs)
-							if err != nil {
-								return 0, false
+			{{ range $_, $fields := $object.UniqueFields }}
+				{{- $len := len $fields }}
+				{{- range $i, $field := $fields }}
+					{{- $last := eq (add $i 1) $len }}
+					{{- if not $field.IsReserved }}
+						{{- if eq $i 0 }}case {{ end }}"{{$object.Name}}.{{$field.Name}}"{{ if not $last }},{{ else }}:
+							if e.complexity.{{$object.Name|go}}.{{$field.GoFieldName}} == nil {
+								break
 							}
+							{{ if $field.Args }}
+								args, err := ec.{{ $field.ArgsFunc }}(context.TODO(),rawArgs)
+								if err != nil {
+									return 0, false
+								}
+							{{ end }}
+							return e.complexity.{{$object.Name|go}}.{{$field.GoFieldName}}(childComplexity{{if $field.Args}}, {{$field.ComplexityArgs}} {{ end }}), true
 						{{ end }}
-						return e.complexity.{{$object.Name|go}}.{{$field.GoFieldName}}(childComplexity{{if $field.Args}}, {{$field.ComplexityArgs}} {{end}}), true
-				{{ end }}
+					{{- end }}
+				{{- end }}
 			{{ end }}
 		{{ end }}
 	{{ end }}

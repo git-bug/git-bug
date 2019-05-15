@@ -19,10 +19,10 @@ type Authored interface {
 // The connection type for Bug.
 type BugConnection struct {
 	// A list of edges.
-	Edges []BugEdge      `json:"edges"`
-	Nodes []bug.Snapshot `json:"nodes"`
+	Edges []*BugEdge      `json:"edges"`
+	Nodes []*bug.Snapshot `json:"nodes"`
 	// Information to aid in pagination.
-	PageInfo PageInfo `json:"pageInfo"`
+	PageInfo *PageInfo `json:"pageInfo"`
 	// Identifies the total count of items in the connection.
 	TotalCount int `json:"totalCount"`
 }
@@ -32,25 +32,25 @@ type BugEdge struct {
 	// A cursor for use in pagination.
 	Cursor string `json:"cursor"`
 	// The item at the end of the edge.
-	Node bug.Snapshot `json:"node"`
+	Node *bug.Snapshot `json:"node"`
 }
 
 type CommentConnection struct {
-	Edges      []CommentEdge `json:"edges"`
-	Nodes      []bug.Comment `json:"nodes"`
-	PageInfo   PageInfo      `json:"pageInfo"`
-	TotalCount int           `json:"totalCount"`
+	Edges      []*CommentEdge `json:"edges"`
+	Nodes      []*bug.Comment `json:"nodes"`
+	PageInfo   *PageInfo      `json:"pageInfo"`
+	TotalCount int            `json:"totalCount"`
 }
 
 type CommentEdge struct {
-	Cursor string      `json:"cursor"`
-	Node   bug.Comment `json:"node"`
+	Cursor string       `json:"cursor"`
+	Node   *bug.Comment `json:"node"`
 }
 
 type IdentityConnection struct {
-	Edges      []IdentityEdge       `json:"edges"`
+	Edges      []*IdentityEdge      `json:"edges"`
 	Nodes      []identity.Interface `json:"nodes"`
-	PageInfo   PageInfo             `json:"pageInfo"`
+	PageInfo   *PageInfo            `json:"pageInfo"`
 	TotalCount int                  `json:"totalCount"`
 }
 
@@ -61,10 +61,10 @@ type IdentityEdge struct {
 
 // The connection type for an Operation
 type OperationConnection struct {
-	Edges      []OperationEdge `json:"edges"`
-	Nodes      []bug.Operation `json:"nodes"`
-	PageInfo   PageInfo        `json:"pageInfo"`
-	TotalCount int             `json:"totalCount"`
+	Edges      []*OperationEdge `json:"edges"`
+	Nodes      []bug.Operation  `json:"nodes"`
+	PageInfo   *PageInfo        `json:"pageInfo"`
+	TotalCount int              `json:"totalCount"`
 }
 
 // Represent an Operation
@@ -87,10 +87,10 @@ type PageInfo struct {
 
 // The connection type for TimelineItem
 type TimelineItemConnection struct {
-	Edges      []TimelineItemEdge `json:"edges"`
-	Nodes      []bug.TimelineItem `json:"nodes"`
-	PageInfo   PageInfo           `json:"pageInfo"`
-	TotalCount int                `json:"totalCount"`
+	Edges      []*TimelineItemEdge `json:"edges"`
+	Nodes      []bug.TimelineItem  `json:"nodes"`
+	PageInfo   *PageInfo           `json:"pageInfo"`
+	TotalCount int                 `json:"totalCount"`
 }
 
 // Represent a TimelineItem

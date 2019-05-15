@@ -4,7 +4,7 @@ var {{ $object.Name|lcFirst}}Implementors = {{$object.Implementors}}
 
 {{- if .Stream }}
 func (ec *executionContext) _{{$object.Name}}(ctx context.Context, sel ast.SelectionSet) func() graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, {{$object.Name|lcFirst}}Implementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, {{$object.Name|lcFirst}}Implementors)
 	ctx = graphql.WithResolverContext(ctx, &graphql.ResolverContext{
 		Object: {{$object.Name|quote}},
 	})
@@ -24,7 +24,7 @@ func (ec *executionContext) _{{$object.Name}}(ctx context.Context, sel ast.Selec
 }
 {{- else }}
 func (ec *executionContext) _{{$object.Name}}(ctx context.Context, sel ast.SelectionSet{{ if not $object.Root }},obj {{$object.Reference | ref }}{{ end }}) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, {{$object.Name|lcFirst}}Implementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, {{$object.Name|lcFirst}}Implementors)
 	{{if $object.Root}}
 		ctx = graphql.WithResolverContext(ctx, &graphql.ResolverContext{
 			Object: {{$object.Name|quote}},
@@ -32,7 +32,7 @@ func (ec *executionContext) _{{$object.Name}}(ctx context.Context, sel ast.Selec
 	{{end}}
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -50,7 +50,11 @@ func (ec *executionContext) _{{$object.Name}}(ctx context.Context, sel ast.Selec
 					res = ec._{{$object.Name}}_{{$field.Name}}(ctx, field{{if not $object.Root}}, obj{{end}})
 					{{- if $field.TypeReference.GQL.NonNull }}
 						if res == graphql.Null {
-							invalid = true
+							{{- if $object.IsConcurrent }}
+								atomic.AddUint32(&invalids, 1)
+							{{- else }}
+								invalids++
+							{{- end }}
 						}
 					{{- end }}
 					return res
@@ -59,7 +63,11 @@ func (ec *executionContext) _{{$object.Name}}(ctx context.Context, sel ast.Selec
 				out.Values[i] = ec._{{$object.Name}}_{{$field.Name}}(ctx, field{{if not $object.Root}}, obj{{end}})
 				{{- if $field.TypeReference.GQL.NonNull }}
 					if out.Values[i] == graphql.Null {
-						invalid = true
+						{{- if $object.IsConcurrent }}
+							atomic.AddUint32(&invalids, 1)
+						{{- else }}
+							invalids++
+						{{- end }}
 					}
 				{{- end }}
 			{{- end }}
@@ -69,7 +77,7 @@ func (ec *executionContext) _{{$object.Name}}(ctx context.Context, sel ast.Selec
 		}
 	}
 	out.Dispatch()
-	if invalid { return graphql.Null }
+	if invalids > 0 { return graphql.Null }
 	return out
 }
 {{- end }}

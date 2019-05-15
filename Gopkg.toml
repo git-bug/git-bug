@@ -58,7 +58,7 @@
 
 [[constraint]]
   name = "github.com/99designs/gqlgen"
-  version = "0.8.3"
+  version = "0.9.0"
 
 [[constraint]]
   name = "github.com/MichaelMure/gocui"

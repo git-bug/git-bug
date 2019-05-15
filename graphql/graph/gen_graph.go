@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -385,105 +386,105 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	_ = ec
 	switch typeName + "." + field {
 
-	case "AddCommentOperation.Author":
+	case "AddCommentOperation.author":
 		if e.complexity.AddCommentOperation.Author == nil {
 			break
 		}
 
 		return e.complexity.AddCommentOperation.Author(childComplexity), true
 
-	case "AddCommentOperation.Date":
+	case "AddCommentOperation.date":
 		if e.complexity.AddCommentOperation.Date == nil {
 			break
 		}
 
 		return e.complexity.AddCommentOperation.Date(childComplexity), true
 
-	case "AddCommentOperation.Files":
+	case "AddCommentOperation.files":
 		if e.complexity.AddCommentOperation.Files == nil {
 			break
 		}
 
 		return e.complexity.AddCommentOperation.Files(childComplexity), true
 
-	case "AddCommentOperation.Hash":
+	case "AddCommentOperation.hash":
 		if e.complexity.AddCommentOperation.Hash == nil {
 			break
 		}
 
 		return e.complexity.AddCommentOperation.Hash(childComplexity), true
 
-	case "AddCommentOperation.Message":
+	case "AddCommentOperation.message":
 		if e.complexity.AddCommentOperation.Message == nil {
 			break
 		}
 
 		return e.complexity.AddCommentOperation.Message(childComplexity), true
 
-	case "AddCommentTimelineItem.Author":
+	case "AddCommentTimelineItem.author":
 		if e.complexity.AddCommentTimelineItem.Author == nil {
 			break
 		}
 
 		return e.complexity.AddCommentTimelineItem.Author(childComplexity), true
 
-	case "AddCommentTimelineItem.CreatedAt":
+	case "AddCommentTimelineItem.createdAt":
 		if e.complexity.AddCommentTimelineItem.CreatedAt == nil {
 			break
 		}
 
 		return e.complexity.AddCommentTimelineItem.CreatedAt(childComplexity), true
 
-	case "AddCommentTimelineItem.Edited":
+	case "AddCommentTimelineItem.edited":
 		if e.complexity.AddCommentTimelineItem.Edited == nil {
 			break
 		}
 
 		return e.complexity.AddCommentTimelineItem.Edited(childComplexity), true
 
-	case "AddCommentTimelineItem.Files":
+	case "AddCommentTimelineItem.files":
 		if e.complexity.AddCommentTimelineItem.Files == nil {
 			break
 		}
 
 		return e.complexity.AddCommentTimelineItem.Files(childComplexity), true
 
-	case "AddCommentTimelineItem.Hash":
+	case "AddCommentTimelineItem.hash":
 		if e.complexity.AddCommentTimelineItem.Hash == nil {
 			break
 		}
 
 		return e.complexity.AddCommentTimelineItem.Hash(childComplexity), true
 
-	case "AddCommentTimelineItem.History":
+	case "AddCommentTimelineItem.history":
 		if e.complexity.AddCommentTimelineItem.History == nil {
 			break
 		}
 
 		return e.complexity.AddCommentTimelineItem.History(childComplexity), true
 
-	case "AddCommentTimelineItem.LastEdit":
+	case "AddCommentTimelineItem.lastEdit":
 		if e.complexity.AddCommentTimelineItem.LastEdit == nil {
 			break
 		}
 
 		return e.complexity.AddCommentTimelineItem.LastEdit(childComplexity), true
 
-	case "AddCommentTimelineItem.Message":
+	case "AddCommentTimelineItem.message":
 		if e.complexity.AddCommentTimelineItem.Message == nil {
 			break
 		}
 
 		return e.complexity.AddCommentTimelineItem.Message(childComplexity), true
 
-	case "AddCommentTimelineItem.MessageIsEmpty":
+	case "AddCommentTimelineItem.messageIsEmpty":
 		if e.complexity.AddCommentTimelineItem.MessageIsEmpty == nil {
 			break
 		}
 
 		return e.complexity.AddCommentTimelineItem.MessageIsEmpty(childComplexity), true
 
-	case "Bug.Actors":
+	case "Bug.actors":
 		if e.complexity.Bug.Actors == nil {
 			break
 		}
@@ -495,14 +496,14 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Bug.Actors(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
 
-	case "Bug.Author":
+	case "Bug.author":
 		if e.complexity.Bug.Author == nil {
 			break
 		}
 
 		return e.complexity.Bug.Author(childComplexity), true
 
-	case "Bug.Comments":
+	case "Bug.comments":
 		if e.complexity.Bug.Comments == nil {
 			break
 		}
@@ -514,42 +515,42 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Bug.Comments(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
 
-	case "Bug.CreatedAt":
+	case "Bug.createdAt":
 		if e.complexity.Bug.CreatedAt == nil {
 			break
 		}
 
 		return e.complexity.Bug.CreatedAt(childComplexity), true
 
-	case "Bug.HumanId":
+	case "Bug.humanId":
 		if e.complexity.Bug.HumanId == nil {
 			break
 		}
 
 		return e.complexity.Bug.HumanId(childComplexity), true
 
-	case "Bug.Id":
+	case "Bug.id":
 		if e.complexity.Bug.Id == nil {
 			break
 		}
 
 		return e.complexity.Bug.Id(childComplexity), true
 
-	case "Bug.Labels":
+	case "Bug.labels":
 		if e.complexity.Bug.Labels == nil {
 			break
 		}
 
 		return e.complexity.Bug.Labels(childComplexity), true
 
-	case "Bug.LastEdit":
+	case "Bug.lastEdit":
 		if e.complexity.Bug.LastEdit == nil {
 			break
 		}
 
 		return e.complexity.Bug.LastEdit(childComplexity), true
 
-	case "Bug.Operations":
+	case "Bug.operations":
 		if e.complexity.Bug.Operations == nil {
 			break
 		}
@@ -561,7 +562,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Bug.Operations(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
 
-	case "Bug.Participants":
+	case "Bug.participants":
 		if e.complexity.Bug.Participants == nil {
 			break
 		}
@@ -573,14 +574,14 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Bug.Participants(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
 
-	case "Bug.Status":
+	case "Bug.status":
 		if e.complexity.Bug.Status == nil {
 			break
 		}
 
 		return e.complexity.Bug.Status(childComplexity), true
 
-	case "Bug.Timeline":
+	case "Bug.timeline":
 		if e.complexity.Bug.Timeline == nil {
 			break
 		}
@@ -592,448 +593,448 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Bug.Timeline(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
 
-	case "Bug.Title":
+	case "Bug.title":
 		if e.complexity.Bug.Title == nil {
 			break
 		}
 
 		return e.complexity.Bug.Title(childComplexity), true
 
-	case "BugConnection.Edges":
+	case "BugConnection.edges":
 		if e.complexity.BugConnection.Edges == nil {
 			break
 		}
 
 		return e.complexity.BugConnection.Edges(childComplexity), true
 
-	case "BugConnection.Nodes":
+	case "BugConnection.nodes":
 		if e.complexity.BugConnection.Nodes == nil {
 			break
 		}
 
 		return e.complexity.BugConnection.Nodes(childComplexity), true
 
-	case "BugConnection.PageInfo":
+	case "BugConnection.pageInfo":
 		if e.complexity.BugConnection.PageInfo == nil {
 			break
 		}
 
 		return e.complexity.BugConnection.PageInfo(childComplexity), true
 
-	case "BugConnection.TotalCount":
+	case "BugConnection.totalCount":
 		if e.complexity.BugConnection.TotalCount == nil {
 			break
 		}
 
 		return e.complexity.BugConnection.TotalCount(childComplexity), true
 
-	case "BugEdge.Cursor":
+	case "BugEdge.cursor":
 		if e.complexity.BugEdge.Cursor == nil {
 			break
 		}
 
 		return e.complexity.BugEdge.Cursor(childComplexity), true
 
-	case "BugEdge.Node":
+	case "BugEdge.node":
 		if e.complexity.BugEdge.Node == nil {
 			break
 		}
 
 		return e.complexity.BugEdge.Node(childComplexity), true
 
-	case "Comment.Author":
+	case "Comment.author":
 		if e.complexity.Comment.Author == nil {
 			break
 		}
 
 		return e.complexity.Comment.Author(childComplexity), true
 
-	case "Comment.Files":
+	case "Comment.files":
 		if e.complexity.Comment.Files == nil {
 			break
 		}
 
 		return e.complexity.Comment.Files(childComplexity), true
 
-	case "Comment.Message":
+	case "Comment.message":
 		if e.complexity.Comment.Message == nil {
 			break
 		}
 
 		return e.complexity.Comment.Message(childComplexity), true
 
-	case "CommentConnection.Edges":
+	case "CommentConnection.edges":
 		if e.complexity.CommentConnection.Edges == nil {
 			break
 		}
 
 		return e.complexity.CommentConnection.Edges(childComplexity), true
 
-	case "CommentConnection.Nodes":
+	case "CommentConnection.nodes":
 		if e.complexity.CommentConnection.Nodes == nil {
 			break
 		}
 
 		return e.complexity.CommentConnection.Nodes(childComplexity), true
 
-	case "CommentConnection.PageInfo":
+	case "CommentConnection.pageInfo":
 		if e.complexity.CommentConnection.PageInfo == nil {
 			break
 		}
 
 		return e.complexity.CommentConnection.PageInfo(childComplexity), true
 
-	case "CommentConnection.TotalCount":
+	case "CommentConnection.totalCount":
 		if e.complexity.CommentConnection.TotalCount == nil {
 			break
 		}
 
 		return e.complexity.CommentConnection.TotalCount(childComplexity), true
 
-	case "CommentEdge.Cursor":
+	case "CommentEdge.cursor":
 		if e.complexity.CommentEdge.Cursor == nil {
 			break
 		}
 
 		return e.complexity.CommentEdge.Cursor(childComplexity), true
 
-	case "CommentEdge.Node":
+	case "CommentEdge.node":
 		if e.complexity.CommentEdge.Node == nil {
 			break
 		}
 
 		return e.complexity.CommentEdge.Node(childComplexity), true
 
-	case "CommentHistoryStep.Date":
+	case "CommentHistoryStep.date":
 		if e.complexity.CommentHistoryStep.Date == nil {
 			break
 		}
 
 		return e.complexity.CommentHistoryStep.Date(childComplexity), true
 
-	case "CommentHistoryStep.Message":
+	case "CommentHistoryStep.message":
 		if e.complexity.CommentHistoryStep.Message == nil {
 			break
 		}
 
 		return e.complexity.CommentHistoryStep.Message(childComplexity), true
 
-	case "CreateOperation.Author":
+	case "CreateOperation.author":
 		if e.complexity.CreateOperation.Author == nil {
 			break
 		}
 
 		return e.complexity.CreateOperation.Author(childComplexity), true
 
-	case "CreateOperation.Date":
+	case "CreateOperation.date":
 		if e.complexity.CreateOperation.Date == nil {
 			break
 		}
 
 		return e.complexity.CreateOperation.Date(childComplexity), true
 
-	case "CreateOperation.Files":
+	case "CreateOperation.files":
 		if e.complexity.CreateOperation.Files == nil {
 			break
 		}
 
 		return e.complexity.CreateOperation.Files(childComplexity), true
 
-	case "CreateOperation.Hash":
+	case "CreateOperation.hash":
 		if e.complexity.CreateOperation.Hash == nil {
 			break
 		}
 
 		return e.complexity.CreateOperation.Hash(childComplexity), true
 
-	case "CreateOperation.Message":
+	case "CreateOperation.message":
 		if e.complexity.CreateOperation.Message == nil {
 			break
 		}
 
 		return e.complexity.CreateOperation.Message(childComplexity), true
 
-	case "CreateOperation.Title":
+	case "CreateOperation.title":
 		if e.complexity.CreateOperation.Title == nil {
 			break
 		}
 
 		return e.complexity.CreateOperation.Title(childComplexity), true
 
-	case "CreateTimelineItem.Author":
+	case "CreateTimelineItem.author":
 		if e.complexity.CreateTimelineItem.Author == nil {
 			break
 		}
 
 		return e.complexity.CreateTimelineItem.Author(childComplexity), true
 
-	case "CreateTimelineItem.CreatedAt":
+	case "CreateTimelineItem.createdAt":
 		if e.complexity.CreateTimelineItem.CreatedAt == nil {
 			break
 		}
 
 		return e.complexity.CreateTimelineItem.CreatedAt(childComplexity), true
 
-	case "CreateTimelineItem.Edited":
+	case "CreateTimelineItem.edited":
 		if e.complexity.CreateTimelineItem.Edited == nil {
 			break
 		}
 
 		return e.complexity.CreateTimelineItem.Edited(childComplexity), true
 
-	case "CreateTimelineItem.Files":
+	case "CreateTimelineItem.files":
 		if e.complexity.CreateTimelineItem.Files == nil {
 			break
 		}
 
 		return e.complexity.CreateTimelineItem.Files(childComplexity), true
 
-	case "CreateTimelineItem.Hash":
+	case "CreateTimelineItem.hash":
 		if e.complexity.CreateTimelineItem.Hash == nil {
 			break
 		}
 
 		return e.complexity.CreateTimelineItem.Hash(childComplexity), true
 
-	case "CreateTimelineItem.History":
+	case "CreateTimelineItem.history":
 		if e.complexity.CreateTimelineItem.History == nil {
 			break
 		}
 
 		return e.complexity.CreateTimelineItem.History(childComplexity), true
 
-	case "CreateTimelineItem.LastEdit":
+	case "CreateTimelineItem.lastEdit":
 		if e.complexity.CreateTimelineItem.LastEdit == nil {
 			break
 		}
 
 		return e.complexity.CreateTimelineItem.LastEdit(childComplexity), true
 
-	case "CreateTimelineItem.Message":
+	case "CreateTimelineItem.message":
 		if e.complexity.CreateTimelineItem.Message == nil {
 			break
 		}
 
 		return e.complexity.CreateTimelineItem.Message(childComplexity), true
 
-	case "CreateTimelineItem.MessageIsEmpty":
+	case "CreateTimelineItem.messageIsEmpty":
 		if e.complexity.CreateTimelineItem.MessageIsEmpty == nil {
 			break
 		}
 
 		return e.complexity.CreateTimelineItem.MessageIsEmpty(childComplexity), true
 
-	case "EditCommentOperation.Author":
+	case "EditCommentOperation.author":
 		if e.complexity.EditCommentOperation.Author == nil {
 			break
 		}
 
 		return e.complexity.EditCommentOperation.Author(childComplexity), true
 
-	case "EditCommentOperation.Date":
+	case "EditCommentOperation.date":
 		if e.complexity.EditCommentOperation.Date == nil {
 			break
 		}
 
 		return e.complexity.EditCommentOperation.Date(childComplexity), true
 
-	case "EditCommentOperation.Files":
+	case "EditCommentOperation.files":
 		if e.complexity.EditCommentOperation.Files == nil {
 			break
 		}
 
 		return e.complexity.EditCommentOperation.Files(childComplexity), true
 
-	case "EditCommentOperation.Hash":
+	case "EditCommentOperation.hash":
 		if e.complexity.EditCommentOperation.Hash == nil {
 			break
 		}
 
 		return e.complexity.EditCommentOperation.Hash(childComplexity), true
 
-	case "EditCommentOperation.Message":
+	case "EditCommentOperation.message":
 		if e.complexity.EditCommentOperation.Message == nil {
 			break
 		}
 
 		return e.complexity.EditCommentOperation.Message(childComplexity), true
 
-	case "EditCommentOperation.Target":
+	case "EditCommentOperation.target":
 		if e.complexity.EditCommentOperation.Target == nil {
 			break
 		}
 
 		return e.complexity.EditCommentOperation.Target(childComplexity), true
 
-	case "Identity.AvatarURL":
+	case "Identity.avatarUrl":
 		if e.complexity.Identity.AvatarURL == nil {
 			break
 		}
 
 		return e.complexity.Identity.AvatarURL(childComplexity), true
 
-	case "Identity.DisplayName":
+	case "Identity.displayName":
 		if e.complexity.Identity.DisplayName == nil {
 			break
 		}
 
 		return e.complexity.Identity.DisplayName(childComplexity), true
 
-	case "Identity.Email":
+	case "Identity.email":
 		if e.complexity.Identity.Email == nil {
 			break
 		}
 
 		return e.complexity.Identity.Email(childComplexity), true
 
-	case "Identity.HumanID":
+	case "Identity.humanId":
 		if e.complexity.Identity.HumanID == nil {
 			break
 		}
 
 		return e.complexity.Identity.HumanID(childComplexity), true
 
-	case "Identity.ID":
+	case "Identity.id":
 		if e.complexity.Identity.ID == nil {
 			break
 		}
 
 		return e.complexity.Identity.ID(childComplexity), true
 
-	case "Identity.IsProtected":
+	case "Identity.isProtected":
 		if e.complexity.Identity.IsProtected == nil {
 			break
 		}
 
 		return e.complexity.Identity.IsProtected(childComplexity), true
 
-	case "Identity.Login":
+	case "Identity.login":
 		if e.complexity.Identity.Login == nil {
 			break
 		}
 
 		return e.complexity.Identity.Login(childComplexity), true
 
-	case "Identity.Name":
+	case "Identity.name":
 		if e.complexity.Identity.Name == nil {
 			break
 		}
 
 		return e.complexity.Identity.Name(childComplexity), true
 
-	case "IdentityConnection.Edges":
+	case "IdentityConnection.edges":
 		if e.complexity.IdentityConnection.Edges == nil {
 			break
 		}
 
 		return e.complexity.IdentityConnection.Edges(childComplexity), true
 
-	case "IdentityConnection.Nodes":
+	case "IdentityConnection.nodes":
 		if e.complexity.IdentityConnection.Nodes == nil {
 			break
 		}
 
 		return e.complexity.IdentityConnection.Nodes(childComplexity), true
 
-	case "IdentityConnection.PageInfo":
+	case "IdentityConnection.pageInfo":
 		if e.complexity.IdentityConnection.PageInfo == nil {
 			break
 		}
 
 		return e.complexity.IdentityConnection.PageInfo(childComplexity), true
 
-	case "IdentityConnection.TotalCount":
+	case "IdentityConnection.totalCount":
 		if e.complexity.IdentityConnection.TotalCount == nil {
 			break
 		}
 
 		return e.complexity.IdentityConnection.TotalCount(childComplexity), true
 
-	case "IdentityEdge.Cursor":
+	case "IdentityEdge.cursor":
 		if e.complexity.IdentityEdge.Cursor == nil {
 			break
 		}
 
 		return e.complexity.IdentityEdge.Cursor(childComplexity), true
 
-	case "IdentityEdge.Node":
+	case "IdentityEdge.node":
 		if e.complexity.IdentityEdge.Node == nil {
 			break
 		}
 
 		return e.complexity.IdentityEdge.Node(childComplexity), true
 
-	case "LabelChangeOperation.Added":
+	case "LabelChangeOperation.added":
 		if e.complexity.LabelChangeOperation.Added == nil {
 			break
 		}
 
 		return e.complexity.LabelChangeOperation.Added(childComplexity), true
 
-	case "LabelChangeOperation.Author":
+	case "LabelChangeOperation.author":
 		if e.complexity.LabelChangeOperation.Author == nil {
 			break
 		}
 
 		return e.complexity.LabelChangeOperation.Author(childComplexity), true
 
-	case "LabelChangeOperation.Date":
+	case "LabelChangeOperation.date":
 		if e.complexity.LabelChangeOperation.Date == nil {
 			break
 		}
 
 		return e.complexity.LabelChangeOperation.Date(childComplexity), true
 
-	case "LabelChangeOperation.Hash":
+	case "LabelChangeOperation.hash":
 		if e.complexity.LabelChangeOperation.Hash == nil {
 			break
 		}
 
 		return e.complexity.LabelChangeOperation.Hash(childComplexity), true
 
-	case "LabelChangeOperation.Removed":
+	case "LabelChangeOperation.removed":
 		if e.complexity.LabelChangeOperation.Removed == nil {
 			break
 		}
 
 		return e.complexity.LabelChangeOperation.Removed(childComplexity), true
 
-	case "LabelChangeTimelineItem.Added":
+	case "LabelChangeTimelineItem.added":
 		if e.complexity.LabelChangeTimelineItem.Added == nil {
 			break
 		}
 
 		return e.complexity.LabelChangeTimelineItem.Added(childComplexity), true
 
-	case "LabelChangeTimelineItem.Author":
+	case "LabelChangeTimelineItem.author":
 		if e.complexity.LabelChangeTimelineItem.Author == nil {
 			break
 		}
 
 		return e.complexity.LabelChangeTimelineItem.Author(childComplexity), true
 
-	case "LabelChangeTimelineItem.Date":
+	case "LabelChangeTimelineItem.date":
 		if e.complexity.LabelChangeTimelineItem.Date == nil {
 			break
 		}
 
 		return e.complexity.LabelChangeTimelineItem.Date(childComplexity), true
 
-	case "LabelChangeTimelineItem.Hash":
+	case "LabelChangeTimelineItem.hash":
 		if e.complexity.LabelChangeTimelineItem.Hash == nil {
 			break
 		}
 
 		return e.complexity.LabelChangeTimelineItem.Hash(childComplexity), true
 
-	case "LabelChangeTimelineItem.Removed":
+	case "LabelChangeTimelineItem.removed":
 		if e.complexity.LabelChangeTimelineItem.Removed == nil {
 			break
 		}
 
 		return e.complexity.LabelChangeTimelineItem.Removed(childComplexity), true
 
-	case "Mutation.AddComment":
+	case "Mutation.addComment":
 		if e.complexity.Mutation.AddComment == nil {
 			break
 		}
@@ -1045,7 +1046,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.AddComment(childComplexity, args["repoRef"].(*string), args["prefix"].(string), args["message"].(string), args["files"].([]git.Hash)), true
 
-	case "Mutation.ChangeLabels":
+	case "Mutation.changeLabels":
 		if e.complexity.Mutation.ChangeLabels == nil {
 			break
 		}
@@ -1057,7 +1058,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.ChangeLabels(childComplexity, args["repoRef"].(*string), args["prefix"].(string), args["added"].([]string), args["removed"].([]string)), true
 
-	case "Mutation.Close":
+	case "Mutation.close":
 		if e.complexity.Mutation.Close == nil {
 			break
 		}
@@ -1069,7 +1070,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.Close(childComplexity, args["repoRef"].(*string), args["prefix"].(string)), true
 
-	case "Mutation.Commit":
+	case "Mutation.commit":
 		if e.complexity.Mutation.Commit == nil {
 			break
 		}
@@ -1081,7 +1082,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.Commit(childComplexity, args["repoRef"].(*string), args["prefix"].(string)), true
 
-	case "Mutation.NewBug":
+	case "Mutation.newBug":
 		if e.complexity.Mutation.NewBug == nil {
 			break
 		}
@@ -1093,7 +1094,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.NewBug(childComplexity, args["repoRef"].(*string), args["title"].(string), args["message"].(string), args["files"].([]git.Hash)), true
 
-	case "Mutation.Open":
+	case "Mutation.open":
 		if e.complexity.Mutation.Open == nil {
 			break
 		}
@@ -1105,7 +1106,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.Open(childComplexity, args["repoRef"].(*string), args["prefix"].(string)), true
 
-	case "Mutation.SetTitle":
+	case "Mutation.setTitle":
 		if e.complexity.Mutation.SetTitle == nil {
 			break
 		}
@@ -1117,84 +1118,84 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.SetTitle(childComplexity, args["repoRef"].(*string), args["prefix"].(string), args["title"].(string)), true
 
-	case "OperationConnection.Edges":
+	case "OperationConnection.edges":
 		if e.complexity.OperationConnection.Edges == nil {
 			break
 		}
 
 		return e.complexity.OperationConnection.Edges(childComplexity), true
 
-	case "OperationConnection.Nodes":
+	case "OperationConnection.nodes":
 		if e.complexity.OperationConnection.Nodes == nil {
 			break
 		}
 
 		return e.complexity.OperationConnection.Nodes(childComplexity), true
 
-	case "OperationConnection.PageInfo":
+	case "OperationConnection.pageInfo":
 		if e.complexity.OperationConnection.PageInfo == nil {
 			break
 		}
 
 		return e.complexity.OperationConnection.PageInfo(childComplexity), true
 
-	case "OperationConnection.TotalCount":
+	case "OperationConnection.totalCount":
 		if e.complexity.OperationConnection.TotalCount == nil {
 			break
 		}
 
 		return e.complexity.OperationConnection.TotalCount(childComplexity), true
 
-	case "OperationEdge.Cursor":
+	case "OperationEdge.cursor":
 		if e.complexity.OperationEdge.Cursor == nil {
 			break
 		}
 
 		return e.complexity.OperationEdge.Cursor(childComplexity), true
 
-	case "OperationEdge.Node":
+	case "OperationEdge.node":
 		if e.complexity.OperationEdge.Node == nil {
 			break
 		}
 
 		return e.complexity.OperationEdge.Node(childComplexity), true
 
-	case "PageInfo.EndCursor":
+	case "PageInfo.endCursor":
 		if e.complexity.PageInfo.EndCursor == nil {
 			break
 		}
 
 		return e.complexity.PageInfo.EndCursor(childComplexity), true
 
-	case "PageInfo.HasNextPage":
+	case "PageInfo.hasNextPage":
 		if e.complexity.PageInfo.HasNextPage == nil {
 			break
 		}
 
 		return e.complexity.PageInfo.HasNextPage(childComplexity), true
 
-	case "PageInfo.HasPreviousPage":
+	case "PageInfo.hasPreviousPage":
 		if e.complexity.PageInfo.HasPreviousPage == nil {
 			break
 		}
 
 		return e.complexity.PageInfo.HasPreviousPage(childComplexity), true
 
-	case "PageInfo.StartCursor":
+	case "PageInfo.startCursor":
 		if e.complexity.PageInfo.StartCursor == nil {
 			break
 		}
 
 		return e.complexity.PageInfo.StartCursor(childComplexity), true
 
-	case "Query.DefaultRepository":
+	case "Query.defaultRepository":
 		if e.complexity.Query.DefaultRepository == nil {
 			break
 		}
 
 		return e.complexity.Query.DefaultRepository(childComplexity), true
 
-	case "Query.Repository":
+	case "Query.repository":
 		if e.complexity.Query.Repository == nil {
 			break
 		}
@@ -1206,7 +1207,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Repository(childComplexity, args["id"].(string)), true
 
-	case "Repository.AllBugs":
+	case "Repository.allBugs":
 		if e.complexity.Repository.AllBugs == nil {
 			break
 		}
@@ -1218,7 +1219,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Repository.AllBugs(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int), args["query"].(*string)), true
 
-	case "Repository.AllIdentities":
+	case "Repository.allIdentities":
 		if e.complexity.Repository.AllIdentities == nil {
 			break
 		}
@@ -1230,7 +1231,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Repository.AllIdentities(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
 
-	case "Repository.Bug":
+	case "Repository.bug":
 		if e.complexity.Repository.Bug == nil {
 			break
 		}
@@ -1242,7 +1243,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Repository.Bug(childComplexity, args["prefix"].(string)), true
 
-	case "Repository.Identity":
+	case "Repository.identity":
 		if e.complexity.Repository.Identity == nil {
 			break
 		}
@@ -1254,182 +1255,182 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Repository.Identity(childComplexity, args["prefix"].(string)), true
 
-	case "Repository.UserIdentity":
+	case "Repository.userIdentity":
 		if e.complexity.Repository.UserIdentity == nil {
 			break
 		}
 
 		return e.complexity.Repository.UserIdentity(childComplexity), true
 
-	case "Repository.ValidLabels":
+	case "Repository.validLabels":
 		if e.complexity.Repository.ValidLabels == nil {
 			break
 		}
 
 		return e.complexity.Repository.ValidLabels(childComplexity), true
 
-	case "SetStatusOperation.Author":
+	case "SetStatusOperation.author":
 		if e.complexity.SetStatusOperation.Author == nil {
 			break
 		}
 
 		return e.complexity.SetStatusOperation.Author(childComplexity), true
 
-	case "SetStatusOperation.Date":
+	case "SetStatusOperation.date":
 		if e.complexity.SetStatusOperation.Date == nil {
 			break
 		}
 
 		return e.complexity.SetStatusOperation.Date(childComplexity), true
 
-	case "SetStatusOperation.Hash":
+	case "SetStatusOperation.hash":
 		if e.complexity.SetStatusOperation.Hash == nil {
 			break
 		}
 
 		return e.complexity.SetStatusOperation.Hash(childComplexity), true
 
-	case "SetStatusOperation.Status":
+	case "SetStatusOperation.status":
 		if e.complexity.SetStatusOperation.Status == nil {
 			break
 		}
 
 		return e.complexity.SetStatusOperation.Status(childComplexity), true
 
-	case "SetStatusTimelineItem.Author":
+	case "SetStatusTimelineItem.author":
 		if e.complexity.SetStatusTimelineItem.Author == nil {
 			break
 		}
 
 		return e.complexity.SetStatusTimelineItem.Author(childComplexity), true
 
-	case "SetStatusTimelineItem.Date":
+	case "SetStatusTimelineItem.date":
 		if e.complexity.SetStatusTimelineItem.Date == nil {
 			break
 		}
 
 		return e.complexity.SetStatusTimelineItem.Date(childComplexity), true
 
-	case "SetStatusTimelineItem.Hash":
+	case "SetStatusTimelineItem.hash":
 		if e.complexity.SetStatusTimelineItem.Hash == nil {
 			break
 		}
 
 		return e.complexity.SetStatusTimelineItem.Hash(childComplexity), true
 
-	case "SetStatusTimelineItem.Status":
+	case "SetStatusTimelineItem.status":
 		if e.complexity.SetStatusTimelineItem.Status == nil {
 			break
 		}
 
 		return e.complexity.SetStatusTimelineItem.Status(childComplexity), true
 
-	case "SetTitleOperation.Author":
+	case "SetTitleOperation.author":
 		if e.complexity.SetTitleOperation.Author == nil {
 			break
 		}
 
 		return e.complexity.SetTitleOperation.Author(childComplexity), true
 
-	case "SetTitleOperation.Date":
+	case "SetTitleOperation.date":
 		if e.complexity.SetTitleOperation.Date == nil {
 			break
 		}
 
 		return e.complexity.SetTitleOperation.Date(childComplexity), true
 
-	case "SetTitleOperation.Hash":
+	case "SetTitleOperation.hash":
 		if e.complexity.SetTitleOperation.Hash == nil {
 			break
 		}
 
 		return e.complexity.SetTitleOperation.Hash(childComplexity), true
 
-	case "SetTitleOperation.Title":
+	case "SetTitleOperation.title":
 		if e.complexity.SetTitleOperation.Title == nil {
 			break
 		}
 
 		return e.complexity.SetTitleOperation.Title(childComplexity), true
 
-	case "SetTitleOperation.Was":
+	case "SetTitleOperation.was":
 		if e.complexity.SetTitleOperation.Was == nil {
 			break
 		}
 
 		return e.complexity.SetTitleOperation.Was(childComplexity), true
 
-	case "SetTitleTimelineItem.Author":
+	case "SetTitleTimelineItem.author":
 		if e.complexity.SetTitleTimelineItem.Author == nil {
 			break
 		}
 
 		return e.complexity.SetTitleTimelineItem.Author(childComplexity), true
 
-	case "SetTitleTimelineItem.Date":
+	case "SetTitleTimelineItem.date":
 		if e.complexity.SetTitleTimelineItem.Date == nil {
 			break
 		}
 
 		return e.complexity.SetTitleTimelineItem.Date(childComplexity), true
 
-	case "SetTitleTimelineItem.Hash":
+	case "SetTitleTimelineItem.hash":
 		if e.complexity.SetTitleTimelineItem.Hash == nil {
 			break
 		}
 
 		return e.complexity.SetTitleTimelineItem.Hash(childComplexity), true
 
-	case "SetTitleTimelineItem.Title":
+	case "SetTitleTimelineItem.title":
 		if e.complexity.SetTitleTimelineItem.Title == nil {
 			break
 		}
 
 		return e.complexity.SetTitleTimelineItem.Title(childComplexity), true
 
-	case "SetTitleTimelineItem.Was":
+	case "SetTitleTimelineItem.was":
 		if e.complexity.SetTitleTimelineItem.Was == nil {
 			break
 		}
 
 		return e.complexity.SetTitleTimelineItem.Was(childComplexity), true
 
-	case "TimelineItemConnection.Edges":
+	case "TimelineItemConnection.edges":
 		if e.complexity.TimelineItemConnection.Edges == nil {
 			break
 		}
 
 		return e.complexity.TimelineItemConnection.Edges(childComplexity), true
 
-	case "TimelineItemConnection.Nodes":
+	case "TimelineItemConnection.nodes":
 		if e.complexity.TimelineItemConnection.Nodes == nil {
 			break
 		}
 
 		return e.complexity.TimelineItemConnection.Nodes(childComplexity), true
 
-	case "TimelineItemConnection.PageInfo":
+	case "TimelineItemConnection.pageInfo":
 		if e.complexity.TimelineItemConnection.PageInfo == nil {
 			break
 		}
 
 		return e.complexity.TimelineItemConnection.PageInfo(childComplexity), true
 
-	case "TimelineItemConnection.TotalCount":
+	case "TimelineItemConnection.totalCount":
 		if e.complexity.TimelineItemConnection.TotalCount == nil {
 			break
 		}
 
 		return e.complexity.TimelineItemConnection.TotalCount(childComplexity), true
 
-	case "TimelineItemEdge.Cursor":
+	case "TimelineItemEdge.cursor":
 		if e.complexity.TimelineItemEdge.Cursor == nil {
 			break
 		}
 
 		return e.complexity.TimelineItemEdge.Cursor(childComplexity), true
 
-	case "TimelineItemEdge.Node":
+	case "TimelineItemEdge.node":
 		if e.complexity.TimelineItemEdge.Node == nil {
 			break
 		}
@@ -3292,10 +3293,10 @@ func (ec *executionContext) _BugConnection_edges(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]models.BugEdge)
+	res := resTmp.([]*models.BugEdge)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNBugEdge2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐBugEdge(ctx, field.Selections, res)
+	return ec.marshalNBugEdge2ᚕᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐBugEdge(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _BugConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *models.BugConnection) graphql.Marshaler {
@@ -3319,10 +3320,10 @@ func (ec *executionContext) _BugConnection_nodes(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]bug.Snapshot)
+	res := resTmp.([]*bug.Snapshot)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNBug2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐSnapshot(ctx, field.Selections, res)
+	return ec.marshalNBug2ᚕᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐSnapshot(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _BugConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *models.BugConnection) graphql.Marshaler {
@@ -3346,10 +3347,10 @@ func (ec *executionContext) _BugConnection_pageInfo(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.(models.PageInfo)
+	res := resTmp.(*models.PageInfo)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNPageInfo2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐPageInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _BugConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *models.BugConnection) graphql.Marshaler {
@@ -3427,10 +3428,10 @@ func (ec *executionContext) _BugEdge_node(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bug.Snapshot)
+	res := resTmp.(*bug.Snapshot)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNBug2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐSnapshot(ctx, field.Selections, res)
+	return ec.marshalNBug2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐSnapshot(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Comment_author(ctx context.Context, field graphql.CollectedField, obj *bug.Comment) graphql.Marshaler {
@@ -3535,10 +3536,10 @@ func (ec *executionContext) _CommentConnection_edges(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]models.CommentEdge)
+	res := resTmp.([]*models.CommentEdge)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNCommentEdge2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐCommentEdge(ctx, field.Selections, res)
+	return ec.marshalNCommentEdge2ᚕᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐCommentEdge(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _CommentConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *models.CommentConnection) graphql.Marshaler {
@@ -3562,10 +3563,10 @@ func (ec *executionContext) _CommentConnection_nodes(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]bug.Comment)
+	res := resTmp.([]*bug.Comment)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNComment2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐComment(ctx, field.Selections, res)
+	return ec.marshalNComment2ᚕᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐComment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _CommentConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *models.CommentConnection) graphql.Marshaler {
@@ -3589,10 +3590,10 @@ func (ec *executionContext) _CommentConnection_pageInfo(ctx context.Context, fie
 		}
 		return graphql.Null
 	}
-	res := resTmp.(models.PageInfo)
+	res := resTmp.(*models.PageInfo)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNPageInfo2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐPageInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _CommentConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *models.CommentConnection) graphql.Marshaler {
@@ -3670,10 +3671,10 @@ func (ec *executionContext) _CommentEdge_node(ctx context.Context, field graphql
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bug.Comment)
+	res := resTmp.(*bug.Comment)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNComment2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐComment(ctx, field.Selections, res)
+	return ec.marshalNComment2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐComment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _CommentHistoryStep_message(ctx context.Context, field graphql.CollectedField, obj *bug.CommentHistoryStep) graphql.Marshaler {
@@ -4522,10 +4523,10 @@ func (ec *executionContext) _IdentityConnection_edges(ctx context.Context, field
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]models.IdentityEdge)
+	res := resTmp.([]*models.IdentityEdge)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNIdentityEdge2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐIdentityEdge(ctx, field.Selections, res)
+	return ec.marshalNIdentityEdge2ᚕᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐIdentityEdge(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _IdentityConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *models.IdentityConnection) graphql.Marshaler {
@@ -4576,10 +4577,10 @@ func (ec *executionContext) _IdentityConnection_pageInfo(ctx context.Context, fi
 		}
 		return graphql.Null
 	}
-	res := resTmp.(models.PageInfo)
+	res := resTmp.(*models.PageInfo)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNPageInfo2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐPageInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _IdentityConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *models.IdentityConnection) graphql.Marshaler {
@@ -5192,10 +5193,10 @@ func (ec *executionContext) _OperationConnection_edges(ctx context.Context, fiel
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]models.OperationEdge)
+	res := resTmp.([]*models.OperationEdge)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNOperationEdge2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐOperationEdge(ctx, field.Selections, res)
+	return ec.marshalNOperationEdge2ᚕᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐOperationEdge(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _OperationConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *models.OperationConnection) graphql.Marshaler {
@@ -5246,10 +5247,10 @@ func (ec *executionContext) _OperationConnection_pageInfo(ctx context.Context, f
 		}
 		return graphql.Null
 	}
-	res := resTmp.(models.PageInfo)
+	res := resTmp.(*models.PageInfo)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNPageInfo2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐPageInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _OperationConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *models.OperationConnection) graphql.Marshaler {
@@ -6239,10 +6240,10 @@ func (ec *executionContext) _TimelineItemConnection_edges(ctx context.Context, f
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]models.TimelineItemEdge)
+	res := resTmp.([]*models.TimelineItemEdge)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNTimelineItemEdge2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐTimelineItemEdge(ctx, field.Selections, res)
+	return ec.marshalNTimelineItemEdge2ᚕᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐTimelineItemEdge(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _TimelineItemConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *models.TimelineItemConnection) graphql.Marshaler {
@@ -6293,10 +6294,10 @@ func (ec *executionContext) _TimelineItemConnection_pageInfo(ctx context.Context
 		}
 		return graphql.Null
 	}
-	res := resTmp.(models.PageInfo)
+	res := resTmp.(*models.PageInfo)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNPageInfo2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐPageInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _TimelineItemConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *models.TimelineItemConnection) graphql.Marshaler {
@@ -7293,10 +7294,10 @@ func (ec *executionContext) _TimelineItem(ctx context.Context, sel ast.Selection
 var addCommentOperationImplementors = []string{"AddCommentOperation", "Operation", "Authored"}
 
 func (ec *executionContext) _AddCommentOperation(ctx context.Context, sel ast.SelectionSet, obj *bug.AddCommentOperation) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, addCommentOperationImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, addCommentOperationImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -7304,12 +7305,12 @@ func (ec *executionContext) _AddCommentOperation(ctx context.Context, sel ast.Se
 		case "hash":
 			out.Values[i] = ec._AddCommentOperation_hash(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "author":
 			out.Values[i] = ec._AddCommentOperation_author(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "date":
 			field := field
@@ -7321,26 +7322,26 @@ func (ec *executionContext) _AddCommentOperation(ctx context.Context, sel ast.Se
 				}()
 				res = ec._AddCommentOperation_date(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
 		case "message":
 			out.Values[i] = ec._AddCommentOperation_message(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "files":
 			out.Values[i] = ec._AddCommentOperation_files(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -7349,10 +7350,10 @@ func (ec *executionContext) _AddCommentOperation(ctx context.Context, sel ast.Se
 var addCommentTimelineItemImplementors = []string{"AddCommentTimelineItem", "TimelineItem"}
 
 func (ec *executionContext) _AddCommentTimelineItem(ctx context.Context, sel ast.SelectionSet, obj *bug.AddCommentTimelineItem) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, addCommentTimelineItemImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, addCommentTimelineItemImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -7360,27 +7361,27 @@ func (ec *executionContext) _AddCommentTimelineItem(ctx context.Context, sel ast
 		case "hash":
 			out.Values[i] = ec._AddCommentTimelineItem_hash(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "author":
 			out.Values[i] = ec._AddCommentTimelineItem_author(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "message":
 			out.Values[i] = ec._AddCommentTimelineItem_message(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "messageIsEmpty":
 			out.Values[i] = ec._AddCommentTimelineItem_messageIsEmpty(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "files":
 			out.Values[i] = ec._AddCommentTimelineItem_files(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "createdAt":
 			field := field
@@ -7392,7 +7393,7 @@ func (ec *executionContext) _AddCommentTimelineItem(ctx context.Context, sel ast
 				}()
 				res = ec._AddCommentTimelineItem_createdAt(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
@@ -7406,26 +7407,26 @@ func (ec *executionContext) _AddCommentTimelineItem(ctx context.Context, sel ast
 				}()
 				res = ec._AddCommentTimelineItem_lastEdit(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
 		case "edited":
 			out.Values[i] = ec._AddCommentTimelineItem_edited(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "history":
 			out.Values[i] = ec._AddCommentTimelineItem_history(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -7434,10 +7435,10 @@ func (ec *executionContext) _AddCommentTimelineItem(ctx context.Context, sel ast
 var bugImplementors = []string{"Bug"}
 
 func (ec *executionContext) _Bug(ctx context.Context, sel ast.SelectionSet, obj *bug.Snapshot) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, bugImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, bugImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -7445,12 +7446,12 @@ func (ec *executionContext) _Bug(ctx context.Context, sel ast.SelectionSet, obj 
 		case "id":
 			out.Values[i] = ec._Bug_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "humanId":
 			out.Values[i] = ec._Bug_humanId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "status":
 			field := field
@@ -7462,29 +7463,29 @@ func (ec *executionContext) _Bug(ctx context.Context, sel ast.SelectionSet, obj 
 				}()
 				res = ec._Bug_status(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
 		case "title":
 			out.Values[i] = ec._Bug_title(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "labels":
 			out.Values[i] = ec._Bug_labels(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "author":
 			out.Values[i] = ec._Bug_author(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "createdAt":
 			out.Values[i] = ec._Bug_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "lastEdit":
 			field := field
@@ -7496,7 +7497,7 @@ func (ec *executionContext) _Bug(ctx context.Context, sel ast.SelectionSet, obj 
 				}()
 				res = ec._Bug_lastEdit(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
@@ -7510,7 +7511,7 @@ func (ec *executionContext) _Bug(ctx context.Context, sel ast.SelectionSet, obj 
 				}()
 				res = ec._Bug_actors(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
@@ -7524,7 +7525,7 @@ func (ec *executionContext) _Bug(ctx context.Context, sel ast.SelectionSet, obj 
 				}()
 				res = ec._Bug_participants(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
@@ -7538,7 +7539,7 @@ func (ec *executionContext) _Bug(ctx context.Context, sel ast.SelectionSet, obj 
 				}()
 				res = ec._Bug_comments(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
@@ -7552,7 +7553,7 @@ func (ec *executionContext) _Bug(ctx context.Context, sel ast.SelectionSet, obj 
 				}()
 				res = ec._Bug_timeline(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
@@ -7566,7 +7567,7 @@ func (ec *executionContext) _Bug(ctx context.Context, sel ast.SelectionSet, obj 
 				}()
 				res = ec._Bug_operations(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
@@ -7575,7 +7576,7 @@ func (ec *executionContext) _Bug(ctx context.Context, sel ast.SelectionSet, obj 
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -7584,10 +7585,10 @@ func (ec *executionContext) _Bug(ctx context.Context, sel ast.SelectionSet, obj 
 var bugConnectionImplementors = []string{"BugConnection"}
 
 func (ec *executionContext) _BugConnection(ctx context.Context, sel ast.SelectionSet, obj *models.BugConnection) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, bugConnectionImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, bugConnectionImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -7595,29 +7596,29 @@ func (ec *executionContext) _BugConnection(ctx context.Context, sel ast.Selectio
 		case "edges":
 			out.Values[i] = ec._BugConnection_edges(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "nodes":
 			out.Values[i] = ec._BugConnection_nodes(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "pageInfo":
 			out.Values[i] = ec._BugConnection_pageInfo(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "totalCount":
 			out.Values[i] = ec._BugConnection_totalCount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -7626,10 +7627,10 @@ func (ec *executionContext) _BugConnection(ctx context.Context, sel ast.Selectio
 var bugEdgeImplementors = []string{"BugEdge"}
 
 func (ec *executionContext) _BugEdge(ctx context.Context, sel ast.SelectionSet, obj *models.BugEdge) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, bugEdgeImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, bugEdgeImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -7637,19 +7638,19 @@ func (ec *executionContext) _BugEdge(ctx context.Context, sel ast.SelectionSet, 
 		case "cursor":
 			out.Values[i] = ec._BugEdge_cursor(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "node":
 			out.Values[i] = ec._BugEdge_node(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -7658,10 +7659,10 @@ func (ec *executionContext) _BugEdge(ctx context.Context, sel ast.SelectionSet, 
 var commentImplementors = []string{"Comment", "Authored"}
 
 func (ec *executionContext) _Comment(ctx context.Context, sel ast.SelectionSet, obj *bug.Comment) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, commentImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, commentImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -7669,24 +7670,24 @@ func (ec *executionContext) _Comment(ctx context.Context, sel ast.SelectionSet, 
 		case "author":
 			out.Values[i] = ec._Comment_author(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "message":
 			out.Values[i] = ec._Comment_message(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "files":
 			out.Values[i] = ec._Comment_files(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -7695,10 +7696,10 @@ func (ec *executionContext) _Comment(ctx context.Context, sel ast.SelectionSet, 
 var commentConnectionImplementors = []string{"CommentConnection"}
 
 func (ec *executionContext) _CommentConnection(ctx context.Context, sel ast.SelectionSet, obj *models.CommentConnection) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, commentConnectionImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, commentConnectionImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -7706,29 +7707,29 @@ func (ec *executionContext) _CommentConnection(ctx context.Context, sel ast.Sele
 		case "edges":
 			out.Values[i] = ec._CommentConnection_edges(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "nodes":
 			out.Values[i] = ec._CommentConnection_nodes(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "pageInfo":
 			out.Values[i] = ec._CommentConnection_pageInfo(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "totalCount":
 			out.Values[i] = ec._CommentConnection_totalCount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -7737,10 +7738,10 @@ func (ec *executionContext) _CommentConnection(ctx context.Context, sel ast.Sele
 var commentEdgeImplementors = []string{"CommentEdge"}
 
 func (ec *executionContext) _CommentEdge(ctx context.Context, sel ast.SelectionSet, obj *models.CommentEdge) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, commentEdgeImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, commentEdgeImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -7748,19 +7749,19 @@ func (ec *executionContext) _CommentEdge(ctx context.Context, sel ast.SelectionS
 		case "cursor":
 			out.Values[i] = ec._CommentEdge_cursor(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "node":
 			out.Values[i] = ec._CommentEdge_node(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -7769,10 +7770,10 @@ func (ec *executionContext) _CommentEdge(ctx context.Context, sel ast.SelectionS
 var commentHistoryStepImplementors = []string{"CommentHistoryStep"}
 
 func (ec *executionContext) _CommentHistoryStep(ctx context.Context, sel ast.SelectionSet, obj *bug.CommentHistoryStep) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, commentHistoryStepImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, commentHistoryStepImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -7780,7 +7781,7 @@ func (ec *executionContext) _CommentHistoryStep(ctx context.Context, sel ast.Sel
 		case "message":
 			out.Values[i] = ec._CommentHistoryStep_message(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "date":
 			field := field
@@ -7792,7 +7793,7 @@ func (ec *executionContext) _CommentHistoryStep(ctx context.Context, sel ast.Sel
 				}()
 				res = ec._CommentHistoryStep_date(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
@@ -7801,7 +7802,7 @@ func (ec *executionContext) _CommentHistoryStep(ctx context.Context, sel ast.Sel
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -7810,10 +7811,10 @@ func (ec *executionContext) _CommentHistoryStep(ctx context.Context, sel ast.Sel
 var createOperationImplementors = []string{"CreateOperation", "Operation", "Authored"}
 
 func (ec *executionContext) _CreateOperation(ctx context.Context, sel ast.SelectionSet, obj *bug.CreateOperation) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, createOperationImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, createOperationImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -7821,12 +7822,12 @@ func (ec *executionContext) _CreateOperation(ctx context.Context, sel ast.Select
 		case "hash":
 			out.Values[i] = ec._CreateOperation_hash(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "author":
 			out.Values[i] = ec._CreateOperation_author(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "date":
 			field := field
@@ -7838,31 +7839,31 @@ func (ec *executionContext) _CreateOperation(ctx context.Context, sel ast.Select
 				}()
 				res = ec._CreateOperation_date(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
 		case "title":
 			out.Values[i] = ec._CreateOperation_title(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "message":
 			out.Values[i] = ec._CreateOperation_message(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "files":
 			out.Values[i] = ec._CreateOperation_files(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -7871,10 +7872,10 @@ func (ec *executionContext) _CreateOperation(ctx context.Context, sel ast.Select
 var createTimelineItemImplementors = []string{"CreateTimelineItem", "TimelineItem"}
 
 func (ec *executionContext) _CreateTimelineItem(ctx context.Context, sel ast.SelectionSet, obj *bug.CreateTimelineItem) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, createTimelineItemImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, createTimelineItemImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -7882,27 +7883,27 @@ func (ec *executionContext) _CreateTimelineItem(ctx context.Context, sel ast.Sel
 		case "hash":
 			out.Values[i] = ec._CreateTimelineItem_hash(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "author":
 			out.Values[i] = ec._CreateTimelineItem_author(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "message":
 			out.Values[i] = ec._CreateTimelineItem_message(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "messageIsEmpty":
 			out.Values[i] = ec._CreateTimelineItem_messageIsEmpty(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "files":
 			out.Values[i] = ec._CreateTimelineItem_files(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "createdAt":
 			field := field
@@ -7914,7 +7915,7 @@ func (ec *executionContext) _CreateTimelineItem(ctx context.Context, sel ast.Sel
 				}()
 				res = ec._CreateTimelineItem_createdAt(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
@@ -7928,26 +7929,26 @@ func (ec *executionContext) _CreateTimelineItem(ctx context.Context, sel ast.Sel
 				}()
 				res = ec._CreateTimelineItem_lastEdit(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
 		case "edited":
 			out.Values[i] = ec._CreateTimelineItem_edited(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "history":
 			out.Values[i] = ec._CreateTimelineItem_history(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -7956,10 +7957,10 @@ func (ec *executionContext) _CreateTimelineItem(ctx context.Context, sel ast.Sel
 var editCommentOperationImplementors = []string{"EditCommentOperation", "Operation", "Authored"}
 
 func (ec *executionContext) _EditCommentOperation(ctx context.Context, sel ast.SelectionSet, obj *bug.EditCommentOperation) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, editCommentOperationImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, editCommentOperationImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -7967,12 +7968,12 @@ func (ec *executionContext) _EditCommentOperation(ctx context.Context, sel ast.S
 		case "hash":
 			out.Values[i] = ec._EditCommentOperation_hash(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "author":
 			out.Values[i] = ec._EditCommentOperation_author(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "date":
 			field := field
@@ -7984,31 +7985,31 @@ func (ec *executionContext) _EditCommentOperation(ctx context.Context, sel ast.S
 				}()
 				res = ec._EditCommentOperation_date(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
 		case "target":
 			out.Values[i] = ec._EditCommentOperation_target(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "message":
 			out.Values[i] = ec._EditCommentOperation_message(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "files":
 			out.Values[i] = ec._EditCommentOperation_files(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -8017,10 +8018,10 @@ func (ec *executionContext) _EditCommentOperation(ctx context.Context, sel ast.S
 var identityImplementors = []string{"Identity"}
 
 func (ec *executionContext) _Identity(ctx context.Context, sel ast.SelectionSet, obj *identity.Interface) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, identityImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, identityImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -8035,7 +8036,7 @@ func (ec *executionContext) _Identity(ctx context.Context, sel ast.SelectionSet,
 				}()
 				res = ec._Identity_id(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
@@ -8049,7 +8050,7 @@ func (ec *executionContext) _Identity(ctx context.Context, sel ast.SelectionSet,
 				}()
 				res = ec._Identity_humanId(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
@@ -8096,7 +8097,7 @@ func (ec *executionContext) _Identity(ctx context.Context, sel ast.SelectionSet,
 				}()
 				res = ec._Identity_displayName(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
@@ -8121,7 +8122,7 @@ func (ec *executionContext) _Identity(ctx context.Context, sel ast.SelectionSet,
 				}()
 				res = ec._Identity_isProtected(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
@@ -8130,7 +8131,7 @@ func (ec *executionContext) _Identity(ctx context.Context, sel ast.SelectionSet,
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -8139,10 +8140,10 @@ func (ec *executionContext) _Identity(ctx context.Context, sel ast.SelectionSet,
 var identityConnectionImplementors = []string{"IdentityConnection"}
 
 func (ec *executionContext) _IdentityConnection(ctx context.Context, sel ast.SelectionSet, obj *models.IdentityConnection) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, identityConnectionImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, identityConnectionImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -8150,29 +8151,29 @@ func (ec *executionContext) _IdentityConnection(ctx context.Context, sel ast.Sel
 		case "edges":
 			out.Values[i] = ec._IdentityConnection_edges(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "nodes":
 			out.Values[i] = ec._IdentityConnection_nodes(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "pageInfo":
 			out.Values[i] = ec._IdentityConnection_pageInfo(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "totalCount":
 			out.Values[i] = ec._IdentityConnection_totalCount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -8181,10 +8182,10 @@ func (ec *executionContext) _IdentityConnection(ctx context.Context, sel ast.Sel
 var identityEdgeImplementors = []string{"IdentityEdge"}
 
 func (ec *executionContext) _IdentityEdge(ctx context.Context, sel ast.SelectionSet, obj *models.IdentityEdge) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, identityEdgeImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, identityEdgeImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -8192,19 +8193,19 @@ func (ec *executionContext) _IdentityEdge(ctx context.Context, sel ast.Selection
 		case "cursor":
 			out.Values[i] = ec._IdentityEdge_cursor(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "node":
 			out.Values[i] = ec._IdentityEdge_node(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -8213,10 +8214,10 @@ func (ec *executionContext) _IdentityEdge(ctx context.Context, sel ast.Selection
 var labelChangeOperationImplementors = []string{"LabelChangeOperation", "Operation", "Authored"}
 
 func (ec *executionContext) _LabelChangeOperation(ctx context.Context, sel ast.SelectionSet, obj *bug.LabelChangeOperation) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, labelChangeOperationImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, labelChangeOperationImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -8224,12 +8225,12 @@ func (ec *executionContext) _LabelChangeOperation(ctx context.Context, sel ast.S
 		case "hash":
 			out.Values[i] = ec._LabelChangeOperation_hash(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "author":
 			out.Values[i] = ec._LabelChangeOperation_author(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "date":
 			field := field
@@ -8241,26 +8242,26 @@ func (ec *executionContext) _LabelChangeOperation(ctx context.Context, sel ast.S
 				}()
 				res = ec._LabelChangeOperation_date(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
 		case "added":
 			out.Values[i] = ec._LabelChangeOperation_added(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "removed":
 			out.Values[i] = ec._LabelChangeOperation_removed(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -8269,10 +8270,10 @@ func (ec *executionContext) _LabelChangeOperation(ctx context.Context, sel ast.S
 var labelChangeTimelineItemImplementors = []string{"LabelChangeTimelineItem", "TimelineItem"}
 
 func (ec *executionContext) _LabelChangeTimelineItem(ctx context.Context, sel ast.SelectionSet, obj *bug.LabelChangeTimelineItem) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, labelChangeTimelineItemImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, labelChangeTimelineItemImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -8280,12 +8281,12 @@ func (ec *executionContext) _LabelChangeTimelineItem(ctx context.Context, sel as
 		case "hash":
 			out.Values[i] = ec._LabelChangeTimelineItem_hash(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "author":
 			out.Values[i] = ec._LabelChangeTimelineItem_author(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "date":
 			field := field
@@ -8297,26 +8298,26 @@ func (ec *executionContext) _LabelChangeTimelineItem(ctx context.Context, sel as
 				}()
 				res = ec._LabelChangeTimelineItem_date(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
 		case "added":
 			out.Values[i] = ec._LabelChangeTimelineItem_added(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "removed":
 			out.Values[i] = ec._LabelChangeTimelineItem_removed(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -8325,14 +8326,14 @@ func (ec *executionContext) _LabelChangeTimelineItem(ctx context.Context, sel as
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, mutationImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, mutationImplementors)
 
 	ctx = graphql.WithResolverContext(ctx, &graphql.ResolverContext{
 		Object: "Mutation",
 	})
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -8340,44 +8341,44 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "newBug":
 			out.Values[i] = ec._Mutation_newBug(ctx, field)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "addComment":
 			out.Values[i] = ec._Mutation_addComment(ctx, field)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "changeLabels":
 			out.Values[i] = ec._Mutation_changeLabels(ctx, field)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "open":
 			out.Values[i] = ec._Mutation_open(ctx, field)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "close":
 			out.Values[i] = ec._Mutation_close(ctx, field)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "setTitle":
 			out.Values[i] = ec._Mutation_setTitle(ctx, field)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "commit":
 			out.Values[i] = ec._Mutation_commit(ctx, field)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -8386,10 +8387,10 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 var operationConnectionImplementors = []string{"OperationConnection"}
 
 func (ec *executionContext) _OperationConnection(ctx context.Context, sel ast.SelectionSet, obj *models.OperationConnection) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, operationConnectionImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, operationConnectionImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -8397,29 +8398,29 @@ func (ec *executionContext) _OperationConnection(ctx context.Context, sel ast.Se
 		case "edges":
 			out.Values[i] = ec._OperationConnection_edges(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "nodes":
 			out.Values[i] = ec._OperationConnection_nodes(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "pageInfo":
 			out.Values[i] = ec._OperationConnection_pageInfo(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "totalCount":
 			out.Values[i] = ec._OperationConnection_totalCount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -8428,10 +8429,10 @@ func (ec *executionContext) _OperationConnection(ctx context.Context, sel ast.Se
 var operationEdgeImplementors = []string{"OperationEdge"}
 
 func (ec *executionContext) _OperationEdge(ctx context.Context, sel ast.SelectionSet, obj *models.OperationEdge) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, operationEdgeImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, operationEdgeImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -8439,19 +8440,19 @@ func (ec *executionContext) _OperationEdge(ctx context.Context, sel ast.Selectio
 		case "cursor":
 			out.Values[i] = ec._OperationEdge_cursor(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "node":
 			out.Values[i] = ec._OperationEdge_node(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -8460,10 +8461,10 @@ func (ec *executionContext) _OperationEdge(ctx context.Context, sel ast.Selectio
 var pageInfoImplementors = []string{"PageInfo"}
 
 func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet, obj *models.PageInfo) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, pageInfoImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, pageInfoImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -8471,29 +8472,29 @@ func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet,
 		case "hasNextPage":
 			out.Values[i] = ec._PageInfo_hasNextPage(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "hasPreviousPage":
 			out.Values[i] = ec._PageInfo_hasPreviousPage(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "startCursor":
 			out.Values[i] = ec._PageInfo_startCursor(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "endCursor":
 			out.Values[i] = ec._PageInfo_endCursor(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -8502,14 +8503,14 @@ func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet,
 var queryImplementors = []string{"Query"}
 
 func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, queryImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, queryImplementors)
 
 	ctx = graphql.WithResolverContext(ctx, &graphql.ResolverContext{
 		Object: "Query",
 	})
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -8545,7 +8546,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -8554,10 +8555,10 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 var repositoryImplementors = []string{"Repository"}
 
 func (ec *executionContext) _Repository(ctx context.Context, sel ast.SelectionSet, obj *models.Repository) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, repositoryImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, repositoryImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -8572,7 +8573,7 @@ func (ec *executionContext) _Repository(ctx context.Context, sel ast.SelectionSe
 				}()
 				res = ec._Repository_allBugs(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
@@ -8597,7 +8598,7 @@ func (ec *executionContext) _Repository(ctx context.Context, sel ast.SelectionSe
 				}()
 				res = ec._Repository_allIdentities(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
@@ -8633,7 +8634,7 @@ func (ec *executionContext) _Repository(ctx context.Context, sel ast.SelectionSe
 				}()
 				res = ec._Repository_validLabels(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
@@ -8642,7 +8643,7 @@ func (ec *executionContext) _Repository(ctx context.Context, sel ast.SelectionSe
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -8651,10 +8652,10 @@ func (ec *executionContext) _Repository(ctx context.Context, sel ast.SelectionSe
 var setStatusOperationImplementors = []string{"SetStatusOperation", "Operation", "Authored"}
 
 func (ec *executionContext) _SetStatusOperation(ctx context.Context, sel ast.SelectionSet, obj *bug.SetStatusOperation) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, setStatusOperationImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, setStatusOperationImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -8662,12 +8663,12 @@ func (ec *executionContext) _SetStatusOperation(ctx context.Context, sel ast.Sel
 		case "hash":
 			out.Values[i] = ec._SetStatusOperation_hash(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "author":
 			out.Values[i] = ec._SetStatusOperation_author(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "date":
 			field := field
@@ -8679,7 +8680,7 @@ func (ec *executionContext) _SetStatusOperation(ctx context.Context, sel ast.Sel
 				}()
 				res = ec._SetStatusOperation_date(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
@@ -8693,7 +8694,7 @@ func (ec *executionContext) _SetStatusOperation(ctx context.Context, sel ast.Sel
 				}()
 				res = ec._SetStatusOperation_status(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
@@ -8702,7 +8703,7 @@ func (ec *executionContext) _SetStatusOperation(ctx context.Context, sel ast.Sel
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -8711,10 +8712,10 @@ func (ec *executionContext) _SetStatusOperation(ctx context.Context, sel ast.Sel
 var setStatusTimelineItemImplementors = []string{"SetStatusTimelineItem", "TimelineItem"}
 
 func (ec *executionContext) _SetStatusTimelineItem(ctx context.Context, sel ast.SelectionSet, obj *bug.SetStatusTimelineItem) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, setStatusTimelineItemImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, setStatusTimelineItemImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -8722,12 +8723,12 @@ func (ec *executionContext) _SetStatusTimelineItem(ctx context.Context, sel ast.
 		case "hash":
 			out.Values[i] = ec._SetStatusTimelineItem_hash(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "author":
 			out.Values[i] = ec._SetStatusTimelineItem_author(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "date":
 			field := field
@@ -8739,7 +8740,7 @@ func (ec *executionContext) _SetStatusTimelineItem(ctx context.Context, sel ast.
 				}()
 				res = ec._SetStatusTimelineItem_date(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
@@ -8753,7 +8754,7 @@ func (ec *executionContext) _SetStatusTimelineItem(ctx context.Context, sel ast.
 				}()
 				res = ec._SetStatusTimelineItem_status(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
@@ -8762,7 +8763,7 @@ func (ec *executionContext) _SetStatusTimelineItem(ctx context.Context, sel ast.
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -8771,10 +8772,10 @@ func (ec *executionContext) _SetStatusTimelineItem(ctx context.Context, sel ast.
 var setTitleOperationImplementors = []string{"SetTitleOperation", "Operation", "Authored"}
 
 func (ec *executionContext) _SetTitleOperation(ctx context.Context, sel ast.SelectionSet, obj *bug.SetTitleOperation) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, setTitleOperationImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, setTitleOperationImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -8782,12 +8783,12 @@ func (ec *executionContext) _SetTitleOperation(ctx context.Context, sel ast.Sele
 		case "hash":
 			out.Values[i] = ec._SetTitleOperation_hash(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "author":
 			out.Values[i] = ec._SetTitleOperation_author(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "date":
 			field := field
@@ -8799,26 +8800,26 @@ func (ec *executionContext) _SetTitleOperation(ctx context.Context, sel ast.Sele
 				}()
 				res = ec._SetTitleOperation_date(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
 		case "title":
 			out.Values[i] = ec._SetTitleOperation_title(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "was":
 			out.Values[i] = ec._SetTitleOperation_was(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -8827,10 +8828,10 @@ func (ec *executionContext) _SetTitleOperation(ctx context.Context, sel ast.Sele
 var setTitleTimelineItemImplementors = []string{"SetTitleTimelineItem", "TimelineItem"}
 
 func (ec *executionContext) _SetTitleTimelineItem(ctx context.Context, sel ast.SelectionSet, obj *bug.SetTitleTimelineItem) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, setTitleTimelineItemImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, setTitleTimelineItemImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -8838,12 +8839,12 @@ func (ec *executionContext) _SetTitleTimelineItem(ctx context.Context, sel ast.S
 		case "hash":
 			out.Values[i] = ec._SetTitleTimelineItem_hash(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "author":
 			out.Values[i] = ec._SetTitleTimelineItem_author(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "date":
 			field := field
@@ -8855,26 +8856,26 @@ func (ec *executionContext) _SetTitleTimelineItem(ctx context.Context, sel ast.S
 				}()
 				res = ec._SetTitleTimelineItem_date(ctx, field, obj)
 				if res == graphql.Null {
-					invalid = true
+					atomic.AddUint32(&invalids, 1)
 				}
 				return res
 			})
 		case "title":
 			out.Values[i] = ec._SetTitleTimelineItem_title(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "was":
 			out.Values[i] = ec._SetTitleTimelineItem_was(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -8883,10 +8884,10 @@ func (ec *executionContext) _SetTitleTimelineItem(ctx context.Context, sel ast.S
 var timelineItemConnectionImplementors = []string{"TimelineItemConnection"}
 
 func (ec *executionContext) _TimelineItemConnection(ctx context.Context, sel ast.SelectionSet, obj *models.TimelineItemConnection) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, timelineItemConnectionImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, timelineItemConnectionImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -8894,29 +8895,29 @@ func (ec *executionContext) _TimelineItemConnection(ctx context.Context, sel ast
 		case "edges":
 			out.Values[i] = ec._TimelineItemConnection_edges(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "nodes":
 			out.Values[i] = ec._TimelineItemConnection_nodes(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "pageInfo":
 			out.Values[i] = ec._TimelineItemConnection_pageInfo(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "totalCount":
 			out.Values[i] = ec._TimelineItemConnection_totalCount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -8925,10 +8926,10 @@ func (ec *executionContext) _TimelineItemConnection(ctx context.Context, sel ast
 var timelineItemEdgeImplementors = []string{"TimelineItemEdge"}
 
 func (ec *executionContext) _TimelineItemEdge(ctx context.Context, sel ast.SelectionSet, obj *models.TimelineItemEdge) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, timelineItemEdgeImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, timelineItemEdgeImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -8936,19 +8937,19 @@ func (ec *executionContext) _TimelineItemEdge(ctx context.Context, sel ast.Selec
 		case "cursor":
 			out.Values[i] = ec._TimelineItemEdge_cursor(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "node":
 			out.Values[i] = ec._TimelineItemEdge_node(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -8957,10 +8958,10 @@ func (ec *executionContext) _TimelineItemEdge(ctx context.Context, sel ast.Selec
 var __DirectiveImplementors = []string{"__Directive"}
 
 func (ec *executionContext) ___Directive(ctx context.Context, sel ast.SelectionSet, obj *introspection.Directive) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, __DirectiveImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, __DirectiveImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -8968,26 +8969,26 @@ func (ec *executionContext) ___Directive(ctx context.Context, sel ast.SelectionS
 		case "name":
 			out.Values[i] = ec.___Directive_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "description":
 			out.Values[i] = ec.___Directive_description(ctx, field, obj)
 		case "locations":
 			out.Values[i] = ec.___Directive_locations(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "args":
 			out.Values[i] = ec.___Directive_args(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -8996,10 +8997,10 @@ func (ec *executionContext) ___Directive(ctx context.Context, sel ast.SelectionS
 var __EnumValueImplementors = []string{"__EnumValue"}
 
 func (ec *executionContext) ___EnumValue(ctx context.Context, sel ast.SelectionSet, obj *introspection.EnumValue) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, __EnumValueImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, __EnumValueImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -9007,14 +9008,14 @@ func (ec *executionContext) ___EnumValue(ctx context.Context, sel ast.SelectionS
 		case "name":
 			out.Values[i] = ec.___EnumValue_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "description":
 			out.Values[i] = ec.___EnumValue_description(ctx, field, obj)
 		case "isDeprecated":
 			out.Values[i] = ec.___EnumValue_isDeprecated(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "deprecationReason":
 			out.Values[i] = ec.___EnumValue_deprecationReason(ctx, field, obj)
@@ -9023,7 +9024,7 @@ func (ec *executionContext) ___EnumValue(ctx context.Context, sel ast.SelectionS
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -9032,10 +9033,10 @@ func (ec *executionContext) ___EnumValue(ctx context.Context, sel ast.SelectionS
 var __FieldImplementors = []string{"__Field"}
 
 func (ec *executionContext) ___Field(ctx context.Context, sel ast.SelectionSet, obj *introspection.Field) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, __FieldImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, __FieldImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -9043,24 +9044,24 @@ func (ec *executionContext) ___Field(ctx context.Context, sel ast.SelectionSet, 
 		case "name":
 			out.Values[i] = ec.___Field_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "description":
 			out.Values[i] = ec.___Field_description(ctx, field, obj)
 		case "args":
 			out.Values[i] = ec.___Field_args(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "type":
 			out.Values[i] = ec.___Field_type(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "isDeprecated":
 			out.Values[i] = ec.___Field_isDeprecated(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "deprecationReason":
 			out.Values[i] = ec.___Field_deprecationReason(ctx, field, obj)
@@ -9069,7 +9070,7 @@ func (ec *executionContext) ___Field(ctx context.Context, sel ast.SelectionSet, 
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -9078,10 +9079,10 @@ func (ec *executionContext) ___Field(ctx context.Context, sel ast.SelectionSet, 
 var __InputValueImplementors = []string{"__InputValue"}
 
 func (ec *executionContext) ___InputValue(ctx context.Context, sel ast.SelectionSet, obj *introspection.InputValue) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, __InputValueImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, __InputValueImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -9089,14 +9090,14 @@ func (ec *executionContext) ___InputValue(ctx context.Context, sel ast.Selection
 		case "name":
 			out.Values[i] = ec.___InputValue_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "description":
 			out.Values[i] = ec.___InputValue_description(ctx, field, obj)
 		case "type":
 			out.Values[i] = ec.___InputValue_type(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "defaultValue":
 			out.Values[i] = ec.___InputValue_defaultValue(ctx, field, obj)
@@ -9105,7 +9106,7 @@ func (ec *executionContext) ___InputValue(ctx context.Context, sel ast.Selection
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -9114,10 +9115,10 @@ func (ec *executionContext) ___InputValue(ctx context.Context, sel ast.Selection
 var __SchemaImplementors = []string{"__Schema"}
 
 func (ec *executionContext) ___Schema(ctx context.Context, sel ast.SelectionSet, obj *introspection.Schema) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, __SchemaImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, __SchemaImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -9125,12 +9126,12 @@ func (ec *executionContext) ___Schema(ctx context.Context, sel ast.SelectionSet,
 		case "types":
 			out.Values[i] = ec.___Schema_types(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "queryType":
 			out.Values[i] = ec.___Schema_queryType(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "mutationType":
 			out.Values[i] = ec.___Schema_mutationType(ctx, field, obj)
@@ -9139,14 +9140,14 @@ func (ec *executionContext) ___Schema(ctx context.Context, sel ast.SelectionSet,
 		case "directives":
 			out.Values[i] = ec.___Schema_directives(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -9155,10 +9156,10 @@ func (ec *executionContext) ___Schema(ctx context.Context, sel ast.SelectionSet,
 var __TypeImplementors = []string{"__Type"}
 
 func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, obj *introspection.Type) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, __TypeImplementors)
+	fields := graphql.CollectFields(ec.RequestContext, sel, __TypeImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	invalid := false
+	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -9166,7 +9167,7 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 		case "kind":
 			out.Values[i] = ec.___Type_kind(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalid = true
+				invalids++
 			}
 		case "name":
 			out.Values[i] = ec.___Type_name(ctx, field, obj)
@@ -9189,7 +9190,7 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 		}
 	}
 	out.Dispatch()
-	if invalid {
+	if invalids > 0 {
 		return graphql.Null
 	}
 	return out
@@ -9204,14 +9205,20 @@ func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interf
 }
 
 func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.SelectionSet, v bool) graphql.Marshaler {
-	return graphql.MarshalBoolean(v)
+	res := graphql.MarshalBoolean(v)
+	if res == graphql.Null {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) marshalNBug2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐSnapshot(ctx context.Context, sel ast.SelectionSet, v bug.Snapshot) graphql.Marshaler {
 	return ec._Bug(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNBug2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐSnapshot(ctx context.Context, sel ast.SelectionSet, v []bug.Snapshot) graphql.Marshaler {
+func (ec *executionContext) marshalNBug2ᚕᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐSnapshot(ctx context.Context, sel ast.SelectionSet, v []*bug.Snapshot) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -9235,7 +9242,7 @@ func (ec *executionContext) marshalNBug2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbu
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNBug2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐSnapshot(ctx, sel, v[i])
+			ret[i] = ec.marshalNBug2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐSnapshot(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -9276,7 +9283,7 @@ func (ec *executionContext) marshalNBugEdge2githubᚗcomᚋMichaelMureᚋgitᚑb
 	return ec._BugEdge(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNBugEdge2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐBugEdge(ctx context.Context, sel ast.SelectionSet, v []models.BugEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNBugEdge2ᚕᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐBugEdge(ctx context.Context, sel ast.SelectionSet, v []*models.BugEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -9300,7 +9307,7 @@ func (ec *executionContext) marshalNBugEdge2ᚕgithubᚗcomᚋMichaelMureᚋgit�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNBugEdge2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐBugEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalNBugEdge2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐBugEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -9311,13 +9318,23 @@ func (ec *executionContext) marshalNBugEdge2ᚕgithubᚗcomᚋMichaelMureᚋgit�
 	}
 	wg.Wait()
 	return ret
+}
+
+func (ec *executionContext) marshalNBugEdge2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐBugEdge(ctx context.Context, sel ast.SelectionSet, v *models.BugEdge) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._BugEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNComment2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐComment(ctx context.Context, sel ast.SelectionSet, v bug.Comment) graphql.Marshaler {
 	return ec._Comment(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNComment2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐComment(ctx context.Context, sel ast.SelectionSet, v []bug.Comment) graphql.Marshaler {
+func (ec *executionContext) marshalNComment2ᚕᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐComment(ctx context.Context, sel ast.SelectionSet, v []*bug.Comment) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -9341,7 +9358,7 @@ func (ec *executionContext) marshalNComment2ᚕgithubᚗcomᚋMichaelMureᚋgit�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNComment2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐComment(ctx, sel, v[i])
+			ret[i] = ec.marshalNComment2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐComment(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -9352,6 +9369,16 @@ func (ec *executionContext) marshalNComment2ᚕgithubᚗcomᚋMichaelMureᚋgit�
 	}
 	wg.Wait()
 	return ret
+}
+
+func (ec *executionContext) marshalNComment2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐComment(ctx context.Context, sel ast.SelectionSet, v *bug.Comment) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Comment(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNCommentConnection2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐCommentConnection(ctx context.Context, sel ast.SelectionSet, v models.CommentConnection) graphql.Marshaler {
@@ -9372,7 +9399,7 @@ func (ec *executionContext) marshalNCommentEdge2githubᚗcomᚋMichaelMureᚋgit
 	return ec._CommentEdge(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNCommentEdge2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐCommentEdge(ctx context.Context, sel ast.SelectionSet, v []models.CommentEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNCommentEdge2ᚕᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐCommentEdge(ctx context.Context, sel ast.SelectionSet, v []*models.CommentEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -9396,7 +9423,7 @@ func (ec *executionContext) marshalNCommentEdge2ᚕgithubᚗcomᚋMichaelMureᚋ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNCommentEdge2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐCommentEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalNCommentEdge2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐCommentEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -9407,6 +9434,16 @@ func (ec *executionContext) marshalNCommentEdge2ᚕgithubᚗcomᚋMichaelMureᚋ
 	}
 	wg.Wait()
 	return ret
+}
+
+func (ec *executionContext) marshalNCommentEdge2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐCommentEdge(ctx context.Context, sel ast.SelectionSet, v *models.CommentEdge) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._CommentEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNCommentHistoryStep2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐCommentHistoryStep(ctx context.Context, sel ast.SelectionSet, v bug.CommentHistoryStep) graphql.Marshaler {
@@ -9547,7 +9584,7 @@ func (ec *executionContext) marshalNIdentityEdge2githubᚗcomᚋMichaelMureᚋgi
 	return ec._IdentityEdge(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNIdentityEdge2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐIdentityEdge(ctx context.Context, sel ast.SelectionSet, v []models.IdentityEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNIdentityEdge2ᚕᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐIdentityEdge(ctx context.Context, sel ast.SelectionSet, v []*models.IdentityEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -9571,7 +9608,7 @@ func (ec *executionContext) marshalNIdentityEdge2ᚕgithubᚗcomᚋMichaelMure�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNIdentityEdge2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐIdentityEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalNIdentityEdge2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐIdentityEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -9584,12 +9621,28 @@ func (ec *executionContext) marshalNIdentityEdge2ᚕgithubᚗcomᚋMichaelMure�
 	return ret
 }
 
+func (ec *executionContext) marshalNIdentityEdge2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐIdentityEdge(ctx context.Context, sel ast.SelectionSet, v *models.IdentityEdge) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._IdentityEdge(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
 	return graphql.UnmarshalInt(v)
 }
 
 func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
-	return graphql.MarshalInt(v)
+	res := graphql.MarshalInt(v)
+	if res == graphql.Null {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) unmarshalNLabel2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐLabel(ctx context.Context, v interface{}) (bug.Label, error) {
@@ -9689,7 +9742,7 @@ func (ec *executionContext) marshalNOperationEdge2githubᚗcomᚋMichaelMureᚋg
 	return ec._OperationEdge(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNOperationEdge2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐOperationEdge(ctx context.Context, sel ast.SelectionSet, v []models.OperationEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNOperationEdge2ᚕᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐOperationEdge(ctx context.Context, sel ast.SelectionSet, v []*models.OperationEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -9713,7 +9766,7 @@ func (ec *executionContext) marshalNOperationEdge2ᚕgithubᚗcomᚋMichaelMure�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNOperationEdge2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐOperationEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalNOperationEdge2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐOperationEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -9726,8 +9779,28 @@ func (ec *executionContext) marshalNOperationEdge2ᚕgithubᚗcomᚋMichaelMure�
 	return ret
 }
 
+func (ec *executionContext) marshalNOperationEdge2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐOperationEdge(ctx context.Context, sel ast.SelectionSet, v *models.OperationEdge) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._OperationEdge(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNPageInfo2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v models.PageInfo) graphql.Marshaler {
 	return ec._PageInfo(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *models.PageInfo) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._PageInfo(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNStatus2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐStatus(ctx context.Context, v interface{}) (models.Status, error) {
@@ -9744,7 +9817,13 @@ func (ec *executionContext) unmarshalNString2string(ctx context.Context, v inter
 }
 
 func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
-	return graphql.MarshalString(v)
+	res := graphql.MarshalString(v)
+	if res == graphql.Null {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {
@@ -9752,13 +9831,13 @@ func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v in
 }
 
 func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
-	if v.IsZero() {
+	res := graphql.MarshalTime(v)
+	if res == graphql.Null {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
 		}
-		return graphql.Null
 	}
-	return graphql.MarshalTime(v)
+	return res
 }
 
 func (ec *executionContext) unmarshalNTime2ᚖtimeᚐTime(ctx context.Context, v interface{}) (*time.Time, error) {
@@ -9838,7 +9917,7 @@ func (ec *executionContext) marshalNTimelineItemEdge2githubᚗcomᚋMichaelMure�
 	return ec._TimelineItemEdge(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNTimelineItemEdge2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐTimelineItemEdge(ctx context.Context, sel ast.SelectionSet, v []models.TimelineItemEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNTimelineItemEdge2ᚕᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐTimelineItemEdge(ctx context.Context, sel ast.SelectionSet, v []*models.TimelineItemEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -9862,7 +9941,7 @@ func (ec *executionContext) marshalNTimelineItemEdge2ᚕgithubᚗcomᚋMichaelMu
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNTimelineItemEdge2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐTimelineItemEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalNTimelineItemEdge2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐTimelineItemEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -9873,6 +9952,16 @@ func (ec *executionContext) marshalNTimelineItemEdge2ᚕgithubᚗcomᚋMichaelMu
 	}
 	wg.Wait()
 	return ret
+}
+
+func (ec *executionContext) marshalNTimelineItemEdge2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐTimelineItemEdge(ctx context.Context, sel ast.SelectionSet, v *models.TimelineItemEdge) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._TimelineItemEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋvendorᚋgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
@@ -9921,7 +10010,13 @@ func (ec *executionContext) unmarshalN__DirectiveLocation2string(ctx context.Con
 }
 
 func (ec *executionContext) marshalN__DirectiveLocation2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
-	return graphql.MarshalString(v)
+	res := graphql.MarshalString(v)
+	if res == graphql.Null {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) unmarshalN__DirectiveLocation2ᚕstring(ctx context.Context, v interface{}) ([]string, error) {
@@ -10086,7 +10181,13 @@ func (ec *executionContext) unmarshalN__TypeKind2string(ctx context.Context, v i
 }
 
 func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
-	return graphql.MarshalString(v)
+	res := graphql.MarshalString(v)
+	if res == graphql.Null {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {

@@ -29,15 +29,19 @@ func (bugResolver) Comments(ctx context.Context, obj *bug.Snapshot, after *strin
 
 	edger := func(comment bug.Comment, offset int) connections.Edge {
 		return models.CommentEdge{
-			Node:   comment,
+			Node:   &comment,
 			Cursor: connections.OffsetToCursor(offset),
 		}
 	}
 
-	conMaker := func(edges []models.CommentEdge, nodes []bug.Comment, info models.PageInfo, totalCount int) (*models.CommentConnection, error) {
+	conMaker := func(edges []*models.CommentEdge, nodes []bug.Comment, info *models.PageInfo, totalCount int) (*models.CommentConnection, error) {
+		var commentNodes []*bug.Comment
+		for _, c := range nodes {
+			commentNodes = append(commentNodes, &c)
+		}
 		return &models.CommentConnection{
 			Edges:      edges,
-			Nodes:      nodes,
+			Nodes:      commentNodes,
 			PageInfo:   info,
 			TotalCount: totalCount,
 		}, nil
@@ -61,7 +65,7 @@ func (bugResolver) Operations(ctx context.Context, obj *bug.Snapshot, after *str
 		}
 	}
 
-	conMaker := func(edges []models.OperationEdge, nodes []bug.Operation, info models.PageInfo, totalCount int) (*models.OperationConnection, error) {
+	conMaker := func(edges []*models.OperationEdge, nodes []bug.Operation, info *models.PageInfo, totalCount int) (*models.OperationConnection, error) {
 		return &models.OperationConnection{
 			Edges:      edges,
 			Nodes:      nodes,
@@ -88,7 +92,7 @@ func (bugResolver) Timeline(ctx context.Context, obj *bug.Snapshot, after *strin
 		}
 	}
 
-	conMaker := func(edges []models.TimelineItemEdge, nodes []bug.TimelineItem, info models.PageInfo, totalCount int) (*models.TimelineItemConnection, error) {
+	conMaker := func(edges []*models.TimelineItemEdge, nodes []bug.TimelineItem, info *models.PageInfo, totalCount int) (*models.TimelineItemConnection, error) {
 		return &models.TimelineItemConnection{
 			Edges:      edges,
 			Nodes:      nodes,
@@ -120,7 +124,7 @@ func (bugResolver) Actors(ctx context.Context, obj *bug.Snapshot, after *string,
 		}
 	}
 
-	conMaker := func(edges []models.IdentityEdge, nodes []identity.Interface, info models.PageInfo, totalCount int) (*models.IdentityConnection, error) {
+	conMaker := func(edges []*models.IdentityEdge, nodes []identity.Interface, info *models.PageInfo, totalCount int) (*models.IdentityConnection, error) {
 		return &models.IdentityConnection{
 			Edges:      edges,
 			Nodes:      nodes,
@@ -147,7 +151,7 @@ func (bugResolver) Participants(ctx context.Context, obj *bug.Snapshot, after *s
 		}
 	}
 
-	conMaker := func(edges []models.IdentityEdge, nodes []identity.Interface, info models.PageInfo, totalCount int) (*models.IdentityConnection, error) {
+	conMaker := func(edges []*models.IdentityEdge, nodes []identity.Interface, info *models.PageInfo, totalCount int) (*models.IdentityConnection, error) {
 		return &models.IdentityConnection{
 			Edges:      edges,
 			Nodes:      nodes,

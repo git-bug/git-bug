@@ -17,17 +17,17 @@ type TimelineItemEdgeMaker func(value bug.TimelineItem, offset int) Edge
 
 // TimelineItemConMaker define a function that create a models.TimelineItemConnection
 type TimelineItemConMaker func(
-	edges []models.TimelineItemEdge,
+	edges []*models.TimelineItemEdge,
 	nodes []bug.TimelineItem,
-	info models.PageInfo,
+	info *models.PageInfo,
 	totalCount int) (*models.TimelineItemConnection, error)
 
 // TimelineItemCon will paginate a source according to the input of a relay connection
 func TimelineItemCon(source []bug.TimelineItem, edgeMaker TimelineItemEdgeMaker, conMaker TimelineItemConMaker, input models.ConnectionInput) (*models.TimelineItemConnection, error) {
 	var nodes []bug.TimelineItem
-	var edges []models.TimelineItemEdge
+	var edges []*models.TimelineItemEdge
 	var cursors []string
-	var pageInfo models.PageInfo
+	var pageInfo = &models.PageInfo{}
 	var totalCount = len(source)
 
 	emptyCon, _ := conMaker(edges, nodes, pageInfo, 0)
@@ -57,18 +57,20 @@ func TimelineItemCon(source []bug.TimelineItem, edgeMaker TimelineItemEdgeMaker,
 				break
 			}
 
-			edges = append(edges, edge.(models.TimelineItemEdge))
+			e := edge.(models.TimelineItemEdge)
+			edges = append(edges, &e)
 			cursors = append(cursors, edge.GetCursor())
 			nodes = append(nodes, value)
 		}
 	} else {
-		edges = make([]models.TimelineItemEdge, len(source))
+		edges = make([]*models.TimelineItemEdge, len(source))
 		cursors = make([]string, len(source))
 		nodes = source
 
 		for i, value := range source {
 			edge := edgeMaker(value, i+offset)
-			edges[i] = edge.(models.TimelineItemEdge)
+			e := edge.(models.TimelineItemEdge)
+			edges[i] = &e
 			cursors[i] = edge.GetCursor()
 		}
 	}
