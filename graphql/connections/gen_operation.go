@@ -17,17 +17,17 @@ type OperationEdgeMaker func(value bug.Operation, offset int) Edge
 
 // OperationConMaker define a function that create a models.OperationConnection
 type OperationConMaker func(
-	edges []models.OperationEdge,
+	edges []*models.OperationEdge,
 	nodes []bug.Operation,
-	info models.PageInfo,
+	info *models.PageInfo,
 	totalCount int) (*models.OperationConnection, error)
 
 // OperationCon will paginate a source according to the input of a relay connection
 func OperationCon(source []bug.Operation, edgeMaker OperationEdgeMaker, conMaker OperationConMaker, input models.ConnectionInput) (*models.OperationConnection, error) {
 	var nodes []bug.Operation
-	var edges []models.OperationEdge
+	var edges []*models.OperationEdge
 	var cursors []string
-	var pageInfo models.PageInfo
+	var pageInfo = &models.PageInfo{}
 	var totalCount = len(source)
 
 	emptyCon, _ := conMaker(edges, nodes, pageInfo, 0)
@@ -57,18 +57,20 @@ func OperationCon(source []bug.Operation, edgeMaker OperationEdgeMaker, conMaker
 				break
 			}
 
-			edges = append(edges, edge.(models.OperationEdge))
+			e := edge.(models.OperationEdge)
+			edges = append(edges, &e)
 			cursors = append(cursors, edge.GetCursor())
 			nodes = append(nodes, value)
 		}
 	} else {
-		edges = make([]models.OperationEdge, len(source))
+		edges = make([]*models.OperationEdge, len(source))
 		cursors = make([]string, len(source))
 		nodes = source
 
 		for i, value := range source {
 			edge := edgeMaker(value, i+offset)
-			edges[i] = edge.(models.OperationEdge)
+			e := edge.(models.OperationEdge)
+			edges[i] = &e
 			cursors[i] = edge.GetCursor()
 		}
 	}

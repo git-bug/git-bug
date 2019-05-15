@@ -16,17 +16,17 @@ type LazyBugEdgeMaker func(value string, offset int) Edge
 
 // LazyBugConMaker define a function that create a models.BugConnection
 type LazyBugConMaker func(
-	edges []LazyBugEdge,
+	edges []*LazyBugEdge,
 	nodes []string,
-	info models.PageInfo,
+	info *models.PageInfo,
 	totalCount int) (*models.BugConnection, error)
 
 // LazyBugCon will paginate a source according to the input of a relay connection
 func LazyBugCon(source []string, edgeMaker LazyBugEdgeMaker, conMaker LazyBugConMaker, input models.ConnectionInput) (*models.BugConnection, error) {
 	var nodes []string
-	var edges []LazyBugEdge
+	var edges []*LazyBugEdge
 	var cursors []string
-	var pageInfo models.PageInfo
+	var pageInfo = &models.PageInfo{}
 	var totalCount = len(source)
 
 	emptyCon, _ := conMaker(edges, nodes, pageInfo, 0)
@@ -56,18 +56,20 @@ func LazyBugCon(source []string, edgeMaker LazyBugEdgeMaker, conMaker LazyBugCon
 				break
 			}
 
-			edges = append(edges, edge.(LazyBugEdge))
+			e := edge.(LazyBugEdge)
+			edges = append(edges, &e)
 			cursors = append(cursors, edge.GetCursor())
 			nodes = append(nodes, value)
 		}
 	} else {
-		edges = make([]LazyBugEdge, len(source))
+		edges = make([]*LazyBugEdge, len(source))
 		cursors = make([]string, len(source))
 		nodes = source
 
 		for i, value := range source {
 			edge := edgeMaker(value, i+offset)
-			edges[i] = edge.(LazyBugEdge)
+			e := edge.(LazyBugEdge)
+			edges[i] = &e
 			cursors[i] = edge.GetCursor()
 		}
 	}

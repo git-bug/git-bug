@@ -17,17 +17,17 @@ type CommentEdgeMaker func(value bug.Comment, offset int) Edge
 
 // CommentConMaker define a function that create a models.CommentConnection
 type CommentConMaker func(
-	edges []models.CommentEdge,
+	edges []*models.CommentEdge,
 	nodes []bug.Comment,
-	info models.PageInfo,
+	info *models.PageInfo,
 	totalCount int) (*models.CommentConnection, error)
 
 // CommentCon will paginate a source according to the input of a relay connection
 func CommentCon(source []bug.Comment, edgeMaker CommentEdgeMaker, conMaker CommentConMaker, input models.ConnectionInput) (*models.CommentConnection, error) {
 	var nodes []bug.Comment
-	var edges []models.CommentEdge
+	var edges []*models.CommentEdge
 	var cursors []string
-	var pageInfo models.PageInfo
+	var pageInfo = &models.PageInfo{}
 	var totalCount = len(source)
 
 	emptyCon, _ := conMaker(edges, nodes, pageInfo, 0)
@@ -57,18 +57,20 @@ func CommentCon(source []bug.Comment, edgeMaker CommentEdgeMaker, conMaker Comme
 				break
 			}
 
-			edges = append(edges, edge.(models.CommentEdge))
+			e := edge.(models.CommentEdge)
+			edges = append(edges, &e)
 			cursors = append(cursors, edge.GetCursor())
 			nodes = append(nodes, value)
 		}
 	} else {
-		edges = make([]models.CommentEdge, len(source))
+		edges = make([]*models.CommentEdge, len(source))
 		cursors = make([]string, len(source))
 		nodes = source
 
 		for i, value := range source {
 			edge := edgeMaker(value, i+offset)
-			edges[i] = edge.(models.CommentEdge)
+			e := edge.(models.CommentEdge)
+			edges[i] = &e
 			cursors[i] = edge.GetCursor()
 		}
 	}

@@ -46,9 +46,9 @@ func (repoResolver) AllBugs(ctx context.Context, obj *models.Repository, after *
 	}
 
 	// The conMaker will finally load and compile bugs from git to replace the selected edges
-	conMaker := func(lazyBugEdges []connections.LazyBugEdge, lazyNode []string, info models.PageInfo, totalCount int) (*models.BugConnection, error) {
-		edges := make([]models.BugEdge, len(lazyBugEdges))
-		nodes := make([]bug.Snapshot, len(lazyBugEdges))
+	conMaker := func(lazyBugEdges []*connections.LazyBugEdge, lazyNode []string, info *models.PageInfo, totalCount int) (*models.BugConnection, error) {
+		edges := make([]*models.BugEdge, len(lazyBugEdges))
+		nodes := make([]*bug.Snapshot, len(lazyBugEdges))
 
 		for i, lazyBugEdge := range lazyBugEdges {
 			b, err := obj.Repo.ResolveBug(lazyBugEdge.Id)
@@ -59,11 +59,11 @@ func (repoResolver) AllBugs(ctx context.Context, obj *models.Repository, after *
 
 			snap := b.Snapshot()
 
-			edges[i] = models.BugEdge{
+			edges[i] = &models.BugEdge{
 				Cursor: lazyBugEdge.Cursor,
-				Node:   *snap,
+				Node:   snap,
 			}
-			nodes[i] = *snap
+			nodes[i] = snap
 		}
 
 		return &models.BugConnection{
@@ -107,8 +107,8 @@ func (repoResolver) AllIdentities(ctx context.Context, obj *models.Repository, a
 	}
 
 	// The conMaker will finally load and compile identities from git to replace the selected edges
-	conMaker := func(lazyIdentityEdges []connections.LazyIdentityEdge, lazyNode []string, info models.PageInfo, totalCount int) (*models.IdentityConnection, error) {
-		edges := make([]models.IdentityEdge, len(lazyIdentityEdges))
+	conMaker := func(lazyIdentityEdges []*connections.LazyIdentityEdge, lazyNode []string, info *models.PageInfo, totalCount int) (*models.IdentityConnection, error) {
+		edges := make([]*models.IdentityEdge, len(lazyIdentityEdges))
 		nodes := make([]identity.Interface, len(lazyIdentityEdges))
 
 		for k, lazyIdentityEdge := range lazyIdentityEdges {
@@ -120,9 +120,9 @@ func (repoResolver) AllIdentities(ctx context.Context, obj *models.Repository, a
 
 			ii := identity.Interface(i.Identity)
 
-			edges[k] = models.IdentityEdge{
+			edges[k] = &models.IdentityEdge{
 				Cursor: lazyIdentityEdge.Cursor,
-				Node:   ii,
+				Node:   i.Identity,
 			}
 			nodes[k] = ii
 		}
