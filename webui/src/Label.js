@@ -4,28 +4,10 @@ import {
   getContrastRatio,
   darken,
 } from '@material-ui/core/styles/colorManipulator';
-import * as allColors from '@material-ui/core/colors';
 import { common } from '@material-ui/core/colors';
-
-// JS's modulo returns negative numbers sometimes.
-// This ensures the result is positive.
-const mod = (n, m) => ((n % m) + m) % m;
 
 // Minimum contrast between the background and the text color
 const contrastThreshold = 2.5;
-
-// Filter out the "common" color
-const labelColors = Object.entries(allColors)
-  .filter(([key, value]) => value !== common)
-  .map(([key, value]) => value);
-
-// Generate a hash (number) from a string
-const hash = string =>
-  string.split('').reduce((a, b) => ((a << 5) - a + b.charCodeAt(0)) | 0, 0);
-
-// Get the background color from the label
-const getColor = label =>
-  labelColors[mod(hash(label), labelColors.length)][500];
 
 // Guess the text color based on the background color
 const getTextColor = background =>
@@ -33,14 +15,14 @@ const getTextColor = background =>
     ? common.white // White on dark backgrounds
     : common.black; // And black on light ones
 
-const _genStyle = background => ({
-  backgroundColor: background,
-  color: getTextColor(background),
-  borderBottomColor: darken(background, 0.2),
-});
+const _rgb = color => 'rgb(' + color.R + ',' + color.G + ',' + color.B + ')';
 
-// Generate a style object (text, background and border colors) from the label
-const genStyle = label => _genStyle(getColor(label));
+// Create a style object from the label RGB colors
+const createStyle = color => ({
+  backgroundColor: _rgb(color),
+  color: getTextColor(_rgb(color)),
+  borderBottomColor: darken(_rgb(color), 0.2),
+});
 
 const useStyles = makeStyles(theme => ({
   label: {
@@ -58,8 +40,8 @@ const useStyles = makeStyles(theme => ({
 function Label({ label }) {
   const classes = useStyles();
   return (
-    <span className={classes.label} style={genStyle(label)}>
-      {label}
+    <span className={classes.label} style={createStyle(label.color)}>
+      {label.name}
     </span>
   );
 }

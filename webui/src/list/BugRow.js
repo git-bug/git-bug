@@ -70,7 +70,7 @@ function BugRow({ bug }) {
               {bug.labels.length > 0 && (
                 <span className={classes.labels}>
                   {bug.labels.map(l => (
-                    <Label key={l} label={l} />
+                    <Label key={l.name} label={l} />
                   ))}
                 </span>
               )}
@@ -94,7 +94,14 @@ BugRow.fragment = gql`
     title
     status
     createdAt
-    labels
+    labels {
+      name
+      color {
+        R
+        G
+        B
+      }
+    }
     author {
       name
       displayName
