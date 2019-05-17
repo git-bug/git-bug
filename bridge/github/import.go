@@ -51,8 +51,7 @@ func (gi *githubImporter) ImportAll(repo *cache.RepoCache, since time.Time) erro
 	// Loop over all matching issues
 	for gi.iterator.NextIssue() {
 		issue := gi.iterator.IssueValue()
-		fmt.Printf("importing issue: %v %v\n", gi.importedIssues+1, issue.Title)
-		gi.importedIssues++
+		fmt.Printf("importing issue: %v\n", issue.Title)
 
 		// create issue
 		b, err := gi.ensureIssue(repo, issue)
@@ -124,6 +123,9 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 			if err != nil {
 				return nil, err
 			}
+
+			// importing a new bug
+			gi.importedIssues++
 		}
 
 	} else {
