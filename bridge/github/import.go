@@ -39,12 +39,8 @@ func (gi *githubImporter) Init(conf core.Configuration) error {
 	return nil
 }
 
-func (gi *githubImporter) Reset() {
-	gi.importedIssues = 0
-	gi.importedIdentities = 0
-}
-
-// ImportAll .
+// ImportAll iterate over all the configured repository issues and ensure the creation of the
+// missing issues / timeline items / edits / label events ...
 func (gi *githubImporter) ImportAll(repo *cache.RepoCache, since time.Time) error {
 	gi.iterator = NewIterator(gi.conf[keyUser], gi.conf[keyProject], gi.conf[keyToken], since)
 
@@ -60,9 +56,9 @@ func (gi *githubImporter) ImportAll(repo *cache.RepoCache, since time.Time) erro
 		}
 
 		// loop over timeline items
-		for gi.iterator.NextTimeline() {
-			if err := gi.ensureTimelineItem(repo, b, gi.iterator.TimelineValue()); err != nil {
-				return fmt.Errorf("timeline event creation: %v", err)
+		for gi.iterator.NextTimelineItem() {
+			if err := gi.ensureTimelineItem(repo, b, gi.iterator.TimelineItemValue()); err != nil {
+				return fmt.Errorf("timeline item creation: %v", err)
 			}
 		}
 
@@ -77,8 +73,7 @@ func (gi *githubImporter) ImportAll(repo *cache.RepoCache, since time.Time) erro
 		return err
 	}
 
-	fmt.Printf("Successfully imported %d issues from Github\n", gi.importedIssues)
-	fmt.Printf("Total imported identities: %d\n", gi.importedIdentities)
+	fmt.Printf("Successfully imported %d issues and %d identities from Github\n", gi.importedIssues, gi.importedIdentities)
 	return nil
 }
 
@@ -159,6 +154,9 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 				if err != nil {
 					return nil, err
 				}
+
+				// importing a new bug
+				gi.importedIssues++
 
 				continue
 			}

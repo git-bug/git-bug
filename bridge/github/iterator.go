@@ -49,9 +49,6 @@ type iterator struct {
 	// sticky error
 	err error
 
-	// started
-	started bool
-
 	// timeline iterator
 	timeline timelineIterator
 
@@ -62,8 +59,9 @@ type iterator struct {
 	commentEdit commentEditIterator
 }
 
+// NewIterator create and initalize a new iterator
 func NewIterator(user, project, token string, since time.Time) *iterator {
-	return &iterator{
+	i := &iterator{
 		gc:       buildClient(token),
 		since:    since,
 		capacity: 10,
@@ -91,6 +89,9 @@ func NewIterator(user, project, token string, since time.Time) *iterator {
 			},
 		},
 	}
+
+	i.initTimelineQueryVariables()
+	return i
 }
 
 // init issue timeline variables
@@ -159,14 +160,15 @@ func (i *iterator) queryIssue() bool {
 	return true
 }
 
-// Next issue
+// NextIssue try to query the next issue and return true. Only one issue is
+// queried at each call.
 func (i *iterator) NextIssue() bool {
-	// we make the first move
-	if !i.started {
-		// init variables and goto queryIssue block
-		i.initTimelineQueryVariables()
-		i.started = true
-		return i.queryIssue()
+	// if $issueAfter variable is nil we can directly make the first query
+	if i.timeline.variables["issueAfter"] == (*githubv4.String)(nil) {
+		nextIssue := i.queryIssue()
+		// prevent from infinite loop by setting a non nil cursor
+		i.timeline.variables["issueAfter"] = i.timeline.query.Repository.Issues.PageInfo.EndCursor
+		return nextIssue
 	}
 
 	if i.err != nil {
@@ -189,11 +191,14 @@ func (i *iterator) NextIssue() bool {
 	return i.queryIssue()
 }
 
+// IssueValue return the actual issue value
 func (i *iterator) IssueValue() issueTimeline {
 	return i.timeline.query.Repository.Issues.Nodes[0]
 }
 
-func (i *iterator) NextTimeline() bool {
+// NextTimelineItem return true if there is a next timeline item and increments the index by one.
+// It is used iterates over all the timeline items. Extra queries are made if it is necessary.
+func (i *iterator) NextTimelineItem() bool {
 	if i.err != nil {
 		return false
 	}
@@ -225,7 +230,8 @@ func (i *iterator) NextTimeline() bool {
 	return true
 }
 
-func (i *iterator) TimelineValue() timelineItem {
+// TimelineItemValue return the actual timeline item value
+func (i *iterator) TimelineItemValue() timelineItem {
 	return i.timeline.query.Repository.Issues.Nodes[0].Timeline.Edges[i.timeline.index].Node
 }
 
@@ -259,6 +265,8 @@ func (i *iterator) nextValidIssueEdit() bool {
 	return true
 }
 
+// NextIssueEdit return true if there is a next issue edit and increments the index by one.
+// It is used iterates over all the issue edits. Extra queries are made if it is necessary.
 func (i *iterator) NextIssueEdit() bool {
 	if i.err != nil {
 		return false
@@ -314,6 +322,7 @@ func (i *iterator) NextIssueEdit() bool {
 	return i.queryIssueEdit()
 }
 
+// IssueEditValue return the actual issue edit value
 func (i *iterator) IssueEditValue() userContentEdit {
 	// if we are using issue edit query
 	if i.timeline.issueEdit.index == -2 {
@@ -351,6 +360,8 @@ func (i *iterator) nextValidCommentEdit() bool {
 	return true
 }
 
+// NextCommentEdit return true if there is a next comment edit and increments the index by one.
+// It is used iterates over all the comment edits. Extra queries are made if it is necessary.
 func (i *iterator) NextCommentEdit() bool {
 	if i.err != nil {
 		return false
@@ -403,6 +414,7 @@ func (i *iterator) NextCommentEdit() bool {
 	return i.queryCommentEdit()
 }
 
+// CommentEditValue return the actual comment edit value
 func (i *iterator) CommentEditValue() userContentEdit {
 	if i.timeline.commentEdit.index == -2 {
 		return i.commentEdit.query.Repository.Issues.Nodes[0].Timeline.Nodes[0].IssueComment.UserContentEdits.Nodes[i.commentEdit.index]
