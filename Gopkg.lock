@@ -269,11 +269,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:39853e1ae46a02816e2419e1f590e00682b1a6b60bb988597cf2efb84314da45"
+  digest = "1:519621a373ae7d96a16415a6356d7b97722ed3a292f73409b361b7c0322971e3"
   name = "github.com/skratchdot/open-golang"
   packages = ["open"]
   pruneopts = "UT"
-  revision = "75fb7ed4208cf72d323d7d02fd1a5964a7a9073c"
+  revision = "79abb63cd66e41cb1473e26d11ebdcd68b04c8e5"
 
 [[projects]]
   digest = "1:e01b05ba901239c783dfe56450bcde607fc858908529868259c9a8765dc176d0"
