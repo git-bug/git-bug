@@ -261,11 +261,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:b5db31f108c72b9de4e36ca3222a4e325beebfa492a9d3f62f313ffa9cdab3b7"
+  digest = "1:98450c86949b8cdc4637b80c1c686ca955e503d3fbae9296d1f49c532895d281"
   name = "github.com/shurcooL/vfsgen"
   packages = ["."]
   pruneopts = "UT"
-  revision = "62bca832be04bd2bcaabd3b68a6b19a7ec044411"
+  revision = "6a9ea43bcacdf716a5c1b38efff722c07adf0069"
 
 [[projects]]
   branch = "master"
