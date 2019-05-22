@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"time"
 
 	"github.com/MichaelMure/git-bug/commands"
 	"github.com/spf13/cobra/doc"
@@ -17,9 +18,12 @@ func main() {
 	cwd, _ := os.Getwd()
 	dir := path.Join(cwd, "doc", "man")
 
+	date := time.Date(2019, 4, 1, 12, 0, 0, 0, time.UTC)
+
 	header := &doc.GenManHeader{
 		Title:   "GIT-BUG",
 		Section: "1",
+		Date:    &date,
 		Source:  "Generated from git-bug's source code",
 	}
 
