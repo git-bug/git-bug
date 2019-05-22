@@ -1,51 +1,43 @@
-import { withStyles } from '@material-ui/core/styles';
+import { makeStyles } from '@material-ui/styles';
 import React from 'react';
 import LabelChange from './LabelChange';
 import Message from './Message';
 import SetStatus from './SetStatus';
 import SetTitle from './SetTitle';
 
-const styles = theme => ({
+const useStyles = makeStyles(theme => ({
   main: {
     '& > *:not(:last-child)': {
       marginBottom: theme.spacing.unit * 2,
     },
   },
-});
+}));
 
-class Timeline extends React.Component {
-  props: {
-    ops: Array,
-    fetchMore: any => any,
-    classes: any,
-  };
+const componentMap = {
+  CreateTimelineItem: Message,
+  AddCommentTimelineItem: Message,
+  LabelChangeTimelineItem: LabelChange,
+  SetTitleTimelineItem: SetTitle,
+  SetStatusTimelineItem: SetStatus,
+};
 
-  render() {
-    const { ops, classes } = this.props;
+function Timeline({ ops }) {
+  const classes = useStyles();
 
-    return (
-      <div className={classes.main}>
-        {ops.map((op, index) => {
-          switch (op.__typename) {
-            case 'CreateTimelineItem':
-              return <Message key={index} op={op} />;
-            case 'AddCommentTimelineItem':
-              return <Message key={index} op={op} />;
-            case 'LabelChangeTimelineItem':
-              return <LabelChange key={index} op={op} />;
-            case 'SetTitleTimelineItem':
-              return <SetTitle key={index} op={op} />;
-            case 'SetStatusTimelineItem':
-              return <SetStatus key={index} op={op} />;
+  return (
+    <div className={classes.main}>
+      {ops.map((op, index) => {
+        const Component = componentMap[op.__typename];
 
-            default:
-              console.log('unsupported operation type ' + op.__typename);
-              return null;
-          }
-        })}
-      </div>
-    );
-  }
+        if (!Component) {
+          console.warn('unsupported operation type ' + op.__typename);
+          return null;
+        }
+
+        return <Component key={index} op={op} />;
+      })}
+    </div>
+  );
 }
 
-export default withStyles(styles)(Timeline);
+export default Timeline;

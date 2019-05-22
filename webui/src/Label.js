@@ -1,5 +1,5 @@
 import React from 'react';
-import { withStyles } from '@material-ui/core/styles';
+import { makeStyles } from '@material-ui/styles';
 import {
   getContrastRatio,
   darken,
@@ -42,7 +42,7 @@ const _genStyle = background => ({
 // Generate a style object (text, background and border colors) from the label
 const genStyle = label => _genStyle(getColor(label));
 
-const styles = theme => ({
+const useStyles = makeStyles(theme => ({
   label: {
     ...theme.typography.body2,
     padding: '0 6px',
@@ -53,12 +53,15 @@ const styles = theme => ({
     borderBottom: 'solid 1.5px',
     verticalAlign: 'bottom',
   },
-});
+}));
 
-const Label = ({ label, classes }) => (
-  <span className={classes.label} style={genStyle(label)}>
-    {label}
-  </span>
-);
+function Label({ label }) {
+  const classes = useStyles();
+  return (
+    <span className={classes.label} style={genStyle(label)}>
+      {label}
+    </span>
+  );
+}
 
-export default withStyles(styles)(Label);
+export default Label;

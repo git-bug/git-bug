@@ -1,22 +1,31 @@
+import { install } from '@material-ui/styles';
+import ThemeProvider from '@material-ui/styles/ThemeProvider';
+import { createMuiTheme } from '@material-ui/core/styles';
 import ApolloClient from 'apollo-boost';
 import React from 'react';
 import { ApolloProvider } from 'react-apollo';
 import ReactDOM from 'react-dom';
 import { BrowserRouter } from 'react-router-dom';
 
-import App from './App';
+install();
+
+// TODO(sandhose): this is temporary until Material-UI v4 goes out
+const App = React.lazy(() => import('./App'));
+
+const theme = createMuiTheme();
 
 const client = new ApolloClient({
   uri: '/graphql',
-  connectToDevTools: true,
 });
 
 ReactDOM.render(
   <ApolloProvider client={client}>
     <BrowserRouter>
-      <React.Fragment>
-        <App />
-      </React.Fragment>
+      <ThemeProvider theme={theme}>
+        <React.Suspense fallback={'Loading…'}>
+          <App />
+        </React.Suspense>
+      </ThemeProvider>
     </BrowserRouter>
   </ApolloProvider>,
   document.getElementById('root')

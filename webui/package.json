@@ -5,20 +5,21 @@
   "dependencies": {
     "@material-ui/core": "^3.9.3",
     "@material-ui/icons": "^3.0.2",
+    "@material-ui/styles": "^3.0.0-alpha.10",
     "apollo-boost": "^0.3.1",
-    "graphql": "^14.2.0",
+    "graphql": "^14.3.0",
     "moment": "^2.24.0",
     "react": "^16.8.6",
-    "react-apollo": "^2.5.3",
+    "react-apollo": "^2.5.6",
     "react-dom": "^16.8.6",
     "react-router": "^5.0.0",
     "react-router-dom": "^5.0.0",
     "react-scripts": "^2.1.8"
   },
   "devDependencies": {
-    "eslint-config-prettier": "^4.1.0",
-    "eslint-plugin-prettier": "^3.0.1",
-    "prettier": "^1.16.4"
+    "eslint-config-prettier": "^4.3.0",
+    "eslint-plugin-prettier": "^3.1.0",
+    "prettier": "^1.17.1"
   },
   "scripts": {
     "start": "react-scripts start",
