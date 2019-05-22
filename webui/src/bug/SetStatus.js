@@ -26,14 +26,12 @@ SetStatus.fragment = gql`
   fragment SetStatus on TimelineItem {
     ... on SetStatusTimelineItem {
       date
-      author {
-        name
-        email
-        displayName
-      }
+      ...authored
       status
     }
   }
+
+  ${Author.fragment}
 `;
 
 export default SetStatus;

@@ -27,7 +27,7 @@ enum Status {
   CLOSED
 }
 
-type Bug {
+type Bug implements Authored {
   """The identifier for this bug"""
   id: String!
   """The human version (truncated) identifier for this bug"""
@@ -116,4 +116,3 @@ type BugEdge {
   """The item at the end of the edge."""
   node: Bug!
 }
-

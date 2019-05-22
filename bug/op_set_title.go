@@ -178,3 +178,6 @@ func SetTitle(b Interface, author identity.Interface, unixTime int64, title stri
 	b.Append(setTitleOp)
 	return setTitleOp, nil
 }
+
+// Sign post method for gqlgen
+func (item *SetTitleTimelineItem) IsAuthored() {}

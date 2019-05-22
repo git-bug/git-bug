@@ -94,13 +94,10 @@ Bug.fragment = gql`
       ...Label
     }
     createdAt
-    author {
-      email
-      name
-      displayName
-    }
+    ...authored
   }
   ${Label.fragment}
+  ${Author.fragment}
 `;
 
 export default Bug;

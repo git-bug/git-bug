@@ -32,15 +32,13 @@ SetTitle.fragment = gql`
   fragment SetTitle on TimelineItem {
     ... on SetTitleTimelineItem {
       date
-      author {
-        name
-        email
-        displayName
-      }
+      ...authored
       title
       was
     }
   }
+
+  ${Author.fragment}
 `;
 
 export default SetTitle;

@@ -44,11 +44,7 @@ LabelChange.fragment = gql`
   fragment LabelChange on TimelineItem {
     ... on LabelChangeTimelineItem {
       date
-      author {
-        name
-        email
-        displayName
-      }
+      ...authored
       added {
         ...Label
       }
@@ -57,7 +53,9 @@ LabelChange.fragment = gql`
       }
     }
   }
+
   ${Label.fragment}
+  ${Author.fragment}
 `;
 
 export default LabelChange;

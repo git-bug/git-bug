@@ -681,3 +681,6 @@ func (bug *Bug) Compile() Snapshot {
 
 	return snap
 }
+
+// Sign post method for gqlgen
+func (bug *Bug) IsAuthored() {}

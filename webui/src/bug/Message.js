@@ -70,32 +70,26 @@ Message.createFragment = gql`
   fragment Create on TimelineItem {
     ... on CreateTimelineItem {
       createdAt
-      author {
-        name
-        email
-        displayName
-        avatarUrl
-      }
+      ...authored
       edited
       message
     }
   }
+
+  ${Author.fragment}
 `;
 
 Message.commentFragment = gql`
   fragment AddComment on TimelineItem {
     ... on AddCommentTimelineItem {
       createdAt
-      author {
-        name
-        email
-        displayName
-        avatarUrl
-      }
+      ...authored
       edited
       message
     }
   }
+
+  ${Author.fragment}
 `;
 
 export default Message;

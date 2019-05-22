@@ -173,3 +173,6 @@ func CreateWithFiles(author identity.Interface, unixTime int64, title, message s
 
 	return newBug, createOp, nil
 }
+
+// Sign post method for gqlgen
+func (item *CreateTimelineItem) IsAuthored() {}
