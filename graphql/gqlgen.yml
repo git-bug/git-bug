@@ -11,6 +11,8 @@ models:
     model: github.com/MichaelMure/git-bug/graphql/models.RepositoryMutation
   Bug:
     model: github.com/MichaelMure/git-bug/bug.Snapshot
+  Color:
+    model: image/color.RGBA
   Comment:
     model: github.com/MichaelMure/git-bug/bug.Comment
   Identity:

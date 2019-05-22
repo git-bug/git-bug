@@ -133,8 +133,22 @@ func TestQueries(t *testing.T) {
                     status
                   }
                   ... on LabelChangeOperation {
-                    added
-                    removed
+                    added {
+                      name
+                      color {
+                        R
+                        G
+                        B
+                      }
+                    }
+                    removed {
+                      name
+                      color {
+                        R
+                        G
+                        B
+                      }
+                    }
                   }
                 }
               }
@@ -150,6 +164,13 @@ func TestQueries(t *testing.T) {
 		Email       string `json:"email"`
 		AvatarUrl   string `json:"avatarUrl"`
 		DisplayName string `json:"displayName"`
+	}
+
+	type Label struct {
+		Name  string
+		Color struct {
+			R, G, B int
+		}
 	}
 
 	var resp struct {
@@ -193,8 +214,8 @@ func TestQueries(t *testing.T) {
 							Message string
 							Was     string
 							Status  string
-							Added   []string
-							Removed []string
+							Added   []Label
+							Removed []Label
 						}
 					}
 				}

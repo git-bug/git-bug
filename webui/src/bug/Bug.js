@@ -74,7 +74,7 @@ function Bug({ bug }) {
           <ul className={classes.labelList}>
             {bug.labels.map(l => (
               <li className={classes.label}>
-                <Label label={l} key={l} />
+                <Label label={l} key={l.name} />
               </li>
             ))}
           </ul>
@@ -90,7 +90,9 @@ Bug.fragment = gql`
     humanId
     status
     title
-    labels
+    labels {
+      ...Label
+    }
     createdAt
     author {
       email
@@ -98,6 +100,7 @@ Bug.fragment = gql`
       displayName
     }
   }
+  ${Label.fragment}
 `;
 
 export default Bug;

@@ -49,10 +49,15 @@ LabelChange.fragment = gql`
         email
         displayName
       }
-      added
-      removed
+      added {
+        ...Label
+      }
+      removed {
+        ...Label
+      }
     }
   }
+  ${Label.fragment}
 `;
 
 export default LabelChange;

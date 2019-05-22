@@ -34,6 +34,14 @@ func (RootResolver) Bug() graph.BugResolver {
 	return &bugResolver{}
 }
 
+func (RootResolver) Color() graph.ColorResolver {
+	return &colorResolver{}
+}
+
+func (RootResolver) Label() graph.LabelResolver {
+	return &labelResolver{}
+}
+
 func (r RootResolver) Identity() graph.IdentityResolver {
 	return &identityResolver{}
 }
