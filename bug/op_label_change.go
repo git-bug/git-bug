@@ -303,3 +303,6 @@ func (l LabelChangeResult) String() string {
 		panic(fmt.Sprintf("unknown label change status %v", l.Status))
 	}
 }
+
+// Sign post method for gqlgen
+func (item *LabelChangeTimelineItem) IsAuthored() {}

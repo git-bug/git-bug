@@ -29,7 +29,7 @@ type TimelineItemEdge {
 # Items
 
 """CreateTimelineItem is a TimelineItem that represent the creation of a bug and its message edition history"""
-type CreateTimelineItem implements TimelineItem {
+type CreateTimelineItem implements TimelineItem & Authored {
     """The hash of the source operation"""
     hash: Hash!
     author: Identity!
@@ -43,7 +43,7 @@ type CreateTimelineItem implements TimelineItem {
 }
 
 """AddCommentTimelineItem is a TimelineItem that represent a Comment and its edition history"""
-type AddCommentTimelineItem implements TimelineItem {
+type AddCommentTimelineItem implements TimelineItem & Authored {
     """The hash of the source operation"""
     hash: Hash!
     author: Identity!
@@ -57,7 +57,7 @@ type AddCommentTimelineItem implements TimelineItem {
 }
 
 """LabelChangeTimelineItem is a TimelineItem that represent a change in the labels of a bug"""
-type LabelChangeTimelineItem implements TimelineItem {
+type LabelChangeTimelineItem implements TimelineItem & Authored {
     """The hash of the source operation"""
     hash: Hash!
     author: Identity!
@@ -67,7 +67,7 @@ type LabelChangeTimelineItem implements TimelineItem {
 }
 
 """SetStatusTimelineItem is a TimelineItem that represent a change in the status of a bug"""
-type SetStatusTimelineItem implements TimelineItem {
+type SetStatusTimelineItem implements TimelineItem & Authored {
     """The hash of the source operation"""
     hash: Hash!
     author: Identity!
@@ -76,7 +76,7 @@ type SetStatusTimelineItem implements TimelineItem {
 }
 
 """LabelChangeTimelineItem is a TimelineItem that represent a change in the title of a bug"""
-type SetTitleTimelineItem implements TimelineItem {
+type SetTitleTimelineItem implements TimelineItem & Authored {
     """The hash of the source operation"""
     hash: Hash!
     author: Identity!

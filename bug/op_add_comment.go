@@ -149,3 +149,6 @@ func AddCommentWithFiles(b Interface, author identity.Interface, unixTime int64,
 	b.Append(addCommentOp)
 	return addCommentOp, nil
 }
+
+// Sign post method for gqlgen
+func (item *AddCommentTimelineItem) IsAuthored() {}

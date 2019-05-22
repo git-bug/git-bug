@@ -86,3 +86,6 @@ func (snap *Snapshot) addParticipant(participant identity.Interface) {
 
 	snap.Participants = append(snap.Participants, participant)
 }
+
+// Sign post method for gqlgen
+func (snap *Snapshot) IsAuthored() {}

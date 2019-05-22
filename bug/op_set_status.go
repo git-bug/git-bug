@@ -143,3 +143,6 @@ func Close(b Interface, author identity.Interface, unixTime int64) (*SetStatusOp
 	b.Append(op)
 	return op, nil
 }
+
+// Sign post method for gqlgen
+func (item *SetStatusTimelineItem) IsAuthored() {}

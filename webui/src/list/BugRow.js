@@ -9,6 +9,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import Date from '../Date';
 import Label from '../Label';
+import Author from '../Author';
 
 const Open = ({ className }) => (
   <Tooltip title="Open">
@@ -97,12 +98,11 @@ BugRow.fragment = gql`
     labels {
       ...Label
     }
-    author {
-      name
-      displayName
-    }
+    ...authored
   }
+
   ${Label.fragment}
+  ${Author.fragment}
 `;
 
 export default BugRow;

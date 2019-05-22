@@ -1601,7 +1601,7 @@ enum Status {
   CLOSED
 }
 
-type Bug {
+type Bug implements Authored {
   """The identifier for this bug"""
   id: String!
   """The human version (truncated) identifier for this bug"""
@@ -1690,7 +1690,6 @@ type BugEdge {
   """The item at the end of the edge."""
   node: Bug!
 }
-
 `},
 	&ast.Source{Name: "schema/identity.graphql", Input: `"""Represents an identity"""
 type Identity {
@@ -1911,7 +1910,7 @@ type TimelineItemEdge {
 # Items
 
 """CreateTimelineItem is a TimelineItem that represent the creation of a bug and its message edition history"""
-type CreateTimelineItem implements TimelineItem {
+type CreateTimelineItem implements TimelineItem & Authored {
     """The hash of the source operation"""
     hash: Hash!
     author: Identity!
@@ -1925,7 +1924,7 @@ type CreateTimelineItem implements TimelineItem {
 }
 
 """AddCommentTimelineItem is a TimelineItem that represent a Comment and its edition history"""
-type AddCommentTimelineItem implements TimelineItem {
+type AddCommentTimelineItem implements TimelineItem & Authored {
     """The hash of the source operation"""
     hash: Hash!
     author: Identity!
@@ -1939,7 +1938,7 @@ type AddCommentTimelineItem implements TimelineItem {
 }
 
 """LabelChangeTimelineItem is a TimelineItem that represent a change in the labels of a bug"""
-type LabelChangeTimelineItem implements TimelineItem {
+type LabelChangeTimelineItem implements TimelineItem & Authored {
     """The hash of the source operation"""
     hash: Hash!
     author: Identity!
@@ -1949,7 +1948,7 @@ type LabelChangeTimelineItem implements TimelineItem {
 }
 
 """SetStatusTimelineItem is a TimelineItem that represent a change in the status of a bug"""
-type SetStatusTimelineItem implements TimelineItem {
+type SetStatusTimelineItem implements TimelineItem & Authored {
     """The hash of the source operation"""
     hash: Hash!
     author: Identity!
@@ -1958,7 +1957,7 @@ type SetStatusTimelineItem implements TimelineItem {
 }
 
 """LabelChangeTimelineItem is a TimelineItem that represent a change in the title of a bug"""
-type SetTitleTimelineItem implements TimelineItem {
+type SetTitleTimelineItem implements TimelineItem & Authored {
     """The hash of the source operation"""
     hash: Hash!
     author: Identity!
@@ -2004,7 +2003,8 @@ type PageInfo {
 interface Authored {
     """The author of this object."""
     author: Identity!
-}`},
+}
+`},
 )
 
 // endregion ************************** generated!.gotpl **************************
@@ -7434,6 +7434,8 @@ func (ec *executionContext) _Authored(ctx context.Context, sel ast.SelectionSet,
 		return ec._Comment(ctx, sel, &obj)
 	case *bug.Comment:
 		return ec._Comment(ctx, sel, obj)
+	case *bug.Snapshot:
+		return ec._Bug(ctx, sel, obj)
 	case *bug.CreateOperation:
 		return ec._CreateOperation(ctx, sel, obj)
 	case *bug.SetTitleOperation:
@@ -7446,6 +7448,16 @@ func (ec *executionContext) _Authored(ctx context.Context, sel ast.SelectionSet,
 		return ec._SetStatusOperation(ctx, sel, obj)
 	case *bug.LabelChangeOperation:
 		return ec._LabelChangeOperation(ctx, sel, obj)
+	case *bug.CreateTimelineItem:
+		return ec._CreateTimelineItem(ctx, sel, obj)
+	case *bug.AddCommentTimelineItem:
+		return ec._AddCommentTimelineItem(ctx, sel, obj)
+	case *bug.LabelChangeTimelineItem:
+		return ec._LabelChangeTimelineItem(ctx, sel, obj)
+	case *bug.SetStatusTimelineItem:
+		return ec._SetStatusTimelineItem(ctx, sel, obj)
+	case *bug.SetTitleTimelineItem:
+		return ec._SetTitleTimelineItem(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -7557,7 +7569,7 @@ func (ec *executionContext) _AddCommentOperation(ctx context.Context, sel ast.Se
 	return out
 }
 
-var addCommentTimelineItemImplementors = []string{"AddCommentTimelineItem", "TimelineItem"}
+var addCommentTimelineItemImplementors = []string{"AddCommentTimelineItem", "TimelineItem", "Authored"}
 
 func (ec *executionContext) _AddCommentTimelineItem(ctx context.Context, sel ast.SelectionSet, obj *bug.AddCommentTimelineItem) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.RequestContext, sel, addCommentTimelineItemImplementors)
@@ -7642,7 +7654,7 @@ func (ec *executionContext) _AddCommentTimelineItem(ctx context.Context, sel ast
 	return out
 }
 
-var bugImplementors = []string{"Bug"}
+var bugImplementors = []string{"Bug", "Authored"}
 
 func (ec *executionContext) _Bug(ctx context.Context, sel ast.SelectionSet, obj *bug.Snapshot) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.RequestContext, sel, bugImplementors)
@@ -8143,7 +8155,7 @@ func (ec *executionContext) _CreateOperation(ctx context.Context, sel ast.Select
 	return out
 }
 
-var createTimelineItemImplementors = []string{"CreateTimelineItem", "TimelineItem"}
+var createTimelineItemImplementors = []string{"CreateTimelineItem", "TimelineItem", "Authored"}
 
 func (ec *executionContext) _CreateTimelineItem(ctx context.Context, sel ast.SelectionSet, obj *bug.CreateTimelineItem) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.RequestContext, sel, createTimelineItemImplementors)
@@ -8591,7 +8603,7 @@ func (ec *executionContext) _LabelChangeOperation(ctx context.Context, sel ast.S
 	return out
 }
 
-var labelChangeTimelineItemImplementors = []string{"LabelChangeTimelineItem", "TimelineItem"}
+var labelChangeTimelineItemImplementors = []string{"LabelChangeTimelineItem", "TimelineItem", "Authored"}
 
 func (ec *executionContext) _LabelChangeTimelineItem(ctx context.Context, sel ast.SelectionSet, obj *bug.LabelChangeTimelineItem) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.RequestContext, sel, labelChangeTimelineItemImplementors)
@@ -9033,7 +9045,7 @@ func (ec *executionContext) _SetStatusOperation(ctx context.Context, sel ast.Sel
 	return out
 }
 
-var setStatusTimelineItemImplementors = []string{"SetStatusTimelineItem", "TimelineItem"}
+var setStatusTimelineItemImplementors = []string{"SetStatusTimelineItem", "TimelineItem", "Authored"}
 
 func (ec *executionContext) _SetStatusTimelineItem(ctx context.Context, sel ast.SelectionSet, obj *bug.SetStatusTimelineItem) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.RequestContext, sel, setStatusTimelineItemImplementors)
@@ -9149,7 +9161,7 @@ func (ec *executionContext) _SetTitleOperation(ctx context.Context, sel ast.Sele
 	return out
 }
 
-var setTitleTimelineItemImplementors = []string{"SetTitleTimelineItem", "TimelineItem"}
+var setTitleTimelineItemImplementors = []string{"SetTitleTimelineItem", "TimelineItem", "Authored"}
 
 func (ec *executionContext) _SetTitleTimelineItem(ctx context.Context, sel ast.SelectionSet, obj *bug.SetTitleTimelineItem) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.RequestContext, sel, setTitleTimelineItemImplementors)
