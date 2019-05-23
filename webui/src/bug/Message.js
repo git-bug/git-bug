@@ -5,6 +5,7 @@ import React from 'react';
 import Author from '../Author';
 import { Avatar } from '../Author';
 import Date from '../Date';
+import Content from '../Content';
 
 const useStyles = makeStyles(theme => ({
   author: {
@@ -41,8 +42,7 @@ const useStyles = makeStyles(theme => ({
   },
   body: {
     ...theme.typography.body1,
-    padding: '1rem',
-    whiteSpace: 'pre-wrap',
+    padding: '0 1rem',
   },
 }));
 
@@ -60,7 +60,9 @@ function Message({ op }) {
           </div>
           {op.edited && <div className={classes.tag}>Edited</div>}
         </header>
-        <section className={classes.body}>{op.message}</section>
+        <section className={classes.body}>
+          <Content markdown={op.message} />
+        </section>
       </Paper>
     </article>
   );
