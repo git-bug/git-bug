@@ -27,20 +27,6 @@
 
 ## Install
 
-<details><summary>go get</summary>
-
-```shell
-go get -u github.com/MichaelMure/git-bug
-```
-
-If it's not done already, add golang binary directory in your PATH:
-
-```bash
-export PATH=$PATH:$(go env GOROOT)/bin:$(go env GOPATH)/bin
-```
-
-</details>
-
 <details><summary>Pre-compiled binaries</summary>
 
 1. Go to the [release page](https://github.com/MichaelMure/git-bug/releases/latest) and download the appropriate binary for your system.
@@ -54,6 +40,20 @@ That's all !
 <details><summary>Linux packages</summary>
 
 * [Archlinux (AUR)](https://aur.archlinux.org/packages/?K=git-bug)
+
+</details>
+
+<details><summary>go get (unstable)</summary>
+
+```shell
+go get -u github.com/MichaelMure/git-bug
+```
+
+If it's not done already, add golang binary directory in your PATH:
+
+```bash
+export PATH=$PATH:$(go env GOROOT)/bin:$(go env GOPATH)/bin
+```
 
 </details>
 
