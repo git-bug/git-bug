@@ -152,7 +152,7 @@ func Test_Importer(t *testing.T) {
 
 	fmt.Printf("test repository imported in %f seconds\n", time.Since(start).Seconds())
 
-	require.Len(t, backend.AllBugsIds(), 9)
+	require.Len(t, backend.AllBugsIds(), len(tests))
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
