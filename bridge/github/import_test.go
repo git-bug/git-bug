@@ -140,9 +140,9 @@ func Test_Importer(t *testing.T) {
 
 	importer := &githubImporter{}
 	err = importer.Init(core.Configuration{
-		"user":    "MichaelMure",
-		"project": "git-bug-test-github-bridge",
-		"token":   token,
+		keyOwner:   "MichaelMure",
+		keyProject: "git-bug-test-github-bridge",
+		keyToken:   token,
 	})
 	require.NoError(t, err)
 

@@ -60,7 +60,7 @@ type iterator struct {
 }
 
 // NewIterator create and initalize a new iterator
-func NewIterator(user, project, token string, since time.Time) *iterator {
+func NewIterator(owner, project, token string, since time.Time) *iterator {
 	i := &iterator{
 		gc:       buildClient(token),
 		since:    since,
@@ -70,22 +70,22 @@ func NewIterator(user, project, token string, since time.Time) *iterator {
 			issueEdit:   indexer{-1},
 			commentEdit: indexer{-1},
 			variables: map[string]interface{}{
-				"owner": githubv4.String(user),
-				"name":  githubv4.String(project),
+				keyOwner: githubv4.String(owner),
+				"name":   githubv4.String(project),
 			},
 		},
 		commentEdit: commentEditIterator{
 			index: -1,
 			variables: map[string]interface{}{
-				"owner": githubv4.String(user),
-				"name":  githubv4.String(project),
+				keyOwner: githubv4.String(owner),
+				"name":   githubv4.String(project),
 			},
 		},
 		issueEdit: issueEditIterator{
 			index: -1,
 			variables: map[string]interface{}{
-				"owner": githubv4.String(user),
-				"name":  githubv4.String(project),
+				keyOwner: githubv4.String(owner),
+				"name":   githubv4.String(project),
 			},
 		},
 	}
