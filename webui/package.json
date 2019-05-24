@@ -7,7 +7,7 @@
     "@material-ui/icons": "^3.0.2",
     "@material-ui/styles": "^3.0.0-alpha.10",
     "apollo-boost": "^0.3.1",
-    "graphql": "^14.3.0",
+    "graphql": "^14.3.1",
     "moment": "^2.24.0",
     "react": "^16.8.6",
     "react-apollo": "^2.5.6",
