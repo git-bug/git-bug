@@ -7,10 +7,22 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/MichaelMure/git-bug/bridge/core"
+
 	"github.com/MichaelMure/git-bug/bridge"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util/interrupt"
 	"github.com/spf13/cobra"
+)
+
+const (
+	defaultName = "default"
+)
+
+var (
+	name         string
+	target       string
+	bridgeParams core.BridgeParams
 )
 
 func runBridgeConfigure(cmd *cobra.Command, args []string) error {
@@ -21,14 +33,18 @@ func runBridgeConfigure(cmd *cobra.Command, args []string) error {
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
 
-	target, err := promptTarget()
-	if err != nil {
-		return err
+	if target == "" {
+		target, err = promptTarget()
+		if err != nil {
+			return err
+		}
 	}
 
-	name, err := promptName()
-	if err != nil {
-		return err
+	if name == "" {
+		name, err = promptName()
+		if err != nil {
+			return err
+		}
 	}
 
 	b, err := bridge.NewBridge(backend, target, name)
@@ -36,11 +52,12 @@ func runBridgeConfigure(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	err = b.Configure()
+	err = b.Configure(bridgeParams)
 	if err != nil {
 		return err
 	}
 
+	fmt.Println("successfully configured bridge")
 	return nil
 }
 
@@ -71,8 +88,6 @@ func promptTarget() (string, error) {
 }
 
 func promptName() (string, error) {
-	defaultName := "default"
-
 	fmt.Printf("name [%s]: ", defaultName)
 
 	line, err := bufio.NewReader(os.Stdin).ReadString('\n')
@@ -98,4 +113,10 @@ var bridgeConfigureCmd = &cobra.Command{
 
 func init() {
 	bridgeCmd.AddCommand(bridgeConfigureCmd)
+	bridgeConfigureCmd.Flags().StringVarP(&name, "name", "n", "", "Bridge name")
+	bridgeConfigureCmd.Flags().StringVarP(&target, "target", "t", "", "Bridge target name. Valid values are [github,gitlab,gitea,launchpad]")
+	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.URL, "url", "u", "", "Repository url")
+	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.Owner, "owner", "o", "", "Repository owner")
+	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.Token, "token", "T", "", "Authentication token")
+	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.Project, "project", "p", "", "Repository name")
 }

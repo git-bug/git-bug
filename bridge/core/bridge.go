@@ -20,6 +20,15 @@ const bridgeConfigKeyPrefix = "git-bug.bridge"
 
 var bridgeImpl map[string]reflect.Type
 
+// BridgeParams holds parameters to simplify the bridge configuration without
+// having to make terminal prompts.
+type BridgeParams struct {
+	Owner   string
+	Project string
+	URL     string
+	Token   string
+}
+
 // Bridge is a wrapper around a BridgeImpl that will bind low-level
 // implementation with utility code to provide high-level functions.
 type Bridge struct {
@@ -166,8 +175,8 @@ func RemoveBridge(repo repository.RepoCommon, fullName string) error {
 }
 
 // Configure run the target specific configuration process
-func (b *Bridge) Configure() error {
-	conf, err := b.impl.Configure(b.repo)
+func (b *Bridge) Configure(params BridgeParams) error {
+	conf, err := b.impl.Configure(b.repo, params)
 	if err != nil {
 		return err
 	}

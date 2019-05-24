@@ -15,7 +15,7 @@ type BridgeImpl interface {
 
 	// Configure handle the user interaction and return a key/value configuration
 	// for future use
-	Configure(repo repository.RepoCommon) (Configuration, error)
+	Configure(repo repository.RepoCommon, params BridgeParams) (Configuration, error)
 
 	// ValidateConfig check the configuration for error
 	ValidateConfig(conf Configuration) error
