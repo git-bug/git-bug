@@ -12,15 +12,17 @@ import (
 
 const keyProject = "project"
 
-func (*Launchpad) Configure(repo repository.RepoCommon) (core.Configuration, error) {
+func (*Launchpad) Configure(repo repository.RepoCommon, params core.BridgeParams) (core.Configuration, error) {
 	conf := make(core.Configuration)
 
-	projectName, err := promptProjectName()
-	if err != nil {
-		return nil, err
-	}
+	if params.Project == "" {
+		projectName, err := promptProjectName()
+		if err != nil {
+			return nil, err
+		}
 
-	conf[keyProject] = projectName
+		conf[keyProject] = projectName
+	}
 
 	return conf, nil
 }
@@ -51,4 +53,8 @@ func promptProjectName() (string, error) {
 
 		return line, nil
 	}
+}
+
+func validateProject() (bool, error) {
+	return false, nil
 }
