@@ -59,6 +59,13 @@ func (r *mockRepoForTest) GetCoreEditor() (string, error) {
 	return "vi", nil
 }
 
+// GetRemotes returns the configured remotes repositories.
+func (r *mockRepoForTest) GetRemotes() (map[string]string, error) {
+	return map[string]string{
+		"origin": "git://github.com/MichaelMure/git-bug",
+	}, nil
+}
+
 func (r *mockRepoForTest) StoreConfig(key string, value string) error {
 	r.config[key] = value
 	return nil
