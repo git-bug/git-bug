@@ -3,7 +3,9 @@ package launchpad
 import (
 	"bufio"
 	"fmt"
+	"net/http"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
@@ -12,18 +14,43 @@ import (
 
 const keyProject = "project"
 
+var (
+	rxLaunchpadURL = regexp.MustCompile(`launchpad\.net[\/:]([^\/]*[a-z]+)`)
+)
+
 func (*Launchpad) Configure(repo repository.RepoCommon, params core.BridgeParams) (core.Configuration, error) {
 	conf := make(core.Configuration)
+	var err error
+	var project string
 
-	if params.Project == "" {
-		projectName, err := promptProjectName()
+	if params.Project != "" {
+		project = params.Project
+
+	} else if params.URL != "" {
+		// get project name from url
+		_, project, err = splitURL(params.URL)
 		if err != nil {
 			return nil, err
 		}
 
-		conf[keyProject] = projectName
+	} else {
+		// get project name from terminal prompt
+		project, err = promptProjectName()
+		if err != nil {
+			return nil, err
+		}
 	}
 
+	// verify project
+	ok, err := validateProject(project)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, fmt.Errorf("project doesn't exist")
+	}
+
+	conf[keyProject] = project
 	return conf, nil
 }
 
@@ -55,6 +82,22 @@ func promptProjectName() (string, error) {
 	}
 }
 
-func validateProject() (bool, error) {
-	return false, nil
+func validateProject(project string) (bool, error) {
+	url := fmt.Sprintf("%s/%s", apiRoot, project)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return false, err
+	}
+
+	return resp.StatusCode == http.StatusOK, nil
+}
+
+func splitURL(url string) (string, string, error) {
+	res := rxLaunchpadURL.FindStringSubmatch(url)
+	if res == nil {
+		return "", "", fmt.Errorf("bad Launchpad project url")
+	}
+
+	return res[0], res[1], nil
 }
