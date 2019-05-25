@@ -44,12 +44,12 @@ func (*Github) Configure(repo repository.RepoCommon, params core.BridgeParams) (
 
 	// getting owner and project name
 	if params.Owner != "" && params.Project != "" {
-		// first try to use params if they are both provided
+		// first try to use params if both or project and owner are provided
 		owner = params.Owner
 		project = params.Project
 
 	} else if params.URL != "" {
-		// try to parse them from params URL
+		// try to parse params URL and extract owner and project
 		_, owner, project, err = splitURL(params.URL)
 		if err != nil {
 			return nil, err
@@ -62,7 +62,7 @@ func (*Github) Configure(repo repository.RepoCommon, params core.BridgeParams) (
 			return nil, err
 		}
 
-		// try terminal prompt
+		// terminal prompt
 		owner, project, err = promptURL(remotes)
 		if err != nil {
 			return nil, err

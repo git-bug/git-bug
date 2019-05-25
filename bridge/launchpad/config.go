@@ -19,6 +19,13 @@ var (
 )
 
 func (*Launchpad) Configure(repo repository.RepoCommon, params core.BridgeParams) (core.Configuration, error) {
+	if params.Token != "" {
+		fmt.Println("warn: token is not needed to configure a launchpad-preview bridge")
+	}
+	if params.Owner != "" {
+		fmt.Println("warn: owner is not used when configuring a launchpad-preview bridge")
+	}
+
 	conf := make(core.Configuration)
 	var err error
 	var project string

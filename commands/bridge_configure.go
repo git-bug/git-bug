@@ -114,7 +114,7 @@ var bridgeConfigureCmd = &cobra.Command{
 func init() {
 	bridgeCmd.AddCommand(bridgeConfigureCmd)
 	bridgeConfigureCmd.Flags().StringVarP(&name, "name", "n", "", "Bridge name")
-	bridgeConfigureCmd.Flags().StringVarP(&target, "target", "t", "", "Bridge target name. Valid values are [github,gitlab,gitea,launchpad]")
+	bridgeConfigureCmd.Flags().StringVarP(&target, "target", "t", "", "Bridge target name. Valid values are [github,gitlab,gitea,launchpad-preview]")
 	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.URL, "url", "u", "", "Repository url")
 	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.Owner, "owner", "o", "", "Repository owner")
 	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.Token, "token", "T", "", "Authentication token")
