@@ -28,7 +28,7 @@ const (
 	keyProject  = "project"
 	keyToken    = "token"
 
-	defaultTimeout = 5 * time.Second
+	defaultTimeout = 60 * time.Second
 )
 
 var (
@@ -243,8 +243,10 @@ func promptToken() (string, error) {
 func loginAndRequestToken(owner, project string) (string, error) {
 	fmt.Println("git-bug will now generate an access token in your Github profile. Your credential are not stored and are only used to generate the token. The token is stored in the repository git config.")
 	fmt.Println()
-	fmt.Println("Depending on your configuration the token will have one of the following scopes:")
+	fmt.Println("The access scope depend on the type of repository.")
+	fmt.Println("Public:")
 	fmt.Println("  - 'user:email': to be able to read public-only users email")
+	fmt.Println("Private:")
 	fmt.Println("  - 'repo'      : to be able to read private repositories")
 	// fmt.Println("The token will have the \"repo\" permission, giving it read/write access to your repositories and issues. There is no narrower scope available, sorry :-|")
 	fmt.Println()
@@ -304,12 +306,7 @@ func loginAndRequestToken(owner, project string) (string, error) {
 	}
 
 	if resp.StatusCode == http.StatusCreated {
-		token, err := decodeBody(resp.Body)
-		if err != nil {
-			return "", err
-		}
-
-		return token, nil
+		return decodeBody(resp.Body)
 	}
 
 	b, _ := ioutil.ReadAll(resp.Body)
@@ -403,7 +400,7 @@ func promptURL(remotes map[string]string) (string, string, error) {
 	}
 }
 
-func splitURL(url string) (string, string, string, error) {
+func splitURL(url string) (shortURL string, owner string, project string, err error) {
 	res := rxGithubURL.FindStringSubmatch(url)
 	if res == nil {
 		return "", "", "", fmt.Errorf("bad github project url")
@@ -500,19 +497,11 @@ func prompt2FA() (string, error) {
 			return "", err
 		}
 
-		if len(byte2fa) != 6 {
-			fmt.Println("invalid 2FA code size")
-			continue
+		if len(byte2fa) > 0 {
+			return string(byte2fa), nil
 		}
 
-		str2fa := string(byte2fa)
-		_, err = strconv.Atoi(str2fa)
-		if err != nil {
-			fmt.Println("2fa code must be digits only")
-			continue
-		}
-
-		return str2fa, nil
+		fmt.Println("code is empty")
 	}
 }
 

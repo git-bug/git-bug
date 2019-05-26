@@ -70,22 +70,22 @@ func NewIterator(owner, project, token string, since time.Time) *iterator {
 			issueEdit:   indexer{-1},
 			commentEdit: indexer{-1},
 			variables: map[string]interface{}{
-				keyOwner: githubv4.String(owner),
-				"name":   githubv4.String(project),
+				"owner": githubv4.String(owner),
+				"name":  githubv4.String(project),
 			},
 		},
 		commentEdit: commentEditIterator{
 			index: -1,
 			variables: map[string]interface{}{
-				keyOwner: githubv4.String(owner),
-				"name":   githubv4.String(project),
+				"owner": githubv4.String(owner),
+				"name":  githubv4.String(project),
 			},
 		},
 		issueEdit: issueEditIterator{
 			index: -1,
 			variables: map[string]interface{}{
-				keyOwner: githubv4.String(owner),
-				"name":   githubv4.String(project),
+				"owner": githubv4.String(owner),
+				"name":  githubv4.String(project),
 			},
 		},
 	}
