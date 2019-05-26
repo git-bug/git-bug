@@ -337,7 +337,7 @@ func promptUsername() (string, error) {
 }
 
 func promptURL(remotes map[string]string) (string, string, error) {
-	validRemotes := valideGithubURLRemotes(remotes)
+	validRemotes := getValideGithubRemoteURLs(remotes)
 	if len(validRemotes) > 0 {
 		for {
 			fmt.Println("\nDetected projects:")
@@ -409,7 +409,7 @@ func splitURL(url string) (shortURL string, owner string, project string, err er
 	return res[0], res[1], res[2], nil
 }
 
-func valideGithubURLRemotes(remotes map[string]string) []string {
+func getValideGithubRemoteURLs(remotes map[string]string) []string {
 	urls := make([]string, 0, len(remotes))
 	for _, url := range remotes {
 		// split url can work again with shortURL
