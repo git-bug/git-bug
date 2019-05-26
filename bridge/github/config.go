@@ -32,7 +32,7 @@ const (
 )
 
 var (
-	rxGithubURL = regexp.MustCompile(`github\.com[\/:]([^\/]*[a-z]+)\/([^\/]*[a-z]+)`)
+	rxGithubURL = regexp.MustCompile(`github\.com[\/:]([a-zA-Z0-9\-\_]+)\/([a-zA-Z0-9\-\_\.]+)`)
 )
 
 func (*Github) Configure(repo repository.RepoCommon, params core.BridgeParams) (core.Configuration, error) {
@@ -222,6 +222,16 @@ func promptTokenOptions(owner, project string) (string, error) {
 }
 
 func promptToken() (string, error) {
+	fmt.Println("You can generate a new token by visiting https://github.com/settings/tokens.")
+	fmt.Println("Choose 'Generate new token' and set the necessary access scope for your repository.")
+	fmt.Println()
+	fmt.Println("The access scope depend on the type of repository.")
+	fmt.Println("Public:")
+	fmt.Println("  - 'repo:public_repo': to be able to read public repositories")
+	fmt.Println("Private:")
+	fmt.Println("  - 'repo'            : to be able to read private repositories")
+	fmt.Println()
+
 	for {
 		fmt.Print("Enter token: ")
 
@@ -245,9 +255,9 @@ func loginAndRequestToken(owner, project string) (string, error) {
 	fmt.Println()
 	fmt.Println("The access scope depend on the type of repository.")
 	fmt.Println("Public:")
-	fmt.Println("  - 'user:email': to be able to read public-only users email")
+	fmt.Println("  - 'repo:public_repo': to be able to read public repositories")
 	fmt.Println("Private:")
-	fmt.Println("  - 'repo'      : to be able to read private repositories")
+	fmt.Println("  - 'repo'            : to be able to read private repositories")
 	// fmt.Println("The token will have the \"repo\" permission, giving it read/write access to your repositories and issues. There is no narrower scope available, sorry :-|")
 	fmt.Println()
 
@@ -269,9 +279,8 @@ func loginAndRequestToken(owner, project string) (string, error) {
 
 	var scope string
 	if isPublic {
-		// user:email is requested to be able to read public emails
-		//     - a private email will stay private, even with this token
-		scope = "user:email"
+		// repo:public_repo is requested to be able to read public repositories
+		scope = "repo:public_repo"
 	} else {
 		// 'repo' is request to be able to read private repositories
 		// /!\ token will have read/write rights on every private repository you have access to
@@ -401,7 +410,8 @@ func promptURL(remotes map[string]string) (string, string, error) {
 }
 
 func splitURL(url string) (shortURL string, owner string, project string, err error) {
-	res := rxGithubURL.FindStringSubmatch(url)
+	cleanURL := strings.TrimSuffix(url, ".git")
+	res := rxGithubURL.FindStringSubmatch(cleanURL)
 	if res == nil {
 		return "", "", "", fmt.Errorf("bad github project url")
 	}
