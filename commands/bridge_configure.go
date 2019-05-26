@@ -113,10 +113,11 @@ var bridgeConfigureCmd = &cobra.Command{
 
 func init() {
 	bridgeCmd.AddCommand(bridgeConfigureCmd)
-	bridgeConfigureCmd.Flags().StringVarP(&name, "name", "n", "", "Bridge name")
-	bridgeConfigureCmd.Flags().StringVarP(&target, "target", "t", "", "Bridge target name. Valid values are [github,gitlab,gitea,launchpad-preview]")
-	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.URL, "url", "u", "", "Repository url")
-	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.Owner, "owner", "o", "", "Repository owner")
-	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.Token, "token", "T", "", "Authentication token")
-	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.Project, "project", "p", "", "Repository name")
+	bridgeConfigureCmd.Flags().StringVarP(&name, "name", "n", "", "A distinctive name to identify the bridge")
+	bridgeConfigureCmd.Flags().StringVarP(&target, "target", "t", "",
+		fmt.Sprintf("The target of the bridge. Valid values are [%s]", strings.Join(bridge.Targets(), ",")))
+	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.URL, "url", "u", "", "The URL of the target repository")
+	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.Owner, "owner", "o", "", "The owner of the target repository")
+	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.Token, "token", "T", "", "The authentication token for the API")
+	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.Project, "project", "p", "", "The name of the target repository")
 }

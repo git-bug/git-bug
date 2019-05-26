@@ -195,8 +195,8 @@ func randomFingerprint() string {
 func promptTokenOptions(owner, project string) (string, error) {
 	for {
 		fmt.Println()
-		fmt.Println("[0]: i have my own token")
-		fmt.Println("[1]: login and generate token")
+		fmt.Println("[0]: user provided token")
+		fmt.Println("[1]: automated token creation")
 		fmt.Print("Select option: ")
 
 		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
