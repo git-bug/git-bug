@@ -4,11 +4,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/git"
-	"github.com/MichaelMure/git-bug/util/test"
-	"github.com/stretchr/testify/require"
 )
 
 func TestValidate(t *testing.T) {
@@ -80,9 +80,12 @@ func TestMetadata(t *testing.T) {
 }
 
 func TestHash(t *testing.T) {
+	repo := repository.CreateTestRepo(false)
+	defer repository.CleanupTestRepos(t, repo)
+
 	repos := []repository.ClockedRepo{
 		repository.NewMockRepoForTest(),
-		test.CreateRepo(false),
+		repo,
 	}
 
 	for _, repo := range repos {

@@ -9,23 +9,13 @@ import (
 	"github.com/MichaelMure/git-bug/graphql/models"
 	"github.com/MichaelMure/git-bug/misc/random_bugs"
 	"github.com/MichaelMure/git-bug/repository"
-	"github.com/MichaelMure/git-bug/util/test"
 )
 
-func CreateFilledRepo(bugNumber int) repository.ClockedRepo {
-	repo := test.CreateRepo(false)
-
-	var seed int64 = 42
-	options := random_bugs.DefaultOptions()
-
-	options.BugNumber = bugNumber
-
-	random_bugs.CommitRandomBugsWithSeed(repo, options, seed)
-	return repo
-}
-
 func TestQueries(t *testing.T) {
-	repo := CreateFilledRepo(10)
+	repo := repository.CreateTestRepo(false)
+	defer repository.CleanupTestRepos(t, repo)
+
+	random_bugs.FillRepoWithSeed(repo, 10, 42)
 
 	handler, err := NewHandler(repo)
 	if err != nil {

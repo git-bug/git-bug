@@ -4,13 +4,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/util/test"
 	"github.com/stretchr/testify/require"
+
+	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/repository"
 )
 
 func TestSelect(t *testing.T) {
-	repo := test.CreateRepo(false)
+	repo := repository.CreateTestRepo(false)
+	defer repository.CleanupTestRepos(t, repo)
 
 	repoCache, err := cache.NewRepoCache(repo)
 	require.NoError(t, err)
@@ -75,6 +77,4 @@ func TestSelect(t *testing.T) {
 	// Resolve without a pattern should error again after clearing the selected bug
 	_, _, err = ResolveBug(repoCache, []string{})
 	require.Error(t, err)
-
-	require.NoError(t, test.CleanupRepo(repo))
 }

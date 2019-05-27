@@ -3,13 +3,14 @@ package identity
 import (
 	"testing"
 
-	"github.com/MichaelMure/git-bug/util/test"
 	"github.com/stretchr/testify/require"
+
+	"github.com/MichaelMure/git-bug/repository"
 )
 
 func TestPushPull(t *testing.T) {
-	repoA, repoB, remote := test.SetupReposAndRemote(t)
-	defer test.CleanupRepos(repoA, repoB, remote)
+	repoA, repoB, remote := repository.SetupReposAndRemote(t)
+	defer repository.CleanupTestRepos(t, repoA, repoB, remote)
 
 	identity1 := NewIdentity("name1", "email1")
 	err := identity1.Commit(repoA)

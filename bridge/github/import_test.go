@@ -13,8 +13,8 @@ import (
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/interrupt"
-	"github.com/MichaelMure/git-bug/util/test"
 )
 
 func Test_Importer(t *testing.T) {
@@ -124,7 +124,8 @@ func Test_Importer(t *testing.T) {
 		},
 	}
 
-	repo := test.CreateRepo(false)
+	repo := repository.CreateTestRepo(false)
+	defer repository.CleanupTestRepos(t, repo)
 
 	backend, err := cache.NewRepoCache(repo)
 	require.NoError(t, err)

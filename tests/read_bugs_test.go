@@ -6,23 +6,14 @@ import (
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/misc/random_bugs"
 	"github.com/MichaelMure/git-bug/repository"
-	"github.com/MichaelMure/git-bug/util/test"
 )
 
-func CreateFilledRepo(bugNumber int) repository.ClockedRepo {
-	repo := test.CreateRepo(false)
-
-	var seed int64 = 42
-	options := random_bugs.DefaultOptions()
-
-	options.BugNumber = bugNumber
-
-	random_bugs.CommitRandomBugsWithSeed(repo, options, seed)
-	return repo
-}
-
 func TestReadBugs(t *testing.T) {
-	repo := CreateFilledRepo(15)
+	repo := repository.CreateTestRepo(false)
+	defer repository.CleanupTestRepos(t, repo)
+
+	random_bugs.FillRepoWithSeed(repo, 15, 42)
+
 	bugs := bug.ReadAllLocalBugs(repo)
 	for b := range bugs {
 		if b.Err != nil {
@@ -32,7 +23,10 @@ func TestReadBugs(t *testing.T) {
 }
 
 func benchmarkReadBugs(bugNumber int, t *testing.B) {
-	repo := CreateFilledRepo(bugNumber)
+	repo := repository.CreateTestRepo(false)
+	defer repository.CleanupTestRepos(t, repo)
+
+	random_bugs.FillRepoWithSeed(repo, bugNumber, 42)
 	t.ResetTimer()
 
 	for n := 0; n < t.N; n++ {

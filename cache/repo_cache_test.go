@@ -3,12 +3,14 @@ package cache
 import (
 	"testing"
 
-	"github.com/MichaelMure/git-bug/util/test"
 	"github.com/stretchr/testify/require"
+
+	"github.com/MichaelMure/git-bug/repository"
 )
 
 func TestCache(t *testing.T) {
-	repo := test.CreateRepo(false)
+	repo := repository.CreateTestRepo(false)
+	defer repository.CleanupTestRepos(t, repo)
 
 	cache, err := NewRepoCache(repo)
 	require.NoError(t, err)
@@ -101,8 +103,8 @@ func TestCache(t *testing.T) {
 }
 
 func TestPushPull(t *testing.T) {
-	repoA, repoB, remote := test.SetupReposAndRemote(t)
-	defer test.CleanupRepos(repoA, repoB, remote)
+	repoA, repoB, remote := repository.SetupReposAndRemote(t)
+	defer repository.CleanupTestRepos(t, repoA, repoB, remote)
 
 	cacheA, err := NewRepoCache(repoA)
 	require.NoError(t, err)

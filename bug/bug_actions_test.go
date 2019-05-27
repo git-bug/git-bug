@@ -4,14 +4,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MichaelMure/git-bug/identity"
-	"github.com/MichaelMure/git-bug/util/test"
 	"github.com/stretchr/testify/require"
+
+	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/repository"
 )
 
 func TestPushPull(t *testing.T) {
-	repoA, repoB, remote := test.SetupReposAndRemote(t)
-	defer test.CleanupRepos(repoA, repoB, remote)
+	repoA, repoB, remote := repository.SetupReposAndRemote(t)
+	defer repository.CleanupTestRepos(t, repoA, repoB, remote)
 
 	reneA := identity.NewIdentity("René Descartes", "rene@descartes.fr")
 
@@ -83,8 +84,8 @@ func BenchmarkRebaseTheirs(b *testing.B) {
 }
 
 func _RebaseTheirs(t testing.TB) {
-	repoA, repoB, remote := test.SetupReposAndRemote(t)
-	defer test.CleanupRepos(repoA, repoB, remote)
+	repoA, repoB, remote := repository.SetupReposAndRemote(t)
+	defer repository.CleanupTestRepos(t, repoA, repoB, remote)
 
 	reneA := identity.NewIdentity("René Descartes", "rene@descartes.fr")
 
@@ -156,8 +157,8 @@ func BenchmarkRebaseOurs(b *testing.B) {
 }
 
 func _RebaseOurs(t testing.TB) {
-	repoA, repoB, remote := test.SetupReposAndRemote(t)
-	defer test.CleanupRepos(repoA, repoB, remote)
+	repoA, repoB, remote := repository.SetupReposAndRemote(t)
+	defer repository.CleanupTestRepos(t, repoA, repoB, remote)
 
 	reneA := identity.NewIdentity("René Descartes", "rene@descartes.fr")
 
@@ -245,8 +246,8 @@ func BenchmarkRebaseConflict(b *testing.B) {
 }
 
 func _RebaseConflict(t testing.TB) {
-	repoA, repoB, remote := test.SetupReposAndRemote(t)
-	defer test.CleanupRepos(repoA, repoB, remote)
+	repoA, repoB, remote := repository.SetupReposAndRemote(t)
+	defer repository.CleanupTestRepos(t, repoA, repoB, remote)
 
 	reneA := identity.NewIdentity("René Descartes", "rene@descartes.fr")
 

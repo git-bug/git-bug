@@ -29,6 +29,17 @@ func DefaultOptions() Options {
 	}
 }
 
+func FillRepo(repo repository.ClockedRepo, bugNumber int) {
+	FillRepoWithSeed(repo, bugNumber, time.Now().UnixNano())
+}
+
+func FillRepoWithSeed(repo repository.ClockedRepo, bugNumber int, seed int64) {
+	options := DefaultOptions()
+	options.BugNumber = bugNumber
+
+	CommitRandomBugsWithSeed(repo, options, seed)
+}
+
 func CommitRandomBugs(repo repository.ClockedRepo, opts Options) {
 	CommitRandomBugsWithSeed(repo, opts, time.Now().UnixNano())
 }
