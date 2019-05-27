@@ -57,7 +57,7 @@ func runBridgeConfigure(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Println("successfully configured bridge")
+	fmt.Printf("Successfully configured bridge: %s\n", name)
 	return nil
 }
 
@@ -105,8 +105,26 @@ func promptName() (string, error) {
 }
 
 var bridgeConfigureCmd = &cobra.Command{
-	Use:     "configure",
-	Short:   "Configure a new bridge.",
+	Use:   "configure",
+	Short: "Configure a new bridge.",
+	Long: `	Configure a new bridge by passing flags or/and using interactive terminal prompts. You can avoid all the terminal prompts by passing all the necessary flags to configure your bridge.
+	Repository configuration can be made by passing or the --url flag or the --project and/or --owner flags. If the three flags are provided git-bug will use --project and --owner flags.
+	Token configuration can be made by passing it in the --token flag or in the terminal prompt. If you don't already have one you can use terminal prompt to login and generate it directly.
+	For Github and Gitlab bridges, git-bug need a token to export and import issues, comments and editions for public and private repositories.
+	For Launchpad bridges, git-bug for now supports only public repositories and you only need --project or --url flag to configure it.`,
+	Example: `# For Github
+git bug bridge configure \
+    --name=default \
+    --target=github \
+    --owner=$(OWNER) \
+    --project=$(PROJECT) \
+    --token=$(TOKEN)
+
+# For Launchpad
+git bug bridge configure \
+    --name=default \
+    --target=launchpad-preview \
+    --url=https://bugs.launchpad.net/ubuntu/`,
 	PreRunE: loadRepo,
 	RunE:    runBridgeConfigure,
 }
