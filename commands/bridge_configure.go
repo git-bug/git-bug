@@ -108,10 +108,8 @@ var bridgeConfigureCmd = &cobra.Command{
 	Use:   "configure",
 	Short: "Configure a new bridge.",
 	Long: `	Configure a new bridge by passing flags or/and using interactive terminal prompts. You can avoid all the terminal prompts by passing all the necessary flags to configure your bridge.
-	Repository configuration can be made by passing or the --url flag or the --project and/or --owner flags. If the three flags are provided git-bug will use --project and --owner flags.
-	Token configuration can be made by passing it in the --token flag or in the terminal prompt. If you don't already have one you can use terminal prompt to login and generate it directly.
-	For Github and Gitlab bridges, git-bug need a token to export and import issues, comments and editions for public and private repositories.
-	For Launchpad bridges, git-bug for now supports only public repositories and you only need --project or --url flag to configure it.`,
+	Repository configuration can be made by passing either the --url flag or the --project and --owner flags. If the three flags are provided git-bug will use --project and --owner flags.
+	Token configuration can be directly passed with the --token flag or in the terminal prompt. If you don't already have one you can use the interactive procedure to generate one.
 	Example: `# For Github
 git bug bridge configure \
     --name=default \

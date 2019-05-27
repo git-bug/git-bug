@@ -196,7 +196,7 @@ func promptTokenOptions(owner, project string) (string, error) {
 	for {
 		fmt.Println()
 		fmt.Println("[0]: user provided token")
-		fmt.Println("[1]: automated token creation")
+		fmt.Println("[1]: interactive token creation")
 		fmt.Print("Select option: ")
 
 		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
@@ -258,7 +258,6 @@ func loginAndRequestToken(owner, project string) (string, error) {
 	fmt.Println("  - 'repo:public_repo': to be able to read public repositories")
 	fmt.Println("Private:")
 	fmt.Println("  - 'repo'            : to be able to read private repositories")
-	// fmt.Println("The token will have the \"repo\" permission, giving it read/write access to your repositories and issues. There is no narrower scope available, sorry :-|")
 	fmt.Println()
 
 	// prompt project visibility to know the token scope needed for the repository
@@ -346,7 +345,7 @@ func promptUsername() (string, error) {
 }
 
 func promptURL(remotes map[string]string) (string, string, error) {
-	validRemotes := getValideGithubRemoteURLs(remotes)
+	validRemotes := getValidGithubRemoteURLs(remotes)
 	if len(validRemotes) > 0 {
 		for {
 			fmt.Println("\nDetected projects:")
@@ -419,7 +418,7 @@ func splitURL(url string) (shortURL string, owner string, project string, err er
 	return res[0], res[1], res[2], nil
 }
 
-func getValideGithubRemoteURLs(remotes map[string]string) []string {
+func getValidGithubRemoteURLs(remotes map[string]string) []string {
 	urls := make([]string, 0, len(remotes))
 	for _, url := range remotes {
 		// split url can work again with shortURL

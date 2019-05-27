@@ -92,7 +92,10 @@ func promptProjectName() (string, error) {
 func validateProject(project string) (bool, error) {
 	url := fmt.Sprintf("%s/%s", apiRoot, project)
 
-	resp, err := http.Get(url)
+	client := := &http.Client{
+		Timeout: defaultTimeout,
+	}
+	resp, err := client.Get(url)
 	if err != nil {
 		return false, err
 	}
