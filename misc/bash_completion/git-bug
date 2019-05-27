@@ -107,7 +107,13 @@ __git-bug_handle_reply()
     fi
 
     if [[ ${#COMPREPLY[@]} -eq 0 ]]; then
-        declare -F __custom_func >/dev/null && __custom_func
+		if declare -F __git-bug_custom_func >/dev/null; then
+			# try command name qualified custom func
+			__git-bug_custom_func
+		else
+			# otherwise fall back to unqualified for compatibility
+			declare -F __custom_func >/dev/null && __custom_func
+		fi
     fi
 
     # available in bash-completion >= 2, not always present on macOS
@@ -171,7 +177,8 @@ __git-bug_handle_flag()
     fi
 
     # skip the argument to a two word flag
-    if __git-bug_contains_word "${words[c]}" "${two_word_flags[@]}"; then
+    if [[ ${words[c]} != *"="* ]] && __git-bug_contains_word "${words[c]}" "${two_word_flags[@]}"; then
+			  __git-bug_debug "${FUNCNAME[0]}: found a flag ${words[c]}, skip the next argument"
         c=$((c+1))
         # if we are looking for a flags value, don't show commands
         if [[ $c -eq $cword ]]; then
@@ -263,12 +270,15 @@ _git-bug_add()
     flags_completion=()
 
     flags+=("--title=")
+    two_word_flags+=("--title")
     two_word_flags+=("-t")
     local_nonpersistent_flags+=("--title=")
     flags+=("--message=")
+    two_word_flags+=("--message")
     two_word_flags+=("-m")
     local_nonpersistent_flags+=("--message=")
     flags+=("--file=")
+    two_word_flags+=("--file")
     two_word_flags+=("-F")
     local_nonpersistent_flags+=("--file=")
 
@@ -398,9 +408,11 @@ _git-bug_comment_add()
     flags_completion=()
 
     flags+=("--file=")
+    two_word_flags+=("--file")
     two_word_flags+=("-F")
     local_nonpersistent_flags+=("--file=")
     flags+=("--message=")
+    two_word_flags+=("--message")
     two_word_flags+=("-m")
     local_nonpersistent_flags+=("--message=")
 
@@ -527,30 +539,39 @@ _git-bug_ls()
     flags_completion=()
 
     flags+=("--status=")
+    two_word_flags+=("--status")
     two_word_flags+=("-s")
     local_nonpersistent_flags+=("--status=")
     flags+=("--author=")
+    two_word_flags+=("--author")
     two_word_flags+=("-a")
     local_nonpersistent_flags+=("--author=")
     flags+=("--participant=")
+    two_word_flags+=("--participant")
     two_word_flags+=("-p")
     local_nonpersistent_flags+=("--participant=")
     flags+=("--actor=")
+    two_word_flags+=("--actor")
     two_word_flags+=("-A")
     local_nonpersistent_flags+=("--actor=")
     flags+=("--label=")
+    two_word_flags+=("--label")
     two_word_flags+=("-l")
     local_nonpersistent_flags+=("--label=")
     flags+=("--title=")
+    two_word_flags+=("--title")
     two_word_flags+=("-t")
     local_nonpersistent_flags+=("--title=")
     flags+=("--no=")
+    two_word_flags+=("--no")
     two_word_flags+=("-n")
     local_nonpersistent_flags+=("--no=")
     flags+=("--by=")
+    two_word_flags+=("--by")
     two_word_flags+=("-b")
     local_nonpersistent_flags+=("--by=")
     flags+=("--direction=")
+    two_word_flags+=("--direction")
     two_word_flags+=("-d")
     local_nonpersistent_flags+=("--direction=")
 
@@ -674,6 +695,7 @@ _git-bug_show()
     flags_completion=()
 
     flags+=("--field=")
+    two_word_flags+=("--field")
     two_word_flags+=("-f")
     local_nonpersistent_flags+=("--field=")
 
@@ -779,6 +801,7 @@ _git-bug_title_edit()
     flags_completion=()
 
     flags+=("--title=")
+    two_word_flags+=("--title")
     two_word_flags+=("-t")
     local_nonpersistent_flags+=("--title=")
 
@@ -886,6 +909,7 @@ _git-bug_user()
     flags_completion=()
 
     flags+=("--field=")
+    two_word_flags+=("--field")
     two_word_flags+=("-f")
     local_nonpersistent_flags+=("--field=")
 
@@ -937,7 +961,12 @@ _git-bug_webui()
     flags_with_completion=()
     flags_completion=()
 
+    flags+=("--open")
+    local_nonpersistent_flags+=("--open")
+    flags+=("--no-open")
+    local_nonpersistent_flags+=("--no-open")
     flags+=("--port=")
+    two_word_flags+=("--port")
     two_word_flags+=("-p")
     local_nonpersistent_flags+=("--port=")
 

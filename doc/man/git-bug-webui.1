@@ -17,11 +17,23 @@ git\-bug\-webui \- Launch the web UI.
 .PP
 Launch the web UI.
 
+.PP
+Available git config:
+  git\-bug.webui.open [bool]: control the automatic opening of the web UI in the default browser
+
 
 .SH OPTIONS
 .PP
+\fB\-\-open\fP[=false]
+    Automatically open the web UI in the default browser
+
+.PP
+\fB\-\-no\-open\fP[=false]
+    Prevent the automatic opening of the web UI in the default browser
+
+.PP
 \fB\-p\fP, \fB\-\-port\fP=0
-    Port to listen to
+    Port to listen to (default is random)
 
 .PP
 \fB\-h\fP, \fB\-\-help\fP[=false]

@@ -13,28 +13,35 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/handler"
-	"github.com/MichaelMure/git-bug/graphql"
-	"github.com/MichaelMure/git-bug/repository"
-	"github.com/MichaelMure/git-bug/util/git"
-	"github.com/MichaelMure/git-bug/webui"
 	"github.com/gorilla/mux"
 	"github.com/phayes/freeport"
 	"github.com/skratchdot/open-golang/open"
 	"github.com/spf13/cobra"
+
+	"github.com/MichaelMure/git-bug/graphql"
+	"github.com/MichaelMure/git-bug/repository"
+	"github.com/MichaelMure/git-bug/util/git"
+	"github.com/MichaelMure/git-bug/webui"
 )
 
-var port int
+var (
+	webUIPort   int
+	webUIOpen   bool
+	webUINoOpen bool
+)
+
+const webUIOpenConfigKey = "git-bug.webui.open"
 
 func runWebUI(cmd *cobra.Command, args []string) error {
-	if port == 0 {
+	if webUIPort == 0 {
 		var err error
-		port, err = freeport.GetFreePort()
+		webUIPort, err = freeport.GetFreePort()
 		if err != nil {
 			return err
 		}
 	}
 
-	addr := fmt.Sprintf("127.0.0.1:%d", port)
+	addr := fmt.Sprintf("127.0.0.1:%d", webUIPort)
 	webUiAddr := fmt.Sprintf("http://%s", addr)
 
 	router := mux.NewRouter()
@@ -93,9 +100,21 @@ func runWebUI(cmd *cobra.Command, args []string) error {
 	fmt.Printf("Graphql Playground: http://%s/playground\n", addr)
 	fmt.Println("Press Ctrl+c to quit")
 
-	err = open.Run(webUiAddr)
-	if err != nil {
-		fmt.Println(err)
+	configOpen, err := repo.ReadConfigBool(webUIOpenConfigKey)
+	if err == repository.ErrNoConfigEntry {
+		// default to true
+		configOpen = true
+	} else if err != nil {
+		return err
+	}
+
+	shouldOpen := (configOpen && !webUINoOpen) || webUIOpen
+
+	if shouldOpen {
+		err = open.Run(webUiAddr)
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 
 	err = srv.ListenAndServe()
@@ -223,8 +242,13 @@ func (gufh *gitUploadFileHandler) ServeHTTP(rw http.ResponseWriter, r *http.Requ
 }
 
 var webUICmd = &cobra.Command{
-	Use:     "webui",
-	Short:   "Launch the web UI.",
+	Use:   "webui",
+	Short: "Launch the web UI.",
+	Long: `Launch the web UI.
+
+Available git config:
+  git-bug.webui.open [bool]: control the automatic opening of the web UI in the default browser
+`,
 	PreRunE: loadRepo,
 	RunE:    runWebUI,
 }
@@ -234,5 +258,8 @@ func init() {
 
 	webUICmd.Flags().SortFlags = false
 
-	webUICmd.Flags().IntVarP(&port, "port", "p", 0, "Port to listen to")
+	webUICmd.Flags().BoolVar(&webUIOpen, "open", false, "Automatically open the web UI in the default browser")
+	webUICmd.Flags().BoolVar(&webUINoOpen, "no-open", false, "Prevent the automatic opening of the web UI in the default browser")
+	webUICmd.Flags().IntVarP(&webUIPort, "port", "p", 0, "Port to listen to (default is random)")
+
 }

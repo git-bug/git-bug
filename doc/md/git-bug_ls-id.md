@@ -1,10 +1,10 @@
 ## git-bug ls-id
 
-List Bug Id
+List bug identifiers.
 
 ### Synopsis
 
-List Bug Id
+List bug identifiers.
 
 ```
 git-bug ls-id [<prefix>] [flags]
