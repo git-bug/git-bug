@@ -3,6 +3,7 @@ package repository
 import (
 	"crypto/sha1"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/MichaelMure/git-bug/util/git"
@@ -73,6 +74,26 @@ func (r *mockRepoForTest) ReadConfigs(keyPrefix string) (map[string]string, erro
 	}
 
 	return result, nil
+}
+
+func (r *mockRepoForTest) ReadConfigBool(key string) (bool, error) {
+	// unlike git, the mock can only store one value for the same key
+	val, ok := r.config[key]
+	if !ok {
+		return false, ErrNoConfigEntry
+	}
+
+	return strconv.ParseBool(val)
+}
+
+func (r *mockRepoForTest) ReadConfigString(key string) (string, error) {
+	// unlike git, the mock can only store one value for the same key
+	val, ok := r.config[key]
+	if !ok {
+		return "", ErrNoConfigEntry
+	}
+
+	return val, nil
 }
 
 func (r *mockRepoForTest) RmConfigs(keyPrefix string) error {

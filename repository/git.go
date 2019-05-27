@@ -8,6 +8,7 @@ import (
 	"io"
 	"os/exec"
 	"path"
+	"strconv"
 	"strings"
 
 	"github.com/MichaelMure/git-bug/util/git"
@@ -200,6 +201,40 @@ func (repo *GitRepo) ReadConfigs(keyPrefix string) (map[string]string, error) {
 	}
 
 	return result, nil
+}
+
+func (repo *GitRepo) ReadConfigBool(key string) (bool, error) {
+	val, err := repo.ReadConfigString(key)
+	if err != nil {
+		return false, err
+	}
+
+	return strconv.ParseBool(val)
+}
+
+func (repo *GitRepo) ReadConfigString(key string) (string, error) {
+	stdout, err := repo.runGitCommand("config", "--get-all", key)
+
+	//   / \
+	//  / ! \
+	// -------
+	//
+	// There can be a legitimate error here, but I see no portable way to
+	// distinguish them from the git error that say "no matching value exist"
+	if err != nil {
+		return "", ErrNoConfigEntry
+	}
+
+	lines := strings.Split(stdout, "\n")
+
+	if len(lines) == 0 {
+		return "", ErrNoConfigEntry
+	}
+	if len(lines) > 1 {
+		return "", ErrMultipleConfigEntry
+	}
+
+	return lines[0], nil
 }
 
 // RmConfigs remove all key/value pair matching the key prefix

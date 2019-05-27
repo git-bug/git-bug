@@ -37,6 +37,8 @@ func (e ErrInvalidCacheFormat) Error() string {
 	return e.message
 }
 
+var _ repository.RepoCommon = &RepoCache{}
+
 // RepoCache is a cache for a Repository. This cache has multiple functions:
 //
 // 1. After being loaded, a Bug is kept in memory in the cache, allowing for fast
@@ -125,6 +127,16 @@ func (c *RepoCache) StoreConfig(key string, value string) error {
 // ReadConfigs read all key/value pair matching the key prefix
 func (c *RepoCache) ReadConfigs(keyPrefix string) (map[string]string, error) {
 	return c.repo.ReadConfigs(keyPrefix)
+}
+
+// ReadConfigBool read a single boolean value from the config
+func (c *RepoCache) ReadConfigBool(key string) (bool, error) {
+	return c.repo.ReadConfigBool(key)
+}
+
+// ReadConfigBool read a single string value from the config
+func (c *RepoCache) ReadConfigString(key string) (string, error) {
+	return c.repo.ReadConfigString(key)
 }
 
 // RmConfigs remove all key/value pair matching the key prefix

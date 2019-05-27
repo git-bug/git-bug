@@ -3,11 +3,15 @@ package repository
 
 import (
 	"bytes"
+	"errors"
 	"strings"
 
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
+
+var ErrNoConfigEntry = errors.New("no config entry for the given key")
+var ErrMultipleConfigEntry = errors.New("multiple config entry for the given key")
 
 // RepoCommon represent the common function the we want all the repo to implement
 type RepoCommon interface {
@@ -28,6 +32,16 @@ type RepoCommon interface {
 
 	// ReadConfigs read all key/value pair matching the key prefix
 	ReadConfigs(keyPrefix string) (map[string]string, error)
+
+	// ReadConfigBool read a single boolean value from the config
+	// Return ErrNoConfigEntry or ErrMultipleConfigEntry if there is zero or more than one entry
+	// for this key
+	ReadConfigBool(key string) (bool, error)
+
+	// ReadConfigBool read a single string value from the config
+	// Return ErrNoConfigEntry or ErrMultipleConfigEntry if there is zero or more than one entry
+	// for this key
+	ReadConfigString(key string) (string, error)
 
 	// RmConfigs remove all key/value pair matching the key prefix
 	RmConfigs(keyPrefix string) error
