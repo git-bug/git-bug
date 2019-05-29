@@ -20,9 +20,9 @@ const (
 )
 
 var (
-	name         string
-	target       string
-	bridgeParams core.BridgeParams
+	bridgeConfigureName   string
+	bridgeConfigureTarget string
+	bridgeParams          core.BridgeParams
 )
 
 func runBridgeConfigure(cmd *cobra.Command, args []string) error {
@@ -33,21 +33,21 @@ func runBridgeConfigure(cmd *cobra.Command, args []string) error {
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
 
-	if target == "" {
-		target, err = promptTarget()
+	if bridgeConfigureTarget == "" {
+		bridgeConfigureTarget, err = promptTarget()
 		if err != nil {
 			return err
 		}
 	}
 
-	if name == "" {
-		name, err = promptName()
+	if bridgeConfigureName == "" {
+		bridgeConfigureName, err = promptName()
 		if err != nil {
 			return err
 		}
 	}
 
-	b, err := bridge.NewBridge(backend, target, name)
+	b, err := bridge.NewBridge(backend, bridgeConfigureTarget, bridgeConfigureName)
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func runBridgeConfigure(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Printf("Successfully configured bridge: %s\n", name)
+	fmt.Printf("Successfully configured bridge: %s\n", bridgeConfigureName)
 	return nil
 }
 
@@ -109,8 +109,38 @@ var bridgeConfigureCmd = &cobra.Command{
 	Short: "Configure a new bridge.",
 	Long: `	Configure a new bridge by passing flags or/and using interactive terminal prompts. You can avoid all the terminal prompts by passing all the necessary flags to configure your bridge.
 	Repository configuration can be made by passing either the --url flag or the --project and --owner flags. If the three flags are provided git-bug will use --project and --owner flags.
-	Token configuration can be directly passed with the --token flag or in the terminal prompt. If you don't already have one you can use the interactive procedure to generate one.
-	Example: `# For Github
+	Token configuration can be directly passed with the --token flag or in the terminal prompt. If you don't already have one you can use the interactive procedure to generate one.`,
+	Example: `# Interactive example
+[1]: github
+[2]: launchpad-preview
+target: 1
+name [default]: default
+
+Detected projects:
+[1]: github.com/a-hilaly/git-bug
+[2]: github.com/MichaelMure/git-bug
+
+[0]: Another project
+
+Select option: 1
+
+[0]: user provided token
+[1]: interactive token creation
+Select option: 0
+
+You can generate a new token by visiting https://github.com/settings/tokens.
+Choose 'Generate new token' and set the necessary access scope for your repository.
+
+The access scope depend on the type of repository.
+Public:
+	- 'public_repo': to be able to read public repositories
+Private:
+	- 'repo'       : to be able to read private repositories
+
+Enter token: 
+Successfully configured bridge: default
+
+# For Github
 git bug bridge configure \
     --name=default \
     --target=github \
@@ -129,8 +159,8 @@ git bug bridge configure \
 
 func init() {
 	bridgeCmd.AddCommand(bridgeConfigureCmd)
-	bridgeConfigureCmd.Flags().StringVarP(&name, "name", "n", "", "A distinctive name to identify the bridge")
-	bridgeConfigureCmd.Flags().StringVarP(&target, "target", "t", "",
+	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureName, "name", "n", "", "A distinctive name to identify the bridge")
+	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureTarget, "target", "t", "",
 		fmt.Sprintf("The target of the bridge. Valid values are [%s]", strings.Join(bridge.Targets(), ",")))
 	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.URL, "url", "u", "", "The URL of the target repository")
 	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.Owner, "owner", "o", "", "The owner of the target repository")
