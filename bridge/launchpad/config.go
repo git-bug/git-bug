@@ -7,12 +7,16 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
-const keyProject = "project"
+const (
+	keyProject     = "project"
+	defaultTimeout = 60 * time.Second
+)
 
 var (
 	rxLaunchpadURL = regexp.MustCompile(`launchpad\.net[\/:]([^\/]*[a-z]+)`)
@@ -92,9 +96,10 @@ func promptProjectName() (string, error) {
 func validateProject(project string) (bool, error) {
 	url := fmt.Sprintf("%s/%s", apiRoot, project)
 
-	client := := &http.Client{
+	client := &http.Client{
 		Timeout: defaultTimeout,
 	}
+
 	resp, err := client.Get(url)
 	if err != nil {
 		return false, err

@@ -16,6 +16,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
@@ -32,7 +34,7 @@ const (
 )
 
 var (
-	rxGithubURL = regexp.MustCompile(`github\.com[\/:]([a-zA-Z0-9\-\_]+)\/([a-zA-Z0-9\-\_\.]+)`)
+	ErrBadProjectURL = errors.New("bad project url")
 )
 
 func (*Github) Configure(repo repository.RepoCommon, params core.BridgeParams) (core.Configuration, error) {
@@ -50,7 +52,7 @@ func (*Github) Configure(repo repository.RepoCommon, params core.BridgeParams) (
 
 	} else if params.URL != "" {
 		// try to parse params URL and extract owner and project
-		_, owner, project, err = splitURL(params.URL)
+		owner, project, err = splitURL(params.URL)
 		if err != nil {
 			return nil, err
 		}
@@ -227,9 +229,9 @@ func promptToken() (string, error) {
 	fmt.Println()
 	fmt.Println("The access scope depend on the type of repository.")
 	fmt.Println("Public:")
-	fmt.Println("  - 'repo:public_repo': to be able to read public repositories")
+	fmt.Println("  - 'public_repo': to be able to read public repositories")
 	fmt.Println("Private:")
-	fmt.Println("  - 'repo'            : to be able to read private repositories")
+	fmt.Println("  - 'repo'       : to be able to read private repositories")
 	fmt.Println()
 
 	for {
@@ -255,9 +257,9 @@ func loginAndRequestToken(owner, project string) (string, error) {
 	fmt.Println()
 	fmt.Println("The access scope depend on the type of repository.")
 	fmt.Println("Public:")
-	fmt.Println("  - 'repo:public_repo': to be able to read public repositories")
+	fmt.Println("  - 'public_repo': to be able to read public repositories")
 	fmt.Println("Private:")
-	fmt.Println("  - 'repo'            : to be able to read private repositories")
+	fmt.Println("  - 'repo'       : to be able to read private repositories")
 	fmt.Println()
 
 	// prompt project visibility to know the token scope needed for the repository
@@ -278,8 +280,8 @@ func loginAndRequestToken(owner, project string) (string, error) {
 
 	var scope string
 	if isPublic {
-		// repo:public_repo is requested to be able to read public repositories
-		scope = "repo:public_repo"
+		// public_repo is requested to be able to read public repositories
+		scope = "public_repo"
 	} else {
 		// 'repo' is request to be able to read private repositories
 		// /!\ token will have read/write rights on every private repository you have access to
@@ -377,7 +379,7 @@ func promptURL(remotes map[string]string) (string, string, error) {
 			}
 
 			// get owner and project with index
-			_, owner, project, _ := splitURL(validRemotes[index-1])
+			owner, project, _ := splitURL(validRemotes[index-1])
 			return owner, project, nil
 		}
 	}
@@ -398,7 +400,7 @@ func promptURL(remotes map[string]string) (string, string, error) {
 		}
 
 		// get owner and project from url
-		_, owner, project, err := splitURL(line)
+		owner, project, err := splitURL(line)
 		if err != nil {
 			fmt.Println(err)
 			continue
@@ -408,22 +410,34 @@ func promptURL(remotes map[string]string) (string, string, error) {
 	}
 }
 
-func splitURL(url string) (shortURL string, owner string, project string, err error) {
+// splitURL extract the owner and project from a github repository URL. It will remove the
+// '.git' extension from the URL before parsing it.
+// Note that Github removes the '.git' extension from projects names at their creation
+func splitURL(url string) (owner string, project string, err error) {
 	cleanURL := strings.TrimSuffix(url, ".git")
-	res := rxGithubURL.FindStringSubmatch(cleanURL)
-	if res == nil {
-		return "", "", "", fmt.Errorf("bad github project url")
+
+	re, err := regexp.Compile(`github\.com[/:]([a-zA-Z0-9\-_]+)/([a-zA-Z0-9\-_.]+)`)
+	if err != nil {
+		return "", "", err
 	}
 
-	return res[0], res[1], res[2], nil
+	res := re.FindStringSubmatch(cleanURL)
+	if res == nil {
+		return "", "", ErrBadProjectURL
+	}
+
+	owner = res[1]
+	project = res[2]
+	return owner, project, nil
 }
 
 func getValidGithubRemoteURLs(remotes map[string]string) []string {
 	urls := make([]string, 0, len(remotes))
 	for _, url := range remotes {
 		// split url can work again with shortURL
-		shortURL, _, _, err := splitURL(url)
+		owner, project, err := splitURL(url)
 		if err == nil {
+			shortURL := fmt.Sprintf("%s/%s/%s", "github.com", owner, project)
 			urls = append(urls, shortURL)
 		}
 	}
@@ -434,7 +448,11 @@ func getValidGithubRemoteURLs(remotes map[string]string) []string {
 func validateUsername(username string) (bool, error) {
 	url := fmt.Sprintf("%s/users/%s", githubV3Url, username)
 
-	resp, err := http.Get(url)
+	client := &http.Client{
+		Timeout: defaultTimeout,
+	}
+
+	resp, err := client.Get(url)
 	if err != nil {
 		return false, err
 	}
