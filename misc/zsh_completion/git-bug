@@ -8,7 +8,7 @@ case $state in
   level1)
     case $words[1] in
       git-bug)
-        _arguments '1: :(add bridge commands comment deselect export label ls ls-id ls-label pull push select show status termui title user version webui)'
+        _arguments '1: :(add bridge commands comment deselect label ls ls-id ls-label pull push select show status termui title user version webui)'
       ;;
       *)
         _arguments '*: :_files'
