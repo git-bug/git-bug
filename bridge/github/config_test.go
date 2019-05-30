@@ -32,7 +32,17 @@ func TestSplitURL(t *testing.T) {
 				err:     nil,
 			},
 		},
-
+		{
+			name: "default issues url",
+			args: args{
+				url: "https://github.com/MichaelMure/git-bug/issues",
+			},
+			want: want{
+				owner:   "MichaelMure",
+				project: "git-bug",
+				err:     nil,
+			},
+		},
 		{
 			name: "default url with git extension",
 			args: args{
@@ -87,6 +97,46 @@ func TestSplitURL(t *testing.T) {
 	}
 }
 
+func TestValidateUsername(t *testing.T) {
+	type args struct {
+		username string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "existing username",
+			args: args{
+				username: "MichaelMure",
+			},
+			want: true,
+		},
+		{
+			name: "existing organisation name",
+			args: args{
+				username: "ipfs",
+			},
+			want: true,
+		},
+		{
+			name: "non existing username",
+			args: args{
+				username: "cant-find-this",
+			},
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ok, _ := validateUsername(tt.args.username)
+			assert.Equal(t, tt.want, ok)
+		})
+	}
+}
+
 func TestValidateProject(t *testing.T) {
 	tokenPrivateScope := os.Getenv("GITHUB_TOKEN_PRIVATE")
 	if tokenPrivateScope == "" {
@@ -109,7 +159,7 @@ func TestValidateProject(t *testing.T) {
 		want bool
 	}{
 		{
-			name: "public repository and token with scope 'public_repo",
+			name: "public repository and token with scope 'public_repo'",
 			args: args{
 				project: "git-bug",
 				owner:   "MichaelMure",
@@ -118,7 +168,7 @@ func TestValidateProject(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "private repository and token with scope 'repo",
+			name: "private repository and token with scope 'repo'",
 			args: args{
 				project: "git-bug-test-github-bridge",
 				owner:   "MichaelMure",
@@ -131,6 +181,15 @@ func TestValidateProject(t *testing.T) {
 			args: args{
 				project: "git-bug-test-github-bridge",
 				owner:   "MichaelMure",
+				token:   tokenPublicScope,
+			},
+			want: false,
+		},
+		{
+			name: "project not existing",
+			args: args{
+				project: "cant-find-this",
+				owner:   "organisation-not-found",
 				token:   tokenPublicScope,
 			},
 			want: false,

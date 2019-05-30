@@ -2,6 +2,7 @@ package launchpad
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -13,13 +14,11 @@ import (
 	"github.com/MichaelMure/git-bug/repository"
 )
 
+var ErrBadProjectURL = errors.New("bad Launchpad project URL")
+
 const (
 	keyProject     = "project"
 	defaultTimeout = 60 * time.Second
-)
-
-var (
-	rxLaunchpadURL = regexp.MustCompile(`launchpad\.net[\/:]([^\/]*[a-z]+)`)
 )
 
 func (*Launchpad) Configure(repo repository.RepoCommon, params core.BridgeParams) (core.Configuration, error) {
@@ -39,7 +38,7 @@ func (*Launchpad) Configure(repo repository.RepoCommon, params core.BridgeParams
 
 	} else if params.URL != "" {
 		// get project name from url
-		_, project, err = splitURL(params.URL)
+		project, err = splitURL(params.URL)
 		if err != nil {
 			return nil, err
 		}
@@ -108,11 +107,17 @@ func validateProject(project string) (bool, error) {
 	return resp.StatusCode == http.StatusOK, nil
 }
 
-func splitURL(url string) (string, string, error) {
-	res := rxLaunchpadURL.FindStringSubmatch(url)
-	if res == nil {
-		return "", "", fmt.Errorf("bad Launchpad project url")
+// extract project name from url
+func splitURL(url string) (string, error) {
+	re, err := regexp.Compile(`launchpad\.net[\/:]([^\/]*[a-z]+)`)
+	if err != nil {
+		panic("regexp compile:" + err.Error())
 	}
 
-	return res[0], res[1], nil
+	res := re.FindStringSubmatch(url)
+	if res == nil {
+		return "", ErrBadProjectURL
+	}
+
+	return res[1], nil
 }

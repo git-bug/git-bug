@@ -418,7 +418,7 @@ func splitURL(url string) (owner string, project string, err error) {
 
 	re, err := regexp.Compile(`github\.com[/:]([a-zA-Z0-9\-_]+)/([a-zA-Z0-9\-_.]+)`)
 	if err != nil {
-		return "", "", err
+		panic("regexp compile:" + err.Error())
 	}
 
 	res := re.FindStringSubmatch(cleanURL)
