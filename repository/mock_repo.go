@@ -103,6 +103,7 @@ func (r *mockRepoForTest) ReadConfigString(key string) (string, error) {
 	return val, nil
 }
 
+// RmConfig remove all key/value pair matching the key prefix
 func (r *mockRepoForTest) RmConfigs(keyPrefix string) error {
 	for key := range r.config {
 		if strings.HasPrefix(key, keyPrefix) {

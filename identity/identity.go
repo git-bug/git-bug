@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/MichaelMure/git-bug/util/timestamp"
 	"github.com/pkg/errors"
 
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/lamport"
+	"github.com/MichaelMure/git-bug/util/timestamp"
 )
 
 const identityRefPattern = "refs/identities/"
