@@ -33,6 +33,13 @@ func runBridgeConfigure(cmd *cobra.Command, args []string) error {
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
 
+	termState, err := terminal.GetState(int(syscall.Stdin))
+	if err != nil {
+		return err
+	}
+	interrupt.RegisterCleaner(func() error {
+		return terminal.Restore(int(syscall.Stdin), termState)
+	})
 	if bridgeConfigureTarget == "" {
 		bridgeConfigureTarget, err = promptTarget()
 		if err != nil {

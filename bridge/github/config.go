@@ -98,7 +98,7 @@ func (*Github) Configure(repo repository.RepoCommon, params core.BridgeParams) (
 		return nil, err
 	}
 	if !ok {
-		return nil, fmt.Errorf("project doesn't exist or authentication token has a wrong scope")
+		return nil, fmt.Errorf("project doesn't exist or authentication token has an incorrect scope")
 	}
 
 	conf[keyToken] = token
@@ -428,7 +428,7 @@ func splitURL(url string) (owner string, project string, err error) {
 
 	owner = res[1]
 	project = res[2]
-	return owner, project, nil
+	return
 }
 
 func getValidGithubRemoteURLs(remotes map[string]string) []string {
