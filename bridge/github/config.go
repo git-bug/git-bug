@@ -197,8 +197,8 @@ func randomFingerprint() string {
 func promptTokenOptions(owner, project string) (string, error) {
 	for {
 		fmt.Println()
-		fmt.Println("[0]: user provided token")
-		fmt.Println("[1]: interactive token creation")
+		fmt.Println("[1]: user provided token")
+		fmt.Println("[2]: interactive token creation")
 		fmt.Print("Select option: ")
 
 		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
@@ -210,12 +210,12 @@ func promptTokenOptions(owner, project string) (string, error) {
 		line = strings.TrimRight(line, "\n")
 
 		index, err := strconv.Atoi(line)
-		if err != nil || (index != 0 && index != 1) {
+		if err != nil || (index != 1 && index != 2) {
 			fmt.Println("invalid input")
 			continue
 		}
 
-		if index == 0 {
+		if index == 1 {
 			return promptToken()
 		}
 
@@ -234,21 +234,25 @@ func promptToken() (string, error) {
 	fmt.Println("  - 'repo'       : to be able to read private repositories")
 	fmt.Println()
 
+	re, err := regexp.Compile(`^[a-zA-Z0-9]{40}`)
+	if err != nil {
+		panic("regexp compile:" + err.Error())
+	}
+
 	for {
 		fmt.Print("Enter token: ")
 
-		byteToken, err := terminal.ReadPassword(int(syscall.Stdin))
-		fmt.Println()
-
+		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
 		if err != nil {
 			return "", err
 		}
 
-		if len(byteToken) > 0 {
-			return string(byteToken), nil
+		token := strings.TrimRight(line, "\n")
+		if re.MatchString(token) {
+			return token, nil
 		}
 
-		fmt.Println("token is empty")
+		fmt.Println("token is invalid")
 	}
 }
 
@@ -534,8 +538,8 @@ func prompt2FA() (string, error) {
 
 func promptProjectVisibility() (bool, error) {
 	for {
-		fmt.Println("[0]: public")
-		fmt.Println("[1]: private")
+		fmt.Println("[1]: public")
+		fmt.Println("[2]: private")
 		fmt.Print("repository visibility: ")
 
 		line, err := bufio.NewReader(os.Stdin).ReadString('\n')

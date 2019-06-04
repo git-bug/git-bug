@@ -6,13 +6,15 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"syscall"
 
-	"github.com/MichaelMure/git-bug/bridge/core"
+	"github.com/spf13/cobra"
+	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/MichaelMure/git-bug/bridge"
+	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util/interrupt"
-	"github.com/spf13/cobra"
 )
 
 const (
@@ -37,9 +39,11 @@ func runBridgeConfigure(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	interrupt.RegisterCleaner(func() error {
 		return terminal.Restore(int(syscall.Stdin), termState)
 	})
+
 	if bridgeConfigureTarget == "" {
 		bridgeConfigureTarget, err = promptTarget()
 		if err != nil {
@@ -78,8 +82,9 @@ func promptTarget() (string, error) {
 		fmt.Printf("target: ")
 
 		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
+
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("got err: '%v' '%v'", line, err)
 		}
 
 		line = strings.TrimRight(line, "\n")
@@ -131,9 +136,9 @@ Detected projects:
 
 Select option: 1
 
-[0]: user provided token
-[1]: interactive token creation
-Select option: 0
+[1]: user provided token
+[2]: interactive token creation
+Select option: 1
 
 You can generate a new token by visiting https://github.com/settings/tokens.
 Choose 'Generate new token' and set the necessary access scope for your repository.
@@ -144,7 +149,7 @@ Public:
 Private:
 	- 'repo'       : to be able to read private repositories
 
-Enter token: 
+Enter token: 87cf5c03b64029f18ea5f9ca5679daa08ccbd700
 Successfully configured bridge: default
 
 # For Github
