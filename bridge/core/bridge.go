@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -47,6 +48,8 @@ func Targets() []string {
 	for key := range bridgeImpl {
 		result = append(result, key)
 	}
+
+	sort.Strings(result)
 
 	return result
 }
