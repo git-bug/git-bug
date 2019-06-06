@@ -84,7 +84,7 @@ func promptTarget() (string, error) {
 		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
 
 		if err != nil {
-			return "", fmt.Errorf("got err: '%v' '%v'", line, err)
+			return "", err
 		}
 
 		line = strings.TrimRight(line, "\n")
