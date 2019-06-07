@@ -22,7 +22,7 @@ install:
 	go install -ldflags "$(LDFLAGS)" .
 
 test:
-	go test -bench=. ./...
+	go test -v -bench=. ./...
 
 pack-webui:
 	npm run --prefix webui build
