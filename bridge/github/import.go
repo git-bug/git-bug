@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/shurcooL/githubv4"
+
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/text"
-	"github.com/shurcooL/githubv4"
 )
 
 const (
@@ -42,7 +43,7 @@ func (gi *githubImporter) Init(conf core.Configuration) error {
 // ImportAll iterate over all the configured repository issues and ensure the creation of the
 // missing issues / timeline items / edits / label events ...
 func (gi *githubImporter) ImportAll(repo *cache.RepoCache, since time.Time) error {
-	gi.iterator = NewIterator(gi.conf[keyUser], gi.conf[keyProject], gi.conf[keyToken], since)
+	gi.iterator = NewIterator(gi.conf[keyOwner], gi.conf[keyProject], gi.conf[keyToken], since)
 
 	// Loop over all matching issues
 	for gi.iterator.NextIssue() {

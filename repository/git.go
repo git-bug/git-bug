@@ -162,6 +162,28 @@ func (repo *GitRepo) GetCoreEditor() (string, error) {
 	return repo.runGitCommand("var", "GIT_EDITOR")
 }
 
+// GetRemotes returns the configured remotes repositories.
+func (repo *GitRepo) GetRemotes() (map[string]string, error) {
+	stdout, err := repo.runGitCommand("remote", "--verbose")
+	if err != nil {
+		return nil, err
+	}
+
+	lines := strings.Split(stdout, "\n")
+	remotes := make(map[string]string, len(lines))
+
+	for _, line := range lines {
+		elements := strings.Fields(line)
+		if len(elements) != 3 {
+			return nil, fmt.Errorf("unexpected output format: %s", line)
+		}
+
+		remotes[elements[0]] = elements[1]
+	}
+
+	return remotes, nil
+}
+
 // StoreConfig store a single key/value pair in the config of the repo
 func (repo *GitRepo) StoreConfig(key string, value string) error {
 	_, err := repo.runGitCommand("config", "--replace-all", key, value)

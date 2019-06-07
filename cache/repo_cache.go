@@ -104,9 +104,14 @@ func (c *RepoCache) GetPath() string {
 	return c.repo.GetPath()
 }
 
-// GetPath returns the path to the repo.
+// GetCoreEditor returns the name of the editor that the user has used to configure git.
 func (c *RepoCache) GetCoreEditor() (string, error) {
 	return c.repo.GetCoreEditor()
+}
+
+// GetRemotes returns the configured remotes repositories.
+func (c *RepoCache) GetRemotes() (map[string]string, error) {
+	return c.repo.GetRemotes()
 }
 
 // GetUserName returns the name the the user has used to configure git

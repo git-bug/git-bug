@@ -133,16 +133,16 @@ func Test_Importer(t *testing.T) {
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
 
-	token := os.Getenv("GITHUB_TOKEN")
+	token := os.Getenv("GITHUB_TOKEN_PRIVATE")
 	if token == "" {
-		t.Skip("Env var GITHUB_TOKEN missing")
+		t.Skip("Env var GITHUB_TOKEN_PRIVATE missing")
 	}
 
 	importer := &githubImporter{}
 	err = importer.Init(core.Configuration{
-		"user":    "MichaelMure",
-		"project": "git-bug-test-github-bridge",
-		"token":   token,
+		keyOwner:   "MichaelMure",
+		keyProject: "git-bug-test-github-bridge",
+		keyToken:   token,
 	})
 	require.NoError(t, err)
 

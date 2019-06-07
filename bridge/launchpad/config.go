@@ -2,26 +2,65 @@ package launchpad
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
+	"net/http"
 	"os"
+	"regexp"
 	"strings"
+	"time"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
-const keyProject = "project"
+var ErrBadProjectURL = errors.New("bad Launchpad project URL")
 
-func (*Launchpad) Configure(repo repository.RepoCommon) (core.Configuration, error) {
+const (
+	keyProject     = "project"
+	defaultTimeout = 60 * time.Second
+)
+
+func (*Launchpad) Configure(repo repository.RepoCommon, params core.BridgeParams) (core.Configuration, error) {
+	if params.Token != "" {
+		fmt.Println("warning: --token is ineffective for a Launchpad bridge")
+	}
+	if params.Owner != "" {
+		fmt.Println("warning: --owner is ineffective for a Launchpad bridge")
+	}
+
 	conf := make(core.Configuration)
+	var err error
+	var project string
 
-	projectName, err := promptProjectName()
+	if params.Project != "" {
+		project = params.Project
+
+	} else if params.URL != "" {
+		// get project name from url
+		project, err = splitURL(params.URL)
+		if err != nil {
+			return nil, err
+		}
+
+	} else {
+		// get project name from terminal prompt
+		project, err = promptProjectName()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// verify project
+	ok, err := validateProject(project)
 	if err != nil {
 		return nil, err
 	}
+	if !ok {
+		return nil, fmt.Errorf("project doesn't exist")
+	}
 
-	conf[keyProject] = projectName
-
+	conf[keyProject] = project
 	return conf, nil
 }
 
@@ -51,4 +90,34 @@ func promptProjectName() (string, error) {
 
 		return line, nil
 	}
+}
+
+func validateProject(project string) (bool, error) {
+	url := fmt.Sprintf("%s/%s", apiRoot, project)
+
+	client := &http.Client{
+		Timeout: defaultTimeout,
+	}
+
+	resp, err := client.Get(url)
+	if err != nil {
+		return false, err
+	}
+
+	return resp.StatusCode == http.StatusOK, nil
+}
+
+// extract project name from url
+func splitURL(url string) (string, error) {
+	re, err := regexp.Compile(`launchpad\.net[\/:]([^\/]*[a-z]+)`)
+	if err != nil {
+		panic("regexp compile:" + err.Error())
+	}
+
+	res := re.FindStringSubmatch(url)
+	if res == nil {
+		return "", ErrBadProjectURL
+	}
+
+	return res[1], nil
 }

@@ -27,6 +27,9 @@ type RepoCommon interface {
 	// GetCoreEditor returns the name of the editor that the user has used to configure git.
 	GetCoreEditor() (string, error)
 
+	// GetRemotes returns the configured remotes repositories.
+	GetRemotes() (map[string]string, error)
+
 	// StoreConfig store a single key/value pair in the config of the repo
 	StoreConfig(key string, value string) error
 

@@ -4,9 +4,10 @@ package github
 import (
 	"context"
 
-	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/shurcooL/githubv4"
 	"golang.org/x/oauth2"
+
+	"github.com/MichaelMure/git-bug/bridge/core"
 )
 
 func init() {

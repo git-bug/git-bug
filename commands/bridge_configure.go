@@ -6,11 +6,25 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"syscall"
+
+	"github.com/spf13/cobra"
+	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/MichaelMure/git-bug/bridge"
+	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util/interrupt"
-	"github.com/spf13/cobra"
+)
+
+const (
+	defaultName = "default"
+)
+
+var (
+	bridgeConfigureName   string
+	bridgeConfigureTarget string
+	bridgeParams          core.BridgeParams
 )
 
 func runBridgeConfigure(cmd *cobra.Command, args []string) error {
@@ -21,26 +35,40 @@ func runBridgeConfigure(cmd *cobra.Command, args []string) error {
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
 
-	target, err := promptTarget()
+	termState, err := terminal.GetState(int(syscall.Stdin))
 	if err != nil {
 		return err
 	}
 
-	name, err := promptName()
+	interrupt.RegisterCleaner(func() error {
+		return terminal.Restore(int(syscall.Stdin), termState)
+	})
+
+	if bridgeConfigureTarget == "" {
+		bridgeConfigureTarget, err = promptTarget()
+		if err != nil {
+			return err
+		}
+	}
+
+	if bridgeConfigureName == "" {
+		bridgeConfigureName, err = promptName()
+		if err != nil {
+			return err
+		}
+	}
+
+	b, err := bridge.NewBridge(backend, bridgeConfigureTarget, bridgeConfigureName)
 	if err != nil {
 		return err
 	}
 
-	b, err := bridge.NewBridge(backend, target, name)
+	err = b.Configure(bridgeParams)
 	if err != nil {
 		return err
 	}
 
-	err = b.Configure()
-	if err != nil {
-		return err
-	}
-
+	fmt.Printf("Successfully configured bridge: %s\n", bridgeConfigureName)
 	return nil
 }
 
@@ -54,6 +82,7 @@ func promptTarget() (string, error) {
 		fmt.Printf("target: ")
 
 		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
+
 		if err != nil {
 			return "", err
 		}
@@ -71,8 +100,6 @@ func promptTarget() (string, error) {
 }
 
 func promptName() (string, error) {
-	defaultName := "default"
-
 	fmt.Printf("name [%s]: ", defaultName)
 
 	line, err := bufio.NewReader(os.Stdin).ReadString('\n')
@@ -90,12 +117,66 @@ func promptName() (string, error) {
 }
 
 var bridgeConfigureCmd = &cobra.Command{
-	Use:     "configure",
-	Short:   "Configure a new bridge.",
+	Use:   "configure",
+	Short: "Configure a new bridge.",
+	Long: `	Configure a new bridge by passing flags or/and using interactive terminal prompts. You can avoid all the terminal prompts by passing all the necessary flags to configure your bridge.
+	Repository configuration can be made by passing either the --url flag or the --project and --owner flags. If the three flags are provided git-bug will use --project and --owner flags.
+	Token configuration can be directly passed with the --token flag or in the terminal prompt. If you don't already have one you can use the interactive procedure to generate one.`,
+	Example: `# Interactive example
+[1]: github
+[2]: launchpad-preview
+target: 1
+name [default]: default
+
+Detected projects:
+[1]: github.com/a-hilaly/git-bug
+[2]: github.com/MichaelMure/git-bug
+
+[0]: Another project
+
+Select option: 1
+
+[1]: user provided token
+[2]: interactive token creation
+Select option: 1
+
+You can generate a new token by visiting https://github.com/settings/tokens.
+Choose 'Generate new token' and set the necessary access scope for your repository.
+
+The access scope depend on the type of repository.
+Public:
+	- 'public_repo': to be able to read public repositories
+Private:
+	- 'repo'       : to be able to read private repositories
+
+Enter token: 87cf5c03b64029f18ea5f9ca5679daa08ccbd700
+Successfully configured bridge: default
+
+# For Github
+git bug bridge configure \
+    --name=default \
+    --target=github \
+    --owner=$(OWNER) \
+    --project=$(PROJECT) \
+    --token=$(TOKEN)
+
+# For Launchpad
+git bug bridge configure \
+    --name=default \
+    --target=launchpad-preview \
+    --url=https://bugs.launchpad.net/ubuntu/`,
 	PreRunE: loadRepo,
 	RunE:    runBridgeConfigure,
 }
 
 func init() {
 	bridgeCmd.AddCommand(bridgeConfigureCmd)
+	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureName, "name", "n", "", "A distinctive name to identify the bridge")
+	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureTarget, "target", "t", "",
+		fmt.Sprintf("The target of the bridge. Valid values are [%s]", strings.Join(bridge.Targets(), ",")))
+	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.URL, "url", "u", "", "The URL of the target repository")
+	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.Owner, "owner", "o", "", "The owner of the target repository")
+	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.Token, "token", "T", "", "The authentication token for the API")
+	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.Project, "project", "p", "", "The name of the target repository")
+	bridgeConfigureCmd.Flags().SortFlags = false
 }

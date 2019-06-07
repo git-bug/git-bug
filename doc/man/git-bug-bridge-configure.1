@@ -15,13 +15,98 @@ git\-bug\-bridge\-configure \- Configure a new bridge.
 
 .SH DESCRIPTION
 .PP
-Configure a new bridge.
+.RS
+
+.nf
+Configure a new bridge by passing flags or/and using interactive terminal prompts. You can avoid all the terminal prompts by passing all the necessary flags to configure your bridge.
+Repository configuration can be made by passing either the \-\-url flag or the \-\-project and \-\-owner flags. If the three flags are provided git\-bug will use \-\-project and \-\-owner flags.
+Token configuration can be directly passed with the \-\-token flag or in the terminal prompt. If you don't already have one you can use the interactive procedure to generate one.
+
+.fi
+.RE
 
 
 .SH OPTIONS
 .PP
+\fB\-n\fP, \fB\-\-name\fP=""
+    A distinctive name to identify the bridge
+
+.PP
+\fB\-t\fP, \fB\-\-target\fP=""
+    The target of the bridge. Valid values are [github,launchpad\-preview]
+
+.PP
+\fB\-u\fP, \fB\-\-url\fP=""
+    The URL of the target repository
+
+.PP
+\fB\-o\fP, \fB\-\-owner\fP=""
+    The owner of the target repository
+
+.PP
+\fB\-T\fP, \fB\-\-token\fP=""
+    The authentication token for the API
+
+.PP
+\fB\-p\fP, \fB\-\-project\fP=""
+    The name of the target repository
+
+.PP
 \fB\-h\fP, \fB\-\-help\fP[=false]
     help for configure
+
+
+.SH EXAMPLE
+.PP
+.RS
+
+.nf
+# Interactive example
+[1]: github
+[2]: launchpad\-preview
+target: 1
+name [default]: default
+
+Detected projects:
+[1]: github.com/a\-hilaly/git\-bug
+[2]: github.com/MichaelMure/git\-bug
+
+[0]: Another project
+
+Select option: 1
+
+[1]: user provided token
+[2]: interactive token creation
+Select option: 1
+
+You can generate a new token by visiting https://github.com/settings/tokens.
+Choose 'Generate new token' and set the necessary access scope for your repository.
+
+The access scope depend on the type of repository.
+Public:
+	\- 'public\_repo': to be able to read public repositories
+Private:
+	\- 'repo'       : to be able to read private repositories
+
+Enter token: 87cf5c03b64029f18ea5f9ca5679daa08ccbd700
+Successfully configured bridge: default
+
+# For Github
+git bug bridge configure \\
+    \-\-name=default \\
+    \-\-target=github \\
+    \-\-owner=$(OWNER) \\
+    \-\-project=$(PROJECT) \\
+    \-\-token=$(TOKEN)
+
+# For Launchpad
+git bug bridge configure \\
+    \-\-name=default \\
+    \-\-target=launchpad\-preview \\
+    \-\-url=https://bugs.launchpad.net/ubuntu/
+
+.fi
+.RE
 
 
 .SH SEE ALSO
