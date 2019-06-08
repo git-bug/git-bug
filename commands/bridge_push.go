@@ -11,7 +11,7 @@ import (
 	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
-func runBridgePull(cmd *cobra.Command, args []string) error {
+func runBridgePush(cmd *cobra.Command, args []string) error {
 	backend, err := cache.NewRepoCache(repo)
 	if err != nil {
 		return err
@@ -24,15 +24,15 @@ func runBridgePull(cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
 		b, err = bridge.DefaultBridge(backend)
 	} else {
-		b, err = bridge.LoadBridge(backend, args[0])
+		b, err = bridge.NewBridgeFromFullName(backend, args[0])
 	}
 
 	if err != nil {
 		return err
 	}
 
-	// TODO: by default import only new events
-	err = b.ImportAll(time.Time{})
+	// TODO: by default export only new events
+	err = b.ExportAll(time.Time{})
 	if err != nil {
 		return err
 	}
@@ -40,14 +40,14 @@ func runBridgePull(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-var bridgePullCmd = &cobra.Command{
-	Use:     "pull [<name>]",
-	Short:   "Pull updates.",
+var bridgePushCmd = &cobra.Command{
+	Use:     "push [<name>]",
+	Short:   "Push updates.",
 	PreRunE: loadRepo,
-	RunE:    runBridgePull,
+	RunE:    runBridgePush,
 	Args:    cobra.MaximumNArgs(1),
 }
 
 func init() {
-	bridgeCmd.AddCommand(bridgePullCmd)
+	bridgeCmd.AddCommand(bridgePushCmd)
 }
