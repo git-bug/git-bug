@@ -25,7 +25,7 @@ func (*Github) NewImporter() core.Importer {
 }
 
 func (*Github) NewExporter() core.Exporter {
-	return nil
+	return &githubExporter{}
 }
 
 func buildClient(token string) *githubv4.Client {
