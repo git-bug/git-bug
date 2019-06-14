@@ -36,6 +36,24 @@ const (
 	CommentCannotUpdateReasonLoginRequired         CommentCannotUpdateReason = "LOGIN_REQUIRED"          // You must be logged in to update this comment.
 	CommentCannotUpdateReasonMaintenance           CommentCannotUpdateReason = "MAINTENANCE"             // Repository is under maintenance.
 	CommentCannotUpdateReasonVerifiedEmailRequired CommentCannotUpdateReason = "VERIFIED_EMAIL_REQUIRED" // At least one email address must be verified to update this comment.
+	CommentCannotUpdateReasonDenied                CommentCannotUpdateReason = "DENIED"                  // You cannot update this comment.
+)
+
+// CommitContributionOrderField represents properties by which commit contribution connections can be ordered.
+type CommitContributionOrderField string
+
+// Properties by which commit contribution connections can be ordered.
+const (
+	CommitContributionOrderFieldOccurredAt  CommitContributionOrderField = "OCCURRED_AT"  // Order commit contributions by when they were made.
+	CommitContributionOrderFieldCommitCount CommitContributionOrderField = "COMMIT_COUNT" // Order commit contributions by how many commits they represent.
+)
+
+// ContributionOrderField represents properties by which contribution connections can be ordered.
+type ContributionOrderField string
+
+// Properties by which contribution connections can be ordered.
+const (
+	ContributionOrderFieldOccurredAt ContributionOrderField = "OCCURRED_AT" // Order contributions by when they were made.
 )
 
 // DefaultRepositoryPermissionField represents the possible default permissions for repositories.
@@ -49,18 +67,28 @@ const (
 	DefaultRepositoryPermissionFieldAdmin DefaultRepositoryPermissionField = "ADMIN" // Can read, write, and administrate repos by default.
 )
 
+// DeploymentOrderField represents properties by which deployment connections can be ordered.
+type DeploymentOrderField string
+
+// Properties by which deployment connections can be ordered.
+const (
+	DeploymentOrderFieldCreatedAt DeploymentOrderField = "CREATED_AT" // Order collection by creation time.
+)
+
 // DeploymentState represents the possible states in which a deployment can be.
 type DeploymentState string
 
 // The possible states in which a deployment can be.
 const (
-	DeploymentStateAbandoned DeploymentState = "ABANDONED" // The pending deployment was not updated after 30 minutes.
-	DeploymentStateActive    DeploymentState = "ACTIVE"    // The deployment is currently active.
-	DeploymentStateDestroyed DeploymentState = "DESTROYED" // An inactive transient deployment.
-	DeploymentStateError     DeploymentState = "ERROR"     // The deployment experienced an error.
-	DeploymentStateFailure   DeploymentState = "FAILURE"   // The deployment has failed.
-	DeploymentStateInactive  DeploymentState = "INACTIVE"  // The deployment is inactive.
-	DeploymentStatePending   DeploymentState = "PENDING"   // The deployment is pending.
+	DeploymentStateAbandoned  DeploymentState = "ABANDONED"   // The pending deployment was not updated after 30 minutes.
+	DeploymentStateActive     DeploymentState = "ACTIVE"      // The deployment is currently active.
+	DeploymentStateDestroyed  DeploymentState = "DESTROYED"   // An inactive transient deployment.
+	DeploymentStateError      DeploymentState = "ERROR"       // The deployment experienced an error.
+	DeploymentStateFailure    DeploymentState = "FAILURE"     // The deployment has failed.
+	DeploymentStateInactive   DeploymentState = "INACTIVE"    // The deployment is inactive.
+	DeploymentStatePending    DeploymentState = "PENDING"     // The deployment is pending.
+	DeploymentStateQueued     DeploymentState = "QUEUED"      // The deployment has queued.
+	DeploymentStateInProgress DeploymentState = "IN_PROGRESS" // The deployment is in progress.
 )
 
 // DeploymentStatusState represents the possible states for a deployment status.
@@ -68,11 +96,13 @@ type DeploymentStatusState string
 
 // The possible states for a deployment status.
 const (
-	DeploymentStatusStatePending  DeploymentStatusState = "PENDING"  // The deployment is pending.
-	DeploymentStatusStateSuccess  DeploymentStatusState = "SUCCESS"  // The deployment was successful.
-	DeploymentStatusStateFailure  DeploymentStatusState = "FAILURE"  // The deployment has failed.
-	DeploymentStatusStateInactive DeploymentStatusState = "INACTIVE" // The deployment is inactive.
-	DeploymentStatusStateError    DeploymentStatusState = "ERROR"    // The deployment experienced an error.
+	DeploymentStatusStatePending    DeploymentStatusState = "PENDING"     // The deployment is pending.
+	DeploymentStatusStateSuccess    DeploymentStatusState = "SUCCESS"     // The deployment was successful.
+	DeploymentStatusStateFailure    DeploymentStatusState = "FAILURE"     // The deployment has failed.
+	DeploymentStatusStateInactive   DeploymentStatusState = "INACTIVE"    // The deployment is inactive.
+	DeploymentStatusStateError      DeploymentStatusState = "ERROR"       // The deployment experienced an error.
+	DeploymentStatusStateQueued     DeploymentStatusState = "QUEUED"      // The deployment is queued.
+	DeploymentStatusStateInProgress DeploymentStatusState = "IN_PROGRESS" // The deployment is in progress.
 )
 
 // GistOrderField represents properties by which gist connections can be ordered.
@@ -115,7 +145,18 @@ const (
 	GitSignatureStateExpiredKey           GitSignatureState = "EXPIRED_KEY"           // Signing key expired.
 	GitSignatureStateOcspPending          GitSignatureState = "OCSP_PENDING"          // Valid signature, pending certificate revocation checking.
 	GitSignatureStateOcspError            GitSignatureState = "OCSP_ERROR"            // Valid siganture, though certificate revocation check failed.
+	GitSignatureStateBadCert              GitSignatureState = "BAD_CERT"              // The signing certificate or its chain could not be verified.
 	GitSignatureStateOcspRevoked          GitSignatureState = "OCSP_REVOKED"          // One or more certificates in chain has been revoked.
+)
+
+// IdentityProviderConfigurationState represents the possible states in which authentication can be configured with an identity provider.
+type IdentityProviderConfigurationState string
+
+// The possible states in which authentication can be configured with an identity provider.
+const (
+	IdentityProviderConfigurationStateEnforced     IdentityProviderConfigurationState = "ENFORCED"     // Authentication with an identity provider is configured and enforced.
+	IdentityProviderConfigurationStateConfigured   IdentityProviderConfigurationState = "CONFIGURED"   // Authentication with an identity provider is configured but not enforced.
+	IdentityProviderConfigurationStateUnconfigured IdentityProviderConfigurationState = "UNCONFIGURED" // Authentication with an identity provider is not configured.
 )
 
 // IssueOrderField represents properties by which issue connections can be ordered.
@@ -136,6 +177,7 @@ const (
 	IssuePubSubTopicUpdated    IssuePubSubTopic = "UPDATED"    // The channel ID for observing issue updates.
 	IssuePubSubTopicMarkasread IssuePubSubTopic = "MARKASREAD" // The channel ID for marking an issue as read.
 	IssuePubSubTopicTimeline   IssuePubSubTopic = "TIMELINE"   // The channel ID for updating items on the issue timeline.
+	IssuePubSubTopicState      IssuePubSubTopic = "STATE"      // The channel ID for observing issue state updates.
 )
 
 // IssueState represents the possible states of an issue.
@@ -145,6 +187,39 @@ type IssueState string
 const (
 	IssueStateOpen   IssueState = "OPEN"   // An issue that is still open.
 	IssueStateClosed IssueState = "CLOSED" // An issue that has been closed.
+)
+
+// IssueTimelineItemsItemType represents the possible item types found in a timeline.
+type IssueTimelineItemsItemType string
+
+// The possible item types found in a timeline.
+const (
+	IssueTimelineItemsItemTypeIssueComment               IssueTimelineItemsItemType = "ISSUE_COMMENT"                  // Represents a comment on an Issue.
+	IssueTimelineItemsItemTypeCrossReferencedEvent       IssueTimelineItemsItemType = "CROSS_REFERENCED_EVENT"         // Represents a mention made by one issue or pull request to another.
+	IssueTimelineItemsItemTypeAddedToProjectEvent        IssueTimelineItemsItemType = "ADDED_TO_PROJECT_EVENT"         // Represents a 'added_to_project' event on a given issue or pull request.
+	IssueTimelineItemsItemTypeAssignedEvent              IssueTimelineItemsItemType = "ASSIGNED_EVENT"                 // Represents an 'assigned' event on any assignable object.
+	IssueTimelineItemsItemTypeClosedEvent                IssueTimelineItemsItemType = "CLOSED_EVENT"                   // Represents a 'closed' event on any `Closable`.
+	IssueTimelineItemsItemTypeCommentDeletedEvent        IssueTimelineItemsItemType = "COMMENT_DELETED_EVENT"          // Represents a 'comment_deleted' event on a given issue or pull request.
+	IssueTimelineItemsItemTypeConvertedNoteToIssueEvent  IssueTimelineItemsItemType = "CONVERTED_NOTE_TO_ISSUE_EVENT"  // Represents a 'converted_note_to_issue' event on a given issue or pull request.
+	IssueTimelineItemsItemTypeDemilestonedEvent          IssueTimelineItemsItemType = "DEMILESTONED_EVENT"             // Represents a 'demilestoned' event on a given issue or pull request.
+	IssueTimelineItemsItemTypeLabeledEvent               IssueTimelineItemsItemType = "LABELED_EVENT"                  // Represents a 'labeled' event on a given issue or pull request.
+	IssueTimelineItemsItemTypeLockedEvent                IssueTimelineItemsItemType = "LOCKED_EVENT"                   // Represents a 'locked' event on a given issue or pull request.
+	IssueTimelineItemsItemTypeMentionedEvent             IssueTimelineItemsItemType = "MENTIONED_EVENT"                // Represents a 'mentioned' event on a given issue or pull request.
+	IssueTimelineItemsItemTypeMilestonedEvent            IssueTimelineItemsItemType = "MILESTONED_EVENT"               // Represents a 'milestoned' event on a given issue or pull request.
+	IssueTimelineItemsItemTypeMovedColumnsInProjectEvent IssueTimelineItemsItemType = "MOVED_COLUMNS_IN_PROJECT_EVENT" // Represents a 'moved_columns_in_project' event on a given issue or pull request.
+	IssueTimelineItemsItemTypePinnedEvent                IssueTimelineItemsItemType = "PINNED_EVENT"                   // Represents a 'pinned' event on a given issue or pull request.
+	IssueTimelineItemsItemTypeReferencedEvent            IssueTimelineItemsItemType = "REFERENCED_EVENT"               // Represents a 'referenced' event on a given `ReferencedSubject`.
+	IssueTimelineItemsItemTypeRemovedFromProjectEvent    IssueTimelineItemsItemType = "REMOVED_FROM_PROJECT_EVENT"     // Represents a 'removed_from_project' event on a given issue or pull request.
+	IssueTimelineItemsItemTypeRenamedTitleEvent          IssueTimelineItemsItemType = "RENAMED_TITLE_EVENT"            // Represents a 'renamed' event on a given issue or pull request.
+	IssueTimelineItemsItemTypeReopenedEvent              IssueTimelineItemsItemType = "REOPENED_EVENT"                 // Represents a 'reopened' event on any `Closable`.
+	IssueTimelineItemsItemTypeSubscribedEvent            IssueTimelineItemsItemType = "SUBSCRIBED_EVENT"               // Represents a 'subscribed' event on a given `Subscribable`.
+	IssueTimelineItemsItemTypeTransferredEvent           IssueTimelineItemsItemType = "TRANSFERRED_EVENT"              // Represents a 'transferred' event on a given issue or pull request.
+	IssueTimelineItemsItemTypeUnassignedEvent            IssueTimelineItemsItemType = "UNASSIGNED_EVENT"               // Represents an 'unassigned' event on any assignable object.
+	IssueTimelineItemsItemTypeUnlabeledEvent             IssueTimelineItemsItemType = "UNLABELED_EVENT"                // Represents an 'unlabeled' event on a given issue or pull request.
+	IssueTimelineItemsItemTypeUnlockedEvent              IssueTimelineItemsItemType = "UNLOCKED_EVENT"                 // Represents an 'unlocked' event on a given issue or pull request.
+	IssueTimelineItemsItemTypeUserBlockedEvent           IssueTimelineItemsItemType = "USER_BLOCKED_EVENT"             // Represents a 'user_blocked' event on a given user.
+	IssueTimelineItemsItemTypeUnpinnedEvent              IssueTimelineItemsItemType = "UNPINNED_EVENT"                 // Represents an 'unpinned' event on a given issue or pull request.
+	IssueTimelineItemsItemTypeUnsubscribedEvent          IssueTimelineItemsItemType = "UNSUBSCRIBED_EVENT"             // Represents an 'unsubscribed' event on a given `Subscribable`.
 )
 
 // LanguageOrderField represents properties by which language connections can be ordered.
@@ -225,6 +300,34 @@ const (
 	OrganizationInvitationTypeEmail OrganizationInvitationType = "EMAIL" // The invitation was to an email address.
 )
 
+// OrganizationMemberRole represents the possible roles within an organization for its members.
+type OrganizationMemberRole string
+
+// The possible roles within an organization for its members.
+const (
+	OrganizationMemberRoleMember OrganizationMemberRole = "MEMBER" // The user is a member of the organization.
+	OrganizationMemberRoleAdmin  OrganizationMemberRole = "ADMIN"  // The user is an administrator of the organization.
+)
+
+// PinnableItemType represents represents items that can be pinned to a profile page or dashboard.
+type PinnableItemType string
+
+// Represents items that can be pinned to a profile page or dashboard.
+const (
+	PinnableItemTypeRepository PinnableItemType = "REPOSITORY" // A repository.
+	PinnableItemTypeGist       PinnableItemType = "GIST"       // A gist.
+	PinnableItemTypeIssue      PinnableItemType = "ISSUE"      // An issue.
+)
+
+// ProjectCardArchivedState represents the possible archived states of a project card.
+type ProjectCardArchivedState string
+
+// The possible archived states of a project card.
+const (
+	ProjectCardArchivedStateArchived    ProjectCardArchivedState = "ARCHIVED"     // A project card that is archived.
+	ProjectCardArchivedStateNotArchived ProjectCardArchivedState = "NOT_ARCHIVED" // A project card that is not archived.
+)
+
 // ProjectCardState represents various content states of a ProjectCard.
 type ProjectCardState string
 
@@ -233,6 +336,16 @@ const (
 	ProjectCardStateContentOnly ProjectCardState = "CONTENT_ONLY" // The card has content only.
 	ProjectCardStateNoteOnly    ProjectCardState = "NOTE_ONLY"    // The card has a note only.
 	ProjectCardStateRedacted    ProjectCardState = "REDACTED"     // The card is redacted.
+)
+
+// ProjectColumnPurpose represents the semantic purpose of the column - todo, in progress, or done.
+type ProjectColumnPurpose string
+
+// The semantic purpose of the column - todo, in progress, or done.
+const (
+	ProjectColumnPurposeTodo       ProjectColumnPurpose = "TODO"        // The column contains cards still to be worked on.
+	ProjectColumnPurposeInProgress ProjectColumnPurpose = "IN_PROGRESS" // The column contains cards which are currently being worked on.
+	ProjectColumnPurposeDone       ProjectColumnPurpose = "DONE"        // The column contains cards which are complete.
 )
 
 // ProjectOrderField represents properties by which project connections can be ordered.
@@ -254,6 +367,15 @@ const (
 	ProjectStateClosed ProjectState = "CLOSED" // The project is closed.
 )
 
+// PullRequestOrderField represents properties by which pull_requests connections can be ordered.
+type PullRequestOrderField string
+
+// Properties by which pull_requests connections can be ordered.
+const (
+	PullRequestOrderFieldCreatedAt PullRequestOrderField = "CREATED_AT" // Order pull_requests by creation time.
+	PullRequestOrderFieldUpdatedAt PullRequestOrderField = "UPDATED_AT" // Order pull_requests by update time.
+)
+
 // PullRequestPubSubTopic represents the possible PubSub channels for a pull request.
 type PullRequestPubSubTopic string
 
@@ -263,6 +385,16 @@ const (
 	PullRequestPubSubTopicMarkasread PullRequestPubSubTopic = "MARKASREAD" // The channel ID for marking an pull request as read.
 	PullRequestPubSubTopicHeadRef    PullRequestPubSubTopic = "HEAD_REF"   // The channel ID for observing head ref updates.
 	PullRequestPubSubTopicTimeline   PullRequestPubSubTopic = "TIMELINE"   // The channel ID for updating items on the pull request timeline.
+	PullRequestPubSubTopicState      PullRequestPubSubTopic = "STATE"      // The channel ID for observing pull request state updates.
+)
+
+// PullRequestReviewCommentState represents the possible states of a pull request review comment.
+type PullRequestReviewCommentState string
+
+// The possible states of a pull request review comment.
+const (
+	PullRequestReviewCommentStatePending   PullRequestReviewCommentState = "PENDING"   // A comment that is part of a pending review.
+	PullRequestReviewCommentStateSubmitted PullRequestReviewCommentState = "SUBMITTED" // A comment that is part of a submitted review.
 )
 
 // PullRequestReviewEvent represents the possible events to perform on a pull request review.
@@ -298,6 +430,55 @@ const (
 	PullRequestStateMerged PullRequestState = "MERGED" // A pull request that has been closed by being merged.
 )
 
+// PullRequestTimelineItemsItemType represents the possible item types found in a timeline.
+type PullRequestTimelineItemsItemType string
+
+// The possible item types found in a timeline.
+const (
+	PullRequestTimelineItemsItemTypePullRequestCommit                 PullRequestTimelineItemsItemType = "PULL_REQUEST_COMMIT"                  // Represents a Git commit part of a pull request.
+	PullRequestTimelineItemsItemTypePullRequestCommitCommentThread    PullRequestTimelineItemsItemType = "PULL_REQUEST_COMMIT_COMMENT_THREAD"   // Represents a commit comment thread part of a pull request.
+	PullRequestTimelineItemsItemTypePullRequestReview                 PullRequestTimelineItemsItemType = "PULL_REQUEST_REVIEW"                  // A review object for a given pull request.
+	PullRequestTimelineItemsItemTypePullRequestReviewThread           PullRequestTimelineItemsItemType = "PULL_REQUEST_REVIEW_THREAD"           // A threaded list of comments for a given pull request.
+	PullRequestTimelineItemsItemTypePullRequestRevisionMarker         PullRequestTimelineItemsItemType = "PULL_REQUEST_REVISION_MARKER"         // Represents the latest point in the pull request timeline for which the viewer has seen the pull request's commits.
+	PullRequestTimelineItemsItemTypeBaseRefChangedEvent               PullRequestTimelineItemsItemType = "BASE_REF_CHANGED_EVENT"               // Represents a 'base_ref_changed' event on a given issue or pull request.
+	PullRequestTimelineItemsItemTypeBaseRefForcePushedEvent           PullRequestTimelineItemsItemType = "BASE_REF_FORCE_PUSHED_EVENT"          // Represents a 'base_ref_force_pushed' event on a given pull request.
+	PullRequestTimelineItemsItemTypeDeployedEvent                     PullRequestTimelineItemsItemType = "DEPLOYED_EVENT"                       // Represents a 'deployed' event on a given pull request.
+	PullRequestTimelineItemsItemTypeDeploymentEnvironmentChangedEvent PullRequestTimelineItemsItemType = "DEPLOYMENT_ENVIRONMENT_CHANGED_EVENT" // Represents a 'deployment_environment_changed' event on a given pull request.
+	PullRequestTimelineItemsItemTypeHeadRefDeletedEvent               PullRequestTimelineItemsItemType = "HEAD_REF_DELETED_EVENT"               // Represents a 'head_ref_deleted' event on a given pull request.
+	PullRequestTimelineItemsItemTypeHeadRefForcePushedEvent           PullRequestTimelineItemsItemType = "HEAD_REF_FORCE_PUSHED_EVENT"          // Represents a 'head_ref_force_pushed' event on a given pull request.
+	PullRequestTimelineItemsItemTypeHeadRefRestoredEvent              PullRequestTimelineItemsItemType = "HEAD_REF_RESTORED_EVENT"              // Represents a 'head_ref_restored' event on a given pull request.
+	PullRequestTimelineItemsItemTypeMergedEvent                       PullRequestTimelineItemsItemType = "MERGED_EVENT"                         // Represents a 'merged' event on a given pull request.
+	PullRequestTimelineItemsItemTypeReviewDismissedEvent              PullRequestTimelineItemsItemType = "REVIEW_DISMISSED_EVENT"               // Represents a 'review_dismissed' event on a given issue or pull request.
+	PullRequestTimelineItemsItemTypeReviewRequestedEvent              PullRequestTimelineItemsItemType = "REVIEW_REQUESTED_EVENT"               // Represents an 'review_requested' event on a given pull request.
+	PullRequestTimelineItemsItemTypeReviewRequestRemovedEvent         PullRequestTimelineItemsItemType = "REVIEW_REQUEST_REMOVED_EVENT"         // Represents an 'review_request_removed' event on a given pull request.
+	PullRequestTimelineItemsItemTypeIssueComment                      PullRequestTimelineItemsItemType = "ISSUE_COMMENT"                        // Represents a comment on an Issue.
+	PullRequestTimelineItemsItemTypeCrossReferencedEvent              PullRequestTimelineItemsItemType = "CROSS_REFERENCED_EVENT"               // Represents a mention made by one issue or pull request to another.
+	PullRequestTimelineItemsItemTypeAddedToProjectEvent               PullRequestTimelineItemsItemType = "ADDED_TO_PROJECT_EVENT"               // Represents a 'added_to_project' event on a given issue or pull request.
+	PullRequestTimelineItemsItemTypeAssignedEvent                     PullRequestTimelineItemsItemType = "ASSIGNED_EVENT"                       // Represents an 'assigned' event on any assignable object.
+	PullRequestTimelineItemsItemTypeClosedEvent                       PullRequestTimelineItemsItemType = "CLOSED_EVENT"                         // Represents a 'closed' event on any `Closable`.
+	PullRequestTimelineItemsItemTypeCommentDeletedEvent               PullRequestTimelineItemsItemType = "COMMENT_DELETED_EVENT"                // Represents a 'comment_deleted' event on a given issue or pull request.
+	PullRequestTimelineItemsItemTypeConvertedNoteToIssueEvent         PullRequestTimelineItemsItemType = "CONVERTED_NOTE_TO_ISSUE_EVENT"        // Represents a 'converted_note_to_issue' event on a given issue or pull request.
+	PullRequestTimelineItemsItemTypeDemilestonedEvent                 PullRequestTimelineItemsItemType = "DEMILESTONED_EVENT"                   // Represents a 'demilestoned' event on a given issue or pull request.
+	PullRequestTimelineItemsItemTypeLabeledEvent                      PullRequestTimelineItemsItemType = "LABELED_EVENT"                        // Represents a 'labeled' event on a given issue or pull request.
+	PullRequestTimelineItemsItemTypeLockedEvent                       PullRequestTimelineItemsItemType = "LOCKED_EVENT"                         // Represents a 'locked' event on a given issue or pull request.
+	PullRequestTimelineItemsItemTypeMentionedEvent                    PullRequestTimelineItemsItemType = "MENTIONED_EVENT"                      // Represents a 'mentioned' event on a given issue or pull request.
+	PullRequestTimelineItemsItemTypeMilestonedEvent                   PullRequestTimelineItemsItemType = "MILESTONED_EVENT"                     // Represents a 'milestoned' event on a given issue or pull request.
+	PullRequestTimelineItemsItemTypeMovedColumnsInProjectEvent        PullRequestTimelineItemsItemType = "MOVED_COLUMNS_IN_PROJECT_EVENT"       // Represents a 'moved_columns_in_project' event on a given issue or pull request.
+	PullRequestTimelineItemsItemTypePinnedEvent                       PullRequestTimelineItemsItemType = "PINNED_EVENT"                         // Represents a 'pinned' event on a given issue or pull request.
+	PullRequestTimelineItemsItemTypeReferencedEvent                   PullRequestTimelineItemsItemType = "REFERENCED_EVENT"                     // Represents a 'referenced' event on a given `ReferencedSubject`.
+	PullRequestTimelineItemsItemTypeRemovedFromProjectEvent           PullRequestTimelineItemsItemType = "REMOVED_FROM_PROJECT_EVENT"           // Represents a 'removed_from_project' event on a given issue or pull request.
+	PullRequestTimelineItemsItemTypeRenamedTitleEvent                 PullRequestTimelineItemsItemType = "RENAMED_TITLE_EVENT"                  // Represents a 'renamed' event on a given issue or pull request.
+	PullRequestTimelineItemsItemTypeReopenedEvent                     PullRequestTimelineItemsItemType = "REOPENED_EVENT"                       // Represents a 'reopened' event on any `Closable`.
+	PullRequestTimelineItemsItemTypeSubscribedEvent                   PullRequestTimelineItemsItemType = "SUBSCRIBED_EVENT"                     // Represents a 'subscribed' event on a given `Subscribable`.
+	PullRequestTimelineItemsItemTypeTransferredEvent                  PullRequestTimelineItemsItemType = "TRANSFERRED_EVENT"                    // Represents a 'transferred' event on a given issue or pull request.
+	PullRequestTimelineItemsItemTypeUnassignedEvent                   PullRequestTimelineItemsItemType = "UNASSIGNED_EVENT"                     // Represents an 'unassigned' event on any assignable object.
+	PullRequestTimelineItemsItemTypeUnlabeledEvent                    PullRequestTimelineItemsItemType = "UNLABELED_EVENT"                      // Represents an 'unlabeled' event on a given issue or pull request.
+	PullRequestTimelineItemsItemTypeUnlockedEvent                     PullRequestTimelineItemsItemType = "UNLOCKED_EVENT"                       // Represents an 'unlocked' event on a given issue or pull request.
+	PullRequestTimelineItemsItemTypeUserBlockedEvent                  PullRequestTimelineItemsItemType = "USER_BLOCKED_EVENT"                   // Represents a 'user_blocked' event on a given user.
+	PullRequestTimelineItemsItemTypeUnpinnedEvent                     PullRequestTimelineItemsItemType = "UNPINNED_EVENT"                       // Represents an 'unpinned' event on a given issue or pull request.
+	PullRequestTimelineItemsItemTypeUnsubscribedEvent                 PullRequestTimelineItemsItemType = "UNSUBSCRIBED_EVENT"                   // Represents an 'unsubscribed' event on a given `Subscribable`.
+)
+
 // ReactionContent represents emojis that can be attached to Issues, Pull Requests and Comments.
 type ReactionContent string
 
@@ -309,6 +490,8 @@ const (
 	ReactionContentHooray     ReactionContent = "HOORAY"      // Represents the 🎉 emoji.
 	ReactionContentConfused   ReactionContent = "CONFUSED"    // Represents the 😕 emoji.
 	ReactionContentHeart      ReactionContent = "HEART"       // Represents the ❤️ emoji.
+	ReactionContentRocket     ReactionContent = "ROCKET"      // Represents the 🚀 emoji.
+	ReactionContentEyes       ReactionContent = "EYES"        // Represents the 👀 emoji.
 )
 
 // ReactionOrderField represents a list of fields that reactions can be ordered by.
@@ -335,6 +518,18 @@ type ReleaseOrderField string
 const (
 	ReleaseOrderFieldCreatedAt ReleaseOrderField = "CREATED_AT" // Order releases by creation time.
 	ReleaseOrderFieldName      ReleaseOrderField = "NAME"       // Order releases alphabetically by name.
+)
+
+// ReportedContentClassifiers represents the reasons a piece of content can be reported or minimized.
+type ReportedContentClassifiers string
+
+// The reasons a piece of content can be reported or minimized.
+const (
+	ReportedContentClassifiersSpam     ReportedContentClassifiers = "SPAM"      // A spammy piece of content.
+	ReportedContentClassifiersAbuse    ReportedContentClassifiers = "ABUSE"     // An abusive or harassing piece of content.
+	ReportedContentClassifiersOffTopic ReportedContentClassifiers = "OFF_TOPIC" // An irrelevant piece of content.
+	ReportedContentClassifiersOutdated ReportedContentClassifiers = "OUTDATED"  // An outdated piece of content.
+	ReportedContentClassifiersResolved ReportedContentClassifiers = "RESOLVED"  // The content has been resolved.
 )
 
 // RepositoryAffiliation represents the affiliation of a user to a repository.
@@ -396,9 +591,11 @@ type RepositoryPermission string
 
 // The access level to a repository.
 const (
-	RepositoryPermissionAdmin RepositoryPermission = "ADMIN" // Can read, clone, push, and add collaborators.
-	RepositoryPermissionWrite RepositoryPermission = "WRITE" // Can read, clone and push.
-	RepositoryPermissionRead  RepositoryPermission = "READ"  // Can read and clone.
+	RepositoryPermissionAdmin    RepositoryPermission = "ADMIN"    // Can read, clone, and push to this repository. Can also manage issues, pull requests, and repository settings, including adding collaborators.
+	RepositoryPermissionMaintain RepositoryPermission = "MAINTAIN" // Can read, clone, and push to this repository. They can also manage issues, pull requests, and some repository settings.
+	RepositoryPermissionWrite    RepositoryPermission = "WRITE"    // Can read, clone, and push to this repository. Can also manage issues and pull requests.
+	RepositoryPermissionTriage   RepositoryPermission = "TRIAGE"   // Can read and clone this repository. Can also manage issues and pull requests.
+	RepositoryPermissionRead     RepositoryPermission = "READ"     // Can read and clone this repository. Can also open and comment on issues and pull requests.
 )
 
 // RepositoryPrivacy represents the privacy of a repository.
@@ -418,6 +615,55 @@ const (
 	SearchTypeIssue      SearchType = "ISSUE"      // Returns results matching issues in repositories.
 	SearchTypeRepository SearchType = "REPOSITORY" // Returns results matching repositories.
 	SearchTypeUser       SearchType = "USER"       // Returns results matching users and organizations on GitHub.
+)
+
+// SecurityAdvisoryEcosystem represents the possible ecosystems of a security vulnerability's package.
+type SecurityAdvisoryEcosystem string
+
+// The possible ecosystems of a security vulnerability's package.
+const (
+	SecurityAdvisoryEcosystemRubygems SecurityAdvisoryEcosystem = "RUBYGEMS" // Ruby gems hosted at RubyGems.org.
+	SecurityAdvisoryEcosystemNpm      SecurityAdvisoryEcosystem = "NPM"      // JavaScript packages hosted at npmjs.com.
+	SecurityAdvisoryEcosystemPip      SecurityAdvisoryEcosystem = "PIP"      // Python packages hosted at PyPI.org.
+	SecurityAdvisoryEcosystemMaven    SecurityAdvisoryEcosystem = "MAVEN"    // Java artifacts hosted at the Maven central repository.
+	SecurityAdvisoryEcosystemNuget    SecurityAdvisoryEcosystem = "NUGET"    // .NET packages hosted at the NuGet Gallery.
+)
+
+// SecurityAdvisoryIdentifierType represents identifier formats available for advisories.
+type SecurityAdvisoryIdentifierType string
+
+// Identifier formats available for advisories.
+const (
+	SecurityAdvisoryIdentifierTypeCve  SecurityAdvisoryIdentifierType = "CVE"  // Common Vulnerabilities and Exposures Identifier.
+	SecurityAdvisoryIdentifierTypeGhsa SecurityAdvisoryIdentifierType = "GHSA" // GitHub Security Advisory ID.
+)
+
+// SecurityAdvisoryOrderField represents properties by which security advisory connections can be ordered.
+type SecurityAdvisoryOrderField string
+
+// Properties by which security advisory connections can be ordered.
+const (
+	SecurityAdvisoryOrderFieldPublishedAt SecurityAdvisoryOrderField = "PUBLISHED_AT" // Order advisories by publication time.
+	SecurityAdvisoryOrderFieldUpdatedAt   SecurityAdvisoryOrderField = "UPDATED_AT"   // Order advisories by update time.
+)
+
+// SecurityAdvisorySeverity represents severity of the vulnerability.
+type SecurityAdvisorySeverity string
+
+// Severity of the vulnerability.
+const (
+	SecurityAdvisorySeverityLow      SecurityAdvisorySeverity = "LOW"      // Low.
+	SecurityAdvisorySeverityModerate SecurityAdvisorySeverity = "MODERATE" // Moderate.
+	SecurityAdvisorySeverityHigh     SecurityAdvisorySeverity = "HIGH"     // High.
+	SecurityAdvisorySeverityCritical SecurityAdvisorySeverity = "CRITICAL" // Critical.
+)
+
+// SecurityVulnerabilityOrderField represents properties by which security vulnerability connections can be ordered.
+type SecurityVulnerabilityOrderField string
+
+// Properties by which security vulnerability connections can be ordered.
+const (
+	SecurityVulnerabilityOrderFieldUpdatedAt SecurityVulnerabilityOrderField = "UPDATED_AT" // Order vulnerability by update time.
 )
 
 // StarOrderField represents properties by which star connections can be ordered.
@@ -445,7 +691,7 @@ type SubscriptionState string
 
 // The possible states of a subscription.
 const (
-	SubscriptionStateUnsubscribed SubscriptionState = "UNSUBSCRIBED" // The User is only notified when particpating or @mentioned.
+	SubscriptionStateUnsubscribed SubscriptionState = "UNSUBSCRIBED" // The User is only notified when participating or @mentioned.
 	SubscriptionStateSubscribed   SubscriptionState = "SUBSCRIBED"   // The User is notified of all conversations.
 	SubscriptionStateIgnored      SubscriptionState = "IGNORED"      // The User is never notified.
 )
@@ -526,4 +772,24 @@ const (
 	TopicSuggestionDeclineReasonTooSpecific        TopicSuggestionDeclineReason = "TOO_SPECIFIC"        // The suggested topic is too specific for the repository (e.g. #ruby-on-rails-version-4-2-1).
 	TopicSuggestionDeclineReasonPersonalPreference TopicSuggestionDeclineReason = "PERSONAL_PREFERENCE" // The viewer does not like the suggested topic.
 	TopicSuggestionDeclineReasonTooGeneral         TopicSuggestionDeclineReason = "TOO_GENERAL"         // The suggested topic is too general for the repository.
+)
+
+// UserBlockDuration represents the possible durations that a user can be blocked for.
+type UserBlockDuration string
+
+// The possible durations that a user can be blocked for.
+const (
+	UserBlockDurationOneDay    UserBlockDuration = "ONE_DAY"    // The user was blocked for 1 day.
+	UserBlockDurationThreeDays UserBlockDuration = "THREE_DAYS" // The user was blocked for 3 days.
+	UserBlockDurationOneWeek   UserBlockDuration = "ONE_WEEK"   // The user was blocked for 7 days.
+	UserBlockDurationOneMonth  UserBlockDuration = "ONE_MONTH"  // The user was blocked for 30 days.
+	UserBlockDurationPermanent UserBlockDuration = "PERMANENT"  // The user was blocked permanently.
+)
+
+// UserStatusOrderField represents properties by which user status connections can be ordered.
+type UserStatusOrderField string
+
+// Properties by which user status connections can be ordered.
+const (
+	UserStatusOrderFieldUpdatedAt UserStatusOrderField = "UPDATED_AT" // Order user statuses by when they were updated.
 )

@@ -214,11 +214,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:a1562fb3021983f533a27d02ebf36f1bc1ab327660d611d6e948970b54087792"
+  digest = "1:2befa342040f385b214cfd400887b584d5eba4e4b25a0ebaea839ddb0d59c586"
   name = "github.com/shurcooL/githubv4"
   packages = ["."]
   pruneopts = "UT"
-  revision = "b5f70540eee0ebfb6a27b52fc5b131be76415539"
+  revision = "068505affed7d8555196a48eb3e0ed43410aa8e8"
 
 [[projects]]
   branch = "master"
