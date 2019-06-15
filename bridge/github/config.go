@@ -26,6 +26,7 @@ import (
 
 const (
 	githubV3Url = "https://api.github.com"
+	keyTarget   = "target"
 	keyOwner    = "owner"
 	keyProject  = "project"
 	keyToken    = "token"
@@ -101,6 +102,7 @@ func (*Github) Configure(repo repository.RepoCommon, params core.BridgeParams) (
 		return nil, fmt.Errorf("project doesn't exist or authentication token has an incorrect scope")
 	}
 
+	conf[keyTarget] = "github"
 	conf[keyToken] = token
 	conf[keyOwner] = owner
 	conf[keyProject] = project
@@ -109,6 +111,10 @@ func (*Github) Configure(repo repository.RepoCommon, params core.BridgeParams) (
 }
 
 func (*Github) ValidateConfig(conf core.Configuration) error {
+	if _, ok := conf[keyTarget]; !ok {
+		return fmt.Errorf("missing %s key", keyTarget)
+	}
+
 	if _, ok := conf[keyToken]; !ok {
 		return fmt.Errorf("missing %s key", keyToken)
 	}

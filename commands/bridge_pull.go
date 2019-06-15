@@ -23,7 +23,7 @@ func runBridgePull(cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
 		b, err = bridge.DefaultBridge(backend)
 	} else {
-		b, err = bridge.NewBridgeFromFullName(backend, args[0])
+		b, err = bridge.LoadBridge(backend, args[0])
 	}
 
 	if err != nil {
