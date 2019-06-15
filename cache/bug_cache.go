@@ -254,6 +254,24 @@ func (c *BugCache) EditCommentRaw(author *IdentityCache, unixTime int64, target 
 	return op, c.notifyUpdated()
 }
 
+func (c *BugCache) SetMetadata(target git.Hash, newMetadata map[string]string) (*bug.SetMetadataOperation, error) {
+	author, err := c.repoCache.GetUserIdentity()
+	if err != nil {
+		return nil, err
+	}
+
+	return c.SetMetadataRaw(author, time.Now().Unix(), target, nil)
+}
+
+func (c *BugCache) SetMetadataRaw(author *IdentityCache, unixTime int64, target git.Hash, newMetadata map[string]string) (*bug.SetMetadataOperation, error) {
+	op, err := bug.SetMetadata(c.bug, author.Identity, unixTime, target, newMetadata)
+	if err != nil {
+		return nil, err
+	}
+
+	return op, c.notifyUpdated()
+}
+
 func (c *BugCache) Commit() error {
 	err := c.bug.Commit(c.repoCache.repo)
 	if err != nil {

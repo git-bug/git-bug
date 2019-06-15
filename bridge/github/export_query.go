@@ -33,8 +33,13 @@ type updateIssueCommentMutation struct {
 	IssueComment struct {
 		ID  string `graphql:"id"`
 		URL string `graphql:"url"`
-	} `graphql:"addComment(input:$input)"`
+	} `graphql:"updateIssueComment(input:$input)"`
 }
 
-type removeLabelsMutation struct {
+type removeLabelsFromLabelableMutation struct {
+	AddLabels struct{} `graphql:"removeLabelsFromLabelable(input:$input)"`
+}
+
+type addLabelsToLabelableMutation struct {
+	RemoveLabels struct{} `graphql:"addLabelsToLabelable(input:$input)"`
 }

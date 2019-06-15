@@ -59,7 +59,7 @@ type iterator struct {
 	commentEdit commentEditIterator
 }
 
-// NewIterator create and initalize a new iterator
+// NewIterator create and initialize a new iterator
 func NewIterator(owner, project, token string, since time.Time) *iterator {
 	i := &iterator{
 		gc:       buildClient(token),

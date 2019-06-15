@@ -10,15 +10,11 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/shurcooL/githubv4"
+
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/shurcooL/githubv4"
-)
-
-const (
-	keyGithubIdExport  = "github-id"
-	keyGithubUrlExport = "github-url"
 )
 
 // githubImporter implement the Importer interface
@@ -449,7 +445,7 @@ func (ge *githubExporter) updateGithubIssueLabels(labelableID string, added, rem
 		return fmt.Errorf("getting added labels ids: %v", err)
 	}
 
-	m := &updateIssueMutation{}
+	m := &addLabelsToLabelableMutation{}
 	inputAdd := &githubv4.AddLabelsToLabelableInput{
 		LabelableID: labelableID,
 		LabelIDs:    addedIDs,
@@ -465,13 +461,14 @@ func (ge *githubExporter) updateGithubIssueLabels(labelableID string, added, rem
 		return fmt.Errorf("getting added labels ids: %v", err)
 	}
 
+	m2 := &removeLabelsFromLabelableMutation{}
 	inputRemove := &githubv4.RemoveLabelsFromLabelableInput{
 		LabelableID: labelableID,
 		LabelIDs:    removedIDs,
 	}
 
 	// remove label labels
-	if err := ge.gc.Mutate(context.TODO(), m, inputRemove, nil); err != nil {
+	if err := ge.gc.Mutate(context.TODO(), m2, inputRemove, nil); err != nil {
 		return err
 	}
 
