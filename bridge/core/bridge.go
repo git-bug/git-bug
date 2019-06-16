@@ -87,30 +87,24 @@ func NewBridge(repo *cache.RepoCache, target string, name string) (*Bridge, erro
 
 // LoadBridge instantiate a new bridge from a repo configuration
 func LoadBridge(repo *cache.RepoCache, name string) (*Bridge, error) {
-	bridge := &Bridge{
-		Name: name,
-		repo: repo,
-	}
-
-	conf, err := bridge.loadConfig()
+	conf, err := loadConfig(repo, name)
 	if err != nil {
 		return nil, err
 	}
-	bridge.conf = conf
 
-	target := bridge.conf[keyTarget]
-	implType, ok := bridgeImpl[target]
-	if !ok {
-		return nil, fmt.Errorf("unknown bridge target %v", target)
+	target := conf[keyTarget]
+	bridge, err := NewBridge(repo, target, name)
+	if err != nil {
+		return nil, err
 	}
 
-	bridge.impl = reflect.New(implType).Elem().Interface().(BridgeImpl)
-
-	err = bridge.impl.ValidateConfig(bridge.conf)
+	err = bridge.impl.ValidateConfig(conf)
 	if err != nil {
 		return nil, errors.Wrap(err, "invalid configuration")
 	}
 
+	// will avoid reloading configuration before an export or import call
+	bridge.conf = conf
 	return bridge, nil
 }
 
@@ -215,7 +209,7 @@ func (b *Bridge) storeConfig(conf Configuration) error {
 
 func (b *Bridge) ensureConfig() error {
 	if b.conf == nil {
-		conf, err := b.loadConfig()
+		conf, err := loadConfig(b.repo, b.Name)
 		if err != nil {
 			return err
 		}
@@ -225,10 +219,10 @@ func (b *Bridge) ensureConfig() error {
 	return nil
 }
 
-func (b *Bridge) loadConfig() (Configuration, error) {
-	keyPrefix := fmt.Sprintf("git-bug.bridge.%s.", b.Name)
+func loadConfig(repo *cache.RepoCache, name string) (Configuration, error) {
+	keyPrefix := fmt.Sprintf("git-bug.bridge.%s.", name)
 
-	pairs, err := b.repo.ReadConfigs(keyPrefix)
+	pairs, err := repo.ReadConfigs(keyPrefix)
 	if err != nil {
 		return nil, errors.Wrap(err, "error while reading bridge configuration")
 	}
