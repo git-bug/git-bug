@@ -63,5 +63,5 @@ func convertStatus(status bug.Status) (models.Status, error) {
 		return models.StatusClosed, nil
 	}
 
-	return "", fmt.Errorf("Unknown status")
+	return "", fmt.Errorf("unknown status")
 }

@@ -30,6 +30,10 @@ func (r RootResolver) Mutation() graph.MutationResolver {
 	}
 }
 
+func (RootResolver) Repository() graph.RepositoryResolver {
+	return &repoResolver{}
+}
+
 func (RootResolver) Bug() graph.BugResolver {
 	return &bugResolver{}
 }
@@ -86,14 +90,14 @@ func (RootResolver) LabelChangeOperation() graph.LabelChangeOperationResolver {
 	return &labelChangeOperation{}
 }
 
-func (RootResolver) Repository() graph.RepositoryResolver {
-	return &repoResolver{}
-}
-
 func (RootResolver) SetStatusOperation() graph.SetStatusOperationResolver {
 	return &setStatusOperationResolver{}
 }
 
 func (RootResolver) SetTitleOperation() graph.SetTitleOperationResolver {
 	return &setTitleOperationResolver{}
+}
+
+func (r RootResolver) LabelChangeResult() graph.LabelChangeResultResolver {
+	return &labelChangeResultResolver{}
 }

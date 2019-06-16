@@ -1,16 +1,25 @@
 type Query {
+    """The default unnamend repository."""
     defaultRepository: Repository
-    repository(id: String!): Repository
+    """Access a repository by reference/name."""
+    repository(ref: String!): Repository
 }
 
 type Mutation {
-    newBug(repoRef: String, title: String!, message: String!, files: [Hash!]): Bug!
-
-    addComment(repoRef: String, prefix: String!, message: String!, files: [Hash!]): Bug!
-    changeLabels(repoRef: String, prefix: String!, added: [String!], removed: [String!]): Bug!
-    open(repoRef: String, prefix: String!): Bug!
-    close(repoRef: String, prefix: String!): Bug!
-    setTitle(repoRef: String, prefix: String!, title: String!): Bug!
-
-    commit(repoRef: String, prefix: String!): Bug!
+    """create a new bug"""
+    newBug(input: NewBugInput!): NewBugPayload!
+    """Add a new comment to a bug"""
+    addComment(input: AddCommentInput!): AddCommentPayload!
+    """Add or remove a set of label on a bug"""
+    changeLabels(input: ChangeLabelInput): ChangeLabelPayload!
+    """Change a bug's status to open"""
+    openBug(input: OpenBugInput!): OpenBugPayload!
+    """Change a bug's status to closed"""
+    closeBug(input: CloseBugInput!): CloseBugPayload!
+    """Change a bug's titlel"""
+    setTitle(input: SetTitleInput!): SetTitlePayload!
+    """Commit write the pending operations into storage. This mutation fail if nothing is pending"""
+    commit(input: CommitInput!): CommitPayload!
+    """Commit write the pending operations into storage. This mutation succed if nothing is pending"""
+    commitAsNeeded(input: CommitAsNeededInput!): CommitAsNeededPayload!
 }
