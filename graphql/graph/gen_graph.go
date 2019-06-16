@@ -2286,7 +2286,7 @@ type Repository {
 }
 
 type Mutation {
-    """create a new bug"""
+    """Create a new bug"""
     newBug(input: NewBugInput!): NewBugPayload!
     """Add a new comment to a bug"""
     addComment(input: AddCommentInput!): AddCommentPayload!
