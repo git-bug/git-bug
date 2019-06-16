@@ -44,7 +44,7 @@ func runAddBug(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	b, err := backend.NewBug(addTitle, addMessage)
+	b, _, err := backend.NewBug(addTitle, addMessage)
 	if err != nil {
 		return err
 	}

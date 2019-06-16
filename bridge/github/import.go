@@ -106,7 +106,7 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 			}
 
 			// create bug
-			b, err = repo.NewBugRaw(
+			b, _, err = repo.NewBugRaw(
 				author,
 				issue.CreatedAt.Unix(),
 				issue.Title,
@@ -140,7 +140,7 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 			// if the bug doesn't exist
 			if b == nil {
 				// we create the bug as soon as we have a legit first edition
-				b, err = repo.NewBugRaw(
+				b, _, err = repo.NewBugRaw(
 					author,
 					issue.CreatedAt.Unix(),
 					issue.Title,

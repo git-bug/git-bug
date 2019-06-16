@@ -74,7 +74,7 @@ func (li *launchpadImporter) ImportAll(repo *cache.RepoCache, since time.Time) e
 
 		if err == bug.ErrBugNotExist {
 			createdAt, _ := time.Parse(time.RFC3339, lpBug.CreatedAt)
-			b, err = repo.NewBugRaw(
+			b, _, err = repo.NewBugRaw(
 				owner,
 				createdAt.Unix(),
 				lpBug.Title,
