@@ -236,7 +236,6 @@ func (b *Bridge) loadConfig() (Configuration, error) {
 	result := make(Configuration, len(pairs))
 	for key, value := range pairs {
 		key := strings.TrimPrefix(key, keyPrefix)
-		fmt.Println(key, value)
 		result[key] = value
 	}
 

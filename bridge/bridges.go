@@ -37,6 +37,6 @@ func ConfiguredBridges(repo repository.RepoCommon) ([]string, error) {
 }
 
 // Remove a configured bridge
-func RemoveBridges(repo repository.RepoCommon, name string) error {
+func RemoveBridge(repo repository.RepoCommon, name string) error {
 	return core.RemoveBridge(repo, name)
 }

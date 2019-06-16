@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-
 	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
@@ -25,6 +24,7 @@ import (
 )
 
 const (
+	target      = "github"
 	githubV3Url = "https://api.github.com"
 	keyTarget   = "target"
 	keyOwner    = "owner"
@@ -102,7 +102,7 @@ func (*Github) Configure(repo repository.RepoCommon, params core.BridgeParams) (
 		return nil, fmt.Errorf("project doesn't exist or authentication token has an incorrect scope")
 	}
 
-	conf[keyTarget] = "github"
+	conf[keyTarget] = target
 	conf[keyToken] = token
 	conf[keyOwner] = owner
 	conf[keyProject] = project
@@ -111,8 +111,10 @@ func (*Github) Configure(repo repository.RepoCommon, params core.BridgeParams) (
 }
 
 func (*Github) ValidateConfig(conf core.Configuration) error {
-	if _, ok := conf[keyTarget]; !ok {
+	if v, ok := conf[keyTarget]; !ok {
 		return fmt.Errorf("missing %s key", keyTarget)
+	} else if v != target {
+		return fmt.Errorf("unexpected target name: %v", v)
 	}
 
 	if _, ok := conf[keyToken]; !ok {
