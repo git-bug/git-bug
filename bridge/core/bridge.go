@@ -9,15 +9,19 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/repository"
-	"github.com/pkg/errors"
 )
 
 var ErrImportNotSupported = errors.New("import is not supported")
 var ErrExportNotSupported = errors.New("export is not supported")
 
-const bridgeConfigKeyPrefix = "git-bug.bridge"
+const (
+	keyTarget             = "target"
+	bridgeConfigKeyPrefix = "git-bug.bridge"
+)
 
 var bridgeImpl map[string]reflect.Type
 
@@ -81,15 +85,27 @@ func NewBridge(repo *cache.RepoCache, target string, name string) (*Bridge, erro
 	return bridge, nil
 }
 
-// Instantiate a new bridge for a repo, from the combined target and name contained
-// in the full name
-func NewBridgeFromFullName(repo *cache.RepoCache, fullName string) (*Bridge, error) {
-	target, name, err := splitFullName(fullName)
+// LoadBridge instantiate a new bridge from a repo configuration
+func LoadBridge(repo *cache.RepoCache, name string) (*Bridge, error) {
+	conf, err := loadConfig(repo, name)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewBridge(repo, target, name)
+	target := conf[keyTarget]
+	bridge, err := NewBridge(repo, target, name)
+	if err != nil {
+		return nil, err
+	}
+
+	err = bridge.impl.ValidateConfig(conf)
+	if err != nil {
+		return nil, errors.Wrap(err, "invalid configuration")
+	}
+
+	// will avoid reloading configuration before an export or import call
+	bridge.conf = conf
+	return bridge, nil
 }
 
 // Attempt to retrieve a default bridge for the given repo. If zero or multiple
@@ -108,22 +124,7 @@ func DefaultBridge(repo *cache.RepoCache) (*Bridge, error) {
 		return nil, fmt.Errorf("multiple bridge are configured, you need to select one explicitely")
 	}
 
-	target, name, err := splitFullName(bridges[0])
-	if err != nil {
-		return nil, err
-	}
-
-	return NewBridge(repo, target, name)
-}
-
-func splitFullName(fullName string) (string, string, error) {
-	split := strings.Split(fullName, ".")
-
-	if len(split) != 2 {
-		return "", "", fmt.Errorf("bad bridge fullname: %s", fullName)
-	}
-
-	return split[0], split[1], nil
+	return LoadBridge(repo, bridges[0])
 }
 
 // ConfiguredBridges return the list of bridge that are configured for the given
@@ -134,7 +135,7 @@ func ConfiguredBridges(repo repository.RepoCommon) ([]string, error) {
 		return nil, errors.Wrap(err, "can't read configured bridges")
 	}
 
-	re, err := regexp.Compile(bridgeConfigKeyPrefix + `.([^.]+\.[^.]+)`)
+	re, err := regexp.Compile(bridgeConfigKeyPrefix + `.([^.]+)`)
 	if err != nil {
 		panic(err)
 	}
@@ -163,17 +164,17 @@ func ConfiguredBridges(repo repository.RepoCommon) ([]string, error) {
 }
 
 // Remove a configured bridge
-func RemoveBridge(repo repository.RepoCommon, fullName string) error {
-	re, err := regexp.Compile(`^[^.]+\.[^.]+$`)
+func RemoveBridge(repo repository.RepoCommon, name string) error {
+	re, err := regexp.Compile(`^[a-zA-Z0-9]+`)
 	if err != nil {
 		panic(err)
 	}
 
-	if !re.MatchString(fullName) {
-		return fmt.Errorf("bad bridge fullname: %s", fullName)
+	if !re.MatchString(name) {
+		return fmt.Errorf("bad bridge fullname: %s", name)
 	}
 
-	keyPrefix := fmt.Sprintf("git-bug.bridge.%s", fullName)
+	keyPrefix := fmt.Sprintf("git-bug.bridge.%s", name)
 	return repo.RmConfigs(keyPrefix)
 }
 
@@ -184,14 +185,18 @@ func (b *Bridge) Configure(params BridgeParams) error {
 		return err
 	}
 
-	b.conf = conf
+	err = b.impl.ValidateConfig(conf)
+	if err != nil {
+		return fmt.Errorf("invalid configuration: %v", err)
+	}
 
+	b.conf = conf
 	return b.storeConfig(conf)
 }
 
 func (b *Bridge) storeConfig(conf Configuration) error {
 	for key, val := range conf {
-		storeKey := fmt.Sprintf("git-bug.bridge.%s.%s.%s", b.impl.Target(), b.Name, key)
+		storeKey := fmt.Sprintf("git-bug.bridge.%s.%s", b.Name, key)
 
 		err := b.repo.StoreConfig(storeKey, val)
 		if err != nil {
@@ -204,7 +209,7 @@ func (b *Bridge) storeConfig(conf Configuration) error {
 
 func (b *Bridge) ensureConfig() error {
 	if b.conf == nil {
-		conf, err := b.loadConfig()
+		conf, err := loadConfig(b.repo, b.Name)
 		if err != nil {
 			return err
 		}
@@ -214,10 +219,10 @@ func (b *Bridge) ensureConfig() error {
 	return nil
 }
 
-func (b *Bridge) loadConfig() (Configuration, error) {
-	keyPrefix := fmt.Sprintf("git-bug.bridge.%s.%s.", b.impl.Target(), b.Name)
+func loadConfig(repo *cache.RepoCache, name string) (Configuration, error) {
+	keyPrefix := fmt.Sprintf("git-bug.bridge.%s.", name)
 
-	pairs, err := b.repo.ReadConfigs(keyPrefix)
+	pairs, err := repo.ReadConfigs(keyPrefix)
 	if err != nil {
 		return nil, errors.Wrap(err, "error while reading bridge configuration")
 	}
@@ -226,11 +231,6 @@ func (b *Bridge) loadConfig() (Configuration, error) {
 	for key, value := range pairs {
 		key := strings.TrimPrefix(key, keyPrefix)
 		result[key] = value
-	}
-
-	err = b.impl.ValidateConfig(result)
-	if err != nil {
-		return nil, errors.Wrap(err, "invalid configuration")
 	}
 
 	return result, nil

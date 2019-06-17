@@ -19,10 +19,9 @@ func NewBridge(repo *cache.RepoCache, target string, name string) (*core.Bridge,
 	return core.NewBridge(repo, target, name)
 }
 
-// Instantiate a new bridge for a repo, from the combined target and name contained
-// in the full name
-func NewBridgeFromFullName(repo *cache.RepoCache, fullName string) (*core.Bridge, error) {
-	return core.NewBridgeFromFullName(repo, fullName)
+// LoadBridge instantiate a new bridge from a repo configuration
+func LoadBridge(repo *cache.RepoCache, name string) (*core.Bridge, error) {
+	return core.LoadBridge(repo, name)
 }
 
 // Attempt to retrieve a default bridge for the given repo. If zero or multiple
@@ -38,6 +37,6 @@ func ConfiguredBridges(repo repository.RepoCommon) ([]string, error) {
 }
 
 // Remove a configured bridge
-func RemoveBridges(repo repository.RepoCommon, fullName string) error {
-	return core.RemoveBridge(repo, fullName)
+func RemoveBridge(repo repository.RepoCommon, name string) error {
+	return core.RemoveBridge(repo, name)
 }

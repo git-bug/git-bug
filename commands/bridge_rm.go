@@ -15,7 +15,7 @@ func runBridgeRm(cmd *cobra.Command, args []string) error {
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
 
-	err = bridge.RemoveBridges(backend, args[0])
+	err = bridge.RemoveBridge(backend, args[0])
 	if err != nil {
 		return err
 	}
