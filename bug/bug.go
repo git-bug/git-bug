@@ -130,7 +130,8 @@ func readBug(repo repository.ClockedRepo, ref string) (*Bug, error) {
 	}
 
 	bug := Bug{
-		id: id,
+		id:       id,
+		editTime: 0,
 	}
 
 	// Load each OperationPack
@@ -191,7 +192,10 @@ func readBug(repo repository.ClockedRepo, ref string) (*Bug, error) {
 			bug.createTime = lamport.Time(createTime)
 		}
 
-		bug.editTime = lamport.Time(editTime)
+		// Due to rebase, edit Lamport time are not necessarily ordered
+		if editTime > uint64(bug.editTime) {
+			bug.editTime = lamport.Time(editTime)
+		}
 
 		// Update the clocks
 		if err := repo.CreateWitness(bug.createTime); err != nil {
