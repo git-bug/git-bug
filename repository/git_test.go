@@ -35,7 +35,6 @@ func TestConfig(t *testing.T) {
 
 	configs, err = repo.ReadConfigs("section")
 	assert.NoError(t, err)
-
 	assert.Equal(t, configs, map[string]string{
 		"section.key": "value",
 	})
@@ -43,9 +42,25 @@ func TestConfig(t *testing.T) {
 	_, err = repo.ReadConfigBool("section.true")
 	assert.Equal(t, ErrNoConfigEntry, err)
 
+	err = repo.RmConfigs("section.nonexistingkey")
+	assert.Error(t, err)
+
 	err = repo.RmConfigs("section.key")
 	assert.NoError(t, err)
 
 	_, err = repo.ReadConfigString("section.key")
 	assert.Equal(t, ErrNoConfigEntry, err)
+
+	err = repo.RmConfigs("nonexistingsection")
+	assert.Error(t, err)
+
+	err = repo.RmConfigs("section")
+	assert.NoError(t, err)
+
+	_, err = repo.ReadConfigString("section.key")
+	assert.Error(t, err)
+
+	err = repo.RmConfigs("section.key")
+	assert.Error(t, err)
+
 }

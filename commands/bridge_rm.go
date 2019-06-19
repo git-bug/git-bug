@@ -1,10 +1,13 @@
 package commands
 
 import (
+	"fmt"
+
+	"github.com/spf13/cobra"
+
 	"github.com/MichaelMure/git-bug/bridge"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util/interrupt"
-	"github.com/spf13/cobra"
 )
 
 func runBridgeRm(cmd *cobra.Command, args []string) error {
@@ -20,11 +23,12 @@ func runBridgeRm(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	fmt.Printf("Successfully removed bridge configuration %v", args[0])
 	return nil
 }
 
 var bridgeRmCmd = &cobra.Command{
-	Use:     "rm name <name>",
+	Use:     "rm <name>",
 	Short:   "Delete a configured bridge.",
 	PreRunE: loadRepo,
 	RunE:    runBridgeRm,
