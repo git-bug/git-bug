@@ -49,6 +49,8 @@ type Operation interface {
 	GetMetadata(key string) (string, bool)
 	// AllMetadata return all metadata for this operation
 	AllMetadata() map[string]string
+	// GetAuthor return author identity
+	GetAuthor() identity.Interface
 }
 
 func hashRaw(data []byte) git.Hash {
@@ -221,4 +223,8 @@ func (op *OpBase) AllMetadata() map[string]string {
 	}
 
 	return result
+}
+
+func (op *OpBase) GetAuthor() identity.Interface {
+	return op.Author
 }
