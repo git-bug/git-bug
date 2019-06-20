@@ -24,6 +24,12 @@ type githubExporter struct {
 	gc   *githubv4.Client
 	conf core.Configuration
 
+	// a map containing
+	tokens map[string]string
+
+	// clients
+	clients map[string]*githubv4.Client
+
 	// github repository ID
 	repositoryID string
 
@@ -37,11 +43,28 @@ type githubExporter struct {
 
 // Init .
 func (ge *githubExporter) Init(conf core.Configuration) error {
+	//TODO: initialize with multiple tokens
 	ge.conf = conf
 	ge.gc = buildClient(conf["token"])
+	ge.tokens = make(map[string]string)
+	ge.clients = make(map[string]*githubv4.Client)
 	ge.cachedIDs = make(map[string]string)
 	ge.cachedLabels = make(map[string]string)
 	return nil
+}
+
+func (ge *githubExporter) getIdentityClient(id string) (*githubv4.Client, error) {
+	client, ok := ge.clients[id]
+	if ok {
+		return client, nil
+	}
+
+	token, ok := ge.tokens[id]
+	if !ok {
+		return nil, fmt.Errorf("unknown identity token")
+	}
+
+	return buildClient(token), nil
 }
 
 // ExportAll export all event made by the current user to Github
@@ -104,7 +127,7 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, user identity.Interface, 
 
 	// first operation is always createOp
 	createOp := snapshot.Operations[0].(*bug.CreateOperation)
-	bugAuthorID := createOp.OpBase.Author.Id()
+	author := createOp.GetAuthor()
 
 	// get github bug ID
 	githubID, ok := createOp.GetMetadata(keyGithubId)
@@ -119,9 +142,19 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, user identity.Interface, 
 		bugGithubID = githubID
 		bugGithubURL = githubURL
 
-	} else if !ok && bugAuthorID == user.Id() {
+	} else {
+		client, err := ge.getIdentityClient(author.Id())
+		if err != nil {
+			// if bug is still not exported and user cannot author bug stop the execution
+
+			// TODO: maybe print a warning ?
+			// this is not an error
+			// don't export bug
+			return nil
+		}
+
 		// create bug
-		id, url, err := ge.createGithubIssue(ge.repositoryID, createOp.Title, createOp.Message)
+		id, url, err := createGithubIssue(client, ge.repositoryID, createOp.Title, createOp.Message)
 		if err != nil {
 			return fmt.Errorf("creating exporting github issue %v", err)
 		}
@@ -139,12 +172,6 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, user identity.Interface, 
 		// cache bug github ID and URL
 		bugGithubID = id
 		bugGithubURL = url
-	} else {
-		// if bug is still not exported and user cannot author bug stop the execution
-
-		//TODO: maybe print a warning ?
-		// this is not an error
-		return nil
 	}
 
 	// get createOp hash
@@ -177,39 +204,42 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, user identity.Interface, 
 			continue
 		}
 
+		opAuthor := op.GetAuthor()
+		client, err := ge.getIdentityClient(opAuthor.Id())
+		if err != nil {
+			// don't export operation
+			continue
+		}
+
+		var id, url string
 		switch op.(type) {
 		case *bug.AddCommentOperation:
 			opr := op.(*bug.AddCommentOperation)
 
 			// send operation to github
-			id, url, err := ge.addCommentGithubIssue(bugGithubID, opr.Message)
+			id, url, err = addCommentGithubIssue(client, bugGithubID, opr.Message)
 			if err != nil {
 				return fmt.Errorf("adding comment: %v", err)
 			}
 
-			hash, err := opr.Hash()
+			hash, err = opr.Hash()
 			if err != nil {
 				return fmt.Errorf("comment hash: %v", err)
 			}
 
-			// mark operation as exported
-			if err := markOperationAsExported(b, hash, id, url); err != nil {
-				return fmt.Errorf("marking operation as exported: %v", err)
-			}
-
 		case *bug.EditCommentOperation:
-
-			id := bugGithubID
-			url := bugGithubURL
 			opr := op.(*bug.EditCommentOperation)
 			targetHash := opr.Target.String()
 
 			// Since github doesn't consider the issue body as a comment
 			if targetHash == bugCreationHash {
 				// case bug creation operation: we need to edit the Github issue
-				if err := ge.updateGithubIssueBody(bugGithubID, opr.Message); err != nil {
+				if err := updateGithubIssueBody(client, bugGithubID, opr.Message); err != nil {
 					return fmt.Errorf("editing issue: %v", err)
 				}
+
+				id = bugGithubID
+				url = bugGithubURL
 
 			} else {
 				// case comment edition operation: we need to edit the Github comment
@@ -218,7 +248,7 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, user identity.Interface, 
 					panic("unexpected error: comment id not found")
 				}
 
-				eid, eurl, err := ge.editCommentGithubIssue(commentID, opr.Message)
+				eid, eurl, err := editCommentGithubIssue(client, commentID, opr.Message)
 				if err != nil {
 					return fmt.Errorf("editing comment: %v", err)
 				}
@@ -228,68 +258,61 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, user identity.Interface, 
 				url = eurl
 			}
 
-			hash, err := opr.Hash()
+			hash, err = opr.Hash()
 			if err != nil {
 				return fmt.Errorf("comment hash: %v", err)
-			}
-
-			// mark operation as exported
-			if err := markOperationAsExported(b, hash, id, url); err != nil {
-				return fmt.Errorf("marking operation as exported: %v", err)
 			}
 
 		case *bug.SetStatusOperation:
 			opr := op.(*bug.SetStatusOperation)
-			if err := ge.updateGithubIssueStatus(bugGithubID, opr.Status); err != nil {
+			if err := updateGithubIssueStatus(client, bugGithubID, opr.Status); err != nil {
 				return fmt.Errorf("updating status %v: %v", bugGithubID, err)
 			}
 
-			hash, err := opr.Hash()
+			hash, err = opr.Hash()
 			if err != nil {
 				return fmt.Errorf("comment hash: %v", err)
 			}
 
-			// mark operation as exported
-			if err := markOperationAsExported(b, hash, bugGithubID, bugGithubURL); err != nil {
-				return fmt.Errorf("marking operation as exported: %v", err)
-			}
+			id = bugGithubID
+			url = bugGithubURL
 
 		case *bug.SetTitleOperation:
 			opr := op.(*bug.SetTitleOperation)
-			if err := ge.updateGithubIssueTitle(bugGithubID, opr.Title); err != nil {
+			if err := updateGithubIssueTitle(client, bugGithubID, opr.Title); err != nil {
 				return fmt.Errorf("editing comment %v: %v", bugGithubID, err)
 			}
 
-			hash, err := opr.Hash()
+			hash, err = opr.Hash()
 			if err != nil {
 				return fmt.Errorf("comment hash: %v", err)
 			}
 
-			// mark operation as exported
-			if err := markOperationAsExported(b, hash, bugGithubID, bugGithubURL); err != nil {
-				return fmt.Errorf("marking operation as exported: %v", err)
-			}
+			id = bugGithubID
+			url = bugGithubURL
 
 		case *bug.LabelChangeOperation:
 			opr := op.(*bug.LabelChangeOperation)
-			if err := ge.updateGithubIssueLabels(bugGithubID, opr.Added, opr.Removed); err != nil {
+			if err := ge.updateGithubIssueLabels(client, bugGithubID, opr.Added, opr.Removed); err != nil {
 				return fmt.Errorf("updating labels %v: %v", bugGithubID, err)
 			}
 
-			hash, err := opr.Hash()
+			hash, err = opr.Hash()
 			if err != nil {
 				return fmt.Errorf("comment hash: %v", err)
 			}
 
-			// mark operation as exported
-			if err := markOperationAsExported(b, hash, bugGithubID, bugGithubURL); err != nil {
-				return fmt.Errorf("marking operation as exported: %v", err)
-			}
+			id = bugGithubID
+			url = bugGithubURL
 
 		default:
 			panic("unhandled operation type case")
 		}
 
+		// mark operation as exported
+		if err := markOperationAsExported(b, hash, id, url); err != nil {
+			return fmt.Errorf("marking operation as exported: %v", err)
+		}
 	}
 
 	if err := b.CommitAsNeeded(); err != nil {
@@ -442,8 +465,6 @@ func randomHexColor() string {
 		return "fffff"
 	}
 
-	// fmt.Sprintf("#%.2x%.2x%.2x", rgba.R, rgba.G, rgba.B)
-
 	return hex.EncodeToString(bytes)
 }
 
@@ -494,7 +515,7 @@ func (ge *githubExporter) getLabelsIDs(repositoryID string, labels []bug.Label) 
 }
 
 // create a github issue and return it ID
-func (ge *githubExporter) createGithubIssue(repositoryID, title, body string) (string, string, error) {
+func createGithubIssue(gc *githubv4.Client, repositoryID, title, body string) (string, string, error) {
 	m := &createIssueMutation{}
 	input := &githubv4.CreateIssueInput{
 		RepositoryID: repositoryID,
@@ -502,7 +523,7 @@ func (ge *githubExporter) createGithubIssue(repositoryID, title, body string) (s
 		Body:         (*githubv4.String)(&body),
 	}
 
-	if err := ge.gc.Mutate(context.TODO(), m, input, nil); err != nil {
+	if err := gc.Mutate(context.TODO(), m, input, nil); err != nil {
 		return "", "", err
 	}
 
@@ -511,14 +532,14 @@ func (ge *githubExporter) createGithubIssue(repositoryID, title, body string) (s
 }
 
 // add a comment to an issue and return it ID
-func (ge *githubExporter) addCommentGithubIssue(subjectID string, body string) (string, string, error) {
+func addCommentGithubIssue(gc *githubv4.Client, subjectID string, body string) (string, string, error) {
 	m := &addCommentToIssueMutation{}
 	input := &githubv4.AddCommentInput{
 		SubjectID: subjectID,
 		Body:      githubv4.String(body),
 	}
 
-	if err := ge.gc.Mutate(context.TODO(), m, input, nil); err != nil {
+	if err := gc.Mutate(context.TODO(), m, input, nil); err != nil {
 		return "", "", err
 	}
 
@@ -526,14 +547,14 @@ func (ge *githubExporter) addCommentGithubIssue(subjectID string, body string) (
 	return node.ID, node.URL, nil
 }
 
-func (ge *githubExporter) editCommentGithubIssue(commentID, body string) (string, string, error) {
+func editCommentGithubIssue(gc *githubv4.Client, commentID, body string) (string, string, error) {
 	m := &updateIssueCommentMutation{}
 	input := &githubv4.UpdateIssueCommentInput{
 		ID:   commentID,
 		Body: githubv4.String(body),
 	}
 
-	if err := ge.gc.Mutate(context.TODO(), m, input, nil); err != nil {
+	if err := gc.Mutate(context.TODO(), m, input, nil); err != nil {
 		return "", "", err
 	}
 
@@ -541,7 +562,7 @@ func (ge *githubExporter) editCommentGithubIssue(commentID, body string) (string
 	return commentID, comment.URL, nil
 }
 
-func (ge *githubExporter) updateGithubIssueStatus(id string, status bug.Status) error {
+func updateGithubIssueStatus(gc *githubv4.Client, id string, status bug.Status) error {
 	m := &updateIssueMutation{}
 
 	// set state
@@ -555,35 +576,35 @@ func (ge *githubExporter) updateGithubIssueStatus(id string, status bug.Status) 
 		State: &state,
 	}
 
-	if err := ge.gc.Mutate(context.TODO(), m, input, nil); err != nil {
+	if err := gc.Mutate(context.TODO(), m, input, nil); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (ge *githubExporter) updateGithubIssueBody(id string, body string) error {
+func updateGithubIssueBody(gc *githubv4.Client, id string, body string) error {
 	m := &updateIssueMutation{}
 	input := &githubv4.UpdateIssueInput{
 		ID:   id,
 		Body: (*githubv4.String)(&body),
 	}
 
-	if err := ge.gc.Mutate(context.TODO(), m, input, nil); err != nil {
+	if err := gc.Mutate(context.TODO(), m, input, nil); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (ge *githubExporter) updateGithubIssueTitle(id, title string) error {
+func updateGithubIssueTitle(gc *githubv4.Client, id, title string) error {
 	m := &updateIssueMutation{}
 	input := &githubv4.UpdateIssueInput{
 		ID:    id,
 		Title: (*githubv4.String)(&title),
 	}
 
-	if err := ge.gc.Mutate(context.TODO(), m, input, nil); err != nil {
+	if err := gc.Mutate(context.TODO(), m, input, nil); err != nil {
 		return err
 	}
 
@@ -591,7 +612,7 @@ func (ge *githubExporter) updateGithubIssueTitle(id, title string) error {
 }
 
 // update github issue labels
-func (ge *githubExporter) updateGithubIssueLabels(labelableID string, added, removed []bug.Label) error {
+func (ge *githubExporter) updateGithubIssueLabels(gc *githubv4.Client, labelableID string, added, removed []bug.Label) error {
 	addedIDs, err := ge.getLabelsIDs(labelableID, added)
 	if err != nil {
 		return fmt.Errorf("getting added labels ids: %v", err)
@@ -604,7 +625,7 @@ func (ge *githubExporter) updateGithubIssueLabels(labelableID string, added, rem
 	}
 
 	// add labels
-	if err := ge.gc.Mutate(context.TODO(), m, inputAdd, nil); err != nil {
+	if err := gc.Mutate(context.TODO(), m, inputAdd, nil); err != nil {
 		return err
 	}
 
@@ -620,7 +641,7 @@ func (ge *githubExporter) updateGithubIssueLabels(labelableID string, added, rem
 	}
 
 	// remove label labels
-	if err := ge.gc.Mutate(context.TODO(), m2, inputRemove, nil); err != nil {
+	if err := gc.Mutate(context.TODO(), m2, inputRemove, nil); err != nil {
 		return err
 	}
 
