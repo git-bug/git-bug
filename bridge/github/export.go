@@ -15,34 +15,54 @@ import (
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/util/git"
 )
 
 // githubImporter implement the Importer interface
 type githubExporter struct {
-	gc           *githubv4.Client
-	conf         core.Configuration
-	cachedLabels map[string]githubv4.ID
+	gc   *githubv4.Client
+	conf core.Configuration
+
+	// github repository ID
+	repositoryID string
+
+	// cache identifiers used to speed up exporting operations
+	// cleared for each bug
+	cachedIDs map[string]string
+
+	// cache labels used to speed up exporting labels events
+	cachedLabels map[string]string
 }
 
 // Init .
 func (ge *githubExporter) Init(conf core.Configuration) error {
-	ge.gc = buildClient(conf["token"])
 	ge.conf = conf
-	ge.cachedLabels = make(map[string]githubv4.ID)
+	ge.gc = buildClient(conf["token"])
+	ge.cachedIDs = make(map[string]string)
+	ge.cachedLabels = make(map[string]string)
 	return nil
 }
 
 // ExportAll export all event made by the current user to Github
 func (ge *githubExporter) ExportAll(repo *cache.RepoCache, since time.Time) error {
-	identity, err := repo.GetUserIdentity()
+	user, err := repo.GetUserIdentity()
+	if err != nil {
+		return err
+	}
+
+	// get repository node id
+	ge.repositoryID, err = getRepositoryNodeID(
+		ge.conf[keyOwner],
+		ge.conf[keyProject],
+		ge.conf[keyToken],
+	)
+
 	if err != nil {
 		return err
 	}
 
 	allBugsIds := repo.AllBugsIds()
-
-	// collect bugs
-	bugs := make([]*cache.BugCache, 0)
 	for _, id := range allBugsIds {
 		b, err := repo.ResolveBug(id)
 		if err != nil {
@@ -51,111 +71,229 @@ func (ge *githubExporter) ExportAll(repo *cache.RepoCache, since time.Time) erro
 
 		snapshot := b.Snapshot()
 
-		// ignore issues edited before since date
-		if snapshot.LastEditTime().Before(since) {
+		// ignore issues created before since date
+		if snapshot.CreatedAt.Before(since) {
 			continue
 		}
 
 		// if identity participated in a bug
 		for _, p := range snapshot.Participants {
-			if p.Id() == identity.Id() {
-				bugs = append(bugs, b)
+			if p.Id() == user.Id() {
+				// try to export the bug and it associated events
+				if err := ge.exportBug(b, user.Identity, since); err != nil {
+					return err
+				}
 			}
 		}
 	}
 
-	// get repository node id
-	repositoryID, err := getRepositoryNodeID(
-		ge.conf[keyOwner],
-		ge.conf[keyProject],
-		ge.conf[keyToken],
-	)
+	return nil
+}
+
+// exportBug publish bugs and related events
+func (ge *githubExporter) exportBug(b *cache.BugCache, user identity.Interface, since time.Time) error {
+	snapshot := b.Snapshot()
+
+	var bugGithubID string
+	var bugGithubURL string
+	var bugCreationHash string
+
+	// Special case:
+	// if a user try to export a bug that is not already exported to Github (or imported
+	// from Github) and he is not the author of the bug. There is nothing we can do.
+
+	// first operation is always createOp
+	createOp := snapshot.Operations[0].(*bug.CreateOperation)
+	bugAuthorID := createOp.OpBase.Author.Id()
+
+	// get github bug ID
+	githubID, ok := createOp.GetMetadata(keyGithubId)
+	if ok {
+		githubURL, ok := createOp.GetMetadata(keyGithubId)
+		if !ok {
+			// if we find github ID, github URL must be found too
+			panic("expected to find github issue URL")
+		}
+
+		// will be used to mark operation related to a bug as exported
+		bugGithubID = githubID
+		bugGithubURL = githubURL
+
+	} else if !ok && bugAuthorID == user.Id() {
+		// create bug
+		id, url, err := ge.createGithubIssue(ge.repositoryID, createOp.Title, createOp.Message)
+		if err != nil {
+			return fmt.Errorf("creating exporting github issue %v", err)
+		}
+
+		hash, err := createOp.Hash()
+		if err != nil {
+			return fmt.Errorf("comment hash: %v", err)
+		}
+
+		// mark bug creation operation as exported
+		if err := markOperationAsExported(b, hash, id, url); err != nil {
+			return fmt.Errorf("marking operation as exported: %v", err)
+		}
+
+		// cache bug github ID and URL
+		bugGithubID = id
+		bugGithubURL = url
+	} else {
+		// if bug is still not exported and user cannot author bug stop the execution
+
+		//TODO: maybe print a warning ?
+		// this is not an error
+		return nil
+	}
+
+	// get createOp hash
+	hash, err := createOp.Hash()
 	if err != nil {
 		return err
 	}
 
-	for _, b := range bugs {
-		snapshot := b.Snapshot()
-		bugGithubID := ""
+	bugCreationHash = hash.String()
 
-		for _, op := range snapshot.Operations {
-			// treat only operations after since date
-			if op.Time().Before(since) {
-				continue
-			}
+	// cache operation github id
+	ge.cachedIDs[bugCreationHash] = bugGithubID
 
-			// ignore SetMetadata operations
-			if _, ok := op.(*bug.SetMetadataOperation); ok {
-				continue
-			}
+	for _, op := range snapshot.Operations[1:] {
+		// ignore SetMetadata operations
+		if _, ok := op.(*bug.SetMetadataOperation); ok {
+			continue
+		}
 
-			// ignore imported issues and operations from github
-			if _, ok := op.GetMetadata(keyGithubId); ok {
-				continue
-			}
+		// get operation hash
+		hash, err := op.Hash()
+		if err != nil {
+			return fmt.Errorf("reading operation hash: %v", err)
+		}
 
-			// get operation hash
-			hash, err := op.Hash()
+		// ignore imported (or exported) operations from github
+		// cache the ID of already exported or imported issues and events from Github
+		if id, ok := op.GetMetadata(keyGithubId); ok {
+			ge.cachedIDs[hash.String()] = id
+			continue
+		}
+
+		switch op.(type) {
+		case *bug.AddCommentOperation:
+			opr := op.(*bug.AddCommentOperation)
+
+			// send operation to github
+			id, url, err := ge.addCommentGithubIssue(bugGithubID, opr.Message)
 			if err != nil {
-				return fmt.Errorf("reading operation hash: %v", err)
+				return fmt.Errorf("adding comment: %v", err)
 			}
 
-			// ignore already exported issues and operations
-			if _, err := b.ResolveOperationWithMetadata("github-exported-op", hash.String()); err != nil {
-				continue
+			hash, err := opr.Hash()
+			if err != nil {
+				return fmt.Errorf("comment hash: %v", err)
 			}
 
-			switch op.(type) {
-			case *bug.CreateOperation:
-				opr := op.(*bug.CreateOperation)
-				//TODO export files
-				bugGithubID, err = ge.createGithubIssue(repositoryID, opr.Title, opr.Message)
+			// mark operation as exported
+			if err := markOperationAsExported(b, hash, id, url); err != nil {
+				return fmt.Errorf("marking operation as exported: %v", err)
+			}
+
+		case *bug.EditCommentOperation:
+
+			id := bugGithubID
+			url := bugGithubURL
+			opr := op.(*bug.EditCommentOperation)
+			targetHash := opr.Target.String()
+
+			// Since github doesn't consider the issue body as a comment
+			if targetHash == bugCreationHash {
+				// case bug creation operation: we need to edit the Github issue
+				if err := ge.updateGithubIssueBody(bugGithubID, opr.Message); err != nil {
+					return fmt.Errorf("editing issue: %v", err)
+				}
+
+			} else {
+				// case comment edition operation: we need to edit the Github comment
+				commentID, ok := ge.cachedIDs[targetHash]
+				if !ok {
+					panic("unexpected error: comment id not found")
+				}
+
+				eid, eurl, err := ge.editCommentGithubIssue(commentID, opr.Message)
 				if err != nil {
-					return fmt.Errorf("exporting bug %v: %v", b.HumanId(), err)
+					return fmt.Errorf("editing comment: %v", err)
 				}
 
-			case *bug.AddCommentOperation:
-				opr := op.(*bug.AddCommentOperation)
-				bugGithubID, err = ge.addCommentGithubIssue(bugGithubID, opr.Message)
-				if err != nil {
-					return fmt.Errorf("adding comment %v: %v", "", err)
-				}
-
-			case *bug.EditCommentOperation:
-				opr := op.(*bug.EditCommentOperation)
-				if err := ge.editCommentGithubIssue(bugGithubID, opr.Message); err != nil {
-					return fmt.Errorf("editing comment %v: %v", "", err)
-				}
-
-			case *bug.SetStatusOperation:
-				opr := op.(*bug.SetStatusOperation)
-				if err := ge.updateGithubIssueStatus(bugGithubID, opr.Status); err != nil {
-					return fmt.Errorf("updating status %v: %v", bugGithubID, err)
-				}
-
-			case *bug.SetTitleOperation:
-				opr := op.(*bug.SetTitleOperation)
-				if err := ge.updateGithubIssueTitle(bugGithubID, opr.Title); err != nil {
-					return fmt.Errorf("editing comment %v: %v", bugGithubID, err)
-				}
-
-			case *bug.LabelChangeOperation:
-				opr := op.(*bug.LabelChangeOperation)
-				if err := ge.updateGithubIssueLabels(bugGithubID, opr.Added, opr.Removed); err != nil {
-					return fmt.Errorf("updating labels %v: %v", bugGithubID, err)
-				}
-
-			default:
-				// ignore other type of operations
+				// use comment id/url instead of issue id/url
+				id = eid
+				url = eurl
 			}
 
+			hash, err := opr.Hash()
+			if err != nil {
+				return fmt.Errorf("comment hash: %v", err)
+			}
+
+			// mark operation as exported
+			if err := markOperationAsExported(b, hash, id, url); err != nil {
+				return fmt.Errorf("marking operation as exported: %v", err)
+			}
+
+		case *bug.SetStatusOperation:
+			opr := op.(*bug.SetStatusOperation)
+			if err := ge.updateGithubIssueStatus(bugGithubID, opr.Status); err != nil {
+				return fmt.Errorf("updating status %v: %v", bugGithubID, err)
+			}
+
+			hash, err := opr.Hash()
+			if err != nil {
+				return fmt.Errorf("comment hash: %v", err)
+			}
+
+			// mark operation as exported
+			if err := markOperationAsExported(b, hash, bugGithubID, bugGithubURL); err != nil {
+				return fmt.Errorf("marking operation as exported: %v", err)
+			}
+
+		case *bug.SetTitleOperation:
+			opr := op.(*bug.SetTitleOperation)
+			if err := ge.updateGithubIssueTitle(bugGithubID, opr.Title); err != nil {
+				return fmt.Errorf("editing comment %v: %v", bugGithubID, err)
+			}
+
+			hash, err := opr.Hash()
+			if err != nil {
+				return fmt.Errorf("comment hash: %v", err)
+			}
+
+			// mark operation as exported
+			if err := markOperationAsExported(b, hash, bugGithubID, bugGithubURL); err != nil {
+				return fmt.Errorf("marking operation as exported: %v", err)
+			}
+
+		case *bug.LabelChangeOperation:
+			opr := op.(*bug.LabelChangeOperation)
+			if err := ge.updateGithubIssueLabels(bugGithubID, opr.Added, opr.Removed); err != nil {
+				return fmt.Errorf("updating labels %v: %v", bugGithubID, err)
+			}
+
+			hash, err := opr.Hash()
+			if err != nil {
+				return fmt.Errorf("comment hash: %v", err)
+			}
+
+			// mark operation as exported
+			if err := markOperationAsExported(b, hash, bugGithubID, bugGithubURL); err != nil {
+				return fmt.Errorf("marking operation as exported: %v", err)
+			}
+
+		default:
+			panic("unhandled operation type case")
 		}
 
-		if err := b.CommitAsNeeded(); err != nil {
-			return fmt.Errorf("bug commit: %v", err)
-		}
+	}
 
-		fmt.Printf("debug: %v", bugGithubID)
+	if err := b.CommitAsNeeded(); err != nil {
+		return fmt.Errorf("bug commit: %v", err)
 	}
 
 	return nil
@@ -201,8 +339,16 @@ func getRepositoryNodeID(owner, project, token string) (string, error) {
 	return aux.NodeID, nil
 }
 
-func (ge *githubExporter) markOperationAsExported(b *cache.BugCache, opHash string) error {
-	return nil
+func markOperationAsExported(b *cache.BugCache, target git.Hash, githubID, githubURL string) error {
+	_, err := b.SetMetadata(
+		target,
+		map[string]string{
+			keyGithubId:  githubID,
+			keyGithubUrl: githubURL,
+		},
+	)
+
+	return err
 }
 
 // get label from github
@@ -296,6 +442,8 @@ func randomHexColor() string {
 		return "fffff"
 	}
 
+	// fmt.Sprintf("#%.2x%.2x%.2x", rgba.R, rgba.G, rgba.B)
+
 	return hex.EncodeToString(bytes)
 }
 
@@ -307,6 +455,7 @@ func (ge *githubExporter) getOrCreateGithubLabelID(repositoryID, label string) (
 	}
 
 	// random color
+	//TODO: no random
 	color := randomHexColor()
 
 	// create label and return id
@@ -345,7 +494,7 @@ func (ge *githubExporter) getLabelsIDs(repositoryID string, labels []bug.Label) 
 }
 
 // create a github issue and return it ID
-func (ge *githubExporter) createGithubIssue(repositoryID, title, body string) (string, error) {
+func (ge *githubExporter) createGithubIssue(repositoryID, title, body string) (string, string, error) {
 	m := &createIssueMutation{}
 	input := &githubv4.CreateIssueInput{
 		RepositoryID: repositoryID,
@@ -354,14 +503,15 @@ func (ge *githubExporter) createGithubIssue(repositoryID, title, body string) (s
 	}
 
 	if err := ge.gc.Mutate(context.TODO(), m, input, nil); err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return m.CreateIssue.Issue.ID, nil
+	issue := m.CreateIssue.Issue
+	return issue.ID, issue.URL, nil
 }
 
 // add a comment to an issue and return it ID
-func (ge *githubExporter) addCommentGithubIssue(subjectID string, body string) (string, error) {
+func (ge *githubExporter) addCommentGithubIssue(subjectID string, body string) (string, string, error) {
 	m := &addCommentToIssueMutation{}
 	input := &githubv4.AddCommentInput{
 		SubjectID: subjectID,
@@ -369,13 +519,14 @@ func (ge *githubExporter) addCommentGithubIssue(subjectID string, body string) (
 	}
 
 	if err := ge.gc.Mutate(context.TODO(), m, input, nil); err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return m.AddComment.CommentEdge.Node.ID, nil
+	node := m.AddComment.CommentEdge.Node
+	return node.ID, node.URL, nil
 }
 
-func (ge *githubExporter) editCommentGithubIssue(commentID, body string) error {
+func (ge *githubExporter) editCommentGithubIssue(commentID, body string) (string, string, error) {
 	m := &updateIssueCommentMutation{}
 	input := &githubv4.UpdateIssueCommentInput{
 		ID:   commentID,
@@ -383,10 +534,11 @@ func (ge *githubExporter) editCommentGithubIssue(commentID, body string) error {
 	}
 
 	if err := ge.gc.Mutate(context.TODO(), m, input, nil); err != nil {
-		return err
+		return "", "", err
 	}
 
-	return nil
+	comment := m.IssueComment
+	return commentID, comment.URL, nil
 }
 
 func (ge *githubExporter) updateGithubIssueStatus(id string, status bug.Status) error {
