@@ -21,7 +21,6 @@ import (
 
 // githubImporter implement the Importer interface
 type githubExporter struct {
-	gc   *githubv4.Client
 	conf core.Configuration
 
 	// a map containing
@@ -45,7 +44,6 @@ type githubExporter struct {
 func (ge *githubExporter) Init(conf core.Configuration) error {
 	//TODO: initialize with multiple tokens
 	ge.conf = conf
-	ge.gc = buildClient(conf["token"])
 	ge.tokens = make(map[string]string)
 	ge.clients = make(map[string]*githubv4.Client)
 	ge.cachedIDs = make(map[string]string)
@@ -74,6 +72,8 @@ func (ge *githubExporter) ExportAll(repo *cache.RepoCache, since time.Time) erro
 		return err
 	}
 
+	ge.tokens[user.Id()] = ge.conf[keyToken]
+
 	// get repository node id
 	ge.repositoryID, err = getRepositoryNodeID(
 		ge.conf[keyOwner],
@@ -86,6 +86,7 @@ func (ge *githubExporter) ExportAll(repo *cache.RepoCache, since time.Time) erro
 	}
 
 	allBugsIds := repo.AllBugsIds()
+bugLoop:
 	for _, id := range allBugsIds {
 		b, err := repo.ResolveBug(id)
 		if err != nil {
@@ -101,10 +102,14 @@ func (ge *githubExporter) ExportAll(repo *cache.RepoCache, since time.Time) erro
 
 		// if identity participated in a bug
 		for _, p := range snapshot.Participants {
-			if p.Id() == user.Id() {
-				// try to export the bug and it associated events
-				if err := ge.exportBug(b, user.Identity, since); err != nil {
-					return err
+			for userId := range ge.tokens {
+				if p.Id() == userId {
+					// try to export the bug and it associated events
+					if err := ge.exportBug(b, user.Identity, since); err != nil {
+						return err
+					}
+
+					continue bugLoop
 				}
 			}
 		}

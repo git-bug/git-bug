@@ -190,7 +190,7 @@ func Test_Importer(t *testing.T) {
 					assert.Equal(t, op.(*bug.EditCommentOperation).Author.Name(), ops[i].(*bug.EditCommentOperation).Author.Name())
 
 				default:
-					panic("Unknown operation type")
+					panic("unknown operation type")
 				}
 			}
 		})
