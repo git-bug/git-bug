@@ -17,7 +17,7 @@ func init() {
 type Github struct{}
 
 func (*Github) Target() string {
-	return "github"
+	return target
 }
 
 func (*Github) NewImporter() core.Importer {

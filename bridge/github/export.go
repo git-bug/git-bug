@@ -15,7 +15,6 @@ import (
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/git"
 )
 
@@ -23,11 +22,11 @@ import (
 type githubExporter struct {
 	conf core.Configuration
 
-	// a map containing
-	tokens map[string]string
+	// cache identities clients
+	identityClient map[string]*githubv4.Client
 
-	// clients
-	clients map[string]*githubv4.Client
+	// map identity with their tokens
+	identityToken map[string]string
 
 	// github repository ID
 	repositoryID string
@@ -44,20 +43,20 @@ type githubExporter struct {
 func (ge *githubExporter) Init(conf core.Configuration) error {
 	//TODO: initialize with multiple tokens
 	ge.conf = conf
-	ge.tokens = make(map[string]string)
-	ge.clients = make(map[string]*githubv4.Client)
+	ge.identityToken = make(map[string]string)
+	ge.identityClient = make(map[string]*githubv4.Client)
 	ge.cachedIDs = make(map[string]string)
 	ge.cachedLabels = make(map[string]string)
 	return nil
 }
 
 func (ge *githubExporter) getIdentityClient(id string) (*githubv4.Client, error) {
-	client, ok := ge.clients[id]
+	client, ok := ge.identityClient[id]
 	if ok {
 		return client, nil
 	}
 
-	token, ok := ge.tokens[id]
+	token, ok := ge.identityToken[id]
 	if !ok {
 		return nil, fmt.Errorf("unknown identity token")
 	}
@@ -72,7 +71,7 @@ func (ge *githubExporter) ExportAll(repo *cache.RepoCache, since time.Time) erro
 		return err
 	}
 
-	ge.tokens[user.Id()] = ge.conf[keyToken]
+	ge.identityToken[user.Id()] = ge.conf[keyToken]
 
 	// get repository node id
 	ge.repositoryID, err = getRepositoryNodeID(
@@ -102,10 +101,10 @@ bugLoop:
 
 		// if identity participated in a bug
 		for _, p := range snapshot.Participants {
-			for userId := range ge.tokens {
+			for userId := range ge.identityToken {
 				if p.Id() == userId {
 					// try to export the bug and it associated events
-					if err := ge.exportBug(b, user.Identity, since); err != nil {
+					if err := ge.exportBug(b, since); err != nil {
 						return err
 					}
 
@@ -119,7 +118,7 @@ bugLoop:
 }
 
 // exportBug publish bugs and related events
-func (ge *githubExporter) exportBug(b *cache.BugCache, user identity.Interface, since time.Time) error {
+func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time) error {
 	snapshot := b.Snapshot()
 
 	var bugGithubID string
@@ -148,6 +147,7 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, user identity.Interface, 
 		bugGithubURL = githubURL
 
 	} else {
+		// check that we have a token for operation author
 		client, err := ge.getIdentityClient(author.Id())
 		if err != nil {
 			// if bug is still not exported and user cannot author bug stop the execution

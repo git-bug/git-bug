@@ -16,6 +16,7 @@ import (
 )
 
 const (
+	keyOrigin      = "origin"
 	keyGithubId    = "github-id"
 	keyGithubUrl   = "github-url"
 	keyGithubLogin = "github-login"
@@ -113,6 +114,7 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 				cleanText,
 				nil,
 				map[string]string{
+					keyOrigin:    target,
 					keyGithubId:  parseId(issue.Id),
 					keyGithubUrl: issue.Url.String(),
 				})
@@ -147,6 +149,7 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 					cleanText,
 					nil,
 					map[string]string{
+						keyOrigin:    target,
 						keyGithubId:  parseId(issue.Id),
 						keyGithubUrl: issue.Url.String(),
 					},
