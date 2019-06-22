@@ -22,6 +22,9 @@ import (
 type githubExporter struct {
 	conf core.Configuration
 
+	// export only bugs taged with one of these origins
+	onlyOrigins []string
+
 	// cache identities clients
 	identityClient map[string]*githubv4.Client
 
@@ -41,13 +44,27 @@ type githubExporter struct {
 
 // Init .
 func (ge *githubExporter) Init(conf core.Configuration) error {
-	//TODO: initialize with multiple tokens
 	ge.conf = conf
+	//TODO: initialize with multiple tokens
 	ge.identityToken = make(map[string]string)
 	ge.identityClient = make(map[string]*githubv4.Client)
 	ge.cachedIDs = make(map[string]string)
 	ge.cachedLabels = make(map[string]string)
 	return nil
+}
+
+func (ge *githubExporter) allowOrigin(origin string) bool {
+	if ge.onlyOrigins == nil {
+		return true
+	}
+
+	for _, o := range ge.onlyOrigins {
+		if origin == o {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (ge *githubExporter) getIdentityClient(id string) (*githubv4.Client, error) {
@@ -56,12 +73,18 @@ func (ge *githubExporter) getIdentityClient(id string) (*githubv4.Client, error)
 		return client, nil
 	}
 
+	// get token
 	token, ok := ge.identityToken[id]
 	if !ok {
 		return nil, fmt.Errorf("unknown identity token")
 	}
 
-	return buildClient(token), nil
+	// create client
+	client = buildClient(token)
+	// cache client
+	ge.identityClient[id] = client
+
+	return client, nil
 }
 
 // ExportAll export all event made by the current user to Github
@@ -99,8 +122,8 @@ bugLoop:
 			continue
 		}
 
-		// if identity participated in a bug
 		for _, p := range snapshot.Participants {
+			// if we have a token for one of the participants
 			for userId := range ge.identityToken {
 				if p.Id() == userId {
 					// try to export the bug and it associated events
@@ -132,6 +155,13 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time) error {
 	// first operation is always createOp
 	createOp := snapshot.Operations[0].(*bug.CreateOperation)
 	author := createOp.GetAuthor()
+
+	// skip bug if origin is not allowed
+	origin, ok := createOp.GetMetadata(keyOrigin)
+	if ok && !ge.allowOrigin(origin) {
+		// TODO print a warn ?
+		return nil
+	}
 
 	// get github bug ID
 	githubID, ok := createOp.GetMetadata(keyGithubId)
