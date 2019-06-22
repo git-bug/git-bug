@@ -35,7 +35,7 @@ type githubExporter struct {
 	// cache identities clients
 	identityClient map[string]*githubv4.Client
 
-	// map identity with their tokens
+	// map identities with their tokens
 	identityToken map[string]string
 
 	// github repository ID
@@ -200,6 +200,9 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time) error {
 		if err != nil {
 			return errors.Wrap(err, "exporting github issue")
 		}
+
+		// incr exported bugs
+		ge.exportedBugs++
 
 		hash, err := createOp.Hash()
 		if err != nil {
