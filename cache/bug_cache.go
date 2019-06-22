@@ -260,7 +260,7 @@ func (c *BugCache) SetMetadata(target git.Hash, newMetadata map[string]string) (
 		return nil, err
 	}
 
-	return c.SetMetadataRaw(author, time.Now().Unix(), target, nil)
+	return c.SetMetadataRaw(author, time.Now().Unix(), target, newMetadata)
 }
 
 func (c *BugCache) SetMetadataRaw(author *IdentityCache, unixTime int64, target git.Hash, newMetadata map[string]string) (*bug.SetMetadataOperation, error) {

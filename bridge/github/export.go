@@ -22,6 +22,9 @@ import (
 type githubExporter struct {
 	conf core.Configuration
 
+	// number of exported bugs
+	exportedBugs int
+
 	// export only bugs taged with one of these origins
 	onlyOrigins []string
 
@@ -166,12 +169,11 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time) error {
 	// get github bug ID
 	githubID, ok := createOp.GetMetadata(keyGithubId)
 	if ok {
-		githubURL, ok := createOp.GetMetadata(keyGithubId)
+		githubURL, ok := createOp.GetMetadata(keyGithubUrl)
 		if !ok {
 			// if we find github ID, github URL must be found too
 			panic("expected to find github issue URL")
 		}
-
 		// will be used to mark operation related to a bug as exported
 		bugGithubID = githubID
 		bugGithubURL = githubURL
@@ -191,7 +193,7 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time) error {
 		// create bug
 		id, url, err := createGithubIssue(client, ge.repositoryID, createOp.Title, createOp.Message)
 		if err != nil {
-			return fmt.Errorf("creating exporting github issue %v", err)
+			return fmt.Errorf("exporting github issue: %v", err)
 		}
 
 		hash, err := createOp.Hash()
@@ -263,11 +265,13 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time) error {
 			}
 
 		case *bug.EditCommentOperation:
+
 			opr := op.(*bug.EditCommentOperation)
 			targetHash := opr.Target.String()
 
 			// Since github doesn't consider the issue body as a comment
 			if targetHash == bugCreationHash {
+
 				// case bug creation operation: we need to edit the Github issue
 				if err := updateGithubIssueBody(client, bugGithubID, opr.Message); err != nil {
 					return fmt.Errorf("editing issue: %v", err)
@@ -277,6 +281,7 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time) error {
 				url = bugGithubURL
 
 			} else {
+
 				// case comment edition operation: we need to edit the Github comment
 				commentID, ok := ge.cachedIDs[targetHash]
 				if !ok {
@@ -552,7 +557,7 @@ func (ge *githubExporter) getLabelsIDs(repositoryID string, labels []bug.Label) 
 // create a github issue and return it ID
 func createGithubIssue(gc *githubv4.Client, repositoryID, title, body string) (string, string, error) {
 	m := &createIssueMutation{}
-	input := &githubv4.CreateIssueInput{
+	input := githubv4.CreateIssueInput{
 		RepositoryID: repositoryID,
 		Title:        githubv4.String(title),
 		Body:         (*githubv4.String)(&body),
@@ -569,7 +574,7 @@ func createGithubIssue(gc *githubv4.Client, repositoryID, title, body string) (s
 // add a comment to an issue and return it ID
 func addCommentGithubIssue(gc *githubv4.Client, subjectID string, body string) (string, string, error) {
 	m := &addCommentToIssueMutation{}
-	input := &githubv4.AddCommentInput{
+	input := githubv4.AddCommentInput{
 		SubjectID: subjectID,
 		Body:      githubv4.String(body),
 	}
@@ -584,7 +589,7 @@ func addCommentGithubIssue(gc *githubv4.Client, subjectID string, body string) (
 
 func editCommentGithubIssue(gc *githubv4.Client, commentID, body string) (string, string, error) {
 	m := &updateIssueCommentMutation{}
-	input := &githubv4.UpdateIssueCommentInput{
+	input := githubv4.UpdateIssueCommentInput{
 		ID:   commentID,
 		Body: githubv4.String(body),
 	}
@@ -606,7 +611,7 @@ func updateGithubIssueStatus(gc *githubv4.Client, id string, status bug.Status) 
 		state = githubv4.IssueStateOpen
 	}
 
-	input := &githubv4.UpdateIssueInput{
+	input := githubv4.UpdateIssueInput{
 		ID:    id,
 		State: &state,
 	}
@@ -620,7 +625,7 @@ func updateGithubIssueStatus(gc *githubv4.Client, id string, status bug.Status) 
 
 func updateGithubIssueBody(gc *githubv4.Client, id string, body string) error {
 	m := &updateIssueMutation{}
-	input := &githubv4.UpdateIssueInput{
+	input := githubv4.UpdateIssueInput{
 		ID:   id,
 		Body: (*githubv4.String)(&body),
 	}
@@ -634,7 +639,7 @@ func updateGithubIssueBody(gc *githubv4.Client, id string, body string) error {
 
 func updateGithubIssueTitle(gc *githubv4.Client, id, title string) error {
 	m := &updateIssueMutation{}
-	input := &githubv4.UpdateIssueInput{
+	input := githubv4.UpdateIssueInput{
 		ID:    id,
 		Title: (*githubv4.String)(&title),
 	}
@@ -654,7 +659,7 @@ func (ge *githubExporter) updateGithubIssueLabels(gc *githubv4.Client, labelable
 	}
 
 	m := &addLabelsToLabelableMutation{}
-	inputAdd := &githubv4.AddLabelsToLabelableInput{
+	inputAdd := githubv4.AddLabelsToLabelableInput{
 		LabelableID: labelableID,
 		LabelIDs:    addedIDs,
 	}
@@ -670,7 +675,7 @@ func (ge *githubExporter) updateGithubIssueLabels(gc *githubv4.Client, labelable
 	}
 
 	m2 := &removeLabelsFromLabelableMutation{}
-	inputRemove := &githubv4.RemoveLabelsFromLabelableInput{
+	inputRemove := githubv4.RemoveLabelsFromLabelableInput{
 		LabelableID: labelableID,
 		LabelIDs:    removedIDs,
 	}
