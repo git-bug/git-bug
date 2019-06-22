@@ -1,12 +1,11 @@
 package github
 
 import (
+	"bytes"
 	"context"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"math/rand"
 	"net/http"
 	"time"
 
@@ -448,7 +447,21 @@ func (ge *githubExporter) createGithubLabel(gc *githubv4.Client, label, labelCol
 		Timeout: defaultTimeout,
 	}
 
-	req, err := http.NewRequest("POST", url, nil)
+	params := struct {
+		Name        string `json:"name"`
+		Color       string `json:"color"`
+		Description string `json:"description"`
+	}{
+		Name:  label,
+		Color: labelColor,
+	}
+
+	data, err := json.Marshal(params)
+	if err != nil {
+		return "", err
+	}
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
 	if err != nil {
 		return "", err
 	}
@@ -462,16 +475,18 @@ func (ge *githubExporter) createGithubLabel(gc *githubv4.Client, label, labelCol
 	}
 
 	if resp.StatusCode != http.StatusCreated {
+		//d, _ := ioutil.ReadAll(resp.Body)
+		//fmt.Println(string(d))
 		return "", fmt.Errorf("error creating label: response status %v", resp.StatusCode)
 	}
 
 	aux := struct {
-		ID     string `json:"id"`
+		ID     int    `json:"id"`
 		NodeID string `json:"node_id"`
 		Color  string `json:"color"`
 	}{}
 
-	data, _ := ioutil.ReadAll(resp.Body)
+	data, _ = ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
 
 	err = json.Unmarshal(data, &aux)
@@ -479,6 +494,7 @@ func (ge *githubExporter) createGithubLabel(gc *githubv4.Client, label, labelCol
 		return "", err
 	}
 
+	fmt.Println("ezzz", aux.NodeID)
 	return aux.NodeID, nil
 }
 
@@ -502,29 +518,21 @@ func (ge *githubExporter) createGithubLabelV4(gc *githubv4.Client, label, labelC
 	return m.CreateLabel.Label.ID, nil
 }
 
-// randomHexColor return a random hex color code
-func randomHexColor() string {
-	bytes := make([]byte, 6)
-	if _, err := rand.Read(bytes); err != nil {
-		return "fffff"
-	}
-
-	return hex.EncodeToString(bytes)
-}
-
-func (ge *githubExporter) getOrCreateGithubLabelID(gc *githubv4.Client, repositoryID, label string) (string, error) {
+func (ge *githubExporter) getOrCreateGithubLabelID(gc *githubv4.Client, repositoryID string, label bug.Label) (string, error) {
 	// try to get label id
-	labelID, err := ge.getGithubLabelID(gc, label)
+	labelID, err := ge.getGithubLabelID(gc, string(label))
 	if err == nil {
 		return labelID, nil
 	}
 
-	// random color
-	//TODO: no random
-	color := randomHexColor()
+	// hex color
+	rgba := label.RGBA()
+	hexColor := fmt.Sprintf("%.2x%.2x%.2x", rgba.R, rgba.G, rgba.B)
+
+	fmt.Println("creating color", label, hexColor)
 
 	// create label and return id
-	labelID, err = ge.createGithubLabel(gc, label, color)
+	labelID, err = ge.createGithubLabel(gc, string(label), hexColor)
 	if err != nil {
 		return "", err
 	}
@@ -537,10 +545,8 @@ func (ge *githubExporter) getLabelsIDs(gc *githubv4.Client, repositoryID string,
 	var err error
 
 	// check labels ids
-	for _, l := range labels {
-		label := string(l)
-
-		id, ok := ge.cachedLabels[label]
+	for _, label := range labels {
+		id, ok := ge.cachedLabels[string(label)]
 		if !ok {
 			// try to query label id
 			id, err = ge.getOrCreateGithubLabelID(gc, repositoryID, label)
@@ -549,7 +555,7 @@ func (ge *githubExporter) getLabelsIDs(gc *githubv4.Client, repositoryID string,
 			}
 
 			// cache label id
-			ge.cachedLabels[label] = id
+			ge.cachedLabels[string(label)] = id
 		}
 
 		ids = append(ids, githubv4.ID(id))
