@@ -168,3 +168,11 @@ type userQuery struct {
 		Email     githubv4.String
 	} `graphql:"user(login: $login)"`
 }
+
+type labelQuery struct {
+	Repository struct {
+		Label struct {
+			ID string `graphql:"id"`
+		} `graphql:"label(name: $name)"`
+	} `graphql:"repository(owner: $owner, name: $name)"`
+}

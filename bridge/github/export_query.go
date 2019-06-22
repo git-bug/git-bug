@@ -1,5 +1,7 @@
 package github
 
+import "github.com/shurcooL/githubv4"
+
 type createIssueMutation struct {
 	CreateIssue struct {
 		Issue struct {
@@ -36,10 +38,25 @@ type updateIssueCommentMutation struct {
 	} `graphql:"updateIssueComment(input:$input)"`
 }
 
+type createLabelMutation struct {
+	CreateLabel struct {
+		Label struct {
+			ID string `graphql:"id"`
+		} `graphql:"label"`
+	} `graphql:"createLabel(input:{repositoryId: $repositoryId, name: $name, color: $color})"`
+}
+
 type removeLabelsFromLabelableMutation struct {
 	AddLabels struct{} `graphql:"removeLabelsFromLabelable(input:$input)"`
 }
 
 type addLabelsToLabelableMutation struct {
 	RemoveLabels struct{} `graphql:"addLabelsToLabelable(input:$input)"`
+}
+
+type createLabelInput struct {
+	Color        githubv4.String  `json:"color"`
+	Description  *githubv4.String `json:"description"`
+	Name         githubv4.String  `json:"name"`
+	RepositoryID githubv4.ID      `json:"repositoryId"`
 }
