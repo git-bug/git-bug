@@ -513,7 +513,11 @@ func (gi *githubImporter) getGhost(repo *cache.RepoCache) (*cache.IdentityCache,
 
 	gc := buildClient(gi.conf[keyToken])
 
-	err = gc.Query(context.TODO(), &q, variables)
+	parentCtx := context.Background()
+	ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
+	defer cancel()
+
+	err = gc.Query(ctx, &q, variables)
 	if err != nil {
 		return nil, err
 	}

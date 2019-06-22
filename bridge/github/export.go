@@ -429,7 +429,12 @@ func markOperationAsExported(b *cache.BugCache, target git.Hash, githubID, githu
 func (ge *githubExporter) getGithubLabelID(gc *githubv4.Client, label string) (string, error) {
 	q := labelQuery{}
 	variables := map[string]interface{}{"name": label}
-	if err := gc.Query(context.TODO(), &q, variables); err != nil {
+
+	parentCtx := context.Background()
+	ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
+	defer cancel()
+
+	if err := gc.Query(ctx, &q, variables); err != nil {
 		return "", err
 	}
 
@@ -486,7 +491,11 @@ func (ge *githubExporter) createGithubLabelV4(gc *githubv4.Client, label, labelC
 		Color:        githubv4.String(labelColor),
 	}
 
-	if err := gc.Mutate(context.TODO(), m, input, nil); err != nil {
+	parentCtx := context.Background()
+	ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
+	defer cancel()
+
+	if err := gc.Mutate(ctx, m, input, nil); err != nil {
 		return "", err
 	}
 
@@ -558,7 +567,11 @@ func createGithubIssue(gc *githubv4.Client, repositoryID, title, body string) (s
 		Body:         (*githubv4.String)(&body),
 	}
 
-	if err := gc.Mutate(context.TODO(), m, input, nil); err != nil {
+	parentCtx := context.Background()
+	ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
+	defer cancel()
+
+	if err := gc.Mutate(ctx, m, input, nil); err != nil {
 		return "", "", err
 	}
 
@@ -574,7 +587,11 @@ func addCommentGithubIssue(gc *githubv4.Client, subjectID string, body string) (
 		Body:      githubv4.String(body),
 	}
 
-	if err := gc.Mutate(context.TODO(), m, input, nil); err != nil {
+	parentCtx := context.Background()
+	ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
+	defer cancel()
+
+	if err := gc.Mutate(ctx, m, input, nil); err != nil {
 		return "", "", err
 	}
 
@@ -589,7 +606,11 @@ func editCommentGithubIssue(gc *githubv4.Client, commentID, body string) (string
 		Body: githubv4.String(body),
 	}
 
-	if err := gc.Mutate(context.TODO(), m, input, nil); err != nil {
+	parentCtx := context.Background()
+	ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
+	defer cancel()
+
+	if err := gc.Mutate(ctx, m, input, nil); err != nil {
 		return "", "", err
 	}
 
@@ -611,7 +632,11 @@ func updateGithubIssueStatus(gc *githubv4.Client, id string, status bug.Status) 
 		State: &state,
 	}
 
-	if err := gc.Mutate(context.TODO(), m, input, nil); err != nil {
+	parentCtx := context.Background()
+	ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
+	defer cancel()
+
+	if err := gc.Mutate(ctx, m, input, nil); err != nil {
 		return err
 	}
 
@@ -625,7 +650,11 @@ func updateGithubIssueBody(gc *githubv4.Client, id string, body string) error {
 		Body: (*githubv4.String)(&body),
 	}
 
-	if err := gc.Mutate(context.TODO(), m, input, nil); err != nil {
+	parentCtx := context.Background()
+	ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
+	defer cancel()
+
+	if err := gc.Mutate(ctx, m, input, nil); err != nil {
 		return err
 	}
 
@@ -639,7 +668,11 @@ func updateGithubIssueTitle(gc *githubv4.Client, id, title string) error {
 		Title: (*githubv4.String)(&title),
 	}
 
-	if err := gc.Mutate(context.TODO(), m, input, nil); err != nil {
+	parentCtx := context.Background()
+	ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
+	defer cancel()
+
+	if err := gc.Mutate(ctx, m, input, nil); err != nil {
 		return err
 	}
 
@@ -648,6 +681,7 @@ func updateGithubIssueTitle(gc *githubv4.Client, id, title string) error {
 
 // update github issue labels
 func (ge *githubExporter) updateGithubIssueLabels(gc *githubv4.Client, labelableID string, added, removed []bug.Label) error {
+
 	addedIDs, err := ge.getLabelsIDs(gc, labelableID, added)
 	if err != nil {
 		return errors.Wrap(err, "getting added labels ids")
@@ -659,11 +693,16 @@ func (ge *githubExporter) updateGithubIssueLabels(gc *githubv4.Client, labelable
 		LabelIDs:    addedIDs,
 	}
 
+	parentCtx := context.Background()
+	ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
+
 	// add labels
-	if err := gc.Mutate(context.TODO(), m, inputAdd, nil); err != nil {
+	if err := gc.Mutate(ctx, m, inputAdd, nil); err != nil {
+		cancel()
 		return err
 	}
 
+	cancel()
 	removedIDs, err := ge.getLabelsIDs(gc, labelableID, added)
 	if err != nil {
 		return errors.Wrap(err, "getting added labels ids")
@@ -675,8 +714,11 @@ func (ge *githubExporter) updateGithubIssueLabels(gc *githubv4.Client, labelable
 		LabelIDs:    removedIDs,
 	}
 
+	ctx2, cancel2 := context.WithTimeout(parentCtx, defaultTimeout)
+	defer cancel2()
+
 	// remove label labels
-	if err := gc.Mutate(context.TODO(), m2, inputRemove, nil); err != nil {
+	if err := gc.Mutate(ctx2, m2, inputRemove, nil); err != nil {
 		return err
 	}
 

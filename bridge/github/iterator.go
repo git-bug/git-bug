@@ -147,7 +147,11 @@ func (i *iterator) Error() error {
 }
 
 func (i *iterator) queryIssue() bool {
-	if err := i.gc.Query(context.TODO(), &i.timeline.query, i.timeline.variables); err != nil {
+	parentCtx := context.Background()
+	ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
+	defer cancel()
+
+	if err := i.gc.Query(ctx, &i.timeline.query, i.timeline.variables); err != nil {
 		i.err = err
 		return false
 	}
@@ -220,7 +224,12 @@ func (i *iterator) NextTimelineItem() bool {
 
 	// more timelines, query them
 	i.timeline.variables["timelineAfter"] = i.timeline.query.Repository.Issues.Nodes[0].Timeline.PageInfo.EndCursor
-	if err := i.gc.Query(context.TODO(), &i.timeline.query, i.timeline.variables); err != nil {
+
+	parentCtx := context.Background()
+	ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
+	defer cancel()
+
+	if err := i.gc.Query(ctx, &i.timeline.query, i.timeline.variables); err != nil {
 		i.err = err
 		return false
 	}
@@ -236,7 +245,11 @@ func (i *iterator) TimelineItemValue() timelineItem {
 }
 
 func (i *iterator) queryIssueEdit() bool {
-	if err := i.gc.Query(context.TODO(), &i.issueEdit.query, i.issueEdit.variables); err != nil {
+	parentCtx := context.Background()
+	ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
+	defer cancel()
+
+	if err := i.gc.Query(ctx, &i.issueEdit.query, i.issueEdit.variables); err != nil {
 		i.err = err
 		//i.timeline.issueEdit.index = -1
 		return false
@@ -334,7 +347,11 @@ func (i *iterator) IssueEditValue() userContentEdit {
 }
 
 func (i *iterator) queryCommentEdit() bool {
-	if err := i.gc.Query(context.TODO(), &i.commentEdit.query, i.commentEdit.variables); err != nil {
+	parentCtx := context.Background()
+	ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
+	defer cancel()
+
+	if err := i.gc.Query(ctx, &i.commentEdit.query, i.commentEdit.variables); err != nil {
 		i.err = err
 		return false
 	}
