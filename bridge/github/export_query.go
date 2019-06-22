@@ -32,10 +32,28 @@ type addCommentToIssueMutation struct {
 }
 
 type updateIssueCommentMutation struct {
-	IssueComment struct {
-		ID  string `graphql:"id"`
-		URL string `graphql:"url"`
+	UpdateIssueComment struct {
+		IssueComment struct {
+			ID  string `graphql:"id"`
+			URL string `graphql:"url"`
+		} `graphql:"issueComment"`
 	} `graphql:"updateIssueComment(input:$input)"`
+}
+
+type removeLabelsFromLabelableMutation struct {
+	AddLabels struct {
+		Labelable struct {
+			Typename string `graphql:"__typename"`
+		}
+	} `graphql:"removeLabelsFromLabelable(input:$input)"`
+}
+
+type addLabelsToLabelableMutation struct {
+	RemoveLabels struct {
+		Labelable struct {
+			Typename string `graphql:"__typename"`
+		}
+	} `graphql:"addLabelsToLabelable(input:$input)"`
 }
 
 type createLabelMutation struct {
@@ -43,20 +61,14 @@ type createLabelMutation struct {
 		Label struct {
 			ID string `graphql:"id"`
 		} `graphql:"label"`
-	} `graphql:"createLabel(input:{repositoryId: $repositoryId, name: $name, color: $color})"`
-}
-
-type removeLabelsFromLabelableMutation struct {
-	AddLabels struct{} `graphql:"removeLabelsFromLabelable(input:$input)"`
-}
-
-type addLabelsToLabelableMutation struct {
-	RemoveLabels struct{} `graphql:"addLabelsToLabelable(input:$input)"`
+	} `graphql:"createLabel(input: $input)"`
 }
 
 type createLabelInput struct {
 	Color        githubv4.String  `json:"color"`
-	Description  *githubv4.String `json:"description"`
+	Description  *githubv4.String `json:"description,omitempty"`
 	Name         githubv4.String  `json:"name"`
 	RepositoryID githubv4.ID      `json:"repositoryId"`
+
+	ClientMutationID *githubv4.String `json:"clientMutationId,omitempty"`
 }

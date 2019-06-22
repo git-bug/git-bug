@@ -426,15 +426,23 @@ func markOperationAsExported(b *cache.BugCache, target git.Hash, githubID, githu
 
 // get label from github
 func (ge *githubExporter) getGithubLabelID(gc *githubv4.Client, label string) (string, error) {
-	q := labelQuery{}
-	variables := map[string]interface{}{"name": label}
+	q := &labelQuery{}
+	variables := map[string]interface{}{
+		"label": githubv4.String(label),
+		"owner": githubv4.String(ge.conf[keyOwner]),
+		"name":  githubv4.String(ge.conf[keyProject]),
+	}
 
 	parentCtx := context.Background()
 	ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
 	defer cancel()
 
-	if err := gc.Query(ctx, &q, variables); err != nil {
+	if err := gc.Query(ctx, q, variables); err != nil {
 		return "", err
+	}
+
+	if q.Repository.Label.ID == "" {
+		return "", fmt.Errorf("label not found")
 	}
 
 	return q.Repository.Label.ID, nil
@@ -475,8 +483,6 @@ func (ge *githubExporter) createGithubLabel(gc *githubv4.Client, label, labelCol
 	}
 
 	if resp.StatusCode != http.StatusCreated {
-		//d, _ := ioutil.ReadAll(resp.Body)
-		//fmt.Println(string(d))
 		return "", fmt.Errorf("error creating label: response status %v", resp.StatusCode)
 	}
 
@@ -494,13 +500,12 @@ func (ge *githubExporter) createGithubLabel(gc *githubv4.Client, label, labelCol
 		return "", err
 	}
 
-	fmt.Println("ezzz", aux.NodeID)
 	return aux.NodeID, nil
 }
 
 // create github label using api v4
 func (ge *githubExporter) createGithubLabelV4(gc *githubv4.Client, label, labelColor string) (string, error) {
-	m := &createLabelMutation{}
+	m := createLabelMutation{}
 	input := createLabelInput{
 		RepositoryID: ge.repositoryID,
 		Name:         githubv4.String(label),
@@ -511,7 +516,7 @@ func (ge *githubExporter) createGithubLabelV4(gc *githubv4.Client, label, labelC
 	ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
 	defer cancel()
 
-	if err := gc.Mutate(ctx, m, input, nil); err != nil {
+	if err := gc.Mutate(ctx, &m, input, nil); err != nil {
 		return "", err
 	}
 
@@ -528,8 +533,6 @@ func (ge *githubExporter) getOrCreateGithubLabelID(gc *githubv4.Client, reposito
 	// hex color
 	rgba := label.RGBA()
 	hexColor := fmt.Sprintf("%.2x%.2x%.2x", rgba.R, rgba.G, rgba.B)
-
-	fmt.Println("creating color", label, hexColor)
 
 	// create label and return id
 	labelID, err = ge.createGithubLabel(gc, string(label), hexColor)
@@ -620,8 +623,7 @@ func editCommentGithubIssue(gc *githubv4.Client, commentID, body string) (string
 		return "", "", err
 	}
 
-	comment := m.IssueComment
-	return commentID, comment.URL, nil
+	return commentID, m.UpdateIssueComment.IssueComment.URL, nil
 }
 
 func updateGithubIssueStatus(gc *githubv4.Client, id string, status bug.Status) error {
@@ -687,7 +689,6 @@ func updateGithubIssueTitle(gc *githubv4.Client, id, title string) error {
 
 // update github issue labels
 func (ge *githubExporter) updateGithubIssueLabels(gc *githubv4.Client, labelableID string, added, removed []bug.Label) error {
-
 	addedIDs, err := ge.getLabelsIDs(gc, labelableID, added)
 	if err != nil {
 		return errors.Wrap(err, "getting added labels ids")
@@ -707,25 +708,28 @@ func (ge *githubExporter) updateGithubIssueLabels(gc *githubv4.Client, labelable
 		cancel()
 		return err
 	}
-
 	cancel()
-	removedIDs, err := ge.getLabelsIDs(gc, labelableID, added)
-	if err != nil {
-		return errors.Wrap(err, "getting added labels ids")
-	}
 
-	m2 := &removeLabelsFromLabelableMutation{}
-	inputRemove := githubv4.RemoveLabelsFromLabelableInput{
-		LabelableID: labelableID,
-		LabelIDs:    removedIDs,
-	}
+	if len(removed) > 0 {
+		removedIDs, err := ge.getLabelsIDs(gc, labelableID, removed)
+		if err != nil {
+			return errors.Wrap(err, "getting added labels ids")
+		}
 
-	ctx2, cancel2 := context.WithTimeout(parentCtx, defaultTimeout)
-	defer cancel2()
+		m2 := &removeLabelsFromLabelableMutation{}
+		inputRemove := githubv4.RemoveLabelsFromLabelableInput{
+			LabelableID: labelableID,
+			LabelIDs:    removedIDs,
+		}
 
-	// remove label labels
-	if err := gc.Mutate(ctx2, m2, inputRemove, nil); err != nil {
-		return err
+		ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
+		defer cancel()
+
+		// remove label labels
+		if err := gc.Mutate(ctx, m2, inputRemove, nil); err != nil {
+			return err
+		}
+
 	}
 
 	return nil

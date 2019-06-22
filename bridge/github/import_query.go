@@ -173,6 +173,6 @@ type labelQuery struct {
 	Repository struct {
 		Label struct {
 			ID string `graphql:"id"`
-		} `graphql:"label(name: $name)"`
+		} `graphql:"label(name: $label)"`
 	} `graphql:"repository(owner: $owner, name: $name)"`
 }
