@@ -1,7 +1,5 @@
 package github
 
-import "github.com/shurcooL/githubv4"
-
 type createIssueMutation struct {
 	CreateIssue struct {
 		Issue struct {
@@ -56,6 +54,7 @@ type addLabelsToLabelableMutation struct {
 	} `graphql:"addLabelsToLabelable(input:$input)"`
 }
 
+/**
 type createLabelMutation struct {
 	CreateLabel struct {
 		Label struct {
@@ -72,3 +71,4 @@ type createLabelInput struct {
 
 	ClientMutationID *githubv4.String `json:"clientMutationId,omitempty"`
 }
+*/

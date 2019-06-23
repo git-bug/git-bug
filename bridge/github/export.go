@@ -122,8 +122,13 @@ func (ge *githubExporter) ExportAll(repo *cache.RepoCache, since time.Time) erro
 		return err
 	}
 
+	allIdentitiesIds := []string{}
+	for id := range ge.identityToken {
+		allIdentitiesIds = append(allIdentitiesIds, id)
+	}
+
 	allBugsIds := repo.AllBugsIds()
-bugLoop:
+
 	for _, id := range allBugsIds {
 		b, err := repo.ResolveBug(id)
 		if err != nil {
@@ -137,20 +142,13 @@ bugLoop:
 			continue
 		}
 
-		for _, p := range snapshot.Participants {
-			// if we have a token for one of the participants
-			for userId := range ge.identityToken {
-				if p.Id() == userId {
-					// try to export the bug and it associated events
-					if err := ge.exportBug(b, since); err != nil {
-						return err
-					}
-
-					// avoid calling exportBug multiple times for the same bug
-					continue bugLoop
-				}
+		if snapshot.HasAnyParticipant(allIdentitiesIds...) {
+			// try to export the bug and it associated events
+			if err := ge.exportBug(b, since); err != nil {
+				return err
 			}
 		}
+
 	}
 
 	fmt.Printf("Successfully exported %d issues and %d labels to Github\n", ge.exportedBugs, ge.exportedLabels)
@@ -171,7 +169,7 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time) error {
 
 	// first operation is always createOp
 	createOp := snapshot.Operations[0].(*bug.CreateOperation)
-	author := createOp.GetAuthor()
+	author := snapshot.Author
 
 	// skip bug if origin is not allowed
 	origin, ok := createOp.GetMetadata(keyOrigin)
@@ -440,6 +438,9 @@ func (ge *githubExporter) getGithubLabelID(gc *githubv4.Client, label string) (s
 	return q.Repository.Label.ID, nil
 }
 
+// create a new label and return it github id
+// NOTE: since createLabel mutation is still in preview mode we use github api v3 to create labels
+// see https://developer.github.com/v4/mutation/createlabel/ and https://developer.github.com/v4/previews/#labels-preview
 func (ge *githubExporter) createGithubLabel(label, color string) (string, error) {
 	url := fmt.Sprintf("%s/repos/%s/%s/labels", githubV3Url, ge.conf[keyOwner], ge.conf[keyProject])
 
@@ -495,6 +496,7 @@ func (ge *githubExporter) createGithubLabel(label, color string) (string, error)
 	return aux.NodeID, nil
 }
 
+/**
 // create github label using api v4
 func (ge *githubExporter) createGithubLabelV4(gc *githubv4.Client, label, labelColor string) (string, error) {
 	m := createLabelMutation{}
@@ -514,6 +516,7 @@ func (ge *githubExporter) createGithubLabelV4(gc *githubv4.Client, label, labelC
 
 	return m.CreateLabel.Label.ID, nil
 }
+*/
 
 func (ge *githubExporter) getOrCreateGithubLabelID(gc *githubv4.Client, repositoryID string, label bug.Label) (string, error) {
 	// try to get label id
@@ -526,9 +529,6 @@ func (ge *githubExporter) getOrCreateGithubLabelID(gc *githubv4.Client, reposito
 	rgba := label.RGBA()
 	hexColor := fmt.Sprintf("%.2x%.2x%.2x", rgba.R, rgba.G, rgba.B)
 
-	// create label and return id
-	// NOTE: since createLabel mutation is still in preview mode we use github api v4 to create labels
-	// see https://developer.github.com/v4/mutation/createlabel/ and https://developer.github.com/v4/previews/#labels-preview
 	labelID, err = ge.createGithubLabel(string(label), hexColor)
 	if err != nil {
 		return "", err
@@ -705,26 +705,27 @@ func (ge *githubExporter) updateGithubIssueLabels(gc *githubv4.Client, labelable
 	}
 	cancel()
 
-	if len(removed) > 0 {
-		removedIDs, err := ge.getLabelsIDs(gc, labelableID, removed)
-		if err != nil {
-			return errors.Wrap(err, "getting added labels ids")
-		}
+	if len(removed) == 0 {
+		return nil
+	}
 
-		m2 := &removeLabelsFromLabelableMutation{}
-		inputRemove := githubv4.RemoveLabelsFromLabelableInput{
-			LabelableID: labelableID,
-			LabelIDs:    removedIDs,
-		}
+	removedIDs, err := ge.getLabelsIDs(gc, labelableID, removed)
+	if err != nil {
+		return errors.Wrap(err, "getting added labels ids")
+	}
 
-		ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
-		defer cancel()
+	m2 := &removeLabelsFromLabelableMutation{}
+	inputRemove := githubv4.RemoveLabelsFromLabelableInput{
+		LabelableID: labelableID,
+		LabelIDs:    removedIDs,
+	}
 
-		// remove label labels
-		if err := gc.Mutate(ctx, m2, inputRemove, nil); err != nil {
-			return err
-		}
+	ctx, cancel = context.WithTimeout(parentCtx, defaultTimeout)
+	defer cancel()
 
+	// remove label labels
+	if err := gc.Mutate(ctx, m2, inputRemove, nil); err != nil {
+		return err
 	}
 
 	return nil

@@ -31,13 +31,13 @@ type testCase struct {
 
 func testCases(repo *cache.RepoCache, identity *cache.IdentityCache) ([]*testCase, error) {
 	// simple bug
-	simpleBug, err := repo.NewBug("simple bug", "new bug")
+	simpleBug, _, err := repo.NewBug("simple bug", "new bug")
 	if err != nil {
 		return nil, err
 	}
 
 	// bug with comments
-	bugWithComments, err := repo.NewBug("bug with comments", "new bug")
+	bugWithComments, _, err := repo.NewBug("bug with comments", "new bug")
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func testCases(repo *cache.RepoCache, identity *cache.IdentityCache) ([]*testCas
 	}
 
 	// bug with label changes
-	bugLabelChange, err := repo.NewBug("bug label change", "new bug")
+	bugLabelChange, _, err := repo.NewBug("bug label change", "new bug")
 	if err != nil {
 		return nil, err
 	}
@@ -69,12 +69,12 @@ func testCases(repo *cache.RepoCache, identity *cache.IdentityCache) ([]*testCas
 	}
 
 	// bug with comments editions
-	bugWithCommentEditions, err := repo.NewBug("bug with comments editions", "new bug")
+	bugWithCommentEditions, createOp, err := repo.NewBug("bug with comments editions", "new bug")
 	if err != nil {
 		return nil, err
 	}
 
-	createOpHash, err := bugWithCommentEditions.Snapshot().Operations[0].Hash()
+	createOpHash, err := createOp.Hash()
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ func testCases(repo *cache.RepoCache, identity *cache.IdentityCache) ([]*testCas
 	}
 
 	// bug status changed
-	bugStatusChanged, err := repo.NewBug("bug status changed", "new bug")
+	bugStatusChanged, _, err := repo.NewBug("bug status changed", "new bug")
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +116,7 @@ func testCases(repo *cache.RepoCache, identity *cache.IdentityCache) ([]*testCas
 	}
 
 	// bug title changed
-	bugTitleEdited, err := repo.NewBug("bug title edited", "new bug")
+	bugTitleEdited, _, err := repo.NewBug("bug title edited", "new bug")
 	if err != nil {
 		return nil, err
 	}
@@ -214,6 +214,10 @@ func TestPushPull(t *testing.T) {
 		fmt.Println("deleted repository:", projectName)
 	}(t)
 
+	interrupt.RegisterCleaner(func() error {
+		return deleteRepository(projectName, user, token)
+	})
+
 	// initialize exporter
 	exporter := &githubExporter{}
 	err = exporter.Init(core.Configuration{
@@ -271,7 +275,7 @@ func TestPushPull(t *testing.T) {
 			}
 
 			// get bug github ID
-			bugGithubID, ok := tt.bug.Snapshot().Operations[0].GetMetadata(keyGithubId)
+			bugGithubID, ok := tt.bug.Snapshot().GetCreateMetadata(keyGithubId)
 			require.True(t, ok)
 
 			// retrive bug from backendTwo
@@ -282,7 +286,7 @@ func TestPushPull(t *testing.T) {
 			require.Len(t, importedBug.Snapshot().Operations, tt.numOrOp)
 
 			// verify bugs are taged with origin=github
-			issueOrigin, ok := importedBug.Snapshot().Operations[0].GetMetadata(keyOrigin)
+			issueOrigin, ok := importedBug.Snapshot().GetCreateMetadata(keyOrigin)
 			require.True(t, ok)
 			require.Equal(t, issueOrigin, target)
 
@@ -303,7 +307,7 @@ func generateRepoName() string {
 
 // create repository need a token with scope 'repo'
 func createRepository(project, token string) error {
-// This function use the V3 Github API because repository creation is not supported yet on the V4 API.
+	// This function use the V3 Github API because repository creation is not supported yet on the V4 API.
 	url := fmt.Sprintf("%s/user/repos", githubV3Url)
 
 	params := struct {
@@ -345,7 +349,7 @@ func createRepository(project, token string) error {
 
 // delete repository need a token with scope 'delete_repo'
 func deleteRepository(project, owner, token string) error {
-// This function use the V3 Github API because repository removal is not supported yet on the V4 API.
+	// This function use the V3 Github API because repository removal is not supported yet on the V4 API.
 	url := fmt.Sprintf("%s/repos/%s/%s", githubV3Url, owner, project)
 
 	req, err := http.NewRequest("DELETE", url, nil)
