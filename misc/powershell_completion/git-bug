@@ -1,0 +1,207 @@
+using namespace System.Management.Automation
+using namespace System.Management.Automation.Language
+Register-ArgumentCompleter -Native -CommandName 'git-bug' -ScriptBlock {
+    param($wordToComplete, $commandAst, $cursorPosition)
+    $commandElements = $commandAst.CommandElements
+    $command = @(
+        'git-bug'
+        for ($i = 1; $i -lt $commandElements.Count; $i++) {
+            $element = $commandElements[$i]
+            if ($element -isnot [StringConstantExpressionAst] -or
+                $element.StringConstantType -ne [StringConstantType]::BareWord -or
+                $element.Value.StartsWith('-')) {
+                break
+            }
+            $element.Value
+        }
+    ) -join ';'
+    $completions = @(switch ($command) {
+        'git-bug' {
+            [CompletionResult]::new('add', 'add', [CompletionResultType]::ParameterValue, 'Create a new bug.')
+            [CompletionResult]::new('bridge', 'bridge', [CompletionResultType]::ParameterValue, 'Configure and use bridges to other bug trackers.')
+            [CompletionResult]::new('commands', 'commands', [CompletionResultType]::ParameterValue, 'Display available commands.')
+            [CompletionResult]::new('comment', 'comment', [CompletionResultType]::ParameterValue, 'Display or add comments to a bug.')
+            [CompletionResult]::new('deselect', 'deselect', [CompletionResultType]::ParameterValue, 'Clear the implicitly selected bug.')
+            [CompletionResult]::new('label', 'label', [CompletionResultType]::ParameterValue, 'Display, add or remove labels to/from a bug.')
+            [CompletionResult]::new('ls', 'ls', [CompletionResultType]::ParameterValue, 'List bugs.')
+            [CompletionResult]::new('ls-id', 'ls-id', [CompletionResultType]::ParameterValue, 'List bug identifiers.')
+            [CompletionResult]::new('ls-label', 'ls-label', [CompletionResultType]::ParameterValue, 'List valid labels.')
+            [CompletionResult]::new('pull', 'pull', [CompletionResultType]::ParameterValue, 'Pull bugs update from a git remote.')
+            [CompletionResult]::new('push', 'push', [CompletionResultType]::ParameterValue, 'Push bugs update to a git remote.')
+            [CompletionResult]::new('select', 'select', [CompletionResultType]::ParameterValue, 'Select a bug for implicit use in future commands.')
+            [CompletionResult]::new('show', 'show', [CompletionResultType]::ParameterValue, 'Display the details of a bug.')
+            [CompletionResult]::new('status', 'status', [CompletionResultType]::ParameterValue, 'Display or change a bug status.')
+            [CompletionResult]::new('termui', 'termui', [CompletionResultType]::ParameterValue, 'Launch the terminal UI.')
+            [CompletionResult]::new('title', 'title', [CompletionResultType]::ParameterValue, 'Display or change a title of a bug.')
+            [CompletionResult]::new('user', 'user', [CompletionResultType]::ParameterValue, 'Display or change the user identity.')
+            [CompletionResult]::new('version', 'version', [CompletionResultType]::ParameterValue, 'Show git-bug version information.')
+            [CompletionResult]::new('webui', 'webui', [CompletionResultType]::ParameterValue, 'Launch the web UI.')
+            break
+        }
+        'git-bug;add' {
+            [CompletionResult]::new('-t', 't', [CompletionResultType]::ParameterName, 'Provide a title to describe the issue')
+            [CompletionResult]::new('--title', 'title', [CompletionResultType]::ParameterName, 'Provide a title to describe the issue')
+            [CompletionResult]::new('-m', 'm', [CompletionResultType]::ParameterName, 'Provide a message to describe the issue')
+            [CompletionResult]::new('--message', 'message', [CompletionResultType]::ParameterName, 'Provide a message to describe the issue')
+            [CompletionResult]::new('-F', 'F', [CompletionResultType]::ParameterName, 'Take the message from the given file. Use - to read the message from the standard input')
+            [CompletionResult]::new('--file', 'file', [CompletionResultType]::ParameterName, 'Take the message from the given file. Use - to read the message from the standard input')
+            break
+        }
+        'git-bug;bridge' {
+            [CompletionResult]::new('configure', 'configure', [CompletionResultType]::ParameterValue, 'Configure a new bridge.')
+            [CompletionResult]::new('pull', 'pull', [CompletionResultType]::ParameterValue, 'Pull updates.')
+            [CompletionResult]::new('rm', 'rm', [CompletionResultType]::ParameterValue, 'Delete a configured bridge.')
+            break
+        }
+        'git-bug;bridge;configure' {
+            [CompletionResult]::new('-n', 'n', [CompletionResultType]::ParameterName, 'A distinctive name to identify the bridge')
+            [CompletionResult]::new('--name', 'name', [CompletionResultType]::ParameterName, 'A distinctive name to identify the bridge')
+            [CompletionResult]::new('-t', 't', [CompletionResultType]::ParameterName, 'The target of the bridge. Valid values are [github,launchpad-preview]')
+            [CompletionResult]::new('--target', 'target', [CompletionResultType]::ParameterName, 'The target of the bridge. Valid values are [github,launchpad-preview]')
+            [CompletionResult]::new('-u', 'u', [CompletionResultType]::ParameterName, 'The URL of the target repository')
+            [CompletionResult]::new('--url', 'url', [CompletionResultType]::ParameterName, 'The URL of the target repository')
+            [CompletionResult]::new('-o', 'o', [CompletionResultType]::ParameterName, 'The owner of the target repository')
+            [CompletionResult]::new('--owner', 'owner', [CompletionResultType]::ParameterName, 'The owner of the target repository')
+            [CompletionResult]::new('-T', 'T', [CompletionResultType]::ParameterName, 'The authentication token for the API')
+            [CompletionResult]::new('--token', 'token', [CompletionResultType]::ParameterName, 'The authentication token for the API')
+            [CompletionResult]::new('-p', 'p', [CompletionResultType]::ParameterName, 'The name of the target repository')
+            [CompletionResult]::new('--project', 'project', [CompletionResultType]::ParameterName, 'The name of the target repository')
+            break
+        }
+        'git-bug;bridge;pull' {
+            break
+        }
+        'git-bug;bridge;rm' {
+            break
+        }
+        'git-bug;commands' {
+            [CompletionResult]::new('-p', 'p', [CompletionResultType]::ParameterName, 'Output the command description as well as Markdown compatible comment')
+            [CompletionResult]::new('--pretty', 'pretty', [CompletionResultType]::ParameterName, 'Output the command description as well as Markdown compatible comment')
+            break
+        }
+        'git-bug;comment' {
+            [CompletionResult]::new('add', 'add', [CompletionResultType]::ParameterValue, 'Add a new comment to a bug.')
+            break
+        }
+        'git-bug;comment;add' {
+            [CompletionResult]::new('-F', 'F', [CompletionResultType]::ParameterName, 'Take the message from the given file. Use - to read the message from the standard input')
+            [CompletionResult]::new('--file', 'file', [CompletionResultType]::ParameterName, 'Take the message from the given file. Use - to read the message from the standard input')
+            [CompletionResult]::new('-m', 'm', [CompletionResultType]::ParameterName, 'Provide the new message from the command line')
+            [CompletionResult]::new('--message', 'message', [CompletionResultType]::ParameterName, 'Provide the new message from the command line')
+            break
+        }
+        'git-bug;deselect' {
+            break
+        }
+        'git-bug;label' {
+            [CompletionResult]::new('add', 'add', [CompletionResultType]::ParameterValue, 'Add a label to a bug.')
+            [CompletionResult]::new('rm', 'rm', [CompletionResultType]::ParameterValue, 'Remove a label from a bug.')
+            break
+        }
+        'git-bug;label;add' {
+            break
+        }
+        'git-bug;label;rm' {
+            break
+        }
+        'git-bug;ls' {
+            [CompletionResult]::new('-s', 's', [CompletionResultType]::ParameterName, 'Filter by status. Valid values are [open,closed]')
+            [CompletionResult]::new('--status', 'status', [CompletionResultType]::ParameterName, 'Filter by status. Valid values are [open,closed]')
+            [CompletionResult]::new('-a', 'a', [CompletionResultType]::ParameterName, 'Filter by author')
+            [CompletionResult]::new('--author', 'author', [CompletionResultType]::ParameterName, 'Filter by author')
+            [CompletionResult]::new('-p', 'p', [CompletionResultType]::ParameterName, 'Filter by participant')
+            [CompletionResult]::new('--participant', 'participant', [CompletionResultType]::ParameterName, 'Filter by participant')
+            [CompletionResult]::new('-A', 'A', [CompletionResultType]::ParameterName, 'Filter by actor')
+            [CompletionResult]::new('--actor', 'actor', [CompletionResultType]::ParameterName, 'Filter by actor')
+            [CompletionResult]::new('-l', 'l', [CompletionResultType]::ParameterName, 'Filter by label')
+            [CompletionResult]::new('--label', 'label', [CompletionResultType]::ParameterName, 'Filter by label')
+            [CompletionResult]::new('-t', 't', [CompletionResultType]::ParameterName, 'Filter by title')
+            [CompletionResult]::new('--title', 'title', [CompletionResultType]::ParameterName, 'Filter by title')
+            [CompletionResult]::new('-n', 'n', [CompletionResultType]::ParameterName, 'Filter by absence of something. Valid values are [label]')
+            [CompletionResult]::new('--no', 'no', [CompletionResultType]::ParameterName, 'Filter by absence of something. Valid values are [label]')
+            [CompletionResult]::new('-b', 'b', [CompletionResultType]::ParameterName, 'Sort the results by a characteristic. Valid values are [id,creation,edit]')
+            [CompletionResult]::new('--by', 'by', [CompletionResultType]::ParameterName, 'Sort the results by a characteristic. Valid values are [id,creation,edit]')
+            [CompletionResult]::new('-d', 'd', [CompletionResultType]::ParameterName, 'Select the sorting direction. Valid values are [asc,desc]')
+            [CompletionResult]::new('--direction', 'direction', [CompletionResultType]::ParameterName, 'Select the sorting direction. Valid values are [asc,desc]')
+            break
+        }
+        'git-bug;ls-id' {
+            break
+        }
+        'git-bug;ls-label' {
+            break
+        }
+        'git-bug;pull' {
+            break
+        }
+        'git-bug;push' {
+            break
+        }
+        'git-bug;select' {
+            break
+        }
+        'git-bug;show' {
+            [CompletionResult]::new('-f', 'f', [CompletionResultType]::ParameterName, 'Select field to display. Valid values are [author,authorEmail,createTime,humanId,id,labels,shortId,status,title,actors,participants]')
+            [CompletionResult]::new('--field', 'field', [CompletionResultType]::ParameterName, 'Select field to display. Valid values are [author,authorEmail,createTime,humanId,id,labels,shortId,status,title,actors,participants]')
+            break
+        }
+        'git-bug;status' {
+            [CompletionResult]::new('close', 'close', [CompletionResultType]::ParameterValue, 'Mark a bug as closed.')
+            [CompletionResult]::new('open', 'open', [CompletionResultType]::ParameterValue, 'Mark a bug as open.')
+            break
+        }
+        'git-bug;status;close' {
+            break
+        }
+        'git-bug;status;open' {
+            break
+        }
+        'git-bug;termui' {
+            break
+        }
+        'git-bug;title' {
+            [CompletionResult]::new('edit', 'edit', [CompletionResultType]::ParameterValue, 'Edit a title of a bug.')
+            break
+        }
+        'git-bug;title;edit' {
+            [CompletionResult]::new('-t', 't', [CompletionResultType]::ParameterName, 'Provide a title to describe the issue')
+            [CompletionResult]::new('--title', 'title', [CompletionResultType]::ParameterName, 'Provide a title to describe the issue')
+            break
+        }
+        'git-bug;user' {
+            [CompletionResult]::new('-f', 'f', [CompletionResultType]::ParameterName, 'Select field to display. Valid values are [email,humanId,id,lastModification,lastModificationLamport,login,metadata,name]')
+            [CompletionResult]::new('--field', 'field', [CompletionResultType]::ParameterName, 'Select field to display. Valid values are [email,humanId,id,lastModification,lastModificationLamport,login,metadata,name]')
+            [CompletionResult]::new('adopt', 'adopt', [CompletionResultType]::ParameterValue, 'Adopt an existing identity as your own.')
+            [CompletionResult]::new('create', 'create', [CompletionResultType]::ParameterValue, 'Create a new identity.')
+            [CompletionResult]::new('ls', 'ls', [CompletionResultType]::ParameterValue, 'List identities.')
+            break
+        }
+        'git-bug;user;adopt' {
+            break
+        }
+        'git-bug;user;create' {
+            break
+        }
+        'git-bug;user;ls' {
+            break
+        }
+        'git-bug;version' {
+            [CompletionResult]::new('-n', 'n', [CompletionResultType]::ParameterName, 'Only show the version number')
+            [CompletionResult]::new('--number', 'number', [CompletionResultType]::ParameterName, 'Only show the version number')
+            [CompletionResult]::new('-c', 'c', [CompletionResultType]::ParameterName, 'Only show the commit hash')
+            [CompletionResult]::new('--commit', 'commit', [CompletionResultType]::ParameterName, 'Only show the commit hash')
+            [CompletionResult]::new('-a', 'a', [CompletionResultType]::ParameterName, 'Show all version informations')
+            [CompletionResult]::new('--all', 'all', [CompletionResultType]::ParameterName, 'Show all version informations')
+            break
+        }
+        'git-bug;webui' {
+            [CompletionResult]::new('--open', 'open', [CompletionResultType]::ParameterName, 'Automatically open the web UI in the default browser')
+            [CompletionResult]::new('--no-open', 'no-open', [CompletionResultType]::ParameterName, 'Prevent the automatic opening of the web UI in the default browser')
+            [CompletionResult]::new('-p', 'p', [CompletionResultType]::ParameterName, 'Port to listen to (default is random)')
+            [CompletionResult]::new('--port', 'port', [CompletionResultType]::ParameterName, 'Port to listen to (default is random)')
+            break
+        }
+    })
+    $completions.Where{ $_.CompletionText -like "$wordToComplete*" } |
+        Sort-Object -Property ListItemText
+}

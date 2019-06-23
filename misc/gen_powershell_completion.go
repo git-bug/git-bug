@@ -13,11 +13,11 @@ import (
 
 func main() {
 	cwd, _ := os.Getwd()
-	dir := path.Join(cwd, "misc", "bash_completion", "git-bug")
+	filepath := path.Join(cwd, "misc", "powershell_completion", "git-bug")
 
-	fmt.Println("Generating Bash completion file ...")
+	fmt.Println("Generating PowerShell completion file ...")
 
-	err := commands.RootCmd.GenBashCompletionFile(dir)
+	err := commands.RootCmd.GenPowerShellCompletionFile(filepath)
 	if err != nil {
 		log.Fatal(err)
 	}
