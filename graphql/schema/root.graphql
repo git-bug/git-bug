@@ -16,7 +16,7 @@ type Mutation {
     openBug(input: OpenBugInput!): OpenBugPayload!
     """Change a bug's status to closed"""
     closeBug(input: CloseBugInput!): CloseBugPayload!
-    """Change a bug's titlel"""
+    """Change a bug's title"""
     setTitle(input: SetTitleInput!): SetTitlePayload!
     """Commit write the pending operations into storage. This mutation fail if nothing is pending"""
     commit(input: CommitInput!): CommitPayload!
