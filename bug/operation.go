@@ -49,7 +49,7 @@ type Operation interface {
 	GetMetadata(key string) (string, bool)
 	// AllMetadata return all metadata for this operation
 	AllMetadata() map[string]string
-	// GetAuthor return author identity
+	// GetAuthor return the author identity
 	GetAuthor() identity.Interface
 }
 
@@ -225,6 +225,7 @@ func (op *OpBase) AllMetadata() map[string]string {
 	return result
 }
 
+// GetAuthor return author identity
 func (op *OpBase) GetAuthor() identity.Interface {
 	return op.Author
 }

@@ -161,19 +161,24 @@ func testCases(repo *cache.RepoCache, identity *cache.IdentityCache) ([]*testCas
 
 }
 
-func TestExporter(t *testing.T) {
+func TestPushPull(t *testing.T) {
+	// repo owner
 	user := os.Getenv("TEST_USER")
+
+	// token must have 'repo' and 'delete_repo' scopes
 	token := os.Getenv("GITHUB_TOKEN_ADMIN")
 	if token == "" {
 		t.Skip("Env var GITHUB_TOKEN_ADMIN missing")
 	}
 
+	// create repo backend
 	repo := repository.CreateTestRepo(false)
 	defer repository.CleanupTestRepos(t, repo)
 
 	backend, err := cache.NewRepoCache(repo)
 	require.NoError(t, err)
 
+	// set author identity
 	author, err := backend.NewIdentity("test identity", "test@test.org")
 	if err != nil {
 		t.Fatal(err)
@@ -195,13 +200,13 @@ func TestExporter(t *testing.T) {
 	// generate project name
 	projectName := generateRepoName()
 
-	// create repository
+	// create target Github repository
 	if err := createRepository(projectName, token); err != nil {
 		t.Fatal(err)
 	}
 	fmt.Println("created repository", projectName)
 
-	// delete repository before ending tests
+	// Make sure to remove the Github repository when the test end
 	defer func(t *testing.T) {
 		if err := deleteRepository(projectName, user, token); err != nil {
 			t.Fatal(err)
@@ -253,7 +258,9 @@ func TestExporter(t *testing.T) {
 			// so number of operations should double
 			require.Len(t, tt.bug.Snapshot().Operations, tt.numOrOp*2)
 
+			// verify operation have correcte metadata
 			for _, op := range tt.bug.Snapshot().Operations {
+				// Check if the originals operations (*not* SetMetadata) are tagged properly
 				if _, ok := op.(*bug.SetMetadataOperation); !ok {
 					_, haveIDMetadata := op.GetMetadata(keyGithubId)
 					require.True(t, haveIDMetadata)
@@ -263,21 +270,23 @@ func TestExporter(t *testing.T) {
 				}
 			}
 
+			// get bug github ID
 			bugGithubID, ok := tt.bug.Snapshot().Operations[0].GetMetadata(keyGithubId)
 			require.True(t, ok)
 
+			// retrive bug from backendTwo
 			importedBug, err := backendTwo.ResolveBugCreateMetadata(keyGithubId, bugGithubID)
 			require.NoError(t, err)
 
+			// verify bug have same number of original operations
 			require.Len(t, importedBug.Snapshot().Operations, tt.numOrOp)
 
+			// verify bugs are taged with origin=github
 			issueOrigin, ok := importedBug.Snapshot().Operations[0].GetMetadata(keyOrigin)
 			require.True(t, ok)
 			require.Equal(t, issueOrigin, target)
 
-			for _, _ = range importedBug.Snapshot().Operations {
-				// test operations or last bug state ?
-			}
+			//TODO: maybe more tests to ensure bug final state
 		})
 	}
 }
@@ -292,7 +301,9 @@ func generateRepoName() string {
 	return fmt.Sprintf("%s-%s", testRepoBaseName, string(b))
 }
 
+// create repository need a token with scope 'repo'
 func createRepository(project, token string) error {
+// This function use the V3 Github API because repository creation is not supported yet on the V4 API.
 	url := fmt.Sprintf("%s/user/repos", githubV3Url)
 
 	params := struct {
@@ -332,7 +343,9 @@ func createRepository(project, token string) error {
 	return resp.Body.Close()
 }
 
+// delete repository need a token with scope 'delete_repo'
 func deleteRepository(project, owner, token string) error {
+// This function use the V3 Github API because repository removal is not supported yet on the V4 API.
 	url := fmt.Sprintf("%s/repos/%s/%s", githubV3Url, owner, project)
 
 	req, err := http.NewRequest("DELETE", url, nil)

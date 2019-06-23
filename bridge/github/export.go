@@ -22,7 +22,7 @@ var (
 	ErrMissingIdentityToken = errors.New("missing identity token")
 )
 
-// githubImporter implement the Importer interface
+// githubExporter implement the Exporter interface
 type githubExporter struct {
 	conf core.Configuration
 
@@ -63,8 +63,11 @@ func (ge *githubExporter) Init(conf core.Configuration) error {
 	return nil
 }
 
+// allowOrigin verify that origin is allowed to get exported.
+// if the exporter was initialized with no specified origins, it will return
+// true for all origins
 func (ge *githubExporter) allowOrigin(origin string) bool {
-	if ge.onlyOrigins == nil {
+	if len(ge.onlyOrigins) == 0 {
 		return true
 	}
 
@@ -78,7 +81,7 @@ func (ge *githubExporter) allowOrigin(origin string) bool {
 }
 
 // getIdentityClient return an identity github api v4 client
-// if no client were found it will initilize it from the known tokens map and cache it for next it use
+// if no client were found it will initilize it from the known tokens map and cache it for next use
 func (ge *githubExporter) getIdentityClient(id string) (*githubv4.Client, error) {
 	client, ok := ge.identityClient[id]
 	if ok {
@@ -143,6 +146,7 @@ bugLoop:
 						return err
 					}
 
+					// avoid calling exportBug multiple times for the same bug
 					continue bugLoop
 				}
 			}
@@ -163,7 +167,7 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time) error {
 
 	// Special case:
 	// if a user try to export a bug that is not already exported to Github (or imported
-	// from Github) and he is not the author of the bug. There is nothing we can do.
+	// from Github) and we do not have the token of the bug author, there is nothing we can do.
 
 	// first operation is always createOp
 	createOp := snapshot.Operations[0].(*bug.CreateOperation)
@@ -184,6 +188,7 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time) error {
 			// if we find github ID, github URL must be found too
 			panic("expected to find github issue URL")
 		}
+
 		// will be used to mark operation related to a bug as exported
 		bugGithubID = githubID
 		bugGithubURL = githubURL
@@ -427,6 +432,7 @@ func (ge *githubExporter) getGithubLabelID(gc *githubv4.Client, label string) (s
 		return "", err
 	}
 
+	// if label id is empty, it means there is no such label in this Github repository
 	if q.Repository.Label.ID == "" {
 		return "", fmt.Errorf("label not found")
 	}
@@ -434,7 +440,7 @@ func (ge *githubExporter) getGithubLabelID(gc *githubv4.Client, label string) (s
 	return q.Repository.Label.ID, nil
 }
 
-func (ge *githubExporter) createGithubLabel(label, labelColor string) (string, error) {
+func (ge *githubExporter) createGithubLabel(label, color string) (string, error) {
 	url := fmt.Sprintf("%s/repos/%s/%s/labels", githubV3Url, ge.conf[keyOwner], ge.conf[keyProject])
 
 	client := &http.Client{
@@ -447,7 +453,7 @@ func (ge *githubExporter) createGithubLabel(label, labelColor string) (string, e
 		Description string `json:"description"`
 	}{
 		Name:  label,
-		Color: labelColor,
+		Color: color,
 	}
 
 	data, err := json.Marshal(params)
@@ -516,7 +522,7 @@ func (ge *githubExporter) getOrCreateGithubLabelID(gc *githubv4.Client, reposito
 		return labelID, nil
 	}
 
-	// hex color
+	// RGBA to hex color
 	rgba := label.RGBA()
 	hexColor := fmt.Sprintf("%.2x%.2x%.2x", rgba.R, rgba.G, rgba.B)
 
