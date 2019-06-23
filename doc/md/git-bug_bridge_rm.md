@@ -7,7 +7,7 @@ Delete a configured bridge.
 Delete a configured bridge.
 
 ```
-git-bug bridge rm name <name> [flags]
+git-bug bridge rm <name> [flags]
 ```
 
 ### Options

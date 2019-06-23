@@ -1,46 +1,396 @@
-#compdef git-bug
+#compdef _git-bug git-bug
 
-_arguments \
-  '1: :->level1' \
-  '2: :->level2' \
-  '3: :_files'
-case $state in
-  level1)
-    case $words[1] in
-      git-bug)
-        _arguments '1: :(add bridge commands comment deselect label ls ls-id ls-label pull push select show status termui title user version webui)'
-      ;;
-      *)
-        _arguments '*: :_files'
-      ;;
-    esac
-  ;;
-  level2)
-    case $words[2] in
-      bridge)
-        _arguments '2: :(configure pull rm)'
-      ;;
-      comment)
-        _arguments '2: :(add)'
-      ;;
-      label)
-        _arguments '2: :(add rm)'
-      ;;
-      status)
-        _arguments '2: :(close open)'
-      ;;
-      title)
-        _arguments '2: :(edit)'
-      ;;
-      user)
-        _arguments '2: :(adopt create ls)'
-      ;;
-      *)
-        _arguments '*: :_files'
-      ;;
-    esac
-  ;;
-  *)
-    _arguments '*: :_files'
-  ;;
-esac
+
+function _git-bug {
+  local -a commands
+
+  _arguments -C \
+    "1: :->cmnds" \
+    "*::arg:->args"
+
+  case $state in
+  cmnds)
+    commands=(
+      "add:Create a new bug."
+      "bridge:Configure and use bridges to other bug trackers."
+      "commands:Display available commands."
+      "comment:Display or add comments to a bug."
+      "deselect:Clear the implicitly selected bug."
+      "label:Display, add or remove labels to/from a bug."
+      "ls:List bugs."
+      "ls-id:List bug identifiers."
+      "ls-label:List valid labels."
+      "pull:Pull bugs update from a git remote."
+      "push:Push bugs update to a git remote."
+      "select:Select a bug for implicit use in future commands."
+      "show:Display the details of a bug."
+      "status:Display or change a bug status."
+      "termui:Launch the terminal UI."
+      "title:Display or change a title of a bug."
+      "user:Display or change the user identity."
+      "version:Show git-bug version information."
+      "webui:Launch the web UI."
+    )
+    _describe "command" commands
+    ;;
+  esac
+
+  case "$words[1]" in
+  add)
+    _git-bug_add
+    ;;
+  bridge)
+    _git-bug_bridge
+    ;;
+  commands)
+    _git-bug_commands
+    ;;
+  comment)
+    _git-bug_comment
+    ;;
+  deselect)
+    _git-bug_deselect
+    ;;
+  label)
+    _git-bug_label
+    ;;
+  ls)
+    _git-bug_ls
+    ;;
+  ls-id)
+    _git-bug_ls-id
+    ;;
+  ls-label)
+    _git-bug_ls-label
+    ;;
+  pull)
+    _git-bug_pull
+    ;;
+  push)
+    _git-bug_push
+    ;;
+  select)
+    _git-bug_select
+    ;;
+  show)
+    _git-bug_show
+    ;;
+  status)
+    _git-bug_status
+    ;;
+  termui)
+    _git-bug_termui
+    ;;
+  title)
+    _git-bug_title
+    ;;
+  user)
+    _git-bug_user
+    ;;
+  version)
+    _git-bug_version
+    ;;
+  webui)
+    _git-bug_webui
+    ;;
+  esac
+}
+
+function _git-bug_add {
+  _arguments \
+    '(-t --title)'{-t,--title}'[Provide a title to describe the issue]:' \
+    '(-m --message)'{-m,--message}'[Provide a message to describe the issue]:' \
+    '(-F --file)'{-F,--file}'[Take the message from the given file. Use - to read the message from the standard input]:'
+}
+
+
+function _git-bug_bridge {
+  local -a commands
+
+  _arguments -C \
+    "1: :->cmnds" \
+    "*::arg:->args"
+
+  case $state in
+  cmnds)
+    commands=(
+      "configure:Configure a new bridge."
+      "pull:Pull updates."
+      "rm:Delete a configured bridge."
+    )
+    _describe "command" commands
+    ;;
+  esac
+
+  case "$words[1]" in
+  configure)
+    _git-bug_bridge_configure
+    ;;
+  pull)
+    _git-bug_bridge_pull
+    ;;
+  rm)
+    _git-bug_bridge_rm
+    ;;
+  esac
+}
+
+function _git-bug_bridge_configure {
+  _arguments \
+    '(-n --name)'{-n,--name}'[A distinctive name to identify the bridge]:' \
+    '(-t --target)'{-t,--target}'[The target of the bridge. Valid values are [github,launchpad-preview]]:' \
+    '(-u --url)'{-u,--url}'[The URL of the target repository]:' \
+    '(-o --owner)'{-o,--owner}'[The owner of the target repository]:' \
+    '(-T --token)'{-T,--token}'[The authentication token for the API]:' \
+    '(-p --project)'{-p,--project}'[The name of the target repository]:'
+}
+
+function _git-bug_bridge_pull {
+  _arguments
+}
+
+function _git-bug_bridge_rm {
+  _arguments
+}
+
+function _git-bug_commands {
+  _arguments \
+    '(-p --pretty)'{-p,--pretty}'[Output the command description as well as Markdown compatible comment]'
+}
+
+
+function _git-bug_comment {
+  local -a commands
+
+  _arguments -C \
+    "1: :->cmnds" \
+    "*::arg:->args"
+
+  case $state in
+  cmnds)
+    commands=(
+      "add:Add a new comment to a bug."
+    )
+    _describe "command" commands
+    ;;
+  esac
+
+  case "$words[1]" in
+  add)
+    _git-bug_comment_add
+    ;;
+  esac
+}
+
+function _git-bug_comment_add {
+  _arguments \
+    '(-F --file)'{-F,--file}'[Take the message from the given file. Use - to read the message from the standard input]:' \
+    '(-m --message)'{-m,--message}'[Provide the new message from the command line]:'
+}
+
+function _git-bug_deselect {
+  _arguments
+}
+
+
+function _git-bug_label {
+  local -a commands
+
+  _arguments -C \
+    "1: :->cmnds" \
+    "*::arg:->args"
+
+  case $state in
+  cmnds)
+    commands=(
+      "add:Add a label to a bug."
+      "rm:Remove a label from a bug."
+    )
+    _describe "command" commands
+    ;;
+  esac
+
+  case "$words[1]" in
+  add)
+    _git-bug_label_add
+    ;;
+  rm)
+    _git-bug_label_rm
+    ;;
+  esac
+}
+
+function _git-bug_label_add {
+  _arguments
+}
+
+function _git-bug_label_rm {
+  _arguments
+}
+
+function _git-bug_ls {
+  _arguments \
+    '(*-s *--status)'{\*-s,\*--status}'[Filter by status. Valid values are [open,closed]]:' \
+    '(*-a *--author)'{\*-a,\*--author}'[Filter by author]:' \
+    '(*-p *--participant)'{\*-p,\*--participant}'[Filter by participant]:' \
+    '(*-A *--actor)'{\*-A,\*--actor}'[Filter by actor]:' \
+    '(*-l *--label)'{\*-l,\*--label}'[Filter by label]:' \
+    '(*-t *--title)'{\*-t,\*--title}'[Filter by title]:' \
+    '(*-n *--no)'{\*-n,\*--no}'[Filter by absence of something. Valid values are [label]]:' \
+    '(-b --by)'{-b,--by}'[Sort the results by a characteristic. Valid values are [id,creation,edit]]:' \
+    '(-d --direction)'{-d,--direction}'[Select the sorting direction. Valid values are [asc,desc]]:'
+}
+
+function _git-bug_ls-id {
+  _arguments
+}
+
+function _git-bug_ls-label {
+  _arguments
+}
+
+function _git-bug_pull {
+  _arguments
+}
+
+function _git-bug_push {
+  _arguments
+}
+
+function _git-bug_select {
+  _arguments
+}
+
+function _git-bug_show {
+  _arguments \
+    '(-f --field)'{-f,--field}'[Select field to display. Valid values are [author,authorEmail,createTime,humanId,id,labels,shortId,status,title,actors,participants]]:'
+}
+
+
+function _git-bug_status {
+  local -a commands
+
+  _arguments -C \
+    "1: :->cmnds" \
+    "*::arg:->args"
+
+  case $state in
+  cmnds)
+    commands=(
+      "close:Mark a bug as closed."
+      "open:Mark a bug as open."
+    )
+    _describe "command" commands
+    ;;
+  esac
+
+  case "$words[1]" in
+  close)
+    _git-bug_status_close
+    ;;
+  open)
+    _git-bug_status_open
+    ;;
+  esac
+}
+
+function _git-bug_status_close {
+  _arguments
+}
+
+function _git-bug_status_open {
+  _arguments
+}
+
+function _git-bug_termui {
+  _arguments
+}
+
+
+function _git-bug_title {
+  local -a commands
+
+  _arguments -C \
+    "1: :->cmnds" \
+    "*::arg:->args"
+
+  case $state in
+  cmnds)
+    commands=(
+      "edit:Edit a title of a bug."
+    )
+    _describe "command" commands
+    ;;
+  esac
+
+  case "$words[1]" in
+  edit)
+    _git-bug_title_edit
+    ;;
+  esac
+}
+
+function _git-bug_title_edit {
+  _arguments \
+    '(-t --title)'{-t,--title}'[Provide a title to describe the issue]:'
+}
+
+
+function _git-bug_user {
+  local -a commands
+
+  _arguments -C \
+    '(-f --field)'{-f,--field}'[Select field to display. Valid values are [email,humanId,id,lastModification,lastModificationLamport,login,metadata,name]]:' \
+    "1: :->cmnds" \
+    "*::arg:->args"
+
+  case $state in
+  cmnds)
+    commands=(
+      "adopt:Adopt an existing identity as your own."
+      "create:Create a new identity."
+      "ls:List identities."
+    )
+    _describe "command" commands
+    ;;
+  esac
+
+  case "$words[1]" in
+  adopt)
+    _git-bug_user_adopt
+    ;;
+  create)
+    _git-bug_user_create
+    ;;
+  ls)
+    _git-bug_user_ls
+    ;;
+  esac
+}
+
+function _git-bug_user_adopt {
+  _arguments
+}
+
+function _git-bug_user_create {
+  _arguments
+}
+
+function _git-bug_user_ls {
+  _arguments
+}
+
+function _git-bug_version {
+  _arguments \
+    '(-n --number)'{-n,--number}'[Only show the version number]' \
+    '(-c --commit)'{-c,--commit}'[Only show the commit hash]' \
+    '(-a --all)'{-a,--all}'[Show all version informations]'
+}
+
+function _git-bug_webui {
+  _arguments \
+    '--open[Automatically open the web UI in the default browser]' \
+    '--no-open[Prevent the automatic opening of the web UI in the default browser]' \
+    '(-p --port)'{-p,--port}'[Port to listen to (default is random)]:'
+}
+

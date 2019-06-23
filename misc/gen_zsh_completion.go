@@ -15,7 +15,7 @@ func main() {
 	cwd, _ := os.Getwd()
 	filepath := path.Join(cwd, "misc", "zsh_completion", "git-bug")
 
-	fmt.Println("Generating zsh completion file ...")
+	fmt.Println("Generating ZSH completion file ...")
 
 	err := commands.RootCmd.GenZshCompletionFile(filepath)
 	if err != nil {
