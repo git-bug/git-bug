@@ -29,6 +29,9 @@ type githubExporter struct {
 	// number of exported bugs
 	exportedBugs int
 
+	// number of exported labels
+	exportedLabels int
+
 	// export only bugs taged with one of these origins
 	onlyOrigins []string
 
@@ -146,6 +149,7 @@ bugLoop:
 		}
 	}
 
+	fmt.Printf("Successfully exported %d issues and %d labels to Github\n", ge.exportedBugs, ge.exportedLabels)
 	return nil
 }
 
@@ -272,10 +276,8 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time) error {
 				return errors.Wrap(err, "adding comment")
 			}
 
-			hash, err = opr.Hash()
-			if err != nil {
-				return errors.Wrap(err, "comment hash")
-			}
+			// cache comment id
+			ge.cachedIDs[hash.String()] = id
 
 		case *bug.EditCommentOperation:
 
@@ -311,20 +313,10 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time) error {
 				url = eurl
 			}
 
-			hash, err = opr.Hash()
-			if err != nil {
-				return errors.Wrap(err, "comment hash")
-			}
-
 		case *bug.SetStatusOperation:
 			opr := op.(*bug.SetStatusOperation)
 			if err := updateGithubIssueStatus(client, bugGithubID, opr.Status); err != nil {
 				return errors.Wrap(err, "editing status")
-			}
-
-			hash, err = opr.Hash()
-			if err != nil {
-				return errors.Wrap(err, "set status operation hash")
 			}
 
 			id = bugGithubID
@@ -336,11 +328,6 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time) error {
 				return errors.Wrap(err, "editing title")
 			}
 
-			hash, err = opr.Hash()
-			if err != nil {
-				return errors.Wrap(err, "set title operation hash")
-			}
-
 			id = bugGithubID
 			url = bugGithubURL
 
@@ -348,11 +335,6 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time) error {
 			opr := op.(*bug.LabelChangeOperation)
 			if err := ge.updateGithubIssueLabels(client, bugGithubID, opr.Added, opr.Removed); err != nil {
 				return errors.Wrap(err, "updating labels")
-			}
-
-			hash, err = opr.Hash()
-			if err != nil {
-				return errors.Wrap(err, "label change operation hash")
 			}
 
 			id = bugGithubID
@@ -367,6 +349,7 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time) error {
 			return errors.Wrap(err, "marking operation as exported")
 		}
 
+		// commit at each operation export to avoid exporting same events multiple times
 		if err := b.CommitAsNeeded(); err != nil {
 			return errors.Wrap(err, "bug commit")
 		}
@@ -451,7 +434,7 @@ func (ge *githubExporter) getGithubLabelID(gc *githubv4.Client, label string) (s
 	return q.Repository.Label.ID, nil
 }
 
-func (ge *githubExporter) createGithubLabel(gc *githubv4.Client, label, labelColor string) (string, error) {
+func (ge *githubExporter) createGithubLabel(label, labelColor string) (string, error) {
 	url := fmt.Sprintf("%s/repos/%s/%s/labels", githubV3Url, ge.conf[keyOwner], ge.conf[keyProject])
 
 	client := &http.Client{
@@ -538,11 +521,14 @@ func (ge *githubExporter) getOrCreateGithubLabelID(gc *githubv4.Client, reposito
 	hexColor := fmt.Sprintf("%.2x%.2x%.2x", rgba.R, rgba.G, rgba.B)
 
 	// create label and return id
-	labelID, err = ge.createGithubLabel(gc, string(label), hexColor)
+	// NOTE: since createLabel mutation is still in preview mode we use github api v4 to create labels
+	// see https://developer.github.com/v4/mutation/createlabel/ and https://developer.github.com/v4/previews/#labels-preview
+	labelID, err = ge.createGithubLabel(string(label), hexColor)
 	if err != nil {
 		return "", err
 	}
 
+	ge.exportedLabels++
 	return labelID, nil
 }
 

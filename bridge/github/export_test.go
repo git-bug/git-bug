@@ -22,48 +22,142 @@ const (
 	testRepoBaseName = "git-bug-test-github-exporter"
 )
 
-// testCases creates bugs in repo cache
-func testCases(repo *cache.RepoCache, identity *cache.IdentityCache) (map[string]*cache.BugCache, error) {
-	bugs := make(map[string]*cache.BugCache)
+type testCase struct {
+	name    string
+	bug     *cache.BugCache
+	numOrOp int // number of original operations
+}
 
+func testCases(repo *cache.RepoCache, identity *cache.IdentityCache) ([]*testCase, error) {
 	// simple bug
-	simpleBug, err := repo.NewBugRaw(identity, time.Now().Unix(), "simple bug", "new bug", nil, nil)
+	simpleBug, err := repo.NewBug("simple bug", "new bug")
 	if err != nil {
 		return nil, err
 	}
-	bugs["simple bug"] = simpleBug
 
-	/*
-		// bug with comments
-		bugWithComments, err := repo.NewBugRaw(author, time.Now().Unix(), "bug with comments", "new bug", nil, nil)
-		if err != nil {
-			return nil, err
-		}
+	// bug with comments
+	bugWithComments, err := repo.NewBug("bug with comments", "new bug")
+	if err != nil {
+		return nil, err
+	}
 
-		_, err = bugWithComments.AddCommentRaw(author, time.Now().Unix(), "new comment", nil, nil)
-		if err != nil {
-			return nil, err
-		}
-		bugs["bug with comments"] = bugWithComments
+	_, err = bugWithComments.AddComment("new comment")
+	if err != nil {
+		return nil, err
+	}
 
-		// bug with label changes
-		bugLabelChange, err := repo.NewBugRaw(author, time.Now().Unix(), "bug label change", "new bug", nil, nil)
-		if err != nil {
-			return nil, err
-		}
+	// bug with label changes
+	bugLabelChange, err := repo.NewBug("bug label change", "new bug")
+	if err != nil {
+		return nil, err
+	}
 
-		_, _, err = bugLabelChange.ChangeLabelsRaw(author, time.Now().Unix(), []string{"bug", "core"}, nil, nil)
-		if err != nil {
-			return nil, err
-		}
+	_, _, err = bugLabelChange.ChangeLabels([]string{"bug"}, nil)
+	if err != nil {
+		return nil, err
+	}
 
-		_, _, err = bugLabelChange.ChangeLabelsRaw(author, time.Now().Unix(), nil, []string{"bug"}, nil)
-		if err != nil {
-			return nil, err
-		}
-		bugs["bug change label"] = bugWithComments
-	*/
-	return nil, err
+	_, _, err = bugLabelChange.ChangeLabels([]string{"core"}, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	_, _, err = bugLabelChange.ChangeLabels(nil, []string{"bug"})
+	if err != nil {
+		return nil, err
+	}
+
+	// bug with comments editions
+	bugWithCommentEditions, err := repo.NewBug("bug with comments editions", "new bug")
+	if err != nil {
+		return nil, err
+	}
+
+	createOpHash, err := bugWithCommentEditions.Snapshot().Operations[0].Hash()
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = bugWithCommentEditions.EditComment(createOpHash, "first comment edited")
+	if err != nil {
+		return nil, err
+	}
+
+	commentOp, err := bugWithCommentEditions.AddComment("first comment")
+	if err != nil {
+		return nil, err
+	}
+
+	commentOpHash, err := commentOp.Hash()
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = bugWithCommentEditions.EditComment(commentOpHash, "first comment edited")
+	if err != nil {
+		return nil, err
+	}
+
+	// bug status changed
+	bugStatusChanged, err := repo.NewBug("bug status changed", "new bug")
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = bugStatusChanged.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = bugStatusChanged.Open()
+	if err != nil {
+		return nil, err
+	}
+
+	// bug title changed
+	bugTitleEdited, err := repo.NewBug("bug title edited", "new bug")
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = bugTitleEdited.SetTitle("bug title edited again")
+	if err != nil {
+		return nil, err
+	}
+
+	return []*testCase{
+		&testCase{
+			name:    "simple bug",
+			bug:     simpleBug,
+			numOrOp: 1,
+		},
+		&testCase{
+			name:    "bug with comments",
+			bug:     bugWithComments,
+			numOrOp: 2,
+		},
+		&testCase{
+			name:    "bug label change",
+			bug:     bugLabelChange,
+			numOrOp: 4,
+		},
+		&testCase{
+			name:    "bug with comment editions",
+			bug:     bugWithCommentEditions,
+			numOrOp: 4,
+		},
+		&testCase{
+			name:    "bug changed status",
+			bug:     bugStatusChanged,
+			numOrOp: 3,
+		},
+		&testCase{
+			name:    "bug title edited",
+			bug:     bugTitleEdited,
+			numOrOp: 2,
+		},
+	}, nil
+
 }
 
 func TestExporter(t *testing.T) {
@@ -79,7 +173,7 @@ func TestExporter(t *testing.T) {
 	backend, err := cache.NewRepoCache(repo)
 	require.NoError(t, err)
 
-	author, err := backend.NewIdentity("test identity", "hello@testidentity.org")
+	author, err := backend.NewIdentity("test identity", "test@test.org")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -99,20 +193,22 @@ func TestExporter(t *testing.T) {
 
 	// generate project name
 	projectName := generateRepoName()
-	fmt.Println("creating repo", projectName)
+
+	// create repository
 	if err := createRepository(projectName, token); err != nil {
 		t.Fatal(err)
 	}
+	fmt.Println("created repository", projectName)
 
-	//
-	//
+	// delete repository before ending tests
 	defer func(t *testing.T) {
-		fmt.Println("deleting repo", projectName)
 		if err := deleteRepository(projectName, user, token); err != nil {
 			t.Fatal(err)
 		}
+		fmt.Println("deleted repository:", projectName)
 	}(t)
 
+	// initialize exporter
 	exporter := &githubExporter{}
 	err = exporter.Init(core.Configuration{
 		keyOwner:   user,
@@ -123,13 +219,50 @@ func TestExporter(t *testing.T) {
 
 	start := time.Now()
 
+	// export all bugs
 	err = exporter.ExportAll(backend, time.Time{})
 	require.NoError(t, err)
 
 	fmt.Printf("test repository exported in %f seconds\n", time.Since(start).Seconds())
-	for name, tt := range tests {
-		t.Run(name, func(t *testing.T) {
-			fmt.Println(tt.Snapshot())
+
+	repoTwo := repository.CreateTestRepo(false)
+	defer repository.CleanupTestRepos(t, repoTwo)
+
+	// create a second backend
+	backendTwo, err := cache.NewRepoCache(repoTwo)
+	require.NoError(t, err)
+
+	importer := &githubImporter{}
+	err = importer.Init(core.Configuration{
+		keyOwner:   user,
+		keyProject: projectName,
+		keyToken:   token,
+	})
+	require.NoError(t, err)
+
+	// import all exported bugs to the second backend
+	err = importer.ImportAll(backendTwo, time.Time{})
+	require.NoError(t, err)
+
+	require.Len(t, backendTwo.AllBugsIds(), len(tests))
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// for each operation a SetMetadataOperation will be added
+			// so number of operations should double
+			require.Len(t, tt.bug.Snapshot().Operations, tt.numOrOp*2)
+
+			bugGithubID, ok := tt.bug.Snapshot().Operations[0].GetMetadata(keyGithubId)
+			require.True(t, ok)
+
+			importedBug, err := backendTwo.ResolveBugCreateMetadata(keyGithubId, bugGithubID)
+			require.NoError(t, err)
+
+			require.Len(t, importedBug.Snapshot().Operations, tt.numOrOp)
+
+			for _, _ = range importedBug.Snapshot().Operations {
+				// test operations or last bug state ?
+			}
 		})
 	}
 }
