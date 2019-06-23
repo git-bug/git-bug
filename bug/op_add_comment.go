@@ -136,6 +136,9 @@ type AddCommentTimelineItem struct {
 	CommentTimelineItem
 }
 
+// Sign post method for gqlgen
+func (a *AddCommentTimelineItem) IsAuthored() {}
+
 // Convenience function to apply the operation
 func AddComment(b Interface, author identity.Interface, unixTime int64, message string) (*AddCommentOperation, error) {
 	return AddCommentWithFiles(b, author, unixTime, message, nil)
@@ -149,6 +152,3 @@ func AddCommentWithFiles(b Interface, author identity.Interface, unixTime int64,
 	b.Append(addCommentOp)
 	return addCommentOp, nil
 }
-
-// Sign post method for gqlgen
-func (item *AddCommentTimelineItem) IsAuthored() {}

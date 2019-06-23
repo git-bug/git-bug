@@ -156,6 +156,9 @@ type CreateTimelineItem struct {
 	CommentTimelineItem
 }
 
+// Sign post method for gqlgen
+func (c *CreateTimelineItem) IsAuthored() {}
+
 // Convenience function to apply the operation
 func Create(author identity.Interface, unixTime int64, title, message string) (*Bug, *CreateOperation, error) {
 	return CreateWithFiles(author, unixTime, title, message, nil)
@@ -173,6 +176,3 @@ func CreateWithFiles(author identity.Interface, unixTime int64, title, message s
 
 	return newBug, createOp, nil
 }
-
-// Sign post method for gqlgen
-func (item *CreateTimelineItem) IsAuthored() {}

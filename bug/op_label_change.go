@@ -174,6 +174,9 @@ func (l LabelChangeTimelineItem) Hash() git.Hash {
 	return l.hash
 }
 
+// Sign post method for gqlgen
+func (l *LabelChangeTimelineItem) IsAuthored() {}
+
 // ChangeLabels is a convenience function to apply the operation
 func ChangeLabels(b Interface, author identity.Interface, unixTime int64, add, remove []string) ([]LabelChangeResult, *LabelChangeOperation, error) {
 	var added, removed []Label
@@ -303,6 +306,3 @@ func (l LabelChangeResult) String() string {
 		panic(fmt.Sprintf("unknown label change status %v", l.Status))
 	}
 }
-
-// Sign post method for gqlgen
-func (item *LabelChangeTimelineItem) IsAuthored() {}

@@ -124,6 +124,9 @@ func (s SetStatusTimelineItem) Hash() git.Hash {
 	return s.hash
 }
 
+// Sign post method for gqlgen
+func (s *SetStatusTimelineItem) IsAuthored() {}
+
 // Convenience function to apply the operation
 func Open(b Interface, author identity.Interface, unixTime int64) (*SetStatusOperation, error) {
 	op := NewSetStatusOp(author, unixTime, OpenStatus)
@@ -143,6 +146,3 @@ func Close(b Interface, author identity.Interface, unixTime int64) (*SetStatusOp
 	b.Append(op)
 	return op, nil
 }
-
-// Sign post method for gqlgen
-func (item *SetStatusTimelineItem) IsAuthored() {}
