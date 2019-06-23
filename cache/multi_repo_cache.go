@@ -54,7 +54,7 @@ func (c *MultiRepoCache) DefaultRepo() (*RepoCache, error) {
 	panic("unreachable")
 }
 
-// ResolveRepo retrieve a repository by name
+// ResolveRepo retrieve a repository with a reference
 func (c *MultiRepoCache) ResolveRepo(ref string) (*RepoCache, error) {
 	r, ok := c.repos[ref]
 	if !ok {

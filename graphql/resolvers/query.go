@@ -27,8 +27,8 @@ func (r rootQueryResolver) DefaultRepository(ctx context.Context) (*models.Repos
 	}, nil
 }
 
-func (r rootQueryResolver) Repository(ctx context.Context, id string) (*models.Repository, error) {
-	repo, err := r.cache.ResolveRepo(id)
+func (r rootQueryResolver) Repository(ctx context.Context, ref string) (*models.Repository, error) {
+	repo, err := r.cache.ResolveRepo(ref)
 
 	if err != nil {
 		return nil, err

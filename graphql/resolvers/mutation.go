@@ -15,9 +15,9 @@ type mutationResolver struct {
 	cache *cache.MultiRepoCache
 }
 
-func (r mutationResolver) getRepo(repoRef *string) (*cache.RepoCache, error) {
-	if repoRef != nil {
-		return r.cache.ResolveRepo(*repoRef)
+func (r mutationResolver) getRepo(ref *string) (*cache.RepoCache, error) {
+	if ref != nil {
+		return r.cache.ResolveRepo(*ref)
 	}
 
 	return r.cache.DefaultRepo()
