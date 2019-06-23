@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
+	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/interrupt"
@@ -162,9 +163,9 @@ func testCases(repo *cache.RepoCache, identity *cache.IdentityCache) ([]*testCas
 
 func TestExporter(t *testing.T) {
 	user := os.Getenv("TEST_USER")
-	token := os.Getenv("BOT_TOKEN")
+	token := os.Getenv("GITHUB_TOKEN_ADMIN")
 	if token == "" {
-		t.Skip("Env var GITHUB_TOKEN_PRIVATE missing")
+		t.Skip("Env var GITHUB_TOKEN_ADMIN missing")
 	}
 
 	repo := repository.CreateTestRepo(false)
@@ -252,6 +253,16 @@ func TestExporter(t *testing.T) {
 			// so number of operations should double
 			require.Len(t, tt.bug.Snapshot().Operations, tt.numOrOp*2)
 
+			for _, op := range tt.bug.Snapshot().Operations {
+				if _, ok := op.(*bug.SetMetadataOperation); !ok {
+					_, haveIDMetadata := op.GetMetadata(keyGithubId)
+					require.True(t, haveIDMetadata)
+
+					_, haveURLMetada := op.GetMetadata(keyGithubUrl)
+					require.True(t, haveURLMetada)
+				}
+			}
+
 			bugGithubID, ok := tt.bug.Snapshot().Operations[0].GetMetadata(keyGithubId)
 			require.True(t, ok)
 
@@ -259,6 +270,10 @@ func TestExporter(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Len(t, importedBug.Snapshot().Operations, tt.numOrOp)
+
+			issueOrigin, ok := importedBug.Snapshot().Operations[0].GetMetadata(keyOrigin)
+			require.True(t, ok)
+			require.Equal(t, issueOrigin, target)
 
 			for _, _ = range importedBug.Snapshot().Operations {
 				// test operations or last bug state ?
