@@ -37,11 +37,11 @@ func TestCache(t *testing.T) {
 	require.Len(t, cache.identities, 2)
 
 	// Create a bug
-	bug1, err := cache.NewBug("title", "message")
+	bug1, _, err := cache.NewBug("title", "message")
 	require.NoError(t, err)
 
 	// It's possible to create two identical bugs
-	bug2, err := cache.NewBug("title", "message")
+	bug2, _, err := cache.NewBug("title", "message")
 	require.NoError(t, err)
 
 	// two identical bugs yield a different id
@@ -125,7 +125,7 @@ func TestPushPull(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create a bug in A
-	_, err = cacheA.NewBug("bug1", "message")
+	_, _, err = cacheA.NewBug("bug1", "message")
 	require.NoError(t, err)
 
 	// A --> remote --> B
@@ -145,7 +145,7 @@ func TestPushPull(t *testing.T) {
 	require.NoError(t, err)
 
 	// B --> remote --> A
-	_, err = cacheB.NewBug("bug2", "message")
+	_, _, err = cacheB.NewBug("bug2", "message")
 	require.NoError(t, err)
 
 	_, err = cacheB.Push("origin")

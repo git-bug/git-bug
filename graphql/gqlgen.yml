@@ -49,3 +49,5 @@ models:
     model: github.com/MichaelMure/git-bug/bug.SetStatusTimelineItem
   SetTitleTimelineItem:
     model: github.com/MichaelMure/git-bug/bug.SetTitleTimelineItem
+  LabelChangeResult:
+    model: github.com/MichaelMure/git-bug/bug.LabelChangeResult

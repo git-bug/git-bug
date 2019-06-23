@@ -563,16 +563,16 @@ func (c *RepoCache) ValidLabels() []bug.Label {
 
 // NewBug create a new bug
 // The new bug is written in the repository (commit)
-func (c *RepoCache) NewBug(title string, message string) (*BugCache, error) {
+func (c *RepoCache) NewBug(title string, message string) (*BugCache, *bug.CreateOperation, error) {
 	return c.NewBugWithFiles(title, message, nil)
 }
 
 // NewBugWithFiles create a new bug with attached files for the message
 // The new bug is written in the repository (commit)
-func (c *RepoCache) NewBugWithFiles(title string, message string, files []git.Hash) (*BugCache, error) {
+func (c *RepoCache) NewBugWithFiles(title string, message string, files []git.Hash) (*BugCache, *bug.CreateOperation, error) {
 	author, err := c.GetUserIdentity()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	return c.NewBugRaw(author, time.Now().Unix(), title, message, files, nil)
@@ -581,10 +581,10 @@ func (c *RepoCache) NewBugWithFiles(title string, message string, files []git.Ha
 // NewBugWithFilesMeta create a new bug with attached files for the message, as
 // well as metadata for the Create operation.
 // The new bug is written in the repository (commit)
-func (c *RepoCache) NewBugRaw(author *IdentityCache, unixTime int64, title string, message string, files []git.Hash, metadata map[string]string) (*BugCache, error) {
+func (c *RepoCache) NewBugRaw(author *IdentityCache, unixTime int64, title string, message string, files []git.Hash, metadata map[string]string) (*BugCache, *bug.CreateOperation, error) {
 	b, op, err := bug.CreateWithFiles(author.Identity, unixTime, title, message, files)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	for key, value := range metadata {
@@ -593,11 +593,11 @@ func (c *RepoCache) NewBugRaw(author *IdentityCache, unixTime int64, title strin
 
 	err = b.Commit(c.repo)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if _, has := c.bugs[b.Id()]; has {
-		return nil, fmt.Errorf("bug %s already exist in the cache", b.Id())
+		return nil, nil, fmt.Errorf("bug %s already exist in the cache", b.Id())
 	}
 
 	cached := NewBugCache(c, b)
@@ -606,10 +606,10 @@ func (c *RepoCache) NewBugRaw(author *IdentityCache, unixTime int64, title strin
 	// force the write of the excerpt
 	err = c.bugUpdated(b.Id())
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return cached, nil
+	return cached, op, nil
 }
 
 // Fetch retrieve updates from a remote

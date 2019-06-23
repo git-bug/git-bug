@@ -1,0 +1,170 @@
+input NewBugInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """"The name of the repository. If not set, the default repository is used."""
+    repoRef: String
+    """The title of the new bug."""
+    title: String!
+    """The first message of the new bug."""
+    message: String!
+    """The collection of file's hash required for the first message."""
+    files: [Hash!]
+}
+
+type NewBugPayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The created bug."""
+    bug: Bug!
+    """The resulting operation."""
+    operation: CreateOperation!
+}
+
+input AddCommentInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """"The name of the repository. If not set, the default repository is used."""
+    repoRef: String
+    """The bug ID's prefix."""
+    prefix: String!
+    """The first message of the new bug."""
+    message: String!
+    """The collection of file's hash required for the first message."""
+    files: [Hash!]
+}
+
+type AddCommentPayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The affected bug."""
+    bug: Bug!
+    """The resulting operation."""
+    operation: AddCommentOperation!
+}
+
+input ChangeLabelInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """"The name of the repository. If not set, the default repository is used."""
+    repoRef: String
+    """The bug ID's prefix."""
+    prefix: String!
+    """The list of label to add."""
+    added: [String!]
+    """The list of label to remove."""
+    Removed: [String!]
+}
+
+enum LabelChangeStatus {
+    ADDED
+    REMOVED
+    DUPLICATE_IN_OP
+    ALREADY_EXIST
+    DOESNT_EXIST
+}
+
+type LabelChangeResult {
+    """The source label."""
+    label: Label!
+    """The effect this label had."""
+    status: LabelChangeStatus!
+}
+
+type ChangeLabelPayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The affected bug."""
+    bug: Bug!
+    """The resulting operation."""
+    operation: LabelChangeOperation!
+    """The effect each source label had."""
+    results: [LabelChangeResult]!
+}
+
+input OpenBugInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """"The name of the repository. If not set, the default repository is used."""
+    repoRef: String
+    """The bug ID's prefix."""
+    prefix: String!
+}
+
+type OpenBugPayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The affected bug."""
+    bug: Bug!
+    """The resulting operation."""
+    operation: SetStatusOperation!
+}
+
+input CloseBugInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """"The name of the repository. If not set, the default repository is used."""
+    repoRef: String
+    """The bug ID's prefix."""
+    prefix: String!
+}
+
+type CloseBugPayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The affected bug."""
+    bug: Bug!
+    """The resulting operation."""
+    operation: SetStatusOperation!
+}
+
+input SetTitleInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """"The name of the repository. If not set, the default repository is used."""
+    repoRef: String
+    """The bug ID's prefix."""
+    prefix: String!
+    """The new title."""
+    title: String!
+}
+
+type SetTitlePayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The affected bug."""
+    bug: Bug!
+    """The resulting operation"""
+    operation: SetTitleOperation!
+}
+
+input CommitInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """"The name of the repository. If not set, the default repository is used."""
+    repoRef: String
+    """The bug ID's prefix."""
+    prefix: String!
+}
+
+type CommitPayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The affected bug."""
+    bug: Bug!
+}
+
+input CommitAsNeededInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """"The name of the repository. If not set, the default repository is used."""
+    repoRef: String
+    """The bug ID's prefix."""
+    prefix: String!
+}
+
+type CommitAsNeededPayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The affected bug."""
+    bug: Bug!
+}

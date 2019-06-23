@@ -190,7 +190,7 @@ func newBugWithEditor(repo *cache.RepoCache) error {
 
 		return errTerminateMainloop
 	} else {
-		b, err = repo.NewBug(title, message)
+		b, _, err = repo.NewBug(title, message)
 		if err != nil {
 			return err
 		}

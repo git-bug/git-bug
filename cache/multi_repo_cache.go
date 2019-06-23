@@ -41,7 +41,7 @@ func (c *MultiRepoCache) RegisterDefaultRepository(repo repository.ClockedRepo) 
 	return nil
 }
 
-// ResolveRepo retrieve a repository by name
+// DefaultRepo retrieve the default repository
 func (c *MultiRepoCache) DefaultRepo() (*RepoCache, error) {
 	if len(c.repos) != 1 {
 		return nil, fmt.Errorf("repository is not unique")
@@ -54,7 +54,7 @@ func (c *MultiRepoCache) DefaultRepo() (*RepoCache, error) {
 	panic("unreachable")
 }
 
-// DefaultRepo retrieve the default repository
+// ResolveRepo retrieve a repository with a reference
 func (c *MultiRepoCache) ResolveRepo(ref string) (*RepoCache, error) {
 	r, ok := c.repos[ref]
 	if !ok {
