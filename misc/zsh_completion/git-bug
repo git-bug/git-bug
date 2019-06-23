@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 #compdef _git-bug git-bug
 
 
@@ -117,6 +116,7 @@ function _git-bug_bridge {
     commands=(
       "configure:Configure a new bridge."
       "pull:Pull updates."
+      "push:Push updates."
       "rm:Delete a configured bridge."
     )
     _describe "command" commands
@@ -129,6 +129,9 @@ function _git-bug_bridge {
     ;;
   pull)
     _git-bug_bridge_pull
+    ;;
+  push)
+    _git-bug_bridge_push
     ;;
   rm)
     _git-bug_bridge_rm
@@ -147,6 +150,10 @@ function _git-bug_bridge_configure {
 }
 
 function _git-bug_bridge_pull {
+  _arguments
+}
+
+function _git-bug_bridge_push {
   _arguments
 }
 
@@ -395,51 +402,3 @@ function _git-bug_webui {
     '(-p --port)'{-p,--port}'[Port to listen to (default is random)]:'
 }
 
-=======
-#compdef git-bug
-
-_arguments \
-  '1: :->level1' \
-  '2: :->level2' \
-  '3: :_files'
-case $state in
-  level1)
-    case $words[1] in
-      git-bug)
-        _arguments '1: :(add bridge commands comment deselect label ls ls-id ls-label pull push select show status termui title user version webui)'
-      ;;
-      *)
-        _arguments '*: :_files'
-      ;;
-    esac
-  ;;
-  level2)
-    case $words[2] in
-      bridge)
-        _arguments '2: :(configure pull push rm)'
-      ;;
-      comment)
-        _arguments '2: :(add)'
-      ;;
-      label)
-        _arguments '2: :(add rm)'
-      ;;
-      status)
-        _arguments '2: :(close open)'
-      ;;
-      title)
-        _arguments '2: :(edit)'
-      ;;
-      user)
-        _arguments '2: :(adopt create ls)'
-      ;;
-      *)
-        _arguments '*: :_files'
-      ;;
-    esac
-  ;;
-  *)
-    _arguments '*: :_files'
-  ;;
-esac
->>>>>>> 3daac46... update man docs and completion scripts
