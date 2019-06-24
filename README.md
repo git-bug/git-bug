@@ -142,6 +142,7 @@ Interested by how it works ? Have a look at the [data model](doc/model.md) and t
 
 - [Bash completion](misc/bash_completion)
 - [Zsh completion](misc/zsh_completion)
+- [PowerShell completion](misc/powershell_completion)
 - [ManPages](doc/man)
 
 ## Planned features
