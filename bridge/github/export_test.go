@@ -163,7 +163,7 @@ func testCases(repo *cache.RepoCache, identity *cache.IdentityCache) ([]*testCas
 
 func TestPushPull(t *testing.T) {
 	// repo owner
-	user := os.Getenv("TEST_USER")
+	user := os.Getenv("GITHUB_TEST_USER")
 
 	// token must have 'repo' and 'delete_repo' scopes
 	token := os.Getenv("GITHUB_TOKEN_ADMIN")
@@ -180,30 +180,24 @@ func TestPushPull(t *testing.T) {
 
 	// set author identity
 	author, err := backend.NewIdentity("test identity", "test@test.org")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	err = backend.SetUserIdentity(author)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
 
 	tests, err := testCases(backend, author)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	// generate project name
 	projectName := generateRepoName()
 
 	// create target Github repository
-	if err := createRepository(projectName, token); err != nil {
-		t.Fatal(err)
-	}
+	err = createRepository(projectName, token)
+	require.NoError(t, err)
+
 	fmt.Println("created repository", projectName)
 
 	// Make sure to remove the Github repository when the test end
@@ -230,7 +224,9 @@ func TestPushPull(t *testing.T) {
 	start := time.Now()
 
 	// export all bugs
-	err = exporter.ExportAll(backend, time.Time{})
+	for result := range exporter.ExportAll(backend, time.Time{}) {
+		require.NoError(t, result.Err)
+	}
 	require.NoError(t, err)
 
 	fmt.Printf("test repository exported in %f seconds\n", time.Since(start).Seconds())

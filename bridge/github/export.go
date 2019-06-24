@@ -26,13 +26,7 @@ var (
 type githubExporter struct {
 	conf core.Configuration
 
-	// number of exported bugs
-	exportedBugs int
-
-	// number of exported labels
-	exportedLabels int
-
-	// export only bugs taged with one of these origins
+	// export only bugs tagged with one of these origins
 	onlyOrigins []string
 
 	// cache identities clients
@@ -81,7 +75,7 @@ func (ge *githubExporter) allowOrigin(origin string) bool {
 }
 
 // getIdentityClient return an identity github api v4 client
-// if no client were found it will initilize it from the known tokens map and cache it for next use
+// if no client were found it will initialize it from the known tokens map and cache it for next use
 func (ge *githubExporter) getIdentityClient(id string) (*githubv4.Client, error) {
 	client, ok := ge.identityClient[id]
 	if ok {
@@ -103,60 +97,68 @@ func (ge *githubExporter) getIdentityClient(id string) (*githubv4.Client, error)
 }
 
 // ExportAll export all event made by the current user to Github
-func (ge *githubExporter) ExportAll(repo *cache.RepoCache, since time.Time) error {
-	user, err := repo.GetUserIdentity()
-	if err != nil {
-		return err
-	}
+func (ge *githubExporter) ExportAll(repo *cache.RepoCache, since time.Time) <-chan core.ExportResult {
+	out := make(chan core.ExportResult)
 
-	ge.identityToken[user.Id()] = ge.conf[keyToken]
+	go func(out chan<- core.ExportResult) {
+		defer close(out)
 
-	// get repository node id
-	ge.repositoryID, err = getRepositoryNodeID(
-		ge.conf[keyOwner],
-		ge.conf[keyProject],
-		ge.conf[keyToken],
-	)
-
-	if err != nil {
-		return err
-	}
-
-	allIdentitiesIds := []string{}
-	for id := range ge.identityToken {
-		allIdentitiesIds = append(allIdentitiesIds, id)
-	}
-
-	allBugsIds := repo.AllBugsIds()
-
-	for _, id := range allBugsIds {
-		b, err := repo.ResolveBug(id)
+		user, err := repo.GetUserIdentity()
 		if err != nil {
-			return err
+			out <- core.NewExportError(err, "")
+			return
 		}
 
-		snapshot := b.Snapshot()
+		ge.identityToken[user.Id()] = ge.conf[keyToken]
 
-		// ignore issues created before since date
-		if snapshot.CreatedAt.Before(since) {
-			continue
+		// get repository node id
+		ge.repositoryID, err = getRepositoryNodeID(
+			ge.conf[keyOwner],
+			ge.conf[keyProject],
+			ge.conf[keyToken],
+		)
+
+		if err != nil {
+			out <- core.NewExportError(err, ge.repositoryID)
+			return
 		}
 
-		if snapshot.HasAnyParticipant(allIdentitiesIds...) {
-			// try to export the bug and it associated events
-			if err := ge.exportBug(b, since); err != nil {
-				return err
+		var allIdentitiesIds []string
+		for id := range ge.identityToken {
+			allIdentitiesIds = append(allIdentitiesIds, id)
+		}
+
+		allBugsIds := repo.AllBugsIds()
+
+		for _, id := range allBugsIds {
+			b, err := repo.ResolveBug(id)
+			if err != nil {
+				out <- core.NewExportError(err, id)
+				return
+			}
+
+			snapshot := b.Snapshot()
+
+			// ignore issues created before since date
+			if snapshot.CreatedAt.Before(since) {
+				out <- core.NewExportNothing(b.Id(), "bug created before the since date")
+				continue
+			}
+
+			if snapshot.HasAnyActor(allIdentitiesIds...) {
+				// try to export the bug and it associated events
+				ge.exportBug(b, since, out)
+			} else {
+				out <- core.NewExportNothing(id, "not an actor")
 			}
 		}
+	}(out)
 
-	}
-
-	fmt.Printf("Successfully exported %d issues and %d labels to Github\n", ge.exportedBugs, ge.exportedLabels)
-	return nil
+	return out
 }
 
 // exportBug publish bugs and related events
-func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time) error {
+func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time, out chan<- core.ExportResult) {
 	snapshot := b.Snapshot()
 
 	var bugGithubID string
@@ -174,8 +176,8 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time) error {
 	// skip bug if origin is not allowed
 	origin, ok := createOp.GetMetadata(keyOrigin)
 	if ok && !ge.allowOrigin(origin) {
-		// TODO print a warn ?
-		return nil
+		out <- core.NewExportNothing(b.Id(), fmt.Sprintf("issue taged with origin: %s", origin))
+		return
 	}
 
 	// get github bug ID
@@ -187,6 +189,7 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time) error {
 			panic("expected to find github issue URL")
 		}
 
+		out <- core.NewExportNothing(b.Id(), "bug already exported")
 		// will be used to mark operation related to a bug as exported
 		bugGithubID = githubID
 		bugGithubURL = githubURL
@@ -197,33 +200,41 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time) error {
 		if err != nil {
 			// if bug is still not exported and we do not have the author stop the execution
 
-			fmt.Println("warning: skipping issue due to missing token for bug creator")
+			// fmt.Println("warning: skipping issue due to missing token for bug creator")
 			// this is not an error, don't export bug
-			return nil
+			out <- core.NewExportNothing(b.Id(), fmt.Sprintf("missing author token"))
+			return
 		}
 
 		// create bug
 		id, url, err := createGithubIssue(client, ge.repositoryID, createOp.Title, createOp.Message)
 		if err != nil {
-			return errors.Wrap(err, "exporting github issue")
+			err := errors.Wrap(err, "exporting github issue")
+			out <- core.NewExportError(err, b.Id())
+			return
 		}
 
-		// incr exported bugs
-		ge.exportedBugs++
+		out <- core.NewExportBug(b.Id())
 
 		hash, err := createOp.Hash()
 		if err != nil {
-			return errors.Wrap(err, "comment hash")
+			err := errors.Wrap(err, "comment hash")
+			out <- core.NewExportError(err, b.Id())
+			return
 		}
 
 		// mark bug creation operation as exported
 		if err := markOperationAsExported(b, hash, id, url); err != nil {
-			return errors.Wrap(err, "marking operation as exported")
+			err := errors.Wrap(err, "marking operation as exported")
+			out <- core.NewExportError(err, b.Id())
+			return
 		}
 
 		// commit operation to avoid creating multiple issues with multiple pushes
 		if err := b.CommitAsNeeded(); err != nil {
-			return errors.Wrap(err, "bug commit")
+			err := errors.Wrap(err, "bug commit")
+			out <- core.NewExportError(err, b.Id())
+			return
 		}
 
 		// cache bug github ID and URL
@@ -234,7 +245,8 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time) error {
 	// get createOp hash
 	hash, err := createOp.Hash()
 	if err != nil {
-		return err
+		out <- core.NewExportError(err, b.Id())
+		return
 	}
 
 	bugCreationHash = hash.String()
@@ -251,20 +263,23 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time) error {
 		// get operation hash
 		hash, err := op.Hash()
 		if err != nil {
-			return errors.Wrap(err, "operation hash")
+			err := errors.Wrap(err, "operation hash")
+			out <- core.NewExportError(err, b.Id())
+			return
 		}
 
 		// ignore imported (or exported) operations from github
 		// cache the ID of already exported or imported issues and events from Github
 		if id, ok := op.GetMetadata(keyGithubId); ok {
 			ge.cachedIDs[hash.String()] = id
+			out <- core.NewExportNothing(hash.String(), "already exported operation")
 			continue
 		}
 
 		opAuthor := op.GetAuthor()
 		client, err := ge.getIdentityClient(opAuthor.Id())
 		if err != nil {
-			// don't export operation
+			out <- core.NewExportNothing(hash.String(), "missing operation author token")
 			continue
 		}
 
@@ -276,8 +291,12 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time) error {
 			// send operation to github
 			id, url, err = addCommentGithubIssue(client, bugGithubID, opr.Message)
 			if err != nil {
-				return errors.Wrap(err, "adding comment")
+				err := errors.Wrap(err, "adding comment")
+				out <- core.NewExportError(err, b.Id())
+				return
 			}
+
+			out <- core.NewExportComment(hash.String())
 
 			// cache comment id
 			ge.cachedIDs[hash.String()] = id
@@ -292,8 +311,12 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time) error {
 
 				// case bug creation operation: we need to edit the Github issue
 				if err := updateGithubIssueBody(client, bugGithubID, opr.Message); err != nil {
-					return errors.Wrap(err, "editing issue")
+					err := errors.Wrap(err, "editing issue")
+					out <- core.NewExportError(err, b.Id())
+					return
 				}
+
+				out <- core.NewExportCommentEdition(hash.String())
 
 				id = bugGithubID
 				url = bugGithubURL
@@ -308,8 +331,12 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time) error {
 
 				eid, eurl, err := editCommentGithubIssue(client, commentID, opr.Message)
 				if err != nil {
-					return errors.Wrap(err, "editing comment")
+					err := errors.Wrap(err, "editing comment")
+					out <- core.NewExportError(err, b.Id())
+					return
 				}
+
+				out <- core.NewExportCommentEdition(hash.String())
 
 				// use comment id/url instead of issue id/url
 				id = eid
@@ -319,8 +346,12 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time) error {
 		case *bug.SetStatusOperation:
 			opr := op.(*bug.SetStatusOperation)
 			if err := updateGithubIssueStatus(client, bugGithubID, opr.Status); err != nil {
-				return errors.Wrap(err, "editing status")
+				err := errors.Wrap(err, "editing status")
+				out <- core.NewExportError(err, b.Id())
+				return
 			}
+
+			out <- core.NewExportStatusChange(hash.String())
 
 			id = bugGithubID
 			url = bugGithubURL
@@ -328,8 +359,12 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time) error {
 		case *bug.SetTitleOperation:
 			opr := op.(*bug.SetTitleOperation)
 			if err := updateGithubIssueTitle(client, bugGithubID, opr.Title); err != nil {
-				return errors.Wrap(err, "editing title")
+				err := errors.Wrap(err, "editing title")
+				out <- core.NewExportError(err, b.Id())
+				return
 			}
+
+			out <- core.NewExportTitleEdition(hash.String())
 
 			id = bugGithubID
 			url = bugGithubURL
@@ -337,8 +372,12 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time) error {
 		case *bug.LabelChangeOperation:
 			opr := op.(*bug.LabelChangeOperation)
 			if err := ge.updateGithubIssueLabels(client, bugGithubID, opr.Added, opr.Removed); err != nil {
-				return errors.Wrap(err, "updating labels")
+				err := errors.Wrap(err, "updating labels")
+				out <- core.NewExportError(err, b.Id())
+				return
 			}
+
+			out <- core.NewExportLabelChange(hash.String())
 
 			id = bugGithubID
 			url = bugGithubURL
@@ -349,16 +388,18 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time) error {
 
 		// mark operation as exported
 		if err := markOperationAsExported(b, hash, id, url); err != nil {
-			return errors.Wrap(err, "marking operation as exported")
+			err := errors.Wrap(err, "marking operation as exported")
+			out <- core.NewExportError(err, b.Id())
+			return
 		}
 
 		// commit at each operation export to avoid exporting same events multiple times
 		if err := b.CommitAsNeeded(); err != nil {
-			return errors.Wrap(err, "bug commit")
+			err := errors.Wrap(err, "bug commit")
+			out <- core.NewExportError(err, b.Id())
+			return
 		}
 	}
-
-	return nil
 }
 
 // getRepositoryNodeID request github api v3 to get repository node id
@@ -391,7 +432,10 @@ func getRepositoryNodeID(owner, project, token string) (string, error) {
 	}{}
 
 	data, _ := ioutil.ReadAll(resp.Body)
-	defer resp.Body.Close()
+	err = resp.Body.Close()
+	if err != nil {
+		return "", err
+	}
 
 	err = json.Unmarshal(data, &aux)
 	if err != nil {
@@ -534,7 +578,6 @@ func (ge *githubExporter) getOrCreateGithubLabelID(gc *githubv4.Client, reposito
 		return "", err
 	}
 
-	ge.exportedLabels++
 	return labelID, nil
 }
 

@@ -297,21 +297,21 @@ func (b *Bridge) ImportAll(since time.Time) error {
 	return importer.ImportAll(b.repo, since)
 }
 
-func (b *Bridge) ExportAll(since time.Time) error {
+func (b *Bridge) ExportAll(since time.Time) (<-chan ExportResult, error) {
 	exporter := b.getExporter()
 	if exporter == nil {
-		return ErrExportNotSupported
+		return nil, ErrExportNotSupported
 	}
 
 	err := b.ensureConfig()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = b.ensureInit()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return exporter.ExportAll(b.repo, since)
+	return exporter.ExportAll(b.repo, since), nil
 }

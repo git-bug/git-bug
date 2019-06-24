@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -32,9 +33,17 @@ func runBridgePush(cmd *cobra.Command, args []string) error {
 	}
 
 	// TODO: by default export only new events
-	err = b.ExportAll(time.Time{})
+	out, err := b.ExportAll(time.Time{})
 	if err != nil {
 		return err
+	}
+
+	for result := range out {
+		if result.Err != nil {
+			fmt.Println(result.Err, result.Reason)
+		} else {
+			fmt.Printf("%s: %s\n", result.String(), result.ID)
+		}
 	}
 
 	return nil
