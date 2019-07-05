@@ -28,9 +28,6 @@ var (
 type githubExporter struct {
 	conf core.Configuration
 
-	// export only bugs tagged with one of these origins
-	onlyOrigins []string
-
 	// cache identities clients
 	identityClient map[string]*githubv4.Client
 
@@ -57,23 +54,6 @@ func (ge *githubExporter) Init(conf core.Configuration) error {
 	ge.cachedOperationIDs = make(map[string]string)
 	ge.cachedLabels = make(map[string]string)
 	return nil
-}
-
-// allowOrigin verify that origin is allowed to get exported.
-// if the exporter was initialized with no specified origins, it will return
-// true for all origins
-func (ge *githubExporter) allowOrigin(origin string) bool {
-	if len(ge.onlyOrigins) == 0 {
-		return true
-	}
-
-	for _, o := range ge.onlyOrigins {
-		if origin == o {
-			return true
-		}
-	}
-
-	return false
 }
 
 // getIdentityClient return a githubv4 API client configured with the access token of the given identity.
@@ -175,20 +155,34 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time, out chan
 	author := snapshot.Author
 
 	// skip bug if origin is not allowed
-	origin, ok := createOp.GetMetadata(keyOrigin)
-	if ok && !ge.allowOrigin(origin) {
+	origin, ok := snapshot.GetCreateMetadata(keyOrigin)
+	if ok && origin != target {
 		out <- core.NewExportNothing(b.Id(), fmt.Sprintf("issue tagged with origin: %s", origin))
 		return
 	}
 
 	// get github bug ID
-	githubID, ok := createOp.GetMetadata(keyGithubId)
+	githubID, ok := snapshot.GetCreateMetadata(keyGithubId)
 	if ok {
-		githubURL, ok := createOp.GetMetadata(keyGithubUrl)
+		githubURL, ok := snapshot.GetCreateMetadata(keyGithubUrl)
 		if !ok {
 			// if we find github ID, github URL must be found too
 			err := fmt.Errorf("expected to find github issue URL")
 			out <- core.NewExportError(err, b.Id())
+		}
+
+		// extract owner and project
+		owner, project, err := splitURL(githubURL)
+		if err != nil {
+			err := fmt.Errorf("bad project url: %v", err)
+			out <- core.NewExportError(err, b.Id())
+			return
+		}
+
+		// ignore issue comming from other repositories
+		if owner != ge.conf[keyOwner] && project != ge.conf[keyProject] {
+			out <- core.NewExportNothing(b.Id(), fmt.Sprintf("skipping issue from url:%s", githubURL))
+			return
 		}
 
 		out <- core.NewExportNothing(b.Id(), "bug already exported")
