@@ -29,102 +29,66 @@ type testCase struct {
 	numOrOp int // number of original operations
 }
 
-func testCases(repo *cache.RepoCache, identity *cache.IdentityCache) ([]*testCase, error) {
+func testCases(t *testing.T, repo *cache.RepoCache, identity *cache.IdentityCache) []*testCase {
 	// simple bug
 	simpleBug, _, err := repo.NewBug("simple bug", "new bug")
-	if err != nil {
-		return nil, err
-	}
+	require.NoError(t, err)
 
 	// bug with comments
 	bugWithComments, _, err := repo.NewBug("bug with comments", "new bug")
-	if err != nil {
-		return nil, err
-	}
+	require.NoError(t, err)
 
 	_, err = bugWithComments.AddComment("new comment")
-	if err != nil {
-		return nil, err
-	}
+	require.NoError(t, err)
 
 	// bug with label changes
 	bugLabelChange, _, err := repo.NewBug("bug label change", "new bug")
-	if err != nil {
-		return nil, err
-	}
+	require.NoError(t, err)
 
 	_, _, err = bugLabelChange.ChangeLabels([]string{"bug"}, nil)
-	if err != nil {
-		return nil, err
-	}
+	require.NoError(t, err)
 
 	_, _, err = bugLabelChange.ChangeLabels([]string{"core"}, nil)
-	if err != nil {
-		return nil, err
-	}
+	require.NoError(t, err)
 
 	_, _, err = bugLabelChange.ChangeLabels(nil, []string{"bug"})
-	if err != nil {
-		return nil, err
-	}
+	require.NoError(t, err)
 
 	// bug with comments editions
 	bugWithCommentEditions, createOp, err := repo.NewBug("bug with comments editions", "new bug")
-	if err != nil {
-		return nil, err
-	}
+	require.NoError(t, err)
 
 	createOpHash, err := createOp.Hash()
-	if err != nil {
-		return nil, err
-	}
+	require.NoError(t, err)
 
 	_, err = bugWithCommentEditions.EditComment(createOpHash, "first comment edited")
-	if err != nil {
-		return nil, err
-	}
+	require.NoError(t, err)
 
 	commentOp, err := bugWithCommentEditions.AddComment("first comment")
-	if err != nil {
-		return nil, err
-	}
+	require.NoError(t, err)
 
 	commentOpHash, err := commentOp.Hash()
-	if err != nil {
-		return nil, err
-	}
+	require.NoError(t, err)
 
 	_, err = bugWithCommentEditions.EditComment(commentOpHash, "first comment edited")
-	if err != nil {
-		return nil, err
-	}
+	require.NoError(t, err)
 
 	// bug status changed
 	bugStatusChanged, _, err := repo.NewBug("bug status changed", "new bug")
-	if err != nil {
-		return nil, err
-	}
+	require.NoError(t, err)
 
 	_, err = bugStatusChanged.Close()
-	if err != nil {
-		return nil, err
-	}
+	require.NoError(t, err)
 
 	_, err = bugStatusChanged.Open()
-	if err != nil {
-		return nil, err
-	}
+	require.NoError(t, err)
 
 	// bug title changed
 	bugTitleEdited, _, err := repo.NewBug("bug title edited", "new bug")
-	if err != nil {
-		return nil, err
-	}
+	require.NoError(t, err)
 
 	_, err = bugTitleEdited.SetTitle("bug title edited again")
-	if err != nil {
-		return nil, err
-	}
+	require.NoError(t, err)
 
 	return []*testCase{
 		&testCase{
@@ -157,8 +121,7 @@ func testCases(repo *cache.RepoCache, identity *cache.IdentityCache) ([]*testCas
 			bug:     bugTitleEdited,
 			numOrOp: 2,
 		},
-	}, nil
-
+	}
 }
 
 func TestPushPull(t *testing.T) {
@@ -188,8 +151,7 @@ func TestPushPull(t *testing.T) {
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
 
-	tests, err := testCases(backend, author)
-	require.NoError(t, err)
+	tests := testCases(t, backend, author)
 
 	// generate project name
 	projectName := generateRepoName()
@@ -224,7 +186,10 @@ func TestPushPull(t *testing.T) {
 	start := time.Now()
 
 	// export all bugs
-	for result := range exporter.ExportAll(backend, time.Time{}) {
+	events, err := exporter.ExportAll(backend, time.Time{})
+	require.NoError(t, err)
+
+	for result := range events {
 		require.NoError(t, result.Err)
 	}
 	require.NoError(t, err)
@@ -258,7 +223,7 @@ func TestPushPull(t *testing.T) {
 			// so number of operations should double
 			require.Len(t, tt.bug.Snapshot().Operations, tt.numOrOp*2)
 
-			// verify operation have correcte metadata
+			// verify operation have correct metadata
 			for _, op := range tt.bug.Snapshot().Operations {
 				// Check if the originals operations (*not* SetMetadata) are tagged properly
 				if _, ok := op.(*bug.SetMetadataOperation); !ok {
@@ -274,7 +239,7 @@ func TestPushPull(t *testing.T) {
 			bugGithubID, ok := tt.bug.Snapshot().GetCreateMetadata(keyGithubId)
 			require.True(t, ok)
 
-			// retrive bug from backendTwo
+			// retrieve bug from backendTwo
 			importedBug, err := backendTwo.ResolveBugCreateMetadata(keyGithubId, bugGithubID)
 			require.NoError(t, err)
 

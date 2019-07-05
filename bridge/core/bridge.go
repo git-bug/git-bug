@@ -313,5 +313,5 @@ func (b *Bridge) ExportAll(since time.Time) (<-chan ExportResult, error) {
 		return nil, err
 	}
 
-	return exporter.ExportAll(b.repo, since), nil
+	return exporter.ExportAll(b.repo, since)
 }
