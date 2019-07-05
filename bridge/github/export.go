@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -671,7 +673,7 @@ func updateGithubIssueStatus(gc *githubv4.Client, id string, status bug.Status) 
 	case bug.OpenStatus:
 		state = githubv4.IssueStateOpen
 	case bug.ClosedStatus:
-		state = githubv4.IssueStateOpen
+		state = githubv4.IssueStateClosed
 	default:
 		panic("unknown bug state")
 	}
@@ -730,49 +732,70 @@ func updateGithubIssueTitle(gc *githubv4.Client, id, title string) error {
 
 // update github issue labels
 func (ge *githubExporter) updateGithubIssueLabels(gc *githubv4.Client, labelableID string, added, removed []bug.Label) error {
-	addedIDs, err := ge.getLabelsIDs(gc, labelableID, added)
-	if err != nil {
-		return errors.Wrap(err, "getting added labels ids")
-	}
-
-	m := &addLabelsToLabelableMutation{}
-	inputAdd := githubv4.AddLabelsToLabelableInput{
-		LabelableID: labelableID,
-		LabelIDs:    addedIDs,
-	}
+	var errs []string
+	var wg sync.WaitGroup
 
 	parentCtx := context.Background()
-	ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
 
-	// add labels
-	if err := gc.Mutate(ctx, m, inputAdd, nil); err != nil {
-		cancel()
-		return err
+	if len(added) > 0 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			addedIDs, err := ge.getLabelsIDs(gc, labelableID, added)
+			if err != nil {
+				errs = append(errs, errors.Wrap(err, "getting added labels ids").Error())
+				return
+			}
+
+			m := &addLabelsToLabelableMutation{}
+			inputAdd := githubv4.AddLabelsToLabelableInput{
+				LabelableID: labelableID,
+				LabelIDs:    addedIDs,
+			}
+
+			ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
+			defer cancel()
+
+			// add labels
+			if err := gc.Mutate(ctx, m, inputAdd, nil); err != nil {
+				errs = append(errs, err.Error())
+			}
+		}()
 	}
-	cancel()
 
-	if len(removed) == 0 {
+	if len(removed) > 0 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			removedIDs, err := ge.getLabelsIDs(gc, labelableID, removed)
+			if err != nil {
+				errs = append(errs, errors.Wrap(err, "getting added labels ids").Error())
+				return
+			}
+
+			m2 := &removeLabelsFromLabelableMutation{}
+			inputRemove := githubv4.RemoveLabelsFromLabelableInput{
+				LabelableID: labelableID,
+				LabelIDs:    removedIDs,
+			}
+
+			ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
+			defer cancel()
+
+			// remove label labels
+			if err := gc.Mutate(ctx, m2, inputRemove, nil); err != nil {
+				errs = append(errs, err.Error())
+			}
+		}()
+	}
+
+	wg.Wait()
+
+	if len(errs) == 0 {
 		return nil
 	}
 
-	removedIDs, err := ge.getLabelsIDs(gc, labelableID, removed)
-	if err != nil {
-		return errors.Wrap(err, "getting added labels ids")
-	}
-
-	m2 := &removeLabelsFromLabelableMutation{}
-	inputRemove := githubv4.RemoveLabelsFromLabelableInput{
-		LabelableID: labelableID,
-		LabelIDs:    removedIDs,
-	}
-
-	ctx, cancel = context.WithTimeout(parentCtx, defaultTimeout)
-	defer cancel()
-
-	// remove label labels
-	if err := gc.Mutate(ctx, m2, inputRemove, nil); err != nil {
-		return err
-	}
-
-	return nil
+	return fmt.Errorf("label change error: %v", strings.Join(errs, "\n"))
 }

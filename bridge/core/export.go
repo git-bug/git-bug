@@ -2,41 +2,41 @@ package core
 
 import "fmt"
 
-type EventStatus int
+type ExportEvent int
 
 const (
-	_ EventStatus = iota
-	EventStatusBug
-	EventStatusComment
-	EventStatusCommentEdition
-	EventStatusStatusChange
-	EventStatusTitleEdition
-	EventStatusLabelChange
-	EventStatusNothing
+	_ ExportEvent = iota
+	ExportEventBug
+	ExportEventComment
+	ExportEventCommentEdition
+	ExportEventStatusChange
+	ExportEventTitleEdition
+	ExportEventLabelChange
+	ExportEventNothing
 )
 
 type ExportResult struct {
 	Err    error
-	Event  EventStatus
+	Event  ExportEvent
 	ID     string
 	Reason string
 }
 
 func (er ExportResult) String() string {
 	switch er.Event {
-	case EventStatusBug:
+	case ExportEventBug:
 		return "new issue"
-	case EventStatusComment:
+	case ExportEventComment:
 		return "new comment"
-	case EventStatusCommentEdition:
+	case ExportEventCommentEdition:
 		return "updated comment"
-	case EventStatusStatusChange:
+	case ExportEventStatusChange:
 		return "changed status"
-	case EventStatusTitleEdition:
+	case ExportEventTitleEdition:
 		return "changed title"
-	case EventStatusLabelChange:
+	case ExportEventLabelChange:
 		return "changed label"
-	case EventStatusNothing:
+	case ExportEventNothing:
 		return fmt.Sprintf("no event: %v", er.Reason)
 	default:
 		panic("unknown export result")
@@ -54,48 +54,48 @@ func NewExportNothing(id string, reason string) ExportResult {
 	return ExportResult{
 		ID:     id,
 		Reason: reason,
-		Event:  EventStatusNothing,
+		Event:  ExportEventNothing,
 	}
 }
 
 func NewExportBug(id string) ExportResult {
 	return ExportResult{
 		ID:    id,
-		Event: EventStatusBug,
+		Event: ExportEventBug,
 	}
 }
 
 func NewExportComment(id string) ExportResult {
 	return ExportResult{
 		ID:    id,
-		Event: EventStatusComment,
+		Event: ExportEventComment,
 	}
 }
 
 func NewExportCommentEdition(id string) ExportResult {
 	return ExportResult{
 		ID:    id,
-		Event: EventStatusCommentEdition,
+		Event: ExportEventCommentEdition,
 	}
 }
 
 func NewExportStatusChange(id string) ExportResult {
 	return ExportResult{
 		ID:    id,
-		Event: EventStatusStatusChange,
+		Event: ExportEventStatusChange,
 	}
 }
 
 func NewExportLabelChange(id string) ExportResult {
 	return ExportResult{
 		ID:    id,
-		Event: EventStatusLabelChange,
+		Event: ExportEventLabelChange,
 	}
 }
 
 func NewExportTitleEdition(id string) ExportResult {
 	return ExportResult{
 		ID:    id,
-		Event: EventStatusTitleEdition,
+		Event: ExportEventTitleEdition,
 	}
 }
