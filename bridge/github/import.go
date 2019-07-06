@@ -505,7 +505,7 @@ func (gi *githubImporter) getGhost(repo *cache.RepoCache) (*cache.IdentityCache,
 		return nil, err
 	}
 
-	var q userQuery
+	var q ghostQuery
 
 	variables := map[string]interface{}{
 		"login": githubv4.String("ghost"),
@@ -529,7 +529,7 @@ func (gi *githubImporter) getGhost(repo *cache.RepoCache) (*cache.IdentityCache,
 
 	return repo.NewIdentityRaw(
 		name,
-		string(q.User.Email),
+		"",
 		string(q.User.Login),
 		string(q.User.AvatarUrl),
 		map[string]string{
