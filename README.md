@@ -156,7 +156,7 @@ Interested by how it works ? Have a look at the [data model](doc/model.md) and t
 ## Planned features
 
 - media embedding
-- exporter to github issue
+- more bridges
 - extendable data model to support arbitrary bug tracker
 - inflatable raptor
 
