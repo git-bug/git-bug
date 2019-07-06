@@ -2,7 +2,7 @@
 
 
 [[projects]]
-  digest = "1:36a35bcd0d31f5082578d975e0c23e5e14c98be262b3832fc2c30f35ca5fc776"
+  digest = "1:ecbcc5f2c6b45a565d5bdc316317671a308f56adb202e0f762d91e42aa9e2060"
   name = "github.com/99designs/gqlgen"
   packages = [
     "api",
@@ -19,11 +19,12 @@
     "plugin",
     "plugin/modelgen",
     "plugin/resolvergen",
+    "plugin/schemaconfig",
     "plugin/servergen",
   ]
   pruneopts = "UT"
-  revision = "ea4652d223c441dc77b31882781ce08488763d67"
-  version = "v0.9.0"
+  revision = "b128a29122e8ca8ada5f34cc18338fa7c10fc5b4"
+  version = "v0.9.1"
 
 [[projects]]
   branch = "master"
