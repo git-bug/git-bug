@@ -351,6 +351,26 @@ _git-bug_bridge_pull()
     noun_aliases=()
 }
 
+_git-bug_bridge_push()
+{
+    last_command="git-bug_bridge_push"
+
+    command_aliases=()
+
+    commands=()
+
+    flags=()
+    two_word_flags=()
+    local_nonpersistent_flags=()
+    flags_with_completion=()
+    flags_completion=()
+
+
+    must_have_one_flag=()
+    must_have_one_noun=()
+    noun_aliases=()
+}
+
 _git-bug_bridge_rm()
 {
     last_command="git-bug_bridge_rm"
@@ -380,6 +400,7 @@ _git-bug_bridge()
     commands=()
     commands+=("configure")
     commands+=("pull")
+    commands+=("push")
     commands+=("rm")
 
     flags=()

@@ -34,5 +34,5 @@ type Importer interface {
 
 type Exporter interface {
 	Init(conf Configuration) error
-	ExportAll(repo *cache.RepoCache, since time.Time) error
+	ExportAll(repo *cache.RepoCache, since time.Time) (<-chan ExportResult, error)
 }

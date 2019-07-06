@@ -160,11 +160,18 @@ type commentEditQuery struct {
 	} `graphql:"repository(owner: $owner, name: $name)"`
 }
 
-type userQuery struct {
+type ghostQuery struct {
 	User struct {
 		Login     githubv4.String
 		AvatarUrl githubv4.String
 		Name      *githubv4.String
-		Email     githubv4.String
 	} `graphql:"user(login: $login)"`
+}
+
+type labelQuery struct {
+	Repository struct {
+		Label struct {
+			ID string `graphql:"id"`
+		} `graphql:"label(name: $label)"`
+	} `graphql:"repository(owner: $owner, name: $name)"`
 }

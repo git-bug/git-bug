@@ -16,6 +16,7 @@ import (
 )
 
 const (
+	keyOrigin      = "origin"
 	keyGithubId    = "github-id"
 	keyGithubUrl   = "github-url"
 	keyGithubLogin = "github-login"
@@ -113,6 +114,7 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 				cleanText,
 				nil,
 				map[string]string{
+					keyOrigin:    target,
 					keyGithubId:  parseId(issue.Id),
 					keyGithubUrl: issue.Url.String(),
 				})
@@ -147,6 +149,7 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 					cleanText,
 					nil,
 					map[string]string{
+						keyOrigin:    target,
 						keyGithubId:  parseId(issue.Id),
 						keyGithubUrl: issue.Url.String(),
 					},
@@ -502,7 +505,7 @@ func (gi *githubImporter) getGhost(repo *cache.RepoCache) (*cache.IdentityCache,
 		return nil, err
 	}
 
-	var q userQuery
+	var q ghostQuery
 
 	variables := map[string]interface{}{
 		"login": githubv4.String("ghost"),
@@ -510,7 +513,11 @@ func (gi *githubImporter) getGhost(repo *cache.RepoCache) (*cache.IdentityCache,
 
 	gc := buildClient(gi.conf[keyToken])
 
-	err = gc.Query(context.TODO(), &q, variables)
+	parentCtx := context.Background()
+	ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
+	defer cancel()
+
+	err = gc.Query(ctx, &q, variables)
 	if err != nil {
 		return nil, err
 	}
@@ -522,7 +529,7 @@ func (gi *githubImporter) getGhost(repo *cache.RepoCache) (*cache.IdentityCache,
 
 	return repo.NewIdentityRaw(
 		name,
-		string(q.User.Email),
+		"",
 		string(q.User.Login),
 		string(q.User.AvatarUrl),
 		map[string]string{

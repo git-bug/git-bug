@@ -50,6 +50,7 @@ Register-ArgumentCompleter -Native -CommandName 'git-bug' -ScriptBlock {
         'git-bug;bridge' {
             [CompletionResult]::new('configure', 'configure', [CompletionResultType]::ParameterValue, 'Configure a new bridge.')
             [CompletionResult]::new('pull', 'pull', [CompletionResultType]::ParameterValue, 'Pull updates.')
+            [CompletionResult]::new('push', 'push', [CompletionResultType]::ParameterValue, 'Push updates.')
             [CompletionResult]::new('rm', 'rm', [CompletionResultType]::ParameterValue, 'Delete a configured bridge.')
             break
         }
@@ -69,6 +70,9 @@ Register-ArgumentCompleter -Native -CommandName 'git-bug' -ScriptBlock {
             break
         }
         'git-bug;bridge;pull' {
+            break
+        }
+        'git-bug;bridge;push' {
             break
         }
         'git-bug;bridge;rm' {

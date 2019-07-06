@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -11,7 +12,7 @@ import (
 	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
-func runBridgePull(cmd *cobra.Command, args []string) error {
+func runBridgePush(cmd *cobra.Command, args []string) error {
 	backend, err := cache.NewRepoCache(repo)
 	if err != nil {
 		return err
@@ -31,23 +32,31 @@ func runBridgePull(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// TODO: by default import only new events
-	err = b.ImportAll(time.Time{})
+	// TODO: by default export only new events
+	out, err := b.ExportAll(time.Time{})
 	if err != nil {
 		return err
+	}
+
+	for result := range out {
+		if result.Err != nil {
+			fmt.Println(result.Err, result.Reason)
+		} else {
+			fmt.Printf("%s: %s\n", result.String(), result.ID)
+		}
 	}
 
 	return nil
 }
 
-var bridgePullCmd = &cobra.Command{
-	Use:     "pull [<name>]",
-	Short:   "Pull updates.",
+var bridgePushCmd = &cobra.Command{
+	Use:     "push [<name>]",
+	Short:   "Push updates.",
 	PreRunE: loadRepo,
-	RunE:    runBridgePull,
+	RunE:    runBridgePush,
 	Args:    cobra.MaximumNArgs(1),
 }
 
 func init() {
-	bridgeCmd.AddCommand(bridgePullCmd)
+	bridgeCmd.AddCommand(bridgePushCmd)
 }

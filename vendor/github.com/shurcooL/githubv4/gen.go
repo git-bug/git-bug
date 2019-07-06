@@ -86,12 +86,12 @@ package githubv4
 
 
 {{- define "enum" -}}
-// {{.name}} {{.description | endSentence}}
+// {{.name}} {{.description | clean | endSentence}}
 type {{.name}} string
 
-// {{.description | fullSentence}}
+// {{.description | clean | fullSentence}}
 const ({{range .enumValues}}
-	{{$.name}}{{.name | enumIdentifier}} {{$.name}} = {{.name | quote}} // {{.description | fullSentence}}{{end}}
+	{{$.name}}{{.name | enumIdentifier}} {{$.name}} = {{.name | quote}} // {{.description | clean | fullSentence}}{{end}}
 )
 {{- end -}}
 `),
@@ -110,12 +110,12 @@ type Input interface{}
 
 
 {{- define "inputObject" -}}
-// {{.name}} {{.description | endSentence}}
+// {{.name}} {{.description | clean | endSentence}}
 type {{.name}} struct {{"{"}}{{range .inputFields}}{{if eq .type.kind "NON_NULL"}}
-	// {{.description | fullSentence}} (Required.)
+	// {{.description | clean | fullSentence}} (Required.)
 	{{.name | identifier}} {{.type | type}} ` + "`" + `json:"{{.name}}"` + "`" + `{{end}}{{end}}
 {{range .inputFields}}{{if ne .type.kind "NON_NULL"}}
-	// {{.description | fullSentence}} (Optional.)
+	// {{.description | clean | fullSentence}} (Optional.)
 	{{.name | identifier}} {{.type | type}} ` + "`" + `json:"{{.name}},omitempty"` + "`" + `{{end}}{{end}}
 }
 {{- end -}}
@@ -167,6 +167,7 @@ func t(text string) *template.Template {
 		"identifier":     func(name string) string { return ident.ParseLowerCamelCase(name).ToMixedCaps() },
 		"enumIdentifier": func(name string) string { return ident.ParseScreamingSnakeCase(name).ToMixedCaps() },
 		"type":           typeString,
+		"clean":          func(s string) string { return strings.Join(strings.Fields(s), " ") },
 		"endSentence": func(s string) string {
 			s = strings.ToLower(s[0:1]) + s[1:]
 			switch {

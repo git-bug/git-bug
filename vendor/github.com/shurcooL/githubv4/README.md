@@ -48,7 +48,7 @@ func main() {
 
 ### Simple Query
 
-To make a query, you need to define a Go type that corresponds to the GitHub GraphQL schema, and contains the fields you're interested in querying. You can look up the GitHub GraphQL schema at https://developer.github.com/v4/reference/query/.
+To make a query, you need to define a Go type that corresponds to the GitHub GraphQL schema, and contains the fields you're interested in querying. You can look up the GitHub GraphQL schema at https://developer.github.com/v4/query/.
 
 For example, to make the following GraphQL query:
 
@@ -89,7 +89,7 @@ fmt.Println("CreatedAt:", query.Viewer.CreatedAt)
 
 ### Scalar Types
 
-For each scalar in the GitHub GraphQL schema listed at https://developer.github.com/v4/reference/scalar/, there is a corresponding Go type in package `githubv4`.
+For each scalar in the GitHub GraphQL schema listed at https://developer.github.com/v4/scalar/, there is a corresponding Go type in package `githubv4`.
 
 You can use these types when writing queries:
 
@@ -127,7 +127,7 @@ var query struct {
 // Call client.Query() and use results in query...
 ```
 
-The [`DateTime`](https://developer.github.com/v4/reference/scalar/datetime/) scalar is described as "an ISO-8601 encoded UTC date string". If you wanted to fetch in that form without parsing it into a `time.Time`, you can use the `string` type. For example, this would work:
+The [`DateTime`](https://developer.github.com/v4/scalar/datetime/) scalar is described as "an ISO-8601 encoded UTC date string". If you wanted to fetch in that form without parsing it into a `time.Time`, you can use the `string` type. For example, this would work:
 
 ```Go
 // import "html/template"
@@ -336,7 +336,7 @@ for {
 }
 ```
 
-There is more than one way to perform pagination. Consider additional fields inside [`PageInfo`](https://developer.github.com/v4/reference/object/pageinfo/) object.
+There is more than one way to perform pagination. Consider additional fields inside [`PageInfo`](https://developer.github.com/v4/object/pageinfo/) object.
 
 ### Mutations
 

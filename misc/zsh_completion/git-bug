@@ -116,6 +116,7 @@ function _git-bug_bridge {
     commands=(
       "configure:Configure a new bridge."
       "pull:Pull updates."
+      "push:Push updates."
       "rm:Delete a configured bridge."
     )
     _describe "command" commands
@@ -128,6 +129,9 @@ function _git-bug_bridge {
     ;;
   pull)
     _git-bug_bridge_pull
+    ;;
+  push)
+    _git-bug_bridge_push
     ;;
   rm)
     _git-bug_bridge_rm
@@ -146,6 +150,10 @@ function _git-bug_bridge_configure {
 }
 
 function _git-bug_bridge_pull {
+  _arguments
+}
+
+function _git-bug_bridge_push {
   _arguments
 }
 

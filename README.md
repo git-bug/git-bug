@@ -116,23 +116,31 @@ The web UI interact with the backend through a GraphQL API. The schema is availa
 
 ### Importer implementations
 
-|                                                 | Github             | Launchpad          |
-| ----------------------------------------------- | :----------------: | :----------------: |
-| **incremental**<br/>(can import more than once) | :heavy_check_mark: | :x:                |
-| **with resume**<br/>(download only new data)    | :x:                | :x:                |
-| **identities**                                  | :heavy_check_mark: | :heavy_check_mark: |
-| identities update                               | :x:                | :x:                |
-| **bug**                                         | :heavy_check_mark: | :heavy_check_mark: |
-| comments                                        | :heavy_check_mark: | :heavy_check_mark: |
-| comment editions                                | :heavy_check_mark: | :x:                |
-| labels                                          | :heavy_check_mark: | :x:                |
-| status                                          | :heavy_check_mark: | :x:                |
-| title edition                                   | :heavy_check_mark: | :x:                |
-| **automated test suite**                        | :x:                | :x:                |
+| | Github | Launchpad |
+| --- | --- | --- |
+| **incremental**<br/>(can import more than once) | :heavy_check_mark: | :x: |
+| **with resume**<br/>(download only new data) | :x: | :x: |
+| **identities** | :heavy_check_mark: | :heavy_check_mark: |
+| identities update | :x: | :x: |
+| **bug** | :heavy_check_mark: | :heavy_check_mark: |
+| comments | :heavy_check_mark: | :heavy_check_mark: |
+| comment editions | :heavy_check_mark: | :x: |
+| labels | :heavy_check_mark: | :x: |
+| status | :heavy_check_mark: | :x: |
+| title edition | :heavy_check_mark: | :x: |
+| **automated test suite** | :heavy_check_mark: | :x: |
 
 ### Exporter implementations
 
-Todo !
+| | Github | Launchpad |
+| --- | --- | --- |
+| **bug** | :heavy_check_mark: | :x: |
+| comments | :heavy_check_mark: | :x: |
+| comment editions | :heavy_check_mark: | :x: |
+| labels | :heavy_check_mark: | :x: |
+| status | :heavy_check_mark: | :x: |
+| title edition | :heavy_check_mark: | :x: |
+| **automated test suite** | :heavy_check_mark: | :x: |
 
 ## Internals
 
