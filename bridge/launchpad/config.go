@@ -19,7 +19,6 @@ var ErrBadProjectURL = errors.New("bad Launchpad project URL")
 const (
 	target         = "launchpad-preview"
 	keyProject     = "project"
-	keyTarget      = "target"
 	defaultTimeout = 60 * time.Second
 )
 
@@ -63,7 +62,7 @@ func (*Launchpad) Configure(repo repository.RepoCommon, params core.BridgeParams
 	}
 
 	conf[keyProject] = project
-	conf[keyTarget] = target
+	conf[core.KeyTarget] = target
 	return conf, nil
 }
 
@@ -72,8 +71,8 @@ func (*Launchpad) ValidateConfig(conf core.Configuration) error {
 		return fmt.Errorf("missing %s key", keyProject)
 	}
 
-	if _, ok := conf[keyTarget]; !ok {
-		return fmt.Errorf("missing %s key", keyTarget)
+	if _, ok := conf[core.KeyTarget]; !ok {
+		return fmt.Errorf("missing %s key", core.KeyTarget)
 	}
 
 	return nil
