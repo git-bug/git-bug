@@ -67,3 +67,7 @@
 [[override]]
   name = "golang.org/x/tools"
   revision = "7e5bf9270d7061560865b8847c378236480f47e3"
+
+[[constraint]]
+  name = "github.com/blang/semver"
+  version = "3.6.1"
