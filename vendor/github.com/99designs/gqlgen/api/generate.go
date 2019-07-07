@@ -8,6 +8,7 @@ import (
 	"github.com/99designs/gqlgen/plugin"
 	"github.com/99designs/gqlgen/plugin/modelgen"
 	"github.com/99designs/gqlgen/plugin/resolvergen"
+	"github.com/99designs/gqlgen/plugin/schemaconfig"
 	"github.com/pkg/errors"
 	"golang.org/x/tools/go/packages"
 )
@@ -17,6 +18,7 @@ func Generate(cfg *config.Config, option ...Option) error {
 	_ = syscall.Unlink(cfg.Model.Filename)
 
 	plugins := []plugin.Plugin{
+		schemaconfig.New(),
 		modelgen.New(),
 		resolvergen.New(),
 	}

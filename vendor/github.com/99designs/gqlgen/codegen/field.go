@@ -284,7 +284,28 @@ func (b *builder) findBindStructTarget(strukt *types.Struct, name string) (types
 }
 
 func (f *Field) HasDirectives() bool {
-	return len(f.Directives) > 0
+	return len(f.ImplDirectives()) > 0
+}
+
+func (f *Field) DirectiveObjName() string {
+	if f.Object.Root {
+		return "nil"
+	}
+	return f.GoReceiverName
+}
+
+func (f *Field) ImplDirectives() []*Directive {
+	var d []*Directive
+	loc := ast.LocationFieldDefinition
+	if f.Object.IsInputType() {
+		loc = ast.LocationInputFieldDefinition
+	}
+	for i := range f.Directives {
+		if !f.Directives[i].Builtin && f.Directives[i].IsLocation(loc) {
+			d = append(d, f.Directives[i])
+		}
+	}
+	return d
 }
 
 func (f *Field) IsReserved() bool {

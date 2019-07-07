@@ -20,18 +20,18 @@ type {{.ResolverType}} struct {}
 {{ range $object := .Objects -}}
 	{{- if $object.HasResolvers -}}
 		func (r *{{$.ResolverType}}) {{$object.Name}}() {{ $object.ResolverInterface | ref }} {
-			return &{{lcFirst $object.Name}}Resolver{r}
+			return &{{lcFirst $object.Name}}{{ucFirst $.ResolverType}}{r}
 		}
 	{{ end -}}
 {{ end }}
 
 {{ range $object := .Objects -}}
 	{{- if $object.HasResolvers -}}
-		type {{lcFirst $object.Name}}Resolver struct { *Resolver }
+		type {{lcFirst $object.Name}}{{ucFirst $.ResolverType}} struct { *{{$.ResolverType}} }
 
 		{{ range $field := $object.Fields -}}
 			{{- if $field.IsResolver -}}
-			func (r *{{lcFirst $object.Name}}Resolver) {{$field.GoFieldName}}{{ $field.ShortResolverDeclaration }} {
+			func (r *{{lcFirst $object.Name}}{{ucFirst $.ResolverType}}) {{$field.GoFieldName}}{{ $field.ShortResolverDeclaration }} {
 				panic("not implemented")
 			}
 			{{ end -}}

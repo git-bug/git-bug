@@ -6,8 +6,11 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
+
+	"golang.org/x/tools/go/packages"
 
 	"github.com/99designs/gqlgen/internal/code"
 	"github.com/pkg/errors"
@@ -17,12 +20,14 @@ import (
 )
 
 type Config struct {
-	SchemaFilename StringList    `yaml:"schema,omitempty"`
-	Exec           PackageConfig `yaml:"exec"`
-	Model          PackageConfig `yaml:"model"`
-	Resolver       PackageConfig `yaml:"resolver,omitempty"`
-	Models         TypeMap       `yaml:"models,omitempty"`
-	StructTag      string        `yaml:"struct_tag,omitempty"`
+	SchemaFilename StringList                 `yaml:"schema,omitempty"`
+	Exec           PackageConfig              `yaml:"exec"`
+	Model          PackageConfig              `yaml:"model"`
+	Resolver       PackageConfig              `yaml:"resolver,omitempty"`
+	AutoBind       []string                   `yaml:"autobind"`
+	Models         TypeMap                    `yaml:"models,omitempty"`
+	StructTag      string                     `yaml:"struct_tag,omitempty"`
+	Directives     map[string]DirectiveConfig `yaml:"directives,omitempty"`
 }
 
 var cfgFilenames = []string{".gqlgen.yml", "gqlgen.yml", "gqlgen.yaml"}
@@ -33,6 +38,17 @@ func DefaultConfig() *Config {
 		SchemaFilename: StringList{"schema.graphql"},
 		Model:          PackageConfig{Filename: "models_gen.go"},
 		Exec:           PackageConfig{Filename: "generated.go"},
+		Directives: map[string]DirectiveConfig{
+			"skip": {
+				SkipRuntime: true,
+			},
+			"include": {
+				SkipRuntime: true,
+			},
+			"deprecated": {
+				SkipRuntime: true,
+			},
+		},
 	}
 }
 
@@ -51,6 +67,13 @@ func LoadConfigFromDefaultLocations() (*Config, error) {
 	return LoadConfig(cfgFile)
 }
 
+var path2regex = strings.NewReplacer(
+	`.`, `\.`,
+	`*`, `.+`,
+	`\`, `[\\/]`,
+	`/`, `[\\/]`,
+)
+
 // LoadConfig reads the gqlgen.yml config file
 func LoadConfig(filename string) (*Config, error) {
 	config := DefaultConfig()
@@ -67,9 +90,35 @@ func LoadConfig(filename string) (*Config, error) {
 	preGlobbing := config.SchemaFilename
 	config.SchemaFilename = StringList{}
 	for _, f := range preGlobbing {
-		matches, err := filepath.Glob(f)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to glob schema filename %s", f)
+		var matches []string
+
+		// for ** we want to override default globbing patterns and walk all
+		// subdirectories to match schema files.
+		if strings.Contains(f, "**") {
+			pathParts := strings.SplitN(f, "**", 2)
+			rest := strings.TrimPrefix(strings.TrimPrefix(pathParts[1], `\`), `/`)
+			// turn the rest of the glob into a regex, anchored only at the end because ** allows
+			// for any number of dirs in between and walk will let us match against the full path name
+			globRe := regexp.MustCompile(path2regex.Replace(rest) + `$`)
+
+			if err := filepath.Walk(pathParts[0], func(path string, info os.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+
+				if globRe.MatchString(strings.TrimPrefix(path, pathParts[0])) {
+					matches = append(matches, path)
+				}
+
+				return nil
+			}); err != nil {
+				return nil, errors.Wrapf(err, "failed to walk schema at root %s", pathParts[0])
+			}
+		} else {
+			matches, err = filepath.Glob(f)
+			if err != nil {
+				return nil, errors.Wrapf(err, "failed to glob schema filename %s", f)
+			}
 		}
 
 		for _, m := range matches {
@@ -265,6 +314,10 @@ func (tm TypeMap) Add(Name string, goType string) {
 	tm[Name] = modelCfg
 }
 
+type DirectiveConfig struct {
+	SkipRuntime bool `yaml:"skip_runtime"`
+}
+
 func inStrSlice(haystack []string, needle string) bool {
 	for _, v := range haystack {
 		if needle == v {
@@ -324,6 +377,31 @@ func (c *Config) normalize() error {
 
 	if c.Models == nil {
 		c.Models = TypeMap{}
+	}
+
+	return nil
+}
+
+func (c *Config) Autobind(s *ast.Schema) error {
+	if len(c.AutoBind) == 0 {
+		return nil
+	}
+	ps, err := packages.Load(&packages.Config{Mode: packages.LoadTypes}, c.AutoBind...)
+	if err != nil {
+		return err
+	}
+
+	for _, t := range s.Types {
+		if c.Models.UserDefined(t.Name) {
+			continue
+		}
+
+		for _, p := range ps {
+			if t := p.Types.Scope().Lookup(t.Name); t != nil {
+				c.Models.Add(t.Name(), t.Pkg().Path()+"."+t.Name())
+				break
+			}
+		}
 	}
 
 	return nil

@@ -14,7 +14,7 @@ import (
 
 // Binder connects graphql types to golang types using static analysis
 type Binder struct {
-	pkgs       []*packages.Package
+	pkgs       map[string]*packages.Package
 	schema     *ast.Schema
 	cfg        *Config
 	References []*TypeReference
@@ -26,7 +26,9 @@ func (c *Config) NewBinder(s *ast.Schema) (*Binder, error) {
 		return nil, err
 	}
 
+	mp := map[string]*packages.Package{}
 	for _, p := range pkgs {
+		populatePkg(mp, p)
 		for _, e := range p.Errors {
 			if e.Kind == packages.ListError {
 				return nil, p.Errors[0]
@@ -35,10 +37,21 @@ func (c *Config) NewBinder(s *ast.Schema) (*Binder, error) {
 	}
 
 	return &Binder{
-		pkgs:   pkgs,
+		pkgs:   mp,
 		schema: s,
 		cfg:    c,
 	}, nil
+}
+
+func populatePkg(mp map[string]*packages.Package, p *packages.Package) {
+	imp := code.NormalizeVendor(p.PkgPath)
+	if _, ok := mp[imp]; ok {
+		return
+	}
+	mp[imp] = p
+	for _, p := range p.Imports {
+		populatePkg(mp, p)
+	}
 }
 
 func (b *Binder) TypePosition(typ types.Type) token.Position {
@@ -75,10 +88,9 @@ func (b *Binder) FindType(pkgName string, typeName string) (types.Type, error) {
 }
 
 func (b *Binder) getPkg(find string) *packages.Package {
-	for _, p := range b.pkgs {
-		if code.NormalizeVendor(find) == code.NormalizeVendor(p.PkgPath) {
-			return p
-		}
+	imp := code.NormalizeVendor(find)
+	if p, ok := b.pkgs[imp]; ok {
+		return p
 	}
 	return nil
 }

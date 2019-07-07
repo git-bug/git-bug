@@ -19,6 +19,7 @@ type Plugin struct{}
 var _ plugin.CodeGenerator = &Plugin{}
 
 func (m *Plugin) Name() string {
+	// TODO: typo, should be resolvergen
 	return "resovlergen"
 }
 func (m *Plugin) GenerateCode(data *codegen.Data) error {

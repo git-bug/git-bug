@@ -15,7 +15,7 @@ type Data struct {
 	Config          *config.Config
 	Schema          *ast.Schema
 	SchemaStr       map[string]string
-	Directives      map[string]*Directive
+	Directives      DirectiveList
 	Objects         Objects
 	Inputs          Objects
 	Interfaces      map[string]*Interface
@@ -47,6 +47,11 @@ func BuildData(cfg *config.Config) (*Data, error) {
 	}
 
 	err = cfg.Check()
+	if err != nil {
+		return nil, err
+	}
+
+	err = cfg.Autobind(b.Schema)
 	if err != nil {
 		return nil, err
 	}

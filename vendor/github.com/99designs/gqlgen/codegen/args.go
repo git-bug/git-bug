@@ -26,6 +26,22 @@ type FieldArgument struct {
 	Value         interface{} // value set in Data
 }
 
+//ImplDirectives get not Builtin and location ARGUMENT_DEFINITION directive
+func (f *FieldArgument) ImplDirectives() []*Directive {
+	d := make([]*Directive, 0)
+	for i := range f.Directives {
+		if !f.Directives[i].Builtin && f.Directives[i].IsLocation(ast.LocationArgumentDefinition) {
+			d = append(d, f.Directives[i])
+		}
+	}
+
+	return d
+}
+
+func (f *FieldArgument) DirectiveObjName() string {
+	return "rawArgs"
+}
+
 func (f *FieldArgument) Stream() bool {
 	return f.Object != nil && f.Object.Stream
 }

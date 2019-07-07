@@ -117,7 +117,13 @@ func (e *executableSchema) Query(ctx context.Context, op *ast.OperationDefinitio
 		ec := executionContext{graphql.GetRequestContext(ctx), e}
 
 		buf := ec.RequestMiddleware(ctx, func(ctx context.Context) []byte {
+		{{ if .Directives.LocationDirectives "QUERY" -}}
+			data := ec._queryMiddleware(ctx, op, func(ctx context.Context) (interface{}, error){
+				return ec._{{.QueryRoot.Name}}(ctx, op.SelectionSet), nil
+			})
+		{{- else -}}
 			data := ec._{{.QueryRoot.Name}}(ctx, op.SelectionSet)
+		{{- end }}
 			var buf bytes.Buffer
 			data.MarshalGQL(&buf)
 			return buf.Bytes()
@@ -138,7 +144,13 @@ func (e *executableSchema) Mutation(ctx context.Context, op *ast.OperationDefini
 		ec := executionContext{graphql.GetRequestContext(ctx), e}
 
 		buf := ec.RequestMiddleware(ctx, func(ctx context.Context) []byte {
+		{{ if .Directives.LocationDirectives "MUTATION" -}}
+			data := ec._mutationMiddleware(ctx, op, func(ctx context.Context) (interface{}, error){
+				return ec._{{.MutationRoot.Name}}(ctx, op.SelectionSet), nil
+			})
+		{{- else -}}
 			data := ec._{{.MutationRoot.Name}}(ctx, op.SelectionSet)
+		{{- end }}
 			var buf bytes.Buffer
 			data.MarshalGQL(&buf)
 			return buf.Bytes()
@@ -158,7 +170,13 @@ func (e *executableSchema) Subscription(ctx context.Context, op *ast.OperationDe
 	{{- if .SubscriptionRoot }}
 		ec := executionContext{graphql.GetRequestContext(ctx), e}
 
-		next := ec._{{.SubscriptionRoot.Name}}(ctx, op.SelectionSet)
+		{{ if .Directives.LocationDirectives "SUBSCRIPTION" -}}
+			next := ec._subscriptionMiddleware(ctx, op, func(ctx context.Context) (interface{}, error){
+				return ec._{{.SubscriptionRoot.Name}}(ctx, op.SelectionSet),nil
+			})
+		{{- else -}}
+			next := ec._{{.SubscriptionRoot.Name}}(ctx, op.SelectionSet)
+		{{- end }}
 		if ec.Errors != nil {
 			return graphql.OneShot(&graphql.Response{Data: []byte("null"), Errors: ec.Errors})
 		}
@@ -194,45 +212,6 @@ func (e *executableSchema) Subscription(ctx context.Context, op *ast.OperationDe
 type executionContext struct {
 	*graphql.RequestContext
 	*executableSchema
-}
-
-func (ec *executionContext) FieldMiddleware(ctx context.Context, obj interface{}, next graphql.Resolver) (ret interface{}) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = nil
-		}
-	}()
-	{{- if .Directives }}
-	rctx := graphql.GetResolverContext(ctx)
-	for _, d := range rctx.Field.Definition.Directives {
-		switch d.Name {
-		{{- range $directive := .Directives }}
-		case "{{$directive.Name}}":
-			if ec.directives.{{$directive.Name|ucFirst}} != nil {
-				{{- if $directive.Args }}
-					rawArgs := d.ArgumentMap(ec.Variables)
-					args, err := ec.{{ $directive.ArgsFunc }}(ctx,rawArgs)
-					if err != nil {
-						ec.Error(ctx, err)
-						return nil
-					}
-				{{- end }}
-				n := next
-				next = func(ctx context.Context) (interface{}, error) {
-					return ec.directives.{{$directive.Name|ucFirst}}({{$directive.CallArgs}})
-				}
-			}
-		{{- end }}
-		}
-	}
-	{{- end }}
-	res, err := ec.ResolverMiddleware(ctx, next)
-	if err != nil {
-		ec.Error(ctx, err)
-		return nil
-	}
-	return res
 }
 
 func (ec *executionContext) introspectSchema() (*introspection.Schema, error) {
