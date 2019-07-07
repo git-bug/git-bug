@@ -163,6 +163,15 @@ func ConfiguredBridges(repo repository.RepoCommon) ([]string, error) {
 	return result, nil
 }
 
+// Check if a bridge exist
+func BridgeExist(repo repository.RepoCommon, name string) bool {
+	keyPrefix := fmt.Sprintf("git-bug.bridge.%s.", name)
+
+	conf, err := repo.ReadConfigs(keyPrefix)
+
+	return err == nil && len(conf) > 0
+}
+
 // Remove a configured bridge
 func RemoveBridge(repo repository.RepoCommon, name string) error {
 	re, err := regexp.Compile(`^[a-zA-Z0-9]+`)
@@ -219,7 +228,7 @@ func (b *Bridge) ensureConfig() error {
 	return nil
 }
 
-func loadConfig(repo *cache.RepoCache, name string) (Configuration, error) {
+func loadConfig(repo repository.RepoCommon, name string) (Configuration, error) {
 	keyPrefix := fmt.Sprintf("git-bug.bridge.%s.", name)
 
 	pairs, err := repo.ReadConfigs(keyPrefix)

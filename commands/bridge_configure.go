@@ -14,6 +14,7 @@ import (
 	"github.com/MichaelMure/git-bug/bridge"
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
@@ -52,7 +53,7 @@ func runBridgeConfigure(cmd *cobra.Command, args []string) error {
 	}
 
 	if bridgeConfigureName == "" {
-		bridgeConfigureName, err = promptName()
+		bridgeConfigureName, err = promptName(repo)
 		if err != nil {
 			return err
 		}
@@ -99,21 +100,28 @@ func promptTarget() (string, error) {
 	}
 }
 
-func promptName() (string, error) {
-	fmt.Printf("name [%s]: ", defaultName)
+func promptName(repo repository.RepoCommon) (string, error) {
+	for {
+		fmt.Printf("name [%s]: ", defaultName)
 
-	line, err := bufio.NewReader(os.Stdin).ReadString('\n')
-	if err != nil {
-		return "", err
+		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
+		if err != nil {
+			return "", err
+		}
+
+		line = strings.TrimRight(line, "\n")
+
+		name := line
+		if name == "" {
+			name = defaultName
+		}
+
+		if !core.BridgeExist(repo, name) {
+			return name, nil
+		}
+
+		fmt.Println("a bridge with the same name already exist")
 	}
-
-	line = strings.TrimRight(line, "\n")
-
-	if line == "" {
-		return defaultName, nil
-	}
-
-	return line, nil
 }
 
 var bridgeConfigureCmd = &cobra.Command{

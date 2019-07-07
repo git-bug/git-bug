@@ -15,6 +15,9 @@ const (
 	ExportEventNothing
 )
 
+// ExportResult is an event that is emitted during the export process, to
+// allow calling code to report on what is happening, collect metrics or
+// display meaningful errors if something went wrong.
 type ExportResult struct {
 	Err    error
 	Event  ExportEvent
