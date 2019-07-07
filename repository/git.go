@@ -13,6 +13,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/lamport"
+	"github.com/blang/semver"
 )
 
 const createClockFile = "/.git/git-bug/create-clock"
@@ -264,11 +265,44 @@ func (repo *GitRepo) RmConfigs(keyPrefix string) error {
 	// try to remove key/value pair by key
 	_, err := repo.runGitCommand("config", "--unset-all", keyPrefix)
 	if err != nil {
-		// try to remove section
-		_, err = repo.runGitCommand("config", "--remove-section", keyPrefix)
+		// starting from git 2.18.0 sections are automatically deleted when the last existing
+		// key/value is removed. Before 2.18.0 we should remove the section
+		// see https://github.com/git/git/blob/master/Documentation/RelNotes/2.18.0.txt#L379
+
+		var ok bool
+		ok, err = repo.gitVersionLT218()
+		if err != nil {
+			return fmt.Errorf("getting git version: %v", err)
+		}
+
+		if ok {
+			// try to remove section
+			_, err = repo.runGitCommand("config", "--remove-section", keyPrefix)
+		}
 	}
 
 	return err
+}
+
+func (repo *GitRepo) gitVersionLT218() (bool, error) {
+	versionOut, err := repo.runGitCommand("version")
+	if err != nil {
+		return false, err
+	}
+
+	versionString := strings.Fields(versionOut)[2]
+	version, err := semver.Make(versionString)
+	if err != nil {
+		return false, err
+	}
+
+	version218string := "2.18.0"
+	gitVersion218, err := semver.Make(version218string)
+	if err != nil {
+		return false, err
+	}
+
+	return version.LT(gitVersion218), nil
 }
 
 // FetchRefs fetch git refs from a remote
