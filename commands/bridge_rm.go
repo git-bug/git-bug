@@ -23,7 +23,7 @@ func runBridgeRm(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Printf("Successfully removed bridge configuration %v", args[0])
+	fmt.Printf("Successfully removed bridge configuration %v\n", args[0])
 	return nil
 }
 
