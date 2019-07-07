@@ -128,7 +128,7 @@ The web UI interact with the backend through a GraphQL API. The schema is availa
 | labels | :heavy_check_mark: | :x: |
 | status | :heavy_check_mark: | :x: |
 | title edition | :heavy_check_mark: | :x: |
-| **media** | :x: | :x: |
+| **media/files** | :x: | :x: |
 | **automated test suite** | :heavy_check_mark: | :x: |
 
 ### Exporter implementations
