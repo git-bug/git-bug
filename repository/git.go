@@ -3,7 +3,6 @@ package repository
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"os/exec"
@@ -11,9 +10,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/blang/semver"
+	"github.com/pkg/errors"
+
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/lamport"
-	"github.com/blang/semver"
 )
 
 const createClockFile = "/.git/git-bug/create-clock"
@@ -262,25 +263,27 @@ func (repo *GitRepo) ReadConfigString(key string) (string, error) {
 
 // RmConfigs remove all key/value pair matching the key prefix
 func (repo *GitRepo) RmConfigs(keyPrefix string) error {
-	// try to remove key/value pair by key
-	_, err := repo.runGitCommand("config", "--unset-all", keyPrefix)
+	// starting from git 2.18.0 sections are automatically deleted when the last existing
+	// key/value is removed. Before 2.18.0 we should remove the section
+	// see https://github.com/git/git/blob/master/Documentation/RelNotes/2.18.0.txt#L379
+	lt218, err := repo.gitVersionLT218()
 	if err != nil {
-		// starting from git 2.18.0 sections are automatically deleted when the last existing
-		// key/value is removed. Before 2.18.0 we should remove the section
-		// see https://github.com/git/git/blob/master/Documentation/RelNotes/2.18.0.txt#L379
+		return errors.Wrap(err, "getting git version")
+	}
 
-		var ok bool
-		ok, err = repo.gitVersionLT218()
+	if lt218 {
+		// try to remove key/value pair by key
+		_, err := repo.runGitCommand("config", "--unset-all", keyPrefix)
 		if err != nil {
-			return fmt.Errorf("getting git version: %v", err)
-		}
-
-		if ok {
 			// try to remove section
 			_, err = repo.runGitCommand("config", "--remove-section", keyPrefix)
 		}
+
+		return err
 	}
 
+	// try to remove key/value pair by key
+	_, err = repo.runGitCommand("config", "--unset-all", keyPrefix)
 	return err
 }
 
@@ -462,7 +465,7 @@ func (repo *GitRepo) FindCommonAncestor(hash1 git.Hash, hash2 git.Hash) (git.Has
 	stdout, err := repo.runGitCommand("merge-base", string(hash1), string(hash2))
 
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
 	return git.Hash(stdout), nil
@@ -473,7 +476,7 @@ func (repo *GitRepo) GetTreeHash(commit git.Hash) (git.Hash, error) {
 	stdout, err := repo.runGitCommand("rev-parse", string(commit)+"^{tree}")
 
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
 	return git.Hash(stdout), nil

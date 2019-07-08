@@ -55,7 +55,7 @@ func TestConfig(t *testing.T) {
 	assert.Error(t, err)
 
 	err = repo.RmConfigs("section")
-	assert.NoError(t, err)
+	assert.Error(t, err)
 
 	_, err = repo.ReadConfigString("section.key")
 	assert.Error(t, err)
