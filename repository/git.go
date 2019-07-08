@@ -261,6 +261,48 @@ func (repo *GitRepo) ReadConfigString(key string) (string, error) {
 	return lines[0], nil
 }
 
+func (repo *GitRepo) rmSection(keyPrefix string) error {
+	_, err := repo.runGitCommand("config", "--remove-section", keyPrefix)
+	return err
+}
+
+func (repo *GitRepo) unsetAll(keyPrefix string) error {
+	_, err := repo.runGitCommand("config", "--unset-all", keyPrefix)
+	return err
+}
+
+// return keyPrefix section
+// example: sectionFromKey(a.b.c.d) return a.b.c
+func sectionFromKey(keyPrefix string) string {
+	s := strings.Split(keyPrefix, ".")
+	if len(s) == 1 {
+		return keyPrefix
+	}
+
+	return strings.Join(s[:len(s)-1], ".")
+}
+
+// rmConfigs with git version lesser than 2.18
+func (repo *GitRepo) rmConfigsGitVersionLT218(keyPrefix string) error {
+	// try to remove key/value pair by key
+	err := repo.unsetAll(keyPrefix)
+	if err != nil {
+		return repo.rmSection(keyPrefix)
+	}
+
+	m, err := repo.ReadConfigs(sectionFromKey(keyPrefix))
+	if err != nil {
+		return err
+	}
+
+	// if section doesn't have any left key/value remove the section
+	if len(m) == 0 {
+		return repo.rmSection(sectionFromKey(keyPrefix))
+	}
+
+	return nil
+}
+
 // RmConfigs remove all key/value pair matching the key prefix
 func (repo *GitRepo) RmConfigs(keyPrefix string) error {
 	// starting from git 2.18.0 sections are automatically deleted when the last existing
@@ -272,19 +314,15 @@ func (repo *GitRepo) RmConfigs(keyPrefix string) error {
 	}
 
 	if lt218 {
-		// try to remove key/value pair by key
-		_, err := repo.runGitCommand("config", "--unset-all", keyPrefix)
-		if err != nil {
-			// try to remove section
-			_, err = repo.runGitCommand("config", "--remove-section", keyPrefix)
-		}
-
-		return err
+		return repo.rmConfigsGitVersionLT218(keyPrefix)
 	}
 
-	// try to remove key/value pair by key
-	_, err = repo.runGitCommand("config", "--unset-all", keyPrefix)
-	return err
+	err = repo.unsetAll(keyPrefix)
+	if err != nil {
+		return repo.rmSection(keyPrefix)
+	}
+
+	return nil
 }
 
 func (repo *GitRepo) gitVersionLT218() (bool, error) {
