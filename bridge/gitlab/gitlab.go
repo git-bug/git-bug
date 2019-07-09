@@ -26,3 +26,8 @@ func (*Gitlab) NewExporter() core.Exporter {
 func buildClient(token string) *gitlab.Client {
 	return gitlab.NewClient(nil, token)
 }
+
+func buildClientFromUsernameAndPassword(username, password string) (*gitlab.Client, error) {
+	return gitlab.NewBasicAuthClient(nil, "https://gitlab.com", username, password)
+
+}

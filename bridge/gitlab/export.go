@@ -403,10 +403,21 @@ func markOperationAsExported(b *cache.BugCache, target git.Hash, gitlabID, gitla
 
 // get label from gitlab
 func (ge *gitlabExporter) getGitlabLabelID(gc *gitlab.Client, label string) (string, error) {
+
 	return "", nil
 }
 
 func (ge *gitlabExporter) createGitlabLabel(label, color string) (string, error) {
+	client := buildClient(ge.conf[keyToken])
+	_, _, err := client.Labels.CreateLabel(ge.repositoryID, &gitlab.CreateLabelOptions{
+		Name:  &label,
+		Color: &color,
+	})
+
+	if err != nil {
+		return "", err
+	}
+
 	return "", nil
 }
 
