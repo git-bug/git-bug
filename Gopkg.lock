@@ -105,6 +105,14 @@
   version = "v1.2.0"
 
 [[projects]]
+  digest = "1:a63cff6b5d8b95638bfe300385d93b2a6d9d687734b863da8e09dc834510a690"
+  name = "github.com/google/go-querystring"
+  packages = ["query"]
+  pruneopts = "UT"
+  revision = "44c6ddd0a2342c386950e880b658017258da92fc"
+  version = "v1.0.0"
+
+[[projects]]
   digest = "1:cbec35fe4d5a4fba369a656a8cd65e244ea2c743007d8f6c1ccb132acf9d1296"
   name = "github.com/gorilla/mux"
   packages = ["."]
@@ -337,6 +345,14 @@
   version = "v1.0.0"
 
 [[projects]]
+  digest = "1:bdea1effaf77c89ea6a098c7343bea21963db1920f83271e98b2517d3e4ea05d"
+  name = "github.com/xanzy/go-gitlab"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "9d665abb0c204f579765d16d24d7ec85257e6624"
+  version = "v0.18.0"
+
+[[projects]]
   branch = "master"
   digest = "1:3f3a05ae0b95893d90b9b3b5afdb79a9b3d96e4e36e099d841ae602e4aca0da8"
   name = "golang.org/x/crypto"
@@ -462,6 +478,7 @@
     "github.com/vektah/gqlgen/client",
     "github.com/vektah/gqlparser",
     "github.com/vektah/gqlparser/ast",
+    "github.com/xanzy/go-gitlab",
     "golang.org/x/crypto/ssh/terminal",
     "golang.org/x/oauth2",
     "golang.org/x/text/runes",
