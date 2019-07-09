@@ -2,11 +2,10 @@
 
 
 [[projects]]
-  digest = "1:ecbcc5f2c6b45a565d5bdc316317671a308f56adb202e0f762d91e42aa9e2060"
+  digest = "1:5038f1f51cfeed48d9643aeb573ecf62393a50ba3165322462e86e6a6d290a19"
   name = "github.com/99designs/gqlgen"
   packages = [
     "api",
-    "cmd",
     "codegen",
     "codegen/config",
     "codegen/templates",
@@ -20,7 +19,6 @@
     "plugin/modelgen",
     "plugin/resolvergen",
     "plugin/schemaconfig",
-    "plugin/servergen",
   ]
   pruneopts = "UT"
   revision = "b128a29122e8ca8ada5f34cc18338fa7c10fc5b4"
@@ -315,14 +313,6 @@
   version = "v1.11.0"
 
 [[projects]]
-  digest = "1:b24d38b282bacf9791408a080f606370efa3d364e4b5fd9ba0f7b87786d3b679"
-  name = "github.com/urfave/cli"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "cfb38830724cc34fedffe9a2a29fb54fa9169cd1"
-  version = "v1.20.0"
-
-[[projects]]
   digest = "1:895fa0f564003de2498fbaf00be596fa814655ab445ce7cc215f7724bb6831ae"
   name = "github.com/vektah/gqlgen"
   packages = ["client"]
@@ -445,7 +435,8 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/99designs/gqlgen/cmd",
+    "github.com/99designs/gqlgen/api",
+    "github.com/99designs/gqlgen/codegen/config",
     "github.com/99designs/gqlgen/graphql",
     "github.com/99designs/gqlgen/graphql/introspection",
     "github.com/99designs/gqlgen/handler",
