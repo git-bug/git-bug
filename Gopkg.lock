@@ -43,6 +43,14 @@
   version = "v1.0.0"
 
 [[projects]]
+  digest = "1:b6d886569181ec96ca83d529f4d6ba0cbf92ace7bb6f633f90c5f34d9bba7aab"
+  name = "github.com/blang/semver"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "ba2c2ddd89069b46a7011d4106f6868f17ee1705"
+  version = "v3.6.1"
+
+[[projects]]
   branch = "master"
   digest = "1:f438d91be142877c3ad83157992c91de787ddfbddcc2a7da1ef6ef61606cadc4"
   name = "github.com/cheekybits/genny"
@@ -442,6 +450,7 @@
     "github.com/99designs/gqlgen/graphql/introspection",
     "github.com/99designs/gqlgen/handler",
     "github.com/MichaelMure/gocui",
+    "github.com/blang/semver",
     "github.com/cheekybits/genny/generic",
     "github.com/dustin/go-humanize",
     "github.com/fatih/color",
