@@ -106,7 +106,7 @@ func (i *iterator) NextIssue() bool {
 	}
 
 	// move cursor index
-	if i.issue.index < min(i.capacity, len(i.issue.cache)) {
+	if i.issue.index < min(i.capacity, len(i.issue.cache))-1 {
 		i.issue.index++
 		return true
 	}
@@ -126,6 +126,7 @@ func (i *iterator) NextIssue() bool {
 	i.issue.page++
 	i.issue.index = 0
 	i.comment.index = 0
+	i.issue.cache = issues
 
 	return true
 }
@@ -149,6 +150,10 @@ func (i *iterator) getComments() ([]*gitlab.Note, error) {
 	return notes, err
 }
 
+func (i *iterator) getNextComments() bool {
+	return false
+}
+
 func (i *iterator) NextComment() bool {
 	if i.err != nil {
 		return false
@@ -168,6 +173,7 @@ func (i *iterator) NextComment() bool {
 			return false
 		}
 
+		i.comment.cache = comments
 		i.comment.page++
 		i.comment.index = 0
 
@@ -175,7 +181,7 @@ func (i *iterator) NextComment() bool {
 	}
 
 	// move cursor index
-	if i.comment.index < min(i.capacity, len(i.comment.cache)) {
+	if i.comment.index < min(i.capacity, len(i.comment.cache))-1 {
 		i.comment.index++
 		return true
 	}
@@ -193,6 +199,7 @@ func (i *iterator) NextComment() bool {
 		return false
 	}
 
+	i.comment.cache = comments
 	i.comment.page++
 	i.comment.index = 0
 
