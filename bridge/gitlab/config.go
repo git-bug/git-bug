@@ -8,23 +8,21 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/pkg/errors"
 	"github.com/xanzy/go-gitlab"
-	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
 const (
-	target      = "gitlab"
-	gitlabV4Url = "https://gitlab.com/api/v4"
-	keyID       = "project-id"
-	keyTarget   = "target"
-	keyToken    = "token"
+	target       = "gitlab"
+	gitlabV4Url  = "https://gitlab.com/api/v4"
+	keyProjectID = "project-id"
+	keyTarget    = "target"
+	keyToken     = "token"
 
 	defaultTimeout = 60 * time.Second
 )
@@ -84,7 +82,7 @@ func (*Gitlab) Configure(repo repository.RepoCommon, params core.BridgeParams) (
 		return nil, fmt.Errorf("invalid project id or wrong token scope")
 	}
 
-	conf[keyID] = strconv.Itoa(id)
+	conf[keyProjectID] = strconv.Itoa(id)
 	conf[keyToken] = token
 	conf[keyTarget] = target
 
@@ -102,8 +100,8 @@ func (*Gitlab) ValidateConfig(conf core.Configuration) error {
 		return fmt.Errorf("missing %s key", keyToken)
 	}
 
-	if _, ok := conf[keyID]; !ok {
-		return fmt.Errorf("missing %s key", keyID)
+	if _, ok := conf[keyProjectID]; !ok {
+		return fmt.Errorf("missing %s key", keyProjectID)
 	}
 
 	return nil
@@ -124,6 +122,7 @@ func requestToken(client *gitlab.Client, userID int, name string, scopes ...stri
 	return impToken.Token, nil
 }
 
+//TODO fix this
 func promptTokenOptions(url string) (string, error) {
 	for {
 		fmt.Println()
@@ -148,8 +147,6 @@ func promptTokenOptions(url string) (string, error) {
 		if index == 1 {
 			return promptToken()
 		}
-
-		return loginAndRequestToken(url)
 	}
 }
 
@@ -179,62 +176,6 @@ func promptToken() (string, error) {
 		}
 
 		fmt.Println("token is invalid")
-	}
-}
-
-func loginAndRequestToken(url string) (string, error) {
-	username, err := promptUsername()
-	if err != nil {
-		return "", err
-	}
-
-	password, err := promptPassword()
-	if err != nil {
-		return "", err
-	}
-
-	// Attempt to authenticate and create a token
-
-	note := fmt.Sprintf("git-bug - %s", url)
-
-	ok, id, err := validateUsername(username)
-	if err != nil {
-		return "", err
-	}
-	if !ok {
-		return "", fmt.Errorf("invalid username")
-	}
-
-	client, err := buildClientFromUsernameAndPassword(username, password)
-	if err != nil {
-		return "", err
-	}
-
-	fmt.Println(username, password)
-
-	return requestToken(client, id, note, "api")
-}
-
-func promptUsername() (string, error) {
-	for {
-		fmt.Print("username: ")
-
-		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
-		if err != nil {
-			return "", err
-		}
-
-		line = strings.TrimRight(line, "\n")
-
-		ok, _, err := validateUsername(line)
-		if err != nil {
-			return "", err
-		}
-		if ok {
-			return line, nil
-		}
-
-		fmt.Println("invalid username")
 	}
 }
 
@@ -354,25 +295,4 @@ func validateProjectURL(url, token string) (bool, int, error) {
 	}
 
 	return true, project.ID, nil
-}
-
-func promptPassword() (string, error) {
-	for {
-		fmt.Print("password: ")
-
-		bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
-		// new line for coherent formatting, ReadPassword clip the normal new line
-		// entered by the user
-		fmt.Println()
-
-		if err != nil {
-			return "", err
-		}
-
-		if len(bytePassword) > 0 {
-			return string(bytePassword), nil
-		}
-
-		fmt.Println("password is empty")
-	}
 }
