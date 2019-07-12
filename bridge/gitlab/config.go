@@ -66,7 +66,7 @@ func (*Gitlab) Configure(repo repository.RepoCommon, params core.BridgeParams) (
 	if params.Token != "" {
 		token = params.Token
 	} else {
-		token, err = promptTokenOptions(url)
+		token, err = promptToken()
 		if err != nil {
 			return nil, err
 		}
@@ -120,34 +120,6 @@ func requestToken(client *gitlab.Client, userID int, name string, scopes ...stri
 	}
 
 	return impToken.Token, nil
-}
-
-//TODO fix this
-func promptTokenOptions(url string) (string, error) {
-	for {
-		fmt.Println()
-		fmt.Println("[1]: user provided token")
-		fmt.Println("[2]: interactive token creation")
-		fmt.Print("Select option: ")
-
-		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
-		fmt.Println()
-		if err != nil {
-			return "", err
-		}
-
-		line = strings.TrimRight(line, "\n")
-
-		index, err := strconv.Atoi(line)
-		if err != nil || (index != 1 && index != 2) {
-			fmt.Println("invalid input")
-			continue
-		}
-
-		if index == 1 {
-			return promptToken()
-		}
-	}
 }
 
 func promptToken() (string, error) {
