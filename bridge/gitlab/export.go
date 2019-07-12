@@ -2,6 +2,7 @@ package gitlab
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/pkg/errors"
@@ -33,7 +34,7 @@ type gitlabExporter struct {
 	// map identities with their tokens
 	identityToken map[string]string
 
-	// gitlab. repository ID
+	// gitlab repository ID
 	repositoryID string
 
 	// cache identifiers used to speed up exporting operations
@@ -74,8 +75,6 @@ func (ge *gitlabExporter) getIdentityClient(id string) (*gitlab.Client, error) {
 	// cache client
 	ge.identityClient[id] = client
 
-	//client.Labels.CreateLabel()
-
 	return client, nil
 }
 
@@ -91,10 +90,7 @@ func (ge *gitlabExporter) ExportAll(repo *cache.RepoCache, since time.Time) (<-c
 	ge.identityToken[user.Id()] = ge.conf[keyToken]
 
 	// get repository node id
-	ge.repositoryID, err = getRepositoryNodeID(
-		"", "",
-		ge.conf[keyToken],
-	)
+	ge.repositoryID = ge.conf[keyProjectID]
 
 	if err != nil {
 		return nil, err
@@ -384,11 +380,6 @@ func (ge *gitlabExporter) exportBug(b *cache.BugCache, since time.Time, out chan
 	}
 }
 
-// getRepositoryNodeID request gitlab api v3 to get repository node id
-func getRepositoryNodeID(owner, project, token string) (string, error) {
-	return "", nil
-}
-
 func markOperationAsExported(b *cache.BugCache, target git.Hash, gitlabID, gitlabURL string) error {
 	_, err := b.SetMetadata(
 		target,
@@ -401,17 +392,65 @@ func markOperationAsExported(b *cache.BugCache, target git.Hash, gitlabID, gitla
 	return err
 }
 
-// get label from gitlab
-func (ge *gitlabExporter) getGitlabLabelID(gc *gitlab.Client, label string) (string, error) {
+func (ge *gitlabExporter) getGitlabLabelID(label string) (string, error) {
+	id, ok := ge.cachedLabels[label]
+	if !ok {
+		return "", fmt.Errorf("non cached label")
+	}
 
-	return "", nil
+	return id, nil
 }
 
-func (ge *gitlabExporter) createGitlabLabel(label, color string) (string, error) {
+// get label from gitlab
+func (ge *gitlabExporter) loadLabelsFromGitlab(client *gitlab.Client) error {
+
+	labels, _, err := client.Labels.ListLabels(
+		ge.repositoryID,
+		&gitlab.ListLabelsOptions{
+			Page: 0,
+		},
+	)
+
+	if err != nil {
+		return err
+	}
+
+	for _, label := range labels {
+		ge.cachedLabels[label.Name] = strconv.Itoa(label.ID)
+	}
+
+	for page := 2; len(labels) != 0; page++ {
+
+		labels, _, err = client.Labels.ListLabels(
+			ge.repositoryID,
+			&gitlab.ListLabelsOptions{
+				Page: page,
+			},
+		)
+
+		if err != nil {
+			return err
+		}
+
+		for _, label := range labels {
+			ge.cachedLabels[label.Name] = strconv.Itoa(label.ID)
+		}
+	}
+
+	return nil
+}
+
+func (ge *gitlabExporter) createGitlabLabel(gc *gitlab.Client, label bug.Label) (string, error) {
 	client := buildClient(ge.conf[keyToken])
+
+	// RGBA to hex color
+	rgba := label.RGBA()
+	hexColor := fmt.Sprintf("%.2x%.2x%.2x", rgba.R, rgba.G, rgba.B)
+	name := label.String()
+
 	_, _, err := client.Labels.CreateLabel(ge.repositoryID, &gitlab.CreateLabelOptions{
-		Name:  &label,
-		Color: &color,
+		Name:  &name,
+		Color: &hexColor,
 	})
 
 	if err != nil {
@@ -419,25 +458,6 @@ func (ge *gitlabExporter) createGitlabLabel(label, color string) (string, error)
 	}
 
 	return "", nil
-}
-
-func (ge *gitlabExporter) getOrCreateGitlabLabelID(gc *gitlab.Client, repositoryID string, label bug.Label) (string, error) {
-	// try to get label id
-	labelID, err := ge.getGitlabLabelID(gc, string(label))
-	if err == nil {
-		return labelID, nil
-	}
-
-	// RGBA to hex color
-	rgba := label.RGBA()
-	hexColor := fmt.Sprintf("%.2x%.2x%.2x", rgba.R, rgba.G, rgba.B)
-
-	labelID, err = ge.createGitlabLabel(string(label), hexColor)
-	if err != nil {
-		return "", err
-	}
-
-	return labelID, nil
 }
 
 func (ge *gitlabExporter) getLabelsIDs(gc *gitlab.Client, repositoryID string, labels []bug.Label) ([]string, error) {
