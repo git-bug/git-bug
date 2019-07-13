@@ -21,7 +21,7 @@
 - **is fast**: listing bugs or opening them is a matter of milliseconds
 - **doesn't pollute your project**: no files are added in your project
 - **integrate with your tooling**: use the UI you like (CLI, terminal, web) or integrate with your existing tools through the CLI or the GraphQL API
-- **bridge with other bug trackers**: [bridges](#bridges) exist to import and soon export to other trackers.
+- **bridge with other bug trackers**: [bridges](#bridges) exist to import and export to other trackers.
 
 :construction: This is now more than a proof of concept, but still not fully stable. Expect dragons and unfinished business. :construction:
 
