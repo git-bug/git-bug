@@ -12,10 +12,16 @@ type issueIterator struct {
 	cache []*gitlab.Issue
 }
 
-type commentIterator struct {
+type noteIterator struct {
 	page  int
 	index int
 	cache []*gitlab.Note
+}
+
+type labelEventIterator struct {
+	page  int
+	index int
+	cache []*gitlab.LabelEvent
 }
 
 type iterator struct {
@@ -38,8 +44,10 @@ type iterator struct {
 	// issues iterator
 	issue *issueIterator
 
-	// comments iterator
-	comment *commentIterator
+	// notes iterator
+	note *noteIterator
+
+	labelEvent *labelEventIterator
 }
 
 // NewIterator create a new iterator
@@ -53,7 +61,11 @@ func NewIterator(projectID, token string, capacity int, since time.Time) *iterat
 			index: -1,
 			page:  1,
 		},
-		comment: &commentIterator{
+		note: &noteIterator{
+			index: -1,
+			page:  1,
+		},
+		labelEvent: &labelEventIterator{
 			index: -1,
 			page:  1,
 		},
@@ -65,7 +77,8 @@ func (i *iterator) Error() error {
 	return i.err
 }
 
-func (i *iterator) getIssues() ([]*gitlab.Issue, error) {
+func (i *iterator) getNextIssues() bool {
+	sort := "asc"
 	scope := "all"
 	issues, _, err := i.gc.Issues.ListProjectIssues(
 		i.project,
@@ -76,29 +89,33 @@ func (i *iterator) getIssues() ([]*gitlab.Issue, error) {
 			},
 			Scope:        &scope,
 			UpdatedAfter: &i.since,
+			Sort:         &sort,
 		},
 	)
 
-	return issues, err
+	if err != nil {
+		i.err = err
+		return false
+	}
+
+	// if repository doesn't have any issues
+	if len(issues) == 0 {
+		return false
+	}
+
+	i.issue.cache = issues
+	i.issue.index = 0
+	i.issue.page++
+	i.note.index = -1
+	i.note.cache = nil
+
+	return true
 }
 
 func (i *iterator) NextIssue() bool {
 	// first query
 	if i.issue.cache == nil {
-		issues, err := i.getIssues()
-		if err != nil {
-			i.err = err
-			return false
-		}
-
-		// if repository doesn't have any issues
-		if len(issues) == 0 {
-			return false
-		}
-
-		i.issue.cache = issues
-		i.issue.index++
-		return true
+		return i.getNextIssues()
 	}
 
 	if i.err != nil {
@@ -111,103 +128,67 @@ func (i *iterator) NextIssue() bool {
 		return true
 	}
 
-	// query next issues
-	issues, err := i.getIssues()
-	if err != nil {
-		i.err = err
-		return false
-	}
-
-	// no more issues to query
-	if len(issues) == 0 {
-		return false
-	}
-
-	i.issue.page++
-	i.issue.index = 0
-	i.comment.index = 0
-	i.issue.cache = issues
-
-	return true
+	return i.getNextIssues()
 }
 
 func (i *iterator) IssueValue() *gitlab.Issue {
 	return i.issue.cache[i.issue.index]
 }
 
-func (i *iterator) getComments() ([]*gitlab.Note, error) {
+func (i *iterator) getNextNotes() bool {
+	sort := "asc"
+	order := "created_at"
 	notes, _, err := i.gc.Notes.ListIssueNotes(
 		i.project,
 		i.IssueValue().IID,
 		&gitlab.ListIssueNotesOptions{
 			ListOptions: gitlab.ListOptions{
-				Page:    i.issue.page,
+				Page:    i.note.page,
 				PerPage: i.capacity,
 			},
+			Sort:    &sort,
+			OrderBy: &order,
 		},
 	)
 
-	return notes, err
-}
-
-func (i *iterator) getNextComments() bool {
-	return false
-}
-
-func (i *iterator) NextComment() bool {
-	if i.err != nil {
-		return false
-	}
-
-	if len(i.comment.cache) == 0 {
-		// query next issues
-		comments, err := i.getComments()
-		if err != nil {
-			i.err = err
-			return false
-		}
-
-		if len(comments) == 0 {
-			i.comment.index = 0
-			i.comment.page = 1
-			return false
-		}
-
-		i.comment.cache = comments
-		i.comment.page++
-		i.comment.index = 0
-
-		return true
-	}
-
-	// move cursor index
-	if i.comment.index < min(i.capacity, len(i.comment.cache))-1 {
-		i.comment.index++
-		return true
-	}
-
-	// query next issues
-	comments, err := i.getComments()
 	if err != nil {
 		i.err = err
 		return false
 	}
 
-	if len(comments) == 0 {
-		i.comment.index = 0
-		i.comment.page = 1
+	if len(notes) == 0 {
+		i.note.index = -1
+		i.note.page = 1
+		i.note.cache = nil
 		return false
 	}
 
-	i.comment.cache = comments
-	i.comment.page++
-	i.comment.index = 0
-
-	return false
+	i.note.cache = notes
+	i.note.page++
+	i.note.index = 0
+	return true
 }
 
-func (i *iterator) CommentValue() *gitlab.Note {
-	return i.comment.cache[i.comment.index]
+func (i *iterator) NextNote() bool {
+	if i.err != nil {
+		return false
+	}
+
+	if len(i.note.cache) == 0 {
+		return i.getNextNotes()
+	}
+
+	// move cursor index
+	if i.note.index < min(i.capacity, len(i.note.cache))-1 {
+		i.note.index++
+		return true
+	}
+
+	return i.getNextNotes()
+}
+
+func (i *iterator) NoteValue() *gitlab.Note {
+	return i.note.cache[i.note.index]
 }
 
 func min(a, b int) int {
