@@ -51,12 +51,12 @@ type iterator struct {
 }
 
 // NewIterator create a new iterator
-func NewIterator(projectID, token string, capacity int, since time.Time) *iterator {
+func NewIterator(projectID, token string, since time.Time) *iterator {
 	return &iterator{
 		gc:       buildClient(token),
 		project:  projectID,
 		since:    since,
-		capacity: capacity,
+		capacity: 20,
 		issue: &issueIterator{
 			index: -1,
 			page:  1,
