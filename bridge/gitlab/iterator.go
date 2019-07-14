@@ -191,6 +191,58 @@ func (i *iterator) NoteValue() *gitlab.Note {
 	return i.note.cache[i.note.index]
 }
 
+func (i *iterator) getNextLabelEvents() bool {
+	labelEvents, _, err := i.gc.ResourceLabelEvents.ListIssueLabelEvents(
+		i.project,
+		i.IssueValue().IID,
+		&gitlab.ListLabelEventsOptions{
+			ListOptions: gitlab.ListOptions{
+				Page:    i.labelEvent.page,
+				PerPage: i.capacity,
+			},
+		},
+	)
+
+	if err != nil {
+		i.err = err
+		return false
+	}
+
+	if len(labelEvents) == 0 {
+		i.labelEvent.page = 1
+		i.labelEvent.index = -1
+		i.labelEvent.cache = nil
+		return false
+	}
+
+	i.labelEvent.cache = labelEvents
+	i.labelEvent.page++
+	i.labelEvent.index = 0
+	return true
+}
+
+func (i *iterator) NextLabelEvent() bool {
+	if i.err != nil {
+		return false
+	}
+
+	if len(i.labelEvent.cache) == 0 {
+		return i.getNextLabelEvents()
+	}
+
+	// move cursor index
+	if i.labelEvent.index < min(i.capacity, len(i.labelEvent.cache))-1 {
+		i.labelEvent.index++
+		return true
+	}
+
+	return i.getNextLabelEvents()
+}
+
+func (i *iterator) LabelEventValue() *gitlab.LabelEvent {
+	return i.labelEvent.cache[i.labelEvent.index]
+}
+
 func min(a, b int) int {
 	if a > b {
 		return b
