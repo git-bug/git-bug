@@ -38,6 +38,7 @@ type ProjectVariable struct {
 	Key              string `json:"key"`
 	Value            string `json:"value"`
 	Protected        bool   `json:"protected"`
+	Masked           bool   `json:"masked"`
 	EnvironmentScope string `json:"environment_scope"`
 }
 
@@ -104,6 +105,7 @@ type CreateVariableOptions struct {
 	Key              *string `url:"key,omitempty" json:"key,omitempty"`
 	Value            *string `url:"value,omitempty" json:"value,omitempty"`
 	Protected        *bool   `url:"protected,omitempty" json:"protected,omitempty"`
+	Masked           *bool   `url:"masked,omitempty" json:"masked,omitempty"`
 	EnvironmentScope *string `url:"environment_scope,omitempty" json:"environment_scope,omitempty"`
 }
 
@@ -140,6 +142,7 @@ func (s *ProjectVariablesService) CreateVariable(pid interface{}, opt *CreateVar
 type UpdateVariableOptions struct {
 	Value            *string `url:"value,omitempty" json:"value,omitempty"`
 	Protected        *bool   `url:"protected,omitempty" json:"protected,omitempty"`
+	Masked           *bool   `url:"masked,omitempty" json:"masked,omitempty"`
 	EnvironmentScope *string `url:"environment_scope,omitempty" json:"environment_scope,omitempty"`
 }
 

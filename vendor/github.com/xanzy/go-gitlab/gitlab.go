@@ -341,6 +341,7 @@ type Client struct {
 	Releases              *ReleasesService
 	Repositories          *RepositoriesService
 	RepositoryFiles       *RepositoryFilesService
+	ResourceLabelEvents   *ResourceLabelEventsService
 	Runners               *RunnersService
 	Search                *SearchService
 	Services              *ServicesService
@@ -490,6 +491,7 @@ func newClient(httpClient *http.Client) *Client {
 	c.Releases = &ReleasesService{client: c}
 	c.Repositories = &RepositoriesService{client: c}
 	c.RepositoryFiles = &RepositoryFilesService{client: c}
+	c.ResourceLabelEvents = &ResourceLabelEventsService{client: c}
 	c.Runners = &RunnersService{client: c}
 	c.Search = &SearchService{client: c}
 	c.Services = &ServicesService{client: c}

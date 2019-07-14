@@ -162,6 +162,7 @@ type ListGroupIssuesOptions struct {
 	OrderBy         *string    `url:"order_by,omitempty" json:"order_by,omitempty"`
 	Sort            *string    `url:"sort,omitempty" json:"sort,omitempty"`
 	Search          *string    `url:"search,omitempty" json:"search,omitempty"`
+	In              *string    `url:"in,omitempty" json:"in,omitempty"`
 	CreatedAfter    *time.Time `url:"created_after,omitempty" json:"created_after,omitempty"`
 	CreatedBefore   *time.Time `url:"created_before,omitempty" json:"created_before,omitempty"`
 	UpdatedAfter    *time.Time `url:"updated_after,omitempty" json:"updated_after,omitempty"`
@@ -209,6 +210,7 @@ type ListProjectIssuesOptions struct {
 	OrderBy         *string    `url:"order_by,omitempty" json:"order_by,omitempty"`
 	Sort            *string    `url:"sort,omitempty" json:"sort,omitempty"`
 	Search          *string    `url:"search,omitempty" json:"search,omitempty"`
+	In              *string    `url:"in,omitempty" json:"in,omitempty"`
 	CreatedAfter    *time.Time `url:"created_after,omitempty" json:"created_after,omitempty"`
 	CreatedBefore   *time.Time `url:"created_before,omitempty" json:"created_before,omitempty"`
 	UpdatedAfter    *time.Time `url:"updated_after,omitempty" json:"updated_after,omitempty"`
@@ -268,6 +270,7 @@ func (s *IssuesService) GetIssue(pid interface{}, issue int, options ...OptionFu
 //
 // GitLab API docs: https://docs.gitlab.com/ce/api/issues.html#new-issues
 type CreateIssueOptions struct {
+	IID                                *int       `url:"iid,omitempty" json:"iid,omitempty"`
 	Title                              *string    `url:"title,omitempty" json:"title,omitempty"`
 	Description                        *string    `url:"description,omitempty" json:"description,omitempty"`
 	Confidential                       *bool      `url:"confidential,omitempty" json:"confidential,omitempty"`
