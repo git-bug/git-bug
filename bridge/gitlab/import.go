@@ -2,6 +2,7 @@ package gitlab
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/xanzy/go-gitlab"
@@ -9,6 +10,7 @@ import (
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
@@ -314,6 +316,18 @@ func (gi *gitlabImporter) ensureLabelEvent(repo *cache.RepoCache, b *cache.BugCa
 }
 
 func (gi *gitlabImporter) ensurePerson(repo *cache.RepoCache, id int) (*cache.IdentityCache, error) {
+	// Look first in the cache
+	i, err := repo.ResolveIdentityImmutableMetadata(keyGitlabId, strconv.Itoa(id))
+	if err == nil {
+		return i, nil
+	}
+	if _, ok := err.(identity.ErrMultipleMatch); ok {
+		return nil, err
+	}
+
+	// importing a new identity
+	gi.importedIdentities++
+
 	client := buildClient(gi.conf["token"])
 
 	user, _, err := client.Users.GetUser(id)
@@ -327,6 +341,7 @@ func (gi *gitlabImporter) ensurePerson(repo *cache.RepoCache, id int) (*cache.Id
 		user.Username,
 		user.AvatarURL,
 		map[string]string{
+			keyGitlabId:    strconv.Itoa(id),
 			keyGitlabLogin: user.Username,
 		},
 	)
