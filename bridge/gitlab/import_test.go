@@ -6,15 +6,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/interrupt"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	//_ "github.com/motemen/go-loghttp/global"
 )
 
 func TestImport(t *testing.T) {

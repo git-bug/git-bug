@@ -107,21 +107,6 @@ func (*Gitlab) ValidateConfig(conf core.Configuration) error {
 	return nil
 }
 
-func requestToken(client *gitlab.Client, userID int, name string, scopes ...string) (string, error) {
-	impToken, _, err := client.Users.CreateImpersonationToken(
-		userID,
-		&gitlab.CreateImpersonationTokenOptions{
-			Name:   &name,
-			Scopes: &scopes,
-		},
-	)
-	if err != nil {
-		return "", err
-	}
-
-	return impToken.Token, nil
-}
-
 func promptToken() (string, error) {
 	fmt.Println("You can generate a new token by visiting https://gitlab.com/settings/tokens.")
 	fmt.Println("Choose 'Generate new token' and set the necessary access scope for your repository.")
@@ -229,28 +214,6 @@ func getValidGitlabRemoteURLs(remotes map[string]string) []string {
 	}
 
 	return urls
-}
-
-func validateUsername(username string) (bool, int, error) {
-	// no need for a token for this action
-	client := buildClient("")
-
-	users, _, err := client.Users.ListUsers(&gitlab.ListUsersOptions{Username: &username})
-	if err != nil {
-		return false, 0, err
-	}
-
-	if len(users) == 0 {
-		return false, 0, fmt.Errorf("username not found")
-	} else if len(users) > 1 {
-		return false, 0, fmt.Errorf("found multiple matches")
-	}
-
-	if users[0].Username == username {
-		return true, users[0].ID, nil
-	}
-
-	return false, 0, nil
 }
 
 func validateProjectURL(url, token string) (bool, int, error) {

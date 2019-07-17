@@ -1,8 +1,9 @@
 package gitlab
 
 import (
-	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/xanzy/go-gitlab"
+
+	"github.com/MichaelMure/git-bug/bridge/core"
 )
 
 func init() {
