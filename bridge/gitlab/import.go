@@ -64,7 +64,6 @@ func (gi *gitlabImporter) ImportAll(repo *cache.RepoCache, since time.Time) erro
 			if err := gi.ensureLabelEvent(repo, b, labelEvent); err != nil {
 				return fmt.Errorf("label event creation: %v", err)
 			}
-
 		}
 
 		// commit bug state
@@ -131,14 +130,14 @@ func (gi *gitlabImporter) ensureIssue(repo *cache.RepoCache, issue *gitlab.Issue
 func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, note *gitlab.Note) error {
 	id := parseID(note.ID)
 
-	hash, err := b.ResolveOperationWithMetadata(keyGitlabId, id)
-	if err != cache.ErrNoMatchingOp {
-		return err
-	}
-
 	// ensure issue author
 	author, err := gi.ensurePerson(repo, note.Author.ID)
 	if err != nil {
+		return err
+	}
+
+	hash, errResolve := b.ResolveOperationWithMetadata(keyGitlabId, id)
+	if err != nil && err != cache.ErrNoMatchingOp {
 		return err
 	}
 
@@ -149,7 +148,8 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 			author,
 			note.CreatedAt.Unix(),
 			map[string]string{
-				keyGitlabId: id,
+				keyGitlabId:  id,
+				keyGitlabUrl: "",
 			},
 		)
 		return err
@@ -159,7 +159,8 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 			author,
 			note.CreatedAt.Unix(),
 			map[string]string{
-				keyGitlabId: id,
+				keyGitlabId:  id,
+				keyGitlabUrl: "",
 			},
 		)
 		return err
@@ -171,6 +172,7 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 		// we should check for "changed the description" notes and compare issue texts
 
 		if issue.Description != b.Snapshot().Comments[0].Message {
+
 			// comment edition
 			_, err = b.EditCommentRaw(
 				author,
@@ -195,7 +197,7 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 		}
 
 		// if we didn't import the comment
-		if err == cache.ErrNoMatchingOp {
+		if errResolve == cache.ErrNoMatchingOp {
 
 			// add comment operation
 			_, err = b.AddCommentRaw(
@@ -220,18 +222,13 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 		}
 
 		// search for last comment update
-		timeline, err := b.Snapshot().SearchTimelineItem(hash)
+		comment, err := b.Snapshot().SearchComment(hash)
 		if err != nil {
 			return err
 		}
 
-		item, ok := timeline.(*bug.AddCommentTimelineItem)
-		if !ok {
-			return fmt.Errorf("expected add comment time line")
-		}
-
 		// compare local bug comment with the new note body
-		if item.Message != cleanText {
+		if comment.Message != cleanText {
 			// comment edition
 			_, err = b.EditCommentRaw(
 				author,
@@ -251,7 +248,7 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 		return nil
 
 	case NOTE_TITLE_CHANGED:
-
+		// title change events are given new notes
 		_, err = b.SetTitleRaw(
 			author,
 			note.CreatedAt.Unix(),
@@ -265,8 +262,8 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 		return err
 
 	default:
-		// non handled note types
-
+		// non handled note types, this is not an error
+		//TODO: send warning via channel
 		return nil
 	}
 
