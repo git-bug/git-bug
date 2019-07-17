@@ -31,6 +31,10 @@ const (
 // and doesn't provide a field to specify the note type. We must parse the
 // note body to detect it type.
 func GetNoteType(n *gitlab.Note) (NoteType, string) {
+	if !n.System {
+		return NOTE_COMMENT, n.Body
+	}
+
 	if n.Body == "closed" {
 		return NOTE_CLOSED, ""
 	}
@@ -79,8 +83,7 @@ func GetNoteType(n *gitlab.Note) (NoteType, string) {
 		return NOTE_REMOVED_MILESTONE, ""
 	}
 
-	// comment don't have a specific format
-	return NOTE_COMMENT, n.Body
+	return NOTE_UNKNOWN, ""
 }
 
 // getNewTitle parses body diff given by gitlab api and return it final form
