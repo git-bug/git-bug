@@ -1,6 +1,7 @@
 package gitlab
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/xanzy/go-gitlab"
@@ -9,9 +10,7 @@ import (
 )
 
 const (
-	target      = "gitlab"
-	gitlabV4Url = "https://gitlab.com/api/v4"
-
+	target         = "gitlab"
 	keyProjectID   = "project-id"
 	keyGitlabId    = "gitlab-id"
 	keyGitlabUrl   = "gitlab-url"
@@ -42,10 +41,9 @@ func (*Gitlab) NewExporter() core.Exporter {
 }
 
 func buildClient(token string) *gitlab.Client {
-	return gitlab.NewClient(nil, token)
-}
+	client := &http.Client{
+		Timeout: defaultTimeout,
+	}
 
-func buildClientFromUsernameAndPassword(username, password string) (*gitlab.Client, error) {
-	return gitlab.NewBasicAuthClient(nil, "https://gitlab.com", username, password)
-
+	return gitlab.NewClient(client, token)
 }

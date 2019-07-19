@@ -120,7 +120,7 @@ func (gi *gitlabImporter) ensureIssue(repo *cache.RepoCache, issue *gitlab.Issue
 		return b, nil
 	}
 
-	return nil, nil
+	return b, nil
 }
 
 func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, note *gitlab.Note) error {
