@@ -8,23 +8,12 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/xanzy/go-gitlab"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/repository"
-)
-
-const (
-	target       = "gitlab"
-	gitlabV4Url  = "https://gitlab.com/api/v4"
-	keyProjectID = "project-id"
-	keyTarget    = "target"
-	keyToken     = "token"
-
-	defaultTimeout = 60 * time.Second
 )
 
 var (
@@ -108,10 +97,10 @@ func (*Gitlab) ValidateConfig(conf core.Configuration) error {
 }
 
 func promptToken() (string, error) {
-	fmt.Println("You can generate a new token by visiting https://gitlab.com/settings/tokens.")
-	fmt.Println("Choose 'Generate new token' and set the necessary access scope for your repository.")
+	fmt.Println("You can generate a new token by visiting https://gitlab.com/profile/personal_access_tokens.")
+	fmt.Println("Choose 'Create personal access token' and set the necessary access scope for your repository.")
 	fmt.Println()
-	fmt.Println("'api' scope access : access scope: to be able to make api calls")
+	fmt.Println("'api' access scope: to be able to make api calls")
 	fmt.Println()
 
 	re, err := regexp.Compile(`^[a-zA-Z0-9\-]{20}`)
@@ -192,13 +181,14 @@ func promptURL(remotes map[string]string) (string, error) {
 }
 
 func getProjectPath(url string) (string, error) {
-
 	cleanUrl := strings.TrimSuffix(url, ".git")
+	cleanUrl = strings.Replace(cleanUrl, "git@", "https://", 1)
 	objectUrl, err := neturl.Parse(cleanUrl)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
+	fmt.Println(objectUrl.Path)
 	return objectUrl.Path[1:], nil
 }
 
