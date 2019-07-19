@@ -14,10 +14,6 @@ import (
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
-const (
-	keyGitlabLogin = "gitlab-login"
-)
-
 type gitlabImporter struct {
 	conf core.Configuration
 
@@ -170,7 +166,7 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 
 		// since gitlab doesn't provide the issue history
 		// we should check for "changed the description" notes and compare issue texts
-
+		// TODO: Check only one time and ignore next 'description change' within one issue
 		if issue.Description != b.Snapshot().Comments[0].Message {
 
 			// comment edition

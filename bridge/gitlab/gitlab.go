@@ -1,9 +1,26 @@
 package gitlab
 
 import (
+	"time"
+
 	"github.com/xanzy/go-gitlab"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
+)
+
+const (
+	target      = "gitlab"
+	gitlabV4Url = "https://gitlab.com/api/v4"
+
+	keyProjectID   = "project-id"
+	keyGitlabId    = "gitlab-id"
+	keyGitlabUrl   = "gitlab-url"
+	keyGitlabLogin = "gitlab-login"
+	keyToken       = "token"
+	keyTarget      = "target"
+	keyOrigin      = "origin"
+
+	defaultTimeout = 60 * time.Second
 )
 
 func init() {

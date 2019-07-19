@@ -18,12 +18,6 @@ var (
 	ErrMissingIdentityToken = errors.New("missing identity token")
 )
 
-const (
-	keyGitlabId  = "gitlab-id"
-	keyGitlabUrl = "gitlab-url"
-	keyOrigin    = "origin"
-)
-
 // gitlabExporter implement the Exporter interface
 type gitlabExporter struct {
 	conf core.Configuration
@@ -288,7 +282,7 @@ func (ge *gitlabExporter) exportBug(b *cache.BugCache, since time.Time, out chan
 			if targetHash == bugCreationHash {
 
 				// case bug creation operation: we need to edit the Gitlab issue
-				if err := updateGitlabIssueBody(client, bugGitlabID, opr.Message); err != nil {
+				if err := updateGitlabIssueBody(client, 0, opr.Message); err != nil {
 					err := errors.Wrap(err, "editing issue")
 					out <- core.NewExportError(err, b.Id())
 					return
@@ -323,7 +317,7 @@ func (ge *gitlabExporter) exportBug(b *cache.BugCache, since time.Time, out chan
 
 		case *bug.SetStatusOperation:
 			opr := op.(*bug.SetStatusOperation)
-			if err := updateGitlabIssueStatus(client, bugGitlabID, opr.Status); err != nil {
+			if err := updateGitlabIssueStatus(client, 0, opr.Status); err != nil {
 				err := errors.Wrap(err, "editing status")
 				out <- core.NewExportError(err, b.Id())
 				return
@@ -336,7 +330,7 @@ func (ge *gitlabExporter) exportBug(b *cache.BugCache, since time.Time, out chan
 
 		case *bug.SetTitleOperation:
 			opr := op.(*bug.SetTitleOperation)
-			if err := updateGitlabIssueTitle(client, bugGitlabID, opr.Title); err != nil {
+			if err := updateGitlabIssueTitle(client, 0, opr.Title); err != nil {
 				err := errors.Wrap(err, "editing title")
 				out <- core.NewExportError(err, b.Id())
 				return
@@ -466,8 +460,16 @@ func (ge *gitlabExporter) getLabelsIDs(gc *gitlab.Client, repositoryID string, l
 
 // create a gitlab. issue and return it ID
 func createGitlabIssue(gc *gitlab.Client, repositoryID, title, body string) (string, string, error) {
-	return "", "", nil
+	issue, _, err := gc.Issues.CreateIssue(repositoryID, &gitlab.CreateIssueOptions{
+		Title:       &title,
+		Description: &body,
+	})
 
+	if err != nil {
+		return "", "", err
+	}
+
+	return strconv.Itoa(issue.IID), issue.WebURL, nil
 }
 
 // add a comment to an issue and return it ID
@@ -479,16 +481,39 @@ func editCommentGitlabIssue(gc *gitlab.Client, commentID, body string) (string, 
 	return "", "", nil
 }
 
-func updateGitlabIssueStatus(gc *gitlab.Client, id string, status bug.Status) error {
-	return nil
+func updateGitlabIssueStatus(gc *gitlab.Client, id int, status bug.Status) error {
+	var state string
+
+	switch status {
+	case bug.OpenStatus:
+		state = "reopen"
+	case bug.ClosedStatus:
+		state = "close"
+	default:
+		panic("unknown bug state")
+	}
+
+	_, _, err := gc.Issues.UpdateIssue("", id, &gitlab.UpdateIssueOptions{
+		StateEvent: &state,
+	})
+
+	return err
 }
 
-func updateGitlabIssueBody(gc *gitlab.Client, id string, body string) error {
-	return nil
+func updateGitlabIssueBody(gc *gitlab.Client, id int, body string) error {
+	_, _, err := gc.Issues.UpdateIssue("", id, &gitlab.UpdateIssueOptions{
+		Description: &body,
+	})
+
+	return err
 }
 
-func updateGitlabIssueTitle(gc *gitlab.Client, id, title string) error {
-	return nil
+func updateGitlabIssueTitle(gc *gitlab.Client, id int, title string) error {
+	_, _, err := gc.Issues.UpdateIssue("", id, &gitlab.UpdateIssueOptions{
+		Title: &title,
+	})
+
+	return err
 }
 
 // update gitlab. issue labels
