@@ -14,6 +14,7 @@ import (
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
+// gitlabImporter implement the Importer interface
 type gitlabImporter struct {
 	conf core.Configuration
 
@@ -32,6 +33,8 @@ func (gi *gitlabImporter) Init(conf core.Configuration) error {
 	return nil
 }
 
+// ImportAll iterate over all the configured repository issues (notes) and ensure the creation
+// of the missing issues / comments / label events / title changes ...
 func (gi *gitlabImporter) ImportAll(repo *cache.RepoCache, since time.Time) error {
 	gi.iterator = NewIterator(gi.conf[keyProjectID], gi.conf[keyToken], since)
 
@@ -90,6 +93,7 @@ func (gi *gitlabImporter) ensureIssue(repo *cache.RepoCache, issue *gitlab.Issue
 		return nil, err
 	}
 
+	// if bug was never imported
 	if err == bug.ErrBugNotExist {
 		cleanText, err := text.Cleanup(string(issue.Description))
 		if err != nil {

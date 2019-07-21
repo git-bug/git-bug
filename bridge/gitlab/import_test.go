@@ -26,7 +26,7 @@ func TestImport(t *testing.T) {
 	}{
 		{
 			name: "simple issue",
-			url:  "https://gitlab.com/a-hilaly/git-bug-test/issues/1",
+			url:  "https://gitlab.com/git-bug/test/issues/1",
 			bug: &bug.Snapshot{
 				Operations: []bug.Operation{
 					bug.NewCreateOp(author, 0, "simple issue", "initial comment", nil),
@@ -37,7 +37,7 @@ func TestImport(t *testing.T) {
 		},
 		{
 			name: "empty issue",
-			url:  "https://gitlab.com/a-hilaly/git-bug-test/issues/2",
+			url:  "https://gitlab.com/git-bug/test/issues/2",
 			bug: &bug.Snapshot{
 				Operations: []bug.Operation{
 					bug.NewCreateOp(author, 0, "empty issue", "", nil),
@@ -46,7 +46,7 @@ func TestImport(t *testing.T) {
 		},
 		{
 			name: "complex issue",
-			url:  "https://gitlab.com/a-hilaly/git-bug-test/issues/3",
+			url:  "https://gitlab.com/git-bug/test/issues/3",
 			bug: &bug.Snapshot{
 				Operations: []bug.Operation{
 					bug.NewCreateOp(author, 0, "complex issue", "initial comment", nil),
@@ -63,7 +63,7 @@ func TestImport(t *testing.T) {
 		},
 		{
 			name: "editions",
-			url:  "https://gitlab.com/a-hilaly/git-bug-test/issues/4",
+			url:  "https://gitlab.com/git-bug/test/issues/4",
 			bug: &bug.Snapshot{
 				Operations: []bug.Operation{
 					bug.NewCreateOp(author, 0, "editions", "initial comment edited", nil),
@@ -113,7 +113,7 @@ func TestImport(t *testing.T) {
 			require.NoError(t, err)
 
 			ops := b.Snapshot().Operations
-			assert.Len(t, tt.bug.Operations, len(ops))
+			require.Len(t, tt.bug.Operations, len(ops))
 
 			for i, op := range tt.bug.Operations {
 

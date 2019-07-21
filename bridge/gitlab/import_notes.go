@@ -26,10 +26,7 @@ const (
 	NOTE_UNKNOWN
 )
 
-// GetNoteType parses note body a give it type
-// Since gitlab api return all these NoteType event as the same object
-// and doesn't provide a field to specify the note type. We must parse the
-// note body to detect it type.
+// GetNoteType parse a note system and body and return the note type and it content
 func GetNoteType(n *gitlab.Note) (NoteType, string) {
 	if !n.System {
 		return NOTE_COMMENT, n.Body

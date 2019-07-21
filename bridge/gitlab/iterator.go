@@ -47,6 +47,7 @@ type iterator struct {
 	// notes iterator
 	note *noteIterator
 
+	// labelEvent iterator
 	labelEvent *labelEventIterator
 }
 
