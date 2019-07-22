@@ -558,12 +558,12 @@ func promptProjectVisibility() (bool, error) {
 		line = strings.TrimRight(line, "\n")
 
 		index, err := strconv.Atoi(line)
-		if err != nil || (index != 0 && index != 1) {
+		if err != nil || (index != 1 && index != 2) {
 			fmt.Println("invalid input")
 			continue
 		}
 
 		// return true for public repositories, false for private
-		return index == 0, nil
+		return index == 1, nil
 	}
 }
