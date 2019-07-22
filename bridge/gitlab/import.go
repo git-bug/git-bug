@@ -95,7 +95,7 @@ func (gi *gitlabImporter) ensureIssue(repo *cache.RepoCache, issue *gitlab.Issue
 
 	// if bug was never imported
 	if err == bug.ErrBugNotExist {
-		cleanText, err := text.Cleanup(string(issue.Description))
+		cleanText, err := text.Cleanup(issue.Description)
 		if err != nil {
 			return nil, err
 		}
@@ -261,10 +261,12 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 
 		return err
 
-	default:
-		// non handled note types, this is not an error
+	case NOTE_UNKNOWN:
 		//TODO: send warning via channel
 		return nil
+
+	default:
+		panic("unhandled note type")
 	}
 
 	return nil
@@ -322,15 +324,15 @@ func (gi *gitlabImporter) ensurePerson(repo *cache.RepoCache, id int) (*cache.Id
 		return nil, err
 	}
 
-	// importing a new identity
-	gi.importedIdentities++
-
 	client := buildClient(gi.conf["token"])
 
 	user, _, err := client.Users.GetUser(id)
 	if err != nil {
 		return nil, err
 	}
+
+	// importing a new identity
+	gi.importedIdentities++
 
 	return repo.NewIdentityRaw(
 		user.Name,

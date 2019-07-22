@@ -3,7 +3,7 @@ package gitlab
 import (
 	"bufio"
 	"fmt"
-	neturl "net/url"
+	"net/url"
 	"os"
 	"regexp"
 	"strconv"
@@ -41,13 +41,13 @@ func (*Gitlab) Configure(repo repository.RepoCommon, params core.BridgeParams) (
 		// remote suggestions
 		remotes, err := repo.GetRemotes()
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "getting remotes")
 		}
 
 		// terminal prompt
 		url, err = promptURL(remotes)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "url prompt")
 		}
 	}
 
@@ -57,7 +57,7 @@ func (*Gitlab) Configure(repo repository.RepoCommon, params core.BridgeParams) (
 	} else {
 		token, err = promptToken()
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "token prompt")
 		}
 	}
 
@@ -65,7 +65,7 @@ func (*Gitlab) Configure(repo repository.RepoCommon, params core.BridgeParams) (
 	// validate project url and get it ID
 	ok, id, err := validateProjectURL(url, token)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "project validation")
 	}
 	if !ok {
 		return nil, fmt.Errorf("invalid project id or wrong token scope")
@@ -180,15 +180,14 @@ func promptURL(remotes map[string]string) (string, error) {
 	}
 }
 
-func getProjectPath(url string) (string, error) {
-	cleanUrl := strings.TrimSuffix(url, ".git")
+func getProjectPath(projectUrl string) (string, error) {
+	cleanUrl := strings.TrimSuffix(projectUrl, ".git")
 	cleanUrl = strings.Replace(cleanUrl, "git@", "https://", 1)
-	objectUrl, err := neturl.Parse(cleanUrl)
+	objectUrl, err := url.Parse(cleanUrl)
 	if err != nil {
-		return "", err
+		return "", ErrBadProjectURL
 	}
 
-	fmt.Println(objectUrl.Path)
 	return objectUrl.Path[1:], nil
 }
 

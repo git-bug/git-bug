@@ -69,6 +69,15 @@ func TestProjectPath(t *testing.T) {
 				err:  nil,
 			},
 		},
+		{
+			name: "bad url",
+			args: args{
+				url: "---,%gitlab.com/MichaelMure/git-bug.git",
+			},
+			want: want{
+				err: ErrBadProjectURL,
+			},
+		},
 	}
 
 	for _, tt := range tests {
