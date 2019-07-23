@@ -379,7 +379,7 @@ func promptURL(remotes map[string]string) (string, string, error) {
 			line = strings.TrimRight(line, "\n")
 
 			index, err := strconv.Atoi(line)
-			if err != nil || (index < 0 && index >= len(validRemotes)) {
+			if err != nil || index < 0 || index > len(validRemotes) {
 				fmt.Println("invalid input")
 				continue
 			}
