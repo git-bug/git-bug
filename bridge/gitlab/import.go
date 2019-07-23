@@ -138,11 +138,6 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 		return err
 	}
 
-	hash, errResolve := b.ResolveOperationWithMetadata(keyGitlabId, id)
-	if errResolve != cache.ErrNoMatchingOp {
-		return errResolve
-	}
-
 	noteType, body := GetNoteType(note)
 	switch noteType {
 	case NOTE_CLOSED:
@@ -189,6 +184,10 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 		}
 
 	case NOTE_COMMENT:
+		hash, errResolve := b.ResolveOperationWithMetadata(keyGitlabId, id)
+		if errResolve != cache.ErrNoMatchingOp {
+			return errResolve
+		}
 
 		cleanText, err := text.Cleanup(body)
 		if err != nil {
@@ -226,7 +225,7 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 			_, err = b.EditCommentRaw(
 				author,
 				note.UpdatedAt.Unix(),
-				hash,
+				git.Hash(comment.Id()),
 				cleanText,
 				nil,
 			)
@@ -327,6 +326,7 @@ func (gi *gitlabImporter) ensurePerson(repo *cache.RepoCache, id int) (*cache.Id
 		user.Username,
 		user.AvatarURL,
 		map[string]string{
+			// because Gitlab
 			keyGitlabId:    strconv.Itoa(id),
 			keyGitlabLogin: user.Username,
 		},

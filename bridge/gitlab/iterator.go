@@ -218,6 +218,7 @@ func (i *iterator) getNextLabelEvents() bool {
 	return true
 }
 
+// because Gitlab
 func (i *iterator) NextLabelEvent() bool {
 	if i.err != nil {
 		return false

@@ -30,6 +30,7 @@ const (
 func GetNoteType(n *gitlab.Note) (NoteType, string) {
 	// when a note is a comment system is set to false
 	// when a note is a different event system is set to true
+	// because Gitlab
 	if !n.System {
 		return NOTE_COMMENT, n.Body
 	}
@@ -88,6 +89,7 @@ func GetNoteType(n *gitlab.Note) (NoteType, string) {
 // getNewTitle parses body diff given by gitlab api and return it final form
 // examples: "changed title from **fourth issue** to **fourth issue{+ changed+}**"
 //           "changed title from **fourth issue{- changed-}** to **fourth issue**"
+// because Gitlab
 func getNewTitle(diff string) string {
 	newTitle := strings.Split(diff, "** to **")[1]
 	newTitle = strings.Replace(newTitle, "{+", "", -1)
