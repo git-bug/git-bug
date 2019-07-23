@@ -14,8 +14,7 @@ var (
 )
 
 // gitlabExporter implement the Exporter interface
-type gitlabExporter struct {
-}
+type gitlabExporter struct{}
 
 // Init .
 func (ge *gitlabExporter) Init(conf core.Configuration) error {

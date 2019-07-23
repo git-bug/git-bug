@@ -108,9 +108,9 @@ func (gi *gitlabImporter) ensureIssue(repo *cache.RepoCache, issue *gitlab.Issue
 			cleanText,
 			nil,
 			map[string]string{
-				keyOrigin:    target,
-				keyGitlabId:  parseID(issue.ID),
-				keyGitlabUrl: issue.WebURL,
+				core.KeyOrigin: target,
+				keyGitlabId:    parseID(issue.ID),
+				keyGitlabUrl:   issue.WebURL,
 			},
 		)
 

@@ -243,11 +243,3 @@ func (i *iterator) NextLabelEvent() bool {
 func (i *iterator) LabelEventValue() *gitlab.LabelEvent {
 	return i.labelEvent.cache[i.labelEvent.index]
 }
-
-func min(a, b int) int {
-	if a > b {
-		return b
-	}
-
-	return a
-}

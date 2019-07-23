@@ -19,7 +19,9 @@ var ErrImportNotSupported = errors.New("import is not supported")
 var ErrExportNotSupported = errors.New("export is not supported")
 
 const (
-	KeyTarget             = "target"
+	KeyTarget = "target"
+	KeyOrigin = "origin"
+
 	bridgeConfigKeyPrefix = "git-bug.bridge"
 )
 

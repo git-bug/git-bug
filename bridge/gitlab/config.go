@@ -61,26 +61,22 @@ func (*Gitlab) Configure(repo repository.RepoCommon, params core.BridgeParams) (
 		}
 	}
 
-	var ok bool
 	// validate project url and get its ID
-	ok, id, err := validateProjectURL(url, token)
+	id, err := validateProjectURL(url, token)
 	if err != nil {
 		return nil, errors.Wrap(err, "project validation")
-	}
-	if !ok {
-		return nil, fmt.Errorf("invalid project id or incorrect token scope")
 	}
 
 	conf[keyProjectID] = strconv.Itoa(id)
 	conf[keyToken] = token
-	conf[keyTarget] = target
+	conf[core.KeyTarget] = target
 
 	return conf, nil
 }
 
 func (*Gitlab) ValidateConfig(conf core.Configuration) error {
-	if v, ok := conf[keyTarget]; !ok {
-		return fmt.Errorf("missing %s key", keyTarget)
+	if v, ok := conf[core.KeyTarget]; !ok {
+		return fmt.Errorf("missing %s key", core.KeyTarget)
 	} else if v != target {
 		return fmt.Errorf("unexpected target name: %v", v)
 	}
@@ -147,7 +143,7 @@ func promptURL(remotes map[string]string) (string, error) {
 			line = strings.TrimRight(line, "\n")
 
 			index, err := strconv.Atoi(line)
-			if err != nil || (index < 0 && index > len(validRemotes)) {
+			if err != nil || index < 0 || index > len(validRemotes) {
 				fmt.Println("invalid input")
 				continue
 			}
@@ -205,18 +201,18 @@ func getValidGitlabRemoteURLs(remotes map[string]string) []string {
 	return urls
 }
 
-func validateProjectURL(url, token string) (bool, int, error) {
-	client := buildClient(token)
-
+func validateProjectURL(url, token string) (int, error) {
 	projectPath, err := getProjectPath(url)
 	if err != nil {
-		return false, 0, err
+		return 0, err
 	}
+
+	client := buildClient(token)
 
 	project, _, err := client.Projects.GetProject(projectPath, &gitlab.GetProjectOptions{})
 	if err != nil {
-		return false, 0, err
+		return 0, err
 	}
 
-	return true, project.ID, nil
+	return project.ID, nil
 }

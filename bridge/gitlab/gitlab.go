@@ -10,14 +10,14 @@ import (
 )
 
 const (
-	target         = "gitlab"
-	keyProjectID   = "project-id"
+	target = "gitlab"
+
 	keyGitlabId    = "gitlab-id"
 	keyGitlabUrl   = "gitlab-url"
 	keyGitlabLogin = "gitlab-login"
-	keyToken       = "token"
-	keyTarget      = "target"
-	keyOrigin      = "origin"
+
+	keyProjectID = "project-id"
+	keyToken     = "token"
 
 	defaultTimeout = 60 * time.Second
 )
@@ -37,7 +37,7 @@ func (*Gitlab) NewImporter() core.Importer {
 }
 
 func (*Gitlab) NewExporter() core.Exporter {
-	return &gitlabExporter{}
+	return nil
 }
 
 func buildClient(token string) *gitlab.Client {
