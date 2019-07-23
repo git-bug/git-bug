@@ -70,6 +70,17 @@ func (snap *Snapshot) SearchTimelineItem(hash git.Hash) (TimelineItem, error) {
 	return nil, fmt.Errorf("timeline item not found")
 }
 
+// SearchComment will search for a comment matching the given hash
+func (snap *Snapshot) SearchComment(hash git.Hash) (*Comment, error) {
+	for _, c := range snap.Comments {
+		if c.id == hash.String() {
+			return &c, nil
+		}
+	}
+
+	return nil, fmt.Errorf("comment item not found")
+}
+
 // append the operation author to the actors list
 func (snap *Snapshot) addActor(actor identity.Interface) {
 	for _, a := range snap.Actors {

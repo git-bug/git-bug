@@ -64,7 +64,7 @@ git bug bridge configure \
 
 ```
   -n, --name string      A distinctive name to identify the bridge
-  -t, --target string    The target of the bridge. Valid values are [github,launchpad-preview]
+  -t, --target string    The target of the bridge. Valid values are [github,gitlab,launchpad-preview]
   -u, --url string       The URL of the target repository
   -o, --owner string     The owner of the target repository
   -T, --token string     The authentication token for the API

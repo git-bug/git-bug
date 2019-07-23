@@ -116,32 +116,32 @@ The web UI interact with the backend through a GraphQL API. The schema is availa
 
 ### Importer implementations
 
-| | Github | Launchpad |
-| --- | --- | --- |
-| **incremental**<br/>(can import more than once) | :heavy_check_mark: | :x: |
-| **with resume**<br/>(download only new data) | :x: | :x: |
-| **identities** | :heavy_check_mark: | :heavy_check_mark: |
-| identities update | :x: | :x: |
-| **bug** | :heavy_check_mark: | :heavy_check_mark: |
-| comments | :heavy_check_mark: | :heavy_check_mark: |
-| comment editions | :heavy_check_mark: | :x: |
-| labels | :heavy_check_mark: | :x: |
-| status | :heavy_check_mark: | :x: |
-| title edition | :heavy_check_mark: | :x: |
-| **media/files** | :x: | :x: |
-| **automated test suite** | :heavy_check_mark: | :x: |
+| | Github | Gitlab | Launchpad |
+| --- | --- | --- | --- |
+| **incremental**<br/>(can import more than once) | :heavy_check_mark: | :heavy_check_mark: | :x: |
+| **with resume**<br/>(download only new data) | :x: | :x: | :x: |
+| **identities** | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| identities update | :x: | :x: | :x: |
+| **bug** | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| comments | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| comment editions | :heavy_check_mark: | :x: | :x: |
+| labels | :heavy_check_mark: | :heavy_check_mark: | :x: |
+| status | :heavy_check_mark: | :heavy_check_mark: | :x: |
+| title edition | :heavy_check_mark: | :heavy_check_mark: | :x: |
+| **media/files** | :x: | :x: | :x: |
+| **automated test suite** | :heavy_check_mark: | :heavy_check_mark: | :x: |
 
 ### Exporter implementations
 
-| | Github | Launchpad |
-| --- | --- | --- |
-| **bug** | :heavy_check_mark: | :x: |
-| comments | :heavy_check_mark: | :x: |
-| comment editions | :heavy_check_mark: | :x: |
-| labels | :heavy_check_mark: | :x: |
-| status | :heavy_check_mark: | :x: |
-| title edition | :heavy_check_mark: | :x: |
-| **automated test suite** | :heavy_check_mark: | :x: |
+| | Github | Gitlab | Launchpad |
+| --- | --- | --- | --- |
+| **bug** | :heavy_check_mark: | :x: | :x: |
+| comments | :heavy_check_mark: | :x: | :x: |
+| comment editions | :heavy_check_mark: | :x: | :x: |
+| labels | :heavy_check_mark: | :x: | :x: |
+| status | :heavy_check_mark: | :x: | :x: |
+| title edition | :heavy_check_mark: | :x: | :x: |
+| **automated test suite** | :heavy_check_mark: | :x: | :x: |
 
 ## Internals
 

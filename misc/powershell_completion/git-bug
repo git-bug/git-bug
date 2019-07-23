@@ -57,8 +57,8 @@ Register-ArgumentCompleter -Native -CommandName 'git-bug' -ScriptBlock {
         'git-bug;bridge;configure' {
             [CompletionResult]::new('-n', 'n', [CompletionResultType]::ParameterName, 'A distinctive name to identify the bridge')
             [CompletionResult]::new('--name', 'name', [CompletionResultType]::ParameterName, 'A distinctive name to identify the bridge')
-            [CompletionResult]::new('-t', 't', [CompletionResultType]::ParameterName, 'The target of the bridge. Valid values are [github,launchpad-preview]')
-            [CompletionResult]::new('--target', 'target', [CompletionResultType]::ParameterName, 'The target of the bridge. Valid values are [github,launchpad-preview]')
+            [CompletionResult]::new('-t', 't', [CompletionResultType]::ParameterName, 'The target of the bridge. Valid values are [github,gitlab,launchpad-preview]')
+            [CompletionResult]::new('--target', 'target', [CompletionResultType]::ParameterName, 'The target of the bridge. Valid values are [github,gitlab,launchpad-preview]')
             [CompletionResult]::new('-u', 'u', [CompletionResultType]::ParameterName, 'The URL of the target repository')
             [CompletionResult]::new('--url', 'url', [CompletionResultType]::ParameterName, 'The URL of the target repository')
             [CompletionResult]::new('-o', 'o', [CompletionResultType]::ParameterName, 'The owner of the target repository')
