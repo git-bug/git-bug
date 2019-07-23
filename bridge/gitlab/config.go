@@ -62,13 +62,13 @@ func (*Gitlab) Configure(repo repository.RepoCommon, params core.BridgeParams) (
 	}
 
 	var ok bool
-	// validate project url and get it ID
+	// validate project url and get its ID
 	ok, id, err := validateProjectURL(url, token)
 	if err != nil {
 		return nil, errors.Wrap(err, "project validation")
 	}
 	if !ok {
-		return nil, fmt.Errorf("invalid project id or wrong token scope")
+		return nil, fmt.Errorf("invalid project id or incorrect token scope")
 	}
 
 	conf[keyProjectID] = strconv.Itoa(id)
@@ -121,7 +121,7 @@ func promptToken() (string, error) {
 			return token, nil
 		}
 
-		fmt.Println("token is invalid")
+		fmt.Println("token format is invalid")
 	}
 }
 
@@ -147,7 +147,7 @@ func promptURL(remotes map[string]string) (string, error) {
 			line = strings.TrimRight(line, "\n")
 
 			index, err := strconv.Atoi(line)
-			if err != nil || (index < 0 && index >= len(validRemotes)) {
+			if err != nil || (index < 0 && index > len(validRemotes)) {
 				fmt.Println("invalid input")
 				continue
 			}

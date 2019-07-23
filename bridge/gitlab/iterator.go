@@ -124,7 +124,7 @@ func (i *iterator) NextIssue() bool {
 	}
 
 	// move cursor index
-	if i.issue.index < min(i.capacity, len(i.issue.cache))-1 {
+	if i.issue.index < len(i.issue.cache)-1 {
 		i.issue.index++
 		return true
 	}
@@ -180,7 +180,7 @@ func (i *iterator) NextNote() bool {
 	}
 
 	// move cursor index
-	if i.note.index < min(i.capacity, len(i.note.cache))-1 {
+	if i.note.index < len(i.note.cache)-1 {
 		i.note.index++
 		return true
 	}
@@ -232,7 +232,7 @@ func (i *iterator) NextLabelEvent() bool {
 	}
 
 	// move cursor index
-	if i.labelEvent.index < min(i.capacity, len(i.labelEvent.cache))-1 {
+	if i.labelEvent.index < len(i.labelEvent.cache)-1 {
 		i.labelEvent.index++
 		return true
 	}
