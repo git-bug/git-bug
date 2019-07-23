@@ -28,8 +28,8 @@ type iterator struct {
 	// gitlab api v4 client
 	gc *gitlab.Client
 
-	// if since is given the iterator will query only the updated
-	// issues after this date
+	// if since is given the iterator will query only the issues
+	// updated after this date
 	since time.Time
 
 	// project id
@@ -79,8 +79,6 @@ func (i *iterator) Error() error {
 }
 
 func (i *iterator) getNextIssues() bool {
-	sort := "asc"
-	scope := "all"
 	issues, _, err := i.gc.Issues.ListProjectIssues(
 		i.project,
 		&gitlab.ListProjectIssuesOptions{
@@ -88,9 +86,9 @@ func (i *iterator) getNextIssues() bool {
 				Page:    i.issue.page,
 				PerPage: i.capacity,
 			},
-			Scope:        &scope,
+			Scope:        gitlab.String("all"),
 			UpdatedAfter: &i.since,
-			Sort:         &sort,
+			Sort:         gitlab.String("asc"),
 		},
 	)
 
@@ -114,13 +112,13 @@ func (i *iterator) getNextIssues() bool {
 }
 
 func (i *iterator) NextIssue() bool {
+	if i.err != nil {
+		return false
+	}
+
 	// first query
 	if i.issue.cache == nil {
 		return i.getNextIssues()
-	}
-
-	if i.err != nil {
-		return false
 	}
 
 	// move cursor index
@@ -137,8 +135,6 @@ func (i *iterator) IssueValue() *gitlab.Issue {
 }
 
 func (i *iterator) getNextNotes() bool {
-	sort := "asc"
-	order := "created_at"
 	notes, _, err := i.gc.Notes.ListIssueNotes(
 		i.project,
 		i.IssueValue().IID,
@@ -147,8 +143,8 @@ func (i *iterator) getNextNotes() bool {
 				Page:    i.note.page,
 				PerPage: i.capacity,
 			},
-			Sort:    &sort,
-			OrderBy: &order,
+			Sort:    gitlab.String("asc"),
+			OrderBy: gitlab.String("created_at"),
 		},
 	)
 

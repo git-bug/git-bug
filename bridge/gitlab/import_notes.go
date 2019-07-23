@@ -28,6 +28,8 @@ const (
 
 // GetNoteType parse a note system and body and return the note type and it content
 func GetNoteType(n *gitlab.Note) (NoteType, string) {
+	// when a note is a comment system is set to false
+	// when a note is a different event system is set to true
 	if !n.System {
 		return NOTE_COMMENT, n.Body
 	}

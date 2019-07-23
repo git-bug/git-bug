@@ -11,6 +11,7 @@ import (
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
@@ -65,15 +66,15 @@ func (gi *gitlabImporter) ImportAll(repo *cache.RepoCache, since time.Time) erro
 			}
 		}
 
+		if err := gi.iterator.Error(); err != nil {
+			fmt.Printf("import error: %v\n", err)
+			return err
+		}
+
 		// commit bug state
 		if err := b.CommitAsNeeded(); err != nil {
 			return fmt.Errorf("bug commit: %v", err)
 		}
-	}
-
-	if err := gi.iterator.Error(); err != nil {
-		fmt.Printf("import error: %v\n", err)
-		return err
 	}
 
 	fmt.Printf("Successfully imported %d issues and %d identities from Gitlab\n", gi.importedIssues, gi.importedIdentities)
@@ -93,36 +94,37 @@ func (gi *gitlabImporter) ensureIssue(repo *cache.RepoCache, issue *gitlab.Issue
 		return nil, err
 	}
 
-	// if bug was never imported
-	if err == bug.ErrBugNotExist {
-		cleanText, err := text.Cleanup(issue.Description)
-		if err != nil {
-			return nil, err
-		}
-
-		// create bug
-		b, _, err = repo.NewBugRaw(
-			author,
-			issue.CreatedAt.Unix(),
-			issue.Title,
-			cleanText,
-			nil,
-			map[string]string{
-				core.KeyOrigin: target,
-				keyGitlabId:    parseID(issue.ID),
-				keyGitlabUrl:   issue.WebURL,
-			},
-		)
-
-		if err != nil {
-			return nil, err
-		}
-
-		// importing a new bug
-		gi.importedIssues++
-
+	if err == nil {
 		return b, nil
 	}
+
+	// if bug was never imported
+	cleanText, err := text.Cleanup(issue.Description)
+	if err != nil {
+		return nil, err
+	}
+
+	// create bug
+	b, _, err = repo.NewBugRaw(
+		author,
+		issue.CreatedAt.Unix(),
+		issue.Title,
+		cleanText,
+		nil,
+		map[string]string{
+			core.KeyOrigin:   target,
+			keyGitlabId:      parseID(issue.ID),
+			keyGitlabUrl:     issue.WebURL,
+			keyGitlabProject: gi.conf[keyProjectID],
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// importing a new bug
+	gi.importedIssues++
 
 	return b, nil
 }
@@ -138,7 +140,7 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 
 	hash, errResolve := b.ResolveOperationWithMetadata(keyGitlabId, id)
 	if errResolve != cache.ErrNoMatchingOp {
-		return err
+		return errResolve
 	}
 
 	noteType, body := GetNoteType(note)
@@ -148,8 +150,7 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 			author,
 			note.CreatedAt.Unix(),
 			map[string]string{
-				keyGitlabId:  id,
-				keyGitlabUrl: "",
+				keyGitlabId: id,
 			},
 		)
 		return err
@@ -159,8 +160,7 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 			author,
 			note.CreatedAt.Unix(),
 			map[string]string{
-				keyGitlabId:  id,
-				keyGitlabUrl: "",
+				keyGitlabId: id,
 			},
 		)
 		return err
@@ -168,25 +168,24 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 	case NOTE_DESCRIPTION_CHANGED:
 		issue := gi.iterator.IssueValue()
 
+		firstComment := b.Snapshot().Comments[0]
 		// since gitlab doesn't provide the issue history
 		// we should check for "changed the description" notes and compare issue texts
 		// TODO: Check only one time and ignore next 'description change' within one issue
-		if issue.Description != b.Snapshot().Comments[0].Message {
+		if issue.Description != firstComment.Message {
 
 			// comment edition
 			_, err = b.EditCommentRaw(
 				author,
 				note.UpdatedAt.Unix(),
-				target,
+				git.Hash(firstComment.Id()),
 				issue.Description,
 				map[string]string{
-					keyGitlabId:  id,
-					keyGitlabUrl: "",
+					keyGitlabId: id,
 				},
 			)
 
 			return err
-
 		}
 
 	case NOTE_COMMENT:
@@ -206,8 +205,7 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 				cleanText,
 				nil,
 				map[string]string{
-					keyGitlabId:  id,
-					keyGitlabUrl: "",
+					keyGitlabId: id,
 				},
 			)
 
@@ -215,11 +213,6 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 		}
 
 		// if comment was already exported
-
-		// if note wasn't updated
-		if note.UpdatedAt.Equal(*note.CreatedAt) {
-			return nil
-		}
 
 		// search for last comment update
 		comment, err := b.Snapshot().SearchComment(hash)
@@ -233,13 +226,9 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 			_, err = b.EditCommentRaw(
 				author,
 				note.UpdatedAt.Unix(),
-				target,
+				hash,
 				cleanText,
-				map[string]string{
-					// no metadata unique metadata to store
-					keyGitlabId:  "",
-					keyGitlabUrl: "",
-				},
+				nil,
 			)
 
 			return err
@@ -254,15 +243,13 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 			note.CreatedAt.Unix(),
 			body,
 			map[string]string{
-				keyGitlabId:  id,
-				keyGitlabUrl: "",
+				keyGitlabId: id,
 			},
 		)
 
 		return err
 
 	case NOTE_UNKNOWN:
-		//TODO: send warning via channel
 		return nil
 
 	default:
@@ -308,7 +295,7 @@ func (gi *gitlabImporter) ensureLabelEvent(repo *cache.RepoCache, b *cache.BugCa
 		)
 
 	default:
-		panic("unexpected label event action")
+		err = fmt.Errorf("unexpected label event action")
 	}
 
 	return err
