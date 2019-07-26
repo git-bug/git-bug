@@ -248,7 +248,15 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 
 		return err
 
-	case NOTE_UNKNOWN:
+	case NOTE_UNKNOWN,
+		NOTE_ASSIGNED,
+		NOTE_UNASSIGNED,
+		NOTE_CHANGED_MILESTONE,
+		NOTE_REMOVED_MILESTONE,
+		NOTE_CHANGED_DUEDATE,
+		NOTE_REMOVED_DUEDATE,
+		NOTE_LOCKED,
+		NOTE_UNLOCKED:
 		return nil
 
 	default:
