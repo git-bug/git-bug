@@ -55,6 +55,12 @@ func testCases(t *testing.T, repo *cache.RepoCache, identity *cache.IdentityCach
 	_, _, err = bugLabelChange.ChangeLabels(nil, []string{"bug"})
 	require.NoError(t, err)
 
+	_, _, err = bugLabelChange.ChangeLabels([]string{"InVaLiD"}, nil)
+	require.NoError(t, err)
+
+	_, _, err = bugLabelChange.ChangeLabels([]string{"bUG"}, nil)
+	require.NoError(t, err)
+
 	// bug with comments editions
 	bugWithCommentEditions, createOp, err := repo.NewBug("bug with comments editions", "new bug")
 	require.NoError(t, err)
@@ -99,7 +105,7 @@ func testCases(t *testing.T, repo *cache.RepoCache, identity *cache.IdentityCach
 		&testCase{
 			name:    "bug label change",
 			bug:     bugLabelChange,
-			numOrOp: 4,
+			numOrOp: 6,
 		},
 		&testCase{
 			name:    "bug with comment editions",
