@@ -132,6 +132,11 @@ func (gi *gitlabImporter) ensureIssue(repo *cache.RepoCache, issue *gitlab.Issue
 func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, note *gitlab.Note) error {
 	id := parseID(note.ID)
 
+	hash, errResolve := b.ResolveOperationWithMetadata(keyGitlabId, id)
+	if errResolve != nil && errResolve != cache.ErrNoMatchingOp {
+		return errResolve
+	}
+
 	// ensure issue author
 	author, err := gi.ensurePerson(repo, note.Author.ID)
 	if err != nil {
@@ -141,6 +146,10 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 	noteType, body := GetNoteType(note)
 	switch noteType {
 	case NOTE_CLOSED:
+		if errResolve == nil {
+			return nil
+		}
+
 		_, err = b.CloseRaw(
 			author,
 			note.CreatedAt.Unix(),
@@ -151,6 +160,10 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 		return err
 
 	case NOTE_REOPENED:
+		if errResolve == nil {
+			return nil
+		}
+
 		_, err = b.OpenRaw(
 			author,
 			note.CreatedAt.Unix(),
@@ -167,8 +180,7 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 		// since gitlab doesn't provide the issue history
 		// we should check for "changed the description" notes and compare issue texts
 		// TODO: Check only one time and ignore next 'description change' within one issue
-		if issue.Description != firstComment.Message {
-
+		if errResolve == cache.ErrNoMatchingOp && issue.Description != firstComment.Message {
 			// comment edition
 			_, err = b.EditCommentRaw(
 				author,
@@ -184,11 +196,6 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 		}
 
 	case NOTE_COMMENT:
-		hash, errResolve := b.ResolveOperationWithMetadata(keyGitlabId, id)
-		if errResolve != cache.ErrNoMatchingOp {
-			return errResolve
-		}
-
 		cleanText, err := text.Cleanup(body)
 		if err != nil {
 			return err
@@ -237,6 +244,10 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 
 	case NOTE_TITLE_CHANGED:
 		// title change events are given new notes
+		if errResolve == nil {
+			return nil
+		}
+
 		_, err = b.SetTitleRaw(
 			author,
 			note.CreatedAt.Unix(),
