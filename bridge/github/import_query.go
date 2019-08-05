@@ -175,3 +175,17 @@ type labelQuery struct {
 		} `graphql:"label(name: $label)"`
 	} `graphql:"repository(owner: $owner, name: $name)"`
 }
+
+type labelsQuery struct {
+	Repository struct {
+		Labels struct {
+			Nodes []struct {
+				ID          string `graphql:"id"`
+				Name        string `graphql:"name"`
+				Color       string `graphql:"color"`
+				Description string `graphql:"description"`
+			}
+			PageInfo pageInfo
+		} `graphql:"labels(first: $first, after: $after)"`
+	} `graphql:"repository(owner: $owner, name: $name)"`
+}

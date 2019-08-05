@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -96,6 +97,17 @@ func (ge *githubExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, 
 		ge.conf[keyToken],
 	)
 
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := ge.getIdentityClient(user.Id())
+	if err != nil {
+		return nil, err
+	}
+
+	// query all labels
+	err = ge.cacheGithubLabels(ctx, client)
 	if err != nil {
 		return nil, err
 	}
@@ -433,28 +445,46 @@ func markOperationAsExported(b *cache.BugCache, target entity.Id, githubID, gith
 	return err
 }
 
-// get label from github
-func (ge *githubExporter) getGithubLabelID(ctx context.Context, gc *githubv4.Client, label string) (string, error) {
-	q := &labelQuery{}
+func (ge *githubExporter) cacheGithubLabels(ctx context.Context, gc *githubv4.Client) error {
 	variables := map[string]interface{}{
-		"label": githubv4.String(label),
 		"owner": githubv4.String(ge.conf[keyOwner]),
 		"name":  githubv4.String(ge.conf[keyProject]),
+		"first": githubv4.Int(10),
+		"after": (*githubv4.String)(nil),
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
-	defer cancel()
+	q := labelsQuery{}
 
-	if err := gc.Query(ctx, q, variables); err != nil {
-		return "", err
+	hasNextPage := true
+	for hasNextPage {
+		// create a new timeout context at each iteration
+		ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
+		defer cancel()
+
+		if err := gc.Query(ctx, &q, variables); err != nil {
+			return err
+		}
+
+		for _, label := range q.Repository.Labels.Nodes {
+			ge.cachedLabels[label.Name] = label.ID
+		}
+
+		hasNextPage = q.Repository.Labels.PageInfo.HasNextPage
+		variables["after"] = q.Repository.Labels.PageInfo.EndCursor
 	}
 
-	// if label id is empty, it means there is no such label in this Github repository
-	if q.Repository.Label.ID == "" {
-		return "", fmt.Errorf("label not found")
+	return nil
+}
+
+func (ge *githubExporter) getLabelID(gc *githubv4.Client, label string) (string, error) {
+	label = strings.ToLower(label)
+	for cachedLabel, ID := range ge.cachedLabels {
+		if label == strings.ToLower(cachedLabel) {
+			return ID, nil
+		}
 	}
 
-	return q.Repository.Label.ID, nil
+	return "", fmt.Errorf("didn't find label id in cache")
 }
 
 // create a new label and return it github id
@@ -539,8 +569,8 @@ func (ge *githubExporter) createGithubLabelV4(gc *githubv4.Client, label, labelC
 */
 
 func (ge *githubExporter) getOrCreateGithubLabelID(ctx context.Context, gc *githubv4.Client, repositoryID string, label bug.Label) (string, error) {
-	// try to get label id
-	labelID, err := ge.getGithubLabelID(ctx, gc, string(label))
+	// try to get label id from cache
+	labelID, err := ge.getLabelID(gc, string(label))
 	if err == nil {
 		return labelID, nil
 	}
