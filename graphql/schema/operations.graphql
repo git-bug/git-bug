@@ -1,7 +1,7 @@
 """An operation applied to a bug."""
 interface Operation {
-    """The hash of the operation"""
-    hash: Hash!
+    """The identifier of the operation"""
+    id: String!
     """The operations author."""
     author: Identity!
     """The datetime when this operation was issued."""
@@ -27,8 +27,8 @@ type OperationEdge {
 # Operations
 
 type CreateOperation implements Operation & Authored {
-    """The hash of the operation"""
-    hash: Hash!
+    """The identifier of the operation"""
+    id: String!
     """The author of this object."""
     author: Identity!
     """The datetime when this operation was issued."""
@@ -40,8 +40,8 @@ type CreateOperation implements Operation & Authored {
 }
 
 type SetTitleOperation implements Operation & Authored {
-    """The hash of the operation"""
-    hash: Hash!
+    """The identifier of the operation"""
+    id: String!
     """The author of this object."""
     author: Identity!
     """The datetime when this operation was issued."""
@@ -52,8 +52,8 @@ type SetTitleOperation implements Operation & Authored {
 }
 
 type AddCommentOperation implements Operation & Authored {
-    """The hash of the operation"""
-    hash: Hash!
+    """The identifier of the operation"""
+    id: String!
     """The author of this object."""
     author: Identity!
     """The datetime when this operation was issued."""
@@ -64,21 +64,21 @@ type AddCommentOperation implements Operation & Authored {
 }
 
 type EditCommentOperation implements Operation & Authored {
-    """The hash of the operation"""
-    hash: Hash!
+    """The identifier of the operation"""
+    id: String!
     """The author of this object."""
     author: Identity!
     """The datetime when this operation was issued."""
     date: Time!
 
-    target: Hash!
+    target: String!
     message: String!
     files: [Hash!]!
 }
 
 type SetStatusOperation implements Operation & Authored {
-    """The hash of the operation"""
-    hash: Hash!
+    """The identifier of the operation"""
+    id: String!
     """The author of this object."""
     author: Identity!
     """The datetime when this operation was issued."""
@@ -88,8 +88,8 @@ type SetStatusOperation implements Operation & Authored {
 }
 
 type LabelChangeOperation implements Operation & Authored {
-    """The hash of the operation"""
-    hash: Hash!
+    """The identifier of the operation"""
+    id: String!
     """The author of this object."""
     author: Identity!
     """The datetime when this operation was issued."""

@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/MichaelMure/git-bug/identity"
-	"github.com/MichaelMure/git-bug/util/git"
 )
 
 // Snapshot is a compiled form of the Bug data structure used for storage and merge
@@ -71,9 +70,9 @@ func (snap *Snapshot) SearchTimelineItem(ID string) (TimelineItem, error) {
 }
 
 // SearchComment will search for a comment matching the given hash
-func (snap *Snapshot) SearchComment(hash git.Hash) (*Comment, error) {
+func (snap *Snapshot) SearchComment(id string) (*Comment, error) {
 	for _, c := range snap.Comments {
-		if c.id == hash.String() {
+		if c.id == id {
 			return &c, nil
 		}
 	}

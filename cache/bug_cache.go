@@ -44,7 +44,7 @@ func (c *BugCache) notifyUpdated() error {
 var ErrNoMatchingOp = fmt.Errorf("no matching operation found")
 
 type ErrMultipleMatchOp struct {
-	Matching []git.Hash
+	Matching []string
 }
 
 func (e ErrMultipleMatchOp) Error() string {
@@ -58,20 +58,16 @@ func (e ErrMultipleMatchOp) Error() string {
 }
 
 // ResolveOperationWithMetadata will find an operation that has the matching metadata
-func (c *BugCache) ResolveOperationWithMetadata(key string, value string) (git.Hash, error) {
+func (c *BugCache) ResolveOperationWithMetadata(key string, value string) (string, error) {
 	// preallocate but empty
-	matching := make([]git.Hash, 0, 5)
+	matching := make([]string, 0, 5)
 
 	it := bug.NewOperationIterator(c.bug)
 	for it.Next() {
 		op := it.Value()
 		opValue, ok := op.GetMetadata(key)
 		if ok && value == opValue {
-			h, err := op.Hash()
-			if err != nil {
-				return "", err
-			}
-			matching = append(matching, h)
+			matching = append(matching, op.ID())
 		}
 	}
 
@@ -232,7 +228,7 @@ func (c *BugCache) SetTitleRaw(author *IdentityCache, unixTime int64, title stri
 	return op, c.notifyUpdated()
 }
 
-func (c *BugCache) EditComment(target git.Hash, message string) (*bug.EditCommentOperation, error) {
+func (c *BugCache) EditComment(target string, message string) (*bug.EditCommentOperation, error) {
 	author, err := c.repoCache.GetUserIdentity()
 	if err != nil {
 		return nil, err
@@ -241,7 +237,7 @@ func (c *BugCache) EditComment(target git.Hash, message string) (*bug.EditCommen
 	return c.EditCommentRaw(author, time.Now().Unix(), target, message, nil)
 }
 
-func (c *BugCache) EditCommentRaw(author *IdentityCache, unixTime int64, target git.Hash, message string, metadata map[string]string) (*bug.EditCommentOperation, error) {
+func (c *BugCache) EditCommentRaw(author *IdentityCache, unixTime int64, target string, message string, metadata map[string]string) (*bug.EditCommentOperation, error) {
 	op, err := bug.EditComment(c.bug, author.Identity, unixTime, target, message)
 	if err != nil {
 		return nil, err
@@ -254,7 +250,7 @@ func (c *BugCache) EditCommentRaw(author *IdentityCache, unixTime int64, target 
 	return op, c.notifyUpdated()
 }
 
-func (c *BugCache) SetMetadata(target git.Hash, newMetadata map[string]string) (*bug.SetMetadataOperation, error) {
+func (c *BugCache) SetMetadata(target string, newMetadata map[string]string) (*bug.SetMetadataOperation, error) {
 	author, err := c.repoCache.GetUserIdentity()
 	if err != nil {
 		return nil, err
@@ -263,7 +259,7 @@ func (c *BugCache) SetMetadata(target git.Hash, newMetadata map[string]string) (
 	return c.SetMetadataRaw(author, time.Now().Unix(), target, newMetadata)
 }
 
-func (c *BugCache) SetMetadataRaw(author *IdentityCache, unixTime int64, target git.Hash, newMetadata map[string]string) (*bug.SetMetadataOperation, error) {
+func (c *BugCache) SetMetadataRaw(author *IdentityCache, unixTime int64, target string, newMetadata map[string]string) (*bug.SetMetadataOperation, error) {
 	op, err := bug.SetMetadata(c.bug, author.Identity, unixTime, target, newMetadata)
 	if err != nil {
 		return nil, err

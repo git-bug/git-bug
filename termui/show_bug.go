@@ -8,7 +8,6 @@ import (
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util/colors"
-	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/text"
 	"github.com/MichaelMure/gocui"
 )
@@ -232,7 +231,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 	y0 += lines + 1
 
 	for _, op := range snap.Timeline {
-		viewName := op.Hash().String()
+		viewName := op.ID()
 
 		// TODO: me might skip the rendering of blocks that are outside of the view
 		// but to do that we need to rework how sb.mainSelectableView is maintained
@@ -643,7 +642,7 @@ func (sb *showBug) edit(g *gocui.Gui, v *gocui.View) error {
 		return nil
 	}
 
-	op, err := snap.SearchTimelineItem(git.Hash(sb.selected))
+	op, err := snap.SearchTimelineItem(sb.selected)
 	if err != nil {
 		return err
 	}
@@ -651,10 +650,10 @@ func (sb *showBug) edit(g *gocui.Gui, v *gocui.View) error {
 	switch op.(type) {
 	case *bug.AddCommentTimelineItem:
 		message := op.(*bug.AddCommentTimelineItem).Message
-		return editCommentWithEditor(sb.bug, op.Hash(), message)
+		return editCommentWithEditor(sb.bug, op.ID(), message)
 	case *bug.CreateTimelineItem:
 		preMessage := op.(*bug.CreateTimelineItem).Message
-		return editCommentWithEditor(sb.bug, op.Hash(), preMessage)
+		return editCommentWithEditor(sb.bug, op.ID(), preMessage)
 	case *bug.LabelChangeTimelineItem:
 		return sb.editLabels(g, snap)
 	}

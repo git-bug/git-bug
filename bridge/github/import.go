@@ -11,7 +11,6 @@ import (
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/identity"
-	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
@@ -93,7 +92,7 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 	}
 
 	// get issue edits
-	issueEdits := []userContentEdit{}
+	var issueEdits []userContentEdit
 	for gi.iterator.NextIssueEdit() {
 		issueEdits = append(issueEdits, gi.iterator.IssueEditValue())
 	}
@@ -307,15 +306,14 @@ func (gi *githubImporter) ensureTimelineComment(repo *cache.RepoCache, b *cache.
 		return err
 	}
 
-	var target git.Hash
-	target, err = b.ResolveOperationWithMetadata(keyGithubId, parseId(item.Id))
+	targetOpID, err := b.ResolveOperationWithMetadata(keyGithubId, parseId(item.Id))
 	if err != nil && err != cache.ErrNoMatchingOp {
 		// real error
 		return err
 	}
+
 	// if no edits are given we create the comment
 	if len(edits) == 0 {
-
 		// if comment doesn't exist
 		if err == cache.ErrNoMatchingOp {
 			cleanText, err := text.Cleanup(string(item.Body))
@@ -324,7 +322,7 @@ func (gi *githubImporter) ensureTimelineComment(repo *cache.RepoCache, b *cache.
 			}
 
 			// add comment operation
-			op, err := b.AddCommentRaw(
+			_, err = b.AddCommentRaw(
 				author,
 				item.CreatedAt.Unix(),
 				cleanText,
@@ -334,19 +332,11 @@ func (gi *githubImporter) ensureTimelineComment(repo *cache.RepoCache, b *cache.
 					keyGithubUrl: parseId(item.Url.String()),
 				},
 			)
-			if err != nil {
-				return err
-			}
-
-			// set hash
-			target, err = op.Hash()
-			if err != nil {
-				return err
-			}
+			return err
 		}
 	} else {
 		for i, edit := range edits {
-			if i == 0 && target != "" {
+			if i == 0 && targetOpID != "" {
 				// The first edit in the github result is the comment creation itself, we already have that
 				continue
 			}
@@ -358,7 +348,7 @@ func (gi *githubImporter) ensureTimelineComment(repo *cache.RepoCache, b *cache.
 			}
 
 			// create comment when target is empty
-			if target == "" {
+			if targetOpID == "" {
 				cleanText, err := text.Cleanup(string(*edit.Diff))
 				if err != nil {
 					return err
@@ -378,16 +368,13 @@ func (gi *githubImporter) ensureTimelineComment(repo *cache.RepoCache, b *cache.
 					return err
 				}
 
-				// set hash
-				target, err = op.Hash()
-				if err != nil {
-					return err
-				}
+				// set target for the nexr edit now that the comment is created
+				targetOpID = op.ID()
 
 				continue
 			}
 
-			err = gi.ensureCommentEdit(repo, b, target, edit)
+			err = gi.ensureCommentEdit(repo, b, targetOpID, edit)
 			if err != nil {
 				return err
 			}
@@ -396,7 +383,7 @@ func (gi *githubImporter) ensureTimelineComment(repo *cache.RepoCache, b *cache.
 	return nil
 }
 
-func (gi *githubImporter) ensureCommentEdit(repo *cache.RepoCache, b *cache.BugCache, target git.Hash, edit userContentEdit) error {
+func (gi *githubImporter) ensureCommentEdit(repo *cache.RepoCache, b *cache.BugCache, target string, edit userContentEdit) error {
 	_, err := b.ResolveOperationWithMetadata(keyGithubId, parseId(edit.Id))
 	if err == nil {
 		// already imported

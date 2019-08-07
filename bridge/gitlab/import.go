@@ -11,7 +11,6 @@ import (
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/identity"
-	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
@@ -130,10 +129,10 @@ func (gi *gitlabImporter) ensureIssue(repo *cache.RepoCache, issue *gitlab.Issue
 }
 
 func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, note *gitlab.Note) error {
-	id := parseID(note.ID)
+	gitlabID := parseID(note.ID)
 
-	hash, errResolve := b.ResolveOperationWithMetadata(keyGitlabId, id)
-	if errResolve != nil && errResolve != cache.ErrNoMatchingOp {
+	id, errResolve := b.ResolveOperationWithMetadata(keyGitlabId, gitlabID)
+	if errResolve != cache.ErrNoMatchingOp {
 		return errResolve
 	}
 
@@ -154,7 +153,7 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 			author,
 			note.CreatedAt.Unix(),
 			map[string]string{
-				keyGitlabId: id,
+				keyGitlabId: gitlabID,
 			},
 		)
 		return err
@@ -168,7 +167,7 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 			author,
 			note.CreatedAt.Unix(),
 			map[string]string{
-				keyGitlabId: id,
+				keyGitlabId: gitlabID,
 			},
 		)
 		return err
@@ -185,10 +184,10 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 			_, err = b.EditCommentRaw(
 				author,
 				note.UpdatedAt.Unix(),
-				git.Hash(firstComment.Id()),
+				firstComment.Id(),
 				issue.Description,
 				map[string]string{
-					keyGitlabId: id,
+					keyGitlabId: gitlabID,
 				},
 			)
 
@@ -211,7 +210,7 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 				cleanText,
 				nil,
 				map[string]string{
-					keyGitlabId: id,
+					keyGitlabId: gitlabID,
 				},
 			)
 
@@ -221,7 +220,7 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 		// if comment was already exported
 
 		// search for last comment update
-		comment, err := b.Snapshot().SearchComment(hash)
+		comment, err := b.Snapshot().SearchComment(id)
 		if err != nil {
 			return err
 		}
@@ -232,7 +231,7 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 			_, err = b.EditCommentRaw(
 				author,
 				note.UpdatedAt.Unix(),
-				git.Hash(comment.Id()),
+				comment.Id(),
 				cleanText,
 				nil,
 			)
@@ -253,7 +252,7 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 			note.CreatedAt.Unix(),
 			body,
 			map[string]string{
-				keyGitlabId: id,
+				keyGitlabId: gitlabID,
 			},
 		)
 
