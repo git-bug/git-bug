@@ -5,14 +5,13 @@ import (
 	"fmt"
 
 	"github.com/MichaelMure/git-bug/identity"
-	"github.com/MichaelMure/git-bug/util/git"
 )
 
 var _ Operation = &SetMetadataOperation{}
 
 type SetMetadataOperation struct {
 	OpBase
-	Target      git.Hash
+	Target      string
 	NewMetadata map[string]string
 }
 
@@ -20,20 +19,13 @@ func (op *SetMetadataOperation) base() *OpBase {
 	return &op.OpBase
 }
 
-func (op *SetMetadataOperation) Hash() (git.Hash, error) {
-	return hashOperation(op)
+func (op *SetMetadataOperation) ID() string {
+	return idOperation(op)
 }
 
 func (op *SetMetadataOperation) Apply(snapshot *Snapshot) {
 	for _, target := range snapshot.Operations {
-		hash, err := target.Hash()
-		if err != nil {
-			// Should never error unless a programming error happened
-			// (covered in OpBase.Validate())
-			panic(err)
-		}
-
-		if hash == op.Target {
+		if target.ID() == op.Target {
 			base := target.base()
 
 			if base.extraMetadata == nil {
@@ -56,7 +48,7 @@ func (op *SetMetadataOperation) Validate() error {
 		return err
 	}
 
-	if !op.Target.IsValid() {
+	if !IDIsValid(op.Target) {
 		return fmt.Errorf("target hash is invalid")
 	}
 
@@ -95,7 +87,7 @@ func (op *SetMetadataOperation) UnmarshalJSON(data []byte) error {
 	}
 
 	aux := struct {
-		Target      git.Hash          `json:"target"`
+		Target      string            `json:"target"`
 		NewMetadata map[string]string `json:"new_metadata"`
 	}{}
 
@@ -114,7 +106,7 @@ func (op *SetMetadataOperation) UnmarshalJSON(data []byte) error {
 // Sign post method for gqlgen
 func (op *SetMetadataOperation) IsAuthored() {}
 
-func NewSetMetadataOp(author identity.Interface, unixTime int64, target git.Hash, newMetadata map[string]string) *SetMetadataOperation {
+func NewSetMetadataOp(author identity.Interface, unixTime int64, target string, newMetadata map[string]string) *SetMetadataOperation {
 	return &SetMetadataOperation{
 		OpBase:      newOpBase(SetMetadataOp, author, unixTime),
 		Target:      target,
@@ -123,7 +115,7 @@ func NewSetMetadataOp(author identity.Interface, unixTime int64, target git.Hash
 }
 
 // Convenience function to apply the operation
-func SetMetadata(b Interface, author identity.Interface, unixTime int64, target git.Hash, newMetadata map[string]string) (*SetMetadataOperation, error) {
+func SetMetadata(b Interface, author identity.Interface, unixTime int64, target string, newMetadata map[string]string) (*SetMetadataOperation, error) {
 	SetMetadataOp := NewSetMetadataOp(author, unixTime, target, newMetadata)
 	if err := SetMetadataOp.Validate(); err != nil {
 		return nil, err

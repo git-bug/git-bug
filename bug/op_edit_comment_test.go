@@ -20,14 +20,14 @@ func TestEdit(t *testing.T) {
 	create := NewCreateOp(rene, unix, "title", "create", nil)
 	create.Apply(&snapshot)
 
-	hash1, err := create.Hash()
-	require.NoError(t, err)
+	hash1 := create.ID()
+	require.True(t, IDIsValid(hash1))
 
 	comment1 := NewAddCommentOp(rene, unix, "comment 1", nil)
 	comment1.Apply(&snapshot)
 
-	hash2, err := comment1.Hash()
-	require.NoError(t, err)
+	hash2 := comment1.ID()
+	require.True(t, IDIsValid(hash2))
 
 	// add another unrelated op in between
 	setTitle := NewSetTitleOp(rene, unix, "edited title", "title")
@@ -36,8 +36,8 @@ func TestEdit(t *testing.T) {
 	comment2 := NewAddCommentOp(rene, unix, "comment 2", nil)
 	comment2.Apply(&snapshot)
 
-	hash3, err := comment2.Hash()
-	require.NoError(t, err)
+	hash3 := comment2.ID()
+	require.True(t, IDIsValid(hash3))
 
 	edit := NewEditCommentOp(rene, unix, hash1, "create edited", nil)
 	edit.Apply(&snapshot)
@@ -84,6 +84,9 @@ func TestEditCommentSerialize(t *testing.T) {
 	var after EditCommentOperation
 	err = json.Unmarshal(data, &after)
 	assert.NoError(t, err)
+
+	// enforce creating the ID
+	before.ID()
 
 	assert.Equal(t, before, &after)
 }

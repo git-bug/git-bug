@@ -7,11 +7,11 @@ import (
 	"os"
 	"path"
 
+	"github.com/pkg/errors"
+
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/repository"
-	"github.com/MichaelMure/git-bug/util/git"
-	"github.com/pkg/errors"
 )
 
 const selectFile = "select"
@@ -112,8 +112,8 @@ func selected(repo *cache.RepoCache) (*cache.BugCache, error) {
 		return nil, fmt.Errorf("the select file should be < 100 bytes")
 	}
 
-	h := git.Hash(buf)
-	if !h.IsValid() {
+	id := string(buf)
+	if !bug.IDIsValid(id) {
 		err = os.Remove(selectPath)
 		if err != nil {
 			return nil, errors.Wrap(err, "error while removing invalid select file")
@@ -122,7 +122,7 @@ func selected(repo *cache.RepoCache) (*cache.BugCache, error) {
 		return nil, fmt.Errorf("select file in invalid, removing it")
 	}
 
-	b, err := repo.ResolveBug(string(h))
+	b, err := repo.ResolveBug(id)
 	if err != nil {
 		return nil, err
 	}

@@ -3,10 +3,10 @@ package bug
 import (
 	"encoding/json"
 
-	"github.com/MichaelMure/git-bug/identity"
-	"github.com/MichaelMure/git-bug/util/git"
-	"github.com/MichaelMure/git-bug/util/timestamp"
 	"github.com/pkg/errors"
+
+	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/util/timestamp"
 )
 
 var _ Operation = &SetStatusOperation{}
@@ -21,23 +21,16 @@ func (op *SetStatusOperation) base() *OpBase {
 	return &op.OpBase
 }
 
-func (op *SetStatusOperation) Hash() (git.Hash, error) {
-	return hashOperation(op)
+func (op *SetStatusOperation) ID() string {
+	return idOperation(op)
 }
 
 func (op *SetStatusOperation) Apply(snapshot *Snapshot) {
 	snapshot.Status = op.Status
 	snapshot.addActor(op.Author)
 
-	hash, err := op.Hash()
-	if err != nil {
-		// Should never error unless a programming error happened
-		// (covered in OpBase.Validate())
-		panic(err)
-	}
-
 	item := &SetStatusTimelineItem{
-		hash:     hash,
+		id:       op.ID(),
 		Author:   op.Author,
 		UnixTime: timestamp.Timestamp(op.UnixTime),
 		Status:   op.Status,
@@ -114,14 +107,14 @@ func NewSetStatusOp(author identity.Interface, unixTime int64, status Status) *S
 }
 
 type SetStatusTimelineItem struct {
-	hash     git.Hash
+	id       string
 	Author   identity.Interface
 	UnixTime timestamp.Timestamp
 	Status   Status
 }
 
-func (s SetStatusTimelineItem) Hash() git.Hash {
-	return s.hash
+func (s SetStatusTimelineItem) ID() string {
+	return s.id
 }
 
 // Sign post method for gqlgen

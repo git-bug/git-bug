@@ -24,23 +24,16 @@ func (op *AddCommentOperation) base() *OpBase {
 	return &op.OpBase
 }
 
-func (op *AddCommentOperation) Hash() (git.Hash, error) {
-	return hashOperation(op)
+func (op *AddCommentOperation) ID() string {
+	return idOperation(op)
 }
 
 func (op *AddCommentOperation) Apply(snapshot *Snapshot) {
 	snapshot.addActor(op.Author)
 	snapshot.addParticipant(op.Author)
 
-	hash, err := op.Hash()
-	if err != nil {
-		// Should never error unless a programming error happened
-		// (covered in OpBase.Validate())
-		panic(err)
-	}
-
 	comment := Comment{
-		id:       string(hash),
+		id:       op.ID(),
 		Message:  op.Message,
 		Author:   op.Author,
 		Files:    op.Files,
@@ -50,7 +43,7 @@ func (op *AddCommentOperation) Apply(snapshot *Snapshot) {
 	snapshot.Comments = append(snapshot.Comments, comment)
 
 	item := &AddCommentTimelineItem{
-		CommentTimelineItem: NewCommentTimelineItem(hash, comment),
+		CommentTimelineItem: NewCommentTimelineItem(op.ID(), comment),
 	}
 
 	snapshot.Timeline = append(snapshot.Timeline, item)

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 
 	"github.com/MichaelMure/git-bug/identity"
-	"github.com/MichaelMure/git-bug/util/git"
 )
 
 var _ Operation = &NoOpOperation{}
@@ -20,8 +19,8 @@ func (op *NoOpOperation) base() *OpBase {
 	return &op.OpBase
 }
 
-func (op *NoOpOperation) Hash() (git.Hash, error) {
-	return hashOperation(op)
+func (op *NoOpOperation) ID() string {
+	return idOperation(op)
 }
 
 func (op *NoOpOperation) Apply(snapshot *Snapshot) {

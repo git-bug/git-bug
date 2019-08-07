@@ -25,25 +25,18 @@ func (op *CreateOperation) base() *OpBase {
 	return &op.OpBase
 }
 
-func (op *CreateOperation) Hash() (git.Hash, error) {
-	return hashOperation(op)
+func (op *CreateOperation) ID() string {
+	return idOperation(op)
 }
 
 func (op *CreateOperation) Apply(snapshot *Snapshot) {
 	snapshot.addActor(op.Author)
 	snapshot.addParticipant(op.Author)
 
-	hash, err := op.Hash()
-	if err != nil {
-		// Should never error unless a programming error happened
-		// (covered in OpBase.Validate())
-		panic(err)
-	}
-
 	snapshot.Title = op.Title
 
 	comment := Comment{
-		id:       string(hash),
+		id:       op.ID(),
 		Message:  op.Message,
 		Author:   op.Author,
 		UnixTime: timestamp.Timestamp(op.UnixTime),
@@ -55,7 +48,7 @@ func (op *CreateOperation) Apply(snapshot *Snapshot) {
 
 	snapshot.Timeline = []TimelineItem{
 		&CreateTimelineItem{
-			CommentTimelineItem: NewCommentTimelineItem(hash, comment),
+			CommentTimelineItem: NewCommentTimelineItem(op.ID(), comment),
 		},
 	}
 }

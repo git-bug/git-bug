@@ -27,12 +27,14 @@ const (
 	SetMetadataOp
 )
 
+const unsetIDMarker = "unset"
+
 // Operation define the interface to fulfill for an edit operation of a Bug
 type Operation interface {
 	// base return the OpBase of the Operation, for package internal use
 	base() *OpBase
-	// Hash return the hash of the operation, to be used for back references
-	Hash() (git.Hash, error)
+	// ID return the identifier of the operation, to be used for back references
+	ID() string
 	// Time return the time when the operation was added
 	Time() time.Time
 	// GetUnixTime return the unix timestamp when the operation was added
@@ -53,32 +55,47 @@ type Operation interface {
 	GetAuthor() identity.Interface
 }
 
-func hashRaw(data []byte) git.Hash {
+func hashRaw(data []byte) string {
 	hasher := sha256.New()
 	// Write can't fail
 	_, _ = hasher.Write(data)
-	return git.Hash(fmt.Sprintf("%x", hasher.Sum(nil)))
+	return fmt.Sprintf("%x", hasher.Sum(nil))
 }
 
-// hash compute the hash of the serialized operation
-func hashOperation(op Operation) (git.Hash, error) {
-	// TODO: this might not be the best idea: if a single bit change in the output of json.Marshal, this will break.
-	// Idea: hash the segment of serialized data (= immutable) instead of the go object in memory
-
+func idOperation(op Operation) string {
 	base := op.base()
 
-	if base.hash != "" {
-		return base.hash, nil
+	if base.id == "" {
+		// something went really wrong
+		panic("op's id not set")
 	}
+	if base.id == "unset" {
+		// This means we are trying to get the op's ID *before* it has been stored, for instance when
+		// adding multiple ops in one go in an OperationPack.
+		// As the ID is computed based on the actual bytes written on the disk, we are going to predict
+		// those and then get the ID. This is safe as it will be the exact same code writing on disk later.
 
-	data, err := json.Marshal(op)
-	if err != nil {
-		return "", err
+		data, err := json.Marshal(op)
+		if err != nil {
+			panic(err)
+		}
+
+		base.id = hashRaw(data)
 	}
+	return base.id
+}
 
-	base.hash = hashRaw(data)
-
-	return base.hash, nil
+func IDIsValid(id string) bool {
+	// IDs have the same format as a git hash
+	if len(id) != 40 && len(id) != 64 {
+		return false
+	}
+	for _, r := range id {
+		if (r < 'a' || r > 'z') && (r < '0' || r > '9') {
+			return false
+		}
+	}
+	return true
 }
 
 // OpBase implement the common code for all operations
@@ -87,8 +104,8 @@ type OpBase struct {
 	Author        identity.Interface
 	UnixTime      int64
 	Metadata      map[string]string
-	// Not serialized. Store the op's hash in memory.
-	hash git.Hash
+	// Not serialized. Store the op's id in memory.
+	id string
 	// Not serialized. Store the extra metadata in memory,
 	// compiled from SetMetadataOperation.
 	extraMetadata map[string]string
@@ -100,6 +117,7 @@ func newOpBase(opType OperationType, author identity.Interface, unixTime int64) 
 		OperationType: opType,
 		Author:        author,
 		UnixTime:      unixTime,
+		id:            unsetIDMarker,
 	}
 }
 
@@ -118,6 +136,9 @@ func (op OpBase) MarshalJSON() ([]byte, error) {
 }
 
 func (op *OpBase) UnmarshalJSON(data []byte) error {
+	// Compute the ID when loading the op from disk.
+	op.id = hashRaw(data)
+
 	aux := struct {
 		OperationType OperationType     `json:"type"`
 		Author        json.RawMessage   `json:"author"`
@@ -192,7 +213,7 @@ func (op *OpBase) SetMetadata(key string, value string) {
 	}
 
 	op.Metadata[key] = value
-	op.hash = ""
+	op.id = unsetIDMarker
 }
 
 // GetMetadata retrieve arbitrary metadata about the operation

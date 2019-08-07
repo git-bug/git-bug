@@ -21,5 +21,8 @@ func TestAddCommentSerialize(t *testing.T) {
 	err = json.Unmarshal(data, &after)
 	assert.NoError(t, err)
 
+	// enforce creating the ID
+	before.ID()
+
 	assert.Equal(t, before, &after)
 }

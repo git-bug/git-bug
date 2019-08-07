@@ -21,16 +21,16 @@ func TestSetMetadata(t *testing.T) {
 	create.Apply(&snapshot)
 	snapshot.Operations = append(snapshot.Operations, create)
 
-	hash1, err := create.Hash()
-	require.NoError(t, err)
+	hash1 := create.ID()
+	require.True(t, IDIsValid(hash1))
 
 	comment := NewAddCommentOp(rene, unix, "comment", nil)
 	comment.SetMetadata("key2", "value2")
 	comment.Apply(&snapshot)
 	snapshot.Operations = append(snapshot.Operations, comment)
 
-	hash2, err := comment.Hash()
-	require.NoError(t, err)
+	hash2 := comment.ID()
+	require.True(t, IDIsValid(hash2))
 
 	op1 := NewSetMetadataOp(rene, unix, hash1, map[string]string{
 		"key":  "override",
@@ -106,6 +106,9 @@ func TestSetMetadataSerialize(t *testing.T) {
 	var after SetMetadataOperation
 	err = json.Unmarshal(data, &after)
 	assert.NoError(t, err)
+
+	// enforce creating the ID
+	before.ID()
 
 	assert.Equal(t, before, &after)
 }

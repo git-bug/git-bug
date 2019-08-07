@@ -9,8 +9,8 @@ import (
 )
 
 type TimelineItem interface {
-	// Hash return the hash of the item
-	Hash() git.Hash
+	// ID return the identifier of the item
+	ID() string
 }
 
 // CommentHistoryStep hold one version of a message in the history
@@ -25,7 +25,7 @@ type CommentHistoryStep struct {
 
 // CommentTimelineItem is a TimelineItem that holds a Comment and its edition history
 type CommentTimelineItem struct {
-	hash      git.Hash
+	id        string
 	Author    identity.Interface
 	Message   string
 	Files     []git.Hash
@@ -34,9 +34,9 @@ type CommentTimelineItem struct {
 	History   []CommentHistoryStep
 }
 
-func NewCommentTimelineItem(hash git.Hash, comment Comment) CommentTimelineItem {
+func NewCommentTimelineItem(ID string, comment Comment) CommentTimelineItem {
 	return CommentTimelineItem{
-		hash:      hash,
+		id:        ID,
 		Author:    comment.Author,
 		Message:   comment.Message,
 		Files:     comment.Files,
@@ -51,8 +51,8 @@ func NewCommentTimelineItem(hash git.Hash, comment Comment) CommentTimelineItem 
 	}
 }
 
-func (c *CommentTimelineItem) Hash() git.Hash {
-	return c.hash
+func (c *CommentTimelineItem) ID() string {
+	return c.id
 }
 
 // Append will append a new comment in the history and update the other values

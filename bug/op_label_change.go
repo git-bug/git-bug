@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/pkg/errors"
+
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/timestamp"
-
-	"github.com/MichaelMure/git-bug/util/git"
-	"github.com/pkg/errors"
 )
 
 var _ Operation = &LabelChangeOperation{}
@@ -25,8 +24,8 @@ func (op *LabelChangeOperation) base() *OpBase {
 	return &op.OpBase
 }
 
-func (op *LabelChangeOperation) Hash() (git.Hash, error) {
-	return hashOperation(op)
+func (op *LabelChangeOperation) ID() string {
+	return idOperation(op)
 }
 
 // Apply apply the operation
@@ -61,15 +60,8 @@ AddLoop:
 		return string(snapshot.Labels[i]) < string(snapshot.Labels[j])
 	})
 
-	hash, err := op.Hash()
-	if err != nil {
-		// Should never error unless a programming error happened
-		// (covered in OpBase.Validate())
-		panic(err)
-	}
-
 	item := &LabelChangeTimelineItem{
-		hash:     hash,
+		id:       op.ID(),
 		Author:   op.Author,
 		UnixTime: timestamp.Timestamp(op.UnixTime),
 		Added:    op.Added,
@@ -163,15 +155,15 @@ func NewLabelChangeOperation(author identity.Interface, unixTime int64, added, r
 }
 
 type LabelChangeTimelineItem struct {
-	hash     git.Hash
+	id       string
 	Author   identity.Interface
 	UnixTime timestamp.Timestamp
 	Added    []Label
 	Removed  []Label
 }
 
-func (l LabelChangeTimelineItem) Hash() git.Hash {
-	return l.hash
+func (l LabelChangeTimelineItem) ID() string {
+	return l.id
 }
 
 // Sign post method for gqlgen

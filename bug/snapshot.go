@@ -60,9 +60,9 @@ func (snap *Snapshot) GetCreateMetadata(key string) (string, bool) {
 }
 
 // SearchTimelineItem will search in the timeline for an item matching the given hash
-func (snap *Snapshot) SearchTimelineItem(hash git.Hash) (TimelineItem, error) {
+func (snap *Snapshot) SearchTimelineItem(ID string) (TimelineItem, error) {
 	for i := range snap.Timeline {
-		if snap.Timeline[i].Hash() == hash {
+		if snap.Timeline[i].ID() == ID {
 			return snap.Timeline[i], nil
 		}
 	}

@@ -16,7 +16,7 @@ var _ Operation = &EditCommentOperation{}
 // EditCommentOperation will change a comment in the bug
 type EditCommentOperation struct {
 	OpBase
-	Target  git.Hash
+	Target  string
 	Message string
 	Files   []git.Hash
 }
@@ -25,8 +25,8 @@ func (op *EditCommentOperation) base() *OpBase {
 	return &op.OpBase
 }
 
-func (op *EditCommentOperation) Hash() (git.Hash, error) {
-	return hashOperation(op)
+func (op *EditCommentOperation) ID() string {
+	return idOperation(op)
 }
 
 func (op *EditCommentOperation) Apply(snapshot *Snapshot) {
@@ -38,9 +38,7 @@ func (op *EditCommentOperation) Apply(snapshot *Snapshot) {
 	var target TimelineItem
 
 	for i, item := range snapshot.Timeline {
-		h := item.Hash()
-
-		if h == op.Target {
+		if item.ID() == op.Target {
 			target = snapshot.Timeline[i]
 			break
 		}
@@ -52,7 +50,7 @@ func (op *EditCommentOperation) Apply(snapshot *Snapshot) {
 	}
 
 	comment := Comment{
-		id:       string(op.Target),
+		id:       op.Target,
 		Message:  op.Message,
 		Files:    op.Files,
 		UnixTime: timestamp.Timestamp(op.UnixTime),
@@ -71,7 +69,7 @@ func (op *EditCommentOperation) Apply(snapshot *Snapshot) {
 	// Updating the corresponding comment
 
 	for i := range snapshot.Comments {
-		if snapshot.Comments[i].Id() == string(op.Target) {
+		if snapshot.Comments[i].Id() == op.Target {
 			snapshot.Comments[i].Message = op.Message
 			snapshot.Comments[i].Files = op.Files
 			break
@@ -88,7 +86,7 @@ func (op *EditCommentOperation) Validate() error {
 		return err
 	}
 
-	if !op.Target.IsValid() {
+	if !IDIsValid(op.Target) {
 		return fmt.Errorf("target hash is invalid")
 	}
 
@@ -132,7 +130,7 @@ func (op *EditCommentOperation) UnmarshalJSON(data []byte) error {
 	}
 
 	aux := struct {
-		Target  git.Hash   `json:"target"`
+		Target  string     `json:"target"`
 		Message string     `json:"message"`
 		Files   []git.Hash `json:"files"`
 	}{}
@@ -153,7 +151,7 @@ func (op *EditCommentOperation) UnmarshalJSON(data []byte) error {
 // Sign post method for gqlgen
 func (op *EditCommentOperation) IsAuthored() {}
 
-func NewEditCommentOp(author identity.Interface, unixTime int64, target git.Hash, message string, files []git.Hash) *EditCommentOperation {
+func NewEditCommentOp(author identity.Interface, unixTime int64, target string, message string, files []git.Hash) *EditCommentOperation {
 	return &EditCommentOperation{
 		OpBase:  newOpBase(EditCommentOp, author, unixTime),
 		Target:  target,
@@ -163,11 +161,11 @@ func NewEditCommentOp(author identity.Interface, unixTime int64, target git.Hash
 }
 
 // Convenience function to apply the operation
-func EditComment(b Interface, author identity.Interface, unixTime int64, target git.Hash, message string) (*EditCommentOperation, error) {
+func EditComment(b Interface, author identity.Interface, unixTime int64, target string, message string) (*EditCommentOperation, error) {
 	return EditCommentWithFiles(b, author, unixTime, target, message, nil)
 }
 
-func EditCommentWithFiles(b Interface, author identity.Interface, unixTime int64, target git.Hash, message string, files []git.Hash) (*EditCommentOperation, error) {
+func EditCommentWithFiles(b Interface, author identity.Interface, unixTime int64, target string, message string, files []git.Hash) (*EditCommentOperation, error) {
 	editCommentOp := NewEditCommentOp(author, unixTime, target, message, files)
 	if err := editCommentOp.Validate(); err != nil {
 		return nil, err
