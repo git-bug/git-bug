@@ -290,7 +290,7 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time, out chan
 			} else {
 
 				// case comment edition operation: we need to edit the Github comment
-				commentID, ok := ge.cachedOperationIDs[opr.ID()]
+				commentID, ok := ge.cachedOperationIDs[opr.Target]
 				if !ok {
 					panic("unexpected error: comment id not found")
 				}
