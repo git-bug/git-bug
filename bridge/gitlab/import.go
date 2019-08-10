@@ -267,7 +267,9 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 		NOTE_CHANGED_DUEDATE,
 		NOTE_REMOVED_DUEDATE,
 		NOTE_LOCKED,
-		NOTE_UNLOCKED:
+		NOTE_UNLOCKED,
+		NOTE_MENTIONED_IN_ISSUE,
+		NOTE_MENTIONED_IN_MERGE_REQUEST:
 		return nil
 
 	default:

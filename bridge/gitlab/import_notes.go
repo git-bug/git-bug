@@ -23,6 +23,8 @@ const (
 	NOTE_UNASSIGNED
 	NOTE_CHANGED_MILESTONE
 	NOTE_REMOVED_MILESTONE
+	NOTE_MENTIONED_IN_ISSUE
+	NOTE_MENTIONED_IN_MERGE_REQUEST
 	NOTE_UNKNOWN
 )
 
@@ -81,6 +83,14 @@ func GetNoteType(n *gitlab.Note) (NoteType, string) {
 
 	if strings.HasPrefix(n.Body, "removed milestone") {
 		return NOTE_REMOVED_MILESTONE, ""
+	}
+
+	if strings.HasPrefix(n.Body, "mentioned in issue") {
+		return NOTE_MENTIONED_IN_ISSUE, ""
+	}
+
+	if strings.HasPrefix(n.Body, "mentioned in merge request") {
+		return NOTE_MENTIONED_IN_MERGE_REQUEST, ""
 	}
 
 	return NOTE_UNKNOWN, ""
