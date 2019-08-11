@@ -7,6 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/timestamp"
 )
@@ -16,15 +17,15 @@ var _ Operation = &LabelChangeOperation{}
 // LabelChangeOperation define a Bug operation to add or remove labels
 type LabelChangeOperation struct {
 	OpBase
-	Added   []Label
-	Removed []Label
+	Added   []Label `json:"added"`
+	Removed []Label `json:"removed"`
 }
 
 func (op *LabelChangeOperation) base() *OpBase {
 	return &op.OpBase
 }
 
-func (op *LabelChangeOperation) ID() string {
+func (op *LabelChangeOperation) Id() entity.Id {
 	return idOperation(op)
 }
 
@@ -61,7 +62,7 @@ AddLoop:
 	})
 
 	item := &LabelChangeTimelineItem{
-		id:       op.ID(),
+		id:       op.Id(),
 		Author:   op.Author,
 		UnixTime: timestamp.Timestamp(op.UnixTime),
 		Added:    op.Added,
@@ -95,28 +96,9 @@ func (op *LabelChangeOperation) Validate() error {
 	return nil
 }
 
-// Workaround to avoid the inner OpBase.MarshalJSON overriding the outer op
-// MarshalJSON
-func (op *LabelChangeOperation) MarshalJSON() ([]byte, error) {
-	base, err := json.Marshal(op.OpBase)
-	if err != nil {
-		return nil, err
-	}
-
-	// revert back to a flat map to be able to add our own fields
-	var data map[string]interface{}
-	if err := json.Unmarshal(base, &data); err != nil {
-		return nil, err
-	}
-
-	data["added"] = op.Added
-	data["removed"] = op.Removed
-
-	return json.Marshal(data)
-}
-
-// Workaround to avoid the inner OpBase.MarshalJSON overriding the outer op
-// MarshalJSON
+// UnmarshalJSON is a two step JSON unmarshaling
+// This workaround is necessary to avoid the inner OpBase.MarshalJSON
+// overriding the outer op's MarshalJSON
 func (op *LabelChangeOperation) UnmarshalJSON(data []byte) error {
 	// Unmarshal OpBase and the op separately
 
@@ -155,14 +137,14 @@ func NewLabelChangeOperation(author identity.Interface, unixTime int64, added, r
 }
 
 type LabelChangeTimelineItem struct {
-	id       string
+	id       entity.Id
 	Author   identity.Interface
 	UnixTime timestamp.Timestamp
 	Added    []Label
 	Removed  []Label
 }
 
-func (l LabelChangeTimelineItem) ID() string {
+func (l LabelChangeTimelineItem) Id() entity.Id {
 	return l.id
 }
 

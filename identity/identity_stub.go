@@ -3,6 +3,7 @@ package identity
 import (
 	"encoding/json"
 
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/lamport"
 	"github.com/MichaelMure/git-bug/util/timestamp"
@@ -16,13 +17,13 @@ var _ Interface = &IdentityStub{}
 // When this JSON is deserialized, an IdentityStub is returned instead, to be replaced
 // later by the proper Identity, loaded from the Repo.
 type IdentityStub struct {
-	id string
+	id entity.Id
 }
 
 func (i *IdentityStub) MarshalJSON() ([]byte, error) {
 	// TODO: add a type marker
 	return json.Marshal(struct {
-		Id string `json:"id"`
+		Id entity.Id `json:"id"`
 	}{
 		Id: i.id,
 	})
@@ -30,7 +31,7 @@ func (i *IdentityStub) MarshalJSON() ([]byte, error) {
 
 func (i *IdentityStub) UnmarshalJSON(data []byte) error {
 	aux := struct {
-		Id string `json:"id"`
+		Id entity.Id `json:"id"`
 	}{}
 
 	if err := json.Unmarshal(data, &aux); err != nil {
@@ -43,13 +44,8 @@ func (i *IdentityStub) UnmarshalJSON(data []byte) error {
 }
 
 // Id return the Identity identifier
-func (i *IdentityStub) Id() string {
+func (i *IdentityStub) Id() entity.Id {
 	return i.id
-}
-
-// HumanId return the Identity identifier truncated for human consumption
-func (i *IdentityStub) HumanId() string {
-	return FormatHumanID(i.Id())
 }
 
 func (IdentityStub) Name() string {

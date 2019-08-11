@@ -3,6 +3,7 @@ package bug
 import (
 	"strings"
 
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/timestamp"
@@ -10,7 +11,7 @@ import (
 
 type TimelineItem interface {
 	// ID return the identifier of the item
-	ID() string
+	Id() entity.Id
 }
 
 // CommentHistoryStep hold one version of a message in the history
@@ -25,7 +26,7 @@ type CommentHistoryStep struct {
 
 // CommentTimelineItem is a TimelineItem that holds a Comment and its edition history
 type CommentTimelineItem struct {
-	id        string
+	id        entity.Id
 	Author    identity.Interface
 	Message   string
 	Files     []git.Hash
@@ -34,7 +35,7 @@ type CommentTimelineItem struct {
 	History   []CommentHistoryStep
 }
 
-func NewCommentTimelineItem(ID string, comment Comment) CommentTimelineItem {
+func NewCommentTimelineItem(ID entity.Id, comment Comment) CommentTimelineItem {
 	return CommentTimelineItem{
 		id:        ID,
 		Author:    comment.Author,
@@ -51,7 +52,7 @@ func NewCommentTimelineItem(ID string, comment Comment) CommentTimelineItem {
 	}
 }
 
-func (c *CommentTimelineItem) ID() string {
+func (c *CommentTimelineItem) Id() entity.Id {
 	return c.id
 }
 

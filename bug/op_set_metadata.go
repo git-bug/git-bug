@@ -2,8 +2,10 @@ package bug
 
 import (
 	"encoding/json"
-	"fmt"
 
+	"github.com/pkg/errors"
+
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/identity"
 )
 
@@ -11,21 +13,21 @@ var _ Operation = &SetMetadataOperation{}
 
 type SetMetadataOperation struct {
 	OpBase
-	Target      string
-	NewMetadata map[string]string
+	Target      entity.Id         `json:"target"`
+	NewMetadata map[string]string `json:"new_metadata"`
 }
 
 func (op *SetMetadataOperation) base() *OpBase {
 	return &op.OpBase
 }
 
-func (op *SetMetadataOperation) ID() string {
+func (op *SetMetadataOperation) Id() entity.Id {
 	return idOperation(op)
 }
 
 func (op *SetMetadataOperation) Apply(snapshot *Snapshot) {
 	for _, target := range snapshot.Operations {
-		if target.ID() == op.Target {
+		if target.Id() == op.Target {
 			base := target.base()
 
 			if base.extraMetadata == nil {
@@ -48,35 +50,16 @@ func (op *SetMetadataOperation) Validate() error {
 		return err
 	}
 
-	if !IDIsValid(op.Target) {
-		return fmt.Errorf("target hash is invalid")
+	if err := op.Target.Validate(); err != nil {
+		return errors.Wrap(err, "target invalid")
 	}
 
 	return nil
 }
 
-// Workaround to avoid the inner OpBase.MarshalJSON overriding the outer op
-// MarshalJSON
-func (op *SetMetadataOperation) MarshalJSON() ([]byte, error) {
-	base, err := json.Marshal(op.OpBase)
-	if err != nil {
-		return nil, err
-	}
-
-	// revert back to a flat map to be able to add our own fields
-	var data map[string]interface{}
-	if err := json.Unmarshal(base, &data); err != nil {
-		return nil, err
-	}
-
-	data["target"] = op.Target
-	data["new_metadata"] = op.NewMetadata
-
-	return json.Marshal(data)
-}
-
-// Workaround to avoid the inner OpBase.MarshalJSON overriding the outer op
-// MarshalJSON
+// UnmarshalJSON is a two step JSON unmarshaling
+// This workaround is necessary to avoid the inner OpBase.MarshalJSON
+// overriding the outer op's MarshalJSON
 func (op *SetMetadataOperation) UnmarshalJSON(data []byte) error {
 	// Unmarshal OpBase and the op separately
 
@@ -87,7 +70,7 @@ func (op *SetMetadataOperation) UnmarshalJSON(data []byte) error {
 	}
 
 	aux := struct {
-		Target      string            `json:"target"`
+		Target      entity.Id         `json:"target"`
 		NewMetadata map[string]string `json:"new_metadata"`
 	}{}
 
@@ -106,7 +89,7 @@ func (op *SetMetadataOperation) UnmarshalJSON(data []byte) error {
 // Sign post method for gqlgen
 func (op *SetMetadataOperation) IsAuthored() {}
 
-func NewSetMetadataOp(author identity.Interface, unixTime int64, target string, newMetadata map[string]string) *SetMetadataOperation {
+func NewSetMetadataOp(author identity.Interface, unixTime int64, target entity.Id, newMetadata map[string]string) *SetMetadataOperation {
 	return &SetMetadataOperation{
 		OpBase:      newOpBase(SetMetadataOp, author, unixTime),
 		Target:      target,
@@ -115,7 +98,7 @@ func NewSetMetadataOp(author identity.Interface, unixTime int64, target string, 
 }
 
 // Convenience function to apply the operation
-func SetMetadata(b Interface, author identity.Interface, unixTime int64, target string, newMetadata map[string]string) (*SetMetadataOperation, error) {
+func SetMetadata(b Interface, author identity.Interface, unixTime int64, target entity.Id, newMetadata map[string]string) (*SetMetadataOperation, error) {
 	SetMetadataOp := NewSetMetadataOp(author, unixTime, target, newMetadata)
 	if err := SetMetadataOp.Validate(); err != nil {
 		return nil, err

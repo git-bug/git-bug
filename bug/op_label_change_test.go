@@ -21,8 +21,9 @@ func TestLabelChangeSerialize(t *testing.T) {
 	err = json.Unmarshal(data, &after)
 	assert.NoError(t, err)
 
-	// enforce creating the ID
-	before.ID()
+	// enforce creating the IDs
+	before.Id()
+	rene.Id()
 
 	assert.Equal(t, before, &after)
 }

@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/MichaelMure/git-bug/identity"
-
-	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/pkg/errors"
+
+	"github.com/MichaelMure/git-bug/entity"
+	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/util/git"
 )
 
 // OperationType is an operation type identifier
@@ -27,14 +28,12 @@ const (
 	SetMetadataOp
 )
 
-const unsetIDMarker = "unset"
-
 // Operation define the interface to fulfill for an edit operation of a Bug
 type Operation interface {
 	// base return the OpBase of the Operation, for package internal use
 	base() *OpBase
-	// ID return the identifier of the operation, to be used for back references
-	ID() string
+	// Id return the identifier of the operation, to be used for back references
+	Id() entity.Id
 	// Time return the time when the operation was added
 	Time() time.Time
 	// GetUnixTime return the unix timestamp when the operation was added
@@ -55,57 +54,42 @@ type Operation interface {
 	GetAuthor() identity.Interface
 }
 
-func hashRaw(data []byte) string {
-	hasher := sha256.New()
-	// Write can't fail
-	_, _ = hasher.Write(data)
-	return fmt.Sprintf("%x", hasher.Sum(nil))
+func deriveId(data []byte) entity.Id {
+	sum := sha256.Sum256(data)
+	return entity.Id(fmt.Sprintf("%x", sum))
 }
 
-func idOperation(op Operation) string {
+func idOperation(op Operation) entity.Id {
 	base := op.base()
 
 	if base.id == "" {
 		// something went really wrong
 		panic("op's id not set")
 	}
-	if base.id == "unset" {
-		// This means we are trying to get the op's ID *before* it has been stored, for instance when
+	if base.id == entity.UnsetId {
+		// This means we are trying to get the op's Id *before* it has been stored, for instance when
 		// adding multiple ops in one go in an OperationPack.
-		// As the ID is computed based on the actual bytes written on the disk, we are going to predict
-		// those and then get the ID. This is safe as it will be the exact same code writing on disk later.
+		// As the Id is computed based on the actual bytes written on the disk, we are going to predict
+		// those and then get the Id. This is safe as it will be the exact same code writing on disk later.
 
 		data, err := json.Marshal(op)
 		if err != nil {
 			panic(err)
 		}
 
-		base.id = hashRaw(data)
+		base.id = deriveId(data)
 	}
 	return base.id
 }
 
-func IDIsValid(id string) bool {
-	// IDs have the same format as a git hash
-	if len(id) != 40 && len(id) != 64 {
-		return false
-	}
-	for _, r := range id {
-		if (r < 'a' || r > 'z') && (r < '0' || r > '9') {
-			return false
-		}
-	}
-	return true
-}
-
 // OpBase implement the common code for all operations
 type OpBase struct {
-	OperationType OperationType
-	Author        identity.Interface
-	UnixTime      int64
-	Metadata      map[string]string
+	OperationType OperationType      `json:"type"`
+	Author        identity.Interface `json:"author"`
+	UnixTime      int64              `json:"timestamp"`
+	Metadata      map[string]string  `json:"metadata,omitempty"`
 	// Not serialized. Store the op's id in memory.
-	id string
+	id entity.Id
 	// Not serialized. Store the extra metadata in memory,
 	// compiled from SetMetadataOperation.
 	extraMetadata map[string]string
@@ -117,27 +101,13 @@ func newOpBase(opType OperationType, author identity.Interface, unixTime int64) 
 		OperationType: opType,
 		Author:        author,
 		UnixTime:      unixTime,
-		id:            unsetIDMarker,
+		id:            entity.UnsetId,
 	}
 }
 
-func (op OpBase) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
-		OperationType OperationType      `json:"type"`
-		Author        identity.Interface `json:"author"`
-		UnixTime      int64              `json:"timestamp"`
-		Metadata      map[string]string  `json:"metadata,omitempty"`
-	}{
-		OperationType: op.OperationType,
-		Author:        op.Author,
-		UnixTime:      op.UnixTime,
-		Metadata:      op.Metadata,
-	})
-}
-
 func (op *OpBase) UnmarshalJSON(data []byte) error {
-	// Compute the ID when loading the op from disk.
-	op.id = hashRaw(data)
+	// Compute the Id when loading the op from disk.
+	op.id = deriveId(data)
 
 	aux := struct {
 		OperationType OperationType     `json:"type"`
@@ -213,7 +183,7 @@ func (op *OpBase) SetMetadata(key string, value string) {
 	}
 
 	op.Metadata[key] = value
-	op.id = unsetIDMarker
+	op.id = entity.UnsetId
 }
 
 // GetMetadata retrieve arbitrary metadata about the operation

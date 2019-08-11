@@ -5,6 +5,9 @@ import (
 	"io"
 )
 
+const idLengthSHA1 = 40
+const idLengthSHA256 = 64
+
 // Hash is a git hash
 type Hash string
 
@@ -16,7 +19,7 @@ func (h Hash) String() string {
 func (h *Hash) UnmarshalGQL(v interface{}) error {
 	_, ok := v.(string)
 	if !ok {
-		return fmt.Errorf("labels must be strings")
+		return fmt.Errorf("hashes must be strings")
 	}
 
 	*h = v.(Hash)
@@ -35,7 +38,8 @@ func (h Hash) MarshalGQL(w io.Writer) {
 
 // IsValid tell if the hash is valid
 func (h *Hash) IsValid() bool {
-	if len(*h) != 40 && len(*h) != 64 {
+	// Support for both sha1 and sha256 git hashes
+	if len(*h) != idLengthSHA1 && len(*h) != idLengthSHA256 {
 		return false
 	}
 	for _, r := range *h {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/text"
@@ -16,16 +17,16 @@ var _ Operation = &CreateOperation{}
 // CreateOperation define the initial creation of a bug
 type CreateOperation struct {
 	OpBase
-	Title   string
-	Message string
-	Files   []git.Hash
+	Title   string     `json:"title"`
+	Message string     `json:"message"`
+	Files   []git.Hash `json:"files"`
 }
 
 func (op *CreateOperation) base() *OpBase {
 	return &op.OpBase
 }
 
-func (op *CreateOperation) ID() string {
+func (op *CreateOperation) Id() entity.Id {
 	return idOperation(op)
 }
 
@@ -36,7 +37,7 @@ func (op *CreateOperation) Apply(snapshot *Snapshot) {
 	snapshot.Title = op.Title
 
 	comment := Comment{
-		id:       op.ID(),
+		id:       op.Id(),
 		Message:  op.Message,
 		Author:   op.Author,
 		UnixTime: timestamp.Timestamp(op.UnixTime),
@@ -48,7 +49,7 @@ func (op *CreateOperation) Apply(snapshot *Snapshot) {
 
 	snapshot.Timeline = []TimelineItem{
 		&CreateTimelineItem{
-			CommentTimelineItem: NewCommentTimelineItem(op.ID(), comment),
+			CommentTimelineItem: NewCommentTimelineItem(op.Id(), comment),
 		},
 	}
 }
@@ -81,29 +82,9 @@ func (op *CreateOperation) Validate() error {
 	return nil
 }
 
-// Workaround to avoid the inner OpBase.MarshalJSON overriding the outer op
-// MarshalJSON
-func (op *CreateOperation) MarshalJSON() ([]byte, error) {
-	base, err := json.Marshal(op.OpBase)
-	if err != nil {
-		return nil, err
-	}
-
-	// revert back to a flat map to be able to add our own fields
-	var data map[string]interface{}
-	if err := json.Unmarshal(base, &data); err != nil {
-		return nil, err
-	}
-
-	data["title"] = op.Title
-	data["message"] = op.Message
-	data["files"] = op.Files
-
-	return json.Marshal(data)
-}
-
-// Workaround to avoid the inner OpBase.MarshalJSON overriding the outer op
-// MarshalJSON
+// UnmarshalJSON is a two step JSON unmarshaling
+// This workaround is necessary to avoid the inner OpBase.MarshalJSON
+// overriding the outer op's MarshalJSON
 func (op *CreateOperation) UnmarshalJSON(data []byte) error {
 	// Unmarshal OpBase and the op separately
 

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/text"
@@ -15,16 +16,16 @@ var _ Operation = &AddCommentOperation{}
 // AddCommentOperation will add a new comment in the bug
 type AddCommentOperation struct {
 	OpBase
-	Message string
+	Message string `json:"message"`
 	// TODO: change for a map[string]util.hash to store the filename ?
-	Files []git.Hash
+	Files []git.Hash `json:"files"`
 }
 
 func (op *AddCommentOperation) base() *OpBase {
 	return &op.OpBase
 }
 
-func (op *AddCommentOperation) ID() string {
+func (op *AddCommentOperation) Id() entity.Id {
 	return idOperation(op)
 }
 
@@ -33,7 +34,7 @@ func (op *AddCommentOperation) Apply(snapshot *Snapshot) {
 	snapshot.addParticipant(op.Author)
 
 	comment := Comment{
-		id:       op.ID(),
+		id:       op.Id(),
 		Message:  op.Message,
 		Author:   op.Author,
 		Files:    op.Files,
@@ -43,7 +44,7 @@ func (op *AddCommentOperation) Apply(snapshot *Snapshot) {
 	snapshot.Comments = append(snapshot.Comments, comment)
 
 	item := &AddCommentTimelineItem{
-		CommentTimelineItem: NewCommentTimelineItem(op.ID(), comment),
+		CommentTimelineItem: NewCommentTimelineItem(op.Id(), comment),
 	}
 
 	snapshot.Timeline = append(snapshot.Timeline, item)
@@ -65,28 +66,9 @@ func (op *AddCommentOperation) Validate() error {
 	return nil
 }
 
-// Workaround to avoid the inner OpBase.MarshalJSON overriding the outer op
-// MarshalJSON
-func (op *AddCommentOperation) MarshalJSON() ([]byte, error) {
-	base, err := json.Marshal(op.OpBase)
-	if err != nil {
-		return nil, err
-	}
-
-	// revert back to a flat map to be able to add our own fields
-	var data map[string]interface{}
-	if err := json.Unmarshal(base, &data); err != nil {
-		return nil, err
-	}
-
-	data["message"] = op.Message
-	data["files"] = op.Files
-
-	return json.Marshal(data)
-}
-
-// Workaround to avoid the inner OpBase.MarshalJSON overriding the outer op
-// MarshalJSON
+// UnmarshalJSON is a two step JSON unmarshaling
+// This workaround is necessary to avoid the inner OpBase.MarshalJSON
+// overriding the outer op's MarshalJSON
 func (op *AddCommentOperation) UnmarshalJSON(data []byte) error {
 	// Unmarshal OpBase and the op separately
 

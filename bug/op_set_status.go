@@ -5,6 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/timestamp"
 )
@@ -14,14 +15,14 @@ var _ Operation = &SetStatusOperation{}
 // SetStatusOperation will change the status of a bug
 type SetStatusOperation struct {
 	OpBase
-	Status Status
+	Status Status `json:"status"`
 }
 
 func (op *SetStatusOperation) base() *OpBase {
 	return &op.OpBase
 }
 
-func (op *SetStatusOperation) ID() string {
+func (op *SetStatusOperation) Id() entity.Id {
 	return idOperation(op)
 }
 
@@ -30,7 +31,7 @@ func (op *SetStatusOperation) Apply(snapshot *Snapshot) {
 	snapshot.addActor(op.Author)
 
 	item := &SetStatusTimelineItem{
-		id:       op.ID(),
+		id:       op.Id(),
 		Author:   op.Author,
 		UnixTime: timestamp.Timestamp(op.UnixTime),
 		Status:   op.Status,
@@ -51,27 +52,9 @@ func (op *SetStatusOperation) Validate() error {
 	return nil
 }
 
-// Workaround to avoid the inner OpBase.MarshalJSON overriding the outer op
-// MarshalJSON
-func (op *SetStatusOperation) MarshalJSON() ([]byte, error) {
-	base, err := json.Marshal(op.OpBase)
-	if err != nil {
-		return nil, err
-	}
-
-	// revert back to a flat map to be able to add our own fields
-	var data map[string]interface{}
-	if err := json.Unmarshal(base, &data); err != nil {
-		return nil, err
-	}
-
-	data["status"] = op.Status
-
-	return json.Marshal(data)
-}
-
-// Workaround to avoid the inner OpBase.MarshalJSON overriding the outer op
-// MarshalJSON
+// UnmarshalJSON is a two step JSON unmarshaling
+// This workaround is necessary to avoid the inner OpBase.MarshalJSON
+// overriding the outer op's MarshalJSON
 func (op *SetStatusOperation) UnmarshalJSON(data []byte) error {
 	// Unmarshal OpBase and the op separately
 
@@ -107,13 +90,13 @@ func NewSetStatusOp(author identity.Interface, unixTime int64, status Status) *S
 }
 
 type SetStatusTimelineItem struct {
-	id       string
+	id       entity.Id
 	Author   identity.Interface
 	UnixTime timestamp.Timestamp
 	Status   Status
 }
 
-func (s SetStatusTimelineItem) ID() string {
+func (s SetStatusTimelineItem) Id() entity.Id {
 	return s.id
 }
 

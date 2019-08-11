@@ -75,7 +75,7 @@ func MergeAll(repo repository.ClockedRepo, remote string) <-chan entity.MergeRes
 				continue
 			}
 
-			localRef := identityRefPattern + remoteIdentity.Id()
+			localRef := identityRefPattern + remoteIdentity.Id().String()
 			localExist, err := repo.RefExist(localRef)
 
 			if err != nil {

@@ -21,18 +21,18 @@ func TestSetMetadata(t *testing.T) {
 	create.Apply(&snapshot)
 	snapshot.Operations = append(snapshot.Operations, create)
 
-	hash1 := create.ID()
-	require.True(t, IDIsValid(hash1))
+	id1 := create.Id()
+	require.NoError(t, id1.Validate())
 
 	comment := NewAddCommentOp(rene, unix, "comment", nil)
 	comment.SetMetadata("key2", "value2")
 	comment.Apply(&snapshot)
 	snapshot.Operations = append(snapshot.Operations, comment)
 
-	hash2 := comment.ID()
-	require.True(t, IDIsValid(hash2))
+	id2 := comment.Id()
+	require.NoError(t, id2.Validate())
 
-	op1 := NewSetMetadataOp(rene, unix, hash1, map[string]string{
+	op1 := NewSetMetadataOp(rene, unix, id1, map[string]string{
 		"key":  "override",
 		"key2": "value",
 	})
@@ -51,7 +51,7 @@ func TestSetMetadata(t *testing.T) {
 	assert.Equal(t, len(commentMetadata), 1)
 	assert.Equal(t, commentMetadata["key2"], "value2")
 
-	op2 := NewSetMetadataOp(rene, unix, hash2, map[string]string{
+	op2 := NewSetMetadataOp(rene, unix, id2, map[string]string{
 		"key2": "value",
 		"key3": "value3",
 	})
@@ -71,7 +71,7 @@ func TestSetMetadata(t *testing.T) {
 	// new key is set
 	assert.Equal(t, commentMetadata["key3"], "value3")
 
-	op3 := NewSetMetadataOp(rene, unix, hash1, map[string]string{
+	op3 := NewSetMetadataOp(rene, unix, id1, map[string]string{
 		"key":  "override",
 		"key2": "override",
 	})
@@ -107,8 +107,9 @@ func TestSetMetadataSerialize(t *testing.T) {
 	err = json.Unmarshal(data, &after)
 	assert.NoError(t, err)
 
-	// enforce creating the ID
-	before.ID()
+	// enforce creating the IDs
+	before.Id()
+	rene.Id()
 
 	assert.Equal(t, before, &after)
 }

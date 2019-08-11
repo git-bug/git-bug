@@ -37,11 +37,11 @@ func UnmarshalJSON(raw json.RawMessage) (Interface, error) {
 	}
 
 	// Fallback on a legacy Bare identity
-	var b Bare
+	b := &Bare{}
 
-	err = json.Unmarshal(raw, &b)
+	err = json.Unmarshal(raw, b)
 	if err == nil && (b.name != "" || b.login != "") {
-		return &b, nil
+		return b, nil
 	}
 
 	// abort if we have an error other than the wrong type

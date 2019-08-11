@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/timestamp"
 
@@ -16,15 +17,15 @@ var _ Operation = &SetTitleOperation{}
 // SetTitleOperation will change the title of a bug
 type SetTitleOperation struct {
 	OpBase
-	Title string
-	Was   string
+	Title string `json:"title"`
+	Was   string `json:"was"`
 }
 
 func (op *SetTitleOperation) base() *OpBase {
 	return &op.OpBase
 }
 
-func (op *SetTitleOperation) ID() string {
+func (op *SetTitleOperation) Id() entity.Id {
 	return idOperation(op)
 }
 
@@ -33,7 +34,7 @@ func (op *SetTitleOperation) Apply(snapshot *Snapshot) {
 	snapshot.addActor(op.Author)
 
 	item := &SetTitleTimelineItem{
-		id:       op.ID(),
+		id:       op.Id(),
 		Author:   op.Author,
 		UnixTime: timestamp.Timestamp(op.UnixTime),
 		Title:    op.Title,
@@ -71,28 +72,9 @@ func (op *SetTitleOperation) Validate() error {
 	return nil
 }
 
-// Workaround to avoid the inner OpBase.MarshalJSON overriding the outer op
-// MarshalJSON
-func (op *SetTitleOperation) MarshalJSON() ([]byte, error) {
-	base, err := json.Marshal(op.OpBase)
-	if err != nil {
-		return nil, err
-	}
-
-	// revert back to a flat map to be able to add our own fields
-	var data map[string]interface{}
-	if err := json.Unmarshal(base, &data); err != nil {
-		return nil, err
-	}
-
-	data["title"] = op.Title
-	data["was"] = op.Was
-
-	return json.Marshal(data)
-}
-
-// Workaround to avoid the inner OpBase.MarshalJSON overriding the outer op
-// MarshalJSON
+// UnmarshalJSON is a two step JSON unmarshaling
+// This workaround is necessary to avoid the inner OpBase.MarshalJSON
+// overriding the outer op's MarshalJSON
 func (op *SetTitleOperation) UnmarshalJSON(data []byte) error {
 	// Unmarshal OpBase and the op separately
 
@@ -131,14 +113,14 @@ func NewSetTitleOp(author identity.Interface, unixTime int64, title string, was 
 }
 
 type SetTitleTimelineItem struct {
-	id       string
+	id       entity.Id
 	Author   identity.Interface
 	UnixTime timestamp.Timestamp
 	Title    string
 	Was      string
 }
 
-func (s SetTitleTimelineItem) ID() string {
+func (s SetTitleTimelineItem) Id() entity.Id {
 	return s.id
 }
 

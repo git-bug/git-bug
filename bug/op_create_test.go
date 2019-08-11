@@ -20,11 +20,11 @@ func TestCreate(t *testing.T) {
 
 	create.Apply(&snapshot)
 
-	id := create.ID()
-	assert.True(t, IDIsValid(id))
+	id := create.Id()
+	assert.NoError(t, id.Validate())
 
 	comment := Comment{
-		id:       string(id),
+		id:       id,
 		Author:   rene,
 		Message:  "message",
 		UnixTime: timestamp.Timestamp(create.UnixTime),
@@ -61,8 +61,9 @@ func TestCreateSerialize(t *testing.T) {
 	err = json.Unmarshal(data, &after)
 	assert.NoError(t, err)
 
-	// enforce creating the ID
-	before.ID()
+	// enforce creating the IDs
+	before.Id()
+	rene.Id()
 
 	assert.Equal(t, before, &after)
 }

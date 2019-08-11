@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/identity"
 )
 
 // Snapshot is a compiled form of the Bug data structure used for storage and merge
 type Snapshot struct {
-	id string
+	id entity.Id
 
 	Status       Status
 	Title        string
@@ -26,13 +27,8 @@ type Snapshot struct {
 }
 
 // Return the Bug identifier
-func (snap *Snapshot) Id() string {
+func (snap *Snapshot) Id() entity.Id {
 	return snap.id
-}
-
-// Return the Bug identifier truncated for human consumption
-func (snap *Snapshot) HumanId() string {
-	return FormatHumanID(snap.id)
 }
 
 // Return the last time a bug was modified
@@ -59,9 +55,9 @@ func (snap *Snapshot) GetCreateMetadata(key string) (string, bool) {
 }
 
 // SearchTimelineItem will search in the timeline for an item matching the given hash
-func (snap *Snapshot) SearchTimelineItem(ID string) (TimelineItem, error) {
+func (snap *Snapshot) SearchTimelineItem(id entity.Id) (TimelineItem, error) {
 	for i := range snap.Timeline {
-		if snap.Timeline[i].ID() == ID {
+		if snap.Timeline[i].Id() == id {
 			return snap.Timeline[i], nil
 		}
 	}
@@ -72,7 +68,7 @@ func (snap *Snapshot) SearchTimelineItem(ID string) (TimelineItem, error) {
 // SearchComment will search for a comment matching the given hash
 func (snap *Snapshot) SearchComment(id string) (*Comment, error) {
 	for _, c := range snap.Comments {
-		if c.id == id {
+		if c.id.String() == id {
 			return &c, nil
 		}
 	}
@@ -103,7 +99,7 @@ func (snap *Snapshot) addParticipant(participant identity.Interface) {
 }
 
 // HasParticipant return true if the id is a participant
-func (snap *Snapshot) HasParticipant(id string) bool {
+func (snap *Snapshot) HasParticipant(id entity.Id) bool {
 	for _, p := range snap.Participants {
 		if p.Id() == id {
 			return true
@@ -113,7 +109,7 @@ func (snap *Snapshot) HasParticipant(id string) bool {
 }
 
 // HasAnyParticipant return true if one of the ids is a participant
-func (snap *Snapshot) HasAnyParticipant(ids ...string) bool {
+func (snap *Snapshot) HasAnyParticipant(ids ...entity.Id) bool {
 	for _, id := range ids {
 		if snap.HasParticipant(id) {
 			return true
@@ -123,7 +119,7 @@ func (snap *Snapshot) HasAnyParticipant(ids ...string) bool {
 }
 
 // HasActor return true if the id is a actor
-func (snap *Snapshot) HasActor(id string) bool {
+func (snap *Snapshot) HasActor(id entity.Id) bool {
 	for _, p := range snap.Actors {
 		if p.Id() == id {
 			return true
@@ -133,7 +129,7 @@ func (snap *Snapshot) HasActor(id string) bool {
 }
 
 // HasAnyActor return true if one of the ids is a actor
-func (snap *Snapshot) HasAnyActor(ids ...string) bool {
+func (snap *Snapshot) HasAnyActor(ids ...entity.Id) bool {
 	for _, id := range ids {
 		if snap.HasActor(id) {
 			return true

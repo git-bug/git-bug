@@ -20,14 +20,14 @@ func TestEdit(t *testing.T) {
 	create := NewCreateOp(rene, unix, "title", "create", nil)
 	create.Apply(&snapshot)
 
-	hash1 := create.ID()
-	require.True(t, IDIsValid(hash1))
+	id1 := create.Id()
+	require.NoError(t, id1.Validate())
 
 	comment1 := NewAddCommentOp(rene, unix, "comment 1", nil)
 	comment1.Apply(&snapshot)
 
-	hash2 := comment1.ID()
-	require.True(t, IDIsValid(hash2))
+	id2 := comment1.Id()
+	require.NoError(t, id2.Validate())
 
 	// add another unrelated op in between
 	setTitle := NewSetTitleOp(rene, unix, "edited title", "title")
@@ -36,10 +36,10 @@ func TestEdit(t *testing.T) {
 	comment2 := NewAddCommentOp(rene, unix, "comment 2", nil)
 	comment2.Apply(&snapshot)
 
-	hash3 := comment2.ID()
-	require.True(t, IDIsValid(hash3))
+	id3 := comment2.Id()
+	require.NoError(t, id3.Validate())
 
-	edit := NewEditCommentOp(rene, unix, hash1, "create edited", nil)
+	edit := NewEditCommentOp(rene, unix, id1, "create edited", nil)
 	edit.Apply(&snapshot)
 
 	assert.Equal(t, len(snapshot.Timeline), 4)
@@ -50,7 +50,7 @@ func TestEdit(t *testing.T) {
 	assert.Equal(t, snapshot.Comments[1].Message, "comment 1")
 	assert.Equal(t, snapshot.Comments[2].Message, "comment 2")
 
-	edit2 := NewEditCommentOp(rene, unix, hash2, "comment 1 edited", nil)
+	edit2 := NewEditCommentOp(rene, unix, id2, "comment 1 edited", nil)
 	edit2.Apply(&snapshot)
 
 	assert.Equal(t, len(snapshot.Timeline), 4)
@@ -61,7 +61,7 @@ func TestEdit(t *testing.T) {
 	assert.Equal(t, snapshot.Comments[1].Message, "comment 1 edited")
 	assert.Equal(t, snapshot.Comments[2].Message, "comment 2")
 
-	edit3 := NewEditCommentOp(rene, unix, hash3, "comment 2 edited", nil)
+	edit3 := NewEditCommentOp(rene, unix, id3, "comment 2 edited", nil)
 	edit3.Apply(&snapshot)
 
 	assert.Equal(t, len(snapshot.Timeline), 4)
@@ -85,8 +85,9 @@ func TestEditCommentSerialize(t *testing.T) {
 	err = json.Unmarshal(data, &after)
 	assert.NoError(t, err)
 
-	// enforce creating the ID
-	before.ID()
+	// enforce creating the IDs
+	before.Id()
+	rene.Id()
 
 	assert.Equal(t, before, &after)
 }

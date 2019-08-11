@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
@@ -17,7 +18,7 @@ func init() {
 // BugExcerpt hold a subset of the bug values to be able to sort and filter bugs
 // efficiently without having to read and compile each raw bugs.
 type BugExcerpt struct {
-	Id string
+	Id entity.ID
 
 	CreateLamportTime lamport.Time
 	EditLamportTime   lamport.Time
@@ -28,8 +29,8 @@ type BugExcerpt struct {
 	Labels       []bug.Label
 	Title        string
 	LenComments  int
-	Actors       []string
-	Participants []string
+	Actors       []entity.ID
+	Participants []entity.ID
 
 	// If author is identity.Bare, LegacyAuthor is set
 	// If author is identity.Identity, AuthorId is set and data is deported

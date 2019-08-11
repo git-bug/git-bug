@@ -3,6 +3,7 @@ package bug
 import (
 	"encoding/json"
 
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/identity"
 )
 
@@ -19,7 +20,7 @@ func (op *NoOpOperation) base() *OpBase {
 	return &op.OpBase
 }
 
-func (op *NoOpOperation) ID() string {
+func (op *NoOpOperation) Id() entity.Id {
 	return idOperation(op)
 }
 
@@ -31,25 +32,9 @@ func (op *NoOpOperation) Validate() error {
 	return opBaseValidate(op, NoOpOp)
 }
 
-// Workaround to avoid the inner OpBase.MarshalJSON overriding the outer op
-// MarshalJSON
-func (op *NoOpOperation) MarshalJSON() ([]byte, error) {
-	base, err := json.Marshal(op.OpBase)
-	if err != nil {
-		return nil, err
-	}
-
-	// revert back to a flat map to be able to add our own fields
-	var data map[string]interface{}
-	if err := json.Unmarshal(base, &data); err != nil {
-		return nil, err
-	}
-
-	return json.Marshal(data)
-}
-
-// Workaround to avoid the inner OpBase.MarshalJSON overriding the outer op
-// MarshalJSON
+// UnmarshalJSON is a two step JSON unmarshaling
+// This workaround is necessary to avoid the inner OpBase.MarshalJSON
+// overriding the outer op's MarshalJSON
 func (op *NoOpOperation) UnmarshalJSON(data []byte) error {
 	// Unmarshal OpBase and the op separately
 

@@ -19,5 +19,8 @@ func TestIdentityStubSerialize(t *testing.T) {
 	err = json.Unmarshal(data, &after)
 	assert.NoError(t, err)
 
+	// enforce creating the Id
+	before.Id()
+
 	assert.Equal(t, before, &after)
 }

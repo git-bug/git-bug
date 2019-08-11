@@ -81,7 +81,7 @@ func MergeAll(repo repository.ClockedRepo, remote string) <-chan entity.MergeRes
 				continue
 			}
 
-			localRef := bugsRefPattern + remoteBug.Id()
+			localRef := bugsRefPattern + remoteBug.Id().String()
 			localExist, err := repo.RefExist(localRef)
 
 			if err != nil {

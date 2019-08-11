@@ -10,6 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/lamport"
@@ -21,18 +22,16 @@ const identityRemoteRefPattern = "refs/remotes/%s/identities/"
 const versionEntryName = "version"
 const identityConfigKey = "git-bug.identity"
 
-const idLength = 40
-const humanIdLength = 7
-
 var ErrNonFastForwardMerge = errors.New("non fast-forward identity merge")
 var ErrNoIdentitySet = errors.New("to interact with bugs, an identity first needs to be created using \"git bug user create\" or \"git bug user adopt\"")
 var ErrMultipleIdentitiesSet = errors.New("multiple user identities set")
 
 var _ Interface = &Identity{}
+var _ entity.Interface = &Identity{}
 
 type Identity struct {
 	// Id used as unique identifier
-	id string
+	id entity.Id
 
 	// all the successive version of the identity
 	versions []*Version
@@ -43,6 +42,7 @@ type Identity struct {
 
 func NewIdentity(name string, email string) *Identity {
 	return &Identity{
+		id: entity.UnsetId,
 		versions: []*Version{
 			{
 				name:  name,
@@ -55,6 +55,7 @@ func NewIdentity(name string, email string) *Identity {
 
 func NewIdentityFull(name string, email string, login string, avatarUrl string) *Identity {
 	return &Identity{
+		id: entity.UnsetId,
 		versions: []*Version{
 			{
 				name:      name,
@@ -70,7 +71,7 @@ func NewIdentityFull(name string, email string, login string, avatarUrl string) 
 // MarshalJSON will only serialize the id
 func (i *Identity) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&IdentityStub{
-		id: i.Id(),
+		id: i.id,
 	})
 }
 
@@ -82,7 +83,7 @@ func (i *Identity) UnmarshalJSON(data []byte) error {
 }
 
 // ReadLocal load a local Identity from the identities data available in git
-func ReadLocal(repo repository.Repo, id string) (*Identity, error) {
+func ReadLocal(repo repository.Repo, id entity.Id) (*Identity, error) {
 	ref := fmt.Sprintf("%s%s", identityRefPattern, id)
 	return read(repo, ref)
 }
@@ -96,10 +97,10 @@ func ReadRemote(repo repository.Repo, remote string, id string) (*Identity, erro
 // read will load and parse an identity from git
 func read(repo repository.Repo, ref string) (*Identity, error) {
 	refSplit := strings.Split(ref, "/")
-	id := refSplit[len(refSplit)-1]
+	id := entity.Id(refSplit[len(refSplit)-1])
 
-	if len(id) != idLength {
-		return nil, fmt.Errorf("invalid ref length")
+	if err := id.Validate(); err != nil {
+		return nil, errors.Wrap(err, "invalid ref")
 	}
 
 	hashes, err := repo.ListCommits(ref)
@@ -233,7 +234,7 @@ func IsUserIdentitySet(repo repository.RepoCommon) (bool, error) {
 
 // SetUserIdentity store the user identity's id in the git config
 func SetUserIdentity(repo repository.RepoCommon, identity *Identity) error {
-	return repo.StoreConfig(identityConfigKey, identity.Id())
+	return repo.StoreConfig(identityConfigKey, identity.Id().String())
 }
 
 // GetUserIdentity read the current user identity, set with a git config entry
@@ -251,9 +252,13 @@ func GetUserIdentity(repo repository.Repo) (*Identity, error) {
 		return nil, ErrMultipleIdentitiesSet
 	}
 
-	var id string
+	var id entity.Id
 	for _, val := range configs {
-		id = val
+		id = entity.Id(val)
+	}
+
+	if err := id.Validate(); err != nil {
+		return nil, err
 	}
 
 	i, err := ReadLocal(repo, id)
@@ -326,8 +331,8 @@ func (i *Identity) Commit(repo repository.ClockedRepo) error {
 		v.commitHash = commitHash
 
 		// if it was the first commit, use the commit hash as the Identity id
-		if i.id == "" {
-			i.id = string(commitHash)
+		if i.id == "" || i.id == entity.UnsetId {
+			i.id = entity.Id(commitHash)
 		}
 	}
 
@@ -410,7 +415,7 @@ func (i *Identity) Merge(repo repository.Repo, other *Identity) (bool, error) {
 	}
 
 	if modified {
-		err := repo.UpdateRef(identityRefPattern+i.id, i.lastCommit)
+		err := repo.UpdateRef(identityRefPattern+i.id.String(), i.lastCommit)
 		if err != nil {
 			return false, err
 		}
@@ -439,8 +444,8 @@ func (i *Identity) Validate() error {
 		lastTime = v.time
 	}
 
-	// The identity ID should be the hash of the first commit
-	if i.versions[0].commitHash != "" && string(i.versions[0].commitHash) != i.id {
+	// The identity Id should be the hash of the first commit
+	if i.versions[0].commitHash != "" && string(i.versions[0].commitHash) != i.id.String() {
 		return fmt.Errorf("identity id should be the first commit hash")
 	}
 
@@ -456,23 +461,13 @@ func (i *Identity) lastVersion() *Version {
 }
 
 // Id return the Identity identifier
-func (i *Identity) Id() string {
+func (i *Identity) Id() entity.Id {
 	if i.id == "" {
 		// simply panic as it would be a coding error
 		// (using an id of an identity not stored yet)
 		panic("no id yet")
 	}
 	return i.id
-}
-
-// HumanId return the Identity identifier truncated for human consumption
-func (i *Identity) HumanId() string {
-	return FormatHumanID(i.Id())
-}
-
-func FormatHumanID(id string) string {
-	format := fmt.Sprintf("%%.%ds", humanIdLength)
-	return fmt.Sprintf(format, id)
 }
 
 // Name return the last version of the name

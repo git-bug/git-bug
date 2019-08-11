@@ -8,6 +8,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/git"
@@ -26,20 +27,24 @@ const createClockEntryPattern = "create-clock-%d"
 const editClockEntryPrefix = "edit-clock-"
 const editClockEntryPattern = "edit-clock-%d"
 
-const idLength = 40
-const humanIdLength = 7
-
 var ErrBugNotExist = errors.New("bug doesn't exist")
 
 type ErrMultipleMatch struct {
-	Matching []string
+	Matching []entity.Id
 }
 
 func (e ErrMultipleMatch) Error() string {
-	return fmt.Sprintf("Multiple matching bug found:\n%s", strings.Join(e.Matching, "\n"))
+	matching := make([]string, len(e.Matching))
+
+	for i, match := range e.Matching {
+		matching[i] = match.String()
+	}
+
+	return fmt.Sprintf("Multiple matching bug found:\n%s", strings.Join(matching, "\n"))
 }
 
 var _ Interface = &Bug{}
+var _ entity.Interface = &Bug{}
 
 // Bug hold the data of a bug thread, organized in a way close to
 // how it will be persisted inside Git. This is the data structure
@@ -53,7 +58,7 @@ type Bug struct {
 	editTime   lamport.Time
 
 	// Id used as unique identifier
-	id string
+	id entity.Id
 
 	lastCommit git.Hash
 	rootPack   git.Hash
@@ -82,10 +87,10 @@ func FindLocalBug(repo repository.ClockedRepo, prefix string) (*Bug, error) {
 	}
 
 	// preallocate but empty
-	matching := make([]string, 0, 5)
+	matching := make([]entity.Id, 0, 5)
 
 	for _, id := range ids {
-		if strings.HasPrefix(id, prefix) {
+		if id.HasPrefix(prefix) {
 			matching = append(matching, id)
 		}
 	}
@@ -102,8 +107,8 @@ func FindLocalBug(repo repository.ClockedRepo, prefix string) (*Bug, error) {
 }
 
 // ReadLocalBug will read a local bug from its hash
-func ReadLocalBug(repo repository.ClockedRepo, id string) (*Bug, error) {
-	ref := bugsRefPattern + id
+func ReadLocalBug(repo repository.ClockedRepo, id entity.Id) (*Bug, error) {
+	ref := bugsRefPattern + id.String()
 	return readBug(repo, ref)
 }
 
@@ -116,10 +121,10 @@ func ReadRemoteBug(repo repository.ClockedRepo, remote string, id string) (*Bug,
 // readBug will read and parse a Bug from git
 func readBug(repo repository.ClockedRepo, ref string) (*Bug, error) {
 	refSplit := strings.Split(ref, "/")
-	id := refSplit[len(refSplit)-1]
+	id := entity.Id(refSplit[len(refSplit)-1])
 
-	if len(id) != idLength {
-		return nil, fmt.Errorf("invalid ref length")
+	if err := id.Validate(); err != nil {
+		return nil, errors.Wrap(err, "invalid ref ")
 	}
 
 	hashes, err := repo.ListCommits(ref)
@@ -278,7 +283,7 @@ func readAllBugs(repo repository.ClockedRepo, refPrefix string) <-chan StreamedB
 }
 
 // ListLocalIds list all the available local bug ids
-func ListLocalIds(repo repository.Repo) ([]string, error) {
+func ListLocalIds(repo repository.Repo) ([]entity.Id, error) {
 	refs, err := repo.ListRefs(bugsRefPattern)
 	if err != nil {
 		return nil, err
@@ -287,12 +292,12 @@ func ListLocalIds(repo repository.Repo) ([]string, error) {
 	return refsToIds(refs), nil
 }
 
-func refsToIds(refs []string) []string {
-	ids := make([]string, len(refs))
+func refsToIds(refs []string) []entity.Id {
+	ids := make([]entity.Id, len(refs))
 
 	for i, ref := range refs {
 		split := strings.Split(ref, "/")
-		ids[i] = split[len(split)-1]
+		ids[i] = entity.Id(split[len(split)-1])
 	}
 
 	return ids
@@ -325,8 +330,8 @@ func (bug *Bug) Validate() error {
 		return fmt.Errorf("first operation should be a Create op")
 	}
 
-	// The bug ID should be the hash of the first commit
-	if len(bug.packs) > 0 && string(bug.packs[0].commitHash) != bug.id {
+	// The bug Id should be the hash of the first commit
+	if len(bug.packs) > 0 && string(bug.packs[0].commitHash) != bug.id.String() {
 		return fmt.Errorf("bug id should be the first commit hash")
 	}
 
@@ -456,7 +461,7 @@ func (bug *Bug) Commit(repo repository.ClockedRepo) error {
 
 	// if it was the first commit, use the commit hash as bug id
 	if bug.id == "" {
-		bug.id = string(hash)
+		bug.id = entity.Id(hash)
 	}
 
 	// Create or update the Git reference for this bug
@@ -594,7 +599,7 @@ func (bug *Bug) Merge(repo repository.Repo, other Interface) (bool, error) {
 	}
 
 	// Update the git ref
-	err = repo.UpdateRef(bugsRefPattern+bug.id, bug.lastCommit)
+	err = repo.UpdateRef(bugsRefPattern+bug.id.String(), bug.lastCommit)
 	if err != nil {
 		return false, err
 	}
@@ -603,23 +608,13 @@ func (bug *Bug) Merge(repo repository.Repo, other Interface) (bool, error) {
 }
 
 // Id return the Bug identifier
-func (bug *Bug) Id() string {
+func (bug *Bug) Id() entity.Id {
 	if bug.id == "" {
 		// simply panic as it would be a coding error
 		// (using an id of a bug not stored yet)
 		panic("no id yet")
 	}
 	return bug.id
-}
-
-// HumanId return the Bug identifier truncated for human consumption
-func (bug *Bug) HumanId() string {
-	return FormatHumanID(bug.Id())
-}
-
-func FormatHumanID(id string) string {
-	format := fmt.Sprintf("%%.%ds", humanIdLength)
-	return fmt.Sprintf(format, id)
 }
 
 // CreateLamportTime return the Lamport time of creation

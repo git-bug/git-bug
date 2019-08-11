@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/stretchr/testify/assert"
 )
@@ -15,6 +16,7 @@ func TestIdentityCommitLoad(t *testing.T) {
 	// single version
 
 	identity := &Identity{
+		id: entity.UnsetId,
 		versions: []*Version{
 			{
 				name:  "René Descartes",
@@ -36,6 +38,7 @@ func TestIdentityCommitLoad(t *testing.T) {
 	// multiple version
 
 	identity = &Identity{
+		id: entity.UnsetId,
 		versions: []*Version{
 			{
 				time:  100,
@@ -114,6 +117,7 @@ func commitsAreSet(t *testing.T, identity *Identity) {
 // Test that the correct crypto keys are returned for a given lamport time
 func TestIdentity_ValidKeysAtTime(t *testing.T) {
 	identity := Identity{
+		id: entity.UnsetId,
 		versions: []*Version{
 			{
 				time:  100,
@@ -215,6 +219,7 @@ func TestJSON(t *testing.T) {
 	mockRepo := repository.NewMockRepoForTest()
 
 	identity := &Identity{
+		id: entity.UnsetId,
 		versions: []*Version{
 			{
 				name:  "René Descartes",
@@ -223,7 +228,7 @@ func TestJSON(t *testing.T) {
 		},
 	}
 
-	// commit to make sure we have an ID
+	// commit to make sure we have an Id
 	err := identity.Commit(mockRepo)
 	assert.Nil(t, err)
 	assert.NotEmpty(t, identity.id)
