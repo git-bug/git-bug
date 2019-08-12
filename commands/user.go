@@ -41,7 +41,7 @@ func runUser(cmd *cobra.Command, args []string) error {
 		case "email":
 			fmt.Printf("%s\n", id.Email())
 		case "humanId":
-			fmt.Printf("%s\n", id.HumanId())
+			fmt.Printf("%s\n", id.Id().Human())
 		case "id":
 			fmt.Printf("%s\n", id.Id())
 		case "lastModification":

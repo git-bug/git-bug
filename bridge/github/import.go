@@ -10,7 +10,7 @@ import (
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
@@ -369,7 +369,7 @@ func (gi *githubImporter) ensureTimelineComment(repo *cache.RepoCache, b *cache.
 				}
 
 				// set target for the nexr edit now that the comment is created
-				targetOpID = op.ID()
+				targetOpID = op.Id()
 
 				continue
 			}
@@ -383,7 +383,7 @@ func (gi *githubImporter) ensureTimelineComment(repo *cache.RepoCache, b *cache.
 	return nil
 }
 
-func (gi *githubImporter) ensureCommentEdit(repo *cache.RepoCache, b *cache.BugCache, target string, edit userContentEdit) error {
+func (gi *githubImporter) ensureCommentEdit(repo *cache.RepoCache, b *cache.BugCache, target entity.Id, edit userContentEdit) error {
 	_, err := b.ResolveOperationWithMetadata(keyGithubId, parseId(edit.Id))
 	if err == nil {
 		// already imported
@@ -445,7 +445,7 @@ func (gi *githubImporter) ensurePerson(repo *cache.RepoCache, actor *actor) (*ca
 	if err == nil {
 		return i, nil
 	}
-	if _, ok := err.(identity.ErrMultipleMatch); ok {
+	if _, ok := err.(entity.ErrMultipleMatch); ok {
 		return nil, err
 	}
 
@@ -488,7 +488,7 @@ func (gi *githubImporter) getGhost(repo *cache.RepoCache) (*cache.IdentityCache,
 	if err == nil {
 		return i, nil
 	}
-	if _, ok := err.(identity.ErrMultipleMatch); ok {
+	if _, ok := err.(entity.ErrMultipleMatch); ok {
 		return nil, err
 	}
 

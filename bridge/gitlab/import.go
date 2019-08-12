@@ -10,7 +10,7 @@ import (
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
@@ -324,7 +324,7 @@ func (gi *gitlabImporter) ensurePerson(repo *cache.RepoCache, id int) (*cache.Id
 	if err == nil {
 		return i, nil
 	}
-	if _, ok := err.(identity.ErrMultipleMatch); ok {
+	if _, ok := err.(entity.ErrMultipleMatch); ok {
 		return nil, err
 	}
 

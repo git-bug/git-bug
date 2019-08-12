@@ -52,12 +52,12 @@ func TestSelect(t *testing.T) {
 	require.Equal(t, b1.Id(), b3.Id())
 
 	// override selection with same id
-	b4, _, err := ResolveBug(repoCache, []string{b1.Id()})
+	b4, _, err := ResolveBug(repoCache, []string{b1.Id().String()})
 	require.NoError(t, err)
 	require.Equal(t, b1.Id(), b4.Id())
 
 	// override selection with a prefix
-	b5, _, err := ResolveBug(repoCache, []string{b1.HumanId()})
+	b5, _, err := ResolveBug(repoCache, []string{b1.Id().Human()})
 	require.NoError(t, err)
 	require.Equal(t, b1.Id(), b5.Id())
 
@@ -67,7 +67,7 @@ func TestSelect(t *testing.T) {
 	require.Equal(t, b1.Id(), b6.Id())
 
 	// override with a different id
-	b7, _, err := ResolveBug(repoCache, []string{b2.Id()})
+	b7, _, err := ResolveBug(repoCache, []string{b2.Id().String()})
 	require.NoError(t, err)
 	require.Equal(t, b2.Id(), b7.Id())
 

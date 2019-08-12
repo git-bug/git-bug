@@ -11,6 +11,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
@@ -69,7 +70,7 @@ func ResolveBug(repo *cache.RepoCache, args []string) (*cache.BugCache, []string
 }
 
 // Select will select a bug for future use
-func Select(repo *cache.RepoCache, id string) error {
+func Select(repo *cache.RepoCache, id entity.Id) error {
 	selectPath := selectFilePath(repo)
 
 	f, err := os.OpenFile(selectPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
@@ -77,7 +78,7 @@ func Select(repo *cache.RepoCache, id string) error {
 		return err
 	}
 
-	_, err = f.WriteString(id)
+	_, err = f.WriteString(id.String())
 	if err != nil {
 		return err
 	}
@@ -112,8 +113,8 @@ func selected(repo *cache.RepoCache) (*cache.BugCache, error) {
 		return nil, fmt.Errorf("the select file should be < 100 bytes")
 	}
 
-	id := string(buf)
-	if !bug.IDIsValid(id) {
+	id := entity.Id(buf)
+	if err := id.Validate(); err != nil {
 		err = os.Remove(selectPath)
 		if err != nil {
 			return nil, errors.Wrap(err, "error while removing invalid select file")

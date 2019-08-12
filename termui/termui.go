@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/input"
 )
 
@@ -237,7 +238,7 @@ func addCommentWithEditor(bug *cache.BugCache) error {
 	return errTerminateMainloop
 }
 
-func editCommentWithEditor(bug *cache.BugCache, target string, preMessage string) error {
+func editCommentWithEditor(bug *cache.BugCache, target entity.Id, preMessage string) error {
 	// This is somewhat hacky.
 	// As there is no way to pause gocui, run the editor and restart gocui,
 	// we have to stop it entirely and start a new one later.

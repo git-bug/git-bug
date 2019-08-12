@@ -5,6 +5,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/graphql/connections"
 	"github.com/MichaelMure/git-bug/graphql/graph"
 	"github.com/MichaelMure/git-bug/graphql/models"
@@ -38,7 +39,7 @@ func (repoResolver) AllBugs(ctx context.Context, obj *models.Repository, after *
 	source := obj.Repo.QueryBugs(query)
 
 	// The edger create a custom edge holding just the id
-	edger := func(id string, offset int) connections.Edge {
+	edger := func(id entity.Id, offset int) connections.Edge {
 		return connections.LazyBugEdge{
 			Id:     id,
 			Cursor: connections.OffsetToCursor(offset),
@@ -46,7 +47,7 @@ func (repoResolver) AllBugs(ctx context.Context, obj *models.Repository, after *
 	}
 
 	// The conMaker will finally load and compile bugs from git to replace the selected edges
-	conMaker := func(lazyBugEdges []*connections.LazyBugEdge, lazyNode []string, info *models.PageInfo, totalCount int) (*models.BugConnection, error) {
+	conMaker := func(lazyBugEdges []*connections.LazyBugEdge, lazyNode []entity.Id, info *models.PageInfo, totalCount int) (*models.BugConnection, error) {
 		edges := make([]*models.BugEdge, len(lazyBugEdges))
 		nodes := make([]*bug.Snapshot, len(lazyBugEdges))
 
@@ -99,7 +100,7 @@ func (repoResolver) AllIdentities(ctx context.Context, obj *models.Repository, a
 	source := obj.Repo.AllIdentityIds()
 
 	// The edger create a custom edge holding just the id
-	edger := func(id string, offset int) connections.Edge {
+	edger := func(id entity.Id, offset int) connections.Edge {
 		return connections.LazyIdentityEdge{
 			Id:     id,
 			Cursor: connections.OffsetToCursor(offset),
@@ -107,7 +108,7 @@ func (repoResolver) AllIdentities(ctx context.Context, obj *models.Repository, a
 	}
 
 	// The conMaker will finally load and compile identities from git to replace the selected edges
-	conMaker := func(lazyIdentityEdges []*connections.LazyIdentityEdge, lazyNode []string, info *models.PageInfo, totalCount int) (*models.IdentityConnection, error) {
+	conMaker := func(lazyIdentityEdges []*connections.LazyIdentityEdge, lazyNode []entity.Id, info *models.PageInfo, totalCount int) (*models.IdentityConnection, error) {
 		edges := make([]*models.IdentityEdge, len(lazyIdentityEdges))
 		nodes := make([]identity.Interface, len(lazyIdentityEdges))
 

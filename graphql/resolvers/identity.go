@@ -12,11 +12,11 @@ var _ graph.IdentityResolver = &identityResolver{}
 type identityResolver struct{}
 
 func (identityResolver) ID(ctx context.Context, obj *identity.Interface) (string, error) {
-	return (*obj).Id(), nil
+	return (*obj).Id().String(), nil
 }
 
 func (identityResolver) HumanID(ctx context.Context, obj *identity.Interface) (string, error) {
-	return (*obj).HumanId(), nil
+	return (*obj).Id().Human(), nil
 }
 
 func (identityResolver) Name(ctx context.Context, obj *identity.Interface) (*string, error) {

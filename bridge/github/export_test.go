@@ -58,13 +58,13 @@ func testCases(t *testing.T, repo *cache.RepoCache, identity *cache.IdentityCach
 	bugWithCommentEditions, createOp, err := repo.NewBug("bug with comments editions", "new bug")
 	require.NoError(t, err)
 
-	_, err = bugWithCommentEditions.EditComment(createOp.ID(), "first comment edited")
+	_, err = bugWithCommentEditions.EditComment(createOp.Id(), "first comment edited")
 	require.NoError(t, err)
 
 	commentOp, err := bugWithCommentEditions.AddComment("first comment")
 	require.NoError(t, err)
 
-	_, err = bugWithCommentEditions.EditComment(commentOp.ID(), "first comment edited")
+	_, err = bugWithCommentEditions.EditComment(commentOp.Id(), "first comment edited")
 	require.NoError(t, err)
 
 	// bug status changed

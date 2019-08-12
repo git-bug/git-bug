@@ -4,17 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
+
+	"github.com/MichaelMure/git-bug/entity"
 )
 
 var ErrIdentityNotExist = errors.New("identity doesn't exist")
 
-type ErrMultipleMatch struct {
-	Matching []string
-}
-
-func (e ErrMultipleMatch) Error() string {
-	return fmt.Sprintf("Multiple matching identities found:\n%s", strings.Join(e.Matching, "\n"))
+func NewErrMultipleMatch(matching []entity.Id) *entity.ErrMultipleMatch {
+	return entity.NewErrMultipleMatch("identity", matching)
 }
 
 // Custom unmarshaling function to allow package user to delegate

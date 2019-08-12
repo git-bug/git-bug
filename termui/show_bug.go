@@ -7,6 +7,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/util/colors"
 	"github.com/MichaelMure/git-bug/util/text"
 	"github.com/MichaelMure/gocui"
@@ -213,7 +214,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 	}
 
 	bugHeader := fmt.Sprintf("[%s] %s\n\n[%s] %s opened this bug on %s%s",
-		colors.Cyan(snap.HumanId()),
+		colors.Cyan(snap.Id().Human()),
 		colors.Bold(snap.Title),
 		colors.Yellow(snap.Status),
 		colors.Magenta(snap.Author.DisplayName()),
@@ -231,7 +232,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 	y0 += lines + 1
 
 	for _, op := range snap.Timeline {
-		viewName := op.ID()
+		viewName := op.Id().String()
 
 		// TODO: me might skip the rendering of blocks that are outside of the view
 		// but to do that we need to rework how sb.mainSelectableView is maintained
@@ -642,7 +643,7 @@ func (sb *showBug) edit(g *gocui.Gui, v *gocui.View) error {
 		return nil
 	}
 
-	op, err := snap.SearchTimelineItem(sb.selected)
+	op, err := snap.SearchTimelineItem(entity.Id(sb.selected))
 	if err != nil {
 		return err
 	}
@@ -650,10 +651,10 @@ func (sb *showBug) edit(g *gocui.Gui, v *gocui.View) error {
 	switch op.(type) {
 	case *bug.AddCommentTimelineItem:
 		message := op.(*bug.AddCommentTimelineItem).Message
-		return editCommentWithEditor(sb.bug, op.ID(), message)
+		return editCommentWithEditor(sb.bug, op.Id(), message)
 	case *bug.CreateTimelineItem:
 		preMessage := op.(*bug.CreateTimelineItem).Message
-		return editCommentWithEditor(sb.bug, op.ID(), preMessage)
+		return editCommentWithEditor(sb.bug, op.Id(), preMessage)
 	case *bug.LabelChangeTimelineItem:
 		return sb.editLabels(g, snap)
 	}

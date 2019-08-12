@@ -98,8 +98,8 @@ type ComplexityRoot struct {
 		Author       func(childComplexity int) int
 		Comments     func(childComplexity int, after *string, before *string, first *int, last *int) int
 		CreatedAt    func(childComplexity int) int
-		HumanId      func(childComplexity int) int
-		Id           func(childComplexity int) int
+		HumanID      func(childComplexity int) int
+		ID           func(childComplexity int) int
 		Labels       func(childComplexity int) int
 		LastEdit     func(childComplexity int) int
 		Operations   func(childComplexity int, after *string, before *string, first *int, last *int) int
@@ -358,13 +358,19 @@ type ComplexityRoot struct {
 }
 
 type AddCommentOperationResolver interface {
+	ID(ctx context.Context, obj *bug.AddCommentOperation) (string, error)
+
 	Date(ctx context.Context, obj *bug.AddCommentOperation) (*time.Time, error)
 }
 type AddCommentTimelineItemResolver interface {
+	ID(ctx context.Context, obj *bug.AddCommentTimelineItem) (string, error)
+
 	CreatedAt(ctx context.Context, obj *bug.AddCommentTimelineItem) (*time.Time, error)
 	LastEdit(ctx context.Context, obj *bug.AddCommentTimelineItem) (*time.Time, error)
 }
 type BugResolver interface {
+	ID(ctx context.Context, obj *bug.Snapshot) (string, error)
+	HumanID(ctx context.Context, obj *bug.Snapshot) (string, error)
 	Status(ctx context.Context, obj *bug.Snapshot) (models.Status, error)
 
 	LastEdit(ctx context.Context, obj *bug.Snapshot) (*time.Time, error)
@@ -383,14 +389,21 @@ type CommentHistoryStepResolver interface {
 	Date(ctx context.Context, obj *bug.CommentHistoryStep) (*time.Time, error)
 }
 type CreateOperationResolver interface {
+	ID(ctx context.Context, obj *bug.CreateOperation) (string, error)
+
 	Date(ctx context.Context, obj *bug.CreateOperation) (*time.Time, error)
 }
 type CreateTimelineItemResolver interface {
+	ID(ctx context.Context, obj *bug.CreateTimelineItem) (string, error)
+
 	CreatedAt(ctx context.Context, obj *bug.CreateTimelineItem) (*time.Time, error)
 	LastEdit(ctx context.Context, obj *bug.CreateTimelineItem) (*time.Time, error)
 }
 type EditCommentOperationResolver interface {
+	ID(ctx context.Context, obj *bug.EditCommentOperation) (string, error)
+
 	Date(ctx context.Context, obj *bug.EditCommentOperation) (*time.Time, error)
+	Target(ctx context.Context, obj *bug.EditCommentOperation) (string, error)
 }
 type IdentityResolver interface {
 	ID(ctx context.Context, obj *identity.Interface) (string, error)
@@ -407,12 +420,16 @@ type LabelResolver interface {
 	Color(ctx context.Context, obj *bug.Label) (*color.RGBA, error)
 }
 type LabelChangeOperationResolver interface {
+	ID(ctx context.Context, obj *bug.LabelChangeOperation) (string, error)
+
 	Date(ctx context.Context, obj *bug.LabelChangeOperation) (*time.Time, error)
 }
 type LabelChangeResultResolver interface {
 	Status(ctx context.Context, obj *bug.LabelChangeResult) (models.LabelChangeStatus, error)
 }
 type LabelChangeTimelineItemResolver interface {
+	ID(ctx context.Context, obj *bug.LabelChangeTimelineItem) (string, error)
+
 	Date(ctx context.Context, obj *bug.LabelChangeTimelineItem) (*time.Time, error)
 }
 type MutationResolver interface {
@@ -438,17 +455,25 @@ type RepositoryResolver interface {
 	ValidLabels(ctx context.Context, obj *models.Repository) ([]bug.Label, error)
 }
 type SetStatusOperationResolver interface {
+	ID(ctx context.Context, obj *bug.SetStatusOperation) (string, error)
+
 	Date(ctx context.Context, obj *bug.SetStatusOperation) (*time.Time, error)
 	Status(ctx context.Context, obj *bug.SetStatusOperation) (models.Status, error)
 }
 type SetStatusTimelineItemResolver interface {
+	ID(ctx context.Context, obj *bug.SetStatusTimelineItem) (string, error)
+
 	Date(ctx context.Context, obj *bug.SetStatusTimelineItem) (*time.Time, error)
 	Status(ctx context.Context, obj *bug.SetStatusTimelineItem) (models.Status, error)
 }
 type SetTitleOperationResolver interface {
+	ID(ctx context.Context, obj *bug.SetTitleOperation) (string, error)
+
 	Date(ctx context.Context, obj *bug.SetTitleOperation) (*time.Time, error)
 }
 type SetTitleTimelineItemResolver interface {
+	ID(ctx context.Context, obj *bug.SetTitleTimelineItem) (string, error)
+
 	Date(ctx context.Context, obj *bug.SetTitleTimelineItem) (*time.Time, error)
 }
 
@@ -625,18 +650,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.Bug.CreatedAt(childComplexity), true
 
 	case "Bug.humanId":
-		if e.complexity.Bug.HumanId == nil {
+		if e.complexity.Bug.HumanID == nil {
 			break
 		}
 
-		return e.complexity.Bug.HumanId(childComplexity), true
+		return e.complexity.Bug.HumanID(childComplexity), true
 
 	case "Bug.id":
-		if e.complexity.Bug.Id == nil {
+		if e.complexity.Bug.ID == nil {
 			break
 		}
 
-		return e.complexity.Bug.Id(childComplexity), true
+		return e.complexity.Bug.ID(childComplexity), true
 
 	case "Bug.labels":
 		if e.complexity.Bug.Labels == nil {
@@ -2918,7 +2943,7 @@ func (ec *executionContext) _AddCommentOperation_id(ctx context.Context, field g
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ID(), nil
+		return ec.resolvers.AddCommentOperation().ID(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3211,7 +3236,7 @@ func (ec *executionContext) _AddCommentTimelineItem_id(ctx context.Context, fiel
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ID(), nil
+		return ec.resolvers.AddCommentTimelineItem().ID(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3544,7 +3569,7 @@ func (ec *executionContext) _Bug_id(ctx context.Context, field graphql.Collected
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Id(), nil
+		return ec.resolvers.Bug().ID(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3581,7 +3606,7 @@ func (ec *executionContext) _Bug_humanId(ctx context.Context, field graphql.Coll
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.HumanId(), nil
+		return ec.resolvers.Bug().HumanID(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5195,7 +5220,7 @@ func (ec *executionContext) _CreateOperation_id(ctx context.Context, field graph
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ID(), nil
+		return ec.resolvers.CreateOperation().ID(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5417,7 +5442,7 @@ func (ec *executionContext) _CreateTimelineItem_id(ctx context.Context, field gr
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ID(), nil
+		return ec.resolvers.CreateTimelineItem().ID(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5750,7 +5775,7 @@ func (ec *executionContext) _EditCommentOperation_id(ctx context.Context, field 
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ID(), nil
+		return ec.resolvers.EditCommentOperation().ID(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5855,13 +5880,13 @@ func (ec *executionContext) _EditCommentOperation_target(ctx context.Context, fi
 		Object:   "EditCommentOperation",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Target, nil
+		return ec.resolvers.EditCommentOperation().Target(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6552,7 +6577,7 @@ func (ec *executionContext) _LabelChangeOperation_id(ctx context.Context, field 
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ID(), nil
+		return ec.resolvers.LabelChangeOperation().ID(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6811,7 +6836,7 @@ func (ec *executionContext) _LabelChangeTimelineItem_id(ctx context.Context, fie
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ID(), nil
+		return ec.resolvers.LabelChangeTimelineItem().ID(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8325,7 +8350,7 @@ func (ec *executionContext) _SetStatusOperation_id(ctx context.Context, field gr
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ID(), nil
+		return ec.resolvers.SetStatusOperation().ID(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8473,7 +8498,7 @@ func (ec *executionContext) _SetStatusTimelineItem_id(ctx context.Context, field
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ID(), nil
+		return ec.resolvers.SetStatusTimelineItem().ID(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8621,7 +8646,7 @@ func (ec *executionContext) _SetTitleOperation_id(ctx context.Context, field gra
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ID(), nil
+		return ec.resolvers.SetTitleOperation().ID(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8914,7 +8939,7 @@ func (ec *executionContext) _SetTitleTimelineItem_id(ctx context.Context, field 
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ID(), nil
+		return ec.resolvers.SetTitleTimelineItem().ID(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10838,10 +10863,19 @@ func (ec *executionContext) _AddCommentOperation(ctx context.Context, sel ast.Se
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("AddCommentOperation")
 		case "id":
-			out.Values[i] = ec._AddCommentOperation_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AddCommentOperation_id(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "author":
 			out.Values[i] = ec._AddCommentOperation_author(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -10928,10 +10962,19 @@ func (ec *executionContext) _AddCommentTimelineItem(ctx context.Context, sel ast
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("AddCommentTimelineItem")
 		case "id":
-			out.Values[i] = ec._AddCommentTimelineItem_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AddCommentTimelineItem_id(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "author":
 			out.Values[i] = ec._AddCommentTimelineItem_author(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -11013,15 +11056,33 @@ func (ec *executionContext) _Bug(ctx context.Context, sel ast.SelectionSet, obj 
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Bug")
 		case "id":
-			out.Values[i] = ec._Bug_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Bug_id(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "humanId":
-			out.Values[i] = ec._Bug_humanId(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Bug_humanId(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "status":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -11584,10 +11645,19 @@ func (ec *executionContext) _CreateOperation(ctx context.Context, sel ast.Select
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("CreateOperation")
 		case "id":
-			out.Values[i] = ec._CreateOperation_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CreateOperation_id(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "author":
 			out.Values[i] = ec._CreateOperation_author(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -11645,10 +11715,19 @@ func (ec *executionContext) _CreateTimelineItem(ctx context.Context, sel ast.Sel
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("CreateTimelineItem")
 		case "id":
-			out.Values[i] = ec._CreateTimelineItem_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CreateTimelineItem_id(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "author":
 			out.Values[i] = ec._CreateTimelineItem_author(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -11730,10 +11809,19 @@ func (ec *executionContext) _EditCommentOperation(ctx context.Context, sel ast.S
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("EditCommentOperation")
 		case "id":
-			out.Values[i] = ec._EditCommentOperation_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._EditCommentOperation_id(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "author":
 			out.Values[i] = ec._EditCommentOperation_author(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -11754,10 +11842,19 @@ func (ec *executionContext) _EditCommentOperation(ctx context.Context, sel ast.S
 				return res
 			})
 		case "target":
-			out.Values[i] = ec._EditCommentOperation_target(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._EditCommentOperation_target(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "message":
 			out.Values[i] = ec._EditCommentOperation_message(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -12037,10 +12134,19 @@ func (ec *executionContext) _LabelChangeOperation(ctx context.Context, sel ast.S
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("LabelChangeOperation")
 		case "id":
-			out.Values[i] = ec._LabelChangeOperation_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._LabelChangeOperation_id(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "author":
 			out.Values[i] = ec._LabelChangeOperation_author(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -12134,10 +12240,19 @@ func (ec *executionContext) _LabelChangeTimelineItem(ctx context.Context, sel as
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("LabelChangeTimelineItem")
 		case "id":
-			out.Values[i] = ec._LabelChangeTimelineItem_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._LabelChangeTimelineItem_id(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "author":
 			out.Values[i] = ec._LabelChangeTimelineItem_author(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -12589,10 +12704,19 @@ func (ec *executionContext) _SetStatusOperation(ctx context.Context, sel ast.Sel
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("SetStatusOperation")
 		case "id":
-			out.Values[i] = ec._SetStatusOperation_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._SetStatusOperation_id(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "author":
 			out.Values[i] = ec._SetStatusOperation_author(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -12649,10 +12773,19 @@ func (ec *executionContext) _SetStatusTimelineItem(ctx context.Context, sel ast.
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("SetStatusTimelineItem")
 		case "id":
-			out.Values[i] = ec._SetStatusTimelineItem_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._SetStatusTimelineItem_id(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "author":
 			out.Values[i] = ec._SetStatusTimelineItem_author(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -12709,10 +12842,19 @@ func (ec *executionContext) _SetTitleOperation(ctx context.Context, sel ast.Sele
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("SetTitleOperation")
 		case "id":
-			out.Values[i] = ec._SetTitleOperation_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._SetTitleOperation_id(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "author":
 			out.Values[i] = ec._SetTitleOperation_author(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -12799,10 +12941,19 @@ func (ec *executionContext) _SetTitleTimelineItem(ctx context.Context, sel ast.S
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("SetTitleTimelineItem")
 		case "id":
-			out.Values[i] = ec._SetTitleTimelineItem_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._SetTitleTimelineItem_id(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "author":
 			out.Values[i] = ec._SetTitleTimelineItem_author(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

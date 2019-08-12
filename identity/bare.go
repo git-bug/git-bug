@@ -50,13 +50,12 @@ type bareIdentityJSON struct {
 }
 
 func (i *Bare) MarshalJSON() ([]byte, error) {
-	data, err := json.Marshal(bareIdentityJSON{
+	return json.Marshal(bareIdentityJSON{
 		Name:      i.name,
 		Email:     i.email,
 		Login:     i.login,
 		AvatarUrl: i.avatarUrl,
 	})
-	return data, err
 }
 
 func (i *Bare) UnmarshalJSON(data []byte) error {

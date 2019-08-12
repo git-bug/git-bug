@@ -2,12 +2,12 @@ package bug
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 	"time"
 
-	"github.com/MichaelMure/git-bug/identity"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/MichaelMure/git-bug/identity"
 )
 
 func TestAddCommentSerialize(t *testing.T) {

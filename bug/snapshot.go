@@ -66,9 +66,9 @@ func (snap *Snapshot) SearchTimelineItem(id entity.Id) (TimelineItem, error) {
 }
 
 // SearchComment will search for a comment matching the given hash
-func (snap *Snapshot) SearchComment(id string) (*Comment, error) {
+func (snap *Snapshot) SearchComment(id entity.Id) (*Comment, error) {
 	for _, c := range snap.Comments {
-		if c.id.String() == id {
+		if c.id == id {
 			return &c, nil
 		}
 	}

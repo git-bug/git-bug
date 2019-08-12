@@ -49,7 +49,7 @@ func runAddBug(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Printf("%s created\n", b.HumanId())
+	fmt.Printf("%s created\n", b.Id().Human())
 
 	return nil
 }

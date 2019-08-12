@@ -1,6 +1,8 @@
 package entity
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // MergeStatus represent the result of a merge operation of an entity
 type MergeStatus int
@@ -17,7 +19,7 @@ type MergeResult struct {
 	// Err is set when a terminal error occur in the process
 	Err error
 
-	Id     string
+	Id     Id
 	Status MergeStatus
 
 	// Only set for invalid status
@@ -42,14 +44,14 @@ func (mr MergeResult) String() string {
 	}
 }
 
-func NewMergeError(err error, id string) MergeResult {
+func NewMergeError(err error, id Id) MergeResult {
 	return MergeResult{
 		Err: err,
 		Id:  id,
 	}
 }
 
-func NewMergeStatus(status MergeStatus, id string, entity Interface) MergeResult {
+func NewMergeStatus(status MergeStatus, id Id, entity Interface) MergeResult {
 	return MergeResult{
 		Id:     id,
 		Status: status,
@@ -59,7 +61,7 @@ func NewMergeStatus(status MergeStatus, id string, entity Interface) MergeResult
 	}
 }
 
-func NewMergeInvalidStatus(id string, reason string) MergeResult {
+func NewMergeInvalidStatus(id Id, reason string) MergeResult {
 	return MergeResult{
 		Id:     id,
 		Status: MergeStatusInvalid,

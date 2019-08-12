@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/identity"
 )
 
@@ -17,7 +18,7 @@ func init() {
 // filter identities efficiently without having to read and compile each raw
 // identity.
 type IdentityExcerpt struct {
-	Id string
+	Id entity.Id
 
 	Name              string
 	Login             string
@@ -31,10 +32,6 @@ func NewIdentityExcerpt(i *identity.Identity) *IdentityExcerpt {
 		Login:             i.Login(),
 		ImmutableMetadata: i.ImmutableMetadata(),
 	}
-}
-
-func (i *IdentityExcerpt) HumanId() string {
-	return identity.FormatHumanID(i.Id)
 }
 
 // DisplayName return a non-empty string to display, representing the
@@ -54,7 +51,7 @@ func (i *IdentityExcerpt) DisplayName() string {
 
 // Match matches a query with the identity name, login and ID prefixes
 func (i *IdentityExcerpt) Match(query string) bool {
-	return strings.HasPrefix(i.Id, query) ||
+	return i.Id.HasPrefix(query) ||
 		strings.Contains(strings.ToLower(i.Name), query) ||
 		strings.Contains(strings.ToLower(i.Login), query)
 }

@@ -24,7 +24,7 @@ func runUserLs(cmd *cobra.Command, args []string) error {
 		}
 
 		fmt.Printf("%s %s\n",
-			colors.Cyan(i.HumanId()),
+			colors.Cyan(i.Id.Human()),
 			i.DisplayName(),
 		)
 	}

@@ -25,7 +25,7 @@ type bugTable struct {
 	repo         *cache.RepoCache
 	queryStr     string
 	query        *cache.Query
-	allIds       []string
+	allIds       []entity.Id
 	excerpts     []*cache.BugExcerpt
 	pageCursor   int
 	selectCursor int
@@ -308,7 +308,7 @@ func (bt *bugTable) render(v *gocui.View, maxX int) {
 
 		lastEditTime := time.Unix(excerpt.EditUnixTime, 0)
 
-		id := text.LeftPadMaxLine(excerpt.HumanId(), columnWidths["id"], 1)
+		id := text.LeftPadMaxLine(excerpt.Id.Human(), columnWidths["id"], 1)
 		status := text.LeftPadMaxLine(excerpt.Status.String(), columnWidths["status"], 1)
 		title := text.LeftPadMaxLine(excerpt.Title, columnWidths["title"], 1)
 		author := text.LeftPadMaxLine(authorDisplayName, columnWidths["author"], 1)
@@ -482,7 +482,7 @@ func (bt *bugTable) pull(g *gocui.Gui, v *gocui.View) error {
 				})
 			} else {
 				_, _ = fmt.Fprintf(&buffer, "%s%s: %s",
-					beginLine, colors.Cyan(result.Entity.HumanId()), result,
+					beginLine, colors.Cyan(result.Entity.Id().Human()), result,
 				)
 
 				beginLine = "\n"

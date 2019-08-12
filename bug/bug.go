@@ -29,18 +29,12 @@ const editClockEntryPattern = "edit-clock-%d"
 
 var ErrBugNotExist = errors.New("bug doesn't exist")
 
-type ErrMultipleMatch struct {
-	Matching []entity.Id
+func NewErrMultipleMatchBug(matching []entity.Id) *entity.ErrMultipleMatch {
+	return entity.NewErrMultipleMatch("bug", matching)
 }
 
-func (e ErrMultipleMatch) Error() string {
-	matching := make([]string, len(e.Matching))
-
-	for i, match := range e.Matching {
-		matching[i] = match.String()
-	}
-
-	return fmt.Sprintf("Multiple matching bug found:\n%s", strings.Join(matching, "\n"))
+func NewErrMultipleMatchOp(matching []entity.Id) *entity.ErrMultipleMatch {
+	return entity.NewErrMultipleMatch("operation", matching)
 }
 
 var _ Interface = &Bug{}
@@ -100,7 +94,7 @@ func FindLocalBug(repo repository.ClockedRepo, prefix string) (*Bug, error) {
 	}
 
 	if len(matching) > 1 {
-		return nil, ErrMultipleMatch{Matching: matching}
+		return nil, NewErrMultipleMatchBug(matching)
 	}
 
 	return ReadLocalBug(repo, matching[0])
