@@ -11,7 +11,7 @@ import (
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/util/git"
+	"github.com/MichaelMure/git-bug/entity"
 )
 
 var (
@@ -53,14 +53,14 @@ func (ge *gitlabExporter) Init(conf core.Configuration) error {
 
 // getIdentityClient return a gitlab v4 API client configured with the access token of the given identity.
 // if no client were found it will initialize it from the known tokens map and cache it for next use
-func (ge *gitlabExporter) getIdentityClient(id string) (*gitlab.Client, error) {
-	client, ok := ge.identityClient[id]
+func (ge *gitlabExporter) getIdentityClient(id entity.Id) (*gitlab.Client, error) {
+	client, ok := ge.identityClient[id.String()]
 	if ok {
 		return client, nil
 	}
 
 	// get token
-	token, ok := ge.identityToken[id]
+	token, ok := ge.identityToken[id.String()]
 	if !ok {
 		return nil, ErrMissingIdentityToken
 	}
@@ -68,7 +68,7 @@ func (ge *gitlabExporter) getIdentityClient(id string) (*gitlab.Client, error) {
 	// create client
 	client = buildClient(token)
 	// cache client
-	ge.identityClient[id] = client
+	ge.identityClient[id.String()] = client
 
 	return client, nil
 }
@@ -82,21 +82,17 @@ func (ge *gitlabExporter) ExportAll(repo *cache.RepoCache, since time.Time) (<-c
 		return nil, err
 	}
 
-	ge.identityToken[user.Id()] = ge.conf[keyToken]
+	ge.identityToken[user.Id().String()] = ge.conf[keyToken]
 
 	// get repository node id
 	ge.repositoryID = ge.conf[keyProjectID]
 
-	if err != nil {
-		return nil, err
-	}
-
 	go func() {
 		defer close(out)
 
-		var allIdentitiesIds []string
+		var allIdentitiesIds []entity.Id
 		for id := range ge.identityToken {
-			allIdentitiesIds = append(allIdentitiesIds, id)
+			allIdentitiesIds = append(allIdentitiesIds, entity.Id(id))
 		}
 
 		allBugsIds := repo.AllBugsIds()
@@ -136,8 +132,8 @@ func (ge *gitlabExporter) exportBug(b *cache.BugCache, since time.Time, out chan
 	var err error
 	var bugGitlabID int
 	var bugGitlabIDString string
-	var bugGitlabURL string
-	var bugCreationHash string
+	var bugCreationId string
+
 	//labels := make([]string, 0)
 
 	// Special case:
@@ -158,25 +154,22 @@ func (ge *gitlabExporter) exportBug(b *cache.BugCache, since time.Time, out chan
 	// get gitlab bug ID
 	gitlabID, ok := snapshot.GetCreateMetadata(keyGitlabId)
 	if ok {
-		gitlabURL, ok := snapshot.GetCreateMetadata(keyGitlabUrl)
+		_, ok := snapshot.GetCreateMetadata(keyGitlabUrl)
 		if !ok {
 			// if we find gitlab ID, gitlab URL must be found too
 			err := fmt.Errorf("expected to find gitlab issue URL")
 			out <- core.NewExportError(err, b.Id())
+			return
 		}
 
-		//FIXME:
-		// ignore issue comming from other repositories
-
 		out <- core.NewExportNothing(b.Id(), "bug already exported")
+
 		// will be used to mark operation related to a bug as exported
 		bugGitlabIDString = gitlabID
 		bugGitlabID, err = strconv.Atoi(bugGitlabIDString)
 		if err != nil {
 			panic("unexpected gitlab id format")
 		}
-
-		bugGitlabURL = gitlabURL
 
 	} else {
 		// check that we have a token for operation author
@@ -199,15 +192,8 @@ func (ge *gitlabExporter) exportBug(b *cache.BugCache, since time.Time, out chan
 
 		out <- core.NewExportBug(b.Id())
 
-		hash, err := createOp.Hash()
-		if err != nil {
-			err := errors.Wrap(err, "comment hash")
-			out <- core.NewExportError(err, b.Id())
-			return
-		}
-
 		// mark bug creation operation as exported
-		if err := markOperationAsExported(b, hash, idString, url); err != nil {
+		if err := markOperationAsExported(b, createOp.Id(), idString, url); err != nil {
 			err := errors.Wrap(err, "marking operation as exported")
 			out <- core.NewExportError(err, b.Id())
 			return
@@ -223,20 +209,11 @@ func (ge *gitlabExporter) exportBug(b *cache.BugCache, since time.Time, out chan
 		// cache bug gitlab ID and URL
 		bugGitlabID = id
 		bugGitlabIDString = idString
-		bugGitlabURL = url
 	}
 
-	// get createOp hash
-	hash, err := createOp.Hash()
-	if err != nil {
-		out <- core.NewExportError(err, b.Id())
-		return
-	}
-
-	bugCreationHash = hash.String()
-
+	bugCreationId = createOp.Id().String()
 	// cache operation gitlab id
-	ge.cachedOperationIDs[bugCreationHash] = bugGitlabIDString
+	ge.cachedOperationIDs[bugCreationId] = bugGitlabIDString
 
 	for _, op := range snapshot.Operations[1:] {
 		// ignore SetMetadata operations
@@ -244,26 +221,18 @@ func (ge *gitlabExporter) exportBug(b *cache.BugCache, since time.Time, out chan
 			continue
 		}
 
-		// get operation hash
-		hash, err := op.Hash()
-		if err != nil {
-			err := errors.Wrap(err, "operation hash")
-			out <- core.NewExportError(err, b.Id())
-			return
-		}
-
 		// ignore operations already existing in gitlab (due to import or export)
 		// cache the ID of already exported or imported issues and events from Gitlab
 		if id, ok := op.GetMetadata(keyGitlabId); ok {
-			ge.cachedOperationIDs[hash.String()] = id
-			out <- core.NewExportNothing(hash.String(), "already exported operation")
+			ge.cachedOperationIDs[op.Id().String()] = id
+			out <- core.NewExportNothing(op.Id(), "already exported operation")
 			continue
 		}
 
 		opAuthor := op.GetAuthor()
 		client, err := ge.getIdentityClient(opAuthor.Id())
 		if err != nil {
-			out <- core.NewExportNothing(hash.String(), "missing operation author token")
+			out <- core.NewExportNothing(op.Id(), "missing operation author token")
 			continue
 		}
 
@@ -281,52 +250,50 @@ func (ge *gitlabExporter) exportBug(b *cache.BugCache, since time.Time, out chan
 				return
 			}
 
-			idString = strconv.Itoa(id)
-			out <- core.NewExportComment(hash.String())
+			out <- core.NewExportComment(op.Id())
 
+			idString = strconv.Itoa(id)
 			// cache comment id
-			ge.cachedOperationIDs[hash.String()] = idString
+			ge.cachedOperationIDs[op.Id().String()] = idString
 
 		case *bug.EditCommentOperation:
-
 			opr := op.(*bug.EditCommentOperation)
-			targetHash := opr.Target.String()
+			targetId := opr.Target.String()
 
 			// Since gitlab doesn't consider the issue body as a comment
-			if targetHash == bugCreationHash {
+			if targetId == bugCreationId {
 
 				// case bug creation operation: we need to edit the Gitlab issue
-				if err := updateGitlabIssueBody(client, ge.repositoryID, id, opr.Message); err != nil {
+				if err := updateGitlabIssueBody(client, ge.repositoryID, bugGitlabID, opr.Message); err != nil {
 					err := errors.Wrap(err, "editing issue")
 					out <- core.NewExportError(err, b.Id())
 					return
 				}
 
-				out <- core.NewExportCommentEdition(hash.String())
-
+				out <- core.NewExportCommentEdition(op.Id())
 				id = bugGitlabID
-				url = bugGitlabURL
 
 			} else {
 
 				// case comment edition operation: we need to edit the Gitlab comment
-				_, ok := ge.cachedOperationIDs[targetHash]
+				commentID, ok := ge.cachedOperationIDs[targetId]
 				if !ok {
 					panic("unexpected error: comment id not found")
 				}
 
-				err := editCommentGitlabIssue(client, ge.repositoryID, id, id, opr.Message)
+				commentIDint, err := strconv.Atoi(commentID)
 				if err != nil {
+					panic("unexpected comment id format")
+				}
+
+				if err := editCommentGitlabIssue(client, ge.repositoryID, commentIDint, id, opr.Message); err != nil {
 					err := errors.Wrap(err, "editing comment")
 					out <- core.NewExportError(err, b.Id())
 					return
 				}
 
-				out <- core.NewExportCommentEdition(hash.String())
-
-				// use comment id/url instead of issue id/url
-				//id = eid
-				//url = eurl
+				out <- core.NewExportCommentEdition(op.Id())
+				id = commentIDint
 			}
 
 		case *bug.SetStatusOperation:
@@ -337,10 +304,8 @@ func (ge *gitlabExporter) exportBug(b *cache.BugCache, since time.Time, out chan
 				return
 			}
 
-			out <- core.NewExportStatusChange(hash.String())
-
+			out <- core.NewExportStatusChange(op.Id())
 			id = bugGitlabID
-			url = bugGitlabURL
 
 		case *bug.SetTitleOperation:
 			opr := op.(*bug.SetTitleOperation)
@@ -350,10 +315,8 @@ func (ge *gitlabExporter) exportBug(b *cache.BugCache, since time.Time, out chan
 				return
 			}
 
-			out <- core.NewExportTitleEdition(hash.String())
-
+			out <- core.NewExportTitleEdition(op.Id())
 			id = bugGitlabID
-			url = bugGitlabURL
 
 		case *bug.LabelChangeOperation:
 			_ = op.(*bug.LabelChangeOperation)
@@ -363,17 +326,14 @@ func (ge *gitlabExporter) exportBug(b *cache.BugCache, since time.Time, out chan
 				return
 			}
 
-			out <- core.NewExportLabelChange(hash.String())
-
+			out <- core.NewExportLabelChange(op.Id())
 			id = bugGitlabID
-			url = bugGitlabURL
-
 		default:
 			panic("unhandled operation type case")
 		}
 
 		// mark operation as exported
-		if err := markOperationAsExported(b, hash, idString, url); err != nil {
+		if err := markOperationAsExported(b, op.Id(), idString, url); err != nil {
 			err := errors.Wrap(err, "marking operation as exported")
 			out <- core.NewExportError(err, b.Id())
 			return
@@ -388,7 +348,7 @@ func (ge *gitlabExporter) exportBug(b *cache.BugCache, since time.Time, out chan
 	}
 }
 
-func markOperationAsExported(b *cache.BugCache, target git.Hash, gitlabID, gitlabURL string) error {
+func markOperationAsExported(b *cache.BugCache, target entity.Id, gitlabID, gitlabURL string) error {
 	_, err := b.SetMetadata(
 		target,
 		map[string]string{
