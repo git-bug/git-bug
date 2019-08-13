@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/identity"
-	"github.com/pkg/errors"
+	"github.com/MichaelMure/git-bug/entity"
 )
 
 type launchpadImporter struct {
@@ -29,7 +30,7 @@ func (li *launchpadImporter) ensurePerson(repo *cache.RepoCache, owner LPPerson)
 	if err == nil {
 		return i, nil
 	}
-	if _, ok := err.(identity.ErrMultipleMatch); ok {
+	if _, ok := err.(entity.ErrMultipleMatch); ok {
 		return nil, err
 	}
 

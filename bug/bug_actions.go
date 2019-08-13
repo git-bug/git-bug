@@ -65,8 +65,13 @@ func MergeAll(repo repository.ClockedRepo, remote string) <-chan entity.MergeRes
 		}
 
 		for _, remoteRef := range remoteRefs {
-			refSplitted := strings.Split(remoteRef, "/")
-			id := refSplitted[len(refSplitted)-1]
+			refSplit := strings.Split(remoteRef, "/")
+			id := entity.Id(refSplit[len(refSplit)-1])
+
+			if err := id.Validate(); err != nil {
+				out <- entity.NewMergeInvalidStatus(id, errors.Wrap(err, "invalid ref").Error())
+				continue
+			}
 
 			remoteBug, err := readBug(repo, remoteRef)
 
@@ -81,7 +86,7 @@ func MergeAll(repo repository.ClockedRepo, remote string) <-chan entity.MergeRes
 				continue
 			}
 
-			localRef := bugsRefPattern + remoteBug.Id()
+			localRef := bugsRefPattern + remoteBug.Id().String()
 			localExist, err := repo.RefExist(localRef)
 
 			if err != nil {

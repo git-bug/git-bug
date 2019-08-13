@@ -2,11 +2,11 @@ package commands
 
 import (
 	"fmt"
-	"strings"
+
+	"github.com/spf13/cobra"
 
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util/interrupt"
-	"github.com/spf13/cobra"
 )
 
 func runLsID(cmd *cobra.Command, args []string) error {
@@ -24,7 +24,7 @@ func runLsID(cmd *cobra.Command, args []string) error {
 	}
 
 	for _, id := range backend.AllBugsIds() {
-		if prefix == "" || strings.HasPrefix(id, prefix) {
+		if prefix == "" || id.HasPrefix(prefix) {
 			fmt.Println(id)
 		}
 	}

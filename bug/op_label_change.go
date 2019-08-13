@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/pkg/errors"
+
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/timestamp"
-
-	"github.com/MichaelMure/git-bug/util/git"
-	"github.com/pkg/errors"
 )
 
 var _ Operation = &LabelChangeOperation{}
@@ -17,16 +17,16 @@ var _ Operation = &LabelChangeOperation{}
 // LabelChangeOperation define a Bug operation to add or remove labels
 type LabelChangeOperation struct {
 	OpBase
-	Added   []Label
-	Removed []Label
+	Added   []Label `json:"added"`
+	Removed []Label `json:"removed"`
 }
 
 func (op *LabelChangeOperation) base() *OpBase {
 	return &op.OpBase
 }
 
-func (op *LabelChangeOperation) Hash() (git.Hash, error) {
-	return hashOperation(op)
+func (op *LabelChangeOperation) Id() entity.Id {
+	return idOperation(op)
 }
 
 // Apply apply the operation
@@ -61,15 +61,8 @@ AddLoop:
 		return string(snapshot.Labels[i]) < string(snapshot.Labels[j])
 	})
 
-	hash, err := op.Hash()
-	if err != nil {
-		// Should never error unless a programming error happened
-		// (covered in OpBase.Validate())
-		panic(err)
-	}
-
 	item := &LabelChangeTimelineItem{
-		hash:     hash,
+		id:       op.Id(),
 		Author:   op.Author,
 		UnixTime: timestamp.Timestamp(op.UnixTime),
 		Added:    op.Added,
@@ -103,28 +96,9 @@ func (op *LabelChangeOperation) Validate() error {
 	return nil
 }
 
-// Workaround to avoid the inner OpBase.MarshalJSON overriding the outer op
-// MarshalJSON
-func (op *LabelChangeOperation) MarshalJSON() ([]byte, error) {
-	base, err := json.Marshal(op.OpBase)
-	if err != nil {
-		return nil, err
-	}
-
-	// revert back to a flat map to be able to add our own fields
-	var data map[string]interface{}
-	if err := json.Unmarshal(base, &data); err != nil {
-		return nil, err
-	}
-
-	data["added"] = op.Added
-	data["removed"] = op.Removed
-
-	return json.Marshal(data)
-}
-
-// Workaround to avoid the inner OpBase.MarshalJSON overriding the outer op
-// MarshalJSON
+// UnmarshalJSON is a two step JSON unmarshaling
+// This workaround is necessary to avoid the inner OpBase.MarshalJSON
+// overriding the outer op's MarshalJSON
 func (op *LabelChangeOperation) UnmarshalJSON(data []byte) error {
 	// Unmarshal OpBase and the op separately
 
@@ -163,15 +137,15 @@ func NewLabelChangeOperation(author identity.Interface, unixTime int64, added, r
 }
 
 type LabelChangeTimelineItem struct {
-	hash     git.Hash
+	id       entity.Id
 	Author   identity.Interface
 	UnixTime timestamp.Timestamp
 	Added    []Label
 	Removed  []Label
 }
 
-func (l LabelChangeTimelineItem) Hash() git.Hash {
-	return l.hash
+func (l LabelChangeTimelineItem) Id() entity.Id {
+	return l.id
 }
 
 // Sign post method for gqlgen

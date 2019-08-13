@@ -5,8 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MichaelMure/git-bug/identity"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/MichaelMure/git-bug/identity"
 )
 
 func TestAddCommentSerialize(t *testing.T) {
@@ -20,6 +21,10 @@ func TestAddCommentSerialize(t *testing.T) {
 	var after AddCommentOperation
 	err = json.Unmarshal(data, &after)
 	assert.NoError(t, err)
+
+	// enforce creating the IDs
+	before.Id()
+	rene.Id()
 
 	assert.Equal(t, before, &after)
 }

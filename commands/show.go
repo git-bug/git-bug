@@ -46,7 +46,7 @@ func runShowBug(cmd *cobra.Command, args []string) error {
 		case "createTime":
 			fmt.Printf("%s\n", firstComment.FormatTime())
 		case "humanId":
-			fmt.Printf("%s\n", snapshot.HumanId())
+			fmt.Printf("%s\n", snapshot.Id().Human())
 		case "id":
 			fmt.Printf("%s\n", snapshot.Id())
 		case "labels":
@@ -62,7 +62,7 @@ func runShowBug(cmd *cobra.Command, args []string) error {
 				fmt.Printf("%s\n", p.DisplayName())
 			}
 		case "shortId":
-			fmt.Printf("%s\n", snapshot.HumanId())
+			fmt.Printf("%s\n", snapshot.Id().Human())
 		case "status":
 			fmt.Printf("%s\n", snapshot.Status)
 		case "title":
@@ -77,7 +77,7 @@ func runShowBug(cmd *cobra.Command, args []string) error {
 	// Header
 	fmt.Printf("[%s] %s %s\n\n",
 		colors.Yellow(snapshot.Status),
-		colors.Cyan(snapshot.HumanId()),
+		colors.Cyan(snapshot.Id().Human()),
 		snapshot.Title,
 	)
 

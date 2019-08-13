@@ -1,6 +1,10 @@
 package core
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/MichaelMure/git-bug/entity"
+)
 
 type ExportEvent int
 
@@ -21,7 +25,7 @@ const (
 type ExportResult struct {
 	Err    error
 	Event  ExportEvent
-	ID     string
+	ID     entity.Id
 	Reason string
 }
 
@@ -46,14 +50,14 @@ func (er ExportResult) String() string {
 	}
 }
 
-func NewExportError(err error, reason string) ExportResult {
+func NewExportError(err error, id entity.Id) ExportResult {
 	return ExportResult{
-		Err:    err,
-		Reason: reason,
+		ID:  id,
+		Err: err,
 	}
 }
 
-func NewExportNothing(id string, reason string) ExportResult {
+func NewExportNothing(id entity.Id, reason string) ExportResult {
 	return ExportResult{
 		ID:     id,
 		Reason: reason,
@@ -61,42 +65,42 @@ func NewExportNothing(id string, reason string) ExportResult {
 	}
 }
 
-func NewExportBug(id string) ExportResult {
+func NewExportBug(id entity.Id) ExportResult {
 	return ExportResult{
 		ID:    id,
 		Event: ExportEventBug,
 	}
 }
 
-func NewExportComment(id string) ExportResult {
+func NewExportComment(id entity.Id) ExportResult {
 	return ExportResult{
 		ID:    id,
 		Event: ExportEventComment,
 	}
 }
 
-func NewExportCommentEdition(id string) ExportResult {
+func NewExportCommentEdition(id entity.Id) ExportResult {
 	return ExportResult{
 		ID:    id,
 		Event: ExportEventCommentEdition,
 	}
 }
 
-func NewExportStatusChange(id string) ExportResult {
+func NewExportStatusChange(id entity.Id) ExportResult {
 	return ExportResult{
 		ID:    id,
 		Event: ExportEventStatusChange,
 	}
 }
 
-func NewExportLabelChange(id string) ExportResult {
+func NewExportLabelChange(id entity.Id) ExportResult {
 	return ExportResult{
 		ID:    id,
 		Event: ExportEventLabelChange,
 	}
 }
 
-func NewExportTitleEdition(id string) ExportResult {
+func NewExportTitleEdition(id entity.Id) ExportResult {
 	return ExportResult{
 		ID:    id,
 		Event: ExportEventTitleEdition,

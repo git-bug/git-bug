@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/lamport"
 	"github.com/MichaelMure/git-bug/util/text"
@@ -13,6 +14,7 @@ import (
 )
 
 var _ Interface = &Bare{}
+var _ entity.Interface = &Bare{}
 
 // Bare is a very minimal identity, designed to be fully embedded directly along
 // other data.
@@ -20,7 +22,7 @@ var _ Interface = &Bare{}
 // in particular, this identity is designed to be compatible with the handling of
 // identities in the early version of git-bug.
 type Bare struct {
-	id        string
+	id        entity.Id
 	name      string
 	email     string
 	login     string
@@ -28,11 +30,16 @@ type Bare struct {
 }
 
 func NewBare(name string, email string) *Bare {
-	return &Bare{name: name, email: email}
+	return &Bare{id: entity.UnsetId, name: name, email: email}
 }
 
 func NewBareFull(name string, email string, login string, avatarUrl string) *Bare {
-	return &Bare{name: name, email: email, login: login, avatarUrl: avatarUrl}
+	return &Bare{id: entity.UnsetId, name: name, email: email, login: login, avatarUrl: avatarUrl}
+}
+
+func deriveId(data []byte) entity.Id {
+	sum := sha256.Sum256(data)
+	return entity.Id(fmt.Sprintf("%x", sum))
 }
 
 type bareIdentityJSON struct {
@@ -52,6 +59,9 @@ func (i *Bare) MarshalJSON() ([]byte, error) {
 }
 
 func (i *Bare) UnmarshalJSON(data []byte) error {
+	// Compute the Id when loading the op from disk.
+	i.id = deriveId(data)
+
 	aux := bareIdentityJSON{}
 
 	if err := json.Unmarshal(data, &aux); err != nil {
@@ -67,28 +77,26 @@ func (i *Bare) UnmarshalJSON(data []byte) error {
 }
 
 // Id return the Identity identifier
-func (i *Bare) Id() string {
-	// We don't have a proper ID at hand, so let's hash all the data to get one.
-	// Hopefully the
+func (i *Bare) Id() entity.Id {
+	// We don't have a proper Id at hand, so let's hash all the data to get one.
 
-	if i.id != "" {
-		return i.id
+	if i.id == "" {
+		// something went really wrong
+		panic("identity's id not set")
 	}
+	if i.id == entity.UnsetId {
+		// This means we are trying to get the identity identifier *before* it has been stored
+		// As the Id is computed based on the actual bytes written on the disk, we are going to predict
+		// those and then get the Id. This is safe as it will be the exact same code writing on disk later.
 
-	data, err := json.Marshal(i)
-	if err != nil {
-		panic(err)
+		data, err := json.Marshal(i)
+		if err != nil {
+			panic(err)
+		}
+
+		i.id = deriveId(data)
 	}
-
-	h := fmt.Sprintf("%x", sha256.New().Sum(data)[:16])
-	i.id = string(h)
-
 	return i.id
-}
-
-// HumanId return the Identity identifier truncated for human consumption
-func (i *Bare) HumanId() string {
-	return FormatHumanID(i.Id())
 }
 
 // Name return the last version of the name

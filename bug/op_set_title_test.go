@@ -21,5 +21,9 @@ func TestSetTitleSerialize(t *testing.T) {
 	err = json.Unmarshal(data, &after)
 	assert.NoError(t, err)
 
+	// enforce creating the IDs
+	before.Id()
+	rene.Id()
+
 	assert.Equal(t, before, &after)
 }

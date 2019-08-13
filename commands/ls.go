@@ -70,7 +70,7 @@ func runLsBug(cmd *cobra.Command, args []string) error {
 		authorFmt := text.LeftPadMaxLine(name, 15, 0)
 
 		fmt.Printf("%s %s\t%s\t%s\tC:%d L:%d\n",
-			colors.Cyan(b.HumanId()),
+			colors.Cyan(b.Id.Human()),
 			colors.Yellow(b.Status),
 			titleFmt,
 			colors.Magenta(authorFmt),

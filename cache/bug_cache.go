@@ -2,12 +2,14 @@ package cache
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/util/git"
 )
+
+var ErrNoMatchingOp = fmt.Errorf("no matching operation found")
 
 // BugCache is a wrapper around a Bug. It provide multiple functions:
 //
@@ -29,49 +31,25 @@ func (c *BugCache) Snapshot() *bug.Snapshot {
 	return c.bug.Snapshot()
 }
 
-func (c *BugCache) Id() string {
+func (c *BugCache) Id() entity.Id {
 	return c.bug.Id()
-}
-
-func (c *BugCache) HumanId() string {
-	return c.bug.HumanId()
 }
 
 func (c *BugCache) notifyUpdated() error {
 	return c.repoCache.bugUpdated(c.bug.Id())
 }
 
-var ErrNoMatchingOp = fmt.Errorf("no matching operation found")
-
-type ErrMultipleMatchOp struct {
-	Matching []git.Hash
-}
-
-func (e ErrMultipleMatchOp) Error() string {
-	casted := make([]string, len(e.Matching))
-
-	for i := range e.Matching {
-		casted[i] = string(e.Matching[i])
-	}
-
-	return fmt.Sprintf("Multiple matching operation found:\n%s", strings.Join(casted, "\n"))
-}
-
 // ResolveOperationWithMetadata will find an operation that has the matching metadata
-func (c *BugCache) ResolveOperationWithMetadata(key string, value string) (git.Hash, error) {
+func (c *BugCache) ResolveOperationWithMetadata(key string, value string) (entity.Id, error) {
 	// preallocate but empty
-	matching := make([]git.Hash, 0, 5)
+	matching := make([]entity.Id, 0, 5)
 
 	it := bug.NewOperationIterator(c.bug)
 	for it.Next() {
 		op := it.Value()
 		opValue, ok := op.GetMetadata(key)
 		if ok && value == opValue {
-			h, err := op.Hash()
-			if err != nil {
-				return "", err
-			}
-			matching = append(matching, h)
+			matching = append(matching, op.Id())
 		}
 	}
 
@@ -80,7 +58,7 @@ func (c *BugCache) ResolveOperationWithMetadata(key string, value string) (git.H
 	}
 
 	if len(matching) > 1 {
-		return "", ErrMultipleMatchOp{Matching: matching}
+		return "", bug.NewErrMultipleMatchOp(matching)
 	}
 
 	return matching[0], nil
@@ -232,7 +210,7 @@ func (c *BugCache) SetTitleRaw(author *IdentityCache, unixTime int64, title stri
 	return op, c.notifyUpdated()
 }
 
-func (c *BugCache) EditComment(target git.Hash, message string) (*bug.EditCommentOperation, error) {
+func (c *BugCache) EditComment(target entity.Id, message string) (*bug.EditCommentOperation, error) {
 	author, err := c.repoCache.GetUserIdentity()
 	if err != nil {
 		return nil, err
@@ -241,7 +219,7 @@ func (c *BugCache) EditComment(target git.Hash, message string) (*bug.EditCommen
 	return c.EditCommentRaw(author, time.Now().Unix(), target, message, nil)
 }
 
-func (c *BugCache) EditCommentRaw(author *IdentityCache, unixTime int64, target git.Hash, message string, metadata map[string]string) (*bug.EditCommentOperation, error) {
+func (c *BugCache) EditCommentRaw(author *IdentityCache, unixTime int64, target entity.Id, message string, metadata map[string]string) (*bug.EditCommentOperation, error) {
 	op, err := bug.EditComment(c.bug, author.Identity, unixTime, target, message)
 	if err != nil {
 		return nil, err
@@ -254,7 +232,7 @@ func (c *BugCache) EditCommentRaw(author *IdentityCache, unixTime int64, target 
 	return op, c.notifyUpdated()
 }
 
-func (c *BugCache) SetMetadata(target git.Hash, newMetadata map[string]string) (*bug.SetMetadataOperation, error) {
+func (c *BugCache) SetMetadata(target entity.Id, newMetadata map[string]string) (*bug.SetMetadataOperation, error) {
 	author, err := c.repoCache.GetUserIdentity()
 	if err != nil {
 		return nil, err
@@ -263,7 +241,7 @@ func (c *BugCache) SetMetadata(target git.Hash, newMetadata map[string]string) (
 	return c.SetMetadataRaw(author, time.Now().Unix(), target, newMetadata)
 }
 
-func (c *BugCache) SetMetadataRaw(author *IdentityCache, unixTime int64, target git.Hash, newMetadata map[string]string) (*bug.SetMetadataOperation, error) {
+func (c *BugCache) SetMetadataRaw(author *IdentityCache, unixTime int64, target entity.Id, newMetadata map[string]string) (*bug.SetMetadataOperation, error) {
 	op, err := bug.SetMetadata(c.bug, author.Identity, unixTime, target, newMetadata)
 	if err != nil {
 		return nil, err

@@ -1,6 +1,7 @@
 package identity
 
 import (
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/lamport"
 	"github.com/MichaelMure/git-bug/util/timestamp"
@@ -8,10 +9,7 @@ import (
 
 type Interface interface {
 	// Id return the Identity identifier
-	Id() string
-
-	// HumanId return the Identity identifier truncated for human consumption
-	HumanId() string
+	Id() entity.Id
 
 	// Name return the last version of the name
 	Name() string

@@ -79,7 +79,7 @@ func TestMetadata(t *testing.T) {
 	require.Equal(t, val, "value")
 }
 
-func TestHash(t *testing.T) {
+func TestID(t *testing.T) {
 	repo := repository.CreateTestRepo(false)
 	defer repository.CleanupTestRepos(t, repo)
 
@@ -94,27 +94,27 @@ func TestHash(t *testing.T) {
 		b, op, err := Create(rene, time.Now().Unix(), "title", "message")
 		require.Nil(t, err)
 
-		h1, err := op.Hash()
-		require.Nil(t, err)
+		id1 := op.Id()
+		require.NoError(t, id1.Validate())
 
 		err = b.Commit(repo)
 		require.Nil(t, err)
 
 		op2 := b.FirstOp()
 
-		h2, err := op2.Hash()
-		require.Nil(t, err)
+		id2 := op2.Id()
+		require.NoError(t, id2.Validate())
 
-		require.Equal(t, h1, h2)
+		require.Equal(t, id1, id2)
 
-		b2, err := ReadLocalBug(repo, b.id)
+		b2, err := ReadLocalBug(repo, b.Id())
 		require.Nil(t, err)
 
 		op3 := b2.FirstOp()
 
-		h3, err := op3.Hash()
-		require.Nil(t, err)
+		id3 := op3.Id()
+		require.NoError(t, id3.Validate())
 
-		require.Equal(t, h1, h3)
+		require.Equal(t, id1, id3)
 	}
 }

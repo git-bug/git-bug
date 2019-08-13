@@ -15,6 +15,14 @@ var _ graph.BugResolver = &bugResolver{}
 
 type bugResolver struct{}
 
+func (bugResolver) ID(ctx context.Context, obj *bug.Snapshot) (string, error) {
+	return obj.Id().String(), nil
+}
+
+func (bugResolver) HumanID(ctx context.Context, obj *bug.Snapshot) (string, error) {
+	return obj.Id().Human(), nil
+}
+
 func (bugResolver) Status(ctx context.Context, obj *bug.Snapshot) (models.Status, error) {
 	return convertStatus(obj.Status)
 }

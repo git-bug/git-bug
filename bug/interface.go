@@ -1,16 +1,14 @@
 package bug
 
 import (
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
 type Interface interface {
 	// Id return the Bug identifier
-	Id() string
-
-	// HumanId return the Bug identifier truncated for human consumption
-	HumanId() string
+	Id() entity.Id
 
 	// Validate check if the Bug data is valid
 	Validate() error

@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/MichaelMure/git-bug/identity"
-
-	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/pkg/errors"
+
+	"github.com/MichaelMure/git-bug/entity"
+	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/util/git"
 )
 
 // OperationType is an operation type identifier
@@ -31,8 +32,8 @@ const (
 type Operation interface {
 	// base return the OpBase of the Operation, for package internal use
 	base() *OpBase
-	// Hash return the hash of the operation, to be used for back references
-	Hash() (git.Hash, error)
+	// Id return the identifier of the operation, to be used for back references
+	Id() entity.Id
 	// Time return the time when the operation was added
 	Time() time.Time
 	// GetUnixTime return the unix timestamp when the operation was added
@@ -53,42 +54,42 @@ type Operation interface {
 	GetAuthor() identity.Interface
 }
 
-func hashRaw(data []byte) git.Hash {
-	hasher := sha256.New()
-	// Write can't fail
-	_, _ = hasher.Write(data)
-	return git.Hash(fmt.Sprintf("%x", hasher.Sum(nil)))
+func deriveId(data []byte) entity.Id {
+	sum := sha256.Sum256(data)
+	return entity.Id(fmt.Sprintf("%x", sum))
 }
 
-// hash compute the hash of the serialized operation
-func hashOperation(op Operation) (git.Hash, error) {
-	// TODO: this might not be the best idea: if a single bit change in the output of json.Marshal, this will break.
-	// Idea: hash the segment of serialized data (= immutable) instead of the go object in memory
-
+func idOperation(op Operation) entity.Id {
 	base := op.base()
 
-	if base.hash != "" {
-		return base.hash, nil
+	if base.id == "" {
+		// something went really wrong
+		panic("op's id not set")
 	}
+	if base.id == entity.UnsetId {
+		// This means we are trying to get the op's Id *before* it has been stored, for instance when
+		// adding multiple ops in one go in an OperationPack.
+		// As the Id is computed based on the actual bytes written on the disk, we are going to predict
+		// those and then get the Id. This is safe as it will be the exact same code writing on disk later.
 
-	data, err := json.Marshal(op)
-	if err != nil {
-		return "", err
+		data, err := json.Marshal(op)
+		if err != nil {
+			panic(err)
+		}
+
+		base.id = deriveId(data)
 	}
-
-	base.hash = hashRaw(data)
-
-	return base.hash, nil
+	return base.id
 }
 
 // OpBase implement the common code for all operations
 type OpBase struct {
-	OperationType OperationType
-	Author        identity.Interface
-	UnixTime      int64
-	Metadata      map[string]string
-	// Not serialized. Store the op's hash in memory.
-	hash git.Hash
+	OperationType OperationType      `json:"type"`
+	Author        identity.Interface `json:"author"`
+	UnixTime      int64              `json:"timestamp"`
+	Metadata      map[string]string  `json:"metadata,omitempty"`
+	// Not serialized. Store the op's id in memory.
+	id entity.Id
 	// Not serialized. Store the extra metadata in memory,
 	// compiled from SetMetadataOperation.
 	extraMetadata map[string]string
@@ -100,24 +101,14 @@ func newOpBase(opType OperationType, author identity.Interface, unixTime int64) 
 		OperationType: opType,
 		Author:        author,
 		UnixTime:      unixTime,
+		id:            entity.UnsetId,
 	}
 }
 
-func (op OpBase) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
-		OperationType OperationType      `json:"type"`
-		Author        identity.Interface `json:"author"`
-		UnixTime      int64              `json:"timestamp"`
-		Metadata      map[string]string  `json:"metadata,omitempty"`
-	}{
-		OperationType: op.OperationType,
-		Author:        op.Author,
-		UnixTime:      op.UnixTime,
-		Metadata:      op.Metadata,
-	})
-}
-
 func (op *OpBase) UnmarshalJSON(data []byte) error {
+	// Compute the Id when loading the op from disk.
+	op.id = deriveId(data)
+
 	aux := struct {
 		OperationType OperationType     `json:"type"`
 		Author        json.RawMessage   `json:"author"`
@@ -192,7 +183,7 @@ func (op *OpBase) SetMetadata(key string, value string) {
 	}
 
 	op.Metadata[key] = value
-	op.hash = ""
+	op.id = entity.UnsetId
 }
 
 // GetMetadata retrieve arbitrary metadata about the operation

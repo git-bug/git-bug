@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
@@ -17,7 +18,7 @@ func init() {
 // BugExcerpt hold a subset of the bug values to be able to sort and filter bugs
 // efficiently without having to read and compile each raw bugs.
 type BugExcerpt struct {
-	Id string
+	Id entity.Id
 
 	CreateLamportTime lamport.Time
 	EditLamportTime   lamport.Time
@@ -28,14 +29,14 @@ type BugExcerpt struct {
 	Labels       []bug.Label
 	Title        string
 	LenComments  int
-	Actors       []string
-	Participants []string
+	Actors       []entity.Id
+	Participants []entity.Id
 
 	// If author is identity.Bare, LegacyAuthor is set
 	// If author is identity.Identity, AuthorId is set and data is deported
 	// in a IdentityExcerpt
 	LegacyAuthor LegacyAuthorExcerpt
-	AuthorId     string
+	AuthorId     entity.Id
 
 	CreateMetadata map[string]string
 }
@@ -60,12 +61,12 @@ func (l LegacyAuthorExcerpt) DisplayName() string {
 }
 
 func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
-	participantsIds := make([]string, len(snap.Participants))
+	participantsIds := make([]entity.Id, len(snap.Participants))
 	for i, participant := range snap.Participants {
 		participantsIds[i] = participant.Id()
 	}
 
-	actorsIds := make([]string, len(snap.Actors))
+	actorsIds := make([]entity.Id, len(snap.Actors))
 	for i, actor := range snap.Actors {
 		actorsIds[i] = actor.Id()
 	}
@@ -98,10 +99,6 @@ func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
 	}
 
 	return e
-}
-
-func (b *BugExcerpt) HumanId() string {
-	return bug.FormatHumanID(b.Id)
 }
 
 /*

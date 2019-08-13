@@ -103,7 +103,7 @@ func equivalentBug(t *testing.T, expected, actual *Bug) {
 
 	for i := range expected.packs {
 		for j := range expected.packs[i].Operations {
-			actual.packs[i].Operations[j].base().hash = expected.packs[i].Operations[j].base().hash
+			actual.packs[i].Operations[j].base().id = expected.packs[i].Operations[j].base().id
 		}
 	}
 

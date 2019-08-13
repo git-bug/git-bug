@@ -10,8 +10,9 @@ import (
 	"path"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/entity"
@@ -19,7 +20,6 @@ import (
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/process"
-	"github.com/pkg/errors"
 )
 
 const bugCacheFile = "bug-cache"
@@ -58,24 +58,24 @@ type RepoCache struct {
 	repo repository.ClockedRepo
 
 	// excerpt of bugs data for all bugs
-	bugExcerpts map[string]*BugExcerpt
+	bugExcerpts map[entity.Id]*BugExcerpt
 	// bug loaded in memory
-	bugs map[string]*BugCache
+	bugs map[entity.Id]*BugCache
 
 	// excerpt of identities data for all identities
-	identitiesExcerpts map[string]*IdentityExcerpt
+	identitiesExcerpts map[entity.Id]*IdentityExcerpt
 	// identities loaded in memory
-	identities map[string]*IdentityCache
+	identities map[entity.Id]*IdentityCache
 
 	// the user identity's id, if known
-	userIdentityId string
+	userIdentityId entity.Id
 }
 
 func NewRepoCache(r repository.ClockedRepo) (*RepoCache, error) {
 	c := &RepoCache{
 		repo:       r,
-		bugs:       make(map[string]*BugCache),
-		identities: make(map[string]*IdentityCache),
+		bugs:       make(map[entity.Id]*BugCache),
+		identities: make(map[entity.Id]*IdentityCache),
 	}
 
 	err := c.lock()
@@ -191,7 +191,7 @@ func (c *RepoCache) Close() error {
 
 // bugUpdated is a callback to trigger when the excerpt of a bug changed,
 // that is each time a bug is updated
-func (c *RepoCache) bugUpdated(id string) error {
+func (c *RepoCache) bugUpdated(id entity.Id) error {
 	b, ok := c.bugs[id]
 	if !ok {
 		panic("missing bug in the cache")
@@ -205,7 +205,7 @@ func (c *RepoCache) bugUpdated(id string) error {
 
 // identityUpdated is a callback to trigger when the excerpt of an identity
 // changed, that is each time an identity is updated
-func (c *RepoCache) identityUpdated(id string) error {
+func (c *RepoCache) identityUpdated(id entity.Id) error {
 	i, ok := c.identities[id]
 	if !ok {
 		panic("missing identity in the cache")
@@ -237,7 +237,7 @@ func (c *RepoCache) loadBugCache() error {
 
 	aux := struct {
 		Version  uint
-		Excerpts map[string]*BugExcerpt
+		Excerpts map[entity.Id]*BugExcerpt
 	}{}
 
 	err = decoder.Decode(&aux)
@@ -266,7 +266,7 @@ func (c *RepoCache) loadIdentityCache() error {
 
 	aux := struct {
 		Version  uint
-		Excerpts map[string]*IdentityExcerpt
+		Excerpts map[entity.Id]*IdentityExcerpt
 	}{}
 
 	err = decoder.Decode(&aux)
@@ -299,7 +299,7 @@ func (c *RepoCache) writeBugCache() error {
 
 	aux := struct {
 		Version  uint
-		Excerpts map[string]*BugExcerpt
+		Excerpts map[entity.Id]*BugExcerpt
 	}{
 		Version:  formatVersion,
 		Excerpts: c.bugExcerpts,
@@ -331,7 +331,7 @@ func (c *RepoCache) writeIdentityCache() error {
 
 	aux := struct {
 		Version  uint
-		Excerpts map[string]*IdentityExcerpt
+		Excerpts map[entity.Id]*IdentityExcerpt
 	}{
 		Version:  formatVersion,
 		Excerpts: c.identitiesExcerpts,
@@ -368,7 +368,7 @@ func identityCacheFilePath(repo repository.Repo) string {
 func (c *RepoCache) buildCache() error {
 	_, _ = fmt.Fprintf(os.Stderr, "Building identity cache... ")
 
-	c.identitiesExcerpts = make(map[string]*IdentityExcerpt)
+	c.identitiesExcerpts = make(map[entity.Id]*IdentityExcerpt)
 
 	allIdentities := identity.ReadAllLocalIdentities(c.repo)
 
@@ -384,7 +384,7 @@ func (c *RepoCache) buildCache() error {
 
 	_, _ = fmt.Fprintf(os.Stderr, "Building bug cache... ")
 
-	c.bugExcerpts = make(map[string]*BugExcerpt)
+	c.bugExcerpts = make(map[entity.Id]*BugExcerpt)
 
 	allBugs := bug.ReadAllLocalBugs(c.repo)
 
@@ -402,7 +402,7 @@ func (c *RepoCache) buildCache() error {
 }
 
 // ResolveBug retrieve a bug matching the exact given id
-func (c *RepoCache) ResolveBug(id string) (*BugCache, error) {
+func (c *RepoCache) ResolveBug(id entity.Id) (*BugCache, error) {
 	cached, ok := c.bugs[id]
 	if ok {
 		return cached, nil
@@ -420,7 +420,7 @@ func (c *RepoCache) ResolveBug(id string) (*BugCache, error) {
 }
 
 // ResolveBugExcerpt retrieve a BugExcerpt matching the exact given id
-func (c *RepoCache) ResolveBugExcerpt(id string) (*BugExcerpt, error) {
+func (c *RepoCache) ResolveBugExcerpt(id entity.Id) (*BugExcerpt, error) {
 	e, ok := c.bugExcerpts[id]
 	if !ok {
 		return nil, bug.ErrBugNotExist
@@ -433,16 +433,16 @@ func (c *RepoCache) ResolveBugExcerpt(id string) (*BugExcerpt, error) {
 // bugs match.
 func (c *RepoCache) ResolveBugPrefix(prefix string) (*BugCache, error) {
 	// preallocate but empty
-	matching := make([]string, 0, 5)
+	matching := make([]entity.Id, 0, 5)
 
 	for id := range c.bugExcerpts {
-		if strings.HasPrefix(id, prefix) {
+		if id.HasPrefix(prefix) {
 			matching = append(matching, id)
 		}
 	}
 
 	if len(matching) > 1 {
-		return nil, bug.ErrMultipleMatch{Matching: matching}
+		return nil, bug.NewErrMultipleMatchBug(matching)
 	}
 
 	if len(matching) == 0 {
@@ -457,7 +457,7 @@ func (c *RepoCache) ResolveBugPrefix(prefix string) (*BugCache, error) {
 // match.
 func (c *RepoCache) ResolveBugCreateMetadata(key string, value string) (*BugCache, error) {
 	// preallocate but empty
-	matching := make([]string, 0, 5)
+	matching := make([]entity.Id, 0, 5)
 
 	for id, excerpt := range c.bugExcerpts {
 		if excerpt.CreateMetadata[key] == value {
@@ -466,7 +466,7 @@ func (c *RepoCache) ResolveBugCreateMetadata(key string, value string) (*BugCach
 	}
 
 	if len(matching) > 1 {
-		return nil, bug.ErrMultipleMatch{Matching: matching}
+		return nil, bug.NewErrMultipleMatchBug(matching)
 	}
 
 	if len(matching) == 0 {
@@ -477,7 +477,7 @@ func (c *RepoCache) ResolveBugCreateMetadata(key string, value string) (*BugCach
 }
 
 // QueryBugs return the id of all Bug matching the given Query
-func (c *RepoCache) QueryBugs(query *Query) []string {
+func (c *RepoCache) QueryBugs(query *Query) []entity.Id {
 	if query == nil {
 		return c.AllBugsIds()
 	}
@@ -509,7 +509,7 @@ func (c *RepoCache) QueryBugs(query *Query) []string {
 
 	sort.Sort(sorter)
 
-	result := make([]string, len(filtered))
+	result := make([]entity.Id, len(filtered))
 
 	for i, val := range filtered {
 		result[i] = val.Id
@@ -519,8 +519,8 @@ func (c *RepoCache) QueryBugs(query *Query) []string {
 }
 
 // AllBugsIds return all known bug ids
-func (c *RepoCache) AllBugsIds() []string {
-	result := make([]string, len(c.bugExcerpts))
+func (c *RepoCache) AllBugsIds() []entity.Id {
+	result := make([]entity.Id, len(c.bugExcerpts))
 
 	i := 0
 	for _, excerpt := range c.bugExcerpts {
@@ -778,7 +778,7 @@ func repoIsAvailable(repo repository.Repo) error {
 }
 
 // ResolveIdentity retrieve an identity matching the exact given id
-func (c *RepoCache) ResolveIdentity(id string) (*IdentityCache, error) {
+func (c *RepoCache) ResolveIdentity(id entity.Id) (*IdentityCache, error) {
 	cached, ok := c.identities[id]
 	if ok {
 		return cached, nil
@@ -796,7 +796,7 @@ func (c *RepoCache) ResolveIdentity(id string) (*IdentityCache, error) {
 }
 
 // ResolveIdentityExcerpt retrieve a IdentityExcerpt matching the exact given id
-func (c *RepoCache) ResolveIdentityExcerpt(id string) (*IdentityExcerpt, error) {
+func (c *RepoCache) ResolveIdentityExcerpt(id entity.Id) (*IdentityExcerpt, error) {
 	e, ok := c.identitiesExcerpts[id]
 	if !ok {
 		return nil, identity.ErrIdentityNotExist
@@ -809,16 +809,16 @@ func (c *RepoCache) ResolveIdentityExcerpt(id string) (*IdentityExcerpt, error) 
 // It fails if multiple identities match.
 func (c *RepoCache) ResolveIdentityPrefix(prefix string) (*IdentityCache, error) {
 	// preallocate but empty
-	matching := make([]string, 0, 5)
+	matching := make([]entity.Id, 0, 5)
 
 	for id := range c.identitiesExcerpts {
-		if strings.HasPrefix(id, prefix) {
+		if id.HasPrefix(prefix) {
 			matching = append(matching, id)
 		}
 	}
 
 	if len(matching) > 1 {
-		return nil, identity.ErrMultipleMatch{Matching: matching}
+		return nil, identity.NewErrMultipleMatch(matching)
 	}
 
 	if len(matching) == 0 {
@@ -832,7 +832,7 @@ func (c *RepoCache) ResolveIdentityPrefix(prefix string) (*IdentityCache, error)
 // one of it's version. If multiple version have the same key, the first defined take precedence.
 func (c *RepoCache) ResolveIdentityImmutableMetadata(key string, value string) (*IdentityCache, error) {
 	// preallocate but empty
-	matching := make([]string, 0, 5)
+	matching := make([]entity.Id, 0, 5)
 
 	for id, i := range c.identitiesExcerpts {
 		if i.ImmutableMetadata[key] == value {
@@ -841,7 +841,7 @@ func (c *RepoCache) ResolveIdentityImmutableMetadata(key string, value string) (
 	}
 
 	if len(matching) > 1 {
-		return nil, identity.ErrMultipleMatch{Matching: matching}
+		return nil, identity.NewErrMultipleMatch(matching)
 	}
 
 	if len(matching) == 0 {
@@ -852,8 +852,8 @@ func (c *RepoCache) ResolveIdentityImmutableMetadata(key string, value string) (
 }
 
 // AllIdentityIds return all known identity ids
-func (c *RepoCache) AllIdentityIds() []string {
-	result := make([]string, len(c.identitiesExcerpts))
+func (c *RepoCache) AllIdentityIds() []entity.Id {
+	result := make([]entity.Id, len(c.identitiesExcerpts))
 
 	i := 0
 	for _, excerpt := range c.identitiesExcerpts {

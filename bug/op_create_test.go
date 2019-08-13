@@ -20,11 +20,11 @@ func TestCreate(t *testing.T) {
 
 	create.Apply(&snapshot)
 
-	hash, err := create.Hash()
-	assert.NoError(t, err)
+	id := create.Id()
+	assert.NoError(t, id.Validate())
 
 	comment := Comment{
-		id:       string(hash),
+		id:       id,
 		Author:   rene,
 		Message:  "message",
 		UnixTime: timestamp.Timestamp(create.UnixTime),
@@ -41,7 +41,7 @@ func TestCreate(t *testing.T) {
 		CreatedAt:    create.Time(),
 		Timeline: []TimelineItem{
 			&CreateTimelineItem{
-				CommentTimelineItem: NewCommentTimelineItem(hash, comment),
+				CommentTimelineItem: NewCommentTimelineItem(id, comment),
 			},
 		},
 	}
@@ -60,6 +60,10 @@ func TestCreateSerialize(t *testing.T) {
 	var after CreateOperation
 	err = json.Unmarshal(data, &after)
 	assert.NoError(t, err)
+
+	// enforce creating the IDs
+	before.Id()
+	rene.Id()
 
 	assert.Equal(t, before, &after)
 }

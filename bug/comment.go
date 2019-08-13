@@ -1,6 +1,7 @@
 package bug
 
 import (
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/timestamp"
@@ -9,7 +10,7 @@ import (
 
 // Comment represent a comment in a Bug
 type Comment struct {
-	id      string
+	id      entity.Id
 	Author  identity.Interface
 	Message string
 	Files   []git.Hash
@@ -20,18 +21,13 @@ type Comment struct {
 }
 
 // Id return the Comment identifier
-func (c Comment) Id() string {
+func (c Comment) Id() entity.Id {
 	if c.id == "" {
 		// simply panic as it would be a coding error
 		// (using an id of an identity not stored yet)
 		panic("no id yet")
 	}
 	return c.id
-}
-
-// HumanId return the Comment identifier truncated for human consumption
-func (c Comment) HumanId() string {
-	return FormatHumanID(c.Id())
 }
 
 // FormatTimeRel format the UnixTime of the comment for human consumption

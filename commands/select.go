@@ -34,7 +34,7 @@ func runSelect(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Printf("selected bug %s: %s\n", b.HumanId(), b.Snapshot().Title)
+	fmt.Printf("selected bug %s: %s\n", b.Id().Human(), b.Snapshot().Title)
 
 	return nil
 }

@@ -7,23 +7,24 @@ package connections
 import (
 	"fmt"
 
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/graphql/models"
 )
 
-// StringEdgeMaker define a function that take a string and an offset and
+// EntityIdEdgeMaker define a function that take a entity.Id and an offset and
 // create an Edge.
-type LazyIdentityEdgeMaker func(value string, offset int) Edge
+type LazyIdentityEdgeMaker func(value entity.Id, offset int) Edge
 
 // LazyIdentityConMaker define a function that create a models.IdentityConnection
 type LazyIdentityConMaker func(
 	edges []*LazyIdentityEdge,
-	nodes []string,
+	nodes []entity.Id,
 	info *models.PageInfo,
 	totalCount int) (*models.IdentityConnection, error)
 
 // LazyIdentityCon will paginate a source according to the input of a relay connection
-func LazyIdentityCon(source []string, edgeMaker LazyIdentityEdgeMaker, conMaker LazyIdentityConMaker, input models.ConnectionInput) (*models.IdentityConnection, error) {
-	var nodes []string
+func LazyIdentityCon(source []entity.Id, edgeMaker LazyIdentityEdgeMaker, conMaker LazyIdentityConMaker, input models.ConnectionInput) (*models.IdentityConnection, error) {
+	var nodes []entity.Id
 	var edges []*LazyIdentityEdge
 	var cursors []string
 	var pageInfo = &models.PageInfo{}

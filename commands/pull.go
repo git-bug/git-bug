@@ -4,11 +4,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/MichaelMure/git-bug/bug"
+	"github.com/spf13/cobra"
+
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/util/interrupt"
-	"github.com/spf13/cobra"
 )
 
 func runPull(cmd *cobra.Command, args []string) error {
@@ -45,7 +45,7 @@ func runPull(cmd *cobra.Command, args []string) error {
 		}
 
 		if result.Status != entity.MergeStatusNothing {
-			fmt.Printf("%s: %s\n", bug.FormatHumanID(result.Id), result)
+			fmt.Printf("%s: %s\n", result.Id.Human(), result)
 		}
 	}
 

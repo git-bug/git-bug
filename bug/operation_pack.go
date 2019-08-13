@@ -63,9 +63,6 @@ func (opp *OperationPack) UnmarshalJSON(data []byte) error {
 			return err
 		}
 
-		// Compute the hash of the operation
-		op.base().hash = hashRaw(raw)
-
 		opp.Operations = append(opp.Operations, op)
 	}
 

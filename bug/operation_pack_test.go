@@ -48,14 +48,16 @@ func TestOperationPackSerialize(t *testing.T) {
 	err = json.Unmarshal(data, &opp2)
 	assert.NoError(t, err)
 
-	ensureHash(t, opp)
+	ensureIDs(t, opp)
 
 	assert.Equal(t, opp, opp2)
 }
 
-func ensureHash(t *testing.T, opp *OperationPack) {
+func ensureIDs(t *testing.T, opp *OperationPack) {
 	for _, op := range opp.Operations {
-		_, err := op.Hash()
-		require.NoError(t, err)
+		id := op.Id()
+		require.NoError(t, id.Validate())
+		id = op.GetAuthor().Id()
+		require.NoError(t, id.Validate())
 	}
 }

@@ -87,7 +87,7 @@ func (r RootResolver) EditCommentOperation() graph.EditCommentOperationResolver 
 }
 
 func (RootResolver) LabelChangeOperation() graph.LabelChangeOperationResolver {
-	return &labelChangeOperation{}
+	return &labelChangeOperationResolver{}
 }
 
 func (RootResolver) SetStatusOperation() graph.SetStatusOperationResolver {

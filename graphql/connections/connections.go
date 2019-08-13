@@ -1,5 +1,5 @@
-//go:generate genny -in=connection_template.go -out=gen_lazy_bug.go gen "Name=LazyBug NodeType=string EdgeType=LazyBugEdge ConnectionType=models.BugConnection"
-//go:generate genny -in=connection_template.go -out=gen_lazy_identity.go gen "Name=LazyIdentity NodeType=string EdgeType=LazyIdentityEdge ConnectionType=models.IdentityConnection"
+//go:generate genny -in=connection_template.go -out=gen_lazy_bug.go gen "Name=LazyBug NodeType=entity.Id EdgeType=LazyBugEdge ConnectionType=models.BugConnection"
+//go:generate genny -in=connection_template.go -out=gen_lazy_identity.go gen "Name=LazyIdentity NodeType=entity.Id EdgeType=LazyIdentityEdge ConnectionType=models.IdentityConnection"
 //go:generate genny -in=connection_template.go -out=gen_identity.go gen "Name=Identity NodeType=identity.Interface EdgeType=models.IdentityEdge ConnectionType=models.IdentityConnection"
 //go:generate genny -in=connection_template.go -out=gen_operation.go gen "Name=Operation NodeType=bug.Operation EdgeType=models.OperationEdge ConnectionType=models.OperationConnection"
 //go:generate genny -in=connection_template.go -out=gen_comment.go gen "Name=Comment NodeType=bug.Comment EdgeType=models.CommentEdge ConnectionType=models.CommentConnection"
