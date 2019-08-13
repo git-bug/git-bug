@@ -132,7 +132,7 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 	gitlabID := parseID(note.ID)
 
 	id, errResolve := b.ResolveOperationWithMetadata(keyGitlabId, gitlabID)
-	if errResolve != cache.ErrNoMatchingOp {
+	if errResolve != nil && errResolve != cache.ErrNoMatchingOp {
 		return errResolve
 	}
 

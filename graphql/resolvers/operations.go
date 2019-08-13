@@ -45,7 +45,7 @@ func (editCommentOperationResolver) ID(ctx context.Context, obj *bug.EditComment
 }
 
 func (editCommentOperationResolver) Target(ctx context.Context, obj *bug.EditCommentOperation) (string, error) {
-	panic("implement me")
+	return obj.Target.String(), nil
 }
 
 func (editCommentOperationResolver) Date(ctx context.Context, obj *bug.EditCommentOperation) (*time.Time, error) {

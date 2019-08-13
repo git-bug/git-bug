@@ -17,10 +17,12 @@ const UnsetId = Id("unset")
 // Id is an identifier for an entity or part of an entity
 type Id string
 
+// String return the identifier as a string
 func (i Id) String() string {
 	return string(i)
 }
 
+// Human return the identifier, shortened for human consumption
 func (i Id) Human() string {
 	format := fmt.Sprintf("%%.%ds", humanIdLength)
 	return fmt.Sprintf(format, i)
