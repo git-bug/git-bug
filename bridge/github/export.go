@@ -79,7 +79,7 @@ func (ge *githubExporter) getIdentityClient(id entity.Id) (*githubv4.Client, err
 }
 
 // ExportAll export all event made by the current user to Github
-func (ge *githubExporter) ExportAll(repo *cache.RepoCache, since time.Time) (<-chan core.ExportResult, error) {
+func (ge *githubExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, since time.Time) (<-chan core.ExportResult, error) {
 	out := make(chan core.ExportResult)
 
 	user, err := repo.GetUserIdentity()
@@ -91,6 +91,7 @@ func (ge *githubExporter) ExportAll(repo *cache.RepoCache, since time.Time) (<-c
 
 	// get repository node id
 	ge.repositoryID, err = getRepositoryNodeID(
+		ctx,
 		ge.conf[keyOwner],
 		ge.conf[keyProject],
 		ge.conf[keyToken],
@@ -117,20 +118,28 @@ func (ge *githubExporter) ExportAll(repo *cache.RepoCache, since time.Time) (<-c
 				return
 			}
 
-			snapshot := b.Snapshot()
+			select {
 
-			// ignore issues created before since date
-			// TODO: compare the Lamport time instead of using the unix time
-			if snapshot.CreatedAt.Before(since) {
-				out <- core.NewExportNothing(b.Id(), "bug created before the since date")
-				continue
-			}
+			case <-ctx.Done():
+				// stop iterating if context cancel function is called
+				return
 
-			if snapshot.HasAnyActor(allIdentitiesIds...) {
-				// try to export the bug and it associated events
-				ge.exportBug(b, since, out)
-			} else {
-				out <- core.NewExportNothing(id, "not an actor")
+			default:
+				snapshot := b.Snapshot()
+
+				// ignore issues created before since date
+				// TODO: compare the Lamport time instead of using the unix time
+				if snapshot.CreatedAt.Before(since) {
+					out <- core.NewExportNothing(b.Id(), "bug created before the since date")
+					continue
+				}
+
+				if snapshot.HasAnyActor(allIdentitiesIds...) {
+					// try to export the bug and it associated events
+					ge.exportBug(ctx, b, since, out)
+				} else {
+					out <- core.NewExportNothing(id, "not an actor")
+				}
 			}
 		}
 	}()
@@ -139,7 +148,7 @@ func (ge *githubExporter) ExportAll(repo *cache.RepoCache, since time.Time) (<-c
 }
 
 // exportBug publish bugs and related events
-func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time, out chan<- core.ExportResult) {
+func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, since time.Time, out chan<- core.ExportResult) {
 	snapshot := b.Snapshot()
 
 	var bugGithubID string
@@ -199,7 +208,7 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time, out chan
 		}
 
 		// create bug
-		id, url, err := createGithubIssue(client, ge.repositoryID, createOp.Title, createOp.Message)
+		id, url, err := createGithubIssue(ctx, client, ge.repositoryID, createOp.Title, createOp.Message)
 		if err != nil {
 			err := errors.Wrap(err, "exporting github issue")
 			out <- core.NewExportError(err, b.Id())
@@ -257,7 +266,7 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time, out chan
 			opr := op.(*bug.AddCommentOperation)
 
 			// send operation to github
-			id, url, err = addCommentGithubIssue(client, bugGithubID, opr.Message)
+			id, url, err = addCommentGithubIssue(ctx, client, bugGithubID, opr.Message)
 			if err != nil {
 				err := errors.Wrap(err, "adding comment")
 				out <- core.NewExportError(err, b.Id())
@@ -277,7 +286,7 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time, out chan
 			if opr.Target == createOp.Id() {
 
 				// case bug creation operation: we need to edit the Github issue
-				if err := updateGithubIssueBody(client, bugGithubID, opr.Message); err != nil {
+				if err := updateGithubIssueBody(ctx, client, bugGithubID, opr.Message); err != nil {
 					err := errors.Wrap(err, "editing issue")
 					out <- core.NewExportError(err, b.Id())
 					return
@@ -296,7 +305,7 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time, out chan
 					panic("unexpected error: comment id not found")
 				}
 
-				eid, eurl, err := editCommentGithubIssue(client, commentID, opr.Message)
+				eid, eurl, err := editCommentGithubIssue(ctx, client, commentID, opr.Message)
 				if err != nil {
 					err := errors.Wrap(err, "editing comment")
 					out <- core.NewExportError(err, b.Id())
@@ -312,7 +321,7 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time, out chan
 
 		case *bug.SetStatusOperation:
 			opr := op.(*bug.SetStatusOperation)
-			if err := updateGithubIssueStatus(client, bugGithubID, opr.Status); err != nil {
+			if err := updateGithubIssueStatus(ctx, client, bugGithubID, opr.Status); err != nil {
 				err := errors.Wrap(err, "editing status")
 				out <- core.NewExportError(err, b.Id())
 				return
@@ -325,7 +334,7 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time, out chan
 
 		case *bug.SetTitleOperation:
 			opr := op.(*bug.SetTitleOperation)
-			if err := updateGithubIssueTitle(client, bugGithubID, opr.Title); err != nil {
+			if err := updateGithubIssueTitle(ctx, client, bugGithubID, opr.Title); err != nil {
 				err := errors.Wrap(err, "editing title")
 				out <- core.NewExportError(err, b.Id())
 				return
@@ -338,7 +347,7 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time, out chan
 
 		case *bug.LabelChangeOperation:
 			opr := op.(*bug.LabelChangeOperation)
-			if err := ge.updateGithubIssueLabels(client, bugGithubID, opr.Added, opr.Removed); err != nil {
+			if err := ge.updateGithubIssueLabels(ctx, client, bugGithubID, opr.Added, opr.Removed); err != nil {
 				err := errors.Wrap(err, "updating labels")
 				out <- core.NewExportError(err, b.Id())
 				return
@@ -370,12 +379,9 @@ func (ge *githubExporter) exportBug(b *cache.BugCache, since time.Time, out chan
 }
 
 // getRepositoryNodeID request github api v3 to get repository node id
-func getRepositoryNodeID(owner, project, token string) (string, error) {
+func getRepositoryNodeID(ctx context.Context, owner, project, token string) (string, error) {
 	url := fmt.Sprintf("%s/repos/%s/%s", githubV3Url, owner, project)
-
-	client := &http.Client{
-		Timeout: defaultTimeout,
-	}
+	client := &http.Client{}
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -384,6 +390,10 @@ func getRepositoryNodeID(owner, project, token string) (string, error) {
 
 	// need the token for private repositories
 	req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
+
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
+	defer cancel()
+	req = req.WithContext(ctx)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -425,7 +435,7 @@ func markOperationAsExported(b *cache.BugCache, target entity.Id, githubID, gith
 }
 
 // get label from github
-func (ge *githubExporter) getGithubLabelID(gc *githubv4.Client, label string) (string, error) {
+func (ge *githubExporter) getGithubLabelID(ctx context.Context, gc *githubv4.Client, label string) (string, error) {
 	q := &labelQuery{}
 	variables := map[string]interface{}{
 		"label": githubv4.String(label),
@@ -433,8 +443,7 @@ func (ge *githubExporter) getGithubLabelID(gc *githubv4.Client, label string) (s
 		"name":  githubv4.String(ge.conf[keyProject]),
 	}
 
-	parentCtx := context.Background()
-	ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
 	if err := gc.Query(ctx, q, variables); err != nil {
@@ -452,12 +461,9 @@ func (ge *githubExporter) getGithubLabelID(gc *githubv4.Client, label string) (s
 // create a new label and return it github id
 // NOTE: since createLabel mutation is still in preview mode we use github api v3 to create labels
 // see https://developer.github.com/v4/mutation/createlabel/ and https://developer.github.com/v4/previews/#labels-preview
-func (ge *githubExporter) createGithubLabel(label, color string) (string, error) {
+func (ge *githubExporter) createGithubLabel(ctx context.Context, label, color string) (string, error) {
 	url := fmt.Sprintf("%s/repos/%s/%s/labels", githubV3Url, ge.conf[keyOwner], ge.conf[keyProject])
-
-	client := &http.Client{
-		Timeout: defaultTimeout,
-	}
+	client := &http.Client{}
 
 	params := struct {
 		Name        string `json:"name"`
@@ -477,6 +483,10 @@ func (ge *githubExporter) createGithubLabel(label, color string) (string, error)
 	if err != nil {
 		return "", err
 	}
+
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
+	defer cancel()
+	req = req.WithContext(ctx)
 
 	// need the token for private repositories
 	req.Header.Set("Authorization", fmt.Sprintf("token %s", ge.conf[keyToken]))
@@ -529,9 +539,9 @@ func (ge *githubExporter) createGithubLabelV4(gc *githubv4.Client, label, labelC
 }
 */
 
-func (ge *githubExporter) getOrCreateGithubLabelID(gc *githubv4.Client, repositoryID string, label bug.Label) (string, error) {
+func (ge *githubExporter) getOrCreateGithubLabelID(ctx context.Context, gc *githubv4.Client, repositoryID string, label bug.Label) (string, error) {
 	// try to get label id
-	labelID, err := ge.getGithubLabelID(gc, string(label))
+	labelID, err := ge.getGithubLabelID(ctx, gc, string(label))
 	if err == nil {
 		return labelID, nil
 	}
@@ -540,7 +550,10 @@ func (ge *githubExporter) getOrCreateGithubLabelID(gc *githubv4.Client, reposito
 	rgba := label.RGBA()
 	hexColor := fmt.Sprintf("%.2x%.2x%.2x", rgba.R, rgba.G, rgba.B)
 
-	labelID, err = ge.createGithubLabel(string(label), hexColor)
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
+	defer cancel()
+
+	labelID, err = ge.createGithubLabel(ctx, string(label), hexColor)
 	if err != nil {
 		return "", err
 	}
@@ -548,7 +561,7 @@ func (ge *githubExporter) getOrCreateGithubLabelID(gc *githubv4.Client, reposito
 	return labelID, nil
 }
 
-func (ge *githubExporter) getLabelsIDs(gc *githubv4.Client, repositoryID string, labels []bug.Label) ([]githubv4.ID, error) {
+func (ge *githubExporter) getLabelsIDs(ctx context.Context, gc *githubv4.Client, repositoryID string, labels []bug.Label) ([]githubv4.ID, error) {
 	ids := make([]githubv4.ID, 0, len(labels))
 	var err error
 
@@ -557,7 +570,7 @@ func (ge *githubExporter) getLabelsIDs(gc *githubv4.Client, repositoryID string,
 		id, ok := ge.cachedLabels[string(label)]
 		if !ok {
 			// try to query label id
-			id, err = ge.getOrCreateGithubLabelID(gc, repositoryID, label)
+			id, err = ge.getOrCreateGithubLabelID(ctx, gc, repositoryID, label)
 			if err != nil {
 				return nil, errors.Wrap(err, "get or create github label")
 			}
@@ -573,7 +586,7 @@ func (ge *githubExporter) getLabelsIDs(gc *githubv4.Client, repositoryID string,
 }
 
 // create a github issue and return it ID
-func createGithubIssue(gc *githubv4.Client, repositoryID, title, body string) (string, string, error) {
+func createGithubIssue(ctx context.Context, gc *githubv4.Client, repositoryID, title, body string) (string, string, error) {
 	m := &createIssueMutation{}
 	input := githubv4.CreateIssueInput{
 		RepositoryID: repositoryID,
@@ -581,8 +594,7 @@ func createGithubIssue(gc *githubv4.Client, repositoryID, title, body string) (s
 		Body:         (*githubv4.String)(&body),
 	}
 
-	parentCtx := context.Background()
-	ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
 	if err := gc.Mutate(ctx, m, input, nil); err != nil {
@@ -594,15 +606,14 @@ func createGithubIssue(gc *githubv4.Client, repositoryID, title, body string) (s
 }
 
 // add a comment to an issue and return it ID
-func addCommentGithubIssue(gc *githubv4.Client, subjectID string, body string) (string, string, error) {
+func addCommentGithubIssue(ctx context.Context, gc *githubv4.Client, subjectID string, body string) (string, string, error) {
 	m := &addCommentToIssueMutation{}
 	input := githubv4.AddCommentInput{
 		SubjectID: subjectID,
 		Body:      githubv4.String(body),
 	}
 
-	parentCtx := context.Background()
-	ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
 	if err := gc.Mutate(ctx, m, input, nil); err != nil {
@@ -613,15 +624,14 @@ func addCommentGithubIssue(gc *githubv4.Client, subjectID string, body string) (
 	return node.ID, node.URL, nil
 }
 
-func editCommentGithubIssue(gc *githubv4.Client, commentID, body string) (string, string, error) {
+func editCommentGithubIssue(ctx context.Context, gc *githubv4.Client, commentID, body string) (string, string, error) {
 	m := &updateIssueCommentMutation{}
 	input := githubv4.UpdateIssueCommentInput{
 		ID:   commentID,
 		Body: githubv4.String(body),
 	}
 
-	parentCtx := context.Background()
-	ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
 	if err := gc.Mutate(ctx, m, input, nil); err != nil {
@@ -631,7 +641,7 @@ func editCommentGithubIssue(gc *githubv4.Client, commentID, body string) (string
 	return commentID, m.UpdateIssueComment.IssueComment.URL, nil
 }
 
-func updateGithubIssueStatus(gc *githubv4.Client, id string, status bug.Status) error {
+func updateGithubIssueStatus(ctx context.Context, gc *githubv4.Client, id string, status bug.Status) error {
 	m := &updateIssueMutation{}
 
 	// set state
@@ -651,8 +661,7 @@ func updateGithubIssueStatus(gc *githubv4.Client, id string, status bug.Status) 
 		State: &state,
 	}
 
-	parentCtx := context.Background()
-	ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
 	if err := gc.Mutate(ctx, m, input, nil); err != nil {
@@ -662,15 +671,14 @@ func updateGithubIssueStatus(gc *githubv4.Client, id string, status bug.Status) 
 	return nil
 }
 
-func updateGithubIssueBody(gc *githubv4.Client, id string, body string) error {
+func updateGithubIssueBody(ctx context.Context, gc *githubv4.Client, id string, body string) error {
 	m := &updateIssueMutation{}
 	input := githubv4.UpdateIssueInput{
 		ID:   id,
 		Body: (*githubv4.String)(&body),
 	}
 
-	parentCtx := context.Background()
-	ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
 	if err := gc.Mutate(ctx, m, input, nil); err != nil {
@@ -680,15 +688,14 @@ func updateGithubIssueBody(gc *githubv4.Client, id string, body string) error {
 	return nil
 }
 
-func updateGithubIssueTitle(gc *githubv4.Client, id, title string) error {
+func updateGithubIssueTitle(ctx context.Context, gc *githubv4.Client, id, title string) error {
 	m := &updateIssueMutation{}
 	input := githubv4.UpdateIssueInput{
 		ID:    id,
 		Title: (*githubv4.String)(&title),
 	}
 
-	parentCtx := context.Background()
-	ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
 	if err := gc.Mutate(ctx, m, input, nil); err != nil {
@@ -699,18 +706,19 @@ func updateGithubIssueTitle(gc *githubv4.Client, id, title string) error {
 }
 
 // update github issue labels
-func (ge *githubExporter) updateGithubIssueLabels(gc *githubv4.Client, labelableID string, added, removed []bug.Label) error {
+func (ge *githubExporter) updateGithubIssueLabels(ctx context.Context, gc *githubv4.Client, labelableID string, added, removed []bug.Label) error {
 	var errs []string
 	var wg sync.WaitGroup
 
-	parentCtx := context.Background()
+	reqCtx, cancel := context.WithTimeout(ctx, defaultTimeout)
+	defer cancel()
 
 	if len(added) > 0 {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 
-			addedIDs, err := ge.getLabelsIDs(gc, labelableID, added)
+			addedIDs, err := ge.getLabelsIDs(ctx, gc, labelableID, added)
 			if err != nil {
 				errs = append(errs, errors.Wrap(err, "getting added labels ids").Error())
 				return
@@ -722,11 +730,8 @@ func (ge *githubExporter) updateGithubIssueLabels(gc *githubv4.Client, labelable
 				LabelIDs:    addedIDs,
 			}
 
-			ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
-			defer cancel()
-
 			// add labels
-			if err := gc.Mutate(ctx, m, inputAdd, nil); err != nil {
+			if err := gc.Mutate(reqCtx, m, inputAdd, nil); err != nil {
 				errs = append(errs, err.Error())
 			}
 		}()
@@ -737,7 +742,7 @@ func (ge *githubExporter) updateGithubIssueLabels(gc *githubv4.Client, labelable
 		go func() {
 			defer wg.Done()
 
-			removedIDs, err := ge.getLabelsIDs(gc, labelableID, removed)
+			removedIDs, err := ge.getLabelsIDs(ctx, gc, labelableID, removed)
 			if err != nil {
 				errs = append(errs, errors.Wrap(err, "getting added labels ids").Error())
 				return
@@ -749,11 +754,8 @@ func (ge *githubExporter) updateGithubIssueLabels(gc *githubv4.Client, labelable
 				LabelIDs:    removedIDs,
 			}
 
-			ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
-			defer cancel()
-
 			// remove label labels
-			if err := gc.Mutate(ctx, m2, inputRemove, nil); err != nil {
+			if err := gc.Mutate(reqCtx, m2, inputRemove, nil); err != nil {
 				errs = append(errs, err.Error())
 			}
 		}()

@@ -14,6 +14,7 @@ package launchpad
  */
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -32,43 +33,6 @@ type LPPerson struct {
 // The keys are links to an owner page, such as
 // https://api.launchpad.net/devel/~login
 var personCache = make(map[string]LPPerson)
-
-func (owner *LPPerson) UnmarshalJSON(data []byte) error {
-	type LPPersonX LPPerson // Avoid infinite recursion
-	var ownerLink string
-	if err := json.Unmarshal(data, &ownerLink); err != nil {
-		return err
-	}
-
-	// First, try to gather info about the bug owner using our cache.
-	if cachedPerson, hasKey := personCache[ownerLink]; hasKey {
-		*owner = cachedPerson
-		return nil
-	}
-
-	// If the bug owner is not already known, we have to send a request.
-	req, err := http.NewRequest("GET", ownerLink, nil)
-	if err != nil {
-		return nil
-	}
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil
-	}
-
-	defer resp.Body.Close()
-
-	var p LPPersonX
-	if err := json.NewDecoder(resp.Body).Decode(&p); err != nil {
-		return nil
-	}
-	*owner = LPPerson(p)
-	// Do not forget to update the cache.
-	personCache[ownerLink] = *owner
-	return nil
-}
 
 // LPBug describes a Launchpad bug.
 type LPBug struct {
@@ -109,11 +73,13 @@ type launchpadAPI struct {
 }
 
 func (lapi *launchpadAPI) Init() error {
-	lapi.client = &http.Client{}
+	lapi.client = &http.Client{
+		Timeout: defaultTimeout,
+	}
 	return nil
 }
 
-func (lapi *launchpadAPI) SearchTasks(project string) ([]LPBug, error) {
+func (lapi *launchpadAPI) SearchTasks(ctx context.Context, project string) ([]LPBug, error) {
 	var bugs []LPBug
 
 	// First, let us build the URL. Not all statuses are included by
@@ -153,7 +119,7 @@ func (lapi *launchpadAPI) SearchTasks(project string) ([]LPBug, error) {
 		}
 
 		for _, bugEntry := range result.Entries {
-			bug, err := lapi.queryBug(bugEntry.BugLink)
+			bug, err := lapi.queryBug(ctx, bugEntry.BugLink)
 			if err == nil {
 				bugs = append(bugs, bug)
 			}
@@ -170,13 +136,14 @@ func (lapi *launchpadAPI) SearchTasks(project string) ([]LPBug, error) {
 	return bugs, nil
 }
 
-func (lapi *launchpadAPI) queryBug(url string) (LPBug, error) {
+func (lapi *launchpadAPI) queryBug(ctx context.Context, url string) (LPBug, error) {
 	var bug LPBug
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return bug, err
 	}
+	req = req.WithContext(ctx)
 
 	resp, err := lapi.client.Do(req)
 	if err != nil {
@@ -191,7 +158,7 @@ func (lapi *launchpadAPI) queryBug(url string) (LPBug, error) {
 
 	/* Fetch messages */
 	messagesCollectionLink := fmt.Sprintf("%s/bugs/%d/messages", apiRoot, bug.ID)
-	messages, err := lapi.queryMessages(messagesCollectionLink)
+	messages, err := lapi.queryMessages(ctx, messagesCollectionLink)
 	if err != nil {
 		return bug, err
 	}
@@ -200,7 +167,7 @@ func (lapi *launchpadAPI) queryBug(url string) (LPBug, error) {
 	return bug, nil
 }
 
-func (lapi *launchpadAPI) queryMessages(messagesURL string) ([]LPMessage, error) {
+func (lapi *launchpadAPI) queryMessages(ctx context.Context, messagesURL string) ([]LPMessage, error) {
 	var messages []LPMessage
 
 	for {
@@ -208,6 +175,7 @@ func (lapi *launchpadAPI) queryMessages(messagesURL string) ([]LPMessage, error)
 		if err != nil {
 			return nil, err
 		}
+		req = req.WithContext(ctx)
 
 		resp, err := lapi.client.Do(req)
 		if err != nil {

@@ -13,6 +13,7 @@ const (
 	MergeStatusInvalid
 	MergeStatusUpdated
 	MergeStatusNothing
+	MergeStatusError
 )
 
 type MergeResult struct {
@@ -39,6 +40,8 @@ func (mr MergeResult) String() string {
 		return "updated"
 	case MergeStatusNothing:
 		return "nothing to do"
+	case MergeStatusError:
+		return fmt.Sprintf("merge error on %s: %s", mr.Id, mr.Err.Error())
 	default:
 		panic("unknown merge status")
 	}
@@ -46,8 +49,9 @@ func (mr MergeResult) String() string {
 
 func NewMergeError(err error, id Id) MergeResult {
 	return MergeResult{
-		Err: err,
-		Id:  id,
+		Err:    err,
+		Id:     id,
+		Status: MergeStatusError,
 	}
 }
 

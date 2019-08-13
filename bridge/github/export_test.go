@@ -2,6 +2,7 @@ package github
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -177,13 +178,14 @@ func TestPushPull(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	ctx := context.Background()
 	start := time.Now()
 
 	// export all bugs
-	events, err := exporter.ExportAll(backend, time.Time{})
+	exportEvents, err := exporter.ExportAll(ctx, backend, time.Time{})
 	require.NoError(t, err)
 
-	for result := range events {
+	for result := range exportEvents {
 		require.NoError(t, result.Err)
 	}
 	require.NoError(t, err)
@@ -206,8 +208,12 @@ func TestPushPull(t *testing.T) {
 	require.NoError(t, err)
 
 	// import all exported bugs to the second backend
-	err = importer.ImportAll(backendTwo, time.Time{})
+	importEvents, err := importer.ImportAll(ctx, backendTwo, time.Time{})
 	require.NoError(t, err)
+
+	for result := range importEvents {
+		require.NoError(t, result.Err)
+	}
 
 	require.Len(t, backendTwo.AllBugsIds(), len(tests))
 
