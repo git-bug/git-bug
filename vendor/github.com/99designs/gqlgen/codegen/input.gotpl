@@ -25,6 +25,10 @@
 					}
 					if data, ok := tmp.({{ $field.TypeReference.GO | ref }}) ; ok {
 						it.{{$field.GoFieldName}} = data
+					{{- if $field.TypeReference.IsNilable }}
+						} else if tmp == nil {
+							it.{{$field.GoFieldName}} = nil
+					{{- end }}
 					} else {
 						return it, fmt.Errorf(`unexpected type %T from directive, should be {{ $field.TypeReference.GO }}`, tmp)
 					}

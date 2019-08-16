@@ -62,22 +62,23 @@ func ImportPathForDir(dir string) (res string) {
 	modDir := dir
 	assumedPart := ""
 	for {
-		f, err := ioutil.ReadFile(filepath.Join(modDir, "/", "go.mod"))
+		f, err := ioutil.ReadFile(filepath.Join(modDir, "go.mod"))
 		if err == nil {
 			// found it, stop searching
 			return string(modregex.FindSubmatch(f)[1]) + assumedPart
 		}
 
 		assumedPart = "/" + filepath.Base(modDir) + assumedPart
-		modDir, err = filepath.Abs(filepath.Join(modDir, ".."))
+		parentDir, err := filepath.Abs(filepath.Join(modDir, ".."))
 		if err != nil {
 			panic(err)
 		}
 
-		// Walked all the way to the root and didnt find anything :'(
-		if modDir == "/" {
+		if parentDir == modDir {
+			// Walked all the way to the root and didnt find anything :'(
 			break
 		}
+		modDir = parentDir
 	}
 
 	for _, gopath := range gopaths {

@@ -14,6 +14,10 @@ func (ec *executionContext) {{ $name }}(ctx context.Context, rawArgs map[string]
 				}
 				if data, ok := tmp.({{ $arg.TypeReference.GO | ref }}) ; ok {
 					arg{{$i}} = data
+				{{- if $arg.TypeReference.IsNilable }}
+					} else if tmp == nil {
+						arg{{$i}} = nil
+				{{- end }}
 				} else {
 					return nil, fmt.Errorf(`unexpected type %T from directive, should be {{ $arg.TypeReference.GO }}`, tmp)
 				}

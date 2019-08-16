@@ -285,7 +285,8 @@ func ToGoPrivate(name string) string {
 	first := true
 	wordWalker(name, func(info *wordInfo) {
 		word := info.Word
-		if first {
+		switch {
+		case first:
 			if strings.ToUpper(word) == word || strings.ToLower(word) == word {
 				// ID → id, CAMEL → camel
 				word = strings.ToLower(info.Word)
@@ -294,9 +295,9 @@ func ToGoPrivate(name string) string {
 				word = lcFirst(info.Word)
 			}
 			first = false
-		} else if info.MatchCommonInitial {
+		case info.MatchCommonInitial:
 			word = strings.ToUpper(word)
-		} else if !info.HasCommonInitial {
+		case !info.HasCommonInitial:
 			word = ucFirst(strings.ToLower(word))
 		}
 		runes = append(runes, []rune(word)...)
@@ -319,9 +320,10 @@ func wordWalker(str string, f func(*wordInfo)) {
 	hasCommonInitial := false
 	for i+1 <= len(runes) {
 		eow := false // whether we hit the end of a word
-		if i+1 == len(runes) {
+		switch {
+		case i+1 == len(runes):
 			eow = true
-		} else if isDelimiter(runes[i+1]) {
+		case isDelimiter(runes[i+1]):
 			// underscore; shift the remainder forward over any run of underscores
 			eow = true
 			n := 1
@@ -336,7 +338,7 @@ func wordWalker(str string, f func(*wordInfo)) {
 
 			copy(runes[i+1:], runes[i+n+1:])
 			runes = runes[:len(runes)-n]
-		} else if unicode.IsLower(runes[i]) && !unicode.IsLower(runes[i+1]) {
+		case unicode.IsLower(runes[i]) && !unicode.IsLower(runes[i+1]):
 			// lower->non-lower
 			eow = true
 		}

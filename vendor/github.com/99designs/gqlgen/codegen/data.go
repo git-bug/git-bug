@@ -123,10 +123,7 @@ func BuildData(cfg *config.Config) (*Data, error) {
 		return nil, err
 	}
 
-	s.ReferencedTypes, err = b.buildTypes()
-	if err != nil {
-		return nil, err
-	}
+	s.ReferencedTypes = b.buildTypes()
 
 	sort.Slice(s.Objects, func(i, j int) bool {
 		return s.Objects[i].Definition.Name < s.Objects[j].Definition.Name

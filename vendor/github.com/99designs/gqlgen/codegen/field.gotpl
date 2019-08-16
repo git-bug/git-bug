@@ -107,6 +107,11 @@
 		if data, ok := tmp.({{ .TypeReference.GO | ref }}) ; ok {
 			return data, nil
 		}
+		{{- if .TypeReference.IsNilable -}}
+			else if tmp == nil {
+				return nil, nil
+			}
+		{{- end }}
 		return nil, fmt.Errorf(`unexpected type %T from directive, should be {{ .TypeReference.GO }}`, tmp)
 	{{- else -}}
 		ctx = rctx  // use context from middleware stack in children

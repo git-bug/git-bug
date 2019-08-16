@@ -114,8 +114,7 @@ func (o *Object) HasUnmarshal() bool {
 		return true
 	}
 	for i := 0; i < o.Type.(*types.Named).NumMethods(); i++ {
-		switch o.Type.(*types.Named).Method(i).Name() {
-		case "UnmarshalGQL":
+		if o.Type.(*types.Named).Method(i).Name() == "UnmarshalGQL" {
 			return true
 		}
 	}

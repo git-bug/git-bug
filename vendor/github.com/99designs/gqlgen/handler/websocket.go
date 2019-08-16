@@ -103,6 +103,7 @@ func (c *wsConnection) init() bool {
 		}
 
 		c.write(&operationMessage{Type: connectionAckMsg})
+		c.write(&operationMessage{Type: connectionKeepAliveMsg})
 	case connectionTerminateMsg:
 		c.close(websocket.CloseNormalClosure, "terminated")
 		return false
@@ -279,9 +280,9 @@ func (c *wsConnection) sendData(id string, response *graphql.Response) {
 }
 
 func (c *wsConnection) sendError(id string, errors ...*gqlerror.Error) {
-	var errs []error
-	for _, err := range errors {
-		errs = append(errs, err)
+	errs := make([]error, len(errors))
+	for i, err := range errors {
+		errs[i] = err
 	}
 	b, err := json.Marshal(errs)
 	if err != nil {

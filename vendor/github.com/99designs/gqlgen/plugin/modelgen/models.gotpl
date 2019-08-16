@@ -36,7 +36,7 @@
 {{- end}}
 
 {{ range $enum := .Enums }}
-	{{ with .Description|go }} {{.|prefixLines "// "}} {{end}}
+	{{ with .Description }} {{.|prefixLines "// "}} {{end}}
 	type {{.Name|go }} string
 	const (
 	{{- range $value := .Values}}
