@@ -345,12 +345,12 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:33f31f1c13617634ff0da960c79293c604b6c22b32c9a95bcea5f6007666042d"
+  digest = "1:4df0865c985d97d4b9a0167cd4479ae65771b311eb01129d327b18c36cd2cdbc"
   name = "github.com/xanzy/go-gitlab"
   packages = ["."]
   pruneopts = "UT"
-  revision = "ee3313ca5478c4786248d63dd75e4cd8e1fad2db"
-  version = "v0.19.0"
+  revision = "fcd8d439c0592fd6f8720585994e7e10323be78a"
+  version = "v0.20.0"
 
 [[projects]]
   branch = "master"

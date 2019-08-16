@@ -204,13 +204,26 @@ var notificationLevelTypes = map[string]NotificationLevelValue{
 // GitLab API docs: https://docs.gitlab.com/ce/api/
 type VisibilityValue string
 
-// List of available visibility levels
+// List of available visibility levels.
 //
 // GitLab API docs: https://docs.gitlab.com/ce/api/
 const (
 	PrivateVisibility  VisibilityValue = "private"
 	InternalVisibility VisibilityValue = "internal"
 	PublicVisibility   VisibilityValue = "public"
+)
+
+// VariableTypeValue represents a variable type within GitLab.
+//
+// GitLab API docs: https://docs.gitlab.com/ce/api/
+type VariableTypeValue string
+
+// List of available variable types.
+//
+// GitLab API docs: https://docs.gitlab.com/ce/api/
+const (
+	EnvVariableType  VariableTypeValue = "env_var"
+	FileVariableType VariableTypeValue = "file"
 )
 
 // MergeMethodValue represents a project merge type within GitLab.
@@ -291,7 +304,6 @@ type Client struct {
 	Boards                *IssueBoardsService
 	Branches              *BranchesService
 	BroadcastMessage      *BroadcastMessagesService
-	BuildVariables        *BuildVariablesService
 	CIYMLTemplate         *CIYMLTemplatesService
 	Commits               *CommitsService
 	ContainerRegistry     *ContainerRegistryService
@@ -441,7 +453,6 @@ func newClient(httpClient *http.Client) *Client {
 	c.Boards = &IssueBoardsService{client: c}
 	c.Branches = &BranchesService{client: c}
 	c.BroadcastMessage = &BroadcastMessagesService{client: c}
-	c.BuildVariables = &BuildVariablesService{client: c}
 	c.CIYMLTemplate = &CIYMLTemplatesService{client: c}
 	c.Commits = &CommitsService{client: c}
 	c.ContainerRegistry = &ContainerRegistryService{client: c}
