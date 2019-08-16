@@ -16,7 +16,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/vektah/gqlparser"
 	"github.com/vektah/gqlparser/ast"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
 type Config struct {
@@ -38,17 +38,7 @@ func DefaultConfig() *Config {
 		SchemaFilename: StringList{"schema.graphql"},
 		Model:          PackageConfig{Filename: "models_gen.go"},
 		Exec:           PackageConfig{Filename: "generated.go"},
-		Directives: map[string]DirectiveConfig{
-			"skip": {
-				SkipRuntime: true,
-			},
-			"include": {
-				SkipRuntime: true,
-			},
-			"deprecated": {
-				SkipRuntime: true,
-			},
-		},
+		Directives:     map[string]DirectiveConfig{},
 	}
 }
 
@@ -85,6 +75,18 @@ func LoadConfig(filename string) (*Config, error) {
 
 	if err := yaml.UnmarshalStrict(b, config); err != nil {
 		return nil, errors.Wrap(err, "unable to parse config")
+	}
+
+	defaultDirectives := map[string]DirectiveConfig{
+		"skip":       {SkipRuntime: true},
+		"include":    {SkipRuntime: true},
+		"deprecated": {SkipRuntime: true},
+	}
+
+	for key, value := range defaultDirectives {
+		if _, defined := config.Directives[key]; !defined {
+			config.Directives[key] = value
+		}
 	}
 
 	preGlobbing := config.SchemaFilename
@@ -308,10 +310,10 @@ func (tm TypeMap) ReferencedPackages() []string {
 	return pkgs
 }
 
-func (tm TypeMap) Add(Name string, goType string) {
-	modelCfg := tm[Name]
+func (tm TypeMap) Add(name string, goType string) {
+	modelCfg := tm[name]
 	modelCfg.Model = append(modelCfg.Model, goType)
-	tm[Name] = modelCfg
+	tm[name] = modelCfg
 }
 
 type DirectiveConfig struct {
@@ -457,9 +459,9 @@ func (c *Config) InjectBuiltins(s *ast.Schema) {
 func (c *Config) LoadSchema() (*ast.Schema, map[string]string, error) {
 	schemaStrings := map[string]string{}
 
-	var sources []*ast.Source
+	sources := make([]*ast.Source, len(c.SchemaFilename))
 
-	for _, filename := range c.SchemaFilename {
+	for i, filename := range c.SchemaFilename {
 		filename = filepath.ToSlash(filename)
 		var err error
 		var schemaRaw []byte
@@ -469,7 +471,7 @@ func (c *Config) LoadSchema() (*ast.Schema, map[string]string, error) {
 			os.Exit(1)
 		}
 		schemaStrings[filename] = string(schemaRaw)
-		sources = append(sources, &ast.Source{Name: filename, Input: schemaStrings[filename]})
+		sources[i] = &ast.Source{Name: filename, Input: schemaStrings[filename]}
 	}
 
 	schema, err := gqlparser.LoadSchema(sources...)

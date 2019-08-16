@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go/types"
 	"strconv"
+	"strings"
 
 	"github.com/99designs/gqlgen/internal/code"
 )
@@ -20,7 +21,7 @@ type Imports struct {
 }
 
 func (i *Import) String() string {
-	if i.Alias == i.Name {
+	if strings.HasSuffix(i.Path, i.Alias) {
 		return strconv.Quote(i.Path)
 	}
 

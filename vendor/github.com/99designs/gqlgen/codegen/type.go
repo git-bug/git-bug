@@ -4,7 +4,7 @@ import (
 	"github.com/99designs/gqlgen/codegen/config"
 )
 
-func (b *builder) buildTypes() (map[string]*config.TypeReference, error) {
+func (b *builder) buildTypes() map[string]*config.TypeReference {
 	ret := map[string]*config.TypeReference{}
 
 	for _, ref := range b.Binder.References {
@@ -14,5 +14,5 @@ func (b *builder) buildTypes() (map[string]*config.TypeReference, error) {
 			ref = ref.Elem()
 		}
 	}
-	return ret, nil
+	return ret
 }
