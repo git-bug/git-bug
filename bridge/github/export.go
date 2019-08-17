@@ -7,12 +7,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strings"
-	"sync"
 	"time"
 
 	"github.com/pkg/errors"
 	"github.com/shurcooL/githubv4"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bug"
@@ -707,21 +706,15 @@ func updateGithubIssueTitle(ctx context.Context, gc *githubv4.Client, id, title 
 
 // update github issue labels
 func (ge *githubExporter) updateGithubIssueLabels(ctx context.Context, gc *githubv4.Client, labelableID string, added, removed []bug.Label) error {
-	var errs []string
-	var wg sync.WaitGroup
-
 	reqCtx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
+	wg, ctx := errgroup.WithContext(ctx)
 	if len(added) > 0 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
+		wg.Go(func() error {
 			addedIDs, err := ge.getLabelsIDs(ctx, gc, labelableID, added)
 			if err != nil {
-				errs = append(errs, errors.Wrap(err, "getting added labels ids").Error())
-				return
+				return err
 			}
 
 			m := &addLabelsToLabelableMutation{}
@@ -732,20 +725,17 @@ func (ge *githubExporter) updateGithubIssueLabels(ctx context.Context, gc *githu
 
 			// add labels
 			if err := gc.Mutate(reqCtx, m, inputAdd, nil); err != nil {
-				errs = append(errs, err.Error())
+				return err
 			}
-		}()
+			return nil
+		})
 	}
 
 	if len(removed) > 0 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
+		wg.Go(func() error {
 			removedIDs, err := ge.getLabelsIDs(ctx, gc, labelableID, removed)
 			if err != nil {
-				errs = append(errs, errors.Wrap(err, "getting added labels ids").Error())
-				return
+				return err
 			}
 
 			m2 := &removeLabelsFromLabelableMutation{}
@@ -756,16 +746,11 @@ func (ge *githubExporter) updateGithubIssueLabels(ctx context.Context, gc *githu
 
 			// remove label labels
 			if err := gc.Mutate(reqCtx, m2, inputRemove, nil); err != nil {
-				errs = append(errs, err.Error())
+				return err
 			}
-		}()
+			return nil
+		})
 	}
 
-	wg.Wait()
-
-	if len(errs) == 0 {
-		return nil
-	}
-
-	return fmt.Errorf("label change error: %v", strings.Join(errs, "\n"))
+	return wg.Wait()
 }
