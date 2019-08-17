@@ -46,9 +46,9 @@ func (er ExportResult) String() string {
 		return fmt.Sprintf("changed label: %s", er.ID)
 	case ExportEventNothing:
 		if er.ID != "" {
-			return fmt.Sprintf("ignoring export event %s: %s", er.ID, er.Reason)
+			return fmt.Sprintf("no actions taken for event %s: %s", er.ID, er.Reason)
 		}
-		return fmt.Sprintf("ignoring export event: %s", er.Reason)
+		return fmt.Sprintf("no actions taken: %s", er.Reason)
 	case ExportEventError:
 		if er.ID != "" {
 			return fmt.Sprintf("export error at %s: %s", er.ID, er.Err.Error())

@@ -369,8 +369,7 @@ func (gi *githubImporter) ensureTimelineComment(repo *cache.RepoCache, b *cache.
 
 	targetOpID, err := b.ResolveOperationWithMetadata(keyGithubId, parseId(item.Id))
 	if err == nil {
-		reason := fmt.Sprintf("comment already imported")
-		gi.out <- core.NewImportNothing("", reason)
+		gi.out <- core.NewImportNothing("", "comment already imported")
 	} else if err != cache.ErrNoMatchingOp {
 		// real error
 		return err

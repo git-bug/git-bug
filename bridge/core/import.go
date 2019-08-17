@@ -49,9 +49,9 @@ func (er ImportResult) String() string {
 		return fmt.Sprintf("new identity: %s", er.ID)
 	case ImportEventNothing:
 		if er.ID != "" {
-			return fmt.Sprintf("ignoring import event %s: %s", er.ID, er.Reason)
+			return fmt.Sprintf("no action taken for event %s: %s", er.ID, er.Reason)
 		}
-		return fmt.Sprintf("ignoring event: %s", er.Reason)
+		return fmt.Sprintf("no action taken: %s", er.Reason)
 	case ImportEventError:
 		if er.ID != "" {
 			return fmt.Sprintf("import error at id %s: %s", er.ID, er.Err.Error())

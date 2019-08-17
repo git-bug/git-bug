@@ -99,8 +99,7 @@ func (gi *gitlabImporter) ensureIssue(repo *cache.RepoCache, issue *gitlab.Issue
 	// resolve bug
 	b, err := repo.ResolveBugCreateMetadata(keyGitlabUrl, issue.WebURL)
 	if err == nil {
-		reason := fmt.Sprintf("bug already imported")
-		gi.out <- core.NewImportNothing("", reason)
+		gi.out <- core.NewImportNothing("", "bug already imported")
 		return b, nil
 	}
 	if err != bug.ErrBugNotExist {
