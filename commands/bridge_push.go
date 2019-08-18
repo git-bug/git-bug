@@ -71,7 +71,9 @@ func runBridgePush(cmd *cobra.Command, args []string) error {
 
 	exportedIssues := 0
 	for result := range events {
-		fmt.Println(result.String())
+		if result.Event != core.ExportEventNothing {
+			fmt.Println(result.String())
+		}
 
 		switch result.Event {
 		case core.ExportEventBug:

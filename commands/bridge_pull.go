@@ -73,7 +73,9 @@ func runBridgePull(cmd *cobra.Command, args []string) error {
 	importedIssues := 0
 	importedIdentities := 0
 	for result := range events {
-		fmt.Println(result.String())
+		if result.Event != core.ImportEventNothing {
+			fmt.Println(result.String())
+		}
 
 		switch result.Event {
 		case core.ImportEventBug:
