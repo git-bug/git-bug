@@ -384,6 +384,14 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:b521f10a2d8fa85c04a8ef4e62f2d1e14d303599a55d64dabf9f5a02f84d35eb"
+  name = "golang.org/x/sync"
+  packages = ["errgroup"]
+  pruneopts = "UT"
+  revision = "112230192c580c3556b8cee6403af37a4fc5f28c"
+
+[[projects]]
+  branch = "master"
   digest = "1:3364d01296ce7eeca363e3d530ae63a2092d6f8efb85fb3d101e8f6d7de83452"
   name = "golang.org/x/sys"
   packages = [
@@ -481,6 +489,7 @@
     "github.com/xanzy/go-gitlab",
     "golang.org/x/crypto/ssh/terminal",
     "golang.org/x/oauth2",
+    "golang.org/x/sync/errgroup",
     "golang.org/x/text/runes",
     "golang.org/x/text/transform",
   ]

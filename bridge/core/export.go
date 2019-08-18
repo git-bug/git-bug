@@ -17,6 +17,7 @@ const (
 	ExportEventTitleEdition
 	ExportEventLabelChange
 	ExportEventNothing
+	ExportEventError
 )
 
 // ExportResult is an event that is emitted during the export process, to
@@ -32,19 +33,28 @@ type ExportResult struct {
 func (er ExportResult) String() string {
 	switch er.Event {
 	case ExportEventBug:
-		return "new issue"
+		return fmt.Sprintf("new issue: %s", er.ID)
 	case ExportEventComment:
-		return "new comment"
+		return fmt.Sprintf("new comment: %s", er.ID)
 	case ExportEventCommentEdition:
-		return "updated comment"
+		return fmt.Sprintf("updated comment: %s", er.ID)
 	case ExportEventStatusChange:
-		return "changed status"
+		return fmt.Sprintf("changed status: %s", er.ID)
 	case ExportEventTitleEdition:
-		return "changed title"
+		return fmt.Sprintf("changed title: %s", er.ID)
 	case ExportEventLabelChange:
-		return "changed label"
+		return fmt.Sprintf("changed label: %s", er.ID)
 	case ExportEventNothing:
-		return fmt.Sprintf("no event: %v", er.Reason)
+		if er.ID != "" {
+			return fmt.Sprintf("no actions taken for event %s: %s", er.ID, er.Reason)
+		}
+		return fmt.Sprintf("no actions taken: %s", er.Reason)
+	case ExportEventError:
+		if er.ID != "" {
+			return fmt.Sprintf("export error at %s: %s", er.ID, er.Err.Error())
+		}
+		return fmt.Sprintf("export error: %s", er.Err.Error())
+
 	default:
 		panic("unknown export result")
 	}

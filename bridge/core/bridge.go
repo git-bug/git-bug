@@ -2,6 +2,7 @@
 package core
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -289,26 +290,26 @@ func (b *Bridge) ensureInit() error {
 	return nil
 }
 
-func (b *Bridge) ImportAll(since time.Time) error {
+func (b *Bridge) ImportAll(ctx context.Context, since time.Time) (<-chan ImportResult, error) {
 	importer := b.getImporter()
 	if importer == nil {
-		return ErrImportNotSupported
+		return nil, ErrImportNotSupported
 	}
 
 	err := b.ensureConfig()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = b.ensureInit()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return importer.ImportAll(b.repo, since)
+	return importer.ImportAll(ctx, b.repo, since)
 }
 
-func (b *Bridge) ExportAll(since time.Time) (<-chan ExportResult, error) {
+func (b *Bridge) ExportAll(ctx context.Context, since time.Time) (<-chan ExportResult, error) {
 	exporter := b.getExporter()
 	if exporter == nil {
 		return nil, ErrExportNotSupported
@@ -324,5 +325,5 @@ func (b *Bridge) ExportAll(since time.Time) (<-chan ExportResult, error) {
 		return nil, err
 	}
 
-	return exporter.ExportAll(b.repo, since)
+	return exporter.ExportAll(ctx, b.repo, since)
 }

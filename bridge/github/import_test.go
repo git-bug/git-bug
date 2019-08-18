@@ -1,6 +1,7 @@
 package github
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"testing"
@@ -146,10 +147,15 @@ func Test_Importer(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	ctx := context.Background()
 	start := time.Now()
 
-	err = importer.ImportAll(backend, time.Time{})
+	events, err := importer.ImportAll(ctx, backend, time.Time{})
 	require.NoError(t, err)
+
+	for result := range events {
+		require.NoError(t, result.Err)
+	}
 
 	fmt.Printf("test repository imported in %f seconds\n", time.Since(start).Seconds())
 

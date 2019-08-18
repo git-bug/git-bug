@@ -1,6 +1,7 @@
 package gitlab
 
 import (
+	"context"
 	"time"
 
 	"github.com/xanzy/go-gitlab"
@@ -38,6 +39,9 @@ type iterator struct {
 	// number of issues and notes to query at once
 	capacity int
 
+	// shared context
+	ctx context.Context
+
 	// sticky error
 	err error
 
@@ -52,12 +56,13 @@ type iterator struct {
 }
 
 // NewIterator create a new iterator
-func NewIterator(projectID, token string, since time.Time) *iterator {
+func NewIterator(ctx context.Context, capacity int, projectID, token string, since time.Time) *iterator {
 	return &iterator{
 		gc:       buildClient(token),
 		project:  projectID,
 		since:    since,
-		capacity: 20,
+		capacity: capacity,
+		ctx:      ctx,
 		issue: &issueIterator{
 			index: -1,
 			page:  1,
@@ -79,6 +84,9 @@ func (i *iterator) Error() error {
 }
 
 func (i *iterator) getNextIssues() bool {
+	ctx, cancel := context.WithTimeout(i.ctx, defaultTimeout)
+	defer cancel()
+
 	issues, _, err := i.gc.Issues.ListProjectIssues(
 		i.project,
 		&gitlab.ListProjectIssuesOptions{
@@ -90,6 +98,7 @@ func (i *iterator) getNextIssues() bool {
 			UpdatedAfter: &i.since,
 			Sort:         gitlab.String("asc"),
 		},
+		gitlab.WithContext(ctx),
 	)
 
 	if err != nil {
@@ -116,6 +125,10 @@ func (i *iterator) NextIssue() bool {
 		return false
 	}
 
+	if i.ctx.Err() != nil {
+		return false
+	}
+
 	// first query
 	if i.issue.cache == nil {
 		return i.getNextIssues()
@@ -135,6 +148,9 @@ func (i *iterator) IssueValue() *gitlab.Issue {
 }
 
 func (i *iterator) getNextNotes() bool {
+	ctx, cancel := context.WithTimeout(i.ctx, defaultTimeout)
+	defer cancel()
+
 	notes, _, err := i.gc.Notes.ListIssueNotes(
 		i.project,
 		i.IssueValue().IID,
@@ -146,6 +162,7 @@ func (i *iterator) getNextNotes() bool {
 			Sort:    gitlab.String("asc"),
 			OrderBy: gitlab.String("created_at"),
 		},
+		gitlab.WithContext(ctx),
 	)
 
 	if err != nil {
@@ -171,6 +188,10 @@ func (i *iterator) NextNote() bool {
 		return false
 	}
 
+	if i.ctx.Err() != nil {
+		return false
+	}
+
 	if len(i.note.cache) == 0 {
 		return i.getNextNotes()
 	}
@@ -189,6 +210,9 @@ func (i *iterator) NoteValue() *gitlab.Note {
 }
 
 func (i *iterator) getNextLabelEvents() bool {
+	ctx, cancel := context.WithTimeout(i.ctx, defaultTimeout)
+	defer cancel()
+
 	labelEvents, _, err := i.gc.ResourceLabelEvents.ListIssueLabelEvents(
 		i.project,
 		i.IssueValue().IID,
@@ -198,6 +222,7 @@ func (i *iterator) getNextLabelEvents() bool {
 				PerPage: i.capacity,
 			},
 		},
+		gitlab.WithContext(ctx),
 	)
 
 	if err != nil {
@@ -221,6 +246,10 @@ func (i *iterator) getNextLabelEvents() bool {
 // because Gitlab
 func (i *iterator) NextLabelEvent() bool {
 	if i.err != nil {
+		return false
+	}
+
+	if i.ctx.Err() != nil {
 		return false
 	}
 

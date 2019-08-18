@@ -46,6 +46,9 @@ type iterator struct {
 	// to make
 	capacity int
 
+	// shared context used for all graphql queries
+	ctx context.Context
+
 	// sticky error
 	err error
 
@@ -60,11 +63,12 @@ type iterator struct {
 }
 
 // NewIterator create and initialize a new iterator
-func NewIterator(owner, project, token string, since time.Time) *iterator {
+func NewIterator(ctx context.Context, capacity int, owner, project, token string, since time.Time) *iterator {
 	i := &iterator{
 		gc:       buildClient(token),
 		since:    since,
-		capacity: 10,
+		capacity: capacity,
+		ctx:      ctx,
 		timeline: timelineIterator{
 			index:       -1,
 			issueEdit:   indexer{-1},
@@ -147,8 +151,7 @@ func (i *iterator) Error() error {
 }
 
 func (i *iterator) queryIssue() bool {
-	parentCtx := context.Background()
-	ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
+	ctx, cancel := context.WithTimeout(i.ctx, defaultTimeout)
 	defer cancel()
 
 	if err := i.gc.Query(ctx, &i.timeline.query, i.timeline.variables); err != nil {
@@ -167,16 +170,16 @@ func (i *iterator) queryIssue() bool {
 // NextIssue try to query the next issue and return true. Only one issue is
 // queried at each call.
 func (i *iterator) NextIssue() bool {
+	if i.err != nil {
+		return false
+	}
+
 	// if $issueAfter variable is nil we can directly make the first query
 	if i.timeline.variables["issueAfter"] == (*githubv4.String)(nil) {
 		nextIssue := i.queryIssue()
 		// prevent from infinite loop by setting a non nil cursor
 		i.timeline.variables["issueAfter"] = i.timeline.query.Repository.Issues.PageInfo.EndCursor
 		return nextIssue
-	}
-
-	if i.err != nil {
-		return false
 	}
 
 	if !i.timeline.query.Repository.Issues.PageInfo.HasNextPage {
@@ -207,11 +210,15 @@ func (i *iterator) NextTimelineItem() bool {
 		return false
 	}
 
+	if i.ctx.Err() != nil {
+		return false
+	}
+
 	if len(i.timeline.query.Repository.Issues.Nodes[0].Timeline.Edges) == 0 {
 		return false
 	}
 
-	if i.timeline.index < min(i.capacity, len(i.timeline.query.Repository.Issues.Nodes[0].Timeline.Edges))-1 {
+	if i.timeline.index < len(i.timeline.query.Repository.Issues.Nodes[0].Timeline.Edges)-1 {
 		i.timeline.index++
 		return true
 	}
@@ -225,8 +232,7 @@ func (i *iterator) NextTimelineItem() bool {
 	// more timelines, query them
 	i.timeline.variables["timelineAfter"] = i.timeline.query.Repository.Issues.Nodes[0].Timeline.PageInfo.EndCursor
 
-	parentCtx := context.Background()
-	ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
+	ctx, cancel := context.WithTimeout(i.ctx, defaultTimeout)
 	defer cancel()
 
 	if err := i.gc.Query(ctx, &i.timeline.query, i.timeline.variables); err != nil {
@@ -245,8 +251,7 @@ func (i *iterator) TimelineItemValue() timelineItem {
 }
 
 func (i *iterator) queryIssueEdit() bool {
-	parentCtx := context.Background()
-	ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
+	ctx, cancel := context.WithTimeout(i.ctx, defaultTimeout)
 	defer cancel()
 
 	if err := i.gc.Query(ctx, &i.issueEdit.query, i.issueEdit.variables); err != nil {
@@ -285,10 +290,14 @@ func (i *iterator) NextIssueEdit() bool {
 		return false
 	}
 
+	if i.ctx.Err() != nil {
+		return false
+	}
+
 	// this mean we looped over all available issue edits in the timeline.
 	// now we have to use i.issueEditQuery
 	if i.timeline.issueEdit.index == -2 {
-		if i.issueEdit.index < min(i.capacity, len(i.issueEdit.query.Repository.Issues.Nodes[0].UserContentEdits.Nodes))-1 {
+		if i.issueEdit.index < len(i.issueEdit.query.Repository.Issues.Nodes[0].UserContentEdits.Nodes)-1 {
 			i.issueEdit.index++
 			return i.nextValidIssueEdit()
 		}
@@ -319,7 +328,7 @@ func (i *iterator) NextIssueEdit() bool {
 	}
 
 	// loop over them timeline comment edits
-	if i.timeline.issueEdit.index < min(i.capacity, len(i.timeline.query.Repository.Issues.Nodes[0].UserContentEdits.Nodes))-1 {
+	if i.timeline.issueEdit.index < len(i.timeline.query.Repository.Issues.Nodes[0].UserContentEdits.Nodes)-1 {
 		i.timeline.issueEdit.index++
 		return i.nextValidIssueEdit()
 	}
@@ -347,8 +356,7 @@ func (i *iterator) IssueEditValue() userContentEdit {
 }
 
 func (i *iterator) queryCommentEdit() bool {
-	parentCtx := context.Background()
-	ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
+	ctx, cancel := context.WithTimeout(i.ctx, defaultTimeout)
 	defer cancel()
 
 	if err := i.gc.Query(ctx, &i.commentEdit.query, i.commentEdit.variables); err != nil {
@@ -384,10 +392,14 @@ func (i *iterator) NextCommentEdit() bool {
 		return false
 	}
 
+	if i.ctx.Err() != nil {
+		return false
+	}
+
 	// same as NextIssueEdit
 	if i.timeline.commentEdit.index == -2 {
 
-		if i.commentEdit.index < min(i.capacity, len(i.commentEdit.query.Repository.Issues.Nodes[0].Timeline.Nodes[0].IssueComment.UserContentEdits.Nodes))-1 {
+		if i.commentEdit.index < len(i.commentEdit.query.Repository.Issues.Nodes[0].Timeline.Nodes[0].IssueComment.UserContentEdits.Nodes)-1 {
 			i.commentEdit.index++
 			return i.nextValidCommentEdit()
 		}
@@ -409,7 +421,7 @@ func (i *iterator) NextCommentEdit() bool {
 	}
 
 	// loop over them timeline comment edits
-	if i.timeline.commentEdit.index < min(i.capacity, len(i.timeline.query.Repository.Issues.Nodes[0].Timeline.Edges[i.timeline.index].Node.IssueComment.UserContentEdits.Nodes))-1 {
+	if i.timeline.commentEdit.index < len(i.timeline.query.Repository.Issues.Nodes[0].Timeline.Edges[i.timeline.index].Node.IssueComment.UserContentEdits.Nodes)-1 {
 		i.timeline.commentEdit.index++
 		return i.nextValidCommentEdit()
 	}
@@ -438,14 +450,6 @@ func (i *iterator) CommentEditValue() userContentEdit {
 	}
 
 	return i.timeline.query.Repository.Issues.Nodes[0].Timeline.Edges[i.timeline.index].Node.IssueComment.UserContentEdits.Nodes[i.timeline.commentEdit.index]
-}
-
-func min(a, b int) int {
-	if a > b {
-		return b
-	}
-
-	return a
 }
 
 func reverseEdits(edits []userContentEdit) {
