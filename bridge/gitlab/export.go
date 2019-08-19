@@ -1,6 +1,7 @@
 package gitlab
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"time"
@@ -74,7 +75,7 @@ func (ge *gitlabExporter) getIdentityClient(id entity.Id) (*gitlab.Client, error
 }
 
 // ExportAll export all event made by the current user to Gitlab
-func (ge *gitlabExporter) ExportAll(repo *cache.RepoCache, since time.Time) (<-chan core.ExportResult, error) {
+func (ge *gitlabExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, since time.Time) (<-chan core.ExportResult, error) {
 	out := make(chan core.ExportResult)
 
 	user, err := repo.GetUserIdentity()
@@ -115,7 +116,7 @@ func (ge *gitlabExporter) ExportAll(repo *cache.RepoCache, since time.Time) (<-c
 
 			if snapshot.HasAnyActor(allIdentitiesIds...) {
 				// try to export the bug and it associated events
-				ge.exportBug(b, since, out)
+				ge.exportBug(ctx, b, since, out)
 			} else {
 				out <- core.NewExportNothing(id, "not an actor")
 			}
@@ -126,7 +127,7 @@ func (ge *gitlabExporter) ExportAll(repo *cache.RepoCache, since time.Time) (<-c
 }
 
 // exportBug publish bugs and related events
-func (ge *gitlabExporter) exportBug(b *cache.BugCache, since time.Time, out chan<- core.ExportResult) {
+func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, since time.Time, out chan<- core.ExportResult) {
 	snapshot := b.Snapshot()
 
 	var err error
@@ -181,7 +182,7 @@ func (ge *gitlabExporter) exportBug(b *cache.BugCache, since time.Time, out chan
 		}
 
 		// create bug
-		id, url, err := createGitlabIssue(client, ge.repositoryID, createOp.Title, createOp.Message)
+		id, url, err := createGitlabIssue(ctx, client, ge.repositoryID, createOp.Title, createOp.Message)
 		if err != nil {
 			err := errors.Wrap(err, "exporting gitlab issue")
 			out <- core.NewExportError(err, b.Id())
@@ -189,7 +190,6 @@ func (ge *gitlabExporter) exportBug(b *cache.BugCache, since time.Time, out chan
 		}
 
 		idString := strconv.Itoa(id)
-
 		out <- core.NewExportBug(b.Id())
 
 		// mark bug creation operation as exported
@@ -215,6 +215,7 @@ func (ge *gitlabExporter) exportBug(b *cache.BugCache, since time.Time, out chan
 	// cache operation gitlab id
 	ge.cachedOperationIDs[bugCreationId] = bugGitlabIDString
 
+	var actualLabels []string
 	for _, op := range snapshot.Operations[1:] {
 		// ignore SetMetadata operations
 		if _, ok := op.(*bug.SetMetadataOperation); ok {
@@ -243,7 +244,7 @@ func (ge *gitlabExporter) exportBug(b *cache.BugCache, since time.Time, out chan
 			opr := op.(*bug.AddCommentOperation)
 
 			// send operation to gitlab
-			id, err = addCommentGitlabIssue(client, ge.repositoryID, bugGitlabID, opr.Message)
+			id, err = addCommentGitlabIssue(ctx, client, ge.repositoryID, bugGitlabID, opr.Message)
 			if err != nil {
 				err := errors.Wrap(err, "adding comment")
 				out <- core.NewExportError(err, b.Id())
@@ -264,7 +265,7 @@ func (ge *gitlabExporter) exportBug(b *cache.BugCache, since time.Time, out chan
 			if targetId == bugCreationId {
 
 				// case bug creation operation: we need to edit the Gitlab issue
-				if err := updateGitlabIssueBody(client, ge.repositoryID, bugGitlabID, opr.Message); err != nil {
+				if err := updateGitlabIssueBody(ctx, client, ge.repositoryID, bugGitlabID, opr.Message); err != nil {
 					err := errors.Wrap(err, "editing issue")
 					out <- core.NewExportError(err, b.Id())
 					return
@@ -286,7 +287,7 @@ func (ge *gitlabExporter) exportBug(b *cache.BugCache, since time.Time, out chan
 					panic("unexpected comment id format")
 				}
 
-				if err := editCommentGitlabIssue(client, ge.repositoryID, commentIDint, id, opr.Message); err != nil {
+				if err := editCommentGitlabIssue(ctx, client, ge.repositoryID, commentIDint, id, opr.Message); err != nil {
 					err := errors.Wrap(err, "editing comment")
 					out <- core.NewExportError(err, b.Id())
 					return
@@ -298,7 +299,7 @@ func (ge *gitlabExporter) exportBug(b *cache.BugCache, since time.Time, out chan
 
 		case *bug.SetStatusOperation:
 			opr := op.(*bug.SetStatusOperation)
-			if err := updateGitlabIssueStatus(client, idString, id, opr.Status); err != nil {
+			if err := updateGitlabIssueStatus(ctx, client, idString, id, opr.Status); err != nil {
 				err := errors.Wrap(err, "editing status")
 				out <- core.NewExportError(err, b.Id())
 				return
@@ -309,7 +310,7 @@ func (ge *gitlabExporter) exportBug(b *cache.BugCache, since time.Time, out chan
 
 		case *bug.SetTitleOperation:
 			opr := op.(*bug.SetTitleOperation)
-			if err := updateGitlabIssueTitle(client, ge.repositoryID, id, opr.Title); err != nil {
+			if err := updateGitlabIssueTitle(ctx, client, ge.repositoryID, id, opr.Title); err != nil {
 				err := errors.Wrap(err, "editing title")
 				out <- core.NewExportError(err, b.Id())
 				return
@@ -319,8 +320,31 @@ func (ge *gitlabExporter) exportBug(b *cache.BugCache, since time.Time, out chan
 			id = bugGitlabID
 
 		case *bug.LabelChangeOperation:
-			_ = op.(*bug.LabelChangeOperation)
-			if err := updateGitlabIssueLabels(client, ge.repositoryID, bugGitlabID, []string{}); err != nil {
+			opr := op.(*bug.LabelChangeOperation)
+			// we need to set the actual list of labels at each label change operation
+			// because gitlab update issue requests need directly the latest list of the verison
+
+			if len(opr.Added) != 0 {
+				for _, label := range opr.Added {
+					actualLabels = append(actualLabels, string(label))
+				}
+			}
+
+			if len(opr.Removed) != 0 {
+				var newActualLabels []string
+				for _, label := range actualLabels {
+					for _, l := range opr.Removed {
+						if label == string(l) {
+							continue
+						}
+
+						newActualLabels = append(newActualLabels, label)
+					}
+				}
+				actualLabels = newActualLabels
+			}
+
+			if err := updateGitlabIssueLabels(ctx, client, ge.repositoryID, bugGitlabID, actualLabels); err != nil {
 				err := errors.Wrap(err, "updating labels")
 				out <- core.NewExportError(err, b.Id())
 				return
@@ -370,35 +394,25 @@ func (ge *gitlabExporter) getGitlabLabelID(label string) (string, error) {
 }
 
 // get label from gitlab
-func (ge *gitlabExporter) loadLabelsFromGitlab(gc *gitlab.Client) error {
-	labels, _, err := gc.Labels.ListLabels(
-		ge.repositoryID,
-		&gitlab.ListLabelsOptions{
-			Page: 0,
-		},
-	)
-
-	if err != nil {
-		return err
-	}
-
-	for _, label := range labels {
-		ge.cachedLabels[label.Name] = strconv.Itoa(label.ID)
-	}
-
-	for page := 2; len(labels) != 0; page++ {
-
-		labels, _, err = gc.Labels.ListLabels(
+func (ge *gitlabExporter) loadLabelsFromGitlab(ctx context.Context, gc *gitlab.Client) error {
+	page := 1
+	for ; ; page++ {
+		ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
+		defer cancel()
+		labels, _, err := gc.Labels.ListLabels(
 			ge.repositoryID,
 			&gitlab.ListLabelsOptions{
 				Page: page,
 			},
+			gitlab.WithContext(ctx),
 		)
-
 		if err != nil {
 			return err
 		}
 
+		if len(labels) == 0 {
+			break
+		}
 		for _, label := range labels {
 			ge.cachedLabels[label.Name] = strconv.Itoa(label.ID)
 		}
@@ -407,7 +421,7 @@ func (ge *gitlabExporter) loadLabelsFromGitlab(gc *gitlab.Client) error {
 	return nil
 }
 
-func (ge *gitlabExporter) createGitlabLabel(gc *gitlab.Client, label bug.Label) error {
+func (ge *gitlabExporter) createGitlabLabel(ctx context.Context, gc *gitlab.Client, label bug.Label) error {
 	client := buildClient(ge.conf[keyToken])
 
 	// RGBA to hex color
@@ -415,21 +429,31 @@ func (ge *gitlabExporter) createGitlabLabel(gc *gitlab.Client, label bug.Label) 
 	hexColor := fmt.Sprintf("%.2x%.2x%.2x", rgba.R, rgba.G, rgba.B)
 	name := label.String()
 
-	_, _, err := client.Labels.CreateLabel(ge.repositoryID, &gitlab.CreateLabelOptions{
-		Name:  &name,
-		Color: &hexColor,
-	})
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
+	defer cancel()
+	_, _, err := client.Labels.CreateLabel(ge.repositoryID,
+		&gitlab.CreateLabelOptions{
+			Name:  &name,
+			Color: &hexColor,
+		},
+		gitlab.WithContext(ctx),
+	)
 
 	return err
 }
 
 // create a gitlab. issue and return it ID
-func createGitlabIssue(gc *gitlab.Client, repositoryID, title, body string) (int, string, error) {
-	issue, _, err := gc.Issues.CreateIssue(repositoryID, &gitlab.CreateIssueOptions{
-		Title:       &title,
-		Description: &body,
-	})
-
+func createGitlabIssue(ctx context.Context, gc *gitlab.Client, repositoryID, title, body string) (int, string, error) {
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
+	defer cancel()
+	issue, _, err := gc.Issues.CreateIssue(
+		repositoryID,
+		&gitlab.CreateIssueOptions{
+			Title:       &title,
+			Description: &body,
+		},
+		gitlab.WithContext(ctx),
+	)
 	if err != nil {
 		return 0, "", err
 	}
@@ -438,11 +462,16 @@ func createGitlabIssue(gc *gitlab.Client, repositoryID, title, body string) (int
 }
 
 // add a comment to an issue and return it ID
-func addCommentGitlabIssue(gc *gitlab.Client, repositoryID string, issueID int, body string) (int, error) {
-	note, _, err := gc.Notes.CreateIssueNote(repositoryID, issueID, &gitlab.CreateIssueNoteOptions{
-		Body: &body,
-	})
-
+func addCommentGitlabIssue(ctx context.Context, gc *gitlab.Client, repositoryID string, issueID int, body string) (int, error) {
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
+	defer cancel()
+	note, _, err := gc.Notes.CreateIssueNote(
+		repositoryID, issueID,
+		&gitlab.CreateIssueNoteOptions{
+			Body: &body,
+		},
+		gitlab.WithContext(ctx),
+	)
 	if err != nil {
 		return 0, err
 	}
@@ -450,15 +479,21 @@ func addCommentGitlabIssue(gc *gitlab.Client, repositoryID string, issueID int, 
 	return note.ID, nil
 }
 
-func editCommentGitlabIssue(gc *gitlab.Client, repositoryID string, issueID, noteID int, body string) error {
-	_, _, err := gc.Notes.UpdateIssueNote(repositoryID, issueID, noteID, &gitlab.UpdateIssueNoteOptions{
-		Body: &body,
-	})
+func editCommentGitlabIssue(ctx context.Context, gc *gitlab.Client, repositoryID string, issueID, noteID int, body string) error {
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
+	defer cancel()
+	_, _, err := gc.Notes.UpdateIssueNote(
+		repositoryID, issueID, noteID,
+		&gitlab.UpdateIssueNoteOptions{
+			Body: &body,
+		},
+		gitlab.WithContext(ctx),
+	)
 
 	return err
 }
 
-func updateGitlabIssueStatus(gc *gitlab.Client, repositoryID string, issueID int, status bug.Status) error {
+func updateGitlabIssueStatus(ctx context.Context, gc *gitlab.Client, repositoryID string, issueID int, status bug.Status) error {
 	var state string
 
 	switch status {
@@ -470,34 +505,58 @@ func updateGitlabIssueStatus(gc *gitlab.Client, repositoryID string, issueID int
 		panic("unknown bug state")
 	}
 
-	_, _, err := gc.Issues.UpdateIssue(repositoryID, issueID, &gitlab.UpdateIssueOptions{
-		StateEvent: &state,
-	})
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
+	defer cancel()
+	_, _, err := gc.Issues.UpdateIssue(
+		repositoryID, issueID,
+		&gitlab.UpdateIssueOptions{
+			StateEvent: &state,
+		},
+		gitlab.WithContext(ctx),
+	)
 
 	return err
 }
 
-func updateGitlabIssueBody(gc *gitlab.Client, repositoryID string, issueID int, body string) error {
-	_, _, err := gc.Issues.UpdateIssue(repositoryID, issueID, &gitlab.UpdateIssueOptions{
-		Description: &body,
-	})
+func updateGitlabIssueBody(ctx context.Context, gc *gitlab.Client, repositoryID string, issueID int, body string) error {
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
+	defer cancel()
+	_, _, err := gc.Issues.UpdateIssue(
+		repositoryID, issueID,
+		&gitlab.UpdateIssueOptions{
+			Description: &body,
+		},
+		gitlab.WithContext(ctx),
+	)
 
 	return err
 }
 
-func updateGitlabIssueTitle(gc *gitlab.Client, repositoryID string, issueID int, title string) error {
-	_, _, err := gc.Issues.UpdateIssue(repositoryID, issueID, &gitlab.UpdateIssueOptions{
-		Title: &title,
-	})
+func updateGitlabIssueTitle(ctx context.Context, gc *gitlab.Client, repositoryID string, issueID int, title string) error {
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
+	defer cancel()
+	_, _, err := gc.Issues.UpdateIssue(
+		repositoryID, issueID,
+		&gitlab.UpdateIssueOptions{
+			Title: &title,
+		},
+		gitlab.WithContext(ctx),
+	)
 
 	return err
 }
 
 // update gitlab. issue labels
-func updateGitlabIssueLabels(gc *gitlab.Client, repositoryID string, issueID int, labels []string) error {
-	_, _, err := gc.Issues.UpdateIssue(repositoryID, issueID, &gitlab.UpdateIssueOptions{
-		Labels: labels,
-	})
+func updateGitlabIssueLabels(ctx context.Context, gc *gitlab.Client, repositoryID string, issueID int, labels []string) error {
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
+	defer cancel()
+	_, _, err := gc.Issues.UpdateIssue(
+		repositoryID, issueID,
+		&gitlab.UpdateIssueOptions{
+			Labels: labels,
+		},
+		gitlab.WithContext(ctx),
+	)
 
 	return err
 }
