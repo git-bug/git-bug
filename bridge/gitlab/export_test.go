@@ -25,9 +25,11 @@ const (
 )
 
 type testCase struct {
-	name    string
-	bug     *cache.BugCache
-	numOrOp int // number of original operations
+	name     string
+	bug      *cache.BugCache
+	numOp    int // number of original operations
+	numOpExp int // number of operations after export
+	numOpImp int // number of operations after import
 }
 
 func testCases(t *testing.T, repo *cache.RepoCache, identity *cache.IdentityCache) []*testCase {
@@ -87,34 +89,46 @@ func testCases(t *testing.T, repo *cache.RepoCache, identity *cache.IdentityCach
 
 	return []*testCase{
 		&testCase{
-			name:    "simple bug",
-			bug:     simpleBug,
-			numOrOp: 1,
+			name:     "simple bug",
+			bug:      simpleBug,
+			numOp:    1,
+			numOpExp: 2,
+			numOpImp: 1,
 		},
 		&testCase{
-			name:    "bug with comments",
-			bug:     bugWithComments,
-			numOrOp: 2,
+			name:     "bug with comments",
+			bug:      bugWithComments,
+			numOp:    2,
+			numOpExp: 4,
+			numOpImp: 2,
 		},
 		&testCase{
-			name:    "bug label change",
-			bug:     bugLabelChange,
-			numOrOp: 4,
+			name:     "bug label change",
+			bug:      bugLabelChange,
+			numOp:    4,
+			numOpExp: 8,
+			numOpImp: 4,
 		},
 		&testCase{
-			name:    "bug with comment editions",
-			bug:     bugWithCommentEditions,
-			numOrOp: 4,
+			name:     "bug with comment editions",
+			bug:      bugWithCommentEditions,
+			numOp:    4,
+			numOpExp: 8,
+			numOpImp: 2,
 		},
 		&testCase{
-			name:    "bug changed status",
-			bug:     bugStatusChanged,
-			numOrOp: 3,
+			name:     "bug changed status",
+			bug:      bugStatusChanged,
+			numOp:    3,
+			numOpExp: 6,
+			numOpImp: 3,
 		},
 		&testCase{
-			name:    "bug title edited",
-			bug:     bugTitleEdited,
-			numOrOp: 2,
+			name:     "bug title edited",
+			bug:      bugTitleEdited,
+			numOp:    2,
+			numOpExp: 4,
+			numOpImp: 2,
 		},
 	}
 }
@@ -216,7 +230,7 @@ func TestPushPull(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// for each operation a SetMetadataOperation will be added
 			// so number of operations should double
-			require.Len(t, tt.bug.Snapshot().Operations, tt.numOrOp*2)
+			require.Len(t, tt.bug.Snapshot().Operations, tt.numOpExp)
 
 			// verify operation have correct metadata
 			for _, op := range tt.bug.Snapshot().Operations {
@@ -239,7 +253,7 @@ func TestPushPull(t *testing.T) {
 			require.NoError(t, err)
 
 			// verify bug have same number of original operations
-			require.Len(t, importedBug.Snapshot().Operations, tt.numOrOp)
+			require.Len(t, importedBug.Snapshot().Operations, tt.numOpImp)
 
 			// verify bugs are taged with origin=gitlab
 			issueOrigin, ok := importedBug.Snapshot().GetCreateMetadata(core.KeyOrigin)

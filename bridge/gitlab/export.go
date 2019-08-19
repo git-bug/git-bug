@@ -35,9 +35,6 @@ type gitlabExporter struct {
 	// cache identifiers used to speed up exporting operations
 	// cleared for each bug
 	cachedOperationIDs map[string]string
-
-	// cache labels used to speed up exporting labels events
-	cachedLabels map[string]string
 }
 
 // Init .
@@ -47,7 +44,6 @@ func (ge *gitlabExporter) Init(conf core.Configuration) error {
 	ge.identityToken = make(map[string]string)
 	ge.identityClient = make(map[string]*gitlab.Client)
 	ge.cachedOperationIDs = make(map[string]string)
-	ge.cachedLabels = make(map[string]string)
 
 	return nil
 }
@@ -99,26 +95,31 @@ func (ge *gitlabExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, 
 		allBugsIds := repo.AllBugsIds()
 
 		for _, id := range allBugsIds {
-			b, err := repo.ResolveBug(id)
-			if err != nil {
-				out <- core.NewExportError(err, id)
+			select {
+			case <-ctx.Done():
 				return
-			}
+			default:
+				b, err := repo.ResolveBug(id)
+				if err != nil {
+					out <- core.NewExportError(err, id)
+					return
+				}
 
-			snapshot := b.Snapshot()
+				snapshot := b.Snapshot()
 
-			// ignore issues created before since date
-			// TODO: compare the Lamport time instead of using the unix time
-			if snapshot.CreatedAt.Before(since) {
-				out <- core.NewExportNothing(b.Id(), "bug created before the since date")
-				continue
-			}
+				// ignore issues created before since date
+				// TODO: compare the Lamport time instead of using the unix time
+				if snapshot.CreatedAt.Before(since) {
+					out <- core.NewExportNothing(b.Id(), "bug created before the since date")
+					continue
+				}
 
-			if snapshot.HasAnyActor(allIdentitiesIds...) {
-				// try to export the bug and it associated events
-				ge.exportBug(ctx, b, since, out)
-			} else {
-				out <- core.NewExportNothing(id, "not an actor")
+				if snapshot.HasAnyActor(allIdentitiesIds...) {
+					// try to export the bug and it associated events
+					ge.exportBug(ctx, b, since, out)
+				} else {
+					out <- core.NewExportNothing(id, "not an actor")
+				}
 			}
 		}
 	}()
@@ -134,8 +135,6 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 	var bugGitlabID int
 	var bugGitlabIDString string
 	var bugCreationId string
-
-	//labels := make([]string, 0)
 
 	// Special case:
 	// if a user try to export a bug that is not already exported to Gitlab (or imported
@@ -182,7 +181,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 		}
 
 		// create bug
-		id, url, err := createGitlabIssue(ctx, client, ge.repositoryID, createOp.Title, createOp.Message)
+		_, id, url, err := createGitlabIssue(ctx, client, ge.repositoryID, createOp.Title, createOp.Message)
 		if err != nil {
 			err := errors.Wrap(err, "exporting gitlab issue")
 			out <- core.NewExportError(err, b.Id())
@@ -287,7 +286,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 					panic("unexpected comment id format")
 				}
 
-				if err := editCommentGitlabIssue(ctx, client, ge.repositoryID, commentIDint, id, opr.Message); err != nil {
+				if err := editCommentGitlabIssue(ctx, client, ge.repositoryID, bugGitlabID, commentIDint, opr.Message); err != nil {
 					err := errors.Wrap(err, "editing comment")
 					out <- core.NewExportError(err, b.Id())
 					return
@@ -299,7 +298,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 
 		case *bug.SetStatusOperation:
 			opr := op.(*bug.SetStatusOperation)
-			if err := updateGitlabIssueStatus(ctx, client, idString, id, opr.Status); err != nil {
+			if err := updateGitlabIssueStatus(ctx, client, ge.repositoryID, bugGitlabID, opr.Status); err != nil {
 				err := errors.Wrap(err, "editing status")
 				out <- core.NewExportError(err, b.Id())
 				return
@@ -310,7 +309,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 
 		case *bug.SetTitleOperation:
 			opr := op.(*bug.SetTitleOperation)
-			if err := updateGitlabIssueTitle(ctx, client, ge.repositoryID, id, opr.Title); err != nil {
+			if err := updateGitlabIssueTitle(ctx, client, ge.repositoryID, bugGitlabID, opr.Title); err != nil {
 				err := errors.Wrap(err, "editing title")
 				out <- core.NewExportError(err, b.Id())
 				return
@@ -356,6 +355,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 			panic("unhandled operation type case")
 		}
 
+		idString = strconv.Itoa(id)
 		// mark operation as exported
 		if err := markOperationAsExported(b, op.Id(), idString, url); err != nil {
 			err := errors.Wrap(err, "marking operation as exported")
@@ -384,66 +384,8 @@ func markOperationAsExported(b *cache.BugCache, target entity.Id, gitlabID, gitl
 	return err
 }
 
-func (ge *gitlabExporter) getGitlabLabelID(label string) (string, error) {
-	id, ok := ge.cachedLabels[label]
-	if !ok {
-		return "", fmt.Errorf("non cached label")
-	}
-
-	return id, nil
-}
-
-// get label from gitlab
-func (ge *gitlabExporter) loadLabelsFromGitlab(ctx context.Context, gc *gitlab.Client) error {
-	page := 1
-	for ; ; page++ {
-		ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
-		defer cancel()
-		labels, _, err := gc.Labels.ListLabels(
-			ge.repositoryID,
-			&gitlab.ListLabelsOptions{
-				Page: page,
-			},
-			gitlab.WithContext(ctx),
-		)
-		if err != nil {
-			return err
-		}
-
-		if len(labels) == 0 {
-			break
-		}
-		for _, label := range labels {
-			ge.cachedLabels[label.Name] = strconv.Itoa(label.ID)
-		}
-	}
-
-	return nil
-}
-
-func (ge *gitlabExporter) createGitlabLabel(ctx context.Context, gc *gitlab.Client, label bug.Label) error {
-	client := buildClient(ge.conf[keyToken])
-
-	// RGBA to hex color
-	rgba := label.RGBA()
-	hexColor := fmt.Sprintf("%.2x%.2x%.2x", rgba.R, rgba.G, rgba.B)
-	name := label.String()
-
-	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
-	defer cancel()
-	_, _, err := client.Labels.CreateLabel(ge.repositoryID,
-		&gitlab.CreateLabelOptions{
-			Name:  &name,
-			Color: &hexColor,
-		},
-		gitlab.WithContext(ctx),
-	)
-
-	return err
-}
-
 // create a gitlab. issue and return it ID
-func createGitlabIssue(ctx context.Context, gc *gitlab.Client, repositoryID, title, body string) (int, string, error) {
+func createGitlabIssue(ctx context.Context, gc *gitlab.Client, repositoryID, title, body string) (int, int, string, error) {
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	issue, _, err := gc.Issues.CreateIssue(
@@ -455,10 +397,10 @@ func createGitlabIssue(ctx context.Context, gc *gitlab.Client, repositoryID, tit
 		gitlab.WithContext(ctx),
 	)
 	if err != nil {
-		return 0, "", err
+		return 0, 0, "", err
 	}
 
-	return issue.IID, issue.WebURL, nil
+	return issue.ID, issue.IID, issue.WebURL, nil
 }
 
 // add a comment to an issue and return it ID

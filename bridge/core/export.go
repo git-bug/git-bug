@@ -62,8 +62,9 @@ func (er ExportResult) String() string {
 
 func NewExportError(err error, id entity.Id) ExportResult {
 	return ExportResult{
-		ID:  id,
-		Err: err,
+		ID:    id,
+		Err:   err,
+		Event: ExportEventError,
 	}
 }
 
