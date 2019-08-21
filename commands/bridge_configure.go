@@ -6,10 +6,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"syscall"
 
 	"github.com/spf13/cobra"
-	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/MichaelMure/git-bug/bridge"
 	"github.com/MichaelMure/git-bug/bridge/core"
@@ -23,6 +21,7 @@ const (
 )
 
 var (
+	tokenStdin            bool
 	bridgeConfigureName   string
 	bridgeConfigureTarget string
 	bridgeParams          core.BridgeParams
@@ -35,15 +34,6 @@ func runBridgeConfigure(cmd *cobra.Command, args []string) error {
 	}
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
-
-	termState, err := terminal.GetState(int(syscall.Stdin))
-	if err != nil {
-		return err
-	}
-
-	interrupt.RegisterCleaner(func() error {
-		return terminal.Restore(int(syscall.Stdin), termState)
-	})
 
 	if bridgeConfigureTarget == "" {
 		bridgeConfigureTarget, err = promptTarget()
@@ -62,6 +52,15 @@ func runBridgeConfigure(cmd *cobra.Command, args []string) error {
 	b, err := bridge.NewBridge(backend, bridgeConfigureTarget, bridgeConfigureName)
 	if err != nil {
 		return err
+	}
+
+	if tokenStdin {
+		reader := bufio.NewReader(os.Stdin)
+		token, err := reader.ReadString('\n')
+		if err != nil {
+			return fmt.Errorf("reading from stdin: %v", err)
+		}
+		bridgeParams.Token = strings.TrimSuffix(token, "\n")
 	}
 
 	err = b.Configure(bridgeParams)
@@ -192,6 +191,7 @@ func init() {
 	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.URL, "url", "u", "", "The URL of the target repository")
 	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.Owner, "owner", "o", "", "The owner of the target repository")
 	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.Token, "token", "T", "", "The authentication token for the API")
+	bridgeConfigureCmd.Flags().BoolVar(&tokenStdin, "token-stdin", false, "Expect to receive token from stdin and ignore token flag.")
 	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.Project, "project", "p", "", "The name of the target repository")
 	bridgeConfigureCmd.Flags().SortFlags = false
 }

@@ -37,12 +37,17 @@ var (
 	ErrBadProjectURL = errors.New("bad project url")
 )
 
-func (*Github) Configure(repo repository.RepoCommon, params core.BridgeParams) (core.Configuration, error) {
+func (g *Github) Configure(repo repository.RepoCommon, params core.BridgeParams) (core.Configuration, error) {
 	conf := make(core.Configuration)
 	var err error
 	var token string
 	var owner string
 	var project string
+
+	if params.Token != "" &&
+		!(params.URL != "" || (params.Project != "" && params.Owner != "")) {
+		return nil, fmt.Errorf("you must provide a project URL or Owner/Name to configure this bridge with a token")
+	}
 
 	// getting owner and project name
 	if params.Owner != "" && params.Project != "" {
@@ -105,6 +110,11 @@ func (*Github) Configure(repo repository.RepoCommon, params core.BridgeParams) (
 	conf[keyToken] = token
 	conf[keyOwner] = owner
 	conf[keyProject] = project
+
+	err = g.ValidateConfig(conf)
+	if err != nil {
+		return nil, err
+	}
 
 	return conf, nil
 }

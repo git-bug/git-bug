@@ -20,7 +20,7 @@ var (
 	ErrBadProjectURL = errors.New("bad project url")
 )
 
-func (*Gitlab) Configure(repo repository.RepoCommon, params core.BridgeParams) (core.Configuration, error) {
+func (g *Gitlab) Configure(repo repository.RepoCommon, params core.BridgeParams) (core.Configuration, error) {
 	if params.Project != "" {
 		fmt.Println("warning: --project is ineffective for a gitlab bridge")
 	}
@@ -32,6 +32,10 @@ func (*Gitlab) Configure(repo repository.RepoCommon, params core.BridgeParams) (
 	var err error
 	var url string
 	var token string
+
+	if params.Token != "" && params.URL == "" {
+		return nil, fmt.Errorf("you must provide a project URL to configure this bridge with a token")
+	}
 
 	// get project url
 	if params.URL != "" {
@@ -71,10 +75,15 @@ func (*Gitlab) Configure(repo repository.RepoCommon, params core.BridgeParams) (
 	conf[keyToken] = token
 	conf[core.KeyTarget] = target
 
+	err = g.ValidateConfig(conf)
+	if err != nil {
+		return nil, err
+	}
+
 	return conf, nil
 }
 
-func (*Gitlab) ValidateConfig(conf core.Configuration) error {
+func (g *Gitlab) ValidateConfig(conf core.Configuration) error {
 	if v, ok := conf[core.KeyTarget]; !ok {
 		return fmt.Errorf("missing %s key", core.KeyTarget)
 	} else if v != target {
