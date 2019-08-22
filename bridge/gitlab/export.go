@@ -87,7 +87,7 @@ func (ge *gitlabExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, 
 	go func() {
 		defer close(out)
 
-		var allIdentitiesIds []entity.Id
+		allIdentitiesIds := make([]entity.Id, 0, len(ge.identityToken))
 		for id := range ge.identityToken {
 			allIdentitiesIds = append(allIdentitiesIds, entity.Id(id))
 		}
@@ -168,7 +168,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 		bugGitlabIDString = gitlabID
 		bugGitlabID, err = strconv.Atoi(bugGitlabIDString)
 		if err != nil {
-			panic("unexpected gitlab id format")
+			panic(fmt.Sprintf("unexpected gitlab id format: %s", bugGitlabIDString))
 		}
 
 	} else {
@@ -214,7 +214,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 	// cache operation gitlab id
 	ge.cachedOperationIDs[bugCreationId] = bugGitlabIDString
 
-	var actualLabels []string
+	labelSet := make(map[string]struct{})
 	for _, op := range snapshot.Operations[1:] {
 		// ignore SetMetadata operations
 		if _, ok := op.(*bug.SetMetadataOperation); ok {
@@ -238,12 +238,11 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 
 		var id int
 		var idString, url string
-		switch op.(type) {
+		switch op := op.(type) {
 		case *bug.AddCommentOperation:
-			opr := op.(*bug.AddCommentOperation)
 
 			// send operation to gitlab
-			id, err = addCommentGitlabIssue(ctx, client, ge.repositoryID, bugGitlabID, opr.Message)
+			id, err = addCommentGitlabIssue(ctx, client, ge.repositoryID, bugGitlabID, op.Message)
 			if err != nil {
 				err := errors.Wrap(err, "adding comment")
 				out <- core.NewExportError(err, b.Id())
@@ -257,14 +256,13 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 			ge.cachedOperationIDs[op.Id().String()] = idString
 
 		case *bug.EditCommentOperation:
-			opr := op.(*bug.EditCommentOperation)
-			targetId := opr.Target.String()
+			targetId := op.Target.String()
 
 			// Since gitlab doesn't consider the issue body as a comment
 			if targetId == bugCreationId {
 
 				// case bug creation operation: we need to edit the Gitlab issue
-				if err := updateGitlabIssueBody(ctx, client, ge.repositoryID, bugGitlabID, opr.Message); err != nil {
+				if err := updateGitlabIssueBody(ctx, client, ge.repositoryID, bugGitlabID, op.Message); err != nil {
 					err := errors.Wrap(err, "editing issue")
 					out <- core.NewExportError(err, b.Id())
 					return
@@ -278,15 +276,17 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 				// case comment edition operation: we need to edit the Gitlab comment
 				commentID, ok := ge.cachedOperationIDs[targetId]
 				if !ok {
-					panic("unexpected error: comment id not found")
+					out <- core.NewExportError(fmt.Errorf("unexpected error: comment id not found"), op.Target)
+					return
 				}
 
 				commentIDint, err := strconv.Atoi(commentID)
 				if err != nil {
-					panic("unexpected comment id format")
+					out <- core.NewExportError(fmt.Errorf("unexpected comment id format"), op.Target)
+					return
 				}
 
-				if err := editCommentGitlabIssue(ctx, client, ge.repositoryID, bugGitlabID, commentIDint, opr.Message); err != nil {
+				if err := editCommentGitlabIssue(ctx, client, ge.repositoryID, bugGitlabID, commentIDint, op.Message); err != nil {
 					err := errors.Wrap(err, "editing comment")
 					out <- core.NewExportError(err, b.Id())
 					return
@@ -297,8 +297,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 			}
 
 		case *bug.SetStatusOperation:
-			opr := op.(*bug.SetStatusOperation)
-			if err := updateGitlabIssueStatus(ctx, client, ge.repositoryID, bugGitlabID, opr.Status); err != nil {
+			if err := updateGitlabIssueStatus(ctx, client, ge.repositoryID, bugGitlabID, op.Status); err != nil {
 				err := errors.Wrap(err, "editing status")
 				out <- core.NewExportError(err, b.Id())
 				return
@@ -308,8 +307,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 			id = bugGitlabID
 
 		case *bug.SetTitleOperation:
-			opr := op.(*bug.SetTitleOperation)
-			if err := updateGitlabIssueTitle(ctx, client, ge.repositoryID, bugGitlabID, opr.Title); err != nil {
+			if err := updateGitlabIssueTitle(ctx, client, ge.repositoryID, bugGitlabID, op.Title); err != nil {
 				err := errors.Wrap(err, "editing title")
 				out <- core.NewExportError(err, b.Id())
 				return
@@ -319,31 +317,23 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 			id = bugGitlabID
 
 		case *bug.LabelChangeOperation:
-			opr := op.(*bug.LabelChangeOperation)
 			// we need to set the actual list of labels at each label change operation
 			// because gitlab update issue requests need directly the latest list of the verison
 
-			if len(opr.Added) != 0 {
-				for _, label := range opr.Added {
-					actualLabels = append(actualLabels, string(label))
-				}
+			for _, label := range op.Added {
+				labelSet[label.String()] = struct{}{}
 			}
 
-			if len(opr.Removed) != 0 {
-				var newActualLabels []string
-				for _, label := range actualLabels {
-					for _, l := range opr.Removed {
-						if label == string(l) {
-							continue
-						}
-
-						newActualLabels = append(newActualLabels, label)
-					}
-				}
-				actualLabels = newActualLabels
+			for _, label := range op.Removed {
+				delete(labelSet, label.String())
 			}
 
-			if err := updateGitlabIssueLabels(ctx, client, ge.repositoryID, bugGitlabID, actualLabels); err != nil {
+			labels := make([]string, 0, len(labelSet))
+			for key := range labelSet {
+				labels = append(labels, key)
+			}
+
+			if err := updateGitlabIssueLabels(ctx, client, ge.repositoryID, bugGitlabID, labels); err != nil {
 				err := errors.Wrap(err, "updating labels")
 				out <- core.NewExportError(err, b.Id())
 				return
