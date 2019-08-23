@@ -154,7 +154,19 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 	// get gitlab bug ID
 	gitlabID, ok := snapshot.GetCreateMetadata(keyGitlabId)
 	if ok {
-		_, ok := snapshot.GetCreateMetadata(keyGitlabUrl)
+		projectID, ok := snapshot.GetCreateMetadata(keyGitlabProject)
+		if !ok {
+			err := fmt.Errorf("expected to find gitlab project id")
+			out <- core.NewExportError(err, b.Id())
+			return
+		}
+
+		if projectID != ge.conf[keyProjectID] {
+			out <- core.NewExportNothing(b.Id(), "skipping issue imported from another repository")
+			return
+		}
+
+		_, ok = snapshot.GetCreateMetadata(keyGitlabUrl)
 		if !ok {
 			// if we find gitlab ID, gitlab URL must be found too
 			err := fmt.Errorf("expected to find gitlab issue URL")
@@ -168,7 +180,8 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 		bugGitlabIDString = gitlabID
 		bugGitlabID, err = strconv.Atoi(bugGitlabIDString)
 		if err != nil {
-			panic(fmt.Sprintf("unexpected gitlab id format: %s", bugGitlabIDString))
+			out <- core.NewExportError(fmt.Errorf("unexpected gitlab id format: %s", bugGitlabIDString), b.Id())
+			return
 		}
 
 	} else {
@@ -191,8 +204,15 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 		idString := strconv.Itoa(id)
 		out <- core.NewExportBug(b.Id())
 
-		// mark bug creation operation as exported
-		if err := markOperationAsExported(b, createOp.Id(), idString, url); err != nil {
+		_, err = b.SetMetadata(
+			createOp.Id(),
+			map[string]string{
+				keyGitlabId:      idString,
+				keyGitlabUrl:     url,
+				keyGitlabProject: ge.repositoryID,
+			},
+		)
+		if err != nil {
 			err := errors.Wrap(err, "marking operation as exported")
 			out <- core.NewExportError(err, b.Id())
 			return
