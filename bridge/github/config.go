@@ -45,7 +45,7 @@ func (g *Github) Configure(repo repository.RepoCommon, params core.BridgeParams)
 	var project string
 
 	if params.Token != "" &&
-		!(params.URL != "" || (params.Project != "" && params.Owner != "")) {
+		(params.URL == "" && (params.Project == "" || params.Owner == "")) {
 		return nil, fmt.Errorf("you must provide a project URL or Owner/Name to configure this bridge with a token")
 	}
 

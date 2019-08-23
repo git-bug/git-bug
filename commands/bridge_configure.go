@@ -191,7 +191,7 @@ func init() {
 	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.URL, "url", "u", "", "The URL of the target repository")
 	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.Owner, "owner", "o", "", "The owner of the target repository")
 	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.Token, "token", "T", "", "The authentication token for the API")
-	bridgeConfigureCmd.Flags().BoolVar(&tokenStdin, "token-stdin", false, "Expect to receive token from stdin and ignore token flag.")
+	bridgeConfigureCmd.Flags().BoolVar(&tokenStdin, "token-stdin", false, "Will read the token from stdin and ignore --token")
 	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.Project, "project", "p", "", "The name of the target repository")
 	bridgeConfigureCmd.Flags().SortFlags = false
 }
