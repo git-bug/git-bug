@@ -166,14 +166,6 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 			return
 		}
 
-		_, ok = snapshot.GetCreateMetadata(keyGitlabUrl)
-		if !ok {
-			// if we find gitlab ID, gitlab URL must be found too
-			err := fmt.Errorf("expected to find gitlab issue URL")
-			out <- core.NewExportError(err, b.Id())
-			return
-		}
-
 		out <- core.NewExportNothing(b.Id(), "bug already exported")
 
 		// will be used to mark operation related to a bug as exported
