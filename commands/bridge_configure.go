@@ -176,7 +176,7 @@ git bug bridge configure \
 
 # For Gitlab
 git bug bridge configure \
-    --name=mybridge \
+    --name=default \
     --target=github \
     --url=https://github.com/michaelmure/git-bug \
     --token=$(TOKEN)`,

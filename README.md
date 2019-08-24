@@ -145,7 +145,14 @@ The web UI interact with the backend through a GraphQL API. The schema is availa
 
 #### Bridge usage
 
-configure a new github bridge
+Interactively configure a new github bridge:
+
+```bash
+git bug bridge configure
+```
+
+Or manually:
+
 ```bash
 git bug bridge configure \
     --name=mybridge \
@@ -154,19 +161,22 @@ git bug bridge configure \
     --token=$TOKEN
 ```
 
-import bugs
+Import bugs:
+
 ```bash
-git bug bridge pull mybridge
+git bug bridge pull [<name>]
 ```
 
-export modifications
+Export modifications:
+
 ```bash
-git bug bridge push mybridge
+git bug bridge push [<name>]
 ```
 
-deleting a bridge
+Deleting a bridge:
+
 ```bash
-git bug bridge rm mybridge
+git bug bridge rm [<name>]
 ```
 
 ## Internals
