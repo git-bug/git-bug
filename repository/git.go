@@ -17,8 +17,8 @@ import (
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
-const createClockFile = "/.git/git-bug/create-clock"
-const editClockFile = "/.git/git-bug/edit-clock"
+const createClockFile = "/git-bug/create-clock"
+const editClockFile = "/git-bug/edit-clock"
 
 // ErrNotARepo is the error returned when the git repo root wan't be found
 var ErrNotARepo = errors.New("not a git repository")
@@ -76,10 +76,11 @@ func NewGitRepo(path string, witnesser Witnesser) (*GitRepo, error) {
 	repo := &GitRepo{Path: path}
 
 	// Check the repo and retrieve the root path
-	stdout, err := repo.runGitCommand("rev-parse", "--show-toplevel")
+	stdout, err := repo.runGitCommand("rev-parse", "--git-dir")
 
-	// for some reason, "git rev-parse --show-toplevel" return nothing
-	// and no error when inside a ".git" dir
+	// Now dir is fetched with "git rev-parse --git-dir". May be it can
+	// still return nothing in some cases. Then empty stdout check is
+	// kept.
 	if err != nil || stdout == "" {
 		return nil, ErrNotARepo
 	}
