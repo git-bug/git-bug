@@ -68,6 +68,7 @@ git bug bridge configure \
   -u, --url string       The URL of the target repository
   -o, --owner string     The owner of the target repository
   -T, --token string     The authentication token for the API
+      --token-stdin      Will read the token from stdin and ignore --token
   -p, --project string   The name of the target repository
   -h, --help             help for configure
 ```
