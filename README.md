@@ -135,13 +135,49 @@ The web UI interact with the backend through a GraphQL API. The schema is availa
 
 | | Github | Gitlab | Launchpad |
 | --- | --- | --- | --- |
-| **bug** | :heavy_check_mark: | :x: | :x: |
-| comments | :heavy_check_mark: | :x: | :x: |
-| comment editions | :heavy_check_mark: | :x: | :x: |
-| labels | :heavy_check_mark: | :x: | :x: |
-| status | :heavy_check_mark: | :x: | :x: |
-| title edition | :heavy_check_mark: | :x: | :x: |
-| **automated test suite** | :heavy_check_mark: | :x: | :x: |
+| **bug** | :heavy_check_mark: | :heavy_check_mark: | :x: |
+| comments | :heavy_check_mark: | :heavy_check_mark: | :x: |
+| comment editions | :heavy_check_mark: | :heavy_check_mark: | :x: |
+| labels | :heavy_check_mark: | :heavy_check_mark: | :x: |
+| status | :heavy_check_mark: | :heavy_check_mark: | :x: |
+| title edition | :heavy_check_mark: | :heavy_check_mark: | :x: |
+| **automated test suite** | :heavy_check_mark: | :heavy_check_mark: | :x: |
+
+#### Bridge usage
+
+Interactively configure a new github bridge:
+
+```bash
+git bug bridge configure
+```
+
+Or manually:
+
+```bash
+git bug bridge configure \
+    --name=mybridge \
+    --target=github \
+    --url=https://github.com/michaelmure/git-bug \
+    --token=$TOKEN
+```
+
+Import bugs:
+
+```bash
+git bug bridge pull [<name>]
+```
+
+Export modifications:
+
+```bash
+git bug bridge push [<name>]
+```
+
+Deleting a bridge:
+
+```bash
+git bug bridge rm [<name>]
+```
 
 ## Internals
 
