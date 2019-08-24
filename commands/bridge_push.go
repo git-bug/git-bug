@@ -85,7 +85,6 @@ func runBridgePush(cmd *cobra.Command, args []string) error {
 	close(done)
 
 	fmt.Printf("Successfully exported %d issues with %s bridge\n", exportedIssues, b.Name)
-
 	return nil
 }
 

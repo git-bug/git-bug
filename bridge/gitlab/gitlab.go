@@ -38,7 +38,7 @@ func (*Gitlab) NewImporter() core.Importer {
 }
 
 func (*Gitlab) NewExporter() core.Exporter {
-	return nil
+	return &gitlabExporter{}
 }
 
 func buildClient(token string) *gitlab.Client {
