@@ -7,6 +7,7 @@ import (
 	"io"
 	"os/exec"
 	"path"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -331,8 +332,16 @@ func (repo *GitRepo) gitVersionLT218() (bool, error) {
 		return false, err
 	}
 
-	versionString := strings.Fields(versionOut)[2]
-	version, err := semver.Make(versionString)
+	// extract the version and truncate potential bad parts
+	// ex: 2.23.0.rc1 instead of 2.23.0-rc1
+	r := regexp.MustCompile(`(\d+\.){1,2}\d+`)
+
+	extracted := r.FindString(versionOut)
+	if extracted == "" {
+		return false, fmt.Errorf("unreadable git version %s", versionOut)
+	}
+
+	version, err := semver.Make(extracted)
 	if err != nil {
 		return false, err
 	}
