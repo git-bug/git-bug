@@ -21,6 +21,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/repository"
+	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
 const (
@@ -235,6 +236,16 @@ func promptTokenOptions(owner, project string) (string, error) {
 		if index == 1 {
 			return promptToken()
 		}
+
+		// Register restore state cleaner before prompting passwords inputs
+		termState, err := terminal.GetState(int(syscall.Stdin))
+		if err != nil {
+			return "", err
+		}
+
+		interrupt.RegisterCleaner(func() error {
+			return terminal.Restore(int(syscall.Stdin), termState)
+		})
 
 		return loginAndRequestToken(owner, project)
 	}

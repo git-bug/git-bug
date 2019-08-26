@@ -35,6 +35,10 @@ func runBridgeConfigure(cmd *cobra.Command, args []string) error {
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
 
+	if (tokenStdin || bridgeParams.Token != "") && (bridgeConfigureName == "" || bridgeConfigureTarget == "") {
+		return fmt.Errorf("you must bridge name and target to configure a bridge with a token")
+	}
+
 	if bridgeConfigureTarget == "" {
 		bridgeConfigureTarget, err = promptTarget()
 		if err != nil {
