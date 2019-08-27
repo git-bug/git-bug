@@ -105,8 +105,13 @@ An interactive terminal UI is available using the command `git bug termui` to br
 
 You can launch a rich Web UI with `git bug webui`.
 
-![Web UI screenshot 1](misc/webui1.png)
-![Web UI screenshot 2](misc/webui2.png)
+<p align="center">
+  <img src="misc/webui1.png" alt="Web UI screenshot 1" width="738">
+</p>
+
+<p align="center">
+  <img src="misc/webui2.png" alt="Web UI screenshot 2" width="738">
+</p>
 
 This web UI is entirely packed inside the same go binary and serve static content through a localhost http server.
 
