@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"strings"
 	"io/ioutil"
 	"log"
 	"os"
@@ -44,6 +45,17 @@ func CleanupTestRepos(t testing.TB, repos ...Repo) {
 	var firstErr error
 	for _, repo := range repos {
 		path := repo.GetPath()
+		if (strings.HasSuffix(path,"/.git")) {
+			// non bare repository, remove complete repos not
+			// only git meta data.
+			path=strings.TrimSuffix(path,"/.git");
+			// Testing non bare repo should also check path is
+			// only .git (i.e. ./.git), but doing so, we should
+			// try to remove the current directory and hav some
+			// trouble. In the present case, this case should not
+			// occure.
+			// TODO consider warning or error when path == ".git"
+		}
 		// fmt.Println("Cleaning repo:", path)
 		err := os.RemoveAll(path)
 		if err != nil {

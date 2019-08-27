@@ -115,7 +115,7 @@ func NewGitRepo(path string, witnesser Witnesser) (*GitRepo, error) {
 
 // InitGitRepo create a new empty git repo at the given path
 func InitGitRepo(path string) (*GitRepo, error) {
-	repo := &GitRepo{Path: path}
+	repo := &GitRepo{Path: path+"/.git"}
 	err := repo.createClocks()
 	if err != nil {
 		return nil, err
