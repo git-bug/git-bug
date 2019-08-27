@@ -498,6 +498,7 @@
     "github.com/go-errors/errors",
     "github.com/gorilla/mux",
     "github.com/icrowley/fake",
+    "github.com/mattn/go-isatty",
     "github.com/phayes/freeport",
     "github.com/pkg/errors",
     "github.com/shurcooL/githubv4",

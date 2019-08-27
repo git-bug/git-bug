@@ -330,12 +330,18 @@ func (bug *Bug) Validate() error {
 	}
 
 	// Check that there is no more CreateOp op
+	// Check that there is no colliding operation's ID
 	it := NewOperationIterator(bug)
 	createCount := 0
+	ids := make(map[entity.Id]struct{})
 	for it.Next() {
 		if it.Value().base().OperationType == CreateOp {
 			createCount++
 		}
+		if _, ok := ids[it.Value().Id()]; ok {
+			return fmt.Errorf("id collision: %s", it.Value().Id())
+		}
+		ids[it.Value().Id()] = struct{}{}
 	}
 
 	if createCount != 1 {

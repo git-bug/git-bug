@@ -73,8 +73,6 @@ func TestBugCommitLoad(t *testing.T) {
 
 	bug1.Append(createOp)
 	bug1.Append(setTitleOp)
-	bug1.Append(setTitleOp)
-	bug1.Append(addCommentOp)
 
 	repo := repository.NewMockRepoForTest()
 
@@ -90,7 +88,6 @@ func TestBugCommitLoad(t *testing.T) {
 
 	// add more op
 
-	bug1.Append(setTitleOp)
 	bug1.Append(addCommentOp)
 
 	assert.True(t, bug1.NeedCommit())

@@ -1,12 +1,14 @@
 package bug
 
 import (
-	"github.com/MichaelMure/git-bug/identity"
-	"github.com/MichaelMure/git-bug/repository"
-	"github.com/stretchr/testify/assert"
-
+	"fmt"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/repository"
 )
 
 func ExampleOperationIterator() {
@@ -29,16 +31,20 @@ func TestOpIterator(t *testing.T) {
 	unix := time.Now().Unix()
 
 	createOp := NewCreateOp(rene, unix, "title", "message", nil)
-	setTitleOp := NewSetTitleOp(rene, unix, "title2", "title1")
 	addCommentOp := NewAddCommentOp(rene, unix, "message2", nil)
 	setStatusOp := NewSetStatusOp(rene, unix, ClosedStatus)
 	labelChangeOp := NewLabelChangeOperation(rene, unix, []Label{"added"}, []Label{"removed"})
+
+	var i int
+	genTitleOp := func() Operation {
+		i++
+		return NewSetTitleOp(rene, unix, fmt.Sprintf("title%d", i), "")
+	}
 
 	bug1 := NewBug()
 
 	// first pack
 	bug1.Append(createOp)
-	bug1.Append(setTitleOp)
 	bug1.Append(addCommentOp)
 	bug1.Append(setStatusOp)
 	bug1.Append(labelChangeOp)
@@ -46,16 +52,16 @@ func TestOpIterator(t *testing.T) {
 	assert.NoError(t, err)
 
 	// second pack
-	bug1.Append(setTitleOp)
-	bug1.Append(setTitleOp)
-	bug1.Append(setTitleOp)
+	bug1.Append(genTitleOp())
+	bug1.Append(genTitleOp())
+	bug1.Append(genTitleOp())
 	err = bug1.Commit(mockRepo)
 	assert.NoError(t, err)
 
 	// staging
-	bug1.Append(setTitleOp)
-	bug1.Append(setTitleOp)
-	bug1.Append(setTitleOp)
+	bug1.Append(genTitleOp())
+	bug1.Append(genTitleOp())
+	bug1.Append(genTitleOp())
 
 	it := NewOperationIterator(bug1)
 
@@ -65,7 +71,5 @@ func TestOpIterator(t *testing.T) {
 		counter++
 	}
 
-	if counter != 11 {
-		t.Fatalf("Wrong count of value iterated (%d instead of 8)", counter)
-	}
+	assert.Equal(t, 10, counter)
 }
