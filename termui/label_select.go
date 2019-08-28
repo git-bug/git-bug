@@ -127,7 +127,12 @@ func (ls *labelSelect) layout(g *gocui.Gui) error {
 		if ls.labelSelect[i] {
 			selectBox = " [x] "
 		}
-		fmt.Fprint(v, selectBox, label)
+
+		lc := label.Color()
+		lc256 := lc.Term256()
+		labelStr := lc256.Escape() + "◼ " + lc256.Unescape() + label.String()
+		fmt.Fprint(v, selectBox, labelStr)
+
 		y0 += 2
 	}
 

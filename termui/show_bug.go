@@ -429,8 +429,9 @@ func (sb *showBug) renderSidebar(g *gocui.Gui, sideView *gocui.View) error {
 
 	labelStr := make([]string, len(snap.Labels))
 	for i, l := range snap.Labels {
-		color256 := l.Term256()
-		labelStr[i] = fmt.Sprintf("\x1b[38;5;%dm◼\x1b[0m %s", color256, string(l))
+		lc := l.Color()
+		lc256 := lc.Term256()
+		labelStr[i] = lc256.Escape() + "◼ " + lc256.Unescape() + l.String()
 	}
 
 	labels := strings.Join(labelStr, "\n")

@@ -19,7 +19,7 @@ func (labelResolver) Name(ctx context.Context, obj *bug.Label) (string, error) {
 }
 
 func (labelResolver) Color(ctx context.Context, obj *bug.Label) (*color.RGBA, error) {
-	rgba := obj.RGBA()
+	rgba := obj.Color().RGBA()
 	return &rgba, nil
 }
 
