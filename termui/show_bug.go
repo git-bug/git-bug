@@ -429,13 +429,14 @@ func (sb *showBug) renderSidebar(g *gocui.Gui, sideView *gocui.View) error {
 
 	labelStr := make([]string, len(snap.Labels))
 	for i, l := range snap.Labels {
-		labelStr[i] = string(l)
+		color256 := l.Term256()
+		labelStr[i] = fmt.Sprintf("\x1b[38;5;%dm◼\x1b[0m %s", color256, string(l))
 	}
 
 	labels := strings.Join(labelStr, "\n")
 	labels, lines := text.WrapLeftPadded(labels, maxX, 2)
 
-	content := fmt.Sprintf("%s\n\n%s", colors.Bold("Labels"), labels)
+	content := fmt.Sprintf("%s\n\n%s", colors.Bold("  Labels"), labels)
 
 	v, err := sb.createSideView(g, "sideLabels", x0, y0, maxX, lines+2)
 	if err != nil {

@@ -50,6 +50,17 @@ func (l Label) RGBA() color.RGBA {
 	return colors[id]
 }
 
+func (l Label) Term256() int {
+	rgba := l.RGBA()
+	red := int(rgba.R) * 6 / 256
+	green := int(rgba.G) * 6 / 256
+	blue := int(rgba.B) * 6 / 256
+
+	color256 := red*36 + green*6 + blue + 16
+
+	return color256
+}
+
 func (l Label) Validate() error {
 	str := string(l)
 
