@@ -34,10 +34,19 @@ type GitRepo struct {
 
 // Run the given git command with the given I/O reader/writers, returning an error if it fails.
 func (repo *GitRepo) runGitCommandWithIO(stdin io.Reader, stdout, stderr io.Writer, args ...string) error {
-	// fmt.Printf("[%s] Running git %s\n", repo.Path, strings.Join(args, " "))
+	repopath:=repo.Path
+	if repopath==".git" {
+		// seeduvax> trangely the git command sometimes fail for very unknown
+		// reason wihtout this replacement.
+		// observed with rev-list command when git-bug is called from git
+		// hook script, even the same command with same args runs perfectly
+		// when called directly from the same hook script. 
+		repopath=""
+	}
+	// fmt.Printf("[%s] Running git %s\n", repopath, strings.Join(args, " "))
 
 	cmd := exec.Command("git", args...)
-	cmd.Dir = repo.Path
+	cmd.Dir = repopath
 	cmd.Stdin = stdin
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
