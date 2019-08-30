@@ -237,16 +237,6 @@ func promptTokenOptions(owner, project string) (string, error) {
 			return promptToken()
 		}
 
-		// Register restore state cleaner before prompting passwords inputs
-		termState, err := terminal.GetState(int(syscall.Stdin))
-		if err != nil {
-			return "", err
-		}
-
-		interrupt.RegisterCleaner(func() error {
-			return terminal.Restore(int(syscall.Stdin), termState)
-		})
-
 		return loginAndRequestToken(owner, project)
 	}
 }
@@ -526,6 +516,16 @@ func validateProject(owner, project, token string) (bool, error) {
 }
 
 func promptPassword() (string, error) {
+	termState, err := terminal.GetState(int(syscall.Stdin))
+	if err != nil {
+		return "", err
+	}
+
+	cancel := interrupt.RegisterCleaner(func() error {
+		return terminal.Restore(int(syscall.Stdin), termState)
+	})
+	defer cancel()
+
 	for {
 		fmt.Print("password: ")
 
@@ -547,6 +547,16 @@ func promptPassword() (string, error) {
 }
 
 func prompt2FA() (string, error) {
+	termState, err := terminal.GetState(int(syscall.Stdin))
+	if err != nil {
+		return "", err
+	}
+
+	cancel := interrupt.RegisterCleaner(func() error {
+		return terminal.Restore(int(syscall.Stdin), termState)
+	})
+	defer cancel()
+
 	for {
 		fmt.Print("two-factor authentication code: ")
 
