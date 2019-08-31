@@ -73,7 +73,7 @@ function Bug({ bug }) {
           <Typography variant={'subheading'}>Labels</Typography>
           <ul className={classes.labelList}>
             {bug.labels.map(l => (
-              <li className={classes.label}>
+              <li className={classes.label} key={l.name}>
                 <Label label={l} key={l.name} />
               </li>
             ))}
