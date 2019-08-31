@@ -1042,6 +1042,10 @@ _git-bug_root_command()
     commands+=("show")
     commands+=("status")
     commands+=("termui")
+    if [[ -z "${BASH_VERSION}" || "${BASH_VERSINFO[0]}" -gt 3 ]]; then
+        command_aliases+=("tui")
+        aliashash["tui"]="termui"
+    fi
     commands+=("title")
     commands+=("user")
     commands+=("version")
