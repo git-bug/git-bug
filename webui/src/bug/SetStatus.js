@@ -6,8 +6,8 @@ import Date from '../Date';
 
 const useStyles = makeStyles(theme => ({
   main: {
-    ...theme.typography.body2,
-    marginLeft: theme.spacing.unit + 40,
+    ...theme.typography.body1,
+    marginLeft: theme.spacing(1) + 40,
   },
 }));
 

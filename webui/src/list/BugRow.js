@@ -13,13 +13,13 @@ import Author from '../Author';
 
 const Open = ({ className }) => (
   <Tooltip title="Open">
-    <ErrorOutline nativeColor="#28a745" className={className} />
+    <ErrorOutline htmlColor="#28a745" className={className} />
   </Tooltip>
 );
 
 const Closed = ({ className }) => (
   <Tooltip title="Closed">
-    <ErrorOutline nativeColor="#cb2431" className={className} />
+    <ErrorOutline htmlColor="#cb2431" className={className} />
   </Tooltip>
 );
 
@@ -52,7 +52,7 @@ const useStyles = makeStyles(theme => ({
     display: 'inline',
   },
   labels: {
-    paddingLeft: theme.spacing.unit,
+    paddingLeft: theme.spacing(1),
   },
 }));
 
@@ -65,7 +65,7 @@ function BugRow({ bug }) {
         <div className={classes.expand}>
           <Link to={'bug/' + bug.humanId}>
             <div className={classes.expand}>
-              <Typography variant={'title'} className={classes.title}>
+              <Typography variant={'h6'} className={classes.title}>
                 {bug.title}
               </Typography>
               {bug.labels.length > 0 && (

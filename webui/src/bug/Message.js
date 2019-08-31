@@ -19,10 +19,10 @@ const useStyles = makeStyles(theme => ({
   },
   bubble: {
     flex: 1,
-    marginLeft: theme.spacing.unit,
+    marginLeft: theme.spacing(1),
   },
   header: {
-    ...theme.typography.body2,
+    ...theme.typography.body1,
     color: '#444',
     padding: '0.5rem 1rem',
     borderBottom: '1px solid #ddd',
@@ -41,7 +41,7 @@ const useStyles = makeStyles(theme => ({
     marginLeft: '0.5rem',
   },
   body: {
-    ...theme.typography.body1,
+    ...theme.typography.body2,
     padding: '0 1rem',
   },
 }));

@@ -1,4 +1,3 @@
-import { install } from '@material-ui/styles';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import { createMuiTheme } from '@material-ui/core/styles';
 import ApolloClient from 'apollo-boost';
@@ -7,10 +6,7 @@ import { ApolloProvider } from 'react-apollo';
 import ReactDOM from 'react-dom';
 import { BrowserRouter } from 'react-router-dom';
 
-install();
-
-// TODO(sandhose): this is temporary until Material-UI v4 goes out
-const App = React.lazy(() => import('./App'));
+import App from './App';
 
 const theme = createMuiTheme();
 
