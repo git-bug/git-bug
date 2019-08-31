@@ -33,7 +33,12 @@ func RegisterCleaner(cleaner CleanerFunc) CancelFunc {
 	defer mu.Unlock()
 
 	w := &wrapper{f: cleaner}
-	cancel := func() { w.disabled = true }
+
+	cancel := func() {
+		mu.Lock()
+		defer mu.Unlock()
+		w.disabled = true
+	}
 
 	// prepend to later execute then in reverse order
 	cleaners = append([]*wrapper{w}, cleaners...)
