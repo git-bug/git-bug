@@ -18,8 +18,8 @@ import (
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
-const createClockFile = "/.git/git-bug/create-clock"
-const editClockFile = "/.git/git-bug/edit-clock"
+const createClockFile = "/git-bug/create-clock"
+const editClockFile = "/git-bug/edit-clock"
 
 // ErrNotARepo is the error returned when the git repo root wan't be found
 var ErrNotARepo = errors.New("not a git repository")
@@ -35,10 +35,19 @@ type GitRepo struct {
 
 // Run the given git command with the given I/O reader/writers, returning an error if it fails.
 func (repo *GitRepo) runGitCommandWithIO(stdin io.Reader, stdout, stderr io.Writer, args ...string) error {
-	// fmt.Printf("[%s] Running git %s\n", repo.Path, strings.Join(args, " "))
+	repopath:=repo.Path
+	if repopath==".git" {
+		// seeduvax> trangely the git command sometimes fail for very unknown
+		// reason wihtout this replacement.
+		// observed with rev-list command when git-bug is called from git
+		// hook script, even the same command with same args runs perfectly
+		// when called directly from the same hook script. 
+		repopath=""
+	}
+	// fmt.Printf("[%s] Running git %s\n", repopath, strings.Join(args, " "))
 
 	cmd := exec.Command("git", args...)
-	cmd.Dir = repo.Path
+	cmd.Dir = repopath
 	cmd.Stdin = stdin
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
@@ -77,10 +86,11 @@ func NewGitRepo(path string, witnesser Witnesser) (*GitRepo, error) {
 	repo := &GitRepo{Path: path}
 
 	// Check the repo and retrieve the root path
-	stdout, err := repo.runGitCommand("rev-parse", "--show-toplevel")
+	stdout, err := repo.runGitCommand("rev-parse", "--git-dir")
 
-	// for some reason, "git rev-parse --show-toplevel" return nothing
-	// and no error when inside a ".git" dir
+	// Now dir is fetched with "git rev-parse --git-dir". May be it can
+	// still return nothing in some cases. Then empty stdout check is
+	// kept.
 	if err != nil || stdout == "" {
 		return nil, ErrNotARepo
 	}
@@ -115,7 +125,7 @@ func NewGitRepo(path string, witnesser Witnesser) (*GitRepo, error) {
 
 // InitGitRepo create a new empty git repo at the given path
 func InitGitRepo(path string) (*GitRepo, error) {
-	repo := &GitRepo{Path: path}
+	repo := &GitRepo{Path: path+"/.git"}
 	err := repo.createClocks()
 	if err != nil {
 		return nil, err

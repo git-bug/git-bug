@@ -350,11 +350,11 @@ func (c *RepoCache) writeIdentityCache() error {
 }
 
 func bugCacheFilePath(repo repository.Repo) string {
-	return path.Join(repo.GetPath(), ".git", "git-bug", bugCacheFile)
+	return path.Join(repo.GetPath(), "git-bug", bugCacheFile)
 }
 
 func identityCacheFilePath(repo repository.Repo) string {
-	return path.Join(repo.GetPath(), ".git", "git-bug", identityCacheFile)
+	return path.Join(repo.GetPath(), "git-bug", identityCacheFile)
 }
 
 func (c *RepoCache) buildCache() error {
@@ -706,7 +706,7 @@ func (c *RepoCache) Pull(remote string) error {
 }
 
 func repoLockFilePath(repo repository.Repo) string {
-	return path.Join(repo.GetPath(), ".git", "git-bug", lockfile)
+	return path.Join(repo.GetPath(), "git-bug", lockfile)
 }
 
 // repoIsAvailable check is the given repository is locked by a Cache.
