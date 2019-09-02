@@ -21,7 +21,6 @@ const (
 )
 
 var (
-	tokenStdin            bool
 	bridgeConfigureName   string
 	bridgeConfigureTarget string
 	bridgeParams          core.BridgeParams
@@ -35,8 +34,8 @@ func runBridgeConfigure(cmd *cobra.Command, args []string) error {
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
 
-	if (tokenStdin || bridgeParams.Token != "") && (bridgeConfigureName == "" || bridgeConfigureTarget == "") {
-		return fmt.Errorf("you must bridge name and target to configure a bridge with a token")
+	if (bridgeParams.TokenStdin || bridgeParams.Token != "") && (bridgeConfigureName == "" || bridgeConfigureTarget == "") {
+		return fmt.Errorf("you must provide a bridge name and target to configure a bridge with a token")
 	}
 
 	if bridgeConfigureTarget == "" {
@@ -56,15 +55,6 @@ func runBridgeConfigure(cmd *cobra.Command, args []string) error {
 	b, err := bridge.NewBridge(backend, bridgeConfigureTarget, bridgeConfigureName)
 	if err != nil {
 		return err
-	}
-
-	if tokenStdin {
-		reader := bufio.NewReader(os.Stdin)
-		token, err := reader.ReadString('\n')
-		if err != nil {
-			return fmt.Errorf("reading from stdin: %v", err)
-		}
-		bridgeParams.Token = strings.TrimSuffix(token, "\n")
 	}
 
 	err = b.Configure(bridgeParams)
@@ -195,7 +185,7 @@ func init() {
 	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.URL, "url", "u", "", "The URL of the target repository")
 	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.Owner, "owner", "o", "", "The owner of the target repository")
 	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.Token, "token", "T", "", "The authentication token for the API")
-	bridgeConfigureCmd.Flags().BoolVar(&tokenStdin, "token-stdin", false, "Will read the token from stdin and ignore --token")
+	bridgeConfigureCmd.Flags().BoolVar(&bridgeParams.TokenStdin, "token-stdin", false, "Will read the token from stdin and ignore --token")
 	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.Project, "project", "p", "", "The name of the target repository")
 	bridgeConfigureCmd.Flags().SortFlags = false
 }

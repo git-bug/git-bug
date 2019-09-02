@@ -45,7 +45,7 @@ func (g *Github) Configure(repo repository.RepoCommon, params core.BridgeParams)
 	var owner string
 	var project string
 
-	if params.Token != "" &&
+	if (params.Token != "" || params.TokenStdin) &&
 		(params.URL == "" && (params.Project == "" || params.Owner == "")) {
 		return nil, fmt.Errorf("you must provide a project URL or Owner/Name to configure this bridge with a token")
 	}
@@ -91,6 +91,13 @@ func (g *Github) Configure(repo repository.RepoCommon, params core.BridgeParams)
 	if params.Token != "" {
 		token = params.Token
 
+	} else if params.TokenStdin {
+		reader := bufio.NewReader(os.Stdin)
+		token, err = reader.ReadString('\n')
+		if err != nil {
+			return nil, fmt.Errorf("reading from stdin: %v", err)
+		}
+		token = strings.TrimSuffix(token, "\n")
 	} else {
 		token, err = promptTokenOptions(owner, project)
 		if err != nil {

@@ -33,7 +33,7 @@ func (g *Gitlab) Configure(repo repository.RepoCommon, params core.BridgeParams)
 	var url string
 	var token string
 
-	if params.Token != "" && params.URL == "" {
+	if (params.Token != "" || params.TokenStdin) && params.URL == "" {
 		return nil, fmt.Errorf("you must provide a project URL to configure this bridge with a token")
 	}
 
@@ -58,6 +58,13 @@ func (g *Gitlab) Configure(repo repository.RepoCommon, params core.BridgeParams)
 	// get user token
 	if params.Token != "" {
 		token = params.Token
+	} else if params.TokenStdin {
+		reader := bufio.NewReader(os.Stdin)
+		token, err = reader.ReadString('\n')
+		if err != nil {
+			return nil, fmt.Errorf("reading from stdin: %v", err)
+		}
+		token = strings.TrimSuffix(token, "\n")
 	} else {
 		token, err = promptToken()
 		if err != nil {
