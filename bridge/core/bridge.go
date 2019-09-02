@@ -31,10 +31,11 @@ var bridgeImpl map[string]reflect.Type
 // BridgeParams holds parameters to simplify the bridge configuration without
 // having to make terminal prompts.
 type BridgeParams struct {
-	Owner   string
-	Project string
-	URL     string
-	Token   string
+	Owner      string
+	Project    string
+	URL        string
+	Token      string
+	TokenStdin bool
 }
 
 // Bridge is a wrapper around a BridgeImpl that will bind low-level

@@ -21,6 +21,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/repository"
+	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
 const (
@@ -37,12 +38,17 @@ var (
 	ErrBadProjectURL = errors.New("bad project url")
 )
 
-func (*Github) Configure(repo repository.RepoCommon, params core.BridgeParams) (core.Configuration, error) {
+func (g *Github) Configure(repo repository.RepoCommon, params core.BridgeParams) (core.Configuration, error) {
 	conf := make(core.Configuration)
 	var err error
 	var token string
 	var owner string
 	var project string
+
+	if (params.Token != "" || params.TokenStdin) &&
+		(params.URL == "" && (params.Project == "" || params.Owner == "")) {
+		return nil, fmt.Errorf("you must provide a project URL or Owner/Name to configure this bridge with a token")
+	}
 
 	// getting owner and project name
 	if params.Owner != "" && params.Project != "" {
@@ -85,6 +91,13 @@ func (*Github) Configure(repo repository.RepoCommon, params core.BridgeParams) (
 	if params.Token != "" {
 		token = params.Token
 
+	} else if params.TokenStdin {
+		reader := bufio.NewReader(os.Stdin)
+		token, err = reader.ReadString('\n')
+		if err != nil {
+			return nil, fmt.Errorf("reading from stdin: %v", err)
+		}
+		token = strings.TrimSuffix(token, "\n")
 	} else {
 		token, err = promptTokenOptions(owner, project)
 		if err != nil {
@@ -105,6 +118,11 @@ func (*Github) Configure(repo repository.RepoCommon, params core.BridgeParams) (
 	conf[keyToken] = token
 	conf[keyOwner] = owner
 	conf[keyProject] = project
+
+	err = g.ValidateConfig(conf)
+	if err != nil {
+		return nil, err
+	}
 
 	return conf, nil
 }
@@ -505,6 +523,16 @@ func validateProject(owner, project, token string) (bool, error) {
 }
 
 func promptPassword() (string, error) {
+	termState, err := terminal.GetState(int(syscall.Stdin))
+	if err != nil {
+		return "", err
+	}
+
+	cancel := interrupt.RegisterCleaner(func() error {
+		return terminal.Restore(int(syscall.Stdin), termState)
+	})
+	defer cancel()
+
 	for {
 		fmt.Print("password: ")
 
@@ -526,6 +554,16 @@ func promptPassword() (string, error) {
 }
 
 func prompt2FA() (string, error) {
+	termState, err := terminal.GetState(int(syscall.Stdin))
+	if err != nil {
+		return "", err
+	}
+
+	cancel := interrupt.RegisterCleaner(func() error {
+		return terminal.Restore(int(syscall.Stdin), termState)
+	})
+	defer cancel()
+
 	for {
 		fmt.Print("two-factor authentication code: ")
 

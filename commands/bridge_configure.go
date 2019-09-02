@@ -6,10 +6,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"syscall"
 
 	"github.com/spf13/cobra"
-	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/MichaelMure/git-bug/bridge"
 	"github.com/MichaelMure/git-bug/bridge/core"
@@ -36,14 +34,9 @@ func runBridgeConfigure(cmd *cobra.Command, args []string) error {
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
 
-	termState, err := terminal.GetState(int(syscall.Stdin))
-	if err != nil {
-		return err
+	if (bridgeParams.TokenStdin || bridgeParams.Token != "") && (bridgeConfigureName == "" || bridgeConfigureTarget == "") {
+		return fmt.Errorf("you must provide a bridge name and target to configure a bridge with a token")
 	}
-
-	interrupt.RegisterCleaner(func() error {
-		return terminal.Restore(int(syscall.Stdin), termState)
-	})
 
 	if bridgeConfigureTarget == "" {
 		bridgeConfigureTarget, err = promptTarget()
@@ -192,6 +185,7 @@ func init() {
 	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.URL, "url", "u", "", "The URL of the target repository")
 	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.Owner, "owner", "o", "", "The owner of the target repository")
 	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.Token, "token", "T", "", "The authentication token for the API")
+	bridgeConfigureCmd.Flags().BoolVar(&bridgeParams.TokenStdin, "token-stdin", false, "Will read the token from stdin and ignore --token")
 	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.Project, "project", "p", "", "The name of the target repository")
 	bridgeConfigureCmd.Flags().SortFlags = false
 }

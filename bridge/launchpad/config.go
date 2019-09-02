@@ -22,7 +22,7 @@ const (
 	defaultTimeout = 60 * time.Second
 )
 
-func (*Launchpad) Configure(repo repository.RepoCommon, params core.BridgeParams) (core.Configuration, error) {
+func (l *Launchpad) Configure(repo repository.RepoCommon, params core.BridgeParams) (core.Configuration, error) {
 	if params.Token != "" {
 		fmt.Println("warning: --token is ineffective for a Launchpad bridge")
 	}
@@ -63,6 +63,12 @@ func (*Launchpad) Configure(repo repository.RepoCommon, params core.BridgeParams
 
 	conf[keyProject] = project
 	conf[core.KeyTarget] = target
+
+	err = l.ValidateConfig(conf)
+	if err != nil {
+		return nil, err
+	}
+
 	return conf, nil
 }
 

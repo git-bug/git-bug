@@ -45,7 +45,7 @@ Private:
 Enter token: 87cf5c03b64029f18ea5f9ca5679daa08ccbd700
 Successfully configured bridge: default
 
-# For Github
+# For GitHub
 git bug bridge configure \
     --name=default \
     --target=github \
@@ -57,7 +57,14 @@ git bug bridge configure \
 git bug bridge configure \
     --name=default \
     --target=launchpad-preview \
-    --url=https://bugs.launchpad.net/ubuntu/
+	--url=https://bugs.launchpad.net/ubuntu/
+
+# For Gitlab
+git bug bridge configure \
+    --name=default \
+    --target=github \
+    --url=https://github.com/michaelmure/git-bug \
+    --token=$(TOKEN)
 ```
 
 ### Options
@@ -68,6 +75,7 @@ git bug bridge configure \
   -u, --url string       The URL of the target repository
   -o, --owner string     The owner of the target repository
   -T, --token string     The authentication token for the API
+      --token-stdin      Will read the token from stdin and ignore --token
   -p, --project string   The name of the target repository
   -h, --help             help for configure
 ```
