@@ -156,6 +156,18 @@ type IdentityEdge struct {
 	Node   identity.Interface `json:"node"`
 }
 
+type LabelConnection struct {
+	Edges      []*LabelEdge `json:"edges"`
+	Nodes      []bug.Label  `json:"nodes"`
+	PageInfo   *PageInfo    `json:"pageInfo"`
+	TotalCount int          `json:"totalCount"`
+}
+
+type LabelEdge struct {
+	Cursor string    `json:"cursor"`
+	Node   bug.Label `json:"node"`
+}
+
 type NewBugInput struct {
 	// A unique identifier for the client performing the mutation.
 	ClientMutationID *string `json:"clientMutationId"`

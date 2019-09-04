@@ -159,6 +159,29 @@ func (repoResolver) UserIdentity(ctx context.Context, obj *models.Repository) (i
 	return i.Identity, nil
 }
 
-func (repoResolver) ValidLabels(ctx context.Context, obj *models.Repository) ([]bug.Label, error) {
-	return obj.Repo.ValidLabels(), nil
+func (resolver repoResolver) ValidLabels(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int) (*models.LabelConnection, error) {
+	input := models.ConnectionInput{
+		Before: before,
+		After:  after,
+		First:  first,
+		Last:   last,
+	}
+
+	edger := func(label bug.Label, offset int) connections.Edge {
+		return models.LabelEdge{
+			Node:   label,
+			Cursor: connections.OffsetToCursor(offset),
+		}
+	}
+
+	conMaker := func(edges []*models.LabelEdge, nodes []bug.Label, info *models.PageInfo, totalCount int) (*models.LabelConnection, error) {
+		return &models.LabelConnection{
+			Edges:      edges,
+			Nodes:      nodes,
+			PageInfo:   info,
+			TotalCount: totalCount,
+		}, nil
+	}
+
+	return connections.LabelCon(obj.Repo.ValidLabels(), edger, conMaker, input)
 }
