@@ -13,13 +13,13 @@ import Author from '../Author';
 
 const Open = ({ className }) => (
   <Tooltip title="Open">
-    <ErrorOutline nativeColor="#28a745" className={className} />
+    <ErrorOutline htmlColor="#28a745" className={className} />
   </Tooltip>
 );
 
 const Closed = ({ className }) => (
   <Tooltip title="Closed">
-    <ErrorOutline nativeColor="#cb2431" className={className} />
+    <ErrorOutline htmlColor="#cb2431" className={className} />
   </Tooltip>
 );
 
@@ -38,21 +38,34 @@ const useStyles = makeStyles(theme => ({
   cell: {
     display: 'flex',
     alignItems: 'center',
+    padding: theme.spacing(1),
     '& a': {
       textDecoration: 'none',
     },
   },
   status: {
-    margin: 10,
+    margin: theme.spacing(1, 2),
   },
   expand: {
     width: '100%',
+    lineHeight: '20px',
   },
   title: {
     display: 'inline',
+    color: theme.palette.text.primary,
+    fontSize: '1.3rem',
+    fontWeight: 500,
+  },
+  details: {
+    ...theme.typography.textSecondary,
+    lineHeight: '1.5rem',
+    color: theme.palette.text.secondary,
   },
   labels: {
-    paddingLeft: theme.spacing.unit,
+    paddingLeft: theme.spacing(1),
+    '& > *': {
+      display: 'inline-block',
+    },
   },
 }));
 
@@ -65,9 +78,7 @@ function BugRow({ bug }) {
         <div className={classes.expand}>
           <Link to={'bug/' + bug.humanId}>
             <div className={classes.expand}>
-              <Typography variant={'title'} className={classes.title}>
-                {bug.title}
-              </Typography>
+              <span className={classes.title}>{bug.title}</span>
               {bug.labels.length > 0 && (
                 <span className={classes.labels}>
                   {bug.labels.map(l => (
@@ -77,11 +88,11 @@ function BugRow({ bug }) {
               )}
             </div>
           </Link>
-          <Typography color={'textSecondary'}>
+          <div className={classes.details}>
             {bug.humanId} opened
             <Date date={bug.createdAt} />
             by {bug.author.displayName}
-          </Typography>
+          </div>
         </div>
       </TableCell>
     </TableRow>

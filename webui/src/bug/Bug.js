@@ -11,29 +11,29 @@ const useStyles = makeStyles(theme => ({
   main: {
     maxWidth: 800,
     margin: 'auto',
-    marginTop: theme.spacing.unit * 4,
+    marginTop: theme.spacing(4),
   },
   header: {
-    marginLeft: theme.spacing.unit + 40,
+    marginLeft: theme.spacing(1) + 40,
   },
   title: {
-    ...theme.typography.headline,
+    ...theme.typography.h5,
   },
   id: {
-    ...theme.typography.subheading,
-    marginLeft: theme.spacing.unit,
+    ...theme.typography.subtitle1,
+    marginLeft: theme.spacing(1),
   },
   container: {
     display: 'flex',
-    marginBottom: theme.spacing.unit,
+    marginBottom: theme.spacing(1),
   },
   timeline: {
     flex: 1,
-    marginTop: theme.spacing.unit * 2,
-    marginRight: theme.spacing.unit * 2,
+    marginTop: theme.spacing(2),
+    marginRight: theme.spacing(2),
   },
   sidebar: {
-    marginTop: theme.spacing.unit * 2,
+    marginTop: theme.spacing(2),
     flex: '0 0 200px',
   },
   labelList: {
@@ -42,8 +42,8 @@ const useStyles = makeStyles(theme => ({
     margin: 0,
   },
   label: {
-    marginTop: theme.spacing.unit,
-    marginBottom: theme.spacing.unit,
+    marginTop: theme.spacing(1),
+    marginBottom: theme.spacing(1),
     '& > *': {
       display: 'block',
     },
@@ -70,10 +70,10 @@ function Bug({ bug }) {
           <TimelineQuery id={bug.id} />
         </div>
         <div className={classes.sidebar}>
-          <Typography variant={'subheading'}>Labels</Typography>
+          <Typography variant={'subtitle1'}>Labels</Typography>
           <ul className={classes.labelList}>
             {bug.labels.map(l => (
-              <li className={classes.label}>
+              <li className={classes.label} key={l.name}>
                 <Label label={l} key={l.name} />
               </li>
             ))}

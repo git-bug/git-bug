@@ -11,7 +11,7 @@ import ListQuery from './list/ListQuery';
 
 const useStyles = makeStyles(theme => ({
   appTitle: {
-    ...theme.typography.title,
+    ...theme.typography.h6,
     color: 'white',
     textDecoration: 'none',
   },
