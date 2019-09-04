@@ -28,9 +28,10 @@ const createStyle = color => ({
 const useStyles = makeStyles(theme => ({
   label: {
     ...theme.typography.body1,
-    padding: '0 6px',
+    padding: '1px 6px 0.5px',
     fontSize: '0.9em',
-    margin: '0 1px',
+    fontWeight: '500',
+    margin: '0.05em 1px calc(-1.5px + 0.05em)',
     borderRadius: '3px',
     display: 'inline-block',
     borderBottom: 'solid 1.5px',
