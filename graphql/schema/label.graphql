@@ -1,0 +1,19 @@
+"""Label for a bug."""
+type Label {
+    """The name of the label."""
+    name: String!
+    """Color of the label."""
+    color: Color!
+}
+
+type LabelConnection {
+    edges: [LabelEdge!]!
+    nodes: [Label!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type LabelEdge {
+    cursor: String!
+    node: Label!
+}

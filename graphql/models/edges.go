@@ -24,3 +24,8 @@ func (e TimelineItemEdge) GetCursor() string {
 func (e IdentityEdge) GetCursor() string {
 	return e.Cursor
 }
+
+// GetCursor return the cursor entry of an edge
+func (e LabelEdge) GetCursor() string {
+	return e.Cursor
+}

@@ -11,14 +11,6 @@ type Color {
     B: Int!
 }
 
-"""Label for a bug."""
-type Label {
-    """The name of the label."""
-    name: String!
-    """Color of the label."""
-    color: Color!
-}
-
 """Information about pagination in a connection."""
 type PageInfo {
     """When paginating forwards, are there more items?"""
