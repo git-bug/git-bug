@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/spf13/cobra"
+
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
-	"github.com/spf13/cobra"
 )
 
 const rootCommandName = "git-bug"
@@ -37,6 +38,7 @@ the same git remote your are already using to collaborate with other peoples.
 		}
 	},
 
+	SilenceUsage:      true,
 	DisableAutoGenTag: true,
 
 	// Custom bash code to connect the git completion for "git bug" to the
@@ -58,12 +60,12 @@ func Execute() {
 func loadRepo(cmd *cobra.Command, args []string) error {
 	cwd, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("Unable to get the current working directory: %q\n", err)
+		return fmt.Errorf("unable to get the current working directory: %q", err)
 	}
 
 	repo, err = repository.NewGitRepo(cwd, bug.Witnesser)
 	if err == repository.ErrNotARepo {
-		return fmt.Errorf("%s must be run from within a git repo.\n", rootCommandName)
+		return fmt.Errorf("%s must be run from within a git repo", rootCommandName)
 	}
 
 	if err != nil {
