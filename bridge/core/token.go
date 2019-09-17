@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/repository"
 )
 
 const (
@@ -17,6 +17,7 @@ const (
 	tokenKeyScopes       = "scopes"
 )
 
+// Token represent token related informations
 type Token struct {
 	Name   string
 	Value  string
@@ -25,6 +26,7 @@ type Token struct {
 	Scopes []string
 }
 
+// NewToken instantiate a new token
 func NewToken(name, value, target string, global bool, scopes []string) *Token {
 	return &Token{
 		Name:   name,
@@ -35,7 +37,8 @@ func NewToken(name, value, target string, global bool, scopes []string) *Token {
 	}
 }
 
-func (t *Token) Valnameate() error {
+// Validate ensure token important fields are valid
+func (t *Token) Validate() error {
 	if t.Name == "" {
 		return fmt.Errorf("missing token name")
 	}
@@ -48,10 +51,12 @@ func (t *Token) Valnameate() error {
 	return nil
 }
 
-func loadToken(repo *cache.RepoCache, name string, global bool) (*Token, error) {
+func loadToken(repo repository.RepoConfig, name string, global bool) (*Token, error) {
 	keyPrefix := fmt.Sprintf("git-bug.token.%s", name)
 	var pairs map[string]string
 	var err error
+
+	// read token config pairs
 	if global {
 		pairs, err = repo.ReadGlobalConfigs(keyPrefix)
 		if err != nil {
@@ -65,6 +70,7 @@ func loadToken(repo *cache.RepoCache, name string, global bool) (*Token, error) 
 		}
 	}
 
+	// trim key prefix
 	result := make(Configuration, len(pairs))
 	for key, value := range pairs {
 		key := strings.TrimPrefix(key, keyPrefix)
@@ -75,16 +81,16 @@ func loadToken(repo *cache.RepoCache, name string, global bool) (*Token, error) 
 	token := &Token{Name: name}
 	token.Value, ok = result[tokenKeyValue]
 	if !ok {
-		return nil, fmt.Errorf("nil value")
+		return nil, fmt.Errorf("empty token value")
 	}
 
 	token.Target, ok = result[tokenKeyTarget]
 	if !ok {
-		return nil, fmt.Errorf("nil value")
+		return nil, fmt.Errorf("empty token key")
 	}
 
 	if g, ok := result[tokenKeyGlobal]; !ok {
-		return nil, fmt.Errorf("nil value")
+		return nil, fmt.Errorf("empty token global")
 	} else if g == "true" {
 		token.Global = true
 	}
@@ -98,15 +104,17 @@ func loadToken(repo *cache.RepoCache, name string, global bool) (*Token, error) 
 	return token, nil
 }
 
-func GetToken(repo *cache.RepoCache, name string) (*Token, error) {
+// GetToken loads a token from repo config
+func GetToken(repo repository.RepoConfig, name string) (*Token, error) {
 	return loadToken(repo, name, false)
 }
 
-func GetGlobalToken(repo *cache.RepoCache, name string) (*Token, error) {
+// GetGlobalToken loads a token from the global config
+func GetGlobalToken(repo repository.RepoConfig, name string) (*Token, error) {
 	return loadToken(repo, name, true)
 }
 
-func listTokens(repo *cache.RepoCache, global bool) ([]string, error) {
+func listTokens(repo repository.RepoConfig, global bool) ([]string, error) {
 	var configs map[string]string
 	var err error
 	if global {
@@ -148,15 +156,17 @@ func listTokens(repo *cache.RepoCache, global bool) ([]string, error) {
 	return result, nil
 }
 
-func ListTokens(repo *cache.RepoCache) ([]string, error) {
+// ListTokens return the list of stored tokens in the repo config
+func ListTokens(repo repository.RepoConfig) ([]string, error) {
 	return listTokens(repo, false)
 }
 
-func ListGlobalTokens(repo *cache.RepoCache) ([]string, error) {
+// ListGlobalTokens return the list of stored tokens in the global config
+func ListGlobalTokens(repo repository.RepoConfig) ([]string, error) {
 	return listTokens(repo, true)
 }
 
-func storeToken(repo *cache.RepoCache, token *Token) error {
+func storeToken(repo repository.RepoConfig, token *Token) error {
 	var store func(key, value string) error
 	if token.Global {
 		store = repo.StoreGlobalConfig
@@ -192,20 +202,24 @@ func storeToken(repo *cache.RepoCache, token *Token) error {
 	return nil
 }
 
-func StoreToken(repo *cache.RepoCache, name, value, target string, global bool, scopes []string) error {
-	return storeToken(repo, NewToken(name, value, target, global, scopes))
+// StoreToken stores a token in the repo config
+func StoreToken(repo repository.RepoConfig, name, value, target string, scopes []string) error {
+	return storeToken(repo, NewToken(name, value, target, false, scopes))
 }
 
-func StoreGlobalToken(repo *cache.RepoCache, name, value, target string, global bool, scopes []string) error {
-	return storeToken(repo, NewToken(name, value, target, global, scopes))
+// StoreGlobalToken stores a token in global config
+func StoreGlobalToken(repo repository.RepoConfig, name, value, target string, scopes []string) error {
+	return storeToken(repo, NewToken(name, value, target, true, scopes))
 }
 
-func RemoveToken(repo *cache.RepoCache, name string) error {
+// RemoveToken removes a token from the repo config
+func RemoveToken(repo repository.RepoConfig, name string) error {
 	keyPrefix := fmt.Sprintf("git-bug.token.%s", name)
 	return repo.RmConfigs(keyPrefix)
 }
 
-func RemoveGlobalToken(repo *cache.RepoCache, name string) error {
+// RemoveGlobalToken removes a token from the repo config
+func RemoveGlobalToken(repo repository.RepoConfig, name string) error {
 	keyPrefix := fmt.Sprintf("git-bug.token.%s", name)
 	return repo.RmGlobalConfigs(keyPrefix)
 }
