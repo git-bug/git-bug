@@ -3,7 +3,6 @@ package core
 import (
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/MichaelMure/git-bug/repository"
@@ -13,13 +12,12 @@ const (
 	tokenConfigKeyPrefix = "git-bug.token"
 	tokenKeyValue        = "value"
 	tokenKeyTarget       = "target"
-	tokenKeyGlobal       = "global"
 	tokenKeyScopes       = "scopes"
 )
 
 // Token represent token related informations
 type Token struct {
-	Name   string
+	Id     string
 	Value  string
 	Target string
 	Global bool
@@ -27,9 +25,9 @@ type Token struct {
 }
 
 // NewToken instantiate a new token
-func NewToken(name, value, target string, global bool, scopes []string) *Token {
+func NewToken(id, value, target string, global bool, scopes []string) *Token {
 	return &Token{
-		Name:   name,
+		Id:     id,
 		Value:  value,
 		Target: target,
 		Global: global,
@@ -39,8 +37,8 @@ func NewToken(name, value, target string, global bool, scopes []string) *Token {
 
 // Validate ensure token important fields are valid
 func (t *Token) Validate() error {
-	if t.Name == "" {
-		return fmt.Errorf("missing token name")
+	if t.Id == "" {
+		return fmt.Errorf("missing token id")
 	}
 	if t.Value == "" {
 		return fmt.Errorf("missing token value")
@@ -51,8 +49,8 @@ func (t *Token) Validate() error {
 	return nil
 }
 
-func loadToken(repo repository.RepoConfig, name string, global bool) (*Token, error) {
-	keyPrefix := fmt.Sprintf("git-bug.token.%s", name)
+func loadToken(repo repository.RepoConfig, id string, global bool) (*Token, error) {
+	keyPrefix := fmt.Sprintf("git-bug.token.%s.", id)
 	var pairs map[string]string
 	var err error
 
@@ -62,7 +60,6 @@ func loadToken(repo repository.RepoConfig, name string, global bool) (*Token, er
 		if err != nil {
 			return nil, err
 		}
-
 	} else {
 		pairs, err = repo.ReadConfigs(keyPrefix)
 		if err != nil {
@@ -78,7 +75,7 @@ func loadToken(repo repository.RepoConfig, name string, global bool) (*Token, er
 	}
 
 	var ok bool
-	token := &Token{Name: name}
+	token := &Token{Id: id, Global: global}
 	token.Value, ok = result[tokenKeyValue]
 	if !ok {
 		return nil, fmt.Errorf("empty token value")
@@ -87,12 +84,6 @@ func loadToken(repo repository.RepoConfig, name string, global bool) (*Token, er
 	token.Target, ok = result[tokenKeyTarget]
 	if !ok {
 		return nil, fmt.Errorf("empty token key")
-	}
-
-	if g, ok := result[tokenKeyGlobal]; !ok {
-		return nil, fmt.Errorf("empty token global")
-	} else if g == "true" {
-		token.Global = true
 	}
 
 	scopesString, ok := result[tokenKeyScopes]
@@ -105,25 +96,25 @@ func loadToken(repo repository.RepoConfig, name string, global bool) (*Token, er
 }
 
 // GetToken loads a token from repo config
-func GetToken(repo repository.RepoConfig, name string) (*Token, error) {
-	return loadToken(repo, name, false)
+func GetToken(repo repository.RepoConfig, id string) (*Token, error) {
+	return loadToken(repo, id, false)
 }
 
 // GetGlobalToken loads a token from the global config
-func GetGlobalToken(repo repository.RepoConfig, name string) (*Token, error) {
-	return loadToken(repo, name, true)
+func GetGlobalToken(repo repository.RepoConfig, id string) (*Token, error) {
+	return loadToken(repo, id, true)
 }
 
 func listTokens(repo repository.RepoConfig, global bool) ([]string, error) {
 	var configs map[string]string
 	var err error
 	if global {
-		configs, err = repo.ReadConfigs(tokenConfigKeyPrefix + ".")
+		configs, err = repo.ReadGlobalConfigs(tokenConfigKeyPrefix + ".")
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		configs, err = repo.ReadGlobalConfigs(tokenConfigKeyPrefix + ".")
+		configs, err = repo.ReadConfigs(tokenConfigKeyPrefix + ".")
 		if err != nil {
 			return nil, err
 		}
@@ -175,25 +166,19 @@ func storeToken(repo repository.RepoConfig, token *Token) error {
 	}
 
 	var err error
-	storeValueKey := fmt.Sprintf("git-bug.token.%s.%s", token.Name, tokenKeyValue)
+	storeValueKey := fmt.Sprintf("git-bug.token.%s.%s", token.Id, tokenKeyValue)
 	err = store(storeValueKey, token.Value)
 	if err != nil {
 		return err
 	}
 
-	storeTargetKey := fmt.Sprintf("git-bug.token.%s.%s", token.Name, tokenKeyTarget)
+	storeTargetKey := fmt.Sprintf("git-bug.token.%s.%s", token.Id, tokenKeyTarget)
 	err = store(storeTargetKey, token.Target)
 	if err != nil {
 		return err
 	}
 
-	storeGlobalKey := fmt.Sprintf("git-bug.token.%s.%s", token.Name, tokenKeyGlobal)
-	err = store(storeGlobalKey, strconv.FormatBool(token.Global))
-	if err != nil {
-		return err
-	}
-
-	storeScopesKey := fmt.Sprintf("git-bug.token.%s.%s", token.Name, tokenKeyScopes)
+	storeScopesKey := fmt.Sprintf("git-bug.token.%s.%s", token.Id, tokenKeyScopes)
 	err = store(storeScopesKey, strings.Join(token.Scopes, ","))
 	if err != nil {
 		return err
@@ -203,23 +188,23 @@ func storeToken(repo repository.RepoConfig, token *Token) error {
 }
 
 // StoreToken stores a token in the repo config
-func StoreToken(repo repository.RepoConfig, name, value, target string, scopes []string) error {
-	return storeToken(repo, NewToken(name, value, target, false, scopes))
+func StoreToken(repo repository.RepoConfig, token *Token) error {
+	return storeToken(repo, token)
 }
 
 // StoreGlobalToken stores a token in global config
-func StoreGlobalToken(repo repository.RepoConfig, name, value, target string, scopes []string) error {
-	return storeToken(repo, NewToken(name, value, target, true, scopes))
+func StoreGlobalToken(repo repository.RepoConfig, token *Token) error {
+	return storeToken(repo, token)
 }
 
 // RemoveToken removes a token from the repo config
-func RemoveToken(repo repository.RepoConfig, name string) error {
-	keyPrefix := fmt.Sprintf("git-bug.token.%s", name)
+func RemoveToken(repo repository.RepoConfig, id string) error {
+	keyPrefix := fmt.Sprintf("git-bug.token.%s", id)
 	return repo.RmConfigs(keyPrefix)
 }
 
 // RemoveGlobalToken removes a token from the repo config
-func RemoveGlobalToken(repo repository.RepoConfig, name string) error {
-	keyPrefix := fmt.Sprintf("git-bug.token.%s", name)
+func RemoveGlobalToken(repo repository.RepoConfig, id string) error {
+	keyPrefix := fmt.Sprintf("git-bug.token.%s", id)
 	return repo.RmGlobalConfigs(keyPrefix)
 }

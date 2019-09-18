@@ -2,16 +2,18 @@ package commands
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/util/colors"
 	"github.com/MichaelMure/git-bug/util/interrupt"
+	"github.com/MichaelMure/git-bug/util/text"
 )
 
 var (
-	bridgeTokenAll        bool
 	bridgeTokenLocalOnly  bool
 	bridgeTokenGlobalOnly bool
 )
@@ -24,25 +26,49 @@ func runTokenBridge(cmd *cobra.Command, args []string) error {
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
 
-	var tokens []string
-	if bridgeTokenLocalOnly || bridgeTokenAll {
+	var tokens []*core.Token
+	if !bridgeTokenGlobalOnly {
 		localTokens, err := core.ListTokens(backend)
 		if err != nil {
 			return err
 		}
-		tokens = localTokens
+
+		for _, id := range localTokens {
+			token, err := core.GetToken(repo, id)
+			if err != nil {
+				return err
+			}
+			tokens = append(tokens, token)
+		}
 	}
 
-	if bridgeTokenGlobalOnly || bridgeTokenAll {
+	if !bridgeTokenLocalOnly {
 		globalTokens, err := core.ListGlobalTokens(backend)
 		if err != nil {
 			return err
 		}
-		tokens = append(tokens, globalTokens...)
+
+		for _, id := range globalTokens {
+			token, err := core.GetGlobalToken(repo, id)
+			if err != nil {
+				return err
+			}
+			tokens = append(tokens, token)
+		}
 	}
 
-	for _, c := range tokens {
-		fmt.Println(c)
+	for _, token := range tokens {
+		valueFmt := text.LeftPadMaxLine(token.Value, 20, 0)
+		targetFmt := text.LeftPadMaxLine(token.Target, 10, 0)
+		scopesFmt := text.LeftPadMaxLine(strings.Join(token.Scopes, ","), 20, 0)
+
+		fmt.Printf("%s %s %s %s %s\n",
+			colors.Cyan(token.Id),
+			colors.Magenta(targetFmt),
+			colors.Yellow(token.Global),
+			valueFmt,
+			scopesFmt,
+		)
 	}
 	return nil
 }
@@ -57,8 +83,7 @@ var bridgeTokenCmd = &cobra.Command{
 
 func init() {
 	bridgeCmd.AddCommand(bridgeTokenCmd)
-	bridgeTokenCmd.Flags().BoolVarP(&bridgeTokenAll, "all", "a", false, "")
-	bridgeTokenCmd.Flags().BoolVarP(&bridgeTokenLocalOnly, "local", "l", true, "")
+	bridgeTokenCmd.Flags().BoolVarP(&bridgeTokenLocalOnly, "local", "l", false, "")
 	bridgeTokenCmd.Flags().BoolVarP(&bridgeTokenGlobalOnly, "global", "g", false, "")
 	bridgeTokenCmd.Flags().SortFlags = false
 }
