@@ -34,11 +34,9 @@ var bridgeTokenAddCmd = &cobra.Command{
 
 func init() {
 	bridgeTokenCmd.AddCommand(bridgeTokenAddCmd)
-	bridgeTokenAddCmd.Flags().StringVarP(&bridgeToken.Id, "id", "i", "", "")
 	bridgeTokenAddCmd.Flags().BoolVarP(&bridgeToken.Global, "global", "g", false, "")
 	bridgeTokenAddCmd.Flags().StringVarP(&bridgeToken.Value, "value", "v", "", "")
 	bridgeTokenAddCmd.Flags().StringVarP(&bridgeToken.Target, "target", "t", "", "")
 	bridgeTokenAddCmd.Flags().StringArrayVarP(&bridgeToken.Scopes, "scopes", "s", []string{}, "")
 	bridgeTokenAddCmd.Flags().SortFlags = false
-
 }

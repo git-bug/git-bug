@@ -59,14 +59,13 @@ func runTokenBridge(cmd *cobra.Command, args []string) error {
 
 	for _, token := range tokens {
 		valueFmt := text.LeftPadMaxLine(token.Value, 20, 0)
-		targetFmt := text.LeftPadMaxLine(token.Target, 10, 0)
+		targetFmt := text.LeftPadMaxLine(token.Target, 8, 0)
 		scopesFmt := text.LeftPadMaxLine(strings.Join(token.Scopes, ","), 20, 0)
 
-		fmt.Printf("%s %s %s %s %s\n",
-			colors.Cyan(token.Id),
+		fmt.Printf("%s %s %s %s\n",
+			valueFmt,
 			colors.Magenta(targetFmt),
 			colors.Yellow(token.Global),
-			valueFmt,
 			scopesFmt,
 		)
 	}

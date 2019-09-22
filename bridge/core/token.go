@@ -10,14 +10,12 @@ import (
 
 const (
 	tokenConfigKeyPrefix = "git-bug.token"
-	tokenKeyValue        = "value"
 	tokenKeyTarget       = "target"
 	tokenKeyScopes       = "scopes"
 )
 
 // Token represent token related informations
 type Token struct {
-	Id     string
 	Value  string
 	Target string
 	Global bool
@@ -25,9 +23,8 @@ type Token struct {
 }
 
 // NewToken instantiate a new token
-func NewToken(id, value, target string, global bool, scopes []string) *Token {
+func NewToken(value, target string, global bool, scopes []string) *Token {
 	return &Token{
-		Id:     id,
 		Value:  value,
 		Target: target,
 		Global: global,
@@ -37,9 +34,6 @@ func NewToken(id, value, target string, global bool, scopes []string) *Token {
 
 // Validate ensure token important fields are valid
 func (t *Token) Validate() error {
-	if t.Id == "" {
-		return fmt.Errorf("missing token id")
-	}
 	if t.Value == "" {
 		return fmt.Errorf("missing token value")
 	}
@@ -49,8 +43,8 @@ func (t *Token) Validate() error {
 	return nil
 }
 
-func loadToken(repo repository.RepoConfig, id string, global bool) (*Token, error) {
-	keyPrefix := fmt.Sprintf("git-bug.token.%s.", id)
+func loadToken(repo repository.RepoConfig, value string, global bool) (*Token, error) {
+	keyPrefix := fmt.Sprintf("git-bug.token.%s.", value)
 	var pairs map[string]string
 	var err error
 
@@ -75,12 +69,7 @@ func loadToken(repo repository.RepoConfig, id string, global bool) (*Token, erro
 	}
 
 	var ok bool
-	token := &Token{Id: id, Global: global}
-	token.Value, ok = result[tokenKeyValue]
-	if !ok {
-		return nil, fmt.Errorf("empty token value")
-	}
-
+	token := &Token{Value: value, Global: global}
 	token.Target, ok = result[tokenKeyTarget]
 	if !ok {
 		return nil, fmt.Errorf("empty token key")
@@ -96,13 +85,13 @@ func loadToken(repo repository.RepoConfig, id string, global bool) (*Token, erro
 }
 
 // GetToken loads a token from repo config
-func GetToken(repo repository.RepoConfig, id string) (*Token, error) {
-	return loadToken(repo, id, false)
+func GetToken(repo repository.RepoConfig, value string) (*Token, error) {
+	return loadToken(repo, value, false)
 }
 
 // GetGlobalToken loads a token from the global config
-func GetGlobalToken(repo repository.RepoConfig, id string) (*Token, error) {
-	return loadToken(repo, id, true)
+func GetGlobalToken(repo repository.RepoConfig, value string) (*Token, error) {
+	return loadToken(repo, value, true)
 }
 
 func listTokens(repo repository.RepoConfig, global bool) ([]string, error) {
@@ -166,19 +155,13 @@ func storeToken(repo repository.RepoConfig, token *Token) error {
 	}
 
 	var err error
-	storeValueKey := fmt.Sprintf("git-bug.token.%s.%s", token.Id, tokenKeyValue)
-	err = store(storeValueKey, token.Value)
-	if err != nil {
-		return err
-	}
-
-	storeTargetKey := fmt.Sprintf("git-bug.token.%s.%s", token.Id, tokenKeyTarget)
+	storeTargetKey := fmt.Sprintf("git-bug.token.%s.%s", token.Value, tokenKeyTarget)
 	err = store(storeTargetKey, token.Target)
 	if err != nil {
 		return err
 	}
 
-	storeScopesKey := fmt.Sprintf("git-bug.token.%s.%s", token.Id, tokenKeyScopes)
+	storeScopesKey := fmt.Sprintf("git-bug.token.%s.%s", token.Value, tokenKeyScopes)
 	err = store(storeScopesKey, strings.Join(token.Scopes, ","))
 	if err != nil {
 		return err
@@ -198,13 +181,13 @@ func StoreGlobalToken(repo repository.RepoConfig, token *Token) error {
 }
 
 // RemoveToken removes a token from the repo config
-func RemoveToken(repo repository.RepoConfig, id string) error {
-	keyPrefix := fmt.Sprintf("git-bug.token.%s", id)
+func RemoveToken(repo repository.RepoConfig, value string) error {
+	keyPrefix := fmt.Sprintf("git-bug.token.%s", value)
 	return repo.RmConfigs(keyPrefix)
 }
 
 // RemoveGlobalToken removes a token from the repo config
-func RemoveGlobalToken(repo repository.RepoConfig, id string) error {
-	keyPrefix := fmt.Sprintf("git-bug.token.%s", id)
+func RemoveGlobalToken(repo repository.RepoConfig, value string) error {
+	keyPrefix := fmt.Sprintf("git-bug.token.%s", value)
 	return repo.RmGlobalConfigs(keyPrefix)
 }
