@@ -95,11 +95,13 @@ func (c *wsConnection) init() bool {
 		}
 
 		if c.cfg.websocketInitFunc != nil {
-			if err := c.cfg.websocketInitFunc(c.ctx, c.initPayload); err != nil {
+			ctx, err := c.cfg.websocketInitFunc(c.ctx, c.initPayload)
+			if err != nil {
 				c.sendConnectionError(err.Error())
 				c.close(websocket.CloseNormalClosure, "terminated")
 				return false
 			}
+			c.ctx = ctx
 		}
 
 		c.write(&operationMessage{Type: connectionAckMsg})
@@ -222,7 +224,11 @@ func (c *wsConnection) subscribe(message *operationMessage) bool {
 		c.sendError(message.ID, err)
 		return true
 	}
-	reqCtx := c.cfg.newRequestContext(c.exec, doc, op, reqParams.Query, vars)
+	reqCtx, err2 := c.cfg.newRequestContext(c.ctx, c.exec, doc, op, reqParams.OperationName, reqParams.Query, vars)
+	if err2 != nil {
+		c.sendError(message.ID, gqlerror.Errorf(err2.Error()))
+		return true
+	}
 	ctx := graphql.WithRequestContext(c.ctx, reqCtx)
 
 	if c.initPayload != nil {

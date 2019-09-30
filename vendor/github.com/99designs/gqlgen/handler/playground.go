@@ -11,7 +11,7 @@ var page = template.Must(template.New("graphiql").Parse(`<!DOCTYPE html>
 	<meta charset=utf-8/>
 	<meta name="viewport" content="user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, minimal-ui">
 	<link rel="shortcut icon" href="https://graphcool-playground.netlify.com/favicon.png">
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/graphql-playground-react@{{ .version }}/build/static/css/index.css" 
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/graphql-playground-react@{{ .version }}/build/static/css/index.css"
 		integrity="{{ .cssSRI }}" crossorigin="anonymous"/>
 	<link rel="shortcut icon" href="https://cdn.jsdelivr.net/npm/graphql-playground-react@{{ .version }}/build/favicon.png"
 		integrity="{{ .faviconSRI }}" crossorigin="anonymous"/>
@@ -33,6 +33,7 @@ var page = template.Must(template.New("graphiql").Parse(`<!DOCTYPE html>
 		GraphQLPlayground.init(root, {
 			endpoint: location.protocol + '//' + location.host + '{{.endpoint}}',
 			subscriptionsEndpoint: wsProto + '//' + location.host + '{{.endpoint }}',
+           shareEnabled: true,
 			settings: {
 				'request.credentials': 'same-origin'
 			}

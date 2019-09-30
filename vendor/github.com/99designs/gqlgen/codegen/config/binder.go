@@ -75,7 +75,22 @@ func (b *Binder) ObjectPosition(typ types.Object) token.Position {
 	return pkg.Fset.Position(typ.Pos())
 }
 
+func (b *Binder) FindTypeFromName(name string) (types.Type, error) {
+	pkgName, typeName := code.PkgAndType(name)
+	return b.FindType(pkgName, typeName)
+}
+
 func (b *Binder) FindType(pkgName string, typeName string) (types.Type, error) {
+	if pkgName == "" {
+		if typeName == "map[string]interface{}" {
+			return MapType, nil
+		}
+
+		if typeName == "interface{}" {
+			return InterfaceType, nil
+		}
+	}
+
 	obj, err := b.FindObject(pkgName, typeName)
 	if err != nil {
 		return nil, err
@@ -225,10 +240,7 @@ func (t *TypeReference) IsPtr() bool {
 }
 
 func (t *TypeReference) IsNilable() bool {
-	_, isPtr := t.GO.(*types.Pointer)
-	_, isMap := t.GO.(*types.Map)
-	_, isInterface := t.GO.(*types.Interface)
-	return isPtr || isMap || isInterface
+	return isNilable(t.GO)
 }
 
 func (t *TypeReference) IsSlice() bool {
@@ -396,7 +408,7 @@ func (b *Binder) TypeReference(schemaType *ast.Type, bindTarget types.Type) (ret
 func (b *Binder) CopyModifiersFromAst(t *ast.Type, base types.Type) types.Type {
 	if t.Elem != nil {
 		child := b.CopyModifiersFromAst(t.Elem, base)
-		if _, isStruct := child.Underlying().(*types.Struct); isStruct {
+		if _, isStruct := child.Underlying().(*types.Struct); isStruct && !b.cfg.OmitSliceElementPointers {
 			child = types.NewPointer(child)
 		}
 		return types.NewSlice(child)
@@ -407,11 +419,21 @@ func (b *Binder) CopyModifiersFromAst(t *ast.Type, base types.Type) types.Type {
 		_, isInterface = named.Underlying().(*types.Interface)
 	}
 
-	if !isInterface && !t.NonNull {
+	if !isInterface && !isNilable(base) && !t.NonNull {
 		return types.NewPointer(base)
 	}
 
 	return base
+}
+
+func isNilable(t types.Type) bool {
+	if namedType, isNamed := t.(*types.Named); isNamed {
+		t = namedType.Underlying()
+	}
+	_, isPtr := t.(*types.Pointer)
+	_, isMap := t.(*types.Map)
+	_, isInterface := t.(*types.Interface)
+	return isPtr || isMap || isInterface
 }
 
 func hasMethod(it types.Type, name string) bool {

@@ -20,14 +20,15 @@ import (
 )
 
 type Config struct {
-	SchemaFilename StringList                 `yaml:"schema,omitempty"`
-	Exec           PackageConfig              `yaml:"exec"`
-	Model          PackageConfig              `yaml:"model"`
-	Resolver       PackageConfig              `yaml:"resolver,omitempty"`
-	AutoBind       []string                   `yaml:"autobind"`
-	Models         TypeMap                    `yaml:"models,omitempty"`
-	StructTag      string                     `yaml:"struct_tag,omitempty"`
-	Directives     map[string]DirectiveConfig `yaml:"directives,omitempty"`
+	SchemaFilename           StringList                 `yaml:"schema,omitempty"`
+	Exec                     PackageConfig              `yaml:"exec"`
+	Model                    PackageConfig              `yaml:"model"`
+	Resolver                 PackageConfig              `yaml:"resolver,omitempty"`
+	AutoBind                 []string                   `yaml:"autobind"`
+	Models                   TypeMap                    `yaml:"models,omitempty"`
+	StructTag                string                     `yaml:"struct_tag,omitempty"`
+	Directives               map[string]DirectiveConfig `yaml:"directives,omitempty"`
+	OmitSliceElementPointers bool                       `yaml:"omit_slice_element_pointers,omitempty"`
 }
 
 var cfgFilenames = []string{".gqlgen.yml", "gqlgen.yml", "gqlgen.yaml"}
@@ -402,6 +403,27 @@ func (c *Config) Autobind(s *ast.Schema) error {
 			if t := p.Types.Scope().Lookup(t.Name); t != nil {
 				c.Models.Add(t.Name(), t.Pkg().Path()+"."+t.Name())
 				break
+			}
+		}
+	}
+
+	for i, t := range c.Models {
+		for j, m := range t.Model {
+			pkg, typename := code.PkgAndType(m)
+
+			// skip anything that looks like an import path
+			if strings.Contains(pkg, "/") {
+				continue
+			}
+
+			for _, p := range ps {
+				if p.Name != pkg {
+					continue
+				}
+				if t := p.Types.Scope().Lookup(typename); t != nil {
+					c.Models[i].Model[j] = t.Pkg().Path() + "." + t.Name()
+					break
+				}
 			}
 		}
 	}

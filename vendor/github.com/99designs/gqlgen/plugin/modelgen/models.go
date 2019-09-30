@@ -7,7 +7,6 @@ import (
 
 	"github.com/99designs/gqlgen/codegen/config"
 	"github.com/99designs/gqlgen/codegen/templates"
-	"github.com/99designs/gqlgen/internal/code"
 	"github.com/99designs/gqlgen/plugin"
 	"github.com/vektah/gqlparser/ast"
 )
@@ -119,8 +118,7 @@ func (m *Plugin) MutateConfig(cfg *config.Config) error {
 				fieldDef := schema.Types[field.Type.Name()]
 
 				if cfg.Models.UserDefined(field.Type.Name()) {
-					pkg, typeName := code.PkgAndType(cfg.Models[field.Type.Name()].Model[0])
-					typ, err = binder.FindType(pkg, typeName)
+					typ, err = binder.FindTypeFromName(cfg.Models[field.Type.Name()].Model[0])
 					if err != nil {
 						return err
 					}

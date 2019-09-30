@@ -2,6 +2,7 @@ package graphql
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 
@@ -15,9 +16,10 @@ type RequestMiddleware func(ctx context.Context, next func(ctx context.Context) 
 type ComplexityLimitFunc func(ctx context.Context) int
 
 type RequestContext struct {
-	RawQuery  string
-	Variables map[string]interface{}
-	Doc       *ast.QueryDocument
+	RawQuery      string
+	Variables     map[string]interface{}
+	OperationName string
+	Doc           *ast.QueryDocument
 
 	ComplexityLimit      int
 	OperationComplexity  int
@@ -38,6 +40,41 @@ type RequestContext struct {
 	Extensions   map[string]interface{}
 }
 
+func (rc *RequestContext) Validate(ctx context.Context) error {
+	if rc.Doc == nil {
+		return errors.New("field 'Doc' must be required")
+	}
+	if rc.RawQuery == "" {
+		return errors.New("field 'RawQuery' must be required")
+	}
+	if rc.Variables == nil {
+		rc.Variables = make(map[string]interface{})
+	}
+	if rc.ResolverMiddleware == nil {
+		rc.ResolverMiddleware = DefaultResolverMiddleware
+	}
+	if rc.DirectiveMiddleware == nil {
+		rc.DirectiveMiddleware = DefaultDirectiveMiddleware
+	}
+	if rc.RequestMiddleware == nil {
+		rc.RequestMiddleware = DefaultRequestMiddleware
+	}
+	if rc.Recover == nil {
+		rc.Recover = DefaultRecover
+	}
+	if rc.ErrorPresenter == nil {
+		rc.ErrorPresenter = DefaultErrorPresenter
+	}
+	if rc.Tracer == nil {
+		rc.Tracer = &NopTracer{}
+	}
+	if rc.ComplexityLimit < 0 {
+		return errors.New("field 'ComplexityLimit' value must be 0 or more")
+	}
+
+	return nil
+}
+
 func DefaultResolverMiddleware(ctx context.Context, next Resolver) (res interface{}, err error) {
 	return next(ctx)
 }
@@ -50,18 +87,19 @@ func DefaultRequestMiddleware(ctx context.Context, next func(ctx context.Context
 	return next(ctx)
 }
 
+// Deprecated: construct RequestContext directly & call Validate method.
 func NewRequestContext(doc *ast.QueryDocument, query string, variables map[string]interface{}) *RequestContext {
-	return &RequestContext{
-		Doc:                 doc,
-		RawQuery:            query,
-		Variables:           variables,
-		ResolverMiddleware:  DefaultResolverMiddleware,
-		DirectiveMiddleware: DefaultDirectiveMiddleware,
-		RequestMiddleware:   DefaultRequestMiddleware,
-		Recover:             DefaultRecover,
-		ErrorPresenter:      DefaultErrorPresenter,
-		Tracer:              &NopTracer{},
+	rc := &RequestContext{
+		Doc:       doc,
+		RawQuery:  query,
+		Variables: variables,
 	}
+	err := rc.Validate(context.Background())
+	if err != nil {
+		panic(err)
+	}
+
+	return rc
 }
 
 type key string

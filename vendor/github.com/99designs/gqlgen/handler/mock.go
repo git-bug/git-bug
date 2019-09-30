@@ -9,6 +9,7 @@ import (
 )
 
 type executableSchemaMock struct {
+	QueryFunc    func(ctx context.Context, op *ast.OperationDefinition) *graphql.Response
 	MutationFunc func(ctx context.Context, op *ast.OperationDefinition) *graphql.Response
 }
 
@@ -42,7 +43,10 @@ func (e *executableSchemaMock) Complexity(typeName, field string, childComplexit
 }
 
 func (e *executableSchemaMock) Query(ctx context.Context, op *ast.OperationDefinition) *graphql.Response {
-	return graphql.ErrorResponse(ctx, "queries are not supported")
+	if e.QueryFunc == nil {
+		return graphql.ErrorResponse(ctx, "queries are not supported")
+	}
+	return e.QueryFunc(ctx, op)
 }
 
 func (e *executableSchemaMock) Mutation(ctx context.Context, op *ast.OperationDefinition) *graphql.Response {

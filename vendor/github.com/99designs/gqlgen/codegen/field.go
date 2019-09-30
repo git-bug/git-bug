@@ -27,6 +27,7 @@ type Field struct {
 	NoErr            bool             // If this is bound to a go method, does that method have an error as the second argument
 	Object           *Object          // A link back to the parent object
 	Default          interface{}      // The default value
+	Stream           bool             // does this field return a channel?
 	Directives       []*Directive
 }
 
@@ -83,6 +84,8 @@ func (b *builder) bindField(obj *Object, f *Field) error {
 			f.TypeReference = tr
 		}
 	}()
+
+	f.Stream = obj.Stream
 
 	switch {
 	case f.Name == "__schema":

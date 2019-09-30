@@ -52,7 +52,7 @@ type PersistedQueryCache interface {
 	Get(ctx context.Context, hash string) (string, bool)
 }
 
-type websocketInitFunc func(ctx context.Context, initPayload InitPayload) error
+type websocketInitFunc func(ctx context.Context, initPayload InitPayload) (context.Context, error)
 
 type Config struct {
 	cacheSize                       int
@@ -72,37 +72,29 @@ type Config struct {
 	apqCache                        PersistedQueryCache
 }
 
-func (c *Config) newRequestContext(es graphql.ExecutableSchema, doc *ast.QueryDocument, op *ast.OperationDefinition, query string, variables map[string]interface{}) *graphql.RequestContext {
-	reqCtx := graphql.NewRequestContext(doc, query, variables)
-	reqCtx.DisableIntrospection = c.disableIntrospection
-
-	if hook := c.recover; hook != nil {
-		reqCtx.Recover = hook
+func (c *Config) newRequestContext(ctx context.Context, es graphql.ExecutableSchema, doc *ast.QueryDocument, op *ast.OperationDefinition, operationName, query string, variables map[string]interface{}) (*graphql.RequestContext, error) {
+	reqCtx := &graphql.RequestContext{
+		Doc:                  doc,
+		RawQuery:             query,
+		Variables:            variables,
+		OperationName:        operationName,
+		DisableIntrospection: c.disableIntrospection,
+		Recover:              c.recover,
+		ErrorPresenter:       c.errorPresenter,
+		ResolverMiddleware:   c.resolverHook,
+		RequestMiddleware:    c.requestHook,
+		Tracer:               c.tracer,
+		ComplexityLimit:      c.complexityLimit,
+	}
+	if reqCtx.ComplexityLimit > 0 || c.complexityLimitFunc != nil {
+		reqCtx.OperationComplexity = complexity.Calculate(es, op, variables)
+	}
+	err := reqCtx.Validate(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	if hook := c.errorPresenter; hook != nil {
-		reqCtx.ErrorPresenter = hook
-	}
-
-	if hook := c.resolverHook; hook != nil {
-		reqCtx.ResolverMiddleware = hook
-	}
-
-	if hook := c.requestHook; hook != nil {
-		reqCtx.RequestMiddleware = hook
-	}
-
-	if hook := c.tracer; hook != nil {
-		reqCtx.Tracer = hook
-	}
-
-	if c.complexityLimit > 0 || c.complexityLimitFunc != nil {
-		reqCtx.ComplexityLimit = c.complexityLimit
-		operationComplexity := complexity.Calculate(es, op, variables)
-		reqCtx.OperationComplexity = operationComplexity
-	}
-
-	return reqCtx
+	return reqCtx, nil
 }
 
 type Option func(cfg *Config)
@@ -278,7 +270,7 @@ func (tw *tracerWrapper) EndOperationExecution(ctx context.Context) {
 
 // WebsocketInitFunc is called when the server receives connection init message from the client.
 // This can be used to check initial payload to see whether to accept the websocket connection.
-func WebsocketInitFunc(websocketInitFunc func(ctx context.Context, initPayload InitPayload) error) Option {
+func WebsocketInitFunc(websocketInitFunc websocketInitFunc) Option {
 	return func(cfg *Config) {
 		cfg.websocketInitFunc = websocketInitFunc
 	}
@@ -532,7 +524,11 @@ func (gh *graphqlHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		gh.cache.Add(reqParams.Query, doc)
 	}
 
-	reqCtx := gh.cfg.newRequestContext(gh.exec, doc, op, reqParams.Query, vars)
+	reqCtx, err := gh.cfg.newRequestContext(ctx, gh.exec, doc, op, reqParams.OperationName, reqParams.Query, vars)
+	if err != nil {
+		sendErrorf(w, http.StatusBadRequest, "invalid RequestContext was generated: %s", err.Error())
+		return
+	}
 	ctx = graphql.WithRequestContext(ctx, reqCtx)
 
 	defer func() {
