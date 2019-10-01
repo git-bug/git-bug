@@ -2,6 +2,7 @@ package gitlab
 
 import (
 	"context"
+	"sort"
 	"time"
 
 	"github.com/xanzy/go-gitlab"
@@ -23,6 +24,20 @@ type labelEventIterator struct {
 	page  int
 	index int
 	cache []*gitlab.LabelEvent
+}
+
+func (l *labelEventIterator) Len() int {
+	return len(l.cache)
+}
+
+func (l *labelEventIterator) Swap(i, j int) {
+	element := l.cache[i]
+	l.cache[i] = l.cache[j]
+	l.cache[j] = element
+}
+
+func (l *labelEventIterator) Less(i, j int) bool {
+	return l.cache[i].ID < l.cache[j].ID
 }
 
 type iterator struct {
@@ -240,6 +255,8 @@ func (i *iterator) getNextLabelEvents() bool {
 	i.labelEvent.cache = labelEvents
 	i.labelEvent.page++
 	i.labelEvent.index = 0
+
+	sort.Sort(i.labelEvent)
 	return true
 }
 
