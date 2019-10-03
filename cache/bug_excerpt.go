@@ -31,6 +31,7 @@ type BugExcerpt struct {
 	LenComments  int
 	Actors       []entity.Id
 	Participants []entity.Id
+	IsFavorite   bool
 
 	// If author is identity.Bare, LegacyAuthor is set
 	// If author is identity.Identity, AuthorId is set and data is deported
@@ -81,6 +82,7 @@ func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
 		Labels:            snap.Labels,
 		Actors:            actorsIds,
 		Participants:      participantsIds,
+		IsFavorite:        false,
 		Title:             snap.Title,
 		LenComments:       len(snap.Comments),
 		CreateMetadata:    b.FirstOp().AllMetadata(),

@@ -121,7 +121,7 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 		v.Frame = false
 		v.BgColor = gocui.ColorBlue
 
-		_, _ = fmt.Fprintf(v, "[q] Quit [s] Search [←↓↑→,hjkl] Navigation [↵] Open bug [n] New bug [i] Pull [o] Push")
+		_, _ = fmt.Fprintf(v, "[q] Quit [s] Search [←↓↑→,hjkl] Navigation [↵] Open bug [n] New bug [i] Pull [o] Push [f] Mark favorite")
 	}
 
 	_, err = g.SetCurrentView(bugTableView)
@@ -207,6 +207,12 @@ func (bt *bugTable) keybindings(g *gocui.Gui) error {
 	// Query
 	if err := g.SetKeybinding(bugTableView, 's', gocui.ModNone,
 		bt.changeQuery); err != nil {
+		return err
+	}
+
+	// Mark favorite
+	if err := g.SetKeybinding(bugTableView, 'f', gocui.ModNone,
+		bt.markFavorite); err != nil {
 		return err
 	}
 
@@ -315,14 +321,25 @@ func (bt *bugTable) render(v *gocui.View, maxX int) {
 		summary := text.LeftPadMaxLine(summaryTxt, columnWidths["summary"], 1)
 		lastEdit := text.LeftPadMaxLine(humanize.Time(lastEditTime), columnWidths["lastEdit"], 1)
 
-		_, _ = fmt.Fprintf(v, "%s %s %s %s %s %s\n",
-			colors.Cyan(id),
-			colors.Yellow(status),
-			title,
-			colors.Magenta(author),
-			summary,
-			lastEdit,
-		)
+		if excerpt.IsFavorite {
+			_, _ = fmt.Fprintf(v, "%s %s %s %s %s %s\n",
+				colors.BlueBg(colors.Cyan(id)),
+				colors.BlueBg(colors.Yellow(status)),
+				colors.BlueBg(title),
+				colors.BlueBg(colors.Magenta(author)),
+				colors.BlueBg(summary),
+				colors.BlueBg(lastEdit),
+			)
+		} else {
+			_, _ = fmt.Fprintf(v, "%s %s %s %s %s %s\n",
+				colors.Cyan(id),
+				colors.Yellow(status),
+				title,
+				colors.Magenta(author),
+				summary,
+				lastEdit,
+			)
+		}
 	}
 }
 
@@ -447,6 +464,17 @@ func (bt *bugTable) openBug(g *gocui.Gui, v *gocui.View) error {
 	}
 	ui.showBug.SetBug(b)
 	return ui.activateWindow(ui.showBug)
+}
+
+func (bt *bugTable) markFavorite(g *gocui.Gui, v *gocui.View) error {
+	_, y := v.Cursor()
+	id := bt.excerpts[y].Id
+	err := bt.repo.MarkFavorite(id)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (bt *bugTable) pull(g *gocui.Gui, v *gocui.View) error {

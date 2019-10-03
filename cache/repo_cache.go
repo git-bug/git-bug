@@ -2,6 +2,7 @@ package cache
 
 import (
 	"bytes"
+	"bufio"
 	"encoding/gob"
 	"fmt"
 	"io"
@@ -24,6 +25,7 @@ import (
 
 const bugCacheFile = "bug-cache"
 const identityCacheFile = "identity-cache"
+const favoriteBugsFile = "favorites"
 
 // 1: original format
 // 2: added cache for identities with a reference in the bug cache
@@ -61,6 +63,8 @@ type RepoCache struct {
 	bugExcerpts map[entity.Id]*BugExcerpt
 	// bug loaded in memory
 	bugs map[entity.Id]*BugCache
+
+	favoriteBugs []entity.Id
 
 	// excerpt of identities data for all identities
 	identitiesExcerpts map[entity.Id]*IdentityExcerpt
@@ -191,6 +195,13 @@ func (c *RepoCache) bugUpdated(id entity.Id) error {
 
 	c.bugExcerpts[id] = NewBugExcerpt(b.bug, b.Snapshot())
 
+	for _, i := range c.favoriteBugs {
+		if id == i {
+			c.bugExcerpts[id].IsFavorite = true
+			break
+		}
+	}
+
 	// we only need to write the bug cache
 	return c.writeBugCache()
 }
@@ -211,10 +222,15 @@ func (c *RepoCache) identityUpdated(id entity.Id) error {
 
 // load will try to read from the disk all the cache files
 func (c *RepoCache) load() error {
-	err := c.loadBugCache()
+	err := c.loadFavorites()
 	if err != nil {
 		return err
 	}
+	err = c.loadBugCache()
+	if err != nil {
+		return err
+	}
+
 	return c.loadIdentityCache()
 }
 
@@ -224,6 +240,7 @@ func (c *RepoCache) loadBugCache() error {
 	if err != nil {
 		return err
 	}
+	defer f.Close()
 
 	decoder := gob.NewDecoder(f)
 
@@ -253,6 +270,7 @@ func (c *RepoCache) loadIdentityCache() error {
 	if err != nil {
 		return err
 	}
+	defer f.Close()
 
 	decoder := gob.NewDecoder(f)
 
@@ -273,6 +291,25 @@ func (c *RepoCache) loadIdentityCache() error {
 	}
 
 	c.identitiesExcerpts = aux.Excerpts
+	return nil
+}
+
+// load list of favorite bugs from disk
+func (c *RepoCache) loadFavorites() error {
+	f, err := os.Open(favoriteBugsFilePath(c.repo))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	s := bufio.NewScanner(f)
+	for s.Scan() {
+		c.favoriteBugs = append(c.favoriteBugs, entity.Id(s.Text()))
+	}
+	if err := s.Err(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -349,12 +386,37 @@ func (c *RepoCache) writeIdentityCache() error {
 	return f.Close()
 }
 
+// Write list of favorite bugs on disk 
+func (c *RepoCache) writeFavorites() error {
+	f, err := os.Create(favoriteBugsFilePath(c.repo))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	w := bufio.NewWriter(f)
+	for _, e := range c.favoriteBugs {
+		fmt.Fprintln(w, e)
+	}
+	w.Flush()
+
+	if err = c.writeBugCache(); err!= nil {
+		return err
+	}
+
+	return f.Close()
+}
+
 func bugCacheFilePath(repo repository.Repo) string {
 	return path.Join(repo.GetPath(), "git-bug", bugCacheFile)
 }
 
 func identityCacheFilePath(repo repository.Repo) string {
 	return path.Join(repo.GetPath(), "git-bug", identityCacheFile)
+}
+
+func favoriteBugsFilePath(repo repository.Repo) string {
+	return path.Join(repo.GetPath(), "git-bug", favoriteBugsFile)
 }
 
 func (c *RepoCache) buildCache() error {
@@ -387,10 +449,46 @@ func (c *RepoCache) buildCache() error {
 
 		snap := b.Bug.Compile()
 		c.bugExcerpts[b.Bug.Id()] = NewBugExcerpt(b.Bug, &snap)
+
+		for _, i := range c.favoriteBugs {
+			if b.Bug.Id() == i {
+				c.bugExcerpts[b.Bug.Id()].IsFavorite = true
+				break
+			}
+		}
 	}
+
 
 	_, _ = fmt.Fprintln(os.Stderr, "Done.")
 	return nil
+}
+
+func (c *RepoCache) MarkFavorite(id entity.Id) error {
+	_, ok := c.bugExcerpts[id]
+	if !ok {
+		return bug.ErrBugNotExist
+	}
+
+	if c.bugExcerpts[id].IsFavorite == false {
+		c.bugExcerpts[id].IsFavorite = true
+		c.favoriteBugs = append(c.favoriteBugs, id)
+	} else {
+		c.bugExcerpts[id].IsFavorite = false
+		var i int
+		var e entity.Id
+		for i, e = range c.favoriteBugs {
+			if id == e {
+				break
+			}
+		}
+		if len(c.favoriteBugs) <= 1 {
+			c.favoriteBugs = c.favoriteBugs[:0]
+		} else {
+			c.favoriteBugs = append(c.favoriteBugs[:i], c.favoriteBugs[i+1:] ...)
+		}
+	}
+
+	return c.writeFavorites()
 }
 
 // ResolveBug retrieve a bug matching the exact given id
