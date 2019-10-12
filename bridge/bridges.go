@@ -3,12 +3,18 @@ package bridge
 
 import (
 	"github.com/MichaelMure/git-bug/bridge/core"
-	_ "github.com/MichaelMure/git-bug/bridge/github"
-	_ "github.com/MichaelMure/git-bug/bridge/gitlab"
-	_ "github.com/MichaelMure/git-bug/bridge/launchpad"
+	"github.com/MichaelMure/git-bug/bridge/github"
+	"github.com/MichaelMure/git-bug/bridge/gitlab"
+	"github.com/MichaelMure/git-bug/bridge/launchpad"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/repository"
 )
+
+func init() {
+	core.Register(&github.Github{})
+	core.Register(&gitlab.Gitlab{})
+	core.Register(&launchpad.Launchpad{})
+}
 
 // Targets return all known bridge implementation target
 func Targets() []string {

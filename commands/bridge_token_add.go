@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
@@ -11,17 +12,15 @@ var (
 )
 
 func runBridgeTokenAdd(cmd *cobra.Command, args []string) error {
-	if bridgeToken.Global {
-		return core.StoreToken(
-			repo,
-			&bridgeToken,
-		)
+	if err := bridgeToken.Validate(); err != nil {
+		return errors.Wrap(err, "invalid token")
 	}
 
-	return core.StoreGlobalToken(
-		repo,
-		&bridgeToken,
-	)
+	if bridgeToken.Global {
+		return core.StoreToken(repo, &bridgeToken)
+	}
+
+	return core.StoreGlobalToken(repo, &bridgeToken)
 }
 
 var bridgeTokenAddCmd = &cobra.Command{

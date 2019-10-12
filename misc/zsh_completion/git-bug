@@ -118,6 +118,7 @@ function _git-bug_bridge {
       "pull:Pull updates."
       "push:Push updates."
       "rm:Delete a configured bridge."
+      "token:Configure and use bridge tokens."
     )
     _describe "command" commands
     ;;
@@ -135,6 +136,9 @@ function _git-bug_bridge {
     ;;
   rm)
     _git-bug_bridge_rm
+    ;;
+  token)
+    _git-bug_bridge_token
     ;;
   esac
 }
@@ -161,6 +165,48 @@ function _git-bug_bridge_push {
 }
 
 function _git-bug_bridge_rm {
+  _arguments
+}
+
+
+function _git-bug_bridge_token {
+  local -a commands
+
+  _arguments -C \
+    '(-l --local)'{-l,--local}'[]' \
+    '(-g --global)'{-g,--global}'[]' \
+    "1: :->cmnds" \
+    "*::arg:->args"
+
+  case $state in
+  cmnds)
+    commands=(
+      "add:Configure and use bridge tokens."
+      "rm:Configure and use bridge tokens."
+    )
+    _describe "command" commands
+    ;;
+  esac
+
+  case "$words[1]" in
+  add)
+    _git-bug_bridge_token_add
+    ;;
+  rm)
+    _git-bug_bridge_token_rm
+    ;;
+  esac
+}
+
+function _git-bug_bridge_token_add {
+  _arguments \
+    '(-g --global)'{-g,--global}'[]' \
+    '(-v --value)'{-v,--value}'[]:' \
+    '(-t --target)'{-t,--target}'[]:' \
+    '(*-s *--scopes)'{\*-s,\*--scopes}'[]:'
+}
+
+function _git-bug_bridge_token_rm {
   _arguments
 }
 

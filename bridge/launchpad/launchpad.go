@@ -5,10 +5,6 @@ import (
 	"github.com/MichaelMure/git-bug/bridge/core"
 )
 
-func init() {
-	core.Register(&Launchpad{})
-}
-
 type Launchpad struct{}
 
 func (*Launchpad) Target() string {

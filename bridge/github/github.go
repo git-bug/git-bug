@@ -10,10 +10,6 @@ import (
 	"github.com/MichaelMure/git-bug/bridge/core"
 )
 
-func init() {
-	core.Register(&Github{})
-}
-
 type Github struct{}
 
 func (*Github) Target() string {

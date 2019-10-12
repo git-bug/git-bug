@@ -14,7 +14,7 @@ const (
 	tokenKeyScopes       = "scopes"
 )
 
-// Token represent token related informations
+// Token holds an API access token data
 type Token struct {
 	Value  string
 	Target string
@@ -35,47 +35,46 @@ func NewToken(value, target string, global bool, scopes []string) *Token {
 // Validate ensure token important fields are valid
 func (t *Token) Validate() error {
 	if t.Value == "" {
-		return fmt.Errorf("missing token value")
+		return fmt.Errorf("missing value")
 	}
 	if t.Target == "" {
-		return fmt.Errorf("missing token target")
+		return fmt.Errorf("missing target")
+	}
+	if _, ok := bridgeImpl[t.Target]; !ok {
+		return fmt.Errorf("unknown target")
 	}
 	return nil
 }
 
 func loadToken(repo repository.RepoConfig, value string, global bool) (*Token, error) {
 	keyPrefix := fmt.Sprintf("git-bug.token.%s.", value)
-	var pairs map[string]string
-	var err error
+
+	readerFn := repo.ReadConfigs
+	if global {
+		readerFn = repo.ReadGlobalConfigs
+	}
 
 	// read token config pairs
-	if global {
-		pairs, err = repo.ReadGlobalConfigs(keyPrefix)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		pairs, err = repo.ReadConfigs(keyPrefix)
-		if err != nil {
-			return nil, err
-		}
+	configs, err := readerFn(keyPrefix)
+	if err != nil {
+		return nil, err
 	}
 
 	// trim key prefix
-	result := make(Configuration, len(pairs))
-	for key, value := range pairs {
-		key := strings.TrimPrefix(key, keyPrefix)
-		result[key] = value
+	for key, value := range configs {
+		newKey := strings.TrimPrefix(key, keyPrefix)
+		configs[newKey] = value
+		delete(configs, key)
 	}
 
 	var ok bool
 	token := &Token{Value: value, Global: global}
-	token.Target, ok = result[tokenKeyTarget]
+	token.Target, ok = configs[tokenKeyTarget]
 	if !ok {
 		return nil, fmt.Errorf("empty token key")
 	}
 
-	scopesString, ok := result[tokenKeyScopes]
+	scopesString, ok := configs[tokenKeyScopes]
 	if !ok {
 		return nil, fmt.Errorf("missing scopes config")
 	}
@@ -95,18 +94,14 @@ func GetGlobalToken(repo repository.RepoConfig, value string) (*Token, error) {
 }
 
 func listTokens(repo repository.RepoConfig, global bool) ([]string, error) {
-	var configs map[string]string
-	var err error
+	readerFn := repo.ReadConfigs
 	if global {
-		configs, err = repo.ReadGlobalConfigs(tokenConfigKeyPrefix + ".")
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		configs, err = repo.ReadConfigs(tokenConfigKeyPrefix + ".")
-		if err != nil {
-			return nil, err
-		}
+		readerFn = repo.ReadGlobalConfigs
+	}
+
+	configs, err := readerFn(tokenConfigKeyPrefix + ".")
+	if err != nil {
+		return nil, err
 	}
 
 	re, err := regexp.Compile(tokenConfigKeyPrefix + `.([^.]+)`)
@@ -147,27 +142,19 @@ func ListGlobalTokens(repo repository.RepoConfig) ([]string, error) {
 }
 
 func storeToken(repo repository.RepoConfig, token *Token) error {
-	var store func(key, value string) error
+	storeFn := repo.StoreConfig
 	if token.Global {
-		store = repo.StoreGlobalConfig
-	} else {
-		store = repo.StoreConfig
+		storeFn = repo.StoreGlobalConfig
 	}
 
-	var err error
 	storeTargetKey := fmt.Sprintf("git-bug.token.%s.%s", token.Value, tokenKeyTarget)
-	err = store(storeTargetKey, token.Target)
+	err := storeFn(storeTargetKey, token.Target)
 	if err != nil {
 		return err
 	}
 
 	storeScopesKey := fmt.Sprintf("git-bug.token.%s.%s", token.Value, tokenKeyScopes)
-	err = store(storeScopesKey, strings.Join(token.Scopes, ","))
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return storeFn(storeScopesKey, strings.Join(token.Scopes, ","))
 }
 
 // StoreToken stores a token in the repo config

@@ -22,6 +22,7 @@ Register-ArgumentCompleter -Native -CommandName 'git-bug' -ScriptBlock {
             [CompletionResult]::new('commands', 'commands', [CompletionResultType]::ParameterValue, 'Display available commands.')
             [CompletionResult]::new('comment', 'comment', [CompletionResultType]::ParameterValue, 'Display or add comments to a bug.')
             [CompletionResult]::new('deselect', 'deselect', [CompletionResultType]::ParameterValue, 'Clear the implicitly selected bug.')
+            [CompletionResult]::new('export', 'export', [CompletionResultType]::ParameterValue, '')
             [CompletionResult]::new('label', 'label', [CompletionResultType]::ParameterValue, 'Display, add or remove labels to/from a bug.')
             [CompletionResult]::new('ls', 'ls', [CompletionResultType]::ParameterValue, 'List bugs.')
             [CompletionResult]::new('ls-id', 'ls-id', [CompletionResultType]::ParameterValue, 'List bug identifiers.')
@@ -52,6 +53,7 @@ Register-ArgumentCompleter -Native -CommandName 'git-bug' -ScriptBlock {
             [CompletionResult]::new('pull', 'pull', [CompletionResultType]::ParameterValue, 'Pull updates.')
             [CompletionResult]::new('push', 'push', [CompletionResultType]::ParameterValue, 'Push updates.')
             [CompletionResult]::new('rm', 'rm', [CompletionResultType]::ParameterValue, 'Delete a configured bridge.')
+            [CompletionResult]::new('token', 'token', [CompletionResultType]::ParameterValue, 'Configure and use bridge tokens.')
             break
         }
         'git-bug;bridge;configure' {
@@ -83,6 +85,29 @@ Register-ArgumentCompleter -Native -CommandName 'git-bug' -ScriptBlock {
         'git-bug;bridge;rm' {
             break
         }
+        'git-bug;bridge;token' {
+            [CompletionResult]::new('-l', 'l', [CompletionResultType]::ParameterName, '')
+            [CompletionResult]::new('--local', 'local', [CompletionResultType]::ParameterName, '')
+            [CompletionResult]::new('-g', 'g', [CompletionResultType]::ParameterName, '')
+            [CompletionResult]::new('--global', 'global', [CompletionResultType]::ParameterName, '')
+            [CompletionResult]::new('add', 'add', [CompletionResultType]::ParameterValue, 'Configure and use bridge tokens.')
+            [CompletionResult]::new('rm', 'rm', [CompletionResultType]::ParameterValue, 'Configure and use bridge tokens.')
+            break
+        }
+        'git-bug;bridge;token;add' {
+            [CompletionResult]::new('-g', 'g', [CompletionResultType]::ParameterName, '')
+            [CompletionResult]::new('--global', 'global', [CompletionResultType]::ParameterName, '')
+            [CompletionResult]::new('-v', 'v', [CompletionResultType]::ParameterName, '')
+            [CompletionResult]::new('--value', 'value', [CompletionResultType]::ParameterName, '')
+            [CompletionResult]::new('-t', 't', [CompletionResultType]::ParameterName, '')
+            [CompletionResult]::new('--target', 'target', [CompletionResultType]::ParameterName, '')
+            [CompletionResult]::new('-s', 's', [CompletionResultType]::ParameterName, '')
+            [CompletionResult]::new('--scopes', 'scopes', [CompletionResultType]::ParameterName, '')
+            break
+        }
+        'git-bug;bridge;token;rm' {
+            break
+        }
         'git-bug;commands' {
             [CompletionResult]::new('-p', 'p', [CompletionResultType]::ParameterName, 'Output the command description as well as Markdown compatible comment')
             [CompletionResult]::new('--pretty', 'pretty', [CompletionResultType]::ParameterName, 'Output the command description as well as Markdown compatible comment')
@@ -100,6 +125,9 @@ Register-ArgumentCompleter -Native -CommandName 'git-bug' -ScriptBlock {
             break
         }
         'git-bug;deselect' {
+            break
+        }
+        'git-bug;export' {
             break
         }
         'git-bug;label' {
