@@ -1,8 +1,6 @@
 # Data model
 
-If you are not familiar with [git internals](https://git-scm.com/book/en/v1/Git-Internals),
-you might first want to read about them,
-as the `git-bug` data model is built on top of them.
+If you are not familiar with [git internals](https://git-scm.com/book/en/v1/Git-Internals), you might first want to read about them, as the `git-bug` data model is built on top of them.
 
 The biggest problem when creating a distributed bug tracker is that there is no central authoritative server (doh!). This implies some constraints.
 
