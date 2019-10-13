@@ -2,6 +2,7 @@ package gitlab
 
 import (
 	"context"
+	"sort"
 	"time"
 
 	"github.com/xanzy/go-gitlab"
@@ -19,10 +20,24 @@ type noteIterator struct {
 	cache []*gitlab.Note
 }
 
+// Since Gitlab does not return the label events items in the correct order
+// we need to sort the list our selfs and stop relying on the pagination model
+// #BecauseGitlab
 type labelEventIterator struct {
-	page  int
 	index int
 	cache []*gitlab.LabelEvent
+}
+
+func (l *labelEventIterator) Len() int {
+	return len(l.cache)
+}
+
+func (l *labelEventIterator) Swap(i, j int) {
+	l.cache[i], l.cache[j] = l.cache[j], l.cache[i]
+}
+
+func (l *labelEventIterator) Less(i, j int) bool {
+	return l.cache[i].ID < l.cache[j].ID
 }
 
 type iterator struct {
@@ -73,7 +88,6 @@ func NewIterator(ctx context.Context, capacity int, projectID, token string, sin
 		},
 		labelEvent: &labelEventIterator{
 			index: -1,
-			page:  1,
 		},
 	}
 }
@@ -209,38 +223,41 @@ func (i *iterator) NoteValue() *gitlab.Note {
 	return i.note.cache[i.note.index]
 }
 
-func (i *iterator) getNextLabelEvents() bool {
+func (i *iterator) getLabelEvents() bool {
 	ctx, cancel := context.WithTimeout(i.ctx, defaultTimeout)
 	defer cancel()
 
-	labelEvents, _, err := i.gc.ResourceLabelEvents.ListIssueLabelEvents(
-		i.project,
-		i.IssueValue().IID,
-		&gitlab.ListLabelEventsOptions{
-			ListOptions: gitlab.ListOptions{
-				Page:    i.labelEvent.page,
-				PerPage: i.capacity,
+	// since order is not garanteed we should query all label events
+	// and sort them by ID
+	page := 1
+	hasNextPage := true
+	for hasNextPage {
+		labelEvents, _, err := i.gc.ResourceLabelEvents.ListIssueLabelEvents(
+			i.project,
+			i.IssueValue().IID,
+			&gitlab.ListLabelEventsOptions{
+				ListOptions: gitlab.ListOptions{
+					Page:    page,
+					PerPage: i.capacity,
+				},
 			},
-		},
-		gitlab.WithContext(ctx),
-	)
+			gitlab.WithContext(ctx),
+		)
+		if err != nil {
+			i.err = err
+			return false
+		}
 
-	if err != nil {
-		i.err = err
-		return false
+		page++
+		hasNextPage = len(labelEvents) != 0
+		i.labelEvent.cache = append(i.labelEvent.cache, labelEvents...)
 	}
 
-	if len(labelEvents) == 0 {
-		i.labelEvent.page = 1
-		i.labelEvent.index = -1
-		i.labelEvent.cache = nil
-		return false
-	}
-
-	i.labelEvent.cache = labelEvents
-	i.labelEvent.page++
 	i.labelEvent.index = 0
-	return true
+	sort.Sort(i.labelEvent)
+
+	// if the label events list is empty return false
+	return len(i.labelEvent.cache) != 0
 }
 
 // because Gitlab
@@ -254,7 +271,7 @@ func (i *iterator) NextLabelEvent() bool {
 	}
 
 	if len(i.labelEvent.cache) == 0 {
-		return i.getNextLabelEvents()
+		return i.getLabelEvents()
 	}
 
 	// move cursor index
@@ -263,7 +280,7 @@ func (i *iterator) NextLabelEvent() bool {
 		return true
 	}
 
-	return i.getNextLabelEvents()
+	return false
 }
 
 func (i *iterator) LabelEventValue() *gitlab.LabelEvent {

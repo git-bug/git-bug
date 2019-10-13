@@ -19,7 +19,7 @@ import (
 )
 
 func TestImport(t *testing.T) {
-	author := identity.NewIdentity("Amine hilaly", "hilalyamine@gmail.com")
+	author := identity.NewIdentity("Amine Hilaly", "hilalyamine@gmail.com")
 	tests := []struct {
 		name string
 		url  string
