@@ -291,17 +291,21 @@ func (bt *bugTable) render(v *gocui.View, maxX int) {
 
 	for _, excerpt := range bt.excerpts {
 		summaryTxt := fmt.Sprintf("%4d 💬", excerpt.LenComments)
-		labelsTxt := "" // fmt.Sprintf("L:%-2d", len(excerpt.Labels))
+		if excerpt.LenComments > 9999 {
+			summaryTxt = "    ∞ 💬"
+		}
+		labelsTxt := ""
 
 		nbLabels := 0
 		for _, l := range excerpt.Labels {
 			lc := l.Color()
 			lc256 := lc.Term256()
-			labelsTxt += lc256.Escape() + " ◼" + lc256.Unescape()
 			nbLabels++
-			if nbLabels >= 5 {
+			if nbLabels >= 5 && len(excerpt.Labels) > 5 {
+				labelsTxt += " …"
 				break
 			}
+			labelsTxt += lc256.Escape() + " ◼" + lc256.Unescape()
 		}
 
 		var authorDisplayName string
