@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"time"
+    "sort"
 
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
@@ -253,12 +254,9 @@ func (bt *bugTable) doPaginate(max int) error {
 		return nil
 	}
 
-	// slice the data
-	ids := bt.allIds[bt.pageCursor : bt.pageCursor+nb]
+	bt.excerpts = make([]*cache.BugExcerpt, len(bt.allIds))
 
-	bt.excerpts = make([]*cache.BugExcerpt, len(ids))
-
-	for i, id := range ids {
+	for i, id := range bt.allIds {
 		excerpt, err := bt.repo.ResolveBugExcerpt(id)
 		if err != nil {
 			return err
@@ -266,6 +264,24 @@ func (bt *bugTable) doPaginate(max int) error {
 
 		bt.excerpts[i] = excerpt
 	}
+
+    sort.Slice(bt.excerpts, func(p, q int) bool {
+        if bt.excerpts[p].IsFavorite == true && bt.excerpts[q].IsFavorite == false {
+            return true
+        }
+        if bt.excerpts[p].IsFavorite == false && bt.excerpts[q].IsFavorite == true {
+            return false
+        }
+        return bt.excerpts[p].EditUnixTime > bt.excerpts[q].EditUnixTime
+    })
+
+	// slice the data
+    ids := make([]entity.Id, nb)
+    for i := bt.pageCursor; i < bt.pageCursor+nb; i++ {
+        ids[i - bt.pageCursor] = bt.excerpts[i].Id
+    }
+
+    bt.excerpts = bt.excerpts[bt.pageCursor : bt.pageCursor+nb]
 
 	return nil
 }
@@ -294,6 +310,16 @@ func (bt *bugTable) getColumnWidths(maxX int) map[string]int {
 
 func (bt *bugTable) render(v *gocui.View, maxX int) {
 	columnWidths := bt.getColumnWidths(maxX)
+
+    sort.Slice(bt.excerpts, func(p, q int) bool {
+        if bt.excerpts[p].IsFavorite == true && bt.excerpts[q].IsFavorite == false {
+            return true
+        }
+        if bt.excerpts[p].IsFavorite == false && bt.excerpts[q].IsFavorite == true {
+            return false
+        }
+        return bt.excerpts[p].EditUnixTime > bt.excerpts[q].EditUnixTime
+    })
 
 	for _, excerpt := range bt.excerpts {
 		summaryTxt := fmt.Sprintf("C:%-2d L:%-2d",
@@ -468,7 +494,7 @@ func (bt *bugTable) openBug(g *gocui.Gui, v *gocui.View) error {
 
 func (bt *bugTable) markFavorite(g *gocui.Gui, v *gocui.View) error {
 	_, y := v.Cursor()
-	id := bt.excerpts[y].Id
+    id := bt.excerpts[y].Id
 	err := bt.repo.MarkFavorite(id)
 	if err != nil {
 		return err
