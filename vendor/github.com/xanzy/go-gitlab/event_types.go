@@ -28,17 +28,18 @@ import (
 // GitLab API docs:
 // https://docs.gitlab.com/ce/user/project/integrations/webhooks.html#push-events
 type PushEvent struct {
-	ObjectKind  string `json:"object_kind"`
-	Before      string `json:"before"`
-	After       string `json:"after"`
-	Ref         string `json:"ref"`
-	CheckoutSHA string `json:"checkout_sha"`
-	UserID      int    `json:"user_id"`
-	UserName    string `json:"user_name"`
-	UserEmail   string `json:"user_email"`
-	UserAvatar  string `json:"user_avatar"`
-	ProjectID   int    `json:"project_id"`
-	Project     struct {
+	ObjectKind   string `json:"object_kind"`
+	Before       string `json:"before"`
+	After        string `json:"after"`
+	Ref          string `json:"ref"`
+	CheckoutSHA  string `json:"checkout_sha"`
+	UserID       int    `json:"user_id"`
+	UserName     string `json:"user_name"`
+	UserUsername string `json:"user_username"`
+	UserEmail    string `json:"user_email"`
+	UserAvatar   string `json:"user_avatar"`
+	ProjectID    int    `json:"project_id"`
+	Project      struct {
 		Name              string          `json:"name"`
 		Description       string          `json:"description"`
 		AvatarURL         string          `json:"avatar_url"`
@@ -311,6 +312,7 @@ type MergeCommentEvent struct {
 	} `json:"project"`
 	ObjectAttributes struct {
 		ID           int    `json:"id"`
+		DiscussionID string `json:"discussion_id"`
 		Note         string `json:"note"`
 		NoteableType string `json:"noteable_type"`
 		AuthorID     int    `json:"author_id"`
@@ -375,6 +377,7 @@ type MergeCommentEvent struct {
 		} `json:"last_commit"`
 		WorkInProgress bool `json:"work_in_progress"`
 		TotalTimeSpent int  `json:"total_time_spent"`
+		HeadPipelineID int  `json:"head_pipeline_id"`
 	} `json:"merge_request"`
 }
 
@@ -592,6 +595,10 @@ type MergeEvent struct {
 			Previous int `json:"previous"`
 			Current  int `json:"current"`
 		} `json:"updated_by_id"`
+		Title struct {
+			Previous string `json:"previous"`
+			Current  string `json:"current"`
+		} `json:"title"`
 	} `json:"changes"`
 }
 
