@@ -12,20 +12,18 @@ var (
 )
 
 func runBridgeTokenAdd(cmd *cobra.Command, args []string) error {
+	_ = bridgeToken.Id() // TODO: a better design to avoid doing this
+
 	if err := bridgeToken.Validate(); err != nil {
 		return errors.Wrap(err, "invalid token")
 	}
 
-	if bridgeToken.Global {
-		return core.StoreToken(repo, &bridgeToken)
-	}
-
-	return core.StoreGlobalToken(repo, &bridgeToken)
+	return core.StoreToken(repo, &bridgeToken)
 }
 
 var bridgeTokenAddCmd = &cobra.Command{
 	Use:     "add",
-	Short:   "Configure and use bridge tokens.",
+	Short:   "Create and store a new token",
 	PreRunE: loadRepo,
 	RunE:    runBridgeTokenAdd,
 	Args:    cobra.NoArgs,

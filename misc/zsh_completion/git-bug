@@ -118,7 +118,7 @@ function _git-bug_bridge {
       "pull:Pull updates."
       "push:Push updates."
       "rm:Delete a configured bridge."
-      "token:Configure and use bridge tokens."
+      "token:List all stored tokens."
     )
     _describe "command" commands
     ;;
@@ -181,8 +181,8 @@ function _git-bug_bridge_token {
   case $state in
   cmnds)
     commands=(
-      "add:Configure and use bridge tokens."
-      "rm:Configure and use bridge tokens."
+      "add:Create and store a new token"
+      "rm:Remove token by Id."
     )
     _describe "command" commands
     ;;

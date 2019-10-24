@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	bridgeTokenLocalOnly  bool
-	bridgeTokenGlobalOnly bool
+	bridgeTokenLocal  bool
+	bridgeTokenGlobal bool
 )
 
 func runTokenBridge(cmd *cobra.Command, args []string) error {
@@ -26,55 +26,46 @@ func runTokenBridge(cmd *cobra.Command, args []string) error {
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
 
-	var tokens []*core.Token
-	if !bridgeTokenGlobalOnly {
-		localTokens, err := core.ListTokens(backend)
+	tokens, err := core.ListTokens(backend)
+	if err != nil {
+		return err
+	}
+
+	for token, global := range tokens {
+		// TODO: filter tokens using flags
+		getTokenFn := core.GetToken
+		if global {
+			getTokenFn = core.GetGlobalToken
+		}
+
+		token, err := getTokenFn(repo, token)
 		if err != nil {
 			return err
 		}
-
-		for _, id := range localTokens {
-			token, err := core.GetToken(repo, id)
-			if err != nil {
-				return err
-			}
-			tokens = append(tokens, token)
-		}
+		printToken(token)
 	}
 
-	if !bridgeTokenLocalOnly {
-		globalTokens, err := core.ListGlobalTokens(backend)
-		if err != nil {
-			return err
-		}
-
-		for _, id := range globalTokens {
-			token, err := core.GetGlobalToken(repo, id)
-			if err != nil {
-				return err
-			}
-			tokens = append(tokens, token)
-		}
-	}
-
-	for _, token := range tokens {
-		valueFmt := text.LeftPadMaxLine(token.Value, 20, 0)
-		targetFmt := text.LeftPadMaxLine(token.Target, 8, 0)
-		scopesFmt := text.LeftPadMaxLine(strings.Join(token.Scopes, ","), 20, 0)
-
-		fmt.Printf("%s %s %s %s\n",
-			valueFmt,
-			colors.Magenta(targetFmt),
-			colors.Yellow(token.Global),
-			scopesFmt,
-		)
-	}
 	return nil
+}
+
+func printToken(token *core.Token) {
+	idFmt := text.LeftPadMaxLine(token.HumanId(), 6, 0)
+	valueFmt := text.LeftPadMaxLine(token.Value, 8, 0)
+	targetFmt := text.LeftPadMaxLine(token.Target, 8, 0)
+	scopesFmt := text.LeftPadMaxLine(strings.Join(token.Scopes, ","), 20, 0)
+
+	fmt.Printf("%s %s %s %s %s\n",
+		idFmt,
+		valueFmt,
+		colors.Magenta(targetFmt),
+		colors.Yellow(token.Kind()),
+		scopesFmt,
+	)
 }
 
 var bridgeTokenCmd = &cobra.Command{
 	Use:     "token",
-	Short:   "Configure and use bridge tokens.",
+	Short:   "List all stored tokens.",
 	PreRunE: loadRepo,
 	RunE:    runTokenBridge,
 	Args:    cobra.NoArgs,
@@ -82,7 +73,7 @@ var bridgeTokenCmd = &cobra.Command{
 
 func init() {
 	bridgeCmd.AddCommand(bridgeTokenCmd)
-	bridgeTokenCmd.Flags().BoolVarP(&bridgeTokenLocalOnly, "local", "l", false, "")
-	bridgeTokenCmd.Flags().BoolVarP(&bridgeTokenGlobalOnly, "global", "g", false, "")
+	bridgeTokenCmd.Flags().BoolVarP(&bridgeTokenLocal, "local", "l", false, "")
+	bridgeTokenCmd.Flags().BoolVarP(&bridgeTokenGlobal, "global", "g", false, "")
 	bridgeTokenCmd.Flags().SortFlags = false
 }
