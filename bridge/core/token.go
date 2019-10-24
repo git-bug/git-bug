@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"github.com/MichaelMure/git-bug/entity"
 	"regexp"
 	"strings"
 
@@ -19,7 +20,7 @@ const (
 
 // Token holds an API access token data
 type Token struct {
-	ID     string
+	id     entity.Id
 	Value  string
 	Target string
 	Global bool
@@ -35,22 +36,22 @@ func NewToken(value, target string, global bool, scopes []string) *Token {
 		Scopes: scopes,
 	}
 
-	token.ID = hashToken(token)
+	token.id = entity.Id(hashToken(token))
 	return token
 }
 
 // Id return full token identifier. It will compute the Id if it's empty
 func (t *Token) Id() string {
-	if t.ID == "" {
-		t.ID = hashToken(t)
+	if t.id == "" {
+		t.id = entity.Id(hashToken(t))
 	}
 
-	return t.ID
+	return t.id.String()
 }
 
 // HumanId return the truncated token id
 func (t *Token) HumanId() string {
-	return t.Id()[:6]
+	return t.id.Human()
 }
 
 func hashToken(token *Token) string {
@@ -65,7 +66,7 @@ func hashToken(token *Token) string {
 
 // Validate ensure token important fields are valid
 func (t *Token) Validate() error {
-	if t.ID == "" {
+	if t.id == "" {
 		return fmt.Errorf("missing id")
 	}
 	if t.Value == "" {
@@ -111,7 +112,7 @@ func loadToken(repo repository.RepoConfig, id string, global bool) (*Token, erro
 	}
 
 	var ok bool
-	token := &Token{ID: id, Global: global}
+	token := &Token{id: entity.Id(id), Global: global}
 
 	token.Value, ok = configs[tokenValueKey]
 	if !ok {

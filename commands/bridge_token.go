@@ -49,7 +49,7 @@ func runTokenBridge(cmd *cobra.Command, args []string) error {
 }
 
 func printToken(token *core.Token) {
-	idFmt := text.LeftPadMaxLine(token.HumanId(), 6, 0)
+	idFmt := text.LeftPadMaxLine(token.HumanId(), 7, 0)
 	valueFmt := text.LeftPadMaxLine(token.Value, 8, 0)
 	targetFmt := text.LeftPadMaxLine(token.Target, 8, 0)
 	scopesFmt := text.LeftPadMaxLine(strings.Join(token.Scopes, ","), 20, 0)
