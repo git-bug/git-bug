@@ -13,7 +13,9 @@ git-bug bridge pull [<name>] [flags]
 ### Options
 
 ```
-  -h, --help   help for pull
+  -h, --help        help for pull
+  -n, --no-resume   force importing all bugs
+  -s, --since int   import only bugs updated after the given date (must be a unix timestamp)
 ```
 
 ### SEE ALSO

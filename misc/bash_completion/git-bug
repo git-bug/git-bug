@@ -347,6 +347,13 @@ _git-bug_bridge_pull()
     flags_with_completion=()
     flags_completion=()
 
+    flags+=("--no-resume")
+    flags+=("-n")
+    local_nonpersistent_flags+=("--no-resume")
+    flags+=("--since=")
+    two_word_flags+=("--since")
+    two_word_flags+=("-s")
+    local_nonpersistent_flags+=("--since=")
 
     must_have_one_flag=()
     must_have_one_noun=()

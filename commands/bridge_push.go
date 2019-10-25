@@ -63,28 +63,13 @@ func runBridgePush(cmd *cobra.Command, args []string) error {
 		return nil
 	})
 
-	// TODO: by default export only new events
-	events, err := b.ExportAll(ctx, time.Time{})
+	err = b.ExportAll(ctx, time.Time{})
 	if err != nil {
 		return err
 	}
 
-	exportedIssues := 0
-	for result := range events {
-		if result.Event != core.ExportEventNothing {
-			fmt.Println(result.String())
-		}
-
-		switch result.Event {
-		case core.ExportEventBug:
-			exportedIssues++
-		}
-	}
-
 	// send done signal
 	close(done)
-
-	fmt.Printf("Successfully exported %d issues with %s bridge\n", exportedIssues, b.Name)
 	return nil
 }
 

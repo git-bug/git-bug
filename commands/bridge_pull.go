@@ -15,7 +15,16 @@ import (
 	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
+var (
+	importSince int64
+	noResume    bool
+)
+
 func runBridgePull(cmd *cobra.Command, args []string) error {
+	if noResume && importSince != 0 {
+		return fmt.Errorf("only one of --no-resume and --since flags should be used")
+	}
+
 	backend, err := cache.NewRepoCache(repo)
 	if err != nil {
 		return err
@@ -64,10 +73,19 @@ func runBridgePull(cmd *cobra.Command, args []string) error {
 		return nil
 	})
 
-	// TODO: by default import only new events
-	events, err := b.ImportAll(ctx, time.Time{})
-	if err != nil {
-		return err
+	var events <-chan core.ImportResult
+	if noResume {
+		events, err = b.ImportAll(ctx)
+	} else {
+		var since time.Time
+		if importSince != 0 {
+			since = time.Unix(importSince, 0)
+		}
+
+		events, err = b.ImportAllSince(ctx, since)
+		if err != nil {
+			return err
+		}
 	}
 
 	importedIssues := 0
@@ -85,12 +103,12 @@ func runBridgePull(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	fmt.Printf("imported %d issues and %d identities with %s bridge\n", importedIssues, importedIdentities, b.Name)
+
 	// send done signal
 	close(done)
 
-	fmt.Printf("Successfully imported %d issues and %d identities with %s bridge\n", importedIssues, importedIdentities, b.Name)
-
-	return nil
+	return err
 }
 
 var bridgePullCmd = &cobra.Command{
@@ -103,4 +121,6 @@ var bridgePullCmd = &cobra.Command{
 
 func init() {
 	bridgeCmd.AddCommand(bridgePullCmd)
+	bridgePullCmd.Flags().BoolVarP(&noResume, "no-resume", "n", false, "force importing all bugs")
+	bridgePullCmd.Flags().Int64VarP(&importSince, "since", "s", 0, "import only bugs updated after the given date (must be a unix timestamp)")
 }

@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -291,7 +292,7 @@ func (b *Bridge) ensureInit() error {
 	return nil
 }
 
-func (b *Bridge) ImportAll(ctx context.Context, since time.Time) (<-chan ImportResult, error) {
+func (b *Bridge) startImportSince(ctx context.Context, since time.Time) (<-chan ImportResult, error) {
 	importer := b.getImporter()
 	if importer == nil {
 		return nil, ErrImportNotSupported
@@ -307,24 +308,88 @@ func (b *Bridge) ImportAll(ctx context.Context, since time.Time) (<-chan ImportR
 		return nil, err
 	}
 
-	return importer.ImportAll(ctx, b.repo, since)
+	events, err := importer.ImportAll(ctx, b.repo, since)
+	if err != nil {
+		return nil, err
+	}
+
+	return events, nil
 }
 
-func (b *Bridge) ExportAll(ctx context.Context, since time.Time) (<-chan ExportResult, error) {
+func (b *Bridge) ImportAllSince(ctx context.Context, since time.Time) (<-chan ImportResult, error) {
+	if since.Equal(time.Time{}) {
+		lastImportTimeStr, err := b.repo.LocalConfig().ReadString(fmt.Sprintf("git-bug.bridge.%s.lastImportTime", b.Name))
+		if err == nil {
+			lastImportTime, err := strconv.Atoi(lastImportTimeStr)
+			if err != nil {
+				return nil, err
+			}
+			since = time.Unix(int64(lastImportTime), 0)
+		}
+	}
+
+	importStartTime := time.Now().Unix()
+
+	events, err := b.startImportSince(ctx, since)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make(chan ImportResult)
+	go func() {
+		defer close(out)
+
+		for event := range events {
+			out <- event
+		}
+
+		// do not store last import time if context was cancelled
+		if ctx.Err() == nil {
+			err = b.repo.LocalConfig().StoreString(fmt.Sprintf("git-bug.bridge.%s.lastImportTime", b.Name), strconv.Itoa(int(importStartTime)))
+		}
+
+	}()
+
+	return out, nil
+}
+
+func (b *Bridge) ImportAll(ctx context.Context) (<-chan ImportResult, error) {
+	return b.startImportSince(ctx, time.Time{})
+}
+
+func (b *Bridge) ExportAll(ctx context.Context, since time.Time) error {
 	exporter := b.getExporter()
 	if exporter == nil {
-		return nil, ErrExportNotSupported
+		return ErrExportNotSupported
 	}
 
 	err := b.ensureConfig()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	err = b.ensureInit()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return exporter.ExportAll(ctx, b.repo, since)
+	events, err := exporter.ExportAll(ctx, b.repo, since)
+	if err != nil {
+		return err
+	}
+
+	exportedIssues := 0
+	for result := range events {
+		if result.Event != ExportEventNothing {
+			fmt.Println(result.String())
+		}
+
+		switch result.Event {
+		case ExportEventBug:
+			exportedIssues++
+		}
+	}
+
+	fmt.Printf("exported %d issues with %s bridge\n", exportedIssues, b.Name)
+	return nil
 }

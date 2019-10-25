@@ -151,7 +151,9 @@ function _git-bug_bridge_configure {
 }
 
 function _git-bug_bridge_pull {
-  _arguments
+  _arguments \
+    '(-n --no-resume)'{-n,--no-resume}'[force importing all bugs]' \
+    '(-s --since)'{-s,--since}'[import only bugs updated after the given date (must be a unix timestamp)]:'
 }
 
 function _git-bug_bridge_push {

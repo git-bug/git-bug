@@ -71,6 +71,10 @@ Register-ArgumentCompleter -Native -CommandName 'git-bug' -ScriptBlock {
             break
         }
         'git-bug;bridge;pull' {
+            [CompletionResult]::new('-n', 'n', [CompletionResultType]::ParameterName, 'force importing all bugs')
+            [CompletionResult]::new('--no-resume', 'no-resume', [CompletionResultType]::ParameterName, 'force importing all bugs')
+            [CompletionResult]::new('-s', 's', [CompletionResultType]::ParameterName, 'import only bugs updated after the given date (must be a unix timestamp)')
+            [CompletionResult]::new('--since', 'since', [CompletionResultType]::ParameterName, 'import only bugs updated after the given date (must be a unix timestamp)')
             break
         }
         'git-bug;bridge;push' {
