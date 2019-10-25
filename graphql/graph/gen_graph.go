@@ -11110,8 +11110,8 @@ func (ec *executionContext) unmarshalInputSetTitleInput(ctx context.Context, obj
 
 // region    ************************** interface.gotpl ***************************
 
-func (ec *executionContext) _Authored(ctx context.Context, sel ast.SelectionSet, obj *models.Authored) graphql.Marshaler {
-	switch obj := (*obj).(type) {
+func (ec *executionContext) _Authored(ctx context.Context, sel ast.SelectionSet, obj models.Authored) graphql.Marshaler {
+	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
 	case bug.Comment:
@@ -11147,8 +11147,8 @@ func (ec *executionContext) _Authored(ctx context.Context, sel ast.SelectionSet,
 	}
 }
 
-func (ec *executionContext) _Operation(ctx context.Context, sel ast.SelectionSet, obj *bug.Operation) graphql.Marshaler {
-	switch obj := (*obj).(type) {
+func (ec *executionContext) _Operation(ctx context.Context, sel ast.SelectionSet, obj bug.Operation) graphql.Marshaler {
+	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
 	case *bug.CreateOperation:
@@ -11168,8 +11168,8 @@ func (ec *executionContext) _Operation(ctx context.Context, sel ast.SelectionSet
 	}
 }
 
-func (ec *executionContext) _TimelineItem(ctx context.Context, sel ast.SelectionSet, obj *bug.TimelineItem) graphql.Marshaler {
-	switch obj := (*obj).(type) {
+func (ec *executionContext) _TimelineItem(ctx context.Context, sel ast.SelectionSet, obj bug.TimelineItem) graphql.Marshaler {
+	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
 	case *bug.CreateTimelineItem:
@@ -14187,7 +14187,13 @@ func (ec *executionContext) marshalNHash2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑb
 }
 
 func (ec *executionContext) marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋidentityᚐInterface(ctx context.Context, sel ast.SelectionSet, v identity.Interface) graphql.Marshaler {
-	return ec._Identity(ctx, sel, &v)
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Identity(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNIdentity2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋidentityᚐInterface(ctx context.Context, sel ast.SelectionSet, v []identity.Interface) graphql.Marshaler {
@@ -14509,7 +14515,13 @@ func (ec *executionContext) marshalNOpenBugPayload2ᚖgithubᚗcomᚋMichaelMure
 }
 
 func (ec *executionContext) marshalNOperation2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐOperation(ctx context.Context, sel ast.SelectionSet, v bug.Operation) graphql.Marshaler {
-	return ec._Operation(ctx, sel, &v)
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Operation(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNOperation2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐOperation(ctx context.Context, sel ast.SelectionSet, v []bug.Operation) graphql.Marshaler {
@@ -14730,7 +14742,13 @@ func (ec *executionContext) marshalNTime2ᚖtimeᚐTime(ctx context.Context, sel
 }
 
 func (ec *executionContext) marshalNTimelineItem2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐTimelineItem(ctx context.Context, sel ast.SelectionSet, v bug.TimelineItem) graphql.Marshaler {
-	return ec._TimelineItem(ctx, sel, &v)
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._TimelineItem(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNTimelineItem2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐTimelineItem(ctx context.Context, sel ast.SelectionSet, v []bug.TimelineItem) graphql.Marshaler {
@@ -15140,7 +15158,10 @@ func (ec *executionContext) marshalOHash2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑb
 }
 
 func (ec *executionContext) marshalOIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋidentityᚐInterface(ctx context.Context, sel ast.SelectionSet, v identity.Interface) graphql.Marshaler {
-	return ec._Identity(ctx, sel, &v)
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Identity(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOInt2int(ctx context.Context, v interface{}) (int, error) {
