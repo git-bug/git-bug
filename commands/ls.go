@@ -65,17 +65,34 @@ func runLsBug(cmd *cobra.Command, args []string) error {
 			name = b.LegacyAuthor.DisplayName()
 		}
 
+		labelsTxt := ""
+		nbLabels := 0
+		for _, l := range b.Labels {
+			lc := l.Color()
+			lc256 := lc.Term256()
+			nbLabels++
+			if nbLabels >= 5 && len(b.Labels) > 5 {
+				labelsTxt += " …"
+				break
+			}
+			labelsTxt += lc256.Escape() + " ◼" + lc256.Unescape()
+		}
+
 		// truncate + pad if needed
-		titleFmt := text.LeftPadMaxLine(b.Title, 50, 0)
+		titleFmt := text.LeftPadMaxLine(b.Title, 50-(nbLabels*2), 0)
 		authorFmt := text.LeftPadMaxLine(name, 15, 0)
 
-		fmt.Printf("%s %s\t%s\t%s\tC:%d L:%d\n",
+		comments := fmt.Sprintf("%4d 💬", b.LenComments)
+		if b.LenComments > 9999 {
+			comments = "    ∞ 💬"
+		}
+
+		fmt.Printf("%s %s\t%s\t%s\t%s\n",
 			colors.Cyan(b.Id.Human()),
 			colors.Yellow(b.Status),
-			titleFmt,
+			titleFmt+labelsTxt,
 			colors.Magenta(authorFmt),
-			b.LenComments,
-			len(b.Labels),
+			comments,
 		)
 	}
 
