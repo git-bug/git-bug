@@ -14,6 +14,7 @@
 </div>
 
 `git-bug` is a bug tracker that:
+
 - **fully embed in git**: you only need your git repository to have a bug tracker
 - **is distributed**: use your normal git remote to collaborate, push and pull your bugs !
 - **works offline**: in a plane or under the sea ? keep reading and writing bugs

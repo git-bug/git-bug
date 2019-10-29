@@ -8,22 +8,32 @@ The biggest problem when creating a distributed bug tracker is that there is no 
 
 To deal with this problem, you need a way to merge these changes in a meaningful way.
 
-Instead of storing directly the final bug data, we store a series of edit `Operation`s. One such operation could looks like this:
+Instead of storing the final bug data directly, we store a series of edit `Operation`s.
+
+Note: In git-bug internally it is a golang struct, but in the git repo it is stored as JSON, as seen later.
+
+These `Operation`s are aggregated in an `OperationPack`, a simple array. An `OperationPack` represents an edit session of a bug. We store this pack in git as a git `Blob`; that consists of a string containing a JSON array of operations. One such pack -- here with two operations -- might look like this:
 
 ```json
-{
-  "type": "SET_TITLE",
-  "author": {
-    "id": "5034cd36acf1a2dadb52b2db17f620cc050eb65c"
+[
+  {
+    "type": "SET_TITLE",
+    "author": {
+      "id": "5034cd36acf1a2dadb52b2db17f620cc050eb65c"
+    },
+    "timestamp": 1533640589,
+    "title": "This title is better"
   },
-  "timestamp": 1533640589,
-  "title": "This title is better"
-}
+  {
+    "type": "ADD_COMMENT",
+    "author": {
+      "id": "5034cd36acf1a2dadb52b2db17f620cc050eb65c"
+    },
+    "timestamp": 1533640612,
+    "message": "A new comment"
+  }
+]
 ```
-
-Note: Json provided for readability. Internally it's a golang struct.
-
-These `Operation`s are aggregated in an `OperationPack`, a simple array. An `OperationPack` represents an edit session of a bug. We store this pack in git as a git `Blob`; that is arbitrary serialized data.
 
 To reference our `OperationPack`, we create a git `Tree`; it references our `OperationPack` `Blob` under `"\ops"`. If any edit operation includes a media (for instance in a message), we can store that media as a `Blob` and reference it here under `"/media"`. 
 
