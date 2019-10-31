@@ -14,13 +14,14 @@ var _ ClockedRepo = &mockRepoForTest{}
 
 // mockRepoForTest defines an instance of Repo that can be used for testing.
 type mockRepoForTest struct {
-	config      map[string]string
-	blobs       map[git.Hash][]byte
-	trees       map[git.Hash]string
-	commits     map[git.Hash]commit
-	refs        map[string]git.Hash
-	createClock lamport.Clock
-	editClock   lamport.Clock
+	config       map[string]string
+	globalConfig map[string]string
+	blobs        map[git.Hash][]byte
+	trees        map[git.Hash]string
+	commits      map[git.Hash]commit
+	refs         map[string]git.Hash
+	createClock  lamport.Clock
+	editClock    lamport.Clock
 }
 
 type commit struct {
@@ -38,6 +39,14 @@ func NewMockRepoForTest() *mockRepoForTest {
 		createClock: lamport.NewClock(),
 		editClock:   lamport.NewClock(),
 	}
+}
+
+func (r *mockRepoForTest) LocalConfig() Config {
+	return newRuntimeConfig(r.config)
+}
+
+func (r *mockRepoForTest) GlobalConfig() Config {
+	return newRuntimeConfig(r.globalConfig)
 }
 
 // GetPath returns the path to the repo.

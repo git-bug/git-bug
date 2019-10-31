@@ -11,56 +11,57 @@ func TestConfig(t *testing.T) {
 	repo := CreateTestRepo(false)
 	defer CleanupTestRepos(t, repo)
 
-	err := repo.StoreConfig("section.key", "value")
+	config := repo.LocalConfig()
+
+	err := config.Store("section.key", "value")
 	assert.NoError(t, err)
 
-	val, err := repo.ReadConfigString("section.key")
+	val, err := config.ReadString("section.key")
 	assert.Equal(t, "value", val)
 
-	err = repo.StoreConfig("section.true", "true")
+	err = config.Store("section.true", "true")
 	assert.NoError(t, err)
 
-	val2, err := repo.ReadConfigBool("section.true")
+	val2, err := config.ReadBool("section.true")
 	assert.Equal(t, true, val2)
 
-	configs, err := repo.ReadConfigs("section")
+	configs, err := config.ReadAll("section")
 	assert.NoError(t, err)
 	assert.Equal(t, configs, map[string]string{
 		"section.key":  "value",
 		"section.true": "true",
 	})
 
-	err = repo.RmConfigs("section.true")
+	err = config.RemoveAll("section.true")
 	assert.NoError(t, err)
 
-	configs, err = repo.ReadConfigs("section")
+	configs, err = config.ReadAll("section")
 	assert.NoError(t, err)
 	assert.Equal(t, configs, map[string]string{
 		"section.key": "value",
 	})
 
-	_, err = repo.ReadConfigBool("section.true")
+	_, err = config.ReadBool("section.true")
 	assert.Equal(t, ErrNoConfigEntry, err)
 
-	err = repo.RmConfigs("section.nonexistingkey")
+	err = config.RemoveAll("section.nonexistingkey")
 	assert.Error(t, err)
 
-	err = repo.RmConfigs("section.key")
+	err = config.RemoveAll("section.key")
 	assert.NoError(t, err)
 
-	_, err = repo.ReadConfigString("section.key")
+	_, err = config.ReadString("section.key")
 	assert.Equal(t, ErrNoConfigEntry, err)
 
-	err = repo.RmConfigs("nonexistingsection")
+	err = config.RemoveAll("nonexistingsection")
 	assert.Error(t, err)
 
-	err = repo.RmConfigs("section")
+	err = config.RemoveAll("section")
 	assert.Error(t, err)
 
-	_, err = repo.ReadConfigString("section.key")
+	_, err = config.ReadString("section.key")
 	assert.Error(t, err)
 
-	err = repo.RmConfigs("section.key")
+	err = config.RemoveAll("section.key")
 	assert.Error(t, err)
-
 }
