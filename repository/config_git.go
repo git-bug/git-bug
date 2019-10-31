@@ -4,17 +4,20 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/blang/semver"
 	"github.com/pkg/errors"
 )
+
+var _ Config = &gitConfig{}
 
 type gitConfig struct {
 	version *semver.Version
 	execFn  func(args ...string) (string, error)
 }
 
-func NewGitConfig(repo *GitRepo, global bool) *gitConfig {
+func newGitConfig(repo *GitRepo, global bool) *gitConfig {
 	version, _ := repo.GitVersion()
 
 	if global {
@@ -29,7 +32,7 @@ func NewGitConfig(repo *GitRepo, global bool) *gitConfig {
 
 	return &gitConfig{
 		execFn: func(args ...string) (string, error) {
-			args = append([]string{"config"}, args...)
+			args = append([]string{"config", "--local"}, args...)
 			return repo.runGitCommand(args...)
 		},
 		version: version,
@@ -109,6 +112,20 @@ func (gc *gitConfig) ReadBool(key string) (bool, error) {
 	}
 
 	return strconv.ParseBool(val)
+}
+
+func (gc *gitConfig) ReadTimestamp(key string) (*time.Time, error) {
+	value, err := gc.ReadString(key)
+	if err != nil {
+		return nil, err
+	}
+	timestamp, err := strconv.Atoi(value)
+	if err != nil {
+		return nil, err
+	}
+
+	t := time.Unix(int64(timestamp), 0)
+	return &t, nil
 }
 
 func (gc *gitConfig) rmSection(keyPrefix string) error {

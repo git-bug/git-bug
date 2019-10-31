@@ -34,12 +34,12 @@ type GitRepo struct {
 
 // LocalConfig .
 func (repo *GitRepo) LocalConfig() Config {
-	return NewGitConfig(repo, false)
+	return newGitConfig(repo, false)
 }
 
 // GlobalConfig .
 func (repo *GitRepo) GlobalConfig() Config {
-	return NewGitConfig(repo, true)
+	return newGitConfig(repo, true)
 }
 
 // Run the given git command with the given I/O reader/writers, returning an error if it fails.

@@ -42,11 +42,11 @@ func NewMockRepoForTest() *mockRepoForTest {
 }
 
 func (r *mockRepoForTest) LocalConfig() Config {
-	return newRuntimeConfig(r.config)
+	return newMemConfig(r.config)
 }
 
 func (r *mockRepoForTest) GlobalConfig() Config {
-	return newRuntimeConfig(r.globalConfig)
+	return newMemConfig(r.globalConfig)
 }
 
 // GetPath returns the path to the repo.
