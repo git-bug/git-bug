@@ -30,12 +30,12 @@ type GitRepo struct {
 	editClock   *lamport.Persisted
 }
 
-// LocalConfig .
+// LocalConfig give access to the repository scoped configuration
 func (repo *GitRepo) LocalConfig() Config {
 	return newGitConfig(repo, false)
 }
 
-// GlobalConfig .
+// GlobalConfig give access to the git global configuration
 func (repo *GitRepo) GlobalConfig() Config {
 	return newGitConfig(repo, true)
 }
