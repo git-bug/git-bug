@@ -15,12 +15,14 @@ func TestConfig(t *testing.T) {
 	assert.NoError(t, err)
 
 	val, err := repo.LocalConfig().ReadString("section.key")
+	assert.NoError(t, err)
 	assert.Equal(t, "value", val)
 
 	err = repo.LocalConfig().StoreString("section.true", "true")
 	assert.NoError(t, err)
 
 	val2, err := repo.LocalConfig().ReadBool("section.true")
+	assert.NoError(t, err)
 	assert.Equal(t, true, val2)
 
 	configs, err := repo.LocalConfig().ReadAll("section")
