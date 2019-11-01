@@ -30,10 +30,10 @@ type RepoCommon interface {
 	// GetRemotes returns the configured remotes repositories.
 	GetRemotes() (map[string]string, error)
 
-	// LocalConfig .
+	// LocalConfig give access to the repository scoped configuration
 	LocalConfig() Config
 
-	// GlobalConfig .
+	// GlobalConfig give access to the git global configuration
 	GlobalConfig() Config
 }
 

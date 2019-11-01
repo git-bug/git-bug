@@ -29,7 +29,7 @@ func newGitConfig(repo *GitRepo, global bool) *gitConfig {
 	}
 }
 
-// StoreConfig store a single key/value pair in the config of the repo
+// StoreString store a single key/value pair in the config of the repo
 func (gc *gitConfig) StoreString(key string, value string) error {
 	_, err := gc.repo.runGitCommand("config", gc.localityFlag, "--replace-all", key, value)
 	return err
@@ -43,7 +43,7 @@ func (gc *gitConfig) StoreTimestamp(key string, value time.Time) error {
 	return gc.StoreString(key, strconv.Itoa(int(value.Unix())))
 }
 
-// ReadConfigs read all key/value pair matching the key prefix
+// ReadAll read all key/value pair matching the key prefix
 func (gc *gitConfig) ReadAll(keyPrefix string) (map[string]string, error) {
 	stdout, err := gc.repo.runGitCommand("config", gc.localityFlag, "--get-regexp", keyPrefix)
 

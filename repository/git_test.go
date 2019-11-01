@@ -11,57 +11,55 @@ func TestConfig(t *testing.T) {
 	repo := CreateTestRepo(false)
 	defer CleanupTestRepos(t, repo)
 
-	config := repo.LocalConfig()
-
-	err := config.StoreString("section.key", "value")
+	err := repo.LocalConfig().StoreString("section.key", "value")
 	assert.NoError(t, err)
 
-	val, err := config.ReadString("section.key")
+	val, err := repo.LocalConfig().ReadString("section.key")
 	assert.Equal(t, "value", val)
 
-	err = config.StoreString("section.true", "true")
+	err = repo.LocalConfig().StoreString("section.true", "true")
 	assert.NoError(t, err)
 
-	val2, err := config.ReadBool("section.true")
+	val2, err := repo.LocalConfig().ReadBool("section.true")
 	assert.Equal(t, true, val2)
 
-	configs, err := config.ReadAll("section")
+	configs, err := repo.LocalConfig().ReadAll("section")
 	assert.NoError(t, err)
 	assert.Equal(t, configs, map[string]string{
 		"section.key":  "value",
 		"section.true": "true",
 	})
 
-	err = config.RemoveAll("section.true")
+	err = repo.LocalConfig().RemoveAll("section.true")
 	assert.NoError(t, err)
 
-	configs, err = config.ReadAll("section")
+	configs, err = repo.LocalConfig().ReadAll("section")
 	assert.NoError(t, err)
 	assert.Equal(t, configs, map[string]string{
 		"section.key": "value",
 	})
 
-	_, err = config.ReadBool("section.true")
+	_, err = repo.LocalConfig().ReadBool("section.true")
 	assert.Equal(t, ErrNoConfigEntry, err)
 
-	err = config.RemoveAll("section.nonexistingkey")
+	err = repo.LocalConfig().RemoveAll("section.nonexistingkey")
 	assert.Error(t, err)
 
-	err = config.RemoveAll("section.key")
+	err = repo.LocalConfig().RemoveAll("section.key")
 	assert.NoError(t, err)
 
-	_, err = config.ReadString("section.key")
+	_, err = repo.LocalConfig().ReadString("section.key")
 	assert.Equal(t, ErrNoConfigEntry, err)
 
-	err = config.RemoveAll("nonexistingsection")
+	err = repo.LocalConfig().RemoveAll("nonexistingsection")
 	assert.Error(t, err)
 
-	err = config.RemoveAll("section")
+	err = repo.LocalConfig().RemoveAll("section")
 	assert.Error(t, err)
 
-	_, err = config.ReadString("section.key")
+	_, err = repo.LocalConfig().ReadString("section.key")
 	assert.Error(t, err)
 
-	err = config.RemoveAll("section.key")
+	err = repo.LocalConfig().RemoveAll("section.key")
 	assert.Error(t, err)
 }

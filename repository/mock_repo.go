@@ -3,8 +3,6 @@ package repository
 import (
 	"crypto/sha1"
 	"fmt"
-	"strconv"
-	"strings"
 
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/lamport"
@@ -41,10 +39,12 @@ func NewMockRepoForTest() *mockRepoForTest {
 	}
 }
 
+// LocalConfig give access to the repository scoped configuration
 func (r *mockRepoForTest) LocalConfig() Config {
 	return newMemConfig(r.config)
 }
 
+// GlobalConfig give access to the git global configuration
 func (r *mockRepoForTest) GlobalConfig() Config {
 	return newMemConfig(r.globalConfig)
 }
@@ -73,53 +73,6 @@ func (r *mockRepoForTest) GetRemotes() (map[string]string, error) {
 	return map[string]string{
 		"origin": "git://github.com/MichaelMure/git-bug",
 	}, nil
-}
-
-func (r *mockRepoForTest) StoreConfig(key string, value string) error {
-	r.config[key] = value
-	return nil
-}
-
-func (r *mockRepoForTest) ReadConfigs(keyPrefix string) (map[string]string, error) {
-	result := make(map[string]string)
-
-	for key, val := range r.config {
-		if strings.HasPrefix(key, keyPrefix) {
-			result[key] = val
-		}
-	}
-
-	return result, nil
-}
-
-func (r *mockRepoForTest) ReadConfigBool(key string) (bool, error) {
-	// unlike git, the mock can only store one value for the same key
-	val, ok := r.config[key]
-	if !ok {
-		return false, ErrNoConfigEntry
-	}
-
-	return strconv.ParseBool(val)
-}
-
-func (r *mockRepoForTest) ReadConfigString(key string) (string, error) {
-	// unlike git, the mock can only store one value for the same key
-	val, ok := r.config[key]
-	if !ok {
-		return "", ErrNoConfigEntry
-	}
-
-	return val, nil
-}
-
-// RmConfigs remove all key/value pair matching the key prefix
-func (r *mockRepoForTest) RmConfigs(keyPrefix string) error {
-	for key := range r.config {
-		if strings.HasPrefix(key, keyPrefix) {
-			delete(r.config, key)
-		}
-	}
-	return nil
 }
 
 // PushRefs push git refs to a remote

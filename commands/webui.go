@@ -100,7 +100,7 @@ func runWebUI(cmd *cobra.Command, args []string) error {
 	fmt.Printf("Graphql Playground: http://%s/playground\n", addr)
 	fmt.Println("Press Ctrl+c to quit")
 
-	configOpen, err := repo.ReadConfigBool(webUIOpenConfigKey)
+	configOpen, err := repo.LocalConfig().ReadBool(webUIOpenConfigKey)
 	if err == repository.ErrNoConfigEntry {
 		// default to true
 		configOpen = true
