@@ -220,7 +220,7 @@ func NewFromGitUser(repo repository.Repo) (*Identity, error) {
 
 // IsUserIdentitySet tell if the user identity is correctly set.
 func IsUserIdentitySet(repo repository.RepoCommon) (bool, error) {
-	configs, err := repo.ReadConfigs(identityConfigKey)
+	configs, err := repo.LocalConfig().ReadAll(identityConfigKey)
 	if err != nil {
 		return false, err
 	}
@@ -234,12 +234,12 @@ func IsUserIdentitySet(repo repository.RepoCommon) (bool, error) {
 
 // SetUserIdentity store the user identity's id in the git config
 func SetUserIdentity(repo repository.RepoCommon, identity *Identity) error {
-	return repo.StoreConfig(identityConfigKey, identity.Id().String())
+	return repo.LocalConfig().StoreString(identityConfigKey, identity.Id().String())
 }
 
 // GetUserIdentity read the current user identity, set with a git config entry
 func GetUserIdentity(repo repository.Repo) (*Identity, error) {
-	configs, err := repo.ReadConfigs(identityConfigKey)
+	configs, err := repo.LocalConfig().ReadAll(identityConfigKey)
 	if err != nil {
 		return nil, err
 	}
@@ -263,7 +263,7 @@ func GetUserIdentity(repo repository.Repo) (*Identity, error) {
 
 	i, err := ReadLocal(repo, id)
 	if err == ErrIdentityNotExist {
-		innerErr := repo.RmConfigs(identityConfigKey)
+		innerErr := repo.LocalConfig().RemoveAll(identityConfigKey)
 		if innerErr != nil {
 			_, _ = fmt.Fprintln(os.Stderr, errors.Wrap(innerErr, "can't clear user identity").Error())
 		}
