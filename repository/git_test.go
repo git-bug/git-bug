@@ -13,13 +13,13 @@ func TestConfig(t *testing.T) {
 
 	config := repo.LocalConfig()
 
-	err := config.Store("section.key", "value")
+	err := config.StoreString("section.key", "value")
 	assert.NoError(t, err)
 
 	val, err := config.ReadString("section.key")
 	assert.Equal(t, "value", val)
 
-	err = config.Store("section.true", "true")
+	err = config.StoreString("section.true", "true")
 	assert.NoError(t, err)
 
 	val2, err := config.ReadBool("section.true")

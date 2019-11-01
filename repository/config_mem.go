@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+var _ Config = &memConfig{}
+
 type memConfig struct {
 	config map[string]string
 }
@@ -14,9 +16,17 @@ func newMemConfig(config map[string]string) *memConfig {
 	return &memConfig{config: config}
 }
 
-func (mc *memConfig) Store(key, value string) error {
+func (mc *memConfig) StoreString(key, value string) error {
 	mc.config[key] = value
 	return nil
+}
+
+func (mc *memConfig) StoreBool(key string, value bool) error {
+	return mc.StoreString(key, strconv.FormatBool(value))
+}
+
+func (mc *memConfig) StoreTimestamp(key string, value time.Time) error {
+	return mc.StoreString(key, strconv.Itoa(int(value.Unix())))
 }
 
 func (mc *memConfig) ReadAll(keyPrefix string) (map[string]string, error) {

@@ -1,11 +1,20 @@
 package repository
 
-import "time"
+import (
+	"strconv"
+	"time"
+)
 
 // Config represent the common function interacting with the repository config storage
 type Config interface {
-	// Store writes a single key/value pair in the config of the repo
-	Store(key string, value string) error
+	// Store writes a single key/value pair in the config
+	StoreString(key, value string) error
+
+	// Store writes a key and timestamp value to the config
+	StoreTimestamp(key string, value time.Time) error
+
+	// Store writes a key and boolean value to the config
+	StoreBool(key string, value bool) error
 
 	// ReadAll reads all key/value pair matching the key prefix
 	ReadAll(keyPrefix string) (map[string]string, error)
@@ -27,4 +36,14 @@ type Config interface {
 
 	// RemoveAll removes all key/value pair matching the key prefix
 	RemoveAll(keyPrefix string) error
+}
+
+func parseTimestamp(s string) (*time.Time, error) {
+	timestamp, err := strconv.Atoi(s)
+	if err != nil {
+		return nil, err
+	}
+
+	t := time.Unix(int64(timestamp), 0)
+	return &t, nil
 }

@@ -7,10 +7,8 @@ import (
 	"io"
 	"os/exec"
 	"path"
-	"regexp"
 	"strings"
 
-	"github.com/blang/semver"
 	"github.com/pkg/errors"
 
 	"github.com/MichaelMure/git-bug/util/git"
@@ -204,44 +202,6 @@ func (repo *GitRepo) GetRemotes() (map[string]string, error) {
 	}
 
 	return remotes, nil
-}
-
-func (repo *GitRepo) GitVersion() (*semver.Version, error) {
-	versionOut, err := repo.runGitCommand("version")
-	if err != nil {
-		return nil, err
-	}
-
-	// extract the version and truncate potential bad parts
-	// ex: 2.23.0.rc1 instead of 2.23.0-rc1
-	r := regexp.MustCompile(`(\d+\.){1,2}\d+`)
-
-	extracted := r.FindString(versionOut)
-	if extracted == "" {
-		return nil, fmt.Errorf("unreadable git version %s", versionOut)
-	}
-
-	version, err := semver.Make(extracted)
-	if err != nil {
-		return nil, err
-	}
-
-	return &version, nil
-}
-
-func (repo *GitRepo) gitVersionLT218() (bool, error) {
-	version, err := repo.GitVersion()
-	if err != nil {
-		return false, err
-	}
-
-	version218string := "2.18.0"
-	gitVersion218, err := semver.Make(version218string)
-	if err != nil {
-		return false, err
-	}
-
-	return version.LT(gitVersion218), nil
 }
 
 // FetchRefs fetch git refs from a remote

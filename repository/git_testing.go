@@ -32,10 +32,10 @@ func CreateTestRepo(bare bool) *GitRepo {
 	}
 
 	config := repo.LocalConfig()
-	if err := config.Store("user.name", "testuser"); err != nil {
+	if err := config.StoreString("user.name", "testuser"); err != nil {
 		log.Fatal("failed to set user.name for test repository: ", err)
 	}
-	if err := config.Store("user.email", "testuser@example.com"); err != nil {
+	if err := config.StoreString("user.email", "testuser@example.com"); err != nil {
 		log.Fatal("failed to set user.email for test repository: ", err)
 	}
 

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -13,42 +14,41 @@ import (
 var _ Config = &gitConfig{}
 
 type gitConfig struct {
-	version *semver.Version
-	execFn  func(args ...string) (string, error)
+	execFn func(args ...string) (string, error)
 }
 
 func newGitConfig(repo *GitRepo, global bool) *gitConfig {
-	version, _ := repo.GitVersion()
-
+	configCmdFlag := "--local"
 	if global {
-		return &gitConfig{
-			execFn: func(args ...string) (string, error) {
-				args = append([]string{"config", "--global"}, args...)
-				return repo.runGitCommand(args...)
-			},
-			version: version,
-		}
+		configCmdFlag = "--global"
 	}
-
 	return &gitConfig{
 		execFn: func(args ...string) (string, error) {
-			args = append([]string{"config", "--local"}, args...)
+			if len(args) > 0 && args[0] == "config" {
+				args = append([]string{args[0], configCmdFlag}, args[1:]...)
+			}
 			return repo.runGitCommand(args...)
 		},
-		version: version,
 	}
 }
 
 // StoreConfig store a single key/value pair in the config of the repo
-func (gc *gitConfig) Store(key string, value string) error {
-	_, err := gc.execFn("--replace-all", key, value)
-
+func (gc *gitConfig) StoreString(key string, value string) error {
+	_, err := gc.execFn("config", "--replace-all", key, value)
 	return err
+}
+
+func (gc *gitConfig) StoreBool(key string, value bool) error {
+	return gc.StoreString(key, strconv.FormatBool(value))
+}
+
+func (gc *gitConfig) StoreTimestamp(key string, value time.Time) error {
+	return gc.StoreString(key, strconv.Itoa(int(value.Unix())))
 }
 
 // ReadConfigs read all key/value pair matching the key prefix
 func (gc *gitConfig) ReadAll(keyPrefix string) (map[string]string, error) {
-	stdout, err := gc.execFn("--get-regexp", keyPrefix)
+	stdout, err := gc.execFn("config", "--get-regexp", keyPrefix)
 
 	//   / \
 	//  / ! \
@@ -81,7 +81,7 @@ func (gc *gitConfig) ReadAll(keyPrefix string) (map[string]string, error) {
 }
 
 func (gc *gitConfig) ReadString(key string) (string, error) {
-	stdout, err := gc.execFn("--get-all", key)
+	stdout, err := gc.execFn("config", "--get-all", key)
 
 	//   / \
 	//  / ! \
@@ -119,22 +119,16 @@ func (gc *gitConfig) ReadTimestamp(key string) (*time.Time, error) {
 	if err != nil {
 		return nil, err
 	}
-	timestamp, err := strconv.Atoi(value)
-	if err != nil {
-		return nil, err
-	}
-
-	t := time.Unix(int64(timestamp), 0)
-	return &t, nil
+	return parseTimestamp(value)
 }
 
 func (gc *gitConfig) rmSection(keyPrefix string) error {
-	_, err := gc.execFn("--remove-section", keyPrefix)
+	_, err := gc.execFn("config", "--remove-section", keyPrefix)
 	return err
 }
 
 func (gc *gitConfig) unsetAll(keyPrefix string) error {
-	_, err := gc.execFn("--unset-all", keyPrefix)
+	_, err := gc.execFn("config", "--unset-all", keyPrefix)
 	return err
 }
 
@@ -192,11 +186,43 @@ func (gc *gitConfig) RemoveAll(keyPrefix string) error {
 	return nil
 }
 
+func (gc *gitConfig) gitVersion() (*semver.Version, error) {
+	versionOut, err := gc.execFn("version")
+	if err != nil {
+		return nil, err
+	}
+	return parseGitVersion(versionOut)
+}
+
+func parseGitVersion(versionOut string) (*semver.Version, error) {
+	// extract the version and truncate potential bad parts
+	// ex: 2.23.0.rc1 instead of 2.23.0-rc1
+	r := regexp.MustCompile(`(\d+\.){1,2}\d+`)
+
+	extracted := r.FindString(versionOut)
+	if extracted == "" {
+		return nil, fmt.Errorf("unreadable git version %s", versionOut)
+	}
+
+	version, err := semver.Make(extracted)
+	if err != nil {
+		return nil, err
+	}
+
+	return &version, nil
+}
+
 func (gc *gitConfig) gitVersionLT218() (bool, error) {
-	gitVersion218, err := semver.Make("2.18.0")
+	version, err := gc.gitVersion()
 	if err != nil {
 		return false, err
 	}
 
-	return gc.version.LT(gitVersion218), nil
+	version218string := "2.18.0"
+	gitVersion218, err := semver.Make(version218string)
+	if err != nil {
+		return false, err
+	}
+
+	return version.LT(gitVersion218), nil
 }
