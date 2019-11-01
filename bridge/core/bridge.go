@@ -134,7 +134,7 @@ func DefaultBridge(repo *cache.RepoCache) (*Bridge, error) {
 // ConfiguredBridges return the list of bridge that are configured for the given
 // repo
 func ConfiguredBridges(repo repository.RepoCommon) ([]string, error) {
-	configs, err := repo.ReadConfigs(bridgeConfigKeyPrefix + ".")
+	configs, err := repo.LocalConfig().ReadAll(bridgeConfigKeyPrefix + ".")
 	if err != nil {
 		return nil, errors.Wrap(err, "can't read configured bridges")
 	}
@@ -171,7 +171,7 @@ func ConfiguredBridges(repo repository.RepoCommon) ([]string, error) {
 func BridgeExist(repo repository.RepoCommon, name string) bool {
 	keyPrefix := fmt.Sprintf("git-bug.bridge.%s.", name)
 
-	conf, err := repo.ReadConfigs(keyPrefix)
+	conf, err := repo.LocalConfig().ReadAll(keyPrefix)
 
 	return err == nil && len(conf) > 0
 }
@@ -188,7 +188,7 @@ func RemoveBridge(repo repository.RepoCommon, name string) error {
 	}
 
 	keyPrefix := fmt.Sprintf("git-bug.bridge.%s", name)
-	return repo.RmConfigs(keyPrefix)
+	return repo.LocalConfig().RemoveAll(keyPrefix)
 }
 
 // Configure run the target specific configuration process
@@ -211,7 +211,7 @@ func (b *Bridge) storeConfig(conf Configuration) error {
 	for key, val := range conf {
 		storeKey := fmt.Sprintf("git-bug.bridge.%s.%s", b.Name, key)
 
-		err := b.repo.StoreConfig(storeKey, val)
+		err := b.repo.LocalConfig().StoreString(storeKey, val)
 		if err != nil {
 			return errors.Wrap(err, "error while storing bridge configuration")
 		}
@@ -235,7 +235,7 @@ func (b *Bridge) ensureConfig() error {
 func loadConfig(repo repository.RepoCommon, name string) (Configuration, error) {
 	keyPrefix := fmt.Sprintf("git-bug.bridge.%s.", name)
 
-	pairs, err := repo.ReadConfigs(keyPrefix)
+	pairs, err := repo.LocalConfig().ReadAll(keyPrefix)
 	if err != nil {
 		return nil, errors.Wrap(err, "error while reading bridge configuration")
 	}

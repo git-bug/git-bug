@@ -7,11 +7,8 @@ import (
 	"io"
 	"os/exec"
 	"path"
-	"regexp"
-	"strconv"
 	"strings"
 
-	"github.com/blang/semver"
 	"github.com/pkg/errors"
 
 	"github.com/MichaelMure/git-bug/util/git"
@@ -33,16 +30,26 @@ type GitRepo struct {
 	editClock   *lamport.Persisted
 }
 
+// LocalConfig give access to the repository scoped configuration
+func (repo *GitRepo) LocalConfig() Config {
+	return newGitConfig(repo, false)
+}
+
+// GlobalConfig give access to the git global configuration
+func (repo *GitRepo) GlobalConfig() Config {
+	return newGitConfig(repo, true)
+}
+
 // Run the given git command with the given I/O reader/writers, returning an error if it fails.
 func (repo *GitRepo) runGitCommandWithIO(stdin io.Reader, stdout, stderr io.Writer, args ...string) error {
-	repopath:=repo.Path
-	if repopath==".git" {
+	repopath := repo.Path
+	if repopath == ".git" {
 		// seeduvax> trangely the git command sometimes fail for very unknown
 		// reason wihtout this replacement.
 		// observed with rev-list command when git-bug is called from git
 		// hook script, even the same command with same args runs perfectly
-		// when called directly from the same hook script. 
-		repopath=""
+		// when called directly from the same hook script.
+		repopath = ""
 	}
 	// fmt.Printf("[%s] Running git %s\n", repopath, strings.Join(args, " "))
 
@@ -125,7 +132,7 @@ func NewGitRepo(path string, witnesser Witnesser) (*GitRepo, error) {
 
 // InitGitRepo create a new empty git repo at the given path
 func InitGitRepo(path string) (*GitRepo, error) {
-	repo := &GitRepo{Path: path+"/.git"}
+	repo := &GitRepo{Path: path + "/.git"}
 	err := repo.createClocks()
 	if err != nil {
 		return nil, err
@@ -195,174 +202,6 @@ func (repo *GitRepo) GetRemotes() (map[string]string, error) {
 	}
 
 	return remotes, nil
-}
-
-// StoreConfig store a single key/value pair in the config of the repo
-func (repo *GitRepo) StoreConfig(key string, value string) error {
-	_, err := repo.runGitCommand("config", "--replace-all", key, value)
-
-	return err
-}
-
-// ReadConfigs read all key/value pair matching the key prefix
-func (repo *GitRepo) ReadConfigs(keyPrefix string) (map[string]string, error) {
-	stdout, err := repo.runGitCommand("config", "--get-regexp", keyPrefix)
-
-	//   / \
-	//  / ! \
-	// -------
-	//
-	// There can be a legitimate error here, but I see no portable way to
-	// distinguish them from the git error that say "no matching value exist"
-	if err != nil {
-		return nil, nil
-	}
-
-	lines := strings.Split(stdout, "\n")
-
-	result := make(map[string]string, len(lines))
-
-	for _, line := range lines {
-		if strings.TrimSpace(line) == "" {
-			continue
-		}
-
-		parts := strings.Fields(line)
-		if len(parts) != 2 {
-			return nil, fmt.Errorf("bad git config: %s", line)
-		}
-
-		result[parts[0]] = parts[1]
-	}
-
-	return result, nil
-}
-
-func (repo *GitRepo) ReadConfigBool(key string) (bool, error) {
-	val, err := repo.ReadConfigString(key)
-	if err != nil {
-		return false, err
-	}
-
-	return strconv.ParseBool(val)
-}
-
-func (repo *GitRepo) ReadConfigString(key string) (string, error) {
-	stdout, err := repo.runGitCommand("config", "--get-all", key)
-
-	//   / \
-	//  / ! \
-	// -------
-	//
-	// There can be a legitimate error here, but I see no portable way to
-	// distinguish them from the git error that say "no matching value exist"
-	if err != nil {
-		return "", ErrNoConfigEntry
-	}
-
-	lines := strings.Split(stdout, "\n")
-
-	if len(lines) == 0 {
-		return "", ErrNoConfigEntry
-	}
-	if len(lines) > 1 {
-		return "", ErrMultipleConfigEntry
-	}
-
-	return lines[0], nil
-}
-
-func (repo *GitRepo) rmSection(keyPrefix string) error {
-	_, err := repo.runGitCommand("config", "--remove-section", keyPrefix)
-	return err
-}
-
-func (repo *GitRepo) unsetAll(keyPrefix string) error {
-	_, err := repo.runGitCommand("config", "--unset-all", keyPrefix)
-	return err
-}
-
-// return keyPrefix section
-// example: sectionFromKey(a.b.c.d) return a.b.c
-func sectionFromKey(keyPrefix string) string {
-	s := strings.Split(keyPrefix, ".")
-	if len(s) == 1 {
-		return keyPrefix
-	}
-
-	return strings.Join(s[:len(s)-1], ".")
-}
-
-// rmConfigs with git version lesser than 2.18
-func (repo *GitRepo) rmConfigsGitVersionLT218(keyPrefix string) error {
-	// try to remove key/value pair by key
-	err := repo.unsetAll(keyPrefix)
-	if err != nil {
-		return repo.rmSection(keyPrefix)
-	}
-
-	m, err := repo.ReadConfigs(sectionFromKey(keyPrefix))
-	if err != nil {
-		return err
-	}
-
-	// if section doesn't have any left key/value remove the section
-	if len(m) == 0 {
-		return repo.rmSection(sectionFromKey(keyPrefix))
-	}
-
-	return nil
-}
-
-// RmConfigs remove all key/value pair matching the key prefix
-func (repo *GitRepo) RmConfigs(keyPrefix string) error {
-	// starting from git 2.18.0 sections are automatically deleted when the last existing
-	// key/value is removed. Before 2.18.0 we should remove the section
-	// see https://github.com/git/git/blob/master/Documentation/RelNotes/2.18.0.txt#L379
-	lt218, err := repo.gitVersionLT218()
-	if err != nil {
-		return errors.Wrap(err, "getting git version")
-	}
-
-	if lt218 {
-		return repo.rmConfigsGitVersionLT218(keyPrefix)
-	}
-
-	err = repo.unsetAll(keyPrefix)
-	if err != nil {
-		return repo.rmSection(keyPrefix)
-	}
-
-	return nil
-}
-
-func (repo *GitRepo) gitVersionLT218() (bool, error) {
-	versionOut, err := repo.runGitCommand("version")
-	if err != nil {
-		return false, err
-	}
-
-	// extract the version and truncate potential bad parts
-	// ex: 2.23.0.rc1 instead of 2.23.0-rc1
-	r := regexp.MustCompile(`(\d+\.){1,2}\d+`)
-
-	extracted := r.FindString(versionOut)
-	if extracted == "" {
-		return false, fmt.Errorf("unreadable git version %s", versionOut)
-	}
-
-	version, err := semver.Make(extracted)
-	if err != nil {
-		return false, err
-	}
-
-	version218string := "2.18.0"
-	gitVersion218, err := semver.Make(version218string)
-	if err != nil {
-		return false, err
-	}
-
-	return version.LT(gitVersion218), nil
 }
 
 // FetchRefs fetch git refs from a remote

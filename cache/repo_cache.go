@@ -99,6 +99,16 @@ func NewRepoCache(r repository.ClockedRepo) (*RepoCache, error) {
 	return c, c.write()
 }
 
+// LocalConfig give access to the repository scoped configuration
+func (c *RepoCache) LocalConfig() repository.Config {
+	return c.repo.LocalConfig()
+}
+
+// GlobalConfig give access to the git global configuration
+func (c *RepoCache) GlobalConfig() repository.Config {
+	return c.repo.GlobalConfig()
+}
+
 // GetPath returns the path to the repo.
 func (c *RepoCache) GetPath() string {
 	return c.repo.GetPath()
@@ -122,31 +132,6 @@ func (c *RepoCache) GetUserName() (string, error) {
 // GetUserEmail returns the email address that the user has used to configure git.
 func (c *RepoCache) GetUserEmail() (string, error) {
 	return c.repo.GetUserEmail()
-}
-
-// StoreConfig store a single key/value pair in the config of the repo
-func (c *RepoCache) StoreConfig(key string, value string) error {
-	return c.repo.StoreConfig(key, value)
-}
-
-// ReadConfigs read all key/value pair matching the key prefix
-func (c *RepoCache) ReadConfigs(keyPrefix string) (map[string]string, error) {
-	return c.repo.ReadConfigs(keyPrefix)
-}
-
-// ReadConfigBool read a single boolean value from the config
-func (c *RepoCache) ReadConfigBool(key string) (bool, error) {
-	return c.repo.ReadConfigBool(key)
-}
-
-// ReadConfigBool read a single string value from the config
-func (c *RepoCache) ReadConfigString(key string) (string, error) {
-	return c.repo.ReadConfigString(key)
-}
-
-// RmConfigs remove all key/value pair matching the key prefix
-func (c *RepoCache) RmConfigs(keyPrefix string) error {
-	return c.repo.RmConfigs(keyPrefix)
 }
 
 func (c *RepoCache) lock() error {
