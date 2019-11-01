@@ -14,27 +14,24 @@ import (
 var _ Config = &gitConfig{}
 
 type gitConfig struct {
-	execFn func(args ...string) (string, error)
+	repo         *GitRepo
+	localityFlag string
 }
 
 func newGitConfig(repo *GitRepo, global bool) *gitConfig {
-	configCmdFlag := "--local"
+	localityFlag := "--local"
 	if global {
-		configCmdFlag = "--global"
+		localityFlag = "--global"
 	}
 	return &gitConfig{
-		execFn: func(args ...string) (string, error) {
-			if len(args) > 0 && args[0] == "config" {
-				args = append([]string{args[0], configCmdFlag}, args[1:]...)
-			}
-			return repo.runGitCommand(args...)
-		},
+		repo:         repo,
+		localityFlag: localityFlag,
 	}
 }
 
 // StoreConfig store a single key/value pair in the config of the repo
 func (gc *gitConfig) StoreString(key string, value string) error {
-	_, err := gc.execFn("config", "--replace-all", key, value)
+	_, err := gc.repo.runGitCommand("config", "gc.localityFlag", "--replace-all", key, value)
 	return err
 }
 
@@ -48,7 +45,7 @@ func (gc *gitConfig) StoreTimestamp(key string, value time.Time) error {
 
 // ReadConfigs read all key/value pair matching the key prefix
 func (gc *gitConfig) ReadAll(keyPrefix string) (map[string]string, error) {
-	stdout, err := gc.execFn("config", "--get-regexp", keyPrefix)
+	stdout, err := gc.repo.runGitCommand("config", "gc.localityFlag", "--get-regexp", keyPrefix)
 
 	//   / \
 	//  / ! \
@@ -81,7 +78,7 @@ func (gc *gitConfig) ReadAll(keyPrefix string) (map[string]string, error) {
 }
 
 func (gc *gitConfig) ReadString(key string) (string, error) {
-	stdout, err := gc.execFn("config", "--get-all", key)
+	stdout, err := gc.repo.runGitCommand("config", "gc.localityFlag", "--get-all", key)
 
 	//   / \
 	//  / ! \
@@ -123,12 +120,12 @@ func (gc *gitConfig) ReadTimestamp(key string) (*time.Time, error) {
 }
 
 func (gc *gitConfig) rmSection(keyPrefix string) error {
-	_, err := gc.execFn("config", "--remove-section", keyPrefix)
+	_, err := gc.repo.runGitCommand("config", "gc.localityFlag", "--remove-section", keyPrefix)
 	return err
 }
 
 func (gc *gitConfig) unsetAll(keyPrefix string) error {
-	_, err := gc.execFn("config", "--unset-all", keyPrefix)
+	_, err := gc.repo.runGitCommand("config", "gc.localityFlag", "--unset-all", keyPrefix)
 	return err
 }
 
@@ -187,7 +184,7 @@ func (gc *gitConfig) RemoveAll(keyPrefix string) error {
 }
 
 func (gc *gitConfig) gitVersion() (*semver.Version, error) {
-	versionOut, err := gc.execFn("version")
+	versionOut, err := gc.repo.runGitCommand("version")
 	if err != nil {
 		return nil, err
 	}
