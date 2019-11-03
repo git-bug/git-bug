@@ -24,13 +24,21 @@ import "time"
 func Init() error {
 	var err error
 
-	out, err = os.OpenFile("/dev/tty", syscall.O_WRONLY, 0)
-	if err != nil {
-		return err
-	}
-	in, err = syscall.Open("/dev/tty", syscall.O_RDONLY, 0)
-	if err != nil {
-		return err
+	if runtime.GOOS == "openbsd" {
+		out, err = os.OpenFile("/dev/tty", os.O_RDWR, 0)
+		if err != nil {
+			return err
+		}
+		in = int(out.Fd())
+	} else {
+		out, err = os.OpenFile("/dev/tty", os.O_WRONLY, 0)
+		if err != nil {
+			return err
+		}
+		in, err = syscall.Open("/dev/tty", syscall.O_RDONLY, 0)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = setup_term()
@@ -317,6 +325,9 @@ func PollEvent() Event {
 	event.Type = EventKey
 	status := extract_event(inbuf, &event, true)
 	if event.N != 0 {
+		if event.N > len(inbuf) {
+			event.N = len(inbuf)
+		}
 		copy(inbuf, inbuf[event.N:])
 		inbuf = inbuf[:len(inbuf)-event.N]
 	}
@@ -345,6 +356,9 @@ func PollEvent() Event {
 			input_comm <- ev
 			status := extract_event(inbuf, &event, true)
 			if event.N != 0 {
+				if event.N > len(inbuf) {
+					event.N = len(inbuf)
+				}
 				copy(inbuf, inbuf[event.N:])
 				inbuf = inbuf[:len(inbuf)-event.N]
 			}
@@ -359,6 +373,9 @@ func PollEvent() Event {
 
 			status := extract_event(inbuf, &event, false)
 			if event.N != 0 {
+				if event.N > len(inbuf) {
+					event.N = len(inbuf)
+				}
 				copy(inbuf, inbuf[event.N:])
 				inbuf = inbuf[:len(inbuf)-event.N]
 			}

@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/MichaelMure/go-term-text"
-	"github.com/MichaelMure/gocui"
+	"github.com/awesome-gocui/gocui"
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
@@ -49,10 +49,10 @@ func (sb *showBug) layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
 	sb.childViews = nil
 
-	v, err := g.SetView(showBugView, 0, 0, maxX*2/3, maxY-2)
+	v, err := g.SetView(showBugView, 0, 0, maxX*2/3, maxY-2, 0)
 
 	if err != nil {
-		if err != gocui.ErrUnknownView {
+		if !gocui.IsUnknownView(err) {
 			return err
 		}
 
@@ -66,10 +66,10 @@ func (sb *showBug) layout(g *gocui.Gui) error {
 		return err
 	}
 
-	v, err = g.SetView(showBugSidebarView, maxX*2/3+1, 0, maxX-1, maxY-2)
+	v, err = g.SetView(showBugSidebarView, maxX*2/3+1, 0, maxX-1, maxY-2, 0)
 
 	if err != nil {
-		if err != gocui.ErrUnknownView {
+		if !gocui.IsUnknownView(err) {
 			return err
 		}
 
@@ -83,10 +83,10 @@ func (sb *showBug) layout(g *gocui.Gui) error {
 		return err
 	}
 
-	v, err = g.SetView(showBugInstructionView, -1, maxY-2, maxX, maxY)
+	v, err = g.SetView(showBugInstructionView, -1, maxY-2, maxX, maxY, 0)
 
 	if err != nil {
-		if err != gocui.ErrUnknownView {
+		if !gocui.IsUnknownView(err) {
 			return err
 		}
 
@@ -190,7 +190,7 @@ func (sb *showBug) keybindings(g *gocui.Gui) error {
 
 func (sb *showBug) disable(g *gocui.Gui) error {
 	for _, view := range sb.childViews {
-		if err := g.DeleteView(view); err != nil && err != gocui.ErrUnknownView {
+		if err := g.DeleteView(view); err != nil && !gocui.IsUnknownView(err) {
 			return err
 		}
 	}
@@ -383,9 +383,9 @@ func emptyMessagePlaceholder() string {
 }
 
 func (sb *showBug) createOpView(g *gocui.Gui, name string, x0 int, y0 int, maxX int, height int, selectable bool) (*gocui.View, error) {
-	v, err := g.SetView(name, x0, y0, maxX, y0+height+1)
+	v, err := g.SetView(name, x0, y0, maxX, y0+height+1, 0)
 
-	if err != nil && err != gocui.ErrUnknownView {
+	if err != nil && !gocui.IsUnknownView(err) {
 		return nil, err
 	}
 
@@ -403,9 +403,9 @@ func (sb *showBug) createOpView(g *gocui.Gui, name string, x0 int, y0 int, maxX 
 }
 
 func (sb *showBug) createSideView(g *gocui.Gui, name string, x0 int, y0 int, maxX int, height int) (*gocui.View, error) {
-	v, err := g.SetView(name, x0, y0, maxX, y0+height+1)
+	v, err := g.SetView(name, x0, y0, maxX, y0+height+1, 0)
 
-	if err != nil && err != gocui.ErrUnknownView {
+	if err != nil && !gocui.IsUnknownView(err) {
 		return nil, err
 	}
 

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/MichaelMure/go-term-text"
-	"github.com/MichaelMure/gocui"
+	"github.com/awesome-gocui/gocui"
 	"github.com/dustin/go-humanize"
 
 	"github.com/MichaelMure/git-bug/cache"
@@ -56,10 +56,10 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 		return nil
 	}
 
-	v, err := g.SetView(bugTableHeaderView, -1, -1, maxX, 3)
+	v, err := g.SetView(bugTableHeaderView, -1, -1, maxX, 3, 0)
 
 	if err != nil {
-		if err != gocui.ErrUnknownView {
+		if !gocui.IsUnknownView(err) {
 			return err
 		}
 
@@ -69,10 +69,10 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 	v.Clear()
 	bt.renderHeader(v, maxX)
 
-	v, err = g.SetView(bugTableView, -1, 1, maxX, maxY-3)
+	v, err = g.SetView(bugTableView, -1, 1, maxX, maxY-3, 0)
 
 	if err != nil {
-		if err != gocui.ErrUnknownView {
+		if !gocui.IsUnknownView(err) {
 			return err
 		}
 
@@ -100,10 +100,10 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 	v.Clear()
 	bt.render(v, maxX)
 
-	v, err = g.SetView(bugTableFooterView, -1, maxY-4, maxX, maxY)
+	v, err = g.SetView(bugTableFooterView, -1, maxY-4, maxX, maxY, 0)
 
 	if err != nil {
-		if err != gocui.ErrUnknownView {
+		if !gocui.IsUnknownView(err) {
 			return err
 		}
 
@@ -113,10 +113,10 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 	v.Clear()
 	bt.renderFooter(v, maxX)
 
-	v, err = g.SetView(bugTableInstructionView, -1, maxY-2, maxX, maxY)
+	v, err = g.SetView(bugTableInstructionView, -1, maxY-2, maxX, maxY, 0)
 
 	if err != nil {
-		if err != gocui.ErrUnknownView {
+		if !gocui.IsUnknownView(err) {
 			return err
 		}
 
@@ -216,16 +216,16 @@ func (bt *bugTable) keybindings(g *gocui.Gui) error {
 }
 
 func (bt *bugTable) disable(g *gocui.Gui) error {
-	if err := g.DeleteView(bugTableView); err != nil && err != gocui.ErrUnknownView {
+	if err := g.DeleteView(bugTableView); err != nil && !gocui.IsUnknownView(err) {
 		return err
 	}
-	if err := g.DeleteView(bugTableHeaderView); err != nil && err != gocui.ErrUnknownView {
+	if err := g.DeleteView(bugTableHeaderView); err != nil && !gocui.IsUnknownView(err) {
 		return err
 	}
-	if err := g.DeleteView(bugTableFooterView); err != nil && err != gocui.ErrUnknownView {
+	if err := g.DeleteView(bugTableFooterView); err != nil && !gocui.IsUnknownView(err) {
 		return err
 	}
-	if err := g.DeleteView(bugTableInstructionView); err != nil && err != gocui.ErrUnknownView {
+	if err := g.DeleteView(bugTableInstructionView); err != nil && !gocui.IsUnknownView(err) {
 		return err
 	}
 	return nil
