@@ -99,7 +99,7 @@ const iso8601 = "2006-01-02"
 func (t ISOTime) MarshalJSON() ([]byte, error) {
 	if y := time.Time(t).Year(); y < 0 || y >= 10000 {
 		// ISO 8901 uses 4 digits for the years
-		return nil, errors.New("ISOTime.MarshalJSON: year outside of range [0,9999]")
+		return nil, errors.New("json: ISOTime year outside of range [0,9999]")
 	}
 
 	b := make([]byte, 0, len(iso8601)+2)
@@ -317,6 +317,7 @@ type Client struct {
 	Features              *FeaturesService
 	GitIgnoreTemplates    *GitIgnoreTemplatesService
 	GroupBadges           *GroupBadgesService
+	GroupCluster          *GroupClustersService
 	GroupIssueBoards      *GroupIssueBoardsService
 	GroupLabels           *GroupLabelsService
 	GroupMembers          *GroupMembersService
@@ -466,6 +467,7 @@ func newClient(httpClient *http.Client) *Client {
 	c.Features = &FeaturesService{client: c}
 	c.GitIgnoreTemplates = &GitIgnoreTemplatesService{client: c}
 	c.GroupBadges = &GroupBadgesService{client: c}
+	c.GroupCluster = &GroupClustersService{client: c}
 	c.GroupIssueBoards = &GroupIssueBoardsService{client: c}
 	c.GroupLabels = &GroupLabelsService{client: c}
 	c.GroupMembers = &GroupMembersService{client: c}
@@ -873,6 +875,14 @@ func String(v string) *string {
 	return p
 }
 
+// Time is a helper routine that allocates a new time.Time value
+// to store v and returns a pointer to it.
+func Time(v time.Time) *time.Time {
+	p := new(time.Time)
+	*p = v
+	return p
+}
+
 // AccessLevel is a helper routine that allocates a new AccessLevelValue
 // to store v and returns a pointer to it.
 func AccessLevel(v AccessLevelValue) *AccessLevelValue {
@@ -893,6 +903,14 @@ func BuildState(v BuildStateValue) *BuildStateValue {
 // to store v and returns a pointer to it.
 func NotificationLevel(v NotificationLevelValue) *NotificationLevelValue {
 	p := new(NotificationLevelValue)
+	*p = v
+	return p
+}
+
+// VariableType is a helper routine that allocates a new VariableTypeValue
+// to store v and returns a pointer to it.
+func VariableType(v VariableTypeValue) *VariableTypeValue {
+	p := new(VariableTypeValue)
 	*p = v
 	return p
 }

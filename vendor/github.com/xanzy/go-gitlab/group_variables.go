@@ -45,18 +45,25 @@ func (v GroupVariable) String() string {
 	return Stringify(v)
 }
 
+// ListGroupVariablesOptions represents the available options for listing variables
+// for a group.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ee/api/group_level_variables.html#list-group-variables
+type ListGroupVariablesOptions ListOptions
+
 // ListVariables gets a list of all variables for a group.
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ee/api/group_level_variables.html#list-group-variables
-func (s *GroupVariablesService) ListVariables(gid interface{}, options ...OptionFunc) ([]*GroupVariable, *Response, error) {
+func (s *GroupVariablesService) ListVariables(gid interface{}, opt *ListGroupVariablesOptions, options ...OptionFunc) ([]*GroupVariable, *Response, error) {
 	group, err := parseID(gid)
 	if err != nil {
 		return nil, nil, err
 	}
 	u := fmt.Sprintf("groups/%s/variables", pathEscape(group))
 
-	req, err := s.client.NewRequest("GET", u, nil, options)
+	req, err := s.client.NewRequest("GET", u, opt, options)
 	if err != nil {
 		return nil, nil, err
 	}

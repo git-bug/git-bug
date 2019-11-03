@@ -47,18 +47,25 @@ func (v ProjectVariable) String() string {
 	return Stringify(v)
 }
 
+// ListProjectVariablesOptions represents the available options for listing variables
+// in a project.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ee/api/project_level_variables.html#list-project-variables
+type ListProjectVariablesOptions ListOptions
+
 // ListVariables gets a list of all variables in a project.
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ee/api/project_level_variables.html#list-project-variables
-func (s *ProjectVariablesService) ListVariables(pid interface{}, options ...OptionFunc) ([]*ProjectVariable, *Response, error) {
+func (s *ProjectVariablesService) ListVariables(pid interface{}, opt *ListProjectVariablesOptions, options ...OptionFunc) ([]*ProjectVariable, *Response, error) {
 	project, err := parseID(pid)
 	if err != nil {
 		return nil, nil, err
 	}
 	u := fmt.Sprintf("projects/%s/variables", pathEscape(project))
 
-	req, err := s.client.NewRequest("GET", u, nil, options)
+	req, err := s.client.NewRequest("GET", u, opt, options)
 	if err != nil {
 		return nil, nil, err
 	}
