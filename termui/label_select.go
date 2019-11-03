@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/MichaelMure/gocui"
+
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/gocui"
 )
 
 const labelSelectView = "labelSelectView"
@@ -127,7 +128,12 @@ func (ls *labelSelect) layout(g *gocui.Gui) error {
 		if ls.labelSelect[i] {
 			selectBox = " [x] "
 		}
-		fmt.Fprint(v, selectBox, label)
+
+		lc := label.Color()
+		lc256 := lc.Term256()
+		labelStr := lc256.Escape() + "◼ " + lc256.Unescape() + label.String()
+		fmt.Fprint(v, selectBox, labelStr)
+
 		y0 += 2
 	}
 

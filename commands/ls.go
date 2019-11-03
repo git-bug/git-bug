@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"strings"
 
+	text "github.com/MichaelMure/go-term-text"
+	"github.com/spf13/cobra"
+
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util/colors"
 	"github.com/MichaelMure/git-bug/util/interrupt"
-	"github.com/MichaelMure/git-bug/util/text"
-	"github.com/spf13/cobra"
 )
 
 var (
@@ -65,17 +66,30 @@ func runLsBug(cmd *cobra.Command, args []string) error {
 			name = b.LegacyAuthor.DisplayName()
 		}
 
+		var labelsTxt strings.Builder
+		for _, l := range b.Labels {
+			lc256 := l.Color().Term256()
+			labelsTxt.WriteString(lc256.Escape())
+			labelsTxt.WriteString(" ◼")
+			labelsTxt.WriteString(lc256.Unescape())
+		}
+
 		// truncate + pad if needed
-		titleFmt := text.LeftPadMaxLine(b.Title, 50, 0)
+		labelsFmt := text.TruncateMax(labelsTxt.String(), 10)
+		titleFmt := text.LeftPadMaxLine(b.Title, 50-text.Len(labelsFmt), 0)
 		authorFmt := text.LeftPadMaxLine(name, 15, 0)
 
-		fmt.Printf("%s %s\t%s\t%s\tC:%d L:%d\n",
+		comments := fmt.Sprintf("%4d 💬", b.LenComments)
+		if b.LenComments > 9999 {
+			comments = "    ∞ 💬"
+		}
+
+		fmt.Printf("%s %s\t%s\t%s\t%s\n",
 			colors.Cyan(b.Id.Human()),
 			colors.Yellow(b.Status),
-			titleFmt,
+			titleFmt+labelsFmt,
 			colors.Magenta(authorFmt),
-			b.LenComments,
-			len(b.Labels),
+			comments,
 		)
 	}
 

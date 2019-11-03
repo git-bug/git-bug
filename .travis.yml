@@ -1,13 +1,13 @@
 matrix:
   include:
   - language: go
-    go: "1.9"
-  - language: go
     go: "1.10"
   - language: go
     go: "1.11"
   - language: go
     go: "1.12"
+  - language: go
+    go: "1.13"
   - language: node_js
     node_js: 8
     before_install:

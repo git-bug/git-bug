@@ -576,7 +576,7 @@ func (ge *githubExporter) getOrCreateGithubLabelID(ctx context.Context, gc *gith
 	}
 
 	// RGBA to hex color
-	rgba := label.RGBA()
+	rgba := label.Color().RGBA()
 	hexColor := fmt.Sprintf("%.2x%.2x%.2x", rgba.R, rgba.G, rgba.B)
 
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)

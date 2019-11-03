@@ -66,11 +66,12 @@ func Run(cache *cache.RepoCache) error {
 		return err
 	}
 
+
 	return nil
 }
 
 func initGui(action func(ui *termUI) error) {
-	g, err := gocui.NewGui(gocui.OutputNormal)
+	g, err := gocui.NewGui(gocui.Output256)
 
 	if err != nil {
 		ui.gError <- err

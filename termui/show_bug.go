@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/MichaelMure/go-term-text"
+	"github.com/MichaelMure/gocui"
+
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/util/colors"
-	"github.com/MichaelMure/git-bug/util/text"
-	"github.com/MichaelMure/gocui"
 )
 
 const showBugView = "showBugView"
@@ -429,13 +430,15 @@ func (sb *showBug) renderSidebar(g *gocui.Gui, sideView *gocui.View) error {
 
 	labelStr := make([]string, len(snap.Labels))
 	for i, l := range snap.Labels {
-		labelStr[i] = string(l)
+		lc := l.Color()
+		lc256 := lc.Term256()
+		labelStr[i] = lc256.Escape() + "◼ " + lc256.Unescape() + l.String()
 	}
 
 	labels := strings.Join(labelStr, "\n")
 	labels, lines := text.WrapLeftPadded(labels, maxX, 2)
 
-	content := fmt.Sprintf("%s\n\n%s", colors.Bold("Labels"), labels)
+	content := fmt.Sprintf("%s\n\n%s", colors.Bold("  Labels"), labels)
 
 	v, err := sb.createSideView(g, "sideLabels", x0, y0, maxX, lines+2)
 	if err != nil {

@@ -3,14 +3,16 @@ package termui
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"time"
+
+	"github.com/MichaelMure/go-term-text"
+	"github.com/MichaelMure/gocui"
+	"github.com/dustin/go-humanize"
 
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/util/colors"
-	"github.com/MichaelMure/git-bug/util/text"
-	"github.com/MichaelMure/gocui"
-	"github.com/dustin/go-humanize"
 )
 
 const bugTableView = "bugTableView"
@@ -275,8 +277,8 @@ func (bt *bugTable) getColumnWidths(maxX int) map[string]int {
 
 	left := maxX - 5 - m["id"] - m["status"]
 
-	m["summary"] = 10
-	left -= m["summary"]
+	m["comments"] = 10
+	left -= m["comments"]
 	m["lastEdit"] = 19
 	left -= m["lastEdit"]
 
@@ -290,10 +292,21 @@ func (bt *bugTable) render(v *gocui.View, maxX int) {
 	columnWidths := bt.getColumnWidths(maxX)
 
 	for _, excerpt := range bt.excerpts {
-		summaryTxt := fmt.Sprintf("C:%-2d L:%-2d",
-			excerpt.LenComments,
-			len(excerpt.Labels),
-		)
+		summaryTxt := fmt.Sprintf("%4d 💬", excerpt.LenComments)
+		if excerpt.LenComments <= 0 {
+			summaryTxt = ""
+		}
+		if excerpt.LenComments > 9999 {
+			summaryTxt = "    ∞ 💬"
+		}
+
+		var labelsTxt strings.Builder
+		for _, l := range excerpt.Labels {
+			lc256 := l.Color().Term256()
+			labelsTxt.WriteString(lc256.Escape())
+			labelsTxt.WriteString(" ◼")
+			labelsTxt.WriteString(lc256.Unescape())
+		}
 
 		var authorDisplayName string
 		if excerpt.AuthorId != "" {
@@ -310,17 +323,19 @@ func (bt *bugTable) render(v *gocui.View, maxX int) {
 
 		id := text.LeftPadMaxLine(excerpt.Id.Human(), columnWidths["id"], 1)
 		status := text.LeftPadMaxLine(excerpt.Status.String(), columnWidths["status"], 1)
-		title := text.LeftPadMaxLine(excerpt.Title, columnWidths["title"], 1)
+		labels := text.TruncateMax(labelsTxt.String(), minInt(columnWidths["title"]-2, 10))
+		title := text.LeftPadMaxLine(excerpt.Title, columnWidths["title"]-text.Len(labels), 1)
 		author := text.LeftPadMaxLine(authorDisplayName, columnWidths["author"], 1)
-		summary := text.LeftPadMaxLine(summaryTxt, columnWidths["summary"], 1)
+		comments := text.LeftPadMaxLine(summaryTxt, columnWidths["comments"], 1)
 		lastEdit := text.LeftPadMaxLine(humanize.Time(lastEditTime), columnWidths["lastEdit"], 1)
 
-		_, _ = fmt.Fprintf(v, "%s %s %s %s %s %s\n",
+		_, _ = fmt.Fprintf(v, "%s %s %s%s %s %s %s\n",
 			colors.Cyan(id),
 			colors.Yellow(status),
 			title,
+			labels,
 			colors.Magenta(author),
-			summary,
+			comments,
 			lastEdit,
 		)
 	}
@@ -333,12 +348,11 @@ func (bt *bugTable) renderHeader(v *gocui.View, maxX int) {
 	status := text.LeftPadMaxLine("STATUS", columnWidths["status"], 1)
 	title := text.LeftPadMaxLine("TITLE", columnWidths["title"], 1)
 	author := text.LeftPadMaxLine("AUTHOR", columnWidths["author"], 1)
-	summary := text.LeftPadMaxLine("SUMMARY", columnWidths["summary"], 1)
+	comments := text.LeftPadMaxLine("COMMENTS", columnWidths["comments"], 1)
 	lastEdit := text.LeftPadMaxLine("LAST EDIT", columnWidths["lastEdit"], 1)
 
 	_, _ = fmt.Fprintf(v, "\n")
-	_, _ = fmt.Fprintf(v, "%s %s %s %s %s %s\n", id, status, title, author, summary, lastEdit)
-
+	_, _ = fmt.Fprintf(v, "%s %s %s %s %s %s\n", id, status, title, author, comments, lastEdit)
 }
 
 func (bt *bugTable) renderFooter(v *gocui.View, maxX int) {

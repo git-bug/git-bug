@@ -3,10 +3,11 @@ package commands
 import (
 	"fmt"
 
+	"github.com/spf13/cobra"
+
 	"github.com/MichaelMure/git-bug/bridge"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util/interrupt"
-	"github.com/spf13/cobra"
 )
 
 func runBridge(cmd *cobra.Command, args []string) error {

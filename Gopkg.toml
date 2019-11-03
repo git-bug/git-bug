@@ -79,3 +79,7 @@
 [[constraint]]
   branch = "master"
   name = "golang.org/x/sync"
+
+[[constraint]]
+  name = "github.com/MichaelMure/go-term-text"
+  version = "0.2.1"
