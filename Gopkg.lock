@@ -321,9 +321,9 @@
   version = "v1.2.2"
 
 [[projects]]
-  digest = "1:823766f4e1833bd562339317d905475fe46789da3863b2da7a1871f9f12bb4b3"
+  digest = "1:8d784da270f610f505e2c9785faec4c81d4a6a6a1034412685a4bf2cffe24cef"
   name = "github.com/theckman/goconstraint"
-  packages = ["go1.9/gte"]
+  packages = ["go1.10/gte"]
   pruneopts = "UT"
   revision = "93babf24513d0e8277635da8169fcc5a46ae3f6a"
   version = "v1.11.0"
@@ -490,7 +490,7 @@
     "github.com/spf13/cobra/doc",
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/require",
-    "github.com/theckman/goconstraint/go1.9/gte",
+    "github.com/theckman/goconstraint/go1.10/gte",
     "github.com/vektah/gqlgen/client",
     "github.com/vektah/gqlparser",
     "github.com/vektah/gqlparser/ast",
