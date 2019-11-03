@@ -7,7 +7,6 @@ import (
 	"reflect"
 	"regexp"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -292,7 +291,10 @@ func (b *Bridge) ensureInit() error {
 	return nil
 }
 
-func (b *Bridge) startImportSince(ctx context.Context, since time.Time) (<-chan ImportResult, error) {
+func (b *Bridge) ImportAllSince(ctx context.Context, since time.Time) (<-chan ImportResult, error) {
+	// 5 seconds before the actual start just to be sure.
+	importStartTime := time.Now().Add(-5 * time.Second)
+
 	importer := b.getImporter()
 	if importer == nil {
 		return nil, ErrImportNotSupported
@@ -313,48 +315,37 @@ func (b *Bridge) startImportSince(ctx context.Context, since time.Time) (<-chan 
 		return nil, err
 	}
 
-	return events, nil
-}
-
-func (b *Bridge) ImportAllSince(ctx context.Context, since time.Time) (<-chan ImportResult, error) {
-	if since.Equal(time.Time{}) {
-		lastImportTimeStr, err := b.repo.LocalConfig().ReadString(fmt.Sprintf("git-bug.bridge.%s.lastImportTime", b.Name))
-		if err == nil {
-			lastImportTime, err := strconv.Atoi(lastImportTimeStr)
-			if err != nil {
-				return nil, err
-			}
-			since = time.Unix(int64(lastImportTime), 0)
-		}
-	}
-
-	importStartTime := time.Now().Unix()
-
-	events, err := b.startImportSince(ctx, since)
-	if err != nil {
-		return nil, err
-	}
-
 	out := make(chan ImportResult)
 	go func() {
 		defer close(out)
+		noError := true
 
+		// relay all events while checking that everything went well
 		for event := range events {
+			if event.Err != nil {
+				noError = false
+			}
 			out <- event
 		}
 
-		// do not store last import time if context was cancelled
-		if ctx.Err() == nil {
-			err = b.repo.LocalConfig().StoreString(fmt.Sprintf("git-bug.bridge.%s.lastImportTime", b.Name), strconv.Itoa(int(importStartTime)))
+		// store the last import time ONLY if no error happened
+		if noError {
+			key := fmt.Sprintf("git-bug.bridge.%s.lastImportTime", b.Name)
+			err = b.repo.LocalConfig().StoreTimestamp(key, importStartTime)
 		}
-
 	}()
 
 	return out, nil
 }
 
 func (b *Bridge) ImportAll(ctx context.Context) (<-chan ImportResult, error) {
-	return b.startImportSince(ctx, time.Time{})
+	// If possible, restart from the last import time
+	lastImport, err := b.repo.LocalConfig().ReadTimestamp(fmt.Sprintf("git-bug.bridge.%s.lastImportTime", b.Name))
+	if err == nil {
+		return b.ImportAllSince(ctx, lastImport)
+	}
+
+	return b.ImportAllSince(ctx, time.Time{})
 }
 
 func (b *Bridge) ExportAll(ctx context.Context, since time.Time) error {

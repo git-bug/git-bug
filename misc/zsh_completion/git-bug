@@ -153,7 +153,7 @@ function _git-bug_bridge_configure {
 function _git-bug_bridge_pull {
   _arguments \
     '(-n --no-resume)'{-n,--no-resume}'[force importing all bugs]' \
-    '(-s --since)'{-s,--since}'[import only bugs updated after the given date (must be a unix timestamp)]:'
+    '(-s --since)'{-s,--since}'[import only bugs updated after the given date (ex: "200h" or "june 2 2019")]:'
 }
 
 function _git-bug_bridge_push {

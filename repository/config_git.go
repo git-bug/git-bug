@@ -111,10 +111,10 @@ func (gc *gitConfig) ReadBool(key string) (bool, error) {
 	return strconv.ParseBool(val)
 }
 
-func (gc *gitConfig) ReadTimestamp(key string) (*time.Time, error) {
+func (gc *gitConfig) ReadTimestamp(key string) (time.Time, error) {
 	value, err := gc.ReadString(key)
 	if err != nil {
-		return nil, err
+		return time.Time{}, err
 	}
 	return parseTimestamp(value)
 }

@@ -32,18 +32,17 @@ type Config interface {
 	// ReadTimestamp read a single timestamp value from the config
 	// Return ErrNoConfigEntry or ErrMultipleConfigEntry if
 	// there is zero or more than one entry for this key
-	ReadTimestamp(key string) (*time.Time, error)
+	ReadTimestamp(key string) (time.Time, error)
 
 	// RemoveAll removes all key/value pair matching the key prefix
 	RemoveAll(keyPrefix string) error
 }
 
-func parseTimestamp(s string) (*time.Time, error) {
+func parseTimestamp(s string) (time.Time, error) {
 	timestamp, err := strconv.Atoi(s)
 	if err != nil {
-		return nil, err
+		return time.Time{}, err
 	}
 
-	t := time.Unix(int64(timestamp), 0)
-	return &t, nil
+	return time.Unix(int64(timestamp), 0), nil
 }

@@ -59,18 +59,18 @@ func (mc *memConfig) ReadBool(key string) (bool, error) {
 	return strconv.ParseBool(val)
 }
 
-func (mc *memConfig) ReadTimestamp(key string) (*time.Time, error) {
+func (mc *memConfig) ReadTimestamp(key string) (time.Time, error) {
 	value, err := mc.ReadString(key)
 	if err != nil {
-		return nil, err
-	}
-	timestamp, err := strconv.Atoi(value)
-	if err != nil {
-		return nil, err
+		return time.Time{}, err
 	}
 
-	t := time.Unix(int64(timestamp), 0)
-	return &t, nil
+	timestamp, err := strconv.Atoi(value)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return time.Unix(int64(timestamp), 0), nil
 }
 
 // RmConfigs remove all key/value pair matching the key prefix
