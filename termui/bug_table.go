@@ -3,14 +3,16 @@ package termui
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"time"
+
+	"github.com/MichaelMure/go-term-text"
+	"github.com/MichaelMure/gocui"
+	"github.com/dustin/go-humanize"
 
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/util/colors"
-	"github.com/MichaelMure/git-bug/util/text"
-	"github.com/MichaelMure/gocui"
-	"github.com/dustin/go-humanize"
 )
 
 const bugTableView = "bugTableView"
@@ -291,21 +293,19 @@ func (bt *bugTable) render(v *gocui.View, maxX int) {
 
 	for _, excerpt := range bt.excerpts {
 		summaryTxt := fmt.Sprintf("%4d 💬", excerpt.LenComments)
+		if excerpt.LenComments <= 0 {
+			summaryTxt = ""
+		}
 		if excerpt.LenComments > 9999 {
 			summaryTxt = "    ∞ 💬"
 		}
-		labelsTxt := ""
 
-		nbLabels := 0
+		var labelsTxt strings.Builder
 		for _, l := range excerpt.Labels {
-			lc := l.Color()
-			lc256 := lc.Term256()
-			nbLabels++
-			if nbLabels >= 5 && len(excerpt.Labels) > 5 {
-				labelsTxt += " …"
-				break
-			}
-			labelsTxt += lc256.Escape() + " ◼" + lc256.Unescape()
+			lc256 := l.Color().Term256()
+			labelsTxt.WriteString(lc256.Escape())
+			labelsTxt.WriteString(" ◼")
+			labelsTxt.WriteString(lc256.Unescape())
 		}
 
 		var authorDisplayName string
@@ -323,15 +323,17 @@ func (bt *bugTable) render(v *gocui.View, maxX int) {
 
 		id := text.LeftPadMaxLine(excerpt.Id.Human(), columnWidths["id"], 1)
 		status := text.LeftPadMaxLine(excerpt.Status.String(), columnWidths["status"], 1)
-		title := text.LeftPadMaxLine(excerpt.Title, columnWidths["title"]-(nbLabels*2), 1) + labelsTxt
+		labels := text.TruncateMax(labelsTxt.String(), minInt(columnWidths["title"]-2, 10))
+		title := text.LeftPadMaxLine(excerpt.Title, columnWidths["title"]-text.Len(labels), 1)
 		author := text.LeftPadMaxLine(authorDisplayName, columnWidths["author"], 1)
 		comments := text.LeftPadMaxLine(summaryTxt, columnWidths["comments"], 1)
 		lastEdit := text.LeftPadMaxLine(humanize.Time(lastEditTime), columnWidths["lastEdit"], 1)
 
-		_, _ = fmt.Fprintf(v, "%s %s %s %s %s %s\n",
+		_, _ = fmt.Fprintf(v, "%s %s %s%s %s %s %s\n",
 			colors.Cyan(id),
 			colors.Yellow(status),
 			title,
+			labels,
 			colors.Magenta(author),
 			comments,
 			lastEdit,

@@ -3,13 +3,14 @@ package commands
 import (
 	"fmt"
 
+	"github.com/MichaelMure/go-term-text"
+	"github.com/spf13/cobra"
+
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/commands/select"
 	"github.com/MichaelMure/git-bug/util/colors"
 	"github.com/MichaelMure/git-bug/util/interrupt"
-	"github.com/MichaelMure/git-bug/util/text"
-	"github.com/spf13/cobra"
 )
 
 func runComment(cmd *cobra.Command, args []string) error {
@@ -41,7 +42,7 @@ func commentsTextOutput(comments []bug.Comment) {
 		fmt.Printf("Author: %s\n", colors.Magenta(comment.Author.DisplayName()))
 		fmt.Printf("Id: %s\n", colors.Cyan(comment.Id().Human()))
 		fmt.Printf("Date: %s\n\n", comment.FormatTime())
-		fmt.Println(text.LeftPad(comment.Message, 4))
+		fmt.Println(text.LeftPadLines(comment.Message, 4))
 	}
 }
 

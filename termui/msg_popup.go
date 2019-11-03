@@ -3,7 +3,7 @@ package termui
 import (
 	"fmt"
 
-	"github.com/MichaelMure/git-bug/util/text"
+	"github.com/MichaelMure/go-term-text"
 	"github.com/MichaelMure/gocui"
 )
 

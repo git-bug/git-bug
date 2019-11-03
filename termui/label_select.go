@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/MichaelMure/gocui"
+
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/gocui"
 )
 
 const labelSelectView = "labelSelectView"
