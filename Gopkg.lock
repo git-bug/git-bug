@@ -49,6 +49,14 @@
   version = "v1.0.0"
 
 [[projects]]
+  branch = "master"
+  digest = "1:fdfcd99fd77a0d3e3228d4d0b5061d9a611d40cd369ea44e333401b06936fdc4"
+  name = "github.com/araddon/dateparse"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "0fb0a474d195a3449cf412ae0176faa193f0ef0b"
+
+[[projects]]
   digest = "1:b6d886569181ec96ca83d529f4d6ba0cbf92ace7bb6f633f90c5f34d9bba7aab"
   name = "github.com/blang/semver"
   packages = ["."]
@@ -474,6 +482,7 @@
     "github.com/99designs/gqlgen/handler",
     "github.com/MichaelMure/go-term-text",
     "github.com/MichaelMure/gocui",
+    "github.com/araddon/dateparse",
     "github.com/blang/semver",
     "github.com/cheekybits/genny/generic",
     "github.com/dustin/go-humanize",

@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/araddon/dateparse"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/MichaelMure/git-bug/bridge"
@@ -15,7 +17,16 @@ import (
 	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
+var (
+	bridgePullImportSince string
+	bridgePullNoResume    bool
+)
+
 func runBridgePull(cmd *cobra.Command, args []string) error {
+	if bridgePullNoResume && bridgePullImportSince != "" {
+		return fmt.Errorf("only one of --no-resume and --since flags should be used")
+	}
+
 	backend, err := cache.NewRepoCache(repo)
 	if err != nil {
 		return err
@@ -64,8 +75,20 @@ func runBridgePull(cmd *cobra.Command, args []string) error {
 		return nil
 	})
 
-	// TODO: by default import only new events
-	events, err := b.ImportAll(ctx, time.Time{})
+	var events <-chan core.ImportResult
+	switch {
+	case bridgePullNoResume:
+		events, err = b.ImportAllSince(ctx, time.Time{})
+	case bridgePullImportSince != "":
+		since, err2 := parseSince(bridgePullImportSince)
+		if err2 != nil {
+			return errors.Wrap(err2, "import time parsing")
+		}
+		events, err = b.ImportAllSince(ctx, since)
+	default:
+		events, err = b.ImportAll(ctx)
+	}
+
 	if err != nil {
 		return err
 	}
@@ -85,12 +108,21 @@ func runBridgePull(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	fmt.Printf("imported %d issues and %d identities with %s bridge\n", importedIssues, importedIdentities, b.Name)
+
 	// send done signal
 	close(done)
 
-	fmt.Printf("Successfully imported %d issues and %d identities with %s bridge\n", importedIssues, importedIdentities, b.Name)
-
 	return nil
+}
+
+func parseSince(since string) (time.Time, error) {
+	duration, err := time.ParseDuration(since)
+	if err == nil {
+		return time.Now().Add(-duration), nil
+	}
+
+	return dateparse.ParseLocal(since)
 }
 
 var bridgePullCmd = &cobra.Command{
@@ -103,4 +135,6 @@ var bridgePullCmd = &cobra.Command{
 
 func init() {
 	bridgeCmd.AddCommand(bridgePullCmd)
+	bridgePullCmd.Flags().BoolVarP(&bridgePullNoResume, "no-resume", "n", false, "force importing all bugs")
+	bridgePullCmd.Flags().StringVarP(&bridgePullImportSince, "since", "s", "", "import only bugs updated after the given date (ex: \"200h\" or \"june 2 2019\")")
 }
