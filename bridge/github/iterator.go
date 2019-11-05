@@ -159,7 +159,8 @@ func (i *iterator) queryIssue() bool {
 		return false
 	}
 
-	if len(i.timeline.query.Repository.Issues.Nodes) == 0 {
+	issues := i.timeline.query.Repository.Issues.Nodes
+	if len(issues) == 0 {
 		return false
 	}
 
@@ -178,21 +179,24 @@ func (i *iterator) NextIssue() bool {
 	if i.timeline.variables["issueAfter"] == (*githubv4.String)(nil) {
 		nextIssue := i.queryIssue()
 		// prevent from infinite loop by setting a non nil cursor
-		i.timeline.variables["issueAfter"] = i.timeline.query.Repository.Issues.PageInfo.EndCursor
+		issues := i.timeline.query.Repository.Issues
+		i.timeline.variables["issueAfter"] = issues.PageInfo.EndCursor
 		return nextIssue
 	}
 
-	if !i.timeline.query.Repository.Issues.PageInfo.HasNextPage {
+	issues := i.timeline.query.Repository.Issues
+	if !issues.PageInfo.HasNextPage {
 		return false
 	}
 
 	// if we have more issues, query them
 	i.timeline.variables["timelineAfter"] = (*githubv4.String)(nil)
-	i.timeline.variables["issueAfter"] = i.timeline.query.Repository.Issues.PageInfo.EndCursor
+	i.timeline.variables["issueAfter"] = issues.PageInfo.EndCursor
 	i.timeline.index = -1
 
+	timelineEndCursor := issues.Nodes[0].Timeline.PageInfo.EndCursor
 	// store cursor for future use
-	i.timeline.lastEndCursor = i.timeline.query.Repository.Issues.Nodes[0].Timeline.PageInfo.EndCursor
+	i.timeline.lastEndCursor = timelineEndCursor
 
 	// query issue block
 	return i.queryIssue()
@@ -200,7 +204,8 @@ func (i *iterator) NextIssue() bool {
 
 // IssueValue return the actual issue value
 func (i *iterator) IssueValue() issueTimeline {
-	return i.timeline.query.Repository.Issues.Nodes[0]
+	issues := i.timeline.query.Repository.Issues
+	return issues.Nodes[0]
 }
 
 // NextTimelineItem return true if there is a next timeline item and increments the index by one.
@@ -214,24 +219,25 @@ func (i *iterator) NextTimelineItem() bool {
 		return false
 	}
 
+	timeline := i.timeline.query.Repository.Issues.Nodes[0].Timeline
 	// after NextIssue call it's good to check wether we have some timeline items or not
-	if len(i.timeline.query.Repository.Issues.Nodes[0].Timeline.Edges) == 0 {
+	if len(timeline.Edges) == 0 {
 		return false
 	}
 
-	if i.timeline.index < len(i.timeline.query.Repository.Issues.Nodes[0].Timeline.Edges)-1 {
+	if i.timeline.index < len(timeline.Edges)-1 {
 		i.timeline.index++
 		return true
 	}
 
-	if !i.timeline.query.Repository.Issues.Nodes[0].Timeline.PageInfo.HasNextPage {
+	if !timeline.PageInfo.HasNextPage {
 		return false
 	}
 
-	i.timeline.lastEndCursor = i.timeline.query.Repository.Issues.Nodes[0].Timeline.PageInfo.EndCursor
+	i.timeline.lastEndCursor = timeline.PageInfo.EndCursor
 
 	// more timelines, query them
-	i.timeline.variables["timelineAfter"] = i.timeline.query.Repository.Issues.Nodes[0].Timeline.PageInfo.EndCursor
+	i.timeline.variables["timelineAfter"] = timeline.PageInfo.EndCursor
 
 	ctx, cancel := context.WithTimeout(i.ctx, defaultTimeout)
 	defer cancel()
@@ -241,8 +247,9 @@ func (i *iterator) NextTimelineItem() bool {
 		return false
 	}
 
+	timeline = i.timeline.query.Repository.Issues.Nodes[0].Timeline
 	// (in case github returns something wierd) just for safety: better return a false than a panic
-	if len(i.timeline.query.Repository.Issues.Nodes[0].Timeline.Edges) == 0 {
+	if len(timeline.Edges) == 0 {
 		return false
 	}
 
@@ -253,7 +260,8 @@ func (i *iterator) NextTimelineItem() bool {
 
 // TimelineItemValue return the actual timeline item value
 func (i *iterator) TimelineItemValue() timelineItem {
-	return i.timeline.query.Repository.Issues.Nodes[0].Timeline.Edges[i.timeline.index].Node
+	timeline := i.timeline.query.Repository.Issues.Nodes[0].Timeline
+	return timeline.Edges[i.timeline.index].Node
 }
 
 func (i *iterator) queryIssueEdit() bool {
@@ -266,11 +274,12 @@ func (i *iterator) queryIssueEdit() bool {
 		return false
 	}
 
+	issueEdits := i.issueEdit.query.Repository.Issues.Nodes[0].UserContentEdits
 	// reverse issue edits because github
-	reverseEdits(i.issueEdit.query.Repository.Issues.Nodes[0].UserContentEdits.Nodes)
+	reverseEdits(issueEdits.Nodes)
 
 	// this is not supposed to happen
-	if len(i.issueEdit.query.Repository.Issues.Nodes[0].UserContentEdits.Nodes) == 0 {
+	if len(issueEdits.Nodes) == 0 {
 		i.timeline.issueEdit.index = -1
 		return false
 	}
@@ -303,22 +312,24 @@ func (i *iterator) NextIssueEdit() bool {
 	// this mean we looped over all available issue edits in the timeline.
 	// now we have to use i.issueEditQuery
 	if i.timeline.issueEdit.index == -2 {
-		if i.issueEdit.index < len(i.issueEdit.query.Repository.Issues.Nodes[0].UserContentEdits.Nodes)-1 {
+		issueEdits := i.issueEdit.query.Repository.Issues.Nodes[0].UserContentEdits
+		if i.issueEdit.index < len(issueEdits.Nodes)-1 {
 			i.issueEdit.index++
 			return i.nextValidIssueEdit()
 		}
 
-		if !i.issueEdit.query.Repository.Issues.Nodes[0].UserContentEdits.PageInfo.HasPreviousPage {
+		if !issueEdits.PageInfo.HasPreviousPage {
 			i.timeline.issueEdit.index = -1
 			i.issueEdit.index = -1
 			return false
 		}
 
 		// if there is more edits, query them
-		i.issueEdit.variables["issueEditBefore"] = i.issueEdit.query.Repository.Issues.Nodes[0].UserContentEdits.PageInfo.StartCursor
+		i.issueEdit.variables["issueEditBefore"] = issueEdits.PageInfo.StartCursor
 		return i.queryIssueEdit()
 	}
 
+	issueEdits := i.timeline.query.Repository.Issues.Nodes[0].UserContentEdits
 	// if there is no edit, the UserContentEdits given by github is empty. That
 	// means that the original message is given by the issue message.
 	//
@@ -329,24 +340,24 @@ func (i *iterator) NextIssueEdit() bool {
 	// the tricky part: for an issue older than the UserContentEdits API, github
 	// doesn't have the previous message version anymore and give an edition
 	// with .Diff == nil. We have to filter them.
-	if len(i.timeline.query.Repository.Issues.Nodes[0].UserContentEdits.Nodes) == 0 {
+	if len(issueEdits.Nodes) == 0 {
 		return false
 	}
 
 	// loop over them timeline comment edits
-	if i.timeline.issueEdit.index < len(i.timeline.query.Repository.Issues.Nodes[0].UserContentEdits.Nodes)-1 {
+	if i.timeline.issueEdit.index < len(issueEdits.Nodes)-1 {
 		i.timeline.issueEdit.index++
 		return i.nextValidIssueEdit()
 	}
 
-	if !i.timeline.query.Repository.Issues.Nodes[0].UserContentEdits.PageInfo.HasPreviousPage {
+	if !issueEdits.PageInfo.HasPreviousPage {
 		i.timeline.issueEdit.index = -1
 		return false
 	}
 
 	// if there is more edits, query them
 	i.initIssueEditQueryVariables()
-	i.issueEdit.variables["issueEditBefore"] = i.timeline.query.Repository.Issues.Nodes[0].UserContentEdits.PageInfo.StartCursor
+	i.issueEdit.variables["issueEditBefore"] = issueEdits.PageInfo.StartCursor
 	return i.queryIssueEdit()
 }
 
@@ -354,11 +365,13 @@ func (i *iterator) NextIssueEdit() bool {
 func (i *iterator) IssueEditValue() userContentEdit {
 	// if we are using issue edit query
 	if i.timeline.issueEdit.index == -2 {
-		return i.issueEdit.query.Repository.Issues.Nodes[0].UserContentEdits.Nodes[i.issueEdit.index]
+		issueEdits := i.issueEdit.query.Repository.Issues.Nodes[0].UserContentEdits
+		return issueEdits.Nodes[i.issueEdit.index]
 	}
 
+	issueEdits := i.timeline.query.Repository.Issues.Nodes[0].UserContentEdits
 	// else get it from timeline issue edit query
-	return i.timeline.query.Repository.Issues.Nodes[0].UserContentEdits.Nodes[i.timeline.issueEdit.index]
+	return issueEdits.Nodes[i.timeline.issueEdit.index]
 }
 
 func (i *iterator) queryCommentEdit() bool {
@@ -370,13 +383,14 @@ func (i *iterator) queryCommentEdit() bool {
 		return false
 	}
 
+	commentEdits := i.commentEdit.query.Repository.Issues.Nodes[0].Timeline.Nodes[0].IssueComment.UserContentEdits
 	// this is not supposed to happen
-	if len(i.commentEdit.query.Repository.Issues.Nodes[0].Timeline.Nodes[0].IssueComment.UserContentEdits.Nodes) == 0 {
+	if len(commentEdits.Nodes) == 0 {
 		i.timeline.commentEdit.index = -1
 		return false
 	}
 
-	reverseEdits(i.commentEdit.query.Repository.Issues.Nodes[0].Timeline.Nodes[0].IssueComment.UserContentEdits.Nodes)
+	reverseEdits(commentEdits.Nodes)
 
 	i.commentEdit.index = 0
 	i.timeline.commentEdit.index = -2
@@ -404,35 +418,36 @@ func (i *iterator) NextCommentEdit() bool {
 
 	// same as NextIssueEdit
 	if i.timeline.commentEdit.index == -2 {
-
-		if i.commentEdit.index < len(i.commentEdit.query.Repository.Issues.Nodes[0].Timeline.Nodes[0].IssueComment.UserContentEdits.Nodes)-1 {
+		commentEdits := i.commentEdit.query.Repository.Issues.Nodes[0].Timeline.Nodes[0].IssueComment.UserContentEdits
+		if i.commentEdit.index < len(commentEdits.Nodes)-1 {
 			i.commentEdit.index++
 			return i.nextValidCommentEdit()
 		}
 
-		if !i.commentEdit.query.Repository.Issues.Nodes[0].Timeline.Nodes[0].IssueComment.UserContentEdits.PageInfo.HasPreviousPage {
+		if !commentEdits.PageInfo.HasPreviousPage {
 			i.timeline.commentEdit.index = -1
 			i.commentEdit.index = -1
 			return false
 		}
 
 		// if there is more comment edits, query them
-		i.commentEdit.variables["commentEditBefore"] = i.commentEdit.query.Repository.Issues.Nodes[0].Timeline.Nodes[0].IssueComment.UserContentEdits.PageInfo.StartCursor
+		i.commentEdit.variables["commentEditBefore"] = commentEdits.PageInfo.StartCursor
 		return i.queryCommentEdit()
 	}
 
+	commentEdits := i.timeline.query.Repository.Issues.Nodes[0].Timeline.Edges[i.timeline.index].Node.IssueComment
 	// if there is no comment edits
-	if len(i.timeline.query.Repository.Issues.Nodes[0].Timeline.Edges[i.timeline.index].Node.IssueComment.UserContentEdits.Nodes) == 0 {
+	if len(commentEdits.UserContentEdits.Nodes) == 0 {
 		return false
 	}
 
 	// loop over them timeline comment edits
-	if i.timeline.commentEdit.index < len(i.timeline.query.Repository.Issues.Nodes[0].Timeline.Edges[i.timeline.index].Node.IssueComment.UserContentEdits.Nodes)-1 {
+	if i.timeline.commentEdit.index < len(commentEdits.UserContentEdits.Nodes)-1 {
 		i.timeline.commentEdit.index++
 		return i.nextValidCommentEdit()
 	}
 
-	if !i.timeline.query.Repository.Issues.Nodes[0].Timeline.Edges[i.timeline.index].Node.IssueComment.UserContentEdits.PageInfo.HasPreviousPage {
+	if !commentEdits.UserContentEdits.PageInfo.HasPreviousPage {
 		i.timeline.commentEdit.index = -1
 		return false
 	}
@@ -444,7 +459,7 @@ func (i *iterator) NextCommentEdit() bool {
 		i.commentEdit.variables["timelineAfter"] = i.timeline.query.Repository.Issues.Nodes[0].Timeline.Edges[i.timeline.index-1].Cursor
 	}
 
-	i.commentEdit.variables["commentEditBefore"] = i.timeline.query.Repository.Issues.Nodes[0].Timeline.Edges[i.timeline.index].Node.IssueComment.UserContentEdits.PageInfo.StartCursor
+	i.commentEdit.variables["commentEditBefore"] = commentEdits.UserContentEdits.PageInfo.StartCursor
 
 	return i.queryCommentEdit()
 }
