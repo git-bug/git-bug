@@ -214,6 +214,7 @@ func (i *iterator) NextTimelineItem() bool {
 		return false
 	}
 
+	// after NextIssue call it's good to check wether we have some timeline items or not
 	if len(i.timeline.query.Repository.Issues.Nodes[0].Timeline.Edges) == 0 {
 		return false
 	}
@@ -237,6 +238,11 @@ func (i *iterator) NextTimelineItem() bool {
 
 	if err := i.gc.Query(ctx, &i.timeline.query, i.timeline.variables); err != nil {
 		i.err = err
+		return false
+	}
+
+	// (in case github returns something wierd) just for safety: better return a false than a panic
+	if len(i.timeline.query.Repository.Issues.Nodes[0].Timeline.Edges) == 0 {
 		return false
 	}
 
