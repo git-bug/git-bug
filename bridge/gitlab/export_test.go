@@ -284,8 +284,11 @@ func createRepository(ctx context.Context, name, token string) (int, error) {
 		},
 		gitlab.WithContext(ctx),
 	)
+	if err != nil {
+		return 0, err
+	}
 
-	return project.ID, err
+	return project.ID, nil
 }
 
 // delete repository need a token with scope 'delete_repo'
