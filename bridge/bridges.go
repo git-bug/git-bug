@@ -5,6 +5,7 @@ import (
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bridge/github"
 	"github.com/MichaelMure/git-bug/bridge/gitlab"
+	"github.com/MichaelMure/git-bug/bridge/jira"
 	"github.com/MichaelMure/git-bug/bridge/launchpad"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/repository"
@@ -14,6 +15,7 @@ func init() {
 	core.Register(&github.Github{})
 	core.Register(&gitlab.Gitlab{})
 	core.Register(&launchpad.Launchpad{})
+	core.Register(&jira.Jira{})
 }
 
 // Targets return all known bridge implementation target

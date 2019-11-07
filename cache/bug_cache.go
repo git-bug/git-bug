@@ -210,6 +210,28 @@ func (c *BugCache) SetTitleRaw(author *IdentityCache, unixTime int64, title stri
 	return op, c.notifyUpdated()
 }
 
+func (c *BugCache) EditBody(body string) (*bug.EditCommentOperation, error) {
+	author, err := c.repoCache.GetUserIdentity()
+	if err != nil {
+		return nil, err
+	}
+
+	return c.EditBodyRaw(author, time.Now().Unix(), body, nil)
+}
+
+func (c *BugCache) EditBodyRaw(author *IdentityCache, unixTime int64, body string, metadata map[string]string) (*bug.EditCommentOperation, error) {
+	op, err := bug.EditBody(c.bug, author.Identity, unixTime, body)
+	if err != nil {
+		return nil, err
+	}
+
+	for key, value := range metadata {
+		op.SetMetadata(key, value)
+	}
+
+	return op, c.notifyUpdated()
+}
+
 func (c *BugCache) EditComment(target entity.Id, message string) (*bug.EditCommentOperation, error) {
 	author, err := c.repoCache.GetUserIdentity()
 	if err != nil {

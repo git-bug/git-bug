@@ -1,0 +1,598 @@
+package jira
+
+import (
+	"context"
+	"fmt"
+	"net/http"
+	"sort"
+	"strings"
+	"time"
+
+	"github.com/MichaelMure/git-bug/bridge/core"
+	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/entity"
+	"github.com/MichaelMure/git-bug/util/text"
+)
+
+const (
+	keyOrigin          = "origin"
+	keyJiraID          = "jira-id"
+	keyJiraOperationID = "jira-derived-id"
+	keyJiraKey         = "jira-key"
+	keyJiraUser        = "jira-user"
+	keyJiraProject     = "jira-project"
+	keyJiraExportTime  = "jira-export-time"
+	defaultPageSize    = 10
+)
+
+// jiraImporter implement the Importer interface
+type jiraImporter struct {
+	conf core.Configuration
+
+	// send only channel
+	out chan<- core.ImportResult
+}
+
+// Init .
+func (gi *jiraImporter) Init(conf core.Configuration) error {
+	gi.conf = conf
+	return nil
+}
+
+// ImportAll iterate over all the configured repository issues and ensure the
+// creation of the missing issues / timeline items / edits / label events ...
+func (self *jiraImporter) ImportAll(
+	ctx context.Context, repo *cache.RepoCache, since time.Time) (
+	<-chan core.ImportResult, error) {
+
+	sinceStr := since.Format("2006-01-02 15:04")
+	serverURL := self.conf[keyServer]
+	project := self.conf[keyProject]
+	// TODO(josh)[da52062]: Validate token and if it is expired then prompt for
+	// credentials and generate a new one
+	out := make(chan core.ImportResult)
+	self.out = out
+
+	go func() {
+		defer close(self.out)
+
+		client := NewClient(serverURL, &ctx)
+		err := client.Login(self.conf)
+		if err != nil {
+			out <- core.NewImportError(err, "")
+			return
+		}
+
+		message, err := client.Search(
+			fmt.Sprintf("project=%s AND updatedDate>\"%s\"", project, sinceStr), 0, 0)
+		if err != nil {
+			out <- core.NewImportError(err, "")
+			return
+		}
+
+		fmt.Printf("So far so good. Have %d issues to import\n", message.Total)
+
+		jql := fmt.Sprintf("project=%s AND updatedDate>\"%s\"", project, sinceStr)
+		var searchIter *SearchIterator
+		for searchIter =
+			client.IterSearch(jql, defaultPageSize); searchIter.HasNext(); {
+			issue := searchIter.Next()
+			bug, err := self.ensureIssue(repo, *issue)
+			if err != nil {
+				err := fmt.Errorf("issue creation: %v", err)
+				out <- core.NewImportError(err, "")
+				return
+			}
+
+			var commentIter *CommentIterator
+			for commentIter =
+				client.IterComments(issue.ID, defaultPageSize); commentIter.HasNext(); {
+				comment := commentIter.Next()
+				self.ensureComment(repo, bug, *comment)
+			}
+			if commentIter.HasError() {
+				out <- core.NewImportError(commentIter.Err, "")
+			}
+
+			snapshot := bug.Snapshot()
+			opIdx := 0
+
+			var changelogIter *ChangeLogIterator
+			for changelogIter =
+				client.IterChangeLog(issue.ID, defaultPageSize); changelogIter.HasNext(); {
+				changelogEntry := changelogIter.Next()
+
+				// Advance the operation iterator up to the first operation which has
+				// an export date not before the changelog entry date. If the changelog
+				// entry was created in response to an exported operation, then this
+				// will be that operation.
+				var exportTime time.Time
+				for ; opIdx < len(snapshot.Operations); opIdx++ {
+					exportTimeStr, hasTime := snapshot.Operations[opIdx].GetMetadata(
+						keyJiraExportTime)
+					if !hasTime {
+						continue
+					}
+					exportTime, err = http.ParseTime(exportTimeStr)
+					if err != nil {
+						continue
+					}
+					if !exportTime.Before(changelogEntry.Created.Time) {
+						break
+					}
+				}
+				if opIdx < len(snapshot.Operations) {
+					self.ensureChange(
+						repo, bug, *changelogEntry, snapshot.Operations[opIdx])
+				} else {
+					self.ensureChange(repo, bug, *changelogEntry, nil)
+				}
+
+			}
+			if changelogIter.HasError() {
+				out <- core.NewImportError(changelogIter.Err, "")
+			}
+
+			if err := bug.CommitAsNeeded(); err != nil {
+				err = fmt.Errorf("bug commit: %v", err)
+				out <- core.NewImportError(err, "")
+				return
+			}
+		}
+		if searchIter.HasError() {
+			out <- core.NewImportError(searchIter.Err, "")
+		}
+	}()
+
+	return out, nil
+}
+
+// Create a bug.Person from a JIRA user
+func (self *jiraImporter) ensurePerson(
+	repo *cache.RepoCache, user User) (*cache.IdentityCache, error) {
+
+	// Look first in the cache
+	i, err := repo.ResolveIdentityImmutableMetadata(
+		keyJiraUser, string(user.Key))
+	if err == nil {
+		return i, nil
+	}
+	if _, ok := err.(entity.ErrMultipleMatch); ok {
+		return nil, err
+	}
+
+	i, err = repo.NewIdentityRaw(
+		user.DisplayName,
+		user.EmailAddress,
+		user.Key,
+		"",
+		map[string]string{
+			keyJiraUser: string(user.Key),
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	self.out <- core.NewImportIdentity(i.Id())
+	return i, nil
+}
+
+// Create a bug.Bug based from a JIRA issue
+func (self *jiraImporter) ensureIssue(
+	repo *cache.RepoCache, issue Issue) (*cache.BugCache, error) {
+	author, err := self.ensurePerson(repo, issue.Fields.Creator)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO(josh)[f8808eb]: Consider looking up the git-bug entry directly from
+	// the jira field which contains it, if we have a custom field configured
+	// to store git-bug IDs.
+	b, err := repo.ResolveBugCreateMetadata(keyJiraID, issue.ID)
+	if err != nil && err != bug.ErrBugNotExist {
+		return nil, err
+	}
+
+	if err == bug.ErrBugNotExist {
+		cleanText, err := text.Cleanup(string(issue.Fields.Description))
+		if err != nil {
+			return nil, err
+		}
+
+		title := fmt.Sprintf("[%s]: %s", issue.Key, issue.Fields.Summary)
+		b, _, err = repo.NewBugRaw(
+			author,
+			issue.Fields.Created.Unix(),
+			title,
+			cleanText,
+			nil,
+			map[string]string{
+				keyOrigin:      target,
+				keyJiraID:      issue.ID,
+				keyJiraKey:     issue.Key,
+				keyJiraProject: self.conf[keyProject],
+			})
+		if err != nil {
+			return nil, err
+		}
+
+		self.out <- core.NewImportBug(b.Id())
+	} else {
+		self.out <- core.NewImportNothing("", "bug already imported")
+	}
+
+	return b, nil
+}
+
+// Return a unique string derived from a unique jira id and a timestamp
+func getTimeDerivedID(jiraID string, timestamp MyTime) string {
+	return fmt.Sprintf("%s-%d", jiraID, timestamp.Unix())
+}
+
+// Create a bug.Comment from a JIRA comment
+func (self *jiraImporter) ensureComment(
+	repo *cache.RepoCache, b *cache.BugCache, item Comment) error {
+	// ensure person
+	author, err := self.ensurePerson(repo, item.Author)
+	if err != nil {
+		return err
+	}
+
+	targetOpID, err := b.ResolveOperationWithMetadata(
+		keyJiraID, item.ID)
+	if err == nil {
+		self.out <- core.NewImportNothing("", "comment already imported")
+	} else if err != cache.ErrNoMatchingOp {
+		return err
+	}
+
+	// If the comment is a new comment then create it
+	if targetOpID == "" && err == cache.ErrNoMatchingOp {
+		var cleanText string
+		if item.Updated != item.Created {
+			// We don't know the original text... we only have the updated text.
+			cleanText = ""
+		} else {
+			cleanText, err = text.Cleanup(string(item.Body))
+			if err != nil {
+				return err
+			}
+		}
+
+		// add comment operation
+		op, err := b.AddCommentRaw(
+			author,
+			item.Created.Unix(),
+			cleanText,
+			nil,
+			map[string]string{
+				keyJiraID:      item.ID,
+				keyJiraProject: self.conf[keyProject],
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+		self.out <- core.NewImportComment(op.Id())
+	}
+
+	// If there are no updates to this comment, then we are done
+	if item.Updated == item.Created {
+		return nil
+	}
+
+	// If there has been an update to this comment, we try to find it in the
+	// database. We need a unique id so we'll concat the issue id with the update
+	// timestamp. Note that this must be consistent with the exporter during
+	// export of an EditCommentOperation
+	derivedID := getTimeDerivedID(item.ID, item.Updated)
+	targetOpID, err = b.ResolveOperationWithMetadata(
+		keyJiraID, item.ID)
+	if err == nil {
+		self.out <- core.NewImportNothing("", "update already imported")
+	} else if err != cache.ErrNoMatchingOp {
+		return err
+	}
+
+	// ensure editor identity
+	editor, err := self.ensurePerson(repo, item.UpdateAuthor)
+	if err != nil {
+		return err
+	}
+
+	// comment edition
+	cleanText, err := text.Cleanup(string(item.Body))
+	if err != nil {
+		return err
+	}
+	op, err := b.EditCommentRaw(
+		editor,
+		item.Updated.Unix(),
+		target,
+		cleanText,
+		map[string]string{
+			keyJiraID:      derivedID,
+			keyJiraProject: self.conf[keyProject],
+		},
+	)
+
+	if err != nil {
+		return err
+	}
+
+	self.out <- core.NewImportCommentEdition(op.Id())
+
+	return nil
+}
+
+// Return a unique string derived from a unique jira id and an index into the
+// data referred to by that jira id.
+func getIndexDerivedID(jiraID string, idx int) string {
+	return fmt.Sprintf("%s-%d", jiraID, idx)
+}
+
+func labelSetsMatch(jiraSet []string, gitbugSet []bug.Label) bool {
+	if len(jiraSet) != len(gitbugSet) {
+		return false
+	}
+
+	sort.Strings(jiraSet)
+	gitbugStrSet := make([]string, len(gitbugSet), len(gitbugSet))
+	for idx, label := range gitbugSet {
+		gitbugStrSet[idx] = label.String()
+	}
+	sort.Strings(gitbugStrSet)
+
+	for idx, value := range jiraSet {
+		if value != gitbugStrSet[idx] {
+			return false
+		}
+	}
+
+	return true
+}
+
+// Create a bug.Operation (or a series of operations) from a JIRA changelog
+// entry
+func (self *jiraImporter) ensureChange(
+	repo *cache.RepoCache, b *cache.BugCache, entry ChangeLogEntry,
+	potentialOp bug.Operation) error {
+
+	// If we have an operation which is already mapped to the entire changelog
+	// entry then that means this changelog entry was induced by an export
+	// operation and we've already done the match, so we skip this one
+	_, err := b.ResolveOperationWithMetadata(keyJiraOperationID, entry.ID)
+	if err == nil {
+		self.out <- core.NewImportNothing(
+			"", "changelog entry already matched to export")
+		return nil
+	} else if err != cache.ErrNoMatchingOp {
+		return err
+	}
+
+	// In general, multiple fields may be changed in changelog entry  on
+	// JIRA. For example, when an issue is closed both its "status" and its
+	// "resolution" are updated within a single changelog entry.
+	// I don't thing git-bug has a single operation to modify an arbitrary
+	// number of fields in one go, so we break up the single JIRA changelog
+	// entry into individual field updates.
+	author, err := self.ensurePerson(repo, entry.Author)
+	if err != nil {
+		return err
+	}
+
+	if len(entry.Items) < 1 {
+		return fmt.Errorf("Received changelog entry with no item! (%s)", entry.ID)
+	}
+
+	statusMap := getStatusMap(self.conf)
+
+	// NOTE(josh): first do an initial scan and see if any of the changed items
+	// matches the current potential operation. If it does, then we know that this
+	// entire changelog entry was created in response to that git-bug operation.
+	// So we associate the operation with the entire changelog, and not a specific
+	// entry.
+	for _, item := range entry.Items {
+		switch item.Field {
+		case "labels":
+			// TODO(josh)[d7fd71c]: move set-symmetric-difference code to a helper
+			// function. Probably in jira.go or something.
+			fromLabels := strings.Split(item.FromString, " ")
+			toLabels := strings.Split(item.ToString, " ")
+			removedLabels, addedLabels, _ := setSymmetricDifference(
+				fromLabels, toLabels)
+
+			opr, isRightType := potentialOp.(*bug.LabelChangeOperation)
+			if isRightType &&
+				labelSetsMatch(addedLabels, opr.Added) &&
+				labelSetsMatch(removedLabels, opr.Removed) {
+				b.SetMetadata(opr.Id(), map[string]string{
+					keyJiraOperationID: entry.ID,
+				})
+				self.out <- core.NewImportNothing("", "matched export")
+				return nil
+			}
+
+		case "status":
+			opr, isRightType := potentialOp.(*bug.SetStatusOperation)
+			if isRightType && statusMap[opr.Status.String()] == item.ToString {
+				b.SetMetadata(opr.Id(), map[string]string{
+					keyJiraOperationID: entry.ID,
+				})
+				self.out <- core.NewImportNothing("", "matched export")
+				return nil
+			}
+
+		case "summary":
+			// NOTE(josh): JIRA calls it "summary", which sounds more like the body
+			// text, but it's the title
+			opr, isRightType := potentialOp.(*bug.SetTitleOperation)
+			if isRightType && opr.Title == item.ToString {
+				b.SetMetadata(opr.Id(), map[string]string{
+					keyJiraOperationID: entry.ID,
+				})
+				self.out <- core.NewImportNothing("", "matched export")
+				return nil
+			}
+
+		case "description":
+			// NOTE(josh): JIRA calls it "description", which sounds more like the
+			// title but it's actually the body
+			opr, isRightType := potentialOp.(*bug.EditCommentOperation)
+			if isRightType &&
+				opr.Target == b.Snapshot().Operations[0].Id() &&
+				opr.Message == item.ToString {
+				b.SetMetadata(opr.Id(), map[string]string{
+					keyJiraOperationID: entry.ID,
+				})
+				self.out <- core.NewImportNothing("", "matched export")
+				return nil
+			}
+		}
+	}
+
+	// Since we didn't match the changelog entry to a known export operation,
+	// then this is a changelog entry that we should import. We import each
+	// changelog entry item as a separate git-bug operation.
+	for idx, item := range entry.Items {
+		derivedID := getIndexDerivedID(entry.ID, idx)
+		_, err := b.ResolveOperationWithMetadata(keyJiraOperationID, derivedID)
+		if err == nil {
+			self.out <- core.NewImportNothing("", "update already imported")
+			continue
+		} else if err != cache.ErrNoMatchingOp {
+			return err
+		}
+
+		switch item.Field {
+		case "labels":
+			// TODO(josh)[d7fd71c]: move set-symmetric-difference code to a helper
+			// function. Probably in jira.go or something.
+			fromLabels := strings.Split(item.FromString, " ")
+			toLabels := strings.Split(item.ToString, " ")
+			removedLabels, addedLabels, _ := setSymmetricDifference(
+				fromLabels, toLabels)
+
+			op, err := b.ForceChangeLabelsRaw(
+				author,
+				entry.Created.Unix(),
+				addedLabels,
+				removedLabels,
+				map[string]string{
+					keyJiraID:          entry.ID,
+					keyJiraOperationID: derivedID,
+					keyJiraProject:     self.conf[keyProject],
+				},
+			)
+			if err != nil {
+				return err
+			}
+
+			self.out <- core.NewImportLabelChange(op.Id())
+
+		case "status":
+			if statusMap[bug.OpenStatus.String()] == item.ToString {
+				op, err := b.OpenRaw(
+					author,
+					entry.Created.Unix(),
+					map[string]string{
+						keyJiraID: entry.ID,
+
+						keyJiraProject:     self.conf[keyProject],
+						keyJiraOperationID: derivedID,
+					},
+				)
+				if err != nil {
+					return err
+				}
+				self.out <- core.NewImportStatusChange(op.Id())
+			} else if statusMap[bug.ClosedStatus.String()] == item.ToString {
+				op, err := b.CloseRaw(
+					author,
+					entry.Created.Unix(),
+					map[string]string{
+						keyJiraID: entry.ID,
+
+						keyJiraProject:     self.conf[keyProject],
+						keyJiraOperationID: derivedID,
+					},
+				)
+				if err != nil {
+					return err
+				}
+				self.out <- core.NewImportStatusChange(op.Id())
+			} else {
+				self.out <- core.NewImportNothing(
+					"", fmt.Sprintf(
+						"No git-bug status mapped for jira status %s", item.ToString))
+			}
+
+		case "summary":
+			// NOTE(josh): JIRA calls it "summary", which sounds more like the body
+			// text, but it's the title
+			op, err := b.SetTitleRaw(
+				author,
+				entry.Created.Unix(),
+				string(item.ToString),
+				map[string]string{
+					keyJiraID:          entry.ID,
+					keyJiraOperationID: derivedID,
+					keyJiraProject:     self.conf[keyProject],
+				},
+			)
+			if err != nil {
+				return err
+			}
+
+			self.out <- core.NewImportTitleEdition(op.Id())
+
+		case "description":
+			// NOTE(josh): JIRA calls it "description", which sounds more like the
+			// title but it's actually the body
+			op, err := b.EditBodyRaw(
+				author,
+				entry.Created.Unix(),
+				string(item.ToString),
+				map[string]string{
+					keyJiraID:          entry.ID,
+					keyJiraOperationID: derivedID,
+					keyJiraProject:     self.conf[keyProject],
+				},
+			)
+			if err != nil {
+				return err
+			}
+
+			self.out <- core.NewImportCommentEdition(op.Id())
+		}
+
+		// Other Examples:
+		// "assignee" (jira)
+		// "Attachment" (jira)
+		// "Epic Link" (custom)
+		// "Rank" (custom)
+		// "resolution" (jira)
+		// "Sprint" (custom)
+	}
+	return nil
+}
+
+func getStatusMap(conf core.Configuration) map[string]string {
+	var hasConf bool
+	statusMap := make(map[string]string)
+	statusMap[bug.OpenStatus.String()], hasConf = conf[keyMapOpenID]
+	if !hasConf {
+		// Default to "1" which is the built-in jira "Open" status
+		statusMap[bug.OpenStatus.String()] = "1"
+	}
+	statusMap[bug.ClosedStatus.String()], hasConf = conf[keyMapCloseID]
+	if !hasConf {
+		// Default to "6" which is the built-in jira "Closed" status
+		statusMap[bug.OpenStatus.String()] = "6"
+	}
+	return statusMap
+}
