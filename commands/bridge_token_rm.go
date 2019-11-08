@@ -7,13 +7,7 @@ import (
 )
 
 func runBridgeTokenRm(cmd *cobra.Command, args []string) error {
-	err := core.RemoveToken(repo, args[0])
-	if err == nil {
-		return nil
-	}
-
-	err = core.RemoveGlobalToken(repo, args[0])
-	return err
+	return core.RemoveToken(repo, args[0])
 }
 
 var bridgeTokenRmCmd = &cobra.Command{

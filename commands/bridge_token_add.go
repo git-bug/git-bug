@@ -8,17 +8,17 @@ import (
 )
 
 var (
-	bridgeToken core.Token
+	bridgeTokenValue  string
+	bridgeTokenTarget string
 )
 
 func runBridgeTokenAdd(cmd *cobra.Command, args []string) error {
-	_ = bridgeToken.Id() // TODO: a better design to avoid doing this
-
-	if err := bridgeToken.Validate(); err != nil {
+	token := core.NewToken(bridgeTokenValue, bridgeTokenTarget)
+	if err := token.Validate(); err != nil {
 		return errors.Wrap(err, "invalid token")
 	}
 
-	return core.StoreToken(repo, &bridgeToken)
+	return core.StoreToken(repo, token)
 }
 
 var bridgeTokenAddCmd = &cobra.Command{
@@ -31,9 +31,7 @@ var bridgeTokenAddCmd = &cobra.Command{
 
 func init() {
 	bridgeTokenCmd.AddCommand(bridgeTokenAddCmd)
-	bridgeTokenAddCmd.Flags().BoolVarP(&bridgeToken.Global, "global", "g", false, "")
-	bridgeTokenAddCmd.Flags().StringVarP(&bridgeToken.Value, "value", "v", "", "")
-	bridgeTokenAddCmd.Flags().StringVarP(&bridgeToken.Target, "target", "t", "", "")
-	bridgeTokenAddCmd.Flags().StringArrayVarP(&bridgeToken.Scopes, "scopes", "s", []string{}, "")
+	bridgeTokenAddCmd.Flags().StringVarP(&bridgeTokenValue, "value", "v", "", "")
+	bridgeTokenAddCmd.Flags().StringVarP(&bridgeTokenTarget, "target", "t", "", "")
 	bridgeTokenAddCmd.Flags().SortFlags = false
 }

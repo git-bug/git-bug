@@ -2,7 +2,7 @@ package commands
 
 import (
 	"fmt"
-	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -10,7 +10,7 @@ import (
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util/colors"
 	"github.com/MichaelMure/git-bug/util/interrupt"
-	"github.com/MichaelMure/git-bug/util/text"
+	text "github.com/MichaelMure/go-term-text"
 )
 
 var (
@@ -31,14 +31,8 @@ func runTokenBridge(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	for token, global := range tokens {
-		// TODO: filter tokens using flags
-		getTokenFn := core.GetToken
-		if global {
-			getTokenFn = core.GetGlobalToken
-		}
-
-		token, err := getTokenFn(repo, token)
+	for _, token := range tokens {
+		token, err := core.LoadToken(repo, token)
 		if err != nil {
 			return err
 		}
@@ -49,17 +43,16 @@ func runTokenBridge(cmd *cobra.Command, args []string) error {
 }
 
 func printToken(token *core.Token) {
-	idFmt := text.LeftPadMaxLine(token.HumanId(), 7, 0)
-	valueFmt := text.LeftPadMaxLine(token.Value, 8, 0)
-	targetFmt := text.LeftPadMaxLine(token.Target, 8, 0)
-	scopesFmt := text.LeftPadMaxLine(strings.Join(token.Scopes, ","), 20, 0)
+	idFmt := text.LeftPadMaxLine(token.ID.Human(), 7, 0)
+	valueFmt := text.LeftPadMaxLine(token.Value, 15, 0)
+	targetFmt := text.LeftPadMaxLine(token.Target, 7, 0)
+	createTimeFmt := text.LeftPadMaxLine(token.CreateTime.Format(time.RFC822), 20, 0)
 
-	fmt.Printf("%s %s %s %s %s\n",
+	fmt.Printf("%s %s %s %s\n",
 		idFmt,
-		valueFmt,
 		colors.Magenta(targetFmt),
-		colors.Yellow(token.Kind()),
-		scopesFmt,
+		valueFmt,
+		createTimeFmt,
 	)
 }
 
