@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/MichaelMure/git-bug/entity"
 	"github.com/araddon/dateparse"
 
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 )
 

@@ -13,11 +13,9 @@ git-bug bridge token add [flags]
 ### Options
 
 ```
-  -g, --global               
-  -v, --value string         
-  -t, --target string        
-  -s, --scopes stringArray   
-  -h, --help                 help for add
+  -v, --value string    
+  -t, --target string   
+  -h, --help            help for add
 ```
 
 ### SEE ALSO

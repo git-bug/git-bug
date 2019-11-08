@@ -94,14 +94,10 @@ Register-ArgumentCompleter -Native -CommandName 'git-bug' -ScriptBlock {
             break
         }
         'git-bug;bridge;token;add' {
-            [CompletionResult]::new('-g', 'g', [CompletionResultType]::ParameterName, '')
-            [CompletionResult]::new('--global', 'global', [CompletionResultType]::ParameterName, '')
             [CompletionResult]::new('-v', 'v', [CompletionResultType]::ParameterName, '')
             [CompletionResult]::new('--value', 'value', [CompletionResultType]::ParameterName, '')
             [CompletionResult]::new('-t', 't', [CompletionResultType]::ParameterName, '')
             [CompletionResult]::new('--target', 'target', [CompletionResultType]::ParameterName, '')
-            [CompletionResult]::new('-s', 's', [CompletionResultType]::ParameterName, '')
-            [CompletionResult]::new('--scopes', 'scopes', [CompletionResultType]::ParameterName, '')
             break
         }
         'git-bug;bridge;token;rm' {
