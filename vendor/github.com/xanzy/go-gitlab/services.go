@@ -100,6 +100,98 @@ func (s *ServicesService) DeleteGitLabCIService(pid interface{}, options ...Opti
 	return s.client.Do(req, nil)
 }
 
+// GithubService represents Github service settings.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ce/api/services.html#github-premium
+type GithubService struct {
+	Service
+	Properties *GithubServiceProperties `json:"properties"`
+}
+
+// GithubServiceProperties represents Github specific properties.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ce/api/services.html#github-premium
+type GithubServiceProperties struct {
+	RepositoryURL string `json:"repository_url,omitempty"`
+	StaticContext string `json:"static_context,omitempty"`
+}
+
+// GetGithubService gets Github service settings for a project.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ce/api/services.html#get-github-service-settings
+func (s *ServicesService) GetGithubService(pid interface{}, options ...OptionFunc) (*GithubService, *Response, error) {
+	project, err := parseID(pid)
+	if err != nil {
+		return nil, nil, err
+	}
+	u := fmt.Sprintf("projects/%s/services/github", pathEscape(project))
+
+	req, err := s.client.NewRequest("GET", u, nil, options)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	svc := new(GithubService)
+	resp, err := s.client.Do(req, svc)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return svc, resp, err
+}
+
+// SetGithubServiceOptions represents the available SetGithubService()
+// options.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ce/api/services.html#createedit-github-service
+type SetGithubServiceOptions struct {
+	Token         *string `url:"token,omitempty" json:"token,omitempty"`
+	RepositoryURL *string `url:"repository_url,omitempty" json:"repository_url,omitempty"`
+	StaticContext *bool   `url:"static_context,omitempty" json:"static_context,omitempty"`
+}
+
+// SetGithubService sets Github service for a project
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ce/api/services.html#createedit-github-service
+func (s *ServicesService) SetGithubService(pid interface{}, opt *SetGithubServiceOptions, options ...OptionFunc) (*Response, error) {
+	project, err := parseID(pid)
+	if err != nil {
+		return nil, err
+	}
+	u := fmt.Sprintf("projects/%s/services/github", pathEscape(project))
+
+	req, err := s.client.NewRequest("PUT", u, opt, options)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.client.Do(req, nil)
+}
+
+// DeleteGithubService deletes Github service for a project
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ce/api/services.html#delete-github-service
+func (s *ServicesService) DeleteGithubService(pid interface{}, options ...OptionFunc) (*Response, error) {
+	project, err := parseID(pid)
+	if err != nil {
+		return nil, err
+	}
+	u := fmt.Sprintf("projects/%s/services/github", pathEscape(project))
+
+	req, err := s.client.NewRequest("DELETE", u, nil, options)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.client.Do(req, nil)
+}
+
 // SetHipChatServiceOptions represents the available SetHipChatService()
 // options.
 //

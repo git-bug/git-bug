@@ -35,7 +35,9 @@ type Environment struct {
 	ID             int         `json:"id"`
 	Name           string      `json:"name"`
 	Slug           string      `json:"slug"`
+	State          string      `json:"state"`
 	ExternalURL    string      `json:"external_url"`
+	Project        *Project    `json:"project"`
 	LastDeployment *Deployment `json:"last_deployment"`
 }
 

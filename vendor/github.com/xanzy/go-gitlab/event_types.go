@@ -561,28 +561,20 @@ type MergeEvent struct {
 				Email string `json:"email"`
 			} `json:"author"`
 		} `json:"last_commit"`
-		WorkInProgress bool   `json:"work_in_progress"`
-		URL            string `json:"url"`
-		Action         string `json:"action"`
-		OldRev         string `json:"oldrev"`
-		Assignee       struct {
-			Name      string `json:"name"`
-			Username  string `json:"username"`
-			AvatarURL string `json:"avatar_url"`
-		} `json:"assignee"`
+		WorkInProgress bool          `json:"work_in_progress"`
+		URL            string        `json:"url"`
+		Action         string        `json:"action"`
+		OldRev         string        `json:"oldrev"`
+		Assignee       MergeAssignee `json:"assignee"`
 	} `json:"object_attributes"`
-	Repository *Repository `json:"repository"`
-	Assignee   struct {
-		Name      string `json:"name"`
-		Username  string `json:"username"`
-		AvatarURL string `json:"avatar_url"`
-	} `json:"assignee"`
-	Labels  []Label `json:"labels"`
-	Changes struct {
-		AssigneeID struct {
-			Previous int `json:"previous"`
-			Current  int `json:"current"`
-		} `json:"assignee_id"`
+	Repository *Repository   `json:"repository"`
+	Assignee   MergeAssignee `json:"assignee"`
+	Labels     []Label       `json:"labels"`
+	Changes    struct {
+		Assignees struct {
+			Previous []MergeAssignee `json:"previous"`
+			Current  []MergeAssignee `json:"current"`
+		} `json:"assignees"`
 		Description struct {
 			Previous string `json:"previous"`
 			Current  string `json:"current"`
@@ -591,15 +583,38 @@ type MergeEvent struct {
 			Previous []Label `json:"previous"`
 			Current  []Label `json:"current"`
 		} `json:"labels"`
-		UpdatedByID struct {
+		SourceBranch struct {
+			Previous string `json:"previous"`
+			Current  string `json:"current"`
+		} `json:"source_branch"`
+		SourceProjectID struct {
 			Previous int `json:"previous"`
 			Current  int `json:"current"`
-		} `json:"updated_by_id"`
+		} `json:"source_project_id"`
+		TargetBranch struct {
+			Previous string `json:"previous"`
+			Current  string `json:"current"`
+		} `json:"target_branch"`
+		TargetProjectID struct {
+			Previous int `json:"previous"`
+			Current  int `json:"current"`
+		} `json:"target_project_id"`
 		Title struct {
 			Previous string `json:"previous"`
 			Current  string `json:"current"`
 		} `json:"title"`
+		UpdatedByID struct {
+			Previous int `json:"previous"`
+			Current  int `json:"current"`
+		} `json:"updated_by_id"`
 	} `json:"changes"`
+}
+
+// MergeAssignee represents a merge assignee.
+type MergeAssignee struct {
+	Name      string `json:"name"`
+	Username  string `json:"username"`
+	AvatarURL string `json:"avatar_url"`
 }
 
 // MergeParams represents the merge params.

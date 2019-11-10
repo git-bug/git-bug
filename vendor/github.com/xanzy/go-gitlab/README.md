@@ -97,8 +97,8 @@ users:
 
 ```go
 git := gitlab.NewClient(nil, "yourtokengoeshere")
-//git.SetBaseURL("https://git.mydomain.com/api/v3")
-users, _, err := git.Users.ListUsers()
+//git.SetBaseURL("https://git.mydomain.com/api/v4")
+users, _, err := git.Users.ListUsers(&gitlab.ListUsersOptions{})
 ```
 
 Some API methods have optional parameters that can be passed. For example,

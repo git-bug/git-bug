@@ -161,8 +161,8 @@ func (s *MergeRequestApprovalsService) ChangeApprovalConfiguration(pid interface
 // GitLab API docs:
 // https://docs.gitlab.com/ee/api/merge_request_approvals.html#change-allowed-approvers-for-merge-request
 type ChangeMergeRequestAllowedApproversOptions struct {
-	ApproverIDs      []int `url:"approver_ids,omitempty" json:"approver_ids,omitempty"`
-	ApproverGroupIDs []int `url:"approver_group_ids,omitempty" json:"approver_group_ids,omitempty"`
+	ApproverIDs      []int `url:"approver_ids" json:"approver_ids"`
+	ApproverGroupIDs []int `url:"approver_group_ids" json:"approver_group_ids"`
 }
 
 // ChangeAllowedApprovers updates the approvers for a merge request.
