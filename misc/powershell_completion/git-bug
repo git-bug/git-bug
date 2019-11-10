@@ -86,7 +86,8 @@ Register-ArgumentCompleter -Native -CommandName 'git-bug' -ScriptBlock {
         }
         'git-bug;bridge;token' {
             [CompletionResult]::new('add', 'add', [CompletionResultType]::ParameterValue, 'Store a new token')
-            [CompletionResult]::new('rm', 'rm', [CompletionResultType]::ParameterValue, 'Remove token by Id.')
+            [CompletionResult]::new('rm', 'rm', [CompletionResultType]::ParameterValue, 'Remove a token.')
+            [CompletionResult]::new('show', 'show', [CompletionResultType]::ParameterValue, 'Display a token.')
             break
         }
         'git-bug;bridge;token;add' {
@@ -95,6 +96,9 @@ Register-ArgumentCompleter -Native -CommandName 'git-bug' -ScriptBlock {
             break
         }
         'git-bug;bridge;token;rm' {
+            break
+        }
+        'git-bug;bridge;token;show' {
             break
         }
         'git-bug;commands' {

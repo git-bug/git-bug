@@ -55,7 +55,7 @@ func (t *Token) Validate() error {
 	if t.Target == "" {
 		return fmt.Errorf("missing target")
 	}
-	if t.CreateTime.IsZero() {
+	if t.CreateTime.IsZero() || t.CreateTime.Equal(time.Time{}) {
 		return fmt.Errorf("missing creation time")
 	}
 	if !TargetExist(t.Target) {

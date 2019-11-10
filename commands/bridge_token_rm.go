@@ -24,8 +24,8 @@ func runBridgeTokenRm(cmd *cobra.Command, args []string) error {
 }
 
 var bridgeTokenRmCmd = &cobra.Command{
-	Use:     "rm",
-	Short:   "Remove token by Id.",
+	Use:     "rm <id>",
+	Short:   "Remove a token.",
 	PreRunE: loadRepo,
 	RunE:    runBridgeTokenRm,
 	Args:    cobra.ExactArgs(1),

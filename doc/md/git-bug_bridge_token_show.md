@@ -1,19 +1,19 @@
-## git-bug bridge token rm
+## git-bug bridge token show
 
-Remove a token.
+Display a token.
 
 ### Synopsis
 
-Remove a token.
+Display a token.
 
 ```
-git-bug bridge token rm <id> [flags]
+git-bug bridge token show [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for rm
+  -h, --help   help for show
 ```
 
 ### SEE ALSO

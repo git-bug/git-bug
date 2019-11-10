@@ -180,7 +180,8 @@ function _git-bug_bridge_token {
   cmnds)
     commands=(
       "add:Store a new token"
-      "rm:Remove token by Id."
+      "rm:Remove a token."
+      "show:Display a token."
     )
     _describe "command" commands
     ;;
@@ -193,6 +194,9 @@ function _git-bug_bridge_token {
   rm)
     _git-bug_bridge_token_rm
     ;;
+  show)
+    _git-bug_bridge_token_show
+    ;;
   esac
 }
 
@@ -202,6 +206,10 @@ function _git-bug_bridge_token_add {
 }
 
 function _git-bug_bridge_token_rm {
+  _arguments
+}
+
+function _git-bug_bridge_token_show {
   _arguments
 }
 

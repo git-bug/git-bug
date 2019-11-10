@@ -444,6 +444,26 @@ _git-bug_bridge_token_rm()
     noun_aliases=()
 }
 
+_git-bug_bridge_token_show()
+{
+    last_command="git-bug_bridge_token_show"
+
+    command_aliases=()
+
+    commands=()
+
+    flags=()
+    two_word_flags=()
+    local_nonpersistent_flags=()
+    flags_with_completion=()
+    flags_completion=()
+
+
+    must_have_one_flag=()
+    must_have_one_noun=()
+    noun_aliases=()
+}
+
 _git-bug_bridge_token()
 {
     last_command="git-bug_bridge_token"
@@ -453,6 +473,7 @@ _git-bug_bridge_token()
     commands=()
     commands+=("add")
     commands+=("rm")
+    commands+=("show")
 
     flags=()
     two_word_flags=()
