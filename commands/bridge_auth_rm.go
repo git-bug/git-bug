@@ -8,7 +8,7 @@ import (
 	"github.com/MichaelMure/git-bug/bridge/core"
 )
 
-func runBridgeTokenRm(cmd *cobra.Command, args []string) error {
+func runBridgeAuthRm(cmd *cobra.Command, args []string) error {
 	token, err := core.LoadTokenPrefix(repo, args[0])
 	if err != nil {
 		return err
@@ -23,14 +23,14 @@ func runBridgeTokenRm(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-var bridgeTokenRmCmd = &cobra.Command{
+var bridgeAuthRmCmd = &cobra.Command{
 	Use:     "rm <id>",
-	Short:   "Remove a token.",
+	Short:   "Remove a credential.",
 	PreRunE: loadRepo,
-	RunE:    runBridgeTokenRm,
+	RunE:    runBridgeAuthRm,
 	Args:    cobra.ExactArgs(1),
 }
 
 func init() {
-	bridgeTokenCmd.AddCommand(bridgeTokenRmCmd)
+	bridgeAuthCmd.AddCommand(bridgeAuthRmCmd)
 }

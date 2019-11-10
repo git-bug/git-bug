@@ -15,17 +15,17 @@ import (
 )
 
 var (
-	bridgeTokenTarget string
+	bridgeAuthAddTokenTarget string
 )
 
 func runBridgeTokenAdd(cmd *cobra.Command, args []string) error {
 	var value string
 
-	if bridgeTokenTarget == "" {
-		return fmt.Errorf("token target is required")
+	if bridgeAuthAddTokenTarget == "" {
+		return fmt.Errorf("auth target is required")
 	}
 
-	if !core.TargetExist(bridgeTokenTarget) {
+	if !core.TargetExist(bridgeAuthAddTokenTarget) {
 		return fmt.Errorf("unknown target")
 	}
 
@@ -44,7 +44,7 @@ func runBridgeTokenAdd(cmd *cobra.Command, args []string) error {
 		value = strings.TrimSuffix(raw, "\n")
 	}
 
-	token := core.NewToken(value, bridgeTokenTarget)
+	token := core.NewToken(value, bridgeAuthAddTokenTarget)
 	if err := token.Validate(); err != nil {
 		return errors.Wrap(err, "invalid token")
 	}
@@ -58,8 +58,8 @@ func runBridgeTokenAdd(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-var bridgeTokenAddCmd = &cobra.Command{
-	Use:     "add",
+var bridgeAuthAddTokenCmd = &cobra.Command{
+	Use:     "add-token [<token>]",
 	Short:   "Store a new token",
 	PreRunE: loadRepo,
 	RunE:    runBridgeTokenAdd,
@@ -67,8 +67,8 @@ var bridgeTokenAddCmd = &cobra.Command{
 }
 
 func init() {
-	bridgeTokenCmd.AddCommand(bridgeTokenAddCmd)
-	bridgeTokenAddCmd.Flags().StringVarP(&bridgeTokenTarget, "target", "t", "",
+	bridgeAuthCmd.AddCommand(bridgeAuthAddTokenCmd)
+	bridgeAuthAddTokenCmd.Flags().StringVarP(&bridgeAuthAddTokenTarget, "target", "t", "",
 		fmt.Sprintf("The target of the bridge. Valid values are [%s]", strings.Join(bridge.Targets(), ",")))
-	bridgeTokenAddCmd.Flags().SortFlags = false
+	bridgeAuthAddTokenCmd.Flags().SortFlags = false
 }

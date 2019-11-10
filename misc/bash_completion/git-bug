@@ -287,6 +287,93 @@ _git-bug_add()
     noun_aliases=()
 }
 
+_git-bug_bridge_auth_add-token()
+{
+    last_command="git-bug_bridge_auth_add-token"
+
+    command_aliases=()
+
+    commands=()
+
+    flags=()
+    two_word_flags=()
+    local_nonpersistent_flags=()
+    flags_with_completion=()
+    flags_completion=()
+
+    flags+=("--target=")
+    two_word_flags+=("--target")
+    two_word_flags+=("-t")
+    local_nonpersistent_flags+=("--target=")
+
+    must_have_one_flag=()
+    must_have_one_noun=()
+    noun_aliases=()
+}
+
+_git-bug_bridge_auth_rm()
+{
+    last_command="git-bug_bridge_auth_rm"
+
+    command_aliases=()
+
+    commands=()
+
+    flags=()
+    two_word_flags=()
+    local_nonpersistent_flags=()
+    flags_with_completion=()
+    flags_completion=()
+
+
+    must_have_one_flag=()
+    must_have_one_noun=()
+    noun_aliases=()
+}
+
+_git-bug_bridge_auth_show()
+{
+    last_command="git-bug_bridge_auth_show"
+
+    command_aliases=()
+
+    commands=()
+
+    flags=()
+    two_word_flags=()
+    local_nonpersistent_flags=()
+    flags_with_completion=()
+    flags_completion=()
+
+
+    must_have_one_flag=()
+    must_have_one_noun=()
+    noun_aliases=()
+}
+
+_git-bug_bridge_auth()
+{
+    last_command="git-bug_bridge_auth"
+
+    command_aliases=()
+
+    commands=()
+    commands+=("add-token")
+    commands+=("rm")
+    commands+=("show")
+
+    flags=()
+    two_word_flags=()
+    local_nonpersistent_flags=()
+    flags_with_completion=()
+    flags_completion=()
+
+
+    must_have_one_flag=()
+    must_have_one_noun=()
+    noun_aliases=()
+}
+
 _git-bug_bridge_configure()
 {
     last_command="git-bug_bridge_configure"
@@ -400,93 +487,6 @@ _git-bug_bridge_rm()
     noun_aliases=()
 }
 
-_git-bug_bridge_token_add()
-{
-    last_command="git-bug_bridge_token_add"
-
-    command_aliases=()
-
-    commands=()
-
-    flags=()
-    two_word_flags=()
-    local_nonpersistent_flags=()
-    flags_with_completion=()
-    flags_completion=()
-
-    flags+=("--target=")
-    two_word_flags+=("--target")
-    two_word_flags+=("-t")
-    local_nonpersistent_flags+=("--target=")
-
-    must_have_one_flag=()
-    must_have_one_noun=()
-    noun_aliases=()
-}
-
-_git-bug_bridge_token_rm()
-{
-    last_command="git-bug_bridge_token_rm"
-
-    command_aliases=()
-
-    commands=()
-
-    flags=()
-    two_word_flags=()
-    local_nonpersistent_flags=()
-    flags_with_completion=()
-    flags_completion=()
-
-
-    must_have_one_flag=()
-    must_have_one_noun=()
-    noun_aliases=()
-}
-
-_git-bug_bridge_token_show()
-{
-    last_command="git-bug_bridge_token_show"
-
-    command_aliases=()
-
-    commands=()
-
-    flags=()
-    two_word_flags=()
-    local_nonpersistent_flags=()
-    flags_with_completion=()
-    flags_completion=()
-
-
-    must_have_one_flag=()
-    must_have_one_noun=()
-    noun_aliases=()
-}
-
-_git-bug_bridge_token()
-{
-    last_command="git-bug_bridge_token"
-
-    command_aliases=()
-
-    commands=()
-    commands+=("add")
-    commands+=("rm")
-    commands+=("show")
-
-    flags=()
-    two_word_flags=()
-    local_nonpersistent_flags=()
-    flags_with_completion=()
-    flags_completion=()
-
-
-    must_have_one_flag=()
-    must_have_one_noun=()
-    noun_aliases=()
-}
-
 _git-bug_bridge()
 {
     last_command="git-bug_bridge"
@@ -494,11 +494,11 @@ _git-bug_bridge()
     command_aliases=()
 
     commands=()
+    commands+=("auth")
     commands+=("configure")
     commands+=("pull")
     commands+=("push")
     commands+=("rm")
-    commands+=("token")
 
     flags=()
     two_word_flags=()

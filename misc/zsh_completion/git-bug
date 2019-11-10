@@ -114,17 +114,20 @@ function _git-bug_bridge {
   case $state in
   cmnds)
     commands=(
+      "auth:List all known bridge authentication credentials."
       "configure:Configure a new bridge."
       "pull:Pull updates."
       "push:Push updates."
       "rm:Delete a configured bridge."
-      "token:List all known tokens."
     )
     _describe "command" commands
     ;;
   esac
 
   case "$words[1]" in
+  auth)
+    _git-bug_bridge_auth
+    ;;
   configure)
     _git-bug_bridge_configure
     ;;
@@ -137,10 +140,52 @@ function _git-bug_bridge {
   rm)
     _git-bug_bridge_rm
     ;;
-  token)
-    _git-bug_bridge_token
+  esac
+}
+
+
+function _git-bug_bridge_auth {
+  local -a commands
+
+  _arguments -C \
+    "1: :->cmnds" \
+    "*::arg:->args"
+
+  case $state in
+  cmnds)
+    commands=(
+      "add-token:Store a new token"
+      "rm:Remove a credential."
+      "show:Display an authentication credential."
+    )
+    _describe "command" commands
     ;;
   esac
+
+  case "$words[1]" in
+  add-token)
+    _git-bug_bridge_auth_add-token
+    ;;
+  rm)
+    _git-bug_bridge_auth_rm
+    ;;
+  show)
+    _git-bug_bridge_auth_show
+    ;;
+  esac
+}
+
+function _git-bug_bridge_auth_add-token {
+  _arguments \
+    '(-t --target)'{-t,--target}'[The target of the bridge. Valid values are [github,gitlab,launchpad-preview]]:'
+}
+
+function _git-bug_bridge_auth_rm {
+  _arguments
+}
+
+function _git-bug_bridge_auth_show {
+  _arguments
 }
 
 function _git-bug_bridge_configure {
@@ -165,51 +210,6 @@ function _git-bug_bridge_push {
 }
 
 function _git-bug_bridge_rm {
-  _arguments
-}
-
-
-function _git-bug_bridge_token {
-  local -a commands
-
-  _arguments -C \
-    "1: :->cmnds" \
-    "*::arg:->args"
-
-  case $state in
-  cmnds)
-    commands=(
-      "add:Store a new token"
-      "rm:Remove a token."
-      "show:Display a token."
-    )
-    _describe "command" commands
-    ;;
-  esac
-
-  case "$words[1]" in
-  add)
-    _git-bug_bridge_token_add
-    ;;
-  rm)
-    _git-bug_bridge_token_rm
-    ;;
-  show)
-    _git-bug_bridge_token_show
-    ;;
-  esac
-}
-
-function _git-bug_bridge_token_add {
-  _arguments \
-    '(-t --target)'{-t,--target}'[The target of the bridge. Valid values are [github,gitlab,launchpad-preview]]:'
-}
-
-function _git-bug_bridge_token_rm {
-  _arguments
-}
-
-function _git-bug_bridge_token_show {
   _arguments
 }
 

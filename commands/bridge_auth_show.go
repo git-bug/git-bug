@@ -9,28 +9,29 @@ import (
 	"github.com/MichaelMure/git-bug/bridge/core"
 )
 
-func runBridgeTokenShow(cmd *cobra.Command, args []string) error {
+func runBridgeAuthShow(cmd *cobra.Command, args []string) error {
 	token, err := core.LoadTokenPrefix(repo, args[0])
 	if err != nil {
 		return err
 	}
 
 	fmt.Printf("Id: %s\n", token.ID())
-	fmt.Printf("Value: %s\n", token.Value)
 	fmt.Printf("Target: %s\n", token.Target)
+	fmt.Printf("Type: token\n")
+	fmt.Printf("Value: %s\n", token.Value)
 	fmt.Printf("Creation: %s\n", token.CreateTime.Format(time.RFC822))
 
 	return nil
 }
 
-var bridgeTokenShowCmd = &cobra.Command{
+var bridgeAuthShowCmd = &cobra.Command{
 	Use:     "show",
-	Short:   "Display a token.",
+	Short:   "Display an authentication credential.",
 	PreRunE: loadRepo,
-	RunE:    runBridgeTokenShow,
+	RunE:    runBridgeAuthShow,
 	Args:    cobra.ExactArgs(1),
 }
 
 func init() {
-	bridgeTokenCmd.AddCommand(bridgeTokenShowCmd)
+	bridgeAuthCmd.AddCommand(bridgeAuthShowCmd)
 }
