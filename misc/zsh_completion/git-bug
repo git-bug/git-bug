@@ -114,6 +114,7 @@ function _git-bug_bridge {
   case $state in
   cmnds)
     commands=(
+      "auth:List all known bridge authentication credentials."
       "configure:Configure a new bridge."
       "pull:Pull updates."
       "push:Push updates."
@@ -124,6 +125,9 @@ function _git-bug_bridge {
   esac
 
   case "$words[1]" in
+  auth)
+    _git-bug_bridge_auth
+    ;;
   configure)
     _git-bug_bridge_configure
     ;;
@@ -137,6 +141,51 @@ function _git-bug_bridge {
     _git-bug_bridge_rm
     ;;
   esac
+}
+
+
+function _git-bug_bridge_auth {
+  local -a commands
+
+  _arguments -C \
+    "1: :->cmnds" \
+    "*::arg:->args"
+
+  case $state in
+  cmnds)
+    commands=(
+      "add-token:Store a new token"
+      "rm:Remove a credential."
+      "show:Display an authentication credential."
+    )
+    _describe "command" commands
+    ;;
+  esac
+
+  case "$words[1]" in
+  add-token)
+    _git-bug_bridge_auth_add-token
+    ;;
+  rm)
+    _git-bug_bridge_auth_rm
+    ;;
+  show)
+    _git-bug_bridge_auth_show
+    ;;
+  esac
+}
+
+function _git-bug_bridge_auth_add-token {
+  _arguments \
+    '(-t --target)'{-t,--target}'[The target of the bridge. Valid values are [github,gitlab,launchpad-preview]]:'
+}
+
+function _git-bug_bridge_auth_rm {
+  _arguments
+}
+
+function _git-bug_bridge_auth_show {
+  _arguments
 }
 
 function _git-bug_bridge_configure {

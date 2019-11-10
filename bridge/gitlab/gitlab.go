@@ -23,10 +23,6 @@ const (
 	defaultTimeout = 60 * time.Second
 )
 
-func init() {
-	core.Register(&Gitlab{})
-}
-
 type Gitlab struct{}
 
 func (*Gitlab) Target() string {

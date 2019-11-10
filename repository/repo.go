@@ -10,8 +10,10 @@ import (
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
-var ErrNoConfigEntry = errors.New("no config entry for the given key")
-var ErrMultipleConfigEntry = errors.New("multiple config entry for the given key")
+var (
+	ErrNoConfigEntry       = errors.New("no config entry for the given key")
+	ErrMultipleConfigEntry = errors.New("multiple config entry for the given key")
+)
 
 // RepoCommon represent the common function the we want all the repo to implement
 type RepoCommon interface {

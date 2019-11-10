@@ -15,11 +15,15 @@ import (
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
-const createClockFile = "/git-bug/create-clock"
-const editClockFile = "/git-bug/edit-clock"
+const (
+	createClockFile = "/git-bug/create-clock"
+	editClockFile   = "/git-bug/edit-clock"
+)
 
-// ErrNotARepo is the error returned when the git repo root wan't be found
-var ErrNotARepo = errors.New("not a git repository")
+var (
+	// ErrNotARepo is the error returned when the git repo root wan't be found
+	ErrNotARepo = errors.New("not a git repository")
+)
 
 var _ ClockedRepo = &GitRepo{}
 

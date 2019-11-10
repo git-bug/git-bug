@@ -48,10 +48,28 @@ Register-ArgumentCompleter -Native -CommandName 'git-bug' -ScriptBlock {
             break
         }
         'git-bug;bridge' {
+            [CompletionResult]::new('auth', 'auth', [CompletionResultType]::ParameterValue, 'List all known bridge authentication credentials.')
             [CompletionResult]::new('configure', 'configure', [CompletionResultType]::ParameterValue, 'Configure a new bridge.')
             [CompletionResult]::new('pull', 'pull', [CompletionResultType]::ParameterValue, 'Pull updates.')
             [CompletionResult]::new('push', 'push', [CompletionResultType]::ParameterValue, 'Push updates.')
             [CompletionResult]::new('rm', 'rm', [CompletionResultType]::ParameterValue, 'Delete a configured bridge.')
+            break
+        }
+        'git-bug;bridge;auth' {
+            [CompletionResult]::new('add-token', 'add-token', [CompletionResultType]::ParameterValue, 'Store a new token')
+            [CompletionResult]::new('rm', 'rm', [CompletionResultType]::ParameterValue, 'Remove a credential.')
+            [CompletionResult]::new('show', 'show', [CompletionResultType]::ParameterValue, 'Display an authentication credential.')
+            break
+        }
+        'git-bug;bridge;auth;add-token' {
+            [CompletionResult]::new('-t', 't', [CompletionResultType]::ParameterName, 'The target of the bridge. Valid values are [github,gitlab,launchpad-preview]')
+            [CompletionResult]::new('--target', 'target', [CompletionResultType]::ParameterName, 'The target of the bridge. Valid values are [github,gitlab,launchpad-preview]')
+            break
+        }
+        'git-bug;bridge;auth;rm' {
+            break
+        }
+        'git-bug;bridge;auth;show' {
             break
         }
         'git-bug;bridge;configure' {
