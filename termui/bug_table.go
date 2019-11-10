@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/MichaelMure/go-term-text"
-	"github.com/MichaelMure/gocui"
+	"github.com/awesome-gocui/gocui"
 	"github.com/dustin/go-humanize"
 
 	"github.com/MichaelMure/git-bug/cache"
@@ -56,10 +56,10 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 		return nil
 	}
 
-	v, err := g.SetView(bugTableHeaderView, -1, -1, maxX, 3)
+	v, err := g.SetView(bugTableHeaderView, -1, -1, maxX, 3, 0)
 
 	if err != nil {
-		if err != gocui.ErrUnknownView {
+		if !gocui.IsUnknownView(err) {
 			return err
 		}
 
@@ -69,21 +69,16 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 	v.Clear()
 	bt.renderHeader(v, maxX)
 
-	v, err = g.SetView(bugTableView, -1, 1, maxX, maxY-3)
+	v, err = g.SetView(bugTableView, -1, 1, maxX, maxY-3, 0)
 
 	if err != nil {
-		if err != gocui.ErrUnknownView {
+		if !gocui.IsUnknownView(err) {
 			return err
 		}
 
 		v.Frame = false
-		v.Highlight = true
 		v.SelBgColor = gocui.ColorWhite
 		v.SelFgColor = gocui.ColorBlack
-
-		// restore the cursor
-		// window is too small to set the cursor properly, ignoring the error
-		_ = v.SetCursor(0, bt.selectCursor)
 	}
 
 	_, viewHeight := v.Size()
@@ -100,10 +95,10 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 	v.Clear()
 	bt.render(v, maxX)
 
-	v, err = g.SetView(bugTableFooterView, -1, maxY-4, maxX, maxY)
+	v, err = g.SetView(bugTableFooterView, -1, maxY-4, maxX, maxY, 0)
 
 	if err != nil {
-		if err != gocui.ErrUnknownView {
+		if !gocui.IsUnknownView(err) {
 			return err
 		}
 
@@ -113,10 +108,10 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 	v.Clear()
 	bt.renderFooter(v, maxX)
 
-	v, err = g.SetView(bugTableInstructionView, -1, maxY-2, maxX, maxY)
+	v, err = g.SetView(bugTableInstructionView, -1, maxY-2, maxX, maxY, 0)
 
 	if err != nil {
-		if err != gocui.ErrUnknownView {
+		if !gocui.IsUnknownView(err) {
 			return err
 		}
 
@@ -216,16 +211,16 @@ func (bt *bugTable) keybindings(g *gocui.Gui) error {
 }
 
 func (bt *bugTable) disable(g *gocui.Gui) error {
-	if err := g.DeleteView(bugTableView); err != nil && err != gocui.ErrUnknownView {
+	if err := g.DeleteView(bugTableView); err != nil && !gocui.IsUnknownView(err) {
 		return err
 	}
-	if err := g.DeleteView(bugTableHeaderView); err != nil && err != gocui.ErrUnknownView {
+	if err := g.DeleteView(bugTableHeaderView); err != nil && !gocui.IsUnknownView(err) {
 		return err
 	}
-	if err := g.DeleteView(bugTableFooterView); err != nil && err != gocui.ErrUnknownView {
+	if err := g.DeleteView(bugTableFooterView); err != nil && !gocui.IsUnknownView(err) {
 		return err
 	}
-	if err := g.DeleteView(bugTableInstructionView); err != nil && err != gocui.ErrUnknownView {
+	if err := g.DeleteView(bugTableInstructionView); err != nil && !gocui.IsUnknownView(err) {
 		return err
 	}
 	return nil
@@ -339,6 +334,8 @@ func (bt *bugTable) render(v *gocui.View, maxX int) {
 			lastEdit,
 		)
 	}
+
+	_ = v.SetHighlight(bt.selectCursor, true)
 }
 
 func (bt *bugTable) renderHeader(v *gocui.View, maxX int) {
@@ -360,10 +357,8 @@ func (bt *bugTable) renderFooter(v *gocui.View, maxX int) {
 }
 
 func (bt *bugTable) cursorDown(g *gocui.Gui, v *gocui.View) error {
-	_, y := v.Cursor()
-
 	// If we are at the bottom of the page, switch to the next one.
-	if y+1 > bt.getTableLength()-1 {
+	if bt.selectCursor+1 > bt.getTableLength()-1 {
 		_, max := v.Size()
 
 		if bt.pageCursor+max >= len(bt.allIds) {
@@ -372,24 +367,18 @@ func (bt *bugTable) cursorDown(g *gocui.Gui, v *gocui.View) error {
 
 		bt.pageCursor += max
 		bt.selectCursor = 0
-		_ = v.SetCursor(0, bt.selectCursor)
 
 		return bt.doPaginate(max)
 	}
 
-	y = minInt(y+1, bt.getTableLength()-1)
-	// window is too small to set the cursor properly, ignoring the error
-	_ = v.SetCursor(0, y)
-	bt.selectCursor = y
+	bt.selectCursor = minInt(bt.selectCursor+1, bt.getTableLength()-1)
 
 	return nil
 }
 
 func (bt *bugTable) cursorUp(g *gocui.Gui, v *gocui.View) error {
-	_, y := v.Cursor()
-
 	// If we are at the top of the page, switch to the previous one.
-	if y-1 < 0 {
+	if bt.selectCursor-1 < 0 {
 		_, max := v.Size()
 
 		if bt.pageCursor == 0 {
@@ -398,27 +387,21 @@ func (bt *bugTable) cursorUp(g *gocui.Gui, v *gocui.View) error {
 
 		bt.pageCursor = maxInt(0, bt.pageCursor-max)
 		bt.selectCursor = max - 1
-		_ = v.SetCursor(0, bt.selectCursor)
 
 		return bt.doPaginate(max)
 	}
 
-	y = maxInt(y-1, 0)
-	// window is too small to set the cursor properly, ignoring the error
-	_ = v.SetCursor(0, y)
-	bt.selectCursor = y
+	bt.selectCursor = maxInt(bt.selectCursor-1, 0)
 
 	return nil
 }
 
 func (bt *bugTable) cursorClamp(v *gocui.View) error {
-	_, y := v.Cursor()
+	y := bt.selectCursor
 
 	y = minInt(y, bt.getTableLength()-1)
 	y = maxInt(y, 0)
 
-	// window is too small to set the cursor properly, ignoring the error
-	_ = v.SetCursor(0, y)
 	bt.selectCursor = y
 
 	return nil
@@ -453,8 +436,7 @@ func (bt *bugTable) newBug(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (bt *bugTable) openBug(g *gocui.Gui, v *gocui.View) error {
-	_, y := v.Cursor()
-	id := bt.excerpts[y].Id
+	id := bt.excerpts[bt.selectCursor].Id
 	b, err := bt.repo.ResolveBug(id)
 	if err != nil {
 		return err

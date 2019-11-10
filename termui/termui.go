@@ -2,8 +2,12 @@
 package termui
 
 import (
-	"github.com/MichaelMure/gocui"
+	"fmt"
+
+	"github.com/awesome-gocui/gocui"
 	"github.com/pkg/errors"
+
+	errors2 "github.com/go-errors/errors"
 
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
@@ -63,15 +67,15 @@ func Run(cache *cache.RepoCache) error {
 	err := <-ui.gError
 
 	if err != nil && err != gocui.ErrQuit {
+		fmt.Println(err.(*errors2.Error).ErrorStack())
 		return err
 	}
-
 
 	return nil
 }
 
 func initGui(action func(ui *termUI) error) {
-	g, err := gocui.NewGui(gocui.Output256)
+	g, err := gocui.NewGui(gocui.Output256, false)
 
 	if err != nil {
 		ui.gError <- err

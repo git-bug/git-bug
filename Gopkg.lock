@@ -33,14 +33,6 @@
   version = "v0.2.1"
 
 [[projects]]
-  branch = "master"
-  digest = "1:38a84d9b4cf50b3e8eb2b54f218413ac163076e3a7763afe5fa15a4eb15fbda6"
-  name = "github.com/MichaelMure/gocui"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "d753c235dd8582d55e99bbb7f7fe453fb3fd3a19"
-
-[[projects]]
   digest = "1:897d91c431ce469d35a5e6030e60e617dccd9a0e95bdffa6a80594f5c5800d29"
   name = "github.com/agnivade/levenshtein"
   packages = ["."]
@@ -55,6 +47,22 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "0fb0a474d195a3449cf412ae0176faa193f0ef0b"
+
+[[projects]]
+  branch = "master"
+  digest = "1:96d56c73765f6ba0dbccf953502342da2c4f0d4280a5aef4e4e3eea9e6674ba1"
+  name = "github.com/awesome-gocui/gocui"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "c9d3c2bec453a8d648228640c79cc769bbc78df8"
+
+[[projects]]
+  branch = "master"
+  digest = "1:237f3e0692e330851b8b5a53117cfcea1beba09aec7668d34db91b809879c296"
+  name = "github.com/awesome-gocui/termbox-go"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "c0aef3d18bcc218a92e318293310ca0191f29654"
 
 [[projects]]
   digest = "1:b6d886569181ec96ca83d529f4d6ba0cbf92ace7bb6f633f90c5f34d9bba7aab"
@@ -111,6 +119,14 @@
   pruneopts = "UT"
   revision = "5b77d2a35fb0ede96d138fc9a99f5c9b6aef11b4"
   version = "v1.7.0"
+
+[[projects]]
+  digest = "1:aacef5f5e45685f2aeda5534d0a750dee6859de7e9088cdd06192787bb01ae6d"
+  name = "github.com/go-errors/errors"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "a6af135bd4e28680facf08a3d206b454abc877a4"
+  version = "v1.0.1"
 
 [[projects]]
   digest = "1:97df918963298c287643883209a2c3f642e6593379f97ab400c2a2e219ab647d"
@@ -202,14 +218,6 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "fa473d140ef3c6adf42d6b391fe76707f1f243c8"
-
-[[projects]]
-  branch = "master"
-  digest = "1:c9b6e36dbd23f8403a04493376916ca5dad8c01b2da5ae0a05e6a468eb0b6f24"
-  name = "github.com/nsf/termbox-go"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "5c94acc5e6eb520f1bcd183974e01171cc4c23b3"
 
 [[projects]]
   digest = "1:7413525ee648f20b4181be7fe8103d0cb98be9e141926a03ee082dc207061e4e"
@@ -481,12 +489,13 @@
     "github.com/99designs/gqlgen/graphql/introspection",
     "github.com/99designs/gqlgen/handler",
     "github.com/MichaelMure/go-term-text",
-    "github.com/MichaelMure/gocui",
     "github.com/araddon/dateparse",
+    "github.com/awesome-gocui/gocui",
     "github.com/blang/semver",
     "github.com/cheekybits/genny/generic",
     "github.com/dustin/go-humanize",
     "github.com/fatih/color",
+    "github.com/go-errors/errors",
     "github.com/gorilla/mux",
     "github.com/icrowley/fake",
     "github.com/phayes/freeport",

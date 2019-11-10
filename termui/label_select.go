@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/MichaelMure/gocui"
+	"github.com/awesome-gocui/gocui"
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
@@ -106,9 +106,9 @@ func (ls *labelSelect) layout(g *gocui.Gui) error {
 	x0 := 1
 	y0 := 0 - ls.scroll
 
-	v, err := g.SetView(labelSelectView, x0, 0, x0+width, maxY-2)
+	v, err := g.SetView(labelSelectView, x0, 0, x0+width, maxY-2, 0)
 	if err != nil {
-		if err != gocui.ErrUnknownView {
+		if !gocui.IsUnknownView(err) {
 			return err
 		}
 
@@ -117,8 +117,8 @@ func (ls *labelSelect) layout(g *gocui.Gui) error {
 
 	for i, label := range ls.labels {
 		viewname := fmt.Sprintf("view%d", i)
-		v, err := g.SetView(viewname, x0+2, y0, x0+width-2, y0+2)
-		if err != nil && err != gocui.ErrUnknownView {
+		v, err := g.SetView(viewname, x0+2, y0, x0+width-2, y0+2, 0)
+		if err != nil && !gocui.IsUnknownView(err) {
 			return err
 		}
 		ls.childViews = append(ls.childViews, viewname)
@@ -137,10 +137,10 @@ func (ls *labelSelect) layout(g *gocui.Gui) error {
 		y0 += 2
 	}
 
-	v, err = g.SetView(labelSelectInstructionsView, -1, maxY-2, maxX, maxY)
+	v, err = g.SetView(labelSelectInstructionsView, -1, maxY-2, maxX, maxY, 0)
 	ls.childViews = append(ls.childViews, labelSelectInstructionsView)
 	if err != nil {
-		if err != gocui.ErrUnknownView {
+		if !gocui.IsUnknownView(err) {
 			return err
 		}
 		v.Frame = false
@@ -159,7 +159,7 @@ func (ls *labelSelect) layout(g *gocui.Gui) error {
 
 func (ls *labelSelect) disable(g *gocui.Gui) error {
 	for _, view := range ls.childViews {
-		if err := g.DeleteView(view); err != nil && err != gocui.ErrUnknownView {
+		if err := g.DeleteView(view); err != nil && !gocui.IsUnknownView(err) {
 			return err
 		}
 	}

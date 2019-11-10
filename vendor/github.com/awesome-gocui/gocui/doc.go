@@ -16,7 +16,7 @@ Create a new GUI:
 	// Set GUI managers and key bindings
 	// ...
 
-	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
+	if err := g.MainLoop(); err != nil && !gocui.IsQuit(err) {
 		// handle error
 	}
 
@@ -38,7 +38,7 @@ their content. The same is valid for reading.
 Create and initialize a view with absolute coordinates:
 
 	if v, err := g.SetView("viewname", 2, 2, 22, 7); err != nil {
-		if err != gocui.ErrUnknownView {
+		if !gocui.IsUnknownView(err) {
 			// handle error
 		}
 		fmt.Fprintln(v, "This is a new view")
@@ -84,7 +84,7 @@ use *Gui.Update(). For example:
 		return nil
 	})
 
-By default, gocui provides a basic edition mode. This mode can be extended
+By default, gocui provides a basic editing mode. This mode can be extended
 and customized creating a new Editor and assigning it to *View.Editor:
 
 	type Editor interface {
