@@ -52,7 +52,7 @@ Register-ArgumentCompleter -Native -CommandName 'git-bug' -ScriptBlock {
             [CompletionResult]::new('pull', 'pull', [CompletionResultType]::ParameterValue, 'Pull updates.')
             [CompletionResult]::new('push', 'push', [CompletionResultType]::ParameterValue, 'Push updates.')
             [CompletionResult]::new('rm', 'rm', [CompletionResultType]::ParameterValue, 'Delete a configured bridge.')
-            [CompletionResult]::new('token', 'token', [CompletionResultType]::ParameterValue, 'List all stored tokens.')
+            [CompletionResult]::new('token', 'token', [CompletionResultType]::ParameterValue, 'List all known tokens.')
             break
         }
         'git-bug;bridge;configure' {
@@ -85,19 +85,13 @@ Register-ArgumentCompleter -Native -CommandName 'git-bug' -ScriptBlock {
             break
         }
         'git-bug;bridge;token' {
-            [CompletionResult]::new('-l', 'l', [CompletionResultType]::ParameterName, '')
-            [CompletionResult]::new('--local', 'local', [CompletionResultType]::ParameterName, '')
-            [CompletionResult]::new('-g', 'g', [CompletionResultType]::ParameterName, '')
-            [CompletionResult]::new('--global', 'global', [CompletionResultType]::ParameterName, '')
-            [CompletionResult]::new('add', 'add', [CompletionResultType]::ParameterValue, 'Create and store a new token')
+            [CompletionResult]::new('add', 'add', [CompletionResultType]::ParameterValue, 'Store a new token')
             [CompletionResult]::new('rm', 'rm', [CompletionResultType]::ParameterValue, 'Remove token by Id.')
             break
         }
         'git-bug;bridge;token;add' {
-            [CompletionResult]::new('-v', 'v', [CompletionResultType]::ParameterName, '')
-            [CompletionResult]::new('--value', 'value', [CompletionResultType]::ParameterName, '')
-            [CompletionResult]::new('-t', 't', [CompletionResultType]::ParameterName, '')
-            [CompletionResult]::new('--target', 'target', [CompletionResultType]::ParameterName, '')
+            [CompletionResult]::new('-t', 't', [CompletionResultType]::ParameterName, 'The target of the bridge. Valid values are [github,gitlab,launchpad-preview]')
+            [CompletionResult]::new('--target', 'target', [CompletionResultType]::ParameterName, 'The target of the bridge. Valid values are [github,gitlab,launchpad-preview]')
             break
         }
         'git-bug;bridge;token;rm' {

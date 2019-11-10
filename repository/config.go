@@ -38,7 +38,7 @@ type Config interface {
 	RemoveAll(keyPrefix string) error
 }
 
-func parseTimestamp(s string) (time.Time, error) {
+func ParseTimestamp(s string) (time.Time, error) {
 	timestamp, err := strconv.Atoi(s)
 	if err != nil {
 		return time.Time{}, err

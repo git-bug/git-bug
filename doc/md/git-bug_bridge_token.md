@@ -1,10 +1,10 @@
 ## git-bug bridge token
 
-List all stored tokens.
+List all known tokens.
 
 ### Synopsis
 
-List all stored tokens.
+List all known tokens.
 
 ```
 git-bug bridge token [flags]
@@ -13,14 +13,12 @@ git-bug bridge token [flags]
 ### Options
 
 ```
-  -l, --local    
-  -g, --global   
-  -h, --help     help for token
+  -h, --help   help for token
 ```
 
 ### SEE ALSO
 
 * [git-bug bridge](git-bug_bridge.md)	 - Configure and use bridges to other bug trackers.
-* [git-bug bridge token add](git-bug_bridge_token_add.md)	 - Create and store a new token
+* [git-bug bridge token add](git-bug_bridge_token_add.md)	 - Store a new token
 * [git-bug bridge token rm](git-bug_bridge_token_rm.md)	 - Remove token by Id.
 

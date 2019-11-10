@@ -23,5 +23,5 @@ git-bug bridge [flags]
 * [git-bug bridge pull](git-bug_bridge_pull.md)	 - Pull updates.
 * [git-bug bridge push](git-bug_bridge_push.md)	 - Push updates.
 * [git-bug bridge rm](git-bug_bridge_rm.md)	 - Delete a configured bridge.
-* [git-bug bridge token](git-bug_bridge_token.md)	 - List all stored tokens.
+* [git-bug bridge token](git-bug_bridge_token.md)	 - List all known tokens.
 

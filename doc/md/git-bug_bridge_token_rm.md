@@ -18,5 +18,5 @@ git-bug bridge token rm [flags]
 
 ### SEE ALSO
 
-* [git-bug bridge token](git-bug_bridge_token.md)	 - List all stored tokens.
+* [git-bug bridge token](git-bug_bridge_token.md)	 - List all known tokens.
 

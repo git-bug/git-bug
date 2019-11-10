@@ -1,10 +1,10 @@
 ## git-bug bridge token add
 
-Create and store a new token
+Store a new token
 
 ### Synopsis
 
-Create and store a new token
+Store a new token
 
 ```
 git-bug bridge token add [flags]
@@ -13,12 +13,11 @@ git-bug bridge token add [flags]
 ### Options
 
 ```
-  -v, --value string    
-  -t, --target string   
+  -t, --target string   The target of the bridge. Valid values are [github,gitlab,launchpad-preview]
   -h, --help            help for add
 ```
 
 ### SEE ALSO
 
-* [git-bug bridge token](git-bug_bridge_token.md)	 - List all stored tokens.
+* [git-bug bridge token](git-bug_bridge_token.md)	 - List all known tokens.
 

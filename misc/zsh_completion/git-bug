@@ -118,7 +118,7 @@ function _git-bug_bridge {
       "pull:Pull updates."
       "push:Push updates."
       "rm:Delete a configured bridge."
-      "token:List all stored tokens."
+      "token:List all known tokens."
     )
     _describe "command" commands
     ;;
@@ -173,15 +173,13 @@ function _git-bug_bridge_token {
   local -a commands
 
   _arguments -C \
-    '(-l --local)'{-l,--local}'[]' \
-    '(-g --global)'{-g,--global}'[]' \
     "1: :->cmnds" \
     "*::arg:->args"
 
   case $state in
   cmnds)
     commands=(
-      "add:Create and store a new token"
+      "add:Store a new token"
       "rm:Remove token by Id."
     )
     _describe "command" commands
@@ -200,8 +198,7 @@ function _git-bug_bridge_token {
 
 function _git-bug_bridge_token_add {
   _arguments \
-    '(-v --value)'{-v,--value}'[]:' \
-    '(-t --target)'{-t,--target}'[]:'
+    '(-t --target)'{-t,--target}'[The target of the bridge. Valid values are [github,gitlab,launchpad-preview]]:'
 }
 
 function _git-bug_bridge_token_rm {

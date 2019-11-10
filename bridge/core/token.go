@@ -2,13 +2,12 @@ package core
 
 import (
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"regexp"
-	"strconv"
+	"sort"
 	"strings"
 	"time"
-
-	"github.com/araddon/dateparse"
 
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
@@ -21,9 +20,14 @@ const (
 	tokenCreateTimeKey   = "createtime"
 )
 
+var ErrTokenNotExist = errors.New("token doesn't exist")
+
+func NewErrMultipleMatchToken(matching []entity.Id) *entity.ErrMultipleMatch {
+	return entity.NewErrMultipleMatch("token", matching)
+}
+
 // Token holds an API access token data
 type Token struct {
-	ID         entity.Id
 	Value      string
 	Target     string
 	CreateTime time.Time
@@ -31,86 +35,96 @@ type Token struct {
 
 // NewToken instantiate a new token
 func NewToken(value, target string) *Token {
-	token := &Token{
+	return &Token{
 		Value:      value,
 		Target:     target,
 		CreateTime: time.Now(),
 	}
-
-	token.ID = entity.Id(hashToken(token))
-	return token
 }
 
-func hashToken(token *Token) string {
-	sum := sha256.Sum256([]byte(token.Value))
-	return fmt.Sprintf("%x", sum)
+func (t *Token) ID() entity.Id {
+	sum := sha256.Sum256([]byte(t.Value))
+	return entity.Id(fmt.Sprintf("%x", sum))
 }
 
 // Validate ensure token important fields are valid
 func (t *Token) Validate() error {
-	if t.ID == "" {
-		return fmt.Errorf("missing id")
-	}
 	if t.Value == "" {
 		return fmt.Errorf("missing value")
 	}
 	if t.Target == "" {
 		return fmt.Errorf("missing target")
 	}
-	if t.CreateTime.Equal(time.Time{}) {
+	if t.CreateTime.IsZero() {
 		return fmt.Errorf("missing creation time")
 	}
-	if _, ok := bridgeImpl[t.Target]; !ok {
+	if !TargetExist(t.Target) {
 		return fmt.Errorf("unknown target")
 	}
 	return nil
 }
 
-// LoadToken loads a token from repo config
-func LoadToken(repo repository.RepoCommon, id string) (*Token, error) {
+// LoadToken loads a token from the repo config
+func LoadToken(repo repository.RepoCommon, id entity.Id) (*Token, error) {
 	keyPrefix := fmt.Sprintf("git-bug.token.%s.", id)
 
 	// read token config pairs
-	configs, err := repo.GlobalConfig().ReadAll(keyPrefix)
+	rawconfigs, err := repo.GlobalConfig().ReadAll(keyPrefix)
 	if err != nil {
-		return nil, err
+		// Not exactly right due to the limitation of ReadAll()
+		return nil, ErrTokenNotExist
 	}
 
 	// trim key prefix
-	for key, value := range configs {
-		delete(configs, key)
+	configs := make(map[string]string)
+	for key, value := range rawconfigs {
 		newKey := strings.TrimPrefix(key, keyPrefix)
 		configs[newKey] = value
 	}
 
-	token := &Token{ID: entity.Id(id)}
+	token := &Token{}
 
-	var ok bool
-	token.Value, ok = configs[tokenValueKey]
-	if !ok {
-		return nil, fmt.Errorf("empty token value")
+	token.Value = configs[tokenValueKey]
+	token.Target = configs[tokenTargetKey]
+	if createTime, ok := configs[tokenCreateTimeKey]; ok {
+		if t, err := repository.ParseTimestamp(createTime); err == nil {
+			token.CreateTime = t
+		}
 	}
 
-	token.Target, ok = configs[tokenTargetKey]
-	if !ok {
-		return nil, fmt.Errorf("empty token key")
-	}
+	return token, nil
+}
 
-	createTime, ok := configs[tokenCreateTimeKey]
-	if !ok {
-		return nil, fmt.Errorf("missing createtime key")
-	}
-
-	token.CreateTime, err = dateparse.ParseLocal(createTime)
+// LoadTokenPrefix load a token from the repo config with a prefix
+func LoadTokenPrefix(repo repository.RepoCommon, prefix string) (*Token, error) {
+	tokens, err := ListTokens(repo)
 	if err != nil {
 		return nil, err
 	}
-	return token, nil
+
+	// preallocate but empty
+	matching := make([]entity.Id, 0, 5)
+
+	for _, id := range tokens {
+		if id.HasPrefix(prefix) {
+			matching = append(matching, id)
+		}
+	}
+
+	if len(matching) > 1 {
+		return nil, NewErrMultipleMatchToken(matching)
+	}
+
+	if len(matching) == 0 {
+		return nil, ErrTokenNotExist
+	}
+
+	return LoadToken(repo, matching[0])
 }
 
 // ListTokens return a map representing the stored tokens in the repo config and global config
 // along with their type (global: true, local:false)
-func ListTokens(repo repository.RepoCommon) ([]string, error) {
+func ListTokens(repo repository.RepoCommon) ([]entity.Id, error) {
 	configs, err := repo.GlobalConfig().ReadAll(tokenConfigKeyPrefix + ".")
 	if err != nil {
 		return nil, err
@@ -133,36 +147,36 @@ func ListTokens(repo repository.RepoCommon) ([]string, error) {
 		set[res[1]] = nil
 	}
 
-	result := make([]string, len(set))
-	i := 0
+	result := make([]entity.Id, 0, len(set))
 	for key := range set {
-		result[i] = key
-		i++
+		result = append(result, entity.Id(key))
 	}
+
+	sort.Sort(entity.Alphabetical(result))
 
 	return result, nil
 }
 
 // StoreToken stores a token in the repo config
 func StoreToken(repo repository.RepoCommon, token *Token) error {
-	storeValueKey := fmt.Sprintf("git-bug.token.%s.%s", token.ID.String(), tokenValueKey)
+	storeValueKey := fmt.Sprintf("git-bug.token.%s.%s", token.ID().String(), tokenValueKey)
 	err := repo.GlobalConfig().StoreString(storeValueKey, token.Value)
 	if err != nil {
 		return err
 	}
 
-	storeTargetKey := fmt.Sprintf("git-bug.token.%s.%s", token.ID.String(), tokenTargetKey)
+	storeTargetKey := fmt.Sprintf("git-bug.token.%s.%s", token.ID().String(), tokenTargetKey)
 	err = repo.GlobalConfig().StoreString(storeTargetKey, token.Target)
 	if err != nil {
 		return err
 	}
 
-	createTimeKey := fmt.Sprintf("git-bug.token.%s.%s", token.ID.String(), tokenCreateTimeKey)
-	return repo.GlobalConfig().StoreString(createTimeKey, strconv.Itoa(int(token.CreateTime.Unix())))
+	createTimeKey := fmt.Sprintf("git-bug.token.%s.%s", token.ID().String(), tokenCreateTimeKey)
+	return repo.GlobalConfig().StoreTimestamp(createTimeKey, token.CreateTime)
 }
 
 // RemoveToken removes a token from the repo config
-func RemoveToken(repo repository.RepoCommon, id string) error {
+func RemoveToken(repo repository.RepoCommon, id entity.Id) error {
 	keyPrefix := fmt.Sprintf("git-bug.token.%s", id)
 	return repo.GlobalConfig().RemoveAll(keyPrefix)
 }

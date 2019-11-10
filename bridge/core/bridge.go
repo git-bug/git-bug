@@ -71,6 +71,12 @@ func Targets() []string {
 	return result
 }
 
+// TargetExist return true if the given target has a bridge implementation
+func TargetExist(target string) bool {
+	_, ok := bridgeImpl[target]
+	return ok
+}
+
 // Instantiate a new Bridge for a repo, from the given target and name
 func NewBridge(repo *cache.RepoCache, target string, name string) (*Bridge, error) {
 	implType, ok := bridgeImpl[target]

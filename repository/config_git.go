@@ -116,7 +116,7 @@ func (gc *gitConfig) ReadTimestamp(key string) (time.Time, error) {
 	if err != nil {
 		return time.Time{}, err
 	}
-	return parseTimestamp(value)
+	return ParseTimestamp(value)
 }
 
 func (gc *gitConfig) rmSection(keyPrefix string) error {
