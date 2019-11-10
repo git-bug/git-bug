@@ -163,7 +163,7 @@ func Test_Importer(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b, err := backend.ResolveBugCreateMetadata(keyGithubUrl, tt.url)
+			b, err := backend.ResolveBugCreateMetadata(metaKeyGithubUrl, tt.url)
 			require.NoError(t, err)
 
 			ops := b.Snapshot().Operations

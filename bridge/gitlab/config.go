@@ -80,7 +80,7 @@ func (g *Gitlab) Configure(repo repository.RepoCommon, params core.BridgeParams)
 
 	conf[keyProjectID] = strconv.Itoa(id)
 	conf[keyToken] = token
-	conf[core.KeyTarget] = target
+	conf[core.ConfigKeyTarget] = target
 
 	err = g.ValidateConfig(conf)
 	if err != nil {
@@ -91,8 +91,8 @@ func (g *Gitlab) Configure(repo repository.RepoCommon, params core.BridgeParams)
 }
 
 func (g *Gitlab) ValidateConfig(conf core.Configuration) error {
-	if v, ok := conf[core.KeyTarget]; !ok {
-		return fmt.Errorf("missing %s key", core.KeyTarget)
+	if v, ok := conf[core.ConfigKeyTarget]; !ok {
+		return fmt.Errorf("missing %s key", core.ConfigKeyTarget)
 	} else if v != target {
 		return fmt.Errorf("unexpected target name: %v", v)
 	}

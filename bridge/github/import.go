@@ -15,10 +15,9 @@ import (
 )
 
 const (
-	keyOrigin      = "origin"
-	keyGithubId    = "github-id"
-	keyGithubUrl   = "github-url"
-	keyGithubLogin = "github-login"
+	metaKeyGithubId    = "github-id"
+	metaKeyGithubUrl   = "github-url"
+	metaKeyGithubLogin = "github-login"
 )
 
 // githubImporter implement the Importer interface
@@ -92,7 +91,7 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 	}
 
 	// resolve bug
-	b, err := repo.ResolveBugCreateMetadata(keyGithubUrl, issue.Url.String())
+	b, err := repo.ResolveBugCreateMetadata(metaKeyGithubUrl, issue.Url.String())
 	if err != nil && err != bug.ErrBugNotExist {
 		return nil, err
 	}
@@ -119,9 +118,9 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 				cleanText,
 				nil,
 				map[string]string{
-					keyOrigin:    target,
-					keyGithubId:  parseId(issue.Id),
-					keyGithubUrl: issue.Url.String(),
+					core.MetaKeyOrigin: target,
+					metaKeyGithubId:    parseId(issue.Id),
+					metaKeyGithubUrl:   issue.Url.String(),
 				})
 			if err != nil {
 				return nil, err
@@ -157,9 +156,9 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 					cleanText,
 					nil,
 					map[string]string{
-						keyOrigin:    target,
-						keyGithubId:  parseId(issue.Id),
-						keyGithubUrl: issue.Url.String(),
+						core.MetaKeyOrigin: target,
+						metaKeyGithubId:    parseId(issue.Id),
+						metaKeyGithubUrl:   issue.Url.String(),
 					},
 				)
 
@@ -173,7 +172,7 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 			}
 
 			// other edits will be added as CommentEdit operations
-			target, err := b.ResolveOperationWithMetadata(keyGithubId, parseId(issue.Id))
+			target, err := b.ResolveOperationWithMetadata(metaKeyGithubId, parseId(issue.Id))
 			if err != nil {
 				return nil, err
 			}
@@ -206,7 +205,7 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 
 	case "LabeledEvent":
 		id := parseId(item.LabeledEvent.Id)
-		_, err := b.ResolveOperationWithMetadata(keyGithubId, id)
+		_, err := b.ResolveOperationWithMetadata(metaKeyGithubId, id)
 		if err == nil {
 			reason := fmt.Sprintf("operation already imported: %v", item.Typename)
 			gi.out <- core.NewImportNothing("", reason)
@@ -227,7 +226,7 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 				string(item.LabeledEvent.Label.Name),
 			},
 			nil,
-			map[string]string{keyGithubId: id},
+			map[string]string{metaKeyGithubId: id},
 		)
 		if err != nil {
 			return err
@@ -238,7 +237,7 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 
 	case "UnlabeledEvent":
 		id := parseId(item.UnlabeledEvent.Id)
-		_, err := b.ResolveOperationWithMetadata(keyGithubId, id)
+		_, err := b.ResolveOperationWithMetadata(metaKeyGithubId, id)
 		if err == nil {
 			reason := fmt.Sprintf("operation already imported: %v", item.Typename)
 			gi.out <- core.NewImportNothing("", reason)
@@ -259,7 +258,7 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 			[]string{
 				string(item.UnlabeledEvent.Label.Name),
 			},
-			map[string]string{keyGithubId: id},
+			map[string]string{metaKeyGithubId: id},
 		)
 		if err != nil {
 			return err
@@ -270,7 +269,7 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 
 	case "ClosedEvent":
 		id := parseId(item.ClosedEvent.Id)
-		_, err := b.ResolveOperationWithMetadata(keyGithubId, id)
+		_, err := b.ResolveOperationWithMetadata(metaKeyGithubId, id)
 		if err != cache.ErrNoMatchingOp {
 			return err
 		}
@@ -286,7 +285,7 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 		op, err := b.CloseRaw(
 			author,
 			item.ClosedEvent.CreatedAt.Unix(),
-			map[string]string{keyGithubId: id},
+			map[string]string{metaKeyGithubId: id},
 		)
 
 		if err != nil {
@@ -298,7 +297,7 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 
 	case "ReopenedEvent":
 		id := parseId(item.ReopenedEvent.Id)
-		_, err := b.ResolveOperationWithMetadata(keyGithubId, id)
+		_, err := b.ResolveOperationWithMetadata(metaKeyGithubId, id)
 		if err != cache.ErrNoMatchingOp {
 			return err
 		}
@@ -314,7 +313,7 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 		op, err := b.OpenRaw(
 			author,
 			item.ReopenedEvent.CreatedAt.Unix(),
-			map[string]string{keyGithubId: id},
+			map[string]string{metaKeyGithubId: id},
 		)
 
 		if err != nil {
@@ -326,7 +325,7 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 
 	case "RenamedTitleEvent":
 		id := parseId(item.RenamedTitleEvent.Id)
-		_, err := b.ResolveOperationWithMetadata(keyGithubId, id)
+		_, err := b.ResolveOperationWithMetadata(metaKeyGithubId, id)
 		if err != cache.ErrNoMatchingOp {
 			return err
 		}
@@ -343,7 +342,7 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 			author,
 			item.RenamedTitleEvent.CreatedAt.Unix(),
 			string(item.RenamedTitleEvent.CurrentTitle),
-			map[string]string{keyGithubId: id},
+			map[string]string{metaKeyGithubId: id},
 		)
 		if err != nil {
 			return err
@@ -367,7 +366,7 @@ func (gi *githubImporter) ensureTimelineComment(repo *cache.RepoCache, b *cache.
 		return err
 	}
 
-	targetOpID, err := b.ResolveOperationWithMetadata(keyGithubId, parseId(item.Id))
+	targetOpID, err := b.ResolveOperationWithMetadata(metaKeyGithubId, parseId(item.Id))
 	if err == nil {
 		gi.out <- core.NewImportNothing("", "comment already imported")
 	} else if err != cache.ErrNoMatchingOp {
@@ -390,8 +389,8 @@ func (gi *githubImporter) ensureTimelineComment(repo *cache.RepoCache, b *cache.
 				cleanText,
 				nil,
 				map[string]string{
-					keyGithubId:  parseId(item.Id),
-					keyGithubUrl: parseId(item.Url.String()),
+					metaKeyGithubId:  parseId(item.Id),
+					metaKeyGithubUrl: parseId(item.Url.String()),
 				},
 			)
 			if err != nil {
@@ -428,8 +427,8 @@ func (gi *githubImporter) ensureTimelineComment(repo *cache.RepoCache, b *cache.
 					cleanText,
 					nil,
 					map[string]string{
-						keyGithubId:  parseId(item.Id),
-						keyGithubUrl: item.Url.String(),
+						metaKeyGithubId:  parseId(item.Id),
+						metaKeyGithubUrl: item.Url.String(),
 					},
 				)
 				if err != nil {
@@ -451,7 +450,7 @@ func (gi *githubImporter) ensureTimelineComment(repo *cache.RepoCache, b *cache.
 }
 
 func (gi *githubImporter) ensureCommentEdit(repo *cache.RepoCache, b *cache.BugCache, target entity.Id, edit userContentEdit) error {
-	_, err := b.ResolveOperationWithMetadata(keyGithubId, parseId(edit.Id))
+	_, err := b.ResolveOperationWithMetadata(metaKeyGithubId, parseId(edit.Id))
 	if err == nil {
 		gi.out <- core.NewImportNothing(b.Id(), "edition already imported")
 		return nil
@@ -485,7 +484,7 @@ func (gi *githubImporter) ensureCommentEdit(repo *cache.RepoCache, b *cache.BugC
 			target,
 			cleanText,
 			map[string]string{
-				keyGithubId: parseId(edit.Id),
+				metaKeyGithubId: parseId(edit.Id),
 			},
 		)
 
@@ -508,7 +507,7 @@ func (gi *githubImporter) ensurePerson(repo *cache.RepoCache, actor *actor) (*ca
 	}
 
 	// Look first in the cache
-	i, err := repo.ResolveIdentityImmutableMetadata(keyGithubLogin, string(actor.Login))
+	i, err := repo.ResolveIdentityImmutableMetadata(metaKeyGithubLogin, string(actor.Login))
 	if err == nil {
 		return i, nil
 	}
@@ -543,7 +542,7 @@ func (gi *githubImporter) ensurePerson(repo *cache.RepoCache, actor *actor) (*ca
 		string(actor.Login),
 		string(actor.AvatarUrl),
 		map[string]string{
-			keyGithubLogin: string(actor.Login),
+			metaKeyGithubLogin: string(actor.Login),
 		},
 	)
 
@@ -557,7 +556,7 @@ func (gi *githubImporter) ensurePerson(repo *cache.RepoCache, actor *actor) (*ca
 
 func (gi *githubImporter) getGhost(repo *cache.RepoCache) (*cache.IdentityCache, error) {
 	// Look first in the cache
-	i, err := repo.ResolveIdentityImmutableMetadata(keyGithubLogin, "ghost")
+	i, err := repo.ResolveIdentityImmutableMetadata(metaKeyGithubLogin, "ghost")
 	if err == nil {
 		return i, nil
 	}
@@ -592,7 +591,7 @@ func (gi *githubImporter) getGhost(repo *cache.RepoCache) (*cache.IdentityCache,
 		string(q.User.Login),
 		string(q.User.AvatarUrl),
 		map[string]string{
-			keyGithubLogin: string(q.User.Login),
+			metaKeyGithubLogin: string(q.User.Login),
 		},
 	)
 }

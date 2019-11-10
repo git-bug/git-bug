@@ -97,7 +97,7 @@ func (gi *gitlabImporter) ensureIssue(repo *cache.RepoCache, issue *gitlab.Issue
 	}
 
 	// resolve bug
-	b, err := repo.ResolveBugCreateMetadata(keyGitlabUrl, issue.WebURL)
+	b, err := repo.ResolveBugCreateMetadata(metaKeyGitlabUrl, issue.WebURL)
 	if err == nil {
 		gi.out <- core.NewImportNothing("", "bug already imported")
 		return b, nil
@@ -120,10 +120,10 @@ func (gi *gitlabImporter) ensureIssue(repo *cache.RepoCache, issue *gitlab.Issue
 		cleanText,
 		nil,
 		map[string]string{
-			core.KeyOrigin:   target,
-			keyGitlabId:      parseID(issue.IID),
-			keyGitlabUrl:     issue.WebURL,
-			keyGitlabProject: gi.conf[keyProjectID],
+			core.MetaKeyOrigin:   target,
+			metaKeyGitlabId:      parseID(issue.IID),
+			metaKeyGitlabUrl:     issue.WebURL,
+			metaKeyGitlabProject: gi.conf[keyProjectID],
 		},
 	)
 
@@ -140,7 +140,7 @@ func (gi *gitlabImporter) ensureIssue(repo *cache.RepoCache, issue *gitlab.Issue
 func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, note *gitlab.Note) error {
 	gitlabID := parseID(note.ID)
 
-	id, errResolve := b.ResolveOperationWithMetadata(keyGitlabId, gitlabID)
+	id, errResolve := b.ResolveOperationWithMetadata(metaKeyGitlabId, gitlabID)
 	if errResolve != nil && errResolve != cache.ErrNoMatchingOp {
 		return errResolve
 	}
@@ -162,7 +162,7 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 			author,
 			note.CreatedAt.Unix(),
 			map[string]string{
-				keyGitlabId: gitlabID,
+				metaKeyGitlabId: gitlabID,
 			},
 		)
 		if err != nil {
@@ -180,7 +180,7 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 			author,
 			note.CreatedAt.Unix(),
 			map[string]string{
-				keyGitlabId: gitlabID,
+				metaKeyGitlabId: gitlabID,
 			},
 		)
 		if err != nil {
@@ -204,7 +204,7 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 				firstComment.Id(),
 				issue.Description,
 				map[string]string{
-					keyGitlabId: gitlabID,
+					metaKeyGitlabId: gitlabID,
 				},
 			)
 			if err != nil {
@@ -230,7 +230,7 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 				cleanText,
 				nil,
 				map[string]string{
-					keyGitlabId: gitlabID,
+					metaKeyGitlabId: gitlabID,
 				},
 			)
 			if err != nil {
@@ -278,7 +278,7 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 			note.CreatedAt.Unix(),
 			body,
 			map[string]string{
-				keyGitlabId: gitlabID,
+				metaKeyGitlabId: gitlabID,
 			},
 		)
 		if err != nil {
@@ -311,7 +311,7 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 }
 
 func (gi *gitlabImporter) ensureLabelEvent(repo *cache.RepoCache, b *cache.BugCache, labelEvent *gitlab.LabelEvent) error {
-	_, err := b.ResolveOperationWithMetadata(keyGitlabId, parseID(labelEvent.ID))
+	_, err := b.ResolveOperationWithMetadata(metaKeyGitlabId, parseID(labelEvent.ID))
 	if err != cache.ErrNoMatchingOp {
 		return err
 	}
@@ -330,7 +330,7 @@ func (gi *gitlabImporter) ensureLabelEvent(repo *cache.RepoCache, b *cache.BugCa
 			[]string{labelEvent.Label.Name},
 			nil,
 			map[string]string{
-				keyGitlabId: parseID(labelEvent.ID),
+				metaKeyGitlabId: parseID(labelEvent.ID),
 			},
 		)
 
@@ -341,7 +341,7 @@ func (gi *gitlabImporter) ensureLabelEvent(repo *cache.RepoCache, b *cache.BugCa
 			nil,
 			[]string{labelEvent.Label.Name},
 			map[string]string{
-				keyGitlabId: parseID(labelEvent.ID),
+				metaKeyGitlabId: parseID(labelEvent.ID),
 			},
 		)
 
@@ -354,7 +354,7 @@ func (gi *gitlabImporter) ensureLabelEvent(repo *cache.RepoCache, b *cache.BugCa
 
 func (gi *gitlabImporter) ensurePerson(repo *cache.RepoCache, id int) (*cache.IdentityCache, error) {
 	// Look first in the cache
-	i, err := repo.ResolveIdentityImmutableMetadata(keyGitlabId, strconv.Itoa(id))
+	i, err := repo.ResolveIdentityImmutableMetadata(metaKeyGitlabId, strconv.Itoa(id))
 	if err == nil {
 		return i, nil
 	}
@@ -376,8 +376,8 @@ func (gi *gitlabImporter) ensurePerson(repo *cache.RepoCache, id int) (*cache.Id
 		user.AvatarURL,
 		map[string]string{
 			// because Gitlab
-			keyGitlabId:    strconv.Itoa(id),
-			keyGitlabLogin: user.Username,
+			metaKeyGitlabId:    strconv.Itoa(id),
+			metaKeyGitlabLogin: user.Username,
 		},
 	)
 	if err != nil {

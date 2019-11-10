@@ -114,7 +114,7 @@ func (g *Github) Configure(repo repository.RepoCommon, params core.BridgeParams)
 		return nil, fmt.Errorf("project doesn't exist or authentication token has an incorrect scope")
 	}
 
-	conf[core.KeyTarget] = target
+	conf[core.ConfigKeyTarget] = target
 	conf[keyToken] = token
 	conf[keyOwner] = owner
 	conf[keyProject] = project
@@ -128,8 +128,8 @@ func (g *Github) Configure(repo repository.RepoCommon, params core.BridgeParams)
 }
 
 func (*Github) ValidateConfig(conf core.Configuration) error {
-	if v, ok := conf[core.KeyTarget]; !ok {
-		return fmt.Errorf("missing %s key", core.KeyTarget)
+	if v, ok := conf[core.ConfigKeyTarget]; !ok {
+		return fmt.Errorf("missing %s key", core.ConfigKeyTarget)
 	} else if v != target {
 		return fmt.Errorf("unexpected target name: %v", v)
 	}

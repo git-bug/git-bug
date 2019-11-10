@@ -12,10 +12,10 @@ import (
 const (
 	target = "gitlab"
 
-	keyGitlabId      = "gitlab-id"
-	keyGitlabUrl     = "gitlab-url"
-	keyGitlabLogin   = "gitlab-login"
-	keyGitlabProject = "gitlab-project-id"
+	metaKeyGitlabId      = "gitlab-id"
+	metaKeyGitlabUrl     = "gitlab-url"
+	metaKeyGitlabLogin   = "gitlab-login"
+	metaKeyGitlabProject = "gitlab-project-id"
 
 	keyProjectID = "project-id"
 	keyToken     = "token"

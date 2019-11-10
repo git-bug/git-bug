@@ -233,27 +233,27 @@ func TestPushPull(t *testing.T) {
 			for _, op := range tt.bug.Snapshot().Operations {
 				// Check if the originals operations (*not* SetMetadata) are tagged properly
 				if _, ok := op.(*bug.SetMetadataOperation); !ok {
-					_, haveIDMetadata := op.GetMetadata(keyGithubId)
+					_, haveIDMetadata := op.GetMetadata(metaKeyGithubId)
 					require.True(t, haveIDMetadata)
 
-					_, haveURLMetada := op.GetMetadata(keyGithubUrl)
+					_, haveURLMetada := op.GetMetadata(metaKeyGithubUrl)
 					require.True(t, haveURLMetada)
 				}
 			}
 
 			// get bug github ID
-			bugGithubID, ok := tt.bug.Snapshot().GetCreateMetadata(keyGithubId)
+			bugGithubID, ok := tt.bug.Snapshot().GetCreateMetadata(metaKeyGithubId)
 			require.True(t, ok)
 
 			// retrieve bug from backendTwo
-			importedBug, err := backendTwo.ResolveBugCreateMetadata(keyGithubId, bugGithubID)
+			importedBug, err := backendTwo.ResolveBugCreateMetadata(metaKeyGithubId, bugGithubID)
 			require.NoError(t, err)
 
 			// verify bug have same number of original operations
 			require.Len(t, importedBug.Snapshot().Operations, tt.numOrOp)
 
 			// verify bugs are taged with origin=github
-			issueOrigin, ok := importedBug.Snapshot().GetCreateMetadata(keyOrigin)
+			issueOrigin, ok := importedBug.Snapshot().GetCreateMetadata(core.MetaKeyOrigin)
 			require.True(t, ok)
 			require.Equal(t, issueOrigin, target)
 

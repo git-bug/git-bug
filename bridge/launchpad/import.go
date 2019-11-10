@@ -20,12 +20,14 @@ func (li *launchpadImporter) Init(conf core.Configuration) error {
 	return nil
 }
 
-const keyLaunchpadID = "launchpad-id"
-const keyLaunchpadLogin = "launchpad-login"
+const (
+	metaKeyLaunchpadID    = "launchpad-id"
+	metaKeyLaunchpadLogin = "launchpad-login"
+)
 
 func (li *launchpadImporter) ensurePerson(repo *cache.RepoCache, owner LPPerson) (*cache.IdentityCache, error) {
 	// Look first in the cache
-	i, err := repo.ResolveIdentityImmutableMetadata(keyLaunchpadLogin, owner.Login)
+	i, err := repo.ResolveIdentityImmutableMetadata(metaKeyLaunchpadLogin, owner.Login)
 	if err == nil {
 		return i, nil
 	}
@@ -39,7 +41,7 @@ func (li *launchpadImporter) ensurePerson(repo *cache.RepoCache, owner LPPerson)
 		owner.Login,
 		"",
 		map[string]string{
-			keyLaunchpadLogin: owner.Login,
+			metaKeyLaunchpadLogin: owner.Login,
 		},
 	)
 }
@@ -65,7 +67,7 @@ func (li *launchpadImporter) ImportAll(ctx context.Context, repo *cache.RepoCach
 				return
 			default:
 				lpBugID := fmt.Sprintf("%d", lpBug.ID)
-				b, err := repo.ResolveBugCreateMetadata(keyLaunchpadID, lpBugID)
+				b, err := repo.ResolveBugCreateMetadata(metaKeyLaunchpadID, lpBugID)
 				if err != nil && err != bug.ErrBugNotExist {
 					out <- core.NewImportError(err, entity.Id(lpBugID))
 					return
@@ -86,7 +88,8 @@ func (li *launchpadImporter) ImportAll(ctx context.Context, repo *cache.RepoCach
 						lpBug.Description,
 						nil,
 						map[string]string{
-							keyLaunchpadID: lpBugID,
+							core.MetaKeyOrigin: target,
+							metaKeyLaunchpadID: lpBugID,
 						},
 					)
 					if err != nil {
@@ -108,7 +111,7 @@ func (li *launchpadImporter) ImportAll(ctx context.Context, repo *cache.RepoCach
 				// The Launchpad API returns the bug description as the first
 				// comment, so skip it.
 				for _, lpMessage := range lpBug.Messages[1:] {
-					_, err := b.ResolveOperationWithMetadata(keyLaunchpadID, lpMessage.ID)
+					_, err := b.ResolveOperationWithMetadata(metaKeyLaunchpadID, lpMessage.ID)
 					if err != nil && err != cache.ErrNoMatchingOp {
 						out <- core.NewImportError(err, entity.Id(lpMessage.ID))
 						return
@@ -136,7 +139,7 @@ func (li *launchpadImporter) ImportAll(ctx context.Context, repo *cache.RepoCach
 						lpMessage.Content,
 						nil,
 						map[string]string{
-							keyLaunchpadID: lpMessage.ID,
+							metaKeyLaunchpadID: lpMessage.ID,
 						})
 					if err != nil {
 						out <- core.NewImportError(err, op.Id())
