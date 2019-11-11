@@ -87,6 +87,7 @@ const (
 	Failed   BuildStateValue = "failed"
 	Canceled BuildStateValue = "canceled"
 	Skipped  BuildStateValue = "skipped"
+	Manual   BuildStateValue = "manual"
 )
 
 // ISOTime represents an ISO 8601 formatted date
