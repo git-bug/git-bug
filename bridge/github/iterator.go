@@ -138,9 +138,9 @@ func (i *iterator) initCommentEditQueryVariables() {
 func (i *iterator) reverseTimelineEditNodes() {
 	node := i.timeline.query.Repository.Issues.Nodes[0]
 	reverseEdits(node.UserContentEdits.Nodes)
-	for index, ce := range node.Timeline.Edges {
-		if ce.Node.Typename == "IssueComment" && len(node.Timeline.Edges) != 0 {
-			reverseEdits(node.Timeline.Edges[index].Node.IssueComment.UserContentEdits.Nodes)
+	for index, ce := range node.TimelineItems.Edges {
+		if ce.Node.Typename == "IssueComment" && len(node.TimelineItems.Edges) != 0 {
+			reverseEdits(node.TimelineItems.Edges[index].Node.IssueComment.UserContentEdits.Nodes)
 		}
 	}
 }
@@ -194,7 +194,7 @@ func (i *iterator) NextIssue() bool {
 	i.timeline.variables["issueAfter"] = issues.PageInfo.EndCursor
 	i.timeline.index = -1
 
-	timelineEndCursor := issues.Nodes[0].Timeline.PageInfo.EndCursor
+	timelineEndCursor := issues.Nodes[0].TimelineItems.PageInfo.EndCursor
 	// store cursor for future use
 	i.timeline.lastEndCursor = timelineEndCursor
 
@@ -219,25 +219,25 @@ func (i *iterator) NextTimelineItem() bool {
 		return false
 	}
 
-	timeline := i.timeline.query.Repository.Issues.Nodes[0].Timeline
-	// after NextIssue call it's good to check wether we have some timeline items or not
-	if len(timeline.Edges) == 0 {
+	timelineItems := i.timeline.query.Repository.Issues.Nodes[0].TimelineItems
+	// after NextIssue call it's good to check wether we have some timelineItems items or not
+	if len(timelineItems.Edges) == 0 {
 		return false
 	}
 
-	if i.timeline.index < len(timeline.Edges)-1 {
+	if i.timeline.index < len(timelineItems.Edges)-1 {
 		i.timeline.index++
 		return true
 	}
 
-	if !timeline.PageInfo.HasNextPage {
+	if !timelineItems.PageInfo.HasNextPage {
 		return false
 	}
 
-	i.timeline.lastEndCursor = timeline.PageInfo.EndCursor
+	i.timeline.lastEndCursor = timelineItems.PageInfo.EndCursor
 
 	// more timelines, query them
-	i.timeline.variables["timelineAfter"] = timeline.PageInfo.EndCursor
+	i.timeline.variables["timelineAfter"] = timelineItems.PageInfo.EndCursor
 
 	ctx, cancel := context.WithTimeout(i.ctx, defaultTimeout)
 	defer cancel()
@@ -247,9 +247,9 @@ func (i *iterator) NextTimelineItem() bool {
 		return false
 	}
 
-	timeline = i.timeline.query.Repository.Issues.Nodes[0].Timeline
-	// (in case github returns something wierd) just for safety: better return a false than a panic
-	if len(timeline.Edges) == 0 {
+	timelineItems = i.timeline.query.Repository.Issues.Nodes[0].TimelineItems
+	// (in case github returns something weird) just for safety: better return a false than a panic
+	if len(timelineItems.Edges) == 0 {
 		return false
 	}
 
@@ -260,8 +260,8 @@ func (i *iterator) NextTimelineItem() bool {
 
 // TimelineItemValue return the actual timeline item value
 func (i *iterator) TimelineItemValue() timelineItem {
-	timeline := i.timeline.query.Repository.Issues.Nodes[0].Timeline
-	return timeline.Edges[i.timeline.index].Node
+	timelineItems := i.timeline.query.Repository.Issues.Nodes[0].TimelineItems
+	return timelineItems.Edges[i.timeline.index].Node
 }
 
 func (i *iterator) queryIssueEdit() bool {
@@ -435,7 +435,7 @@ func (i *iterator) NextCommentEdit() bool {
 		return i.queryCommentEdit()
 	}
 
-	commentEdits := i.timeline.query.Repository.Issues.Nodes[0].Timeline.Edges[i.timeline.index].Node.IssueComment
+	commentEdits := i.timeline.query.Repository.Issues.Nodes[0].TimelineItems.Edges[i.timeline.index].Node.IssueComment
 	// if there is no comment edits
 	if len(commentEdits.UserContentEdits.Nodes) == 0 {
 		return false
@@ -456,7 +456,7 @@ func (i *iterator) NextCommentEdit() bool {
 	if i.timeline.index == 0 {
 		i.commentEdit.variables["timelineAfter"] = i.timeline.lastEndCursor
 	} else {
-		i.commentEdit.variables["timelineAfter"] = i.timeline.query.Repository.Issues.Nodes[0].Timeline.Edges[i.timeline.index-1].Cursor
+		i.commentEdit.variables["timelineAfter"] = i.timeline.query.Repository.Issues.Nodes[0].TimelineItems.Edges[i.timeline.index-1].Cursor
 	}
 
 	i.commentEdit.variables["commentEditBefore"] = commentEdits.UserContentEdits.PageInfo.StartCursor
@@ -470,7 +470,7 @@ func (i *iterator) CommentEditValue() userContentEdit {
 		return i.commentEdit.query.Repository.Issues.Nodes[0].Timeline.Nodes[0].IssueComment.UserContentEdits.Nodes[i.commentEdit.index]
 	}
 
-	return i.timeline.query.Repository.Issues.Nodes[0].Timeline.Edges[i.timeline.index].Node.IssueComment.UserContentEdits.Nodes[i.timeline.commentEdit.index]
+	return i.timeline.query.Repository.Issues.Nodes[0].TimelineItems.Edges[i.timeline.index].Node.IssueComment.UserContentEdits.Nodes[i.timeline.commentEdit.index]
 }
 
 func reverseEdits(edits []userContentEdit) {
