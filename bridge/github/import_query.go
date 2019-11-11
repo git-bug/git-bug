@@ -102,13 +102,13 @@ type issueTimeline struct {
 	Body  githubv4.String
 	Url   githubv4.URI
 
-	Timeline struct {
+	TimelineItems struct {
 		Edges []struct {
 			Cursor githubv4.String
 			Node   timelineItem
 		}
 		PageInfo pageInfo
-	} `graphql:"timeline(first: $timelineFirst, after: $timelineAfter)"`
+	} `graphql:"timelineItems(first: $timelineFirst, after: $timelineAfter)"`
 
 	UserContentEdits struct {
 		Nodes    []userContentEdit
