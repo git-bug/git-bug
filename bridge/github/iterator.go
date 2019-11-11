@@ -191,7 +191,6 @@ func (i *iterator) NextIssue() bool {
 
 	// if we have more issues, query them
 	i.timeline.variables["timelineAfter"] = (*githubv4.String)(nil)
-	i.timeline.variables["issueAfter"] = issues.PageInfo.EndCursor
 	i.timeline.index = -1
 
 	timelineEndCursor := issues.Nodes[0].TimelineItems.PageInfo.EndCursor
@@ -199,7 +198,10 @@ func (i *iterator) NextIssue() bool {
 	i.timeline.lastEndCursor = timelineEndCursor
 
 	// query issue block
-	return i.queryIssue()
+	nextIssue := i.queryIssue()
+	i.timeline.variables["issueAfter"] = issues.PageInfo.EndCursor
+
+	return nextIssue
 }
 
 // IssueValue return the actual issue value
