@@ -89,7 +89,10 @@ func (self *jiraImporter) ImportAll(
 			for commentIter =
 				client.IterComments(issue.ID, defaultPageSize); commentIter.HasNext(); {
 				comment := commentIter.Next()
-				self.ensureComment(repo, bug, *comment)
+				err := self.ensureComment(repo, bug, *comment)
+				if err != nil {
+					out <- core.NewImportError(err, "")
+				}
 			}
 			if commentIter.HasError() {
 				out <- core.NewImportError(commentIter.Err, "")
@@ -123,10 +126,13 @@ func (self *jiraImporter) ImportAll(
 					}
 				}
 				if opIdx < len(snapshot.Operations) {
-					self.ensureChange(
+					err = self.ensureChange(
 						repo, bug, *changelogEntry, snapshot.Operations[opIdx])
 				} else {
-					self.ensureChange(repo, bug, *changelogEntry, nil)
+					err = self.ensureChange(repo, bug, *changelogEntry, nil)
+				}
+				if err != nil {
+					out <- core.NewImportError(err, "")
 				}
 
 			}
@@ -290,8 +296,8 @@ func (self *jiraImporter) ensureComment(
 	// timestamp. Note that this must be consistent with the exporter during
 	// export of an EditCommentOperation
 	derivedID := getTimeDerivedID(item.ID, item.Updated)
-	targetOpID, err = b.ResolveOperationWithMetadata(
-		keyJiraID, item.ID)
+	_, err = b.ResolveOperationWithMetadata(
+		keyJiraID, derivedID)
 	if err == nil {
 		self.out <- core.NewImportNothing("", "update already imported")
 	} else if err != cache.ErrNoMatchingOp {
@@ -341,7 +347,7 @@ func labelSetsMatch(jiraSet []string, gitbugSet []bug.Label) bool {
 	}
 
 	sort.Strings(jiraSet)
-	gitbugStrSet := make([]string, len(gitbugSet), len(gitbugSet))
+	gitbugStrSet := make([]string, len(gitbugSet))
 	for idx, label := range gitbugSet {
 		gitbugStrSet[idx] = label.String()
 	}
@@ -420,9 +426,12 @@ func (self *jiraImporter) ensureChange(
 		case "status":
 			opr, isRightType := potentialOp.(*bug.SetStatusOperation)
 			if isRightType && statusMap[opr.Status.String()] == item.ToString {
-				b.SetMetadata(opr.Id(), map[string]string{
+				_, err := b.SetMetadata(opr.Id(), map[string]string{
 					keyJiraOperationID: entry.ID,
 				})
+				if err != nil {
+					panic("Can't set metadata")
+				}
 				self.out <- core.NewImportNothing("", "matched export")
 				return nil
 			}
@@ -432,9 +441,12 @@ func (self *jiraImporter) ensureChange(
 			// text, but it's the title
 			opr, isRightType := potentialOp.(*bug.SetTitleOperation)
 			if isRightType && opr.Title == item.ToString {
-				b.SetMetadata(opr.Id(), map[string]string{
+				_, err := b.SetMetadata(opr.Id(), map[string]string{
 					keyJiraOperationID: entry.ID,
 				})
+				if err != nil {
+					panic("Can't set metadata")
+				}
 				self.out <- core.NewImportNothing("", "matched export")
 				return nil
 			}
@@ -446,9 +458,12 @@ func (self *jiraImporter) ensureChange(
 			if isRightType &&
 				opr.Target == b.Snapshot().Operations[0].Id() &&
 				opr.Message == item.ToString {
-				b.SetMetadata(opr.Id(), map[string]string{
+				_, err := b.SetMetadata(opr.Id(), map[string]string{
 					keyJiraOperationID: entry.ID,
 				})
+				if err != nil {
+					panic("Can't set metadata")
+				}
 				self.out <- core.NewImportNothing("", "matched export")
 				return nil
 			}

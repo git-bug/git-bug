@@ -105,6 +105,9 @@ func (g *Jira) Configure(
 	fmt.Printf("Attempting to login with credentials...\n")
 	client := NewClient(serverURL, nil)
 	err = client.RefreshTokenRaw(jsonData)
+	if err != nil {
+		return nil, err
+	}
 
 	// verify access to the project with credentials
 	_, err = client.GetProject(project)

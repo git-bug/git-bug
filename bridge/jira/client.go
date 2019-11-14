@@ -1363,6 +1363,9 @@ func (client *Client) DoTransition(
 		`{"transition":{"id":"%s"}, "resolution": {"name": "Done"}}`,
 		transitionID)
 	request, err := http.NewRequest("POST", url, bytes.NewBuffer(buffer.Bytes()))
+	if err != nil {
+		return responseTime, err
+	}
 
 	if client.ctx != nil {
 		ctx, cancel := context.WithTimeout(*client.ctx, defaultTimeout)
@@ -1378,9 +1381,9 @@ func (client *Client) DoTransition(
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusNoContent {
-		err := fmt.Errorf(
+		err := errors.Wrap(errTransitionNotAllowed, fmt.Sprintf(
 			"HTTP response %d, query was %s", response.StatusCode,
-			request.URL.String())
+			request.URL.String()))
 		return responseTime, err
 	}
 

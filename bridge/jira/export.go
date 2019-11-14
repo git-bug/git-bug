@@ -15,8 +15,6 @@ import (
 	"github.com/MichaelMure/git-bug/entity"
 )
 
-var errDuplicateMatch = errors.New("Ambiguous match")
-
 // jiraExporter implement the Exporter interface
 type jiraExporter struct {
 	conf core.Configuration
@@ -199,7 +197,10 @@ func (self *jiraExporter) exportBug(
 		fields := make(map[string]interface{})
 		defaultFields, hasConf := self.conf[keyCreateDefaults]
 		if hasConf {
-			json.Unmarshal([]byte(defaultFields), &fields)
+			err = json.Unmarshal([]byte(defaultFields), &fields)
+			if err != nil {
+				panic("Invalid JSON in config")
+			}
 		} else {
 			// If there is no configuration provided, at the very least the
 			// "issueType" field is always required. 10001 is "story" which I'm
@@ -278,9 +279,8 @@ func (self *jiraExporter) exportBug(
 
 		var id string
 		var exportTime time.Time
-		switch op.(type) {
+		switch opr := op.(type) {
 		case *bug.AddCommentOperation:
-			opr := op.(*bug.AddCommentOperation)
 			comment, err := client.AddComment(bugJiraID, opr.Message)
 			if err != nil {
 				err := errors.Wrap(err, "adding comment")
@@ -294,7 +294,6 @@ func (self *jiraExporter) exportBug(
 			self.cachedOperationIDs[op.Id()] = id
 
 		case *bug.EditCommentOperation:
-			opr := op.(*bug.EditCommentOperation)
 			if opr.Target == createOp.Id() {
 				// An EditCommentOpreation with the Target set to the create operation
 				// encodes a modification to the long-description/summary.
@@ -332,7 +331,6 @@ func (self *jiraExporter) exportBug(
 			}
 
 		case *bug.SetStatusOperation:
-			opr := op.(*bug.SetStatusOperation)
 			jiraStatus, hasStatus := statusMap[opr.Status.String()]
 			if hasStatus {
 				exportTime, err = UpdateIssueStatus(client, bugJiraID, jiraStatus)
@@ -355,7 +353,6 @@ func (self *jiraExporter) exportBug(
 			}
 
 		case *bug.SetTitleOperation:
-			opr := op.(*bug.SetTitleOperation)
 			exportTime, err = client.UpdateIssueTitle(bugJiraID, opr.Title)
 			if err != nil {
 				err := errors.Wrap(err, "editing title")
@@ -368,7 +365,6 @@ func (self *jiraExporter) exportBug(
 			id = bugJiraID
 
 		case *bug.LabelChangeOperation:
-			opr := op.(*bug.LabelChangeOperation)
 			exportTime, err = client.UpdateLabels(
 				bugJiraID, opr.Added, opr.Removed)
 			if err != nil {
