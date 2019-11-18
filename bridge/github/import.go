@@ -60,15 +60,18 @@ func (gi *githubImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 			// loop over timeline items
 			for gi.iterator.NextTimelineItem() {
 				item := gi.iterator.TimelineItemValue()
-				if err := gi.ensureTimelineItem(repo, b, item); err != nil {
-					err := fmt.Errorf("timeline item creation: %v", err)
+				err := gi.ensureTimelineItem(repo, b, item)
+				if err != nil {
+					err = fmt.Errorf("timeline item creation: %v", err)
 					out <- core.NewImportError(err, "")
 					return
 				}
 			}
 
-			// commit bug state
-			if err := b.CommitAsNeeded(); err != nil {
+			if !b.NeedCommit() {
+				out <- core.NewImportNothing(b.Id(), "no imported operation")
+			} else if err := b.CommitAsNeeded(); err != nil {
+				// commit bug state
 				err = fmt.Errorf("bug commit: %v", err)
 				out <- core.NewImportError(err, "")
 				return
@@ -128,16 +131,12 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 
 			// importing a new bug
 			gi.out <- core.NewImportBug(b.Id())
-		} else {
-			gi.out <- core.NewImportNothing("", "bug already imported")
 		}
-
 	} else {
 		// create bug from given issueEdits
 		for i, edit := range issueEdits {
 			if i == 0 && b != nil {
 				// The first edit in the github result is the issue creation itself, we already have that
-				gi.out <- core.NewImportNothing("", "bug already imported")
 				continue
 			}
 
@@ -165,7 +164,6 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 				if err != nil {
 					return nil, err
 				}
-
 				// importing a new bug
 				gi.out <- core.NewImportBug(b.Id())
 				continue
@@ -202,13 +200,12 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 		if err != nil {
 			return fmt.Errorf("timeline comment creation: %v", err)
 		}
+		return nil
 
 	case "LabeledEvent":
 		id := parseId(item.LabeledEvent.Id)
 		_, err := b.ResolveOperationWithMetadata(metaKeyGithubId, id)
 		if err == nil {
-			reason := fmt.Sprintf("operation already imported: %v", item.Typename)
-			gi.out <- core.NewImportNothing("", reason)
 			return nil
 		}
 
@@ -239,8 +236,6 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 		id := parseId(item.UnlabeledEvent.Id)
 		_, err := b.ResolveOperationWithMetadata(metaKeyGithubId, id)
 		if err == nil {
-			reason := fmt.Sprintf("operation already imported: %v", item.Typename)
-			gi.out <- core.NewImportNothing("", reason)
 			return nil
 		}
 		if err != cache.ErrNoMatchingOp {
@@ -274,8 +269,6 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 			return err
 		}
 		if err == nil {
-			reason := fmt.Sprintf("operation already imported: %v", item.Typename)
-			gi.out <- core.NewImportNothing("", reason)
 			return nil
 		}
 		author, err := gi.ensurePerson(repo, item.ClosedEvent.Actor)
@@ -302,8 +295,6 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 			return err
 		}
 		if err == nil {
-			reason := fmt.Sprintf("operation already imported: %v", item.Typename)
-			gi.out <- core.NewImportNothing("", reason)
 			return nil
 		}
 		author, err := gi.ensurePerson(repo, item.ReopenedEvent.Actor)
@@ -330,8 +321,6 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 			return err
 		}
 		if err == nil {
-			reason := fmt.Sprintf("operation already imported: %v", item.Typename)
-			gi.out <- core.NewImportNothing("", reason)
 			return nil
 		}
 		author, err := gi.ensurePerson(repo, item.RenamedTitleEvent.Actor)
@@ -350,10 +339,6 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 
 		gi.out <- core.NewImportTitleEdition(op.Id())
 		return nil
-
-	default:
-		reason := fmt.Sprintf("ignoring timeline type: %v", item.Typename)
-		gi.out <- core.NewImportNothing("", reason)
 	}
 
 	return nil
@@ -367,9 +352,7 @@ func (gi *githubImporter) ensureTimelineComment(repo *cache.RepoCache, b *cache.
 	}
 
 	targetOpID, err := b.ResolveOperationWithMetadata(metaKeyGithubId, parseId(item.Id))
-	if err == nil {
-		gi.out <- core.NewImportNothing("", "comment already imported")
-	} else if err != cache.ErrNoMatchingOp {
+	if err != nil && err != cache.ErrNoMatchingOp {
 		// real error
 		return err
 	}
@@ -398,6 +381,7 @@ func (gi *githubImporter) ensureTimelineComment(repo *cache.RepoCache, b *cache.
 			}
 
 			gi.out <- core.NewImportComment(op.Id())
+			return nil
 		}
 
 	} else {
@@ -452,7 +436,6 @@ func (gi *githubImporter) ensureTimelineComment(repo *cache.RepoCache, b *cache.
 func (gi *githubImporter) ensureCommentEdit(repo *cache.RepoCache, b *cache.BugCache, target entity.Id, edit userContentEdit) error {
 	_, err := b.ResolveOperationWithMetadata(metaKeyGithubId, parseId(edit.Id))
 	if err == nil {
-		gi.out <- core.NewImportNothing(b.Id(), "edition already imported")
 		return nil
 	}
 	if err != cache.ErrNoMatchingOp {
@@ -468,7 +451,7 @@ func (gi *githubImporter) ensureCommentEdit(repo *cache.RepoCache, b *cache.BugC
 	switch {
 	case edit.DeletedAt != nil:
 		// comment deletion, not supported yet
-		gi.out <- core.NewImportNothing(b.Id(), "comment deletion is not supported yet")
+		return nil
 
 	case edit.DeletedAt == nil:
 
@@ -493,8 +476,8 @@ func (gi *githubImporter) ensureCommentEdit(repo *cache.RepoCache, b *cache.BugC
 		}
 
 		gi.out <- core.NewImportCommentEdition(op.Id())
+		return nil
 	}
-
 	return nil
 }
 

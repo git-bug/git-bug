@@ -265,3 +265,7 @@ func (c *BugCache) CommitAsNeeded() error {
 	}
 	return c.notifyUpdated()
 }
+
+func (c *BugCache) NeedCommit() bool {
+	return c.bug.NeedCommit()
+}
