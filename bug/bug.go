@@ -592,6 +592,8 @@ func (bug *Bug) Merge(repo repository.Repo, other Interface) (bool, error) {
 		bug.lastCommit = hash
 	}
 
+	bug.packs = newPacks
+
 	// Update the git ref
 	err = repo.UpdateRef(bugsRefPattern+bug.id.String(), bug.lastCommit)
 	if err != nil {
