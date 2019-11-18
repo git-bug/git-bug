@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/MichaelMure/git-bug/identity"
@@ -18,8 +19,10 @@ func TestPushPull(t *testing.T) {
 
 	bug1, _, err := Create(reneA, time.Now().Unix(), "bug1", "message")
 	require.NoError(t, err)
+	assert.True(t, bug1.NeedCommit())
 	err = bug1.Commit(repoA)
 	require.NoError(t, err)
+	assert.False(t, bug1.NeedCommit())
 
 	// distribute the identity
 	_, err = identity.Push(repoA, "origin")
@@ -91,8 +94,10 @@ func _RebaseTheirs(t testing.TB) {
 
 	bug1, _, err := Create(reneA, time.Now().Unix(), "bug1", "message")
 	require.NoError(t, err)
+	assert.True(t, bug1.NeedCommit())
 	err = bug1.Commit(repoA)
 	require.NoError(t, err)
+	assert.False(t, bug1.NeedCommit())
 
 	// distribute the identity
 	_, err = identity.Push(repoA, "origin")
@@ -111,18 +116,21 @@ func _RebaseTheirs(t testing.TB) {
 
 	bug2, err := ReadLocalBug(repoB, bug1.Id())
 	require.NoError(t, err)
+	assert.False(t, bug2.NeedCommit())
 
 	reneB, err := identity.ReadLocal(repoA, reneA.Id())
 	require.NoError(t, err)
 
 	_, err = AddComment(bug2, reneB, time.Now().Unix(), "message2")
 	require.NoError(t, err)
+	assert.True(t, bug2.NeedCommit())
 	_, err = AddComment(bug2, reneB, time.Now().Unix(), "message3")
 	require.NoError(t, err)
 	_, err = AddComment(bug2, reneB, time.Now().Unix(), "message4")
 	require.NoError(t, err)
 	err = bug2.Commit(repoB)
 	require.NoError(t, err)
+	assert.False(t, bug2.NeedCommit())
 
 	// B --> remote
 	_, err = Push(repoB, "origin")

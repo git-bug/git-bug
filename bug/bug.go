@@ -160,7 +160,7 @@ func readBug(repo repository.ClockedRepo, ref string) (*Bug, error) {
 				rootFound = true
 			}
 			if strings.HasPrefix(entry.Name, createClockEntryPrefix) {
-				n, err := fmt.Sscanf(string(entry.Name), createClockEntryPattern, &createTime)
+				n, err := fmt.Sscanf(entry.Name, createClockEntryPattern, &createTime)
 				if err != nil {
 					return nil, errors.Wrap(err, "can't read create lamport time")
 				}
@@ -169,7 +169,7 @@ func readBug(repo repository.ClockedRepo, ref string) (*Bug, error) {
 				}
 			}
 			if strings.HasPrefix(entry.Name, editClockEntryPrefix) {
-				n, err := fmt.Sscanf(string(entry.Name), editClockEntryPattern, &editTime)
+				n, err := fmt.Sscanf(entry.Name, editClockEntryPattern, &editTime)
 				if err != nil {
 					return nil, errors.Wrap(err, "can't read edit lamport time")
 				}
@@ -348,11 +348,6 @@ func (bug *Bug) Validate() error {
 // Append an operation into the staging area, to be committed later
 func (bug *Bug) Append(op Operation) {
 	bug.staging.Append(op)
-}
-
-// HasPendingOp tell if the bug need to be committed
-func (bug *Bug) HasPendingOp() bool {
-	return !bug.staging.IsEmpty()
 }
 
 // Commit write the staging area in Git and move the operations to the packs
