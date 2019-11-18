@@ -111,13 +111,13 @@ type ClockedRepo interface {
 	// EditTimeIncrement increment the edit clock and return the new value.
 	EditTimeIncrement() (lamport.Time, error)
 
-	// CreateWitness witness another create time and increment the corresponding
+	// WitnessCreate witness another create time and increment the corresponding
 	// clock if needed.
-	CreateWitness(time lamport.Time) error
+	WitnessCreate(time lamport.Time) error
 
-	// EditWitness witness another edition time and increment the corresponding
+	// WitnessEdit witness another edition time and increment the corresponding
 	// clock if needed.
-	EditWitness(time lamport.Time) error
+	WitnessEdit(time lamport.Time) error
 }
 
 // Witnesser is a function that will initialize the clocks of a repo

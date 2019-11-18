@@ -197,10 +197,10 @@ func readBug(repo repository.ClockedRepo, ref string) (*Bug, error) {
 		}
 
 		// Update the clocks
-		if err := repo.CreateWitness(bug.createTime); err != nil {
+		if err := repo.WitnessCreate(bug.createTime); err != nil {
 			return nil, errors.Wrap(err, "failed to update create lamport clock")
 		}
-		if err := repo.EditWitness(bug.editTime); err != nil {
+		if err := repo.WitnessEdit(bug.editTime); err != nil {
 			return nil, errors.Wrap(err, "failed to update edit lamport clock")
 		}
 

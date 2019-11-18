@@ -461,14 +461,14 @@ func (repo *GitRepo) EditTimeIncrement() (lamport.Time, error) {
 	return repo.editClock.Increment()
 }
 
-// CreateWitness witness another create time and increment the corresponding clock
+// WitnessCreate witness another create time and increment the corresponding clock
 // if needed.
-func (repo *GitRepo) CreateWitness(time lamport.Time) error {
+func (repo *GitRepo) WitnessCreate(time lamport.Time) error {
 	return repo.createClock.Witness(time)
 }
 
-// EditWitness witness another edition time and increment the corresponding clock
+// WitnessEdit witness another edition time and increment the corresponding clock
 // if needed.
-func (repo *GitRepo) EditWitness(time lamport.Time) error {
+func (repo *GitRepo) WitnessEdit(time lamport.Time) error {
 	return repo.editClock.Witness(time)
 }

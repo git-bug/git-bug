@@ -12,12 +12,12 @@ func Witnesser(repo repository.ClockedRepo) error {
 			return b.Err
 		}
 
-		err := repo.CreateWitness(b.Bug.createTime)
+		err := repo.WitnessCreate(b.Bug.createTime)
 		if err != nil {
 			return err
 		}
 
-		err = repo.EditWitness(b.Bug.editTime)
+		err = repo.WitnessEdit(b.Bug.editTime)
 		if err != nil {
 			return err
 		}
