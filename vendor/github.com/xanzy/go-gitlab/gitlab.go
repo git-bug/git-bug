@@ -14,6 +14,7 @@
 // limitations under the License.
 //
 
+// Package gitlab implements a GitLab API client.
 package gitlab
 
 import (
