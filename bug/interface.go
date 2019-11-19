@@ -16,8 +16,8 @@ type Interface interface {
 	// Append an operation into the staging area, to be committed later
 	Append(op Operation)
 
-	// Append an operation into the staging area, to be committed later
-	HasPendingOp() bool
+	// Indicate that the in-memory state changed and need to be commit in the repository
+	NeedCommit() bool
 
 	// Commit write the staging area in Git and move the operations to the packs
 	Commit(repo repository.ClockedRepo) error

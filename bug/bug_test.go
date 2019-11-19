@@ -78,8 +78,11 @@ func TestBugCommitLoad(t *testing.T) {
 
 	repo := repository.NewMockRepoForTest()
 
+	assert.True(t, bug1.NeedCommit())
+
 	err := bug1.Commit(repo)
 	assert.Nil(t, err)
+	assert.False(t, bug1.NeedCommit())
 
 	bug2, err := ReadLocalBug(repo, bug1.Id())
 	assert.NoError(t, err)
@@ -90,8 +93,11 @@ func TestBugCommitLoad(t *testing.T) {
 	bug1.Append(setTitleOp)
 	bug1.Append(addCommentOp)
 
+	assert.True(t, bug1.NeedCommit())
+
 	err = bug1.Commit(repo)
 	assert.Nil(t, err)
+	assert.False(t, bug1.NeedCommit())
 
 	bug3, err := ReadLocalBug(repo, bug1.Id())
 	assert.NoError(t, err)

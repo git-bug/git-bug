@@ -236,12 +236,12 @@ func (r *mockRepoForTest) EditTimeIncrement() (lamport.Time, error) {
 	return r.editClock.Increment(), nil
 }
 
-func (r *mockRepoForTest) CreateWitness(time lamport.Time) error {
+func (r *mockRepoForTest) WitnessCreate(time lamport.Time) error {
 	r.createClock.Witness(time)
 	return nil
 }
 
-func (r *mockRepoForTest) EditWitness(time lamport.Time) error {
+func (r *mockRepoForTest) WitnessEdit(time lamport.Time) error {
 	r.editClock.Witness(time)
 	return nil
 }
