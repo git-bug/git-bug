@@ -103,8 +103,6 @@ func (li *launchpadImporter) ImportAll(ctx context.Context, repo *cache.RepoCach
 
 				/* Handle messages */
 				if len(lpBug.Messages) == 0 {
-					err := fmt.Sprintf("bug doesn't have any comments")
-					out <- core.NewImportNothing(entity.Id(lpBugID), err)
 					return
 				}
 
@@ -149,8 +147,9 @@ func (li *launchpadImporter) ImportAll(ctx context.Context, repo *cache.RepoCach
 					out <- core.NewImportComment(op.Id())
 				}
 
-				err = b.CommitAsNeeded()
-				if err != nil {
+				if !b.NeedCommit() {
+					out <- core.NewImportNothing(b.Id(), "no imported operation")
+				} else if err := b.Commit(); err != nil {
 					out <- core.NewImportError(err, "")
 					return
 				}

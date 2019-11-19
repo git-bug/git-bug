@@ -388,7 +388,6 @@ func (gi *githubImporter) ensureTimelineComment(repo *cache.RepoCache, b *cache.
 		for i, edit := range edits {
 			if i == 0 && targetOpID != "" {
 				// The first edit in the github result is the comment creation itself, we already have that
-				gi.out <- core.NewImportNothing("", "comment already imported")
 				continue
 			}
 
@@ -418,6 +417,7 @@ func (gi *githubImporter) ensureTimelineComment(repo *cache.RepoCache, b *cache.
 				if err != nil {
 					return err
 				}
+				gi.out <- core.NewImportComment(op.Id())
 
 				// set target for the nexr edit now that the comment is created
 				targetOpID = op.Id()
