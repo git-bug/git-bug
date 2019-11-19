@@ -5,8 +5,9 @@
 package gocui
 
 import (
-	"github.com/go-errors/errors"
 	"strconv"
+
+	"github.com/go-errors/errors"
 )
 
 type escapeInterpreter struct {
@@ -17,13 +18,22 @@ type escapeInterpreter struct {
 	mode                   OutputMode
 }
 
-type escapeState int
+type (
+	escapeState int
+	fontEffect  int
+)
 
 const (
 	stateNone escapeState = iota
 	stateEscape
 	stateCSI
 	stateParams
+
+	bold               fontEffect = 1
+	underline          fontEffect = 4
+	reverse            fontEffect = 7
+	setForegroundColor fontEffect = 38
+	setBackgroundColor fontEffect = 48
 )
 
 var (
@@ -191,39 +201,59 @@ func (ei *escapeInterpreter) output256() error {
 		return ei.outputNormal()
 	}
 
-	fgbg, err := strconv.Atoi(ei.csiParam[0])
-	if err != nil {
-		return errCSIParseError
-	}
-	color, err := strconv.Atoi(ei.csiParam[2])
-	if err != nil {
-		return errCSIParseError
-	}
-
-	switch fgbg {
-	case 38:
-		ei.curFgColor = Attribute(color + 1)
-
-		for _, param := range ei.csiParam[3:] {
-			p, err := strconv.Atoi(param)
-			if err != nil {
-				return errCSIParseError
-			}
-
-			switch {
-			case p == 1:
-				ei.curFgColor |= AttrBold
-			case p == 4:
-				ei.curFgColor |= AttrUnderline
-			case p == 7:
-				ei.curFgColor |= AttrReverse
-			}
+	for _, param := range splitFgBg(ei.csiParam) {
+		fgbg, err := strconv.Atoi(param[0])
+		if err != nil {
+			return errCSIParseError
 		}
-	case 48:
-		ei.curBgColor = Attribute(color + 1)
-	default:
-		return errCSIParseError
+		color, err := strconv.Atoi(param[2])
+		if err != nil {
+			return errCSIParseError
+		}
+
+		switch fontEffect(fgbg) {
+		case setForegroundColor:
+			ei.curFgColor = Attribute(color + 1)
+
+			for _, s := range param[3:] {
+				p, err := strconv.Atoi(s)
+				if err != nil {
+					return errCSIParseError
+				}
+
+				switch fontEffect(p) {
+				case bold:
+					ei.curFgColor |= AttrBold
+				case underline:
+					ei.curFgColor |= AttrUnderline
+				case reverse:
+					ei.curFgColor |= AttrReverse
+
+				}
+			}
+		case setBackgroundColor:
+			ei.curBgColor = Attribute(color + 1)
+		default:
+			return errCSIParseError
+		}
+	}
+	return nil
+}
+
+func splitFgBg(params []string) [][]string {
+	var out [][]string
+	var current []string
+	for _, p := range params {
+		if len(current) == 3 && (p == "48" || p == "38") {
+			out = append(out, current)
+			current = []string{}
+		}
+		current = append(current, p)
 	}
 
-	return nil
+	if len(current) > 0 {
+		out = append(out, current)
+	}
+
+	return out
 }
