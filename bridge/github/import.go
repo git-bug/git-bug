@@ -70,7 +70,7 @@ func (gi *githubImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 
 			if !b.NeedCommit() {
 				out <- core.NewImportNothing(b.Id(), "no imported operation")
-			} else if err := b.CommitAsNeeded(); err != nil {
+			} else if err := b.Commit(); err != nil {
 				// commit bug state
 				err = fmt.Errorf("bug commit: %v", err)
 				out <- core.NewImportError(err, "")
