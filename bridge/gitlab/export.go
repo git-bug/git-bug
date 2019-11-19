@@ -117,8 +117,6 @@ func (ge *gitlabExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, 
 				if snapshot.HasAnyActor(allIdentitiesIds...) {
 					// try to export the bug and it associated events
 					ge.exportBug(ctx, b, since, out)
-				} else {
-					out <- core.NewExportNothing(id, "not an actor")
 				}
 			}
 		}
@@ -131,6 +129,7 @@ func (ge *gitlabExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, 
 func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, since time.Time, out chan<- core.ExportResult) {
 	snapshot := b.Snapshot()
 
+	var bugUpdated bool
 	var err error
 	var bugGitlabID int
 	var bugGitlabIDString string
@@ -165,8 +164,6 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 			out <- core.NewExportNothing(b.Id(), "skipping issue imported from another repository")
 			return
 		}
-
-		out <- core.NewExportNothing(b.Id(), "bug already exported")
 
 		// will be used to mark operation related to a bug as exported
 		bugGitlabIDString = gitlabID
@@ -237,14 +234,12 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 		// cache the ID of already exported or imported issues and events from Gitlab
 		if id, ok := op.GetMetadata(metaKeyGitlabId); ok {
 			ge.cachedOperationIDs[op.Id().String()] = id
-			out <- core.NewExportNothing(op.Id(), "already exported operation")
 			continue
 		}
 
 		opAuthor := op.GetAuthor()
 		client, err := ge.getIdentityClient(opAuthor.Id())
 		if err != nil {
-			out <- core.NewExportNothing(op.Id(), "missing operation author token")
 			continue
 		}
 
@@ -371,6 +366,12 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 			out <- core.NewExportError(err, b.Id())
 			return
 		}
+
+		bugUpdated = true
+	}
+
+	if !bugUpdated {
+		out <- core.NewExportNothing(b.Id(), "nothing has been exported")
 	}
 }
 
