@@ -11,7 +11,7 @@ import (
 	"github.com/icrowley/fake"
 )
 
-type opsGenerator func(bug.Interface, identity.Interface)
+type opsGenerator func(bug.Interface, identity.Interface, int64)
 
 type Options struct {
 	BugNumber    int
@@ -61,6 +61,12 @@ func generateRandomBugsWithSeed(opts Options, seed int64) []*bug.Bug {
 	rand.Seed(seed)
 	fake.Seed(seed)
 
+	// At the moment git-bug has a risk of hash collision is simple
+	// operation (like open/close) are made with the same timestamp.
+	// As a temporary workaround, we use here an strictly increasing
+	// timestamp
+	timestamp := time.Now().Unix()
+
 	opsGenerators := []opsGenerator{
 		comment,
 		comment,
@@ -94,7 +100,8 @@ func generateRandomBugsWithSeed(opts Options, seed int64) []*bug.Bug {
 
 		for j := 0; j < nOps; j++ {
 			index := rand.Intn(len(opsGenerators))
-			opsGenerators[index](b, randomPerson())
+			opsGenerators[index](b, randomPerson(), timestamp)
+			timestamp++
 		}
 
 		result[i] = b
@@ -177,25 +184,25 @@ func paragraphs() string {
 	return strings.Replace(p, "\t", "\n\n", -1)
 }
 
-func comment(b bug.Interface, p identity.Interface) {
-	_, _ = bug.AddComment(b, p, time.Now().Unix(), paragraphs())
+func comment(b bug.Interface, p identity.Interface, timestamp int64) {
+	_, _ = bug.AddComment(b, p, timestamp, paragraphs())
 }
 
-func title(b bug.Interface, p identity.Interface) {
-	_, _ = bug.SetTitle(b, p, time.Now().Unix(), fake.Sentence())
+func title(b bug.Interface, p identity.Interface, timestamp int64) {
+	_, _ = bug.SetTitle(b, p, timestamp, fake.Sentence())
 }
 
-func open(b bug.Interface, p identity.Interface) {
-	_, _ = bug.Open(b, p, time.Now().Unix())
+func open(b bug.Interface, p identity.Interface, timestamp int64) {
+	_, _ = bug.Open(b, p, timestamp)
 }
 
-func close(b bug.Interface, p identity.Interface) {
-	_, _ = bug.Close(b, p, time.Now().Unix())
+func close(b bug.Interface, p identity.Interface, timestamp int64) {
+	_, _ = bug.Close(b, p, timestamp)
 }
 
 var addedLabels []string
 
-func labels(b bug.Interface, p identity.Interface) {
+func labels(b bug.Interface, p identity.Interface, timestamp int64) {
 	var removed []string
 	nbRemoved := rand.Intn(3)
 	for nbRemoved > 0 && len(addedLabels) > 0 {
@@ -217,5 +224,5 @@ func labels(b bug.Interface, p identity.Interface) {
 	// ignore error
 	// if the randomisation produce no changes, no op
 	// is added to the bug
-	_, _, _ = bug.ChangeLabels(b, p, time.Now().Unix(), added, removed)
+	_, _, _ = bug.ChangeLabels(b, p, timestamp, added, removed)
 }

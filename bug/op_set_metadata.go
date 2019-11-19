@@ -34,6 +34,8 @@ func (op *SetMetadataOperation) Apply(snapshot *Snapshot) {
 				base.extraMetadata = make(map[string]string)
 			}
 
+			// Apply the metadata in an immutable way: if a metadata already
+			// exist, it's not possible to override it.
 			for key, val := range op.NewMetadata {
 				if _, exist := base.extraMetadata[key]; !exist {
 					base.extraMetadata[key] = val
