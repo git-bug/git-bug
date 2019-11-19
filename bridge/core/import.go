@@ -10,14 +10,26 @@ type ImportEvent int
 
 const (
 	_ ImportEvent = iota
+
+	// Bug has been created
 	ImportEventBug
+	// Comment has been created
 	ImportEventComment
+	// Comment has been edited
 	ImportEventCommentEdition
+	// Bug's status has changed
 	ImportEventStatusChange
+	// Bug's title has changed
 	ImportEventTitleEdition
+	// Bug's labels changed
 	ImportEventLabelChange
-	ImportEventIdentity
+	// Nothing happened on a Bug
 	ImportEventNothing
+
+	// Identity has been created
+	ImportEventIdentity
+
+	// Error happened during import
 	ImportEventError
 )
 

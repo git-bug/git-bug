@@ -10,13 +10,24 @@ type ExportEvent int
 
 const (
 	_ ExportEvent = iota
+
+	// Bug has been exported on the remote tracker
 	ExportEventBug
+	// Comment has been exported on the remote tracker
 	ExportEventComment
+	// Comment has been edited on the remote tracker
 	ExportEventCommentEdition
+	// Bug's status has been changed on on the remote tracker
 	ExportEventStatusChange
+	// Bug's title has been changed on the remote tracker
 	ExportEventTitleEdition
+	// Bug's labels have been changed on the remote tracker
 	ExportEventLabelChange
+
+	// Nothing changed on the bug
 	ExportEventNothing
+
+	// Error happened during export
 	ExportEventError
 )
 
