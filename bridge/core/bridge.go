@@ -20,8 +20,8 @@ var ErrImportNotSupported = errors.New("import is not supported")
 var ErrExportNotSupported = errors.New("export is not supported")
 
 const (
-	KeyTarget = "target"
-	KeyOrigin = "origin"
+	ConfigKeyTarget = "target"
+	MetaKeyOrigin   = "origin"
 
 	bridgeConfigKeyPrefix = "git-bug.bridge"
 )
@@ -102,7 +102,7 @@ func LoadBridge(repo *cache.RepoCache, name string) (*Bridge, error) {
 		return nil, err
 	}
 
-	target := conf[KeyTarget]
+	target := conf[ConfigKeyTarget]
 	bridge, err := NewBridge(repo, target, name)
 	if err != nil {
 		return nil, err

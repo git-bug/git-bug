@@ -141,7 +141,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 	// from Gitlab) and we do not have the token of the bug author, there is nothing we can do.
 
 	// skip bug if origin is not allowed
-	origin, ok := snapshot.GetCreateMetadata(core.KeyOrigin)
+	origin, ok := snapshot.GetCreateMetadata(core.MetaKeyOrigin)
 	if ok && origin != target {
 		out <- core.NewExportNothing(b.Id(), fmt.Sprintf("issue tagged with origin: %s", origin))
 		return
@@ -152,9 +152,9 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 	author := snapshot.Author
 
 	// get gitlab bug ID
-	gitlabID, ok := snapshot.GetCreateMetadata(keyGitlabId)
+	gitlabID, ok := snapshot.GetCreateMetadata(metaKeyGitlabId)
 	if ok {
-		projectID, ok := snapshot.GetCreateMetadata(keyGitlabProject)
+		projectID, ok := snapshot.GetCreateMetadata(metaKeyGitlabProject)
 		if !ok {
 			err := fmt.Errorf("expected to find gitlab project id")
 			out <- core.NewExportError(err, b.Id())
@@ -199,9 +199,9 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 		_, err = b.SetMetadata(
 			createOp.Id(),
 			map[string]string{
-				keyGitlabId:      idString,
-				keyGitlabUrl:     url,
-				keyGitlabProject: ge.repositoryID,
+				metaKeyGitlabId:      idString,
+				metaKeyGitlabUrl:     url,
+				metaKeyGitlabProject: ge.repositoryID,
 			},
 		)
 		if err != nil {
@@ -235,7 +235,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 
 		// ignore operations already existing in gitlab (due to import or export)
 		// cache the ID of already exported or imported issues and events from Gitlab
-		if id, ok := op.GetMetadata(keyGitlabId); ok {
+		if id, ok := op.GetMetadata(metaKeyGitlabId); ok {
 			ge.cachedOperationIDs[op.Id().String()] = id
 			out <- core.NewExportNothing(op.Id(), "already exported operation")
 			continue
@@ -378,8 +378,8 @@ func markOperationAsExported(b *cache.BugCache, target entity.Id, gitlabID, gitl
 	_, err := b.SetMetadata(
 		target,
 		map[string]string{
-			keyGitlabId:  gitlabID,
-			keyGitlabUrl: gitlabURL,
+			metaKeyGitlabId:  gitlabID,
+			metaKeyGitlabUrl: gitlabURL,
 		},
 	)
 

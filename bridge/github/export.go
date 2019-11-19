@@ -174,16 +174,16 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 	author := snapshot.Author
 
 	// skip bug if origin is not allowed
-	origin, ok := snapshot.GetCreateMetadata(keyOrigin)
+	origin, ok := snapshot.GetCreateMetadata(core.MetaKeyOrigin)
 	if ok && origin != target {
 		out <- core.NewExportNothing(b.Id(), fmt.Sprintf("issue tagged with origin: %s", origin))
 		return
 	}
 
 	// get github bug ID
-	githubID, ok := snapshot.GetCreateMetadata(keyGithubId)
+	githubID, ok := snapshot.GetCreateMetadata(metaKeyGithubId)
 	if ok {
-		githubURL, ok := snapshot.GetCreateMetadata(keyGithubUrl)
+		githubURL, ok := snapshot.GetCreateMetadata(metaKeyGithubUrl)
 		if !ok {
 			// if we find github ID, github URL must be found too
 			err := fmt.Errorf("incomplete Github metadata: expected to find issue URL")
@@ -258,7 +258,7 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 
 		// ignore operations already existing in github (due to import or export)
 		// cache the ID of already exported or imported issues and events from Github
-		if id, ok := op.GetMetadata(keyGithubId); ok {
+		if id, ok := op.GetMetadata(metaKeyGithubId); ok {
 			ge.cachedOperationIDs[op.Id()] = id
 			out <- core.NewExportNothing(op.Id(), "already exported operation")
 			continue
@@ -437,8 +437,8 @@ func markOperationAsExported(b *cache.BugCache, target entity.Id, githubID, gith
 	_, err := b.SetMetadata(
 		target,
 		map[string]string{
-			keyGithubId:  githubID,
-			keyGithubUrl: githubURL,
+			metaKeyGithubId:  githubID,
+			metaKeyGithubUrl: githubURL,
 		},
 	)
 

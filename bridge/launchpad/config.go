@@ -62,7 +62,7 @@ func (l *Launchpad) Configure(repo repository.RepoCommon, params core.BridgePara
 	}
 
 	conf[keyProject] = project
-	conf[core.KeyTarget] = target
+	conf[core.ConfigKeyTarget] = target
 
 	err = l.ValidateConfig(conf)
 	if err != nil {
@@ -77,8 +77,8 @@ func (*Launchpad) ValidateConfig(conf core.Configuration) error {
 		return fmt.Errorf("missing %s key", keyProject)
 	}
 
-	if _, ok := conf[core.KeyTarget]; !ok {
-		return fmt.Errorf("missing %s key", core.KeyTarget)
+	if _, ok := conf[core.ConfigKeyTarget]; !ok {
+		return fmt.Errorf("missing %s key", core.ConfigKeyTarget)
 	}
 
 	return nil
