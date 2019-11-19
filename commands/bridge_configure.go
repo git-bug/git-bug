@@ -94,8 +94,14 @@ func promptTarget() (string, error) {
 }
 
 func promptName(repo repository.RepoCommon) (string, error) {
+	defaultExist := core.BridgeExist(repo, defaultName)
+
 	for {
-		fmt.Printf("name [%s]: ", defaultName)
+		if defaultExist {
+			fmt.Printf("name: ")
+		} else {
+			fmt.Printf("name [%s]: ", defaultName)
+		}
 
 		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
 		if err != nil {
@@ -105,6 +111,10 @@ func promptName(repo repository.RepoCommon) (string, error) {
 		line = strings.TrimRight(line, "\n")
 
 		name := line
+		if defaultExist && name == "" {
+			continue
+		}
+
 		if name == "" {
 			name = defaultName
 		}
