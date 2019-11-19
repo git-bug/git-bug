@@ -73,8 +73,10 @@ func (gi *gitlabImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 				}
 			}
 
-			// commit bug state
-			if err := b.CommitAsNeeded(); err != nil {
+			if !b.NeedCommit() {
+				out <- core.NewImportNothing(b.Id(), "no imported operation")
+			} else if err := b.Commit(); err != nil {
+				// commit bug state
 				err := fmt.Errorf("bug commit: %v", err)
 				out <- core.NewImportError(err, "")
 				return
@@ -99,7 +101,6 @@ func (gi *gitlabImporter) ensureIssue(repo *cache.RepoCache, issue *gitlab.Issue
 	// resolve bug
 	b, err := repo.ResolveBugCreateMetadata(metaKeyGitlabUrl, issue.WebURL)
 	if err == nil {
-		gi.out <- core.NewImportNothing("", "bug already imported")
 		return b, nil
 	}
 	if err != bug.ErrBugNotExist {
@@ -299,8 +300,6 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 		NOTE_MENTIONED_IN_ISSUE,
 		NOTE_MENTIONED_IN_MERGE_REQUEST:
 
-		reason := fmt.Sprintf("unsupported note type: %s", noteType.String())
-		gi.out <- core.NewImportNothing("", reason)
 		return nil
 
 	default:
