@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"syscall"
@@ -470,6 +471,8 @@ func getValidGithubRemoteURLs(remotes map[string]string) []string {
 			urls = append(urls, shortURL)
 		}
 	}
+
+	sort.Strings(urls)
 
 	return urls
 }

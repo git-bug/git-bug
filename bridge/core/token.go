@@ -43,7 +43,7 @@ func NewToken(value, target string) *Token {
 }
 
 func (t *Token) ID() entity.Id {
-	sum := sha256.Sum256([]byte(t.Value))
+	sum := sha256.Sum256([]byte(t.Target + t.Value))
 	return entity.Id(fmt.Sprintf("%x", sum))
 }
 
