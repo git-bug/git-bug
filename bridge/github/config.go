@@ -318,21 +318,6 @@ func promptTokenOptions(repo repository.RepoCommon, owner, project string) (*cor
 	}
 }
 
-func tokenAlreadyExist(repo repository.RepoCommon, id string) (bool, error) {
-	tokens, err := core.LoadTokens(repo)
-	if err != nil {
-		return false, err
-	}
-
-	for _, token := range tokens {
-		if token.Target == target && token.Value == id {
-			return true, nil
-		}
-	}
-
-	return false, nil
-}
-
 func promptToken() (string, error) {
 	fmt.Println("You can generate a new token by visiting https://github.com/settings/tokens.")
 	fmt.Println("Choose 'Generate new token' and set the necessary access scope for your repository.")
