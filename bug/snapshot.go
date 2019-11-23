@@ -20,6 +20,7 @@ type Snapshot struct {
 	Actors       []identity.Interface
 	Participants []identity.Interface
 	CreatedAt    time.Time
+	IsFavorite   bool
 
 	Timeline []TimelineItem
 

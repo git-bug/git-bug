@@ -63,6 +63,8 @@ type Bug struct {
 	// a temporary pack of operations used for convenience to pile up new operations
 	// before a commit
 	staging OperationPack
+
+	isFavorite bool
 }
 
 // NewBug create a new Bug

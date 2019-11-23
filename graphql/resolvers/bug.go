@@ -27,6 +27,10 @@ func (bugResolver) Status(ctx context.Context, obj *bug.Snapshot) (models.Status
 	return convertStatus(obj.Status)
 }
 
+func (bugResolver) IsFavorite(ctx context.Context, obj *bug.Snapshot) (*bool, error) {
+	return &obj.IsFavorite, nil
+}
+
 func (bugResolver) Comments(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (*models.CommentConnection, error) {
 	input := models.ConnectionInput{
 		Before: before,

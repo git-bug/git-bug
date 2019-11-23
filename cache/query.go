@@ -72,6 +72,10 @@ func ParseQuery(query string) (*Query, error) {
 			f := TitleFilter(qualifierQuery)
 			result.Title = append(result.Title, f)
 
+		case "isFavorite":
+			f := IsFavoriteFilter(qualifierQuery)
+			result.IsFavorite = append(result.IsFavorite, f)
+
 		case "no":
 			err := result.parseNoFilter(qualifierQuery)
 			if err != nil {

@@ -48,6 +48,7 @@ func TestQueries(t *testing.T) {
               lastEdit
               status
               title
+              isFavorite
 
               actors(first: 10) {
                 pageInfo {

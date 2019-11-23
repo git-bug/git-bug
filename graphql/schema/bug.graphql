@@ -38,6 +38,7 @@ type Bug implements Authored {
   author: Identity!
   createdAt: Time!
   lastEdit: Time!
+  isFavorite: Boolean
 
   """The actors of the bug. Actors are Identity that have interacted with the bug."""
   actors(

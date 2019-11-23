@@ -100,6 +100,7 @@ type ComplexityRoot struct {
 		CreatedAt    func(childComplexity int) int
 		HumanID      func(childComplexity int) int
 		ID           func(childComplexity int) int
+		IsFavorite   func(childComplexity int) int
 		Labels       func(childComplexity int) int
 		LastEdit     func(childComplexity int) int
 		Operations   func(childComplexity int, after *string, before *string, first *int, last *int) int
@@ -386,6 +387,7 @@ type BugResolver interface {
 	Status(ctx context.Context, obj *bug.Snapshot) (models.Status, error)
 
 	LastEdit(ctx context.Context, obj *bug.Snapshot) (*time.Time, error)
+
 	Actors(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (*models.IdentityConnection, error)
 	Participants(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (*models.IdentityConnection, error)
 	Comments(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (*models.CommentConnection, error)
@@ -674,6 +676,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Bug.ID(childComplexity), true
+
+	case "Bug.isFavorite":
+		if e.complexity.Bug.IsFavorite == nil {
+			break
+		}
+
+		return e.complexity.Bug.IsFavorite(childComplexity), true
 
 	case "Bug.labels":
 		if e.complexity.Bug.Labels == nil {
@@ -1926,6 +1935,7 @@ type Bug implements Authored {
   author: Identity!
   createdAt: Time!
   lastEdit: Time!
+  isFavorite: Boolean
 
   """The actors of the bug. Actors are Identity that have interacted with the bug."""
   actors(
@@ -3961,6 +3971,40 @@ func (ec *executionContext) _Bug_lastEdit(ctx context.Context, field graphql.Col
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Bug_isFavorite(ctx context.Context, field graphql.CollectedField, obj *bug.Snapshot) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Bug",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsFavorite, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Bug_actors(ctx context.Context, field graphql.CollectedField, obj *bug.Snapshot) (ret graphql.Marshaler) {
@@ -11477,6 +11521,8 @@ func (ec *executionContext) _Bug(ctx context.Context, sel ast.SelectionSet, obj 
 				}
 				return res
 			})
+		case "isFavorite":
+			out.Values[i] = ec._Bug_isFavorite(ctx, field, obj)
 		case "actors":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {

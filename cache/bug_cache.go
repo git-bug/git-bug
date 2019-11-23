@@ -28,7 +28,14 @@ func NewBugCache(repoCache *RepoCache, b *bug.Bug) *BugCache {
 }
 
 func (c *BugCache) Snapshot() *bug.Snapshot {
-	return c.bug.Snapshot()
+	var snapshot = c.bug.Snapshot()
+	for _, b_id := range c.repoCache.favoriteBugs {
+		if (snapshot.Id() == b_id) {
+			snapshot.IsFavorite = true;
+			break;
+		}
+	}
+	return snapshot
 }
 
 func (c *BugCache) Id() entity.Id {

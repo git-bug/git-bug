@@ -2,6 +2,7 @@ package cache
 
 import (
 	"strings"
+	"strconv"
 
 	"github.com/MichaelMure/git-bug/bug"
 )
@@ -102,6 +103,13 @@ func TitleFilter(query string) Filter {
 	}
 }
 
+// IsFavoriteFilter return a Filter that match a favorite bug
+func IsFavoriteFilter(query string) Filter {
+	return func(repoCache *RepoCache, excerpt *BugExcerpt) bool {
+		return strconv.FormatBool(excerpt.IsFavorite) == query
+	}
+}
+
 // NoLabelFilter return a Filter that match the absence of labels
 func NoLabelFilter() Filter {
 	return func(repoCache *RepoCache, excerpt *BugExcerpt) bool {
@@ -117,6 +125,7 @@ type Filters struct {
 	Participant []Filter
 	Label       []Filter
 	Title       []Filter
+	IsFavorite  []Filter
 	NoFilters   []Filter
 }
 
@@ -147,6 +156,10 @@ func (f *Filters) Match(repoCache *RepoCache, excerpt *BugExcerpt) bool {
 	}
 
 	if match := f.andMatch(f.Title, repoCache, excerpt); !match {
+		return false
+	}
+
+	if match := f.andMatch(f.IsFavorite, repoCache, excerpt); !match {
 		return false
 	}
 
