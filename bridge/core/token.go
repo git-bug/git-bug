@@ -122,8 +122,7 @@ func LoadTokenPrefix(repo repository.RepoCommon, prefix string) (*Token, error) 
 	return LoadToken(repo, matching[0])
 }
 
-// ListTokens return a map representing the stored tokens in the repo config and global config
-// along with their type (global: true, local:false)
+// ListTokens list all existing token ids
 func ListTokens(repo repository.RepoCommon) ([]entity.Id, error) {
 	configs, err := repo.GlobalConfig().ReadAll(tokenConfigKeyPrefix + ".")
 	if err != nil {
@@ -155,6 +154,79 @@ func ListTokens(repo repository.RepoCommon) ([]entity.Id, error) {
 	sort.Sort(entity.Alphabetical(result))
 
 	return result, nil
+}
+
+// ListTokensWithTarget list all token ids associated with the target
+func ListTokensWithTarget(repo repository.RepoCommon, target string) ([]entity.Id, error) {
+	var ids []entity.Id
+	tokensIds, err := ListTokens(repo)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, tokenId := range tokensIds {
+		token, err := LoadToken(repo, tokenId)
+		if err != nil {
+			return nil, err
+		}
+
+		if token.Target == target {
+			ids = append(ids, tokenId)
+		}
+	}
+	return ids, nil
+}
+
+// LoadTokens load all existing tokens
+func LoadTokens(repo repository.RepoCommon) ([]*Token, error) {
+	tokensIds, err := ListTokens(repo)
+	if err != nil {
+		return nil, err
+	}
+
+	var tokens []*Token
+	for _, id := range tokensIds {
+		token, err := LoadToken(repo, id)
+		if err != nil {
+			return nil, err
+		}
+		tokens = append(tokens, token)
+	}
+	return tokens, nil
+}
+
+// TokenIdExist return wether token id exist or not
+func TokenIdExist(repo repository.RepoCommon, id entity.Id) bool {
+	_, err := LoadToken(repo, id)
+	return err == nil
+}
+
+// TokenExist return wether there is a token with a certain value or not
+func TokenExist(repo repository.RepoCommon, value string) bool {
+	tokens, err := LoadTokens(repo)
+	if err != nil {
+		return false
+	}
+	for _, token := range tokens {
+		if token.Value == value {
+			return true
+		}
+	}
+	return false
+}
+
+// TokenExistWithTarget same as TokenExist but restrict search for a given target
+func TokenExistWithTarget(repo repository.RepoCommon, value string, target string) bool {
+	tokens, err := LoadTokens(repo)
+	if err != nil {
+		return false
+	}
+	for _, token := range tokens {
+		if token.Value == value && token.Target == target {
+			return true
+		}
+	}
+	return false
 }
 
 // StoreToken stores a token in the repo config
