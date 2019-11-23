@@ -8,15 +8,13 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/pkg/errors"
-	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
+	"github.com/MichaelMure/git-bug/input"
 	"github.com/MichaelMure/git-bug/repository"
-	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
 const (
@@ -26,13 +24,19 @@ const (
 	keyCredentialsFile = "credentials-file"
 	keyUsername        = "username"
 	keyPassword        = "password"
-	keyMapOpenID       = "bug-open-id"
-	keyMapCloseID      = "bug-closed-id"
+	keyIDMap           = "bug-id-map"
 	keyCreateDefaults  = "create-issue-defaults"
 	keyCreateGitBug    = "create-issue-gitbug-id"
 
 	defaultTimeout = 60 * time.Second
 )
+
+const moreConfigText = `
+NOTE: There are a few optional configuration values that you can additionally
+set in your git configuration to influence the behavior of the bridge. Please
+see the notes at:
+https://github.com/MichaelMure/git-bug/blob/master/doc/jira_bridge.md
+`
 
 // Configure sets up the bridge configuration
 func (g *Jira) Configure(
@@ -91,7 +95,7 @@ func (g *Jira) Configure(
 		return nil, err
 	}
 
-	password, err = PromptPassword()
+	password, err = input.PromptPassword()
 	if err != nil {
 		return nil, err
 	}
@@ -121,24 +125,27 @@ func (g *Jira) Configure(
 	conf[core.KeyTarget] = target
 	conf[keyServer] = serverURL
 	conf[keyProject] = project
-	if choice == 1 {
+	switch choice {
+	case 1:
 		conf[keyCredentialsFile] = credentialsFile
 		err = ioutil.WriteFile(credentialsFile, jsonData, 0644)
 		if err != nil {
 			return nil, errors.Wrap(
 				err, fmt.Sprintf("Unable to write credentials to %s", credentialsFile))
 		}
-	} else if choice == 2 {
+	case 2:
 		conf[keyUsername] = username
 		conf[keyPassword] = password
-	} else if choice == 3 {
+	case 3:
 		conf[keyUsername] = username
 	}
+
 	err = g.ValidateConfig(conf)
 	if err != nil {
 		return nil, err
 	}
 
+	fmt.Print(moreConfigText)
 	return conf, nil
 }
 
@@ -207,36 +214,5 @@ func prompt(description, name string) (string, error) {
 		}
 
 		return line, nil
-	}
-}
-
-// PromptPassword performs interactive input collection to get the user password
-func PromptPassword() (string, error) {
-	termState, err := terminal.GetState(int(syscall.Stdin))
-	if err != nil {
-		return "", err
-	}
-
-	cancel := interrupt.RegisterCleaner(func() error {
-		return terminal.Restore(int(syscall.Stdin), termState)
-	})
-	defer cancel()
-
-	for {
-		fmt.Print("password: ")
-		bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
-		// new line for coherent formatting, ReadPassword clip the normal new line
-		// entered by the user
-		fmt.Println()
-
-		if err != nil {
-			return "", err
-		}
-
-		if len(bytePassword) > 0 {
-			return string(bytePassword), nil
-		}
-
-		fmt.Println("password is empty")
 	}
 }

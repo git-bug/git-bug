@@ -148,12 +148,6 @@ func EditComment(b Interface, author identity.Interface, unixTime int64, target 
 	return EditCommentWithFiles(b, author, unixTime, target, message, nil)
 }
 
-// Convenience function to edit the body of a bug (the first comment)
-func EditBody(b Interface, author identity.Interface, unixTime int64, message string) (*EditCommentOperation, error) {
-	createOp := b.FirstOp().(*CreateOperation)
-	return EditComment(b, author, unixTime, createOp.Id(), message)
-}
-
 func EditCommentWithFiles(b Interface, author identity.Interface, unixTime int64, target entity.Id, message string, files []git.Hash) (*EditCommentOperation, error) {
 	editCommentOp := NewEditCommentOp(author, unixTime, target, message, files)
 	if err := editCommentOp.Validate(); err != nil {
@@ -163,3 +157,14 @@ func EditCommentWithFiles(b Interface, author identity.Interface, unixTime int64
 	return editCommentOp, nil
 }
 
+// Convenience function to edit the body of a bug (the first comment)
+func EditCreateComment(b Interface, author identity.Interface, unixTime int64, message string) (*EditCommentOperation, error) {
+	createOp := b.FirstOp().(*CreateOperation)
+	return EditComment(b, author, unixTime, createOp.Id(), message)
+}
+
+// Convenience function to edit the body of a bug (the first comment)
+func EditCreateCommentWithFiles(b Interface, author identity.Interface, unixTime int64, message string, files []git.Hash) (*EditCommentOperation, error) {
+	createOp := b.FirstOp().(*CreateOperation)
+	return EditCommentWithFiles(b, author, unixTime, createOp.Id(), message, files)
+}

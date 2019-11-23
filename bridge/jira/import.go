@@ -2,6 +2,7 @@ package jira
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"sort"
@@ -57,7 +58,7 @@ func (self *jiraImporter) ImportAll(
 	go func() {
 		defer close(self.out)
 
-		client := NewClient(serverURL, &ctx)
+		client := NewClient(serverURL, ctx)
 		err := client.Login(self.conf)
 		if err != nil {
 			out <- core.NewImportError(err, "")
@@ -140,7 +141,9 @@ func (self *jiraImporter) ImportAll(
 				out <- core.NewImportError(changelogIter.Err, "")
 			}
 
-			if err := bug.CommitAsNeeded(); err != nil {
+			if !bug.NeedCommit() {
+				out <- core.NewImportNothing(bug.Id(), "no imported operation")
+			} else if err := bug.Commit(); err != nil {
 				err = fmt.Errorf("bug commit: %v", err)
 				out <- core.NewImportError(err, "")
 				return
@@ -194,9 +197,6 @@ func (self *jiraImporter) ensureIssue(
 		return nil, err
 	}
 
-	// TODO(josh)[f8808eb]: Consider looking up the git-bug entry directly from
-	// the jira field which contains it, if we have a custom field configured
-	// to store git-bug IDs.
 	b, err := repo.ResolveBugCreateMetadata(keyJiraID, issue.ID)
 	if err != nil && err != bug.ErrBugNotExist {
 		return nil, err
@@ -226,8 +226,6 @@ func (self *jiraImporter) ensureIssue(
 		}
 
 		self.out <- core.NewImportBug(b.Id())
-	} else {
-		self.out <- core.NewImportNothing("", "bug already imported")
 	}
 
 	return b, nil
@@ -249,9 +247,7 @@ func (self *jiraImporter) ensureComment(
 
 	targetOpID, err := b.ResolveOperationWithMetadata(
 		keyJiraID, item.ID)
-	if err == nil {
-		self.out <- core.NewImportNothing("", "comment already imported")
-	} else if err != cache.ErrNoMatchingOp {
+	if err != nil && err != cache.ErrNoMatchingOp {
 		return err
 	}
 
@@ -298,9 +294,7 @@ func (self *jiraImporter) ensureComment(
 	derivedID := getTimeDerivedID(item.ID, item.Updated)
 	_, err = b.ResolveOperationWithMetadata(
 		keyJiraID, derivedID)
-	if err == nil {
-		self.out <- core.NewImportNothing("", "update already imported")
-	} else if err != cache.ErrNoMatchingOp {
+	if err != nil && err != cache.ErrNoMatchingOp {
 		return err
 	}
 
@@ -373,8 +367,6 @@ func (self *jiraImporter) ensureChange(
 	// operation and we've already done the match, so we skip this one
 	_, err := b.ResolveOperationWithMetadata(keyJiraOperationID, entry.ID)
 	if err == nil {
-		self.out <- core.NewImportNothing(
-			"", "changelog entry already matched to export")
 		return nil
 	} else if err != cache.ErrNoMatchingOp {
 		return err
@@ -395,7 +387,10 @@ func (self *jiraImporter) ensureChange(
 		return fmt.Errorf("Received changelog entry with no item! (%s)", entry.ID)
 	}
 
-	statusMap := getStatusMap(self.conf)
+	statusMap, err := getStatusMap(self.conf)
+	if err != nil {
+		return err
+	}
 
 	// NOTE(josh): first do an initial scan and see if any of the changed items
 	// matches the current potential operation. If it does, then we know that this
@@ -405,8 +400,6 @@ func (self *jiraImporter) ensureChange(
 	for _, item := range entry.Items {
 		switch item.Field {
 		case "labels":
-			// TODO(josh)[d7fd71c]: move set-symmetric-difference code to a helper
-			// function. Probably in jira.go or something.
 			fromLabels := strings.Split(item.FromString, " ")
 			toLabels := strings.Split(item.ToString, " ")
 			removedLabels, addedLabels, _ := setSymmetricDifference(
@@ -416,10 +409,12 @@ func (self *jiraImporter) ensureChange(
 			if isRightType &&
 				labelSetsMatch(addedLabels, opr.Added) &&
 				labelSetsMatch(removedLabels, opr.Removed) {
-				b.SetMetadata(opr.Id(), map[string]string{
+				_, err := b.SetMetadata(opr.Id(), map[string]string{
 					keyJiraOperationID: entry.ID,
 				})
-				self.out <- core.NewImportNothing("", "matched export")
+				if err != nil {
+					return err
+				}
 				return nil
 			}
 
@@ -430,9 +425,8 @@ func (self *jiraImporter) ensureChange(
 					keyJiraOperationID: entry.ID,
 				})
 				if err != nil {
-					panic("Can't set metadata")
+					return err
 				}
-				self.out <- core.NewImportNothing("", "matched export")
 				return nil
 			}
 
@@ -445,9 +439,8 @@ func (self *jiraImporter) ensureChange(
 					keyJiraOperationID: entry.ID,
 				})
 				if err != nil {
-					panic("Can't set metadata")
+					return err
 				}
-				self.out <- core.NewImportNothing("", "matched export")
 				return nil
 			}
 
@@ -462,9 +455,8 @@ func (self *jiraImporter) ensureChange(
 					keyJiraOperationID: entry.ID,
 				})
 				if err != nil {
-					panic("Can't set metadata")
+					return err
 				}
-				self.out <- core.NewImportNothing("", "matched export")
 				return nil
 			}
 		}
@@ -477,7 +469,6 @@ func (self *jiraImporter) ensureChange(
 		derivedID := getIndexDerivedID(entry.ID, idx)
 		_, err := b.ResolveOperationWithMetadata(keyJiraOperationID, derivedID)
 		if err == nil {
-			self.out <- core.NewImportNothing("", "update already imported")
 			continue
 		} else if err != cache.ErrNoMatchingOp {
 			return err
@@ -485,8 +476,6 @@ func (self *jiraImporter) ensureChange(
 
 		switch item.Field {
 		case "labels":
-			// TODO(josh)[d7fd71c]: move set-symmetric-difference code to a helper
-			// function. Probably in jira.go or something.
 			fromLabels := strings.Split(item.FromString, " ")
 			toLabels := strings.Split(item.ToString, " ")
 			removedLabels, addedLabels, _ := setSymmetricDifference(
@@ -541,9 +530,9 @@ func (self *jiraImporter) ensureChange(
 				}
 				self.out <- core.NewImportStatusChange(op.Id())
 			} else {
-				self.out <- core.NewImportNothing(
-					"", fmt.Sprintf(
-						"No git-bug status mapped for jira status %s", item.ToString))
+				self.out <- core.NewImportError(
+					fmt.Errorf(
+						"No git-bug status mapped for jira status %s", item.ToString), "")
 			}
 
 		case "summary":
@@ -568,7 +557,7 @@ func (self *jiraImporter) ensureChange(
 		case "description":
 			// NOTE(josh): JIRA calls it "description", which sounds more like the
 			// title but it's actually the body
-			op, err := b.EditBodyRaw(
+			op, err := b.EditCreateCommentRaw(
 				author,
 				entry.Created.Unix(),
 				string(item.ToString),
@@ -596,18 +585,16 @@ func (self *jiraImporter) ensureChange(
 	return nil
 }
 
-func getStatusMap(conf core.Configuration) map[string]string {
-	var hasConf bool
+func getStatusMap(conf core.Configuration) (map[string]string, error) {
+	mapStr, hasConf := conf[keyIDMap]
+	if !hasConf {
+		return map[string]string{
+			bug.OpenStatus.String():   "1",
+			bug.ClosedStatus.String(): "6",
+		}, nil
+	}
+
 	statusMap := make(map[string]string)
-	statusMap[bug.OpenStatus.String()], hasConf = conf[keyMapOpenID]
-	if !hasConf {
-		// Default to "1" which is the built-in jira "Open" status
-		statusMap[bug.OpenStatus.String()] = "1"
-	}
-	statusMap[bug.ClosedStatus.String()], hasConf = conf[keyMapCloseID]
-	if !hasConf {
-		// Default to "6" which is the built-in jira "Closed" status
-		statusMap[bug.OpenStatus.String()] = "6"
-	}
-	return statusMap
+	err := json.Unmarshal([]byte(mapStr), &statusMap)
+	return statusMap, err
 }

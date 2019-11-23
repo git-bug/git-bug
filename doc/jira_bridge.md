@@ -208,8 +208,7 @@ create-issue-gitbug-id = "customfield_5678"
 You can specify the mapping between `git-bug` status and JIRA status id's using
 the following:
 ```
-bug-open-id = 1
-bug-closed-id = 6
+bug-id-map = {"open": "1", "closed": "6"}
 ```
 
 Note that in JIRA each different `issuetype` can have a different set of

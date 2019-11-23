@@ -15,6 +15,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/input"
 	"github.com/pkg/errors"
 )
 
@@ -318,12 +319,12 @@ func (self *ClientTransport) RoundTrip(
 type Client struct {
 	*http.Client
 	serverURL string
-	ctx       *context.Context
+	ctx       context.Context
 }
 
 // NewClient Construct a new client connected to the provided server and
 // utilizing the given context for asynchronous events
-func NewClient(serverURL string, ctx *context.Context) *Client {
+func NewClient(serverURL string, ctx context.Context) *Client {
 	cookiJar, _ := cookiejar.New(nil)
 	client := &http.Client{
 		Transport: &ClientTransport{underlyingTransport: http.DefaultTransport},
@@ -353,7 +354,7 @@ func (client *Client) Login(conf core.Configuration) error {
 	password := conf[keyPassword]
 	if password == "" {
 		var err error
-		password, err = PromptPassword()
+		password, err = input.PromptPassword()
 		if err != nil {
 			return err
 		}
@@ -397,7 +398,7 @@ func (client *Client) RefreshTokenRaw(credentialsJSON []byte) error {
 	}
 
 	if client.ctx != nil {
-		ctx, cancel := context.WithTimeout(*client.ctx, defaultTimeout)
+		ctx, cancel := context.WithTimeout(client.ctx, defaultTimeout)
 		defer cancel()
 		req = req.WithContext(ctx)
 	}
@@ -465,7 +466,7 @@ func (client *Client) Search(jql string, maxResults int, startAt int) (
 	}
 
 	if client.ctx != nil {
-		ctx, cancel := context.WithTimeout(*client.ctx, defaultTimeout)
+		ctx, cancel := context.WithTimeout(client.ctx, defaultTimeout)
 		defer cancel()
 		request = request.WithContext(ctx)
 	}
@@ -593,7 +594,7 @@ func (client *Client) GetIssue(
 	request.URL.RawQuery = query.Encode()
 
 	if client.ctx != nil {
-		ctx, cancel := context.WithTimeout(*client.ctx, defaultTimeout)
+		ctx, cancel := context.WithTimeout(client.ctx, defaultTimeout)
 		defer cancel()
 		request = request.WithContext(ctx)
 	}
@@ -648,7 +649,7 @@ func (client *Client) GetComments(
 	request.URL.RawQuery = query.Encode()
 
 	if client.ctx != nil {
-		ctx, cancel := context.WithTimeout(*client.ctx, defaultTimeout)
+		ctx, cancel := context.WithTimeout(client.ctx, defaultTimeout)
 		defer cancel()
 		request = request.WithContext(ctx)
 	}
@@ -776,7 +777,7 @@ func (client *Client) GetChangeLog(
 	request.URL.RawQuery = query.Encode()
 
 	if client.ctx != nil {
-		ctx, cancel := context.WithTimeout(*client.ctx, defaultTimeout)
+		ctx, cancel := context.WithTimeout(client.ctx, defaultTimeout)
 		defer cancel()
 		request = request.WithContext(ctx)
 	}
@@ -905,7 +906,7 @@ func (client *Client) GetProject(projectIDOrKey string) (*Project, error) {
 	}
 
 	if client.ctx != nil {
-		ctx, cancel := context.WithTimeout(*client.ctx, defaultTimeout)
+		ctx, cancel := context.WithTimeout(client.ctx, defaultTimeout)
 		defer cancel()
 		request = request.WithContext(ctx)
 	}
@@ -972,7 +973,7 @@ func (client *Client) CreateIssue(
 	}
 
 	if client.ctx != nil {
-		ctx, cancel := context.WithTimeout(*client.ctx, defaultTimeout)
+		ctx, cancel := context.WithTimeout(client.ctx, defaultTimeout)
 		defer cancel()
 		request = request.WithContext(ctx)
 	}
@@ -1086,7 +1087,7 @@ func (client *Client) UpdateIssueBody(
 	}
 
 	if client.ctx != nil {
-		ctx, cancel := context.WithTimeout(*client.ctx, defaultTimeout)
+		ctx, cancel := context.WithTimeout(client.ctx, defaultTimeout)
 		defer cancel()
 		request = request.WithContext(ctx)
 	}
@@ -1138,7 +1139,7 @@ func (client *Client) AddComment(issueKeyOrID, body string) (*Comment, error) {
 	}
 
 	if client.ctx != nil {
-		ctx, cancel := context.WithTimeout(*client.ctx, defaultTimeout)
+		ctx, cancel := context.WithTimeout(client.ctx, defaultTimeout)
 		defer cancel()
 		request = request.WithContext(ctx)
 	}
@@ -1189,7 +1190,7 @@ func (client *Client) UpdateComment(issueKeyOrID, commentID, body string) (
 	}
 
 	if client.ctx != nil {
-		ctx, cancel := context.WithTimeout(*client.ctx, defaultTimeout)
+		ctx, cancel := context.WithTimeout(client.ctx, defaultTimeout)
 		defer cancel()
 		request = request.WithContext(ctx)
 	}
@@ -1255,7 +1256,7 @@ func (client *Client) UpdateLabels(
 	}
 
 	if client.ctx != nil {
-		ctx, cancel := context.WithTimeout(*client.ctx, defaultTimeout)
+		ctx, cancel := context.WithTimeout(client.ctx, defaultTimeout)
 		defer cancel()
 		request = request.WithContext(ctx)
 	}
@@ -1304,7 +1305,7 @@ func (client *Client) GetTransitions(issueKeyOrID string) (
 	}
 
 	if client.ctx != nil {
-		ctx, cancel := context.WithTimeout(*client.ctx, defaultTimeout)
+		ctx, cancel := context.WithTimeout(client.ctx, defaultTimeout)
 		defer cancel()
 		request = request.WithContext(ctx)
 	}
@@ -1368,7 +1369,7 @@ func (client *Client) DoTransition(
 	}
 
 	if client.ctx != nil {
-		ctx, cancel := context.WithTimeout(*client.ctx, defaultTimeout)
+		ctx, cancel := context.WithTimeout(client.ctx, defaultTimeout)
 		defer cancel()
 		request = request.WithContext(ctx)
 	}
@@ -1414,7 +1415,7 @@ func (client *Client) GetServerInfo() (*ServerInfo, error) {
 	}
 
 	if client.ctx != nil {
-		ctx, cancel := context.WithTimeout(*client.ctx, defaultTimeout)
+		ctx, cancel := context.WithTimeout(client.ctx, defaultTimeout)
 		defer cancel()
 		request = request.WithContext(ctx)
 	}
