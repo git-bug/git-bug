@@ -39,7 +39,7 @@ func (gi *githubImporter) Init(conf core.Configuration) error {
 // ImportAll iterate over all the configured repository issues and ensure the creation of the
 // missing issues / timeline items / edits / label events ...
 func (gi *githubImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, since time.Time) (<-chan core.ImportResult, error) {
-	gi.iterator = NewIterator(ctx, 10, gi.conf[keyOwner], gi.conf[keyProject], gi.conf[keyToken], since)
+	gi.iterator = NewIterator(ctx, 10, gi.conf[keyOwner], gi.conf[keyProject], gi.conf[core.ConfigKeyToken], since)
 	out := make(chan core.ImportResult)
 	gi.out = out
 
@@ -553,7 +553,7 @@ func (gi *githubImporter) getGhost(repo *cache.RepoCache) (*cache.IdentityCache,
 		"login": githubv4.String("ghost"),
 	}
 
-	gc := buildClient(gi.conf[keyToken])
+	gc := buildClient(gi.conf[core.ConfigKeyToken])
 
 	ctx, cancel := context.WithTimeout(gi.iterator.ctx, defaultTimeout)
 	defer cancel()
