@@ -79,7 +79,7 @@ func (ge *gitlabExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, 
 		return nil, err
 	}
 
-	ge.identityToken[user.Id().String()] = ge.conf[keyToken]
+	ge.identityToken[user.Id().String()] = ge.conf[core.ConfigKeyToken]
 
 	// get repository node id
 	ge.repositoryID = ge.conf[keyProjectID]

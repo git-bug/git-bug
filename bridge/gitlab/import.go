@@ -34,7 +34,7 @@ func (gi *gitlabImporter) Init(conf core.Configuration) error {
 // ImportAll iterate over all the configured repository issues (notes) and ensure the creation
 // of the missing issues / comments / label events / title changes ...
 func (gi *gitlabImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, since time.Time) (<-chan core.ImportResult, error) {
-	gi.iterator = NewIterator(ctx, 10, gi.conf[keyProjectID], gi.conf[keyToken], since)
+	gi.iterator = NewIterator(ctx, 10, gi.conf[keyProjectID], gi.conf[core.ConfigKeyToken], since)
 	out := make(chan core.ImportResult)
 	gi.out = out
 

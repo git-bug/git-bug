@@ -237,12 +237,12 @@ func TokenExist(repo repository.RepoCommon, value string) bool {
 
 // TokenExistWithTarget same as TokenExist but restrict search for a given target
 func TokenExistWithTarget(repo repository.RepoCommon, value string, target string) bool {
-	tokens, err := LoadTokens(repo)
+	tokens, err := LoadTokensWithTarget(repo, target)
 	if err != nil {
 		return false
 	}
 	for _, token := range tokens {
-		if token.Value == value && token.Target == target {
+		if token.Value == value {
 			return true
 		}
 	}
