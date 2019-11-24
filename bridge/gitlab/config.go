@@ -13,6 +13,7 @@ import (
 	"github.com/xanzy/go-gitlab"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
@@ -32,6 +33,8 @@ func (g *Gitlab) Configure(repo repository.RepoCommon, params core.BridgeParams)
 	var err error
 	var url string
 	var token string
+	var tokenId entity.Id
+	var tokenObj *core.Token
 
 	if (params.Token != "" || params.TokenStdin) && params.URL == "" {
 		return nil, fmt.Errorf("you must provide a project URL to configure this bridge with a token")
@@ -65,21 +68,38 @@ func (g *Gitlab) Configure(repo repository.RepoCommon, params core.BridgeParams)
 			return nil, fmt.Errorf("reading from stdin: %v", err)
 		}
 		token = strings.TrimSuffix(token, "\n")
+	} else if params.TokenId != "" {
+		tokenId = entity.Id(params.TokenId)
 	} else {
-		token, err = promptToken()
+		tokenObj, err = promptTokenOptions(repo)
 		if err != nil {
 			return nil, errors.Wrap(err, "token prompt")
 		}
 	}
 
+	if token != "" {
+		tokenObj, err = core.LoadOrCreateToken(repo, target, token)
+		if err != nil {
+			return nil, err
+		}
+	} else if tokenId != "" {
+		tokenObj, err = core.LoadToken(repo, entity.Id(tokenId))
+		if err != nil {
+			return nil, err
+		}
+		if tokenObj.Target != target {
+			return nil, fmt.Errorf("token target is incompatible %s", tokenObj.Target)
+		}
+	}
+
 	// validate project url and get its ID
-	id, err := validateProjectURL(url, token)
+	id, err := validateProjectURL(url, tokenObj.Value)
 	if err != nil {
 		return nil, errors.Wrap(err, "project validation")
 	}
 
 	conf[keyProjectID] = strconv.Itoa(id)
-	conf[keyToken] = token
+	conf[core.ConfigKeyTokenId] = tokenObj.ID().String()
 	conf[core.ConfigKeyTarget] = target
 
 	err = g.ValidateConfig(conf)
@@ -106,6 +126,54 @@ func (g *Gitlab) ValidateConfig(conf core.Configuration) error {
 	}
 
 	return nil
+}
+
+func promptTokenOptions(repo repository.RepoCommon) (*core.Token, error) {
+	for {
+		tokens, err := core.LoadTokensWithTarget(repo, target)
+		if err != nil {
+			return nil, err
+		}
+
+		fmt.Println()
+		fmt.Println("[1]: user provided token")
+
+		if len(tokens) > 0 {
+			fmt.Println("known tokens for Gitlab:")
+			for i, token := range tokens {
+				if token.Target == target {
+					fmt.Printf("[%d]: %s\n", i+2, token.ID())
+				}
+			}
+		}
+		fmt.Print("Select option: ")
+
+		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
+		fmt.Println()
+		if err != nil {
+			return nil, err
+		}
+
+		line = strings.TrimRight(line, "\n")
+		index, err := strconv.Atoi(line)
+		if err != nil || index < 1 || index > len(tokens)+1 {
+			fmt.Println("invalid input")
+			continue
+		}
+
+		var token string
+		switch index {
+		case 1:
+			token, err = promptToken()
+			if err != nil {
+				return nil, err
+			}
+		default:
+			return tokens[index-2], nil
+		}
+
+		return core.LoadOrCreateToken(repo, target, token)
+	}
 }
 
 func promptToken() (string, error) {

@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
@@ -20,8 +21,10 @@ var ErrImportNotSupported = errors.New("import is not supported")
 var ErrExportNotSupported = errors.New("export is not supported")
 
 const (
-	ConfigKeyTarget = "target"
-	MetaKeyOrigin   = "origin"
+	ConfigKeyTarget  = "target"
+	ConfigKeyToken   = "token"
+	ConfigKeyTokenId = "token-id"
+	MetaKeyOrigin    = "origin"
 
 	bridgeConfigKeyPrefix = "git-bug.bridge"
 )
@@ -35,6 +38,7 @@ type BridgeParams struct {
 	Project    string
 	URL        string
 	Token      string
+	TokenId    string
 	TokenStdin bool
 }
 
@@ -275,6 +279,13 @@ func (b *Bridge) ensureInit() error {
 	if b.initDone {
 		return nil
 	}
+
+	token, err := LoadToken(b.repo, entity.Id(b.conf[ConfigKeyTokenId]))
+	if err != nil {
+		return err
+	}
+
+	b.conf[ConfigKeyToken] = token.Value
 
 	importer := b.getImporter()
 	if importer != nil {

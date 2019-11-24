@@ -87,14 +87,14 @@ func (ge *githubExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, 
 		return nil, err
 	}
 
-	ge.identityToken[user.Id()] = ge.conf[keyToken]
+	ge.identityToken[user.Id()] = ge.conf[core.ConfigKeyToken]
 
 	// get repository node id
 	ge.repositoryID, err = getRepositoryNodeID(
 		ctx,
 		ge.conf[keyOwner],
 		ge.conf[keyProject],
-		ge.conf[keyToken],
+		ge.conf[core.ConfigKeyToken],
 	)
 
 	if err != nil {
@@ -512,7 +512,7 @@ func (ge *githubExporter) createGithubLabel(ctx context.Context, label, color st
 	req = req.WithContext(ctx)
 
 	// need the token for private repositories
-	req.Header.Set("Authorization", fmt.Sprintf("token %s", ge.conf[keyToken]))
+	req.Header.Set("Authorization", fmt.Sprintf("token %s", ge.conf[core.ConfigKeyToken]))
 
 	resp, err := client.Do(req)
 	if err != nil {

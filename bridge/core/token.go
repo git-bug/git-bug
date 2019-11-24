@@ -122,8 +122,7 @@ func LoadTokenPrefix(repo repository.RepoCommon, prefix string) (*Token, error) 
 	return LoadToken(repo, matching[0])
 }
 
-// ListTokens return a map representing the stored tokens in the repo config and global config
-// along with their type (global: true, local:false)
+// ListTokens list all existing token ids
 func ListTokens(repo repository.RepoCommon) ([]entity.Id, error) {
 	configs, err := repo.GlobalConfig().ReadAll(tokenConfigKeyPrefix + ".")
 	if err != nil {
@@ -157,6 +156,99 @@ func ListTokens(repo repository.RepoCommon) ([]entity.Id, error) {
 	return result, nil
 }
 
+// ListTokensWithTarget list all token ids associated with the target
+func ListTokensWithTarget(repo repository.RepoCommon, target string) ([]entity.Id, error) {
+	var ids []entity.Id
+	tokensIds, err := ListTokens(repo)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, tokenId := range tokensIds {
+		token, err := LoadToken(repo, tokenId)
+		if err != nil {
+			return nil, err
+		}
+
+		if token.Target == target {
+			ids = append(ids, tokenId)
+		}
+	}
+	return ids, nil
+}
+
+// LoadTokens load all existing tokens
+func LoadTokens(repo repository.RepoCommon) ([]*Token, error) {
+	tokensIds, err := ListTokens(repo)
+	if err != nil {
+		return nil, err
+	}
+
+	var tokens []*Token
+	for _, id := range tokensIds {
+		token, err := LoadToken(repo, id)
+		if err != nil {
+			return nil, err
+		}
+		tokens = append(tokens, token)
+	}
+	return tokens, nil
+}
+
+// LoadTokensWithTarget load all existing tokens for a given target
+func LoadTokensWithTarget(repo repository.RepoCommon, target string) ([]*Token, error) {
+	tokensIds, err := ListTokens(repo)
+	if err != nil {
+		return nil, err
+	}
+
+	var tokens []*Token
+	for _, id := range tokensIds {
+		token, err := LoadToken(repo, id)
+		if err != nil {
+			return nil, err
+		}
+		if token.Target == target {
+			tokens = append(tokens, token)
+		}
+	}
+	return tokens, nil
+}
+
+// TokenIdExist return wether token id exist or not
+func TokenIdExist(repo repository.RepoCommon, id entity.Id) bool {
+	_, err := LoadToken(repo, id)
+	return err == nil
+}
+
+// TokenExist return wether there is a token with a certain value or not
+func TokenExist(repo repository.RepoCommon, value string) bool {
+	tokens, err := LoadTokens(repo)
+	if err != nil {
+		return false
+	}
+	for _, token := range tokens {
+		if token.Value == value {
+			return true
+		}
+	}
+	return false
+}
+
+// TokenExistWithTarget same as TokenExist but restrict search for a given target
+func TokenExistWithTarget(repo repository.RepoCommon, value string, target string) bool {
+	tokens, err := LoadTokensWithTarget(repo, target)
+	if err != nil {
+		return false
+	}
+	for _, token := range tokens {
+		if token.Value == value {
+			return true
+		}
+	}
+	return false
+}
+
 // StoreToken stores a token in the repo config
 func StoreToken(repo repository.RepoCommon, token *Token) error {
 	storeValueKey := fmt.Sprintf("git-bug.token.%s.%s", token.ID().String(), tokenValueKey)
@@ -179,4 +271,26 @@ func StoreToken(repo repository.RepoCommon, token *Token) error {
 func RemoveToken(repo repository.RepoCommon, id entity.Id) error {
 	keyPrefix := fmt.Sprintf("git-bug.token.%s", id)
 	return repo.GlobalConfig().RemoveAll(keyPrefix)
+}
+
+// LoadOrCreateToken will try to load a token matching the same value or create it
+func LoadOrCreateToken(repo repository.RepoCommon, target, tokenValue string) (*Token, error) {
+	tokens, err := LoadTokensWithTarget(repo, target)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, token := range tokens {
+		if token.Value == tokenValue {
+			return token, nil
+		}
+	}
+
+	token := NewToken(tokenValue, target)
+	err = StoreToken(repo, token)
+	if err != nil {
+		return nil, err
+	}
+
+	return token, nil
 }

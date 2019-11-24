@@ -21,6 +21,7 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/interrupt"
 )
@@ -43,10 +44,12 @@ func (g *Github) Configure(repo repository.RepoCommon, params core.BridgeParams)
 	conf := make(core.Configuration)
 	var err error
 	var token string
+	var tokenId entity.Id
+	var tokenObj *core.Token
 	var owner string
 	var project string
 
-	if (params.Token != "" || params.TokenStdin) &&
+	if (params.Token != "" || params.TokenId != "" || params.TokenStdin) &&
 		(params.URL == "" && (params.Project == "" || params.Owner == "")) {
 		return nil, fmt.Errorf("you must provide a project URL or Owner/Name to configure this bridge with a token")
 	}
@@ -87,11 +90,11 @@ func (g *Github) Configure(repo repository.RepoCommon, params core.BridgeParams)
 		return nil, fmt.Errorf("invalid parameter owner: %v", owner)
 	}
 
-	// try to get token from params if provided, else use terminal prompt to either
-	// enter a token or login and generate a new one
+	// try to get token from params if provided, else use terminal prompt
+	// to either enter a token or login and generate a new one, or choose
+	// an existing token
 	if params.Token != "" {
 		token = params.Token
-
 	} else if params.TokenStdin {
 		reader := bufio.NewReader(os.Stdin)
 		token, err = reader.ReadString('\n')
@@ -99,15 +102,33 @@ func (g *Github) Configure(repo repository.RepoCommon, params core.BridgeParams)
 			return nil, fmt.Errorf("reading from stdin: %v", err)
 		}
 		token = strings.TrimSuffix(token, "\n")
+	} else if params.TokenId != "" {
+		tokenId = entity.Id(params.TokenId)
 	} else {
-		token, err = promptTokenOptions(owner, project)
+		tokenObj, err = promptTokenOptions(repo, owner, project)
 		if err != nil {
 			return nil, err
 		}
 	}
 
+	// at this point, we check if the token already exist or we create a new one
+	if token != "" {
+		tokenObj, err = core.LoadOrCreateToken(repo, target, token)
+		if err != nil {
+			return nil, err
+		}
+	} else if tokenId != "" {
+		tokenObj, err = core.LoadToken(repo, entity.Id(tokenId))
+		if err != nil {
+			return nil, err
+		}
+		if tokenObj.Target != target {
+			return nil, fmt.Errorf("token target is incompatible %s", tokenObj.Target)
+		}
+	}
+
 	// verify access to the repository with token
-	ok, err = validateProject(owner, project, token)
+	ok, err = validateProject(owner, project, tokenObj.Value)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +137,7 @@ func (g *Github) Configure(repo repository.RepoCommon, params core.BridgeParams)
 	}
 
 	conf[core.ConfigKeyTarget] = target
-	conf[keyToken] = token
+	conf[core.ConfigKeyTokenId] = tokenObj.ID().String()
 	conf[keyOwner] = owner
 	conf[keyProject] = project
 
@@ -135,8 +156,8 @@ func (*Github) ValidateConfig(conf core.Configuration) error {
 		return fmt.Errorf("unexpected target name: %v", v)
 	}
 
-	if _, ok := conf[keyToken]; !ok {
-		return fmt.Errorf("missing %s key", keyToken)
+	if _, ok := conf[core.ConfigKeyTokenId]; !ok {
+		return fmt.Errorf("missing %s key", core.ConfigKeyTokenId)
 	}
 
 	if _, ok := conf[keyOwner]; !ok {
@@ -220,32 +241,58 @@ func randomFingerprint() string {
 	return string(b)
 }
 
-func promptTokenOptions(owner, project string) (string, error) {
+func promptTokenOptions(repo repository.RepoCommon, owner, project string) (*core.Token, error) {
 	for {
+		tokens, err := core.LoadTokensWithTarget(repo, target)
+		if err != nil {
+			return nil, err
+		}
+
 		fmt.Println()
 		fmt.Println("[1]: user provided token")
 		fmt.Println("[2]: interactive token creation")
+
+		if len(tokens) > 0 {
+			fmt.Println("known tokens for Github:")
+			for i, token := range tokens {
+				if token.Target == target {
+					fmt.Printf("[%d]: %s\n", i+3, token.ID())
+				}
+			}
+		}
 		fmt.Print("Select option: ")
 
 		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
 		fmt.Println()
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 
 		line = strings.TrimRight(line, "\n")
 
 		index, err := strconv.Atoi(line)
-		if err != nil || (index != 1 && index != 2) {
+		if err != nil || index < 1 || index > len(tokens)+2 {
 			fmt.Println("invalid input")
 			continue
 		}
 
-		if index == 1 {
-			return promptToken()
+		var token string
+		switch index {
+		case 1:
+			token, err = promptToken()
+			if err != nil {
+				return nil, err
+			}
+		case 2:
+			token, err = loginAndRequestToken(owner, project)
+			if err != nil {
+				return nil, err
+			}
+		default:
+			return tokens[index-3], nil
 		}
 
-		return loginAndRequestToken(owner, project)
+		return core.LoadOrCreateToken(repo, target, token)
 	}
 }
 
