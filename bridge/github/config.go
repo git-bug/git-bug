@@ -113,7 +113,7 @@ func (g *Github) Configure(repo repository.RepoCommon, params core.BridgeParams)
 
 	// at this point, we check if the token already exist or we create a new one
 	if token != "" {
-		tokenObj, err = loadOrCreateToken(repo, token)
+		tokenObj, err = core.LoadOrCreateToken(repo, target, token)
 		if err != nil {
 			return nil, err
 		}
@@ -147,27 +147,6 @@ func (g *Github) Configure(repo repository.RepoCommon, params core.BridgeParams)
 	}
 
 	return conf, nil
-}
-
-func loadOrCreateToken(repo repository.RepoCommon, tokenValue string) (*core.Token, error) {
-	tokens, err := core.LoadTokens(repo)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, token := range tokens {
-		if token.Target == target && token.Value == tokenValue {
-			return token, nil
-		}
-	}
-
-	token := core.NewToken(tokenValue, target)
-	err = core.StoreToken(repo, token)
-	if err != nil {
-		return nil, err
-	}
-
-	return token, nil
 }
 
 func (*Github) ValidateConfig(conf core.Configuration) error {
@@ -264,7 +243,7 @@ func randomFingerprint() string {
 
 func promptTokenOptions(repo repository.RepoCommon, owner, project string) (*core.Token, error) {
 	for {
-		tokens, err := core.LoadTokens(repo)
+		tokens, err := core.LoadTokensWithTarget(repo, target)
 		if err != nil {
 			return nil, err
 		}
@@ -272,15 +251,13 @@ func promptTokenOptions(repo repository.RepoCommon, owner, project string) (*cor
 		fmt.Println()
 		fmt.Println("[1]: user provided token")
 		fmt.Println("[2]: interactive token creation")
-		fmt.Println("known tokens for Github:")
 
-		var githubTokens []*core.Token
-		i := 0
-		for _, token := range tokens {
-			if token.Target == target {
-				fmt.Printf("[%d]: %s\n", i+3, token.ID())
-				githubTokens = append(githubTokens, token)
-				i++
+		if len(tokens) > 0 {
+			fmt.Println("known tokens for Github:")
+			for i, token := range tokens {
+				if token.Target == target {
+					fmt.Printf("[%d]: %s\n", i+3, token.ID())
+				}
 			}
 		}
 		fmt.Print("Select option: ")
@@ -294,27 +271,28 @@ func promptTokenOptions(repo repository.RepoCommon, owner, project string) (*cor
 		line = strings.TrimRight(line, "\n")
 
 		index, err := strconv.Atoi(line)
-		if err != nil || index < 1 || index > len(githubTokens)+2 {
+		if err != nil || index < 1 || index > len(tokens)+2 {
 			fmt.Println("invalid input")
 			continue
 		}
 
 		var token string
-		if index == 1 {
+		switch index {
+		case 1:
 			token, err = promptToken()
 			if err != nil {
 				return nil, err
 			}
-		} else if index == 2 {
+		case 2:
 			token, err = loginAndRequestToken(owner, project)
 			if err != nil {
 				return nil, err
 			}
-		} else {
-			return githubTokens[index-2], nil
+		default:
+			return tokens[index-3], nil
 		}
 
-		return loadOrCreateToken(repo, token)
+		return core.LoadOrCreateToken(repo, target, token)
 	}
 }
 

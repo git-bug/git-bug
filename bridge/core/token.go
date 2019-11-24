@@ -195,6 +195,26 @@ func LoadTokens(repo repository.RepoCommon) ([]*Token, error) {
 	return tokens, nil
 }
 
+// LoadTokensWithTarget load all existing tokens for a given target
+func LoadTokensWithTarget(repo repository.RepoCommon, target string) ([]*Token, error) {
+	tokensIds, err := ListTokens(repo)
+	if err != nil {
+		return nil, err
+	}
+
+	var tokens []*Token
+	for _, id := range tokensIds {
+		token, err := LoadToken(repo, id)
+		if err != nil {
+			return nil, err
+		}
+		if token.Target == target {
+			tokens = append(tokens, token)
+		}
+	}
+	return tokens, nil
+}
+
 // TokenIdExist return wether token id exist or not
 func TokenIdExist(repo repository.RepoCommon, id entity.Id) bool {
 	_, err := LoadToken(repo, id)
@@ -251,4 +271,26 @@ func StoreToken(repo repository.RepoCommon, token *Token) error {
 func RemoveToken(repo repository.RepoCommon, id entity.Id) error {
 	keyPrefix := fmt.Sprintf("git-bug.token.%s", id)
 	return repo.GlobalConfig().RemoveAll(keyPrefix)
+}
+
+// LoadOrCreateToken will try to load a token matching the same value or create it
+func LoadOrCreateToken(repo repository.RepoCommon, target, tokenValue string) (*Token, error) {
+	tokens, err := LoadTokensWithTarget(repo, target)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, token := range tokens {
+		if token.Value == tokenValue {
+			return token, nil
+		}
+	}
+
+	token := NewToken(tokenValue, target)
+	err = StoreToken(repo, token)
+	if err != nil {
+		return nil, err
+	}
+
+	return token, nil
 }
