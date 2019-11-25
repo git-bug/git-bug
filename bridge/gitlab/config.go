@@ -67,7 +67,7 @@ func (g *Gitlab) Configure(repo repository.RepoCommon, params core.BridgeParams)
 		if err != nil {
 			return nil, fmt.Errorf("reading from stdin: %v", err)
 		}
-		token = strings.TrimSuffix(token, "\n")
+		token = strings.TrimSpace(token)
 	} else if params.TokenId != "" {
 		tokenId = entity.Id(params.TokenId)
 	} else {
@@ -154,7 +154,7 @@ func promptTokenOptions(repo repository.RepoCommon) (*core.Token, error) {
 			return nil, err
 		}
 
-		line = strings.TrimRight(line, "\n")
+		line = strings.TrimSpace(line)
 		index, err := strconv.Atoi(line)
 		if err != nil || index < 1 || index > len(tokens)+1 {
 			fmt.Println("invalid input")
@@ -196,7 +196,7 @@ func promptToken() (string, error) {
 			return "", err
 		}
 
-		token := strings.TrimRight(line, "\n")
+		token := strings.TrimSpace(line)
 		if re.MatchString(token) {
 			return token, nil
 		}
@@ -224,7 +224,7 @@ func promptURL(remotes map[string]string) (string, error) {
 				return "", err
 			}
 
-			line = strings.TrimRight(line, "\n")
+			line = strings.TrimSpace(line)
 
 			index, err := strconv.Atoi(line)
 			if err != nil || index < 0 || index > len(validRemotes) {
@@ -250,7 +250,7 @@ func promptURL(remotes map[string]string) (string, error) {
 			return "", err
 		}
 
-		url := strings.TrimRight(line, "\n")
+		url := strings.TrimSpace(line)
 		if line == "" {
 			fmt.Println("URL is empty")
 			continue
