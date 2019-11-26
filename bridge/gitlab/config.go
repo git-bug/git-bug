@@ -8,13 +8,16 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
+	text "github.com/MichaelMure/go-term-text"
 	"github.com/pkg/errors"
 	"github.com/xanzy/go-gitlab"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
+	"github.com/MichaelMure/git-bug/util/colors"
 )
 
 var (
@@ -135,17 +138,31 @@ func promptTokenOptions(repo repository.RepoCommon) (*core.Token, error) {
 			return nil, err
 		}
 
-		fmt.Println()
-		fmt.Println("[1]: user provided token")
+		if len(tokens) == 0 {
+			token, err := promptToken()
+			if err != nil {
+				return nil, err
+			}
+			return core.LoadOrCreateToken(repo, target, token)
+		}
 
-		if len(tokens) > 0 {
-			fmt.Println("known tokens for Gitlab:")
-			for i, token := range tokens {
-				if token.Target == target {
-					fmt.Printf("[%d]: %s\n", i+2, token.ID())
-				}
+		fmt.Println()
+		fmt.Println("[1]: enter my token")
+
+		fmt.Println()
+		fmt.Println("Existing tokens for Gitlab:")
+		for i, token := range tokens {
+			if token.Target == target {
+				fmt.Printf("[%d]: %s => %s (%s)\n",
+					i+2,
+					colors.Cyan(token.ID().Human()),
+					text.TruncateMax(token.Value, 10),
+					token.CreateTime.Format(time.RFC822),
+				)
 			}
 		}
+
+		fmt.Println()
 		fmt.Print("Select option: ")
 
 		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
@@ -251,7 +268,7 @@ func promptURL(remotes map[string]string) (string, error) {
 		}
 
 		url := strings.TrimSpace(line)
-		if line == "" {
+		if url == "" {
 			fmt.Println("URL is empty")
 			continue
 		}
