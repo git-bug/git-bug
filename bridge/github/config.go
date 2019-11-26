@@ -101,7 +101,7 @@ func (g *Github) Configure(repo repository.RepoCommon, params core.BridgeParams)
 		if err != nil {
 			return nil, fmt.Errorf("reading from stdin: %v", err)
 		}
-		token = strings.TrimSuffix(token, "\n")
+		token = strings.TrimSpace(token)
 	} else if params.TokenId != "" {
 		tokenId = entity.Id(params.TokenId)
 	} else {
@@ -268,7 +268,7 @@ func promptTokenOptions(repo repository.RepoCommon, owner, project string) (*cor
 			return nil, err
 		}
 
-		line = strings.TrimRight(line, "\n")
+		line = strings.TrimSpace(line)
 
 		index, err := strconv.Atoi(line)
 		if err != nil || index < 1 || index > len(tokens)+2 {
@@ -320,7 +320,7 @@ func promptToken() (string, error) {
 			return "", err
 		}
 
-		token := strings.TrimRight(line, "\n")
+		token := strings.TrimSpace(line)
 		if re.MatchString(token) {
 			return token, nil
 		}
@@ -409,7 +409,7 @@ func promptUsername() (string, error) {
 			return "", err
 		}
 
-		line = strings.TrimRight(line, "\n")
+		line = strings.TrimSpace(line)
 
 		ok, err := validateUsername(line)
 		if err != nil {
@@ -442,7 +442,7 @@ func promptURL(remotes map[string]string) (string, string, error) {
 				return "", "", err
 			}
 
-			line = strings.TrimRight(line, "\n")
+			line = strings.TrimSpace(line)
 
 			index, err := strconv.Atoi(line)
 			if err != nil || index < 0 || index > len(validRemotes) {
@@ -470,7 +470,7 @@ func promptURL(remotes map[string]string) (string, string, error) {
 			return "", "", err
 		}
 
-		line = strings.TrimRight(line, "\n")
+		line = strings.TrimSpace(line)
 		if line == "" {
 			fmt.Println("URL is empty")
 			continue
@@ -643,7 +643,7 @@ func promptProjectVisibility() (bool, error) {
 			return false, err
 		}
 
-		line = strings.TrimRight(line, "\n")
+		line = strings.TrimSpace(line)
 
 		index, err := strconv.Atoi(line)
 		if err != nil || (index != 1 && index != 2) {

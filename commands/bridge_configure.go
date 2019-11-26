@@ -82,7 +82,7 @@ func promptTarget() (string, error) {
 			return "", err
 		}
 
-		line = strings.TrimRight(line, "\n")
+		line = strings.TrimSpace(line)
 
 		index, err := strconv.Atoi(line)
 		if err != nil || index <= 0 || index > len(targets) {
@@ -109,7 +109,7 @@ func promptName(repo repository.RepoCommon) (string, error) {
 			return "", err
 		}
 
-		line = strings.TrimRight(line, "\n")
+		line = strings.TrimSpace(line)
 
 		name := line
 		if defaultExist && name == "" {
