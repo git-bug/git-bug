@@ -253,7 +253,7 @@ func promptTokenOptions(repo repository.RepoCommon, owner, project string) (*cor
 		}
 
 		fmt.Println()
-		fmt.Println("[1]: user provided token")
+		fmt.Println("[1]: enter my token")
 		fmt.Println("[2]: interactive token creation")
 
 		if len(tokens) > 0 {
