@@ -365,39 +365,21 @@ func (b *Bridge) ImportAll(ctx context.Context) (<-chan ImportResult, error) {
 	return b.ImportAllSince(ctx, time.Time{})
 }
 
-func (b *Bridge) ExportAll(ctx context.Context, since time.Time) error {
+func (b *Bridge) ExportAll(ctx context.Context, since time.Time) (<-chan ExportResult, error) {
 	exporter := b.getExporter()
 	if exporter == nil {
-		return ErrExportNotSupported
+		return nil, ErrExportNotSupported
 	}
 
 	err := b.ensureConfig()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = b.ensureInit()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	events, err := exporter.ExportAll(ctx, b.repo, since)
-	if err != nil {
-		return err
-	}
-
-	exportedIssues := 0
-	for result := range events {
-		if result.Event != ExportEventNothing {
-			fmt.Println(result.String())
-		}
-
-		switch result.Event {
-		case ExportEventBug:
-			exportedIssues++
-		}
-	}
-
-	fmt.Printf("exported %d issues with %s bridge\n", exportedIssues, b.Name)
-	return nil
+	return exporter.ExportAll(ctx, b.repo, since)
 }
