@@ -17,12 +17,14 @@ import (
 	"syscall"
 	"time"
 
+	text "github.com/MichaelMure/go-term-text"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
+	"github.com/MichaelMure/git-bug/util/colors"
 	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
@@ -43,31 +45,29 @@ var (
 func (g *Github) Configure(repo repository.RepoCommon, params core.BridgeParams) (core.Configuration, error) {
 	conf := make(core.Configuration)
 	var err error
-	var token string
-	var tokenId entity.Id
-	var tokenObj *core.Token
-	var owner string
-	var project string
 
 	if (params.Token != "" || params.TokenId != "" || params.TokenStdin) &&
 		(params.URL == "" && (params.Project == "" || params.Owner == "")) {
 		return nil, fmt.Errorf("you must provide a project URL or Owner/Name to configure this bridge with a token")
 	}
 
+	var owner string
+	var project string
 	// getting owner and project name
-	if params.Owner != "" && params.Project != "" {
+	switch {
+	case params.Owner != "" && params.Project != "":
 		// first try to use params if both or project and owner are provided
 		owner = params.Owner
 		project = params.Project
 
-	} else if params.URL != "" {
+	case params.URL != "":
 		// try to parse params URL and extract owner and project
 		owner, project, err = splitURL(params.URL)
 		if err != nil {
 			return nil, err
 		}
 
-	} else {
+	default:
 		// remote suggestions
 		remotes, err := repo.GetRemotes()
 		if err != nil {
@@ -89,6 +89,10 @@ func (g *Github) Configure(repo repository.RepoCommon, params core.BridgeParams)
 	if !ok {
 		return nil, fmt.Errorf("invalid parameter owner: %v", owner)
 	}
+
+	var token string
+	var tokenId entity.Id
+	var tokenObj *core.Token
 
 	// try to get token from params if provided, else use terminal prompt
 	// to either enter a token or login and generate a new one, or choose
@@ -118,7 +122,7 @@ func (g *Github) Configure(repo repository.RepoCommon, params core.BridgeParams)
 			return nil, err
 		}
 	} else if tokenId != "" {
-		tokenObj, err = core.LoadToken(repo, entity.Id(tokenId))
+		tokenObj, err = core.LoadToken(repo, tokenId)
 		if err != nil {
 			return nil, err
 		}
@@ -253,13 +257,21 @@ func promptTokenOptions(repo repository.RepoCommon, owner, project string) (*cor
 		fmt.Println("[2]: interactive token creation")
 
 		if len(tokens) > 0 {
-			fmt.Println("known tokens for Github:")
+			fmt.Println()
+			fmt.Println("Existing tokens for Github:")
 			for i, token := range tokens {
 				if token.Target == target {
-					fmt.Printf("[%d]: %s\n", i+3, token.ID())
+					fmt.Printf("[%d]: %s => %s (%s)\n",
+						i+3,
+						colors.Cyan(token.ID().Human()),
+						text.TruncateMax(token.Value, 10),
+						token.CreateTime.Format(time.RFC822),
+					)
 				}
 			}
 		}
+
+		fmt.Println()
 		fmt.Print("Select option: ")
 
 		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
@@ -330,7 +342,7 @@ func promptToken() (string, error) {
 }
 
 func loginAndRequestToken(owner, project string) (string, error) {
-	fmt.Println("git-bug will now generate an access token in your Github profile. Your credential are not stored and are only used to generate the token. The token is stored in the repository git config.")
+	fmt.Println("git-bug will now generate an access token in your Github profile. Your credential are not stored and are only used to generate the token. The token is stored in the global git config.")
 	fmt.Println()
 	fmt.Println("The access scope depend on the type of repository.")
 	fmt.Println("Public:")

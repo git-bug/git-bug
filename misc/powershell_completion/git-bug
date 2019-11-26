@@ -83,6 +83,8 @@ Register-ArgumentCompleter -Native -CommandName 'git-bug' -ScriptBlock {
             [CompletionResult]::new('--owner', 'owner', [CompletionResultType]::ParameterName, 'The owner of the target repository')
             [CompletionResult]::new('-T', 'T', [CompletionResultType]::ParameterName, 'The authentication token for the API')
             [CompletionResult]::new('--token', 'token', [CompletionResultType]::ParameterName, 'The authentication token for the API')
+            [CompletionResult]::new('-i', 'i', [CompletionResultType]::ParameterName, 'The authentication token identifier for the API')
+            [CompletionResult]::new('--token-id', 'token-id', [CompletionResultType]::ParameterName, 'The authentication token identifier for the API')
             [CompletionResult]::new('--token-stdin', 'token-stdin', [CompletionResultType]::ParameterName, 'Will read the token from stdin and ignore --token')
             [CompletionResult]::new('-p', 'p', [CompletionResultType]::ParameterName, 'The name of the target repository')
             [CompletionResult]::new('--project', 'project', [CompletionResultType]::ParameterName, 'The name of the target repository')

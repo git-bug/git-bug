@@ -70,14 +70,15 @@ git bug bridge configure \
 ### Options
 
 ```
-  -n, --name string      A distinctive name to identify the bridge
-  -t, --target string    The target of the bridge. Valid values are [github,gitlab,launchpad-preview]
-  -u, --url string       The URL of the target repository
-  -o, --owner string     The owner of the target repository
-  -T, --token string     The authentication token for the API
-      --token-stdin      Will read the token from stdin and ignore --token
-  -p, --project string   The name of the target repository
-  -h, --help             help for configure
+  -n, --name string       A distinctive name to identify the bridge
+  -t, --target string     The target of the bridge. Valid values are [github,gitlab,launchpad-preview]
+  -u, --url string        The URL of the target repository
+  -o, --owner string      The owner of the target repository
+  -T, --token string      The authentication token for the API
+  -i, --token-id string   The authentication token identifier for the API
+      --token-stdin       Will read the token from stdin and ignore --token
+  -p, --project string    The name of the target repository
+  -h, --help              help for configure
 ```
 
 ### SEE ALSO
