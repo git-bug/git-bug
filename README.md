@@ -15,14 +15,14 @@
 
 `git-bug` is a bug tracker that:
 
-- **fully embed in git**: you only need your git repository to have a bug tracker
-- **is distributed**: use your normal git remote to collaborate, push and pull your bugs !
-- **works offline**: in a plane or under the sea ? keep reading and writing bugs
-- **prevent vendor locking**: your usual service is down or went bad ? you already have a full backup
+- **is fully embeded in git**: you only need your git repository to have a bug tracker
+- **is distributed**: use your normal git remote to collaborate, push and pull your bugs!
+- **works offline**: in a plane or under the sea? Keep reading and writing bugs!
+- **prevents vendor lock-in**: your usual service is down or went bad? You already have a full backup.
 - **is fast**: listing bugs or opening them is a matter of milliseconds
 - **doesn't pollute your project**: no files are added in your project
-- **integrate with your tooling**: use the UI you like (CLI, terminal, web) or integrate with your existing tools through the CLI or the GraphQL API
-- **bridge with other bug trackers**: [bridges](#bridges) exist to import and export to other trackers.
+- **integrates with your tooling**: use the UI you like (CLI, terminal, web) or integrate with your existing tools through the CLI or the GraphQL API
+- **bridges to other bug trackers**: use [bridges](#bridges) to import and export to other trackers.
 
 :construction: This is now more than a proof of concept, but still not fully stable. Expect dragons and unfinished business. :construction:
 
@@ -31,7 +31,7 @@
 <details><summary>Pre-compiled binaries</summary>
 
 1. Go to the [release page](https://github.com/MichaelMure/git-bug/releases/latest) and download the appropriate binary for your system.
-2. Copy the binary anywhere in your PATH
+2. Copy the binary anywhere in your $PATH
 3. Rename the binary to `git-bug` (or `git-bug.exe` on windows)
 
 That's all !
