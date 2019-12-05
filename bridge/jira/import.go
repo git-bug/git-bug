@@ -17,7 +17,6 @@ import (
 )
 
 const (
-	keyOrigin          = "origin"
 	keyJiraID          = "jira-id"
 	keyJiraOperationID = "jira-derived-id"
 	keyJiraKey         = "jira-key"
@@ -216,7 +215,7 @@ func (self *jiraImporter) ensureIssue(
 			cleanText,
 			nil,
 			map[string]string{
-				keyOrigin:      target,
+				core.KeyOrigin: target,
 				keyJiraID:      issue.ID,
 				keyJiraKey:     issue.Key,
 				keyJiraProject: self.conf[keyProject],
@@ -237,8 +236,8 @@ func getTimeDerivedID(jiraID string, timestamp MyTime) string {
 }
 
 // Create a bug.Comment from a JIRA comment
-func (self *jiraImporter) ensureComment(
-	repo *cache.RepoCache, b *cache.BugCache, item Comment) error {
+func (self *jiraImporter) ensureComment(repo *cache.RepoCache,
+	b *cache.BugCache, item Comment) error {
 	// ensure person
 	author, err := self.ensurePerson(repo, item.Author)
 	if err != nil {
@@ -271,8 +270,7 @@ func (self *jiraImporter) ensureComment(
 			cleanText,
 			nil,
 			map[string]string{
-				keyJiraID:      item.ID,
-				keyJiraProject: self.conf[keyProject],
+				keyJiraID: item.ID,
 			},
 		)
 		if err != nil {
@@ -315,8 +313,7 @@ func (self *jiraImporter) ensureComment(
 		target,
 		cleanText,
 		map[string]string{
-			keyJiraID:      derivedID,
-			keyJiraProject: self.conf[keyProject],
+			keyJiraID: derivedID,
 		},
 	)
 
@@ -489,7 +486,6 @@ func (self *jiraImporter) ensureChange(
 				map[string]string{
 					keyJiraID:          entry.ID,
 					keyJiraOperationID: derivedID,
-					keyJiraProject:     self.conf[keyProject],
 				},
 			)
 			if err != nil {
@@ -504,9 +500,7 @@ func (self *jiraImporter) ensureChange(
 					author,
 					entry.Created.Unix(),
 					map[string]string{
-						keyJiraID: entry.ID,
-
-						keyJiraProject:     self.conf[keyProject],
+						keyJiraID:          entry.ID,
 						keyJiraOperationID: derivedID,
 					},
 				)
@@ -519,9 +513,7 @@ func (self *jiraImporter) ensureChange(
 					author,
 					entry.Created.Unix(),
 					map[string]string{
-						keyJiraID: entry.ID,
-
-						keyJiraProject:     self.conf[keyProject],
+						keyJiraID:          entry.ID,
 						keyJiraOperationID: derivedID,
 					},
 				)
@@ -545,7 +537,6 @@ func (self *jiraImporter) ensureChange(
 				map[string]string{
 					keyJiraID:          entry.ID,
 					keyJiraOperationID: derivedID,
-					keyJiraProject:     self.conf[keyProject],
 				},
 			)
 			if err != nil {
@@ -564,7 +555,6 @@ func (self *jiraImporter) ensureChange(
 				map[string]string{
 					keyJiraID:          entry.ID,
 					keyJiraOperationID: derivedID,
-					keyJiraProject:     self.conf[keyProject],
 				},
 			)
 			if err != nil {

@@ -3,6 +3,7 @@ package jira
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -305,13 +306,25 @@ type ServerInfo struct {
 // "Content-Type=application/json" header
 type ClientTransport struct {
 	underlyingTransport http.RoundTripper
+	basicAuthString     string
 }
 
 // RoundTrip overrides the default by adding the content-type header
 func (self *ClientTransport) RoundTrip(
 	req *http.Request) (*http.Response, error) {
 	req.Header.Add("Content-Type", "application/json")
+	if self.basicAuthString != "" {
+		req.Header.Add("Authorization",
+			fmt.Sprintf("Basic %s", self.basicAuthString))
+	}
+
 	return self.underlyingTransport.RoundTrip(req)
+}
+
+func (self *ClientTransport) SetCredentials(
+	username string, token string) {
+	credString := fmt.Sprintf("%s:%s", username, token)
+	self.basicAuthString = base64.StdEncoding.EncodeToString([]byte(credString))
 }
 
 // Client Thin wrapper around the http.Client providing jira-specific methods
@@ -336,12 +349,26 @@ func NewClient(serverURL string, ctx context.Context) *Client {
 
 // Login POST credentials to the /session endpoing and get a session cookie
 func (client *Client) Login(conf core.Configuration) error {
+	credType := conf[keyCredentialsType]
+
 	if conf[keyCredentialsFile] != "" {
 		content, err := ioutil.ReadFile(conf[keyCredentialsFile])
 		if err != nil {
 			return err
 		}
-		return client.RefreshTokenRaw(content)
+
+		switch credType {
+		case "SESSION":
+			return client.RefreshSessionTokenRaw(content)
+		case "TOKEN":
+			var params SessionQuery
+			err := json.Unmarshal(content, &params)
+			if err != nil {
+				return err
+			}
+			return client.SetTokenCredentials(params.Username, params.Password)
+		}
+		return fmt.Errorf("Unexpected credType: %s", credType)
 	}
 
 	username := conf[keyUsername]
@@ -360,12 +387,18 @@ func (client *Client) Login(conf core.Configuration) error {
 		}
 	}
 
-	return client.RefreshToken(username, password)
+	switch credType {
+	case "SESSION":
+		return client.RefreshSessionToken(username, password)
+	case "TOKEN":
+		return client.SetTokenCredentials(username, password)
+	}
+	return fmt.Errorf("Unexpected credType: %s", credType)
 }
 
-// RefreshToken formulate the JSON request object from the user credentials
-// and POST it to the /session endpoing and get a session cookie
-func (client *Client) RefreshToken(username, password string) error {
+// RefreshSessionToken formulate the JSON request object from the user
+// credentials and POST it to the /session endpoing and get a session cookie
+func (client *Client) RefreshSessionToken(username, password string) error {
 	params := SessionQuery{
 		Username: username,
 		Password: password,
@@ -376,12 +409,24 @@ func (client *Client) RefreshToken(username, password string) error {
 		return err
 	}
 
-	return client.RefreshTokenRaw(data)
+	return client.RefreshSessionTokenRaw(data)
 }
 
-// RefreshTokenRaw POST credentials to the /session endpoing and get a session
-// cookie
-func (client *Client) RefreshTokenRaw(credentialsJSON []byte) error {
+// SetTokenCredentials POST credentials to the /session endpoing and get a
+// session cookie
+func (client *Client) SetTokenCredentials(username, password string) error {
+	switch transport := client.Transport.(type) {
+	case *ClientTransport:
+		transport.SetCredentials(username, password)
+	default:
+		return fmt.Errorf("Invalid transport type")
+	}
+	return nil
+}
+
+// RefreshSessionTokenRaw POST credentials to the /session endpoing and get a
+// session cookie
+func (client *Client) RefreshSessionTokenRaw(credentialsJSON []byte) error {
 	postURL := fmt.Sprintf("%s/rest/auth/1/session", client.serverURL)
 
 	req, err := http.NewRequest("POST", postURL, bytes.NewBuffer(credentialsJSON))

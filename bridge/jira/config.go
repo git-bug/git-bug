@@ -21,6 +21,7 @@ const (
 	target             = "jira"
 	keyServer          = "server"
 	keyProject         = "project"
+	keyCredentialsType = "credentials-type"
 	keyCredentialsFile = "credentials-file"
 	keyUsername        = "username"
 	keyPassword        = "password"
@@ -36,6 +37,30 @@ NOTE: There are a few optional configuration values that you can additionally
 set in your git configuration to influence the behavior of the bridge. Please
 see the notes at:
 https://github.com/MichaelMure/git-bug/blob/master/doc/jira_bridge.md
+`
+
+const credTypeText = `
+JIRA has recently altered it's authentication strategies. Servers deployed
+prior to October 1st 2019 must use "SESSION" authentication, whereby the REST
+client logs in with an actual username and password, is assigned a session, and
+passes the session cookie with each request. JIRA Cloud and servers deployed
+after October 1st 2019 must use "TOKEN" authentication. You must create a user
+API token and the client will provide this along with your username with each
+request.
+
+Which authentication mechanism should this bridge use?
+[1]: SESSION
+[2]: TOKEN
+`
+const credentialsText = `
+How would you like to store your JIRA login credentials?
+[1]: sidecar JSON file: Your credentials will be stored in a JSON sidecar next
+     to your git config. Note that it will contain your JIRA password in clear
+     text.
+[2]: git-config: Your credentials will be stored in the git config. Note that
+     it will contain your JIRA password in clear text.
+[3]: username in config, askpass: Your username will be stored in the git
+     config. We will ask you for your password each time you execute the bridge.
 `
 
 // Configure sets up the bridge configuration
@@ -78,7 +103,12 @@ func (g *Jira) Configure(
 		}
 	}
 
-	choice, err := promptCredentialOptions(serverURL)
+	credType, err := promptOptions(credTypeText, 1, 2)
+	if err != nil {
+		return nil, err
+	}
+
+	choice, err := promptOptions(credentialsText, 1, 3)
 	if err != nil {
 		return nil, err
 	}
@@ -106,25 +136,17 @@ func (g *Jira) Configure(
 		return nil, err
 	}
 
-	fmt.Printf("Attempting to login with credentials...\n")
-	client := NewClient(serverURL, nil)
-	err = client.RefreshTokenRaw(jsonData)
-	if err != nil {
-		return nil, err
-	}
-
-	// verify access to the project with credentials
-	_, err = client.GetProject(project)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"Project %s doesn't exist on %s, or authentication credentials for (%s)"+
-				" are invalid",
-			project, serverURL, username)
-	}
-
 	conf[core.KeyTarget] = target
 	conf[keyServer] = serverURL
 	conf[keyProject] = project
+
+	switch credType {
+	case 1:
+		conf[keyCredentialsType] = "SESSION"
+	case 2:
+		conf[keyCredentialsType] = "TOKEN"
+	}
+
 	switch choice {
 	case 1:
 		conf[keyCredentialsFile] = credentialsFile
@@ -143,6 +165,23 @@ func (g *Jira) Configure(
 	err = g.ValidateConfig(conf)
 	if err != nil {
 		return nil, err
+	}
+
+	fmt.Printf("Attempting to login with credentials...\n")
+	client := NewClient(serverURL, nil)
+	err = client.Login(conf)
+	if err != nil {
+		return nil, err
+	}
+
+	// verify access to the project with credentials
+	fmt.Printf("Checking project ...\n")
+	_, err = client.GetProject(project)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"Project %s doesn't exist on %s, or authentication credentials for (%s)"+
+				" are invalid",
+			project, serverURL, username)
 	}
 
 	fmt.Print(moreConfigText)
@@ -164,19 +203,8 @@ func (*Jira) ValidateConfig(conf core.Configuration) error {
 	return nil
 }
 
-const credentialsText = `
-How would you like to store your JIRA login credentials?
-[1]: sidecar JSON file: Your credentials will be stored in a JSON sidecar next
-     to your git config. Note that it will contain your JIRA password in clear
-     text.
-[2]: git-config: Your credentials will be stored in the git config. Note that
-     it will contain your JIRA password in clear text.
-[3]: username in config, askpass: Your username will be stored in the git
-     config. We will ask you for your password each time you execute the bridge.
-`
-
-func promptCredentialOptions(serverURL string) (int, error) {
-	fmt.Print(credentialsText)
+func promptOptions(description string, minVal, maxVal int) (int, error) {
+	fmt.Print(description)
 	for {
 		fmt.Print("Select option: ")
 
@@ -189,8 +217,12 @@ func promptCredentialOptions(serverURL string) (int, error) {
 		line = strings.TrimRight(line, "\n")
 
 		index, err := strconv.Atoi(line)
-		if err != nil || (index != 1 && index != 2 && index != 3) {
+		if err != nil {
 			fmt.Println("invalid input")
+			continue
+		}
+		if index < minVal || index > maxVal {
+			fmt.Println("invalid choice")
 			continue
 		}
 

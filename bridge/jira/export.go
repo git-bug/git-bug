@@ -171,7 +171,7 @@ func (self *jiraExporter) exportBug(
 	author := snapshot.Author
 
 	// skip bug if it was imported from some other bug system
-	origin, ok := snapshot.GetCreateMetadata(keyOrigin)
+	origin, ok := snapshot.GetCreateMetadata(core.KeyOrigin)
 	if ok && origin != target {
 		out <- core.NewExportNothing(
 			b.Id(), fmt.Sprintf("issue tagged with origin: %s", origin))
@@ -342,7 +342,7 @@ func (self *jiraExporter) exportBug(
 				// so we use the comment ID plus the timestamp of the update, as
 				// reported by JIRA. Note that this must be consistent with the importer
 				// during ensureComment()
-				id = fmt.Sprintf("%s-%d", comment.ID, comment.Updated.Unix())
+				id = getTimeDerivedID(comment.ID, comment.Updated)
 			}
 
 		case *bug.SetStatusOperation:
