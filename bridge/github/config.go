@@ -22,6 +22,8 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
+	"github.com/MichaelMure/git-bug/bridge/core/auth"
+	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/colors"
@@ -33,7 +35,6 @@ const (
 	githubV3Url = "https://api.github.com"
 	keyOwner    = "owner"
 	keyProject  = "project"
-	keyToken    = "token"
 
 	defaultTimeout = 60 * time.Second
 )
@@ -42,40 +43,33 @@ var (
 	ErrBadProjectURL = errors.New("bad project url")
 )
 
-func (g *Github) Configure(repo repository.RepoCommon, params core.BridgeParams) (core.Configuration, error) {
+func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams) (core.Configuration, error) {
 	conf := make(core.Configuration)
 	var err error
 
-	if (params.Token != "" || params.TokenId != "" || params.TokenStdin) &&
+	if (params.CredPrefix != "" || params.TokenRaw != "") &&
 		(params.URL == "" && (params.Project == "" || params.Owner == "")) {
 		return nil, fmt.Errorf("you must provide a project URL or Owner/Name to configure this bridge with a token")
 	}
 
 	var owner string
 	var project string
+
 	// getting owner and project name
 	switch {
 	case params.Owner != "" && params.Project != "":
 		// first try to use params if both or project and owner are provided
 		owner = params.Owner
 		project = params.Project
-
 	case params.URL != "":
 		// try to parse params URL and extract owner and project
 		owner, project, err = splitURL(params.URL)
 		if err != nil {
 			return nil, err
 		}
-
 	default:
-		// remote suggestions
-		remotes, err := repo.GetRemotes()
-		if err != nil {
-			return nil, err
-		}
-
 		// terminal prompt
-		owner, project, err = promptURL(remotes)
+		owner, project, err = promptURL(repo)
 		if err != nil {
 			return nil, err
 		}
@@ -90,49 +84,38 @@ func (g *Github) Configure(repo repository.RepoCommon, params core.BridgeParams)
 		return nil, fmt.Errorf("invalid parameter owner: %v", owner)
 	}
 
-	var token string
-	var tokenId entity.Id
-	var tokenObj *core.Token
+	user, err := repo.GetUserIdentity()
+	if err != nil {
+		return nil, err
+	}
 
-	// try to get token from params if provided, else use terminal prompt
-	// to either enter a token or login and generate a new one, or choose
-	// an existing token
-	if params.Token != "" {
-		token = params.Token
-	} else if params.TokenStdin {
-		reader := bufio.NewReader(os.Stdin)
-		token, err = reader.ReadString('\n')
+	var cred auth.Credential
+
+	switch {
+	case params.CredPrefix != "":
+		cred, err = auth.LoadWithPrefix(repo, params.CredPrefix)
 		if err != nil {
-			return nil, fmt.Errorf("reading from stdin: %v", err)
+			return nil, err
 		}
-		token = strings.TrimSpace(token)
-	} else if params.TokenId != "" {
-		tokenId = entity.Id(params.TokenId)
-	} else {
-		tokenObj, err = promptTokenOptions(repo, owner, project)
+		if cred.UserId() != user.Id() {
+			return nil, fmt.Errorf("selected credential don't match the user")
+		}
+	case params.TokenRaw != "":
+		cred = auth.NewToken(user.Id(), params.TokenRaw, target)
+	default:
+		cred, err = promptTokenOptions(repo, user.Id(), owner, project)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	// at this point, we check if the token already exist or we create a new one
-	if token != "" {
-		tokenObj, err = core.LoadOrCreateToken(repo, target, token)
-		if err != nil {
-			return nil, err
-		}
-	} else if tokenId != "" {
-		tokenObj, err = core.LoadToken(repo, tokenId)
-		if err != nil {
-			return nil, err
-		}
-		if tokenObj.Target != target {
-			return nil, fmt.Errorf("token target is incompatible %s", tokenObj.Target)
-		}
+	token, ok := cred.(*auth.Token)
+	if !ok {
+		return nil, fmt.Errorf("the Github bridge only handle token credentials")
 	}
 
 	// verify access to the repository with token
-	ok, err = validateProject(owner, project, tokenObj.Value)
+	ok, err = validateProject(owner, project, token)
 	if err != nil {
 		return nil, err
 	}
@@ -141,13 +124,20 @@ func (g *Github) Configure(repo repository.RepoCommon, params core.BridgeParams)
 	}
 
 	conf[core.ConfigKeyTarget] = target
-	conf[core.ConfigKeyTokenId] = tokenObj.ID().String()
 	conf[keyOwner] = owner
 	conf[keyProject] = project
 
 	err = g.ValidateConfig(conf)
 	if err != nil {
 		return nil, err
+	}
+
+	// don't forget to store the now known valid token
+	if !auth.IdExist(repo, cred.ID()) {
+		err = auth.Store(repo, cred)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return conf, nil
@@ -158,10 +148,6 @@ func (*Github) ValidateConfig(conf core.Configuration) error {
 		return fmt.Errorf("missing %s key", core.ConfigKeyTarget)
 	} else if v != target {
 		return fmt.Errorf("unexpected target name: %v", v)
-	}
-
-	if _, ok := conf[core.ConfigKeyTokenId]; !ok {
-		return fmt.Errorf("missing %s key", core.ConfigKeyTokenId)
 	}
 
 	if _, ok := conf[keyOwner]; !ok {
@@ -245,9 +231,9 @@ func randomFingerprint() string {
 	return string(b)
 }
 
-func promptTokenOptions(repo repository.RepoCommon, owner, project string) (*core.Token, error) {
+func promptTokenOptions(repo repository.RepoConfig, userId entity.Id, owner, project string) (auth.Credential, error) {
 	for {
-		tokens, err := core.LoadTokensWithTarget(repo, target)
+		creds, err := auth.List(repo, auth.WithUserId(userId), auth.WithTarget(target))
 		if err != nil {
 			return nil, err
 		}
@@ -256,18 +242,19 @@ func promptTokenOptions(repo repository.RepoCommon, owner, project string) (*cor
 		fmt.Println("[1]: enter my token")
 		fmt.Println("[2]: interactive token creation")
 
-		if len(tokens) > 0 {
+		if len(creds) > 0 {
+			sort.Sort(auth.ById(creds))
+
 			fmt.Println()
 			fmt.Println("Existing tokens for Github:")
-			for i, token := range tokens {
-				if token.Target == target {
-					fmt.Printf("[%d]: %s => %s (%s)\n",
-						i+3,
-						colors.Cyan(token.ID().Human()),
-						text.TruncateMax(token.Value, 10),
-						token.CreateTime.Format(time.RFC822),
-					)
-				}
+			for i, cred := range creds {
+				token := cred.(*auth.Token)
+				fmt.Printf("[%d]: %s => %s (%s)\n",
+					i+3,
+					colors.Cyan(token.ID().Human()),
+					colors.Red(text.TruncateMax(token.Value, 10)),
+					token.CreateTime().Format(time.RFC822),
+				)
 			}
 		}
 
@@ -281,30 +268,28 @@ func promptTokenOptions(repo repository.RepoCommon, owner, project string) (*cor
 		}
 
 		line = strings.TrimSpace(line)
-
 		index, err := strconv.Atoi(line)
-		if err != nil || index < 1 || index > len(tokens)+2 {
+		if err != nil || index < 1 || index > len(creds)+2 {
 			fmt.Println("invalid input")
 			continue
 		}
 
-		var token string
 		switch index {
 		case 1:
-			token, err = promptToken()
+			value, err := promptToken()
 			if err != nil {
 				return nil, err
 			}
+			return auth.NewToken(userId, value, target), nil
 		case 2:
-			token, err = loginAndRequestToken(owner, project)
+			value, err := loginAndRequestToken(owner, project)
 			if err != nil {
 				return nil, err
 			}
+			return auth.NewToken(userId, value, target), nil
 		default:
-			return tokens[index-3], nil
+			return creds[index-3], nil
 		}
-
-		return core.LoadOrCreateToken(repo, target, token)
 	}
 }
 
@@ -435,7 +420,13 @@ func promptUsername() (string, error) {
 	}
 }
 
-func promptURL(remotes map[string]string) (string, string, error) {
+func promptURL(repo repository.RepoCommon) (string, string, error) {
+	// remote suggestions
+	remotes, err := repo.GetRemotes()
+	if err != nil {
+		return "", "", err
+	}
+
 	validRemotes := getValidGithubRemoteURLs(remotes)
 	if len(validRemotes) > 0 {
 		for {
@@ -556,7 +547,7 @@ func validateUsername(username string) (bool, error) {
 	return resp.StatusCode == http.StatusOK, nil
 }
 
-func validateProject(owner, project, token string) (bool, error) {
+func validateProject(owner, project string, token *auth.Token) (bool, error) {
 	url := fmt.Sprintf("%s/repos/%s/%s", githubV3Url, owner, project)
 
 	req, err := http.NewRequest("GET", url, nil)
@@ -565,7 +556,7 @@ func validateProject(owner, project, token string) (bool, error) {
 	}
 
 	// need the token for private repositories
-	req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
+	req.Header.Set("Authorization", fmt.Sprintf("token %s", token.Value))
 
 	client := &http.Client{
 		Timeout: defaultTimeout,

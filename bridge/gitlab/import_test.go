@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
+	"github.com/MichaelMure/git-bug/bridge/core/auth"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/identity"
@@ -83,8 +84,8 @@ func TestImport(t *testing.T) {
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
 
-	token := os.Getenv("GITLAB_API_TOKEN")
-	if token == "" {
+	envToken := os.Getenv("GITLAB_API_TOKEN")
+	if envToken == "" {
 		t.Skip("Env var GITLAB_API_TOKEN missing")
 	}
 
@@ -93,10 +94,16 @@ func TestImport(t *testing.T) {
 		t.Skip("Env var GITLAB_PROJECT_ID missing")
 	}
 
+	err = author.Commit(repo)
+	require.NoError(t, err)
+
+	token := auth.NewToken(author.Id(), envToken, target)
+	err = auth.Store(repo, token)
+	require.NoError(t, err)
+
 	importer := &gitlabImporter{}
-	err = importer.Init(core.Configuration{
+	err = importer.Init(backend, core.Configuration{
 		keyProjectID: projectID,
-		keyToken:     token,
 	})
 	require.NoError(t, err)
 

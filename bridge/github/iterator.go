@@ -63,9 +63,9 @@ type iterator struct {
 }
 
 // NewIterator create and initialize a new iterator
-func NewIterator(ctx context.Context, capacity int, owner, project, token string, since time.Time) *iterator {
+func NewIterator(ctx context.Context, client *githubv4.Client, capacity int, owner, project string, since time.Time) *iterator {
 	i := &iterator{
-		gc:       buildClient(token),
+		gc:       client,
 		since:    since,
 		capacity: capacity,
 		ctx:      ctx,

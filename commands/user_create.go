@@ -18,10 +18,6 @@ func runUserCreate(cmd *cobra.Command, args []string) error {
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
 
-	_, _ = fmt.Fprintf(os.Stderr, "Before creating a new identity, please be aware that "+
-		"you can also use an already existing one using \"git bug user adopt\". As an example, "+
-		"you can do that if your identity has already been created by an importer.\n\n")
-
 	preName, err := backend.GetUserName()
 	if err != nil {
 		return err

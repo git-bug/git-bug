@@ -23,7 +23,9 @@ const versionEntryName = "version"
 const identityConfigKey = "git-bug.identity"
 
 var ErrNonFastForwardMerge = errors.New("non fast-forward identity merge")
-var ErrNoIdentitySet = errors.New("to interact with bugs, an identity first needs to be created using \"git bug user create\" or \"git bug user adopt\"")
+var ErrNoIdentitySet = errors.New("No identity is set.\n" +
+	"To interact with bugs, an identity first needs to be created using " +
+	"\"git bug user create\"")
 var ErrMultipleIdentitiesSet = errors.New("multiple user identities set")
 
 var _ Interface = &Identity{}
@@ -218,22 +220,8 @@ func NewFromGitUser(repo repository.Repo) (*Identity, error) {
 	return NewIdentity(name, email), nil
 }
 
-// IsUserIdentitySet tell if the user identity is correctly set.
-func IsUserIdentitySet(repo repository.RepoCommon) (bool, error) {
-	configs, err := repo.LocalConfig().ReadAll(identityConfigKey)
-	if err != nil {
-		return false, err
-	}
-
-	if len(configs) > 1 {
-		return false, ErrMultipleIdentitiesSet
-	}
-
-	return len(configs) == 1, nil
-}
-
 // SetUserIdentity store the user identity's id in the git config
-func SetUserIdentity(repo repository.RepoCommon, identity *Identity) error {
+func SetUserIdentity(repo repository.RepoConfig, identity *Identity) error {
 	return repo.LocalConfig().StoreString(identityConfigKey, identity.Id().String())
 }
 

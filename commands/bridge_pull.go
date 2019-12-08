@@ -128,7 +128,7 @@ func parseSince(since string) (time.Time, error) {
 var bridgePullCmd = &cobra.Command{
 	Use:     "pull [<name>]",
 	Short:   "Pull updates.",
-	PreRunE: loadRepo,
+	PreRunE: loadRepoEnsureUser,
 	RunE:    runBridgePull,
 	Args:    cobra.MaximumNArgs(1),
 }

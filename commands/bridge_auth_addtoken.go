@@ -12,6 +12,8 @@ import (
 
 	"github.com/MichaelMure/git-bug/bridge"
 	"github.com/MichaelMure/git-bug/bridge/core"
+	"github.com/MichaelMure/git-bug/bridge/core/auth"
+	"github.com/MichaelMure/git-bug/identity"
 )
 
 var (
@@ -22,7 +24,7 @@ func runBridgeTokenAdd(cmd *cobra.Command, args []string) error {
 	var value string
 
 	if bridgeAuthAddTokenTarget == "" {
-		return fmt.Errorf("auth target is required")
+		return fmt.Errorf("flag --target is required")
 	}
 
 	if !core.TargetExist(bridgeAuthAddTokenTarget) {
@@ -44,12 +46,17 @@ func runBridgeTokenAdd(cmd *cobra.Command, args []string) error {
 		value = strings.TrimSuffix(raw, "\n")
 	}
 
-	token := core.NewToken(value, bridgeAuthAddTokenTarget)
+	user, err := identity.GetUserIdentity(repo)
+	if err != nil {
+		return err
+	}
+
+	token := auth.NewToken(user.Id(), value, bridgeAuthAddTokenTarget)
 	if err := token.Validate(); err != nil {
 		return errors.Wrap(err, "invalid token")
 	}
 
-	err := core.StoreToken(repo, token)
+	err = auth.Store(repo, token)
 	if err != nil {
 		return err
 	}
@@ -61,7 +68,7 @@ func runBridgeTokenAdd(cmd *cobra.Command, args []string) error {
 var bridgeAuthAddTokenCmd = &cobra.Command{
 	Use:     "add-token [<token>]",
 	Short:   "Store a new token",
-	PreRunE: loadRepo,
+	PreRunE: loadRepoEnsureUser,
 	RunE:    runBridgeTokenAdd,
 	Args:    cobra.MaximumNArgs(1),
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/xanzy/go-gitlab"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
+	"github.com/MichaelMure/git-bug/bridge/core/auth"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
@@ -19,6 +20,9 @@ import (
 type gitlabImporter struct {
 	conf core.Configuration
 
+	// default user client
+	client *gitlab.Client
+
 	// iterator
 	iterator *iterator
 
@@ -26,15 +30,37 @@ type gitlabImporter struct {
 	out chan<- core.ImportResult
 }
 
-func (gi *gitlabImporter) Init(conf core.Configuration) error {
+func (gi *gitlabImporter) Init(repo *cache.RepoCache, conf core.Configuration) error {
 	gi.conf = conf
+
+	opts := []auth.Option{
+		auth.WithTarget(target),
+		auth.WithKind(auth.KindToken),
+	}
+
+	user, err := repo.GetUserIdentity()
+	if err == nil {
+		opts = append(opts, auth.WithUserId(user.Id()))
+	}
+
+	creds, err := auth.List(repo, opts...)
+	if err != nil {
+		return err
+	}
+
+	if len(creds) == 0 {
+		return ErrMissingIdentityToken
+	}
+
+	gi.client = buildClient(creds[0].(*auth.Token))
+
 	return nil
 }
 
 // ImportAll iterate over all the configured repository issues (notes) and ensure the creation
 // of the missing issues / comments / label events / title changes ...
 func (gi *gitlabImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, since time.Time) (<-chan core.ImportResult, error) {
-	gi.iterator = NewIterator(ctx, 10, gi.conf[keyProjectID], gi.conf[core.ConfigKeyToken], since)
+	gi.iterator = NewIterator(ctx, gi.client, 10, gi.conf[keyProjectID], since)
 	out := make(chan core.ImportResult)
 	gi.out = out
 
@@ -357,13 +383,11 @@ func (gi *gitlabImporter) ensurePerson(repo *cache.RepoCache, id int) (*cache.Id
 	if err == nil {
 		return i, nil
 	}
-	if _, ok := err.(entity.ErrMultipleMatch); ok {
+	if entity.IsErrMultipleMatch(err) {
 		return nil, err
 	}
 
-	client := buildClient(gi.conf["token"])
-
-	user, _, err := client.Users.GetUser(id)
+	user, _, err := gi.client.Users.GetUser(id)
 	if err != nil {
 		return nil, err
 	}

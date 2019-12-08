@@ -13,7 +13,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
@@ -21,10 +20,9 @@ var ErrImportNotSupported = errors.New("import is not supported")
 var ErrExportNotSupported = errors.New("export is not supported")
 
 const (
-	ConfigKeyTarget  = "target"
-	ConfigKeyToken   = "token"
-	ConfigKeyTokenId = "token-id"
-	MetaKeyOrigin    = "origin"
+	ConfigKeyTarget = "target"
+
+	MetaKeyOrigin = "origin"
 
 	bridgeConfigKeyPrefix = "git-bug.bridge"
 )
@@ -37,9 +35,8 @@ type BridgeParams struct {
 	Owner      string
 	Project    string
 	URL        string
-	Token      string
-	TokenId    string
-	TokenStdin bool
+	CredPrefix string
+	TokenRaw   string
 }
 
 // Bridge is a wrapper around a BridgeImpl that will bind low-level
@@ -143,7 +140,7 @@ func DefaultBridge(repo *cache.RepoCache) (*Bridge, error) {
 
 // ConfiguredBridges return the list of bridge that are configured for the given
 // repo
-func ConfiguredBridges(repo repository.RepoCommon) ([]string, error) {
+func ConfiguredBridges(repo repository.RepoConfig) ([]string, error) {
 	configs, err := repo.LocalConfig().ReadAll(bridgeConfigKeyPrefix + ".")
 	if err != nil {
 		return nil, errors.Wrap(err, "can't read configured bridges")
@@ -178,7 +175,7 @@ func ConfiguredBridges(repo repository.RepoCommon) ([]string, error) {
 }
 
 // Check if a bridge exist
-func BridgeExist(repo repository.RepoCommon, name string) bool {
+func BridgeExist(repo repository.RepoConfig, name string) bool {
 	keyPrefix := fmt.Sprintf("git-bug.bridge.%s.", name)
 
 	conf, err := repo.LocalConfig().ReadAll(keyPrefix)
@@ -187,7 +184,7 @@ func BridgeExist(repo repository.RepoCommon, name string) bool {
 }
 
 // Remove a configured bridge
-func RemoveBridge(repo repository.RepoCommon, name string) error {
+func RemoveBridge(repo repository.RepoConfig, name string) error {
 	re, err := regexp.Compile(`^[a-zA-Z0-9]+`)
 	if err != nil {
 		panic(err)
@@ -242,7 +239,7 @@ func (b *Bridge) ensureConfig() error {
 	return nil
 }
 
-func loadConfig(repo repository.RepoCommon, name string) (Configuration, error) {
+func loadConfig(repo repository.RepoConfig, name string) (Configuration, error) {
 	keyPrefix := fmt.Sprintf("git-bug.bridge.%s.", name)
 
 	pairs, err := repo.LocalConfig().ReadAll(keyPrefix)
@@ -280,16 +277,9 @@ func (b *Bridge) ensureInit() error {
 		return nil
 	}
 
-	token, err := LoadToken(b.repo, entity.Id(b.conf[ConfigKeyTokenId]))
-	if err != nil {
-		return err
-	}
-
-	b.conf[ConfigKeyToken] = token.Value
-
 	importer := b.getImporter()
 	if importer != nil {
-		err := importer.Init(b.conf)
+		err := importer.Init(b.repo, b.conf)
 		if err != nil {
 			return err
 		}
@@ -297,7 +287,7 @@ func (b *Bridge) ensureInit() error {
 
 	exporter := b.getExporter()
 	if exporter != nil {
-		err := exporter.Init(b.conf)
+		err := exporter.Init(b.repo, b.conf)
 		if err != nil {
 			return err
 		}

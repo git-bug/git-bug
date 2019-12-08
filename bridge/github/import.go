@@ -8,6 +8,7 @@ import (
 	"github.com/shurcooL/githubv4"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
+	"github.com/MichaelMure/git-bug/bridge/core/auth"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
@@ -24,6 +25,9 @@ const (
 type githubImporter struct {
 	conf core.Configuration
 
+	// default user client
+	client *githubv4.Client
+
 	// iterator
 	iterator *iterator
 
@@ -31,15 +35,37 @@ type githubImporter struct {
 	out chan<- core.ImportResult
 }
 
-func (gi *githubImporter) Init(conf core.Configuration) error {
+func (gi *githubImporter) Init(repo *cache.RepoCache, conf core.Configuration) error {
 	gi.conf = conf
+
+	opts := []auth.Option{
+		auth.WithTarget(target),
+		auth.WithKind(auth.KindToken),
+	}
+
+	user, err := repo.GetUserIdentity()
+	if err == nil {
+		opts = append(opts, auth.WithUserId(user.Id()))
+	}
+
+	creds, err := auth.List(repo, opts...)
+	if err != nil {
+		return err
+	}
+
+	if len(creds) == 0 {
+		return ErrMissingIdentityToken
+	}
+
+	gi.client = buildClient(creds[0].(*auth.Token))
+
 	return nil
 }
 
 // ImportAll iterate over all the configured repository issues and ensure the creation of the
 // missing issues / timeline items / edits / label events ...
 func (gi *githubImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, since time.Time) (<-chan core.ImportResult, error) {
-	gi.iterator = NewIterator(ctx, 10, gi.conf[keyOwner], gi.conf[keyProject], gi.conf[core.ConfigKeyToken], since)
+	gi.iterator = NewIterator(ctx, gi.client, 10, gi.conf[keyOwner], gi.conf[keyProject], since)
 	out := make(chan core.ImportResult)
 	gi.out = out
 
@@ -494,7 +520,7 @@ func (gi *githubImporter) ensurePerson(repo *cache.RepoCache, actor *actor) (*ca
 	if err == nil {
 		return i, nil
 	}
-	if _, ok := err.(entity.ErrMultipleMatch); ok {
+	if entity.IsErrMultipleMatch(err) {
 		return nil, err
 	}
 
@@ -543,7 +569,7 @@ func (gi *githubImporter) getGhost(repo *cache.RepoCache) (*cache.IdentityCache,
 	if err == nil {
 		return i, nil
 	}
-	if _, ok := err.(entity.ErrMultipleMatch); ok {
+	if entity.IsErrMultipleMatch(err) {
 		return nil, err
 	}
 
@@ -553,12 +579,10 @@ func (gi *githubImporter) getGhost(repo *cache.RepoCache) (*cache.IdentityCache,
 		"login": githubv4.String("ghost"),
 	}
 
-	gc := buildClient(gi.conf[core.ConfigKeyToken])
-
 	ctx, cancel := context.WithTimeout(gi.iterator.ctx, defaultTimeout)
 	defer cancel()
 
-	err = gc.Query(ctx, &q, variables)
+	err = gi.client.Query(ctx, &q, variables)
 	if err != nil {
 		return nil, err
 	}

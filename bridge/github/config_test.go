@@ -5,6 +5,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/MichaelMure/git-bug/bridge/core/auth"
+	"github.com/MichaelMure/git-bug/entity"
 )
 
 func TestSplitURL(t *testing.T) {
@@ -142,20 +145,23 @@ func TestValidateUsername(t *testing.T) {
 }
 
 func TestValidateProject(t *testing.T) {
-	tokenPrivateScope := os.Getenv("GITHUB_TOKEN_PRIVATE")
-	if tokenPrivateScope == "" {
+	envPrivate := os.Getenv("GITHUB_TOKEN_PRIVATE")
+	if envPrivate == "" {
 		t.Skip("Env var GITHUB_TOKEN_PRIVATE missing")
 	}
 
-	tokenPublicScope := os.Getenv("GITHUB_TOKEN_PUBLIC")
-	if tokenPublicScope == "" {
+	envPublic := os.Getenv("GITHUB_TOKEN_PUBLIC")
+	if envPublic == "" {
 		t.Skip("Env var GITHUB_TOKEN_PUBLIC missing")
 	}
+
+	tokenPrivate := auth.NewToken(entity.UnsetId, envPrivate, target)
+	tokenPublic := auth.NewToken(entity.UnsetId, envPublic, target)
 
 	type args struct {
 		owner   string
 		project string
-		token   string
+		token   *auth.Token
 	}
 	tests := []struct {
 		name string
@@ -167,7 +173,7 @@ func TestValidateProject(t *testing.T) {
 			args: args{
 				project: "git-bug",
 				owner:   "MichaelMure",
-				token:   tokenPublicScope,
+				token:   tokenPublic,
 			},
 			want: true,
 		},
@@ -176,7 +182,7 @@ func TestValidateProject(t *testing.T) {
 			args: args{
 				project: "git-bug-test-github-bridge",
 				owner:   "MichaelMure",
-				token:   tokenPrivateScope,
+				token:   tokenPrivate,
 			},
 			want: true,
 		},
@@ -185,7 +191,7 @@ func TestValidateProject(t *testing.T) {
 			args: args{
 				project: "git-bug-test-github-bridge",
 				owner:   "MichaelMure",
-				token:   tokenPublicScope,
+				token:   tokenPublic,
 			},
 			want: false,
 		},
@@ -194,7 +200,7 @@ func TestValidateProject(t *testing.T) {
 			args: args{
 				project: "cant-find-this",
 				owner:   "organisation-not-found",
-				token:   tokenPublicScope,
+				token:   tokenPublic,
 			},
 			want: false,
 		},

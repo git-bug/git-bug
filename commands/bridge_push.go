@@ -90,7 +90,7 @@ func runBridgePush(cmd *cobra.Command, args []string) error {
 var bridgePushCmd = &cobra.Command{
 	Use:     "push [<name>]",
 	Short:   "Push updates.",
-	PreRunE: loadRepo,
+	PreRunE: loadRepoEnsureUser,
 	RunE:    runBridgePush,
 	Args:    cobra.MaximumNArgs(1),
 }

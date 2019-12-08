@@ -71,9 +71,9 @@ type iterator struct {
 }
 
 // NewIterator create a new iterator
-func NewIterator(ctx context.Context, capacity int, projectID, token string, since time.Time) *iterator {
+func NewIterator(ctx context.Context, client *gitlab.Client, capacity int, projectID string, since time.Time) *iterator {
 	return &iterator{
-		gc:       buildClient(token),
+		gc:       client,
 		project:  projectID,
 		since:    since,
 		capacity: capacity,

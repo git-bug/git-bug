@@ -4,9 +4,10 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/spf13/cobra"
+
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util/interrupt"
-	"github.com/spf13/cobra"
 )
 
 var (
@@ -84,7 +85,7 @@ func runUser(cmd *cobra.Command, args []string) error {
 var userCmd = &cobra.Command{
 	Use:     "user [<user-id>]",
 	Short:   "Display or change the user identity.",
-	PreRunE: loadRepo,
+	PreRunE: loadRepoEnsureUser,
 	RunE:    runUser,
 }
 

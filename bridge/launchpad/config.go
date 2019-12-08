@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/MichaelMure/git-bug/cache"
 )
 
 var ErrBadProjectURL = errors.New("bad Launchpad project URL")
@@ -22,9 +22,9 @@ const (
 	defaultTimeout = 60 * time.Second
 )
 
-func (l *Launchpad) Configure(repo repository.RepoCommon, params core.BridgeParams) (core.Configuration, error) {
-	if params.Token != "" {
-		fmt.Println("warning: --token is ineffective for a Launchpad bridge")
+func (l *Launchpad) Configure(repo *cache.RepoCache, params core.BridgeParams) (core.Configuration, error) {
+	if params.TokenRaw != "" {
+		fmt.Println("warning: token params are ineffective for a Launchpad bridge")
 	}
 	if params.Owner != "" {
 		fmt.Println("warning: --owner is ineffective for a Launchpad bridge")
@@ -34,22 +34,19 @@ func (l *Launchpad) Configure(repo repository.RepoCommon, params core.BridgePara
 	var err error
 	var project string
 
-	if params.Project != "" {
+	switch {
+	case params.Project != "":
 		project = params.Project
-
-	} else if params.URL != "" {
+	case params.URL != "":
 		// get project name from url
 		project, err = splitURL(params.URL)
-		if err != nil {
-			return nil, err
-		}
-
-	} else {
+	default:
 		// get project name from terminal prompt
 		project, err = promptProjectName()
-		if err != nil {
-			return nil, err
-		}
+	}
+
+	if err != nil {
+		return nil, err
 	}
 
 	// verify project
@@ -61,8 +58,8 @@ func (l *Launchpad) Configure(repo repository.RepoCommon, params core.BridgePara
 		return nil, fmt.Errorf("project doesn't exist")
 	}
 
-	conf[keyProject] = project
 	conf[core.ConfigKeyTarget] = target
+	conf[keyProject] = project
 
 	err = l.ValidateConfig(conf)
 	if err != nil {
@@ -73,12 +70,14 @@ func (l *Launchpad) Configure(repo repository.RepoCommon, params core.BridgePara
 }
 
 func (*Launchpad) ValidateConfig(conf core.Configuration) error {
-	if _, ok := conf[keyProject]; !ok {
-		return fmt.Errorf("missing %s key", keyProject)
+	if v, ok := conf[core.ConfigKeyTarget]; !ok {
+		return fmt.Errorf("missing %s key", core.ConfigKeyTarget)
+	} else if v != target {
+		return fmt.Errorf("unexpected target name: %v", v)
 	}
 
-	if _, ok := conf[core.ConfigKeyTarget]; !ok {
-		return fmt.Errorf("missing %s key", core.ConfigKeyTarget)
+	if _, ok := conf[keyProject]; !ok {
+		return fmt.Errorf("missing %s key", keyProject)
 	}
 
 	return nil

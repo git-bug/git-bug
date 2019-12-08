@@ -15,9 +15,11 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
+	"github.com/MichaelMure/git-bug/bridge/core/auth"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
+	"github.com/MichaelMure/git-bug/repository"
 )
 
 var (
@@ -31,8 +33,12 @@ type githubExporter struct {
 	// cache identities clients
 	identityClient map[entity.Id]*githubv4.Client
 
-	// map identities with their tokens
-	identityToken map[entity.Id]string
+	// the client to use for non user-specific queries
+	// should be the client of the default user
+	defaultClient *githubv4.Client
+
+	// the token of the default user
+	defaultToken *auth.Token
 
 	// github repository ID
 	repositoryID string
@@ -46,68 +52,86 @@ type githubExporter struct {
 }
 
 // Init .
-func (ge *githubExporter) Init(conf core.Configuration) error {
+func (ge *githubExporter) Init(repo *cache.RepoCache, conf core.Configuration) error {
 	ge.conf = conf
-	//TODO: initialize with multiple tokens
-	ge.identityToken = make(map[entity.Id]string)
 	ge.identityClient = make(map[entity.Id]*githubv4.Client)
 	ge.cachedOperationIDs = make(map[entity.Id]string)
 	ge.cachedLabels = make(map[string]string)
+
+	user, err := repo.GetUserIdentity()
+	if err != nil {
+		return err
+	}
+
+	// preload all clients
+	err = ge.cacheAllClient(repo)
+	if err != nil {
+		return err
+	}
+
+	ge.defaultClient, err = ge.getClientForIdentity(user.Id())
+	if err != nil {
+		return err
+	}
+
+	creds, err := auth.List(repo, auth.WithUserId(user.Id()), auth.WithTarget(target), auth.WithKind(auth.KindToken))
+	if err != nil {
+		return err
+	}
+
+	if len(creds) == 0 {
+		return ErrMissingIdentityToken
+	}
+
+	ge.defaultToken = creds[0].(*auth.Token)
+
 	return nil
 }
 
-// getIdentityClient return a githubv4 API client configured with the access token of the given identity.
-// if no client were found it will initialize it from the known tokens map and cache it for next use
-func (ge *githubExporter) getIdentityClient(id entity.Id) (*githubv4.Client, error) {
-	client, ok := ge.identityClient[id]
+func (ge *githubExporter) cacheAllClient(repo repository.RepoConfig) error {
+	creds, err := auth.List(repo, auth.WithTarget(target), auth.WithKind(auth.KindToken))
+	if err != nil {
+		return err
+	}
+
+	for _, cred := range creds {
+		if _, ok := ge.identityClient[cred.UserId()]; !ok {
+			client := buildClient(creds[0].(*auth.Token))
+			ge.identityClient[cred.UserId()] = client
+		}
+	}
+
+	return nil
+}
+
+// getClientForIdentity return a githubv4 API client configured with the access token of the given identity.
+func (ge *githubExporter) getClientForIdentity(userId entity.Id) (*githubv4.Client, error) {
+	client, ok := ge.identityClient[userId]
 	if ok {
 		return client, nil
 	}
 
-	// get token
-	token, ok := ge.identityToken[id]
-	if !ok {
-		return nil, ErrMissingIdentityToken
-	}
-
-	// create client
-	client = buildClient(token)
-	// cache client
-	ge.identityClient[id] = client
-
-	return client, nil
+	return nil, ErrMissingIdentityToken
 }
 
 // ExportAll export all event made by the current user to Github
 func (ge *githubExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, since time.Time) (<-chan core.ExportResult, error) {
 	out := make(chan core.ExportResult)
 
-	user, err := repo.GetUserIdentity()
-	if err != nil {
-		return nil, err
-	}
-
-	ge.identityToken[user.Id()] = ge.conf[core.ConfigKeyToken]
-
+	var err error
 	// get repository node id
 	ge.repositoryID, err = getRepositoryNodeID(
 		ctx,
+		ge.defaultToken,
 		ge.conf[keyOwner],
 		ge.conf[keyProject],
-		ge.conf[core.ConfigKeyToken],
 	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	client, err := ge.getIdentityClient(user.Id())
 	if err != nil {
 		return nil, err
 	}
 
 	// query all labels
-	err = ge.cacheGithubLabels(ctx, client)
+	err = ge.cacheGithubLabels(ctx, ge.defaultClient)
 	if err != nil {
 		return nil, err
 	}
@@ -115,8 +139,8 @@ func (ge *githubExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, 
 	go func() {
 		defer close(out)
 
-		var allIdentitiesIds []entity.Id
-		for id := range ge.identityToken {
+		allIdentitiesIds := make([]entity.Id, 0, len(ge.identityClient))
+		for id := range ge.identityClient {
 			allIdentitiesIds = append(allIdentitiesIds, id)
 		}
 
@@ -209,7 +233,7 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 
 	} else {
 		// check that we have a token for operation author
-		client, err := ge.getIdentityClient(author.Id())
+		client, err := ge.getClientForIdentity(author.Id())
 		if err != nil {
 			// if bug is still not exported and we do not have the author stop the execution
 			out <- core.NewExportNothing(b.Id(), fmt.Sprintf("missing author token"))
@@ -262,7 +286,7 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 		}
 
 		opAuthor := op.GetAuthor()
-		client, err := ge.getIdentityClient(opAuthor.Id())
+		client, err := ge.getClientForIdentity(opAuthor.Id())
 		if err != nil {
 			continue
 		}
@@ -384,7 +408,7 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 }
 
 // getRepositoryNodeID request github api v3 to get repository node id
-func getRepositoryNodeID(ctx context.Context, owner, project, token string) (string, error) {
+func getRepositoryNodeID(ctx context.Context, token *auth.Token, owner, project string) (string, error) {
 	url := fmt.Sprintf("%s/repos/%s/%s", githubV3Url, owner, project)
 	client := &http.Client{}
 
@@ -394,7 +418,7 @@ func getRepositoryNodeID(ctx context.Context, owner, project, token string) (str
 	}
 
 	// need the token for private repositories
-	req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
+	req.Header.Set("Authorization", fmt.Sprintf("token %s", token.Value))
 
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
@@ -512,7 +536,7 @@ func (ge *githubExporter) createGithubLabel(ctx context.Context, label, color st
 	req = req.WithContext(ctx)
 
 	// need the token for private repositories
-	req.Header.Set("Authorization", fmt.Sprintf("token %s", ge.conf[core.ConfigKeyToken]))
+	req.Header.Set("Authorization", fmt.Sprintf("token %s", ge.defaultToken.Value))
 
 	resp, err := client.Do(req)
 	if err != nil {

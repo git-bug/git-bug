@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/repository"
 )
 
 type Configuration map[string]string
@@ -16,7 +15,7 @@ type BridgeImpl interface {
 
 	// Configure handle the user interaction and return a key/value configuration
 	// for future use
-	Configure(repo repository.RepoCommon, params BridgeParams) (Configuration, error)
+	Configure(repo *cache.RepoCache, params BridgeParams) (Configuration, error)
 
 	// ValidateConfig check the configuration for error
 	ValidateConfig(conf Configuration) error
@@ -29,11 +28,11 @@ type BridgeImpl interface {
 }
 
 type Importer interface {
-	Init(conf Configuration) error
+	Init(repo *cache.RepoCache, conf Configuration) error
 	ImportAll(ctx context.Context, repo *cache.RepoCache, since time.Time) (<-chan ImportResult, error)
 }
 
 type Exporter interface {
-	Init(conf Configuration) error
+	Init(repo *cache.RepoCache, conf Configuration) error
 	ExportAll(ctx context.Context, repo *cache.RepoCache, since time.Time) (<-chan ExportResult, error)
 }

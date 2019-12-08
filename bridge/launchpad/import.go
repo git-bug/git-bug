@@ -15,7 +15,7 @@ type launchpadImporter struct {
 	conf core.Configuration
 }
 
-func (li *launchpadImporter) Init(conf core.Configuration) error {
+func (li *launchpadImporter) Init(repo *cache.RepoCache, conf core.Configuration) error {
 	li.conf = conf
 	return nil
 }
@@ -31,7 +31,7 @@ func (li *launchpadImporter) ensurePerson(repo *cache.RepoCache, owner LPPerson)
 	if err == nil {
 		return i, nil
 	}
-	if _, ok := err.(entity.ErrMultipleMatch); ok {
+	if entity.IsErrMultipleMatch(err) {
 		return nil, err
 	}
 

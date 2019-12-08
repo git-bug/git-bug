@@ -249,7 +249,7 @@ var webUICmd = &cobra.Command{
 Available git config:
   git-bug.webui.open [bool]: control the automatic opening of the web UI in the default browser
 `,
-	PreRunE: loadRepo,
+	PreRunE: loadRepoEnsureUser,
 	RunE:    runWebUI,
 }
 

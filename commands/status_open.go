@@ -31,7 +31,7 @@ func runStatusOpen(cmd *cobra.Command, args []string) error {
 var openCmd = &cobra.Command{
 	Use:     "open [<id>]",
 	Short:   "Mark a bug as open.",
-	PreRunE: loadRepo,
+	PreRunE: loadRepoEnsureUser,
 	RunE:    runStatusOpen,
 }
 

@@ -194,8 +194,8 @@ function _git-bug_bridge_configure {
     '(-t --target)'{-t,--target}'[The target of the bridge. Valid values are [github,gitlab,launchpad-preview]]:' \
     '(-u --url)'{-u,--url}'[The URL of the target repository]:' \
     '(-o --owner)'{-o,--owner}'[The owner of the target repository]:' \
-    '(-T --token)'{-T,--token}'[The authentication token for the API]:' \
-    '(-i --token-id)'{-i,--token-id}'[The authentication token identifier for the API]:' \
+    '(-c --credential)'{-c,--credential}'[The identifier or prefix of an already known credential for the API (see "git-bug bridge auth")]:' \
+    '--token[A raw authentication token for the API]:' \
     '--token-stdin[Will read the token from stdin and ignore --token]' \
     '(-p --project)'{-p,--project}'[The name of the target repository]:'
 }

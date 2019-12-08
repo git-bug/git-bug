@@ -55,7 +55,7 @@ func runTitleEdit(cmd *cobra.Command, args []string) error {
 var titleEditCmd = &cobra.Command{
 	Use:     "edit [<id>]",
 	Short:   "Edit a title of a bug.",
-	PreRunE: loadRepo,
+	PreRunE: loadRepoEnsureUser,
 	RunE:    runTitleEdit,
 }
 

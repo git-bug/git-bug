@@ -25,3 +25,8 @@ func (e ErrMultipleMatch) Error() string {
 		e.entityType,
 		strings.Join(matching, "\n"))
 }
+
+func IsErrMultipleMatch(err error) bool {
+	_, ok := err.(*ErrMultipleMatch)
+	return ok
+}
