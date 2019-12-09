@@ -22,8 +22,8 @@ const (
 type CredentialKind string
 
 const (
-	KindToken         = "token"
-	KindLoginPassword = "login-password"
+	KindToken         CredentialKind = "token"
+	KindLoginPassword CredentialKind = "login-password"
 )
 
 var ErrCredentialNotExist = errors.New("credential doesn't exist")
