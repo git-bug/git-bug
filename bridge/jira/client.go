@@ -165,7 +165,9 @@ type ChangeLogPage struct {
 	StartAt    int              `json:"startAt"`
 	MaxResults int              `json:"maxResults"`
 	Total      int              `json:"total"`
+	IsLast     bool             `json:"isLast"` // Cloud-only
 	Entries    []ChangeLogEntry `json:"histories"`
+	Values     []ChangeLogEntry `json:"values"`
 }
 
 // NextStartAt return the index of the first item on the next page
@@ -175,6 +177,9 @@ func (self *ChangeLogPage) NextStartAt() int {
 
 // IsLastPage return true if there are no more items beyond this page
 func (self *ChangeLogPage) IsLastPage() bool {
+	// NOTE(josh): The "isLast" field is returned on JIRA cloud, but not on
+	// JIRA server. If we can distinguish which one we are working with, we can
+	// possibly rely on that instead.
 	return self.NextStartAt() >= self.Total
 }
 
@@ -804,7 +809,8 @@ func (client *Client) IterComments(
 // https://docs.atlassian.com/software/jira/docs/api/REST/8.2.6/#api/2/issue
 func (client *Client) GetChangeLog(
 	idOrKey string, maxResults int, startAt int) (*ChangeLogPage, error) {
-	url := fmt.Sprintf("%s/rest/api/2/issue/%s/changelog", client.serverURL, idOrKey)
+	url := fmt.Sprintf(
+		"%s/rest/api/2/issue/%s/changelog", client.serverURL, idOrKey)
 
 	request, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -864,6 +870,12 @@ func (client *Client) GetChangeLog(
 		err := fmt.Errorf("Decoding response %v", err)
 		return nil, err
 	}
+
+	// JIRA cloud returns changelog entries in the "values" list, whereas JIRA
+	// server returns them in the "histories" list when embedded in an issue
+	// object.
+	changelog.Entries = changelog.Values
+	changelog.Values = nil
 
 	return &changelog, nil
 }

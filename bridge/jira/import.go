@@ -207,7 +207,7 @@ func (self *jiraImporter) ensureIssue(
 			return nil, err
 		}
 
-		title := fmt.Sprintf("[%s]: %s", issue.Key, issue.Fields.Summary)
+		title := issue.Fields.Summary
 		b, _, err = repo.NewBugRaw(
 			author,
 			issue.Fields.Created.Unix(),
@@ -278,6 +278,7 @@ func (self *jiraImporter) ensureComment(repo *cache.RepoCache,
 		}
 
 		self.out <- core.NewImportComment(op.Id())
+		targetOpID = op.Id()
 	}
 
 	// If there are no updates to this comment, then we are done
@@ -292,7 +293,12 @@ func (self *jiraImporter) ensureComment(repo *cache.RepoCache,
 	derivedID := getTimeDerivedID(item.ID, item.Updated)
 	_, err = b.ResolveOperationWithMetadata(
 		keyJiraID, derivedID)
-	if err != nil && err != cache.ErrNoMatchingOp {
+	if err == nil {
+		// Already imported this edition
+		return nil
+	}
+
+	if err != cache.ErrNoMatchingOp {
 		return err
 	}
 
@@ -310,7 +316,7 @@ func (self *jiraImporter) ensureComment(repo *cache.RepoCache,
 	op, err := b.EditCommentRaw(
 		editor,
 		item.Updated.Unix(),
-		target,
+		targetOpID,
 		cleanText,
 		map[string]string{
 			keyJiraID: derivedID,
@@ -397,8 +403,8 @@ func (self *jiraImporter) ensureChange(
 	for _, item := range entry.Items {
 		switch item.Field {
 		case "labels":
-			fromLabels := strings.Split(item.FromString, " ")
-			toLabels := strings.Split(item.ToString, " ")
+			fromLabels := removeEmpty(strings.Split(item.FromString, " "))
+			toLabels := removeEmpty(strings.Split(item.ToString, " "))
 			removedLabels, addedLabels, _ := setSymmetricDifference(
 				fromLabels, toLabels)
 
@@ -467,14 +473,15 @@ func (self *jiraImporter) ensureChange(
 		_, err := b.ResolveOperationWithMetadata(keyJiraOperationID, derivedID)
 		if err == nil {
 			continue
-		} else if err != cache.ErrNoMatchingOp {
+		}
+		if err != cache.ErrNoMatchingOp {
 			return err
 		}
 
 		switch item.Field {
 		case "labels":
-			fromLabels := strings.Split(item.FromString, " ")
-			toLabels := strings.Split(item.ToString, " ")
+			fromLabels := removeEmpty(strings.Split(item.FromString, " "))
+			toLabels := removeEmpty(strings.Split(item.ToString, " "))
 			removedLabels, addedLabels, _ := setSymmetricDifference(
 				fromLabels, toLabels)
 
@@ -562,6 +569,9 @@ func (self *jiraImporter) ensureChange(
 			}
 
 			self.out <- core.NewImportCommentEdition(op.Id())
+
+		default:
+			fmt.Printf("Unhandled changelog event %s\n", item.Field)
 		}
 
 		// Other Examples:
@@ -587,4 +597,15 @@ func getStatusMap(conf core.Configuration) (map[string]string, error) {
 	statusMap := make(map[string]string)
 	err := json.Unmarshal([]byte(mapStr), &statusMap)
 	return statusMap, err
+}
+
+func removeEmpty(values []string) []string {
+	output := make([]string, 0, len(values))
+	for _, value := range values {
+		value = strings.TrimSpace(value)
+		if value != "" {
+			output = append(output, value)
+		}
+	}
+	return output
 }
