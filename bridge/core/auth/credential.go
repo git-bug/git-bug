@@ -102,7 +102,7 @@ func loadFromConfig(rawConfigs map[string]string, id entity.Id) (Credential, err
 
 	var cred Credential
 
-	switch configs[configKeyKind] {
+	switch CredentialKind(configs[configKeyKind]) {
 	case KindToken:
 		cred = NewTokenFromConfig(configs)
 	case KindLoginPassword:
