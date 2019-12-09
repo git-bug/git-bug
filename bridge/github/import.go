@@ -78,7 +78,7 @@ func (gi *githubImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 			}
 		}
 
-		if err := gi.iterator.Error(); err != nil && err != context.Canceled {
+		if err := gi.iterator.Error(); err != nil {
 			gi.out <- core.NewImportError(err, "")
 		}
 	}()
