@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
+	"github.com/MichaelMure/git-bug/bridge/core/auth"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/repository"
@@ -32,7 +33,7 @@ type testCase struct {
 	numOpImp int // number of operations after import
 }
 
-func testCases(t *testing.T, repo *cache.RepoCache, identity *cache.IdentityCache) []*testCase {
+func testCases(t *testing.T, repo *cache.RepoCache) []*testCase {
 	// simple bug
 	simpleBug, _, err := repo.NewBug("simple bug", "new bug")
 	require.NoError(t, err)
@@ -135,8 +136,8 @@ func testCases(t *testing.T, repo *cache.RepoCache, identity *cache.IdentityCach
 
 func TestPushPull(t *testing.T) {
 	// token must have 'repo' and 'delete_repo' scopes
-	token := os.Getenv("GITLAB_API_TOKEN")
-	if token == "" {
+	envToken := os.Getenv("GITLAB_API_TOKEN")
+	if envToken == "" {
 		t.Skip("Env var GITLAB_API_TOKEN missing")
 	}
 
@@ -157,7 +158,11 @@ func TestPushPull(t *testing.T) {
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
 
-	tests := testCases(t, backend, author)
+	tests := testCases(t, backend)
+
+	token := auth.NewToken(author.Id(), envToken, target)
+	err = auth.Store(repo, token)
+	require.NoError(t, err)
 
 	// generate project name
 	projectName := generateRepoName()
@@ -182,9 +187,8 @@ func TestPushPull(t *testing.T) {
 
 	// initialize exporter
 	exporter := &gitlabExporter{}
-	err = exporter.Init(core.Configuration{
+	err = exporter.Init(backend, core.Configuration{
 		keyProjectID: strconv.Itoa(projectID),
-		keyToken:     token,
 	})
 	require.NoError(t, err)
 
@@ -210,9 +214,8 @@ func TestPushPull(t *testing.T) {
 	require.NoError(t, err)
 
 	importer := &gitlabImporter{}
-	err = importer.Init(core.Configuration{
+	err = importer.Init(backend, core.Configuration{
 		keyProjectID: strconv.Itoa(projectID),
-		keyToken:     token,
 	})
 	require.NoError(t, err)
 
@@ -276,7 +279,7 @@ func generateRepoName() string {
 }
 
 // create repository need a token with scope 'repo'
-func createRepository(ctx context.Context, name, token string) (int, error) {
+func createRepository(ctx context.Context, name string, token *auth.Token) (int, error) {
 	client := buildClient(token)
 	project, _, err := client.Projects.CreateProject(
 		&gitlab.CreateProjectOptions{
@@ -292,7 +295,7 @@ func createRepository(ctx context.Context, name, token string) (int, error) {
 }
 
 // delete repository need a token with scope 'delete_repo'
-func deleteRepository(ctx context.Context, project int, token string) error {
+func deleteRepository(ctx context.Context, project int, token *auth.Token) error {
 	client := buildClient(token)
 	_, err := client.Projects.DeleteProject(project, gitlab.WithContext(ctx))
 	return err

@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
+	"github.com/MichaelMure/git-bug/bridge/core/auth"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/identity"
@@ -134,16 +135,22 @@ func Test_Importer(t *testing.T) {
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
 
-	token := os.Getenv("GITHUB_TOKEN_PRIVATE")
-	if token == "" {
+	envToken := os.Getenv("GITHUB_TOKEN_PRIVATE")
+	if envToken == "" {
 		t.Skip("Env var GITHUB_TOKEN_PRIVATE missing")
 	}
 
+	err = author.Commit(repo)
+	require.NoError(t, err)
+
+	token := auth.NewToken(author.Id(), envToken, target)
+	err = auth.Store(repo, token)
+	require.NoError(t, err)
+
 	importer := &githubImporter{}
-	err = importer.Init(core.Configuration{
+	err = importer.Init(backend, core.Configuration{
 		keyOwner:   "MichaelMure",
 		keyProject: "git-bug-test-github-bridge",
-		keyToken:   token,
 	})
 	require.NoError(t, err)
 

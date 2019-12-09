@@ -39,11 +39,11 @@ func DefaultBridge(repo *cache.RepoCache) (*core.Bridge, error) {
 
 // ConfiguredBridges return the list of bridge that are configured for the given
 // repo
-func ConfiguredBridges(repo repository.RepoCommon) ([]string, error) {
+func ConfiguredBridges(repo repository.RepoConfig) ([]string, error) {
 	return core.ConfiguredBridges(repo)
 }
 
 // Remove a configured bridge
-func RemoveBridge(repo repository.RepoCommon, name string) error {
+func RemoveBridge(repo repository.RepoConfig, name string) error {
 	return core.RemoveBridge(repo, name)
 }

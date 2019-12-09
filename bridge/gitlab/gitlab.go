@@ -7,6 +7,7 @@ import (
 	"github.com/xanzy/go-gitlab"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
+	"github.com/MichaelMure/git-bug/bridge/core/auth"
 )
 
 const (
@@ -18,7 +19,6 @@ const (
 	metaKeyGitlabProject = "gitlab-project-id"
 
 	keyProjectID = "project-id"
-	keyToken     = "token"
 
 	defaultTimeout = 60 * time.Second
 )
@@ -37,10 +37,10 @@ func (*Gitlab) NewExporter() core.Exporter {
 	return &gitlabExporter{}
 }
 
-func buildClient(token string) *gitlab.Client {
+func buildClient(token *auth.Token) *gitlab.Client {
 	client := &http.Client{
 		Timeout: defaultTimeout,
 	}
 
-	return gitlab.NewClient(client, token)
+	return gitlab.NewClient(client, token.Value)
 }

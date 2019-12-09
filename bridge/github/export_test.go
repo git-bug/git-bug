@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
+	"github.com/MichaelMure/git-bug/bridge/core/auth"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/repository"
@@ -30,7 +31,7 @@ type testCase struct {
 	numOrOp int // number of original operations
 }
 
-func testCases(t *testing.T, repo *cache.RepoCache, identity *cache.IdentityCache) []*testCase {
+func testCases(t *testing.T, repo *cache.RepoCache) []*testCase {
 	// simple bug
 	simpleBug, _, err := repo.NewBug("simple bug", "new bug")
 	require.NoError(t, err)
@@ -92,32 +93,32 @@ func testCases(t *testing.T, repo *cache.RepoCache, identity *cache.IdentityCach
 	require.NoError(t, err)
 
 	return []*testCase{
-		&testCase{
+		{
 			name:    "simple bug",
 			bug:     simpleBug,
 			numOrOp: 1,
 		},
-		&testCase{
+		{
 			name:    "bug with comments",
 			bug:     bugWithComments,
 			numOrOp: 2,
 		},
-		&testCase{
+		{
 			name:    "bug label change",
 			bug:     bugLabelChange,
 			numOrOp: 6,
 		},
-		&testCase{
+		{
 			name:    "bug with comment editions",
 			bug:     bugWithCommentEditions,
 			numOrOp: 4,
 		},
-		&testCase{
+		{
 			name:    "bug changed status",
 			bug:     bugStatusChanged,
 			numOrOp: 3,
 		},
-		&testCase{
+		{
 			name:    "bug title edited",
 			bug:     bugTitleEdited,
 			numOrOp: 2,
@@ -127,11 +128,11 @@ func testCases(t *testing.T, repo *cache.RepoCache, identity *cache.IdentityCach
 
 func TestPushPull(t *testing.T) {
 	// repo owner
-	user := os.Getenv("GITHUB_TEST_USER")
+	envUser := os.Getenv("GITHUB_TEST_USER")
 
 	// token must have 'repo' and 'delete_repo' scopes
-	token := os.Getenv("GITHUB_TOKEN_ADMIN")
-	if token == "" {
+	envToken := os.Getenv("GITHUB_TOKEN_ADMIN")
+	if envToken == "" {
 		t.Skip("Env var GITHUB_TOKEN_ADMIN missing")
 	}
 
@@ -152,35 +153,38 @@ func TestPushPull(t *testing.T) {
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
 
-	tests := testCases(t, backend, author)
+	tests := testCases(t, backend)
 
 	// generate project name
 	projectName := generateRepoName()
 
 	// create target Github repository
-	err = createRepository(projectName, token)
+	err = createRepository(projectName, envToken)
 	require.NoError(t, err)
 
 	fmt.Println("created repository", projectName)
 
 	// Make sure to remove the Github repository when the test end
 	defer func(t *testing.T) {
-		if err := deleteRepository(projectName, user, token); err != nil {
+		if err := deleteRepository(projectName, envUser, envToken); err != nil {
 			t.Fatal(err)
 		}
 		fmt.Println("deleted repository:", projectName)
 	}(t)
 
 	interrupt.RegisterCleaner(func() error {
-		return deleteRepository(projectName, user, token)
+		return deleteRepository(projectName, envUser, envToken)
 	})
+
+	token := auth.NewToken(author.Id(), envToken, target)
+	err = auth.Store(repo, token)
+	require.NoError(t, err)
 
 	// initialize exporter
 	exporter := &githubExporter{}
-	err = exporter.Init(core.Configuration{
-		keyOwner:   user,
+	err = exporter.Init(backend, core.Configuration{
+		keyOwner:   envUser,
 		keyProject: projectName,
-		keyToken:   token,
 	})
 	require.NoError(t, err)
 
@@ -206,10 +210,9 @@ func TestPushPull(t *testing.T) {
 	require.NoError(t, err)
 
 	importer := &githubImporter{}
-	err = importer.Init(core.Configuration{
-		keyOwner:   user,
+	err = importer.Init(backend, core.Configuration{
+		keyOwner:   envUser,
 		keyProject: projectName,
-		keyToken:   token,
 	})
 	require.NoError(t, err)
 

@@ -15,6 +15,15 @@ var (
 	ErrMultipleConfigEntry = errors.New("multiple config entry for the given key")
 )
 
+// RepoConfig access the configuration of a repository
+type RepoConfig interface {
+	// LocalConfig give access to the repository scoped configuration
+	LocalConfig() Config
+
+	// GlobalConfig give access to the git global configuration
+	GlobalConfig() Config
+}
+
 // RepoCommon represent the common function the we want all the repo to implement
 type RepoCommon interface {
 	// GetPath returns the path to the repo.
@@ -31,16 +40,11 @@ type RepoCommon interface {
 
 	// GetRemotes returns the configured remotes repositories.
 	GetRemotes() (map[string]string, error)
-
-	// LocalConfig give access to the repository scoped configuration
-	LocalConfig() Config
-
-	// GlobalConfig give access to the git global configuration
-	GlobalConfig() Config
 }
 
 // Repo represents a source code repository.
 type Repo interface {
+	RepoConfig
 	RepoCommon
 
 	// FetchRefs fetch git refs from a remote

@@ -84,15 +84,9 @@ func loadRepoEnsureUser(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	set, err := identity.IsUserIdentitySet(repo)
+	_, err = identity.GetUserIdentity(repo)
 	if err != nil {
 		return err
-	}
-
-	if !set {
-		// Print the error directly to not confuse a user
-		_, _ = fmt.Fprintln(os.Stderr, identity.ErrNoIdentitySet.Error())
-		os.Exit(-1)
 	}
 
 	return nil

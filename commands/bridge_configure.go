@@ -11,6 +11,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/bridge"
 	"github.com/MichaelMure/git-bug/bridge/core"
+	"github.com/MichaelMure/git-bug/bridge/core/auth"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/interrupt"
@@ -21,9 +22,11 @@ const (
 )
 
 var (
-	bridgeConfigureName   string
-	bridgeConfigureTarget string
-	bridgeParams          core.BridgeParams
+	bridgeConfigureName       string
+	bridgeConfigureTarget     string
+	bridgeConfigureParams     core.BridgeParams
+	bridgeConfigureToken      string
+	bridgeConfigureTokenStdin bool
 )
 
 func runBridgeConfigure(cmd *cobra.Command, args []string) error {
@@ -34,9 +37,28 @@ func runBridgeConfigure(cmd *cobra.Command, args []string) error {
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
 
-	if (bridgeParams.TokenStdin || bridgeParams.Token != "" || bridgeParams.TokenId != "") &&
+	if (bridgeConfigureTokenStdin || bridgeConfigureToken != "" || bridgeConfigureParams.CredPrefix != "") &&
 		(bridgeConfigureName == "" || bridgeConfigureTarget == "") {
-		return fmt.Errorf("you must provide a bridge name and target to configure a bridge with a token")
+		return fmt.Errorf("you must provide a bridge name and target to configure a bridge with a credential")
+	}
+
+	// early fail
+	if bridgeConfigureParams.CredPrefix != "" {
+		if _, err := auth.LoadWithPrefix(repo, bridgeConfigureParams.CredPrefix); err != nil {
+			return err
+		}
+	}
+
+	switch {
+	case bridgeConfigureTokenStdin:
+		reader := bufio.NewReader(os.Stdin)
+		token, err := reader.ReadString('\n')
+		if err != nil {
+			return fmt.Errorf("reading from stdin: %v", err)
+		}
+		bridgeConfigureParams.TokenRaw = strings.TrimSpace(token)
+	case bridgeConfigureToken != "":
+		bridgeConfigureParams.TokenRaw = bridgeConfigureToken
 	}
 
 	if bridgeConfigureTarget == "" {
@@ -58,7 +80,7 @@ func runBridgeConfigure(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	err = b.Configure(bridgeParams)
+	err = b.Configure(bridgeConfigureParams)
 	if err != nil {
 		return err
 	}
@@ -94,7 +116,7 @@ func promptTarget() (string, error) {
 	}
 }
 
-func promptName(repo repository.RepoCommon) (string, error) {
+func promptName(repo repository.RepoConfig) (string, error) {
 	defaultExist := core.BridgeExist(repo, defaultName)
 
 	for {
@@ -184,7 +206,7 @@ git bug bridge configure \
     --target=github \
     --url=https://github.com/michaelmure/git-bug \
     --token=$(TOKEN)`,
-	PreRunE: loadRepo,
+	PreRunE: loadRepoEnsureUser,
 	RunE:    runBridgeConfigure,
 }
 
@@ -193,11 +215,11 @@ func init() {
 	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureName, "name", "n", "", "A distinctive name to identify the bridge")
 	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureTarget, "target", "t", "",
 		fmt.Sprintf("The target of the bridge. Valid values are [%s]", strings.Join(bridge.Targets(), ",")))
-	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.URL, "url", "u", "", "The URL of the target repository")
-	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.Owner, "owner", "o", "", "The owner of the target repository")
-	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.Token, "token", "T", "", "The authentication token for the API")
-	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.TokenId, "token-id", "i", "", "The authentication token identifier for the API")
-	bridgeConfigureCmd.Flags().BoolVar(&bridgeParams.TokenStdin, "token-stdin", false, "Will read the token from stdin and ignore --token")
-	bridgeConfigureCmd.Flags().StringVarP(&bridgeParams.Project, "project", "p", "", "The name of the target repository")
+	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureParams.URL, "url", "u", "", "The URL of the target repository")
+	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureParams.Owner, "owner", "o", "", "The owner of the target repository")
+	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureParams.CredPrefix, "credential", "c", "", "The identifier or prefix of an already known credential for the API (see \"git-bug bridge auth\")")
+	bridgeConfigureCmd.Flags().StringVar(&bridgeConfigureToken, "token", "", "A raw authentication token for the API")
+	bridgeConfigureCmd.Flags().BoolVar(&bridgeConfigureTokenStdin, "token-stdin", false, "Will read the token from stdin and ignore --token")
+	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureParams.Project, "project", "p", "", "The name of the target repository")
 	bridgeConfigureCmd.Flags().SortFlags = false
 }

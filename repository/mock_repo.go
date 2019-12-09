@@ -12,8 +12,8 @@ var _ ClockedRepo = &mockRepoForTest{}
 
 // mockRepoForTest defines an instance of Repo that can be used for testing.
 type mockRepoForTest struct {
-	config       map[string]string
-	globalConfig map[string]string
+	config       *MemConfig
+	globalConfig *MemConfig
 	blobs        map[git.Hash][]byte
 	trees        map[git.Hash]string
 	commits      map[git.Hash]commit
@@ -29,24 +29,25 @@ type commit struct {
 
 func NewMockRepoForTest() *mockRepoForTest {
 	return &mockRepoForTest{
-		config:      make(map[string]string),
-		blobs:       make(map[git.Hash][]byte),
-		trees:       make(map[git.Hash]string),
-		commits:     make(map[git.Hash]commit),
-		refs:        make(map[string]git.Hash),
-		createClock: lamport.NewClock(),
-		editClock:   lamport.NewClock(),
+		config:       NewMemConfig(),
+		globalConfig: NewMemConfig(),
+		blobs:        make(map[git.Hash][]byte),
+		trees:        make(map[git.Hash]string),
+		commits:      make(map[git.Hash]commit),
+		refs:         make(map[string]git.Hash),
+		createClock:  lamport.NewClock(),
+		editClock:    lamport.NewClock(),
 	}
 }
 
 // LocalConfig give access to the repository scoped configuration
 func (r *mockRepoForTest) LocalConfig() Config {
-	return newMemConfig(r.config)
+	return r.config
 }
 
 // GlobalConfig give access to the git global configuration
 func (r *mockRepoForTest) GlobalConfig() Config {
-	return newMemConfig(r.globalConfig)
+	return r.globalConfig
 }
 
 // GetPath returns the path to the repo.

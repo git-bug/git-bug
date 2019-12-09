@@ -6,30 +6,32 @@ import (
 	"time"
 )
 
-var _ Config = &memConfig{}
+var _ Config = &MemConfig{}
 
-type memConfig struct {
+type MemConfig struct {
 	config map[string]string
 }
 
-func newMemConfig(config map[string]string) *memConfig {
-	return &memConfig{config: config}
+func NewMemConfig() *MemConfig {
+	return &MemConfig{
+		config: make(map[string]string),
+	}
 }
 
-func (mc *memConfig) StoreString(key, value string) error {
+func (mc *MemConfig) StoreString(key, value string) error {
 	mc.config[key] = value
 	return nil
 }
 
-func (mc *memConfig) StoreBool(key string, value bool) error {
+func (mc *MemConfig) StoreBool(key string, value bool) error {
 	return mc.StoreString(key, strconv.FormatBool(value))
 }
 
-func (mc *memConfig) StoreTimestamp(key string, value time.Time) error {
+func (mc *MemConfig) StoreTimestamp(key string, value time.Time) error {
 	return mc.StoreString(key, strconv.Itoa(int(value.Unix())))
 }
 
-func (mc *memConfig) ReadAll(keyPrefix string) (map[string]string, error) {
+func (mc *MemConfig) ReadAll(keyPrefix string) (map[string]string, error) {
 	result := make(map[string]string)
 	for key, val := range mc.config {
 		if strings.HasPrefix(key, keyPrefix) {
@@ -39,7 +41,7 @@ func (mc *memConfig) ReadAll(keyPrefix string) (map[string]string, error) {
 	return result, nil
 }
 
-func (mc *memConfig) ReadString(key string) (string, error) {
+func (mc *MemConfig) ReadString(key string) (string, error) {
 	// unlike git, the mock can only store one value for the same key
 	val, ok := mc.config[key]
 	if !ok {
@@ -49,7 +51,7 @@ func (mc *memConfig) ReadString(key string) (string, error) {
 	return val, nil
 }
 
-func (mc *memConfig) ReadBool(key string) (bool, error) {
+func (mc *MemConfig) ReadBool(key string) (bool, error) {
 	// unlike git, the mock can only store one value for the same key
 	val, ok := mc.config[key]
 	if !ok {
@@ -59,7 +61,7 @@ func (mc *memConfig) ReadBool(key string) (bool, error) {
 	return strconv.ParseBool(val)
 }
 
-func (mc *memConfig) ReadTimestamp(key string) (time.Time, error) {
+func (mc *MemConfig) ReadTimestamp(key string) (time.Time, error) {
 	value, err := mc.ReadString(key)
 	if err != nil {
 		return time.Time{}, err
@@ -74,7 +76,7 @@ func (mc *memConfig) ReadTimestamp(key string) (time.Time, error) {
 }
 
 // RmConfigs remove all key/value pair matching the key prefix
-func (mc *memConfig) RemoveAll(keyPrefix string) error {
+func (mc *MemConfig) RemoveAll(keyPrefix string) error {
 	for key := range mc.config {
 		if strings.HasPrefix(key, keyPrefix) {
 			delete(mc.config, key)

@@ -6,20 +6,24 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/bridge/core"
+	"github.com/MichaelMure/git-bug/bridge/core/auth"
 )
 
 func runBridgeAuthShow(cmd *cobra.Command, args []string) error {
-	token, err := core.LoadTokenPrefix(repo, args[0])
+	cred, err := auth.LoadWithPrefix(repo, args[0])
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("Id: %s\n", token.ID())
-	fmt.Printf("Target: %s\n", token.Target)
-	fmt.Printf("Type: token\n")
-	fmt.Printf("Value: %s\n", token.Value)
-	fmt.Printf("Creation: %s\n", token.CreateTime.Format(time.RFC822))
+	fmt.Printf("Id: %s\n", cred.ID())
+	fmt.Printf("Target: %s\n", cred.Target())
+	fmt.Printf("Kind: %s\n", cred.Kind())
+	fmt.Printf("Creation: %s\n", cred.CreateTime().Format(time.RFC822))
+
+	switch cred := cred.(type) {
+	case *auth.Token:
+		fmt.Printf("Value: %s\n", cred.Value)
+	}
 
 	return nil
 }

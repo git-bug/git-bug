@@ -7,36 +7,56 @@ import (
 
 	text "github.com/MichaelMure/go-term-text"
 
-	"github.com/MichaelMure/git-bug/bridge/core"
+	"github.com/MichaelMure/git-bug/bridge/core/auth"
+	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util/colors"
+	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
 func runBridgeAuth(cmd *cobra.Command, args []string) error {
-	tokens, err := core.ListTokens(repo)
+	backend, err := cache.NewRepoCache(repo)
+	if err != nil {
+		return err
+	}
+	defer backend.Close()
+	interrupt.RegisterCleaner(backend.Close)
+
+	creds, err := auth.List(backend)
 	if err != nil {
 		return err
 	}
 
-	for _, token := range tokens {
-		token, err := core.LoadToken(repo, token)
+	defaultUser, _ := backend.GetUserIdentity()
+
+	for _, cred := range creds {
+		targetFmt := text.LeftPadMaxLine(cred.Target(), 10, 0)
+
+		var value string
+		switch cred := cred.(type) {
+		case *auth.Token:
+			value = cred.Value
+		}
+
+		user, err := backend.ResolveIdentity(cred.UserId())
 		if err != nil {
 			return err
 		}
-		printToken(token)
+		userFmt := user.DisplayName()
+
+		if cred.UserId() == defaultUser.Id() {
+			userFmt = colors.Red(userFmt)
+		}
+
+		fmt.Printf("%s %s %s %s %s\n",
+			colors.Cyan(cred.ID().Human()),
+			colors.Yellow(targetFmt),
+			colors.Magenta(cred.Kind()),
+			userFmt,
+			value,
+		)
 	}
 
 	return nil
-}
-
-func printToken(token *core.Token) {
-	targetFmt := text.LeftPadMaxLine(token.Target, 10, 0)
-
-	fmt.Printf("%s %s %s %s\n",
-		colors.Cyan(token.ID().Human()),
-		colors.Yellow(targetFmt),
-		colors.Magenta("token"),
-		token.Value,
-	)
 }
 
 var bridgeAuthCmd = &cobra.Command{

@@ -5,21 +5,21 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/bridge/core"
+	"github.com/MichaelMure/git-bug/bridge/core/auth"
 )
 
 func runBridgeAuthRm(cmd *cobra.Command, args []string) error {
-	token, err := core.LoadTokenPrefix(repo, args[0])
+	cred, err := auth.LoadWithPrefix(repo, args[0])
 	if err != nil {
 		return err
 	}
 
-	err = core.RemoveToken(repo, token.ID())
+	err = auth.Remove(repo, cred.ID())
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("token %s removed\n", token.ID())
+	fmt.Printf("credential %s removed\n", cred.ID())
 	return nil
 }
 

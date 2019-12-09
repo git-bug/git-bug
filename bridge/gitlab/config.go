@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -15,6 +16,8 @@ import (
 	"github.com/xanzy/go-gitlab"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
+	"github.com/MichaelMure/git-bug/bridge/core/auth"
+	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/colors"
@@ -24,7 +27,7 @@ var (
 	ErrBadProjectURL = errors.New("bad project url")
 )
 
-func (g *Gitlab) Configure(repo repository.RepoCommon, params core.BridgeParams) (core.Configuration, error) {
+func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams) (core.Configuration, error) {
 	if params.Project != "" {
 		fmt.Println("warning: --project is ineffective for a gitlab bridge")
 	}
@@ -34,80 +37,75 @@ func (g *Gitlab) Configure(repo repository.RepoCommon, params core.BridgeParams)
 
 	conf := make(core.Configuration)
 	var err error
-	var url string
-	var token string
-	var tokenId entity.Id
-	var tokenObj *core.Token
 
-	if (params.Token != "" || params.TokenStdin) && params.URL == "" {
+	if (params.CredPrefix != "" || params.TokenRaw != "") && params.URL == "" {
 		return nil, fmt.Errorf("you must provide a project URL to configure this bridge with a token")
 	}
 
+	var url string
+
 	// get project url
-	if params.URL != "" {
+	switch {
+	case params.URL != "":
 		url = params.URL
-
-	} else {
-		// remote suggestions
-		remotes, err := repo.GetRemotes()
-		if err != nil {
-			return nil, errors.Wrap(err, "getting remotes")
-		}
-
+	default:
 		// terminal prompt
-		url, err = promptURL(remotes)
+		url, err = promptURL(repo)
 		if err != nil {
 			return nil, errors.Wrap(err, "url prompt")
 		}
 	}
 
-	// get user token
-	if params.Token != "" {
-		token = params.Token
-	} else if params.TokenStdin {
-		reader := bufio.NewReader(os.Stdin)
-		token, err = reader.ReadString('\n')
+	user, err := repo.GetUserIdentity()
+	if err != nil {
+		return nil, err
+	}
+
+	var cred auth.Credential
+
+	switch {
+	case params.CredPrefix != "":
+		cred, err = auth.LoadWithPrefix(repo, params.CredPrefix)
 		if err != nil {
-			return nil, fmt.Errorf("reading from stdin: %v", err)
+			return nil, err
 		}
-		token = strings.TrimSpace(token)
-	} else if params.TokenId != "" {
-		tokenId = entity.Id(params.TokenId)
-	} else {
-		tokenObj, err = promptTokenOptions(repo)
+		if cred.UserId() != user.Id() {
+			return nil, fmt.Errorf("selected credential don't match the user")
+		}
+	case params.TokenRaw != "":
+		cred = auth.NewToken(user.Id(), params.TokenRaw, target)
+	default:
+		cred, err = promptTokenOptions(repo, user.Id())
 		if err != nil {
-			return nil, errors.Wrap(err, "token prompt")
+			return nil, err
 		}
 	}
 
-	if token != "" {
-		tokenObj, err = core.LoadOrCreateToken(repo, target, token)
-		if err != nil {
-			return nil, err
-		}
-	} else if tokenId != "" {
-		tokenObj, err = core.LoadToken(repo, entity.Id(tokenId))
-		if err != nil {
-			return nil, err
-		}
-		if tokenObj.Target != target {
-			return nil, fmt.Errorf("token target is incompatible %s", tokenObj.Target)
-		}
+	token, ok := cred.(*auth.Token)
+	if !ok {
+		return nil, fmt.Errorf("the Gitlab bridge only handle token credentials")
 	}
 
 	// validate project url and get its ID
-	id, err := validateProjectURL(url, tokenObj.Value)
+	id, err := validateProjectURL(url, token)
 	if err != nil {
 		return nil, errors.Wrap(err, "project validation")
 	}
 
-	conf[keyProjectID] = strconv.Itoa(id)
-	conf[core.ConfigKeyTokenId] = tokenObj.ID().String()
 	conf[core.ConfigKeyTarget] = target
+	conf[keyProjectID] = strconv.Itoa(id)
 
 	err = g.ValidateConfig(conf)
 	if err != nil {
 		return nil, err
+	}
+
+	// don't forget to store the now known valid token
+	if !auth.IdExist(repo, cred.ID()) {
+		err = auth.Store(repo, cred)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return conf, nil
@@ -120,10 +118,6 @@ func (g *Gitlab) ValidateConfig(conf core.Configuration) error {
 		return fmt.Errorf("unexpected target name: %v", v)
 	}
 
-	if _, ok := conf[keyToken]; !ok {
-		return fmt.Errorf("missing %s key", keyToken)
-	}
-
 	if _, ok := conf[keyProjectID]; !ok {
 		return fmt.Errorf("missing %s key", keyProjectID)
 	}
@@ -131,19 +125,20 @@ func (g *Gitlab) ValidateConfig(conf core.Configuration) error {
 	return nil
 }
 
-func promptTokenOptions(repo repository.RepoCommon) (*core.Token, error) {
+func promptTokenOptions(repo repository.RepoConfig, userId entity.Id) (auth.Credential, error) {
 	for {
-		tokens, err := core.LoadTokensWithTarget(repo, target)
+		creds, err := auth.List(repo, auth.WithUserId(userId), auth.WithTarget(target), auth.WithKind(auth.KindToken))
 		if err != nil {
 			return nil, err
 		}
 
-		if len(tokens) == 0 {
-			token, err := promptToken()
+		// if we don't have existing token, fast-track to the token prompt
+		if len(creds) == 0 {
+			value, err := promptToken()
 			if err != nil {
 				return nil, err
 			}
-			return core.LoadOrCreateToken(repo, target, token)
+			return auth.NewToken(userId, value, target), nil
 		}
 
 		fmt.Println()
@@ -151,15 +146,16 @@ func promptTokenOptions(repo repository.RepoCommon) (*core.Token, error) {
 
 		fmt.Println()
 		fmt.Println("Existing tokens for Gitlab:")
-		for i, token := range tokens {
-			if token.Target == target {
-				fmt.Printf("[%d]: %s => %s (%s)\n",
-					i+2,
-					colors.Cyan(token.ID().Human()),
-					text.TruncateMax(token.Value, 10),
-					token.CreateTime.Format(time.RFC822),
-				)
-			}
+
+		sort.Sort(auth.ById(creds))
+		for i, cred := range creds {
+			token := cred.(*auth.Token)
+			fmt.Printf("[%d]: %s => %s (%s)\n",
+				i+2,
+				colors.Cyan(token.ID().Human()),
+				colors.Red(text.TruncateMax(token.Value, 10)),
+				token.CreateTime().Format(time.RFC822),
+			)
 		}
 
 		fmt.Println()
@@ -173,23 +169,21 @@ func promptTokenOptions(repo repository.RepoCommon) (*core.Token, error) {
 
 		line = strings.TrimSpace(line)
 		index, err := strconv.Atoi(line)
-		if err != nil || index < 1 || index > len(tokens)+1 {
+		if err != nil || index < 1 || index > len(creds)+1 {
 			fmt.Println("invalid input")
 			continue
 		}
 
-		var token string
 		switch index {
 		case 1:
-			token, err = promptToken()
+			value, err := promptToken()
 			if err != nil {
 				return nil, err
 			}
+			return auth.NewToken(userId, value, target), nil
 		default:
-			return tokens[index-2], nil
+			return creds[index-2], nil
 		}
-
-		return core.LoadOrCreateToken(repo, target, token)
 	}
 }
 
@@ -222,7 +216,13 @@ func promptToken() (string, error) {
 	}
 }
 
-func promptURL(remotes map[string]string) (string, error) {
+func promptURL(repo repository.RepoCommon) (string, error) {
+	// remote suggestions
+	remotes, err := repo.GetRemotes()
+	if err != nil {
+		return "", errors.Wrap(err, "getting remotes")
+	}
+
 	validRemotes := getValidGitlabRemoteURLs(remotes)
 	if len(validRemotes) > 0 {
 		for {
@@ -302,7 +302,7 @@ func getValidGitlabRemoteURLs(remotes map[string]string) []string {
 	return urls
 }
 
-func validateProjectURL(url, token string) (int, error) {
+func validateProjectURL(url string, token *auth.Token) (int, error) {
 	projectPath, err := getProjectPath(url)
 	if err != nil {
 		return 0, err

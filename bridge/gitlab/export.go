@@ -10,9 +10,11 @@ import (
 	"github.com/xanzy/go-gitlab"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
+	"github.com/MichaelMure/git-bug/bridge/core/auth"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
+	"github.com/MichaelMure/git-bug/repository"
 )
 
 var (
@@ -24,10 +26,7 @@ type gitlabExporter struct {
 	conf core.Configuration
 
 	// cache identities clients
-	identityClient map[string]*gitlab.Client
-
-	// map identities with their tokens
-	identityToken map[string]string
+	identityClient map[entity.Id]*gitlab.Client
 
 	// gitlab repository ID
 	repositoryID string
@@ -38,58 +37,59 @@ type gitlabExporter struct {
 }
 
 // Init .
-func (ge *gitlabExporter) Init(conf core.Configuration) error {
+func (ge *gitlabExporter) Init(repo *cache.RepoCache, conf core.Configuration) error {
 	ge.conf = conf
-	//TODO: initialize with multiple tokens
-	ge.identityToken = make(map[string]string)
-	ge.identityClient = make(map[string]*gitlab.Client)
+	ge.identityClient = make(map[entity.Id]*gitlab.Client)
 	ge.cachedOperationIDs = make(map[string]string)
+
+	// get repository node id
+	ge.repositoryID = ge.conf[keyProjectID]
+
+	// preload all clients
+	err := ge.cacheAllClient(repo)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (ge *gitlabExporter) cacheAllClient(repo repository.RepoConfig) error {
+	creds, err := auth.List(repo, auth.WithTarget(target), auth.WithKind(auth.KindToken))
+	if err != nil {
+		return err
+	}
+
+	for _, cred := range creds {
+		if _, ok := ge.identityClient[cred.UserId()]; !ok {
+			client := buildClient(creds[0].(*auth.Token))
+			ge.identityClient[cred.UserId()] = client
+		}
+	}
 
 	return nil
 }
 
 // getIdentityClient return a gitlab v4 API client configured with the access token of the given identity.
-// if no client were found it will initialize it from the known tokens map and cache it for next use
-func (ge *gitlabExporter) getIdentityClient(id entity.Id) (*gitlab.Client, error) {
-	client, ok := ge.identityClient[id.String()]
+func (ge *gitlabExporter) getIdentityClient(userId entity.Id) (*gitlab.Client, error) {
+	client, ok := ge.identityClient[userId]
 	if ok {
 		return client, nil
 	}
 
-	// get token
-	token, ok := ge.identityToken[id.String()]
-	if !ok {
-		return nil, ErrMissingIdentityToken
-	}
-
-	// create client
-	client = buildClient(token)
-	// cache client
-	ge.identityClient[id.String()] = client
-
-	return client, nil
+	return nil, ErrMissingIdentityToken
 }
 
 // ExportAll export all event made by the current user to Gitlab
 func (ge *gitlabExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, since time.Time) (<-chan core.ExportResult, error) {
 	out := make(chan core.ExportResult)
 
-	user, err := repo.GetUserIdentity()
-	if err != nil {
-		return nil, err
-	}
-
-	ge.identityToken[user.Id().String()] = ge.conf[core.ConfigKeyToken]
-
-	// get repository node id
-	ge.repositoryID = ge.conf[keyProjectID]
-
 	go func() {
 		defer close(out)
 
-		allIdentitiesIds := make([]entity.Id, 0, len(ge.identityToken))
-		for id := range ge.identityToken {
-			allIdentitiesIds = append(allIdentitiesIds, entity.Id(id))
+		allIdentitiesIds := make([]entity.Id, 0, len(ge.identityClient))
+		for id := range ge.identityClient {
+			allIdentitiesIds = append(allIdentitiesIds, id)
 		}
 
 		allBugsIds := repo.AllBugsIds()
