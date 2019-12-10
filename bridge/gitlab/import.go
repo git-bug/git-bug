@@ -52,7 +52,10 @@ func (gi *gitlabImporter) Init(repo *cache.RepoCache, conf core.Configuration) e
 		return ErrMissingIdentityToken
 	}
 
-	gi.client = buildClient(creds[0].(*auth.Token))
+	gi.client, err = buildClient(conf[keyGitlabBaseUrl], creds[0].(*auth.Token))
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -151,6 +154,7 @@ func (gi *gitlabImporter) ensureIssue(repo *cache.RepoCache, issue *gitlab.Issue
 			metaKeyGitlabId:      parseID(issue.IID),
 			metaKeyGitlabUrl:     issue.WebURL,
 			metaKeyGitlabProject: gi.conf[keyProjectID],
+			metaKeyGitlabBaseUrl: gi.conf[keyGitlabBaseUrl],
 		},
 	)
 

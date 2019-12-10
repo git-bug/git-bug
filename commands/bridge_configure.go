@@ -216,6 +216,7 @@ func init() {
 	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureTarget, "target", "t", "",
 		fmt.Sprintf("The target of the bridge. Valid values are [%s]", strings.Join(bridge.Targets(), ",")))
 	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureParams.URL, "url", "u", "", "The URL of the target repository")
+	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureParams.BaseURL, "base-url", "b", "", "The base URL of your issue tracker service")
 	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureParams.Owner, "owner", "o", "", "The owner of the target repository")
 	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureParams.CredPrefix, "credential", "c", "", "The identifier or prefix of an already known credential for the API (see \"git-bug bridge auth\")")
 	bridgeConfigureCmd.Flags().StringVar(&bridgeConfigureToken, "token", "", "A raw authentication token for the API")

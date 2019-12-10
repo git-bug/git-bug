@@ -42,6 +42,10 @@ func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 		return nil, fmt.Errorf("you must provide a project URL to configure this bridge with a token")
 	}
 
+	if params.URL == "" {
+		params.URL = defaultBaseURL
+	}
+
 	var url string
 
 	// get project url
@@ -54,6 +58,10 @@ func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 		if err != nil {
 			return nil, errors.Wrap(err, "url prompt")
 		}
+	}
+
+	if !strings.HasPrefix(url, params.BaseURL) {
+		return nil, fmt.Errorf("base URL (%s) doesn't match the project URL (%s)", params.BaseURL, url)
 	}
 
 	user, err := repo.GetUserIdentity()
@@ -87,13 +95,14 @@ func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 	}
 
 	// validate project url and get its ID
-	id, err := validateProjectURL(url, token)
+	id, err := validateProjectURL(params.BaseURL, url, token)
 	if err != nil {
 		return nil, errors.Wrap(err, "project validation")
 	}
 
 	conf[core.ConfigKeyTarget] = target
 	conf[keyProjectID] = strconv.Itoa(id)
+	conf[keyGitlabBaseUrl] = params.BaseURL
 
 	err = g.ValidateConfig(conf)
 	if err != nil {
@@ -302,13 +311,16 @@ func getValidGitlabRemoteURLs(remotes map[string]string) []string {
 	return urls
 }
 
-func validateProjectURL(url string, token *auth.Token) (int, error) {
+func validateProjectURL(baseURL, url string, token *auth.Token) (int, error) {
 	projectPath, err := getProjectPath(url)
 	if err != nil {
 		return 0, err
 	}
 
-	client := buildClient(token)
+	client, err := buildClient(baseURL, token)
+	if err != nil {
+		return 0, err
+	}
 
 	project, _, err := client.Projects.GetProject(projectPath, &gitlab.GetProjectOptions{})
 	if err != nil {

@@ -193,6 +193,7 @@ function _git-bug_bridge_configure {
     '(-n --name)'{-n,--name}'[A distinctive name to identify the bridge]:' \
     '(-t --target)'{-t,--target}'[The target of the bridge. Valid values are [github,gitlab,launchpad-preview]]:' \
     '(-u --url)'{-u,--url}'[The URL of the target repository]:' \
+    '(-b --base-url)'{-b,--base-url}'[The base URL of your issue tracker service]:' \
     '(-o --owner)'{-o,--owner}'[The owner of the target repository]:' \
     '(-c --credential)'{-c,--credential}'[The identifier or prefix of an already known credential for the API (see "git-bug bridge auth")]:' \
     '--token[A raw authentication token for the API]:' \

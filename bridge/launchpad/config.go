@@ -29,6 +29,9 @@ func (l *Launchpad) Configure(repo *cache.RepoCache, params core.BridgeParams) (
 	if params.Owner != "" {
 		fmt.Println("warning: --owner is ineffective for a Launchpad bridge")
 	}
+	if params.BaseURL != "" {
+		fmt.Println("warning: --base-url is ineffective for a Launchpad bridge")
+	}
 
 	conf := make(core.Configuration)
 	var err error

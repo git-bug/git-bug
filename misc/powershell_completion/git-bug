@@ -79,6 +79,8 @@ Register-ArgumentCompleter -Native -CommandName 'git-bug' -ScriptBlock {
             [CompletionResult]::new('--target', 'target', [CompletionResultType]::ParameterName, 'The target of the bridge. Valid values are [github,gitlab,launchpad-preview]')
             [CompletionResult]::new('-u', 'u', [CompletionResultType]::ParameterName, 'The URL of the target repository')
             [CompletionResult]::new('--url', 'url', [CompletionResultType]::ParameterName, 'The URL of the target repository')
+            [CompletionResult]::new('-b', 'b', [CompletionResultType]::ParameterName, 'The base URL of your issue tracker service')
+            [CompletionResult]::new('--base-url', 'base-url', [CompletionResultType]::ParameterName, 'The base URL of your issue tracker service')
             [CompletionResult]::new('-o', 'o', [CompletionResultType]::ParameterName, 'The owner of the target repository')
             [CompletionResult]::new('--owner', 'owner', [CompletionResultType]::ParameterName, 'The owner of the target repository')
             [CompletionResult]::new('-c', 'c', [CompletionResultType]::ParameterName, 'The identifier or prefix of an already known credential for the API (see "git-bug bridge auth")')
