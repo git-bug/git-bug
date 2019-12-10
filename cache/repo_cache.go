@@ -877,6 +877,10 @@ func (c *RepoCache) GetUserIdentity() (*IdentityCache, error) {
 	return cached, nil
 }
 
+func (c *RepoCache) IsUserIdentitySet() (bool, error) {
+	return identity.IsUserIdentitySet(c.repo)
+}
+
 // NewIdentity create a new identity
 // The new identity is written in the repository (commit)
 func (c *RepoCache) NewIdentity(name string, email string) (*IdentityCache, error) {
