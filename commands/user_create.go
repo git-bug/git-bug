@@ -53,9 +53,16 @@ func runUserCreate(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	err = backend.SetUserIdentity(id)
+	set, err := backend.IsUserIdentitySet()
 	if err != nil {
 		return err
+	}
+
+	if !set {
+		err = backend.SetUserIdentity(id)
+		if err != nil {
+			return err
+		}
 	}
 
 	_, _ = fmt.Fprintln(os.Stderr)

@@ -261,6 +261,16 @@ func GetUserIdentity(repo repository.Repo) (*Identity, error) {
 	return i, nil
 }
 
+// IsUserIdentitySet say if the user has set his identity
+func IsUserIdentitySet(repo repository.Repo) (bool, error) {
+	configs, err := repo.LocalConfig().ReadAll(identityConfigKey)
+	if err != nil {
+		return false, err
+	}
+
+	return len(configs) == 1, nil
+}
+
 func (i *Identity) AddVersion(version *Version) {
 	i.versions = append(i.versions, version)
 }
