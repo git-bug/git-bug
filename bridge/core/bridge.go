@@ -35,6 +35,7 @@ type BridgeParams struct {
 	Owner      string
 	Project    string
 	URL        string
+	BaseURL    string
 	CredPrefix string
 	TokenRaw   string
 }

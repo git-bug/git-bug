@@ -44,6 +44,10 @@ var (
 )
 
 func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams) (core.Configuration, error) {
+	if params.BaseURL != "" {
+		fmt.Println("warning: --base-url is ineffective for a Github bridge")
+	}
+
 	conf := make(core.Configuration)
 	var err error
 

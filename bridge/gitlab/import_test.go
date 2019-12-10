@@ -103,7 +103,8 @@ func TestImport(t *testing.T) {
 
 	importer := &gitlabImporter{}
 	err = importer.Init(backend, core.Configuration{
-		keyProjectID: projectID,
+		keyProjectID:     projectID,
+		keyGitlabBaseUrl: "https://gitlab.com",
 	})
 	require.NoError(t, err)
 

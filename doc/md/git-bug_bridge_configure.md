@@ -73,6 +73,7 @@ git bug bridge configure \
   -n, --name string         A distinctive name to identify the bridge
   -t, --target string       The target of the bridge. Valid values are [github,gitlab,launchpad-preview]
   -u, --url string          The URL of the target repository
+  -b, --base-url string     The base URL of your issue tracker service
   -o, --owner string        The owner of the target repository
   -c, --credential string   The identifier or prefix of an already known credential for the API (see "git-bug bridge auth")
       --token string        A raw authentication token for the API
