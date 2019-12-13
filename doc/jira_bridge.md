@@ -208,11 +208,24 @@ create-issue-gitbug-id = "customfield_5678"
 You can specify the mapping between `git-bug` status and JIRA status id's using
 the following:
 ```
-bug-id-map = {"open": "1", "closed": "6"}
+bug-id-map = {\"open\": \"1\", \"closed\": \"6\"}
 ```
+
+The format of the map is `<git-bug-status-name>: <jira-status-id>`. In general
+your jira instance will have more statuses than `git-bug` will and you may map
+more than one jira-status to a git-bug status. You can do this with
+`bug-id-revmap`:
+```
+bug-id-revmap = {\"10109\": \"open\", \"10006\": \"open\", \"10814\": \"open\"}
+```
+
+The reverse map `bug-id-revmap` will automatically include the inverse of the
+forward map `bug-id-map`.
 
 Note that in JIRA each different `issuetype` can have a different set of
 statuses. The bridge doesn't currently support more than one mapping, however.
+Also, note that the format of the map is JSON and the git config file syntax
+requires doublequotes to be escaped (as in the examples above).
 
 ### Full example
 

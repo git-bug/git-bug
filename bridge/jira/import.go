@@ -207,7 +207,9 @@ func (self *jiraImporter) ensureIssue(
 			return nil, err
 		}
 
-		title := issue.Fields.Summary
+		// NOTE(josh): newlines in titles appears to be rare, but it has been seen
+		// in the wild. It does not appear to be allowed in the JIRA web interface.
+		title := strings.Replace(issue.Fields.Summary, "\n", "", -1)
 		b, _, err = repo.NewBugRaw(
 			author,
 			issue.Fields.Created.Unix(),
@@ -390,7 +392,7 @@ func (self *jiraImporter) ensureChange(
 		return fmt.Errorf("Received changelog entry with no item! (%s)", entry.ID)
 	}
 
-	statusMap, err := getStatusMap(self.conf)
+	statusMap, err := getStatusMapReverse(self.conf)
 	if err != nil {
 		return err
 	}
@@ -423,7 +425,7 @@ func (self *jiraImporter) ensureChange(
 
 		case "status":
 			opr, isRightType := potentialOp.(*bug.SetStatusOperation)
-			if isRightType && statusMap[opr.Status.String()] == item.ToString {
+			if isRightType && statusMap[opr.Status.String()] == item.To {
 				_, err := b.SetMetadata(opr.Id(), map[string]string{
 					keyJiraOperationID: entry.ID,
 				})
@@ -437,7 +439,7 @@ func (self *jiraImporter) ensureChange(
 			// NOTE(josh): JIRA calls it "summary", which sounds more like the body
 			// text, but it's the title
 			opr, isRightType := potentialOp.(*bug.SetTitleOperation)
-			if isRightType && opr.Title == item.ToString {
+			if isRightType && opr.Title == item.To {
 				_, err := b.SetMetadata(opr.Id(), map[string]string{
 					keyJiraOperationID: entry.ID,
 				})
@@ -502,36 +504,42 @@ func (self *jiraImporter) ensureChange(
 			self.out <- core.NewImportLabelChange(op.Id())
 
 		case "status":
-			if statusMap[bug.OpenStatus.String()] == item.ToString {
-				op, err := b.OpenRaw(
-					author,
-					entry.Created.Unix(),
-					map[string]string{
-						keyJiraID:          entry.ID,
-						keyJiraOperationID: derivedID,
-					},
-				)
-				if err != nil {
-					return err
+			statusStr, hasMap := statusMap[item.To]
+			if hasMap {
+				switch statusStr {
+				case bug.OpenStatus.String():
+					op, err := b.OpenRaw(
+						author,
+						entry.Created.Unix(),
+						map[string]string{
+							keyJiraID:          entry.ID,
+							keyJiraOperationID: derivedID,
+						},
+					)
+					if err != nil {
+						return err
+					}
+					self.out <- core.NewImportStatusChange(op.Id())
+
+				case bug.ClosedStatus.String():
+					op, err := b.CloseRaw(
+						author,
+						entry.Created.Unix(),
+						map[string]string{
+							keyJiraID:          entry.ID,
+							keyJiraOperationID: derivedID,
+						},
+					)
+					if err != nil {
+						return err
+					}
+					self.out <- core.NewImportStatusChange(op.Id())
 				}
-				self.out <- core.NewImportStatusChange(op.Id())
-			} else if statusMap[bug.ClosedStatus.String()] == item.ToString {
-				op, err := b.CloseRaw(
-					author,
-					entry.Created.Unix(),
-					map[string]string{
-						keyJiraID:          entry.ID,
-						keyJiraOperationID: derivedID,
-					},
-				)
-				if err != nil {
-					return err
-				}
-				self.out <- core.NewImportStatusChange(op.Id())
 			} else {
 				self.out <- core.NewImportError(
 					fmt.Errorf(
-						"No git-bug status mapped for jira status %s", item.ToString), "")
+						"No git-bug status mapped for jira status %s (%s)",
+						item.ToString, item.To), "")
 			}
 
 		case "summary":
@@ -571,7 +579,9 @@ func (self *jiraImporter) ensureChange(
 			self.out <- core.NewImportCommentEdition(op.Id())
 
 		default:
-			fmt.Printf("Unhandled changelog event %s\n", item.Field)
+			self.out <- core.NewImportWarning(
+				fmt.Errorf(
+					"Unhandled changelog event %s", item.Field), "")
 		}
 
 		// Other Examples:
@@ -597,6 +607,31 @@ func getStatusMap(conf core.Configuration) (map[string]string, error) {
 	statusMap := make(map[string]string)
 	err := json.Unmarshal([]byte(mapStr), &statusMap)
 	return statusMap, err
+}
+
+func getStatusMapReverse(conf core.Configuration) (map[string]string, error) {
+	fwdMap, err := getStatusMap(conf)
+	if err != nil {
+		return fwdMap, err
+	}
+
+	outMap := map[string]string{}
+	for key, val := range fwdMap {
+		outMap[val] = key
+	}
+
+	mapStr, hasConf := conf[keyIDRevMap]
+	if !hasConf {
+		return outMap, nil
+	}
+
+	revMap := make(map[string]string)
+	err = json.Unmarshal([]byte(mapStr), &revMap)
+	for key, val := range revMap {
+		outMap[key] = val
+	}
+
+	return outMap, err
 }
 
 func removeEmpty(values []string) []string {

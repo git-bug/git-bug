@@ -31,6 +31,7 @@ const (
 
 	// Error happened during import
 	ImportEventError
+	ImportEventWarning
 )
 
 // ImportResult is an event that is emitted during the import process, to
@@ -69,6 +70,12 @@ func (er ImportResult) String() string {
 			return fmt.Sprintf("import error at id %s: %s", er.ID, er.Err.Error())
 		}
 		return fmt.Sprintf("import error: %s", er.Err.Error())
+	case ImportEventWarning:
+		if er.ID != "" {
+			return fmt.Sprintf("warning at id %s: %s", er.ID, er.Err.Error())
+		}
+		return fmt.Sprintf("warning: %s", er.Err.Error())
+
 	default:
 		panic("unknown import result")
 	}
@@ -79,6 +86,14 @@ func NewImportError(err error, id entity.Id) ImportResult {
 		Err:   err,
 		ID:    id,
 		Event: ImportEventError,
+	}
+}
+
+func NewImportWarning(err error, id entity.Id) ImportResult {
+	return ImportResult{
+		Err:   err,
+		ID:    id,
+		Event: ImportEventWarning,
 	}
 }
 

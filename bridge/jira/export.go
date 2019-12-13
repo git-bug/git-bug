@@ -351,7 +351,7 @@ func (self *jiraExporter) exportBug(
 				exportTime, err = UpdateIssueStatus(client, bugJiraID, jiraStatus)
 				if err != nil {
 					err := errors.Wrap(err, "editing status")
-					out <- core.NewExportError(err, b.Id())
+					out <- core.NewExportWarning(err, b.Id())
 					// Failure to update status isn't necessarily a big error. It's
 					// possible that we just don't have enough information to make that
 					// update. In this case, just don't export the operation.

@@ -26,6 +26,7 @@ const (
 	keyUsername        = "username"
 	keyPassword        = "password"
 	keyIDMap           = "bug-id-map"
+	keyIDRevMap        = "bug-id-revmap"
 	keyCreateDefaults  = "create-issue-defaults"
 	keyCreateGitBug    = "create-issue-gitbug-id"
 
