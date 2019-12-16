@@ -25,12 +25,12 @@
   version = "v0.9.2"
 
 [[projects]]
-  digest = "1:b46ef47d5fcc120e6fc1f75e75106f31cbb51fe9981234b5c191d0083d8f9867"
+  digest = "1:a43d442a7838c9ecc4295a0b3cf30b84b453b1a92f71c451820783be5274a96d"
   name = "github.com/MichaelMure/go-term-text"
   packages = ["."]
   pruneopts = "UT"
-  revision = "60f9049b9d18b9370b8ed1247fe4334af5db131a"
-  version = "v0.2.1"
+  revision = "43fbc384b8fc8d603c8822f1ac52ecd7a889451a"
+  version = "v0.2.2"
 
 [[projects]]
   digest = "1:897d91c431ce469d35a5e6030e60e617dccd9a0e95bdffa6a80594f5c5800d29"
