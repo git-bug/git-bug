@@ -330,7 +330,7 @@ func (b *Bridge) ImportAllSince(ctx context.Context, since time.Time) (<-chan Im
 
 		// relay all events while checking that everything went well
 		for event := range events {
-			if event.Err != nil {
+			if event.Event == ImportEventError {
 				noError = false
 			}
 			out <- event
