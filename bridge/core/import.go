@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/MichaelMure/git-bug/entity"
 )
@@ -74,10 +75,18 @@ func (er ImportResult) String() string {
 		}
 		return fmt.Sprintf("import error: %s", er.Err.Error())
 	case ImportEventWarning:
+		parts := make([]string, 0, 4)
+		parts = append(parts, "warning:")
 		if er.ID != "" {
-			return fmt.Sprintf("warning at id %s: %s", er.ID, er.Err.Error())
+			parts = append(parts, fmt.Sprintf("at id %s", er.ID))
 		}
-		return fmt.Sprintf("warning: %s", er.Err.Error())
+		if er.Reason != "" {
+			parts = append(parts, fmt.Sprintf("reason: %s", er.Reason))
+		}
+		if er.Err != nil {
+			parts = append(parts, fmt.Sprintf("err: %s", er.Err))
+		}
+		return strings.Join(parts, " ")
 
 	default:
 		panic("unknown import result")
