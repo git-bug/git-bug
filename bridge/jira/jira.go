@@ -7,10 +7,6 @@ import (
 	"github.com/MichaelMure/git-bug/bridge/core"
 )
 
-func init() {
-	core.Register(&Jira{})
-}
-
 // Jira Main object for the bridge
 type Jira struct{}
 

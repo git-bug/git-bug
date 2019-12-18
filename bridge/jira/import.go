@@ -35,7 +35,8 @@ type jiraImporter struct {
 }
 
 // Init .
-func (gi *jiraImporter) Init(conf core.Configuration) error {
+func (gi *jiraImporter) Init(repo *cache.RepoCache,
+	conf core.Configuration) error {
 	gi.conf = conf
 	return nil
 }
@@ -217,10 +218,10 @@ func (self *jiraImporter) ensureIssue(
 			cleanText,
 			nil,
 			map[string]string{
-				core.KeyOrigin: target,
-				keyJiraID:      issue.ID,
-				keyJiraKey:     issue.Key,
-				keyJiraProject: self.conf[keyProject],
+				core.MetaKeyOrigin: target,
+				keyJiraID:          issue.ID,
+				keyJiraKey:         issue.Key,
+				keyJiraProject:     self.conf[keyProject],
 			})
 		if err != nil {
 			return nil, err

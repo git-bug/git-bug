@@ -13,8 +13,8 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
+	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/input"
-	"github.com/MichaelMure/git-bug/repository"
 )
 
 const (
@@ -66,7 +66,7 @@ How would you like to store your JIRA login credentials?
 
 // Configure sets up the bridge configuration
 func (g *Jira) Configure(
-	repo repository.RepoCommon, params core.BridgeParams) (
+	repo *cache.RepoCache, params core.BridgeParams) (
 	core.Configuration, error) {
 	conf := make(core.Configuration)
 	var err error
@@ -77,11 +77,11 @@ func (g *Jira) Configure(
 	var password string
 	var serverURL string
 
-	if params.Token != "" || params.TokenStdin {
-		return nil, fmt.Errorf(
-			"JIRA session tokens are extremely short lived. We don't store them " +
-				"in the configuration, so they are not valid for this bridge.")
-	}
+	// if params.Token != "" || params.TokenStdin {
+	// 	return nil, fmt.Errorf(
+	// 		"JIRA session tokens are extremely short lived. We don't store them " +
+	// 			"in the configuration, so they are not valid for this bridge.")
+	// }
 
 	if params.Owner != "" {
 		return nil, fmt.Errorf("owner doesn't make sense for jira")
@@ -137,7 +137,7 @@ func (g *Jira) Configure(
 		return nil, err
 	}
 
-	conf[core.KeyTarget] = target
+	conf[core.ConfigKeyTarget] = target
 	conf[keyServer] = serverURL
 	conf[keyProject] = project
 
@@ -191,8 +191,8 @@ func (g *Jira) Configure(
 
 // ValidateConfig returns true if all required keys are present
 func (*Jira) ValidateConfig(conf core.Configuration) error {
-	if v, ok := conf[core.KeyTarget]; !ok {
-		return fmt.Errorf("missing %s key", core.KeyTarget)
+	if v, ok := conf[core.ConfigKeyTarget]; !ok {
+		return fmt.Errorf("missing %s key", core.ConfigKeyTarget)
 	} else if v != target {
 		return fmt.Errorf("unexpected target name: %v", v)
 	}

@@ -43,7 +43,8 @@ type jiraExporter struct {
 }
 
 // Init .
-func (self *jiraExporter) Init(conf core.Configuration) error {
+func (self *jiraExporter) Init(repo *cache.RepoCache,
+	conf core.Configuration) error {
 	self.conf = conf
 	self.identityClient = make(map[entity.Id]*Client)
 	self.cachedOperationIDs = make(map[entity.Id]string)
@@ -171,7 +172,7 @@ func (self *jiraExporter) exportBug(
 	author := snapshot.Author
 
 	// skip bug if it was imported from some other bug system
-	origin, ok := snapshot.GetCreateMetadata(core.KeyOrigin)
+	origin, ok := snapshot.GetCreateMetadata(core.MetaKeyOrigin)
 	if ok && origin != target {
 		out <- core.NewExportNothing(
 			b.Id(), fmt.Sprintf("issue tagged with origin: %s", origin))
