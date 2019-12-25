@@ -25,6 +25,7 @@ import (
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/colors"
 	"github.com/MichaelMure/git-bug/util/interrupt"
@@ -89,8 +90,14 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 	}
 
 	user, err := repo.GetUserIdentity()
-	if err != nil {
+	if err != nil && err != identity.ErrNoIdentitySet {
 		return nil, err
+	}
+
+	// default to a "to be filled" user Id if we don't have a valid one yet
+	userId := auth.DefaultUserId
+	if user != nil {
+		userId = user.Id()
 	}
 
 	var cred auth.Credential
@@ -101,13 +108,13 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 		if err != nil {
 			return nil, err
 		}
-		if cred.UserId() != user.Id() {
+		if user != nil && cred.UserId() != user.Id() {
 			return nil, fmt.Errorf("selected credential don't match the user")
 		}
 	case params.TokenRaw != "":
-		cred = auth.NewToken(user.Id(), params.TokenRaw, target)
+		cred = auth.NewToken(userId, params.TokenRaw, target)
 	default:
-		cred, err = promptTokenOptions(repo, user.Id(), owner, project)
+		cred, err = promptTokenOptions(repo, userId, owner, project)
 		if err != nil {
 			return nil, err
 		}
@@ -326,7 +333,7 @@ func promptToken() (string, error) {
 			return token, nil
 		}
 
-		fmt.Println("token is invalid")
+		fmt.Println("token has incorrect format")
 	}
 }
 

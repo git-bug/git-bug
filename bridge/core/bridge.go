@@ -43,13 +43,14 @@ type BridgeParams struct {
 // Bridge is a wrapper around a BridgeImpl that will bind low-level
 // implementation with utility code to provide high-level functions.
 type Bridge struct {
-	Name     string
-	repo     *cache.RepoCache
-	impl     BridgeImpl
-	importer Importer
-	exporter Exporter
-	conf     Configuration
-	initDone bool
+	Name           string
+	repo           *cache.RepoCache
+	impl           BridgeImpl
+	importer       Importer
+	exporter       Exporter
+	conf           Configuration
+	initImportDone bool
+	initExportDone bool
 }
 
 // Register will register a new BridgeImpl
@@ -273,8 +274,25 @@ func (b *Bridge) getExporter() Exporter {
 	return b.exporter
 }
 
-func (b *Bridge) ensureInit() error {
-	if b.initDone {
+func (b *Bridge) ensureImportInit() error {
+	if b.initImportDone {
+		return nil
+	}
+
+	importer := b.getImporter()
+	if importer != nil {
+		err := importer.Init(b.repo, b.conf)
+		if err != nil {
+			return err
+		}
+	}
+
+	b.initImportDone = true
+	return nil
+}
+
+func (b *Bridge) ensureExportInit() error {
+	if b.initExportDone {
 		return nil
 	}
 
@@ -294,8 +312,7 @@ func (b *Bridge) ensureInit() error {
 		}
 	}
 
-	b.initDone = true
-
+	b.initExportDone = true
 	return nil
 }
 
@@ -313,7 +330,7 @@ func (b *Bridge) ImportAllSince(ctx context.Context, since time.Time) (<-chan Im
 		return nil, err
 	}
 
-	err = b.ensureInit()
+	err = b.ensureImportInit()
 	if err != nil {
 		return nil, err
 	}
@@ -367,7 +384,7 @@ func (b *Bridge) ExportAll(ctx context.Context, since time.Time) (<-chan ExportR
 		return nil, err
 	}
 
-	err = b.ensureInit()
+	err = b.ensureExportInit()
 	if err != nil {
 		return nil, err
 	}
