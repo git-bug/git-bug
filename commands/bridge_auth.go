@@ -37,14 +37,21 @@ func runBridgeAuth(cmd *cobra.Command, args []string) error {
 			value = cred.Value
 		}
 
-		user, err := backend.ResolveIdentity(cred.UserId())
-		if err != nil {
-			return err
-		}
-		userFmt := user.DisplayName()
+		var userFmt string
 
-		if cred.UserId() == defaultUser.Id() {
-			userFmt = colors.Red(userFmt)
+		switch cred.UserId() {
+		case auth.DefaultUserId:
+			userFmt = colors.Red("default user")
+		default:
+			user, err := backend.ResolveIdentity(cred.UserId())
+			if err != nil {
+				return err
+			}
+			userFmt = user.DisplayName()
+
+			if cred.UserId() == defaultUser.Id() {
+				userFmt = colors.Red(userFmt)
+			}
 		}
 
 		fmt.Printf("%s %s %s %s %s\n",

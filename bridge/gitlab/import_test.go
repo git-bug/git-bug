@@ -97,6 +97,9 @@ func TestImport(t *testing.T) {
 	err = author.Commit(repo)
 	require.NoError(t, err)
 
+	err = identity.SetUserIdentity(repo, author)
+	require.NoError(t, err)
+
 	token := auth.NewToken(author.Id(), envToken, target)
 	err = auth.Store(repo, token)
 	require.NoError(t, err)

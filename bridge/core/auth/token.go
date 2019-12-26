@@ -59,6 +59,10 @@ func (t *Token) UserId() entity.Id {
 	return t.userId
 }
 
+func (t *Token) updateUserId(id entity.Id) {
+	t.userId = id
+}
+
 func (t *Token) Target() string {
 	return t.target
 }
@@ -88,7 +92,7 @@ func (t *Token) Validate() error {
 	return nil
 }
 
-func (t *Token) ToConfig() map[string]string {
+func (t *Token) toConfig() map[string]string {
 	return map[string]string{
 		tokenValueKey: t.Value,
 	}
