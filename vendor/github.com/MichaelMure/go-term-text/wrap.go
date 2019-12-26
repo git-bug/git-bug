@@ -13,52 +13,89 @@ func init() {
 	runewidth.DefaultCondition.EastAsianWidth = false
 }
 
+type wrapOpts struct {
+	indent string
+	pad    string
+	align  Alignment
+}
+
+// WrapOption is a functional option for the Wrap() function
+type WrapOption func(opts *wrapOpts)
+
+// WrapPad configure the padding with a string for Wrap()
+func WrapPad(pad string) WrapOption {
+	return func(opts *wrapOpts) {
+		opts.pad = pad
+	}
+}
+
+// WrapPadded configure the padding with a number of space characters for Wrap()
+func WrapPadded(padLen int) WrapOption {
+	return func(opts *wrapOpts) {
+		opts.pad = strings.Repeat(" ", padLen)
+	}
+}
+
+// WrapPad configure the indentation on the first line for Wrap()
+func WrapIndent(indent string) WrapOption {
+	return func(opts *wrapOpts) {
+		opts.indent = indent
+	}
+}
+
+// WrapAlign configure the text alignment for Wrap()
+func WrapAlign(align Alignment) WrapOption {
+	return func(opts *wrapOpts) {
+		opts.align = align
+	}
+}
+
+// allWrapOpts compile the set of WrapOption into a final wrapOpts
+// from the default values.
+func allWrapOpts(opts []WrapOption) *wrapOpts {
+	wrapOpts := &wrapOpts{
+		indent: "",
+		pad:    "",
+		align:  NoAlign,
+	}
+	for _, opt := range opts {
+		opt(wrapOpts)
+	}
+	if wrapOpts.indent == "" {
+		wrapOpts.indent = wrapOpts.pad
+	}
+	return wrapOpts
+}
+
 // Wrap a text for a given line size.
 // Handle properly terminal color escape code
-func Wrap(text string, lineWidth int) (string, int) {
-	return WrapLeftPadded(text, lineWidth, 0)
-}
+// Options are accepted to configure things like indent, padding or alignment.
+// Return the wrapped text and the number of lines
+func Wrap(text string, lineWidth int, opts ...WrapOption) (string, int) {
+	wrapOpts := allWrapOpts(opts)
 
-// WrapLeftPadded wrap a text for a given line size with a left padding.
-// Handle properly terminal color escape code
-func WrapLeftPadded(text string, lineWidth int, leftPad int) (string, int) {
-	pad := strings.Repeat(" ", leftPad)
-	return WrapWithPad(text, lineWidth, pad)
-}
+	if lineWidth <= 0 {
+		return "", 1
+	}
 
-// WrapWithPad wrap a text for a given line size with a custom left padding
-// Handle properly terminal color escape code
-func WrapWithPad(text string, lineWidth int, pad string) (string, int) {
-	return WrapWithPadIndent(text, lineWidth, pad, pad)
-}
-
-// WrapWithPad wrap a text for a given line size with a custom left padding
-// This function also align the result depending on the requested alignment.
-// Handle properly terminal color escape code
-func WrapWithPadAlign(text string, lineWidth int, pad string, align Alignment) (string, int) {
-	return WrapWithPadIndentAlign(text, lineWidth, pad, pad, align)
-}
-
-// WrapWithPadIndent wrap a text for a given line size with a custom left padding
-// and a first line indent. The padding is not effective on the first line, indent
-// is used instead, which allow to implement indents and outdents.
-// Handle properly terminal color escape code
-func WrapWithPadIndent(text string, lineWidth int, indent string, pad string) (string, int) {
-	return WrapWithPadIndentAlign(text, lineWidth, indent, pad, NoAlign)
-}
-
-// WrapWithPadIndentAlign wrap a text for a given line size with a custom left padding
-// and a first line indent. The padding is not effective on the first line, indent
-// is used instead, which allow to implement indents and outdents.
-// This function also align the result depending on the requested alignment.
-// Handle properly terminal color escape code
-func WrapWithPadIndentAlign(text string, lineWidth int, indent string, pad string, align Alignment) (string, int) {
 	var lines []string
 	nbLine := 0
 
+	if len(wrapOpts.indent) >= lineWidth {
+		// fallback rendering
+		lines = append(lines, strings.Repeat("⭬", lineWidth))
+		nbLine++
+		wrapOpts.indent = wrapOpts.pad
+	}
+	if len(wrapOpts.pad) >= lineWidth {
+		// fallback rendering
+		line := strings.Repeat("⭬", lineWidth)
+		return strings.Repeat(line+"\n", 5), 5
+	}
+
 	// Start with the indent
-	padStr := indent
-	padLen := Len(indent)
+	padStr := wrapOpts.indent
+	padLen := Len(wrapOpts.indent)
 
 	// tabs are formatted as 4 spaces
 	text = strings.Replace(text, "\t", "    ", -1)
@@ -67,8 +104,8 @@ func WrapWithPadIndentAlign(text string, lineWidth int, indent string, pad strin
 	for i, line := range strings.Split(text, "\n") {
 		// on the second line, use the padding instead
 		if i == 1 {
-			padStr = pad
-			padLen = Len(pad)
+			padStr = wrapOpts.pad
+			padLen = Len(wrapOpts.pad)
 		}
 
 		if line == "" || strings.TrimSpace(line) == "" {
@@ -87,14 +124,14 @@ func WrapWithPadIndentAlign(text string, lineWidth int, indent string, pad strin
 			// use the first wrapped line, ignore everything else and
 			// wrap the remaining of the line with the normal padding.
 
-			content := LineAlign(strings.TrimRight(split[0], " "), lineWidth-padLen, align)
+			content := LineAlign(strings.TrimRight(split[0], " "), lineWidth-padLen, wrapOpts.align)
 			lines = append(lines, padStr+content)
 			nbLine++
 			line = strings.TrimPrefix(line, split[0])
 			line = strings.TrimLeft(line, " ")
 
-			padStr = pad
-			padLen = Len(pad)
+			padStr = wrapOpts.pad
+			padLen = Len(wrapOpts.pad)
 			wrapped = softwrapLine(line, lineWidth-padLen)
 			split = strings.Split(wrapped, "\n")
 		}
@@ -102,10 +139,10 @@ func WrapWithPadIndentAlign(text string, lineWidth int, indent string, pad strin
 		for j, seg := range split {
 			if j == 0 {
 				// keep the left padding of the wrapped line
-				content := LineAlign(strings.TrimRight(seg, " "), lineWidth-padLen, align)
+				content := LineAlign(strings.TrimRight(seg, " "), lineWidth-padLen, wrapOpts.align)
 				lines = append(lines, padStr+content)
 			} else {
-				content := LineAlign(strings.TrimSpace(seg), lineWidth-padLen, align)
+				content := LineAlign(strings.TrimSpace(seg), lineWidth-padLen, wrapOpts.align)
 				lines = append(lines, padStr+content)
 			}
 			nbLine++
@@ -113,6 +150,42 @@ func WrapWithPadIndentAlign(text string, lineWidth int, indent string, pad strin
 	}
 
 	return strings.Join(lines, "\n"), nbLine
+}
+
+// WrapLeftPadded wrap a text for a given line size with a left padding.
+// Handle properly terminal color escape code
+func WrapLeftPadded(text string, lineWidth int, leftPad int) (string, int) {
+	return Wrap(text, lineWidth, WrapPadded(leftPad))
+}
+
+// WrapWithPad wrap a text for a given line size with a custom left padding
+// Handle properly terminal color escape code
+func WrapWithPad(text string, lineWidth int, pad string) (string, int) {
+	return Wrap(text, lineWidth, WrapPad(pad))
+}
+
+// WrapWithPad wrap a text for a given line size with a custom left padding
+// This function also align the result depending on the requested alignment.
+// Handle properly terminal color escape code
+func WrapWithPadAlign(text string, lineWidth int, pad string, align Alignment) (string, int) {
+	return Wrap(text, lineWidth, WrapPad(pad), WrapAlign(align))
+}
+
+// WrapWithPadIndent wrap a text for a given line size with a custom left padding
+// and a first line indent. The padding is not effective on the first line, indent
+// is used instead, which allow to implement indents and outdents.
+// Handle properly terminal color escape code
+func WrapWithPadIndent(text string, lineWidth int, indent string, pad string) (string, int) {
+	return Wrap(text, lineWidth, WrapIndent(indent), WrapPad(pad))
+}
+
+// WrapWithPadIndentAlign wrap a text for a given line size with a custom left padding
+// and a first line indent. The padding is not effective on the first line, indent
+// is used instead, which allow to implement indents and outdents.
+// This function also align the result depending on the requested alignment.
+// Handle properly terminal color escape code
+func WrapWithPadIndentAlign(text string, lineWidth int, indent string, pad string, align Alignment) (string, int) {
+	return Wrap(text, lineWidth, WrapIndent(indent), WrapPad(pad), WrapAlign(align))
 }
 
 // Break a line into several lines so that each line consumes at most

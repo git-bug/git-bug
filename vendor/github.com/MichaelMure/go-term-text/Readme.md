@@ -20,6 +20,7 @@ Included algorithms cover:
 - trimming
 - alignment
 - escape sequence extraction and reapplication
+- escape sequence snapshot and simplification
 - truncation
 
 ## Example
@@ -31,7 +32,7 @@ import (
 	"fmt"
 	"strings"
 
-	text "github.com/MichaelMure/go-term-text"
+	"github.com/MichaelMure/go-term-text"
 )
 
 func main() {
@@ -41,8 +42,10 @@ func main() {
     		"various graphic design. 一只 A Quick \x1b[31m敏捷的狐 Fox " +
     		"狸跳过了\x1b[0mDog一只懒狗。"
 
-	output, n := text.WrapWithPadIndent(input, 60,
-    		"\x1b[34m<-indent-> \x1b[0m", "\x1b[33m<-pad-> \x1b[0m")
+	output, n := text.Wrap(input, 60,
+            text.WrapIndent("\x1b[34m<-indent-> \x1b[0m"),
+            text.WrapPad("\x1b[33m<-pad-> \x1b[0m"),
+    )
 
 	fmt.Printf("output has %d lines\n\n", n)
 
