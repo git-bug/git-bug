@@ -67,7 +67,9 @@ func Run(cache *cache.RepoCache) error {
 	err := <-ui.gError
 
 	if err != nil && err != gocui.ErrQuit {
-		fmt.Println(err.(*errors2.Error).ErrorStack())
+		if e, ok := err.(*errors2.Error); ok {
+			fmt.Println(e.ErrorStack())
+		}
 		return err
 	}
 
