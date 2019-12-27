@@ -175,7 +175,7 @@ func promptBaseUrlOptions() (string, error) {
 
 func promptBaseUrl() (string, error) {
 	for {
-		fmt.Print("base url: ")
+		fmt.Print("Base url: ")
 
 		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
 		if err != nil {
