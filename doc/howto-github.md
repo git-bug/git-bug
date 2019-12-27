@@ -18,7 +18,7 @@ Check that `git-bug` is properly installed by running `git bug version`. If ever
 
 ## Configuration
 
-1. From within the git repository you care about, run `git bug bridge  configure` and follow the wizard's steps:
+1. From within the git repository you care about, run `git bug bridge configure` and follow the wizard's steps:
     1. Choose `github`.
     1. Type a name for the bridge configuration. As you can configure multiple bridges, this name will allow you to choose when there is an ambiguity.
     1. Setup the remote Github project. The wizard is smart enough to inspect the git remote and detect the potential project. Otherwise, enter the project URL like this: `https://github.com/MichaelMure/git-bug`
@@ -56,6 +56,6 @@ The command line tools are really meant for programmatic usage or to integrate `
 
 ![termui recording](../misc/termui_recording.gif)
 
-For a richer UI more user friendly UI, `git-bug` propose a web UI (read-only at the moment). You can start it with `git bug webui`:
+For a richer and more user friendly UI, `git-bug` proposes a web UI (read-only at the moment). You can start it with `git bug webui`:
 
 ![web UI screenshot](../misc/webui2.png)
