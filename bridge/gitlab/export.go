@@ -159,7 +159,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 	gitlabID, ok := snapshot.GetCreateMetadata(metaKeyGitlabId)
 	if ok {
 		gitlabBaseUrl, ok := snapshot.GetCreateMetadata(metaKeyGitlabBaseUrl)
-		if ok && gitlabBaseUrl != ge.conf[gitlabBaseUrl] {
+		if ok && gitlabBaseUrl != ge.conf[keyGitlabBaseUrl] {
 			out <- core.NewExportNothing(b.Id(), "skipping issue imported from another Gitlab instance")
 			return
 		}
