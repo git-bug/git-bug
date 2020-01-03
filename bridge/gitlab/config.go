@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"path"
 	"regexp"
 	"sort"
 	"strconv"
@@ -98,7 +99,7 @@ func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 	case params.TokenRaw != "":
 		cred = auth.NewToken(userId, params.TokenRaw, target)
 	default:
-		cred, err = promptTokenOptions(repo, userId)
+		cred, err = promptTokenOptions(repo, userId, baseUrl)
 		if err != nil {
 			return nil, err
 		}
@@ -209,7 +210,7 @@ func validateBaseUrl(baseUrl string) (bool, error) {
 	return u.Scheme != "" && u.Host != "", nil
 }
 
-func promptTokenOptions(repo repository.RepoConfig, userId entity.Id) (auth.Credential, error) {
+func promptTokenOptions(repo repository.RepoConfig, userId entity.Id, baseUrl string) (auth.Credential, error) {
 	for {
 		creds, err := auth.List(repo, auth.WithUserId(userId), auth.WithTarget(target), auth.WithKind(auth.KindToken))
 		if err != nil {
@@ -218,7 +219,7 @@ func promptTokenOptions(repo repository.RepoConfig, userId entity.Id) (auth.Cred
 
 		// if we don't have existing token, fast-track to the token prompt
 		if len(creds) == 0 {
-			value, err := promptToken()
+			value, err := promptToken(baseUrl)
 			if err != nil {
 				return nil, err
 			}
@@ -260,7 +261,7 @@ func promptTokenOptions(repo repository.RepoConfig, userId entity.Id) (auth.Cred
 
 		switch index {
 		case 1:
-			value, err := promptToken()
+			value, err := promptToken(baseUrl)
 			if err != nil {
 				return nil, err
 			}
@@ -271,8 +272,8 @@ func promptTokenOptions(repo repository.RepoConfig, userId entity.Id) (auth.Cred
 	}
 }
 
-func promptToken() (string, error) {
-	fmt.Println("You can generate a new token by visiting https://gitlab.com/profile/personal_access_tokens.")
+func promptToken(baseUrl string) (string, error) {
+	fmt.Printf("You can generate a new token by visiting %s.\n", path.Join(baseUrl, "profile/personal_access_tokens"))
 	fmt.Println("Choose 'Create personal access token' and set the necessary access scope for your repository.")
 	fmt.Println()
 	fmt.Println("'api' access scope: to be able to make api calls")
