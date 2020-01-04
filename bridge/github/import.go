@@ -201,6 +201,11 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 
 			// other edits will be added as CommentEdit operations
 			target, err := b.ResolveOperationWithMetadata(metaKeyGithubId, parseId(issue.Id))
+			if err == cache.ErrNoMatchingOp {
+				// original comment is missing somehow, issuing a warning
+				gi.out <- core.NewImportWarning(fmt.Errorf("comment ID %s to edit is missing", parseId(issue.Id)), b.Id())
+				continue
+			}
 			if err != nil {
 				return nil, err
 			}
