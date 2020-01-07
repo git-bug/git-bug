@@ -29,6 +29,10 @@ const (
 
 	// Error happened during export
 	ExportEventError
+
+	// Something wrong happened during export that is worth notifying to the user
+	// but not severe enough to consider the export a failure.
+	ExportEventWarning
 )
 
 // ExportResult is an event that is emitted during the export process, to
@@ -65,6 +69,11 @@ func (er ExportResult) String() string {
 			return fmt.Sprintf("export error at %s: %s", er.ID, er.Err.Error())
 		}
 		return fmt.Sprintf("export error: %s", er.Err.Error())
+	case ExportEventWarning:
+		if er.ID != "" {
+			return fmt.Sprintf("warning at %s: %s", er.ID, er.Err.Error())
+		}
+		return fmt.Sprintf("warning: %s", er.Err.Error())
 
 	default:
 		panic("unknown export result")
@@ -76,6 +85,14 @@ func NewExportError(err error, id entity.Id) ExportResult {
 		ID:    id,
 		Err:   err,
 		Event: ExportEventError,
+	}
+}
+
+func NewExportWarning(err error, id entity.Id) ExportResult {
+	return ExportResult{
+		ID:    id,
+		Err:   err,
+		Event: ExportEventWarning,
 	}
 }
 

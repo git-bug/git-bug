@@ -66,11 +66,7 @@ func (gc *gitConfig) ReadAll(keyPrefix string) (map[string]string, error) {
 			continue
 		}
 
-		parts := strings.Fields(line)
-		if len(parts) != 2 {
-			return nil, fmt.Errorf("bad git config: %s", line)
-		}
-
+		parts := strings.SplitN(line, " ", 2)
 		result[parts[0]] = parts[1]
 	}
 
