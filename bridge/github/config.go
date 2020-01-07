@@ -14,21 +14,19 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	text "github.com/MichaelMure/go-term-text"
 	"github.com/pkg/errors"
-	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/input"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/colors"
-	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
 const (
@@ -320,21 +318,14 @@ func promptToken() (string, error) {
 		panic("regexp compile:" + err.Error())
 	}
 
-	for {
-		fmt.Print("Enter token: ")
-
-		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
-		if err != nil {
-			return "", err
+	validator := func(name string, value string) (complaint string, err error) {
+		if re.MatchString(value) {
+			return "", nil
 		}
-
-		token := strings.TrimSpace(line)
-		if re.MatchString(token) {
-			return token, nil
-		}
-
-		fmt.Println("token has incorrect format")
+		return "token has incorrect format", nil
 	}
+
+	return input.Prompt("Enter token", "token", "", input.Required, validator)
 }
 
 func loginAndRequestToken(owner, project string) (string, error) {
@@ -348,17 +339,18 @@ func loginAndRequestToken(owner, project string) (string, error) {
 	fmt.Println()
 
 	// prompt project visibility to know the token scope needed for the repository
-	isPublic, err := promptProjectVisibility()
+	i, err := input.PromptChoice("repository visibility", []string{"public", "private"})
 	if err != nil {
 		return "", err
 	}
+	isPublic := i == 0
 
 	username, err := promptUsername()
 	if err != nil {
 		return "", err
 	}
 
-	password, err := promptPassword()
+	password, err := input.PromptPassword("Password", "password", input.Required)
 	if err != nil {
 		return "", err
 	}
@@ -387,12 +379,12 @@ func loginAndRequestToken(owner, project string) (string, error) {
 	// Handle 2FA is needed
 	OTPHeader := resp.Header.Get("X-GitHub-OTP")
 	if resp.StatusCode == http.StatusUnauthorized && OTPHeader != "" {
-		otpCode, err := prompt2FA()
+		otpCode, err := input.PromptPassword("Two-factor authentication code", "code", input.Required)
 		if err != nil {
 			return "", err
 		}
 
-		resp, err = requestTokenWith2FA(note, username, password, otpCode, scope)
+		resp, err = requestTokenWith2FA(note, login, password, otpCode, scope)
 		if err != nil {
 			return "", err
 		}
@@ -406,29 +398,6 @@ func loginAndRequestToken(owner, project string) (string, error) {
 
 	b, _ := ioutil.ReadAll(resp.Body)
 	return "", fmt.Errorf("error creating token %v: %v", resp.StatusCode, string(b))
-}
-
-func promptUsername() (string, error) {
-	for {
-		fmt.Print("username: ")
-
-		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
-		if err != nil {
-			return "", err
-		}
-
-		line = strings.TrimSpace(line)
-
-		ok, err := validateUsername(line)
-		if err != nil {
-			return "", err
-		}
-		if ok {
-			return line, nil
-		}
-
-		fmt.Println("invalid username")
-	}
 }
 
 func promptURL(repo repository.RepoCommon) (string, string, error) {
@@ -584,88 +553,4 @@ func validateProject(owner, project string, token *auth.Token) (bool, error) {
 	}
 
 	return resp.StatusCode == http.StatusOK, nil
-}
-
-func promptPassword() (string, error) {
-	termState, err := terminal.GetState(int(syscall.Stdin))
-	if err != nil {
-		return "", err
-	}
-
-	cancel := interrupt.RegisterCleaner(func() error {
-		return terminal.Restore(int(syscall.Stdin), termState)
-	})
-	defer cancel()
-
-	for {
-		fmt.Print("password: ")
-
-		bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
-		// new line for coherent formatting, ReadPassword clip the normal new line
-		// entered by the user
-		fmt.Println()
-
-		if err != nil {
-			return "", err
-		}
-
-		if len(bytePassword) > 0 {
-			return string(bytePassword), nil
-		}
-
-		fmt.Println("password is empty")
-	}
-}
-
-func prompt2FA() (string, error) {
-	termState, err := terminal.GetState(int(syscall.Stdin))
-	if err != nil {
-		return "", err
-	}
-
-	cancel := interrupt.RegisterCleaner(func() error {
-		return terminal.Restore(int(syscall.Stdin), termState)
-	})
-	defer cancel()
-
-	for {
-		fmt.Print("two-factor authentication code: ")
-
-		byte2fa, err := terminal.ReadPassword(int(syscall.Stdin))
-		fmt.Println()
-		if err != nil {
-			return "", err
-		}
-
-		if len(byte2fa) > 0 {
-			return string(byte2fa), nil
-		}
-
-		fmt.Println("code is empty")
-	}
-}
-
-func promptProjectVisibility() (bool, error) {
-	for {
-		fmt.Println("[1]: public")
-		fmt.Println("[2]: private")
-		fmt.Print("repository visibility: ")
-
-		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
-		fmt.Println()
-		if err != nil {
-			return false, err
-		}
-
-		line = strings.TrimSpace(line)
-
-		index, err := strconv.Atoi(line)
-		if err != nil || (index != 1 && index != 2) {
-			fmt.Println("invalid input")
-			continue
-		}
-
-		// return true for public repositories, false for private
-		return index == 1, nil
-	}
 }

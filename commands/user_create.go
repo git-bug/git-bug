@@ -23,7 +23,7 @@ func runUserCreate(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	name, err := input.PromptValueRequired("Name", preName)
+	name, err := input.Prompt("Name", "name", preName, input.Required)
 	if err != nil {
 		return err
 	}
@@ -33,12 +33,12 @@ func runUserCreate(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	email, err := input.PromptValueRequired("Email", preEmail)
+	email, err := input.Prompt("Email", "email", preEmail, input.Required)
 	if err != nil {
 		return err
 	}
 
-	login, err := input.PromptValue("Avatar URL", "")
+	login, err := input.Prompt("Avatar URL", "avatar", "")
 	if err != nil {
 		return err
 	}
