@@ -18,26 +18,25 @@ var _ Credential = &Token{}
 
 // Token holds an API access token data
 type Token struct {
-	userId     entity.Id
 	target     string
 	createTime time.Time
 	Value      string
+	meta       map[string]string
 }
 
 // NewToken instantiate a new token
-func NewToken(userId entity.Id, value, target string) *Token {
+func NewToken(value, target string) *Token {
 	return &Token{
-		userId:     userId,
 		target:     target,
 		createTime: time.Now(),
 		Value:      value,
+		meta:       make(map[string]string),
 	}
 }
 
 func NewTokenFromConfig(conf map[string]string) *Token {
 	token := &Token{}
 
-	token.userId = entity.Id(conf[configKeyUserId])
 	token.target = conf[configKeyTarget]
 	if createTime, ok := conf[configKeyCreateTime]; ok {
 		if t, err := repository.ParseTimestamp(createTime); err == nil {
@@ -46,6 +45,7 @@ func NewTokenFromConfig(conf map[string]string) *Token {
 	}
 
 	token.Value = conf[tokenValueKey]
+	token.meta = metaFromConfig(conf)
 
 	return token
 }
@@ -53,14 +53,6 @@ func NewTokenFromConfig(conf map[string]string) *Token {
 func (t *Token) ID() entity.Id {
 	sum := sha256.Sum256([]byte(t.target + t.Value))
 	return entity.Id(fmt.Sprintf("%x", sum))
-}
-
-func (t *Token) UserId() entity.Id {
-	return t.userId
-}
-
-func (t *Token) updateUserId(id entity.Id) {
-	t.userId = id
 }
 
 func (t *Token) Target() string {
@@ -90,6 +82,10 @@ func (t *Token) Validate() error {
 		return fmt.Errorf("unknown target")
 	}
 	return nil
+}
+
+func (t *Token) Metadata() map[string]string {
+	return t.meta
 }
 
 func (t *Token) toConfig() map[string]string {

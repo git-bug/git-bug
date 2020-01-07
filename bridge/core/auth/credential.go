@@ -14,9 +14,11 @@ import (
 const (
 	configKeyPrefix     = "git-bug.auth"
 	configKeyKind       = "kind"
-	configKeyUserId     = "userid"
 	configKeyTarget     = "target"
 	configKeyCreateTime = "createtime"
+	configKeyPrefixMeta = "meta."
+
+	MetaKeyLogin = "login"
 )
 
 type CredentialKind string
@@ -32,19 +34,13 @@ func NewErrMultipleMatchCredential(matching []entity.Id) *entity.ErrMultipleMatc
 	return entity.NewErrMultipleMatch("credential", matching)
 }
 
-// Special Id to mark a credential as being associated to the default user, whoever it might be.
-// The intended use is for the bridge configuration, to be able to create and store a credential
-// with no identities created yet, and then select one with `git-bug user adopt`
-const DefaultUserId = entity.Id("default-user")
-
 type Credential interface {
 	ID() entity.Id
-	UserId() entity.Id
-	updateUserId(id entity.Id)
 	Target() string
 	Kind() CredentialKind
 	CreateTime() time.Time
 	Validate() error
+	Metadata() map[string]string
 
 	// Return all the specific properties of the credential that need to be saved into the configuration.
 	// This does not include Target, User, Kind and CreateTime.
@@ -120,6 +116,17 @@ func loadFromConfig(rawConfigs map[string]string, id entity.Id) (Credential, err
 	return cred, nil
 }
 
+func metaFromConfig(configs map[string]string) map[string]string {
+	result := make(map[string]string)
+	for key, val := range configs {
+		if strings.HasPrefix(key, configKeyPrefixMeta) {
+			key = strings.TrimPrefix(key, configKeyPrefixMeta)
+			result[key] = val
+		}
+	}
+	return result
+}
+
 // List load all existing credentials
 func List(repo repository.RepoConfig, opts ...Option) ([]Credential, error) {
 	rawConfigs, err := repo.GlobalConfig().ReadAll(configKeyPrefix + ".")
@@ -185,12 +192,6 @@ func Store(repo repository.RepoConfig, cred Credential) error {
 		return err
 	}
 
-	// UserId
-	err = repo.GlobalConfig().StoreString(prefix+configKeyUserId, cred.UserId().String())
-	if err != nil {
-		return err
-	}
-
 	// Target
 	err = repo.GlobalConfig().StoreString(prefix+configKeyTarget, cred.Target())
 	if err != nil {
@@ -201,6 +202,14 @@ func Store(repo repository.RepoConfig, cred Credential) error {
 	err = repo.GlobalConfig().StoreTimestamp(prefix+configKeyCreateTime, cred.CreateTime())
 	if err != nil {
 		return err
+	}
+
+	// Metadata
+	for key, val := range cred.Metadata() {
+		err := repo.GlobalConfig().StoreString(prefix+configKeyPrefixMeta+key, val)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Custom
@@ -218,25 +227,6 @@ func Store(repo repository.RepoConfig, cred Credential) error {
 func Remove(repo repository.RepoConfig, id entity.Id) error {
 	keyPrefix := fmt.Sprintf("%s.%s", configKeyPrefix, id)
 	return repo.GlobalConfig().RemoveAll(keyPrefix)
-}
-
-// ReplaceDefaultUser update all the credential attributed to the temporary "default user"
-// with a real user Id
-func ReplaceDefaultUser(repo repository.RepoConfig, id entity.Id) error {
-	list, err := List(repo, WithUserId(DefaultUserId))
-	if err != nil {
-		return err
-	}
-
-	for _, cred := range list {
-		cred.updateUserId(id)
-		err = Store(repo, cred)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 /*

@@ -212,7 +212,7 @@ func validateBaseUrl(baseUrl string) (bool, error) {
 
 func promptTokenOptions(repo repository.RepoConfig, userId entity.Id, baseUrl string) (auth.Credential, error) {
 	for {
-		creds, err := auth.List(repo, auth.WithUserId(userId), auth.WithTarget(target), auth.WithKind(auth.KindToken))
+		creds, err := auth.List(repo, auth.WithTarget(target), auth.WithKind(auth.KindToken))
 		if err != nil {
 			return nil, err
 		}

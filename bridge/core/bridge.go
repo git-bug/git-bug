@@ -32,12 +32,13 @@ var bridgeImpl map[string]reflect.Type
 // BridgeParams holds parameters to simplify the bridge configuration without
 // having to make terminal prompts.
 type BridgeParams struct {
-	Owner      string
-	Project    string
-	URL        string
-	BaseURL    string
-	CredPrefix string
-	TokenRaw   string
+	Owner      string // owner of the repo                    (Github)
+	Project    string // name of the repo                     (Github,         Launchpad)
+	URL        string // complete URL of a repo               (Github, Gitlab, Launchpad)
+	BaseURL    string // base URL for self-hosted instance    (        Gitlab)
+	CredPrefix string // ID prefix of the credential to use   (Github, Gitlab)
+	TokenRaw   string // pre-existing token to use            (Github, Gitlab)
+	Login      string // username for the passed credential   (Github, Gitlab)
 }
 
 // Bridge is a wrapper around a BridgeImpl that will bind low-level

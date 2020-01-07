@@ -22,8 +22,6 @@ import (
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/input"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/colors"
@@ -49,12 +47,6 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 
 	conf := make(core.Configuration)
 	var err error
-
-	if (params.CredPrefix != "" || params.TokenRaw != "") &&
-		(params.URL == "" && (params.Project == "" || params.Owner == "")) {
-		return nil, fmt.Errorf("you must provide a project URL or Owner/Name to configure this bridge with a token")
-	}
-
 	var owner string
 	var project string
 
@@ -87,15 +79,12 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 		return nil, fmt.Errorf("invalid parameter owner: %v", owner)
 	}
 
-	user, err := repo.GetUserIdentity()
-	if err != nil && err != identity.ErrNoIdentitySet {
-		return nil, err
-	}
-
-	// default to a "to be filled" user Id if we don't have a valid one yet
-	userId := auth.DefaultUserId
-	if user != nil {
-		userId = user.Id()
+	login := params.Login
+	if login == "" {
+		login, err = input.Prompt("Github login", "", true, validateUsername)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var cred auth.Credential
@@ -106,13 +95,11 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 		if err != nil {
 			return nil, err
 		}
-		if user != nil && cred.UserId() != user.Id() {
-			return nil, fmt.Errorf("selected credential don't match the user")
-		}
 	case params.TokenRaw != "":
-		cred = auth.NewToken(userId, params.TokenRaw, target)
+		cred = auth.NewToken(params.TokenRaw, target)
+		cred.Metadata()[auth.MetaKeyLogin] = login
 	default:
-		cred, err = promptTokenOptions(repo, userId, owner, project)
+		cred, err = promptTokenOptions(repo, login, owner, project)
 		if err != nil {
 			return nil, err
 		}
@@ -170,11 +157,11 @@ func (*Github) ValidateConfig(conf core.Configuration) error {
 	return nil
 }
 
-func requestToken(note, username, password string, scope string) (*http.Response, error) {
-	return requestTokenWith2FA(note, username, password, "", scope)
+func requestToken(note, login, password string, scope string) (*http.Response, error) {
+	return requestTokenWith2FA(note, login, password, "", scope)
 }
 
-func requestTokenWith2FA(note, username, password, otpCode string, scope string) (*http.Response, error) {
+func requestTokenWith2FA(note, login, password, otpCode string, scope string) (*http.Response, error) {
 	url := fmt.Sprintf("%s/authorizations", githubV3Url)
 	params := struct {
 		Scopes      []string `json:"scopes"`
@@ -196,7 +183,7 @@ func requestTokenWith2FA(note, username, password, otpCode string, scope string)
 		return nil, err
 	}
 
-	req.SetBasicAuth(username, password)
+	req.SetBasicAuth(login, password)
 	req.Header.Set("Content-Type", "application/json")
 
 	if otpCode != "" {
@@ -240,9 +227,9 @@ func randomFingerprint() string {
 	return string(b)
 }
 
-func promptTokenOptions(repo repository.RepoConfig, userId entity.Id, owner, project string) (auth.Credential, error) {
+func promptTokenOptions(repo repository.RepoConfig, login, owner, project string) (auth.Credential, error) {
 	for {
-		creds, err := auth.List(repo, auth.WithUserId(userId), auth.WithTarget(target))
+		creds, err := auth.List(repo, auth.WithTarget(target), auth.WithMeta(auth.MetaKeyLogin, login))
 		if err != nil {
 			return nil, err
 		}
@@ -258,10 +245,11 @@ func promptTokenOptions(repo repository.RepoConfig, userId entity.Id, owner, pro
 			fmt.Println("Existing tokens for Github:")
 			for i, cred := range creds {
 				token := cred.(*auth.Token)
-				fmt.Printf("[%d]: %s => %s (%s)\n",
+				fmt.Printf("[%d]: %s => %s (login: %s, %s)\n",
 					i+3,
 					colors.Cyan(token.ID().Human()),
 					colors.Red(text.TruncateMax(token.Value, 10)),
+					token.Metadata()[auth.MetaKeyLogin],
 					token.CreateTime().Format(time.RFC822),
 				)
 			}
@@ -289,13 +277,17 @@ func promptTokenOptions(repo repository.RepoConfig, userId entity.Id, owner, pro
 			if err != nil {
 				return nil, err
 			}
-			return auth.NewToken(userId, value, target), nil
+			token := auth.NewToken(value, target)
+			token.Metadata()[auth.MetaKeyLogin] = login
+			return token, nil
 		case 2:
-			value, err := loginAndRequestToken(owner, project)
+			value, err := loginAndRequestToken(login, owner, project)
 			if err != nil {
 				return nil, err
 			}
-			return auth.NewToken(userId, value, target), nil
+			token := auth.NewToken(value, target)
+			token.Metadata()[auth.MetaKeyLogin] = login
+			return token, nil
 		default:
 			return creds[index-3], nil
 		}
@@ -328,7 +320,7 @@ func promptToken() (string, error) {
 	return input.Prompt("Enter token", "token", "", input.Required, validator)
 }
 
-func loginAndRequestToken(owner, project string) (string, error) {
+func loginAndRequestToken(login, owner, project string) (string, error) {
 	fmt.Println("git-bug will now generate an access token in your Github profile. Your credential are not stored and are only used to generate the token. The token is stored in the global git config.")
 	fmt.Println()
 	fmt.Println("The access scope depend on the type of repository.")
@@ -344,11 +336,6 @@ func loginAndRequestToken(owner, project string) (string, error) {
 		return "", err
 	}
 	isPublic := i == 0
-
-	username, err := promptUsername()
-	if err != nil {
-		return "", err
-	}
 
 	password, err := input.PromptPassword("Password", "password", input.Required)
 	if err != nil {
@@ -369,7 +356,7 @@ func loginAndRequestToken(owner, project string) (string, error) {
 
 	note := fmt.Sprintf("git-bug - %s/%s", owner, project)
 
-	resp, err := requestToken(note, username, password, scope)
+	resp, err := requestToken(note, login, password, scope)
 	if err != nil {
 		return "", err
 	}

@@ -1,14 +1,9 @@
 package auth
 
-import (
-	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/identity"
-)
-
 type options struct {
 	target string
-	userId entity.Id
 	kind   CredentialKind
+	meta   map[string]string
 }
 
 type Option func(opts *options)
@@ -26,12 +21,14 @@ func (opts *options) Match(cred Credential) bool {
 		return false
 	}
 
-	if opts.userId != "" && cred.UserId() != opts.userId {
+	if opts.kind != "" && cred.Kind() != opts.kind {
 		return false
 	}
 
-	if opts.kind != "" && cred.Kind() != opts.kind {
-		return false
+	for key, val := range opts.meta {
+		if v, ok := cred.Metadata()[key]; !ok || v != val {
+			return false
+		}
 	}
 
 	return true
@@ -43,20 +40,17 @@ func WithTarget(target string) Option {
 	}
 }
 
-func WithUser(user identity.Interface) Option {
-	return func(opts *options) {
-		opts.userId = user.Id()
-	}
-}
-
-func WithUserId(userId entity.Id) Option {
-	return func(opts *options) {
-		opts.userId = userId
-	}
-}
-
 func WithKind(kind CredentialKind) Option {
 	return func(opts *options) {
 		opts.kind = kind
+	}
+}
+
+func WithMeta(key string, val string) Option {
+	return func(opts *options) {
+		if opts.meta == nil {
+			opts.meta = make(map[string]string)
+		}
+		opts.meta[key] = val
 	}
 }
