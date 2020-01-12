@@ -14,6 +14,8 @@ import (
 )
 
 // PromptValidator is a validator for a user entry
+// If complaint is "", value is considered valid, otherwise it's the error reported to the user
+// If err != nil, a terminal error happened
 type PromptValidator func(name string, value string) (complaint string, err error)
 
 // Required is a validator preventing a "" value

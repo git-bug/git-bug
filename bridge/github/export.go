@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -19,6 +20,7 @@ import (
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
@@ -32,13 +34,6 @@ type githubExporter struct {
 
 	// cache identities clients
 	identityClient map[entity.Id]*githubv4.Client
-
-	// the client to use for non user-specific queries
-	// should be the client of the default user
-	defaultClient *githubv4.Client
-
-	// the token of the default user
-	defaultToken *auth.Token
 
 	// github repository ID
 	repositoryID string
@@ -58,43 +53,33 @@ func (ge *githubExporter) Init(repo *cache.RepoCache, conf core.Configuration) e
 	ge.cachedOperationIDs = make(map[entity.Id]string)
 	ge.cachedLabels = make(map[string]string)
 
-	user, err := repo.GetUserIdentity()
-	if err != nil {
-		return err
-	}
-
 	// preload all clients
-	err = ge.cacheAllClient(repo)
+	err := ge.cacheAllClient(repo)
 	if err != nil {
 		return err
 	}
-
-	ge.defaultClient, err = ge.getClientForIdentity(user.Id())
-	if err != nil {
-		return err
-	}
-
-	creds, err := auth.List(repo, auth.WithUserId(user.Id()), auth.WithTarget(target), auth.WithKind(auth.KindToken))
-	if err != nil {
-		return err
-	}
-
-	if len(creds) == 0 {
-		return ErrMissingIdentityToken
-	}
-
-	ge.defaultToken = creds[0].(*auth.Token)
 
 	return nil
 }
 
-func (ge *githubExporter) cacheAllClient(repo repository.RepoConfig) error {
+func (ge *githubExporter) cacheAllClient(repo *cache.RepoCache) error {
 	creds, err := auth.List(repo, auth.WithTarget(target), auth.WithKind(auth.KindToken))
 	if err != nil {
 		return err
 	}
 
 	for _, cred := range creds {
+		login, ok := cred.Metadata()[auth.MetaKeyLogin]
+		if !ok {
+			_, _ = fmt.Fprintf(os.Stderr, "credential %s is not tagged with Github login\n", cred.ID().Human())
+			continue
+		}
+
+		user, err := repo.ResolveIdentityImmutableMetadata(metaKeyGithubLogin, login)
+		if err == identity.ErrIdentityNotExist {
+			continue
+		}
+
 		if _, ok := ge.identityClient[cred.UserId()]; !ok {
 			client := buildClient(creds[0].(*auth.Token))
 			ge.identityClient[cred.UserId()] = client

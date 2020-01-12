@@ -43,7 +43,7 @@ type Credential interface {
 	Metadata() map[string]string
 
 	// Return all the specific properties of the credential that need to be saved into the configuration.
-	// This does not include Target, User, Kind and CreateTime.
+	// This does not include Target, Kind, CreateTime and Metadata.
 	toConfig() map[string]string
 }
 
@@ -134,7 +134,7 @@ func List(repo repository.RepoConfig, opts ...Option) ([]Credential, error) {
 		return nil, err
 	}
 
-	re, err := regexp.Compile(configKeyPrefix + `.([^.]+).([^.]+)`)
+	re, err := regexp.Compile(`^` + configKeyPrefix + `\.([^.]+)\.([^.]+(?:\.[^.]+)*)$`)
 	if err != nil {
 		panic(err)
 	}

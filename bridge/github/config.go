@@ -81,7 +81,7 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 
 	login := params.Login
 	if login == "" {
-		login, err = input.Prompt("Github login", "", true, validateUsername)
+		login, err = input.Prompt("Github login", "login", input.Required, validateUsername)
 		if err != nil {
 			return nil, err
 		}
@@ -127,6 +127,10 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 	if err != nil {
 		return nil, err
 	}
+
+	// Todo: if no user exist with the given login
+	// - tag the default user with the github login
+	// - add a command to manually tag a user ?
 
 	// don't forget to store the now known valid token
 	if !auth.IdExist(repo, cred.ID()) {
@@ -317,7 +321,7 @@ func promptToken() (string, error) {
 		return "token has incorrect format", nil
 	}
 
-	return input.Prompt("Enter token", "token", "", input.Required, validator)
+	return input.Prompt("Enter token", "token", input.Required, validator)
 }
 
 func loginAndRequestToken(login, owner, project string) (string, error) {

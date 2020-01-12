@@ -140,13 +140,7 @@ func Test_Importer(t *testing.T) {
 		t.Skip("Env var GITHUB_TOKEN_PRIVATE missing")
 	}
 
-	err = author.Commit(repo)
-	require.NoError(t, err)
-
-	err = identity.SetUserIdentity(repo, author)
-	require.NoError(t, err)
-
-	token := auth.NewToken(author.Id(), envToken, target)
+	token := auth.NewToken(envToken, target)
 	err = auth.Store(repo, token)
 	require.NoError(t, err)
 

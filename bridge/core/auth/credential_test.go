@@ -7,32 +7,23 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
 func TestCredential(t *testing.T) {
 	repo := repository.NewMockRepoForTest()
 
-	user1 := identity.NewIdentity("user1", "email")
-	err := user1.Commit(repo)
-	assert.NoError(t, err)
-
-	user2 := identity.NewIdentity("user2", "email")
-	err = user2.Commit(repo)
-	assert.NoError(t, err)
-
-	storeToken := func(user identity.Interface, val string, target string) *Token {
-		token := NewToken(user.Id(), val, target)
-		err = Store(repo, token)
+	storeToken := func(val string, target string) *Token {
+		token := NewToken(val, target)
+		err := Store(repo, token)
 		require.NoError(t, err)
 		return token
 	}
 
-	token := storeToken(user1, "foobar", "github")
+	token := storeToken("foobar", "github")
 
 	// Store + Load
-	err = Store(repo, token)
+	err := Store(repo, token)
 	assert.NoError(t, err)
 
 	token2, err := LoadWithId(repo, token.ID())
@@ -50,8 +41,8 @@ func TestCredential(t *testing.T) {
 	token.createTime = token3.CreateTime()
 	assert.Equal(t, token, token3)
 
-	token4 := storeToken(user1, "foo", "gitlab")
-	token5 := storeToken(user2, "bar", "github")
+	token4 := storeToken("foo", "gitlab")
+	token5 := storeToken("bar", "github")
 
 	// List + options
 	creds, err := List(repo, WithTarget("github"))
@@ -62,14 +53,6 @@ func TestCredential(t *testing.T) {
 	assert.NoError(t, err)
 	sameIds(t, creds, []Credential{token4})
 
-	creds, err = List(repo, WithUser(user1))
-	assert.NoError(t, err)
-	sameIds(t, creds, []Credential{token, token4})
-
-	creds, err = List(repo, WithUserId(user1.Id()))
-	assert.NoError(t, err)
-	sameIds(t, creds, []Credential{token, token4})
-
 	creds, err = List(repo, WithKind(KindToken))
 	assert.NoError(t, err)
 	sameIds(t, creds, []Credential{token, token4, token5})
@@ -77,6 +60,16 @@ func TestCredential(t *testing.T) {
 	creds, err = List(repo, WithKind(KindLoginPassword))
 	assert.NoError(t, err)
 	sameIds(t, creds, []Credential{})
+
+	// Metadata
+
+	token4.Metadata()["key"] = "value"
+	err = Store(repo, token4)
+	assert.NoError(t, err)
+
+	creds, err = List(repo, WithMeta("key", "value"))
+	assert.NoError(t, err)
+	sameIds(t, creds, []Credential{token4})
 
 	// Exist
 	exist := IdExist(repo, token.ID())
