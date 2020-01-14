@@ -409,36 +409,27 @@ func (c *RepoCache) ResolveBugExcerpt(id entity.Id) (*BugExcerpt, error) {
 // ResolveBugPrefix retrieve a bug matching an id prefix. It fails if multiple
 // bugs match.
 func (c *RepoCache) ResolveBugPrefix(prefix string) (*BugCache, error) {
-	// preallocate but empty
-	matching := make([]entity.Id, 0, 5)
-
-	for id := range c.bugExcerpts {
-		if id.HasPrefix(prefix) {
-			matching = append(matching, id)
-		}
-	}
-
-	if len(matching) > 1 {
-		return nil, bug.NewErrMultipleMatchBug(matching)
-	}
-
-	if len(matching) == 0 {
-		return nil, bug.ErrBugNotExist
-	}
-
-	return c.ResolveBug(matching[0])
+	return c.ResolveBugMatcher(func(excerpt *BugExcerpt) bool {
+		return excerpt.Id.HasPrefix(prefix)
+	})
 }
 
 // ResolveBugCreateMetadata retrieve a bug that has the exact given metadata on
 // its Create operation, that is, the first operation. It fails if multiple bugs
 // match.
 func (c *RepoCache) ResolveBugCreateMetadata(key string, value string) (*BugCache, error) {
+	return c.ResolveBugMatcher(func(excerpt *BugExcerpt) bool {
+		return excerpt.CreateMetadata[key] == value
+	})
+}
+
+func (c *RepoCache) ResolveBugMatcher(f func(*BugExcerpt) bool) (*BugCache, error) {
 	// preallocate but empty
 	matching := make([]entity.Id, 0, 5)
 
-	for id, excerpt := range c.bugExcerpts {
-		if excerpt.CreateMetadata[key] == value {
-			matching = append(matching, id)
+	for _, excerpt := range c.bugExcerpts {
+		if f(excerpt) {
+			matching = append(matching, excerpt.Id)
 		}
 	}
 
@@ -785,35 +776,32 @@ func (c *RepoCache) ResolveIdentityExcerpt(id entity.Id) (*IdentityExcerpt, erro
 // ResolveIdentityPrefix retrieve an Identity matching an id prefix.
 // It fails if multiple identities match.
 func (c *RepoCache) ResolveIdentityPrefix(prefix string) (*IdentityCache, error) {
-	// preallocate but empty
-	matching := make([]entity.Id, 0, 5)
-
-	for id := range c.identitiesExcerpts {
-		if id.HasPrefix(prefix) {
-			matching = append(matching, id)
-		}
-	}
-
-	if len(matching) > 1 {
-		return nil, identity.NewErrMultipleMatch(matching)
-	}
-
-	if len(matching) == 0 {
-		return nil, identity.ErrIdentityNotExist
-	}
-
-	return c.ResolveIdentity(matching[0])
+	return c.ResolveIdentityMatcher(func(excerpt *IdentityExcerpt) bool {
+		return excerpt.Id.HasPrefix(prefix)
+	})
 }
 
 // ResolveIdentityImmutableMetadata retrieve an Identity that has the exact given metadata on
 // one of it's version. If multiple version have the same key, the first defined take precedence.
 func (c *RepoCache) ResolveIdentityImmutableMetadata(key string, value string) (*IdentityCache, error) {
+	return c.ResolveIdentityMatcher(func(excerpt *IdentityExcerpt) bool {
+		return excerpt.ImmutableMetadata[key] == value
+	})
+}
+
+func (c *RepoCache) ResolveIdentityLogin(login string) (*IdentityCache, error) {
+	return c.ResolveIdentityMatcher(func(excerpt *IdentityExcerpt) bool {
+		return excerpt.Login == login
+	})
+}
+
+func (c *RepoCache) ResolveIdentityMatcher(f func(*IdentityExcerpt) bool) (*IdentityCache, error) {
 	// preallocate but empty
 	matching := make([]entity.Id, 0, 5)
 
-	for id, i := range c.identitiesExcerpts {
-		if i.ImmutableMetadata[key] == value {
-			matching = append(matching, id)
+	for _, excerpt := range c.identitiesExcerpts {
+		if f(excerpt) {
+			matching = append(matching, excerpt.Id)
 		}
 	}
 
