@@ -24,8 +24,8 @@ type Version struct {
 	unixTime int64
 
 	name      string
-	email     string
-	login     string
+	email     string // TODO: remove ? keep and use metadata for bridges ?
+	login     string // TODO: remove
 	avatarURL string
 
 	// The set of keys valid at that time, from this version onward, until they get removed
@@ -58,6 +58,14 @@ type VersionJSON struct {
 	Keys      []Key             `json:"pub_keys,omitempty"`
 	Nonce     []byte            `json:"nonce,omitempty"`
 	Metadata  map[string]string `json:"metadata,omitempty"`
+}
+
+type VersionMutator struct {
+	Name      string
+	Email     string
+	Login     string
+	AvatarUrl string
+	Keys      []Key
 }
 
 func (v *Version) MarshalJSON() ([]byte, error) {

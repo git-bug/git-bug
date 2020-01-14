@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"reflect"
 	"strings"
 	"time"
 
@@ -271,8 +272,26 @@ func IsUserIdentitySet(repo repository.Repo) (bool, error) {
 	return len(configs) == 1, nil
 }
 
-func (i *Identity) AddVersion(version *Version) {
-	i.versions = append(i.versions, version)
+// Mutate allow to create a new version of the Identity
+func (i *Identity) Mutate(f func(orig VersionMutator) VersionMutator) {
+	orig := VersionMutator{
+		Name:      i.Name(),
+		Email:     i.Email(),
+		Login:     i.Login(),
+		AvatarUrl: i.AvatarUrl(),
+		Keys:      i.Keys(),
+	}
+	mutated := f(orig)
+	if reflect.DeepEqual(orig, mutated) {
+		return
+	}
+	i.versions = append(i.versions, &Version{
+		name:      mutated.Name,
+		email:     mutated.Email,
+		login:     mutated.Login,
+		avatarURL: mutated.AvatarUrl,
+		keys:      mutated.Keys,
+	})
 }
 
 // Write the identity into the Repository. In particular, this ensure that

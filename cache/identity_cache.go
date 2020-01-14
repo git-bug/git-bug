@@ -21,8 +21,8 @@ func (i *IdentityCache) notifyUpdated() error {
 	return i.repoCache.identityUpdated(i.Identity.Id())
 }
 
-func (i *IdentityCache) AddVersion(version *identity.Version) error {
-	i.Identity.AddVersion(version)
+func (i *IdentityCache) Mutate(f func(identity.VersionMutator) identity.VersionMutator) error {
+	i.Identity.Mutate(f)
 	return i.notifyUpdated()
 }
 
