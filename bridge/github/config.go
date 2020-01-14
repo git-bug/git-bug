@@ -22,6 +22,7 @@ import (
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/input"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/colors"
@@ -81,7 +82,18 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 
 	login := params.Login
 	if login == "" {
-		login, err = input.Prompt("Github login", "login", input.Required, validateUsername)
+		validator := func(name string, value string) (string, error) {
+			ok, err := validateUsername(value)
+			if err != nil {
+				return "", err
+			}
+			if !ok {
+				return "invalid login", nil
+			}
+			return "", nil
+		}
+
+		login, err = input.Prompt("Github login", "login", input.Required, validator)
 		if err != nil {
 			return nil, err
 		}
@@ -127,6 +139,28 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 	if err != nil {
 		return nil, err
 	}
+
+	// TODO
+	func(login string) error {
+		// if no user exist with the given login
+		_, err := repo.ResolveIdentityLogin(login)
+		if err != nil && err != identity.ErrIdentityNotExist {
+			return err
+		}
+
+		// tag the default user with the github login, if any
+		// if not,
+		user, err := repo.GetUserIdentity()
+		if err == identity.ErrNoIdentitySet {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+
+		repo.GetUserIdentity()
+
+	}(login)
 
 	// Todo: if no user exist with the given login
 	// - tag the default user with the github login
