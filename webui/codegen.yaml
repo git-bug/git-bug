@@ -1,0 +1,8 @@
+schema: '../graphql/schema/*.graphql'
+overwrite: true
+generates:
+  ./src/fragmentTypes.js:
+    plugins:
+    - fragment-matcher
+    config:
+      module: es2015

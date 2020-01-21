@@ -2,7 +2,6 @@ import { makeStyles } from '@material-ui/styles';
 import TableCell from '@material-ui/core/TableCell/TableCell';
 import TableRow from '@material-ui/core/TableRow/TableRow';
 import Tooltip from '@material-ui/core/Tooltip/Tooltip';
-import Typography from '@material-ui/core/Typography';
 import ErrorOutline from '@material-ui/icons/ErrorOutline';
 import gql from 'graphql-tag';
 import React from 'react';
