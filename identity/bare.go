@@ -25,7 +25,6 @@ type Bare struct {
 	id        entity.Id
 	name      string
 	email     string
-	login     string
 	avatarUrl string
 }
 
@@ -33,8 +32,8 @@ func NewBare(name string, email string) *Bare {
 	return &Bare{id: entity.UnsetId, name: name, email: email}
 }
 
-func NewBareFull(name string, email string, login string, avatarUrl string) *Bare {
-	return &Bare{id: entity.UnsetId, name: name, email: email, login: login, avatarUrl: avatarUrl}
+func NewBareFull(name string, email string, avatarUrl string) *Bare {
+	return &Bare{id: entity.UnsetId, name: name, email: email, avatarUrl: avatarUrl}
 }
 
 func deriveId(data []byte) entity.Id {
@@ -45,7 +44,7 @@ func deriveId(data []byte) entity.Id {
 type bareIdentityJSON struct {
 	Name      string `json:"name,omitempty"`
 	Email     string `json:"email,omitempty"`
-	Login     string `json:"login,omitempty"`
+	Login     string `json:"login,omitempty"` // Deprecated, only kept to have the same ID when reading an old value
 	AvatarUrl string `json:"avatar_url,omitempty"`
 }
 
@@ -53,7 +52,6 @@ func (i *Bare) MarshalJSON() ([]byte, error) {
 	return json.Marshal(bareIdentityJSON{
 		Name:      i.name,
 		Email:     i.email,
-		Login:     i.login,
 		AvatarUrl: i.avatarUrl,
 	})
 }
@@ -70,7 +68,6 @@ func (i *Bare) UnmarshalJSON(data []byte) error {
 
 	i.name = aux.Name
 	i.email = aux.Email
-	i.login = aux.Login
 	i.avatarUrl = aux.AvatarUrl
 
 	return nil
@@ -109,11 +106,6 @@ func (i *Bare) Email() string {
 	return i.email
 }
 
-// Login return the last version of the login
-func (i *Bare) Login() string {
-	return i.login
-}
-
 // AvatarUrl return the last version of the Avatar URL
 func (i *Bare) AvatarUrl() string {
 	return i.avatarUrl
@@ -132,22 +124,13 @@ func (i *Bare) ValidKeysAtTime(time lamport.Time) []Key {
 // DisplayName return a non-empty string to display, representing the
 // identity, based on the non-empty values.
 func (i *Bare) DisplayName() string {
-	switch {
-	case i.name == "" && i.login != "":
-		return i.login
-	case i.name != "" && i.login == "":
-		return i.name
-	case i.name != "" && i.login != "":
-		return fmt.Sprintf("%s (%s)", i.name, i.login)
-	}
-
-	panic("invalid person data")
+	return i.name
 }
 
 // Validate check if the Identity data is valid
 func (i *Bare) Validate() error {
-	if text.Empty(i.name) && text.Empty(i.login) {
-		return fmt.Errorf("either name or login should be set")
+	if text.Empty(i.name) {
+		return fmt.Errorf("name is not set")
 	}
 
 	if strings.Contains(i.name, "\n") {
@@ -156,14 +139,6 @@ func (i *Bare) Validate() error {
 
 	if !text.Safe(i.name) {
 		return fmt.Errorf("name is not fully printable")
-	}
-
-	if strings.Contains(i.login, "\n") {
-		return fmt.Errorf("login should be a single line")
-	}
-
-	if !text.Safe(i.login) {
-		return fmt.Errorf("login is not fully printable")
 	}
 
 	if strings.Contains(i.email, "\n") {

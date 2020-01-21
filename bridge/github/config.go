@@ -149,7 +149,6 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 		}
 
 		// tag the default user with the github login, if any
-		// if not,
 		user, err := repo.GetUserIdentity()
 		if err == identity.ErrNoIdentitySet {
 			return nil
@@ -158,7 +157,10 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 			return err
 		}
 
-		repo.GetUserIdentity()
+		userLogin, ok := user.ImmutableMetadata()[metaKeyGithubLogin]
+		if !ok {
+			user.SetMetadata()
+		}
 
 	}(login)
 

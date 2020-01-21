@@ -17,9 +17,6 @@ type Interface interface {
 	// Email return the last version of the email
 	Email() string
 
-	// Login return the last version of the login
-	Login() string
-
 	// AvatarUrl return the last version of the Avatar URL
 	AvatarUrl() string
 

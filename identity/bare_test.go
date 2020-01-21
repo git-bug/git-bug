@@ -18,7 +18,6 @@ func TestBare_Id(t *testing.T) {
 
 func TestBareSerialize(t *testing.T) {
 	before := &Bare{
-		login:     "login",
 		email:     "email",
 		name:      "name",
 		avatarUrl: "avatar",
