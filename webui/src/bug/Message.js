@@ -20,6 +20,7 @@ const useStyles = makeStyles(theme => ({
   bubble: {
     flex: 1,
     marginLeft: theme.spacing(1),
+    minWidth: 0,
   },
   header: {
     ...theme.typography.body1,

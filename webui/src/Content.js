@@ -3,6 +3,7 @@ import parse from 'remark-parse';
 import html from 'remark-html';
 import remark2react from 'remark-react';
 import ImageTag from './tag/ImageTag';
+import PreTag from './tag/PreTag';
 
 const Content = ({ markdown }) => {
   const processor = unified()
@@ -11,6 +12,7 @@ const Content = ({ markdown }) => {
     .use(remark2react, {
       remarkReactComponents: {
         img: ImageTag,
+        pre: PreTag,
       },
     });
 
