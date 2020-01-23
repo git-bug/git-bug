@@ -7,9 +7,13 @@ const useStyles = makeStyles({
   },
 });
 
-const ImageTag = (props) => {
+const ImageTag = ({ alt, ...props }) => {
   const classes = useStyles();
-  return <img className={classes.tag} {...props} />
+  return (
+    <a href={props.src} target="_blank" rel="noopener noreferrer nofollow">
+      <img className={classes.tag} alt={alt} {...props} />
+    </a>
+  );
 };
 
 export default ImageTag;
