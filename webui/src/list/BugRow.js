@@ -3,6 +3,7 @@ import TableCell from '@material-ui/core/TableCell/TableCell';
 import TableRow from '@material-ui/core/TableRow/TableRow';
 import Tooltip from '@material-ui/core/Tooltip/Tooltip';
 import ErrorOutline from '@material-ui/icons/ErrorOutline';
+import CheckCircleOutline from '@material-ui/icons/CheckCircleOutline';
 import gql from 'graphql-tag';
 import React from 'react';
 import { Link } from 'react-router-dom';
@@ -18,7 +19,7 @@ const Open = ({ className }) => (
 
 const Closed = ({ className }) => (
   <Tooltip title="Closed">
-    <ErrorOutline htmlColor="#cb2431" className={className} />
+    <CheckCircleOutline htmlColor="#cb2431" className={className} />
   </Tooltip>
 );
 
