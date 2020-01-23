@@ -44,7 +44,7 @@ func StatusFromString(str string) (Status, error) {
 	case "closed":
 		return ClosedStatus, nil
 	default:
-		return 0, fmt.Errorf("unknow status")
+		return 0, fmt.Errorf("unknown status")
 	}
 }
 

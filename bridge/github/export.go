@@ -21,7 +21,6 @@ import (
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/identity"
-	"github.com/MichaelMure/git-bug/repository"
 )
 
 var (
@@ -34,6 +33,13 @@ type githubExporter struct {
 
 	// cache identities clients
 	identityClient map[entity.Id]*githubv4.Client
+
+	// the client to use for non user-specific queries
+	// should be the client of the default user
+	defaultClient *githubv4.Client
+
+	// the token of the default user
+	defaultToken *auth.Token
 
 	// github repository ID
 	repositoryID string
@@ -53,11 +59,33 @@ func (ge *githubExporter) Init(repo *cache.RepoCache, conf core.Configuration) e
 	ge.cachedOperationIDs = make(map[entity.Id]string)
 	ge.cachedLabels = make(map[string]string)
 
-	// preload all clients
-	err := ge.cacheAllClient(repo)
+	user, err := repo.GetUserIdentity()
 	if err != nil {
 		return err
 	}
+
+	// preload all clients
+	err = ge.cacheAllClient(repo)
+	if err != nil {
+		return err
+	}
+
+	ge.defaultClient, err = ge.getClientForIdentity(user.Id())
+	if err != nil {
+		return err
+	}
+
+	login := user.ImmutableMetadata()[metaKeyGithubLogin]
+	creds, err := auth.List(repo, auth.WithMeta(metaKeyGithubLogin, login), auth.WithTarget(target), auth.WithKind(auth.KindToken))
+	if err != nil {
+		return err
+	}
+
+	if len(creds) == 0 {
+		return ErrMissingIdentityToken
+	}
+
+	ge.defaultToken = creds[0].(*auth.Token)
 
 	return nil
 }
@@ -69,7 +97,7 @@ func (ge *githubExporter) cacheAllClient(repo *cache.RepoCache) error {
 	}
 
 	for _, cred := range creds {
-		login, ok := cred.Metadata()[auth.MetaKeyLogin]
+		login, ok := cred.GetMetadata(auth.MetaKeyLogin)
 		if !ok {
 			_, _ = fmt.Fprintf(os.Stderr, "credential %s is not tagged with Github login\n", cred.ID().Human())
 			continue
@@ -80,9 +108,9 @@ func (ge *githubExporter) cacheAllClient(repo *cache.RepoCache) error {
 			continue
 		}
 
-		if _, ok := ge.identityClient[cred.UserId()]; !ok {
+		if _, ok := ge.identityClient[user.Id()]; !ok {
 			client := buildClient(creds[0].(*auth.Token))
-			ge.identityClient[cred.UserId()] = client
+			ge.identityClient[user.Id()] = client
 		}
 	}
 
@@ -462,11 +490,12 @@ func (ge *githubExporter) cacheGithubLabels(ctx context.Context, gc *githubv4.Cl
 	for hasNextPage {
 		// create a new timeout context at each iteration
 		ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
-		defer cancel()
 
 		if err := gc.Query(ctx, &q, variables); err != nil {
+			cancel()
 			return err
 		}
+		cancel()
 
 		for _, label := range q.Repository.Labels.Nodes {
 			ge.cachedLabels[label.Name] = label.ID

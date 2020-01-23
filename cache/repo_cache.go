@@ -789,12 +789,6 @@ func (c *RepoCache) ResolveIdentityImmutableMetadata(key string, value string) (
 	})
 }
 
-func (c *RepoCache) ResolveIdentityLogin(login string) (*IdentityCache, error) {
-	return c.ResolveIdentityMatcher(func(excerpt *IdentityExcerpt) bool {
-		return excerpt.Login == login
-	})
-}
-
 func (c *RepoCache) ResolveIdentityMatcher(f func(*IdentityExcerpt) bool) (*IdentityCache, error) {
 	// preallocate but empty
 	matching := make([]entity.Id, 0, 5)
@@ -869,21 +863,36 @@ func (c *RepoCache) IsUserIdentitySet() (bool, error) {
 	return identity.IsUserIdentitySet(c.repo)
 }
 
+func (c *RepoCache) NewIdentityFromGitUser() (*IdentityCache, error) {
+	return c.NewIdentityFromGitUserRaw(nil)
+}
+
+func (c *RepoCache) NewIdentityFromGitUserRaw(metadata map[string]string) (*IdentityCache, error) {
+	i, err := identity.NewFromGitUser(c.repo)
+	if err != nil {
+		return nil, err
+	}
+	return c.finishIdentity(i, metadata)
+}
+
 // NewIdentity create a new identity
 // The new identity is written in the repository (commit)
 func (c *RepoCache) NewIdentity(name string, email string) (*IdentityCache, error) {
-	return c.NewIdentityRaw(name, email, "", "", nil)
+	return c.NewIdentityRaw(name, email, "", nil)
 }
 
 // NewIdentityFull create a new identity
 // The new identity is written in the repository (commit)
-func (c *RepoCache) NewIdentityFull(name string, email string, login string, avatarUrl string) (*IdentityCache, error) {
-	return c.NewIdentityRaw(name, email, login, avatarUrl, nil)
+func (c *RepoCache) NewIdentityFull(name string, email string, avatarUrl string) (*IdentityCache, error) {
+	return c.NewIdentityRaw(name, email, avatarUrl, nil)
 }
 
-func (c *RepoCache) NewIdentityRaw(name string, email string, login string, avatarUrl string, metadata map[string]string) (*IdentityCache, error) {
-	i := identity.NewIdentityFull(name, email, login, avatarUrl)
+func (c *RepoCache) NewIdentityRaw(name string, email string, avatarUrl string, metadata map[string]string) (*IdentityCache, error) {
+	i := identity.NewIdentityFull(name, email, avatarUrl)
+	return c.finishIdentity(i, metadata)
+}
 
+func (c *RepoCache) finishIdentity(i *identity.Identity, metadata map[string]string) (*IdentityCache, error) {
 	for key, value := range metadata {
 		i.SetMetadata(key, value)
 	}

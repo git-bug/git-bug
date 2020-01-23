@@ -26,7 +26,7 @@ func (opts *options) Match(cred Credential) bool {
 	}
 
 	for key, val := range opts.meta {
-		if v, ok := cred.Metadata()[key]; !ok || v != val {
+		if v, ok := cred.GetMetadata(key); !ok || v != val {
 			return false
 		}
 	}

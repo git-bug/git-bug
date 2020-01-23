@@ -14,7 +14,3 @@ type identityResolver struct{}
 func (identityResolver) ID(ctx context.Context, obj identity.Interface) (string, error) {
 	return obj.Id().String(), nil
 }
-
-func (identityResolver) HumanID(ctx context.Context, obj identity.Interface) (string, error) {
-	return obj.Id().Human(), nil
-}

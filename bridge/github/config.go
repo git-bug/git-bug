@@ -22,7 +22,6 @@ import (
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/input"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/colors"
@@ -109,7 +108,7 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 		}
 	case params.TokenRaw != "":
 		cred = auth.NewToken(params.TokenRaw, target)
-		cred.Metadata()[auth.MetaKeyLogin] = login
+		cred.SetMetadata(auth.MetaKeyLogin, login)
 	default:
 		cred, err = promptTokenOptions(repo, login, owner, project)
 		if err != nil {
@@ -140,34 +139,6 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 		return nil, err
 	}
 
-	// TODO
-	func(login string) error {
-		// if no user exist with the given login
-		_, err := repo.ResolveIdentityLogin(login)
-		if err != nil && err != identity.ErrIdentityNotExist {
-			return err
-		}
-
-		// tag the default user with the github login, if any
-		user, err := repo.GetUserIdentity()
-		if err == identity.ErrNoIdentitySet {
-			return nil
-		}
-		if err != nil {
-			return err
-		}
-
-		userLogin, ok := user.ImmutableMetadata()[metaKeyGithubLogin]
-		if !ok {
-			user.SetMetadata()
-		}
-
-	}(login)
-
-	// Todo: if no user exist with the given login
-	// - tag the default user with the github login
-	// - add a command to manually tag a user ?
-
 	// don't forget to store the now known valid token
 	if !auth.IdExist(repo, cred.ID()) {
 		err = auth.Store(repo, cred)
@@ -176,7 +147,7 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 		}
 	}
 
-	return conf, nil
+	return conf, core.FinishConfig(repo, metaKeyGithubLogin, login)
 }
 
 func (*Github) ValidateConfig(conf core.Configuration) error {
@@ -318,7 +289,7 @@ func promptTokenOptions(repo repository.RepoConfig, login, owner, project string
 				return nil, err
 			}
 			token := auth.NewToken(value, target)
-			token.Metadata()[auth.MetaKeyLogin] = login
+			token.SetMetadata(auth.MetaKeyLogin, login)
 			return token, nil
 		case 2:
 			value, err := loginAndRequestToken(login, owner, project)
@@ -326,7 +297,7 @@ func promptTokenOptions(repo repository.RepoConfig, login, owner, project string
 				return nil, err
 			}
 			token := auth.NewToken(value, target)
-			token.Metadata()[auth.MetaKeyLogin] = login
+			token.SetMetadata(auth.MetaKeyLogin, login)
 			return token, nil
 		default:
 			return creds[index-3], nil

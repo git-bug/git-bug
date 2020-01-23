@@ -21,10 +21,10 @@ type Interface interface {
 	AvatarUrl() string
 
 	// Keys return the last version of the valid keys
-	Keys() []Key
+	Keys() []*Key
 
 	// ValidKeysAtTime return the set of keys valid at a given lamport time
-	ValidKeysAtTime(time lamport.Time) []Key
+	ValidKeysAtTime(time lamport.Time) []*Key
 
 	// DisplayName return a non-empty string to display, representing the
 	// identity, based on the non-empty values.

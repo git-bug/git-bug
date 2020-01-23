@@ -275,7 +275,7 @@ type Mutator struct {
 	Name      string
 	Email     string
 	AvatarUrl string
-	Keys      []Key
+	Keys      []*Key
 }
 
 // Mutate allow to create a new version of the Identity
@@ -507,13 +507,13 @@ func (i *Identity) AvatarUrl() string {
 }
 
 // Keys return the last version of the valid keys
-func (i *Identity) Keys() []Key {
+func (i *Identity) Keys() []*Key {
 	return i.lastVersion().keys
 }
 
 // ValidKeysAtTime return the set of keys valid at a given lamport time
-func (i *Identity) ValidKeysAtTime(time lamport.Time) []Key {
-	var result []Key
+func (i *Identity) ValidKeysAtTime(time lamport.Time) []*Key {
+	var result []*Key
 
 	for _, v := range i.versions {
 		if v.time > time {
@@ -550,11 +550,11 @@ func (i *Identity) LastModification() timestamp.Timestamp {
 }
 
 // SetMetadata store arbitrary metadata along the last not-commit Version.
-// If the Version has been commit to git already, a new version is added and will need to be
+// If the Version has been commit to git already, a new identical version is added and will need to be
 // commit.
 func (i *Identity) SetMetadata(key string, value string) {
 	if i.lastVersion().commitHash != "" {
-
+		i.versions = append(i.versions, i.lastVersion().Clone())
 	}
 	i.lastVersion().SetMetadata(key, value)
 }
@@ -587,4 +587,10 @@ func (i *Identity) MutableMetadata() map[string]string {
 	}
 
 	return metadata
+}
+
+// addVersionForTest add a new version to the identity
+// Only for testing !
+func (i *Identity) addVersionForTest(version *Version) {
+	i.versions = append(i.versions, version)
 }

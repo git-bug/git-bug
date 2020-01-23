@@ -176,7 +176,7 @@ func TestPushPull(t *testing.T) {
 		return deleteRepository(projectName, envUser, envToken)
 	})
 
-	token := auth.NewToken(author.Id(), envToken, target)
+	token := auth.NewToken(envToken, target)
 	err = auth.Store(repo, token)
 	require.NoError(t, err)
 

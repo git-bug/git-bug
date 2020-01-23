@@ -30,7 +30,7 @@ type Version struct {
 	// The set of keys valid at that time, from this version onward, until they get removed
 	// in a new version. This allow to have multiple key for the same identity (e.g. one per
 	// device) as well as revoke key.
-	keys []Key
+	keys []*Key
 
 	// This optional array is here to ensure a better randomness of the identity id to avoid collisions.
 	// It has no functional purpose and should be ignored.
@@ -53,24 +53,22 @@ type VersionJSON struct {
 	Name      string            `json:"name,omitempty"`
 	Email     string            `json:"email,omitempty"`
 	AvatarUrl string            `json:"avatar_url,omitempty"`
-	Keys      []Key             `json:"pub_keys,omitempty"`
+	Keys      []*Key            `json:"pub_keys,omitempty"`
 	Nonce     []byte            `json:"nonce,omitempty"`
 	Metadata  map[string]string `json:"metadata,omitempty"`
 }
 
 // Make a deep copy
 func (v *Version) Clone() *Version {
-
 	clone := &Version{
 		name:      v.name,
 		email:     v.email,
 		avatarURL: v.avatarURL,
-		keys:      make([]Key, len(v.keys)),
-		metadata:  make(map[string]string),
+		keys:      make([]*Key, len(v.keys)),
 	}
 
-	for i, op := range opp.Operations {
-		clone.Operations[i] = op
+	for i, key := range v.keys {
+		clone.keys[i] = key.Clone()
 	}
 
 	return clone

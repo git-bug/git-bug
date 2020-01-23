@@ -30,7 +30,6 @@ func NewToken(value, target string) *Token {
 		target:     target,
 		createTime: time.Now(),
 		Value:      value,
-		meta:       make(map[string]string),
 	}
 }
 
@@ -86,6 +85,18 @@ func (t *Token) Validate() error {
 
 func (t *Token) Metadata() map[string]string {
 	return t.meta
+}
+
+func (t *Token) GetMetadata(key string) (string, bool) {
+	val, ok := t.meta[key]
+	return val, ok
+}
+
+func (t *Token) SetMetadata(key string, value string) {
+	if t.meta == nil {
+		t.meta = make(map[string]string)
+	}
+	t.meta[key] = value
 }
 
 func (t *Token) toConfig() map[string]string {

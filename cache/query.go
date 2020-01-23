@@ -91,7 +91,7 @@ func ParseQuery(query string) (*Query, error) {
 			sortingDone = true
 
 		default:
-			return nil, fmt.Errorf("unknow qualifier name %s", qualifierName)
+			return nil, fmt.Errorf("unknown qualifier name %s", qualifierName)
 		}
 	}
 
@@ -165,7 +165,7 @@ func (q *Query) parseSorting(query string) error {
 		q.OrderDirection = OrderAscending
 
 	default:
-		return fmt.Errorf("unknow sorting %s", query)
+		return fmt.Errorf("unknown sorting %s", query)
 	}
 
 	return nil

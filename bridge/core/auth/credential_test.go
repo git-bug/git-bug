@@ -63,7 +63,7 @@ func TestCredential(t *testing.T) {
 
 	// Metadata
 
-	token4.Metadata()["key"] = "value"
+	token4.SetMetadata("key", "value")
 	err = Store(repo, token4)
 	assert.NoError(t, err)
 

@@ -40,7 +40,10 @@ type Credential interface {
 	Kind() CredentialKind
 	CreateTime() time.Time
 	Validate() error
+
 	Metadata() map[string]string
+	GetMetadata(key string) (string, bool)
+	SetMetadata(key string, value string)
 
 	// Return all the specific properties of the credential that need to be saved into the configuration.
 	// This does not include Target, Kind, CreateTime and Metadata.
@@ -123,6 +126,9 @@ func metaFromConfig(configs map[string]string) map[string]string {
 			key = strings.TrimPrefix(key, configKeyPrefixMeta)
 			result[key] = val
 		}
+	}
+	if len(result) == 0 {
+		return nil
 	}
 	return result
 }

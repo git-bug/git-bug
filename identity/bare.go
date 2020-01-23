@@ -112,13 +112,13 @@ func (i *Bare) AvatarUrl() string {
 }
 
 // Keys return the last version of the valid keys
-func (i *Bare) Keys() []Key {
-	return []Key{}
+func (i *Bare) Keys() []*Key {
+	return nil
 }
 
 // ValidKeysAtTime return the set of keys valid at a given lamport time
-func (i *Bare) ValidKeysAtTime(time lamport.Time) []Key {
-	return []Key{}
+func (i *Bare) ValidKeysAtTime(_ lamport.Time) []*Key {
+	return nil
 }
 
 // DisplayName return a non-empty string to display, representing the
