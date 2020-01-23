@@ -21,13 +21,19 @@ const theme = createMuiTheme({
 
 const useStyles = makeStyles(theme => ({
   offset: theme.mixins.toolbar,
+  filler: {
+    flexGrow: 1,
+  },
   appTitle: {
     ...theme.typography.h6,
     color: 'white',
     textDecoration: 'none',
+    display: 'flex',
+    alignItems: 'center',
   },
-  headerLeft: {
-    flexGrow: 1,
+  logo: {
+    height: '42px',
+    marginRight: theme.spacing(2),
   },
 }));
 
@@ -39,11 +45,11 @@ export default function App() {
       <CssBaseline />
       <AppBar position="fixed" color="primary">
         <Toolbar>
-          <div className={classes.headerLeft}>
-            <Link to="/" className={classes.appTitle}>
-              git-bug webui
-            </Link>
-          </div>
+          <Link to="/" className={classes.appTitle}>
+            <img src="logo.svg" className={classes.logo} alt="git-bug" />
+            git-bug
+          </Link>
+          <div className={classes.filler}></div>
           <CurrentIdentity />
         </Toolbar>
       </AppBar>
