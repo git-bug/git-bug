@@ -25,22 +25,16 @@ const CurrentIdentity = () => {
   const classes = useStyles();
   return (
     <Query query={QUERY}>
-      {({ error, data }) => {
-        if (
-          error ||
-          !data ||
-          !data.defaultRepository ||
-          !data.defaultRepository.userIdentity ||
-          !data.defaultRepository.userIdentity.displayName
-        )
-          return <></>;
-        const displayName =
-          data.defaultRepository.userIdentity.displayName || '';
-        const avatar = data.defaultRepository.userIdentity.avatarUrl;
+      {({ loading, error, data }) => {
+        if (error || loading || !data.defaultRepository.userIdentity)
+          return null;
+        const user = data.defaultRepository.userIdentity;
         return (
           <>
-            <Avatar src={avatar}>{displayName.charAt(0).toUpperCase()}</Avatar>
-            <div className={classes.displayName}>{displayName}</div>
+            <Avatar src={user.avatarUrl}>
+              {user.displayName.charAt(0).toUpperCase()}
+            </Avatar>
+            <div className={classes.displayName}>{user.displayName}</div>
           </>
         );
       }}
