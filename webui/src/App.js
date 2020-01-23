@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 
 import BugQuery from './bug/BugQuery';
 import ListQuery from './list/ListQuery';
+import CurrentIdentity from './CurrentIdentity';
 
 const theme = createMuiTheme({
   palette: {
@@ -24,6 +25,8 @@ const useStyles = makeStyles(theme => ({
     ...theme.typography.h6,
     color: 'white',
     textDecoration: 'none',
+  },
+  headerLeft: {
     flexGrow: 1,
   },
 }));
@@ -36,9 +39,12 @@ export default function App() {
       <CssBaseline />
       <AppBar position="fixed" color="primary">
         <Toolbar>
-          <Link to="/" className={classes.appTitle}>
-            git-bug webui
-          </Link>
+          <div className={classes.headerLeft}>
+            <Link to="/" className={classes.appTitle}>
+              git-bug webui
+            </Link>
+          </div>
+          <CurrentIdentity />
         </Toolbar>
       </AppBar>
       <div className={classes.offset} />
