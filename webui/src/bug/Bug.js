@@ -31,6 +31,7 @@ const useStyles = makeStyles(theme => ({
     flex: 1,
     marginTop: theme.spacing(2),
     marginRight: theme.spacing(2),
+    minWidth: 0,
   },
   sidebar: {
     marginTop: theme.spacing(2),
