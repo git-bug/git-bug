@@ -19,10 +19,12 @@ const theme = createMuiTheme({
 });
 
 const useStyles = makeStyles(theme => ({
+  offset: theme.mixins.toolbar,
   appTitle: {
     ...theme.typography.h6,
     color: 'white',
     textDecoration: 'none',
+    flexGrow: 1,
   },
 }));
 
@@ -32,13 +34,14 @@ export default function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AppBar position="static" color="primary">
+      <AppBar position="fixed" color="primary">
         <Toolbar>
           <Link to="/" className={classes.appTitle}>
             git-bug webui
           </Link>
         </Toolbar>
       </AppBar>
+      <div className={classes.offset} />
       <Switch>
         <Route path="/" exact component={ListQuery} />
         <Route path="/bug/:id" exact component={BugQuery} />
