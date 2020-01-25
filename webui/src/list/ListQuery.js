@@ -1,19 +1,18 @@
-import { makeStyles } from '@material-ui/styles';
+import { fade, makeStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
-import Toolbar from '@material-ui/core/Toolbar';
 import KeyboardArrowLeft from '@material-ui/icons/KeyboardArrowLeft';
 import KeyboardArrowRight from '@material-ui/icons/KeyboardArrowRight';
 import ErrorOutline from '@material-ui/icons/ErrorOutline';
-import CheckCircleOutline from '@material-ui/icons/CheckCircleOutline';
 import Paper from '@material-ui/core/Paper';
-import Filter from './Filter';
+import InputBase from '@material-ui/core/InputBase';
 import Skeleton from '@material-ui/lab/Skeleton';
 import gql from 'graphql-tag';
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@apollo/react-hooks';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, useHistory, Link } from 'react-router-dom';
 import BugRow from './BugRow';
 import List from './List';
+import FilterToolbar from './FilterToolbar';
 
 const useStyles = makeStyles(theme => ({
   main: {
@@ -29,19 +28,28 @@ const useStyles = makeStyles(theme => ({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  toolbar: {
-    backgroundColor: theme.palette.grey['100'],
-    borderColor: theme.palette.grey['300'],
-    borderWidth: '1px 0',
-    borderStyle: 'solid',
-    margin: theme.spacing(0, -1),
-  },
   header: {
-    ...theme.typography.h6,
-    padding: theme.spacing(2, 4),
+    display: 'flex',
+    padding: theme.spacing(2),
+    '& > h1': {
+      ...theme.typography.h6,
+      margin: theme.spacing(0, 2),
+    },
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  spacer: {
-    flex: 1,
+  search: {
+    borderRadius: theme.shape.borderRadius,
+    borderColor: fade(theme.palette.primary.main, 0.2),
+    borderStyle: 'solid',
+    borderWidth: '1px',
+    backgroundColor: fade(theme.palette.primary.main, 0.05),
+    padding: theme.spacing(0, 1),
+    ':focus': {
+      // TODO
+      borderColor: fade(theme.palette.primary.main, 0.4),
+      backgroundColor: theme.palette.background.paper,
+    },
   },
   placeholderRow: {
     padding: theme.spacing(1),
@@ -57,7 +65,7 @@ const useStyles = makeStyles(theme => ({
   placeholderRowText: {
     flex: 1,
   },
-  noBug: {
+  message: {
     ...theme.typography.h5,
     padding: theme.spacing(8),
     textAlign: 'center',
@@ -66,6 +74,17 @@ const useStyles = makeStyles(theme => ({
     borderBottomStyle: 'solid',
     '& > p': {
       margin: '0',
+    },
+  },
+  errorBox: {
+    color: theme.palette.error.main,
+    '& > pre': {
+      fontSize: '1rem',
+      textAlign: 'left',
+      backgroundColor: theme.palette.grey['900'],
+      color: theme.palette.common.white,
+      marginTop: theme.spacing(4),
+      padding: theme.spacing(2, 3),
     },
   },
 }));
@@ -139,9 +158,25 @@ const Placeholder = ({ count }) => {
 const NoBug = () => {
   const classes = useStyles();
   return (
-    <div className={classes.noBug}>
+    <div className={classes.message}>
       <ErrorOutline fontSize="large" />
       <p>No results matched your search.</p>
+    </div>
+  );
+};
+
+const Error = ({ error }) => {
+  const classes = useStyles();
+  return (
+    <div className={[classes.errorBox, classes.message].join(' ')}>
+      <ErrorOutline fontSize="large" />
+      <p>There was an error while fetching bug.</p>
+      <p>
+        <em>{error.message}</em>
+      </p>
+      <pre>
+        <code>{JSON.stringify(error, null, 2)}</code>
+      </pre>
     </div>
   );
 };
@@ -149,8 +184,21 @@ const NoBug = () => {
 function ListQuery() {
   const classes = useStyles();
   const location = useLocation();
+  const history = useHistory();
   const params = new URLSearchParams(location.search);
   const query = params.get('q');
+
+  const [input, setInput] = useState(query);
+
+  // TODO is this the right way to do it?
+  const lastQuery = useRef();
+  useEffect(() => {
+    if (query !== lastQuery.current) {
+      setInput(query);
+    }
+    lastQuery.current = query;
+  }, [query, input, lastQuery]);
+
   const page = {
     first: params.get('first'),
     last: params.get('last'),
@@ -204,11 +252,24 @@ function ListQuery() {
     };
   }
 
+  // Prepare params without paging for editing filters
+  const paramsWithoutPaging = editParams(params, p => {
+    p.delete('first');
+    p.delete('last');
+    p.delete('before');
+    p.delete('after');
+  });
+  // Returns a new location with the `q` param edited
+  const queryLocation = query => ({
+    ...location,
+    search: editParams(paramsWithoutPaging, p => p.set('q', query)).toString(),
+  });
+
   let content;
   if (loading) {
     content = <Placeholder count={10} />;
   } else if (error) {
-    content = <p>Error: {JSON.stringify(error)}</p>;
+    content = <Error error={error} />;
   } else {
     const bugs = data.defaultRepository.bugs;
 
@@ -219,31 +280,42 @@ function ListQuery() {
     }
   }
 
+  const formSubmit = e => {
+    e.preventDefault();
+    history.push(queryLocation(input));
+  };
+
   return (
     <Paper className={classes.main}>
-      <header className={classes.header}>Issues</header>
-      <Toolbar className={classes.toolbar}>
-        {/* TODO */}
-        <Filter active icon={ErrorOutline}>
-          123 open
-        </Filter>
-        <Filter icon={CheckCircleOutline}>456 closed</Filter>
-        <div className={classes.spacer} />
-        <Filter>Author</Filter>
-        <Filter>Label</Filter>
-        <Filter>Sort</Filter>
-      </Toolbar>
+      <header className={classes.header}>
+        <h1>Issues</h1>
+        <form onSubmit={formSubmit}>
+          <InputBase
+            value={input}
+            onInput={e => setInput(e.target.value)}
+            className={classes.search}
+          />
+          <button type="submit" hidden>
+            Search
+          </button>
+        </form>
+      </header>
+      <FilterToolbar query={query} queryLocation={queryLocation} />
       {content}
       <div className={classes.pagination}>
         <IconButton
-          component={Link}
+          component={hasPreviousPage ? Link : 'button'}
           to={previousPage}
           disabled={!hasPreviousPage}
         >
           <KeyboardArrowLeft />
         </IconButton>
         <div>{loading ? 'Loading' : `Total: ${count}`}</div>
-        <IconButton component={Link} to={nextPage} disabled={!hasNextPage}>
+        <IconButton
+          component={hasNextPage ? Link : 'button'}
+          to={nextPage}
+          disabled={!hasNextPage}
+        >
           <KeyboardArrowRight />
         </IconButton>
       </div>
