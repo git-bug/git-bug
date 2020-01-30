@@ -45,11 +45,13 @@ const useStyles = makeStyles(theme => ({
     borderWidth: '1px',
     backgroundColor: fade(theme.palette.primary.main, 0.05),
     padding: theme.spacing(0, 1),
-    ':focus': {
-      // TODO
-      borderColor: fade(theme.palette.primary.main, 0.4),
-      backgroundColor: theme.palette.background.paper,
-    },
+    width: ({ searching }) => (searching ? '20rem' : '15rem'),
+    transition: theme.transitions.create(),
+  },
+  searchFocused: {
+    borderColor: fade(theme.palette.primary.main, 0.4),
+    backgroundColor: theme.palette.background.paper,
+    width: '20rem!important',
   },
   placeholderRow: {
     padding: theme.spacing(1),
@@ -182,13 +184,14 @@ const Error = ({ error }) => {
 };
 
 function ListQuery() {
-  const classes = useStyles();
   const location = useLocation();
   const history = useHistory();
   const params = new URLSearchParams(location.search);
   const query = params.get('q');
 
   const [input, setInput] = useState(query);
+
+  const classes = useStyles({ searching: !!input });
 
   // TODO is this the right way to do it?
   const lastQuery = useRef();
@@ -291,9 +294,13 @@ function ListQuery() {
         <h1>Issues</h1>
         <form onSubmit={formSubmit}>
           <InputBase
+            placeholder="Filter"
             value={input}
             onInput={e => setInput(e.target.value)}
-            className={classes.search}
+            classes={{
+              root: classes.search,
+              focused: classes.searchFocused,
+            }}
           />
           <button type="submit" hidden>
             Search

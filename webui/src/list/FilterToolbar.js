@@ -32,7 +32,7 @@ function FilterToolbar({ query, queryLocation }) {
   };
 
   // TODO: open/closed count
-  // TODO: author/label/sort filters
+  // TODO: author/label filters
   return (
     <Toolbar className={classes.toolbar}>
       <Filter
@@ -52,7 +52,20 @@ function FilterToolbar({ query, queryLocation }) {
       <div className={classes.spacer} />
       <Filter active={hasKey('author')}>Author</Filter>
       <Filter active={hasKey('label')}>Label</Filter>
-      <Filter active={hasKey('sort')}>Sort</Filter>
+      <Filter
+        dropdown={[
+          ['id', 'ID'],
+          ['creation', 'Newest'],
+          ['creation-asc', 'Oldest'],
+          ['edit', 'Recently updated'],
+          ['edit-asc', 'Least recently updated'],
+        ]}
+        active={hasKey('sort')}
+        itemActive={key => hasValue('sort', key)}
+        to={key => replaceParam('sort', key)}
+      >
+        Sort
+      </Filter>
     </Toolbar>
   );
 }

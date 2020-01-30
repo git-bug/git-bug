@@ -1,13 +1,16 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { makeStyles } from '@material-ui/styles';
+import Menu from '@material-ui/core/Menu';
+import MenuItem from '@material-ui/core/MenuItem';
+import ArrowDropDown from '@material-ui/icons/ArrowDropDown';
 
 function parse(query) {
   // TODO: extract the rest of the query?
   const params = {};
 
   // TODO: support escaping without quotes
-  const re = /(\w+):(\w+|(["'])(([^\3]|\\.)*)\3)+/g;
+  const re = /(\w+):([A-Za-z0-9-]+|(["'])(([^\3]|\\.)*)\3)+/g;
   let matches;
   while ((matches = re.exec(query)) !== null) {
     if (!params[matches[1]]) {
@@ -58,20 +61,63 @@ const useStyles = makeStyles(theme => ({
     ...theme.typography.body2,
     color: ({ active }) => (active ? '#333' : '#444'),
     padding: theme.spacing(0, 1),
-    fontWeight: ({ active }) => (active ? 500 : 400),
+    fontWeight: ({ active }) => (active ? 600 : 400),
     textDecoration: 'none',
     display: 'flex',
-    alignSelf: ({ end }) => (end ? 'flex-end' : 'auto'),
     background: 'none',
     border: 'none',
+  },
+  itemActive: {
+    fontWeight: 600,
   },
   icon: {
     paddingRight: theme.spacing(0.5),
   },
 }));
 
-function Filter({ active, to, children, icon: Icon, end, ...props }) {
-  const classes = useStyles({ active, end });
+function Dropdown({ children, dropdown, itemActive, to, ...props }) {
+  const [open, setOpen] = useState(false);
+  const buttonRef = useRef();
+  const classes = useStyles();
+
+  return (
+    <>
+      <button ref={buttonRef} onClick={() => setOpen(!open)} {...props}>
+        {children}
+        <ArrowDropDown fontSize="small" />
+      </button>
+      <Menu
+        getContentAnchorEl={null}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'left',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'left',
+        }}
+        open={open}
+        onClose={() => setOpen(false)}
+        anchorEl={buttonRef.current}
+      >
+        {dropdown.map(([key, value]) => (
+          <MenuItem
+            component={Link}
+            to={to(key)}
+            className={itemActive(key) ? classes.itemActive : null}
+            onClick={() => setOpen(false)}
+            key={key}
+          >
+            {value}
+          </MenuItem>
+        ))}
+      </Menu>
+    </>
+  );
+}
+
+function Filter({ active, to, children, icon: Icon, dropdown, ...props }) {
+  const classes = useStyles({ active });
 
   const content = (
     <>
@@ -79,6 +125,19 @@ function Filter({ active, to, children, icon: Icon, end, ...props }) {
       <div>{children}</div>
     </>
   );
+
+  if (dropdown) {
+    return (
+      <Dropdown
+        {...props}
+        to={to}
+        dropdown={dropdown}
+        className={classes.element}
+      >
+        {content}
+      </Dropdown>
+    );
+  }
 
   if (to) {
     return (
@@ -88,11 +147,7 @@ function Filter({ active, to, children, icon: Icon, end, ...props }) {
     );
   }
 
-  return (
-    <button {...props} className={classes.element}>
-      {content}
-    </button>
-  );
+  return <div className={classes.element}>{content}</div>;
 }
 
 export default Filter;

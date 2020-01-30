@@ -7,9 +7,9 @@ it('parses a simple query', () => {
 });
 
 it('parses a query with multiple filters', () => {
-  expect(parse('foo:bar baz:foobar')).toEqual({
+  expect(parse('foo:bar baz:foo-bar')).toEqual({
     foo: ['bar'],
-    baz: ['foobar'],
+    baz: ['foo-bar'],
   });
 });
 
