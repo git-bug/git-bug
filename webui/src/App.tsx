@@ -1,7 +1,10 @@
 import AppBar from '@material-ui/core/AppBar';
 import CssBaseline from '@material-ui/core/CssBaseline';
-import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
-import { makeStyles } from '@material-ui/styles';
+import {
+  createMuiTheme,
+  ThemeProvider,
+  makeStyles,
+} from '@material-ui/core/styles';
 import Toolbar from '@material-ui/core/Toolbar';
 import React from 'react';
 import { Route, Switch } from 'react-router';
@@ -20,7 +23,9 @@ const theme = createMuiTheme({
 });
 
 const useStyles = makeStyles(theme => ({
-  offset: theme.mixins.toolbar,
+  offset: {
+    ...theme.mixins.toolbar,
+  },
   filler: {
     flexGrow: 1,
   },
