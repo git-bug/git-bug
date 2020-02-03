@@ -16,6 +16,9 @@ type NoOpOperation struct {
 	OpBase
 }
 
+// Sign-post method for gqlgen
+func (op *NoOpOperation) IsOperation() {}
+
 func (op *NoOpOperation) base() *OpBase {
 	return &op.OpBase
 }

@@ -42,6 +42,10 @@ func (RootResolver) Color() graph.ColorResolver {
 	return &colorResolver{}
 }
 
+func (r RootResolver) Comment() graph.CommentResolver {
+	return &commentResolver{}
+}
+
 func (RootResolver) Label() graph.LabelResolver {
 	return &labelResolver{}
 }

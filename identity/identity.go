@@ -227,25 +227,8 @@ func SetUserIdentity(repo repository.RepoConfig, identity *Identity) error {
 
 // GetUserIdentity read the current user identity, set with a git config entry
 func GetUserIdentity(repo repository.Repo) (*Identity, error) {
-	configs, err := repo.LocalConfig().ReadAll(identityConfigKey)
+	id, err := GetUserIdentityId(repo)
 	if err != nil {
-		return nil, err
-	}
-
-	if len(configs) == 0 {
-		return nil, ErrNoIdentitySet
-	}
-
-	if len(configs) > 1 {
-		return nil, ErrMultipleIdentitiesSet
-	}
-
-	var id entity.Id
-	for _, val := range configs {
-		id = entity.Id(val)
-	}
-
-	if err := id.Validate(); err != nil {
 		return nil, err
 	}
 
@@ -259,6 +242,32 @@ func GetUserIdentity(repo repository.Repo) (*Identity, error) {
 	}
 
 	return i, nil
+}
+
+func GetUserIdentityId(repo repository.Repo) (entity.Id, error) {
+	configs, err := repo.LocalConfig().ReadAll(identityConfigKey)
+	if err != nil {
+		return entity.UnsetId, err
+	}
+
+	if len(configs) == 0 {
+		return entity.UnsetId, ErrNoIdentitySet
+	}
+
+	if len(configs) > 1 {
+		return entity.UnsetId, ErrMultipleIdentitiesSet
+	}
+
+	var id entity.Id
+	for _, val := range configs {
+		id = entity.Id(val)
+	}
+
+	if err := id.Validate(); err != nil {
+		return entity.UnsetId, err
+	}
+
+	return id, nil
 }
 
 // IsUserIdentitySet say if the user has set his identity

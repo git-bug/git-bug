@@ -9,14 +9,13 @@ import (
 	"github.com/MichaelMure/git-bug/graphql/connections"
 	"github.com/MichaelMure/git-bug/graphql/graph"
 	"github.com/MichaelMure/git-bug/graphql/models"
-	"github.com/MichaelMure/git-bug/identity"
 )
 
 var _ graph.RepositoryResolver = &repoResolver{}
 
 type repoResolver struct{}
 
-func (repoResolver) AllBugs(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int, queryStr *string) (*models.BugConnection, error) {
+func (repoResolver) AllBugs(_ context.Context, obj *models.Repository, after *string, before *string, first *int, last *int, queryStr *string) (*models.BugConnection, error) {
 	input := models.ConnectionInput{
 		Before: before,
 		After:  after,
@@ -49,22 +48,21 @@ func (repoResolver) AllBugs(ctx context.Context, obj *models.Repository, after *
 	// The conMaker will finally load and compile bugs from git to replace the selected edges
 	conMaker := func(lazyBugEdges []*connections.LazyBugEdge, lazyNode []entity.Id, info *models.PageInfo, totalCount int) (*models.BugConnection, error) {
 		edges := make([]*models.BugEdge, len(lazyBugEdges))
-		nodes := make([]*bug.Snapshot, len(lazyBugEdges))
+		nodes := make([]models.BugWrapper, len(lazyBugEdges))
 
 		for i, lazyBugEdge := range lazyBugEdges {
-			b, err := obj.Repo.ResolveBug(lazyBugEdge.Id)
-
+			excerpt, err := obj.Repo.ResolveBugExcerpt(lazyBugEdge.Id)
 			if err != nil {
 				return nil, err
 			}
 
-			snap := b.Snapshot()
+			b := models.NewLazyBug(obj.Repo, excerpt)
 
 			edges[i] = &models.BugEdge{
 				Cursor: lazyBugEdge.Cursor,
-				Node:   snap,
+				Node:   b,
 			}
-			nodes[i] = snap
+			nodes[i] = b
 		}
 
 		return &models.BugConnection{
@@ -78,17 +76,16 @@ func (repoResolver) AllBugs(ctx context.Context, obj *models.Repository, after *
 	return connections.LazyBugCon(source, edger, conMaker, input)
 }
 
-func (repoResolver) Bug(ctx context.Context, obj *models.Repository, prefix string) (*bug.Snapshot, error) {
-	b, err := obj.Repo.ResolveBugPrefix(prefix)
-
+func (repoResolver) Bug(_ context.Context, obj *models.Repository, prefix string) (models.BugWrapper, error) {
+	excerpt, err := obj.Repo.ResolveBugExcerptPrefix(prefix)
 	if err != nil {
 		return nil, err
 	}
 
-	return b.Snapshot(), nil
+	return models.NewLazyBug(obj.Repo, excerpt), nil
 }
 
-func (repoResolver) AllIdentities(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int) (*models.IdentityConnection, error) {
+func (repoResolver) AllIdentities(_ context.Context, obj *models.Repository, after *string, before *string, first *int, last *int) (*models.IdentityConnection, error) {
 	input := models.ConnectionInput{
 		Before: before,
 		After:  after,
@@ -110,22 +107,21 @@ func (repoResolver) AllIdentities(ctx context.Context, obj *models.Repository, a
 	// The conMaker will finally load and compile identities from git to replace the selected edges
 	conMaker := func(lazyIdentityEdges []*connections.LazyIdentityEdge, lazyNode []entity.Id, info *models.PageInfo, totalCount int) (*models.IdentityConnection, error) {
 		edges := make([]*models.IdentityEdge, len(lazyIdentityEdges))
-		nodes := make([]identity.Interface, len(lazyIdentityEdges))
+		nodes := make([]models.IdentityWrapper, len(lazyIdentityEdges))
 
 		for k, lazyIdentityEdge := range lazyIdentityEdges {
-			i, err := obj.Repo.ResolveIdentity(lazyIdentityEdge.Id)
-
+			excerpt, err := obj.Repo.ResolveIdentityExcerpt(lazyIdentityEdge.Id)
 			if err != nil {
 				return nil, err
 			}
 
-			ii := identity.Interface(i.Identity)
+			i := models.NewLazyIdentity(obj.Repo, excerpt)
 
 			edges[k] = &models.IdentityEdge{
 				Cursor: lazyIdentityEdge.Cursor,
-				Node:   i.Identity,
+				Node:   i,
 			}
-			nodes[k] = ii
+			nodes[k] = i
 		}
 
 		return &models.IdentityConnection{
@@ -139,27 +135,25 @@ func (repoResolver) AllIdentities(ctx context.Context, obj *models.Repository, a
 	return connections.LazyIdentityCon(source, edger, conMaker, input)
 }
 
-func (repoResolver) Identity(ctx context.Context, obj *models.Repository, prefix string) (identity.Interface, error) {
-	i, err := obj.Repo.ResolveIdentityPrefix(prefix)
-
+func (repoResolver) Identity(_ context.Context, obj *models.Repository, prefix string) (models.IdentityWrapper, error) {
+	excerpt, err := obj.Repo.ResolveIdentityExcerptPrefix(prefix)
 	if err != nil {
 		return nil, err
 	}
 
-	return i.Identity, nil
+	return models.NewLazyIdentity(obj.Repo, excerpt), nil
 }
 
-func (repoResolver) UserIdentity(ctx context.Context, obj *models.Repository) (identity.Interface, error) {
-	i, err := obj.Repo.GetUserIdentity()
-
+func (repoResolver) UserIdentity(_ context.Context, obj *models.Repository) (models.IdentityWrapper, error) {
+	excerpt, err := obj.Repo.GetUserIdentityExcerpt()
 	if err != nil {
 		return nil, err
 	}
 
-	return i.Identity, nil
+	return models.NewLazyIdentity(obj.Repo, excerpt), nil
 }
 
-func (resolver repoResolver) ValidLabels(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int) (*models.LabelConnection, error) {
+func (resolver repoResolver) ValidLabels(_ context.Context, obj *models.Repository, after *string, before *string, first *int, last *int) (*models.LabelConnection, error) {
 	input := models.ConnectionInput{
 		Before: before,
 		After:  after,

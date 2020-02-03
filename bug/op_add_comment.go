@@ -21,6 +21,9 @@ type AddCommentOperation struct {
 	Files []git.Hash `json:"files"`
 }
 
+// Sign-post method for gqlgen
+func (op *AddCommentOperation) IsOperation() {}
+
 func (op *AddCommentOperation) base() *OpBase {
 	return &op.OpBase
 }

@@ -17,7 +17,6 @@ import (
 	"github.com/99designs/gqlgen/graphql/introspection"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/graphql/models"
-	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/vektah/gqlparser"
 	"github.com/vektah/gqlparser/ast"
@@ -45,6 +44,7 @@ type ResolverRoot interface {
 	AddCommentTimelineItem() AddCommentTimelineItemResolver
 	Bug() BugResolver
 	Color() ColorResolver
+	Comment() CommentResolver
 	CommentHistoryStep() CommentHistoryStepResolver
 	CreateOperation() CreateOperationResolver
 	CreateTimelineItem() CreateTimelineItemResolver
@@ -370,55 +370,59 @@ type ComplexityRoot struct {
 
 type AddCommentOperationResolver interface {
 	ID(ctx context.Context, obj *bug.AddCommentOperation) (string, error)
-
+	Author(ctx context.Context, obj *bug.AddCommentOperation) (models.IdentityWrapper, error)
 	Date(ctx context.Context, obj *bug.AddCommentOperation) (*time.Time, error)
 }
 type AddCommentTimelineItemResolver interface {
 	ID(ctx context.Context, obj *bug.AddCommentTimelineItem) (string, error)
+	Author(ctx context.Context, obj *bug.AddCommentTimelineItem) (models.IdentityWrapper, error)
 
 	CreatedAt(ctx context.Context, obj *bug.AddCommentTimelineItem) (*time.Time, error)
 	LastEdit(ctx context.Context, obj *bug.AddCommentTimelineItem) (*time.Time, error)
 }
 type BugResolver interface {
-	ID(ctx context.Context, obj *bug.Snapshot) (string, error)
-	HumanID(ctx context.Context, obj *bug.Snapshot) (string, error)
-	Status(ctx context.Context, obj *bug.Snapshot) (models.Status, error)
+	ID(ctx context.Context, obj models.BugWrapper) (string, error)
+	HumanID(ctx context.Context, obj models.BugWrapper) (string, error)
+	Status(ctx context.Context, obj models.BugWrapper) (models.Status, error)
 
-	LastEdit(ctx context.Context, obj *bug.Snapshot) (*time.Time, error)
-	Actors(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (*models.IdentityConnection, error)
-	Participants(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (*models.IdentityConnection, error)
-	Comments(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (*models.CommentConnection, error)
-	Timeline(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (*models.TimelineItemConnection, error)
-	Operations(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (*models.OperationConnection, error)
+	Actors(ctx context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*models.IdentityConnection, error)
+	Participants(ctx context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*models.IdentityConnection, error)
+	Comments(ctx context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*models.CommentConnection, error)
+	Timeline(ctx context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*models.TimelineItemConnection, error)
+	Operations(ctx context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*models.OperationConnection, error)
 }
 type ColorResolver interface {
 	R(ctx context.Context, obj *color.RGBA) (int, error)
 	G(ctx context.Context, obj *color.RGBA) (int, error)
 	B(ctx context.Context, obj *color.RGBA) (int, error)
 }
+type CommentResolver interface {
+	Author(ctx context.Context, obj *bug.Comment) (models.IdentityWrapper, error)
+}
 type CommentHistoryStepResolver interface {
 	Date(ctx context.Context, obj *bug.CommentHistoryStep) (*time.Time, error)
 }
 type CreateOperationResolver interface {
 	ID(ctx context.Context, obj *bug.CreateOperation) (string, error)
-
+	Author(ctx context.Context, obj *bug.CreateOperation) (models.IdentityWrapper, error)
 	Date(ctx context.Context, obj *bug.CreateOperation) (*time.Time, error)
 }
 type CreateTimelineItemResolver interface {
 	ID(ctx context.Context, obj *bug.CreateTimelineItem) (string, error)
+	Author(ctx context.Context, obj *bug.CreateTimelineItem) (models.IdentityWrapper, error)
 
 	CreatedAt(ctx context.Context, obj *bug.CreateTimelineItem) (*time.Time, error)
 	LastEdit(ctx context.Context, obj *bug.CreateTimelineItem) (*time.Time, error)
 }
 type EditCommentOperationResolver interface {
 	ID(ctx context.Context, obj *bug.EditCommentOperation) (string, error)
-
+	Author(ctx context.Context, obj *bug.EditCommentOperation) (models.IdentityWrapper, error)
 	Date(ctx context.Context, obj *bug.EditCommentOperation) (*time.Time, error)
 	Target(ctx context.Context, obj *bug.EditCommentOperation) (string, error)
 }
 type IdentityResolver interface {
-	ID(ctx context.Context, obj identity.Interface) (string, error)
-	HumanID(ctx context.Context, obj identity.Interface) (string, error)
+	ID(ctx context.Context, obj models.IdentityWrapper) (string, error)
+	HumanID(ctx context.Context, obj models.IdentityWrapper) (string, error)
 }
 type LabelResolver interface {
 	Name(ctx context.Context, obj *bug.Label) (string, error)
@@ -426,7 +430,7 @@ type LabelResolver interface {
 }
 type LabelChangeOperationResolver interface {
 	ID(ctx context.Context, obj *bug.LabelChangeOperation) (string, error)
-
+	Author(ctx context.Context, obj *bug.LabelChangeOperation) (models.IdentityWrapper, error)
 	Date(ctx context.Context, obj *bug.LabelChangeOperation) (*time.Time, error)
 }
 type LabelChangeResultResolver interface {
@@ -434,7 +438,7 @@ type LabelChangeResultResolver interface {
 }
 type LabelChangeTimelineItemResolver interface {
 	ID(ctx context.Context, obj *bug.LabelChangeTimelineItem) (string, error)
-
+	Author(ctx context.Context, obj *bug.LabelChangeTimelineItem) (models.IdentityWrapper, error)
 	Date(ctx context.Context, obj *bug.LabelChangeTimelineItem) (*time.Time, error)
 }
 type MutationResolver interface {
@@ -453,32 +457,32 @@ type QueryResolver interface {
 }
 type RepositoryResolver interface {
 	AllBugs(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int, query *string) (*models.BugConnection, error)
-	Bug(ctx context.Context, obj *models.Repository, prefix string) (*bug.Snapshot, error)
+	Bug(ctx context.Context, obj *models.Repository, prefix string) (models.BugWrapper, error)
 	AllIdentities(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int) (*models.IdentityConnection, error)
-	Identity(ctx context.Context, obj *models.Repository, prefix string) (identity.Interface, error)
-	UserIdentity(ctx context.Context, obj *models.Repository) (identity.Interface, error)
+	Identity(ctx context.Context, obj *models.Repository, prefix string) (models.IdentityWrapper, error)
+	UserIdentity(ctx context.Context, obj *models.Repository) (models.IdentityWrapper, error)
 	ValidLabels(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int) (*models.LabelConnection, error)
 }
 type SetStatusOperationResolver interface {
 	ID(ctx context.Context, obj *bug.SetStatusOperation) (string, error)
-
+	Author(ctx context.Context, obj *bug.SetStatusOperation) (models.IdentityWrapper, error)
 	Date(ctx context.Context, obj *bug.SetStatusOperation) (*time.Time, error)
 	Status(ctx context.Context, obj *bug.SetStatusOperation) (models.Status, error)
 }
 type SetStatusTimelineItemResolver interface {
 	ID(ctx context.Context, obj *bug.SetStatusTimelineItem) (string, error)
-
+	Author(ctx context.Context, obj *bug.SetStatusTimelineItem) (models.IdentityWrapper, error)
 	Date(ctx context.Context, obj *bug.SetStatusTimelineItem) (*time.Time, error)
 	Status(ctx context.Context, obj *bug.SetStatusTimelineItem) (models.Status, error)
 }
 type SetTitleOperationResolver interface {
 	ID(ctx context.Context, obj *bug.SetTitleOperation) (string, error)
-
+	Author(ctx context.Context, obj *bug.SetTitleOperation) (models.IdentityWrapper, error)
 	Date(ctx context.Context, obj *bug.SetTitleOperation) (*time.Time, error)
 }
 type SetTitleTimelineItemResolver interface {
 	ID(ctx context.Context, obj *bug.SetTitleTimelineItem) (string, error)
-
+	Author(ctx context.Context, obj *bug.SetTitleTimelineItem) (models.IdentityWrapper, error)
 	Date(ctx context.Context, obj *bug.SetTitleTimelineItem) (*time.Time, error)
 }
 
@@ -1873,877 +1877,642 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 	return introspection.WrapTypeFromDef(parsedSchema, parsedSchema.Types[name]), nil
 }
 
-var parsedSchema = gqlparser.MustLoadSchema(
-	&ast.Source{Name: "schema.graphql", Input: `input AddCommentInput {
-	"""
-	A unique identifier for the client performing the mutation.
-	"""
-	clientMutationId: String
-	"""
-	"The name of the repository. If not set, the default repository is used.
-	"""
-	repoRef: String
-	"""
-	The bug ID's prefix.
-	"""
-	prefix: String!
-	"""
-	The first message of the new bug.
-	"""
-	message: String!
-	"""
-	The collection of file's hash required for the first message.
-	"""
-	files: [Hash!]
-}
-type AddCommentOperation implements Operation & Authored {
-	"""
-	The identifier of the operation
-	"""
-	id: String!
-	"""
-	The author of this object.
-	"""
-	author: Identity!
-	"""
-	The datetime when this operation was issued.
-	"""
-	date: Time!
-	message: String!
-	files: [Hash!]!
-}
-type AddCommentPayload {
-	"""
-	A unique identifier for the client performing the mutation.
-	"""
-	clientMutationId: String
-	"""
-	The affected bug.
-	"""
-	bug: Bug!
-	"""
-	The resulting operation.
-	"""
-	operation: AddCommentOperation!
-}
-"""
-AddCommentTimelineItem is a TimelineItem that represent a Comment and its edition history
-"""
-type AddCommentTimelineItem implements TimelineItem & Authored {
-	"""
-	The identifier of the source operation
-	"""
-	id: String!
-	author: Identity!
-	message: String!
-	messageIsEmpty: Boolean!
-	files: [Hash!]!
-	createdAt: Time!
-	lastEdit: Time!
-	edited: Boolean!
-	history: [CommentHistoryStep!]!
-}
-"""
-An object that has an author.
-"""
-interface Authored {
-	"""
-	The author of this object.
-	"""
-	author: Identity!
-}
-type Bug implements Authored {
-	"""
-	The identifier for this bug
-	"""
-	id: String!
-	"""
-	The human version (truncated) identifier for this bug
-	"""
-	humanId: String!
-	status: Status!
-	title: String!
-	labels: [Label!]!
-	author: Identity!
-	createdAt: Time!
-	lastEdit: Time!
-	"""
-	The actors of the bug. Actors are Identity that have interacted with the bug.
-	"""
-	actors("""
-	Returns the elements in the list that come after the specified cursor.
-	"""
-	after: String, """
-	Returns the elements in the list that come before the specified cursor.
-	"""
-	before: String, """
-	Returns the first _n_ elements from the list.
-	"""
-	first: Int, """
-	Returns the last _n_ elements from the list.
-	"""
-	last: Int): IdentityConnection!
-	"""
-	The participants of the bug. Participants are Identity that have created or
-	  added a comment on the bug.
-	"""
-	participants("""
-	Returns the elements in the list that come after the specified cursor.
-	"""
-	after: String, """
-	Returns the elements in the list that come before the specified cursor.
-	"""
-	before: String, """
-	Returns the first _n_ elements from the list.
-	"""
-	first: Int, """
-	Returns the last _n_ elements from the list.
-	"""
-	last: Int): IdentityConnection!
-	comments("""
-	Returns the elements in the list that come after the specified cursor.
-	"""
-	after: String, """
-	Returns the elements in the list that come before the specified cursor.
-	"""
-	before: String, """
-	Returns the first _n_ elements from the list.
-	"""
-	first: Int, """
-	Returns the last _n_ elements from the list.
-	"""
-	last: Int): CommentConnection!
-	timeline("""
-	Returns the elements in the list that come after the specified cursor.
-	"""
-	after: String, """
-	Returns the elements in the list that come before the specified cursor.
-	"""
-	before: String, """
-	Returns the first _n_ elements from the list.
-	"""
-	first: Int, """
-	Returns the last _n_ elements from the list.
-	"""
-	last: Int): TimelineItemConnection!
-	operations("""
-	Returns the elements in the list that come after the specified cursor.
-	"""
-	after: String, """
-	Returns the elements in the list that come before the specified cursor.
-	"""
-	before: String, """
-	Returns the first _n_ elements from the list.
-	"""
-	first: Int, """
-	Returns the last _n_ elements from the list.
-	"""
-	last: Int): OperationConnection!
-}
-"""
-The connection type for Bug.
-"""
-type BugConnection {
-	"""
-	A list of edges.
-	"""
-	edges: [BugEdge!]!
-	nodes: [Bug!]!
-	"""
-	Information to aid in pagination.
-	"""
-	pageInfo: PageInfo!
-	"""
-	Identifies the total count of items in the connection.
-	"""
-	totalCount: Int!
-}
-"""
-An edge in a connection.
-"""
-type BugEdge {
-	"""
-	A cursor for use in pagination.
-	"""
-	cursor: String!
-	"""
-	The item at the end of the edge.
-	"""
-	node: Bug!
-}
-input ChangeLabelInput {
-	"""
-	A unique identifier for the client performing the mutation.
-	"""
-	clientMutationId: String
-	"""
-	"The name of the repository. If not set, the default repository is used.
-	"""
-	repoRef: String
-	"""
-	The bug ID's prefix.
-	"""
-	prefix: String!
-	"""
-	The list of label to add.
-	"""
-	added: [String!]
-	"""
-	The list of label to remove.
-	"""
-	Removed: [String!]
-}
-type ChangeLabelPayload {
-	"""
-	A unique identifier for the client performing the mutation.
-	"""
-	clientMutationId: String
-	"""
-	The affected bug.
-	"""
-	bug: Bug!
-	"""
-	The resulting operation.
-	"""
-	operation: LabelChangeOperation!
-	"""
-	The effect each source label had.
-	"""
-	results: [LabelChangeResult]!
-}
-input CloseBugInput {
-	"""
-	A unique identifier for the client performing the mutation.
-	"""
-	clientMutationId: String
-	"""
-	"The name of the repository. If not set, the default repository is used.
-	"""
-	repoRef: String
-	"""
-	The bug ID's prefix.
-	"""
-	prefix: String!
-}
-type CloseBugPayload {
-	"""
-	A unique identifier for the client performing the mutation.
-	"""
-	clientMutationId: String
-	"""
-	The affected bug.
-	"""
-	bug: Bug!
-	"""
-	The resulting operation.
-	"""
-	operation: SetStatusOperation!
-}
-"""
-Defines a color by red, green and blue components.
-"""
-type Color {
-	"""
-	Red component of the color.
-	"""
-	R: Int!
-	"""
-	Green component of the color.
-	"""
-	G: Int!
-	"""
-	Blue component of the color.
-	"""
-	B: Int!
-}
-"""
-Represents a comment on a bug.
-"""
+var sources = []*ast.Source{
+	&ast.Source{Name: "schema/bug.graphql", Input: `"""Represents a comment on a bug."""
 type Comment implements Authored {
-	"""
-	The author of this comment.
-	"""
-	author: Identity!
-	"""
-	The message of this comment.
-	"""
-	message: String!
-	"""
-	All media's hash referenced in this comment
-	"""
-	files: [Hash!]!
+  """The author of this comment."""
+  author: Identity!
+
+  """The message of this comment."""
+  message: String!
+
+  """All media's hash referenced in this comment"""
+  files: [Hash!]!
 }
+
 type CommentConnection {
-	edges: [CommentEdge!]!
-	nodes: [Comment!]!
-	pageInfo: PageInfo!
-	totalCount: Int!
+  edges: [CommentEdge!]!
+  nodes: [Comment!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
 }
+
 type CommentEdge {
-	cursor: String!
-	node: Comment!
+  cursor: String!
+  node: Comment!
 }
-"""
-CommentHistoryStep hold one version of a message in the history
-"""
-type CommentHistoryStep {
-	message: String!
-	date: Time!
-}
-input CommitAsNeededInput {
-	"""
-	A unique identifier for the client performing the mutation.
-	"""
-	clientMutationId: String
-	"""
-	"The name of the repository. If not set, the default repository is used.
-	"""
-	repoRef: String
-	"""
-	The bug ID's prefix.
-	"""
-	prefix: String!
-}
-type CommitAsNeededPayload {
-	"""
-	A unique identifier for the client performing the mutation.
-	"""
-	clientMutationId: String
-	"""
-	The affected bug.
-	"""
-	bug: Bug!
-}
-input CommitInput {
-	"""
-	A unique identifier for the client performing the mutation.
-	"""
-	clientMutationId: String
-	"""
-	"The name of the repository. If not set, the default repository is used.
-	"""
-	repoRef: String
-	"""
-	The bug ID's prefix.
-	"""
-	prefix: String!
-}
-type CommitPayload {
-	"""
-	A unique identifier for the client performing the mutation.
-	"""
-	clientMutationId: String
-	"""
-	The affected bug.
-	"""
-	bug: Bug!
-}
-type CreateOperation implements Operation & Authored {
-	"""
-	The identifier of the operation
-	"""
-	id: String!
-	"""
-	The author of this object.
-	"""
-	author: Identity!
-	"""
-	The datetime when this operation was issued.
-	"""
-	date: Time!
-	title: String!
-	message: String!
-	files: [Hash!]!
-}
-"""
-CreateTimelineItem is a TimelineItem that represent the creation of a bug and its message edition history
-"""
-type CreateTimelineItem implements TimelineItem & Authored {
-	"""
-	The identifier of the source operation
-	"""
-	id: String!
-	author: Identity!
-	message: String!
-	messageIsEmpty: Boolean!
-	files: [Hash!]!
-	createdAt: Time!
-	lastEdit: Time!
-	edited: Boolean!
-	history: [CommentHistoryStep!]!
-}
-type EditCommentOperation implements Operation & Authored {
-	"""
-	The identifier of the operation
-	"""
-	id: String!
-	"""
-	The author of this object.
-	"""
-	author: Identity!
-	"""
-	The datetime when this operation was issued.
-	"""
-	date: Time!
-	target: String!
-	message: String!
-	files: [Hash!]!
-}
-scalar Hash
-"""
-Represents an identity
-"""
-type Identity {
-	"""
-	The identifier for this identity
-	"""
-	id: String!
-	"""
-	The human version (truncated) identifier for this identity
-	"""
-	humanId: String!
-	"""
-	The name of the person, if known.
-	"""
-	name: String
-	"""
-	The email of the person, if known.
-	"""
-	email: String
-	"""
-	A non-empty string to display, representing the identity, based on the non-empty values.
-	"""
-	displayName: String!
-	"""
-	An url to an avatar
-	"""
-	avatarUrl: String
-	"""
-	isProtected is true if the chain of git commits started to be signed.
-	    If that's the case, only signed commit with a valid key for this identity can be added.
-	"""
-	isProtected: Boolean!
-}
-type IdentityConnection {
-	edges: [IdentityEdge!]!
-	nodes: [Identity!]!
-	pageInfo: PageInfo!
-	totalCount: Int!
-}
-type IdentityEdge {
-	cursor: String!
-	node: Identity!
-}
-"""
-Label for a bug.
-"""
-type Label {
-	"""
-	The name of the label.
-	"""
-	name: String!
-	"""
-	Color of the label.
-	"""
-	color: Color!
-}
-type LabelChangeOperation implements Operation & Authored {
-	"""
-	The identifier of the operation
-	"""
-	id: String!
-	"""
-	The author of this object.
-	"""
-	author: Identity!
-	"""
-	The datetime when this operation was issued.
-	"""
-	date: Time!
-	added: [Label!]!
-	removed: [Label!]!
-}
-type LabelChangeResult {
-	"""
-	The source label.
-	"""
-	label: Label!
-	"""
-	The effect this label had.
-	"""
-	status: LabelChangeStatus!
-}
-enum LabelChangeStatus {
-	ADDED
-	REMOVED
-	DUPLICATE_IN_OP
-	ALREADY_EXIST
-	DOESNT_EXIST
-}
-"""
-LabelChangeTimelineItem is a TimelineItem that represent a change in the labels of a bug
-"""
-type LabelChangeTimelineItem implements TimelineItem & Authored {
-	"""
-	The identifier of the source operation
-	"""
-	id: String!
-	author: Identity!
-	date: Time!
-	added: [Label!]!
-	removed: [Label!]!
-}
-type LabelConnection {
-	edges: [LabelEdge!]!
-	nodes: [Label!]!
-	pageInfo: PageInfo!
-	totalCount: Int!
-}
-type LabelEdge {
-	cursor: String!
-	node: Label!
-}
-type Mutation {
-	"""
-	Create a new bug
-	"""
-	newBug(input: NewBugInput!): NewBugPayload!
-	"""
-	Add a new comment to a bug
-	"""
-	addComment(input: AddCommentInput!): AddCommentPayload!
-	"""
-	Add or remove a set of label on a bug
-	"""
-	changeLabels(input: ChangeLabelInput): ChangeLabelPayload!
-	"""
-	Change a bug's status to open
-	"""
-	openBug(input: OpenBugInput!): OpenBugPayload!
-	"""
-	Change a bug's status to closed
-	"""
-	closeBug(input: CloseBugInput!): CloseBugPayload!
-	"""
-	Change a bug's title
-	"""
-	setTitle(input: SetTitleInput!): SetTitlePayload!
-	"""
-	Commit write the pending operations into storage. This mutation fail if nothing is pending
-	"""
-	commit(input: CommitInput!): CommitPayload!
-	"""
-	Commit write the pending operations into storage. This mutation succed if nothing is pending
-	"""
-	commitAsNeeded(input: CommitAsNeededInput!): CommitAsNeededPayload!
-}
-input NewBugInput {
-	"""
-	A unique identifier for the client performing the mutation.
-	"""
-	clientMutationId: String
-	"""
-	"The name of the repository. If not set, the default repository is used.
-	"""
-	repoRef: String
-	"""
-	The title of the new bug.
-	"""
-	title: String!
-	"""
-	The first message of the new bug.
-	"""
-	message: String!
-	"""
-	The collection of file's hash required for the first message.
-	"""
-	files: [Hash!]
-}
-type NewBugPayload {
-	"""
-	A unique identifier for the client performing the mutation.
-	"""
-	clientMutationId: String
-	"""
-	The created bug.
-	"""
-	bug: Bug!
-	"""
-	The resulting operation.
-	"""
-	operation: CreateOperation!
-}
-input OpenBugInput {
-	"""
-	A unique identifier for the client performing the mutation.
-	"""
-	clientMutationId: String
-	"""
-	"The name of the repository. If not set, the default repository is used.
-	"""
-	repoRef: String
-	"""
-	The bug ID's prefix.
-	"""
-	prefix: String!
-}
-type OpenBugPayload {
-	"""
-	A unique identifier for the client performing the mutation.
-	"""
-	clientMutationId: String
-	"""
-	The affected bug.
-	"""
-	bug: Bug!
-	"""
-	The resulting operation.
-	"""
-	operation: SetStatusOperation!
-}
-"""
-An operation applied to a bug.
-"""
-interface Operation {
-	"""
-	The identifier of the operation
-	"""
-	id: String!
-	"""
-	The operations author.
-	"""
-	author: Identity!
-	"""
-	The datetime when this operation was issued.
-	"""
-	date: Time!
-}
-"""
-The connection type for an Operation
-"""
-type OperationConnection {
-	edges: [OperationEdge!]!
-	nodes: [Operation!]!
-	pageInfo: PageInfo!
-	totalCount: Int!
-}
-"""
-Represent an Operation
-"""
-type OperationEdge {
-	cursor: String!
-	node: Operation!
-}
-"""
-Information about pagination in a connection.
-"""
-type PageInfo {
-	"""
-	When paginating forwards, are there more items?
-	"""
-	hasNextPage: Boolean!
-	"""
-	When paginating backwards, are there more items?
-	"""
-	hasPreviousPage: Boolean!
-	"""
-	When paginating backwards, the cursor to continue.
-	"""
-	startCursor: String!
-	"""
-	When paginating forwards, the cursor to continue.
-	"""
-	endCursor: String!
-}
-type Query {
-	"""
-	The default unnamend repository.
-	"""
-	defaultRepository: Repository
-	"""
-	Access a repository by reference/name.
-	"""
-	repository(ref: String!): Repository
-}
-type Repository {
-	"""
-	All the bugs
-	"""
-	allBugs("""
-	Returns the elements in the list that come after the specified cursor.
-	"""
-	after: String, """
-	Returns the elements in the list that come before the specified cursor.
-	"""
-	before: String, """
-	Returns the first _n_ elements from the list.
-	"""
-	first: Int, """
-	Returns the last _n_ elements from the list.
-	"""
-	last: Int, """
-	A query to select and order bugs
-	"""
-	query: String): BugConnection!
-	bug(prefix: String!): Bug
-	"""
-	All the identities
-	"""
-	allIdentities("""
-	Returns the elements in the list that come after the specified cursor.
-	"""
-	after: String, """
-	Returns the elements in the list that come before the specified cursor.
-	"""
-	before: String, """
-	Returns the first _n_ elements from the list.
-	"""
-	first: Int, """
-	Returns the last _n_ elements from the list.
-	"""
-	last: Int): IdentityConnection!
-	identity(prefix: String!): Identity
-	"""
-	The identity created or selected by the user as its own
-	"""
-	userIdentity: Identity
-	"""
-	List of valid labels.
-	"""
-	validLabels("""
-	Returns the elements in the list that come after the specified cursor.
-	"""
-	after: String, """
-	Returns the elements in the list that come before the specified cursor.
-	"""
-	before: String, """
-	Returns the first _n_ elements from the list.
-	"""
-	first: Int, """
-	Returns the last _n_ elements from the list.
-	"""
-	last: Int): LabelConnection!
-}
-type SetStatusOperation implements Operation & Authored {
-	"""
-	The identifier of the operation
-	"""
-	id: String!
-	"""
-	The author of this object.
-	"""
-	author: Identity!
-	"""
-	The datetime when this operation was issued.
-	"""
-	date: Time!
-	status: Status!
-}
-"""
-SetStatusTimelineItem is a TimelineItem that represent a change in the status of a bug
-"""
-type SetStatusTimelineItem implements TimelineItem & Authored {
-	"""
-	The identifier of the source operation
-	"""
-	id: String!
-	author: Identity!
-	date: Time!
-	status: Status!
-}
-input SetTitleInput {
-	"""
-	A unique identifier for the client performing the mutation.
-	"""
-	clientMutationId: String
-	"""
-	"The name of the repository. If not set, the default repository is used.
-	"""
-	repoRef: String
-	"""
-	The bug ID's prefix.
-	"""
-	prefix: String!
-	"""
-	The new title.
-	"""
-	title: String!
-}
-type SetTitleOperation implements Operation & Authored {
-	"""
-	The identifier of the operation
-	"""
-	id: String!
-	"""
-	The author of this object.
-	"""
-	author: Identity!
-	"""
-	The datetime when this operation was issued.
-	"""
-	date: Time!
-	title: String!
-	was: String!
-}
-type SetTitlePayload {
-	"""
-	A unique identifier for the client performing the mutation.
-	"""
-	clientMutationId: String
-	"""
-	The affected bug.
-	"""
-	bug: Bug!
-	"""
-	The resulting operation
-	"""
-	operation: SetTitleOperation!
-}
-"""
-LabelChangeTimelineItem is a TimelineItem that represent a change in the title of a bug
-"""
-type SetTitleTimelineItem implements TimelineItem & Authored {
-	"""
-	The identifier of the source operation
-	"""
-	id: String!
-	author: Identity!
-	date: Time!
-	title: String!
-	was: String!
-}
+
 enum Status {
-	OPEN
-	CLOSED
+  OPEN
+  CLOSED
 }
-scalar Time
-"""
-An item in the timeline of events
-"""
+
+type Bug implements Authored {
+  """The identifier for this bug"""
+  id: String!
+  """The human version (truncated) identifier for this bug"""
+  humanId: String!
+  status: Status!
+  title: String!
+  labels: [Label!]!
+  author: Identity!
+  createdAt: Time!
+  lastEdit: Time!
+
+  """The actors of the bug. Actors are Identity that have interacted with the bug."""
+  actors(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+    """Returns the elements in the list that come before the specified cursor."""
+    before: String
+    """Returns the first _n_ elements from the list."""
+    first: Int
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): IdentityConnection!
+
+  """The participants of the bug. Participants are Identity that have created or
+  added a comment on the bug."""
+  participants(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+    """Returns the elements in the list that come before the specified cursor."""
+    before: String
+    """Returns the first _n_ elements from the list."""
+    first: Int
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): IdentityConnection!
+
+  comments(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+    """Returns the elements in the list that come before the specified cursor."""
+    before: String
+    """Returns the first _n_ elements from the list."""
+    first: Int
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): CommentConnection!
+
+  timeline(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+    """Returns the elements in the list that come before the specified cursor."""
+    before: String
+    """Returns the first _n_ elements from the list."""
+    first: Int
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): TimelineItemConnection!
+
+  operations(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+    """Returns the elements in the list that come before the specified cursor."""
+    before: String
+    """Returns the first _n_ elements from the list."""
+    first: Int
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): OperationConnection!
+}
+
+"""The connection type for Bug."""
+type BugConnection {
+  """A list of edges."""
+  edges: [BugEdge!]!
+  nodes: [Bug!]!
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+  """Identifies the total count of items in the connection."""
+  totalCount: Int!
+}
+
+"""An edge in a connection."""
+type BugEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+  """The item at the end of the edge."""
+  node: Bug!
+}
+`, BuiltIn: false},
+	&ast.Source{Name: "schema/identity.graphql", Input: `"""Represents an identity"""
+type Identity {
+    """The identifier for this identity"""
+    id: String!
+    """The human version (truncated) identifier for this identity"""
+    humanId: String!
+    """The name of the person, if known."""
+    name: String
+    """The email of the person, if known."""
+    email: String
+    """A non-empty string to display, representing the identity, based on the non-empty values."""
+    displayName: String!
+    """An url to an avatar"""
+    avatarUrl: String
+    """isProtected is true if the chain of git commits started to be signed.
+    If that's the case, only signed commit with a valid key for this identity can be added."""
+    isProtected: Boolean!
+}
+
+type IdentityConnection {
+    edges: [IdentityEdge!]!
+    nodes: [Identity!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type IdentityEdge {
+    cursor: String!
+    node: Identity!
+}`, BuiltIn: false},
+	&ast.Source{Name: "schema/label.graphql", Input: `"""Label for a bug."""
+type Label {
+    """The name of the label."""
+    name: String!
+    """Color of the label."""
+    color: Color!
+}
+
+type LabelConnection {
+    edges: [LabelEdge!]!
+    nodes: [Label!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type LabelEdge {
+    cursor: String!
+    node: Label!
+}`, BuiltIn: false},
+	&ast.Source{Name: "schema/mutations.graphql", Input: `input NewBugInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """"The name of the repository. If not set, the default repository is used."""
+    repoRef: String
+    """The title of the new bug."""
+    title: String!
+    """The first message of the new bug."""
+    message: String!
+    """The collection of file's hash required for the first message."""
+    files: [Hash!]
+}
+
+type NewBugPayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The created bug."""
+    bug: Bug!
+    """The resulting operation."""
+    operation: CreateOperation!
+}
+
+input AddCommentInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """"The name of the repository. If not set, the default repository is used."""
+    repoRef: String
+    """The bug ID's prefix."""
+    prefix: String!
+    """The first message of the new bug."""
+    message: String!
+    """The collection of file's hash required for the first message."""
+    files: [Hash!]
+}
+
+type AddCommentPayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The affected bug."""
+    bug: Bug!
+    """The resulting operation."""
+    operation: AddCommentOperation!
+}
+
+input ChangeLabelInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """"The name of the repository. If not set, the default repository is used."""
+    repoRef: String
+    """The bug ID's prefix."""
+    prefix: String!
+    """The list of label to add."""
+    added: [String!]
+    """The list of label to remove."""
+    Removed: [String!]
+}
+
+enum LabelChangeStatus {
+    ADDED
+    REMOVED
+    DUPLICATE_IN_OP
+    ALREADY_EXIST
+    DOESNT_EXIST
+}
+
+type LabelChangeResult {
+    """The source label."""
+    label: Label!
+    """The effect this label had."""
+    status: LabelChangeStatus!
+}
+
+type ChangeLabelPayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The affected bug."""
+    bug: Bug!
+    """The resulting operation."""
+    operation: LabelChangeOperation!
+    """The effect each source label had."""
+    results: [LabelChangeResult]!
+}
+
+input OpenBugInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """"The name of the repository. If not set, the default repository is used."""
+    repoRef: String
+    """The bug ID's prefix."""
+    prefix: String!
+}
+
+type OpenBugPayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The affected bug."""
+    bug: Bug!
+    """The resulting operation."""
+    operation: SetStatusOperation!
+}
+
+input CloseBugInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """"The name of the repository. If not set, the default repository is used."""
+    repoRef: String
+    """The bug ID's prefix."""
+    prefix: String!
+}
+
+type CloseBugPayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The affected bug."""
+    bug: Bug!
+    """The resulting operation."""
+    operation: SetStatusOperation!
+}
+
+input SetTitleInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """"The name of the repository. If not set, the default repository is used."""
+    repoRef: String
+    """The bug ID's prefix."""
+    prefix: String!
+    """The new title."""
+    title: String!
+}
+
+type SetTitlePayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The affected bug."""
+    bug: Bug!
+    """The resulting operation"""
+    operation: SetTitleOperation!
+}
+
+input CommitInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """"The name of the repository. If not set, the default repository is used."""
+    repoRef: String
+    """The bug ID's prefix."""
+    prefix: String!
+}
+
+type CommitPayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The affected bug."""
+    bug: Bug!
+}
+
+input CommitAsNeededInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """"The name of the repository. If not set, the default repository is used."""
+    repoRef: String
+    """The bug ID's prefix."""
+    prefix: String!
+}
+
+type CommitAsNeededPayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The affected bug."""
+    bug: Bug!
+}
+`, BuiltIn: false},
+	&ast.Source{Name: "schema/operations.graphql", Input: `"""An operation applied to a bug."""
+interface Operation {
+    """The identifier of the operation"""
+    id: String!
+    """The operations author."""
+    author: Identity!
+    """The datetime when this operation was issued."""
+    date: Time!
+}
+
+# Connection
+
+"""The connection type for an Operation"""
+type OperationConnection {
+    edges: [OperationEdge!]!
+    nodes: [Operation!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+"""Represent an Operation"""
+type OperationEdge {
+    cursor: String!
+    node: Operation!
+}
+
+# Operations
+
+type CreateOperation implements Operation & Authored {
+    """The identifier of the operation"""
+    id: String!
+    """The author of this object."""
+    author: Identity!
+    """The datetime when this operation was issued."""
+    date: Time!
+
+    title: String!
+    message: String!
+    files: [Hash!]!
+}
+
+type SetTitleOperation implements Operation & Authored {
+    """The identifier of the operation"""
+    id: String!
+    """The author of this object."""
+    author: Identity!
+    """The datetime when this operation was issued."""
+    date: Time!
+
+    title: String!
+    was: String!
+}
+
+type AddCommentOperation implements Operation & Authored {
+    """The identifier of the operation"""
+    id: String!
+    """The author of this object."""
+    author: Identity!
+    """The datetime when this operation was issued."""
+    date: Time!
+
+    message: String!
+    files: [Hash!]!
+}
+
+type EditCommentOperation implements Operation & Authored {
+    """The identifier of the operation"""
+    id: String!
+    """The author of this object."""
+    author: Identity!
+    """The datetime when this operation was issued."""
+    date: Time!
+
+    target: String!
+    message: String!
+    files: [Hash!]!
+}
+
+type SetStatusOperation implements Operation & Authored {
+    """The identifier of the operation"""
+    id: String!
+    """The author of this object."""
+    author: Identity!
+    """The datetime when this operation was issued."""
+    date: Time!
+
+    status: Status!
+}
+
+type LabelChangeOperation implements Operation & Authored {
+    """The identifier of the operation"""
+    id: String!
+    """The author of this object."""
+    author: Identity!
+    """The datetime when this operation was issued."""
+    date: Time!
+
+    added: [Label!]!
+    removed: [Label!]!
+}
+`, BuiltIn: false},
+	&ast.Source{Name: "schema/repository.graphql", Input: `
+type Repository {
+    """All the bugs"""
+    allBugs(
+        """Returns the elements in the list that come after the specified cursor."""
+        after: String
+        """Returns the elements in the list that come before the specified cursor."""
+        before: String
+        """Returns the first _n_ elements from the list."""
+        first: Int
+        """Returns the last _n_ elements from the list."""
+        last: Int
+        """A query to select and order bugs"""
+        query: String
+    ): BugConnection!
+
+    bug(prefix: String!): Bug
+
+    """All the identities"""
+    allIdentities(
+        """Returns the elements in the list that come after the specified cursor."""
+        after: String
+        """Returns the elements in the list that come before the specified cursor."""
+        before: String
+        """Returns the first _n_ elements from the list."""
+        first: Int
+        """Returns the last _n_ elements from the list."""
+        last: Int
+    ): IdentityConnection!
+
+    identity(prefix: String!): Identity
+
+    """The identity created or selected by the user as its own"""
+    userIdentity: Identity
+
+    """List of valid labels."""
+    validLabels(
+        """Returns the elements in the list that come after the specified cursor."""
+        after: String
+        """Returns the elements in the list that come before the specified cursor."""
+        before: String
+        """Returns the first _n_ elements from the list."""
+        first: Int
+        """Returns the last _n_ elements from the list."""
+        last: Int
+    ): LabelConnection!
+}`, BuiltIn: false},
+	&ast.Source{Name: "schema/root.graphql", Input: `type Query {
+    """The default unnamend repository."""
+    defaultRepository: Repository
+    """Access a repository by reference/name."""
+    repository(ref: String!): Repository
+
+    #TODO: connection for all repositories
+}
+
+type Mutation {
+    """Create a new bug"""
+    newBug(input: NewBugInput!): NewBugPayload!
+    """Add a new comment to a bug"""
+    addComment(input: AddCommentInput!): AddCommentPayload!
+    """Add or remove a set of label on a bug"""
+    changeLabels(input: ChangeLabelInput): ChangeLabelPayload!
+    """Change a bug's status to open"""
+    openBug(input: OpenBugInput!): OpenBugPayload!
+    """Change a bug's status to closed"""
+    closeBug(input: CloseBugInput!): CloseBugPayload!
+    """Change a bug's title"""
+    setTitle(input: SetTitleInput!): SetTitlePayload!
+    """Commit write the pending operations into storage. This mutation fail if nothing is pending"""
+    commit(input: CommitInput!): CommitPayload!
+    """Commit write the pending operations into storage. This mutation succed if nothing is pending"""
+    commitAsNeeded(input: CommitAsNeededInput!): CommitAsNeededPayload!
+}
+`, BuiltIn: false},
+	&ast.Source{Name: "schema/timeline.graphql", Input: `"""An item in the timeline of events"""
 interface TimelineItem {
-	"""
-	The identifier of the source operation
-	"""
-	id: String!
+    """The identifier of the source operation"""
+    id: String!
 }
-"""
-The connection type for TimelineItem
-"""
+
+"""CommentHistoryStep hold one version of a message in the history"""
+type CommentHistoryStep {
+    message: String!
+    date: Time!
+}
+
+# Connection
+
+"""The connection type for TimelineItem"""
 type TimelineItemConnection {
-	edges: [TimelineItemEdge!]!
-	nodes: [TimelineItem!]!
-	pageInfo: PageInfo!
-	totalCount: Int!
+    edges: [TimelineItemEdge!]!
+    nodes: [TimelineItem!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
 }
-"""
-Represent a TimelineItem
-"""
+
+"""Represent a TimelineItem"""
 type TimelineItemEdge {
-	cursor: String!
-	node: TimelineItem!
+    cursor: String!
+    node: TimelineItem!
 }
-`},
-)
+
+# Items
+
+"""CreateTimelineItem is a TimelineItem that represent the creation of a bug and its message edition history"""
+type CreateTimelineItem implements TimelineItem & Authored {
+    """The identifier of the source operation"""
+    id: String!
+    author: Identity!
+    message: String!
+    messageIsEmpty: Boolean!
+    files: [Hash!]!
+    createdAt: Time!
+    lastEdit: Time!
+    edited: Boolean!
+    history: [CommentHistoryStep!]!
+}
+
+"""AddCommentTimelineItem is a TimelineItem that represent a Comment and its edition history"""
+type AddCommentTimelineItem implements TimelineItem & Authored {
+    """The identifier of the source operation"""
+    id: String!
+    author: Identity!
+    message: String!
+    messageIsEmpty: Boolean!
+    files: [Hash!]!
+    createdAt: Time!
+    lastEdit: Time!
+    edited: Boolean!
+    history: [CommentHistoryStep!]!
+}
+
+"""LabelChangeTimelineItem is a TimelineItem that represent a change in the labels of a bug"""
+type LabelChangeTimelineItem implements TimelineItem & Authored {
+    """The identifier of the source operation"""
+    id: String!
+    author: Identity!
+    date: Time!
+    added: [Label!]!
+    removed: [Label!]!
+}
+
+"""SetStatusTimelineItem is a TimelineItem that represent a change in the status of a bug"""
+type SetStatusTimelineItem implements TimelineItem & Authored {
+    """The identifier of the source operation"""
+    id: String!
+    author: Identity!
+    date: Time!
+    status: Status!
+}
+
+"""LabelChangeTimelineItem is a TimelineItem that represent a change in the title of a bug"""
+type SetTitleTimelineItem implements TimelineItem & Authored {
+    """The identifier of the source operation"""
+    id: String!
+    author: Identity!
+    date: Time!
+    title: String!
+    was: String!
+}
+`, BuiltIn: false},
+	&ast.Source{Name: "schema/types.graphql", Input: `scalar Time
+scalar Hash
+
+"""Defines a color by red, green and blue components."""
+type Color {
+    """Red component of the color."""
+    R: Int!
+    """Green component of the color."""
+    G: Int!
+    """Blue component of the color."""
+    B: Int!
+}
+
+"""Information about pagination in a connection."""
+type PageInfo {
+    """When paginating forwards, are there more items?"""
+    hasNextPage: Boolean!
+    """When paginating backwards, are there more items?"""
+    hasPreviousPage: Boolean!
+    """When paginating backwards, the cursor to continue."""
+    startCursor: String!
+    """When paginating forwards, the cursor to continue."""
+    endCursor: String!
+}
+
+"""An object that has an author."""
+interface Authored {
+    """The author of this object."""
+    author: Identity!
+}
+`, BuiltIn: false},
+}
+var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // endregion ************************** generated!.gotpl **************************
 
@@ -3310,13 +3079,13 @@ func (ec *executionContext) _AddCommentOperation_author(ctx context.Context, fie
 		Object:   "AddCommentOperation",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Author, nil
+		return ec.resolvers.AddCommentOperation().Author(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3328,9 +3097,9 @@ func (ec *executionContext) _AddCommentOperation_author(ctx context.Context, fie
 		}
 		return graphql.Null
 	}
-	res := resTmp.(identity.Interface)
+	res := resTmp.(models.IdentityWrapper)
 	fc.Result = res
-	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋidentityᚐInterface(ctx, field.Selections, res)
+	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _AddCommentOperation_date(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentOperation) (ret graphql.Marshaler) {
@@ -3495,9 +3264,9 @@ func (ec *executionContext) _AddCommentPayload_bug(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*bug.Snapshot)
+	res := resTmp.(models.BugWrapper)
 	fc.Result = res
-	return ec.marshalNBug2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐSnapshot(ctx, field.Selections, res)
+	return ec.marshalNBug2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐBugWrapper(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _AddCommentPayload_operation(ctx context.Context, field graphql.CollectedField, obj *models.AddCommentPayload) (ret graphql.Marshaler) {
@@ -3579,13 +3348,13 @@ func (ec *executionContext) _AddCommentTimelineItem_author(ctx context.Context, 
 		Object:   "AddCommentTimelineItem",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Author, nil
+		return ec.resolvers.AddCommentTimelineItem().Author(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3597,9 +3366,9 @@ func (ec *executionContext) _AddCommentTimelineItem_author(ctx context.Context, 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(identity.Interface)
+	res := resTmp.(models.IdentityWrapper)
 	fc.Result = res
-	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋidentityᚐInterface(ctx, field.Selections, res)
+	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _AddCommentTimelineItem_message(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentTimelineItem) (ret graphql.Marshaler) {
@@ -3840,7 +3609,7 @@ func (ec *executionContext) _AddCommentTimelineItem_history(ctx context.Context,
 	return ec.marshalNCommentHistoryStep2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐCommentHistoryStepᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Bug_id(ctx context.Context, field graphql.CollectedField, obj *bug.Snapshot) (ret graphql.Marshaler) {
+func (ec *executionContext) _Bug_id(ctx context.Context, field graphql.CollectedField, obj models.BugWrapper) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -3874,7 +3643,7 @@ func (ec *executionContext) _Bug_id(ctx context.Context, field graphql.Collected
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Bug_humanId(ctx context.Context, field graphql.CollectedField, obj *bug.Snapshot) (ret graphql.Marshaler) {
+func (ec *executionContext) _Bug_humanId(ctx context.Context, field graphql.CollectedField, obj models.BugWrapper) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -3908,7 +3677,7 @@ func (ec *executionContext) _Bug_humanId(ctx context.Context, field graphql.Coll
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Bug_status(ctx context.Context, field graphql.CollectedField, obj *bug.Snapshot) (ret graphql.Marshaler) {
+func (ec *executionContext) _Bug_status(ctx context.Context, field graphql.CollectedField, obj models.BugWrapper) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -3942,143 +3711,7 @@ func (ec *executionContext) _Bug_status(ctx context.Context, field graphql.Colle
 	return ec.marshalNStatus2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐStatus(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Bug_title(ctx context.Context, field graphql.CollectedField, obj *bug.Snapshot) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:   "Bug",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Title, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Bug_labels(ctx context.Context, field graphql.CollectedField, obj *bug.Snapshot) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:   "Bug",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Labels, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]bug.Label)
-	fc.Result = res
-	return ec.marshalNLabel2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐLabelᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Bug_author(ctx context.Context, field graphql.CollectedField, obj *bug.Snapshot) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:   "Bug",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Author, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(identity.Interface)
-	fc.Result = res
-	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋidentityᚐInterface(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Bug_createdAt(ctx context.Context, field graphql.CollectedField, obj *bug.Snapshot) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:   "Bug",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CreatedAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(time.Time)
-	fc.Result = res
-	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Bug_lastEdit(ctx context.Context, field graphql.CollectedField, obj *bug.Snapshot) (ret graphql.Marshaler) {
+func (ec *executionContext) _Bug_title(ctx context.Context, field graphql.CollectedField, obj models.BugWrapper) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -4095,7 +3728,7 @@ func (ec *executionContext) _Bug_lastEdit(ctx context.Context, field graphql.Col
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Bug().LastEdit(rctx, obj)
+		return obj.Title(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4107,12 +3740,148 @@ func (ec *executionContext) _Bug_lastEdit(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Bug_actors(ctx context.Context, field graphql.CollectedField, obj *bug.Snapshot) (ret graphql.Marshaler) {
+func (ec *executionContext) _Bug_labels(ctx context.Context, field graphql.CollectedField, obj models.BugWrapper) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Bug",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Labels(), nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]bug.Label)
+	fc.Result = res
+	return ec.marshalNLabel2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐLabelᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Bug_author(ctx context.Context, field graphql.CollectedField, obj models.BugWrapper) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Bug",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Author()
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(models.IdentityWrapper)
+	fc.Result = res
+	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Bug_createdAt(ctx context.Context, field graphql.CollectedField, obj models.BugWrapper) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Bug",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt(), nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Bug_lastEdit(ctx context.Context, field graphql.CollectedField, obj models.BugWrapper) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Bug",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastEdit(), nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Bug_actors(ctx context.Context, field graphql.CollectedField, obj models.BugWrapper) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -4153,7 +3922,7 @@ func (ec *executionContext) _Bug_actors(ctx context.Context, field graphql.Colle
 	return ec.marshalNIdentityConnection2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐIdentityConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Bug_participants(ctx context.Context, field graphql.CollectedField, obj *bug.Snapshot) (ret graphql.Marshaler) {
+func (ec *executionContext) _Bug_participants(ctx context.Context, field graphql.CollectedField, obj models.BugWrapper) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -4194,7 +3963,7 @@ func (ec *executionContext) _Bug_participants(ctx context.Context, field graphql
 	return ec.marshalNIdentityConnection2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐIdentityConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Bug_comments(ctx context.Context, field graphql.CollectedField, obj *bug.Snapshot) (ret graphql.Marshaler) {
+func (ec *executionContext) _Bug_comments(ctx context.Context, field graphql.CollectedField, obj models.BugWrapper) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -4235,7 +4004,7 @@ func (ec *executionContext) _Bug_comments(ctx context.Context, field graphql.Col
 	return ec.marshalNCommentConnection2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐCommentConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Bug_timeline(ctx context.Context, field graphql.CollectedField, obj *bug.Snapshot) (ret graphql.Marshaler) {
+func (ec *executionContext) _Bug_timeline(ctx context.Context, field graphql.CollectedField, obj models.BugWrapper) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -4276,7 +4045,7 @@ func (ec *executionContext) _Bug_timeline(ctx context.Context, field graphql.Col
 	return ec.marshalNTimelineItemConnection2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐTimelineItemConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Bug_operations(ctx context.Context, field graphql.CollectedField, obj *bug.Snapshot) (ret graphql.Marshaler) {
+func (ec *executionContext) _Bug_operations(ctx context.Context, field graphql.CollectedField, obj models.BugWrapper) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -4380,9 +4149,9 @@ func (ec *executionContext) _BugConnection_nodes(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*bug.Snapshot)
+	res := resTmp.([]models.BugWrapper)
 	fc.Result = res
-	return ec.marshalNBug2ᚕᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐSnapshotᚄ(ctx, field.Selections, res)
+	return ec.marshalNBug2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐBugWrapperᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _BugConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *models.BugConnection) (ret graphql.Marshaler) {
@@ -4516,9 +4285,9 @@ func (ec *executionContext) _BugEdge_node(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*bug.Snapshot)
+	res := resTmp.(models.BugWrapper)
 	fc.Result = res
-	return ec.marshalNBug2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐSnapshot(ctx, field.Selections, res)
+	return ec.marshalNBug2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐBugWrapper(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _ChangeLabelPayload_clientMutationId(ctx context.Context, field graphql.CollectedField, obj *models.ChangeLabelPayload) (ret graphql.Marshaler) {
@@ -4581,9 +4350,9 @@ func (ec *executionContext) _ChangeLabelPayload_bug(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*bug.Snapshot)
+	res := resTmp.(models.BugWrapper)
 	fc.Result = res
-	return ec.marshalNBug2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐSnapshot(ctx, field.Selections, res)
+	return ec.marshalNBug2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐBugWrapper(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _ChangeLabelPayload_operation(ctx context.Context, field graphql.CollectedField, obj *models.ChangeLabelPayload) (ret graphql.Marshaler) {
@@ -4714,9 +4483,9 @@ func (ec *executionContext) _CloseBugPayload_bug(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*bug.Snapshot)
+	res := resTmp.(models.BugWrapper)
 	fc.Result = res
-	return ec.marshalNBug2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐSnapshot(ctx, field.Selections, res)
+	return ec.marshalNBug2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐBugWrapper(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _CloseBugPayload_operation(ctx context.Context, field graphql.CollectedField, obj *models.CloseBugPayload) (ret graphql.Marshaler) {
@@ -4866,13 +4635,13 @@ func (ec *executionContext) _Comment_author(ctx context.Context, field graphql.C
 		Object:   "Comment",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Author, nil
+		return ec.resolvers.Comment().Author(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4884,9 +4653,9 @@ func (ec *executionContext) _Comment_author(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(identity.Interface)
+	res := resTmp.(models.IdentityWrapper)
 	fc.Result = res
-	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋidentityᚐInterface(ctx, field.Selections, res)
+	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Comment_message(ctx context.Context, field graphql.CollectedField, obj *bug.Comment) (ret graphql.Marshaler) {
@@ -5289,9 +5058,9 @@ func (ec *executionContext) _CommitAsNeededPayload_bug(ctx context.Context, fiel
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*bug.Snapshot)
+	res := resTmp.(models.BugWrapper)
 	fc.Result = res
-	return ec.marshalNBug2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐSnapshot(ctx, field.Selections, res)
+	return ec.marshalNBug2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐBugWrapper(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _CommitPayload_clientMutationId(ctx context.Context, field graphql.CollectedField, obj *models.CommitPayload) (ret graphql.Marshaler) {
@@ -5354,9 +5123,9 @@ func (ec *executionContext) _CommitPayload_bug(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*bug.Snapshot)
+	res := resTmp.(models.BugWrapper)
 	fc.Result = res
-	return ec.marshalNBug2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐSnapshot(ctx, field.Selections, res)
+	return ec.marshalNBug2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐBugWrapper(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _CreateOperation_id(ctx context.Context, field graphql.CollectedField, obj *bug.CreateOperation) (ret graphql.Marshaler) {
@@ -5404,13 +5173,13 @@ func (ec *executionContext) _CreateOperation_author(ctx context.Context, field g
 		Object:   "CreateOperation",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Author, nil
+		return ec.resolvers.CreateOperation().Author(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5422,9 +5191,9 @@ func (ec *executionContext) _CreateOperation_author(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.(identity.Interface)
+	res := resTmp.(models.IdentityWrapper)
 	fc.Result = res
-	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋidentityᚐInterface(ctx, field.Selections, res)
+	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _CreateOperation_date(ctx context.Context, field graphql.CollectedField, obj *bug.CreateOperation) (ret graphql.Marshaler) {
@@ -5608,13 +5377,13 @@ func (ec *executionContext) _CreateTimelineItem_author(ctx context.Context, fiel
 		Object:   "CreateTimelineItem",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Author, nil
+		return ec.resolvers.CreateTimelineItem().Author(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5626,9 +5395,9 @@ func (ec *executionContext) _CreateTimelineItem_author(ctx context.Context, fiel
 		}
 		return graphql.Null
 	}
-	res := resTmp.(identity.Interface)
+	res := resTmp.(models.IdentityWrapper)
 	fc.Result = res
-	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋidentityᚐInterface(ctx, field.Selections, res)
+	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _CreateTimelineItem_message(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) (ret graphql.Marshaler) {
@@ -5914,13 +5683,13 @@ func (ec *executionContext) _EditCommentOperation_author(ctx context.Context, fi
 		Object:   "EditCommentOperation",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Author, nil
+		return ec.resolvers.EditCommentOperation().Author(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5932,9 +5701,9 @@ func (ec *executionContext) _EditCommentOperation_author(ctx context.Context, fi
 		}
 		return graphql.Null
 	}
-	res := resTmp.(identity.Interface)
+	res := resTmp.(models.IdentityWrapper)
 	fc.Result = res
-	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋidentityᚐInterface(ctx, field.Selections, res)
+	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _EditCommentOperation_date(ctx context.Context, field graphql.CollectedField, obj *bug.EditCommentOperation) (ret graphql.Marshaler) {
@@ -6073,7 +5842,7 @@ func (ec *executionContext) _EditCommentOperation_files(ctx context.Context, fie
 	return ec.marshalNHash2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋutilᚋgitᚐHashᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Identity_id(ctx context.Context, field graphql.CollectedField, obj identity.Interface) (ret graphql.Marshaler) {
+func (ec *executionContext) _Identity_id(ctx context.Context, field graphql.CollectedField, obj models.IdentityWrapper) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -6107,7 +5876,7 @@ func (ec *executionContext) _Identity_id(ctx context.Context, field graphql.Coll
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Identity_humanId(ctx context.Context, field graphql.CollectedField, obj identity.Interface) (ret graphql.Marshaler) {
+func (ec *executionContext) _Identity_humanId(ctx context.Context, field graphql.CollectedField, obj models.IdentityWrapper) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -6141,7 +5910,7 @@ func (ec *executionContext) _Identity_humanId(ctx context.Context, field graphql
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Identity_name(ctx context.Context, field graphql.CollectedField, obj identity.Interface) (ret graphql.Marshaler) {
+func (ec *executionContext) _Identity_name(ctx context.Context, field graphql.CollectedField, obj models.IdentityWrapper) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -6172,7 +5941,7 @@ func (ec *executionContext) _Identity_name(ctx context.Context, field graphql.Co
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Identity_email(ctx context.Context, field graphql.CollectedField, obj identity.Interface) (ret graphql.Marshaler) {
+func (ec *executionContext) _Identity_email(ctx context.Context, field graphql.CollectedField, obj models.IdentityWrapper) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -6189,7 +5958,7 @@ func (ec *executionContext) _Identity_email(ctx context.Context, field graphql.C
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Email(), nil
+		return obj.Email()
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6203,7 +5972,7 @@ func (ec *executionContext) _Identity_email(ctx context.Context, field graphql.C
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Identity_displayName(ctx context.Context, field graphql.CollectedField, obj identity.Interface) (ret graphql.Marshaler) {
+func (ec *executionContext) _Identity_displayName(ctx context.Context, field graphql.CollectedField, obj models.IdentityWrapper) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -6237,7 +6006,7 @@ func (ec *executionContext) _Identity_displayName(ctx context.Context, field gra
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Identity_avatarUrl(ctx context.Context, field graphql.CollectedField, obj identity.Interface) (ret graphql.Marshaler) {
+func (ec *executionContext) _Identity_avatarUrl(ctx context.Context, field graphql.CollectedField, obj models.IdentityWrapper) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -6254,7 +6023,7 @@ func (ec *executionContext) _Identity_avatarUrl(ctx context.Context, field graph
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.AvatarUrl(), nil
+		return obj.AvatarUrl()
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6268,7 +6037,7 @@ func (ec *executionContext) _Identity_avatarUrl(ctx context.Context, field graph
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Identity_isProtected(ctx context.Context, field graphql.CollectedField, obj identity.Interface) (ret graphql.Marshaler) {
+func (ec *executionContext) _Identity_isProtected(ctx context.Context, field graphql.CollectedField, obj models.IdentityWrapper) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -6285,7 +6054,7 @@ func (ec *executionContext) _Identity_isProtected(ctx context.Context, field gra
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.IsProtected(), nil
+		return obj.IsProtected()
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6365,9 +6134,9 @@ func (ec *executionContext) _IdentityConnection_nodes(ctx context.Context, field
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]identity.Interface)
+	res := resTmp.([]models.IdentityWrapper)
 	fc.Result = res
-	return ec.marshalNIdentity2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋidentityᚐInterfaceᚄ(ctx, field.Selections, res)
+	return ec.marshalNIdentity2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐIdentityWrapperᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _IdentityConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *models.IdentityConnection) (ret graphql.Marshaler) {
@@ -6501,9 +6270,9 @@ func (ec *executionContext) _IdentityEdge_node(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(identity.Interface)
+	res := resTmp.(models.IdentityWrapper)
 	fc.Result = res
-	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋidentityᚐInterface(ctx, field.Selections, res)
+	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Label_name(ctx context.Context, field graphql.CollectedField, obj *bug.Label) (ret graphql.Marshaler) {
@@ -6619,13 +6388,13 @@ func (ec *executionContext) _LabelChangeOperation_author(ctx context.Context, fi
 		Object:   "LabelChangeOperation",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Author, nil
+		return ec.resolvers.LabelChangeOperation().Author(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6637,9 +6406,9 @@ func (ec *executionContext) _LabelChangeOperation_author(ctx context.Context, fi
 		}
 		return graphql.Null
 	}
-	res := resTmp.(identity.Interface)
+	res := resTmp.(models.IdentityWrapper)
 	fc.Result = res
-	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋidentityᚐInterface(ctx, field.Selections, res)
+	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _LabelChangeOperation_date(ctx context.Context, field graphql.CollectedField, obj *bug.LabelChangeOperation) (ret graphql.Marshaler) {
@@ -6857,13 +6626,13 @@ func (ec *executionContext) _LabelChangeTimelineItem_author(ctx context.Context,
 		Object:   "LabelChangeTimelineItem",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Author, nil
+		return ec.resolvers.LabelChangeTimelineItem().Author(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6875,9 +6644,9 @@ func (ec *executionContext) _LabelChangeTimelineItem_author(ctx context.Context,
 		}
 		return graphql.Null
 	}
-	res := resTmp.(identity.Interface)
+	res := resTmp.(models.IdentityWrapper)
 	fc.Result = res
-	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋidentityᚐInterface(ctx, field.Selections, res)
+	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _LabelChangeTimelineItem_date(ctx context.Context, field graphql.CollectedField, obj *bug.LabelChangeTimelineItem) (ret graphql.Marshaler) {
@@ -7574,9 +7343,9 @@ func (ec *executionContext) _NewBugPayload_bug(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*bug.Snapshot)
+	res := resTmp.(models.BugWrapper)
 	fc.Result = res
-	return ec.marshalNBug2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐSnapshot(ctx, field.Selections, res)
+	return ec.marshalNBug2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐBugWrapper(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _NewBugPayload_operation(ctx context.Context, field graphql.CollectedField, obj *models.NewBugPayload) (ret graphql.Marshaler) {
@@ -7673,9 +7442,9 @@ func (ec *executionContext) _OpenBugPayload_bug(ctx context.Context, field graph
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*bug.Snapshot)
+	res := resTmp.(models.BugWrapper)
 	fc.Result = res
-	return ec.marshalNBug2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐSnapshot(ctx, field.Selections, res)
+	return ec.marshalNBug2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐBugWrapper(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _OpenBugPayload_operation(ctx context.Context, field graphql.CollectedField, obj *models.OpenBugPayload) (ret graphql.Marshaler) {
@@ -8264,9 +8033,9 @@ func (ec *executionContext) _Repository_bug(ctx context.Context, field graphql.C
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*bug.Snapshot)
+	res := resTmp.(models.BugWrapper)
 	fc.Result = res
-	return ec.marshalOBug2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐSnapshot(ctx, field.Selections, res)
+	return ec.marshalOBug2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐBugWrapper(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Repository_allIdentities(ctx context.Context, field graphql.CollectedField, obj *models.Repository) (ret graphql.Marshaler) {
@@ -8343,9 +8112,9 @@ func (ec *executionContext) _Repository_identity(ctx context.Context, field grap
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(identity.Interface)
+	res := resTmp.(models.IdentityWrapper)
 	fc.Result = res
-	return ec.marshalOIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋidentityᚐInterface(ctx, field.Selections, res)
+	return ec.marshalOIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Repository_userIdentity(ctx context.Context, field graphql.CollectedField, obj *models.Repository) (ret graphql.Marshaler) {
@@ -8374,9 +8143,9 @@ func (ec *executionContext) _Repository_userIdentity(ctx context.Context, field 
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(identity.Interface)
+	res := resTmp.(models.IdentityWrapper)
 	fc.Result = res
-	return ec.marshalOIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋidentityᚐInterface(ctx, field.Selections, res)
+	return ec.marshalOIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Repository_validLabels(ctx context.Context, field graphql.CollectedField, obj *models.Repository) (ret graphql.Marshaler) {
@@ -8465,13 +8234,13 @@ func (ec *executionContext) _SetStatusOperation_author(ctx context.Context, fiel
 		Object:   "SetStatusOperation",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Author, nil
+		return ec.resolvers.SetStatusOperation().Author(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8483,9 +8252,9 @@ func (ec *executionContext) _SetStatusOperation_author(ctx context.Context, fiel
 		}
 		return graphql.Null
 	}
-	res := resTmp.(identity.Interface)
+	res := resTmp.(models.IdentityWrapper)
 	fc.Result = res
-	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋidentityᚐInterface(ctx, field.Selections, res)
+	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _SetStatusOperation_date(ctx context.Context, field graphql.CollectedField, obj *bug.SetStatusOperation) (ret graphql.Marshaler) {
@@ -8601,13 +8370,13 @@ func (ec *executionContext) _SetStatusTimelineItem_author(ctx context.Context, f
 		Object:   "SetStatusTimelineItem",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Author, nil
+		return ec.resolvers.SetStatusTimelineItem().Author(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8619,9 +8388,9 @@ func (ec *executionContext) _SetStatusTimelineItem_author(ctx context.Context, f
 		}
 		return graphql.Null
 	}
-	res := resTmp.(identity.Interface)
+	res := resTmp.(models.IdentityWrapper)
 	fc.Result = res
-	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋidentityᚐInterface(ctx, field.Selections, res)
+	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _SetStatusTimelineItem_date(ctx context.Context, field graphql.CollectedField, obj *bug.SetStatusTimelineItem) (ret graphql.Marshaler) {
@@ -8737,13 +8506,13 @@ func (ec *executionContext) _SetTitleOperation_author(ctx context.Context, field
 		Object:   "SetTitleOperation",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Author, nil
+		return ec.resolvers.SetTitleOperation().Author(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8755,9 +8524,9 @@ func (ec *executionContext) _SetTitleOperation_author(ctx context.Context, field
 		}
 		return graphql.Null
 	}
-	res := resTmp.(identity.Interface)
+	res := resTmp.(models.IdentityWrapper)
 	fc.Result = res
-	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋidentityᚐInterface(ctx, field.Selections, res)
+	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _SetTitleOperation_date(ctx context.Context, field graphql.CollectedField, obj *bug.SetTitleOperation) (ret graphql.Marshaler) {
@@ -8922,9 +8691,9 @@ func (ec *executionContext) _SetTitlePayload_bug(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*bug.Snapshot)
+	res := resTmp.(models.BugWrapper)
 	fc.Result = res
-	return ec.marshalNBug2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐSnapshot(ctx, field.Selections, res)
+	return ec.marshalNBug2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐBugWrapper(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _SetTitlePayload_operation(ctx context.Context, field graphql.CollectedField, obj *models.SetTitlePayload) (ret graphql.Marshaler) {
@@ -9006,13 +8775,13 @@ func (ec *executionContext) _SetTitleTimelineItem_author(ctx context.Context, fi
 		Object:   "SetTitleTimelineItem",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Author, nil
+		return ec.resolvers.SetTitleTimelineItem().Author(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9024,9 +8793,9 @@ func (ec *executionContext) _SetTitleTimelineItem_author(ctx context.Context, fi
 		}
 		return graphql.Null
 	}
-	res := resTmp.(identity.Interface)
+	res := resTmp.(models.IdentityWrapper)
 	fc.Result = res
-	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋidentityᚐInterface(ctx, field.Selections, res)
+	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _SetTitleTimelineItem_date(ctx context.Context, field graphql.CollectedField, obj *bug.SetTitleTimelineItem) (ret graphql.Marshaler) {
@@ -10687,10 +10456,7 @@ func (ec *executionContext) _Authored(ctx context.Context, sel ast.SelectionSet,
 			return graphql.Null
 		}
 		return ec._Comment(ctx, sel, obj)
-	case *bug.Snapshot:
-		if obj == nil {
-			return graphql.Null
-		}
+	case models.BugWrapper:
 		return ec._Bug(ctx, sel, obj)
 	case *bug.CreateOperation:
 		if obj == nil {
@@ -10861,10 +10627,19 @@ func (ec *executionContext) _AddCommentOperation(ctx context.Context, sel ast.Se
 				return res
 			})
 		case "author":
-			out.Values[i] = ec._AddCommentOperation_author(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AddCommentOperation_author(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "date":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -10960,10 +10735,19 @@ func (ec *executionContext) _AddCommentTimelineItem(ctx context.Context, sel ast
 				return res
 			})
 		case "author":
-			out.Values[i] = ec._AddCommentTimelineItem_author(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AddCommentTimelineItem_author(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "message":
 			out.Values[i] = ec._AddCommentTimelineItem_message(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -11030,7 +10814,7 @@ func (ec *executionContext) _AddCommentTimelineItem(ctx context.Context, sel ast
 
 var bugImplementors = []string{"Bug", "Authored"}
 
-func (ec *executionContext) _Bug(ctx context.Context, sel ast.SelectionSet, obj *bug.Snapshot) graphql.Marshaler {
+func (ec *executionContext) _Bug(ctx context.Context, sel ast.SelectionSet, obj models.BugWrapper) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, bugImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -11102,19 +10886,10 @@ func (ec *executionContext) _Bug(ctx context.Context, sel ast.SelectionSet, obj 
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "lastEdit":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Bug_lastEdit(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
+			out.Values[i] = ec._Bug_lastEdit(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "actors":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -11419,19 +11194,28 @@ func (ec *executionContext) _Comment(ctx context.Context, sel ast.SelectionSet, 
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Comment")
 		case "author":
-			out.Values[i] = ec._Comment_author(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Comment_author(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "message":
 			out.Values[i] = ec._Comment_message(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "files":
 			out.Values[i] = ec._Comment_files(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -11643,10 +11427,19 @@ func (ec *executionContext) _CreateOperation(ctx context.Context, sel ast.Select
 				return res
 			})
 		case "author":
-			out.Values[i] = ec._CreateOperation_author(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CreateOperation_author(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "date":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -11713,10 +11506,19 @@ func (ec *executionContext) _CreateTimelineItem(ctx context.Context, sel ast.Sel
 				return res
 			})
 		case "author":
-			out.Values[i] = ec._CreateTimelineItem_author(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CreateTimelineItem_author(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "message":
 			out.Values[i] = ec._CreateTimelineItem_message(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -11807,10 +11609,19 @@ func (ec *executionContext) _EditCommentOperation(ctx context.Context, sel ast.S
 				return res
 			})
 		case "author":
-			out.Values[i] = ec._EditCommentOperation_author(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._EditCommentOperation_author(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "date":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -11862,7 +11673,7 @@ func (ec *executionContext) _EditCommentOperation(ctx context.Context, sel ast.S
 
 var identityImplementors = []string{"Identity"}
 
-func (ec *executionContext) _Identity(ctx context.Context, sel ast.SelectionSet, obj identity.Interface) graphql.Marshaler {
+func (ec *executionContext) _Identity(ctx context.Context, sel ast.SelectionSet, obj models.IdentityWrapper) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, identityImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -12076,10 +11887,19 @@ func (ec *executionContext) _LabelChangeOperation(ctx context.Context, sel ast.S
 				return res
 			})
 		case "author":
-			out.Values[i] = ec._LabelChangeOperation_author(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._LabelChangeOperation_author(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "date":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -12182,10 +12002,19 @@ func (ec *executionContext) _LabelChangeTimelineItem(ctx context.Context, sel as
 				return res
 			})
 		case "author":
-			out.Values[i] = ec._LabelChangeTimelineItem_author(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._LabelChangeTimelineItem_author(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "date":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -12720,10 +12549,19 @@ func (ec *executionContext) _SetStatusOperation(ctx context.Context, sel ast.Sel
 				return res
 			})
 		case "author":
-			out.Values[i] = ec._SetStatusOperation_author(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._SetStatusOperation_author(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "date":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -12789,10 +12627,19 @@ func (ec *executionContext) _SetStatusTimelineItem(ctx context.Context, sel ast.
 				return res
 			})
 		case "author":
-			out.Values[i] = ec._SetStatusTimelineItem_author(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._SetStatusTimelineItem_author(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "date":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -12858,10 +12705,19 @@ func (ec *executionContext) _SetTitleOperation(ctx context.Context, sel ast.Sele
 				return res
 			})
 		case "author":
-			out.Values[i] = ec._SetTitleOperation_author(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._SetTitleOperation_author(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "date":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -12957,10 +12813,19 @@ func (ec *executionContext) _SetTitleTimelineItem(ctx context.Context, sel ast.S
 				return res
 			})
 		case "author":
-			out.Values[i] = ec._SetTitleTimelineItem_author(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._SetTitleTimelineItem_author(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "date":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -13361,11 +13226,17 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) marshalNBug2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐSnapshot(ctx context.Context, sel ast.SelectionSet, v bug.Snapshot) graphql.Marshaler {
-	return ec._Bug(ctx, sel, &v)
+func (ec *executionContext) marshalNBug2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐBugWrapper(ctx context.Context, sel ast.SelectionSet, v models.BugWrapper) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Bug(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNBug2ᚕᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐSnapshotᚄ(ctx context.Context, sel ast.SelectionSet, v []*bug.Snapshot) graphql.Marshaler {
+func (ec *executionContext) marshalNBug2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐBugWrapperᚄ(ctx context.Context, sel ast.SelectionSet, v []models.BugWrapper) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -13389,7 +13260,7 @@ func (ec *executionContext) marshalNBug2ᚕᚖgithubᚗcomᚋMichaelMureᚋgit�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNBug2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐSnapshot(ctx, sel, v[i])
+			ret[i] = ec.marshalNBug2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐBugWrapper(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -13400,16 +13271,6 @@ func (ec *executionContext) marshalNBug2ᚕᚖgithubᚗcomᚋMichaelMureᚋgit�
 	}
 	wg.Wait()
 	return ret
-}
-
-func (ec *executionContext) marshalNBug2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐSnapshot(ctx context.Context, sel ast.SelectionSet, v *bug.Snapshot) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return ec._Bug(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNBugConnection2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐBugConnection(ctx context.Context, sel ast.SelectionSet, v models.BugConnection) graphql.Marshaler {
@@ -13768,7 +13629,7 @@ func (ec *executionContext) marshalNHash2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑb
 	return ret
 }
 
-func (ec *executionContext) marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋidentityᚐInterface(ctx context.Context, sel ast.SelectionSet, v identity.Interface) graphql.Marshaler {
+func (ec *executionContext) marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx context.Context, sel ast.SelectionSet, v models.IdentityWrapper) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -13778,7 +13639,7 @@ func (ec *executionContext) marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑ
 	return ec._Identity(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNIdentity2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋidentityᚐInterfaceᚄ(ctx context.Context, sel ast.SelectionSet, v []identity.Interface) graphql.Marshaler {
+func (ec *executionContext) marshalNIdentity2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐIdentityWrapperᚄ(ctx context.Context, sel ast.SelectionSet, v []models.IdentityWrapper) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -13802,7 +13663,7 @@ func (ec *executionContext) marshalNIdentity2ᚕgithubᚗcomᚋMichaelMureᚋgit
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋidentityᚐInterface(ctx, sel, v[i])
+			ret[i] = ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -14684,11 +14545,7 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return ec.marshalOBoolean2bool(ctx, sel, *v)
 }
 
-func (ec *executionContext) marshalOBug2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐSnapshot(ctx context.Context, sel ast.SelectionSet, v bug.Snapshot) graphql.Marshaler {
-	return ec._Bug(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalOBug2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐSnapshot(ctx context.Context, sel ast.SelectionSet, v *bug.Snapshot) graphql.Marshaler {
+func (ec *executionContext) marshalOBug2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐBugWrapper(ctx context.Context, sel ast.SelectionSet, v models.BugWrapper) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -14739,7 +14596,7 @@ func (ec *executionContext) marshalOHash2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑb
 	return ret
 }
 
-func (ec *executionContext) marshalOIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋidentityᚐInterface(ctx context.Context, sel ast.SelectionSet, v identity.Interface) graphql.Marshaler {
+func (ec *executionContext) marshalOIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx context.Context, sel ast.SelectionSet, v models.IdentityWrapper) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
