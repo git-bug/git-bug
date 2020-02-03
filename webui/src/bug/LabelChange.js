@@ -1,5 +1,4 @@
 import { makeStyles } from '@material-ui/styles';
-import gql from 'graphql-tag';
 import React from 'react';
 import Author from '../Author';
 import Date from '../Date';
@@ -39,23 +38,5 @@ function LabelChange({ op }) {
     </div>
   );
 }
-
-LabelChange.fragment = gql`
-  fragment LabelChange on TimelineItem {
-    ... on LabelChangeTimelineItem {
-      date
-      ...authored
-      added {
-        ...Label
-      }
-      removed {
-        ...Label
-      }
-    }
-  }
-
-  ${Label.fragment}
-  ${Author.fragment}
-`;
 
 export default LabelChange;

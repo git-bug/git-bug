@@ -1,0 +1,25 @@
+#import "./MessageCreateFragment.graphql"
+#import "./MessageCommentFragment.graphql"
+#import "./LabelChangeFragment.graphql"
+#import "./SetTitleFragment.graphql"
+#import "./SetStatusFragment.graphql"
+
+query Timeline($id: String!, $first: Int = 10, $after: String) {
+  defaultRepository {
+    bug(prefix: $id) {
+      timeline(first: $first, after: $after) {
+        nodes {
+          ...LabelChange
+          ...SetStatus
+          ...SetTitle
+          ...AddComment
+          ...Create
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+      }
+    }
+  }
+}

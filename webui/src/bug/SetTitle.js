@@ -1,5 +1,4 @@
 import { makeStyles } from '@material-ui/styles';
-import gql from 'graphql-tag';
 import React from 'react';
 import Author from '../Author';
 import Date from '../Date';
@@ -27,18 +26,5 @@ function SetTitle({ op }) {
     </div>
   );
 }
-
-SetTitle.fragment = gql`
-  fragment SetTitle on TimelineItem {
-    ... on SetTitleTimelineItem {
-      date
-      ...authored
-      title
-      was
-    }
-  }
-
-  ${Author.fragment}
-`;
 
 export default SetTitle;

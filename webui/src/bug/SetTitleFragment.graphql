@@ -1,0 +1,10 @@
+#import "../Author.graphql"
+
+fragment SetTitle on TimelineItem {
+  ... on SetTitleTimelineItem {
+    date
+    ...authored
+    title
+    was
+  }
+}

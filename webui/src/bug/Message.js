@@ -1,6 +1,5 @@
 import { makeStyles } from '@material-ui/styles';
 import Paper from '@material-ui/core/Paper';
-import gql from 'graphql-tag';
 import React from 'react';
 import Author from '../Author';
 import { Avatar } from '../Author';
@@ -68,31 +67,5 @@ function Message({ op }) {
     </article>
   );
 }
-
-Message.createFragment = gql`
-  fragment Create on TimelineItem {
-    ... on CreateTimelineItem {
-      createdAt
-      ...authored
-      edited
-      message
-    }
-  }
-
-  ${Author.fragment}
-`;
-
-Message.commentFragment = gql`
-  fragment AddComment on TimelineItem {
-    ... on AddCommentTimelineItem {
-      createdAt
-      ...authored
-      edited
-      message
-    }
-  }
-
-  ${Author.fragment}
-`;
 
 export default Message;
