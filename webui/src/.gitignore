@@ -1,1 +1,3 @@
 fragmentTypes.js
+gqlTypes.ts
+*.generated.*

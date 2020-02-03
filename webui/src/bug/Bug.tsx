@@ -1,11 +1,11 @@
-import { makeStyles } from '@material-ui/styles';
+import { makeStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography/Typography';
-import gql from 'graphql-tag';
 import React from 'react';
 import Author from '../Author';
 import Date from '../Date';
 import TimelineQuery from './TimelineQuery';
 import Label from '../Label';
+import { BugFragment } from './Bug.generated';
 
 const useStyles = makeStyles(theme => ({
   main: {
@@ -51,7 +51,11 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-function Bug({ bug }) {
+type Props = {
+  bug: BugFragment
+};
+
+function Bug({ bug }: Props) {
   const classes = useStyles();
   return (
     <main className={classes.main}>
@@ -84,21 +88,5 @@ function Bug({ bug }) {
     </main>
   );
 }
-
-Bug.fragment = gql`
-  fragment Bug on Bug {
-    id
-    humanId
-    status
-    title
-    labels {
-      ...Label
-    }
-    createdAt
-    ...authored
-  }
-  ${Label.fragment}
-  ${Author.fragment}
-`;
 
 export default Bug;

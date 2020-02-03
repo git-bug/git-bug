@@ -1,5 +1,4 @@
 import React from 'react';
-import gql from 'graphql-tag';
 import { makeStyles } from '@material-ui/styles';
 import {
   getContrastRatio,
@@ -47,16 +46,5 @@ function Label({ label }) {
     </span>
   );
 }
-
-Label.fragment = gql`
-  fragment Label on Label {
-    name
-    color {
-      R
-      G
-      B
-    }
-  }
-`;
 
 export default Label;
