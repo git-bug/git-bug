@@ -21,6 +21,7 @@ import (
 
 func Test_Importer(t *testing.T) {
 	author := identity.NewIdentity("Michael Muré", "batolettre@gmail.com")
+
 	tests := []struct {
 		name string
 		url  string
@@ -140,7 +141,11 @@ func Test_Importer(t *testing.T) {
 		t.Skip("Env var GITHUB_TOKEN_PRIVATE missing")
 	}
 
+	login := "test-identity"
+	author.SetMetadata(metaKeyGithubLogin, login)
+
 	token := auth.NewToken(envToken, target)
+	token.SetMetadata(metaKeyGithubLogin, login)
 	err = auth.Store(repo, token)
 	require.NoError(t, err)
 

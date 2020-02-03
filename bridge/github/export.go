@@ -99,13 +99,16 @@ func (ge *githubExporter) cacheAllClient(repo *cache.RepoCache) error {
 	for _, cred := range creds {
 		login, ok := cred.GetMetadata(auth.MetaKeyLogin)
 		if !ok {
-			_, _ = fmt.Fprintf(os.Stderr, "credential %s is not tagged with Github login\n", cred.ID().Human())
+			_, _ = fmt.Fprintf(os.Stderr, "credential %s is not tagged with a Github login\n", cred.ID().Human())
 			continue
 		}
 
 		user, err := repo.ResolveIdentityImmutableMetadata(metaKeyGithubLogin, login)
 		if err == identity.ErrIdentityNotExist {
 			continue
+		}
+		if err != nil {
+			return nil
 		}
 
 		if _, ok := ge.identityClient[user.Id()]; !ok {

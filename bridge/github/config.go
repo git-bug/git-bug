@@ -316,7 +316,7 @@ func promptToken() (string, error) {
 	fmt.Println("  - 'repo'       : to be able to read private repositories")
 	fmt.Println()
 
-	re, err := regexp.Compile(`^[a-zA-Z0-9]{40}`)
+	re, err := regexp.Compile(`^[a-zA-Z0-9]{40}$`)
 	if err != nil {
 		panic("regexp compile:" + err.Error())
 	}

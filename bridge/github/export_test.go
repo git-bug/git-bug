@@ -144,8 +144,10 @@ func TestPushPull(t *testing.T) {
 	require.NoError(t, err)
 
 	// set author identity
+	login := "identity-test"
 	author, err := backend.NewIdentity("test identity", "test@test.org")
 	require.NoError(t, err)
+	author.SetMetadata(metaKeyGithubLogin, login)
 
 	err = backend.SetUserIdentity(author)
 	require.NoError(t, err)
@@ -177,6 +179,7 @@ func TestPushPull(t *testing.T) {
 	})
 
 	token := auth.NewToken(envToken, target)
+	token.SetMetadata(metaKeyGithubLogin, login)
 	err = auth.Store(repo, token)
 	require.NoError(t, err)
 

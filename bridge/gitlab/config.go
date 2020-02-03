@@ -19,8 +19,7 @@ import (
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/input"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/colors"
 )
@@ -36,14 +35,12 @@ func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 	if params.Owner != "" {
 		fmt.Println("warning: --owner is ineffective for a gitlab bridge")
 	}
+	if params.Login != "" {
+		fmt.Println("warning: --login is ineffective for a gitlab bridge")
+	}
 
 	conf := make(core.Configuration)
 	var err error
-
-	if (params.CredPrefix != "" || params.TokenRaw != "") && params.URL == "" {
-		return nil, fmt.Errorf("you must provide a project URL to configure this bridge with a token")
-	}
-
 	var baseUrl string
 
 	switch {
@@ -74,17 +71,6 @@ func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 		return nil, fmt.Errorf("base URL (%s) doesn't match the project URL (%s)", params.BaseURL, url)
 	}
 
-	user, err := repo.GetUserIdentity()
-	if err != nil && err != identity.ErrNoIdentitySet {
-		return nil, err
-	}
-
-	// default to a "to be filled" user Id if we don't have a valid one yet
-	userId := auth.DefaultUserId
-	if user != nil {
-		userId = user.Id()
-	}
-
 	var cred auth.Credential
 
 	switch {
@@ -93,13 +79,16 @@ func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 		if err != nil {
 			return nil, err
 		}
-		if user != nil && cred.UserId() != user.Id() {
-			return nil, fmt.Errorf("selected credential don't match the user")
-		}
 	case params.TokenRaw != "":
-		cred = auth.NewToken(userId, params.TokenRaw, target)
+		token := auth.NewToken(params.TokenRaw, target)
+		login, err := getLoginFromToken(baseUrl, token)
+		if err != nil {
+			return nil, err
+		}
+		token.SetMetadata(auth.MetaKeyLogin, login)
+		cred = token
 	default:
-		cred, err = promptTokenOptions(repo, userId, baseUrl)
+		cred, err = promptTokenOptions(repo, baseUrl)
 		if err != nil {
 			return nil, err
 		}
@@ -153,64 +142,41 @@ func (g *Gitlab) ValidateConfig(conf core.Configuration) error {
 }
 
 func promptBaseUrlOptions() (string, error) {
-	for {
-		fmt.Printf("Gitlab base url:\n")
-		fmt.Printf("[0]: https://gitlab.com\n")
-		fmt.Printf("[1]: enter your own base url\n")
-		fmt.Printf("Select option: ")
+	index, err := input.PromptChoice("Gitlab base url", []string{
+		"https://gitlab.com",
+		"enter your own base url",
+	})
 
-		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
-		if err != nil {
-			return "", err
-		}
+	if err != nil {
+		return "", err
+	}
 
-		line = strings.TrimSpace(line)
-
-		index, err := strconv.Atoi(line)
-		if err != nil || index < 0 || index > 1 {
-			fmt.Println("invalid input")
-			continue
-		}
-
-		switch index {
-		case 0:
-			return defaultBaseURL, nil
-		case 1:
-			return promptBaseUrl()
-		}
+	if index == 0 {
+		return defaultBaseURL, nil
+	} else {
+		return promptBaseUrl()
 	}
 }
 
 func promptBaseUrl() (string, error) {
-	for {
-		fmt.Print("Base url: ")
-
-		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
+	validator := func(name string, value string) (string, error) {
+		u, err := url.Parse(value)
 		if err != nil {
-			return "", err
+			return err.Error(), nil
 		}
-
-		line = strings.TrimSpace(line)
-
-		ok, err := validateBaseUrl(line)
-		if err != nil {
-			return "", err
+		if u.Scheme == "" {
+			return "missing scheme", nil
 		}
-		if ok {
-			return line, nil
+		if u.Host == "" {
+			return "missing host", nil
 		}
+		return "", nil
 	}
+
+	return input.Prompt("Base url", "url", input.Required, validator)
 }
 
-func validateBaseUrl(baseUrl string) (bool, error) {
-	u, err := url.Parse(baseUrl)
-	if err != nil {
-		return false, err
-	}
-	return u.Scheme != "" && u.Host != "", nil
-}
-
-func promptTokenOptions(repo repository.RepoConfig, userId entity.Id, baseUrl string) (auth.Credential, error) {
+func promptTokenOptions(repo repository.RepoConfig, baseUrl string) (auth.Credential, error) {
 	for {
 		creds, err := auth.List(repo, auth.WithTarget(target), auth.WithKind(auth.KindToken))
 		if err != nil {
@@ -219,11 +185,7 @@ func promptTokenOptions(repo repository.RepoConfig, userId entity.Id, baseUrl st
 
 		// if we don't have existing token, fast-track to the token prompt
 		if len(creds) == 0 {
-			value, err := promptToken(baseUrl)
-			if err != nil {
-				return nil, err
-			}
-			return auth.NewToken(userId, value, target), nil
+			return promptToken(baseUrl)
 		}
 
 		fmt.Println()
@@ -261,44 +223,44 @@ func promptTokenOptions(repo repository.RepoConfig, userId entity.Id, baseUrl st
 
 		switch index {
 		case 1:
-			value, err := promptToken(baseUrl)
-			if err != nil {
-				return nil, err
-			}
-			return auth.NewToken(userId, value, target), nil
+			return promptToken(baseUrl)
 		default:
 			return creds[index-2], nil
 		}
 	}
 }
 
-func promptToken(baseUrl string) (string, error) {
+func promptToken(baseUrl string) (*auth.Token, error) {
 	fmt.Printf("You can generate a new token by visiting %s.\n", path.Join(baseUrl, "profile/personal_access_tokens"))
 	fmt.Println("Choose 'Create personal access token' and set the necessary access scope for your repository.")
 	fmt.Println()
 	fmt.Println("'api' access scope: to be able to make api calls")
 	fmt.Println()
 
-	re, err := regexp.Compile(`^[a-zA-Z0-9\-\_]{20}`)
+	re, err := regexp.Compile(`^[a-zA-Z0-9\-\_]{20}$`)
 	if err != nil {
 		panic("regexp compile:" + err.Error())
 	}
 
-	for {
-		fmt.Print("Enter token: ")
+	var login string
 
-		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
+	validator := func(name string, value string) (complaint string, err error) {
+		if !re.MatchString(value) {
+			return "token has incorrect format", nil
+		}
+		login, err = getLoginFromToken(baseUrl, auth.NewToken(value, target))
 		if err != nil {
-			return "", err
+			return fmt.Sprintf("token is invalid: %v", err), nil
 		}
-
-		token := strings.TrimSpace(line)
-		if re.MatchString(token) {
-			return token, nil
-		}
-
-		fmt.Println("token has incorrect format")
+		return "", nil
 	}
+
+	rawToken, err := input.Prompt("Enter token", "token", input.Required, validator)
+
+	token := auth.NewToken(rawToken, target)
+	token.SetMetadata(auth.MetaKeyLogin, login)
+
+	return token, nil
 }
 
 func promptURL(repo repository.RepoCommon, baseUrl string) (string, error) {
@@ -408,8 +370,25 @@ func validateProjectURL(baseUrl, url string, token *auth.Token) (int, error) {
 
 	project, _, err := client.Projects.GetProject(projectPath, &gitlab.GetProjectOptions{})
 	if err != nil {
-		return 0, errors.Wrap(err, "wrong token scope ou inexistent project")
+		return 0, errors.Wrap(err, "wrong token scope ou non-existent project")
 	}
 
 	return project.ID, nil
+}
+
+func getLoginFromToken(baseUrl string, token *auth.Token) (string, error) {
+	client, err := buildClient(baseUrl, token)
+	if err != nil {
+		return "", err
+	}
+
+	user, _, err := client.Users.CurrentUser()
+	if err != nil {
+		return "", err
+	}
+	if user.Username == "" {
+		return "", fmt.Errorf("gitlab say username is empty")
+	}
+
+	return user.Username, nil
 }

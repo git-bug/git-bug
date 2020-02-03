@@ -3,6 +3,7 @@ package gitlab
 import (
 	"context"
 	"fmt"
+	"os"
 	"strconv"
 	"time"
 
@@ -14,7 +15,7 @@ import (
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/MichaelMure/git-bug/identity"
 )
 
 var (
@@ -54,20 +55,33 @@ func (ge *gitlabExporter) Init(repo *cache.RepoCache, conf core.Configuration) e
 	return nil
 }
 
-func (ge *gitlabExporter) cacheAllClient(repo repository.RepoConfig) error {
+func (ge *gitlabExporter) cacheAllClient(repo *cache.RepoCache) error {
 	creds, err := auth.List(repo, auth.WithTarget(target), auth.WithKind(auth.KindToken))
 	if err != nil {
 		return err
 	}
 
 	for _, cred := range creds {
-		if _, ok := ge.identityClient[cred.UserId()]; !ok {
+		login, ok := cred.GetMetadata(auth.MetaKeyLogin)
+		if !ok {
+			_, _ = fmt.Fprintf(os.Stderr, "credential %s is not tagged with a Gitlab login\n", cred.ID().Human())
+			continue
+		}
+
+		user, err := repo.ResolveIdentityImmutableMetadata(metaKeyGitlabLogin, login)
+		if err == identity.ErrIdentityNotExist {
+			continue
+		}
+		if err != nil {
+			return nil
+		}
+
+		if _, ok := ge.identityClient[user.Id()]; !ok {
 			client, err := buildClient(ge.conf[keyGitlabBaseUrl], creds[0].(*auth.Token))
 			if err != nil {
 				return err
 			}
-
-			ge.identityClient[cred.UserId()] = client
+			ge.identityClient[user.Id()] = client
 		}
 	}
 
