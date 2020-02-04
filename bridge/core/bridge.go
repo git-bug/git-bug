@@ -28,6 +28,7 @@ const (
 )
 
 var bridgeImpl map[string]reflect.Type
+var bridgeLoginMetaKey map[string]string
 
 // BridgeParams holds parameters to simplify the bridge configuration without
 // having to make terminal prompts.
@@ -59,7 +60,11 @@ func Register(impl BridgeImpl) {
 	if bridgeImpl == nil {
 		bridgeImpl = make(map[string]reflect.Type)
 	}
+	if bridgeLoginMetaKey == nil {
+		bridgeLoginMetaKey = make(map[string]string)
+	}
 	bridgeImpl[impl.Target()] = reflect.TypeOf(impl)
+	bridgeLoginMetaKey[impl.Target()] = impl.LoginMetaKey()
 }
 
 // Targets return all known bridge implementation target
@@ -79,6 +84,18 @@ func Targets() []string {
 func TargetExist(target string) bool {
 	_, ok := bridgeImpl[target]
 	return ok
+}
+
+// LoginMetaKey return the metadata key used to store the remote bug-tracker login
+// on the user identity. The corresponding value is used to match identities and
+// credentials.
+func LoginMetaKey(target string) (string, error) {
+	metaKey, ok := bridgeLoginMetaKey[target]
+	if !ok {
+		return "", fmt.Errorf("unknown bridge target %v", target)
+	}
+
+	return metaKey, nil
 }
 
 // Instantiate a new Bridge for a repo, from the given target and name

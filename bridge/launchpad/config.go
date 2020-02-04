@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"time"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/cache"
@@ -13,12 +12,6 @@ import (
 )
 
 var ErrBadProjectURL = errors.New("bad Launchpad project URL")
-
-const (
-	target         = "launchpad-preview"
-	keyProject     = "project"
-	defaultTimeout = 60 * time.Second
-)
 
 func (l *Launchpad) Configure(repo *cache.RepoCache, params core.BridgeParams) (core.Configuration, error) {
 	if params.TokenRaw != "" {

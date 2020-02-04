@@ -15,12 +15,6 @@ import (
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
-const (
-	metaKeyGithubId    = "github-id"
-	metaKeyGithubUrl   = "github-url"
-	metaKeyGithubLogin = "github-login"
-)
-
 // githubImporter implement the Importer interface
 type githubImporter struct {
 	conf core.Configuration

@@ -26,10 +26,16 @@ const (
 	defaultTimeout = 60 * time.Second
 )
 
+var _ core.BridgeImpl = &Gitlab{}
+
 type Gitlab struct{}
 
 func (*Gitlab) Target() string {
 	return target
+}
+
+func (g *Gitlab) LoginMetaKey() string {
+	return metaKeyGitlabLogin
 }
 
 func (*Gitlab) NewImporter() core.Importer {

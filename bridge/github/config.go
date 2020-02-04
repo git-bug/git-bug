@@ -27,15 +27,6 @@ import (
 	"github.com/MichaelMure/git-bug/util/colors"
 )
 
-const (
-	target      = "github"
-	githubV3Url = "https://api.github.com"
-	keyOwner    = "owner"
-	keyProject  = "project"
-
-	defaultTimeout = 60 * time.Second
-)
-
 var (
 	ErrBadProjectURL = errors.New("bad project url")
 )

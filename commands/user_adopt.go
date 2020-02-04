@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/MichaelMure/git-bug/bridge/core/auth"
-	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/identity"
-	"github.com/MichaelMure/git-bug/util/interrupt"
 	"github.com/spf13/cobra"
+
+	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
 func runUserAdopt(cmd *cobra.Command, args []string) error {
@@ -23,16 +22,6 @@ func runUserAdopt(cmd *cobra.Command, args []string) error {
 
 	i, err := backend.ResolveIdentityPrefix(prefix)
 	if err != nil {
-		return err
-	}
-
-	_, err = backend.GetUserIdentity()
-	if err == identity.ErrNoIdentitySet {
-		err = auth.ReplaceDefaultUser(repo, i.Id())
-		if err != nil {
-			return err
-		}
-	} else if err != nil {
 		return err
 	}
 

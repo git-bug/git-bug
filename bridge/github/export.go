@@ -76,7 +76,7 @@ func (ge *githubExporter) Init(repo *cache.RepoCache, conf core.Configuration) e
 	}
 
 	login := user.ImmutableMetadata()[metaKeyGithubLogin]
-	creds, err := auth.List(repo, auth.WithMeta(metaKeyGithubLogin, login), auth.WithTarget(target), auth.WithKind(auth.KindToken))
+	creds, err := auth.List(repo, auth.WithMeta(auth.MetaKeyLogin, login), auth.WithTarget(target), auth.WithKind(auth.KindToken))
 	if err != nil {
 		return err
 	}

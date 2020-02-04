@@ -179,7 +179,7 @@ func TestPushPull(t *testing.T) {
 	})
 
 	token := auth.NewToken(envToken, target)
-	token.SetMetadata(metaKeyGithubLogin, login)
+	token.SetMetadata(auth.MetaKeyLogin, login)
 	err = auth.Store(repo, token)
 	require.NoError(t, err)
 
