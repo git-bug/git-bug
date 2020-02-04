@@ -2,10 +2,12 @@ import unified from 'unified';
 import parse from 'remark-parse';
 import html from 'remark-html';
 import remark2react from 'remark-react';
+import { ReactNode } from 'react';
 import ImageTag from './tag/ImageTag';
 import PreTag from './tag/PreTag';
 
-const Content = ({ markdown }) => {
+type Props = { markdown: string };
+const Content = ({ markdown }: Props) => {
   const processor = unified()
     .use(parse)
     .use(html)
@@ -16,7 +18,8 @@ const Content = ({ markdown }) => {
       },
     });
 
-  return processor.processSync(markdown).contents;
+  const contents: ReactNode = processor.processSync(markdown).contents;
+  return contents;
 };
 
 export default Content;

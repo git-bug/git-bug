@@ -1,0 +1,8 @@
+query CurrentIdentity {
+  defaultRepository {
+    userIdentity {
+      displayName
+      avatarUrl
+    }
+  }
+}

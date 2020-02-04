@@ -2,7 +2,10 @@ import Tooltip from '@material-ui/core/Tooltip/Tooltip';
 import MAvatar from '@material-ui/core/Avatar';
 import React from 'react';
 
-const Author = ({ author, ...props }) => {
+import { AuthoredFragment } from './Author.generated';
+
+type Props = AuthoredFragment;
+const Author = ({ author, ...props }: Props) => {
   if (!author.email) {
     return <span {...props}>{author.displayName}</span>;
   }
@@ -14,7 +17,7 @@ const Author = ({ author, ...props }) => {
   );
 };
 
-export const Avatar = ({ author, ...props }) => {
+export const Avatar = ({ author, ...props }: Props) => {
   if (author.avatarUrl) {
     return <MAvatar src={author.avatarUrl} {...props} />;
   }
