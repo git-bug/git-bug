@@ -12,6 +12,7 @@ generates:
     - typescript
   ./src/:
     plugins:
+    - add: '/* eslint-disable @typescript-eslint/no-unused-vars */'
     - typescript-operations
     - typescript-react-apollo
     preset: near-operation-file
@@ -22,9 +23,6 @@ generates:
       withComponent: false
       withHOC: false
       withHooks: true
-
-config:
-  documentMode: documentNode
 
 hooks:
   afterOneFileWrite:

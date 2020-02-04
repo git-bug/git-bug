@@ -31,7 +31,7 @@
   "devDependencies": {
     "@graphql-codegen/cli": "^1.12.1",
     "@graphql-codegen/fragment-matcher": "^1.12.1",
-    "@graphql-codegen/near-operation-file-preset": "^1.12.1",
+    "@graphql-codegen/near-operation-file-preset": "^1.12.2-alpha-ea7264f9.15",
     "@graphql-codegen/typescript-operations": "^1.12.1",
     "@graphql-codegen/typescript-react-apollo": "^1.12.1",
     "eslint-config-prettier": "^6.10.0",

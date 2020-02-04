@@ -1,36 +1,41 @@
-import { makeStyles } from '@material-ui/styles';
+import { makeStyles } from '@material-ui/core/styles';
 import TableCell from '@material-ui/core/TableCell/TableCell';
 import TableRow from '@material-ui/core/TableRow/TableRow';
 import Tooltip from '@material-ui/core/Tooltip/Tooltip';
 import ErrorOutline from '@material-ui/icons/ErrorOutline';
 import CheckCircleOutline from '@material-ui/icons/CheckCircleOutline';
-import gql from 'graphql-tag';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Date from '../Date';
 import Label from '../Label';
-import Author from '../Author';
+import { BugRowFragment } from './BugRow.generated';
+import { Status } from '../gqlTypes';
 
-const Open = ({ className }) => (
+type OpenClosedProps = { className: string };
+const Open = ({ className }: OpenClosedProps) => (
   <Tooltip title="Open">
     <ErrorOutline htmlColor="#28a745" className={className} />
   </Tooltip>
 );
 
-const Closed = ({ className }) => (
+const Closed = ({ className }: OpenClosedProps) => (
   <Tooltip title="Closed">
     <CheckCircleOutline htmlColor="#cb2431" className={className} />
   </Tooltip>
 );
 
-const Status = ({ status, className }) => {
+type StatusProps = { className: string; status: Status };
+const BugStatus: React.FC<StatusProps> = ({
+  status,
+  className,
+}: StatusProps) => {
   switch (status) {
     case 'OPEN':
       return <Open className={className} />;
     case 'CLOSED':
       return <Closed className={className} />;
     default:
-      return 'unknown status ' + status;
+      return <p>{'unknown status ' + status}</p>;
   }
 };
 
@@ -57,7 +62,6 @@ const useStyles = makeStyles(theme => ({
     fontWeight: 500,
   },
   details: {
-    ...theme.typography.textSecondary,
     lineHeight: '1.5rem',
     color: theme.palette.text.secondary,
   },
@@ -69,12 +73,16 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-function BugRow({ bug }) {
+type Props = {
+  bug: BugRowFragment;
+};
+
+function BugRow({ bug }: Props) {
   const classes = useStyles();
   return (
     <TableRow hover>
       <TableCell className={classes.cell}>
-        <Status status={bug.status} className={classes.status} />
+        <BugStatus status={bug.status} className={classes.status} />
         <div className={classes.expand}>
           <Link to={'bug/' + bug.humanId}>
             <div className={classes.expand}>
@@ -98,22 +106,5 @@ function BugRow({ bug }) {
     </TableRow>
   );
 }
-
-BugRow.fragment = gql`
-  fragment BugRow on Bug {
-    id
-    humanId
-    title
-    status
-    createdAt
-    labels {
-      ...Label
-    }
-    ...authored
-  }
-
-  ${Label.fragment}
-  ${Author.fragment}
-`;
 
 export default BugRow;

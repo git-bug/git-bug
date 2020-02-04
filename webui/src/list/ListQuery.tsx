@@ -1,4 +1,4 @@
-import { fade, makeStyles } from '@material-ui/core/styles';
+import { fade, makeStyles, Theme } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
 import KeyboardArrowLeft from '@material-ui/icons/KeyboardArrowLeft';
 import KeyboardArrowRight from '@material-ui/icons/KeyboardArrowRight';
@@ -6,15 +6,15 @@ import ErrorOutline from '@material-ui/icons/ErrorOutline';
 import Paper from '@material-ui/core/Paper';
 import InputBase from '@material-ui/core/InputBase';
 import Skeleton from '@material-ui/lab/Skeleton';
-import gql from 'graphql-tag';
 import React, { useState, useEffect, useRef } from 'react';
-import { useQuery } from '@apollo/react-hooks';
 import { useLocation, useHistory, Link } from 'react-router-dom';
-import BugRow from './BugRow';
+import { ApolloError } from 'apollo-boost';
 import List from './List';
 import FilterToolbar from './FilterToolbar';
+import { useListBugsQuery } from './ListQuery.generated';
 
-const useStyles = makeStyles(theme => ({
+type StylesProps = { searching?: boolean };
+const useStyles = makeStyles<Theme, StylesProps>(theme => ({
   main: {
     maxWidth: 800,
     margin: 'auto',
@@ -46,7 +46,11 @@ const useStyles = makeStyles(theme => ({
     backgroundColor: fade(theme.palette.primary.main, 0.05),
     padding: theme.spacing(0, 1),
     width: ({ searching }) => (searching ? '20rem' : '15rem'),
-    transition: theme.transitions.create(),
+    transition: theme.transitions.create([
+      'width',
+      'borderColor',
+      'backgroundColor',
+    ]),
   },
   searchFocused: {
     borderColor: fade(theme.palette.primary.main, 0.4),
@@ -91,51 +95,21 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-const QUERY = gql`
-  query(
-    $first: Int
-    $last: Int
-    $after: String
-    $before: String
-    $query: String
-  ) {
-    defaultRepository {
-      bugs: allBugs(
-        first: $first
-        last: $last
-        after: $after
-        before: $before
-        query: $query
-      ) {
-        totalCount
-        edges {
-          cursor
-          node {
-            ...BugRow
-          }
-        }
-        pageInfo {
-          hasNextPage
-          hasPreviousPage
-          startCursor
-          endCursor
-        }
-      }
-    }
-  }
-
-  ${BugRow.fragment}
-`;
-
-function editParams(params, callback) {
+function editParams(
+  params: URLSearchParams,
+  callback: (params: URLSearchParams) => void
+) {
   const cloned = new URLSearchParams(params.toString());
   callback(cloned);
   return cloned;
 }
 
 // TODO: factor this out
-const Placeholder = ({ count }) => {
-  const classes = useStyles();
+type PlaceholderProps = { count: number };
+const Placeholder: React.FC<PlaceholderProps> = ({
+  count,
+}: PlaceholderProps) => {
+  const classes = useStyles({});
   return (
     <>
       {new Array(count).fill(null).map((_, i) => (
@@ -158,7 +132,7 @@ const Placeholder = ({ count }) => {
 
 // TODO: factor this out
 const NoBug = () => {
-  const classes = useStyles();
+  const classes = useStyles({});
   return (
     <div className={classes.message}>
       <ErrorOutline fontSize="large" />
@@ -167,8 +141,9 @@ const NoBug = () => {
   );
 };
 
-const Error = ({ error }) => {
-  const classes = useStyles();
+type ErrorProps = { error: ApolloError };
+const Error: React.FC<ErrorProps> = ({ error }: ErrorProps) => {
+  const classes = useStyles({});
   return (
     <div className={[classes.errorBox, classes.message].join(' ')}>
       <ErrorOutline fontSize="large" />
@@ -194,7 +169,7 @@ function ListQuery() {
   const classes = useStyles({ searching: !!input });
 
   // TODO is this the right way to do it?
-  const lastQuery = useRef();
+  const lastQuery = useRef<string | null>(null);
   useEffect(() => {
     if (query !== lastQuery.current) {
       setInput(query);
@@ -202,9 +177,10 @@ function ListQuery() {
     lastQuery.current = query;
   }, [query, input, lastQuery]);
 
+  const num = (param: string | null) => (param ? parseInt(param) : null);
   const page = {
-    first: params.get('first'),
-    last: params.get('last'),
+    first: num(params.get('first')),
+    last: num(params.get('last')),
     after: params.get('after'),
     before: params.get('before'),
   };
@@ -214,9 +190,9 @@ function ListQuery() {
     page.first = 10;
   }
 
-  const perPage = page.first || page.last;
+  const perPage = (page.first || page.last || 10).toString();
 
-  const { loading, error, data } = useQuery(QUERY, {
+  const { loading, error, data } = useListBugsQuery({
     variables: {
       ...page,
       query,
@@ -225,34 +201,34 @@ function ListQuery() {
 
   let nextPage = null;
   let previousPage = null;
-  let hasNextPage = false;
-  let hasPreviousPage = false;
   let count = 0;
-  if (!loading && !error && data.defaultRepository.bugs) {
+  if (!loading && !error && data?.defaultRepository?.bugs) {
     const bugs = data.defaultRepository.bugs;
-    hasNextPage = bugs.pageInfo.hasNextPage;
-    hasPreviousPage = bugs.pageInfo.hasPreviousPage;
     count = bugs.totalCount;
     // This computes the URL for the next page
-    nextPage = {
-      ...location,
-      search: editParams(params, p => {
-        p.delete('last');
-        p.delete('before');
-        p.set('first', perPage);
-        p.set('after', bugs.pageInfo.endCursor);
-      }).toString(),
-    };
+    if (bugs.pageInfo.hasNextPage) {
+      nextPage = {
+        ...location,
+        search: editParams(params, p => {
+          p.delete('last');
+          p.delete('before');
+          p.set('first', perPage);
+          p.set('after', bugs.pageInfo.endCursor);
+        }).toString(),
+      };
+    }
     // and this for the previous page
-    previousPage = {
-      ...location,
-      search: editParams(params, p => {
-        p.delete('first');
-        p.delete('after');
-        p.set('last', perPage);
-        p.set('before', bugs.pageInfo.startCursor);
-      }).toString(),
-    };
+    if (bugs.pageInfo.hasPreviousPage) {
+      previousPage = {
+        ...location,
+        search: editParams(params, p => {
+          p.delete('first');
+          p.delete('after');
+          p.set('last', perPage);
+          p.set('before', bugs.pageInfo.startCursor);
+        }).toString(),
+      };
+    }
   }
 
   // Prepare params without paging for editing filters
@@ -263,7 +239,7 @@ function ListQuery() {
     p.delete('after');
   });
   // Returns a new location with the `q` param edited
-  const queryLocation = query => ({
+  const queryLocation = (query: string) => ({
     ...location,
     search: editParams(paramsWithoutPaging, p => p.set('q', query)).toString(),
   });
@@ -273,7 +249,7 @@ function ListQuery() {
     content = <Placeholder count={10} />;
   } else if (error) {
     content = <Error error={error} />;
-  } else {
+  } else if (data?.defaultRepository) {
     const bugs = data.defaultRepository.bugs;
 
     if (bugs.totalCount === 0) {
@@ -283,7 +259,7 @@ function ListQuery() {
     }
   }
 
-  const formSubmit = e => {
+  const formSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     history.push(queryLocation(input));
   };
@@ -296,7 +272,7 @@ function ListQuery() {
           <InputBase
             placeholder="Filter"
             value={input}
-            onInput={e => setInput(e.target.value)}
+            onInput={(e: any) => setInput(e.target.value)}
             classes={{
               root: classes.search,
               focused: classes.searchFocused,
@@ -310,21 +286,25 @@ function ListQuery() {
       <FilterToolbar query={query} queryLocation={queryLocation} />
       {content}
       <div className={classes.pagination}>
-        <IconButton
-          component={hasPreviousPage ? Link : 'button'}
-          to={previousPage}
-          disabled={!hasPreviousPage}
-        >
-          <KeyboardArrowLeft />
-        </IconButton>
+        {previousPage ? (
+          <IconButton component={Link} to={previousPage}>
+            <KeyboardArrowLeft />
+          </IconButton>
+        ) : (
+          <IconButton disabled>
+            <KeyboardArrowLeft />
+          </IconButton>
+        )}
         <div>{loading ? 'Loading' : `Total: ${count}`}</div>
-        <IconButton
-          component={hasNextPage ? Link : 'button'}
-          to={nextPage}
-          disabled={!hasNextPage}
-        >
-          <KeyboardArrowRight />
-        </IconButton>
+        {nextPage ? (
+          <IconButton component={Link} to={nextPage}>
+            <KeyboardArrowRight />
+          </IconButton>
+        ) : (
+          <IconButton disabled>
+            <KeyboardArrowRight />
+          </IconButton>
+        )}
       </div>
     </Paper>
   );

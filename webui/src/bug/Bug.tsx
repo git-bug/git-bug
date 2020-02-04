@@ -52,7 +52,7 @@ const useStyles = makeStyles(theme => ({
 }));
 
 type Props = {
-  bug: BugFragment
+  bug: BugFragment;
 };
 
 function Bug({ bug }: Props) {
