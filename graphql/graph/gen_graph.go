@@ -306,8 +306,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		DefaultRepository func(childComplexity int) int
-		Repository        func(childComplexity int, ref string) int
+		Repository func(childComplexity int, ref *string) int
 	}
 
 	Repository struct {
@@ -452,8 +451,7 @@ type MutationResolver interface {
 	CommitAsNeeded(ctx context.Context, input models.CommitAsNeededInput) (*models.CommitAsNeededPayload, error)
 }
 type QueryResolver interface {
-	DefaultRepository(ctx context.Context) (*models.Repository, error)
-	Repository(ctx context.Context, ref string) (*models.Repository, error)
+	Repository(ctx context.Context, ref *string) (*models.Repository, error)
 }
 type RepositoryResolver interface {
 	AllBugs(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int, query *string) (*models.BugConnection, error)
@@ -1539,13 +1537,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PageInfo.StartCursor(childComplexity), true
 
-	case "Query.defaultRepository":
-		if e.complexity.Query.DefaultRepository == nil {
-			break
-		}
-
-		return e.complexity.Query.DefaultRepository(childComplexity), true
-
 	case "Query.repository":
 		if e.complexity.Query.Repository == nil {
 			break
@@ -1556,7 +1547,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Repository(childComplexity, args["ref"].(string)), true
+		return e.complexity.Query.Repository(childComplexity, args["ref"].(*string)), true
 
 	case "Repository.allBugs":
 		if e.complexity.Repository.AllBugs == nil {
@@ -2366,12 +2357,8 @@ type Repository {
     ): LabelConnection!
 }`, BuiltIn: false},
 	&ast.Source{Name: "schema/root.graphql", Input: `type Query {
-    """The default unnamend repository."""
-    defaultRepository: Repository
-    """Access a repository by reference/name."""
-    repository(ref: String!): Repository
-
-    #TODO: connection for all repositories
+    """Access a repository by reference/name. If no ref is given, the default repository is returned if any."""
+    repository(ref: String): Repository
 }
 
 type Mutation {
@@ -2837,9 +2824,9 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 func (ec *executionContext) field_Query_repository_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 *string
 	if tmp, ok := rawArgs["ref"]; ok {
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7821,37 +7808,6 @@ func (ec *executionContext) _PageInfo_endCursor(ctx context.Context, field graph
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_defaultRepository(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:   "Query",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().DefaultRepository(rctx)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*models.Repository)
-	fc.Result = res
-	return ec.marshalORepository2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐRepository(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _Query_repository(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -7876,7 +7832,7 @@ func (ec *executionContext) _Query_repository(ctx context.Context, field graphql
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Repository(rctx, args["ref"].(string))
+		return ec.resolvers.Query().Repository(rctx, args["ref"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12392,17 +12348,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
-		case "defaultRepository":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_defaultRepository(ctx, field)
-				return res
-			})
 		case "repository":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
