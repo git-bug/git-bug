@@ -25,7 +25,7 @@ func TestQueries(t *testing.T) {
 
 	query := `
      query {
-        defaultRepository {
+        repository {
           allBugs(first: 2) {
             pageInfo {
               endCursor
@@ -162,7 +162,7 @@ func TestQueries(t *testing.T) {
 	}
 
 	var resp struct {
-		DefaultRepository struct {
+		Repository struct {
 			AllBugs struct {
 				PageInfo models.PageInfo
 				Nodes    []struct {
