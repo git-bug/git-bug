@@ -29,6 +29,9 @@ matrix:
       - cd webui
     after_success: []
 
+env:
+  GO111MODULE=on
+
 install:
   - make install
 

@@ -4,7 +4,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/vektah/gqlgen/client"
+	"github.com/99designs/gqlgen/client"
 
 	"github.com/MichaelMure/git-bug/graphql/models"
 	"github.com/MichaelMure/git-bug/misc/random_bugs"
