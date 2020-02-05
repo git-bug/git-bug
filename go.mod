@@ -3,7 +3,7 @@ module github.com/MichaelMure/git-bug
 go 1.10
 
 require (
-	github.com/99designs/gqlgen v0.9.2
+	github.com/99designs/gqlgen v0.10.3-0.20200205113530-b941b970f0b6
 	github.com/MichaelMure/go-term-text v0.2.4
 	github.com/araddon/dateparse v0.0.0-20190622164848-0fb0a474d195
 	github.com/awesome-gocui/gocui v0.6.1-0.20191115151952-a34ffb055986
@@ -26,9 +26,9 @@ require (
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.4.0
 	github.com/theckman/goconstraint v1.11.0
-	github.com/vektah/gqlparser v1.1.2
+	github.com/vektah/gqlparser v1.2.1
 	github.com/xanzy/go-gitlab v0.22.1
-	golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
+	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550
 	golang.org/x/oauth2 v0.0.0-20181106182150-f42d05182288
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
 	golang.org/x/text v0.3.0

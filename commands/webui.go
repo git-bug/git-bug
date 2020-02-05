@@ -12,7 +12,7 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/99designs/gqlgen/handler"
+	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gorilla/mux"
 	"github.com/phayes/freeport"
 	"github.com/skratchdot/open-golang/open"
@@ -57,7 +57,7 @@ func runWebUI(cmd *cobra.Command, args []string) error {
 	}
 
 	// Routes
-	router.Path("/playground").Handler(handler.Playground("git-bug", "/graphql"))
+	router.Path("/playground").Handler(playground.Handler("git-bug", "/graphql"))
 	router.Path("/graphql").Handler(graphqlHandler)
 	router.Path("/gitfile/{hash}").Handler(newGitFileHandler(repo))
 	router.Path("/upload").Methods("POST").Handler(newGitUploadFileHandler(repo))
