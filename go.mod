@@ -11,7 +11,7 @@ require (
 	github.com/cheekybits/genny v0.0.0-20170328200008-9127e812e1e9
 	github.com/corpix/uarand v0.1.1 // indirect
 	github.com/dustin/go-humanize v1.0.0
-	github.com/fatih/color v1.7.0
+	github.com/fatih/color v1.9.0
 	github.com/go-errors/errors v1.0.1
 	github.com/gorilla/mux v1.7.3
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
