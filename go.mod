@@ -31,5 +31,5 @@ require (
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550
 	golang.org/x/oauth2 v0.0.0-20181106182150-f42d05182288
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
-	golang.org/x/text v0.3.0
+	golang.org/x/text v0.3.2
 )
