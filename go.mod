@@ -4,7 +4,7 @@ go 1.11
 
 require (
 	github.com/99designs/gqlgen v0.10.3-0.20200205113530-b941b970f0b6
-	github.com/MichaelMure/go-term-text v0.2.4
+	github.com/MichaelMure/go-term-text v0.2.6
 	github.com/araddon/dateparse v0.0.0-20190622164848-0fb0a474d195
 	github.com/awesome-gocui/gocui v0.6.1-0.20191115151952-a34ffb055986
 	github.com/blang/semver v3.5.1+incompatible
