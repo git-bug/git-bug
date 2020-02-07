@@ -1,13 +1,11 @@
 matrix:
   include:
   - language: go
-    go: "1.10"
+    go: 1.11.x
   - language: go
-    go: "1.11"
+    go: 1.12.x
   - language: go
-    go: "1.12"
-  - language: go
-    go: "1.13"
+    go: 1.13.x
   - language: node_js
     node_js: 8
     before_install:
@@ -28,6 +26,19 @@ matrix:
     before_install:
       - cd webui
     after_success: []
+  - language: node_js
+    node_js: 12
+    before_install:
+      - cd webui
+    after_success: []
+  - language: node_js
+    node_js: 13
+    before_install:
+      - cd webui
+    after_success: []
+
+env:
+  GO111MODULE=on
 
 install:
   - make install
