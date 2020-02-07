@@ -6,6 +6,8 @@ github.com/Masterminds/semver v1.4.2/go.mod h1:MB6lktGJrhw8PrUyiEoblNEGEQ+RzHPF0
 github.com/Masterminds/vcs v1.13.0/go.mod h1:N09YCmOQr6RLxC6UNHzuVwAdodYbbnycGHSmwVJjcKA=
 github.com/MichaelMure/go-term-text v0.2.4 h1:h+lAsjG5o3oNvaJeh7OzE8zdSiB/VyJo9JzSnncrZv4=
 github.com/MichaelMure/go-term-text v0.2.4/go.mod h1:o2Z5T3b28F4kwAojGvvNdbzjHf9t18vbQ7E2pmTe2Ww=
+github.com/MichaelMure/go-term-text v0.2.6 h1:dSmJSzk2iI5xWymSMrMbdVM1bxYWu3DjDFhdcJvAuqA=
+github.com/MichaelMure/go-term-text v0.2.6/go.mod h1:o2Z5T3b28F4kwAojGvvNdbzjHf9t18vbQ7E2pmTe2Ww=
 github.com/agnivade/levenshtein v1.0.1 h1:3oJU7J3FGFmyhn8KHjmVaZCN5hxTr7GxgRue+sxIXdQ=
 github.com/agnivade/levenshtein v1.0.1/go.mod h1:CURSv5d9Uaml+FovSIICkLbAUZ9S4RqaHDIsdSBg7lM=
 github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883 h1:bvNMNQO63//z+xNgfBlViaCIJKLlCJ6/fmUseuG0wVQ=
