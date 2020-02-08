@@ -9,6 +9,9 @@ import (
 	"github.com/MichaelMure/git-bug/entity"
 )
 
+// BugWrapper is an interface used by the GraphQL resolvers to handle a bug.
+// Depending on the situation, a Bug can already be fully loaded in memory or not.
+// This interface is used to wrap either a lazyBug or a loadedBug depending on the situation.
 type BugWrapper interface {
 	Id() entity.Id
 	LastEdit() time.Time
@@ -26,9 +29,11 @@ type BugWrapper interface {
 	IsAuthored()
 }
 
-var _ BugWrapper = &LazyBug{}
+var _ BugWrapper = &lazyBug{}
 
-type LazyBug struct {
+// lazyBug is a lazy-loading wrapper that fetch data from the cache (BugExcerpt) in priority,
+// and load the complete bug and snapshot only when necessary.
+type lazyBug struct {
 	cache   *cache.RepoCache
 	excerpt *cache.BugExcerpt
 
@@ -36,14 +41,14 @@ type LazyBug struct {
 	snap *bug.Snapshot
 }
 
-func NewLazyBug(cache *cache.RepoCache, excerpt *cache.BugExcerpt) *LazyBug {
-	return &LazyBug{
+func NewLazyBug(cache *cache.RepoCache, excerpt *cache.BugExcerpt) *lazyBug {
+	return &lazyBug{
 		cache:   cache,
 		excerpt: excerpt,
 	}
 }
 
-func (lb *LazyBug) load() error {
+func (lb *lazyBug) load() error {
 	if lb.snap != nil {
 		return nil
 	}
@@ -60,34 +65,34 @@ func (lb *LazyBug) load() error {
 	return nil
 }
 
-func (lb *LazyBug) identity(id entity.Id) (IdentityWrapper, error) {
+func (lb *lazyBug) identity(id entity.Id) (IdentityWrapper, error) {
 	i, err := lb.cache.ResolveIdentityExcerpt(id)
 	if err != nil {
 		return nil, err
 	}
-	return &LazyIdentity{cache: lb.cache, excerpt: i}, nil
+	return &lazyIdentity{cache: lb.cache, excerpt: i}, nil
 }
 
 // Sign post method for gqlgen
-func (lb *LazyBug) IsAuthored() {}
+func (lb *lazyBug) IsAuthored() {}
 
-func (lb *LazyBug) Id() entity.Id {
+func (lb *lazyBug) Id() entity.Id {
 	return lb.excerpt.Id
 }
 
-func (lb *LazyBug) LastEdit() time.Time {
+func (lb *lazyBug) LastEdit() time.Time {
 	return time.Unix(lb.excerpt.EditUnixTime, 0)
 }
 
-func (lb *LazyBug) Status() bug.Status {
+func (lb *lazyBug) Status() bug.Status {
 	return lb.excerpt.Status
 }
 
-func (lb *LazyBug) Title() string {
+func (lb *lazyBug) Title() string {
 	return lb.excerpt.Title
 }
 
-func (lb *LazyBug) Comments() ([]bug.Comment, error) {
+func (lb *lazyBug) Comments() ([]bug.Comment, error) {
 	err := lb.load()
 	if err != nil {
 		return nil, err
@@ -95,15 +100,15 @@ func (lb *LazyBug) Comments() ([]bug.Comment, error) {
 	return lb.snap.Comments, nil
 }
 
-func (lb *LazyBug) Labels() []bug.Label {
+func (lb *lazyBug) Labels() []bug.Label {
 	return lb.excerpt.Labels
 }
 
-func (lb *LazyBug) Author() (IdentityWrapper, error) {
+func (lb *lazyBug) Author() (IdentityWrapper, error) {
 	return lb.identity(lb.excerpt.AuthorId)
 }
 
-func (lb *LazyBug) Actors() ([]IdentityWrapper, error) {
+func (lb *lazyBug) Actors() ([]IdentityWrapper, error) {
 	result := make([]IdentityWrapper, len(lb.excerpt.Actors))
 	for i, actorId := range lb.excerpt.Actors {
 		actor, err := lb.identity(actorId)
@@ -115,7 +120,7 @@ func (lb *LazyBug) Actors() ([]IdentityWrapper, error) {
 	return result, nil
 }
 
-func (lb *LazyBug) Participants() ([]IdentityWrapper, error) {
+func (lb *lazyBug) Participants() ([]IdentityWrapper, error) {
 	result := make([]IdentityWrapper, len(lb.excerpt.Participants))
 	for i, participantId := range lb.excerpt.Participants {
 		participant, err := lb.identity(participantId)
@@ -127,11 +132,11 @@ func (lb *LazyBug) Participants() ([]IdentityWrapper, error) {
 	return result, nil
 }
 
-func (lb *LazyBug) CreatedAt() time.Time {
+func (lb *lazyBug) CreatedAt() time.Time {
 	return time.Unix(lb.excerpt.CreateUnixTime, 0)
 }
 
-func (lb *LazyBug) Timeline() ([]bug.TimelineItem, error) {
+func (lb *lazyBug) Timeline() ([]bug.TimelineItem, error) {
 	err := lb.load()
 	if err != nil {
 		return nil, err
@@ -139,53 +144,49 @@ func (lb *LazyBug) Timeline() ([]bug.TimelineItem, error) {
 	return lb.snap.Timeline, nil
 }
 
-func (lb *LazyBug) Operations() ([]bug.Operation, error) {
+func (lb *lazyBug) Operations() ([]bug.Operation, error) {
 	err := lb.load()
 	if err != nil {
 		return nil, err
 	}
-	result := make([]bug.Operation, len(lb.snap.Operations))
-	for i, operation := range lb.snap.Operations {
-		result[i] = operation
-	}
-	return result, nil
+	return lb.snap.Operations, nil
 }
 
-var _ BugWrapper = &LoadedBug{}
+var _ BugWrapper = &loadedBug{}
 
-type LoadedBug struct {
+type loadedBug struct {
 	*bug.Snapshot
 }
 
-func NewLoadedBug(snap *bug.Snapshot) *LoadedBug {
-	return &LoadedBug{Snapshot: snap}
+func NewLoadedBug(snap *bug.Snapshot) *loadedBug {
+	return &loadedBug{Snapshot: snap}
 }
 
-func (l *LoadedBug) LastEdit() time.Time {
+func (l *loadedBug) LastEdit() time.Time {
 	return l.Snapshot.LastEditTime()
 }
 
-func (l *LoadedBug) Status() bug.Status {
+func (l *loadedBug) Status() bug.Status {
 	return l.Snapshot.Status
 }
 
-func (l *LoadedBug) Title() string {
+func (l *loadedBug) Title() string {
 	return l.Snapshot.Title
 }
 
-func (l *LoadedBug) Comments() ([]bug.Comment, error) {
+func (l *loadedBug) Comments() ([]bug.Comment, error) {
 	return l.Snapshot.Comments, nil
 }
 
-func (l *LoadedBug) Labels() []bug.Label {
+func (l *loadedBug) Labels() []bug.Label {
 	return l.Snapshot.Labels
 }
 
-func (l *LoadedBug) Author() (IdentityWrapper, error) {
+func (l *loadedBug) Author() (IdentityWrapper, error) {
 	return NewLoadedIdentity(l.Snapshot.Author), nil
 }
 
-func (l *LoadedBug) Actors() ([]IdentityWrapper, error) {
+func (l *loadedBug) Actors() ([]IdentityWrapper, error) {
 	res := make([]IdentityWrapper, len(l.Snapshot.Actors))
 	for i, actor := range l.Snapshot.Actors {
 		res[i] = NewLoadedIdentity(actor)
@@ -193,7 +194,7 @@ func (l *LoadedBug) Actors() ([]IdentityWrapper, error) {
 	return res, nil
 }
 
-func (l *LoadedBug) Participants() ([]IdentityWrapper, error) {
+func (l *loadedBug) Participants() ([]IdentityWrapper, error) {
 	res := make([]IdentityWrapper, len(l.Snapshot.Participants))
 	for i, participant := range l.Snapshot.Participants {
 		res[i] = NewLoadedIdentity(participant)
@@ -201,14 +202,14 @@ func (l *LoadedBug) Participants() ([]IdentityWrapper, error) {
 	return res, nil
 }
 
-func (l *LoadedBug) CreatedAt() time.Time {
+func (l *loadedBug) CreatedAt() time.Time {
 	return l.Snapshot.CreatedAt
 }
 
-func (l *LoadedBug) Timeline() ([]bug.TimelineItem, error) {
+func (l *loadedBug) Timeline() ([]bug.TimelineItem, error) {
 	return l.Snapshot.Timeline, nil
 }
 
-func (l *LoadedBug) Operations() ([]bug.Operation, error) {
+func (l *loadedBug) Operations() ([]bug.Operation, error) {
 	return l.Snapshot.Operations, nil
 }
