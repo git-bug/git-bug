@@ -153,6 +153,8 @@ func TestPushPull(t *testing.T) {
 	author, err := backend.NewIdentity("test identity", "test@test.org")
 	require.NoError(t, err)
 	author.SetMetadata(metaKeyGitlabLogin, login)
+	err = author.Commit()
+	require.NoError(t, err)
 
 	err = backend.SetUserIdentity(author)
 	require.NoError(t, err)
