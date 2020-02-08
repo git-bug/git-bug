@@ -2062,7 +2062,6 @@ type BugConnection {
 An edge in a connection.
 """
 type BugEdge {
-<<<<<<< HEAD
 	"""
 	A cursor for use in pagination.
 	"""
@@ -2071,105 +2070,6 @@ type BugEdge {
 	The item at the end of the edge.
 	"""
 	node: Bug!
-=======
-  """A cursor for use in pagination."""
-  cursor: String!
-  """The item at the end of the edge."""
-  node: Bug!
-}
-`},
-	&ast.Source{Name: "schema/identity.graphql", Input: `"""Represents an identity"""
-type Identity {
-    """The identifier for this identity"""
-    id: String!
-    """The human version (truncated) identifier for this identity"""
-    humanId: String!
-    """The name of the person, if known."""
-    name: String
-    """The email of the person, if known."""
-    email: String
-    """A non-empty string to display, representing the identity, based on the non-empty values."""
-    displayName: String!
-    """An url to an avatar"""
-    avatarUrl: String
-    """isProtected is true if the chain of git commits started to be signed.
-    If that's the case, only signed commit with a valid key for this identity can be added."""
-    isProtected: Boolean!
-}
-
-type IdentityConnection {
-    edges: [IdentityEdge!]!
-    nodes: [Identity!]!
-    pageInfo: PageInfo!
-    totalCount: Int!
-}
-
-type IdentityEdge {
-    cursor: String!
-    node: Identity!
-}`},
-	&ast.Source{Name: "schema/label.graphql", Input: `"""Label for a bug."""
-type Label {
-    """The name of the label."""
-    name: String!
-    """Color of the label."""
-    color: Color!
-}
-
-type LabelConnection {
-    edges: [LabelEdge!]!
-    nodes: [Label!]!
-    pageInfo: PageInfo!
-    totalCount: Int!
-}
-
-type LabelEdge {
-    cursor: String!
-    node: Label!
-}`},
-	&ast.Source{Name: "schema/mutations.graphql", Input: `input NewBugInput {
-    """A unique identifier for the client performing the mutation."""
-    clientMutationId: String
-    """"The name of the repository. If not set, the default repository is used."""
-    repoRef: String
-    """The title of the new bug."""
-    title: String!
-    """The first message of the new bug."""
-    message: String!
-    """The collection of file's hash required for the first message."""
-    files: [Hash!]
-}
-
-type NewBugPayload {
-    """A unique identifier for the client performing the mutation."""
-    clientMutationId: String
-    """The created bug."""
-    bug: Bug!
-    """The resulting operation."""
-    operation: CreateOperation!
-}
-
-input AddCommentInput {
-    """A unique identifier for the client performing the mutation."""
-    clientMutationId: String
-    """"The name of the repository. If not set, the default repository is used."""
-    repoRef: String
-    """The bug ID's prefix."""
-    prefix: String!
-    """The first message of the new bug."""
-    message: String!
-    """The collection of file's hash required for the first message."""
-    files: [Hash!]
-}
-
-type AddCommentPayload {
-    """A unique identifier for the client performing the mutation."""
-    clientMutationId: String
-    """The affected bug."""
-    bug: Bug!
-    """The resulting operation."""
-    operation: AddCommentOperation!
->>>>>>> more more wip
 }
 input ChangeLabelInput {
 	"""
@@ -2411,11 +2311,7 @@ type Identity {
 	"""
 	email: String
 	"""
-	The login of the person, if known.
-	"""
-	login: String
-	"""
-	A string containing the either the name of the person, its login or both
+	A non-empty string to display, representing the identity, based on the non-empty values.
 	"""
 	displayName: String!
 	"""
@@ -6307,43 +6203,7 @@ func (ec *executionContext) _Identity_email(ctx context.Context, field graphql.C
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-<<<<<<< HEAD
-func (ec *executionContext) _Identity_login(ctx context.Context, field graphql.CollectedField, obj identity.Interface) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:   "Identity",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Login(), nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalOString2string(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _Identity_displayName(ctx context.Context, field graphql.CollectedField, obj identity.Interface) (ret graphql.Marshaler) {
-=======
-func (ec *executionContext) _Identity_displayName(ctx context.Context, field graphql.CollectedField, obj *identity.Interface) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
->>>>>>> more more wip
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -12042,22 +11902,7 @@ func (ec *executionContext) _Identity(ctx context.Context, sel ast.SelectionSet,
 		case "name":
 			out.Values[i] = ec._Identity_name(ctx, field, obj)
 		case "email":
-<<<<<<< HEAD
 			out.Values[i] = ec._Identity_email(ctx, field, obj)
-		case "login":
-			out.Values[i] = ec._Identity_login(ctx, field, obj)
-=======
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Identity_email(ctx, field, obj)
-				return res
-			})
->>>>>>> more more wip
 		case "displayName":
 			out.Values[i] = ec._Identity_displayName(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

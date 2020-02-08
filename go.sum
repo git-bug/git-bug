@@ -131,6 +131,8 @@ github.com/urfave/cli v1.20.0/go.mod h1:70zkFmudgCuE/ngEzBv17Jvp/497gISqfk5gWijb
 github.com/vektah/dataloaden v0.2.1-0.20190515034641-a19b9a6e7c9e/go.mod h1:/HUdMve7rvxZma+2ZELQeNh88+003LL7Pf/CZ089j8U=
 github.com/vektah/gqlparser v1.2.1 h1:C+L7Go/eUbN0w6Y0kaiq2W6p2wN5j8wU82EdDXxDivc=
 github.com/vektah/gqlparser v1.2.1/go.mod h1:bkVf0FX+Stjg/MHnm8mEyubuaArhNEqfQhF+OTiAL74=
+github.com/vektah/gqlparser v1.3.1 h1:8b0IcD3qZKWJQHSzynbDlrtP3IxVydZ2DZepCGofqfU=
+github.com/vektah/gqlparser v1.3.1/go.mod h1:bkVf0FX+Stjg/MHnm8mEyubuaArhNEqfQhF+OTiAL74=
 github.com/xanzy/go-gitlab v0.22.1 h1:TVxgHmoa35jQL+9FCkG0nwPDxU9dQZXknBTDtGaSFno=
 github.com/xanzy/go-gitlab v0.22.1/go.mod h1:t4Bmvnxj7k37S4Y17lfLx+nLqkf/oQwT2HagfWKv5Og=
 github.com/xanzy/go-gitlab v0.24.0 h1:zP1zC4K76Gha0coN5GhygOLhsHTCvUjrnqGL3kHXkVU=
