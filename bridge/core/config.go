@@ -19,7 +19,7 @@ func FinishConfig(repo *cache.RepoCache, metaKey string, login string) error {
 
 	// if a default user exist, tag it with the login
 	user, err := repo.GetUserIdentity()
-	if err != nil && err != identity.ErrIdentityNotExist {
+	if err != nil && err != identity.ErrNoIdentitySet {
 		// real error
 		return err
 	}
