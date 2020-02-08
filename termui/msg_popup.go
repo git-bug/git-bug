@@ -63,7 +63,7 @@ func (ep *msgPopup) layout(g *gocui.Gui) error {
 	v.Title = ep.title
 
 	v.Clear()
-	fmt.Fprintf(v, wrapped)
+	_, _ = fmt.Fprint(v, wrapped)
 
 	if _, err := g.SetCurrentView(msgPopupView); err != nil {
 		return err

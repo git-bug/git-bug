@@ -27,9 +27,7 @@ func runCommands(cmd *cobra.Command, args []string) error {
 		cmd := queue[0]
 		queue = queue[1:]
 		allCmds = append(allCmds, cmd)
-		for _, c := range cmd.Commands() {
-			queue = append(queue, c)
-		}
+		queue = append(queue, cmd.Commands()...)
 	}
 
 	sort.Sort(commandSorterByName(allCmds))

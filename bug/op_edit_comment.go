@@ -59,14 +59,11 @@ func (op *EditCommentOperation) Apply(snapshot *Snapshot) {
 		UnixTime: timestamp.Timestamp(op.UnixTime),
 	}
 
-	switch target.(type) {
+	switch target := target.(type) {
 	case *CreateTimelineItem:
-		item := target.(*CreateTimelineItem)
-		item.Append(comment)
-
+		target.Append(comment)
 	case *AddCommentTimelineItem:
-		item := target.(*AddCommentTimelineItem)
-		item.Append(comment)
+		target.Append(comment)
 	}
 
 	// Updating the corresponding comment

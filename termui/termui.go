@@ -117,8 +117,6 @@ func initGui(action func(ui *termUI) error) {
 		}
 		ui.gError <- err
 	}
-
-	return
 }
 
 func layout(g *gocui.Gui) error {
