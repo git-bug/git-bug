@@ -4,10 +4,17 @@ import (
 	"strings"
 
 	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/entity"
 )
 
+// resolver has the resolving functions needed by filters.
+// This exist mainly to go through the functions of the cache with proper locking.
+type resolver interface {
+	ResolveIdentityExcerpt(id entity.Id) (*IdentityExcerpt, error)
+}
+
 // Filter is a predicate that match a subset of bugs
-type Filter func(repoCache *RepoCache, excerpt *BugExcerpt) bool
+type Filter func(excerpt *BugExcerpt, resolver resolver) bool
 
 // StatusFilter return a Filter that match a bug status
 func StatusFilter(query string) (Filter, error) {
@@ -16,21 +23,21 @@ func StatusFilter(query string) (Filter, error) {
 		return nil, err
 	}
 
-	return func(repoCache *RepoCache, excerpt *BugExcerpt) bool {
+	return func(excerpt *BugExcerpt, resolver resolver) bool {
 		return excerpt.Status == status
 	}, nil
 }
 
 // AuthorFilter return a Filter that match a bug author
 func AuthorFilter(query string) Filter {
-	return func(repoCache *RepoCache, excerpt *BugExcerpt) bool {
+	return func(excerpt *BugExcerpt, resolver resolver) bool {
 		query = strings.ToLower(query)
 
 		// Normal identity
 		if excerpt.AuthorId != "" {
-			author, ok := repoCache.identitiesExcerpts[excerpt.AuthorId]
-			if !ok {
-				panic("missing identity in the cache")
+			author, err := resolver.ResolveIdentityExcerpt(excerpt.AuthorId)
+			if err != nil {
+				panic(err)
 			}
 
 			return author.Match(query)
@@ -43,7 +50,7 @@ func AuthorFilter(query string) Filter {
 
 // LabelFilter return a Filter that match a label
 func LabelFilter(label string) Filter {
-	return func(repoCache *RepoCache, excerpt *BugExcerpt) bool {
+	return func(excerpt *BugExcerpt, resolver resolver) bool {
 		for _, l := range excerpt.Labels {
 			if string(l) == label {
 				return true
@@ -55,13 +62,13 @@ func LabelFilter(label string) Filter {
 
 // ActorFilter return a Filter that match a bug actor
 func ActorFilter(query string) Filter {
-	return func(repoCache *RepoCache, excerpt *BugExcerpt) bool {
+	return func(excerpt *BugExcerpt, resolver resolver) bool {
 		query = strings.ToLower(query)
 
 		for _, id := range excerpt.Actors {
-			identityExcerpt, ok := repoCache.identitiesExcerpts[id]
-			if !ok {
-				panic("missing identity in the cache")
+			identityExcerpt, err := resolver.ResolveIdentityExcerpt(id)
+			if err != nil {
+				panic(err)
 			}
 
 			if identityExcerpt.Match(query) {
@@ -74,13 +81,13 @@ func ActorFilter(query string) Filter {
 
 // ParticipantFilter return a Filter that match a bug participant
 func ParticipantFilter(query string) Filter {
-	return func(repoCache *RepoCache, excerpt *BugExcerpt) bool {
+	return func(excerpt *BugExcerpt, resolver resolver) bool {
 		query = strings.ToLower(query)
 
 		for _, id := range excerpt.Participants {
-			identityExcerpt, ok := repoCache.identitiesExcerpts[id]
-			if !ok {
-				panic("missing identity in the cache")
+			identityExcerpt, err := resolver.ResolveIdentityExcerpt(id)
+			if err != nil {
+				panic(err)
 			}
 
 			if identityExcerpt.Match(query) {
@@ -93,7 +100,7 @@ func ParticipantFilter(query string) Filter {
 
 // TitleFilter return a Filter that match if the title contains the given query
 func TitleFilter(query string) Filter {
-	return func(repo *RepoCache, excerpt *BugExcerpt) bool {
+	return func(excerpt *BugExcerpt, resolver resolver) bool {
 		return strings.Contains(
 			strings.ToLower(excerpt.Title),
 			strings.ToLower(query),
@@ -103,7 +110,7 @@ func TitleFilter(query string) Filter {
 
 // NoLabelFilter return a Filter that match the absence of labels
 func NoLabelFilter() Filter {
-	return func(repoCache *RepoCache, excerpt *BugExcerpt) bool {
+	return func(excerpt *BugExcerpt, resolver resolver) bool {
 		return len(excerpt.Labels) == 0
 	}
 }
@@ -120,32 +127,32 @@ type Filters struct {
 }
 
 // Match check if a bug match the set of filters
-func (f *Filters) Match(repoCache *RepoCache, excerpt *BugExcerpt) bool {
-	if match := f.orMatch(f.Status, repoCache, excerpt); !match {
+func (f *Filters) Match(excerpt *BugExcerpt, resolver resolver) bool {
+	if match := f.orMatch(f.Status, excerpt, resolver); !match {
 		return false
 	}
 
-	if match := f.orMatch(f.Author, repoCache, excerpt); !match {
+	if match := f.orMatch(f.Author, excerpt, resolver); !match {
 		return false
 	}
 
-	if match := f.orMatch(f.Participant, repoCache, excerpt); !match {
+	if match := f.orMatch(f.Participant, excerpt, resolver); !match {
 		return false
 	}
 
-	if match := f.orMatch(f.Actor, repoCache, excerpt); !match {
+	if match := f.orMatch(f.Actor, excerpt, resolver); !match {
 		return false
 	}
 
-	if match := f.andMatch(f.Label, repoCache, excerpt); !match {
+	if match := f.andMatch(f.Label, excerpt, resolver); !match {
 		return false
 	}
 
-	if match := f.andMatch(f.NoFilters, repoCache, excerpt); !match {
+	if match := f.andMatch(f.NoFilters, excerpt, resolver); !match {
 		return false
 	}
 
-	if match := f.andMatch(f.Title, repoCache, excerpt); !match {
+	if match := f.andMatch(f.Title, excerpt, resolver); !match {
 		return false
 	}
 
@@ -153,28 +160,28 @@ func (f *Filters) Match(repoCache *RepoCache, excerpt *BugExcerpt) bool {
 }
 
 // Check if any of the filters provided match the bug
-func (*Filters) orMatch(filters []Filter, repoCache *RepoCache, excerpt *BugExcerpt) bool {
+func (*Filters) orMatch(filters []Filter, excerpt *BugExcerpt, resolver resolver) bool {
 	if len(filters) == 0 {
 		return true
 	}
 
 	match := false
 	for _, f := range filters {
-		match = match || f(repoCache, excerpt)
+		match = match || f(excerpt, resolver)
 	}
 
 	return match
 }
 
 // Check if all of the filters provided match the bug
-func (*Filters) andMatch(filters []Filter, repoCache *RepoCache, excerpt *BugExcerpt) bool {
+func (*Filters) andMatch(filters []Filter, excerpt *BugExcerpt, resolver resolver) bool {
 	if len(filters) == 0 {
 		return true
 	}
 
 	match := true
 	for _, f := range filters {
-		match = match && f(repoCache, excerpt)
+		match = match && f(excerpt, resolver)
 	}
 
 	return match
