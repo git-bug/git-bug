@@ -256,6 +256,9 @@ func promptToken(baseUrl string) (*auth.Token, error) {
 	}
 
 	rawToken, err := input.Prompt("Enter token", "token", input.Required, validator)
+	if err != nil {
+		return nil, err
+	}
 
 	token := auth.NewToken(rawToken, target)
 	token.SetMetadata(auth.MetaKeyLogin, login)

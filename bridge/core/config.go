@@ -33,6 +33,9 @@ func FinishConfig(repo *cache.RepoCache, metaKey string, login string) error {
 	i, err := repo.NewIdentityFromGitUserRaw(map[string]string{
 		metaKey: login,
 	})
+	if err != nil {
+		return err
+	}
 
 	err = repo.SetUserIdentity(i)
 	if err != nil {
