@@ -155,6 +155,11 @@ func TestPushPull(t *testing.T) {
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
 
+	token := auth.NewToken(envToken, target)
+	token.SetMetadata(auth.MetaKeyLogin, login)
+	err = auth.Store(repo, token)
+	require.NoError(t, err)
+
 	tests := testCases(t, backend)
 
 	// generate project name
@@ -177,11 +182,6 @@ func TestPushPull(t *testing.T) {
 	interrupt.RegisterCleaner(func() error {
 		return deleteRepository(projectName, envUser, envToken)
 	})
-
-	token := auth.NewToken(envToken, target)
-	token.SetMetadata(auth.MetaKeyLogin, login)
-	err = auth.Store(repo, token)
-	require.NoError(t, err)
 
 	// initialize exporter
 	exporter := &githubExporter{}
@@ -258,7 +258,7 @@ func TestPushPull(t *testing.T) {
 			// verify bug have same number of original operations
 			require.Len(t, importedBug.Snapshot().Operations, tt.numOrOp)
 
-			// verify bugs are taged with origin=github
+			// verify bugs are tagged with origin=github
 			issueOrigin, ok := importedBug.Snapshot().GetCreateMetadata(core.MetaKeyOrigin)
 			require.True(t, ok)
 			require.Equal(t, issueOrigin, target)
