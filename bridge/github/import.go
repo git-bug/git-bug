@@ -534,6 +534,11 @@ func (gi *githubImporter) ensurePerson(repo *cache.RepoCache, actor *actor) (*ca
 	case "Bot":
 	}
 
+	// Name is not necessarily set, fallback to login as a name is required in the identity
+	if name == "" {
+		name = string(actor.Login)
+	}
+
 	i, err = repo.NewIdentityRaw(
 		name,
 		email,
