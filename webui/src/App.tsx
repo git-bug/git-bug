@@ -51,7 +51,7 @@ export default function App() {
       <AppBar position="fixed" color="primary">
         <Toolbar>
           <Link to="/" className={classes.appTitle}>
-            <img src="logo.svg" className={classes.logo} alt="git-bug" />
+            <img src="/logo.svg" className={classes.logo} alt="git-bug" />
             git-bug
           </Link>
           <div className={classes.filler}></div>
