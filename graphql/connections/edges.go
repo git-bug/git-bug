@@ -12,3 +12,14 @@ type LazyBugEdge struct {
 func (lbe LazyBugEdge) GetCursor() string {
 	return lbe.Cursor
 }
+
+// LazyIdentityEdge is a special relay edge used to implement a lazy loading connection
+type LazyIdentityEdge struct {
+	Id     entity.Id
+	Cursor string
+}
+
+// GetCursor return the cursor of a LazyIdentityEdge
+func (lbe LazyIdentityEdge) GetCursor() string {
+	return lbe.Cursor
+}

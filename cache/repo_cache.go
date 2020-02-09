@@ -10,6 +10,7 @@ import (
 	"path"
 	"sort"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -57,11 +58,13 @@ type RepoCache struct {
 	// the underlying repo
 	repo repository.ClockedRepo
 
+	muBug sync.RWMutex
 	// excerpt of bugs data for all bugs
 	bugExcerpts map[entity.Id]*BugExcerpt
 	// bug loaded in memory
 	bugs map[entity.Id]*BugCache
 
+	muIdentity sync.RWMutex
 	// excerpt of identities data for all identities
 	identitiesExcerpts map[entity.Id]*IdentityExcerpt
 	// identities loaded in memory
@@ -157,6 +160,11 @@ func (c *RepoCache) lock() error {
 }
 
 func (c *RepoCache) Close() error {
+	c.muBug.Lock()
+	defer c.muBug.Unlock()
+	c.muIdentity.Lock()
+	defer c.muIdentity.Unlock()
+
 	c.identities = make(map[entity.Id]*IdentityCache)
 	c.identitiesExcerpts = nil
 	c.bugs = make(map[entity.Id]*BugCache)
@@ -169,12 +177,16 @@ func (c *RepoCache) Close() error {
 // bugUpdated is a callback to trigger when the excerpt of a bug changed,
 // that is each time a bug is updated
 func (c *RepoCache) bugUpdated(id entity.Id) error {
+	c.muBug.Lock()
+
 	b, ok := c.bugs[id]
 	if !ok {
+		c.muBug.Unlock()
 		panic("missing bug in the cache")
 	}
 
 	c.bugExcerpts[id] = NewBugExcerpt(b.bug, b.Snapshot())
+	c.muBug.Unlock()
 
 	// we only need to write the bug cache
 	return c.writeBugCache()
@@ -183,12 +195,16 @@ func (c *RepoCache) bugUpdated(id entity.Id) error {
 // identityUpdated is a callback to trigger when the excerpt of an identity
 // changed, that is each time an identity is updated
 func (c *RepoCache) identityUpdated(id entity.Id) error {
+	c.muIdentity.Lock()
+
 	i, ok := c.identities[id]
 	if !ok {
+		c.muIdentity.Unlock()
 		panic("missing identity in the cache")
 	}
 
 	c.identitiesExcerpts[id] = NewIdentityExcerpt(i.Identity)
+	c.muIdentity.Unlock()
 
 	// we only need to write the identity cache
 	return c.writeIdentityCache()
@@ -205,6 +221,9 @@ func (c *RepoCache) load() error {
 
 // load will try to read from the disk the bug cache file
 func (c *RepoCache) loadBugCache() error {
+	c.muBug.Lock()
+	defer c.muBug.Unlock()
+
 	f, err := os.Open(bugCacheFilePath(c.repo))
 	if err != nil {
 		return err
@@ -234,6 +253,9 @@ func (c *RepoCache) loadBugCache() error {
 
 // load will try to read from the disk the identity cache file
 func (c *RepoCache) loadIdentityCache() error {
+	c.muIdentity.Lock()
+	defer c.muIdentity.Unlock()
+
 	f, err := os.Open(identityCacheFilePath(c.repo))
 	if err != nil {
 		return err
@@ -272,6 +294,9 @@ func (c *RepoCache) write() error {
 
 // write will serialize on disk the bug cache file
 func (c *RepoCache) writeBugCache() error {
+	c.muBug.RLock()
+	defer c.muBug.RUnlock()
+
 	var data bytes.Buffer
 
 	aux := struct {
@@ -304,6 +329,9 @@ func (c *RepoCache) writeBugCache() error {
 
 // write will serialize on disk the identity cache file
 func (c *RepoCache) writeIdentityCache() error {
+	c.muIdentity.RLock()
+	defer c.muIdentity.RUnlock()
+
 	var data bytes.Buffer
 
 	aux := struct {
@@ -343,6 +371,11 @@ func identityCacheFilePath(repo repository.Repo) string {
 }
 
 func (c *RepoCache) buildCache() error {
+	c.muBug.Lock()
+	defer c.muBug.Unlock()
+	c.muIdentity.Lock()
+	defer c.muIdentity.Unlock()
+
 	_, _ = fmt.Fprintf(os.Stderr, "Building identity cache... ")
 
 	c.identitiesExcerpts = make(map[entity.Id]*IdentityExcerpt)
@@ -378,9 +411,24 @@ func (c *RepoCache) buildCache() error {
 	return nil
 }
 
+// ResolveBugExcerpt retrieve a BugExcerpt matching the exact given id
+func (c *RepoCache) ResolveBugExcerpt(id entity.Id) (*BugExcerpt, error) {
+	c.muBug.RLock()
+	defer c.muBug.RUnlock()
+
+	e, ok := c.bugExcerpts[id]
+	if !ok {
+		return nil, bug.ErrBugNotExist
+	}
+
+	return e, nil
+}
+
 // ResolveBug retrieve a bug matching the exact given id
 func (c *RepoCache) ResolveBug(id entity.Id) (*BugCache, error) {
+	c.muBug.RLock()
 	cached, ok := c.bugs[id]
+	c.muBug.RUnlock()
 	if ok {
 		return cached, nil
 	}
@@ -391,19 +439,20 @@ func (c *RepoCache) ResolveBug(id entity.Id) (*BugCache, error) {
 	}
 
 	cached = NewBugCache(c, b)
+
+	c.muBug.Lock()
 	c.bugs[id] = cached
+	c.muBug.Unlock()
 
 	return cached, nil
 }
 
-// ResolveBugExcerpt retrieve a BugExcerpt matching the exact given id
-func (c *RepoCache) ResolveBugExcerpt(id entity.Id) (*BugExcerpt, error) {
-	e, ok := c.bugExcerpts[id]
-	if !ok {
-		return nil, bug.ErrBugNotExist
-	}
-
-	return e, nil
+// ResolveBugExcerptPrefix retrieve a BugExcerpt matching an id prefix. It fails if multiple
+// bugs match.
+func (c *RepoCache) ResolveBugExcerptPrefix(prefix string) (*BugExcerpt, error) {
+	return c.ResolveBugExcerptMatcher(func(excerpt *BugExcerpt) bool {
+		return excerpt.Id.HasPrefix(prefix)
+	})
 }
 
 // ResolveBugPrefix retrieve a bug matching an id prefix. It fails if multiple
@@ -423,7 +472,26 @@ func (c *RepoCache) ResolveBugCreateMetadata(key string, value string) (*BugCach
 	})
 }
 
+func (c *RepoCache) ResolveBugExcerptMatcher(f func(*BugExcerpt) bool) (*BugExcerpt, error) {
+	id, err := c.resolveBugMatcher(f)
+	if err != nil {
+		return nil, err
+	}
+	return c.ResolveBugExcerpt(id)
+}
+
 func (c *RepoCache) ResolveBugMatcher(f func(*BugExcerpt) bool) (*BugCache, error) {
+	id, err := c.resolveBugMatcher(f)
+	if err != nil {
+		return nil, err
+	}
+	return c.ResolveBug(id)
+}
+
+func (c *RepoCache) resolveBugMatcher(f func(*BugExcerpt) bool) (entity.Id, error) {
+	c.muBug.RLock()
+	defer c.muBug.RUnlock()
+
 	// preallocate but empty
 	matching := make([]entity.Id, 0, 5)
 
@@ -434,18 +502,21 @@ func (c *RepoCache) ResolveBugMatcher(f func(*BugExcerpt) bool) (*BugCache, erro
 	}
 
 	if len(matching) > 1 {
-		return nil, bug.NewErrMultipleMatchBug(matching)
+		return entity.UnsetId, bug.NewErrMultipleMatchBug(matching)
 	}
 
 	if len(matching) == 0 {
-		return nil, bug.ErrBugNotExist
+		return entity.UnsetId, bug.ErrBugNotExist
 	}
 
-	return c.ResolveBug(matching[0])
+	return matching[0], nil
 }
 
 // QueryBugs return the id of all Bug matching the given Query
 func (c *RepoCache) QueryBugs(query *Query) []entity.Id {
+	c.muBug.RLock()
+	defer c.muBug.RUnlock()
+
 	if query == nil {
 		return c.AllBugsIds()
 	}
@@ -453,7 +524,7 @@ func (c *RepoCache) QueryBugs(query *Query) []entity.Id {
 	var filtered []*BugExcerpt
 
 	for _, excerpt := range c.bugExcerpts {
-		if query.Match(c, excerpt) {
+		if query.Match(excerpt, c) {
 			filtered = append(filtered, excerpt)
 		}
 	}
@@ -488,6 +559,9 @@ func (c *RepoCache) QueryBugs(query *Query) []entity.Id {
 
 // AllBugsIds return all known bug ids
 func (c *RepoCache) AllBugsIds() []entity.Id {
+	c.muBug.RLock()
+	defer c.muBug.RUnlock()
+
 	result := make([]entity.Id, len(c.bugExcerpts))
 
 	i := 0
@@ -505,6 +579,9 @@ func (c *RepoCache) AllBugsIds() []entity.Id {
 // labels are defined in a configuration file. Until that, the default behavior
 // is to return the list of labels already used.
 func (c *RepoCache) ValidLabels() []bug.Label {
+	c.muBug.RLock()
+	defer c.muBug.RUnlock()
+
 	set := map[bug.Label]interface{}{}
 
 	for _, excerpt := range c.bugExcerpts {
@@ -564,12 +641,15 @@ func (c *RepoCache) NewBugRaw(author *IdentityCache, unixTime int64, title strin
 		return nil, nil, err
 	}
 
+	c.muBug.Lock()
 	if _, has := c.bugs[b.Id()]; has {
+		c.muBug.Unlock()
 		return nil, nil, fmt.Errorf("bug %s already exist in the cache", b.Id())
 	}
 
 	cached := NewBugCache(c, b)
 	c.bugs[b.Id()] = cached
+	c.muBug.Unlock()
 
 	// force the write of the excerpt
 	err = c.bugUpdated(b.Id())
@@ -615,7 +695,9 @@ func (c *RepoCache) MergeAll(remote string) <-chan entity.MergeResult {
 			switch result.Status {
 			case entity.MergeStatusNew, entity.MergeStatusUpdated:
 				i := result.Entity.(*identity.Identity)
+				c.muIdentity.Lock()
 				c.identitiesExcerpts[result.Id] = NewIdentityExcerpt(i)
+				c.muIdentity.Unlock()
 			}
 		}
 
@@ -631,7 +713,9 @@ func (c *RepoCache) MergeAll(remote string) <-chan entity.MergeResult {
 			case entity.MergeStatusNew, entity.MergeStatusUpdated:
 				b := result.Entity.(*bug.Bug)
 				snap := b.Compile()
+				c.muBug.Lock()
 				c.bugExcerpts[result.Id] = NewBugExcerpt(b, &snap)
+				c.muBug.Unlock()
 			}
 		}
 
@@ -745,9 +829,24 @@ func repoIsAvailable(repo repository.Repo) error {
 	return nil
 }
 
+// ResolveIdentityExcerpt retrieve a IdentityExcerpt matching the exact given id
+func (c *RepoCache) ResolveIdentityExcerpt(id entity.Id) (*IdentityExcerpt, error) {
+	c.muIdentity.RLock()
+	defer c.muIdentity.RUnlock()
+
+	e, ok := c.identitiesExcerpts[id]
+	if !ok {
+		return nil, identity.ErrIdentityNotExist
+	}
+
+	return e, nil
+}
+
 // ResolveIdentity retrieve an identity matching the exact given id
 func (c *RepoCache) ResolveIdentity(id entity.Id) (*IdentityCache, error) {
+	c.muIdentity.RLock()
 	cached, ok := c.identities[id]
+	c.muIdentity.RUnlock()
 	if ok {
 		return cached, nil
 	}
@@ -758,19 +857,20 @@ func (c *RepoCache) ResolveIdentity(id entity.Id) (*IdentityCache, error) {
 	}
 
 	cached = NewIdentityCache(c, i)
+
+	c.muIdentity.Lock()
 	c.identities[id] = cached
+	c.muIdentity.Unlock()
 
 	return cached, nil
 }
 
-// ResolveIdentityExcerpt retrieve a IdentityExcerpt matching the exact given id
-func (c *RepoCache) ResolveIdentityExcerpt(id entity.Id) (*IdentityExcerpt, error) {
-	e, ok := c.identitiesExcerpts[id]
-	if !ok {
-		return nil, identity.ErrIdentityNotExist
-	}
-
-	return e, nil
+// ResolveIdentityExcerptPrefix retrieve a IdentityExcerpt matching an id prefix.
+// It fails if multiple identities match.
+func (c *RepoCache) ResolveIdentityExcerptPrefix(prefix string) (*IdentityExcerpt, error) {
+	return c.ResolveIdentityExcerptMatcher(func(excerpt *IdentityExcerpt) bool {
+		return excerpt.Id.HasPrefix(prefix)
+	})
 }
 
 // ResolveIdentityPrefix retrieve an Identity matching an id prefix.
@@ -789,7 +889,26 @@ func (c *RepoCache) ResolveIdentityImmutableMetadata(key string, value string) (
 	})
 }
 
+func (c *RepoCache) ResolveIdentityExcerptMatcher(f func(*IdentityExcerpt) bool) (*IdentityExcerpt, error) {
+	id, err := c.resolveIdentityMatcher(f)
+	if err != nil {
+		return nil, err
+	}
+	return c.ResolveIdentityExcerpt(id)
+}
+
 func (c *RepoCache) ResolveIdentityMatcher(f func(*IdentityExcerpt) bool) (*IdentityCache, error) {
+	id, err := c.resolveIdentityMatcher(f)
+	if err != nil {
+		return nil, err
+	}
+	return c.ResolveIdentity(id)
+}
+
+func (c *RepoCache) resolveIdentityMatcher(f func(*IdentityExcerpt) bool) (entity.Id, error) {
+	c.muIdentity.RLock()
+	defer c.muIdentity.RUnlock()
+
 	// preallocate but empty
 	matching := make([]entity.Id, 0, 5)
 
@@ -800,18 +919,21 @@ func (c *RepoCache) ResolveIdentityMatcher(f func(*IdentityExcerpt) bool) (*Iden
 	}
 
 	if len(matching) > 1 {
-		return nil, identity.NewErrMultipleMatch(matching)
+		return entity.UnsetId, identity.NewErrMultipleMatch(matching)
 	}
 
 	if len(matching) == 0 {
-		return nil, identity.ErrIdentityNotExist
+		return entity.UnsetId, identity.ErrIdentityNotExist
 	}
 
-	return c.ResolveIdentity(matching[0])
+	return matching[0], nil
 }
 
 // AllIdentityIds return all known identity ids
 func (c *RepoCache) AllIdentityIds() []entity.Id {
+	c.muIdentity.RLock()
+	defer c.muIdentity.RUnlock()
+
 	result := make([]entity.Id, len(c.identitiesExcerpts))
 
 	i := 0
@@ -828,6 +950,9 @@ func (c *RepoCache) SetUserIdentity(i *IdentityCache) error {
 	if err != nil {
 		return err
 	}
+
+	c.muIdentity.RLock()
+	defer c.muIdentity.RUnlock()
 
 	// Make sure that everything is fine
 	if _, ok := c.identities[i.Id()]; !ok {
@@ -847,6 +972,9 @@ func (c *RepoCache) GetUserIdentity() (*IdentityCache, error) {
 		}
 	}
 
+	c.muIdentity.Lock()
+	defer c.muIdentity.Unlock()
+
 	i, err := identity.GetUserIdentity(c.repo)
 	if err != nil {
 		return nil, err
@@ -857,6 +985,25 @@ func (c *RepoCache) GetUserIdentity() (*IdentityCache, error) {
 	c.userIdentityId = i.Id()
 
 	return cached, nil
+}
+
+func (c *RepoCache) GetUserIdentityExcerpt() (*IdentityExcerpt, error) {
+	if c.userIdentityId == "" {
+		id, err := identity.GetUserIdentityId(c.repo)
+		if err != nil {
+			return nil, err
+		}
+		c.userIdentityId = id
+	}
+
+	c.muIdentity.RLock()
+	defer c.muIdentity.RUnlock()
+
+	excerpt, ok := c.identitiesExcerpts[c.userIdentityId]
+	if !ok {
+		return nil, fmt.Errorf("cache: missing identity excerpt %v", c.userIdentityId)
+	}
+	return excerpt, nil
 }
 
 func (c *RepoCache) IsUserIdentitySet() (bool, error) {
@@ -902,12 +1049,14 @@ func (c *RepoCache) finishIdentity(i *identity.Identity, metadata map[string]str
 		return nil, err
 	}
 
+	c.muIdentity.Lock()
 	if _, has := c.identities[i.Id()]; has {
 		return nil, fmt.Errorf("identity %s already exist in the cache", i.Id())
 	}
 
 	cached := NewIdentityCache(c, i)
 	c.identities[i.Id()] = cached
+	c.muIdentity.Unlock()
 
 	// force the write of the excerpt
 	err = c.identityUpdated(i.Id())

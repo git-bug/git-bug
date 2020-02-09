@@ -52,6 +52,9 @@ type Operation interface {
 	AllMetadata() map[string]string
 	// GetAuthor return the author identity
 	GetAuthor() identity.Interface
+
+	// sign-post method for gqlgen
+	IsOperation()
 }
 
 func deriveId(data []byte) entity.Id {

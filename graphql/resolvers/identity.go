@@ -4,18 +4,18 @@ import (
 	"context"
 
 	"github.com/MichaelMure/git-bug/graphql/graph"
-	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/graphql/models"
 )
 
 var _ graph.IdentityResolver = &identityResolver{}
 
 type identityResolver struct{}
 
-func (identityResolver) ID(ctx context.Context, obj identity.Interface) (string, error) {
+func (identityResolver) ID(ctx context.Context, obj models.IdentityWrapper) (string, error) {
 	return obj.Id().String(), nil
 }
 
-func (r identityResolver) HumanID(ctx context.Context, obj identity.Interface) (string, error) {
+func (r identityResolver) HumanID(ctx context.Context, obj models.IdentityWrapper) (string, error) {
 	return obj.Id().Human(), nil
 
 }

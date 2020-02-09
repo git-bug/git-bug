@@ -28,7 +28,7 @@ func TestTitleFilter(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			filter := TitleFilter(tt.query)
 			excerpt := &BugExcerpt{Title: tt.title}
-			assert.Equal(t, tt.match, filter(nil, excerpt))
+			assert.Equal(t, tt.match, filter(excerpt, nil))
 		})
 	}
 }
