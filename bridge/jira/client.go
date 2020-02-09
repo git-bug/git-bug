@@ -386,7 +386,7 @@ func (client *Client) Login(conf core.Configuration) error {
 	password := conf[keyPassword]
 	if password == "" {
 		var err error
-		password, err = input.PromptPassword()
+		password, err = input.PromptPassword("Password", "password", input.Required)
 		if err != nil {
 			return err
 		}

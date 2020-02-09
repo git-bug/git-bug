@@ -8,29 +8,12 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/pkg/errors"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/input"
-)
-
-const (
-	target             = "jira"
-	keyServer          = "server"
-	keyProject         = "project"
-	keyCredentialsType = "credentials-type"
-	keyCredentialsFile = "credentials-file"
-	keyUsername        = "username"
-	keyPassword        = "password"
-	keyIDMap           = "bug-id-map"
-	keyIDRevMap        = "bug-id-revmap"
-	keyCreateDefaults  = "create-issue-defaults"
-	keyCreateGitBug    = "create-issue-gitbug-id"
-
-	defaultTimeout = 60 * time.Second
 )
 
 const moreConfigText = `
@@ -65,9 +48,7 @@ How would you like to store your JIRA login credentials?
 `
 
 // Configure sets up the bridge configuration
-func (g *Jira) Configure(
-	repo *cache.RepoCache, params core.BridgeParams) (
-	core.Configuration, error) {
+func (g *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams) (core.Configuration, error) {
 	conf := make(core.Configuration)
 	var err error
 	var url string
@@ -126,7 +107,7 @@ func (g *Jira) Configure(
 		return nil, err
 	}
 
-	password, err = input.PromptPassword()
+	password, err = input.PromptPassword("Password", "password", input.Required)
 	if err != nil {
 		return nil, err
 	}

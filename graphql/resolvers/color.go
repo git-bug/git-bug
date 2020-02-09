@@ -11,14 +11,14 @@ var _ graph.ColorResolver = &colorResolver{}
 
 type colorResolver struct{}
 
-func (colorResolver) R(ctx context.Context, obj *color.RGBA) (int, error) {
+func (colorResolver) R(_ context.Context, obj *color.RGBA) (int, error) {
 	return int(obj.R), nil
 }
 
-func (colorResolver) G(ctx context.Context, obj *color.RGBA) (int, error) {
+func (colorResolver) G(_ context.Context, obj *color.RGBA) (int, error) {
 	return int(obj.G), nil
 }
 
-func (colorResolver) B(ctx context.Context, obj *color.RGBA) (int, error) {
+func (colorResolver) B(_ context.Context, obj *color.RGBA) (int, error) {
 	return int(obj.B), nil
 }

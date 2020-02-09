@@ -46,11 +46,11 @@ type Interface interface {
 }
 
 func bugFromInterface(bug Interface) *Bug {
-	switch bug.(type) {
+	switch bug := bug.(type) {
 	case *Bug:
-		return bug.(*Bug)
+		return bug
 	case *WithSnapshot:
-		return bug.(*WithSnapshot).Bug
+		return bug.Bug
 	default:
 		panic("missing type case")
 	}

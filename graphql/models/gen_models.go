@@ -8,7 +8,6 @@ import (
 	"strconv"
 
 	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/git"
 )
 
@@ -34,7 +33,7 @@ type AddCommentPayload struct {
 	// A unique identifier for the client performing the mutation.
 	ClientMutationID *string `json:"clientMutationId"`
 	// The affected bug.
-	Bug *bug.Snapshot `json:"bug"`
+	Bug BugWrapper `json:"bug"`
 	// The resulting operation.
 	Operation *bug.AddCommentOperation `json:"operation"`
 }
@@ -42,8 +41,8 @@ type AddCommentPayload struct {
 // The connection type for Bug.
 type BugConnection struct {
 	// A list of edges.
-	Edges []*BugEdge      `json:"edges"`
-	Nodes []*bug.Snapshot `json:"nodes"`
+	Edges []*BugEdge   `json:"edges"`
+	Nodes []BugWrapper `json:"nodes"`
 	// Information to aid in pagination.
 	PageInfo *PageInfo `json:"pageInfo"`
 	// Identifies the total count of items in the connection.
@@ -55,7 +54,7 @@ type BugEdge struct {
 	// A cursor for use in pagination.
 	Cursor string `json:"cursor"`
 	// The item at the end of the edge.
-	Node *bug.Snapshot `json:"node"`
+	Node BugWrapper `json:"node"`
 }
 
 type ChangeLabelInput struct {
@@ -75,7 +74,7 @@ type ChangeLabelPayload struct {
 	// A unique identifier for the client performing the mutation.
 	ClientMutationID *string `json:"clientMutationId"`
 	// The affected bug.
-	Bug *bug.Snapshot `json:"bug"`
+	Bug BugWrapper `json:"bug"`
 	// The resulting operation.
 	Operation *bug.LabelChangeOperation `json:"operation"`
 	// The effect each source label had.
@@ -95,7 +94,7 @@ type CloseBugPayload struct {
 	// A unique identifier for the client performing the mutation.
 	ClientMutationID *string `json:"clientMutationId"`
 	// The affected bug.
-	Bug *bug.Snapshot `json:"bug"`
+	Bug BugWrapper `json:"bug"`
 	// The resulting operation.
 	Operation *bug.SetStatusOperation `json:"operation"`
 }
@@ -125,7 +124,7 @@ type CommitAsNeededPayload struct {
 	// A unique identifier for the client performing the mutation.
 	ClientMutationID *string `json:"clientMutationId"`
 	// The affected bug.
-	Bug *bug.Snapshot `json:"bug"`
+	Bug BugWrapper `json:"bug"`
 }
 
 type CommitInput struct {
@@ -141,19 +140,19 @@ type CommitPayload struct {
 	// A unique identifier for the client performing the mutation.
 	ClientMutationID *string `json:"clientMutationId"`
 	// The affected bug.
-	Bug *bug.Snapshot `json:"bug"`
+	Bug BugWrapper `json:"bug"`
 }
 
 type IdentityConnection struct {
-	Edges      []*IdentityEdge      `json:"edges"`
-	Nodes      []identity.Interface `json:"nodes"`
-	PageInfo   *PageInfo            `json:"pageInfo"`
-	TotalCount int                  `json:"totalCount"`
+	Edges      []*IdentityEdge   `json:"edges"`
+	Nodes      []IdentityWrapper `json:"nodes"`
+	PageInfo   *PageInfo         `json:"pageInfo"`
+	TotalCount int               `json:"totalCount"`
 }
 
 type IdentityEdge struct {
-	Cursor string             `json:"cursor"`
-	Node   identity.Interface `json:"node"`
+	Cursor string          `json:"cursor"`
+	Node   IdentityWrapper `json:"node"`
 }
 
 type LabelConnection struct {
@@ -185,7 +184,7 @@ type NewBugPayload struct {
 	// A unique identifier for the client performing the mutation.
 	ClientMutationID *string `json:"clientMutationId"`
 	// The created bug.
-	Bug *bug.Snapshot `json:"bug"`
+	Bug BugWrapper `json:"bug"`
 	// The resulting operation.
 	Operation *bug.CreateOperation `json:"operation"`
 }
@@ -203,7 +202,7 @@ type OpenBugPayload struct {
 	// A unique identifier for the client performing the mutation.
 	ClientMutationID *string `json:"clientMutationId"`
 	// The affected bug.
-	Bug *bug.Snapshot `json:"bug"`
+	Bug BugWrapper `json:"bug"`
 	// The resulting operation.
 	Operation *bug.SetStatusOperation `json:"operation"`
 }
@@ -249,7 +248,7 @@ type SetTitlePayload struct {
 	// A unique identifier for the client performing the mutation.
 	ClientMutationID *string `json:"clientMutationId"`
 	// The affected bug.
-	Bug *bug.Snapshot `json:"bug"`
+	Bug BugWrapper `json:"bug"`
 	// The resulting operation
 	Operation *bug.SetTitleOperation `json:"operation"`
 }

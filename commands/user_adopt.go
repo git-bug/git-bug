@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/spf13/cobra"
+
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util/interrupt"
-	"github.com/spf13/cobra"
 )
 
 func runUserAdopt(cmd *cobra.Command, args []string) error {

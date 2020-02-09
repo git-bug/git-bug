@@ -175,7 +175,6 @@ func (self *jiraImporter) ensurePerson(
 		user.DisplayName,
 		user.EmailAddress,
 		user.Key,
-		"",
 		map[string]string{
 			keyJiraUser: string(user.Key),
 		},

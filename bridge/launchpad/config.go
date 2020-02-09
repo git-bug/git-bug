@@ -1,26 +1,17 @@
 package launchpad
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"regexp"
-	"strings"
-	"time"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/input"
 )
 
 var ErrBadProjectURL = errors.New("bad Launchpad project URL")
-
-const (
-	target         = "launchpad-preview"
-	keyProject     = "project"
-	defaultTimeout = 60 * time.Second
-)
 
 func (l *Launchpad) Configure(repo *cache.RepoCache, params core.BridgeParams) (core.Configuration, error) {
 	if params.TokenRaw != "" {
@@ -45,7 +36,7 @@ func (l *Launchpad) Configure(repo *cache.RepoCache, params core.BridgeParams) (
 		project, err = splitURL(params.URL)
 	default:
 		// get project name from terminal prompt
-		project, err = promptProjectName()
+		project, err = input.Prompt("Launchpad project name", "project name", input.Required)
 	}
 
 	if err != nil {
@@ -84,26 +75,6 @@ func (*Launchpad) ValidateConfig(conf core.Configuration) error {
 	}
 
 	return nil
-}
-
-func promptProjectName() (string, error) {
-	for {
-		fmt.Print("Launchpad project name: ")
-
-		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
-		if err != nil {
-			return "", err
-		}
-
-		line = strings.TrimRight(line, "\n")
-
-		if line == "" {
-			fmt.Println("Project name is empty")
-			continue
-		}
-
-		return line, nil
-	}
 }
 
 func validateProject(project string) (bool, error) {

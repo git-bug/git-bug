@@ -22,6 +22,9 @@ type CreateOperation struct {
 	Files   []git.Hash `json:"files"`
 }
 
+// Sign-post method for gqlgen
+func (op *CreateOperation) IsOperation() {}
+
 func (op *CreateOperation) base() *OpBase {
 	return &op.OpBase
 }

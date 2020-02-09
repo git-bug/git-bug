@@ -6,7 +6,8 @@ package graphql
 import (
 	"net/http"
 
-	"github.com/99designs/gqlgen/handler"
+	"github.com/99designs/gqlgen/graphql/handler"
+
 	"github.com/MichaelMure/git-bug/graphql/graph"
 	"github.com/MichaelMure/git-bug/graphql/resolvers"
 	"github.com/MichaelMure/git-bug/repository"
@@ -14,7 +15,7 @@ import (
 
 // Handler is the root GraphQL http handler
 type Handler struct {
-	http.HandlerFunc
+	http.Handler
 	*resolvers.RootResolver
 }
 
@@ -32,7 +33,7 @@ func NewHandler(repo repository.ClockedRepo) (Handler, error) {
 		Resolvers: h.RootResolver,
 	}
 
-	h.HandlerFunc = handler.GraphQL(graph.NewExecutableSchema(config))
+	h.Handler = handler.NewDefaultServer(graph.NewExecutableSchema(config))
 
 	return h, nil
 }

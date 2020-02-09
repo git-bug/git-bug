@@ -149,7 +149,11 @@ func TestPushPull(t *testing.T) {
 	require.NoError(t, err)
 
 	// set author identity
+	login := "test-identity"
 	author, err := backend.NewIdentity("test identity", "test@test.org")
+	require.NoError(t, err)
+	author.SetMetadata(metaKeyGitlabLogin, login)
+	err = author.Commit()
 	require.NoError(t, err)
 
 	err = backend.SetUserIdentity(author)
@@ -158,11 +162,12 @@ func TestPushPull(t *testing.T) {
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
 
-	tests := testCases(t, backend)
-
-	token := auth.NewToken(author.Id(), envToken, target)
+	token := auth.NewToken(envToken, target)
+	token.SetMetadata(auth.MetaKeyLogin, login)
 	err = auth.Store(repo, token)
 	require.NoError(t, err)
+
+	tests := testCases(t, backend)
 
 	// generate project name
 	projectName := generateRepoName()
@@ -260,7 +265,7 @@ func TestPushPull(t *testing.T) {
 			// verify bug have same number of original operations
 			require.Len(t, importedBug.Snapshot().Operations, tt.numOpImp)
 
-			// verify bugs are taged with origin=gitlab
+			// verify bugs are tagged with origin=gitlab
 			issueOrigin, ok := importedBug.Snapshot().GetCreateMetadata(core.MetaKeyOrigin)
 			require.True(t, ok)
 			require.Equal(t, issueOrigin, target)

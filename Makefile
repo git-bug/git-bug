@@ -27,6 +27,10 @@ install:
 	go generate
 	go install -ldflags "$(LDFLAGS)" .
 
+releases:
+	go generate
+	gox -ldflags "$(LDFLAGS)" -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}"
+
 test:
 	go test -v -bench=. ./...
 
@@ -51,4 +55,4 @@ clean-local-identities:
 	git for-each-ref refs/remotes/origin/identities/ | cut -f 2 | $(XARGS) -n 1 git update-ref -d
 	rm -f .git/git-bug/identity-cache
 
-.PHONY: build install test pack-webui debug-webui clean-local-bugs clean-remote-bugs
+.PHONY: build install releases test pack-webui debug-webui clean-local-bugs clean-remote-bugs

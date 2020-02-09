@@ -33,17 +33,7 @@ type gitlabImporter struct {
 func (gi *gitlabImporter) Init(repo *cache.RepoCache, conf core.Configuration) error {
 	gi.conf = conf
 
-	opts := []auth.Option{
-		auth.WithTarget(target),
-		auth.WithKind(auth.KindToken),
-	}
-
-	user, err := repo.GetUserIdentity()
-	if err == nil {
-		opts = append(opts, auth.WithUserId(user.Id()))
-	}
-
-	creds, err := auth.List(repo, opts...)
+	creds, err := auth.List(repo, auth.WithTarget(target), auth.WithKind(auth.KindToken))
 	if err != nil {
 		return err
 	}
@@ -399,7 +389,6 @@ func (gi *gitlabImporter) ensurePerson(repo *cache.RepoCache, id int) (*cache.Id
 	i, err = repo.NewIdentityRaw(
 		user.Name,
 		user.PublicEmail,
-		user.Username,
 		user.AvatarURL,
 		map[string]string{
 			// because Gitlab

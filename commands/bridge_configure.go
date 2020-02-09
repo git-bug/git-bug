@@ -206,7 +206,7 @@ git bug bridge configure \
     --target=github \
     --url=https://github.com/michaelmure/git-bug \
     --token=$(TOKEN)`,
-	PreRunE: loadRepoEnsureUser,
+	PreRunE: loadRepo,
 	RunE:    runBridgeConfigure,
 }
 

@@ -24,14 +24,13 @@ type Version struct {
 	unixTime int64
 
 	name      string
-	email     string
-	login     string
+	email     string // as defined in git, not for bridges
 	avatarURL string
 
 	// The set of keys valid at that time, from this version onward, until they get removed
 	// in a new version. This allow to have multiple key for the same identity (e.g. one per
 	// device) as well as revoke key.
-	keys []Key
+	keys []*Key
 
 	// This optional array is here to ensure a better randomness of the identity id to avoid collisions.
 	// It has no functional purpose and should be ignored.
@@ -53,11 +52,26 @@ type VersionJSON struct {
 	UnixTime  int64             `json:"unix_time"`
 	Name      string            `json:"name,omitempty"`
 	Email     string            `json:"email,omitempty"`
-	Login     string            `json:"login,omitempty"`
 	AvatarUrl string            `json:"avatar_url,omitempty"`
-	Keys      []Key             `json:"pub_keys,omitempty"`
+	Keys      []*Key            `json:"pub_keys,omitempty"`
 	Nonce     []byte            `json:"nonce,omitempty"`
 	Metadata  map[string]string `json:"metadata,omitempty"`
+}
+
+// Make a deep copy
+func (v *Version) Clone() *Version {
+	clone := &Version{
+		name:      v.name,
+		email:     v.email,
+		avatarURL: v.avatarURL,
+		keys:      make([]*Key, len(v.keys)),
+	}
+
+	for i, key := range v.keys {
+		clone.keys[i] = key.Clone()
+	}
+
+	return clone
 }
 
 func (v *Version) MarshalJSON() ([]byte, error) {
@@ -67,7 +81,6 @@ func (v *Version) MarshalJSON() ([]byte, error) {
 		UnixTime:      v.unixTime,
 		Name:          v.name,
 		Email:         v.email,
-		Login:         v.login,
 		AvatarUrl:     v.avatarURL,
 		Keys:          v.keys,
 		Nonce:         v.nonce,
@@ -90,7 +103,6 @@ func (v *Version) UnmarshalJSON(data []byte) error {
 	v.unixTime = aux.UnixTime
 	v.name = aux.Name
 	v.email = aux.Email
-	v.login = aux.Login
 	v.avatarURL = aux.AvatarUrl
 	v.keys = aux.Keys
 	v.nonce = aux.Nonce
@@ -108,8 +120,8 @@ func (v *Version) Validate() error {
 		return fmt.Errorf("lamport time not set")
 	}
 
-	if text.Empty(v.name) && text.Empty(v.login) {
-		return fmt.Errorf("either name or login should be set")
+	if text.Empty(v.name) {
+		return fmt.Errorf("name not set")
 	}
 
 	if strings.Contains(v.name, "\n") {
@@ -118,14 +130,6 @@ func (v *Version) Validate() error {
 
 	if !text.Safe(v.name) {
 		return fmt.Errorf("name is not fully printable")
-	}
-
-	if strings.Contains(v.login, "\n") {
-		return fmt.Errorf("login should be a single line")
-	}
-
-	if !text.Safe(v.login) {
-		return fmt.Errorf("login is not fully printable")
 	}
 
 	if strings.Contains(v.email, "\n") {
@@ -202,7 +206,7 @@ func (v *Version) GetMetadata(key string) (string, bool) {
 	return val, ok
 }
 
-// AllMetadata return all metadata for this Identity
+// AllMetadata return all metadata for this Version
 func (v *Version) AllMetadata() map[string]string {
 	return v.metadata
 }

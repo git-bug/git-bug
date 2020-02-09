@@ -50,8 +50,6 @@ func runUser(cmd *cobra.Command, args []string) error {
 				Time().Format("Mon Jan 2 15:04:05 2006 +0200"))
 		case "lastModificationLamport":
 			fmt.Printf("%d\n", id.LastModificationLamport())
-		case "login":
-			fmt.Printf("%s\n", id.Login())
 		case "metadata":
 			for key, value := range id.ImmutableMetadata() {
 				fmt.Printf("%s\n%s\n", key, value)
@@ -68,7 +66,6 @@ func runUser(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("Id: %s\n", id.Id())
 	fmt.Printf("Name: %s\n", id.Name())
-	fmt.Printf("Login: %s\n", id.Login())
 	fmt.Printf("Email: %s\n", id.Email())
 	fmt.Printf("Last modification: %s (lamport %d)\n",
 		id.LastModification().Time().Format("Mon Jan 2 15:04:05 2006 +0200"),

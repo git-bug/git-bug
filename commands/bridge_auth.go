@@ -2,6 +2,8 @@ package commands
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -26,8 +28,6 @@ func runBridgeAuth(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	defaultUser, _ := backend.GetUserIdentity()
-
 	for _, cred := range creds {
 		targetFmt := text.LeftPadMaxLine(cred.Target(), 10, 0)
 
@@ -37,22 +37,19 @@ func runBridgeAuth(cmd *cobra.Command, args []string) error {
 			value = cred.Value
 		}
 
-		user, err := backend.ResolveIdentity(cred.UserId())
-		if err != nil {
-			return err
+		meta := make([]string, 0, len(cred.Metadata()))
+		for k, v := range cred.Metadata() {
+			meta = append(meta, k+":"+v)
 		}
-		userFmt := user.DisplayName()
-
-		if cred.UserId() == defaultUser.Id() {
-			userFmt = colors.Red(userFmt)
-		}
+		sort.Strings(meta)
+		metaFmt := strings.Join(meta, ",")
 
 		fmt.Printf("%s %s %s %s %s\n",
 			colors.Cyan(cred.ID().Human()),
 			colors.Yellow(targetFmt),
 			colors.Magenta(cred.Kind()),
-			userFmt,
 			value,
+			metaFmt,
 		)
 	}
 

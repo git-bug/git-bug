@@ -14,7 +14,7 @@ type rootQueryResolver struct {
 	cache *cache.MultiRepoCache
 }
 
-func (r rootQueryResolver) DefaultRepository(ctx context.Context) (*models.Repository, error) {
+func (r rootQueryResolver) DefaultRepository(_ context.Context) (*models.Repository, error) {
 	repo, err := r.cache.DefaultRepo()
 
 	if err != nil {
@@ -27,7 +27,7 @@ func (r rootQueryResolver) DefaultRepository(ctx context.Context) (*models.Repos
 	}, nil
 }
 
-func (r rootQueryResolver) Repository(ctx context.Context, ref string) (*models.Repository, error) {
+func (r rootQueryResolver) Repository(_ context.Context, ref string) (*models.Repository, error) {
 	repo, err := r.cache.ResolveRepo(ref)
 
 	if err != nil {

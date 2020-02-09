@@ -48,14 +48,14 @@ func TestPushPull(t *testing.T) {
 
 	// Update both
 
-	identity1.AddVersion(&Version{
+	identity1.addVersionForTest(&Version{
 		name:  "name1b",
 		email: "email1b",
 	})
 	err = identity1.Commit(repoA)
 	require.NoError(t, err)
 
-	identity2.AddVersion(&Version{
+	identity2.addVersionForTest(&Version{
 		name:  "name2b",
 		email: "email2b",
 	})
@@ -92,7 +92,7 @@ func TestPushPull(t *testing.T) {
 
 	// Concurrent update
 
-	identity1.AddVersion(&Version{
+	identity1.addVersionForTest(&Version{
 		name:  "name1c",
 		email: "email1c",
 	})
@@ -102,7 +102,7 @@ func TestPushPull(t *testing.T) {
 	identity1B, err := ReadLocal(repoB, identity1.Id())
 	require.NoError(t, err)
 
-	identity1B.AddVersion(&Version{
+	identity1B.addVersionForTest(&Version{
 		name:  "name1concurrent",
 		email: "email1concurrent",
 	})

@@ -8,23 +8,22 @@ import (
 	"fmt"
 
 	"github.com/MichaelMure/git-bug/graphql/models"
-	"github.com/MichaelMure/git-bug/identity"
 )
 
-// IdentityInterfaceEdgeMaker define a function that take a identity.Interface and an offset and
+// ModelsIdentityWrapperEdgeMaker define a function that take a models.IdentityWrapper and an offset and
 // create an Edge.
-type IdentityEdgeMaker func(value identity.Interface, offset int) Edge
+type IdentityEdgeMaker func(value models.IdentityWrapper, offset int) Edge
 
 // IdentityConMaker define a function that create a models.IdentityConnection
 type IdentityConMaker func(
 	edges []*models.IdentityEdge,
-	nodes []identity.Interface,
+	nodes []models.IdentityWrapper,
 	info *models.PageInfo,
 	totalCount int) (*models.IdentityConnection, error)
 
 // IdentityCon will paginate a source according to the input of a relay connection
-func IdentityCon(source []identity.Interface, edgeMaker IdentityEdgeMaker, conMaker IdentityConMaker, input models.ConnectionInput) (*models.IdentityConnection, error) {
-	var nodes []identity.Interface
+func IdentityCon(source []models.IdentityWrapper, edgeMaker IdentityEdgeMaker, conMaker IdentityConMaker, input models.ConnectionInput) (*models.IdentityConnection, error) {
+	var nodes []models.IdentityWrapper
 	var edges []*models.IdentityEdge
 	var cursors []string
 	var pageInfo = &models.PageInfo{}

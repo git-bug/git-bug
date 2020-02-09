@@ -82,7 +82,7 @@ func TestProjectPath(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			path, err := getProjectPath(tt.args.url)
+			path, err := getProjectPath(defaultBaseURL, tt.args.url)
 			assert.Equal(t, tt.want.path, path)
 			assert.Equal(t, tt.want.err, err)
 		})

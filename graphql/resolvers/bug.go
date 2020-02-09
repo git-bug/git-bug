@@ -2,32 +2,30 @@ package resolvers
 
 import (
 	"context"
-	"time"
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/graphql/connections"
 	"github.com/MichaelMure/git-bug/graphql/graph"
 	"github.com/MichaelMure/git-bug/graphql/models"
-	"github.com/MichaelMure/git-bug/identity"
 )
 
 var _ graph.BugResolver = &bugResolver{}
 
 type bugResolver struct{}
 
-func (bugResolver) ID(ctx context.Context, obj *bug.Snapshot) (string, error) {
+func (bugResolver) ID(_ context.Context, obj models.BugWrapper) (string, error) {
 	return obj.Id().String(), nil
 }
 
-func (bugResolver) HumanID(ctx context.Context, obj *bug.Snapshot) (string, error) {
+func (bugResolver) HumanID(_ context.Context, obj models.BugWrapper) (string, error) {
 	return obj.Id().Human(), nil
 }
 
-func (bugResolver) Status(ctx context.Context, obj *bug.Snapshot) (models.Status, error) {
-	return convertStatus(obj.Status)
+func (bugResolver) Status(_ context.Context, obj models.BugWrapper) (models.Status, error) {
+	return convertStatus(obj.Status())
 }
 
-func (bugResolver) Comments(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (*models.CommentConnection, error) {
+func (bugResolver) Comments(_ context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*models.CommentConnection, error) {
 	input := models.ConnectionInput{
 		Before: before,
 		After:  after,
@@ -55,10 +53,15 @@ func (bugResolver) Comments(ctx context.Context, obj *bug.Snapshot, after *strin
 		}, nil
 	}
 
-	return connections.CommentCon(obj.Comments, edger, conMaker, input)
+	comments, err := obj.Comments()
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.CommentCon(comments, edger, conMaker, input)
 }
 
-func (bugResolver) Operations(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (*models.OperationConnection, error) {
+func (bugResolver) Operations(_ context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*models.OperationConnection, error) {
 	input := models.ConnectionInput{
 		Before: before,
 		After:  after,
@@ -82,10 +85,15 @@ func (bugResolver) Operations(ctx context.Context, obj *bug.Snapshot, after *str
 		}, nil
 	}
 
-	return connections.OperationCon(obj.Operations, edger, conMaker, input)
+	ops, err := obj.Operations()
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.OperationCon(ops, edger, conMaker, input)
 }
 
-func (bugResolver) Timeline(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (*models.TimelineItemConnection, error) {
+func (bugResolver) Timeline(_ context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*models.TimelineItemConnection, error) {
 	input := models.ConnectionInput{
 		Before: before,
 		After:  after,
@@ -109,15 +117,15 @@ func (bugResolver) Timeline(ctx context.Context, obj *bug.Snapshot, after *strin
 		}, nil
 	}
 
-	return connections.TimelineItemCon(obj.Timeline, edger, conMaker, input)
+	timeline, err := obj.Timeline()
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.TimelineItemCon(timeline, edger, conMaker, input)
 }
 
-func (bugResolver) LastEdit(ctx context.Context, obj *bug.Snapshot) (*time.Time, error) {
-	t := obj.LastEditTime()
-	return &t, nil
-}
-
-func (bugResolver) Actors(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (*models.IdentityConnection, error) {
+func (bugResolver) Actors(_ context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*models.IdentityConnection, error) {
 	input := models.ConnectionInput{
 		Before: before,
 		After:  after,
@@ -125,14 +133,14 @@ func (bugResolver) Actors(ctx context.Context, obj *bug.Snapshot, after *string,
 		Last:   last,
 	}
 
-	edger := func(actor identity.Interface, offset int) connections.Edge {
+	edger := func(actor models.IdentityWrapper, offset int) connections.Edge {
 		return models.IdentityEdge{
 			Node:   actor,
 			Cursor: connections.OffsetToCursor(offset),
 		}
 	}
 
-	conMaker := func(edges []*models.IdentityEdge, nodes []identity.Interface, info *models.PageInfo, totalCount int) (*models.IdentityConnection, error) {
+	conMaker := func(edges []*models.IdentityEdge, nodes []models.IdentityWrapper, info *models.PageInfo, totalCount int) (*models.IdentityConnection, error) {
 		return &models.IdentityConnection{
 			Edges:      edges,
 			Nodes:      nodes,
@@ -141,10 +149,15 @@ func (bugResolver) Actors(ctx context.Context, obj *bug.Snapshot, after *string,
 		}, nil
 	}
 
-	return connections.IdentityCon(obj.Actors, edger, conMaker, input)
+	actors, err := obj.Actors()
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.IdentityCon(actors, edger, conMaker, input)
 }
 
-func (bugResolver) Participants(ctx context.Context, obj *bug.Snapshot, after *string, before *string, first *int, last *int) (*models.IdentityConnection, error) {
+func (bugResolver) Participants(_ context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*models.IdentityConnection, error) {
 	input := models.ConnectionInput{
 		Before: before,
 		After:  after,
@@ -152,14 +165,14 @@ func (bugResolver) Participants(ctx context.Context, obj *bug.Snapshot, after *s
 		Last:   last,
 	}
 
-	edger := func(participant identity.Interface, offset int) connections.Edge {
+	edger := func(participant models.IdentityWrapper, offset int) connections.Edge {
 		return models.IdentityEdge{
 			Node:   participant,
 			Cursor: connections.OffsetToCursor(offset),
 		}
 	}
 
-	conMaker := func(edges []*models.IdentityEdge, nodes []identity.Interface, info *models.PageInfo, totalCount int) (*models.IdentityConnection, error) {
+	conMaker := func(edges []*models.IdentityEdge, nodes []models.IdentityWrapper, info *models.PageInfo, totalCount int) (*models.IdentityConnection, error) {
 		return &models.IdentityConnection{
 			Edges:      edges,
 			Nodes:      nodes,
@@ -168,5 +181,10 @@ func (bugResolver) Participants(ctx context.Context, obj *bug.Snapshot, after *s
 		}, nil
 	}
 
-	return connections.IdentityCon(obj.Participants, edger, conMaker, input)
+	participants, err := obj.Participants()
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.IdentityCon(participants, edger, conMaker, input)
 }

@@ -14,9 +14,11 @@ import (
 const (
 	configKeyPrefix     = "git-bug.auth"
 	configKeyKind       = "kind"
-	configKeyUserId     = "userid"
 	configKeyTarget     = "target"
 	configKeyCreateTime = "createtime"
+	configKeyPrefixMeta = "meta."
+
+	MetaKeyLogin = "login"
 )
 
 type CredentialKind string
@@ -34,15 +36,18 @@ func NewErrMultipleMatchCredential(matching []entity.Id) *entity.ErrMultipleMatc
 
 type Credential interface {
 	ID() entity.Id
-	UserId() entity.Id
 	Target() string
 	Kind() CredentialKind
 	CreateTime() time.Time
 	Validate() error
 
+	Metadata() map[string]string
+	GetMetadata(key string) (string, bool)
+	SetMetadata(key string, value string)
+
 	// Return all the specific properties of the credential that need to be saved into the configuration.
-	// This does not include Target, User, Kind and CreateTime.
-	ToConfig() map[string]string
+	// This does not include Target, Kind, CreateTime and Metadata.
+	toConfig() map[string]string
 }
 
 // Load loads a credential from the repo config
@@ -90,6 +95,7 @@ func LoadWithPrefix(repo repository.RepoConfig, prefix string) (Credential, erro
 	return matching[0], nil
 }
 
+// loadFromConfig is a helper to construct a Credential from the set of git configs
 func loadFromConfig(rawConfigs map[string]string, id entity.Id) (Credential, error) {
 	keyPrefix := fmt.Sprintf("%s.%s.", configKeyPrefix, id)
 
@@ -113,6 +119,20 @@ func loadFromConfig(rawConfigs map[string]string, id entity.Id) (Credential, err
 	return cred, nil
 }
 
+func metaFromConfig(configs map[string]string) map[string]string {
+	result := make(map[string]string)
+	for key, val := range configs {
+		if strings.HasPrefix(key, configKeyPrefixMeta) {
+			key = strings.TrimPrefix(key, configKeyPrefixMeta)
+			result[key] = val
+		}
+	}
+	if len(result) == 0 {
+		return nil
+	}
+	return result
+}
+
 // List load all existing credentials
 func List(repo repository.RepoConfig, opts ...Option) ([]Credential, error) {
 	rawConfigs, err := repo.GlobalConfig().ReadAll(configKeyPrefix + ".")
@@ -120,7 +140,7 @@ func List(repo repository.RepoConfig, opts ...Option) ([]Credential, error) {
 		return nil, err
 	}
 
-	re, err := regexp.Compile(configKeyPrefix + `.([^.]+).([^.]+)`)
+	re, err := regexp.Compile(`^` + configKeyPrefix + `\.([^.]+)\.([^.]+(?:\.[^.]+)*)$`)
 	if err != nil {
 		panic(err)
 	}
@@ -168,18 +188,12 @@ func PrefixExist(repo repository.RepoConfig, prefix string) bool {
 
 // Store stores a credential in the global git config
 func Store(repo repository.RepoConfig, cred Credential) error {
-	confs := cred.ToConfig()
+	confs := cred.toConfig()
 
 	prefix := fmt.Sprintf("%s.%s.", configKeyPrefix, cred.ID())
 
 	// Kind
 	err := repo.GlobalConfig().StoreString(prefix+configKeyKind, string(cred.Kind()))
-	if err != nil {
-		return err
-	}
-
-	// UserId
-	err = repo.GlobalConfig().StoreString(prefix+configKeyUserId, cred.UserId().String())
 	if err != nil {
 		return err
 	}
@@ -194,6 +208,14 @@ func Store(repo repository.RepoConfig, cred Credential) error {
 	err = repo.GlobalConfig().StoreTimestamp(prefix+configKeyCreateTime, cred.CreateTime())
 	if err != nil {
 		return err
+	}
+
+	// Metadata
+	for key, val := range cred.Metadata() {
+		err := repo.GlobalConfig().StoreString(prefix+configKeyPrefixMeta+key, val)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Custom

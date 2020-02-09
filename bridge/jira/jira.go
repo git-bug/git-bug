@@ -3,9 +3,31 @@ package jira
 
 import (
 	"sort"
+	"time"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
 )
+
+const (
+	target = "jira"
+
+	metaKeyJiraLogin = "jira-login"
+
+	keyServer          = "server"
+	keyProject         = "project"
+	keyCredentialsType = "credentials-type"
+	keyCredentialsFile = "credentials-file"
+	keyUsername        = "username"
+	keyPassword        = "password"
+	keyIDMap           = "bug-id-map"
+	keyIDRevMap        = "bug-id-revmap"
+	keyCreateDefaults  = "create-issue-defaults"
+	keyCreateGitBug    = "create-issue-gitbug-id"
+
+	defaultTimeout = 60 * time.Second
+)
+
+var _ core.BridgeImpl = &Jira{}
 
 // Jira Main object for the bridge
 type Jira struct{}
@@ -13,6 +35,10 @@ type Jira struct{}
 // Target returns "jira"
 func (*Jira) Target() string {
 	return target
+}
+
+func (*Jira) LoginMetaKey() string {
+	return metaKeyJiraLogin
 }
 
 // NewImporter returns the jira importer
@@ -39,8 +65,7 @@ func stringInSlice(needle string, haystack []string) bool {
 // 1. elements found only in the first input list
 // 2. elements found only in the second input list
 // 3. elements found in both input lists
-func setSymmetricDifference(
-	setA, setB []string) ([]string, []string, []string) {
+func setSymmetricDifference(setA, setB []string) ([]string, []string, []string) {
 	sort.Strings(setA)
 	sort.Strings(setB)
 

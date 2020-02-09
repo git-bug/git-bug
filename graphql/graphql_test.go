@@ -1,10 +1,9 @@
 package graphql
 
 import (
-	"net/http/httptest"
 	"testing"
 
-	"github.com/vektah/gqlgen/client"
+	"github.com/99designs/gqlgen/client"
 
 	"github.com/MichaelMure/git-bug/graphql/models"
 	"github.com/MichaelMure/git-bug/misc/random_bugs"
@@ -22,8 +21,7 @@ func TestQueries(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	srv := httptest.NewServer(handler)
-	c := client.New(srv.URL)
+	c := client.New(handler)
 
 	query := `
      query {

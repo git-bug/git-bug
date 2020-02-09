@@ -2,7 +2,6 @@ package cache
 
 import (
 	"encoding/gob"
-	"fmt"
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/entity"
@@ -43,32 +42,26 @@ type BugExcerpt struct {
 
 // identity.Bare data are directly embedded in the bug excerpt
 type LegacyAuthorExcerpt struct {
-	Name  string
-	Login string
+	Name string
 }
 
 func (l LegacyAuthorExcerpt) DisplayName() string {
-	switch {
-	case l.Name == "" && l.Login != "":
-		return l.Login
-	case l.Name != "" && l.Login == "":
-		return l.Name
-	case l.Name != "" && l.Login != "":
-		return fmt.Sprintf("%s (%s)", l.Name, l.Login)
-	}
-
-	panic("invalid person data")
+	return l.Name
 }
 
 func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
-	participantsIds := make([]entity.Id, len(snap.Participants))
-	for i, participant := range snap.Participants {
-		participantsIds[i] = participant.Id()
+	participantsIds := make([]entity.Id, 0, len(snap.Participants))
+	for _, participant := range snap.Participants {
+		if _, ok := participant.(*identity.Identity); ok {
+			participantsIds = append(participantsIds, participant.Id())
+		}
 	}
 
-	actorsIds := make([]entity.Id, len(snap.Actors))
-	for i, actor := range snap.Actors {
-		actorsIds[i] = actor.Id()
+	actorsIds := make([]entity.Id, 0, len(snap.Actors))
+	for _, actor := range snap.Actors {
+		if _, ok := actor.(*identity.Identity); ok {
+			actorsIds = append(actorsIds, actor.Id())
+		}
 	}
 
 	e := &BugExcerpt{
@@ -91,8 +84,7 @@ func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
 		e.AuthorId = snap.Author.Id()
 	case *identity.Bare:
 		e.LegacyAuthor = LegacyAuthorExcerpt{
-			Login: snap.Author.Login(),
-			Name:  snap.Author.Name(),
+			Name: snap.Author.Name(),
 		}
 	default:
 		panic("unhandled identity type")
