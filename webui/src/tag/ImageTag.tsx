@@ -7,7 +7,10 @@ const useStyles = makeStyles({
   },
 });
 
-const ImageTag = ({ alt, ...props }) => {
+const ImageTag = ({
+  alt,
+  ...props
+}: React.ImgHTMLAttributes<HTMLImageElement>) => {
   const classes = useStyles();
   return (
     <a href={props.src} target="_blank" rel="noopener noreferrer nofollow">
