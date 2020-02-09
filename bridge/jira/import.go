@@ -35,31 +35,27 @@ type jiraImporter struct {
 }
 
 // Init .
-func (gi *jiraImporter) Init(repo *cache.RepoCache,
-	conf core.Configuration) error {
-	gi.conf = conf
+func (ji *jiraImporter) Init(repo *cache.RepoCache, conf core.Configuration) error {
+	ji.conf = conf
 	return nil
 }
 
 // ImportAll iterate over all the configured repository issues and ensure the
 // creation of the missing issues / timeline items / edits / label events ...
-func (self *jiraImporter) ImportAll(
-	ctx context.Context, repo *cache.RepoCache, since time.Time) (
-	<-chan core.ImportResult, error) {
-
+func (ji *jiraImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, since time.Time) (<-chan core.ImportResult, error) {
 	sinceStr := since.Format("2006-01-02 15:04")
-	serverURL := self.conf[keyServer]
-	project := self.conf[keyProject]
+	serverURL := ji.conf[keyServer]
+	project := ji.conf[keyProject]
 	// TODO(josh)[da52062]: Validate token and if it is expired then prompt for
 	// credentials and generate a new one
 	out := make(chan core.ImportResult)
-	self.out = out
+	ji.out = out
 
 	go func() {
-		defer close(self.out)
+		defer close(ji.out)
 
 		client := NewClient(serverURL, ctx)
-		err := client.Login(self.conf)
+		err := client.Login(ji.conf)
 		if err != nil {
 			out <- core.NewImportError(err, "")
 			return
@@ -79,7 +75,7 @@ func (self *jiraImporter) ImportAll(
 		for searchIter =
 			client.IterSearch(jql, defaultPageSize); searchIter.HasNext(); {
 			issue := searchIter.Next()
-			bug, err := self.ensureIssue(repo, *issue)
+			b, err := ji.ensureIssue(repo, *issue)
 			if err != nil {
 				err := fmt.Errorf("issue creation: %v", err)
 				out <- core.NewImportError(err, "")
@@ -90,7 +86,7 @@ func (self *jiraImporter) ImportAll(
 			for commentIter =
 				client.IterComments(issue.ID, defaultPageSize); commentIter.HasNext(); {
 				comment := commentIter.Next()
-				err := self.ensureComment(repo, bug, *comment)
+				err := ji.ensureComment(repo, b, *comment)
 				if err != nil {
 					out <- core.NewImportError(err, "")
 				}
@@ -99,7 +95,7 @@ func (self *jiraImporter) ImportAll(
 				out <- core.NewImportError(commentIter.Err, "")
 			}
 
-			snapshot := bug.Snapshot()
+			snapshot := b.Snapshot()
 			opIdx := 0
 
 			var changelogIter *ChangeLogIterator
@@ -127,10 +123,9 @@ func (self *jiraImporter) ImportAll(
 					}
 				}
 				if opIdx < len(snapshot.Operations) {
-					err = self.ensureChange(
-						repo, bug, *changelogEntry, snapshot.Operations[opIdx])
+					err = ji.ensureChange(repo, b, *changelogEntry, snapshot.Operations[opIdx])
 				} else {
-					err = self.ensureChange(repo, bug, *changelogEntry, nil)
+					err = ji.ensureChange(repo, b, *changelogEntry, nil)
 				}
 				if err != nil {
 					out <- core.NewImportError(err, "")
@@ -141,9 +136,9 @@ func (self *jiraImporter) ImportAll(
 				out <- core.NewImportError(changelogIter.Err, "")
 			}
 
-			if !bug.NeedCommit() {
-				out <- core.NewImportNothing(bug.Id(), "no imported operation")
-			} else if err := bug.Commit(); err != nil {
+			if !b.NeedCommit() {
+				out <- core.NewImportNothing(b.Id(), "no imported operation")
+			} else if err := b.Commit(); err != nil {
 				err = fmt.Errorf("bug commit: %v", err)
 				out <- core.NewImportError(err, "")
 				return
@@ -158,9 +153,7 @@ func (self *jiraImporter) ImportAll(
 }
 
 // Create a bug.Person from a JIRA user
-func (self *jiraImporter) ensurePerson(
-	repo *cache.RepoCache, user User) (*cache.IdentityCache, error) {
-
+func (ji *jiraImporter) ensurePerson(repo *cache.RepoCache, user User) (*cache.IdentityCache, error) {
 	// Look first in the cache
 	i, err := repo.ResolveIdentityImmutableMetadata(
 		keyJiraUser, string(user.Key))
@@ -184,14 +177,13 @@ func (self *jiraImporter) ensurePerson(
 		return nil, err
 	}
 
-	self.out <- core.NewImportIdentity(i.Id())
+	ji.out <- core.NewImportIdentity(i.Id())
 	return i, nil
 }
 
 // Create a bug.Bug based from a JIRA issue
-func (self *jiraImporter) ensureIssue(
-	repo *cache.RepoCache, issue Issue) (*cache.BugCache, error) {
-	author, err := self.ensurePerson(repo, issue.Fields.Creator)
+func (ji *jiraImporter) ensureIssue(repo *cache.RepoCache, issue Issue) (*cache.BugCache, error) {
+	author, err := ji.ensurePerson(repo, issue.Fields.Creator)
 	if err != nil {
 		return nil, err
 	}
@@ -220,13 +212,13 @@ func (self *jiraImporter) ensureIssue(
 				core.MetaKeyOrigin: target,
 				keyJiraID:          issue.ID,
 				keyJiraKey:         issue.Key,
-				keyJiraProject:     self.conf[keyProject],
+				keyJiraProject:     ji.conf[keyProject],
 			})
 		if err != nil {
 			return nil, err
 		}
 
-		self.out <- core.NewImportBug(b.Id())
+		ji.out <- core.NewImportBug(b.Id())
 	}
 
 	return b, nil
@@ -238,10 +230,9 @@ func getTimeDerivedID(jiraID string, timestamp MyTime) string {
 }
 
 // Create a bug.Comment from a JIRA comment
-func (self *jiraImporter) ensureComment(repo *cache.RepoCache,
-	b *cache.BugCache, item Comment) error {
+func (ji *jiraImporter) ensureComment(repo *cache.RepoCache, b *cache.BugCache, item Comment) error {
 	// ensure person
-	author, err := self.ensurePerson(repo, item.Author)
+	author, err := ji.ensurePerson(repo, item.Author)
 	if err != nil {
 		return err
 	}
@@ -279,7 +270,7 @@ func (self *jiraImporter) ensureComment(repo *cache.RepoCache,
 			return err
 		}
 
-		self.out <- core.NewImportComment(op.Id())
+		ji.out <- core.NewImportComment(op.Id())
 		targetOpID = op.Id()
 	}
 
@@ -293,8 +284,7 @@ func (self *jiraImporter) ensureComment(repo *cache.RepoCache,
 	// timestamp. Note that this must be consistent with the exporter during
 	// export of an EditCommentOperation
 	derivedID := getTimeDerivedID(item.ID, item.Updated)
-	_, err = b.ResolveOperationWithMetadata(
-		keyJiraID, derivedID)
+	_, err = b.ResolveOperationWithMetadata(keyJiraID, derivedID)
 	if err == nil {
 		// Already imported this edition
 		return nil
@@ -305,7 +295,7 @@ func (self *jiraImporter) ensureComment(repo *cache.RepoCache,
 	}
 
 	// ensure editor identity
-	editor, err := self.ensurePerson(repo, item.UpdateAuthor)
+	editor, err := ji.ensurePerson(repo, item.UpdateAuthor)
 	if err != nil {
 		return err
 	}
@@ -329,7 +319,7 @@ func (self *jiraImporter) ensureComment(repo *cache.RepoCache,
 		return err
 	}
 
-	self.out <- core.NewImportCommentEdition(op.Id())
+	ji.out <- core.NewImportCommentEdition(op.Id())
 
 	return nil
 }
@@ -363,9 +353,7 @@ func labelSetsMatch(jiraSet []string, gitbugSet []bug.Label) bool {
 
 // Create a bug.Operation (or a series of operations) from a JIRA changelog
 // entry
-func (self *jiraImporter) ensureChange(
-	repo *cache.RepoCache, b *cache.BugCache, entry ChangeLogEntry,
-	potentialOp bug.Operation) error {
+func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, entry ChangeLogEntry, potentialOp bug.Operation) error {
 
 	// If we have an operation which is already mapped to the entire changelog
 	// entry then that means this changelog entry was induced by an export
@@ -383,7 +371,7 @@ func (self *jiraImporter) ensureChange(
 	// I don't thing git-bug has a single operation to modify an arbitrary
 	// number of fields in one go, so we break up the single JIRA changelog
 	// entry into individual field updates.
-	author, err := self.ensurePerson(repo, entry.Author)
+	author, err := ji.ensurePerson(repo, entry.Author)
 	if err != nil {
 		return err
 	}
@@ -392,7 +380,7 @@ func (self *jiraImporter) ensureChange(
 		return fmt.Errorf("Received changelog entry with no item! (%s)", entry.ID)
 	}
 
-	statusMap, err := getStatusMapReverse(self.conf)
+	statusMap, err := getStatusMapReverse(ji.conf)
 	if err != nil {
 		return err
 	}
@@ -407,13 +395,10 @@ func (self *jiraImporter) ensureChange(
 		case "labels":
 			fromLabels := removeEmpty(strings.Split(item.FromString, " "))
 			toLabels := removeEmpty(strings.Split(item.ToString, " "))
-			removedLabels, addedLabels, _ := setSymmetricDifference(
-				fromLabels, toLabels)
+			removedLabels, addedLabels, _ := setSymmetricDifference(fromLabels, toLabels)
 
 			opr, isRightType := potentialOp.(*bug.LabelChangeOperation)
-			if isRightType &&
-				labelSetsMatch(addedLabels, opr.Added) &&
-				labelSetsMatch(removedLabels, opr.Removed) {
+			if isRightType && labelSetsMatch(addedLabels, opr.Added) && labelSetsMatch(removedLabels, opr.Removed) {
 				_, err := b.SetMetadata(opr.Id(), map[string]string{
 					keyJiraOperationID: entry.ID,
 				})
@@ -484,8 +469,7 @@ func (self *jiraImporter) ensureChange(
 		case "labels":
 			fromLabels := removeEmpty(strings.Split(item.FromString, " "))
 			toLabels := removeEmpty(strings.Split(item.ToString, " "))
-			removedLabels, addedLabels, _ := setSymmetricDifference(
-				fromLabels, toLabels)
+			removedLabels, addedLabels, _ := setSymmetricDifference(fromLabels, toLabels)
 
 			op, err := b.ForceChangeLabelsRaw(
 				author,
@@ -501,7 +485,7 @@ func (self *jiraImporter) ensureChange(
 				return err
 			}
 
-			self.out <- core.NewImportLabelChange(op.Id())
+			ji.out <- core.NewImportLabelChange(op.Id())
 
 		case "status":
 			statusStr, hasMap := statusMap[item.To]
@@ -519,7 +503,7 @@ func (self *jiraImporter) ensureChange(
 					if err != nil {
 						return err
 					}
-					self.out <- core.NewImportStatusChange(op.Id())
+					ji.out <- core.NewImportStatusChange(op.Id())
 
 				case bug.ClosedStatus.String():
 					op, err := b.CloseRaw(
@@ -533,10 +517,10 @@ func (self *jiraImporter) ensureChange(
 					if err != nil {
 						return err
 					}
-					self.out <- core.NewImportStatusChange(op.Id())
+					ji.out <- core.NewImportStatusChange(op.Id())
 				}
 			} else {
-				self.out <- core.NewImportError(
+				ji.out <- core.NewImportError(
 					fmt.Errorf(
 						"No git-bug status mapped for jira status %s (%s)",
 						item.ToString, item.To), "")
@@ -558,7 +542,7 @@ func (self *jiraImporter) ensureChange(
 				return err
 			}
 
-			self.out <- core.NewImportTitleEdition(op.Id())
+			ji.out <- core.NewImportTitleEdition(op.Id())
 
 		case "description":
 			// NOTE(josh): JIRA calls it "description", which sounds more like the
@@ -576,10 +560,10 @@ func (self *jiraImporter) ensureChange(
 				return err
 			}
 
-			self.out <- core.NewImportCommentEdition(op.Id())
+			ji.out <- core.NewImportCommentEdition(op.Id())
 
 		default:
-			self.out <- core.NewImportWarning(
+			ji.out <- core.NewImportWarning(
 				fmt.Errorf(
 					"Unhandled changelog event %s", item.Field), "")
 		}

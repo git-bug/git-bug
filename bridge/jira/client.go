@@ -315,21 +315,19 @@ type ClientTransport struct {
 }
 
 // RoundTrip overrides the default by adding the content-type header
-func (self *ClientTransport) RoundTrip(
-	req *http.Request) (*http.Response, error) {
+func (ct *ClientTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	req.Header.Add("Content-Type", "application/json")
-	if self.basicAuthString != "" {
+	if ct.basicAuthString != "" {
 		req.Header.Add("Authorization",
-			fmt.Sprintf("Basic %s", self.basicAuthString))
+			fmt.Sprintf("Basic %s", ct.basicAuthString))
 	}
 
-	return self.underlyingTransport.RoundTrip(req)
+	return ct.underlyingTransport.RoundTrip(req)
 }
 
-func (self *ClientTransport) SetCredentials(
-	username string, token string) {
+func (ct *ClientTransport) SetCredentials(username string, token string) {
 	credString := fmt.Sprintf("%s:%s", username, token)
-	self.basicAuthString = base64.StdEncoding.EncodeToString([]byte(credString))
+	ct.basicAuthString = base64.StdEncoding.EncodeToString([]byte(credString))
 }
 
 // Client Thin wrapper around the http.Client providing jira-specific methods
@@ -490,8 +488,7 @@ func (client *Client) RefreshSessionTokenRaw(credentialsJSON []byte) error {
 
 // Search Perform an issue a JQL search on the /search endpoint
 // https://docs.atlassian.com/software/jira/docs/api/REST/8.2.6/#api/2/search
-func (client *Client) Search(jql string, maxResults int, startAt int) (
-	*SearchResult, error) {
+func (client *Client) Search(jql string, maxResults int, startAt int) (*SearchResult, error) {
 	url := fmt.Sprintf("%s/rest/api/2/search", client.serverURL)
 
 	requestBody, err := json.Marshal(SearchRequest{
@@ -558,52 +555,51 @@ type SearchIterator struct {
 }
 
 // HasError returns true if the iterator is holding an error
-func (self *SearchIterator) HasError() bool {
-	if self.Err == errDone {
+func (si *SearchIterator) HasError() bool {
+	if si.Err == errDone {
 		return false
 	}
-	if self.Err == nil {
+	if si.Err == nil {
 		return false
 	}
 	return true
 }
 
 // HasNext returns true if there is another item available in the result set
-func (self *SearchIterator) HasNext() bool {
-	return self.Err == nil && self.itemIdx < len(self.searchResult.Issues)
+func (si *SearchIterator) HasNext() bool {
+	return si.Err == nil && si.itemIdx < len(si.searchResult.Issues)
 }
 
 // Next Return the next item in the result set and advance the iterator.
 // Advancing the iterator may require fetching a new page.
-func (self *SearchIterator) Next() *Issue {
-	if self.Err != nil {
+func (si *SearchIterator) Next() *Issue {
+	if si.Err != nil {
 		return nil
 	}
 
-	issue := self.searchResult.Issues[self.itemIdx]
-	if self.itemIdx+1 < len(self.searchResult.Issues) {
+	issue := si.searchResult.Issues[si.itemIdx]
+	if si.itemIdx+1 < len(si.searchResult.Issues) {
 		// We still have an item left in the currently cached page
-		self.itemIdx++
+		si.itemIdx++
 	} else {
-		if self.searchResult.IsLastPage() {
-			self.Err = errDone
+		if si.searchResult.IsLastPage() {
+			si.Err = errDone
 		} else {
 			// There are still more pages to fetch, so fetch the next page and
 			// cache it
-			self.searchResult, self.Err = self.client.Search(
-				self.jql, self.pageSize, self.searchResult.NextStartAt())
+			si.searchResult, si.Err = si.client.Search(
+				si.jql, si.pageSize, si.searchResult.NextStartAt())
 			// NOTE(josh): we don't deal with the error now, we just cache it.
 			// HasNext() will return false and the caller can check the error
 			// afterward.
-			self.itemIdx = 0
+			si.itemIdx = 0
 		}
 	}
 	return &issue
 }
 
 // IterSearch return an iterator over paginated results for a JQL search
-func (client *Client) IterSearch(
-	jql string, pageSize int) *SearchIterator {
+func (client *Client) IterSearch(jql string, pageSize int) *SearchIterator {
 	result, err := client.Search(jql, pageSize, 0)
 
 	iter := &SearchIterator{
@@ -620,9 +616,9 @@ func (client *Client) IterSearch(
 
 // GetIssue fetches an issue object via the /issue/{IssueIdOrKey} endpoint
 // https://docs.atlassian.com/software/jira/docs/api/REST/8.2.6/#api/2/issue
-func (client *Client) GetIssue(
-	idOrKey string, fields []string, expand []string,
+func (client *Client) GetIssue(idOrKey string, fields []string, expand []string,
 	properties []string) (*Issue, error) {
+
 	url := fmt.Sprintf("%s/rest/api/2/issue/%s", client.serverURL, idOrKey)
 
 	request, err := http.NewRequest("GET", url, nil)
@@ -678,8 +674,7 @@ func (client *Client) GetIssue(
 // GetComments returns a page of comments via the issue/{IssueIdOrKey}/comment
 // endpoint
 // https://docs.atlassian.com/software/jira/docs/api/REST/8.2.6/#api/2/issue-getComment
-func (client *Client) GetComments(
-	idOrKey string, maxResults int, startAt int) (*CommentPage, error) {
+func (client *Client) GetComments(idOrKey string, maxResults int, startAt int) (*CommentPage, error) {
 	url := fmt.Sprintf(
 		"%s/rest/api/2/issue/%s/comment", client.serverURL, idOrKey)
 
@@ -742,52 +737,51 @@ type CommentIterator struct {
 }
 
 // HasError returns true if the iterator is holding an error
-func (self *CommentIterator) HasError() bool {
-	if self.Err == errDone {
+func (ci *CommentIterator) HasError() bool {
+	if ci.Err == errDone {
 		return false
 	}
-	if self.Err == nil {
+	if ci.Err == nil {
 		return false
 	}
 	return true
 }
 
 // HasNext returns true if there is another item available in the result set
-func (self *CommentIterator) HasNext() bool {
-	return self.Err == nil && self.itemIdx < len(self.message.Comments)
+func (ci *CommentIterator) HasNext() bool {
+	return ci.Err == nil && ci.itemIdx < len(ci.message.Comments)
 }
 
 // Next Return the next item in the result set and advance the iterator.
 // Advancing the iterator may require fetching a new page.
-func (self *CommentIterator) Next() *Comment {
-	if self.Err != nil {
+func (ci *CommentIterator) Next() *Comment {
+	if ci.Err != nil {
 		return nil
 	}
 
-	comment := self.message.Comments[self.itemIdx]
-	if self.itemIdx+1 < len(self.message.Comments) {
+	comment := ci.message.Comments[ci.itemIdx]
+	if ci.itemIdx+1 < len(ci.message.Comments) {
 		// We still have an item left in the currently cached page
-		self.itemIdx++
+		ci.itemIdx++
 	} else {
-		if self.message.IsLastPage() {
-			self.Err = errDone
+		if ci.message.IsLastPage() {
+			ci.Err = errDone
 		} else {
 			// There are still more pages to fetch, so fetch the next page and
 			// cache it
-			self.message, self.Err = self.client.GetComments(
-				self.idOrKey, self.pageSize, self.message.NextStartAt())
+			ci.message, ci.Err = ci.client.GetComments(
+				ci.idOrKey, ci.pageSize, ci.message.NextStartAt())
 			// NOTE(josh): we don't deal with the error now, we just cache it.
 			// HasNext() will return false and the caller can check the error
 			// afterward.
-			self.itemIdx = 0
+			ci.itemIdx = 0
 		}
 	}
 	return &comment
 }
 
 // IterComments returns an iterator over paginated comments within an issue
-func (client *Client) IterComments(
-	idOrKey string, pageSize int) *CommentIterator {
+func (client *Client) IterComments(idOrKey string, pageSize int) *CommentIterator {
 	message, err := client.GetComments(idOrKey, pageSize, 0)
 
 	iter := &CommentIterator{
@@ -807,8 +801,7 @@ func (client *Client) IterComments(
 // /issue/{IssueIdOrKey} with (fields=*none&expand=changelog)
 // (for JIRA server)
 // https://docs.atlassian.com/software/jira/docs/api/REST/8.2.6/#api/2/issue
-func (client *Client) GetChangeLog(
-	idOrKey string, maxResults int, startAt int) (*ChangeLogPage, error) {
+func (client *Client) GetChangeLog(idOrKey string, maxResults int, startAt int) (*ChangeLogPage, error) {
 	url := fmt.Sprintf(
 		"%s/rest/api/2/issue/%s/changelog", client.serverURL, idOrKey)
 
@@ -892,52 +885,51 @@ type ChangeLogIterator struct {
 }
 
 // HasError returns true if the iterator is holding an error
-func (self *ChangeLogIterator) HasError() bool {
-	if self.Err == errDone {
+func (cli *ChangeLogIterator) HasError() bool {
+	if cli.Err == errDone {
 		return false
 	}
-	if self.Err == nil {
+	if cli.Err == nil {
 		return false
 	}
 	return true
 }
 
 // HasNext returns true if there is another item available in the result set
-func (self *ChangeLogIterator) HasNext() bool {
-	return self.Err == nil && self.itemIdx < len(self.message.Entries)
+func (cli *ChangeLogIterator) HasNext() bool {
+	return cli.Err == nil && cli.itemIdx < len(cli.message.Entries)
 }
 
 // Next Return the next item in the result set and advance the iterator.
 // Advancing the iterator may require fetching a new page.
-func (self *ChangeLogIterator) Next() *ChangeLogEntry {
-	if self.Err != nil {
+func (cli *ChangeLogIterator) Next() *ChangeLogEntry {
+	if cli.Err != nil {
 		return nil
 	}
 
-	item := self.message.Entries[self.itemIdx]
-	if self.itemIdx+1 < len(self.message.Entries) {
+	item := cli.message.Entries[cli.itemIdx]
+	if cli.itemIdx+1 < len(cli.message.Entries) {
 		// We still have an item left in the currently cached page
-		self.itemIdx++
+		cli.itemIdx++
 	} else {
-		if self.message.IsLastPage() {
-			self.Err = errDone
+		if cli.message.IsLastPage() {
+			cli.Err = errDone
 		} else {
 			// There are still more pages to fetch, so fetch the next page and
 			// cache it
-			self.message, self.Err = self.client.GetChangeLog(
-				self.idOrKey, self.pageSize, self.message.NextStartAt())
+			cli.message, cli.Err = cli.client.GetChangeLog(
+				cli.idOrKey, cli.pageSize, cli.message.NextStartAt())
 			// NOTE(josh): we don't deal with the error now, we just cache it.
 			// HasNext() will return false and the caller can check the error
 			// afterward.
-			self.itemIdx = 0
+			cli.itemIdx = 0
 		}
 	}
 	return &item
 }
 
 // IterChangeLog returns an iterator over entries in the changelog for an issue
-func (client *Client) IterChangeLog(
-	idOrKey string, pageSize int) *ChangeLogIterator {
+func (client *Client) IterChangeLog(idOrKey string, pageSize int) *ChangeLogIterator {
 	message, err := client.GetChangeLog(idOrKey, pageSize, 0)
 
 	iter := &ChangeLogIterator{
@@ -994,9 +986,8 @@ func (client *Client) GetProject(projectIDOrKey string) (*Project, error) {
 }
 
 // CreateIssue creates a new JIRA issue and returns it
-func (client *Client) CreateIssue(
-	projectIDOrKey, title, body string, extra map[string]interface{}) (
-	*IssueCreateResult, error) {
+func (client *Client) CreateIssue(projectIDOrKey, title, body string,
+	extra map[string]interface{}) (*IssueCreateResult, error) {
 
 	url := fmt.Sprintf("%s/rest/api/2/issue", client.serverURL)
 
@@ -1063,8 +1054,7 @@ func (client *Client) CreateIssue(
 }
 
 // UpdateIssueTitle changes the "summary" field of a JIRA issue
-func (client *Client) UpdateIssueTitle(
-	issueKeyOrID, title string) (time.Time, error) {
+func (client *Client) UpdateIssueTitle(issueKeyOrID, title string) (time.Time, error) {
 
 	url := fmt.Sprintf(
 		"%s/rest/api/2/issue/%s", client.serverURL, issueKeyOrID)
@@ -1078,9 +1068,9 @@ func (client *Client) UpdateIssueTitle(
 	}
 
 	var buffer bytes.Buffer
-	fmt.Fprintf(&buffer, `{"update":{"summary":[`)
-	fmt.Fprintf(&buffer, `{"set":%s}`, data)
-	fmt.Fprintf(&buffer, `]}}`)
+	_, _ = fmt.Fprintf(&buffer, `{"update":{"summary":[`)
+	_, _ = fmt.Fprintf(&buffer, `{"set":%s}`, data)
+	_, _ = fmt.Fprintf(&buffer, `]}}`)
 
 	data = buffer.Bytes()
 	request, err := http.NewRequest("PUT", url, bytes.NewBuffer(data))
@@ -1119,8 +1109,7 @@ func (client *Client) UpdateIssueTitle(
 }
 
 // UpdateIssueBody changes the "description" field of a JIRA issue
-func (client *Client) UpdateIssueBody(
-	issueKeyOrID, body string) (time.Time, error) {
+func (client *Client) UpdateIssueBody(issueKeyOrID, body string) (time.Time, error) {
 
 	url := fmt.Sprintf(
 		"%s/rest/api/2/issue/%s", client.serverURL, issueKeyOrID)
@@ -1133,9 +1122,9 @@ func (client *Client) UpdateIssueBody(
 	}
 
 	var buffer bytes.Buffer
-	fmt.Fprintf(&buffer, `{"update":{"description":[`)
-	fmt.Fprintf(&buffer, `{"set":%s}`, data)
-	fmt.Fprintf(&buffer, `]}}`)
+	_, _ = fmt.Fprintf(&buffer, `{"update":{"description":[`)
+	_, _ = fmt.Fprintf(&buffer, `{"set":%s}`, data)
+	_, _ = fmt.Fprintf(&buffer, `]}}`)
 
 	data = buffer.Bytes()
 	request, err := http.NewRequest("PUT", url, bytes.NewBuffer(data))
@@ -1279,8 +1268,7 @@ func (client *Client) UpdateComment(issueKeyOrID, commentID, body string) (
 }
 
 // UpdateLabels changes labels for an issue
-func (client *Client) UpdateLabels(
-	issueKeyOrID string, added, removed []bug.Label) (time.Time, error) {
+func (client *Client) UpdateLabels(issueKeyOrID string, added, removed []bug.Label) (time.Time, error) {
 	url := fmt.Sprintf(
 		"%s/rest/api/2/issue/%s/", client.serverURL, issueKeyOrID)
 	var responseTime time.Time
@@ -1288,23 +1276,23 @@ func (client *Client) UpdateLabels(
 	// NOTE(josh): Since updates are a list of heterogeneous objects let's just
 	// manually build the JSON text
 	var buffer bytes.Buffer
-	fmt.Fprintf(&buffer, `{"update":{"labels":[`)
+	_, _ = fmt.Fprintf(&buffer, `{"update":{"labels":[`)
 	first := true
 	for _, label := range added {
 		if !first {
-			fmt.Fprintf(&buffer, ",")
+			_, _ = fmt.Fprintf(&buffer, ",")
 		}
-		fmt.Fprintf(&buffer, `{"add":"%s"}`, label)
+		_, _ = fmt.Fprintf(&buffer, `{"add":"%s"}`, label)
 		first = false
 	}
 	for _, label := range removed {
 		if !first {
-			fmt.Fprintf(&buffer, ",")
+			_, _ = fmt.Fprintf(&buffer, ",")
 		}
-		fmt.Fprintf(&buffer, `{"remove":"%s"}`, label)
+		_, _ = fmt.Fprintf(&buffer, `{"remove":"%s"}`, label)
 		first = false
 	}
-	fmt.Fprintf(&buffer, "]}}")
+	_, _ = fmt.Fprintf(&buffer, "]}}")
 
 	data := buffer.Bytes()
 	request, err := http.NewRequest("PUT", url, bytes.NewBuffer(data))
@@ -1349,8 +1337,7 @@ func (client *Client) UpdateLabels(
 }
 
 // GetTransitions returns a list of available transitions for an issue
-func (client *Client) GetTransitions(issueKeyOrID string) (
-	*TransitionList, error) {
+func (client *Client) GetTransitions(issueKeyOrID string) (*TransitionList, error) {
 
 	url := fmt.Sprintf(
 		"%s/rest/api/2/issue/%s/transitions", client.serverURL, issueKeyOrID)
@@ -1393,8 +1380,7 @@ func (client *Client) GetTransitions(issueKeyOrID string) (
 	return &message, nil
 }
 
-func getTransitionTo(
-	tlist *TransitionList, desiredStateNameOrID string) *Transition {
+func getTransitionTo(tlist *TransitionList, desiredStateNameOrID string) *Transition {
 	for _, transition := range tlist.Transitions {
 		if transition.To.ID == desiredStateNameOrID {
 			return &transition
@@ -1406,8 +1392,7 @@ func getTransitionTo(
 }
 
 // DoTransition changes the "status" of an issue
-func (client *Client) DoTransition(
-	issueKeyOrID string, transitionID string) (time.Time, error) {
+func (client *Client) DoTransition(issueKeyOrID string, transitionID string) (time.Time, error) {
 	url := fmt.Sprintf(
 		"%s/rest/api/2/issue/%s/transitions", client.serverURL, issueKeyOrID)
 	var responseTime time.Time
@@ -1417,7 +1402,7 @@ func (client *Client) DoTransition(
 	// *compute* the necessary transitions and prompt for missing metatdata...
 	// but that is complex
 	var buffer bytes.Buffer
-	fmt.Fprintf(&buffer,
+	_, _ = fmt.Fprintf(&buffer,
 		`{"transition":{"id":"%s"}, "resolution": {"name": "Done"}}`,
 		transitionID)
 	request, err := http.NewRequest("POST", url, bytes.NewBuffer(buffer.Bytes()))
