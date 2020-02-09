@@ -18,7 +18,8 @@ const (
 	configKeyCreateTime = "createtime"
 	configKeyPrefixMeta = "meta."
 
-	MetaKeyLogin = "login"
+	MetaKeyLogin   = "login"
+	MetaKeyBaseURL = "base-url"
 )
 
 type CredentialKind string
