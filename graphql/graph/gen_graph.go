@@ -10457,6 +10457,9 @@ func (ec *executionContext) _Authored(ctx context.Context, sel ast.SelectionSet,
 		}
 		return ec._Comment(ctx, sel, obj)
 	case models.BugWrapper:
+		if obj == nil {
+			return graphql.Null
+		}
 		return ec._Bug(ctx, sel, obj)
 	case *bug.CreateOperation:
 		if obj == nil {
