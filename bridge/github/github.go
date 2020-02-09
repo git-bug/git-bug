@@ -3,6 +3,7 @@ package github
 
 import (
 	"context"
+	"time"
 
 	"github.com/shurcooL/githubv4"
 	"golang.org/x/oauth2"
@@ -11,10 +12,30 @@ import (
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
 )
 
+const (
+	target = "github"
+
+	metaKeyGithubId    = "github-id"
+	metaKeyGithubUrl   = "github-url"
+	metaKeyGithubLogin = "github-login"
+
+	keyOwner   = "owner"
+	keyProject = "project"
+
+	githubV3Url    = "https://api.github.com"
+	defaultTimeout = 60 * time.Second
+)
+
+var _ core.BridgeImpl = &Github{}
+
 type Github struct{}
 
 func (*Github) Target() string {
 	return target
+}
+
+func (g *Github) LoginMetaKey() string {
+	return metaKeyGithubLogin
 }
 
 func (*Github) NewImporter() core.Importer {

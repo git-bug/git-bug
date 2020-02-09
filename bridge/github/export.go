@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -19,7 +20,7 @@ import (
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/MichaelMure/git-bug/identity"
 )
 
 var (
@@ -74,7 +75,8 @@ func (ge *githubExporter) Init(repo *cache.RepoCache, conf core.Configuration) e
 		return err
 	}
 
-	creds, err := auth.List(repo, auth.WithUserId(user.Id()), auth.WithTarget(target), auth.WithKind(auth.KindToken))
+	login := user.ImmutableMetadata()[metaKeyGithubLogin]
+	creds, err := auth.List(repo, auth.WithMeta(auth.MetaKeyLogin, login), auth.WithTarget(target), auth.WithKind(auth.KindToken))
 	if err != nil {
 		return err
 	}
@@ -88,16 +90,30 @@ func (ge *githubExporter) Init(repo *cache.RepoCache, conf core.Configuration) e
 	return nil
 }
 
-func (ge *githubExporter) cacheAllClient(repo repository.RepoConfig) error {
+func (ge *githubExporter) cacheAllClient(repo *cache.RepoCache) error {
 	creds, err := auth.List(repo, auth.WithTarget(target), auth.WithKind(auth.KindToken))
 	if err != nil {
 		return err
 	}
 
 	for _, cred := range creds {
-		if _, ok := ge.identityClient[cred.UserId()]; !ok {
+		login, ok := cred.GetMetadata(auth.MetaKeyLogin)
+		if !ok {
+			_, _ = fmt.Fprintf(os.Stderr, "credential %s is not tagged with a Github login\n", cred.ID().Human())
+			continue
+		}
+
+		user, err := repo.ResolveIdentityImmutableMetadata(metaKeyGithubLogin, login)
+		if err == identity.ErrIdentityNotExist {
+			continue
+		}
+		if err != nil {
+			return nil
+		}
+
+		if _, ok := ge.identityClient[user.Id()]; !ok {
 			client := buildClient(creds[0].(*auth.Token))
-			ge.identityClient[cred.UserId()] = client
+			ge.identityClient[user.Id()] = client
 		}
 	}
 
@@ -477,11 +493,12 @@ func (ge *githubExporter) cacheGithubLabels(ctx context.Context, gc *githubv4.Cl
 	for hasNextPage {
 		// create a new timeout context at each iteration
 		ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
-		defer cancel()
 
 		if err := gc.Query(ctx, &q, variables); err != nil {
+			cancel()
 			return err
 		}
+		cancel()
 
 		for _, label := range q.Repository.Labels.Nodes {
 			ge.cachedLabels[label.Name] = label.ID

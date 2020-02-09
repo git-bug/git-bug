@@ -2,7 +2,6 @@ package cache
 
 import (
 	"encoding/gob"
-	"fmt"
 	"strings"
 
 	"github.com/MichaelMure/git-bug/entity"
@@ -21,7 +20,6 @@ type IdentityExcerpt struct {
 	Id entity.Id
 
 	Name              string
-	Login             string
 	ImmutableMetadata map[string]string
 }
 
@@ -29,7 +27,6 @@ func NewIdentityExcerpt(i *identity.Identity) *IdentityExcerpt {
 	return &IdentityExcerpt{
 		Id:                i.Id(),
 		Name:              i.Name(),
-		Login:             i.Login(),
 		ImmutableMetadata: i.ImmutableMetadata(),
 	}
 }
@@ -37,23 +34,13 @@ func NewIdentityExcerpt(i *identity.Identity) *IdentityExcerpt {
 // DisplayName return a non-empty string to display, representing the
 // identity, based on the non-empty values.
 func (i *IdentityExcerpt) DisplayName() string {
-	switch {
-	case i.Name == "" && i.Login != "":
-		return i.Login
-	case i.Name != "" && i.Login == "":
-		return i.Name
-	case i.Name != "" && i.Login != "":
-		return fmt.Sprintf("%s (%s)", i.Name, i.Login)
-	}
-
-	panic("invalid person data")
+	return i.Name
 }
 
 // Match matches a query with the identity name, login and ID prefixes
 func (i *IdentityExcerpt) Match(query string) bool {
 	return i.Id.HasPrefix(query) ||
-		strings.Contains(strings.ToLower(i.Name), query) ||
-		strings.Contains(strings.ToLower(i.Login), query)
+		strings.Contains(strings.ToLower(i.Name), query)
 }
 
 /*

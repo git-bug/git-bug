@@ -64,6 +64,10 @@ Register-ArgumentCompleter -Native -CommandName 'git-bug' -ScriptBlock {
         'git-bug;bridge;auth;add-token' {
             [CompletionResult]::new('-t', 't', [CompletionResultType]::ParameterName, 'The target of the bridge. Valid values are [github,gitlab,launchpad-preview]')
             [CompletionResult]::new('--target', 'target', [CompletionResultType]::ParameterName, 'The target of the bridge. Valid values are [github,gitlab,launchpad-preview]')
+            [CompletionResult]::new('-l', 'l', [CompletionResultType]::ParameterName, 'The login in the remote bug-tracker')
+            [CompletionResult]::new('--login', 'login', [CompletionResultType]::ParameterName, 'The login in the remote bug-tracker')
+            [CompletionResult]::new('-u', 'u', [CompletionResultType]::ParameterName, 'The user to add the token to. Default is the current user')
+            [CompletionResult]::new('--user', 'user', [CompletionResultType]::ParameterName, 'The user to add the token to. Default is the current user')
             break
         }
         'git-bug;bridge;auth;rm' {

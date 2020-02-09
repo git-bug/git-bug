@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
-	"github.com/MichaelMure/git-bug/entity"
 )
 
 func TestSplitURL(t *testing.T) {
@@ -155,8 +154,8 @@ func TestValidateProject(t *testing.T) {
 		t.Skip("Env var GITHUB_TOKEN_PUBLIC missing")
 	}
 
-	tokenPrivate := auth.NewToken(entity.UnsetId, envPrivate, target)
-	tokenPublic := auth.NewToken(entity.UnsetId, envPublic, target)
+	tokenPrivate := auth.NewToken(envPrivate, target)
+	tokenPublic := auth.NewToken(envPublic, target)
 
 	type args struct {
 		owner   string

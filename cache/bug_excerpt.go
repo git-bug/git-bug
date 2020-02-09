@@ -2,7 +2,6 @@ package cache
 
 import (
 	"encoding/gob"
-	"fmt"
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/entity"
@@ -43,21 +42,11 @@ type BugExcerpt struct {
 
 // identity.Bare data are directly embedded in the bug excerpt
 type LegacyAuthorExcerpt struct {
-	Name  string
-	Login string
+	Name string
 }
 
 func (l LegacyAuthorExcerpt) DisplayName() string {
-	switch {
-	case l.Name == "" && l.Login != "":
-		return l.Login
-	case l.Name != "" && l.Login == "":
-		return l.Name
-	case l.Name != "" && l.Login != "":
-		return fmt.Sprintf("%s (%s)", l.Name, l.Login)
-	}
-
-	panic("invalid person data")
+	return l.Name
 }
 
 func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
@@ -95,8 +84,7 @@ func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
 		e.AuthorId = snap.Author.Id()
 	case *identity.Bare:
 		e.LegacyAuthor = LegacyAuthorExcerpt{
-			Login: snap.Author.Login(),
-			Name:  snap.Author.Name(),
+			Name: snap.Author.Name(),
 		}
 	default:
 		panic("unhandled identity type")

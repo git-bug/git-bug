@@ -13,23 +13,36 @@ import (
 	"github.com/MichaelMure/git-bug/bridge"
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
-	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
 var (
 	bridgeAuthAddTokenTarget string
+	bridgeAuthAddTokenLogin  string
+	bridgeAuthAddTokenUser   string
 )
 
 func runBridgeTokenAdd(cmd *cobra.Command, args []string) error {
-	var value string
-
 	if bridgeAuthAddTokenTarget == "" {
 		return fmt.Errorf("flag --target is required")
 	}
+	if bridgeAuthAddTokenLogin == "" {
+		return fmt.Errorf("flag --login is required")
+	}
+
+	backend, err := cache.NewRepoCache(repo)
+	if err != nil {
+		return err
+	}
+	defer backend.Close()
+	interrupt.RegisterCleaner(backend.Close)
 
 	if !core.TargetExist(bridgeAuthAddTokenTarget) {
 		return fmt.Errorf("unknown target")
 	}
+
+	var value string
 
 	if len(args) == 1 {
 		value = args[0]
@@ -46,12 +59,36 @@ func runBridgeTokenAdd(cmd *cobra.Command, args []string) error {
 		value = strings.TrimSuffix(raw, "\n")
 	}
 
-	user, err := identity.GetUserIdentity(repo)
+	var user *cache.IdentityCache
+
+	if bridgeAuthAddTokenUser == "" {
+		user, err = backend.GetUserIdentity()
+	} else {
+		user, err = backend.ResolveIdentityPrefix(bridgeAuthAddTokenUser)
+	}
 	if err != nil {
 		return err
 	}
 
-	token := auth.NewToken(user.Id(), value, bridgeAuthAddTokenTarget)
+	metaKey, _ := bridge.LoginMetaKey(bridgeAuthAddTokenTarget)
+	login, ok := user.ImmutableMetadata()[metaKey]
+
+	switch {
+	case ok && login == bridgeAuthAddTokenLogin:
+		// nothing to do
+	case ok && login != bridgeAuthAddTokenLogin:
+		return fmt.Errorf("this user is already tagged with a different %s login", bridgeAuthAddTokenTarget)
+	default:
+		user.SetMetadata(metaKey, bridgeAuthAddTokenLogin)
+		err = user.Commit()
+		if err != nil {
+			return err
+		}
+	}
+
+	token := auth.NewToken(value, bridgeAuthAddTokenTarget)
+	token.SetMetadata(auth.MetaKeyLogin, bridgeAuthAddTokenLogin)
+
 	if err := token.Validate(); err != nil {
 		return errors.Wrap(err, "invalid token")
 	}
@@ -77,5 +114,9 @@ func init() {
 	bridgeAuthCmd.AddCommand(bridgeAuthAddTokenCmd)
 	bridgeAuthAddTokenCmd.Flags().StringVarP(&bridgeAuthAddTokenTarget, "target", "t", "",
 		fmt.Sprintf("The target of the bridge. Valid values are [%s]", strings.Join(bridge.Targets(), ",")))
+	bridgeAuthAddTokenCmd.Flags().StringVarP(&bridgeAuthAddTokenLogin,
+		"login", "l", "", "The login in the remote bug-tracker")
+	bridgeAuthAddTokenCmd.Flags().StringVarP(&bridgeAuthAddTokenUser,
+		"user", "u", "", "The user to add the token to. Default is the current user")
 	bridgeAuthAddTokenCmd.Flags().SortFlags = false
 }

@@ -409,36 +409,27 @@ func (c *RepoCache) ResolveBugExcerpt(id entity.Id) (*BugExcerpt, error) {
 // ResolveBugPrefix retrieve a bug matching an id prefix. It fails if multiple
 // bugs match.
 func (c *RepoCache) ResolveBugPrefix(prefix string) (*BugCache, error) {
-	// preallocate but empty
-	matching := make([]entity.Id, 0, 5)
-
-	for id := range c.bugExcerpts {
-		if id.HasPrefix(prefix) {
-			matching = append(matching, id)
-		}
-	}
-
-	if len(matching) > 1 {
-		return nil, bug.NewErrMultipleMatchBug(matching)
-	}
-
-	if len(matching) == 0 {
-		return nil, bug.ErrBugNotExist
-	}
-
-	return c.ResolveBug(matching[0])
+	return c.ResolveBugMatcher(func(excerpt *BugExcerpt) bool {
+		return excerpt.Id.HasPrefix(prefix)
+	})
 }
 
 // ResolveBugCreateMetadata retrieve a bug that has the exact given metadata on
 // its Create operation, that is, the first operation. It fails if multiple bugs
 // match.
 func (c *RepoCache) ResolveBugCreateMetadata(key string, value string) (*BugCache, error) {
+	return c.ResolveBugMatcher(func(excerpt *BugExcerpt) bool {
+		return excerpt.CreateMetadata[key] == value
+	})
+}
+
+func (c *RepoCache) ResolveBugMatcher(f func(*BugExcerpt) bool) (*BugCache, error) {
 	// preallocate but empty
 	matching := make([]entity.Id, 0, 5)
 
-	for id, excerpt := range c.bugExcerpts {
-		if excerpt.CreateMetadata[key] == value {
-			matching = append(matching, id)
+	for _, excerpt := range c.bugExcerpts {
+		if f(excerpt) {
+			matching = append(matching, excerpt.Id)
 		}
 	}
 
@@ -785,35 +776,26 @@ func (c *RepoCache) ResolveIdentityExcerpt(id entity.Id) (*IdentityExcerpt, erro
 // ResolveIdentityPrefix retrieve an Identity matching an id prefix.
 // It fails if multiple identities match.
 func (c *RepoCache) ResolveIdentityPrefix(prefix string) (*IdentityCache, error) {
-	// preallocate but empty
-	matching := make([]entity.Id, 0, 5)
-
-	for id := range c.identitiesExcerpts {
-		if id.HasPrefix(prefix) {
-			matching = append(matching, id)
-		}
-	}
-
-	if len(matching) > 1 {
-		return nil, identity.NewErrMultipleMatch(matching)
-	}
-
-	if len(matching) == 0 {
-		return nil, identity.ErrIdentityNotExist
-	}
-
-	return c.ResolveIdentity(matching[0])
+	return c.ResolveIdentityMatcher(func(excerpt *IdentityExcerpt) bool {
+		return excerpt.Id.HasPrefix(prefix)
+	})
 }
 
 // ResolveIdentityImmutableMetadata retrieve an Identity that has the exact given metadata on
 // one of it's version. If multiple version have the same key, the first defined take precedence.
 func (c *RepoCache) ResolveIdentityImmutableMetadata(key string, value string) (*IdentityCache, error) {
+	return c.ResolveIdentityMatcher(func(excerpt *IdentityExcerpt) bool {
+		return excerpt.ImmutableMetadata[key] == value
+	})
+}
+
+func (c *RepoCache) ResolveIdentityMatcher(f func(*IdentityExcerpt) bool) (*IdentityCache, error) {
 	// preallocate but empty
 	matching := make([]entity.Id, 0, 5)
 
-	for id, i := range c.identitiesExcerpts {
-		if i.ImmutableMetadata[key] == value {
-			matching = append(matching, id)
+	for _, excerpt := range c.identitiesExcerpts {
+		if f(excerpt) {
+			matching = append(matching, excerpt.Id)
 		}
 	}
 
@@ -881,21 +863,36 @@ func (c *RepoCache) IsUserIdentitySet() (bool, error) {
 	return identity.IsUserIdentitySet(c.repo)
 }
 
+func (c *RepoCache) NewIdentityFromGitUser() (*IdentityCache, error) {
+	return c.NewIdentityFromGitUserRaw(nil)
+}
+
+func (c *RepoCache) NewIdentityFromGitUserRaw(metadata map[string]string) (*IdentityCache, error) {
+	i, err := identity.NewFromGitUser(c.repo)
+	if err != nil {
+		return nil, err
+	}
+	return c.finishIdentity(i, metadata)
+}
+
 // NewIdentity create a new identity
 // The new identity is written in the repository (commit)
 func (c *RepoCache) NewIdentity(name string, email string) (*IdentityCache, error) {
-	return c.NewIdentityRaw(name, email, "", "", nil)
+	return c.NewIdentityRaw(name, email, "", nil)
 }
 
 // NewIdentityFull create a new identity
 // The new identity is written in the repository (commit)
-func (c *RepoCache) NewIdentityFull(name string, email string, login string, avatarUrl string) (*IdentityCache, error) {
-	return c.NewIdentityRaw(name, email, login, avatarUrl, nil)
+func (c *RepoCache) NewIdentityFull(name string, email string, avatarUrl string) (*IdentityCache, error) {
+	return c.NewIdentityRaw(name, email, avatarUrl, nil)
 }
 
-func (c *RepoCache) NewIdentityRaw(name string, email string, login string, avatarUrl string, metadata map[string]string) (*IdentityCache, error) {
-	i := identity.NewIdentityFull(name, email, login, avatarUrl)
+func (c *RepoCache) NewIdentityRaw(name string, email string, avatarUrl string, metadata map[string]string) (*IdentityCache, error) {
+	i := identity.NewIdentityFull(name, email, avatarUrl)
+	return c.finishIdentity(i, metadata)
+}
 
+func (c *RepoCache) finishIdentity(i *identity.Identity, metadata map[string]string) (*IdentityCache, error) {
 	for key, value := range metadata {
 		i.SetMetadata(key, value)
 	}

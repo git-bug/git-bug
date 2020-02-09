@@ -37,8 +37,7 @@ func AuthorFilter(query string) Filter {
 		}
 
 		// Legacy identity support
-		return strings.Contains(strings.ToLower(excerpt.LegacyAuthor.Name), query) ||
-			strings.Contains(strings.ToLower(excerpt.LegacyAuthor.Login), query)
+		return strings.Contains(strings.ToLower(excerpt.LegacyAuthor.Name), query)
 	}
 }
 

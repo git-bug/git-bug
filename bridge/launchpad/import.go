@@ -20,11 +20,6 @@ func (li *launchpadImporter) Init(repo *cache.RepoCache, conf core.Configuration
 	return nil
 }
 
-const (
-	metaKeyLaunchpadID    = "launchpad-id"
-	metaKeyLaunchpadLogin = "launchpad-login"
-)
-
 func (li *launchpadImporter) ensurePerson(repo *cache.RepoCache, owner LPPerson) (*cache.IdentityCache, error) {
 	// Look first in the cache
 	i, err := repo.ResolveIdentityImmutableMetadata(metaKeyLaunchpadLogin, owner.Login)
@@ -38,7 +33,6 @@ func (li *launchpadImporter) ensurePerson(repo *cache.RepoCache, owner LPPerson)
 	return repo.NewIdentityRaw(
 		owner.Name,
 		"",
-		owner.Login,
 		"",
 		map[string]string{
 			metaKeyLaunchpadLogin: owner.Login,

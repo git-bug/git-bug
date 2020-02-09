@@ -9,11 +9,10 @@ import (
 
 func TestVersionSerialize(t *testing.T) {
 	before := &Version{
-		login:     "login",
 		name:      "name",
 		email:     "email",
 		avatarURL: "avatarUrl",
-		keys: []Key{
+		keys: []*Key{
 			{
 				Fingerprint: "fingerprint1",
 				PubKey:      "pubkey1",

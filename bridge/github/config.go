@@ -14,30 +14,17 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	text "github.com/MichaelMure/go-term-text"
 	"github.com/pkg/errors"
-	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/input"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/colors"
-	"github.com/MichaelMure/git-bug/util/interrupt"
-)
-
-const (
-	target      = "github"
-	githubV3Url = "https://api.github.com"
-	keyOwner    = "owner"
-	keyProject  = "project"
-
-	defaultTimeout = 60 * time.Second
 )
 
 var (
@@ -51,12 +38,6 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 
 	conf := make(core.Configuration)
 	var err error
-
-	if (params.CredPrefix != "" || params.TokenRaw != "") &&
-		(params.URL == "" && (params.Project == "" || params.Owner == "")) {
-		return nil, fmt.Errorf("you must provide a project URL or Owner/Name to configure this bridge with a token")
-	}
-
 	var owner string
 	var project string
 
@@ -89,15 +70,23 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 		return nil, fmt.Errorf("invalid parameter owner: %v", owner)
 	}
 
-	user, err := repo.GetUserIdentity()
-	if err != nil && err != identity.ErrNoIdentitySet {
-		return nil, err
-	}
+	login := params.Login
+	if login == "" {
+		validator := func(name string, value string) (string, error) {
+			ok, err := validateUsername(value)
+			if err != nil {
+				return "", err
+			}
+			if !ok {
+				return "invalid login", nil
+			}
+			return "", nil
+		}
 
-	// default to a "to be filled" user Id if we don't have a valid one yet
-	userId := auth.DefaultUserId
-	if user != nil {
-		userId = user.Id()
+		login, err = input.Prompt("Github login", "login", input.Required, validator)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var cred auth.Credential
@@ -108,13 +97,11 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 		if err != nil {
 			return nil, err
 		}
-		if user != nil && cred.UserId() != user.Id() {
-			return nil, fmt.Errorf("selected credential don't match the user")
-		}
 	case params.TokenRaw != "":
-		cred = auth.NewToken(userId, params.TokenRaw, target)
+		cred = auth.NewToken(params.TokenRaw, target)
+		cred.SetMetadata(auth.MetaKeyLogin, login)
 	default:
-		cred, err = promptTokenOptions(repo, userId, owner, project)
+		cred, err = promptTokenOptions(repo, login, owner, project)
 		if err != nil {
 			return nil, err
 		}
@@ -151,7 +138,7 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 		}
 	}
 
-	return conf, nil
+	return conf, core.FinishConfig(repo, metaKeyGithubLogin, login)
 }
 
 func (*Github) ValidateConfig(conf core.Configuration) error {
@@ -172,11 +159,11 @@ func (*Github) ValidateConfig(conf core.Configuration) error {
 	return nil
 }
 
-func requestToken(note, username, password string, scope string) (*http.Response, error) {
-	return requestTokenWith2FA(note, username, password, "", scope)
+func requestToken(note, login, password string, scope string) (*http.Response, error) {
+	return requestTokenWith2FA(note, login, password, "", scope)
 }
 
-func requestTokenWith2FA(note, username, password, otpCode string, scope string) (*http.Response, error) {
+func requestTokenWith2FA(note, login, password, otpCode string, scope string) (*http.Response, error) {
 	url := fmt.Sprintf("%s/authorizations", githubV3Url)
 	params := struct {
 		Scopes      []string `json:"scopes"`
@@ -198,7 +185,7 @@ func requestTokenWith2FA(note, username, password, otpCode string, scope string)
 		return nil, err
 	}
 
-	req.SetBasicAuth(username, password)
+	req.SetBasicAuth(login, password)
 	req.Header.Set("Content-Type", "application/json")
 
 	if otpCode != "" {
@@ -242,9 +229,9 @@ func randomFingerprint() string {
 	return string(b)
 }
 
-func promptTokenOptions(repo repository.RepoConfig, userId entity.Id, owner, project string) (auth.Credential, error) {
+func promptTokenOptions(repo repository.RepoConfig, login, owner, project string) (auth.Credential, error) {
 	for {
-		creds, err := auth.List(repo, auth.WithUserId(userId), auth.WithTarget(target))
+		creds, err := auth.List(repo, auth.WithTarget(target), auth.WithMeta(auth.MetaKeyLogin, login))
 		if err != nil {
 			return nil, err
 		}
@@ -260,10 +247,11 @@ func promptTokenOptions(repo repository.RepoConfig, userId entity.Id, owner, pro
 			fmt.Println("Existing tokens for Github:")
 			for i, cred := range creds {
 				token := cred.(*auth.Token)
-				fmt.Printf("[%d]: %s => %s (%s)\n",
+				fmt.Printf("[%d]: %s => %s (login: %s, %s)\n",
 					i+3,
 					colors.Cyan(token.ID().Human()),
 					colors.Red(text.TruncateMax(token.Value, 10)),
+					token.Metadata()[auth.MetaKeyLogin],
 					token.CreateTime().Format(time.RFC822),
 				)
 			}
@@ -291,13 +279,17 @@ func promptTokenOptions(repo repository.RepoConfig, userId entity.Id, owner, pro
 			if err != nil {
 				return nil, err
 			}
-			return auth.NewToken(userId, value, target), nil
+			token := auth.NewToken(value, target)
+			token.SetMetadata(auth.MetaKeyLogin, login)
+			return token, nil
 		case 2:
-			value, err := loginAndRequestToken(owner, project)
+			value, err := loginAndRequestToken(login, owner, project)
 			if err != nil {
 				return nil, err
 			}
-			return auth.NewToken(userId, value, target), nil
+			token := auth.NewToken(value, target)
+			token.SetMetadata(auth.MetaKeyLogin, login)
+			return token, nil
 		default:
 			return creds[index-3], nil
 		}
@@ -315,29 +307,22 @@ func promptToken() (string, error) {
 	fmt.Println("  - 'repo'       : to be able to read private repositories")
 	fmt.Println()
 
-	re, err := regexp.Compile(`^[a-zA-Z0-9]{40}`)
+	re, err := regexp.Compile(`^[a-zA-Z0-9]{40}$`)
 	if err != nil {
 		panic("regexp compile:" + err.Error())
 	}
 
-	for {
-		fmt.Print("Enter token: ")
-
-		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
-		if err != nil {
-			return "", err
+	validator := func(name string, value string) (complaint string, err error) {
+		if re.MatchString(value) {
+			return "", nil
 		}
-
-		token := strings.TrimSpace(line)
-		if re.MatchString(token) {
-			return token, nil
-		}
-
-		fmt.Println("token has incorrect format")
+		return "token has incorrect format", nil
 	}
+
+	return input.Prompt("Enter token", "token", input.Required, validator)
 }
 
-func loginAndRequestToken(owner, project string) (string, error) {
+func loginAndRequestToken(login, owner, project string) (string, error) {
 	fmt.Println("git-bug will now generate an access token in your Github profile. Your credential are not stored and are only used to generate the token. The token is stored in the global git config.")
 	fmt.Println()
 	fmt.Println("The access scope depend on the type of repository.")
@@ -348,17 +333,13 @@ func loginAndRequestToken(owner, project string) (string, error) {
 	fmt.Println()
 
 	// prompt project visibility to know the token scope needed for the repository
-	isPublic, err := promptProjectVisibility()
+	i, err := input.PromptChoice("repository visibility", []string{"public", "private"})
 	if err != nil {
 		return "", err
 	}
+	isPublic := i == 0
 
-	username, err := promptUsername()
-	if err != nil {
-		return "", err
-	}
-
-	password, err := promptPassword()
+	password, err := input.PromptPassword("Password", "password", input.Required)
 	if err != nil {
 		return "", err
 	}
@@ -377,7 +358,7 @@ func loginAndRequestToken(owner, project string) (string, error) {
 
 	note := fmt.Sprintf("git-bug - %s/%s", owner, project)
 
-	resp, err := requestToken(note, username, password, scope)
+	resp, err := requestToken(note, login, password, scope)
 	if err != nil {
 		return "", err
 	}
@@ -387,12 +368,12 @@ func loginAndRequestToken(owner, project string) (string, error) {
 	// Handle 2FA is needed
 	OTPHeader := resp.Header.Get("X-GitHub-OTP")
 	if resp.StatusCode == http.StatusUnauthorized && OTPHeader != "" {
-		otpCode, err := prompt2FA()
+		otpCode, err := input.PromptPassword("Two-factor authentication code", "code", input.Required)
 		if err != nil {
 			return "", err
 		}
 
-		resp, err = requestTokenWith2FA(note, username, password, otpCode, scope)
+		resp, err = requestTokenWith2FA(note, login, password, otpCode, scope)
 		if err != nil {
 			return "", err
 		}
@@ -406,29 +387,6 @@ func loginAndRequestToken(owner, project string) (string, error) {
 
 	b, _ := ioutil.ReadAll(resp.Body)
 	return "", fmt.Errorf("error creating token %v: %v", resp.StatusCode, string(b))
-}
-
-func promptUsername() (string, error) {
-	for {
-		fmt.Print("username: ")
-
-		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
-		if err != nil {
-			return "", err
-		}
-
-		line = strings.TrimSpace(line)
-
-		ok, err := validateUsername(line)
-		if err != nil {
-			return "", err
-		}
-		if ok {
-			return line, nil
-		}
-
-		fmt.Println("invalid username")
-	}
 }
 
 func promptURL(repo repository.RepoCommon) (string, string, error) {
@@ -584,88 +542,4 @@ func validateProject(owner, project string, token *auth.Token) (bool, error) {
 	}
 
 	return resp.StatusCode == http.StatusOK, nil
-}
-
-func promptPassword() (string, error) {
-	termState, err := terminal.GetState(int(syscall.Stdin))
-	if err != nil {
-		return "", err
-	}
-
-	cancel := interrupt.RegisterCleaner(func() error {
-		return terminal.Restore(int(syscall.Stdin), termState)
-	})
-	defer cancel()
-
-	for {
-		fmt.Print("password: ")
-
-		bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
-		// new line for coherent formatting, ReadPassword clip the normal new line
-		// entered by the user
-		fmt.Println()
-
-		if err != nil {
-			return "", err
-		}
-
-		if len(bytePassword) > 0 {
-			return string(bytePassword), nil
-		}
-
-		fmt.Println("password is empty")
-	}
-}
-
-func prompt2FA() (string, error) {
-	termState, err := terminal.GetState(int(syscall.Stdin))
-	if err != nil {
-		return "", err
-	}
-
-	cancel := interrupt.RegisterCleaner(func() error {
-		return terminal.Restore(int(syscall.Stdin), termState)
-	})
-	defer cancel()
-
-	for {
-		fmt.Print("two-factor authentication code: ")
-
-		byte2fa, err := terminal.ReadPassword(int(syscall.Stdin))
-		fmt.Println()
-		if err != nil {
-			return "", err
-		}
-
-		if len(byte2fa) > 0 {
-			return string(byte2fa), nil
-		}
-
-		fmt.Println("code is empty")
-	}
-}
-
-func promptProjectVisibility() (bool, error) {
-	for {
-		fmt.Println("[1]: public")
-		fmt.Println("[2]: private")
-		fmt.Print("repository visibility: ")
-
-		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
-		fmt.Println()
-		if err != nil {
-			return false, err
-		}
-
-		line = strings.TrimSpace(line)
-
-		index, err := strconv.Atoi(line)
-		if err != nil || (index != 1 && index != 2) {
-			fmt.Println("invalid input")
-			continue
-		}
-
-		// return true for public repositories, false for private
-		return index == 1, nil
-	}
 }

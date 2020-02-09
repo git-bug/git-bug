@@ -21,6 +21,7 @@ import (
 
 func TestImport(t *testing.T) {
 	author := identity.NewIdentity("Amine Hilaly", "hilalyamine@gmail.com")
+
 	tests := []struct {
 		name string
 		url  string
@@ -94,13 +95,11 @@ func TestImport(t *testing.T) {
 		t.Skip("Env var GITLAB_PROJECT_ID missing")
 	}
 
-	err = author.Commit(repo)
-	require.NoError(t, err)
+	login := "test-identity"
+	author.SetMetadata(metaKeyGitlabLogin, login)
 
-	err = identity.SetUserIdentity(repo, author)
-	require.NoError(t, err)
-
-	token := auth.NewToken(author.Id(), envToken, target)
+	token := auth.NewToken(envToken, target)
+	token.SetMetadata(metaKeyGitlabLogin, login)
 	err = auth.Store(repo, token)
 	require.NoError(t, err)
 

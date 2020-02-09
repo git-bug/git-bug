@@ -28,16 +28,18 @@ const (
 )
 
 var bridgeImpl map[string]reflect.Type
+var bridgeLoginMetaKey map[string]string
 
 // BridgeParams holds parameters to simplify the bridge configuration without
 // having to make terminal prompts.
 type BridgeParams struct {
-	Owner      string
-	Project    string
-	URL        string
-	BaseURL    string
-	CredPrefix string
-	TokenRaw   string
+	Owner      string // owner of the repo                    (Github)
+	Project    string // name of the repo                     (Github,         Launchpad)
+	URL        string // complete URL of a repo               (Github, Gitlab, Launchpad)
+	BaseURL    string // base URL for self-hosted instance    (        Gitlab)
+	CredPrefix string // ID prefix of the credential to use   (Github, Gitlab)
+	TokenRaw   string // pre-existing token to use            (Github, Gitlab)
+	Login      string // username for the passed credential   (Github, Gitlab)
 }
 
 // Bridge is a wrapper around a BridgeImpl that will bind low-level
@@ -58,7 +60,11 @@ func Register(impl BridgeImpl) {
 	if bridgeImpl == nil {
 		bridgeImpl = make(map[string]reflect.Type)
 	}
+	if bridgeLoginMetaKey == nil {
+		bridgeLoginMetaKey = make(map[string]string)
+	}
 	bridgeImpl[impl.Target()] = reflect.TypeOf(impl)
+	bridgeLoginMetaKey[impl.Target()] = impl.LoginMetaKey()
 }
 
 // Targets return all known bridge implementation target
@@ -78,6 +84,18 @@ func Targets() []string {
 func TargetExist(target string) bool {
 	_, ok := bridgeImpl[target]
 	return ok
+}
+
+// LoginMetaKey return the metadata key used to store the remote bug-tracker login
+// on the user identity. The corresponding value is used to match identities and
+// credentials.
+func LoginMetaKey(target string) (string, error) {
+	metaKey, ok := bridgeLoginMetaKey[target]
+	if !ok {
+		return "", fmt.Errorf("unknown bridge target %v", target)
+	}
+
+	return metaKey, nil
 }
 
 // Instantiate a new Bridge for a repo, from the given target and name

@@ -11,3 +11,8 @@ func (k *Key) Validate() error {
 
 	return nil
 }
+
+func (k *Key) Clone() *Key {
+	clone := *k
+	return &clone
+}

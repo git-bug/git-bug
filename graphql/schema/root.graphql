@@ -3,6 +3,8 @@ type Query {
     defaultRepository: Repository
     """Access a repository by reference/name."""
     repository(ref: String!): Repository
+
+    #TODO: connection for all repositories
 }
 
 type Mutation {

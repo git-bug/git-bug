@@ -13,6 +13,11 @@ type BridgeImpl interface {
 	// Target return the target of the bridge (e.g.: "github")
 	Target() string
 
+	// LoginMetaKey return the metadata key used to store the remote bug-tracker login
+	// on the user identity. The corresponding value is used to match identities and
+	// credentials.
+	LoginMetaKey() string
+
 	// Configure handle the user interaction and return a key/value configuration
 	// for future use
 	Configure(repo *cache.RepoCache, params BridgeParams) (Configuration, error)

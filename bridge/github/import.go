@@ -12,14 +12,7 @@ import (
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/text"
-)
-
-const (
-	metaKeyGithubId    = "github-id"
-	metaKeyGithubUrl   = "github-url"
-	metaKeyGithubLogin = "github-login"
 )
 
 // githubImporter implement the Importer interface
@@ -39,20 +32,7 @@ type githubImporter struct {
 func (gi *githubImporter) Init(repo *cache.RepoCache, conf core.Configuration) error {
 	gi.conf = conf
 
-	opts := []auth.Option{
-		auth.WithTarget(target),
-		auth.WithKind(auth.KindToken),
-	}
-
-	user, err := repo.GetUserIdentity()
-	if err == nil {
-		opts = append(opts, auth.WithUserId(user.Id()))
-	}
-	if err == identity.ErrNoIdentitySet {
-		opts = append(opts, auth.WithUserId(auth.DefaultUserId))
-	}
-
-	creds, err := auth.List(repo, opts...)
+	creds, err := auth.List(repo, auth.WithTarget(target), auth.WithKind(auth.KindToken))
 	if err != nil {
 		return err
 	}
@@ -554,10 +534,14 @@ func (gi *githubImporter) ensurePerson(repo *cache.RepoCache, actor *actor) (*ca
 	case "Bot":
 	}
 
+	// Name is not necessarily set, fallback to login as a name is required in the identity
+	if name == "" {
+		name = string(actor.Login)
+	}
+
 	i, err = repo.NewIdentityRaw(
 		name,
 		email,
-		string(actor.Login),
 		string(actor.AvatarUrl),
 		map[string]string{
 			metaKeyGithubLogin: string(actor.Login),
@@ -604,7 +588,6 @@ func (gi *githubImporter) getGhost(repo *cache.RepoCache) (*cache.IdentityCache,
 	return repo.NewIdentityRaw(
 		name,
 		"",
-		string(q.User.Login),
 		string(q.User.AvatarUrl),
 		map[string]string{
 			metaKeyGithubLogin: string(q.User.Login),

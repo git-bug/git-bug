@@ -25,7 +25,7 @@ require (
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.4.0
 	github.com/theckman/goconstraint v1.11.0
-	github.com/vektah/gqlparser v1.2.1
+	github.com/vektah/gqlparser v1.3.1
 	github.com/xanzy/go-gitlab v0.24.0
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550
 	golang.org/x/oauth2 v0.0.0-20181106182150-f42d05182288

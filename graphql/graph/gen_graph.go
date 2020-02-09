@@ -210,7 +210,6 @@ type ComplexityRoot struct {
 		HumanID     func(childComplexity int) int
 		ID          func(childComplexity int) int
 		IsProtected func(childComplexity int) int
-		Login       func(childComplexity int) int
 		Name        func(childComplexity int) int
 	}
 
@@ -1138,13 +1137,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Identity.IsProtected(childComplexity), true
-
-	case "Identity.login":
-		if e.complexity.Identity.Login == nil {
-			break
-		}
-
-		return e.complexity.Identity.Login(childComplexity), true
 
 	case "Identity.name":
 		if e.complexity.Identity.Name == nil {
@@ -2319,11 +2311,7 @@ type Identity {
 	"""
 	email: String
 	"""
-	The login of the person, if known.
-	"""
-	login: String
-	"""
-	A string containing the either the name of the person, its login or both
+	A non-empty string to display, representing the identity, based on the non-empty values.
 	"""
 	displayName: String!
 	"""
@@ -6202,37 +6190,6 @@ func (ec *executionContext) _Identity_email(ctx context.Context, field graphql.C
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Email(), nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalOString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Identity_login(ctx context.Context, field graphql.CollectedField, obj identity.Interface) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:   "Identity",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Login(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11946,8 +11903,6 @@ func (ec *executionContext) _Identity(ctx context.Context, sel ast.SelectionSet,
 			out.Values[i] = ec._Identity_name(ctx, field, obj)
 		case "email":
 			out.Values[i] = ec._Identity_email(ctx, field, obj)
-		case "login":
-			out.Values[i] = ec._Identity_login(ctx, field, obj)
 		case "displayName":
 			out.Values[i] = ec._Identity_displayName(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

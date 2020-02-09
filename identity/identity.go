@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"reflect"
 	"strings"
 	"time"
 
@@ -55,14 +56,13 @@ func NewIdentity(name string, email string) *Identity {
 	}
 }
 
-func NewIdentityFull(name string, email string, login string, avatarUrl string) *Identity {
+func NewIdentityFull(name string, email string, avatarUrl string) *Identity {
 	return &Identity{
 		id: entity.UnsetId,
 		versions: []*Version{
 			{
 				name:      name,
 				email:     email,
-				login:     login,
 				avatarURL: avatarUrl,
 				nonce:     makeNonce(20),
 			},
@@ -271,8 +271,31 @@ func IsUserIdentitySet(repo repository.Repo) (bool, error) {
 	return len(configs) == 1, nil
 }
 
-func (i *Identity) AddVersion(version *Version) {
-	i.versions = append(i.versions, version)
+type Mutator struct {
+	Name      string
+	Email     string
+	AvatarUrl string
+	Keys      []*Key
+}
+
+// Mutate allow to create a new version of the Identity
+func (i *Identity) Mutate(f func(orig Mutator) Mutator) {
+	orig := Mutator{
+		Name:      i.Name(),
+		Email:     i.Email(),
+		AvatarUrl: i.AvatarUrl(),
+		Keys:      i.Keys(),
+	}
+	mutated := f(orig)
+	if reflect.DeepEqual(orig, mutated) {
+		return
+	}
+	i.versions = append(i.versions, &Version{
+		name:      mutated.Name,
+		email:     mutated.Email,
+		avatarURL: mutated.AvatarUrl,
+		keys:      mutated.Keys,
+	})
 }
 
 // Write the identity into the Repository. In particular, this ensure that
@@ -478,24 +501,19 @@ func (i *Identity) Email() string {
 	return i.lastVersion().email
 }
 
-// Login return the last version of the login
-func (i *Identity) Login() string {
-	return i.lastVersion().login
-}
-
 // AvatarUrl return the last version of the Avatar URL
 func (i *Identity) AvatarUrl() string {
 	return i.lastVersion().avatarURL
 }
 
 // Keys return the last version of the valid keys
-func (i *Identity) Keys() []Key {
+func (i *Identity) Keys() []*Key {
 	return i.lastVersion().keys
 }
 
 // ValidKeysAtTime return the set of keys valid at a given lamport time
-func (i *Identity) ValidKeysAtTime(time lamport.Time) []Key {
-	var result []Key
+func (i *Identity) ValidKeysAtTime(time lamport.Time) []*Key {
+	var result []*Key
 
 	for _, v := range i.versions {
 		if v.time > time {
@@ -511,16 +529,7 @@ func (i *Identity) ValidKeysAtTime(time lamport.Time) []Key {
 // DisplayName return a non-empty string to display, representing the
 // identity, based on the non-empty values.
 func (i *Identity) DisplayName() string {
-	switch {
-	case i.Name() == "" && i.Login() != "":
-		return i.Login()
-	case i.Name() != "" && i.Login() == "":
-		return i.Name()
-	case i.Name() != "" && i.Login() != "":
-		return fmt.Sprintf("%s (%s)", i.Name(), i.Login())
-	}
-
-	panic("invalid person data")
+	return i.Name()
 }
 
 // IsProtected return true if the chain of git commits started to be signed.
@@ -540,9 +549,13 @@ func (i *Identity) LastModification() timestamp.Timestamp {
 	return timestamp.Timestamp(i.lastVersion().unixTime)
 }
 
-// SetMetadata store arbitrary metadata along the last defined Version.
-// If the Version has been commit to git already, it won't be overwritten.
+// SetMetadata store arbitrary metadata along the last not-commit Version.
+// If the Version has been commit to git already, a new identical version is added and will need to be
+// commit.
 func (i *Identity) SetMetadata(key string, value string) {
+	if i.lastVersion().commitHash != "" {
+		i.versions = append(i.versions, i.lastVersion().Clone())
+	}
 	i.lastVersion().SetMetadata(key, value)
 }
 
@@ -574,4 +587,10 @@ func (i *Identity) MutableMetadata() map[string]string {
 	}
 
 	return metadata
+}
+
+// addVersionForTest add a new version to the identity
+// Only for testing !
+func (i *Identity) addVersionForTest(version *Version) {
+	i.versions = append(i.versions, version)
 }

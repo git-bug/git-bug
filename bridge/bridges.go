@@ -21,6 +21,13 @@ func Targets() []string {
 	return core.Targets()
 }
 
+// LoginMetaKey return the metadata key used to store the remote bug-tracker login
+// on the user identity. The corresponding value is used to match identities and
+// credentials.
+func LoginMetaKey(target string) (string, error) {
+	return core.LoginMetaKey(target)
+}
+
 // Instantiate a new Bridge for a repo, from the given target and name
 func NewBridge(repo *cache.RepoCache, target string, name string) (*core.Bridge, error) {
 	return core.NewBridge(repo, target, name)

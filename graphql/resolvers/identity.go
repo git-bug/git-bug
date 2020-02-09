@@ -15,6 +15,7 @@ func (identityResolver) ID(ctx context.Context, obj identity.Interface) (string,
 	return obj.Id().String(), nil
 }
 
-func (identityResolver) HumanID(ctx context.Context, obj identity.Interface) (string, error) {
+func (r identityResolver) HumanID(ctx context.Context, obj identity.Interface) (string, error) {
 	return obj.Id().Human(), nil
+
 }

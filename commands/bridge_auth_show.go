@@ -2,13 +2,14 @@ package commands
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
 
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/util/colors"
 	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
@@ -25,34 +26,25 @@ func runBridgeAuthShow(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var userFmt string
-
-	switch cred.UserId() {
-	case auth.DefaultUserId:
-		userFmt = colors.Red("default user")
-	default:
-		user, err := backend.ResolveIdentity(cred.UserId())
-		if err != nil {
-			return err
-		}
-		userFmt = user.DisplayName()
-
-		defaultUser, _ := backend.GetUserIdentity()
-		if cred.UserId() == defaultUser.Id() {
-			userFmt = colors.Red(userFmt)
-		}
-	}
-
 	fmt.Printf("Id: %s\n", cred.ID())
 	fmt.Printf("Target: %s\n", cred.Target())
 	fmt.Printf("Kind: %s\n", cred.Kind())
-	fmt.Printf("User: %s\n", userFmt)
 	fmt.Printf("Creation: %s\n", cred.CreateTime().Format(time.RFC822))
 
 	switch cred := cred.(type) {
 	case *auth.Token:
 		fmt.Printf("Value: %s\n", cred.Value)
 	}
+
+	fmt.Println("Metadata:")
+
+	meta := make([]string, 0, len(cred.Metadata()))
+	for key, value := range cred.Metadata() {
+		meta = append(meta, fmt.Sprintf("    %s --> %s\n", key, value))
+	}
+	sort.Strings(meta)
+
+	fmt.Print(strings.Join(meta, ""))
 
 	return nil
 }

@@ -44,7 +44,7 @@ func TestIdentityCommitLoad(t *testing.T) {
 				time:  100,
 				name:  "René Descartes",
 				email: "rene.descartes@example.com",
-				keys: []Key{
+				keys: []*Key{
 					{PubKey: "pubkeyA"},
 				},
 			},
@@ -52,7 +52,7 @@ func TestIdentityCommitLoad(t *testing.T) {
 				time:  200,
 				name:  "René Descartes",
 				email: "rene.descartes@example.com",
-				keys: []Key{
+				keys: []*Key{
 					{PubKey: "pubkeyB"},
 				},
 			},
@@ -60,7 +60,7 @@ func TestIdentityCommitLoad(t *testing.T) {
 				time:  201,
 				name:  "René Descartes",
 				email: "rene.descartes@example.com",
-				keys: []Key{
+				keys: []*Key{
 					{PubKey: "pubkeyC"},
 				},
 			},
@@ -79,20 +79,25 @@ func TestIdentityCommitLoad(t *testing.T) {
 
 	// add more version
 
-	identity.AddVersion(&Version{
+	identity.Mutate(func(orig Mutator) Mutator {
+
+		return orig
+	})
+
+	identity.addVersionForTest(&Version{
 		time:  201,
 		name:  "René Descartes",
 		email: "rene.descartes@example.com",
-		keys: []Key{
+		keys: []*Key{
 			{PubKey: "pubkeyD"},
 		},
 	})
 
-	identity.AddVersion(&Version{
+	identity.addVersionForTest(&Version{
 		time:  300,
 		name:  "René Descartes",
 		email: "rene.descartes@example.com",
-		keys: []Key{
+		keys: []*Key{
 			{PubKey: "pubkeyE"},
 		},
 	})
@@ -123,7 +128,7 @@ func TestIdentity_ValidKeysAtTime(t *testing.T) {
 				time:  100,
 				name:  "René Descartes",
 				email: "rene.descartes@example.com",
-				keys: []Key{
+				keys: []*Key{
 					{PubKey: "pubkeyA"},
 				},
 			},
@@ -131,7 +136,7 @@ func TestIdentity_ValidKeysAtTime(t *testing.T) {
 				time:  200,
 				name:  "René Descartes",
 				email: "rene.descartes@example.com",
-				keys: []Key{
+				keys: []*Key{
 					{PubKey: "pubkeyB"},
 				},
 			},
@@ -139,7 +144,7 @@ func TestIdentity_ValidKeysAtTime(t *testing.T) {
 				time:  201,
 				name:  "René Descartes",
 				email: "rene.descartes@example.com",
-				keys: []Key{
+				keys: []*Key{
 					{PubKey: "pubkeyC"},
 				},
 			},
@@ -147,7 +152,7 @@ func TestIdentity_ValidKeysAtTime(t *testing.T) {
 				time:  201,
 				name:  "René Descartes",
 				email: "rene.descartes@example.com",
-				keys: []Key{
+				keys: []*Key{
 					{PubKey: "pubkeyD"},
 				},
 			},
@@ -155,7 +160,7 @@ func TestIdentity_ValidKeysAtTime(t *testing.T) {
 				time:  300,
 				name:  "René Descartes",
 				email: "rene.descartes@example.com",
-				keys: []Key{
+				keys: []*Key{
 					{PubKey: "pubkeyE"},
 				},
 			},
@@ -163,13 +168,13 @@ func TestIdentity_ValidKeysAtTime(t *testing.T) {
 	}
 
 	assert.Nil(t, identity.ValidKeysAtTime(10))
-	assert.Equal(t, identity.ValidKeysAtTime(100), []Key{{PubKey: "pubkeyA"}})
-	assert.Equal(t, identity.ValidKeysAtTime(140), []Key{{PubKey: "pubkeyA"}})
-	assert.Equal(t, identity.ValidKeysAtTime(200), []Key{{PubKey: "pubkeyB"}})
-	assert.Equal(t, identity.ValidKeysAtTime(201), []Key{{PubKey: "pubkeyD"}})
-	assert.Equal(t, identity.ValidKeysAtTime(202), []Key{{PubKey: "pubkeyD"}})
-	assert.Equal(t, identity.ValidKeysAtTime(300), []Key{{PubKey: "pubkeyE"}})
-	assert.Equal(t, identity.ValidKeysAtTime(3000), []Key{{PubKey: "pubkeyE"}})
+	assert.Equal(t, identity.ValidKeysAtTime(100), []*Key{{PubKey: "pubkeyA"}})
+	assert.Equal(t, identity.ValidKeysAtTime(140), []*Key{{PubKey: "pubkeyA"}})
+	assert.Equal(t, identity.ValidKeysAtTime(200), []*Key{{PubKey: "pubkeyB"}})
+	assert.Equal(t, identity.ValidKeysAtTime(201), []*Key{{PubKey: "pubkeyD"}})
+	assert.Equal(t, identity.ValidKeysAtTime(202), []*Key{{PubKey: "pubkeyD"}})
+	assert.Equal(t, identity.ValidKeysAtTime(300), []*Key{{PubKey: "pubkeyE"}})
+	assert.Equal(t, identity.ValidKeysAtTime(3000), []*Key{{PubKey: "pubkeyE"}})
 }
 
 // Test the immutable or mutable metadata search
@@ -189,7 +194,7 @@ func TestMetadata(t *testing.T) {
 	assertHasKeyValue(t, identity.MutableMetadata(), "key1", "value1")
 
 	// try override
-	identity.AddVersion(&Version{
+	identity.addVersionForTest(&Version{
 		name:  "René Descartes",
 		email: "rene.descartes@example.com",
 	})

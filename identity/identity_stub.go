@@ -64,11 +64,11 @@ func (IdentityStub) AvatarUrl() string {
 	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 
-func (IdentityStub) Keys() []Key {
+func (IdentityStub) Keys() []*Key {
 	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 
-func (IdentityStub) ValidKeysAtTime(time lamport.Time) []Key {
+func (IdentityStub) ValidKeysAtTime(_ lamport.Time) []*Key {
 	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 
