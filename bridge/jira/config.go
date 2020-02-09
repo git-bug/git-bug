@@ -1,13 +1,9 @@
 package jira
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"os"
-	"strconv"
-	"strings"
 
 	"github.com/pkg/errors"
 
@@ -30,33 +26,14 @@ client logs in with an actual username and password, is assigned a session, and
 passes the session cookie with each request. JIRA Cloud and servers deployed
 after October 1st 2019 must use "TOKEN" authentication. You must create a user
 API token and the client will provide this along with your username with each
-request.
-
-Which authentication mechanism should this bridge use?
-[1]: SESSION
-[2]: TOKEN
-`
-const credentialsText = `
-How would you like to store your JIRA login credentials?
-[1]: sidecar JSON file: Your credentials will be stored in a JSON sidecar next
-     to your git config. Note that it will contain your JIRA password in clear
-     text.
-[2]: git-config: Your credentials will be stored in the git config. Note that
-     it will contain your JIRA password in clear text.
-[3]: username in config, askpass: Your username will be stored in the git
-     config. We will ask you for your password each time you execute the bridge.
-`
+request.`
 
 // Configure sets up the bridge configuration
 func (g *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams) (core.Configuration, error) {
 	conf := make(core.Configuration)
+	conf[core.ConfigKeyTarget] = target
+
 	var err error
-	var url string
-	var project string
-	var credentialsFile string
-	var username string
-	var password string
-	var serverURL string
 
 	// if params.Token != "" || params.TokenStdin {
 	// 	return nil, fmt.Errorf(
@@ -65,62 +42,33 @@ func (g *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams) (core.
 	// }
 
 	if params.Owner != "" {
-		return nil, fmt.Errorf("owner doesn't make sense for jira")
+		fmt.Println("warning: --owner is ineffective for a Jira bridge")
 	}
 
-	serverURL = params.URL
-	if url == "" {
+	serverURL := params.URL
+	if serverURL == "" {
 		// terminal prompt
-		serverURL, err = prompt("JIRA server URL", "URL")
+		serverURL, err = input.Prompt("JIRA server URL", "URL", input.Required)
 		if err != nil {
 			return nil, err
 		}
 	}
-
-	project = params.Project
-	if project == "" {
-		project, err = prompt("JIRA project key", "project")
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	credType, err := promptOptions(credTypeText, 1, 2)
-	if err != nil {
-		return nil, err
-	}
-
-	choice, err := promptOptions(credentialsText, 1, 3)
-	if err != nil {
-		return nil, err
-	}
-
-	if choice == 1 {
-		credentialsFile, err = prompt("Credentials file path", "path")
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	username, err = prompt("JIRA username", "username")
-	if err != nil {
-		return nil, err
-	}
-
-	password, err = input.PromptPassword("Password", "password", input.Required)
-	if err != nil {
-		return nil, err
-	}
-
-	jsonData, err := json.Marshal(
-		&SessionQuery{Username: username, Password: password})
-	if err != nil {
-		return nil, err
-	}
-
-	conf[core.ConfigKeyTarget] = target
 	conf[keyServer] = serverURL
+
+	project := params.Project
+	if project == "" {
+		project, err = input.Prompt("JIRA project key", "project", input.Required)
+		if err != nil {
+			return nil, err
+		}
+	}
 	conf[keyProject] = project
+
+	fmt.Println(credTypeText)
+	credType, err := input.PromptChoice("Authentication mechanism", []string{"SESSION", "TOKEN"})
+	if err != nil {
+		return nil, err
+	}
 
 	switch credType {
 	case 1:
@@ -129,9 +77,42 @@ func (g *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams) (core.
 		conf[keyCredentialsType] = "TOKEN"
 	}
 
-	switch choice {
+	fmt.Println("How would you like to store your JIRA login credentials?")
+	credTargetChoice, err := input.PromptChoice("Credential storage", []string{
+		"sidecar JSON file: Your credentials will be stored in a JSON sidecar next" +
+			"to your git config. Note that it will contain your JIRA password in clear" +
+			"text.",
+		"git-config: Your credentials will be stored in the git config. Note that" +
+			"it will contain your JIRA password in clear text.",
+		"username in config, askpass: Your username will be stored in the git" +
+			"config. We will ask you for your password each time you execute the bridge.",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	username, err := input.Prompt("JIRA username", "username", input.Required)
+	if err != nil {
+		return nil, err
+	}
+
+	password, err := input.PromptPassword("Password", "password", input.Required)
+	if err != nil {
+		return nil, err
+	}
+
+	switch credTargetChoice {
 	case 1:
+		// TODO: a validator to see if the path is writable ?
+		credentialsFile, err := input.Prompt("Credentials file path", "path", input.Required)
+		if err != nil {
+			return nil, err
+		}
 		conf[keyCredentialsFile] = credentialsFile
+		jsonData, err := json.Marshal(&SessionQuery{Username: username, Password: password})
+		if err != nil {
+			return nil, err
+		}
 		err = ioutil.WriteFile(credentialsFile, jsonData, 0644)
 		if err != nil {
 			return nil, errors.Wrap(
@@ -183,50 +164,4 @@ func (*Jira) ValidateConfig(conf core.Configuration) error {
 	}
 
 	return nil
-}
-
-func promptOptions(description string, minVal, maxVal int) (int, error) {
-	fmt.Print(description)
-	for {
-		fmt.Print("Select option: ")
-
-		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
-		fmt.Println()
-		if err != nil {
-			return -1, err
-		}
-
-		line = strings.TrimRight(line, "\n")
-
-		index, err := strconv.Atoi(line)
-		if err != nil {
-			fmt.Println("invalid input")
-			continue
-		}
-		if index < minVal || index > maxVal {
-			fmt.Println("invalid choice")
-			continue
-		}
-
-		return index, nil
-	}
-}
-
-func prompt(description, name string) (string, error) {
-	for {
-		fmt.Printf("%s: ", description)
-
-		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
-		if err != nil {
-			return "", err
-		}
-
-		line = strings.TrimRight(line, "\n")
-		if line == "" {
-			fmt.Printf("%s is empty\n", name)
-			continue
-		}
-
-		return line, nil
-	}
 }
