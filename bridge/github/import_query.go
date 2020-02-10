@@ -168,14 +168,6 @@ type ghostQuery struct {
 	} `graphql:"user(login: $login)"`
 }
 
-type labelQuery struct {
-	Repository struct {
-		Label struct {
-			ID string `graphql:"id"`
-		} `graphql:"label(name: $label)"`
-	} `graphql:"repository(owner: $owner, name: $name)"`
-}
-
 type labelsQuery struct {
 	Repository struct {
 		Labels struct {
@@ -188,4 +180,10 @@ type labelsQuery struct {
 			PageInfo pageInfo
 		} `graphql:"labels(first: $first, after: $after)"`
 	} `graphql:"repository(owner: $owner, name: $name)"`
+}
+
+type loginQuery struct {
+	Viewer struct {
+		Login string `graphql:"login"`
+	} `graphql:"viewer"`
 }

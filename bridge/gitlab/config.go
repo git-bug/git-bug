@@ -35,9 +35,6 @@ func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 	if params.Owner != "" {
 		fmt.Println("warning: --owner is ineffective for a gitlab bridge")
 	}
-	if params.Login != "" {
-		fmt.Println("warning: --login is ineffective for a gitlab bridge")
-	}
 
 	conf := make(core.Configuration)
 	var err error
@@ -53,24 +50,25 @@ func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 		}
 	}
 
-	var url string
+	var projectURL string
 
 	// get project url
 	switch {
 	case params.URL != "":
-		url = params.URL
+		projectURL = params.URL
 	default:
 		// terminal prompt
-		url, err = promptURL(repo, baseUrl)
+		projectURL, err = promptProjectURL(repo, baseUrl)
 		if err != nil {
 			return nil, errors.Wrap(err, "url prompt")
 		}
 	}
 
-	if !strings.HasPrefix(url, params.BaseURL) {
-		return nil, fmt.Errorf("base URL (%s) doesn't match the project URL (%s)", params.BaseURL, url)
+	if !strings.HasPrefix(projectURL, params.BaseURL) {
+		return nil, fmt.Errorf("base URL (%s) doesn't match the project URL (%s)", params.BaseURL, projectURL)
 	}
 
+	var login string
 	var cred auth.Credential
 
 	switch {
@@ -79,16 +77,30 @@ func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 		if err != nil {
 			return nil, err
 		}
+		l, ok := cred.GetMetadata(auth.MetaKeyLogin)
+		if !ok {
+			return nil, fmt.Errorf("credential doesn't have a login")
+		}
+		login = l
 	case params.TokenRaw != "":
 		token := auth.NewToken(params.TokenRaw, target)
-		login, err := getLoginFromToken(baseUrl, token)
+		login, err = getLoginFromToken(baseUrl, token)
 		if err != nil {
 			return nil, err
 		}
 		token.SetMetadata(auth.MetaKeyLogin, login)
+		token.SetMetadata(auth.MetaKeyBaseURL, baseUrl)
 		cred = token
 	default:
-		cred, err = promptTokenOptions(repo, baseUrl)
+		login := params.Login
+		if login == "" {
+			// TODO: validate username
+			login, err = input.Prompt("Gitlab login", "login", input.Required)
+			if err != nil {
+				return nil, err
+			}
+		}
+		cred, err = promptTokenOptions(repo, login, baseUrl)
 		if err != nil {
 			return nil, err
 		}
@@ -100,7 +112,7 @@ func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 	}
 
 	// validate project url and get its ID
-	id, err := validateProjectURL(baseUrl, url, token)
+	id, err := validateProjectURL(baseUrl, projectURL, token)
 	if err != nil {
 		return nil, errors.Wrap(err, "project validation")
 	}
@@ -122,7 +134,7 @@ func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 		}
 	}
 
-	return conf, nil
+	return conf, core.FinishConfig(repo, metaKeyGitlabLogin, login)
 }
 
 func (g *Gitlab) ValidateConfig(conf core.Configuration) error {
@@ -176,9 +188,14 @@ func promptBaseUrl() (string, error) {
 	return input.Prompt("Base url", "url", input.Required, validator)
 }
 
-func promptTokenOptions(repo repository.RepoConfig, baseUrl string) (auth.Credential, error) {
+func promptTokenOptions(repo repository.RepoConfig, login, baseUrl string) (auth.Credential, error) {
 	for {
-		creds, err := auth.List(repo, auth.WithTarget(target), auth.WithKind(auth.KindToken))
+		creds, err := auth.List(repo,
+			auth.WithTarget(target),
+			auth.WithKind(auth.KindToken),
+			auth.WithMeta(auth.MetaKeyLogin, login),
+			auth.WithMeta(auth.MetaKeyBaseURL, baseUrl),
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -262,11 +279,12 @@ func promptToken(baseUrl string) (*auth.Token, error) {
 
 	token := auth.NewToken(rawToken, target)
 	token.SetMetadata(auth.MetaKeyLogin, login)
+	token.SetMetadata(auth.MetaKeyBaseURL, baseUrl)
 
 	return token, nil
 }
 
-func promptURL(repo repository.RepoCommon, baseUrl string) (string, error) {
+func promptProjectURL(repo repository.RepoCommon, baseUrl string) (string, error) {
 	// remote suggestions
 	remotes, err := repo.GetRemotes()
 	if err != nil {
@@ -317,13 +335,13 @@ func promptURL(repo repository.RepoCommon, baseUrl string) (string, error) {
 			return "", err
 		}
 
-		url := strings.TrimSpace(line)
-		if url == "" {
+		projectURL := strings.TrimSpace(line)
+		if projectURL == "" {
 			fmt.Println("URL is empty")
 			continue
 		}
 
-		return url, nil
+		return projectURL, nil
 	}
 }
 

@@ -3,6 +3,7 @@ package github
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -70,25 +71,7 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 		return nil, fmt.Errorf("invalid parameter owner: %v", owner)
 	}
 
-	login := params.Login
-	if login == "" {
-		validator := func(name string, value string) (string, error) {
-			ok, err := validateUsername(value)
-			if err != nil {
-				return "", err
-			}
-			if !ok {
-				return "invalid login", nil
-			}
-			return "", nil
-		}
-
-		login, err = input.Prompt("Github login", "login", input.Required, validator)
-		if err != nil {
-			return nil, err
-		}
-	}
-
+	var login string
 	var cred auth.Credential
 
 	switch {
@@ -97,10 +80,27 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 		if err != nil {
 			return nil, err
 		}
+		l, ok := cred.GetMetadata(auth.MetaKeyLogin)
+		if !ok {
+			return nil, fmt.Errorf("credential doesn't have a login")
+		}
+		login = l
 	case params.TokenRaw != "":
-		cred = auth.NewToken(params.TokenRaw, target)
-		cred.SetMetadata(auth.MetaKeyLogin, login)
+		token := auth.NewToken(params.TokenRaw, target)
+		login, err = getLoginFromToken(token)
+		if err != nil {
+			return nil, err
+		}
+		token.SetMetadata(auth.MetaKeyLogin, login)
+		cred = token
 	default:
+		login = params.Login
+		if login == "" {
+			login, err = input.Prompt("Github login", "login", input.Required, usernameValidator)
+			if err != nil {
+				return nil, err
+			}
+		}
 		cred, err = promptTokenOptions(repo, login, owner, project)
 		if err != nil {
 			return nil, err
@@ -157,6 +157,17 @@ func (*Github) ValidateConfig(conf core.Configuration) error {
 	}
 
 	return nil
+}
+
+func usernameValidator(name string, value string) (string, error) {
+	ok, err := validateUsername(value)
+	if err != nil {
+		return "", err
+	}
+	if !ok {
+		return "invalid login", nil
+	}
+	return "", nil
 }
 
 func requestToken(note, login, password string, scope string) (*http.Response, error) {
@@ -231,7 +242,11 @@ func randomFingerprint() string {
 
 func promptTokenOptions(repo repository.RepoConfig, login, owner, project string) (auth.Credential, error) {
 	for {
-		creds, err := auth.List(repo, auth.WithTarget(target), auth.WithMeta(auth.MetaKeyLogin, login))
+		creds, err := auth.List(repo,
+			auth.WithTarget(target),
+			auth.WithKind(auth.KindToken),
+			auth.WithMeta(auth.MetaKeyLogin, login),
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -275,13 +290,7 @@ func promptTokenOptions(repo repository.RepoConfig, login, owner, project string
 
 		switch index {
 		case 1:
-			value, err := promptToken()
-			if err != nil {
-				return nil, err
-			}
-			token := auth.NewToken(value, target)
-			token.SetMetadata(auth.MetaKeyLogin, login)
-			return token, nil
+			return promptToken()
 		case 2:
 			value, err := loginAndRequestToken(login, owner, project)
 			if err != nil {
@@ -296,7 +305,7 @@ func promptTokenOptions(repo repository.RepoConfig, login, owner, project string
 	}
 }
 
-func promptToken() (string, error) {
+func promptToken() (*auth.Token, error) {
 	fmt.Println("You can generate a new token by visiting https://github.com/settings/tokens.")
 	fmt.Println("Choose 'Generate new token' and set the necessary access scope for your repository.")
 	fmt.Println()
@@ -312,14 +321,28 @@ func promptToken() (string, error) {
 		panic("regexp compile:" + err.Error())
 	}
 
+	var login string
+
 	validator := func(name string, value string) (complaint string, err error) {
-		if re.MatchString(value) {
-			return "", nil
+		if !re.MatchString(value) {
+			return "token has incorrect format", nil
 		}
-		return "token has incorrect format", nil
+		login, err = getLoginFromToken(auth.NewToken(value, target))
+		if err != nil {
+			return fmt.Sprintf("token is invalid: %v", err), nil
+		}
+		return "", nil
 	}
 
-	return input.Prompt("Enter token", "token", input.Required, validator)
+	rawToken, err := input.Prompt("Enter token", "token", input.Required, validator)
+	if err != nil {
+		return nil, err
+	}
+
+	token := auth.NewToken(rawToken, target)
+	token.SetMetadata(auth.MetaKeyLogin, login)
+
+	return token, nil
 }
 
 func loginAndRequestToken(login, owner, project string) (string, error) {
@@ -542,4 +565,23 @@ func validateProject(owner, project string, token *auth.Token) (bool, error) {
 	}
 
 	return resp.StatusCode == http.StatusOK, nil
+}
+
+func getLoginFromToken(token *auth.Token) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	defer cancel()
+
+	client := buildClient(token)
+
+	var q loginQuery
+
+	err := client.Query(ctx, &q, nil)
+	if err != nil {
+		return "", err
+	}
+	if q.Viewer.Login == "" {
+		return "", fmt.Errorf("github say username is empty")
+	}
+
+	return q.Viewer.Login, nil
 }
