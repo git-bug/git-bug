@@ -10,9 +10,12 @@ generates:
   ./src/gqlTypes.ts:
     plugins:
     - typescript
+  ./src/schema.json:
+    plugins:
+    - introspection
   ./src/:
     plugins:
-    - add: '/* eslint-disable @typescript-eslint/no-unused-vars */'
+    - add: '/* eslint-disable @typescript-eslint/no-unused-vars, import/order */'
     - typescript-operations
     - typescript-react-apollo
     preset: near-operation-file
@@ -25,5 +28,5 @@ generates:
       withHooks: true
 
 hooks:
-  afterOneFileWrite:
-  - eslint --fix
+  afterAllFileWrite:
+  - prettier --write

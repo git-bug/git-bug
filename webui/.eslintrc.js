@@ -1,10 +1,17 @@
-{
-  "extends": [
+module.exports = {
+  extends: [
     "react-app",
     "prettier/@typescript-eslint",
     "plugin:prettier/recommended"
   ],
-  "rules": {
+  plugins: [
+    "graphql"
+  ],
+  rules: {
+    "graphql/template-strings": ["error", {
+      "schemaJson": require("./src/schema.json"),
+      "env": "literal"
+    }],
     "import/order": [
       "error", {
         "alphabetize": {"order": "asc"},
@@ -22,4 +29,4 @@
       }
     ]
   }
-}
+};

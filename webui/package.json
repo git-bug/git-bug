@@ -36,7 +36,9 @@
     "@graphql-codegen/near-operation-file-preset": "^1.12.2-alpha-ea7264f9.15",
     "@graphql-codegen/typescript-operations": "^1.12.1",
     "@graphql-codegen/typescript-react-apollo": "^1.12.1",
+    "@graphql-codegen/introspection": "^1.12.2",
     "eslint-config-prettier": "^6.10.0",
+    "eslint-plugin-graphql": "^3.1.1",
     "eslint-plugin-prettier": "^3.1.2",
     "prettier": "^1.19.1"
   },
@@ -46,7 +48,7 @@
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
     "generate": "graphql-codegen",
-    "lint": "eslint 'src/**/*.{js,jsx,ts,tsx}'"
+    "lint": "eslint src --ext .ts --ext .tsx --ext .js --ext .jsx --ext .graphql"
   },
   "proxy": "http://localhost:3001",
   "browserslist": [

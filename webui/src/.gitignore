@@ -1,3 +1,4 @@
 fragmentTypes.js
 gqlTypes.ts
 *.generated.*
+schema.json
