@@ -14,9 +14,9 @@ const CurrentIdentity = () => {
   const classes = useStyles();
   const { loading, error, data } = useCurrentIdentityQuery();
 
-  if (error || loading || !data?.defaultRepository?.userIdentity) return null;
+  if (error || loading || !data?.repository?.userIdentity) return null;
 
-  const user = data.defaultRepository.userIdentity;
+  const user = data.repository.userIdentity;
   return (
     <>
       <Avatar src={user.avatarUrl ? user.avatarUrl : undefined}>

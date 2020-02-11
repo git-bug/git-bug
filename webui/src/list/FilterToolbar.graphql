@@ -1,5 +1,5 @@
 query BugCount($query: String) {
-  defaultRepository {
+  repository {
     bugs: allBugs(query: $query) {
       totalCount
     }

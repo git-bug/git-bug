@@ -7,7 +7,7 @@ query ListBugs(
   $before: String
   $query: String
 ) {
-  defaultRepository {
+  repository {
     bugs: allBugs(
       first: $first
       last: $last

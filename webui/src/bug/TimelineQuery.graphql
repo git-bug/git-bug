@@ -5,7 +5,7 @@
 #import "./SetStatusFragment.graphql"
 
 query Timeline($id: String!, $first: Int = 10, $after: String) {
-  defaultRepository {
+  repository {
     bug(prefix: $id) {
       timeline(first: $first, after: $after) {
         nodes {

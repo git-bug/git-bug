@@ -15,8 +15,8 @@ const BugQuery: React.FC<Props> = ({ match }: Props) => {
   });
   if (loading) return <CircularProgress />;
   if (error) return <p>Error: {error}</p>;
-  if (!data?.defaultRepository?.bug) return <p>404.</p>;
-  return <Bug bug={data.defaultRepository.bug} />;
+  if (!data?.repository?.bug) return <p>404.</p>;
+  return <Bug bug={data.repository.bug} />;
 };
 
 export default BugQuery;

@@ -203,8 +203,8 @@ function ListQuery() {
   let nextPage = null;
   let previousPage = null;
   let count = 0;
-  if (!loading && !error && data?.defaultRepository?.bugs) {
-    const bugs = data.defaultRepository.bugs;
+  if (!loading && !error && data?.repository?.bugs) {
+    const bugs = data.repository.bugs;
     count = bugs.totalCount;
     // This computes the URL for the next page
     if (bugs.pageInfo.hasNextPage) {
@@ -250,8 +250,8 @@ function ListQuery() {
     content = <Placeholder count={10} />;
   } else if (error) {
     content = <Error error={error} />;
-  } else if (data?.defaultRepository) {
-    const bugs = data.defaultRepository.bugs;
+  } else if (data?.repository) {
+    const bugs = data.repository.bugs;
 
     if (bugs.totalCount === 0) {
       content = <NoBug />;

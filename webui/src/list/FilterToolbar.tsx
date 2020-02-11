@@ -41,9 +41,9 @@ function CountingFilter({ query, children, ...props }: CountingFilterProps) {
 
   var prefix;
   if (loading) prefix = '...';
-  else if (error || !data?.defaultRepository) prefix = '???';
+  else if (error || !data?.repository) prefix = '???';
   // TODO: better prefixes & error handling
-  else prefix = data.defaultRepository.bugs.totalCount;
+  else prefix = data.repository.bugs.totalCount;
 
   return (
     <Filter {...props}>

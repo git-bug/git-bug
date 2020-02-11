@@ -1,5 +1,5 @@
 query CurrentIdentity {
-  defaultRepository {
+  repository {
     userIdentity {
       displayName
       avatarUrl

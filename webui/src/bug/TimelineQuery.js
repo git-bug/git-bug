@@ -15,10 +15,7 @@ const TimelineQuery = ({ id }) => {
   if (loading) return <CircularProgress />;
   if (error) return <p>Error: {error}</p>;
   return (
-    <Timeline
-      ops={data.defaultRepository.bug.timeline.nodes}
-      fetchMore={fetchMore}
-    />
+    <Timeline ops={data.repository.bug.timeline.nodes} fetchMore={fetchMore} />
   );
 };
 
