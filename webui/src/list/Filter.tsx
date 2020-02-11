@@ -1,13 +1,18 @@
 import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { makeStyles } from '@material-ui/styles';
+import { LocationDescriptor } from 'history';
+import clsx from 'clsx';
+import { makeStyles } from '@material-ui/core/styles';
+import { SvgIconProps } from '@material-ui/core/SvgIcon';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import ArrowDropDown from '@material-ui/icons/ArrowDropDown';
 
-function parse(query) {
+export type Query = { [key: string]: Array<string> };
+
+function parse(query: string): Query {
   // TODO: extract the rest of the query?
-  const params = {};
+  const params: Query = {};
 
   // TODO: support escaping without quotes
   const re = /(\w+):([A-Za-z0-9-]+|(["'])(([^\3]|\\.)*)\3)+/g;
@@ -29,7 +34,7 @@ function parse(query) {
   return params;
 }
 
-function quote(value) {
+function quote(value: string): string {
   const hasSingle = value.includes("'");
   const hasDouble = value.includes('"');
   const hasSpaces = value.includes(' ');
@@ -49,19 +54,19 @@ function quote(value) {
   return `"${value}"`;
 }
 
-function stringify(params) {
-  const parts = Object.entries(params).map(([key, values]) => {
+function stringify(params: Query): string {
+  const parts: string[][] = Object.entries(params).map(([key, values]) => {
     return values.map(value => `${key}:${quote(value)}`);
   });
-  return [].concat(...parts).join(' ');
+  return new Array<string>().concat(...parts).join(' ');
 }
 
 const useStyles = makeStyles(theme => ({
   element: {
     ...theme.typography.body2,
-    color: ({ active }) => (active ? '#333' : '#444'),
+    color: '#444',
     padding: theme.spacing(0, 1),
-    fontWeight: ({ active }) => (active ? 600 : 400),
+    fontWeight: 400,
     textDecoration: 'none',
     display: 'flex',
     background: 'none',
@@ -69,21 +74,51 @@ const useStyles = makeStyles(theme => ({
   },
   itemActive: {
     fontWeight: 600,
+    color: '#333',
   },
   icon: {
     paddingRight: theme.spacing(0.5),
   },
 }));
 
-function Dropdown({ children, dropdown, itemActive, to, ...props }) {
+type DropdownTuple = [string, string];
+
+type FilterDropdownProps = {
+  children: React.ReactNode;
+  dropdown: DropdownTuple[];
+  itemActive: (key: string) => boolean;
+  icon?: React.ComponentType<SvgIconProps>;
+  to: (key: string) => LocationDescriptor;
+} & React.ButtonHTMLAttributes<HTMLButtonElement>;
+
+function FilterDropdown({
+  children,
+  dropdown,
+  itemActive,
+  icon: Icon,
+  to,
+  ...props
+}: FilterDropdownProps) {
   const [open, setOpen] = useState(false);
-  const buttonRef = useRef();
-  const classes = useStyles();
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const classes = useStyles({ active: false });
+
+  const content = (
+    <>
+      {Icon && <Icon fontSize="small" classes={{ root: classes.icon }} />}
+      <div>{children}</div>
+    </>
+  );
 
   return (
     <>
-      <button ref={buttonRef} onClick={() => setOpen(!open)} {...props}>
-        {children}
+      <button
+        ref={buttonRef}
+        onClick={() => setOpen(!open)}
+        className={classes.element}
+        {...props}
+      >
+        {content}
         <ArrowDropDown fontSize="small" />
       </button>
       <Menu
@@ -104,7 +139,7 @@ function Dropdown({ children, dropdown, itemActive, to, ...props }) {
           <MenuItem
             component={Link}
             to={to(key)}
-            className={itemActive(key) ? classes.itemActive : null}
+            className={itemActive(key) ? classes.itemActive : undefined}
             onClick={() => setOpen(false)}
             key={key}
           >
@@ -116,8 +151,14 @@ function Dropdown({ children, dropdown, itemActive, to, ...props }) {
   );
 }
 
-function Filter({ active, to, children, icon: Icon, dropdown, ...props }) {
-  const classes = useStyles({ active });
+export type FilterProps = {
+  active: boolean;
+  to: LocationDescriptor;
+  icon?: React.ComponentType<SvgIconProps>;
+  children: React.ReactNode;
+};
+function Filter({ active, to, children, icon: Icon }: FilterProps) {
+  const classes = useStyles();
 
   const content = (
     <>
@@ -126,29 +167,23 @@ function Filter({ active, to, children, icon: Icon, dropdown, ...props }) {
     </>
   );
 
-  if (dropdown) {
-    return (
-      <Dropdown
-        {...props}
-        to={to}
-        dropdown={dropdown}
-        className={classes.element}
-      >
-        {content}
-      </Dropdown>
-    );
-  }
-
   if (to) {
     return (
-      <Link to={to} {...props} className={classes.element}>
+      <Link
+        to={to}
+        className={clsx(classes.element, active && classes.itemActive)}
+      >
         {content}
       </Link>
     );
   }
 
-  return <div className={classes.element}>{content}</div>;
+  return (
+    <div className={clsx(classes.element, active && classes.itemActive)}>
+      {content}
+    </div>
+  );
 }
 
 export default Filter;
-export { parse, stringify, quote };
+export { parse, stringify, quote, FilterDropdown, Filter };

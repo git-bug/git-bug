@@ -1,16 +1,19 @@
-import { makeStyles } from '@material-ui/styles';
-import { useQuery } from '@apollo/react-hooks';
-import gql from 'graphql-tag';
+import { makeStyles } from '@material-ui/core/styles';
 import React from 'react';
+import { LocationDescriptor } from 'history';
+import { pipe } from '@arrows/composition';
 import Toolbar from '@material-ui/core/Toolbar';
 import ErrorOutline from '@material-ui/icons/ErrorOutline';
 import CheckCircleOutline from '@material-ui/icons/CheckCircleOutline';
-import Filter, { parse, stringify } from './Filter';
-
-// simple pipe operator
-// pipe(o, f, g, h) <=> h(g(f(o)))
-// TODO: move this out?
-const pipe = (initial, ...funcs) => funcs.reduce((acc, f) => f(acc), initial);
+import {
+  FilterDropdown,
+  FilterProps,
+  Filter,
+  parse,
+  stringify,
+  Query,
+} from './Filter';
+import { useBugCountQuery } from './FilterToolbar.generated';
 
 const useStyles = makeStyles(theme => ({
   toolbar: {
@@ -25,25 +28,19 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-const BUG_COUNT_QUERY = gql`
-  query($query: String) {
-    defaultRepository {
-      bugs: allBugs(query: $query) {
-        totalCount
-      }
-    }
-  }
-`;
-
 // This prepends the filter text with a count
-function CountingFilter({ query, children, ...props }) {
-  const { data, loading, error } = useQuery(BUG_COUNT_QUERY, {
+type CountingFilterProps = {
+  query: string;
+  children: React.ReactNode;
+} & FilterProps;
+function CountingFilter({ query, children, ...props }: CountingFilterProps) {
+  const { data, loading, error } = useBugCountQuery({
     variables: { query },
   });
 
   var prefix;
   if (loading) prefix = '...';
-  else if (error) prefix = '???';
+  else if (error || !data?.defaultRepository) prefix = '???';
   // TODO: better prefixes & error handling
   else prefix = data.defaultRepository.bugs.totalCount;
 
@@ -54,18 +51,26 @@ function CountingFilter({ query, children, ...props }) {
   );
 }
 
-function FilterToolbar({ query, queryLocation }) {
+type Props = {
+  query: string;
+  queryLocation: (query: string) => LocationDescriptor;
+};
+function FilterToolbar({ query, queryLocation }: Props) {
   const classes = useStyles();
-  const params = parse(query);
+  const params: Query = parse(query);
 
-  const hasKey = key => params[key] && params[key].length > 0;
-  const hasValue = (key, value) => hasKey(key) && params[key].includes(value);
-  const loc = params => pipe(params, stringify, queryLocation);
-  const replaceParam = (key, value) => params => ({
+  const hasKey = (key: string): boolean =>
+    params[key] && params[key].length > 0;
+  const hasValue = (key: string, value: string): boolean =>
+    hasKey(key) && params[key].includes(value);
+  const loc = pipe(stringify, queryLocation);
+  const replaceParam = (key: string, value: string) => (
+    params: Query
+  ): Query => ({
     ...params,
     [key]: [value],
   });
-  const clearParam = key => params => ({
+  const clearParam = (key: string) => (params: Query): Query => ({
     ...params,
     [key]: [],
   });
@@ -76,12 +81,11 @@ function FilterToolbar({ query, queryLocation }) {
       <CountingFilter
         active={hasValue('status', 'open')}
         query={pipe(
-          params,
           replaceParam('status', 'open'),
           clearParam('sort'),
           stringify
-        )}
-        to={pipe(params, replaceParam('status', 'open'), loc)}
+        )(params)}
+        to={pipe(replaceParam('status', 'open'), loc)(params)}
         icon={ErrorOutline}
       >
         open
@@ -89,12 +93,11 @@ function FilterToolbar({ query, queryLocation }) {
       <CountingFilter
         active={hasValue('status', 'closed')}
         query={pipe(
-          params,
           replaceParam('status', 'closed'),
           clearParam('sort'),
           stringify
-        )}
-        to={pipe(params, replaceParam('status', 'closed'), loc)}
+        )(params)}
+        to={pipe(replaceParam('status', 'closed'), loc)(params)}
         icon={CheckCircleOutline}
       >
         closed
@@ -104,7 +107,7 @@ function FilterToolbar({ query, queryLocation }) {
       <Filter active={hasKey('author')}>Author</Filter>
       <Filter active={hasKey('label')}>Label</Filter>
       */}
-      <Filter
+      <FilterDropdown
         dropdown={[
           ['id', 'ID'],
           ['creation', 'Newest'],
@@ -112,12 +115,11 @@ function FilterToolbar({ query, queryLocation }) {
           ['edit', 'Recently updated'],
           ['edit-asc', 'Least recently updated'],
         ]}
-        active={hasKey('sort')}
         itemActive={key => hasValue('sort', key)}
-        to={key => pipe(params, replaceParam('sort', key), loc)}
+        to={key => pipe(replaceParam('sort', key), loc)(params)}
       >
         Sort
-      </Filter>
+      </FilterDropdown>
     </Toolbar>
   );
 }

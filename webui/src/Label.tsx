@@ -18,7 +18,8 @@ const getTextColor = (background: string) =>
     ? common.white // White on dark backgrounds
     : common.black; // And black on light ones
 
-const _rgb = (color: Color) => 'rgb(' + color.R + ',' + color.G + ',' + color.B + ')';
+const _rgb = (color: Color) =>
+  'rgb(' + color.R + ',' + color.G + ',' + color.B + ')';
 
 // Create a style object from the label RGB colors
 const createStyle = (color: Color) => ({

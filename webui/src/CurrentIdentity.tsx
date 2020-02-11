@@ -14,8 +14,7 @@ const CurrentIdentity = () => {
   const classes = useStyles();
   const { loading, error, data } = useCurrentIdentityQuery();
 
-  if (error || loading || !data?.defaultRepository?.userIdentity)
-    return null;
+  if (error || loading || !data?.defaultRepository?.userIdentity) return null;
 
   const user = data.defaultRepository.userIdentity;
   return (
