@@ -1,15 +1,17 @@
-import { makeStyles } from '@material-ui/core/styles';
 import TableCell from '@material-ui/core/TableCell/TableCell';
 import TableRow from '@material-ui/core/TableRow/TableRow';
 import Tooltip from '@material-ui/core/Tooltip/Tooltip';
-import ErrorOutline from '@material-ui/icons/ErrorOutline';
+import { makeStyles } from '@material-ui/core/styles';
 import CheckCircleOutline from '@material-ui/icons/CheckCircleOutline';
+import ErrorOutline from '@material-ui/icons/ErrorOutline';
 import React from 'react';
 import { Link } from 'react-router-dom';
+
 import Date from '../Date';
 import Label from '../Label';
-import { BugRowFragment } from './BugRow.generated';
 import { Status } from '../gqlTypes';
+
+import { BugRowFragment } from './BugRow.generated';
 
 type OpenClosedProps = { className: string };
 const Open = ({ className }: OpenClosedProps) => (

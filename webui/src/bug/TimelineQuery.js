@@ -1,7 +1,7 @@
 import CircularProgress from '@material-ui/core/CircularProgress';
 import React from 'react';
-import Timeline from './Timeline';
 
+import Timeline from './Timeline';
 import { useTimelineQuery } from './TimelineQuery.generated';
 
 const TimelineQuery = ({ id }) => {

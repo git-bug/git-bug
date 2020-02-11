@@ -1,13 +1,13 @@
-import React from 'react';
+import { common } from '@material-ui/core/colors';
 import { makeStyles } from '@material-ui/core/styles';
 import {
   getContrastRatio,
   darken,
 } from '@material-ui/core/styles/colorManipulator';
-import { common } from '@material-ui/core/colors';
+import React from 'react';
 
-import { Color } from './gqlTypes';
 import { LabelFragment } from './Label.generated';
+import { Color } from './gqlTypes';
 
 // Minimum contrast between the background and the text color
 const contrastThreshold = 2.5;

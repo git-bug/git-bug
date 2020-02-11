@@ -1,10 +1,11 @@
-import { makeStyles } from '@material-ui/core/styles';
-import React from 'react';
-import { LocationDescriptor } from 'history';
 import { pipe } from '@arrows/composition';
 import Toolbar from '@material-ui/core/Toolbar';
-import ErrorOutline from '@material-ui/icons/ErrorOutline';
+import { makeStyles } from '@material-ui/core/styles';
 import CheckCircleOutline from '@material-ui/icons/CheckCircleOutline';
+import ErrorOutline from '@material-ui/icons/ErrorOutline';
+import { LocationDescriptor } from 'history';
+import React from 'react';
+
 import {
   FilterDropdown,
   FilterProps,

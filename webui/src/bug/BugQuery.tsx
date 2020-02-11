@@ -2,8 +2,8 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import React from 'react';
 import { RouteComponentProps } from 'react-router-dom';
 
-import { useGetBugQuery } from './BugQuery.generated';
 import Bug from './Bug';
+import { useGetBugQuery } from './BugQuery.generated';
 
 type Props = RouteComponentProps<{
   id: string;

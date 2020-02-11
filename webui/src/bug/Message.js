@@ -1,10 +1,11 @@
-import { makeStyles } from '@material-ui/styles';
 import Paper from '@material-ui/core/Paper';
+import { makeStyles } from '@material-ui/styles';
 import React from 'react';
+
 import Author from '../Author';
 import { Avatar } from '../Author';
-import Date from '../Date';
 import Content from '../Content';
+import Date from '../Date';
 
 const useStyles = makeStyles(theme => ({
   author: {

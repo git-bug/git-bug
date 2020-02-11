@@ -1,11 +1,13 @@
-import { makeStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography/Typography';
+import { makeStyles } from '@material-ui/core/styles';
 import React from 'react';
+
 import Author from '../Author';
 import Date from '../Date';
-import TimelineQuery from './TimelineQuery';
 import Label from '../Label';
+
 import { BugFragment } from './Bug.generated';
+import TimelineQuery from './TimelineQuery';
 
 const useStyles = makeStyles(theme => ({
   main: {

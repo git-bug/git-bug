@@ -1,5 +1,5 @@
-import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import { createMuiTheme } from '@material-ui/core/styles';
+import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import ApolloClient from 'apollo-boost';
 import {
   IntrospectionFragmentMatcher,
@@ -10,8 +10,8 @@ import { ApolloProvider } from 'react-apollo';
 import ReactDOM from 'react-dom';
 import { BrowserRouter } from 'react-router-dom';
 
-import introspectionQueryResultData from './fragmentTypes';
 import App from './App';
+import introspectionQueryResultData from './fragmentTypes';
 
 const theme = createMuiTheme();
 

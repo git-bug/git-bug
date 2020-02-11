@@ -26,4 +26,4 @@ generates:
 
 hooks:
   afterOneFileWrite:
-  - prettier --write
+  - eslint --fix

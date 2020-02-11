@@ -1,16 +1,17 @@
-import { fade, makeStyles, Theme } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
+import InputBase from '@material-ui/core/InputBase';
+import Paper from '@material-ui/core/Paper';
+import { fade, makeStyles, Theme } from '@material-ui/core/styles';
+import ErrorOutline from '@material-ui/icons/ErrorOutline';
 import KeyboardArrowLeft from '@material-ui/icons/KeyboardArrowLeft';
 import KeyboardArrowRight from '@material-ui/icons/KeyboardArrowRight';
-import ErrorOutline from '@material-ui/icons/ErrorOutline';
-import Paper from '@material-ui/core/Paper';
-import InputBase from '@material-ui/core/InputBase';
 import Skeleton from '@material-ui/lab/Skeleton';
+import { ApolloError } from 'apollo-boost';
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useHistory, Link } from 'react-router-dom';
-import { ApolloError } from 'apollo-boost';
-import List from './List';
+
 import FilterToolbar from './FilterToolbar';
+import List from './List';
 import { useListBugsQuery } from './ListQuery.generated';
 
 type StylesProps = { searching?: boolean };

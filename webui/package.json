@@ -46,7 +46,7 @@
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
     "generate": "graphql-codegen",
-    "lint": "eslint src/"
+    "lint": "eslint 'src/**/*.{js,jsx,ts,tsx}'"
   },
   "proxy": "http://localhost:3001",
   "browserslist": [

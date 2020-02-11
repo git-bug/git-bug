@@ -1,12 +1,12 @@
-import React, { useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import { LocationDescriptor } from 'history';
-import clsx from 'clsx';
-import { makeStyles } from '@material-ui/core/styles';
-import { SvgIconProps } from '@material-ui/core/SvgIcon';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
+import { SvgIconProps } from '@material-ui/core/SvgIcon';
+import { makeStyles } from '@material-ui/core/styles';
 import ArrowDropDown from '@material-ui/icons/ArrowDropDown';
+import clsx from 'clsx';
+import { LocationDescriptor } from 'history';
+import React, { useState, useRef } from 'react';
+import { Link } from 'react-router-dom';
 
 export type Query = { [key: string]: Array<string> };
 
