@@ -7,6 +7,7 @@ import Date from '../Date';
 import Label from '../Label';
 
 import { BugFragment } from './Bug.generated';
+import CommentForm from './CommentForm';
 import TimelineQuery from './TimelineQuery';
 
 const useStyles = makeStyles(theme => ({
@@ -87,6 +88,8 @@ function Bug({ bug }: Props) {
           </ul>
         </div>
       </div>
+
+      <CommentForm bugId={bug.id} />
     </main>
   );
 }
