@@ -14,7 +14,7 @@ func TestCredential(t *testing.T) {
 	repo := repository.NewMockRepoForTest()
 
 	storeToken := func(val string, target string) *Token {
-		token := NewToken(val, target)
+		token := NewToken(target, val)
 		err := Store(repo, token)
 		require.NoError(t, err)
 		return token
@@ -99,4 +99,26 @@ func sameIds(t *testing.T, a []Credential, b []Credential) {
 	}
 
 	assert.ElementsMatch(t, ids(a), ids(b))
+}
+
+func testCredentialSerial(t *testing.T, original Credential) Credential {
+	repo := repository.NewMockRepoForTest()
+
+	original.SetMetadata("test", "value")
+
+	assert.NotEmpty(t, original.ID().String())
+	assert.NotEmpty(t, original.Salt())
+	assert.NoError(t, Store(repo, original))
+
+	loaded, err := LoadWithId(repo, original.ID())
+	assert.NoError(t, err)
+
+	assert.Equal(t, original.ID(), loaded.ID())
+	assert.Equal(t, original.Kind(), loaded.Kind())
+	assert.Equal(t, original.Target(), loaded.Target())
+	assert.Equal(t, original.CreateTime().Unix(), loaded.CreateTime().Unix())
+	assert.Equal(t, original.Salt(), loaded.Salt())
+	assert.Equal(t, original.Metadata(), loaded.Metadata())
+
+	return loaded
 }

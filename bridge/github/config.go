@@ -86,7 +86,7 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 		}
 		login = l
 	case params.TokenRaw != "":
-		token := auth.NewToken(params.TokenRaw, target)
+		token := auth.NewToken(target, params.TokenRaw)
 		login, err = getLoginFromToken(token)
 		if err != nil {
 			return nil, err
@@ -296,7 +296,7 @@ func promptTokenOptions(repo repository.RepoConfig, login, owner, project string
 			if err != nil {
 				return nil, err
 			}
-			token := auth.NewToken(value, target)
+			token := auth.NewToken(target, value)
 			token.SetMetadata(auth.MetaKeyLogin, login)
 			return token, nil
 		default:
@@ -327,7 +327,7 @@ func promptToken() (*auth.Token, error) {
 		if !re.MatchString(value) {
 			return "token has incorrect format", nil
 		}
-		login, err = getLoginFromToken(auth.NewToken(value, target))
+		login, err = getLoginFromToken(auth.NewToken(target, value))
 		if err != nil {
 			return fmt.Sprintf("token is invalid: %v", err), nil
 		}
@@ -339,7 +339,7 @@ func promptToken() (*auth.Token, error) {
 		return nil, err
 	}
 
-	token := auth.NewToken(rawToken, target)
+	token := auth.NewToken(target, rawToken)
 	token.SetMetadata(auth.MetaKeyLogin, login)
 
 	return token, nil

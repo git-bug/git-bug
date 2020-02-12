@@ -98,7 +98,7 @@ func TestImport(t *testing.T) {
 	login := "test-identity"
 	author.SetMetadata(metaKeyGitlabLogin, login)
 
-	token := auth.NewToken(envToken, target)
+	token := auth.NewToken(target, envToken)
 	token.SetMetadata(auth.MetaKeyLogin, login)
 	token.SetMetadata(auth.MetaKeyBaseURL, defaultBaseURL)
 	err = auth.Store(repo, token)

@@ -154,8 +154,8 @@ func TestValidateProject(t *testing.T) {
 		t.Skip("Env var GITHUB_TOKEN_PUBLIC missing")
 	}
 
-	tokenPrivate := auth.NewToken(envPrivate, target)
-	tokenPublic := auth.NewToken(envPublic, target)
+	tokenPrivate := auth.NewToken(target, envPrivate)
+	tokenPublic := auth.NewToken(target, envPublic)
 
 	type args struct {
 		owner   string
