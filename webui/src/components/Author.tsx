@@ -2,7 +2,7 @@ import MAvatar from '@material-ui/core/Avatar';
 import Tooltip from '@material-ui/core/Tooltip/Tooltip';
 import React from 'react';
 
-import { AuthoredFragment } from './Author.generated';
+import { AuthoredFragment } from './fragments.generated';
 
 type Props = AuthoredFragment & {
   className?: string;

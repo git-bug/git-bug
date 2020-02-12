@@ -7,8 +7,8 @@ import ErrorOutline from '@material-ui/icons/ErrorOutline';
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-import Date from '../Date';
-import Label from '../Label';
+import Date from '../components/Date';
+import Label from '../components/Label';
 import { Status } from '../gqlTypes';
 
 import { BugRowFragment } from './BugRow.generated';

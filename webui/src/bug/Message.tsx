@@ -2,10 +2,9 @@ import Paper from '@material-ui/core/Paper';
 import { makeStyles } from '@material-ui/core/styles';
 import React from 'react';
 
-import Author from '../Author';
-import { Avatar } from '../Author';
-import Content from '../Content';
-import Date from '../Date';
+import Author, { Avatar } from '../components/Author';
+import Date from '../components/Date';
+import Content from '../components/Content';
 
 import { AddCommentFragment } from './MessageCommentFragment.generated';
 import { CreateFragment } from './MessageCreateFragment.generated';

@@ -2,9 +2,9 @@ import Typography from '@material-ui/core/Typography/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import React from 'react';
 
-import Author from '../Author';
-import Date from '../Date';
-import Label from '../Label';
+import Author from '../components/Author';
+import Date from '../components/Date';
+import Label from '../components/Label';
 
 import { BugFragment } from './Bug.generated';
 import CommentForm from './CommentForm';

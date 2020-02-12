@@ -1,8 +1,8 @@
 import { makeStyles } from '@material-ui/core/styles';
 import React from 'react';
 
-import Author from '../Author';
-import Date from '../Date';
+import Author from '../components/Author';
+import Date from '../components/Date';
 
 import { SetTitleFragment } from './SetTitleFragment.generated';
 

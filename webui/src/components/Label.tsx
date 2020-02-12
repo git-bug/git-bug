@@ -6,8 +6,8 @@ import {
 } from '@material-ui/core/styles/colorManipulator';
 import React from 'react';
 
-import { LabelFragment } from './Label.generated';
-import { Color } from './gqlTypes';
+import { LabelFragment } from './fragments.generated';
+import { Color } from '../gqlTypes';
 
 // Minimum contrast between the background and the text color
 const contrastThreshold = 2.5;

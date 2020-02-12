@@ -1,5 +1,4 @@
-#import "../Label.graphql"
-#import "../Author.graphql"
+#import "../components/fragments.graphql"
 
 fragment Bug on Bug {
   id

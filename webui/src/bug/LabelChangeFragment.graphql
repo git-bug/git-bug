@@ -1,5 +1,4 @@
-#import "../Author.graphql"
-#import "../Label.graphql"
+#import "../components/fragments.graphql"
 
 fragment LabelChange on LabelChangeTimelineItem {
   date

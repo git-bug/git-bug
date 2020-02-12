@@ -1,8 +1,0 @@
-fragment Label on Label {
-  name
-  color {
-    R
-    G
-    B
-  }
-}

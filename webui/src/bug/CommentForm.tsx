@@ -6,7 +6,7 @@ import TextField from '@material-ui/core/TextField';
 import { makeStyles, Theme } from '@material-ui/core/styles';
 import React, { useState, useRef } from 'react';
 
-import Content from '../Content';
+import Content from '../components/Content';
 
 import { useAddCommentMutation } from './CommentForm.generated';
 import { TimelineDocument } from './TimelineQuery.generated';

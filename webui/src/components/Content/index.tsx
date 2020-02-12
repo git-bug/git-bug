@@ -4,8 +4,8 @@ import parse from 'remark-parse';
 import remark2react from 'remark-react';
 import unified from 'unified';
 
-import ImageTag from './tag/ImageTag';
-import PreTag from './tag/PreTag';
+import ImageTag from './ImageTag';
+import PreTag from './PreTag';
 
 type Props = { markdown: string };
 const Content: React.FC<Props> = ({ markdown }: Props) => {
