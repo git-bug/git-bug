@@ -4,6 +4,7 @@ import React from 'react';
 import Author from '../Author';
 import Date from '../Date';
 import Label from '../Label';
+
 import { LabelChangeFragment } from './LabelChangeFragment.generated';
 
 const useStyles = makeStyles(theme => ({

@@ -3,6 +3,7 @@ import React from 'react';
 
 import Author from '../Author';
 import Date from '../Date';
+
 import { SetTitleFragment } from './SetTitleFragment.generated';
 
 const useStyles = makeStyles(theme => ({

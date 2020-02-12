@@ -3,6 +3,7 @@ import React from 'react';
 
 import Author from '../Author';
 import Date from '../Date';
+
 import { SetStatusFragment } from './SetStatusFragment.generated';
 
 const useStyles = makeStyles(theme => ({

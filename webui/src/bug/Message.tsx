@@ -6,6 +6,7 @@ import Author from '../Author';
 import { Avatar } from '../Author';
 import Content from '../Content';
 import Date from '../Date';
+
 import { AddCommentFragment } from './MessageCommentFragment.generated';
 import { CreateFragment } from './MessageCreateFragment.generated';
 
