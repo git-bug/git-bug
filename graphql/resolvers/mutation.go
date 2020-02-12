@@ -23,6 +23,15 @@ func (r mutationResolver) getRepo(ref *string) (*cache.RepoCache, error) {
 	return r.cache.DefaultRepo()
 }
 
+func (r mutationResolver) getBug(repoRef *string, bugPrefix string) (*cache.BugCache, error) {
+	repo, err := r.getRepo(repoRef)
+	if err != nil {
+		return nil, err
+	}
+
+	return repo.ResolveBugPrefix(bugPrefix)
+}
+
 func (r mutationResolver) NewBug(_ context.Context, input models.NewBugInput) (*models.NewBugPayload, error) {
 	repo, err := r.getRepo(input.RepoRef)
 	if err != nil {
@@ -42,17 +51,17 @@ func (r mutationResolver) NewBug(_ context.Context, input models.NewBugInput) (*
 }
 
 func (r mutationResolver) AddComment(_ context.Context, input models.AddCommentInput) (*models.AddCommentPayload, error) {
-	repo, err := r.getRepo(input.RepoRef)
-	if err != nil {
-		return nil, err
-	}
-
-	b, err := repo.ResolveBugPrefix(input.Prefix)
+	b, err := r.getBug(input.RepoRef, input.Prefix)
 	if err != nil {
 		return nil, err
 	}
 
 	op, err := b.AddCommentWithFiles(input.Message, input.Files)
+	if err != nil {
+		return nil, err
+	}
+
+	err = b.Commit()
 	if err != nil {
 		return nil, err
 	}
@@ -65,17 +74,17 @@ func (r mutationResolver) AddComment(_ context.Context, input models.AddCommentI
 }
 
 func (r mutationResolver) ChangeLabels(_ context.Context, input *models.ChangeLabelInput) (*models.ChangeLabelPayload, error) {
-	repo, err := r.getRepo(input.RepoRef)
-	if err != nil {
-		return nil, err
-	}
-
-	b, err := repo.ResolveBugPrefix(input.Prefix)
+	b, err := r.getBug(input.RepoRef, input.Prefix)
 	if err != nil {
 		return nil, err
 	}
 
 	results, op, err := b.ChangeLabels(input.Added, input.Removed)
+	if err != nil {
+		return nil, err
+	}
+
+	err = b.Commit()
 	if err != nil {
 		return nil, err
 	}
@@ -94,17 +103,17 @@ func (r mutationResolver) ChangeLabels(_ context.Context, input *models.ChangeLa
 }
 
 func (r mutationResolver) OpenBug(_ context.Context, input models.OpenBugInput) (*models.OpenBugPayload, error) {
-	repo, err := r.getRepo(input.RepoRef)
-	if err != nil {
-		return nil, err
-	}
-
-	b, err := repo.ResolveBugPrefix(input.Prefix)
+	b, err := r.getBug(input.RepoRef, input.Prefix)
 	if err != nil {
 		return nil, err
 	}
 
 	op, err := b.Open()
+	if err != nil {
+		return nil, err
+	}
+
+	err = b.Commit()
 	if err != nil {
 		return nil, err
 	}
@@ -117,17 +126,17 @@ func (r mutationResolver) OpenBug(_ context.Context, input models.OpenBugInput) 
 }
 
 func (r mutationResolver) CloseBug(_ context.Context, input models.CloseBugInput) (*models.CloseBugPayload, error) {
-	repo, err := r.getRepo(input.RepoRef)
-	if err != nil {
-		return nil, err
-	}
-
-	b, err := repo.ResolveBugPrefix(input.Prefix)
+	b, err := r.getBug(input.RepoRef, input.Prefix)
 	if err != nil {
 		return nil, err
 	}
 
 	op, err := b.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	err = b.Commit()
 	if err != nil {
 		return nil, err
 	}
@@ -140,12 +149,7 @@ func (r mutationResolver) CloseBug(_ context.Context, input models.CloseBugInput
 }
 
 func (r mutationResolver) SetTitle(_ context.Context, input models.SetTitleInput) (*models.SetTitlePayload, error) {
-	repo, err := r.getRepo(input.RepoRef)
-	if err != nil {
-		return nil, err
-	}
-
-	b, err := repo.ResolveBugPrefix(input.Prefix)
+	b, err := r.getBug(input.RepoRef, input.Prefix)
 	if err != nil {
 		return nil, err
 	}
@@ -155,53 +159,14 @@ func (r mutationResolver) SetTitle(_ context.Context, input models.SetTitleInput
 		return nil, err
 	}
 
-	return &models.SetTitlePayload{
-		ClientMutationID: input.ClientMutationID,
-		Bug:              models.NewLoadedBug(b.Snapshot()),
-		Operation:        op,
-	}, nil
-}
-
-func (r mutationResolver) Commit(_ context.Context, input models.CommitInput) (*models.CommitPayload, error) {
-	repo, err := r.getRepo(input.RepoRef)
-	if err != nil {
-		return nil, err
-	}
-
-	b, err := repo.ResolveBugPrefix(input.Prefix)
-	if err != nil {
-		return nil, err
-	}
-
 	err = b.Commit()
 	if err != nil {
 		return nil, err
 	}
 
-	return &models.CommitPayload{
+	return &models.SetTitlePayload{
 		ClientMutationID: input.ClientMutationID,
 		Bug:              models.NewLoadedBug(b.Snapshot()),
-	}, nil
-}
-
-func (r mutationResolver) CommitAsNeeded(_ context.Context, input models.CommitAsNeededInput) (*models.CommitAsNeededPayload, error) {
-	repo, err := r.getRepo(input.RepoRef)
-	if err != nil {
-		return nil, err
-	}
-
-	b, err := repo.ResolveBugPrefix(input.Prefix)
-	if err != nil {
-		return nil, err
-	}
-
-	err = b.CommitAsNeeded()
-	if err != nil {
-		return nil, err
-	}
-
-	return &models.CommitAsNeededPayload{
-		ClientMutationID: input.ClientMutationID,
-		Bug:              models.NewLoadedBug(b.Snapshot()),
+		Operation:        op,
 	}, nil
 }

@@ -15,6 +15,11 @@ var _ graph.RepositoryResolver = &repoResolver{}
 
 type repoResolver struct{}
 
+func (repoResolver) Name(_ context.Context, obj *models.Repository) (*string, error) {
+	name := obj.Repo.Name()
+	return &name, nil
+}
+
 func (repoResolver) AllBugs(_ context.Context, obj *models.Repository, after *string, before *string, first *int, last *int, queryStr *string) (*models.BugConnection, error) {
 	input := models.ConnectionInput{
 		Before: before,
@@ -153,7 +158,7 @@ func (repoResolver) UserIdentity(_ context.Context, obj *models.Repository) (mod
 	return models.NewLazyIdentity(obj.Repo, excerpt), nil
 }
 
-func (resolver repoResolver) ValidLabels(_ context.Context, obj *models.Repository, after *string, before *string, first *int, last *int) (*models.LabelConnection, error) {
+func (repoResolver) ValidLabels(_ context.Context, obj *models.Repository, after *string, before *string, first *int, last *int) (*models.LabelConnection, error) {
 	input := models.ConnectionInput{
 		Before: before,
 		After:  after,

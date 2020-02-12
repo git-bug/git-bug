@@ -58,6 +58,9 @@ type RepoCache struct {
 	// the underlying repo
 	repo repository.ClockedRepo
 
+	// the name of the repository, as defined in the MultiRepoCache
+	name string
+
 	muBug sync.RWMutex
 	// excerpt of bugs data for all bugs
 	bugExcerpts map[entity.Id]*BugExcerpt
@@ -75,8 +78,13 @@ type RepoCache struct {
 }
 
 func NewRepoCache(r repository.ClockedRepo) (*RepoCache, error) {
+	return NewNamedRepoCache(r, "")
+}
+
+func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, error) {
 	c := &RepoCache{
 		repo:       r,
+		name:       name,
 		bugs:       make(map[entity.Id]*BugCache),
 		identities: make(map[entity.Id]*IdentityCache),
 	}
@@ -100,6 +108,10 @@ func NewRepoCache(r repository.ClockedRepo) (*RepoCache, error) {
 	}
 
 	return c, c.write()
+}
+
+func (c *RepoCache) Name() string {
+	return c.name
 }
 
 // LocalConfig give access to the repository scoped configuration

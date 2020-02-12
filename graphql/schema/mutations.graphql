@@ -136,35 +136,3 @@ type SetTitlePayload {
     """The resulting operation"""
     operation: SetTitleOperation!
 }
-
-input CommitInput {
-    """A unique identifier for the client performing the mutation."""
-    clientMutationId: String
-    """"The name of the repository. If not set, the default repository is used."""
-    repoRef: String
-    """The bug ID's prefix."""
-    prefix: String!
-}
-
-type CommitPayload {
-    """A unique identifier for the client performing the mutation."""
-    clientMutationId: String
-    """The affected bug."""
-    bug: Bug!
-}
-
-input CommitAsNeededInput {
-    """A unique identifier for the client performing the mutation."""
-    clientMutationId: String
-    """"The name of the repository. If not set, the default repository is used."""
-    repoRef: String
-    """The bug ID's prefix."""
-    prefix: String!
-}
-
-type CommitAsNeededPayload {
-    """A unique identifier for the client performing the mutation."""
-    clientMutationId: String
-    """The affected bug."""
-    bug: Bug!
-}

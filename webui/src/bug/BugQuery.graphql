@@ -1,0 +1,9 @@
+#import "./Bug.graphql"
+
+query GetBug($id: String!) {
+  repository {
+    bug(prefix: $id) {
+      ...Bug
+    }
+  }
+}
