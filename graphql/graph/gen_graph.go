@@ -314,6 +314,7 @@ type ComplexityRoot struct {
 		AllIdentities func(childComplexity int, after *string, before *string, first *int, last *int) int
 		Bug           func(childComplexity int, prefix string) int
 		Identity      func(childComplexity int, prefix string) int
+		Name          func(childComplexity int) int
 		UserIdentity  func(childComplexity int) int
 		ValidLabels   func(childComplexity int, after *string, before *string, first *int, last *int) int
 	}
@@ -454,6 +455,7 @@ type QueryResolver interface {
 	Repository(ctx context.Context, ref *string) (*models.Repository, error)
 }
 type RepositoryResolver interface {
+	Name(ctx context.Context, obj *models.Repository) (*string, error)
 	AllBugs(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int, query *string) (*models.BugConnection, error)
 	Bug(ctx context.Context, obj *models.Repository, prefix string) (models.BugWrapper, error)
 	AllIdentities(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int) (*models.IdentityConnection, error)
@@ -1597,6 +1599,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Repository.Identity(childComplexity, args["prefix"].(string)), true
 
+	case "Repository.name":
+		if e.complexity.Repository.Name == nil {
+			break
+		}
+
+		return e.complexity.Repository.Name(childComplexity), true
+
 	case "Repository.userIdentity":
 		if e.complexity.Repository.UserIdentity == nil {
 			break
@@ -2311,6 +2320,9 @@ type LabelChangeOperation implements Operation & Authored {
 `, BuiltIn: false},
 	&ast.Source{Name: "schema/repository.graphql", Input: `
 type Repository {
+    """The name of the repository"""
+    name: String
+
     """All the bugs"""
     allBugs(
         """Returns the elements in the list that come after the specified cursor."""
@@ -2321,7 +2333,7 @@ type Repository {
         first: Int
         """Returns the last _n_ elements from the list."""
         last: Int
-        """A query to select and order bugs"""
+        """A query to select and order bugs."""
         query: String
     ): BugConnection!
 
@@ -7915,6 +7927,37 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	return ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Repository_name(ctx context.Context, field graphql.CollectedField, obj *models.Repository) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Repository",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Repository().Name(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Repository_allBugs(ctx context.Context, field graphql.CollectedField, obj *models.Repository) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -12385,6 +12428,17 @@ func (ec *executionContext) _Repository(ctx context.Context, sel ast.SelectionSe
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Repository")
+		case "name":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Repository_name(ctx, field, obj)
+				return res
+			})
 		case "allBugs":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
