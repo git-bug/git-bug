@@ -16,8 +16,4 @@ type Mutation {
     closeBug(input: CloseBugInput!): CloseBugPayload!
     """Change a bug's title"""
     setTitle(input: SetTitleInput!): SetTitlePayload!
-    """Commit write the pending operations into storage. This mutation fail if nothing is pending"""
-    commit(input: CommitInput!): CommitPayload!
-    """Commit write the pending operations into storage. This mutation succed if nothing is pending"""
-    commitAsNeeded(input: CommitAsNeededInput!): CommitAsNeededPayload!
 }

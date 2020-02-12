@@ -163,16 +163,6 @@ type ComplexityRoot struct {
 		Message func(childComplexity int) int
 	}
 
-	CommitAsNeededPayload struct {
-		Bug              func(childComplexity int) int
-		ClientMutationID func(childComplexity int) int
-	}
-
-	CommitPayload struct {
-		Bug              func(childComplexity int) int
-		ClientMutationID func(childComplexity int) int
-	}
-
 	CreateOperation struct {
 		Author  func(childComplexity int) int
 		Date    func(childComplexity int) int
@@ -264,14 +254,12 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AddComment     func(childComplexity int, input models.AddCommentInput) int
-		ChangeLabels   func(childComplexity int, input *models.ChangeLabelInput) int
-		CloseBug       func(childComplexity int, input models.CloseBugInput) int
-		Commit         func(childComplexity int, input models.CommitInput) int
-		CommitAsNeeded func(childComplexity int, input models.CommitAsNeededInput) int
-		NewBug         func(childComplexity int, input models.NewBugInput) int
-		OpenBug        func(childComplexity int, input models.OpenBugInput) int
-		SetTitle       func(childComplexity int, input models.SetTitleInput) int
+		AddComment   func(childComplexity int, input models.AddCommentInput) int
+		ChangeLabels func(childComplexity int, input *models.ChangeLabelInput) int
+		CloseBug     func(childComplexity int, input models.CloseBugInput) int
+		NewBug       func(childComplexity int, input models.NewBugInput) int
+		OpenBug      func(childComplexity int, input models.OpenBugInput) int
+		SetTitle     func(childComplexity int, input models.SetTitleInput) int
 	}
 
 	NewBugPayload struct {
@@ -448,8 +436,6 @@ type MutationResolver interface {
 	OpenBug(ctx context.Context, input models.OpenBugInput) (*models.OpenBugPayload, error)
 	CloseBug(ctx context.Context, input models.CloseBugInput) (*models.CloseBugPayload, error)
 	SetTitle(ctx context.Context, input models.SetTitleInput) (*models.SetTitlePayload, error)
-	Commit(ctx context.Context, input models.CommitInput) (*models.CommitPayload, error)
-	CommitAsNeeded(ctx context.Context, input models.CommitAsNeededInput) (*models.CommitAsNeededPayload, error)
 }
 type QueryResolver interface {
 	Repository(ctx context.Context, ref *string) (*models.Repository, error)
@@ -925,34 +911,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.CommentHistoryStep.Message(childComplexity), true
 
-	case "CommitAsNeededPayload.bug":
-		if e.complexity.CommitAsNeededPayload.Bug == nil {
-			break
-		}
-
-		return e.complexity.CommitAsNeededPayload.Bug(childComplexity), true
-
-	case "CommitAsNeededPayload.clientMutationId":
-		if e.complexity.CommitAsNeededPayload.ClientMutationID == nil {
-			break
-		}
-
-		return e.complexity.CommitAsNeededPayload.ClientMutationID(childComplexity), true
-
-	case "CommitPayload.bug":
-		if e.complexity.CommitPayload.Bug == nil {
-			break
-		}
-
-		return e.complexity.CommitPayload.Bug(childComplexity), true
-
-	case "CommitPayload.clientMutationId":
-		if e.complexity.CommitPayload.ClientMutationID == nil {
-			break
-		}
-
-		return e.complexity.CommitPayload.ClientMutationID(childComplexity), true
-
 	case "CreateOperation.author":
 		if e.complexity.CreateOperation.Author == nil {
 			break
@@ -1366,30 +1324,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CloseBug(childComplexity, args["input"].(models.CloseBugInput)), true
-
-	case "Mutation.commit":
-		if e.complexity.Mutation.Commit == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_commit_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.Commit(childComplexity, args["input"].(models.CommitInput)), true
-
-	case "Mutation.commitAsNeeded":
-		if e.complexity.Mutation.CommitAsNeeded == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_commitAsNeeded_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CommitAsNeeded(childComplexity, args["input"].(models.CommitAsNeededInput)), true
 
 	case "Mutation.newBug":
 		if e.complexity.Mutation.NewBug == nil {
@@ -2184,38 +2118,6 @@ type SetTitlePayload {
     """The resulting operation"""
     operation: SetTitleOperation!
 }
-
-input CommitInput {
-    """A unique identifier for the client performing the mutation."""
-    clientMutationId: String
-    """"The name of the repository. If not set, the default repository is used."""
-    repoRef: String
-    """The bug ID's prefix."""
-    prefix: String!
-}
-
-type CommitPayload {
-    """A unique identifier for the client performing the mutation."""
-    clientMutationId: String
-    """The affected bug."""
-    bug: Bug!
-}
-
-input CommitAsNeededInput {
-    """A unique identifier for the client performing the mutation."""
-    clientMutationId: String
-    """"The name of the repository. If not set, the default repository is used."""
-    repoRef: String
-    """The bug ID's prefix."""
-    prefix: String!
-}
-
-type CommitAsNeededPayload {
-    """A unique identifier for the client performing the mutation."""
-    clientMutationId: String
-    """The affected bug."""
-    bug: Bug!
-}
 `, BuiltIn: false},
 	&ast.Source{Name: "schema/operations.graphql", Input: `"""An operation applied to a bug."""
 interface Operation {
@@ -2386,10 +2288,6 @@ type Mutation {
     closeBug(input: CloseBugInput!): CloseBugPayload!
     """Change a bug's title"""
     setTitle(input: SetTitleInput!): SetTitlePayload!
-    """Commit write the pending operations into storage. This mutation fail if nothing is pending"""
-    commit(input: CommitInput!): CommitPayload!
-    """Commit write the pending operations into storage. This mutation succed if nothing is pending"""
-    commitAsNeeded(input: CommitAsNeededInput!): CommitAsNeededPayload!
 }
 `, BuiltIn: false},
 	&ast.Source{Name: "schema/timeline.graphql", Input: `"""An item in the timeline of events"""
@@ -2741,34 +2639,6 @@ func (ec *executionContext) field_Mutation_closeBug_args(ctx context.Context, ra
 	var arg0 models.CloseBugInput
 	if tmp, ok := rawArgs["input"]; ok {
 		arg0, err = ec.unmarshalNCloseBugInput2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐCloseBugInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_commitAsNeeded_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 models.CommitAsNeededInput
-	if tmp, ok := rawArgs["input"]; ok {
-		arg0, err = ec.unmarshalNCommitAsNeededInput2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐCommitAsNeededInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_commit_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 models.CommitInput
-	if tmp, ok := rawArgs["input"]; ok {
-		arg0, err = ec.unmarshalNCommitInput2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐCommitInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -4997,136 +4867,6 @@ func (ec *executionContext) _CommentHistoryStep_date(ctx context.Context, field 
 	return ec.marshalNTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _CommitAsNeededPayload_clientMutationId(ctx context.Context, field graphql.CollectedField, obj *models.CommitAsNeededPayload) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:   "CommitAsNeededPayload",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ClientMutationID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _CommitAsNeededPayload_bug(ctx context.Context, field graphql.CollectedField, obj *models.CommitAsNeededPayload) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:   "CommitAsNeededPayload",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Bug, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(models.BugWrapper)
-	fc.Result = res
-	return ec.marshalNBug2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐBugWrapper(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _CommitPayload_clientMutationId(ctx context.Context, field graphql.CollectedField, obj *models.CommitPayload) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:   "CommitPayload",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ClientMutationID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _CommitPayload_bug(ctx context.Context, field graphql.CollectedField, obj *models.CommitPayload) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:   "CommitPayload",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Bug, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(models.BugWrapper)
-	fc.Result = res
-	return ec.marshalNBug2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐBugWrapper(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _CreateOperation_id(ctx context.Context, field graphql.CollectedField, obj *bug.CreateOperation) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -7198,88 +6938,6 @@ func (ec *executionContext) _Mutation_setTitle(ctx context.Context, field graphq
 	res := resTmp.(*models.SetTitlePayload)
 	fc.Result = res
 	return ec.marshalNSetTitlePayload2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐSetTitlePayload(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_commit(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:   "Mutation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_commit_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().Commit(rctx, args["input"].(models.CommitInput))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*models.CommitPayload)
-	fc.Result = res
-	return ec.marshalNCommitPayload2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐCommitPayload(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_commitAsNeeded(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:   "Mutation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_commitAsNeeded_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CommitAsNeeded(rctx, args["input"].(models.CommitAsNeededInput))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*models.CommitAsNeededPayload)
-	fc.Result = res
-	return ec.marshalNCommitAsNeededPayload2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐCommitAsNeededPayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _NewBugPayload_clientMutationId(ctx context.Context, field graphql.CollectedField, obj *models.NewBugPayload) (ret graphql.Marshaler) {
@@ -10272,66 +9930,6 @@ func (ec *executionContext) unmarshalInputCloseBugInput(ctx context.Context, obj
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputCommitAsNeededInput(ctx context.Context, obj interface{}) (models.CommitAsNeededInput, error) {
-	var it models.CommitAsNeededInput
-	var asMap = obj.(map[string]interface{})
-
-	for k, v := range asMap {
-		switch k {
-		case "clientMutationId":
-			var err error
-			it.ClientMutationID, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "repoRef":
-			var err error
-			it.RepoRef, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "prefix":
-			var err error
-			it.Prefix, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputCommitInput(ctx context.Context, obj interface{}) (models.CommitInput, error) {
-	var it models.CommitInput
-	var asMap = obj.(map[string]interface{})
-
-	for k, v := range asMap {
-		switch k {
-		case "clientMutationId":
-			var err error
-			it.ClientMutationID, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "repoRef":
-			var err error
-			it.RepoRef, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "prefix":
-			var err error
-			it.Prefix, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputNewBugInput(ctx context.Context, obj interface{}) (models.NewBugInput, error) {
 	var it models.NewBugInput
 	var asMap = obj.(map[string]interface{})
@@ -11345,64 +10943,6 @@ func (ec *executionContext) _CommentHistoryStep(ctx context.Context, sel ast.Sel
 	return out
 }
 
-var commitAsNeededPayloadImplementors = []string{"CommitAsNeededPayload"}
-
-func (ec *executionContext) _CommitAsNeededPayload(ctx context.Context, sel ast.SelectionSet, obj *models.CommitAsNeededPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, commitAsNeededPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("CommitAsNeededPayload")
-		case "clientMutationId":
-			out.Values[i] = ec._CommitAsNeededPayload_clientMutationId(ctx, field, obj)
-		case "bug":
-			out.Values[i] = ec._CommitAsNeededPayload_bug(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
-var commitPayloadImplementors = []string{"CommitPayload"}
-
-func (ec *executionContext) _CommitPayload(ctx context.Context, sel ast.SelectionSet, obj *models.CommitPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, commitPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("CommitPayload")
-		case "clientMutationId":
-			out.Values[i] = ec._CommitPayload_clientMutationId(ctx, field, obj)
-		case "bug":
-			out.Values[i] = ec._CommitPayload_bug(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
 var createOperationImplementors = []string{"CreateOperation", "Operation", "Authored"}
 
 func (ec *executionContext) _CreateOperation(ctx context.Context, sel ast.SelectionSet, obj *bug.CreateOperation) graphql.Marshaler {
@@ -12168,16 +11708,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "setTitle":
 			out.Values[i] = ec._Mutation_setTitle(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "commit":
-			out.Values[i] = ec._Mutation_commit(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "commitAsNeeded":
-			out.Values[i] = ec._Mutation_commitAsNeeded(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -13541,42 +13071,6 @@ func (ec *executionContext) marshalNCommentHistoryStep2ᚕgithubᚗcomᚋMichael
 	}
 	wg.Wait()
 	return ret
-}
-
-func (ec *executionContext) unmarshalNCommitAsNeededInput2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐCommitAsNeededInput(ctx context.Context, v interface{}) (models.CommitAsNeededInput, error) {
-	return ec.unmarshalInputCommitAsNeededInput(ctx, v)
-}
-
-func (ec *executionContext) marshalNCommitAsNeededPayload2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐCommitAsNeededPayload(ctx context.Context, sel ast.SelectionSet, v models.CommitAsNeededPayload) graphql.Marshaler {
-	return ec._CommitAsNeededPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNCommitAsNeededPayload2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐCommitAsNeededPayload(ctx context.Context, sel ast.SelectionSet, v *models.CommitAsNeededPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return ec._CommitAsNeededPayload(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNCommitInput2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐCommitInput(ctx context.Context, v interface{}) (models.CommitInput, error) {
-	return ec.unmarshalInputCommitInput(ctx, v)
-}
-
-func (ec *executionContext) marshalNCommitPayload2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐCommitPayload(ctx context.Context, sel ast.SelectionSet, v models.CommitPayload) graphql.Marshaler {
-	return ec._CommitPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNCommitPayload2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋgraphqlᚋmodelsᚐCommitPayload(ctx context.Context, sel ast.SelectionSet, v *models.CommitPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return ec._CommitPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNCreateOperation2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐCreateOperation(ctx context.Context, sel ast.SelectionSet, v bug.CreateOperation) graphql.Marshaler {
