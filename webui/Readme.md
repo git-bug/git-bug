@@ -7,8 +7,9 @@
 2. Run the GraphQL backend on the port 3001
    - `./git-bug webui -p 3001`
 3. Run the hot-reloadable development WebUI
+
    - run `npm start` in the **webui** directory
-   
+
 The development version of the WebUI is configured to query the backend on the port 3001. You can now live edit the js code and use the normal backend.
 
 ## Bundle the web UI
