@@ -4,8 +4,12 @@ import React from 'react';
 import Timeline from './Timeline';
 import { useTimelineQuery } from './TimelineQuery.generated';
 
-const TimelineQuery = ({ id }) => {
-  const { loading, error, data, fetchMore } = useTimelineQuery({
+type Props = {
+  id: string;
+};
+
+const TimelineQuery = ({ id }: Props) => {
+  const { loading, error, data } = useTimelineQuery({
     variables: {
       id,
       first: 100,
@@ -14,9 +18,13 @@ const TimelineQuery = ({ id }) => {
 
   if (loading) return <CircularProgress />;
   if (error) return <p>Error: {error}</p>;
-  return (
-    <Timeline ops={data.repository.bug.timeline.nodes} fetchMore={fetchMore} />
-  );
+
+  const nodes = data?.repository?.bug?.timeline.nodes;
+  if (!nodes) {
+    return null;
+  }
+
+  return <Timeline ops={nodes} />;
 };
 
 export default TimelineQuery;

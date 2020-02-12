@@ -1,8 +1,9 @@
-import { makeStyles } from '@material-ui/styles';
+import { makeStyles } from '@material-ui/core/styles';
 import React from 'react';
 
 import Author from '../Author';
 import Date from '../Date';
+import { SetTitleFragment } from './SetTitleFragment.generated';
 
 const useStyles = makeStyles(theme => ({
   main: {
@@ -14,7 +15,11 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-function SetTitle({ op }) {
+type Props = {
+  op: SetTitleFragment;
+};
+
+function SetTitle({ op }: Props) {
   const classes = useStyles();
   return (
     <div className={classes.main}>

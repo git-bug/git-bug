@@ -1,8 +1,9 @@
-import { makeStyles } from '@material-ui/styles';
+import { makeStyles } from '@material-ui/core/styles';
 import React from 'react';
 
 import Author from '../Author';
 import Date from '../Date';
+import { SetStatusFragment } from './SetStatusFragment.generated';
 
 const useStyles = makeStyles(theme => ({
   main: {
@@ -11,7 +12,11 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-function SetStatus({ op }) {
+type Props = {
+  op: SetStatusFragment;
+};
+
+function SetStatus({ op }: Props) {
   const classes = useStyles();
   return (
     <div className={classes.main}>

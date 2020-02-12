@@ -4,7 +4,11 @@ import React from 'react';
 
 import { AuthoredFragment } from './Author.generated';
 
-type Props = AuthoredFragment;
+type Props = AuthoredFragment & {
+  className?: string;
+  bold?: boolean;
+};
+
 const Author = ({ author, ...props }: Props) => {
   if (!author.email) {
     return <span {...props}>{author.displayName}</span>;

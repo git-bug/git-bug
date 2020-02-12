@@ -1,10 +1,8 @@
 #import "../Author.graphql"
 
-fragment Create on TimelineItem {
-  ... on CreateTimelineItem {
-    createdAt
-    ...authored
-    edited
-    message
-  }
+fragment Create on CreateTimelineItem {
+  createdAt
+  ...authored
+  edited
+  message
 }

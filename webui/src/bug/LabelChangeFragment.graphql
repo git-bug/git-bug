@@ -1,15 +1,13 @@
 #import "../Author.graphql"
 #import "../Label.graphql"
 
-fragment LabelChange on TimelineItem {
-  ... on LabelChangeTimelineItem {
-    date
-    ...authored
-    added {
-      ...Label
-    }
-    removed {
-      ...Label
-    }
+fragment LabelChange on LabelChangeTimelineItem {
+  date
+  ...authored
+  added {
+    ...Label
+  }
+  removed {
+    ...Label
   }
 }

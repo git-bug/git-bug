@@ -1,9 +1,7 @@
 #import "../Author.graphql"
 
-fragment SetStatus on TimelineItem {
-  ... on SetStatusTimelineItem {
-    date
-    ...authored
-    status
-  }
+fragment SetStatus on SetStatusTimelineItem {
+  date
+  ...authored
+  status
 }

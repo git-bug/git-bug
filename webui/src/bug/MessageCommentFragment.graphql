@@ -1,10 +1,8 @@
 #import "../Author.graphql"
 
-fragment AddComment on TimelineItem {
-  ... on AddCommentTimelineItem {
-    createdAt
-    ...authored
-    edited
-    message
-  }
+fragment AddComment on AddCommentTimelineItem {
+  createdAt
+  ...authored
+  edited
+  message
 }

@@ -1,9 +1,10 @@
-import { makeStyles } from '@material-ui/styles';
+import { makeStyles } from '@material-ui/core/styles';
 import React from 'react';
 
 import Author from '../Author';
 import Date from '../Date';
 import Label from '../Label';
+import { LabelChangeFragment } from './LabelChangeFragment.generated';
 
 const useStyles = makeStyles(theme => ({
   main: {
@@ -15,7 +16,11 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-function LabelChange({ op }) {
+type Props = {
+  op: LabelChangeFragment;
+};
+
+function LabelChange({ op }: Props) {
   const { added, removed } = op;
   const classes = useStyles();
   return (

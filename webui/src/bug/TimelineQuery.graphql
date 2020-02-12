@@ -9,11 +9,7 @@ query Timeline($id: String!, $first: Int = 10, $after: String) {
     bug(prefix: $id) {
       timeline(first: $first, after: $after) {
         nodes {
-          ...LabelChange
-          ...SetStatus
-          ...SetTitle
-          ...AddComment
-          ...Create
+          ...TimelineItem
         }
         pageInfo {
           hasNextPage
@@ -21,5 +17,23 @@ query Timeline($id: String!, $first: Int = 10, $after: String) {
         }
       }
     }
+  }
+}
+
+fragment TimelineItem on TimelineItem {
+  ... on LabelChangeTimelineItem {
+    ...LabelChange
+  }
+  ... on SetStatusTimelineItem {
+    ...SetStatus
+  }
+  ... on SetTitleTimelineItem {
+    ...SetTitle
+  }
+  ... on AddCommentTimelineItem {
+    ...AddComment
+  }
+  ... on CreateTimelineItem {
+    ...Create
   }
 }
