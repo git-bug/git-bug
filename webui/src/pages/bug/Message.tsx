@@ -1,10 +1,11 @@
-import Paper from '@material-ui/core/Paper';
-import { makeStyles } from '@material-ui/core/styles';
 import React from 'react';
 
-import Author, { Avatar } from '../components/Author';
-import Date from '../components/Date';
-import Content from '../components/Content';
+import Paper from '@material-ui/core/Paper';
+import { makeStyles } from '@material-ui/core/styles';
+
+import Author, { Avatar } from 'src/components/Author';
+import Content from 'src/components/Content';
+import Date from 'src/components/Date';
 
 import { AddCommentFragment } from './MessageCommentFragment.generated';
 import { CreateFragment } from './MessageCreateFragment.generated';

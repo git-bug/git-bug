@@ -1,12 +1,13 @@
+import React, { useState, useRef } from 'react';
+
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import Tab from '@material-ui/core/Tab';
 import Tabs from '@material-ui/core/Tabs';
 import TextField from '@material-ui/core/TextField';
 import { makeStyles, Theme } from '@material-ui/core/styles';
-import React, { useState, useRef } from 'react';
 
-import Content from '../components/Content';
+import Content from 'src/components/Content';
 
 import { useAddCommentMutation } from './CommentForm.generated';
 import { TimelineDocument } from './TimelineQuery.generated';

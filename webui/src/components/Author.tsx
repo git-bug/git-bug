@@ -1,6 +1,7 @@
+import React from 'react';
+
 import MAvatar from '@material-ui/core/Avatar';
 import Tooltip from '@material-ui/core/Tooltip/Tooltip';
-import React from 'react';
 
 import { AuthoredFragment } from './fragments.generated';
 

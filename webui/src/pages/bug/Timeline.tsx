@@ -1,5 +1,6 @@
-import { makeStyles } from '@material-ui/core/styles';
 import React from 'react';
+
+import { makeStyles } from '@material-ui/core/styles';
 
 import LabelChange from './LabelChange';
 import Message from './Message';

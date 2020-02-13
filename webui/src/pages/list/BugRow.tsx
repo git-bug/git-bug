@@ -1,15 +1,16 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
+
 import TableCell from '@material-ui/core/TableCell/TableCell';
 import TableRow from '@material-ui/core/TableRow/TableRow';
 import Tooltip from '@material-ui/core/Tooltip/Tooltip';
 import { makeStyles } from '@material-ui/core/styles';
 import CheckCircleOutline from '@material-ui/icons/CheckCircleOutline';
 import ErrorOutline from '@material-ui/icons/ErrorOutline';
-import React from 'react';
-import { Link } from 'react-router-dom';
 
-import Date from '../components/Date';
-import Label from '../components/Label';
-import { Status } from '../gqlTypes';
+import Date from 'src/components/Date';
+import Label from 'src/components/Label';
+import { Status } from 'src/gqlTypes';
 
 import { BugRowFragment } from './BugRow.generated';
 

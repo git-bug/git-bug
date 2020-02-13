@@ -1,7 +1,8 @@
-import Tooltip from '@material-ui/core/Tooltip/Tooltip';
 import moment from 'moment';
 import React from 'react';
 import Moment from 'react-moment';
+
+import Tooltip from '@material-ui/core/Tooltip/Tooltip';
 
 const HOUR = 1000 * 3600;
 const DAY = 24 * HOUR;

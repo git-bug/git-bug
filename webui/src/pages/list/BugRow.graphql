@@ -1,4 +1,4 @@
-#import "../components/fragments.graphql"
+#import "../../components/fragments.graphql"
 
 fragment BugRow on Bug {
   id

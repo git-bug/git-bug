@@ -1,6 +1,7 @@
-import CircularProgress from '@material-ui/core/CircularProgress';
 import React from 'react';
 import { RouteComponentProps } from 'react-router-dom';
+
+import CircularProgress from '@material-ui/core/CircularProgress';
 
 import Bug from './Bug';
 import { useGetBugQuery } from './BugQuery.generated';
