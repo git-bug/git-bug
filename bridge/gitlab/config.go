@@ -83,7 +83,7 @@ func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 		}
 		login = l
 	case params.TokenRaw != "":
-		token := auth.NewToken(params.TokenRaw, target)
+		token := auth.NewToken(target, params.TokenRaw)
 		login, err = getLoginFromToken(baseUrl, token)
 		if err != nil {
 			return nil, err
@@ -265,7 +265,7 @@ func promptToken(baseUrl string) (*auth.Token, error) {
 		if !re.MatchString(value) {
 			return "token has incorrect format", nil
 		}
-		login, err = getLoginFromToken(baseUrl, auth.NewToken(value, target))
+		login, err = getLoginFromToken(baseUrl, auth.NewToken(target, value))
 		if err != nil {
 			return fmt.Sprintf("token is invalid: %v", err), nil
 		}
@@ -277,7 +277,7 @@ func promptToken(baseUrl string) (*auth.Token, error) {
 		return nil, err
 	}
 
-	token := auth.NewToken(rawToken, target)
+	token := auth.NewToken(target, rawToken)
 	token.SetMetadata(auth.MetaKeyLogin, login)
 	token.SetMetadata(auth.MetaKeyBaseURL, baseUrl)
 

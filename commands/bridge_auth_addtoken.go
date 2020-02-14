@@ -86,7 +86,7 @@ func runBridgeTokenAdd(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	token := auth.NewToken(value, bridgeAuthAddTokenTarget)
+	token := auth.NewToken(bridgeAuthAddTokenTarget, value)
 	token.SetMetadata(auth.MetaKeyLogin, bridgeAuthAddTokenLogin)
 
 	if err := token.Validate(); err != nil {

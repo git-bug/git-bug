@@ -3,104 +3,68 @@ package auth
 import (
 	"crypto/sha256"
 	"fmt"
-	"time"
 
-	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/repository"
 )
 
 const (
-	tokenValueKey = "value"
+	configKeyTokenValue = "value"
 )
 
 var _ Credential = &Token{}
 
 // Token holds an API access token data
 type Token struct {
-	target     string
-	createTime time.Time
-	Value      string
-	meta       map[string]string
+	*credentialBase
+	Value string
 }
 
 // NewToken instantiate a new token
-func NewToken(value, target string) *Token {
+func NewToken(target, value string) *Token {
 	return &Token{
-		target:     target,
-		createTime: time.Now(),
-		Value:      value,
+		credentialBase: newCredentialBase(target),
+		Value:          value,
 	}
 }
 
-func NewTokenFromConfig(conf map[string]string) *Token {
-	token := &Token{}
-
-	token.target = conf[configKeyTarget]
-	if createTime, ok := conf[configKeyCreateTime]; ok {
-		if t, err := repository.ParseTimestamp(createTime); err == nil {
-			token.createTime = t
-		}
+func NewTokenFromConfig(conf map[string]string) (*Token, error) {
+	base, err := newCredentialBaseFromConfig(conf)
+	if err != nil {
+		return nil, err
 	}
 
-	token.Value = conf[tokenValueKey]
-	token.meta = metaFromConfig(conf)
-
-	return token
+	return &Token{
+		credentialBase: base,
+		Value:          conf[configKeyTokenValue],
+	}, nil
 }
 
 func (t *Token) ID() entity.Id {
-	sum := sha256.Sum256([]byte(t.target + t.Value))
-	return entity.Id(fmt.Sprintf("%x", sum))
-}
-
-func (t *Token) Target() string {
-	return t.target
+	h := sha256.New()
+	_, _ = h.Write(t.salt)
+	_, _ = h.Write([]byte(t.target))
+	_, _ = h.Write([]byte(t.Value))
+	return entity.Id(fmt.Sprintf("%x", h.Sum(nil)))
 }
 
 func (t *Token) Kind() CredentialKind {
 	return KindToken
 }
 
-func (t *Token) CreateTime() time.Time {
-	return t.createTime
-}
-
 // Validate ensure token important fields are valid
 func (t *Token) Validate() error {
+	err := t.credentialBase.validate()
+	if err != nil {
+		return err
+	}
 	if t.Value == "" {
 		return fmt.Errorf("missing value")
-	}
-	if t.target == "" {
-		return fmt.Errorf("missing target")
-	}
-	if t.createTime.IsZero() || t.createTime.Equal(time.Time{}) {
-		return fmt.Errorf("missing creation time")
-	}
-	if !core.TargetExist(t.target) {
-		return fmt.Errorf("unknown target")
 	}
 	return nil
 }
 
-func (t *Token) Metadata() map[string]string {
-	return t.meta
-}
-
-func (t *Token) GetMetadata(key string) (string, bool) {
-	val, ok := t.meta[key]
-	return val, ok
-}
-
-func (t *Token) SetMetadata(key string, value string) {
-	if t.meta == nil {
-		t.meta = make(map[string]string)
-	}
-	t.meta[key] = value
-}
-
 func (t *Token) toConfig() map[string]string {
 	return map[string]string{
-		tokenValueKey: t.Value,
+		configKeyTokenValue: t.Value,
 	}
 }

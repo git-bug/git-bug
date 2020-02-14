@@ -144,7 +144,7 @@ func Test_Importer(t *testing.T) {
 	login := "test-identity"
 	author.SetMetadata(metaKeyGithubLogin, login)
 
-	token := auth.NewToken(envToken, target)
+	token := auth.NewToken(target, envToken)
 	token.SetMetadata(auth.MetaKeyLogin, login)
 	err = auth.Store(repo, token)
 	require.NoError(t, err)
