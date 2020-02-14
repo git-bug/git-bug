@@ -27,6 +27,7 @@ type CredentialKind string
 const (
 	KindToken         CredentialKind = "token"
 	KindLoginPassword CredentialKind = "login-password"
+	KindGitCredential CredentialKind = "git"
 )
 
 var ErrCredentialNotExist = errors.New("credential doesn't exist")
@@ -112,7 +113,10 @@ func loadFromConfig(rawConfigs map[string]string, id entity.Id) (Credential, err
 	switch CredentialKind(configs[configKeyKind]) {
 	case KindToken:
 		cred = NewTokenFromConfig(configs)
+	case KindGitCredential:
+		return NewGitCredentialFromConfig(configs)
 	case KindLoginPassword:
+
 	default:
 		return nil, fmt.Errorf("unknown credential type %s", configs[configKeyKind])
 	}
