@@ -98,15 +98,16 @@ func TestImport(t *testing.T) {
 	login := "test-identity"
 	author.SetMetadata(metaKeyGitlabLogin, login)
 
-	token := auth.NewToken(envToken, target)
-	token.SetMetadata(metaKeyGitlabLogin, login)
+	token := auth.NewToken(target, envToken)
+	token.SetMetadata(auth.MetaKeyLogin, login)
+	token.SetMetadata(auth.MetaKeyBaseURL, defaultBaseURL)
 	err = auth.Store(repo, token)
 	require.NoError(t, err)
 
 	importer := &gitlabImporter{}
 	err = importer.Init(backend, core.Configuration{
 		keyProjectID:     projectID,
-		keyGitlabBaseUrl: "https://gitlab.com",
+		keyGitlabBaseUrl: defaultBaseURL,
 	})
 	require.NoError(t, err)
 

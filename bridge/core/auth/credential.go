@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"regexp"
@@ -16,15 +18,18 @@ const (
 	configKeyKind       = "kind"
 	configKeyTarget     = "target"
 	configKeyCreateTime = "createtime"
+	configKeySalt       = "salt"
 	configKeyPrefixMeta = "meta."
 
-	MetaKeyLogin = "login"
+	MetaKeyLogin   = "login"
+	MetaKeyBaseURL = "base-url"
 )
 
 type CredentialKind string
 
 const (
 	KindToken         CredentialKind = "token"
+	KindLogin         CredentialKind = "login"
 	KindLoginPassword CredentialKind = "login-password"
 )
 
@@ -36,9 +41,10 @@ func NewErrMultipleMatchCredential(matching []entity.Id) *entity.ErrMultipleMatc
 
 type Credential interface {
 	ID() entity.Id
-	Target() string
 	Kind() CredentialKind
+	Target() string
 	CreateTime() time.Time
+	Salt() []byte
 	Validate() error
 
 	Metadata() map[string]string
@@ -46,7 +52,7 @@ type Credential interface {
 	SetMetadata(key string, value string)
 
 	// Return all the specific properties of the credential that need to be saved into the configuration.
-	// This does not include Target, Kind, CreateTime and Metadata.
+	// This does not include Target, Kind, CreateTime, Metadata or Salt.
 	toConfig() map[string]string
 }
 
@@ -107,13 +113,21 @@ func loadFromConfig(rawConfigs map[string]string, id entity.Id) (Credential, err
 	}
 
 	var cred Credential
+	var err error
 
 	switch CredentialKind(configs[configKeyKind]) {
 	case KindToken:
-		cred = NewTokenFromConfig(configs)
+		cred, err = NewTokenFromConfig(configs)
+	case KindLogin:
+		cred, err = NewLoginFromConfig(configs)
 	case KindLoginPassword:
+		cred, err = NewLoginPasswordFromConfig(configs)
 	default:
 		return nil, fmt.Errorf("unknown credential type %s", configs[configKeyKind])
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("loading credential: %v", err)
 	}
 
 	return cred, nil
@@ -131,6 +145,23 @@ func metaFromConfig(configs map[string]string) map[string]string {
 		return nil
 	}
 	return result
+}
+
+func makeSalt() []byte {
+	result := make([]byte, 16)
+	_, err := rand.Read(result)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+func saltFromConfig(configs map[string]string) ([]byte, error) {
+	val, ok := configs[configKeySalt]
+	if !ok {
+		return nil, fmt.Errorf("no credential salt found")
+	}
+	return base64.StdEncoding.DecodeString(val)
 }
 
 // List load all existing credentials
@@ -206,6 +237,16 @@ func Store(repo repository.RepoConfig, cred Credential) error {
 
 	// CreateTime
 	err = repo.GlobalConfig().StoreTimestamp(prefix+configKeyCreateTime, cred.CreateTime())
+	if err != nil {
+		return err
+	}
+
+	// Salt
+	if len(cred.Salt()) != 16 {
+		panic("credentials need to be salted")
+	}
+	encoded := base64.StdEncoding.EncodeToString(cred.Salt())
+	err = repo.GlobalConfig().StoreString(prefix+configKeySalt, encoded)
 	if err != nil {
 		return err
 	}

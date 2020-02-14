@@ -1,0 +1,39 @@
+#import "./MessageCreateFragment.graphql"
+#import "./MessageCommentFragment.graphql"
+#import "./LabelChangeFragment.graphql"
+#import "./SetTitleFragment.graphql"
+#import "./SetStatusFragment.graphql"
+
+query Timeline($id: String!, $first: Int = 10, $after: String) {
+  repository {
+    bug(prefix: $id) {
+      timeline(first: $first, after: $after) {
+        nodes {
+          ...TimelineItem
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+      }
+    }
+  }
+}
+
+fragment TimelineItem on TimelineItem {
+  ... on LabelChangeTimelineItem {
+    ...LabelChange
+  }
+  ... on SetStatusTimelineItem {
+    ...SetStatus
+  }
+  ... on SetTitleTimelineItem {
+    ...SetTitle
+  }
+  ... on AddCommentTimelineItem {
+    ...AddComment
+  }
+  ... on CreateTimelineItem {
+    ...Create
+  }
+}

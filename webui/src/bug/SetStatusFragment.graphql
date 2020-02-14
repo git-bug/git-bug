@@ -1,0 +1,7 @@
+#import "../Author.graphql"
+
+fragment SetStatus on SetStatusTimelineItem {
+  date
+  ...authored
+  status
+}

@@ -47,7 +47,7 @@ func (ge *gitlabExporter) Init(repo *cache.RepoCache, conf core.Configuration) e
 	ge.repositoryID = ge.conf[keyProjectID]
 
 	// preload all clients
-	err := ge.cacheAllClient(repo)
+	err := ge.cacheAllClient(repo, ge.conf[keyGitlabBaseUrl])
 	if err != nil {
 		return err
 	}
@@ -55,8 +55,12 @@ func (ge *gitlabExporter) Init(repo *cache.RepoCache, conf core.Configuration) e
 	return nil
 }
 
-func (ge *gitlabExporter) cacheAllClient(repo *cache.RepoCache) error {
-	creds, err := auth.List(repo, auth.WithTarget(target), auth.WithKind(auth.KindToken))
+func (ge *gitlabExporter) cacheAllClient(repo *cache.RepoCache, baseURL string) error {
+	creds, err := auth.List(repo,
+		auth.WithTarget(target),
+		auth.WithKind(auth.KindToken),
+		auth.WithMeta(auth.MetaKeyBaseURL, baseURL),
+	)
 	if err != nil {
 		return err
 	}

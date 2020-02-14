@@ -1,8 +1,32 @@
 schema: '../graphql/schema/*.graphql'
 overwrite: true
+documents: src/**/*.graphql
 generates:
-  ./src/fragmentTypes.js:
+  ./src/fragmentTypes.ts:
     plugins:
-    - fragment-matcher
+      - fragment-matcher
     config:
       module: es2015
+  ./src/gqlTypes.ts:
+    plugins:
+      - typescript
+  ./src/schema.json:
+    plugins:
+      - introspection
+  ./src/:
+    plugins:
+      - add: '/* eslint-disable @typescript-eslint/no-unused-vars, import/order */'
+      - typescript-operations
+      - typescript-react-apollo
+    preset: near-operation-file
+    presetConfig:
+      extension: .generated.tsx
+      baseTypesPath: gqlTypes.ts
+    config:
+      withComponent: false
+      withHOC: false
+      withHooks: true
+
+hooks:
+  afterAllFileWrite:
+    - prettier --write

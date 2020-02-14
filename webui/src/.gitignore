@@ -1,1 +1,4 @@
-fragmentTypes.js
+fragmentTypes.ts
+gqlTypes.ts
+*.generated.*
+schema.json

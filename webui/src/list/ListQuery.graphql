@@ -1,0 +1,37 @@
+#import "./BugRow.graphql"
+
+query ListBugs(
+  $first: Int
+  $last: Int
+  $after: String
+  $before: String
+  $query: String
+) {
+  repository {
+    bugs: allBugs(
+      first: $first
+      last: $last
+      after: $after
+      before: $before
+      query: $query
+    ) {
+      ...BugList
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+    }
+  }
+}
+
+fragment BugList on BugConnection {
+  totalCount
+  edges {
+    cursor
+    node {
+      ...BugRow
+    }
+  }
+}

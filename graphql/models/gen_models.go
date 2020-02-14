@@ -111,38 +111,6 @@ type CommentEdge struct {
 	Node   *bug.Comment `json:"node"`
 }
 
-type CommitAsNeededInput struct {
-	// A unique identifier for the client performing the mutation.
-	ClientMutationID *string `json:"clientMutationId"`
-	// "The name of the repository. If not set, the default repository is used.
-	RepoRef *string `json:"repoRef"`
-	// The bug ID's prefix.
-	Prefix string `json:"prefix"`
-}
-
-type CommitAsNeededPayload struct {
-	// A unique identifier for the client performing the mutation.
-	ClientMutationID *string `json:"clientMutationId"`
-	// The affected bug.
-	Bug BugWrapper `json:"bug"`
-}
-
-type CommitInput struct {
-	// A unique identifier for the client performing the mutation.
-	ClientMutationID *string `json:"clientMutationId"`
-	// "The name of the repository. If not set, the default repository is used.
-	RepoRef *string `json:"repoRef"`
-	// The bug ID's prefix.
-	Prefix string `json:"prefix"`
-}
-
-type CommitPayload struct {
-	// A unique identifier for the client performing the mutation.
-	ClientMutationID *string `json:"clientMutationId"`
-	// The affected bug.
-	Bug BugWrapper `json:"bug"`
-}
-
 type IdentityConnection struct {
 	Edges      []*IdentityEdge   `json:"edges"`
 	Nodes      []IdentityWrapper `json:"nodes"`

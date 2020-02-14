@@ -1,4 +1,0 @@
-{
-  "extends": ["react-app", "plugin:prettier/recommended"],
-  "ignorePatterns": ["src/fragmentTypes.js"]
-}

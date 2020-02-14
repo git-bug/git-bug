@@ -44,13 +44,13 @@ That's all !
 
 </details>
 
-<details><summary>go get (unstable)</summary>
+<details><summary>go install (unstable)</summary>
 
 ```shell
-go get -u github.com/MichaelMure/git-bug
+go install github.com/MichaelMure/git-bug
 ```
 
-If it's not done already, add golang binary directory in your PATH:
+If it's not done already, add the golang binary directory in your PATH:
 
 ```bash
 export PATH=$PATH:$(go env GOROOT)/bin:$(go env GOPATH)/bin

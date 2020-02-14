@@ -7,32 +7,12 @@ matrix:
   - language: go
     go: 1.13.x
   - language: node_js
-    node_js: 8
+    node_js: node
     before_install:
       - cd webui
     after_success: []
   - language: node_js
-    node_js: 9
-    before_install:
-      - cd webui
-    after_success: []
-  - language: node_js
-    node_js: 10
-    before_install:
-      - cd webui
-    after_success: []
-  - language: node_js
-    node_js: 11
-    before_install:
-      - cd webui
-    after_success: []
-  - language: node_js
-    node_js: 12
-    before_install:
-      - cd webui
-    after_success: []
-  - language: node_js
-    node_js: 13
+    node_js: lts/*
     before_install:
       - cd webui
     after_success: []

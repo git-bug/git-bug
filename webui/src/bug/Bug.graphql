@@ -1,0 +1,14 @@
+#import "../Label.graphql"
+#import "../Author.graphql"
+
+fragment Bug on Bug {
+  id
+  humanId
+  status
+  title
+  labels {
+    ...Label
+  }
+  createdAt
+  ...authored
+}

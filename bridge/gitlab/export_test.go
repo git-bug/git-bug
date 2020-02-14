@@ -162,8 +162,9 @@ func TestPushPull(t *testing.T) {
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
 
-	token := auth.NewToken(envToken, target)
+	token := auth.NewToken(target, envToken)
 	token.SetMetadata(auth.MetaKeyLogin, login)
+	token.SetMetadata(auth.MetaKeyBaseURL, defaultBaseURL)
 	err = auth.Store(repo, token)
 	require.NoError(t, err)
 
@@ -194,7 +195,7 @@ func TestPushPull(t *testing.T) {
 	exporter := &gitlabExporter{}
 	err = exporter.Init(backend, core.Configuration{
 		keyProjectID:     strconv.Itoa(projectID),
-		keyGitlabBaseUrl: "https://gitlab.com/",
+		keyGitlabBaseUrl: defaultBaseURL,
 	})
 	require.NoError(t, err)
 
@@ -222,7 +223,7 @@ func TestPushPull(t *testing.T) {
 	importer := &gitlabImporter{}
 	err = importer.Init(backend, core.Configuration{
 		keyProjectID:     strconv.Itoa(projectID),
-		keyGitlabBaseUrl: "https://gitlab.com/",
+		keyGitlabBaseUrl: defaultBaseURL,
 	})
 	require.NoError(t, err)
 
@@ -287,7 +288,7 @@ func generateRepoName() string {
 
 // create repository need a token with scope 'repo'
 func createRepository(ctx context.Context, name string, token *auth.Token) (int, error) {
-	client, err := buildClient("https://gitlab.com/", token)
+	client, err := buildClient(defaultBaseURL, token)
 	if err != nil {
 		return 0, err
 	}
@@ -307,7 +308,7 @@ func createRepository(ctx context.Context, name string, token *auth.Token) (int,
 
 // delete repository need a token with scope 'delete_repo'
 func deleteRepository(ctx context.Context, project int, token *auth.Token) error {
-	client, err := buildClient("https://gitlab.com/", token)
+	client, err := buildClient(defaultBaseURL, token)
 	if err != nil {
 		return err
 	}

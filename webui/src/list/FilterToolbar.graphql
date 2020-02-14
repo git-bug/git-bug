@@ -1,0 +1,7 @@
+query BugCount($query: String) {
+  repository {
+    bugs: allBugs(query: $query) {
+      totalCount
+    }
+  }
+}

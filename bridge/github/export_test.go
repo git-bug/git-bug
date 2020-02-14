@@ -157,7 +157,7 @@ func TestPushPull(t *testing.T) {
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
 
-	token := auth.NewToken(envToken, target)
+	token := auth.NewToken(target, envToken)
 	token.SetMetadata(auth.MetaKeyLogin, login)
 	err = auth.Store(repo, token)
 	require.NoError(t, err)

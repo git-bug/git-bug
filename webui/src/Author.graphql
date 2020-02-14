@@ -1,0 +1,8 @@
+fragment authored on Authored {
+  author {
+    name
+    email
+    displayName
+    avatarUrl
+  }
+}
