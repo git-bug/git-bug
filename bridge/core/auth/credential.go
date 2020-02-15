@@ -123,7 +123,7 @@ func loadFromConfig(rawConfigs map[string]string, id entity.Id) (Credential, err
 	case KindLoginPassword:
 		cred, err = NewLoginPasswordFromConfig(configs)
 	default:
-		return nil, fmt.Errorf("unknown credential type %s", configs[configKeyKind])
+		return nil, fmt.Errorf("unknown credential type \"%s\"", configs[configKeyKind])
 	}
 
 	if err != nil {

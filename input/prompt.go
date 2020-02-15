@@ -2,7 +2,6 @@ package input
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -46,6 +45,8 @@ func IsURL(name string, value string) (string, error) {
 	}
 	return "", nil
 }
+
+// Prompts
 
 func Prompt(prompt, name string, validators ...PromptValidator) (string, error) {
 	return PromptDefault(prompt, name, "", validators...)
@@ -148,7 +149,7 @@ func PromptChoice(prompt string, choices []string) (int, error) {
 			continue
 		}
 
-		return index, nil
+		return index - 1, nil
 	}
 }
 
@@ -193,69 +194,22 @@ func PromptURLWithRemote(prompt, name string, validRemotes []string, validators 
 	return Prompt(prompt, name, validators...)
 }
 
-var ErrDirectPrompt = errors.New("direct prompt selected")
-var ErrInteractiveCreation = errors.New("interactive creation selected")
-
-func PromptCredential(target, name string, credentials []auth.Credential) (auth.Credential, error) {
-	if len(credentials) == 0 {
-		return nil, nil
+func PromptCredential(target, name string, credentials []auth.Credential, choices []string) (auth.Credential, int, error) {
+	if len(credentials) == 0 && len(choices) == 0 {
+		return nil, 0, fmt.Errorf("no possible choice")
+	}
+	if len(credentials) == 0 && len(choices) == 1 {
+		return nil, 0, nil
 	}
 
 	sort.Sort(auth.ById(credentials))
 
 	for {
-		_, _ = fmt.Fprintf(os.Stderr, "[1]: enter my %s\n", name)
-
-		_, _ = fmt.Fprintln(os.Stderr)
-		_, _ = fmt.Fprintf(os.Stderr, "Existing %s for %s:", name, target)
-
-		for i, cred := range credentials {
-			meta := make([]string, 0, len(cred.Metadata()))
-			for k, v := range cred.Metadata() {
-				meta = append(meta, k+":"+v)
-			}
-			sort.Strings(meta)
-			metaFmt := strings.Join(meta, ",")
-
-			fmt.Printf("[%d]: %s => (%s) (%s)\n",
-				i+2,
-				colors.Cyan(cred.ID().Human()),
-				metaFmt,
-				cred.CreateTime().Format(time.RFC822),
-			)
+		offset := 0
+		for i, choice := range choices {
+			_, _ = fmt.Fprintf(os.Stderr, "[%d]: %s\n", i+1, choice)
+			offset++
 		}
-
-		_, _ = fmt.Fprintln(os.Stderr)
-		_, _ = fmt.Fprintf(os.Stderr, "Select option: ")
-
-		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
-		_, _ = fmt.Fprintln(os.Stderr)
-		if err != nil {
-			return nil, err
-		}
-
-		line = strings.TrimSpace(line)
-		index, err := strconv.Atoi(line)
-		if err != nil || index < 1 || index > len(credentials)+1 {
-			_, _ = fmt.Fprintln(os.Stderr, "invalid input")
-			continue
-		}
-
-		switch index {
-		case 1:
-			return nil, ErrDirectPrompt
-		default:
-			return credentials[index-2], nil
-		}
-	}
-}
-
-func PromptCredentialWithInteractive(target, name string, credentials []auth.Credential) (auth.Credential, error) {
-	sort.Sort(auth.ById(credentials))
-
-	for {
-		_, _ = fmt.Fprintf(os.Stderr, "[1]: enter my %s\n", name)
-		_, _ = fmt.Fprintf(os.Stderr, "[2]: interactive %s creation\n", name)
 
 		if len(credentials) > 0 {
 			_, _ = fmt.Fprintln(os.Stderr)
@@ -270,7 +224,7 @@ func PromptCredentialWithInteractive(target, name string, credentials []auth.Cre
 				metaFmt := strings.Join(meta, ",")
 
 				fmt.Printf("[%d]: %s => (%s) (%s)\n",
-					i+2,
+					i+1+offset,
 					colors.Cyan(cred.ID().Human()),
 					metaFmt,
 					cred.CreateTime().Format(time.RFC822),
@@ -284,23 +238,21 @@ func PromptCredentialWithInteractive(target, name string, credentials []auth.Cre
 		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
 		_, _ = fmt.Fprintln(os.Stderr)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		line = strings.TrimSpace(line)
 		index, err := strconv.Atoi(line)
-		if err != nil || index < 1 || index > len(credentials)+1 {
+		if err != nil || index < 1 || index > len(choices)+len(credentials) {
 			_, _ = fmt.Fprintln(os.Stderr, "invalid input")
 			continue
 		}
 
-		switch index {
-		case 1:
-			return nil, ErrDirectPrompt
-		case 2:
-			return nil, ErrInteractiveCreation
+		switch {
+		case index < len(choices):
+			return nil, index - 1, nil
 		default:
-			return credentials[index-3], nil
+			return credentials[index-len(choices)-1], 0, nil
 		}
 	}
 }

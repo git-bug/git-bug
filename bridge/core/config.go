@@ -1,6 +1,8 @@
 package core
 
 import (
+	"fmt"
+
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/identity"
 )
@@ -24,6 +26,7 @@ func FinishConfig(repo *cache.RepoCache, metaKey string, login string) error {
 		return err
 	}
 	if err == nil {
+		fmt.Printf("Current identity %v tagged with login %v\n", user.Id().Human(), login)
 		// found one
 		user.SetMetadata(metaKey, login)
 		return user.CommitAsNeeded()
@@ -41,6 +44,8 @@ func FinishConfig(repo *cache.RepoCache, metaKey string, login string) error {
 	if err != nil {
 		return err
 	}
+
+	fmt.Printf("Identity %v created, set as current\n", i.Id().Human())
 
 	return nil
 }
