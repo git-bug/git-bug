@@ -5,14 +5,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/pkg/errors"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
+	"github.com/MichaelMure/git-bug/bridge/core/auth"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
+	"github.com/MichaelMure/git-bug/identity"
 )
 
 var (
@@ -23,13 +26,11 @@ var (
 type jiraExporter struct {
 	conf core.Configuration
 
-	// the current user identity
-	// NOTE: this is only needed to mock the credentials database in
-	// getIdentityClient
-	userIdentity entity.Id
-
 	// cache identities clients
 	identityClient map[entity.Id]*Client
+
+	// the mapping from git-bug "status" to JIRA "status" id
+	statusMap map[string]string
 
 	// cache identifiers used to speed up exporting operations
 	// cleared for each bug
@@ -43,61 +44,98 @@ type jiraExporter struct {
 }
 
 // Init .
-func (je *jiraExporter) Init(repo *cache.RepoCache, conf core.Configuration) error {
+func (je *jiraExporter) Init(ctx context.Context, repo *cache.RepoCache, conf core.Configuration) error {
 	je.conf = conf
 	je.identityClient = make(map[entity.Id]*Client)
 	je.cachedOperationIDs = make(map[entity.Id]string)
 	je.cachedLabels = make(map[string]string)
+
+	statusMap, err := getStatusMap(je.conf)
+	if err != nil {
+		return err
+	}
+	je.statusMap = statusMap
+
+	// preload all clients
+	err = je.cacheAllClient(ctx, repo)
+	if err != nil {
+		return err
+	}
+
+	if len(je.identityClient) == 0 {
+		return fmt.Errorf("no credentials for this bridge")
+	}
+
+	var client *Client
+	for _, c := range je.identityClient {
+		client = c
+		break
+	}
+
+	if client == nil {
+		panic("nil client")
+	}
+
+	je.project, err = client.GetProject(je.conf[confKeyProject])
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-// getIdentityClient return an API client configured with the credentials
+func (je *jiraExporter) cacheAllClient(ctx context.Context, repo *cache.RepoCache) error {
+	creds, err := auth.List(repo,
+		auth.WithTarget(target),
+		auth.WithKind(auth.KindLoginPassword), auth.WithKind(auth.KindLogin),
+		auth.WithMeta(auth.MetaKeyBaseURL, je.conf[confKeyBaseUrl]),
+	)
+	if err != nil {
+		return err
+	}
+
+	for _, cred := range creds {
+		login, ok := cred.GetMetadata(auth.MetaKeyLogin)
+		if !ok {
+			_, _ = fmt.Fprintf(os.Stderr, "credential %s is not tagged with a Jira login\n", cred.ID().Human())
+			continue
+		}
+
+		user, err := repo.ResolveIdentityImmutableMetadata(metaKeyJiraLogin, login)
+		if err == identity.ErrIdentityNotExist {
+			continue
+		}
+		if err != nil {
+			return nil
+		}
+
+		if _, ok := je.identityClient[user.Id()]; !ok {
+			client, err := buildClient(ctx, je.conf[confKeyBaseUrl], je.conf[confKeyCredentialType], creds[0])
+			if err != nil {
+				return err
+			}
+			je.identityClient[user.Id()] = client
+		}
+	}
+
+	return nil
+}
+
+// getClientForIdentity return an API client configured with the credentials
 // of the given identity. If no client were found it will initialize it from
-// the known credentials map and cache it for next use
-func (je *jiraExporter) getIdentityClient(ctx context.Context, id entity.Id) (*Client, error) {
-	client, ok := je.identityClient[id]
+// the known credentials and cache it for next use.
+func (je *jiraExporter) getClientForIdentity(userId entity.Id) (*Client, error) {
+	client, ok := je.identityClient[userId]
 	if ok {
 		return client, nil
 	}
 
-	client = NewClient(je.conf[keyServer], ctx)
-
-	// NOTE: as a future enhancement, the bridge would ideally be able to generate
-	// a separate session token for each user that we have stored credentials
-	// for. However we currently only support a single user.
-	if id != je.userIdentity {
-		return nil, ErrMissingCredentials
-	}
-	err := client.Login(je.conf)
-	if err != nil {
-		return nil, err
-	}
-
-	je.identityClient[id] = client
-	return client, nil
+	return nil, ErrMissingCredentials
 }
 
 // ExportAll export all event made by the current user to Jira
 func (je *jiraExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, since time.Time) (<-chan core.ExportResult, error) {
 	out := make(chan core.ExportResult)
-
-	user, err := repo.GetUserIdentity()
-	if err != nil {
-		return nil, err
-	}
-
-	// NOTE: this is currently only need to mock the credentials database in
-	// getIdentityClient.
-	je.userIdentity = user.Id()
-	client, err := je.getIdentityClient(ctx, user.Id())
-	if err != nil {
-		return nil, err
-	}
-
-	je.project, err = client.GetProject(je.conf[keyProject])
-	if err != nil {
-		return nil, err
-	}
 
 	go func() {
 		defer close(out)
@@ -134,7 +172,7 @@ func (je *jiraExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, si
 
 				if snapshot.HasAnyActor(allIdentitiesIds...) {
 					// try to export the bug and it associated events
-					err := je.exportBug(ctx, b, since, out)
+					err := je.exportBug(ctx, b, out)
 					if err != nil {
 						out <- core.NewExportError(errors.Wrap(err, "can't export bug"), id)
 						return
@@ -150,7 +188,7 @@ func (je *jiraExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, si
 }
 
 // exportBug publish bugs and related events
-func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, since time.Time, out chan<- core.ExportResult) error {
+func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, out chan<- core.ExportResult) error {
 	snapshot := b.Snapshot()
 
 	var bugJiraID string
@@ -174,7 +212,7 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, since 
 
 	// skip bug if it is a jira bug but is associated with another project
 	// (one bridge per JIRA project)
-	project, ok := snapshot.GetCreateMetadata(keyJiraProject)
+	project, ok := snapshot.GetCreateMetadata(metaKeyJiraProject)
 	if ok && !stringInSlice(project, []string{je.project.ID, je.project.Key}) {
 		out <- core.NewExportNothing(
 			b.Id(), fmt.Sprintf("issue tagged with project: %s", project))
@@ -182,18 +220,18 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, since 
 	}
 
 	// get jira bug ID
-	jiraID, ok := snapshot.GetCreateMetadata(keyJiraID)
+	jiraID, ok := snapshot.GetCreateMetadata(metaKeyJiraId)
 	if ok {
 		// will be used to mark operation related to a bug as exported
 		bugJiraID = jiraID
 	} else {
 		// check that we have credentials for operation author
-		client, err := je.getIdentityClient(ctx, author.Id())
+		client, err := je.getClientForIdentity(author.Id())
 		if err != nil {
 			// if bug is not yet exported and we do not have the author's credentials
 			// then there is nothing we can do, so just skip this bug
 			out <- core.NewExportNothing(
-				b.Id(), fmt.Sprintf("missing author token for user %.8s",
+				b.Id(), fmt.Sprintf("missing author credentials for user %.8s",
 					author.Id().String()))
 			return err
 		}
@@ -201,7 +239,7 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, since 
 		// Load any custom fields required to create an issue from the git
 		// config file.
 		fields := make(map[string]interface{})
-		defaultFields, hasConf := je.conf[keyCreateDefaults]
+		defaultFields, hasConf := je.conf[confKeyCreateDefaults]
 		if hasConf {
 			err = json.Unmarshal([]byte(defaultFields), &fields)
 			if err != nil {
@@ -215,7 +253,7 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, since 
 				"id": "10001",
 			}
 		}
-		bugIDField, hasConf := je.conf[keyCreateGitBug]
+		bugIDField, hasConf := je.conf[confKeyCreateGitBug]
 		if hasConf {
 			// If the git configuration also indicates it, we can assign the git-bug
 			// id to a custom field to assist in integrations
@@ -257,12 +295,6 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, since 
 	// cache operation jira id
 	je.cachedOperationIDs[createOp.Id()] = bugJiraID
 
-	// lookup the mapping from git-bug "status" to JIRA "status" id
-	statusMap, err := getStatusMap(je.conf)
-	if err != nil {
-		return err
-	}
-
 	for _, op := range snapshot.Operations[1:] {
 		// ignore SetMetadata operations
 		if _, ok := op.(*bug.SetMetadataOperation); ok {
@@ -272,13 +304,13 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, since 
 		// ignore operations already existing in jira (due to import or export)
 		// cache the ID of already exported or imported issues and events from
 		// Jira
-		if id, ok := op.GetMetadata(keyJiraID); ok {
+		if id, ok := op.GetMetadata(metaKeyJiraId); ok {
 			je.cachedOperationIDs[op.Id()] = id
 			continue
 		}
 
 		opAuthor := op.GetAuthor()
-		client, err := je.getIdentityClient(ctx, opAuthor.Id())
+		client, err := je.getClientForIdentity(opAuthor.Id())
 		if err != nil {
 			out <- core.NewExportError(
 				fmt.Errorf("missing operation author credentials for user %.8s",
@@ -340,7 +372,7 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, since 
 			}
 
 		case *bug.SetStatusOperation:
-			jiraStatus, hasStatus := statusMap[opr.Status.String()]
+			jiraStatus, hasStatus := je.statusMap[opr.Status.String()]
 			if hasStatus {
 				exportTime, err = UpdateIssueStatus(client, bugJiraID, jiraStatus)
 				if err != nil {
@@ -407,11 +439,11 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, since 
 
 func markOperationAsExported(b *cache.BugCache, target entity.Id, jiraID, jiraProject string, exportTime time.Time) error {
 	newMetadata := map[string]string{
-		keyJiraID:      jiraID,
-		keyJiraProject: jiraProject,
+		metaKeyJiraId:      jiraID,
+		metaKeyJiraProject: jiraProject,
 	}
 	if !exportTime.IsZero() {
-		newMetadata[keyJiraExportTime] = exportTime.Format(http.TimeFormat)
+		newMetadata[metaKeyJiraExportTime] = exportTime.Format(http.TimeFormat)
 	}
 
 	_, err := b.SetMetadata(target, newMetadata)

@@ -14,10 +14,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/MichaelMure/git-bug/bridge/core"
-	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/input"
 	"github.com/pkg/errors"
+
+	"github.com/MichaelMure/git-bug/bug"
 )
 
 var errDone = errors.New("Iteration Done")
@@ -39,14 +38,14 @@ func ParseTime(timeStr string) (time.Time, error) {
 	return out, err
 }
 
-// MyTime is just a time.Time with a JSON serialization
-type MyTime struct {
+// Time is just a time.Time with a JSON serialization
+type Time struct {
 	time.Time
 }
 
 // UnmarshalJSON parses an RFC3339 date string into a time object
 // borrowed from: https://stackoverflow.com/a/39180230/141023
-func (self *MyTime) UnmarshalJSON(data []byte) (err error) {
+func (t *Time) UnmarshalJSON(data []byte) (err error) {
 	str := string(data)
 
 	// Get rid of the quotes "" around the value.
@@ -56,7 +55,7 @@ func (self *MyTime) UnmarshalJSON(data []byte) (err error) {
 	str = str[1 : len(str)-1]
 
 	timeObj, err := ParseTime(str)
-	self.Time = timeObj
+	t.Time = timeObj
 	return
 }
 
@@ -100,8 +99,8 @@ type Comment struct {
 	Body         string `json:"body"`
 	Author       User   `json:"author"`
 	UpdateAuthor User   `json:"updateAuthor"`
-	Created      MyTime `json:"created"`
-	Updated      MyTime `json:"updated"`
+	Created      Time   `json:"created"`
+	Updated      Time   `json:"updated"`
 }
 
 // CommentPage the JSON object holding a single page of comments returned
@@ -115,13 +114,13 @@ type CommentPage struct {
 }
 
 // NextStartAt return the index of the first item on the next page
-func (self *CommentPage) NextStartAt() int {
-	return self.StartAt + len(self.Comments)
+func (cp *CommentPage) NextStartAt() int {
+	return cp.StartAt + len(cp.Comments)
 }
 
 // IsLastPage return true if there are no more items beyond this page
-func (self *CommentPage) IsLastPage() bool {
-	return self.NextStartAt() >= self.Total
+func (cp *CommentPage) IsLastPage() bool {
+	return cp.NextStartAt() >= cp.Total
 }
 
 // IssueFields the JSON object returned as the "fields" member of an issue.
@@ -130,7 +129,7 @@ func (self *CommentPage) IsLastPage() bool {
 // https://docs.atlassian.com/software/jira/docs/api/REST/8.2.6/#api/2/issue-getIssue
 type IssueFields struct {
 	Creator     User        `json:"creator"`
-	Created     MyTime      `json:"created"`
+	Created     Time        `json:"created"`
 	Description string      `json:"description"`
 	Summary     string      `json:"summary"`
 	Comments    CommentPage `json:"comment"`
@@ -155,7 +154,7 @@ type ChangeLogItem struct {
 type ChangeLogEntry struct {
 	ID      string          `json:"id"`
 	Author  User            `json:"author"`
-	Created MyTime          `json:"created"`
+	Created Time            `json:"created"`
 	Items   []ChangeLogItem `json:"items"`
 }
 
@@ -171,16 +170,16 @@ type ChangeLogPage struct {
 }
 
 // NextStartAt return the index of the first item on the next page
-func (self *ChangeLogPage) NextStartAt() int {
-	return self.StartAt + len(self.Entries)
+func (clp *ChangeLogPage) NextStartAt() int {
+	return clp.StartAt + len(clp.Entries)
 }
 
 // IsLastPage return true if there are no more items beyond this page
-func (self *ChangeLogPage) IsLastPage() bool {
+func (clp *ChangeLogPage) IsLastPage() bool {
 	// NOTE(josh): The "isLast" field is returned on JIRA cloud, but not on
 	// JIRA server. If we can distinguish which one we are working with, we can
 	// possibly rely on that instead.
-	return self.NextStartAt() >= self.Total
+	return clp.NextStartAt() >= clp.Total
 }
 
 // Issue Top-level object for an issue
@@ -202,13 +201,13 @@ type SearchResult struct {
 }
 
 // NextStartAt return the index of the first item on the next page
-func (self *SearchResult) NextStartAt() int {
-	return self.StartAt + len(self.Issues)
+func (sr *SearchResult) NextStartAt() int {
+	return sr.StartAt + len(sr.Issues)
 }
 
 // IsLastPage return true if there are no more items beyond this page
-func (self *SearchResult) IsLastPage() bool {
-	return self.NextStartAt() >= self.Total
+func (sr *SearchResult) IsLastPage() bool {
+	return sr.NextStartAt() >= sr.Total
 }
 
 // SearchRequest the JSON object POSTed to the /search endpoint
@@ -296,8 +295,8 @@ type ServerInfo struct {
 	Version          string `json:"version"`
 	VersionNumbers   []int  `json:"versionNumbers"`
 	BuildNumber      int    `json:"buildNumber"`
-	BuildDate        MyTime `json:"buildDate"`
-	ServerTime       MyTime `json:"serverTime"`
+	BuildDate        Time   `json:"buildDate"`
+	ServerTime       Time   `json:"serverTime"`
 	ScmInfo          string `json:"scmInfo"`
 	BuildPartnerName string `json:"buildPartnerName"`
 	ServerTitle      string `json:"serverTitle"`
@@ -331,7 +330,7 @@ func (ct *ClientTransport) SetCredentials(username string, token string) {
 }
 
 // Client Thin wrapper around the http.Client providing jira-specific methods
-// for APIendpoints
+// for API endpoints
 type Client struct {
 	*http.Client
 	serverURL string
@@ -340,7 +339,7 @@ type Client struct {
 
 // NewClient Construct a new client connected to the provided server and
 // utilizing the given context for asynchronous events
-func NewClient(serverURL string, ctx context.Context) *Client {
+func NewClient(ctx context.Context, serverURL string) *Client {
 	cookiJar, _ := cookiejar.New(nil)
 	client := &http.Client{
 		Transport: &ClientTransport{underlyingTransport: http.DefaultTransport},
@@ -350,57 +349,20 @@ func NewClient(serverURL string, ctx context.Context) *Client {
 	return &Client{client, serverURL, ctx}
 }
 
-// Login POST credentials to the /session endpoing and get a session cookie
-func (client *Client) Login(conf core.Configuration) error {
-	credType := conf[keyCredentialsType]
-
-	if conf[keyCredentialsFile] != "" {
-		content, err := ioutil.ReadFile(conf[keyCredentialsFile])
-		if err != nil {
-			return err
-		}
-
-		switch credType {
-		case "SESSION":
-			return client.RefreshSessionTokenRaw(content)
-		case "TOKEN":
-			var params SessionQuery
-			err := json.Unmarshal(content, &params)
-			if err != nil {
-				return err
-			}
-			return client.SetTokenCredentials(params.Username, params.Password)
-		}
-		return fmt.Errorf("Unexpected credType: %s", credType)
-	}
-
-	username := conf[keyUsername]
-	if username == "" {
-		return fmt.Errorf(
-			"Invalid configuration lacks both a username and credentials sidecar " +
-				"path. At least one is required.")
-	}
-
-	password := conf[keyPassword]
-	if password == "" {
-		var err error
-		password, err = input.PromptPassword("Password", "password", input.Required)
-		if err != nil {
-			return err
-		}
-	}
-
+// Login POST credentials to the /session endpoint and get a session cookie
+func (client *Client) Login(credType, login, password string) error {
 	switch credType {
 	case "SESSION":
-		return client.RefreshSessionToken(username, password)
+		return client.RefreshSessionToken(login, password)
 	case "TOKEN":
-		return client.SetTokenCredentials(username, password)
+		return client.SetTokenCredentials(login, password)
+	default:
+		panic("unknown Jira cred type")
 	}
-	return fmt.Errorf("Unexpected credType: %s", credType)
 }
 
 // RefreshSessionToken formulate the JSON request object from the user
-// credentials and POST it to the /session endpoing and get a session cookie
+// credentials and POST it to the /session endpoint and get a session cookie
 func (client *Client) RefreshSessionToken(username, password string) error {
 	params := SessionQuery{
 		Username: username,
@@ -415,7 +377,7 @@ func (client *Client) RefreshSessionToken(username, password string) error {
 	return client.RefreshSessionTokenRaw(data)
 }
 
-// SetTokenCredentials POST credentials to the /session endpoing and get a
+// SetTokenCredentials POST credentials to the /session endpoint and get a
 // session cookie
 func (client *Client) SetTokenCredentials(username, password string) error {
 	switch transport := client.Transport.(type) {
@@ -427,7 +389,7 @@ func (client *Client) SetTokenCredentials(username, password string) error {
 	return nil
 }
 
-// RefreshSessionTokenRaw POST credentials to the /session endpoing and get a
+// RefreshSessionTokenRaw POST credentials to the /session endpoint and get a
 // session cookie
 func (client *Client) RefreshSessionTokenRaw(credentialsJSON []byte) error {
 	postURL := fmt.Sprintf("%s/rest/auth/1/session", client.serverURL)
@@ -796,7 +758,7 @@ func (client *Client) IterComments(idOrKey string, pageSize int) *CommentIterato
 	return iter
 }
 
-// GetChangeLog fetchs one page of the changelog for an issue via the
+// GetChangeLog fetch one page of the changelog for an issue via the
 // /issue/{IssueIdOrKey}/changelog endpoint (for JIRA cloud) or
 // /issue/{IssueIdOrKey} with (fields=*none&expand=changelog)
 // (for JIRA server)
@@ -1489,8 +1451,8 @@ func (client *Client) GetServerInfo() (*ServerInfo, error) {
 }
 
 // GetServerTime returns the current time on the server
-func (client *Client) GetServerTime() (MyTime, error) {
-	var result MyTime
+func (client *Client) GetServerTime() (Time, error) {
+	var result Time
 	info, err := client.GetServerInfo()
 	if err != nil {
 		return result, err
