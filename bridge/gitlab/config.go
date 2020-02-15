@@ -161,14 +161,18 @@ func promptTokenOptions(repo repository.RepoConfig, login, baseUrl string) (auth
 		return nil, err
 	}
 
-	cred, err := input.PromptCredential(target, "token", creds)
-	switch err {
-	case nil:
+	cred, index, err := input.PromptCredential(target, "token", creds, []string{
+		"enter my token",
+	})
+	switch {
+	case err != nil:
+		return nil, err
+	case cred != nil:
 		return cred, nil
-	case input.ErrDirectPrompt:
+	case index == 0:
 		return promptToken(baseUrl)
 	default:
-		return nil, err
+		panic("missed case")
 	}
 }
 

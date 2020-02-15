@@ -52,7 +52,7 @@ func Register(impl BridgeImpl) {
 	if bridgeLoginMetaKey == nil {
 		bridgeLoginMetaKey = make(map[string]string)
 	}
-	bridgeImpl[impl.Target()] = reflect.TypeOf(impl)
+	bridgeImpl[impl.Target()] = reflect.TypeOf(impl).Elem()
 	bridgeLoginMetaKey[impl.Target()] = impl.LoginMetaKey()
 }
 
@@ -94,7 +94,7 @@ func NewBridge(repo *cache.RepoCache, target string, name string) (*Bridge, erro
 		return nil, fmt.Errorf("unknown bridge target %v", target)
 	}
 
-	impl := reflect.New(implType).Elem().Interface().(BridgeImpl)
+	impl := reflect.New(implType).Interface().(BridgeImpl)
 
 	bridge := &Bridge{
 		Name: name,
