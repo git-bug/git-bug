@@ -104,14 +104,15 @@ func TestImport(t *testing.T) {
 	err = auth.Store(repo, token)
 	require.NoError(t, err)
 
+	ctx := context.Background()
+
 	importer := &gitlabImporter{}
-	err = importer.Init(backend, core.Configuration{
+	err = importer.Init(ctx, backend, core.Configuration{
 		confKeyProjectID:     projectID,
 		confKeyGitlabBaseUrl: defaultBaseURL,
 	})
 	require.NoError(t, err)
 
-	ctx := context.Background()
 	start := time.Now()
 
 	events, err := importer.ImportAll(ctx, backend, time.Time{})

@@ -185,15 +185,16 @@ func TestPushPull(t *testing.T) {
 		return deleteRepository(projectName, envUser, envToken)
 	})
 
+	ctx := context.Background()
+
 	// initialize exporter
 	exporter := &githubExporter{}
-	err = exporter.Init(backend, core.Configuration{
+	err = exporter.Init(ctx, backend, core.Configuration{
 		confKeyOwner:   envUser,
 		confKeyProject: projectName,
 	})
 	require.NoError(t, err)
 
-	ctx := context.Background()
 	start := time.Now()
 
 	// export all bugs
@@ -215,7 +216,7 @@ func TestPushPull(t *testing.T) {
 	require.NoError(t, err)
 
 	importer := &githubImporter{}
-	err = importer.Init(backend, core.Configuration{
+	err = importer.Init(ctx, backend, core.Configuration{
 		confKeyOwner:   envUser,
 		confKeyProject: projectName,
 	})

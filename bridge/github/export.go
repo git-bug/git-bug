@@ -53,7 +53,7 @@ type githubExporter struct {
 }
 
 // Init .
-func (ge *githubExporter) Init(repo *cache.RepoCache, conf core.Configuration) error {
+func (ge *githubExporter) Init(_ context.Context, repo *cache.RepoCache, conf core.Configuration) error {
 	ge.conf = conf
 	ge.identityClient = make(map[entity.Id]*githubv4.Client)
 	ge.cachedOperationIDs = make(map[entity.Id]string)
