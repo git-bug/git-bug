@@ -143,7 +143,7 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 	return conf, core.FinishConfig(repo, metaKeyGithubLogin, login)
 }
 
-func (Github) ValidateConfig(conf core.Configuration) error {
+func (*Github) ValidateConfig(conf core.Configuration) error {
 	if v, ok := conf[core.ConfigKeyTarget]; !ok {
 		return fmt.Errorf("missing %s key", core.ConfigKeyTarget)
 	} else if v != target {
@@ -252,13 +252,18 @@ func promptTokenOptions(repo repository.RepoConfig, login, owner, project string
 		return nil, err
 	}
 
-	cred, err := input.PromptCredentialWithInteractive(target, "token", creds)
-	switch err {
-	case nil:
+	cred, index, err := input.PromptCredential(target, "token", creds, []string{
+		"enter my token",
+		"interactive token creation",
+	})
+	switch {
+	case err != nil:
+		return nil, err
+	case cred != nil:
 		return cred, nil
-	case input.ErrDirectPrompt:
+	case index == 0:
 		return promptToken()
-	case input.ErrInteractiveCreation:
+	case index == 1:
 		value, err := loginAndRequestToken(login, owner, project)
 		if err != nil {
 			return nil, err
@@ -267,7 +272,7 @@ func promptTokenOptions(repo repository.RepoConfig, login, owner, project string
 		token.SetMetadata(auth.MetaKeyLogin, login)
 		return token, nil
 	default:
-		return nil, err
+		panic("missed case")
 	}
 }
 
@@ -322,31 +327,19 @@ func loginAndRequestToken(login, owner, project string) (string, error) {
 	fmt.Println()
 
 	// prompt project visibility to know the token scope needed for the repository
-	i, err := input.PromptChoice("repository visibility", []string{"public", "private"})
+	index, err := input.PromptChoice("repository visibility", []string{"public", "private"})
 	if err != nil {
 		return "", err
 	}
-	isPublic := i == 0
+	scope := []string{"public_repo", "repo"}[index]
 
 	password, err := input.PromptPassword("Password", "password", input.Required)
 	if err != nil {
 		return "", err
 	}
 
-	var scope string
-	if isPublic {
-		// public_repo is requested to be able to read public repositories
-		scope = "public_repo"
-	} else {
-		// 'repo' is request to be able to read private repositories
-		// /!\ token will have read/write rights on every private repository you have access to
-		scope = "repo"
-	}
-
 	// Attempt to authenticate and create a token
-
 	note := fmt.Sprintf("git-bug - %s/%s", owner, project)
-
 	resp, err := requestToken(note, login, password, scope)
 	if err != nil {
 		return "", err
