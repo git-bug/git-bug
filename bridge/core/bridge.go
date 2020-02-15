@@ -4,6 +4,7 @@ package core
 import (
 	"context"
 	"fmt"
+	"os"
 	"reflect"
 	"regexp"
 	"sort"
@@ -29,18 +30,6 @@ const (
 
 var bridgeImpl map[string]reflect.Type
 var bridgeLoginMetaKey map[string]string
-
-// BridgeParams holds parameters to simplify the bridge configuration without
-// having to make terminal prompts.
-type BridgeParams struct {
-	Owner      string // owner of the repo                    (Github)
-	Project    string // name of the repo                     (Github,         Launchpad)
-	URL        string // complete URL of a repo               (Github, Gitlab, Launchpad)
-	BaseURL    string // base URL for self-hosted instance    (        Gitlab)
-	CredPrefix string // ID prefix of the credential to use   (Github, Gitlab)
-	TokenRaw   string // pre-existing token to use            (Github, Gitlab)
-	Login      string // username for the passed credential   (Github, Gitlab)
-}
 
 // Bridge is a wrapper around a BridgeImpl that will bind low-level
 // implementation with utility code to provide high-level functions.
@@ -220,6 +209,8 @@ func RemoveBridge(repo repository.RepoConfig, name string) error {
 
 // Configure run the target specific configuration process
 func (b *Bridge) Configure(params BridgeParams) error {
+	validateParams(params, b.impl)
+
 	conf, err := b.impl.Configure(b.repo, params)
 	if err != nil {
 		return err
@@ -232,6 +223,22 @@ func (b *Bridge) Configure(params BridgeParams) error {
 
 	b.conf = conf
 	return b.storeConfig(conf)
+}
+
+func validateParams(params BridgeParams, impl BridgeImpl) {
+	validParams := impl.ValidParams()
+
+	paramsValue := reflect.ValueOf(params)
+	paramsType := paramsValue.Type()
+
+	for i := 0; i < paramsValue.NumField(); i++ {
+		name := paramsType.Field(i).Name
+		val := paramsValue.Field(i).Interface().(string)
+		_, valid := validParams[name]
+		if val != "" && !valid {
+			_, _ = fmt.Fprintln(os.Stderr, params.fieldWarning(name, impl.Target()))
+		}
+	}
 }
 
 func (b *Bridge) storeConfig(conf Configuration) error {

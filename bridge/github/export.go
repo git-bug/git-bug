@@ -139,8 +139,8 @@ func (ge *githubExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, 
 	ge.repositoryID, err = getRepositoryNodeID(
 		ctx,
 		ge.defaultToken,
-		ge.conf[keyOwner],
-		ge.conf[keyProject],
+		ge.conf[confKeyOwner],
+		ge.conf[confKeyProject],
 	)
 	if err != nil {
 		return nil, err
@@ -187,7 +187,7 @@ func (ge *githubExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, 
 
 				if snapshot.HasAnyActor(allIdentitiesIds...) {
 					// try to export the bug and it associated events
-					ge.exportBug(ctx, b, since, out)
+					ge.exportBug(ctx, b, out)
 				}
 			}
 		}
@@ -197,7 +197,7 @@ func (ge *githubExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, 
 }
 
 // exportBug publish bugs and related events
-func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, since time.Time, out chan<- core.ExportResult) {
+func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out chan<- core.ExportResult) {
 	snapshot := b.Snapshot()
 	var bugUpdated bool
 
@@ -238,7 +238,7 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 		}
 
 		// ignore issue coming from other repositories
-		if owner != ge.conf[keyOwner] && project != ge.conf[keyProject] {
+		if owner != ge.conf[confKeyOwner] && project != ge.conf[confKeyProject] {
 			out <- core.NewExportNothing(b.Id(), fmt.Sprintf("skipping issue from url:%s", githubURL))
 			return
 		}
@@ -481,8 +481,8 @@ func markOperationAsExported(b *cache.BugCache, target entity.Id, githubID, gith
 
 func (ge *githubExporter) cacheGithubLabels(ctx context.Context, gc *githubv4.Client) error {
 	variables := map[string]interface{}{
-		"owner": githubv4.String(ge.conf[keyOwner]),
-		"name":  githubv4.String(ge.conf[keyProject]),
+		"owner": githubv4.String(ge.conf[confKeyOwner]),
+		"name":  githubv4.String(ge.conf[confKeyProject]),
 		"first": githubv4.Int(10),
 		"after": (*githubv4.String)(nil),
 	}
@@ -526,7 +526,7 @@ func (ge *githubExporter) getLabelID(gc *githubv4.Client, label string) (string,
 // NOTE: since createLabel mutation is still in preview mode we use github api v3 to create labels
 // see https://developer.github.com/v4/mutation/createlabel/ and https://developer.github.com/v4/previews/#labels-preview
 func (ge *githubExporter) createGithubLabel(ctx context.Context, label, color string) (string, error) {
-	url := fmt.Sprintf("%s/repos/%s/%s/labels", githubV3Url, ge.conf[keyOwner], ge.conf[keyProject])
+	url := fmt.Sprintf("%s/repos/%s/%s/labels", githubV3Url, ge.conf[confKeyOwner], ge.conf[confKeyProject])
 	client := &http.Client{}
 
 	params := struct {

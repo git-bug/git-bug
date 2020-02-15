@@ -44,10 +44,10 @@ func (ge *gitlabExporter) Init(repo *cache.RepoCache, conf core.Configuration) e
 	ge.cachedOperationIDs = make(map[string]string)
 
 	// get repository node id
-	ge.repositoryID = ge.conf[keyProjectID]
+	ge.repositoryID = ge.conf[confKeyProjectID]
 
 	// preload all clients
-	err := ge.cacheAllClient(repo, ge.conf[keyGitlabBaseUrl])
+	err := ge.cacheAllClient(repo, ge.conf[confKeyGitlabBaseUrl])
 	if err != nil {
 		return err
 	}
@@ -81,7 +81,7 @@ func (ge *gitlabExporter) cacheAllClient(repo *cache.RepoCache, baseURL string) 
 		}
 
 		if _, ok := ge.identityClient[user.Id()]; !ok {
-			client, err := buildClient(ge.conf[keyGitlabBaseUrl], creds[0].(*auth.Token))
+			client, err := buildClient(ge.conf[confKeyGitlabBaseUrl], creds[0].(*auth.Token))
 			if err != nil {
 				return err
 			}
@@ -138,7 +138,7 @@ func (ge *gitlabExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, 
 
 				if snapshot.HasAnyActor(allIdentitiesIds...) {
 					// try to export the bug and it associated events
-					ge.exportBug(ctx, b, since, out)
+					ge.exportBug(ctx, b, out)
 				}
 			}
 		}
@@ -148,7 +148,7 @@ func (ge *gitlabExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, 
 }
 
 // exportBug publish bugs and related events
-func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, since time.Time, out chan<- core.ExportResult) {
+func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out chan<- core.ExportResult) {
 	snapshot := b.Snapshot()
 
 	var bugUpdated bool
@@ -177,7 +177,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 	gitlabID, ok := snapshot.GetCreateMetadata(metaKeyGitlabId)
 	if ok {
 		gitlabBaseUrl, ok := snapshot.GetCreateMetadata(metaKeyGitlabBaseUrl)
-		if ok && gitlabBaseUrl != ge.conf[keyGitlabBaseUrl] {
+		if ok && gitlabBaseUrl != ge.conf[confKeyGitlabBaseUrl] {
 			out <- core.NewExportNothing(b.Id(), "skipping issue imported from another Gitlab instance")
 			return
 		}
@@ -189,7 +189,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, sinc
 			return
 		}
 
-		if projectID != ge.conf[keyProjectID] {
+		if projectID != ge.conf[confKeyProjectID] {
 			out <- core.NewExportNothing(b.Id(), "skipping issue imported from another repository")
 			return
 		}
