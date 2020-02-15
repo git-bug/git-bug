@@ -149,14 +149,15 @@ func Test_Importer(t *testing.T) {
 	err = auth.Store(repo, token)
 	require.NoError(t, err)
 
+	ctx := context.Background()
+
 	importer := &githubImporter{}
-	err = importer.Init(backend, core.Configuration{
+	err = importer.Init(ctx, backend, core.Configuration{
 		confKeyOwner:   "MichaelMure",
 		confKeyProject: "git-bug-test-github-bridge",
 	})
 	require.NoError(t, err)
 
-	ctx := context.Background()
 	start := time.Now()
 
 	events, err := importer.ImportAll(ctx, backend, time.Time{})

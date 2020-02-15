@@ -299,14 +299,14 @@ func (b *Bridge) getExporter() Exporter {
 	return b.exporter
 }
 
-func (b *Bridge) ensureImportInit() error {
+func (b *Bridge) ensureImportInit(ctx context.Context) error {
 	if b.initImportDone {
 		return nil
 	}
 
 	importer := b.getImporter()
 	if importer != nil {
-		err := importer.Init(b.repo, b.conf)
+		err := importer.Init(ctx, b.repo, b.conf)
 		if err != nil {
 			return err
 		}
@@ -316,22 +316,14 @@ func (b *Bridge) ensureImportInit() error {
 	return nil
 }
 
-func (b *Bridge) ensureExportInit() error {
+func (b *Bridge) ensureExportInit(ctx context.Context) error {
 	if b.initExportDone {
 		return nil
 	}
 
-	importer := b.getImporter()
-	if importer != nil {
-		err := importer.Init(b.repo, b.conf)
-		if err != nil {
-			return err
-		}
-	}
-
 	exporter := b.getExporter()
 	if exporter != nil {
-		err := exporter.Init(b.repo, b.conf)
+		err := exporter.Init(ctx, b.repo, b.conf)
 		if err != nil {
 			return err
 		}
@@ -355,7 +347,7 @@ func (b *Bridge) ImportAllSince(ctx context.Context, since time.Time) (<-chan Im
 		return nil, err
 	}
 
-	err = b.ensureImportInit()
+	err = b.ensureImportInit(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -409,7 +401,7 @@ func (b *Bridge) ExportAll(ctx context.Context, since time.Time) (<-chan ExportR
 		return nil, err
 	}
 
-	err = b.ensureExportInit()
+	err = b.ensureExportInit(ctx)
 	if err != nil {
 		return nil, err
 	}
