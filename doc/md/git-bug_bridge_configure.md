@@ -5,8 +5,6 @@ Configure a new bridge.
 ### Synopsis
 
 	Configure a new bridge by passing flags or/and using interactive terminal prompts. You can avoid all the terminal prompts by passing all the necessary flags to configure your bridge.
-	Repository configuration can be made by passing either the --url flag or the --project and --owner flags. If the three flags are provided git-bug will use --project and --owner flags.
-	Token configuration can be directly passed with the --token flag or in the terminal prompt. If you don't already have one you can use the interactive procedure to generate one.
 
 ```
 git-bug bridge configure [flags]
@@ -17,7 +15,10 @@ git-bug bridge configure [flags]
 ```
 # Interactive example
 [1]: github
-[2]: launchpad-preview
+[2]: gitlab
+[3]: jira
+[4]: launchpad-preview
+
 target: 1
 name [default]: default
 
@@ -71,14 +72,15 @@ git bug bridge configure \
 
 ```
   -n, --name string         A distinctive name to identify the bridge
-  -t, --target string       The target of the bridge. Valid values are [github,gitlab,jira,launchpad-preview]
-  -u, --url string          The URL of the target repository
-  -b, --base-url string     The base URL of your issue tracker service
-  -o, --owner string        The owner of the target repository
-  -c, --credential string   The identifier or prefix of an already known credential for the API (see "git-bug bridge auth")
-      --token string        A raw authentication token for the API
+  -t, --target string       The target of the bridge. Valid values are [github,gitlab,launchpad-preview]
+  -u, --url string          The URL of the remote repository
+  -b, --base-url string     The base URL of your remote issue tracker
+  -l, --login string        The login on your remote issue tracker
+  -c, --credential string   The identifier or prefix of an already known credential for your remote issue tracker (see "git-bug bridge auth")
+      --token string        A raw authentication token for the remote issue tracker
       --token-stdin         Will read the token from stdin and ignore --token
-  -p, --project string      The name of the target repository
+  -o, --owner string        The owner of the remote repository
+  -p, --project string      The name of the remote repository
   -h, --help                help for configure
 ```
 

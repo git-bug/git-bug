@@ -1,7 +1,6 @@
 package github
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -10,14 +9,11 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"net/http"
-	"os"
 	"regexp"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
-	text "github.com/MichaelMure/go-term-text"
 	"github.com/pkg/errors"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
@@ -25,19 +21,24 @@ import (
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/input"
 	"github.com/MichaelMure/git-bug/repository"
-	"github.com/MichaelMure/git-bug/util/colors"
 )
 
 var (
 	ErrBadProjectURL = errors.New("bad project url")
 )
 
-func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams) (core.Configuration, error) {
-	if params.BaseURL != "" {
-		fmt.Println("warning: --base-url is ineffective for a Github bridge")
+func (g *Github) ValidParams() map[string]interface{} {
+	return map[string]interface{}{
+		"URL":        nil,
+		"Login":      nil,
+		"CredPrefix": nil,
+		"TokenRaw":   nil,
+		"Owner":      nil,
+		"Project":    nil,
 	}
+}
 
-	conf := make(core.Configuration)
+func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams) (core.Configuration, error) {
 	var err error
 	var owner string
 	var project string
@@ -121,9 +122,10 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 		return nil, fmt.Errorf("project doesn't exist or authentication token has an incorrect scope")
 	}
 
+	conf := make(core.Configuration)
 	conf[core.ConfigKeyTarget] = target
-	conf[keyOwner] = owner
-	conf[keyProject] = project
+	conf[confKeyOwner] = owner
+	conf[confKeyProject] = project
 
 	err = g.ValidateConfig(conf)
 	if err != nil {
@@ -141,25 +143,25 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 	return conf, core.FinishConfig(repo, metaKeyGithubLogin, login)
 }
 
-func (*Github) ValidateConfig(conf core.Configuration) error {
+func (Github) ValidateConfig(conf core.Configuration) error {
 	if v, ok := conf[core.ConfigKeyTarget]; !ok {
 		return fmt.Errorf("missing %s key", core.ConfigKeyTarget)
 	} else if v != target {
 		return fmt.Errorf("unexpected target name: %v", v)
 	}
 
-	if _, ok := conf[keyOwner]; !ok {
-		return fmt.Errorf("missing %s key", keyOwner)
+	if _, ok := conf[confKeyOwner]; !ok {
+		return fmt.Errorf("missing %s key", confKeyOwner)
 	}
 
-	if _, ok := conf[keyProject]; !ok {
-		return fmt.Errorf("missing %s key", keyProject)
+	if _, ok := conf[confKeyProject]; !ok {
+		return fmt.Errorf("missing %s key", confKeyProject)
 	}
 
 	return nil
 }
 
-func usernameValidator(name string, value string) (string, error) {
+func usernameValidator(_ string, value string) (string, error) {
 	ok, err := validateUsername(value)
 	if err != nil {
 		return "", err
@@ -241,67 +243,31 @@ func randomFingerprint() string {
 }
 
 func promptTokenOptions(repo repository.RepoConfig, login, owner, project string) (auth.Credential, error) {
-	for {
-		creds, err := auth.List(repo,
-			auth.WithTarget(target),
-			auth.WithKind(auth.KindToken),
-			auth.WithMeta(auth.MetaKeyLogin, login),
-		)
+	creds, err := auth.List(repo,
+		auth.WithTarget(target),
+		auth.WithKind(auth.KindToken),
+		auth.WithMeta(auth.MetaKeyLogin, login),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	cred, err := input.PromptCredentialWithInteractive(target, "token", creds)
+	switch err {
+	case nil:
+		return cred, nil
+	case input.ErrDirectPrompt:
+		return promptToken()
+	case input.ErrInteractiveCreation:
+		value, err := loginAndRequestToken(login, owner, project)
 		if err != nil {
 			return nil, err
 		}
-
-		fmt.Println()
-		fmt.Println("[1]: enter my token")
-		fmt.Println("[2]: interactive token creation")
-
-		if len(creds) > 0 {
-			sort.Sort(auth.ById(creds))
-
-			fmt.Println()
-			fmt.Println("Existing tokens for Github:")
-			for i, cred := range creds {
-				token := cred.(*auth.Token)
-				fmt.Printf("[%d]: %s => %s (login: %s, %s)\n",
-					i+3,
-					colors.Cyan(token.ID().Human()),
-					colors.Red(text.TruncateMax(token.Value, 10)),
-					token.Metadata()[auth.MetaKeyLogin],
-					token.CreateTime().Format(time.RFC822),
-				)
-			}
-		}
-
-		fmt.Println()
-		fmt.Print("Select option: ")
-
-		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
-		fmt.Println()
-		if err != nil {
-			return nil, err
-		}
-
-		line = strings.TrimSpace(line)
-		index, err := strconv.Atoi(line)
-		if err != nil || index < 1 || index > len(creds)+2 {
-			fmt.Println("invalid input")
-			continue
-		}
-
-		switch index {
-		case 1:
-			return promptToken()
-		case 2:
-			value, err := loginAndRequestToken(login, owner, project)
-			if err != nil {
-				return nil, err
-			}
-			token := auth.NewToken(target, value)
-			token.SetMetadata(auth.MetaKeyLogin, login)
-			return token, nil
-		default:
-			return creds[index-3], nil
-		}
+		token := auth.NewToken(target, value)
+		token.SetMetadata(auth.MetaKeyLogin, login)
+		return token, nil
+	default:
+		return nil, err
 	}
 }
 
@@ -413,73 +379,25 @@ func loginAndRequestToken(login, owner, project string) (string, error) {
 }
 
 func promptURL(repo repository.RepoCommon) (string, string, error) {
-	// remote suggestions
-	remotes, err := repo.GetRemotes()
+	validRemotes, err := getValidGithubRemoteURLs(repo)
 	if err != nil {
 		return "", "", err
 	}
 
-	validRemotes := getValidGithubRemoteURLs(remotes)
-	if len(validRemotes) > 0 {
-		for {
-			fmt.Println("\nDetected projects:")
-
-			// print valid remote github urls
-			for i, remote := range validRemotes {
-				fmt.Printf("[%d]: %v\n", i+1, remote)
-			}
-
-			fmt.Printf("\n[0]: Another project\n\n")
-			fmt.Printf("Select option: ")
-
-			line, err := bufio.NewReader(os.Stdin).ReadString('\n')
-			if err != nil {
-				return "", "", err
-			}
-
-			line = strings.TrimSpace(line)
-
-			index, err := strconv.Atoi(line)
-			if err != nil || index < 0 || index > len(validRemotes) {
-				fmt.Println("invalid input")
-				continue
-			}
-
-			// if user want to enter another project url break this loop
-			if index == 0 {
-				break
-			}
-
-			// get owner and project with index
-			owner, project, _ := splitURL(validRemotes[index-1])
-			return owner, project, nil
+	validator := func(name, value string) (string, error) {
+		_, _, err := splitURL(value)
+		if err != nil {
+			return err.Error(), nil
 		}
+		return "", nil
 	}
 
-	// manually enter github url
-	for {
-		fmt.Print("Github project URL: ")
-
-		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
-		if err != nil {
-			return "", "", err
-		}
-
-		line = strings.TrimSpace(line)
-		if line == "" {
-			fmt.Println("URL is empty")
-			continue
-		}
-
-		// get owner and project from url
-		owner, project, err := splitURL(line)
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
-
-		return owner, project, nil
+	url, err := input.PromptURLWithRemote("Github project URL", "URL", validRemotes, input.Required, validator)
+	if err != nil {
+		return "", "", err
 	}
+
+	return splitURL(url)
 }
 
 // splitURL extract the owner and project from a github repository URL. It will remove the
@@ -488,10 +406,7 @@ func promptURL(repo repository.RepoCommon) (string, string, error) {
 func splitURL(url string) (owner string, project string, err error) {
 	cleanURL := strings.TrimSuffix(url, ".git")
 
-	re, err := regexp.Compile(`github\.com[/:]([a-zA-Z0-9\-_]+)/([a-zA-Z0-9\-_.]+)`)
-	if err != nil {
-		panic("regexp compile:" + err.Error())
-	}
+	re := regexp.MustCompile(`github\.com[/:]([a-zA-Z0-9\-_]+)/([a-zA-Z0-9\-_.]+)`)
 
 	res := re.FindStringSubmatch(cleanURL)
 	if res == nil {
@@ -503,7 +418,12 @@ func splitURL(url string) (owner string, project string, err error) {
 	return
 }
 
-func getValidGithubRemoteURLs(remotes map[string]string) []string {
+func getValidGithubRemoteURLs(repo repository.RepoCommon) ([]string, error) {
+	remotes, err := repo.GetRemotes()
+	if err != nil {
+		return nil, err
+	}
+
 	urls := make([]string, 0, len(remotes))
 	for _, url := range remotes {
 		// split url can work again with shortURL
@@ -516,7 +436,7 @@ func getValidGithubRemoteURLs(remotes map[string]string) []string {
 
 	sort.Strings(urls)
 
-	return urls
+	return urls, nil
 }
 
 func validateUsername(username string) (bool, error) {

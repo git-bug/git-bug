@@ -153,12 +153,13 @@ func promptName(repo repository.RepoConfig) (string, error) {
 var bridgeConfigureCmd = &cobra.Command{
 	Use:   "configure",
 	Short: "Configure a new bridge.",
-	Long: `	Configure a new bridge by passing flags or/and using interactive terminal prompts. You can avoid all the terminal prompts by passing all the necessary flags to configure your bridge.
-	Repository configuration can be made by passing either the --url flag or the --project and --owner flags. If the three flags are provided git-bug will use --project and --owner flags.
-	Token configuration can be directly passed with the --token flag or in the terminal prompt. If you don't already have one you can use the interactive procedure to generate one.`,
+	Long: `	Configure a new bridge by passing flags or/and using interactive terminal prompts. You can avoid all the terminal prompts by passing all the necessary flags to configure your bridge.`,
 	Example: `# Interactive example
 [1]: github
-[2]: launchpad-preview
+[2]: gitlab
+[3]: jira
+[4]: launchpad-preview
+
 target: 1
 name [default]: default
 
@@ -215,12 +216,13 @@ func init() {
 	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureName, "name", "n", "", "A distinctive name to identify the bridge")
 	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureTarget, "target", "t", "",
 		fmt.Sprintf("The target of the bridge. Valid values are [%s]", strings.Join(bridge.Targets(), ",")))
-	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureParams.URL, "url", "u", "", "The URL of the target repository")
-	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureParams.BaseURL, "base-url", "b", "", "The base URL of your issue tracker service")
-	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureParams.Owner, "owner", "o", "", "The owner of the target repository")
-	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureParams.CredPrefix, "credential", "c", "", "The identifier or prefix of an already known credential for the API (see \"git-bug bridge auth\")")
-	bridgeConfigureCmd.Flags().StringVar(&bridgeConfigureToken, "token", "", "A raw authentication token for the API")
+	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureParams.URL, "url", "u", "", "The URL of the remote repository")
+	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureParams.BaseURL, "base-url", "b", "", "The base URL of your remote issue tracker")
+	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureParams.Login, "login", "l", "", "The login on your remote issue tracker")
+	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureParams.CredPrefix, "credential", "c", "", "The identifier or prefix of an already known credential for your remote issue tracker (see \"git-bug bridge auth\")")
+	bridgeConfigureCmd.Flags().StringVar(&bridgeConfigureToken, "token", "", "A raw authentication token for the remote issue tracker")
 	bridgeConfigureCmd.Flags().BoolVar(&bridgeConfigureTokenStdin, "token-stdin", false, "Will read the token from stdin and ignore --token")
-	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureParams.Project, "project", "p", "", "The name of the target repository")
+	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureParams.Owner, "owner", "o", "", "The owner of the remote repository")
+	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureParams.Project, "project", "p", "", "The name of the remote repository")
 	bridgeConfigureCmd.Flags().SortFlags = false
 }

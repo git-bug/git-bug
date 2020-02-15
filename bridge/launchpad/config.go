@@ -13,18 +13,14 @@ import (
 
 var ErrBadProjectURL = errors.New("bad Launchpad project URL")
 
-func (l *Launchpad) Configure(repo *cache.RepoCache, params core.BridgeParams) (core.Configuration, error) {
-	if params.TokenRaw != "" {
-		fmt.Println("warning: token params are ineffective for a Launchpad bridge")
+func (Launchpad) ValidParams() map[string]interface{} {
+	return map[string]interface{}{
+		"URL":     nil,
+		"Project": nil,
 	}
-	if params.Owner != "" {
-		fmt.Println("warning: --owner is ineffective for a Launchpad bridge")
-	}
-	if params.BaseURL != "" {
-		fmt.Println("warning: --base-url is ineffective for a Launchpad bridge")
-	}
+}
 
-	conf := make(core.Configuration)
+func (l *Launchpad) Configure(repo *cache.RepoCache, params core.BridgeParams) (core.Configuration, error) {
 	var err error
 	var project string
 
@@ -52,8 +48,9 @@ func (l *Launchpad) Configure(repo *cache.RepoCache, params core.BridgeParams) (
 		return nil, fmt.Errorf("project doesn't exist")
 	}
 
+	conf := make(core.Configuration)
 	conf[core.ConfigKeyTarget] = target
-	conf[keyProject] = project
+	conf[confKeyProject] = project
 
 	err = l.ValidateConfig(conf)
 	if err != nil {
@@ -70,8 +67,8 @@ func (*Launchpad) ValidateConfig(conf core.Configuration) error {
 		return fmt.Errorf("unexpected target name: %v", v)
 	}
 
-	if _, ok := conf[keyProject]; !ok {
-		return fmt.Errorf("missing %s key", keyProject)
+	if _, ok := conf[confKeyProject]; !ok {
+		return fmt.Errorf("missing %s key", confKeyProject)
 	}
 
 	return nil
