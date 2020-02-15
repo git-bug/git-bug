@@ -36,11 +36,11 @@ type BridgeImpl interface {
 }
 
 type Importer interface {
-	Init(repo *cache.RepoCache, conf Configuration) error
+	Init(ctx context.Context, repo *cache.RepoCache, conf Configuration) error
 	ImportAll(ctx context.Context, repo *cache.RepoCache, since time.Time) (<-chan ImportResult, error)
 }
 
 type Exporter interface {
-	Init(repo *cache.RepoCache, conf Configuration) error
+	Init(ctx context.Context, repo *cache.RepoCache, conf Configuration) error
 	ExportAll(ctx context.Context, repo *cache.RepoCache, since time.Time) (<-chan ExportResult, error)
 }

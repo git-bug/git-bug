@@ -21,6 +21,8 @@ var _ entity.Interface = &Bare{}
 //
 // in particular, this identity is designed to be compatible with the handling of
 // identities in the early version of git-bug.
+// Deprecated: legacy identity for compat, might make sense to ditch entirely for
+// simplicity but that would be a breaking change.
 type Bare struct {
 	id        entity.Id
 	name      string

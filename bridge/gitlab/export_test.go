@@ -191,15 +191,16 @@ func TestPushPull(t *testing.T) {
 		return deleteRepository(context.TODO(), projectID, token)
 	})
 
+	ctx := context.Background()
+
 	// initialize exporter
 	exporter := &gitlabExporter{}
-	err = exporter.Init(backend, core.Configuration{
+	err = exporter.Init(ctx, backend, core.Configuration{
 		confKeyProjectID:     strconv.Itoa(projectID),
 		confKeyGitlabBaseUrl: defaultBaseURL,
 	})
 	require.NoError(t, err)
 
-	ctx := context.Background()
 	start := time.Now()
 
 	// export all bugs
@@ -221,7 +222,7 @@ func TestPushPull(t *testing.T) {
 	require.NoError(t, err)
 
 	importer := &gitlabImporter{}
-	err = importer.Init(backend, core.Configuration{
+	err = importer.Init(ctx, backend, core.Configuration{
 		confKeyProjectID:     strconv.Itoa(projectID),
 		confKeyGitlabBaseUrl: defaultBaseURL,
 	})
