@@ -1,6 +1,7 @@
 package jira
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
@@ -104,7 +105,7 @@ func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams) (core.
 	}
 
 	fmt.Printf("Attempting to login with credentials...\n")
-	client, err := buildClient(nil, baseURL, credType, cred)
+	client, err := buildClient(context.TODO(), baseURL, credType, cred)
 	if err != nil {
 		return nil, err
 	}
