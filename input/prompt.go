@@ -145,7 +145,7 @@ func PromptChoice(prompt string, choices []string) (int, error) {
 
 		index, err := strconv.Atoi(line)
 		if err != nil || index < 1 || index > len(choices) {
-			_, _ = fmt.Fprintf(os.Stderr, "invalid input")
+			_, _ = fmt.Fprintln(os.Stderr, "invalid input")
 			continue
 		}
 
@@ -179,7 +179,7 @@ func PromptURLWithRemote(prompt, name string, validRemotes []string, validators 
 
 		index, err := strconv.Atoi(line)
 		if err != nil || index < 0 || index > len(validRemotes) {
-			_, _ = fmt.Fprintf(os.Stderr, "invalid input")
+			_, _ = fmt.Fprintln(os.Stderr, "invalid input")
 			continue
 		}
 
@@ -249,7 +249,7 @@ func PromptCredential(target, name string, credentials []auth.Credential, choice
 		}
 
 		switch {
-		case index < len(choices):
+		case index <= len(choices):
 			return nil, index - 1, nil
 		default:
 			return credentials[index-len(choices)-1], 0, nil
