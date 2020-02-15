@@ -19,8 +19,6 @@ git\-bug\-bridge\-configure \- Configure a new bridge.
 
 .nf
 Configure a new bridge by passing flags or/and using interactive terminal prompts. You can avoid all the terminal prompts by passing all the necessary flags to configure your bridge.
-Repository configuration can be made by passing either the \-\-url flag or the \-\-project and \-\-owner flags. If the three flags are provided git\-bug will use \-\-project and \-\-owner flags.
-Token configuration can be directly passed with the \-\-token flag or in the terminal prompt. If you don't already have one you can use the interactive procedure to generate one.
 
 .fi
 .RE
@@ -37,31 +35,35 @@ Token configuration can be directly passed with the \-\-token flag or in the ter
 
 .PP
 \fB\-u\fP, \fB\-\-url\fP=""
-    The URL of the target repository
+    The URL of the remote repository
 
 .PP
 \fB\-b\fP, \fB\-\-base\-url\fP=""
-    The base URL of your issue tracker service
+    The base URL of your remote issue tracker
 
 .PP
-\fB\-o\fP, \fB\-\-owner\fP=""
-    The owner of the target repository
+\fB\-l\fP, \fB\-\-login\fP=""
+    The login on your remote issue tracker
 
 .PP
 \fB\-c\fP, \fB\-\-credential\fP=""
-    The identifier or prefix of an already known credential for the API (see "git\-bug bridge auth")
+    The identifier or prefix of an already known credential for your remote issue tracker (see "git\-bug bridge auth")
 
 .PP
 \fB\-\-token\fP=""
-    A raw authentication token for the API
+    A raw authentication token for the remote issue tracker
 
 .PP
 \fB\-\-token\-stdin\fP[=false]
     Will read the token from stdin and ignore \-\-token
 
 .PP
+\fB\-o\fP, \fB\-\-owner\fP=""
+    The owner of the remote repository
+
+.PP
 \fB\-p\fP, \fB\-\-project\fP=""
-    The name of the target repository
+    The name of the remote repository
 
 .PP
 \fB\-h\fP, \fB\-\-help\fP[=false]
@@ -75,7 +77,10 @@ Token configuration can be directly passed with the \-\-token flag or in the ter
 .nf
 # Interactive example
 [1]: github
-[2]: launchpad\-preview
+[2]: gitlab
+[3]: jira
+[4]: launchpad\-preview
+
 target: 1
 name [default]: default
 

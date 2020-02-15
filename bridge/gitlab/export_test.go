@@ -194,8 +194,8 @@ func TestPushPull(t *testing.T) {
 	// initialize exporter
 	exporter := &gitlabExporter{}
 	err = exporter.Init(backend, core.Configuration{
-		keyProjectID:     strconv.Itoa(projectID),
-		keyGitlabBaseUrl: defaultBaseURL,
+		confKeyProjectID:     strconv.Itoa(projectID),
+		confKeyGitlabBaseUrl: defaultBaseURL,
 	})
 	require.NoError(t, err)
 
@@ -222,8 +222,8 @@ func TestPushPull(t *testing.T) {
 
 	importer := &gitlabImporter{}
 	err = importer.Init(backend, core.Configuration{
-		keyProjectID:     strconv.Itoa(projectID),
-		keyGitlabBaseUrl: defaultBaseURL,
+		confKeyProjectID:     strconv.Itoa(projectID),
+		confKeyGitlabBaseUrl: defaultBaseURL,
 	})
 	require.NoError(t, err)
 

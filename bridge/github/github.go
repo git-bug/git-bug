@@ -19,8 +19,8 @@ const (
 	metaKeyGithubUrl   = "github-url"
 	metaKeyGithubLogin = "github-login"
 
-	keyOwner   = "owner"
-	keyProject = "project"
+	confKeyOwner   = "owner"
+	confKeyProject = "project"
 
 	githubV3Url    = "https://api.github.com"
 	defaultTimeout = 60 * time.Second
@@ -30,7 +30,7 @@ var _ core.BridgeImpl = &Github{}
 
 type Github struct{}
 
-func (*Github) Target() string {
+func (Github) Target() string {
 	return target
 }
 
@@ -38,11 +38,11 @@ func (g *Github) LoginMetaKey() string {
 	return metaKeyGithubLogin
 }
 
-func (*Github) NewImporter() core.Importer {
+func (Github) NewImporter() core.Importer {
 	return &githubImporter{}
 }
 
-func (*Github) NewExporter() core.Exporter {
+func (Github) NewExporter() core.Exporter {
 	return &githubExporter{}
 }
 

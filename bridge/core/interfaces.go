@@ -18,6 +18,9 @@ type BridgeImpl interface {
 	// credentials.
 	LoginMetaKey() string
 
+	// The set of the BridgeParams fields supported
+	ValidParams() map[string]interface{}
+
 	// Configure handle the user interaction and return a key/value configuration
 	// for future use
 	Configure(repo *cache.RepoCache, params BridgeParams) (Configuration, error)

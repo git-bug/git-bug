@@ -188,8 +188,8 @@ func TestPushPull(t *testing.T) {
 	// initialize exporter
 	exporter := &githubExporter{}
 	err = exporter.Init(backend, core.Configuration{
-		keyOwner:   envUser,
-		keyProject: projectName,
+		confKeyOwner:   envUser,
+		confKeyProject: projectName,
 	})
 	require.NoError(t, err)
 
@@ -216,8 +216,8 @@ func TestPushPull(t *testing.T) {
 
 	importer := &githubImporter{}
 	err = importer.Init(backend, core.Configuration{
-		keyOwner:   envUser,
-		keyProject: projectName,
+		confKeyOwner:   envUser,
+		confKeyProject: projectName,
 	})
 	require.NoError(t, err)
 

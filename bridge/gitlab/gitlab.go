@@ -19,8 +19,8 @@ const (
 	metaKeyGitlabProject = "gitlab-project-id"
 	metaKeyGitlabBaseUrl = "gitlab-base-url"
 
-	keyProjectID     = "project-id"
-	keyGitlabBaseUrl = "base-url"
+	confKeyProjectID     = "project-id"
+	confKeyGitlabBaseUrl = "base-url"
 
 	defaultBaseURL = "https://gitlab.com/"
 	defaultTimeout = 60 * time.Second
@@ -30,7 +30,7 @@ var _ core.BridgeImpl = &Gitlab{}
 
 type Gitlab struct{}
 
-func (*Gitlab) Target() string {
+func (Gitlab) Target() string {
 	return target
 }
 
@@ -38,11 +38,11 @@ func (g *Gitlab) LoginMetaKey() string {
 	return metaKeyGitlabLogin
 }
 
-func (*Gitlab) NewImporter() core.Importer {
+func (Gitlab) NewImporter() core.Importer {
 	return &gitlabImporter{}
 }
 
-func (*Gitlab) NewExporter() core.Exporter {
+func (Gitlab) NewExporter() core.Exporter {
 	return &gitlabExporter{}
 }
 

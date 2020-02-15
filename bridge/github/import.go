@@ -49,7 +49,7 @@ func (gi *githubImporter) Init(repo *cache.RepoCache, conf core.Configuration) e
 // ImportAll iterate over all the configured repository issues and ensure the creation of the
 // missing issues / timeline items / edits / label events ...
 func (gi *githubImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, since time.Time) (<-chan core.ImportResult, error) {
-	gi.iterator = NewIterator(ctx, gi.client, 10, gi.conf[keyOwner], gi.conf[keyProject], since)
+	gi.iterator = NewIterator(ctx, gi.client, 10, gi.conf[confKeyOwner], gi.conf[confKeyProject], since)
 	out := make(chan core.ImportResult)
 	gi.out = out
 

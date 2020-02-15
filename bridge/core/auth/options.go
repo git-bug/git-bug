@@ -2,7 +2,7 @@ package auth
 
 type options struct {
 	target string
-	kind   CredentialKind
+	kind   map[CredentialKind]interface{}
 	meta   map[string]string
 }
 
@@ -21,7 +21,8 @@ func (opts *options) Match(cred Credential) bool {
 		return false
 	}
 
-	if opts.kind != "" && cred.Kind() != opts.kind {
+	_, has := opts.kind[cred.Kind()]
+	if len(opts.kind) > 0 && !has {
 		return false
 	}
 
@@ -40,9 +41,13 @@ func WithTarget(target string) Option {
 	}
 }
 
+// WithKind match credentials with the given kind. Can be specified multiple times.
 func WithKind(kind CredentialKind) Option {
 	return func(opts *options) {
-		opts.kind = kind
+		if opts.kind == nil {
+			opts.kind = make(map[CredentialKind]interface{})
+		}
+		opts.kind[kind] = nil
 	}
 }
 

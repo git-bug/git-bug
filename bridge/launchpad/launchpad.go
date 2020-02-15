@@ -13,7 +13,7 @@ const (
 	metaKeyLaunchpadID    = "launchpad-id"
 	metaKeyLaunchpadLogin = "launchpad-login"
 
-	keyProject = "project"
+	confKeyProject = "project"
 
 	defaultTimeout = 60 * time.Second
 )
@@ -26,7 +26,7 @@ func (*Launchpad) Target() string {
 	return "launchpad-preview"
 }
 
-func (l *Launchpad) LoginMetaKey() string {
+func (Launchpad) LoginMetaKey() string {
 	return metaKeyLaunchpadLogin
 }
 
