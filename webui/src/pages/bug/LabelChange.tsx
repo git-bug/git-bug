@@ -10,7 +10,7 @@ import { LabelChangeFragment } from './LabelChangeFragment.generated';
 
 const useStyles = makeStyles(theme => ({
   main: {
-    ...theme.typography.body1,
+    ...theme.typography.body2,
     marginLeft: theme.spacing(1) + 40,
   },
   author: {

@@ -9,10 +9,17 @@ import { SetTitleFragment } from './SetTitleFragment.generated';
 
 const useStyles = makeStyles(theme => ({
   main: {
-    ...theme.typography.body1,
+    ...theme.typography.body2,
     marginLeft: theme.spacing(1) + 40,
   },
-  bold: {
+  author: {
+    fontWeight: 'bold',
+  },
+  before: {
+    fontWeight: 'bold',
+    textDecoration: 'line-through',
+  },
+  after: {
     fontWeight: 'bold',
   },
 }));
@@ -25,11 +32,11 @@ function SetTitle({ op }: Props) {
   const classes = useStyles();
   return (
     <div className={classes.main}>
-      <Author author={op.author} className={classes.bold} />
+      <Author author={op.author} className={classes.author} />
       <span> changed the title from </span>
-      <span className={classes.bold}>{op.was}</span>
+      <span className={classes.before}>{op.was}</span>
       <span> to </span>
-      <span className={classes.bold}>{op.title}</span>
+      <span className={classes.after}>{op.title}</span>&nbsp;
       <Date date={op.date} />
     </div>
   );
