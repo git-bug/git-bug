@@ -31,6 +31,7 @@ const useStyles = makeStyles(theme => ({
     padding: '0.5rem 1rem',
     borderBottom: '1px solid #ddd',
     display: 'flex',
+    backgroundColor: '#e2f1ff',
   },
   title: {
     flex: 1,

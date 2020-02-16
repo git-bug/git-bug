@@ -13,7 +13,7 @@ import TimelineQuery from './TimelineQuery';
 
 const useStyles = makeStyles(theme => ({
   main: {
-    maxWidth: 800,
+    maxWidth: 1000,
     margin: 'auto',
     marginTop: theme.spacing(4),
   },
@@ -41,6 +41,9 @@ const useStyles = makeStyles(theme => ({
     marginTop: theme.spacing(2),
     flex: '0 0 200px',
   },
+  sidebarTitle: {
+    fontWeight: 'bold',
+  },
   labelList: {
     listStyle: 'none',
     padding: 0,
@@ -52,6 +55,12 @@ const useStyles = makeStyles(theme => ({
     '& > *': {
       display: 'block',
     },
+  },
+  noLabel: {
+    ...theme.typography.body2,
+  },
+  commentForm: {
+    marginLeft: 48,
   },
 }));
 
@@ -77,10 +86,16 @@ function Bug({ bug }: Props) {
       <div className={classes.container}>
         <div className={classes.timeline}>
           <TimelineQuery id={bug.id} />
+          <div className={classes.commentForm}>
+            <CommentForm bugId={bug.id} />
+          </div>
         </div>
         <div className={classes.sidebar}>
-          <Typography variant={'subtitle1'}>Labels</Typography>
+          <span className={classes.sidebarTitle}>Labels</span>
           <ul className={classes.labelList}>
+            {bug.labels.length === 0 && (
+              <span className={classes.noLabel}>None yet</span>
+            )}
             {bug.labels.map(l => (
               <li className={classes.label} key={l.name}>
                 <Label label={l} key={l.name} />
@@ -89,8 +104,6 @@ function Bug({ bug }: Props) {
           </ul>
         </div>
       </div>
-
-      <CommentForm bugId={bug.id} />
     </main>
   );
 }
