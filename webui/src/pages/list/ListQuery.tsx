@@ -164,7 +164,7 @@ function ListQuery() {
   const location = useLocation();
   const history = useHistory();
   const params = new URLSearchParams(location.search);
-  const query = params.get('q') || 'status:open';
+  const query = params.has('q') ? (params.get('q') || '') : 'status:open';
 
   const [input, setInput] = useState(query);
 
