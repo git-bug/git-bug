@@ -154,7 +154,7 @@ function FilterDropdown({
 
 export type FilterProps = {
   active: boolean;
-  to: LocationDescriptor;
+  to: LocationDescriptor; // the target on click
   icon?: React.ComponentType<SvgIconProps>;
   children: React.ReactNode;
 };

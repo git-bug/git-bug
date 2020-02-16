@@ -32,7 +32,7 @@ const useStyles = makeStyles(theme => ({
 
 // This prepends the filter text with a count
 type CountingFilterProps = {
-  query: string;
+  query: string; // the query used as a source to count the number of element
   children: React.ReactNode;
 } & FilterProps;
 function CountingFilter({ query, children, ...props }: CountingFilterProps) {
@@ -72,6 +72,12 @@ function FilterToolbar({ query, queryLocation }: Props) {
     ...params,
     [key]: [value],
   });
+  const toggleParam = (key: string, value: string) => (
+    params: Query
+  ): Query => ({
+    ...params,
+    [key]: params[key] && params[key].includes(value) ? [] : [value],
+  });
   const clearParam = (key: string) => (params: Query): Query => ({
     ...params,
     [key]: [],
@@ -87,7 +93,7 @@ function FilterToolbar({ query, queryLocation }: Props) {
           clearParam('sort'),
           stringify
         )(params)}
-        to={pipe(replaceParam('status', 'open'), loc)(params)}
+        to={pipe(toggleParam('status', 'open'), loc)(params)}
         icon={ErrorOutline}
       >
         open
@@ -99,7 +105,7 @@ function FilterToolbar({ query, queryLocation }: Props) {
           clearParam('sort'),
           stringify
         )(params)}
-        to={pipe(replaceParam('status', 'closed'), loc)(params)}
+        to={pipe(toggleParam('status', 'closed'), loc)(params)}
         icon={CheckCircleOutline}
       >
         closed
