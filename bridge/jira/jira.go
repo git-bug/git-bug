@@ -2,27 +2,36 @@
 package jira
 
 import (
+	"context"
+	"fmt"
 	"sort"
 	"time"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
+	"github.com/MichaelMure/git-bug/bridge/core/auth"
+	"github.com/MichaelMure/git-bug/input"
 )
 
 const (
 	target = "jira"
 
-	metaKeyJiraLogin = "jira-login"
+	metaKeyJiraId          = "jira-id"
+	metaKeyJiraOperationId = "jira-derived-id"
+	metaKeyJiraKey         = "jira-key"
+	metaKeyJiraUser        = "jira-user"
+	metaKeyJiraProject     = "jira-project"
+	metaKeyJiraExportTime  = "jira-export-time"
+	metaKeyJiraLogin       = "jira-login"
 
-	keyServer          = "server"
-	keyProject         = "project"
-	keyCredentialsType = "credentials-type"
-	keyCredentialsFile = "credentials-file"
-	keyUsername        = "username"
-	keyPassword        = "password"
-	keyIDMap           = "bug-id-map"
-	keyIDRevMap        = "bug-id-revmap"
-	keyCreateDefaults  = "create-issue-defaults"
-	keyCreateGitBug    = "create-issue-gitbug-id"
+	confKeyBaseUrl        = "base-url"
+	confKeyProject        = "project"
+	confKeyCredentialType = "credentials-type" // "SESSION" or "TOKEN"
+	confKeyIDMap          = "bug-id-map"
+	confKeyIDRevMap       = "bug-id-revmap"
+	// the issue type when exporting a new bug. Default is Story (10001)
+	confKeyCreateDefaults = "create-issue-defaults"
+	// if set, the bridge fill this JIRA field with the `git-bug` id when exporting
+	confKeyCreateGitBug = "create-issue-gitbug-id"
 
 	defaultTimeout = 60 * time.Second
 )
@@ -49,6 +58,32 @@ func (*Jira) NewImporter() core.Importer {
 // NewExporter returns the jira exporter
 func (*Jira) NewExporter() core.Exporter {
 	return &jiraExporter{}
+}
+
+func buildClient(ctx context.Context, baseURL string, credType string, cred auth.Credential) (*Client, error) {
+	client := NewClient(ctx, baseURL)
+
+	var login, password string
+
+	switch cred := cred.(type) {
+	case *auth.LoginPassword:
+		login = cred.Login
+		password = cred.Password
+	case *auth.Login:
+		login = cred.Login
+		p, err := input.PromptPassword(fmt.Sprintf("Password for %s", login), "password", input.Required)
+		if err != nil {
+			return nil, err
+		}
+		password = p
+	}
+
+	err := client.Login(credType, login, password)
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
 }
 
 // stringInSlice returns true if needle is found in haystack

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
+	"github.com/MichaelMure/git-bug/bridge/core/auth"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
@@ -17,51 +18,75 @@ import (
 )
 
 const (
-	keyJiraID          = "jira-id"
-	keyJiraOperationID = "jira-derived-id"
-	keyJiraKey         = "jira-key"
-	keyJiraUser        = "jira-user"
-	keyJiraProject     = "jira-project"
-	keyJiraExportTime  = "jira-export-time"
-	defaultPageSize    = 10
+	defaultPageSize = 10
 )
 
 // jiraImporter implement the Importer interface
 type jiraImporter struct {
 	conf core.Configuration
 
+	client *Client
+
 	// send only channel
 	out chan<- core.ImportResult
 }
 
 // Init .
-func (ji *jiraImporter) Init(repo *cache.RepoCache, conf core.Configuration) error {
+func (ji *jiraImporter) Init(ctx context.Context, repo *cache.RepoCache, conf core.Configuration) error {
 	ji.conf = conf
-	return nil
+
+	var cred auth.Credential
+
+	// Prioritize LoginPassword credentials to avoid a prompt
+	creds, err := auth.List(repo,
+		auth.WithTarget(target),
+		auth.WithMeta(auth.MetaKeyBaseURL, conf[confKeyBaseUrl]),
+		auth.WithKind(auth.KindLoginPassword),
+	)
+	if err != nil {
+		return err
+	}
+	if len(creds) > 0 {
+		cred = creds[0]
+		goto end
+	}
+
+	creds, err = auth.List(repo,
+		auth.WithTarget(target),
+		auth.WithMeta(auth.MetaKeyBaseURL, conf[confKeyBaseUrl]),
+		auth.WithKind(auth.KindLogin),
+	)
+	if err != nil {
+		return err
+	}
+	if len(creds) > 0 {
+		cred = creds[0]
+	}
+
+end:
+	if cred == nil {
+		return fmt.Errorf("no credential for this bridge")
+	}
+
+	// TODO(josh)[da52062]: Validate token and if it is expired then prompt for
+	// credentials and generate a new one
+	ji.client, err = buildClient(ctx, conf[confKeyBaseUrl], conf[confKeyCredentialType], cred)
+	return err
 }
 
 // ImportAll iterate over all the configured repository issues and ensure the
 // creation of the missing issues / timeline items / edits / label events ...
 func (ji *jiraImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, since time.Time) (<-chan core.ImportResult, error) {
 	sinceStr := since.Format("2006-01-02 15:04")
-	serverURL := ji.conf[keyServer]
-	project := ji.conf[keyProject]
-	// TODO(josh)[da52062]: Validate token and if it is expired then prompt for
-	// credentials and generate a new one
+	project := ji.conf[confKeyProject]
+
 	out := make(chan core.ImportResult)
 	ji.out = out
 
 	go func() {
 		defer close(ji.out)
 
-		client := NewClient(serverURL, ctx)
-		err := client.Login(ji.conf)
-		if err != nil {
-			out <- core.NewImportError(err, "")
-			return
-		}
-
-		message, err := client.Search(
+		message, err := ji.client.Search(
 			fmt.Sprintf("project=%s AND updatedDate>\"%s\"", project, sinceStr), 0, 0)
 		if err != nil {
 			out <- core.NewImportError(err, "")
@@ -73,7 +98,7 @@ func (ji *jiraImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, si
 		jql := fmt.Sprintf("project=%s AND updatedDate>\"%s\"", project, sinceStr)
 		var searchIter *SearchIterator
 		for searchIter =
-			client.IterSearch(jql, defaultPageSize); searchIter.HasNext(); {
+			ji.client.IterSearch(jql, defaultPageSize); searchIter.HasNext(); {
 			issue := searchIter.Next()
 			b, err := ji.ensureIssue(repo, *issue)
 			if err != nil {
@@ -84,7 +109,7 @@ func (ji *jiraImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, si
 
 			var commentIter *CommentIterator
 			for commentIter =
-				client.IterComments(issue.ID, defaultPageSize); commentIter.HasNext(); {
+				ji.client.IterComments(issue.ID, defaultPageSize); commentIter.HasNext(); {
 				comment := commentIter.Next()
 				err := ji.ensureComment(repo, b, *comment)
 				if err != nil {
@@ -100,7 +125,7 @@ func (ji *jiraImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, si
 
 			var changelogIter *ChangeLogIterator
 			for changelogIter =
-				client.IterChangeLog(issue.ID, defaultPageSize); changelogIter.HasNext(); {
+				ji.client.IterChangeLog(issue.ID, defaultPageSize); changelogIter.HasNext(); {
 				changelogEntry := changelogIter.Next()
 
 				// Advance the operation iterator up to the first operation which has
@@ -110,7 +135,7 @@ func (ji *jiraImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, si
 				var exportTime time.Time
 				for ; opIdx < len(snapshot.Operations); opIdx++ {
 					exportTimeStr, hasTime := snapshot.Operations[opIdx].GetMetadata(
-						keyJiraExportTime)
+						metaKeyJiraExportTime)
 					if !hasTime {
 						continue
 					}
@@ -156,7 +181,7 @@ func (ji *jiraImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, si
 func (ji *jiraImporter) ensurePerson(repo *cache.RepoCache, user User) (*cache.IdentityCache, error) {
 	// Look first in the cache
 	i, err := repo.ResolveIdentityImmutableMetadata(
-		keyJiraUser, string(user.Key))
+		metaKeyJiraUser, string(user.Key))
 	if err == nil {
 		return i, nil
 	}
@@ -169,7 +194,7 @@ func (ji *jiraImporter) ensurePerson(repo *cache.RepoCache, user User) (*cache.I
 		user.EmailAddress,
 		user.Key,
 		map[string]string{
-			keyJiraUser: string(user.Key),
+			metaKeyJiraUser: string(user.Key),
 		},
 	)
 
@@ -188,7 +213,7 @@ func (ji *jiraImporter) ensureIssue(repo *cache.RepoCache, issue Issue) (*cache.
 		return nil, err
 	}
 
-	b, err := repo.ResolveBugCreateMetadata(keyJiraID, issue.ID)
+	b, err := repo.ResolveBugCreateMetadata(metaKeyJiraId, issue.ID)
 	if err != nil && err != bug.ErrBugNotExist {
 		return nil, err
 	}
@@ -210,9 +235,9 @@ func (ji *jiraImporter) ensureIssue(repo *cache.RepoCache, issue Issue) (*cache.
 			nil,
 			map[string]string{
 				core.MetaKeyOrigin: target,
-				keyJiraID:          issue.ID,
-				keyJiraKey:         issue.Key,
-				keyJiraProject:     ji.conf[keyProject],
+				metaKeyJiraId:      issue.ID,
+				metaKeyJiraKey:     issue.Key,
+				metaKeyJiraProject: ji.conf[confKeyProject],
 			})
 		if err != nil {
 			return nil, err
@@ -225,7 +250,7 @@ func (ji *jiraImporter) ensureIssue(repo *cache.RepoCache, issue Issue) (*cache.
 }
 
 // Return a unique string derived from a unique jira id and a timestamp
-func getTimeDerivedID(jiraID string, timestamp MyTime) string {
+func getTimeDerivedID(jiraID string, timestamp Time) string {
 	return fmt.Sprintf("%s-%d", jiraID, timestamp.Unix())
 }
 
@@ -238,7 +263,7 @@ func (ji *jiraImporter) ensureComment(repo *cache.RepoCache, b *cache.BugCache, 
 	}
 
 	targetOpID, err := b.ResolveOperationWithMetadata(
-		keyJiraID, item.ID)
+		metaKeyJiraId, item.ID)
 	if err != nil && err != cache.ErrNoMatchingOp {
 		return err
 	}
@@ -263,7 +288,7 @@ func (ji *jiraImporter) ensureComment(repo *cache.RepoCache, b *cache.BugCache, 
 			cleanText,
 			nil,
 			map[string]string{
-				keyJiraID: item.ID,
+				metaKeyJiraId: item.ID,
 			},
 		)
 		if err != nil {
@@ -284,7 +309,7 @@ func (ji *jiraImporter) ensureComment(repo *cache.RepoCache, b *cache.BugCache, 
 	// timestamp. Note that this must be consistent with the exporter during
 	// export of an EditCommentOperation
 	derivedID := getTimeDerivedID(item.ID, item.Updated)
-	_, err = b.ResolveOperationWithMetadata(keyJiraID, derivedID)
+	_, err = b.ResolveOperationWithMetadata(metaKeyJiraId, derivedID)
 	if err == nil {
 		// Already imported this edition
 		return nil
@@ -311,7 +336,7 @@ func (ji *jiraImporter) ensureComment(repo *cache.RepoCache, b *cache.BugCache, 
 		targetOpID,
 		cleanText,
 		map[string]string{
-			keyJiraID: derivedID,
+			metaKeyJiraId: derivedID,
 		},
 	)
 
@@ -358,7 +383,7 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 	// If we have an operation which is already mapped to the entire changelog
 	// entry then that means this changelog entry was induced by an export
 	// operation and we've already done the match, so we skip this one
-	_, err := b.ResolveOperationWithMetadata(keyJiraOperationID, entry.ID)
+	_, err := b.ResolveOperationWithMetadata(metaKeyJiraOperationId, entry.ID)
 	if err == nil {
 		return nil
 	} else if err != cache.ErrNoMatchingOp {
@@ -400,7 +425,7 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 			opr, isRightType := potentialOp.(*bug.LabelChangeOperation)
 			if isRightType && labelSetsMatch(addedLabels, opr.Added) && labelSetsMatch(removedLabels, opr.Removed) {
 				_, err := b.SetMetadata(opr.Id(), map[string]string{
-					keyJiraOperationID: entry.ID,
+					metaKeyJiraOperationId: entry.ID,
 				})
 				if err != nil {
 					return err
@@ -412,7 +437,7 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 			opr, isRightType := potentialOp.(*bug.SetStatusOperation)
 			if isRightType && statusMap[opr.Status.String()] == item.To {
 				_, err := b.SetMetadata(opr.Id(), map[string]string{
-					keyJiraOperationID: entry.ID,
+					metaKeyJiraOperationId: entry.ID,
 				})
 				if err != nil {
 					return err
@@ -426,7 +451,7 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 			opr, isRightType := potentialOp.(*bug.SetTitleOperation)
 			if isRightType && opr.Title == item.To {
 				_, err := b.SetMetadata(opr.Id(), map[string]string{
-					keyJiraOperationID: entry.ID,
+					metaKeyJiraOperationId: entry.ID,
 				})
 				if err != nil {
 					return err
@@ -442,7 +467,7 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 				opr.Target == b.Snapshot().Operations[0].Id() &&
 				opr.Message == item.ToString {
 				_, err := b.SetMetadata(opr.Id(), map[string]string{
-					keyJiraOperationID: entry.ID,
+					metaKeyJiraOperationId: entry.ID,
 				})
 				if err != nil {
 					return err
@@ -457,7 +482,7 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 	// changelog entry item as a separate git-bug operation.
 	for idx, item := range entry.Items {
 		derivedID := getIndexDerivedID(entry.ID, idx)
-		_, err := b.ResolveOperationWithMetadata(keyJiraOperationID, derivedID)
+		_, err := b.ResolveOperationWithMetadata(metaKeyJiraOperationId, derivedID)
 		if err == nil {
 			continue
 		}
@@ -477,8 +502,8 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 				addedLabels,
 				removedLabels,
 				map[string]string{
-					keyJiraID:          entry.ID,
-					keyJiraOperationID: derivedID,
+					metaKeyJiraId:          entry.ID,
+					metaKeyJiraOperationId: derivedID,
 				},
 			)
 			if err != nil {
@@ -496,8 +521,8 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 						author,
 						entry.Created.Unix(),
 						map[string]string{
-							keyJiraID:          entry.ID,
-							keyJiraOperationID: derivedID,
+							metaKeyJiraId:          entry.ID,
+							metaKeyJiraOperationId: derivedID,
 						},
 					)
 					if err != nil {
@@ -510,8 +535,8 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 						author,
 						entry.Created.Unix(),
 						map[string]string{
-							keyJiraID:          entry.ID,
-							keyJiraOperationID: derivedID,
+							metaKeyJiraId:          entry.ID,
+							metaKeyJiraOperationId: derivedID,
 						},
 					)
 					if err != nil {
@@ -534,8 +559,8 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 				entry.Created.Unix(),
 				string(item.ToString),
 				map[string]string{
-					keyJiraID:          entry.ID,
-					keyJiraOperationID: derivedID,
+					metaKeyJiraId:          entry.ID,
+					metaKeyJiraOperationId: derivedID,
 				},
 			)
 			if err != nil {
@@ -552,8 +577,8 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 				entry.Created.Unix(),
 				string(item.ToString),
 				map[string]string{
-					keyJiraID:          entry.ID,
-					keyJiraOperationID: derivedID,
+					metaKeyJiraId:          entry.ID,
+					metaKeyJiraOperationId: derivedID,
 				},
 			)
 			if err != nil {
@@ -580,7 +605,7 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 }
 
 func getStatusMap(conf core.Configuration) (map[string]string, error) {
-	mapStr, hasConf := conf[keyIDMap]
+	mapStr, hasConf := conf[confKeyIDMap]
 	if !hasConf {
 		return map[string]string{
 			bug.OpenStatus.String():   "1",
@@ -604,7 +629,7 @@ func getStatusMapReverse(conf core.Configuration) (map[string]string, error) {
 		outMap[val] = key
 	}
 
-	mapStr, hasConf := conf[keyIDRevMap]
+	mapStr, hasConf := conf[confKeyIDRevMap]
 	if !hasConf {
 		return outMap, nil
 	}
