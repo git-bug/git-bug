@@ -120,6 +120,14 @@ func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams) (core.
 			project, baseURL, login)
 	}
 
+	// don't forget to store the now known valid token
+	if !auth.IdExist(repo, cred.ID()) {
+		err = auth.Store(repo, cred)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	err = core.FinishConfig(repo, metaKeyJiraLogin, login)
 	if err != nil {
 		return nil, err
@@ -171,10 +179,12 @@ func promptCredOptions(repo repository.RepoConfig, login, baseUrl string) (auth.
 		}
 		lp := auth.NewLoginPassword(target, login, password)
 		lp.SetMetadata(auth.MetaKeyLogin, login)
+		lp.SetMetadata(auth.MetaKeyBaseURL, baseUrl)
 		return lp, nil
 	case index == 1:
 		l := auth.NewLogin(target, login)
 		l.SetMetadata(auth.MetaKeyLogin, login)
+		l.SetMetadata(auth.MetaKeyBaseURL, baseUrl)
 		return l, nil
 	default:
 		panic("missed case")
