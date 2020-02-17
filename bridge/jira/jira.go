@@ -15,13 +15,13 @@ import (
 const (
 	target = "jira"
 
-	metaKeyJiraId          = "jira-id"
-	metaKeyJiraOperationId = "jira-derived-id"
-	metaKeyJiraKey         = "jira-key"
-	metaKeyJiraUser        = "jira-user"
-	metaKeyJiraProject     = "jira-project"
-	metaKeyJiraExportTime  = "jira-export-time"
-	metaKeyJiraLogin       = "jira-login"
+	metaKeyJiraId         = "jira-id"
+	metaKeyJiraDerivedId  = "jira-derived-id"
+	metaKeyJiraKey        = "jira-key"
+	metaKeyJiraUser       = "jira-user"
+	metaKeyJiraProject    = "jira-project"
+	metaKeyJiraExportTime = "jira-export-time"
+	metaKeyJiraLogin      = "jira-login"
 
 	confKeyBaseUrl        = "base-url"
 	confKeyProject        = "project"

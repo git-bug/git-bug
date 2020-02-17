@@ -383,7 +383,7 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 	// If we have an operation which is already mapped to the entire changelog
 	// entry then that means this changelog entry was induced by an export
 	// operation and we've already done the match, so we skip this one
-	_, err := b.ResolveOperationWithMetadata(metaKeyJiraOperationId, entry.ID)
+	_, err := b.ResolveOperationWithMetadata(metaKeyJiraDerivedId, entry.ID)
 	if err == nil {
 		return nil
 	} else if err != cache.ErrNoMatchingOp {
@@ -425,7 +425,7 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 			opr, isRightType := potentialOp.(*bug.LabelChangeOperation)
 			if isRightType && labelSetsMatch(addedLabels, opr.Added) && labelSetsMatch(removedLabels, opr.Removed) {
 				_, err := b.SetMetadata(opr.Id(), map[string]string{
-					metaKeyJiraOperationId: entry.ID,
+					metaKeyJiraDerivedId: entry.ID,
 				})
 				if err != nil {
 					return err
@@ -437,7 +437,7 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 			opr, isRightType := potentialOp.(*bug.SetStatusOperation)
 			if isRightType && statusMap[opr.Status.String()] == item.To {
 				_, err := b.SetMetadata(opr.Id(), map[string]string{
-					metaKeyJiraOperationId: entry.ID,
+					metaKeyJiraDerivedId: entry.ID,
 				})
 				if err != nil {
 					return err
@@ -451,7 +451,7 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 			opr, isRightType := potentialOp.(*bug.SetTitleOperation)
 			if isRightType && opr.Title == item.To {
 				_, err := b.SetMetadata(opr.Id(), map[string]string{
-					metaKeyJiraOperationId: entry.ID,
+					metaKeyJiraDerivedId: entry.ID,
 				})
 				if err != nil {
 					return err
@@ -467,7 +467,7 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 				opr.Target == b.Snapshot().Operations[0].Id() &&
 				opr.Message == item.ToString {
 				_, err := b.SetMetadata(opr.Id(), map[string]string{
-					metaKeyJiraOperationId: entry.ID,
+					metaKeyJiraDerivedId: entry.ID,
 				})
 				if err != nil {
 					return err
@@ -482,7 +482,7 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 	// changelog entry item as a separate git-bug operation.
 	for idx, item := range entry.Items {
 		derivedID := getIndexDerivedID(entry.ID, idx)
-		_, err := b.ResolveOperationWithMetadata(metaKeyJiraOperationId, derivedID)
+		_, err := b.ResolveOperationWithMetadata(metaKeyJiraDerivedId, derivedID)
 		if err == nil {
 			continue
 		}
@@ -502,8 +502,8 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 				addedLabels,
 				removedLabels,
 				map[string]string{
-					metaKeyJiraId:          entry.ID,
-					metaKeyJiraOperationId: derivedID,
+					metaKeyJiraId:        entry.ID,
+					metaKeyJiraDerivedId: derivedID,
 				},
 			)
 			if err != nil {
@@ -521,8 +521,8 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 						author,
 						entry.Created.Unix(),
 						map[string]string{
-							metaKeyJiraId:          entry.ID,
-							metaKeyJiraOperationId: derivedID,
+							metaKeyJiraId:        entry.ID,
+							metaKeyJiraDerivedId: derivedID,
 						},
 					)
 					if err != nil {
@@ -535,8 +535,8 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 						author,
 						entry.Created.Unix(),
 						map[string]string{
-							metaKeyJiraId:          entry.ID,
-							metaKeyJiraOperationId: derivedID,
+							metaKeyJiraId:        entry.ID,
+							metaKeyJiraDerivedId: derivedID,
 						},
 					)
 					if err != nil {
@@ -559,8 +559,8 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 				entry.Created.Unix(),
 				string(item.ToString),
 				map[string]string{
-					metaKeyJiraId:          entry.ID,
-					metaKeyJiraOperationId: derivedID,
+					metaKeyJiraId:        entry.ID,
+					metaKeyJiraDerivedId: derivedID,
 				},
 			)
 			if err != nil {
@@ -577,8 +577,8 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 				entry.Created.Unix(),
 				string(item.ToString),
 				map[string]string{
-					metaKeyJiraId:          entry.ID,
-					metaKeyJiraOperationId: derivedID,
+					metaKeyJiraId:        entry.ID,
+					metaKeyJiraDerivedId: derivedID,
 				},
 			)
 			if err != nil {
