@@ -30,12 +30,12 @@ const (
 	// Identity has been created
 	ImportEventIdentity
 
-	// Error happened during import
-	ImportEventError
-
 	// Something wrong happened during import that is worth notifying to the user
 	// but not severe enough to consider the import a failure.
 	ImportEventWarning
+
+	// Error happened during import
+	ImportEventError
 )
 
 // ImportResult is an event that is emitted during the import process, to

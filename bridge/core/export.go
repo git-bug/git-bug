@@ -27,12 +27,12 @@ const (
 	// Nothing changed on the bug
 	ExportEventNothing
 
-	// Error happened during export
-	ExportEventError
-
 	// Something wrong happened during export that is worth notifying to the user
 	// but not severe enough to consider the export a failure.
 	ExportEventWarning
+
+	// Error happened during export
+	ExportEventError
 )
 
 // ExportResult is an event that is emitted during the export process, to
