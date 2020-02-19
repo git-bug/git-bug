@@ -122,32 +122,32 @@ The web UI interact with the backend through a GraphQL API. The schema is availa
 
 ### Importer implementations
 
-| | Github | Gitlab | Launchpad |
-| --- | --- | --- | --- |
-| **incremental**<br/>(can import more than once) | :heavy_check_mark: | :heavy_check_mark: | :x: |
-| **with resume**<br/>(download only new data) | :heavy_check_mark: | :heavy_check_mark: | :x: |
-| **identities** | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| identities update | :x: | :x: | :x: |
-| **bug** | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| comments | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| comment editions | :heavy_check_mark: | :x: | :x: |
-| labels | :heavy_check_mark: | :heavy_check_mark: | :x: |
-| status | :heavy_check_mark: | :heavy_check_mark: | :x: |
-| title edition | :heavy_check_mark: | :heavy_check_mark: | :x: |
-| **media/files** | :x: | :x: | :x: |
-| **automated test suite** | :heavy_check_mark: | :heavy_check_mark: | :x: |
+| | Github | Gitlab | Launchpad | Jira |
+| --- | --- | --- | --- | --- |
+| **incremental**<br/>(can import more than once) | :heavy_check_mark: | :heavy_check_mark: | :x: | :heavy_check_mark: |
+| **with resume**<br/>(download only new data) | :heavy_check_mark: | :heavy_check_mark: | :x: | :heavy_check_mark: |
+| **identities** | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| identities update | :x: | :x: | :x: | :heavy_check_mark: |
+| **bug** | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| comments | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| comment editions | :heavy_check_mark: | :x: | :x: | :heavy_check_mark: |
+| labels | :heavy_check_mark: | :heavy_check_mark: | :x: | :heavy_check_mark: |
+| status | :heavy_check_mark: | :heavy_check_mark: | :x: | :heavy_check_mark: |
+| title edition | :heavy_check_mark: | :heavy_check_mark: | :x: | :heavy_check_mark: |
+| **media/files** | :x: | :x: | :x: | :x: |
+| **automated test suite** | :heavy_check_mark: | :heavy_check_mark: | :x: | :x: |
 
 ### Exporter implementations
 
-| | Github | Gitlab | Launchpad |
-| --- | --- | --- | --- |
-| **bug** | :heavy_check_mark: | :heavy_check_mark: | :x: |
-| comments | :heavy_check_mark: | :heavy_check_mark: | :x: |
-| comment editions | :heavy_check_mark: | :heavy_check_mark: | :x: |
-| labels | :heavy_check_mark: | :heavy_check_mark: | :x: |
-| status | :heavy_check_mark: | :heavy_check_mark: | :x: |
-| title edition | :heavy_check_mark: | :heavy_check_mark: | :x: |
-| **automated test suite** | :heavy_check_mark: | :heavy_check_mark: | :x: |
+| | Github | Gitlab | Launchpad | Jira |
+| --- | --- | --- | --- | --- |
+| **bug** | :heavy_check_mark: | :heavy_check_mark: | :x: | :heavy_check_mark: |
+| comments | :heavy_check_mark: | :heavy_check_mark: | :x: | :heavy_check_mark: |
+| comment editions | :heavy_check_mark: | :heavy_check_mark: | :x: | :heavy_check_mark: |
+| labels | :heavy_check_mark: | :heavy_check_mark: | :x: | :heavy_check_mark: |
+| status | :heavy_check_mark: | :heavy_check_mark: | :x: | :heavy_check_mark: |
+| title edition | :heavy_check_mark: | :heavy_check_mark: | :x: | :heavy_check_mark: |
+| **automated test suite** | :heavy_check_mark: | :heavy_check_mark: | :x: | :x: |
 
 #### Bridge usage
 
