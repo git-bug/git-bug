@@ -111,6 +111,22 @@ type CommentEdge struct {
 	Node   *bug.Comment `json:"node"`
 }
 
+type CommitInput struct {
+	// A unique identifier for the client performing the mutation.
+	ClientMutationID *string `json:"clientMutationId"`
+	// The identifier of the transaction
+	ID string `json:"id"`
+}
+
+type CommitPayload struct {
+	// A unique identifier for the client performing the mutation.
+	ClientMutationID *string `json:"clientMutationId"`
+	// The identifier of the transaction
+	ID string `json:"id"`
+	// The affected bug.
+	Bug BugWrapper `json:"bug"`
+}
+
 type IdentityConnection struct {
 	Edges      []*IdentityEdge   `json:"edges"`
 	Nodes      []IdentityWrapper `json:"nodes"`
@@ -201,6 +217,22 @@ type PageInfo struct {
 	EndCursor string `json:"endCursor"`
 }
 
+type RollbackInput struct {
+	// A unique identifier for the client performing the mutation.
+	ClientMutationID *string `json:"clientMutationId"`
+	// The identifier of the transaction
+	ID string `json:"id"`
+}
+
+type RollbackPayload struct {
+	// A unique identifier for the client performing the mutation.
+	ClientMutationID *string `json:"clientMutationId"`
+	// The identifier of the transaction
+	ID string `json:"id"`
+	// The affected bug.
+	Bug BugWrapper `json:"bug"`
+}
+
 type SetTitleInput struct {
 	// A unique identifier for the client performing the mutation.
 	ClientMutationID *string `json:"clientMutationId"`
@@ -219,6 +251,22 @@ type SetTitlePayload struct {
 	Bug BugWrapper `json:"bug"`
 	// The resulting operation
 	Operation *bug.SetTitleOperation `json:"operation"`
+}
+
+type StartTransactionInput struct {
+	// A unique identifier for the client performing the mutation.
+	ClientMutationID *string `json:"clientMutationId"`
+	// "The name of the repository. If not set, the default repository is used.
+	RepoRef *string `json:"repoRef"`
+	// The bug ID's prefix.
+	Prefix string `json:"prefix"`
+}
+
+type StartTransactionPayload struct {
+	// A unique identifier for the client performing the mutation.
+	ClientMutationID *string `json:"clientMutationId"`
+	// The identifier of the transaction
+	ID string `json:"id"`
 }
 
 // The connection type for TimelineItem

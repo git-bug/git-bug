@@ -122,11 +122,23 @@ func AddComment(b Interface, author identity.Interface, unixTime int64, message 
 	return AddCommentWithFiles(b, author, unixTime, message, nil)
 }
 
+func OpAddComment(author identity.Interface, unixTime int64, message string) (*AddCommentOperation, error) {
+	return OpAddCommentWithFiles(author, unixTime, message, nil)
+}
+
 func AddCommentWithFiles(b Interface, author identity.Interface, unixTime int64, message string, files []git.Hash) (*AddCommentOperation, error) {
+	op, err := OpAddCommentWithFiles(author, unixTime, message, files)
+	if err != nil {
+		return nil, err
+	}
+	b.Append(op)
+	return op, nil
+}
+
+func OpAddCommentWithFiles(author identity.Interface, unixTime int64, message string, files []git.Hash) (*AddCommentOperation, error) {
 	addCommentOp := NewAddCommentOp(author, unixTime, message, files)
 	if err := addCommentOp.Validate(); err != nil {
 		return nil, err
 	}
-	b.Append(addCommentOp)
 	return addCommentOp, nil
 }

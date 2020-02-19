@@ -26,7 +26,8 @@ func (r RootResolver) Query() graph.QueryResolver {
 
 func (r RootResolver) Mutation() graph.MutationResolver {
 	return &mutationResolver{
-		cache: &r.MultiRepoCache,
+		cache:        &r.MultiRepoCache,
+		transactions: make(map[string]transaction),
 	}
 }
 

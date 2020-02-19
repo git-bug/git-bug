@@ -5,15 +5,25 @@ type Query {
 
 type Mutation {
     """Create a new bug"""
-    newBug(input: NewBugInput!): NewBugPayload!
+    newBug(input: NewBugInput!, txId: TxId): NewBugPayload!
     """Add a new comment to a bug"""
-    addComment(input: AddCommentInput!): AddCommentPayload!
+    addComment(input: AddCommentInput!, txId: TxId): AddCommentPayload!
     """Add or remove a set of label on a bug"""
-    changeLabels(input: ChangeLabelInput): ChangeLabelPayload!
+    changeLabels(input: ChangeLabelInput!, txId: TxId): ChangeLabelPayload!
     """Change a bug's status to open"""
-    openBug(input: OpenBugInput!): OpenBugPayload!
+    openBug(input: OpenBugInput!, txId: TxId): OpenBugPayload!
     """Change a bug's status to closed"""
-    closeBug(input: CloseBugInput!): CloseBugPayload!
+    closeBug(input: CloseBugInput!, txId: TxId): CloseBugPayload!
     """Change a bug's title"""
-    setTitle(input: SetTitleInput!): SetTitlePayload!
+    setTitle(input: SetTitleInput!, txId: TxId): SetTitlePayload!
+
+    """Start a transaction.
+    If a transaction ID if passed to the mutation, operation are accumulated
+    in memory until a commit happen.
+    """
+    startTransaction(input: StartTransactionInput!): StartTransactionPayload!
+    """Commit a transaction. All mutation linked to this transaction are written on disk."""
+    commit(input: CommitInput!): CommitPayload!
+    """Rollback a transaction. Alll mutationlinked to this transaction are discarded."""
+    rollback(input: RollbackInput!): RollbackPayload!
 }

@@ -289,9 +289,11 @@ function ListQuery() {
       {content}
       <div className={classes.pagination}>
         {previousPage ? (
-          <IconButton component={Link} to={previousPage}>
-            <KeyboardArrowLeft />
-          </IconButton>
+          <Link to={previousPage}>
+            <IconButton component={Link} to={previousPage}>
+              <KeyboardArrowLeft />
+            </IconButton>
+          </Link>
         ) : (
           <IconButton disabled>
             <KeyboardArrowLeft />

@@ -1,0 +1,49 @@
+scalar TxId
+
+input StartTransactionInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """"The name of the repository. If not set, the default repository is used."""
+    repoRef: String
+    """The bug ID's prefix."""
+    prefix: String!
+}
+
+type StartTransactionPayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The identifier of the transaction"""
+    id: TxId!
+}
+
+input CommitInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The identifier of the transaction"""
+    id: TxId!
+}
+
+type CommitPayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The identifier of the transaction"""
+    id: TxId!
+    """The affected bug."""
+    bug: Bug!
+}
+
+input RollbackInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The identifier of the transaction"""
+    id: TxId!
+}
+
+type RollbackPayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The identifier of the transaction"""
+    id: TxId!
+    """The affected bug."""
+    bug: Bug!
+}
