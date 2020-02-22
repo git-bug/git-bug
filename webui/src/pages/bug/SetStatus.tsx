@@ -2,11 +2,11 @@ import React from 'react';
 
 import { makeStyles } from '@material-ui/core/styles';
 
+import { Status } from '../../gqlTypes';
 import Author from 'src/components/Author';
 import Date from 'src/components/Date';
 
 import { SetStatusFragment } from './SetStatusFragment.generated';
-import { Status } from '../../gqlTypes'
 
 const useStyles = makeStyles(theme => ({
   main: {
@@ -24,7 +24,9 @@ type Props = {
 
 function SetStatus({ op }: Props) {
   const classes = useStyles();
-  const status = { [Status.Open]: 'reopened', [Status.Closed]: 'closed' }[op.status]
+  const status = { [Status.Open]: 'reopened', [Status.Closed]: 'closed' }[
+    op.status
+  ];
 
   return (
     <div className={classes.main}>
