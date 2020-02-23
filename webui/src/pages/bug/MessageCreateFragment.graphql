@@ -1,0 +1,8 @@
+#import "../../components/fragments.graphql"
+
+fragment Create on CreateTimelineItem {
+  createdAt
+  ...authored
+  edited
+  message
+}

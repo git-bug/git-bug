@@ -1,0 +1,13 @@
+#import "../components/fragments.graphql"
+
+fragment Bug on Bug {
+  id
+  humanId
+  status
+  title
+  labels {
+    ...Label
+  }
+  createdAt
+  ...authored
+}

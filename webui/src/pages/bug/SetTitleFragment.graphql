@@ -1,0 +1,8 @@
+#import "../../components/fragments.graphql"
+
+fragment SetTitle on SetTitleTimelineItem {
+  date
+  ...authored
+  title
+  was
+}

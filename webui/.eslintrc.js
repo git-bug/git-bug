@@ -29,9 +29,13 @@ module.exports = {
             position: 'after',
           },
         ],
-        groups: [['builtin', 'external'], 'parent', ['sibling', 'index']],
+        pathGroupsExcludedImportTypes: ["builtin"],
+        groups: [['builtin', 'external'], ['internal', 'parent'], ['sibling', 'index']],
         'newlines-between': 'always',
       },
     ],
+  },
+  settings: {
+    'import/internal-regex': '^src/',
   },
 };

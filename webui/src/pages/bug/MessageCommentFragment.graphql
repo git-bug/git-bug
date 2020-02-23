@@ -1,0 +1,8 @@
+#import "../../components/fragments.graphql"
+
+fragment AddComment on AddCommentTimelineItem {
+  createdAt
+  ...authored
+  edited
+  message
+}

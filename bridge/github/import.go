@@ -161,7 +161,7 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 				b, _, err = repo.NewBugRaw(
 					author,
 					issue.CreatedAt.Unix(),
-					issue.Title,
+					issue.Title, // TODO: this is the *current* title, not the original one
 					cleanText,
 					nil,
 					map[string]string{

@@ -1,0 +1,19 @@
+# Label.tsx
+fragment Label on Label {
+  name
+  color {
+    R
+    G
+    B
+  }
+}
+
+# Author.tsx
+fragment authored on Authored {
+  author {
+    name
+    email
+    displayName
+    avatarUrl
+  }
+}

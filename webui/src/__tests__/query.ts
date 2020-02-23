@@ -1,4 +1,4 @@
-import { parse, stringify, quote } from '../list/Filter';
+import { parse, stringify, quote } from 'src/pages/list/Filter';
 
 it('parses a simple query', () => {
   expect(parse('foo:bar')).toEqual({

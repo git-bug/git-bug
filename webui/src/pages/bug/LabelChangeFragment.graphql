@@ -1,0 +1,12 @@
+#import "../../components/fragments.graphql"
+
+fragment LabelChange on LabelChangeTimelineItem {
+  date
+  ...authored
+  added {
+    ...Label
+  }
+  removed {
+    ...Label
+  }
+}
