@@ -11,3 +11,9 @@ test:
 
 build:
 	npm run build
+
+lint:
+	npm run lint
+
+fix-lint:
+	npm run lint -- --fix

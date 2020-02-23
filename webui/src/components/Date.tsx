@@ -11,9 +11,7 @@ const WEEK = 7 * DAY;
 type Props = { date: string };
 const Date = ({ date }: Props) => (
   <Tooltip title={moment(date).format('LLLL')}>
-    <span>
-      on <Moment date={date} format="ll" fromNowDuring={WEEK} />
-    </span>
+    <Moment date={date} format="on ll" fromNowDuring={WEEK} />
   </Tooltip>
 );
 
