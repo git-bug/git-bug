@@ -18,7 +18,7 @@ const useStyles = makeStyles(theme => ({
     marginTop: theme.spacing(4),
   },
   header: {
-    marginLeft: theme.spacing(1) + 40,
+    marginLeft: theme.spacing(3) + 40,
   },
   title: {
     ...theme.typography.h5,
@@ -30,12 +30,14 @@ const useStyles = makeStyles(theme => ({
   container: {
     display: 'flex',
     marginBottom: theme.spacing(1),
+    marginRight: theme.spacing(2),
+    marginLeft: theme.spacing(2),
   },
   timeline: {
     flex: 1,
     marginTop: theme.spacing(2),
     marginRight: theme.spacing(2),
-    minWidth: 0,
+    minWidth: 400,
   },
   sidebar: {
     marginTop: theme.spacing(2),
