@@ -177,7 +177,7 @@ function _git-bug_bridge_auth {
 
 function _git-bug_bridge_auth_add-token {
   _arguments \
-    '(-t --target)'{-t,--target}'[The target of the bridge. Valid values are [github,gitlab,launchpad-preview]]:' \
+    '(-t --target)'{-t,--target}'[The target of the bridge. Valid values are [github,gitlab,jira,launchpad-preview]]:' \
     '(-l --login)'{-l,--login}'[The login in the remote bug-tracker]:' \
     '(-u --user)'{-u,--user}'[The user to add the token to. Default is the current user]:'
 }
@@ -193,7 +193,7 @@ function _git-bug_bridge_auth_show {
 function _git-bug_bridge_configure {
   _arguments \
     '(-n --name)'{-n,--name}'[A distinctive name to identify the bridge]:' \
-    '(-t --target)'{-t,--target}'[The target of the bridge. Valid values are [github,gitlab,launchpad-preview]]:' \
+    '(-t --target)'{-t,--target}'[The target of the bridge. Valid values are [github,gitlab,jira,launchpad-preview]]:' \
     '(-u --url)'{-u,--url}'[The URL of the remote repository]:' \
     '(-b --base-url)'{-b,--base-url}'[The base URL of your remote issue tracker]:' \
     '(-l --login)'{-l,--login}'[The login on your remote issue tracker]:' \
