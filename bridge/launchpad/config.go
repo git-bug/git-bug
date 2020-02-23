@@ -91,10 +91,7 @@ func validateProject(project string) (bool, error) {
 
 // extract project name from url
 func splitURL(url string) (string, error) {
-	re, err := regexp.Compile(`launchpad\.net[\/:]([^\/]*[a-z]+)`)
-	if err != nil {
-		panic("regexp compile:" + err.Error())
-	}
+	re := regexp.MustCompile(`launchpad\.net[\/:]([^\/]*[a-z]+)`)
 
 	res := re.FindStringSubmatch(url)
 	if res == nil {

@@ -155,10 +155,7 @@ func ConfiguredBridges(repo repository.RepoConfig) ([]string, error) {
 		return nil, errors.Wrap(err, "can't read configured bridges")
 	}
 
-	re, err := regexp.Compile(bridgeConfigKeyPrefix + `.([^.]+)`)
-	if err != nil {
-		panic(err)
-	}
+	re := regexp.MustCompile(bridgeConfigKeyPrefix + `.([^.]+)`)
 
 	set := make(map[string]interface{})
 
@@ -194,10 +191,7 @@ func BridgeExist(repo repository.RepoConfig, name string) bool {
 
 // Remove a configured bridge
 func RemoveBridge(repo repository.RepoConfig, name string) error {
-	re, err := regexp.Compile(`^[a-zA-Z0-9]+`)
-	if err != nil {
-		panic(err)
-	}
+	re := regexp.MustCompile(`^[a-zA-Z0-9]+`)
 
 	if !re.MatchString(name) {
 		return fmt.Errorf("bad bridge fullname: %s", name)

@@ -171,10 +171,7 @@ func List(repo repository.RepoConfig, opts ...Option) ([]Credential, error) {
 		return nil, err
 	}
 
-	re, err := regexp.Compile(`^` + configKeyPrefix + `\.([^.]+)\.([^.]+(?:\.[^.]+)*)$`)
-	if err != nil {
-		panic(err)
-	}
+	re := regexp.MustCompile(`^` + configKeyPrefix + `\.([^.]+)\.([^.]+(?:\.[^.]+)*)$`)
 
 	mapped := make(map[string]map[string]string)
 

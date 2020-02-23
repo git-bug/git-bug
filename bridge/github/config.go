@@ -287,10 +287,7 @@ func promptToken() (*auth.Token, error) {
 	fmt.Println("  - 'repo'       : to be able to read private repositories")
 	fmt.Println()
 
-	re, err := regexp.Compile(`^[a-zA-Z0-9]{40}$`)
-	if err != nil {
-		panic("regexp compile:" + err.Error())
-	}
+	re := regexp.MustCompile(`^[a-zA-Z0-9]{40}$`)
 
 	var login string
 
