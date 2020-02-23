@@ -48,10 +48,12 @@ func IsURL(name string, value string) (string, error) {
 
 // Prompts
 
+// Prompt is a simple text input.
 func Prompt(prompt, name string, validators ...PromptValidator) (string, error) {
 	return PromptDefault(prompt, name, "", validators...)
 }
 
+// PromptDefault is a simple text input with a default value.
 func PromptDefault(prompt, name, preValue string, validators ...PromptValidator) (string, error) {
 loop:
 	for {
@@ -87,6 +89,7 @@ loop:
 	}
 }
 
+// PromptPassword is a specialized text input that doesn't display the characters entered.
 func PromptPassword(prompt, name string, validators ...PromptValidator) (string, error) {
 	termState, err := terminal.GetState(syscall.Stdin)
 	if err != nil {
@@ -128,6 +131,8 @@ loop:
 	}
 }
 
+// PromptChoice is a prompt giving possible choices
+// Return the index starting at zero of the choice selected.
 func PromptChoice(prompt string, choices []string) (int, error) {
 	for {
 		for i, choice := range choices {

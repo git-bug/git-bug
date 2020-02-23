@@ -66,7 +66,6 @@ func (*Launchpad) ValidateConfig(conf core.Configuration) error {
 	} else if v != target {
 		return fmt.Errorf("unexpected target name: %v", v)
 	}
-
 	if _, ok := conf[confKeyProject]; !ok {
 		return fmt.Errorf("missing %s key", confKeyProject)
 	}

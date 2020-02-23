@@ -21,6 +21,7 @@ const (
 
 	confKeyProjectID     = "project-id"
 	confKeyGitlabBaseUrl = "base-url"
+	confKeyDefaultLogin  = "default-login"
 
 	defaultBaseURL = "https://gitlab.com/"
 	defaultTimeout = 60 * time.Second

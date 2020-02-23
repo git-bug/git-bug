@@ -19,8 +19,9 @@ const (
 	metaKeyGithubUrl   = "github-url"
 	metaKeyGithubLogin = "github-login"
 
-	confKeyOwner   = "owner"
-	confKeyProject = "project"
+	confKeyOwner        = "owner"
+	confKeyProject      = "project"
+	confKeyDefaultLogin = "default-login"
 
 	githubV3Url    = "https://api.github.com"
 	defaultTimeout = 60 * time.Second

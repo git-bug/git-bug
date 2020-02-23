@@ -40,8 +40,9 @@ func (ji *jiraImporter) Init(ctx context.Context, repo *cache.RepoCache, conf co
 	// Prioritize LoginPassword credentials to avoid a prompt
 	creds, err := auth.List(repo,
 		auth.WithTarget(target),
-		auth.WithMeta(auth.MetaKeyBaseURL, conf[confKeyBaseUrl]),
 		auth.WithKind(auth.KindLoginPassword),
+		auth.WithMeta(auth.MetaKeyBaseURL, conf[confKeyBaseUrl]),
+		auth.WithMeta(auth.MetaKeyLogin, conf[confKeyDefaultLogin]),
 	)
 	if err != nil {
 		return err
@@ -53,8 +54,9 @@ func (ji *jiraImporter) Init(ctx context.Context, repo *cache.RepoCache, conf co
 
 	creds, err = auth.List(repo,
 		auth.WithTarget(target),
-		auth.WithMeta(auth.MetaKeyBaseURL, conf[confKeyBaseUrl]),
 		auth.WithKind(auth.KindLogin),
+		auth.WithMeta(auth.MetaKeyBaseURL, conf[confKeyBaseUrl]),
+		auth.WithMeta(auth.MetaKeyLogin, conf[confKeyDefaultLogin]),
 	)
 	if err != nil {
 		return err
