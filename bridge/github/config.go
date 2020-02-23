@@ -126,6 +126,7 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 	conf[core.ConfigKeyTarget] = target
 	conf[confKeyOwner] = owner
 	conf[confKeyProject] = project
+	conf[confKeyDefaultLogin] = login
 
 	err = g.ValidateConfig(conf)
 	if err != nil {
@@ -149,13 +150,14 @@ func (*Github) ValidateConfig(conf core.Configuration) error {
 	} else if v != target {
 		return fmt.Errorf("unexpected target name: %v", v)
 	}
-
 	if _, ok := conf[confKeyOwner]; !ok {
 		return fmt.Errorf("missing %s key", confKeyOwner)
 	}
-
 	if _, ok := conf[confKeyProject]; !ok {
 		return fmt.Errorf("missing %s key", confKeyProject)
+	}
+	if _, ok := conf[confKeyDefaultLogin]; !ok {
+		return fmt.Errorf("missing %s key", confKeyDefaultLogin)
 	}
 
 	return nil

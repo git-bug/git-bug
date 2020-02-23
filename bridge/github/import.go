@@ -19,7 +19,7 @@ import (
 type githubImporter struct {
 	conf core.Configuration
 
-	// default user client
+	// default client
 	client *githubv4.Client
 
 	// iterator
@@ -32,7 +32,11 @@ type githubImporter struct {
 func (gi *githubImporter) Init(_ context.Context, repo *cache.RepoCache, conf core.Configuration) error {
 	gi.conf = conf
 
-	creds, err := auth.List(repo, auth.WithTarget(target), auth.WithKind(auth.KindToken))
+	creds, err := auth.List(repo,
+		auth.WithTarget(target),
+		auth.WithKind(auth.KindToken),
+		auth.WithMeta(auth.MetaKeyLogin, conf[confKeyDefaultLogin]),
+	)
 	if err != nil {
 		return err
 	}
@@ -434,7 +438,7 @@ func (gi *githubImporter) ensureTimelineComment(repo *cache.RepoCache, b *cache.
 				}
 				gi.out <- core.NewImportComment(op.Id())
 
-				// set target for the nexr edit now that the comment is created
+				// set target for the next edit now that the comment is created
 				targetOpID = op.Id()
 				continue
 			}

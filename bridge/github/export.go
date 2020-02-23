@@ -35,10 +35,13 @@ type githubExporter struct {
 	identityClient map[entity.Id]*githubv4.Client
 
 	// the client to use for non user-specific queries
-	// should be the client of the default user
+	// it's the client associated to the "default-login" config
+	// used for the github V4 API (graphql)
 	defaultClient *githubv4.Client
 
 	// the token of the default user
+	// it's the token associated to the "default-login" config
+	// used for the github V3 API (REST)
 	defaultToken *auth.Token
 
 	// github repository ID
@@ -59,33 +62,11 @@ func (ge *githubExporter) Init(_ context.Context, repo *cache.RepoCache, conf co
 	ge.cachedOperationIDs = make(map[entity.Id]string)
 	ge.cachedLabels = make(map[string]string)
 
-	user, err := repo.GetUserIdentity()
-	if err != nil {
-		return err
-	}
-
 	// preload all clients
-	err = ge.cacheAllClient(repo)
+	err := ge.cacheAllClient(repo)
 	if err != nil {
 		return err
 	}
-
-	ge.defaultClient, err = ge.getClientForIdentity(user.Id())
-	if err != nil {
-		return err
-	}
-
-	login := user.ImmutableMetadata()[metaKeyGithubLogin]
-	creds, err := auth.List(repo, auth.WithMeta(auth.MetaKeyLogin, login), auth.WithTarget(target), auth.WithKind(auth.KindToken))
-	if err != nil {
-		return err
-	}
-
-	if len(creds) == 0 {
-		return ErrMissingIdentityToken
-	}
-
-	ge.defaultToken = creds[0].(*auth.Token)
 
 	return nil
 }
@@ -111,10 +92,22 @@ func (ge *githubExporter) cacheAllClient(repo *cache.RepoCache) error {
 			return nil
 		}
 
-		if _, ok := ge.identityClient[user.Id()]; !ok {
-			client := buildClient(creds[0].(*auth.Token))
-			ge.identityClient[user.Id()] = client
+		if _, ok := ge.identityClient[user.Id()]; ok {
+			continue
 		}
+
+		client := buildClient(creds[0].(*auth.Token))
+		ge.identityClient[user.Id()] = client
+
+		// assign the default client and token as well
+		if ge.defaultClient == nil && login == ge.conf[confKeyDefaultLogin] {
+			ge.defaultClient = client
+			ge.defaultToken = creds[0].(*auth.Token)
+		}
+	}
+
+	if ge.defaultClient == nil {
+		return fmt.Errorf("no token found for the default login \"%s\"", ge.conf[confKeyDefaultLogin])
 	}
 
 	return nil

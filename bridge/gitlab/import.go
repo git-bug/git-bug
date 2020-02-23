@@ -20,7 +20,7 @@ import (
 type gitlabImporter struct {
 	conf core.Configuration
 
-	// default user client
+	// default client
 	client *gitlab.Client
 
 	// iterator
@@ -37,6 +37,7 @@ func (gi *gitlabImporter) Init(_ context.Context, repo *cache.RepoCache, conf co
 		auth.WithTarget(target),
 		auth.WithKind(auth.KindToken),
 		auth.WithMeta(auth.MetaKeyBaseURL, conf[confKeyGitlabBaseUrl]),
+		auth.WithMeta(auth.MetaKeyLogin, conf[confKeyDefaultLogin]),
 	)
 	if err != nil {
 		return err

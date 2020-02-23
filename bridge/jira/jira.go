@@ -25,6 +25,7 @@ const (
 
 	confKeyBaseUrl        = "base-url"
 	confKeyProject        = "project"
+	confKeyDefaultLogin   = "default-login"
 	confKeyCredentialType = "credentials-type" // "SESSION" or "TOKEN"
 	confKeyIDMap          = "bug-id-map"
 	confKeyIDRevMap       = "bug-id-revmap"

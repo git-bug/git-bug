@@ -110,6 +110,7 @@ func TestImport(t *testing.T) {
 	err = importer.Init(ctx, backend, core.Configuration{
 		confKeyProjectID:     projectID,
 		confKeyGitlabBaseUrl: defaultBaseURL,
+		confKeyDefaultLogin:  login,
 	})
 	require.NoError(t, err)
 

@@ -117,6 +117,7 @@ func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 	conf[core.ConfigKeyTarget] = target
 	conf[confKeyProjectID] = strconv.Itoa(id)
 	conf[confKeyGitlabBaseUrl] = baseUrl
+	conf[confKeyDefaultLogin] = login
 
 	err = g.ValidateConfig(conf)
 	if err != nil {
@@ -145,6 +146,9 @@ func (g *Gitlab) ValidateConfig(conf core.Configuration) error {
 	}
 	if _, ok := conf[confKeyProjectID]; !ok {
 		return fmt.Errorf("missing %s key", confKeyProjectID)
+	}
+	if _, ok := conf[confKeyDefaultLogin]; !ok {
+		return fmt.Errorf("missing %s key", confKeyDefaultLogin)
 	}
 
 	return nil
@@ -246,12 +250,12 @@ func getValidGitlabRemoteURLs(repo repository.RepoCommon, baseUrl string) ([]str
 
 	urls := make([]string, 0, len(remotes))
 	for _, u := range remotes {
-		path, err := getProjectPath(baseUrl, u)
+		p, err := getProjectPath(baseUrl, u)
 		if err != nil {
 			continue
 		}
 
-		urls = append(urls, fmt.Sprintf("%s/%s", baseUrl, path))
+		urls = append(urls, fmt.Sprintf("%s/%s", baseUrl, p))
 	}
 
 	return urls, nil

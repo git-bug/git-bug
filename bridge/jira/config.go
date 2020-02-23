@@ -79,7 +79,7 @@ func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams) (core.
 		}
 		login = l
 	default:
-		login := params.Login
+		login = params.Login
 		if login == "" {
 			// TODO: validate username
 			login, err = input.Prompt("JIRA login", "login", input.Required)
@@ -98,6 +98,7 @@ func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams) (core.
 	conf[confKeyBaseUrl] = baseURL
 	conf[confKeyProject] = project
 	conf[confKeyCredentialType] = credType
+	conf[confKeyDefaultLogin] = login
 
 	err = j.ValidateConfig(conf)
 	if err != nil {
@@ -144,9 +145,17 @@ func (*Jira) ValidateConfig(conf core.Configuration) error {
 	} else if v != target {
 		return fmt.Errorf("unexpected target name: %v", v)
 	}
-
+	if _, ok := conf[confKeyBaseUrl]; !ok {
+		return fmt.Errorf("missing %s key", confKeyBaseUrl)
+	}
 	if _, ok := conf[confKeyProject]; !ok {
 		return fmt.Errorf("missing %s key", confKeyProject)
+	}
+	if _, ok := conf[confKeyCredentialType]; !ok {
+		return fmt.Errorf("missing %s key", confKeyCredentialType)
+	}
+	if _, ok := conf[confKeyDefaultLogin]; !ok {
+		return fmt.Errorf("missing %s key", confKeyDefaultLogin)
 	}
 
 	return nil
