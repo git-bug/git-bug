@@ -205,6 +205,8 @@ func PromptCredential(target, name string, credentials []auth.Credential, choice
 	sort.Sort(auth.ById(credentials))
 
 	for {
+		_, _ = fmt.Fprintln(os.Stderr)
+
 		offset := 0
 		for i, choice := range choices {
 			_, _ = fmt.Fprintf(os.Stderr, "[%d]: %s\n", i+1, choice)
@@ -213,7 +215,7 @@ func PromptCredential(target, name string, credentials []auth.Credential, choice
 
 		if len(credentials) > 0 {
 			_, _ = fmt.Fprintln(os.Stderr)
-			_, _ = fmt.Fprintf(os.Stderr, "Existing %s for %s:", name, target)
+			_, _ = fmt.Fprintf(os.Stderr, "Existing %s for %s:\n", name, target)
 
 			for i, cred := range credentials {
 				meta := make([]string, 0, len(cred.Metadata()))
