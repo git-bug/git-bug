@@ -91,13 +91,13 @@ loop:
 
 // PromptPassword is a specialized text input that doesn't display the characters entered.
 func PromptPassword(prompt, name string, validators ...PromptValidator) (string, error) {
-	termState, err := terminal.GetState(syscall.Stdin)
+	termState, err := terminal.GetState(int(syscall.Stdin))
 	if err != nil {
 		return "", err
 	}
 
 	cancel := interrupt.RegisterCleaner(func() error {
-		return terminal.Restore(syscall.Stdin, termState)
+		return terminal.Restore(int(syscall.Stdin), termState)
 	})
 	defer cancel()
 
@@ -105,7 +105,7 @@ loop:
 	for {
 		_, _ = fmt.Fprintf(os.Stderr, "%s: ", prompt)
 
-		bytePassword, err := terminal.ReadPassword(syscall.Stdin)
+		bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
 		// new line for coherent formatting, ReadPassword clip the normal new line
 		// entered by the user
 		fmt.Println()
