@@ -100,7 +100,7 @@ func (ls *labelSelect) layout(g *gocui.Gui) error {
 
 	width := 5
 	for _, label := range ls.labels {
-		width = maxInt(width, len(label))
+		width = maxInt(width, len(label.String()))
 	}
 	width += 10
 	x0 := 1
@@ -116,8 +116,8 @@ func (ls *labelSelect) layout(g *gocui.Gui) error {
 	}
 
 	for i, label := range ls.labels {
-		viewname := fmt.Sprintf("view%d", i)
-		v, err := g.SetView(viewname, x0+2, y0, x0+width-2, y0+2, 0)
+		viewname := fmt.Sprintf("labeledit%d", i)
+		v, err := g.SetView(viewname, x0+2, y0, x0+width+2, y0+2, 0)
 		if err != nil && !gocui.IsUnknownView(err) {
 			return err
 		}
@@ -176,7 +176,7 @@ func (ls *labelSelect) focusView(g *gocui.Gui) error {
 		return err
 	}
 
-	_, vy0, _, vy1, err := g.ViewPosition(fmt.Sprintf("view%d", ls.selected))
+	_, vy0, _, vy1, err := g.ViewPosition(fmt.Sprintf("labeledit%d", ls.selected))
 	if err != nil {
 		return err
 	}
