@@ -1,0 +1,11 @@
+#import "../../components/fragments.graphql"
+
+query ValidLabels {
+  repository {
+    validLabels {
+      nodes {
+        ...Label
+      }
+    }
+  }
+}
