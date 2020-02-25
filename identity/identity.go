@@ -56,13 +56,14 @@ func NewIdentity(name string, email string) *Identity {
 	}
 }
 
-func NewIdentityFull(name string, email string, avatarUrl string) *Identity {
+func NewIdentityFull(name string, email string, login string, avatarUrl string) *Identity {
 	return &Identity{
 		id: entity.UnsetId,
 		versions: []*Version{
 			{
 				name:      name,
 				email:     email,
+				login:     login,
 				avatarURL: avatarUrl,
 				nonce:     makeNonce(20),
 			},
@@ -282,6 +283,7 @@ func IsUserIdentitySet(repo repository.Repo) (bool, error) {
 
 type Mutator struct {
 	Name      string
+	Login     string
 	Email     string
 	AvatarUrl string
 	Keys      []*Key
@@ -292,6 +294,7 @@ func (i *Identity) Mutate(f func(orig Mutator) Mutator) {
 	orig := Mutator{
 		Name:      i.Name(),
 		Email:     i.Email(),
+		Login:     i.Login(),
 		AvatarUrl: i.AvatarUrl(),
 		Keys:      i.Keys(),
 	}
@@ -302,6 +305,7 @@ func (i *Identity) Mutate(f func(orig Mutator) Mutator) {
 	i.versions = append(i.versions, &Version{
 		name:      mutated.Name,
 		email:     mutated.Email,
+		login:     mutated.Login,
 		avatarURL: mutated.AvatarUrl,
 		keys:      mutated.Keys,
 	})
@@ -510,6 +514,11 @@ func (i *Identity) Email() string {
 	return i.lastVersion().email
 }
 
+// Login return the last version of the login
+func (i *Identity) Login() string {
+	return i.lastVersion().login
+}
+
 // AvatarUrl return the last version of the Avatar URL
 func (i *Identity) AvatarUrl() string {
 	return i.lastVersion().avatarURL
@@ -538,7 +547,16 @@ func (i *Identity) ValidKeysAtTime(time lamport.Time) []*Key {
 // DisplayName return a non-empty string to display, representing the
 // identity, based on the non-empty values.
 func (i *Identity) DisplayName() string {
-	return i.Name()
+	switch {
+	case i.Name() == "" && i.Login() != "":
+		return i.Login()
+	case i.Name() != "" && i.Login() == "":
+		return i.Name()
+	case i.Name() != "" && i.Login() != "":
+		return fmt.Sprintf("%s (%s)", i.Name(), i.Login())
+	}
+
+	panic("invalid person data")
 }
 
 // IsProtected return true if the chain of git commits started to be signed.

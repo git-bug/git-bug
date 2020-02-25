@@ -33,6 +33,7 @@ func (li *launchpadImporter) ensurePerson(repo *cache.RepoCache, owner LPPerson)
 	return repo.NewIdentityRaw(
 		owner.Name,
 		"",
+		owner.Login,
 		"",
 		map[string]string{
 			metaKeyLaunchpadLogin: owner.Login,

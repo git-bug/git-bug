@@ -37,7 +37,7 @@ func UnmarshalJSON(raw json.RawMessage) (Interface, error) {
 	b := &Bare{}
 
 	err = json.Unmarshal(raw, b)
-	if err == nil && b.name != "" {
+	if err == nil && (b.name != "" || b.login != "") {
 		return b, nil
 	}
 

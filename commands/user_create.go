@@ -43,7 +43,7 @@ func runUserCreate(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	id, err := backend.NewIdentityRaw(name, email, avatarURL, nil)
+	id, err := backend.NewIdentityRaw(name, email, "", avatarURL, nil)
 	if err != nil {
 		return err
 	}
