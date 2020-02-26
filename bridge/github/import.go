@@ -546,6 +546,7 @@ func (gi *githubImporter) ensurePerson(repo *cache.RepoCache, actor *actor) (*ca
 	i, err = repo.NewIdentityRaw(
 		name,
 		email,
+		string(actor.Login),
 		string(actor.AvatarUrl),
 		map[string]string{
 			metaKeyGithubLogin: string(actor.Login),
@@ -592,6 +593,7 @@ func (gi *githubImporter) getGhost(repo *cache.RepoCache) (*cache.IdentityCache,
 	return repo.NewIdentityRaw(
 		name,
 		"",
+		string(q.User.Login),
 		string(q.User.AvatarUrl),
 		map[string]string{
 			metaKeyGithubLogin: string(q.User.Login),

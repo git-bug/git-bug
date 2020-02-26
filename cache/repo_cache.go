@@ -1037,17 +1037,17 @@ func (c *RepoCache) NewIdentityFromGitUserRaw(metadata map[string]string) (*Iden
 // NewIdentity create a new identity
 // The new identity is written in the repository (commit)
 func (c *RepoCache) NewIdentity(name string, email string) (*IdentityCache, error) {
-	return c.NewIdentityRaw(name, email, "", nil)
+	return c.NewIdentityRaw(name, email, "", "", nil)
 }
 
 // NewIdentityFull create a new identity
 // The new identity is written in the repository (commit)
-func (c *RepoCache) NewIdentityFull(name string, email string, avatarUrl string) (*IdentityCache, error) {
-	return c.NewIdentityRaw(name, email, avatarUrl, nil)
+func (c *RepoCache) NewIdentityFull(name string, email string, login string, avatarUrl string) (*IdentityCache, error) {
+	return c.NewIdentityRaw(name, email, login, avatarUrl, nil)
 }
 
-func (c *RepoCache) NewIdentityRaw(name string, email string, avatarUrl string, metadata map[string]string) (*IdentityCache, error) {
-	i := identity.NewIdentityFull(name, email, avatarUrl)
+func (c *RepoCache) NewIdentityRaw(name string, email string, login string, avatarUrl string, metadata map[string]string) (*IdentityCache, error) {
+	i := identity.NewIdentityFull(name, email, login, avatarUrl)
 	return c.finishIdentity(i, metadata)
 }
 

@@ -8,6 +8,8 @@ type Identity {
     name: String
     """The email of the person, if known."""
     email: String
+    """The login of the person, if known."""
+    login: String
     """A non-empty string to display, representing the identity, based on the non-empty values."""
     displayName: String!
     """An url to an avatar"""

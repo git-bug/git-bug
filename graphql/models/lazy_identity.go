@@ -18,6 +18,7 @@ type IdentityWrapper interface {
 	Id() entity.Id
 	Name() string
 	Email() (string, error)
+	Login() (string, error)
 	AvatarUrl() (string, error)
 	Keys() ([]*identity.Key, error)
 	ValidKeysAtTime(time lamport.Time) ([]*identity.Key, error)
@@ -74,6 +75,14 @@ func (li *lazyIdentity) Email() (string, error) {
 		return "", err
 	}
 	return id.Email(), nil
+}
+
+func (li *lazyIdentity) Login() (string, error) {
+	id, err := li.load()
+	if err != nil {
+		return "", err
+	}
+	return id.Login(), nil
 }
 
 func (li *lazyIdentity) AvatarUrl() (string, error) {
@@ -140,6 +149,10 @@ func NewLoadedIdentity(id identity.Interface) *loadedIdentity {
 
 func (l loadedIdentity) Email() (string, error) {
 	return l.Interface.Email(), nil
+}
+
+func (l loadedIdentity) Login() (string, error) {
+	return l.Interface.Login(), nil
 }
 
 func (l loadedIdentity) AvatarUrl() (string, error) {

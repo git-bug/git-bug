@@ -394,6 +394,7 @@ func (gi *gitlabImporter) ensurePerson(repo *cache.RepoCache, id int) (*cache.Id
 	i, err = repo.NewIdentityRaw(
 		user.Name,
 		user.PublicEmail,
+		user.Username,
 		user.AvatarURL,
 		map[string]string{
 			// because Gitlab
