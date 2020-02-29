@@ -85,6 +85,8 @@ func validateProject(project string) (bool, error) {
 		return false, err
 	}
 
+	_ = resp.Body.Close()
+
 	return resp.StatusCode == http.StatusOK, nil
 }
 

@@ -42,6 +42,7 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 	var err error
 	var owner string
 	var project string
+	var ok bool
 
 	// getting owner and project name
 	switch {
@@ -63,8 +64,8 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 		}
 	}
 
-	// validate project owner
-	ok, err := validateUsername(owner)
+	// validate project owner and override with the correct case
+	ok, owner, err = validateUsername(owner)
 	if err != nil {
 		return nil, err
 	}
@@ -95,12 +96,17 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 		token.SetMetadata(auth.MetaKeyLogin, login)
 		cred = token
 	default:
-		login = params.Login
-		if login == "" {
-			login, err = input.Prompt("Github login", "login", input.Required, usernameValidator)
-			if err != nil {
-				return nil, err
+		if params.Login == "" {
+			login, err = promptLogin()
+		} else {
+			// validate login and override with the correct case
+			ok, login, err = validateUsername(params.Login)
+			if !ok {
+				return nil, fmt.Errorf("invalid parameter login: %v", params.Login)
 			}
+		}
+		if err != nil {
+			return nil, err
 		}
 		cred, err = promptTokenOptions(repo, login, owner, project)
 		if err != nil {
@@ -161,17 +167,6 @@ func (*Github) ValidateConfig(conf core.Configuration) error {
 	}
 
 	return nil
-}
-
-func usernameValidator(_ string, value string) (string, error) {
-	ok, err := validateUsername(value)
-	if err != nil {
-		return "", err
-	}
-	if !ok {
-		return "invalid login", nil
-	}
-	return "", nil
 }
 
 func requestToken(note, login, password string, scope string) (*http.Response, error) {
@@ -431,7 +426,30 @@ func getValidGithubRemoteURLs(repo repository.RepoCommon) ([]string, error) {
 	return urls, nil
 }
 
-func validateUsername(username string) (bool, error) {
+func promptLogin() (string, error) {
+	var login string
+
+	validator := func(_ string, value string) (string, error) {
+		ok, fixed, err := validateUsername(value)
+		if err != nil {
+			return "", err
+		}
+		if !ok {
+			return "invalid login", nil
+		}
+		login = fixed
+		return "", nil
+	}
+
+	_, err := input.Prompt("Github login", "login", input.Required, validator)
+	if err != nil {
+		return "", err
+	}
+
+	return login, nil
+}
+
+func validateUsername(username string) (bool, string, error) {
 	url := fmt.Sprintf("%s/users/%s", githubV3Url, username)
 
 	client := &http.Client{
@@ -440,15 +458,36 @@ func validateUsername(username string) (bool, error) {
 
 	resp, err := client.Get(url)
 	if err != nil {
-		return false, err
+		return false, "", err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return false, "", nil
+	}
+
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return false, "", err
 	}
 
 	err = resp.Body.Close()
 	if err != nil {
-		return false, err
+		return false, "", err
 	}
 
-	return resp.StatusCode == http.StatusOK, nil
+	var decoded struct {
+		Login string `json:"login"`
+	}
+	err = json.Unmarshal(data, &decoded)
+	if err != nil {
+		return false, "", err
+	}
+
+	if decoded.Login == "" {
+		return false, "", fmt.Errorf("validateUsername: missing login in the response")
+	}
+
+	return true, decoded.Login, nil
 }
 
 func validateProject(owner, project string, token *auth.Token) (bool, error) {

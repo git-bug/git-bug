@@ -104,41 +104,50 @@ func TestValidateUsername(t *testing.T) {
 		t.Skip("Travis environment: avoiding non authenticated requests")
 	}
 
-	type args struct {
-		username string
-	}
 	tests := []struct {
-		name string
-		args args
-		want bool
+		name  string
+		input string
+		fixed string
+		ok    bool
 	}{
 		{
-			name: "existing username",
-			args: args{
-				username: "MichaelMure",
-			},
-			want: true,
+			name:  "existing username",
+			input: "MichaelMure",
+			fixed: "MichaelMure",
+			ok:    true,
 		},
 		{
-			name: "existing organisation name",
-			args: args{
-				username: "ipfs",
-			},
-			want: true,
+			name:  "existing username with bad case",
+			input: "MicHaelmurE",
+			fixed: "MichaelMure",
+			ok:    true,
 		},
 		{
-			name: "non existing username",
-			args: args{
-				username: "cant-find-this",
-			},
-			want: false,
+			name:  "existing organisation",
+			input: "ipfs",
+			fixed: "ipfs",
+			ok:    true,
+		},
+		{
+			name:  "existing organisation with bad case",
+			input: "iPfS",
+			fixed: "ipfs",
+			ok:    true,
+		},
+		{
+			name:  "non existing username",
+			input: "cant-find-this",
+			fixed: "",
+			ok:    false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ok, _ := validateUsername(tt.args.username)
-			assert.Equal(t, tt.want, ok)
+			ok, fixed, err := validateUsername(tt.input)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.ok, ok)
+			assert.Equal(t, tt.fixed, fixed)
 		})
 	}
 }
