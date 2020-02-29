@@ -6,7 +6,9 @@
 <div align="center">
 
 [![Build Status](https://travis-ci.org/MichaelMure/git-bug.svg?branch=master)](https://travis-ci.org/MichaelMure/git-bug)
-[![Backers on Open Collective](https://opencollective.com/git-bug/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/git-bug/sponsors/badge.svg)](#sponsors) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3+-blue.svg)](http://www.gnu.org/licenses/gpl-3.0)
+[![Backers on Open Collective](https://opencollective.com/git-bug/backers/badge.svg)](#backers)
+[![Sponsors on Open Collective](https://opencollective.com/git-bug/sponsors/badge.svg)](#sponsors)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3+-blue.svg)](http://www.gnu.org/licenses/gpl-3.0)
 [![GoDoc](https://godoc.org/github.com/MichaelMure/git-bug?status.svg)](https://godoc.org/github.com/MichaelMure/git-bug)
 [![Go Report Card](https://goreportcard.com/badge/github.com/MichaelMure/git-bug)](https://goreportcard.com/report/github.com/MichaelMure/git-bug)
 [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/the-git-bug/Lobby)
@@ -41,13 +43,15 @@ That's all !
 <details><summary>Linux packages</summary>
 
 * [Archlinux (AUR)](https://aur.archlinux.org/packages/?K=git-bug)
+* [NixOS](https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/version-management/git-and-tools/git-bug/default.nix#L31)
 
 </details>
 
-<details><summary>go install (unstable)</summary>
+<details><summary>Compile from git (unstable)</summary>
 
 ```shell
-go install github.com/MichaelMure/git-bug
+git clone git@github.com:MichaelMure/git-bug.git
+make install
 ```
 
 If it's not done already, add the golang binary directory in your PATH:
@@ -122,32 +126,32 @@ The web UI interact with the backend through a GraphQL API. The schema is availa
 
 ### Importer implementations
 
-| | Github | Gitlab | Launchpad | Jira |
-| --- | --- | --- | --- | --- |
-| **incremental**<br/>(can import more than once) | :heavy_check_mark: | :heavy_check_mark: | :x: | :heavy_check_mark: |
-| **with resume**<br/>(download only new data) | :heavy_check_mark: | :heavy_check_mark: | :x: | :heavy_check_mark: |
-| **identities** | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| identities update | :x: | :x: | :x: | :heavy_check_mark: |
-| **bug** | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| comments | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| comment editions | :heavy_check_mark: | :x: | :x: | :heavy_check_mark: |
-| labels | :heavy_check_mark: | :heavy_check_mark: | :x: | :heavy_check_mark: |
-| status | :heavy_check_mark: | :heavy_check_mark: | :x: | :heavy_check_mark: |
-| title edition | :heavy_check_mark: | :heavy_check_mark: | :x: | :heavy_check_mark: |
-| **media/files** | :x: | :x: | :x: | :x: |
-| **automated test suite** | :heavy_check_mark: | :heavy_check_mark: | :x: | :x: |
+|                                                 | Github             | Gitlab             | Jira               | Launchpad          |
+|-------------------------------------------------|--------------------|--------------------|--------------------|--------------------|
+| **incremental**<br/>(can import more than once) | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:                |
+| **with resume**<br/>(download only new data)    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:                |
+| **identities**                                  | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| identities update                               | :x:                | :x:                | :x:                | :x:                |
+| **bug**                                         | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| comments                                        | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| comment editions                                | :heavy_check_mark: | :x:                | :heavy_check_mark: | :x:                |
+| labels                                          | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:                |
+| status                                          | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:                |
+| title edition                                   | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:                |
+| **media/files**                                 | :x:                | :x:                | :x:                | :x:                |
+| **automated test suite**                        | :heavy_check_mark: | :heavy_check_mark: | :x:                | :x:                |
 
 ### Exporter implementations
 
-| | Github | Gitlab | Launchpad | Jira |
-| --- | --- | --- | --- | --- |
-| **bug** | :heavy_check_mark: | :heavy_check_mark: | :x: | :heavy_check_mark: |
-| comments | :heavy_check_mark: | :heavy_check_mark: | :x: | :heavy_check_mark: |
-| comment editions | :heavy_check_mark: | :heavy_check_mark: | :x: | :heavy_check_mark: |
-| labels | :heavy_check_mark: | :heavy_check_mark: | :x: | :heavy_check_mark: |
-| status | :heavy_check_mark: | :heavy_check_mark: | :x: | :heavy_check_mark: |
-| title edition | :heavy_check_mark: | :heavy_check_mark: | :x: | :heavy_check_mark: |
-| **automated test suite** | :heavy_check_mark: | :heavy_check_mark: | :x: | :x: |
+|                          | Github             | Gitlab             | Jira               | Launchpad |
+|--------------------------|--------------------|--------------------|--------------------|-----------|
+| **bug**                  | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:       |
+| comments                 | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:       |
+| comment editions         | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:       |
+| labels                   | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:       |
+| status                   | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:       |
+| title edition            | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:       |
+| **automated test suite** | :heavy_check_mark: | :heavy_check_mark: | :x:                | :x:       |
 
 #### Bridge usage
 
@@ -161,10 +165,11 @@ Or manually:
 
 ```bash
 git bug bridge configure \
-    --name=mybridge \
+    --name=<bridge> \
     --target=github \
-    --url=https://github.com/michaelmure/git-bug \
-    --token=$TOKEN
+    --url=https://github.com/MichaelMure/git-bug \
+    --login=<login>
+    --token=<token>
 ```
 
 Import bugs:
@@ -207,17 +212,8 @@ Interested by how it works ? Have a look at the [data model](doc/model.md) and t
 
 PRs accepted. Drop by the [Gitter lobby](https://gitter.im/the-git-bug/Lobby) for a chat or browse the issues to see what is worked on or discussed.
 
-Developers unfamiliar with Go may try to clone the repository using "git clone". Instead, one should use:
-
 ```shell
-go get -u github.com/MichaelMure/git-bug
-```
-
-The git repository will then be available:
-
-```shell
-# Note that $GOPATH defaults to $HOME/go
-$ cd $GOPATH/src/github.com/MichaelMure/git-bug/
+git clone git@github.com:MichaelMure/git-bug.git
 ```
 
 You can now run `make` to build the project, or `make install` to install the binary in `$GOPATH/bin/`.
