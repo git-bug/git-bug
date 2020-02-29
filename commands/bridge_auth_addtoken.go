@@ -24,6 +24,12 @@ var (
 )
 
 func runBridgeTokenAdd(cmd *cobra.Command, args []string) error {
+	// Note: as bridgeAuthAddTokenLogin is not checked against the remote bug-tracker,
+	// it's possible to register a credential with an incorrect login (including bad case).
+	// The consequence is that it will not get picked later by the bridge. I find that
+	// checking it would require a cumbersome UX (need to provide a base URL for some bridges, ...)
+	// so it's probably not worth it, unless we refactor that entirely.
+
 	if bridgeAuthAddTokenTarget == "" {
 		return fmt.Errorf("flag --target is required")
 	}
