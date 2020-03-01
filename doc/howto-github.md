@@ -1,4 +1,4 @@
-# How-to: Read/write offline Github issues with git-bug
+# How-to: Read and edit offline your Github/Gitlab/Jira issues with git-bug
 
 [git-bug](https://github.com/MichaelMure/git-bug) is a standalone distributed bug-tracker that is embedded in git. In short, if you have a git repository you can use it to store bugs alongside your code (without mixing them though!), push and pull them to/from a normal git remote to collaborate.
 
