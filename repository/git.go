@@ -197,9 +197,12 @@ func (repo *GitRepo) GetRemotes() (map[string]string, error) {
 	remotes := make(map[string]string, len(lines))
 
 	for _, line := range lines {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
 		elements := strings.Fields(line)
 		if len(elements) != 3 {
-			return nil, fmt.Errorf("unexpected output format: %s", line)
+			return nil, fmt.Errorf("git remote: unexpected output format: %s", line)
 		}
 
 		remotes[elements[0]] = elements[1]
