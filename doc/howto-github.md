@@ -18,6 +18,8 @@ This has several upsides:
 - you get to choose the UI you prefer between CLI, interactive terminal UI or web UI
 - you get a near complete backup in case Github is down or no longer fit your needs
 
+Note: at the moment, Gitlab and Jira are also fully supported.
+
 ## Installation
 
 Follow the [installation instruction](https://github.com/MichaelMure/git-bug#installation). The simplest way is to download a pre-compiled binary from [the latest release](https://github.com/MichaelMure/git-bug/releases/latest) and to put it anywhere in your `$PATH`.
@@ -67,3 +69,12 @@ The command line tools are really meant for programmatic usage or to integrate `
 For a richer and more user friendly UI, `git-bug` proposes a web UI (read-only at the moment). You can start it with `git bug webui`:
 
 ![web UI screenshot](../misc/webui2.png)
+
+## Want more?
+
+If you interested to read more about `git-bug`, have a look at the followings:
+- [the project itself, with a more complete readme](https://github.com/MichaelMure/git-bug)
+- [a bird view of the internals](https://github.com/MichaelMure/git-bug/blob/master/doc/architecture.md)
+- [a description of the data model](https://github.com/MichaelMure/git-bug/blob/master/doc/model.md)
+
+Of course, if you want to contribute the door is way open :-)
