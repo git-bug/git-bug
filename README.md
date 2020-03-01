@@ -28,7 +28,7 @@
 
 :construction: This is now more than a proof of concept, but still not fully stable. Expect dragons and unfinished business. :construction:
 
-## Install
+## Installation
 
 <details><summary>Pre-compiled binaries</summary>
 
