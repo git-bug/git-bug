@@ -21,8 +21,9 @@ const (
 	configKeySalt       = "salt"
 	configKeyPrefixMeta = "meta."
 
-	MetaKeyLogin   = "login"
-	MetaKeyBaseURL = "base-url"
+	MetaKeyLogin    = "login"
+	MetaKeyBaseURL  = "base-url"
+	MetaKeyIdentity = "identity"
 )
 
 type CredentialKind string
