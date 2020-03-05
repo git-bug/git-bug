@@ -55,4 +55,7 @@ clean-local-identities:
 	git for-each-ref refs/remotes/origin/identities/ | cut -f 2 | $(XARGS) -n 1 git update-ref -d
 	rm -f .git/git-bug/identity-cache
 
+clean-remote-identities:
+	git ls-remote origin "refs/identities/*" | cut -f 2 | $(XARGS) git push origin -d
+
 .PHONY: build install releases test pack-webui debug-webui clean-local-bugs clean-remote-bugs
