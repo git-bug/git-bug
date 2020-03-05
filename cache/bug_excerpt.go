@@ -95,7 +95,8 @@ func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
 		e.AuthorId = snap.Author.Id()
 	case *identity.Bare:
 		e.LegacyAuthor = LegacyAuthorExcerpt{
-			Name: snap.Author.Name(),
+			Login: snap.Author.Login(),
+			Name:  snap.Author.Name(),
 		}
 	default:
 		panic("unhandled identity type")
