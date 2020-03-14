@@ -7,7 +7,10 @@ import (
 	text "github.com/MichaelMure/go-term-text"
 	"github.com/spf13/cobra"
 
+	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/query"
+	"github.com/MichaelMure/git-bug/query/ast"
 	"github.com/MichaelMure/git-bug/util/colors"
 	"github.com/MichaelMure/git-bug/util/interrupt"
 )
@@ -32,21 +35,21 @@ func runLsBug(cmd *cobra.Command, args []string) error {
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
 
-	var query *cache.Query
+	var q *ast.Query
 	if len(args) >= 1 {
-		query, err = cache.ParseQuery(strings.Join(args, " "))
+		q, err = query.Parse(strings.Join(args, " "))
 
 		if err != nil {
 			return err
 		}
 	} else {
-		query, err = lsQueryFromFlags()
+		q, err = lsQueryFromFlags()
 		if err != nil {
 			return err
 		}
 	}
 
-	allIds := backend.QueryBugs(query)
+	allIds := backend.QueryBugs(q)
 
 	for _, id := range allIds {
 		b, err := backend.ResolveBugExcerpt(id)
@@ -96,47 +99,37 @@ func runLsBug(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// Transform the command flags into a query
-func lsQueryFromFlags() (*cache.Query, error) {
-	query := cache.NewQuery()
+// Transform the command flags into an ast.Query
+func lsQueryFromFlags() (*ast.Query, error) {
+	q := ast.NewQuery()
 
-	for _, status := range lsStatusQuery {
-		f, err := cache.StatusFilter(status)
+	for _, str := range lsStatusQuery {
+		status, err := bug.StatusFromString(str)
 		if err != nil {
 			return nil, err
 		}
-		query.Status = append(query.Status, f)
+		q.Status = append(q.Status, status)
 	}
-
 	for _, title := range lsTitleQuery {
-		f := cache.TitleFilter(title)
-		query.Title = append(query.Title, f)
+		q.Title = append(q.Title, title)
 	}
-
 	for _, author := range lsAuthorQuery {
-		f := cache.AuthorFilter(author)
-		query.Author = append(query.Author, f)
+		q.Author = append(q.Author, author)
 	}
-
 	for _, actor := range lsActorQuery {
-		f := cache.ActorFilter(actor)
-		query.Actor = append(query.Actor, f)
+		q.Actor = append(q.Actor, actor)
 	}
-
 	for _, participant := range lsParticipantQuery {
-		f := cache.ParticipantFilter(participant)
-		query.Participant = append(query.Participant, f)
+		q.Participant = append(q.Participant, participant)
 	}
-
 	for _, label := range lsLabelQuery {
-		f := cache.LabelFilter(label)
-		query.Label = append(query.Label, f)
+		q.Label = append(q.Label, label)
 	}
 
 	for _, no := range lsNoQuery {
 		switch no {
 		case "label":
-			query.NoFilters = append(query.NoFilters, cache.NoLabelFilter())
+			q.NoLabel = true
 		default:
 			return nil, fmt.Errorf("unknown \"no\" filter %s", no)
 		}
@@ -144,25 +137,25 @@ func lsQueryFromFlags() (*cache.Query, error) {
 
 	switch lsSortBy {
 	case "id":
-		query.OrderBy = cache.OrderById
+		q.OrderBy = ast.OrderById
 	case "creation":
-		query.OrderBy = cache.OrderByCreation
+		q.OrderBy = ast.OrderByCreation
 	case "edit":
-		query.OrderBy = cache.OrderByEdit
+		q.OrderBy = ast.OrderByEdit
 	default:
 		return nil, fmt.Errorf("unknown sort flag %s", lsSortBy)
 	}
 
 	switch lsSortDirection {
 	case "asc":
-		query.OrderDirection = cache.OrderAscending
+		q.OrderDirection = ast.OrderAscending
 	case "desc":
-		query.OrderDirection = cache.OrderDescending
+		q.OrderDirection = ast.OrderDescending
 	default:
 		return nil, fmt.Errorf("unknown sort direction %s", lsSortDirection)
 	}
 
-	return query, nil
+	return q, nil
 }
 
 var lsCmd = &cobra.Command{

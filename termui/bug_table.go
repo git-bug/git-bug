@@ -12,6 +12,8 @@ import (
 
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
+	"github.com/MichaelMure/git-bug/query"
+	"github.com/MichaelMure/git-bug/query/ast"
 	"github.com/MichaelMure/git-bug/util/colors"
 )
 
@@ -26,7 +28,7 @@ const defaultQuery = "status:open"
 type bugTable struct {
 	repo         *cache.RepoCache
 	queryStr     string
-	query        *cache.Query
+	query        *ast.Query
 	allIds       []entity.Id
 	excerpts     []*cache.BugExcerpt
 	pageCursor   int
@@ -34,14 +36,14 @@ type bugTable struct {
 }
 
 func newBugTable(c *cache.RepoCache) *bugTable {
-	query, err := cache.ParseQuery(defaultQuery)
+	q, err := query.Parse(defaultQuery)
 	if err != nil {
 		panic(err)
 	}
 
 	return &bugTable{
 		repo:         c,
-		query:        query,
+		query:        q,
 		queryStr:     defaultQuery,
 		pageCursor:   0,
 		selectCursor: 0,

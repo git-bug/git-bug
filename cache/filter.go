@@ -5,6 +5,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/entity"
+	"github.com/MichaelMure/git-bug/query/ast"
 )
 
 // resolver has the resolving functions needed by filters.
@@ -17,15 +18,10 @@ type resolver interface {
 type Filter func(excerpt *BugExcerpt, resolver resolver) bool
 
 // StatusFilter return a Filter that match a bug status
-func StatusFilter(query string) (Filter, error) {
-	status, err := bug.StatusFromString(query)
-	if err != nil {
-		return nil, err
-	}
-
+func StatusFilter(status bug.Status) Filter {
 	return func(excerpt *BugExcerpt, resolver resolver) bool {
 		return excerpt.Status == status
-	}, nil
+	}
 }
 
 // AuthorFilter return a Filter that match a bug author
@@ -116,8 +112,8 @@ func NoLabelFilter() Filter {
 	}
 }
 
-// Filters is a collection of Filter that implement a complex filter
-type Filters struct {
+// Matcher is a collection of Filter that implement a complex filter
+type Matcher struct {
 	Status      []Filter
 	Author      []Filter
 	Actor       []Filter
@@ -127,8 +123,35 @@ type Filters struct {
 	NoFilters   []Filter
 }
 
+// compileMatcher transform an ast.Filters into a specialized matcher
+// for the cache.
+func compileMatcher(filters ast.Filters) *Matcher {
+	result := &Matcher{}
+
+	for _, value := range filters.Status {
+		result.Status = append(result.Status, StatusFilter(value))
+	}
+	for _, value := range filters.Author {
+		result.Author = append(result.Author, AuthorFilter(value))
+	}
+	for _, value := range filters.Actor {
+		result.Actor = append(result.Actor, ActorFilter(value))
+	}
+	for _, value := range filters.Participant {
+		result.Participant = append(result.Participant, ParticipantFilter(value))
+	}
+	for _, value := range filters.Label {
+		result.Label = append(result.Label, LabelFilter(value))
+	}
+	for _, value := range filters.Title {
+		result.Title = append(result.Title, TitleFilter(value))
+	}
+
+	return result
+}
+
 // Match check if a bug match the set of filters
-func (f *Filters) Match(excerpt *BugExcerpt, resolver resolver) bool {
+func (f *Matcher) Match(excerpt *BugExcerpt, resolver resolver) bool {
 	if match := f.orMatch(f.Status, excerpt, resolver); !match {
 		return false
 	}
@@ -161,7 +184,7 @@ func (f *Filters) Match(excerpt *BugExcerpt, resolver resolver) bool {
 }
 
 // Check if any of the filters provided match the bug
-func (*Filters) orMatch(filters []Filter, excerpt *BugExcerpt, resolver resolver) bool {
+func (*Matcher) orMatch(filters []Filter, excerpt *BugExcerpt, resolver resolver) bool {
 	if len(filters) == 0 {
 		return true
 	}
@@ -175,7 +198,7 @@ func (*Filters) orMatch(filters []Filter, excerpt *BugExcerpt, resolver resolver
 }
 
 // Check if all of the filters provided match the bug
-func (*Filters) andMatch(filters []Filter, excerpt *BugExcerpt, resolver resolver) bool {
+func (*Matcher) andMatch(filters []Filter, excerpt *BugExcerpt, resolver resolver) bool {
 	if len(filters) == 0 {
 		return true
 	}
