@@ -9,7 +9,6 @@ import (
 	"github.com/MichaelMure/git-bug/graphql/graph"
 	"github.com/MichaelMure/git-bug/graphql/models"
 	"github.com/MichaelMure/git-bug/query"
-	"github.com/MichaelMure/git-bug/query/ast"
 )
 
 var _ graph.RepositoryResolver = &repoResolver{}
@@ -29,7 +28,7 @@ func (repoResolver) AllBugs(_ context.Context, obj *models.Repository, after *st
 		Last:   last,
 	}
 
-	var q *ast.Query
+	var q *query.Query
 	if queryStr != nil {
 		query2, err := query.Parse(*queryStr)
 		if err != nil {
@@ -37,7 +36,7 @@ func (repoResolver) AllBugs(_ context.Context, obj *models.Repository, after *st
 		}
 		q = query2
 	} else {
-		q = ast.NewQuery()
+		q = query.NewQuery()
 	}
 
 	// Simply pass a []string with the ids to the pagination algorithm

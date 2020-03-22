@@ -1,7 +1,11 @@
-package ast
+package query
 
 import "github.com/MichaelMure/git-bug/bug"
 
+// Query is the intermediary representation of a Bug's query. It is either
+// produced by parsing a query string (ex: "status:open author:rene") or created
+// manually. This query doesn't do anything by itself and need to be interpreted
+// for the specific domain of application.
 type Query struct {
 	Filters
 	OrderBy

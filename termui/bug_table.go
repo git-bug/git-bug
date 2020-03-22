@@ -13,7 +13,6 @@ import (
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/query"
-	"github.com/MichaelMure/git-bug/query/ast"
 	"github.com/MichaelMure/git-bug/util/colors"
 )
 
@@ -28,7 +27,7 @@ const defaultQuery = "status:open"
 type bugTable struct {
 	repo         *cache.RepoCache
 	queryStr     string
-	query        *ast.Query
+	query        *query.Query
 	allIds       []entity.Id
 	excerpts     []*cache.BugExcerpt
 	pageCursor   int

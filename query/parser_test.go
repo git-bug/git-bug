@@ -6,73 +6,72 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/query/ast"
 )
 
 func TestParse(t *testing.T) {
 	var tests = []struct {
 		input  string
-		output *ast.Query
+		output *Query
 	}{
 		{"gibberish", nil},
 		{"status:", nil},
 		{":value", nil},
 
-		{"status:open", &ast.Query{
-			Filters: ast.Filters{Status: []bug.Status{bug.OpenStatus}},
+		{"status:open", &Query{
+			Filters: Filters{Status: []bug.Status{bug.OpenStatus}},
 		}},
-		{"status:closed", &ast.Query{
-			Filters: ast.Filters{Status: []bug.Status{bug.ClosedStatus}},
+		{"status:closed", &Query{
+			Filters: Filters{Status: []bug.Status{bug.ClosedStatus}},
 		}},
 		{"status:unknown", nil},
 
-		{"author:rene", &ast.Query{
-			Filters: ast.Filters{Author: []string{"rene"}},
+		{"author:rene", &Query{
+			Filters: Filters{Author: []string{"rene"}},
 		}},
-		{`author:"René Descartes"`, &ast.Query{
-			Filters: ast.Filters{Author: []string{"René Descartes"}},
-		}},
-
-		{"actor:bernhard", &ast.Query{
-			Filters: ast.Filters{Actor: []string{"bernhard"}},
-		}},
-		{"participant:leonhard", &ast.Query{
-			Filters: ast.Filters{Participant: []string{"leonhard"}},
+		{`author:"René Descartes"`, &Query{
+			Filters: Filters{Author: []string{"René Descartes"}},
 		}},
 
-		{"label:hello", &ast.Query{
-			Filters: ast.Filters{Label: []string{"hello"}},
+		{"actor:bernhard", &Query{
+			Filters: Filters{Actor: []string{"bernhard"}},
 		}},
-		{`label:"Good first issue"`, &ast.Query{
-			Filters: ast.Filters{Label: []string{"Good first issue"}},
-		}},
-
-		{"title:titleOne", &ast.Query{
-			Filters: ast.Filters{Title: []string{"titleOne"}},
-		}},
-		{`title:"Bug titleTwo"`, &ast.Query{
-			Filters: ast.Filters{Title: []string{"Bug titleTwo"}},
+		{"participant:leonhard", &Query{
+			Filters: Filters{Participant: []string{"leonhard"}},
 		}},
 
-		{"no:label", &ast.Query{
-			Filters: ast.Filters{NoLabel: true},
+		{"label:hello", &Query{
+			Filters: Filters{Label: []string{"hello"}},
+		}},
+		{`label:"Good first issue"`, &Query{
+			Filters: Filters{Label: []string{"Good first issue"}},
 		}},
 
-		{"sort:edit", &ast.Query{
-			OrderBy: ast.OrderByEdit,
+		{"title:titleOne", &Query{
+			Filters: Filters{Title: []string{"titleOne"}},
+		}},
+		{`title:"Bug titleTwo"`, &Query{
+			Filters: Filters{Title: []string{"Bug titleTwo"}},
+		}},
+
+		{"no:label", &Query{
+			Filters: Filters{NoLabel: true},
+		}},
+
+		{"sort:edit", &Query{
+			OrderBy: OrderByEdit,
 		}},
 		{"sort:unknown", nil},
 
 		{`status:open author:"René Descartes" participant:leonhard label:hello label:"Good first issue" sort:edit-desc`,
-			&ast.Query{
-				Filters: ast.Filters{
+			&Query{
+				Filters: Filters{
 					Status:      []bug.Status{bug.OpenStatus},
 					Author:      []string{"René Descartes"},
 					Participant: []string{"leonhard"},
 					Label:       []string{"hello", "Good first issue"},
 				},
-				OrderBy:        ast.OrderByEdit,
-				OrderDirection: ast.OrderDescending,
+				OrderBy:        OrderByEdit,
+				OrderDirection: OrderDescending,
 			},
 		},
 	}

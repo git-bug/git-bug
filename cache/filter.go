@@ -5,7 +5,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/query/ast"
+	"github.com/MichaelMure/git-bug/query"
 )
 
 // resolver has the resolving functions needed by filters.
@@ -123,9 +123,9 @@ type Matcher struct {
 	NoFilters   []Filter
 }
 
-// compileMatcher transform an ast.Filters into a specialized matcher
+// compileMatcher transform a query.Filters into a specialized matcher
 // for the cache.
-func compileMatcher(filters ast.Filters) *Matcher {
+func compileMatcher(filters query.Filters) *Matcher {
 	result := &Matcher{}
 
 	for _, value := range filters.Status {

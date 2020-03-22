@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/query/ast"
 )
 
 // Parse parse a query DSL
@@ -12,15 +11,15 @@ import (
 // Ex: "status:open author:descartes sort:edit-asc"
 //
 // Supported filter qualifiers and syntax are described in docs/queries.md
-func Parse(query string) (*ast.Query, error) {
+func Parse(query string) (*Query, error) {
 	tokens, err := tokenize(query)
 	if err != nil {
 		return nil, err
 	}
 
-	q := &ast.Query{
-		OrderBy:        ast.OrderByCreation,
-		OrderDirection: ast.OrderDescending,
+	q := &Query{
+		OrderBy:        OrderByCreation,
+		OrderDirection: OrderDescending,
 	}
 	sortingDone := false
 
@@ -66,31 +65,31 @@ func Parse(query string) (*ast.Query, error) {
 	return q, nil
 }
 
-func parseSorting(q *ast.Query, value string) error {
+func parseSorting(q *Query, value string) error {
 	switch value {
 	// default ASC
 	case "id-desc":
-		q.OrderBy = ast.OrderById
-		q.OrderDirection = ast.OrderDescending
+		q.OrderBy = OrderById
+		q.OrderDirection = OrderDescending
 	case "id", "id-asc":
-		q.OrderBy = ast.OrderById
-		q.OrderDirection = ast.OrderAscending
+		q.OrderBy = OrderById
+		q.OrderDirection = OrderAscending
 
 	// default DESC
 	case "creation", "creation-desc":
-		q.OrderBy = ast.OrderByCreation
-		q.OrderDirection = ast.OrderDescending
+		q.OrderBy = OrderByCreation
+		q.OrderDirection = OrderDescending
 	case "creation-asc":
-		q.OrderBy = ast.OrderByCreation
-		q.OrderDirection = ast.OrderAscending
+		q.OrderBy = OrderByCreation
+		q.OrderDirection = OrderAscending
 
 	// default DESC
 	case "edit", "edit-desc":
-		q.OrderBy = ast.OrderByEdit
-		q.OrderDirection = ast.OrderDescending
+		q.OrderBy = OrderByEdit
+		q.OrderDirection = OrderDescending
 	case "edit-asc":
-		q.OrderBy = ast.OrderByEdit
-		q.OrderDirection = ast.OrderAscending
+		q.OrderBy = OrderByEdit
+		q.OrderDirection = OrderAscending
 
 	default:
 		return fmt.Errorf("unknown sorting %s", value)

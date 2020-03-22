@@ -18,7 +18,7 @@ import (
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/identity"
-	"github.com/MichaelMure/git-bug/query/ast"
+	"github.com/MichaelMure/git-bug/query"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/process"
@@ -526,15 +526,15 @@ func (c *RepoCache) resolveBugMatcher(f func(*BugExcerpt) bool) (entity.Id, erro
 }
 
 // QueryBugs return the id of all Bug matching the given Query
-func (c *RepoCache) QueryBugs(query *ast.Query) []entity.Id {
+func (c *RepoCache) QueryBugs(q *query.Query) []entity.Id {
 	c.muBug.RLock()
 	defer c.muBug.RUnlock()
 
-	if query == nil {
+	if q == nil {
 		return c.AllBugsIds()
 	}
 
-	matcher := compileMatcher(query.Filters)
+	matcher := compileMatcher(q.Filters)
 
 	var filtered []*BugExcerpt
 
@@ -546,21 +546,21 @@ func (c *RepoCache) QueryBugs(query *ast.Query) []entity.Id {
 
 	var sorter sort.Interface
 
-	switch query.OrderBy {
-	case ast.OrderById:
+	switch q.OrderBy {
+	case query.OrderById:
 		sorter = BugsById(filtered)
-	case ast.OrderByCreation:
+	case query.OrderByCreation:
 		sorter = BugsByCreationTime(filtered)
-	case ast.OrderByEdit:
+	case query.OrderByEdit:
 		sorter = BugsByEditTime(filtered)
 	default:
 		panic("missing sort type")
 	}
 
-	switch query.OrderDirection {
-	case ast.OrderAscending:
+	switch q.OrderDirection {
+	case query.OrderAscending:
 		// Nothing to do
-	case ast.OrderDescending:
+	case query.OrderDescending:
 		sorter = sort.Reverse(sorter)
 	default:
 		panic("missing sort direction")
