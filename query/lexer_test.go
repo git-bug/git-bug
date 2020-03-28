@@ -30,6 +30,13 @@ func TestTokenize(t *testing.T) {
 				{"author", "René Descartes"},
 			},
 		},
+
+		// quotes
+		{`key:"value value"`, []token{{"key", "value value"}}},
+		{`key:'value value'`, []token{{"key", "value value"}}},
+		// unmatched quotes
+		{`key:'value value`, nil},
+		{`key:value value'`, nil},
 	}
 
 	for _, tc := range tests {

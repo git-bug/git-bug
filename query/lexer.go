@@ -11,13 +11,13 @@ type token struct {
 	value     string
 }
 
-// TODO: this lexer implementation behave badly with unmatched quotes.
-// A hand written one would be better instead of relying on strings.FieldsFunc()
-
 // tokenize parse and break a input into tokens ready to be
 // interpreted later by a parser to get the semantic.
 func tokenize(query string) ([]token, error) {
-	fields := splitQuery(query)
+	fields, err := splitQuery(query)
+	if err != nil {
+		return nil, err
+	}
 
 	var tokens []token
 	for _, field := range fields {
@@ -41,30 +41,63 @@ func tokenize(query string) ([]token, error) {
 	return tokens, nil
 }
 
-func splitQuery(query string) []string {
+func splitQuery(query string) ([]string, error) {
 	lastQuote := rune(0)
-	f := func(c rune) bool {
+	inQuote := false
+
+	isToken := func(r rune) bool {
 		switch {
-		case c == lastQuote:
+		case !inQuote && isQuote(r):
+			lastQuote = r
+			inQuote = true
+			return true
+		case inQuote && r == lastQuote:
 			lastQuote = rune(0)
-			return false
-		case lastQuote != rune(0):
-			return false
-		case unicode.In(c, unicode.Quotation_Mark):
-			lastQuote = c
-			return false
+			inQuote = false
+			return true
+		case inQuote:
+			return true
 		default:
-			return unicode.IsSpace(c)
+			return !unicode.IsSpace(r)
 		}
 	}
 
-	return strings.FieldsFunc(query, f)
+	var result []string
+	var token strings.Builder
+	for _, r := range query {
+		if isToken(r) {
+			token.WriteRune(r)
+		} else {
+			if token.Len() > 0 {
+				result = append(result, token.String())
+				token.Reset()
+			}
+		}
+	}
+
+	if inQuote {
+		return nil, fmt.Errorf("unmatched quote")
+	}
+
+	if token.Len() > 0 {
+		result = append(result, token.String())
+	}
+
+	return result, nil
+}
+
+func isQuote(r rune) bool {
+	return r == '"' || r == '\''
 }
 
 func removeQuote(field string) string {
-	if len(field) >= 2 {
-		if field[0] == '"' && field[len(field)-1] == '"' {
-			return field[1 : len(field)-1]
+	runes := []rune(field)
+	if len(runes) >= 2 {
+		r1 := runes[0]
+		r2 := runes[len(runes)-1]
+
+		if r1 == r2 && isQuote(r1) {
+			return string(runes[1 : len(runes)-1])
 		}
 	}
 	return field
