@@ -123,7 +123,12 @@ func (gi *gitlabImporter) ensureIssue(repo *cache.RepoCache, issue *gitlab.Issue
 	}
 
 	// resolve bug
-	b, err := repo.ResolveBugCreateMetadata(metaKeyGitlabUrl, issue.WebURL)
+	b, err := repo.ResolveBugMatcher(func(excerpt *cache.BugExcerpt) bool {
+		return excerpt.CreateMetadata[core.MetaKeyOrigin] == target &&
+			excerpt.CreateMetadata[metaKeyGitlabId] == parseID(issue.IID) &&
+			excerpt.CreateMetadata[metaKeyGitlabBaseUrl] == gi.conf[confKeyProjectID] &&
+			excerpt.CreateMetadata[metaKeyGitlabProject] == gi.conf[confKeyGitlabBaseUrl]
+	})
 	if err == nil {
 		return b, nil
 	}

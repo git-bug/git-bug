@@ -108,7 +108,10 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline
 	}
 
 	// resolve bug
-	b, err := repo.ResolveBugCreateMetadata(metaKeyGithubUrl, issue.Url.String())
+	b, err := repo.ResolveBugMatcher(func(excerpt *cache.BugExcerpt) bool {
+		return excerpt.CreateMetadata[core.MetaKeyOrigin] == target &&
+			excerpt.CreateMetadata[metaKeyGithubId] == parseId(issue.Id)
+	})
 	if err != nil && err != bug.ErrBugNotExist {
 		return nil, err
 	}

@@ -216,7 +216,16 @@ func (ji *jiraImporter) ensureIssue(repo *cache.RepoCache, issue Issue) (*cache.
 		return nil, err
 	}
 
-	b, err := repo.ResolveBugCreateMetadata(metaKeyJiraId, issue.ID)
+	b, err := repo.ResolveBugMatcher(func(excerpt *cache.BugExcerpt) bool {
+		if _, ok := excerpt.CreateMetadata[metaKeyJiraBaseUrl]; ok &&
+			excerpt.CreateMetadata[metaKeyJiraBaseUrl] != ji.conf[confKeyBaseUrl] {
+			return false
+		}
+
+		return excerpt.CreateMetadata[core.MetaKeyOrigin] == target &&
+			excerpt.CreateMetadata[metaKeyJiraId] == issue.ID &&
+			excerpt.CreateMetadata[metaKeyJiraProject] == ji.conf[confKeyProject]
+	})
 	if err != nil && err != bug.ErrBugNotExist {
 		return nil, err
 	}
@@ -241,6 +250,7 @@ func (ji *jiraImporter) ensureIssue(repo *cache.RepoCache, issue Issue) (*cache.
 				metaKeyJiraId:      issue.ID,
 				metaKeyJiraKey:     issue.Key,
 				metaKeyJiraProject: ji.conf[confKeyProject],
+				metaKeyJiraBaseUrl: ji.conf[confKeyBaseUrl],
 			})
 		if err != nil {
 			return nil, err
