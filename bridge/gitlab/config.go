@@ -88,13 +88,15 @@ func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams) (cor
 		token.SetMetadata(auth.MetaKeyBaseURL, baseUrl)
 		cred = token
 	default:
-		login := params.Login
-		if login == "" {
+		if params.Login == "" {
 			// TODO: validate username
 			login, err = input.Prompt("Gitlab login", "login", input.Required)
-			if err != nil {
-				return nil, err
-			}
+		} else {
+			// TODO: validate username
+			login = params.Login
+		}
+		if err != nil {
+			return nil, err
 		}
 		cred, err = promptTokenOptions(repo, login, baseUrl)
 		if err != nil {
