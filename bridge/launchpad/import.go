@@ -138,7 +138,7 @@ func (li *launchpadImporter) ImportAll(ctx context.Context, repo *cache.RepoCach
 							metaKeyLaunchpadID: lpMessage.ID,
 						})
 					if err != nil {
-						out <- core.NewImportError(err, op.Id())
+						out <- core.NewImportError(err, b.Id())
 						return
 					}
 
