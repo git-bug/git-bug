@@ -62,7 +62,10 @@ func (li *launchpadImporter) ImportAll(ctx context.Context, repo *cache.RepoCach
 				return
 			default:
 				lpBugID := fmt.Sprintf("%d", lpBug.ID)
-				b, err := repo.ResolveBugCreateMetadata(metaKeyLaunchpadID, lpBugID)
+				b, err := repo.ResolveBugMatcher(func(excerpt *cache.BugExcerpt) bool {
+					return excerpt.CreateMetadata[core.MetaKeyOrigin] == target &&
+						excerpt.CreateMetadata[metaKeyLaunchpadID] == lpBugID
+				})
 				if err != nil && err != bug.ErrBugNotExist {
 					out <- core.NewImportError(err, entity.Id(lpBugID))
 					return
