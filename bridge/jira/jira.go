@@ -20,6 +20,7 @@ const (
 	metaKeyJiraKey        = "jira-key"
 	metaKeyJiraUser       = "jira-user"
 	metaKeyJiraProject    = "jira-project"
+	metaKeyJiraBaseUrl    = "jira-base-url"
 	metaKeyJiraExportTime = "jira-export-time"
 	metaKeyJiraLogin      = "jira-login"
 
