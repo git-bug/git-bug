@@ -12,6 +12,7 @@ import (
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/input"
+	"github.com/MichaelMure/git-bug/query"
 )
 
 var errTerminateMainloop = errors.New("terminate gocui mainloop")
@@ -336,12 +337,12 @@ func editQueryWithEditor(bt *bugTable) error {
 
 	bt.queryStr = queryStr
 
-	query, err := cache.ParseQuery(queryStr)
+	q, err := query.Parse(queryStr)
 
 	if err != nil {
 		ui.msgPopup.Activate(msgPopupErrorTitle, err.Error())
 	} else {
-		bt.query = query
+		bt.query = q
 	}
 
 	initGui(nil)

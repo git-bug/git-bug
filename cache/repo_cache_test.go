@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/MichaelMure/git-bug/query"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
@@ -68,9 +69,9 @@ func TestCache(t *testing.T) {
 	require.NoError(t, err)
 
 	// Querying
-	query, err := ParseQuery("status:open author:descartes sort:edit-asc")
+	q, err := query.Parse("status:open author:descartes sort:edit-asc")
 	require.NoError(t, err)
-	require.Len(t, cache.QueryBugs(query), 2)
+	require.Len(t, cache.QueryBugs(q), 2)
 
 	// Close
 	require.NoError(t, cache.Close())

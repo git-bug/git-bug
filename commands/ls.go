@@ -7,21 +7,20 @@ import (
 	text "github.com/MichaelMure/go-term-text"
 	"github.com/spf13/cobra"
 
+	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/query"
 	"github.com/MichaelMure/git-bug/util/colors"
 	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
 var (
-	lsStatusQuery      []string
-	lsAuthorQuery      []string
-	lsParticipantQuery []string
-	lsLabelQuery       []string
-	lsTitleQuery       []string
-	lsActorQuery       []string
-	lsNoQuery          []string
-	lsSortBy           string
-	lsSortDirection    string
+	lsQuery query.Query
+
+	lsStatusQuery   []string
+	lsNoQuery       []string
+	lsSortBy        string
+	lsSortDirection string
 )
 
 func runLsBug(cmd *cobra.Command, args []string) error {
@@ -32,21 +31,22 @@ func runLsBug(cmd *cobra.Command, args []string) error {
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
 
-	var query *cache.Query
+	var q *query.Query
 	if len(args) >= 1 {
-		query, err = cache.ParseQuery(strings.Join(args, " "))
+		q, err = query.Parse(strings.Join(args, " "))
 
 		if err != nil {
 			return err
 		}
 	} else {
-		query, err = lsQueryFromFlags()
+		err = completeQuery()
 		if err != nil {
 			return err
 		}
+		q = &lsQuery
 	}
 
-	allIds := backend.QueryBugs(query)
+	allIds := backend.QueryBugs(q)
 
 	for _, id := range allIds {
 		b, err := backend.ResolveBugExcerpt(id)
@@ -96,73 +96,46 @@ func runLsBug(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// Transform the command flags into a query
-func lsQueryFromFlags() (*cache.Query, error) {
-	query := cache.NewQuery()
-
-	for _, status := range lsStatusQuery {
-		f, err := cache.StatusFilter(status)
+// Finish the command flags transformation into the query.Query
+func completeQuery() error {
+	for _, str := range lsStatusQuery {
+		status, err := bug.StatusFromString(str)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		query.Status = append(query.Status, f)
-	}
-
-	for _, title := range lsTitleQuery {
-		f := cache.TitleFilter(title)
-		query.Title = append(query.Title, f)
-	}
-
-	for _, author := range lsAuthorQuery {
-		f := cache.AuthorFilter(author)
-		query.Author = append(query.Author, f)
-	}
-
-	for _, actor := range lsActorQuery {
-		f := cache.ActorFilter(actor)
-		query.Actor = append(query.Actor, f)
-	}
-
-	for _, participant := range lsParticipantQuery {
-		f := cache.ParticipantFilter(participant)
-		query.Participant = append(query.Participant, f)
-	}
-
-	for _, label := range lsLabelQuery {
-		f := cache.LabelFilter(label)
-		query.Label = append(query.Label, f)
+		lsQuery.Status = append(lsQuery.Status, status)
 	}
 
 	for _, no := range lsNoQuery {
 		switch no {
 		case "label":
-			query.NoFilters = append(query.NoFilters, cache.NoLabelFilter())
+			lsQuery.NoLabel = true
 		default:
-			return nil, fmt.Errorf("unknown \"no\" filter %s", no)
+			return fmt.Errorf("unknown \"no\" filter %s", no)
 		}
 	}
 
 	switch lsSortBy {
 	case "id":
-		query.OrderBy = cache.OrderById
+		lsQuery.OrderBy = query.OrderById
 	case "creation":
-		query.OrderBy = cache.OrderByCreation
+		lsQuery.OrderBy = query.OrderByCreation
 	case "edit":
-		query.OrderBy = cache.OrderByEdit
+		lsQuery.OrderBy = query.OrderByEdit
 	default:
-		return nil, fmt.Errorf("unknown sort flag %s", lsSortBy)
+		return fmt.Errorf("unknown sort flag %s", lsSortBy)
 	}
 
 	switch lsSortDirection {
 	case "asc":
-		query.OrderDirection = cache.OrderAscending
+		lsQuery.OrderDirection = query.OrderAscending
 	case "desc":
-		query.OrderDirection = cache.OrderDescending
+		lsQuery.OrderDirection = query.OrderDescending
 	default:
-		return nil, fmt.Errorf("unknown sort direction %s", lsSortDirection)
+		return fmt.Errorf("unknown sort direction %s", lsSortDirection)
 	}
 
-	return query, nil
+	return nil
 }
 
 var lsCmd = &cobra.Command{
@@ -188,15 +161,15 @@ func init() {
 
 	lsCmd.Flags().StringSliceVarP(&lsStatusQuery, "status", "s", nil,
 		"Filter by status. Valid values are [open,closed]")
-	lsCmd.Flags().StringSliceVarP(&lsAuthorQuery, "author", "a", nil,
+	lsCmd.Flags().StringSliceVarP(&lsQuery.Author, "author", "a", nil,
 		"Filter by author")
-	lsCmd.Flags().StringSliceVarP(&lsParticipantQuery, "participant", "p", nil,
+	lsCmd.Flags().StringSliceVarP(&lsQuery.Participant, "participant", "p", nil,
 		"Filter by participant")
-	lsCmd.Flags().StringSliceVarP(&lsActorQuery, "actor", "A", nil,
+	lsCmd.Flags().StringSliceVarP(&lsQuery.Actor, "actor", "A", nil,
 		"Filter by actor")
-	lsCmd.Flags().StringSliceVarP(&lsLabelQuery, "label", "l", nil,
+	lsCmd.Flags().StringSliceVarP(&lsQuery.Label, "label", "l", nil,
 		"Filter by label")
-	lsCmd.Flags().StringSliceVarP(&lsTitleQuery, "title", "t", nil,
+	lsCmd.Flags().StringSliceVarP(&lsQuery.Title, "title", "t", nil,
 		"Filter by title")
 	lsCmd.Flags().StringSliceVarP(&lsNoQuery, "no", "n", nil,
 		"Filter by absence of something. Valid values are [label]")
