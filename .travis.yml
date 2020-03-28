@@ -1,8 +1,6 @@
 matrix:
   include:
   - language: go
-    go: 1.11.x
-  - language: go
     go: 1.12.x
   - language: go
     go: 1.13.x
