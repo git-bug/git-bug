@@ -10,6 +10,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
+	"github.com/MichaelMure/git-bug/bridge/gitlab/iterator"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
@@ -24,7 +25,7 @@ type gitlabImporter struct {
 	client *gitlab.Client
 
 	// iterator
-	iterator *iterator
+	iterator *iterator.Iterator
 
 	// send only channel
 	out chan<- core.ImportResult
@@ -58,7 +59,7 @@ func (gi *gitlabImporter) Init(_ context.Context, repo *cache.RepoCache, conf co
 // ImportAll iterate over all the configured repository issues (notes) and ensure the creation
 // of the missing issues / comments / label events / title changes ...
 func (gi *gitlabImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, since time.Time) (<-chan core.ImportResult, error) {
-	gi.iterator = NewIterator(ctx, gi.client, 10, gi.conf[confKeyProjectID], since)
+	gi.iterator = iterator.NewIterator(ctx, gi.client, 10, gi.conf[confKeyProjectID], since)
 	out := make(chan core.ImportResult)
 	gi.out = out
 
