@@ -7,10 +7,11 @@ import (
 )
 
 type noteIterator struct {
-	issue int
-	page  int
-	index int
-	cache []*gitlab.Note
+	issue    int
+	page     int
+	lastPage bool
+	index    int
+	cache    []*gitlab.Note
 }
 
 func newNoteIterator() *noteIterator {
@@ -39,10 +40,14 @@ func (in *noteIterator) Value() *gitlab.Note {
 }
 
 func (in *noteIterator) getNext(ctx context.Context, conf config) (bool, error) {
+	if in.lastPage {
+		return false, nil
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, conf.timeout)
 	defer cancel()
 
-	notes, _, err := conf.gc.Notes.ListIssueNotes(
+	notes, resp, err := conf.gc.Notes.ListIssueNotes(
 		conf.project,
 		in.issue,
 		&gitlab.ListIssueNotesOptions{
@@ -61,6 +66,10 @@ func (in *noteIterator) getNext(ctx context.Context, conf config) (bool, error) 
 		return false, err
 	}
 
+	if resp.TotalPages == in.page {
+		in.lastPage = true
+	}
+
 	if len(notes) == 0 {
 		return false, nil
 	}
@@ -75,6 +84,7 @@ func (in *noteIterator) getNext(ctx context.Context, conf config) (bool, error) 
 func (in *noteIterator) Reset(issue int) {
 	in.issue = issue
 	in.index = -1
-	in.page = -1
+	in.page = 1
+	in.lastPage = false
 	in.cache = nil
 }

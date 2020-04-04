@@ -49,7 +49,7 @@ func (lei *labelEventIterator) getNext(ctx context.Context, conf config) (bool, 
 	// and sort them by ID
 	page := 1
 	for {
-		labelEvents, _, err := conf.gc.ResourceLabelEvents.ListIssueLabelEvents(
+		labelEvents, resp, err := conf.gc.ResourceLabelEvents.ListIssueLabelEvents(
 			conf.project,
 			lei.issue,
 			&gitlab.ListLabelEventsOptions{
@@ -68,7 +68,13 @@ func (lei *labelEventIterator) getNext(ctx context.Context, conf config) (bool, 
 		if len(labelEvents) == 0 {
 			break
 		}
+
 		lei.cache = append(lei.cache, labelEvents...)
+
+		if resp.TotalPages == page {
+			break
+		}
+
 		page++
 	}
 

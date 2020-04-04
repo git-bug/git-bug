@@ -7,9 +7,10 @@ import (
 )
 
 type issueIterator struct {
-	page  int
-	index int
-	cache []*gitlab.Issue
+	page     int
+	lastPage bool
+	index    int
+	cache    []*gitlab.Issue
 }
 
 func newIssueIterator() *issueIterator {
@@ -38,10 +39,14 @@ func (ii *issueIterator) Value() *gitlab.Issue {
 }
 
 func (ii *issueIterator) getNext(ctx context.Context, conf config) (bool, error) {
+	if ii.lastPage {
+		return false, nil
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, conf.timeout)
 	defer cancel()
 
-	issues, _, err := conf.gc.Issues.ListProjectIssues(
+	issues, resp, err := conf.gc.Issues.ListProjectIssues(
 		conf.project,
 		&gitlab.ListProjectIssuesOptions{
 			ListOptions: gitlab.ListOptions{
@@ -60,6 +65,10 @@ func (ii *issueIterator) getNext(ctx context.Context, conf config) (bool, error)
 		return false, err
 	}
 
+	if resp.TotalPages == ii.page {
+		ii.lastPage = true
+	}
+
 	// if repository doesn't have any issues
 	if len(issues) == 0 {
 		return false, nil
@@ -74,6 +83,7 @@ func (ii *issueIterator) getNext(ctx context.Context, conf config) (bool, error)
 
 func (ii *issueIterator) Reset() {
 	ii.index = -1
-	ii.page = -1
+	ii.page = 1
+	ii.lastPage = false
 	ii.cache = nil
 }
