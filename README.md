@@ -62,6 +62,37 @@ export PATH=$PATH:$(go env GOROOT)/bin:$(go env GOPATH)/bin
 
 </details>
 
+## Workflows
+
+There is multiple ways to use `git-bug`:
+
+<details><summary>Native workflow</summary>
+<p align="center">
+    <img src="../misc/diagrams/native_workflow.png" alt="Native workflow">
+</p>
+
+This is the pure `git-bug` experience. As you would do with code, push and pull your bugs between git remotes.
+
+</details>
+
+<details><summary>Bridge workflow</summary>
+<p align="center">
+    <img src="../misc/diagrams/bridge_workflow.png" alt="Bridge workflow">
+</p>
+
+As `git-bug` has bridges with other bug-trackers, you can use it as your personal local remote interface. Sync with `git bug bridge pull` and `git bug bridge push`, work from your terminal, integrate into your editor, it's up to you. And it works offline !
+
+</details>
+
+<details><summary>Web UI workflow (WIP)</summary>
+<p align="center">
+    <img src="../misc/diagrams/webui-workflow.png" alt="Web UI workflow">
+</p>
+
+Often, projects needs to have their bug-tracker public and accept editions from anyone facing a problem. To support this workflow, `git-bug` aims to have the web UI accept external OAuth authentication and act as a public portal. However the web UI is not up to speed for that yet. Contribution are very much welcome!
+
+</details>
+
 ## CLI usage
 
 Create a new identity:
