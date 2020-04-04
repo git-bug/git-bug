@@ -71,7 +71,7 @@ There is multiple ways to use `git-bug`:
     <img src="misc/diagrams/native_workflow.png" alt="Native workflow">
 </p>
 
-This is the pure `git-bug` experience. As you would do with code, push and pull your bugs between git remotes.
+This is the pure `git-bug` experience. In a similar fashion as with code, use `git bug push` and `git bug pull` to push and pull your bugs between git remotes and collaborate with your teammate. 
 
 </details>
 
