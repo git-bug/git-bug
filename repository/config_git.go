@@ -45,7 +45,7 @@ func (gc *gitConfig) StoreTimestamp(key string, value time.Time) error {
 
 // ReadAll read all key/value pair matching the key prefix
 func (gc *gitConfig) ReadAll(keyPrefix string) (map[string]string, error) {
-	stdout, err := gc.repo.runGitCommand("config", gc.localityFlag, "--get-regexp", keyPrefix)
+	stdout, err := gc.repo.runGitCommand("config", gc.localityFlag, "--includes", "--get-regexp", keyPrefix)
 
 	//   / \
 	//  / ! \
@@ -74,7 +74,7 @@ func (gc *gitConfig) ReadAll(keyPrefix string) (map[string]string, error) {
 }
 
 func (gc *gitConfig) ReadString(key string) (string, error) {
-	stdout, err := gc.repo.runGitCommand("config", gc.localityFlag, "--get-all", key)
+	stdout, err := gc.repo.runGitCommand("config", gc.localityFlag, "--includes", "--get-all", key)
 
 	//   / \
 	//  / ! \
