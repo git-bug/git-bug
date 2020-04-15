@@ -270,19 +270,34 @@ func (repo *GitRepo) StoreTree(entries []TreeEntry) (git.Hash, error) {
 
 // StoreCommit will store a Git commit with the given Git tree
 func (repo *GitRepo) StoreCommit(treeHash git.Hash) (git.Hash, error) {
-	stdout, err := repo.runGitCommand("commit-tree", string(treeHash))
-
-	if err != nil {
-		return "", err
-	}
-
-	return git.Hash(stdout), nil
+	return repo.storeCommitRaw(treeHash)
 }
 
 // StoreCommitWithParent will store a Git commit with the given Git tree
 func (repo *GitRepo) StoreCommitWithParent(treeHash git.Hash, parent git.Hash) (git.Hash, error) {
-	stdout, err := repo.runGitCommand("commit-tree", string(treeHash),
-		"-p", string(parent))
+	return repo.storeCommitRaw(treeHash, "-p", string(parent))
+}
+
+func (repo *GitRepo) storeCommitRaw(treeHash git.Hash, extraArgs ...string) (git.Hash, error) {
+	args := []string{"commit-tree"}
+
+	// `git commit-tree` uses user.signingkey and gpg.program, but not commit.gpgsign.
+	// We read commit.gpgsign ourselves and simply pass -S to `git commit-tree`.
+	config := repo.LocalConfig()
+	gpgsign, err := config.ReadBool("commit.gpgsign")
+	if err != nil && err != ErrNoConfigEntry {
+		// There are more than one entries, or some other error.
+		return "", errors.Wrap(err, "failed to read local commit.gpgsign")
+	}
+	if gpgsign {
+		args = append(args, "-S")
+	}
+
+	args = append(args, extraArgs...)
+
+	args = append(args, string(treeHash))
+
+	stdout, err := repo.runGitCommand(args...)
 
 	if err != nil {
 		return "", err
