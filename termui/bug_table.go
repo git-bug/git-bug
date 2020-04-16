@@ -437,6 +437,10 @@ func (bt *bugTable) newBug(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (bt *bugTable) openBug(g *gocui.Gui, v *gocui.View) error {
+	if len(bt.excerpts) == 0 {
+		// There are no open bugs, just do nothing
+		return nil
+	}
 	id := bt.excerpts[bt.selectCursor].Id
 	b, err := bt.repo.ResolveBug(id)
 	if err != nil {
