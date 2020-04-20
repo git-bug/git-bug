@@ -46,6 +46,24 @@ func CreateTestRepo(bare bool) TestedRepo {
 	return repo
 }
 
+// CreatePubkey returns an armored public PGP key.
+func CreatePubkey(t *testing.T) string {
+	// Generate a key pair for signing commits.
+	pgpEntity, err := openpgp.NewEntity("First Last", "", "fl@example.org", nil)
+	require.NoError(t, err)
+
+	// Armor the public part.
+	pubBuilder := &strings.Builder{}
+	w, err := armor.Encode(pubBuilder, openpgp.PublicKeyType, nil)
+	require.NoError(t, err)
+	err = pgpEntity.Serialize(w)
+	require.NoError(t, err)
+	err = w.Close()
+	require.NoError(t, err)
+	armoredPub := pubBuilder.String()
+	return armoredPub
+}
+
 // setupSigningKey creates a GPG key and sets up the local config so it's used.
 // The key id is set as "user.signingkey". For the key to be found, a `gpg`
 // wrapper which uses only a custom keyring is created and set as "gpg.program".

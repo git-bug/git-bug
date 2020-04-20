@@ -249,6 +249,31 @@ func (i *Identity) Mutate(f func(orig Mutator) Mutator) {
 	})
 }
 
+func AddKeyMutator(key *Key) func(mutator Mutator) Mutator {
+	return func(mutator Mutator) Mutator {
+		mutator.Keys = append(mutator.Keys, key)
+		return mutator
+	}
+}
+
+func RemoveKeyMutator(fingerprint string, removedKey **Key) func(mutator Mutator) Mutator {
+	return func(mutator Mutator) Mutator {
+		for j, key := range mutator.Keys {
+			if key.Fingerprint() == fingerprint {
+				if removedKey != nil {
+					*removedKey = key
+				}
+				keys := make([]*Key, len(mutator.Keys) - 1)
+				copy(keys, mutator.Keys[0:j])
+				copy(keys[j:], mutator.Keys[j+1:])
+				mutator.Keys = keys
+				break
+			}
+		}
+		return mutator
+	}
+}
+
 // Write the identity into the Repository. In particular, this ensure that
 // the Id is properly set.
 func (i *Identity) Commit(repo repository.ClockedRepo) error {

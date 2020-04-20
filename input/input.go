@@ -18,6 +18,7 @@ import (
 )
 
 const messageFilename = "BUG_MESSAGE_EDITMSG"
+const keyFilename = "KEY_EDITMSG"
 
 // ErrEmptyMessage is returned when the required message has not been entered
 var ErrEmptyMessage = errors.New("empty message")
@@ -54,7 +55,7 @@ func BugCreateEditorInput(repo repository.RepoCommon, preTitle string, preMessag
 // BugCreateFileInput read from either from a file or from the standard input
 // and extract a title and a message
 func BugCreateFileInput(fileName string) (string, string, error) {
-	raw, err := fromFile(fileName)
+	raw, err := TextFileInput(fileName)
 	if err != nil {
 		return "", "", err
 	}
@@ -112,10 +113,29 @@ func BugCommentEditorInput(repo repository.RepoCommon, preMessage string) (strin
 	return processComment(raw)
 }
 
-// BugCommentFileInput read from either from a file or from the standard input
+const identityVersionKeyTemplate = `%s
+
+# Please enter the armored key block. Lines starting with '#' will be ignored,
+# and an empty message aborts the operation.
+`
+// IdentityVersionKeyEditorInput will open the default editor in the terminal
+// with a template for the user to fill. The file is then processed to extract
+// the key.
+func IdentityVersionKeyEditorInput(repo repository.RepoCommon, preMessage string) (string, error) {
+	template := fmt.Sprintf(identityVersionKeyTemplate, preMessage)
+	raw, err := launchEditorWithTemplate(repo, keyFilename, template)
+
+	if err != nil {
+		return "", err
+	}
+
+	return removeCommentedLines(raw), nil
+}
+
+// BugCommentFileInput read either from a file or from the standard input
 // and extract a message
 func BugCommentFileInput(fileName string) (string, error) {
-	raw, err := fromFile(fileName)
+	raw, err := TextFileInput(fileName)
 	if err != nil {
 		return "", err
 	}
@@ -124,6 +144,18 @@ func BugCommentFileInput(fileName string) (string, error) {
 }
 
 func processComment(raw string) (string, error) {
+	message := removeCommentedLines(raw)
+
+	if message == "" {
+		return "", ErrEmptyMessage
+	}
+
+	return message, nil
+}
+
+// removeCommentedLines removes the lines starting with '#' and and
+// trims the result.
+func removeCommentedLines(raw string) string {
 	lines := strings.Split(raw, "\n")
 
 	var buffer bytes.Buffer
@@ -135,13 +167,7 @@ func processComment(raw string) (string, error) {
 		buffer.WriteString("\n")
 	}
 
-	message := strings.TrimSpace(buffer.String())
-
-	if message == "" {
-		return "", ErrEmptyMessage
-	}
-
-	return message, nil
+	return strings.TrimSpace(buffer.String())
 }
 
 const bugTitleTemplate = `%s
@@ -297,11 +323,11 @@ func launchEditor(repo repository.RepoCommon, fileName string) (string, error) {
 	return string(output), err
 }
 
-// fromFile loads and returns the contents of a given file. If - is passed
+// TextFileInput loads and returns the contents of a given file. If - is passed
 // through, much like git, it will read from stdin. This can be piped data,
 // unless there is a tty in which case the user will be prompted to enter a
 // message.
-func fromFile(fileName string) (string, error) {
+func TextFileInput(fileName string) (string, error) {
 	if fileName == "-" {
 		stat, err := os.Stdin.Stat()
 		if err != nil {

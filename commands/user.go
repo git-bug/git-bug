@@ -5,8 +5,6 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-
-	"github.com/MichaelMure/git-bug/cache"
 )
 
 type userOptions struct {
@@ -29,6 +27,7 @@ func newUserCommand() *cobra.Command {
 
 	cmd.AddCommand(newUserAdoptCommand())
 	cmd.AddCommand(newUserCreateCommand())
+	cmd.AddCommand(newUserKeyCommand())
 	cmd.AddCommand(newUserLsCommand())
 
 	flags := cmd.Flags()
@@ -45,13 +44,7 @@ func runUser(env *Env, opts userOptions, args []string) error {
 		return errors.New("only one identity can be displayed at a time")
 	}
 
-	var id *cache.IdentityCache
-	var err error
-	if len(args) == 1 {
-		id, err = env.backend.ResolveIdentityPrefix(args[0])
-	} else {
-		id, err = env.backend.GetUserIdentity()
-	}
+	id, args, err := ResolveUser(env.backend, args)
 
 	if err != nil {
 		return err
