@@ -14,12 +14,10 @@ func TestVersionSerialize(t *testing.T) {
 		avatarURL: "avatarUrl",
 		keys: []*Key{
 			{
-				Fingerprint: "fingerprint1",
-				PubKey:      "pubkey1",
+				ArmoredPublicKey:      "pubkey1",
 			},
 			{
-				Fingerprint: "fingerprint2",
-				PubKey:      "pubkey2",
+				ArmoredPublicKey:      "pubkey2",
 			},
 		},
 		nonce: makeNonce(20),
