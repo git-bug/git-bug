@@ -47,6 +47,15 @@ That's all !
 
 </details>
 
+<details><summary>macOS packages</summary>
+
+* [Homebrew](https://formulae.brew.sh/formula/git-bug)
+  ```
+  brew install git-bug
+  ```
+
+</details>
+
 <details><summary>Compile from git (unstable)</summary>
 
 ```shell
