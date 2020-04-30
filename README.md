@@ -73,7 +73,7 @@ export PATH=$PATH:$(go env GOROOT)/bin:$(go env GOPATH)/bin
 
 ## Workflows
 
-There is multiple ways to use `git-bug`:
+There are multiple ways to use `git-bug`:
 
 <details><summary>Native workflow</summary>
 <p align="center">
