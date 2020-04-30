@@ -289,7 +289,7 @@ type Mutator struct {
 	Keys      []*Key
 }
 
-// Mutate allow to create a new version of the Identity
+// Mutate allow to create a new version of the Identity in one go
 func (i *Identity) Mutate(f func(orig Mutator) Mutator) {
 	orig := Mutator{
 		Name:      i.Name(),
