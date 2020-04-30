@@ -8,7 +8,7 @@ git-bug is a bug tracker embedded in git.
 
 git-bug use git objects to store the bug tracking separated from the files
 history. As bugs are regular git objects, they can be pushed and pulled from/to
-the same git remote your are already using to collaborate with other peoples.
+the same git remote you are already using to collaborate with other people.
 
 
 
