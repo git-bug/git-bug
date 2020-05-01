@@ -48,19 +48,66 @@ func CreateTestRepo(bare bool) *GitRepo {
 	return repo
 }
 
-// setupSigningKey creates a GPG key and sets up the local config so it's used.
+// CreatePubkey returns an armored public PGP key.
+func CreatePubkey(t *testing.T) string {
+	// Generate a key pair for signing commits.
+	pgpEntity, err := openpgp.NewEntity("First Last", "", "fl@example.org", nil)
+	require.NoError(t, err)
+
+	// Armor the public part.
+	pubBuilder := &strings.Builder{}
+	w, err := armor.Encode(pubBuilder, openpgp.PublicKeyType, nil)
+	require.NoError(t, err)
+	err = pgpEntity.Serialize(w)
+	require.NoError(t, err)
+	err = w.Close()
+	require.NoError(t, err)
+	armoredPub := pubBuilder.String()
+	return armoredPub
+}
+
+// SetupSigningKey creates a GPG key and sets up the local config so it's used.
 // The key id is set as "user.signingkey". For the key to be found, a `gpg`
 // wrapper which uses only a custom keyring is created and set as "gpg.program".
 // Finally "commit.gpgsign" is set to true so the signing takes place.
-func setupSigningKey(t *testing.T, repo *GitRepo) {
+//
+// Returns the armored public key.
+func SetupSigningKey(t *testing.T, repo *GitRepo, email string) string {
+	keyId, armoredPub, gpgWrapper := CreateKey(t, email)
+
+	SetupKey(t, repo, email, keyId, gpgWrapper)
+
+	return armoredPub
+}
+
+func SetupKey(t *testing.T, repo *GitRepo, email, keyId, gpgWrapper string) {
 	config := repo.LocalConfig()
 
+	if email != "" {
+		err := config.StoreString("user.email", email)
+		require.NoError(t, err)
+	}
+
+	if keyId != "" {
+		err := config.StoreString("user.signingkey", keyId)
+		require.NoError(t, err)
+	}
+
+	if gpgWrapper != "" {
+		err := config.StoreString("gpg.program", gpgWrapper)
+		require.NoError(t, err)
+	}
+
+	err := config.StoreString("commit.gpgsign", "true")
+	require.NoError(t, err)
+}
+
+func CreateKey(t *testing.T, email string) (keyId, armoredPub, gpgWrapper string) {
 	// Generate a key pair for signing commits.
-	entity, err := openpgp.NewEntity("First Last", "", "fl@example.org", nil)
+	entity, err := openpgp.NewEntity("First Last", "", email, nil)
 	require.NoError(t, err)
 
-	err = config.StoreString("user.signingkey", entity.PrivateKey.KeyIdString())
-	require.NoError(t, err)
+	keyId = entity.PrivateKey.KeyIdString()
 
 	// Armor the private part.
 	privBuilder := &strings.Builder{}
@@ -80,7 +127,7 @@ func setupSigningKey(t *testing.T, repo *GitRepo) {
 	require.NoError(t, err)
 	err = w.Close()
 	require.NoError(t, err)
-	armoredPub := pubBuilder.String()
+	armoredPub = pubBuilder.String()
 
 	// Create a custom gpg keyring to be used when creating commits with `git`.
 	keyring, err := ioutil.TempFile("", "keyring")
@@ -107,14 +154,9 @@ func setupSigningKey(t *testing.T, repo *GitRepo) {
 	require.NoError(t, err)
 
 	// Use a gpg wrapper to use a custom keyring containing GPGKeyID.
-	gpgWrapper := createGPGWrapper(t, keyring.Name())
-	if err := config.StoreString("gpg.program", gpgWrapper); err != nil {
-		log.Fatal("failed to set gpg.program for test repository: ", err)
-	}
+	gpgWrapper = createGPGWrapper(t, keyring.Name())
 
-	if err := config.StoreString("commit.gpgsign", "true"); err != nil {
-		log.Fatal("failed to set commit.gpgsign for test repository: ", err)
-	}
+	return
 }
 
 // createGPGWrapper creates a shell script running gpg with a specific keyring.

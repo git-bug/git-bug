@@ -14,7 +14,7 @@ type Key struct {
 	// PubKey is the armored PGP public key.
 	ArmoredPublicKey string `json:"pub_key"`
 
-	publicKey *packet.PublicKey `json:"-"`
+	PublicKey *packet.PublicKey `json:"-"`
 }
 
 func NewKey(armoredPGPKey string) (*Key, error) {
@@ -61,7 +61,7 @@ func DecodeKeyFingerprint(keyFingerprint string) ([20]byte, error) {
 }
 
 func EncodeKeyFingerprint(fingerprint [20]byte) string {
-	return hex.EncodeToString(fingerprint[:])
+	return strings.ToUpper(hex.EncodeToString(fingerprint[:]))
 }
 
 func (k *Key) Validate() error {
@@ -76,8 +76,8 @@ func (k *Key) Clone() *Key {
 
 func (k *Key) GetPublicKey() (*packet.PublicKey, error) {
 	var err error
-	if k.publicKey == nil {
-		k.publicKey, err = parsePublicKey(k.ArmoredPublicKey)
+	if k.PublicKey == nil {
+		k.PublicKey, err = parsePublicKey(k.ArmoredPublicKey)
 	}
-	return k.publicKey, err
+	return k.PublicKey, err
 }

@@ -13,6 +13,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/pkg/errors"
 
 	"github.com/MichaelMure/git-bug/bug"
@@ -22,6 +24,7 @@ import (
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/process"
+	git2 "github.com/go-git/go-git/v5"
 )
 
 const bugCacheFile = "bug-cache"
@@ -58,6 +61,8 @@ var _ repository.RepoCommon = &RepoCache{}
 type RepoCache struct {
 	// the underlying repo
 	repo repository.ClockedRepo
+	// the underlying repo powered by go-git, for reading commits
+	repo2 *git2.Repository
 
 	// the name of the repository, as defined in the MultiRepoCache
 	name string
@@ -76,6 +81,10 @@ type RepoCache struct {
 
 	// the user identity's id, if known
 	userIdentityId entity.Id
+
+	// the cache of commits
+	muCommit sync.RWMutex
+	commits  map[git.Hash]*object.Commit
 }
 
 func NewRepoCache(r repository.ClockedRepo) (*RepoCache, error) {
@@ -83,14 +92,21 @@ func NewRepoCache(r repository.ClockedRepo) (*RepoCache, error) {
 }
 
 func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, error) {
+	r2, err := git2.PlainOpen(r.GetPath())
+	if err != nil {
+		return &RepoCache{}, err
+	}
+
 	c := &RepoCache{
 		repo:       r,
+		repo2:      r2,
 		name:       name,
 		bugs:       make(map[entity.Id]*BugCache),
 		identities: make(map[entity.Id]*IdentityCache),
+		commits:    make(map[git.Hash]*object.Commit),
 	}
 
-	err := c.lock()
+	err = c.lock()
 	if err != nil {
 		return &RepoCache{}, err
 	}
@@ -177,6 +193,8 @@ func (c *RepoCache) Close() error {
 	defer c.muBug.Unlock()
 	c.muIdentity.Lock()
 	defer c.muIdentity.Unlock()
+	c.muCommit.Lock()
+	defer c.muCommit.Unlock()
 
 	c.identities = make(map[entity.Id]*IdentityCache)
 	c.identitiesExcerpts = nil
@@ -1055,7 +1073,11 @@ func (c *RepoCache) NewIdentityFull(name string, email string, login string, ava
 }
 
 func (c *RepoCache) NewIdentityRaw(name string, email string, login string, avatarUrl string, metadata map[string]string) (*IdentityCache, error) {
-	i := identity.NewIdentityFull(name, email, login, avatarUrl)
+	return c.NewIdentityWithKeyRaw(name, email, login, avatarUrl, metadata, nil)
+}
+
+func (c *RepoCache) NewIdentityWithKeyRaw(name string, email string, login string, avatarUrl string, metadata map[string]string, key *identity.Key) (*IdentityCache, error) {
+	i := identity.NewIdentityFull(name, email, login, avatarUrl, key)
 	return c.finishIdentity(i, metadata)
 }
 
@@ -1085,4 +1107,28 @@ func (c *RepoCache) finishIdentity(i *identity.Identity, metadata map[string]str
 	}
 
 	return cached, nil
+}
+
+func (c *RepoCache) ResolveCommit(hash git.Hash) (*object.Commit, error) {
+	c.muCommit.Lock()
+	defer c.muCommit.Unlock()
+
+	commit, ok := c.commits[hash]
+	if !ok {
+		var err error
+		commit, err = c.repo2.CommitObject(plumbing.NewHash(string(hash)))
+		if err != nil {
+			return nil, err
+		}
+		c.commits[hash] = commit
+	}
+	return commit, nil
+}
+
+func (c *RepoCache) ResolveRef(ref string) (git.Hash, error) {
+	h, err := c.repo2.ResolveRevision(plumbing.Revision(ref))
+	if err != nil {
+		return "", err
+	}
+	return git.Hash(h.String()), nil
 }

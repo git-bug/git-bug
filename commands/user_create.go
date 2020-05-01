@@ -5,10 +5,13 @@ import (
 	"os"
 
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/input"
 	"github.com/MichaelMure/git-bug/util/interrupt"
 	"github.com/spf13/cobra"
 )
+
+var userCreateArmoredKeyFile string
 
 func runUserCreate(cmd *cobra.Command, args []string) error {
 	backend, err := cache.NewRepoCache(repo)
@@ -43,7 +46,22 @@ func runUserCreate(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	id, err := backend.NewIdentityRaw(name, email, "", avatarURL, nil)
+	var key *identity.Key
+	if userCreateArmoredKeyFile != "" {
+		armoredPubkey, err := input.TextFileInput(userCreateArmoredKeyFile)
+		if err != nil {
+			return err
+		}
+
+		key, err = identity.NewKey(armoredPubkey)
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("Using key from file `%s`:\n%s\n", userCreateArmoredKeyFile, armoredPubkey)
+	}
+
+	id, err := backend.NewIdentityWithKeyRaw(name, email, "", avatarURL, nil, key)
 	if err != nil {
 		return err
 	}
@@ -81,4 +99,9 @@ var userCreateCmd = &cobra.Command{
 func init() {
 	userCmd.AddCommand(userCreateCmd)
 	userCreateCmd.Flags().SortFlags = false
+
+	userCreateCmd.Flags().StringVar(&userCreateArmoredKeyFile, "key-file","",
+		"Take the armored PGP public key from the given file. Use - to read the message from the standard input",
+	)
+
 }

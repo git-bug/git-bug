@@ -1,12 +1,12 @@
 package commands
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/interrupt"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -19,7 +19,7 @@ func runKeyRm(cmd *cobra.Command, args []string) error {
 	interrupt.RegisterCleaner(backend.Close)
 
 	if len(args) == 0 {
-		return errors.New("missing key ID")
+		return errors.New("missing key fingerprint")
 	}
 
 	keyFingerprint := args[0]
@@ -36,7 +36,7 @@ func runKeyRm(cmd *cobra.Command, args []string) error {
 
 	fingerprint, err := identity.DecodeKeyFingerprint(keyFingerprint)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "invalid key fingerprint")
 	}
 
 	var removedKey *identity.Key

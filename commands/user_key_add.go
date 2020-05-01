@@ -7,6 +7,8 @@ import (
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/input"
 	"github.com/MichaelMure/git-bug/util/interrupt"
+	"github.com/MichaelMure/git-bug/validate"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -51,16 +53,23 @@ func runKeyAdd(cmd *cobra.Command, args []string) error {
 	}
 
 	key, err := identity.NewKey(keyAddArmored)
-
 	if err != nil {
 		return err
+	}
+
+	validator, err := validate.NewValidator(backend)
+	if err != nil {
+		return errors.Wrap(err, "failed to create validator")
+	}
+	commitHash := validator.KeyCommitHash(key.PublicKey.KeyId)
+	if commitHash != "" {
+		return fmt.Errorf("key id %d is already used by the key introduced in commit %s", key.PublicKey.KeyId, commitHash)
 	}
 
 	err = id.Mutate(func(mutator identity.Mutator) identity.Mutator {
 		mutator.Keys = append(mutator.Keys, key)
 		return mutator
 	})
-
 	if err != nil {
 		return err
 	}

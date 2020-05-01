@@ -94,6 +94,6 @@ func TestGitRepo_StoreCommit(t *testing.T) {
 	checkStoreCommit(t,repo, "N")
 
 	// Commit and expect a good signature with unknown validity.
-	setupSigningKey(t, repo)
+	SetupSigningKey(t, repo, "a@e.org")
 	checkStoreCommit(t, repo, "U")
 }

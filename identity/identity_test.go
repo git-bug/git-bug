@@ -2,34 +2,12 @@ package identity
 
 import (
 	"encoding/json"
-	"strings"
 	"testing"
 
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"golang.org/x/crypto/openpgp"
-	"golang.org/x/crypto/openpgp/armor"
 )
-
-// createPubkey returns an armored public PGP key.
-func createPubkey(t *testing.T) string {
-	// Generate a key pair for signing commits.
-	pgpEntity, err := openpgp.NewEntity("First Last", "", "fl@example.org", nil)
-	require.NoError(t, err)
-
-	// Armor the public part.
-	pubBuilder := &strings.Builder{}
-	w, err := armor.Encode(pubBuilder, openpgp.PublicKeyType, nil)
-	require.NoError(t, err)
-	err = pgpEntity.Serialize(w)
-	require.NoError(t, err)
-	err = w.Close()
-	require.NoError(t, err)
-	armoredPub := pubBuilder.String()
-	return armoredPub
-}
 
 // Test the commit and load of an Identity with multiple versions
 func TestIdentityCommitLoad(t *testing.T) {
@@ -67,7 +45,7 @@ func TestIdentityCommitLoad(t *testing.T) {
 				name:  "René Descartes",
 				email: "rene.descartes@example.com",
 				keys: []*Key{
-					{ArmoredPublicKey: createPubkey(t)},
+					{ArmoredPublicKey: repository.CreatePubkey(t)},
 				},
 			},
 			{
@@ -75,7 +53,7 @@ func TestIdentityCommitLoad(t *testing.T) {
 				name:  "René Descartes",
 				email: "rene.descartes@example.com",
 				keys: []*Key{
-					{ArmoredPublicKey: createPubkey(t)},
+					{ArmoredPublicKey: repository.CreatePubkey(t)},
 				},
 			},
 			{
@@ -83,7 +61,7 @@ func TestIdentityCommitLoad(t *testing.T) {
 				name:  "René Descartes",
 				email: "rene.descartes@example.com",
 				keys: []*Key{
-					{ArmoredPublicKey: createPubkey(t)},
+					{ArmoredPublicKey: repository.CreatePubkey(t)},
 				},
 			},
 		},
@@ -112,7 +90,7 @@ func TestIdentityCommitLoad(t *testing.T) {
 		name:  "René Descartes",
 		email: "rene.descartes@example.com",
 		keys: []*Key{
-			{ArmoredPublicKey: createPubkey(t)},
+			{ArmoredPublicKey: repository.CreatePubkey(t)},
 		},
 	})
 
@@ -121,7 +99,7 @@ func TestIdentityCommitLoad(t *testing.T) {
 		name:  "René Descartes",
 		email: "rene.descartes@example.com",
 		keys: []*Key{
-			{ArmoredPublicKey: createPubkey(t)},
+			{ArmoredPublicKey: repository.CreatePubkey(t)},
 		},
 	})
 

@@ -56,7 +56,12 @@ func NewIdentity(name string, email string) *Identity {
 	}
 }
 
-func NewIdentityFull(name string, email string, login string, avatarUrl string) *Identity {
+func NewIdentityFull(name string, email string, login string, avatarUrl string, key *Key) *Identity {
+	var keys []*Key
+	if key != nil {
+		keys = []*Key{key}
+	}
+
 	return &Identity{
 		id: entity.UnsetId,
 		versions: []*Version{
@@ -66,6 +71,7 @@ func NewIdentityFull(name string, email string, login string, avatarUrl string) 
 				login:     login,
 				avatarURL: avatarUrl,
 				nonce:     makeNonce(20),
+				keys:      keys,
 			},
 		},
 	}
@@ -332,7 +338,11 @@ func (i *Identity) Commit(repo repository.ClockedRepo) error {
 		}
 
 		// get the times where new versions starts to be valid
-		v.time = repo.EditTime()
+		var err error
+		v.time, err = repo.EditTimeIncrement()
+		if err != nil {
+			return err
+		}
 		v.unixTime = time.Now().Unix()
 
 		blobHash, err := v.Write(repo)
@@ -614,6 +624,10 @@ func (i *Identity) MutableMetadata() map[string]string {
 	}
 
 	return metadata
+}
+
+func (i *Identity) Versions() []*Version {
+	return i.versions
 }
 
 // addVersionForTest add a new version to the identity
