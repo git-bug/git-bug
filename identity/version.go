@@ -225,3 +225,15 @@ func (v *Version) GetMetadata(key string) (string, bool) {
 func (v *Version) AllMetadata() map[string]string {
 	return v.metadata
 }
+
+func (v *Version) Keys() []*Key {
+	return v.keys
+}
+
+func (v *Version) CommitHash() repository.Hash {
+	return v.commitHash
+}
+
+func (v *Version) Time() lamport.Time {
+	return v.time
+}

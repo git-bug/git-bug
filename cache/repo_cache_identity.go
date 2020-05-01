@@ -242,7 +242,11 @@ func (c *RepoCache) NewIdentityFull(name string, email string, login string, ava
 }
 
 func (c *RepoCache) NewIdentityRaw(name string, email string, login string, avatarUrl string, metadata map[string]string) (*IdentityCache, error) {
-	i := identity.NewIdentityFull(name, email, login, avatarUrl)
+	return c.NewIdentityWithKeyRaw(name, email, login, avatarUrl, metadata, nil)
+}
+
+func (c *RepoCache) NewIdentityWithKeyRaw(name string, email string, login string, avatarUrl string, metadata map[string]string, key *identity.Key) (*IdentityCache, error) {
+	i := identity.NewIdentityFull(name, email, login, avatarUrl, key)
 	return c.finishIdentity(i, metadata)
 }
 

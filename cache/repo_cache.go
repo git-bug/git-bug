@@ -10,6 +10,9 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
+
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/identity"
@@ -66,6 +69,10 @@ type RepoCache struct {
 
 	// the user identity's id, if known
 	userIdentityId entity.Id
+
+	// the cache of commits
+	muCommit sync.RWMutex
+	commits  map[repository.Hash]*object.Commit
 }
 
 func NewRepoCache(r repository.ClockedRepo) (*RepoCache, error) {
@@ -80,6 +87,7 @@ func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, error
 		bugs:          make(map[entity.Id]*BugCache),
 		loadedBugs:    NewLRUIdCache(),
 		identities:    make(map[entity.Id]*IdentityCache),
+		commits:    make(map[repository.Hash]*object.Commit),
 	}
 
 	err := c.lock()
@@ -157,6 +165,8 @@ func (c *RepoCache) Close() error {
 	defer c.muBug.Unlock()
 	c.muIdentity.Lock()
 	defer c.muIdentity.Unlock()
+	c.muCommit.Lock()
+	defer c.muCommit.Unlock()
 
 	c.identities = make(map[entity.Id]*IdentityCache)
 	c.identitiesExcerpts = nil
@@ -270,4 +280,28 @@ func repoIsAvailable(repo repository.Repo) error {
 	}
 
 	return nil
+}
+
+func (c *RepoCache) ResolveCommit(hash repository.Hash) (*object.Commit, error) {
+	c.muCommit.Lock()
+	defer c.muCommit.Unlock()
+
+	commit, ok := c.commits[hash]
+	if !ok {
+		var err error
+		commit, err = c.repo.CommitObject(plumbing.NewHash(string(hash)))
+		if err != nil {
+			return nil, err
+		}
+		c.commits[hash] = commit
+	}
+	return commit, nil
+}
+
+func (c *RepoCache) ResolveRef(ref string) (repository.Hash, error) {
+	h, err := c.repo.ResolveRevision(plumbing.Revision(ref))
+	if err != nil {
+		return "", err
+	}
+	return repository.Hash(h.String()), nil
 }

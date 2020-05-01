@@ -27,7 +27,7 @@ func newUserKeyRmCommand() *cobra.Command {
 
 func runUserKeyRm(env *Env, args []string) error {
 	if len(args) == 0 {
-		return errors.New("missing key ID")
+		return errors.New("missing key fingerprint")
 	}
 
 	fingerprint := args[0]

@@ -10,8 +10,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/MichaelMure/git-bug/util/lamport"
+	goGit "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/pkg/errors"
+
+	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
 const (
@@ -27,6 +31,10 @@ type GitRepo struct {
 
 	clocksMutex sync.Mutex
 	clocks      map[string]lamport.Clock
+
+	// memoized go-git repo representing the same repository,
+	// for reading commits.
+	repo        *goGit.Repository
 }
 
 // LocalConfig give access to the repository scoped configuration
@@ -118,7 +126,7 @@ func NewGitRepo(path string, clockLoaders []ClockLoader) (*GitRepo, error) {
 		}
 	}
 
-	return repo, nil
+	return setupGitRepo(repo)
 }
 
 // InitGitRepo create a new empty git repo at the given path
@@ -133,7 +141,7 @@ func InitGitRepo(path string) (*GitRepo, error) {
 		return nil, err
 	}
 
-	return repo, nil
+	return setupGitRepo(repo)
 }
 
 // InitBareGitRepo create a new --bare empty git repo at the given path
@@ -144,6 +152,17 @@ func InitBareGitRepo(path string) (*GitRepo, error) {
 	}
 
 	_, err := repo.runGitCommand("init", "--bare", path)
+	if err != nil {
+		return nil, err
+	}
+
+	return setupGitRepo(repo)
+}
+
+func setupGitRepo(repo *GitRepo) (*GitRepo, error) {
+	var err error
+
+	repo.repo, err = goGit.PlainOpen(repo.path)
 	if err != nil {
 		return nil, err
 	}
@@ -390,6 +409,14 @@ func (repo *GitRepo) GetTreeHash(commit Hash) (Hash, error) {
 	}
 
 	return Hash(stdout), nil
+}
+
+func (repo *GitRepo) CommitObject(h plumbing.Hash) (*object.Commit, error) {
+	return repo.repo.CommitObject(h)
+}
+
+func (repo *GitRepo) ResolveRevision(rev plumbing.Revision) (*plumbing.Hash, error) {
+	return repo.repo.ResolveRevision(rev)
 }
 
 // GetOrCreateClock return a Lamport clock stored in the Repo.

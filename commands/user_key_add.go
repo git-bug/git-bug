@@ -3,9 +3,12 @@ package commands
 import (
 	"fmt"
 
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/input"
-	"github.com/spf13/cobra"
+	"github.com/MichaelMure/git-bug/validate"
 )
 
 type userKeyAddOptions struct {
@@ -60,7 +63,7 @@ func runUserKeyAdd(env *Env, opts userKeyAddOptions, args []string) error {
 	}
 
 	if opts.ArmoredFile == "" && opts.Armored == "" {
-		opts.Armored, err = input.IdentityVersionKeyEditorInput(env.backend, "")
+		opts.Armored, err = input.IdentityVersionKeyEditorInput(env.repo, "")
 		if err == input.ErrEmptyMessage {
 			fmt.Println("Empty PGP key, aborting.")
 			return nil
@@ -73,6 +76,15 @@ func runUserKeyAdd(env *Env, opts userKeyAddOptions, args []string) error {
 	key, err := identity.NewKeyFromArmored(opts.Armored)
 	if err != nil {
 		return err
+	}
+
+	validator, err := validate.NewValidator(env.backend)
+	if err != nil {
+		return errors.Wrap(err, "failed to create validator")
+	}
+	commitHash := validator.KeyCommitHash(key.PublicKey().KeyId)
+	if commitHash != "" {
+		return fmt.Errorf("key id %d is already used by the key introduced in commit %s", key.PublicKey().KeyId, commitHash)
 	}
 
 	err = id.Mutate(identity.AddKeyMutator(key))

@@ -78,6 +78,7 @@ _git_bug() {
 	cmd.AddCommand(newTermUICommand())
 	cmd.AddCommand(newTitleCommand())
 	cmd.AddCommand(newUserCommand())
+	cmd.AddCommand(newValidateCommand())
 	cmd.AddCommand(newVersionCommand())
 	cmd.AddCommand(newWebUICommand())
 
