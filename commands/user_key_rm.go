@@ -3,11 +3,12 @@ package commands
 import (
 	"fmt"
 
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/interrupt"
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
 )
 
 func runKeyRm(cmd *cobra.Command, args []string) error {
@@ -22,7 +23,7 @@ func runKeyRm(cmd *cobra.Command, args []string) error {
 		return errors.New("missing key fingerprint")
 	}
 
-	keyFingerprint := args[0]
+	fingerprint := args[0]
 	args = args[1:]
 
 	id, args, err := ResolveUser(backend, args)
@@ -34,21 +35,10 @@ func runKeyRm(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("unexpected arguments: %s", args)
 	}
 
-	fingerprint, err := identity.DecodeKeyFingerprint(keyFingerprint)
-	if err != nil {
-		return errors.Wrap(err, "invalid key fingerprint")
-	}
-
 	var removedKey *identity.Key
 	err = id.Mutate(func(mutator identity.Mutator) identity.Mutator {
 		for j, key := range mutator.Keys {
-			pubkey, err := key.GetPublicKey()
-			if err != nil {
-				fmt.Printf("Warning: failed to decode public key: %s", err)
-				continue
-			}
-
-			if pubkey.Fingerprint == fingerprint {
+			if key.Fingerprint() == fingerprint {
 				removedKey = key
 				copy(mutator.Keys[j:], mutator.Keys[j+1:])
 				mutator.Keys = mutator.Keys[:len(mutator.Keys)-1]

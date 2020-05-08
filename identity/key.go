@@ -2,6 +2,7 @@ package identity
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -10,14 +11,20 @@ import (
 	"golang.org/x/crypto/openpgp/packet"
 )
 
+// Key hold a cryptographic public key
 type Key struct {
 	// PubKey is the armored PGP public key.
-	ArmoredPublicKey string `json:"pub_key"`
+	armoredPublicKey string
 
-	PublicKey *packet.PublicKey `json:"-"`
+	// memoized decoded public key
+	publicKey *packet.PublicKey
 }
 
-func NewKey(armoredPGPKey string) (*Key, error) {
+type keyJSON struct {
+	ArmoredPublicKey string `json:"armored_pub_key"`
+}
+
+func NewKeyFromArmored(armoredPGPKey string) (*Key, error) {
 	publicKey, err := parsePublicKey(armoredPGPKey)
 	if err != nil {
 		return nil, err
@@ -26,10 +33,70 @@ func NewKey(armoredPGPKey string) (*Key, error) {
 	return &Key{armoredPGPKey, publicKey}, nil
 }
 
+func (k *Key) MarshalJSON() ([]byte, error) {
+	return json.Marshal(keyJSON{
+		ArmoredPublicKey: k.armoredPublicKey,
+	})
+}
+
+func (k *Key) UnmarshalJSON(data []byte) error {
+	var aux keyJSON
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	k.armoredPublicKey = aux.ArmoredPublicKey
+
+	return nil
+}
+
+func (k *Key) Validate() error {
+	if k.publicKey != nil {
+		return nil
+	}
+
+	publicKey, err := parsePublicKey(k.armoredPublicKey)
+	if err != nil {
+		return errors.Wrap(err, "invalid public key")
+	}
+	k.publicKey = publicKey
+
+	return nil
+}
+
+func (k *Key) Clone() *Key {
+	clone := *k
+	return &clone
+}
+
+func (k *Key) publicKey() *packet.PublicKey {
+	if k.publicKey != nil {
+		return k.publicKey
+	}
+
+	publicKey, err := parsePublicKey(k.armoredPublicKey)
+	if err != nil {
+		// Coding problem, a key should be validated before use
+		panic("invalid key: " + err.Error())
+	}
+
+	k.publicKey = publicKey
+	return k.publicKey
+}
+
+func (k Key) Armored() string {
+	return k.armoredPublicKey
+}
+
+func (k Key) Fingerprint() string {
+	return encodeKeyFingerprint(k.publicKey().Fingerprint)
+}
+
 func parsePublicKey(armoredPublicKey string) (*packet.PublicKey, error) {
 	block, err := armor.Decode(strings.NewReader(armoredPublicKey))
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to dearmor public key")
+		return nil, errors.Wrap(err, "failed to decode armored public key")
 	}
 
 	reader := packet.NewReader(block.Body)
@@ -40,14 +107,14 @@ func parsePublicKey(armoredPublicKey string) (*packet.PublicKey, error) {
 
 	publicKey, ok := p.(*packet.PublicKey)
 	if !ok {
-		return nil, errors.New("got no packet.PublicKey")
+		return nil, errors.New("got no packet.publicKey")
 	}
 
 	return publicKey, nil
 }
 
-// DecodeKeyFingerprint decodes a 40 hex digits long fingerprint into bytes.
-func DecodeKeyFingerprint(keyFingerprint string) ([20]byte, error) {
+// decodeKeyFingerprint decodes a 40 hex digits long fingerprint into bytes.
+func decodeKeyFingerprint(keyFingerprint string) ([20]byte, error) {
 	var fingerprint [20]byte
 	fingerprintBytes, err := hex.DecodeString(keyFingerprint)
 	if err != nil {
@@ -60,24 +127,7 @@ func DecodeKeyFingerprint(keyFingerprint string) ([20]byte, error) {
 	return fingerprint, nil
 }
 
-func EncodeKeyFingerprint(fingerprint [20]byte) string {
+// encodeKeyFingerprint encode a byte representation of a fingerprint into a 40 hex digits string.
+func encodeKeyFingerprint(fingerprint [20]byte) string {
 	return strings.ToUpper(hex.EncodeToString(fingerprint[:]))
-}
-
-func (k *Key) Validate() error {
-	_, err := k.GetPublicKey()
-	return err
-}
-
-func (k *Key) Clone() *Key {
-	clone := *k
-	return &clone
-}
-
-func (k *Key) GetPublicKey() (*packet.PublicKey, error) {
-	var err error
-	if k.PublicKey == nil {
-		k.PublicKey, err = parsePublicKey(k.ArmoredPublicKey)
-	}
-	return k.PublicKey, err
 }

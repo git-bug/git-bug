@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	keyAddArmoredFile    string
-	keyAddArmored        string
+	keyAddArmoredFile string
+	keyAddArmored     string
 )
 
 func runKeyAdd(cmd *cobra.Command, args []string) error {
@@ -52,7 +52,7 @@ func runKeyAdd(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	key, err := identity.NewKey(keyAddArmored)
+	key, err := identity.NewKeyFromArmored(keyAddArmored)
 	if err != nil {
 		return err
 	}
@@ -61,9 +61,9 @@ func runKeyAdd(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to create validator")
 	}
-	commitHash := validator.KeyCommitHash(key.PublicKey.KeyId)
+	commitHash := validator.KeyCommitHash(key.publicKey().KeyId)
 	if commitHash != "" {
-		return fmt.Errorf("key id %d is already used by the key introduced in commit %s", key.PublicKey.KeyId, commitHash)
+		return fmt.Errorf("key id %d is already used by the key introduced in commit %s", key.publicKey.KeyId, commitHash)
 	}
 
 	err = id.Mutate(func(mutator identity.Mutator) identity.Mutator {

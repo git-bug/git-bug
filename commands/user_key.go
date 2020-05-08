@@ -3,10 +3,10 @@ package commands
 import (
 	"fmt"
 
-	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/identity"
-	"github.com/MichaelMure/git-bug/util/interrupt"
 	"github.com/spf13/cobra"
+
+	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
 func ResolveUser(repo *cache.RepoCache, args []string) (*cache.IdentityCache, []string, error) {
@@ -39,11 +39,7 @@ func runKey(cmd *cobra.Command, args []string) error {
 	}
 
 	for _, key := range id.Keys() {
-		pubkey, err := key.GetPublicKey()
-		if err != nil {
-			return err
-		}
-		fmt.Println(identity.EncodeKeyFingerprint(pubkey.Fingerprint))
+		fmt.Println(key.Fingerprint())
 	}
 
 	return nil

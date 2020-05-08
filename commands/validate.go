@@ -24,7 +24,7 @@ func runValidate(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Printf("first commit signed with key: %s\n", identity.EncodeKeyFingerprint(validator.FirstKey.PublicKey.Fingerprint))
+	fmt.Printf("first commit signed with key: %s\n", identity.encodeKeyFingerprint(validator.FirstKey.publicKey.Fingerprint))
 
 	var refErr error
 	for _, ref := range args {
