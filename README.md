@@ -58,11 +58,11 @@ That's all !
 
 <details><summary>FreeBSD package/port</summary>
 
-* [Freshports](https://www.freshports.org/devel/git-bug/)
 Install via the package manager
   ```
   pkg install git-bugs
   ```
+
 Or from the ports collection
   ```
   cd /usr/ports/devel/git-bug && make install clean
