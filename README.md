@@ -56,6 +56,20 @@ That's all !
 
 </details>
 
+<details><summary>FreeBSD package/port</summary>
+
+Install via the package manager
+  ```
+  pkg install git-bugs
+  ```
+
+Or from the ports collection
+  ```
+  cd /usr/ports/devel/git-bug && make install clean
+  ```
+
+</details>
+
 <details><summary>Compile from git (unstable)</summary>
 
 ```shell
