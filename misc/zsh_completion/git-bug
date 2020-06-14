@@ -303,7 +303,8 @@ function _git-bug_ls {
     '(*-t *--title)'{\*-t,\*--title}'[Filter by title]:' \
     '(*-n *--no)'{\*-n,\*--no}'[Filter by absence of something. Valid values are [label]]:' \
     '(-b --by)'{-b,--by}'[Sort the results by a characteristic. Valid values are [id,creation,edit]]:' \
-    '(-d --direction)'{-d,--direction}'[Select the sorting direction. Valid values are [asc,desc]]:'
+    '(-d --direction)'{-d,--direction}'[Select the sorting direction. Valid values are [asc,desc]]:' \
+    '(-f --format)'{-f,--format}'[Select the output formatting style. Valid values are [default, plain(text), json]]:'
 }
 
 function _git-bug_ls-id {
