@@ -66,6 +66,6 @@ func init() {
 		"Only show the commit hash",
 	)
 	versionCmd.Flags().BoolVarP(&versionAll, "all", "a", false,
-		"Show all version informations",
+		"Show all version information",
 	)
 }

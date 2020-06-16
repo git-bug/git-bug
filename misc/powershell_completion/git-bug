@@ -226,8 +226,8 @@ Register-ArgumentCompleter -Native -CommandName 'git-bug' -ScriptBlock {
             [CompletionResult]::new('--number', 'number', [CompletionResultType]::ParameterName, 'Only show the version number')
             [CompletionResult]::new('-c', 'c', [CompletionResultType]::ParameterName, 'Only show the commit hash')
             [CompletionResult]::new('--commit', 'commit', [CompletionResultType]::ParameterName, 'Only show the commit hash')
-            [CompletionResult]::new('-a', 'a', [CompletionResultType]::ParameterName, 'Show all version informations')
-            [CompletionResult]::new('--all', 'all', [CompletionResultType]::ParameterName, 'Show all version informations')
+            [CompletionResult]::new('-a', 'a', [CompletionResultType]::ParameterName, 'Show all version information')
+            [CompletionResult]::new('--all', 'all', [CompletionResultType]::ParameterName, 'Show all version information')
             break
         }
         'git-bug;webui' {

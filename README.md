@@ -17,7 +17,7 @@
 
 `git-bug` is a bug tracker that:
 
-- **is fully embeded in git**: you only need your git repository to have a bug tracker
+- **is fully embedded in git**: you only need your git repository to have a bug tracker
 - **is distributed**: use your normal git remote to collaborate, push and pull your bugs!
 - **works offline**: in a plane or under the sea? Keep reading and writing bugs!
 - **prevents vendor lock-in**: your usual service is down or went bad? You already have a full backup.
