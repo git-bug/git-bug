@@ -449,7 +449,7 @@ function _git-bug_version {
   _arguments \
     '(-n --number)'{-n,--number}'[Only show the version number]' \
     '(-c --commit)'{-c,--commit}'[Only show the commit hash]' \
-    '(-a --all)'{-a,--all}'[Show all version informations]'
+    '(-a --all)'{-a,--all}'[Show all version information]'
 }
 
 function _git-bug_webui {

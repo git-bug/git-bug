@@ -21,8 +21,8 @@ Hopefully the bridge will be able to enable synchronization of these soon.
 JIRA does not support user/personal access tokens. They have experimental
 3-legged oauth support but that requires an API token for the app configured
 by the server administrator. The only reliable authentication mechanism then is
-the username/password and session-token mechanims. We can aquire a session
-token programatically from the username/password but these are very short lived
+the username/password and session-token mechanism. We can acquire a session
+token programmatically from the username/password but these are very short lived
 (i.e. hours or less). As such the bridge currently requires an actual username
 and password as user credentials. It supports three options:
 
@@ -42,7 +42,7 @@ is configurable (in JIRA) per `issuetype` so the set might be different between
 "bug" and "story", for example.
 
 For now, the bridge only supports exporting issues as a single `issuetype`. If
-no configuration is provied, then the default is `"id": "10001"` which is
+no configuration is provided, then the default is `"id": "10001"` which is
 `"story"` in the default set of issue types.
 
 In addition to specifying the `issuetype` of issues created on export, the
@@ -100,7 +100,7 @@ with the `expand=changelog` query parameter. Unfortunately in this case the
 entire changelog is provided without paging.
 
 Each changelog entry is identified with a unique string `id`, but within a
-single changelog entry is a list of multilple fields that are modified. In other
+single changelog entry is a list of multiple fields that are modified. In other
 words a single "event" might atomically change multiple fields. As an example,
 when an issue is closed the `"status"` might change to `"closed"` and the
 `"resolution"` might change to `"fixed'`.
@@ -112,9 +112,9 @@ single JIRA change event might create more than one `git-bug` operation.
 However, when a `git-bug` operation is exported to JIRA it will only create a
 single changelog entry. Furthermore, when we modify JIRA issues over the REST
 API JIRA does not provide any information to associate that modification event
-with the changelog. We must, therefore, herustically match changelog entries
+with the changelog. We must, therefore, heuristically match changelog entries
 against operations that we performed in order to not import them as duplicate
-events. In order to assist in this matching proceess, the bridge will record the
+events. In order to assist in this matching process, the bridge will record the
 JIRA server time of the response to the `POST` (as reported by the `"Date"`
 response header). During import, we keep an iterator to the list of `git-bug`
 operations for the bug mapped to the Jira issue. As we walk the JIRA changelog,
@@ -134,13 +134,13 @@ then we treat that as a new comment edition. If we do not already have the
 comment imported, then we import an empty comment followed by a comment edition.
 
 Because comment editions are not uniquely identified in JIRA we identify them
-in `git-bug` by concatinating the JIRA issue `id` with the `updated` time of
+in `git-bug` by concatenating the JIRA issue `id` with the `updated` time of
 the edition.
 
 ### Workflow Validation (future)
 
 The long-term plan for the JIRA bridge is to download and store the workflow
-specifiations from the JIRA server. This includes the required metadata for
+specifications from the JIRA server. This includes the required metadata for
 issue creation, and the status state graph, and the set of required metadata for
 status transition.
 
@@ -170,7 +170,7 @@ configuration. You can set these options in your `.git/config` file:
 ### Issue Creation Defaults
 
 The format for this config entry is a JSON object containing fields you wish to
-set during issue creation when exproting bugs. If you provide a value for this
+set during issue creation when exporting bugs. If you provide a value for this
 configuration option, it must include at least the `"issuetype"` field, or
 the bridge will not be able to export any new issues.
 
@@ -250,7 +250,7 @@ Here is an example configuration with all optional fields set
 * [c70e22a] Implement additional query filters for import
 * [9ecefaa] Create JIRA mock and add REST unit tests
 * [67bf520] Create import/export integration tests
-* [1121826] Add unit tests for utilites
+* [1121826] Add unit tests for utilities
 * [0597088] Use OS keyring for credentials
 * [d3e8f79] Don't count on the `Total` value in paginations
 

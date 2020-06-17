@@ -15,7 +15,7 @@ git-bug version [flags]
 ```
   -n, --number   Only show the version number
   -c, --commit   Only show the commit hash
-  -a, --all      Show all version informations
+  -a, --all      Show all version information
   -h, --help     help for version
 ```
 
