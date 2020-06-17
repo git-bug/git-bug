@@ -97,7 +97,8 @@ type JSONIdentity struct {
 }
 
 func lsJsonFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerpt) error {
-	for _, b := range bugExcerpts {
+	jsonBugs := make([]JSONBug, len(bugExcerpts))
+	for i, b := range bugExcerpts {
 		jsonBug := JSONBug{
 			b.Id.String(),
 			b.Id.Human(),
@@ -155,9 +156,10 @@ func lsJsonFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerpt) 
 			})
 		}
 
-		jsonObject, _ := json.MarshalIndent(jsonBug, "", "    ")
-		fmt.Printf("%s\n", jsonObject)
+		jsonBugs[i] = jsonBug
 	}
+	jsonObject, _ := json.MarshalIndent(jsonBugs, "", "    ")
+	fmt.Printf("%s\n", jsonObject)
 	return nil
 }
 
@@ -203,7 +205,7 @@ func lsDefaultFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerp
 	return nil
 }
 
-func lsPlainFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerpt) error {
+func lsPlainFormatter(_ *cache.RepoCache, bugExcerpts []*cache.BugExcerpt) error {
 	for _, b := range bugExcerpts {
 		fmt.Printf("[%s] %s\n", b.Status, b.Title)
 	}
