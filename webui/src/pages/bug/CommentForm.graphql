@@ -1,7 +1,5 @@
 mutation AddComment($input: AddCommentInput!) {
   addComment(input: $input) {
-    operation {
-      id
-    }
+    operation { id }
   }
 }
