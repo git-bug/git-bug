@@ -19,6 +19,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/MichaelMure/git-bug/graphql"
+	"github.com/MichaelMure/git-bug/graphql/graphqlidentity"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/git"
@@ -34,10 +35,10 @@ var (
 
 const webUIOpenConfigKey = "git-bug.webui.open"
 
-func authMiddleware(repo repository.RepoCommon, id *identity.Identity) func(http.Handler) http.Handler {
+func authMiddleware(id *identity.Identity) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := identity.AttachToContext(r.Context(), repo, id)
+			ctx := graphqlidentity.AttachToContext(r.Context(), id)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
@@ -83,7 +84,7 @@ func runWebUI(cmd *cobra.Command, args []string) error {
 	router.Path("/gitfile/{hash}").Handler(newGitFileHandler(repo))
 	router.Path("/upload").Methods("POST").Handler(newGitUploadFileHandler(repo))
 	router.PathPrefix("/").Handler(http.FileServer(assetsHandler))
-	router.Use(authMiddleware(repo, id))
+	router.Use(authMiddleware(id))
 
 	srv := &http.Server{
 		Addr:    addr,
@@ -210,7 +211,11 @@ func newGitUploadFileHandler(repo repository.Repo) http.Handler {
 }
 
 func (gufh *gitUploadFileHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	if identity.ForContext(r.Context(), gufh.repo) == nil {
+	id, err := graphqlidentity.ForContextUncached(r.Context(), gufh.repo)
+	if err != nil {
+		http.Error(rw, fmt.Sprintf("loading identity: %v", err), http.StatusInternalServerError)
+		return
+	} else if id == nil {
 		http.Error(rw, fmt.Sprintf("read-only mode or not logged in"), http.StatusForbidden)
 		return
 	}

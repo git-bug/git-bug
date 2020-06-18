@@ -2,17 +2,14 @@ package resolvers
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/graphql/graph"
+	"github.com/MichaelMure/git-bug/graphql/graphqlidentity"
 	"github.com/MichaelMure/git-bug/graphql/models"
-	"github.com/MichaelMure/git-bug/identity"
 )
-
-var ErrNotAuthenticated = errors.New("not authenticated or read-only")
 
 var _ graph.MutationResolver = &mutationResolver{}
 
@@ -47,13 +44,14 @@ func (r mutationResolver) NewBug(ctx context.Context, input models.NewBugInput) 
 		return nil, err
 	}
 
-	id := identity.ForContext(ctx, repo)
-	if id == nil {
+	id, err := graphqlidentity.ForContext(ctx, repo)
+	if err != nil {
+		return nil, err
+	} else if id == nil {
 		return nil, ErrNotAuthenticated
 	}
-	author := cache.NewIdentityCache(repo, id)
 
-	b, op, err := repo.NewBugRaw(author, time.Now().Unix(), input.Title, input.Message, input.Files, nil)
+	b, op, err := repo.NewBugRaw(id, time.Now().Unix(), input.Title, input.Message, input.Files, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -71,13 +69,14 @@ func (r mutationResolver) AddComment(ctx context.Context, input models.AddCommen
 		return nil, err
 	}
 
-	id := identity.ForContext(ctx, repo)
-	if id == nil {
+	id, err := graphqlidentity.ForContext(ctx, repo)
+	if err != nil {
+		return nil, err
+	} else if id == nil {
 		return nil, ErrNotAuthenticated
 	}
-	author := cache.NewIdentityCache(repo, id)
 
-	op, err := b.AddCommentRaw(author, time.Now().Unix(), input.Message, input.Files, nil)
+	op, err := b.AddCommentRaw(id, time.Now().Unix(), input.Message, input.Files, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -100,13 +99,14 @@ func (r mutationResolver) ChangeLabels(ctx context.Context, input *models.Change
 		return nil, err
 	}
 
-	id := identity.ForContext(ctx, repo)
-	if id == nil {
+	id, err := graphqlidentity.ForContext(ctx, repo)
+	if err != nil {
+		return nil, err
+	} else if id == nil {
 		return nil, ErrNotAuthenticated
 	}
-	author := cache.NewIdentityCache(repo, id)
 
-	results, op, err := b.ChangeLabelsRaw(author, time.Now().Unix(), input.Added, input.Removed, nil)
+	results, op, err := b.ChangeLabelsRaw(id, time.Now().Unix(), input.Added, input.Removed, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -135,13 +135,14 @@ func (r mutationResolver) OpenBug(ctx context.Context, input models.OpenBugInput
 		return nil, err
 	}
 
-	id := identity.ForContext(ctx, repo)
-	if id == nil {
+	id, err := graphqlidentity.ForContext(ctx, repo)
+	if err != nil {
+		return nil, err
+	} else if id == nil {
 		return nil, ErrNotAuthenticated
 	}
-	author := cache.NewIdentityCache(repo, id)
 
-	op, err := b.OpenRaw(author, time.Now().Unix(), nil)
+	op, err := b.OpenRaw(id, time.Now().Unix(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -164,13 +165,14 @@ func (r mutationResolver) CloseBug(ctx context.Context, input models.CloseBugInp
 		return nil, err
 	}
 
-	id := identity.ForContext(ctx, repo)
-	if id == nil {
+	id, err := graphqlidentity.ForContext(ctx, repo)
+	if err != nil {
+		return nil, err
+	} else if id == nil {
 		return nil, ErrNotAuthenticated
 	}
-	author := cache.NewIdentityCache(repo, id)
 
-	op, err := b.CloseRaw(author, time.Now().Unix(), nil)
+	op, err := b.CloseRaw(id, time.Now().Unix(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -193,13 +195,14 @@ func (r mutationResolver) SetTitle(ctx context.Context, input models.SetTitleInp
 		return nil, err
 	}
 
-	id := identity.ForContext(ctx, repo)
-	if id == nil {
+	id, err := graphqlidentity.ForContext(ctx, repo)
+	if err != nil {
+		return nil, err
+	} else if id == nil {
 		return nil, ErrNotAuthenticated
 	}
-	author := cache.NewIdentityCache(repo, id)
 
-	op, err := b.SetTitleRaw(author, time.Now().Unix(), input.Title, nil)
+	op, err := b.SetTitleRaw(id, time.Now().Unix(), input.Title, nil)
 	if err != nil {
 		return nil, err
 	}

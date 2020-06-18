@@ -7,8 +7,8 @@ import (
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/graphql/connections"
 	"github.com/MichaelMure/git-bug/graphql/graph"
+	"github.com/MichaelMure/git-bug/graphql/graphqlidentity"
 	"github.com/MichaelMure/git-bug/graphql/models"
-	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/query"
 )
 
@@ -151,11 +151,13 @@ func (repoResolver) Identity(_ context.Context, obj *models.Repository, prefix s
 }
 
 func (repoResolver) UserIdentity(ctx context.Context, obj *models.Repository) (models.IdentityWrapper, error) {
-	id := identity.ForContext(ctx, obj.Repo)
-	if id == nil {
+	id, err := graphqlidentity.ForContext(ctx, obj.Repo)
+	if err != nil {
+		return nil, err
+	} else if id == nil {
 		return nil, nil
 	}
-	return models.NewLoadedIdentity(id), nil
+	return models.NewLoadedIdentity(id.Identity), nil
 }
 
 func (repoResolver) ValidLabels(_ context.Context, obj *models.Repository, after *string, before *string, first *int, last *int) (*models.LabelConnection, error) {
