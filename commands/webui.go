@@ -19,15 +19,17 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/MichaelMure/git-bug/graphql"
+	"github.com/MichaelMure/git-bug/graphql/config"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/webui"
 )
 
 var (
-	webUIPort   int
-	webUIOpen   bool
-	webUINoOpen bool
+	webUIPort     int
+	webUIOpen     bool
+	webUINoOpen   bool
+	webUIReadOnly bool
 )
 
 const webUIOpenConfigKey = "git-bug.webui.open"
@@ -46,7 +48,7 @@ func runWebUI(cmd *cobra.Command, args []string) error {
 
 	router := mux.NewRouter()
 
-	graphqlHandler, err := graphql.NewHandler(repo)
+	graphqlHandler, err := graphql.NewHandler(repo, config.Config{ReadOnly: webUIReadOnly})
 	if err != nil {
 		return err
 	}
@@ -261,5 +263,6 @@ func init() {
 	webUICmd.Flags().BoolVar(&webUIOpen, "open", false, "Automatically open the web UI in the default browser")
 	webUICmd.Flags().BoolVar(&webUINoOpen, "no-open", false, "Prevent the automatic opening of the web UI in the default browser")
 	webUICmd.Flags().IntVarP(&webUIPort, "port", "p", 0, "Port to listen to (default is random)")
+	webUICmd.Flags().BoolVar(&webUIReadOnly, "read-only", false, "Whether to run the web UI in read-only mode")
 
 }

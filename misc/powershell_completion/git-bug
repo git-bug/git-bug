@@ -240,6 +240,7 @@ Register-ArgumentCompleter -Native -CommandName 'git-bug' -ScriptBlock {
             [CompletionResult]::new('--no-open', 'no-open', [CompletionResultType]::ParameterName, 'Prevent the automatic opening of the web UI in the default browser')
             [CompletionResult]::new('-p', 'p', [CompletionResultType]::ParameterName, 'Port to listen to (default is random)')
             [CompletionResult]::new('--port', 'port', [CompletionResultType]::ParameterName, 'Port to listen to (default is random)')
+            [CompletionResult]::new('--read-only', 'read-only', [CompletionResultType]::ParameterName, 'Whether to run the web UI in read-only mode')
             break
         }
     })

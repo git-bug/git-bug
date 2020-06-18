@@ -6,6 +6,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import Author from 'src/components/Author';
 import Date from 'src/components/Date';
 import Label from 'src/components/Label';
+import ReadonlyHidden from 'src/layout/ReadonlyHidden';
 
 import { BugFragment } from './Bug.generated';
 import CommentForm from './CommentForm';
@@ -88,9 +89,11 @@ function Bug({ bug }: Props) {
       <div className={classes.container}>
         <div className={classes.timeline}>
           <TimelineQuery id={bug.id} />
-          <div className={classes.commentForm}>
-            <CommentForm bugId={bug.id} />
-          </div>
+          <ReadonlyHidden>
+            <div className={classes.commentForm}>
+              <CommentForm bugId={bug.id} />
+            </div>
+          </ReadonlyHidden>
         </div>
         <div className={classes.sidebar}>
           <span className={classes.sidebarTitle}>Labels</span>

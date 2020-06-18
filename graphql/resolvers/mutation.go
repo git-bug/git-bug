@@ -7,7 +7,31 @@ import (
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/graphql/graph"
 	"github.com/MichaelMure/git-bug/graphql/models"
+	"github.com/vektah/gqlparser/gqlerror"
 )
+
+var _ graph.MutationResolver = &readonlyMutationResolver{}
+
+type readonlyMutationResolver struct{}
+
+func (readonlyMutationResolver) NewBug(_ context.Context, _ models.NewBugInput) (*models.NewBugPayload, error) {
+	return nil, gqlerror.Errorf("readonly mode")
+}
+func (readonlyMutationResolver) AddComment(_ context.Context, input models.AddCommentInput) (*models.AddCommentPayload, error) {
+	return nil, gqlerror.Errorf("readonly mode")
+}
+func (readonlyMutationResolver) ChangeLabels(_ context.Context, input *models.ChangeLabelInput) (*models.ChangeLabelPayload, error) {
+	return nil, gqlerror.Errorf("readonly mode")
+}
+func (readonlyMutationResolver) OpenBug(_ context.Context, input models.OpenBugInput) (*models.OpenBugPayload, error) {
+	return nil, gqlerror.Errorf("readonly mode")
+}
+func (readonlyMutationResolver) CloseBug(_ context.Context, input models.CloseBugInput) (*models.CloseBugPayload, error) {
+	return nil, gqlerror.Errorf("readonly mode")
+}
+func (readonlyMutationResolver) SetTitle(_ context.Context, input models.SetTitleInput) (*models.SetTitlePayload, error) {
+	return nil, gqlerror.Errorf("readonly mode")
+}
 
 var _ graph.MutationResolver = &mutationResolver{}
 

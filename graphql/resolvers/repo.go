@@ -5,6 +5,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/entity"
+	"github.com/MichaelMure/git-bug/graphql/config"
 	"github.com/MichaelMure/git-bug/graphql/connections"
 	"github.com/MichaelMure/git-bug/graphql/graph"
 	"github.com/MichaelMure/git-bug/graphql/models"
@@ -13,7 +14,7 @@ import (
 
 var _ graph.RepositoryResolver = &repoResolver{}
 
-type repoResolver struct{}
+type repoResolver struct{ cfg config.Config }
 
 func (repoResolver) Name(_ context.Context, obj *models.Repository) (*string, error) {
 	name := obj.Repo.Name()
@@ -149,7 +150,10 @@ func (repoResolver) Identity(_ context.Context, obj *models.Repository, prefix s
 	return models.NewLazyIdentity(obj.Repo, excerpt), nil
 }
 
-func (repoResolver) UserIdentity(_ context.Context, obj *models.Repository) (models.IdentityWrapper, error) {
+func (r repoResolver) UserIdentity(_ context.Context, obj *models.Repository) (models.IdentityWrapper, error) {
+	if r.cfg.ReadOnly {
+		return nil, nil
+	}
 	excerpt, err := obj.Repo.GetUserIdentityExcerpt()
 	if err != nil {
 		return nil, err
