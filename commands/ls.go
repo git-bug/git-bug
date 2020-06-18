@@ -1,8 +1,10 @@
 package commands
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	text "github.com/MichaelMure/go-term-text"
 	"github.com/spf13/cobra"
@@ -21,9 +23,10 @@ var (
 	lsNoQuery       []string
 	lsSortBy        string
 	lsSortDirection string
+	lsOutputFormat  string
 )
 
-func runLsBug(cmd *cobra.Command, args []string) error {
+func runLsBug(_ *cobra.Command, args []string) error {
 	backend, err := cache.NewRepoCache(repo)
 	if err != nil {
 		return err
@@ -48,20 +51,127 @@ func runLsBug(cmd *cobra.Command, args []string) error {
 
 	allIds := backend.QueryBugs(q)
 
-	for _, id := range allIds {
+	bugExcerpt := make([]*cache.BugExcerpt, len(allIds))
+	for i, id := range allIds {
 		b, err := backend.ResolveBugExcerpt(id)
 		if err != nil {
 			return err
 		}
+		bugExcerpt[i] = b
+	}
 
+	switch lsOutputFormat {
+	case "plain":
+		return lsPlainFormatter(backend, bugExcerpt)
+	case "json":
+		return lsJsonFormatter(backend, bugExcerpt)
+	case "default":
+		return lsDefaultFormatter(backend, bugExcerpt)
+	default:
+		return fmt.Errorf("unknown format %s", lsOutputFormat)
+	}
+}
+
+type JSONBug struct {
+	Id           string    `json:"id"`
+	HumanId      string    `json:"human_id"`
+	CreationTime time.Time `json:"creation_time"`
+	LastEdited   time.Time `json:"last_edited"`
+
+	Status       string         `json:"status"`
+	Labels       []bug.Label    `json:"labels"`
+	Title        string         `json:"title"`
+	Actors       []JSONIdentity `json:"actors"`
+	Participants []JSONIdentity `json:"participants"`
+	Author       JSONIdentity   `json:"author"`
+
+	Comments int               `json:"comments"`
+	Metadata map[string]string `json:"metadata"`
+}
+
+type JSONIdentity struct {
+	Id      string `json:"id"`
+	HumanId string `json:"human_id"`
+	Name    string `json:"name"`
+	Login   string `json:"login"`
+}
+
+func lsJsonFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerpt) error {
+	jsonBugs := make([]JSONBug, len(bugExcerpts))
+	for i, b := range bugExcerpts {
+		jsonBug := JSONBug{
+			b.Id.String(),
+			b.Id.Human(),
+			time.Unix(b.CreateUnixTime, 0),
+			time.Unix(b.EditUnixTime, 0),
+			b.Status.String(),
+			b.Labels,
+			b.Title,
+			[]JSONIdentity{},
+			[]JSONIdentity{},
+			JSONIdentity{},
+			b.LenComments,
+			b.CreateMetadata,
+		}
+
+		if b.AuthorId != "" {
+			author, err := backend.ResolveIdentityExcerpt(b.AuthorId)
+			if err != nil {
+				return err
+			}
+
+			jsonBug.Author.Name = author.DisplayName()
+			jsonBug.Author.Login = author.Login
+			jsonBug.Author.Id = author.Id.String()
+			jsonBug.Author.HumanId = author.Id.Human()
+		} else {
+			jsonBug.Author.Name = b.LegacyAuthor.DisplayName()
+			jsonBug.Author.Login = b.LegacyAuthor.Login
+		}
+
+		for _, element := range b.Actors {
+			actor, err := backend.ResolveIdentityExcerpt(element)
+			if err != nil {
+				return err
+			}
+
+			jsonBug.Actors = append(jsonBug.Actors, JSONIdentity{
+				actor.Id.String(),
+				actor.Id.Human(),
+				actor.Name,
+				actor.Login,
+			})
+		}
+
+		for _, element := range b.Participants {
+			participant, err := backend.ResolveIdentityExcerpt(element)
+			if err != nil {
+				return err
+			}
+			jsonBug.Participants = append(jsonBug.Participants, JSONIdentity{
+				participant.Id.String(),
+				participant.Id.Human(),
+				participant.DisplayName(),
+				participant.Login,
+			})
+		}
+
+		jsonBugs[i] = jsonBug
+	}
+	jsonObject, _ := json.MarshalIndent(jsonBugs, "", "    ")
+	fmt.Printf("%s\n", jsonObject)
+	return nil
+}
+
+func lsDefaultFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerpt) error {
+	for _, b := range bugExcerpts {
 		var name string
 		if b.AuthorId != "" {
 			author, err := backend.ResolveIdentityExcerpt(b.AuthorId)
 			if err != nil {
-				name = "<missing author data>"
-			} else {
-				name = author.DisplayName()
+				return err
 			}
+			name = author.DisplayName()
 		} else {
 			name = b.LegacyAuthor.DisplayName()
 		}
@@ -92,7 +202,13 @@ func runLsBug(cmd *cobra.Command, args []string) error {
 			comments,
 		)
 	}
+	return nil
+}
 
+func lsPlainFormatter(_ *cache.RepoCache, bugExcerpts []*cache.BugExcerpt) error {
+	for _, b := range bugExcerpts {
+		fmt.Printf("[%s] %s\n", b.Status, b.Title)
+	}
 	return nil
 }
 
@@ -177,4 +293,6 @@ func init() {
 		"Sort the results by a characteristic. Valid values are [id,creation,edit]")
 	lsCmd.Flags().StringVarP(&lsSortDirection, "direction", "d", "asc",
 		"Select the sorting direction. Valid values are [asc,desc]")
+	lsCmd.Flags().StringVarP(&lsOutputFormat, "format", "f", "default",
+		"Select the output formatting style. Valid values are [default, plain(text), json]")
 }

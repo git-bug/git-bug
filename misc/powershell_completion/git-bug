@@ -159,6 +159,8 @@ Register-ArgumentCompleter -Native -CommandName 'git-bug' -ScriptBlock {
             [CompletionResult]::new('--by', 'by', [CompletionResultType]::ParameterName, 'Sort the results by a characteristic. Valid values are [id,creation,edit]')
             [CompletionResult]::new('-d', 'd', [CompletionResultType]::ParameterName, 'Select the sorting direction. Valid values are [asc,desc]')
             [CompletionResult]::new('--direction', 'direction', [CompletionResultType]::ParameterName, 'Select the sorting direction. Valid values are [asc,desc]')
+            [CompletionResult]::new('-f', 'f', [CompletionResultType]::ParameterName, 'Select the output formatting style. Valid values are [default, plain(text), json]')
+            [CompletionResult]::new('--format', 'format', [CompletionResultType]::ParameterName, 'Select the output formatting style. Valid values are [default, plain(text), json]')
             break
         }
         'git-bug;ls-id' {
