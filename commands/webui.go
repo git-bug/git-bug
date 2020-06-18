@@ -62,7 +62,9 @@ func runWebUI(cmd *cobra.Command, args []string) error {
 	router.Path("/playground").Handler(playground.Handler("git-bug", "/graphql"))
 	router.Path("/graphql").Handler(graphqlHandler)
 	router.Path("/gitfile/{hash}").Handler(newGitFileHandler(repo))
-	router.Path("/upload").Methods("POST").Handler(newGitUploadFileHandler(repo))
+	if !webUIReadOnly {
+		router.Path("/upload").Methods("POST").Handler(newGitUploadFileHandler(repo))
+	}
 	router.PathPrefix("/").Handler(http.FileServer(assetsHandler))
 
 	srv := &http.Server{
