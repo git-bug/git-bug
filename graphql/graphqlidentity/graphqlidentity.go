@@ -18,22 +18,24 @@ func AttachToContext(ctx context.Context, u *identity.Identity) context.Context 
 	return context.WithValue(ctx, identityCtxKey, u.Id())
 }
 
-// ForContext retrieves an IdentityCache from the context, or nil if no identity is present.
+// ForContext retrieves an IdentityCache from the context.
+// If there is no identity in the context, ErrNotAuthenticated is returned.
 // If an error occurs while resolving the identity (e.g. I/O error), then it will be returned.
 func ForContext(ctx context.Context, r *cache.RepoCache) (*cache.IdentityCache, error) {
 	id, ok := ctx.Value(identityCtxKey).(entity.Id)
 	if !ok {
-		return nil, nil
+		return nil, ErrNotAuthenticated
 	}
 	return r.ResolveIdentity(id)
 }
 
-// ForContextUncached retrieves an Identity from the context, or nil if no identity is present.
+// ForContextUncached retrieves an Identity from the context.
+// If there is no identity in the context, ErrNotAuthenticated is returned.
 // If an error occurs while resolving the identity (e.g. I/O error), then it will be returned.
 func ForContextUncached(ctx context.Context, repo repository.Repo) (*identity.Identity, error) {
 	id, ok := ctx.Value(identityCtxKey).(entity.Id)
 	if !ok {
-		return nil, nil
+		return nil, ErrNotAuthenticated
 	}
 	return identity.ReadLocal(repo, id)
 }

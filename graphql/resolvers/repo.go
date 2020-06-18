@@ -152,10 +152,10 @@ func (repoResolver) Identity(_ context.Context, obj *models.Repository, prefix s
 
 func (repoResolver) UserIdentity(ctx context.Context, obj *models.Repository) (models.IdentityWrapper, error) {
 	id, err := graphqlidentity.ForContext(ctx, obj.Repo)
-	if err != nil {
-		return nil, err
-	} else if id == nil {
+	if err == graphqlidentity.ErrNotAuthenticated {
 		return nil, nil
+	} else if err != nil {
+		return nil, err
 	}
 	return models.NewLoadedIdentity(id.Identity), nil
 }

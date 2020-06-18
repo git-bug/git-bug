@@ -47,8 +47,6 @@ func (r mutationResolver) NewBug(ctx context.Context, input models.NewBugInput) 
 	id, err := graphqlidentity.ForContext(ctx, repo)
 	if err != nil {
 		return nil, err
-	} else if id == nil {
-		return nil, ErrNotAuthenticated
 	}
 
 	b, op, err := repo.NewBugRaw(id, time.Now().Unix(), input.Title, input.Message, input.Files, nil)
@@ -72,8 +70,6 @@ func (r mutationResolver) AddComment(ctx context.Context, input models.AddCommen
 	id, err := graphqlidentity.ForContext(ctx, repo)
 	if err != nil {
 		return nil, err
-	} else if id == nil {
-		return nil, ErrNotAuthenticated
 	}
 
 	op, err := b.AddCommentRaw(id, time.Now().Unix(), input.Message, input.Files, nil)
@@ -102,8 +98,6 @@ func (r mutationResolver) ChangeLabels(ctx context.Context, input *models.Change
 	id, err := graphqlidentity.ForContext(ctx, repo)
 	if err != nil {
 		return nil, err
-	} else if id == nil {
-		return nil, ErrNotAuthenticated
 	}
 
 	results, op, err := b.ChangeLabelsRaw(id, time.Now().Unix(), input.Added, input.Removed, nil)
@@ -138,8 +132,6 @@ func (r mutationResolver) OpenBug(ctx context.Context, input models.OpenBugInput
 	id, err := graphqlidentity.ForContext(ctx, repo)
 	if err != nil {
 		return nil, err
-	} else if id == nil {
-		return nil, ErrNotAuthenticated
 	}
 
 	op, err := b.OpenRaw(id, time.Now().Unix(), nil)
@@ -168,8 +160,6 @@ func (r mutationResolver) CloseBug(ctx context.Context, input models.CloseBugInp
 	id, err := graphqlidentity.ForContext(ctx, repo)
 	if err != nil {
 		return nil, err
-	} else if id == nil {
-		return nil, ErrNotAuthenticated
 	}
 
 	op, err := b.CloseRaw(id, time.Now().Unix(), nil)
@@ -198,8 +188,6 @@ func (r mutationResolver) SetTitle(ctx context.Context, input models.SetTitleInp
 	id, err := graphqlidentity.ForContext(ctx, repo)
 	if err != nil {
 		return nil, err
-	} else if id == nil {
-		return nil, ErrNotAuthenticated
 	}
 
 	op, err := b.SetTitleRaw(id, time.Now().Unix(), input.Title, nil)

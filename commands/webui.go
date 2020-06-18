@@ -211,12 +211,12 @@ func newGitUploadFileHandler(repo repository.Repo) http.Handler {
 }
 
 func (gufh *gitUploadFileHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	id, err := graphqlidentity.ForContextUncached(r.Context(), gufh.repo)
-	if err != nil {
-		http.Error(rw, fmt.Sprintf("loading identity: %v", err), http.StatusInternalServerError)
-		return
-	} else if id == nil {
+	_, err := graphqlidentity.ForContextUncached(r.Context(), gufh.repo)
+	if err == graphqlidentity.ErrNotAuthenticated {
 		http.Error(rw, fmt.Sprintf("read-only mode or not logged in"), http.StatusForbidden)
+		return
+	} else if err != nil {
+		http.Error(rw, fmt.Sprintf("loading identity: %v", err), http.StatusInternalServerError)
 		return
 	}
 
