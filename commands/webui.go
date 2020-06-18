@@ -19,7 +19,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/MichaelMure/git-bug/graphql"
-	"github.com/MichaelMure/git-bug/graphql/config"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/git"
@@ -35,6 +34,15 @@ var (
 
 const webUIOpenConfigKey = "git-bug.webui.open"
 
+func authMiddleware(repo repository.RepoCommon, id *identity.Identity) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := identity.AttachToContext(r.Context(), repo, id)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+}
+
 func runWebUI(cmd *cobra.Command, args []string) error {
 	if webUIPort == 0 {
 		var err error
@@ -44,9 +52,12 @@ func runWebUI(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	var id *identity.Identity
 	if !webUIReadOnly {
 		// Verify that we have an identity.
-		if _, err := identity.GetUserIdentity(repo); err != nil {
+		var err error
+		id, err = identity.GetUserIdentity(repo)
+		if err != nil {
 			return err
 		}
 	}
@@ -56,7 +67,7 @@ func runWebUI(cmd *cobra.Command, args []string) error {
 
 	router := mux.NewRouter()
 
-	graphqlHandler, err := graphql.NewHandler(repo, config.Config{ReadOnly: webUIReadOnly})
+	graphqlHandler, err := graphql.NewHandler(repo)
 	if err != nil {
 		return err
 	}
@@ -70,10 +81,9 @@ func runWebUI(cmd *cobra.Command, args []string) error {
 	router.Path("/playground").Handler(playground.Handler("git-bug", "/graphql"))
 	router.Path("/graphql").Handler(graphqlHandler)
 	router.Path("/gitfile/{hash}").Handler(newGitFileHandler(repo))
-	if !webUIReadOnly {
-		router.Path("/upload").Methods("POST").Handler(newGitUploadFileHandler(repo))
-	}
+	router.Path("/upload").Methods("POST").Handler(newGitUploadFileHandler(repo))
 	router.PathPrefix("/").Handler(http.FileServer(assetsHandler))
+	router.Use(authMiddleware(repo, id))
 
 	srv := &http.Server{
 		Addr:    addr,
@@ -200,6 +210,11 @@ func newGitUploadFileHandler(repo repository.Repo) http.Handler {
 }
 
 func (gufh *gitUploadFileHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	if identity.ForContext(r.Context(), gufh.repo) == nil {
+		http.Error(rw, fmt.Sprintf("read-only mode or not logged in"), http.StatusForbidden)
+		return
+	}
+
 	// 100MB (github limit)
 	var maxUploadSize int64 = 100 * 1000 * 1000
 	r.Body = http.MaxBytesReader(rw, r.Body, maxUploadSize)

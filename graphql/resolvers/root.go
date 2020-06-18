@@ -3,7 +3,6 @@ package resolvers
 
 import (
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/graphql/config"
 	"github.com/MichaelMure/git-bug/graphql/graph"
 )
 
@@ -11,13 +10,11 @@ var _ graph.ResolverRoot = &RootResolver{}
 
 type RootResolver struct {
 	cache.MultiRepoCache
-	cfg config.Config
 }
 
-func NewRootResolver(cfg config.Config) *RootResolver {
+func NewRootResolver() *RootResolver {
 	return &RootResolver{
 		MultiRepoCache: cache.NewMultiRepoCache(),
-		cfg:            cfg,
 	}
 }
 
@@ -28,16 +25,13 @@ func (r RootResolver) Query() graph.QueryResolver {
 }
 
 func (r RootResolver) Mutation() graph.MutationResolver {
-	if r.cfg.ReadOnly {
-		return &readonlyMutationResolver{}
-	}
 	return &mutationResolver{
 		cache: &r.MultiRepoCache,
 	}
 }
 
-func (r RootResolver) Repository() graph.RepositoryResolver {
-	return &repoResolver{r.cfg}
+func (RootResolver) Repository() graph.RepositoryResolver {
+	return &repoResolver{}
 }
 
 func (RootResolver) Bug() graph.BugResolver {
@@ -56,7 +50,7 @@ func (RootResolver) Label() graph.LabelResolver {
 	return &labelResolver{}
 }
 
-func (RootResolver) Identity() graph.IdentityResolver {
+func (r RootResolver) Identity() graph.IdentityResolver {
 	return &identityResolver{}
 }
 

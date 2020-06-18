@@ -8,7 +8,6 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 
-	"github.com/MichaelMure/git-bug/graphql/config"
 	"github.com/MichaelMure/git-bug/graphql/graph"
 	"github.com/MichaelMure/git-bug/graphql/resolvers"
 	"github.com/MichaelMure/git-bug/repository"
@@ -20,9 +19,9 @@ type Handler struct {
 	*resolvers.RootResolver
 }
 
-func NewHandler(repo repository.ClockedRepo, cfg config.Config) (Handler, error) {
+func NewHandler(repo repository.ClockedRepo) (Handler, error) {
 	h := Handler{
-		RootResolver: resolvers.NewRootResolver(cfg),
+		RootResolver: resolvers.NewRootResolver(),
 	}
 
 	err := h.RootResolver.RegisterDefaultRepository(repo)

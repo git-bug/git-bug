@@ -5,7 +5,6 @@ import (
 
 	"github.com/99designs/gqlgen/client"
 
-	"github.com/MichaelMure/git-bug/graphql/config"
 	"github.com/MichaelMure/git-bug/graphql/models"
 	"github.com/MichaelMure/git-bug/misc/random_bugs"
 	"github.com/MichaelMure/git-bug/repository"
@@ -17,7 +16,7 @@ func TestQueries(t *testing.T) {
 
 	random_bugs.FillRepoWithSeed(repo, 10, 42)
 
-	handler, err := NewHandler(repo, config.Config{})
+	handler, err := NewHandler(repo)
 	if err != nil {
 		t.Fatal(err)
 	}

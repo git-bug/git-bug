@@ -5,16 +5,16 @@ import (
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/graphql/config"
 	"github.com/MichaelMure/git-bug/graphql/connections"
 	"github.com/MichaelMure/git-bug/graphql/graph"
 	"github.com/MichaelMure/git-bug/graphql/models"
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/query"
 )
 
 var _ graph.RepositoryResolver = &repoResolver{}
 
-type repoResolver struct{ cfg config.Config }
+type repoResolver struct{}
 
 func (repoResolver) Name(_ context.Context, obj *models.Repository) (*string, error) {
 	name := obj.Repo.Name()
@@ -150,16 +150,12 @@ func (repoResolver) Identity(_ context.Context, obj *models.Repository, prefix s
 	return models.NewLazyIdentity(obj.Repo, excerpt), nil
 }
 
-func (r repoResolver) UserIdentity(_ context.Context, obj *models.Repository) (models.IdentityWrapper, error) {
-	if r.cfg.ReadOnly {
+func (repoResolver) UserIdentity(ctx context.Context, obj *models.Repository) (models.IdentityWrapper, error) {
+	id := identity.ForContext(ctx, obj.Repo)
+	if id == nil {
 		return nil, nil
 	}
-	excerpt, err := obj.Repo.GetUserIdentityExcerpt()
-	if err != nil {
-		return nil, err
-	}
-
-	return models.NewLazyIdentity(obj.Repo, excerpt), nil
+	return models.NewLoadedIdentity(id), nil
 }
 
 func (repoResolver) ValidLabels(_ context.Context, obj *models.Repository, after *string, before *string, first *int, last *int) (*models.LabelConnection, error) {
