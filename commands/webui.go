@@ -20,6 +20,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/graphql"
 	"github.com/MichaelMure/git-bug/graphql/config"
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/webui"
@@ -39,6 +40,13 @@ func runWebUI(cmd *cobra.Command, args []string) error {
 		var err error
 		webUIPort, err = freeport.GetFreePort()
 		if err != nil {
+			return err
+		}
+	}
+
+	if !webUIReadOnly {
+		// Verify that we have an identity.
+		if _, err := identity.GetUserIdentity(repo); err != nil {
 			return err
 		}
 	}
@@ -253,7 +261,7 @@ var webUICmd = &cobra.Command{
 Available git config:
   git-bug.webui.open [bool]: control the automatic opening of the web UI in the default browser
 `,
-	PreRunE: loadRepoEnsureUser,
+	PreRunE: loadRepo,
 	RunE:    runWebUI,
 }
 
