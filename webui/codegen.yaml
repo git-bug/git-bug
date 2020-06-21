@@ -1,4 +1,4 @@
-schema: '../graphql/schema/*.graphql'
+schema: '../api/graphql/schema/*.graphql'
 overwrite: true
 documents: src/**/*.graphql
 generates:
