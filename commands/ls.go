@@ -72,7 +72,7 @@ func runLsBug(_ *cobra.Command, args []string) error {
 	}
 }
 
-type JSONBug struct {
+type JSONBugExcerpt struct {
 	Id           string    `json:"id"`
 	HumanId      string    `json:"human_id"`
 	CreationTime time.Time `json:"creation_time"`
@@ -89,17 +89,10 @@ type JSONBug struct {
 	Metadata map[string]string `json:"metadata"`
 }
 
-type JSONIdentity struct {
-	Id      string `json:"id"`
-	HumanId string `json:"human_id"`
-	Name    string `json:"name"`
-	Login   string `json:"login"`
-}
-
 func lsJsonFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerpt) error {
-	jsonBugs := make([]JSONBug, len(bugExcerpts))
+	jsonBugs := make([]JSONBugExcerpt, len(bugExcerpts))
 	for i, b := range bugExcerpts {
-		jsonBug := JSONBug{
+		jsonBug := JSONBugExcerpt{
 			b.Id.String(),
 			b.Id.Human(),
 			time.Unix(b.CreateUnixTime, 0),
@@ -294,5 +287,5 @@ func init() {
 	lsCmd.Flags().StringVarP(&lsSortDirection, "direction", "d", "asc",
 		"Select the sorting direction. Valid values are [asc,desc]")
 	lsCmd.Flags().StringVarP(&lsOutputFormat, "format", "f", "default",
-		"Select the output formatting style. Valid values are [default, plain(text), json]")
+		"Select the output formatting style. Valid values are [default,plain,json]")
 }
