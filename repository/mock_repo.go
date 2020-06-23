@@ -9,6 +9,7 @@ import (
 )
 
 var _ ClockedRepo = &mockRepoForTest{}
+var _ TestedRepo = &mockRepoForTest{}
 
 // mockRepoForTest defines an instance of Repo that can be used for testing.
 type mockRepoForTest struct {
@@ -18,8 +19,7 @@ type mockRepoForTest struct {
 	trees        map[git.Hash]string
 	commits      map[git.Hash]commit
 	refs         map[string]git.Hash
-	createClock  lamport.Clock
-	editClock    lamport.Clock
+	clocks       map[string]lamport.Clock
 }
 
 type commit struct {
@@ -35,8 +35,7 @@ func NewMockRepoForTest() *mockRepoForTest {
 		trees:        make(map[git.Hash]string),
 		commits:      make(map[git.Hash]commit),
 		refs:         make(map[string]git.Hash),
-		createClock:  lamport.NewClock(),
-		editClock:    lamport.NewClock(),
+		clocks:       make(map[string]lamport.Clock),
 	}
 }
 
@@ -213,36 +212,16 @@ func (r *mockRepoForTest) GetTreeHash(commit git.Hash) (git.Hash, error) {
 	panic("implement me")
 }
 
-func (r *mockRepoForTest) LoadClocks() error {
-	return nil
+func (r *mockRepoForTest) GetOrCreateClock(name string) (lamport.Clock, error) {
+	if c, ok := r.clocks[name]; ok {
+		return c, nil
+	}
+
+	c := lamport.NewMemClock()
+	r.clocks[name] = c
+	return c, nil
 }
 
-func (r *mockRepoForTest) WriteClocks() error {
-	return nil
-}
-
-func (r *mockRepoForTest) CreateTime() lamport.Time {
-	return r.createClock.Time()
-}
-
-func (r *mockRepoForTest) CreateTimeIncrement() (lamport.Time, error) {
-	return r.createClock.Increment(), nil
-}
-
-func (r *mockRepoForTest) EditTime() lamport.Time {
-	return r.editClock.Time()
-}
-
-func (r *mockRepoForTest) EditTimeIncrement() (lamport.Time, error) {
-	return r.editClock.Increment(), nil
-}
-
-func (r *mockRepoForTest) WitnessCreate(time lamport.Time) error {
-	r.createClock.Witness(time)
-	return nil
-}
-
-func (r *mockRepoForTest) WitnessEdit(time lamport.Time) error {
-	r.editClock.Witness(time)
-	return nil
+func (r *mockRepoForTest) AddRemote(name string, url string) error {
+	panic("implement me")
 }

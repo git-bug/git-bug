@@ -4,24 +4,34 @@ import (
 	"github.com/MichaelMure/git-bug/repository"
 )
 
-// Witnesser will read all the available Bug to recreate the different logical
-// clocks
-func Witnesser(repo repository.ClockedRepo) error {
-	for b := range ReadAllLocalBugs(repo) {
-		if b.Err != nil {
-			return b.Err
+// ClockLoader is the repository.ClockLoader for the Bug entity
+var ClockLoader = repository.ClockLoader{
+	Clocks: []string{creationClockName, editClockName},
+	Witnesser: func(repo repository.ClockedRepo) error {
+		for b := range ReadAllLocalBugs(repo) {
+			if b.Err != nil {
+				return b.Err
+			}
+
+			createClock, err := repo.GetOrCreateClock(creationClockName)
+			if err != nil {
+				return err
+			}
+			err = createClock.Witness(b.Bug.createTime)
+			if err != nil {
+				return err
+			}
+
+			editClock, err := repo.GetOrCreateClock(editClockName)
+			if err != nil {
+				return err
+			}
+			err = editClock.Witness(b.Bug.editTime)
+			if err != nil {
+				return err
+			}
 		}
 
-		err := repo.WitnessCreate(b.Bug.createTime)
-		if err != nil {
-			return err
-		}
-
-		err = repo.WitnessEdit(b.Bug.editTime)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+		return nil
+	},
 }

@@ -12,7 +12,7 @@ import (
 
 func TestQueries(t *testing.T) {
 	repo := repository.CreateTestRepo(false)
-	defer repository.CleanupTestRepos(t, repo)
+	defer repository.CleanupTestRepos(repo)
 
 	random_bugs.FillRepoWithSeed(repo, 10, 42)
 

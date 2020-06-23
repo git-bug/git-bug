@@ -20,6 +20,9 @@ type Version struct {
 	// The lamport time at which this version become effective
 	// The reference time is the bug edition lamport clock
 	// It must be the first field in this struct due to https://github.com/golang/go/issues/599
+	//
+	// TODO: BREAKING CHANGE - this need to actually be one edition lamport time **per entity**
+	// This is not a problem right now but will be when more entities are added (pull-request, config ...)
 	time     lamport.Time
 	unixTime int64
 

@@ -10,7 +10,7 @@ import (
 
 func TestReadBugs(t *testing.T) {
 	repo := repository.CreateTestRepo(false)
-	defer repository.CleanupTestRepos(t, repo)
+	defer repository.CleanupTestRepos(repo)
 
 	random_bugs.FillRepoWithSeed(repo, 15, 42)
 
@@ -24,7 +24,7 @@ func TestReadBugs(t *testing.T) {
 
 func benchmarkReadBugs(bugNumber int, t *testing.B) {
 	repo := repository.CreateTestRepo(false)
-	defer repository.CleanupTestRepos(t, repo)
+	defer repository.CleanupTestRepos(repo)
 
 	random_bugs.FillRepoWithSeed(repo, bugNumber, 42)
 	t.ResetTimer()

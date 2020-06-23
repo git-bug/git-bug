@@ -81,7 +81,7 @@ func TestMetadata(t *testing.T) {
 
 func TestID(t *testing.T) {
 	repo := repository.CreateTestRepo(false)
-	defer repository.CleanupTestRepos(t, repo)
+	defer repository.CleanupTestRepos(repo)
 
 	repos := []repository.ClockedRepo{
 		repository.NewMockRepoForTest(),

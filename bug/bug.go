@@ -27,6 +27,9 @@ const createClockEntryPattern = "create-clock-%d"
 const editClockEntryPrefix = "edit-clock-"
 const editClockEntryPattern = "edit-clock-%d"
 
+const creationClockName = "bug-create"
+const editClockName = "bug-edit"
+
 var ErrBugNotExist = errors.New("bug doesn't exist")
 
 func NewErrMultipleMatchBug(matching []entity.Id) *entity.ErrMultipleMatch {
@@ -197,10 +200,18 @@ func readBug(repo repository.ClockedRepo, ref string) (*Bug, error) {
 		}
 
 		// Update the clocks
-		if err := repo.WitnessCreate(bug.createTime); err != nil {
+		createClock, err := repo.GetOrCreateClock(creationClockName)
+		if err != nil {
+			return nil, err
+		}
+		if err := createClock.Witness(bug.createTime); err != nil {
 			return nil, errors.Wrap(err, "failed to update create lamport clock")
 		}
-		if err := repo.WitnessEdit(bug.editTime); err != nil {
+		editClock, err := repo.GetOrCreateClock(editClockName)
+		if err != nil {
+			return nil, err
+		}
+		if err := editClock.Witness(bug.editTime); err != nil {
 			return nil, errors.Wrap(err, "failed to update edit lamport clock")
 		}
 
@@ -412,7 +423,11 @@ func (bug *Bug) Commit(repo repository.ClockedRepo) error {
 		return err
 	}
 
-	bug.editTime, err = repo.EditTimeIncrement()
+	editClock, err := repo.GetOrCreateClock(editClockName)
+	if err != nil {
+		return err
+	}
+	bug.editTime, err = editClock.Increment()
 	if err != nil {
 		return err
 	}
@@ -423,7 +438,11 @@ func (bug *Bug) Commit(repo repository.ClockedRepo) error {
 		Name:       fmt.Sprintf(editClockEntryPattern, bug.editTime),
 	})
 	if bug.lastCommit == "" {
-		bug.createTime, err = repo.CreateTimeIncrement()
+		createClock, err := repo.GetOrCreateClock(creationClockName)
+		if err != nil {
+			return err
+		}
+		bug.createTime, err = createClock.Increment()
 		if err != nil {
 			return err
 		}

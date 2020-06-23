@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"sync"
@@ -145,6 +146,11 @@ func (c *RepoCache) lock() error {
 	lockPath := repoLockFilePath(c.repo)
 
 	err := repoIsAvailable(c.repo)
+	if err != nil {
+		return err
+	}
+
+	err = os.MkdirAll(filepath.Dir(lockPath), 0777)
 	if err != nil {
 		return err
 	}

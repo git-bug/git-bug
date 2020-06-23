@@ -31,58 +31,59 @@ import (
 	"sync/atomic"
 )
 
-// Clock is a thread safe implementation of a lamport clock. It
+var _ Clock = &MemClock{}
+
+// MemClock is a thread safe implementation of a lamport clock. It
 // uses efficient atomic operations for all of its functions, falling back
 // to a heavy lock only if there are enough CAS failures.
-type Clock struct {
+type MemClock struct {
 	counter uint64
 }
 
-// Time is the value of a Clock.
-type Time uint64
-
-// NewClock create a new clock with the value 1.
+// NewMemClock create a new clock with the value 1.
 // Value 0 is considered as invalid.
-func NewClock() Clock {
-	return Clock{
+func NewMemClock() *MemClock {
+	return &MemClock{
 		counter: 1,
 	}
 }
 
-// NewClockWithTime create a new clock with a value.
-func NewClockWithTime(time uint64) Clock {
-	return Clock{
+// NewMemClockWithTime create a new clock with a value.
+func NewMemClockWithTime(time uint64) *MemClock {
+	return &MemClock{
 		counter: time,
 	}
 }
 
 // Time is used to return the current value of the lamport clock
-func (l *Clock) Time() Time {
-	return Time(atomic.LoadUint64(&l.counter))
+func (mc *MemClock) Time() Time {
+	return Time(atomic.LoadUint64(&mc.counter))
 }
 
 // Increment is used to return the value of the lamport clock and increment it afterwards
-func (l *Clock) Increment() Time {
-	return Time(atomic.AddUint64(&l.counter, 1) - 1)
+func (mc *MemClock) Increment() (Time, error) {
+	return Time(atomic.AddUint64(&mc.counter, 1) - 1), nil
 }
 
 // Witness is called to update our local clock if necessary after
 // witnessing a clock value received from another process
-func (l *Clock) Witness(v Time) {
+func (mc *MemClock) Witness(v Time) error {
 WITNESS:
 	// If the other value is old, we do not need to do anything
-	cur := atomic.LoadUint64(&l.counter)
+	cur := atomic.LoadUint64(&mc.counter)
 	other := uint64(v)
 	if other < cur {
-		return
+		return nil
 	}
 
 	// Ensure that our local clock is at least one ahead.
-	if !atomic.CompareAndSwapUint64(&l.counter, cur, other+1) {
+	if !atomic.CompareAndSwapUint64(&mc.counter, cur, other+1) {
 		// CAS: CompareAndSwap
 		// The CAS failed, so we just retry. Eventually our CAS should
 		// succeed or a future witness will pass us by and our witness
 		// will end.
 		goto WITNESS
 	}
+
+	return nil
 }

@@ -3,11 +3,12 @@ package repository
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/MichaelMure/git-bug/util/git"
 )
 
 func TestTreeEntryFormat(t *testing.T) {
-
 	entries := []TreeEntry{
 		{Blob, git.Hash("a85730cf5287d40a1e32d3a671ba2296c73387cb"), "name"},
 		{Tree, git.Hash("a85730cf5287d40a1e32d3a671ba2296c73387cb"), "name"},
@@ -26,10 +27,7 @@ func TestTreeEntryParse(t *testing.T) {
 
 	for _, line := range lines {
 		_, err := ParseTreeEntry(line)
-
-		if err != nil {
-			t.Fatal(err)
-		}
+		assert.NoError(t, err)
 	}
 
 }
