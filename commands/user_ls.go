@@ -22,6 +22,8 @@ func runUserLs(_ *cobra.Command, _ []string) error {
 	interrupt.RegisterCleaner(backend.Close)
 
 	switch userLsOutputFormat {
+	case "org-mode":
+		return userLsOrgmodeFormatter(backend)
 	case "json":
 		return userLsJsonFormatter(backend)
 	case "plain":
@@ -93,6 +95,22 @@ func userLsJsonFormatter(backend *cache.RepoCache) error {
 	return nil
 }
 
+func userLsOrgmodeFormatter(backend *cache.RepoCache) error {
+	for _, id := range backend.AllIdentityIds() {
+		i, err := backend.ResolveIdentityExcerpt(id)
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("* %s %s\n",
+			i.Id.Human(),
+			i.DisplayName(),
+		)
+	}
+
+	return nil
+}
+
 var userLsCmd = &cobra.Command{
 	Use:     "ls",
 	Short:   "List identities.",
@@ -104,5 +122,5 @@ func init() {
 	userCmd.AddCommand(userLsCmd)
 	userLsCmd.Flags().SortFlags = false
 	userLsCmd.Flags().StringVarP(&userLsOutputFormat, "format", "f", "default",
-		"Select the output formatting style. Valid values are [default,plain,json]")
+		"Select the output formatting style. Valid values are [default,plain,json,org-mode]")
 }

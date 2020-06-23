@@ -61,6 +61,8 @@ func runLsBug(_ *cobra.Command, args []string) error {
 	}
 
 	switch lsOutputFormat {
+	case "org-mode":
+		return lsOrgmodeFormatter(backend, bugExcerpt)
 	case "plain":
 		return lsPlainFormatter(backend, bugExcerpt)
 	case "json":
@@ -200,8 +202,85 @@ func lsDefaultFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerp
 
 func lsPlainFormatter(_ *cache.RepoCache, bugExcerpts []*cache.BugExcerpt) error {
 	for _, b := range bugExcerpts {
-		fmt.Printf("[%s] %s\n", b.Status, b.Title)
+		fmt.Printf("%s [%s] %s\n", b.Id.Human(), b.Status, b.Title)
 	}
+	return nil
+}
+
+func lsOrgmodeFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerpt) error {
+	fmt.Println("+TODO: OPEN | CLOSED")
+
+	for _, b := range bugExcerpts {
+		status := strings.Title(b.Status.String())
+
+		var title string
+		if link, ok := b.CreateMetadata["github-url"]; ok {
+			title = fmt.Sprintf("[%s][%s]", link, b.Title)
+		} else {
+			title = b.Title
+		}
+
+		var name string
+		if b.AuthorId != "" {
+			author, err := backend.ResolveIdentityExcerpt(b.AuthorId)
+			if err != nil {
+				return err
+			}
+			name = author.DisplayName()
+		} else {
+			name = b.LegacyAuthor.DisplayName()
+		}
+
+		labels := b.Labels
+		labelsString := ":"
+		if len(labels) > 0 {
+			for _, label := range labels {
+				labelsString += label.String() + ":"
+			}
+		} else {
+			labelsString = ""
+		}
+
+		fmt.Printf("* %s %s [%s] %s: %s %s\n",
+			b.Id.Human(),
+			status,
+			time.Unix(b.CreateUnixTime, 0),
+			name,
+			title,
+			labelsString,
+		)
+
+		fmt.Printf("** Last Edited: %s\n",
+			time.Unix(b.EditUnixTime, 0).String(),
+		)
+
+		fmt.Printf("** Actors:\n")
+		for _, element := range b.Actors {
+			actor, err := backend.ResolveIdentityExcerpt(element)
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf(": %s %s\n",
+				actor.Id.Human(),
+				actor.DisplayName(),
+			)
+		}
+
+		fmt.Printf("** Participants:\n")
+		for _, element := range b.Participants {
+			participant, err := backend.ResolveIdentityExcerpt(element)
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf(": %s %s\n",
+				participant.Id.Human(),
+				participant.DisplayName(),
+			)
+		}
+	}
+
 	return nil
 }
 
@@ -287,5 +366,5 @@ func init() {
 	lsCmd.Flags().StringVarP(&lsSortDirection, "direction", "d", "asc",
 		"Select the sorting direction. Valid values are [asc,desc]")
 	lsCmd.Flags().StringVarP(&lsOutputFormat, "format", "f", "default",
-		"Select the output formatting style. Valid values are [default,plain,json]")
+		"Select the output formatting style. Valid values are [default,plain,json,org-mode]")
 }

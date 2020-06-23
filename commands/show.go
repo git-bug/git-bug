@@ -78,6 +78,8 @@ func runShowBug(_ *cobra.Command, args []string) error {
 	}
 
 	switch showOutputFormat {
+	case "org-mode":
+		return showOrgmodeFormatter(snapshot)
 	case "json":
 		return showJsonFormatter(snapshot)
 	case "plain":
@@ -91,9 +93,9 @@ func runShowBug(_ *cobra.Command, args []string) error {
 
 func showDefaultFormatter(snapshot *bug.Snapshot) error {
 	// Header
-	fmt.Printf("[%s] %s %s\n\n",
-		colors.Yellow(snapshot.Status),
+	fmt.Printf("%s [%s] %s\n\n",
 		colors.Cyan(snapshot.Id().Human()),
+		colors.Yellow(snapshot.Status),
 		snapshot.Title,
 	)
 
@@ -165,9 +167,9 @@ func showDefaultFormatter(snapshot *bug.Snapshot) error {
 
 func showPlainFormatter(snapshot *bug.Snapshot) error {
 	// Header
-	fmt.Printf("[%s] %s %s\n",
-		snapshot.Status,
+	fmt.Printf("%s [%s] %s\n",
 		snapshot.Id().Human(),
+		snapshot.Status,
 		snapshot.Title,
 	)
 
@@ -322,6 +324,86 @@ func showJsonFormatter(snapshot *bug.Snapshot) error {
 	return nil
 }
 
+func showOrgmodeFormatter(snapshot *bug.Snapshot) error {
+	// Header
+	fmt.Printf("%s [%s] %s\n",
+		snapshot.Id().Human(),
+		snapshot.Status,
+		snapshot.Title,
+	)
+
+	fmt.Printf("* Author: %s\n",
+		snapshot.Author.DisplayName(),
+	)
+
+	fmt.Printf("* Creation Time: %s\n",
+		snapshot.CreatedAt.String(),
+	)
+
+	fmt.Printf("* Last Edit: %s\n",
+		snapshot.LastEditTime().String(),
+	)
+
+	// Labels
+	var labels = make([]string, len(snapshot.Labels))
+	for i, label := range snapshot.Labels {
+		labels[i] = string(label)
+	}
+
+	fmt.Printf("* Labels:\n")
+	if len(labels) > 0 {
+		fmt.Printf("** %s", strings.TrimSuffix(strings.Join(labels, "\n **"), "\n **"))
+	}
+
+	// Actors
+	var actors = make([]string, len(snapshot.Actors))
+	for i, actor := range snapshot.Actors {
+		actors[i] = fmt.Sprintf("%s %s",
+			actor.Id().Human(),
+			actor.DisplayName(),
+		)
+	}
+
+	fmt.Printf("* Actors: %s\n",
+		strings.TrimSuffix(strings.Join(actors, "\n **"), "\n **"),
+	)
+
+	// Participants
+	var participants = make([]string, len(snapshot.Participants))
+	for i, participant := range snapshot.Participants {
+		actors[i] = fmt.Sprintf("%s %s",
+			participant.Id().Human(),
+			participant.DisplayName(),
+		)
+	}
+
+	fmt.Printf("* Participants: %s\n",
+		strings.TrimSuffix(strings.Join(participants, "\n **"), "\n **"),
+	)
+
+	fmt.Printf("* Comments:\n")
+
+	for i, comment := range snapshot.Comments {
+		var message string
+		fmt.Printf("** #%d %s [%s]\n",
+			i,
+			comment.Author.DisplayName(),
+		)
+
+		if comment.Message == "" {
+			message = "No description provided."
+		} else {
+			message = strings.Replace(comment.Message, "\n", "\n: ", -1)
+		}
+
+		fmt.Printf(": %s\n",
+			message,
+		)
+	}
+
+	return nil
+}
+
 var showCmd = &cobra.Command{
 	Use:     "show [<id>]",
 	Short:   "Display the details of a bug.",
@@ -334,5 +416,5 @@ func init() {
 	showCmd.Flags().StringVarP(&showFieldsQuery, "field", "", "",
 		"Select field to display. Valid values are [author,authorEmail,createTime,lastEdit,humanId,id,labels,shortId,status,title,actors,participants]")
 	showCmd.Flags().StringVarP(&showOutputFormat, "format", "f", "default",
-		"Select the output formatting style. Valid values are [default,plain,json]")
+		"Select the output formatting style. Valid values are [default,plain,json,org-mode]")
 }
