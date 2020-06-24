@@ -78,8 +78,8 @@ func NewJSONIdentity(id interface{}) (JSONIdentity, error) {
 	case cache.LegacyAuthorExcerpt:
 		i := id.(cache.LegacyAuthorExcerpt)
 		return JSONIdentity{
-			nil,
-			nil,
+			"",
+			"",
 			i.Name,
 			i.Login,
 		}, nil

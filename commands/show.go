@@ -351,7 +351,9 @@ func showOrgmodeFormatter(snapshot *bug.Snapshot) error {
 
 	fmt.Printf("* Labels:\n")
 	if len(labels) > 0 {
-		fmt.Printf("** %s", strings.TrimSuffix(strings.Join(labels, "\n **"), "\n **"))
+		fmt.Printf("** %s\n",
+			strings.Join(labels, "\n** "),
+		)
 	}
 
 	// Actors
@@ -363,28 +365,28 @@ func showOrgmodeFormatter(snapshot *bug.Snapshot) error {
 		)
 	}
 
-	fmt.Printf("* Actors: %s\n",
-		strings.TrimSuffix(strings.Join(actors, "\n **"), "\n **"),
+	fmt.Printf("* Actors:\n** %s\n",
+		strings.Join(actors, "\n** "),
 	)
 
 	// Participants
 	var participants = make([]string, len(snapshot.Participants))
 	for i, participant := range snapshot.Participants {
-		actors[i] = fmt.Sprintf("%s %s",
+		participants[i] = fmt.Sprintf("%s %s",
 			participant.Id().Human(),
 			participant.DisplayName(),
 		)
 	}
 
-	fmt.Printf("* Participants: %s\n",
-		strings.TrimSuffix(strings.Join(participants, "\n **"), "\n **"),
+	fmt.Printf("* Participants:\n** %s\n",
+		strings.Join(participants, "\n** "),
 	)
 
 	fmt.Printf("* Comments:\n")
 
 	for i, comment := range snapshot.Comments {
 		var message string
-		fmt.Printf("** #%d %s [%s]\n",
+		fmt.Printf("** #%d %s\n",
 			i,
 			comment.Author.DisplayName(),
 		)
