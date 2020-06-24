@@ -4,14 +4,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
+	"time"
+
+	"github.com/spf13/cobra"
+
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	_select "github.com/MichaelMure/git-bug/commands/select"
 	"github.com/MichaelMure/git-bug/util/colors"
 	"github.com/MichaelMure/git-bug/util/interrupt"
-	"github.com/spf13/cobra"
-	"strings"
-	"time"
 )
 
 var (
@@ -82,8 +84,6 @@ func runShowBug(_ *cobra.Command, args []string) error {
 		return showOrgmodeFormatter(snapshot)
 	case "json":
 		return showJsonFormatter(snapshot)
-	case "plain":
-		return showPlainFormatter(snapshot)
 	case "default":
 		return showDefaultFormatter(snapshot)
 	default:
@@ -165,83 +165,6 @@ func showDefaultFormatter(snapshot *bug.Snapshot) error {
 	return nil
 }
 
-func showPlainFormatter(snapshot *bug.Snapshot) error {
-	// Header
-	fmt.Printf("%s [%s] %s\n",
-		snapshot.Id().Human(),
-		snapshot.Status,
-		snapshot.Title,
-	)
-
-	fmt.Printf("author: %s\n",
-		snapshot.Author.DisplayName(),
-	)
-
-	fmt.Printf("creation time: %s\n",
-		snapshot.CreatedAt.String(),
-	)
-
-	fmt.Printf("last edit: %s\n",
-		snapshot.LastEditTime().String(),
-	)
-
-	// Labels
-	var labels = make([]string, len(snapshot.Labels))
-	for i := range snapshot.Labels {
-		labels[i] = string(snapshot.Labels[i])
-	}
-
-	fmt.Printf("labels: %s\n",
-		strings.Join(labels, ", "),
-	)
-
-	// Actors
-	var actors = make([]string, len(snapshot.Actors))
-	for i := range snapshot.Actors {
-		actors[i] = snapshot.Actors[i].DisplayName()
-	}
-
-	fmt.Printf("actors: %s\n",
-		strings.Join(actors, ", "),
-	)
-
-	// Participants
-	var participants = make([]string, len(snapshot.Participants))
-	for i := range snapshot.Participants {
-		participants[i] = snapshot.Participants[i].DisplayName()
-	}
-
-	fmt.Printf("participants: %s\n",
-		strings.Join(participants, ", "),
-	)
-
-	// Comments
-	indent := "  "
-
-	for i, comment := range snapshot.Comments {
-		var message string
-		fmt.Printf("%s#%d %s <%s>\n",
-			indent,
-			i,
-			comment.Author.DisplayName(),
-			comment.Author.Email(),
-		)
-
-		if comment.Message == "" {
-			message = "No description provided."
-		} else {
-			message = comment.Message
-		}
-
-		fmt.Printf("%s%s\n",
-			indent,
-			strings.ReplaceAll(message, "\n", fmt.Sprintf("\n%s", indent)),
-		)
-	}
-
-	return nil
-}
-
 type JSONBugSnapshot struct {
 	Id           string    `json:"id"`
 	HumanId      string    `json:"human_id"`
@@ -259,47 +182,31 @@ type JSONBugSnapshot struct {
 }
 
 type JSONComment struct {
-	Id          int    `json:"id"`
-	AuthorName  string `json:"author_name"`
-	AuthorLogin string `json:"author_login"`
-	Message     string `json:"message"`
+	Id      int          `json:"id"`
+	Author  JSONIdentity `json:"author"`
+	Message string       `json:"message"`
 }
 
 func showJsonFormatter(snapshot *bug.Snapshot) error {
 	jsonBug := JSONBugSnapshot{
-		snapshot.Id().String(),
-		snapshot.Id().Human(),
-		snapshot.CreatedAt,
-		snapshot.LastEditTime(),
-		snapshot.Status.String(),
-		snapshot.Labels,
-		snapshot.Title,
-		JSONIdentity{},
-		[]JSONIdentity{},
-		[]JSONIdentity{},
-		[]JSONComment{},
+		Id:           snapshot.Id().String(),
+		HumanId:      snapshot.Id().Human(),
+		CreationTime: snapshot.CreatedAt,
+		LastEdited:   snapshot.LastEditTime(),
+		Status:       snapshot.Status.String(),
+		Labels:       snapshot.Labels,
+		Title:        snapshot.Title,
+		Author:       NewJSONIdentity(snapshot.Author),
 	}
 
-	author, err := NewJSONIdentity(snapshot.Author)
-	if err != nil {
-		return err
-	}
-	jsonBug.Author = author
-
-	for _, element := range snapshot.Actors {
-		actor, err := NewJSONIdentity(element)
-		if err != nil {
-			return err
-		}
-		jsonBug.Actors = append(jsonBug.Actors, actor)
+	jsonBug.Actors = make([]JSONIdentity, len(snapshot.Actors))
+	for i, element := range snapshot.Actors {
+		jsonBug.Actors[i] = NewJSONIdentity(element)
 	}
 
-	for _, element := range snapshot.Participants {
-		participant, err := NewJSONIdentity(element)
-		if err != nil {
-			return err
-		}
-		jsonBug.Participants = append(jsonBug.Participants, participant)
+	jsonBug.Participants = make([]JSONIdentity, len(snapshot.Participants))
+	for i, element := range snapshot.Participants {
+		jsonBug.Participants[i] = NewJSONIdentity(element)
 	}
 
 	for i, comment := range snapshot.Comments {
@@ -310,10 +217,9 @@ func showJsonFormatter(snapshot *bug.Snapshot) error {
 			message = comment.Message
 		}
 		jsonBug.Comments = append(jsonBug.Comments, JSONComment{
-			i,
-			comment.Author.Name(),
-			comment.Author.Login(),
-			message,
+			Id:      i,
+			Author:  NewJSONIdentity(comment.Author),
+			Message: message,
 		})
 	}
 
@@ -417,5 +323,5 @@ func init() {
 	showCmd.Flags().StringVarP(&showFieldsQuery, "field", "", "",
 		"Select field to display. Valid values are [author,authorEmail,createTime,lastEdit,humanId,id,labels,shortId,status,title,actors,participants]")
 	showCmd.Flags().StringVarP(&showOutputFormat, "format", "f", "default",
-		"Select the output formatting style. Valid values are [default,plain,json,org-mode]")
+		"Select the output formatting style. Valid values are [default,json,org-mode]")
 }

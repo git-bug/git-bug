@@ -95,18 +95,15 @@ func lsJsonFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerpt) 
 	jsonBugs := make([]JSONBugExcerpt, len(bugExcerpts))
 	for i, b := range bugExcerpts {
 		jsonBug := JSONBugExcerpt{
-			b.Id.String(),
-			b.Id.Human(),
-			time.Unix(b.CreateUnixTime, 0),
-			time.Unix(b.EditUnixTime, 0),
-			b.Status.String(),
-			b.Labels,
-			b.Title,
-			[]JSONIdentity{},
-			[]JSONIdentity{},
-			JSONIdentity{},
-			b.LenComments,
-			b.CreateMetadata,
+			Id:           b.Id.String(),
+			HumanId:      b.Id.Human(),
+			CreationTime: time.Unix(b.CreateUnixTime, 0),
+			LastEdited:   time.Unix(b.EditUnixTime, 0),
+			Status:       b.Status.String(),
+			Labels:       b.Labels,
+			Title:        b.Title,
+			Comments:     b.LenComments,
+			Metadata:     b.CreateMetadata,
 		}
 
 		if b.AuthorId != "" {
@@ -114,46 +111,27 @@ func lsJsonFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerpt) 
 			if err != nil {
 				return err
 			}
-
-			i, err := NewJSONIdentity(author)
-			if err != nil {
-				return err
-			}
-			jsonBug.Author = i
+			jsonBug.Author = NewJSONIdentityFromExcerpt(author)
 		} else {
-			i, err := NewJSONIdentity(b.LegacyAuthor)
-			if err != nil {
-				return err
-			}
-			jsonBug.Author = i
+			jsonBug.Author = NewJSONIdentityFromLegacyExcerpt(&b.LegacyAuthor)
 		}
 
-		for _, element := range b.Actors {
+		jsonBug.Actors = make([]JSONIdentity, len(b.Actors))
+		for i, element := range b.Actors {
 			actor, err := backend.ResolveIdentityExcerpt(element)
 			if err != nil {
 				return err
 			}
-
-			i, err := NewJSONIdentity(actor)
-			if err != nil {
-				return err
-			}
-
-			jsonBug.Actors = append(jsonBug.Actors, i)
+			jsonBug.Actors[i] = NewJSONIdentityFromExcerpt(actor)
 		}
 
-		for _, element := range b.Participants {
+		jsonBug.Participants = make([]JSONIdentity, len(b.Participants))
+		for i, element := range b.Participants {
 			participant, err := backend.ResolveIdentityExcerpt(element)
 			if err != nil {
 				return err
 			}
-
-			i, err := NewJSONIdentity(participant)
-			if err != nil {
-				return err
-			}
-
-			jsonBug.Participants = append(jsonBug.Participants, i)
+			jsonBug.Participants[i] = NewJSONIdentityFromExcerpt(participant)
 		}
 
 		jsonBugs[i] = jsonBug
