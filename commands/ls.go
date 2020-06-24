@@ -115,13 +115,17 @@ func lsJsonFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerpt) 
 				return err
 			}
 
-			jsonBug.Author.Name = author.DisplayName()
-			jsonBug.Author.Login = author.Login
-			jsonBug.Author.Id = author.Id.String()
-			jsonBug.Author.HumanId = author.Id.Human()
+			i, err := NewJSONIdentity(author)
+			if err != nil {
+				return err
+			}
+			jsonBug.Author = i
 		} else {
-			jsonBug.Author.Name = b.LegacyAuthor.DisplayName()
-			jsonBug.Author.Login = b.LegacyAuthor.Login
+			i, err := NewJSONIdentity(b.LegacyAuthor)
+			if err != nil {
+				return err
+			}
+			jsonBug.Author = i
 		}
 
 		for _, element := range b.Actors {
@@ -130,12 +134,12 @@ func lsJsonFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerpt) 
 				return err
 			}
 
-			jsonBug.Actors = append(jsonBug.Actors, JSONIdentity{
-				actor.Id.String(),
-				actor.Id.Human(),
-				actor.Name,
-				actor.Login,
-			})
+			i, err := NewJSONIdentity(actor)
+			if err != nil {
+				return err
+			}
+
+			jsonBug.Actors = append(jsonBug.Actors, i)
 		}
 
 		for _, element := range b.Participants {
@@ -143,12 +147,13 @@ func lsJsonFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerpt) 
 			if err != nil {
 				return err
 			}
-			jsonBug.Participants = append(jsonBug.Participants, JSONIdentity{
-				participant.Id.String(),
-				participant.Id.Human(),
-				participant.DisplayName(),
-				participant.Login,
-			})
+
+			i, err := NewJSONIdentity(participant)
+			if err != nil {
+				return err
+			}
+
+			jsonBug.Participants = append(jsonBug.Participants, i)
 		}
 
 		jsonBugs[i] = jsonBug
@@ -232,11 +237,9 @@ func lsOrgmodeFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerp
 		}
 
 		labels := b.Labels
-		labelsString := ":"
+		var labelsString string
 		if len(labels) > 0 {
-			for _, label := range labels {
-				labelsString += label.String() + ":"
-			}
+			labelsString = fmt.Sprintf(":%s:", strings.Replace(fmt.Sprint(labels), " ", ":", -1))
 		} else {
 			labelsString = ""
 		}

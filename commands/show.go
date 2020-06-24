@@ -235,7 +235,7 @@ func showPlainFormatter(snapshot *bug.Snapshot) error {
 
 		fmt.Printf("%s%s\n",
 			indent,
-			message,
+			strings.ReplaceAll(message, "\n", fmt.Sprintf("\n%s", indent)),
 		)
 	}
 
@@ -280,27 +280,26 @@ func showJsonFormatter(snapshot *bug.Snapshot) error {
 		[]JSONComment{},
 	}
 
-	jsonBug.Author.Name = snapshot.Author.DisplayName()
-	jsonBug.Author.Login = snapshot.Author.Login()
-	jsonBug.Author.Id = snapshot.Author.Id().String()
-	jsonBug.Author.HumanId = snapshot.Author.Id().Human()
+	author, err := NewJSONIdentity(snapshot.Author)
+	if err != nil {
+		return err
+	}
+	jsonBug.Author = author
 
 	for _, element := range snapshot.Actors {
-		jsonBug.Actors = append(jsonBug.Actors, JSONIdentity{
-			element.Id().String(),
-			element.Id().Human(),
-			element.Name(),
-			element.Login(),
-		})
+		actor, err := NewJSONIdentity(element)
+		if err != nil {
+			return err
+		}
+		jsonBug.Actors = append(jsonBug.Actors, actor)
 	}
 
 	for _, element := range snapshot.Participants {
-		jsonBug.Actors = append(jsonBug.Actors, JSONIdentity{
-			element.Id().String(),
-			element.Id().Human(),
-			element.Name(),
-			element.Login(),
-		})
+		participant, err := NewJSONIdentity(element)
+		if err != nil {
+			return err
+		}
+		jsonBug.Participants = append(jsonBug.Participants, participant)
 	}
 
 	for i, comment := range snapshot.Comments {
@@ -393,7 +392,7 @@ func showOrgmodeFormatter(snapshot *bug.Snapshot) error {
 		if comment.Message == "" {
 			message = "No description provided."
 		} else {
-			message = strings.Replace(comment.Message, "\n", "\n: ", -1)
+			message = strings.ReplaceAll(comment.Message, "\n", "\n: ")
 		}
 
 		fmt.Printf(": %s\n",
