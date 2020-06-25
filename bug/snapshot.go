@@ -19,7 +19,7 @@ type Snapshot struct {
 	Author       identity.Interface
 	Actors       []identity.Interface
 	Participants []identity.Interface
-	CreatedAt    time.Time
+	CreateTime   time.Time
 
 	Timeline []TimelineItem
 
@@ -32,21 +32,12 @@ func (snap *Snapshot) Id() entity.Id {
 }
 
 // Return the last time a bug was modified
-func (snap *Snapshot) LastEditTime() time.Time {
+func (snap *Snapshot) EditTime() time.Time {
 	if len(snap.Operations) == 0 {
 		return time.Unix(0, 0)
 	}
 
 	return snap.Operations[len(snap.Operations)-1].Time()
-}
-
-// Return the last timestamp a bug was modified
-func (snap *Snapshot) LastEditUnix() int64 {
-	if len(snap.Operations) == 0 {
-		return 0
-	}
-
-	return snap.Operations[len(snap.Operations)-1].GetUnixTime()
 }
 
 // GetCreateMetadata return the creation metadata

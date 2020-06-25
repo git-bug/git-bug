@@ -165,7 +165,7 @@ func (je *jiraExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, si
 
 				// ignore issues whose last modification date is before the query date
 				// TODO: compare the Lamport time instead of using the unix time
-				if snapshot.CreatedAt.Before(since) {
+				if snapshot.CreateTime.Before(since) {
 					out <- core.NewExportNothing(b.Id(), "bug created before the since date")
 					continue
 				}

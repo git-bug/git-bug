@@ -173,7 +173,7 @@ func (ge *githubExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, 
 
 				// ignore issues created before since date
 				// TODO: compare the Lamport time instead of using the unix time
-				if snapshot.CreatedAt.Before(since) {
+				if snapshot.CreateTime.Before(since) {
 					out <- core.NewExportNothing(b.Id(), "bug created before the since date")
 					continue
 				}

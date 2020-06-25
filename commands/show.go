@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 
@@ -47,9 +46,9 @@ func runShowBug(_ *cobra.Command, args []string) error {
 		case "authorEmail":
 			fmt.Printf("%s\n", snapshot.Author.Email())
 		case "createTime":
-			fmt.Printf("%s\n", snapshot.CreatedAt.String())
+			fmt.Printf("%s\n", snapshot.CreateTime.String())
 		case "lastEdit":
-			fmt.Printf("%s\n", snapshot.LastEditTime().String())
+			fmt.Printf("%s\n", snapshot.EditTime().String())
 		case "humanId":
 			fmt.Printf("%s\n", snapshot.Id().Human())
 		case "id":
@@ -101,11 +100,11 @@ func showDefaultFormatter(snapshot *bug.Snapshot) error {
 
 	fmt.Printf("%s opened this issue %s\n",
 		colors.Magenta(snapshot.Author.DisplayName()),
-		snapshot.CreatedAt.String(),
+		snapshot.CreateTime.String(),
 	)
 
 	fmt.Printf("This was last edited at %s\n\n",
-		snapshot.LastEditTime().String(),
+		snapshot.EditTime().String(),
 	)
 
 	// Labels
@@ -166,37 +165,45 @@ func showDefaultFormatter(snapshot *bug.Snapshot) error {
 }
 
 type JSONBugSnapshot struct {
-	Id           string    `json:"id"`
-	HumanId      string    `json:"human_id"`
-	CreationTime time.Time `json:"creation_time"`
-	LastEdited   time.Time `json:"last_edited"`
-
+	Id           string         `json:"id"`
+	HumanId      string         `json:"human_id"`
+	CreateTime   JSONTime       `json:"create_time"`
+	EditTime     JSONTime       `json:"edit_time"`
 	Status       string         `json:"status"`
 	Labels       []bug.Label    `json:"labels"`
 	Title        string         `json:"title"`
 	Author       JSONIdentity   `json:"author"`
 	Actors       []JSONIdentity `json:"actors"`
 	Participants []JSONIdentity `json:"participants"`
-
-	Comments []JSONComment `json:"comments"`
+	Comments     []JSONComment  `json:"comments"`
 }
 
 type JSONComment struct {
-	Id      int          `json:"id"`
+	Id      string       `json:"id"`
+	HumanId string       `json:"human_id"`
 	Author  JSONIdentity `json:"author"`
 	Message string       `json:"message"`
 }
 
+func NewJSONComment(comment bug.Comment) JSONComment {
+	return JSONComment{
+		Id:      comment.Id().String(),
+		HumanId: comment.Id().Human(),
+		Author:  NewJSONIdentity(comment.Author),
+		Message: comment.Message,
+	}
+}
+
 func showJsonFormatter(snapshot *bug.Snapshot) error {
 	jsonBug := JSONBugSnapshot{
-		Id:           snapshot.Id().String(),
-		HumanId:      snapshot.Id().Human(),
-		CreationTime: snapshot.CreatedAt,
-		LastEdited:   snapshot.LastEditTime(),
-		Status:       snapshot.Status.String(),
-		Labels:       snapshot.Labels,
-		Title:        snapshot.Title,
-		Author:       NewJSONIdentity(snapshot.Author),
+		Id:         snapshot.Id().String(),
+		HumanId:    snapshot.Id().Human(),
+		CreateTime: NewJSONTime(snapshot.CreateTime, 0),
+		EditTime:   NewJSONTime(snapshot.EditTime(), 0),
+		Status:     snapshot.Status.String(),
+		Labels:     snapshot.Labels,
+		Title:      snapshot.Title,
+		Author:     NewJSONIdentity(snapshot.Author),
 	}
 
 	jsonBug.Actors = make([]JSONIdentity, len(snapshot.Actors))
@@ -209,18 +216,9 @@ func showJsonFormatter(snapshot *bug.Snapshot) error {
 		jsonBug.Participants[i] = NewJSONIdentity(element)
 	}
 
+	jsonBug.Comments = make([]JSONComment, len(snapshot.Comments))
 	for i, comment := range snapshot.Comments {
-		var message string
-		if comment.Message == "" {
-			message = "No description provided."
-		} else {
-			message = comment.Message
-		}
-		jsonBug.Comments = append(jsonBug.Comments, JSONComment{
-			Id:      i,
-			Author:  NewJSONIdentity(comment.Author),
-			Message: message,
-		})
+		jsonBug.Comments[i] = NewJSONComment(comment)
 	}
 
 	jsonObject, _ := json.MarshalIndent(jsonBug, "", "    ")
@@ -242,11 +240,11 @@ func showOrgmodeFormatter(snapshot *bug.Snapshot) error {
 	)
 
 	fmt.Printf("* Creation Time: %s\n",
-		snapshot.CreatedAt.String(),
+		snapshot.CreateTime.String(),
 	)
 
 	fmt.Printf("* Last Edit: %s\n",
-		snapshot.LastEditTime().String(),
+		snapshot.EditTime().String(),
 	)
 
 	// Labels

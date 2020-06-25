@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
 	text "github.com/MichaelMure/go-term-text"
 	"github.com/spf13/cobra"
@@ -75,10 +74,10 @@ func runLsBug(_ *cobra.Command, args []string) error {
 }
 
 type JSONBugExcerpt struct {
-	Id           string    `json:"id"`
-	HumanId      string    `json:"human_id"`
-	CreationTime time.Time `json:"creation_time"`
-	LastEdited   time.Time `json:"last_edited"`
+	Id         string   `json:"id"`
+	HumanId    string   `json:"human_id"`
+	CreateTime JSONTime `json:"create_time"`
+	EditTime   JSONTime `json:"edit_time"`
 
 	Status       string         `json:"status"`
 	Labels       []bug.Label    `json:"labels"`
@@ -95,15 +94,15 @@ func lsJsonFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerpt) 
 	jsonBugs := make([]JSONBugExcerpt, len(bugExcerpts))
 	for i, b := range bugExcerpts {
 		jsonBug := JSONBugExcerpt{
-			Id:           b.Id.String(),
-			HumanId:      b.Id.Human(),
-			CreationTime: time.Unix(b.CreateUnixTime, 0),
-			LastEdited:   time.Unix(b.EditUnixTime, 0),
-			Status:       b.Status.String(),
-			Labels:       b.Labels,
-			Title:        b.Title,
-			Comments:     b.LenComments,
-			Metadata:     b.CreateMetadata,
+			Id:         b.Id.String(),
+			HumanId:    b.Id.Human(),
+			CreateTime: NewJSONTime(b.CreateTime(), b.CreateLamportTime),
+			EditTime:   NewJSONTime(b.EditTime(), b.EditLamportTime),
+			Status:     b.Status.String(),
+			Labels:     b.Labels,
+			Title:      b.Title,
+			Comments:   b.LenComments,
+			Metadata:   b.CreateMetadata,
 		}
 
 		if b.AuthorId != "" {
@@ -225,15 +224,13 @@ func lsOrgmodeFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerp
 		fmt.Printf("* %s %s [%s] %s: %s %s\n",
 			b.Id.Human(),
 			status,
-			time.Unix(b.CreateUnixTime, 0),
+			b.CreateTime(),
 			name,
 			title,
 			labelsString,
 		)
 
-		fmt.Printf("** Last Edited: %s\n",
-			time.Unix(b.EditUnixTime, 0).String(),
-		)
+		fmt.Printf("** Last Edited: %s\n", b.EditTime().String())
 
 		fmt.Printf("** Actors:\n")
 		for _, element := range b.Actors {

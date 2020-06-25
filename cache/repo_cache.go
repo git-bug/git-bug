@@ -29,7 +29,8 @@ const identityCacheFile = "identity-cache"
 
 // 1: original format
 // 2: added cache for identities with a reference in the bug cache
-const formatVersion = 2
+// 3: CreateUnixTime --> createUnixTime, EditUnixTime --> editUnixTime
+const formatVersion = 3
 
 type ErrInvalidCacheFormat struct {
 	message string
@@ -99,9 +100,12 @@ func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, error
 	if err == nil {
 		return c, nil
 	}
-	if _, ok := err.(ErrInvalidCacheFormat); ok {
+	if _, ok := err.(ErrInvalidCacheFormat); !ok {
+		// Actual error
 		return nil, err
 	}
+
+	// We have an outdated cache format, rebuilding it.
 
 	err = c.buildCache()
 	if err != nil {
@@ -254,7 +258,7 @@ func (c *RepoCache) loadBugCache() error {
 		return err
 	}
 
-	if aux.Version != 2 {
+	if aux.Version != formatVersion {
 		return ErrInvalidCacheFormat{
 			message: fmt.Sprintf("unknown cache format version %v", aux.Version),
 		}
@@ -286,7 +290,7 @@ func (c *RepoCache) loadIdentityCache() error {
 		return err
 	}
 
-	if aux.Version != 2 {
+	if aux.Version != formatVersion {
 		return ErrInvalidCacheFormat{
 			message: fmt.Sprintf("unknown cache format version %v", aux.Version),
 		}
