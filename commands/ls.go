@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
 	text "github.com/MichaelMure/go-term-text"
 	"github.com/spf13/cobra"
@@ -61,6 +60,8 @@ func runLsBug(_ *cobra.Command, args []string) error {
 	}
 
 	switch lsOutputFormat {
+	case "org-mode":
+		return lsOrgmodeFormatter(backend, bugExcerpt)
 	case "plain":
 		return lsPlainFormatter(backend, bugExcerpt)
 	case "json":
@@ -72,11 +73,11 @@ func runLsBug(_ *cobra.Command, args []string) error {
 	}
 }
 
-type JSONBug struct {
-	Id           string    `json:"id"`
-	HumanId      string    `json:"human_id"`
-	CreationTime time.Time `json:"creation_time"`
-	LastEdited   time.Time `json:"last_edited"`
+type JSONBugExcerpt struct {
+	Id         string   `json:"id"`
+	HumanId    string   `json:"human_id"`
+	CreateTime JSONTime `json:"create_time"`
+	EditTime   JSONTime `json:"edit_time"`
 
 	Status       string         `json:"status"`
 	Labels       []bug.Label    `json:"labels"`
@@ -89,29 +90,19 @@ type JSONBug struct {
 	Metadata map[string]string `json:"metadata"`
 }
 
-type JSONIdentity struct {
-	Id      string `json:"id"`
-	HumanId string `json:"human_id"`
-	Name    string `json:"name"`
-	Login   string `json:"login"`
-}
-
 func lsJsonFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerpt) error {
-	jsonBugs := make([]JSONBug, len(bugExcerpts))
+	jsonBugs := make([]JSONBugExcerpt, len(bugExcerpts))
 	for i, b := range bugExcerpts {
-		jsonBug := JSONBug{
-			b.Id.String(),
-			b.Id.Human(),
-			time.Unix(b.CreateUnixTime, 0),
-			time.Unix(b.EditUnixTime, 0),
-			b.Status.String(),
-			b.Labels,
-			b.Title,
-			[]JSONIdentity{},
-			[]JSONIdentity{},
-			JSONIdentity{},
-			b.LenComments,
-			b.CreateMetadata,
+		jsonBug := JSONBugExcerpt{
+			Id:         b.Id.String(),
+			HumanId:    b.Id.Human(),
+			CreateTime: NewJSONTime(b.CreateTime(), b.CreateLamportTime),
+			EditTime:   NewJSONTime(b.EditTime(), b.EditLamportTime),
+			Status:     b.Status.String(),
+			Labels:     b.Labels,
+			Title:      b.Title,
+			Comments:   b.LenComments,
+			Metadata:   b.CreateMetadata,
 		}
 
 		if b.AuthorId != "" {
@@ -119,41 +110,27 @@ func lsJsonFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerpt) 
 			if err != nil {
 				return err
 			}
-
-			jsonBug.Author.Name = author.DisplayName()
-			jsonBug.Author.Login = author.Login
-			jsonBug.Author.Id = author.Id.String()
-			jsonBug.Author.HumanId = author.Id.Human()
+			jsonBug.Author = NewJSONIdentityFromExcerpt(author)
 		} else {
-			jsonBug.Author.Name = b.LegacyAuthor.DisplayName()
-			jsonBug.Author.Login = b.LegacyAuthor.Login
+			jsonBug.Author = NewJSONIdentityFromLegacyExcerpt(&b.LegacyAuthor)
 		}
 
-		for _, element := range b.Actors {
+		jsonBug.Actors = make([]JSONIdentity, len(b.Actors))
+		for i, element := range b.Actors {
 			actor, err := backend.ResolveIdentityExcerpt(element)
 			if err != nil {
 				return err
 			}
-
-			jsonBug.Actors = append(jsonBug.Actors, JSONIdentity{
-				actor.Id.String(),
-				actor.Id.Human(),
-				actor.Name,
-				actor.Login,
-			})
+			jsonBug.Actors[i] = NewJSONIdentityFromExcerpt(actor)
 		}
 
-		for _, element := range b.Participants {
+		jsonBug.Participants = make([]JSONIdentity, len(b.Participants))
+		for i, element := range b.Participants {
 			participant, err := backend.ResolveIdentityExcerpt(element)
 			if err != nil {
 				return err
 			}
-			jsonBug.Participants = append(jsonBug.Participants, JSONIdentity{
-				participant.Id.String(),
-				participant.Id.Human(),
-				participant.DisplayName(),
-				participant.Login,
-			})
+			jsonBug.Participants[i] = NewJSONIdentityFromExcerpt(participant)
 		}
 
 		jsonBugs[i] = jsonBug
@@ -207,8 +184,81 @@ func lsDefaultFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerp
 
 func lsPlainFormatter(_ *cache.RepoCache, bugExcerpts []*cache.BugExcerpt) error {
 	for _, b := range bugExcerpts {
-		fmt.Printf("[%s] %s\n", b.Status, b.Title)
+		fmt.Printf("%s [%s] %s\n", b.Id.Human(), b.Status, b.Title)
 	}
+	return nil
+}
+
+func lsOrgmodeFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerpt) error {
+	fmt.Println("+TODO: OPEN | CLOSED")
+
+	for _, b := range bugExcerpts {
+		status := strings.Title(b.Status.String())
+
+		var title string
+		if link, ok := b.CreateMetadata["github-url"]; ok {
+			title = fmt.Sprintf("[%s][%s]", link, b.Title)
+		} else {
+			title = b.Title
+		}
+
+		var name string
+		if b.AuthorId != "" {
+			author, err := backend.ResolveIdentityExcerpt(b.AuthorId)
+			if err != nil {
+				return err
+			}
+			name = author.DisplayName()
+		} else {
+			name = b.LegacyAuthor.DisplayName()
+		}
+
+		labels := b.Labels
+		var labelsString string
+		if len(labels) > 0 {
+			labelsString = fmt.Sprintf(":%s:", strings.Replace(fmt.Sprint(labels), " ", ":", -1))
+		} else {
+			labelsString = ""
+		}
+
+		fmt.Printf("* %s %s [%s] %s: %s %s\n",
+			b.Id.Human(),
+			status,
+			b.CreateTime(),
+			name,
+			title,
+			labelsString,
+		)
+
+		fmt.Printf("** Last Edited: %s\n", b.EditTime().String())
+
+		fmt.Printf("** Actors:\n")
+		for _, element := range b.Actors {
+			actor, err := backend.ResolveIdentityExcerpt(element)
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf(": %s %s\n",
+				actor.Id.Human(),
+				actor.DisplayName(),
+			)
+		}
+
+		fmt.Printf("** Participants:\n")
+		for _, element := range b.Participants {
+			participant, err := backend.ResolveIdentityExcerpt(element)
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf(": %s %s\n",
+				participant.Id.Human(),
+				participant.DisplayName(),
+			)
+		}
+	}
+
 	return nil
 }
 
@@ -294,5 +344,5 @@ func init() {
 	lsCmd.Flags().StringVarP(&lsSortDirection, "direction", "d", "asc",
 		"Select the sorting direction. Valid values are [asc,desc]")
 	lsCmd.Flags().StringVarP(&lsOutputFormat, "format", "f", "default",
-		"Select the output formatting style. Valid values are [default, plain(text), json]")
+		"Select the output formatting style. Valid values are [default,plain,json,org-mode]")
 }

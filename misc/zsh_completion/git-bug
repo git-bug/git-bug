@@ -304,7 +304,7 @@ function _git-bug_ls {
     '(*-n *--no)'{\*-n,\*--no}'[Filter by absence of something. Valid values are [label]]:' \
     '(-b --by)'{-b,--by}'[Sort the results by a characteristic. Valid values are [id,creation,edit]]:' \
     '(-d --direction)'{-d,--direction}'[Select the sorting direction. Valid values are [asc,desc]]:' \
-    '(-f --format)'{-f,--format}'[Select the output formatting style. Valid values are [default, plain(text), json]]:'
+    '(-f --format)'{-f,--format}'[Select the output formatting style. Valid values are [default,plain,json,org-mode]]:'
 }
 
 function _git-bug_ls-id {
@@ -329,7 +329,8 @@ function _git-bug_select {
 
 function _git-bug_show {
   _arguments \
-    '(-f --field)'{-f,--field}'[Select field to display. Valid values are [author,authorEmail,createTime,humanId,id,labels,shortId,status,title,actors,participants]]:'
+    '--field[Select field to display. Valid values are [author,authorEmail,createTime,lastEdit,humanId,id,labels,shortId,status,title,actors,participants]]:' \
+    '(-f --format)'{-f,--format}'[Select the output formatting style. Valid values are [default,json,org-mode]]:'
 }
 
 
@@ -443,7 +444,8 @@ function _git-bug_user_create {
 }
 
 function _git-bug_user_ls {
-  _arguments
+  _arguments \
+    '(-f --format)'{-f,--format}'[Select the output formatting style. Valid values are [default,json]]:'
 }
 
 function _git-bug_version {

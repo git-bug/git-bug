@@ -81,7 +81,7 @@ func (lb *lazyBug) Id() entity.Id {
 }
 
 func (lb *lazyBug) LastEdit() time.Time {
-	return time.Unix(lb.excerpt.EditUnixTime, 0)
+	return lb.excerpt.EditTime()
 }
 
 func (lb *lazyBug) Status() bug.Status {
@@ -133,7 +133,7 @@ func (lb *lazyBug) Participants() ([]IdentityWrapper, error) {
 }
 
 func (lb *lazyBug) CreatedAt() time.Time {
-	return time.Unix(lb.excerpt.CreateUnixTime, 0)
+	return lb.excerpt.CreateTime()
 }
 
 func (lb *lazyBug) Timeline() ([]bug.TimelineItem, error) {
@@ -163,7 +163,7 @@ func NewLoadedBug(snap *bug.Snapshot) *loadedBug {
 }
 
 func (l *loadedBug) LastEdit() time.Time {
-	return l.Snapshot.LastEditTime()
+	return l.Snapshot.EditTime()
 }
 
 func (l *loadedBug) Status() bug.Status {
@@ -203,7 +203,7 @@ func (l *loadedBug) Participants() ([]IdentityWrapper, error) {
 }
 
 func (l *loadedBug) CreatedAt() time.Time {
-	return l.Snapshot.CreatedAt
+	return l.Snapshot.CreateTime
 }
 
 func (l *loadedBug) Timeline() ([]bug.TimelineItem, error) {

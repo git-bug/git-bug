@@ -29,15 +29,8 @@ const identityCacheFile = "identity-cache"
 
 // 1: original format
 // 2: added cache for identities with a reference in the bug cache
-const formatVersion = 2
-
-type ErrInvalidCacheFormat struct {
-	message string
-}
-
-func (e ErrInvalidCacheFormat) Error() string {
-	return e.message
-}
+// 3: CreateUnixTime --> createUnixTime, EditUnixTime --> editUnixTime
+const formatVersion = 3
 
 var _ repository.RepoCommon = &RepoCache{}
 
@@ -99,10 +92,8 @@ func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, error
 	if err == nil {
 		return c, nil
 	}
-	if _, ok := err.(ErrInvalidCacheFormat); ok {
-		return nil, err
-	}
 
+	// Cache is either missing, broken or outdated. Rebuilding.
 	err = c.buildCache()
 	if err != nil {
 		return nil, err
@@ -254,10 +245,8 @@ func (c *RepoCache) loadBugCache() error {
 		return err
 	}
 
-	if aux.Version != 2 {
-		return ErrInvalidCacheFormat{
-			message: fmt.Sprintf("unknown cache format version %v", aux.Version),
-		}
+	if aux.Version != formatVersion {
+		return fmt.Errorf("unknown cache format version %v", aux.Version)
 	}
 
 	c.bugExcerpts = aux.Excerpts
@@ -286,10 +275,8 @@ func (c *RepoCache) loadIdentityCache() error {
 		return err
 	}
 
-	if aux.Version != 2 {
-		return ErrInvalidCacheFormat{
-			message: fmt.Sprintf("unknown cache format version %v", aux.Version),
-		}
+	if aux.Version != formatVersion {
+		return fmt.Errorf("unknown cache format version %v", aux.Version)
 	}
 
 	c.identitiesExcerpts = aux.Excerpts

@@ -36,8 +36,6 @@ type Operation interface {
 	Id() entity.Id
 	// Time return the time when the operation was added
 	Time() time.Time
-	// GetUnixTime return the unix timestamp when the operation was added
-	GetUnixTime() int64
 	// GetFiles return the files needed by this operation
 	GetFiles() []git.Hash
 	// Apply the operation to a Snapshot to create the final state
@@ -89,8 +87,9 @@ func idOperation(op Operation) entity.Id {
 type OpBase struct {
 	OperationType OperationType      `json:"type"`
 	Author        identity.Interface `json:"author"`
-	UnixTime      int64              `json:"timestamp"`
-	Metadata      map[string]string  `json:"metadata,omitempty"`
+	// TODO: part of the data model upgrade, this should eventually be a timestamp + lamport
+	UnixTime int64             `json:"timestamp"`
+	Metadata map[string]string `json:"metadata,omitempty"`
 	// Not serialized. Store the op's id in memory.
 	id entity.Id
 	// Not serialized. Store the extra metadata in memory,
@@ -142,11 +141,6 @@ func (op *OpBase) Time() time.Time {
 	return time.Unix(op.UnixTime, 0)
 }
 
-// GetUnixTime return the unix timestamp when the operation was added
-func (op *OpBase) GetUnixTime() int64 {
-	return op.UnixTime
-}
-
 // GetFiles return the files needed by this operation
 func (op *OpBase) GetFiles() []git.Hash {
 	return nil
@@ -158,7 +152,7 @@ func opBaseValidate(op Operation, opType OperationType) error {
 		return fmt.Errorf("incorrect operation type (expected: %v, actual: %v)", opType, op.base().OperationType)
 	}
 
-	if op.GetUnixTime() == 0 {
+	if op.Time().Unix() == 0 {
 		return fmt.Errorf("time not set")
 	}
 

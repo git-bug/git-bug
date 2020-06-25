@@ -159,8 +159,8 @@ Register-ArgumentCompleter -Native -CommandName 'git-bug' -ScriptBlock {
             [CompletionResult]::new('--by', 'by', [CompletionResultType]::ParameterName, 'Sort the results by a characteristic. Valid values are [id,creation,edit]')
             [CompletionResult]::new('-d', 'd', [CompletionResultType]::ParameterName, 'Select the sorting direction. Valid values are [asc,desc]')
             [CompletionResult]::new('--direction', 'direction', [CompletionResultType]::ParameterName, 'Select the sorting direction. Valid values are [asc,desc]')
-            [CompletionResult]::new('-f', 'f', [CompletionResultType]::ParameterName, 'Select the output formatting style. Valid values are [default, plain(text), json]')
-            [CompletionResult]::new('--format', 'format', [CompletionResultType]::ParameterName, 'Select the output formatting style. Valid values are [default, plain(text), json]')
+            [CompletionResult]::new('-f', 'f', [CompletionResultType]::ParameterName, 'Select the output formatting style. Valid values are [default,plain,json,org-mode]')
+            [CompletionResult]::new('--format', 'format', [CompletionResultType]::ParameterName, 'Select the output formatting style. Valid values are [default,plain,json,org-mode]')
             break
         }
         'git-bug;ls-id' {
@@ -179,8 +179,9 @@ Register-ArgumentCompleter -Native -CommandName 'git-bug' -ScriptBlock {
             break
         }
         'git-bug;show' {
-            [CompletionResult]::new('-f', 'f', [CompletionResultType]::ParameterName, 'Select field to display. Valid values are [author,authorEmail,createTime,humanId,id,labels,shortId,status,title,actors,participants]')
-            [CompletionResult]::new('--field', 'field', [CompletionResultType]::ParameterName, 'Select field to display. Valid values are [author,authorEmail,createTime,humanId,id,labels,shortId,status,title,actors,participants]')
+            [CompletionResult]::new('--field', 'field', [CompletionResultType]::ParameterName, 'Select field to display. Valid values are [author,authorEmail,createTime,lastEdit,humanId,id,labels,shortId,status,title,actors,participants]')
+            [CompletionResult]::new('-f', 'f', [CompletionResultType]::ParameterName, 'Select the output formatting style. Valid values are [default,json,org-mode]')
+            [CompletionResult]::new('--format', 'format', [CompletionResultType]::ParameterName, 'Select the output formatting style. Valid values are [default,json,org-mode]')
             break
         }
         'git-bug;status' {
@@ -221,6 +222,8 @@ Register-ArgumentCompleter -Native -CommandName 'git-bug' -ScriptBlock {
             break
         }
         'git-bug;user;ls' {
+            [CompletionResult]::new('-f', 'f', [CompletionResultType]::ParameterName, 'Select the output formatting style. Valid values are [default,json]')
+            [CompletionResult]::new('--format', 'format', [CompletionResultType]::ParameterName, 'Select the output formatting style. Valid values are [default,json]')
             break
         }
         'git-bug;version' {

@@ -13,7 +13,8 @@ git-bug user ls [flags]
 ### Options
 
 ```
-  -h, --help   help for ls
+  -f, --format string   Select the output formatting style. Valid values are [default,json] (default "default")
+  -h, --help            help for ls
 ```
 
 ### SEE ALSO

@@ -933,8 +933,11 @@ _git-bug_show()
 
     flags+=("--field=")
     two_word_flags+=("--field")
-    two_word_flags+=("-f")
     local_nonpersistent_flags+=("--field=")
+    flags+=("--format=")
+    two_word_flags+=("--format")
+    two_word_flags+=("-f")
+    local_nonpersistent_flags+=("--format=")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -1122,6 +1125,10 @@ _git-bug_user_ls()
     flags_with_completion=()
     flags_completion=()
 
+    flags+=("--format=")
+    two_word_flags+=("--format")
+    two_word_flags+=("-f")
+    local_nonpersistent_flags+=("--format=")
 
     must_have_one_flag=()
     must_have_one_noun=()

@@ -3,6 +3,7 @@ package cache
 import (
 	"encoding/gob"
 	"fmt"
+	"time"
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/entity"
@@ -22,8 +23,8 @@ type BugExcerpt struct {
 
 	CreateLamportTime lamport.Time
 	EditLamportTime   lamport.Time
-	CreateUnixTime    int64
-	EditUnixTime      int64
+	createUnixTime    int64
+	editUnixTime      int64
 
 	Status       bug.Status
 	Labels       []bug.Label
@@ -79,8 +80,8 @@ func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
 		Id:                b.Id(),
 		CreateLamportTime: b.CreateLamportTime(),
 		EditLamportTime:   b.EditLamportTime(),
-		CreateUnixTime:    b.FirstOp().GetUnixTime(),
-		EditUnixTime:      snap.LastEditUnix(),
+		createUnixTime:    b.FirstOp().Time().Unix(),
+		editUnixTime:      snap.EditTime().Unix(),
 		Status:            snap.Status,
 		Labels:            snap.Labels,
 		Actors:            actorsIds,
@@ -103,6 +104,14 @@ func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
 	}
 
 	return e
+}
+
+func (b *BugExcerpt) CreateTime() time.Time {
+	return time.Unix(b.createUnixTime, 0)
+}
+
+func (b *BugExcerpt) EditTime() time.Time {
+	return time.Unix(b.editUnixTime, 0)
 }
 
 /*
@@ -144,7 +153,7 @@ func (b BugsByCreationTime) Less(i, j int) bool {
 	// by the first sorting using the logical clock. That means that if users
 	// synchronize their bugs regularly, the timestamp will rarely be used, and
 	// should still provide a kinda accurate sorting when needed.
-	return b[i].CreateUnixTime < b[j].CreateUnixTime
+	return b[i].createUnixTime < b[j].createUnixTime
 }
 
 func (b BugsByCreationTime) Swap(i, j int) {
@@ -172,7 +181,7 @@ func (b BugsByEditTime) Less(i, j int) bool {
 	// by the first sorting using the logical clock. That means that if users
 	// synchronize their bugs regularly, the timestamp will rarely be used, and
 	// should still provide a kinda accurate sorting when needed.
-	return b[i].EditUnixTime < b[j].EditUnixTime
+	return b[i].editUnixTime < b[j].editUnixTime
 }
 
 func (b BugsByEditTime) Swap(i, j int) {

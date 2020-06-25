@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/MichaelMure/go-term-text"
 	"github.com/awesome-gocui/gocui"
@@ -315,7 +314,7 @@ func (bt *bugTable) render(v *gocui.View, maxX int) {
 			authorDisplayName = excerpt.LegacyAuthor.DisplayName()
 		}
 
-		lastEditTime := time.Unix(excerpt.EditUnixTime, 0)
+		lastEditTime := excerpt.EditTime()
 
 		id := text.LeftPadMaxLine(excerpt.Id.Human(), columnWidths["id"], 1)
 		status := text.LeftPadMaxLine(excerpt.Status.String(), columnWidths["status"], 1)
