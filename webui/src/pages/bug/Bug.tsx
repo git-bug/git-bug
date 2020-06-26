@@ -90,9 +90,11 @@ function Bug({ bug }: Props) {
         <div className={classes.timeline}>
           <TimelineQuery id={bug.id} />
           <IfLoggedIn>
-            <div className={classes.commentForm}>
-              <CommentForm bugId={bug.id} />
-            </div>
+            {() => (
+              <div className={classes.commentForm}>
+                <CommentForm bugId={bug.id} />
+              </div>
+            )}
           </IfLoggedIn>
         </div>
         <div className={classes.sidebar}>
