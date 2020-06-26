@@ -77,7 +77,7 @@ func TestImport(t *testing.T) {
 	}
 
 	repo := repository.CreateTestRepo(false)
-	defer repository.CleanupTestRepos(t, repo)
+	defer repository.CleanupTestRepos(repo)
 
 	backend, err := cache.NewRepoCache(repo)
 	require.NoError(t, err)

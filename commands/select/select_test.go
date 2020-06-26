@@ -12,7 +12,7 @@ import (
 
 func TestSelect(t *testing.T) {
 	repo := repository.CreateTestRepo(false)
-	defer repository.CleanupTestRepos(t, repo)
+	defer repository.CleanupTestRepos(repo)
 
 	repoCache, err := cache.NewRepoCache(repo)
 	require.NoError(t, err)

@@ -63,7 +63,7 @@ func loadRepo(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("unable to get the current working directory: %q", err)
 	}
 
-	repo, err = repository.NewGitRepo(cwd, bug.Witnesser)
+	repo, err = repository.NewGitRepo(cwd, []repository.ClockLoader{bug.ClockLoader})
 	if err == repository.ErrNotARepo {
 		return fmt.Errorf("%s must be run from within a git repo", rootCommandName)
 	}

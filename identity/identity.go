@@ -332,7 +332,14 @@ func (i *Identity) Commit(repo repository.ClockedRepo) error {
 		}
 
 		// get the times where new versions starts to be valid
-		v.time = repo.EditTime()
+		// TODO: instead of this hardcoded clock for bugs only, this need to be
+		// a vector of edit clock, one for each entity (bug, PR, config ..)
+		bugEditClock, err := repo.GetOrCreateClock("bug-edit")
+		if err != nil {
+			return err
+		}
+
+		v.time = bugEditClock.Time()
 		v.unixTime = time.Now().Unix()
 
 		blobHash, err := v.Write(repo)

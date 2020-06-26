@@ -11,7 +11,7 @@ import (
 
 func TestCache(t *testing.T) {
 	repo := repository.CreateTestRepo(false)
-	defer repository.CleanupTestRepos(t, repo)
+	defer repository.CleanupTestRepos(repo)
 
 	cache, err := NewRepoCache(repo)
 	require.NoError(t, err)
@@ -104,8 +104,8 @@ func TestCache(t *testing.T) {
 }
 
 func TestPushPull(t *testing.T) {
-	repoA, repoB, remote := repository.SetupReposAndRemote(t)
-	defer repository.CleanupTestRepos(t, repoA, repoB, remote)
+	repoA, repoB, remote := repository.SetupReposAndRemote()
+	defer repository.CleanupTestRepos(repoA, repoB, remote)
 
 	cacheA, err := NewRepoCache(repoA)
 	require.NoError(t, err)

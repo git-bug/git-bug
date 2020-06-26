@@ -222,7 +222,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 		snap.CreateTime.Format(timeLayout),
 		edited,
 	)
-	bugHeader, lines := text.Wrap(bugHeader, maxX)
+	bugHeader, lines := text.Wrap(bugHeader, maxX, text.WrapIndent("   "))
 
 	v, err := sb.createOpView(g, showBugHeaderView, x0, y0, maxX+1, lines, false)
 	if err != nil {
