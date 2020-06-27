@@ -4,8 +4,11 @@ import (
 	"testing"
 
 	"github.com/99designs/gqlgen/client"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
-	"github.com/MichaelMure/git-bug/graphql/models"
+	"github.com/MichaelMure/git-bug/api/graphql/models"
+	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/misc/random_bugs"
 	"github.com/MichaelMure/git-bug/repository"
 )
@@ -16,10 +19,11 @@ func TestQueries(t *testing.T) {
 
 	random_bugs.FillRepoWithSeed(repo, 10, 42)
 
-	handler, err := NewHandler(repo)
-	if err != nil {
-		t.Fatal(err)
-	}
+	mrc := cache.NewMultiRepoCache()
+	_, err := mrc.RegisterDefaultRepository(repo)
+	require.NoError(t, err)
+
+	handler := NewHandler(mrc)
 
 	c := client.New(handler)
 
@@ -211,5 +215,6 @@ func TestQueries(t *testing.T) {
 		}
 	}
 
-	c.MustPost(query, &resp)
+	err = c.Post(query, &resp)
+	assert.NoError(t, err)
 }

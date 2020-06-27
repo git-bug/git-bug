@@ -1213,6 +1213,8 @@ _git-bug_webui()
     two_word_flags+=("--port")
     two_word_flags+=("-p")
     local_nonpersistent_flags+=("--port=")
+    flags+=("--read-only")
+    local_nonpersistent_flags+=("--read-only")
 
     must_have_one_flag=()
     must_have_one_noun=()

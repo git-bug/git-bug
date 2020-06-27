@@ -3,8 +3,8 @@ package resolvers
 import (
 	"context"
 
-	"github.com/MichaelMure/git-bug/graphql/graph"
-	"github.com/MichaelMure/git-bug/graphql/models"
+	"github.com/MichaelMure/git-bug/api/graphql/graph"
+	"github.com/MichaelMure/git-bug/api/graphql/models"
 )
 
 var _ graph.IdentityResolver = &identityResolver{}

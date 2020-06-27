@@ -174,7 +174,7 @@ You can launch a rich Web UI with `git bug webui`.
 
 This web UI is entirely packed inside the same go binary and serve static content through a localhost http server.
 
-The web UI interact with the backend through a GraphQL API. The schema is available [here](graphql/).
+The web UI interact with the backend through a GraphQL API. The schema is available [here](api/graphql/schema).
 
 ## Bridges
 

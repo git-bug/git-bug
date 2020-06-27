@@ -15,11 +15,12 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
-	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/graphql/models"
-	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/vektah/gqlparser"
 	"github.com/vektah/gqlparser/ast"
+
+	"github.com/MichaelMure/git-bug/api/graphql/models"
+	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/util/git"
 )
 
 // region    ************************** generated!.gotpl **************************

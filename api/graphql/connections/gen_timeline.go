@@ -7,25 +7,25 @@ package connections
 import (
 	"fmt"
 
+	"github.com/MichaelMure/git-bug/api/graphql/models"
 	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/graphql/models"
 )
 
-// BugCommentEdgeMaker define a function that take a bug.Comment and an offset and
+// BugTimelineItemEdgeMaker define a function that take a bug.TimelineItem and an offset and
 // create an Edge.
-type CommentEdgeMaker func(value bug.Comment, offset int) Edge
+type TimelineItemEdgeMaker func(value bug.TimelineItem, offset int) Edge
 
-// CommentConMaker define a function that create a models.CommentConnection
-type CommentConMaker func(
-	edges []*models.CommentEdge,
-	nodes []bug.Comment,
+// TimelineItemConMaker define a function that create a models.TimelineItemConnection
+type TimelineItemConMaker func(
+	edges []*models.TimelineItemEdge,
+	nodes []bug.TimelineItem,
 	info *models.PageInfo,
-	totalCount int) (*models.CommentConnection, error)
+	totalCount int) (*models.TimelineItemConnection, error)
 
-// CommentCon will paginate a source according to the input of a relay connection
-func CommentCon(source []bug.Comment, edgeMaker CommentEdgeMaker, conMaker CommentConMaker, input models.ConnectionInput) (*models.CommentConnection, error) {
-	var nodes []bug.Comment
-	var edges []*models.CommentEdge
+// TimelineItemCon will paginate a source according to the input of a relay connection
+func TimelineItemCon(source []bug.TimelineItem, edgeMaker TimelineItemEdgeMaker, conMaker TimelineItemConMaker, input models.ConnectionInput) (*models.TimelineItemConnection, error) {
+	var nodes []bug.TimelineItem
+	var edges []*models.TimelineItemEdge
 	var cursors []string
 	var pageInfo = &models.PageInfo{}
 	var totalCount = len(source)
@@ -57,19 +57,19 @@ func CommentCon(source []bug.Comment, edgeMaker CommentEdgeMaker, conMaker Comme
 				break
 			}
 
-			e := edge.(models.CommentEdge)
+			e := edge.(models.TimelineItemEdge)
 			edges = append(edges, &e)
 			cursors = append(cursors, edge.GetCursor())
 			nodes = append(nodes, value)
 		}
 	} else {
-		edges = make([]*models.CommentEdge, len(source))
+		edges = make([]*models.TimelineItemEdge, len(source))
 		cursors = make([]string, len(source))
 		nodes = source
 
 		for i, value := range source {
 			edge := edgeMaker(value, i+offset)
-			e := edge.(models.CommentEdge)
+			e := edge.(models.TimelineItemEdge)
 			edges[i] = &e
 			cursors[i] = edge.GetCursor()
 		}

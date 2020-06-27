@@ -13,32 +13,32 @@ type MultiRepoCache struct {
 	repos map[string]*RepoCache
 }
 
-func NewMultiRepoCache() MultiRepoCache {
-	return MultiRepoCache{
+func NewMultiRepoCache() *MultiRepoCache {
+	return &MultiRepoCache{
 		repos: make(map[string]*RepoCache),
 	}
 }
 
 // RegisterRepository register a named repository. Use this for multi-repo setup
-func (c *MultiRepoCache) RegisterRepository(ref string, repo repository.ClockedRepo) error {
+func (c *MultiRepoCache) RegisterRepository(ref string, repo repository.ClockedRepo) (*RepoCache, error) {
 	r, err := NewRepoCache(repo)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	c.repos[ref] = r
-	return nil
+	return r, nil
 }
 
 // RegisterDefaultRepository register a unnamed repository. Use this for mono-repo setup
-func (c *MultiRepoCache) RegisterDefaultRepository(repo repository.ClockedRepo) error {
+func (c *MultiRepoCache) RegisterDefaultRepository(repo repository.ClockedRepo) (*RepoCache, error) {
 	r, err := NewRepoCache(repo)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	c.repos[""] = r
-	return nil
+	return r, nil
 }
 
 // DefaultRepo retrieve the default repository

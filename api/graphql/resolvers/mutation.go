@@ -2,11 +2,13 @@ package resolvers
 
 import (
 	"context"
+	"time"
 
+	"github.com/MichaelMure/git-bug/api/auth"
+	"github.com/MichaelMure/git-bug/api/graphql/graph"
+	"github.com/MichaelMure/git-bug/api/graphql/models"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/graphql/graph"
-	"github.com/MichaelMure/git-bug/graphql/models"
 )
 
 var _ graph.MutationResolver = &mutationResolver{}
@@ -23,22 +25,31 @@ func (r mutationResolver) getRepo(ref *string) (*cache.RepoCache, error) {
 	return r.cache.DefaultRepo()
 }
 
-func (r mutationResolver) getBug(repoRef *string, bugPrefix string) (*cache.BugCache, error) {
+func (r mutationResolver) getBug(repoRef *string, bugPrefix string) (*cache.RepoCache, *cache.BugCache, error) {
 	repo, err := r.getRepo(repoRef)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return repo.ResolveBugPrefix(bugPrefix)
+	b, err := repo.ResolveBugPrefix(bugPrefix)
+	if err != nil {
+		return nil, nil, err
+	}
+	return repo, b, nil
 }
 
-func (r mutationResolver) NewBug(_ context.Context, input models.NewBugInput) (*models.NewBugPayload, error) {
+func (r mutationResolver) NewBug(ctx context.Context, input models.NewBugInput) (*models.NewBugPayload, error) {
 	repo, err := r.getRepo(input.RepoRef)
 	if err != nil {
 		return nil, err
 	}
 
-	b, op, err := repo.NewBugWithFiles(input.Title, input.Message, input.Files)
+	author, err := auth.UserFromCtx(ctx, repo)
+	if err != nil {
+		return nil, err
+	}
+
+	b, op, err := repo.NewBugRaw(author, time.Now().Unix(), input.Title, input.Message, input.Files, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -50,13 +61,18 @@ func (r mutationResolver) NewBug(_ context.Context, input models.NewBugInput) (*
 	}, nil
 }
 
-func (r mutationResolver) AddComment(_ context.Context, input models.AddCommentInput) (*models.AddCommentPayload, error) {
-	b, err := r.getBug(input.RepoRef, input.Prefix)
+func (r mutationResolver) AddComment(ctx context.Context, input models.AddCommentInput) (*models.AddCommentPayload, error) {
+	repo, b, err := r.getBug(input.RepoRef, input.Prefix)
 	if err != nil {
 		return nil, err
 	}
 
-	op, err := b.AddCommentWithFiles(input.Message, input.Files)
+	author, err := auth.UserFromCtx(ctx, repo)
+	if err != nil {
+		return nil, err
+	}
+
+	op, err := b.AddCommentRaw(author, time.Now().Unix(), input.Message, input.Files, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -73,13 +89,18 @@ func (r mutationResolver) AddComment(_ context.Context, input models.AddCommentI
 	}, nil
 }
 
-func (r mutationResolver) ChangeLabels(_ context.Context, input *models.ChangeLabelInput) (*models.ChangeLabelPayload, error) {
-	b, err := r.getBug(input.RepoRef, input.Prefix)
+func (r mutationResolver) ChangeLabels(ctx context.Context, input *models.ChangeLabelInput) (*models.ChangeLabelPayload, error) {
+	repo, b, err := r.getBug(input.RepoRef, input.Prefix)
 	if err != nil {
 		return nil, err
 	}
 
-	results, op, err := b.ChangeLabels(input.Added, input.Removed)
+	author, err := auth.UserFromCtx(ctx, repo)
+	if err != nil {
+		return nil, err
+	}
+
+	results, op, err := b.ChangeLabelsRaw(author, time.Now().Unix(), input.Added, input.Removed, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -102,13 +123,18 @@ func (r mutationResolver) ChangeLabels(_ context.Context, input *models.ChangeLa
 	}, nil
 }
 
-func (r mutationResolver) OpenBug(_ context.Context, input models.OpenBugInput) (*models.OpenBugPayload, error) {
-	b, err := r.getBug(input.RepoRef, input.Prefix)
+func (r mutationResolver) OpenBug(ctx context.Context, input models.OpenBugInput) (*models.OpenBugPayload, error) {
+	repo, b, err := r.getBug(input.RepoRef, input.Prefix)
 	if err != nil {
 		return nil, err
 	}
 
-	op, err := b.Open()
+	author, err := auth.UserFromCtx(ctx, repo)
+	if err != nil {
+		return nil, err
+	}
+
+	op, err := b.OpenRaw(author, time.Now().Unix(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -125,13 +151,18 @@ func (r mutationResolver) OpenBug(_ context.Context, input models.OpenBugInput) 
 	}, nil
 }
 
-func (r mutationResolver) CloseBug(_ context.Context, input models.CloseBugInput) (*models.CloseBugPayload, error) {
-	b, err := r.getBug(input.RepoRef, input.Prefix)
+func (r mutationResolver) CloseBug(ctx context.Context, input models.CloseBugInput) (*models.CloseBugPayload, error) {
+	repo, b, err := r.getBug(input.RepoRef, input.Prefix)
 	if err != nil {
 		return nil, err
 	}
 
-	op, err := b.Close()
+	author, err := auth.UserFromCtx(ctx, repo)
+	if err != nil {
+		return nil, err
+	}
+
+	op, err := b.CloseRaw(author, time.Now().Unix(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -148,13 +179,18 @@ func (r mutationResolver) CloseBug(_ context.Context, input models.CloseBugInput
 	}, nil
 }
 
-func (r mutationResolver) SetTitle(_ context.Context, input models.SetTitleInput) (*models.SetTitlePayload, error) {
-	b, err := r.getBug(input.RepoRef, input.Prefix)
+func (r mutationResolver) SetTitle(ctx context.Context, input models.SetTitleInput) (*models.SetTitlePayload, error) {
+	repo, b, err := r.getBug(input.RepoRef, input.Prefix)
 	if err != nil {
 		return nil, err
 	}
 
-	op, err := b.SetTitle(input.Title)
+	author, err := auth.UserFromCtx(ctx, repo)
+	if err != nil {
+		return nil, err
+	}
+
+	op, err := b.SetTitleRaw(author, time.Now().Unix(), input.Title, nil)
 	if err != nil {
 		return nil, err
 	}

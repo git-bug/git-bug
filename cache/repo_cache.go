@@ -142,6 +142,16 @@ func (c *RepoCache) GetUserEmail() (string, error) {
 	return c.repo.GetUserEmail()
 }
 
+// ReadData will attempt to read arbitrary data from the given hash
+func (c *RepoCache) ReadData(hash git.Hash) ([]byte, error) {
+	return c.repo.ReadData(hash)
+}
+
+// StoreData will store arbitrary data and return the corresponding hash
+func (c *RepoCache) StoreData(data []byte) (git.Hash, error) {
+	return c.repo.StoreData(data)
+}
+
 func (c *RepoCache) lock() error {
 	lockPath := repoLockFilePath(c.repo)
 

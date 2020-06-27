@@ -7,25 +7,25 @@ package connections
 import (
 	"fmt"
 
-	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/graphql/models"
+	"github.com/MichaelMure/git-bug/api/graphql/models"
+	"github.com/MichaelMure/git-bug/bug"
 )
 
-// EntityIdEdgeMaker define a function that take a entity.Id and an offset and
+// BugOperationEdgeMaker define a function that take a bug.Operation and an offset and
 // create an Edge.
-type LazyIdentityEdgeMaker func(value entity.Id, offset int) Edge
+type OperationEdgeMaker func(value bug.Operation, offset int) Edge
 
-// LazyIdentityConMaker define a function that create a models.IdentityConnection
-type LazyIdentityConMaker func(
-	edges []*LazyIdentityEdge,
-	nodes []entity.Id,
+// OperationConMaker define a function that create a models.OperationConnection
+type OperationConMaker func(
+	edges []*models.OperationEdge,
+	nodes []bug.Operation,
 	info *models.PageInfo,
-	totalCount int) (*models.IdentityConnection, error)
+	totalCount int) (*models.OperationConnection, error)
 
-// LazyIdentityCon will paginate a source according to the input of a relay connection
-func LazyIdentityCon(source []entity.Id, edgeMaker LazyIdentityEdgeMaker, conMaker LazyIdentityConMaker, input models.ConnectionInput) (*models.IdentityConnection, error) {
-	var nodes []entity.Id
-	var edges []*LazyIdentityEdge
+// OperationCon will paginate a source according to the input of a relay connection
+func OperationCon(source []bug.Operation, edgeMaker OperationEdgeMaker, conMaker OperationConMaker, input models.ConnectionInput) (*models.OperationConnection, error) {
+	var nodes []bug.Operation
+	var edges []*models.OperationEdge
 	var cursors []string
 	var pageInfo = &models.PageInfo{}
 	var totalCount = len(source)
@@ -57,19 +57,19 @@ func LazyIdentityCon(source []entity.Id, edgeMaker LazyIdentityEdgeMaker, conMak
 				break
 			}
 
-			e := edge.(LazyIdentityEdge)
+			e := edge.(models.OperationEdge)
 			edges = append(edges, &e)
 			cursors = append(cursors, edge.GetCursor())
 			nodes = append(nodes, value)
 		}
 	} else {
-		edges = make([]*LazyIdentityEdge, len(source))
+		edges = make([]*models.OperationEdge, len(source))
 		cursors = make([]string, len(source))
 		nodes = source
 
 		for i, value := range source {
 			edge := edgeMaker(value, i+offset)
-			e := edge.(LazyIdentityEdge)
+			e := edge.(models.OperationEdge)
 			edges[i] = &e
 			cursors[i] = edge.GetCursor()
 		}

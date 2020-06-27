@@ -2,31 +2,31 @@
 package resolvers
 
 import (
+	"github.com/MichaelMure/git-bug/api/graphql/graph"
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/graphql/graph"
 )
 
 var _ graph.ResolverRoot = &RootResolver{}
 
 type RootResolver struct {
-	cache.MultiRepoCache
+	*cache.MultiRepoCache
 }
 
-func NewRootResolver() *RootResolver {
+func NewRootResolver(mrc *cache.MultiRepoCache) *RootResolver {
 	return &RootResolver{
-		MultiRepoCache: cache.NewMultiRepoCache(),
+		MultiRepoCache: mrc,
 	}
 }
 
 func (r RootResolver) Query() graph.QueryResolver {
 	return &rootQueryResolver{
-		cache: &r.MultiRepoCache,
+		cache: r.MultiRepoCache,
 	}
 }
 
 func (r RootResolver) Mutation() graph.MutationResolver {
 	return &mutationResolver{
-		cache: &r.MultiRepoCache,
+		cache: r.MultiRepoCache,
 	}
 }
 

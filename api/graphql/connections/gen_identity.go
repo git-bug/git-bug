@@ -7,7 +7,7 @@ package connections
 import (
 	"fmt"
 
-	"github.com/MichaelMure/git-bug/graphql/models"
+	"github.com/MichaelMure/git-bug/api/graphql/models"
 )
 
 // ModelsIdentityWrapperEdgeMaker define a function that take a models.IdentityWrapper and an offset and

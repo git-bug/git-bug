@@ -7,25 +7,25 @@ package connections
 import (
 	"fmt"
 
-	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/graphql/models"
+	"github.com/MichaelMure/git-bug/api/graphql/models"
+	"github.com/MichaelMure/git-bug/entity"
 )
 
-// BugLabelEdgeMaker define a function that take a bug.Label and an offset and
+// EntityIdEdgeMaker define a function that take a entity.Id and an offset and
 // create an Edge.
-type LabelEdgeMaker func(value bug.Label, offset int) Edge
+type LazyIdentityEdgeMaker func(value entity.Id, offset int) Edge
 
-// LabelConMaker define a function that create a models.LabelConnection
-type LabelConMaker func(
-	edges []*models.LabelEdge,
-	nodes []bug.Label,
+// LazyIdentityConMaker define a function that create a models.IdentityConnection
+type LazyIdentityConMaker func(
+	edges []*LazyIdentityEdge,
+	nodes []entity.Id,
 	info *models.PageInfo,
-	totalCount int) (*models.LabelConnection, error)
+	totalCount int) (*models.IdentityConnection, error)
 
-// LabelCon will paginate a source according to the input of a relay connection
-func LabelCon(source []bug.Label, edgeMaker LabelEdgeMaker, conMaker LabelConMaker, input models.ConnectionInput) (*models.LabelConnection, error) {
-	var nodes []bug.Label
-	var edges []*models.LabelEdge
+// LazyIdentityCon will paginate a source according to the input of a relay connection
+func LazyIdentityCon(source []entity.Id, edgeMaker LazyIdentityEdgeMaker, conMaker LazyIdentityConMaker, input models.ConnectionInput) (*models.IdentityConnection, error) {
+	var nodes []entity.Id
+	var edges []*LazyIdentityEdge
 	var cursors []string
 	var pageInfo = &models.PageInfo{}
 	var totalCount = len(source)
@@ -57,19 +57,19 @@ func LabelCon(source []bug.Label, edgeMaker LabelEdgeMaker, conMaker LabelConMak
 				break
 			}
 
-			e := edge.(models.LabelEdge)
+			e := edge.(LazyIdentityEdge)
 			edges = append(edges, &e)
 			cursors = append(cursors, edge.GetCursor())
 			nodes = append(nodes, value)
 		}
 	} else {
-		edges = make([]*models.LabelEdge, len(source))
+		edges = make([]*LazyIdentityEdge, len(source))
 		cursors = make([]string, len(source))
 		nodes = source
 
 		for i, value := range source {
 			edge := edgeMaker(value, i+offset)
-			e := edge.(models.LabelEdge)
+			e := edge.(LazyIdentityEdge)
 			edges[i] = &e
 			cursors[i] = edge.GetCursor()
 		}

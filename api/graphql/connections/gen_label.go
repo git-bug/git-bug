@@ -7,25 +7,25 @@ package connections
 import (
 	"fmt"
 
+	"github.com/MichaelMure/git-bug/api/graphql/models"
 	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/graphql/models"
 )
 
-// BugOperationEdgeMaker define a function that take a bug.Operation and an offset and
+// BugLabelEdgeMaker define a function that take a bug.Label and an offset and
 // create an Edge.
-type OperationEdgeMaker func(value bug.Operation, offset int) Edge
+type LabelEdgeMaker func(value bug.Label, offset int) Edge
 
-// OperationConMaker define a function that create a models.OperationConnection
-type OperationConMaker func(
-	edges []*models.OperationEdge,
-	nodes []bug.Operation,
+// LabelConMaker define a function that create a models.LabelConnection
+type LabelConMaker func(
+	edges []*models.LabelEdge,
+	nodes []bug.Label,
 	info *models.PageInfo,
-	totalCount int) (*models.OperationConnection, error)
+	totalCount int) (*models.LabelConnection, error)
 
-// OperationCon will paginate a source according to the input of a relay connection
-func OperationCon(source []bug.Operation, edgeMaker OperationEdgeMaker, conMaker OperationConMaker, input models.ConnectionInput) (*models.OperationConnection, error) {
-	var nodes []bug.Operation
-	var edges []*models.OperationEdge
+// LabelCon will paginate a source according to the input of a relay connection
+func LabelCon(source []bug.Label, edgeMaker LabelEdgeMaker, conMaker LabelConMaker, input models.ConnectionInput) (*models.LabelConnection, error) {
+	var nodes []bug.Label
+	var edges []*models.LabelEdge
 	var cursors []string
 	var pageInfo = &models.PageInfo{}
 	var totalCount = len(source)
@@ -57,19 +57,19 @@ func OperationCon(source []bug.Operation, edgeMaker OperationEdgeMaker, conMaker
 				break
 			}
 
-			e := edge.(models.OperationEdge)
+			e := edge.(models.LabelEdge)
 			edges = append(edges, &e)
 			cursors = append(cursors, edge.GetCursor())
 			nodes = append(nodes, value)
 		}
 	} else {
-		edges = make([]*models.OperationEdge, len(source))
+		edges = make([]*models.LabelEdge, len(source))
 		cursors = make([]string, len(source))
 		nodes = source
 
 		for i, value := range source {
 			edge := edgeMaker(value, i+offset)
-			e := edge.(models.OperationEdge)
+			e := edge.(models.LabelEdge)
 			edges[i] = &e
 			cursors[i] = edge.GetCursor()
 		}
