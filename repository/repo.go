@@ -66,11 +66,20 @@ type Repo interface {
 	// StoreTree will store a mapping key-->Hash as a Git tree
 	StoreTree(mapping []TreeEntry) (git.Hash, error)
 
+	// ReadTree will return the list of entries in a Git tree
+	ReadTree(hash git.Hash) ([]TreeEntry, error)
+
 	// StoreCommit will store a Git commit with the given Git tree
 	StoreCommit(treeHash git.Hash) (git.Hash, error)
 
 	// StoreCommit will store a Git commit with the given Git tree
 	StoreCommitWithParent(treeHash git.Hash, parent git.Hash) (git.Hash, error)
+
+	// GetTreeHash return the git tree hash referenced in a commit
+	GetTreeHash(commit git.Hash) (git.Hash, error)
+
+	// FindCommonAncestor will return the last common ancestor of two chain of commit
+	FindCommonAncestor(hash1 git.Hash, hash2 git.Hash) (git.Hash, error)
 
 	// UpdateRef will create or update a Git reference
 	UpdateRef(ref string, hash git.Hash) error
@@ -86,15 +95,6 @@ type Repo interface {
 
 	// ListCommits will return the list of tree hashes of a ref, in chronological order
 	ListCommits(ref string) ([]git.Hash, error)
-
-	// ListEntries will return the list of entries in a Git tree
-	ListEntries(hash git.Hash) ([]TreeEntry, error)
-
-	// FindCommonAncestor will return the last common ancestor of two chain of commit
-	FindCommonAncestor(hash1 git.Hash, hash2 git.Hash) (git.Hash, error)
-
-	// GetTreeHash return the git tree hash referenced in a commit
-	GetTreeHash(commit git.Hash) (git.Hash, error)
 }
 
 // ClockedRepo is a Repo that also has Lamport clocks

@@ -138,7 +138,7 @@ func readBug(repo repository.ClockedRepo, ref string) (*Bug, error) {
 
 	// Load each OperationPack
 	for _, hash := range hashes {
-		entries, err := repo.ListEntries(hash)
+		entries, err := repo.ReadTree(hash)
 		if err != nil {
 			return nil, errors.Wrap(err, "can't list git tree entries")
 		}

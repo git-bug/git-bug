@@ -5,10 +5,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/icrowley/fake"
+
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
-	"github.com/icrowley/fake"
 )
 
 type opsGenerator func(bug.Interface, identity.Interface, int64)

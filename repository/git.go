@@ -337,8 +337,8 @@ func (repo *GitRepo) ListCommits(ref string) ([]git.Hash, error) {
 
 }
 
-// ListEntries will return the list of entries in a Git tree
-func (repo *GitRepo) ListEntries(hash git.Hash) ([]TreeEntry, error) {
+// ReadTree will return the list of entries in a Git tree
+func (repo *GitRepo) ReadTree(hash git.Hash) ([]TreeEntry, error) {
 	stdout, err := repo.runGitCommand("ls-tree", string(hash))
 
 	if err != nil {
