@@ -3,6 +3,7 @@ package repository
 import (
 	"crypto/sha1"
 	"fmt"
+	"strings"
 
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/lamport"
@@ -151,12 +152,12 @@ func (r *mockRepoForTest) CopyRef(source string, dest string) error {
 }
 
 func (r *mockRepoForTest) ListRefs(refspec string) ([]string, error) {
-	keys := make([]string, len(r.refs))
+	var keys []string
 
-	i := 0
 	for k := range r.refs {
-		keys[i] = k
-		i++
+		if strings.HasPrefix(k, refspec) {
+			keys = append(keys, k)
+		}
 	}
 
 	return keys, nil
@@ -181,7 +182,7 @@ func (r *mockRepoForTest) ListCommits(ref string) ([]git.Hash, error) {
 	return hashes, nil
 }
 
-func (r *mockRepoForTest) ListEntries(hash git.Hash) ([]TreeEntry, error) {
+func (r *mockRepoForTest) ReadTree(hash git.Hash) ([]TreeEntry, error) {
 	var data string
 
 	data, ok := r.trees[hash]
@@ -205,11 +206,44 @@ func (r *mockRepoForTest) ListEntries(hash git.Hash) ([]TreeEntry, error) {
 }
 
 func (r *mockRepoForTest) FindCommonAncestor(hash1 git.Hash, hash2 git.Hash) (git.Hash, error) {
-	panic("implement me")
+	ancestor1 := []git.Hash{hash1}
+
+	for hash1 != "" {
+		c, ok := r.commits[hash1]
+		if !ok {
+			return "", fmt.Errorf("unknown commit %v", hash1)
+		}
+		ancestor1 = append(ancestor1, c.parent)
+		hash1 = c.parent
+	}
+
+	for {
+		for _, ancestor := range ancestor1 {
+			if ancestor == hash2 {
+				return ancestor, nil
+			}
+		}
+
+		c, ok := r.commits[hash2]
+		if !ok {
+			return "", fmt.Errorf("unknown commit %v", hash1)
+		}
+
+		if c.parent == "" {
+			return "", fmt.Errorf("no ancestor found")
+		}
+
+		hash2 = c.parent
+	}
 }
 
 func (r *mockRepoForTest) GetTreeHash(commit git.Hash) (git.Hash, error) {
-	panic("implement me")
+	c, ok := r.commits[commit]
+	if !ok {
+		return "", fmt.Errorf("unknown commit")
+	}
+
+	return c.treeHash, nil
 }
 
 func (r *mockRepoForTest) GetOrCreateClock(name string) (lamport.Clock, error) {
