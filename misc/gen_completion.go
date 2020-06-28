@@ -39,23 +39,23 @@ func main() {
 func genBash() error {
 	cwd, _ := os.Getwd()
 	dir := path.Join(cwd, "misc", "bash_completion", "git-bug")
-	return commands.RootCmd.GenBashCompletionFile(dir)
+	return commands.NewRootCommand().GenBashCompletionFile(dir)
 }
 
 func genFish() error {
 	cwd, _ := os.Getwd()
 	dir := path.Join(cwd, "misc", "fish_completion", "git-bug")
-	return commands.RootCmd.GenFishCompletionFile(dir, true)
+	return commands.NewRootCommand().GenFishCompletionFile(dir, true)
 }
 
 func genPowerShell() error {
 	cwd, _ := os.Getwd()
 	filepath := path.Join(cwd, "misc", "powershell_completion", "git-bug")
-	return commands.RootCmd.GenPowerShellCompletionFile(filepath)
+	return commands.NewRootCommand().GenPowerShellCompletionFile(filepath)
 }
 
 func genZsh() error {
 	cwd, _ := os.Getwd()
 	filepath := path.Join(cwd, "misc", "zsh_completion", "git-bug")
-	return commands.RootCmd.GenZshCompletionFile(filepath)
+	return commands.NewRootCommand().GenZshCompletionFile(filepath)
 }

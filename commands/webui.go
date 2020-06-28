@@ -24,25 +24,54 @@ import (
 	"github.com/MichaelMure/git-bug/webui"
 )
 
-var (
-	webUIPort     int
-	webUIOpen     bool
-	webUINoOpen   bool
-	webUIReadOnly bool
-)
-
 const webUIOpenConfigKey = "git-bug.webui.open"
 
-func runWebUI(cmd *cobra.Command, args []string) error {
-	if webUIPort == 0 {
+type webUIOptions struct {
+	port     int
+	open     bool
+	noOpen   bool
+	readOnly bool
+}
+
+func newWebUICommand() *cobra.Command {
+	env := newEnv()
+	options := webUIOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "webui",
+		Short: "Launch the web UI.",
+		Long: `Launch the web UI.
+
+Available git config:
+  git-bug.webui.open [bool]: control the automatic opening of the web UI in the default browser
+`,
+		PreRunE: loadRepo(env),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runWebUI(env, options, args)
+		},
+	}
+
+	flags := cmd.Flags()
+	flags.SortFlags = false
+
+	flags.BoolVar(&options.open, "open", false, "Automatically open the web UI in the default browser")
+	flags.BoolVar(&options.noOpen, "no-open", false, "Prevent the automatic opening of the web UI in the default browser")
+	flags.IntVarP(&options.port, "port", "p", 0, "Port to listen to (default is random)")
+	flags.BoolVar(&options.readOnly, "read-only", false, "Whether to run the web UI in read-only mode")
+
+	return cmd
+}
+
+func runWebUI(env *Env, opts webUIOptions, args []string) error {
+	if opts.port == 0 {
 		var err error
-		webUIPort, err = freeport.GetFreePort()
+		opts.port, err = freeport.GetFreePort()
 		if err != nil {
 			return err
 		}
 	}
 
-	addr := fmt.Sprintf("127.0.0.1:%d", webUIPort)
+	addr := fmt.Sprintf("127.0.0.1:%d", opts.port)
 	webUiAddr := fmt.Sprintf("http://%s", addr)
 
 	router := mux.NewRouter()
@@ -50,8 +79,8 @@ func runWebUI(cmd *cobra.Command, args []string) error {
 	// If the webUI is not read-only, use an authentication middleware with a
 	// fixed identity: the default user of the repo
 	// TODO: support dynamic authentication with OAuth
-	if !webUIReadOnly {
-		author, err := identity.GetUserIdentity(repo)
+	if !opts.readOnly {
+		author, err := identity.GetUserIdentity(env.repo)
 		if err != nil {
 			return err
 		}
@@ -59,7 +88,7 @@ func runWebUI(cmd *cobra.Command, args []string) error {
 	}
 
 	mrc := cache.NewMultiRepoCache()
-	_, err := mrc.RegisterDefaultRepository(repo)
+	_, err := mrc.RegisterDefaultRepository(env.repo)
 	if err != nil {
 		return err
 	}
@@ -86,7 +115,7 @@ func runWebUI(cmd *cobra.Command, args []string) error {
 
 	go func() {
 		<-quit
-		fmt.Println("WebUI is shutting down...")
+		env.out.Println("WebUI is shutting down...")
 
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
@@ -99,18 +128,18 @@ func runWebUI(cmd *cobra.Command, args []string) error {
 		// Teardown
 		err := graphqlHandler.Close()
 		if err != nil {
-			fmt.Println(err)
+			env.out.Println(err)
 		}
 
 		close(done)
 	}()
 
-	fmt.Printf("Web UI: %s\n", webUiAddr)
-	fmt.Printf("Graphql API: http://%s/graphql\n", addr)
-	fmt.Printf("Graphql Playground: http://%s/playground\n", addr)
-	fmt.Println("Press Ctrl+c to quit")
+	env.out.Printf("Web UI: %s\n", webUiAddr)
+	env.out.Printf("Graphql API: http://%s/graphql\n", addr)
+	env.out.Printf("Graphql Playground: http://%s/playground\n", addr)
+	env.out.Println("Press Ctrl+c to quit")
 
-	configOpen, err := repo.LocalConfig().ReadBool(webUIOpenConfigKey)
+	configOpen, err := env.repo.LocalConfig().ReadBool(webUIOpenConfigKey)
 	if err == repository.ErrNoConfigEntry {
 		// default to true
 		configOpen = true
@@ -118,12 +147,12 @@ func runWebUI(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	shouldOpen := (configOpen && !webUINoOpen) || webUIOpen
+	shouldOpen := (configOpen && !opts.noOpen) || opts.open
 
 	if shouldOpen {
 		err = open.Run(webUiAddr)
 		if err != nil {
-			fmt.Println(err)
+			env.out.Println(err)
 		}
 	}
 
@@ -134,29 +163,6 @@ func runWebUI(cmd *cobra.Command, args []string) error {
 
 	<-done
 
-	fmt.Println("WebUI stopped")
+	env.out.Println("WebUI stopped")
 	return nil
-}
-
-var webUICmd = &cobra.Command{
-	Use:   "webui",
-	Short: "Launch the web UI.",
-	Long: `Launch the web UI.
-
-Available git config:
-  git-bug.webui.open [bool]: control the automatic opening of the web UI in the default browser
-`,
-	PreRunE: loadRepo,
-	RunE:    runWebUI,
-}
-
-func init() {
-	RootCmd.AddCommand(webUICmd)
-
-	webUICmd.Flags().SortFlags = false
-
-	webUICmd.Flags().BoolVar(&webUIOpen, "open", false, "Automatically open the web UI in the default browser")
-	webUICmd.Flags().BoolVar(&webUINoOpen, "no-open", false, "Prevent the automatic opening of the web UI in the default browser")
-	webUICmd.Flags().IntVarP(&webUIPort, "port", "p", 0, "Port to listen to (default is random)")
-	webUICmd.Flags().BoolVar(&webUIReadOnly, "read-only", false, "Whether to run the web UI in read-only mode")
 }

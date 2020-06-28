@@ -62,7 +62,7 @@ func genManPage() error {
 		}
 	}
 
-	return doc.GenManTree(commands.RootCmd, header, dir)
+	return doc.GenManTree(commands.NewRootCommand(), header, dir)
 }
 
 func genMarkdown() error {
@@ -79,5 +79,5 @@ func genMarkdown() error {
 		}
 	}
 
-	return doc.GenMarkdownTree(commands.RootCmd, dir)
+	return doc.GenMarkdownTree(commands.NewRootCommand(), dir)
 }

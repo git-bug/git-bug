@@ -2,7 +2,6 @@ package commands
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"sync"
 	"time"
@@ -11,24 +10,34 @@ import (
 
 	"github.com/MichaelMure/git-bug/bridge"
 	"github.com/MichaelMure/git-bug/bridge/core"
-	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
-func runBridgePush(cmd *cobra.Command, args []string) error {
-	backend, err := cache.NewRepoCache(repo)
-	if err != nil {
-		return err
-	}
-	defer backend.Close()
-	interrupt.RegisterCleaner(backend.Close)
+func newBridgePushCommand() *cobra.Command {
+	env := newEnv()
 
+	cmd := &cobra.Command{
+		Use:      "push [<name>]",
+		Short:    "Push updates.",
+		PreRunE:  loadBackendEnsureUser(env),
+		PostRunE: closeBackend(env),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runBridgePush(env, args)
+		},
+		Args: cobra.MaximumNArgs(1),
+	}
+
+	return cmd
+}
+
+func runBridgePush(env *Env, args []string) error {
 	var b *core.Bridge
+	var err error
 
 	if len(args) == 0 {
-		b, err = bridge.DefaultBridge(backend)
+		b, err = bridge.DefaultBridge(env.backend)
 	} else {
-		b, err = bridge.LoadBridge(backend, args[0])
+		b, err = bridge.LoadBridge(env.backend, args[0])
 	}
 
 	if err != nil {
@@ -46,14 +55,14 @@ func runBridgePush(cmd *cobra.Command, args []string) error {
 	interrupt.RegisterCleaner(func() error {
 		mu.Lock()
 		if interruptCount > 0 {
-			fmt.Println("Received another interrupt before graceful stop, terminating...")
+			env.err.Println("Received another interrupt before graceful stop, terminating...")
 			os.Exit(0)
 		}
 
 		interruptCount++
 		mu.Unlock()
 
-		fmt.Println("Received interrupt signal, stopping the import...\n(Hit ctrl-c again to kill the process.)")
+		env.err.Println("Received interrupt signal, stopping the import...\n(Hit ctrl-c again to kill the process.)")
 
 		// send signal to stop the importer
 		cancel()
@@ -71,7 +80,7 @@ func runBridgePush(cmd *cobra.Command, args []string) error {
 	exportedIssues := 0
 	for result := range events {
 		if result.Event != core.ExportEventNothing {
-			fmt.Println(result.String())
+			env.out.Println(result.String())
 		}
 
 		switch result.Event {
@@ -80,21 +89,9 @@ func runBridgePush(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	fmt.Printf("exported %d issues with %s bridge\n", exportedIssues, b.Name)
+	env.out.Printf("exported %d issues with %s bridge\n", exportedIssues, b.Name)
 
 	// send done signal
 	close(done)
 	return nil
-}
-
-var bridgePushCmd = &cobra.Command{
-	Use:     "push [<name>]",
-	Short:   "Push updates.",
-	PreRunE: loadRepoEnsureUser,
-	RunE:    runBridgePush,
-	Args:    cobra.MaximumNArgs(1),
-}
-
-func init() {
-	bridgeCmd.AddCommand(bridgePushCmd)
 }

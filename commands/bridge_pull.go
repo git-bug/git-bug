@@ -13,33 +13,50 @@ import (
 
 	"github.com/MichaelMure/git-bug/bridge"
 	"github.com/MichaelMure/git-bug/bridge/core"
-	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
-var (
-	bridgePullImportSince string
-	bridgePullNoResume    bool
-)
+type bridgePullOptions struct {
+	importSince string
+	noResume    bool
+}
 
-func runBridgePull(cmd *cobra.Command, args []string) error {
-	if bridgePullNoResume && bridgePullImportSince != "" {
+func newBridgePullCommand() *cobra.Command {
+	env := newEnv()
+	options := bridgePullOptions{}
+
+	cmd := &cobra.Command{
+		Use:      "pull [<name>]",
+		Short:    "Pull updates.",
+		PreRunE:  loadBackend(env),
+		PostRunE: closeBackend(env),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runBridgePull(env, options, args)
+		},
+		Args: cobra.MaximumNArgs(1),
+	}
+
+	flags := cmd.Flags()
+	flags.SortFlags = false
+
+	flags.BoolVarP(&options.noResume, "no-resume", "n", false, "force importing all bugs")
+	flags.StringVarP(&options.importSince, "since", "s", "", "import only bugs updated after the given date (ex: \"200h\" or \"june 2 2019\")")
+
+	return cmd
+}
+
+func runBridgePull(env *Env, opts bridgePullOptions, args []string) error {
+	if opts.noResume && opts.importSince != "" {
 		return fmt.Errorf("only one of --no-resume and --since flags should be used")
 	}
 
-	backend, err := cache.NewRepoCache(repo)
-	if err != nil {
-		return err
-	}
-	defer backend.Close()
-	interrupt.RegisterCleaner(backend.Close)
-
 	var b *core.Bridge
+	var err error
 
 	if len(args) == 0 {
-		b, err = bridge.DefaultBridge(backend)
+		b, err = bridge.DefaultBridge(env.backend)
 	} else {
-		b, err = bridge.LoadBridge(backend, args[0])
+		b, err = bridge.LoadBridge(env.backend, args[0])
 	}
 
 	if err != nil {
@@ -58,14 +75,14 @@ func runBridgePull(cmd *cobra.Command, args []string) error {
 	interrupt.RegisterCleaner(func() error {
 		mu.Lock()
 		if interruptCount > 0 {
-			fmt.Println("Received another interrupt before graceful stop, terminating...")
+			env.err.Println("Received another interrupt before graceful stop, terminating...")
 			os.Exit(0)
 		}
 
 		interruptCount++
 		mu.Unlock()
 
-		fmt.Println("Received interrupt signal, stopping the import...\n(Hit ctrl-c again to kill the process.)")
+		env.err.Println("Received interrupt signal, stopping the import...\n(Hit ctrl-c again to kill the process.)")
 
 		// send signal to stop the importer
 		cancel()
@@ -77,10 +94,10 @@ func runBridgePull(cmd *cobra.Command, args []string) error {
 
 	var events <-chan core.ImportResult
 	switch {
-	case bridgePullNoResume:
+	case opts.noResume:
 		events, err = b.ImportAllSince(ctx, time.Time{})
-	case bridgePullImportSince != "":
-		since, err2 := parseSince(bridgePullImportSince)
+	case opts.importSince != "":
+		since, err2 := parseSince(opts.importSince)
 		if err2 != nil {
 			return errors.Wrap(err2, "import time parsing")
 		}
@@ -102,23 +119,23 @@ func runBridgePull(cmd *cobra.Command, args []string) error {
 
 		case core.ImportEventBug:
 			importedIssues++
-			fmt.Println(result.String())
+			env.out.Println(result.String())
 
 		case core.ImportEventIdentity:
 			importedIdentities++
-			fmt.Println(result.String())
+			env.out.Println(result.String())
 
 		case core.ImportEventError:
 			if result.Err != context.Canceled {
-				fmt.Println(result.String())
+				env.out.Println(result.String())
 			}
 
 		default:
-			fmt.Println(result.String())
+			env.out.Println(result.String())
 		}
 	}
 
-	fmt.Printf("imported %d issues and %d identities with %s bridge\n", importedIssues, importedIdentities, b.Name)
+	env.out.Printf("imported %d issues and %d identities with %s bridge\n", importedIssues, importedIdentities, b.Name)
 
 	// send done signal
 	close(done)
@@ -133,18 +150,4 @@ func parseSince(since string) (time.Time, error) {
 	}
 
 	return dateparse.ParseLocal(since)
-}
-
-var bridgePullCmd = &cobra.Command{
-	Use:     "pull [<name>]",
-	Short:   "Pull updates.",
-	PreRunE: loadRepo,
-	RunE:    runBridgePull,
-	Args:    cobra.MaximumNArgs(1),
-}
-
-func init() {
-	bridgeCmd.AddCommand(bridgePullCmd)
-	bridgePullCmd.Flags().BoolVarP(&bridgePullNoResume, "no-resume", "n", false, "force importing all bugs")
-	bridgePullCmd.Flags().StringVarP(&bridgePullImportSince, "since", "s", "", "import only bugs updated after the given date (ex: \"200h\" or \"june 2 2019\")")
 }

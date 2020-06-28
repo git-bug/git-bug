@@ -1,23 +1,32 @@
 package commands
 
 import (
-	"fmt"
-
-	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/commands/select"
-	"github.com/MichaelMure/git-bug/util/interrupt"
 	"github.com/spf13/cobra"
+
+	"github.com/MichaelMure/git-bug/commands/select"
 )
 
-func runLabel(cmd *cobra.Command, args []string) error {
-	backend, err := cache.NewRepoCache(repo)
-	if err != nil {
-		return err
-	}
-	defer backend.Close()
-	interrupt.RegisterCleaner(backend.Close)
+func newLabelCommand() *cobra.Command {
+	env := newEnv()
 
-	b, args, err := _select.ResolveBug(backend, args)
+	cmd := &cobra.Command{
+		Use:      "label [<id>]",
+		Short:    "Display, add or remove labels to/from a bug.",
+		PreRunE:  loadBackend(env),
+		PostRunE: closeBackend(env),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runLabel(env, args)
+		},
+	}
+
+	cmd.AddCommand(newLabelAddCommand())
+	cmd.AddCommand(newLabelRmCommand())
+
+	return cmd
+}
+
+func runLabel(env *Env, args []string) error {
+	b, args, err := _select.ResolveBug(env.backend, args)
 	if err != nil {
 		return err
 	}
@@ -25,21 +34,8 @@ func runLabel(cmd *cobra.Command, args []string) error {
 	snap := b.Snapshot()
 
 	for _, l := range snap.Labels {
-		fmt.Println(l)
+		env.out.Println(l)
 	}
 
 	return nil
-}
-
-var labelCmd = &cobra.Command{
-	Use:     "label [<id>]",
-	Short:   "Display, add or remove labels to/from a bug.",
-	PreRunE: loadRepo,
-	RunE:    runLabel,
-}
-
-func init() {
-	RootCmd.AddCommand(labelCmd)
-
-	labelCmd.Flags().SortFlags = false
 }

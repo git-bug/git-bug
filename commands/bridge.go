@@ -1,43 +1,43 @@
 package commands
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 
 	"github.com/MichaelMure/git-bug/bridge"
-	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
-func runBridge(cmd *cobra.Command, args []string) error {
-	backend, err := cache.NewRepoCache(repo)
-	if err != nil {
-		return err
-	}
-	defer backend.Close()
-	interrupt.RegisterCleaner(backend.Close)
+func newBridgeCommand() *cobra.Command {
+	env := newEnv()
 
-	configured, err := bridge.ConfiguredBridges(backend)
+	cmd := &cobra.Command{
+		Use:      "bridge",
+		Short:    "Configure and use bridges to other bug trackers.",
+		PreRunE:  loadBackend(env),
+		PostRunE: closeBackend(env),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runBridge(env)
+		},
+		Args: cobra.NoArgs,
+	}
+
+	cmd.AddCommand(newBridgeAuthCommand())
+	cmd.AddCommand(newBridgeConfigureCommand())
+	cmd.AddCommand(newBridgePullCommand())
+	cmd.AddCommand(newBridgePushCommand())
+	cmd.AddCommand(newBridgeRm())
+
+	return cmd
+}
+
+func runBridge(env *Env) error {
+	configured, err := bridge.ConfiguredBridges(env.backend)
 	if err != nil {
 		return err
 	}
 
 	for _, c := range configured {
-		fmt.Println(c)
+		env.out.Println(c)
 	}
 
 	return nil
-}
-
-var bridgeCmd = &cobra.Command{
-	Use:     "bridge",
-	Short:   "Configure and use bridges to other bug trackers.",
-	PreRunE: loadRepo,
-	RunE:    runBridge,
-	Args:    cobra.NoArgs,
-}
-
-func init() {
-	RootCmd.AddCommand(bridgeCmd)
 }

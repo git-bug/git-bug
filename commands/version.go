@@ -1,71 +1,62 @@
 package commands
 
 import (
-	"fmt"
 	"runtime"
 
 	"github.com/spf13/cobra"
 )
 
-// These variables are initialized externally during the build. See the Makefile.
-var GitCommit string
-var GitLastTag string
-var GitExactTag string
-
-var (
-	versionNumber bool
-	versionCommit bool
-	versionAll    bool
-)
-
-func runVersionCmd(cmd *cobra.Command, args []string) {
-	if versionAll {
-		fmt.Printf("%s version: %s\n", rootCommandName, RootCmd.Version)
-		fmt.Printf("System version: %s/%s\n", runtime.GOARCH, runtime.GOOS)
-		fmt.Printf("Golang version: %s\n", runtime.Version())
-		return
-	}
-
-	if versionNumber {
-		fmt.Println(RootCmd.Version)
-		return
-	}
-
-	if versionCommit {
-		fmt.Println(GitCommit)
-		return
-	}
-
-	fmt.Printf("%s version: %s\n", rootCommandName, RootCmd.Version)
+type versionOptions struct {
+	number bool
+	commit bool
+	all    bool
 }
 
-var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "Show git-bug version information.",
-	Run:   runVersionCmd,
-}
+func newVersionCommand() *cobra.Command {
+	env := newEnv()
+	options := versionOptions{}
 
-func init() {
-	if GitExactTag == "undefined" {
-		GitExactTag = ""
+	cmd := &cobra.Command{
+		Use:   "version",
+		Short: "Show git-bug version information.",
+		Run: func(cmd *cobra.Command, args []string) {
+			runVersion(env, options, cmd.Root())
+		},
 	}
 
-	RootCmd.Version = GitLastTag
+	flags := cmd.Flags()
+	flags.SortFlags = false
 
-	if GitExactTag == "" {
-		RootCmd.Version = fmt.Sprintf("%s-dev-%.10s", RootCmd.Version, GitCommit)
-	}
-
-	RootCmd.AddCommand(versionCmd)
-	versionCmd.Flags().SortFlags = false
-
-	versionCmd.Flags().BoolVarP(&versionNumber, "number", "n", false,
+	flags.BoolVarP(&options.number, "number", "n", false,
 		"Only show the version number",
 	)
-	versionCmd.Flags().BoolVarP(&versionCommit, "commit", "c", false,
+	flags.BoolVarP(&options.commit, "commit", "c", false,
 		"Only show the commit hash",
 	)
-	versionCmd.Flags().BoolVarP(&versionAll, "all", "a", false,
+	flags.BoolVarP(&options.all, "all", "a", false,
 		"Show all version information",
 	)
+
+	return cmd
+}
+
+func runVersion(env *Env, opts versionOptions, root *cobra.Command) {
+	if opts.all {
+		env.out.Printf("%s version: %s\n", rootCommandName, root.Version)
+		env.out.Printf("System version: %s/%s\n", runtime.GOARCH, runtime.GOOS)
+		env.out.Printf("Golang version: %s\n", runtime.Version())
+		return
+	}
+
+	if opts.number {
+		env.out.Println(root.Version)
+		return
+	}
+
+	if opts.commit {
+		env.out.Println(GitCommit)
+		return
+	}
+
+	env.out.Printf("%s version: %s\n", rootCommandName, root.Version)
 }
