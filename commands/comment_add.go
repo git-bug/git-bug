@@ -1,22 +1,46 @@
 package commands
 
 import (
-	"fmt"
+	"github.com/spf13/cobra"
 
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/commands/select"
 	"github.com/MichaelMure/git-bug/input"
 	"github.com/MichaelMure/git-bug/util/interrupt"
-	"github.com/spf13/cobra"
 )
 
-var (
-	commentAddMessageFile string
-	commentAddMessage     string
-)
+type commentAddOptions struct {
+	messageFile string
+	message     string
+}
 
-func runCommentAdd(cmd *cobra.Command, args []string) error {
-	backend, err := cache.NewRepoCache(repo)
+func newCommentAddCommand() *cobra.Command {
+	env := newEnv()
+	options := commentAddOptions{}
+
+	cmd := &cobra.Command{
+		Use:     "add [<id>]",
+		Short:   "Add a new comment to a bug.",
+		PreRunE: loadRepoEnsureUser(env),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runCommentAdd(env, options, args)
+		},
+	}
+
+	flags := cmd.Flags()
+	flags.SortFlags = false
+
+	flags.StringVarP(&options.messageFile, "file", "F", "",
+		"Take the message from the given file. Use - to read the message from the standard input")
+
+	flags.StringVarP(&options.message, "message", "m", "",
+		"Provide the new message from the command line")
+
+	return cmd
+}
+
+func runCommentAdd(env *Env, opts commentAddOptions, args []string) error {
+	backend, err := cache.NewRepoCache(env.repo)
 	if err != nil {
 		return err
 	}
@@ -28,17 +52,17 @@ func runCommentAdd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if commentAddMessageFile != "" && commentAddMessage == "" {
-		commentAddMessage, err = input.BugCommentFileInput(commentAddMessageFile)
+	if opts.messageFile != "" && opts.message == "" {
+		opts.message, err = input.BugCommentFileInput(opts.messageFile)
 		if err != nil {
 			return err
 		}
 	}
 
-	if commentAddMessageFile == "" && commentAddMessage == "" {
-		commentAddMessage, err = input.BugCommentEditorInput(backend, "")
+	if opts.messageFile == "" && opts.message == "" {
+		opts.message, err = input.BugCommentEditorInput(backend, "")
 		if err == input.ErrEmptyMessage {
-			fmt.Println("Empty message, aborting.")
+			env.err.Println("Empty message, aborting.")
 			return nil
 		}
 		if err != nil {
@@ -46,31 +70,10 @@ func runCommentAdd(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	_, err = b.AddComment(commentAddMessage)
+	_, err = b.AddComment(opts.message)
 	if err != nil {
 		return err
 	}
 
 	return b.Commit()
-}
-
-var commentAddCmd = &cobra.Command{
-	Use:     "add [<id>]",
-	Short:   "Add a new comment to a bug.",
-	PreRunE: loadRepoEnsureUser,
-	RunE:    runCommentAdd,
-}
-
-func init() {
-	commentCmd.AddCommand(commentAddCmd)
-
-	commentAddCmd.Flags().SortFlags = false
-
-	commentAddCmd.Flags().StringVarP(&commentAddMessageFile, "file", "F", "",
-		"Take the message from the given file. Use - to read the message from the standard input",
-	)
-
-	commentAddCmd.Flags().StringVarP(&commentAddMessage, "message", "m", "",
-		"Provide the new message from the command line",
-	)
 }

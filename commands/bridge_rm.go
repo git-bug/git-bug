@@ -1,8 +1,6 @@
 package commands
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 
 	"github.com/MichaelMure/git-bug/bridge"
@@ -10,8 +8,24 @@ import (
 	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
-func runBridgeRm(cmd *cobra.Command, args []string) error {
-	backend, err := cache.NewRepoCache(repo)
+func newBridgeRm() *cobra.Command {
+	env := newEnv()
+
+	cmd := &cobra.Command{
+		Use:     "rm <name>",
+		Short:   "Delete a configured bridge.",
+		PreRunE: loadRepo(env),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runBridgeRm(env, args)
+		},
+		Args: cobra.ExactArgs(1),
+	}
+
+	return cmd
+}
+
+func runBridgeRm(env *Env, args []string) error {
+	backend, err := cache.NewRepoCache(env.repo)
 	if err != nil {
 		return err
 	}
@@ -23,18 +37,6 @@ func runBridgeRm(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Printf("Successfully removed bridge configuration %v\n", args[0])
+	env.out.Printf("Successfully removed bridge configuration %v\n", args[0])
 	return nil
-}
-
-var bridgeRmCmd = &cobra.Command{
-	Use:     "rm <name>",
-	Short:   "Delete a configured bridge.",
-	PreRunE: loadRepo,
-	RunE:    runBridgeRm,
-	Args:    cobra.ExactArgs(1),
-}
-
-func init() {
-	bridgeCmd.AddCommand(bridgeRmCmd)
 }

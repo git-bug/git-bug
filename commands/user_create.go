@@ -1,17 +1,30 @@
 package commands
 
 import (
-	"fmt"
-	"os"
+	"github.com/spf13/cobra"
 
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/input"
 	"github.com/MichaelMure/git-bug/util/interrupt"
-	"github.com/spf13/cobra"
 )
 
-func runUserCreate(cmd *cobra.Command, args []string) error {
-	backend, err := cache.NewRepoCache(repo)
+func newUserCreateCommand() *cobra.Command {
+	env := newEnv()
+
+	cmd := &cobra.Command{
+		Use:     "create",
+		Short:   "Create a new identity.",
+		PreRunE: loadRepo(env),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runUserCreate(env)
+		},
+	}
+
+	return cmd
+}
+
+func runUserCreate(env *Env) error {
+	backend, err := cache.NewRepoCache(env.repo)
 	if err != nil {
 		return err
 	}
@@ -65,20 +78,8 @@ func runUserCreate(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	_, _ = fmt.Fprintln(os.Stderr)
-	fmt.Println(id.Id())
+	env.err.Println()
+	env.out.Println(id.Id())
 
 	return nil
-}
-
-var userCreateCmd = &cobra.Command{
-	Use:     "create",
-	Short:   "Create a new identity.",
-	PreRunE: loadRepo,
-	RunE:    runUserCreate,
-}
-
-func init() {
-	userCmd.AddCommand(userCreateCmd)
-	userCreateCmd.Flags().SortFlags = false
 }

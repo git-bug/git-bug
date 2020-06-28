@@ -1,16 +1,32 @@
 package commands
 
 import (
-	"fmt"
+	"github.com/spf13/cobra"
 
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/commands/select"
 	"github.com/MichaelMure/git-bug/util/interrupt"
-	"github.com/spf13/cobra"
 )
 
-func runTitle(cmd *cobra.Command, args []string) error {
-	backend, err := cache.NewRepoCache(repo)
+func newTitleCommand() *cobra.Command {
+	env := newEnv()
+
+	cmd := &cobra.Command{
+		Use:     "title [<id>]",
+		Short:   "Display or change a title of a bug.",
+		PreRunE: loadRepo(env),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runTitle(env, args)
+		},
+	}
+
+	cmd.AddCommand(newTitleEditCommand())
+
+	return cmd
+}
+
+func runTitle(env *Env, args []string) error {
+	backend, err := cache.NewRepoCache(env.repo)
 	if err != nil {
 		return err
 	}
@@ -24,20 +40,7 @@ func runTitle(cmd *cobra.Command, args []string) error {
 
 	snap := b.Snapshot()
 
-	fmt.Println(snap.Title)
+	env.out.Println(snap.Title)
 
 	return nil
-}
-
-var titleCmd = &cobra.Command{
-	Use:     "title [<id>]",
-	Short:   "Display or change a title of a bug.",
-	PreRunE: loadRepo,
-	RunE:    runTitle,
-}
-
-func init() {
-	RootCmd.AddCommand(titleCmd)
-
-	titleCmd.Flags().SortFlags = false
 }

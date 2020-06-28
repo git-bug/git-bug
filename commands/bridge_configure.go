@@ -17,144 +17,23 @@ import (
 	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
-const (
-	defaultName = "default"
-)
-
-var (
-	bridgeConfigureName       string
-	bridgeConfigureTarget     string
-	bridgeConfigureParams     core.BridgeParams
-	bridgeConfigureToken      string
-	bridgeConfigureTokenStdin bool
-)
-
-func runBridgeConfigure(cmd *cobra.Command, args []string) error {
-	backend, err := cache.NewRepoCache(repo)
-	if err != nil {
-		return err
-	}
-	defer backend.Close()
-	interrupt.RegisterCleaner(backend.Close)
-
-	if (bridgeConfigureTokenStdin || bridgeConfigureToken != "" || bridgeConfigureParams.CredPrefix != "") &&
-		(bridgeConfigureName == "" || bridgeConfigureTarget == "") {
-		return fmt.Errorf("you must provide a bridge name and target to configure a bridge with a credential")
-	}
-
-	// early fail
-	if bridgeConfigureParams.CredPrefix != "" {
-		if _, err := auth.LoadWithPrefix(repo, bridgeConfigureParams.CredPrefix); err != nil {
-			return err
-		}
-	}
-
-	switch {
-	case bridgeConfigureTokenStdin:
-		reader := bufio.NewReader(os.Stdin)
-		token, err := reader.ReadString('\n')
-		if err != nil {
-			return fmt.Errorf("reading from stdin: %v", err)
-		}
-		bridgeConfigureParams.TokenRaw = strings.TrimSpace(token)
-	case bridgeConfigureToken != "":
-		bridgeConfigureParams.TokenRaw = bridgeConfigureToken
-	}
-
-	if bridgeConfigureTarget == "" {
-		bridgeConfigureTarget, err = promptTarget()
-		if err != nil {
-			return err
-		}
-	}
-
-	if bridgeConfigureName == "" {
-		bridgeConfigureName, err = promptName(repo)
-		if err != nil {
-			return err
-		}
-	}
-
-	b, err := bridge.NewBridge(backend, bridgeConfigureTarget, bridgeConfigureName)
-	if err != nil {
-		return err
-	}
-
-	err = b.Configure(bridgeConfigureParams)
-	if err != nil {
-		return err
-	}
-
-	fmt.Printf("Successfully configured bridge: %s\n", bridgeConfigureName)
-	return nil
+type bridgeConfigureOptions struct {
+	name       string
+	target     string
+	params     core.BridgeParams
+	token      string
+	tokenStdin bool
 }
 
-func promptTarget() (string, error) {
-	targets := bridge.Targets()
+func newBridgeConfigureCommand() *cobra.Command {
+	env := newEnv()
+	options := bridgeConfigureOptions{}
 
-	for {
-		for i, target := range targets {
-			fmt.Printf("[%d]: %s\n", i+1, target)
-		}
-		fmt.Printf("target: ")
-
-		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
-
-		if err != nil {
-			return "", err
-		}
-
-		line = strings.TrimSpace(line)
-
-		index, err := strconv.Atoi(line)
-		if err != nil || index <= 0 || index > len(targets) {
-			fmt.Println("invalid input")
-			continue
-		}
-
-		return targets[index-1], nil
-	}
-}
-
-func promptName(repo repository.RepoConfig) (string, error) {
-	defaultExist := core.BridgeExist(repo, defaultName)
-
-	for {
-		if defaultExist {
-			fmt.Printf("name: ")
-		} else {
-			fmt.Printf("name [%s]: ", defaultName)
-		}
-
-		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
-		if err != nil {
-			return "", err
-		}
-
-		line = strings.TrimSpace(line)
-
-		name := line
-		if defaultExist && name == "" {
-			continue
-		}
-
-		if name == "" {
-			name = defaultName
-		}
-
-		if !core.BridgeExist(repo, name) {
-			return name, nil
-		}
-
-		fmt.Println("a bridge with the same name already exist")
-	}
-}
-
-var bridgeConfigureCmd = &cobra.Command{
-	Use:   "configure",
-	Short: "Configure a new bridge.",
-	Long: `	Configure a new bridge by passing flags or/and using interactive terminal prompts. You can avoid all the terminal prompts by passing all the necessary flags to configure your bridge.`,
-	Example: `# Interactive example
+	cmd := &cobra.Command{
+		Use:   "configure",
+		Short: "Configure a new bridge.",
+		Long: `	Configure a new bridge by passing flags or/and using interactive terminal prompts. You can avoid all the terminal prompts by passing all the necessary flags to configure your bridge.`,
+		Example: `# Interactive example
 [1]: github
 [2]: gitlab
 [3]: jira
@@ -207,22 +86,151 @@ git bug bridge configure \
     --target=github \
     --url=https://github.com/michaelmure/git-bug \
     --token=$(TOKEN)`,
-	PreRunE: loadRepo,
-	RunE:    runBridgeConfigure,
+		PreRunE: loadRepo(env),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runBridgeConfigure(env, options)
+		},
+	}
+
+	flags := cmd.Flags()
+	flags.SortFlags = false
+
+	flags.StringVarP(&options.name, "name", "n", "", "A distinctive name to identify the bridge")
+	flags.StringVarP(&options.target, "target", "t", "",
+		fmt.Sprintf("The target of the bridge. Valid values are [%s]", strings.Join(bridge.Targets(), ",")))
+	flags.StringVarP(&options.params.URL, "url", "u", "", "The URL of the remote repository")
+	flags.StringVarP(&options.params.BaseURL, "base-url", "b", "", "The base URL of your remote issue tracker")
+	flags.StringVarP(&options.params.Login, "login", "l", "", "The login on your remote issue tracker")
+	flags.StringVarP(&options.params.CredPrefix, "credential", "c", "", "The identifier or prefix of an already known credential for your remote issue tracker (see \"git-bug bridge auth\")")
+	flags.StringVar(&options.token, "token", "", "A raw authentication token for the remote issue tracker")
+	flags.BoolVar(&options.tokenStdin, "token-stdin", false, "Will read the token from stdin and ignore --token")
+	flags.StringVarP(&options.params.Owner, "owner", "o", "", "The owner of the remote repository")
+	flags.StringVarP(&options.params.Project, "project", "p", "", "The name of the remote repository")
+
+	return cmd
 }
 
-func init() {
-	bridgeCmd.AddCommand(bridgeConfigureCmd)
-	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureName, "name", "n", "", "A distinctive name to identify the bridge")
-	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureTarget, "target", "t", "",
-		fmt.Sprintf("The target of the bridge. Valid values are [%s]", strings.Join(bridge.Targets(), ",")))
-	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureParams.URL, "url", "u", "", "The URL of the remote repository")
-	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureParams.BaseURL, "base-url", "b", "", "The base URL of your remote issue tracker")
-	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureParams.Login, "login", "l", "", "The login on your remote issue tracker")
-	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureParams.CredPrefix, "credential", "c", "", "The identifier or prefix of an already known credential for your remote issue tracker (see \"git-bug bridge auth\")")
-	bridgeConfigureCmd.Flags().StringVar(&bridgeConfigureToken, "token", "", "A raw authentication token for the remote issue tracker")
-	bridgeConfigureCmd.Flags().BoolVar(&bridgeConfigureTokenStdin, "token-stdin", false, "Will read the token from stdin and ignore --token")
-	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureParams.Owner, "owner", "o", "", "The owner of the remote repository")
-	bridgeConfigureCmd.Flags().StringVarP(&bridgeConfigureParams.Project, "project", "p", "", "The name of the remote repository")
-	bridgeConfigureCmd.Flags().SortFlags = false
+func runBridgeConfigure(env *Env, opts bridgeConfigureOptions) error {
+	backend, err := cache.NewRepoCache(env.repo)
+	if err != nil {
+		return err
+	}
+	defer backend.Close()
+	interrupt.RegisterCleaner(backend.Close)
+
+	if (opts.tokenStdin || opts.token != "" || opts.params.CredPrefix != "") &&
+		(opts.name == "" || opts.target == "") {
+		return fmt.Errorf("you must provide a bridge name and target to configure a bridge with a credential")
+	}
+
+	// early fail
+	if opts.params.CredPrefix != "" {
+		if _, err := auth.LoadWithPrefix(env.repo, opts.params.CredPrefix); err != nil {
+			return err
+		}
+	}
+
+	switch {
+	case opts.tokenStdin:
+		reader := bufio.NewReader(os.Stdin)
+		token, err := reader.ReadString('\n')
+		if err != nil {
+			return fmt.Errorf("reading from stdin: %v", err)
+		}
+		opts.params.TokenRaw = strings.TrimSpace(token)
+	case opts.token != "":
+		opts.params.TokenRaw = opts.token
+	}
+
+	if opts.target == "" {
+		opts.target, err = promptTarget()
+		if err != nil {
+			return err
+		}
+	}
+
+	if opts.name == "" {
+		opts.name, err = promptName(env.repo)
+		if err != nil {
+			return err
+		}
+	}
+
+	b, err := bridge.NewBridge(backend, opts.target, opts.name)
+	if err != nil {
+		return err
+	}
+
+	err = b.Configure(opts.params)
+	if err != nil {
+		return err
+	}
+
+	env.out.Printf("Successfully configured bridge: %s\n", opts.name)
+	return nil
+}
+
+func promptTarget() (string, error) {
+	// TODO: use the reusable prompt from the input package
+	targets := bridge.Targets()
+
+	for {
+		for i, target := range targets {
+			fmt.Printf("[%d]: %s\n", i+1, target)
+		}
+		fmt.Printf("target: ")
+
+		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
+
+		if err != nil {
+			return "", err
+		}
+
+		line = strings.TrimSpace(line)
+
+		index, err := strconv.Atoi(line)
+		if err != nil || index <= 0 || index > len(targets) {
+			fmt.Println("invalid input")
+			continue
+		}
+
+		return targets[index-1], nil
+	}
+}
+
+func promptName(repo repository.RepoConfig) (string, error) {
+	// TODO: use the reusable prompt from the input package
+	const defaultName = "default"
+
+	defaultExist := core.BridgeExist(repo, defaultName)
+
+	for {
+		if defaultExist {
+			fmt.Printf("name: ")
+		} else {
+			fmt.Printf("name [%s]: ", defaultName)
+		}
+
+		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
+		if err != nil {
+			return "", err
+		}
+
+		line = strings.TrimSpace(line)
+
+		name := line
+		if defaultExist && name == "" {
+			continue
+		}
+
+		if name == "" {
+			name = defaultName
+		}
+
+		if !core.BridgeExist(repo, name) {
+			return name, nil
+		}
+
+		fmt.Println("a bridge with the same name already exist")
+	}
 }

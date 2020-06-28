@@ -2,14 +2,29 @@ package commands
 
 import (
 	"errors"
-	"fmt"
+
+	"github.com/spf13/cobra"
 
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util/interrupt"
-	"github.com/spf13/cobra"
 )
 
-func runPush(cmd *cobra.Command, args []string) error {
+func newPushCommand() *cobra.Command {
+	env := newEnv()
+
+	cmd := &cobra.Command{
+		Use:     "push [<remote>]",
+		Short:   "Push bugs update to a git remote.",
+		PreRunE: loadRepo(env),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runPush(env, args)
+		},
+	}
+
+	return cmd
+}
+
+func runPush(env *Env, args []string) error {
 	if len(args) > 1 {
 		return errors.New("Only pushing to one remote at a time is supported")
 	}
@@ -19,7 +34,7 @@ func runPush(cmd *cobra.Command, args []string) error {
 		remote = args[0]
 	}
 
-	backend, err := cache.NewRepoCache(repo)
+	backend, err := cache.NewRepoCache(env.repo)
 	if err != nil {
 		return err
 	}
@@ -31,19 +46,7 @@ func runPush(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Println(stdout)
+	env.out.Println(stdout)
 
 	return nil
-}
-
-// showCmd defines the "push" subcommand.
-var pushCmd = &cobra.Command{
-	Use:     "push [<remote>]",
-	Short:   "Push bugs update to a git remote.",
-	PreRunE: loadRepo,
-	RunE:    runPush,
-}
-
-func init() {
-	RootCmd.AddCommand(pushCmd)
 }

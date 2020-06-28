@@ -1,16 +1,30 @@
 package commands
 
 import (
-	"fmt"
+	"github.com/spf13/cobra"
 
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/commands/select"
 	"github.com/MichaelMure/git-bug/util/interrupt"
-	"github.com/spf13/cobra"
 )
 
-func runLabelAdd(cmd *cobra.Command, args []string) error {
-	backend, err := cache.NewRepoCache(repo)
+func newLabelAddCommand() *cobra.Command {
+	env := newEnv()
+
+	cmd := &cobra.Command{
+		Use:     "add [<id>] <label>[...]",
+		Short:   "Add a label to a bug.",
+		PreRunE: loadRepoEnsureUser(env),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runLabelAdd(env, args)
+		},
+	}
+
+	return cmd
+}
+
+func runLabelAdd(env *Env, args []string) error {
+	backend, err := cache.NewRepoCache(env.repo)
 	if err != nil {
 		return err
 	}
@@ -25,7 +39,7 @@ func runLabelAdd(cmd *cobra.Command, args []string) error {
 	changes, _, err := b.ChangeLabels(args, nil)
 
 	for _, change := range changes {
-		fmt.Println(change)
+		env.out.Println(change)
 	}
 
 	if err != nil {
@@ -33,15 +47,4 @@ func runLabelAdd(cmd *cobra.Command, args []string) error {
 	}
 
 	return b.Commit()
-}
-
-var labelAddCmd = &cobra.Command{
-	Use:     "add [<id>] <label>[...]",
-	Short:   "Add a label to a bug.",
-	PreRunE: loadRepoEnsureUser,
-	RunE:    runLabelAdd,
-}
-
-func init() {
-	labelCmd.AddCommand(labelAddCmd)
 }

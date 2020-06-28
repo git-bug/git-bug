@@ -1,15 +1,32 @@
 package commands
 
 import (
-	"fmt"
+	"github.com/spf13/cobra"
 
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util/interrupt"
-	"github.com/spf13/cobra"
 )
 
-func runLsLabel(cmd *cobra.Command, args []string) error {
-	backend, err := cache.NewRepoCache(repo)
+func newLsLabelCommand() *cobra.Command {
+	env := newEnv()
+
+	cmd := &cobra.Command{
+		Use:   "ls-label",
+		Short: "List valid labels.",
+		Long: `List valid labels.
+
+Note: in the future, a proper label policy could be implemented where valid labels are defined in a configuration file. Until that, the default behavior is to return the list of labels already used.`,
+		PreRunE: loadRepo(env),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runLsLabel(env)
+		},
+	}
+
+	return cmd
+}
+
+func runLsLabel(env *Env) error {
+	backend, err := cache.NewRepoCache(env.repo)
 	if err != nil {
 		return err
 	}
@@ -19,22 +36,8 @@ func runLsLabel(cmd *cobra.Command, args []string) error {
 	labels := backend.ValidLabels()
 
 	for _, l := range labels {
-		fmt.Println(l)
+		env.out.Println(l)
 	}
 
 	return nil
-}
-
-var lsLabelCmd = &cobra.Command{
-	Use:   "ls-label",
-	Short: "List valid labels.",
-	Long: `List valid labels.
-
-Note: in the future, a proper label policy could be implemented where valid labels are defined in a configuration file. Until that, the default behavior is to return the list of labels already used.`,
-	PreRunE: loadRepo,
-	RunE:    runLsLabel,
-}
-
-func init() {
-	RootCmd.AddCommand(lsLabelCmd)
 }

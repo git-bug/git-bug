@@ -10,12 +10,38 @@ import (
 	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
-var (
-	userFieldsQuery string
-)
+type userOptions struct {
+	fieldsQuery string
+}
 
-func runUser(cmd *cobra.Command, args []string) error {
-	backend, err := cache.NewRepoCache(repo)
+func newUserCommand() *cobra.Command {
+	env := newEnv()
+	options := userOptions{}
+
+	cmd := &cobra.Command{
+		Use:     "user [<user-id>]",
+		Short:   "Display or change the user identity.",
+		PreRunE: loadRepoEnsureUser(env),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runUser(env, options, args)
+		},
+	}
+
+	cmd.AddCommand(newUserAdoptCommand())
+	cmd.AddCommand(newUserCreateCommand())
+	cmd.AddCommand(newUserLsCommand())
+
+	flags := cmd.Flags()
+	flags.SortFlags = false
+
+	flags.StringVarP(&options.fieldsQuery, "field", "f", "",
+		"Select field to display. Valid values are [email,humanId,id,lastModification,lastModificationLamport,login,metadata,name]")
+
+	return cmd
+}
+
+func runUser(env *Env, opts userOptions, args []string) error {
+	backend, err := cache.NewRepoCache(env.repo)
 	if err != nil {
 		return err
 	}
@@ -37,62 +63,47 @@ func runUser(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if userFieldsQuery != "" {
-		switch userFieldsQuery {
+	if opts.fieldsQuery != "" {
+		switch opts.fieldsQuery {
 		case "email":
-			fmt.Printf("%s\n", id.Email())
+			env.out.Printf("%s\n", id.Email())
 		case "login":
-			fmt.Printf("%s\n", id.Login())
+			env.out.Printf("%s\n", id.Login())
 		case "humanId":
-			fmt.Printf("%s\n", id.Id().Human())
+			env.out.Printf("%s\n", id.Id().Human())
 		case "id":
-			fmt.Printf("%s\n", id.Id())
+			env.out.Printf("%s\n", id.Id())
 		case "lastModification":
-			fmt.Printf("%s\n", id.LastModification().
+			env.out.Printf("%s\n", id.LastModification().
 				Time().Format("Mon Jan 2 15:04:05 2006 +0200"))
 		case "lastModificationLamport":
-			fmt.Printf("%d\n", id.LastModificationLamport())
+			env.out.Printf("%d\n", id.LastModificationLamport())
 		case "metadata":
 			for key, value := range id.ImmutableMetadata() {
-				fmt.Printf("%s\n%s\n", key, value)
+				env.out.Printf("%s\n%s\n", key, value)
 			}
 		case "name":
-			fmt.Printf("%s\n", id.Name())
+			env.out.Printf("%s\n", id.Name())
 
 		default:
-			return fmt.Errorf("\nUnsupported field: %s\n", userFieldsQuery)
+			return fmt.Errorf("\nUnsupported field: %s\n", opts.fieldsQuery)
 		}
 
 		return nil
 	}
 
-	fmt.Printf("Id: %s\n", id.Id())
-	fmt.Printf("Name: %s\n", id.Name())
-	fmt.Printf("Email: %s\n", id.Email())
-	fmt.Printf("Login: %s\n", id.Login())
-	fmt.Printf("Last modification: %s (lamport %d)\n",
+	env.out.Printf("Id: %s\n", id.Id())
+	env.out.Printf("Name: %s\n", id.Name())
+	env.out.Printf("Email: %s\n", id.Email())
+	env.out.Printf("Login: %s\n", id.Login())
+	env.out.Printf("Last modification: %s (lamport %d)\n",
 		id.LastModification().Time().Format("Mon Jan 2 15:04:05 2006 +0200"),
 		id.LastModificationLamport())
-	fmt.Println("Metadata:")
+	env.out.Println("Metadata:")
 	for key, value := range id.ImmutableMetadata() {
-		fmt.Printf("    %s --> %s\n", key, value)
+		env.out.Printf("    %s --> %s\n", key, value)
 	}
-	// fmt.Printf("Protected: %v\n", id.IsProtected())
+	// env.out.Printf("Protected: %v\n", id.IsProtected())
 
 	return nil
-}
-
-var userCmd = &cobra.Command{
-	Use:     "user [<user-id>]",
-	Short:   "Display or change the user identity.",
-	PreRunE: loadRepoEnsureUser,
-	RunE:    runUser,
-}
-
-func init() {
-	RootCmd.AddCommand(userCmd)
-	userCmd.Flags().SortFlags = false
-
-	userCmd.Flags().StringVarP(&userFieldsQuery, "field", "f", "",
-		"Select field to display. Valid values are [email,humanId,id,lastModification,lastModificationLamport,login,metadata,name]")
 }

@@ -11,12 +11,34 @@ import (
 	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
-var (
-	userLsOutputFormat string
-)
+type userLsOptions struct {
+	format string
+}
 
-func runUserLs(_ *cobra.Command, _ []string) error {
-	backend, err := cache.NewRepoCache(repo)
+func newUserLsCommand() *cobra.Command {
+	env := newEnv()
+	options := userLsOptions{}
+
+	cmd := &cobra.Command{
+		Use:     "ls",
+		Short:   "List identities.",
+		PreRunE: loadRepo(env),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runUserLs(env, options)
+		},
+	}
+
+	flags := cmd.Flags()
+	flags.SortFlags = false
+
+	flags.StringVarP(&options.format, "format", "f", "default",
+		"Select the output formatting style. Valid values are [default,json]")
+
+	return cmd
+}
+
+func runUserLs(env *Env, opts userLsOptions) error {
+	backend, err := cache.NewRepoCache(env.repo)
 	if err != nil {
 		return err
 	}
@@ -33,19 +55,19 @@ func runUserLs(_ *cobra.Command, _ []string) error {
 		users = append(users, user)
 	}
 
-	switch userLsOutputFormat {
+	switch opts.format {
 	case "json":
-		return userLsJsonFormatter(users)
+		return userLsJsonFormatter(env, users)
 	case "default":
-		return userLsDefaultFormatter(users)
+		return userLsDefaultFormatter(env, users)
 	default:
-		return fmt.Errorf("unknown format %s", userLsOutputFormat)
+		return fmt.Errorf("unknown format %s", opts.format)
 	}
 }
 
-func userLsDefaultFormatter(users []*cache.IdentityExcerpt) error {
+func userLsDefaultFormatter(env *Env, users []*cache.IdentityExcerpt) error {
 	for _, user := range users {
-		fmt.Printf("%s %s\n",
+		env.out.Printf("%s %s\n",
 			colors.Cyan(user.Id.Human()),
 			user.DisplayName(),
 		)
@@ -54,27 +76,13 @@ func userLsDefaultFormatter(users []*cache.IdentityExcerpt) error {
 	return nil
 }
 
-func userLsJsonFormatter(users []*cache.IdentityExcerpt) error {
+func userLsJsonFormatter(env *Env, users []*cache.IdentityExcerpt) error {
 	jsonUsers := make([]JSONIdentity, len(users))
 	for i, user := range users {
 		jsonUsers[i] = NewJSONIdentityFromExcerpt(user)
 	}
 
 	jsonObject, _ := json.MarshalIndent(jsonUsers, "", "    ")
-	fmt.Printf("%s\n", jsonObject)
+	env.out.Printf("%s\n", jsonObject)
 	return nil
-}
-
-var userLsCmd = &cobra.Command{
-	Use:     "ls",
-	Short:   "List identities.",
-	PreRunE: loadRepo,
-	RunE:    runUserLs,
-}
-
-func init() {
-	userCmd.AddCommand(userLsCmd)
-	userLsCmd.Flags().SortFlags = false
-	userLsCmd.Flags().StringVarP(&userLsOutputFormat, "format", "f", "default",
-		"Select the output formatting style. Valid values are [default,json]")
 }

@@ -1,8 +1,6 @@
 package commands
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 
 	"github.com/MichaelMure/git-bug/cache"
@@ -10,8 +8,23 @@ import (
 	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
-func runLabelRm(cmd *cobra.Command, args []string) error {
-	backend, err := cache.NewRepoCache(repo)
+func newLabelRmCommand() *cobra.Command {
+	env := newEnv()
+
+	cmd := &cobra.Command{
+		Use:     "rm [<id>] <label>[...]",
+		Short:   "Remove a label from a bug.",
+		PreRunE: loadRepo(env),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runLabelRm(env, args)
+		},
+	}
+
+	return cmd
+}
+
+func runLabelRm(env *Env, args []string) error {
+	backend, err := cache.NewRepoCache(env.repo)
 	if err != nil {
 		return err
 	}
@@ -26,7 +39,7 @@ func runLabelRm(cmd *cobra.Command, args []string) error {
 	changes, _, err := b.ChangeLabels(nil, args)
 
 	for _, change := range changes {
-		fmt.Println(change)
+		env.out.Println(change)
 	}
 
 	if err != nil {
@@ -34,15 +47,4 @@ func runLabelRm(cmd *cobra.Command, args []string) error {
 	}
 
 	return b.Commit()
-}
-
-var labelRmCmd = &cobra.Command{
-	Use:     "rm [<id>] <label>[...]",
-	Short:   "Remove a label from a bug.",
-	PreRunE: loadRepo,
-	RunE:    runLabelRm,
-}
-
-func init() {
-	labelCmd.AddCommand(labelRmCmd)
 }

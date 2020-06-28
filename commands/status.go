@@ -1,16 +1,33 @@
 package commands
 
 import (
-	"fmt"
+	"github.com/spf13/cobra"
 
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/commands/select"
 	"github.com/MichaelMure/git-bug/util/interrupt"
-	"github.com/spf13/cobra"
 )
 
-func runStatus(cmd *cobra.Command, args []string) error {
-	backend, err := cache.NewRepoCache(repo)
+func newStatusCommand() *cobra.Command {
+	env := newEnv()
+
+	cmd := &cobra.Command{
+		Use:     "status [<id>]",
+		Short:   "Display or change a bug status.",
+		PreRunE: loadRepo(env),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runStatus(env, args)
+		},
+	}
+
+	cmd.AddCommand(newStatusCloseCommand())
+	cmd.AddCommand(newStatusOpenCommand())
+
+	return cmd
+}
+
+func runStatus(env *Env, args []string) error {
+	backend, err := cache.NewRepoCache(env.repo)
 	if err != nil {
 		return err
 	}
@@ -24,18 +41,7 @@ func runStatus(cmd *cobra.Command, args []string) error {
 
 	snap := b.Snapshot()
 
-	fmt.Println(snap.Status)
+	env.out.Println(snap.Status)
 
 	return nil
-}
-
-var statusCmd = &cobra.Command{
-	Use:     "status [<id>]",
-	Short:   "Display or change a bug status.",
-	PreRunE: loadRepo,
-	RunE:    runStatus,
-}
-
-func init() {
-	RootCmd.AddCommand(statusCmd)
 }

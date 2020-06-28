@@ -1,17 +1,29 @@
 package commands
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
-func runLsID(cmd *cobra.Command, args []string) error {
+func newLsIdCommand() *cobra.Command {
+	env := newEnv()
 
-	backend, err := cache.NewRepoCache(repo)
+	cmd := &cobra.Command{
+		Use:     "ls-id [<prefix>]",
+		Short:   "List bug identifiers.",
+		PreRunE: loadRepo(env),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runLsId(env, args)
+		},
+	}
+
+	return cmd
+}
+
+func runLsId(env *Env, args []string) error {
+	backend, err := cache.NewRepoCache(env.repo)
 	if err != nil {
 		return err
 	}
@@ -25,20 +37,9 @@ func runLsID(cmd *cobra.Command, args []string) error {
 
 	for _, id := range backend.AllBugsIds() {
 		if prefix == "" || id.HasPrefix(prefix) {
-			fmt.Println(id)
+			env.out.Println(id)
 		}
 	}
 
 	return nil
-}
-
-var listBugIDCmd = &cobra.Command{
-	Use:     "ls-id [<prefix>]",
-	Short:   "List bug identifiers.",
-	PreRunE: loadRepo,
-	RunE:    runLsID,
-}
-
-func init() {
-	RootCmd.AddCommand(listBugIDCmd)
 }

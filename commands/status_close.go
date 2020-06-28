@@ -1,14 +1,30 @@
 package commands
 
 import (
+	"github.com/spf13/cobra"
+
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/commands/select"
 	"github.com/MichaelMure/git-bug/util/interrupt"
-	"github.com/spf13/cobra"
 )
 
-func runStatusClose(cmd *cobra.Command, args []string) error {
-	backend, err := cache.NewRepoCache(repo)
+func newStatusCloseCommand() *cobra.Command {
+	env := newEnv()
+
+	cmd := &cobra.Command{
+		Use:     "close [<id>]",
+		Short:   "Mark a bug as closed.",
+		PreRunE: loadRepoEnsureUser(env),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runStatusClose(env, args)
+		},
+	}
+
+	return cmd
+}
+
+func runStatusClose(env *Env, args []string) error {
+	backend, err := cache.NewRepoCache(env.repo)
 	if err != nil {
 		return err
 	}
@@ -26,15 +42,4 @@ func runStatusClose(cmd *cobra.Command, args []string) error {
 	}
 
 	return b.Commit()
-}
-
-var closeCmd = &cobra.Command{
-	Use:     "close [<id>]",
-	Short:   "Mark a bug as closed.",
-	PreRunE: loadRepoEnsureUser,
-	RunE:    runStatusClose,
-}
-
-func init() {
-	statusCmd.AddCommand(closeCmd)
 }
