@@ -8,7 +8,6 @@ import (
 
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util/colors"
-	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
 type userLsOptions struct {
@@ -20,9 +19,10 @@ func newUserLsCommand() *cobra.Command {
 	options := userLsOptions{}
 
 	cmd := &cobra.Command{
-		Use:     "ls",
-		Short:   "List identities.",
-		PreRunE: loadRepo(env),
+		Use:      "ls",
+		Short:    "List identities.",
+		PreRunE:  loadBackend(env),
+		PostRunE: closeBackend(env),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runUserLs(env, options)
 		},
@@ -38,17 +38,10 @@ func newUserLsCommand() *cobra.Command {
 }
 
 func runUserLs(env *Env, opts userLsOptions) error {
-	backend, err := cache.NewRepoCache(env.repo)
-	if err != nil {
-		return err
-	}
-	defer backend.Close()
-	interrupt.RegisterCleaner(backend.Close)
-
-	ids := backend.AllIdentityIds()
+	ids := env.backend.AllIdentityIds()
 	var users []*cache.IdentityExcerpt
 	for _, id := range ids {
-		user, err := backend.ResolveIdentityExcerpt(id)
+		user, err := env.backend.ResolveIdentityExcerpt(id)
 		if err != nil {
 			return err
 		}

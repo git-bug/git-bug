@@ -4,17 +4,16 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/MichaelMure/git-bug/bridge"
-	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
 func newBridgeCommand() *cobra.Command {
 	env := newEnv()
 
 	cmd := &cobra.Command{
-		Use:     "bridge",
-		Short:   "Configure and use bridges to other bug trackers.",
-		PreRunE: loadRepo(env),
+		Use:      "bridge",
+		Short:    "Configure and use bridges to other bug trackers.",
+		PreRunE:  loadBackend(env),
+		PostRunE: closeBackend(env),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runBridge(env)
 		},
@@ -31,14 +30,7 @@ func newBridgeCommand() *cobra.Command {
 }
 
 func runBridge(env *Env) error {
-	backend, err := cache.NewRepoCache(env.repo)
-	if err != nil {
-		return err
-	}
-	defer backend.Close()
-	interrupt.RegisterCleaner(backend.Close)
-
-	configured, err := bridge.ConfiguredBridges(backend)
+	configured, err := bridge.ConfiguredBridges(env.backend)
 	if err != nil {
 		return err
 	}

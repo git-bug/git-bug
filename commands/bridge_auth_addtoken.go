@@ -14,7 +14,6 @@ import (
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
 type bridgeAuthAddTokenOptions struct {
@@ -28,9 +27,10 @@ func newBridgeAuthAddTokenCommand() *cobra.Command {
 	options := bridgeAuthAddTokenOptions{}
 
 	cmd := &cobra.Command{
-		Use:     "add-token [<token>]",
-		Short:   "Store a new token",
-		PreRunE: loadRepoEnsureUser(env),
+		Use:      "add-token [<token>]",
+		Short:    "Store a new token",
+		PreRunE:  loadBackendEnsureUser(env),
+		PostRunE: closeBackend(env),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runBridgeAuthAddToken(env, options, args)
 		},
@@ -64,13 +64,6 @@ func runBridgeAuthAddToken(env *Env, opts bridgeAuthAddTokenOptions, args []stri
 		return fmt.Errorf("flag --login is required")
 	}
 
-	backend, err := cache.NewRepoCache(env.repo)
-	if err != nil {
-		return err
-	}
-	defer backend.Close()
-	interrupt.RegisterCleaner(backend.Close)
-
 	if !core.TargetExist(opts.target) {
 		return fmt.Errorf("unknown target")
 	}
@@ -93,11 +86,12 @@ func runBridgeAuthAddToken(env *Env, opts bridgeAuthAddTokenOptions, args []stri
 	}
 
 	var user *cache.IdentityCache
+	var err error
 
 	if opts.user == "" {
-		user, err = backend.GetUserIdentity()
+		user, err = env.backend.GetUserIdentity()
 	} else {
-		user, err = backend.ResolveIdentityPrefix(opts.user)
+		user, err = env.backend.ResolveIdentityPrefix(opts.user)
 	}
 	if err != nil {
 		return err

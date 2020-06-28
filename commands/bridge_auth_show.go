@@ -9,17 +9,16 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
-	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
 func newBridgeAuthShow() *cobra.Command {
 	env := newEnv()
 
 	cmd := &cobra.Command{
-		Use:     "show",
-		Short:   "Display an authentication credential.",
-		PreRunE: loadRepo(env),
+		Use:      "show",
+		Short:    "Display an authentication credential.",
+		PreRunE:  loadBackend(env),
+		PostRunE: closeBackend(env),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runBridgeAuthShow(env, args)
 		},
@@ -30,13 +29,6 @@ func newBridgeAuthShow() *cobra.Command {
 }
 
 func runBridgeAuthShow(env *Env, args []string) error {
-	backend, err := cache.NewRepoCache(env.repo)
-	if err != nil {
-		return err
-	}
-	defer backend.Close()
-	interrupt.RegisterCleaner(backend.Close)
-
 	cred, err := auth.LoadWithPrefix(env.repo, args[0])
 	if err != nil {
 		return err

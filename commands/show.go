@@ -9,10 +9,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/cache"
 	_select "github.com/MichaelMure/git-bug/commands/select"
 	"github.com/MichaelMure/git-bug/util/colors"
-	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
 type showOptions struct {
@@ -25,9 +23,10 @@ func newShowCommand() *cobra.Command {
 	options := showOptions{}
 
 	cmd := &cobra.Command{
-		Use:     "show [<id>]",
-		Short:   "Display the details of a bug.",
-		PreRunE: loadRepo(env),
+		Use:      "show [<id>]",
+		Short:    "Display the details of a bug.",
+		PreRunE:  loadBackend(env),
+		PostRunE: closeBackend(env),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runShow(env, options, args)
 		},
@@ -45,14 +44,7 @@ func newShowCommand() *cobra.Command {
 }
 
 func runShow(env *Env, opts showOptions, args []string) error {
-	backend, err := cache.NewRepoCache(env.repo)
-	if err != nil {
-		return err
-	}
-	defer backend.Close()
-	interrupt.RegisterCleaner(backend.Close)
-
-	b, args, err := _select.ResolveBug(backend, args)
+	b, args, err := _select.ResolveBug(env.backend, args)
 	if err != nil {
 		return err
 	}

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	text "github.com/MichaelMure/go-term-text"
 	"github.com/spf13/cobra"
@@ -12,7 +13,6 @@ import (
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/query"
 	"github.com/MichaelMure/git-bug/util/colors"
-	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
 type lsOptions struct {
@@ -41,7 +41,8 @@ git bug ls status:open sort:edit-desc
 List closed bugs sorted by creation with flags:
 git bug ls --status closed --by creation
 `,
-		PreRunE: loadRepo(env),
+		PreRunE:  loadBackend(env),
+		PostRunE: closeBackend(env),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runLs(env, options, args)
 		},
@@ -75,14 +76,11 @@ git bug ls --status closed --by creation
 }
 
 func runLs(env *Env, opts lsOptions, args []string) error {
-	backend, err := cache.NewRepoCache(env.repo)
-	if err != nil {
-		return err
-	}
-	defer backend.Close()
-	interrupt.RegisterCleaner(backend.Close)
+	time.Sleep(5 * time.Second)
 
 	var q *query.Query
+	var err error
+
 	if len(args) >= 1 {
 		q, err = query.Parse(strings.Join(args, " "))
 
@@ -97,11 +95,11 @@ func runLs(env *Env, opts lsOptions, args []string) error {
 		q = &opts.query
 	}
 
-	allIds := backend.QueryBugs(q)
+	allIds := env.backend.QueryBugs(q)
 
 	bugExcerpt := make([]*cache.BugExcerpt, len(allIds))
 	for i, id := range allIds {
-		b, err := backend.ResolveBugExcerpt(id)
+		b, err := env.backend.ResolveBugExcerpt(id)
 		if err != nil {
 			return err
 		}
@@ -110,13 +108,13 @@ func runLs(env *Env, opts lsOptions, args []string) error {
 
 	switch opts.outputFormat {
 	case "org-mode":
-		return lsOrgmodeFormatter(env, backend, bugExcerpt)
+		return lsOrgmodeFormatter(env, bugExcerpt)
 	case "plain":
-		return lsPlainFormatter(env, backend, bugExcerpt)
+		return lsPlainFormatter(env, bugExcerpt)
 	case "json":
-		return lsJsonFormatter(env, backend, bugExcerpt)
+		return lsJsonFormatter(env, bugExcerpt)
 	case "default":
-		return lsDefaultFormatter(env, backend, bugExcerpt)
+		return lsDefaultFormatter(env, bugExcerpt)
 	default:
 		return fmt.Errorf("unknown format %s", opts.outputFormat)
 	}
@@ -139,7 +137,7 @@ type JSONBugExcerpt struct {
 	Metadata map[string]string `json:"metadata"`
 }
 
-func lsJsonFormatter(env *Env, backend *cache.RepoCache, bugExcerpts []*cache.BugExcerpt) error {
+func lsJsonFormatter(env *Env, bugExcerpts []*cache.BugExcerpt) error {
 	jsonBugs := make([]JSONBugExcerpt, len(bugExcerpts))
 	for i, b := range bugExcerpts {
 		jsonBug := JSONBugExcerpt{
@@ -155,7 +153,7 @@ func lsJsonFormatter(env *Env, backend *cache.RepoCache, bugExcerpts []*cache.Bu
 		}
 
 		if b.AuthorId != "" {
-			author, err := backend.ResolveIdentityExcerpt(b.AuthorId)
+			author, err := env.backend.ResolveIdentityExcerpt(b.AuthorId)
 			if err != nil {
 				return err
 			}
@@ -166,7 +164,7 @@ func lsJsonFormatter(env *Env, backend *cache.RepoCache, bugExcerpts []*cache.Bu
 
 		jsonBug.Actors = make([]JSONIdentity, len(b.Actors))
 		for i, element := range b.Actors {
-			actor, err := backend.ResolveIdentityExcerpt(element)
+			actor, err := env.backend.ResolveIdentityExcerpt(element)
 			if err != nil {
 				return err
 			}
@@ -175,7 +173,7 @@ func lsJsonFormatter(env *Env, backend *cache.RepoCache, bugExcerpts []*cache.Bu
 
 		jsonBug.Participants = make([]JSONIdentity, len(b.Participants))
 		for i, element := range b.Participants {
-			participant, err := backend.ResolveIdentityExcerpt(element)
+			participant, err := env.backend.ResolveIdentityExcerpt(element)
 			if err != nil {
 				return err
 			}
@@ -189,11 +187,11 @@ func lsJsonFormatter(env *Env, backend *cache.RepoCache, bugExcerpts []*cache.Bu
 	return nil
 }
 
-func lsDefaultFormatter(env *Env, backend *cache.RepoCache, bugExcerpts []*cache.BugExcerpt) error {
+func lsDefaultFormatter(env *Env, bugExcerpts []*cache.BugExcerpt) error {
 	for _, b := range bugExcerpts {
 		var name string
 		if b.AuthorId != "" {
-			author, err := backend.ResolveIdentityExcerpt(b.AuthorId)
+			author, err := env.backend.ResolveIdentityExcerpt(b.AuthorId)
 			if err != nil {
 				return err
 			}
@@ -231,14 +229,14 @@ func lsDefaultFormatter(env *Env, backend *cache.RepoCache, bugExcerpts []*cache
 	return nil
 }
 
-func lsPlainFormatter(env *Env, _ *cache.RepoCache, bugExcerpts []*cache.BugExcerpt) error {
+func lsPlainFormatter(env *Env, bugExcerpts []*cache.BugExcerpt) error {
 	for _, b := range bugExcerpts {
 		env.out.Printf("%s [%s] %s\n", b.Id.Human(), b.Status, b.Title)
 	}
 	return nil
 }
 
-func lsOrgmodeFormatter(env *Env, backend *cache.RepoCache, bugExcerpts []*cache.BugExcerpt) error {
+func lsOrgmodeFormatter(env *Env, bugExcerpts []*cache.BugExcerpt) error {
 	env.out.Println("+TODO: OPEN | CLOSED")
 
 	for _, b := range bugExcerpts {
@@ -253,7 +251,7 @@ func lsOrgmodeFormatter(env *Env, backend *cache.RepoCache, bugExcerpts []*cache
 
 		var name string
 		if b.AuthorId != "" {
-			author, err := backend.ResolveIdentityExcerpt(b.AuthorId)
+			author, err := env.backend.ResolveIdentityExcerpt(b.AuthorId)
 			if err != nil {
 				return err
 			}
@@ -283,7 +281,7 @@ func lsOrgmodeFormatter(env *Env, backend *cache.RepoCache, bugExcerpts []*cache
 
 		env.out.Printf("** Actors:\n")
 		for _, element := range b.Actors {
-			actor, err := backend.ResolveIdentityExcerpt(element)
+			actor, err := env.backend.ResolveIdentityExcerpt(element)
 			if err != nil {
 				return err
 			}
@@ -296,7 +294,7 @@ func lsOrgmodeFormatter(env *Env, backend *cache.RepoCache, bugExcerpts []*cache
 
 		env.out.Printf("** Participants:\n")
 		for _, element := range b.Participants {
-			participant, err := backend.ResolveIdentityExcerpt(element)
+			participant, err := env.backend.ResolveIdentityExcerpt(element)
 			if err != nil {
 				return err
 			}

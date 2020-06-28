@@ -5,18 +5,17 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
 func newPullCommand() *cobra.Command {
 	env := newEnv()
 
 	cmd := &cobra.Command{
-		Use:     "pull [<remote>]",
-		Short:   "Pull bugs update from a git remote.",
-		PreRunE: loadRepo(env),
+		Use:      "pull [<remote>]",
+		Short:    "Pull bugs update from a git remote.",
+		PreRunE:  loadBackend(env),
+		PostRunE: closeBackend(env),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runPull(env, args)
 		},
@@ -35,16 +34,9 @@ func runPull(env *Env, args []string) error {
 		remote = args[0]
 	}
 
-	backend, err := cache.NewRepoCache(env.repo)
-	if err != nil {
-		return err
-	}
-	defer backend.Close()
-	interrupt.RegisterCleaner(backend.Close)
-
 	env.out.Println("Fetching remote ...")
 
-	stdout, err := backend.Fetch(remote)
+	stdout, err := env.backend.Fetch(remote)
 	if err != nil {
 		return err
 	}
@@ -53,7 +45,7 @@ func runPull(env *Env, args []string) error {
 
 	env.out.Println("Merging data ...")
 
-	for result := range backend.MergeAll(remote) {
+	for result := range env.backend.MergeAll(remote) {
 		if result.Err != nil {
 			env.err.Println(result.Err)
 		}

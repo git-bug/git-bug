@@ -3,18 +3,17 @@ package commands
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/input"
-	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
 func newUserCreateCommand() *cobra.Command {
 	env := newEnv()
 
 	cmd := &cobra.Command{
-		Use:     "create",
-		Short:   "Create a new identity.",
-		PreRunE: loadRepo(env),
+		Use:      "create",
+		Short:    "Create a new identity.",
+		PreRunE:  loadBackend(env),
+		PostRunE: closeBackend(env),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runUserCreate(env)
 		},
@@ -24,14 +23,7 @@ func newUserCreateCommand() *cobra.Command {
 }
 
 func runUserCreate(env *Env) error {
-	backend, err := cache.NewRepoCache(env.repo)
-	if err != nil {
-		return err
-	}
-	defer backend.Close()
-	interrupt.RegisterCleaner(backend.Close)
-
-	preName, err := backend.GetUserName()
+	preName, err := env.backend.GetUserName()
 	if err != nil {
 		return err
 	}
@@ -41,7 +33,7 @@ func runUserCreate(env *Env) error {
 		return err
 	}
 
-	preEmail, err := backend.GetUserEmail()
+	preEmail, err := env.backend.GetUserEmail()
 	if err != nil {
 		return err
 	}
@@ -56,7 +48,7 @@ func runUserCreate(env *Env) error {
 		return err
 	}
 
-	id, err := backend.NewIdentityRaw(name, email, "", avatarURL, nil)
+	id, err := env.backend.NewIdentityRaw(name, email, "", avatarURL, nil)
 	if err != nil {
 		return err
 	}
@@ -66,13 +58,13 @@ func runUserCreate(env *Env) error {
 		return err
 	}
 
-	set, err := backend.IsUserIdentitySet()
+	set, err := env.backend.IsUserIdentitySet()
 	if err != nil {
 		return err
 	}
 
 	if !set {
-		err = backend.SetUserIdentity(id)
+		err = env.backend.SetUserIdentity(id)
 		if err != nil {
 			return err
 		}

@@ -3,10 +3,8 @@ package commands
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/commands/select"
 	"github.com/MichaelMure/git-bug/input"
-	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
 type commentAddOptions struct {
@@ -19,9 +17,10 @@ func newCommentAddCommand() *cobra.Command {
 	options := commentAddOptions{}
 
 	cmd := &cobra.Command{
-		Use:     "add [<id>]",
-		Short:   "Add a new comment to a bug.",
-		PreRunE: loadRepoEnsureUser(env),
+		Use:      "add [<id>]",
+		Short:    "Add a new comment to a bug.",
+		PreRunE:  loadBackendEnsureUser(env),
+		PostRunE: closeBackend(env),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runCommentAdd(env, options, args)
 		},
@@ -40,14 +39,7 @@ func newCommentAddCommand() *cobra.Command {
 }
 
 func runCommentAdd(env *Env, opts commentAddOptions, args []string) error {
-	backend, err := cache.NewRepoCache(env.repo)
-	if err != nil {
-		return err
-	}
-	defer backend.Close()
-	interrupt.RegisterCleaner(backend.Close)
-
-	b, args, err := _select.ResolveBug(backend, args)
+	b, args, err := _select.ResolveBug(env.backend, args)
 	if err != nil {
 		return err
 	}
@@ -60,7 +52,7 @@ func runCommentAdd(env *Env, opts commentAddOptions, args []string) error {
 	}
 
 	if opts.messageFile == "" && opts.message == "" {
-		opts.message, err = input.BugCommentEditorInput(backend, "")
+		opts.message, err = input.BugCommentEditorInput(env.backend, "")
 		if err == input.ErrEmptyMessage {
 			env.err.Println("Empty message, aborting.")
 			return nil

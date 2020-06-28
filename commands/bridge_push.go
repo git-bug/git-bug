@@ -10,7 +10,6 @@ import (
 
 	"github.com/MichaelMure/git-bug/bridge"
 	"github.com/MichaelMure/git-bug/bridge/core"
-	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
@@ -18,9 +17,10 @@ func newBridgePushCommand() *cobra.Command {
 	env := newEnv()
 
 	cmd := &cobra.Command{
-		Use:     "push [<name>]",
-		Short:   "Push updates.",
-		PreRunE: loadRepoEnsureUser(env),
+		Use:      "push [<name>]",
+		Short:    "Push updates.",
+		PreRunE:  loadBackendEnsureUser(env),
+		PostRunE: closeBackend(env),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runBridgePush(env, args)
 		},
@@ -31,19 +31,13 @@ func newBridgePushCommand() *cobra.Command {
 }
 
 func runBridgePush(env *Env, args []string) error {
-	backend, err := cache.NewRepoCache(env.repo)
-	if err != nil {
-		return err
-	}
-	defer backend.Close()
-	interrupt.RegisterCleaner(backend.Close)
-
 	var b *core.Bridge
+	var err error
 
 	if len(args) == 0 {
-		b, err = bridge.DefaultBridge(backend)
+		b, err = bridge.DefaultBridge(env.backend)
 	} else {
-		b, err = bridge.LoadBridge(backend, args[0])
+		b, err = bridge.LoadBridge(env.backend, args[0])
 	}
 
 	if err != nil {

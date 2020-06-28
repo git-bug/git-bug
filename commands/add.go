@@ -3,9 +3,7 @@ package commands
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/input"
-	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
 type addOptions struct {
@@ -19,9 +17,10 @@ func newAddCommand() *cobra.Command {
 	options := addOptions{}
 
 	cmd := &cobra.Command{
-		Use:     "add",
-		Short:   "Create a new bug.",
-		PreRunE: loadRepoEnsureUser(env),
+		Use:      "add",
+		Short:    "Create a new bug.",
+		PreRunE:  loadBackendEnsureUser(env),
+		PostRunE: closeBackend(env),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runAdd(env, options)
 		},
@@ -41,13 +40,7 @@ func newAddCommand() *cobra.Command {
 }
 
 func runAdd(env *Env, opts addOptions) error {
-	backend, err := cache.NewRepoCache(env.repo)
-	if err != nil {
-		return err
-	}
-	defer backend.Close()
-	interrupt.RegisterCleaner(backend.Close)
-
+	var err error
 	if opts.messageFile != "" && opts.message == "" {
 		opts.title, opts.message, err = input.BugCreateFileInput(opts.messageFile)
 		if err != nil {
@@ -56,7 +49,7 @@ func runAdd(env *Env, opts addOptions) error {
 	}
 
 	if opts.messageFile == "" && (opts.message == "" || opts.title == "") {
-		opts.title, opts.message, err = input.BugCreateEditorInput(backend, opts.title, opts.message)
+		opts.title, opts.message, err = input.BugCreateEditorInput(env.backend, opts.title, opts.message)
 
 		if err == input.ErrEmptyTitle {
 			env.out.Println("Empty title, aborting.")
@@ -67,7 +60,7 @@ func runAdd(env *Env, opts addOptions) error {
 		}
 	}
 
-	b, _, err := backend.NewBug(opts.title, opts.message)
+	b, _, err := env.backend.NewBug(opts.title, opts.message)
 	if err != nil {
 		return err
 	}

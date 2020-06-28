@@ -6,10 +6,6 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-
-	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/identity"
-	"github.com/MichaelMure/git-bug/repository"
 )
 
 const rootCommandName = "git-bug"
@@ -90,45 +86,5 @@ _git_bug() {
 func Execute() {
 	if err := NewRootCommand().Execute(); err != nil {
 		os.Exit(1)
-	}
-}
-
-// loadRepo is a pre-run function that load the repository for use in a command
-func loadRepo(env *Env) func(*cobra.Command, []string) error {
-	return func(cmd *cobra.Command, args []string) error {
-		cwd, err := os.Getwd()
-		if err != nil {
-			return fmt.Errorf("unable to get the current working directory: %q", err)
-		}
-
-		env.repo, err = repository.NewGitRepo(cwd, []repository.ClockLoader{bug.ClockLoader})
-		if err == repository.ErrNotARepo {
-			return fmt.Errorf("%s must be run from within a git repo", rootCommandName)
-		}
-
-		if err != nil {
-			return err
-		}
-
-		return nil
-	}
-}
-
-// loadRepoEnsureUser is the same as loadRepo, but also ensure that the user has configured
-// an identity. Use this pre-run function when an error after using the configured user won't
-// do.
-func loadRepoEnsureUser(env *Env) func(*cobra.Command, []string) error {
-	return func(cmd *cobra.Command, args []string) error {
-		err := loadRepo(env)(cmd, args)
-		if err != nil {
-			return err
-		}
-
-		_, err = identity.GetUserIdentity(env.repo)
-		if err != nil {
-			return err
-		}
-
-		return nil
 	}
 }

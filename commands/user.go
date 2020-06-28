@@ -7,7 +7,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
 type userOptions struct {
@@ -19,9 +18,10 @@ func newUserCommand() *cobra.Command {
 	options := userOptions{}
 
 	cmd := &cobra.Command{
-		Use:     "user [<user-id>]",
-		Short:   "Display or change the user identity.",
-		PreRunE: loadRepoEnsureUser(env),
+		Use:      "user [<user-id>]",
+		Short:    "Display or change the user identity.",
+		PreRunE:  loadBackendEnsureUser(env),
+		PostRunE: closeBackend(env),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runUser(env, options, args)
 		},
@@ -41,22 +41,16 @@ func newUserCommand() *cobra.Command {
 }
 
 func runUser(env *Env, opts userOptions, args []string) error {
-	backend, err := cache.NewRepoCache(env.repo)
-	if err != nil {
-		return err
-	}
-	defer backend.Close()
-	interrupt.RegisterCleaner(backend.Close)
-
 	if len(args) > 1 {
 		return errors.New("only one identity can be displayed at a time")
 	}
 
 	var id *cache.IdentityCache
+	var err error
 	if len(args) == 1 {
-		id, err = backend.ResolveIdentityPrefix(args[0])
+		id, err = env.backend.ResolveIdentityPrefix(args[0])
 	} else {
-		id, err = backend.GetUserIdentity()
+		id, err = env.backend.GetUserIdentity()
 	}
 
 	if err != nil {

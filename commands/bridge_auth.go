@@ -9,18 +9,17 @@ import (
 	text "github.com/MichaelMure/go-term-text"
 
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
-	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util/colors"
-	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
 func newBridgeAuthCommand() *cobra.Command {
 	env := newEnv()
 
 	cmd := &cobra.Command{
-		Use:     "auth",
-		Short:   "List all known bridge authentication credentials.",
-		PreRunE: loadRepo(env),
+		Use:      "auth",
+		Short:    "List all known bridge authentication credentials.",
+		PreRunE:  loadBackend(env),
+		PostRunE: closeBackend(env),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runBridgeAuth(env)
 		},
@@ -35,14 +34,7 @@ func newBridgeAuthCommand() *cobra.Command {
 }
 
 func runBridgeAuth(env *Env) error {
-	backend, err := cache.NewRepoCache(env.repo)
-	if err != nil {
-		return err
-	}
-	defer backend.Close()
-	interrupt.RegisterCleaner(backend.Close)
-
-	creds, err := auth.List(backend)
+	creds, err := auth.List(env.backend)
 	if err != nil {
 		return err
 	}

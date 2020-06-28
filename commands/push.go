@@ -4,18 +4,16 @@ import (
 	"errors"
 
 	"github.com/spf13/cobra"
-
-	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
 func newPushCommand() *cobra.Command {
 	env := newEnv()
 
 	cmd := &cobra.Command{
-		Use:     "push [<remote>]",
-		Short:   "Push bugs update to a git remote.",
-		PreRunE: loadRepo(env),
+		Use:      "push [<remote>]",
+		Short:    "Push bugs update to a git remote.",
+		PreRunE:  loadBackend(env),
+		PostRunE: closeBackend(env),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runPush(env, args)
 		},
@@ -34,14 +32,7 @@ func runPush(env *Env, args []string) error {
 		remote = args[0]
 	}
 
-	backend, err := cache.NewRepoCache(env.repo)
-	if err != nil {
-		return err
-	}
-	defer backend.Close()
-	interrupt.RegisterCleaner(backend.Close)
-
-	stdout, err := backend.Push(remote)
+	stdout, err := env.backend.Push(remote)
 	if err != nil {
 		return err
 	}

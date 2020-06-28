@@ -12,9 +12,7 @@ import (
 	"github.com/MichaelMure/git-bug/bridge"
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
-	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/repository"
-	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
 type bridgeConfigureOptions struct {
@@ -86,7 +84,8 @@ git bug bridge configure \
     --target=github \
     --url=https://github.com/michaelmure/git-bug \
     --token=$(TOKEN)`,
-		PreRunE: loadRepo(env),
+		PreRunE:  loadBackend(env),
+		PostRunE: closeBackend(env),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runBridgeConfigure(env, options)
 		},
@@ -111,12 +110,7 @@ git bug bridge configure \
 }
 
 func runBridgeConfigure(env *Env, opts bridgeConfigureOptions) error {
-	backend, err := cache.NewRepoCache(env.repo)
-	if err != nil {
-		return err
-	}
-	defer backend.Close()
-	interrupt.RegisterCleaner(backend.Close)
+	var err error
 
 	if (opts.tokenStdin || opts.token != "" || opts.params.CredPrefix != "") &&
 		(opts.name == "" || opts.target == "") {
@@ -156,7 +150,7 @@ func runBridgeConfigure(env *Env, opts bridgeConfigureOptions) error {
 		}
 	}
 
-	b, err := bridge.NewBridge(backend, opts.target, opts.name)
+	b, err := bridge.NewBridge(env.backend, opts.target, opts.name)
 	if err != nil {
 		return err
 	}

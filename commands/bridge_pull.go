@@ -13,7 +13,6 @@ import (
 
 	"github.com/MichaelMure/git-bug/bridge"
 	"github.com/MichaelMure/git-bug/bridge/core"
-	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
@@ -27,9 +26,10 @@ func newBridgePullCommand() *cobra.Command {
 	options := bridgePullOptions{}
 
 	cmd := &cobra.Command{
-		Use:     "pull [<name>]",
-		Short:   "Pull updates.",
-		PreRunE: loadRepo(env),
+		Use:      "pull [<name>]",
+		Short:    "Pull updates.",
+		PreRunE:  loadBackend(env),
+		PostRunE: closeBackend(env),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runBridgePull(env, options, args)
 		},
@@ -50,19 +50,13 @@ func runBridgePull(env *Env, opts bridgePullOptions, args []string) error {
 		return fmt.Errorf("only one of --no-resume and --since flags should be used")
 	}
 
-	backend, err := cache.NewRepoCache(env.repo)
-	if err != nil {
-		return err
-	}
-	defer backend.Close()
-	interrupt.RegisterCleaner(backend.Close)
-
 	var b *core.Bridge
+	var err error
 
 	if len(args) == 0 {
-		b, err = bridge.DefaultBridge(backend)
+		b, err = bridge.DefaultBridge(env.backend)
 	} else {
-		b, err = bridge.LoadBridge(backend, args[0])
+		b, err = bridge.LoadBridge(env.backend, args[0])
 	}
 
 	if err != nil {
