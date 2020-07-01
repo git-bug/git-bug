@@ -88,32 +88,32 @@ func TestID(t *testing.T) {
 	}
 
 	for _, repo := range repos {
-		rene := identity.NewBare("René Descartes", "rene@descartes.fr")
+		rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
+		err := rene.Commit(repo)
+		require.NoError(t, err)
 
 		b, op, err := Create(rene, time.Now().Unix(), "title", "message")
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		id1 := op.Id()
 		require.NoError(t, id1.Validate())
 
 		err = b.Commit(repo)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		op2 := b.FirstOp()
 
 		id2 := op2.Id()
 		require.NoError(t, id2.Validate())
-
 		require.Equal(t, id1, id2)
 
 		b2, err := ReadLocal(repo, b.Id())
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		op3 := b2.FirstOp()
 
 		id3 := op3.Id()
 		require.NoError(t, id3.Validate())
-
 		require.Equal(t, id1, id3)
 	}
 }

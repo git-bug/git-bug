@@ -441,7 +441,7 @@ func (i *Identity) lastVersion() *Version {
 
 // Id return the Identity identifier
 func (i *Identity) Id() entity.Id {
-	if i.id == "" {
+	if i.id == "" || i.id == entity.UnsetId {
 		// simply panic as it would be a coding error
 		// (using an id of an identity not stored yet)
 		panic("no id yet")

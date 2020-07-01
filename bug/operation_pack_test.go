@@ -15,7 +15,11 @@ import (
 func TestOperationPackSerialize(t *testing.T) {
 	opp := &OperationPack{}
 
-	rene := identity.NewBare("René Descartes", "rene@descartes.fr")
+	repo := repository.NewMockRepoForTest()
+	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
+	err := rene.Commit(repo)
+	require.NoError(t, err)
+
 	createOp := NewCreateOp(rene, time.Now().Unix(), "title", "message", nil)
 	setTitleOp := NewSetTitleOp(rene, time.Now().Unix(), "title2", "title1")
 	addCommentOp := NewAddCommentOp(rene, time.Now().Unix(), "message2", nil)
@@ -49,16 +53,27 @@ func TestOperationPackSerialize(t *testing.T) {
 	err = json.Unmarshal(data, &opp2)
 	assert.NoError(t, err)
 
-	ensureIDs(t, opp)
+	ensureIds(opp)
+	ensureAuthors(t, opp, opp2)
 
 	assert.Equal(t, opp, opp2)
 }
 
-func ensureIDs(t *testing.T, opp *OperationPack) {
+func ensureIds(opp *OperationPack) {
 	for _, op := range opp.Operations {
-		id := op.Id()
-		require.NoError(t, id.Validate())
-		id = op.GetAuthor().Id()
-		require.NoError(t, id.Validate())
+		op.Id()
+	}
+}
+
+func ensureAuthors(t *testing.T, opp1 *OperationPack, opp2 *OperationPack) {
+	require.Equal(t, len(opp1.Operations), len(opp2.Operations))
+	for i := 0; i < len(opp1.Operations); i++ {
+		op1 := opp1.Operations[i]
+		op2 := opp2.Operations[i]
+
+		// ensure we have equivalent authors (IdentityStub vs Identity) then
+		// enforce equality
+		require.Equal(t, op1.base().Author.Id(), op2.base().Author.Id())
+		op1.base().Author = op2.base().Author
 	}
 }

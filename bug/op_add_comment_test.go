@@ -6,12 +6,18 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/repository"
 )
 
 func TestAddCommentSerialize(t *testing.T) {
-	var rene = identity.NewBare("René Descartes", "rene@descartes.fr")
+	repo := repository.NewMockRepoForTest()
+	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
+	err := rene.Commit(repo)
+	require.NoError(t, err)
+
 	unix := time.Now().Unix()
 	before := NewAddCommentOp(rene, unix, "message", nil)
 
@@ -22,9 +28,12 @@ func TestAddCommentSerialize(t *testing.T) {
 	err = json.Unmarshal(data, &after)
 	assert.NoError(t, err)
 
-	// enforce creating the IDs
+	// enforce creating the ID
 	before.Id()
-	rene.Id()
+
+	// Replace the identity stub with the real thing
+	assert.Equal(t, rene.Id(), after.base().Author.Id())
+	after.Author = rene
 
 	assert.Equal(t, before, &after)
 }

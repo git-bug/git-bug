@@ -33,18 +33,5 @@ func UnmarshalJSON(raw json.RawMessage) (Interface, error) {
 		return nil, err
 	}
 
-	// Fallback on a legacy Bare identity
-	b := &Bare{}
-
-	err = json.Unmarshal(raw, b)
-	if err == nil && (b.name != "" || b.login != "") {
-		return b, nil
-	}
-
-	// abort if we have an error other than the wrong type
-	if _, ok := err.(*json.UnmarshalTypeError); err != nil && !ok {
-		return nil, err
-	}
-
 	return nil, fmt.Errorf("unknown identity type")
 }

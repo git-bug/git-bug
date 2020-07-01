@@ -6,14 +6,16 @@ import (
 	"time"
 
 	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/timestamp"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCreate(t *testing.T) {
 	snapshot := Snapshot{}
 
-	rene := identity.NewBare("René Descartes", "rene@descartes.fr")
+	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
 	unix := time.Now().Unix()
 
 	create := NewCreateOp(rene, unix, "title", "message", nil)
@@ -50,7 +52,11 @@ func TestCreate(t *testing.T) {
 }
 
 func TestCreateSerialize(t *testing.T) {
-	var rene = identity.NewBare("René Descartes", "rene@descartes.fr")
+	repo := repository.NewMockRepoForTest()
+	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
+	err := rene.Commit(repo)
+	require.NoError(t, err)
+
 	unix := time.Now().Unix()
 	before := NewCreateOp(rene, unix, "title", "message", nil)
 
@@ -61,9 +67,12 @@ func TestCreateSerialize(t *testing.T) {
 	err = json.Unmarshal(data, &after)
 	assert.NoError(t, err)
 
-	// enforce creating the IDs
+	// enforce creating the ID
 	before.Id()
-	rene.Id()
+
+	// Replace the identity stub with the real thing
+	assert.Equal(t, rene.Id(), after.base().Author.Id())
+	after.Author = rene
 
 	assert.Equal(t, before, &after)
 }

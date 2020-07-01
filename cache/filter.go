@@ -29,19 +29,12 @@ func AuthorFilter(query string) Filter {
 	return func(excerpt *BugExcerpt, resolver resolver) bool {
 		query = strings.ToLower(query)
 
-		// Normal identity
-		if excerpt.AuthorId != "" {
-			author, err := resolver.ResolveIdentityExcerpt(excerpt.AuthorId)
-			if err != nil {
-				panic(err)
-			}
-
-			return author.Match(query)
+		author, err := resolver.ResolveIdentityExcerpt(excerpt.AuthorId)
+		if err != nil {
+			panic(err)
 		}
 
-		// Legacy identity support
-		return strings.Contains(strings.ToLower(excerpt.LegacyAuthor.Name), query) ||
-			strings.Contains(strings.ToLower(excerpt.LegacyAuthor.Login), query)
+		return author.Match(query)
 	}
 }
 
