@@ -11,7 +11,6 @@ import (
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
-	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
@@ -57,8 +56,8 @@ type Bug struct {
 	// Id used as unique identifier
 	id entity.Id
 
-	lastCommit git.Hash
-	rootPack   git.Hash
+	lastCommit repository.Hash
+	rootPack   repository.Hash
 
 	// all the committed operations
 	packs []OperationPack
@@ -509,7 +508,7 @@ func (bug *Bug) NeedCommit() bool {
 func makeMediaTree(pack OperationPack) []repository.TreeEntry {
 	var tree []repository.TreeEntry
 	counter := 0
-	added := make(map[git.Hash]interface{})
+	added := make(map[repository.Hash]interface{})
 
 	for _, ops := range pack.Operations {
 		for _, file := range ops.GetFiles() {

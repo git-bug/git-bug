@@ -8,7 +8,7 @@ import (
 	"strconv"
 
 	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/util/git"
+	"github.com/MichaelMure/git-bug/repository"
 )
 
 // An object that has an author.
@@ -26,7 +26,7 @@ type AddCommentInput struct {
 	// The first message of the new bug.
 	Message string `json:"message"`
 	// The collection of file's hash required for the first message.
-	Files []git.Hash `json:"files"`
+	Files []repository.Hash `json:"files"`
 }
 
 type AddCommentPayload struct {
@@ -145,7 +145,7 @@ type NewBugInput struct {
 	// The first message of the new bug.
 	Message string `json:"message"`
 	// The collection of file's hash required for the first message.
-	Files []git.Hash `json:"files"`
+	Files []repository.Hash `json:"files"`
 }
 
 type NewBugPayload struct {

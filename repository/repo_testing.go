@@ -9,8 +9,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/MichaelMure/git-bug/util/git"
 )
 
 func CleanupTestRepos(repos ...Repo) {
@@ -158,7 +156,7 @@ func RepoTest(t *testing.T, creator RepoCreator, cleaner RepoCleaner) {
 
 		commits, err := repo.ListCommits("refs/bugs/ref2")
 		require.NoError(t, err)
-		assert.Equal(t, []git.Hash{commit1, commit2}, commits)
+		assert.Equal(t, []Hash{commit1, commit2}, commits)
 
 		// Graph
 

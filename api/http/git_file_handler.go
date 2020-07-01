@@ -8,7 +8,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/util/git"
+	"github.com/MichaelMure/git-bug/repository"
 )
 
 // implement a http.Handler that will read and server git blob.
@@ -41,7 +41,7 @@ func (gfh *gitFileHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hash := git.Hash(mux.Vars(r)["hash"])
+	hash := repository.Hash(mux.Vars(r)["hash"])
 	if !hash.IsValid() {
 		http.Error(rw, "invalid git hash", http.StatusBadRequest)
 		return

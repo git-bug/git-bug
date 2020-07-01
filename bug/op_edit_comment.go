@@ -8,9 +8,9 @@ import (
 
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/timestamp"
 
-	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
@@ -19,9 +19,9 @@ var _ Operation = &EditCommentOperation{}
 // EditCommentOperation will change a comment in the bug
 type EditCommentOperation struct {
 	OpBase
-	Target  entity.Id  `json:"target"`
-	Message string     `json:"message"`
-	Files   []git.Hash `json:"files"`
+	Target  entity.Id         `json:"target"`
+	Message string            `json:"message"`
+	Files   []repository.Hash `json:"files"`
 }
 
 // Sign-post method for gqlgen
@@ -80,7 +80,7 @@ func (op *EditCommentOperation) Apply(snapshot *Snapshot) {
 	}
 }
 
-func (op *EditCommentOperation) GetFiles() []git.Hash {
+func (op *EditCommentOperation) GetFiles() []repository.Hash {
 	return op.Files
 }
 
@@ -113,9 +113,9 @@ func (op *EditCommentOperation) UnmarshalJSON(data []byte) error {
 	}
 
 	aux := struct {
-		Target  entity.Id  `json:"target"`
-		Message string     `json:"message"`
-		Files   []git.Hash `json:"files"`
+		Target  entity.Id         `json:"target"`
+		Message string            `json:"message"`
+		Files   []repository.Hash `json:"files"`
 	}{}
 
 	err = json.Unmarshal(data, &aux)
@@ -134,7 +134,7 @@ func (op *EditCommentOperation) UnmarshalJSON(data []byte) error {
 // Sign post method for gqlgen
 func (op *EditCommentOperation) IsAuthored() {}
 
-func NewEditCommentOp(author identity.Interface, unixTime int64, target entity.Id, message string, files []git.Hash) *EditCommentOperation {
+func NewEditCommentOp(author identity.Interface, unixTime int64, target entity.Id, message string, files []repository.Hash) *EditCommentOperation {
 	return &EditCommentOperation{
 		OpBase:  newOpBase(EditCommentOp, author, unixTime),
 		Target:  target,
@@ -148,7 +148,7 @@ func EditComment(b Interface, author identity.Interface, unixTime int64, target 
 	return EditCommentWithFiles(b, author, unixTime, target, message, nil)
 }
 
-func EditCommentWithFiles(b Interface, author identity.Interface, unixTime int64, target entity.Id, message string, files []git.Hash) (*EditCommentOperation, error) {
+func EditCommentWithFiles(b Interface, author identity.Interface, unixTime int64, target entity.Id, message string, files []repository.Hash) (*EditCommentOperation, error) {
 	editCommentOp := NewEditCommentOp(author, unixTime, target, message, files)
 	if err := editCommentOp.Validate(); err != nil {
 		return nil, err
@@ -164,7 +164,7 @@ func EditCreateComment(b Interface, author identity.Interface, unixTime int64, m
 }
 
 // Convenience function to edit the body of a bug (the first comment)
-func EditCreateCommentWithFiles(b Interface, author identity.Interface, unixTime int64, message string, files []git.Hash) (*EditCommentOperation, error) {
+func EditCreateCommentWithFiles(b Interface, author identity.Interface, unixTime int64, message string, files []repository.Hash) (*EditCommentOperation, error) {
 	createOp := b.FirstOp().(*CreateOperation)
 	return EditCommentWithFiles(b, author, unixTime, createOp.Id(), message, files)
 }

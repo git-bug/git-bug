@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/MichaelMure/git-bug/repository"
-	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/pkg/errors"
+
+	"github.com/MichaelMure/git-bug/repository"
 )
 
 const formatVersion = 1
@@ -21,7 +21,7 @@ type OperationPack struct {
 	Operations []Operation
 
 	// Private field so not serialized
-	commitHash git.Hash
+	commitHash repository.Hash
 }
 
 func (opp *OperationPack) MarshalJSON() ([]byte, error) {
@@ -135,7 +135,7 @@ func (opp *OperationPack) Validate() error {
 
 // Write will serialize and store the OperationPack as a git blob and return
 // its hash
-func (opp *OperationPack) Write(repo repository.ClockedRepo) (git.Hash, error) {
+func (opp *OperationPack) Write(repo repository.ClockedRepo) (repository.Hash, error) {
 	// make sure we don't write invalid data
 	err := opp.Validate()
 	if err != nil {

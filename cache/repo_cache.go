@@ -21,7 +21,6 @@ import (
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/query"
 	"github.com/MichaelMure/git-bug/repository"
-	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/process"
 )
 
@@ -143,12 +142,12 @@ func (c *RepoCache) GetUserEmail() (string, error) {
 }
 
 // ReadData will attempt to read arbitrary data from the given hash
-func (c *RepoCache) ReadData(hash git.Hash) ([]byte, error) {
+func (c *RepoCache) ReadData(hash repository.Hash) ([]byte, error) {
 	return c.repo.ReadData(hash)
 }
 
 // StoreData will store arbitrary data and return the corresponding hash
-func (c *RepoCache) StoreData(data []byte) (git.Hash, error) {
+func (c *RepoCache) StoreData(data []byte) (repository.Hash, error) {
 	return c.repo.StoreData(data)
 }
 
@@ -637,7 +636,7 @@ func (c *RepoCache) NewBug(title string, message string) (*BugCache, *bug.Create
 
 // NewBugWithFiles create a new bug with attached files for the message
 // The new bug is written in the repository (commit)
-func (c *RepoCache) NewBugWithFiles(title string, message string, files []git.Hash) (*BugCache, *bug.CreateOperation, error) {
+func (c *RepoCache) NewBugWithFiles(title string, message string, files []repository.Hash) (*BugCache, *bug.CreateOperation, error) {
 	author, err := c.GetUserIdentity()
 	if err != nil {
 		return nil, nil, err
@@ -649,7 +648,7 @@ func (c *RepoCache) NewBugWithFiles(title string, message string, files []git.Ha
 // NewBugWithFilesMeta create a new bug with attached files for the message, as
 // well as metadata for the Create operation.
 // The new bug is written in the repository (commit)
-func (c *RepoCache) NewBugRaw(author *IdentityCache, unixTime int64, title string, message string, files []git.Hash, metadata map[string]string) (*BugCache, *bug.CreateOperation, error) {
+func (c *RepoCache) NewBugRaw(author *IdentityCache, unixTime int64, title string, message string, files []repository.Hash, metadata map[string]string) (*BugCache, *bug.CreateOperation, error) {
 	b, op, err := bug.CreateWithFiles(author.Identity, unixTime, title, message, files)
 	if err != nil {
 		return nil, nil, err

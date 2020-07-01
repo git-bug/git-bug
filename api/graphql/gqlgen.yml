@@ -6,11 +6,11 @@ model:
 
 models:
   Repository:
-    model: github.com/MichaelMure/git-bug/graphql/models.Repository
+    model: github.com/MichaelMure/git-bug/api/graphql/models.Repository
   RepositoryMutation:
-    model: github.com/MichaelMure/git-bug/graphql/models.RepositoryMutation
+    model: github.com/MichaelMure/git-bug/api/graphql/models.RepositoryMutation
   Bug:
-    model: github.com/MichaelMure/git-bug/graphql/models.BugWrapper
+    model: github.com/MichaelMure/git-bug/api/graphql/models.BugWrapper
     fields:
       actors:
         resolver: true
@@ -27,11 +27,11 @@ models:
   Comment:
     model: github.com/MichaelMure/git-bug/bug.Comment
   Identity:
-    model: github.com/MichaelMure/git-bug/graphql/models.IdentityWrapper
+    model: github.com/MichaelMure/git-bug/api/graphql/models.IdentityWrapper
   Label:
     model: github.com/MichaelMure/git-bug/bug.Label
   Hash:
-    model: github.com/MichaelMure/git-bug/util/git.Hash
+    model: github.com/MichaelMure/git-bug/repository.Hash
   Operation:
     model: github.com/MichaelMure/git-bug/bug.Operation
   CreateOperation:

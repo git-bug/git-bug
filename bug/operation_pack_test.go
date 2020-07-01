@@ -5,10 +5,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MichaelMure/git-bug/identity"
-	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/repository"
 )
 
 func TestOperationPackSerialize(t *testing.T) {
@@ -33,7 +34,7 @@ func TestOperationPackSerialize(t *testing.T) {
 
 	assert.Equal(t, 1, len(opMeta.Metadata))
 
-	opFile := NewAddCommentOp(rene, time.Now().Unix(), "message", []git.Hash{
+	opFile := NewAddCommentOp(rene, time.Now().Unix(), "message", []repository.Hash{
 		"abcdef",
 		"ghijkl",
 	})

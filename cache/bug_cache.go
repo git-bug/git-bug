@@ -6,7 +6,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/util/git"
+	"github.com/MichaelMure/git-bug/repository"
 )
 
 var ErrNoMatchingOp = fmt.Errorf("no matching operation found")
@@ -68,7 +68,7 @@ func (c *BugCache) AddComment(message string) (*bug.AddCommentOperation, error) 
 	return c.AddCommentWithFiles(message, nil)
 }
 
-func (c *BugCache) AddCommentWithFiles(message string, files []git.Hash) (*bug.AddCommentOperation, error) {
+func (c *BugCache) AddCommentWithFiles(message string, files []repository.Hash) (*bug.AddCommentOperation, error) {
 	author, err := c.repoCache.GetUserIdentity()
 	if err != nil {
 		return nil, err
@@ -77,7 +77,7 @@ func (c *BugCache) AddCommentWithFiles(message string, files []git.Hash) (*bug.A
 	return c.AddCommentRaw(author, time.Now().Unix(), message, files, nil)
 }
 
-func (c *BugCache) AddCommentRaw(author *IdentityCache, unixTime int64, message string, files []git.Hash, metadata map[string]string) (*bug.AddCommentOperation, error) {
+func (c *BugCache) AddCommentRaw(author *IdentityCache, unixTime int64, message string, files []repository.Hash, metadata map[string]string) (*bug.AddCommentOperation, error) {
 	op, err := bug.AddCommentWithFiles(c.bug, author.Identity, unixTime, message, files)
 	if err != nil {
 		return nil, err

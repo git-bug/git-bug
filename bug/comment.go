@@ -1,11 +1,12 @@
 package bug
 
 import (
+	"github.com/dustin/go-humanize"
+
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/identity"
-	"github.com/MichaelMure/git-bug/util/git"
+	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/timestamp"
-	"github.com/dustin/go-humanize"
 )
 
 // Comment represent a comment in a Bug
@@ -13,7 +14,7 @@ type Comment struct {
 	id      entity.Id
 	Author  identity.Interface
 	Message string
-	Files   []git.Hash
+	Files   []repository.Hash
 
 	// Creation time of the comment.
 	// Should be used only for human display, never for ordering as we can't rely on it in a distributed system.
