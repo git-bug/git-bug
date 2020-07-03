@@ -152,7 +152,7 @@ func RepoTest(t *testing.T, creator RepoCreator, cleaner RepoCleaner) {
 
 		ls, err = repo.ListRefs("refs/bugs")
 		require.NoError(t, err)
-		assert.Equal(t, []string{"refs/bugs/ref1", "refs/bugs/ref2"}, ls)
+		assert.ElementsMatch(t, []string{"refs/bugs/ref1", "refs/bugs/ref2"}, ls)
 
 		commits, err := repo.ListCommits("refs/bugs/ref2")
 		require.NoError(t, err)
