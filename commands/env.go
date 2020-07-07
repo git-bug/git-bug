@@ -122,7 +122,7 @@ func loadBackend(env *Env) func(*cobra.Command, []string) error {
 // do.
 func loadBackendEnsureUser(env *Env) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		err := loadRepo(env)(cmd, args)
+		err := loadBackend(env)(cmd, args)
 		if err != nil {
 			return err
 		}
