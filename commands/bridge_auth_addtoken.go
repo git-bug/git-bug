@@ -14,37 +14,57 @@ import (
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
-var (
-	bridgeAuthAddTokenTarget string
-	bridgeAuthAddTokenLogin  string
-	bridgeAuthAddTokenUser   string
-)
+type bridgeAuthAddTokenOptions struct {
+	target string
+	login  string
+	user   string
+}
 
-func runBridgeTokenAdd(cmd *cobra.Command, args []string) error {
+func newBridgeAuthAddTokenCommand() *cobra.Command {
+	env := newEnv()
+	options := bridgeAuthAddTokenOptions{}
+
+	cmd := &cobra.Command{
+		Use:      "add-token [<token>]",
+		Short:    "Store a new token",
+		PreRunE:  loadBackendEnsureUser(env),
+		PostRunE: closeBackend(env),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runBridgeAuthAddToken(env, options, args)
+		},
+		Args: cobra.MaximumNArgs(1),
+	}
+
+	flags := cmd.Flags()
+	flags.SortFlags = false
+
+	flags.StringVarP(&options.target, "target", "t", "",
+		fmt.Sprintf("The target of the bridge. Valid values are [%s]", strings.Join(bridge.Targets(), ",")))
+	flags.StringVarP(&options.login,
+		"login", "l", "", "The login in the remote bug-tracker")
+	flags.StringVarP(&options.user,
+		"user", "u", "", "The user to add the token to. Default is the current user")
+
+	return cmd
+}
+
+func runBridgeAuthAddToken(env *Env, opts bridgeAuthAddTokenOptions, args []string) error {
 	// Note: as bridgeAuthAddTokenLogin is not checked against the remote bug-tracker,
 	// it's possible to register a credential with an incorrect login (including bad case).
 	// The consequence is that it will not get picked later by the bridge. I find that
 	// checking it would require a cumbersome UX (need to provide a base URL for some bridges, ...)
 	// so it's probably not worth it, unless we refactor that entirely.
 
-	if bridgeAuthAddTokenTarget == "" {
+	if opts.target == "" {
 		return fmt.Errorf("flag --target is required")
 	}
-	if bridgeAuthAddTokenLogin == "" {
+	if opts.login == "" {
 		return fmt.Errorf("flag --login is required")
 	}
 
-	backend, err := cache.NewRepoCache(repo)
-	if err != nil {
-		return err
-	}
-	defer backend.Close()
-	interrupt.RegisterCleaner(backend.Close)
-
-	if !core.TargetExist(bridgeAuthAddTokenTarget) {
+	if !core.TargetExist(opts.target) {
 		return fmt.Errorf("unknown target")
 	}
 
@@ -55,7 +75,7 @@ func runBridgeTokenAdd(cmd *cobra.Command, args []string) error {
 	} else {
 		// Read from Stdin
 		if isatty.IsTerminal(os.Stdin.Fd()) {
-			fmt.Println("Enter the token:")
+			env.err.Println("Enter the token:")
 		}
 		reader := bufio.NewReader(os.Stdin)
 		raw, err := reader.ReadString('\n')
@@ -66,63 +86,45 @@ func runBridgeTokenAdd(cmd *cobra.Command, args []string) error {
 	}
 
 	var user *cache.IdentityCache
+	var err error
 
-	if bridgeAuthAddTokenUser == "" {
-		user, err = backend.GetUserIdentity()
+	if opts.user == "" {
+		user, err = env.backend.GetUserIdentity()
 	} else {
-		user, err = backend.ResolveIdentityPrefix(bridgeAuthAddTokenUser)
+		user, err = env.backend.ResolveIdentityPrefix(opts.user)
 	}
 	if err != nil {
 		return err
 	}
 
-	metaKey, _ := bridge.LoginMetaKey(bridgeAuthAddTokenTarget)
+	metaKey, _ := bridge.LoginMetaKey(opts.target)
 	login, ok := user.ImmutableMetadata()[metaKey]
 
 	switch {
-	case ok && login == bridgeAuthAddTokenLogin:
+	case ok && login == opts.login:
 		// nothing to do
-	case ok && login != bridgeAuthAddTokenLogin:
-		return fmt.Errorf("this user is already tagged with a different %s login", bridgeAuthAddTokenTarget)
+	case ok && login != opts.login:
+		return fmt.Errorf("this user is already tagged with a different %s login", opts.target)
 	default:
-		user.SetMetadata(metaKey, bridgeAuthAddTokenLogin)
+		user.SetMetadata(metaKey, opts.login)
 		err = user.Commit()
 		if err != nil {
 			return err
 		}
 	}
 
-	token := auth.NewToken(bridgeAuthAddTokenTarget, value)
-	token.SetMetadata(auth.MetaKeyLogin, bridgeAuthAddTokenLogin)
+	token := auth.NewToken(opts.target, value)
+	token.SetMetadata(auth.MetaKeyLogin, opts.login)
 
 	if err := token.Validate(); err != nil {
 		return errors.Wrap(err, "invalid token")
 	}
 
-	err = auth.Store(repo, token)
+	err = auth.Store(env.repo, token)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("token %s added\n", token.ID())
+	env.out.Printf("token %s added\n", token.ID())
 	return nil
-}
-
-var bridgeAuthAddTokenCmd = &cobra.Command{
-	Use:     "add-token [<token>]",
-	Short:   "Store a new token",
-	PreRunE: loadRepoEnsureUser,
-	RunE:    runBridgeTokenAdd,
-	Args:    cobra.MaximumNArgs(1),
-}
-
-func init() {
-	bridgeAuthCmd.AddCommand(bridgeAuthAddTokenCmd)
-	bridgeAuthAddTokenCmd.Flags().StringVarP(&bridgeAuthAddTokenTarget, "target", "t", "",
-		fmt.Sprintf("The target of the bridge. Valid values are [%s]", strings.Join(bridge.Targets(), ",")))
-	bridgeAuthAddTokenCmd.Flags().StringVarP(&bridgeAuthAddTokenLogin,
-		"login", "l", "", "The login in the remote bug-tracker")
-	bridgeAuthAddTokenCmd.Flags().StringVarP(&bridgeAuthAddTokenUser,
-		"user", "u", "", "The user to add the token to. Default is the current user")
-	bridgeAuthAddTokenCmd.Flags().SortFlags = false
 }

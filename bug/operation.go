@@ -10,7 +10,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/identity"
-	"github.com/MichaelMure/git-bug/util/git"
+	"github.com/MichaelMure/git-bug/repository"
 )
 
 // OperationType is an operation type identifier
@@ -37,7 +37,7 @@ type Operation interface {
 	// Time return the time when the operation was added
 	Time() time.Time
 	// GetFiles return the files needed by this operation
-	GetFiles() []git.Hash
+	GetFiles() []repository.Hash
 	// Apply the operation to a Snapshot to create the final state
 	Apply(snapshot *Snapshot)
 	// Validate check if the operation is valid (ex: a title is a single line)
@@ -142,7 +142,7 @@ func (op *OpBase) Time() time.Time {
 }
 
 // GetFiles return the files needed by this operation
-func (op *OpBase) GetFiles() []git.Hash {
+func (op *OpBase) GetFiles() []repository.Hash {
 	return nil
 }
 

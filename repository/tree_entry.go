@@ -3,13 +3,11 @@ package repository
 import (
 	"fmt"
 	"strings"
-
-	"github.com/MichaelMure/git-bug/util/git"
 )
 
 type TreeEntry struct {
 	ObjectType ObjectType
-	Hash       git.Hash
+	Hash       Hash
 	Name       string
 }
 
@@ -34,7 +32,7 @@ func ParseTreeEntry(line string) (TreeEntry, error) {
 		return TreeEntry{}, err
 	}
 
-	hash := git.Hash(fields[2])
+	hash := Hash(fields[2])
 	name := strings.Join(fields[3:], "")
 
 	return TreeEntry{

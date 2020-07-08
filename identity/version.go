@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/pkg/errors"
+
 	"github.com/MichaelMure/git-bug/repository"
-	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/lamport"
 	"github.com/MichaelMure/git-bug/util/text"
-	"github.com/pkg/errors"
 )
 
 const formatVersion = 1
@@ -45,7 +45,7 @@ type Version struct {
 	metadata map[string]string
 
 	// Not serialized
-	commitHash git.Hash
+	commitHash repository.Hash
 }
 
 type VersionJSON struct {
@@ -174,7 +174,7 @@ func (v *Version) Validate() error {
 
 // Write will serialize and store the Version as a git blob and return
 // its hash
-func (v *Version) Write(repo repository.Repo) (git.Hash, error) {
+func (v *Version) Write(repo repository.Repo) (repository.Hash, error) {
 	// make sure we don't write invalid data
 	err := v.Validate()
 	if err != nil {

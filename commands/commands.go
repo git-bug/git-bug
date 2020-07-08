@@ -1,27 +1,42 @@
 package commands
 
 import (
-	"fmt"
 	"sort"
 
 	"github.com/spf13/cobra"
 )
 
-var (
-	commandsDesc bool
-)
+type commandOptions struct {
+	desc bool
+}
 
-type commandSorterByName []*cobra.Command
+func newCommandsCommand() *cobra.Command {
+	env := newEnv()
+	options := commandOptions{}
 
-func (c commandSorterByName) Len() int           { return len(c) }
-func (c commandSorterByName) Swap(i, j int)      { c[i], c[j] = c[j], c[i] }
-func (c commandSorterByName) Less(i, j int) bool { return c[i].CommandPath() < c[j].CommandPath() }
+	cmd := &cobra.Command{
+		Use:   "commands [<option>...]",
+		Short: "Display available commands.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runCommands(env, options)
+		},
+	}
 
-func runCommands(cmd *cobra.Command, args []string) error {
+	flags := cmd.Flags()
+	flags.SortFlags = false
+
+	flags.BoolVarP(&options.desc, "pretty", "p", false,
+		"Output the command description as well as Markdown compatible comment",
+	)
+
+	return cmd
+}
+
+func runCommands(env *Env, opts commandOptions) error {
 	first := true
 
 	var allCmds []*cobra.Command
-	queue := []*cobra.Command{RootCmd}
+	queue := []*cobra.Command{NewRootCommand()}
 
 	for len(queue) > 0 {
 		cmd := queue[0]
@@ -34,41 +49,31 @@ func runCommands(cmd *cobra.Command, args []string) error {
 
 	for _, cmd := range allCmds {
 		if !first {
-			fmt.Println()
+			env.out.Println()
 		}
 
 		first = false
 
-		if commandsDesc {
-			fmt.Printf("# %s\n", cmd.Short)
+		if opts.desc {
+			env.out.Printf("# %s\n", cmd.Short)
 		}
 
-		fmt.Print(cmd.UseLine())
+		env.out.Print(cmd.UseLine())
 
-		if commandsDesc {
-			fmt.Println()
+		if opts.desc {
+			env.out.Println()
 		}
 	}
 
-	if !commandsDesc {
-		fmt.Println()
+	if !opts.desc {
+		env.out.Println()
 	}
 
 	return nil
 }
 
-var commandsCmd = &cobra.Command{
-	Use:   "commands [<option>...]",
-	Short: "Display available commands.",
-	RunE:  runCommands,
-}
+type commandSorterByName []*cobra.Command
 
-func init() {
-	RootCmd.AddCommand(commandsCmd)
-
-	commandsCmd.Flags().SortFlags = false
-
-	commandsCmd.Flags().BoolVarP(&commandsDesc, "pretty", "p", false,
-		"Output the command description as well as Markdown compatible comment",
-	)
-}
+func (c commandSorterByName) Len() int           { return len(c) }
+func (c commandSorterByName) Swap(i, j int)      { c[i], c[j] = c[j], c[i] }
+func (c commandSorterByName) Less(i, j int) bool { return c[i].CommandPath() < c[j].CommandPath() }

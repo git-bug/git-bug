@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	text "github.com/MichaelMure/go-term-text"
 	"github.com/spf13/cobra"
@@ -12,28 +13,74 @@ import (
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/query"
 	"github.com/MichaelMure/git-bug/util/colors"
-	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
-var (
-	lsQuery query.Query
+type lsOptions struct {
+	query query.Query
 
-	lsStatusQuery   []string
-	lsNoQuery       []string
-	lsSortBy        string
-	lsSortDirection string
-	lsOutputFormat  string
-)
+	statusQuery   []string
+	noQuery       []string
+	sortBy        string
+	sortDirection string
+	outputFormat  string
+}
 
-func runLsBug(_ *cobra.Command, args []string) error {
-	backend, err := cache.NewRepoCache(repo)
-	if err != nil {
-		return err
+func newLsCommand() *cobra.Command {
+	env := newEnv()
+	options := lsOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "ls [<query>]",
+		Short: "List bugs.",
+		Long: `Display a summary of each bugs.
+
+You can pass an additional query to filter and order the list. This query can be expressed either with a simple query language or with flags.`,
+		Example: `List open bugs sorted by last edition with a query:
+git bug ls status:open sort:edit-desc
+
+List closed bugs sorted by creation with flags:
+git bug ls --status closed --by creation
+`,
+		PreRunE:  loadBackend(env),
+		PostRunE: closeBackend(env),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runLs(env, options, args)
+		},
 	}
-	defer backend.Close()
-	interrupt.RegisterCleaner(backend.Close)
+
+	flags := cmd.Flags()
+	flags.SortFlags = false
+
+	flags.StringSliceVarP(&options.statusQuery, "status", "s", nil,
+		"Filter by status. Valid values are [open,closed]")
+	flags.StringSliceVarP(&options.query.Author, "author", "a", nil,
+		"Filter by author")
+	flags.StringSliceVarP(&options.query.Participant, "participant", "p", nil,
+		"Filter by participant")
+	flags.StringSliceVarP(&options.query.Actor, "actor", "A", nil,
+		"Filter by actor")
+	flags.StringSliceVarP(&options.query.Label, "label", "l", nil,
+		"Filter by label")
+	flags.StringSliceVarP(&options.query.Title, "title", "t", nil,
+		"Filter by title")
+	flags.StringSliceVarP(&options.noQuery, "no", "n", nil,
+		"Filter by absence of something. Valid values are [label]")
+	flags.StringVarP(&options.sortBy, "by", "b", "creation",
+		"Sort the results by a characteristic. Valid values are [id,creation,edit]")
+	flags.StringVarP(&options.sortDirection, "direction", "d", "asc",
+		"Select the sorting direction. Valid values are [asc,desc]")
+	flags.StringVarP(&options.outputFormat, "format", "f", "default",
+		"Select the output formatting style. Valid values are [default,plain,json,org-mode]")
+
+	return cmd
+}
+
+func runLs(env *Env, opts lsOptions, args []string) error {
+	time.Sleep(5 * time.Second)
 
 	var q *query.Query
+	var err error
+
 	if len(args) >= 1 {
 		q, err = query.Parse(strings.Join(args, " "))
 
@@ -41,35 +88,35 @@ func runLsBug(_ *cobra.Command, args []string) error {
 			return err
 		}
 	} else {
-		err = completeQuery()
+		err = completeQuery(&opts)
 		if err != nil {
 			return err
 		}
-		q = &lsQuery
+		q = &opts.query
 	}
 
-	allIds := backend.QueryBugs(q)
+	allIds := env.backend.QueryBugs(q)
 
 	bugExcerpt := make([]*cache.BugExcerpt, len(allIds))
 	for i, id := range allIds {
-		b, err := backend.ResolveBugExcerpt(id)
+		b, err := env.backend.ResolveBugExcerpt(id)
 		if err != nil {
 			return err
 		}
 		bugExcerpt[i] = b
 	}
 
-	switch lsOutputFormat {
+	switch opts.outputFormat {
 	case "org-mode":
-		return lsOrgmodeFormatter(backend, bugExcerpt)
+		return lsOrgmodeFormatter(env, bugExcerpt)
 	case "plain":
-		return lsPlainFormatter(backend, bugExcerpt)
+		return lsPlainFormatter(env, bugExcerpt)
 	case "json":
-		return lsJsonFormatter(backend, bugExcerpt)
+		return lsJsonFormatter(env, bugExcerpt)
 	case "default":
-		return lsDefaultFormatter(backend, bugExcerpt)
+		return lsDefaultFormatter(env, bugExcerpt)
 	default:
-		return fmt.Errorf("unknown format %s", lsOutputFormat)
+		return fmt.Errorf("unknown format %s", opts.outputFormat)
 	}
 }
 
@@ -90,7 +137,7 @@ type JSONBugExcerpt struct {
 	Metadata map[string]string `json:"metadata"`
 }
 
-func lsJsonFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerpt) error {
+func lsJsonFormatter(env *Env, bugExcerpts []*cache.BugExcerpt) error {
 	jsonBugs := make([]JSONBugExcerpt, len(bugExcerpts))
 	for i, b := range bugExcerpts {
 		jsonBug := JSONBugExcerpt{
@@ -106,7 +153,7 @@ func lsJsonFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerpt) 
 		}
 
 		if b.AuthorId != "" {
-			author, err := backend.ResolveIdentityExcerpt(b.AuthorId)
+			author, err := env.backend.ResolveIdentityExcerpt(b.AuthorId)
 			if err != nil {
 				return err
 			}
@@ -117,7 +164,7 @@ func lsJsonFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerpt) 
 
 		jsonBug.Actors = make([]JSONIdentity, len(b.Actors))
 		for i, element := range b.Actors {
-			actor, err := backend.ResolveIdentityExcerpt(element)
+			actor, err := env.backend.ResolveIdentityExcerpt(element)
 			if err != nil {
 				return err
 			}
@@ -126,7 +173,7 @@ func lsJsonFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerpt) 
 
 		jsonBug.Participants = make([]JSONIdentity, len(b.Participants))
 		for i, element := range b.Participants {
-			participant, err := backend.ResolveIdentityExcerpt(element)
+			participant, err := env.backend.ResolveIdentityExcerpt(element)
 			if err != nil {
 				return err
 			}
@@ -136,15 +183,15 @@ func lsJsonFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerpt) 
 		jsonBugs[i] = jsonBug
 	}
 	jsonObject, _ := json.MarshalIndent(jsonBugs, "", "    ")
-	fmt.Printf("%s\n", jsonObject)
+	env.out.Printf("%s\n", jsonObject)
 	return nil
 }
 
-func lsDefaultFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerpt) error {
+func lsDefaultFormatter(env *Env, bugExcerpts []*cache.BugExcerpt) error {
 	for _, b := range bugExcerpts {
 		var name string
 		if b.AuthorId != "" {
-			author, err := backend.ResolveIdentityExcerpt(b.AuthorId)
+			author, err := env.backend.ResolveIdentityExcerpt(b.AuthorId)
 			if err != nil {
 				return err
 			}
@@ -171,7 +218,7 @@ func lsDefaultFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerp
 			comments = "    ∞ 💬"
 		}
 
-		fmt.Printf("%s %s\t%s\t%s\t%s\n",
+		env.out.Printf("%s %s\t%s\t%s\t%s\n",
 			colors.Cyan(b.Id.Human()),
 			colors.Yellow(b.Status),
 			titleFmt+labelsFmt,
@@ -182,15 +229,15 @@ func lsDefaultFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerp
 	return nil
 }
 
-func lsPlainFormatter(_ *cache.RepoCache, bugExcerpts []*cache.BugExcerpt) error {
+func lsPlainFormatter(env *Env, bugExcerpts []*cache.BugExcerpt) error {
 	for _, b := range bugExcerpts {
-		fmt.Printf("%s [%s] %s\n", b.Id.Human(), b.Status, b.Title)
+		env.out.Printf("%s [%s] %s\n", b.Id.Human(), b.Status, b.Title)
 	}
 	return nil
 }
 
-func lsOrgmodeFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerpt) error {
-	fmt.Println("+TODO: OPEN | CLOSED")
+func lsOrgmodeFormatter(env *Env, bugExcerpts []*cache.BugExcerpt) error {
+	env.out.Println("+TODO: OPEN | CLOSED")
 
 	for _, b := range bugExcerpts {
 		status := strings.Title(b.Status.String())
@@ -204,7 +251,7 @@ func lsOrgmodeFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerp
 
 		var name string
 		if b.AuthorId != "" {
-			author, err := backend.ResolveIdentityExcerpt(b.AuthorId)
+			author, err := env.backend.ResolveIdentityExcerpt(b.AuthorId)
 			if err != nil {
 				return err
 			}
@@ -221,7 +268,7 @@ func lsOrgmodeFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerp
 			labelsString = ""
 		}
 
-		fmt.Printf("* %s %s [%s] %s: %s %s\n",
+		env.out.Printf("* %s %s [%s] %s: %s %s\n",
 			b.Id.Human(),
 			status,
 			b.CreateTime(),
@@ -230,29 +277,29 @@ func lsOrgmodeFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerp
 			labelsString,
 		)
 
-		fmt.Printf("** Last Edited: %s\n", b.EditTime().String())
+		env.out.Printf("** Last Edited: %s\n", b.EditTime().String())
 
-		fmt.Printf("** Actors:\n")
+		env.out.Printf("** Actors:\n")
 		for _, element := range b.Actors {
-			actor, err := backend.ResolveIdentityExcerpt(element)
+			actor, err := env.backend.ResolveIdentityExcerpt(element)
 			if err != nil {
 				return err
 			}
 
-			fmt.Printf(": %s %s\n",
+			env.out.Printf(": %s %s\n",
 				actor.Id.Human(),
 				actor.DisplayName(),
 			)
 		}
 
-		fmt.Printf("** Participants:\n")
+		env.out.Printf("** Participants:\n")
 		for _, element := range b.Participants {
-			participant, err := backend.ResolveIdentityExcerpt(element)
+			participant, err := env.backend.ResolveIdentityExcerpt(element)
 			if err != nil {
 				return err
 			}
 
-			fmt.Printf(": %s %s\n",
+			env.out.Printf(": %s %s\n",
 				participant.Id.Human(),
 				participant.DisplayName(),
 			)
@@ -263,86 +310,43 @@ func lsOrgmodeFormatter(backend *cache.RepoCache, bugExcerpts []*cache.BugExcerp
 }
 
 // Finish the command flags transformation into the query.Query
-func completeQuery() error {
-	for _, str := range lsStatusQuery {
+func completeQuery(opts *lsOptions) error {
+	for _, str := range opts.statusQuery {
 		status, err := bug.StatusFromString(str)
 		if err != nil {
 			return err
 		}
-		lsQuery.Status = append(lsQuery.Status, status)
+		opts.query.Status = append(opts.query.Status, status)
 	}
 
-	for _, no := range lsNoQuery {
+	for _, no := range opts.noQuery {
 		switch no {
 		case "label":
-			lsQuery.NoLabel = true
+			opts.query.NoLabel = true
 		default:
 			return fmt.Errorf("unknown \"no\" filter %s", no)
 		}
 	}
 
-	switch lsSortBy {
+	switch opts.sortBy {
 	case "id":
-		lsQuery.OrderBy = query.OrderById
+		opts.query.OrderBy = query.OrderById
 	case "creation":
-		lsQuery.OrderBy = query.OrderByCreation
+		opts.query.OrderBy = query.OrderByCreation
 	case "edit":
-		lsQuery.OrderBy = query.OrderByEdit
+		opts.query.OrderBy = query.OrderByEdit
 	default:
-		return fmt.Errorf("unknown sort flag %s", lsSortBy)
+		return fmt.Errorf("unknown sort flag %s", opts.sortBy)
 	}
 
-	switch lsSortDirection {
+	switch opts.sortDirection {
 	case "asc":
-		lsQuery.OrderDirection = query.OrderAscending
+		opts.query.OrderDirection = query.OrderAscending
 	case "desc":
-		lsQuery.OrderDirection = query.OrderDescending
+		opts.query.OrderDirection = query.OrderDescending
 	default:
-		return fmt.Errorf("unknown sort direction %s", lsSortDirection)
+		return fmt.Errorf("unknown sort direction %s", opts.sortDirection)
 	}
 
 	return nil
-}
-
-var lsCmd = &cobra.Command{
-	Use:   "ls [<query>]",
-	Short: "List bugs.",
-	Long: `Display a summary of each bugs.
-
-You can pass an additional query to filter and order the list. This query can be expressed either with a simple query language or with flags.`,
-	Example: `List open bugs sorted by last edition with a query:
-git bug ls status:open sort:edit-desc
-
-List closed bugs sorted by creation with flags:
-git bug ls --status closed --by creation
-`,
-	PreRunE: loadRepo,
-	RunE:    runLsBug,
-}
-
-func init() {
-	RootCmd.AddCommand(lsCmd)
-
-	lsCmd.Flags().SortFlags = false
-
-	lsCmd.Flags().StringSliceVarP(&lsStatusQuery, "status", "s", nil,
-		"Filter by status. Valid values are [open,closed]")
-	lsCmd.Flags().StringSliceVarP(&lsQuery.Author, "author", "a", nil,
-		"Filter by author")
-	lsCmd.Flags().StringSliceVarP(&lsQuery.Participant, "participant", "p", nil,
-		"Filter by participant")
-	lsCmd.Flags().StringSliceVarP(&lsQuery.Actor, "actor", "A", nil,
-		"Filter by actor")
-	lsCmd.Flags().StringSliceVarP(&lsQuery.Label, "label", "l", nil,
-		"Filter by label")
-	lsCmd.Flags().StringSliceVarP(&lsQuery.Title, "title", "t", nil,
-		"Filter by title")
-	lsCmd.Flags().StringSliceVarP(&lsNoQuery, "no", "n", nil,
-		"Filter by absence of something. Valid values are [label]")
-	lsCmd.Flags().StringVarP(&lsSortBy, "by", "b", "creation",
-		"Sort the results by a characteristic. Valid values are [id,creation,edit]")
-	lsCmd.Flags().StringVarP(&lsSortDirection, "direction", "d", "asc",
-		"Select the sorting direction. Valid values are [asc,desc]")
-	lsCmd.Flags().StringVarP(&lsOutputFormat, "format", "f", "default",
-		"Select the output formatting style. Valid values are [default,plain,json,org-mode]")
 }

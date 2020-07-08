@@ -13,7 +13,6 @@ import (
 
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
-	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/lamport"
 	"github.com/MichaelMure/git-bug/util/timestamp"
 )
@@ -40,7 +39,7 @@ type Identity struct {
 	versions []*Version
 
 	// not serialized
-	lastCommit git.Hash
+	lastCommit repository.Hash
 }
 
 func NewIdentity(name string, email string) *Identity {
@@ -357,7 +356,7 @@ func (i *Identity) Commit(repo repository.ClockedRepo) error {
 			return err
 		}
 
-		var commitHash git.Hash
+		var commitHash repository.Hash
 		if i.lastCommit != "" {
 			commitHash, err = repo.StoreCommitWithParent(treeHash, i.lastCommit)
 		} else {

@@ -9,101 +9,117 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/cache"
 	_select "github.com/MichaelMure/git-bug/commands/select"
 	"github.com/MichaelMure/git-bug/util/colors"
-	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
-var (
-	showFieldsQuery  string
-	showOutputFormat string
-)
+type showOptions struct {
+	query  string
+	format string
+}
 
-func runShowBug(_ *cobra.Command, args []string) error {
-	backend, err := cache.NewRepoCache(repo)
+func newShowCommand() *cobra.Command {
+	env := newEnv()
+	options := showOptions{}
+
+	cmd := &cobra.Command{
+		Use:      "show [<id>]",
+		Short:    "Display the details of a bug.",
+		PreRunE:  loadBackend(env),
+		PostRunE: closeBackend(env),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runShow(env, options, args)
+		},
+	}
+
+	flags := cmd.Flags()
+	flags.SortFlags = false
+
+	flags.StringVarP(&options.query, "field", "", "",
+		"Select field to display. Valid values are [author,authorEmail,createTime,lastEdit,humanId,id,labels,shortId,status,title,actors,participants]")
+	flags.StringVarP(&options.format, "format", "f", "default",
+		"Select the output formatting style. Valid values are [default,json,org-mode]")
+
+	return cmd
+}
+
+func runShow(env *Env, opts showOptions, args []string) error {
+	b, args, err := _select.ResolveBug(env.backend, args)
 	if err != nil {
 		return err
 	}
-	defer backend.Close()
-	interrupt.RegisterCleaner(backend.Close)
 
-	b, args, err := _select.ResolveBug(backend, args)
-	if err != nil {
-		return err
-	}
+	snap := b.Snapshot()
 
-	snapshot := b.Snapshot()
-
-	if len(snapshot.Comments) == 0 {
+	if len(snap.Comments) == 0 {
 		return errors.New("invalid bug: no comment")
 	}
 
-	if showFieldsQuery != "" {
-		switch showFieldsQuery {
+	if opts.query != "" {
+		switch opts.query {
 		case "author":
-			fmt.Printf("%s\n", snapshot.Author.DisplayName())
+			env.out.Printf("%s\n", snap.Author.DisplayName())
 		case "authorEmail":
-			fmt.Printf("%s\n", snapshot.Author.Email())
+			env.out.Printf("%s\n", snap.Author.Email())
 		case "createTime":
-			fmt.Printf("%s\n", snapshot.CreateTime.String())
+			env.out.Printf("%s\n", snap.CreateTime.String())
 		case "lastEdit":
-			fmt.Printf("%s\n", snapshot.EditTime().String())
+			env.out.Printf("%s\n", snap.EditTime().String())
 		case "humanId":
-			fmt.Printf("%s\n", snapshot.Id().Human())
+			env.out.Printf("%s\n", snap.Id().Human())
 		case "id":
-			fmt.Printf("%s\n", snapshot.Id())
+			env.out.Printf("%s\n", snap.Id())
 		case "labels":
-			for _, l := range snapshot.Labels {
-				fmt.Printf("%s\n", l.String())
+			for _, l := range snap.Labels {
+				env.out.Printf("%s\n", l.String())
 			}
 		case "actors":
-			for _, a := range snapshot.Actors {
-				fmt.Printf("%s\n", a.DisplayName())
+			for _, a := range snap.Actors {
+				env.out.Printf("%s\n", a.DisplayName())
 			}
 		case "participants":
-			for _, p := range snapshot.Participants {
-				fmt.Printf("%s\n", p.DisplayName())
+			for _, p := range snap.Participants {
+				env.out.Printf("%s\n", p.DisplayName())
 			}
 		case "shortId":
-			fmt.Printf("%s\n", snapshot.Id().Human())
+			env.out.Printf("%s\n", snap.Id().Human())
 		case "status":
-			fmt.Printf("%s\n", snapshot.Status)
+			env.out.Printf("%s\n", snap.Status)
 		case "title":
-			fmt.Printf("%s\n", snapshot.Title)
+			env.out.Printf("%s\n", snap.Title)
 		default:
-			return fmt.Errorf("\nUnsupported field: %s\n", showFieldsQuery)
+			return fmt.Errorf("\nUnsupported field: %s\n", opts.query)
 		}
 
 		return nil
 	}
 
-	switch showOutputFormat {
+	switch opts.format {
 	case "org-mode":
-		return showOrgmodeFormatter(snapshot)
+		return showOrgModeFormatter(env, snap)
 	case "json":
-		return showJsonFormatter(snapshot)
+		return showJsonFormatter(env, snap)
 	case "default":
-		return showDefaultFormatter(snapshot)
+		return showDefaultFormatter(env, snap)
 	default:
-		return fmt.Errorf("unknown format %s", showOutputFormat)
+		return fmt.Errorf("unknown format %s", opts.format)
 	}
 }
 
-func showDefaultFormatter(snapshot *bug.Snapshot) error {
+func showDefaultFormatter(env *Env, snapshot *bug.Snapshot) error {
 	// Header
-	fmt.Printf("%s [%s] %s\n\n",
+	env.out.Printf("%s [%s] %s\n\n",
 		colors.Cyan(snapshot.Id().Human()),
 		colors.Yellow(snapshot.Status),
 		snapshot.Title,
 	)
 
-	fmt.Printf("%s opened this issue %s\n",
+	env.out.Printf("%s opened this issue %s\n",
 		colors.Magenta(snapshot.Author.DisplayName()),
 		snapshot.CreateTime.String(),
 	)
 
-	fmt.Printf("This was last edited at %s\n\n",
+	env.out.Printf("This was last edited at %s\n\n",
 		snapshot.EditTime().String(),
 	)
 
@@ -113,7 +129,7 @@ func showDefaultFormatter(snapshot *bug.Snapshot) error {
 		labels[i] = string(snapshot.Labels[i])
 	}
 
-	fmt.Printf("labels: %s\n",
+	env.out.Printf("labels: %s\n",
 		strings.Join(labels, ", "),
 	)
 
@@ -123,7 +139,7 @@ func showDefaultFormatter(snapshot *bug.Snapshot) error {
 		actors[i] = snapshot.Actors[i].DisplayName()
 	}
 
-	fmt.Printf("actors: %s\n",
+	env.out.Printf("actors: %s\n",
 		strings.Join(actors, ", "),
 	)
 
@@ -133,7 +149,7 @@ func showDefaultFormatter(snapshot *bug.Snapshot) error {
 		participants[i] = snapshot.Participants[i].DisplayName()
 	}
 
-	fmt.Printf("participants: %s\n\n",
+	env.out.Printf("participants: %s\n\n",
 		strings.Join(participants, ", "),
 	)
 
@@ -142,7 +158,7 @@ func showDefaultFormatter(snapshot *bug.Snapshot) error {
 
 	for i, comment := range snapshot.Comments {
 		var message string
-		fmt.Printf("%s#%d %s <%s>\n\n",
+		env.out.Printf("%s#%d %s <%s>\n\n",
 			indent,
 			i,
 			comment.Author.DisplayName(),
@@ -155,7 +171,7 @@ func showDefaultFormatter(snapshot *bug.Snapshot) error {
 			message = comment.Message
 		}
 
-		fmt.Printf("%s%s\n\n\n",
+		env.out.Printf("%s%s\n\n\n",
 			indent,
 			message,
 		)
@@ -194,7 +210,7 @@ func NewJSONComment(comment bug.Comment) JSONComment {
 	}
 }
 
-func showJsonFormatter(snapshot *bug.Snapshot) error {
+func showJsonFormatter(env *Env, snapshot *bug.Snapshot) error {
 	jsonBug := JSONBugSnapshot{
 		Id:         snapshot.Id().String(),
 		HumanId:    snapshot.Id().Human(),
@@ -222,28 +238,28 @@ func showJsonFormatter(snapshot *bug.Snapshot) error {
 	}
 
 	jsonObject, _ := json.MarshalIndent(jsonBug, "", "    ")
-	fmt.Printf("%s\n", jsonObject)
+	env.out.Printf("%s\n", jsonObject)
 
 	return nil
 }
 
-func showOrgmodeFormatter(snapshot *bug.Snapshot) error {
+func showOrgModeFormatter(env *Env, snapshot *bug.Snapshot) error {
 	// Header
-	fmt.Printf("%s [%s] %s\n",
+	env.out.Printf("%s [%s] %s\n",
 		snapshot.Id().Human(),
 		snapshot.Status,
 		snapshot.Title,
 	)
 
-	fmt.Printf("* Author: %s\n",
+	env.out.Printf("* Author: %s\n",
 		snapshot.Author.DisplayName(),
 	)
 
-	fmt.Printf("* Creation Time: %s\n",
+	env.out.Printf("* Creation Time: %s\n",
 		snapshot.CreateTime.String(),
 	)
 
-	fmt.Printf("* Last Edit: %s\n",
+	env.out.Printf("* Last Edit: %s\n",
 		snapshot.EditTime().String(),
 	)
 
@@ -253,9 +269,9 @@ func showOrgmodeFormatter(snapshot *bug.Snapshot) error {
 		labels[i] = string(label)
 	}
 
-	fmt.Printf("* Labels:\n")
+	env.out.Printf("* Labels:\n")
 	if len(labels) > 0 {
-		fmt.Printf("** %s\n",
+		env.out.Printf("** %s\n",
 			strings.Join(labels, "\n** "),
 		)
 	}
@@ -269,7 +285,7 @@ func showOrgmodeFormatter(snapshot *bug.Snapshot) error {
 		)
 	}
 
-	fmt.Printf("* Actors:\n** %s\n",
+	env.out.Printf("* Actors:\n** %s\n",
 		strings.Join(actors, "\n** "),
 	)
 
@@ -282,18 +298,16 @@ func showOrgmodeFormatter(snapshot *bug.Snapshot) error {
 		)
 	}
 
-	fmt.Printf("* Participants:\n** %s\n",
+	env.out.Printf("* Participants:\n** %s\n",
 		strings.Join(participants, "\n** "),
 	)
 
-	fmt.Printf("* Comments:\n")
+	env.out.Printf("* Comments:\n")
 
 	for i, comment := range snapshot.Comments {
 		var message string
-		fmt.Printf("** #%d %s\n",
-			i,
-			comment.Author.DisplayName(),
-		)
+		env.out.Printf("** #%d %s\n",
+			i, comment.Author.DisplayName())
 
 		if comment.Message == "" {
 			message = "No description provided."
@@ -301,25 +315,8 @@ func showOrgmodeFormatter(snapshot *bug.Snapshot) error {
 			message = strings.ReplaceAll(comment.Message, "\n", "\n: ")
 		}
 
-		fmt.Printf(": %s\n",
-			message,
-		)
+		env.out.Printf(": %s\n", message)
 	}
 
 	return nil
-}
-
-var showCmd = &cobra.Command{
-	Use:     "show [<id>]",
-	Short:   "Display the details of a bug.",
-	PreRunE: loadRepo,
-	RunE:    runShowBug,
-}
-
-func init() {
-	RootCmd.AddCommand(showCmd)
-	showCmd.Flags().StringVarP(&showFieldsQuery, "field", "", "",
-		"Select field to display. Valid values are [author,authorEmail,createTime,lastEdit,humanId,id,labels,shortId,status,title,actors,participants]")
-	showCmd.Flags().StringVarP(&showOutputFormat, "format", "f", "default",
-		"Select the output formatting style. Valid values are [default,json,org-mode]")
 }

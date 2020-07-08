@@ -2,16 +2,29 @@ package commands
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
-func runPull(cmd *cobra.Command, args []string) error {
+func newPullCommand() *cobra.Command {
+	env := newEnv()
+
+	cmd := &cobra.Command{
+		Use:      "pull [<remote>]",
+		Short:    "Pull bugs update from a git remote.",
+		PreRunE:  loadBackend(env),
+		PostRunE: closeBackend(env),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runPull(env, args)
+		},
+	}
+
+	return cmd
+}
+
+func runPull(env *Env, args []string) error {
 	if len(args) > 1 {
 		return errors.New("Only pulling from one remote at a time is supported")
 	}
@@ -21,45 +34,26 @@ func runPull(cmd *cobra.Command, args []string) error {
 		remote = args[0]
 	}
 
-	backend, err := cache.NewRepoCache(repo)
-	if err != nil {
-		return err
-	}
-	defer backend.Close()
-	interrupt.RegisterCleaner(backend.Close)
+	env.out.Println("Fetching remote ...")
 
-	fmt.Println("Fetching remote ...")
-
-	stdout, err := backend.Fetch(remote)
+	stdout, err := env.backend.Fetch(remote)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(stdout)
+	env.out.Println(stdout)
 
-	fmt.Println("Merging data ...")
+	env.out.Println("Merging data ...")
 
-	for result := range backend.MergeAll(remote) {
+	for result := range env.backend.MergeAll(remote) {
 		if result.Err != nil {
-			fmt.Println(result.Err)
+			env.err.Println(result.Err)
 		}
 
 		if result.Status != entity.MergeStatusNothing {
-			fmt.Printf("%s: %s\n", result.Id.Human(), result)
+			env.out.Printf("%s: %s\n", result.Id.Human(), result)
 		}
 	}
 
 	return nil
-}
-
-// showCmd defines the "push" subcommand.
-var pullCmd = &cobra.Command{
-	Use:     "pull [<remote>]",
-	Short:   "Pull bugs update from a git remote.",
-	PreRunE: loadRepo,
-	RunE:    runPull,
-}
-
-func init() {
-	RootCmd.AddCommand(pullCmd)
 }

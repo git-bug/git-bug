@@ -6,7 +6,6 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
@@ -58,31 +57,31 @@ type Repo interface {
 	PushRefs(remote string, refSpec string) (string, error)
 
 	// StoreData will store arbitrary data and return the corresponding hash
-	StoreData(data []byte) (git.Hash, error)
+	StoreData(data []byte) (Hash, error)
 
 	// ReadData will attempt to read arbitrary data from the given hash
-	ReadData(hash git.Hash) ([]byte, error)
+	ReadData(hash Hash) ([]byte, error)
 
 	// StoreTree will store a mapping key-->Hash as a Git tree
-	StoreTree(mapping []TreeEntry) (git.Hash, error)
+	StoreTree(mapping []TreeEntry) (Hash, error)
 
 	// ReadTree will return the list of entries in a Git tree
-	ReadTree(hash git.Hash) ([]TreeEntry, error)
+	ReadTree(hash Hash) ([]TreeEntry, error)
 
 	// StoreCommit will store a Git commit with the given Git tree
-	StoreCommit(treeHash git.Hash) (git.Hash, error)
+	StoreCommit(treeHash Hash) (Hash, error)
 
 	// StoreCommit will store a Git commit with the given Git tree
-	StoreCommitWithParent(treeHash git.Hash, parent git.Hash) (git.Hash, error)
+	StoreCommitWithParent(treeHash Hash, parent Hash) (Hash, error)
 
 	// GetTreeHash return the git tree hash referenced in a commit
-	GetTreeHash(commit git.Hash) (git.Hash, error)
+	GetTreeHash(commit Hash) (Hash, error)
 
 	// FindCommonAncestor will return the last common ancestor of two chain of commit
-	FindCommonAncestor(hash1 git.Hash, hash2 git.Hash) (git.Hash, error)
+	FindCommonAncestor(commit1 Hash, commit2 Hash) (Hash, error)
 
 	// UpdateRef will create or update a Git reference
-	UpdateRef(ref string, hash git.Hash) error
+	UpdateRef(ref string, hash Hash) error
 
 	// RemoveRef will remove a Git reference
 	RemoveRef(ref string) error
@@ -97,7 +96,7 @@ type Repo interface {
 	CopyRef(source string, dest string) error
 
 	// ListCommits will return the list of tree hashes of a ref, in chronological order
-	ListCommits(ref string) ([]git.Hash, error)
+	ListCommits(ref string) ([]Hash, error)
 }
 
 // ClockedRepo is a Repo that also has Lamport clocks

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
@@ -16,26 +15,26 @@ var _ TestedRepo = &mockRepoForTest{}
 type mockRepoForTest struct {
 	config       *MemConfig
 	globalConfig *MemConfig
-	blobs        map[git.Hash][]byte
-	trees        map[git.Hash]string
-	commits      map[git.Hash]commit
-	refs         map[string]git.Hash
+	blobs        map[Hash][]byte
+	trees        map[Hash]string
+	commits      map[Hash]commit
+	refs         map[string]Hash
 	clocks       map[string]lamport.Clock
 }
 
 type commit struct {
-	treeHash git.Hash
-	parent   git.Hash
+	treeHash Hash
+	parent   Hash
 }
 
 func NewMockRepoForTest() *mockRepoForTest {
 	return &mockRepoForTest{
 		config:       NewMemConfig(),
 		globalConfig: NewMemConfig(),
-		blobs:        make(map[git.Hash][]byte),
-		trees:        make(map[git.Hash]string),
-		commits:      make(map[git.Hash]commit),
-		refs:         make(map[string]git.Hash),
+		blobs:        make(map[Hash][]byte),
+		trees:        make(map[Hash]string),
+		commits:      make(map[Hash]commit),
+		refs:         make(map[string]Hash),
 		clocks:       make(map[string]lamport.Clock),
 	}
 }
@@ -85,14 +84,14 @@ func (r *mockRepoForTest) FetchRefs(remote string, refSpec string) (string, erro
 	return "", nil
 }
 
-func (r *mockRepoForTest) StoreData(data []byte) (git.Hash, error) {
+func (r *mockRepoForTest) StoreData(data []byte) (Hash, error) {
 	rawHash := sha1.Sum(data)
-	hash := git.Hash(fmt.Sprintf("%x", rawHash))
+	hash := Hash(fmt.Sprintf("%x", rawHash))
 	r.blobs[hash] = data
 	return hash, nil
 }
 
-func (r *mockRepoForTest) ReadData(hash git.Hash) ([]byte, error) {
+func (r *mockRepoForTest) ReadData(hash Hash) ([]byte, error) {
 	data, ok := r.blobs[hash]
 
 	if !ok {
@@ -102,27 +101,27 @@ func (r *mockRepoForTest) ReadData(hash git.Hash) ([]byte, error) {
 	return data, nil
 }
 
-func (r *mockRepoForTest) StoreTree(entries []TreeEntry) (git.Hash, error) {
+func (r *mockRepoForTest) StoreTree(entries []TreeEntry) (Hash, error) {
 	buffer := prepareTreeEntries(entries)
 	rawHash := sha1.Sum(buffer.Bytes())
-	hash := git.Hash(fmt.Sprintf("%x", rawHash))
+	hash := Hash(fmt.Sprintf("%x", rawHash))
 	r.trees[hash] = buffer.String()
 
 	return hash, nil
 }
 
-func (r *mockRepoForTest) StoreCommit(treeHash git.Hash) (git.Hash, error) {
+func (r *mockRepoForTest) StoreCommit(treeHash Hash) (Hash, error) {
 	rawHash := sha1.Sum([]byte(treeHash))
-	hash := git.Hash(fmt.Sprintf("%x", rawHash))
+	hash := Hash(fmt.Sprintf("%x", rawHash))
 	r.commits[hash] = commit{
 		treeHash: treeHash,
 	}
 	return hash, nil
 }
 
-func (r *mockRepoForTest) StoreCommitWithParent(treeHash git.Hash, parent git.Hash) (git.Hash, error) {
+func (r *mockRepoForTest) StoreCommitWithParent(treeHash Hash, parent Hash) (Hash, error) {
 	rawHash := sha1.Sum([]byte(treeHash + parent))
-	hash := git.Hash(fmt.Sprintf("%x", rawHash))
+	hash := Hash(fmt.Sprintf("%x", rawHash))
 	r.commits[hash] = commit{
 		treeHash: treeHash,
 		parent:   parent,
@@ -130,7 +129,7 @@ func (r *mockRepoForTest) StoreCommitWithParent(treeHash git.Hash, parent git.Ha
 	return hash, nil
 }
 
-func (r *mockRepoForTest) UpdateRef(ref string, hash git.Hash) error {
+func (r *mockRepoForTest) UpdateRef(ref string, hash Hash) error {
 	r.refs[ref] = hash
 	return nil
 }
@@ -168,8 +167,8 @@ func (r *mockRepoForTest) ListRefs(refspec string) ([]string, error) {
 	return keys, nil
 }
 
-func (r *mockRepoForTest) ListCommits(ref string) ([]git.Hash, error) {
-	var hashes []git.Hash
+func (r *mockRepoForTest) ListCommits(ref string) ([]Hash, error) {
+	var hashes []Hash
 
 	hash := r.refs[ref]
 
@@ -180,14 +179,14 @@ func (r *mockRepoForTest) ListCommits(ref string) ([]git.Hash, error) {
 			break
 		}
 
-		hashes = append([]git.Hash{hash}, hashes...)
+		hashes = append([]Hash{hash}, hashes...)
 		hash = commit.parent
 	}
 
 	return hashes, nil
 }
 
-func (r *mockRepoForTest) ReadTree(hash git.Hash) ([]TreeEntry, error) {
+func (r *mockRepoForTest) ReadTree(hash Hash) ([]TreeEntry, error) {
 	var data string
 
 	data, ok := r.trees[hash]
@@ -210,8 +209,8 @@ func (r *mockRepoForTest) ReadTree(hash git.Hash) ([]TreeEntry, error) {
 	return readTreeEntries(data)
 }
 
-func (r *mockRepoForTest) FindCommonAncestor(hash1 git.Hash, hash2 git.Hash) (git.Hash, error) {
-	ancestor1 := []git.Hash{hash1}
+func (r *mockRepoForTest) FindCommonAncestor(hash1 Hash, hash2 Hash) (Hash, error) {
+	ancestor1 := []Hash{hash1}
 
 	for hash1 != "" {
 		c, ok := r.commits[hash1]
@@ -242,7 +241,7 @@ func (r *mockRepoForTest) FindCommonAncestor(hash1 git.Hash, hash2 git.Hash) (gi
 	}
 }
 
-func (r *mockRepoForTest) GetTreeHash(commit git.Hash) (git.Hash, error) {
+func (r *mockRepoForTest) GetTreeHash(commit Hash) (Hash, error) {
 	c, ok := r.commits[commit]
 	if !ok {
 		return "", fmt.Errorf("unknown commit")

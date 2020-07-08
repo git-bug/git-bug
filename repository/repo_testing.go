@@ -9,8 +9,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/MichaelMure/git-bug/util/git"
 )
 
 func CleanupTestRepos(repos ...Repo) {

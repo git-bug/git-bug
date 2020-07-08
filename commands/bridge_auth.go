@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"fmt"
 	"sort"
 	"strings"
 
@@ -10,20 +9,32 @@ import (
 	text "github.com/MichaelMure/go-term-text"
 
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
-	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/util/colors"
-	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
-func runBridgeAuth(cmd *cobra.Command, args []string) error {
-	backend, err := cache.NewRepoCache(repo)
-	if err != nil {
-		return err
-	}
-	defer backend.Close()
-	interrupt.RegisterCleaner(backend.Close)
+func newBridgeAuthCommand() *cobra.Command {
+	env := newEnv()
 
-	creds, err := auth.List(backend)
+	cmd := &cobra.Command{
+		Use:      "auth",
+		Short:    "List all known bridge authentication credentials.",
+		PreRunE:  loadBackend(env),
+		PostRunE: closeBackend(env),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runBridgeAuth(env)
+		},
+		Args: cobra.NoArgs,
+	}
+
+	cmd.AddCommand(newBridgeAuthAddTokenCommand())
+	cmd.AddCommand(newBridgeAuthRm())
+	cmd.AddCommand(newBridgeAuthShow())
+
+	return cmd
+}
+
+func runBridgeAuth(env *Env) error {
+	creds, err := auth.List(env.backend)
 	if err != nil {
 		return err
 	}
@@ -44,7 +55,7 @@ func runBridgeAuth(cmd *cobra.Command, args []string) error {
 		sort.Strings(meta)
 		metaFmt := strings.Join(meta, ",")
 
-		fmt.Printf("%s %s %s %s %s\n",
+		env.out.Printf("%s %s %s %s %s\n",
 			colors.Cyan(cred.ID().Human()),
 			colors.Yellow(targetFmt),
 			colors.Magenta(cred.Kind()),
@@ -54,17 +65,4 @@ func runBridgeAuth(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
-}
-
-var bridgeAuthCmd = &cobra.Command{
-	Use:     "auth",
-	Short:   "List all known bridge authentication credentials.",
-	PreRunE: loadRepo,
-	RunE:    runBridgeAuth,
-	Args:    cobra.NoArgs,
-}
-
-func init() {
-	bridgeCmd.AddCommand(bridgeAuthCmd)
-	bridgeAuthCmd.Flags().SortFlags = false
 }
