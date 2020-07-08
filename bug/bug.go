@@ -243,6 +243,11 @@ func readBug(repo repository.ClockedRepo, ref string) (*Bug, error) {
 	return &bug, nil
 }
 
+func RemoveLocalBug(repo repository.ClockedRepo, id entity.Id) error {
+	ref := bugsRefPattern + id.String()
+	return repo.RemoveRef(ref)
+}
+
 type StreamedBug struct {
 	Bug *Bug
 	Err error

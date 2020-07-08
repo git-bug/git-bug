@@ -4,9 +4,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestBugId(t *testing.T) {
@@ -63,7 +64,7 @@ func TestBugValidity(t *testing.T) {
 	}
 }
 
-func TestBugCommitLoad(t *testing.T) {
+func TestBugCommitLoadRemove(t *testing.T) {
 	bug1 := NewBug()
 
 	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
@@ -99,6 +100,12 @@ func TestBugCommitLoad(t *testing.T) {
 	bug3, err := ReadLocalBug(repo, bug1.Id())
 	assert.NoError(t, err)
 	equivalentBug(t, bug1, bug3)
+
+	err = RemoveLocalBug(repo, bug1.Id())
+	assert.NoError(t, err)
+
+	streamedBugs := ReadAllLocalBugs(repo)
+	assert.Equal(t, 0, len(streamedBugs))
 }
 
 func equivalentBug(t *testing.T, expected, actual *Bug) {

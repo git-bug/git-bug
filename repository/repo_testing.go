@@ -147,18 +147,18 @@ func RepoTest(t *testing.T, creator RepoCreator, cleaner RepoCleaner) {
 
 		ls, err := repo.ListRefs("refs/bugs")
 		require.NoError(t, err)
-		assert.Equal(t, []string{"refs/bugs/ref1"}, ls)
+		assert.ElementsMatch(t, []string{"refs/bugs/ref1"}, ls)
 
 		err = repo.CopyRef("refs/bugs/ref1", "refs/bugs/ref2")
 		require.NoError(t, err)
 
 		ls, err = repo.ListRefs("refs/bugs")
 		require.NoError(t, err)
-		assert.Equal(t, []string{"refs/bugs/ref1", "refs/bugs/ref2"}, ls)
+		assert.ElementsMatch(t, []string{"refs/bugs/ref1", "refs/bugs/ref2"}, ls)
 
 		commits, err := repo.ListCommits("refs/bugs/ref2")
 		require.NoError(t, err)
-		assert.Equal(t, []git.Hash{commit1, commit2}, commits)
+		assert.ElementsMatch(t, []git.Hash{commit1, commit2}, commits)
 
 		// Graph
 
@@ -168,6 +168,9 @@ func RepoTest(t *testing.T, creator RepoCreator, cleaner RepoCleaner) {
 		ancestorHash, err := repo.FindCommonAncestor(commit2, commit3)
 		require.NoError(t, err)
 		assert.Equal(t, commit1, ancestorHash)
+
+		err = repo.RemoveRef("refs/bugs/ref1")
+		require.NoError(t, err)
 	})
 
 	t.Run("Local config", func(t *testing.T) {
