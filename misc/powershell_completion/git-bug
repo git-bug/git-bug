@@ -118,9 +118,17 @@ Register-ArgumentCompleter -Native -CommandName 'git-bug' -ScriptBlock {
         }
         'git-bug;comment' {
             [CompletionResult]::new('add', 'add', [CompletionResultType]::ParameterValue, 'Add a new comment to a bug.')
+            [CompletionResult]::new('edit', 'edit', [CompletionResultType]::ParameterValue, 'Edit an existing comment on a bug.')
             break
         }
         'git-bug;comment;add' {
+            [CompletionResult]::new('-F', 'F', [CompletionResultType]::ParameterName, 'Take the message from the given file. Use - to read the message from the standard input')
+            [CompletionResult]::new('--file', 'file', [CompletionResultType]::ParameterName, 'Take the message from the given file. Use - to read the message from the standard input')
+            [CompletionResult]::new('-m', 'm', [CompletionResultType]::ParameterName, 'Provide the new message from the command line')
+            [CompletionResult]::new('--message', 'message', [CompletionResultType]::ParameterName, 'Provide the new message from the command line')
+            break
+        }
+        'git-bug;comment;edit' {
             [CompletionResult]::new('-F', 'F', [CompletionResultType]::ParameterName, 'Take the message from the given file. Use - to read the message from the standard input')
             [CompletionResult]::new('--file', 'file', [CompletionResultType]::ParameterName, 'Take the message from the given file. Use - to read the message from the standard input')
             [CompletionResult]::new('-m', 'm', [CompletionResultType]::ParameterName, 'Provide the new message from the command line')
