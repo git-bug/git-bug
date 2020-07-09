@@ -156,7 +156,7 @@ func RepoTest(t *testing.T, creator RepoCreator, cleaner RepoCleaner) {
 
 		commits, err := repo.ListCommits("refs/bugs/ref2")
 		require.NoError(t, err)
-		assert.ElementsMatch(t, []git.Hash{commit1, commit2}, commits)
+		assert.ElementsMatch(t, []Hash{commit1, commit2}, commits)
 
 		// Graph
 

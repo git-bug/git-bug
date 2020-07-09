@@ -105,7 +105,11 @@ func TestBugCommitLoadRemove(t *testing.T) {
 	assert.NoError(t, err)
 
 	streamedBugs := ReadAllLocalBugs(repo)
-	assert.Equal(t, 0, len(streamedBugs))
+	count := 0
+	for range streamedBugs {
+		count++
+	}
+	assert.Equal(t, 0, count)
 }
 
 func equivalentBug(t *testing.T, expected, actual *Bug) {
