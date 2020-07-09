@@ -37,7 +37,7 @@ func (op *AddCommentOperation) Apply(snapshot *Snapshot) {
 	snapshot.addParticipant(op.Author)
 
 	comment := Comment{
-		id:       op.Id(),
+		id:       entity.Id(CompileCommentId(snapshot.Id().String(), op.Id().String())),
 		Message:  op.Message,
 		Author:   op.Author,
 		Files:    op.Files,

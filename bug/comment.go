@@ -21,6 +21,8 @@ type Comment struct {
 	UnixTime timestamp.Timestamp
 }
 
+const compiledCommentIdFormat = "BCBCBCBBBCBBBBCBBBBCBBBBCBBBBCBBBBCBBBBC"
+
 // Id return the Comment identifier
 func (c Comment) Id() entity.Id {
 	if c.id == "" {
@@ -29,6 +31,36 @@ func (c Comment) Id() entity.Id {
 		panic("no id yet")
 	}
 	return c.id
+}
+
+func CompileCommentId(bugId string, commentId string) string {
+	commentIdString := commentId
+	bugIdString := bugId
+	id := ""
+	for _, char := range compiledCommentIdFormat {
+		if char == 'B' {
+			id += string(bugIdString[0])
+			bugIdString = bugIdString[1:]
+		} else {
+			id += string(commentIdString[0])
+			commentIdString = commentIdString[1:]
+		}
+	}
+	return id
+}
+
+func UnpackCommentId(id string) (string, string) {
+	commentIdPrefix := ""
+	bugIdPrefix := ""
+
+	for i, char := range id {
+		if compiledCommentIdFormat[i] == 'B' {
+			bugIdPrefix += string(char)
+		} else {
+			commentIdPrefix += string(char)
+		}
+	}
+	return bugIdPrefix, commentIdPrefix
 }
 
 // FormatTimeRel format the UnixTime of the comment for human consumption

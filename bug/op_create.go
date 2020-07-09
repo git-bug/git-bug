@@ -40,7 +40,7 @@ func (op *CreateOperation) Apply(snapshot *Snapshot) {
 	snapshot.Title = op.Title
 
 	comment := Comment{
-		id:       op.Id(),
+		id:       entity.Id(CompileCommentId(snapshot.Id().String(), op.Id().String())),
 		Message:  op.Message,
 		Author:   op.Author,
 		UnixTime: timestamp.Timestamp(op.UnixTime),
