@@ -158,8 +158,9 @@ func showDefaultFormatter(env *Env, snapshot *bug.Snapshot) error {
 
 	for i, comment := range snapshot.Comments {
 		var message string
-		env.out.Printf("%s#%d %s <%s>\n\n",
+		env.out.Printf("%s%s #%d %s <%s>\n\n",
 			indent,
+			comment.Id().Human(),
 			i,
 			comment.Author.DisplayName(),
 			comment.Author.Email(),

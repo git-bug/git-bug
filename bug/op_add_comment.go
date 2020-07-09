@@ -36,8 +36,9 @@ func (op *AddCommentOperation) Apply(snapshot *Snapshot) {
 	snapshot.addActor(op.Author)
 	snapshot.addParticipant(op.Author)
 
+	commentId := DeriveCommentId(snapshot.Id(), op.Id())
 	comment := Comment{
-		id:       op.Id(),
+		id:       commentId,
 		Message:  op.Message,
 		Author:   op.Author,
 		Files:    op.Files,
@@ -47,7 +48,7 @@ func (op *AddCommentOperation) Apply(snapshot *Snapshot) {
 	snapshot.Comments = append(snapshot.Comments, comment)
 
 	item := &AddCommentTimelineItem{
-		CommentTimelineItem: NewCommentTimelineItem(op.Id(), comment),
+		CommentTimelineItem: NewCommentTimelineItem(commentId, comment),
 	}
 
 	snapshot.Timeline = append(snapshot.Timeline, item)

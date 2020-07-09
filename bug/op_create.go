@@ -59,8 +59,9 @@ func (op *CreateOperation) Apply(snapshot *Snapshot) {
 
 	snapshot.Title = op.Title
 
+	commentId := DeriveCommentId(snapshot.Id(), op.Id())
 	comment := Comment{
-		id:       op.Id(),
+		id:       commentId,
 		Message:  op.Message,
 		Author:   op.Author,
 		UnixTime: timestamp.Timestamp(op.UnixTime),
@@ -72,7 +73,7 @@ func (op *CreateOperation) Apply(snapshot *Snapshot) {
 
 	snapshot.Timeline = []TimelineItem{
 		&CreateTimelineItem{
-			CommentTimelineItem: NewCommentTimelineItem(op.Id(), comment),
+			CommentTimelineItem: NewCommentTimelineItem(commentId, comment),
 		},
 	}
 }
