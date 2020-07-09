@@ -134,6 +134,11 @@ func (r *mockRepoForTest) UpdateRef(ref string, hash Hash) error {
 	return nil
 }
 
+func (r *mockRepoForTest) RemoveRef(ref string) error {
+	delete(r.refs, ref)
+	return nil
+}
+
 func (r *mockRepoForTest) RefExist(ref string) (bool, error) {
 	_, exist := r.refs[ref]
 	return exist, nil

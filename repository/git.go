@@ -282,6 +282,13 @@ func (repo *GitRepo) UpdateRef(ref string, hash Hash) error {
 	return err
 }
 
+// RemoveRef will remove a Git reference
+func (repo *GitRepo) RemoveRef(ref string) error {
+	_, err := repo.runGitCommand("update-ref", "-d", ref)
+
+	return err
+}
+
 // ListRefs will return a list of Git ref matching the given refspec
 func (repo *GitRepo) ListRefs(refspec string) ([]string, error) {
 	stdout, err := repo.runGitCommand("for-each-ref", "--format=%(refname)", refspec)

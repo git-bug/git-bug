@@ -83,6 +83,9 @@ type Repo interface {
 	// UpdateRef will create or update a Git reference
 	UpdateRef(ref string, hash Hash) error
 
+	// RemoveRef will remove a Git reference
+	RemoveRef(ref string) error
+
 	// ListRefs will return a list of Git ref matching the given refspec
 	ListRefs(refspec string) ([]string, error)
 
