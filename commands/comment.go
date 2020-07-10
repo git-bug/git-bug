@@ -22,6 +22,7 @@ func newCommentCommand() *cobra.Command {
 	}
 
 	cmd.AddCommand(newCommentAddCommand())
+	cmd.AddCommand(newCommentEditCommand())
 
 	return cmd
 }

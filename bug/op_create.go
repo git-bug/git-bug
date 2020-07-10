@@ -39,8 +39,9 @@ func (op *CreateOperation) Apply(snapshot *Snapshot) {
 
 	snapshot.Title = op.Title
 
+	commentId := entity.Id(CompileCommentId(snapshot.Id().String(), op.Id().String()))
 	comment := Comment{
-		id:       entity.Id(CompileCommentId(snapshot.Id().String(), op.Id().String())),
+		id:       commentId,
 		Message:  op.Message,
 		Author:   op.Author,
 		UnixTime: timestamp.Timestamp(op.UnixTime),
@@ -52,7 +53,7 @@ func (op *CreateOperation) Apply(snapshot *Snapshot) {
 
 	snapshot.Timeline = []TimelineItem{
 		&CreateTimelineItem{
-			CommentTimelineItem: NewCommentTimelineItem(op.Id(), comment),
+			CommentTimelineItem: NewCommentTimelineItem(commentId, comment),
 		},
 	}
 }
