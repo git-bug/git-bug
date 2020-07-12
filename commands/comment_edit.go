@@ -21,8 +21,9 @@ func newCommentEditCommand() *cobra.Command {
 	options := commentEditOptions{}
 
 	cmd := &cobra.Command{
-		Use:      "edit [<id>]",
+		Use:      "edit <id>",
 		Short:    "Edit an existing comment on a bug.",
+		Args:     cobra.ExactArgs(1),
 		PreRunE:  loadBackendEnsureUser(env),
 		PostRunE: closeBackend(env),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -42,11 +43,9 @@ func newCommentEditCommand() *cobra.Command {
 	return cmd
 }
 
-func ResolveComment(repo *cache.RepoCache, args []string) (*cache.BugCache, entity.Id, error) {
-	fullId := args[0]
-	bugId, _ := bug.UnpackCommentId(args[0])
-	args[0] = bugId
-	b, args, err := _select.ResolveBug(repo, args)
+func ResolveComment(repo *cache.RepoCache, fullId string) (*cache.BugCache, entity.Id, error) {
+	bugId, _ := bug.SplitCommentId(fullId)
+	b, _, err := _select.ResolveBug(repo, []string{bugId})
 	if err != nil {
 		return nil, entity.UnsetId, err
 	}
@@ -69,7 +68,7 @@ func ResolveComment(repo *cache.RepoCache, args []string) (*cache.BugCache, enti
 }
 
 func runCommentEdit(env *Env, opts commentEditOptions, args []string) error {
-	b, c, err := ResolveComment(env.backend, args)
+	b, c, err := ResolveComment(env.backend, args[0])
 
 	if err != nil {
 		return err

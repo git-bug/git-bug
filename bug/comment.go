@@ -33,7 +33,7 @@ func (c Comment) Id() entity.Id {
 	return c.id
 }
 
-func CompileCommentId(bugId string, commentId string) string {
+func DeriveCommentId(bugId entity.ID, commentId entity.ID) entity.ID {
 	commentIdString := commentId
 	bugIdString := bugId
 	id := ""
@@ -49,7 +49,7 @@ func CompileCommentId(bugId string, commentId string) string {
 	return id
 }
 
-func UnpackCommentId(id string) (string, string) {
+func SplitCommentId(prefix string) (bugPrefix string, commentPrefix string) {
 	commentIdPrefix := ""
 	bugIdPrefix := ""
 
