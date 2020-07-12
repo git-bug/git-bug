@@ -3,6 +3,7 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -236,15 +237,19 @@ func lsPlainFormatter(env *Env, bugExcerpts []*cache.BugExcerpt) error {
 	return nil
 }
 
+func timeToOrgmode(time time.Time) string {
+	return time.Format("[2006-01-02 Mon 15:05]")
+}
+
 func lsOrgmodeFormatter(env *Env, bugExcerpts []*cache.BugExcerpt) error {
-	env.out.Println("+TODO: OPEN | CLOSED")
+	env.out.Println("#+TODO: OPEN | CLOSED")
 
 	for _, b := range bugExcerpts {
-		status := strings.Title(b.Status.String())
+		status := strings.ToUpper(b.Status.String())
 
 		var title string
 		if link, ok := b.CreateMetadata["github-url"]; ok {
-			title = fmt.Sprintf("[%s][%s]", link, b.Title)
+			title = fmt.Sprintf("[[%s][%s]]", link, b.Title)
 		} else {
 			title = b.Title
 		}
@@ -263,21 +268,28 @@ func lsOrgmodeFormatter(env *Env, bugExcerpts []*cache.BugExcerpt) error {
 		labels := b.Labels
 		var labelsString string
 		if len(labels) > 0 {
-			labelsString = fmt.Sprintf(":%s:", strings.Replace(fmt.Sprint(labels), " ", ":", -1))
+			var labelsStrings = make([]string, len(labels))
+			// see https://orgmode.org/manual/Tags.html
+			var orgTagRe = regexp.MustCompile("[^[:alpha:]_@]")
+			for i, l := range labels {
+				var tag = orgTagRe.ReplaceAllString(l.String(), "_")
+				labelsStrings[i] = tag
+			}
+			labelsString = fmt.Sprintf(":%s:", strings.Join(labelsStrings, ":"))
 		} else {
 			labelsString = ""
 		}
 
-		env.out.Printf("* %s %s [%s] %s: %s %s\n",
-			b.Id.Human(),
+		env.out.Printf("* %-6s %s %s %s: %s %s\n",
 			status,
-			b.CreateTime(),
+			b.Id.Human(),
+			timeToOrgmode(b.CreateTime()),
 			name,
 			title,
 			labelsString,
 		)
 
-		env.out.Printf("** Last Edited: %s\n", b.EditTime().String())
+		env.out.Printf("** Last Edited: %s\n", timeToOrgmode(b.EditTime()))
 
 		env.out.Printf("** Actors:\n")
 		for _, element := range b.Actors {
