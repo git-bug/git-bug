@@ -92,6 +92,7 @@ func (sb *showBug) layout(g *gocui.Gui) error {
 
 		sb.childViews = append(sb.childViews, showBugInstructionView)
 		v.Frame = false
+		v.FgColor = gocui.ColorWhite
 		v.BgColor = gocui.ColorBlue
 	}
 
