@@ -210,7 +210,7 @@ func lsDefaultFormatter(env *Env, bugExcerpts []*cache.BugExcerpt) error {
 
 		// truncate + pad if needed
 		labelsFmt := text.TruncateMax(labelsTxt.String(), 10)
-		titleFmt := text.LeftPadMaxLine(b.Title, 50-text.Len(labelsFmt), 0)
+		titleFmt := text.LeftPadMaxLine(strings.TrimSpace(b.Title), 50-text.Len(labelsFmt), 0)
 		authorFmt := text.LeftPadMaxLine(name, 15, 0)
 
 		comments := fmt.Sprintf("%4d 💬", b.LenComments)
@@ -231,7 +231,7 @@ func lsDefaultFormatter(env *Env, bugExcerpts []*cache.BugExcerpt) error {
 
 func lsPlainFormatter(env *Env, bugExcerpts []*cache.BugExcerpt) error {
 	for _, b := range bugExcerpts {
-		env.out.Printf("%s [%s] %s\n", b.Id.Human(), b.Status, b.Title)
+		env.out.Printf("%s [%s] %s\n", b.Id.Human(), b.Status, strings.TrimSpace(b.Title))
 	}
 	return nil
 }

@@ -319,7 +319,7 @@ func (bt *bugTable) render(v *gocui.View, maxX int) {
 		id := text.LeftPadMaxLine(excerpt.Id.Human(), columnWidths["id"], 1)
 		status := text.LeftPadMaxLine(excerpt.Status.String(), columnWidths["status"], 1)
 		labels := text.TruncateMax(labelsTxt.String(), minInt(columnWidths["title"]-2, 10))
-		title := text.LeftPadMaxLine(excerpt.Title, columnWidths["title"]-text.Len(labels), 1)
+		title := text.LeftPadMaxLine(strings.TrimSpace(excerpt.Title), columnWidths["title"]-text.Len(labels), 1)
 		author := text.LeftPadMaxLine(authorDisplayName, columnWidths["author"], 1)
 		comments := text.LeftPadMaxLine(summaryTxt, columnWidths["comments"], 1)
 		lastEdit := text.LeftPadMaxLine(humanize.Time(lastEditTime), columnWidths["lastEdit"], 1)
