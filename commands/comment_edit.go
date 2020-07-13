@@ -1,13 +1,9 @@
 package commands
 
 import (
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/cache"
 	_select "github.com/MichaelMure/git-bug/commands/select"
-	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/input"
 )
 
@@ -43,32 +39,8 @@ func newCommentEditCommand() *cobra.Command {
 	return cmd
 }
 
-func ResolveComment(repo *cache.RepoCache, fullId string) (*cache.BugCache, entity.Id, error) {
-	bugId, _ := bug.SplitCommentId(fullId)
-	b, _, err := _select.ResolveBug(repo, []string{bugId})
-	if err != nil {
-		return nil, entity.UnsetId, err
-	}
-
-	matching := make([]entity.Id, 0, 5)
-
-	for _, comment := range b.Snapshot().Comments {
-		if comment.Id().HasPrefix(fullId) {
-			matching = append(matching, comment.Id())
-		}
-	}
-
-	if len(matching) > 1 {
-		return nil, entity.UnsetId, entity.NewErrMultipleMatch("comment", matching)
-	} else if len(matching) == 0 {
-		return nil, entity.UnsetId, errors.New("comment doesn't exist")
-	}
-
-	return b, matching[0], nil
-}
-
 func runCommentEdit(env *Env, opts commentEditOptions, args []string) error {
-	b, c, err := ResolveComment(env.backend, args[0])
+	b, c, err := _select.ResolveComment(env.backend, args[0])
 
 	if err != nil {
 		return err
