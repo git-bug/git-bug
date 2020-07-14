@@ -144,6 +144,7 @@ func (ls *labelSelect) layout(g *gocui.Gui) error {
 			return err
 		}
 		v.Frame = false
+		v.FgColor = gocui.ColorWhite
 		v.BgColor = gocui.ColorBlue
 	}
 	v.Clear()

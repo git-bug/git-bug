@@ -116,6 +116,7 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 		}
 
 		v.Frame = false
+		v.FgColor = gocui.ColorWhite
 		v.BgColor = gocui.ColorBlue
 
 		_, _ = fmt.Fprintf(v, "[q] Quit [s] Search [←↓↑→,hjkl] Navigation [↵] Open bug [n] New bug [i] Pull [o] Push")
