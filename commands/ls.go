@@ -77,8 +77,6 @@ git bug ls --status closed --by creation
 }
 
 func runLs(env *Env, opts lsOptions, args []string) error {
-	time.Sleep(5 * time.Second)
-
 	var q *query.Query
 	var err error
 
@@ -237,11 +235,17 @@ func lsPlainFormatter(env *Env, bugExcerpts []*cache.BugExcerpt) error {
 	return nil
 }
 
-func timeToOrgmode(time time.Time) string {
-	return time.Format("[2006-01-02 Mon 15:05]")
-}
-
 func lsOrgmodeFormatter(env *Env, bugExcerpts []*cache.BugExcerpt) error {
+	// see https://orgmode.org/manual/Tags.html
+	orgTagRe := regexp.MustCompile("[^[:alpha:]_@]")
+	formatTag := func(l bug.Label) string {
+		return orgTagRe.ReplaceAllString(l.String(), "_")
+	}
+
+	formatTime := func(time time.Time) string {
+		return time.Format("[2006-01-02 Mon 15:05]")
+	}
+
 	env.out.Println("#+TODO: OPEN | CLOSED")
 
 	for _, b := range bugExcerpts {
@@ -265,31 +269,26 @@ func lsOrgmodeFormatter(env *Env, bugExcerpts []*cache.BugExcerpt) error {
 			name = b.LegacyAuthor.DisplayName()
 		}
 
-		labels := b.Labels
-		var labelsString string
-		if len(labels) > 0 {
-			var labelsStrings = make([]string, len(labels))
-			// see https://orgmode.org/manual/Tags.html
-			var orgTagRe = regexp.MustCompile("[^[:alpha:]_@]")
-			for i, l := range labels {
-				var tag = orgTagRe.ReplaceAllString(l.String(), "_")
-				labelsStrings[i] = tag
+		var labels strings.Builder
+		labels.WriteString(":")
+		for i, l := range b.Labels {
+			if i > 0 {
+				labels.WriteString(":")
 			}
-			labelsString = fmt.Sprintf(":%s:", strings.Join(labelsStrings, ":"))
-		} else {
-			labelsString = ""
+			labels.WriteString(formatTag(l))
 		}
+		labels.WriteString(":")
 
 		env.out.Printf("* %-6s %s %s %s: %s %s\n",
 			status,
 			b.Id.Human(),
-			timeToOrgmode(b.CreateTime()),
+			formatTime(b.CreateTime()),
 			name,
 			title,
-			labelsString,
+			labels.String(),
 		)
 
-		env.out.Printf("** Last Edited: %s\n", timeToOrgmode(b.EditTime()))
+		env.out.Printf("** Last Edited: %s\n", formatTime(b.EditTime()))
 
 		env.out.Printf("** Actors:\n")
 		for _, element := range b.Actors {
