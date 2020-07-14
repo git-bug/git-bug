@@ -69,6 +69,11 @@ func Targets() []string {
 	return result
 }
 
+// TargetTypes returns all types of bridge implementation target
+func TargetTypes() map[string]reflect.Type {
+	return bridgeImpl
+}
+
 // TargetExist return true if the given target has a bridge implementation
 func TargetExist(target string) bool {
 	_, ok := bridgeImpl[target]

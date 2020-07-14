@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -27,11 +28,21 @@ func newBridgeConfigureCommand() *cobra.Command {
 	env := newEnv()
 	options := bridgeConfigureOptions{}
 
+	targetDocs := ""
+	for _, v := range core.TargetTypes() {
+		targetDocs += fmt.Sprintf("# For %s:\ngit bug bridge configure \\\n", strings.Title(strings.Split(v.String(), ".")[0]))
+		b := reflect.New(v).Interface().(core.BridgeImpl)
+		for param := range b.ValidParams() {
+			targetDocs += fmt.Sprintf("    --%s=Placeholder Text \\\n", strings.ToLower(param))
+		}
+		targetDocs += "\n"
+	}
+
 	cmd := &cobra.Command{
 		Use:   "configure",
 		Short: "Configure a new bridge.",
 		Long: `	Configure a new bridge by passing flags or/and using interactive terminal prompts. You can avoid all the terminal prompts by passing all the necessary flags to configure your bridge.`,
-		Example: `# Interactive example
+		Example: fmt.Sprintf(`# Interactive example
 [1]: github
 [2]: gitlab
 [3]: jira
@@ -64,26 +75,7 @@ Private:
 Enter token: 87cf5c03b64029f18ea5f9ca5679daa08ccbd700
 Successfully configured bridge: default
 
-# For GitHub
-git bug bridge configure \
-    --name=default \
-    --target=github \
-    --owner=$(OWNER) \
-    --project=$(PROJECT) \
-    --token=$(TOKEN)
-
-# For Launchpad
-git bug bridge configure \
-    --name=default \
-    --target=launchpad-preview \
-	--url=https://bugs.launchpad.net/ubuntu/
-
-# For Gitlab
-git bug bridge configure \
-    --name=default \
-    --target=github \
-    --url=https://github.com/michaelmure/git-bug \
-    --token=$(TOKEN)`,
+%s`, targetDocs),
 		PreRunE:  loadBackend(env),
 		PostRunE: closeBackend(env),
 		RunE: func(cmd *cobra.Command, args []string) error {
