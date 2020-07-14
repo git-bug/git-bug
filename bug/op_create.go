@@ -39,7 +39,7 @@ func (op *CreateOperation) Apply(snapshot *Snapshot) {
 
 	snapshot.Title = op.Title
 
-	commentId := entity.Id(CompileCommentId(snapshot.Id().String(), op.Id().String()))
+	commentId := DeriveCommentId(snapshot.Id(), op.Id())
 	comment := Comment{
 		id:       commentId,
 		Message:  op.Message,

@@ -235,6 +235,7 @@ function _git-bug_comment {
   cmnds)
     commands=(
       "add:Add a new comment to a bug."
+      "edit:Edit an existing comment on a bug."
     )
     _describe "command" commands
     ;;
@@ -244,10 +245,19 @@ function _git-bug_comment {
   add)
     _git-bug_comment_add
     ;;
+  edit)
+    _git-bug_comment_edit
+    ;;
   esac
 }
 
 function _git-bug_comment_add {
+  _arguments \
+    '(-F --file)'{-F,--file}'[Take the message from the given file. Use - to read the message from the standard input]:' \
+    '(-m --message)'{-m,--message}'[Provide the new message from the command line]:'
+}
+
+function _git-bug_comment_edit {
   _arguments \
     '(-F --file)'{-F,--file}'[Take the message from the given file. Use - to read the message from the standard input]:' \
     '(-m --message)'{-m,--message}'[Provide the new message from the command line]:'

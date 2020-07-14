@@ -69,30 +69,6 @@ func ResolveBug(repo *cache.RepoCache, args []string) (*cache.BugCache, []string
 	return nil, nil, ErrNoValidId
 }
 
-func ResolveComment(repo *cache.RepoCache, fullId string) (*cache.BugCache, entity.Id, error) {
-	bugId, _ := bug.SplitCommentId(fullId)
-	b, _, err := ResolveBug(repo, []string{bugId})
-	if err != nil {
-		return nil, entity.UnsetId, err
-	}
-
-	matching := make([]entity.Id, 0, 5)
-
-	for _, comment := range b.Snapshot().Comments {
-		if comment.Id().HasPrefix(fullId) {
-			matching = append(matching, comment.Id())
-		}
-	}
-
-	if len(matching) > 1 {
-		return nil, entity.UnsetId, entity.NewErrMultipleMatch("comment", matching)
-	} else if len(matching) == 0 {
-		return nil, entity.UnsetId, errors.New("comment doesn't exist")
-	}
-
-	return b, matching[0], nil
-}
-
 // Select will select a bug for future use
 func Select(repo *cache.RepoCache, id entity.Id) error {
 	selectPath := selectFilePath(repo)

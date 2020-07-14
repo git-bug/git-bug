@@ -1,6 +1,8 @@
 package bug
 
 import (
+	"strings"
+
 	"github.com/dustin/go-humanize"
 
 	"github.com/MichaelMure/git-bug/entity"
@@ -21,8 +23,6 @@ type Comment struct {
 	UnixTime timestamp.Timestamp
 }
 
-const compiledCommentIdFormat = "BCBCBCBBBCBBBBCBBBBCBBBBCBBBBCBBBBCBBBBC"
-
 // Id return the Comment identifier
 func (c Comment) Id() entity.Id {
 	if c.id == "" {
@@ -33,34 +33,48 @@ func (c Comment) Id() entity.Id {
 	return c.id
 }
 
-func DeriveCommentId(bugId entity.ID, commentId entity.ID) entity.ID {
-	commentIdString := commentId
-	bugIdString := bugId
-	id := ""
+const compiledCommentIdFormat = "BCBCBCBBBCBBBBCBBBBCBBBBCBBBBCBBBBCBBBBC"
+
+// DeriveCommentId compute a merged Id for a comment holding information from
+// both the Bug's Id and the Comment's Id. This allow to later find efficiently
+// a Comment because we can access the bug directly instead of searching for a
+// Bug that has a Comment matching the Id.
+//
+// To allow the use of an arbitrary length prefix of this merged Id, Ids from Bug
+// and Comment are interleaved with this irregular pattern to give the best chance
+// to find the Comment even with a 7 character prefix.
+//
+// A complete merged Id hold 30 characters for the Bug and 10 for the Comment,
+// which give a key space of 36^30 for the Bug (~5 * 10^46) and 36^10 for the
+// Comment (~3 * 10^15). This asymmetry assume a reasonable number of Comment
+// within a Bug, while still allowing for a vast key space for Bug (that is, a
+// globally merged bug database) with a low risk of collision.
+func DeriveCommentId(bugId entity.Id, commentId entity.Id) entity.Id {
+	var id strings.Builder
 	for _, char := range compiledCommentIdFormat {
 		if char == 'B' {
-			id += string(bugIdString[0])
-			bugIdString = bugIdString[1:]
+			id.WriteByte(bugId[0])
+			bugId = bugId[1:]
 		} else {
-			id += string(commentIdString[0])
-			commentIdString = commentIdString[1:]
+			id.WriteByte(commentId[0])
+			commentId = commentId[1:]
 		}
 	}
-	return id
+	return entity.Id(id.String())
 }
 
 func SplitCommentId(prefix string) (bugPrefix string, commentPrefix string) {
-	commentIdPrefix := ""
-	bugIdPrefix := ""
+	var bugIdPrefix strings.Builder
+	var commentIdPrefix strings.Builder
 
-	for i, char := range id {
+	for i, char := range prefix {
 		if compiledCommentIdFormat[i] == 'B' {
-			bugIdPrefix += string(char)
+			bugIdPrefix.WriteRune(char)
 		} else {
-			commentIdPrefix += string(char)
+			commentIdPrefix.WriteRune(char)
 		}
 	}
-	return bugIdPrefix, commentIdPrefix
+	return bugIdPrefix.String(), commentIdPrefix.String()
 }
 
 // FormatTimeRel format the UnixTime of the comment for human consumption

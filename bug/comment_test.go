@@ -4,21 +4,24 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/MichaelMure/git-bug/entity"
 )
 
-func TestCompileUnpackCommentId(t *testing.T) {
-	id1 := "abcdefghijklmnopqrstuvwxyz1234"
-	id2 := "ABCDEFGHIJ"
-	expectedId := "aAbBcCdefDghijEklmnFopqrGstuvHwxyzI1234J"
+func TestCommentId(t *testing.T) {
+	bugId := entity.Id("abcdefghijklmnopqrstuvwxyz1234__________")
+	opId := entity.Id("ABCDEFGHIJ______________________________")
+	expectedId := entity.Id("aAbBcCdefDghijEklmnFopqrGstuvHwxyzI1234J")
 
-	compiledId := CompileCommentId(id1, id2)
-	assert.Equal(t, expectedId, compiledId)
+	mergedId := DeriveCommentId(bugId, opId)
+	assert.Equal(t, expectedId, mergedId)
 
-	unpackedId1, unpackedId2 := UnpackCommentId(compiledId)
-	assert.Equal(t, id1, unpackedId1)
-	assert.Equal(t, id2, unpackedId2)
+	// full length
+	splitBugId, splitCommentId := SplitCommentId(mergedId.String())
+	assert.Equal(t, string(bugId[:30]), splitBugId)
+	assert.Equal(t, string(opId[:10]), splitCommentId)
 
-	unpackedId1, unpackedId2 = UnpackCommentId(expectedId[:6])
-	assert.Equal(t, unpackedId1, id1[:3])
-	assert.Equal(t, unpackedId2, id2[:3])
+	splitBugId, splitCommentId = SplitCommentId(string(expectedId[:6]))
+	assert.Equal(t, string(bugId[:3]), splitBugId)
+	assert.Equal(t, string(opId[:3]), splitCommentId)
 }

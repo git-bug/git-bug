@@ -3,7 +3,6 @@ package commands
 import (
 	"github.com/spf13/cobra"
 
-	_select "github.com/MichaelMure/git-bug/commands/select"
 	"github.com/MichaelMure/git-bug/input"
 )
 
@@ -17,7 +16,7 @@ func newCommentEditCommand() *cobra.Command {
 	options := commentEditOptions{}
 
 	cmd := &cobra.Command{
-		Use:      "edit <id>",
+		Use:      "edit <commentid>",
 		Short:    "Edit an existing comment on a bug.",
 		Args:     cobra.ExactArgs(1),
 		PreRunE:  loadBackendEnsureUser(env),
@@ -40,8 +39,7 @@ func newCommentEditCommand() *cobra.Command {
 }
 
 func runCommentEdit(env *Env, opts commentEditOptions, args []string) error {
-	b, c, err := _select.ResolveComment(env.backend, args[0])
-
+	b, commentId, err := env.backend.ResolveComment(args[0])
 	if err != nil {
 		return err
 	}
@@ -64,7 +62,7 @@ func runCommentEdit(env *Env, opts commentEditOptions, args []string) error {
 		}
 	}
 
-	_, err = b.EditComment(c, opts.message)
+	_, err = b.EditComment(commentId, opts.message)
 	if err != nil {
 		return err
 	}

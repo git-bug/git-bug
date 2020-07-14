@@ -36,7 +36,7 @@ func (op *AddCommentOperation) Apply(snapshot *Snapshot) {
 	snapshot.addActor(op.Author)
 	snapshot.addParticipant(op.Author)
 
-	commentId := entity.Id(CompileCommentId(snapshot.Id().String(), op.Id().String()))
+	commentId := DeriveCommentId(snapshot.Id(), op.Id())
 	comment := Comment{
 		id:       commentId,
 		Message:  op.Message,
