@@ -3,6 +3,7 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -76,8 +77,6 @@ git bug ls --status closed --by creation
 }
 
 func runLs(env *Env, opts lsOptions, args []string) error {
-	time.Sleep(5 * time.Second)
-
 	var q *query.Query
 	var err error
 
@@ -237,14 +236,24 @@ func lsPlainFormatter(env *Env, bugExcerpts []*cache.BugExcerpt) error {
 }
 
 func lsOrgmodeFormatter(env *Env, bugExcerpts []*cache.BugExcerpt) error {
-	env.out.Println("+TODO: OPEN | CLOSED")
+	// see https://orgmode.org/manual/Tags.html
+	orgTagRe := regexp.MustCompile("[^[:alpha:]_@]")
+	formatTag := func(l bug.Label) string {
+		return orgTagRe.ReplaceAllString(l.String(), "_")
+	}
+
+	formatTime := func(time time.Time) string {
+		return time.Format("[2006-01-02 Mon 15:05]")
+	}
+
+	env.out.Println("#+TODO: OPEN | CLOSED")
 
 	for _, b := range bugExcerpts {
-		status := strings.Title(b.Status.String())
+		status := strings.ToUpper(b.Status.String())
 
 		var title string
 		if link, ok := b.CreateMetadata["github-url"]; ok {
-			title = fmt.Sprintf("[%s][%s]", link, b.Title)
+			title = fmt.Sprintf("[[%s][%s]]", link, b.Title)
 		} else {
 			title = b.Title
 		}
@@ -260,24 +269,26 @@ func lsOrgmodeFormatter(env *Env, bugExcerpts []*cache.BugExcerpt) error {
 			name = b.LegacyAuthor.DisplayName()
 		}
 
-		labels := b.Labels
-		var labelsString string
-		if len(labels) > 0 {
-			labelsString = fmt.Sprintf(":%s:", strings.Replace(fmt.Sprint(labels), " ", ":", -1))
-		} else {
-			labelsString = ""
+		var labels strings.Builder
+		labels.WriteString(":")
+		for i, l := range b.Labels {
+			if i > 0 {
+				labels.WriteString(":")
+			}
+			labels.WriteString(formatTag(l))
 		}
+		labels.WriteString(":")
 
-		env.out.Printf("* %s %s [%s] %s: %s %s\n",
-			b.Id.Human(),
+		env.out.Printf("* %-6s %s %s %s: %s %s\n",
 			status,
-			b.CreateTime(),
+			b.Id.Human(),
+			formatTime(b.CreateTime()),
 			name,
 			title,
-			labelsString,
+			labels.String(),
 		)
 
-		env.out.Printf("** Last Edited: %s\n", b.EditTime().String())
+		env.out.Printf("** Last Edited: %s\n", formatTime(b.EditTime()))
 
 		env.out.Printf("** Actors:\n")
 		for _, element := range b.Actors {
