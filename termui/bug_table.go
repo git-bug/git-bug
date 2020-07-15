@@ -66,7 +66,7 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 		return nil
 	}
 
-	v, err := g.SetView(bugTableHeaderView, -1, -1, maxX, 3, 0)
+	v, err := g.SetView(bugTableHeaderView, -1, -1, maxX, 1, 0)
 
 	if err != nil {
 		if !gocui.IsUnknownView(err) {
@@ -79,7 +79,7 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 	v.Clear()
 	bt.renderHeader(v, maxX)
 
-	v, err = g.SetView(bugTableView, -1, 1, maxX, maxY-3, 0)
+	v, err = g.SetView(bugTableView, -1, 0, maxX, maxY-2, 0)
 
 	if err != nil {
 		if !gocui.IsUnknownView(err) {
@@ -91,7 +91,7 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 		v.SelFgColor = gocui.ColorBlack
 	}
 
-	_, viewHeight := v.Size()
+	viewWidth, viewHeight := v.Size()
 	err = bt.paginate(viewHeight)
 	if err != nil {
 		return err
@@ -103,9 +103,9 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 	}
 
 	v.Clear()
-	bt.render(v, maxX)
+	bt.render(v, viewWidth)
 
-	v, err = g.SetView(bugTableFooterView, -1, maxY-4, maxX, maxY, 0)
+	v, err = g.SetView(bugTableFooterView, -1, maxY-3, maxX, maxY, 0)
 
 	if err != nil {
 		if !gocui.IsUnknownView(err) {
@@ -326,7 +326,7 @@ func (bt *bugTable) render(v *gocui.View, maxX int) {
 
 		lastEditTime := excerpt.EditTime()
 
-		id := text.LeftPadMaxLine(excerpt.Id.Human(), columnWidths["id"], 1)
+		id := text.LeftPadMaxLine(excerpt.Id.Human(), columnWidths["id"], 0)
 		status := text.LeftPadMaxLine(excerpt.Status.String(), columnWidths["status"], 1)
 		labels := text.TruncateMax(labelsTxt.String(), minInt(columnWidths["title"]-2, 10))
 		title := text.LeftPadMaxLine(strings.TrimSpace(excerpt.Title), columnWidths["title"]-text.Len(labels), 1)
@@ -351,19 +351,18 @@ func (bt *bugTable) render(v *gocui.View, maxX int) {
 func (bt *bugTable) renderHeader(v *gocui.View, maxX int) {
 	columnWidths := bt.getColumnWidths(maxX)
 
-	id := text.LeftPadMaxLine("ID", columnWidths["id"], 1)
+	id := text.LeftPadMaxLine("ID", columnWidths["id"], 0)
 	status := text.LeftPadMaxLine("STATUS", columnWidths["status"], 1)
 	title := text.LeftPadMaxLine("TITLE", columnWidths["title"], 1)
 	author := text.LeftPadMaxLine("AUTHOR", columnWidths["author"], 1)
 	comments := text.LeftPadMaxLine("COMMENTS", columnWidths["comments"], 1)
 	lastEdit := text.LeftPadMaxLine("LAST EDIT", columnWidths["lastEdit"], 1)
 
-	_, _ = fmt.Fprintf(v, "\n")
 	_, _ = fmt.Fprintf(v, "%s %s %s %s %s %s\n", id, status, title, author, comments, lastEdit)
 }
 
 func (bt *bugTable) renderFooter(v *gocui.View, maxX int) {
-	_, _ = fmt.Fprintf(v, " \nShowing %d of %d bugs", len(bt.excerpts), len(bt.allIds))
+	_, _ = fmt.Fprintf(v, " Showing %d of %d bugs", len(bt.excerpts), len(bt.allIds))
 }
 
 func (bt *bugTable) cursorDown(g *gocui.Gui, v *gocui.View) error {
