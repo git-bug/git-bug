@@ -5,7 +5,7 @@
 
 <div align="center">
 
-[![Build Status](https://travis-ci.org/MichaelMure/git-bug.svg?branch=master)](https://travis-ci.org/MichaelMure/git-bug)
+[![Build Status](https://travis-ci.com/MichaelMure/git-bug.svg?branch=master)](https://travis-ci.com/MichaelMure/git-bug)
 [![Backers on Open Collective](https://opencollective.com/git-bug/backers/badge.svg)](#backers)
 [![Sponsors on Open Collective](https://opencollective.com/git-bug/sponsors/badge.svg)](#sponsors)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3+-blue.svg)](http://www.gnu.org/licenses/gpl-3.0)

@@ -73,7 +73,7 @@ Now that we have this, we can easily merge our bugs without conflict. When pulli
 
 ## You can't have a simple consecutive index for your bugs
 
-The same way git can't have a simple counter as identifier for it's commits as SVN does, we can't have consecutive identifiers for bugs.
+The same way git can't have a simple counter as identifier for its commits as SVN does, we can't have consecutive identifiers for bugs.
 
 `git-bug` uses as identifier the hash of the first commit in the chain of commits of the bug. As this hash is ultimately computed with the content of the `CREATE` operation that includes title, message and a timestamp, it will be unique and prevent collision.
 
