@@ -4,7 +4,6 @@ package identity
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"reflect"
 	"strings"
 	"time"
@@ -68,6 +67,28 @@ func NewIdentityFull(name string, email string, login string, avatarUrl string) 
 			},
 		},
 	}
+}
+
+// NewFromGitUser will query the repository for user detail and
+// build the corresponding Identity
+func NewFromGitUser(repo repository.Repo) (*Identity, error) {
+	name, err := repo.GetUserName()
+	if err != nil {
+		return nil, err
+	}
+	if name == "" {
+		return nil, errors.New("user name is not configured in git yet. Please use `git config --global user.name \"John Doe\"`")
+	}
+
+	email, err := repo.GetUserEmail()
+	if err != nil {
+		return nil, err
+	}
+	if email == "" {
+		return nil, errors.New("user name is not configured in git yet. Please use `git config --global user.email johndoe@example.com`")
+	}
+
+	return NewIdentity(name, email), nil
 }
 
 // MarshalJSON will only serialize the id
@@ -196,88 +217,6 @@ func readAllIdentities(repo repository.ClockedRepo, refPrefix string) <-chan Str
 	}()
 
 	return out
-}
-
-// NewFromGitUser will query the repository for user detail and
-// build the corresponding Identity
-func NewFromGitUser(repo repository.Repo) (*Identity, error) {
-	name, err := repo.GetUserName()
-	if err != nil {
-		return nil, err
-	}
-	if name == "" {
-		return nil, errors.New("user name is not configured in git yet. Please use `git config --global user.name \"John Doe\"`")
-	}
-
-	email, err := repo.GetUserEmail()
-	if err != nil {
-		return nil, err
-	}
-	if email == "" {
-		return nil, errors.New("user name is not configured in git yet. Please use `git config --global user.email johndoe@example.com`")
-	}
-
-	return NewIdentity(name, email), nil
-}
-
-// SetUserIdentity store the user identity's id in the git config
-func SetUserIdentity(repo repository.RepoConfig, identity *Identity) error {
-	return repo.LocalConfig().StoreString(identityConfigKey, identity.Id().String())
-}
-
-// GetUserIdentity read the current user identity, set with a git config entry
-func GetUserIdentity(repo repository.Repo) (*Identity, error) {
-	id, err := GetUserIdentityId(repo)
-	if err != nil {
-		return nil, err
-	}
-
-	i, err := ReadLocal(repo, id)
-	if err == ErrIdentityNotExist {
-		innerErr := repo.LocalConfig().RemoveAll(identityConfigKey)
-		if innerErr != nil {
-			_, _ = fmt.Fprintln(os.Stderr, errors.Wrap(innerErr, "can't clear user identity").Error())
-		}
-		return nil, err
-	}
-
-	return i, nil
-}
-
-func GetUserIdentityId(repo repository.Repo) (entity.Id, error) {
-	configs, err := repo.LocalConfig().ReadAll(identityConfigKey)
-	if err != nil {
-		return entity.UnsetId, err
-	}
-
-	if len(configs) == 0 {
-		return entity.UnsetId, ErrNoIdentitySet
-	}
-
-	if len(configs) > 1 {
-		return entity.UnsetId, ErrMultipleIdentitiesSet
-	}
-
-	var id entity.Id
-	for _, val := range configs {
-		id = entity.Id(val)
-	}
-
-	if err := id.Validate(); err != nil {
-		return entity.UnsetId, err
-	}
-
-	return id, nil
-}
-
-// IsUserIdentitySet say if the user has set his identity
-func IsUserIdentitySet(repo repository.Repo) (bool, error) {
-	configs, err := repo.LocalConfig().ReadAll(identityConfigKey)
-	if err != nil {
-		return false, err
-	}
-
-	return len(configs) == 1, nil
 }
 
 type Mutator struct {
