@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"reflect"
 	"strconv"
 	"strings"
 
@@ -29,14 +28,6 @@ func newBridgeConfigureCommand() *cobra.Command {
 	options := bridgeConfigureOptions{}
 
 	targetDocs := ""
-	for _, v := range core.TargetTypes() {
-		targetDocs += fmt.Sprintf("# For %s:\ngit bug bridge configure \\\n", strings.Title(strings.Split(v.String(), ".")[0]))
-		b := reflect.New(v).Interface().(core.BridgeImpl)
-		for param := range b.ValidParams() {
-			targetDocs += fmt.Sprintf("    --%s=Placeholder Text \\\n", strings.ToLower(param))
-		}
-		targetDocs += "\n"
-	}
 
 	cmd := &cobra.Command{
 		Use:   "configure",
