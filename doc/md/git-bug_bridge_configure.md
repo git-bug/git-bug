@@ -44,28 +44,38 @@ Private:
 	- 'repo'       : to be able to read private repositories
 
 Enter token: 87cf5c03b64029f18ea5f9ca5679daa08ccbd700
-Successfully configured bridge: default
-
-# For GitHub
+Successfully configured bridge: default# For Github
 git bug bridge configure \
-    --name=default \
-    --target=github \
-    --owner=$(OWNER) \
-    --project=$(PROJECT) \
-    --token=$(TOKEN)
+    --%!s(int=0)= \
+    --%!s(int=1)= \
+    --%!s(int=2)= \
+    --%!s(int=3)= \
+    --%!s(int=4)= \
+    --%!s(int=5)= \
 
-# For Launchpad
-git bug bridge configure \
-    --name=default \
-    --target=launchpad-preview \
-	--url=https://bugs.launchpad.net/ubuntu/
 
 # For Gitlab
 git bug bridge configure \
-    --name=default \
-    --target=github \
-    --url=https://github.com/michaelmure/git-bug \
-    --token=$(TOKEN)
+    --%!s(int=0)= \
+    --%!s(int=1)= \
+    --%!s(int=2)= \
+    --%!s(int=3)= \
+    --%!s(int=4)= \
+
+
+# For Jira
+git bug bridge configure \
+    --%!s(int=0)= \
+    --%!s(int=1)= \
+    --%!s(int=2)= \
+    --%!s(int=3)= \
+
+
+# For Launchpad-Preview
+git bug bridge configure \
+    --%!s(int=0)= \
+    --%!s(int=1)= \
+
 ```
 
 ### Options

@@ -53,10 +53,13 @@ func Register(impl BridgeImpl) {
 	if bridgeLoginMetaKey == nil {
 		bridgeLoginMetaKey = make(map[string]string)
 	}
+	if bridgeValidParams == nil {
+		bridgeValidParams = make(map[string][]string)
+	}
 	bridgeImpl[impl.Target()] = reflect.TypeOf(impl).Elem()
 	bridgeLoginMetaKey[impl.Target()] = impl.LoginMetaKey()
 
-	paramMap := bridgeImpl[impl.Target()].(BridgeImpl).ValidParams()
+	paramMap := reflect.New(bridgeImpl[impl.Target()]).Interface().(BridgeImpl).ValidParams()
 	params := make([]string, len(paramMap))
 
 	i := 0

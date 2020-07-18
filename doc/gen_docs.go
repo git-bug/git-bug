@@ -16,8 +16,9 @@ func main() {
 	fmt.Println("Generating documentation ...")
 
 	tasks := map[string]func() error{
-		"ManPage":  genManPage,
-		"Markdown": genMarkdown,
+		"BridgeConfig": commands.GenBridgeConfig,
+		"ManPage":      genManPage,
+		"Markdown":     genMarkdown,
 	}
 
 	// Due to concurrency issues in cobra, the following can't be concurrent :(
