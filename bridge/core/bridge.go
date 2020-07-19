@@ -59,7 +59,7 @@ func Register(impl BridgeImpl) {
 	bridgeImpl[impl.Target()] = reflect.TypeOf(impl).Elem()
 	bridgeLoginMetaKey[impl.Target()] = impl.LoginMetaKey()
 
-	paramMap := reflect.New(bridgeImpl[impl.Target()]).Interface().(BridgeImpl).ValidParams()
+	paramMap := impl.ValidParams()
 	params := make([]string, len(paramMap))
 
 	i := 0
@@ -81,11 +81,6 @@ func Targets() []string {
 	sort.Strings(result)
 
 	return result
-}
-
-// TargetTypes returns all types of bridge implementation target
-func TargetTypes() map[string]reflect.Type {
-	return bridgeImpl
 }
 
 func ValidParams(target string) ([]string, error) {
