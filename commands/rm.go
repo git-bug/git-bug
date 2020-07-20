@@ -1,25 +1,20 @@
 package commands
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
-type rmOptions struct {
-}
-
 func newRmCommand() *cobra.Command {
 	env := newEnv()
-	options := rmOptions{}
 
 	cmd := &cobra.Command{
-		Use:      "rm <id>",
+		Use:      "rm <id> [<remote>]",
 		Short:    "Remove an existing bug.",
+		Long:     "Remove an existing bug in the local repository. If the bug was imported from a bridge, specify the remote name to remove it from. Note removing bugs that were imported from bridges will not remove the bug remote, and will only remove the local copy of the bug.",
 		PreRunE:  loadBackendEnsureUser(env),
 		PostRunE: closeBackend(env),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runRm(env, options, args)
+			return runRm(env, args)
 		},
 	}
 
@@ -29,17 +24,14 @@ func newRmCommand() *cobra.Command {
 	return cmd
 }
 
-func runRm(env *Env, opts rmOptions, args []string) error {
-	if len(args) == 0 {
-		return fmt.Errorf("you must provide a bug id prefix to remove")
-	}
+func runRm(env *Env, args []string) (err error) {
+	err = env.backend.RemoveBug(args)
 
-	err := env.backend.RemoveBug(args[0])
 	if err != nil {
-		return err
+		return
 	}
 
 	env.out.Printf("bug %s removed\n", args[0])
 
-	return nil
+	return
 }

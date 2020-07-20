@@ -361,13 +361,24 @@ func (c *RepoCache) NewBugRaw(author *IdentityCache, unixTime int64, title strin
 }
 
 // RemoveBug removes a bug from the cache and repo
-func (c *RepoCache) RemoveBug(prefix string) error {
-	b, err := c.ResolveBugPrefix(prefix)
+// args[0] specifies the bug prefix to remove
+// args[1] (if present) specifies the remote the bug was imported from
+func (c *RepoCache) RemoveBug(args []string) error {
+	if len(args) == 0 {
+		return fmt.Errorf("you must provide a bug prefix to remove")
+	}
+
+	b, err := c.ResolveBugPrefix(args[0])
+
 	if err != nil {
 		return err
 	}
 
-	err = bug.RemoveLocalBug(c.repo, b.Id())
+	if len(args) == 1 {
+		err = bug.RemoveLocalBug(c.repo, b.Id())
+	} else {
+		err = bug.RemoveRemoteBug(c.repo, args[1], b.Id())
+	}
 	if err != nil {
 		return err
 	}
