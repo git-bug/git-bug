@@ -23,6 +23,7 @@ func Targets() []string {
 	return core.Targets()
 }
 
+// ValidParams returns the valid input parameters for configuring a target bridge
 func ValidParams(target string) ([]string, error) {
 	return core.ValidParams(target)
 }

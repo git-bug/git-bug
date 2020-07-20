@@ -83,6 +83,7 @@ func Targets() []string {
 	return result
 }
 
+// ValidParams returns the valid input parameters for configuring a target bridge
 func ValidParams(target string) ([]string, error) {
 	validParams, ok := bridgeValidParams[target]
 	if !ok {
