@@ -7,8 +7,6 @@ import (
 	"github.com/awesome-gocui/gocui"
 	"github.com/pkg/errors"
 
-	errors2 "github.com/go-errors/errors"
-
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/input"
@@ -67,8 +65,12 @@ func Run(cache *cache.RepoCache) error {
 
 	err := <-ui.gError
 
+	type errorStack interface {
+		ErrorStack() string
+	}
+
 	if err != nil && err != gocui.ErrQuit {
-		if e, ok := err.(*errors2.Error); ok {
+		if e, ok := err.(errorStack); ok {
 			fmt.Println(e.ErrorStack())
 		}
 		return err
