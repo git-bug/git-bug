@@ -101,6 +101,11 @@ func TestCache(t *testing.T) {
 	require.NoError(t, err)
 	_, err = cache.ResolveBugPrefix(bug1.Id().String()[:10])
 	require.NoError(t, err)
+
+	// Possible to delete a bug
+	err = cache.RemoveBug([]string{bug1.Id().Human()})
+	require.NoError(t, err)
+	require.Equal(t, len(cache.AllBugsIds()), 1)
 }
 
 func TestPushPull(t *testing.T) {
