@@ -103,7 +103,7 @@ func TestCache(t *testing.T) {
 	require.NoError(t, err)
 
 	// Possible to delete a bug
-	err = cache.RemoveBug([]string{bug1.Id().Human()})
+	err = cache.RemoveBug(bug1.Id().Human(), "")
 	require.NoError(t, err)
 	require.Equal(t, len(cache.AllBugsIds()), 1)
 }

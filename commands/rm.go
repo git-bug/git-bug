@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"errors"
+
 	"github.com/spf13/cobra"
 )
 
@@ -25,7 +27,15 @@ func newRmCommand() *cobra.Command {
 }
 
 func runRm(env *Env, args []string) (err error) {
-	err = env.backend.RemoveBug(args)
+	switch len(args) {
+	case 1:
+		err = env.backend.RemoveBug(args[0], "")
+		break
+	case 2:
+		err = env.backend.RemoveBug(args[0], args[1])
+	default:
+		return errors.New("invalid number of arguments for rm command")
+	}
 
 	if err != nil {
 		return
