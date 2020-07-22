@@ -21,6 +21,8 @@ const identityRemoteRefPattern = "refs/remotes/%s/identities/"
 const versionEntryName = "version"
 const identityConfigKey = "git-bug.identity"
 
+const identityEditClockName = "identity-edit"
+
 var ErrNonFastForwardMerge = errors.New("non fast-forward identity merge")
 var ErrNoIdentitySet = errors.New("No identity is set.\n" +
 	"To interact with bugs, an identity first needs to be created using " +
@@ -112,15 +114,25 @@ func (i *Identity) UnmarshalJSON(data []byte) error {
 }
 
 // ReadLocal load a local Identity from the identities data available in git
-func ReadLocal(repo repository.Repo, id entity.Id) (*Identity, error) {
+func ReadLocal(repo repository.ClockedRepo, id entity.Id) (*Identity, error) {
 	ref := fmt.Sprintf("%s%s", identityRefPattern, id)
-	return read(repo, ref)
+	i, err := read(repo, ref)
+	if err != nil {
+		return nil, err
+	}
+
+	err = informClockAboutLocalIdentity(repo, i)
+	if err != nil {
+		return nil, err
+	}
+
+	return i, nil
 }
 
 // ReadRemote load a remote Identity from the identities data available in git
-func ReadRemote(repo repository.Repo, remote string, id string) (*Identity, error) {
-	ref := fmt.Sprintf(identityRemoteRefPattern, remote) + id
-	return read(repo, ref)
+func ReadRemote(repo repository.ClockedRepo, remote string, id string) (*Identity, error) {
+       ref := fmt.Sprintf(identityRemoteRefPattern, remote) + id
+       return read(repo, ref)
 }
 
 // read will load and parse an identity from git
@@ -181,6 +193,22 @@ func read(repo repository.Repo, ref string) (*Identity, error) {
 	return i, nil
 }
 
+func informClockAboutLocalIdentity(repo repository.ClockedRepo, i *Identity) error {
+	editClock, err := repo.GetOrCreateClock(identityEditClockName)
+	if err != nil {
+		return err
+	}
+
+	for _, v := range i.versions {
+		err = editClock.Witness(v.time)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 type StreamedIdentity struct {
 	Identity *Identity
 	Err      error
@@ -188,7 +216,26 @@ type StreamedIdentity struct {
 
 // ReadAllLocalIdentities read and parse all local Identity
 func ReadAllLocalIdentities(repo repository.ClockedRepo) <-chan StreamedIdentity {
-	return readAllIdentities(repo, identityRefPattern)
+	stream := readAllIdentities(repo, identityRefPattern)
+
+	out := make(chan StreamedIdentity)
+
+	go func() {
+		defer close(out)
+
+		for i := range stream {
+			if i.Identity != nil {
+				err := informClockAboutLocalIdentity(repo, i.Identity)
+				if err != nil {
+					i = StreamedIdentity{Err: err}
+				}
+			}
+
+			out <- i
+		}
+	}()
+
+	return out
 }
 
 // ReadAllRemoteIdentities read and parse all remote Identity for a given remote
@@ -198,7 +245,7 @@ func ReadAllRemoteIdentities(repo repository.ClockedRepo, remote string) <-chan 
 }
 
 // Read and parse all available bug with a given ref prefix
-func readAllIdentities(repo repository.ClockedRepo, refPrefix string) <-chan StreamedIdentity {
+func readAllIdentities(repo repository.Repo, refPrefix string) <-chan StreamedIdentity {
 	out := make(chan StreamedIdentity)
 
 	go func() {
@@ -301,14 +348,11 @@ func (i *Identity) Commit(repo repository.ClockedRepo) error {
 		}
 
 		// get the times where new versions starts to be valid
-		// TODO: instead of this hardcoded clock for bugs only, this need to be
-		// a vector of edit clock, one for each entity (bug, PR, config ..)
-		bugEditClock, err := repo.GetOrCreateClock("bug-edit")
+		clock, err := repo.GetOrCreateClock(identityEditClockName)
 		if err != nil {
 			return err
 		}
-
-		v.time, err = bugEditClock.Increment()
+		v.time, err = clock.Increment()
 		if err != nil {
 			return err
 		}

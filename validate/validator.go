@@ -13,6 +13,7 @@ import (
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
+	"github.com/MichaelMure/git-bug/util/lamport"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/pkg/errors"
@@ -78,14 +79,12 @@ func NewValidator(backend *cache.RepoCache) (*Validator, error) {
 
 	sort.Sort(ByLamportTime(v.versions))
 
-	if len(v.versions) > 0 {
-		lastInfo := v.versions[0]
-		for _, info := range v.versions[1:] {
-			if len(info.KeysAdded) + len(info.KeysRemoved) > 0 && info.Version.Time() == lastInfo.Version.Time() {
-				return nil, fmt.Errorf("multiple versions with the same lamport time: %d in commits %s %s", lastInfo.Version.Time(), lastInfo.Version.CommitHash(), info.Version.CommitHash())
-			}
-			lastInfo = info
+	clock := lamport.NewMemClock()
+	for i, version := range v.versions {
+		if clock.Time() != version.Version.Time() {
+			return nil, fmt.Errorf("unexpected lamport time for version at position %d: %d in commit %s", i, clock.Time(), version.Version.CommitHash())
 		}
+		clock.Increment()
 	}
 
 	v.FirstKey, err = v.validateIdentities()

@@ -13,10 +13,10 @@ type Resolver interface {
 
 // DefaultResolver is a Resolver loading Identities directly from a Repo
 type SimpleResolver struct {
-	repo repository.Repo
+	repo repository.ClockedRepo
 }
 
-func NewSimpleResolver(repo repository.Repo) *SimpleResolver {
+func NewSimpleResolver(repo repository.ClockedRepo) *SimpleResolver {
 	return &SimpleResolver{repo: repo}
 }
 

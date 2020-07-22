@@ -16,7 +16,7 @@ func SetUserIdentity(repo repository.RepoConfig, identity *Identity) error {
 }
 
 // GetUserIdentity read the current user identity, set with a git config entry
-func GetUserIdentity(repo repository.Repo) (*Identity, error) {
+func GetUserIdentity(repo repository.ClockedRepo) (*Identity, error) {
 	id, err := GetUserIdentityId(repo)
 	if err != nil {
 		return nil, err
