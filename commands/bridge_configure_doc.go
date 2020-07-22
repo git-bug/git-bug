@@ -37,33 +37,34 @@ Successfully configured bridge: default
 
 # For Github
 git bug bridge configure \
-    --TokenRaw=PLACEHOLDERTEXT \
-    --Owner=PLACEHOLDERTEXT \
-    --Project=PLACEHOLDERTEXT \
-    --URL=PLACEHOLDERTEXT \
-    --Login=PLACEHOLDERTEXT \
-    --CredPrefix=PLACEHOLDERTEXT \
+    --target=github \
+    --login=$(LOGIN) \
+    --owner=$(OWNER) \
+    --project=$(PROJECT) \
+    --token=$(TOKEN) \
+    --url=$(URL) \
 
 
 # For Gitlab
 git bug bridge configure \
-    --Login=PLACEHOLDERTEXT \
-    --CredPrefix=PLACEHOLDERTEXT \
-    --TokenRaw=PLACEHOLDERTEXT \
-    --URL=PLACEHOLDERTEXT \
-    --BaseURL=PLACEHOLDERTEXT \
+    --target=gitlab \
+    --base-url=$(BASE_URL) \
+    --login=$(LOGIN) \
+    --token=$(TOKEN) \
+    --url=$(URL) \
 
 
 # For Jira
 git bug bridge configure \
-    --BaseURL=PLACEHOLDERTEXT \
-    --Login=PLACEHOLDERTEXT \
-    --CredPrefix=PLACEHOLDERTEXT \
-    --Project=PLACEHOLDERTEXT \
+    --target=jira \
+    --base-url=$(BASE_URL) \
+    --login=$(LOGIN) \
+    --project=$(PROJECT) \
 
 
 # For Launchpad-Preview
 git bug bridge configure \
-    --URL=PLACEHOLDERTEXT \
-    --Project=PLACEHOLDERTEXT \
+    --target=launchpad-preview \
+    --project=$(PROJECT) \
+    --url=$(URL) \
 `

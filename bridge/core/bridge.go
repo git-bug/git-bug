@@ -90,6 +90,7 @@ func ValidParams(target string) ([]string, error) {
 		return nil, fmt.Errorf("unknown bridge target %v", target)
 	}
 
+	sort.Strings(validParams)
 	return validParams, nil
 }
 

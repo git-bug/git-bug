@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-errors/errors"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra/doc"
 
 	"github.com/MichaelMure/git-bug/bridge"
@@ -43,6 +43,36 @@ func main() {
 	}
 
 	// wg.Wait()
+}
+
+// If a flag is not listed in flagInfos, docs will generate the default values for the flag:
+// flagName = lowercase name
+// defaultVal = $({uppercase name})
+// paramConflicts = none
+var flagInfos = map[string]BridgeFlagInfo{
+	"BaseURL": {
+		flagName:       "base-url",
+		defaultVal:     "$(BASE_URL)",
+		paramConflicts: []string{},
+	},
+	"CredPrefix": {
+		flagName:   "credential",
+		defaultVal: "$(CREDENTIALS)",
+		paramConflicts: []string{
+			"TokenRaw",
+		},
+	},
+	"TokenRaw": {
+		flagName:       "token",
+		defaultVal:     "$(TOKEN)",
+		paramConflicts: []string{},
+	},
+}
+
+type BridgeFlagInfo struct {
+	flagName       string
+	defaultVal     string
+	paramConflicts []string
 }
 
 func genBridgeConfig() error {
@@ -85,24 +115,47 @@ Successfully configured bridge: default
 	targets := bridge.Targets()
 	for i, b := range targets {
 		if i != 0 {
-			_, err := exampleText.WriteString("\n\n")
-			if err != nil {
-				return err
-			}
+			exampleText.WriteString("\n\n")
 		}
-		_, err := fmt.Fprintf(&exampleText, "# For %s\ngit bug bridge configure \\\n", strings.Title(strings.Split(b, ".")[0]))
-		if err != nil {
-			return err
-		}
+		exampleText.WriteString("# For ")
+		exampleText.WriteString(strings.Title(b))
+		exampleText.WriteString("\ngit bug bridge configure \\\n")
+
+		exampleText.WriteString("    --target=")
+		exampleText.WriteString(strings.ToLower(b))
+		exampleText.WriteString(" \\\n")
+
 		params, err := bridge.ValidParams(b)
 		if err != nil {
-			return errors.WrapPrefix(err, "bridge parameters", 0)
+			return errors.Wrap(err, "bridge parameters")
 		}
+
+	OUTER:
 		for _, param := range params {
-			_, err = fmt.Fprintf(&exampleText, "    --%s=PLACEHOLDERTEXT \\\n", param)
-			if err != nil {
-				return err
+			if flagInfo, ok := flagInfos[param]; ok {
+				if len(flagInfo.paramConflicts) != 0 {
+					for p := range params {
+						for conflict := range flagInfo.paramConflicts {
+							if p == conflict {
+								continue OUTER
+							}
+						}
+					}
+				}
+
+				exampleText.WriteString("    --")
+				exampleText.WriteString(flagInfo.flagName)
+				exampleText.WriteRune('=')
+				exampleText.WriteString(flagInfo.defaultVal)
+			} else {
+				exampleText.WriteString("    --")
+				exampleText.WriteString(strings.ToLower(param))
+				exampleText.WriteString("=$(")
+				exampleText.WriteString(strings.ToUpper(strings.ReplaceAll(param, "-", "_")))
+				exampleText.WriteRune(')')
 			}
+
+			exampleText.WriteString(" \\\n")
 		}
 	}
 	exampleText.WriteString("`")

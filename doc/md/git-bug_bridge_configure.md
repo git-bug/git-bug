@@ -48,35 +48,36 @@ Successfully configured bridge: default
 
 # For Github
 git bug bridge configure \
-    --URL= \
-    --Login= \
-    --CredPrefix= \
-    --TokenRaw= \
-    --Owner= \
-    --Project= \
+    --target=github \
+    --login=$(LOGIN) \
+    --owner=$(OWNER) \
+    --project=$(PROJECT) \
+    --token=$(TOKEN) \
+    --url=$(URL) \
 
 
 # For Gitlab
 git bug bridge configure \
-    --BaseURL= \
-    --Login= \
-    --CredPrefix= \
-    --TokenRaw= \
-    --URL= \
+    --target=gitlab \
+    --base-url=$(BASE URL) \
+    --login=$(LOGIN) \
+    --token=$(TOKEN) \
+    --url=$(URL) \
 
 
 # For Jira
 git bug bridge configure \
-    --Project= \
-    --BaseURL= \
-    --Login= \
-    --CredPrefix= \
+    --target=jira \
+    --base-url=$(BASE URL) \
+    --login=$(LOGIN) \
+    --project=$(PROJECT) \
 
 
 # For Launchpad-Preview
 git bug bridge configure \
-    --URL= \
-    --Project= \
+    --target=launchpad-preview \
+    --project=$(PROJECT) \
+    --url=$(URL) \
 
 ```
 
