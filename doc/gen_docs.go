@@ -75,6 +75,15 @@ type BridgeFlagInfo struct {
 	paramConflicts []string
 }
 
+var bridgeUrls = map[string]string{
+	"github":            "https://github.com/MichaelMure/git-bug",
+	"gitlab":            "https://gitlab.com/gitlab-org/gitlab",
+	"launchpad-preview": "https://bugs.launchpad.net/ubuntu/",
+	// TODO: Insert URL for Jira Project
+}
+
+// genBridgeConfig generates the bridge configuration documentation on go generate
+// Documentation is stored in commands/bridge_configure_doc.go
 func genBridgeConfig() error {
 	var exampleText strings.Builder
 	exampleText.WriteString("`")
@@ -125,37 +134,26 @@ Successfully configured bridge: default
 		exampleText.WriteString(strings.ToLower(b))
 		exampleText.WriteString(" \\\n")
 
+		exampleText.WriteString("    --url=")
+		exampleText.WriteString(bridgeUrls[b])
+		exampleText.WriteString(" \\\n")
+
 		params, err := bridge.ValidParams(b)
 		if err != nil {
 			return errors.Wrap(err, "bridge parameters")
 		}
 
-	OUTER:
 		for _, param := range params {
-			if flagInfo, ok := flagInfos[param]; ok {
-				if len(flagInfo.paramConflicts) != 0 {
-					for p := range params {
-						for conflict := range flagInfo.paramConflicts {
-							if p == conflict {
-								continue OUTER
-							}
-						}
-					}
-				}
-
-				exampleText.WriteString("    --")
-				exampleText.WriteString(flagInfo.flagName)
-				exampleText.WriteRune('=')
-				exampleText.WriteString(flagInfo.defaultVal)
-			} else {
-				exampleText.WriteString("    --")
-				exampleText.WriteString(strings.ToLower(param))
-				exampleText.WriteString("=$(")
-				exampleText.WriteString(strings.ToUpper(strings.ReplaceAll(param, "-", "_")))
-				exampleText.WriteRune(')')
+			if param == "URL" || param == "BaseURL" {
+				continue
 			}
 
-			exampleText.WriteString(" \\\n")
+			paramString := formatParam(param, params)
+			if paramString == "" {
+				continue
+			}
+
+			exampleText.WriteString(paramString)
 		}
 	}
 	exampleText.WriteString("`")
@@ -182,6 +180,40 @@ var bridgeConfigureExample =`)
 	}
 
 	return nil
+}
+
+// formatParam formats a parameter into a flag example in the command line
+func formatParam(param string, params []string) string {
+	paramString := "    --"
+	if flagInfo, ok := flagInfos[param]; ok {
+		if checkParamConflicts(flagInfo.paramConflicts, params) {
+			return ""
+		}
+
+		paramString += flagInfo.flagName + "=" + flagInfo.defaultVal
+	} else {
+		paramString += strings.ToLower(param) + "=$(" + strings.ToUpper(param) + ")"
+	}
+
+	paramString += " \\\n"
+	return paramString
+}
+
+// checkParamConflicts checks the parameter conflicts against the list of present parameters
+// If a conflict is found, it returns true. Otherwise, it returns false
+func checkParamConflicts(paramConflicts []string, params []string) bool {
+	if len(paramConflicts) == 0 {
+		return false
+	}
+
+	for p := range params {
+		for conflict := range paramConflicts {
+			if p == conflict {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func genManPage() error {
