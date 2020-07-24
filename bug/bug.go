@@ -243,15 +243,18 @@ func readBug(repo repository.ClockedRepo, ref string) (*Bug, error) {
 }
 
 // RemoveLocalBug will remove a local bug from its hash
-func RemoveLocalBug(repo repository.ClockedRepo, id entity.Id) error {
-	ref := bugsRefPattern + id.String()
-	return repo.RemoveRef(ref)
-}
-
-// RemoveRemoteBug will remove a remote bug locally from its hash
-func RemoveRemoteBug(repo repository.ClockedRepo, remote string, id entity.Id) error {
-	ref := fmt.Sprintf(bugsRemoteRefPattern, remote) + id.String()
-	return repo.RemoveRef(ref)
+func RemoveBug(repo repository.ClockedRepo, id entity.Id) error {
+	refs, err := repo.ListRefs(id.String())
+	if err != nil {
+		return err
+	}
+	for _, ref := range refs {
+		err = repo.RemoveRef(ref)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 type StreamedBug struct {

@@ -10,7 +10,7 @@ func newRmCommand() *cobra.Command {
 	env := newEnv()
 
 	cmd := &cobra.Command{
-		Use:      "rm <id> [<remote>]",
+		Use:      "rm <id>",
 		Short:    "Remove an existing bug.",
 		Long:     "Remove an existing bug in the local repository. If the bug was imported from a bridge, specify the remote name to remove it from. Note removing bugs that were imported from bridges will not remove the bug remote, and will only remove the local copy of the bug.",
 		PreRunE:  loadBackendEnsureUser(env),
@@ -27,15 +27,11 @@ func newRmCommand() *cobra.Command {
 }
 
 func runRm(env *Env, args []string) (err error) {
-	switch len(args) {
-	case 1:
-		err = env.backend.RemoveBug(args[0], "")
-		break
-	case 2:
-		err = env.backend.RemoveBug(args[0], args[1])
-	default:
-		return errors.New("invalid number of arguments for rm command")
+	if len(args) == 0 {
+		return errors.New("you must provide a bug prefix to remove")
 	}
+
+	err = env.backend.RemoveBug(args[0])
 
 	if err != nil {
 		return
