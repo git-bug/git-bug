@@ -1,7 +1,6 @@
 package gitlab
 
 import (
-	"net/http"
 	"time"
 
 	"github.com/xanzy/go-gitlab"
@@ -48,12 +47,9 @@ func (Gitlab) NewExporter() core.Exporter {
 }
 
 func buildClient(baseURL string, token *auth.Token) (*gitlab.Client, error) {
-	httpClient := &http.Client{
-		Timeout: defaultTimeout,
-	}
-
-	gitlabClient := gitlab.NewClient(httpClient, token.Value)
-	err := gitlabClient.SetBaseURL(baseURL)
+	gitlabClient, err := gitlab.NewClient(token.Value,
+		gitlab.WithBaseURL(baseURL),
+	)
 	if err != nil {
 		return nil, err
 	}
