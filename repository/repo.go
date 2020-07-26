@@ -10,8 +10,6 @@ import (
 )
 
 var (
-	ErrNoConfigEntry       = errors.New("no config entry for the given key")
-	ErrMultipleConfigEntry = errors.New("multiple config entry for the given key")
 	// ErrNotARepo is the error returned when the git repo root wan't be found
 	ErrNotARepo = errors.New("not a git repository")
 	// ErrClockNotExist is the error returned when a clock can't be found
@@ -24,7 +22,15 @@ type RepoConfig interface {
 	LocalConfig() Config
 
 	// GlobalConfig give access to the git global configuration
+	// Deprecated: to remove in favor of Keyring()
+	// TODO: remove
 	GlobalConfig() Config
+}
+
+// RepoKeyring give access to a user-wide storage for secrets
+type RepoKeyring interface {
+	// Keyring give access to a user-wide storage for secrets
+	Keyring() Keyring
 }
 
 // RepoCommon represent the common function the we want all the repo to implement
@@ -48,6 +54,7 @@ type RepoCommon interface {
 // Repo represents a source code repository.
 type Repo interface {
 	RepoConfig
+	RepoKeyring
 	RepoCommon
 
 	// FetchRefs fetch git refs from a remote

@@ -26,6 +26,8 @@ type GitRepo struct {
 
 	clocksMutex sync.Mutex
 	clocks      map[string]lamport.Clock
+
+	keyring Keyring
 }
 
 // LocalConfig give access to the repository scoped configuration
@@ -36,6 +38,10 @@ func (repo *GitRepo) LocalConfig() Config {
 // GlobalConfig give access to the git global configuration
 func (repo *GitRepo) GlobalConfig() Config {
 	return newGitConfig(repo, true)
+}
+
+func (repo *GitRepo) Keyring() Keyring {
+	return repo.keyring
 }
 
 // Run the given git command with the given I/O reader/writers, returning an error if it fails.
@@ -83,9 +89,15 @@ func (repo *GitRepo) runGitCommand(args ...string) (string, error) {
 // NewGitRepo determines if the given working directory is inside of a git repository,
 // and returns the corresponding GitRepo instance if it is.
 func NewGitRepo(path string, clockLoaders []ClockLoader) (*GitRepo, error) {
+	k, err := defaultKeyring()
+	if err != nil {
+		return nil, err
+	}
+
 	repo := &GitRepo{
-		path:   path,
-		clocks: make(map[string]lamport.Clock),
+		path:    path,
+		clocks:  make(map[string]lamport.Clock),
+		keyring: k,
 	}
 
 	// Check the repo and retrieve the root path

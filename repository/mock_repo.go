@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/99designs/keyring"
+
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
@@ -15,6 +17,7 @@ var _ TestedRepo = &mockRepoForTest{}
 type mockRepoForTest struct {
 	config       *MemConfig
 	globalConfig *MemConfig
+	keyring      *keyring.ArrayKeyring
 	blobs        map[Hash][]byte
 	trees        map[Hash]string
 	commits      map[Hash]commit
@@ -31,6 +34,7 @@ func NewMockRepoForTest() *mockRepoForTest {
 	return &mockRepoForTest{
 		config:       NewMemConfig(),
 		globalConfig: NewMemConfig(),
+		keyring:      keyring.NewArrayKeyring(nil),
 		blobs:        make(map[Hash][]byte),
 		trees:        make(map[Hash]string),
 		commits:      make(map[Hash]commit),
@@ -47,6 +51,11 @@ func (r *mockRepoForTest) LocalConfig() Config {
 // GlobalConfig give access to the git global configuration
 func (r *mockRepoForTest) GlobalConfig() Config {
 	return r.globalConfig
+}
+
+// Keyring give access to a user-wide storage for secrets
+func (r *mockRepoForTest) Keyring() Keyring {
+	return r.keyring
 }
 
 // GetPath returns the path to the repo.

@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	github.com/99designs/gqlgen v0.10.3-0.20200209012558-b7a58a1c0e4b
+	github.com/99designs/keyring v1.1.5
 	github.com/MichaelMure/go-term-text v0.2.9
 	github.com/araddon/dateparse v0.0.0-20190622164848-0fb0a474d195
 	github.com/awesome-gocui/gocui v0.6.1-0.20191115151952-a34ffb055986

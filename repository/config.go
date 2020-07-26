@@ -1,8 +1,14 @@
 package repository
 
 import (
+	"errors"
 	"strconv"
 	"time"
+)
+
+var (
+	ErrNoConfigEntry       = errors.New("no config entry for the given key")
+	ErrMultipleConfigEntry = errors.New("multiple config entry for the given key")
 )
 
 // Config represent the common function interacting with the repository config storage

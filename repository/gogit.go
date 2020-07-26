@@ -24,6 +24,8 @@ type GoGitRepo struct {
 
 	clocksMutex sync.Mutex
 	clocks      map[string]lamport.Clock
+
+	keyring Keyring
 }
 
 func NewGoGitRepo(path string, clockLoaders []ClockLoader) (*GoGitRepo, error) {
@@ -37,10 +39,16 @@ func NewGoGitRepo(path string, clockLoaders []ClockLoader) (*GoGitRepo, error) {
 		return nil, err
 	}
 
+	k, err := defaultKeyring()
+	if err != nil {
+		return nil, err
+	}
+
 	repo := &GoGitRepo{
-		r:      r,
-		path:   path,
-		clocks: make(map[string]lamport.Clock),
+		r:       r,
+		path:    path,
+		clocks:  make(map[string]lamport.Clock),
+		keyring: k,
 	}
 
 	for _, loader := range clockLoaders {
@@ -152,6 +160,10 @@ func (repo *GoGitRepo) LocalConfig() Config {
 
 func (repo *GoGitRepo) GlobalConfig() Config {
 	panic("go-git doesn't support writing global config")
+}
+
+func (repo *GoGitRepo) Keyring() Keyring {
+	return repo.keyring
 }
 
 // GetPath returns the path to the repo.
