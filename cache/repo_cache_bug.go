@@ -24,14 +24,13 @@ func bugCacheFilePath(repo repository.Repo) string {
 // bugUpdated is a callback to trigger when the excerpt of a bug changed,
 // that is each time a bug is updated
 func (c *RepoCache) bugUpdated(id entity.Id) error {
-	c.muBug.Lock()
-
-	b, ok := c.bugs[id]
-	if !ok {
-		c.muBug.Unlock()
-		panic("missing bug in the cache")
+	err := c.ensureBugLoaded(id)
+	if err != nil {
+		return err
 	}
 
+	c.muBug.Lock()
+	b, _ := c.bugs[id]
 	c.bugExcerpts[id] = NewBugExcerpt(b.bug, b.Snapshot())
 	c.muBug.Unlock()
 
@@ -106,38 +105,59 @@ func (c *RepoCache) writeBugCache() error {
 
 // ResolveBugExcerpt retrieve a BugExcerpt matching the exact given id
 func (c *RepoCache) ResolveBugExcerpt(id entity.Id) (*BugExcerpt, error) {
-	c.muBug.RLock()
-	defer c.muBug.RUnlock()
-
-	e, ok := c.bugExcerpts[id]
-	if !ok {
-		return nil, bug.ErrBugNotExist
-	}
-
-	return e, nil
-}
-
-// ResolveBug retrieve a bug matching the exact given id
-func (c *RepoCache) ResolveBug(id entity.Id) (*BugCache, error) {
-	c.muBug.RLock()
-	cached, ok := c.bugs[id]
-	c.muBug.RUnlock()
-	if ok {
-		return cached, nil
-	}
-
-	b, err := bug.ReadLocalBug(c.repo, id)
+	err := c.ensureBugLoaded(id)
 	if err != nil {
 		return nil, err
 	}
 
-	cached = NewBugCache(c, b)
+	c.muBug.RLock()
+	defer c.muBug.RUnlock()
+	return c.bugExcerpts[id], nil
+}
+
+// ResolveBug retrieve a bug matching the exact given id
+func (c *RepoCache) ResolveBug(id entity.Id) (*BugCache, error) {
+	err := c.ensureBugLoaded(id)
+	if err != nil {
+		return nil, err
+	}
+
+	c.muBug.RLock()
+	defer c.muBug.RUnlock()
+	return c.bugs[id], nil
+}
+
+func (c *RepoCache) ensureBugLoaded(id entity.Id) error {
+	if c.presentBugs.Get(id) {
+		return nil
+	}
+
+	b, err := bug.ReadLocalBug(c.repo, id)
+	if err != nil {
+		return err
+	}
+
+	bugCache := NewBugCache(c, b)
 
 	c.muBug.Lock()
-	c.bugs[id] = cached
-	c.muBug.Unlock()
+	if c.presentBugs.Len() == c.presentBugs.maxSize {
+		for _, id := range c.presentBugs.GetAll() {
+			if b := c.bugs[id]; !b.NeedCommit() {
+				b.mu.Lock()
+				c.presentBugs.Remove(id)
+				delete(c.bugExcerpts, id)
+				delete(c.bugs, id)
+			}
+		}
+	}
 
-	return cached, nil
+	c.presentBugs.Add(id)
+	c.bugs[id] = bugCache
+	excerpt := NewBugExcerpt(b, bugCache.Snapshot()) // TODO: Is this needed?
+	c.bugExcerpts[id] = excerpt
+
+	c.muBug.Unlock()
+	return nil
 }
 
 // ResolveBugExcerptPrefix retrieve a BugExcerpt matching an id prefix. It fails if multiple
@@ -363,15 +383,38 @@ func (c *RepoCache) NewBugRaw(author *IdentityCache, unixTime int64, title strin
 // RemoveBug removes a bug from the cache and repo given a bug id prefix
 func (c *RepoCache) RemoveBug(prefix string) error {
 	b, err := c.ResolveBugPrefix(prefix)
-
 	if err != nil {
 		return err
 	}
 
+	err = c.ensureBugLoaded(b.Id())
+	if err != nil {
+		return err
+	}
+
+	c.muBug.Lock()
+	b.mu.Lock()
+	fmt.Println("got lock")
 	err = bug.RemoveBug(c.repo, b.Id())
-
+	if err != nil {
+		c.muBug.Unlock()
+		b.mu.Unlock()
+		return err
+	}
+	fmt.Println("noerr")
+	c.presentBugs.Remove(b.Id())
+	fmt.Println("removing1")
 	delete(c.bugs, b.Id())
+	fmt.Println("removed2")
 	delete(c.bugExcerpts, b.Id())
+	fmt.Println("unlocking")
 
+	c.muBug.Unlock()
 	return c.writeBugCache()
+}
+
+// onEvict will update the bugs and bugExcerpts when a bug is evicted from the cache
+func (c *RepoCache) onEvict(id entity.Id) { // TODO: Do we need this?
+	delete(c.bugs, id)
+	delete(c.bugExcerpts, id)
 }

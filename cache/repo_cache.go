@@ -21,6 +21,8 @@ import (
 // 2: added cache for identities with a reference in the bug cache
 const formatVersion = 2
 
+const lruCacheSize = 100
+
 var _ repository.RepoCommon = &RepoCache{}
 
 // RepoCache is a cache for a Repository. This cache has multiple functions:
@@ -49,6 +51,9 @@ type RepoCache struct {
 	bugExcerpts map[entity.Id]*BugExcerpt
 	// bug loaded in memory
 	bugs map[entity.Id]*BugCache
+
+	// presentBugs is an LRU cache that records which bugs the cache has loaded in
+	presentBugs *LRUIdCache
 
 	muIdentity sync.RWMutex
 	// excerpt of identities data for all identities
@@ -144,7 +149,7 @@ func (c *RepoCache) Close() error {
 
 	c.identities = make(map[entity.Id]*IdentityCache)
 	c.identitiesExcerpts = nil
-	c.bugs = make(map[entity.Id]*BugCache)
+	c.bugs = nil
 	c.bugExcerpts = nil
 
 	lockPath := repoLockFilePath(c.repo)
@@ -175,11 +180,22 @@ func (c *RepoCache) buildCache() error {
 
 	_, _ = fmt.Fprintf(os.Stderr, "Building bug cache... ")
 
+	presentBugs, err := NewLRUIdCache(lruCacheSize, c.onEvict)
+	if err != nil {
+		return err
+	}
+	c.presentBugs = presentBugs
+
 	c.bugExcerpts = make(map[entity.Id]*BugExcerpt)
 
 	allBugs := bug.ReadAllLocalBugs(c.repo)
 
-	for b := range allBugs {
+	for i := 0; i < lruCacheSize; i++ {
+		if len(allBugs) == 0 {
+			break
+		}
+
+		b := <-allBugs
 		if b.Err != nil {
 			return b.Err
 		}
