@@ -1,10 +1,12 @@
 package bug
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
@@ -64,7 +66,7 @@ func TestBugValidity(t *testing.T) {
 	}
 }
 
-func TestBugCommitLoadRemove(t *testing.T) {
+func TestBugCommitLoad(t *testing.T) {
 	bug1 := NewBug()
 
 	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
@@ -100,16 +102,6 @@ func TestBugCommitLoadRemove(t *testing.T) {
 	bug3, err := ReadLocalBug(repo, bug1.Id())
 	assert.NoError(t, err)
 	equivalentBug(t, bug1, bug3)
-
-	err = RemoveLocalBug(repo, bug1.Id())
-	assert.NoError(t, err)
-
-	streamedBugs := ReadAllLocalBugs(repo)
-	count := 0
-	for range streamedBugs {
-		count++
-	}
-	assert.Equal(t, 0, count)
 }
 
 func equivalentBug(t *testing.T, expected, actual *Bug) {
@@ -122,4 +114,61 @@ func equivalentBug(t *testing.T, expected, actual *Bug) {
 	}
 
 	assert.Equal(t, expected, actual)
+}
+
+func TestBugRemove(t *testing.T) {
+	repo := repository.CreateTestRepo(false)
+	remoteA := repository.CreateTestRepo(true)
+	remoteB := repository.CreateTestRepo(true)
+	defer repository.CleanupTestRepos(repo, remoteA, remoteB)
+
+	err := repo.AddRemote("remoteA", "file://"+remoteA.GetPath())
+	require.NoError(t, err)
+
+	err = repo.AddRemote("remoteB", "file://"+remoteB.GetPath())
+	require.NoError(t, err)
+
+	// generate a bunch of bugs
+	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
+	err = rene.Commit(repo)
+	require.NoError(t, err)
+
+	for i := 0; i < 100; i++ {
+		b := NewBug()
+		createOp := NewCreateOp(rene, time.Now().Unix(), "title", fmt.Sprintf("message%v", i), nil)
+		b.Append(createOp)
+		err = b.Commit(repo)
+		require.NoError(t, err)
+	}
+
+	// and one more for testing
+	b := NewBug()
+	createOp := NewCreateOp(rene, time.Now().Unix(), "title", "message", nil)
+	b.Append(createOp)
+	err = b.Commit(repo)
+	require.NoError(t, err)
+
+	_, err = Push(repo, "remoteA")
+	require.NoError(t, err)
+
+	_, err = Push(repo, "remoteB")
+	require.NoError(t, err)
+
+	_, err = Fetch(repo, "remoteA")
+	require.NoError(t, err)
+
+	_, err = Fetch(repo, "remoteB")
+	require.NoError(t, err)
+
+	err = RemoveBug(repo, b.Id())
+	require.NoError(t, err)
+
+	_, err = ReadLocalBug(repo, b.Id())
+	require.Error(t, ErrBugNotExist, err)
+
+	_, err = ReadRemoteBug(repo, "remoteA", b.Id())
+	require.Error(t, ErrBugNotExist, err)
+
+	_, err = ReadRemoteBug(repo, "remoteB", b.Id())
+	require.Error(t, ErrBugNotExist, err)
 }

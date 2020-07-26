@@ -1,8 +1,11 @@
 package cache
 
 import (
+	"fmt"
 	"testing"
+	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/MichaelMure/git-bug/query"
@@ -101,11 +104,6 @@ func TestCache(t *testing.T) {
 	require.NoError(t, err)
 	_, err = cache.ResolveBugPrefix(bug1.Id().String()[:10])
 	require.NoError(t, err)
-
-	// Possible to delete a bug
-	err = cache.RemoveBug(bug1.Id().Human(), "")
-	require.NoError(t, err)
-	require.Equal(t, len(cache.AllBugsIds()), 1)
 }
 
 func TestPushPull(t *testing.T) {
@@ -161,4 +159,49 @@ func TestPushPull(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, cacheA.AllBugsIds(), 2)
+}
+
+func TestRemove(t *testing.T) {
+	repo := repository.CreateTestRepo(false)
+	remoteA := repository.CreateTestRepo(true)
+	remoteB := repository.CreateTestRepo(true)
+	defer repository.CleanupTestRepos(repo, remoteA, remoteB)
+
+	err := repo.AddRemote("remoteA", "file://"+remoteA.GetPath())
+	require.NoError(t, err)
+
+	err = repo.AddRemote("remoteB", "file://"+remoteB.GetPath())
+	require.NoError(t, err)
+
+	repoCache, err := NewRepoCache(repo)
+	require.NoError(t, err)
+
+	// generate a bunch of bugs
+	rene, err := repoCache.NewIdentity("René Descartes", "rene@descartes.fr")
+	require.NoError(t, err)
+
+	for i := 0; i < 100; i++ {
+		_, _, err := repoCache.NewBugRaw(rene, time.Now().Unix(), "title", fmt.Sprintf("message%v", i), nil, nil)
+		require.NoError(t, err)
+	}
+
+	// and one more for testing
+	b1, _, err := repoCache.NewBugRaw(rene, time.Now().Unix(), "title", "message", nil, nil)
+	require.NoError(t, err)
+
+	_, err = repoCache.Push("remoteA")
+	require.NoError(t, err)
+
+	_, err = repoCache.Push("remoteB")
+	require.NoError(t, err)
+
+	_, err = repoCache.Fetch("remoteA")
+	require.NoError(t, err)
+
+	_, err = repoCache.Fetch("remoteB")
+	require.NoError(t, err)
+
+	err = repoCache.RemoveBug(b1.Id().String())
+	require.NoError(t, err)
+	assert.Equal(t, 100, len(repoCache.bugs))
 }
