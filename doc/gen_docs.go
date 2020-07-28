@@ -134,21 +134,17 @@ Successfully configured bridge: default
 		exampleText.WriteString(strings.ToLower(b))
 		exampleText.WriteString(" \\\n")
 
-		exampleText.WriteString("    --url=")
-		exampleText.WriteString(bridgeUrls[b])
-		exampleText.WriteString(" \\\n")
-
 		params, err := bridge.ValidParams(b)
 		if err != nil {
 			return errors.Wrap(err, "bridge parameters")
 		}
 
 		for _, param := range params {
-			if param == "URL" || param == "BaseURL" {
+			if param == "BaseURL" {
 				continue
 			}
 
-			paramString := formatParam(param, params)
+			paramString := formatParam(param, params, b)
 			if paramString == "" {
 				continue
 			}
@@ -182,21 +178,23 @@ var bridgeConfigureExample =`)
 	return nil
 }
 
+const paramFormatString = "    --%s=%s \\\n"
+
 // formatParam formats a parameter into a flag example in the command line
-func formatParam(param string, params []string) string {
-	paramString := "    --"
+func formatParam(param string, params []string, bridge string) string {
 	if flagInfo, ok := flagInfos[param]; ok {
 		if checkParamConflicts(flagInfo.paramConflicts, params) {
 			return ""
 		}
 
-		paramString += flagInfo.flagName + "=" + flagInfo.defaultVal
-	} else {
-		paramString += strings.ToLower(param) + "=$(" + strings.ToUpper(param) + ")"
+		return fmt.Sprintf(paramFormatString, flagInfo.flagName, flagInfo.defaultVal)
+	} else if param == "URL" {
+		if exampleUrl, ok := bridgeUrls[bridge]; ok {
+			return fmt.Sprintf(paramFormatString, "url", exampleUrl)
+		}
 	}
 
-	paramString += " \\\n"
-	return paramString
+	return fmt.Sprintf(paramFormatString, strings.ToLower(param), "=$("+strings.ToUpper(param)+")")
 }
 
 // checkParamConflicts checks the parameter conflicts against the list of present parameters
