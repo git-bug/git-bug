@@ -3,14 +3,14 @@ package commands
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/commands/select"
+	_select "github.com/MichaelMure/git-bug/commands/select"
 )
 
 func newLabelAddCommand() *cobra.Command {
 	env := newEnv()
 
 	cmd := &cobra.Command{
-		Use:      "add [<id>] <label>[...]",
+		Use:      "add [ID] LABEL...",
 		Short:    "Add a label to a bug.",
 		PreRunE:  loadBackendEnsureUser(env),
 		PostRunE: closeBackend(env),
@@ -28,7 +28,9 @@ func runLabelAdd(env *Env, args []string) error {
 		return err
 	}
 
-	changes, _, err := b.ChangeLabels(args, nil)
+	added := args
+
+	changes, _, err := b.ChangeLabels(added, nil)
 
 	for _, change := range changes {
 		env.out.Println(change)

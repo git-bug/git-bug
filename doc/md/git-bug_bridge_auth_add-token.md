@@ -7,7 +7,7 @@ Store a new token
 Store a new token
 
 ```
-git-bug bridge auth add-token [<token>] [flags]
+git-bug bridge auth add-token [TOKEN] [flags]
 ```
 
 ### Options

@@ -17,7 +17,7 @@ func newBridgePushCommand() *cobra.Command {
 	env := newEnv()
 
 	cmd := &cobra.Command{
-		Use:      "push [<name>]",
+		Use:      "push [NAME]",
 		Short:    "Push updates.",
 		PreRunE:  loadBackendEnsureUser(env),
 		PostRunE: closeBackend(env),

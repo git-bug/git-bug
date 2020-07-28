@@ -27,7 +27,7 @@ func newBridgeAuthAddTokenCommand() *cobra.Command {
 	options := bridgeAuthAddTokenOptions{}
 
 	cmd := &cobra.Command{
-		Use:      "add-token [<token>]",
+		Use:      "add-token [TOKEN]",
 		Short:    "Store a new token",
 		PreRunE:  loadBackendEnsureUser(env),
 		PostRunE: closeBackend(env),

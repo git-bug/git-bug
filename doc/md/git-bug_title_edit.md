@@ -7,7 +7,7 @@ Edit a title of a bug.
 Edit a title of a bug.
 
 ```
-git-bug title edit [<id>] [flags]
+git-bug title edit [ID] [flags]
 ```
 
 ### Options

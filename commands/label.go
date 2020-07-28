@@ -3,14 +3,14 @@ package commands
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/commands/select"
+	_select "github.com/MichaelMure/git-bug/commands/select"
 )
 
 func newLabelCommand() *cobra.Command {
 	env := newEnv()
 
 	cmd := &cobra.Command{
-		Use:      "label [<id>]",
+		Use:      "label [ID]",
 		Short:    "Display, add or remove labels to/from a bug.",
 		PreRunE:  loadBackend(env),
 		PostRunE: closeBackend(env),

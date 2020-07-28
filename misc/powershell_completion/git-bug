@@ -28,6 +28,7 @@ Register-ArgumentCompleter -Native -CommandName 'git-bug' -ScriptBlock {
             [CompletionResult]::new('ls-label', 'ls-label', [CompletionResultType]::ParameterValue, 'List valid labels.')
             [CompletionResult]::new('pull', 'pull', [CompletionResultType]::ParameterValue, 'Pull bugs update from a git remote.')
             [CompletionResult]::new('push', 'push', [CompletionResultType]::ParameterValue, 'Push bugs update to a git remote.')
+            [CompletionResult]::new('rm', 'rm', [CompletionResultType]::ParameterValue, 'Remove an existing bug.')
             [CompletionResult]::new('select', 'select', [CompletionResultType]::ParameterValue, 'Select a bug for implicit use in future commands.')
             [CompletionResult]::new('show', 'show', [CompletionResultType]::ParameterValue, 'Display the details of a bug.')
             [CompletionResult]::new('status', 'status', [CompletionResultType]::ParameterValue, 'Display or change a bug status.')
@@ -173,6 +174,9 @@ Register-ArgumentCompleter -Native -CommandName 'git-bug' -ScriptBlock {
             break
         }
         'git-bug;push' {
+            break
+        }
+        'git-bug;rm' {
             break
         }
         'git-bug;select' {

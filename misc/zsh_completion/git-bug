@@ -22,6 +22,7 @@ function _git-bug {
       "ls-label:List valid labels."
       "pull:Pull bugs update from a git remote."
       "push:Push bugs update to a git remote."
+      "rm:Remove an existing bug."
       "select:Select a bug for implicit use in future commands."
       "show:Display the details of a bug."
       "status:Display or change a bug status."
@@ -68,6 +69,9 @@ function _git-bug {
     ;;
   push)
     _git-bug_push
+    ;;
+  rm)
+    _git-bug_rm
     ;;
   select)
     _git-bug_select
@@ -320,6 +324,10 @@ function _git-bug_pull {
 }
 
 function _git-bug_push {
+  _arguments
+}
+
+function _git-bug_rm {
   _arguments
 }
 

@@ -7,7 +7,7 @@ Display, add or remove labels to/from a bug.
 Display, add or remove labels to/from a bug.
 
 ```
-git-bug label [<id>] [flags]
+git-bug label [ID] [flags]
 ```
 
 ### Options

@@ -7,7 +7,7 @@ Mark a bug as open.
 Mark a bug as open.
 
 ```
-git-bug status open [<id>] [flags]
+git-bug status open [ID] [flags]
 ```
 
 ### Options

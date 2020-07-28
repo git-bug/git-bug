@@ -7,7 +7,7 @@ Display the details of a bug.
 Display the details of a bug.
 
 ```
-git-bug show [<id>] [flags]
+git-bug show [ID] [flags]
 ```
 
 ### Options

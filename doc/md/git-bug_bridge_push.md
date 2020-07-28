@@ -7,7 +7,7 @@ Push updates.
 Push updates.
 
 ```
-git-bug bridge push [<name>] [flags]
+git-bug bridge push [NAME] [flags]
 ```
 
 ### Options

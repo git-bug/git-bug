@@ -897,6 +897,26 @@ _git-bug_push()
     noun_aliases=()
 }
 
+_git-bug_rm()
+{
+    last_command="git-bug_rm"
+
+    command_aliases=()
+
+    commands=()
+
+    flags=()
+    two_word_flags=()
+    local_nonpersistent_flags=()
+    flags_with_completion=()
+    flags_completion=()
+
+
+    must_have_one_flag=()
+    must_have_one_noun=()
+    noun_aliases=()
+}
+
 _git-bug_select()
 {
     last_command="git-bug_select"
@@ -1239,6 +1259,7 @@ _git-bug_root_command()
     commands+=("ls-label")
     commands+=("pull")
     commands+=("push")
+    commands+=("rm")
     commands+=("select")
     commands+=("show")
     commands+=("status")

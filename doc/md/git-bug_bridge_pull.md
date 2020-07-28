@@ -7,7 +7,7 @@ Pull updates.
 Pull updates.
 
 ```
-git-bug bridge pull [<name>] [flags]
+git-bug bridge pull [NAME] [flags]
 ```
 
 ### Options

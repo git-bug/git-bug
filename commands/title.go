@@ -1,16 +1,15 @@
 package commands
 
 import (
+	_select "github.com/MichaelMure/git-bug/commands/select"
 	"github.com/spf13/cobra"
-
-	"github.com/MichaelMure/git-bug/commands/select"
 )
 
 func newTitleCommand() *cobra.Command {
 	env := newEnv()
 
 	cmd := &cobra.Command{
-		Use:      "title [<id>]",
+		Use:      "title [ID]",
 		Short:    "Display or change a title of a bug.",
 		PreRunE:  loadBackend(env),
 		PostRunE: closeBackend(env),

@@ -26,7 +26,7 @@ func newBridgePullCommand() *cobra.Command {
 	options := bridgePullOptions{}
 
 	cmd := &cobra.Command{
-		Use:      "pull [<name>]",
+		Use:      "pull [NAME]",
 		Short:    "Pull updates.",
 		PreRunE:  loadBackend(env),
 		PostRunE: closeBackend(env),

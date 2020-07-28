@@ -10,7 +10,7 @@ func newBridgeAuthRm() *cobra.Command {
 	env := newEnv()
 
 	cmd := &cobra.Command{
-		Use:     "rm <id>",
+		Use:     "rm ID",
 		Short:   "Remove a credential.",
 		PreRunE: loadRepo(env),
 		RunE: func(cmd *cobra.Command, args []string) error {

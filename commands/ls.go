@@ -31,7 +31,7 @@ func newLsCommand() *cobra.Command {
 	options := lsOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "ls [<query>]",
+		Use:   "ls [QUERY]",
 		Short: "List bugs.",
 		Long: `Display a summary of each bugs.
 

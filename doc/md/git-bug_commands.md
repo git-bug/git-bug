@@ -7,7 +7,7 @@ Display available commands.
 Display available commands.
 
 ```
-git-bug commands [<option>...] [flags]
+git-bug commands [flags]
 ```
 
 ### Options

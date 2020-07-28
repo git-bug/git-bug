@@ -9,7 +9,7 @@ Display a summary of each bugs.
 You can pass an additional query to filter and order the list. This query can be expressed either with a simple query language or with flags.
 
 ```
-git-bug ls [<query>] [flags]
+git-bug ls [QUERY] [flags]
 ```
 
 ### Examples
