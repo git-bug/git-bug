@@ -23,8 +23,8 @@ type BugExcerpt struct {
 
 	CreateLamportTime lamport.Time
 	EditLamportTime   lamport.Time
-	createUnixTime    int64
-	editUnixTime      int64
+	CreateUnixTime    int64
+	EditUnixTime      int64
 
 	Status       bug.Status
 	Labels       []bug.Label
@@ -80,8 +80,8 @@ func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
 		Id:                b.Id(),
 		CreateLamportTime: b.CreateLamportTime(),
 		EditLamportTime:   b.EditLamportTime(),
-		createUnixTime:    b.FirstOp().Time().Unix(),
-		editUnixTime:      snap.EditTime().Unix(),
+		CreateUnixTime:    b.FirstOp().Time().Unix(),
+		EditUnixTime:      snap.EditTime().Unix(),
 		Status:            snap.Status,
 		Labels:            snap.Labels,
 		Actors:            actorsIds,
@@ -107,11 +107,11 @@ func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
 }
 
 func (b *BugExcerpt) CreateTime() time.Time {
-	return time.Unix(b.createUnixTime, 0)
+	return time.Unix(b.CreateUnixTime, 0)
 }
 
 func (b *BugExcerpt) EditTime() time.Time {
-	return time.Unix(b.editUnixTime, 0)
+	return time.Unix(b.EditUnixTime, 0)
 }
 
 /*
@@ -153,7 +153,7 @@ func (b BugsByCreationTime) Less(i, j int) bool {
 	// by the first sorting using the logical clock. That means that if users
 	// synchronize their bugs regularly, the timestamp will rarely be used, and
 	// should still provide a kinda accurate sorting when needed.
-	return b[i].createUnixTime < b[j].createUnixTime
+	return b[i].CreateUnixTime < b[j].CreateUnixTime
 }
 
 func (b BugsByCreationTime) Swap(i, j int) {
@@ -181,7 +181,7 @@ func (b BugsByEditTime) Less(i, j int) bool {
 	// by the first sorting using the logical clock. That means that if users
 	// synchronize their bugs regularly, the timestamp will rarely be used, and
 	// should still provide a kinda accurate sorting when needed.
-	return b[i].editUnixTime < b[j].editUnixTime
+	return b[i].EditUnixTime < b[j].EditUnixTime
 }
 
 func (b BugsByEditTime) Swap(i, j int) {

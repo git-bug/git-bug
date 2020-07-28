@@ -19,8 +19,7 @@ import (
 
 // 1: original format
 // 2: added cache for identities with a reference in the bug cache
-// 3: CreateUnixTime --> createUnixTime, EditUnixTime --> editUnixTime
-const formatVersion = 3
+const formatVersion = 2
 
 var _ repository.RepoCommon = &RepoCache{}
 
