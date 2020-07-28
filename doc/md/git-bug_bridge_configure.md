@@ -49,9 +49,9 @@ Successfully configured bridge: default
 # For Github
 git bug bridge configure \
     --target=github \
-    --url=https://github.com/MichaelMure/git-bug \
-    --url=https://github.com/MichaelMure/git-bug \
-    --url=https://github.com/MichaelMure/git-bug \
+    --login==$(LOGIN) \
+    --owner==$(OWNER) \
+    --project==$(PROJECT) \
     --token=$(TOKEN) \
     --url=https://github.com/MichaelMure/git-bug \
 
@@ -59,7 +59,7 @@ git bug bridge configure \
 # For Gitlab
 git bug bridge configure \
     --target=gitlab \
-    --url=https://gitlab.com/gitlab-org/gitlab \
+    --login==$(LOGIN) \
     --token=$(TOKEN) \
     --url=https://gitlab.com/gitlab-org/gitlab \
 
@@ -74,7 +74,7 @@ git bug bridge configure \
 # For Launchpad-Preview
 git bug bridge configure \
     --target=launchpad-preview \
-    --url=https://bugs.launchpad.net/ubuntu/ \
+    --project==$(PROJECT) \
     --url=https://bugs.launchpad.net/ubuntu/ \
 
 ```
