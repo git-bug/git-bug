@@ -20,11 +20,6 @@ var (
 type RepoConfig interface {
 	// LocalConfig give access to the repository scoped configuration
 	LocalConfig() Config
-
-	// GlobalConfig give access to the git global configuration
-	// Deprecated: to remove in favor of Keyring()
-	// TODO: remove
-	GlobalConfig() Config
 }
 
 // RepoKeyring give access to a user-wide storage for secrets

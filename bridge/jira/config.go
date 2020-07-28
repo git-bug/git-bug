@@ -163,7 +163,7 @@ func (*Jira) ValidateConfig(conf core.Configuration) error {
 	return nil
 }
 
-func promptCredOptions(repo repository.RepoConfig, login, baseUrl string) (auth.Credential, error) {
+func promptCredOptions(repo repository.RepoKeyring, login, baseUrl string) (auth.Credential, error) {
 	creds, err := auth.List(repo,
 		auth.WithTarget(target),
 		auth.WithKind(auth.KindToken),

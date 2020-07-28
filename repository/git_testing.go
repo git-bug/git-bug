@@ -3,6 +3,8 @@ package repository
 import (
 	"io/ioutil"
 	"log"
+
+	"github.com/99designs/keyring"
 )
 
 // This is intended for testing only
@@ -34,7 +36,11 @@ func CreateTestRepo(bare bool) TestedRepo {
 		log.Fatal("failed to set user.email for test repository: ", err)
 	}
 
-	return repo
+	// make sure we use a mock keyring for testing to not interact with the global system
+	return &replaceKeyring{
+		TestedRepo: repo,
+		keyring:    keyring.NewArrayKeyring(nil),
+	}
 }
 
 func SetupReposAndRemote() (repoA, repoB, remote TestedRepo) {
@@ -55,4 +61,14 @@ func SetupReposAndRemote() (repoA, repoB, remote TestedRepo) {
 	}
 
 	return repoA, repoB, remote
+}
+
+// replaceKeyring allow to replace the Keyring of the underlying repo
+type replaceKeyring struct {
+	TestedRepo
+	keyring Keyring
+}
+
+func (rk replaceKeyring) Keyring() Keyring {
+	return rk.keyring
 }

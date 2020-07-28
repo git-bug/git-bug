@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	configKeyTokenValue = "value"
+	keyringKeyTokenValue = "value"
 )
 
 var _ Credential = &Token{}
@@ -28,14 +28,14 @@ func NewToken(target, value string) *Token {
 }
 
 func NewTokenFromConfig(conf map[string]string) (*Token, error) {
-	base, err := newCredentialBaseFromConfig(conf)
+	base, err := newCredentialBaseFromData(conf)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Token{
 		credentialBase: base,
-		Value:          conf[configKeyTokenValue],
+		Value:          conf[keyringKeyTokenValue],
 	}, nil
 }
 
@@ -65,6 +65,6 @@ func (t *Token) Validate() error {
 
 func (t *Token) toConfig() map[string]string {
 	return map[string]string{
-		configKeyTokenValue: t.Value,
+		keyringKeyTokenValue: t.Value,
 	}
 }

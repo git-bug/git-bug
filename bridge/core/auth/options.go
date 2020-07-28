@@ -1,22 +1,22 @@
 package auth
 
-type options struct {
+type listOptions struct {
 	target string
 	kind   map[CredentialKind]interface{}
 	meta   map[string]string
 }
 
-type Option func(opts *options)
+type ListOption func(opts *listOptions)
 
-func matcher(opts []Option) *options {
-	result := &options{}
+func matcher(opts []ListOption) *listOptions {
+	result := &listOptions{}
 	for _, opt := range opts {
 		opt(result)
 	}
 	return result
 }
 
-func (opts *options) Match(cred Credential) bool {
+func (opts *listOptions) Match(cred Credential) bool {
 	if opts.target != "" && cred.Target() != opts.target {
 		return false
 	}
@@ -35,15 +35,15 @@ func (opts *options) Match(cred Credential) bool {
 	return true
 }
 
-func WithTarget(target string) Option {
-	return func(opts *options) {
+func WithTarget(target string) ListOption {
+	return func(opts *listOptions) {
 		opts.target = target
 	}
 }
 
 // WithKind match credentials with the given kind. Can be specified multiple times.
-func WithKind(kind CredentialKind) Option {
-	return func(opts *options) {
+func WithKind(kind CredentialKind) ListOption {
+	return func(opts *listOptions) {
 		if opts.kind == nil {
 			opts.kind = make(map[CredentialKind]interface{})
 		}
@@ -51,8 +51,8 @@ func WithKind(kind CredentialKind) Option {
 	}
 }
 
-func WithMeta(key string, val string) Option {
-	return func(opts *options) {
+func WithMeta(key string, val string) ListOption {
+	return func(opts *listOptions) {
 		if opts.meta == nil {
 			opts.meta = make(map[string]string)
 		}

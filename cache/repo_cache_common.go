@@ -20,9 +20,8 @@ func (c *RepoCache) LocalConfig() repository.Config {
 	return c.repo.LocalConfig()
 }
 
-// GlobalConfig give access to the git global configuration
-func (c *RepoCache) GlobalConfig() repository.Config {
-	return c.repo.GlobalConfig()
+func (c *RepoCache) Keyring() repository.Keyring {
+	return c.repo.Keyring()
 }
 
 // GetPath returns the path to the repo.

@@ -1,7 +1,10 @@
 package auth
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
@@ -23,13 +26,22 @@ func newCredentialBase(target string) *credentialBase {
 	}
 }
 
-func newCredentialBaseFromConfig(conf map[string]string) (*credentialBase, error) {
+func makeSalt() []byte {
+	result := make([]byte, 16)
+	_, err := rand.Read(result)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+func newCredentialBaseFromData(data map[string]string) (*credentialBase, error) {
 	base := &credentialBase{
-		target: conf[configKeyTarget],
-		meta:   metaFromConfig(conf),
+		target: data[keyringKeyTarget],
+		meta:   metaFromData(data),
 	}
 
-	if createTime, ok := conf[configKeyCreateTime]; ok {
+	if createTime, ok := data[keyringKeyCreateTime]; ok {
 		t, err := repository.ParseTimestamp(createTime)
 		if err != nil {
 			return nil, err
@@ -39,13 +51,35 @@ func newCredentialBaseFromConfig(conf map[string]string) (*credentialBase, error
 		return nil, fmt.Errorf("missing create time")
 	}
 
-	salt, err := saltFromConfig(conf)
+	salt, err := saltFromData(data)
 	if err != nil {
 		return nil, err
 	}
 	base.salt = salt
 
 	return base, nil
+}
+
+func metaFromData(data map[string]string) map[string]string {
+	result := make(map[string]string)
+	for key, val := range data {
+		if strings.HasPrefix(key, keyringKeyPrefixMeta) {
+			key = strings.TrimPrefix(key, keyringKeyPrefixMeta)
+			result[key] = val
+		}
+	}
+	if len(result) == 0 {
+		return nil
+	}
+	return result
+}
+
+func saltFromData(data map[string]string) ([]byte, error) {
+	val, ok := data[keyringKeySalt]
+	if !ok {
+		return nil, fmt.Errorf("no credential salt found")
+	}
+	return base64.StdEncoding.DecodeString(val)
 }
 
 func (cb *credentialBase) Target() string {
