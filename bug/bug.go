@@ -109,8 +109,8 @@ func ReadLocalBug(repo repository.ClockedRepo, id entity.Id) (*Bug, error) {
 }
 
 // ReadRemoteBug will read a remote bug from its hash
-func ReadRemoteBug(repo repository.ClockedRepo, remote string, id string) (*Bug, error) {
-	ref := fmt.Sprintf(bugsRemoteRefPattern, remote) + id
+func ReadRemoteBug(repo repository.ClockedRepo, remote string, id entity.Id) (*Bug, error) {
+	ref := fmt.Sprintf(bugsRemoteRefPattern, remote) + id.String()
 	return readBug(repo, ref)
 }
 
@@ -242,9 +242,54 @@ func readBug(repo repository.ClockedRepo, ref string) (*Bug, error) {
 	return &bug, nil
 }
 
-func RemoveLocalBug(repo repository.ClockedRepo, id entity.Id) error {
-	ref := bugsRefPattern + id.String()
-	return repo.RemoveRef(ref)
+// RemoveBug will remove a local bug from its entity.Id
+func RemoveBug(repo repository.ClockedRepo, id entity.Id) error {
+	var fullMatches []string
+
+	refs, err := repo.ListRefs(bugsRefPattern + id.String())
+	if err != nil {
+		return err
+	}
+	if len(refs) > 1 {
+		return NewErrMultipleMatchBug(refsToIds(refs))
+	}
+	if len(refs) == 1 {
+		// we have the bug locally
+		fullMatches = append(fullMatches, refs[0])
+	}
+
+	remotes, err := repo.GetRemotes()
+	if err != nil {
+		return err
+	}
+
+	for remote := range remotes {
+		remotePrefix := fmt.Sprintf(bugsRemoteRefPattern+id.String(), remote)
+		remoteRefs, err := repo.ListRefs(remotePrefix)
+		if err != nil {
+			return err
+		}
+		if len(remoteRefs) > 1 {
+			return NewErrMultipleMatchBug(refsToIds(refs))
+		}
+		if len(remoteRefs) == 1 {
+			// found the bug in a remote
+			fullMatches = append(fullMatches, remoteRefs[0])
+		}
+	}
+
+	if len(fullMatches) == 0 {
+		return ErrBugNotExist
+	}
+
+	for _, ref := range fullMatches {
+		err = repo.RemoveRef(ref)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 type StreamedBug struct {
@@ -305,11 +350,15 @@ func refsToIds(refs []string) []entity.Id {
 	ids := make([]entity.Id, len(refs))
 
 	for i, ref := range refs {
-		split := strings.Split(ref, "/")
-		ids[i] = entity.Id(split[len(split)-1])
+		ids[i] = refToId(ref)
 	}
 
 	return ids
+}
+
+func refToId(ref string) entity.Id {
+	split := strings.Split(ref, "/")
+	return entity.Id(split[len(split)-1])
 }
 
 // Validate check if the Bug data is valid

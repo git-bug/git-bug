@@ -359,3 +359,19 @@ func (c *RepoCache) NewBugRaw(author *IdentityCache, unixTime int64, title strin
 
 	return cached, op, nil
 }
+
+// RemoveBug removes a bug from the cache and repo given a bug id prefix
+func (c *RepoCache) RemoveBug(prefix string) error {
+	b, err := c.ResolveBugPrefix(prefix)
+
+	if err != nil {
+		return err
+	}
+
+	err = bug.RemoveBug(c.repo, b.Id())
+
+	delete(c.bugs, b.Id())
+	delete(c.bugExcerpts, b.Id())
+
+	return c.writeBugCache()
+}
