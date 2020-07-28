@@ -2,9 +2,7 @@
 package repository
 
 import (
-	"bytes"
 	"errors"
-	"strings"
 
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
@@ -15,6 +13,14 @@ var (
 	// ErrClockNotExist is the error returned when a clock can't be found
 	ErrClockNotExist = errors.New("clock doesn't exist")
 )
+
+// Repo represents a source code repository.
+type Repo interface {
+	RepoConfig
+	RepoKeyring
+	RepoCommon
+	RepoData
+}
 
 // RepoConfig access the configuration of a repository
 type RepoConfig interface {
@@ -46,12 +52,8 @@ type RepoCommon interface {
 	GetRemotes() (map[string]string, error)
 }
 
-// Repo represents a source code repository.
-type Repo interface {
-	RepoConfig
-	RepoKeyring
-	RepoCommon
-
+// RepoData give access to the git data storage
+type RepoData interface {
 	// FetchRefs fetch git refs from a remote
 	FetchRefs(remote string, refSpec string) (string, error)
 
@@ -120,37 +122,6 @@ type ClockLoader struct {
 	// Witnesser is a function that will initialize the clocks of a repo
 	// from scratch
 	Witnesser func(repo ClockedRepo) error
-}
-
-func prepareTreeEntries(entries []TreeEntry) bytes.Buffer {
-	var buffer bytes.Buffer
-
-	for _, entry := range entries {
-		buffer.WriteString(entry.Format())
-	}
-
-	return buffer
-}
-
-func readTreeEntries(s string) ([]TreeEntry, error) {
-	split := strings.Split(strings.TrimSpace(s), "\n")
-
-	casted := make([]TreeEntry, len(split))
-	for i, line := range split {
-		if line == "" {
-			continue
-		}
-
-		entry, err := ParseTreeEntry(line)
-
-		if err != nil {
-			return nil, err
-		}
-
-		casted[i] = entry
-	}
-
-	return casted, nil
 }
 
 // TestedRepo is an extended ClockedRepo with function for testing only

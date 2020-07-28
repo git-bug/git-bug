@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 )
@@ -67,4 +68,35 @@ func ParseObjectType(mode, objType string) (ObjectType, error) {
 	default:
 		return Unknown, fmt.Errorf("Unknown git object type %s %s", mode, objType)
 	}
+}
+
+func prepareTreeEntries(entries []TreeEntry) bytes.Buffer {
+	var buffer bytes.Buffer
+
+	for _, entry := range entries {
+		buffer.WriteString(entry.Format())
+	}
+
+	return buffer
+}
+
+func readTreeEntries(s string) ([]TreeEntry, error) {
+	split := strings.Split(strings.TrimSpace(s), "\n")
+
+	casted := make([]TreeEntry, len(split))
+	for i, line := range split {
+		if line == "" {
+			continue
+		}
+
+		entry, err := ParseTreeEntry(line)
+
+		if err != nil {
+			return nil, err
+		}
+
+		casted[i] = entry
+	}
+
+	return casted, nil
 }
