@@ -1,16 +1,15 @@
 package commands
 
 import (
+	_select "github.com/MichaelMure/git-bug/commands/select"
 	"github.com/spf13/cobra"
-
-	"github.com/MichaelMure/git-bug/commands/select"
 )
 
 func newStatusOpenCommand() *cobra.Command {
 	env := newEnv()
 
 	cmd := &cobra.Command{
-		Use:      "open [<id>]",
+		Use:      "open [ID]",
 		Short:    "Mark a bug as open.",
 		PreRunE:  loadBackendEnsureUser(env),
 		PostRunE: closeBackend(env),

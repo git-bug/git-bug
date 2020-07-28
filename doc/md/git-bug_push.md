@@ -7,7 +7,7 @@ Push bugs update to a git remote.
 Push bugs update to a git remote.
 
 ```
-git-bug push [<remote>] [flags]
+git-bug push [REMOTE] [flags]
 ```
 
 ### Options

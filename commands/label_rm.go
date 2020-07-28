@@ -3,14 +3,14 @@ package commands
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/commands/select"
+	_select "github.com/MichaelMure/git-bug/commands/select"
 )
 
 func newLabelRmCommand() *cobra.Command {
 	env := newEnv()
 
 	cmd := &cobra.Command{
-		Use:      "rm [<id>] <label>[...]",
+		Use:      "rm [ID] LABEL...",
 		Short:    "Remove a label from a bug.",
 		PreRunE:  loadBackend(env),
 		PostRunE: closeBackend(env),
@@ -28,7 +28,9 @@ func runLabelRm(env *Env, args []string) error {
 		return err
 	}
 
-	changes, _, err := b.ChangeLabels(nil, args)
+	removed := args
+
+	changes, _, err := b.ChangeLabels(nil, removed)
 
 	for _, change := range changes {
 		env.out.Println(change)

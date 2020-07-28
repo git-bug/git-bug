@@ -7,7 +7,7 @@ Display or change a bug status.
 Display or change a bug status.
 
 ```
-git-bug status [<id>] [flags]
+git-bug status [ID] [flags]
 ```
 
 ### Options

@@ -1,16 +1,15 @@
 package commands
 
 import (
+	_select "github.com/MichaelMure/git-bug/commands/select"
 	"github.com/spf13/cobra"
-
-	"github.com/MichaelMure/git-bug/commands/select"
 )
 
 func newStatusCommand() *cobra.Command {
 	env := newEnv()
 
 	cmd := &cobra.Command{
-		Use:      "status [<id>]",
+		Use:      "status [ID]",
 		Short:    "Display or change a bug status.",
 		PreRunE:  loadBackend(env),
 		PostRunE: closeBackend(env),

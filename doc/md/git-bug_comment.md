@@ -7,7 +7,7 @@ Display or add comments to a bug.
 Display or add comments to a bug.
 
 ```
-git-bug comment [<id>] [flags]
+git-bug comment [ID] [flags]
 ```
 
 ### Options

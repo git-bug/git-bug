@@ -7,7 +7,7 @@ Add a label to a bug.
 Add a label to a bug.
 
 ```
-git-bug label add [<id>] <label>[...] [flags]
+git-bug label add [ID] LABEL... [flags]
 ```
 
 ### Options

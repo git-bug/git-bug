@@ -4,7 +4,7 @@ import (
 	text "github.com/MichaelMure/go-term-text"
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/commands/select"
+	_select "github.com/MichaelMure/git-bug/commands/select"
 	"github.com/MichaelMure/git-bug/util/colors"
 )
 
@@ -12,7 +12,7 @@ func newCommentCommand() *cobra.Command {
 	env := newEnv()
 
 	cmd := &cobra.Command{
-		Use:      "comment [<id>]",
+		Use:      "comment [ID]",
 		Short:    "Display or add comments to a bug.",
 		PreRunE:  loadBackend(env),
 		PostRunE: closeBackend(env),

@@ -14,7 +14,7 @@ import (
 )
 
 type showOptions struct {
-	query  string
+	fields string
 	format string
 }
 
@@ -23,7 +23,7 @@ func newShowCommand() *cobra.Command {
 	options := showOptions{}
 
 	cmd := &cobra.Command{
-		Use:      "show [<id>]",
+		Use:      "show [ID]",
 		Short:    "Display the details of a bug.",
 		PreRunE:  loadBackend(env),
 		PostRunE: closeBackend(env),
@@ -35,7 +35,7 @@ func newShowCommand() *cobra.Command {
 	flags := cmd.Flags()
 	flags.SortFlags = false
 
-	flags.StringVarP(&options.query, "field", "", "",
+	flags.StringVarP(&options.fields, "field", "", "",
 		"Select field to display. Valid values are [author,authorEmail,createTime,lastEdit,humanId,id,labels,shortId,status,title,actors,participants]")
 	flags.StringVarP(&options.format, "format", "f", "default",
 		"Select the output formatting style. Valid values are [default,json,org-mode]")
@@ -55,8 +55,8 @@ func runShow(env *Env, opts showOptions, args []string) error {
 		return errors.New("invalid bug: no comment")
 	}
 
-	if opts.query != "" {
-		switch opts.query {
+	if opts.fields != "" {
+		switch opts.fields {
 		case "author":
 			env.out.Printf("%s\n", snap.Author.DisplayName())
 		case "authorEmail":
@@ -88,7 +88,7 @@ func runShow(env *Env, opts showOptions, args []string) error {
 		case "title":
 			env.out.Printf("%s\n", snap.Title)
 		default:
-			return fmt.Errorf("\nUnsupported field: %s\n", opts.query)
+			return fmt.Errorf("\nUnsupported field: %s\n", opts.fields)
 		}
 
 		return nil

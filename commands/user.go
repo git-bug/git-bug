@@ -10,7 +10,7 @@ import (
 )
 
 type userOptions struct {
-	fieldsQuery string
+	fields string
 }
 
 func newUserCommand() *cobra.Command {
@@ -18,7 +18,7 @@ func newUserCommand() *cobra.Command {
 	options := userOptions{}
 
 	cmd := &cobra.Command{
-		Use:      "user [<user-id>]",
+		Use:      "user [USER-ID]",
 		Short:    "Display or change the user identity.",
 		PreRunE:  loadBackendEnsureUser(env),
 		PostRunE: closeBackend(env),
@@ -34,7 +34,7 @@ func newUserCommand() *cobra.Command {
 	flags := cmd.Flags()
 	flags.SortFlags = false
 
-	flags.StringVarP(&options.fieldsQuery, "field", "f", "",
+	flags.StringVarP(&options.fields, "field", "f", "",
 		"Select field to display. Valid values are [email,humanId,id,lastModification,lastModificationLamport,login,metadata,name]")
 
 	return cmd
@@ -57,8 +57,8 @@ func runUser(env *Env, opts userOptions, args []string) error {
 		return err
 	}
 
-	if opts.fieldsQuery != "" {
-		switch opts.fieldsQuery {
+	if opts.fields != "" {
+		switch opts.fields {
 		case "email":
 			env.out.Printf("%s\n", id.Email())
 		case "login":
@@ -80,7 +80,7 @@ func runUser(env *Env, opts userOptions, args []string) error {
 			env.out.Printf("%s\n", id.Name())
 
 		default:
-			return fmt.Errorf("\nUnsupported field: %s\n", opts.fieldsQuery)
+			return fmt.Errorf("\nUnsupported field: %s\n", opts.fields)
 		}
 
 		return nil

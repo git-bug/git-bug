@@ -7,7 +7,7 @@ Remove a label from a bug.
 Remove a label from a bug.
 
 ```
-git-bug label rm [<id>] <label>[...] [flags]
+git-bug label rm [ID] LABEL... [flags]
 ```
 
 ### Options

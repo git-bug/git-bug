@@ -5,14 +5,14 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/commands/select"
+	_select "github.com/MichaelMure/git-bug/commands/select"
 )
 
 func newSelectCommand() *cobra.Command {
 	env := newEnv()
 
 	cmd := &cobra.Command{
-		Use:   "select <id>",
+		Use:   "select ID",
 		Short: "Select a bug for implicit use in future commands.",
 		Example: `git bug select 2f15
 git bug comment
@@ -20,7 +20,7 @@ git bug status
 `,
 		Long: `Select a bug for implicit use in future commands.
 
-This command allows you to omit any bug <id> argument, for example:
+This command allows you to omit any bug ID argument, for example:
   git bug show
 instead of
   git bug show 2f153ca

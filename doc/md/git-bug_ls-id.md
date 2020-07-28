@@ -7,7 +7,7 @@ List bug identifiers.
 List bug identifiers.
 
 ```
-git-bug ls-id [<prefix>] [flags]
+git-bug ls-id [PREFIX] [flags]
 ```
 
 ### Options

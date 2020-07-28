@@ -7,7 +7,7 @@ Remove a credential.
 Remove a credential.
 
 ```
-git-bug bridge auth rm <id> [flags]
+git-bug bridge auth rm ID [flags]
 ```
 
 ### Options

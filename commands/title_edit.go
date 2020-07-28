@@ -3,7 +3,7 @@ package commands
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/commands/select"
+	_select "github.com/MichaelMure/git-bug/commands/select"
 	"github.com/MichaelMure/git-bug/input"
 )
 
@@ -16,7 +16,7 @@ func newTitleEditCommand() *cobra.Command {
 	options := titleEditOptions{}
 
 	cmd := &cobra.Command{
-		Use:      "edit [<id>]",
+		Use:      "edit [ID]",
 		Short:    "Edit a title of a bug.",
 		PreRunE:  loadBackendEnsureUser(env),
 		PostRunE: closeBackend(env),

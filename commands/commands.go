@@ -15,7 +15,7 @@ func newCommandsCommand() *cobra.Command {
 	options := commandOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "commands [<option>...]",
+		Use:   "commands",
 		Short: "Display available commands.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runCommands(env, options)

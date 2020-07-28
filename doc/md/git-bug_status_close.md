@@ -7,7 +7,7 @@ Mark a bug as closed.
 Mark a bug as closed.
 
 ```
-git-bug status close [<id>] [flags]
+git-bug status close [ID] [flags]
 ```
 
 ### Options

@@ -10,7 +10,7 @@ func newBridgeRm() *cobra.Command {
 	env := newEnv()
 
 	cmd := &cobra.Command{
-		Use:      "rm <name>",
+		Use:      "rm NAME",
 		Short:    "Delete a configured bridge.",
 		PreRunE:  loadBackend(env),
 		PostRunE: closeBackend(env),

@@ -7,7 +7,7 @@ Pull bugs update from a git remote.
 Pull bugs update from a git remote.
 
 ```
-git-bug pull [<remote>] [flags]
+git-bug pull [REMOTE] [flags]
 ```
 
 ### Options

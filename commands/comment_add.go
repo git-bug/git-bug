@@ -3,7 +3,7 @@ package commands
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/commands/select"
+	_select "github.com/MichaelMure/git-bug/commands/select"
 	"github.com/MichaelMure/git-bug/input"
 )
 
@@ -17,7 +17,7 @@ func newCommentAddCommand() *cobra.Command {
 	options := commentAddOptions{}
 
 	cmd := &cobra.Command{
-		Use:      "add [<id>]",
+		Use:      "add [ID]",
 		Short:    "Add a new comment to a bug.",
 		PreRunE:  loadBackendEnsureUser(env),
 		PostRunE: closeBackend(env),
