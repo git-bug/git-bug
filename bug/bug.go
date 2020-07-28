@@ -244,17 +244,18 @@ func readBug(repo repository.ClockedRepo, ref string) (*Bug, error) {
 
 // RemoveBug will remove a local bug from its entity.Id
 func RemoveBug(repo repository.ClockedRepo, id entity.Id) error {
-	matching := entity.Id("")
-	fullMatches := []string{}
+	var fullMatches []string
 
 	refs, err := repo.ListRefs(bugsRefPattern + id.String())
 	if err != nil {
 		return err
-	} else if num := len(refs); num > 1 {
+	}
+	if len(refs) > 1 {
 		return NewErrMultipleMatchBug(refsToIds(refs))
-	} else if num == 1 {
-		matching = refToId(refs[0])
-		fullMatches = []string{refs[0]}
+	}
+	if len(refs) == 1 {
+		// we have the bug locally
+		fullMatches = append(fullMatches, refs[0])
 	}
 
 	remotes, err := repo.GetRemotes()
@@ -267,20 +268,17 @@ func RemoveBug(repo repository.ClockedRepo, id entity.Id) error {
 		remoteRefs, err := repo.ListRefs(remotePrefix)
 		if err != nil {
 			return err
-		} else if num := len(remoteRefs); num > 1 {
+		}
+		if len(remoteRefs) > 1 {
 			return NewErrMultipleMatchBug(refsToIds(refs))
-		} else if num == 1 {
-			id := refToId(remoteRefs[0])
+		}
+		if len(remoteRefs) == 1 {
+			// found the bug in a remote
 			fullMatches = append(fullMatches, remoteRefs[0])
-			if matching.String() == "" {
-				matching = id
-			} else if id != matching {
-				return NewErrMultipleMatchBug([]entity.Id{matching, id})
-			}
 		}
 	}
 
-	if matching == "" {
+	if len(fullMatches) == 0 {
 		return ErrBugNotExist
 	}
 

@@ -171,4 +171,8 @@ func TestBugRemove(t *testing.T) {
 
 	_, err = ReadRemoteBug(repo, "remoteB", b.Id())
 	require.Error(t, ErrBugNotExist, err)
+
+	ids, err := ListLocalIds(repo)
+	require.NoError(t, err)
+	require.Len(t, ids, 100)
 }

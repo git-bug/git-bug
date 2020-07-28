@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/query"
 	"github.com/MichaelMure/git-bug/repository"
 )
@@ -204,4 +205,8 @@ func TestRemove(t *testing.T) {
 	err = repoCache.RemoveBug(b1.Id().String())
 	require.NoError(t, err)
 	assert.Equal(t, 100, len(repoCache.bugs))
+	assert.Equal(t, 100, len(repoCache.bugExcerpts))
+
+	_, err = repoCache.ResolveBug(b1.Id())
+	assert.Error(t, bug.ErrBugNotExist, err)
 }
