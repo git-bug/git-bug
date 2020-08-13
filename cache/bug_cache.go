@@ -19,7 +19,7 @@ var ErrNoMatchingOp = fmt.Errorf("no matching operation found")
 // 3. Deal with concurrency.
 type BugCache struct {
 	repoCache *RepoCache
-	mu        *sync.RWMutex
+	mu        sync.RWMutex
 	bug       *bug.WithSnapshot
 }
 
