@@ -210,3 +210,21 @@ func TestRemove(t *testing.T) {
 	_, err = repoCache.ResolveBug(b1.Id())
 	assert.Error(t, bug.ErrBugNotExist, err)
 }
+
+//func TestConcurrency(t *testing.T) {
+//	repo := repository.CreateTestRepo(false)
+//	defer repository.CleanupTestRepos(repo)
+//
+//	cache, err := NewRepoCache(repo)
+//	require.NoError(t, err)
+//
+//	iden1, err := cache.NewIdentity("René Descartes", "rene@descartes.fr")
+//	require.NoError(t, err)
+//	err = cache.SetUserIdentity(iden1)
+//	require.NoError(t, err)
+//
+//	bug1, _, err := cache.NewBug("title", "message")
+//	require.NoError(t, err)
+//
+//	bug1.mu.Lock()
+//}
