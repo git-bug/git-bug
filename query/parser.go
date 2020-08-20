@@ -24,42 +24,49 @@ func Parse(query string) (*Query, error) {
 	sortingDone := false
 
 	for _, t := range tokens {
-		switch t.qualifier {
-		case "status", "state":
-			status, err := bug.StatusFromString(t.value)
-			if err != nil {
-				return nil, err
-			}
-			q.Status = append(q.Status, status)
-		case "author":
-			q.Author = append(q.Author, t.value)
-		case "actor":
-			q.Actor = append(q.Actor, t.value)
-		case "participant":
-			q.Participant = append(q.Participant, t.value)
-		case "label":
-			q.Label = append(q.Label, t.value)
-		case "title":
-			q.Title = append(q.Title, t.value)
-		case "no":
-			switch t.value {
-			case "label":
-				q.NoLabel = true
-			default:
-				return nil, fmt.Errorf("unknown \"no\" filter \"%s\"", t.value)
-			}
-		case "sort":
-			if sortingDone {
-				return nil, fmt.Errorf("multiple sorting")
-			}
-			err = parseSorting(q, t.value)
-			if err != nil {
-				return nil, err
-			}
-			sortingDone = true
+		switch t.kind {
+		case tokenKindSearch:
+			q.Search = append(q.Search, t.term)
+			break
 
-		default:
-			return nil, fmt.Errorf("unknown qualifier \"%s\"", t.qualifier)
+		case tokenKindKV:
+			switch t.qualifier {
+			case "status", "state":
+				status, err := bug.StatusFromString(t.value)
+				if err != nil {
+					return nil, err
+				}
+				q.Status = append(q.Status, status)
+			case "author":
+				q.Author = append(q.Author, t.value)
+			case "actor":
+				q.Actor = append(q.Actor, t.value)
+			case "participant":
+				q.Participant = append(q.Participant, t.value)
+			case "label":
+				q.Label = append(q.Label, t.value)
+			case "title":
+				q.Title = append(q.Title, t.value)
+			case "no":
+				switch t.value {
+				case "label":
+					q.NoLabel = true
+				default:
+					return nil, fmt.Errorf("unknown \"no\" filter \"%s\"", t.value)
+				}
+			case "sort":
+				if sortingDone {
+					return nil, fmt.Errorf("multiple sorting")
+				}
+				err = parseSorting(q, t.value)
+				if err != nil {
+					return nil, err
+				}
+				sortingDone = true
+
+			default:
+				return nil, fmt.Errorf("unknown qualifier \"%s\"", t.qualifier)
+			}
 		}
 	}
 	return q, nil
