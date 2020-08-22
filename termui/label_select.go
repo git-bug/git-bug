@@ -153,7 +153,7 @@ func (ls *labelSelect) layout(g *gocui.Gui) error {
 		v.FgColor = gocui.ColorWhite
 	}
 	v.Clear()
-	_, _ = fmt.Fprint(v, labelSelectHelp.Render())
+	_, _ = fmt.Fprint(v, labelSelectHelp.Render(maxX))
 	if _, err = g.SetViewOnTop(labelSelectInstructionsView); err != nil {
 		return err
 	}

@@ -128,7 +128,7 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 		v.Frame = false
 		v.FgColor = gocui.ColorWhite
 
-		_, _ = fmt.Fprint(v, bugTableHelp.Render())
+		_, _ = fmt.Fprint(v, bugTableHelp.Render(maxX))
 	}
 
 	_, err = g.SetCurrentView(bugTableView)

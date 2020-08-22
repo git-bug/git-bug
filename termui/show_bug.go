@@ -105,7 +105,7 @@ func (sb *showBug) layout(g *gocui.Gui) error {
 	}
 
 	v.Clear()
-	_, _ = fmt.Fprint(v, showBugHelp.Render())
+	_, _ = fmt.Fprint(v, showBugHelp.Render(maxX))
 
 	_, err = g.SetViewOnTop(showBugInstructionView)
 	if err != nil {
