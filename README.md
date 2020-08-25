@@ -60,7 +60,7 @@ That's all !
 
 Install via the package manager
   ```
-  pkg install git-bugs
+  pkg install git-bug
   ```
 
 Or from the ports collection
