@@ -1,6 +1,8 @@
 package cache
 
 import (
+	"math"
+
 	lru "github.com/hashicorp/golang-lru"
 
 	"github.com/MichaelMure/git-bug/entity"
@@ -8,16 +10,14 @@ import (
 
 type LRUIdCache struct {
 	parentCache *lru.Cache
-	maxSize     int
 }
 
-func NewLRUIdCache(size int) *LRUIdCache {
+func NewLRUIdCache() *LRUIdCache {
 	// Ignore error here
-	cache, _ := lru.New(size)
+	cache, _ := lru.New(math.MaxInt32)
 
 	return &LRUIdCache{
 		cache,
-		size,
 	}
 }
 
@@ -39,7 +39,7 @@ func (c *LRUIdCache) GetOldest() (entity.Id, bool) {
 	return id.(entity.Id), present
 }
 
-func (c *LRUIdCache) GetAll() (ids []entity.Id) {
+func (c *LRUIdCache) GetOldestToNewest() (ids []entity.Id) {
 	interfaceKeys := c.parentCache.Keys()
 	for _, id := range interfaceKeys {
 		ids = append(ids, id.(entity.Id))
@@ -53,9 +53,4 @@ func (c *LRUIdCache) Len() int {
 
 func (c *LRUIdCache) Remove(id entity.Id) bool {
 	return c.parentCache.Remove(id)
-}
-
-func (c *LRUIdCache) Resize(size int) int {
-	c.maxSize = size
-	return c.parentCache.Resize(size)
 }
