@@ -9,20 +9,16 @@ import (
 type LRUIdCache struct {
 	parentCache *lru.Cache
 	maxSize     int
-	onEvict     func(id entity.Id)
 }
 
-func NewLRUIdCache(size int, onEvicted func(id entity.Id)) (*LRUIdCache, error) {
-	cache, err := lru.New(size)
-	if err != nil {
-		return nil, err
-	}
+func NewLRUIdCache(size int) *LRUIdCache {
+	// Ignore error here
+	cache, _ := lru.New(size)
 
 	return &LRUIdCache{
 		cache,
 		size,
-		onEvicted,
-	}, nil
+	}
 }
 
 func (c *LRUIdCache) Add(id entity.Id) bool {
@@ -60,5 +56,6 @@ func (c *LRUIdCache) Remove(id entity.Id) bool {
 }
 
 func (c *LRUIdCache) Resize(size int) int {
+	c.maxSize = size
 	return c.parentCache.Resize(size)
 }

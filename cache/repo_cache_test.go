@@ -83,7 +83,8 @@ func TestCache(t *testing.T) {
 	require.Empty(t, cache.identitiesExcerpts)
 
 	// Reload, only excerpt are loaded
-	require.NoError(t, cache.load())
+	cache, err = NewRepoCache(repo)
+	require.NoError(t, err)
 	require.Empty(t, cache.bugs)
 	require.Empty(t, cache.identities)
 	require.Len(t, cache.bugExcerpts, 2)
@@ -175,17 +176,14 @@ func TestRemove(t *testing.T) {
 	repoCache, err := NewRepoCache(repo)
 	require.NoError(t, err)
 
-	// generate a bunch of bugs
 	rene, err := repoCache.NewIdentity("René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
 
 	err = repoCache.SetUserIdentity(rene)
 	require.NoError(t, err)
 
-	for i := 0; i < 100; i++ {
-		_, _, err := repoCache.NewBug("title", "message")
-		require.NoError(t, err)
-	}
+	_, _, err = repoCache.NewBug("title", "message")
+	require.NoError(t, err)
 
 	// and one more for testing
 	b1, _, err := repoCache.NewBug("title", "message")
@@ -205,8 +203,8 @@ func TestRemove(t *testing.T) {
 
 	err = repoCache.RemoveBug(b1.Id().String())
 	require.NoError(t, err)
-	assert.Equal(t, 100, len(repoCache.bugs))
-	assert.Equal(t, 100, len(repoCache.bugExcerpts))
+	assert.Equal(t, 1, len(repoCache.bugs))
+	assert.Equal(t, 1, len(repoCache.bugExcerpts))
 
 	_, err = repoCache.ResolveBug(b1.Id())
 	assert.Error(t, bug.ErrBugNotExist, err)
@@ -218,6 +216,7 @@ func TestCacheEviction(t *testing.T) {
 	require.NoError(t, err)
 	repoCache.presentBugs.Resize(2)
 
+	require.Equal(t, 2, repoCache.presentBugs.maxSize)
 	require.Equal(t, 0, repoCache.presentBugs.Len())
 	require.Equal(t, 0, len(repoCache.bugs))
 	require.Equal(t, 0, len(repoCache.bugExcerpts))
@@ -249,12 +248,12 @@ func TestCacheEviction(t *testing.T) {
 	bug3, _, err := repoCache.NewBug("title", "message")
 	require.NoError(t, err)
 
-	checkBugPresence(t, repoCache, bug1, false)
-	checkBugPresence(t, repoCache, bug2, true)
-	checkBugPresence(t, repoCache, bug3, true)
 	require.Equal(t, 2, repoCache.presentBugs.Len())
 	require.Equal(t, 2, len(repoCache.bugs))
 	require.Equal(t, 2, len(repoCache.bugExcerpts))
+	checkBugPresence(t, repoCache, bug1, false)
+	checkBugPresence(t, repoCache, bug2, true)
+	checkBugPresence(t, repoCache, bug3, true)
 
 	// Accessing bug should update position in lruCache and therefore it should not be evicted
 	repoCache.presentBugs.Get(bug2.Id())
@@ -274,7 +273,9 @@ func checkBugPresence(t *testing.T, cache *RepoCache, bug *BugCache, presence bo
 	require.Equal(t, presence, cache.presentBugs.Contains(id))
 	b, ok := cache.bugs[id]
 	require.Equal(t, presence, ok)
-	require.Equal(t, bug, b)
+	if ok {
+		require.Equal(t, bug, b)
+	}
 	_, ok = cache.bugExcerpts[id]
 	require.Equal(t, presence, ok)
 }

@@ -82,6 +82,9 @@ func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, error
 		return &RepoCache{}, err
 	}
 
+	presentBugs := NewLRUIdCache(lruCacheSize)
+	c.presentBugs = presentBugs
+
 	err = c.load()
 	if err == nil {
 		return c, nil
@@ -180,22 +183,11 @@ func (c *RepoCache) buildCache() error {
 
 	_, _ = fmt.Fprintf(os.Stderr, "Building bug cache... ")
 
-	presentBugs, err := NewLRUIdCache(lruCacheSize, c.onEvict)
-	if err != nil {
-		return err
-	}
-	c.presentBugs = presentBugs
-
 	c.bugExcerpts = make(map[entity.Id]*BugExcerpt)
 
 	allBugs := bug.ReadAllLocalBugs(c.repo)
 
-	for i := 0; i < lruCacheSize; i++ {
-		if len(allBugs) == 0 {
-			break
-		}
-
-		b := <-allBugs
+	for b := range allBugs {
 		if b.Err != nil {
 			return b.Err
 		}
