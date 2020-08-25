@@ -21,6 +21,15 @@ const showBugHeaderView = "showBugHeaderView"
 
 const timeLayout = "Jan 2 2006"
 
+var showBugHelp = helpBar{
+	{"q", "Save and return"},
+	{"←↓↑→,hjkl", "Navigation"},
+	{"o", "Toggle open/close"},
+	{"e", "Edit"},
+	{"c", "Comment"},
+	{"t", "Change title"},
+}
+
 type showBug struct {
 	cache              *cache.RepoCache
 	bug                *cache.BugCache
@@ -93,11 +102,10 @@ func (sb *showBug) layout(g *gocui.Gui) error {
 		sb.childViews = append(sb.childViews, showBugInstructionView)
 		v.Frame = false
 		v.FgColor = gocui.ColorWhite
-		v.BgColor = gocui.ColorBlue
 	}
 
 	v.Clear()
-	_, _ = fmt.Fprintf(v, "[q] Save and return [←↓↑→,hjkl] Navigation [o] Toggle open/close [e] Edit [c] Comment [t] Change title")
+	_, _ = fmt.Fprint(v, showBugHelp.Render(maxX))
 
 	_, err = g.SetViewOnTop(showBugInstructionView)
 	if err != nil {

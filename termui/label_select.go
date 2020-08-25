@@ -13,6 +13,12 @@ import (
 const labelSelectView = "labelSelectView"
 const labelSelectInstructionsView = "labelSelectInstructionsView"
 
+var labelSelectHelp = helpBar{
+	{"q", "Save and close"},
+	{"↓↑,jk", "Nav"},
+	{"a", "Add item"},
+}
+
 type labelSelect struct {
 	cache       *cache.RepoCache
 	bug         *cache.BugCache
@@ -132,7 +138,7 @@ func (ls *labelSelect) layout(g *gocui.Gui) error {
 		lc := label.Color()
 		lc256 := lc.Term256()
 		labelStr := lc256.Escape() + "◼ " + lc256.Unescape() + label.String()
-		fmt.Fprint(v, selectBox, labelStr)
+		_, _ = fmt.Fprint(v, selectBox, labelStr)
 
 		y0 += 2
 	}
@@ -145,10 +151,9 @@ func (ls *labelSelect) layout(g *gocui.Gui) error {
 		}
 		v.Frame = false
 		v.FgColor = gocui.ColorWhite
-		v.BgColor = gocui.ColorBlue
 	}
 	v.Clear()
-	fmt.Fprint(v, "[q] Save and close [↓↑,jk] Nav [a] Add item")
+	_, _ = fmt.Fprint(v, labelSelectHelp.Render(maxX))
 	if _, err = g.SetViewOnTop(labelSelectInstructionsView); err != nil {
 		return err
 	}

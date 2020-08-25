@@ -23,6 +23,16 @@ const bugTableInstructionView = "bugTableInstructionView"
 const defaultRemote = "origin"
 const defaultQuery = "status:open"
 
+var bugTableHelp = helpBar{
+	{"q", "Quit"},
+	{"s", "Search"},
+	{"←↓↑→,hjkl", "Navigation"},
+	{"↵", "Open bug"},
+	{"n", "New bug"},
+	{"i", "Pull"},
+	{"o", "Push"},
+}
+
 type bugTable struct {
 	repo         *cache.RepoCache
 	queryStr     string
@@ -117,9 +127,8 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 
 		v.Frame = false
 		v.FgColor = gocui.ColorWhite
-		v.BgColor = gocui.ColorBlue
 
-		_, _ = fmt.Fprintf(v, "[q] Quit [s] Search [←↓↑→,hjkl] Navigation [↵] Open bug [n] New bug [i] Pull [o] Push")
+		_, _ = fmt.Fprint(v, bugTableHelp.Render(maxX))
 	}
 
 	_, err = g.SetCurrentView(bugTableView)
