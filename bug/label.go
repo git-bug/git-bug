@@ -1,13 +1,14 @@
 package bug
 
 import (
-	"crypto/sha1"
+	"crypto/sha256"
 	"fmt"
 	"image/color"
 	"strings"
 
-	"github.com/MichaelMure/git-bug/util/text"
 	fcolor "github.com/fatih/color"
+
+	"github.com/MichaelMure/git-bug/util/text"
 )
 
 type Label string
@@ -42,7 +43,7 @@ func (l Label) Color() LabelColor {
 	}
 
 	id := 0
-	hash := sha1.Sum([]byte(l))
+	hash := sha256.Sum256([]byte(l))
 	for _, char := range hash {
 		id = (id + int(char)) % len(colors)
 	}
