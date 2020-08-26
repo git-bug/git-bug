@@ -22,7 +22,7 @@ import (
 const formatVersion = 2
 
 // The maximum number of bugs loaded in memory. After that, eviction will be done.
-const defaultMaxLoadedBugs = 100
+const defaultMaxLoadedBugs = 1000
 
 var _ repository.RepoCommon = &RepoCache{}
 
@@ -160,7 +160,7 @@ func (c *RepoCache) Close() error {
 
 	c.identities = make(map[entity.Id]*IdentityCache)
 	c.identitiesExcerpts = nil
-	c.bugs = nil
+	c.bugs = make(map[entity.Id]*BugCache)
 	c.bugExcerpts = nil
 
 	lockPath := repoLockFilePath(c.repo)

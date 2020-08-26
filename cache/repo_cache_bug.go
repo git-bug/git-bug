@@ -119,7 +119,7 @@ func (c *RepoCache) ResolveBugExcerpt(id entity.Id) (*BugExcerpt, error) {
 
 	excerpt, ok := c.bugExcerpts[id]
 	if !ok {
-		panic("missing bug in the cache")
+		return nil, bug.ErrBugNotExist
 	}
 
 	return excerpt, nil
