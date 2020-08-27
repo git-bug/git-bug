@@ -13,7 +13,7 @@ type LRUIdCache struct {
 }
 
 func NewLRUIdCache() *LRUIdCache {
-	// Ignore error here
+	// we can ignore the error here as it would only fail if the size is negative.
 	cache, _ := lru.New(math.MaxInt32)
 
 	return &LRUIdCache{
