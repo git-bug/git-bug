@@ -749,22 +749,3 @@ func (bug *Bug) Compile() Snapshot {
 
 	return snap
 }
-
-// EquivalentBug returns true if two bugs are equal
-func EquivalentBug(expected, actual *Bug) bool {
-	if len(expected.packs) != len(actual.packs) {
-		return false
-	}
-
-	for i := range expected.packs {
-		for j := range expected.packs[i].Operations {
-			actual.packs[i].Operations[j].base().id = expected.packs[i].Operations[j].base().id
-		}
-	}
-
-	if expected != actual {
-		return false
-	}
-
-	return true
-}
