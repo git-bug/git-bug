@@ -37,8 +37,6 @@ func (c *BugCache) Snapshot() *bug.Snapshot {
 }
 
 func (c *BugCache) Id() entity.Id {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
 	return c.bug.Id()
 }
 

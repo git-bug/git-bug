@@ -21,6 +21,9 @@ import (
 // 2: added cache for identities with a reference in the bug cache
 const formatVersion = 2
 
+// The maximum number of bugs loaded in memory. After that, eviction will be done.
+const defaultMaxLoadedBugs = 1000
+
 var _ repository.RepoCommon = &RepoCache{}
 
 // RepoCache is a cache for a Repository. This cache has multiple functions:
@@ -44,11 +47,16 @@ type RepoCache struct {
 	// the name of the repository, as defined in the MultiRepoCache
 	name string
 
+	// maximum number of loaded bugs
+	maxLoadedBugs int
+
 	muBug sync.RWMutex
 	// excerpt of bugs data for all bugs
 	bugExcerpts map[entity.Id]*BugExcerpt
 	// bug loaded in memory
 	bugs map[entity.Id]*BugCache
+	// loadedBugs is an LRU cache that records which bugs the cache has loaded in
+	loadedBugs *LRUIdCache
 
 	muIdentity sync.RWMutex
 	// excerpt of identities data for all identities
@@ -66,10 +74,12 @@ func NewRepoCache(r repository.ClockedRepo) (*RepoCache, error) {
 
 func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, error) {
 	c := &RepoCache{
-		repo:       r,
-		name:       name,
-		bugs:       make(map[entity.Id]*BugCache),
-		identities: make(map[entity.Id]*IdentityCache),
+		repo:          r,
+		name:          name,
+		maxLoadedBugs: defaultMaxLoadedBugs,
+		bugs:          make(map[entity.Id]*BugCache),
+		loadedBugs:    NewLRUIdCache(),
+		identities:    make(map[entity.Id]*IdentityCache),
 	}
 
 	err := c.lock()
@@ -89,6 +99,12 @@ func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, error
 	}
 
 	return c, c.write()
+}
+
+// setCacheSize change the maximum number of loaded bugs
+func (c *RepoCache) setCacheSize(size int) {
+	c.maxLoadedBugs = size
+	c.evictIfNeeded()
 }
 
 // load will try to read from the disk all the cache files

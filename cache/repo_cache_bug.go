@@ -3,6 +3,7 @@ package cache
 import (
 	"bytes"
 	"encoding/gob"
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -17,6 +18,8 @@ import (
 
 const bugCacheFile = "bug-cache"
 
+var errBugNotInCache = errors.New("bug missing from cache")
+
 func bugCacheFilePath(repo repository.Repo) string {
 	return path.Join(repo.GetPath(), "git-bug", bugCacheFile)
 }
@@ -25,13 +28,18 @@ func bugCacheFilePath(repo repository.Repo) string {
 // that is each time a bug is updated
 func (c *RepoCache) bugUpdated(id entity.Id) error {
 	c.muBug.Lock()
-
 	b, ok := c.bugs[id]
 	if !ok {
 		c.muBug.Unlock()
-		panic("missing bug in the cache")
-	}
 
+		// if the bug is not loaded at this point, it means it was loaded before
+		// but got evicted. Which means we potentially have multiple copies in
+		// memory and thus concurrent write.
+		// Failing immediately here is the simple and safe solution to avoid
+		// complicated data loss.
+		return errBugNotInCache
+	}
+	c.loadedBugs.Get(id)
 	c.bugExcerpts[id] = NewBugExcerpt(b.bug, b.Snapshot())
 	c.muBug.Unlock()
 
@@ -109,22 +117,24 @@ func (c *RepoCache) ResolveBugExcerpt(id entity.Id) (*BugExcerpt, error) {
 	c.muBug.RLock()
 	defer c.muBug.RUnlock()
 
-	e, ok := c.bugExcerpts[id]
+	excerpt, ok := c.bugExcerpts[id]
 	if !ok {
 		return nil, bug.ErrBugNotExist
 	}
 
-	return e, nil
+	return excerpt, nil
 }
 
 // ResolveBug retrieve a bug matching the exact given id
 func (c *RepoCache) ResolveBug(id entity.Id) (*BugCache, error) {
 	c.muBug.RLock()
 	cached, ok := c.bugs[id]
-	c.muBug.RUnlock()
 	if ok {
+		c.loadedBugs.Get(id)
+		c.muBug.RUnlock()
 		return cached, nil
 	}
+	c.muBug.RUnlock()
 
 	b, err := bug.ReadLocalBug(c.repo, id)
 	if err != nil {
@@ -135,9 +145,37 @@ func (c *RepoCache) ResolveBug(id entity.Id) (*BugCache, error) {
 
 	c.muBug.Lock()
 	c.bugs[id] = cached
+	c.loadedBugs.Add(id)
 	c.muBug.Unlock()
 
+	c.evictIfNeeded()
+
 	return cached, nil
+}
+
+// evictIfNeeded will evict a bug from the cache if needed
+// it also removes references of the bug from the bugs
+func (c *RepoCache) evictIfNeeded() {
+	c.muBug.Lock()
+	defer c.muBug.Unlock()
+	if c.loadedBugs.Len() <= c.maxLoadedBugs {
+		return
+	}
+
+	for _, id := range c.loadedBugs.GetOldestToNewest() {
+		b := c.bugs[id]
+		if b.NeedCommit() {
+			continue
+		}
+
+		b.mu.Lock()
+		c.loadedBugs.Remove(id)
+		delete(c.bugs, id)
+
+		if c.loadedBugs.Len() <= c.maxLoadedBugs {
+			return
+		}
+	}
 }
 
 // ResolveBugExcerptPrefix retrieve a BugExcerpt matching an id prefix. It fails if multiple
@@ -349,7 +387,10 @@ func (c *RepoCache) NewBugRaw(author *IdentityCache, unixTime int64, title strin
 
 	cached := NewBugCache(c, b)
 	c.bugs[b.Id()] = cached
+	c.loadedBugs.Add(b.Id())
 	c.muBug.Unlock()
+
+	c.evictIfNeeded()
 
 	// force the write of the excerpt
 	err = c.bugUpdated(b.Id())
@@ -362,16 +403,23 @@ func (c *RepoCache) NewBugRaw(author *IdentityCache, unixTime int64, title strin
 
 // RemoveBug removes a bug from the cache and repo given a bug id prefix
 func (c *RepoCache) RemoveBug(prefix string) error {
-	b, err := c.ResolveBugPrefix(prefix)
+	c.muBug.RLock()
 
+	b, err := c.ResolveBugPrefix(prefix)
 	if err != nil {
+		c.muBug.RUnlock()
 		return err
 	}
+	c.muBug.RUnlock()
 
+	c.muBug.Lock()
 	err = bug.RemoveBug(c.repo, b.Id())
 
 	delete(c.bugs, b.Id())
 	delete(c.bugExcerpts, b.Id())
+	c.loadedBugs.Remove(b.Id())
+
+	c.muBug.Unlock()
 
 	return c.writeBugCache()
 }

@@ -1,9 +1,7 @@
 package cache
 
 import (
-	"fmt"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -85,7 +83,8 @@ func TestCache(t *testing.T) {
 	require.Empty(t, cache.identitiesExcerpts)
 
 	// Reload, only excerpt are loaded
-	require.NoError(t, cache.load())
+	cache, err = NewRepoCache(repo)
+	require.NoError(t, err)
 	require.Empty(t, cache.bugs)
 	require.Empty(t, cache.identities)
 	require.Len(t, cache.bugExcerpts, 2)
@@ -177,17 +176,17 @@ func TestRemove(t *testing.T) {
 	repoCache, err := NewRepoCache(repo)
 	require.NoError(t, err)
 
-	// generate a bunch of bugs
 	rene, err := repoCache.NewIdentity("René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
 
-	for i := 0; i < 100; i++ {
-		_, _, err := repoCache.NewBugRaw(rene, time.Now().Unix(), "title", fmt.Sprintf("message%v", i), nil, nil)
-		require.NoError(t, err)
-	}
+	err = repoCache.SetUserIdentity(rene)
+	require.NoError(t, err)
+
+	_, _, err = repoCache.NewBug("title", "message")
+	require.NoError(t, err)
 
 	// and one more for testing
-	b1, _, err := repoCache.NewBugRaw(rene, time.Now().Unix(), "title", "message", nil, nil)
+	b1, _, err := repoCache.NewBug("title", "message")
 	require.NoError(t, err)
 
 	_, err = repoCache.Push("remoteA")
@@ -204,9 +203,72 @@ func TestRemove(t *testing.T) {
 
 	err = repoCache.RemoveBug(b1.Id().String())
 	require.NoError(t, err)
-	assert.Equal(t, 100, len(repoCache.bugs))
-	assert.Equal(t, 100, len(repoCache.bugExcerpts))
+	assert.Equal(t, 1, len(repoCache.bugs))
+	assert.Equal(t, 1, len(repoCache.bugExcerpts))
 
 	_, err = repoCache.ResolveBug(b1.Id())
 	assert.Error(t, bug.ErrBugNotExist, err)
+}
+
+func TestCacheEviction(t *testing.T) {
+	repo := repository.CreateTestRepo(false)
+	repoCache, err := NewRepoCache(repo)
+	require.NoError(t, err)
+	repoCache.setCacheSize(2)
+
+	require.Equal(t, 2, repoCache.maxLoadedBugs)
+	require.Equal(t, 0, repoCache.loadedBugs.Len())
+	require.Equal(t, 0, len(repoCache.bugs))
+
+	// Generating some bugs
+	rene, err := repoCache.NewIdentity("René Descartes", "rene@descartes.fr")
+	require.NoError(t, err)
+	err = repoCache.SetUserIdentity(rene)
+	require.NoError(t, err)
+
+	bug1, _, err := repoCache.NewBug("title", "message")
+	require.NoError(t, err)
+
+	checkBugPresence(t, repoCache, bug1, true)
+	require.Equal(t, 1, repoCache.loadedBugs.Len())
+	require.Equal(t, 1, len(repoCache.bugs))
+
+	bug2, _, err := repoCache.NewBug("title", "message")
+	require.NoError(t, err)
+
+	checkBugPresence(t, repoCache, bug1, true)
+	checkBugPresence(t, repoCache, bug2, true)
+	require.Equal(t, 2, repoCache.loadedBugs.Len())
+	require.Equal(t, 2, len(repoCache.bugs))
+
+	// Number of bugs should not exceed max size of lruCache, oldest one should be evicted
+	bug3, _, err := repoCache.NewBug("title", "message")
+	require.NoError(t, err)
+
+	require.Equal(t, 2, repoCache.loadedBugs.Len())
+	require.Equal(t, 2, len(repoCache.bugs))
+	checkBugPresence(t, repoCache, bug1, false)
+	checkBugPresence(t, repoCache, bug2, true)
+	checkBugPresence(t, repoCache, bug3, true)
+
+	// Accessing bug should update position in lruCache and therefore it should not be evicted
+	repoCache.loadedBugs.Get(bug2.Id())
+	oldestId, _ := repoCache.loadedBugs.GetOldest()
+	require.Equal(t, bug3.Id(), oldestId)
+
+	checkBugPresence(t, repoCache, bug1, false)
+	checkBugPresence(t, repoCache, bug2, true)
+	checkBugPresence(t, repoCache, bug3, true)
+	require.Equal(t, 2, repoCache.loadedBugs.Len())
+	require.Equal(t, 2, len(repoCache.bugs))
+}
+
+func checkBugPresence(t *testing.T, cache *RepoCache, bug *BugCache, presence bool) {
+	id := bug.Id()
+	require.Equal(t, presence, cache.loadedBugs.Contains(id))
+	b, ok := cache.bugs[id]
+	require.Equal(t, presence, ok)
+	if ok {
+		require.Equal(t, bug, b)
+	}
 }
