@@ -297,11 +297,11 @@ func (bt *bugTable) render(v *gocui.View, maxX int) {
 	columnWidths := bt.getColumnWidths(maxX)
 
 	for _, excerpt := range bt.excerpts {
-		summaryTxt := fmt.Sprintf("%3d", excerpt.LenComments)
-		if excerpt.LenComments <= 0 {
+		summaryTxt := fmt.Sprintf("%3d", excerpt.LenComments-1)
+		if excerpt.LenComments-1 <= 0 {
 			summaryTxt = ""
 		}
-		if excerpt.LenComments > 999 {
+		if excerpt.LenComments-1 > 999 {
 			summaryTxt = "  ∞"
 		}
 
