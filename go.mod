@@ -32,3 +32,7 @@ require (
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
 	golang.org/x/text v0.3.3
 )
+
+// Use a forked go-git for now until https://github.com/go-git/go-git/pull/112 is merged
+// and released.
+replace github.com/go-git/go-git/v5 => github.com/MichaelMure/go-git/v5 v5.1.1-0.20200827115354-b40ca794fe33

@@ -105,19 +105,40 @@ func (ggc *goGitConfig) ReadString(key string) (string, error) {
 
 	split := strings.Split(key, ".")
 
-	// TODO: return ErrNoConfigEntry and ErrMultipleConfigEntry
-	// Can use forked go-git: https://github.com/go-git/go-git/pull/112
+	if len(split) <= 1 {
+		return "", fmt.Errorf("invalid key")
+	}
+
+	sectionName := split[0]
+	if !cfg.Raw.HasSection(sectionName) {
+		return "", ErrNoConfigEntry
+	}
+	section := cfg.Raw.Section(sectionName)
 
 	switch {
-	case len(split) <= 1:
-		return "", fmt.Errorf("invalid key")
 	case len(split) == 2:
-		return cfg.Raw.Section(split[0]).Option(split[1]), nil
+		optionName := split[1]
+		if !section.HasOption(optionName) {
+			return "", ErrNoConfigEntry
+		}
+		if len(section.OptionAll(optionName)) > 1 {
+			return "", ErrMultipleConfigEntry
+		}
+		return section.Option(optionName), nil
 	default:
-		section := split[0]
-		subsection := strings.Join(split[1:len(split)-2], ".")
-		option := split[len(split)-1]
-		return cfg.Raw.Section(section).Subsection(subsection).Option(option), nil
+		subsectionName := strings.Join(split[1:len(split)-2], ".")
+		optionName := split[len(split)-1]
+		if !section.HasSubsection(subsectionName) {
+			return "", ErrNoConfigEntry
+		}
+		subsection := section.Subsection(subsectionName)
+		if !subsection.HasOption(optionName) {
+			return "", ErrNoConfigEntry
+		}
+		if len(subsection.OptionAll(optionName)) > 1 {
+			return "", ErrMultipleConfigEntry
+		}
+		return subsection.Option(optionName), nil
 	}
 }
 
@@ -137,16 +158,6 @@ func (ggc *goGitConfig) RemoveAll(keyPrefix string) error {
 
 	split := strings.Split(keyPrefix, ".")
 
-	// missing in go-git
-	hasOption := func(options config.Options, key string) bool {
-		for _, option := range options {
-			if option.IsKey(key) {
-				return true
-			}
-		}
-		return false
-	}
-
 	switch {
 	case len(split) < 1:
 		return fmt.Errorf("invalid key prefix")
@@ -163,7 +174,7 @@ func (ggc *goGitConfig) RemoveAll(keyPrefix string) error {
 		if cfg.Raw.Section(section).HasSubsection(rest) {
 			cfg.Raw.RemoveSubsection(section, rest)
 		} else {
-			if hasOption(cfg.Raw.Section(section).Options, rest) {
+			if cfg.Raw.Section(section).HasOption(rest) {
 				cfg.Raw.Section(section).RemoveOption(rest)
 			} else {
 				return fmt.Errorf("invalid key prefix")
