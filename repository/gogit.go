@@ -12,6 +12,8 @@ import (
 	gogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/filemode"
+	"github.com/go-git/go-git/v5/plumbing/object"
 
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
@@ -285,10 +287,37 @@ func (repo *GoGitRepo) ReadData(hash Hash) ([]byte, error) {
 }
 
 func (repo *GoGitRepo) StoreTree(mapping []TreeEntry) (Hash, error) {
-	panic("implement me")
+	var tree object.Tree
+
+	for _, entry := range mapping {
+		mode := filemode.Regular
+		if entry.ObjectType == Tree {
+			mode = filemode.Dir
+		}
+
+		tree.Entries = append(tree.Entries, object.TreeEntry{
+			Name: entry.Name,
+			Mode: mode,
+			Hash: plumbing.NewHash(entry.Hash.String()),
+		})
+	}
+
+	obj := repo.r.Storer.NewEncodedObject()
+	err := tree.Encode(obj)
+	if err != nil {
+		return "", err
+	}
+
+	hash, err := repo.r.Storer.SetEncodedObject(obj)
+	if err != nil {
+		return "", err
+	}
+
+	return Hash(hash.String()), nil
 }
 
 func (repo *GoGitRepo) ReadTree(hash Hash) ([]TreeEntry, error) {
+	// repo.r.TreeObject()
 	panic("implement me")
 }
 
@@ -313,7 +342,7 @@ func (repo *GoGitRepo) UpdateRef(ref string, hash Hash) error {
 }
 
 func (repo *GoGitRepo) RemoveRef(ref string) error {
-	panic("implement me")
+	return repo.r.Storer.RemoveReference(plumbing.ReferenceName(ref))
 }
 
 func (repo *GoGitRepo) ListRefs(refspec string) ([]string, error) {
