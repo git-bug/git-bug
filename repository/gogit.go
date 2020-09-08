@@ -8,6 +8,7 @@ import (
 	stdpath "path"
 	"path/filepath"
 	"sync"
+	"time"
 
 	gogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
@@ -303,6 +304,7 @@ func (repo *GoGitRepo) StoreTree(mapping []TreeEntry) (Hash, error) {
 	}
 
 	obj := repo.r.Storer.NewEncodedObject()
+	obj.SetType(plumbing.TreeObject)
 	err := tree.Encode(obj)
 	if err != nil {
 		return "", err
@@ -317,28 +319,101 @@ func (repo *GoGitRepo) StoreTree(mapping []TreeEntry) (Hash, error) {
 }
 
 func (repo *GoGitRepo) ReadTree(hash Hash) ([]TreeEntry, error) {
-	// repo.r.TreeObject()
-	panic("implement me")
+	obj, err := repo.r.TreeObject(plumbing.NewHash(hash.String()))
+	if err != nil {
+		return nil, err
+	}
+
+	treeEntries := make([]TreeEntry, len(obj.Entries))
+	for i, entry := range obj.Entries {
+		objType := Blob
+		if entry.Mode == filemode.Dir {
+			objType = Tree
+		}
+
+		treeEntries[i] = TreeEntry{
+			ObjectType: objType,
+			Hash:       Hash(entry.Hash.String()),
+			Name:       entry.Name,
+		}
+	}
+
+	return treeEntries, nil
 }
 
 func (repo *GoGitRepo) StoreCommit(treeHash Hash) (Hash, error) {
-	panic("implement me")
+	return repo.StoreCommitWithParent(treeHash, "")
 }
 
 func (repo *GoGitRepo) StoreCommitWithParent(treeHash Hash, parent Hash) (Hash, error) {
-	panic("implement me")
+	cfg, err := repo.r.Config()
+	if err != nil {
+		return "", err
+	}
+
+	commit := object.Commit{
+		Author: object.Signature{
+			cfg.Author.Name,
+			cfg.Author.Email,
+			time.Now(),
+		},
+		Committer: object.Signature{
+			cfg.Committer.Name,
+			cfg.Committer.Email,
+			time.Now(),
+		},
+		Message:  "",
+		TreeHash: plumbing.NewHash(treeHash.String()),
+	}
+
+	if parent != "" {
+		commit.ParentHashes = []plumbing.Hash{plumbing.NewHash(parent.String())}
+	}
+
+	obj := repo.r.Storer.NewEncodedObject()
+	obj.SetType(plumbing.CommitObject)
+	err = commit.Encode(obj)
+	if err != nil {
+		return "", err
+	}
+
+	hash, err := repo.r.Storer.SetEncodedObject(obj)
+	if err != nil {
+		return "", err
+	}
+
+	return Hash(hash.String()), nil
 }
 
 func (repo *GoGitRepo) GetTreeHash(commit Hash) (Hash, error) {
-	panic("implement me")
+	obj, err := repo.r.CommitObject(plumbing.NewHash(commit.String()))
+	if err != nil {
+		return "", err
+	}
+
+	return Hash(obj.TreeHash.String()), nil
 }
 
 func (repo *GoGitRepo) FindCommonAncestor(commit1 Hash, commit2 Hash) (Hash, error) {
-	panic("implement me")
+	obj1, err := repo.r.CommitObject(plumbing.NewHash(commit1.String()))
+	if err != nil {
+		return "", err
+	}
+	obj2, err := repo.r.CommitObject(plumbing.NewHash(commit2.String()))
+	if err != nil {
+		return "", err
+	}
+
+	commits, err := obj1.MergeBase(obj2)
+	if err != nil {
+		return "", err
+	}
+
+	return Hash(commits[0].Hash.String()), nil
 }
 
 func (repo *GoGitRepo) UpdateRef(ref string, hash Hash) error {
-	panic("implement me")
+	return repo.r.Storer.SetReference(plumbing.NewHashReference(plumbing.ReferenceName(ref), plumbing.NewHash(hash.String())))
 }
 
 func (repo *GoGitRepo) RemoveRef(ref string) error {
@@ -346,19 +421,44 @@ func (repo *GoGitRepo) RemoveRef(ref string) error {
 }
 
 func (repo *GoGitRepo) ListRefs(refspec string) ([]string, error) {
-	panic("implement me")
+	refIter, err := repo.r.References()
+	if err != nil {
+		return nil, err
+	}
+
+	refs := make([]string, 0)
+
+	for ref, _ := refIter.Next(); ref != nil; {
+		refs = append(refs, ref.String()) // TODO: Use format to search
+	}
+	return refs, nil
 }
 
 func (repo *GoGitRepo) RefExist(ref string) (bool, error) {
-	panic("implement me")
+	_, err := repo.r.Reference(plumbing.ReferenceName(ref), false)
+	if err == nil {
+		return true, nil
+	} else if err == plumbing.ErrReferenceNotFound {
+		return false, nil
+	}
+	return false, err
 }
 
 func (repo *GoGitRepo) CopyRef(source string, dest string) error {
-	panic("implement me")
+	return repo.r.Storer.SetReference(plumbing.NewHashReference(plumbing.ReferenceName(dest), plumbing.NewHash(source)))
 }
 
 func (repo *GoGitRepo) ListCommits(ref string) ([]Hash, error) {
-	panic("implement me")
+	commitIter, err := repo.r.CommitObjects()
+	if err != nil {
+		return nil, err
+	}
+
+	var commits []Hash // TODO: Implement refspec
+	for commit, _ := commitIter.Next(); commit != nil; {
+		commits = append(commits, Hash(commit.Hash.String()))
+	}
+	return commits, nil
 }
 
 // GetOrCreateClock return a Lamport clock stored in the Repo.
