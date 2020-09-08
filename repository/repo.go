@@ -91,7 +91,7 @@ type RepoData interface {
 	RemoveRef(ref string) error
 
 	// ListRefs will return a list of Git ref matching the given refspec
-	ListRefs(refspec string) ([]string, error)
+	ListRefs(refPrefix string) ([]string, error)
 
 	// RefExist will check if a reference exist in Git
 	RefExist(ref string) (bool, error)

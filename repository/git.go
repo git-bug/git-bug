@@ -302,8 +302,8 @@ func (repo *GitRepo) RemoveRef(ref string) error {
 }
 
 // ListRefs will return a list of Git ref matching the given refspec
-func (repo *GitRepo) ListRefs(refspec string) ([]string, error) {
-	stdout, err := repo.runGitCommand("for-each-ref", "--format=%(refname)", refspec)
+func (repo *GitRepo) ListRefs(refPrefix string) ([]string, error) {
+	stdout, err := repo.runGitCommand("for-each-ref", "--format=%(refname)", refPrefix)
 
 	if err != nil {
 		return nil, err

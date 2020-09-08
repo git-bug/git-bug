@@ -7,6 +7,7 @@ import (
 	"os"
 	stdpath "path"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -420,7 +421,7 @@ func (repo *GoGitRepo) RemoveRef(ref string) error {
 	return repo.r.Storer.RemoveReference(plumbing.ReferenceName(ref))
 }
 
-func (repo *GoGitRepo) ListRefs(refspec string) ([]string, error) {
+func (repo *GoGitRepo) ListRefs(refPrefix string) ([]string, error) {
 	refIter, err := repo.r.References()
 	if err != nil {
 		return nil, err
@@ -428,9 +429,16 @@ func (repo *GoGitRepo) ListRefs(refspec string) ([]string, error) {
 
 	refs := make([]string, 0)
 
-	for ref, _ := refIter.Next(); ref != nil; {
-		refs = append(refs, ref.String()) // TODO: Use format to search
+	err = refIter.ForEach(func(ref *plumbing.Reference) error {
+		if strings.HasPrefix(ref.Name().String(), refPrefix) {
+			refs = append(refs, ref.Name().String())
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
+
 	return refs, nil
 }
 
@@ -454,10 +462,16 @@ func (repo *GoGitRepo) ListCommits(ref string) ([]Hash, error) {
 		return nil, err
 	}
 
-	var commits []Hash // TODO: Implement refspec
-	for commit, _ := commitIter.Next(); commit != nil; {
+	var commits []Hash
+
+	err = commitIter.ForEach(func(commit *object.Commit) error {
 		commits = append(commits, Hash(commit.Hash.String()))
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
+
 	return commits, nil
 }
 

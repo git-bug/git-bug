@@ -164,11 +164,11 @@ func (r *mockRepoForTest) CopyRef(source string, dest string) error {
 	return nil
 }
 
-func (r *mockRepoForTest) ListRefs(refspec string) ([]string, error) {
+func (r *mockRepoForTest) ListRefs(refPrefix string) ([]string, error) {
 	var keys []string
 
 	for k := range r.refs {
-		if strings.HasPrefix(k, refspec) {
+		if strings.HasPrefix(k, refPrefix) {
 			keys = append(keys, k)
 		}
 	}
