@@ -453,23 +453,41 @@ func (repo *GoGitRepo) RefExist(ref string) (bool, error) {
 }
 
 func (repo *GoGitRepo) CopyRef(source string, dest string) error {
-	return repo.r.Storer.SetReference(plumbing.NewHashReference(plumbing.ReferenceName(dest), plumbing.NewHash(source)))
+	r, err := repo.r.Reference(plumbing.ReferenceName(source), false)
+	if err != nil {
+		return err
+	}
+	return repo.r.Storer.SetReference(plumbing.NewHashReference(plumbing.ReferenceName(dest), r.Hash()))
 }
 
 func (repo *GoGitRepo) ListCommits(ref string) ([]Hash, error) {
-	commitIter, err := repo.r.CommitObjects()
+	r, err := repo.r.Reference(plumbing.ReferenceName(ref), false)
 	if err != nil {
 		return nil, err
 	}
 
-	var commits []Hash
-
-	err = commitIter.ForEach(func(commit *object.Commit) error {
-		commits = append(commits, Hash(commit.Hash.String()))
-		return nil
-	})
+	commit, err := repo.r.CommitObject(r.Hash())
 	if err != nil {
 		return nil, err
+	}
+	commits := []Hash{Hash(commit.Hash.String())}
+
+	for {
+		commit, err = commit.Parent(0)
+
+		if err != nil {
+			if err == object.ErrParentNotFound {
+				break
+			}
+
+			return nil, err
+		}
+
+		if commit.NumParents() > 1 {
+			return nil, fmt.Errorf("multiple parents")
+		}
+
+		commits = append(commits, Hash(commit.Hash.String()))
 	}
 
 	return commits, nil
