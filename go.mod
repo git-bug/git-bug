@@ -1,6 +1,6 @@
 module github.com/MichaelMure/git-bug
 
-go 1.12
+go 1.13
 
 require (
 	github.com/99designs/gqlgen v0.10.3-0.20200209012558-b7a58a1c0e4b
