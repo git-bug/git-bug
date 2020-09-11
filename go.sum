@@ -7,8 +7,6 @@ github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03
 github.com/Masterminds/glide v0.13.2/go.mod h1:STyF5vcenH/rUqTEv+/hBXlSTo7KYwg2oc2f4tzPWic=
 github.com/Masterminds/semver v1.4.2/go.mod h1:MB6lktGJrhw8PrUyiEoblNEGEQ+RzHPF078ddwwvV3Y=
 github.com/Masterminds/vcs v1.13.0/go.mod h1:N09YCmOQr6RLxC6UNHzuVwAdodYbbnycGHSmwVJjcKA=
-<<<<<<< HEAD
-=======
 github.com/MichaelMure/go-git/v5 v5.1.1-0.20200827115354-b40ca794fe33 h1:QFzkZPUMm0HRZ0dZ+GgDKHPUrgUrH3CbcyuzQlhBeww=
 github.com/MichaelMure/go-git/v5 v5.1.1-0.20200827115354-b40ca794fe33/go.mod h1:kh02eMX+wdqqxgNMEyq8YgwlIOsDOa9homkUq1PoTMs=
 github.com/MichaelMure/go-term-text v0.2.6 h1:dSmJSzk2iI5xWymSMrMbdVM1bxYWu3DjDFhdcJvAuqA=
@@ -17,7 +15,6 @@ github.com/MichaelMure/go-term-text v0.2.7 h1:nSYvYGwXxJoiQu6kdGSErpxZ6ah/4WlJyp
 github.com/MichaelMure/go-term-text v0.2.7/go.mod h1:6z+q5b/nP1V8I9KkWQcUi5QpmF8DVrz9vLJ4hdoxHnM=
 github.com/MichaelMure/go-term-text v0.2.8 h1:daXIVPjPkAhcLhA+tfjQBHYjatb1D42/LY1Nw2PXYlU=
 github.com/MichaelMure/go-term-text v0.2.8/go.mod h1:6z+q5b/nP1V8I9KkWQcUi5QpmF8DVrz9vLJ4hdoxHnM=
->>>>>>> d2f92f6... repository: fix a todo in the gogit repo
 github.com/MichaelMure/go-term-text v0.2.9 h1:jUxInT3rDhl4WoJgLnmMS3hR79zigyJS1TqKFDTI6xE=
 github.com/MichaelMure/go-term-text v0.2.9/go.mod h1:2QSU/Nn2u41Tqoar+90RlYuhjngJPYgod7evnsYwkWc=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
