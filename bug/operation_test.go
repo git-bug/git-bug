@@ -106,7 +106,7 @@ func TestID(t *testing.T) {
 
 		require.Equal(t, id1, id2)
 
-		b2, err := ReadLocalBug(repo, b.Id())
+		b2, err := ReadLocal(repo, b.Id())
 		require.Nil(t, err)
 
 		op3 := b2.FirstOp()

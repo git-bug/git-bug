@@ -185,14 +185,14 @@ func (i *Bare) Validate() error {
 
 // Write the identity into the Repository. In particular, this ensure that
 // the Id is properly set.
-func (i *Bare) Commit(repo repository.ClockedRepo) error {
+func (i *Bare) CommitWithRepo(repo repository.ClockedRepo) error {
 	// Nothing to do, everything is directly embedded
 	return nil
 }
 
 // If needed, write the identity into the Repository. In particular, this
 // ensure that the Id is properly set.
-func (i *Bare) CommitAsNeeded(repo repository.ClockedRepo) error {
+func (i *Bare) CommitAsNeededWithRepo(repo repository.ClockedRepo) error {
 	// Nothing to do, everything is directly embedded
 	return nil
 }
@@ -211,4 +211,8 @@ func (i *Bare) LastModificationLamport() lamport.Time {
 // LastModification return the timestamp at which the last version of the identity became valid.
 func (i *Bare) LastModification() timestamp.Timestamp {
 	return 0
+}
+
+func (i *Bare) NeedCommit() bool {
+	return false
 }

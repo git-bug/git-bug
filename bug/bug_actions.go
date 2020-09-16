@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/MichaelMure/git-bug/entity"
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/pkg/errors"
 )
@@ -57,6 +58,11 @@ func Pull(repo repository.ClockedRepo, remote string) error {
 func MergeAll(repo repository.ClockedRepo, remote string) <-chan entity.MergeResult {
 	out := make(chan entity.MergeResult)
 
+	// no caching for the merge, we load everything from git even if that means multiple
+	// copy of the same entity in memory. The cache layer will intercept the results to
+	// invalidate entities if necessary.
+	identityResolver := identity.NewSimpleResolver(repo)
+
 	go func() {
 		defer close(out)
 
@@ -77,7 +83,7 @@ func MergeAll(repo repository.ClockedRepo, remote string) <-chan entity.MergeRes
 				continue
 			}
 
-			remoteBug, err := readBug(repo, remoteRef)
+			remoteBug, err := read(repo, identityResolver, remoteRef)
 
 			if err != nil {
 				out <- entity.NewMergeInvalidStatus(id, errors.Wrap(err, "remote bug is not readable").Error())
@@ -111,7 +117,7 @@ func MergeAll(repo repository.ClockedRepo, remote string) <-chan entity.MergeRes
 				continue
 			}
 
-			localBug, err := readBug(repo, localRef)
+			localBug, err := read(repo, identityResolver, localRef)
 
 			if err != nil {
 				out <- entity.NewMergeError(errors.Wrap(err, "local bug is not readable"), id)

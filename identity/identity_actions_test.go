@@ -23,7 +23,7 @@ func TestPushPull(t *testing.T) {
 	err = Pull(repoB, "origin")
 	require.NoError(t, err)
 
-	identities := allIdentities(t, ReadAllLocalIdentities(repoB))
+	identities := allIdentities(t, ReadAllLocal(repoB))
 
 	if len(identities) != 1 {
 		t.Fatal("Unexpected number of bugs")
@@ -40,7 +40,7 @@ func TestPushPull(t *testing.T) {
 	err = Pull(repoA, "origin")
 	require.NoError(t, err)
 
-	identities = allIdentities(t, ReadAllLocalIdentities(repoA))
+	identities = allIdentities(t, ReadAllLocal(repoA))
 
 	if len(identities) != 2 {
 		t.Fatal("Unexpected number of bugs")
@@ -70,7 +70,7 @@ func TestPushPull(t *testing.T) {
 	err = Pull(repoB, "origin")
 	require.NoError(t, err)
 
-	identities = allIdentities(t, ReadAllLocalIdentities(repoB))
+	identities = allIdentities(t, ReadAllLocal(repoB))
 
 	if len(identities) != 2 {
 		t.Fatal("Unexpected number of bugs")
@@ -84,7 +84,7 @@ func TestPushPull(t *testing.T) {
 	err = Pull(repoA, "origin")
 	require.NoError(t, err)
 
-	identities = allIdentities(t, ReadAllLocalIdentities(repoA))
+	identities = allIdentities(t, ReadAllLocal(repoA))
 
 	if len(identities) != 2 {
 		t.Fatal("Unexpected number of bugs")
@@ -118,7 +118,7 @@ func TestPushPull(t *testing.T) {
 	err = Pull(repoB, "origin")
 	require.Error(t, err)
 
-	identities = allIdentities(t, ReadAllLocalIdentities(repoB))
+	identities = allIdentities(t, ReadAllLocal(repoB))
 
 	if len(identities) != 2 {
 		t.Fatal("Unexpected number of bugs")
@@ -133,7 +133,7 @@ func TestPushPull(t *testing.T) {
 	err = Pull(repoA, "origin")
 	require.NoError(t, err)
 
-	identities = allIdentities(t, ReadAllLocalIdentities(repoA))
+	identities = allIdentities(t, ReadAllLocal(repoA))
 
 	if len(identities) != 2 {
 		t.Fatal("Unexpected number of bugs")

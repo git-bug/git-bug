@@ -157,14 +157,14 @@ func GenerateRandomOperationPacksWithSeed(packNumber int, opNumber int, seed int
 	return result
 }
 
-func person() identity.Interface {
+func person() *identity.Identity {
 	return identity.NewIdentity(fake.FullName(), fake.EmailAddress())
 }
 
-var persons []identity.Interface
+var persons []*identity.Identity
 
 func generateRandomPersons(repo repository.ClockedRepo, n int) {
-	persons = make([]identity.Interface, n)
+	persons = make([]*identity.Identity, n)
 	for i := range persons {
 		p := person()
 		err := p.Commit(repo)

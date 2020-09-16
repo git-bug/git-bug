@@ -143,10 +143,11 @@ func (opp *OperationPack) Write(repo repository.ClockedRepo) (repository.Hash, e
 	}
 
 	// First, make sure that all the identities are properly Commit as well
+	// TODO: this might be downgraded to "make sure it exist in git" but then, what make
+	// sure no data is lost on identities ?
 	for _, op := range opp.Operations {
-		err := op.base().Author.CommitAsNeeded(repo)
-		if err != nil {
-			return "", err
+		if op.base().Author.NeedCommit() {
+			return "", fmt.Errorf("identity need commmit")
 		}
 	}
 

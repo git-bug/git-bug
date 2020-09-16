@@ -180,19 +180,19 @@ type StreamedIdentity struct {
 	Err      error
 }
 
-// ReadAllLocalIdentities read and parse all local Identity
-func ReadAllLocalIdentities(repo repository.ClockedRepo) <-chan StreamedIdentity {
-	return readAllIdentities(repo, identityRefPattern)
+// ReadAllLocal read and parse all local Identity
+func ReadAllLocal(repo repository.ClockedRepo) <-chan StreamedIdentity {
+	return readAll(repo, identityRefPattern)
 }
 
-// ReadAllRemoteIdentities read and parse all remote Identity for a given remote
-func ReadAllRemoteIdentities(repo repository.ClockedRepo, remote string) <-chan StreamedIdentity {
+// ReadAllRemote read and parse all remote Identity for a given remote
+func ReadAllRemote(repo repository.ClockedRepo, remote string) <-chan StreamedIdentity {
 	refPrefix := fmt.Sprintf(identityRemoteRefPattern, remote)
-	return readAllIdentities(repo, refPrefix)
+	return readAll(repo, refPrefix)
 }
 
-// Read and parse all available bug with a given ref prefix
-func readAllIdentities(repo repository.ClockedRepo, refPrefix string) <-chan StreamedIdentity {
+// readAll read and parse all available bug with a given ref prefix
+func readAll(repo repository.ClockedRepo, refPrefix string) <-chan StreamedIdentity {
 	out := make(chan StreamedIdentity)
 
 	go func() {

@@ -74,48 +74,32 @@ func NewBug() *Bug {
 	return &Bug{}
 }
 
-// FindLocalBug find an existing Bug matching a prefix
-func FindLocalBug(repo repository.ClockedRepo, prefix string) (*Bug, error) {
-	ids, err := ListLocalIds(repo)
-
-	if err != nil {
-		return nil, err
-	}
-
-	// preallocate but empty
-	matching := make([]entity.Id, 0, 5)
-
-	for _, id := range ids {
-		if id.HasPrefix(prefix) {
-			matching = append(matching, id)
-		}
-	}
-
-	if len(matching) == 0 {
-		return nil, errors.New("no matching bug found.")
-	}
-
-	if len(matching) > 1 {
-		return nil, NewErrMultipleMatchBug(matching)
-	}
-
-	return ReadLocalBug(repo, matching[0])
-}
-
-// ReadLocalBug will read a local bug from its hash
-func ReadLocalBug(repo repository.ClockedRepo, id entity.Id) (*Bug, error) {
+// ReadLocal will read a local bug from its hash
+func ReadLocal(repo repository.ClockedRepo, id entity.Id) (*Bug, error) {
 	ref := bugsRefPattern + id.String()
-	return readBug(repo, ref)
+	return read(repo, identity.NewSimpleResolver(repo), ref)
 }
 
-// ReadRemoteBug will read a remote bug from its hash
-func ReadRemoteBug(repo repository.ClockedRepo, remote string, id entity.Id) (*Bug, error) {
+// ReadLocalWithResolver will read a local bug from its hash
+func ReadLocalWithResolver(repo repository.ClockedRepo, identityResolver identity.Resolver, id entity.Id) (*Bug, error) {
+	ref := bugsRefPattern + id.String()
+	return read(repo, identityResolver, ref)
+}
+
+// ReadRemote will read a remote bug from its hash
+func ReadRemote(repo repository.ClockedRepo, remote string, id entity.Id) (*Bug, error) {
 	ref := fmt.Sprintf(bugsRemoteRefPattern, remote) + id.String()
-	return readBug(repo, ref)
+	return read(repo, identity.NewSimpleResolver(repo), ref)
 }
 
-// readBug will read and parse a Bug from git
-func readBug(repo repository.ClockedRepo, ref string) (*Bug, error) {
+// ReadRemoteWithResolver will read a remote bug from its hash
+func ReadRemoteWithResolver(repo repository.ClockedRepo, identityResolver identity.Resolver, remote string, id entity.Id) (*Bug, error) {
+	ref := fmt.Sprintf(bugsRemoteRefPattern, remote) + id.String()
+	return read(repo, identityResolver, ref)
+}
+
+// read will read and parse a Bug from git
+func read(repo repository.ClockedRepo, identityResolver identity.Resolver, ref string) (*Bug, error) {
 	refSplit := strings.Split(ref, "/")
 	id := entity.Id(refSplit[len(refSplit)-1])
 
@@ -233,8 +217,7 @@ func readBug(repo repository.ClockedRepo, ref string) (*Bug, error) {
 	}
 
 	// Make sure that the identities are properly loaded
-	resolver := identity.NewSimpleResolver(repo)
-	err = bug.EnsureIdentities(resolver)
+	err = bug.EnsureIdentities(identityResolver)
 	if err != nil {
 		return nil, err
 	}
@@ -297,19 +280,30 @@ type StreamedBug struct {
 	Err error
 }
 
-// ReadAllLocalBugs read and parse all local bugs
-func ReadAllLocalBugs(repo repository.ClockedRepo) <-chan StreamedBug {
-	return readAllBugs(repo, bugsRefPattern)
+// ReadAllLocal read and parse all local bugs
+func ReadAllLocal(repo repository.ClockedRepo) <-chan StreamedBug {
+	return readAll(repo, identity.NewSimpleResolver(repo), bugsRefPattern)
 }
 
-// ReadAllRemoteBugs read and parse all remote bugs for a given remote
-func ReadAllRemoteBugs(repo repository.ClockedRepo, remote string) <-chan StreamedBug {
+// ReadAllLocalWithResolver read and parse all local bugs
+func ReadAllLocalWithResolver(repo repository.ClockedRepo, identityResolver identity.Resolver) <-chan StreamedBug {
+	return readAll(repo, identityResolver, bugsRefPattern)
+}
+
+// ReadAllRemote read and parse all remote bugs for a given remote
+func ReadAllRemote(repo repository.ClockedRepo, remote string) <-chan StreamedBug {
 	refPrefix := fmt.Sprintf(bugsRemoteRefPattern, remote)
-	return readAllBugs(repo, refPrefix)
+	return readAll(repo, identity.NewSimpleResolver(repo), refPrefix)
+}
+
+// ReadAllRemoteWithResolver read and parse all remote bugs for a given remote
+func ReadAllRemoteWithResolver(repo repository.ClockedRepo, identityResolver identity.Resolver, remote string) <-chan StreamedBug {
+	refPrefix := fmt.Sprintf(bugsRemoteRefPattern, remote)
+	return readAll(repo, identityResolver, refPrefix)
 }
 
 // Read and parse all available bug with a given ref prefix
-func readAllBugs(repo repository.ClockedRepo, refPrefix string) <-chan StreamedBug {
+func readAll(repo repository.ClockedRepo, identityResolver identity.Resolver, refPrefix string) <-chan StreamedBug {
 	out := make(chan StreamedBug)
 
 	go func() {
@@ -322,7 +316,7 @@ func readAllBugs(repo repository.ClockedRepo, refPrefix string) <-chan StreamedB
 		}
 
 		for _, ref := range refs {
-			b, err := readBug(repo, ref)
+			b, err := read(repo, identityResolver, ref)
 
 			if err != nil {
 				out <- StreamedBug{Err: err}

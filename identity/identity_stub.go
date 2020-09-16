@@ -80,11 +80,11 @@ func (IdentityStub) Validate() error {
 	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 
-func (IdentityStub) Commit(repo repository.ClockedRepo) error {
+func (IdentityStub) CommitWithRepo(repo repository.ClockedRepo) error {
 	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 
-func (i *IdentityStub) CommitAsNeeded(repo repository.ClockedRepo) error {
+func (i *IdentityStub) CommitAsNeededWithRepo(repo repository.ClockedRepo) error {
 	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 
@@ -98,4 +98,8 @@ func (i *IdentityStub) LastModificationLamport() lamport.Time {
 
 func (i *IdentityStub) LastModification() timestamp.Timestamp {
 	panic("identities needs to be properly loaded with identity.ReadLocal()")
+}
+
+func (i *IdentityStub) NeedCommit() bool {
+	return false
 }
