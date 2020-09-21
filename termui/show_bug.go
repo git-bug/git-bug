@@ -378,7 +378,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 
 // emptyMessagePlaceholder return a formatted placeholder for an empty message
 func emptyMessagePlaceholder() string {
-	return colors.GreyBold("No description provided.")
+	return colors.BlackBold(colors.WhiteBg("No description provided."))
 }
 
 func (sb *showBug) createOpView(g *gocui.Gui, name string, x0 int, y0 int, maxX int, height int, selectable bool) (*gocui.View, error) {
