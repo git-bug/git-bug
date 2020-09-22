@@ -28,6 +28,15 @@
 
 :construction: This is now more than a proof of concept, but still not fully stable. Expect dragons and unfinished business. :construction:
 
+## Help needed!
+
+This project has grown bigger than I can handle by myself, especially with a day job. I'm looking for people to help on or maintain part of it:
+- each bridges (go)
+- the terminal UI (go)
+- the web UI (Typescript/React/GraphQL)
+
+Individually, those pieces are not expecially complex but doing everything make it hard for me to focus on the core where things get more complicated. If this is useful for you or you just want to join the fun, maybe consider it?
+
 ## Installation
 
 <details><summary>Pre-compiled binaries</summary>
