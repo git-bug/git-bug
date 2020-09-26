@@ -13,15 +13,11 @@ var (
 
 // Config represent the common function interacting with the repository config storage
 type Config interface {
-	// Store writes a single key/value pair in the config
-	StoreString(key, value string) error
+	ConfigRead
+	ConfigWrite
+}
 
-	// Store writes a key and timestamp value to the config
-	StoreTimestamp(key string, value time.Time) error
-
-	// Store writes a key and boolean value to the config
-	StoreBool(key string, value bool) error
-
+type ConfigRead interface {
 	// ReadAll reads all key/value pair matching the key prefix
 	ReadAll(keyPrefix string) (map[string]string, error)
 
@@ -39,6 +35,17 @@ type Config interface {
 	// Return ErrNoConfigEntry or ErrMultipleConfigEntry if
 	// there is zero or more than one entry for this key
 	ReadTimestamp(key string) (time.Time, error)
+}
+
+type ConfigWrite interface {
+	// Store writes a single key/value pair in the config
+	StoreString(key, value string) error
+
+	// Store writes a key and timestamp value to the config
+	StoreTimestamp(key string, value time.Time) error
+
+	// Store writes a key and boolean value to the config
+	StoreBool(key string, value bool) error
 
 	// RemoveAll removes all key/value pair matching the key prefix
 	RemoveAll(keyPrefix string) error
