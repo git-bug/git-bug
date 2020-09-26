@@ -29,36 +29,13 @@ func defaultKeyring() (Keyring, error) {
 		return nil, err
 	}
 
-	backends := []keyring.BackendType{
-		keyring.WinCredBackend,
-		keyring.KeychainBackend,
-		keyring.PassBackend,
-		keyring.FileBackend,
-	}
-
 	return keyring.Open(keyring.Config{
-		// TODO: ideally this would not be there, it disable the freedesktop backend on linux
-		// due to https://github.com/99designs/keyring/issues/44
-		AllowedBackends: backends,
+		// only use the file backend until https://github.com/99designs/keyring/issues/74 is resolved
+		AllowedBackends: []keyring.BackendType{
+			keyring.FileBackend,
+		},
 
 		ServiceName: "git-bug",
-
-		// MacOS keychain
-		KeychainName:             "git-bug",
-		KeychainTrustApplication: true,
-
-		// KDE Wallet
-		KWalletAppID:  "git-bug",
-		KWalletFolder: "git-bug",
-
-		// Windows
-		WinCredPrefix: "git-bug",
-
-		// freedesktop.org's Secret Service
-		LibSecretCollectionName: "git-bug",
-
-		// Pass (https://www.passwordstore.org/)
-		PassPrefix: "git-bug",
 
 		// Fallback encrypted file
 		FileDir: path.Join(ucd, "git-bug", "keyring"),
