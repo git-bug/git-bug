@@ -507,7 +507,7 @@ func (repo *GoGitRepo) GetOrCreateClock(name string) (lamport.Clock, error) {
 	repo.clocksMutex.Lock()
 	defer repo.clocksMutex.Unlock()
 
-	p := clockPath + name + "-clock"
+	p := stdpath.Join(repo.path, clockPath, name+"-clock")
 
 	c, err = lamport.NewPersistedClock(p)
 	if err != nil {
@@ -526,7 +526,7 @@ func (repo *GoGitRepo) getClock(name string) (lamport.Clock, error) {
 		return c, nil
 	}
 
-	p := clockPath + name + "-clock"
+	p := stdpath.Join(repo.path, clockPath, name+"-clock")
 
 	c, err := lamport.LoadPersistedClock(p)
 	if err == nil {
