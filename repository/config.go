@@ -59,3 +59,67 @@ func ParseTimestamp(s string) (time.Time, error) {
 
 	return time.Unix(int64(timestamp), 0), nil
 }
+
+// mergeConfig is a helper to easily support RepoConfig.AnyConfig()
+// from two separate local and global Config
+func mergeConfig(local ConfigRead, global ConfigRead) *mergedConfig {
+	return &mergedConfig{
+		local:  local,
+		global: global,
+	}
+}
+
+var _ ConfigRead = &mergedConfig{}
+
+type mergedConfig struct {
+	local  ConfigRead
+	global ConfigRead
+}
+
+func (m *mergedConfig) ReadAll(keyPrefix string) (map[string]string, error) {
+	values, err := m.global.ReadAll(keyPrefix)
+	if err != nil {
+		return nil, err
+	}
+	locals, err := m.local.ReadAll(keyPrefix)
+	if err != nil {
+		return nil, err
+	}
+	for k, val := range locals {
+		values[k] = val
+	}
+	return values, nil
+}
+
+func (m *mergedConfig) ReadBool(key string) (bool, error) {
+	v, err := m.local.ReadBool(key)
+	if err == nil {
+		return v, nil
+	}
+	if err != ErrNoConfigEntry && err != ErrMultipleConfigEntry {
+		return false, err
+	}
+	return m.global.ReadBool(key)
+}
+
+func (m *mergedConfig) ReadString(key string) (string, error) {
+	val, err := m.local.ReadString(key)
+	if err == nil {
+		return val, nil
+	}
+	if err != ErrNoConfigEntry && err != ErrMultipleConfigEntry {
+		return "", err
+	}
+	return m.global.ReadString(key)
+}
+
+func (m *mergedConfig) ReadTimestamp(key string) (time.Time, error) {
+	val, err := m.local.ReadTimestamp(key)
+	if err == nil {
+		return val, nil
+	}
+	if err != ErrNoConfigEntry && err != ErrMultipleConfigEntry {
+		return time.Time{}, err
+	}
+	return m.global.ReadTimestamp(key)
+}

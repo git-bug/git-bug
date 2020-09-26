@@ -35,25 +35,30 @@ func NewMockRepoForTest() *mockRepoForTest {
 var _ RepoConfig = &mockRepoConfig{}
 
 type mockRepoConfig struct {
-	config       *MemConfig
+	localConfig  *MemConfig
 	globalConfig *MemConfig
 }
 
 func NewMockRepoConfig() *mockRepoConfig {
 	return &mockRepoConfig{
-		config:       NewMemConfig(),
+		localConfig:  NewMemConfig(),
 		globalConfig: NewMemConfig(),
 	}
 }
 
 // LocalConfig give access to the repository scoped configuration
 func (r *mockRepoConfig) LocalConfig() Config {
-	return r.config
+	return r.localConfig
 }
 
 // GlobalConfig give access to the git global configuration
 func (r *mockRepoConfig) GlobalConfig() Config {
 	return r.globalConfig
+}
+
+// AnyConfig give access to a merged local/global configuration
+func (r *mockRepoConfig) AnyConfig() ConfigRead {
+	return mergeConfig(r.localConfig, r.globalConfig)
 }
 
 var _ RepoKeyring = &mockRepoKeyring{}

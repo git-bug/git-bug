@@ -139,7 +139,7 @@ func runWebUI(env *Env, opts webUIOptions, args []string) error {
 	env.out.Printf("Graphql Playground: http://%s/playground\n", addr)
 	env.out.Println("Press Ctrl+c to quit")
 
-	configOpen, err := env.repo.LocalConfig().ReadBool(webUIOpenConfigKey)
+	configOpen, err := env.repo.AnyConfig().ReadBool(webUIOpenConfigKey)
 	if err == repository.ErrNoConfigEntry {
 		// default to true
 		configOpen = true

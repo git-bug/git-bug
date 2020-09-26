@@ -20,6 +20,16 @@ func (c *RepoCache) LocalConfig() repository.Config {
 	return c.repo.LocalConfig()
 }
 
+// GlobalConfig give access to the global scoped configuration
+func (c *RepoCache) GlobalConfig() repository.Config {
+	return c.repo.GlobalConfig()
+}
+
+// AnyConfig give access to a merged local/global configuration
+func (c *RepoCache) AnyConfig() repository.ConfigRead {
+	return c.repo.AnyConfig()
+}
+
 func (c *RepoCache) Keyring() repository.Keyring {
 	return c.repo.Keyring()
 }

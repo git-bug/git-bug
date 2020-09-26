@@ -158,14 +158,25 @@ func InitBareGoGitRepo(path string) (*GoGitRepo, error) {
 	}, nil
 }
 
+// LocalConfig give access to the repository scoped configuration
 func (repo *GoGitRepo) LocalConfig() Config {
 	return newGoGitConfig(repo.r)
 }
 
+// GlobalConfig give access to the global scoped configuration
 func (repo *GoGitRepo) GlobalConfig() Config {
-	panic("go-git doesn't support writing global config")
+	// TODO: replace that with go-git native implementation once it's supported
+	// see: https://github.com/go-git/go-git
+	// see: https://github.com/src-d/go-git/issues/760
+	return newGitConfig(gitCli{repo.path}, true)
 }
 
+// AnyConfig give access to a merged local/global configuration
+func (repo *GoGitRepo) AnyConfig() ConfigRead {
+	return mergeConfig(repo.LocalConfig(), repo.GlobalConfig())
+}
+
+// Keyring give access to a user-wide storage for secrets
 func (repo *GoGitRepo) Keyring() Keyring {
 	return repo.keyring
 }
@@ -288,6 +299,7 @@ func (repo *GoGitRepo) ReadData(hash Hash) ([]byte, error) {
 	return ioutil.ReadAll(r)
 }
 
+// StoreTree will store a mapping key-->Hash as a Git tree
 func (repo *GoGitRepo) StoreTree(mapping []TreeEntry) (Hash, error) {
 	var tree object.Tree
 
@@ -319,6 +331,7 @@ func (repo *GoGitRepo) StoreTree(mapping []TreeEntry) (Hash, error) {
 	return Hash(hash.String()), nil
 }
 
+// ReadTree will return the list of entries in a Git tree
 func (repo *GoGitRepo) ReadTree(hash Hash) ([]TreeEntry, error) {
 	obj, err := repo.r.TreeObject(plumbing.NewHash(hash.String()))
 	if err != nil {
@@ -342,10 +355,12 @@ func (repo *GoGitRepo) ReadTree(hash Hash) ([]TreeEntry, error) {
 	return treeEntries, nil
 }
 
+// StoreCommit will store a Git commit with the given Git tree
 func (repo *GoGitRepo) StoreCommit(treeHash Hash) (Hash, error) {
 	return repo.StoreCommitWithParent(treeHash, "")
 }
 
+// StoreCommit will store a Git commit with the given Git tree
 func (repo *GoGitRepo) StoreCommitWithParent(treeHash Hash, parent Hash) (Hash, error) {
 	cfg, err := repo.r.Config()
 	if err != nil {
@@ -386,6 +401,7 @@ func (repo *GoGitRepo) StoreCommitWithParent(treeHash Hash, parent Hash) (Hash, 
 	return Hash(hash.String()), nil
 }
 
+// GetTreeHash return the git tree hash referenced in a commit
 func (repo *GoGitRepo) GetTreeHash(commit Hash) (Hash, error) {
 	obj, err := repo.r.CommitObject(plumbing.NewHash(commit.String()))
 	if err != nil {
@@ -395,6 +411,7 @@ func (repo *GoGitRepo) GetTreeHash(commit Hash) (Hash, error) {
 	return Hash(obj.TreeHash.String()), nil
 }
 
+// FindCommonAncestor will return the last common ancestor of two chain of commit
 func (repo *GoGitRepo) FindCommonAncestor(commit1 Hash, commit2 Hash) (Hash, error) {
 	obj1, err := repo.r.CommitObject(plumbing.NewHash(commit1.String()))
 	if err != nil {
@@ -413,14 +430,17 @@ func (repo *GoGitRepo) FindCommonAncestor(commit1 Hash, commit2 Hash) (Hash, err
 	return Hash(commits[0].Hash.String()), nil
 }
 
+// UpdateRef will create or update a Git reference
 func (repo *GoGitRepo) UpdateRef(ref string, hash Hash) error {
 	return repo.r.Storer.SetReference(plumbing.NewHashReference(plumbing.ReferenceName(ref), plumbing.NewHash(hash.String())))
 }
 
+// RemoveRef will remove a Git reference
 func (repo *GoGitRepo) RemoveRef(ref string) error {
 	return repo.r.Storer.RemoveReference(plumbing.ReferenceName(ref))
 }
 
+// ListRefs will return a list of Git ref matching the given refspec
 func (repo *GoGitRepo) ListRefs(refPrefix string) ([]string, error) {
 	refIter, err := repo.r.References()
 	if err != nil {
@@ -442,6 +462,7 @@ func (repo *GoGitRepo) ListRefs(refPrefix string) ([]string, error) {
 	return refs, nil
 }
 
+// RefExist will check if a reference exist in Git
 func (repo *GoGitRepo) RefExist(ref string) (bool, error) {
 	_, err := repo.r.Reference(plumbing.ReferenceName(ref), false)
 	if err == nil {
@@ -452,6 +473,7 @@ func (repo *GoGitRepo) RefExist(ref string) (bool, error) {
 	return false, err
 }
 
+// CopyRef will create a new reference with the same value as another one
 func (repo *GoGitRepo) CopyRef(source string, dest string) error {
 	r, err := repo.r.Reference(plumbing.ReferenceName(source), false)
 	if err != nil {
@@ -460,6 +482,7 @@ func (repo *GoGitRepo) CopyRef(source string, dest string) error {
 	return repo.r.Storer.SetReference(plumbing.NewHashReference(plumbing.ReferenceName(dest), r.Hash()))
 }
 
+// ListCommits will return the list of tree hashes of a ref, in chronological order
 func (repo *GoGitRepo) ListCommits(ref string) ([]Hash, error) {
 	r, err := repo.r.Reference(plumbing.ReferenceName(ref), false)
 	if err != nil {

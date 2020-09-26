@@ -32,6 +32,12 @@ type ClockedRepo interface {
 type RepoConfig interface {
 	// LocalConfig give access to the repository scoped configuration
 	LocalConfig() Config
+
+	// GlobalConfig give access to the global scoped configuration
+	GlobalConfig() Config
+
+	// AnyConfig give access to a merged local/global configuration
+	AnyConfig() ConfigRead
 }
 
 // RepoKeyring give access to a user-wide storage for secrets

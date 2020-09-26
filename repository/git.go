@@ -4,8 +4,6 @@ package repository
 import (
 	"bytes"
 	"fmt"
-	"io"
-	"os/exec"
 	"path"
 	"strings"
 	"sync"
@@ -22,68 +20,13 @@ var _ TestedRepo = &GitRepo{}
 
 // GitRepo represents an instance of a (local) git repository.
 type GitRepo struct {
+	gitCli
 	path string
 
 	clocksMutex sync.Mutex
 	clocks      map[string]lamport.Clock
 
 	keyring Keyring
-}
-
-// LocalConfig give access to the repository scoped configuration
-func (repo *GitRepo) LocalConfig() Config {
-	return newGitConfig(repo, false)
-}
-
-// GlobalConfig give access to the git global configuration
-func (repo *GitRepo) GlobalConfig() Config {
-	return newGitConfig(repo, true)
-}
-
-func (repo *GitRepo) Keyring() Keyring {
-	return repo.keyring
-}
-
-// Run the given git command with the given I/O reader/writers, returning an error if it fails.
-func (repo *GitRepo) runGitCommandWithIO(stdin io.Reader, stdout, stderr io.Writer, args ...string) error {
-	// make sure that the working directory for the command
-	// always exist, in particular when running "git init".
-	path := strings.TrimSuffix(repo.path, ".git")
-
-	// fmt.Printf("[%s] Running git %s\n", path, strings.Join(args, " "))
-
-	cmd := exec.Command("git", args...)
-	cmd.Dir = path
-	cmd.Stdin = stdin
-	cmd.Stdout = stdout
-	cmd.Stderr = stderr
-
-	return cmd.Run()
-}
-
-// Run the given git command and return its stdout, or an error if the command fails.
-func (repo *GitRepo) runGitCommandRaw(stdin io.Reader, args ...string) (string, string, error) {
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	err := repo.runGitCommandWithIO(stdin, &stdout, &stderr, args...)
-	return strings.TrimSpace(stdout.String()), strings.TrimSpace(stderr.String()), err
-}
-
-// Run the given git command and return its stdout, or an error if the command fails.
-func (repo *GitRepo) runGitCommandWithStdin(stdin io.Reader, args ...string) (string, error) {
-	stdout, stderr, err := repo.runGitCommandRaw(stdin, args...)
-	if err != nil {
-		if stderr == "" {
-			stderr = "Error running git command: " + strings.Join(args, " ")
-		}
-		err = fmt.Errorf(stderr)
-	}
-	return stdout, err
-}
-
-// Run the given git command and return its stdout, or an error if the command fails.
-func (repo *GitRepo) runGitCommand(args ...string) (string, error) {
-	return repo.runGitCommandWithStdin(nil, args...)
 }
 
 // NewGitRepo determines if the given working directory is inside of a git repository,
@@ -95,6 +38,7 @@ func NewGitRepo(path string, clockLoaders []ClockLoader) (*GitRepo, error) {
 	}
 
 	repo := &GitRepo{
+		gitCli:  gitCli{path: path},
 		path:    path,
 		clocks:  make(map[string]lamport.Clock),
 		keyring: k,
@@ -112,6 +56,7 @@ func NewGitRepo(path string, clockLoaders []ClockLoader) (*GitRepo, error) {
 
 	// Fix the path to be sure we are at the root
 	repo.path = stdout
+	repo.gitCli.path = stdout
 
 	for _, loader := range clockLoaders {
 		allExist := true
@@ -135,6 +80,7 @@ func NewGitRepo(path string, clockLoaders []ClockLoader) (*GitRepo, error) {
 // InitGitRepo create a new empty git repo at the given path
 func InitGitRepo(path string) (*GitRepo, error) {
 	repo := &GitRepo{
+		gitCli: gitCli{path: path},
 		path:   path + "/.git",
 		clocks: make(map[string]lamport.Clock),
 	}
@@ -150,6 +96,7 @@ func InitGitRepo(path string) (*GitRepo, error) {
 // InitBareGitRepo create a new --bare empty git repo at the given path
 func InitBareGitRepo(path string) (*GitRepo, error) {
 	repo := &GitRepo{
+		gitCli: gitCli{path: path},
 		path:   path,
 		clocks: make(map[string]lamport.Clock),
 	}
@@ -160,6 +107,26 @@ func InitBareGitRepo(path string) (*GitRepo, error) {
 	}
 
 	return repo, nil
+}
+
+// LocalConfig give access to the repository scoped configuration
+func (repo *GitRepo) LocalConfig() Config {
+	return newGitConfig(repo.gitCli, false)
+}
+
+// GlobalConfig give access to the global scoped configuration
+func (repo *GitRepo) GlobalConfig() Config {
+	return newGitConfig(repo.gitCli, true)
+}
+
+// AnyConfig give access to a merged local/global configuration
+func (repo *GitRepo) AnyConfig() ConfigRead {
+	return mergeConfig(repo.LocalConfig(), repo.GlobalConfig())
+}
+
+// Keyring give access to a user-wide storage for secrets
+func (repo *GitRepo) Keyring() Keyring {
+	return repo.keyring
 }
 
 // GetPath returns the path to the repo.
