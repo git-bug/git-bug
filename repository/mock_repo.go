@@ -15,92 +15,138 @@ var _ TestedRepo = &mockRepoForTest{}
 
 // mockRepoForTest defines an instance of Repo that can be used for testing.
 type mockRepoForTest struct {
+	*mockRepoConfig
+	*mockRepoKeyring
+	*mockRepoCommon
+	*mockRepoData
+	*mockRepoClock
+}
+
+func NewMockRepoForTest() *mockRepoForTest {
+	return &mockRepoForTest{
+		mockRepoConfig:  NewMockRepoConfig(),
+		mockRepoKeyring: NewMockRepoKeyring(),
+		mockRepoCommon:  NewMockRepoCommon(),
+		mockRepoData:    NewMockRepoData(),
+		mockRepoClock:   NewMockRepoClock(),
+	}
+}
+
+var _ RepoConfig = &mockRepoConfig{}
+
+type mockRepoConfig struct {
 	config       *MemConfig
 	globalConfig *MemConfig
-	keyring      *keyring.ArrayKeyring
-	blobs        map[Hash][]byte
-	trees        map[Hash]string
-	commits      map[Hash]commit
-	refs         map[string]Hash
-	clocks       map[string]lamport.Clock
 }
+
+func NewMockRepoConfig() *mockRepoConfig {
+	return &mockRepoConfig{
+		config:       NewMemConfig(),
+		globalConfig: NewMemConfig(),
+	}
+}
+
+// LocalConfig give access to the repository scoped configuration
+func (r *mockRepoConfig) LocalConfig() Config {
+	return r.config
+}
+
+// GlobalConfig give access to the git global configuration
+func (r *mockRepoConfig) GlobalConfig() Config {
+	return r.globalConfig
+}
+
+var _ RepoKeyring = &mockRepoKeyring{}
+
+type mockRepoKeyring struct {
+	keyring *keyring.ArrayKeyring
+}
+
+func NewMockRepoKeyring() *mockRepoKeyring {
+	return &mockRepoKeyring{
+		keyring: keyring.NewArrayKeyring(nil),
+	}
+}
+
+// Keyring give access to a user-wide storage for secrets
+func (r *mockRepoKeyring) Keyring() Keyring {
+	return r.keyring
+}
+
+var _ RepoCommon = &mockRepoCommon{}
+
+type mockRepoCommon struct{}
+
+func NewMockRepoCommon() *mockRepoCommon {
+	return &mockRepoCommon{}
+}
+
+// GetPath returns the path to the repo.
+func (r *mockRepoCommon) GetPath() string {
+	return "~/mockRepo/"
+}
+
+func (r *mockRepoCommon) GetUserName() (string, error) {
+	return "René Descartes", nil
+}
+
+// GetUserEmail returns the email address that the user has used to configure git.
+func (r *mockRepoCommon) GetUserEmail() (string, error) {
+	return "user@example.com", nil
+}
+
+// GetCoreEditor returns the name of the editor that the user has used to configure git.
+func (r *mockRepoCommon) GetCoreEditor() (string, error) {
+	return "vi", nil
+}
+
+// GetRemotes returns the configured remotes repositories.
+func (r *mockRepoCommon) GetRemotes() (map[string]string, error) {
+	return map[string]string{
+		"origin": "git://github.com/MichaelMure/git-bug",
+	}, nil
+}
+
+var _ RepoData = &mockRepoData{}
 
 type commit struct {
 	treeHash Hash
 	parent   Hash
 }
 
-func NewMockRepoForTest() *mockRepoForTest {
-	return &mockRepoForTest{
-		config:       NewMemConfig(),
-		globalConfig: NewMemConfig(),
-		keyring:      keyring.NewArrayKeyring(nil),
-		blobs:        make(map[Hash][]byte),
-		trees:        make(map[Hash]string),
-		commits:      make(map[Hash]commit),
-		refs:         make(map[string]Hash),
-		clocks:       make(map[string]lamport.Clock),
+type mockRepoData struct {
+	blobs   map[Hash][]byte
+	trees   map[Hash]string
+	commits map[Hash]commit
+	refs    map[string]Hash
+}
+
+func NewMockRepoData() *mockRepoData {
+	return &mockRepoData{
+		blobs:   make(map[Hash][]byte),
+		trees:   make(map[Hash]string),
+		commits: make(map[Hash]commit),
+		refs:    make(map[string]Hash),
 	}
 }
 
-// LocalConfig give access to the repository scoped configuration
-func (r *mockRepoForTest) LocalConfig() Config {
-	return r.config
-}
-
-// GlobalConfig give access to the git global configuration
-func (r *mockRepoForTest) GlobalConfig() Config {
-	return r.globalConfig
-}
-
-// Keyring give access to a user-wide storage for secrets
-func (r *mockRepoForTest) Keyring() Keyring {
-	return r.keyring
-}
-
-// GetPath returns the path to the repo.
-func (r *mockRepoForTest) GetPath() string {
-	return "~/mockRepo/"
-}
-
-func (r *mockRepoForTest) GetUserName() (string, error) {
-	return "René Descartes", nil
-}
-
-// GetUserEmail returns the email address that the user has used to configure git.
-func (r *mockRepoForTest) GetUserEmail() (string, error) {
-	return "user@example.com", nil
-}
-
-// GetCoreEditor returns the name of the editor that the user has used to configure git.
-func (r *mockRepoForTest) GetCoreEditor() (string, error) {
-	return "vi", nil
-}
-
-// GetRemotes returns the configured remotes repositories.
-func (r *mockRepoForTest) GetRemotes() (map[string]string, error) {
-	return map[string]string{
-		"origin": "git://github.com/MichaelMure/git-bug",
-	}, nil
-}
-
 // PushRefs push git refs to a remote
-func (r *mockRepoForTest) PushRefs(remote string, refSpec string) (string, error) {
+func (r *mockRepoData) PushRefs(remote string, refSpec string) (string, error) {
 	return "", nil
 }
 
-func (r *mockRepoForTest) FetchRefs(remote string, refSpec string) (string, error) {
+func (r *mockRepoData) FetchRefs(remote string, refSpec string) (string, error) {
 	return "", nil
 }
 
-func (r *mockRepoForTest) StoreData(data []byte) (Hash, error) {
+func (r *mockRepoData) StoreData(data []byte) (Hash, error) {
 	rawHash := sha1.Sum(data)
 	hash := Hash(fmt.Sprintf("%x", rawHash))
 	r.blobs[hash] = data
 	return hash, nil
 }
 
-func (r *mockRepoForTest) ReadData(hash Hash) ([]byte, error) {
+func (r *mockRepoData) ReadData(hash Hash) ([]byte, error) {
 	data, ok := r.blobs[hash]
 
 	if !ok {
@@ -110,7 +156,7 @@ func (r *mockRepoForTest) ReadData(hash Hash) ([]byte, error) {
 	return data, nil
 }
 
-func (r *mockRepoForTest) StoreTree(entries []TreeEntry) (Hash, error) {
+func (r *mockRepoData) StoreTree(entries []TreeEntry) (Hash, error) {
 	buffer := prepareTreeEntries(entries)
 	rawHash := sha1.Sum(buffer.Bytes())
 	hash := Hash(fmt.Sprintf("%x", rawHash))
@@ -119,7 +165,7 @@ func (r *mockRepoForTest) StoreTree(entries []TreeEntry) (Hash, error) {
 	return hash, nil
 }
 
-func (r *mockRepoForTest) StoreCommit(treeHash Hash) (Hash, error) {
+func (r *mockRepoData) StoreCommit(treeHash Hash) (Hash, error) {
 	rawHash := sha1.Sum([]byte(treeHash))
 	hash := Hash(fmt.Sprintf("%x", rawHash))
 	r.commits[hash] = commit{
@@ -128,7 +174,7 @@ func (r *mockRepoForTest) StoreCommit(treeHash Hash) (Hash, error) {
 	return hash, nil
 }
 
-func (r *mockRepoForTest) StoreCommitWithParent(treeHash Hash, parent Hash) (Hash, error) {
+func (r *mockRepoData) StoreCommitWithParent(treeHash Hash, parent Hash) (Hash, error) {
 	rawHash := sha1.Sum([]byte(treeHash + parent))
 	hash := Hash(fmt.Sprintf("%x", rawHash))
 	r.commits[hash] = commit{
@@ -138,22 +184,22 @@ func (r *mockRepoForTest) StoreCommitWithParent(treeHash Hash, parent Hash) (Has
 	return hash, nil
 }
 
-func (r *mockRepoForTest) UpdateRef(ref string, hash Hash) error {
+func (r *mockRepoData) UpdateRef(ref string, hash Hash) error {
 	r.refs[ref] = hash
 	return nil
 }
 
-func (r *mockRepoForTest) RemoveRef(ref string) error {
+func (r *mockRepoData) RemoveRef(ref string) error {
 	delete(r.refs, ref)
 	return nil
 }
 
-func (r *mockRepoForTest) RefExist(ref string) (bool, error) {
+func (r *mockRepoData) RefExist(ref string) (bool, error) {
 	_, exist := r.refs[ref]
 	return exist, nil
 }
 
-func (r *mockRepoForTest) CopyRef(source string, dest string) error {
+func (r *mockRepoData) CopyRef(source string, dest string) error {
 	hash, exist := r.refs[source]
 
 	if !exist {
@@ -164,7 +210,7 @@ func (r *mockRepoForTest) CopyRef(source string, dest string) error {
 	return nil
 }
 
-func (r *mockRepoForTest) ListRefs(refPrefix string) ([]string, error) {
+func (r *mockRepoData) ListRefs(refPrefix string) ([]string, error) {
 	var keys []string
 
 	for k := range r.refs {
@@ -176,7 +222,7 @@ func (r *mockRepoForTest) ListRefs(refPrefix string) ([]string, error) {
 	return keys, nil
 }
 
-func (r *mockRepoForTest) ListCommits(ref string) ([]Hash, error) {
+func (r *mockRepoData) ListCommits(ref string) ([]Hash, error) {
 	var hashes []Hash
 
 	hash := r.refs[ref]
@@ -195,7 +241,7 @@ func (r *mockRepoForTest) ListCommits(ref string) ([]Hash, error) {
 	return hashes, nil
 }
 
-func (r *mockRepoForTest) ReadTree(hash Hash) ([]TreeEntry, error) {
+func (r *mockRepoData) ReadTree(hash Hash) ([]TreeEntry, error) {
 	var data string
 
 	data, ok := r.trees[hash]
@@ -218,7 +264,7 @@ func (r *mockRepoForTest) ReadTree(hash Hash) ([]TreeEntry, error) {
 	return readTreeEntries(data)
 }
 
-func (r *mockRepoForTest) FindCommonAncestor(hash1 Hash, hash2 Hash) (Hash, error) {
+func (r *mockRepoData) FindCommonAncestor(hash1 Hash, hash2 Hash) (Hash, error) {
 	ancestor1 := []Hash{hash1}
 
 	for hash1 != "" {
@@ -250,7 +296,7 @@ func (r *mockRepoForTest) FindCommonAncestor(hash1 Hash, hash2 Hash) (Hash, erro
 	}
 }
 
-func (r *mockRepoForTest) GetTreeHash(commit Hash) (Hash, error) {
+func (r *mockRepoData) GetTreeHash(commit Hash) (Hash, error) {
 	c, ok := r.commits[commit]
 	if !ok {
 		return "", fmt.Errorf("unknown commit")
@@ -259,7 +305,21 @@ func (r *mockRepoForTest) GetTreeHash(commit Hash) (Hash, error) {
 	return c.treeHash, nil
 }
 
-func (r *mockRepoForTest) GetOrCreateClock(name string) (lamport.Clock, error) {
+func (r *mockRepoData) AddRemote(name string, url string) error {
+	panic("implement me")
+}
+
+type mockRepoClock struct {
+	clocks map[string]lamport.Clock
+}
+
+func NewMockRepoClock() *mockRepoClock {
+	return &mockRepoClock{
+		clocks: make(map[string]lamport.Clock),
+	}
+}
+
+func (r *mockRepoClock) GetOrCreateClock(name string) (lamport.Clock, error) {
 	if c, ok := r.clocks[name]; ok {
 		return c, nil
 	}
@@ -267,8 +327,4 @@ func (r *mockRepoForTest) GetOrCreateClock(name string) (lamport.Clock, error) {
 	c := lamport.NewMemClock()
 	r.clocks[name] = c
 	return c, nil
-}
-
-func (r *mockRepoForTest) AddRemote(name string, url string) error {
-	panic("implement me")
 }
