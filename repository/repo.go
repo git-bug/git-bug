@@ -22,6 +22,12 @@ type Repo interface {
 	RepoData
 }
 
+// ClockedRepo is a Repo that also has Lamport clocks
+type ClockedRepo interface {
+	Repo
+	RepoClock
+}
+
 // RepoConfig access the configuration of a repository
 type RepoConfig interface {
 	// LocalConfig give access to the repository scoped configuration
@@ -103,10 +109,8 @@ type RepoData interface {
 	ListCommits(ref string) ([]Hash, error)
 }
 
-// ClockedRepo is a Repo that also has Lamport clocks
-type ClockedRepo interface {
-	Repo
-
+// RepoClock give access to Lamport clocks
+type RepoClock interface {
 	// GetOrCreateClock return a Lamport clock stored in the Repo.
 	// If the clock doesn't exist, it's created.
 	GetOrCreateClock(name string) (lamport.Clock, error)
@@ -127,7 +131,11 @@ type ClockLoader struct {
 // TestedRepo is an extended ClockedRepo with function for testing only
 type TestedRepo interface {
 	ClockedRepo
+	repoTest
+}
 
+// repoTest give access to test only functions
+type repoTest interface {
 	// AddRemote add a new remote to the repository
 	AddRemote(name string, url string) error
 }
