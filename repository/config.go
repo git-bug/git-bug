@@ -123,3 +123,23 @@ func (m *mergedConfig) ReadTimestamp(key string) (time.Time, error) {
 	}
 	return m.global.ReadTimestamp(key)
 }
+
+var _ ConfigWrite = &configPanicWriter{}
+
+type configPanicWriter struct{}
+
+func (c configPanicWriter) StoreString(key, value string) error {
+	panic("not implemented")
+}
+
+func (c configPanicWriter) StoreTimestamp(key string, value time.Time) error {
+	panic("not implemented")
+}
+
+func (c configPanicWriter) StoreBool(key string, value bool) error {
+	panic("not implemented")
+}
+
+func (c configPanicWriter) RemoveAll(keyPrefix string) error {
+	panic("not implemented")
+}

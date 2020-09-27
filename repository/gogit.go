@@ -160,7 +160,7 @@ func InitBareGoGitRepo(path string) (*GoGitRepo, error) {
 
 // LocalConfig give access to the repository scoped configuration
 func (repo *GoGitRepo) LocalConfig() Config {
-	return newGoGitConfig(repo.r)
+	return newGoGitLocalConfig(repo.r)
 }
 
 // GlobalConfig give access to the global scoped configuration
@@ -168,7 +168,7 @@ func (repo *GoGitRepo) GlobalConfig() Config {
 	// TODO: replace that with go-git native implementation once it's supported
 	// see: https://github.com/go-git/go-git
 	// see: https://github.com/src-d/go-git/issues/760
-	return newGitConfig(gitCli{repo.path}, true)
+	return newGoGitGlobalConfig(repo.r)
 }
 
 // AnyConfig give access to a merged local/global configuration
