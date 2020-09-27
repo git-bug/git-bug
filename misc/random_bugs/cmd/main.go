@@ -1,10 +1,9 @@
-// +build ignore
-
 package main
 
 import (
 	"os"
 
+	"github.com/MichaelMure/git-bug/bug"
 	rb "github.com/MichaelMure/git-bug/misc/random_bugs"
 	"github.com/MichaelMure/git-bug/repository"
 )
@@ -17,7 +16,11 @@ func main() {
 		panic(err)
 	}
 
-	repo, err := repository.NewGitRepo(dir)
+	loaders := []repository.ClockLoader{
+		bug.ClockLoader,
+	}
+
+	repo, err := repository.NewGitRepo(dir, loaders)
 	if err != nil {
 		panic(err)
 	}
