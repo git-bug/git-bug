@@ -212,9 +212,12 @@ func lsDefaultFormatter(env *Env, bugExcerpts []*cache.BugExcerpt) error {
 		titleFmt := text.LeftPadMaxLine(strings.TrimSpace(b.Title), 50-text.Len(labelsFmt), 0)
 		authorFmt := text.LeftPadMaxLine(name, 15, 0)
 
-		comments := fmt.Sprintf("%4d 💬", b.LenComments)
-		if b.LenComments > 9999 {
-			comments = "    ∞ 💬"
+		comments := fmt.Sprintf("%3d 💬", b.LenComments-1)
+		if b.LenComments-1 <= 0 {
+			comments = ""
+		}
+		if b.LenComments-1 > 999 {
+			comments = "  ∞ 💬"
 		}
 
 		env.out.Printf("%s %s\t%s\t%s\t%s\n",
