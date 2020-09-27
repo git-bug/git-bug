@@ -333,13 +333,34 @@ func (repo *GoGitRepo) StoreTree(mapping []TreeEntry) (Hash, error) {
 
 // ReadTree will return the list of entries in a Git tree
 func (repo *GoGitRepo) ReadTree(hash Hash) ([]TreeEntry, error) {
-	obj, err := repo.r.TreeObject(plumbing.NewHash(hash.String()))
+	h := plumbing.NewHash(hash.String())
+
+	// the given hash could be a tree or a commit
+	obj, err := repo.r.Storer.EncodedObject(plumbing.AnyObject, h)
 	if err != nil {
 		return nil, err
 	}
 
-	treeEntries := make([]TreeEntry, len(obj.Entries))
-	for i, entry := range obj.Entries {
+	var tree *object.Tree
+	switch obj.Type() {
+	case plumbing.TreeObject:
+		tree, err = object.DecodeTree(repo.r.Storer, obj)
+	case plumbing.CommitObject:
+		var commit *object.Commit
+		commit, err = object.DecodeCommit(repo.r.Storer, obj)
+		if err != nil {
+			return nil, err
+		}
+		tree, err = commit.Tree()
+	default:
+		return nil, fmt.Errorf("given hash is not a tree")
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	treeEntries := make([]TreeEntry, len(tree.Entries))
+	for i, entry := range tree.Entries {
 		objType := Blob
 		if entry.Mode == filemode.Dir {
 			objType = Tree

@@ -82,6 +82,7 @@ type RepoData interface {
 	StoreTree(mapping []TreeEntry) (Hash, error)
 
 	// ReadTree will return the list of entries in a Git tree
+	// The given hash could be from either a commit or a tree
 	ReadTree(hash Hash) ([]TreeEntry, error)
 
 	// StoreCommit will store a Git commit with the given Git tree
