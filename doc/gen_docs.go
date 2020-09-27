@@ -5,8 +5,10 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sync"
 	"time"
 
+	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 
 	"github.com/MichaelMure/git-bug/commands"
@@ -15,34 +17,34 @@ import (
 func main() {
 	fmt.Println("Generating documentation ...")
 
-	tasks := map[string]func() error{
+	tasks := map[string]func(*cobra.Command) error{
 		"ManPage":  genManPage,
 		"Markdown": genMarkdown,
 	}
 
-	// Due to concurrency issues in cobra, the following can't be concurrent :(
-
-	// var wg sync.WaitGroup
+	var wg sync.WaitGroup
 	for name, f := range tasks {
-		// wg.Add(1)
-		// go func(name string, f func() error) {
-		// 	defer wg.Done()
-		err := f()
-		if err != nil {
-			fmt.Printf("  - %s: %v\n", name, err)
-			return
-		}
-		fmt.Printf("  - %s: ok\n", name)
-		// }(name, f)
+		wg.Add(1)
+		go func(name string, f func(*cobra.Command) error) {
+			defer wg.Done()
+			root := commands.NewRootCommand()
+			err := f(root)
+			if err != nil {
+				fmt.Printf("  - %s: %v\n", name, err)
+				return
+			}
+			fmt.Printf("  - %s: ok\n", name)
+		}(name, f)
 	}
 
-	// wg.Wait()
+	wg.Wait()
 }
 
-func genManPage() error {
+func genManPage(root *cobra.Command) error {
 	cwd, _ := os.Getwd()
 	dir := path.Join(cwd, "doc", "man")
 
+	// fixed date to avoid having to commit each month
 	date := time.Date(2019, 4, 1, 12, 0, 0, 0, time.UTC)
 
 	header := &doc.GenManHeader{
@@ -62,10 +64,10 @@ func genManPage() error {
 		}
 	}
 
-	return doc.GenManTree(commands.NewRootCommand(), header, dir)
+	return doc.GenManTree(root, header, dir)
 }
 
-func genMarkdown() error {
+func genMarkdown(root *cobra.Command) error {
 	cwd, _ := os.Getwd()
 	dir := path.Join(cwd, "doc", "md")
 
@@ -79,5 +81,5 @@ func genMarkdown() error {
 		}
 	}
 
-	return doc.GenMarkdownTree(commands.NewRootCommand(), dir)
+	return doc.GenMarkdownTree(root, dir)
 }
