@@ -166,7 +166,7 @@ func showDefaultFormatter(env *Env, snapshot *bug.Snapshot) error {
 		)
 
 		if comment.Message == "" {
-			message = colors.GreyBold("No description provided.")
+			message = colors.BlackBold(colors.WhiteBg("No description provided."))
 		} else {
 			message = comment.Message
 		}

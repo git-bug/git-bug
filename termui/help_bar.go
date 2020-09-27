@@ -17,13 +17,13 @@ type helpBar []struct {
 func (hb helpBar) Render(maxX int) string {
 	var builder strings.Builder
 	for _, entry := range hb {
-		builder.WriteString(colors.BlueBg(fmt.Sprintf("[%s] %s", entry.keys, entry.text)))
+		builder.WriteString(colors.White(colors.BlueBg(fmt.Sprintf("[%s] %s", entry.keys, entry.text))))
 		builder.WriteByte(' ')
 	}
 
 	l := text.Len(builder.String())
 	if l < maxX {
-		builder.WriteString(colors.BlueBg(strings.Repeat(" ", maxX-l)))
+		builder.WriteString(colors.White(colors.BlueBg(strings.Repeat(" ", maxX-l))))
 	}
 
 	return builder.String()
