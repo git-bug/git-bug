@@ -157,6 +157,11 @@ func RepoDataTest(t *testing.T, repo RepoData) {
 	require.NoError(t, err)
 	require.Equal(t, treeHash2, treeHash2Read)
 
+	// ReadTree should accept tree and commit hashes
+	tree1read, err := repo.ReadTree(commit1)
+	require.NoError(t, err)
+	require.Equal(t, tree1read, tree1)
+
 	// Ref
 
 	exist1, err := repo.RefExist("refs/bugs/ref1")
