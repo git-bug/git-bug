@@ -208,8 +208,30 @@ func (repo *GoGitRepo) GetUserEmail() (string, error) {
 
 // GetCoreEditor returns the name of the editor that the user has used to configure git.
 func (repo *GoGitRepo) GetCoreEditor() (string, error) {
+	// See https://git-scm.com/docs/git-var
+	// The order of preference is the $GIT_EDITOR environment variable, then core.editor configuration, then $VISUAL, then $EDITOR, and then the default chosen at compile time, which is usually vi.
 
-	panic("implement me")
+	if val, ok := os.LookupEnv("GIT_EDITOR"); ok {
+		return val, nil
+	}
+
+	val, err := repo.AnyConfig().ReadString("core.editor")
+	if err == nil && val != "" {
+		return val, nil
+	}
+	if err != nil && err != ErrNoConfigEntry {
+		return "", err
+	}
+
+	if val, ok := os.LookupEnv("VISUAL"); ok {
+		return val, nil
+	}
+
+	if val, ok := os.LookupEnv("EDITOR"); ok {
+		return val, nil
+	}
+
+	return "vi", nil
 }
 
 // GetRemotes returns the configured remotes repositories.
