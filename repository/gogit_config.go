@@ -7,7 +7,6 @@ import (
 	"time"
 
 	gogit "github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing/format/config"
 )
 
 var _ Config = &goGitConfig{}
@@ -35,7 +34,7 @@ func (ggc *goGitConfig) StoreString(key, value string) error {
 		cfg.Raw.Section(split[0]).SetOption(split[1], value)
 	default:
 		section := split[0]
-		subsection := strings.Join(split[1:len(split)-2], ".")
+		subsection := strings.Join(split[1:len(split)-1], ".")
 		option := split[len(split)-1]
 		cfg.Raw.Section(section).Subsection(subsection).SetOption(option, value)
 	}
@@ -58,31 +57,50 @@ func (ggc *goGitConfig) ReadAll(keyPrefix string) (map[string]string, error) {
 	}
 
 	split := strings.Split(keyPrefix, ".")
-
-	var opts config.Options
+	result := make(map[string]string)
 
 	switch {
-	case len(split) < 1:
-		return nil, fmt.Errorf("invalid key prefix")
+	case keyPrefix == "":
+		for _, section := range cfg.Raw.Sections {
+			for _, option := range section.Options {
+				result[fmt.Sprintf("%s.%s", section.Name, option.Key)] = option.Value
+			}
+			for _, subsection := range section.Subsections {
+				for _, option := range subsection.Options {
+					result[fmt.Sprintf("%s.%s.%s", section.Name, subsection.Name, option.Key)] = option.Value
+				}
+			}
+		}
 	case len(split) == 1:
-		opts = cfg.Raw.Section(split[0]).Options
+		if !cfg.Raw.HasSection(split[0]) {
+			return nil, fmt.Errorf("invalid section")
+		}
+		section := cfg.Raw.Section(split[0])
+		for _, option := range section.Options {
+			result[fmt.Sprintf("%s.%s", section.Name, option.Key)] = option.Value
+		}
+		for _, subsection := range section.Subsections {
+			for _, option := range subsection.Options {
+				result[fmt.Sprintf("%s.%s.%s", section.Name, subsection.Name, option.Key)] = option.Value
+			}
+		}
 	default:
-		section := split[0]
-		subsection := strings.Join(split[1:len(split)-1], ".")
-		opts = cfg.Raw.Section(section).Subsection(subsection).Options
+		if !cfg.Raw.HasSection(split[0]) {
+			return nil, fmt.Errorf("invalid section")
+		}
+		section := cfg.Raw.Section(split[0])
+		rest := strings.Join(split[1:], ".")
+		for _, subsection := range section.Subsections {
+			if strings.HasPrefix(subsection.Name, rest) {
+				for _, option := range subsection.Options {
+					result[fmt.Sprintf("%s.%s.%s", section.Name, subsection.Name, option.Key)] = option.Value
+				}
+			}
+		}
 	}
 
-	if len(opts) == 0 {
+	if len(result) == 0 {
 		return nil, fmt.Errorf("invalid section")
-	}
-
-	if keyPrefix[len(keyPrefix)-1:] != "." {
-		keyPrefix += "."
-	}
-
-	result := make(map[string]string, len(opts))
-	for _, opt := range opts {
-		result[keyPrefix+opt.Key] = opt.Value
 	}
 
 	return result, nil
@@ -159,26 +177,34 @@ func (ggc *goGitConfig) RemoveAll(keyPrefix string) error {
 	split := strings.Split(keyPrefix, ".")
 
 	switch {
-	case len(split) < 1:
-		return fmt.Errorf("invalid key prefix")
+	case keyPrefix == "":
+		cfg.Raw.Sections = nil
+		// warning: this does not actually remove everything as go-git config hold
+		// some entries in multiple places (cfg.User ...)
 	case len(split) == 1:
-		if len(cfg.Raw.Section(split[0]).Options) > 0 {
+		if cfg.Raw.HasSection(split[0]) {
 			cfg.Raw.RemoveSection(split[0])
 		} else {
 			return fmt.Errorf("invalid key prefix")
 		}
 	default:
-		section := split[0]
+		if !cfg.Raw.HasSection(split[0]) {
+			return fmt.Errorf("invalid key prefix")
+		}
+		section := cfg.Raw.Section(split[0])
 		rest := strings.Join(split[1:], ".")
 
-		if cfg.Raw.Section(section).HasSubsection(rest) {
-			cfg.Raw.RemoveSubsection(section, rest)
-		} else {
-			if cfg.Raw.Section(section).HasOption(rest) {
-				cfg.Raw.Section(section).RemoveOption(rest)
-			} else {
-				return fmt.Errorf("invalid key prefix")
-			}
+		ok := false
+		if section.HasSubsection(rest) {
+			section.RemoveSubsection(rest)
+			ok = true
+		}
+		if section.HasOption(rest) {
+			section.RemoveOption(rest)
+			ok = true
+		}
+		if !ok {
+			return fmt.Errorf("invalid key prefix")
 		}
 	}
 
