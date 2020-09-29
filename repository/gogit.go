@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	stdpath "path"
 	"path/filepath"
 	"strings"
@@ -231,7 +232,22 @@ func (repo *GoGitRepo) GetCoreEditor() (string, error) {
 		return val, nil
 	}
 
-	return "vi", nil
+	priorities := []string{
+		"editor",
+		"nano",
+		"vim",
+		"vi",
+		"emacs",
+	}
+
+	for _, cmd := range priorities {
+		if _, err = exec.LookPath(cmd); err == nil {
+			return cmd, nil
+		}
+
+	}
+
+	return "ed", nil
 }
 
 // GetRemotes returns the configured remotes repositories.
