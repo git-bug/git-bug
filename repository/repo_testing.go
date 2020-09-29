@@ -188,7 +188,7 @@ func RepoDataTest(t *testing.T, repo RepoData) {
 
 	commits, err := repo.ListCommits("refs/bugs/ref2")
 	require.NoError(t, err)
-	require.ElementsMatch(t, []Hash{commit1, commit2}, commits)
+	require.Equal(t, []Hash{commit1, commit2}, commits)
 
 	// Graph
 

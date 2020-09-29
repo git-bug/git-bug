@@ -536,16 +536,14 @@ func (repo *GoGitRepo) ListCommits(ref string) ([]Hash, error) {
 	if err != nil {
 		return nil, err
 	}
-	commits := []Hash{Hash(commit.Hash.String())}
+	hashes := []Hash{Hash(commit.Hash.String())}
 
 	for {
 		commit, err = commit.Parent(0)
-
+		if err == object.ErrParentNotFound {
+			break
+		}
 		if err != nil {
-			if err == object.ErrParentNotFound {
-				break
-			}
-
 			return nil, err
 		}
 
@@ -553,10 +551,10 @@ func (repo *GoGitRepo) ListCommits(ref string) ([]Hash, error) {
 			return nil, fmt.Errorf("multiple parents")
 		}
 
-		commits = append(commits, Hash(commit.Hash.String()))
+		hashes = append([]Hash{Hash(commit.Hash.String())}, hashes...)
 	}
 
-	return commits, nil
+	return hashes, nil
 }
 
 // GetOrCreateClock return a Lamport clock stored in the Repo.
