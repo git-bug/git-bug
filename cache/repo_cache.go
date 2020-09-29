@@ -25,6 +25,8 @@ const formatVersion = 2
 const defaultMaxLoadedBugs = 1000
 
 var _ repository.RepoCommon = &RepoCache{}
+var _ repository.RepoConfig = &RepoCache{}
+var _ repository.RepoKeyring = &RepoCache{}
 
 // RepoCache is a cache for a Repository. This cache has multiple functions:
 //

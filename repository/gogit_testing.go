@@ -3,24 +3,22 @@ package repository
 import (
 	"io/ioutil"
 	"log"
-
-	"github.com/99designs/keyring"
 )
 
 // This is intended for testing only
 
-func CreateTestRepo(bare bool) TestedRepo {
+func CreateGoGitTestRepo(bare bool) TestedRepo {
 	dir, err := ioutil.TempDir("", "")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	var creator func(string) (*GitRepo, error)
+	var creator func(string) (*GoGitRepo, error)
 
 	if bare {
-		creator = InitBareGitRepo
+		creator = InitBareGoGitRepo
 	} else {
-		creator = InitGitRepo
+		creator = InitGoGitRepo
 	}
 
 	repo, err := creator(dir)
@@ -36,17 +34,13 @@ func CreateTestRepo(bare bool) TestedRepo {
 		log.Fatal("failed to set user.email for test repository: ", err)
 	}
 
-	// make sure we use a mock keyring for testing to not interact with the global system
-	return &replaceKeyring{
-		TestedRepo: repo,
-		keyring:    keyring.NewArrayKeyring(nil),
-	}
+	return repo
 }
 
-func SetupReposAndRemote() (repoA, repoB, remote TestedRepo) {
-	repoA = CreateTestRepo(false)
-	repoB = CreateTestRepo(false)
-	remote = CreateTestRepo(true)
+func SetupGoGitReposAndRemote() (repoA, repoB, remote TestedRepo) {
+	repoA = CreateGoGitTestRepo(false)
+	repoB = CreateGoGitTestRepo(false)
+	remote = CreateGoGitTestRepo(true)
 
 	remoteAddr := "file://" + remote.GetPath()
 
@@ -61,14 +55,4 @@ func SetupReposAndRemote() (repoA, repoB, remote TestedRepo) {
 	}
 
 	return repoA, repoB, remote
-}
-
-// replaceKeyring allow to replace the Keyring of the underlying repo
-type replaceKeyring struct {
-	TestedRepo
-	keyring Keyring
-}
-
-func (rk replaceKeyring) Keyring() Keyring {
-	return rk.keyring
 }

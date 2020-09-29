@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	configKeyLoginPasswordLogin    = "login"
-	configKeyLoginPasswordPassword = "password"
+	keyringKeyLoginPasswordLogin    = "login"
+	keyringKeyLoginPasswordPassword = "password"
 )
 
 var _ Credential = &LoginPassword{}
@@ -29,15 +29,15 @@ func NewLoginPassword(target, login, password string) *LoginPassword {
 }
 
 func NewLoginPasswordFromConfig(conf map[string]string) (*LoginPassword, error) {
-	base, err := newCredentialBaseFromConfig(conf)
+	base, err := newCredentialBaseFromData(conf)
 	if err != nil {
 		return nil, err
 	}
 
 	return &LoginPassword{
 		credentialBase: base,
-		Login:          conf[configKeyLoginPasswordLogin],
-		Password:       conf[configKeyLoginPasswordPassword],
+		Login:          conf[keyringKeyLoginPasswordLogin],
+		Password:       conf[keyringKeyLoginPasswordPassword],
 	}, nil
 }
 
@@ -70,7 +70,7 @@ func (lp *LoginPassword) Validate() error {
 
 func (lp *LoginPassword) toConfig() map[string]string {
 	return map[string]string{
-		configKeyLoginPasswordLogin:    lp.Login,
-		configKeyLoginPasswordPassword: lp.Password,
+		keyringKeyLoginPasswordLogin:    lp.Login,
+		keyringKeyLoginPasswordPassword: lp.Password,
 	}
 }

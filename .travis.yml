@@ -1,11 +1,11 @@
 matrix:
   include:
   - language: go
-    go: 1.12.x
-  - language: go
     go: 1.13.x
   - language: go
     go: 1.14.x
+  - language: go
+    go: 1.15.x
   - language: node_js
     node_js: node
     before_install:
@@ -41,5 +41,5 @@ deploy:
   file: dist/**/*
   on:
     repo: MichaelMure/git-bug
-    go: 1.13.x
+    go: 1.14.x
     tags: true

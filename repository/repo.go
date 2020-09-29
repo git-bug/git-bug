@@ -2,29 +2,48 @@
 package repository
 
 import (
-	"bytes"
 	"errors"
-	"strings"
 
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
 var (
-	ErrNoConfigEntry       = errors.New("no config entry for the given key")
-	ErrMultipleConfigEntry = errors.New("multiple config entry for the given key")
 	// ErrNotARepo is the error returned when the git repo root wan't be found
 	ErrNotARepo = errors.New("not a git repository")
 	// ErrClockNotExist is the error returned when a clock can't be found
 	ErrClockNotExist = errors.New("clock doesn't exist")
 )
 
+// Repo represents a source code repository.
+type Repo interface {
+	RepoConfig
+	RepoKeyring
+	RepoCommon
+	RepoData
+}
+
+// ClockedRepo is a Repo that also has Lamport clocks
+type ClockedRepo interface {
+	Repo
+	RepoClock
+}
+
 // RepoConfig access the configuration of a repository
 type RepoConfig interface {
 	// LocalConfig give access to the repository scoped configuration
 	LocalConfig() Config
 
-	// GlobalConfig give access to the git global configuration
+	// GlobalConfig give access to the global scoped configuration
 	GlobalConfig() Config
+
+	// AnyConfig give access to a merged local/global configuration
+	AnyConfig() ConfigRead
+}
+
+// RepoKeyring give access to a user-wide storage for secrets
+type RepoKeyring interface {
+	// Keyring give access to a user-wide storage for secrets
+	Keyring() Keyring
 }
 
 // RepoCommon represent the common function the we want all the repo to implement
@@ -45,11 +64,8 @@ type RepoCommon interface {
 	GetRemotes() (map[string]string, error)
 }
 
-// Repo represents a source code repository.
-type Repo interface {
-	RepoConfig
-	RepoCommon
-
+// RepoData give access to the git data storage
+type RepoData interface {
 	// FetchRefs fetch git refs from a remote
 	FetchRefs(remote string, refSpec string) (string, error)
 
@@ -66,6 +82,7 @@ type Repo interface {
 	StoreTree(mapping []TreeEntry) (Hash, error)
 
 	// ReadTree will return the list of entries in a Git tree
+	// The given hash could be from either a commit or a tree
 	ReadTree(hash Hash) ([]TreeEntry, error)
 
 	// StoreCommit will store a Git commit with the given Git tree
@@ -87,7 +104,7 @@ type Repo interface {
 	RemoveRef(ref string) error
 
 	// ListRefs will return a list of Git ref matching the given refspec
-	ListRefs(refspec string) ([]string, error)
+	ListRefs(refPrefix string) ([]string, error)
 
 	// RefExist will check if a reference exist in Git
 	RefExist(ref string) (bool, error)
@@ -99,10 +116,8 @@ type Repo interface {
 	ListCommits(ref string) ([]Hash, error)
 }
 
-// ClockedRepo is a Repo that also has Lamport clocks
-type ClockedRepo interface {
-	Repo
-
+// RepoClock give access to Lamport clocks
+type RepoClock interface {
 	// GetOrCreateClock return a Lamport clock stored in the Repo.
 	// If the clock doesn't exist, it's created.
 	GetOrCreateClock(name string) (lamport.Clock, error)
@@ -120,41 +135,14 @@ type ClockLoader struct {
 	Witnesser func(repo ClockedRepo) error
 }
 
-func prepareTreeEntries(entries []TreeEntry) bytes.Buffer {
-	var buffer bytes.Buffer
-
-	for _, entry := range entries {
-		buffer.WriteString(entry.Format())
-	}
-
-	return buffer
-}
-
-func readTreeEntries(s string) ([]TreeEntry, error) {
-	split := strings.Split(strings.TrimSpace(s), "\n")
-
-	casted := make([]TreeEntry, len(split))
-	for i, line := range split {
-		if line == "" {
-			continue
-		}
-
-		entry, err := ParseTreeEntry(line)
-
-		if err != nil {
-			return nil, err
-		}
-
-		casted[i] = entry
-	}
-
-	return casted, nil
-}
-
 // TestedRepo is an extended ClockedRepo with function for testing only
 type TestedRepo interface {
 	ClockedRepo
+	repoTest
+}
 
+// repoTest give access to test only functions
+type repoTest interface {
 	// AddRemote add a new remote to the repository
 	AddRemote(name string, url string) error
 }

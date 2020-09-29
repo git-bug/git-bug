@@ -1,11 +1,11 @@
 package auth
 
 import (
-	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -14,12 +14,12 @@ import (
 )
 
 const (
-	configKeyPrefix     = "git-bug.auth"
-	configKeyKind       = "kind"
-	configKeyTarget     = "target"
-	configKeyCreateTime = "createtime"
-	configKeySalt       = "salt"
-	configKeyPrefixMeta = "meta."
+	keyringKeyPrefix     = "auth-"
+	keyringKeyKind       = "kind"
+	keyringKeyTarget     = "target"
+	keyringKeyCreateTime = "createtime"
+	keyringKeySalt       = "salt"
+	keyringKeyPrefixMeta = "meta."
 
 	MetaKeyLogin   = "login"
 	MetaKeyBaseURL = "base-url"
@@ -57,22 +57,23 @@ type Credential interface {
 }
 
 // Load loads a credential from the repo config
-func LoadWithId(repo repository.RepoConfig, id entity.Id) (Credential, error) {
-	keyPrefix := fmt.Sprintf("%s.%s.", configKeyPrefix, id)
+func LoadWithId(repo repository.RepoKeyring, id entity.Id) (Credential, error) {
+	key := fmt.Sprintf("%s%s", keyringKeyPrefix, id)
 
-	// read token config pairs
-	rawconfigs, err := repo.GlobalConfig().ReadAll(keyPrefix)
-	if err != nil {
-		// Not exactly right due to the limitation of ReadAll()
+	item, err := repo.Keyring().Get(key)
+	if err == repository.ErrKeyringKeyNotFound {
 		return nil, ErrCredentialNotExist
 	}
+	if err != nil {
+		return nil, err
+	}
 
-	return loadFromConfig(rawconfigs, id)
+	return decode(item)
 }
 
 // LoadWithPrefix load a credential from the repo config with a prefix
-func LoadWithPrefix(repo repository.RepoConfig, prefix string) (Credential, error) {
-	creds, err := List(repo)
+func LoadWithPrefix(repo repository.RepoKeyring, prefix string) (Credential, error) {
+	keys, err := repo.Keyring().Keys()
 	if err != nil {
 		return nil, err
 	}
@@ -80,10 +81,22 @@ func LoadWithPrefix(repo repository.RepoConfig, prefix string) (Credential, erro
 	// preallocate but empty
 	matching := make([]Credential, 0, 5)
 
-	for _, cred := range creds {
-		if cred.ID().HasPrefix(prefix) {
-			matching = append(matching, cred)
+	for _, key := range keys {
+		if !strings.HasPrefix(key, keyringKeyPrefix+prefix) {
+			continue
 		}
+
+		item, err := repo.Keyring().Get(key)
+		if err != nil {
+			return nil, err
+		}
+
+		cred, err := decode(item)
+		if err != nil {
+			return nil, err
+		}
+
+		matching = append(matching, cred)
 	}
 
 	if len(matching) > 1 {
@@ -101,29 +114,25 @@ func LoadWithPrefix(repo repository.RepoConfig, prefix string) (Credential, erro
 	return matching[0], nil
 }
 
-// loadFromConfig is a helper to construct a Credential from the set of git configs
-func loadFromConfig(rawConfigs map[string]string, id entity.Id) (Credential, error) {
-	keyPrefix := fmt.Sprintf("%s.%s.", configKeyPrefix, id)
+// decode is a helper to construct a Credential from the keyring Item
+func decode(item repository.Item) (Credential, error) {
+	data := make(map[string]string)
 
-	// trim key prefix
-	configs := make(map[string]string)
-	for key, value := range rawConfigs {
-		newKey := strings.TrimPrefix(key, keyPrefix)
-		configs[newKey] = value
+	err := json.Unmarshal(item.Data, &data)
+	if err != nil {
+		return nil, err
 	}
 
 	var cred Credential
-	var err error
-
-	switch CredentialKind(configs[configKeyKind]) {
+	switch CredentialKind(data[keyringKeyKind]) {
 	case KindToken:
-		cred, err = NewTokenFromConfig(configs)
+		cred, err = NewTokenFromConfig(data)
 	case KindLogin:
-		cred, err = NewLoginFromConfig(configs)
+		cred, err = NewLoginFromConfig(data)
 	case KindLoginPassword:
-		cred, err = NewLoginPasswordFromConfig(configs)
+		cred, err = NewLoginPasswordFromConfig(data)
 	default:
-		return nil, fmt.Errorf("unknown credential type \"%s\"", configs[configKeyKind])
+		return nil, fmt.Errorf("unknown credential type \"%s\"", data[keyringKeyKind])
 	}
 
 	if err != nil {
@@ -133,64 +142,27 @@ func loadFromConfig(rawConfigs map[string]string, id entity.Id) (Credential, err
 	return cred, nil
 }
 
-func metaFromConfig(configs map[string]string) map[string]string {
-	result := make(map[string]string)
-	for key, val := range configs {
-		if strings.HasPrefix(key, configKeyPrefixMeta) {
-			key = strings.TrimPrefix(key, configKeyPrefixMeta)
-			result[key] = val
-		}
-	}
-	if len(result) == 0 {
-		return nil
-	}
-	return result
-}
-
-func makeSalt() []byte {
-	result := make([]byte, 16)
-	_, err := rand.Read(result)
-	if err != nil {
-		panic(err)
-	}
-	return result
-}
-
-func saltFromConfig(configs map[string]string) ([]byte, error) {
-	val, ok := configs[configKeySalt]
-	if !ok {
-		return nil, fmt.Errorf("no credential salt found")
-	}
-	return base64.StdEncoding.DecodeString(val)
-}
-
 // List load all existing credentials
-func List(repo repository.RepoConfig, opts ...Option) ([]Credential, error) {
-	rawConfigs, err := repo.GlobalConfig().ReadAll(configKeyPrefix + ".")
+func List(repo repository.RepoKeyring, opts ...ListOption) ([]Credential, error) {
+	keys, err := repo.Keyring().Keys()
 	if err != nil {
 		return nil, err
-	}
-
-	re := regexp.MustCompile(`^` + configKeyPrefix + `\.([^.]+)\.([^.]+(?:\.[^.]+)*)$`)
-
-	mapped := make(map[string]map[string]string)
-
-	for key, val := range rawConfigs {
-		res := re.FindStringSubmatch(key)
-		if res == nil {
-			continue
-		}
-		if mapped[res[1]] == nil {
-			mapped[res[1]] = make(map[string]string)
-		}
-		mapped[res[1]][res[2]] = val
 	}
 
 	matcher := matcher(opts)
 
 	var credentials []Credential
-	for id, kvs := range mapped {
-		cred, err := loadFromConfig(kvs, entity.Id(id))
+	for _, key := range keys {
+		if !strings.HasPrefix(key, keyringKeyPrefix) {
+			continue
+		}
+
+		item, err := repo.Keyring().Get(key)
+		if err != nil {
+			return nil, err
+		}
+
+		cred, err := decode(item)
 		if err != nil {
 			return nil, err
 		}
@@ -203,74 +175,48 @@ func List(repo repository.RepoConfig, opts ...Option) ([]Credential, error) {
 }
 
 // IdExist return whether a credential id exist or not
-func IdExist(repo repository.RepoConfig, id entity.Id) bool {
+func IdExist(repo repository.RepoKeyring, id entity.Id) bool {
 	_, err := LoadWithId(repo, id)
 	return err == nil
 }
 
 // PrefixExist return whether a credential id prefix exist or not
-func PrefixExist(repo repository.RepoConfig, prefix string) bool {
+func PrefixExist(repo repository.RepoKeyring, prefix string) bool {
 	_, err := LoadWithPrefix(repo, prefix)
 	return err == nil
 }
 
 // Store stores a credential in the global git config
-func Store(repo repository.RepoConfig, cred Credential) error {
-	confs := cred.toConfig()
-
-	prefix := fmt.Sprintf("%s.%s.", configKeyPrefix, cred.ID())
-
-	// Kind
-	err := repo.GlobalConfig().StoreString(prefix+configKeyKind, string(cred.Kind()))
-	if err != nil {
-		return err
-	}
-
-	// Target
-	err = repo.GlobalConfig().StoreString(prefix+configKeyTarget, cred.Target())
-	if err != nil {
-		return err
-	}
-
-	// CreateTime
-	err = repo.GlobalConfig().StoreTimestamp(prefix+configKeyCreateTime, cred.CreateTime())
-	if err != nil {
-		return err
-	}
-
-	// Salt
+func Store(repo repository.RepoKeyring, cred Credential) error {
 	if len(cred.Salt()) != 16 {
 		panic("credentials need to be salted")
 	}
-	encoded := base64.StdEncoding.EncodeToString(cred.Salt())
-	err = repo.GlobalConfig().StoreString(prefix+configKeySalt, encoded)
+
+	confs := cred.toConfig()
+
+	confs[keyringKeyKind] = string(cred.Kind())
+	confs[keyringKeyTarget] = cred.Target()
+	confs[keyringKeyCreateTime] = strconv.Itoa(int(cred.CreateTime().Unix()))
+	confs[keyringKeySalt] = base64.StdEncoding.EncodeToString(cred.Salt())
+
+	for key, val := range cred.Metadata() {
+		confs[keyringKeyPrefixMeta+key] = val
+	}
+
+	data, err := json.Marshal(confs)
 	if err != nil {
 		return err
 	}
 
-	// Metadata
-	for key, val := range cred.Metadata() {
-		err := repo.GlobalConfig().StoreString(prefix+configKeyPrefixMeta+key, val)
-		if err != nil {
-			return err
-		}
-	}
-
-	// Custom
-	for key, val := range confs {
-		err := repo.GlobalConfig().StoreString(prefix+key, val)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return repo.Keyring().Set(repository.Item{
+		Key:  keyringKeyPrefix + cred.ID().String(),
+		Data: data,
+	})
 }
 
 // Remove removes a credential from the global git config
-func Remove(repo repository.RepoConfig, id entity.Id) error {
-	keyPrefix := fmt.Sprintf("%s.%s", configKeyPrefix, id)
-	return repo.GlobalConfig().RemoveAll(keyPrefix)
+func Remove(repo repository.RepoKeyring, id entity.Id) error {
+	return repo.Keyring().Remove(keyringKeyPrefix + id.String())
 }
 
 /*

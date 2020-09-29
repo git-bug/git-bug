@@ -239,7 +239,7 @@ func randomFingerprint() string {
 	return string(b)
 }
 
-func promptTokenOptions(repo repository.RepoConfig, login, owner, project string) (auth.Credential, error) {
+func promptTokenOptions(repo repository.RepoKeyring, login, owner, project string) (auth.Credential, error) {
 	creds, err := auth.List(repo,
 		auth.WithTarget(target),
 		auth.WithKind(auth.KindToken),

@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/pkg/errors"
+
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
-	"github.com/pkg/errors"
 )
 
 // Fetch retrieve updates from a remote

@@ -20,7 +20,7 @@ func main() {
 		bug.ClockLoader,
 	}
 
-	repo, err := repository.NewGitRepo(dir, loaders)
+	repo, err := repository.NewGoGitRepo(dir, loaders)
 	if err != nil {
 		panic(err)
 	}
