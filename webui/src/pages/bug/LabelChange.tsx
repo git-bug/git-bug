@@ -8,7 +8,7 @@ import Label from 'src/components/Label';
 
 import { LabelChangeFragment } from './LabelChangeFragment.generated';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   main: {
     ...theme.typography.body2,
     marginLeft: theme.spacing(1) + 40,

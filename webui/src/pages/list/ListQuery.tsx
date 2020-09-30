@@ -1,4 +1,4 @@
-import { ApolloError } from 'apollo-boost';
+import { ApolloError } from '@apollo/client';
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useHistory, Link } from 'react-router-dom';
 
@@ -16,7 +16,7 @@ import List from './List';
 import { useListBugsQuery } from './ListQuery.generated';
 
 type StylesProps = { searching?: boolean };
-const useStyles = makeStyles<Theme, StylesProps>(theme => ({
+const useStyles = makeStyles<Theme, StylesProps>((theme) => ({
   main: {
     maxWidth: 800,
     margin: 'auto',
@@ -211,7 +211,7 @@ function ListQuery() {
     if (bugs.pageInfo.hasNextPage) {
       nextPage = {
         ...location,
-        search: editParams(params, p => {
+        search: editParams(params, (p) => {
           p.delete('last');
           p.delete('before');
           p.set('first', perPage);
@@ -223,7 +223,7 @@ function ListQuery() {
     if (bugs.pageInfo.hasPreviousPage) {
       previousPage = {
         ...location,
-        search: editParams(params, p => {
+        search: editParams(params, (p) => {
           p.delete('first');
           p.delete('after');
           p.set('last', perPage);
@@ -234,7 +234,7 @@ function ListQuery() {
   }
 
   // Prepare params without paging for editing filters
-  const paramsWithoutPaging = editParams(params, p => {
+  const paramsWithoutPaging = editParams(params, (p) => {
     p.delete('first');
     p.delete('last');
     p.delete('before');
@@ -243,7 +243,9 @@ function ListQuery() {
   // Returns a new location with the `q` param edited
   const queryLocation = (query: string) => ({
     ...location,
-    search: editParams(paramsWithoutPaging, p => p.set('q', query)).toString(),
+    search: editParams(paramsWithoutPaging, (p) =>
+      p.set('q', query)
+    ).toString(),
   });
 
   let content;

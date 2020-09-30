@@ -30,7 +30,7 @@ const createStyle = (color: Color) => ({
   borderBottomColor: darken(_rgb(color), 0.2),
 });
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   label: {
     ...theme.typography.body1,
     padding: '1px 6px 0.5px',

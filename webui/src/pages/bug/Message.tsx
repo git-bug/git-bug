@@ -10,7 +10,7 @@ import Date from 'src/components/Date';
 import { AddCommentFragment } from './MessageCommentFragment.generated';
 import { CreateFragment } from './MessageCreateFragment.generated';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   author: {
     fontWeight: 'bold',
   },

@@ -8,7 +8,7 @@ import Date from 'src/components/Date';
 
 import { SetStatusFragment } from './SetStatusFragment.generated';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   main: {
     ...theme.typography.body2,
     marginLeft: theme.spacing(1) + 40,

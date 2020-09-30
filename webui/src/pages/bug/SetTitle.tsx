@@ -7,7 +7,7 @@ import Date from 'src/components/Date';
 
 import { SetTitleFragment } from './SetTitleFragment.generated';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   main: {
     ...theme.typography.body2,
     marginLeft: theme.spacing(1) + 40,
