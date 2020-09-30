@@ -12,7 +12,7 @@ import { BugFragment } from './Bug.generated';
 import CommentForm from './CommentForm';
 import TimelineQuery from './TimelineQuery';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   main: {
     maxWidth: 1000,
     margin: 'auto',
@@ -103,7 +103,7 @@ function Bug({ bug }: Props) {
             {bug.labels.length === 0 && (
               <span className={classes.noLabel}>None yet</span>
             )}
-            {bug.labels.map(l => (
+            {bug.labels.map((l) => (
               <li className={classes.label} key={l.name}>
                 <Label label={l} key={l.name} />
               </li>

@@ -5,7 +5,7 @@ import { makeStyles } from '@material-ui/core/styles';
 
 import { useCurrentIdentityQuery } from './CurrentIdentity.generated';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   displayName: {
     marginLeft: theme.spacing(2),
   },

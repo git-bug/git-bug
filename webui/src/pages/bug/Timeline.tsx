@@ -8,7 +8,7 @@ import SetStatus from './SetStatus';
 import SetTitle from './SetTitle';
 import { TimelineItemFragment } from './TimelineQuery.generated';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   main: {
     '& > *:not(:last-child)': {
       marginBottom: theme.spacing(2),

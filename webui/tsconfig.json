@@ -22,7 +22,8 @@
       "node_modules/@types/",
       "types/"
     ],
-    "baseUrl": "."
+    "baseUrl": ".",
+    "noFallthroughCasesInSwitch": true
   },
   "include": [
     "src"

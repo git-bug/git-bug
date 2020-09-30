@@ -7,7 +7,7 @@ import { makeStyles } from '@material-ui/core/styles';
 
 import CurrentIdentity from './CurrentIdentity';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   offset: {
     ...theme.mixins.toolbar,
   },

@@ -9,7 +9,7 @@ import { SvgIconProps } from '@material-ui/core/SvgIcon';
 import { makeStyles } from '@material-ui/core/styles';
 import ArrowDropDown from '@material-ui/icons/ArrowDropDown';
 
-export type Query = { [key: string]: Array<string> };
+export type Query = { [key: string]: string[] };
 
 function parse(query: string): Query {
   // TODO: extract the rest of the query?
@@ -57,12 +57,12 @@ function quote(value: string): string {
 
 function stringify(params: Query): string {
   const parts: string[][] = Object.entries(params).map(([key, values]) => {
-    return values.map(value => `${key}:${quote(value)}`);
+    return values.map((value) => `${key}:${quote(value)}`);
   });
   return new Array<string>().concat(...parts).join(' ');
 }
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   element: {
     ...theme.typography.body2,
     color: '#444',

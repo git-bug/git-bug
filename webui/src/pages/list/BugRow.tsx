@@ -42,7 +42,7 @@ const BugStatus: React.FC<StatusProps> = ({
   }
 };
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   cell: {
     display: 'flex',
     alignItems: 'center',
@@ -92,7 +92,7 @@ function BugRow({ bug }: Props) {
               <span className={classes.title}>{bug.title}</span>
               {bug.labels.length > 0 && (
                 <span className={classes.labels}>
-                  {bug.labels.map(l => (
+                  {bug.labels.map((l) => (
                     <Label key={l.name} label={l} />
                   ))}
                 </span>

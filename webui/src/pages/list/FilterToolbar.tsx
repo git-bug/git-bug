@@ -17,7 +17,7 @@ import {
 } from './Filter';
 import { useBugCountQuery } from './FilterToolbar.generated';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   toolbar: {
     backgroundColor: theme.palette.grey['100'],
     borderColor: theme.palette.grey['300'],
@@ -123,8 +123,8 @@ function FilterToolbar({ query, queryLocation }: Props) {
           ['edit', 'Recently updated'],
           ['edit-asc', 'Least recently updated'],
         ]}
-        itemActive={key => hasValue('sort', key)}
-        to={key => pipe(replaceParam('sort', key), loc)(params)}
+        itemActive={(key) => hasValue('sort', key)}
+        to={(key) => pipe(replaceParam('sort', key), loc)(params)}
       >
         Sort
       </FilterDropdown>

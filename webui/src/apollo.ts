@@ -1,17 +1,11 @@
-import ApolloClient from 'apollo-boost';
-import {
-  IntrospectionFragmentMatcher,
-  InMemoryCache,
-} from 'apollo-cache-inmemory';
+import { ApolloClient, InMemoryCache } from '@apollo/client';
 
-import introspectionQueryResultData from './fragmentTypes';
+import introspectionResult from './fragmentTypes';
 
 const client = new ApolloClient({
   uri: '/graphql',
   cache: new InMemoryCache({
-    fragmentMatcher: new IntrospectionFragmentMatcher({
-      introspectionQueryResultData,
-    }),
+    possibleTypes: introspectionResult.possibleTypes,
   }),
 });
 
