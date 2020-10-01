@@ -15,6 +15,7 @@ import (
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/process"
+	"github.com/blevesearch/bleve"
 )
 
 // 1: original format
@@ -56,6 +57,8 @@ type RepoCache struct {
 	muBug sync.RWMutex
 	// excerpt of bugs data for all bugs
 	bugExcerpts map[entity.Id]*BugExcerpt
+	// searchable cache of all bugs
+	searchCache bleve.Index
 	// bug loaded in memory
 	bugs map[entity.Id]*BugCache
 	// loadedBugs is an LRU cache that records which bugs the cache has loaded in
@@ -116,6 +119,7 @@ func (c *RepoCache) load() error {
 	if err != nil {
 		return err
 	}
+
 	return c.loadIdentityCache()
 }
 
@@ -166,6 +170,11 @@ func (c *RepoCache) Close() error {
 	c.bugs = make(map[entity.Id]*BugCache)
 	c.bugExcerpts = nil
 
+	if c.searchCache != nil {
+		c.searchCache.Close()
+		c.searchCache = nil
+	}
+
 	lockPath := repoLockFilePath(c.repo)
 	return os.Remove(lockPath)
 }
@@ -198,6 +207,11 @@ func (c *RepoCache) buildCache() error {
 
 	allBugs := bug.ReadAllLocal(c.repo)
 
+	err := c.ensureBleveIndex()
+	if err != nil {
+		return fmt.Errorf("Unable to create or open search cache. Error: %v", err)
+	}
+
 	for b := range allBugs {
 		if b.Err != nil {
 			return b.Err
@@ -205,9 +219,31 @@ func (c *RepoCache) buildCache() error {
 
 		snap := b.Bug.Compile()
 		c.bugExcerpts[b.Bug.Id()] = NewBugExcerpt(b.Bug, &snap)
+
+		if err := c.addBugToSearchIndex(&snap); err != nil {
+			return err
+		}
 	}
 
 	_, _ = fmt.Fprintln(os.Stderr, "Done.")
+
+	return nil
+}
+
+func (c *RepoCache) addBugToSearchIndex(snap *bug.Snapshot) error {
+	searchableBug := struct {
+		Text []string
+	}{}
+
+	for _, comment := range snap.Comments {
+		searchableBug.Text = append(searchableBug.Text, comment.Message)
+	}
+
+	err := c.searchCache.Index(snap.Id().String(), searchableBug)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
