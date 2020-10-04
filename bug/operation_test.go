@@ -79,7 +79,7 @@ func TestMetadata(t *testing.T) {
 }
 
 func TestID(t *testing.T) {
-	repo := repository.CreateTestRepo(false)
+	repo := repository.CreateGoGitTestRepo(false)
 	defer repository.CleanupTestRepos(repo)
 
 	repos := []repository.ClockedRepo{

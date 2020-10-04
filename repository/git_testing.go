@@ -44,9 +44,9 @@ func CreateTestRepo(bare bool) TestedRepo {
 }
 
 func SetupReposAndRemote() (repoA, repoB, remote TestedRepo) {
-	repoA = CreateTestRepo(false)
-	repoB = CreateTestRepo(false)
-	remote = CreateTestRepo(true)
+	repoA = CreateGoGitTestRepo(false)
+	repoB = CreateGoGitTestRepo(false)
+	remote = CreateGoGitTestRepo(true)
 
 	remoteAddr := "file://" + remote.GetPath()
 

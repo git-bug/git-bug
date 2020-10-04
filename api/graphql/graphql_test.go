@@ -14,7 +14,7 @@ import (
 )
 
 func TestQueries(t *testing.T) {
-	repo := repository.CreateTestRepo(false)
+	repo := repository.CreateGoGitTestRepo(false)
 	defer repository.CleanupTestRepos(repo)
 
 	random_bugs.FillRepoWithSeed(repo, 10, 42)

@@ -76,7 +76,7 @@ func TestImport(t *testing.T) {
 		},
 	}
 
-	repo := repository.CreateTestRepo(false)
+	repo := repository.CreateGoGitTestRepo(false)
 	defer repository.CleanupTestRepos(repo)
 
 	backend, err := cache.NewRepoCache(repo)

@@ -12,7 +12,7 @@ import (
 )
 
 func TestCache(t *testing.T) {
-	repo := repository.CreateTestRepo(false)
+	repo := repository.CreateGoGitTestRepo(false)
 	defer repository.CleanupTestRepos(repo)
 
 	cache, err := NewRepoCache(repo)
@@ -162,9 +162,9 @@ func TestPushPull(t *testing.T) {
 }
 
 func TestRemove(t *testing.T) {
-	repo := repository.CreateTestRepo(false)
-	remoteA := repository.CreateTestRepo(true)
-	remoteB := repository.CreateTestRepo(true)
+	repo := repository.CreateGoGitTestRepo(false)
+	remoteA := repository.CreateGoGitTestRepo(true)
+	remoteB := repository.CreateGoGitTestRepo(true)
 	defer repository.CleanupTestRepos(repo, remoteA, remoteB)
 
 	err := repo.AddRemote("remoteA", "file://"+remoteA.GetPath())
@@ -211,7 +211,7 @@ func TestRemove(t *testing.T) {
 }
 
 func TestCacheEviction(t *testing.T) {
-	repo := repository.CreateTestRepo(false)
+	repo := repository.CreateGoGitTestRepo(false)
 	repoCache, err := NewRepoCache(repo)
 	require.NoError(t, err)
 	repoCache.setCacheSize(2)
