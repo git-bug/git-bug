@@ -138,10 +138,16 @@ func InitGoGitRepo(path string) (*GoGitRepo, error) {
 		return nil, err
 	}
 
+	k, err := defaultKeyring()
+	if err != nil {
+		return nil, err
+	}
+
 	return &GoGitRepo{
-		r:      r,
-		path:   path + "/.git",
-		clocks: make(map[string]lamport.Clock),
+		r:       r,
+		path:    path + "/.git",
+		clocks:  make(map[string]lamport.Clock),
+		keyring: k,
 	}, nil
 }
 
@@ -152,10 +158,16 @@ func InitBareGoGitRepo(path string) (*GoGitRepo, error) {
 		return nil, err
 	}
 
+	k, err := defaultKeyring()
+	if err != nil {
+		return nil, err
+	}
+
 	return &GoGitRepo{
-		r:      r,
-		path:   path,
-		clocks: make(map[string]lamport.Clock),
+		r:       r,
+		path:    path,
+		clocks:  make(map[string]lamport.Clock),
+		keyring: k,
 	}, nil
 }
 
