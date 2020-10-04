@@ -446,14 +446,14 @@ func (repo *GoGitRepo) StoreCommitWithParent(treeHash Hash, parent Hash) (Hash, 
 
 	commit := object.Commit{
 		Author: object.Signature{
-			cfg.Author.Name,
-			cfg.Author.Email,
-			time.Now(),
+			Name:  cfg.Author.Name,
+			Email: cfg.Author.Email,
+			When:  time.Now(),
 		},
 		Committer: object.Signature{
-			cfg.Committer.Name,
-			cfg.Committer.Email,
-			time.Now(),
+			Name:  cfg.Committer.Name,
+			Email: cfg.Committer.Email,
+			When:  time.Now(),
 		},
 		Message:  "",
 		TreeHash: plumbing.NewHash(treeHash.String()),
