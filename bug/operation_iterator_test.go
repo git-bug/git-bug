@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
@@ -28,6 +28,9 @@ func TestOpIterator(t *testing.T) {
 	mockRepo := repository.NewMockRepoForTest()
 
 	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
+	err := rene.Commit(mockRepo)
+	require.NoError(t, err)
+
 	unix := time.Now().Unix()
 
 	createOp := NewCreateOp(rene, unix, "title", "message", nil)
@@ -48,15 +51,15 @@ func TestOpIterator(t *testing.T) {
 	bug1.Append(addCommentOp)
 	bug1.Append(setStatusOp)
 	bug1.Append(labelChangeOp)
-	err := bug1.Commit(mockRepo)
-	assert.NoError(t, err)
+	err = bug1.Commit(mockRepo)
+	require.NoError(t, err)
 
 	// second pack
 	bug1.Append(genTitleOp())
 	bug1.Append(genTitleOp())
 	bug1.Append(genTitleOp())
 	err = bug1.Commit(mockRepo)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// staging
 	bug1.Append(genTitleOp())
@@ -71,5 +74,5 @@ func TestOpIterator(t *testing.T) {
 		counter++
 	}
 
-	assert.Equal(t, 10, counter)
+	require.Equal(t, 10, counter)
 }

@@ -16,6 +16,8 @@ func TestPushPull(t *testing.T) {
 	defer repository.CleanupTestRepos(repoA, repoB, remote)
 
 	reneA := identity.NewIdentity("René Descartes", "rene@descartes.fr")
+	err := reneA.Commit(repoA)
+	require.NoError(t, err)
 
 	bug1, _, err := Create(reneA, time.Now().Unix(), "bug1", "message")
 	require.NoError(t, err)
@@ -37,7 +39,7 @@ func TestPushPull(t *testing.T) {
 	err = Pull(repoB, "origin")
 	require.NoError(t, err)
 
-	bugs := allBugs(t, ReadAllLocalBugs(repoB))
+	bugs := allBugs(t, ReadAllLocal(repoB))
 
 	if len(bugs) != 1 {
 		t.Fatal("Unexpected number of bugs")
@@ -58,7 +60,7 @@ func TestPushPull(t *testing.T) {
 	err = Pull(repoA, "origin")
 	require.NoError(t, err)
 
-	bugs = allBugs(t, ReadAllLocalBugs(repoA))
+	bugs = allBugs(t, ReadAllLocal(repoA))
 
 	if len(bugs) != 2 {
 		t.Fatal("Unexpected number of bugs")
@@ -91,6 +93,8 @@ func _RebaseTheirs(t testing.TB) {
 	defer repository.CleanupTestRepos(repoA, repoB, remote)
 
 	reneA := identity.NewIdentity("René Descartes", "rene@descartes.fr")
+	err := reneA.Commit(repoA)
+	require.NoError(t, err)
 
 	bug1, _, err := Create(reneA, time.Now().Unix(), "bug1", "message")
 	require.NoError(t, err)
@@ -114,7 +118,7 @@ func _RebaseTheirs(t testing.TB) {
 	err = Pull(repoB, "origin")
 	require.NoError(t, err)
 
-	bug2, err := ReadLocalBug(repoB, bug1.Id())
+	bug2, err := ReadLocal(repoB, bug1.Id())
 	require.NoError(t, err)
 	assert.False(t, bug2.NeedCommit())
 
@@ -140,13 +144,13 @@ func _RebaseTheirs(t testing.TB) {
 	err = Pull(repoA, "origin")
 	require.NoError(t, err)
 
-	bugs := allBugs(t, ReadAllLocalBugs(repoB))
+	bugs := allBugs(t, ReadAllLocal(repoB))
 
 	if len(bugs) != 1 {
 		t.Fatal("Unexpected number of bugs")
 	}
 
-	bug3, err := ReadLocalBug(repoA, bug1.Id())
+	bug3, err := ReadLocal(repoA, bug1.Id())
 	require.NoError(t, err)
 
 	if nbOps(bug3) != 4 {
@@ -169,6 +173,8 @@ func _RebaseOurs(t testing.TB) {
 	defer repository.CleanupTestRepos(repoA, repoB, remote)
 
 	reneA := identity.NewIdentity("René Descartes", "rene@descartes.fr")
+	err := reneA.Commit(repoA)
+	require.NoError(t, err)
 
 	bug1, _, err := Create(reneA, time.Now().Unix(), "bug1", "message")
 	require.NoError(t, err)
@@ -220,13 +226,13 @@ func _RebaseOurs(t testing.TB) {
 	err = Pull(repoA, "origin")
 	require.NoError(t, err)
 
-	bugs := allBugs(t, ReadAllLocalBugs(repoA))
+	bugs := allBugs(t, ReadAllLocal(repoA))
 
 	if len(bugs) != 1 {
 		t.Fatal("Unexpected number of bugs")
 	}
 
-	bug2, err := ReadLocalBug(repoA, bug1.Id())
+	bug2, err := ReadLocal(repoA, bug1.Id())
 	require.NoError(t, err)
 
 	if nbOps(bug2) != 10 {
@@ -258,6 +264,8 @@ func _RebaseConflict(t testing.TB) {
 	defer repository.CleanupTestRepos(repoA, repoB, remote)
 
 	reneA := identity.NewIdentity("René Descartes", "rene@descartes.fr")
+	err := reneA.Commit(repoA)
+	require.NoError(t, err)
 
 	bug1, _, err := Create(reneA, time.Now().Unix(), "bug1", "message")
 	require.NoError(t, err)
@@ -305,7 +313,7 @@ func _RebaseConflict(t testing.TB) {
 	err = bug1.Commit(repoA)
 	require.NoError(t, err)
 
-	bug2, err := ReadLocalBug(repoB, bug1.Id())
+	bug2, err := ReadLocal(repoB, bug1.Id())
 	require.NoError(t, err)
 
 	reneB, err := identity.ReadLocal(repoA, reneA.Id())
@@ -346,13 +354,13 @@ func _RebaseConflict(t testing.TB) {
 	err = Pull(repoB, "origin")
 	require.NoError(t, err)
 
-	bugs := allBugs(t, ReadAllLocalBugs(repoB))
+	bugs := allBugs(t, ReadAllLocal(repoB))
 
 	if len(bugs) != 1 {
 		t.Fatal("Unexpected number of bugs")
 	}
 
-	bug3, err := ReadLocalBug(repoB, bug1.Id())
+	bug3, err := ReadLocal(repoB, bug1.Id())
 	require.NoError(t, err)
 
 	if nbOps(bug3) != 19 {
@@ -367,13 +375,13 @@ func _RebaseConflict(t testing.TB) {
 	err = Pull(repoA, "origin")
 	require.NoError(t, err)
 
-	bugs = allBugs(t, ReadAllLocalBugs(repoA))
+	bugs = allBugs(t, ReadAllLocal(repoA))
 
 	if len(bugs) != 1 {
 		t.Fatal("Unexpected number of bugs")
 	}
 
-	bug4, err := ReadLocalBug(repoA, bug1.Id())
+	bug4, err := ReadLocal(repoA, bug1.Id())
 	require.NoError(t, err)
 
 	if nbOps(bug4) != 19 {

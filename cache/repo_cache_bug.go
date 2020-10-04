@@ -136,7 +136,7 @@ func (c *RepoCache) ResolveBug(id entity.Id) (*BugCache, error) {
 	}
 	c.muBug.RUnlock()
 
-	b, err := bug.ReadLocalBug(c.repo, id)
+	b, err := bug.ReadLocalWithResolver(c.repo, newIdentityCacheResolver(c), id)
 	if err != nil {
 		return nil, err
 	}

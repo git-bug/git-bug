@@ -4,6 +4,8 @@ import (
 	"github.com/MichaelMure/git-bug/identity"
 )
 
+var _ identity.Interface = &IdentityCache{}
+
 // IdentityCache is a wrapper around an Identity for caching.
 type IdentityCache struct {
 	*identity.Identity

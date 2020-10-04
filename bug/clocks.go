@@ -1,6 +1,7 @@
 package bug
 
 import (
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
@@ -8,7 +9,9 @@ import (
 var ClockLoader = repository.ClockLoader{
 	Clocks: []string{creationClockName, editClockName},
 	Witnesser: func(repo repository.ClockedRepo) error {
-		for b := range ReadAllLocalBugs(repo) {
+		// We don't care about the actual identity so an IdentityStub will do
+		resolver := identity.NewStubResolver()
+		for b := range ReadAllLocalWithResolver(repo, resolver) {
 			if b.Err != nil {
 				return b.Err
 			}

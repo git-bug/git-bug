@@ -14,7 +14,7 @@ func TestReadBugs(t *testing.T) {
 
 	random_bugs.FillRepoWithSeed(repo, 15, 42)
 
-	bugs := bug.ReadAllLocalBugs(repo)
+	bugs := bug.ReadAllLocal(repo)
 	for b := range bugs {
 		if b.Err != nil {
 			t.Fatal(b.Err)
@@ -30,7 +30,7 @@ func benchmarkReadBugs(bugNumber int, t *testing.B) {
 	t.ResetTimer()
 
 	for n := 0; n < t.N; n++ {
-		bugs := bug.ReadAllLocalBugs(repo)
+		bugs := bug.ReadAllLocal(repo)
 		for b := range bugs {
 			if b.Err != nil {
 				t.Fatal(b.Err)

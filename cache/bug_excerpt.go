@@ -92,7 +92,7 @@ func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
 	}
 
 	switch snap.Author.(type) {
-	case *identity.Identity:
+	case *identity.Identity, *IdentityCache:
 		e.AuthorId = snap.Author.Id()
 	case *identity.Bare:
 		e.LegacyAuthor = LegacyAuthorExcerpt{

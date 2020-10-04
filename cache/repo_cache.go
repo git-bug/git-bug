@@ -179,7 +179,7 @@ func (c *RepoCache) buildCache() error {
 
 	c.identitiesExcerpts = make(map[entity.Id]*IdentityExcerpt)
 
-	allIdentities := identity.ReadAllLocalIdentities(c.repo)
+	allIdentities := identity.ReadAllLocal(c.repo)
 
 	for i := range allIdentities {
 		if i.Err != nil {
@@ -195,7 +195,7 @@ func (c *RepoCache) buildCache() error {
 
 	c.bugExcerpts = make(map[entity.Id]*BugExcerpt)
 
-	allBugs := bug.ReadAllLocalBugs(c.repo)
+	allBugs := bug.ReadAllLocal(c.repo)
 
 	for b := range allBugs {
 		if b.Err != nil {

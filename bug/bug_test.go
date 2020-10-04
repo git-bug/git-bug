@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/MichaelMure/git-bug/identity"
@@ -18,11 +17,14 @@ func TestBugId(t *testing.T) {
 	bug1 := NewBug()
 
 	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
+	err := rene.Commit(mockRepo)
+	require.NoError(t, err)
+
 	createOp := NewCreateOp(rene, time.Now().Unix(), "title", "message", nil)
 
 	bug1.Append(createOp)
 
-	err := bug1.Commit(mockRepo)
+	err = bug1.Commit(mockRepo)
 
 	if err != nil {
 		t.Fatal(err)
@@ -37,6 +39,9 @@ func TestBugValidity(t *testing.T) {
 	bug1 := NewBug()
 
 	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
+	err := rene.Commit(mockRepo)
+	require.NoError(t, err)
+
 	createOp := NewCreateOp(rene, time.Now().Unix(), "title", "message", nil)
 
 	if bug1.Validate() == nil {
@@ -49,7 +54,7 @@ func TestBugValidity(t *testing.T) {
 		t.Fatal("Bug with just a CreateOp should be valid")
 	}
 
-	err := bug1.Commit(mockRepo)
+	err = bug1.Commit(mockRepo)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -67,9 +72,14 @@ func TestBugValidity(t *testing.T) {
 }
 
 func TestBugCommitLoad(t *testing.T) {
+	repo := repository.NewMockRepoForTest()
+
 	bug1 := NewBug()
 
 	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
+	err := rene.Commit(repo)
+	require.NoError(t, err)
+
 	createOp := NewCreateOp(rene, time.Now().Unix(), "title", "message", nil)
 	setTitleOp := NewSetTitleOp(rene, time.Now().Unix(), "title2", "title1")
 	addCommentOp := NewAddCommentOp(rene, time.Now().Unix(), "message2", nil)
@@ -77,35 +87,33 @@ func TestBugCommitLoad(t *testing.T) {
 	bug1.Append(createOp)
 	bug1.Append(setTitleOp)
 
-	repo := repository.NewMockRepoForTest()
+	require.True(t, bug1.NeedCommit())
 
-	assert.True(t, bug1.NeedCommit())
+	err = bug1.Commit(repo)
+	require.Nil(t, err)
+	require.False(t, bug1.NeedCommit())
 
-	err := bug1.Commit(repo)
-	assert.Nil(t, err)
-	assert.False(t, bug1.NeedCommit())
-
-	bug2, err := ReadLocalBug(repo, bug1.Id())
-	assert.NoError(t, err)
+	bug2, err := ReadLocal(repo, bug1.Id())
+	require.NoError(t, err)
 	equivalentBug(t, bug1, bug2)
 
 	// add more op
 
 	bug1.Append(addCommentOp)
 
-	assert.True(t, bug1.NeedCommit())
+	require.True(t, bug1.NeedCommit())
 
 	err = bug1.Commit(repo)
-	assert.Nil(t, err)
-	assert.False(t, bug1.NeedCommit())
+	require.Nil(t, err)
+	require.False(t, bug1.NeedCommit())
 
-	bug3, err := ReadLocalBug(repo, bug1.Id())
-	assert.NoError(t, err)
+	bug3, err := ReadLocal(repo, bug1.Id())
+	require.NoError(t, err)
 	equivalentBug(t, bug1, bug3)
 }
 
 func equivalentBug(t *testing.T, expected, actual *Bug) {
-	assert.Equal(t, len(expected.packs), len(actual.packs))
+	require.Equal(t, len(expected.packs), len(actual.packs))
 
 	for i := range expected.packs {
 		for j := range expected.packs[i].Operations {
@@ -113,7 +121,7 @@ func equivalentBug(t *testing.T, expected, actual *Bug) {
 		}
 	}
 
-	assert.Equal(t, expected, actual)
+	require.Equal(t, expected, actual)
 }
 
 func TestBugRemove(t *testing.T) {
@@ -163,13 +171,13 @@ func TestBugRemove(t *testing.T) {
 	err = RemoveBug(repo, b.Id())
 	require.NoError(t, err)
 
-	_, err = ReadLocalBug(repo, b.Id())
+	_, err = ReadLocal(repo, b.Id())
 	require.Error(t, ErrBugNotExist, err)
 
-	_, err = ReadRemoteBug(repo, "remoteA", b.Id())
+	_, err = ReadRemote(repo, "remoteA", b.Id())
 	require.Error(t, ErrBugNotExist, err)
 
-	_, err = ReadRemoteBug(repo, "remoteB", b.Id())
+	_, err = ReadRemote(repo, "remoteB", b.Id())
 	require.Error(t, ErrBugNotExist, err)
 
 	ids, err := ListLocalIds(repo)
