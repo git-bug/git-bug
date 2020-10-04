@@ -138,10 +138,16 @@ func InitGoGitRepo(path string) (*GoGitRepo, error) {
 		return nil, err
 	}
 
+	k, err := defaultKeyring()
+	if err != nil {
+		return nil, err
+	}
+
 	return &GoGitRepo{
-		r:      r,
-		path:   path + "/.git",
-		clocks: make(map[string]lamport.Clock),
+		r:       r,
+		path:    path + "/.git",
+		clocks:  make(map[string]lamport.Clock),
+		keyring: k,
 	}, nil
 }
 
@@ -152,10 +158,16 @@ func InitBareGoGitRepo(path string) (*GoGitRepo, error) {
 		return nil, err
 	}
 
+	k, err := defaultKeyring()
+	if err != nil {
+		return nil, err
+	}
+
 	return &GoGitRepo{
-		r:      r,
-		path:   path,
-		clocks: make(map[string]lamport.Clock),
+		r:       r,
+		path:    path,
+		clocks:  make(map[string]lamport.Clock),
+		keyring: k,
 	}, nil
 }
 
@@ -276,6 +288,9 @@ func (repo *GoGitRepo) FetchRefs(remote string, refSpec string) (string, error) 
 		RefSpecs:   []config.RefSpec{config.RefSpec(refSpec)},
 		Progress:   buf,
 	})
+	if err == gogit.NoErrAlreadyUpToDate {
+		return "already up-to-date", nil
+	}
 	if err != nil {
 		return "", err
 	}
@@ -292,6 +307,9 @@ func (repo *GoGitRepo) PushRefs(remote string, refSpec string) (string, error) {
 		RefSpecs:   []config.RefSpec{config.RefSpec(refSpec)},
 		Progress:   buf,
 	})
+	if err == gogit.NoErrAlreadyUpToDate {
+		return "already up-to-date", nil
+	}
 	if err != nil {
 		return "", err
 	}

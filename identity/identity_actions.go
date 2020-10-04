@@ -13,6 +13,7 @@ import (
 // Fetch retrieve updates from a remote
 // This does not change the local identities state
 func Fetch(repo repository.Repo, remote string) (string, error) {
+	// "refs/identities/*:refs/remotes/<remote>/identities/*"
 	remoteRefSpec := fmt.Sprintf(identityRemoteRefPattern, remote)
 	fetchRefSpec := fmt.Sprintf("%s*:%s*", identityRefPattern, remoteRefSpec)
 
@@ -21,7 +22,10 @@ func Fetch(repo repository.Repo, remote string) (string, error) {
 
 // Push update a remote with the local changes
 func Push(repo repository.Repo, remote string) (string, error) {
-	return repo.PushRefs(remote, identityRefPattern+"*")
+	// "refs/identities/*:refs/identities/*"
+	refspec := fmt.Sprintf("%s*:%s*", identityRefPattern, identityRefPattern)
+
+	return repo.PushRefs(remote, refspec)
 }
 
 // Pull will do a Fetch + MergeAll

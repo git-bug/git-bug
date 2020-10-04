@@ -117,9 +117,9 @@ func equivalentBug(t *testing.T, expected, actual *Bug) {
 }
 
 func TestBugRemove(t *testing.T) {
-	repo := repository.CreateTestRepo(false)
-	remoteA := repository.CreateTestRepo(true)
-	remoteB := repository.CreateTestRepo(true)
+	repo := repository.CreateGoGitTestRepo(false)
+	remoteA := repository.CreateGoGitTestRepo(true)
+	remoteB := repository.CreateGoGitTestRepo(true)
 	defer repository.CleanupTestRepos(repo, remoteA, remoteB)
 
 	err := repo.AddRemote("remoteA", "file://"+remoteA.GetPath())

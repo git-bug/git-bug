@@ -11,7 +11,7 @@ import (
 )
 
 func TestSelect(t *testing.T) {
-	repo := repository.CreateTestRepo(false)
+	repo := repository.CreateGoGitTestRepo(false)
 	defer repository.CleanupTestRepos(repo)
 
 	repoCache, err := cache.NewRepoCache(repo)

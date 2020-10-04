@@ -142,7 +142,7 @@ func TestPushPull(t *testing.T) {
 	}
 
 	// create repo backend
-	repo := repository.CreateTestRepo(false)
+	repo := repository.CreateGoGitTestRepo(false)
 	defer repository.CleanupTestRepos(repo)
 
 	backend, err := cache.NewRepoCache(repo)
@@ -215,7 +215,7 @@ func TestPushPull(t *testing.T) {
 
 	fmt.Printf("test repository exported in %f seconds\n", time.Since(start).Seconds())
 
-	repoTwo := repository.CreateTestRepo(false)
+	repoTwo := repository.CreateGoGitTestRepo(false)
 	defer repository.CleanupTestRepos(repoTwo)
 
 	// create a second backend
