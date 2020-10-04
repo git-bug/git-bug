@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/MichaelMure/go-term-text"
+	text "github.com/MichaelMure/go-term-text"
 	"github.com/awesome-gocui/gocui"
 	"github.com/dustin/go-humanize"
 
@@ -314,33 +314,25 @@ func (bt *bugTable) render(v *gocui.View, maxX int) {
 			labelsTxt.WriteString(lc256.Unescape())
 		}
 
-		var authorDisplayName string
-		if excerpt.AuthorId != "" {
-			author, err := bt.repo.ResolveIdentityExcerpt(excerpt.AuthorId)
-			if err != nil {
-				panic(err)
-			}
-			authorDisplayName = author.DisplayName()
-		} else {
-			authorDisplayName = excerpt.LegacyAuthor.DisplayName()
+		author, err := bt.repo.ResolveIdentityExcerpt(excerpt.AuthorId)
+		if err != nil {
+			panic(err)
 		}
-
-		lastEditTime := excerpt.EditTime()
 
 		id := text.LeftPadMaxLine(excerpt.Id.Human(), columnWidths["id"], 0)
 		status := text.LeftPadMaxLine(excerpt.Status.String(), columnWidths["status"], 0)
 		labels := text.TruncateMax(labelsTxt.String(), minInt(columnWidths["title"]-2, 10))
 		title := text.LeftPadMaxLine(strings.TrimSpace(excerpt.Title), columnWidths["title"]-text.Len(labels), 0)
-		author := text.LeftPadMaxLine(authorDisplayName, columnWidths["author"], 0)
+		authorTxt := text.LeftPadMaxLine(author.DisplayName(), columnWidths["author"], 0)
 		comments := text.LeftPadMaxLine(summaryTxt, columnWidths["comments"], 0)
-		lastEdit := text.LeftPadMaxLine(humanize.Time(lastEditTime), columnWidths["lastEdit"], 1)
+		lastEdit := text.LeftPadMaxLine(humanize.Time(excerpt.EditTime()), columnWidths["lastEdit"], 1)
 
 		_, _ = fmt.Fprintf(v, "%s %s %s%s %s %s %s\n",
 			colors.Cyan(id),
 			colors.Yellow(status),
 			title,
 			labels,
-			colors.Magenta(author),
+			colors.Magenta(authorTxt),
 			comments,
 			lastEdit,
 		)

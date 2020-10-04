@@ -13,6 +13,7 @@ import (
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
+// 1: original format
 const formatVersion = 1
 
 // Version is a complete set of information about an Identity at a point in time.
