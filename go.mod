@@ -23,12 +23,12 @@ require (
 	github.com/shurcooL/githubv4 v0.0.0-20190601194912-068505affed7
 	github.com/shurcooL/graphql v0.0.0-20181231061246-d48a9a75455f // indirect
 	github.com/skratchdot/open-golang v0.0.0-20190402232053-79abb63cd66e
-	github.com/spf13/cobra v1.0.0
+	github.com/spf13/cobra v1.1.0
 	github.com/stretchr/testify v1.6.1
 	github.com/vektah/gqlparser v1.3.1
 	github.com/xanzy/go-gitlab v0.33.0
 	golang.org/x/crypto v0.0.0-20200302210943-78000ba7a073
-	golang.org/x/oauth2 v0.0.0-20181106182150-f42d05182288
+	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
 	golang.org/x/text v0.3.3
 )
