@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/MichaelMure/git-bug/bug"
@@ -85,10 +86,15 @@ func (c *RepoCache) loadBugCache() error {
 		return fmt.Errorf("unknown cache format version %v", aux.Version)
 	}
 
-	err = c.ensureBleveIndex()
+	c.bugExcerpts = aux.Excerpts
+
+	blevePath := searchCacheDirPath(c.repo)
+	searchCache, err := bleve.Open(blevePath)
 	if err != nil {
-		return fmt.Errorf("Unable to create or open search cache. Error: %v", err)
+		return fmt.Errorf("Unable to open search cache. Error: %v", err)
 	}
+	c.searchCache = searchCache
+
 	count, err := c.searchCache.DocCount()
 	if err != nil {
 		return err
@@ -97,33 +103,20 @@ func (c *RepoCache) loadBugCache() error {
 		return fmt.Errorf("count mismatch between bleve and bug excerpts")
 	}
 
-	c.bugExcerpts = aux.Excerpts
 	return nil
 }
 
-func (c *RepoCache) ensureBleveIndex() error {
+func (c *RepoCache) createBleveIndex() error {
 	blevePath := searchCacheDirPath(c.repo)
 
-	// Try to open the bleve index. If there is _any_ error, whether it be that
-	// the bleve index does not exist or is corrupt, handle that by nuking the
-	// bleve index and recreating it.
-	bleveIndex, err := bleve.Open(blevePath)
+	_ = os.RemoveAll(blevePath)
+
+	mapping := bleve.NewIndexMapping()
+	dir := searchCacheDirPath(c.repo)
+
+	bleveIndex, err := bleve.New(dir, mapping)
 	if err != nil {
-		// If the index does not exist, we don't care. We're going to create it
-		// next.
-		_ = os.RemoveAll(blevePath)
-
-		mapping := bleve.NewIndexMapping()
-		dir := searchCacheDirPath(c.repo)
-
-		bleveIndex, err := bleve.New(dir, mapping)
-		if err != nil {
-			return err
-		}
-
-		c.searchCache = bleveIndex
-
-		return nil
+		return err
 	}
 
 	c.searchCache = bleveIndex
@@ -309,19 +302,27 @@ func (c *RepoCache) QueryBugs(q *query.Query) []entity.Id {
 	matcher := compileMatcher(q.Filters)
 
 	var filtered []*BugExcerpt
+	var foundBySearch map[entity.Id]*BugExcerpt
 
-	//if q.Search != nil {
-	//	booleanQuery := bleve.NewBooleanQuery()
-	//	for _, term := range q.Search {
-	//		query := bleve.NewMatchQuery(term)
-	//		booleanQuery.AddMust(query)
-	//	}
+	if q.Search != nil {
+		foundBySearch = map[entity.Id]*BugExcerpt{}
 
-	//	search := bleve.NewSearchRequest(booleanQuery)
-	//	searchResults, _ := c.searchCache.Search(search)
-	//}
+		query := bleve.NewQueryStringQuery(strings.Join(q.Search, " "))
 
-	for _, excerpt := range c.bugExcerpts {
+		search := bleve.NewSearchRequest(query)
+		searchResults, err := c.searchCache.Search(search)
+		if err != nil {
+			panic("bleve search failed")
+		}
+
+		for _, hit := range searchResults.Hits {
+			foundBySearch[entity.Id(hit.ID)] = c.bugExcerpts[entity.Id(hit.ID)]
+		}
+	} else {
+		foundBySearch = c.bugExcerpts
+	}
+
+	for _, excerpt := range foundBySearch {
 		if matcher.Match(excerpt, c) {
 			filtered = append(filtered, excerpt)
 		}
@@ -487,4 +488,23 @@ func (c *RepoCache) RemoveBug(prefix string) error {
 	c.muBug.Unlock()
 
 	return c.writeBugCache()
+}
+
+func (c *RepoCache) addBugToSearchIndex(snap *bug.Snapshot) error {
+	searchableBug := struct {
+		Text []string
+	}{}
+
+	for _, comment := range snap.Comments {
+		searchableBug.Text = append(searchableBug.Text, comment.Message)
+	}
+
+	searchableBug.Text = append(searchableBug.Text, snap.Title)
+
+	err := c.searchCache.Index(snap.Id().String(), searchableBug)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

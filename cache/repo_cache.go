@@ -207,9 +207,9 @@ func (c *RepoCache) buildCache() error {
 
 	allBugs := bug.ReadAllLocal(c.repo)
 
-	err := c.ensureBleveIndex()
+	err := c.createBleveIndex()
 	if err != nil {
-		return fmt.Errorf("Unable to create or open search cache. Error: %v", err)
+		return fmt.Errorf("Unable to create search cache. Error: %v", err)
 	}
 
 	for b := range allBugs {
@@ -226,23 +226,6 @@ func (c *RepoCache) buildCache() error {
 	}
 
 	_, _ = fmt.Fprintln(os.Stderr, "Done.")
-
-	return nil
-}
-
-func (c *RepoCache) addBugToSearchIndex(snap *bug.Snapshot) error {
-	searchableBug := struct {
-		Text []string
-	}{}
-
-	for _, comment := range snap.Comments {
-		searchableBug.Text = append(searchableBug.Text, comment.Message)
-	}
-
-	err := c.searchCache.Index(snap.Id().String(), searchableBug)
-	if err != nil {
-		return err
-	}
 
 	return nil
 }
