@@ -13,10 +13,11 @@ require (
 	github.com/corpix/uarand v0.1.1 // indirect
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fatih/color v1.9.0
-	github.com/go-git/go-git/v5 v5.1.0
+	github.com/go-git/go-git/v5 v5.2.0
 	github.com/gorilla/mux v1.8.0
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/icrowley/fake v0.0.0-20180203215853-4178557ae428
+	github.com/imdario/mergo v0.3.11 // indirect
 	github.com/mattn/go-isatty v0.0.12
 	github.com/phayes/freeport v0.0.0-20171002181615-b8543db493a5
 	github.com/pkg/errors v0.9.1
@@ -27,12 +28,11 @@ require (
 	github.com/stretchr/testify v1.6.1
 	github.com/vektah/gqlparser v1.3.1
 	github.com/xanzy/go-gitlab v0.33.0
-	golang.org/x/crypto v0.0.0-20200302210943-78000ba7a073
+	github.com/xanzy/ssh-agent v0.3.0 // indirect
+	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897
+	golang.org/x/net v0.0.0-20201021035429-f5854403a974 // indirect
 	golang.org/x/oauth2 v0.0.0-20181106182150-f42d05182288
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
+	golang.org/x/sys v0.0.0-20201020230747-6e5568b54d1a // indirect
 	golang.org/x/text v0.3.3
 )
-
-// Use a forked go-git for now until https://github.com/go-git/go-git/pull/112 is merged
-// and released.
-replace github.com/go-git/go-git/v5 => github.com/MichaelMure/go-git/v5 v5.1.1-0.20200827115354-b40ca794fe33
