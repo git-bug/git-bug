@@ -57,12 +57,21 @@ func (gi *githubImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 	out := make(chan core.ImportResult)
 	gi.out = out
 
+	previousIssueId := ""
 	go func() {
 		defer close(gi.out)
 
 		// Loop over all matching issues
 		for gi.iterator.NextIssue() {
 			issue := gi.iterator.IssueValue()
+			currentIssueId := parseId(issue.Id)
+
+			if previousIssueId == currentIssueId {
+				continue
+			}
+
+			previousIssueId = currentIssueId
+
 			// create issue
 			b, err := gi.ensureIssue(repo, issue)
 			if err != nil {
