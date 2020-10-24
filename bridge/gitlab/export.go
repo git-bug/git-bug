@@ -529,7 +529,7 @@ func updateGitlabIssueLabels(ctx context.Context, gc *gitlab.Client, repositoryI
 	_, _, err := gc.Issues.UpdateIssue(
 		repositoryID, issueID,
 		&gitlab.UpdateIssueOptions{
-			Labels: &gitlabLabels,
+			Labels: gitlabLabels,
 		},
 		gitlab.WithContext(ctx),
 	)
