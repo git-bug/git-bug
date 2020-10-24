@@ -45,7 +45,7 @@ func NewGitRepo(path string, clockLoaders []ClockLoader) (*GitRepo, error) {
 	}
 
 	// Check the repo and retrieve the root path
-	stdout, err := repo.runGitCommand("rev-parse", "--git-dir")
+	stdout, err := repo.runGitCommand("rev-parse", "--absolute-git-dir")
 
 	// Now dir is fetched with "git rev-parse --git-dir". May be it can
 	// still return nothing in some cases. Then empty stdout check is
