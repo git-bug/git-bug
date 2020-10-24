@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	stdpath "path"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -359,7 +360,22 @@ func (repo *GoGitRepo) ReadData(hash Hash) ([]byte, error) {
 func (repo *GoGitRepo) StoreTree(mapping []TreeEntry) (Hash, error) {
 	var tree object.Tree
 
-	for _, entry := range mapping {
+	// TODO: can be removed once https://github.com/go-git/go-git/issues/193 is resolved
+	sorted := make([]TreeEntry, len(mapping))
+	copy(sorted, mapping)
+	sort.Slice(sorted, func(i, j int) bool {
+		nameI := sorted[i].Name
+		if sorted[i].ObjectType == Tree {
+			nameI += "/"
+		}
+		nameJ := sorted[j].Name
+		if sorted[j].ObjectType == Tree {
+			nameJ += "/"
+		}
+		return nameI < nameJ
+	})
+
+	for _, entry := range sorted {
 		mode := filemode.Regular
 		if entry.ObjectType == Tree {
 			mode = filemode.Dir
