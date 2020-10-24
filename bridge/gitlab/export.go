@@ -525,11 +525,10 @@ func updateGitlabIssueTitle(ctx context.Context, gc *gitlab.Client, repositoryID
 func updateGitlabIssueLabels(ctx context.Context, gc *gitlab.Client, repositoryID string, issueID int, labels []string) error {
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
-	gitlabLabels := gitlab.Labels(labels)
 	_, _, err := gc.Issues.UpdateIssue(
 		repositoryID, issueID,
 		&gitlab.UpdateIssueOptions{
-			Labels: &gitlabLabels,
+			Labels: labels,
 		},
 		gitlab.WithContext(ctx),
 	)
