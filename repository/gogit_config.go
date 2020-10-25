@@ -79,6 +79,7 @@ func (cr *goGitConfigReader) ReadAll(keyPrefix string) (map[string]string, error
 		}
 		section := cfg.Raw.Section(split[0])
 		rest := strings.Join(split[1:], ".")
+		rest = strings.TrimSuffix(rest, ".")
 		for _, subsection := range section.Subsections {
 			if strings.HasPrefix(subsection.Name, rest) {
 				for _, option := range subsection.Options {
