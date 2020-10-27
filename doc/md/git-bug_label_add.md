@@ -2,10 +2,6 @@
 
 Add a label to a bug.
 
-### Synopsis
-
-Add a label to a bug.
-
 ```
 git-bug label add [ID] LABEL... [flags]
 ```

@@ -2,10 +2,6 @@
 
 Pull updates.
 
-### Synopsis
-
-Pull updates.
-
 ```
 git-bug bridge pull [NAME] [flags]
 ```

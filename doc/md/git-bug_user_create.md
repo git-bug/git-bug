@@ -2,10 +2,6 @@
 
 Create a new identity.
 
-### Synopsis
-
-Create a new identity.
-
 ```
 git-bug user create [flags]
 ```

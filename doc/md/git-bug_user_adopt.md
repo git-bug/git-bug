@@ -2,10 +2,6 @@
 
 Adopt an existing identity as your own.
 
-### Synopsis
-
-Adopt an existing identity as your own.
-
 ```
 git-bug user adopt USER-ID [flags]
 ```

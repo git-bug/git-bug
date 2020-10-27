@@ -2,10 +2,6 @@
 
 Pull bugs update from a git remote.
 
-### Synopsis
-
-Pull bugs update from a git remote.
-
 ```
 git-bug pull [REMOTE] [flags]
 ```

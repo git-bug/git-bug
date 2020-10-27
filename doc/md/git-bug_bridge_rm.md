@@ -2,10 +2,6 @@
 
 Delete a configured bridge.
 
-### Synopsis
-
-Delete a configured bridge.
-
 ```
 git-bug bridge rm NAME [flags]
 ```

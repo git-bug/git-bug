@@ -2,10 +2,6 @@
 
 Show git-bug version information.
 
-### Synopsis
-
-Show git-bug version information.
-
 ```
 git-bug version [flags]
 ```

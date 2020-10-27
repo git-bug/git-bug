@@ -2,10 +2,6 @@
 
 Clear the implicitly selected bug.
 
-### Synopsis
-
-Clear the implicitly selected bug.
-
 ```
 git-bug deselect [flags]
 ```

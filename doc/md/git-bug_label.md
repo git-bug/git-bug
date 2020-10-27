@@ -2,10 +2,6 @@
 
 Display, add or remove labels to/from a bug.
 
-### Synopsis
-
-Display, add or remove labels to/from a bug.
-
 ```
 git-bug label [ID] [flags]
 ```

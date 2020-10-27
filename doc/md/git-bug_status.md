@@ -2,10 +2,6 @@
 
 Display or change a bug status.
 
-### Synopsis
-
-Display or change a bug status.
-
 ```
 git-bug status [ID] [flags]
 ```

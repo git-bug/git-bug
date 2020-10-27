@@ -2,10 +2,6 @@
 
 Mark a bug as closed.
 
-### Synopsis
-
-Mark a bug as closed.
-
 ```
 git-bug status close [ID] [flags]
 ```

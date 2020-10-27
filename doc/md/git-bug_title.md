@@ -2,10 +2,6 @@
 
 Display or change a title of a bug.
 
-### Synopsis
-
-Display or change a title of a bug.
-
 ```
 git-bug title [ID] [flags]
 ```

@@ -2,10 +2,6 @@
 
 List identities.
 
-### Synopsis
-
-List identities.
-
 ```
 git-bug user ls [flags]
 ```
