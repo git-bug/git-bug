@@ -1,473 +1,159 @@
 #compdef _git-bug git-bug
 
+# zsh completion for git-bug                              -*- shell-script -*-
 
-function _git-bug {
-  local -a commands
-
-  _arguments -C \
-    "1: :->cmnds" \
-    "*::arg:->args"
-
-  case $state in
-  cmnds)
-    commands=(
-      "add:Create a new bug."
-      "bridge:Configure and use bridges to other bug trackers."
-      "commands:Display available commands."
-      "comment:Display or add comments to a bug."
-      "deselect:Clear the implicitly selected bug."
-      "label:Display, add or remove labels to/from a bug."
-      "ls:List bugs."
-      "ls-id:List bug identifiers."
-      "ls-label:List valid labels."
-      "pull:Pull bugs update from a git remote."
-      "push:Push bugs update to a git remote."
-      "rm:Remove an existing bug."
-      "select:Select a bug for implicit use in future commands."
-      "show:Display the details of a bug."
-      "status:Display or change a bug status."
-      "termui:Launch the terminal UI."
-      "title:Display or change a title of a bug."
-      "user:Display or change the user identity."
-      "version:Show git-bug version information."
-      "webui:Launch the web UI."
-    )
-    _describe "command" commands
-    ;;
-  esac
-
-  case "$words[1]" in
-  add)
-    _git-bug_add
-    ;;
-  bridge)
-    _git-bug_bridge
-    ;;
-  commands)
-    _git-bug_commands
-    ;;
-  comment)
-    _git-bug_comment
-    ;;
-  deselect)
-    _git-bug_deselect
-    ;;
-  label)
-    _git-bug_label
-    ;;
-  ls)
-    _git-bug_ls
-    ;;
-  ls-id)
-    _git-bug_ls-id
-    ;;
-  ls-label)
-    _git-bug_ls-label
-    ;;
-  pull)
-    _git-bug_pull
-    ;;
-  push)
-    _git-bug_push
-    ;;
-  rm)
-    _git-bug_rm
-    ;;
-  select)
-    _git-bug_select
-    ;;
-  show)
-    _git-bug_show
-    ;;
-  status)
-    _git-bug_status
-    ;;
-  termui)
-    _git-bug_termui
-    ;;
-  title)
-    _git-bug_title
-    ;;
-  user)
-    _git-bug_user
-    ;;
-  version)
-    _git-bug_version
-    ;;
-  webui)
-    _git-bug_webui
-    ;;
-  esac
+__git-bug_debug()
+{
+    local file="$BASH_COMP_DEBUG_FILE"
+    if [[ -n ${file} ]]; then
+        echo "$*" >> "${file}"
+    fi
 }
 
-function _git-bug_add {
-  _arguments \
-    '(-t --title)'{-t,--title}'[Provide a title to describe the issue]:' \
-    '(-m --message)'{-m,--message}'[Provide a message to describe the issue]:' \
-    '(-F --file)'{-F,--file}'[Take the message from the given file. Use - to read the message from the standard input]:'
+_git-bug()
+{
+    local shellCompDirectiveError=1
+    local shellCompDirectiveNoSpace=2
+    local shellCompDirectiveNoFileComp=4
+    local shellCompDirectiveFilterFileExt=8
+    local shellCompDirectiveFilterDirs=16
+
+    local lastParam lastChar flagPrefix requestComp out directive compCount comp lastComp
+    local -a completions
+
+    __git-bug_debug "\n========= starting completion logic =========="
+    __git-bug_debug "CURRENT: ${CURRENT}, words[*]: ${words[*]}"
+
+    # The user could have moved the cursor backwards on the command-line.
+    # We need to trigger completion from the $CURRENT location, so we need
+    # to truncate the command-line ($words) up to the $CURRENT location.
+    # (We cannot use $CURSOR as its value does not work when a command is an alias.)
+    words=("${=words[1,CURRENT]}")
+    __git-bug_debug "Truncated words[*]: ${words[*]},"
+
+    lastParam=${words[-1]}
+    lastChar=${lastParam[-1]}
+    __git-bug_debug "lastParam: ${lastParam}, lastChar: ${lastChar}"
+
+    # For zsh, when completing a flag with an = (e.g., git-bug -n=<TAB>)
+    # completions must be prefixed with the flag
+    setopt local_options BASH_REMATCH
+    if [[ "${lastParam}" =~ '-.*=' ]]; then
+        # We are dealing with a flag with an =
+        flagPrefix="-P ${BASH_REMATCH}"
+    fi
+
+    # Prepare the command to obtain completions
+    requestComp="${words[1]} __complete ${words[2,-1]}"
+    if [ "${lastChar}" = "" ]; then
+        # If the last parameter is complete (there is a space following it)
+        # We add an extra empty parameter so we can indicate this to the go completion code.
+        __git-bug_debug "Adding extra empty parameter"
+        requestComp="${requestComp} \"\""
+    fi
+
+    __git-bug_debug "About to call: eval ${requestComp}"
+
+    # Use eval to handle any environment variables and such
+    out=$(eval ${requestComp} 2>/dev/null)
+    __git-bug_debug "completion output: ${out}"
+
+    # Extract the directive integer following a : from the last line
+    local lastLine
+    while IFS='\n' read -r line; do
+        lastLine=${line}
+    done < <(printf "%s\n" "${out[@]}")
+    __git-bug_debug "last line: ${lastLine}"
+
+    if [ "${lastLine[1]}" = : ]; then
+        directive=${lastLine[2,-1]}
+        # Remove the directive including the : and the newline
+        local suffix
+        (( suffix=${#lastLine}+2))
+        out=${out[1,-$suffix]}
+    else
+        # There is no directive specified.  Leave $out as is.
+        __git-bug_debug "No directive found.  Setting do default"
+        directive=0
+    fi
+
+    __git-bug_debug "directive: ${directive}"
+    __git-bug_debug "completions: ${out}"
+    __git-bug_debug "flagPrefix: ${flagPrefix}"
+
+    if [ $((directive & shellCompDirectiveError)) -ne 0 ]; then
+        __git-bug_debug "Completion received error. Ignoring completions."
+        return
+    fi
+
+    compCount=0
+    while IFS='\n' read -r comp; do
+        if [ -n "$comp" ]; then
+            # If requested, completions are returned with a description.
+            # The description is preceded by a TAB character.
+            # For zsh's _describe, we need to use a : instead of a TAB.
+            # We first need to escape any : as part of the completion itself.
+            comp=${comp//:/\\:}
+
+            local tab=$(printf '\t')
+            comp=${comp//$tab/:}
+
+            ((compCount++))
+            __git-bug_debug "Adding completion: ${comp}"
+            completions+=${comp}
+            lastComp=$comp
+        fi
+    done < <(printf "%s\n" "${out[@]}")
+
+    if [ $((directive & shellCompDirectiveFilterFileExt)) -ne 0 ]; then
+        # File extension filtering
+        local filteringCmd
+        filteringCmd='_files'
+        for filter in ${completions[@]}; do
+            if [ ${filter[1]} != '*' ]; then
+                # zsh requires a glob pattern to do file filtering
+                filter="\*.$filter"
+            fi
+            filteringCmd+=" -g $filter"
+        done
+        filteringCmd+=" ${flagPrefix}"
+
+        __git-bug_debug "File filtering command: $filteringCmd"
+        _arguments '*:filename:'"$filteringCmd"
+    elif [ $((directive & shellCompDirectiveFilterDirs)) -ne 0 ]; then
+        # File completion for directories only
+        local subDir
+        subdir="${completions[1]}"
+        if [ -n "$subdir" ]; then
+            __git-bug_debug "Listing directories in $subdir"
+            pushd "${subdir}" >/dev/null 2>&1
+        else
+            __git-bug_debug "Listing directories in ."
+        fi
+
+        _arguments '*:dirname:_files -/'" ${flagPrefix}"
+        if [ -n "$subdir" ]; then
+            popd >/dev/null 2>&1
+        fi
+    elif [ $((directive & shellCompDirectiveNoSpace)) -ne 0 ] && [ ${compCount} -eq 1 ]; then
+        __git-bug_debug "Activating nospace."
+        # We can use compadd here as there is no description when
+        # there is only one completion.
+        compadd -S '' "${lastComp}"
+    elif [ ${compCount} -eq 0 ]; then
+        if [ $((directive & shellCompDirectiveNoFileComp)) -ne 0 ]; then
+            __git-bug_debug "deactivating file completion"
+        else
+            # Perform file completion
+            __git-bug_debug "activating file completion"
+            _arguments '*:filename:_files'" ${flagPrefix}"
+        fi
+    else
+        _describe "completions" completions $(echo $flagPrefix)
+    fi
 }
 
-
-function _git-bug_bridge {
-  local -a commands
-
-  _arguments -C \
-    "1: :->cmnds" \
-    "*::arg:->args"
-
-  case $state in
-  cmnds)
-    commands=(
-      "auth:List all known bridge authentication credentials."
-      "configure:Configure a new bridge."
-      "pull:Pull updates."
-      "push:Push updates."
-      "rm:Delete a configured bridge."
-    )
-    _describe "command" commands
-    ;;
-  esac
-
-  case "$words[1]" in
-  auth)
-    _git-bug_bridge_auth
-    ;;
-  configure)
-    _git-bug_bridge_configure
-    ;;
-  pull)
-    _git-bug_bridge_pull
-    ;;
-  push)
-    _git-bug_bridge_push
-    ;;
-  rm)
-    _git-bug_bridge_rm
-    ;;
-  esac
-}
-
-
-function _git-bug_bridge_auth {
-  local -a commands
-
-  _arguments -C \
-    "1: :->cmnds" \
-    "*::arg:->args"
-
-  case $state in
-  cmnds)
-    commands=(
-      "add-token:Store a new token"
-      "rm:Remove a credential."
-      "show:Display an authentication credential."
-    )
-    _describe "command" commands
-    ;;
-  esac
-
-  case "$words[1]" in
-  add-token)
-    _git-bug_bridge_auth_add-token
-    ;;
-  rm)
-    _git-bug_bridge_auth_rm
-    ;;
-  show)
-    _git-bug_bridge_auth_show
-    ;;
-  esac
-}
-
-function _git-bug_bridge_auth_add-token {
-  _arguments \
-    '(-t --target)'{-t,--target}'[The target of the bridge. Valid values are [github,gitlab,jira,launchpad-preview]]:' \
-    '(-l --login)'{-l,--login}'[The login in the remote bug-tracker]:' \
-    '(-u --user)'{-u,--user}'[The user to add the token to. Default is the current user]:'
-}
-
-function _git-bug_bridge_auth_rm {
-  _arguments
-}
-
-function _git-bug_bridge_auth_show {
-  _arguments
-}
-
-function _git-bug_bridge_configure {
-  _arguments \
-    '(-n --name)'{-n,--name}'[A distinctive name to identify the bridge]:' \
-    '(-t --target)'{-t,--target}'[The target of the bridge. Valid values are [github,gitlab,jira,launchpad-preview]]:' \
-    '(-u --url)'{-u,--url}'[The URL of the remote repository]:' \
-    '(-b --base-url)'{-b,--base-url}'[The base URL of your remote issue tracker]:' \
-    '(-l --login)'{-l,--login}'[The login on your remote issue tracker]:' \
-    '(-c --credential)'{-c,--credential}'[The identifier or prefix of an already known credential for your remote issue tracker (see "git-bug bridge auth")]:' \
-    '--token[A raw authentication token for the remote issue tracker]:' \
-    '--token-stdin[Will read the token from stdin and ignore --token]' \
-    '(-o --owner)'{-o,--owner}'[The owner of the remote repository]:' \
-    '(-p --project)'{-p,--project}'[The name of the remote repository]:'
-}
-
-function _git-bug_bridge_pull {
-  _arguments \
-    '(-n --no-resume)'{-n,--no-resume}'[force importing all bugs]' \
-    '(-s --since)'{-s,--since}'[import only bugs updated after the given date (ex: "200h" or "june 2 2019")]:'
-}
-
-function _git-bug_bridge_push {
-  _arguments
-}
-
-function _git-bug_bridge_rm {
-  _arguments
-}
-
-function _git-bug_commands {
-  _arguments \
-    '(-p --pretty)'{-p,--pretty}'[Output the command description as well as Markdown compatible comment]'
-}
-
-
-function _git-bug_comment {
-  local -a commands
-
-  _arguments -C \
-    "1: :->cmnds" \
-    "*::arg:->args"
-
-  case $state in
-  cmnds)
-    commands=(
-      "add:Add a new comment to a bug."
-    )
-    _describe "command" commands
-    ;;
-  esac
-
-  case "$words[1]" in
-  add)
-    _git-bug_comment_add
-    ;;
-  esac
-}
-
-function _git-bug_comment_add {
-  _arguments \
-    '(-F --file)'{-F,--file}'[Take the message from the given file. Use - to read the message from the standard input]:' \
-    '(-m --message)'{-m,--message}'[Provide the new message from the command line]:'
-}
-
-function _git-bug_deselect {
-  _arguments
-}
-
-
-function _git-bug_label {
-  local -a commands
-
-  _arguments -C \
-    "1: :->cmnds" \
-    "*::arg:->args"
-
-  case $state in
-  cmnds)
-    commands=(
-      "add:Add a label to a bug."
-      "rm:Remove a label from a bug."
-    )
-    _describe "command" commands
-    ;;
-  esac
-
-  case "$words[1]" in
-  add)
-    _git-bug_label_add
-    ;;
-  rm)
-    _git-bug_label_rm
-    ;;
-  esac
-}
-
-function _git-bug_label_add {
-  _arguments
-}
-
-function _git-bug_label_rm {
-  _arguments
-}
-
-function _git-bug_ls {
-  _arguments \
-    '(*-s *--status)'{\*-s,\*--status}'[Filter by status. Valid values are [open,closed]]:' \
-    '(*-a *--author)'{\*-a,\*--author}'[Filter by author]:' \
-    '(*-p *--participant)'{\*-p,\*--participant}'[Filter by participant]:' \
-    '(*-A *--actor)'{\*-A,\*--actor}'[Filter by actor]:' \
-    '(*-l *--label)'{\*-l,\*--label}'[Filter by label]:' \
-    '(*-t *--title)'{\*-t,\*--title}'[Filter by title]:' \
-    '(*-n *--no)'{\*-n,\*--no}'[Filter by absence of something. Valid values are [label]]:' \
-    '(-b --by)'{-b,--by}'[Sort the results by a characteristic. Valid values are [id,creation,edit]]:' \
-    '(-d --direction)'{-d,--direction}'[Select the sorting direction. Valid values are [asc,desc]]:' \
-    '(-f --format)'{-f,--format}'[Select the output formatting style. Valid values are [default,plain,json,org-mode]]:'
-}
-
-function _git-bug_ls-id {
-  _arguments
-}
-
-function _git-bug_ls-label {
-  _arguments
-}
-
-function _git-bug_pull {
-  _arguments
-}
-
-function _git-bug_push {
-  _arguments
-}
-
-function _git-bug_rm {
-  _arguments
-}
-
-function _git-bug_select {
-  _arguments
-}
-
-function _git-bug_show {
-  _arguments \
-    '--field[Select field to display. Valid values are [author,authorEmail,createTime,lastEdit,humanId,id,labels,shortId,status,title,actors,participants]]:' \
-    '(-f --format)'{-f,--format}'[Select the output formatting style. Valid values are [default,json,org-mode]]:'
-}
-
-
-function _git-bug_status {
-  local -a commands
-
-  _arguments -C \
-    "1: :->cmnds" \
-    "*::arg:->args"
-
-  case $state in
-  cmnds)
-    commands=(
-      "close:Mark a bug as closed."
-      "open:Mark a bug as open."
-    )
-    _describe "command" commands
-    ;;
-  esac
-
-  case "$words[1]" in
-  close)
-    _git-bug_status_close
-    ;;
-  open)
-    _git-bug_status_open
-    ;;
-  esac
-}
-
-function _git-bug_status_close {
-  _arguments
-}
-
-function _git-bug_status_open {
-  _arguments
-}
-
-function _git-bug_termui {
-  _arguments
-}
-
-
-function _git-bug_title {
-  local -a commands
-
-  _arguments -C \
-    "1: :->cmnds" \
-    "*::arg:->args"
-
-  case $state in
-  cmnds)
-    commands=(
-      "edit:Edit a title of a bug."
-    )
-    _describe "command" commands
-    ;;
-  esac
-
-  case "$words[1]" in
-  edit)
-    _git-bug_title_edit
-    ;;
-  esac
-}
-
-function _git-bug_title_edit {
-  _arguments \
-    '(-t --title)'{-t,--title}'[Provide a title to describe the issue]:'
-}
-
-
-function _git-bug_user {
-  local -a commands
-
-  _arguments -C \
-    '(-f --field)'{-f,--field}'[Select field to display. Valid values are [email,humanId,id,lastModification,lastModificationLamport,login,metadata,name]]:' \
-    "1: :->cmnds" \
-    "*::arg:->args"
-
-  case $state in
-  cmnds)
-    commands=(
-      "adopt:Adopt an existing identity as your own."
-      "create:Create a new identity."
-      "ls:List identities."
-    )
-    _describe "command" commands
-    ;;
-  esac
-
-  case "$words[1]" in
-  adopt)
-    _git-bug_user_adopt
-    ;;
-  create)
-    _git-bug_user_create
-    ;;
-  ls)
-    _git-bug_user_ls
-    ;;
-  esac
-}
-
-function _git-bug_user_adopt {
-  _arguments
-}
-
-function _git-bug_user_create {
-  _arguments
-}
-
-function _git-bug_user_ls {
-  _arguments \
-    '(-f --format)'{-f,--format}'[Select the output formatting style. Valid values are [default,json]]:'
-}
-
-function _git-bug_version {
-  _arguments \
-    '(-n --number)'{-n,--number}'[Only show the version number]' \
-    '(-c --commit)'{-c,--commit}'[Only show the commit hash]' \
-    '(-a --all)'{-a,--all}'[Show all version information]'
-}
-
-function _git-bug_webui {
-  _arguments \
-    '--open[Automatically open the web UI in the default browser]' \
-    '--no-open[Prevent the automatic opening of the web UI in the default browser]' \
-    '(-p --port)'{-p,--port}'[Port to listen to (default is random)]:' \
-    '--read-only[Whether to run the web UI in read-only mode]'
-}
-
+# don't run the completion function when being source-ed or eval-ed
+if [ "$funcstack[1]" = "_git-bug" ]; then
+	_git-bug
+fi
