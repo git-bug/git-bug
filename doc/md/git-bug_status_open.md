@@ -2,10 +2,6 @@
 
 Mark a bug as open.
 
-### Synopsis
-
-Mark a bug as open.
-
 ```
 git-bug status open [ID] [flags]
 ```

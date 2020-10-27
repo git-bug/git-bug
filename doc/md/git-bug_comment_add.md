@@ -2,10 +2,6 @@
 
 Add a new comment to a bug.
 
-### Synopsis
-
-Add a new comment to a bug.
-
 ```
 git-bug comment add [ID] [flags]
 ```

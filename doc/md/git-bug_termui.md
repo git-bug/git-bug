@@ -2,10 +2,6 @@
 
 Launch the terminal UI.
 
-### Synopsis
-
-Launch the terminal UI.
-
 ```
 git-bug termui [flags]
 ```

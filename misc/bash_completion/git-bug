@@ -40,6 +40,12 @@ __git-bug_handle_go_custom_completion()
 {
     __git-bug_debug "${FUNCNAME[0]}: cur is ${cur}, words[*] is ${words[*]}, #words[@] is ${#words[@]}"
 
+    local shellCompDirectiveError=1
+    local shellCompDirectiveNoSpace=2
+    local shellCompDirectiveNoFileComp=4
+    local shellCompDirectiveFilterFileExt=8
+    local shellCompDirectiveFilterDirs=16
+
     local out requestComp lastParam lastChar comp directive args
 
     # Prepare the command to request completions for the program.
@@ -73,24 +79,50 @@ __git-bug_handle_go_custom_completion()
     __git-bug_debug "${FUNCNAME[0]}: the completion directive is: ${directive}"
     __git-bug_debug "${FUNCNAME[0]}: the completions are: ${out[*]}"
 
-    if [ $((directive & 1)) -ne 0 ]; then
+    if [ $((directive & shellCompDirectiveError)) -ne 0 ]; then
         # Error code.  No completion.
         __git-bug_debug "${FUNCNAME[0]}: received error from custom completion go code"
         return
     else
-        if [ $((directive & 2)) -ne 0 ]; then
+        if [ $((directive & shellCompDirectiveNoSpace)) -ne 0 ]; then
             if [[ $(type -t compopt) = "builtin" ]]; then
                 __git-bug_debug "${FUNCNAME[0]}: activating no space"
                 compopt -o nospace
             fi
         fi
-        if [ $((directive & 4)) -ne 0 ]; then
+        if [ $((directive & shellCompDirectiveNoFileComp)) -ne 0 ]; then
             if [[ $(type -t compopt) = "builtin" ]]; then
                 __git-bug_debug "${FUNCNAME[0]}: activating no file completion"
                 compopt +o default
             fi
         fi
+    fi
 
+    if [ $((directive & shellCompDirectiveFilterFileExt)) -ne 0 ]; then
+        # File extension filtering
+        local fullFilter filter filteringCmd
+        # Do not use quotes around the $out variable or else newline
+        # characters will be kept.
+        for filter in ${out[*]}; do
+            fullFilter+="$filter|"
+        done
+
+        filteringCmd="_filedir $fullFilter"
+        __git-bug_debug "File filtering command: $filteringCmd"
+        $filteringCmd
+    elif [ $((directive & shellCompDirectiveFilterDirs)) -ne 0 ]; then
+        # File completion for directories only
+        local subDir
+        # Use printf to strip any trailing newline
+        subdir=$(printf "%s" "${out[0]}")
+        if [ -n "$subdir" ]; then
+            __git-bug_debug "Listing directories in $subdir"
+            __git-bug_handle_subdirs_in_dir_flag "$subdir"
+        else
+            __git-bug_debug "Listing directories in ."
+            _filedir -d
+        fi
+    else
         while IFS='' read -r comp; do
             COMPREPLY+=("$comp")
         done < <(compgen -W "${out[*]}" -- "$cur")
@@ -159,10 +191,9 @@ __git-bug_handle_reply()
     local completions
     completions=("${commands[@]}")
     if [[ ${#must_have_one_noun[@]} -ne 0 ]]; then
-        completions=("${must_have_one_noun[@]}")
+        completions+=("${must_have_one_noun[@]}")
     elif [[ -n "${has_completion_function}" ]]; then
         # if a go completion function is provided, defer to that function
-        completions=()
         __git-bug_handle_go_custom_completion
     fi
     if [[ ${#must_have_one_flag[@]} -ne 0 ]]; then
@@ -344,15 +375,21 @@ _git-bug_add()
     flags+=("--title=")
     two_word_flags+=("--title")
     two_word_flags+=("-t")
+    local_nonpersistent_flags+=("--title")
     local_nonpersistent_flags+=("--title=")
+    local_nonpersistent_flags+=("-t")
     flags+=("--message=")
     two_word_flags+=("--message")
     two_word_flags+=("-m")
+    local_nonpersistent_flags+=("--message")
     local_nonpersistent_flags+=("--message=")
+    local_nonpersistent_flags+=("-m")
     flags+=("--file=")
     two_word_flags+=("--file")
     two_word_flags+=("-F")
+    local_nonpersistent_flags+=("--file")
     local_nonpersistent_flags+=("--file=")
+    local_nonpersistent_flags+=("-F")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -376,15 +413,21 @@ _git-bug_bridge_auth_add-token()
     flags+=("--target=")
     two_word_flags+=("--target")
     two_word_flags+=("-t")
+    local_nonpersistent_flags+=("--target")
     local_nonpersistent_flags+=("--target=")
+    local_nonpersistent_flags+=("-t")
     flags+=("--login=")
     two_word_flags+=("--login")
     two_word_flags+=("-l")
+    local_nonpersistent_flags+=("--login")
     local_nonpersistent_flags+=("--login=")
+    local_nonpersistent_flags+=("-l")
     flags+=("--user=")
     two_word_flags+=("--user")
     two_word_flags+=("-u")
+    local_nonpersistent_flags+=("--user")
     local_nonpersistent_flags+=("--user=")
+    local_nonpersistent_flags+=("-u")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -471,40 +514,57 @@ _git-bug_bridge_configure()
     flags+=("--name=")
     two_word_flags+=("--name")
     two_word_flags+=("-n")
+    local_nonpersistent_flags+=("--name")
     local_nonpersistent_flags+=("--name=")
+    local_nonpersistent_flags+=("-n")
     flags+=("--target=")
     two_word_flags+=("--target")
     two_word_flags+=("-t")
+    local_nonpersistent_flags+=("--target")
     local_nonpersistent_flags+=("--target=")
+    local_nonpersistent_flags+=("-t")
     flags+=("--url=")
     two_word_flags+=("--url")
     two_word_flags+=("-u")
+    local_nonpersistent_flags+=("--url")
     local_nonpersistent_flags+=("--url=")
+    local_nonpersistent_flags+=("-u")
     flags+=("--base-url=")
     two_word_flags+=("--base-url")
     two_word_flags+=("-b")
+    local_nonpersistent_flags+=("--base-url")
     local_nonpersistent_flags+=("--base-url=")
+    local_nonpersistent_flags+=("-b")
     flags+=("--login=")
     two_word_flags+=("--login")
     two_word_flags+=("-l")
+    local_nonpersistent_flags+=("--login")
     local_nonpersistent_flags+=("--login=")
+    local_nonpersistent_flags+=("-l")
     flags+=("--credential=")
     two_word_flags+=("--credential")
     two_word_flags+=("-c")
+    local_nonpersistent_flags+=("--credential")
     local_nonpersistent_flags+=("--credential=")
+    local_nonpersistent_flags+=("-c")
     flags+=("--token=")
     two_word_flags+=("--token")
+    local_nonpersistent_flags+=("--token")
     local_nonpersistent_flags+=("--token=")
     flags+=("--token-stdin")
     local_nonpersistent_flags+=("--token-stdin")
     flags+=("--owner=")
     two_word_flags+=("--owner")
     two_word_flags+=("-o")
+    local_nonpersistent_flags+=("--owner")
     local_nonpersistent_flags+=("--owner=")
+    local_nonpersistent_flags+=("-o")
     flags+=("--project=")
     two_word_flags+=("--project")
     two_word_flags+=("-p")
+    local_nonpersistent_flags+=("--project")
     local_nonpersistent_flags+=("--project=")
+    local_nonpersistent_flags+=("-p")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -528,10 +588,13 @@ _git-bug_bridge_pull()
     flags+=("--no-resume")
     flags+=("-n")
     local_nonpersistent_flags+=("--no-resume")
+    local_nonpersistent_flags+=("-n")
     flags+=("--since=")
     two_word_flags+=("--since")
     two_word_flags+=("-s")
+    local_nonpersistent_flags+=("--since")
     local_nonpersistent_flags+=("--since=")
+    local_nonpersistent_flags+=("-s")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -620,6 +683,7 @@ _git-bug_commands()
     flags+=("--pretty")
     flags+=("-p")
     local_nonpersistent_flags+=("--pretty")
+    local_nonpersistent_flags+=("-p")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -643,11 +707,15 @@ _git-bug_comment_add()
     flags+=("--file=")
     two_word_flags+=("--file")
     two_word_flags+=("-F")
+    local_nonpersistent_flags+=("--file")
     local_nonpersistent_flags+=("--file=")
+    local_nonpersistent_flags+=("-F")
     flags+=("--message=")
     two_word_flags+=("--message")
     two_word_flags+=("-m")
+    local_nonpersistent_flags+=("--message")
     local_nonpersistent_flags+=("--message=")
+    local_nonpersistent_flags+=("-m")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -774,43 +842,63 @@ _git-bug_ls()
     flags+=("--status=")
     two_word_flags+=("--status")
     two_word_flags+=("-s")
+    local_nonpersistent_flags+=("--status")
     local_nonpersistent_flags+=("--status=")
+    local_nonpersistent_flags+=("-s")
     flags+=("--author=")
     two_word_flags+=("--author")
     two_word_flags+=("-a")
+    local_nonpersistent_flags+=("--author")
     local_nonpersistent_flags+=("--author=")
+    local_nonpersistent_flags+=("-a")
     flags+=("--participant=")
     two_word_flags+=("--participant")
     two_word_flags+=("-p")
+    local_nonpersistent_flags+=("--participant")
     local_nonpersistent_flags+=("--participant=")
+    local_nonpersistent_flags+=("-p")
     flags+=("--actor=")
     two_word_flags+=("--actor")
     two_word_flags+=("-A")
+    local_nonpersistent_flags+=("--actor")
     local_nonpersistent_flags+=("--actor=")
+    local_nonpersistent_flags+=("-A")
     flags+=("--label=")
     two_word_flags+=("--label")
     two_word_flags+=("-l")
+    local_nonpersistent_flags+=("--label")
     local_nonpersistent_flags+=("--label=")
+    local_nonpersistent_flags+=("-l")
     flags+=("--title=")
     two_word_flags+=("--title")
     two_word_flags+=("-t")
+    local_nonpersistent_flags+=("--title")
     local_nonpersistent_flags+=("--title=")
+    local_nonpersistent_flags+=("-t")
     flags+=("--no=")
     two_word_flags+=("--no")
     two_word_flags+=("-n")
+    local_nonpersistent_flags+=("--no")
     local_nonpersistent_flags+=("--no=")
+    local_nonpersistent_flags+=("-n")
     flags+=("--by=")
     two_word_flags+=("--by")
     two_word_flags+=("-b")
+    local_nonpersistent_flags+=("--by")
     local_nonpersistent_flags+=("--by=")
+    local_nonpersistent_flags+=("-b")
     flags+=("--direction=")
     two_word_flags+=("--direction")
     two_word_flags+=("-d")
+    local_nonpersistent_flags+=("--direction")
     local_nonpersistent_flags+=("--direction=")
+    local_nonpersistent_flags+=("-d")
     flags+=("--format=")
     two_word_flags+=("--format")
     two_word_flags+=("-f")
+    local_nonpersistent_flags+=("--format")
     local_nonpersistent_flags+=("--format=")
+    local_nonpersistent_flags+=("-f")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -953,11 +1041,14 @@ _git-bug_show()
 
     flags+=("--field=")
     two_word_flags+=("--field")
+    local_nonpersistent_flags+=("--field")
     local_nonpersistent_flags+=("--field=")
     flags+=("--format=")
     two_word_flags+=("--format")
     two_word_flags+=("-f")
+    local_nonpersistent_flags+=("--format")
     local_nonpersistent_flags+=("--format=")
+    local_nonpersistent_flags+=("-f")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -1063,7 +1154,9 @@ _git-bug_title_edit()
     flags+=("--title=")
     two_word_flags+=("--title")
     two_word_flags+=("-t")
+    local_nonpersistent_flags+=("--title")
     local_nonpersistent_flags+=("--title=")
+    local_nonpersistent_flags+=("-t")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -1148,7 +1241,9 @@ _git-bug_user_ls()
     flags+=("--format=")
     two_word_flags+=("--format")
     two_word_flags+=("-f")
+    local_nonpersistent_flags+=("--format")
     local_nonpersistent_flags+=("--format=")
+    local_nonpersistent_flags+=("-f")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -1175,7 +1270,9 @@ _git-bug_user()
     flags+=("--field=")
     two_word_flags+=("--field")
     two_word_flags+=("-f")
+    local_nonpersistent_flags+=("--field")
     local_nonpersistent_flags+=("--field=")
+    local_nonpersistent_flags+=("-f")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -1199,12 +1296,15 @@ _git-bug_version()
     flags+=("--number")
     flags+=("-n")
     local_nonpersistent_flags+=("--number")
+    local_nonpersistent_flags+=("-n")
     flags+=("--commit")
     flags+=("-c")
     local_nonpersistent_flags+=("--commit")
+    local_nonpersistent_flags+=("-c")
     flags+=("--all")
     flags+=("-a")
     local_nonpersistent_flags+=("--all")
+    local_nonpersistent_flags+=("-a")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -1232,7 +1332,9 @@ _git-bug_webui()
     flags+=("--port=")
     two_word_flags+=("--port")
     two_word_flags+=("-p")
+    local_nonpersistent_flags+=("--port")
     local_nonpersistent_flags+=("--port=")
+    local_nonpersistent_flags+=("-p")
     flags+=("--read-only")
     local_nonpersistent_flags+=("--read-only")
 

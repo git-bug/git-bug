@@ -2,10 +2,6 @@
 
 Display the details of a bug.
 
-### Synopsis
-
-Display the details of a bug.
-
 ```
 git-bug show [ID] [flags]
 ```

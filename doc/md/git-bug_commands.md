@@ -2,10 +2,6 @@
 
 Display available commands.
 
-### Synopsis
-
-Display available commands.
-
 ```
 git-bug commands [flags]
 ```

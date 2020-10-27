@@ -2,10 +2,6 @@
 
 Display or add comments to a bug.
 
-### Synopsis
-
-Display or add comments to a bug.
-
 ```
 git-bug comment [ID] [flags]
 ```

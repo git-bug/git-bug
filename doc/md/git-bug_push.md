@@ -2,10 +2,6 @@
 
 Push bugs update to a git remote.
 
-### Synopsis
-
-Push bugs update to a git remote.
-
 ```
 git-bug push [REMOTE] [flags]
 ```

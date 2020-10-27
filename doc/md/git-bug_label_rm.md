@@ -2,10 +2,6 @@
 
 Remove a label from a bug.
 
-### Synopsis
-
-Remove a label from a bug.
-
 ```
 git-bug label rm [ID] LABEL... [flags]
 ```

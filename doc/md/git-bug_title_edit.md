@@ -2,10 +2,6 @@
 
 Edit a title of a bug.
 
-### Synopsis
-
-Edit a title of a bug.
-
 ```
 git-bug title edit [ID] [flags]
 ```

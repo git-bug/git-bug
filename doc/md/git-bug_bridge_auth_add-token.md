@@ -2,10 +2,6 @@
 
 Store a new token
 
-### Synopsis
-
-Store a new token
-
 ```
 git-bug bridge auth add-token [TOKEN] [flags]
 ```

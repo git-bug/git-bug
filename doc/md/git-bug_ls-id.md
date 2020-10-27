@@ -2,10 +2,6 @@
 
 List bug identifiers.
 
-### Synopsis
-
-List bug identifiers.
-
 ```
 git-bug ls-id [PREFIX] [flags]
 ```

@@ -2,10 +2,6 @@
 
 Create a new bug.
 
-### Synopsis
-
-Create a new bug.
-
 ```
 git-bug add [flags]
 ```

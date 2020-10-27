@@ -2,10 +2,6 @@
 
 Remove a credential.
 
-### Synopsis
-
-Remove a credential.
-
 ```
 git-bug bridge auth rm ID [flags]
 ```

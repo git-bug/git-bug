@@ -2,10 +2,6 @@
 
 Display an authentication credential.
 
-### Synopsis
-
-Display an authentication credential.
-
 ```
 git-bug bridge auth show [flags]
 ```

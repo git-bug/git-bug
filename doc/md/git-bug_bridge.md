@@ -2,10 +2,6 @@
 
 Configure and use bridges to other bug trackers.
 
-### Synopsis
-
-Configure and use bridges to other bug trackers.
-
 ```
 git-bug bridge [flags]
 ```

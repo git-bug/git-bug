@@ -2,10 +2,6 @@
 
 List all known bridge authentication credentials.
 
-### Synopsis
-
-List all known bridge authentication credentials.
-
 ```
 git-bug bridge auth [flags]
 ```

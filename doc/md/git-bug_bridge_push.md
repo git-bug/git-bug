@@ -2,10 +2,6 @@
 
 Push updates.
 
-### Synopsis
-
-Push updates.
-
 ```
 git-bug bridge push [NAME] [flags]
 ```
