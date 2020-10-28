@@ -138,7 +138,11 @@ func (gi *gitlabImporter) ensureIssue(repo *cache.RepoCache, issue *gitlab.Issue
 	}
 
 	// if bug was never imported
-	cleanText, err := text.Cleanup(issue.Description)
+	cleanTitle, err := text.Cleanup(issue.Title)
+	if err != nil {
+		return nil, err
+	}
+	cleanDesc, err := text.Cleanup(issue.Description)
 	if err != nil {
 		return nil, err
 	}
@@ -147,8 +151,8 @@ func (gi *gitlabImporter) ensureIssue(repo *cache.RepoCache, issue *gitlab.Issue
 	b, _, err = repo.NewBugRaw(
 		author,
 		issue.CreatedAt.Unix(),
-		issue.Title,
-		cleanText,
+		cleanTitle,
+		cleanDesc,
 		nil,
 		map[string]string{
 			core.MetaKeyOrigin:   target,
