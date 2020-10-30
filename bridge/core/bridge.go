@@ -182,7 +182,7 @@ func ConfiguredBridges(repo repository.RepoConfig) ([]string, error) {
 
 // Check if a bridge exist
 func BridgeExist(repo repository.RepoConfig, name string) bool {
-	keyPrefix := fmt.Sprintf("git-bug.bridge.%s.", name)
+	keyPrefix := fmt.Sprintf(bridgeConfigKeyPrefix + "." + name)
 
 	conf, err := repo.LocalConfig().ReadAll(keyPrefix)
 
@@ -261,7 +261,7 @@ func (b *Bridge) ensureConfig() error {
 }
 
 func loadConfig(repo repository.RepoConfig, name string) (Configuration, error) {
-	keyPrefix := fmt.Sprintf("git-bug.bridge.%s.", name)
+	keyPrefix := bridgeConfigKeyPrefix + "." + name
 
 	pairs, err := repo.LocalConfig().ReadAll(keyPrefix)
 	if err != nil {
@@ -270,7 +270,7 @@ func loadConfig(repo repository.RepoConfig, name string) (Configuration, error) 
 
 	result := make(Configuration, len(pairs))
 	for key, value := range pairs {
-		key := strings.TrimPrefix(key, keyPrefix)
+		key := strings.TrimPrefix(key, keyPrefix + ".")
 		result[key] = value
 	}
 
