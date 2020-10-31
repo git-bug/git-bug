@@ -202,22 +202,12 @@ func (repo *GoGitRepo) GetPath() string {
 
 // GetUserName returns the name the the user has used to configure git
 func (repo *GoGitRepo) GetUserName() (string, error) {
-	cfg, err := repo.r.Config()
-	if err != nil {
-		return "", err
-	}
-
-	return cfg.User.Name, nil
+	return repo.AnyConfig().ReadString("user.name")
 }
 
 // GetUserEmail returns the email address that the user has used to configure git.
 func (repo *GoGitRepo) GetUserEmail() (string, error) {
-	cfg, err := repo.r.Config()
-	if err != nil {
-		return "", err
-	}
-
-	return cfg.User.Email, nil
+	return repo.AnyConfig().ReadString("user.email")
 }
 
 // GetCoreEditor returns the name of the editor that the user has used to configure git.
