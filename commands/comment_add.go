@@ -39,7 +39,7 @@ func newCommentAddCommand() *cobra.Command {
 		"Provide the new message from the command line")
 
 	flags.Int64VarP(&options.unixTime, "time", "u", 0,
-		"Set the unix timestamp of the commit, in number of seconds since 1970-01-01")
+		"Set the unix timestamp of the commit, in seconds since 1970-01-01")
 
 	return cmd
 }

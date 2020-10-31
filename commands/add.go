@@ -39,7 +39,7 @@ func newAddCommand() *cobra.Command {
 	flags.StringVarP(&options.messageFile, "file", "F", "",
 		"Take the message from the given file. Use - to read the message from the standard input")
 	flags.Int64VarP(&options.unixTime, "time", "u", 0,
-		"Set the unix timestamp of the commit, in number of seconds since 1970-01-01")
+		"Set the unix timestamp of the commit, in seconds since 1970-01-01")
 
 	return cmd
 }
