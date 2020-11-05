@@ -17,13 +17,16 @@ import (
 )
 
 type lsOptions struct {
-	query query.Query
-
-	statusQuery   []string
-	noQuery       []string
-	sortBy        string
-	sortDirection string
-	outputFormat  string
+	statusQuery      []string
+	authorQuery      []string
+	participantQuery []string
+	actorQuery       []string
+	labelQuery       []string
+	titleQuery       []string
+	noQuery          []string
+	sortBy           string
+	sortDirection    string
+	outputFormat     string
 }
 
 func newLsCommand() *cobra.Command {
@@ -54,15 +57,15 @@ git bug ls --status closed --by creation
 
 	flags.StringSliceVarP(&options.statusQuery, "status", "s", nil,
 		"Filter by status. Valid values are [open,closed]")
-	flags.StringSliceVarP(&options.query.Author, "author", "a", nil,
+	flags.StringSliceVarP(&options.authorQuery, "author", "a", nil,
 		"Filter by author")
-	flags.StringSliceVarP(&options.query.Participant, "participant", "p", nil,
+	flags.StringSliceVarP(&options.participantQuery, "participant", "p", nil,
 		"Filter by participant")
-	flags.StringSliceVarP(&options.query.Actor, "actor", "A", nil,
+	flags.StringSliceVarP(&options.actorQuery, "actor", "A", nil,
 		"Filter by actor")
-	flags.StringSliceVarP(&options.query.Label, "label", "l", nil,
+	flags.StringSliceVarP(&options.labelQuery, "label", "l", nil,
 		"Filter by label")
-	flags.StringSliceVarP(&options.query.Title, "title", "t", nil,
+	flags.StringSliceVarP(&options.titleQuery, "title", "t", nil,
 		"Filter by title")
 	flags.StringSliceVarP(&options.noQuery, "no", "n", nil,
 		"Filter by absence of something. Valid values are [label]")
@@ -81,17 +84,24 @@ func runLs(env *Env, opts lsOptions, args []string) error {
 	var err error
 
 	if len(args) >= 1 {
-		q, err = query.Parse(strings.Join(args, " "))
-
+		// either the shell or cobra remove the quotes, we need them back for the parsing
+		for i, arg := range args {
+			if strings.Contains(arg, " ") {
+				args[i] = fmt.Sprintf("\"%s\"", arg)
+			}
+		}
+		assembled := strings.Join(args, " ")
+		q, err = query.Parse(assembled)
 		if err != nil {
 			return err
 		}
 	} else {
-		err = completeQuery(&opts)
-		if err != nil {
-			return err
-		}
-		q = &opts.query
+		q = query.NewQuery()
+	}
+
+	err = completeQuery(q, opts)
+	if err != nil {
+		return err
 	}
 
 	allIds := env.backend.QueryBugs(q)
@@ -308,19 +318,25 @@ func lsOrgmodeFormatter(env *Env, bugExcerpts []*cache.BugExcerpt) error {
 }
 
 // Finish the command flags transformation into the query.Query
-func completeQuery(opts *lsOptions) error {
+func completeQuery(q *query.Query, opts lsOptions) error {
 	for _, str := range opts.statusQuery {
 		status, err := bug.StatusFromString(str)
 		if err != nil {
 			return err
 		}
-		opts.query.Status = append(opts.query.Status, status)
+		q.Status = append(q.Status, status)
 	}
+
+	q.Author = append(q.Author, opts.authorQuery...)
+	q.Participant = append(q.Participant, opts.participantQuery...)
+	q.Actor = append(q.Actor, opts.actorQuery...)
+	q.Label = append(q.Label, opts.labelQuery...)
+	q.Title = append(q.Title, opts.titleQuery...)
 
 	for _, no := range opts.noQuery {
 		switch no {
 		case "label":
-			opts.query.NoLabel = true
+			q.NoLabel = true
 		default:
 			return fmt.Errorf("unknown \"no\" filter %s", no)
 		}
@@ -328,20 +344,20 @@ func completeQuery(opts *lsOptions) error {
 
 	switch opts.sortBy {
 	case "id":
-		opts.query.OrderBy = query.OrderById
+		q.OrderBy = query.OrderById
 	case "creation":
-		opts.query.OrderBy = query.OrderByCreation
+		q.OrderBy = query.OrderByCreation
 	case "edit":
-		opts.query.OrderBy = query.OrderByEdit
+		q.OrderBy = query.OrderByEdit
 	default:
 		return fmt.Errorf("unknown sort flag %s", opts.sortBy)
 	}
 
 	switch opts.sortDirection {
 	case "asc":
-		opts.query.OrderDirection = query.OrderAscending
+		q.OrderDirection = query.OrderAscending
 	case "desc":
-		opts.query.OrderDirection = query.OrderDescending
+		q.OrderDirection = query.OrderDescending
 	default:
 		return fmt.Errorf("unknown sort direction %s", opts.sortDirection)
 	}

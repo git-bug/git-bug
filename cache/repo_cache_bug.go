@@ -307,10 +307,17 @@ func (c *RepoCache) QueryBugs(q *query.Query) []entity.Id {
 	if q.Search != nil {
 		foundBySearch = map[entity.Id]*BugExcerpt{}
 
-		query := bleve.NewQueryStringQuery(strings.Join(q.Search, " "))
+		terms := make([]string, len(q.Search))
+		copy(terms, q.Search)
+		for i, search := range q.Search {
+			if strings.Contains(search, " ") {
+				terms[i] = fmt.Sprintf("\"%s\"", search)
+			}
+		}
 
-		search := bleve.NewSearchRequest(query)
-		searchResults, err := c.searchCache.Search(search)
+		bleveQuery := bleve.NewQueryStringQuery(strings.Join(terms, " "))
+		bleveSearch := bleve.NewSearchRequest(bleveQuery)
+		searchResults, err := c.searchCache.Search(bleveSearch)
 		if err != nil {
 			panic("bleve search failed")
 		}
