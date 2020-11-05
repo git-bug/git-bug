@@ -112,6 +112,8 @@ func (c *RepoCache) createBleveIndex() error {
 	_ = os.RemoveAll(blevePath)
 
 	mapping := bleve.NewIndexMapping()
+	mapping.DefaultAnalyzer = "en"
+
 	dir := searchCacheDirPath(c.repo)
 
 	bleveIndex, err := bleve.New(dir, mapping)
