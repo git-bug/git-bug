@@ -62,7 +62,7 @@ func (mc *MemClock) Time() Time {
 
 // Increment is used to return the value of the lamport clock and increment it afterwards
 func (mc *MemClock) Increment() (Time, error) {
-	return Time(atomic.AddUint64(&mc.counter, 1) - 1), nil
+	return Time(atomic.AddUint64(&mc.counter, 1)), nil
 }
 
 // Witness is called to update our local clock if necessary after
