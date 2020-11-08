@@ -11,7 +11,8 @@ import (
 
 // 1: original format
 // 2: no more legacy identities
-const formatVersion = 2
+// 3: Ids are generated from the create operation serialized data instead of from the first git commit
+const formatVersion = 3
 
 // OperationPack represent an ordered set of operation to apply
 // to a Bug. These operations are stored in a single Git commit.
@@ -50,7 +51,7 @@ func (opp *OperationPack) UnmarshalJSON(data []byte) error {
 		return fmt.Errorf("outdated repository format, please use https://github.com/MichaelMure/git-bug-migration to upgrade")
 	}
 	if aux.Version > formatVersion {
-		return fmt.Errorf("your version of git-bug is too old for this repository (version %v), please upgrade to the latest version", aux.Version)
+		return fmt.Errorf("your version of git-bug is too old for this repository (bug format %v), please upgrade to the latest version", aux.Version)
 	}
 
 	for _, raw := range aux.Operations {
@@ -157,13 +158,11 @@ func (opp *OperationPack) Write(repo repository.ClockedRepo) (repository.Hash, e
 	}
 
 	data, err := json.Marshal(opp)
-
 	if err != nil {
 		return "", err
 	}
 
 	hash, err := repo.StoreData(data)
-
 	if err != nil {
 		return "", err
 	}

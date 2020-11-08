@@ -15,8 +15,9 @@ func TestPushPull(t *testing.T) {
 	repoA, repoB, remote := repository.SetupReposAndRemote()
 	defer repository.CleanupTestRepos(repoA, repoB, remote)
 
-	reneA := identity.NewIdentity("René Descartes", "rene@descartes.fr")
-	err := reneA.Commit(repoA)
+	reneA, err := identity.NewIdentity(repoA, "René Descartes", "rene@descartes.fr")
+	require.NoError(t, err)
+	err = reneA.Commit(repoA)
 	require.NoError(t, err)
 
 	bug1, _, err := Create(reneA, time.Now().Unix(), "bug1", "message")
@@ -92,8 +93,9 @@ func _RebaseTheirs(t testing.TB) {
 	repoA, repoB, remote := repository.SetupReposAndRemote()
 	defer repository.CleanupTestRepos(repoA, repoB, remote)
 
-	reneA := identity.NewIdentity("René Descartes", "rene@descartes.fr")
-	err := reneA.Commit(repoA)
+	reneA, err := identity.NewIdentity(repoA, "René Descartes", "rene@descartes.fr")
+	require.NoError(t, err)
+	err = reneA.Commit(repoA)
 	require.NoError(t, err)
 
 	bug1, _, err := Create(reneA, time.Now().Unix(), "bug1", "message")
@@ -172,8 +174,9 @@ func _RebaseOurs(t testing.TB) {
 	repoA, repoB, remote := repository.SetupReposAndRemote()
 	defer repository.CleanupTestRepos(repoA, repoB, remote)
 
-	reneA := identity.NewIdentity("René Descartes", "rene@descartes.fr")
-	err := reneA.Commit(repoA)
+	reneA, err := identity.NewIdentity(repoA, "René Descartes", "rene@descartes.fr")
+	require.NoError(t, err)
+	err = reneA.Commit(repoA)
 	require.NoError(t, err)
 
 	bug1, _, err := Create(reneA, time.Now().Unix(), "bug1", "message")
@@ -263,8 +266,9 @@ func _RebaseConflict(t testing.TB) {
 	repoA, repoB, remote := repository.SetupReposAndRemote()
 	defer repository.CleanupTestRepos(repoA, repoB, remote)
 
-	reneA := identity.NewIdentity("René Descartes", "rene@descartes.fr")
-	err := reneA.Commit(repoA)
+	reneA, err := identity.NewIdentity(repoA, "René Descartes", "rene@descartes.fr")
+	require.NoError(t, err)
+	err = reneA.Commit(repoA)
 	require.NoError(t, err)
 
 	bug1, _, err := Create(reneA, time.Now().Unix(), "bug1", "message")

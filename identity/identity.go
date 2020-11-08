@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"strings"
 
 	"github.com/pkg/errors"
 
@@ -102,8 +101,7 @@ func ReadRemote(repo repository.Repo, remote string, id string) (*Identity, erro
 
 // read will load and parse an identity from git
 func read(repo repository.Repo, ref string) (*Identity, error) {
-	refSplit := strings.Split(ref, "/")
-	id := entity.Id(refSplit[len(refSplit)-1])
+	id := entity.RefToId(ref)
 
 	if err := id.Validate(); err != nil {
 		return nil, errors.Wrap(err, "invalid ref")

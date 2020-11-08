@@ -12,19 +12,20 @@ import (
 )
 
 func TestBugId(t *testing.T) {
-	mockRepo := repository.NewMockRepo()
+	repo := repository.NewMockRepo()
 
 	bug1 := NewBug()
 
-	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
-	err := rene.Commit(mockRepo)
+	rene, err := identity.NewIdentity(repo, "René Descartes", "rene@descartes.fr")
+	require.NoError(t, err)
+	err = rene.Commit(repo)
 	require.NoError(t, err)
 
 	createOp := NewCreateOp(rene, time.Now().Unix(), "title", "message", nil)
 
 	bug1.Append(createOp)
 
-	err = bug1.Commit(mockRepo)
+	err = bug1.Commit(repo)
 
 	if err != nil {
 		t.Fatal(err)
@@ -34,12 +35,13 @@ func TestBugId(t *testing.T) {
 }
 
 func TestBugValidity(t *testing.T) {
-	mockRepo := repository.NewMockRepo()
+	repo := repository.NewMockRepo()
 
 	bug1 := NewBug()
 
-	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
-	err := rene.Commit(mockRepo)
+	rene, err := identity.NewIdentity(repo, "René Descartes", "rene@descartes.fr")
+	require.NoError(t, err)
+	err = rene.Commit(repo)
 	require.NoError(t, err)
 
 	createOp := NewCreateOp(rene, time.Now().Unix(), "title", "message", nil)
@@ -54,7 +56,7 @@ func TestBugValidity(t *testing.T) {
 		t.Fatal("Bug with just a CreateOp should be valid")
 	}
 
-	err = bug1.Commit(mockRepo)
+	err = bug1.Commit(repo)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -65,7 +67,7 @@ func TestBugValidity(t *testing.T) {
 		t.Fatal("Bug with multiple CreateOp should be invalid")
 	}
 
-	err = bug1.Commit(mockRepo)
+	err = bug1.Commit(repo)
 	if err == nil {
 		t.Fatal("Invalid bug should not commit")
 	}
@@ -76,8 +78,9 @@ func TestBugCommitLoad(t *testing.T) {
 
 	bug1 := NewBug()
 
-	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
-	err := rene.Commit(repo)
+	rene, err := identity.NewIdentity(repo, "René Descartes", "rene@descartes.fr")
+	require.NoError(t, err)
+	err = rene.Commit(repo)
 	require.NoError(t, err)
 
 	createOp := NewCreateOp(rene, time.Now().Unix(), "title", "message", nil)
@@ -137,7 +140,8 @@ func TestBugRemove(t *testing.T) {
 	require.NoError(t, err)
 
 	// generate a bunch of bugs
-	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
+	rene, err := identity.NewIdentity(repo, "René Descartes", "rene@descartes.fr")
+	require.NoError(t, err)
 	err = rene.Commit(repo)
 	require.NoError(t, err)
 
