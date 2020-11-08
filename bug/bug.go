@@ -321,6 +321,8 @@ func (bug *Bug) Validate() error {
 
 	// The bug Id should be the id of the first operation
 	if bug.FirstOp().Id() != bug.id {
+		fmt.Println("bug", bug.id.String())
+		fmt.Println("op", bug.FirstOp().Id().String())
 		return fmt.Errorf("bug id should be the first commit hash")
 	}
 
