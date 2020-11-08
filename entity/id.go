@@ -8,8 +8,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-const IdLengthSHA1 = 40
-const IdLengthSHA256 = 64
+// sha-256
+const idLength = 64
 const humanIdLength = 7
 
 const UnsetId = Id("unset")
@@ -55,7 +55,7 @@ func (i Id) MarshalGQL(w io.Writer) {
 
 // IsValid tell if the Id is valid
 func (i Id) Validate() error {
-	if len(i) != IdLengthSHA1 && len(i) != IdLengthSHA256 {
+	if len(i) != idLength {
 		return fmt.Errorf("invalid length")
 	}
 	for _, r := range i {
