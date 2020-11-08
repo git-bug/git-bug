@@ -25,7 +25,7 @@ func ExampleOperationIterator() {
 }
 
 func TestOpIterator(t *testing.T) {
-	mockRepo := repository.NewMockRepoForTest()
+	mockRepo := repository.NewMockRepo()
 
 	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
 	err := rene.Commit(mockRepo)

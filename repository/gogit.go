@@ -24,6 +24,8 @@ import (
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
+const clockPath = "clocks"
+
 var _ ClockedRepo = &GoGitRepo{}
 var _ TestedRepo = &GoGitRepo{}
 
@@ -677,6 +679,37 @@ func (repo *GoGitRepo) ListCommits(ref string) ([]Hash, error) {
 	return hashes, nil
 }
 
+func (repo *GoGitRepo) AllClocks() (map[string]lamport.Clock, error) {
+	repo.clocksMutex.Lock()
+	defer repo.clocksMutex.Unlock()
+
+	result := make(map[string]lamport.Clock)
+
+	files, err := ioutil.ReadDir(filepath.Join(repo.path, "git-bug", clockPath))
+	if os.IsNotExist(err) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	for _, file := range files {
+		name := file.Name()
+		if c, ok := repo.clocks[name]; ok {
+			result[name] = c
+		} else {
+			c, err := lamport.LoadPersistedClock(repo.LocalStorage(), filepath.Join(clockPath, name))
+			if err != nil {
+				return nil, err
+			}
+			repo.clocks[name] = c
+			result[name] = c
+		}
+	}
+
+	return result, nil
+}
+
 // GetOrCreateClock return a Lamport clock stored in the Repo.
 // If the clock doesn't exist, it's created.
 func (repo *GoGitRepo) GetOrCreateClock(name string) (lamport.Clock, error) {
@@ -691,7 +724,7 @@ func (repo *GoGitRepo) GetOrCreateClock(name string) (lamport.Clock, error) {
 		return nil, err
 	}
 
-	c, err = lamport.NewPersistedClock(repo.localStorage, name+"-clock")
+	c, err = lamport.NewPersistedClock(repo.LocalStorage(), filepath.Join(clockPath, name))
 	if err != nil {
 		return nil, err
 	}
@@ -705,7 +738,7 @@ func (repo *GoGitRepo) getClock(name string) (lamport.Clock, error) {
 		return c, nil
 	}
 
-	c, err := lamport.LoadPersistedClock(repo.localStorage, name+"-clock")
+	c, err := lamport.LoadPersistedClock(repo.LocalStorage(), filepath.Join(clockPath, name))
 	if err == nil {
 		repo.clocks[name] = c
 		return c, nil
@@ -714,6 +747,24 @@ func (repo *GoGitRepo) getClock(name string) (lamport.Clock, error) {
 		return nil, ErrClockNotExist
 	}
 	return nil, err
+}
+
+// Increment is equivalent to c = GetOrCreateClock(name) + c.Increment()
+func (repo *GoGitRepo) Increment(name string) (lamport.Time, error) {
+	c, err := repo.GetOrCreateClock(name)
+	if err != nil {
+		return lamport.Time(0), err
+	}
+	return c.Increment()
+}
+
+// Witness is equivalent to c = GetOrCreateClock(name) + c.Witness(time)
+func (repo *GoGitRepo) Witness(name string, time lamport.Time) error {
+	c, err := repo.GetOrCreateClock(name)
+	if err != nil {
+		return err
+	}
+	return c.Witness(time)
 }
 
 // AddRemote add a new remote to the repository

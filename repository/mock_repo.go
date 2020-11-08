@@ -14,11 +14,11 @@ import (
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
-var _ ClockedRepo = &mockRepoForTest{}
-var _ TestedRepo = &mockRepoForTest{}
+var _ ClockedRepo = &mockRepo{}
+var _ TestedRepo = &mockRepo{}
 
-// mockRepoForTest defines an instance of Repo that can be used for testing.
-type mockRepoForTest struct {
+// mockRepo defines an instance of Repo that can be used for testing.
+type mockRepo struct {
 	*mockRepoConfig
 	*mockRepoKeyring
 	*mockRepoCommon
@@ -26,12 +26,13 @@ type mockRepoForTest struct {
 	*mockRepoBleve
 	*mockRepoData
 	*mockRepoClock
+	*mockRepoTest
 }
 
-func (m *mockRepoForTest) Close() error { return nil }
+func (m *mockRepo) Close() error { return nil }
 
-func NewMockRepoForTest() *mockRepoForTest {
-	return &mockRepoForTest{
+func NewMockRepo() *mockRepo {
+	return &mockRepo{
 		mockRepoConfig:  NewMockRepoConfig(),
 		mockRepoKeyring: NewMockRepoKeyring(),
 		mockRepoCommon:  NewMockRepoCommon(),
@@ -39,6 +40,7 @@ func NewMockRepoForTest() *mockRepoForTest {
 		mockRepoBleve:   newMockRepoBleve(),
 		mockRepoData:    NewMockRepoData(),
 		mockRepoClock:   NewMockRepoClock(),
+		mockRepoTest:    NewMockRepoTest(),
 	}
 }
 
@@ -371,18 +373,7 @@ func (r *mockRepoData) GetTreeHash(commit Hash) (Hash, error) {
 	return c.treeHash, nil
 }
 
-func (r *mockRepoData) AddRemote(name string, url string) error {
-	panic("implement me")
-}
-
-func (m mockRepoForTest) GetLocalRemote() string {
-	panic("implement me")
-}
-
-func (m mockRepoForTest) EraseFromDisk() error {
-	// nothing to do
-	return nil
-}
+var _ RepoClock = &mockRepoClock{}
 
 type mockRepoClock struct {
 	mu     sync.Mutex
@@ -393,6 +384,10 @@ func NewMockRepoClock() *mockRepoClock {
 	return &mockRepoClock{
 		clocks: make(map[string]lamport.Clock),
 	}
+}
+
+func (r *mockRepoClock) AllClocks() (map[string]lamport.Clock, error) {
+	return r.clocks, nil
 }
 
 func (r *mockRepoClock) GetOrCreateClock(name string) (lamport.Clock, error) {
@@ -406,4 +401,41 @@ func (r *mockRepoClock) GetOrCreateClock(name string) (lamport.Clock, error) {
 	c := lamport.NewMemClock()
 	r.clocks[name] = c
 	return c, nil
+}
+
+func (r *mockRepoClock) Increment(name string) (lamport.Time, error) {
+	c, err := r.GetOrCreateClock(name)
+	if err != nil {
+		return lamport.Time(0), err
+	}
+	return c.Increment()
+}
+
+func (r *mockRepoClock) Witness(name string, time lamport.Time) error {
+	c, err := r.GetOrCreateClock(name)
+	if err != nil {
+		return err
+	}
+	return c.Witness(time)
+}
+
+var _ repoTest = &mockRepoTest{}
+
+type mockRepoTest struct{}
+
+func NewMockRepoTest() *mockRepoTest {
+	return &mockRepoTest{}
+}
+
+func (r *mockRepoTest) AddRemote(name string, url string) error {
+	panic("implement me")
+}
+
+func (r mockRepoTest) GetLocalRemote() string {
+	panic("implement me")
+}
+
+func (r mockRepoTest) EraseFromDisk() error {
+	// nothing to do
+	return nil
 }
