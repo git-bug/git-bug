@@ -15,8 +15,8 @@ import (
 
 func TestNoopSerialize(t *testing.T) {
 	repo := repository.NewMockRepo()
-	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
-	err := rene.Commit(repo)
+
+	rene, err := identity.NewIdentity(repo, "René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
 
 	unix := time.Now().Unix()

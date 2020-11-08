@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/MichaelMure/git-bug/identity"
@@ -16,8 +15,8 @@ func TestOperationPackSerialize(t *testing.T) {
 	opp := &OperationPack{}
 
 	repo := repository.NewMockRepo()
-	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
-	err := rene.Commit(repo)
+
+	rene, err := identity.NewIdentity(repo, "René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
 
 	createOp := NewCreateOp(rene, time.Now().Unix(), "title", "message", nil)
@@ -36,7 +35,7 @@ func TestOperationPackSerialize(t *testing.T) {
 	opMeta.SetMetadata("key", "value")
 	opp.Append(opMeta)
 
-	assert.Equal(t, 1, len(opMeta.Metadata))
+	require.Equal(t, 1, len(opMeta.Metadata))
 
 	opFile := NewAddCommentOp(rene, time.Now().Unix(), "message", []repository.Hash{
 		"abcdef",
@@ -44,19 +43,19 @@ func TestOperationPackSerialize(t *testing.T) {
 	})
 	opp.Append(opFile)
 
-	assert.Equal(t, 2, len(opFile.Files))
+	require.Equal(t, 2, len(opFile.Files))
 
 	data, err := json.Marshal(opp)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	var opp2 *OperationPack
 	err = json.Unmarshal(data, &opp2)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	ensureIds(opp)
 	ensureAuthors(t, opp, opp2)
 
-	assert.Equal(t, opp, opp2)
+	require.Equal(t, opp, opp2)
 }
 
 func ensureIds(opp *OperationPack) {

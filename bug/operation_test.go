@@ -11,7 +11,16 @@ import (
 )
 
 func TestValidate(t *testing.T) {
-	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
+	repo := repository.NewMockRepoClock()
+
+	makeIdentity := func(t *testing.T, name, email string) *identity.Identity {
+		i, err := identity.NewIdentity(repo, name, email)
+		require.NoError(t, err)
+		return i
+	}
+
+	rene := makeIdentity(t, "René Descartes", "rene@descartes.fr")
+
 	unix := time.Now().Unix()
 
 	good := []Operation{
@@ -30,11 +39,11 @@ func TestValidate(t *testing.T) {
 
 	bad := []Operation{
 		// opbase
-		NewSetStatusOp(identity.NewIdentity("", "rene@descartes.fr"), unix, ClosedStatus),
-		NewSetStatusOp(identity.NewIdentity("René Descartes\u001b", "rene@descartes.fr"), unix, ClosedStatus),
-		NewSetStatusOp(identity.NewIdentity("René Descartes", "rene@descartes.fr\u001b"), unix, ClosedStatus),
-		NewSetStatusOp(identity.NewIdentity("René \nDescartes", "rene@descartes.fr"), unix, ClosedStatus),
-		NewSetStatusOp(identity.NewIdentity("René Descartes", "rene@\ndescartes.fr"), unix, ClosedStatus),
+		NewSetStatusOp(makeIdentity(t, "", "rene@descartes.fr"), unix, ClosedStatus),
+		NewSetStatusOp(makeIdentity(t, "René Descartes\u001b", "rene@descartes.fr"), unix, ClosedStatus),
+		NewSetStatusOp(makeIdentity(t, "René Descartes", "rene@descartes.fr\u001b"), unix, ClosedStatus),
+		NewSetStatusOp(makeIdentity(t, "René \nDescartes", "rene@descartes.fr"), unix, ClosedStatus),
+		NewSetStatusOp(makeIdentity(t, "René Descartes", "rene@\ndescartes.fr"), unix, ClosedStatus),
 		&CreateOperation{OpBase: OpBase{
 			Author:        rene,
 			UnixTime:      0,
@@ -68,7 +77,11 @@ func TestValidate(t *testing.T) {
 }
 
 func TestMetadata(t *testing.T) {
-	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
+	repo := repository.NewMockRepoClock()
+
+	rene, err := identity.NewIdentity(repo, "René Descartes", "rene@descartes.fr")
+	require.NoError(t, err)
+
 	op := NewCreateOp(rene, time.Now().Unix(), "title", "message", nil)
 
 	op.SetMetadata("key", "value")
@@ -88,8 +101,9 @@ func TestID(t *testing.T) {
 	}
 
 	for _, repo := range repos {
-		rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
-		err := rene.Commit(repo)
+		rene, err := identity.NewIdentity(repo, "René Descartes", "rene@descartes.fr")
+		require.NoError(t, err)
+		err = rene.Commit(repo)
 		require.NoError(t, err)
 
 		b, op, err := Create(rene, time.Now().Unix(), "title", "message")

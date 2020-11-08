@@ -25,10 +25,11 @@ func ExampleOperationIterator() {
 }
 
 func TestOpIterator(t *testing.T) {
-	mockRepo := repository.NewMockRepo()
+	repo := repository.NewMockRepo()
 
-	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
-	err := rene.Commit(mockRepo)
+	rene, err := identity.NewIdentity(repo, "René Descartes", "rene@descartes.fr")
+	require.NoError(t, err)
+	err = rene.Commit(repo)
 	require.NoError(t, err)
 
 	unix := time.Now().Unix()
@@ -51,14 +52,14 @@ func TestOpIterator(t *testing.T) {
 	bug1.Append(addCommentOp)
 	bug1.Append(setStatusOp)
 	bug1.Append(labelChangeOp)
-	err = bug1.Commit(mockRepo)
+	err = bug1.Commit(repo)
 	require.NoError(t, err)
 
 	// second pack
 	bug1.Append(genTitleOp())
 	bug1.Append(genTitleOp())
 	bug1.Append(genTitleOp())
-	err = bug1.Commit(mockRepo)
+	err = bug1.Commit(repo)
 	require.NoError(t, err)
 
 	// staging

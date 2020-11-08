@@ -5,17 +5,21 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/timestamp"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestCreate(t *testing.T) {
 	snapshot := Snapshot{}
 
-	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
+	repo := repository.NewMockRepoClock()
+
+	rene, err := identity.NewIdentity(repo, "René Descartes", "rene@descartes.fr")
+	require.NoError(t, err)
+
 	unix := time.Now().Unix()
 
 	create := NewCreateOp(rene, unix, "title", "message", nil)
@@ -23,7 +27,7 @@ func TestCreate(t *testing.T) {
 	create.Apply(&snapshot)
 
 	id := create.Id()
-	assert.NoError(t, id.Validate())
+	require.NoError(t, id.Validate())
 
 	comment := Comment{
 		id:       id,
@@ -48,31 +52,31 @@ func TestCreate(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, expected, snapshot)
+	require.Equal(t, expected, snapshot)
 }
 
 func TestCreateSerialize(t *testing.T) {
 	repo := repository.NewMockRepo()
-	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
-	err := rene.Commit(repo)
+
+	rene, err := identity.NewIdentity(repo, "René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
 
 	unix := time.Now().Unix()
 	before := NewCreateOp(rene, unix, "title", "message", nil)
 
 	data, err := json.Marshal(before)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	var after CreateOperation
 	err = json.Unmarshal(data, &after)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// enforce creating the ID
 	before.Id()
 
 	// Replace the identity stub with the real thing
-	assert.Equal(t, rene.Id(), after.base().Author.Id())
+	require.Equal(t, rene.Id(), after.base().Author.Id())
 	after.Author = rene
 
-	assert.Equal(t, before, &after)
+	require.Equal(t, before, &after)
 }
