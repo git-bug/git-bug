@@ -1,7 +1,6 @@
 package bug
 
 import (
-	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -55,11 +54,6 @@ type Operation interface {
 	IsOperation()
 }
 
-func deriveId(data []byte) entity.Id {
-	sum := sha256.Sum256(data)
-	return entity.Id(fmt.Sprintf("%x", sum))
-}
-
 func idOperation(op Operation) entity.Id {
 	base := op.base()
 
@@ -78,7 +72,7 @@ func idOperation(op Operation) entity.Id {
 			panic(err)
 		}
 
-		base.id = deriveId(data)
+		base.id = entity.DeriveId(data)
 	}
 	return base.id
 }
@@ -109,7 +103,7 @@ func newOpBase(opType OperationType, author identity.Interface, unixTime int64) 
 
 func (op *OpBase) UnmarshalJSON(data []byte) error {
 	// Compute the Id when loading the op from disk.
-	op.id = deriveId(data)
+	op.id = entity.DeriveId(data)
 
 	aux := struct {
 		OperationType OperationType     `json:"type"`
