@@ -2,88 +2,148 @@ package identity
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/lamport"
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
 // 1: original format
-const formatVersion = 1
+// 2: Identity Ids are generated from the first version serialized data instead of from the first git commit
+const formatVersion = 2
 
-// Version is a complete set of information about an Identity at a point in time.
-type Version struct {
-	// The lamport time at which this version become effective
-	// The reference time is the bug edition lamport clock
-	// It must be the first field in this struct due to https://github.com/golang/go/issues/599
-	//
-	// TODO: BREAKING CHANGE - this need to actually be one edition lamport time **per entity**
-	// This is not a problem right now but will be when more entities are added (pull-request, config ...)
-	time     lamport.Time
-	unixTime int64
+// TODO ^^
 
+// version is a complete set of information about an Identity at a point in time.
+type version struct {
 	name      string
 	email     string // as defined in git or from a bridge when importing the identity
 	login     string // from a bridge when importing the identity
 	avatarURL string
+
+	// The lamport times of the other entities at which this version become effective
+	times    map[string]lamport.Time
+	unixTime int64
 
 	// The set of keys valid at that time, from this version onward, until they get removed
 	// in a new version. This allow to have multiple key for the same identity (e.g. one per
 	// device) as well as revoke key.
 	keys []*Key
 
-	// This optional array is here to ensure a better randomness of the identity id to avoid collisions.
+	// mandatory random bytes to ensure a better randomness of the data of the first
+	// version of a bug, used to later generate the ID
+	// len(Nonce) should be > 20 and < 64 bytes
 	// It has no functional purpose and should be ignored.
-	// It is advised to fill this array if there is not enough entropy, e.g. if there is no keys.
+	// TODO: optional?
 	nonce []byte
 
 	// A set of arbitrary key/value to store metadata about a version or about an Identity in general.
 	metadata map[string]string
 
+	// Not serialized. Store the version's id in memory.
+	id entity.Id
 	// Not serialized
 	commitHash repository.Hash
 }
 
-type VersionJSON struct {
+func newVersion(repo repository.RepoClock, name string, email string, login string, avatarURL string, keys []*Key) (*version, error) {
+	clocks, err := repo.AllClocks()
+	if err != nil {
+		return nil, err
+	}
+
+	times := make(map[string]lamport.Time)
+	for name, clock := range clocks {
+		times[name] = clock.Time()
+	}
+
+	return &version{
+		id:        entity.UnsetId,
+		name:      name,
+		email:     email,
+		login:     login,
+		avatarURL: avatarURL,
+		times:     times,
+		unixTime:  time.Now().Unix(),
+		keys:      keys,
+		nonce:     makeNonce(20),
+	}, nil
+}
+
+type versionJSON struct {
 	// Additional field to version the data
 	FormatVersion uint `json:"version"`
 
-	Time      lamport.Time      `json:"time"`
-	UnixTime  int64             `json:"unix_time"`
-	Name      string            `json:"name,omitempty"`
-	Email     string            `json:"email,omitempty"`
-	Login     string            `json:"login,omitempty"`
-	AvatarUrl string            `json:"avatar_url,omitempty"`
-	Keys      []*Key            `json:"pub_keys,omitempty"`
-	Nonce     []byte            `json:"nonce,omitempty"`
-	Metadata  map[string]string `json:"metadata,omitempty"`
+	Times     map[string]lamport.Time `json:"times"`
+	UnixTime  int64                   `json:"unix_time"`
+	Name      string                  `json:"name,omitempty"`
+	Email     string                  `json:"email,omitempty"`
+	Login     string                  `json:"login,omitempty"`
+	AvatarUrl string                  `json:"avatar_url,omitempty"`
+	Keys      []*Key                  `json:"pub_keys,omitempty"`
+	Nonce     []byte                  `json:"nonce"`
+	Metadata  map[string]string       `json:"metadata,omitempty"`
+}
+
+// Id return the identifier of the version
+func (v *version) Id() entity.Id {
+	if v.id == "" {
+		// something went really wrong
+		panic("version's id not set")
+	}
+	if v.id == entity.UnsetId {
+		// This means we are trying to get the version's Id *before* it has been stored.
+		// As the Id is computed based on the actual bytes written on the disk, we are going to predict
+		// those and then get the Id. This is safe as it will be the exact same code writing on disk later.
+		data, err := json.Marshal(v)
+		if err != nil {
+			panic(err)
+		}
+		v.id = deriveId(data)
+	}
+	return v.id
+}
+
+func deriveId(data []byte) entity.Id {
+	sum := sha256.Sum256(data)
+	return entity.Id(fmt.Sprintf("%x", sum))
 }
 
 // Make a deep copy
-func (v *Version) Clone() *Version {
-	clone := &Version{
-		name:      v.name,
-		email:     v.email,
-		avatarURL: v.avatarURL,
-		keys:      make([]*Key, len(v.keys)),
+func (v *version) Clone() *version {
+	// copy direct fields
+	clone := *v
+
+	clone.times = make(map[string]lamport.Time)
+	for name, t := range v.times {
+		clone.times[name] = t
 	}
 
+	clone.keys = make([]*Key, len(v.keys))
 	for i, key := range v.keys {
 		clone.keys[i] = key.Clone()
 	}
 
-	return clone
+	clone.nonce = make([]byte, len(v.nonce))
+	copy(clone.nonce, v.nonce)
+
+	// not copying metadata
+
+	return &clone
 }
 
-func (v *Version) MarshalJSON() ([]byte, error) {
-	return json.Marshal(VersionJSON{
+func (v *version) MarshalJSON() ([]byte, error) {
+	return json.Marshal(versionJSON{
 		FormatVersion: formatVersion,
-		Time:          v.time,
+		Times:         v.times,
 		UnixTime:      v.unixTime,
 		Name:          v.name,
 		Email:         v.email,
@@ -95,18 +155,22 @@ func (v *Version) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (v *Version) UnmarshalJSON(data []byte) error {
-	var aux VersionJSON
+func (v *version) UnmarshalJSON(data []byte) error {
+	var aux versionJSON
 
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
 	}
 
-	if aux.FormatVersion != formatVersion {
-		return fmt.Errorf("unknown format version %v", aux.FormatVersion)
+	if aux.FormatVersion < formatVersion {
+		return fmt.Errorf("outdated repository format, please use https://github.com/MichaelMure/git-bug-migration to upgrade")
+	}
+	if aux.FormatVersion > formatVersion {
+		return fmt.Errorf("your version of git-bug is too old for this repository (identity format %v), please upgrade to the latest version", aux.FormatVersion)
 	}
 
-	v.time = aux.Time
+	v.id = deriveId(data)
+	v.times = aux.Times
 	v.unixTime = aux.UnixTime
 	v.name = aux.Name
 	v.email = aux.Email
@@ -119,23 +183,18 @@ func (v *Version) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (v *Version) Validate() error {
+func (v *version) Validate() error {
 	// time must be set after a commit
 	if v.commitHash != "" && v.unixTime == 0 {
 		return fmt.Errorf("unix time not set")
-	}
-	if v.commitHash != "" && v.time == 0 {
-		return fmt.Errorf("lamport time not set")
 	}
 
 	if text.Empty(v.name) && text.Empty(v.login) {
 		return fmt.Errorf("either name or login should be set")
 	}
-
 	if strings.Contains(v.name, "\n") {
 		return fmt.Errorf("name should be a single line")
 	}
-
 	if !text.Safe(v.name) {
 		return fmt.Errorf("name is not fully printable")
 	}
@@ -143,7 +202,6 @@ func (v *Version) Validate() error {
 	if strings.Contains(v.login, "\n") {
 		return fmt.Errorf("login should be a single line")
 	}
-
 	if !text.Safe(v.login) {
 		return fmt.Errorf("login is not fully printable")
 	}
@@ -151,7 +209,6 @@ func (v *Version) Validate() error {
 	if strings.Contains(v.email, "\n") {
 		return fmt.Errorf("email should be a single line")
 	}
-
 	if !text.Safe(v.email) {
 		return fmt.Errorf("email is not fully printable")
 	}
@@ -163,6 +220,9 @@ func (v *Version) Validate() error {
 	if len(v.nonce) > 64 {
 		return fmt.Errorf("nonce is too big")
 	}
+	if len(v.nonce) < 20 {
+		return fmt.Errorf("nonce is too small")
+	}
 
 	for _, k := range v.keys {
 		if err := k.Validate(); err != nil {
@@ -173,9 +233,9 @@ func (v *Version) Validate() error {
 	return nil
 }
 
-// Write will serialize and store the Version as a git blob and return
+// Write will serialize and store the version as a git blob and return
 // its hash
-func (v *Version) Write(repo repository.Repo) (repository.Hash, error) {
+func (v *version) Write(repo repository.Repo) (repository.Hash, error) {
 	// make sure we don't write invalid data
 	err := v.Validate()
 	if err != nil {
@@ -183,16 +243,17 @@ func (v *Version) Write(repo repository.Repo) (repository.Hash, error) {
 	}
 
 	data, err := json.Marshal(v)
-
 	if err != nil {
 		return "", err
 	}
 
 	hash, err := repo.StoreData(data)
-
 	if err != nil {
 		return "", err
 	}
+
+	// make sure we set the Id when writing in the repo
+	v.id = deriveId(data)
 
 	return hash, nil
 }
@@ -207,22 +268,22 @@ func makeNonce(len int) []byte {
 }
 
 // SetMetadata store arbitrary metadata about a version or an Identity in general
-// If the Version has been commit to git already, it won't be overwritten.
-func (v *Version) SetMetadata(key string, value string) {
+// If the version has been commit to git already, it won't be overwritten.
+// Beware: changing the metadata on a version will change it's ID
+func (v *version) SetMetadata(key string, value string) {
 	if v.metadata == nil {
 		v.metadata = make(map[string]string)
 	}
-
 	v.metadata[key] = value
 }
 
-// GetMetadata retrieve arbitrary metadata about the Version
-func (v *Version) GetMetadata(key string) (string, bool) {
+// GetMetadata retrieve arbitrary metadata about the version
+func (v *version) GetMetadata(key string) (string, bool) {
 	val, ok := v.metadata[key]
 	return val, ok
 }
 
-// AllMetadata return all metadata for this Version
-func (v *Version) AllMetadata() map[string]string {
+// AllMetadata return all metadata for this version
+func (v *version) AllMetadata() map[string]string {
 	return v.metadata
 }

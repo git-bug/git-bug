@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 
 	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/lamport"
 	"github.com/MichaelMure/git-bug/util/timestamp"
 )
@@ -52,6 +51,10 @@ func (IdentityStub) Name() string {
 	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 
+func (IdentityStub) DisplayName() string {
+	panic("identities needs to be properly loaded with identity.ReadLocal()")
+}
+
 func (IdentityStub) Email() string {
 	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
@@ -68,23 +71,15 @@ func (IdentityStub) Keys() []*Key {
 	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 
-func (IdentityStub) ValidKeysAtTime(_ lamport.Time) []*Key {
+func (IdentityStub) ValidKeysAtTime(_ string, _ lamport.Time) []*Key {
 	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 
-func (IdentityStub) DisplayName() string {
+func (i *IdentityStub) LastModification() timestamp.Timestamp {
 	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 
-func (IdentityStub) Validate() error {
-	panic("identities needs to be properly loaded with identity.ReadLocal()")
-}
-
-func (IdentityStub) CommitWithRepo(repo repository.ClockedRepo) error {
-	panic("identities needs to be properly loaded with identity.ReadLocal()")
-}
-
-func (i *IdentityStub) CommitAsNeededWithRepo(repo repository.ClockedRepo) error {
+func (i *IdentityStub) LastModificationLamports() map[string]lamport.Time {
 	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 
@@ -92,11 +87,7 @@ func (IdentityStub) IsProtected() bool {
 	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 
-func (i *IdentityStub) LastModificationLamport() lamport.Time {
-	panic("identities needs to be properly loaded with identity.ReadLocal()")
-}
-
-func (i *IdentityStub) LastModification() timestamp.Timestamp {
+func (IdentityStub) Validate() error {
 	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 
