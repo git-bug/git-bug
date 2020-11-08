@@ -406,6 +406,7 @@ func (gi *gitlabImporter) ensurePerson(repo *cache.RepoCache, id int) (*cache.Id
 		user.PublicEmail,
 		user.Username,
 		user.AvatarURL,
+		nil,
 		map[string]string{
 			// because Gitlab
 			metaKeyGitlabId:    strconv.Itoa(id),

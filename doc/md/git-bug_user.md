@@ -9,7 +9,7 @@ git-bug user [USER-ID] [flags]
 ### Options
 
 ```
-  -f, --field string   Select field to display. Valid values are [email,humanId,id,lastModification,lastModificationLamport,login,metadata,name]
+  -f, --field string   Select field to display. Valid values are [email,humanId,id,lastModification,lastModificationLamports,login,metadata,name]
   -h, --help           help for user
 ```
 

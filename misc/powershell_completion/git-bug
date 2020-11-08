@@ -212,8 +212,8 @@ Register-ArgumentCompleter -Native -CommandName 'git-bug' -ScriptBlock {
             break
         }
         'git-bug;user' {
-            [CompletionResult]::new('-f', 'f', [CompletionResultType]::ParameterName, 'Select field to display. Valid values are [email,humanId,id,lastModification,lastModificationLamport,login,metadata,name]')
-            [CompletionResult]::new('--field', 'field', [CompletionResultType]::ParameterName, 'Select field to display. Valid values are [email,humanId,id,lastModification,lastModificationLamport,login,metadata,name]')
+            [CompletionResult]::new('-f', 'f', [CompletionResultType]::ParameterName, 'Select field to display. Valid values are [email,humanId,id,lastModification,lastModificationLamports,login,metadata,name]')
+            [CompletionResult]::new('--field', 'field', [CompletionResultType]::ParameterName, 'Select field to display. Valid values are [email,humanId,id,lastModification,lastModificationLamports,login,metadata,name]')
             [CompletionResult]::new('adopt', 'adopt', [CompletionResultType]::ParameterValue, 'Adopt an existing identity as your own.')
             [CompletionResult]::new('create', 'create', [CompletionResultType]::ParameterValue, 'Create a new identity.')
             [CompletionResult]::new('ls', 'ls', [CompletionResultType]::ParameterValue, 'List identities.')

@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
@@ -20,7 +19,22 @@ import (
 )
 
 func Test_Importer(t *testing.T) {
-	author := identity.NewIdentity("Michael Muré", "batolettre@gmail.com")
+	envToken := os.Getenv("GITHUB_TOKEN_PRIVATE")
+	if envToken == "" {
+		t.Skip("Env var GITHUB_TOKEN_PRIVATE missing")
+	}
+
+	repo := repository.CreateGoGitTestRepo(false)
+	defer repository.CleanupTestRepos(repo)
+
+	backend, err := cache.NewRepoCache(repo)
+	require.NoError(t, err)
+
+	defer backend.Close()
+	interrupt.RegisterCleaner(backend.Close)
+
+	author, err := identity.NewIdentity(repo, "Michael Muré", "batolettre@gmail.com")
+	require.NoError(t, err)
 
 	tests := []struct {
 		name string
@@ -127,20 +141,6 @@ func Test_Importer(t *testing.T) {
 		},
 	}
 
-	repo := repository.CreateGoGitTestRepo(false)
-	defer repository.CleanupTestRepos(repo)
-
-	backend, err := cache.NewRepoCache(repo)
-	require.NoError(t, err)
-
-	defer backend.Close()
-	interrupt.RegisterCleaner(backend.Close)
-
-	envToken := os.Getenv("GITHUB_TOKEN_PRIVATE")
-	if envToken == "" {
-		t.Skip("Env var GITHUB_TOKEN_PRIVATE missing")
-	}
-
 	login := "test-identity"
 	author.SetMetadata(metaKeyGithubLogin, login)
 
@@ -178,33 +178,33 @@ func Test_Importer(t *testing.T) {
 			require.NoError(t, err)
 
 			ops := b.Snapshot().Operations
-			assert.Len(t, tt.bug.Operations, len(b.Snapshot().Operations))
+			require.Len(t, tt.bug.Operations, len(b.Snapshot().Operations))
 
 			for i, op := range tt.bug.Operations {
 				require.IsType(t, ops[i], op)
 
 				switch op.(type) {
 				case *bug.CreateOperation:
-					assert.Equal(t, op.(*bug.CreateOperation).Title, ops[i].(*bug.CreateOperation).Title)
-					assert.Equal(t, op.(*bug.CreateOperation).Message, ops[i].(*bug.CreateOperation).Message)
-					assert.Equal(t, op.(*bug.CreateOperation).Author.Name(), ops[i].(*bug.CreateOperation).Author.Name())
+					require.Equal(t, op.(*bug.CreateOperation).Title, ops[i].(*bug.CreateOperation).Title)
+					require.Equal(t, op.(*bug.CreateOperation).Message, ops[i].(*bug.CreateOperation).Message)
+					require.Equal(t, op.(*bug.CreateOperation).Author.Name(), ops[i].(*bug.CreateOperation).Author.Name())
 				case *bug.SetStatusOperation:
-					assert.Equal(t, op.(*bug.SetStatusOperation).Status, ops[i].(*bug.SetStatusOperation).Status)
-					assert.Equal(t, op.(*bug.SetStatusOperation).Author.Name(), ops[i].(*bug.SetStatusOperation).Author.Name())
+					require.Equal(t, op.(*bug.SetStatusOperation).Status, ops[i].(*bug.SetStatusOperation).Status)
+					require.Equal(t, op.(*bug.SetStatusOperation).Author.Name(), ops[i].(*bug.SetStatusOperation).Author.Name())
 				case *bug.SetTitleOperation:
-					assert.Equal(t, op.(*bug.SetTitleOperation).Was, ops[i].(*bug.SetTitleOperation).Was)
-					assert.Equal(t, op.(*bug.SetTitleOperation).Title, ops[i].(*bug.SetTitleOperation).Title)
-					assert.Equal(t, op.(*bug.SetTitleOperation).Author.Name(), ops[i].(*bug.SetTitleOperation).Author.Name())
+					require.Equal(t, op.(*bug.SetTitleOperation).Was, ops[i].(*bug.SetTitleOperation).Was)
+					require.Equal(t, op.(*bug.SetTitleOperation).Title, ops[i].(*bug.SetTitleOperation).Title)
+					require.Equal(t, op.(*bug.SetTitleOperation).Author.Name(), ops[i].(*bug.SetTitleOperation).Author.Name())
 				case *bug.LabelChangeOperation:
-					assert.ElementsMatch(t, op.(*bug.LabelChangeOperation).Added, ops[i].(*bug.LabelChangeOperation).Added)
-					assert.ElementsMatch(t, op.(*bug.LabelChangeOperation).Removed, ops[i].(*bug.LabelChangeOperation).Removed)
-					assert.Equal(t, op.(*bug.LabelChangeOperation).Author.Name(), ops[i].(*bug.LabelChangeOperation).Author.Name())
+					require.ElementsMatch(t, op.(*bug.LabelChangeOperation).Added, ops[i].(*bug.LabelChangeOperation).Added)
+					require.ElementsMatch(t, op.(*bug.LabelChangeOperation).Removed, ops[i].(*bug.LabelChangeOperation).Removed)
+					require.Equal(t, op.(*bug.LabelChangeOperation).Author.Name(), ops[i].(*bug.LabelChangeOperation).Author.Name())
 				case *bug.AddCommentOperation:
-					assert.Equal(t, op.(*bug.AddCommentOperation).Message, ops[i].(*bug.AddCommentOperation).Message)
-					assert.Equal(t, op.(*bug.AddCommentOperation).Author.Name(), ops[i].(*bug.AddCommentOperation).Author.Name())
+					require.Equal(t, op.(*bug.AddCommentOperation).Message, ops[i].(*bug.AddCommentOperation).Message)
+					require.Equal(t, op.(*bug.AddCommentOperation).Author.Name(), ops[i].(*bug.AddCommentOperation).Author.Name())
 				case *bug.EditCommentOperation:
-					assert.Equal(t, op.(*bug.EditCommentOperation).Message, ops[i].(*bug.EditCommentOperation).Message)
-					assert.Equal(t, op.(*bug.EditCommentOperation).Author.Name(), ops[i].(*bug.EditCommentOperation).Author.Name())
+					require.Equal(t, op.(*bug.EditCommentOperation).Message, ops[i].(*bug.EditCommentOperation).Message)
+					require.Equal(t, op.(*bug.EditCommentOperation).Author.Name(), ops[i].(*bug.EditCommentOperation).Author.Name())
 
 				default:
 					panic("unknown operation type")
