@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
-	"time"
 
 	"github.com/pkg/errors"
 
@@ -35,47 +34,27 @@ var _ Interface = &Identity{}
 var _ entity.Interface = &Identity{}
 
 type Identity struct {
-	// Id used as unique identifier
-	id entity.Id
-
 	// all the successive version of the identity
-	versions []*Version
-
-	// not serialized
-	lastCommit repository.Hash
+	versions []*version
 }
 
-func NewIdentity(name string, email string) *Identity {
-	return &Identity{
-		id: entity.UnsetId,
-		versions: []*Version{
-			{
-				name:  name,
-				email: email,
-				nonce: makeNonce(20),
-			},
-		},
-	}
+func NewIdentity(repo repository.RepoClock, name string, email string) (*Identity, error) {
+	return NewIdentityFull(repo, name, email, "", "", nil)
 }
 
-func NewIdentityFull(name string, email string, login string, avatarUrl string) *Identity {
-	return &Identity{
-		id: entity.UnsetId,
-		versions: []*Version{
-			{
-				name:      name,
-				email:     email,
-				login:     login,
-				avatarURL: avatarUrl,
-				nonce:     makeNonce(20),
-			},
-		},
+func NewIdentityFull(repo repository.RepoClock, name string, email string, login string, avatarUrl string, keys []*Key) (*Identity, error) {
+	v, err := newVersion(repo, name, email, login, avatarUrl, keys)
+	if err != nil {
+		return nil, err
 	}
+	return &Identity{
+		versions: []*version{v},
+	}, nil
 }
 
 // NewFromGitUser will query the repository for user detail and
 // build the corresponding Identity
-func NewFromGitUser(repo repository.Repo) (*Identity, error) {
+func NewFromGitUser(repo repository.ClockedRepo) (*Identity, error) {
 	name, err := repo.GetUserName()
 	if err != nil {
 		return nil, err
@@ -92,13 +71,13 @@ func NewFromGitUser(repo repository.Repo) (*Identity, error) {
 		return nil, errors.New("user name is not configured in git yet. Please use `git config --global user.email johndoe@example.com`")
 	}
 
-	return NewIdentity(name, email), nil
+	return NewIdentity(repo, name, email)
 }
 
 // MarshalJSON will only serialize the id
 func (i *Identity) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&IdentityStub{
-		id: i.id,
+		id: i.Id(),
 	})
 }
 
@@ -131,28 +110,25 @@ func read(repo repository.Repo, ref string) (*Identity, error) {
 	}
 
 	hashes, err := repo.ListCommits(ref)
-
-	// TODO: this is not perfect, it might be a command invoke error
 	if err != nil {
 		return nil, ErrIdentityNotExist
 	}
-
-	i := &Identity{
-		id: id,
+	if len(hashes) == 0 {
+		return nil, fmt.Errorf("empty identity")
 	}
+
+	i := &Identity{}
 
 	for _, hash := range hashes {
 		entries, err := repo.ReadTree(hash)
 		if err != nil {
 			return nil, errors.Wrap(err, "can't list git tree entries")
 		}
-
 		if len(entries) != 1 {
 			return nil, fmt.Errorf("invalid identity data at hash %s", hash)
 		}
 
 		entry := entries[0]
-
 		if entry.Name != versionEntryName {
 			return nil, fmt.Errorf("invalid identity data at hash %s", hash)
 		}
@@ -162,18 +138,20 @@ func read(repo repository.Repo, ref string) (*Identity, error) {
 			return nil, errors.Wrap(err, "failed to read git blob data")
 		}
 
-		var version Version
+		var version version
 		err = json.Unmarshal(data, &version)
-
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to decode Identity version json %s", hash)
 		}
 
 		// tag the version with the commit hash
 		version.commitHash = hash
-		i.lastCommit = hash
 
 		i.versions = append(i.versions, &version)
+	}
+
+	if id != i.versions[0].Id() {
+		return nil, fmt.Errorf("identity ID doesn't math the first version ID")
 	}
 
 	return i, nil
@@ -292,32 +270,49 @@ type Mutator struct {
 }
 
 // Mutate allow to create a new version of the Identity in one go
-func (i *Identity) Mutate(f func(orig Mutator) Mutator) {
+func (i *Identity) Mutate(repo repository.RepoClock, f func(orig *Mutator)) error {
+	copyKeys := func(keys []*Key) []*Key {
+		result := make([]*Key, len(keys))
+		for i, key := range keys {
+			result[i] = key.Clone()
+		}
+		return result
+	}
+
 	orig := Mutator{
 		Name:      i.Name(),
 		Email:     i.Email(),
 		Login:     i.Login(),
 		AvatarUrl: i.AvatarUrl(),
-		Keys:      i.Keys(),
+		Keys:      copyKeys(i.Keys()),
 	}
-	mutated := f(orig)
+	mutated := orig
+	mutated.Keys = copyKeys(orig.Keys)
+
+	f(&mutated)
+
 	if reflect.DeepEqual(orig, mutated) {
-		return
+		return nil
 	}
-	i.versions = append(i.versions, &Version{
-		name:      mutated.Name,
-		email:     mutated.Email,
-		login:     mutated.Login,
-		avatarURL: mutated.AvatarUrl,
-		keys:      mutated.Keys,
-	})
+
+	v, err := newVersion(repo,
+		mutated.Name,
+		mutated.Email,
+		mutated.Login,
+		mutated.AvatarUrl,
+		mutated.Keys,
+	)
+	if err != nil {
+		return err
+	}
+
+	i.versions = append(i.versions, v)
+	return nil
 }
 
 // Write the identity into the Repository. In particular, this ensure that
 // the Id is properly set.
 func (i *Identity) Commit(repo repository.ClockedRepo) error {
-	// Todo: check for mismatch between memory and commit data
-
 	if !i.NeedCommit() {
 		return fmt.Errorf("can't commit an identity with no pending version")
 	}
@@ -326,23 +321,13 @@ func (i *Identity) Commit(repo repository.ClockedRepo) error {
 		return errors.Wrap(err, "can't commit an identity with invalid data")
 	}
 
+	var lastCommit repository.Hash
 	for _, v := range i.versions {
 		if v.commitHash != "" {
-			i.lastCommit = v.commitHash
+			lastCommit = v.commitHash
 			// ignore already commit versions
 			continue
 		}
-
-		// get the times where new versions starts to be valid
-		// TODO: instead of this hardcoded clock for bugs only, this need to be
-		// a vector of edit clock, one for each entity (bug, PR, config ..)
-		bugEditClock, err := repo.GetOrCreateClock("bug-edit")
-		if err != nil {
-			return err
-		}
-
-		v.time = bugEditClock.Time()
-		v.unixTime = time.Now().Unix()
 
 		blobHash, err := v.Write(repo)
 		if err != nil {
@@ -360,37 +345,21 @@ func (i *Identity) Commit(repo repository.ClockedRepo) error {
 		}
 
 		var commitHash repository.Hash
-		if i.lastCommit != "" {
-			commitHash, err = repo.StoreCommitWithParent(treeHash, i.lastCommit)
+		if lastCommit != "" {
+			commitHash, err = repo.StoreCommitWithParent(treeHash, lastCommit)
 		} else {
 			commitHash, err = repo.StoreCommit(treeHash)
 		}
-
 		if err != nil {
 			return err
 		}
 
-		i.lastCommit = commitHash
+		lastCommit = commitHash
 		v.commitHash = commitHash
-
-		// if it was the first commit, use the commit hash as the Identity id
-		if i.id == "" || i.id == entity.UnsetId {
-			i.id = entity.Id(commitHash)
-		}
 	}
 
-	if i.id == "" {
-		panic("identity with no id")
-	}
-
-	ref := fmt.Sprintf("%s%s", identityRefPattern, i.id)
-	err := repo.UpdateRef(ref, i.lastCommit)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	ref := fmt.Sprintf("%s%s", identityRefPattern, i.Id().String())
+	return repo.UpdateRef(ref, lastCommit)
 }
 
 func (i *Identity) CommitAsNeeded(repo repository.ClockedRepo) error {
@@ -433,20 +402,17 @@ func (i *Identity) NeedCommit() bool {
 // confident enough to implement that. I choose the strict fast-forward only approach,
 // despite it's potential problem with two different version as mentioned above.
 func (i *Identity) Merge(repo repository.Repo, other *Identity) (bool, error) {
-	if i.id != other.id {
+	if i.Id() != other.Id() {
 		return false, errors.New("merging unrelated identities is not supported")
 	}
 
-	if i.lastCommit == "" || other.lastCommit == "" {
-		return false, errors.New("can't merge identities that has never been stored")
-	}
-
 	modified := false
+	var lastCommit repository.Hash
 	for j, otherVersion := range other.versions {
 		// if there is more version in other, take them
 		if len(i.versions) == j {
 			i.versions = append(i.versions, otherVersion)
-			i.lastCommit = otherVersion.commitHash
+			lastCommit = otherVersion.commitHash
 			modified = true
 		}
 
@@ -458,7 +424,7 @@ func (i *Identity) Merge(repo repository.Repo, other *Identity) (bool, error) {
 	}
 
 	if modified {
-		err := repo.UpdateRef(identityRefPattern+i.id.String(), i.lastCommit)
+		err := repo.UpdateRef(identityRefPattern+i.Id().String(), lastCommit)
 		if err != nil {
 			return false, err
 		}
@@ -469,7 +435,7 @@ func (i *Identity) Merge(repo repository.Repo, other *Identity) (bool, error) {
 
 // Validate check if the Identity data is valid
 func (i *Identity) Validate() error {
-	lastTime := lamport.Time(0)
+	lastTimes := make(map[string]lamport.Time)
 
 	if len(i.versions) == 0 {
 		return fmt.Errorf("no version")
@@ -480,22 +446,27 @@ func (i *Identity) Validate() error {
 			return err
 		}
 
-		if v.commitHash != "" && v.time < lastTime {
-			return fmt.Errorf("non-chronological version (%d --> %d)", lastTime, v.time)
+		// check for always increasing lamport time
+		// check that a new version didn't drop a clock
+		for name, previous := range lastTimes {
+			if now, ok := v.times[name]; ok {
+				if now < previous {
+					return fmt.Errorf("non-chronological lamport clock %s (%d --> %d)", name, previous, now)
+				}
+			} else {
+				return fmt.Errorf("version has less lamport clocks than before (missing %s)", name)
+			}
 		}
 
-		lastTime = v.time
-	}
-
-	// The identity Id should be the hash of the first commit
-	if i.versions[0].commitHash != "" && string(i.versions[0].commitHash) != i.id.String() {
-		return fmt.Errorf("identity id should be the first commit hash")
+		for name, now := range v.times {
+			lastTimes[name] = now
+		}
 	}
 
 	return nil
 }
 
-func (i *Identity) lastVersion() *Version {
+func (i *Identity) lastVersion() *version {
 	if len(i.versions) <= 0 {
 		panic("no version at all")
 	}
@@ -505,17 +476,28 @@ func (i *Identity) lastVersion() *Version {
 
 // Id return the Identity identifier
 func (i *Identity) Id() entity.Id {
-	if i.id == "" || i.id == entity.UnsetId {
-		// simply panic as it would be a coding error
-		// (using an id of an identity not stored yet)
-		panic("no id yet")
-	}
-	return i.id
+	// id is the id of the first version
+	return i.versions[0].Id()
 }
 
 // Name return the last version of the name
 func (i *Identity) Name() string {
 	return i.lastVersion().name
+}
+
+// DisplayName return a non-empty string to display, representing the
+// identity, based on the non-empty values.
+func (i *Identity) DisplayName() string {
+	switch {
+	case i.Name() == "" && i.Login() != "":
+		return i.Login()
+	case i.Name() != "" && i.Login() == "":
+		return i.Name()
+	case i.Name() != "" && i.Login() != "":
+		return fmt.Sprintf("%s (%s)", i.Name(), i.Login())
+	}
+
+	panic("invalid person data")
 }
 
 // Email return the last version of the email
@@ -539,11 +521,18 @@ func (i *Identity) Keys() []*Key {
 }
 
 // ValidKeysAtTime return the set of keys valid at a given lamport time
-func (i *Identity) ValidKeysAtTime(time lamport.Time) []*Key {
+func (i *Identity) ValidKeysAtTime(clockName string, time lamport.Time) []*Key {
 	var result []*Key
 
+	var lastTime lamport.Time
 	for _, v := range i.versions {
-		if v.time > time {
+		refTime, ok := v.times[clockName]
+		if !ok {
+			refTime = lastTime
+		}
+		lastTime = refTime
+
+		if refTime > time {
 			return result
 		}
 
@@ -553,19 +542,14 @@ func (i *Identity) ValidKeysAtTime(time lamport.Time) []*Key {
 	return result
 }
 
-// DisplayName return a non-empty string to display, representing the
-// identity, based on the non-empty values.
-func (i *Identity) DisplayName() string {
-	switch {
-	case i.Name() == "" && i.Login() != "":
-		return i.Login()
-	case i.Name() != "" && i.Login() == "":
-		return i.Name()
-	case i.Name() != "" && i.Login() != "":
-		return fmt.Sprintf("%s (%s)", i.Name(), i.Login())
-	}
+// LastModification return the timestamp at which the last version of the identity became valid.
+func (i *Identity) LastModification() timestamp.Timestamp {
+	return timestamp.Timestamp(i.lastVersion().unixTime)
+}
 
-	panic("invalid person data")
+// LastModificationLamports return the lamport times at which the last version of the identity became valid.
+func (i *Identity) LastModificationLamports() map[string]lamport.Time {
+	return i.lastVersion().times
 }
 
 // IsProtected return true if the chain of git commits started to be signed.
@@ -575,27 +559,23 @@ func (i *Identity) IsProtected() bool {
 	return false
 }
 
-// LastModificationLamportTime return the Lamport time at which the last version of the identity became valid.
-func (i *Identity) LastModificationLamport() lamport.Time {
-	return i.lastVersion().time
-}
-
-// LastModification return the timestamp at which the last version of the identity became valid.
-func (i *Identity) LastModification() timestamp.Timestamp {
-	return timestamp.Timestamp(i.lastVersion().unixTime)
-}
-
-// SetMetadata store arbitrary metadata along the last not-commit Version.
-// If the Version has been commit to git already, a new identical version is added and will need to be
+// SetMetadata store arbitrary metadata along the last not-commit version.
+// If the version has been commit to git already, a new identical version is added and will need to be
 // commit.
 func (i *Identity) SetMetadata(key string, value string) {
+	// once commit, data is immutable so we create a new version
 	if i.lastVersion().commitHash != "" {
 		i.versions = append(i.versions, i.lastVersion().Clone())
 	}
+	// if Id() has been called, we can't change the first version anymore, so we create a new version
+	if len(i.versions) == 1 && i.versions[0].id != entity.UnsetId && i.versions[0].id != "" {
+		i.versions = append(i.versions, i.lastVersion().Clone())
+	}
+
 	i.lastVersion().SetMetadata(key, value)
 }
 
-// ImmutableMetadata return all metadata for this Identity, accumulated from each Version.
+// ImmutableMetadata return all metadata for this Identity, accumulated from each version.
 // If multiple value are found, the first defined takes precedence.
 func (i *Identity) ImmutableMetadata() map[string]string {
 	metadata := make(map[string]string)
@@ -611,7 +591,7 @@ func (i *Identity) ImmutableMetadata() map[string]string {
 	return metadata
 }
 
-// MutableMetadata return all metadata for this Identity, accumulated from each Version.
+// MutableMetadata return all metadata for this Identity, accumulated from each version.
 // If multiple value are found, the last defined takes precedence.
 func (i *Identity) MutableMetadata() map[string]string {
 	metadata := make(map[string]string)
@@ -623,10 +603,4 @@ func (i *Identity) MutableMetadata() map[string]string {
 	}
 
 	return metadata
-}
-
-// addVersionForTest add a new version to the identity
-// Only for testing !
-func (i *Identity) addVersionForTest(version *Version) {
-	i.versions = append(i.versions, version)
 }

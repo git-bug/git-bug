@@ -12,8 +12,9 @@ func TestPushPull(t *testing.T) {
 	repoA, repoB, remote := repository.SetupReposAndRemote()
 	defer repository.CleanupTestRepos(repoA, repoB, remote)
 
-	identity1 := NewIdentity("name1", "email1")
-	err := identity1.Commit(repoA)
+	identity1, err := NewIdentity(repoA, "name1", "email1")
+	require.NoError(t, err)
+	err = identity1.Commit(repoA)
 	require.NoError(t, err)
 
 	// A --> remote --> B
@@ -30,7 +31,8 @@ func TestPushPull(t *testing.T) {
 	}
 
 	// B --> remote --> A
-	identity2 := NewIdentity("name2", "email2")
+	identity2, err := NewIdentity(repoB, "name2", "email2")
+	require.NoError(t, err)
 	err = identity2.Commit(repoB)
 	require.NoError(t, err)
 
@@ -48,17 +50,19 @@ func TestPushPull(t *testing.T) {
 
 	// Update both
 
-	identity1.addVersionForTest(&Version{
-		name:  "name1b",
-		email: "email1b",
+	err = identity1.Mutate(repoA, func(orig *Mutator) {
+		orig.Name = "name1b"
+		orig.Email = "email1b"
 	})
+	require.NoError(t, err)
 	err = identity1.Commit(repoA)
 	require.NoError(t, err)
 
-	identity2.addVersionForTest(&Version{
-		name:  "name2b",
-		email: "email2b",
+	err = identity2.Mutate(repoB, func(orig *Mutator) {
+		orig.Name = "name2b"
+		orig.Email = "email2b"
 	})
+	require.NoError(t, err)
 	err = identity2.Commit(repoB)
 	require.NoError(t, err)
 
@@ -92,20 +96,22 @@ func TestPushPull(t *testing.T) {
 
 	// Concurrent update
 
-	identity1.addVersionForTest(&Version{
-		name:  "name1c",
-		email: "email1c",
+	err = identity1.Mutate(repoA, func(orig *Mutator) {
+		orig.Name = "name1c"
+		orig.Email = "email1c"
 	})
+	require.NoError(t, err)
 	err = identity1.Commit(repoA)
 	require.NoError(t, err)
 
 	identity1B, err := ReadLocal(repoB, identity1.Id())
 	require.NoError(t, err)
 
-	identity1B.addVersionForTest(&Version{
-		name:  "name1concurrent",
-		email: "email1concurrent",
+	err = identity1B.Mutate(repoB, func(orig *Mutator) {
+		orig.Name = "name1concurrent"
+		orig.Email = "name1concurrent"
 	})
+	require.NoError(t, err)
 	err = identity1B.Commit(repoB)
 	require.NoError(t, err)
 
