@@ -18,7 +18,7 @@ import (
 	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
-func Test_Importer(t *testing.T) {
+func TestGithubImporter(t *testing.T) {
 	envToken := os.Getenv("GITHUB_TOKEN_PRIVATE")
 	if envToken == "" {
 		t.Skip("Env var GITHUB_TOKEN_PRIVATE missing")

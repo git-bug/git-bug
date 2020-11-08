@@ -204,6 +204,16 @@ func TestMetadata(t *testing.T) {
 
 	assertHasKeyValue(t, loaded.ImmutableMetadata(), "key1", "value1")
 	assertHasKeyValue(t, loaded.MutableMetadata(), "key1", "value2")
+
+	// set metadata after commit
+	versionCount := len(identity.versions)
+	identity.SetMetadata("foo", "bar")
+	require.True(t, identity.NeedCommit())
+	require.Len(t, identity.versions, versionCount+1)
+
+	err = identity.Commit(repo)
+	require.NoError(t, err)
+	require.Len(t, identity.versions, versionCount+1)
 }
 
 func assertHasKeyValue(t *testing.T, metadata map[string]string, key, value string) {

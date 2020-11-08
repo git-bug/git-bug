@@ -18,7 +18,7 @@ import (
 	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
-func TestImport(t *testing.T) {
+func TestGitlabImport(t *testing.T) {
 	envToken := os.Getenv("GITLAB_API_TOKEN")
 	if envToken == "" {
 		t.Skip("Env var GITLAB_API_TOKEN missing")
