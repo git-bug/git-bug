@@ -12,7 +12,7 @@ import (
 
 // Test the commit and load of an Identity with multiple versions
 func TestIdentityCommitLoad(t *testing.T) {
-	mockRepo := repository.NewMockRepoForTest()
+	mockRepo := repository.NewMockRepo()
 
 	// single version
 
@@ -193,7 +193,7 @@ func TestIdentity_ValidKeysAtTime(t *testing.T) {
 
 // Test the immutable or mutable metadata search
 func TestMetadata(t *testing.T) {
-	mockRepo := repository.NewMockRepoForTest()
+	mockRepo := repository.NewMockRepo()
 
 	identity := NewIdentity("René Descartes", "rene.descartes@example.com")
 
@@ -235,7 +235,7 @@ func assertHasKeyValue(t *testing.T, metadata map[string]string, key, value stri
 }
 
 func TestJSON(t *testing.T) {
-	mockRepo := repository.NewMockRepoForTest()
+	mockRepo := repository.NewMockRepo()
 
 	identity := &Identity{
 		id: entity.UnsetId,

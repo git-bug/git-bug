@@ -15,7 +15,7 @@ import (
 func TestSetMetadata(t *testing.T) {
 	snapshot := Snapshot{}
 
-	repo := repository.NewMockRepoForTest()
+	repo := repository.NewMockRepo()
 	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
 	err := rene.Commit(repo)
 	require.NoError(t, err)
@@ -99,7 +99,7 @@ func TestSetMetadata(t *testing.T) {
 }
 
 func TestSetMetadataSerialize(t *testing.T) {
-	repo := repository.NewMockRepoForTest()
+	repo := repository.NewMockRepo()
 	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
 	err := rene.Commit(repo)
 	require.NoError(t, err)

@@ -83,7 +83,7 @@ func TestID(t *testing.T) {
 	defer repository.CleanupTestRepos(repo)
 
 	repos := []repository.ClockedRepo{
-		repository.NewMockRepoForTest(),
+		repository.NewMockRepo(),
 		repo,
 	}
 

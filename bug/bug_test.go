@@ -12,7 +12,7 @@ import (
 )
 
 func TestBugId(t *testing.T) {
-	mockRepo := repository.NewMockRepoForTest()
+	mockRepo := repository.NewMockRepo()
 
 	bug1 := NewBug()
 
@@ -34,7 +34,7 @@ func TestBugId(t *testing.T) {
 }
 
 func TestBugValidity(t *testing.T) {
-	mockRepo := repository.NewMockRepoForTest()
+	mockRepo := repository.NewMockRepo()
 
 	bug1 := NewBug()
 
@@ -72,7 +72,7 @@ func TestBugValidity(t *testing.T) {
 }
 
 func TestBugCommitLoad(t *testing.T) {
-	repo := repository.NewMockRepoForTest()
+	repo := repository.NewMockRepo()
 
 	bug1 := NewBug()
 

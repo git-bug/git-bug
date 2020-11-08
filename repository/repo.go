@@ -22,9 +22,9 @@ type Repo interface {
 	RepoConfig
 	RepoKeyring
 	RepoCommon
-	RepoData
 	RepoStorage
 	RepoBleve
+	RepoData
 
 	Close() error
 }
@@ -142,9 +142,18 @@ type RepoData interface {
 
 // RepoClock give access to Lamport clocks
 type RepoClock interface {
+	// AllClocks return all the known clocks
+	AllClocks() (map[string]lamport.Clock, error)
+
 	// GetOrCreateClock return a Lamport clock stored in the Repo.
 	// If the clock doesn't exist, it's created.
 	GetOrCreateClock(name string) (lamport.Clock, error)
+
+	// Increment is equivalent to c = GetOrCreateClock(name) + c.Increment()
+	Increment(name string) (lamport.Time, error)
+
+	// Witness is equivalent to c = GetOrCreateClock(name) + c.Witness(time)
+	Witness(name string, time lamport.Time) error
 }
 
 // ClockLoader hold which logical clock need to exist for an entity and

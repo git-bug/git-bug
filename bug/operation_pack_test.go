@@ -15,7 +15,7 @@ import (
 func TestOperationPackSerialize(t *testing.T) {
 	opp := &OperationPack{}
 
-	repo := repository.NewMockRepoForTest()
+	repo := repository.NewMockRepo()
 	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
 	err := rene.Commit(repo)
 	require.NoError(t, err)

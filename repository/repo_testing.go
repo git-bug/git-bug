@@ -191,13 +191,17 @@ func RepoDataTest(t *testing.T, repo RepoData) {
 
 // helper to test a RepoClock
 func RepoClockTest(t *testing.T, repo RepoClock) {
+	allClocks, err := repo.AllClocks()
+	require.NoError(t, err)
+	require.Len(t, allClocks, 0)
+
 	clock, err := repo.GetOrCreateClock("foo")
 	require.NoError(t, err)
 	require.Equal(t, lamport.Time(1), clock.Time())
 
 	time, err := clock.Increment()
 	require.NoError(t, err)
-	require.Equal(t, lamport.Time(1), time)
+	require.Equal(t, lamport.Time(2), time)
 	require.Equal(t, lamport.Time(2), clock.Time())
 
 	clock2, err := repo.GetOrCreateClock("foo")
@@ -207,6 +211,13 @@ func RepoClockTest(t *testing.T, repo RepoClock) {
 	clock3, err := repo.GetOrCreateClock("bar")
 	require.NoError(t, err)
 	require.Equal(t, lamport.Time(1), clock3.Time())
+
+	allClocks, err = repo.AllClocks()
+	require.NoError(t, err)
+	require.Equal(t, map[string]lamport.Clock{
+		"foo": clock,
+		"bar": clock3,
+	}, allClocks)
 }
 
 func randomData() []byte {

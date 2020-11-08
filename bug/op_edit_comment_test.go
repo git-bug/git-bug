@@ -15,7 +15,7 @@ import (
 func TestEdit(t *testing.T) {
 	snapshot := Snapshot{}
 
-	repo := repository.NewMockRepoForTest()
+	repo := repository.NewMockRepo()
 	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
 	err := rene.Commit(repo)
 	require.NoError(t, err)
@@ -79,7 +79,7 @@ func TestEdit(t *testing.T) {
 }
 
 func TestEditCommentSerialize(t *testing.T) {
-	repo := repository.NewMockRepoForTest()
+	repo := repository.NewMockRepo()
 	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
 	err := rene.Commit(repo)
 	require.NoError(t, err)

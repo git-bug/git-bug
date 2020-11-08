@@ -4,6 +4,7 @@ package repository
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,10 +15,6 @@ import (
 	"github.com/go-git/go-billy/v5/osfs"
 
 	"github.com/MichaelMure/git-bug/util/lamport"
-)
-
-const (
-	clockPath = "git-bug"
 )
 
 var _ ClockedRepo = &GitRepo{}
@@ -34,7 +31,8 @@ type GitRepo struct {
 	indexesMutex sync.Mutex
 	indexes      map[string]bleve.Index
 
-	keyring Keyring
+	keyring      Keyring
+	localStorage billy.Filesystem
 }
 
 // OpenGitRepo determines if the given working directory is inside of a git repository,
@@ -66,6 +64,7 @@ func OpenGitRepo(path string, clockLoaders []ClockLoader) (*GitRepo, error) {
 	// Fix the path to be sure we are at the root
 	repo.path = stdout
 	repo.gitCli.path = stdout
+	repo.localStorage = osfs.New(filepath.Join(path, "git-bug"))
 
 	for _, loader := range clockLoaders {
 		allExist := true
@@ -88,14 +87,21 @@ func OpenGitRepo(path string, clockLoaders []ClockLoader) (*GitRepo, error) {
 
 // InitGitRepo create a new empty git repo at the given path
 func InitGitRepo(path string) (*GitRepo, error) {
-	repo := &GitRepo{
-		gitCli:  gitCli{path: path},
-		path:    path + "/.git",
-		clocks:  make(map[string]lamport.Clock),
-		indexes: make(map[string]bleve.Index),
+	k, err := defaultKeyring()
+	if err != nil {
+		return nil, err
 	}
 
-	_, err := repo.runGitCommand("init", path)
+	repo := &GitRepo{
+		gitCli:       gitCli{path: path},
+		path:         filepath.Join(path, ".git"),
+		clocks:       make(map[string]lamport.Clock),
+		indexes:      make(map[string]bleve.Index),
+		keyring:      k,
+		localStorage: osfs.New(filepath.Join(path, ".git", "git-bug")),
+	}
+
+	_, err = repo.runGitCommand("init", path)
 	if err != nil {
 		return nil, err
 	}
@@ -105,14 +111,21 @@ func InitGitRepo(path string) (*GitRepo, error) {
 
 // InitBareGitRepo create a new --bare empty git repo at the given path
 func InitBareGitRepo(path string) (*GitRepo, error) {
-	repo := &GitRepo{
-		gitCli:  gitCli{path: path},
-		path:    path,
-		clocks:  make(map[string]lamport.Clock),
-		indexes: make(map[string]bleve.Index),
+	k, err := defaultKeyring()
+	if err != nil {
+		return nil, err
 	}
 
-	_, err := repo.runGitCommand("init", "--bare", path)
+	repo := &GitRepo{
+		gitCli:       gitCli{path: path},
+		path:         path,
+		clocks:       make(map[string]lamport.Clock),
+		indexes:      make(map[string]bleve.Index),
+		keyring:      k,
+		localStorage: osfs.New(filepath.Join(path, "git-bug")),
+	}
+
+	_, err = repo.runGitCommand("init", "--bare", path)
 	if err != nil {
 		return nil, err
 	}
@@ -198,7 +211,7 @@ func (repo *GitRepo) GetRemotes() (map[string]string, error) {
 
 // LocalStorage return a billy.Filesystem giving access to $RepoPath/.git/git-bug
 func (repo *GitRepo) LocalStorage() billy.Filesystem {
-	return osfs.New(repo.path)
+	return repo.localStorage
 }
 
 // GetBleveIndex return a bleve.Index that can be used to index documents
@@ -434,6 +447,37 @@ func (repo *GitRepo) GetTreeHash(commit Hash) (Hash, error) {
 	return Hash(stdout), nil
 }
 
+func (repo *GitRepo) AllClocks() (map[string]lamport.Clock, error) {
+	repo.clocksMutex.Lock()
+	defer repo.clocksMutex.Unlock()
+
+	result := make(map[string]lamport.Clock)
+
+	files, err := ioutil.ReadDir(filepath.Join(repo.path, "git-bug", clockPath))
+	if os.IsNotExist(err) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	for _, file := range files {
+		name := file.Name()
+		if c, ok := repo.clocks[name]; ok {
+			result[name] = c
+		} else {
+			c, err := lamport.LoadPersistedClock(repo.LocalStorage(), filepath.Join(clockPath, name))
+			if err != nil {
+				return nil, err
+			}
+			repo.clocks[name] = c
+			result[name] = c
+		}
+	}
+
+	return result, nil
+}
+
 // GetOrCreateClock return a Lamport clock stored in the Repo.
 // If the clock doesn't exist, it's created.
 func (repo *GitRepo) GetOrCreateClock(name string) (lamport.Clock, error) {
@@ -448,7 +492,7 @@ func (repo *GitRepo) GetOrCreateClock(name string) (lamport.Clock, error) {
 		return nil, err
 	}
 
-	c, err = lamport.NewPersistedClock(repo.LocalStorage(), name+"-clock")
+	c, err = lamport.NewPersistedClock(repo.LocalStorage(), filepath.Join(clockPath, name))
 	if err != nil {
 		return nil, err
 	}
@@ -462,7 +506,7 @@ func (repo *GitRepo) getClock(name string) (lamport.Clock, error) {
 		return c, nil
 	}
 
-	c, err := lamport.LoadPersistedClock(repo.LocalStorage(), name+"-clock")
+	c, err := lamport.LoadPersistedClock(repo.LocalStorage(), filepath.Join(clockPath, name))
 	if err == nil {
 		repo.clocks[name] = c
 		return c, nil
@@ -471,6 +515,24 @@ func (repo *GitRepo) getClock(name string) (lamport.Clock, error) {
 		return nil, ErrClockNotExist
 	}
 	return nil, err
+}
+
+// Increment is equivalent to c = GetOrCreateClock(name) + c.Increment()
+func (repo *GitRepo) Increment(name string) (lamport.Time, error) {
+	c, err := repo.GetOrCreateClock(name)
+	if err != nil {
+		return lamport.Time(0), err
+	}
+	return c.Increment()
+}
+
+// Witness is equivalent to c = GetOrCreateClock(name) + c.Witness(time)
+func (repo *GitRepo) Witness(name string, time lamport.Time) error {
+	c, err := repo.GetOrCreateClock(name)
+	if err != nil {
+		return err
+	}
+	return c.Witness(time)
 }
 
 // AddRemote add a new remote to the repository
