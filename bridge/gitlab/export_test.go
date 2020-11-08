@@ -134,7 +134,7 @@ func testCases(t *testing.T, repo *cache.RepoCache) []*testCase {
 	}
 }
 
-func TestPushPull(t *testing.T) {
+func TestGitlabPushPull(t *testing.T) {
 	// token must have 'repo' and 'delete_repo' scopes
 	envToken := os.Getenv("GITLAB_API_TOKEN")
 	if envToken == "" {

@@ -18,9 +18,8 @@ import (
 
 // 1: original format
 // 2: Identity Ids are generated from the first version serialized data instead of from the first git commit
+//    + Identity hold multiple lamport clocks from other entities, instead of just bug edit
 const formatVersion = 2
-
-// TODO ^^
 
 // version is a complete set of information about an Identity at a point in time.
 type version struct {
@@ -42,7 +41,7 @@ type version struct {
 	// version of a bug, used to later generate the ID
 	// len(Nonce) should be > 20 and < 64 bytes
 	// It has no functional purpose and should be ignored.
-	// TODO: optional?
+	// TODO: optional after first version?
 	nonce []byte
 
 	// A set of arbitrary key/value to store metadata about a version or about an Identity in general.
@@ -121,6 +120,10 @@ func deriveId(data []byte) entity.Id {
 func (v *version) Clone() *version {
 	// copy direct fields
 	clone := *v
+
+	// reset some fields
+	clone.commitHash = ""
+	clone.id = entity.UnsetId
 
 	clone.times = make(map[string]lamport.Time)
 	for name, t := range v.times {

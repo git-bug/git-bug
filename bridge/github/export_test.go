@@ -126,7 +126,7 @@ func testCases(t *testing.T, repo *cache.RepoCache) []*testCase {
 	}
 }
 
-func TestPushPull(t *testing.T) {
+func TestGithubPushPull(t *testing.T) {
 	// repo owner
 	envUser := os.Getenv("GITHUB_TEST_USER")
 
