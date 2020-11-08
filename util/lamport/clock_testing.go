@@ -11,7 +11,7 @@ func testClock(t *testing.T, c Clock) {
 
 	val, err := c.Increment()
 	assert.NoError(t, err)
-	assert.Equal(t, Time(1), val)
+	assert.Equal(t, Time(2), val)
 	assert.Equal(t, Time(2), c.Time())
 
 	err = c.Witness(41)
