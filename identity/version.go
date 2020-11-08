@@ -2,7 +2,6 @@ package identity
 
 import (
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -106,14 +105,9 @@ func (v *version) Id() entity.Id {
 		if err != nil {
 			panic(err)
 		}
-		v.id = deriveId(data)
+		v.id = entity.DeriveId(data)
 	}
 	return v.id
-}
-
-func deriveId(data []byte) entity.Id {
-	sum := sha256.Sum256(data)
-	return entity.Id(fmt.Sprintf("%x", sum))
 }
 
 // Make a deep copy
@@ -172,7 +166,7 @@ func (v *version) UnmarshalJSON(data []byte) error {
 		return fmt.Errorf("your version of git-bug is too old for this repository (identity format %v), please upgrade to the latest version", aux.FormatVersion)
 	}
 
-	v.id = deriveId(data)
+	v.id = entity.DeriveId(data)
 	v.times = aux.Times
 	v.unixTime = aux.UnixTime
 	v.name = aux.Name
@@ -256,7 +250,7 @@ func (v *version) Write(repo repository.Repo) (repository.Hash, error) {
 	}
 
 	// make sure we set the Id when writing in the repo
-	v.id = deriveId(data)
+	v.id = entity.DeriveId(data)
 
 	return hash, nil
 }
