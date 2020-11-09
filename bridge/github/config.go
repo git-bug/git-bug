@@ -1,14 +1,13 @@
 package github
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"regexp"
 	"sort"
 	"strings"
@@ -25,6 +24,7 @@ import (
 
 var (
 	ErrBadProjectURL = errors.New("bad project url")
+	GithubClientID   = "ce3600aa56c2e69f18a5"
 )
 
 func (g *Github) ValidParams() map[string]interface{} {
@@ -169,63 +169,112 @@ func (*Github) ValidateConfig(conf core.Configuration) error {
 	return nil
 }
 
-func requestToken(note, login, password string, scope string) (*http.Response, error) {
-	return requestTokenWith2FA(note, login, password, "", scope)
-}
-
-func requestTokenWith2FA(note, login, password, otpCode string, scope string) (*http.Response, error) {
-	url := fmt.Sprintf("%s/authorizations", githubV3Url)
-	params := struct {
-		Scopes      []string `json:"scopes"`
-		Note        string   `json:"note"`
-		Fingerprint string   `json:"fingerprint"`
-	}{
-		Scopes:      []string{scope},
-		Note:        note,
-		Fingerprint: randomFingerprint(),
-	}
-
-	data, err := json.Marshal(params)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
-	if err != nil {
-		return nil, err
-	}
-
-	req.SetBasicAuth(login, password)
-	req.Header.Set("Content-Type", "application/json")
-
-	if otpCode != "" {
-		req.Header.Set("X-GitHub-OTP", otpCode)
-	}
-
-	client := &http.Client{
-		Timeout: defaultTimeout,
-	}
-
-	return client.Do(req)
-}
-
-func decodeBody(body io.ReadCloser) (string, error) {
-	data, _ := ioutil.ReadAll(body)
-
-	aux := struct {
-		Token string `json:"token"`
-	}{}
-
-	err := json.Unmarshal(data, &aux)
+func requestToken() (string, error) {
+	// prompt project visibility to know the token scope needed for the repository
+	index, err := input.PromptChoice("repository visibility", []string{"public", "private"})
 	if err != nil {
 		return "", err
 	}
-
-	if aux.Token == "" {
-		return "", fmt.Errorf("no token found in response: %s", string(data))
+	scope := []string{"public_repo", "repo"}[index]
+	//
+	resp, err := requestUserVerificationCode(scope)
+	if err != nil {
+		return "", err
 	}
+	defer resp.Body.Close()
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	values, err := url.ParseQuery(string(data))
+	if err != nil {
+		return "", err
+	}
+	promptUserToGoToBrowser(values.Get("user_code"))
+	return pollGithubUntilUserAuthorizedGitbug(&values)
+}
 
-	return aux.Token, nil
+func requestUserVerificationCode(scope string) (*http.Response, error) {
+	params := url.Values{}
+	params.Set("client_id", GithubClientID)
+	params.Set("scope", scope)
+	client := &http.Client{
+		Timeout: defaultTimeout,
+	}
+	resp, err := client.PostForm("https://github.com/login/device/code", params)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		defer resp.Body.Close()
+		bb, _ := ioutil.ReadAll(resp.Body)
+		return nil, fmt.Errorf("error creating token %v: %v", resp.StatusCode, string(bb))
+	}
+	return resp, nil
+}
+
+func promptUserToGoToBrowser(code string) {
+	fmt.Println("Please visit the following URL in a browser and enter the user authentication code.")
+	fmt.Println()
+	fmt.Println("  URL: https://github.com/login/device")
+	fmt.Println("  user authentiation code: ", code)
+	fmt.Println()
+}
+
+func pollGithubUntilUserAuthorizedGitbug(values1 *url.Values) (string, error) {
+	params := url.Values{}
+	params.Set("client_id", GithubClientID)
+	params.Set("device_code", values1.Get("device_code"))
+	params.Set("grant_type", "urn:ietf:params:oauth:grant-type:device_code") // fixed by RFC 8628
+	client := &http.Client{
+		Timeout: defaultTimeout,
+	}
+	// there exists a minimum interval required by the github API
+	var initialInterval time.Duration = 6 // seconds
+	var interval time.Duration = initialInterval
+	token := ""
+	for {
+		resp, err := client.PostForm("https://github.com/login/oauth/access_token", params)
+		if err != nil {
+			return "", err
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			bb, _ := ioutil.ReadAll(resp.Body)
+			return "", fmt.Errorf("error creating token %v, %v", resp.StatusCode, string(bb))
+		}
+		data2, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return "", err
+		}
+		values2, err := url.ParseQuery(string(data2))
+		if err != nil {
+			return "", err
+		}
+		apiError := values2.Get("error")
+		if apiError != "" {
+			if apiError == "slow_down" {
+				interval *= 2
+			} else {
+				interval = initialInterval
+			}
+			if apiError == "authorization_pending" {
+				// no-op
+			} else {
+				// apiError equals on of: "expired_token", "unsupported_grant_type",
+				// "incorrect_client_credentials", "incorrect_device_code", or "access_denied"
+				return "", fmt.Errorf("error creating token %v, %v", apiError, values2.Get("error_description"))
+			}
+			time.Sleep(interval * time.Second)
+			continue
+		}
+		token = values2.Get("access_token")
+		if token == "" {
+			panic("invalid Github API response")
+		}
+		break
+	}
+	return token, nil
 }
 
 func randomFingerprint() string {
@@ -261,7 +310,7 @@ func promptTokenOptions(repo repository.RepoKeyring, login, owner, project strin
 	case index == 0:
 		return promptToken()
 	case index == 1:
-		value, err := loginAndRequestToken(login, owner, project)
+		value, err := requestToken()
 		if err != nil {
 			return nil, err
 		}
@@ -308,61 +357,6 @@ func promptToken() (*auth.Token, error) {
 	token.SetMetadata(auth.MetaKeyLogin, login)
 
 	return token, nil
-}
-
-func loginAndRequestToken(login, owner, project string) (string, error) {
-	fmt.Println("git-bug will now generate an access token in your Github profile. Your credential are not stored and are only used to generate the token. The token is stored in the global git config.")
-	fmt.Println()
-	fmt.Println("The access scope depend on the type of repository.")
-	fmt.Println("Public:")
-	fmt.Println("  - 'public_repo': to be able to read public repositories")
-	fmt.Println("Private:")
-	fmt.Println("  - 'repo'       : to be able to read private repositories")
-	fmt.Println()
-
-	// prompt project visibility to know the token scope needed for the repository
-	index, err := input.PromptChoice("repository visibility", []string{"public", "private"})
-	if err != nil {
-		return "", err
-	}
-	scope := []string{"public_repo", "repo"}[index]
-
-	password, err := input.PromptPassword("Password", "password", input.Required)
-	if err != nil {
-		return "", err
-	}
-
-	// Attempt to authenticate and create a token
-	note := fmt.Sprintf("git-bug - %s/%s", owner, project)
-	resp, err := requestToken(note, login, password, scope)
-	if err != nil {
-		return "", err
-	}
-
-	defer resp.Body.Close()
-
-	// Handle 2FA is needed
-	OTPHeader := resp.Header.Get("X-GitHub-OTP")
-	if resp.StatusCode == http.StatusUnauthorized && OTPHeader != "" {
-		otpCode, err := input.PromptPassword("Two-factor authentication code", "code", input.Required)
-		if err != nil {
-			return "", err
-		}
-
-		resp, err = requestTokenWith2FA(note, login, password, otpCode, scope)
-		if err != nil {
-			return "", err
-		}
-
-		defer resp.Body.Close()
-	}
-
-	if resp.StatusCode == http.StatusCreated {
-		return decodeBody(resp.Body)
-	}
-
-	b, _ := ioutil.ReadAll(resp.Body)
-	return "", fmt.Errorf("error creating token %v: %v", resp.StatusCode, string(b))
 }
 
 func promptURL(repo repository.RepoCommon) (string, string, error) {
