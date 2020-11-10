@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -24,7 +25,7 @@ import (
 
 var (
 	ErrBadProjectURL = errors.New("bad project url")
-	GithubClientID   = "ce3600aa56c2e69f18a5"
+	githubClientID   = "ce3600aa56c2e69f18a5"
 )
 
 func (g *Github) ValidParams() map[string]interface{} {
@@ -170,111 +171,123 @@ func (*Github) ValidateConfig(conf core.Configuration) error {
 }
 
 func requestToken() (string, error) {
-	// prompt project visibility to know the token scope needed for the repository
+	scope, err := promptUserForProjectVisibility()
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+	ghResp, err := requestUserVerificationCode(scope)
+	if err != nil {
+		return "", err
+	}
+	promptUserToGoToBrowser(ghResp["verification_uri"], ghResp["user_code"])
+	interval, err := strconv.ParseInt(ghResp["interval"], 10, 64) // base 10, bitSize 64
+	if err != nil {
+		return "", errors.Wrap(err, "Error parsing integer received from Github API")
+	}
+	return pollGithubForAuthorization(ghResp["device_code"], interval)
+}
+
+func promptUserForProjectVisibility() (string, error) {
+	fmt.Println("git-bug will now generate an access token in your Github profile. The token is stored in the global git config.")
+	fmt.Println()
+	fmt.Println("The access scope depend on the type of repository.")
+	fmt.Println("Public:")
+	fmt.Println("  - 'public_repo': to be able to read public repositories")
+	fmt.Println("Private:")
+	fmt.Println("  - 'repo'       : to be able to read private repositories")
+	fmt.Println()
 	index, err := input.PromptChoice("repository visibility", []string{"public", "private"})
 	if err != nil {
 		return "", err
 	}
-	scope := []string{"public_repo", "repo"}[index]
-	//
-	resp, err := requestUserVerificationCode(scope)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-	values, err := url.ParseQuery(string(data))
-	if err != nil {
-		return "", err
-	}
-	promptUserToGoToBrowser(values.Get("user_code"))
-	return pollGithubUntilUserAuthorizedGitbug(&values)
+	return []string{"public_repo", "repo"}[index], nil
 }
 
-func requestUserVerificationCode(scope string) (*http.Response, error) {
+func requestUserVerificationCode(scope string) (map[string]string, error) {
 	params := url.Values{}
-	params.Set("client_id", GithubClientID)
+	params.Set("client_id", githubClientID)
 	params.Set("scope", scope)
 	client := &http.Client{
 		Timeout: defaultTimeout,
 	}
 	resp, err := client.PostForm("https://github.com/login/device/code", params)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "error requesting user verification code")
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		defer resp.Body.Close()
-		bb, _ := ioutil.ReadAll(resp.Body)
-		return nil, fmt.Errorf("error creating token %v: %v", resp.StatusCode, string(bb))
+		return nil, fmt.Errorf("unexpected response status code from Github API:", resp.StatusCode)
 	}
-	return resp, nil
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, errors.Wrap(err, "error requesting user verification code")
+	}
+	values, err := url.ParseQuery(string(data))
+	if err != nil {
+		return nil, errors.Wrap(err, "error decoding Github API response")
+	}
+	result := map[string]string{"device_code": "", "user_code": "", "verification_uri": "", "interval": ""}
+	for key, _ := range result {
+		result[key] = values.Get(key)
+	}
+	return result, nil
 }
 
-func promptUserToGoToBrowser(code string) {
-	fmt.Println("Please visit the following URL in a browser and enter the user authentication code.")
+func promptUserToGoToBrowser(url, userCode string) {
+	fmt.Println("Please visit the following Github URL in a browser and enter your user authentication code.")
 	fmt.Println()
-	fmt.Println("  URL: https://github.com/login/device")
-	fmt.Println("  user authentiation code: ", code)
+	fmt.Println("  URL:", url)
+	fmt.Println("  user authentiation code:", userCode)
 	fmt.Println()
 }
 
-func pollGithubUntilUserAuthorizedGitbug(values1 *url.Values) (string, error) {
+func pollGithubForAuthorization(deviceCode string, intervalSec int64) (string, error) {
 	params := url.Values{}
-	params.Set("client_id", GithubClientID)
-	params.Set("device_code", values1.Get("device_code"))
+	params.Set("client_id", githubClientID)
+	params.Set("device_code", deviceCode)
 	params.Set("grant_type", "urn:ietf:params:oauth:grant-type:device_code") // fixed by RFC 8628
 	client := &http.Client{
 		Timeout: defaultTimeout,
 	}
-	// there exists a minimum interval required by the github API
-	var initialInterval time.Duration = 6 // seconds
-	var interval time.Duration = initialInterval
-	token := ""
+	interval := time.Duration(intervalSec * 1100) // milliseconds, add 10% margin
 	for {
 		resp, err := client.PostForm("https://github.com/login/oauth/access_token", params)
 		if err != nil {
-			return "", err
+			return "", errors.Wrap(err, "error polling the Github API")
 		}
 		defer resp.Body.Close()
 		if resp.StatusCode != http.StatusOK {
-			bb, _ := ioutil.ReadAll(resp.Body)
-			return "", fmt.Errorf("error creating token %v, %v", resp.StatusCode, string(bb))
+			return "", fmt.Errorf("unexpected response status code from Github API:", resp.StatusCode)
 		}
-		data2, err := ioutil.ReadAll(resp.Body)
+		data, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			return "", err
+			return "", errors.Wrap(err, "error polling the Github API")
 		}
-		values2, err := url.ParseQuery(string(data2))
+		values, err := url.ParseQuery(string(data))
 		if err != nil {
-			return "", err
+			return "", errors.Wrap(err, "error decoding Github API response")
 		}
-		apiError := values2.Get("error")
-		if apiError != "" {
-			if apiError == "slow_down" {
-				interval *= 2
-			} else {
-				interval = initialInterval
-			}
-			if apiError == "authorization_pending" || apiError == "slow_down" {
-				// no-op
-			} else {
-				// apiError equals on of: "expired_token", "unsupported_grant_type",
-				// "incorrect_client_credentials", "incorrect_device_code", or "access_denied"
-				return "", fmt.Errorf("error creating token %v, %v", apiError, values2.Get("error_description"))
-			}
-			time.Sleep(interval * time.Second)
+
+		if token := values.Get("access_token"); token != "" {
+			return token, nil
+		}
+
+		switch apiError := values.Get("error"); apiError {
+		case "slow_down":
+			interval += 5500 // add 5 seconds (RFC 8628), plus some margin
+			time.Sleep(interval * time.Millisecond)
 			continue
+		case "authorization_pending":
+			time.Sleep(interval * time.Millisecond)
+			continue
+		case "":
+			return "", errors.New("unexpected response from Github API")
+		default:
+			// apiError should equal one of: "expired_token", "unsupported_grant_type",
+			// "incorrect_client_credentials", "incorrect_device_code", or "access_denied"
+			return "", fmt.Errorf("error creating token: %v, %v", apiError, values.Get("error_description"))
 		}
-		token = values2.Get("access_token")
-		if token == "" {
-			panic("invalid Github API response")
-		}
-		break
 	}
-	return token, nil
 }
 
 func randomFingerprint() string {
