@@ -161,6 +161,11 @@ Filter and sort bugs using a [query](doc/queries.md):
 git bug ls "status:open sort:edit"
 ```
 
+Search for bugs by text content:
+```
+git bug ls "foo bar" baz
+```
+
 You can now use commands like `show`, `comment`, `open` or `close` to display and modify bugs. For more details about each command, you can run `git bug <command> --help` or read the [command's documentation](doc/md/git-bug.md).
 
 ## Interactive terminal UI
