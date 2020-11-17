@@ -216,7 +216,7 @@ func requestUserVerificationCode(scope string) (map[string]string, error) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected response status code from Github API:", resp.StatusCode)
+		return nil, fmt.Errorf("unexpected response status code %d from Github API", resp.StatusCode)
 	}
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -257,7 +257,7 @@ func pollGithubForAuthorization(deviceCode string, intervalSec int64) (string, e
 		}
 		defer resp.Body.Close()
 		if resp.StatusCode != http.StatusOK {
-			return "", fmt.Errorf("unexpected response status code from Github API:", resp.StatusCode)
+			return "", fmt.Errorf("unexpected response status code %d from Github API", resp.StatusCode)
 		}
 		data, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
