@@ -6,9 +6,38 @@ import (
 	"unicode"
 )
 
+type tokenKind int
+
+const (
+	_ tokenKind = iota
+	tokenKindKV
+	tokenKindSearch
+)
+
 type token struct {
+	kind tokenKind
+
+	// KV
 	qualifier string
 	value     string
+
+	// Search
+	term string
+}
+
+func newTokenKV(qualifier, value string) token {
+	return token{
+		kind:      tokenKindKV,
+		qualifier: qualifier,
+		value:     value,
+	}
+}
+
+func newTokenSearch(term string) token {
+	return token{
+		kind: tokenKindSearch,
+		term: term,
+	}
 }
 
 // tokenize parse and break a input into tokens ready to be
@@ -22,6 +51,13 @@ func tokenize(query string) ([]token, error) {
 	var tokens []token
 	for _, field := range fields {
 		split := strings.Split(field, ":")
+
+		// full text search
+		if len(split) == 1 {
+			tokens = append(tokens, newTokenSearch(removeQuote(field)))
+			continue
+		}
+
 		if len(split) != 2 {
 			return nil, fmt.Errorf("can't tokenize \"%s\"", field)
 		}
@@ -33,14 +69,13 @@ func tokenize(query string) ([]token, error) {
 			return nil, fmt.Errorf("empty value for qualifier \"%s\"", split[0])
 		}
 
-		tokens = append(tokens, token{
-			qualifier: split[0],
-			value:     removeQuote(split[1]),
-		})
+		tokens = append(tokens, newTokenKV(split[0], removeQuote(split[1])))
 	}
 	return tokens, nil
 }
 
+// split the query into chunks by splitting on whitespaces but respecting
+// quotes
 func splitQuery(query string) ([]string, error) {
 	lastQuote := rune(0)
 	inQuote := false

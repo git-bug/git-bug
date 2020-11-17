@@ -11,32 +11,43 @@ func TestTokenize(t *testing.T) {
 		input  string
 		tokens []token
 	}{
-		{"gibberish", nil},
 		{"status:", nil},
 		{":value", nil},
 
-		{"status:open", []token{{"status", "open"}}},
-		{"status:closed", []token{{"status", "closed"}}},
+		{"status:open", []token{newTokenKV("status", "open")}},
+		{"status:closed", []token{newTokenKV("status", "closed")}},
 
-		{"author:rene", []token{{"author", "rene"}}},
-		{`author:"René Descartes"`, []token{{"author", "René Descartes"}}},
+		{"author:rene", []token{newTokenKV("author", "rene")}},
+		{`author:"René Descartes"`, []token{newTokenKV("author", "René Descartes")}},
 
 		{
 			`status:open status:closed author:rene author:"René Descartes"`,
 			[]token{
-				{"status", "open"},
-				{"status", "closed"},
-				{"author", "rene"},
-				{"author", "René Descartes"},
+				newTokenKV("status", "open"),
+				newTokenKV("status", "closed"),
+				newTokenKV("author", "rene"),
+				newTokenKV("author", "René Descartes"),
 			},
 		},
 
 		// quotes
-		{`key:"value value"`, []token{{"key", "value value"}}},
-		{`key:'value value'`, []token{{"key", "value value"}}},
+		{`key:"value value"`, []token{newTokenKV("key", "value value")}},
+		{`key:'value value'`, []token{newTokenKV("key", "value value")}},
 		// unmatched quotes
 		{`key:'value value`, nil},
 		{`key:value value'`, nil},
+
+		// full text search
+		{"search", []token{newTokenSearch("search")}},
+		{"search more terms", []token{
+			newTokenSearch("search"),
+			newTokenSearch("more"),
+			newTokenSearch("terms"),
+		}},
+		{"search \"more terms\"", []token{
+			newTokenSearch("search"),
+			newTokenSearch("more terms"),
+		}},
 	}
 
 	for _, tc := range tests {

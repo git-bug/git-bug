@@ -13,7 +13,7 @@ func TestParse(t *testing.T) {
 		input  string
 		output *Query
 	}{
-		{"gibberish", nil},
+		// KV
 		{"status:", nil},
 		{":value", nil},
 
@@ -62,8 +62,18 @@ func TestParse(t *testing.T) {
 		}},
 		{"sort:unknown", nil},
 
-		{`status:open author:"René Descartes" participant:leonhard label:hello label:"Good first issue" sort:edit-desc`,
+		// Search
+		{"search", &Query{
+			Search: []string{"search"},
+		}},
+		{"search \"more terms\"", &Query{
+			Search: []string{"search", "more terms"},
+		}},
+
+		// Complex
+		{`status:open author:"René Descartes" search participant:leonhard label:hello label:"Good first issue" sort:edit-desc "more terms"`,
 			&Query{
+				Search: []string{"search", "more terms"},
 				Filters: Filters{
 					Status:      []bug.Status{bug.OpenStatus},
 					Author:      []string{"René Descartes"},

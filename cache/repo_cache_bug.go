@@ -8,20 +8,29 @@ import (
 	"os"
 	"path"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/query"
 	"github.com/MichaelMure/git-bug/repository"
+	"github.com/blevesearch/bleve"
 )
 
-const bugCacheFile = "bug-cache"
+const (
+	bugCacheFile   = "bug-cache"
+	searchCacheDir = "search-cache"
+)
 
 var errBugNotInCache = errors.New("bug missing from cache")
 
 func bugCacheFilePath(repo repository.Repo) string {
 	return path.Join(repo.GetPath(), "git-bug", bugCacheFile)
+}
+
+func searchCacheDirPath(repo repository.Repo) string {
+	return path.Join(repo.GetPath(), "git-bug", searchCacheDir)
 }
 
 // bugUpdated is a callback to trigger when the excerpt of a bug changed,
@@ -42,6 +51,10 @@ func (c *RepoCache) bugUpdated(id entity.Id) error {
 	c.loadedBugs.Get(id)
 	c.bugExcerpts[id] = NewBugExcerpt(b.bug, b.Snapshot())
 	c.muBug.Unlock()
+
+	if err := c.addBugToSearchIndex(b.Snapshot()); err != nil {
+		return err
+	}
 
 	// we only need to write the bug cache
 	return c.writeBugCache()
@@ -74,6 +87,42 @@ func (c *RepoCache) loadBugCache() error {
 	}
 
 	c.bugExcerpts = aux.Excerpts
+
+	blevePath := searchCacheDirPath(c.repo)
+	searchCache, err := bleve.Open(blevePath)
+	if err != nil {
+		return fmt.Errorf("Unable to open search cache. Error: %v", err)
+	}
+	c.searchCache = searchCache
+
+	count, err := c.searchCache.DocCount()
+	if err != nil {
+		return err
+	}
+	if count != uint64(len(c.bugExcerpts)) {
+		return fmt.Errorf("count mismatch between bleve and bug excerpts")
+	}
+
+	return nil
+}
+
+func (c *RepoCache) createBleveIndex() error {
+	blevePath := searchCacheDirPath(c.repo)
+
+	_ = os.RemoveAll(blevePath)
+
+	mapping := bleve.NewIndexMapping()
+	mapping.DefaultAnalyzer = "en"
+
+	dir := searchCacheDirPath(c.repo)
+
+	bleveIndex, err := bleve.New(dir, mapping)
+	if err != nil {
+		return err
+	}
+
+	c.searchCache = bleveIndex
+
 	return nil
 }
 
@@ -255,8 +304,34 @@ func (c *RepoCache) QueryBugs(q *query.Query) []entity.Id {
 	matcher := compileMatcher(q.Filters)
 
 	var filtered []*BugExcerpt
+	var foundBySearch map[entity.Id]*BugExcerpt
 
-	for _, excerpt := range c.bugExcerpts {
+	if q.Search != nil {
+		foundBySearch = map[entity.Id]*BugExcerpt{}
+
+		terms := make([]string, len(q.Search))
+		copy(terms, q.Search)
+		for i, search := range q.Search {
+			if strings.Contains(search, " ") {
+				terms[i] = fmt.Sprintf("\"%s\"", search)
+			}
+		}
+
+		bleveQuery := bleve.NewQueryStringQuery(strings.Join(terms, " "))
+		bleveSearch := bleve.NewSearchRequest(bleveQuery)
+		searchResults, err := c.searchCache.Search(bleveSearch)
+		if err != nil {
+			panic("bleve search failed")
+		}
+
+		for _, hit := range searchResults.Hits {
+			foundBySearch[entity.Id(hit.ID)] = c.bugExcerpts[entity.Id(hit.ID)]
+		}
+	} else {
+		foundBySearch = c.bugExcerpts
+	}
+
+	for _, excerpt := range foundBySearch {
 		if matcher.Match(excerpt, c) {
 			filtered = append(filtered, excerpt)
 		}
@@ -422,4 +497,23 @@ func (c *RepoCache) RemoveBug(prefix string) error {
 	c.muBug.Unlock()
 
 	return c.writeBugCache()
+}
+
+func (c *RepoCache) addBugToSearchIndex(snap *bug.Snapshot) error {
+	searchableBug := struct {
+		Text []string
+	}{}
+
+	for _, comment := range snap.Comments {
+		searchableBug.Text = append(searchableBug.Text, comment.Message)
+	}
+
+	searchableBug.Text = append(searchableBug.Text, snap.Title)
+
+	err := c.searchCache.Index(snap.Id().String(), searchableBug)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -6,7 +6,7 @@ List bugs.
 
 Display a summary of each bugs.
 
-You can pass an additional query to filter and order the list. This query can be expressed either with a simple query language or with flags.
+You can pass an additional query to filter and order the list. This query can be expressed either with a simple query language, flags, a natural language full text search, or a combination of the aforementioned.
 
 ```
 git-bug ls [QUERY] [flags]
@@ -20,6 +20,12 @@ git bug ls status:open sort:edit-desc
 
 List closed bugs sorted by creation with flags:
 git bug ls --status closed --by creation
+
+Do a full text search of all bugs:
+git bug ls "foo bar" baz
+
+Use queries, flags, and full text search:
+git bug ls status:open --by creation "foo bar" baz
 
 ```
 

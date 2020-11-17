@@ -7,6 +7,7 @@ import "github.com/MichaelMure/git-bug/bug"
 // manually. This query doesn't do anything by itself and need to be interpreted
 // for the specific domain of application.
 type Query struct {
+	Search
 	Filters
 	OrderBy
 	OrderDirection
@@ -19,6 +20,8 @@ func NewQuery() *Query {
 		OrderDirection: OrderDescending,
 	}
 }
+
+type Search []string
 
 // Filters is a collection of Filter that implement a complex filter
 type Filters struct {
