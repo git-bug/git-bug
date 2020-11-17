@@ -170,21 +170,24 @@ func (*Github) ValidateConfig(conf core.Configuration) error {
 	return nil
 }
 
+type githRespT struct {
+	uri        string
+	userCode   string
+	deviceCode string
+	interval   int64
+}
+
 func requestToken() (string, error) {
 	scope, err := promptUserForProjectVisibility()
 	if err != nil {
 		return "", errors.WithStack(err)
 	}
-	ghResp, err := requestUserVerificationCode(scope)
+	resp, err := requestUserVerificationCode(scope)
 	if err != nil {
 		return "", err
 	}
-	promptUserToGoToBrowser(ghResp["verification_uri"], ghResp["user_code"])
-	interval, err := strconv.ParseInt(ghResp["interval"], 10, 64) // base 10, bitSize 64
-	if err != nil {
-		return "", errors.Wrap(err, "Error parsing integer received from Github API")
-	}
-	return pollGithubForAuthorization(ghResp["device_code"], interval)
+	promptUserToGoToBrowser(resp.uri, resp.userCode)
+	return pollGithubForAuthorization(resp.deviceCode, resp.interval)
 }
 
 func promptUserForProjectVisibility() (string, error) {
@@ -203,7 +206,7 @@ func promptUserForProjectVisibility() (string, error) {
 	return []string{"public_repo", "repo"}[index], nil
 }
 
-func requestUserVerificationCode(scope string) (map[string]string, error) {
+func requestUserVerificationCode(scope string) (*githRespT, error) {
 	params := url.Values{}
 	params.Set("client_id", githubClientID)
 	params.Set("scope", scope)
@@ -222,15 +225,17 @@ func requestUserVerificationCode(scope string) (map[string]string, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "error requesting user verification code")
 	}
-	values, err := url.ParseQuery(string(data))
+	vals, err := url.ParseQuery(string(data))
 	if err != nil {
 		return nil, errors.Wrap(err, "error decoding Github API response")
 	}
-	result := map[string]string{"device_code": "", "user_code": "", "verification_uri": "", "interval": ""}
-	for key, _ := range result {
-		result[key] = values.Get(key)
+	interval, err := strconv.ParseInt(vals.Get("interval"), 10, 64) // base 10, bitSize 64
+	if err != nil {
+		return nil, errors.Wrap(err, "Error parsing integer received from Github API")
 	}
-	return result, nil
+	result := githRespT{uri: vals.Get("verification_uri"), userCode: vals.Get("user_code"),
+		deviceCode: vals.Get("device_code"), interval: interval}
+	return &result, nil
 }
 
 func promptUserToGoToBrowser(url, userCode string) {
