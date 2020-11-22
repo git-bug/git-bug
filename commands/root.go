@@ -79,6 +79,20 @@ the same git remote you are already using to collaborate with other people.
 	cmd.AddCommand(newVersionCommand(env))
 	cmd.AddCommand(newWipeCommand(env))
 
+	// Added with export NDJSON
+	cmd.AddCommand(newAddCommand(env))
+	cmd.AddCommand(newCommentCommand(env))
+	cmd.AddCommand(newDeselectCommand(env))
+	cmd.AddCommand(newExportCommand(env))
+	cmd.AddCommand(newLsCommand(env))
+	cmd.AddCommand(newLsIdCommand(env))
+	cmd.AddCommand(newLsLabelCommand(env))
+	cmd.AddCommand(newRmCommand(env))
+	cmd.AddCommand(newSelectCommand(env))
+	cmd.AddCommand(newShowCommand(env))
+	cmd.AddCommand(newStatusCommand(env))
+	cmd.AddCommand(newTitleCommand(env))
+
 	return cmd
 }
 
