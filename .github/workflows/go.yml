@@ -19,12 +19,12 @@ jobs:
     
     steps:
 
-    - name: Set up Go
+    - name: Set up Go ${{ matrix.node-version }}
       uses: actions/setup-go@v2
       with:
         go-version: ${{ matrix.go-version }}
 
-    - name: Check out code into the Go module directory
+    - name: Check out code
       uses: actions/checkout@v2
 
     - name: Build
