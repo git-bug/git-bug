@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"path"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -131,7 +132,7 @@ func (repo *GitRepo) Keyring() Keyring {
 
 // GetPath returns the path to the repo.
 func (repo *GitRepo) GetPath() string {
-	return repo.path
+	return filepath.FromSlash(repo.path)
 }
 
 // GetUserName returns the name the the user has used to configure git

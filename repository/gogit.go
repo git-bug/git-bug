@@ -197,7 +197,7 @@ func (repo *GoGitRepo) Keyring() Keyring {
 
 // GetPath returns the path to the repo.
 func (repo *GoGitRepo) GetPath() string {
-	return repo.path
+	return filepath.FromSlash(repo.path)
 }
 
 // GetUserName returns the name the the user has used to configure git

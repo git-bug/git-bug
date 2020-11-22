@@ -3,6 +3,7 @@ package repository
 import (
 	"crypto/sha1"
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/99designs/keyring"
@@ -88,7 +89,7 @@ func NewMockRepoCommon() *mockRepoCommon {
 
 // GetPath returns the path to the repo.
 func (r *mockRepoCommon) GetPath() string {
-	return "~/mockRepo/"
+	return filepath.FromSlash("~/mockRepo/")
 }
 
 func (r *mockRepoCommon) GetUserName() (string, error) {
