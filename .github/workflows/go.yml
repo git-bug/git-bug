@@ -27,9 +27,6 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v2
 
-      - name: go fmt
-        uses: Jerome1337/gofmt-action@v1.0.2
-
       - name: Build
         run: make
 
