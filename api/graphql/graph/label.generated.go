@@ -49,7 +49,7 @@ func (ec *executionContext) _Label_name(ctx context.Context, field graphql.Colle
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Label().Name(rctx, obj)
 	})
@@ -93,7 +93,7 @@ func (ec *executionContext) _Label_color(ctx context.Context, field graphql.Coll
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Label().Color(rctx, obj)
 	})
@@ -145,7 +145,7 @@ func (ec *executionContext) _LabelChangeResult_label(ctx context.Context, field 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Label, nil
 	})
@@ -195,7 +195,7 @@ func (ec *executionContext) _LabelChangeResult_status(ctx context.Context, field
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Status, nil
 	})
@@ -239,7 +239,7 @@ func (ec *executionContext) _LabelConnection_edges(ctx context.Context, field gr
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Edges, nil
 	})
@@ -289,7 +289,7 @@ func (ec *executionContext) _LabelConnection_nodes(ctx context.Context, field gr
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Nodes, nil
 	})
@@ -339,7 +339,7 @@ func (ec *executionContext) _LabelConnection_pageInfo(ctx context.Context, field
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.PageInfo, nil
 	})
@@ -393,7 +393,7 @@ func (ec *executionContext) _LabelConnection_totalCount(ctx context.Context, fie
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.TotalCount, nil
 	})
@@ -437,7 +437,7 @@ func (ec *executionContext) _LabelEdge_cursor(ctx context.Context, field graphql
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Cursor, nil
 	})
@@ -481,7 +481,7 @@ func (ec *executionContext) _LabelEdge_node(ctx context.Context, field graphql.C
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Node, nil
 	})
@@ -869,7 +869,7 @@ func (ec *executionContext) marshalNLabelChangeResult2ᚕᚖgithubᚗcomᚋgit�
 	return ret
 }
 
-func (ec *executionContext) unmarshalNLabelChangeStatus2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐLabelChangeStatus(ctx context.Context, v interface{}) (bug.LabelChangeStatus, error) {
+func (ec *executionContext) unmarshalNLabelChangeStatus2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐLabelChangeStatus(ctx context.Context, v any) (bug.LabelChangeStatus, error) {
 	var res bug.LabelChangeStatus
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)

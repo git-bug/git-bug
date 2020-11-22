@@ -40,7 +40,7 @@ import (
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) unmarshalNStatus2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋcommonᚐStatus(ctx context.Context, v interface{}) (common.Status, error) {
+func (ec *executionContext) unmarshalNStatus2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋcommonᚐStatus(ctx context.Context, v any) (common.Status, error) {
 	var res common.Status
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
