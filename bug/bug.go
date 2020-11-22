@@ -234,7 +234,7 @@ func RemoveBug(repo repository.ClockedRepo, id entity.Id) error {
 		return err
 	}
 	if len(refs) > 1 {
-		return NewErrMultipleMatchBug(refsToIds(refs))
+		return NewErrMultipleMatchBug(entity.RefsToIds(refs))
 	}
 	if len(refs) == 1 {
 		// we have the bug locally
@@ -253,7 +253,7 @@ func RemoveBug(repo repository.ClockedRepo, id entity.Id) error {
 			return err
 		}
 		if len(remoteRefs) > 1 {
-			return NewErrMultipleMatchBug(refsToIds(refs))
+			return NewErrMultipleMatchBug(entity.RefsToIds(refs))
 		}
 		if len(remoteRefs) == 1 {
 			// found the bug in a remote
@@ -337,22 +337,7 @@ func ListLocalIds(repo repository.Repo) ([]entity.Id, error) {
 		return nil, err
 	}
 
-	return refsToIds(refs), nil
-}
-
-func refsToIds(refs []string) []entity.Id {
-	ids := make([]entity.Id, len(refs))
-
-	for i, ref := range refs {
-		ids[i] = refToId(ref)
-	}
-
-	return ids
-}
-
-func refToId(ref string) entity.Id {
-	split := strings.Split(ref, "/")
-	return entity.Id(split[len(split)-1])
+	return entity.RefsToIds(refs), nil
 }
 
 // Validate check if the Bug data is valid
