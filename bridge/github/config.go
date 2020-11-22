@@ -23,9 +23,10 @@ import (
 	"github.com/MichaelMure/git-bug/repository"
 )
 
+const githubClientID = "ce3600aa56c2e69f18a5" // git-bug org
+
 var (
 	ErrBadProjectURL = errors.New("bad project url")
-	githubClientID   = "ce3600aa56c2e69f18a5"
 )
 
 func (g *Github) ValidParams() map[string]interface{} {
@@ -170,13 +171,6 @@ func (*Github) ValidateConfig(conf core.Configuration) error {
 	return nil
 }
 
-type githRespT struct {
-	uri        string
-	userCode   string
-	deviceCode string
-	interval   int64
-}
-
 func requestToken() (string, error) {
 	scope, err := promptUserForProjectVisibility()
 	if err != nil {
@@ -206,6 +200,13 @@ func promptUserForProjectVisibility() (string, error) {
 	return []string{"public_repo", "repo"}[index], nil
 }
 
+type githRespT struct {
+	uri        string
+	userCode   string
+	deviceCode string
+	interval   int64
+}
+
 func requestUserVerificationCode(scope string) (*githRespT, error) {
 	params := url.Values{}
 	params.Set("client_id", githubClientID)
@@ -213,6 +214,7 @@ func requestUserVerificationCode(scope string) (*githRespT, error) {
 	client := &http.Client{
 		Timeout: defaultTimeout,
 	}
+
 	resp, err := client.PostForm("https://github.com/login/device/code", params)
 	if err != nil {
 		return nil, errors.Wrap(err, "error requesting user verification code")
@@ -221,21 +223,28 @@ func requestUserVerificationCode(scope string) (*githRespT, error) {
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("unexpected response status code %d from Github API", resp.StatusCode)
 	}
+
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, errors.Wrap(err, "error requesting user verification code")
 	}
+
 	vals, err := url.ParseQuery(string(data))
 	if err != nil {
 		return nil, errors.Wrap(err, "error decoding Github API response")
 	}
+
 	interval, err := strconv.ParseInt(vals.Get("interval"), 10, 64) // base 10, bitSize 64
 	if err != nil {
 		return nil, errors.Wrap(err, "Error parsing integer received from Github API")
 	}
-	result := githRespT{uri: vals.Get("verification_uri"), userCode: vals.Get("user_code"),
-		deviceCode: vals.Get("device_code"), interval: interval}
-	return &result, nil
+
+	return &githRespT{
+		uri:        vals.Get("verification_uri"),
+		userCode:   vals.Get("user_code"),
+		deviceCode: vals.Get("device_code"),
+		interval:   interval,
+	}, nil
 }
 
 func promptUserToGoToBrowser(url, userCode string) {
@@ -255,19 +264,24 @@ func pollGithubForAuthorization(deviceCode string, intervalSec int64) (string, e
 		Timeout: defaultTimeout,
 	}
 	interval := time.Duration(intervalSec * 1100) // milliseconds, add 10% margin
+
 	for {
 		resp, err := client.PostForm("https://github.com/login/oauth/access_token", params)
 		if err != nil {
 			return "", errors.Wrap(err, "error polling the Github API")
 		}
-		defer resp.Body.Close()
 		if resp.StatusCode != http.StatusOK {
+			_ = resp.Body.Close()
 			return "", fmt.Errorf("unexpected response status code %d from Github API", resp.StatusCode)
 		}
+
 		data, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
+			_ = resp.Body.Close()
 			return "", errors.Wrap(err, "error polling the Github API")
 		}
+		_ = resp.Body.Close()
+
 		values, err := url.ParseQuery(string(data))
 		if err != nil {
 			return "", errors.Wrap(err, "error decoding Github API response")
