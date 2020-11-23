@@ -35,7 +35,7 @@ This project has grown bigger than I can handle by myself, especially with a day
 - the terminal UI (go)
 - the web UI (Typescript/React/GraphQL)
 
-Individually, those pieces are not expecially complex but doing everything make it hard for me to focus on the core where things get more complicated. If this is useful for you or you just want to join the fun, maybe consider it?
+Individually, those pieces are not especially complex but doing everything make it hard for me to focus on the core where things get more complicated. If this is useful for you or you just want to join the fun, maybe consider it?
 
 ## Installation
 
