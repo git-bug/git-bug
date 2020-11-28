@@ -182,7 +182,7 @@ func (repo *GoGitRepo) GlobalConfig() Config {
 	// TODO: replace that with go-git native implementation once it's supported
 	// see: https://github.com/go-git/go-git
 	// see: https://github.com/src-d/go-git/issues/760
-	return newGoGitGlobalConfig(repo.r)
+	return newGitConfig(gitCli{path: repo.path}, true)
 }
 
 // AnyConfig give access to a merged local/global configuration

@@ -263,7 +263,7 @@ func (b *Bridge) ensureConfig() error {
 func loadConfig(repo repository.RepoConfig, name string) (Configuration, error) {
 	keyPrefix := fmt.Sprintf("git-bug.bridge.%s.", name)
 
-	pairs, err := repo.LocalConfig().ReadAll(keyPrefix)
+	pairs, err := repo.AnyConfig().ReadAll(keyPrefix)
 	if err != nil {
 		return nil, errors.Wrap(err, "error while reading bridge configuration")
 	}
