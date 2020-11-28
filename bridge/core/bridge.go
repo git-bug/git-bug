@@ -376,12 +376,19 @@ func (b *Bridge) ImportAllSince(ctx context.Context, since time.Time) (<-chan Im
 
 func (b *Bridge) ImportAll(ctx context.Context) (<-chan ImportResult, error) {
 	// If possible, restart from the last import time
-	lastImport, err := b.repo.LocalConfig().ReadTimestamp(fmt.Sprintf("git-bug.bridge.%s.lastImportTime", b.Name))
-	if err == nil {
-		return b.ImportAllSince(ctx, lastImport)
+	since, err := b.lastImportTime()
+	if err != nil {
+		return nil, err
 	}
+	return b.ImportAllSince(ctx, since)
+}
 
-	return b.ImportAllSince(ctx, time.Time{})
+func (b *Bridge) lastImportTime() (time.Time, error) {
+	lastImport := b.conf["lastImportTime"]
+	if lastImport == "" {
+		return time.Time{}, nil
+	}
+	return repository.ParseTimestamp(lastImport)
 }
 
 func (b *Bridge) ExportAll(ctx context.Context, since time.Time) (<-chan ExportResult, error) {
