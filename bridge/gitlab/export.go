@@ -38,7 +38,7 @@ type gitlabExporter struct {
 }
 
 // Init .
-func (ge *gitlabExporter) Init(_ context.Context, repo *cache.RepoCache, conf core.Configuration) error {
+func (ge *gitlabExporter) Init(_ context.Context, repo *cache.RepoCache, name string, conf core.Configuration) error {
 	ge.conf = conf
 	ge.identityClient = make(map[entity.Id]*gitlab.Client)
 	ge.cachedOperationIDs = make(map[string]string)

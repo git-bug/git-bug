@@ -300,7 +300,7 @@ func (b *Bridge) ensureImportInit(ctx context.Context) error {
 
 	importer := b.getImporter()
 	if importer != nil {
-		err := importer.Init(ctx, b.repo, b.conf)
+		err := importer.Init(ctx, b.repo, b.Name, b.conf)
 		if err != nil {
 			return err
 		}
@@ -317,7 +317,7 @@ func (b *Bridge) ensureExportInit(ctx context.Context) error {
 
 	exporter := b.getExporter()
 	if exporter != nil {
-		err := exporter.Init(ctx, b.repo, b.conf)
+		err := exporter.Init(ctx, b.repo, b.Name, b.conf)
 		if err != nil {
 			return err
 		}

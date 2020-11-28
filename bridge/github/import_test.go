@@ -152,7 +152,7 @@ func Test_Importer(t *testing.T) {
 	ctx := context.Background()
 
 	importer := &githubImporter{}
-	err = importer.Init(ctx, backend, core.Configuration{
+	err = importer.Init(ctx, backend, "test", core.Configuration{
 		confKeyOwner:        "MichaelMure",
 		confKeyProject:      "git-bug-test-github-bridge",
 		confKeyDefaultLogin: login,

@@ -12,6 +12,7 @@ type BridgeParams struct {
 	TokenRaw   string // pre-existing token to use            (Github, Gitlab,     ,          )
 	Owner      string // owner of the repo                    (Github,       ,     ,          )
 	Project    string // name of the repo or project key      (Github,       , Jira, Launchpad)
+	Filter     string // import filter                        (      ,       . Jira,          )
 }
 
 func (BridgeParams) fieldWarning(field string, target string) string {
@@ -30,6 +31,8 @@ func (BridgeParams) fieldWarning(field string, target string) string {
 		return fmt.Sprintf("warning: --owner is ineffective for a %s bridge", target)
 	case "Project":
 		return fmt.Sprintf("warning: --project is ineffective for a %s bridge", target)
+	case "Filter":
+		return fmt.Sprintf("warning: --filter is ineffective for a %s bridge", target)
 	default:
 		panic("unknown field")
 	}

@@ -24,6 +24,7 @@ var (
 
 // jiraExporter implement the Exporter interface
 type jiraExporter struct {
+	name string
 	conf core.Configuration
 
 	// cache identities clients
@@ -44,7 +45,8 @@ type jiraExporter struct {
 }
 
 // Init .
-func (je *jiraExporter) Init(ctx context.Context, repo *cache.RepoCache, conf core.Configuration) error {
+func (je *jiraExporter) Init(ctx context.Context, repo *cache.RepoCache, name string, conf core.Configuration) error {
+	je.name = name
 	je.conf = conf
 	je.identityClient = make(map[entity.Id]*Client)
 	je.cachedOperationIDs = make(map[entity.Id]string)
@@ -212,10 +214,10 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, out ch
 
 	// skip bug if it is a jira bug but is associated with another project
 	// (one bridge per JIRA project)
-	project, ok := snapshot.GetCreateMetadata(metaKeyJiraProject)
-	if ok && !stringInSlice(project, []string{je.project.ID, je.project.Key}) {
+	bridge, ok := snapshot.GetCreateMetadata(metaKeyJiraBridge)
+	if ok && !stringInSlice(bridge, []string{je.project.ID, je.project.Key}) {
 		out <- core.NewExportNothing(
-			b.Id(), fmt.Sprintf("issue tagged with project: %s", project))
+			b.Id(), fmt.Sprintf("issue tagged with project: %s", bridge))
 		return nil
 	}
 
@@ -273,7 +275,7 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, out ch
 		out <- core.NewExportBug(b.Id())
 		// mark bug creation operation as exported
 		err = markOperationAsExported(
-			b, createOp.Id(), id, je.project.Key, time.Time{})
+			b, createOp.Id(), id, je.name, time.Time{})
 		if err != nil {
 			err := errors.Wrap(err, "marking operation as exported")
 			out <- core.NewExportError(err, b.Id())
@@ -437,10 +439,10 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, out ch
 	return nil
 }
 
-func markOperationAsExported(b *cache.BugCache, target entity.Id, jiraID, jiraProject string, exportTime time.Time) error {
+func markOperationAsExported(b *cache.BugCache, target entity.Id, jiraID, name string, exportTime time.Time) error {
 	newMetadata := map[string]string{
-		metaKeyJiraId:      jiraID,
-		metaKeyJiraProject: jiraProject,
+		metaKeyJiraId:     jiraID,
+		metaKeyJiraBridge: name,
 	}
 	if !exportTime.IsZero() {
 		newMetadata[metaKeyJiraExportTime] = exportTime.Format(http.TimeFormat)

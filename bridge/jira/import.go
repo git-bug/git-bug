@@ -23,6 +23,7 @@ const (
 
 // jiraImporter implement the Importer interface
 type jiraImporter struct {
+	name string
 	conf core.Configuration
 
 	client *Client
@@ -32,7 +33,8 @@ type jiraImporter struct {
 }
 
 // Init .
-func (ji *jiraImporter) Init(ctx context.Context, repo *cache.RepoCache, conf core.Configuration) error {
+func (ji *jiraImporter) Init(ctx context.Context, repo *cache.RepoCache, name string, conf core.Configuration) error {
+	ji.name = name
 	ji.conf = conf
 
 	var cred auth.Credential
@@ -76,11 +78,17 @@ end:
 	return err
 }
 
+func filterOf(filter string, project string, since time.Time) string {
+	if filter == "" {
+		filter = fmt.Sprintf("project = \"%s\"", project)
+	}
+	return fmt.Sprintf("%s AND updatedDate>\"%s\"", filter, since.Format("2006-01-02 15:04"))
+}
+
 // ImportAll iterate over all the configured repository issues and ensure the
 // creation of the missing issues / timeline items / edits / label events ...
 func (ji *jiraImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, since time.Time) (<-chan core.ImportResult, error) {
-	sinceStr := since.Format("2006-01-02 15:04")
-	project := ji.conf[confKeyProject]
+	filter := filterOf(ji.conf[confKeyFilter], ji.conf[confKeyProject], since)
 
 	out := make(chan core.ImportResult)
 	ji.out = out
@@ -88,8 +96,9 @@ func (ji *jiraImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, si
 	go func() {
 		defer close(ji.out)
 
-		message, err := ji.client.Search(
-			fmt.Sprintf("project=%s AND updatedDate>\"%s\"", project, sinceStr), 0, 0)
+		fmt.Printf("Searchin for %s\n", filter)
+
+		message, err := ji.client.Search(filter, 0, 0)
 		if err != nil {
 			out <- core.NewImportError(err, "")
 			return
@@ -97,10 +106,9 @@ func (ji *jiraImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, si
 
 		fmt.Printf("So far so good. Have %d issues to import\n", message.Total)
 
-		jql := fmt.Sprintf("project=%s AND updatedDate>\"%s\"", project, sinceStr)
 		var searchIter *SearchIterator
 		for searchIter =
-			ji.client.IterSearch(jql, defaultPageSize); searchIter.HasNext(); {
+			ji.client.IterSearch(filter, defaultPageSize); searchIter.HasNext(); {
 			issue := searchIter.Next()
 			b, err := ji.ensureIssue(repo, *issue)
 			if err != nil {
@@ -224,7 +232,7 @@ func (ji *jiraImporter) ensureIssue(repo *cache.RepoCache, issue Issue) (*cache.
 
 		return excerpt.CreateMetadata[core.MetaKeyOrigin] == target &&
 			excerpt.CreateMetadata[metaKeyJiraId] == issue.ID &&
-			excerpt.CreateMetadata[metaKeyJiraProject] == ji.conf[confKeyProject]
+			excerpt.CreateMetadata[metaKeyJiraBridge] == ji.name
 	})
 	if err != nil && err != bug.ErrBugNotExist {
 		return nil, err
@@ -249,7 +257,7 @@ func (ji *jiraImporter) ensureIssue(repo *cache.RepoCache, issue Issue) (*cache.
 				core.MetaKeyOrigin: target,
 				metaKeyJiraId:      issue.ID,
 				metaKeyJiraKey:     issue.Key,
-				metaKeyJiraProject: ji.conf[confKeyProject],
+				metaKeyJiraBridge:  ji.name,
 				metaKeyJiraBaseUrl: ji.conf[confKeyBaseUrl],
 			})
 		if err != nil {

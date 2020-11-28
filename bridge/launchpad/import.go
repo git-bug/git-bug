@@ -15,7 +15,7 @@ type launchpadImporter struct {
 	conf core.Configuration
 }
 
-func (li *launchpadImporter) Init(_ context.Context, repo *cache.RepoCache, conf core.Configuration) error {
+func (li *launchpadImporter) Init(_ context.Context, repo *cache.RepoCache, name string, conf core.Configuration) error {
 	li.conf = conf
 	return nil
 }

@@ -96,6 +96,8 @@ Register-ArgumentCompleter -Native -CommandName 'git-bug' -ScriptBlock {
             [CompletionResult]::new('--owner', 'owner', [CompletionResultType]::ParameterName, 'The owner of the remote repository')
             [CompletionResult]::new('-p', 'p', [CompletionResultType]::ParameterName, 'The name of the remote repository')
             [CompletionResult]::new('--project', 'project', [CompletionResultType]::ParameterName, 'The name of the remote repository')
+            [CompletionResult]::new('-f', 'f', [CompletionResultType]::ParameterName, 'The issues filter')
+            [CompletionResult]::new('--filter', 'filter', [CompletionResultType]::ParameterName, 'The issues filter')
             break
         }
         'git-bug;bridge;pull' {

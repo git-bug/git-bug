@@ -107,7 +107,7 @@ func TestImport(t *testing.T) {
 	ctx := context.Background()
 
 	importer := &gitlabImporter{}
-	err = importer.Init(ctx, backend, core.Configuration{
+	err = importer.Init(ctx, backend, "test", core.Configuration{
 		confKeyProjectID:     projectID,
 		confKeyGitlabBaseUrl: defaultBaseURL,
 		confKeyDefaultLogin:  login,
