@@ -200,9 +200,9 @@ func (ji *jiraImporter) ensurePerson(repo *cache.RepoCache, user User) (*cache.I
 	}
 
 	i, err = repo.NewIdentityRaw(
-		user.DisplayName,
-		user.EmailAddress,
-		user.Key,
+		strings.TrimSpace(user.DisplayName),
+		strings.TrimSpace(user.EmailAddress),
+		strings.TrimSpace(user.Key),
 		"",
 		map[string]string{
 			metaKeyJiraUser: user.Key,
