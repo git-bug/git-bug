@@ -77,7 +77,7 @@ type mergedConfig struct {
 }
 
 func (m *mergedConfig) ReadAll(keyPrefix string) (map[string]string, error) {
-	values, err := m.global.ReadAll(keyPrefix)
+	globals, err := m.global.ReadAll(keyPrefix)
 	if err != nil {
 		return nil, err
 	}
@@ -85,10 +85,13 @@ func (m *mergedConfig) ReadAll(keyPrefix string) (map[string]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	for k, val := range locals {
-		values[k] = val
+	if globals == nil {
+		return locals, nil
 	}
-	return values, nil
+	for k, val := range locals {
+		globals[k] = val
+	}
+	return globals, nil
 }
 
 func (m *mergedConfig) ReadBool(key string) (bool, error) {
