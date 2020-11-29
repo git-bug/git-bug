@@ -29,14 +29,17 @@ func TestCreate(t *testing.T) {
 	id := create.Id()
 	require.NoError(t, id.Validate())
 
+	commentId := DeriveCommentId(create.Id(), create.Id())
+
 	comment := Comment{
-		id:       id,
+		id:       commentId,
 		Author:   rene,
 		Message:  "message",
 		UnixTime: timestamp.Timestamp(create.UnixTime),
 	}
 
 	expected := Snapshot{
+		id:    create.Id(),
 		Title: "title",
 		Comments: []Comment{
 			comment,
@@ -47,7 +50,7 @@ func TestCreate(t *testing.T) {
 		CreateTime:   create.Time(),
 		Timeline: []TimelineItem{
 			&CreateTimelineItem{
-				CommentTimelineItem: NewCommentTimelineItem(id, comment),
+				CommentTimelineItem: NewCommentTimelineItem(commentId, comment),
 			},
 		},
 	}
