@@ -215,7 +215,7 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, out ch
 	// skip bug if it is a jira bug but is associated with another project
 	// (one bridge per JIRA project)
 	bridge, ok := snapshot.GetCreateMetadata(metaKeyJiraBridge)
-	if ok && !stringInSlice(bridge, []string{je.project.ID, je.project.Key}) {
+	if ok && je.name != bridge {
 		out <- core.NewExportNothing(
 			b.Id(), fmt.Sprintf("issue tagged with project: %s", bridge))
 		return nil
