@@ -44,15 +44,11 @@ var _ entity.Interface = &Bug{}
 // how it will be persisted inside Git. This is the data structure
 // used to merge two different version of the same Bug.
 type Bug struct {
-
 	// A Lamport clock is a logical clock that allow to order event
 	// inside a distributed system.
 	// It must be the first field in this struct due to https://github.com/golang/go/issues/599
 	createTime lamport.Time
 	editTime   lamport.Time
-
-	// Id used as unique identifier
-	id entity.Id
 
 	lastCommit repository.Hash
 
@@ -66,9 +62,8 @@ type Bug struct {
 
 // NewBug create a new Bug
 func NewBug() *Bug {
-	// No id yet
 	// No logical clock yet
-	return &Bug{id: entity.UnsetId}
+	return &Bug{}
 }
 
 // ReadLocal will read a local bug from its hash
@@ -111,9 +106,7 @@ func read(repo repository.ClockedRepo, identityResolver identity.Resolver, ref s
 		return nil, fmt.Errorf("empty bug")
 	}
 
-	bug := Bug{
-		id: id,
-	}
+	bug := Bug{}
 
 	// Load each OperationPack
 	for _, hash := range hashes {
@@ -164,7 +157,7 @@ func read(repo repository.ClockedRepo, identityResolver identity.Resolver, ref s
 	if len(bug.packs[0].Operations) == 0 {
 		return nil, fmt.Errorf("first OperationPack is empty")
 	}
-	if bug.id != bug.packs[0].Operations[0].Id() {
+	if id != bug.packs[0].Operations[0].Id() {
 		return nil, fmt.Errorf("bug ID doesn't match the first operation ID")
 	}
 
@@ -319,13 +312,6 @@ func (bug *Bug) Validate() error {
 		return fmt.Errorf("first operation should be a Create op")
 	}
 
-	// The bug Id should be the id of the first operation
-	if bug.FirstOp().Id() != bug.id {
-		fmt.Println("bug", bug.id.String())
-		fmt.Println("op", bug.FirstOp().Id().String())
-		return fmt.Errorf("bug id should be the first commit hash")
-	}
-
 	// Check that there is no more CreateOp op
 	// Check that there is no colliding operation's ID
 	it := NewOperationIterator(bug)
@@ -354,7 +340,6 @@ func (bug *Bug) Append(op Operation) {
 		if op.base().OperationType != CreateOp {
 			panic("first operation should be a Create")
 		}
-		bug.id = op.Id()
 	}
 	bug.staging.Append(op)
 }
@@ -454,15 +439,10 @@ func (bug *Bug) Commit(repo repository.ClockedRepo) error {
 	bug.packs = append(bug.packs, bug.staging)
 	bug.staging = OperationPack{}
 
-	// if it was the first commit, use the Id of the first op (create)
-	if bug.id == "" || bug.id == entity.UnsetId {
-		bug.id = bug.packs[0].Operations[0].Id()
-	}
-
 	// Create or update the Git reference for this bug
 	// When pushing later, the remote will ensure that this ref update
 	// is fast-forward, that is no data has been overwritten
-	ref := fmt.Sprintf("%s%s", bugsRefPattern, bug.id)
+	ref := fmt.Sprintf("%s%s", bugsRefPattern, bug.Id().String())
 	return repo.UpdateRef(ref, hash)
 }
 
@@ -488,7 +468,7 @@ func (bug *Bug) Merge(repo repository.Repo, other Interface) (bool, error) {
 	// Reading the other side is still necessary to validate remote data, at least
 	// for new operations
 
-	if bug.id != otherBug.id {
+	if bug.Id() != otherBug.Id() {
 		return false, errors.New("merging unrelated bugs is not supported")
 	}
 
@@ -562,7 +542,7 @@ func (bug *Bug) Merge(repo repository.Repo, other Interface) (bool, error) {
 	bug.packs = newPacks
 
 	// Update the git ref
-	err = repo.UpdateRef(bugsRefPattern+bug.id.String(), bug.lastCommit)
+	err = repo.UpdateRef(bugsRefPattern+bug.Id().String(), bug.lastCommit)
 	if err != nil {
 		return false, err
 	}
@@ -572,12 +552,8 @@ func (bug *Bug) Merge(repo repository.Repo, other Interface) (bool, error) {
 
 // Id return the Bug identifier
 func (bug *Bug) Id() entity.Id {
-	if bug.id == "" || bug.id == entity.UnsetId {
-		// simply panic as it would be a coding error
-		// (using an id of a bug without operation yet)
-		panic("no id yet")
-	}
-	return bug.id
+	// id is the id of the first operation
+	return bug.FirstOp().Id()
 }
 
 // CreateLamportTime return the Lamport time of creation
@@ -629,7 +605,7 @@ func (bug *Bug) LastOp() Operation {
 // Compile a bug in a easily usable snapshot
 func (bug *Bug) Compile() Snapshot {
 	snap := Snapshot{
-		id:     bug.id,
+		id:     bug.Id(),
 		Status: OpenStatus,
 	}
 
