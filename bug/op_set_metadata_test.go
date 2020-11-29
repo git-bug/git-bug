@@ -46,14 +46,14 @@ func TestSetMetadata(t *testing.T) {
 	snapshot.Operations = append(snapshot.Operations, op1)
 
 	createMetadata := snapshot.Operations[0].AllMetadata()
-	require.Equal(t, len(createMetadata), 2)
+	require.Len(t, createMetadata, 2)
 	// original key is not overrided
 	require.Equal(t, createMetadata["key"], "value")
 	// new key is set
 	require.Equal(t, createMetadata["key2"], "value")
 
 	commentMetadata := snapshot.Operations[1].AllMetadata()
-	require.Equal(t, len(commentMetadata), 1)
+	require.Len(t, commentMetadata, 1)
 	require.Equal(t, commentMetadata["key2"], "value2")
 
 	op2 := NewSetMetadataOp(rene, unix, id2, map[string]string{
@@ -65,12 +65,12 @@ func TestSetMetadata(t *testing.T) {
 	snapshot.Operations = append(snapshot.Operations, op2)
 
 	createMetadata = snapshot.Operations[0].AllMetadata()
-	require.Equal(t, len(createMetadata), 2)
+	require.Len(t, createMetadata, 2)
 	require.Equal(t, createMetadata["key"], "value")
 	require.Equal(t, createMetadata["key2"], "value")
 
 	commentMetadata = snapshot.Operations[1].AllMetadata()
-	require.Equal(t, len(commentMetadata), 2)
+	require.Len(t, commentMetadata, 2)
 	// original key is not overrided
 	require.Equal(t, commentMetadata["key2"], "value2")
 	// new key is set
@@ -85,14 +85,14 @@ func TestSetMetadata(t *testing.T) {
 	snapshot.Operations = append(snapshot.Operations, op3)
 
 	createMetadata = snapshot.Operations[0].AllMetadata()
-	require.Equal(t, len(createMetadata), 2)
+	require.Len(t, createMetadata, 2)
 	// original key is not overrided
 	require.Equal(t, createMetadata["key"], "value")
 	// previously set key is not overrided
 	require.Equal(t, createMetadata["key2"], "value")
 
 	commentMetadata = snapshot.Operations[1].AllMetadata()
-	require.Equal(t, len(commentMetadata), 2)
+	require.Len(t, commentMetadata, 2)
 	require.Equal(t, commentMetadata["key2"], "value2")
 	require.Equal(t, commentMetadata["key3"], "value3")
 }

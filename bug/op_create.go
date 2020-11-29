@@ -54,6 +54,13 @@ func (op *CreateOperation) SetMetadata(key string, value string) {
 }
 
 func (op *CreateOperation) Apply(snapshot *Snapshot) {
+	// sanity check: will fail when adding a second Create
+	if snapshot.id != "" && snapshot.id != entity.UnsetId && snapshot.id != op.Id() {
+		panic("adding a second Create operation")
+	}
+
+	snapshot.id = op.Id()
+
 	snapshot.addActor(op.Author)
 	snapshot.addParticipant(op.Author)
 
