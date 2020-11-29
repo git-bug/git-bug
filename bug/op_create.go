@@ -38,6 +38,21 @@ func (op *CreateOperation) Id() entity.Id {
 	return idOperation(op)
 }
 
+// OVERRIDE
+func (op *CreateOperation) SetMetadata(key string, value string) {
+	// sanity check: we make sure we are not in the following scenario:
+	// - the bug is created with a first operation
+	// - Id() is used
+	// - metadata are added, which will change the Id
+	// - Id() is used again
+
+	if op.id != entity.UnsetId {
+		panic("usage of Id() after changing the first operation")
+	}
+
+	op.OpBase.SetMetadata(key, value)
+}
+
 func (op *CreateOperation) Apply(snapshot *Snapshot) {
 	snapshot.addActor(op.Author)
 	snapshot.addParticipant(op.Author)
@@ -95,7 +110,7 @@ func (op *CreateOperation) Validate() error {
 	return nil
 }
 
-// UnmarshalJSON is a two step JSON unmarshaling
+// UnmarshalJSON is a two step JSON unmarshalling
 // This workaround is necessary to avoid the inner OpBase.MarshalJSON
 // overriding the outer op's MarshalJSON
 func (op *CreateOperation) UnmarshalJSON(data []byte) error {

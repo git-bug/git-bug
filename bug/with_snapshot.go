@@ -47,7 +47,7 @@ func (b *WithSnapshot) Commit(repo repository.ClockedRepo) error {
 		return nil
 	}
 
-	b.snap.id = b.Bug.id
+	b.snap.id = b.Bug.Id()
 	return nil
 }
 
