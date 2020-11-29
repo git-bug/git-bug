@@ -195,7 +195,7 @@ The web UI interact with the backend through a GraphQL API. The schema is availa
 ### Importer implementations
 
 |                                                 | Github             | Gitlab             | Jira               | Launchpad          |
-|-------------------------------------------------|--------------------|--------------------|--------------------|--------------------|
+|-------------------------------------------------|:------------------:|:------------------:|:------------------:|:------------------:|
 | **incremental**<br/>(can import more than once) | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:                |
 | **with resume**<br/>(download only new data)    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:                |
 | **identities**                                  | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
@@ -212,7 +212,7 @@ The web UI interact with the backend through a GraphQL API. The schema is availa
 ### Exporter implementations
 
 |                          | Github             | Gitlab             | Jira               | Launchpad |
-|--------------------------|--------------------|--------------------|--------------------|-----------|
+|--------------------------|:------------------:|:------------------:|:------------------:|:---------:|
 | **bug**                  | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:       |
 | comments                 | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:       |
 | comment editions         | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:       |
