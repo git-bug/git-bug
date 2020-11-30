@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/timestamp"
@@ -29,7 +30,7 @@ func TestCreate(t *testing.T) {
 	id := create.Id()
 	require.NoError(t, id.Validate())
 
-	commentId := DeriveCommentId(create.Id(), create.Id())
+	commentId := entity.CombineIds(create.Id(), create.Id())
 
 	comment := Comment{
 		id:       commentId,
