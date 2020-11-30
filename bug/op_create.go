@@ -66,7 +66,7 @@ func (op *CreateOperation) Apply(snapshot *Snapshot) {
 
 	snapshot.Title = op.Title
 
-	commentId := DeriveCommentId(snapshot.Id(), op.Id())
+	commentId := entity.CombineIds(snapshot.Id(), op.Id())
 	comment := Comment{
 		id:       commentId,
 		Message:  op.Message,

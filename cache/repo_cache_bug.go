@@ -265,7 +265,7 @@ func (c *RepoCache) resolveBugMatcher(f func(*BugExcerpt) bool) (entity.Id, erro
 // bug/comment Id prefix. Returns the Bug containing the Comment and the Comment's
 // Id.
 func (c *RepoCache) ResolveComment(prefix string) (*BugCache, entity.Id, error) {
-	bugPrefix, _ := bug.SplitCommentId(prefix)
+	bugPrefix, _ := entity.SeparateIds(prefix)
 	bugCandidate := make([]entity.Id, 0, 5)
 
 	// build a list of possible matching bugs
