@@ -3,8 +3,6 @@ package repository
 import (
 	"log"
 	"math/rand"
-	"os"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -15,25 +13,13 @@ import (
 func CleanupTestRepos(repos ...Repo) {
 	var firstErr error
 	for _, repo := range repos {
-		path := repo.GetPath()
-		if strings.HasSuffix(path, "/.git") {
-			// for a normal repository (not --bare), we want to remove everything
-			// including the parent directory where files are checked out
-			path = strings.TrimSuffix(path, "/.git")
-
-			// Testing non-bare repo should also check path is
-			// only .git (i.e. ./.git), but doing so, we should
-			// try to remove the current directory and hav some
-			// trouble. In the present case, this case should not
-			// occur.
-			// TODO consider warning or error when path == ".git"
-		}
-		// fmt.Println("Cleaning repo:", path)
-		err := os.RemoveAll(path)
-		if err != nil {
-			log.Println(err)
-			if firstErr == nil {
-				firstErr = err
+		if repo, ok := repo.(TestedRepo); ok {
+			err := repo.EraseFromDisk()
+			if err != nil {
+				log.Println(err)
+				if firstErr == nil {
+					firstErr = err
+				}
 			}
 		}
 	}

@@ -4,6 +4,8 @@ package repository
 import (
 	"errors"
 
+	"github.com/go-git/go-billy/v5"
+
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
@@ -20,6 +22,7 @@ type Repo interface {
 	RepoKeyring
 	RepoCommon
 	RepoData
+	RepoStorage
 }
 
 // ClockedRepo is a Repo that also has Lamport clocks
@@ -48,9 +51,6 @@ type RepoKeyring interface {
 
 // RepoCommon represent the common function the we want all the repo to implement
 type RepoCommon interface {
-	// GetPath returns the path to the repo.
-	GetPath() string
-
 	// GetUserName returns the name the the user has used to configure git
 	GetUserName() (string, error)
 
@@ -62,6 +62,11 @@ type RepoCommon interface {
 
 	// GetRemotes returns the configured remotes repositories.
 	GetRemotes() (map[string]string, error)
+}
+
+type RepoStorage interface {
+	// LocalStorage return a billy.Filesystem giving access to $RepoPath/.git/git-bug
+	LocalStorage() billy.Filesystem
 }
 
 // RepoData give access to the git data storage
@@ -145,4 +150,10 @@ type TestedRepo interface {
 type repoTest interface {
 	// AddRemote add a new remote to the repository
 	AddRemote(name string, url string) error
+
+	// GetLocalRemote return the URL to use to add this repo as a local remote
+	GetLocalRemote() string
+
+	// EraseFromDisk delete this repository entirely from the disk
+	EraseFromDisk() error
 }
