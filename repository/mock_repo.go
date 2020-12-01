@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/99designs/keyring"
+	"github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-billy/v5/memfs"
 
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
@@ -18,6 +20,7 @@ type mockRepoForTest struct {
 	*mockRepoConfig
 	*mockRepoKeyring
 	*mockRepoCommon
+	*mockRepoStorage
 	*mockRepoData
 	*mockRepoClock
 }
@@ -27,6 +30,7 @@ func NewMockRepoForTest() *mockRepoForTest {
 		mockRepoConfig:  NewMockRepoConfig(),
 		mockRepoKeyring: NewMockRepoKeyring(),
 		mockRepoCommon:  NewMockRepoCommon(),
+		mockRepoStorage: NewMockRepoStorage(),
 		mockRepoData:    NewMockRepoData(),
 		mockRepoClock:   NewMockRepoClock(),
 	}
@@ -86,11 +90,6 @@ func NewMockRepoCommon() *mockRepoCommon {
 	return &mockRepoCommon{}
 }
 
-// GetPath returns the path to the repo.
-func (r *mockRepoCommon) GetPath() string {
-	return "~/mockRepo/"
-}
-
 func (r *mockRepoCommon) GetUserName() (string, error) {
 	return "René Descartes", nil
 }
@@ -110,6 +109,20 @@ func (r *mockRepoCommon) GetRemotes() (map[string]string, error) {
 	return map[string]string{
 		"origin": "git://github.com/MichaelMure/git-bug",
 	}, nil
+}
+
+var _ RepoStorage = &mockRepoStorage{}
+
+type mockRepoStorage struct {
+	localFs billy.Filesystem
+}
+
+func NewMockRepoStorage() *mockRepoStorage {
+	return &mockRepoStorage{localFs: memfs.New()}
+}
+
+func (m *mockRepoStorage) LocalStorage() billy.Filesystem {
+	return m.localFs
 }
 
 var _ RepoData = &mockRepoData{}
@@ -312,6 +325,15 @@ func (r *mockRepoData) GetTreeHash(commit Hash) (Hash, error) {
 
 func (r *mockRepoData) AddRemote(name string, url string) error {
 	panic("implement me")
+}
+
+func (m mockRepoForTest) GetLocalRemote() string {
+	panic("implement me")
+}
+
+func (m mockRepoForTest) EraseFromDisk() error {
+	// nothing to do
+	return nil
 }
 
 type mockRepoClock struct {

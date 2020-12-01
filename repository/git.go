@@ -4,9 +4,14 @@ package repository
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-billy/v5/osfs"
 
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
@@ -172,6 +177,11 @@ func (repo *GitRepo) GetRemotes() (map[string]string, error) {
 	}
 
 	return remotes, nil
+}
+
+// LocalStorage return a billy.Filesystem giving access to $RepoPath/.git/git-bug
+func (repo *GitRepo) LocalStorage() billy.Filesystem {
+	return osfs.New(repo.path)
 }
 
 // FetchRefs fetch git refs from a remote
@@ -407,4 +417,17 @@ func (repo *GitRepo) AddRemote(name string, url string) error {
 	_, err := repo.runGitCommand("remote", "add", name, url)
 
 	return err
+}
+
+// GetLocalRemote return the URL to use to add this repo as a local remote
+func (repo *GitRepo) GetLocalRemote() string {
+	return repo.path
+}
+
+// EraseFromDisk delete this repository entirely from the disk
+func (repo *GitRepo) EraseFromDisk() error {
+	path := filepath.Clean(strings.TrimSuffix(repo.path, string(filepath.Separator)+".git"))
+
+	// fmt.Println("Cleaning repo:", path)
+	return os.RemoveAll(path)
 }

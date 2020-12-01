@@ -58,7 +58,7 @@ func TestNewGoGitRepo(t *testing.T) {
 			require.Error(t, err, i)
 		} else {
 			require.NoError(t, err, i)
-			assert.Equal(t, filepath.ToSlash(tc.outPath), filepath.ToSlash(r.GetPath()), i)
+			assert.Equal(t, filepath.ToSlash(tc.outPath), filepath.ToSlash(r.path), i)
 		}
 	}
 }

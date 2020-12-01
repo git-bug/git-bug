@@ -13,7 +13,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-git/go-billy"
+	"github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-billy/v5/osfs"
 	gogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -24,6 +25,7 @@ import (
 )
 
 var _ ClockedRepo = &GoGitRepo{}
+var _ TestedRepo = &GoGitRepo{}
 
 type GoGitRepo struct {
 	r    *gogit.Repository
@@ -33,12 +35,6 @@ type GoGitRepo struct {
 	clocks      map[string]lamport.Clock
 
 	keyring Keyring
-	RepoStorage
-}
-
-type RepoStorage interface {
-	// Storage returns a billy.Filesystem giving access to $RepoPath/.git/git-bug
-	Storage() billy.Filesystem
 }
 
 func NewGoGitRepo(path string, clockLoaders []ClockLoader) (*GoGitRepo, error) {
@@ -202,11 +198,6 @@ func (repo *GoGitRepo) Keyring() Keyring {
 	return repo.keyring
 }
 
-// GetPath returns the path to the repo.
-func (repo *GoGitRepo) GetPath() string {
-	return repo.path
-}
-
 // GetUserName returns the name the the user has used to configure git
 func (repo *GoGitRepo) GetUserName() (string, error) {
 	return repo.AnyConfig().ReadString("user.name")
@@ -275,6 +266,11 @@ func (repo *GoGitRepo) GetRemotes() (map[string]string, error) {
 	}
 
 	return result, nil
+}
+
+// LocalStorage return a billy.Filesystem giving access to $RepoPath/.git/git-bug
+func (repo *GoGitRepo) LocalStorage() billy.Filesystem {
+	return osfs.New(repo.path)
 }
 
 // FetchRefs fetch git refs from a remote
@@ -659,4 +655,17 @@ func (repo *GoGitRepo) AddRemote(name string, url string) error {
 	})
 
 	return err
+}
+
+// GetLocalRemote return the URL to use to add this repo as a local remote
+func (repo *GoGitRepo) GetLocalRemote() string {
+	return repo.path
+}
+
+// EraseFromDisk delete this repository entirely from the disk
+func (repo *GoGitRepo) EraseFromDisk() error {
+	path := filepath.Clean(strings.TrimSuffix(repo.path, string(filepath.Separator)+".git"))
+
+	// fmt.Println("Cleaning repo:", path)
+	return os.RemoveAll(path)
 }
