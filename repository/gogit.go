@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-git/go-billy"
 	gogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -32,6 +33,12 @@ type GoGitRepo struct {
 	clocks      map[string]lamport.Clock
 
 	keyring Keyring
+	RepoStorage
+}
+
+type RepoStorage interface {
+	// Storage returns a billy.Filesystem giving access to $RepoPath/.git/git-bug
+	Storage() billy.Filesystem
 }
 
 func NewGoGitRepo(path string, clockLoaders []ClockLoader) (*GoGitRepo, error) {
