@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	stdpath "path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -84,12 +83,12 @@ func detectGitPath(path string) (string, error) {
 	}
 
 	for {
-		fi, err := os.Stat(stdpath.Join(path, ".git"))
+		fi, err := os.Stat(filepath.Join(path, ".git"))
 		if err == nil {
 			if !fi.IsDir() {
 				return "", fmt.Errorf(".git exist but is not a directory")
 			}
-			return stdpath.Join(path, ".git"), nil
+			return filepath.Join(path, ".git"), nil
 		}
 		if !os.IsNotExist(err) {
 			// unknown error
@@ -117,7 +116,7 @@ func isGitDir(path string) (bool, error) {
 	markers := []string{"HEAD", "objects", "refs"}
 
 	for _, marker := range markers {
-		_, err := os.Stat(stdpath.Join(path, marker))
+		_, err := os.Stat(filepath.Join(path, marker))
 		if err == nil {
 			continue
 		}
@@ -611,7 +610,7 @@ func (repo *GoGitRepo) GetOrCreateClock(name string) (lamport.Clock, error) {
 	repo.clocksMutex.Lock()
 	defer repo.clocksMutex.Unlock()
 
-	p := stdpath.Join(repo.path, clockPath, name+"-clock")
+	p := filepath.Join(repo.path, clockPath, name+"-clock")
 
 	c, err = lamport.NewPersistedClock(p)
 	if err != nil {
@@ -630,7 +629,7 @@ func (repo *GoGitRepo) getClock(name string) (lamport.Clock, error) {
 		return c, nil
 	}
 
-	p := stdpath.Join(repo.path, clockPath, name+"-clock")
+	p := filepath.Join(repo.path, clockPath, name+"-clock")
 
 	c, err := lamport.LoadPersistedClock(p)
 	if err == nil {

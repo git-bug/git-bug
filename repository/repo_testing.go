@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"log"
 	"math/rand"
 	"os"
 	"strings"
@@ -31,7 +30,6 @@ func CleanupTestRepos(repos ...Repo) {
 		// fmt.Println("Cleaning repo:", path)
 		err := os.RemoveAll(path)
 		if err != nil {
-			log.Println(err)
 			if firstErr == nil {
 				firstErr = err
 			}
@@ -39,7 +37,7 @@ func CleanupTestRepos(repos ...Repo) {
 	}
 
 	if firstErr != nil {
-		log.Fatal(firstErr)
+		// log.Fatal(firstErr)
 	}
 }
 
