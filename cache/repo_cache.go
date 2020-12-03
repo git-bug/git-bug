@@ -129,25 +129,25 @@ func (c *RepoCache) write() error {
 }
 
 func (c *RepoCache) lock() error {
-	lockPath := repoLockFilePath(c.repo)
-
 	err := repoIsAvailable(c.repo)
 	if err != nil {
 		return err
 	}
 
-	err = os.MkdirAll(filepath.Dir(lockPath), 0777)
+	lockPath := repoLockFilePath(c.repo)
+	fs := c.repo.LocalStorage()
+	err = fs.MkdirAll(filepath.Dir(lockPath), 0777)
 	if err != nil {
 		return err
 	}
 
-	f, err := os.Create(lockPath)
+	f, err := fs.Create(lockPath)
 	if err != nil {
 		return err
 	}
 
 	pid := fmt.Sprintf("%d", os.Getpid())
-	_, err = f.WriteString(pid)
+	_, err = f.Write([]byte(pid))
 	if err != nil {
 		return err
 	}
@@ -212,15 +212,16 @@ func (c *RepoCache) buildCache() error {
 }
 
 func repoLockFilePath(repo repository.Repo) string {
-	return path.Join(repo.GetPath(), "git-bug", lockfile)
+	return path.Join("git-bug", lockfile)
 }
 
-// repoIsAvailable check is the given repository is locked by a Cache.
+// repoIsAvailableRaw check is the given repository is locked by a Cache.
 // Note: this is a smart function that will cleanup the lock file if the
 // corresponding process is not there anymore.
 // If no error is returned, the repo is free to edit.
 func repoIsAvailable(repo repository.Repo) error {
 	lockPath := repoLockFilePath(repo)
+	fs := repo.LocalStorage()
 
 	// Todo: this leave way for a racey access to the repo between the test
 	// if the file exist and the actual write. It's probably not a problem in
@@ -233,7 +234,7 @@ func repoIsAvailable(repo repository.Repo) error {
 	// computer. Should add a configuration that prevent the cleaning of the
 	// lock file
 
-	f, err := os.Open(lockPath)
+	f, err := fs.Open(lockPath)
 
 	if err != nil && !os.IsNotExist(err) {
 		return err
@@ -266,7 +267,7 @@ func repoIsAvailable(repo repository.Repo) error {
 			return err
 		}
 
-		err = os.Remove(lockPath)
+		err = fs.Remove(lockPath)
 		if err != nil {
 			return err
 		}

@@ -17,7 +17,7 @@ func TestNewGoGitRepo(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(plainRoot)
 
-	_, err = InitGoGitRepo(plainRoot)
+	_, err = InitGoGitRepo(plainRoot, nil)
 	require.NoError(t, err)
 	plainGitDir := path.Join(plainRoot, ".git")
 
@@ -26,7 +26,7 @@ func TestNewGoGitRepo(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(bareRoot)
 
-	_, err = InitBareGoGitRepo(bareRoot)
+	_, err = InitBareGoGitRepo(bareRoot, nil)
 	require.NoError(t, err)
 	bareGitDir := bareRoot
 
@@ -52,7 +52,7 @@ func TestNewGoGitRepo(t *testing.T) {
 	}
 
 	for i, tc := range tests {
-		r, err := NewGoGitRepo(tc.inPath, nil)
+		r, err := NewGoGitRepo(tc.inPath, nil, nil)
 
 		if tc.err {
 			require.Error(t, err, i)

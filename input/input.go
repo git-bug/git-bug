@@ -239,7 +239,7 @@ func QueryEditorInput(repo repository.RepoCommon, preQuery string) (string, erro
 // launchEditorWithTemplate will launch an editor as launchEditor do, but with a
 // provided template.
 func launchEditorWithTemplate(repo repository.RepoCommon, fileName string, template string) (string, error) {
-	path := fmt.Sprintf("%s/%s", repo.GetPath(), fileName)
+	path := fmt.Sprintf("%s/%s", repo.GitDirPath(), fileName)
 
 	err := ioutil.WriteFile(path, []byte(template), 0644)
 
@@ -260,7 +260,7 @@ func launchEditorWithTemplate(repo repository.RepoCommon, fileName string, templ
 // This method returns the text that was read from the temporary file, or
 // an error if any step in the process failed.
 func launchEditor(repo repository.RepoCommon, fileName string) (string, error) {
-	path := fmt.Sprintf("%s/%s", repo.GetPath(), fileName)
+	path := fmt.Sprintf("%s/%s", repo.GitDirPath(), fileName)
 	defer os.Remove(path)
 
 	editor, err := repo.GetCoreEditor()

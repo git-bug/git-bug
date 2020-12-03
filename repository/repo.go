@@ -62,6 +62,9 @@ type RepoCommon interface {
 
 	// GetRemotes returns the configured remotes repositories.
 	GetRemotes() (map[string]string, error)
+
+	// GitDirPath returns the full path to the repo git directory (e.g. on the local device)
+	GitDirPath() string
 }
 
 type RepoStorage interface {
@@ -131,7 +134,7 @@ type RepoClock interface {
 // ClockLoader hold which logical clock need to exist for an entity and
 // how to create them if they don't.
 type ClockLoader struct {
-	// Clocks hold the name of all the clocks this loader deal with.
+	// Clocks hold the name of all the clo	cks this loader deal with.
 	// Those clocks will be checked when the repo load. If not present or broken,
 	// Witnesser will be used to create them.
 	Clocks []string

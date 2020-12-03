@@ -34,10 +34,10 @@ func (c *RepoCache) Keyring() repository.Keyring {
 	return c.repo.Keyring()
 }
 
-// GetPath returns the path to the repo.
-func (c *RepoCache) GetPath() string {
-	return c.repo.GetPath()
-}
+// // GetPath returns the path to the repo.
+// func (c *RepoCache) GetPath() string {
+// 	return c.repo.GetPath()
+// }
 
 // GetCoreEditor returns the name of the editor that the user has used to configure git.
 func (c *RepoCache) GetCoreEditor() (string, error) {
@@ -57,6 +57,11 @@ func (c *RepoCache) GetUserName() (string, error) {
 // GetUserEmail returns the email address that the user has used to configure git.
 func (c *RepoCache) GetUserEmail() (string, error) {
 	return c.repo.GetUserEmail()
+}
+
+// GitDirPath returns the full path to the repo git directory (e.g. on the local device)
+func (c *RepoCache) GitDirPath() string {
+	return c.repo.GitDirPath()
 }
 
 // ReadData will attempt to read arbitrary data from the given hash

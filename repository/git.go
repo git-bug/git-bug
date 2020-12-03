@@ -149,6 +149,11 @@ func (repo *GitRepo) GetUserEmail() (string, error) {
 	return repo.runGitCommand("config", "user.email")
 }
 
+// GitDirPath returns the full path to the repo git directory (e.g. on the local device)
+func (repo *GitRepo) GitDirPath() string {
+	return repo.path
+}
+
 // GetCoreEditor returns the name of the editor that the user has used to configure git.
 func (repo *GitRepo) GetCoreEditor() (string, error) {
 	return repo.runGitCommand("var", "GIT_EDITOR")

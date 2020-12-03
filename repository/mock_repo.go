@@ -99,6 +99,11 @@ func (r *mockRepoCommon) GetUserEmail() (string, error) {
 	return "user@example.com", nil
 }
 
+// GitDirPath returns the full path to the repo git directory (e.g. on the local device)
+func (m *mockRepoCommon) GitDirPath() string {
+	return "."
+}
+
 // GetCoreEditor returns the name of the editor that the user has used to configure git.
 func (r *mockRepoCommon) GetCoreEditor() (string, error) {
 	return "vi", nil
@@ -118,9 +123,11 @@ type mockRepoStorage struct {
 }
 
 func NewMockRepoStorage() *mockRepoStorage {
+	println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx")
 	return &mockRepoStorage{localFs: memfs.New()}
 }
 
+// LocalStorage return a billy.Filesystem giving access to $RepoPath/.git/git-bug
 func (m *mockRepoStorage) LocalStorage() billy.Filesystem {
 	return m.localFs
 }

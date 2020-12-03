@@ -21,7 +21,7 @@ const bugCacheFile = "bug-cache"
 var errBugNotInCache = errors.New("bug missing from cache")
 
 func bugCacheFilePath(repo repository.Repo) string {
-	return path.Join(repo.GetPath(), "git-bug", bugCacheFile)
+	return path.Join("git-bug", bugCacheFile)
 }
 
 // bugUpdated is a callback to trigger when the excerpt of a bug changed,

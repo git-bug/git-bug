@@ -15,7 +15,7 @@ import (
 const identityCacheFile = "identity-cache"
 
 func identityCacheFilePath(repo repository.Repo) string {
-	return path.Join(repo.GetPath(), "git-bug", identityCacheFile)
+	return path.Join("git-bug", identityCacheFile)
 }
 
 // identityUpdated is a callback to trigger when the excerpt of an identity

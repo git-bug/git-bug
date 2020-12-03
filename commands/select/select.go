@@ -137,5 +137,5 @@ func selected(repo *cache.RepoCache) (*cache.BugCache, error) {
 }
 
 func selectFilePath(repo repository.RepoCommon) string {
-	return path.Join(repo.GetPath(), "git-bug", selectFile)
+	return path.Join("git-bug", selectFile)
 }
