@@ -2,11 +2,11 @@ package repository
 
 import (
 	"io/ioutil"
-	"os"
 	"path"
 	"path/filepath"
 	"testing"
 
+	"github.com/go-git/go-billy/v5/osfs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -15,18 +15,21 @@ func TestNewGoGitRepo(t *testing.T) {
 	// Plain
 	plainRoot, err := ioutil.TempDir("", "")
 	require.NoError(t, err)
-	defer os.RemoveAll(plainRoot)
+	plainFs := osfs.New(plainRoot)
+	// TODO: defer plainFs.RemoveAll(plainRoot)
+	// defer (*osfs.OS).RemoveAll(plainFs, plainRoot)
 
-	_, err = InitGoGitRepo(plainRoot, nil)
+	_, err = InitGoGitRepo(plainRoot, plainFs)
 	require.NoError(t, err)
 	plainGitDir := path.Join(plainRoot, ".git")
 
 	// Bare
 	bareRoot, err := ioutil.TempDir("", "")
 	require.NoError(t, err)
-	defer os.RemoveAll(bareRoot)
+	bareFs := osfs.New(bareRoot)
+	// TODO: defer bareFs.RemoveAll(bareRoot)
 
-	_, err = InitBareGoGitRepo(bareRoot, nil)
+	_, err = InitBareGoGitRepo(bareRoot, bareFs)
 	require.NoError(t, err)
 	bareGitDir := bareRoot
 
@@ -42,7 +45,7 @@ func TestNewGoGitRepo(t *testing.T) {
 
 		// Plain repo
 		{plainRoot, plainGitDir, false},
-		{plainGitDir, plainGitDir, false},
+		{plainGitDir, plainGitDir, false}, //<<<FAILING
 		{path.Join(plainGitDir, "objects"), plainGitDir, false},
 
 		// Bare repo
@@ -52,13 +55,14 @@ func TestNewGoGitRepo(t *testing.T) {
 	}
 
 	for i, tc := range tests {
-		r, err := NewGoGitRepo(tc.inPath, nil, nil)
+		fs := osfs.New("/")
+		r, err := NewGoGitRepo(tc.inPath, nil, fs)
 
 		if tc.err {
 			require.Error(t, err, i)
 		} else {
 			require.NoError(t, err, i)
-			assert.Equal(t, filepath.ToSlash(tc.outPath), filepath.ToSlash(r.path), i)
+			assert.Equal(t, filepath.ToSlash(tc.outPath), filepath.ToSlash(r.GitDirPath()), i)
 		}
 	}
 }
