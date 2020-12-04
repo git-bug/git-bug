@@ -35,7 +35,8 @@ type GoGitRepo struct {
 	clocksMutex sync.Mutex
 	clocks      map[string]lamport.Clock
 
-	keyring Keyring
+	keyring    Keyring
+	filesystem billy.Filesystem
 	RepoStorage
 }
 
@@ -76,10 +77,11 @@ func NewGoGitRepo(path string, clockLoaders []ClockLoader, fs billy.Filesystem) 
 	}
 
 	repo := &GoGitRepo{
-		r:       r,
-		path:    gitDirPath,
-		clocks:  make(map[string]lamport.Clock),
-		keyring: k,
+		r:          r,
+		path:       gitDirPath,
+		clocks:     make(map[string]lamport.Clock),
+		keyring:    k,
+		filesystem: fs,
 	}
 
 	for _, loader := range clockLoaders {
@@ -190,10 +192,11 @@ func InitGoGitRepo(path string, fs billy.Filesystem) (*GoGitRepo, error) {
 	}
 
 	return &GoGitRepo{
-		r:       r,
-		path:    path + "/.git",
-		clocks:  make(map[string]lamport.Clock),
-		keyring: k,
+		r:          r,
+		path:       path + "/.git",
+		clocks:     make(map[string]lamport.Clock),
+		keyring:    k,
+		filesystem: fs,
 	}, nil
 }
 
@@ -216,10 +219,11 @@ func InitBareGoGitRepo(path string, fs billy.Filesystem) (*GoGitRepo, error) {
 	}
 
 	return &GoGitRepo{
-		r:       r,
-		path:    path,
-		clocks:  make(map[string]lamport.Clock),
-		keyring: k,
+		r:          r,
+		path:       path,
+		clocks:     make(map[string]lamport.Clock),
+		keyring:    k,
+		filesystem: fs,
 	}, nil
 }
 
@@ -259,6 +263,11 @@ func (repo *GoGitRepo) GetUserEmail() (string, error) {
 // GitDirPath returns the full path to the repo git directory (e.g. on the local device)
 func (repo *GoGitRepo) GitDirPath() string {
 	return repo.path
+}
+
+// LocalStorage return a billy.Filesystem giving access to $RepoPath/.git/git-bug
+func (repo *GoGitRepo) LocalStorage() billy.Filesystem {
+	return repo.filesystem
 }
 
 // GetCoreEditor returns the name of the editor that the user has used to configure git.
@@ -319,11 +328,6 @@ func (repo *GoGitRepo) GetRemotes() (map[string]string, error) {
 	}
 
 	return result, nil
-}
-
-// LocalStorage return a billy.Filesystem giving access to $RepoPath/.git/git-bug
-func (repo *GoGitRepo) LocalStorage() billy.Filesystem {
-	return osfs.New(repo.path)
 }
 
 // FetchRefs fetch git refs from a remote
