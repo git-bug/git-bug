@@ -261,7 +261,7 @@ func launchEditorWithTemplate(repo repository.RepoCommon, fileName string, templ
 // an error if any step in the process failed.
 func launchEditor(repo repository.RepoCommon, fileName string) (string, error) {
 	path := fmt.Sprintf("%s/%s", repo.GitDirPath(), fileName)
-	defer os.Remove(path)
+	defer repo.LocalStorage().Remove(path)
 
 	editor, err := repo.GetCoreEditor()
 	if err != nil {

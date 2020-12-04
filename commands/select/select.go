@@ -73,12 +73,12 @@ func ResolveBug(repo *cache.RepoCache, args []string) (*cache.BugCache, []string
 func Select(repo *cache.RepoCache, id entity.Id) error {
 	selectPath := selectFilePath(repo)
 
-	f, err := os.OpenFile(selectPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+	f, err := repo.LocalStorage().OpenFile(selectPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
 		return err
 	}
 
-	_, err = f.WriteString(id.String())
+	_, err = f.Write([]byte(id.String()))
 	if err != nil {
 		return err
 	}
@@ -90,13 +90,13 @@ func Select(repo *cache.RepoCache, id entity.Id) error {
 func Clear(repo *cache.RepoCache) error {
 	selectPath := selectFilePath(repo)
 
-	return os.Remove(selectPath)
+	return repo.LocalStorage().Remove(selectPath)
 }
 
 func selected(repo *cache.RepoCache) (*cache.BugCache, error) {
 	selectPath := selectFilePath(repo)
 
-	f, err := os.Open(selectPath)
+	f, err := repo.LocalStorage().Open(selectPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, nil
@@ -115,7 +115,7 @@ func selected(repo *cache.RepoCache) (*cache.BugCache, error) {
 
 	id := entity.Id(buf)
 	if err := id.Validate(); err != nil {
-		err = os.Remove(selectPath)
+		err = repo.LocalStorage().Remove(selectPath)
 		if err != nil {
 			return nil, errors.Wrap(err, "error while removing invalid select file")
 		}

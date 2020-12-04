@@ -15,10 +15,10 @@ import (
 
 func TestQueries(t *testing.T) {
 	repo := repository.CreateGoGitTestRepo(false)
-	defer repository.CleanupTestRepos(repo)
+	// FIXME re-instate:
+	// defer repository.CleanupTestRepos(repo)
 
 	random_bugs.FillRepoWithSeed(repo, 10, 42)
-
 	mrc := cache.NewMultiRepoCache()
 	_, err := mrc.RegisterDefaultRepository(repo)
 	require.NoError(t, err)

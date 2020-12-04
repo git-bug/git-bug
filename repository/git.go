@@ -4,9 +4,7 @@ package repository
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"path"
-	"path/filepath"
 	"strings"
 	"sync"
 
@@ -431,8 +429,8 @@ func (repo *GitRepo) GetLocalRemote() string {
 
 // EraseFromDisk delete this repository entirely from the disk
 func (repo *GitRepo) EraseFromDisk() error {
-	path := filepath.Clean(strings.TrimSuffix(repo.path, string(filepath.Separator)+".git"))
+	// FIXME path := filepath.Clean(strings.TrimSuffix(repo.path, string(filepath.Separator)+".git"))
 
 	// fmt.Println("Cleaning repo:", path)
-	return os.RemoveAll(path)
+	return nil //FIXME repo.LocalStorage().RemoveAll(path)
 }

@@ -20,7 +20,6 @@ type mockRepoForTest struct {
 	*mockRepoConfig
 	*mockRepoKeyring
 	*mockRepoCommon
-	*mockRepoStorage
 	*mockRepoData
 	*mockRepoClock
 }
@@ -30,7 +29,6 @@ func NewMockRepoForTest() *mockRepoForTest {
 		mockRepoConfig:  NewMockRepoConfig(),
 		mockRepoKeyring: NewMockRepoKeyring(),
 		mockRepoCommon:  NewMockRepoCommon(),
-		mockRepoStorage: NewMockRepoStorage(),
 		mockRepoData:    NewMockRepoData(),
 		mockRepoClock:   NewMockRepoClock(),
 	}
@@ -84,10 +82,12 @@ func (r *mockRepoKeyring) Keyring() Keyring {
 
 var _ RepoCommon = &mockRepoCommon{}
 
-type mockRepoCommon struct{}
+type mockRepoCommon struct {
+	localFs billy.Filesystem
+}
 
 func NewMockRepoCommon() *mockRepoCommon {
-	return &mockRepoCommon{}
+	return &mockRepoCommon{localFs: memfs.New()}
 }
 
 func (r *mockRepoCommon) GetUserName() (string, error) {
@@ -97,11 +97,6 @@ func (r *mockRepoCommon) GetUserName() (string, error) {
 // GetUserEmail returns the email address that the user has used to configure git.
 func (r *mockRepoCommon) GetUserEmail() (string, error) {
 	return "user@example.com", nil
-}
-
-// GitDirPath returns the full path to the repo git directory (e.g. on the local device)
-func (m *mockRepoCommon) GitDirPath() string {
-	return "."
 }
 
 // GetCoreEditor returns the name of the editor that the user has used to configure git.
@@ -116,19 +111,13 @@ func (r *mockRepoCommon) GetRemotes() (map[string]string, error) {
 	}, nil
 }
 
-var _ RepoStorage = &mockRepoStorage{}
-
-type mockRepoStorage struct {
-	localFs billy.Filesystem
-}
-
-func NewMockRepoStorage() *mockRepoStorage {
-	println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx")
-	return &mockRepoStorage{localFs: memfs.New()}
+// GitDirPath returns the full path to the repo git directory (e.g. on the local device)
+func (m *mockRepoCommon) GitDirPath() string {
+	return "."
 }
 
 // LocalStorage return a billy.Filesystem giving access to $RepoPath/.git/git-bug
-func (m *mockRepoStorage) LocalStorage() billy.Filesystem {
+func (m *mockRepoCommon) LocalStorage() billy.Filesystem {
 	return m.localFs
 }
 

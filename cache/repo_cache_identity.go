@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
-	"os"
 	"path"
 
 	"github.com/MichaelMure/git-bug/entity"
@@ -41,7 +40,7 @@ func (c *RepoCache) loadIdentityCache() error {
 	c.muIdentity.Lock()
 	defer c.muIdentity.Unlock()
 
-	f, err := os.Open(identityCacheFilePath(c.repo))
+	f, err := c.repo.LocalStorage().Open(identityCacheFilePath(c.repo))
 	if err != nil {
 		return err
 	}
@@ -88,7 +87,7 @@ func (c *RepoCache) writeIdentityCache() error {
 		return err
 	}
 
-	f, err := os.Create(identityCacheFilePath(c.repo))
+	f, err := c.repo.LocalStorage().Create(identityCacheFilePath(c.repo))
 	if err != nil {
 		return err
 	}

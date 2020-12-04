@@ -15,6 +15,7 @@ import (
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/process"
+	"github.com/go-git/go-billy/v5"
 )
 
 // 1: original format
@@ -104,6 +105,10 @@ func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, error
 	return c, c.write()
 }
 
+func (c *RepoCache) LocalStorage() billy.Filesystem {
+	return c.repo.LocalStorage()
+}
+
 // setCacheSize change the maximum number of loaded bugs
 func (c *RepoCache) setCacheSize(size int) {
 	c.maxLoadedBugs = size
@@ -167,7 +172,7 @@ func (c *RepoCache) Close() error {
 	c.bugExcerpts = nil
 
 	lockPath := repoLockFilePath(c.repo)
-	return os.Remove(lockPath)
+	return c.repo.LocalStorage().Remove(lockPath)
 }
 
 func (c *RepoCache) buildCache() error {
@@ -177,11 +182,9 @@ func (c *RepoCache) buildCache() error {
 	defer c.muIdentity.Unlock()
 
 	_, _ = fmt.Fprintf(os.Stderr, "Building identity cache... ")
-
 	c.identitiesExcerpts = make(map[entity.Id]*IdentityExcerpt)
 
 	allIdentities := identity.ReadAllLocal(c.repo)
-
 	for i := range allIdentities {
 		if i.Err != nil {
 			return i.Err
@@ -191,7 +194,6 @@ func (c *RepoCache) buildCache() error {
 	}
 
 	_, _ = fmt.Fprintln(os.Stderr, "Done.")
-
 	_, _ = fmt.Fprintf(os.Stderr, "Building bug cache... ")
 
 	c.bugExcerpts = make(map[entity.Id]*BugExcerpt)

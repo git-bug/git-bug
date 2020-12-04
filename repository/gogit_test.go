@@ -16,7 +16,7 @@ func TestNewGoGitRepo(t *testing.T) {
 	plainRoot, err := ioutil.TempDir("", "")
 	require.NoError(t, err)
 	plainFs := osfs.New(plainRoot)
-	// TODO: defer plainFs.RemoveAll(plainRoot)
+	// FIXME defer plainFs.RemoveAll(plainRoot)
 	// defer (*osfs.OS).RemoveAll(plainFs, plainRoot)
 
 	_, err = InitGoGitRepo(plainRoot, plainFs)
@@ -27,7 +27,7 @@ func TestNewGoGitRepo(t *testing.T) {
 	bareRoot, err := ioutil.TempDir("", "")
 	require.NoError(t, err)
 	bareFs := osfs.New(bareRoot)
-	// TODO: defer bareFs.RemoveAll(bareRoot)
+	// FIXME defer bareFs.RemoveAll(bareRoot)
 
 	_, err = InitBareGoGitRepo(bareRoot, bareFs)
 	require.NoError(t, err)

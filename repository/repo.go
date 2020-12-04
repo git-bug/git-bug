@@ -22,7 +22,6 @@ type Repo interface {
 	RepoKeyring
 	RepoCommon
 	RepoData
-	RepoStorage
 }
 
 // ClockedRepo is a Repo that also has Lamport clocks
@@ -63,11 +62,13 @@ type RepoCommon interface {
 	// GetRemotes returns the configured remotes repositories.
 	GetRemotes() (map[string]string, error)
 
-	// GitDirPath returns the full path to the repo git directory (e.g. on the local device)
-	GitDirPath() string
+	RepoStorage
 }
 
 type RepoStorage interface {
+	// GitDirPath returns the full path to the repo git directory (e.g. on the local device)
+	GitDirPath() string
+
 	// LocalStorage return a billy.Filesystem giving access to $RepoPath/.git/git-bug
 	LocalStorage() billy.Filesystem
 }

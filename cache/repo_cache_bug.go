@@ -5,7 +5,6 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
-	"os"
 	"path"
 	"sort"
 	"time"
@@ -52,7 +51,7 @@ func (c *RepoCache) loadBugCache() error {
 	c.muBug.Lock()
 	defer c.muBug.Unlock()
 
-	f, err := os.Open(bugCacheFilePath(c.repo))
+	f, err := c.repo.LocalStorage().Open(bugCacheFilePath(c.repo))
 	if err != nil {
 		return err
 	}
@@ -99,7 +98,7 @@ func (c *RepoCache) writeBugCache() error {
 		return err
 	}
 
-	f, err := os.Create(bugCacheFilePath(c.repo))
+	f, err := c.repo.LocalStorage().Create(bugCacheFilePath(c.repo))
 	if err != nil {
 		return err
 	}

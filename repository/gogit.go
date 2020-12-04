@@ -169,6 +169,7 @@ func isGitDir(path string, fs billy.Filesystem) (bool, error) {
 // InitGoGitRepo create a new empty git repo at the given path
 // fs is the filesystem and if nil a go-billy/osfs will be used (local filesystem)
 func InitGoGitRepo(path string, fs billy.Filesystem) (*GoGitRepo, error) {
+	println("InitGoGitRepo()... at:", path)
 
 	if fs == nil {
 		fs = osfs.New(path)
@@ -199,6 +200,8 @@ func InitGoGitRepo(path string, fs billy.Filesystem) (*GoGitRepo, error) {
 // InitBareGoGitRepo create a new --bare empty git repo at the given path
 // fs is the filesystem and if nil a go-billy/osfs will be used (local filesystem)
 func InitBareGoGitRepo(path string, fs billy.Filesystem) (*GoGitRepo, error) {
+	println("InitBareGoGitRepo()... at:", path)
+
 	if fs == nil {
 		fs = osfs.New(path)
 	}
@@ -620,12 +623,14 @@ func (repo *GoGitRepo) CopyRef(source string, dest string) error {
 
 // ListCommits will return the list of tree hashes of a ref, in chronological order
 func (repo *GoGitRepo) ListCommits(ref string) ([]Hash, error) {
+	println("ListCommits() for ref: ", ref)
 	r, err := repo.r.Reference(plumbing.ReferenceName(ref), false)
 	if err != nil {
 		return nil, err
 	}
-
-	commit, err := repo.r.CommitObject(r.Hash())
+	println("repo.r.CommitObject(r.Hash()) hash:", r.Hash().String())
+	commit, err := repo.r.CommitObject(r.Hash()) // <<crashes here for test TestQueries
+	println("DONE repo.r.CommitObject(r.Hash())")
 	if err != nil {
 		return nil, err
 	}
@@ -714,8 +719,8 @@ func (repo *GoGitRepo) GetLocalRemote() string {
 
 // EraseFromDisk delete this repository entirely from the disk
 func (repo *GoGitRepo) EraseFromDisk() error {
-	path := filepath.Clean(strings.TrimSuffix(repo.path, string(filepath.Separator)+".git"))
+	// FIXME path := filepath.Clean(strings.TrimSuffix(repo.path, string(filepath.Separator)+".git"))
 
 	// fmt.Println("Cleaning repo:", path)
-	return os.RemoveAll(path)
+	return nil //FIXME repo.LocalStorage().RemoveAll(path)
 }
