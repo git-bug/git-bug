@@ -173,7 +173,8 @@ func isGitDir(path string, fs billy.Filesystem) (bool, error) {
 }
 
 // InitGoGitRepo create a new empty git repo at the given path
-// fs is the filesystem and if nil a go-billy/osfs will be used (local filesystem)
+// path is the path of the repo on the local filesystem
+// fs is a filesystem with root equal to path, but if passed as nil a go-billy/osfs will be used (local filesystem)
 func InitGoGitRepo(path string, fs billy.Filesystem) (*GoGitRepo, error) {
 	println("InitGoGitRepo()... at:", path)
 
@@ -205,7 +206,8 @@ func InitGoGitRepo(path string, fs billy.Filesystem) (*GoGitRepo, error) {
 }
 
 // InitBareGoGitRepo create a new --bare empty git repo at the given path
-// fs is the filesystem and if nil a go-billy/osfs will be used (local filesystem)
+// path is the path of the repo on the local filesystem
+// fs is a filesystem with root equal to path, but if passed as nil a go-billy/osfs will be used (local filesystem)
 func InitBareGoGitRepo(path string, fs billy.Filesystem) (*GoGitRepo, error) {
 	println("InitBareGoGitRepo()... at:", path)
 
