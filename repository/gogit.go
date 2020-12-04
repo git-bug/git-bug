@@ -65,7 +65,11 @@ func NewGoGitRepo(path string, clockLoaders []ClockLoader, fs billy.Filesystem) 
 		return nil, err
 	}
 
-	wt := osfs.New(repoPath)
+	wt, err := fs.Chroot(repoPath)
+	if err != nil {
+		return nil, err
+	}
+
 	r, err := gogit.Open(storagefs.NewStorage(dotGitFs, nil), wt)
 	if err != nil {
 		return nil, err
