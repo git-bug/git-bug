@@ -3,6 +3,7 @@ package cache
 import (
 	"fmt"
 
+	"github.com/go-git/go-billy/v5"
 	"github.com/pkg/errors"
 
 	"github.com/MichaelMure/git-bug/bug"
@@ -30,13 +31,19 @@ func (c *RepoCache) AnyConfig() repository.ConfigRead {
 	return c.repo.AnyConfig()
 }
 
+// Keyring give access to a user-wide storage for secrets
 func (c *RepoCache) Keyring() repository.Keyring {
 	return c.repo.Keyring()
 }
 
-// GetPath returns the path to the repo.
-func (c *RepoCache) GetPath() string {
-	return c.repo.GetPath()
+// GetUserName returns the name the the user has used to configure git
+func (c *RepoCache) GetUserName() (string, error) {
+	return c.repo.GetUserName()
+}
+
+// GetUserEmail returns the email address that the user has used to configure git.
+func (c *RepoCache) GetUserEmail() (string, error) {
+	return c.repo.GetUserEmail()
 }
 
 // GetCoreEditor returns the name of the editor that the user has used to configure git.
@@ -49,14 +56,9 @@ func (c *RepoCache) GetRemotes() (map[string]string, error) {
 	return c.repo.GetRemotes()
 }
 
-// GetUserName returns the name the the user has used to configure git
-func (c *RepoCache) GetUserName() (string, error) {
-	return c.repo.GetUserName()
-}
-
-// GetUserEmail returns the email address that the user has used to configure git.
-func (c *RepoCache) GetUserEmail() (string, error) {
-	return c.repo.GetUserEmail()
+// LocalStorage return a billy.Filesystem giving access to $RepoPath/.git/git-bug
+func (c *RepoCache) LocalStorage() billy.Filesystem {
+	return c.repo.LocalStorage()
 }
 
 // ReadData will attempt to read arbitrary data from the given hash

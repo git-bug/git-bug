@@ -6,20 +6,22 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	stdpath "path"
 	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/99designs/keyring"
 	"github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/go-git/go-billy/v5/osfs"
 	gogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v5/storage/memory"
 
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
@@ -28,16 +30,18 @@ var _ ClockedRepo = &GoGitRepo{}
 var _ TestedRepo = &GoGitRepo{}
 
 type GoGitRepo struct {
-	r    *gogit.Repository
-	path string
+	r        *gogit.Repository
+	path     string
+	isMemory bool
 
 	clocksMutex sync.Mutex
 	clocks      map[string]lamport.Clock
 
-	keyring Keyring
+	keyring      Keyring
+	localStorage billy.Filesystem
 }
 
-func NewGoGitRepo(path string, clockLoaders []ClockLoader) (*GoGitRepo, error) {
+func OpenGoGitRepo(path string, clockLoaders []ClockLoader) (*GoGitRepo, error) {
 	path, err := detectGitPath(path)
 	if err != nil {
 		return nil, err
@@ -54,10 +58,12 @@ func NewGoGitRepo(path string, clockLoaders []ClockLoader) (*GoGitRepo, error) {
 	}
 
 	repo := &GoGitRepo{
-		r:       r,
-		path:    path,
-		clocks:  make(map[string]lamport.Clock),
-		keyring: k,
+		r:            r,
+		path:         path,
+		isMemory:     false,
+		clocks:       make(map[string]lamport.Clock),
+		keyring:      k,
+		localStorage: osfs.New(filepath.Join(path, "git-bug")),
 	}
 
 	for _, loader := range clockLoaders {
@@ -79,6 +85,69 @@ func NewGoGitRepo(path string, clockLoaders []ClockLoader) (*GoGitRepo, error) {
 	return repo, nil
 }
 
+// InitGoGitRepo create a new empty git repo at the given path
+func InitGoGitRepo(path string) (*GoGitRepo, error) {
+	r, err := gogit.PlainInit(path, false)
+	if err != nil {
+		return nil, err
+	}
+
+	k, err := defaultKeyring()
+	if err != nil {
+		return nil, err
+	}
+
+	return &GoGitRepo{
+		r:            r,
+		path:         filepath.Join(path, ".git"),
+		isMemory:     false,
+		clocks:       make(map[string]lamport.Clock),
+		keyring:      k,
+		localStorage: osfs.New(filepath.Join(path, ".git", "git-bug")),
+	}, nil
+}
+
+// InitBareGoGitRepo create a new --bare empty git repo at the given path
+func InitBareGoGitRepo(path string) (*GoGitRepo, error) {
+	r, err := gogit.PlainInit(path, true)
+	if err != nil {
+		return nil, err
+	}
+
+	k, err := defaultKeyring()
+	if err != nil {
+		return nil, err
+	}
+
+	return &GoGitRepo{
+		r:            r,
+		path:         path,
+		isMemory:     false,
+		clocks:       make(map[string]lamport.Clock),
+		keyring:      k,
+		localStorage: osfs.New(filepath.Join(path, "git-bug")),
+	}, nil
+}
+
+func InitMemoryGoGitRepo() (*GoGitRepo, error) {
+	r, err := gogit.Init(memory.NewStorage(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	k := keyring.NewArrayKeyring(nil)
+
+	repo := &GoGitRepo{
+		r:            r,
+		isMemory:     true,
+		clocks:       make(map[string]lamport.Clock),
+		keyring:      k,
+		localStorage: memfs.New(),
+	}
+
+	return repo, nil
+}
+
 func detectGitPath(path string) (string, error) {
 	// normalize the path
 	path, err := filepath.Abs(path)
@@ -87,12 +156,12 @@ func detectGitPath(path string) (string, error) {
 	}
 
 	for {
-		fi, err := os.Stat(stdpath.Join(path, ".git"))
+		fi, err := os.Stat(filepath.Join(path, ".git"))
 		if err == nil {
 			if !fi.IsDir() {
 				return "", fmt.Errorf(".git exist but is not a directory")
 			}
-			return stdpath.Join(path, ".git"), nil
+			return filepath.Join(path, ".git"), nil
 		}
 		if !os.IsNotExist(err) {
 			// unknown error
@@ -120,7 +189,7 @@ func isGitDir(path string) (bool, error) {
 	markers := []string{"HEAD", "objects", "refs"}
 
 	for _, marker := range markers {
-		_, err := os.Stat(stdpath.Join(path, marker))
+		_, err := os.Stat(filepath.Join(path, marker))
 		if err == nil {
 			continue
 		}
@@ -135,46 +204,6 @@ func isGitDir(path string) (bool, error) {
 	return true, nil
 }
 
-// InitGoGitRepo create a new empty git repo at the given path
-func InitGoGitRepo(path string) (*GoGitRepo, error) {
-	r, err := gogit.PlainInit(path, false)
-	if err != nil {
-		return nil, err
-	}
-
-	k, err := defaultKeyring()
-	if err != nil {
-		return nil, err
-	}
-
-	return &GoGitRepo{
-		r:       r,
-		path:    path + "/.git",
-		clocks:  make(map[string]lamport.Clock),
-		keyring: k,
-	}, nil
-}
-
-// InitBareGoGitRepo create a new --bare empty git repo at the given path
-func InitBareGoGitRepo(path string) (*GoGitRepo, error) {
-	r, err := gogit.PlainInit(path, true)
-	if err != nil {
-		return nil, err
-	}
-
-	k, err := defaultKeyring()
-	if err != nil {
-		return nil, err
-	}
-
-	return &GoGitRepo{
-		r:       r,
-		path:    path,
-		clocks:  make(map[string]lamport.Clock),
-		keyring: k,
-	}, nil
-}
-
 // LocalConfig give access to the repository scoped configuration
 func (repo *GoGitRepo) LocalConfig() Config {
 	return newGoGitLocalConfig(repo.r)
@@ -182,10 +211,7 @@ func (repo *GoGitRepo) LocalConfig() Config {
 
 // GlobalConfig give access to the global scoped configuration
 func (repo *GoGitRepo) GlobalConfig() Config {
-	// TODO: replace that with go-git native implementation once it's supported
-	// see: https://github.com/go-git/go-git
-	// see: https://github.com/src-d/go-git/issues/760
-	return newGoGitGlobalConfig(repo.r)
+	return newGoGitGlobalConfig()
 }
 
 // AnyConfig give access to a merged local/global configuration
@@ -270,7 +296,7 @@ func (repo *GoGitRepo) GetRemotes() (map[string]string, error) {
 
 // LocalStorage return a billy.Filesystem giving access to $RepoPath/.git/git-bug
 func (repo *GoGitRepo) LocalStorage() billy.Filesystem {
-	return osfs.New(repo.path)
+	return repo.localStorage
 }
 
 // FetchRefs fetch git refs from a remote
@@ -614,9 +640,7 @@ func (repo *GoGitRepo) GetOrCreateClock(name string) (lamport.Clock, error) {
 	repo.clocksMutex.Lock()
 	defer repo.clocksMutex.Unlock()
 
-	p := stdpath.Join(repo.path, clockPath, name+"-clock")
-
-	c, err = lamport.NewPersistedClock(p)
+	c, err = lamport.NewPersistedClock(repo.localStorage, name+"-clock")
 	if err != nil {
 		return nil, err
 	}
@@ -633,9 +657,7 @@ func (repo *GoGitRepo) getClock(name string) (lamport.Clock, error) {
 		return c, nil
 	}
 
-	p := stdpath.Join(repo.path, clockPath, name+"-clock")
-
-	c, err := lamport.LoadPersistedClock(p)
+	c, err := lamport.LoadPersistedClock(repo.localStorage, name+"-clock")
 	if err == nil {
 		repo.clocks[name] = c
 		return c, nil
@@ -664,6 +686,7 @@ func (repo *GoGitRepo) GetLocalRemote() string {
 
 // EraseFromDisk delete this repository entirely from the disk
 func (repo *GoGitRepo) EraseFromDisk() error {
+
 	path := filepath.Clean(strings.TrimSuffix(repo.path, string(filepath.Separator)+".git"))
 
 	// fmt.Println("Cleaning repo:", path)

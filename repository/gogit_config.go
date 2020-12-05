@@ -24,7 +24,11 @@ func newGoGitLocalConfig(repo *gogit.Repository) *goGitConfig {
 	}
 }
 
-func newGoGitGlobalConfig(repo *gogit.Repository) *goGitConfig {
+func newGoGitGlobalConfig() *goGitConfig {
+	// TODO: replace that with go-git native implementation once it's supported
+	// see: https://github.com/go-git/go-git
+	// see: https://github.com/src-d/go-git/issues/760
+
 	return &goGitConfig{
 		ConfigRead: &goGitConfigReader{getConfig: func() (*config.Config, error) {
 			return config.LoadConfig(config.GlobalScope)

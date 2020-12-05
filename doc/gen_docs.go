@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"sync"
 	"time"
@@ -42,7 +41,7 @@ func main() {
 
 func genManPage(root *cobra.Command) error {
 	cwd, _ := os.Getwd()
-	dir := path.Join(cwd, "doc", "man")
+	dir := filepath.Join(cwd, "doc", "man")
 
 	// fixed date to avoid having to commit each month
 	date := time.Date(2019, 4, 1, 12, 0, 0, 0, time.UTC)
@@ -69,7 +68,7 @@ func genManPage(root *cobra.Command) error {
 
 func genMarkdown(root *cobra.Command) error {
 	cwd, _ := os.Getwd()
-	dir := path.Join(cwd, "doc", "md")
+	dir := filepath.Join(cwd, "doc", "md")
 
 	files, err := filepath.Glob(dir + "/*.md")
 	if err != nil {

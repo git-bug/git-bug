@@ -5,14 +5,12 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"path"
 
 	"github.com/pkg/errors"
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/repository"
 )
 
 const selectFile = "select"
@@ -71,14 +69,12 @@ func ResolveBug(repo *cache.RepoCache, args []string) (*cache.BugCache, []string
 
 // Select will select a bug for future use
 func Select(repo *cache.RepoCache, id entity.Id) error {
-	selectPath := selectFilePath(repo)
-
-	f, err := os.OpenFile(selectPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+	f, err := repo.LocalStorage().OpenFile(selectFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
 		return err
 	}
 
-	_, err = f.WriteString(id.String())
+	_, err = f.Write([]byte(id.String()))
 	if err != nil {
 		return err
 	}
@@ -88,15 +84,11 @@ func Select(repo *cache.RepoCache, id entity.Id) error {
 
 // Clear will clear the selected bug, if any
 func Clear(repo *cache.RepoCache) error {
-	selectPath := selectFilePath(repo)
-
-	return os.Remove(selectPath)
+	return repo.LocalStorage().Remove(selectFile)
 }
 
 func selected(repo *cache.RepoCache) (*cache.BugCache, error) {
-	selectPath := selectFilePath(repo)
-
-	f, err := os.Open(selectPath)
+	f, err := repo.LocalStorage().Open(selectFile)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, nil
@@ -115,7 +107,7 @@ func selected(repo *cache.RepoCache) (*cache.BugCache, error) {
 
 	id := entity.Id(buf)
 	if err := id.Validate(); err != nil {
-		err = os.Remove(selectPath)
+		err = repo.LocalStorage().Remove(selectFile)
 		if err != nil {
 			return nil, errors.Wrap(err, "error while removing invalid select file")
 		}
@@ -134,8 +126,4 @@ func selected(repo *cache.RepoCache) (*cache.BugCache, error) {
 	}
 
 	return b, nil
-}
-
-func selectFilePath(repo repository.RepoCommon) string {
-	return path.Join(repo.GetPath(), "git-bug", selectFile)
 }

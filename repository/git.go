@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -379,9 +378,7 @@ func (repo *GitRepo) GetOrCreateClock(name string) (lamport.Clock, error) {
 	repo.clocksMutex.Lock()
 	defer repo.clocksMutex.Unlock()
 
-	p := path.Join(repo.path, clockPath, name+"-clock")
-
-	c, err = lamport.NewPersistedClock(p)
+	c, err = lamport.NewPersistedClock(repo.LocalStorage(), name+"-clock")
 	if err != nil {
 		return nil, err
 	}
@@ -398,9 +395,7 @@ func (repo *GitRepo) getClock(name string) (lamport.Clock, error) {
 		return c, nil
 	}
 
-	p := path.Join(repo.path, clockPath, name+"-clock")
-
-	c, err := lamport.LoadPersistedClock(p)
+	c, err := lamport.LoadPersistedClock(repo.LocalStorage(), name+"-clock")
 	if err == nil {
 		repo.clocks[name] = c
 		return c, nil
