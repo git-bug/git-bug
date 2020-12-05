@@ -5,30 +5,28 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path/filepath"
+
+	"github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-billy/v5/util"
 )
 
 var ErrClockNotExist = errors.New("clock doesn't exist")
 
 type PersistedClock struct {
 	*MemClock
+	root     billy.Filesystem
 	filePath string
 }
 
 // NewPersistedClock create a new persisted Lamport clock
-func NewPersistedClock(filePath string) (*PersistedClock, error) {
+func NewPersistedClock(root billy.Filesystem, filePath string) (*PersistedClock, error) {
 	clock := &PersistedClock{
 		MemClock: NewMemClock(),
+		root:     root,
 		filePath: filePath,
 	}
 
-	dir := filepath.Dir(filePath)
-	err := os.MkdirAll(dir, 0777)
-	if err != nil {
-		return nil, err
-	}
-
-	err = clock.Write()
+	err := clock.Write()
 	if err != nil {
 		return nil, err
 	}
@@ -37,8 +35,9 @@ func NewPersistedClock(filePath string) (*PersistedClock, error) {
 }
 
 // LoadPersistedClock load a persisted Lamport clock from a file
-func LoadPersistedClock(filePath string) (*PersistedClock, error) {
+func LoadPersistedClock(root billy.Filesystem, filePath string) (*PersistedClock, error) {
 	clock := &PersistedClock{
+		root:     root,
 		filePath: filePath,
 	}
 
@@ -71,10 +70,16 @@ func (pc *PersistedClock) Witness(time Time) error {
 }
 
 func (pc *PersistedClock) read() error {
-	content, err := ioutil.ReadFile(pc.filePath)
+	f, err := pc.root.Open(pc.filePath)
 	if os.IsNotExist(err) {
 		return ErrClockNotExist
 	}
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	content, err := ioutil.ReadAll(f)
 	if err != nil {
 		return err
 	}
@@ -96,5 +101,5 @@ func (pc *PersistedClock) read() error {
 
 func (pc *PersistedClock) Write() error {
 	data := []byte(fmt.Sprintf("%d", pc.counter))
-	return ioutil.WriteFile(pc.filePath, data, 0644)
+	return util.WriteFile(pc.root, pc.filePath, data, 0644)
 }

@@ -25,6 +25,11 @@ type Repo interface {
 	RepoStorage
 }
 
+type RepoCommonStorage interface {
+	RepoCommon
+	RepoStorage
+}
+
 // ClockedRepo is a Repo that also has Lamport clocks
 type ClockedRepo interface {
 	Repo

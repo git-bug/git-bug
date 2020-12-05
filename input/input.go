@@ -11,9 +11,11 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/MichaelMure/git-bug/repository"
+	"github.com/go-git/go-billy/v5/util"
 	"github.com/pkg/errors"
 )
 
@@ -35,7 +37,7 @@ const bugTitleCommentTemplate = `%s%s
 // BugCreateEditorInput will open the default editor in the terminal with a
 // template for the user to fill. The file is then processed to extract title
 // and message.
-func BugCreateEditorInput(repo repository.RepoCommon, preTitle string, preMessage string) (string, string, error) {
+func BugCreateEditorInput(repo repository.RepoCommonStorage, preTitle string, preMessage string) (string, string, error) {
 	if preMessage != "" {
 		preMessage = "\n\n" + preMessage
 	}
@@ -101,10 +103,10 @@ const bugCommentTemplate = `%s
 
 // BugCommentEditorInput will open the default editor in the terminal with a
 // template for the user to fill. The file is then processed to extract a comment.
-func BugCommentEditorInput(repo repository.RepoCommon, preMessage string) (string, error) {
+func BugCommentEditorInput(repo repository.RepoCommonStorage, preMessage string) (string, error) {
 	template := fmt.Sprintf(bugCommentTemplate, preMessage)
-	raw, err := launchEditorWithTemplate(repo, messageFilename, template)
 
+	raw, err := launchEditorWithTemplate(repo, messageFilename, template)
 	if err != nil {
 		return "", err
 	}
@@ -152,10 +154,10 @@ const bugTitleTemplate = `%s
 
 // BugTitleEditorInput will open the default editor in the terminal with a
 // template for the user to fill. The file is then processed to extract a title.
-func BugTitleEditorInput(repo repository.RepoCommon, preTitle string) (string, error) {
+func BugTitleEditorInput(repo repository.RepoCommonStorage, preTitle string) (string, error) {
 	template := fmt.Sprintf(bugTitleTemplate, preTitle)
-	raw, err := launchEditorWithTemplate(repo, messageFilename, template)
 
+	raw, err := launchEditorWithTemplate(repo, messageFilename, template)
 	if err != nil {
 		return "", err
 	}
@@ -212,10 +214,10 @@ const queryTemplate = `%s
 
 // QueryEditorInput will open the default editor in the terminal with a
 // template for the user to fill. The file is then processed to extract a query.
-func QueryEditorInput(repo repository.RepoCommon, preQuery string) (string, error) {
+func QueryEditorInput(repo repository.RepoCommonStorage, preQuery string) (string, error) {
 	template := fmt.Sprintf(queryTemplate, preQuery)
-	raw, err := launchEditorWithTemplate(repo, messageFilename, template)
 
+	raw, err := launchEditorWithTemplate(repo, messageFilename, template)
 	if err != nil {
 		return "", err
 	}
@@ -238,11 +240,8 @@ func QueryEditorInput(repo repository.RepoCommon, preQuery string) (string, erro
 
 // launchEditorWithTemplate will launch an editor as launchEditor do, but with a
 // provided template.
-func launchEditorWithTemplate(repo repository.RepoCommon, fileName string, template string) (string, error) {
-	path := fmt.Sprintf("%s/%s", repo.GetPath(), fileName)
-
-	err := ioutil.WriteFile(path, []byte(template), 0644)
-
+func launchEditorWithTemplate(repo repository.RepoCommonStorage, fileName string, template string) (string, error) {
+	err := util.WriteFile(repo.LocalStorage(), fileName, []byte(template), 0644)
 	if err != nil {
 		return "", err
 	}
@@ -254,19 +253,24 @@ func launchEditorWithTemplate(repo repository.RepoCommon, fileName string, templ
 // method blocks until the editor command has returned.
 //
 // The specified filename should be a temporary file and provided as a relative path
-// from the repo (e.g. "FILENAME" will be converted to "[<reporoot>/].git/FILENAME"). This file
+// from the repo (e.g. "FILENAME" will be converted to "[<reporoot>/].git/git-bug/FILENAME"). This file
 // will be deleted after the editor is closed and its contents have been read.
 //
 // This method returns the text that was read from the temporary file, or
 // an error if any step in the process failed.
-func launchEditor(repo repository.RepoCommon, fileName string) (string, error) {
-	path := fmt.Sprintf("%s/%s", repo.GetPath(), fileName)
-	defer os.Remove(path)
+func launchEditor(repo repository.RepoCommonStorage, fileName string) (string, error) {
+	defer repo.LocalStorage().Remove(fileName)
 
 	editor, err := repo.GetCoreEditor()
 	if err != nil {
 		return "", fmt.Errorf("Unable to detect default git editor: %v\n", err)
 	}
+
+	repo.LocalStorage().Root()
+
+	// bypass the interface but that's ok: we need that because we are communicating
+	// the absolute path to an external program
+	path := filepath.Join(repo.LocalStorage().Root(), fileName)
 
 	cmd, err := startInlineCommand(editor, path)
 	if err != nil {

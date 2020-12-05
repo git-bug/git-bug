@@ -4,19 +4,12 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
-	"os"
-	"path"
 
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/identity"
-	"github.com/MichaelMure/git-bug/repository"
 )
 
 const identityCacheFile = "identity-cache"
-
-func identityCacheFilePath(repo repository.Repo) string {
-	return path.Join(repo.GetPath(), "git-bug", identityCacheFile)
-}
 
 // identityUpdated is a callback to trigger when the excerpt of an identity
 // changed, that is each time an identity is updated
@@ -41,7 +34,7 @@ func (c *RepoCache) loadIdentityCache() error {
 	c.muIdentity.Lock()
 	defer c.muIdentity.Unlock()
 
-	f, err := os.Open(identityCacheFilePath(c.repo))
+	f, err := c.repo.LocalStorage().Open(identityCacheFile)
 	if err != nil {
 		return err
 	}
@@ -88,7 +81,7 @@ func (c *RepoCache) writeIdentityCache() error {
 		return err
 	}
 
-	f, err := os.Create(identityCacheFilePath(c.repo))
+	f, err := c.repo.LocalStorage().Create(identityCacheFile)
 	if err != nil {
 		return err
 	}

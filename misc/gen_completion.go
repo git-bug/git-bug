@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 	"sync"
 
 	"github.com/spf13/cobra"
@@ -41,24 +41,24 @@ func main() {
 
 func genBash(root *cobra.Command) error {
 	cwd, _ := os.Getwd()
-	dir := path.Join(cwd, "misc", "bash_completion", "git-bug")
+	dir := filepath.Join(cwd, "misc", "bash_completion", "git-bug")
 	return root.GenBashCompletionFile(dir)
 }
 
 func genFish(root *cobra.Command) error {
 	cwd, _ := os.Getwd()
-	dir := path.Join(cwd, "misc", "fish_completion", "git-bug")
+	dir := filepath.Join(cwd, "misc", "fish_completion", "git-bug")
 	return root.GenFishCompletionFile(dir, true)
 }
 
 func genPowerShell(root *cobra.Command) error {
 	cwd, _ := os.Getwd()
-	filepath := path.Join(cwd, "misc", "powershell_completion", "git-bug")
-	return root.GenPowerShellCompletionFile(filepath)
+	path := filepath.Join(cwd, "misc", "powershell_completion", "git-bug")
+	return root.GenPowerShellCompletionFile(path)
 }
 
 func genZsh(root *cobra.Command) error {
 	cwd, _ := os.Getwd()
-	filepath := path.Join(cwd, "misc", "zsh_completion", "git-bug")
-	return root.GenZshCompletionFile(filepath)
+	path := filepath.Join(cwd, "misc", "zsh_completion", "git-bug")
+	return root.GenZshCompletionFile(path)
 }

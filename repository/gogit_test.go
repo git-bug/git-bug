@@ -19,7 +19,7 @@ func TestNewGoGitRepo(t *testing.T) {
 
 	_, err = InitGoGitRepo(plainRoot)
 	require.NoError(t, err)
-	plainGitDir := path.Join(plainRoot, ".git")
+	plainGitDir := filepath.Join(plainRoot, ".git")
 
 	// Bare
 	bareRoot, err := ioutil.TempDir("", "")
@@ -52,7 +52,7 @@ func TestNewGoGitRepo(t *testing.T) {
 	}
 
 	for i, tc := range tests {
-		r, err := NewGoGitRepo(tc.inPath, nil)
+		r, err := OpenGoGitRepo(tc.inPath, nil)
 
 		if tc.err {
 			require.Error(t, err, i)

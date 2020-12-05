@@ -1,18 +1,16 @@
 package lamport
 
 import (
-	"io/ioutil"
-	"path"
 	"testing"
 
+	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/stretchr/testify/require"
 )
 
 func TestPersistedClock(t *testing.T) {
-	dir, err := ioutil.TempDir("", "")
-	require.NoError(t, err)
+	root := memfs.New()
 
-	c, err := NewPersistedClock(path.Join(dir, "test-clock"))
+	c, err := NewPersistedClock(root, "test-clock")
 	require.NoError(t, err)
 
 	testClock(t, c)
