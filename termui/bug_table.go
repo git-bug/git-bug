@@ -237,7 +237,11 @@ func (bt *bugTable) disable(g *gocui.Gui) error {
 }
 
 func (bt *bugTable) paginate(max int) error {
-	bt.allIds = bt.repo.QueryBugs(bt.query)
+	var err error
+	bt.allIds, err = bt.repo.QueryBugs(bt.query)
+	if err != nil {
+		return err
+	}
 
 	return bt.doPaginate(max)
 }

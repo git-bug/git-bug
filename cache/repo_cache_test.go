@@ -73,7 +73,9 @@ func TestCache(t *testing.T) {
 	// Querying
 	q, err := query.Parse("status:open author:descartes sort:edit-asc")
 	require.NoError(t, err)
-	require.Len(t, cache.QueryBugs(q), 2)
+	res, err := cache.QueryBugs(q)
+	require.NoError(t, err)
+	require.Len(t, res, 2)
 
 	// Close
 	require.NoError(t, cache.Close())
@@ -167,10 +169,10 @@ func TestRemove(t *testing.T) {
 	remoteB := repository.CreateGoGitTestRepo(true)
 	defer repository.CleanupTestRepos(repo, remoteA, remoteB)
 
-	err := repo.AddRemote("remoteA", "file://"+remoteA.GetPath())
+	err := repo.AddRemote("remoteA", remoteA.GetLocalRemote())
 	require.NoError(t, err)
 
-	err = repo.AddRemote("remoteB", "file://"+remoteB.GetPath())
+	err = repo.AddRemote("remoteB", remoteB.GetLocalRemote())
 	require.NoError(t, err)
 
 	repoCache, err := NewRepoCache(repo)

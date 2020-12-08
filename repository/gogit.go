@@ -6,13 +6,15 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	stdpath "path"
 	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/blevesearch/bleve"
+	"github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-billy/v5/osfs"
 	gogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -23,6 +25,7 @@ import (
 )
 
 var _ ClockedRepo = &GoGitRepo{}
+var _ TestedRepo = &GoGitRepo{}
 
 type GoGitRepo struct {
 	r    *gogit.Repository
@@ -31,10 +34,15 @@ type GoGitRepo struct {
 	clocksMutex sync.Mutex
 	clocks      map[string]lamport.Clock
 
-	keyring Keyring
+	indexesMutex sync.Mutex
+	indexes      map[string]bleve.Index
+
+	keyring      Keyring
+	localStorage billy.Filesystem
 }
 
-func NewGoGitRepo(path string, clockLoaders []ClockLoader) (*GoGitRepo, error) {
+// OpenGoGitRepo open an already existing repo at the given path
+func OpenGoGitRepo(path string, clockLoaders []ClockLoader) (*GoGitRepo, error) {
 	path, err := detectGitPath(path)
 	if err != nil {
 		return nil, err
@@ -51,10 +59,12 @@ func NewGoGitRepo(path string, clockLoaders []ClockLoader) (*GoGitRepo, error) {
 	}
 
 	repo := &GoGitRepo{
-		r:       r,
-		path:    path,
-		clocks:  make(map[string]lamport.Clock),
-		keyring: k,
+		r:            r,
+		path:         path,
+		clocks:       make(map[string]lamport.Clock),
+		indexes:      make(map[string]bleve.Index),
+		keyring:      k,
+		localStorage: osfs.New(filepath.Join(path, "git-bug")),
 	}
 
 	for _, loader := range clockLoaders {
@@ -76,6 +86,50 @@ func NewGoGitRepo(path string, clockLoaders []ClockLoader) (*GoGitRepo, error) {
 	return repo, nil
 }
 
+// InitGoGitRepo create a new empty git repo at the given path
+func InitGoGitRepo(path string) (*GoGitRepo, error) {
+	r, err := gogit.PlainInit(path, false)
+	if err != nil {
+		return nil, err
+	}
+
+	k, err := defaultKeyring()
+	if err != nil {
+		return nil, err
+	}
+
+	return &GoGitRepo{
+		r:            r,
+		path:         filepath.Join(path, ".git"),
+		clocks:       make(map[string]lamport.Clock),
+		indexes:      make(map[string]bleve.Index),
+		keyring:      k,
+		localStorage: osfs.New(filepath.Join(path, ".git", "git-bug")),
+	}, nil
+}
+
+// InitBareGoGitRepo create a new --bare empty git repo at the given path
+func InitBareGoGitRepo(path string) (*GoGitRepo, error) {
+	r, err := gogit.PlainInit(path, true)
+	if err != nil {
+		return nil, err
+	}
+
+	k, err := defaultKeyring()
+	if err != nil {
+		return nil, err
+	}
+
+	return &GoGitRepo{
+		r:            r,
+		path:         path,
+		clocks:       make(map[string]lamport.Clock),
+		indexes:      make(map[string]bleve.Index),
+		keyring:      k,
+		localStorage: osfs.New(filepath.Join(path, "git-bug")),
+	}, nil
+}
+
 func detectGitPath(path string) (string, error) {
 	// normalize the path
 	path, err := filepath.Abs(path)
@@ -84,12 +138,12 @@ func detectGitPath(path string) (string, error) {
 	}
 
 	for {
-		fi, err := os.Stat(stdpath.Join(path, ".git"))
+		fi, err := os.Stat(filepath.Join(path, ".git"))
 		if err == nil {
 			if !fi.IsDir() {
 				return "", fmt.Errorf(".git exist but is not a directory")
 			}
-			return stdpath.Join(path, ".git"), nil
+			return filepath.Join(path, ".git"), nil
 		}
 		if !os.IsNotExist(err) {
 			// unknown error
@@ -117,7 +171,7 @@ func isGitDir(path string) (bool, error) {
 	markers := []string{"HEAD", "objects", "refs"}
 
 	for _, marker := range markers {
-		_, err := os.Stat(stdpath.Join(path, marker))
+		_, err := os.Stat(filepath.Join(path, marker))
 		if err == nil {
 			continue
 		}
@@ -132,44 +186,15 @@ func isGitDir(path string) (bool, error) {
 	return true, nil
 }
 
-// InitGoGitRepo create a new empty git repo at the given path
-func InitGoGitRepo(path string) (*GoGitRepo, error) {
-	r, err := gogit.PlainInit(path, false)
-	if err != nil {
-		return nil, err
+func (repo *GoGitRepo) Close() error {
+	var firstErr error
+	for _, index := range repo.indexes {
+		err := index.Close()
+		if err != nil && firstErr == nil {
+			firstErr = err
+		}
 	}
-
-	k, err := defaultKeyring()
-	if err != nil {
-		return nil, err
-	}
-
-	return &GoGitRepo{
-		r:       r,
-		path:    path + "/.git",
-		clocks:  make(map[string]lamport.Clock),
-		keyring: k,
-	}, nil
-}
-
-// InitBareGoGitRepo create a new --bare empty git repo at the given path
-func InitBareGoGitRepo(path string) (*GoGitRepo, error) {
-	r, err := gogit.PlainInit(path, true)
-	if err != nil {
-		return nil, err
-	}
-
-	k, err := defaultKeyring()
-	if err != nil {
-		return nil, err
-	}
-
-	return &GoGitRepo{
-		r:       r,
-		path:    path,
-		clocks:  make(map[string]lamport.Clock),
-		keyring: k,
-	}, nil
+	return firstErr
 }
 
 // LocalConfig give access to the repository scoped configuration
@@ -179,10 +204,7 @@ func (repo *GoGitRepo) LocalConfig() Config {
 
 // GlobalConfig give access to the global scoped configuration
 func (repo *GoGitRepo) GlobalConfig() Config {
-	// TODO: replace that with go-git native implementation once it's supported
-	// see: https://github.com/go-git/go-git
-	// see: https://github.com/src-d/go-git/issues/760
-	return newGoGitGlobalConfig(repo.r)
+	return newGoGitGlobalConfig()
 }
 
 // AnyConfig give access to a merged local/global configuration
@@ -193,11 +215,6 @@ func (repo *GoGitRepo) AnyConfig() ConfigRead {
 // Keyring give access to a user-wide storage for secrets
 func (repo *GoGitRepo) Keyring() Keyring {
 	return repo.keyring
-}
-
-// GetPath returns the path to the repo.
-func (repo *GoGitRepo) GetPath() string {
-	return repo.path
 }
 
 // GetUserName returns the name the the user has used to configure git
@@ -268,6 +285,69 @@ func (repo *GoGitRepo) GetRemotes() (map[string]string, error) {
 	}
 
 	return result, nil
+}
+
+// LocalStorage return a billy.Filesystem giving access to $RepoPath/.git/git-bug
+func (repo *GoGitRepo) LocalStorage() billy.Filesystem {
+	return repo.localStorage
+}
+
+// GetBleveIndex return a bleve.Index that can be used to index documents
+func (repo *GoGitRepo) GetBleveIndex(name string) (bleve.Index, error) {
+	repo.indexesMutex.Lock()
+	defer repo.indexesMutex.Unlock()
+
+	if index, ok := repo.indexes[name]; ok {
+		return index, nil
+	}
+
+	path := filepath.Join(repo.path, "git-bug", "indexes", name)
+
+	index, err := bleve.Open(path)
+	if err == nil {
+		repo.indexes[name] = index
+		return index, nil
+	}
+
+	err = os.MkdirAll(path, os.ModePerm)
+	if err != nil {
+		return nil, err
+	}
+
+	mapping := bleve.NewIndexMapping()
+	mapping.DefaultAnalyzer = "en"
+
+	index, err = bleve.New(path, mapping)
+	if err != nil {
+		return nil, err
+	}
+
+	repo.indexes[name] = index
+
+	return index, nil
+}
+
+// ClearBleveIndex will wipe the given index
+func (repo *GoGitRepo) ClearBleveIndex(name string) error {
+	repo.indexesMutex.Lock()
+	defer repo.indexesMutex.Unlock()
+
+	path := filepath.Join(repo.path, "indexes", name)
+
+	err := os.RemoveAll(path)
+	if err != nil {
+		return err
+	}
+
+	if index, ok := repo.indexes[name]; ok {
+		err = index.Close()
+		if err != nil {
+			return err
+		}
+		delete(repo.indexes, name)
+	}
+
+	return nil
 }
 
 // FetchRefs fetch git refs from a remote
@@ -600,6 +680,9 @@ func (repo *GoGitRepo) ListCommits(ref string) ([]Hash, error) {
 // GetOrCreateClock return a Lamport clock stored in the Repo.
 // If the clock doesn't exist, it's created.
 func (repo *GoGitRepo) GetOrCreateClock(name string) (lamport.Clock, error) {
+	repo.clocksMutex.Lock()
+	defer repo.clocksMutex.Unlock()
+
 	c, err := repo.getClock(name)
 	if err == nil {
 		return c, nil
@@ -608,12 +691,7 @@ func (repo *GoGitRepo) GetOrCreateClock(name string) (lamport.Clock, error) {
 		return nil, err
 	}
 
-	repo.clocksMutex.Lock()
-	defer repo.clocksMutex.Unlock()
-
-	p := stdpath.Join(repo.path, clockPath, name+"-clock")
-
-	c, err = lamport.NewPersistedClock(p)
+	c, err = lamport.NewPersistedClock(repo.localStorage, name+"-clock")
 	if err != nil {
 		return nil, err
 	}
@@ -623,16 +701,11 @@ func (repo *GoGitRepo) GetOrCreateClock(name string) (lamport.Clock, error) {
 }
 
 func (repo *GoGitRepo) getClock(name string) (lamport.Clock, error) {
-	repo.clocksMutex.Lock()
-	defer repo.clocksMutex.Unlock()
-
 	if c, ok := repo.clocks[name]; ok {
 		return c, nil
 	}
 
-	p := stdpath.Join(repo.path, clockPath, name+"-clock")
-
-	c, err := lamport.LoadPersistedClock(p)
+	c, err := lamport.LoadPersistedClock(repo.localStorage, name+"-clock")
 	if err == nil {
 		repo.clocks[name] = c
 		return c, nil
@@ -652,4 +725,22 @@ func (repo *GoGitRepo) AddRemote(name string, url string) error {
 	})
 
 	return err
+}
+
+// GetLocalRemote return the URL to use to add this repo as a local remote
+func (repo *GoGitRepo) GetLocalRemote() string {
+	return repo.path
+}
+
+// EraseFromDisk delete this repository entirely from the disk
+func (repo *GoGitRepo) EraseFromDisk() error {
+	err := repo.Close()
+	if err != nil {
+		return err
+	}
+
+	path := filepath.Clean(strings.TrimSuffix(repo.path, string(filepath.Separator)+".git"))
+
+	// fmt.Println("Cleaning repo:", path)
+	return os.RemoveAll(path)
 }

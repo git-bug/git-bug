@@ -4,9 +4,14 @@ package repository
 import (
 	"bytes"
 	"fmt"
-	"path"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/blevesearch/bleve"
+	"github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-billy/v5/osfs"
 
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
@@ -26,12 +31,15 @@ type GitRepo struct {
 	clocksMutex sync.Mutex
 	clocks      map[string]lamport.Clock
 
+	indexesMutex sync.Mutex
+	indexes      map[string]bleve.Index
+
 	keyring Keyring
 }
 
-// NewGitRepo determines if the given working directory is inside of a git repository,
+// OpenGitRepo determines if the given working directory is inside of a git repository,
 // and returns the corresponding GitRepo instance if it is.
-func NewGitRepo(path string, clockLoaders []ClockLoader) (*GitRepo, error) {
+func OpenGitRepo(path string, clockLoaders []ClockLoader) (*GitRepo, error) {
 	k, err := defaultKeyring()
 	if err != nil {
 		return nil, err
@@ -41,6 +49,7 @@ func NewGitRepo(path string, clockLoaders []ClockLoader) (*GitRepo, error) {
 		gitCli:  gitCli{path: path},
 		path:    path,
 		clocks:  make(map[string]lamport.Clock),
+		indexes: make(map[string]bleve.Index),
 		keyring: k,
 	}
 
@@ -80,9 +89,10 @@ func NewGitRepo(path string, clockLoaders []ClockLoader) (*GitRepo, error) {
 // InitGitRepo create a new empty git repo at the given path
 func InitGitRepo(path string) (*GitRepo, error) {
 	repo := &GitRepo{
-		gitCli: gitCli{path: path},
-		path:   path + "/.git",
-		clocks: make(map[string]lamport.Clock),
+		gitCli:  gitCli{path: path},
+		path:    path + "/.git",
+		clocks:  make(map[string]lamport.Clock),
+		indexes: make(map[string]bleve.Index),
 	}
 
 	_, err := repo.runGitCommand("init", path)
@@ -96,9 +106,10 @@ func InitGitRepo(path string) (*GitRepo, error) {
 // InitBareGitRepo create a new --bare empty git repo at the given path
 func InitBareGitRepo(path string) (*GitRepo, error) {
 	repo := &GitRepo{
-		gitCli: gitCli{path: path},
-		path:   path,
-		clocks: make(map[string]lamport.Clock),
+		gitCli:  gitCli{path: path},
+		path:    path,
+		clocks:  make(map[string]lamport.Clock),
+		indexes: make(map[string]bleve.Index),
 	}
 
 	_, err := repo.runGitCommand("init", "--bare", path)
@@ -107,6 +118,17 @@ func InitBareGitRepo(path string) (*GitRepo, error) {
 	}
 
 	return repo, nil
+}
+
+func (repo *GitRepo) Close() error {
+	var firstErr error
+	for _, index := range repo.indexes {
+		err := index.Close()
+		if err != nil && firstErr == nil {
+			firstErr = err
+		}
+	}
+	return firstErr
 }
 
 // LocalConfig give access to the repository scoped configuration
@@ -172,6 +194,63 @@ func (repo *GitRepo) GetRemotes() (map[string]string, error) {
 	}
 
 	return remotes, nil
+}
+
+// LocalStorage return a billy.Filesystem giving access to $RepoPath/.git/git-bug
+func (repo *GitRepo) LocalStorage() billy.Filesystem {
+	return osfs.New(repo.path)
+}
+
+// GetBleveIndex return a bleve.Index that can be used to index documents
+func (repo *GitRepo) GetBleveIndex(name string) (bleve.Index, error) {
+	repo.indexesMutex.Lock()
+	defer repo.indexesMutex.Unlock()
+
+	if index, ok := repo.indexes[name]; ok {
+		return index, nil
+	}
+
+	path := filepath.Join(repo.path, "indexes", name)
+
+	index, err := bleve.Open(path)
+	if err == nil {
+		repo.indexes[name] = index
+		return index, nil
+	}
+
+	err = os.MkdirAll(path, os.ModeDir)
+	if err != nil {
+		return nil, err
+	}
+
+	mapping := bleve.NewIndexMapping()
+	mapping.DefaultAnalyzer = "en"
+
+	index, err = bleve.New(path, mapping)
+	if err != nil {
+		return nil, err
+	}
+
+	repo.indexes[name] = index
+
+	return index, nil
+}
+
+// ClearBleveIndex will wipe the given index
+func (repo *GitRepo) ClearBleveIndex(name string) error {
+	repo.indexesMutex.Lock()
+	defer repo.indexesMutex.Unlock()
+
+	path := filepath.Join(repo.path, "indexes", name)
+
+	err := os.RemoveAll(path)
+	if err != nil {
+		return err
+	}
+
+	delete(repo.indexes, name)
+
+	return nil
 }
 
 // FetchRefs fetch git refs from a remote
@@ -358,6 +437,9 @@ func (repo *GitRepo) GetTreeHash(commit Hash) (Hash, error) {
 // GetOrCreateClock return a Lamport clock stored in the Repo.
 // If the clock doesn't exist, it's created.
 func (repo *GitRepo) GetOrCreateClock(name string) (lamport.Clock, error) {
+	repo.clocksMutex.Lock()
+	defer repo.clocksMutex.Unlock()
+
 	c, err := repo.getClock(name)
 	if err == nil {
 		return c, nil
@@ -366,12 +448,7 @@ func (repo *GitRepo) GetOrCreateClock(name string) (lamport.Clock, error) {
 		return nil, err
 	}
 
-	repo.clocksMutex.Lock()
-	defer repo.clocksMutex.Unlock()
-
-	p := path.Join(repo.path, clockPath, name+"-clock")
-
-	c, err = lamport.NewPersistedClock(p)
+	c, err = lamport.NewPersistedClock(repo.LocalStorage(), name+"-clock")
 	if err != nil {
 		return nil, err
 	}
@@ -381,16 +458,11 @@ func (repo *GitRepo) GetOrCreateClock(name string) (lamport.Clock, error) {
 }
 
 func (repo *GitRepo) getClock(name string) (lamport.Clock, error) {
-	repo.clocksMutex.Lock()
-	defer repo.clocksMutex.Unlock()
-
 	if c, ok := repo.clocks[name]; ok {
 		return c, nil
 	}
 
-	p := path.Join(repo.path, clockPath, name+"-clock")
-
-	c, err := lamport.LoadPersistedClock(p)
+	c, err := lamport.LoadPersistedClock(repo.LocalStorage(), name+"-clock")
 	if err == nil {
 		repo.clocks[name] = c
 		return c, nil
@@ -407,4 +479,22 @@ func (repo *GitRepo) AddRemote(name string, url string) error {
 	_, err := repo.runGitCommand("remote", "add", name, url)
 
 	return err
+}
+
+// GetLocalRemote return the URL to use to add this repo as a local remote
+func (repo *GitRepo) GetLocalRemote() string {
+	return repo.path
+}
+
+// EraseFromDisk delete this repository entirely from the disk
+func (repo *GitRepo) EraseFromDisk() error {
+	err := repo.Close()
+	if err != nil {
+		return err
+	}
+
+	path := filepath.Clean(strings.TrimSuffix(repo.path, string(filepath.Separator)+".git"))
+
+	// fmt.Println("Cleaning repo:", path)
+	return os.RemoveAll(path)
 }

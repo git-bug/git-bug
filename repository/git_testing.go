@@ -48,14 +48,12 @@ func SetupReposAndRemote() (repoA, repoB, remote TestedRepo) {
 	repoB = CreateGoGitTestRepo(false)
 	remote = CreateGoGitTestRepo(true)
 
-	remoteAddr := "file://" + remote.GetPath()
-
-	err := repoA.AddRemote("origin", remoteAddr)
+	err := repoA.AddRemote("origin", remote.GetLocalRemote())
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = repoB.AddRemote("origin", remoteAddr)
+	err = repoB.AddRemote("origin", remote.GetLocalRemote())
 	if err != nil {
 		log.Fatal(err)
 	}

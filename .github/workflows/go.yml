@@ -1,0 +1,41 @@
+name: Go build and test
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    strategy:
+      matrix:
+        go-version: [1.13.x, 1.14.x, 1.15.x]
+        platform: [ubuntu-latest, macos-latest, windows-latest]
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+
+      - name: Set up Go ${{ matrix.node-version }}
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Build
+        run: make
+
+      - name: Test
+        run: make test
+        env:
+          GITHUB_TEST_USER: ${{ secrets._GITHUB_TEST_USER }}
+          GITHUB_TOKEN_ADMIN: ${{ secrets._GITHUB_TOKEN_ADMIN }}
+          GITHUB_TOKEN_PRIVATE: ${{ secrets._GITHUB_TOKEN_PRIVATE }}
+          GITHUB_TOKEN_PUBLIC: ${{ secrets._GITHUB_TOKEN_PUBLIC }}
+          GITLAB_API_TOKEN: ${{ secrets.GITLAB_API_TOKEN }}
+          GITLAB_PROJECT_ID: ${{ secrets.GITLAB_PROJECT_ID }}

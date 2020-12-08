@@ -5,8 +5,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"path"
-	"path/filepath"
 	"strconv"
 	"sync"
 
@@ -15,7 +13,6 @@ import (
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/process"
-	"github.com/blevesearch/bleve"
 )
 
 // 1: original format
@@ -57,8 +54,6 @@ type RepoCache struct {
 	muBug sync.RWMutex
 	// excerpt of bugs data for all bugs
 	bugExcerpts map[entity.Id]*BugExcerpt
-	// searchable cache of all bugs
-	searchCache bleve.Index
 	// bug loaded in memory
 	bugs map[entity.Id]*BugCache
 	// loadedBugs is an LRU cache that records which bugs the cache has loaded in
@@ -133,25 +128,18 @@ func (c *RepoCache) write() error {
 }
 
 func (c *RepoCache) lock() error {
-	lockPath := repoLockFilePath(c.repo)
-
 	err := repoIsAvailable(c.repo)
 	if err != nil {
 		return err
 	}
 
-	err = os.MkdirAll(filepath.Dir(lockPath), 0777)
-	if err != nil {
-		return err
-	}
-
-	f, err := os.Create(lockPath)
+	f, err := c.repo.LocalStorage().Create(lockfile)
 	if err != nil {
 		return err
 	}
 
 	pid := fmt.Sprintf("%d", os.Getpid())
-	_, err = f.WriteString(pid)
+	_, err = f.Write([]byte(pid))
 	if err != nil {
 		return err
 	}
@@ -170,16 +158,17 @@ func (c *RepoCache) Close() error {
 	c.bugs = make(map[entity.Id]*BugCache)
 	c.bugExcerpts = nil
 
-	if c.searchCache != nil {
-		c.searchCache.Close()
-		c.searchCache = nil
+	err := c.repo.Close()
+	if err != nil {
+		return err
 	}
 
-	lockPath := repoLockFilePath(c.repo)
-	return os.Remove(lockPath)
+	return c.repo.LocalStorage().Remove(lockfile)
 }
 
 func (c *RepoCache) buildCache() error {
+	// TODO: make that parallel
+
 	c.muBug.Lock()
 	defer c.muBug.Unlock()
 	c.muIdentity.Lock()
@@ -207,9 +196,10 @@ func (c *RepoCache) buildCache() error {
 
 	allBugs := bug.ReadAllLocal(c.repo)
 
-	err := c.createBleveIndex()
+	// wipe the index just to be sure
+	err := c.repo.ClearBleveIndex("bug")
 	if err != nil {
-		return fmt.Errorf("Unable to create search cache. Error: %v", err)
+		return err
 	}
 
 	for b := range allBugs {
@@ -230,17 +220,11 @@ func (c *RepoCache) buildCache() error {
 	return nil
 }
 
-func repoLockFilePath(repo repository.Repo) string {
-	return path.Join(repo.GetPath(), "git-bug", lockfile)
-}
-
 // repoIsAvailable check is the given repository is locked by a Cache.
 // Note: this is a smart function that will cleanup the lock file if the
 // corresponding process is not there anymore.
 // If no error is returned, the repo is free to edit.
-func repoIsAvailable(repo repository.Repo) error {
-	lockPath := repoLockFilePath(repo)
-
+func repoIsAvailable(repo repository.RepoStorage) error {
 	// Todo: this leave way for a racey access to the repo between the test
 	// if the file exist and the actual write. It's probably not a problem in
 	// practice because using a repository will be done from user interaction
@@ -252,8 +236,7 @@ func repoIsAvailable(repo repository.Repo) error {
 	// computer. Should add a configuration that prevent the cleaning of the
 	// lock file
 
-	f, err := os.Open(lockPath)
-
+	f, err := repo.LocalStorage().Open(lockfile)
 	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
@@ -285,7 +268,7 @@ func repoIsAvailable(repo repository.Repo) error {
 			return err
 		}
 
-		err = os.Remove(lockPath)
+		err = repo.LocalStorage().Remove(lockfile)
 		if err != nil {
 			return err
 		}
