@@ -604,6 +604,9 @@ func (repo *GoGitRepo) ListCommits(ref string) ([]Hash, error) {
 // GetOrCreateClock return a Lamport clock stored in the Repo.
 // If the clock doesn't exist, it's created.
 func (repo *GoGitRepo) GetOrCreateClock(name string) (lamport.Clock, error) {
+	repo.clocksMutex.Lock()
+	defer repo.clocksMutex.Unlock()
+
 	c, err := repo.getClock(name)
 	if err == nil {
 		return c, nil
@@ -611,9 +614,6 @@ func (repo *GoGitRepo) GetOrCreateClock(name string) (lamport.Clock, error) {
 	if err != ErrClockNotExist {
 		return nil, err
 	}
-
-	repo.clocksMutex.Lock()
-	defer repo.clocksMutex.Unlock()
 
 	c, err = lamport.NewPersistedClock(repo.localStorage, name+"-clock")
 	if err != nil {
@@ -625,9 +625,6 @@ func (repo *GoGitRepo) GetOrCreateClock(name string) (lamport.Clock, error) {
 }
 
 func (repo *GoGitRepo) getClock(name string) (lamport.Clock, error) {
-	repo.clocksMutex.Lock()
-	defer repo.clocksMutex.Unlock()
-
 	if c, ok := repo.clocks[name]; ok {
 		return c, nil
 	}

@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/99designs/keyring"
 	"github.com/go-git/go-billy/v5"
@@ -337,6 +338,7 @@ func (m mockRepoForTest) EraseFromDisk() error {
 }
 
 type mockRepoClock struct {
+	mu     sync.Mutex
 	clocks map[string]lamport.Clock
 }
 
@@ -347,6 +349,9 @@ func NewMockRepoClock() *mockRepoClock {
 }
 
 func (r *mockRepoClock) GetOrCreateClock(name string) (lamport.Clock, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	if c, ok := r.clocks[name]; ok {
 		return c, nil
 	}

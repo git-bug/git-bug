@@ -367,6 +367,9 @@ func (repo *GitRepo) GetTreeHash(commit Hash) (Hash, error) {
 // GetOrCreateClock return a Lamport clock stored in the Repo.
 // If the clock doesn't exist, it's created.
 func (repo *GitRepo) GetOrCreateClock(name string) (lamport.Clock, error) {
+	repo.clocksMutex.Lock()
+	defer repo.clocksMutex.Unlock()
+
 	c, err := repo.getClock(name)
 	if err == nil {
 		return c, nil
@@ -374,9 +377,6 @@ func (repo *GitRepo) GetOrCreateClock(name string) (lamport.Clock, error) {
 	if err != ErrClockNotExist {
 		return nil, err
 	}
-
-	repo.clocksMutex.Lock()
-	defer repo.clocksMutex.Unlock()
 
 	c, err = lamport.NewPersistedClock(repo.LocalStorage(), name+"-clock")
 	if err != nil {
@@ -388,9 +388,6 @@ func (repo *GitRepo) GetOrCreateClock(name string) (lamport.Clock, error) {
 }
 
 func (repo *GitRepo) getClock(name string) (lamport.Clock, error) {
-	repo.clocksMutex.Lock()
-	defer repo.clocksMutex.Unlock()
-
 	if c, ok := repo.clocks[name]; ok {
 		return c, nil
 	}
