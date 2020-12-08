@@ -4,6 +4,7 @@ package repository
 import (
 	"errors"
 
+	"github.com/blevesearch/bleve"
 	"github.com/go-git/go-billy/v5"
 
 	"github.com/MichaelMure/git-bug/util/lamport"
@@ -23,6 +24,9 @@ type Repo interface {
 	RepoCommon
 	RepoData
 	RepoStorage
+	RepoBleve
+
+	Close() error
 }
 
 type RepoCommonStorage interface {
@@ -69,9 +73,19 @@ type RepoCommon interface {
 	GetRemotes() (map[string]string, error)
 }
 
+// RepoStorage give access to the filesystem
 type RepoStorage interface {
 	// LocalStorage return a billy.Filesystem giving access to $RepoPath/.git/git-bug
 	LocalStorage() billy.Filesystem
+}
+
+// RepoBleve give access to Bleve to implement full-text search indexes.
+type RepoBleve interface {
+	// GetBleveIndex return a bleve.Index that can be used to index documents
+	GetBleveIndex(name string) (bleve.Index, error)
+
+	// ClearBleveIndex will wipe the given index
+	ClearBleveIndex(name string) error
 }
 
 // RepoData give access to the git data storage

@@ -273,10 +273,10 @@ func TestIdentityRemove(t *testing.T) {
 	remoteB := repository.CreateGoGitTestRepo(true)
 	defer repository.CleanupTestRepos(repo, remoteA, remoteB)
 
-	err := repo.AddRemote("remoteA", "file://"+remoteA.GetPath())
+	err := repo.AddRemote("remoteA", remoteA.GetLocalRemote())
 	require.NoError(t, err)
 
-	err = repo.AddRemote("remoteB", "file://"+remoteB.GetPath())
+	err = repo.AddRemote("remoteB", remoteB.GetLocalRemote())
 	require.NoError(t, err)
 
 	// generate an identity for testing

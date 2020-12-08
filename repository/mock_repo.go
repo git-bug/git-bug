@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/99designs/keyring"
+	"github.com/blevesearch/bleve"
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/memfs"
 
@@ -22,9 +23,12 @@ type mockRepoForTest struct {
 	*mockRepoKeyring
 	*mockRepoCommon
 	*mockRepoStorage
+	*mockRepoBleve
 	*mockRepoData
 	*mockRepoClock
 }
+
+func (m *mockRepoForTest) Close() error { return nil }
 
 func NewMockRepoForTest() *mockRepoForTest {
 	return &mockRepoForTest{
@@ -32,6 +36,7 @@ func NewMockRepoForTest() *mockRepoForTest {
 		mockRepoKeyring: NewMockRepoKeyring(),
 		mockRepoCommon:  NewMockRepoCommon(),
 		mockRepoStorage: NewMockRepoStorage(),
+		mockRepoBleve:   newMockRepoBleve(),
 		mockRepoData:    NewMockRepoData(),
 		mockRepoClock:   NewMockRepoClock(),
 	}
@@ -124,6 +129,48 @@ func NewMockRepoStorage() *mockRepoStorage {
 
 func (m *mockRepoStorage) LocalStorage() billy.Filesystem {
 	return m.localFs
+}
+
+var _ RepoBleve = &mockRepoBleve{}
+
+type mockRepoBleve struct {
+	indexesMutex sync.Mutex
+	indexes      map[string]bleve.Index
+}
+
+func newMockRepoBleve() *mockRepoBleve {
+	return &mockRepoBleve{
+		indexes: make(map[string]bleve.Index),
+	}
+}
+
+func (m *mockRepoBleve) GetBleveIndex(name string) (bleve.Index, error) {
+	m.indexesMutex.Lock()
+	defer m.indexesMutex.Unlock()
+
+	if index, ok := m.indexes[name]; ok {
+		return index, nil
+	}
+
+	mapping := bleve.NewIndexMapping()
+	mapping.DefaultAnalyzer = "en"
+
+	index, err := bleve.NewMemOnly(mapping)
+	if err != nil {
+		return nil, err
+	}
+
+	m.indexes[name] = index
+
+	return index, nil
+}
+
+func (m *mockRepoBleve) ClearBleveIndex(name string) error {
+	m.indexesMutex.Lock()
+	defer m.indexesMutex.Unlock()
+
+	delete(m.indexes, name)
+	return nil
 }
 
 var _ RepoData = &mockRepoData{}

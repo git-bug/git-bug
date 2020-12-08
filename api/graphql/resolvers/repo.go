@@ -41,7 +41,10 @@ func (repoResolver) AllBugs(_ context.Context, obj *models.Repository, after *st
 	}
 
 	// Simply pass a []string with the ids to the pagination algorithm
-	source := obj.Repo.QueryBugs(q)
+	source, err := obj.Repo.QueryBugs(q)
+	if err != nil {
+		return nil, err
+	}
 
 	// The edger create a custom edge holding just the id
 	edger := func(id entity.Id, offset int) connections.Edge {

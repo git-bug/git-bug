@@ -13,7 +13,6 @@ import (
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/process"
-	"github.com/blevesearch/bleve"
 )
 
 // 1: original format
@@ -55,8 +54,6 @@ type RepoCache struct {
 	muBug sync.RWMutex
 	// excerpt of bugs data for all bugs
 	bugExcerpts map[entity.Id]*BugExcerpt
-	// searchable cache of all bugs
-	searchCache bleve.Index
 	// bug loaded in memory
 	bugs map[entity.Id]*BugCache
 	// loadedBugs is an LRU cache that records which bugs the cache has loaded in
@@ -161,9 +158,9 @@ func (c *RepoCache) Close() error {
 	c.bugs = make(map[entity.Id]*BugCache)
 	c.bugExcerpts = nil
 
-	if c.searchCache != nil {
-		c.searchCache.Close()
-		c.searchCache = nil
+	err := c.repo.Close()
+	if err != nil {
+		return err
 	}
 
 	return c.repo.LocalStorage().Remove(lockfile)
@@ -199,9 +196,10 @@ func (c *RepoCache) buildCache() error {
 
 	allBugs := bug.ReadAllLocal(c.repo)
 
-	err := c.createBleveIndex()
+	// wipe the index just to be sure
+	err := c.repo.ClearBleveIndex("bug")
 	if err != nil {
-		return fmt.Errorf("Unable to create search cache. Error: %v", err)
+		return err
 	}
 
 	for b := range allBugs {

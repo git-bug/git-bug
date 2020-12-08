@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/blevesearch/bleve"
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/osfs"
 	gogit "github.com/go-git/go-git/v5"
@@ -32,6 +33,9 @@ type GoGitRepo struct {
 
 	clocksMutex sync.Mutex
 	clocks      map[string]lamport.Clock
+
+	indexesMutex sync.Mutex
+	indexes      map[string]bleve.Index
 
 	keyring      Keyring
 	localStorage billy.Filesystem
@@ -58,6 +62,7 @@ func OpenGoGitRepo(path string, clockLoaders []ClockLoader) (*GoGitRepo, error) 
 		r:            r,
 		path:         path,
 		clocks:       make(map[string]lamport.Clock),
+		indexes:      make(map[string]bleve.Index),
 		keyring:      k,
 		localStorage: osfs.New(filepath.Join(path, "git-bug")),
 	}
@@ -97,6 +102,7 @@ func InitGoGitRepo(path string) (*GoGitRepo, error) {
 		r:            r,
 		path:         filepath.Join(path, ".git"),
 		clocks:       make(map[string]lamport.Clock),
+		indexes:      make(map[string]bleve.Index),
 		keyring:      k,
 		localStorage: osfs.New(filepath.Join(path, ".git", "git-bug")),
 	}, nil
@@ -118,6 +124,7 @@ func InitBareGoGitRepo(path string) (*GoGitRepo, error) {
 		r:            r,
 		path:         path,
 		clocks:       make(map[string]lamport.Clock),
+		indexes:      make(map[string]bleve.Index),
 		keyring:      k,
 		localStorage: osfs.New(filepath.Join(path, "git-bug")),
 	}, nil
@@ -177,6 +184,17 @@ func isGitDir(path string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (repo *GoGitRepo) Close() error {
+	var firstErr error
+	for _, index := range repo.indexes {
+		err := index.Close()
+		if err != nil && firstErr == nil {
+			firstErr = err
+		}
+	}
+	return firstErr
 }
 
 // LocalConfig give access to the repository scoped configuration
@@ -272,6 +290,64 @@ func (repo *GoGitRepo) GetRemotes() (map[string]string, error) {
 // LocalStorage return a billy.Filesystem giving access to $RepoPath/.git/git-bug
 func (repo *GoGitRepo) LocalStorage() billy.Filesystem {
 	return repo.localStorage
+}
+
+// GetBleveIndex return a bleve.Index that can be used to index documents
+func (repo *GoGitRepo) GetBleveIndex(name string) (bleve.Index, error) {
+	repo.indexesMutex.Lock()
+	defer repo.indexesMutex.Unlock()
+
+	if index, ok := repo.indexes[name]; ok {
+		return index, nil
+	}
+
+	path := filepath.Join(repo.path, "git-bug", "indexes", name)
+
+	index, err := bleve.Open(path)
+	if err == nil {
+		repo.indexes[name] = index
+		return index, nil
+	}
+
+	err = os.MkdirAll(path, os.ModePerm)
+	if err != nil {
+		return nil, err
+	}
+
+	mapping := bleve.NewIndexMapping()
+	mapping.DefaultAnalyzer = "en"
+
+	index, err = bleve.New(path, mapping)
+	if err != nil {
+		return nil, err
+	}
+
+	repo.indexes[name] = index
+
+	return index, nil
+}
+
+// ClearBleveIndex will wipe the given index
+func (repo *GoGitRepo) ClearBleveIndex(name string) error {
+	repo.indexesMutex.Lock()
+	defer repo.indexesMutex.Unlock()
+
+	path := filepath.Join(repo.path, "indexes", name)
+
+	err := os.RemoveAll(path)
+	if err != nil {
+		return err
+	}
+
+	if index, ok := repo.indexes[name]; ok {
+		err = index.Close()
+		if err != nil {
+			return err
+		}
+		delete(repo.indexes, name)
+	}
+
+	return nil
 }
 
 // FetchRefs fetch git refs from a remote

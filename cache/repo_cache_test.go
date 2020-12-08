@@ -73,7 +73,9 @@ func TestCache(t *testing.T) {
 	// Querying
 	q, err := query.Parse("status:open author:descartes sort:edit-asc")
 	require.NoError(t, err)
-	require.Len(t, cache.QueryBugs(q), 2)
+	res, err := cache.QueryBugs(q)
+	require.NoError(t, err)
+	require.Len(t, res, 2)
 
 	// Close
 	require.NoError(t, cache.Close())

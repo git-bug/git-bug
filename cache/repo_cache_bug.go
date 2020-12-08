@@ -23,10 +23,6 @@ const (
 
 var errBugNotInCache = errors.New("bug missing from cache")
 
-func searchCacheDirPath(repo repository.Repo) string {
-	return path.Join(repo.GetPath(), "git-bug", searchCacheDir)
-}
-
 // bugUpdated is a callback to trigger when the excerpt of a bug changed,
 // that is each time a bug is updated
 func (c *RepoCache) bugUpdated(id entity.Id) error {
@@ -82,40 +78,19 @@ func (c *RepoCache) loadBugCache() error {
 
 	c.bugExcerpts = aux.Excerpts
 
-	blevePath := searchCacheDirPath(c.repo)
-	searchCache, err := bleve.Open(blevePath)
+	index, err := c.repo.GetBleveIndex("bug")
 	if err != nil {
-		return fmt.Errorf("Unable to open search cache. Error: %v", err)
+		return err
 	}
-	c.searchCache = searchCache
 
-	count, err := c.searchCache.DocCount()
+	// simple heuristic to detect a mismatch between the index and the bugs
+	count, err := index.DocCount()
 	if err != nil {
 		return err
 	}
 	if count != uint64(len(c.bugExcerpts)) {
 		return fmt.Errorf("count mismatch between bleve and bug excerpts")
 	}
-
-	return nil
-}
-
-func (c *RepoCache) createBleveIndex() error {
-	blevePath := searchCacheDirPath(c.repo)
-
-	_ = os.RemoveAll(blevePath)
-
-	mapping := bleve.NewIndexMapping()
-	mapping.DefaultAnalyzer = "en"
-
-	dir := searchCacheDirPath(c.repo)
-
-	bleveIndex, err := bleve.New(dir, mapping)
-	if err != nil {
-		return err
-	}
-
-	c.searchCache = bleveIndex
 
 	return nil
 }
@@ -287,12 +262,12 @@ func (c *RepoCache) resolveBugMatcher(f func(*BugExcerpt) bool) (entity.Id, erro
 }
 
 // QueryBugs return the id of all Bug matching the given Query
-func (c *RepoCache) QueryBugs(q *query.Query) []entity.Id {
+func (c *RepoCache) QueryBugs(q *query.Query) ([]entity.Id, error) {
 	c.muBug.RLock()
 	defer c.muBug.RUnlock()
 
 	if q == nil {
-		return c.AllBugsIds()
+		return c.AllBugsIds(), nil
 	}
 
 	matcher := compileMatcher(q.Filters)
@@ -313,9 +288,15 @@ func (c *RepoCache) QueryBugs(q *query.Query) []entity.Id {
 
 		bleveQuery := bleve.NewQueryStringQuery(strings.Join(terms, " "))
 		bleveSearch := bleve.NewSearchRequest(bleveQuery)
-		searchResults, err := c.searchCache.Search(bleveSearch)
+
+		index, err := c.repo.GetBleveIndex("bug")
 		if err != nil {
-			panic("bleve search failed")
+			return nil, err
+		}
+
+		searchResults, err := index.Search(bleveSearch)
+		if err != nil {
+			return nil, err
 		}
 
 		for _, hit := range searchResults.Hits {
@@ -341,7 +322,7 @@ func (c *RepoCache) QueryBugs(q *query.Query) []entity.Id {
 	case query.OrderByEdit:
 		sorter = BugsByEditTime(filtered)
 	default:
-		panic("missing sort type")
+		return nil, errors.New("missing sort type")
 	}
 
 	switch q.OrderDirection {
@@ -350,7 +331,7 @@ func (c *RepoCache) QueryBugs(q *query.Query) []entity.Id {
 	case query.OrderDescending:
 		sorter = sort.Reverse(sorter)
 	default:
-		panic("missing sort direction")
+		return nil, errors.New("missing sort direction")
 	}
 
 	sort.Sort(sorter)
@@ -361,7 +342,7 @@ func (c *RepoCache) QueryBugs(q *query.Query) []entity.Id {
 		result[i] = val.Id
 	}
 
-	return result
+	return result, nil
 }
 
 // AllBugsIds return all known bug ids
@@ -504,7 +485,12 @@ func (c *RepoCache) addBugToSearchIndex(snap *bug.Snapshot) error {
 
 	searchableBug.Text = append(searchableBug.Text, snap.Title)
 
-	err := c.searchCache.Index(snap.Id().String(), searchableBug)
+	index, err := c.repo.GetBleveIndex("bug")
+	if err != nil {
+		return err
+	}
+
+	err = index.Index(snap.Id().String(), searchableBug)
 	if err != nil {
 		return err
 	}

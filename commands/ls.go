@@ -110,7 +110,10 @@ func runLs(env *Env, opts lsOptions, args []string) error {
 		return err
 	}
 
-	allIds := env.backend.QueryBugs(q)
+	allIds, err := env.backend.QueryBugs(q)
+	if err != nil {
+		return err
+	}
 
 	bugExcerpt := make([]*cache.BugExcerpt, len(allIds))
 	for i, id := range allIds {
