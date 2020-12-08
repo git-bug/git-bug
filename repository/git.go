@@ -488,6 +488,11 @@ func (repo *GitRepo) GetLocalRemote() string {
 
 // EraseFromDisk delete this repository entirely from the disk
 func (repo *GitRepo) EraseFromDisk() error {
+	err := repo.Close()
+	if err != nil {
+		return err
+	}
+
 	path := filepath.Clean(strings.TrimSuffix(repo.path, string(filepath.Separator)+".git"))
 
 	// fmt.Println("Cleaning repo:", path)
