@@ -30,3 +30,27 @@ func IsErrMultipleMatch(err error) bool {
 	_, ok := err.(*ErrMultipleMatch)
 	return ok
 }
+
+type ErrOldFormatVersion struct {
+	formatVersion uint
+}
+
+type ErrNewFormatVersion struct {
+	formatVersion uint
+}
+
+func NewErrOldFormatVersion(formatVersion uint) *ErrOldFormatVersion {
+	return &ErrOldFormatVersion{formatVersion: formatVersion}
+}
+
+func NewErrNewFormatVersion(formatVersion uint) *ErrNewFormatVersion {
+	return &ErrNewFormatVersion{formatVersion: formatVersion}
+}
+
+func (e ErrOldFormatVersion) Error() string {
+	return fmt.Sprintf("outdated repository format %v, please use https://github.com/MichaelMure/git-bug-migration to upgrade", e.formatVersion)
+}
+
+func (e ErrNewFormatVersion) Error() string {
+	return fmt.Sprintf("your version of git-bug is too old for this repository (version %v), please upgrade to the latest version", e.formatVersion)
+}

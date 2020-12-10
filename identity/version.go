@@ -8,6 +8,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/lamport"
 	"github.com/MichaelMure/git-bug/util/text"
@@ -18,6 +19,8 @@ const formatVersion = 1
 
 // Version is a complete set of information about an Identity at a point in time.
 type Version struct {
+	FormatVersion uint
+
 	// The lamport time at which this version become effective
 	// The reference time is the bug edition lamport clock
 	// It must be the first field in this struct due to https://github.com/golang/go/issues/599
@@ -102,10 +105,14 @@ func (v *Version) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if aux.FormatVersion != formatVersion {
-		return fmt.Errorf("unknown format version %v", aux.FormatVersion)
+	if aux.FormatVersion < formatVersion {
+		return entity.NewErrOldFormatVersion(aux.FormatVersion)
+	}
+	if aux.FormatVersion > formatVersion {
+		return entity.NewErrNewFormatVersion(aux.FormatVersion)
 	}
 
+	v.FormatVersion = formatVersion
 	v.time = aux.Time
 	v.unixTime = aux.UnixTime
 	v.name = aux.Name

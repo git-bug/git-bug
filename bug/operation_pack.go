@@ -6,6 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
@@ -20,7 +21,8 @@ const formatVersion = 2
 // inside Git to form the complete ordered chain of operation to
 // apply to get the final state of the Bug
 type OperationPack struct {
-	Operations []Operation
+	Operations    []Operation
+	FormatVersion uint
 
 	// Private field so not serialized
 	commitHash repository.Hash
@@ -47,11 +49,13 @@ func (opp *OperationPack) UnmarshalJSON(data []byte) error {
 	}
 
 	if aux.Version < formatVersion {
-		return fmt.Errorf("outdated repository format, please use https://github.com/MichaelMure/git-bug-migration to upgrade")
+		return entity.NewErrOldFormatVersion(aux.Version)
 	}
 	if aux.Version > formatVersion {
-		return fmt.Errorf("your version of git-bug is too old for this repository (version %v), please upgrade to the latest version", aux.Version)
+		return entity.NewErrNewFormatVersion(aux.Version)
 	}
+
+	opp.FormatVersion = formatVersion
 
 	for _, raw := range aux.Operations {
 		var t struct {
