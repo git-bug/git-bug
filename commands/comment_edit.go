@@ -16,7 +16,7 @@ func newCommentEditCommand() *cobra.Command {
 	options := commentEditOptions{}
 
 	cmd := &cobra.Command{
-		Use:      "edit <commentid>",
+		Use:      "edit [COMMENT_ID]",
 		Short:    "Edit an existing comment on a bug.",
 		Args:     cobra.ExactArgs(1),
 		PreRunE:  loadBackendEnsureUser(env),
