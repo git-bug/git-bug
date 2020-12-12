@@ -2,6 +2,7 @@ package github
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/shurcooL/githubv4"
@@ -29,6 +30,7 @@ type timelineIterator struct {
 	issueEdit   indexer
 	commentEdit indexer
 
+	// Alex: It would be really help clearity to get rid of this variable.
 	// lastEndCursor cache the timeline end cursor for one iteration
 	lastEndCursor githubv4.String
 }
@@ -100,7 +102,7 @@ func NewIterator(ctx context.Context, client *githubv4.Client, capacity int, own
 
 // init issue timeline variables
 func (i *iterator) initTimelineQueryVariables() {
-	i.timeline.variables["issueFirst"] = githubv4.Int(1)
+	i.timeline.variables["issueFirst"] = githubv4.Int(1) // each query one single issue only
 	i.timeline.variables["issueAfter"] = (*githubv4.String)(nil)
 	i.timeline.variables["issueSince"] = githubv4.DateTime{Time: i.since}
 	i.timeline.variables["timelineFirst"] = githubv4.Int(i.capacity)
@@ -175,6 +177,10 @@ func (i *iterator) NextIssue() bool {
 		return false
 	}
 
+	if i.ctx.Err() != nil {
+		return false
+	}
+
 	// if $issueAfter variable is nil we can directly make the first query
 	if i.timeline.variables["issueAfter"] == (*githubv4.String)(nil) {
 		nextIssue := i.queryIssue()
@@ -223,6 +229,7 @@ func (i *iterator) NextTimelineItem() bool {
 
 	timelineItems := i.timeline.query.Repository.Issues.Nodes[0].TimelineItems
 	// after NextIssue call it's good to check wether we have some timelineItems items or not
+	// Alex: Correct?
 	if len(timelineItems.Edges) == 0 {
 		return false
 	}
@@ -240,14 +247,34 @@ func (i *iterator) NextTimelineItem() bool {
 
 	// more timelines, query them
 	i.timeline.variables["timelineAfter"] = timelineItems.PageInfo.EndCursor
+	// HACK
+	var query timelineItemsQuery
+	// var variables map[string]interface{}
+	variables := make(map[string]interface{})
+	variables["owner"] = i.timeline.variables["owner"]
+	variables["name"] = i.timeline.variables["name"]
+	variables["issueNumber"] = i.timeline.query.Repository.Issues.Nodes[0].Number
+	fmt.Println("### Alex using issue number ", i.timeline.query.Repository.Issues.Nodes[0].Number)
+	variables["timelineFirst"] = i.timeline.variables["timelineFirst"]
+	variables["timelineAfter"] = i.timeline.variables["timelineAfter"]
+	variables["commentEditLast"] = i.timeline.variables["commentEditLast"]
+	variables["commentEditBefore"] = i.timeline.variables["commentEditBefore"]
 
 	ctx, cancel := context.WithTimeout(i.ctx, defaultTimeout)
 	defer cancel()
 
-	if err := i.gc.Query(ctx, &i.timeline.query, i.timeline.variables); err != nil {
+	// if err := i.gc.Query(ctx, &i.timeline.query, i.timeline.variables); err != nil {
+	if err := i.gc.Query(ctx, &query, variables); err != nil {
 		i.err = err
 		return false
 	}
+	// HACK
+	fmt.Println("### Alex after the query")
+	i.timeline.variables["timelineFirst"] = variables["timelineFirst"]
+	i.timeline.variables["timelineAfter"] = variables["timelineAfter"]
+	i.timeline.variables["commentEditLast"] = variables["commentEditLast"]
+	i.timeline.variables["commentEditBefore"] = variables["commentEditBefore"]
+	i.timeline.query.Repository.Issues.Nodes[0].TimelineItems = query.Repository.Issue.TimelineItems
 
 	timelineItems = i.timeline.query.Repository.Issues.Nodes[0].TimelineItems
 	// (in case github returns something weird) just for safety: better return a false than a panic

@@ -98,9 +98,10 @@ type timelineItem struct {
 
 type issueTimeline struct {
 	authorEvent
-	Title string
-	Body  githubv4.String
-	Url   githubv4.URI
+	Title  string
+	Number githubv4.Int
+	Body   githubv4.String
+	Url    githubv4.URI
 
 	TimelineItems struct {
 		Edges []struct {
@@ -114,6 +115,21 @@ type issueTimeline struct {
 		Nodes    []userContentEdit
 		PageInfo pageInfo
 	} `graphql:"userContentEdits(last: $issueEditLast, before: $issueEditBefore)"`
+}
+
+// Alex
+type timelineItemsQuery struct {
+	Repository struct {
+		Issue struct {
+			TimelineItems struct {
+				Edges []struct {
+					Cursor githubv4.String
+					Node timelineItem
+				}
+				PageInfo pageInfo
+			} `graphql:"timelineItems(first: $timelineFirst, after: $timelineAfter)"`
+		} `graphql:"issue(number: $issueNumber)"`
+	} `graphql:"repository(owner: $owner, name: $name)"`
 }
 
 type issueEdit struct {
