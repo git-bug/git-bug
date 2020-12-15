@@ -6,6 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
@@ -47,10 +48,10 @@ func (opp *OperationPack) UnmarshalJSON(data []byte) error {
 	}
 
 	if aux.Version < formatVersion {
-		return fmt.Errorf("outdated repository format, please use https://github.com/MichaelMure/git-bug-migration to upgrade")
+		return entity.NewErrOldFormatVersion(aux.Version)
 	}
 	if aux.Version > formatVersion {
-		return fmt.Errorf("your version of git-bug is too old for this repository (version %v), please upgrade to the latest version", aux.Version)
+		return entity.NewErrNewFormatVersion(aux.Version)
 	}
 
 	for _, raw := range aux.Operations {

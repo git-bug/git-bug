@@ -8,6 +8,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/lamport"
 	"github.com/MichaelMure/git-bug/util/text"
@@ -102,8 +103,11 @@ func (v *Version) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if aux.FormatVersion != formatVersion {
-		return fmt.Errorf("unknown format version %v", aux.FormatVersion)
+	if aux.FormatVersion < formatVersion {
+		return entity.NewErrOldFormatVersion(aux.FormatVersion)
+	}
+	if aux.FormatVersion > formatVersion {
+		return entity.NewErrNewFormatVersion(aux.FormatVersion)
 	}
 
 	v.time = aux.Time
