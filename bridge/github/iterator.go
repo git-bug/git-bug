@@ -8,6 +8,29 @@ import (
 	"github.com/shurcooL/githubv4"
 )
 
+type iterator_A struct {
+        gc        *githubv4.Client
+        since     time.Time
+        ctx       context.Context
+        err       error
+        issueIter issueIter
+}
+
+type issueIter struct {
+        iterVars
+        query         issueQuery
+        // issueEditIter []issueEditIter
+        // timelineIter  []timelineIter
+}
+
+type iterVars struct {
+        index     int
+        capacity  int
+        variables varmap
+}
+
+type varmap map[string]interface{}
+
 type indexer struct{ index int }
 
 type issueEditIterator struct {

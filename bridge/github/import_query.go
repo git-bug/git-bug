@@ -203,3 +203,20 @@ type loginQuery struct {
 		Login string `graphql:"login"`
 	} `graphql:"viewer"`
 }
+
+type issueQuery struct {
+        Repository struct {
+                Issues struct {
+                        Nodes    []issue
+                        PageInfo pageInfo
+                } `graphql:"issues(first: $issueFirst, after: $issueAfter, orderBy: {field: CREATED_AT, direction: ASC})"` //, filterBy: {since: $issueSince})"`
+        } `graphql:"repository(owner: $owner, name: $name)"`
+}
+
+type issue struct {
+        authorEvent
+        Title  string
+        Number githubv4.Int
+        Body   githubv4.String
+        Url    githubv4.URI
+}
