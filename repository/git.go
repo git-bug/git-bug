@@ -35,6 +35,14 @@ type GitRepo struct {
 	localStorage billy.Filesystem
 }
 
+func (repo *GitRepo) ReadCommit(hash Hash) (Commit, error) {
+	panic("implement me")
+}
+
+func (repo *GitRepo) ResolveRef(ref string) (Hash, error) {
+	panic("implement me")
+}
+
 // OpenGitRepo determines if the given working directory is inside of a git repository,
 // and returns the corresponding GitRepo instance if it is.
 func OpenGitRepo(path string, clockLoaders []ClockLoader) (*GitRepo, error) {

@@ -88,6 +88,12 @@ type RepoBleve interface {
 	ClearBleveIndex(name string) error
 }
 
+type Commit struct {
+	Hash     Hash
+	Parents  []Hash
+	TreeHash Hash
+}
+
 // RepoData give access to the git data storage
 type RepoData interface {
 	// FetchRefs fetch git refs from a remote
@@ -115,11 +121,12 @@ type RepoData interface {
 	// StoreCommit will store a Git commit with the given Git tree
 	StoreCommitWithParent(treeHash Hash, parent Hash) (Hash, error)
 
+	ReadCommit(hash Hash) (Commit, error)
+
 	// GetTreeHash return the git tree hash referenced in a commit
 	GetTreeHash(commit Hash) (Hash, error)
 
-	// FindCommonAncestor will return the last common ancestor of two chain of commit
-	FindCommonAncestor(commit1 Hash, commit2 Hash) (Hash, error)
+	ResolveRef(ref string) (Hash, error)
 
 	// UpdateRef will create or update a Git reference
 	UpdateRef(ref string, hash Hash) error
@@ -136,7 +143,12 @@ type RepoData interface {
 	// CopyRef will create a new reference with the same value as another one
 	CopyRef(source string, dest string) error
 
+	// FindCommonAncestor will return the last common ancestor of two chain of commit
+	// Deprecated
+	FindCommonAncestor(commit1 Hash, commit2 Hash) (Hash, error)
+
 	// ListCommits will return the list of tree hashes of a ref, in chronological order
+	// Deprecated
 	ListCommits(ref string) ([]Hash, error)
 }
 

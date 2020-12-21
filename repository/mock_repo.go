@@ -179,7 +179,7 @@ var _ RepoData = &mockRepoData{}
 
 type commit struct {
 	treeHash Hash
-	parent   Hash
+	parents  []Hash
 }
 
 type mockRepoData struct {
@@ -247,9 +247,17 @@ func (r *mockRepoData) StoreCommitWithParent(treeHash Hash, parent Hash) (Hash, 
 	hash := Hash(fmt.Sprintf("%x", rawHash))
 	r.commits[hash] = commit{
 		treeHash: treeHash,
-		parent:   parent,
+		parents:  []Hash{parent},
 	}
 	return hash, nil
+}
+
+func (r *mockRepoData) ResolveRef(ref string) (Hash, error) {
+	h, ok := r.refs[ref]
+	if !ok {
+		return "", fmt.Errorf("unknown ref")
+	}
+	return h, nil
 }
 
 func (r *mockRepoData) UpdateRef(ref string, hash Hash) error {
@@ -303,10 +311,27 @@ func (r *mockRepoData) ListCommits(ref string) ([]Hash, error) {
 		}
 
 		hashes = append([]Hash{hash}, hashes...)
-		hash = commit.parent
+
+		if len(commit.parents) == 0 {
+			break
+		}
+		hash = commit.parents[0]
 	}
 
 	return hashes, nil
+}
+
+func (r *mockRepoData) ReadCommit(hash Hash) (Commit, error) {
+	c, ok := r.commits[hash]
+	if !ok {
+		return Commit{}, fmt.Errorf("unknown commit")
+	}
+
+	return Commit{
+		Hash:     hash,
+		Parents:  c.parents,
+		TreeHash: c.treeHash,
+	}, nil
 }
 
 func (r *mockRepoData) ReadTree(hash Hash) ([]TreeEntry, error) {
@@ -340,8 +365,11 @@ func (r *mockRepoData) FindCommonAncestor(hash1 Hash, hash2 Hash) (Hash, error) 
 		if !ok {
 			return "", fmt.Errorf("unknown commit %v", hash1)
 		}
-		ancestor1 = append(ancestor1, c.parent)
-		hash1 = c.parent
+		if len(c.parents) == 0 {
+			break
+		}
+		ancestor1 = append(ancestor1, c.parents[0])
+		hash1 = c.parents[0]
 	}
 
 	for {
@@ -356,11 +384,11 @@ func (r *mockRepoData) FindCommonAncestor(hash1 Hash, hash2 Hash) (Hash, error) 
 			return "", fmt.Errorf("unknown commit %v", hash1)
 		}
 
-		if c.parent == "" {
+		if c.parents[0] == "" {
 			return "", fmt.Errorf("no ancestor found")
 		}
 
-		hash2 = c.parent
+		hash2 = c.parents[0]
 	}
 }
 

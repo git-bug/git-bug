@@ -595,6 +595,14 @@ func (repo *GoGitRepo) FindCommonAncestor(commit1 Hash, commit2 Hash) (Hash, err
 	return Hash(commits[0].Hash.String()), nil
 }
 
+func (repo *GoGitRepo) ResolveRef(ref string) (Hash, error) {
+	r, err := repo.r.Reference(plumbing.ReferenceName(ref), false)
+	if err != nil {
+		return "", err
+	}
+	return Hash(r.Hash().String()), nil
+}
+
 // UpdateRef will create or update a Git reference
 func (repo *GoGitRepo) UpdateRef(ref string, hash Hash) error {
 	return repo.r.Storer.SetReference(plumbing.NewHashReference(plumbing.ReferenceName(ref), plumbing.NewHash(hash.String())))
@@ -677,6 +685,25 @@ func (repo *GoGitRepo) ListCommits(ref string) ([]Hash, error) {
 	}
 
 	return hashes, nil
+}
+
+func (repo *GoGitRepo) ReadCommit(hash Hash) (Commit, error) {
+	commit, err := repo.r.CommitObject(plumbing.NewHash(hash.String()))
+	if err != nil {
+		return Commit{}, err
+	}
+
+	parents := make([]Hash, len(commit.ParentHashes))
+	for i, parentHash := range commit.ParentHashes {
+		parents[i] = Hash(parentHash.String())
+	}
+
+	return Commit{
+		Hash:     hash,
+		Parents:  parents,
+		TreeHash: Hash(commit.TreeHash.String()),
+	}, nil
+
 }
 
 func (repo *GoGitRepo) AllClocks() (map[string]lamport.Clock, error) {

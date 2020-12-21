@@ -148,6 +148,11 @@ func RepoDataTest(t *testing.T, repo RepoData) {
 	require.NoError(t, err)
 	require.Equal(t, tree1read, tree1)
 
+	c2, err := repo.ReadCommit(commit2)
+	require.NoError(t, err)
+	c2expected := Commit{Hash: commit2, Parents: []Hash{commit1}, TreeHash: treeHash2}
+	require.Equal(t, c2expected, c2)
+
 	// Ref
 
 	exist1, err := repo.RefExist("refs/bugs/ref1")
@@ -160,6 +165,10 @@ func RepoDataTest(t *testing.T, repo RepoData) {
 	exist1, err = repo.RefExist("refs/bugs/ref1")
 	require.NoError(t, err)
 	require.True(t, exist1)
+
+	h, err := repo.ResolveRef("refs/bugs/ref1")
+	require.NoError(t, err)
+	require.Equal(t, commit2, h)
 
 	ls, err := repo.ListRefs("refs/bugs")
 	require.NoError(t, err)
