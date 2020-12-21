@@ -25,3 +25,7 @@ func Pull() {
 func Push() {
 
 }
+
+func Remove() error {
+	panic("")
+}
