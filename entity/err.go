@@ -31,28 +31,31 @@ func IsErrMultipleMatch(err error) bool {
 	return ok
 }
 
-// ErrOldFormatVersion indicate that the read data has a too old format.
-type ErrOldFormatVersion struct {
-	formatVersion uint
+type ErrInvalidFormat struct {
+	version  uint
+	expected uint
 }
 
-func NewErrOldFormatVersion(formatVersion uint) *ErrOldFormatVersion {
-	return &ErrOldFormatVersion{formatVersion: formatVersion}
+func NewErrInvalidFormat(version uint, expected uint) *ErrInvalidFormat {
+	return &ErrInvalidFormat{
+		version:  version,
+		expected: expected,
+	}
 }
 
-func (e ErrOldFormatVersion) Error() string {
-	return fmt.Sprintf("outdated repository format %v, please use https://github.com/MichaelMure/git-bug-migration to upgrade", e.formatVersion)
+func NewErrUnknowFormat(expected uint) *ErrInvalidFormat {
+	return &ErrInvalidFormat{
+		version:  0,
+		expected: expected,
+	}
 }
 
-// ErrNewFormatVersion indicate that the read data is too new for this software.
-type ErrNewFormatVersion struct {
-	formatVersion uint
-}
-
-func NewErrNewFormatVersion(formatVersion uint) *ErrNewFormatVersion {
-	return &ErrNewFormatVersion{formatVersion: formatVersion}
-}
-
-func (e ErrNewFormatVersion) Error() string {
-	return fmt.Sprintf("your version of git-bug is too old for this repository (version %v), please upgrade to the latest version", e.formatVersion)
+func (e ErrInvalidFormat) Error() string {
+	if e.version == 0 {
+		return fmt.Sprintf("unreadable data, expected format version %v", e.expected)
+	}
+	if e.version < e.expected {
+		return fmt.Sprintf("outdated repository format %v, please use https://github.com/MichaelMure/git-bug-migration to upgrade to format version %v", e.version, e.expected)
+	}
+	return fmt.Sprintf("your version of git-bug is too old for this repository (format version %v, expected %v), please upgrade to the latest version", e.version, e.expected)
 }
