@@ -31,6 +31,96 @@ type iterVars struct {
 
 type varmap map[string]interface{}
 
+
+func NewIterator_A(ctx context.Context, client *githubv4.Client, capacity int, owner, project string, since time.Time) *iterator_A {
+        i := &iterator_A{
+                gc:    client,
+                since: since,
+                ctx:   ctx,
+                issueIter: issueIter{
+                        iterVars:      newIterVars(capacity),
+                },
+        }
+	i.issueIter.variables.setOwnerProject(owner, project)
+	return i
+}
+
+func newIterVars(capacity int) iterVars {
+        return iterVars{
+                index:     -1,
+                capacity:  capacity,
+                variables: varmap{},
+        }
+}
+
+func (v *varmap) setOwnerProject(owner, project string) {
+        (*v)["owner"] = githubv4.String(owner)
+        (*v)["name"] = githubv4.String(project)
+}
+
+func (i *iterator_A) currIssueItem() *issue {
+        return &i.issueIter.query.Repository.Issues.Nodes[i.issueIter.index]
+}
+
+// Error return last encountered error
+func (i *iterator_A) Error() error {
+        if i.err != nil {
+                return i.err
+        }
+        return i.ctx.Err() // might return nil
+}
+
+func (i *iterator_A) HasError() bool {
+        return i.err != nil || i.ctx.Err() != nil
+}
+
+func (i *iterator_A) NextIssue() bool {
+        if i.HasError() {
+                return false
+        }
+        index := &i.issueIter.index
+        issues := &i.issueIter.query.Repository.Issues
+        issueItems := &issues.Nodes
+        if 0 <= *index && *index < len(*issueItems)-1 {
+                *index += 1
+                return true
+        }
+
+        if !issues.PageInfo.HasNextPage {
+                return false
+        }
+        nextIssue := i.queryIssue()
+        return nextIssue
+}
+
+func (i *iterator_A) IssueValue() issue {
+        return *i.currIssueItem()
+}
+
+func (i *iterator_A) queryIssue() bool {
+        ctx, cancel := context.WithTimeout(i.ctx, defaultTimeout)
+        defer cancel()
+        if endCursor := i.issueIter.query.Repository.Issues.PageInfo.EndCursor; endCursor != "" {
+                i.issueIter.variables["issueAfter"] = endCursor
+        }
+        if err := i.gc.Query(ctx, &i.issueIter.query, i.issueIter.variables); err != nil {
+                i.err = err
+                return false
+        }
+        // i.resetIssueEditVars()
+        // i.resetTimelineVars()
+        issueItems := &i.issueIter.query.Repository.Issues.Nodes
+        if len(*issueItems) <= 0 {
+                i.issueIter.index = -1
+                return false
+        }
+        i.issueIter.index = 0
+        return true
+}
+
+
+
+
 type indexer struct{ index int }
 
 type issueEditIterator struct {
