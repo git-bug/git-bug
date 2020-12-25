@@ -68,7 +68,6 @@ func MergeAll(repo repository.ClockedRepo, remote string) <-chan entity.MergeRes
 
 		remoteRefSpec := fmt.Sprintf(bugsRemoteRefPattern, remote)
 		remoteRefs, err := repo.ListRefs(remoteRefSpec)
-
 		if err != nil {
 			out <- entity.MergeResult{Err: err}
 			return

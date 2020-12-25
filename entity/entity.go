@@ -21,9 +21,7 @@ type Operation interface {
 	Validate() error
 }
 
-type OperationIterator struct {
-}
-
+// Definition hold the details defining one specialization of an Entity.
 type Definition struct {
 	// the name of the entity (bug, pull-request, ...)
 	typename string
@@ -59,6 +57,11 @@ func Read(def Definition, repo repository.ClockedRepo, id Id) (*Entity, error) {
 
 	ref := fmt.Sprintf("refs/%s/%s", def.namespace, id.String())
 
+	return read(def, repo, ref)
+}
+
+// read fetch from git and decode an Entity at an arbitrary git reference.
+func read(def Definition, repo repository.ClockedRepo, ref string) (*Entity, error) {
 	rootHash, err := repo.ResolveRef(ref)
 	if err != nil {
 		return nil, err
@@ -180,9 +183,22 @@ func Read(def Definition, repo repository.ClockedRepo, id Id) (*Entity, error) {
 		oppSlice = append(oppSlice, pack)
 	}
 	sort.Slice(oppSlice, func(i, j int) bool {
-		// TODO: no secondary ordering?
-		// might be useful for stable ordering
-		return oppSlice[i].PackTime < oppSlice[i].PackTime
+		// Primary ordering with the dedicated "pack" Lamport time that encode causality
+		// within the entity
+		if oppSlice[i].PackTime != oppSlice[j].PackTime {
+			return oppSlice[i].PackTime < oppSlice[i].PackTime
+		}
+		// We have equal PackTime, which means we had a concurrent edition. We can't tell which exactly
+		// came first. As a secondary arbitrary ordering, we can use the EditTime. It's unlikely to be
+		// enough but it can give us an edge to approach what really happened.
+		if oppSlice[i].EditTime != oppSlice[j].EditTime {
+			return oppSlice[i].EditTime < oppSlice[j].EditTime
+		}
+		// Well, what now? We still need a total ordering, the most stable possible.
+		// As a last resort, we can order based on a hash of the serialized Operations in the
+		// operationPack. It doesn't carry much meaning but it's unbiased and hard to abuse.
+		// This is a lexicographic ordering.
+		return oppSlice[i].Id < oppSlice[j].Id
 	})
 
 	// Now that we ordered the operationPacks, we have the order of the Operations
@@ -270,6 +286,7 @@ func (e *Entity) CommitAdNeeded(repo repository.ClockedRepo) error {
 	return nil
 }
 
+// TODO: support commit signature
 func (e *Entity) Commit(repo repository.ClockedRepo) error {
 	if !e.NeedCommit() {
 		return fmt.Errorf("can't commit an entity with no pending operation")
