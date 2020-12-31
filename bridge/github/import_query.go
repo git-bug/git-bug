@@ -124,7 +124,7 @@ type timelineItemsQuery struct {
 			TimelineItems struct {
 				Edges []struct {
 					Cursor githubv4.String
-					Node timelineItem
+					Node   timelineItem
 				}
 				PageInfo pageInfo
 			} `graphql:"timelineItems(first: $timelineFirst, after: $timelineAfter)"`
@@ -205,18 +205,31 @@ type loginQuery struct {
 }
 
 type issueQuery struct {
-        Repository struct {
-                Issues struct {
-                        Nodes    []issue
-                        PageInfo pageInfo
-                } `graphql:"issues(first: $issueFirst, after: $issueAfter, orderBy: {field: CREATED_AT, direction: ASC})"` //, filterBy: {since: $issueSince})"`
-        } `graphql:"repository(owner: $owner, name: $name)"`
+	Repository struct {
+		Issues struct {
+			Nodes    []issue
+			PageInfo pageInfo
+		} `graphql:"issues(first: $issueFirst, after: $issueAfter, orderBy: {field: CREATED_AT, direction: ASC})"` //, filterBy: {since: $issueSince})"`
+	} `graphql:"repository(owner: $owner, name: $name)"`
 }
 
 type issue struct {
-        authorEvent
-        Title  string
-        Number githubv4.Int
-        Body   githubv4.String
-        Url    githubv4.URI
+	authorEvent
+	Title  string
+	Number githubv4.Int
+	Body   githubv4.String
+	Url    githubv4.URI
+}
+
+type issueEditQuery_A struct {
+	Node struct {
+		Typename githubv4.String `graphql:"__typename"`
+		Issue    struct {
+			UserContentEdits struct {
+				Nodes      []userContentEdit
+				TotalCount githubv4.Int
+				PageInfo   pageInfo
+			} `graphql:"userContentEdits(last: $issueEditLast, before: $issueEditBefore)"`
+		} `graphql:"... on Issue"`
+	} `graphql:"node(id: $gqlNodeId)"`
 }

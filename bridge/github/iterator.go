@@ -19,8 +19,13 @@ type iterator_A struct {
 type issueIter struct {
         iterVars
         query         issueQuery
-        // issueEditIter []issueEditIter
+        issueEditIter []issueEditIter
         // timelineIter  []timelineIter
+}
+
+type issueEditIter struct {
+        iterVars
+        query issueEditQuery_A
 }
 
 type iterVars struct {
@@ -60,6 +65,14 @@ func (v *varmap) setOwnerProject(owner, project string) {
 
 func (i *iterator_A) currIssueItem() *issue {
         return &i.issueIter.query.Repository.Issues.Nodes[i.issueIter.index]
+}
+
+func (i *iterator_A) currIssueEditIter() *issueEditIter {
+        return &i.issueIter.issueEditIter[i.issueIter.index]
+}
+
+func (i *iterator_A) currIssueGqlNodeId() githubv4.ID {
+        return i.currIssueItem().Id
 }
 
 // Error return last encountered error
@@ -118,6 +131,64 @@ func (i *iterator_A) queryIssue() bool {
         return true
 }
 
+func (i *iterator_A) NextIssueEdit() bool {
+        if i.HasError() {
+                return false
+        }
+        ieIter := i.currIssueEditIter()
+        ieIdx := &ieIter.index
+        ieItems := ieIter.query.Node.Issue.UserContentEdits
+        if 0 <= *ieIdx && *ieIdx < len(ieItems.Nodes)-1 {
+                *ieIdx += 1
+                return i.nextValidIssueEdit()
+        }
+        if !ieItems.PageInfo.HasNextPage {
+                return false
+        }
+        querySucc := i.queryIssueEdit()
+        if !querySucc {
+                return false
+        }
+        return i.nextValidIssueEdit()
+}
+
+func (i *iterator_A) nextValidIssueEdit() bool {
+        // issueEdit.Diff == nil happen if the event is older than early 2018, Github doesn't have the data before that.
+        // Best we can do is to ignore the event.
+        if issueEdit := i.IssueEditValue(); issueEdit.Diff == nil || string(*issueEdit.Diff) == "" {
+                return i.NextIssueEdit()
+        }
+        return true
+}
+
+func (i *iterator_A) IssueEditValue() userContentEdit {
+        iei := i.currIssueEditIter()
+        return iei.query.Node.Issue.UserContentEdits.Nodes[iei.index]
+}
+
+func (i *iterator_A) queryIssueEdit() bool {
+        ctx, cancel := context.WithTimeout(i.ctx, defaultTimeout)
+        defer cancel()
+        iei := i.currIssueEditIter()
+        if endCursor := iei.query.Node.Issue.UserContentEdits.PageInfo.EndCursor; endCursor != "" {
+                iei.variables["issueEditBefore"] = endCursor
+        }
+        iei.variables["gqlNodeId"] = i.currIssueGqlNodeId()
+        if err := i.gc.Query(ctx, &iei.query, iei.variables); err != nil {
+                i.err = err
+                return false
+        }
+        issueEditItems := iei.query.Node.Issue.UserContentEdits.Nodes
+        if len(issueEditItems) <= 0 {
+                iei.index = -1
+                return false
+        }
+        // The UserContentEditConnection in the Github API serves its elements in reverse chronological
+        // order. For our purpose we have to reverse the edits.
+        reverseEdits(issueEditItems)
+        iei.index = 0
+        return true
+}
 
 
 
