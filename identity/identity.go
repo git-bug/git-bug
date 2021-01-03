@@ -344,7 +344,7 @@ func (i *Identity) Commit(repo repository.ClockedRepo) error {
 
 		var commitHash repository.Hash
 		if lastCommit != "" {
-			commitHash, err = repo.StoreCommitWithParent(treeHash, lastCommit)
+			commitHash, err = repo.StoreCommit(treeHash, lastCommit)
 		} else {
 			commitHash, err = repo.StoreCommit(treeHash)
 		}
@@ -516,6 +516,15 @@ func (i *Identity) AvatarUrl() string {
 // Keys return the last version of the valid keys
 func (i *Identity) Keys() []*Key {
 	return i.lastVersion().keys
+}
+
+// SigningKey return the key that should be used to sign new messages. If no key is available, return nil.
+func (i *Identity) SigningKey() *Key {
+	keys := i.Keys()
+	if len(keys) > 0 {
+		return keys[0]
+	}
+	return nil
 }
 
 // ValidKeysAtTime return the set of keys valid at a given lamport time

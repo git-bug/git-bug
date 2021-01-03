@@ -135,7 +135,8 @@ func RepoDataTest(t *testing.T, repo RepoData) {
 	require.NoError(t, err)
 	require.Equal(t, treeHash1, treeHash1Read)
 
-	commit2, err := repo.StoreCommitWithParent(treeHash2, commit1)
+	// commit with a parent
+	commit2, err := repo.StoreCommit(treeHash2, commit1)
 	require.NoError(t, err)
 	require.True(t, commit2.IsValid())
 
@@ -187,7 +188,7 @@ func RepoDataTest(t *testing.T, repo RepoData) {
 
 	// Graph
 
-	commit3, err := repo.StoreCommitWithParent(treeHash1, commit1)
+	commit3, err := repo.StoreCommit(treeHash1, commit1)
 	require.NoError(t, err)
 
 	ancestorHash, err := repo.FindCommonAncestor(commit2, commit3)
@@ -236,4 +237,23 @@ func randomData() []byte {
 		b[i] = letterRunes[rand.Intn(len(letterRunes))]
 	}
 	return b
+}
+
+func makeCommit(t *testing.T, repo RepoData, parents ...Hash) Hash {
+	blobHash, err := repo.StoreData(randomData())
+	require.NoError(t, err)
+
+	treeHash, err := repo.StoreTree([]TreeEntry{
+		{
+			ObjectType: Blob,
+			Hash:       blobHash,
+			Name:       "foo",
+		},
+	})
+	require.NoError(t, err)
+
+	commitHash, err := repo.StoreCommit(treeHash, parents...)
+	require.NoError(t, err)
+
+	return commitHash
 }

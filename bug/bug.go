@@ -426,7 +426,7 @@ func (bug *Bug) Commit(repo repository.ClockedRepo) error {
 
 	// Write a Git commit referencing the tree, with the previous commit as parent
 	if bug.lastCommit != "" {
-		hash, err = repo.StoreCommitWithParent(hash, bug.lastCommit)
+		hash, err = repo.StoreCommit(hash, bug.lastCommit)
 	} else {
 		hash, err = repo.StoreCommit(hash)
 	}
@@ -524,7 +524,7 @@ func (bug *Bug) Merge(repo repository.Repo, other Interface) (bool, error) {
 		}
 
 		// create a new commit with the correct ancestor
-		hash, err := repo.StoreCommitWithParent(treeHash, bug.lastCommit)
+		hash, err := repo.StoreCommit(treeHash, bug.lastCommit)
 
 		if err != nil {
 			return false, err

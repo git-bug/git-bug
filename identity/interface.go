@@ -36,6 +36,9 @@ type Interface interface {
 	// Can be empty.
 	Keys() []*Key
 
+	// SigningKey return the key that should be used to sign new messages. If no key is available, return nil.
+	SigningKey() *Key
+
 	// ValidKeysAtTime return the set of keys valid at a given lamport time for a given clock of another entity
 	// Can be empty.
 	ValidKeysAtTime(clockName string, time lamport.Time) []*Key

@@ -3,6 +3,8 @@ package repository
 import (
 	"io/ioutil"
 	"log"
+
+	"github.com/99designs/keyring"
 )
 
 // This is intended for testing only
@@ -34,7 +36,11 @@ func CreateGoGitTestRepo(bare bool) TestedRepo {
 		log.Fatal("failed to set user.email for test repository: ", err)
 	}
 
-	return repo
+	// make sure we use a mock keyring for testing to not interact with the global system
+	return &replaceKeyring{
+		TestedRepo: repo,
+		keyring:    keyring.NewArrayKeyring(nil),
+	}
 }
 
 func SetupGoGitReposAndRemote() (repoA, repoB, remote TestedRepo) {

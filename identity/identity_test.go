@@ -36,18 +36,18 @@ func TestIdentityCommitLoad(t *testing.T) {
 
 	// multiple versions
 
-	identity, err = NewIdentityFull(repo, "René Descartes", "rene.descartes@example.com", "", "", []*Key{{PubKey: "pubkeyA"}})
+	identity, err = NewIdentityFull(repo, "René Descartes", "rene.descartes@example.com", "", "", []*Key{generatePublicKey()})
 	require.NoError(t, err)
 
 	idBeforeCommit = identity.Id()
 
 	err = identity.Mutate(repo, func(orig *Mutator) {
-		orig.Keys = []*Key{{PubKey: "pubkeyB"}}
+		orig.Keys = []*Key{generatePublicKey()}
 	})
 	require.NoError(t, err)
 
 	err = identity.Mutate(repo, func(orig *Mutator) {
-		orig.Keys = []*Key{{PubKey: "pubkeyC"}}
+		orig.Keys = []*Key{generatePublicKey()}
 	})
 	require.NoError(t, err)
 
@@ -70,13 +70,13 @@ func TestIdentityCommitLoad(t *testing.T) {
 
 	err = identity.Mutate(repo, func(orig *Mutator) {
 		orig.Email = "rene@descartes.com"
-		orig.Keys = []*Key{{PubKey: "pubkeyD"}}
+		orig.Keys = []*Key{generatePublicKey()}
 	})
 	require.NoError(t, err)
 
 	err = identity.Mutate(repo, func(orig *Mutator) {
 		orig.Email = "rene@descartes.com"
-		orig.Keys = []*Key{{PubKey: "pubkeyD"}, {PubKey: "pubkeyE"}}
+		orig.Keys = []*Key{generatePublicKey(), generatePublicKey()}
 	})
 	require.NoError(t, err)
 
@@ -123,49 +123,45 @@ func commitsAreSet(t *testing.T, identity *Identity) {
 
 // Test that the correct crypto keys are returned for a given lamport time
 func TestIdentity_ValidKeysAtTime(t *testing.T) {
+	pubKeyA := generatePublicKey()
+	pubKeyB := generatePublicKey()
+	pubKeyC := generatePublicKey()
+	pubKeyD := generatePublicKey()
+	pubKeyE := generatePublicKey()
+
 	identity := Identity{
 		versions: []*version{
 			{
 				times: map[string]lamport.Time{"foo": 100},
-				keys: []*Key{
-					{PubKey: "pubkeyA"},
-				},
+				keys:  []*Key{pubKeyA},
 			},
 			{
 				times: map[string]lamport.Time{"foo": 200},
-				keys: []*Key{
-					{PubKey: "pubkeyB"},
-				},
+				keys:  []*Key{pubKeyB},
 			},
 			{
 				times: map[string]lamport.Time{"foo": 201},
-				keys: []*Key{
-					{PubKey: "pubkeyC"},
-				},
+				keys:  []*Key{pubKeyC},
 			},
 			{
 				times: map[string]lamport.Time{"foo": 201},
-				keys: []*Key{
-					{PubKey: "pubkeyD"},
-				},
+				keys:  []*Key{pubKeyD},
 			},
 			{
 				times: map[string]lamport.Time{"foo": 300},
-				keys: []*Key{
-					{PubKey: "pubkeyE"},
-				},
+				keys:  []*Key{pubKeyE},
 			},
 		},
 	}
 
 	require.Nil(t, identity.ValidKeysAtTime("foo", 10))
-	require.Equal(t, identity.ValidKeysAtTime("foo", 100), []*Key{{PubKey: "pubkeyA"}})
-	require.Equal(t, identity.ValidKeysAtTime("foo", 140), []*Key{{PubKey: "pubkeyA"}})
-	require.Equal(t, identity.ValidKeysAtTime("foo", 200), []*Key{{PubKey: "pubkeyB"}})
-	require.Equal(t, identity.ValidKeysAtTime("foo", 201), []*Key{{PubKey: "pubkeyD"}})
-	require.Equal(t, identity.ValidKeysAtTime("foo", 202), []*Key{{PubKey: "pubkeyD"}})
-	require.Equal(t, identity.ValidKeysAtTime("foo", 300), []*Key{{PubKey: "pubkeyE"}})
-	require.Equal(t, identity.ValidKeysAtTime("foo", 3000), []*Key{{PubKey: "pubkeyE"}})
+	require.Equal(t, identity.ValidKeysAtTime("foo", 100), []*Key{pubKeyA})
+	require.Equal(t, identity.ValidKeysAtTime("foo", 140), []*Key{pubKeyA})
+	require.Equal(t, identity.ValidKeysAtTime("foo", 200), []*Key{pubKeyB})
+	require.Equal(t, identity.ValidKeysAtTime("foo", 201), []*Key{pubKeyD})
+	require.Equal(t, identity.ValidKeysAtTime("foo", 202), []*Key{pubKeyD})
+	require.Equal(t, identity.ValidKeysAtTime("foo", 300), []*Key{pubKeyE})
+	require.Equal(t, identity.ValidKeysAtTime("foo", 3000), []*Key{pubKeyE})
 }
 
 // Test the immutable or mutable metadata search

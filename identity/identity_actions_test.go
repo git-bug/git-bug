@@ -9,7 +9,7 @@ import (
 )
 
 func TestPushPull(t *testing.T) {
-	repoA, repoB, remote := repository.SetupReposAndRemote()
+	repoA, repoB, remote := repository.SetupGoGitReposAndRemote()
 	defer repository.CleanupTestRepos(repoA, repoB, remote)
 
 	identity1, err := NewIdentity(repoA, "name1", "email1")

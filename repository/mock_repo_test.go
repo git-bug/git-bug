@@ -1,6 +1,8 @@
 package repository
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestMockRepo(t *testing.T) {
 	creator := func(bare bool) TestedRepo { return NewMockRepo() }

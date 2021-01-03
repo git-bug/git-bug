@@ -48,3 +48,13 @@ func defaultKeyring() (Keyring, error) {
 		},
 	})
 }
+
+// replaceKeyring allow to replace the Keyring of the underlying repo
+type replaceKeyring struct {
+	TestedRepo
+	keyring Keyring
+}
+
+func (rk replaceKeyring) Keyring() Keyring {
+	return rk.keyring
+}

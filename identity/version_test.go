@@ -18,29 +18,23 @@ func makeIdentityTestRepo(t *testing.T) repository.ClockedRepo {
 
 	clock1, err := repo.GetOrCreateClock("foo")
 	require.NoError(t, err)
-	err = clock1.Witness(42) // clock goes to 43
+	err = clock1.Witness(42)
 	require.NoError(t, err)
 
 	clock2, err := repo.GetOrCreateClock("bar")
 	require.NoError(t, err)
-	err = clock2.Witness(34) // clock goes to 35
+	err = clock2.Witness(34)
 	require.NoError(t, err)
 
 	return repo
 }
 
-func TestVersionSerialize(t *testing.T) {
+func TestVersionJSON(t *testing.T) {
 	repo := makeIdentityTestRepo(t)
 
 	keys := []*Key{
-		{
-			Fingerprint: "fingerprint1",
-			PubKey:      "pubkey1",
-		},
-		{
-			Fingerprint: "fingerprint2",
-			PubKey:      "pubkey2",
-		},
+		generatePublicKey(),
+		generatePublicKey(),
 	}
 
 	before, err := newVersion(repo, "name", "email", "login", "avatarUrl", keys)
@@ -57,8 +51,8 @@ func TestVersionSerialize(t *testing.T) {
 		avatarURL: "avatarUrl",
 		unixTime:  time.Now().Unix(),
 		times: map[string]lamport.Time{
-			"foo": 43,
-			"bar": 35,
+			"foo": 42,
+			"bar": 34,
 		},
 		keys:  keys,
 		nonce: before.nonce,

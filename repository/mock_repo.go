@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"bytes"
 	"crypto/sha1"
 	"fmt"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"github.com/blevesearch/bleve"
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/memfs"
+	"golang.org/x/crypto/openpgp"
 
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
@@ -180,6 +182,7 @@ var _ RepoData = &mockRepoData{}
 type commit struct {
 	treeHash Hash
 	parents  []Hash
+	sig      string
 }
 
 type mockRepoData struct {
@@ -198,12 +201,12 @@ func NewMockRepoData() *mockRepoData {
 	}
 }
 
-// PushRefs push git refs to a remote
-func (r *mockRepoData) PushRefs(remote string, refSpec string) (string, error) {
+func (r *mockRepoData) FetchRefs(remote string, refSpec string) (string, error) {
 	return "", nil
 }
 
-func (r *mockRepoData) FetchRefs(remote string, refSpec string) (string, error) {
+// PushRefs push git refs to a remote
+func (r *mockRepoData) PushRefs(remote string, refSpec string) (string, error) {
 	return "", nil
 }
 
@@ -216,7 +219,6 @@ func (r *mockRepoData) StoreData(data []byte) (Hash, error) {
 
 func (r *mockRepoData) ReadData(hash Hash) ([]byte, error) {
 	data, ok := r.blobs[hash]
-
 	if !ok {
 		return nil, fmt.Errorf("unknown hash")
 	}
@@ -231,107 +233,6 @@ func (r *mockRepoData) StoreTree(entries []TreeEntry) (Hash, error) {
 	r.trees[hash] = buffer.String()
 
 	return hash, nil
-}
-
-func (r *mockRepoData) StoreCommit(treeHash Hash) (Hash, error) {
-	rawHash := sha1.Sum([]byte(treeHash))
-	hash := Hash(fmt.Sprintf("%x", rawHash))
-	r.commits[hash] = commit{
-		treeHash: treeHash,
-	}
-	return hash, nil
-}
-
-func (r *mockRepoData) StoreCommitWithParent(treeHash Hash, parent Hash) (Hash, error) {
-	rawHash := sha1.Sum([]byte(treeHash + parent))
-	hash := Hash(fmt.Sprintf("%x", rawHash))
-	r.commits[hash] = commit{
-		treeHash: treeHash,
-		parents:  []Hash{parent},
-	}
-	return hash, nil
-}
-
-func (r *mockRepoData) ResolveRef(ref string) (Hash, error) {
-	h, ok := r.refs[ref]
-	if !ok {
-		return "", fmt.Errorf("unknown ref")
-	}
-	return h, nil
-}
-
-func (r *mockRepoData) UpdateRef(ref string, hash Hash) error {
-	r.refs[ref] = hash
-	return nil
-}
-
-func (r *mockRepoData) RemoveRef(ref string) error {
-	delete(r.refs, ref)
-	return nil
-}
-
-func (r *mockRepoData) RefExist(ref string) (bool, error) {
-	_, exist := r.refs[ref]
-	return exist, nil
-}
-
-func (r *mockRepoData) CopyRef(source string, dest string) error {
-	hash, exist := r.refs[source]
-
-	if !exist {
-		return fmt.Errorf("Unknown ref")
-	}
-
-	r.refs[dest] = hash
-	return nil
-}
-
-func (r *mockRepoData) ListRefs(refPrefix string) ([]string, error) {
-	var keys []string
-
-	for k := range r.refs {
-		if strings.HasPrefix(k, refPrefix) {
-			keys = append(keys, k)
-		}
-	}
-
-	return keys, nil
-}
-
-func (r *mockRepoData) ListCommits(ref string) ([]Hash, error) {
-	var hashes []Hash
-
-	hash := r.refs[ref]
-
-	for {
-		commit, ok := r.commits[hash]
-
-		if !ok {
-			break
-		}
-
-		hashes = append([]Hash{hash}, hashes...)
-
-		if len(commit.parents) == 0 {
-			break
-		}
-		hash = commit.parents[0]
-	}
-
-	return hashes, nil
-}
-
-func (r *mockRepoData) ReadCommit(hash Hash) (Commit, error) {
-	c, ok := r.commits[hash]
-	if !ok {
-		return Commit{}, fmt.Errorf("unknown commit")
-	}
-
-	return Commit{
-		Hash:     hash,
-		Parents:  c.parents,
-		TreeHash: c.treeHash,
-	}, nil
 }
 
 func (r *mockRepoData) ReadTree(hash Hash) ([]TreeEntry, error) {
@@ -355,6 +256,109 @@ func (r *mockRepoData) ReadTree(hash Hash) ([]TreeEntry, error) {
 	}
 
 	return readTreeEntries(data)
+}
+
+func (r *mockRepoData) StoreCommit(treeHash Hash, parents ...Hash) (Hash, error) {
+	return r.StoreSignedCommit(treeHash, nil, parents...)
+}
+
+func (r *mockRepoData) StoreSignedCommit(treeHash Hash, signKey *openpgp.Entity, parents ...Hash) (Hash, error) {
+	hasher := sha1.New()
+	hasher.Write([]byte(treeHash))
+	for _, parent := range parents {
+		hasher.Write([]byte(parent))
+	}
+	rawHash := hasher.Sum(nil)
+	hash := Hash(fmt.Sprintf("%x", rawHash))
+	c := commit{
+		treeHash: treeHash,
+		parents:  parents,
+	}
+	if signKey != nil {
+		// unlike go-git, we only sign the tree hash for simplicity instead of all the fields (parents ...)
+		var sig bytes.Buffer
+		if err := openpgp.DetachSign(&sig, signKey, strings.NewReader(string(treeHash)), nil); err != nil {
+			return "", err
+		}
+		c.sig = sig.String()
+	}
+	r.commits[hash] = c
+	return hash, nil
+}
+
+func (r *mockRepoData) ReadCommit(hash Hash) (Commit, error) {
+	c, ok := r.commits[hash]
+	if !ok {
+		return Commit{}, fmt.Errorf("unknown commit")
+	}
+
+	result := Commit{
+		Hash:     hash,
+		Parents:  c.parents,
+		TreeHash: c.treeHash,
+	}
+
+	if c.sig != "" {
+		result.SignedData = strings.NewReader(string(c.treeHash))
+		result.Signature = strings.NewReader(c.sig)
+	}
+
+	return result, nil
+}
+
+func (r *mockRepoData) GetTreeHash(commit Hash) (Hash, error) {
+	c, ok := r.commits[commit]
+	if !ok {
+		return "", fmt.Errorf("unknown commit")
+	}
+
+	return c.treeHash, nil
+}
+
+func (r *mockRepoData) ResolveRef(ref string) (Hash, error) {
+	h, ok := r.refs[ref]
+	if !ok {
+		return "", fmt.Errorf("unknown ref")
+	}
+	return h, nil
+}
+
+func (r *mockRepoData) UpdateRef(ref string, hash Hash) error {
+	r.refs[ref] = hash
+	return nil
+}
+
+func (r *mockRepoData) RemoveRef(ref string) error {
+	delete(r.refs, ref)
+	return nil
+}
+
+func (r *mockRepoData) ListRefs(refPrefix string) ([]string, error) {
+	var keys []string
+
+	for k := range r.refs {
+		if strings.HasPrefix(k, refPrefix) {
+			keys = append(keys, k)
+		}
+	}
+
+	return keys, nil
+}
+
+func (r *mockRepoData) RefExist(ref string) (bool, error) {
+	_, exist := r.refs[ref]
+	return exist, nil
+}
+
+func (r *mockRepoData) CopyRef(source string, dest string) error {
+	hash, exist := r.refs[source]
+
+	if !exist {
+		return fmt.Errorf("Unknown ref")
+	}
+
+	r.refs[dest] = hash
+	return nil
 }
 
 func (r *mockRepoData) FindCommonAncestor(hash1 Hash, hash2 Hash) (Hash, error) {
@@ -392,13 +396,8 @@ func (r *mockRepoData) FindCommonAncestor(hash1 Hash, hash2 Hash) (Hash, error) 
 	}
 }
 
-func (r *mockRepoData) GetTreeHash(commit Hash) (Hash, error) {
-	c, ok := r.commits[commit]
-	if !ok {
-		return "", fmt.Errorf("unknown commit")
-	}
-
-	return c.treeHash, nil
+func (r *mockRepoData) ListCommits(ref string) ([]Hash, error) {
+	return nonNativeListCommits(r, ref)
 }
 
 var _ RepoClock = &mockRepoClock{}

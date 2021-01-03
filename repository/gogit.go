@@ -20,6 +20,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"golang.org/x/crypto/openpgp"
 
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
@@ -521,12 +522,13 @@ func (repo *GoGitRepo) ReadTree(hash Hash) ([]TreeEntry, error) {
 }
 
 // StoreCommit will store a Git commit with the given Git tree
-func (repo *GoGitRepo) StoreCommit(treeHash Hash) (Hash, error) {
-	return repo.StoreCommitWithParent(treeHash, "")
+func (repo *GoGitRepo) StoreCommit(treeHash Hash, parents ...Hash) (Hash, error) {
+	return repo.StoreSignedCommit(treeHash, nil, parents...)
 }
 
-// StoreCommit will store a Git commit with the given Git tree
-func (repo *GoGitRepo) StoreCommitWithParent(treeHash Hash, parent Hash) (Hash, error) {
+// StoreCommit will store a Git commit with the given Git tree. If signKey is not nil, the commit
+// will be signed accordingly.
+func (repo *GoGitRepo) StoreSignedCommit(treeHash Hash, signKey *openpgp.Entity, parents ...Hash) (Hash, error) {
 	cfg, err := repo.r.Config()
 	if err != nil {
 		return "", err
@@ -547,8 +549,28 @@ func (repo *GoGitRepo) StoreCommitWithParent(treeHash Hash, parent Hash) (Hash, 
 		TreeHash: plumbing.NewHash(treeHash.String()),
 	}
 
-	if parent != "" {
-		commit.ParentHashes = []plumbing.Hash{plumbing.NewHash(parent.String())}
+	for _, parent := range parents {
+		commit.ParentHashes = append(commit.ParentHashes, plumbing.NewHash(parent.String()))
+	}
+
+	// Compute the signature if needed
+	if signKey != nil {
+		// first get the serialized commit
+		encoded := &plumbing.MemoryObject{}
+		if err := commit.Encode(encoded); err != nil {
+			return "", err
+		}
+		r, err := encoded.Reader()
+		if err != nil {
+			return "", err
+		}
+
+		// sign the data
+		var sig bytes.Buffer
+		if err := openpgp.ArmoredDetachSign(&sig, signKey, r, nil); err != nil {
+			return "", err
+		}
+		commit.PGPSignature = sig.String()
 	}
 
 	obj := repo.r.Storer.NewEncodedObject()
@@ -608,6 +630,13 @@ func (repo *GoGitRepo) UpdateRef(ref string, hash Hash) error {
 	return repo.r.Storer.SetReference(plumbing.NewHashReference(plumbing.ReferenceName(ref), plumbing.NewHash(hash.String())))
 }
 
+// MergeRef merge other into ref and update the reference
+// If the update is not fast-forward, the callback treeHashFn will be called for the caller to generate
+// the Tree to store in the merge commit.
+func (repo *GoGitRepo) MergeRef(ref string, otherRef string, treeHashFn func() Hash) error {
+	return nonNativeMerge(repo, ref, otherRef, treeHashFn)
+}
+
 // RemoveRef will remove a Git reference
 func (repo *GoGitRepo) RemoveRef(ref string) error {
 	return repo.r.Storer.RemoveReference(plumbing.ReferenceName(ref))
@@ -657,38 +686,16 @@ func (repo *GoGitRepo) CopyRef(source string, dest string) error {
 
 // ListCommits will return the list of tree hashes of a ref, in chronological order
 func (repo *GoGitRepo) ListCommits(ref string) ([]Hash, error) {
-	r, err := repo.r.Reference(plumbing.ReferenceName(ref), false)
-	if err != nil {
-		return nil, err
-	}
-
-	commit, err := repo.r.CommitObject(r.Hash())
-	if err != nil {
-		return nil, err
-	}
-	hashes := []Hash{Hash(commit.Hash.String())}
-
-	for {
-		commit, err = commit.Parent(0)
-		if err == object.ErrParentNotFound {
-			break
-		}
-		if err != nil {
-			return nil, err
-		}
-
-		if commit.NumParents() > 1 {
-			return nil, fmt.Errorf("multiple parents")
-		}
-
-		hashes = append([]Hash{Hash(commit.Hash.String())}, hashes...)
-	}
-
-	return hashes, nil
+	return nonNativeListCommits(repo, ref)
 }
 
 func (repo *GoGitRepo) ReadCommit(hash Hash) (Commit, error) {
-	commit, err := repo.r.CommitObject(plumbing.NewHash(hash.String()))
+	encoded, err := repo.r.Storer.EncodedObject(plumbing.CommitObject, plumbing.NewHash(hash.String()))
+	if err != nil {
+		return Commit{}, err
+	}
+
+	commit, err := object.DecodeCommit(repo.r.Storer, encoded)
 	if err != nil {
 		return Commit{}, err
 	}
@@ -698,12 +705,25 @@ func (repo *GoGitRepo) ReadCommit(hash Hash) (Commit, error) {
 		parents[i] = Hash(parentHash.String())
 	}
 
-	return Commit{
+	result := Commit{
 		Hash:     hash,
 		Parents:  parents,
 		TreeHash: Hash(commit.TreeHash.String()),
-	}, nil
+	}
 
+	if commit.PGPSignature != "" {
+		result.SignedData, err = encoded.Reader()
+		if err != nil {
+			return Commit{}, err
+		}
+
+		result.Signature, err = deArmorSignature(strings.NewReader(commit.PGPSignature))
+		if err != nil {
+			return Commit{}, err
+		}
+	}
+
+	return result, nil
 }
 
 func (repo *GoGitRepo) AllClocks() (map[string]lamport.Clock, error) {

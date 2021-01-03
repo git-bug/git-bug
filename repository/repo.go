@@ -3,15 +3,17 @@ package repository
 
 import (
 	"errors"
+	"io"
 
 	"github.com/blevesearch/bleve"
 	"github.com/go-git/go-billy/v5"
+	"golang.org/x/crypto/openpgp"
 
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
 var (
-	// ErrNotARepo is the error returned when the git repo root wan't be found
+	// ErrNotARepo is the error returned when the git repo root can't be found
 	ErrNotARepo = errors.New("not a git repository")
 	// ErrClockNotExist is the error returned when a clock can't be found
 	ErrClockNotExist = errors.New("clock doesn't exist")
@@ -89,9 +91,11 @@ type RepoBleve interface {
 }
 
 type Commit struct {
-	Hash     Hash
-	Parents  []Hash
-	TreeHash Hash
+	Hash       Hash
+	Parents    []Hash    // hashes of the parents, if any
+	TreeHash   Hash      // hash of the git Tree
+	SignedData io.Reader // if signed, reader for the signed data (likely, the serialized commit)
+	Signature  io.Reader // if signed, reader for the (non-armored) signature
 }
 
 // RepoData give access to the git data storage
@@ -116,20 +120,28 @@ type RepoData interface {
 	ReadTree(hash Hash) ([]TreeEntry, error)
 
 	// StoreCommit will store a Git commit with the given Git tree
-	StoreCommit(treeHash Hash) (Hash, error)
+	StoreCommit(treeHash Hash, parents ...Hash) (Hash, error)
 
-	// StoreCommit will store a Git commit with the given Git tree
-	StoreCommitWithParent(treeHash Hash, parent Hash) (Hash, error)
+	// StoreCommit will store a Git commit with the given Git tree. If signKey is not nil, the commit
+	// will be signed accordingly.
+	StoreSignedCommit(treeHash Hash, signKey *openpgp.Entity, parents ...Hash) (Hash, error)
 
+	// ReadCommit read a Git commit and returns some of its characteristic
 	ReadCommit(hash Hash) (Commit, error)
 
 	// GetTreeHash return the git tree hash referenced in a commit
 	GetTreeHash(commit Hash) (Hash, error)
 
+	// ResolveRef returns the hash of the target commit of the given ref
 	ResolveRef(ref string) (Hash, error)
 
 	// UpdateRef will create or update a Git reference
 	UpdateRef(ref string, hash Hash) error
+
+	// // MergeRef merge other into ref and update the reference
+	// // If the update is not fast-forward, the callback treeHashFn will be called for the caller to generate
+	// // the Tree to store in the merge commit.
+	// MergeRef(ref string, otherRef string, treeHashFn func() Hash) error
 
 	// RemoveRef will remove a Git reference
 	RemoveRef(ref string) error
@@ -148,7 +160,6 @@ type RepoData interface {
 	FindCommonAncestor(commit1 Hash, commit2 Hash) (Hash, error)
 
 	// ListCommits will return the list of tree hashes of a ref, in chronological order
-	// Deprecated
 	ListCommits(ref string) ([]Hash, error)
 }
 

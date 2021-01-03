@@ -71,6 +71,10 @@ func (IdentityStub) Keys() []*Key {
 	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 
+func (i *IdentityStub) SigningKey() *Key {
+	panic("identities needs to be properly loaded with identity.ReadLocal()")
+}
+
 func (IdentityStub) ValidKeysAtTime(_ string, _ lamport.Time) []*Key {
 	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }

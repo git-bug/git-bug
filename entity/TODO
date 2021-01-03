@@ -1,0 +1,8 @@
+- is the pack Lamport clock really useful vs only topological sort?
+  - topological order is enforced on the clocks, so what's the point?
+  - is EditTime equivalent to PackTime? no, avoid the gaps. Is it better?
+- how to do commit signature?
+- how to avoid id collision between Operations?
+- write tests for actions
+- migrate Bug to the new structure
+- migrate Identity to the new structure?

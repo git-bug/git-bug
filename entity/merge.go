@@ -8,14 +8,15 @@ import (
 type MergeStatus int
 
 const (
-	_ MergeStatus = iota
-	MergeStatusNew
-	MergeStatusInvalid
-	MergeStatusUpdated
-	MergeStatusNothing
-	MergeStatusError
+	_                  MergeStatus = iota
+	MergeStatusNew                 // a new Entity was created locally
+	MergeStatusInvalid             // the remote data is invalid
+	MergeStatusUpdated             // a local Entity has been updated
+	MergeStatusNothing             // no changes were made to a local Entity (already up to date)
+	MergeStatusError               // a terminal error happened
 )
 
+// MergeResult hold the result of a merge operation on an Entity.
 type MergeResult struct {
 	// Err is set when a terminal error occur in the process
 	Err error
@@ -55,6 +56,7 @@ func NewMergeError(err error, id Id) MergeResult {
 	}
 }
 
+// TODO: Interface --> *Entity ?
 func NewMergeStatus(status MergeStatus, id Id, entity Interface) MergeResult {
 	return MergeResult{
 		Id:     id,

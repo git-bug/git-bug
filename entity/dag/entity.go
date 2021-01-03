@@ -1,4 +1,6 @@
-package entity
+// Package dag contains the base common code to define an entity stored
+// in a chain of git objects, supporting actions like Push, Pull and Merge.
+package dag
 
 import (
 	"encoding/json"
@@ -7,6 +9,8 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/MichaelMure/git-bug/entity"
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
@@ -15,12 +19,6 @@ const refsPattern = "refs/%s/%s"
 const creationClockPattern = "%s-create"
 const editClockPattern = "%s-edit"
 
-type Operation interface {
-	Id() Id
-	// MarshalJSON() ([]byte, error)
-	Validate() error
-}
-
 // Definition hold the details defining one specialization of an Entity.
 type Definition struct {
 	// the name of the entity (bug, pull-request, ...)
@@ -28,29 +26,40 @@ type Definition struct {
 	// the namespace in git (bugs, prs, ...)
 	namespace string
 	// a function decoding a JSON message into an Operation
-	operationUnmarshaler func(raw json.RawMessage) (Operation, error)
-	// the expected format version number
+	operationUnmarshaler func(author identity.Interface, raw json.RawMessage) (Operation, error)
+	// a function loading an identity.Identity from its Id
+	identityResolver identity.Resolver
+	// the expected format version number, that can be used for data migration/upgrade
 	formatVersion uint
 }
 
+// Entity is a data structure stored in a chain of git objects, supporting actions like Push, Pull and Merge.
 type Entity struct {
 	Definition
 
-	ops     []Operation
+	// operations that are already stored in the repository
+	ops []Operation
+	// operations not yet stored in the repository
 	staging []Operation
 
-	packClock  lamport.Clock
+	// TODO: add here createTime and editTime
+
+	// // TODO: doesn't seems to actually be useful over the topological sort ? Timestamp can be generated from graph depth
+	// // TODO: maybe EditTime is better because it could spread ops in consecutive groups on the logical timeline --> avoid interleaving
+	// packClock  lamport.Clock
 	lastCommit repository.Hash
 }
 
+// New create an empty Entity
 func New(definition Definition) *Entity {
 	return &Entity{
 		Definition: definition,
-		packClock:  lamport.NewMemClock(),
+		// packClock:  lamport.NewMemClock(),
 	}
 }
 
-func Read(def Definition, repo repository.ClockedRepo, id Id) (*Entity, error) {
+// Read will read and decode a stored Entity from a repository
+func Read(def Definition, repo repository.ClockedRepo, id entity.Id) (*Entity, error) {
 	if err := id.Validate(); err != nil {
 		return nil, errors.Wrap(err, "invalid id")
 	}
@@ -109,32 +118,33 @@ func read(def Definition, repo repository.ClockedRepo, ref string) (*Entity, err
 
 	oppMap := make(map[repository.Hash]*operationPack)
 	var opsCount int
-	var packClock = lamport.NewMemClock()
+	// var packClock = lamport.NewMemClock()
 
 	for i := len(DFSOrder) - 1; i >= 0; i-- {
 		commit := DFSOrder[i]
-		firstCommit := i == len(DFSOrder)-1
+		isFirstCommit := i == len(DFSOrder)-1
+		isMerge := len(commit.Parents) > 1
 
 		// Verify DAG structure: single chronological root, so only the root
-		// can have no parents
-		if !firstCommit && len(commit.Parents) == 0 {
-			return nil, fmt.Errorf("multiple root in the entity DAG")
+		// can have no parents. Said otherwise, the DAG need to have exactly
+		// one leaf.
+		if !isFirstCommit && len(commit.Parents) == 0 {
+			return nil, fmt.Errorf("multiple leafs in the entity DAG")
 		}
 
-		opp, err := readOperationPack(def, repo, commit.TreeHash)
+		opp, err := readOperationPack(def, repo, commit)
 		if err != nil {
 			return nil, err
 		}
 
-		// Check that the lamport clocks are set
-		if firstCommit && opp.CreateTime <= 0 {
+		err = opp.Validate()
+		if err != nil {
+			return nil, err
+		}
+
+		// Check that the create lamport clock is set (not checked in Validate() as it's optional)
+		if isFirstCommit && opp.CreateTime <= 0 {
 			return nil, fmt.Errorf("creation lamport time not set")
-		}
-		if opp.EditTime <= 0 {
-			return nil, fmt.Errorf("edition lamport time not set")
-		}
-		if opp.PackTime <= 0 {
-			return nil, fmt.Errorf("pack lamport time not set")
 		}
 
 		// make sure that the lamport clocks causality match the DAG topology
@@ -150,9 +160,13 @@ func read(def Definition, repo repository.ClockedRepo, ref string) (*Entity, err
 
 			// to avoid an attack where clocks are pushed toward the uint64 rollover, make sure
 			// that the clocks don't jump too far in the future
-			if opp.EditTime-parentPack.EditTime > 10_000 {
+			// we ignore merge commits here to allow merging after a loooong time without breaking anything,
+			// as long as there is one valid chain of small hops, it's fine.
+			if !isMerge && opp.EditTime-parentPack.EditTime > 1_000_000 {
 				return nil, fmt.Errorf("lamport clock jumping too far in the future, likely an attack")
 			}
+
+			// TODO: PackTime is not checked
 		}
 
 		oppMap[commit.Hash] = opp
@@ -169,10 +183,10 @@ func read(def Definition, repo repository.ClockedRepo, ref string) (*Entity, err
 		if err != nil {
 			return nil, err
 		}
-		err = packClock.Witness(opp.PackTime)
-		if err != nil {
-			return nil, err
-		}
+		// err = packClock.Witness(opp.PackTime)
+		// if err != nil {
+		// 	return nil, err
+		// }
 	}
 
 	// Now that we know that the topological order and clocks are fine, we order the operationPacks
@@ -185,20 +199,20 @@ func read(def Definition, repo repository.ClockedRepo, ref string) (*Entity, err
 	sort.Slice(oppSlice, func(i, j int) bool {
 		// Primary ordering with the dedicated "pack" Lamport time that encode causality
 		// within the entity
-		if oppSlice[i].PackTime != oppSlice[j].PackTime {
-			return oppSlice[i].PackTime < oppSlice[i].PackTime
-		}
+		// if oppSlice[i].PackTime != oppSlice[j].PackTime {
+		// 	return oppSlice[i].PackTime < oppSlice[i].PackTime
+		// }
 		// We have equal PackTime, which means we had a concurrent edition. We can't tell which exactly
 		// came first. As a secondary arbitrary ordering, we can use the EditTime. It's unlikely to be
 		// enough but it can give us an edge to approach what really happened.
 		if oppSlice[i].EditTime != oppSlice[j].EditTime {
 			return oppSlice[i].EditTime < oppSlice[j].EditTime
 		}
-		// Well, what now? We still need a total ordering, the most stable possible.
+		// Well, what now? We still need a total ordering and the most stable possible.
 		// As a last resort, we can order based on a hash of the serialized Operations in the
 		// operationPack. It doesn't carry much meaning but it's unbiased and hard to abuse.
-		// This is a lexicographic ordering.
-		return oppSlice[i].Id < oppSlice[j].Id
+		// This is a lexicographic ordering on the stringified ID.
+		return oppSlice[i].Id() < oppSlice[j].Id()
 	})
 
 	// Now that we ordered the operationPacks, we have the order of the Operations
@@ -213,16 +227,18 @@ func read(def Definition, repo repository.ClockedRepo, ref string) (*Entity, err
 	return &Entity{
 		Definition: def,
 		ops:        ops,
+		// packClock:  packClock,
 		lastCommit: rootHash,
 	}, nil
 }
 
 // Id return the Entity identifier
-func (e *Entity) Id() Id {
+func (e *Entity) Id() entity.Id {
 	// id is the id of the first operation
 	return e.FirstOp().Id()
 }
 
+// Validate check if the Entity data is valid
 func (e *Entity) Validate() error {
 	// non-empty
 	if len(e.ops) == 0 && len(e.staging) == 0 {
@@ -244,7 +260,7 @@ func (e *Entity) Validate() error {
 	}
 
 	// Check that there is no colliding operation's ID
-	ids := make(map[Id]struct{})
+	ids := make(map[entity.Id]struct{})
 	for _, op := range e.Operations() {
 		if _, ok := ids[op.Id()]; ok {
 			return fmt.Errorf("id collision: %s", op.Id())
@@ -255,12 +271,12 @@ func (e *Entity) Validate() error {
 	return nil
 }
 
-// return the ordered operations
+// Operations return the ordered operations
 func (e *Entity) Operations() []Operation {
 	return append(e.ops, e.staging...)
 }
 
-// Lookup for the very first operation of the Entity.
+// FirstOp lookup for the very first operation of the Entity
 func (e *Entity) FirstOp() Operation {
 	for _, op := range e.ops {
 		return op
@@ -271,14 +287,29 @@ func (e *Entity) FirstOp() Operation {
 	return nil
 }
 
+// LastOp lookup for the very last operation of the Entity
+func (e *Entity) LastOp() Operation {
+	if len(e.staging) > 0 {
+		return e.staging[len(e.staging)-1]
+	}
+	if len(e.ops) > 0 {
+		return e.ops[len(e.ops)-1]
+	}
+	return nil
+}
+
+// Append add a new Operation to the Entity
 func (e *Entity) Append(op Operation) {
 	e.staging = append(e.staging, op)
 }
 
+// NeedCommit indicate if the in-memory state changed and need to be commit in the repository
 func (e *Entity) NeedCommit() bool {
 	return len(e.staging) > 0
 }
 
+// CommitAdNeeded execute a Commit only if necessary. This function is useful to avoid getting an error if the Entity
+// is already in sync with the repository.
 func (e *Entity) CommitAdNeeded(repo repository.ClockedRepo) error {
 	if e.NeedCommit() {
 		return e.Commit(repo)
@@ -286,6 +317,7 @@ func (e *Entity) CommitAdNeeded(repo repository.ClockedRepo) error {
 	return nil
 }
 
+// Commit write the appended operations in the repository
 // TODO: support commit signature
 func (e *Entity) Commit(repo repository.ClockedRepo) error {
 	if !e.NeedCommit() {
@@ -296,11 +328,19 @@ func (e *Entity) Commit(repo repository.ClockedRepo) error {
 		return errors.Wrapf(err, "can't commit a %s with invalid data", e.Definition.typename)
 	}
 
-	// increment the various clocks for this new operationPack
-	packTime, err := e.packClock.Increment()
-	if err != nil {
-		return err
+	var author identity.Interface
+	for _, op := range e.staging {
+		if author != nil && op.Author() != author {
+			return fmt.Errorf("operations with different author")
+		}
+		author = op.Author()
 	}
+
+	// increment the various clocks for this new operationPack
+	// packTime, err := e.packClock.Increment()
+	// if err != nil {
+	// 	return err
+	// }
 	editTime, err := repo.Increment(fmt.Sprintf(editClockPattern, e.namespace))
 	if err != nil {
 		return err
@@ -314,13 +354,14 @@ func (e *Entity) Commit(repo repository.ClockedRepo) error {
 	}
 
 	opp := &operationPack{
+		Author:     author,
 		Operations: e.staging,
 		CreateTime: creationTime,
 		EditTime:   editTime,
-		PackTime:   packTime,
+		// PackTime:   packTime,
 	}
 
-	treeHash, err := opp.write(e.Definition, repo)
+	treeHash, err := opp.Write(e.Definition, repo)
 	if err != nil {
 		return err
 	}
@@ -328,7 +369,7 @@ func (e *Entity) Commit(repo repository.ClockedRepo) error {
 	// Write a Git commit referencing the tree, with the previous commit as parent
 	var commitHash repository.Hash
 	if e.lastCommit != "" {
-		commitHash, err = repo.StoreCommitWithParent(treeHash, e.lastCommit)
+		commitHash, err = repo.StoreCommit(treeHash, e.lastCommit)
 	} else {
 		commitHash, err = repo.StoreCommit(treeHash)
 	}

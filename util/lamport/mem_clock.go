@@ -25,6 +25,14 @@
 
 */
 
+// Note: this code originally originate from Hashicorp's Serf but has been changed since to fit git-bug's need.
+
+// Note: this Lamport clock implementation is different than the algorithms you can find, notably Wikipedia or the
+//       original Serf implementation. The reason is lie to what constitute an event in this distributed system.
+//       Commonly, events happen when messages are sent or received, whereas in git-bug events happen when some data is
+//       written, but *not* when read. This is why Witness set the time to the max seen value instead of max seen value +1.
+//       See https://cs.stackexchange.com/a/133730/129795
+
 package lamport
 
 import (
@@ -72,12 +80,12 @@ WITNESS:
 	// If the other value is old, we do not need to do anything
 	cur := atomic.LoadUint64(&mc.counter)
 	other := uint64(v)
-	if other < cur {
+	if other <= cur {
 		return nil
 	}
 
 	// Ensure that our local clock is at least one ahead.
-	if !atomic.CompareAndSwapUint64(&mc.counter, cur, other+1) {
+	if !atomic.CompareAndSwapUint64(&mc.counter, cur, other) {
 		// CAS: CompareAndSwap
 		// The CAS failed, so we just retry. Eventually our CAS should
 		// succeed or a future witness will pass us by and our witness
