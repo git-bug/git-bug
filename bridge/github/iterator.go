@@ -20,12 +20,24 @@ type issueIter struct {
         iterVars
         query         issueQuery
         issueEditIter []issueEditIter
-        // timelineIter  []timelineIter
+        timelineIter  []timelineIter
 }
 
 type issueEditIter struct {
         iterVars
         query issueEditQuery_A
+}
+
+type timelineIter struct {
+        iterVars
+        query           timelineQuery
+        commentEditIter []commentEditIter
+}
+
+
+type commentEditIter struct {
+        iterVars
+        //query commentEditQuery
 }
 
 type iterVars struct {
@@ -47,6 +59,15 @@ func NewIterator_A(ctx context.Context, client *githubv4.Client, capacity int, o
                 },
         }
 	i.issueIter.variables.setOwnerProject(owner, project)
+	        for idx := range i.issueIter.issueEditIter {
+                ie := &i.issueIter.issueEditIter[idx]
+                ie.iterVars = newIterVars(capacity)
+        }
+        for i1 := range i.issueIter.timelineIter {
+                tli := &i.issueIter.timelineIter[i1]
+                tli.iterVars = newIterVars(capacity)
+	}
+	i.resetIssueVars()
 	return i
 }
 
@@ -63,12 +84,46 @@ func (v *varmap) setOwnerProject(owner, project string) {
         (*v)["name"] = githubv4.String(project)
 }
 
+func (i *iterator_A) resetIssueVars() {
+        vars := &i.issueIter.variables
+        (*vars)["issueFirst"] = githubv4.Int(i.issueIter.capacity)
+        (*vars)["issueAfter"] = (*githubv4.String)(nil)
+        // I am not sure if the since variable should be used.
+        //(*vars)["issueSince"] = githubv4.DateTime{Time: i.since}
+        i.issueIter.query.Repository.Issues.PageInfo.HasNextPage = true
+        i.issueIter.query.Repository.Issues.PageInfo.EndCursor = ""
+}
+
+func (i *iterator_A) resetIssueEditVars() {
+        for idx := range i.issueIter.issueEditIter {
+                ie := &i.issueIter.issueEditIter[idx]
+                ie.variables["issueEditLast"] = githubv4.Int(ie.capacity)
+                ie.variables["issueEditBefore"] = (*githubv4.String)(nil)
+                ie.query.Node.Issue.UserContentEdits.PageInfo.HasNextPage = true
+                ie.query.Node.Issue.UserContentEdits.PageInfo.EndCursor = ""
+        }
+}
+
+func (i *iterator_A) resetTimelineVars() {
+        for idx := range i.issueIter.timelineIter {
+                ip := &i.issueIter.timelineIter[idx]
+                ip.variables["timelineFirst"] = githubv4.Int(ip.capacity)
+                ip.variables["timelineAfter"] = (*githubv4.String)(nil)
+                ip.query.Node.Issue.TimelineItems.PageInfo.HasNextPage = true
+                ip.query.Node.Issue.TimelineItems.PageInfo.EndCursor = ""
+        }
+}
+
 func (i *iterator_A) currIssueItem() *issue {
         return &i.issueIter.query.Repository.Issues.Nodes[i.issueIter.index]
 }
 
 func (i *iterator_A) currIssueEditIter() *issueEditIter {
         return &i.issueIter.issueEditIter[i.issueIter.index]
+}
+
+func (i *iterator_A) currTimelineIter() *timelineIter {
+        return &i.issueIter.timelineIter[i.issueIter.index]
 }
 
 func (i *iterator_A) currIssueGqlNodeId() githubv4.ID {
@@ -120,8 +175,8 @@ func (i *iterator_A) queryIssue() bool {
                 i.err = err
                 return false
         }
-        // i.resetIssueEditVars()
-        // i.resetTimelineVars()
+        i.resetIssueEditVars()
+        i.resetTimelineVars()
         issueItems := &i.issueIter.query.Repository.Issues.Nodes
         if len(*issueItems) <= 0 {
                 i.issueIter.index = -1
@@ -187,6 +242,51 @@ func (i *iterator_A) queryIssueEdit() bool {
         // order. For our purpose we have to reverse the edits.
         reverseEdits(issueEditItems)
         iei.index = 0
+        return true
+}
+
+func (i *iterator_A) NextTimelineItem() bool {
+        if i.HasError() {
+                return false
+        }
+        tlIter := &i.issueIter.timelineIter[i.issueIter.index]
+        tlIdx := &tlIter.index
+        tlItems := tlIter.query.Node.Issue.TimelineItems
+        if 0 <= *tlIdx && *tlIdx < len(tlItems.Nodes)-1 {
+                *tlIdx += 1
+                return true
+        }
+        if !tlItems.PageInfo.HasNextPage {
+                return false
+        }
+        nextTlItem := i.queryTimeline()
+        return nextTlItem
+}
+
+func (i *iterator_A) TimelineItemValue() timelineItem {
+        tli := i.currTimelineIter()
+        return tli.query.Node.Issue.TimelineItems.Nodes[tli.index]
+}
+
+func (i *iterator_A) queryTimeline() bool {
+        ctx, cancel := context.WithTimeout(i.ctx, defaultTimeout)
+        defer cancel()
+        tli := i.currTimelineIter()
+        if endCursor := tli.query.Node.Issue.TimelineItems.PageInfo.EndCursor; endCursor != "" {
+                tli.variables["timelineAfter"] = endCursor
+        }
+        tli.variables["gqlNodeId"] = i.currIssueGqlNodeId()
+        if err := i.gc.Query(ctx, &tli.query, tli.variables); err != nil {
+                i.err = err
+                return false
+        }
+        //i.resetCommentEditVars()
+        timelineItems := &tli.query.Node.Issue.TimelineItems
+        if len(timelineItems.Nodes) <= 0 {
+                tli.index = -1
+                return false
+        }
+        tli.index = 0
         return true
 }
 

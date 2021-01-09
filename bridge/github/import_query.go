@@ -233,3 +233,15 @@ type issueEditQuery_A struct {
 		} `graphql:"... on Issue"`
 	} `graphql:"node(id: $gqlNodeId)"`
 }
+
+type timelineQuery struct {
+	Node struct {
+		Typename githubv4.String `graphql:"__typename"`
+		Issue    struct {
+			TimelineItems struct {
+				Nodes    []timelineItem
+				PageInfo pageInfo
+			} `graphql:"timelineItems(first: $timelineFirst, after: $timelineAfter)"`
+		} `graphql:"... on Issue"`
+	} `graphql:"node(id: $gqlNodeId)"`
+}
