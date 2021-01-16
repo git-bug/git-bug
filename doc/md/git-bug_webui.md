@@ -17,11 +17,12 @@ git-bug webui [flags]
 ### Options
 
 ```
-      --open        Automatically open the web UI in the default browser
-      --no-open     Prevent the automatic opening of the web UI in the default browser
-  -p, --port int    Port to listen to (default is random)
-      --read-only   Whether to run the web UI in read-only mode
-  -h, --help        help for webui
+      --host string   Network address or hostname to listen to (default 127.0.0.1) (default "127.0.0.1")
+      --open          Automatically open the web UI in the default browser
+      --no-open       Prevent the automatic opening of the web UI in the default browser
+  -p, --port int      Port to listen to (default is random)
+      --read-only     Whether to run the web UI in read-only mode
+  -h, --help          help for webui
 ```
 
 ### SEE ALSO
