@@ -245,3 +245,15 @@ type timelineQuery struct {
 		} `graphql:"... on Issue"`
 	} `graphql:"node(id: $gqlNodeId)"`
 }
+
+type commentEditQuery_A struct {
+	Node struct {
+		Typename     githubv4.String `graphql:"__typename"`
+		IssueComment struct {
+			UserContentEdits struct {
+				Nodes    []userContentEdit
+				PageInfo pageInfo
+			} `graphql:"userContentEdits(last: $commentEditLast, before: $commentEditBefore)"`
+		} `graphql:"... on IssueComment"`
+	} `graphql:"node(id: $gqlNodeId)"`
+}

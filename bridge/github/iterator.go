@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	
+        "github.com/pkg/errors"
 	"github.com/shurcooL/githubv4"
 )
 
@@ -37,7 +39,7 @@ type timelineIter struct {
 
 type commentEditIter struct {
         iterVars
-        //query commentEditQuery
+        query commentEditQuery_A
 }
 
 type iterVars struct {
@@ -128,6 +130,11 @@ func (i *iterator_A) currTimelineIter() *timelineIter {
 
 func (i *iterator_A) currIssueGqlNodeId() githubv4.ID {
         return i.currIssueItem().Id
+}
+
+func (i *iterator_A) currCommentEditIter() *commentEditIter {
+        timelineIter := i.currTimelineIter()
+        return &timelineIter.commentEditIter[timelineIter.index]
 }
 
 // Error return last encountered error
@@ -290,6 +297,78 @@ func (i *iterator_A) queryTimeline() bool {
         return true
 }
 
+func (i *iterator_A) NextCommentEdit() bool {
+        if i.HasError() {
+                return false
+        }
+
+        tmlnVal := i.TimelineItemValue()
+        if tmlnVal.Typename != "IssueComment" {
+                // The timeline iterator does not point to a comment.
+                i.err = errors.New("Call to NextCommentEdit() while timeline item is not a comment")
+                return false
+        }
+
+        cei := i.currCommentEditIter()
+        ceIdx := &cei.index
+        ceItems := &cei.query.Node.IssueComment.UserContentEdits
+        if 0 <= *ceIdx && *ceIdx < len(ceItems.Nodes)-1 {
+                *ceIdx += 1
+                return i.nextValidCommentEdit()
+        }
+        if !ceItems.PageInfo.HasNextPage {
+                return false
+        }
+        querySucc := i.queryCommentEdit()
+        if !querySucc {
+                return false
+        }
+        return i.nextValidCommentEdit()
+}
+
+func (i *iterator_A) nextValidCommentEdit() bool {
+        // if comment edit diff is a nil pointer or points to an empty string look for next value
+        if commentEdit := i.CommentEditValue(); commentEdit.Diff == nil || string(*commentEdit.Diff) == "" {
+                return i.NextCommentEdit()
+        }
+        return true
+}
+
+func (i *iterator_A) CommentEditValue() userContentEdit {
+        cei := i.currCommentEditIter()
+        return cei.query.Node.IssueComment.UserContentEdits.Nodes[cei.index]
+}
+
+
+func (i *iterator_A) queryCommentEdit() bool {
+        ctx, cancel := context.WithTimeout(i.ctx, defaultTimeout)
+        defer cancel()
+        cei := i.currCommentEditIter()
+
+        if endCursor := cei.query.Node.IssueComment.UserContentEdits.PageInfo.EndCursor; endCursor != "" {
+                cei.variables["commentEditBefore"] = endCursor
+        }
+        tmlnVal := i.TimelineItemValue()
+        if tmlnVal.Typename != "IssueComment" {
+                i.err = errors.New("Call to queryCommentEdit() while timeline item is not a comment")
+                return false
+        }
+        cei.variables["gqlNodeId"] = tmlnVal.IssueComment.Id
+        if err := i.gc.Query(ctx, &cei.query, cei.variables); err != nil {
+                i.err = err
+                return false
+        }
+        ceItems := cei.query.Node.IssueComment.UserContentEdits.Nodes
+        if len(ceItems) <= 0 {
+                cei.index = -1
+                return false
+        }
+        // The UserContentEditConnection in the Github API serves its elements in reverse chronological
+        // order. For our purpose we have to reverse the edits.
+        reverseEdits(ceItems)
+        cei.index = 0
+        return true
+}
 
 
 type indexer struct{ index int }
