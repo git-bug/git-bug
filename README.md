@@ -12,6 +12,7 @@
 [![GoDoc](https://godoc.org/github.com/MichaelMure/git-bug?status.svg)](https://godoc.org/github.com/MichaelMure/git-bug)
 [![Go Report Card](https://goreportcard.com/badge/github.com/MichaelMure/git-bug)](https://goreportcard.com/report/github.com/MichaelMure/git-bug)
 [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/the-git-bug/Lobby)
+![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/glancingmind/git-bug)
 
 </div>
 
@@ -47,6 +48,11 @@ Individually, those pieces are not especially complex but doing everything make 
 
 That's all !
 
+</details>
+
+<details><summary>Container Image</summary>
+
+  The latest build can be pulled as container image from [dockerhub](https://hub.docker.com/r/glancingmind/git-bug) via: `docker pull glancingmind/git-bug`
 </details>
 
 <details><summary>Linux packages</summary>
@@ -190,6 +196,37 @@ This web UI is entirely packed inside the same go binary and serve static conten
 
 The web UI interact with the backend through a GraphQL API. The schema is available [here](api/graphql/schema).
 
+## Container Image
+
+The container functions like the git-bug binary (with some small exception).  
+Just append the corresponding cli-commands at the end of the container invokation:
+```shell
+docker run -i -t glancingmind/git-bug <cli-command>
+```
+E.g.
+- Show help: `docker run -i -t glancingmind/git-bug --help`
+- Open terminalui: `docker run -i -t glancingmind/git-bug termui`
+
+### Small exceptions
+
+- For your convenience, the webui is started on port 3000, when no cli-command is given.
+  E.g.
+  
+  ```shell
+  docker run -i -t glancingmind/git-bug
+  ```
+
+- Also the container image includes a preconfigured issue-repository. 
+  This is your own personal and ready-to-go playground. Horay!
+  But if you want to use your own issue-repository, then mount it inside the container at the `/repository` path. E.g.
+  ```shell
+  docker run -i -t --rm -v <path-to-your-issue-repository>:/repository glancingmind/git-bug
+  ```
+  And don't forget to create a git-bug identity, as describted [here](https://github.com/GlancingMind/git-bug#cli-usage).
+  **NOTE** The user name and email of the Issue-repositories TestUser can be
+  overwritten by setting the ISSUE_REPO_USER_NAME and ISSUE_REPO_USER_EMAIL
+  as build arguments on container build.
+
 ## Bridges
 
 ### Importer implementations
@@ -285,6 +322,9 @@ git clone git@github.com:MichaelMure/git-bug.git
 ```
 
 You can now run `make` to build the project, or `make install` to install the binary in `$GOPATH/bin/`.
+
+Alternativly `docker build .` can be invoked from the root directory to build a container image.
+But be aware, that this will make a release build. Advantage, it is no longer required to have go installed on the system.
 
 To work on the web UI, have a look at [the dedicated Readme.](webui/Readme.md)
 
