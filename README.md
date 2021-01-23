@@ -226,6 +226,14 @@ E.g.
   **NOTE** The user name and email of the Issue-repositories TestUser can be
   overwritten by setting the ISSUE_REPO_USER_NAME and ISSUE_REPO_USER_EMAIL
   as build arguments on container build.
+- Additionaly the access tokens of git-bug-bridges aren't persisted unless
+  a directory from the container-host is mounted to git-bugs keyring directory
+  located at /root/.config/git-bug/keyring. For example see the following
+  command:
+
+  ```shell
+  docker run -i -t -v <local-keyring-directory>:/root/.config/git-bug/keyring glancingmind/git-bug bridge configure
+  ```
 
 ## Bridges
 

@@ -1,4 +1,4 @@
-FROM node:14-alpine AS build-webui
+FROM node:14-alpine AS webui-dependencies
 
 WORKDIR /src/webui
 COPY webui/package*.json ./
@@ -9,6 +9,12 @@ COPY api/graphql/schema .
 
 WORKDIR /src/webui
 COPY webui .
+
+#############################################
+# By making 'npm run build' as a separate build step, the startup time of the
+# dev-webui service (in docker-compose) can be reduced. As the dev-webui
+# doesn't require a build of the webui - only the dependencies.
+FROM webui-dependencies AS build-webui
 RUN npm run build
 
 #############################################
@@ -55,7 +61,9 @@ RUN /app/src/git-bug add \
         with a test user so you don't have to. If you want to use your \
         own issue-repository instead of this \"playground\", hop over to the \
         git-bug ReadMe at \
-        https://github.com/GlancingMind/git-bug/#small-exceptions"
+        https://github.com/GlancingMind/git-bug/#small-exceptions or if you \
+        used docker-compose take a look at the webui-ReadMe right over \
+        here: https://github.com/GlancingMind/git-bug/webui/Readme.md"
 
 #############################################
 FROM busybox AS release
