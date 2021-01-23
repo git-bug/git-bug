@@ -15,6 +15,7 @@
     "@types/react-router-dom": "^5.1.5",
     "clsx": "^1.1.1",
     "graphql": "^15.3.0",
+    "http-proxy-middleware": "^1.0.6",
     "moment": "^2.29.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
@@ -49,7 +50,6 @@
     "lint": "eslint src --ext .ts --ext .tsx --ext .js --ext .jsx --ext .graphql",
     "clean": "rimraf src/**.generated.* src/schema.json src/gqlTypes.* src/fragmentTypes.*"
   },
-  "proxy": "http://localhost:3001",
   "browserslist": [
     ">0.2%",
     "not dead",

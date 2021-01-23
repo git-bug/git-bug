@@ -1,0 +1,62 @@
+# See the README in the webui directory for some general information about
+# this setup.
+version: "3.4"
+services:
+  backend:
+    build: .
+    image: glancingmind/git-bug
+    expose:
+      - "3001"
+    ports:
+      - "3001:3001"
+    command: ["webui", "--host", "0.0.0.0", "--port", "3001", "--no-open"]
+    volumes:
+      - ${ISSUE_REPOSITORY:-playground-issue-repository-volume}:/repository
+      - ${KEYRING:-git-bug-bridge-keyring-volume}:/root/.config/git-bug/keyring
+
+  dev-webui:
+    build:
+      context: .
+      target: webui-dependencies
+    entrypoint: ["npm"]
+    command: ["start"]
+    expose:
+      - "3000"
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_PROXY: "http://backend:3001"
+    depends_on:
+      - backend
+    working_dir: /src/webui
+    volumes:
+      - ./webui:/src/webui
+      # Will overshadow the node_modules of the container host with the
+      # preinstalled node_modules of the webui. This shall prevent host
+      # dependend node_modules to be used inside the container.
+      - node_modules:/src/webui/node_modules
+
+  # This service shall sync the persisted node_modules from the dev-webui
+  # container over to the host. Otherwise the host node_module directory will
+  # be empty. Leading to unresolved module errors and no autocompletion in
+  # editors or IDEs. Syncing will happen everytime the package.json is changed.
+  sync-node_modules-to-host:
+    image: instrumentisto/rsync-ssh
+    entrypoint: ["/bin/sh", "-c",
+                'while true; do
+                  printf "Syncing node_modules to host...\n";
+                  rsync -az /container/node_modules/ /host/webui/node_modules;
+                  printf "Sync complete\n";
+                  inotifyd -c /host/webui/package.json;
+                done' ]
+    stop_grace_period: 2s
+    depends_on:
+      - dev-webui
+    volumes:
+      - ./webui:/host/webui
+      - node_modules:/container/node_modules:ro
+
+volumes:
+  playground-issue-repository-volume:
+  git-bug-bridge-keyring-volume:
+  node_modules:
