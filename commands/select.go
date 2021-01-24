@@ -31,6 +31,7 @@ The complementary command is "git bug deselect" performing the opposite operatio
 		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runSelect(env, args)
 		}),
+		ValidArgsFunction: completeBug(env),
 	}
 
 	return cmd

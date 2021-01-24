@@ -18,6 +18,7 @@ func newCommentCommand() *cobra.Command {
 		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runComment(env, args)
 		}),
+		ValidArgsFunction: completeBug(env),
 	}
 
 	cmd.AddCommand(newCommentAddCommand())

@@ -18,6 +18,7 @@ func newPullCommand() *cobra.Command {
 		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runPull(env, args)
 		}),
+		ValidArgsFunction: completeGitRemote(env),
 	}
 
 	return cmd

@@ -15,6 +15,7 @@ func newStatusCommand() *cobra.Command {
 		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runStatus(env, args)
 		}),
+		ValidArgsFunction: completeBug(env),
 	}
 
 	cmd.AddCommand(newStatusCloseCommand())

@@ -32,7 +32,8 @@ func newBridgePullCommand() *cobra.Command {
 		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runBridgePull(env, options, args)
 		}),
-		Args: cobra.MaximumNArgs(1),
+		Args:              cobra.MaximumNArgs(1),
+		ValidArgsFunction: completeBridge(env),
 	}
 
 	flags := cmd.Flags()

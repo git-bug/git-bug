@@ -420,7 +420,11 @@ _git-bug_bridge_auth_add-token()
 
     flags+=("--target=")
     two_word_flags+=("--target")
+    flags_with_completion+=("--target")
+    flags_completion+=("__git-bug_handle_go_custom_completion")
     two_word_flags+=("-t")
+    flags_with_completion+=("-t")
+    flags_completion+=("__git-bug_handle_go_custom_completion")
     local_nonpersistent_flags+=("--target")
     local_nonpersistent_flags+=("--target=")
     local_nonpersistent_flags+=("-t")
@@ -432,7 +436,11 @@ _git-bug_bridge_auth_add-token()
     local_nonpersistent_flags+=("-l")
     flags+=("--user=")
     two_word_flags+=("--user")
+    flags_with_completion+=("--user")
+    flags_completion+=("__git-bug_handle_go_custom_completion")
     two_word_flags+=("-u")
+    flags_with_completion+=("-u")
+    flags_completion+=("__git-bug_handle_go_custom_completion")
     local_nonpersistent_flags+=("--user")
     local_nonpersistent_flags+=("--user=")
     local_nonpersistent_flags+=("-u")
@@ -459,6 +467,7 @@ _git-bug_bridge_auth_rm()
 
     must_have_one_flag=()
     must_have_one_noun=()
+    has_completion_function=1
     noun_aliases=()
 }
 
@@ -479,6 +488,7 @@ _git-bug_bridge_auth_show()
 
     must_have_one_flag=()
     must_have_one_noun=()
+    has_completion_function=1
     noun_aliases=()
 }
 
@@ -527,7 +537,11 @@ _git-bug_bridge_configure()
     local_nonpersistent_flags+=("-n")
     flags+=("--target=")
     two_word_flags+=("--target")
+    flags_with_completion+=("--target")
+    flags_completion+=("__git-bug_handle_go_custom_completion")
     two_word_flags+=("-t")
+    flags_with_completion+=("-t")
+    flags_completion+=("__git-bug_handle_go_custom_completion")
     local_nonpersistent_flags+=("--target")
     local_nonpersistent_flags+=("--target=")
     local_nonpersistent_flags+=("-t")
@@ -608,6 +622,7 @@ _git-bug_bridge_pull()
 
     must_have_one_flag=()
     must_have_one_noun=()
+    has_completion_function=1
     noun_aliases=()
 }
 
@@ -628,6 +643,7 @@ _git-bug_bridge_push()
 
     must_have_one_flag=()
     must_have_one_noun=()
+    has_completion_function=1
     noun_aliases=()
 }
 
@@ -648,6 +664,7 @@ _git-bug_bridge_rm()
 
     must_have_one_flag=()
     must_have_one_noun=()
+    has_completion_function=1
     noun_aliases=()
 }
 
@@ -731,6 +748,7 @@ _git-bug_comment_add()
 
     must_have_one_flag=()
     must_have_one_noun=()
+    has_completion_function=1
     noun_aliases=()
 }
 
@@ -787,6 +805,7 @@ _git-bug_comment()
 
     must_have_one_flag=()
     must_have_one_noun=()
+    has_completion_function=1
     noun_aliases=()
 }
 
@@ -827,6 +846,7 @@ _git-bug_label_add()
 
     must_have_one_flag=()
     must_have_one_noun=()
+    has_completion_function=1
     noun_aliases=()
 }
 
@@ -847,6 +867,7 @@ _git-bug_label_rm()
 
     must_have_one_flag=()
     must_have_one_noun=()
+    has_completion_function=1
     noun_aliases=()
 }
 
@@ -869,6 +890,7 @@ _git-bug_label()
 
     must_have_one_flag=()
     must_have_one_noun=()
+    has_completion_function=1
     noun_aliases=()
 }
 
@@ -888,13 +910,21 @@ _git-bug_ls()
 
     flags+=("--status=")
     two_word_flags+=("--status")
+    flags_with_completion+=("--status")
+    flags_completion+=("__git-bug_handle_go_custom_completion")
     two_word_flags+=("-s")
+    flags_with_completion+=("-s")
+    flags_completion+=("__git-bug_handle_go_custom_completion")
     local_nonpersistent_flags+=("--status")
     local_nonpersistent_flags+=("--status=")
     local_nonpersistent_flags+=("-s")
     flags+=("--author=")
     two_word_flags+=("--author")
+    flags_with_completion+=("--author")
+    flags_completion+=("__git-bug_handle_go_custom_completion")
     two_word_flags+=("-a")
+    flags_with_completion+=("-a")
+    flags_completion+=("__git-bug_handle_go_custom_completion")
     local_nonpersistent_flags+=("--author")
     local_nonpersistent_flags+=("--author=")
     local_nonpersistent_flags+=("-a")
@@ -906,19 +936,31 @@ _git-bug_ls()
     local_nonpersistent_flags+=("-m")
     flags+=("--participant=")
     two_word_flags+=("--participant")
+    flags_with_completion+=("--participant")
+    flags_completion+=("__git-bug_handle_go_custom_completion")
     two_word_flags+=("-p")
+    flags_with_completion+=("-p")
+    flags_completion+=("__git-bug_handle_go_custom_completion")
     local_nonpersistent_flags+=("--participant")
     local_nonpersistent_flags+=("--participant=")
     local_nonpersistent_flags+=("-p")
     flags+=("--actor=")
     two_word_flags+=("--actor")
+    flags_with_completion+=("--actor")
+    flags_completion+=("__git-bug_handle_go_custom_completion")
     two_word_flags+=("-A")
+    flags_with_completion+=("-A")
+    flags_completion+=("__git-bug_handle_go_custom_completion")
     local_nonpersistent_flags+=("--actor")
     local_nonpersistent_flags+=("--actor=")
     local_nonpersistent_flags+=("-A")
     flags+=("--label=")
     two_word_flags+=("--label")
+    flags_with_completion+=("--label")
+    flags_completion+=("__git-bug_handle_go_custom_completion")
     two_word_flags+=("-l")
+    flags_with_completion+=("-l")
+    flags_completion+=("__git-bug_handle_go_custom_completion")
     local_nonpersistent_flags+=("--label")
     local_nonpersistent_flags+=("--label=")
     local_nonpersistent_flags+=("-l")
@@ -930,31 +972,48 @@ _git-bug_ls()
     local_nonpersistent_flags+=("-t")
     flags+=("--no=")
     two_word_flags+=("--no")
+    flags_with_completion+=("--no")
+    flags_completion+=("__git-bug_handle_go_custom_completion")
     two_word_flags+=("-n")
+    flags_with_completion+=("-n")
+    flags_completion+=("__git-bug_handle_go_custom_completion")
     local_nonpersistent_flags+=("--no")
     local_nonpersistent_flags+=("--no=")
     local_nonpersistent_flags+=("-n")
     flags+=("--by=")
     two_word_flags+=("--by")
+    flags_with_completion+=("--by")
+    flags_completion+=("__git-bug_handle_go_custom_completion")
     two_word_flags+=("-b")
+    flags_with_completion+=("-b")
+    flags_completion+=("__git-bug_handle_go_custom_completion")
     local_nonpersistent_flags+=("--by")
     local_nonpersistent_flags+=("--by=")
     local_nonpersistent_flags+=("-b")
     flags+=("--direction=")
     two_word_flags+=("--direction")
+    flags_with_completion+=("--direction")
+    flags_completion+=("__git-bug_handle_go_custom_completion")
     two_word_flags+=("-d")
+    flags_with_completion+=("-d")
+    flags_completion+=("__git-bug_handle_go_custom_completion")
     local_nonpersistent_flags+=("--direction")
     local_nonpersistent_flags+=("--direction=")
     local_nonpersistent_flags+=("-d")
     flags+=("--format=")
     two_word_flags+=("--format")
+    flags_with_completion+=("--format")
+    flags_completion+=("__git-bug_handle_go_custom_completion")
     two_word_flags+=("-f")
+    flags_with_completion+=("-f")
+    flags_completion+=("__git-bug_handle_go_custom_completion")
     local_nonpersistent_flags+=("--format")
     local_nonpersistent_flags+=("--format=")
     local_nonpersistent_flags+=("-f")
 
     must_have_one_flag=()
     must_have_one_noun=()
+    has_completion_function=1
     noun_aliases=()
 }
 
@@ -1015,6 +1074,7 @@ _git-bug_pull()
 
     must_have_one_flag=()
     must_have_one_noun=()
+    has_completion_function=1
     noun_aliases=()
 }
 
@@ -1035,6 +1095,7 @@ _git-bug_push()
 
     must_have_one_flag=()
     must_have_one_noun=()
+    has_completion_function=1
     noun_aliases=()
 }
 
@@ -1055,6 +1116,7 @@ _git-bug_rm()
 
     must_have_one_flag=()
     must_have_one_noun=()
+    has_completion_function=1
     noun_aliases=()
 }
 
@@ -1075,6 +1137,7 @@ _git-bug_select()
 
     must_have_one_flag=()
     must_have_one_noun=()
+    has_completion_function=1
     noun_aliases=()
 }
 
@@ -1105,6 +1168,7 @@ _git-bug_show()
 
     must_have_one_flag=()
     must_have_one_noun=()
+    has_completion_function=1
     noun_aliases=()
 }
 
@@ -1167,6 +1231,7 @@ _git-bug_status()
 
     must_have_one_flag=()
     must_have_one_noun=()
+    has_completion_function=1
     noun_aliases=()
 }
 
@@ -1215,6 +1280,7 @@ _git-bug_title_edit()
 
     must_have_one_flag=()
     must_have_one_noun=()
+    has_completion_function=1
     noun_aliases=()
 }
 
@@ -1236,6 +1302,7 @@ _git-bug_title()
 
     must_have_one_flag=()
     must_have_one_noun=()
+    has_completion_function=1
     noun_aliases=()
 }
 
@@ -1256,6 +1323,7 @@ _git-bug_user_adopt()
 
     must_have_one_flag=()
     must_have_one_noun=()
+    has_completion_function=1
     noun_aliases=()
 }
 
@@ -1315,7 +1383,11 @@ _git-bug_user_ls()
 
     flags+=("--format=")
     two_word_flags+=("--format")
+    flags_with_completion+=("--format")
+    flags_completion+=("__git-bug_handle_go_custom_completion")
     two_word_flags+=("-f")
+    flags_with_completion+=("-f")
+    flags_completion+=("__git-bug_handle_go_custom_completion")
     local_nonpersistent_flags+=("--format")
     local_nonpersistent_flags+=("--format=")
     local_nonpersistent_flags+=("-f")
@@ -1344,13 +1416,18 @@ _git-bug_user()
 
     flags+=("--field=")
     two_word_flags+=("--field")
+    flags_with_completion+=("--field")
+    flags_completion+=("__git-bug_handle_go_custom_completion")
     two_word_flags+=("-f")
+    flags_with_completion+=("-f")
+    flags_completion+=("__git-bug_handle_go_custom_completion")
     local_nonpersistent_flags+=("--field")
     local_nonpersistent_flags+=("--field=")
     local_nonpersistent_flags+=("-f")
 
     must_have_one_flag=()
     must_have_one_noun=()
+    has_completion_function=1
     noun_aliases=()
 }
 
