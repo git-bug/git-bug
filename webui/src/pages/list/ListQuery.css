@@ -1,0 +1,31 @@
+header {
+    display: flex;
+    flex-direction: row;
+}
+
+.filterissue-container {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: left;
+}
+
+.bt-new-issue {
+    background-color: #2ea44fd9;
+    border: 1px solid;
+    border-color: #1b1f2326;
+    border-radius: 6px;
+    padding: 3px 12px;
+
+    font-size: 12px;
+    color: #ffffff;
+    line-height: 20px;
+    text-decoration: none;
+
+    transition: all 0.2s cubic-bezier(0.3, 0, 0.5, 1);
+}
+
+.bt-new-issue:hover {
+    background-color: #2ea44f;
+    border-color: #1b1f2326;
+}

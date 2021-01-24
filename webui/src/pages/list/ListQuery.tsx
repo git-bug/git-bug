@@ -15,6 +15,8 @@ import FilterToolbar from './FilterToolbar';
 import List from './List';
 import { useListBugsQuery } from './ListQuery.generated';
 
+import './ListQuery.css';
+
 type StylesProps = { searching?: boolean };
 const useStyles = makeStyles<Theme, StylesProps>((theme) => ({
   main: {
@@ -272,9 +274,10 @@ function ListQuery() {
     <Paper className={classes.main}>
       <header className={classes.header}>
         <div className="filterissue-container">
-          <h1>Issues</h1>
           <form onSubmit={formSubmit}>
+            <label htmlFor="issuefilter">Filter</label>
             <InputBase
+              id="issuefilter"
               placeholder="Filter"
               value={input}
               onInput={(e: any) => setInput(e.target.value)}
@@ -288,7 +291,9 @@ function ListQuery() {
             </button>
           </form>
         </div>
-        <button className="bt-new-issue">New Issue</button>
+        <Link to="/newIssue" className="bt-new-issue">
+          New Issue
+        </Link>
       </header>
       <FilterToolbar query={query} queryLocation={queryLocation} />
       {content}
