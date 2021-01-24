@@ -15,7 +15,7 @@ var ErrKeyringKeyNotFound = keyring.ErrKeyNotFound
 type Keyring interface {
 	// Returns an Item matching the key or ErrKeyringKeyNotFound
 	Get(key string) (Item, error)
-	// Stores an Item on the keyring
+	// Stores an Item on the keyring. Set is idempotent.
 	Set(item Item) error
 	// Removes the item with matching key
 	Remove(key string) error

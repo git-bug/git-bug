@@ -519,12 +519,19 @@ func (i *Identity) Keys() []*Key {
 }
 
 // SigningKey return the key that should be used to sign new messages. If no key is available, return nil.
-func (i *Identity) SigningKey() *Key {
+func (i *Identity) SigningKey(repo repository.RepoKeyring) (*Key, error) {
 	keys := i.Keys()
-	if len(keys) > 0 {
-		return keys[0]
+	for _, key := range keys {
+		err := key.ensurePrivateKey(repo)
+		if err == errNoPrivateKey {
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
+		return key, nil
 	}
-	return nil
+	return nil, nil
 }
 
 // ValidKeysAtTime return the set of keys valid at a given lamport time

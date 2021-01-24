@@ -318,7 +318,6 @@ func (e *Entity) CommitAdNeeded(repo repository.ClockedRepo) error {
 }
 
 // Commit write the appended operations in the repository
-// TODO: support commit signature
 func (e *Entity) Commit(repo repository.ClockedRepo) error {
 	if !e.NeedCommit() {
 		return fmt.Errorf("can't commit an entity with no pending operation")
@@ -361,18 +360,13 @@ func (e *Entity) Commit(repo repository.ClockedRepo) error {
 		// PackTime:   packTime,
 	}
 
-	treeHash, err := opp.Write(e.Definition, repo)
-	if err != nil {
-		return err
+	var commitHash repository.Hash
+	if e.lastCommit == "" {
+		commitHash, err = opp.Write(e.Definition, repo)
+	} else {
+		commitHash, err = opp.Write(e.Definition, repo, e.lastCommit)
 	}
 
-	// Write a Git commit referencing the tree, with the previous commit as parent
-	var commitHash repository.Hash
-	if e.lastCommit != "" {
-		commitHash, err = repo.StoreCommit(treeHash, e.lastCommit)
-	} else {
-		commitHash, err = repo.StoreCommit(treeHash)
-	}
 	if err != nil {
 		return err
 	}

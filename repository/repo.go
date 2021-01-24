@@ -138,11 +138,6 @@ type RepoData interface {
 	// UpdateRef will create or update a Git reference
 	UpdateRef(ref string, hash Hash) error
 
-	// // MergeRef merge other into ref and update the reference
-	// // If the update is not fast-forward, the callback treeHashFn will be called for the caller to generate
-	// // the Tree to store in the merge commit.
-	// MergeRef(ref string, otherRef string, treeHashFn func() Hash) error
-
 	// RemoveRef will remove a Git reference
 	RemoveRef(ref string) error
 

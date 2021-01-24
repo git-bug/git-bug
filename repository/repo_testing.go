@@ -197,6 +197,8 @@ func RepoDataTest(t *testing.T, repo RepoData) {
 
 	err = repo.RemoveRef("refs/bugs/ref1")
 	require.NoError(t, err)
+
+	// TODO: testing for commit's signature
 }
 
 // helper to test a RepoClock
@@ -237,23 +239,4 @@ func randomData() []byte {
 		b[i] = letterRunes[rand.Intn(len(letterRunes))]
 	}
 	return b
-}
-
-func makeCommit(t *testing.T, repo RepoData, parents ...Hash) Hash {
-	blobHash, err := repo.StoreData(randomData())
-	require.NoError(t, err)
-
-	treeHash, err := repo.StoreTree([]TreeEntry{
-		{
-			ObjectType: Blob,
-			Hash:       blobHash,
-			Name:       "foo",
-		},
-	})
-	require.NoError(t, err)
-
-	commitHash, err := repo.StoreCommit(treeHash, parents...)
-	require.NoError(t, err)
-
-	return commitHash
 }

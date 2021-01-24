@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/MichaelMure/git-bug/entity"
+	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/lamport"
 	"github.com/MichaelMure/git-bug/util/timestamp"
 )
@@ -71,7 +72,7 @@ func (IdentityStub) Keys() []*Key {
 	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 
-func (i *IdentityStub) SigningKey() *Key {
+func (i *IdentityStub) SigningKey(repo repository.RepoKeyring) (*Key, error) {
 	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 

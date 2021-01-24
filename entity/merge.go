@@ -24,10 +24,10 @@ type MergeResult struct {
 	Id     Id
 	Status MergeStatus
 
-	// Only set for invalid status
+	// Only set for Invalid status
 	Reason string
 
-	// Not set for invalid status
+	// Only set for New or Updated status
 	Entity Interface
 }
 
@@ -48,21 +48,11 @@ func (mr MergeResult) String() string {
 	}
 }
 
-func NewMergeError(err error, id Id) MergeResult {
-	return MergeResult{
-		Err:    err,
-		Id:     id,
-		Status: MergeStatusError,
-	}
-}
-
 // TODO: Interface --> *Entity ?
-func NewMergeStatus(status MergeStatus, id Id, entity Interface) MergeResult {
+func NewMergeNewStatus(id Id, entity Interface) MergeResult {
 	return MergeResult{
 		Id:     id,
-		Status: status,
-
-		// Entity is not set for an invalid merge result
+		Status: MergeStatusNew,
 		Entity: entity,
 	}
 }
@@ -72,5 +62,28 @@ func NewMergeInvalidStatus(id Id, reason string) MergeResult {
 		Id:     id,
 		Status: MergeStatusInvalid,
 		Reason: reason,
+	}
+}
+
+func NewMergeUpdatedStatus(id Id, entity Interface) MergeResult {
+	return MergeResult{
+		Id:     id,
+		Status: MergeStatusUpdated,
+		Entity: entity,
+	}
+}
+
+func NewMergeNothingStatus(id Id) MergeResult {
+	return MergeResult{
+		Id:     id,
+		Status: MergeStatusNothing,
+	}
+}
+
+func NewMergeError(err error, id Id) MergeResult {
+	return MergeResult{
+		Id:     id,
+		Status: MergeStatusError,
+		Err:    err,
 	}
 }

@@ -8,59 +8,6 @@ import (
 	"golang.org/x/crypto/openpgp/errors"
 )
 
-// nonNativeMerge is an implementation of a branch merge, for the case where
-// the underlying git implementation doesn't support it natively.
-func nonNativeMerge(repo RepoData, ref string, otherRef string, treeHashFn func() Hash) error {
-	commit, err := repo.ResolveRef(ref)
-	if err != nil {
-		return err
-	}
-
-	otherCommit, err := repo.ResolveRef(otherRef)
-	if err != nil {
-		return err
-	}
-
-	if commit == otherCommit {
-		// nothing to merge
-		return nil
-	}
-
-	// fast-forward is possible if otherRef include ref
-
-	otherCommits, err := repo.ListCommits(otherRef)
-	if err != nil {
-		return err
-	}
-
-	fastForwardPossible := false
-	for _, hash := range otherCommits {
-		if hash == commit {
-			fastForwardPossible = true
-			break
-		}
-	}
-
-	if fastForwardPossible {
-		return repo.UpdateRef(ref, otherCommit)
-	}
-
-	// fast-forward is not possible, we need to create a merge commit
-
-	// we need a Tree to make the commit, an empty Tree will do
-	emptyTreeHash, err := repo.StoreTree(nil)
-	if err != nil {
-		return err
-	}
-
-	newHash, err := repo.StoreCommit(emptyTreeHash, commit, otherCommit)
-	if err != nil {
-		return err
-	}
-
-	return repo.UpdateRef(ref, newHash)
-}
-
 // nonNativeListCommits is an implementation for ListCommits, for the case where
 // the underlying git implementation doesn't support if natively.
 func nonNativeListCommits(repo RepoData, ref string) ([]Hash, error) {

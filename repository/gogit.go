@@ -630,13 +630,6 @@ func (repo *GoGitRepo) UpdateRef(ref string, hash Hash) error {
 	return repo.r.Storer.SetReference(plumbing.NewHashReference(plumbing.ReferenceName(ref), plumbing.NewHash(hash.String())))
 }
 
-// MergeRef merge other into ref and update the reference
-// If the update is not fast-forward, the callback treeHashFn will be called for the caller to generate
-// the Tree to store in the merge commit.
-func (repo *GoGitRepo) MergeRef(ref string, otherRef string, treeHashFn func() Hash) error {
-	return nonNativeMerge(repo, ref, otherRef, treeHashFn)
-}
-
 // RemoveRef will remove a Git reference
 func (repo *GoGitRepo) RemoveRef(ref string) error {
 	return repo.r.Storer.RemoveReference(plumbing.ReferenceName(ref))

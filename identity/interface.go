@@ -2,6 +2,7 @@ package identity
 
 import (
 	"github.com/MichaelMure/git-bug/entity"
+	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/lamport"
 	"github.com/MichaelMure/git-bug/util/timestamp"
 )
@@ -37,7 +38,7 @@ type Interface interface {
 	Keys() []*Key
 
 	// SigningKey return the key that should be used to sign new messages. If no key is available, return nil.
-	SigningKey() *Key
+	SigningKey(repo repository.RepoKeyring) (*Key, error)
 
 	// ValidKeysAtTime return the set of keys valid at a given lamport time for a given clock of another entity
 	// Can be empty.

@@ -86,7 +86,10 @@ func (opp *operationPack) Validate() error {
 	return nil
 }
 
-func (opp *operationPack) Write(def Definition, repo repository.RepoData, parentCommit ...repository.Hash) (repository.Hash, error) {
+// Write write the OperationPack in git, with zero, one or more parent commits.
+// If the repository has a keypair able to sign (that is, with a private key), the resulting commit is signed with that key.
+// Return the hash of the created commit.
+func (opp *operationPack) Write(def Definition, repo repository.Repo, parentCommit ...repository.Hash) (repository.Hash, error) {
 	if err := opp.Validate(); err != nil {
 		return "", err
 	}
@@ -148,8 +151,13 @@ func (opp *operationPack) Write(def Definition, repo repository.RepoData, parent
 	var commitHash repository.Hash
 
 	// Sign the commit if we have a key
-	if opp.Author.SigningKey() != nil {
-		commitHash, err = repo.StoreSignedCommit(treeHash, opp.Author.SigningKey().PGPEntity(), parentCommit...)
+	signingKey, err := opp.Author.SigningKey(repo)
+	if err != nil {
+		return "", err
+	}
+
+	if signingKey != nil {
+		commitHash, err = repo.StoreSignedCommit(treeHash, signingKey.PGPEntity(), parentCommit...)
 	} else {
 		commitHash, err = repo.StoreCommit(treeHash, parentCommit...)
 	}
@@ -240,7 +248,7 @@ func readOperationPack(def Definition, repo repository.RepoData, commit reposito
 	// Verify signature if we expect one
 	keys := author.ValidKeysAtTime(fmt.Sprintf(editClockPattern, def.namespace), editTime)
 	if len(keys) > 0 {
-		keyring := identity.PGPKeyring(keys)
+		keyring := PGPKeyring(keys)
 		_, err = openpgp.CheckDetachedSignature(keyring, commit.SignedData, commit.Signature)
 		if err != nil {
 			return nil, fmt.Errorf("signature failure: %v", err)
@@ -291,4 +299,38 @@ func unmarshallPack(def Definition, data []byte) ([]Operation, identity.Interfac
 	}
 
 	return ops, author, nil
+}
+
+var _ openpgp.KeyRing = &PGPKeyring{}
+
+// PGPKeyring implement a openpgp.KeyRing from an slice of Key
+type PGPKeyring []*identity.Key
+
+func (pk PGPKeyring) KeysById(id uint64) []openpgp.Key {
+	var result []openpgp.Key
+	for _, key := range pk {
+		if key.Public().KeyId == id {
+			result = append(result, openpgp.Key{
+				PublicKey:  key.Public(),
+				PrivateKey: key.Private(),
+			})
+		}
+	}
+	return result
+}
+
+func (pk PGPKeyring) KeysByIdUsage(id uint64, requiredUsage byte) []openpgp.Key {
+	// the only usage we care about is the ability to sign, which all keys should already be capable of
+	return pk.KeysById(id)
+}
+
+func (pk PGPKeyring) DecryptionKeys() []openpgp.Key {
+	result := make([]openpgp.Key, len(pk))
+	for i, key := range pk {
+		result[i] = openpgp.Key{
+			PublicKey:  key.Public(),
+			PrivateKey: key.Private(),
+		}
+	}
+	return result
 }

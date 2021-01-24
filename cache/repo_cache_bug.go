@@ -16,10 +16,7 @@ import (
 	"github.com/blevesearch/bleve"
 )
 
-const (
-	bugCacheFile   = "bug-cache"
-	searchCacheDir = "search-cache"
-)
+const bugCacheFile = "bug-cache"
 
 var errBugNotInCache = errors.New("bug missing from cache")
 
