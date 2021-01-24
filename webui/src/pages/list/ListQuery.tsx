@@ -271,21 +271,24 @@ function ListQuery() {
   return (
     <Paper className={classes.main}>
       <header className={classes.header}>
-        <h1>Issues</h1>
-        <form onSubmit={formSubmit}>
-          <InputBase
-            placeholder="Filter"
-            value={input}
-            onInput={(e: any) => setInput(e.target.value)}
-            classes={{
-              root: classes.search,
-              focused: classes.searchFocused,
-            }}
-          />
-          <button type="submit" hidden>
-            Search
-          </button>
-        </form>
+        <div className="filterissue-container">
+          <h1>Issues</h1>
+          <form onSubmit={formSubmit}>
+            <InputBase
+              placeholder="Filter"
+              value={input}
+              onInput={(e: any) => setInput(e.target.value)}
+              classes={{
+                root: classes.search,
+                focused: classes.searchFocused,
+              }}
+            />
+            <button type="submit" hidden>
+              Search
+            </button>
+          </form>
+        </div>
+        <button className="bt-new-issue">New Issue</button>
       </header>
       <FilterToolbar query={query} queryLocation={queryLocation} />
       {content}
