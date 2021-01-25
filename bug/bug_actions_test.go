@@ -12,7 +12,7 @@ import (
 )
 
 func TestPushPull(t *testing.T) {
-	repoA, repoB, remote := repository.SetupReposAndRemote()
+	repoA, repoB, remote := repository.SetupGoGitReposAndRemote()
 	defer repository.CleanupTestRepos(repoA, repoB, remote)
 
 	reneA, err := identity.NewIdentity(repoA, "René Descartes", "rene@descartes.fr")
@@ -90,7 +90,7 @@ func BenchmarkRebaseTheirs(b *testing.B) {
 }
 
 func _RebaseTheirs(t testing.TB) {
-	repoA, repoB, remote := repository.SetupReposAndRemote()
+	repoA, repoB, remote := repository.SetupGoGitReposAndRemote()
 	defer repository.CleanupTestRepos(repoA, repoB, remote)
 
 	reneA, err := identity.NewIdentity(repoA, "René Descartes", "rene@descartes.fr")
@@ -171,7 +171,7 @@ func BenchmarkRebaseOurs(b *testing.B) {
 }
 
 func _RebaseOurs(t testing.TB) {
-	repoA, repoB, remote := repository.SetupReposAndRemote()
+	repoA, repoB, remote := repository.SetupGoGitReposAndRemote()
 	defer repository.CleanupTestRepos(repoA, repoB, remote)
 
 	reneA, err := identity.NewIdentity(repoA, "René Descartes", "rene@descartes.fr")
@@ -263,7 +263,7 @@ func BenchmarkRebaseConflict(b *testing.B) {
 }
 
 func _RebaseConflict(t testing.TB) {
-	repoA, repoB, remote := repository.SetupReposAndRemote()
+	repoA, repoB, remote := repository.SetupGoGitReposAndRemote()
 	defer repository.CleanupTestRepos(repoA, repoB, remote)
 
 	reneA, err := identity.NewIdentity(repoA, "René Descartes", "rene@descartes.fr")

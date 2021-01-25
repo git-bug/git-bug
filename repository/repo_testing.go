@@ -10,6 +10,9 @@ import (
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
+// TODO: add tests for RepoBleve
+// TODO: add tests for RepoStorage
+
 func CleanupTestRepos(repos ...Repo) {
 	var firstErr error
 	for _, repo := range repos {

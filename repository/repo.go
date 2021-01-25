@@ -130,6 +130,7 @@ type RepoData interface {
 	ReadCommit(hash Hash) (Commit, error)
 
 	// GetTreeHash return the git tree hash referenced in a commit
+	// Deprecated
 	GetTreeHash(commit Hash) (Hash, error)
 
 	// ResolveRef returns the hash of the target commit of the given ref

@@ -109,7 +109,7 @@ func TestCache(t *testing.T) {
 }
 
 func TestPushPull(t *testing.T) {
-	repoA, repoB, remote := repository.SetupReposAndRemote()
+	repoA, repoB, remote := repository.SetupGoGitReposAndRemote()
 	defer repository.CleanupTestRepos(repoA, repoB, remote)
 
 	cacheA, err := NewRepoCache(repoA)

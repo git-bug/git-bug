@@ -58,13 +58,24 @@ func New(definition Definition) *Entity {
 	}
 }
 
-// Read will read and decode a stored Entity from a repository
+// Read will read and decode a stored local Entity from a repository
 func Read(def Definition, repo repository.ClockedRepo, id entity.Id) (*Entity, error) {
 	if err := id.Validate(); err != nil {
 		return nil, errors.Wrap(err, "invalid id")
 	}
 
 	ref := fmt.Sprintf("refs/%s/%s", def.namespace, id.String())
+
+	return read(def, repo, ref)
+}
+
+// readRemote will read and decode a stored remote Entity from a repository
+func readRemote(def Definition, repo repository.ClockedRepo, remote string, id entity.Id) (*Entity, error) {
+	if err := id.Validate(); err != nil {
+		return nil, errors.Wrap(err, "invalid id")
+	}
+
+	ref := fmt.Sprintf("refs/remotes/%s/%s/%s", def.namespace, remote, id.String())
 
 	return read(def, repo, ref)
 }
@@ -230,6 +241,41 @@ func read(def Definition, repo repository.ClockedRepo, ref string) (*Entity, err
 		// packClock:  packClock,
 		lastCommit: rootHash,
 	}, nil
+}
+
+type StreamedEntity struct {
+	Entity *Entity
+	Err    error
+}
+
+// ReadAll read and parse all local Entity
+func ReadAll(def Definition, repo repository.ClockedRepo) <-chan StreamedEntity {
+	out := make(chan StreamedEntity)
+
+	go func() {
+		defer close(out)
+
+		refPrefix := fmt.Sprintf("refs/%s/", def.namespace)
+
+		refs, err := repo.ListRefs(refPrefix)
+		if err != nil {
+			out <- StreamedEntity{Err: err}
+			return
+		}
+
+		for _, ref := range refs {
+			e, err := read(def, repo, ref)
+
+			if err != nil {
+				out <- StreamedEntity{Err: err}
+				return
+			}
+
+			out <- StreamedEntity{Entity: e}
+		}
+	}()
+
+	return out
 }
 
 // Id return the Entity identifier

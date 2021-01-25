@@ -202,12 +202,12 @@ func NewMockRepoData() *mockRepoData {
 }
 
 func (r *mockRepoData) FetchRefs(remote string, refSpec string) (string, error) {
-	return "", nil
+	panic("implement me")
 }
 
 // PushRefs push git refs to a remote
 func (r *mockRepoData) PushRefs(remote string, refSpec string) (string, error) {
-	return "", nil
+	panic("implement me")
 }
 
 func (r *mockRepoData) StoreData(data []byte) (Hash, error) {

@@ -10,8 +10,8 @@ import (
 )
 
 // ListLocalIds list all the available local Entity's Id
-func ListLocalIds(typename string, repo repository.RepoData) ([]entity.Id, error) {
-	refs, err := repo.ListRefs(fmt.Sprintf("refs/%s/", typename))
+func ListLocalIds(def Definition, repo repository.RepoData) ([]entity.Id, error) {
+	refs, err := repo.ListRefs(fmt.Sprintf("refs/%s/", def.namespace))
 	if err != nil {
 		return nil, err
 	}
@@ -74,10 +74,6 @@ func Pull(def Definition, repo repository.ClockedRepo, remote string) error {
 //    --> emit entity.MergeStatusUpdated
 func MergeAll(def Definition, repo repository.ClockedRepo, remote string) <-chan entity.MergeResult {
 	out := make(chan entity.MergeResult)
-
-	// no caching for the merge, we load everything from git even if that means multiple
-	// copy of the same entity in memory. The cache layer will intercept the results to
-	// invalidate entities if necessary.
 
 	go func() {
 		defer close(out)
