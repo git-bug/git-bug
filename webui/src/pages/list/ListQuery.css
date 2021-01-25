@@ -3,6 +3,12 @@ header {
     flex-direction: row;
 }
 
+label {
+    font-size: 14px;
+    font-weight: bold !important;
+    padding-right: 12px;
+}
+
 .filterissue-container {
     display: flex;
     flex-direction: row;
@@ -15,9 +21,9 @@ header {
     border: 1px solid;
     border-color: #1b1f2326;
     border-radius: 6px;
-    padding: 3px 12px;
+    padding: 6px 12px;
 
-    font-size: 12px;
+    font-size: 14px;
     color: #ffffff;
     line-height: 20px;
     text-decoration: none;
