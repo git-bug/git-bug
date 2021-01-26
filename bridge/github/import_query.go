@@ -124,7 +124,7 @@ type issueQuery struct {
 		Issues struct {
 			Nodes    []issue
 			PageInfo pageInfo
-		} `graphql:"issues(first: $issueFirst, after: $issueAfter, orderBy: {field: CREATED_AT, direction: ASC}), filterBy: {since: $issueSince})"`
+		} `graphql:"issues(first: $issueFirst, after: $issueAfter, orderBy: {field: CREATED_AT, direction: ASC}, filterBy: {since: $issueSince})"`
 	} `graphql:"repository(owner: $owner, name: $name)"`
 }
 
