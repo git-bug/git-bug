@@ -11,6 +11,8 @@ import KeyboardArrowLeft from '@material-ui/icons/KeyboardArrowLeft';
 import KeyboardArrowRight from '@material-ui/icons/KeyboardArrowRight';
 import Skeleton from '@material-ui/lab/Skeleton';
 
+import GBButton from 'src/components/Button/GBButton';
+
 import FilterToolbar from './FilterToolbar';
 import List from './List';
 import { useListBugsQuery } from './ListQuery.generated';
@@ -291,9 +293,7 @@ function ListQuery() {
             </button>
           </form>
         </div>
-        <Link to="/newIssue" className="bt-new-issue">
-          New Issue
-        </Link>
+        <GBButton to="/new" text="New Issue" />
       </header>
       <FilterToolbar query={query} queryLocation={queryLocation} />
       {content}
