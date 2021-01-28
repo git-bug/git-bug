@@ -9,10 +9,20 @@ import (
 )
 
 type iterator struct {
-	gc        *githubv4.Client
-	since     time.Time
-	ctx       context.Context
-	err       error
+	// Github graphql client
+	gc *githubv4.Client
+
+	// The iterator will only query issues updated or created after the date given in
+	// the variable since.
+	since time.Time
+
+	// Shared context, which is used for all graphql queries.
+	ctx context.Context
+
+	// Sticky error
+	err error
+
+	// Issue iterator
 	issueIter issueIter
 }
 
@@ -40,8 +50,15 @@ type commentEditIter struct {
 }
 
 type iterVars struct {
-	index     int
-	capacity  int
+	// Iterator index
+	index int
+
+	// capacity is the number of elements (issues, issue edits, timeline items, or
+	// comment edits) to query at a time. More capacity = more used memory =
+	// less queries to make.
+	capacity int
+
+	// Variable assignments for graphql query
 	variables varmap
 }
 
@@ -55,6 +72,7 @@ func newIterVars(capacity int) iterVars {
 	}
 }
 
+// NewIterator creates and initialize a new iterator.
 func NewIterator(ctx context.Context, client *githubv4.Client, capacity int, owner, project string, since time.Time) *iterator {
 	i := &iterator{
 		gc:    client,
@@ -93,7 +111,6 @@ func (i *iterator) resetIssueVars() {
 	vars := &i.issueIter.variables
 	(*vars)["issueFirst"] = githubv4.Int(i.issueIter.capacity)
 	(*vars)["issueAfter"] = (*githubv4.String)(nil)
-	// Only query issues after the given date. This varaible is used in the GraphQL query.
 	(*vars)["issueSince"] = githubv4.DateTime{Time: i.since}
 	i.issueIter.query.Repository.Issues.PageInfo.HasNextPage = true
 	i.issueIter.query.Repository.Issues.PageInfo.EndCursor = ""
@@ -164,6 +181,8 @@ func (i *iterator) currIssueGqlNodeId() githubv4.ID {
 	return i.currIssueItem().Id
 }
 
+// NextIssue returns true if there exists a next issue and advances the iterator by one.
+// It is used to iterate over all issues. Queries to github are made when necessary.
 func (i *iterator) NextIssue() bool {
 	if i.HasError() {
 		return false
@@ -183,6 +202,7 @@ func (i *iterator) NextIssue() bool {
 	return nextIssue
 }
 
+// IssueValue returns the actual issue value.
 func (i *iterator) IssueValue() issue {
 	return *i.currIssueItem()
 }
@@ -208,6 +228,9 @@ func (i *iterator) queryIssue() bool {
 	return true
 }
 
+// NextIssueEdit returns true if there exists a next issue edit and advances the iterator
+// by one. It is used to iterate over all the issue edits. Queries to github are made when
+// necessary.
 func (i *iterator) NextIssueEdit() bool {
 	if i.HasError() {
 		return false
@@ -230,14 +253,15 @@ func (i *iterator) NextIssueEdit() bool {
 }
 
 func (i *iterator) nextValidIssueEdit() bool {
-	// issueEdit.Diff == nil happen if the event is older than early 2018, Github doesn't have the data before that.
-	// Best we can do is to ignore the event.
+	// issueEdit.Diff == nil happen if the event is older than early 2018, Github doesn't have
+	// the data before that. Best we can do is to ignore the event.
 	if issueEdit := i.IssueEditValue(); issueEdit.Diff == nil || string(*issueEdit.Diff) == "" {
 		return i.NextIssueEdit()
 	}
 	return true
 }
 
+// IssueEditValue returns the actual issue edit value.
 func (i *iterator) IssueEditValue() userContentEdit {
 	iei := i.currIssueEditIter()
 	return iei.query.Node.Issue.UserContentEdits.Nodes[iei.index]
@@ -267,6 +291,9 @@ func (i *iterator) queryIssueEdit() bool {
 	return true
 }
 
+// NextTimelineItem returns true if there exists a next timeline item and advances the iterator
+// by one. It is used to iterate over all the timeline items. Queries to github are made when
+// necessary.
 func (i *iterator) NextTimelineItem() bool {
 	if i.HasError() {
 		return false
@@ -285,6 +312,7 @@ func (i *iterator) NextTimelineItem() bool {
 	return nextTlItem
 }
 
+// TimelineItemValue returns the actual timeline item value.
 func (i *iterator) TimelineItemValue() timelineItem {
 	tli := i.currTimelineIter()
 	return tli.query.Node.Issue.TimelineItems.Nodes[tli.index]
@@ -312,6 +340,9 @@ func (i *iterator) queryTimeline() bool {
 	return true
 }
 
+// NextCommentEdit returns true if there exists a next comment edit and advances the iterator
+// by one. It is used to iterate over all issue edits. Queries to github are made when
+// necessary.
 func (i *iterator) NextCommentEdit() bool {
 	if i.HasError() {
 		return false
@@ -349,6 +380,7 @@ func (i *iterator) nextValidCommentEdit() bool {
 	return true
 }
 
+// CommentEditValue returns the actual comment edit value.
 func (i *iterator) CommentEditValue() userContentEdit {
 	cei := i.currCommentEditIter()
 	return cei.query.Node.IssueComment.UserContentEdits.Nodes[cei.index]
