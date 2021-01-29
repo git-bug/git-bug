@@ -1,16 +1,15 @@
-import { gql, useMutation } from '@apollo/client';
 import React, { FormEvent } from 'react';
 
 import Paper from '@material-ui/core/Paper/Paper';
 import TextField from '@material-ui/core/TextField/TextField';
 import { fade, makeStyles, Theme } from '@material-ui/core/styles';
 
-import GBButton from '../../components/Button/GBButton';
+import { useNewBugMutation } from './NewBug.generated';
 
 /**
  * Styles
  */
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles((theme: Theme) => ({
   main: {
     maxWidth: 800,
     margin: 'auto',
@@ -40,41 +39,47 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const NEW_BUG = gql`
-  mutation NewBug($input: NewBugInput) {
-    newBug(input: $input) {
-      title
-      message
-    }
-  }
-`;
-
 /**
  * Form to create a new issue
  */
-function NewPage() {
-  const classes = useStyles({ searching: false });
-  const [newBugInput] = useMutation(NEW_BUG);
+function NewBugPage() {
+  const classes = useStyles();
+  let inputField: any;
+  const [newBug, { loading, error }] = useNewBugMutation();
 
   function submitNewIssue(e: FormEvent) {
     e.preventDefault();
-    // TODO Call API
+    newBug({
+      variables: {
+        input: {
+          title: String(inputField.value),
+          message: 'Message', //TODO
+        },
+      },
+    });
+    inputField.value = '';
   }
+
+  if (loading) return <div>Loading</div>;
+  if (error) return <div>Error</div>;
 
   return (
     <Paper className={classes.main}>
       <form className={classes.form} onSubmit={submitNewIssue}>
         <TextField
+          inputRef={(node) => {
+            inputField = node;
+          }}
           label="Title"
           className={classes.titleInput}
           variant="outlined"
           fullWidth
           margin="dense"
         />
-        <GBButton to="/" text="Submit new issue" />
+        <button type="submit">Submit</button>
       </form>
     </Paper>
   );
 }
 
-export default NewPage;
+export default NewBugPage;
