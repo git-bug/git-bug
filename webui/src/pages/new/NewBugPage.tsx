@@ -1,6 +1,6 @@
 import React, { FormEvent } from 'react';
 
-import Paper from '@material-ui/core/Paper/Paper';
+import Paper from '@material-ui/core/Paper';
 import TextField from '@material-ui/core/TextField/TextField';
 import { fade, makeStyles, Theme } from '@material-ui/core/styles';
 
