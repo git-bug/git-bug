@@ -1,13 +1,16 @@
-import React, { FormEvent } from 'react';
+import React, { FormEvent, useState } from 'react';
 
+import { Button } from '@material-ui/core';
 import Paper from '@material-ui/core/Paper';
 import TextField from '@material-ui/core/TextField/TextField';
 import { fade, makeStyles, Theme } from '@material-ui/core/styles';
 
+import CommentInput from '../bug/CommentInput';
+
 import { useNewBugMutation } from './NewBug.generated';
 
 /**
- * Styles
+ * Css in JS styles
  */
 const useStyles = makeStyles((theme: Theme) => ({
   main: {
@@ -33,8 +36,10 @@ const useStyles = makeStyles((theme: Theme) => ({
   },
   form: {
     display: 'flex',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: 'column',
+  },
+  actions: {
+    display: 'flex',
     justifyContent: 'flex-end',
   },
 }));
@@ -43,21 +48,31 @@ const useStyles = makeStyles((theme: Theme) => ({
  * Form to create a new issue
  */
 function NewBugPage() {
-  const classes = useStyles();
-  let inputField: any;
   const [newBug, { loading, error }] = useNewBugMutation();
+  const [issueTitle, setIssueTitle] = useState('');
+  const [issueComment, setIssueComment] = useState('');
+  const classes = useStyles();
+  let issueTitleInput: any;
 
   function submitNewIssue(e: FormEvent) {
     e.preventDefault();
+    if (!isFormValid()) return;
+    console.log('submitNewISsue');
+    console.log('title: ', issueTitle);
+    console.log('comment: ', issueComment);
     newBug({
       variables: {
         input: {
-          title: String(inputField.value),
-          message: 'Message', //TODO
+          title: issueTitle,
+          message: issueComment,
         },
       },
     });
-    inputField.value = '';
+    issueTitleInput.value = '';
+  }
+
+  function isFormValid() {
+    return issueTitle.length > 0 && issueComment.length > 0 ? true : false;
   }
 
   if (loading) return <div>Loading</div>;
@@ -68,15 +83,29 @@ function NewBugPage() {
       <form className={classes.form} onSubmit={submitNewIssue}>
         <TextField
           inputRef={(node) => {
-            inputField = node;
+            issueTitleInput = node;
           }}
           label="Title"
           className={classes.titleInput}
           variant="outlined"
           fullWidth
           margin="dense"
+          onChange={(event: any) => setIssueTitle(event.target.value)}
         />
-        <button type="submit">Submit</button>
+        <CommentInput
+          loading={false}
+          onChange={(comment: string) => setIssueComment(comment)}
+        />
+        <div className={classes.actions}>
+          <Button
+            variant="contained"
+            color="primary"
+            type="submit"
+            disabled={isFormValid() ? false : true}
+          >
+            Submit new issue
+          </Button>
+        </div>
       </form>
     </Paper>
   );
