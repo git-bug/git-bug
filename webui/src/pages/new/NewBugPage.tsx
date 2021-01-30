@@ -42,6 +42,13 @@ const useStyles = makeStyles((theme: Theme) => ({
     display: 'flex',
     justifyContent: 'flex-end',
   },
+  gitbugButton: {
+    backgroundColor: '#2ea44fd9',
+    color: '#fff',
+    '&:hover': {
+      backgroundColor: '#2ea44f',
+    },
+  },
 }));
 
 /**
@@ -98,8 +105,8 @@ function NewBugPage() {
         />
         <div className={classes.actions}>
           <Button
+            className={classes.gitbugButton}
             variant="contained"
-            color="primary"
             type="submit"
             disabled={isFormValid() ? false : true}
           >

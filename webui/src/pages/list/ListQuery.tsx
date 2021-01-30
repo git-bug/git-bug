@@ -2,6 +2,7 @@ import { ApolloError } from '@apollo/client';
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useHistory, Link } from 'react-router-dom';
 
+import { Button } from '@material-ui/core';
 import IconButton from '@material-ui/core/IconButton';
 import InputBase from '@material-ui/core/InputBase';
 import Paper from '@material-ui/core/Paper';
@@ -97,6 +98,13 @@ const useStyles = makeStyles<Theme, StylesProps>((theme) => ({
       color: theme.palette.common.white,
       marginTop: theme.spacing(4),
       padding: theme.spacing(2, 3),
+    },
+  },
+  gitbugButton: {
+    backgroundColor: '#2ea44fd9',
+    color: '#fff',
+    '&:hover': {
+      backgroundColor: '#2ea44f',
     },
   },
 }));
@@ -293,7 +301,13 @@ function ListQuery() {
             </button>
           </form>
         </div>
-        <GBButton to="/new" text="New Issue" />
+        <Button
+          className={classes.gitbugButton}
+          variant="contained"
+          href="/new"
+        >
+          New issue
+        </Button>
       </header>
       <FilterToolbar query={query} queryLocation={queryLocation} />
       {content}
