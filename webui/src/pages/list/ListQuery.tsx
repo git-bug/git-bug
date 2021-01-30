@@ -16,8 +16,6 @@ import FilterToolbar from './FilterToolbar';
 import List from './List';
 import { useListBugsQuery } from './ListQuery.generated';
 
-import './ListQuery.css';
-
 type StylesProps = { searching?: boolean };
 const useStyles = makeStyles<Theme, StylesProps>((theme) => ({
   main: {
@@ -42,6 +40,17 @@ const useStyles = makeStyles<Theme, StylesProps>((theme) => ({
     },
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  filterissueLabel: {
+    fontSize: '14px',
+    fontWeight: 'bold',
+    paddingRight: '12px',
+  },
+  filterissueContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContents: 'left',
   },
   search: {
     borderRadius: theme.shape.borderRadius,
@@ -98,7 +107,7 @@ const useStyles = makeStyles<Theme, StylesProps>((theme) => ({
       padding: theme.spacing(2, 3),
     },
   },
-  gitbugButton: {
+  greenButton: {
     backgroundColor: '#2ea44fd9',
     color: '#fff',
     '&:hover': {
@@ -281,9 +290,11 @@ function ListQuery() {
   return (
     <Paper className={classes.main}>
       <header className={classes.header}>
-        <div className="filterissue-container">
+        <div className="filterissueContainer">
           <form onSubmit={formSubmit}>
-            <label htmlFor="issuefilter">Filter</label>
+            <label className={classes.filterissueLabel} htmlFor="issuefilter">
+              Filter
+            </label>
             <InputBase
               id="issuefilter"
               placeholder="Filter"
@@ -299,11 +310,7 @@ function ListQuery() {
             </button>
           </form>
         </div>
-        <Button
-          className={classes.gitbugButton}
-          variant="contained"
-          href="/new"
-        >
+        <Button className={classes.greenButton} variant="contained" href="/new">
           New issue
         </Button>
       </header>
