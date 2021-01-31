@@ -1,0 +1,25 @@
+# This file defines a common editor configuration for a consistent code base.
+# Learn more about this file at: http://EditorConfig.org
+
+# Specifies this as the top-most EditorConfig file
+# NOTE:
+#   This should be the FIRST property in this file,
+#   other properties shall follow!
+root = true
+
+[*]
+indent_style = space
+charset = utf-8
+max_line_length = 78
+trim_trailing_whitespace = true
+end_of_line = lf
+insert_final_newline = true
+
+[*.md]
+trim_trailing_whitespace = false
+
+[{m,M,GNUm}akefile]
+indent_style = tab
+
+[*.{js,json,yml}]
+indent_size = 2
