@@ -7,6 +7,9 @@ import { makeStyles } from '@material-ui/core/styles';
 
 import Content from 'src/components/Content';
 
+/**
+ * Styles
+ */
 const useStyles = makeStyles((theme) => ({
   container: {
     margin: theme.spacing(2, 0),
@@ -51,14 +54,26 @@ const a11yProps = (index: number) => ({
 });
 
 type Props = {
+  inputProps?: any;
   loading: boolean;
   onChange: (comment: string) => void;
 };
 
-function CommentInput({ loading, onChange }: Props) {
+/**
+ * Component for issue comment input
+ *
+ * @param inputProps Reset input value
+ * @param loading Disable input when component not ready yet
+ * @param onChange Callback to return input value changes
+ */
+function CommentInput({ inputProps, loading, onChange }: Props) {
   const [input, setInput] = useState<string>('');
   const [tab, setTab] = useState(0);
   const classes = useStyles();
+
+  useEffect(() => {
+    if (inputProps) setInput(inputProps.value);
+  }, [inputProps]);
 
   useEffect(() => {
     onChange(input);
