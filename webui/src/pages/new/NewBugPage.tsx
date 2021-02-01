@@ -5,7 +5,7 @@ import Paper from '@material-ui/core/Paper';
 import TextField from '@material-ui/core/TextField/TextField';
 import { fade, makeStyles, Theme } from '@material-ui/core/styles';
 
-import CommentInput from '../bug/CommentInput';
+import CommentInput from '../../layout/CommentInput/CommentInput';
 
 import { useNewBugMutation } from './NewBug.generated';
 
@@ -42,7 +42,7 @@ const useStyles = makeStyles((theme: Theme) => ({
     display: 'flex',
     justifyContent: 'flex-end',
   },
-  gitbugButton: {
+  greenButton: {
     backgroundColor: '#2ea44fd9',
     color: '#fff',
     '&:hover': {
@@ -105,7 +105,7 @@ function NewBugPage() {
         />
         <div className={classes.actions}>
           <Button
-            className={classes.gitbugButton}
+            className={classes.greenButton}
             variant="contained"
             type="submit"
             disabled={isFormValid() ? false : true}
