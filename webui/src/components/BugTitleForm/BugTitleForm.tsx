@@ -43,6 +43,14 @@ const useStyles = makeStyles((theme) => ({
     minWidth: 200,
     marginLeft: theme.spacing(2),
   },
+  greenButton: {
+    marginLeft: '8px',
+    backgroundColor: '#2ea44fd9',
+    color: '#fff',
+    '&:hover': {
+      backgroundColor: '#2ea44f',
+    },
+  },
   titleInput: {
     borderRadius: theme.shape.borderRadius,
     borderColor: fade(theme.palette.primary.main, 0.2),
@@ -155,6 +163,14 @@ function BugTitleForm({ bug }: Props) {
             onClick={() => setBugTitleEditable(!bugTitleEditable)}
           >
             Edit
+          </Button>
+          <Button
+            className={classes.greenButton}
+            size="small"
+            variant="contained"
+            href="/new"
+          >
+            New issue
           </Button>
         </div>
       </div>
