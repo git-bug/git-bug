@@ -5,6 +5,7 @@ import Paper from '@material-ui/core/Paper';
 import { makeStyles, Theme } from '@material-ui/core/styles';
 
 import CommentInput from '../../layout/CommentInput/CommentInput';
+import CloseBugButton from 'src/components/CloseBugButton/CloseBugButton';
 
 import { useAddCommentMutation } from './CommentForm.generated';
 import { TimelineDocument } from './TimelineQuery.generated';
@@ -28,6 +29,7 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
     justifyContent: 'flex-end',
   },
   greenButton: {
+    marginLeft: '8px',
     backgroundColor: '#2ea44fd9',
     color: '#fff',
     '&:hover': {
@@ -89,6 +91,7 @@ function CommentForm({ bugId }: Props) {
           onChange={(comment: string) => setIssueComment(comment)}
         />
         <div className={classes.actions}>
+          <CloseBugButton bugId={bugId} />
           <Button
             className={classes.greenButton}
             variant="contained"

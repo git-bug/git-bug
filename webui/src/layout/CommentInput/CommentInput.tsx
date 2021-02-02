@@ -23,10 +23,6 @@ const useStyles = makeStyles((theme) => ({
     borderBottom: `solid 3px ${theme.palette.grey['200']}`,
     minHeight: '5rem',
   },
-  actions: {
-    display: 'flex',
-    justifyContent: 'flex-end',
-  },
 }));
 
 type TabPanelProps = {
