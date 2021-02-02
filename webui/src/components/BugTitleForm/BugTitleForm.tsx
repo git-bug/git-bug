@@ -126,13 +126,16 @@ function BugTitleForm({ bug }: Props) {
         />
         <div className={classes.editButtonContainer}>
           <Button
+            size="small"
             variant="contained"
             type="submit"
             disabled={issueTitle.length === 0}
           >
             Save
           </Button>
-          <Button onClick={() => cancelChange()}>Cancel</Button>
+          <Button size="small" onClick={() => cancelChange()}>
+            Cancel
+          </Button>
         </div>
       </form>
     );
@@ -147,6 +150,7 @@ function BugTitleForm({ bug }: Props) {
         </div>
         <div className={classes.editButtonContainer}>
           <Button
+            size="small"
             variant="contained"
             onClick={() => setBugTitleEditable(!bugTitleEditable)}
           >
