@@ -2,22 +2,24 @@ import React from 'react';
 
 import Button from '@material-ui/core/Button';
 
+import { BugFragment } from 'src/pages/bug/Bug.generated';
 import { TimelineDocument } from 'src/pages/bug/TimelineQuery.generated';
 
 import { useCloseBugMutation } from './CloseBug.generated';
 
 interface Props {
-  bugId: string;
+  bug: BugFragment;
+  disabled: boolean;
 }
 
-function CloseBugButton({ bugId }: Props) {
+function CloseBugButton({ bug, disabled }: Props) {
   const [closeBug, { loading, error }] = useCloseBugMutation();
 
   function closeBugAction() {
     closeBug({
       variables: {
         input: {
-          prefix: bugId,
+          prefix: bug.id,
         },
       },
       refetchQueries: [
@@ -25,7 +27,7 @@ function CloseBugButton({ bugId }: Props) {
         {
           query: TimelineDocument,
           variables: {
-            id: bugId,
+            id: bug.id,
             first: 100,
           },
         },
@@ -39,7 +41,11 @@ function CloseBugButton({ bugId }: Props) {
 
   return (
     <div>
-      <Button variant="contained" onClick={() => closeBugAction()}>
+      <Button
+        variant="contained"
+        onClick={() => closeBugAction()}
+        disabled={bug.status === 'CLOSED' || disabled}
+      >
         Close issue
       </Button>
     </div>
