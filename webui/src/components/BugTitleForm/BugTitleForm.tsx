@@ -76,7 +76,7 @@ interface Props {
  * @param bug Selected bug in list page
  */
 function BugTitleForm({ bug }: Props) {
-  const [bugTitleEditable, setBugTitleEditable] = useState(false);
+  const [bugTitleEdition, setbugTitleEdition] = useState(false);
   const [setTitle, { loading, error }] = useSetTitleMutation();
   const [issueTitle, setIssueTitle] = useState(bug.title);
   const classes = useStyles();
@@ -110,12 +110,12 @@ function BugTitleForm({ bug }: Props) {
         },
       ],
       awaitRefetchQueries: true,
-    }).then(() => setBugTitleEditable(false));
+    }).then(() => setbugTitleEdition(false));
   }
 
   function cancelChange() {
     setIssueTitle(bug.title);
-    setBugTitleEditable(false);
+    setbugTitleEdition(false);
   }
 
   function editableBugTitle() {
@@ -160,7 +160,7 @@ function BugTitleForm({ bug }: Props) {
           <Button
             size="small"
             variant="contained"
-            onClick={() => setBugTitleEditable(!bugTitleEditable)}
+            onClick={() => setbugTitleEdition(!bugTitleEdition)}
           >
             Edit
           </Button>
@@ -182,7 +182,7 @@ function BugTitleForm({ bug }: Props) {
 
   return (
     <div className={classes.header}>
-      {bugTitleEditable ? editableBugTitle() : readonlyBugTitle()}
+      {bugTitleEdition ? editableBugTitle() : readonlyBugTitle()}
       <div className="classes.headerSubtitle">
         <Typography color={'textSecondary'}>
           <Author author={bug.author} />
