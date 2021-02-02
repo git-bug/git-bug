@@ -1,10 +1,8 @@
 import React from 'react';
 
-import Typography from '@material-ui/core/Typography/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 
-import Author from 'src/components/Author';
-import Date from 'src/components/Date';
+import BugTitleForm from 'src/components/BugTitleForm/BugTitleForm';
 import Label from 'src/components/Label';
 import IfLoggedIn from 'src/layout/IfLoggedIn';
 
@@ -12,21 +10,19 @@ import { BugFragment } from './Bug.generated';
 import CommentForm from './CommentForm';
 import TimelineQuery from './TimelineQuery';
 
+/**
+ * Css in JS Styles
+ */
 const useStyles = makeStyles((theme) => ({
   main: {
     maxWidth: 1000,
     margin: 'auto',
     marginTop: theme.spacing(4),
+    overflow: 'hidden',
   },
   header: {
     marginLeft: theme.spacing(3) + 40,
-  },
-  title: {
-    ...theme.typography.h5,
-  },
-  id: {
-    ...theme.typography.subtitle1,
-    marginLeft: theme.spacing(1),
+    marginRight: theme.spacing(2),
   },
   container: {
     display: 'flex',
@@ -73,17 +69,11 @@ type Props = {
 
 function Bug({ bug }: Props) {
   const classes = useStyles();
+
   return (
     <main className={classes.main}>
       <div className={classes.header}>
-        <span className={classes.title}>{bug.title}</span>
-        <span className={classes.id}>{bug.humanId}</span>
-
-        <Typography color={'textSecondary'}>
-          <Author author={bug.author} />
-          {' opened this bug '}
-          <Date date={bug.createdAt} />
-        </Typography>
+        <BugTitleForm bug={bug} />
       </div>
 
       <div className={classes.container}>
