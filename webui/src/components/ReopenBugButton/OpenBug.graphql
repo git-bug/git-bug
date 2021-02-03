@@ -1,0 +1,7 @@
+mutation openBug($input: OpenBugInput!) {
+  openBug(input: $input) {
+    bug {
+      id
+    }
+  }
+}
