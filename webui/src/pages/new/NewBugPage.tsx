@@ -64,9 +64,6 @@ function NewBugPage() {
   function submitNewIssue(e: FormEvent) {
     e.preventDefault();
     if (!isFormValid()) return;
-    console.log('submitNewISsue');
-    console.log('title: ', issueTitle);
-    console.log('comment: ', issueComment);
     newBug({
       variables: {
         input: {
@@ -82,7 +79,7 @@ function NewBugPage() {
     return issueTitle.length > 0 && issueComment.length > 0 ? true : false;
   }
 
-  if (loading) return <div>Loading</div>;
+  if (loading) return <div>Loading...</div>;
   if (error) return <div>Error</div>;
 
   return (
