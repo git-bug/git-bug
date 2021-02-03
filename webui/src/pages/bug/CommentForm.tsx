@@ -6,6 +6,7 @@ import { makeStyles, Theme } from '@material-ui/core/styles';
 
 import CommentInput from '../../layout/CommentInput/CommentInput';
 import CloseBugButton from 'src/components/CloseBugButton/CloseBugButton';
+import ReopenBugButton from 'src/components/ReopenBugButton/ReopenBugButton';
 
 import { BugFragment } from './Bug.generated';
 import { useAddCommentMutation } from './CommentForm.generated';
@@ -83,6 +84,14 @@ function CommentForm({ bug }: Props) {
     if (issueComment.length > 0) submit();
   };
 
+  function getCloseButton() {
+    return <CloseBugButton bug={bug} disabled={issueComment.length > 0} />;
+  }
+
+  function getReopenButton() {
+    return <ReopenBugButton bug={bug} disabled={issueComment.length > 0} />;
+  }
+
   return (
     <Paper className={classes.container}>
       <form onSubmit={handleSubmit} ref={form}>
@@ -92,7 +101,7 @@ function CommentForm({ bug }: Props) {
           onChange={(comment: string) => setIssueComment(comment)}
         />
         <div className={classes.actions}>
-          <CloseBugButton bug={bug} disabled={issueComment.length > 0} />
+          {bug.status === 'OPEN' ? getCloseButton() : getReopenButton()}
           <Button
             className={classes.greenButton}
             variant="contained"
