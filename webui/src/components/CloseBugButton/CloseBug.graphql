@@ -2,7 +2,7 @@
 mutation closeBug($input: CloseBugInput!) {
   closeBug(input: $input) {
     bug {
-      humanId
+      id
     }
   }
 }
