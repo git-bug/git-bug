@@ -201,12 +201,12 @@ func NewMockRepoData() *mockRepoData {
 	}
 }
 
-func (r *mockRepoData) FetchRefs(remote string, refSpec string) (string, error) {
+func (r *mockRepoData) FetchRefs(remote string, prefix string) (string, error) {
 	panic("implement me")
 }
 
 // PushRefs push git refs to a remote
-func (r *mockRepoData) PushRefs(remote string, refSpec string) (string, error) {
+func (r *mockRepoData) PushRefs(remote string, prefix string) (string, error) {
 	panic("implement me")
 }
 

@@ -353,13 +353,17 @@ func (repo *GoGitRepo) ClearBleveIndex(name string) error {
 	return nil
 }
 
-// FetchRefs fetch git refs from a remote
-func (repo *GoGitRepo) FetchRefs(remote string, refSpec string) (string, error) {
+// FetchRefs fetch git refs matching a directory prefix to a remote
+// Ex: prefix="foo" will fetch any remote refs matching "refs/foo/*" locally.
+// The equivalent git refspec would be "refs/foo/*:refs/remotes/<remote>/foo/*"
+func (repo *GoGitRepo) FetchRefs(remote string, prefix string) (string, error) {
+	refspec := fmt.Sprintf("refs/%s/*:refs/remotes/%s/%s/*", prefix, remote, prefix)
+
 	buf := bytes.NewBuffer(nil)
 
 	err := repo.r.Fetch(&gogit.FetchOptions{
 		RemoteName: remote,
-		RefSpecs:   []config.RefSpec{config.RefSpec(refSpec)},
+		RefSpecs:   []config.RefSpec{config.RefSpec(refspec)},
 		Progress:   buf,
 	})
 	if err == gogit.NoErrAlreadyUpToDate {
@@ -372,13 +376,41 @@ func (repo *GoGitRepo) FetchRefs(remote string, refSpec string) (string, error) 
 	return buf.String(), nil
 }
 
-// PushRefs push git refs to a remote
-func (repo *GoGitRepo) PushRefs(remote string, refSpec string) (string, error) {
+// PushRefs push git refs matching a directory prefix to a remote
+// Ex: prefix="foo" will push any local refs matching "refs/foo/*" to the remote.
+// The equivalent git refspec would be "refs/foo/*:refs/foo/*"
+//
+// Additionally, PushRefs will update the local references in refs/remotes/<remote>/foo to match
+// the remote state.
+func (repo *GoGitRepo) PushRefs(remote string, prefix string) (string, error) {
+	refspec := fmt.Sprintf("refs/%s/*:refs/%s/*", prefix, prefix)
+
+	remo, err := repo.r.Remote(remote)
+	if err != nil {
+		return "", err
+	}
+
+	// to make sure that the push also create the corresponding refs/remotes/<remote>/... references,
+	// we need to have a default fetch refspec configured on the remote, to make our refs "track" the remote ones.
+	// This does not change the config on disk, only on memory.
+	hasCustomFetch := false
+	fetchRefspec := fmt.Sprintf("refs/%s/*:refs/remotes/%s/%s/*", prefix, remote, prefix)
+	for _, r := range remo.Config().Fetch {
+		if string(r) == fetchRefspec {
+			hasCustomFetch = true
+			break
+		}
+	}
+
+	if !hasCustomFetch {
+		remo.Config().Fetch = append(remo.Config().Fetch, config.RefSpec(fetchRefspec))
+	}
+
 	buf := bytes.NewBuffer(nil)
 
-	err := repo.r.Push(&gogit.PushOptions{
+	err = remo.Push(&gogit.PushOptions{
 		RemoteName: remote,
-		RefSpecs:   []config.RefSpec{config.RefSpec(refSpec)},
+		RefSpecs:   []config.RefSpec{config.RefSpec(refspec)},
 		Progress:   buf,
 	})
 	if err == gogit.NoErrAlreadyUpToDate {

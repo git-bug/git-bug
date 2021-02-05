@@ -14,19 +14,12 @@ import (
 // Fetch retrieve updates from a remote
 // This does not change the local bugs state
 func Fetch(repo repository.Repo, remote string) (string, error) {
-	// "refs/bugs/*:refs/remotes/<remote>>/bugs/*"
-	remoteRefSpec := fmt.Sprintf(bugsRemoteRefPattern, remote)
-	fetchRefSpec := fmt.Sprintf("%s*:%s*", bugsRefPattern, remoteRefSpec)
-
-	return repo.FetchRefs(remote, fetchRefSpec)
+	return repo.FetchRefs(remote, "bugs")
 }
 
 // Push update a remote with the local changes
 func Push(repo repository.Repo, remote string) (string, error) {
-	// "refs/bugs/*:refs/bugs/*"
-	refspec := fmt.Sprintf("%s*:%s*", bugsRefPattern, bugsRefPattern)
-
-	return repo.PushRefs(remote, refspec)
+	return repo.PushRefs(remote, "bugs")
 }
 
 // Pull will do a Fetch + MergeAll

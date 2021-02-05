@@ -3,6 +3,9 @@ package dag
 import (
 	"encoding/json"
 	"fmt"
+	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/identity"
@@ -94,22 +97,27 @@ func makeTestContext() (repository.ClockedRepo, identity.Interface, identity.Int
 	return repo, id1, id2, def
 }
 
-func makeTestContextRemote() (repository.ClockedRepo, repository.ClockedRepo, repository.ClockedRepo, identity.Interface, identity.Interface, Definition) {
+func makeTestContextRemote(t *testing.T) (repository.ClockedRepo, repository.ClockedRepo, repository.ClockedRepo, identity.Interface, identity.Interface, Definition) {
 	repoA := repository.CreateGoGitTestRepo(false)
 	repoB := repository.CreateGoGitTestRepo(false)
 	remote := repository.CreateGoGitTestRepo(true)
 
-	err := repoA.AddRemote("origin", remote.GetLocalRemote())
-	if err != nil {
-		panic(err)
-	}
-
-	err = repoB.AddRemote("origin", remote.GetLocalRemote())
-	if err != nil {
-		panic(err)
-	}
+	err := repoA.AddRemote("remote", remote.GetLocalRemote())
+	require.NoError(t, err)
+	err = repoA.AddRemote("repoB", repoB.GetLocalRemote())
+	require.NoError(t, err)
+	err = repoB.AddRemote("remote", remote.GetLocalRemote())
+	require.NoError(t, err)
+	err = repoB.AddRemote("repoA", repoA.GetLocalRemote())
+	require.NoError(t, err)
 
 	id1, id2, def := makeTestContextInternal(repoA)
+
+	// distribute the identities
+	_, err = identity.Push(repoA, "remote")
+	require.NoError(t, err)
+	err = identity.Pull(repoB, "remote")
+	require.NoError(t, err)
 
 	return repoA, repoB, remote, id1, id2, def
 }

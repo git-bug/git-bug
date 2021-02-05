@@ -21,20 +21,12 @@ func ListLocalIds(def Definition, repo repository.RepoData) ([]entity.Id, error)
 // Fetch retrieve updates from a remote
 // This does not change the local entity state
 func Fetch(def Definition, repo repository.Repo, remote string) (string, error) {
-	// "refs/<entity>/*:refs/remotes/<remote>/<entity>/*"
-	fetchRefSpec := fmt.Sprintf("refs/%s/*:refs/remotes/%s/%s/*",
-		def.namespace, remote, def.namespace)
-
-	return repo.FetchRefs(remote, fetchRefSpec)
+	return repo.FetchRefs(remote, def.namespace)
 }
 
 // Push update a remote with the local changes
 func Push(def Definition, repo repository.Repo, remote string) (string, error) {
-	// "refs/<entity>/*:refs/<entity>/*"
-	refspec := fmt.Sprintf("refs/%s/*:refs/%s/*",
-		def.namespace, def.namespace)
-
-	return repo.PushRefs(remote, refspec)
+	return repo.PushRefs(remote, def.namespace)
 }
 
 // Pull will do a Fetch + MergeAll
