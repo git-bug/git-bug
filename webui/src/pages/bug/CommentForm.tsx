@@ -5,7 +5,9 @@ import Paper from '@material-ui/core/Paper';
 import { makeStyles, Theme } from '@material-ui/core/styles';
 
 import CommentInput from '../../layout/CommentInput/CommentInput';
+import CloseBugButton from 'src/components/CloseBugButton/CloseBugButton';
 
+import { BugFragment } from './Bug.generated';
 import { useAddCommentMutation } from './CommentForm.generated';
 import { TimelineDocument } from './TimelineQuery.generated';
 
@@ -28,6 +30,7 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
     justifyContent: 'flex-end',
   },
   greenButton: {
+    marginLeft: '8px',
     backgroundColor: '#2ea44fd9',
     color: '#fff',
     '&:hover': {
@@ -37,10 +40,10 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
 }));
 
 type Props = {
-  bugId: string;
+  bug: BugFragment;
 };
 
-function CommentForm({ bugId }: Props) {
+function CommentForm({ bug }: Props) {
   const [addComment, { loading }] = useAddCommentMutation();
   const [issueComment, setIssueComment] = useState('');
   const [inputProp, setInputProp] = useState<any>('');
@@ -51,7 +54,7 @@ function CommentForm({ bugId }: Props) {
     addComment({
       variables: {
         input: {
-          prefix: bugId,
+          prefix: bug.id,
           message: issueComment,
         },
       },
@@ -60,7 +63,7 @@ function CommentForm({ bugId }: Props) {
         {
           query: TimelineDocument,
           variables: {
-            id: bugId,
+            id: bug.id,
             first: 100,
           },
         },
@@ -89,6 +92,7 @@ function CommentForm({ bugId }: Props) {
           onChange={(comment: string) => setIssueComment(comment)}
         />
         <div className={classes.actions}>
+          <CloseBugButton bug={bug} disabled={issueComment.length > 0} />
           <Button
             className={classes.greenButton}
             variant="contained"
