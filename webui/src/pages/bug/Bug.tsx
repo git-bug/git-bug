@@ -82,7 +82,7 @@ function Bug({ bug }: Props) {
           <IfLoggedIn>
             {() => (
               <div className={classes.commentForm}>
-                <CommentForm bugId={bug.id} />
+                <CommentForm bug={bug} />
               </div>
             )}
           </IfLoggedIn>
