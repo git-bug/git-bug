@@ -5,7 +5,7 @@ import Paper from '@material-ui/core/Paper';
 import TextField from '@material-ui/core/TextField/TextField';
 import { fade, makeStyles, Theme } from '@material-ui/core/styles';
 
-import CommentInput from '../../layout/CommentInput/CommentInput';
+import CommentInput from '../../components/CommentInput/CommentInput';
 
 import { useNewBugMutation } from './NewBug.generated';
 

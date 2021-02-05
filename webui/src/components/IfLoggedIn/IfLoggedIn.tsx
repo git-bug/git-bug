@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { useCurrentIdentityQuery } from './CurrentIdentity.generated';
+import { useCurrentIdentityQuery } from '../CurrentIdentity/CurrentIdentity.generated';
 
 type Props = { children: () => React.ReactNode };
 const IfLoggedIn = ({ children }: Props) => {

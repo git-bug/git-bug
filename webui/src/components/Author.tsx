@@ -3,7 +3,7 @@ import React from 'react';
 import MAvatar from '@material-ui/core/Avatar';
 import Tooltip from '@material-ui/core/Tooltip/Tooltip';
 
-import { AuthoredFragment } from './fragments.generated';
+import { AuthoredFragment } from '../graphql/fragments.generated';
 
 type Props = AuthoredFragment & {
   className?: string;
