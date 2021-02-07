@@ -2,6 +2,7 @@ package dag
 
 import (
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -36,7 +37,7 @@ func TestPushPull(t *testing.T) {
 	_, err = Push(def, repoA, "remote")
 	require.NoError(t, err)
 
-	err = Pull(def, repoB, "remote")
+	err = Pull(def, repoB, "remote", id1)
 	require.NoError(t, err)
 
 	entities := allEntities(t, ReadAll(def, repoB))
@@ -52,7 +53,7 @@ func TestPushPull(t *testing.T) {
 	_, err = Push(def, repoB, "remote")
 	require.NoError(t, err)
 
-	err = Pull(def, repoA, "remote")
+	err = Pull(def, repoA, "remote", id1)
 	require.NoError(t, err)
 
 	entities = allEntities(t, ReadAll(def, repoB))
@@ -86,7 +87,7 @@ func TestListLocalIds(t *testing.T) {
 	listLocalIds(t, def, repoA, 2)
 	listLocalIds(t, def, repoB, 0)
 
-	err = Pull(def, repoB, "remote")
+	err = Pull(def, repoB, "remote", id1)
 	require.NoError(t, err)
 
 	listLocalIds(t, def, repoA, 2)
@@ -132,6 +133,78 @@ func assertMergeResults(t *testing.T, expected []entity.MergeResult, results <-c
 	}
 }
 
+func assertEqualRefs(t *testing.T, repoA, repoB repository.RepoData, prefix string) {
+	t.Helper()
+
+	refsA, err := repoA.ListRefs("")
+	require.NoError(t, err)
+
+	var refsAFiltered []string
+	for _, ref := range refsA {
+		if strings.HasPrefix(ref, prefix) {
+			refsAFiltered = append(refsAFiltered, ref)
+		}
+	}
+
+	refsB, err := repoB.ListRefs("")
+	require.NoError(t, err)
+
+	var refsBFiltered []string
+	for _, ref := range refsB {
+		if strings.HasPrefix(ref, prefix) {
+			refsBFiltered = append(refsBFiltered, ref)
+		}
+	}
+
+	require.NotEmpty(t, refsAFiltered)
+	require.Equal(t, refsAFiltered, refsBFiltered)
+
+	for _, ref := range refsAFiltered {
+		commitA, err := repoA.ResolveRef(ref)
+		require.NoError(t, err)
+		commitB, err := repoB.ResolveRef(ref)
+		require.NoError(t, err)
+
+		require.Equal(t, commitA, commitB)
+	}
+}
+
+func assertNotEqualRefs(t *testing.T, repoA, repoB repository.RepoData, prefix string) {
+	t.Helper()
+
+	refsA, err := repoA.ListRefs("")
+	require.NoError(t, err)
+
+	var refsAFiltered []string
+	for _, ref := range refsA {
+		if strings.HasPrefix(ref, prefix) {
+			refsAFiltered = append(refsAFiltered, ref)
+		}
+	}
+
+	refsB, err := repoB.ListRefs("")
+	require.NoError(t, err)
+
+	var refsBFiltered []string
+	for _, ref := range refsB {
+		if strings.HasPrefix(ref, prefix) {
+			refsBFiltered = append(refsBFiltered, ref)
+		}
+	}
+
+	require.NotEmpty(t, refsAFiltered)
+	require.Equal(t, refsAFiltered, refsBFiltered)
+
+	for _, ref := range refsAFiltered {
+		commitA, err := repoA.ResolveRef(ref)
+		require.NoError(t, err)
+		commitB, err := repoB.ResolveRef(ref)
+		require.NoError(t, err)
+
+		require.NotEqual(t, commitA, commitB)
+	}
+}
+
 func TestMerge(t *testing.T) {
 	repoA, repoB, remote, id1, id2, def := makeTestContextRemote(t)
 	defer repository.CleanupTestRepos(repoA, repoB, remote)
@@ -140,14 +213,14 @@ func TestMerge(t *testing.T) {
 	// if the remote Entity doesn't exist locally, it's created
 
 	// 2 entities in repoA + push to remote
-	e1 := New(def)
-	e1.Append(newOp1(id1, "foo"))
-	err := e1.Commit(repoA)
+	e1A := New(def)
+	e1A.Append(newOp1(id1, "foo"))
+	err := e1A.Commit(repoA)
 	require.NoError(t, err)
 
-	e2 := New(def)
-	e2.Append(newOp2(id2, "bar"))
-	err = e2.Commit(repoA)
+	e2A := New(def)
+	e2A.Append(newOp2(id2, "bar"))
+	err = e2A.Commit(repoA)
 	require.NoError(t, err)
 
 	_, err = Push(def, repoA, "remote")
@@ -158,60 +231,157 @@ func TestMerge(t *testing.T) {
 	_, err = Fetch(def, repoB, "remote")
 	require.NoError(t, err)
 
-	results := MergeAll(def, repoB, "remote")
+	results := MergeAll(def, repoB, "remote", id1)
 
 	assertMergeResults(t, []entity.MergeResult{
 		{
-			Id:     e1.Id(),
+			Id:     e1A.Id(),
 			Status: entity.MergeStatusNew,
 		},
 		{
-			Id:     e2.Id(),
+			Id:     e2A.Id(),
 			Status: entity.MergeStatusNew,
 		},
 	}, results)
+
+	assertEqualRefs(t, repoA, repoB, "refs/"+def.namespace)
 
 	// SCENARIO 2
 	// if the remote and local Entity have the same state, nothing is changed
 
-	results = MergeAll(def, repoB, "remote")
+	results = MergeAll(def, repoB, "remote", id1)
 
 	assertMergeResults(t, []entity.MergeResult{
 		{
-			Id:     e1.Id(),
+			Id:     e1A.Id(),
 			Status: entity.MergeStatusNothing,
 		},
 		{
-			Id:     e2.Id(),
+			Id:     e2A.Id(),
 			Status: entity.MergeStatusNothing,
 		},
 	}, results)
+
+	assertEqualRefs(t, repoA, repoB, "refs/"+def.namespace)
 
 	// SCENARIO 3
 	// if the local Entity has new commits but the remote don't, nothing is changed
 
-	e1.Append(newOp1(id1, "barbar"))
-	err = e1.Commit(repoA)
+	e1A.Append(newOp1(id1, "barbar"))
+	err = e1A.Commit(repoA)
 	require.NoError(t, err)
 
-	e2.Append(newOp2(id2, "barbarbar"))
-	err = e2.Commit(repoA)
+	e2A.Append(newOp2(id2, "barbarbar"))
+	err = e2A.Commit(repoA)
 	require.NoError(t, err)
 
-	results = MergeAll(def, repoA, "remote")
+	results = MergeAll(def, repoA, "remote", id1)
 
 	assertMergeResults(t, []entity.MergeResult{
 		{
-			Id:     e1.Id(),
+			Id:     e1A.Id(),
 			Status: entity.MergeStatusNothing,
 		},
 		{
-			Id:     e2.Id(),
+			Id:     e2A.Id(),
 			Status: entity.MergeStatusNothing,
 		},
 	}, results)
 
+	assertNotEqualRefs(t, repoA, repoB, "refs/"+def.namespace)
+
 	// SCENARIO 4
 	// if the remote has new commit, the local bug is updated to match the same history
 	// (fast-forward update)
+
+	_, err = Push(def, repoA, "remote")
+	require.NoError(t, err)
+
+	_, err = Fetch(def, repoB, "remote")
+	require.NoError(t, err)
+
+	results = MergeAll(def, repoB, "remote", id1)
+
+	assertMergeResults(t, []entity.MergeResult{
+		{
+			Id:     e1A.Id(),
+			Status: entity.MergeStatusUpdated,
+		},
+		{
+			Id:     e2A.Id(),
+			Status: entity.MergeStatusUpdated,
+		},
+	}, results)
+
+	assertEqualRefs(t, repoA, repoB, "refs/"+def.namespace)
+
+	// SCENARIO 5
+	// if both local and remote Entity have new commits (that is, we have a concurrent edition),
+	// a merge commit with an empty operationPack is created to join both branch and form a DAG.
+
+	e1A.Append(newOp1(id1, "barbarfoo"))
+	err = e1A.Commit(repoA)
+	require.NoError(t, err)
+
+	e2A.Append(newOp2(id2, "barbarbarfoo"))
+	err = e2A.Commit(repoA)
+	require.NoError(t, err)
+
+	e1B, err := Read(def, repoB, e1A.Id())
+	require.NoError(t, err)
+
+	e2B, err := Read(def, repoB, e2A.Id())
+	require.NoError(t, err)
+
+	e1B.Append(newOp1(id1, "barbarfoofoo"))
+	err = e1B.Commit(repoB)
+	require.NoError(t, err)
+
+	e2B.Append(newOp2(id2, "barbarbarfoofoo"))
+	err = e2B.Commit(repoB)
+	require.NoError(t, err)
+
+	_, err = Push(def, repoA, "remote")
+	require.NoError(t, err)
+
+	_, err = Fetch(def, repoB, "remote")
+	require.NoError(t, err)
+
+	results = MergeAll(def, repoB, "remote", id1)
+
+	assertMergeResults(t, []entity.MergeResult{
+		{
+			Id:     e1A.Id(),
+			Status: entity.MergeStatusUpdated,
+		},
+		{
+			Id:     e2A.Id(),
+			Status: entity.MergeStatusUpdated,
+		},
+	}, results)
+
+	assertNotEqualRefs(t, repoA, repoB, "refs/"+def.namespace)
+
+	_, err = Push(def, repoB, "remote")
+	require.NoError(t, err)
+
+	_, err = Fetch(def, repoA, "remote")
+	require.NoError(t, err)
+
+	results = MergeAll(def, repoA, "remote", id1)
+
+	assertMergeResults(t, []entity.MergeResult{
+		{
+			Id:     e1A.Id(),
+			Status: entity.MergeStatusUpdated,
+		},
+		{
+			Id:     e2A.Id(),
+			Status: entity.MergeStatusUpdated,
+		},
+	}, results)
+
+	// make sure that the graphs become stable over multiple repo, due to the
+	// fast-forward
+	assertEqualRefs(t, repoA, repoB, "refs/"+def.namespace)
 }

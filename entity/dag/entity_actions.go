@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/MichaelMure/git-bug/entity"
+	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
@@ -31,13 +32,13 @@ func Push(def Definition, repo repository.Repo, remote string) (string, error) {
 
 // Pull will do a Fetch + MergeAll
 // Contrary to MergeAll, this function will return an error if a merge fail.
-func Pull(def Definition, repo repository.ClockedRepo, remote string) error {
+func Pull(def Definition, repo repository.ClockedRepo, remote string, author identity.Interface) error {
 	_, err := Fetch(def, repo, remote)
 	if err != nil {
 		return err
 	}
 
-	for merge := range MergeAll(def, repo, remote) {
+	for merge := range MergeAll(def, repo, remote, author) {
 		if merge.Err != nil {
 			return merge.Err
 		}
@@ -64,7 +65,7 @@ func Pull(def Definition, repo repository.ClockedRepo, remote string) error {
 // 5. if both local and remote Entity have new commits (that is, we have a concurrent edition),
 //    a merge commit with an empty operationPack is created to join both branch and form a DAG.
 //    --> emit entity.MergeStatusUpdated
-func MergeAll(def Definition, repo repository.ClockedRepo, remote string) <-chan entity.MergeResult {
+func MergeAll(def Definition, repo repository.ClockedRepo, remote string, author identity.Interface) <-chan entity.MergeResult {
 	out := make(chan entity.MergeResult)
 
 	go func() {
@@ -78,7 +79,7 @@ func MergeAll(def Definition, repo repository.ClockedRepo, remote string) <-chan
 		}
 
 		for _, remoteRef := range remoteRefs {
-			out <- merge(def, repo, remoteRef)
+			out <- merge(def, repo, remoteRef, author)
 		}
 	}()
 
@@ -87,7 +88,7 @@ func MergeAll(def Definition, repo repository.ClockedRepo, remote string) <-chan
 
 // merge perform a merge to make sure a local Entity is up to date.
 // See MergeAll for more details.
-func merge(def Definition, repo repository.ClockedRepo, remoteRef string) entity.MergeResult {
+func merge(def Definition, repo repository.ClockedRepo, remoteRef string, author identity.Interface) entity.MergeResult {
 	id := entity.RefToId(remoteRef)
 
 	if err := id.Validate(); err != nil {
@@ -153,7 +154,7 @@ func merge(def Definition, repo repository.ClockedRepo, remoteRef string) entity
 	}
 
 	for _, hash := range localCommits {
-		if hash == localCommit {
+		if hash == remoteCommit {
 			return entity.NewMergeNothingStatus(id)
 		}
 	}
@@ -215,6 +216,7 @@ func merge(def Definition, repo repository.ClockedRepo, remoteRef string) entity
 	}
 
 	opp := &operationPack{
+		Author:     author,
 		Operations: nil,
 		CreateTime: 0,
 		EditTime:   editTime,
