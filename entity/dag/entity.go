@@ -87,36 +87,34 @@ func read(def Definition, repo repository.ClockedRepo, ref string) (*Entity, err
 		return nil, err
 	}
 
-	// Perform a depth-first search to get a topological order of the DAG where we discover the
+	// Perform a breadth-first search to get a topological order of the DAG where we discover the
 	// parents commit and go back in time up to the chronological root
 
-	stack := make([]repository.Hash, 0, 32)
+	queue := make([]repository.Hash, 0, 32)
 	visited := make(map[repository.Hash]struct{})
-	DFSOrder := make([]repository.Commit, 0, 32)
+	BFSOrder := make([]repository.Commit, 0, 32)
 
-	stack = append(stack, rootHash)
+	queue = append(queue, rootHash)
+	visited[rootHash] = struct{}{}
 
-	for len(stack) > 0 {
+	for len(queue) > 0 {
 		// pop
-		hash := stack[len(stack)-1]
-		stack = stack[:len(stack)-1]
-
-		if _, ok := visited[hash]; ok {
-			continue
-		}
-
-		// mark as visited
-		visited[hash] = struct{}{}
+		hash := queue[0]
+		queue = queue[1:]
 
 		commit, err := repo.ReadCommit(hash)
 		if err != nil {
 			return nil, err
 		}
 
-		DFSOrder = append(DFSOrder, commit)
+		BFSOrder = append(BFSOrder, commit)
 
 		for _, parent := range commit.Parents {
-			stack = append(stack, parent)
+			if _, ok := visited[parent]; !ok {
+				queue = append(queue, parent)
+				// mark as visited
+				visited[parent] = struct{}{}
+			}
 		}
 	}
 
@@ -131,9 +129,9 @@ func read(def Definition, repo repository.ClockedRepo, ref string) (*Entity, err
 	var opsCount int
 	// var packClock = lamport.NewMemClock()
 
-	for i := len(DFSOrder) - 1; i >= 0; i-- {
-		commit := DFSOrder[i]
-		isFirstCommit := i == len(DFSOrder)-1
+	for i := len(BFSOrder) - 1; i >= 0; i-- {
+		commit := BFSOrder[i]
+		isFirstCommit := i == len(BFSOrder)-1
 		isMerge := len(commit.Parents) > 1
 
 		// Verify DAG structure: single chronological root, so only the root
