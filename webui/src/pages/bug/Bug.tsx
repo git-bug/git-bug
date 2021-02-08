@@ -3,8 +3,8 @@ import React from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 
 import BugTitleForm from 'src/components/BugTitleForm/BugTitleForm';
+import IfLoggedIn from 'src/components/IfLoggedIn/IfLoggedIn';
 import Label from 'src/components/Label';
-import IfLoggedIn from 'src/layout/IfLoggedIn';
 
 import { BugFragment } from './Bug.generated';
 import CommentForm from './CommentForm';

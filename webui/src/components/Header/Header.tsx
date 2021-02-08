@@ -5,7 +5,7 @@ import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import { makeStyles } from '@material-ui/core/styles';
 
-import CurrentIdentity from './CurrentIdentity';
+import CurrentIdentity from '../CurrentIdentity/CurrentIdentity';
 
 const useStyles = makeStyles((theme) => ({
   offset: {

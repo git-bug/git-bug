@@ -4,7 +4,7 @@ import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import { makeStyles, Theme } from '@material-ui/core/styles';
 
-import CommentInput from '../../layout/CommentInput/CommentInput';
+import CommentInput from '../../components/CommentInput/CommentInput';
 import CloseBugButton from 'src/components/CloseBugButton/CloseBugButton';
 import ReopenBugButton from 'src/components/ReopenBugButton/ReopenBugButton';
 

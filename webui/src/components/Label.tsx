@@ -7,9 +7,8 @@ import {
   darken,
 } from '@material-ui/core/styles/colorManipulator';
 
+import { LabelFragment } from '../graphql/fragments.generated';
 import { Color } from 'src/gqlTypes';
-
-import { LabelFragment } from './fragments.generated';
 
 // Minimum contrast between the background and the text color
 const contrastThreshold = 2.5;

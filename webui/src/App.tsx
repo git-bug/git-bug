@@ -1,7 +1,7 @@
 import React from 'react';
 import { Route, Switch } from 'react-router';
 
-import Layout from './layout';
+import Layout from './components/Header';
 import BugPage from './pages/bug';
 import ListPage from './pages/list';
 import NewBugPage from './pages/new/NewBugPage';
