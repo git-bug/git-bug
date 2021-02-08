@@ -18,12 +18,11 @@
 
 3. Generate ts code from graphql files and run webui in development mode
    - npm start
-
-   1. If You got compilation errors from lint, run lint command below and start again:
+   - If You got compilation errors from lint, run lint command below and start again:
       - npm run lint -- --fix
       - npm start
 
-   2. The development version of the WebUI is configured to query the backend on the port 3001. You can now live edit the js code and use the normal backend.
+The development version of the WebUI is configured to query the backend on the port 3001. You can now live edit the js code and use the normal backend.
 
 ## Bundle the web UI
 
