@@ -2,15 +2,28 @@
 
 ## How to develop
 
-1. Compile the go binary
-   - run `make` in the **root** directory
-2. Run the GraphQL backend on the port 3001
-   - `./git-bug webui -p 3001`
-3. Run the hot-reloadable development WebUI
+### Run GraphQL backend
 
-   - run `npm start` in the **webui** directory
+1. Download a git-bug stable binary.
 
-The development version of the WebUI is configured to query the backend on the port 3001. You can now live edit the js code and use the normal backend.
+2. Execute git-bug binary inside directory for the git repository it will manage issues:
+   - git-bug webui -p 3001
+
+### Run ReactJS front-end
+
+1. Clone git-bug repository.
+
+2. Enter webui directory and install libraries needed:
+   - npm install
+
+3. Generate ts code from graphql files and run webui in development mode
+   - npm start
+
+3.1. If You got compilation errors from lint, run lint command below and start again:
+   - npm run lint -- --fix
+   - npm start
+
+3.2. The development version of the WebUI is configured to query the backend on the port 3001. You can now live edit the js code and use the normal backend.
 
 ## Bundle the web UI
 
