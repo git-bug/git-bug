@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"golang.org/x/crypto/openpgp"
 
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
@@ -47,6 +48,7 @@ func RepoTest(t *testing.T, creator RepoCreator, cleaner RepoCleaner) {
 
 			t.Run("Data", func(t *testing.T) {
 				RepoDataTest(t, repo)
+				RepoDataSignatureTest(t, repo)
 			})
 
 			t.Run("Config", func(t *testing.T) {
@@ -200,8 +202,54 @@ func RepoDataTest(t *testing.T, repo RepoData) {
 
 	err = repo.RemoveRef("refs/bugs/ref1")
 	require.NoError(t, err)
+}
 
-	// TODO: testing for commit's signature
+func RepoDataSignatureTest(t *testing.T, repo RepoData) {
+	data := randomData()
+
+	blobHash, err := repo.StoreData(data)
+	require.NoError(t, err)
+
+	treeHash, err := repo.StoreTree([]TreeEntry{
+		{
+			ObjectType: Blob,
+			Hash:       blobHash,
+			Name:       "blob",
+		},
+	})
+	require.NoError(t, err)
+
+	pgpEntity1, err := openpgp.NewEntity("", "", "", nil)
+	require.NoError(t, err)
+	keyring1 := openpgp.EntityList{pgpEntity1}
+
+	pgpEntity2, err := openpgp.NewEntity("", "", "", nil)
+	require.NoError(t, err)
+	keyring2 := openpgp.EntityList{pgpEntity2}
+
+	commitHash1, err := repo.StoreSignedCommit(treeHash, pgpEntity1)
+	require.NoError(t, err)
+
+	commit1, err := repo.ReadCommit(commitHash1)
+	require.NoError(t, err)
+
+	_, err = openpgp.CheckDetachedSignature(keyring1, commit1.SignedData, commit1.Signature)
+	require.NoError(t, err)
+
+	_, err = openpgp.CheckDetachedSignature(keyring2, commit1.SignedData, commit1.Signature)
+	require.Error(t, err)
+
+	commitHash2, err := repo.StoreSignedCommit(treeHash, pgpEntity1, commitHash1)
+	require.NoError(t, err)
+
+	commit2, err := repo.ReadCommit(commitHash2)
+	require.NoError(t, err)
+
+	_, err = openpgp.CheckDetachedSignature(keyring1, commit2.SignedData, commit2.Signature)
+	require.NoError(t, err)
+
+	_, err = openpgp.CheckDetachedSignature(keyring2, commit2.SignedData, commit2.Signature)
+	require.Error(t, err)
 }
 
 // helper to test a RepoClock

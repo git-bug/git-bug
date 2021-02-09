@@ -715,12 +715,7 @@ func (repo *GoGitRepo) ListCommits(ref string) ([]Hash, error) {
 }
 
 func (repo *GoGitRepo) ReadCommit(hash Hash) (Commit, error) {
-	encoded, err := repo.r.Storer.EncodedObject(plumbing.CommitObject, plumbing.NewHash(hash.String()))
-	if err != nil {
-		return Commit{}, err
-	}
-
-	commit, err := object.DecodeCommit(repo.r.Storer, encoded)
+	commit, err := repo.r.CommitObject(plumbing.NewHash(hash.String()))
 	if err != nil {
 		return Commit{}, err
 	}
@@ -737,6 +732,15 @@ func (repo *GoGitRepo) ReadCommit(hash Hash) (Commit, error) {
 	}
 
 	if commit.PGPSignature != "" {
+		// I can't find a way to just remove the signature when reading the encoded commit so we need to
+		// re-encode the commit without signature.
+
+		encoded := &plumbing.MemoryObject{}
+		err := commit.EncodeWithoutSignature(encoded)
+		if err != nil {
+			return Commit{}, err
+		}
+
 		result.SignedData, err = encoded.Reader()
 		if err != nil {
 			return Commit{}, err

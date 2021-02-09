@@ -299,6 +299,8 @@ func (r *mockRepoData) ReadCommit(hash Hash) (Commit, error) {
 	}
 
 	if c.sig != "" {
+		// Note: this is actually incorrect as the signed data should be the full commit (+comment, +date ...)
+		// but only the tree hash work for our purpose here.
 		result.SignedData = strings.NewReader(string(c.treeHash))
 		result.Signature = strings.NewReader(c.sig)
 	}
