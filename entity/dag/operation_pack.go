@@ -22,7 +22,6 @@ const opsEntryName = "ops"
 const versionEntryPrefix = "version-"
 const createClockEntryPrefix = "create-clock-"
 const editClockEntryPrefix = "edit-clock-"
-const packClockEntryPrefix = "pack-clock-"
 
 // operationPack is a wrapper structure to store multiple operations in a single git blob.
 // Additionally, it holds and store the metadata for those operations.
@@ -40,9 +39,6 @@ type operationPack struct {
 	// Encode the entity's logical time of last edition across all entities of the same type.
 	// Exist on all operationPack
 	EditTime lamport.Time
-	// // Encode the operationPack's logical time of creation withing this entity.
-	// // Exist on all operationPack
-	// PackTime lamport.Time
 }
 
 func (opp *operationPack) Id() entity.Id {
@@ -129,8 +125,6 @@ func (opp *operationPack) Write(def Definition, repo repository.Repo, parentComm
 			Name: opsEntryName},
 		{ObjectType: repository.Blob, Hash: emptyBlobHash,
 			Name: fmt.Sprintf(editClockEntryPrefix+"%d", opp.EditTime)},
-		// {ObjectType: repository.Blob, Hash: emptyBlobHash,
-		// 	Name: fmt.Sprintf(packClockEntryPrefix+"%d", opp.PackTime)},
 	}
 	if opp.CreateTime > 0 {
 		tree = append(tree, repository.TreeEntry{
@@ -205,7 +199,6 @@ func readOperationPack(def Definition, repo repository.RepoData, commit reposito
 	var ops []Operation
 	var createTime lamport.Time
 	var editTime lamport.Time
-	// var packTime lamport.Time
 
 	for _, entry := range entries {
 		switch {
@@ -233,15 +226,6 @@ func readOperationPack(def Definition, repo repository.RepoData, commit reposito
 				return nil, errors.Wrap(err, "can't read edit lamport time")
 			}
 			editTime = lamport.Time(v)
-
-			// case strings.HasPrefix(entry.Name, packClockEntryPrefix):
-			// 	found &= 1 << 3
-			//
-			// 	v, err := strconv.ParseUint(strings.TrimPrefix(entry.Name, packClockEntryPrefix), 10, 64)
-			// 	if err != nil {
-			// 		return nil, errors.Wrap(err, "can't read pack lamport time")
-			// 	}
-			// 	packTime = lamport.Time(v)
 		}
 	}
 
@@ -261,7 +245,6 @@ func readOperationPack(def Definition, repo repository.RepoData, commit reposito
 		Operations: ops,
 		CreateTime: createTime,
 		EditTime:   editTime,
-		// PackTime:   packTime,
 	}, nil
 }
 

@@ -44,9 +44,6 @@ type Entity struct {
 
 	// TODO: add here createTime and editTime
 
-	// // TODO: doesn't seems to actually be useful over the topological sort ? Timestamp can be generated from graph depth
-	// // TODO: maybe EditTime is better because it could spread ops in consecutive groups on the logical timeline --> avoid interleaving
-	// packClock  lamport.Clock
 	lastCommit repository.Hash
 }
 
@@ -54,7 +51,6 @@ type Entity struct {
 func New(definition Definition) *Entity {
 	return &Entity{
 		Definition: definition,
-		// packClock:  lamport.NewMemClock(),
 	}
 }
 
@@ -127,7 +123,6 @@ func read(def Definition, repo repository.ClockedRepo, ref string) (*Entity, err
 
 	oppMap := make(map[repository.Hash]*operationPack)
 	var opsCount int
-	// var packClock = lamport.NewMemClock()
 
 	for i := len(BFSOrder) - 1; i >= 0; i-- {
 		commit := BFSOrder[i]
@@ -174,8 +169,6 @@ func read(def Definition, repo repository.ClockedRepo, ref string) (*Entity, err
 			if !isMerge && opp.EditTime-parentPack.EditTime > 1_000_000 {
 				return nil, fmt.Errorf("lamport clock jumping too far in the future, likely an attack")
 			}
-
-			// TODO: PackTime is not checked
 		}
 
 		oppMap[commit.Hash] = opp
@@ -192,10 +185,6 @@ func read(def Definition, repo repository.ClockedRepo, ref string) (*Entity, err
 		if err != nil {
 			return nil, err
 		}
-		// err = packClock.Witness(opp.PackTime)
-		// if err != nil {
-		// 	return nil, err
-		// }
 	}
 
 	// Now that we know that the topological order and clocks are fine, we order the operationPacks
@@ -206,19 +195,13 @@ func read(def Definition, repo repository.ClockedRepo, ref string) (*Entity, err
 		oppSlice = append(oppSlice, pack)
 	}
 	sort.Slice(oppSlice, func(i, j int) bool {
-		// Primary ordering with the dedicated "pack" Lamport time that encode causality
-		// within the entity
-		// if oppSlice[i].PackTime != oppSlice[j].PackTime {
-		// 	return oppSlice[i].PackTime < oppSlice[i].PackTime
-		// }
-		// We have equal PackTime, which means we had a concurrent edition. We can't tell which exactly
-		// came first. As a secondary arbitrary ordering, we can use the EditTime. It's unlikely to be
-		// enough but it can give us an edge to approach what really happened.
+		// Primary ordering with the EditTime.
 		if oppSlice[i].EditTime != oppSlice[j].EditTime {
 			return oppSlice[i].EditTime < oppSlice[j].EditTime
 		}
-		// Well, what now? We still need a total ordering and the most stable possible.
-		// As a last resort, we can order based on a hash of the serialized Operations in the
+		// We have equal EditTime, which means we have concurrent edition over different machines and we
+		// can't tell which one came first. So, what now? We still need a total ordering and the most stable possible.
+		// As a secondary ordering, we can order based on a hash of the serialized Operations in the
 		// operationPack. It doesn't carry much meaning but it's unbiased and hard to abuse.
 		// This is a lexicographic ordering on the stringified ID.
 		return oppSlice[i].Id() < oppSlice[j].Id()
@@ -236,7 +219,6 @@ func read(def Definition, repo repository.ClockedRepo, ref string) (*Entity, err
 	return &Entity{
 		Definition: def,
 		ops:        ops,
-		// packClock:  packClock,
 		lastCommit: rootHash,
 	}, nil
 }
@@ -379,11 +361,6 @@ func (e *Entity) Commit(repo repository.ClockedRepo) error {
 		author = op.Author()
 	}
 
-	// increment the various clocks for this new operationPack
-	// packTime, err := e.packClock.Increment()
-	// if err != nil {
-	// 	return err
-	// }
 	editTime, err := repo.Increment(fmt.Sprintf(editClockPattern, e.namespace))
 	if err != nil {
 		return err
@@ -401,7 +378,6 @@ func (e *Entity) Commit(repo repository.ClockedRepo) error {
 		Operations: e.staging,
 		CreateTime: creationTime,
 		EditTime:   editTime,
-		// PackTime:   packTime,
 	}
 
 	var commitHash repository.Hash

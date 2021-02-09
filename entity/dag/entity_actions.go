@@ -199,17 +199,6 @@ func merge(def Definition, repo repository.ClockedRepo, remoteRef string, author
 		return entity.NewMergeError(err, id)
 	}
 
-	// TODO: pack clock
-	// err = localEntity.packClock.Witness(remoteEntity.packClock.Time())
-	// if err != nil {
-	// 	return entity.NewMergeError(err, id)
-	// }
-	//
-	// packTime, err := localEntity.packClock.Increment()
-	// if err != nil {
-	// 	return entity.NewMergeError(err, id)
-	// }
-
 	editTime, err := repo.Increment(fmt.Sprintf(editClockPattern, def.namespace))
 	if err != nil {
 		return entity.NewMergeError(err, id)
@@ -220,8 +209,6 @@ func merge(def Definition, repo repository.ClockedRepo, remoteRef string, author
 		Operations: nil,
 		CreateTime: 0,
 		EditTime:   editTime,
-		// TODO: pack clock
-		// PackTime:   packTime,
 	}
 
 	commitHash, err := opp.Write(def, repo, localCommit, remoteCommit)
