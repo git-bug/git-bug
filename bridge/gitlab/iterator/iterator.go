@@ -25,6 +25,9 @@ type Iterator struct {
 
 	// labelEvent iterator
 	labelEvent *labelEventIterator
+
+	// stateEvent iterator
+	stateEvent *stateEventIterator
 }
 
 type config struct {
@@ -58,6 +61,7 @@ func NewIterator(ctx context.Context, client *gitlab.Client, capacity int, proje
 		issue:      newIssueIterator(),
 		note:       newNoteIterator(),
 		labelEvent: newLabelEventIterator(),
+		stateEvent: newStateEventIterator(),
 	}
 }
 
@@ -85,6 +89,7 @@ func (i *Iterator) NextIssue() bool {
 	// no longer be valid
 	i.note.Reset(i.issue.Value().IID)
 	i.labelEvent.Reset(i.issue.Value().IID)
+	i.stateEvent.Reset(i.issue.Value().IID)
 
 	return more
 }
@@ -135,4 +140,26 @@ func (i *Iterator) NextLabelEvent() bool {
 
 func (i *Iterator) LabelEventValue() *gitlab.LabelEvent {
 	return i.labelEvent.Value()
+}
+
+func (i *Iterator) NextStateEvent() bool {
+	if i.err != nil {
+		return false
+	}
+
+	if i.ctx.Err() != nil {
+		return false
+	}
+
+	more, err := i.stateEvent.Next(i.ctx, i.conf)
+	if err != nil {
+		i.err = err
+		return false
+	}
+
+	return more
+}
+
+func (i *Iterator) StateEventValue() *gitlab.StateEvent {
+	return i.stateEvent.Value()
 }

@@ -98,6 +98,16 @@ func (gi *gitlabImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 				}
 			}
 
+			// Loop over all status events
+			for gi.iterator.NextStateEvent() {
+				statusEvent := gi.iterator.StateEventValue()
+				if err := gi.ensureStateEvent(repo, b, statusEvent); err != nil {
+					err := fmt.Errorf("status event creation: %v", err)
+					out <- core.NewImportError(err, entity.Id(strconv.Itoa(statusEvent.ID)))
+					return
+				}
+			}
+
 			if !b.NeedCommit() {
 				out <- core.NewImportNothing(b.Id(), "no imported operation")
 			} else if err := b.Commit(); err != nil {
@@ -381,6 +391,54 @@ func (gi *gitlabImporter) ensureLabelEvent(repo *cache.RepoCache, b *cache.BugCa
 
 	default:
 		err = fmt.Errorf("unexpected label event action")
+	}
+
+	return err
+}
+
+func (gi *gitlabImporter) ensureStateEvent(repo *cache.RepoCache, b *cache.BugCache, stateEvent *gitlab.StateEvent) error {
+	_, err := b.ResolveOperationWithMetadata(metaKeyGitlabId, parseID(stateEvent.ID))
+	if err != cache.ErrNoMatchingOp {
+		return err
+	}
+
+	// ensure issue author
+	author, err := gi.ensurePerson(repo, stateEvent.User.ID)
+	if err != nil {
+		return err
+	}
+
+	switch stateEvent.State {
+	case "reopened":
+		op, err := b.OpenRaw(
+			author,
+			stateEvent.CreatedAt.Unix(),
+			map[string]string{
+				metaKeyGitlabId: parseID(stateEvent.ID),
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+		gi.out <- core.NewImportStatusChange(op.Id())
+
+	case "closed":
+		op, err := b.CloseRaw(
+			author,
+			stateEvent.CreatedAt.Unix(),
+			map[string]string{
+				metaKeyGitlabId: parseID(stateEvent.ID),
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+		gi.out <- core.NewImportStatusChange(op.Id())
+
+	default:
+		err = fmt.Errorf("unexpected state event action: %q", stateEvent.State)
 	}
 
 	return err
