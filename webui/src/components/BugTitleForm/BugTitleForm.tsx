@@ -9,6 +9,7 @@ import {
 } from '@material-ui/core';
 
 import { TimelineDocument } from '../../pages/bug/TimelineQuery.generated';
+import IfLoggedIn from '../IfLoggedIn/IfLoggedIn';
 import Author from 'src/components/Author';
 import Date from 'src/components/Date';
 import { BugFragment } from 'src/pages/bug/Bug.generated';
@@ -156,23 +157,27 @@ function BugTitleForm({ bug }: Props) {
           <span className={classes.readOnlyTitle}>{bug.title}</span>
           <span className={classes.readOnlyId}>{bug.humanId}</span>
         </div>
-        <div className={classes.editButtonContainer}>
-          <Button
-            size="small"
-            variant="contained"
-            onClick={() => setbugTitleEdition(!bugTitleEdition)}
-          >
-            Edit
-          </Button>
-          <Button
-            className={classes.greenButton}
-            size="small"
-            variant="contained"
-            href="/new"
-          >
-            New issue
-          </Button>
-        </div>
+        <IfLoggedIn>
+          {() => (
+            <div className={classes.editButtonContainer}>
+              <Button
+                size="small"
+                variant="contained"
+                onClick={() => setbugTitleEdition(!bugTitleEdition)}
+              >
+                Edit
+              </Button>
+              <Button
+                className={classes.greenButton}
+                size="small"
+                variant="contained"
+                href="/new"
+              >
+                New issue
+              </Button>
+            </div>
+          )}
+        </IfLoggedIn>
       </div>
     );
   }

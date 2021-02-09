@@ -12,6 +12,8 @@ import KeyboardArrowLeft from '@material-ui/icons/KeyboardArrowLeft';
 import KeyboardArrowRight from '@material-ui/icons/KeyboardArrowRight';
 import Skeleton from '@material-ui/lab/Skeleton';
 
+import IfLoggedIn from 'src/components/IfLoggedIn/IfLoggedIn';
+
 import FilterToolbar from './FilterToolbar';
 import List from './List';
 import { useListBugsQuery } from './ListQuery.generated';
@@ -310,9 +312,17 @@ function ListQuery() {
             </button>
           </form>
         </div>
-        <Button className={classes.greenButton} variant="contained" href="/new">
-          New issue
-        </Button>
+        <IfLoggedIn>
+          {() => (
+            <Button
+              className={classes.greenButton}
+              variant="contained"
+              href="/new"
+            >
+              New issue
+            </Button>
+          )}
+        </IfLoggedIn>
       </header>
       <FilterToolbar query={query} queryLocation={queryLocation} />
       {content}
