@@ -385,3 +385,28 @@ func TestMerge(t *testing.T) {
 	// fast-forward
 	assertEqualRefs(t, repoA, repoB, "refs/"+def.namespace)
 }
+
+func TestRemove(t *testing.T) {
+	repoA, repoB, remote, id1, _, def := makeTestContextRemote(t)
+	defer repository.CleanupTestRepos(repoA, repoB, remote)
+
+	e := New(def)
+	e.Append(newOp1(id1, "foo"))
+	require.NoError(t, e.Commit(repoA))
+
+	_, err := Push(def, repoA, "remote")
+	require.NoError(t, err)
+
+	err = Remove(def, repoA, e.Id())
+	require.NoError(t, err)
+
+	_, err = Read(def, repoA, e.Id())
+	require.Error(t, err)
+
+	_, err = readRemote(def, repoA, "remote", e.Id())
+	require.Error(t, err)
+
+	// Remove is idempotent
+	err = Remove(def, repoA, e.Id())
+	require.NoError(t, err)
+}

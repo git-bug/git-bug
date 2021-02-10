@@ -228,6 +228,30 @@ func merge(def Definition, repo repository.ClockedRepo, remoteRef string, author
 	return entity.NewMergeUpdatedStatus(id, localEntity)
 }
 
-func Remove() error {
-	panic("")
+// Remove delete an Entity.
+// Remove is idempotent.
+func Remove(def Definition, repo repository.ClockedRepo, id entity.Id) error {
+	var matches []string
+
+	ref := fmt.Sprintf("refs/%s/%s", def.namespace, id.String())
+	matches = append(matches, ref)
+
+	remotes, err := repo.GetRemotes()
+	if err != nil {
+		return err
+	}
+
+	for remote := range remotes {
+		ref = fmt.Sprintf("refs/remotes/%s/%s/%s", remote, def.namespace, id.String())
+		matches = append(matches, ref)
+	}
+
+	for _, ref = range matches {
+		err = repo.RemoveRef(ref)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

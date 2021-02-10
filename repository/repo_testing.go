@@ -202,6 +202,10 @@ func RepoDataTest(t *testing.T, repo RepoData) {
 
 	err = repo.RemoveRef("refs/bugs/ref1")
 	require.NoError(t, err)
+
+	// RemoveRef is idempotent
+	err = repo.RemoveRef("refs/bugs/ref1")
+	require.NoError(t, err)
 }
 
 func RepoDataSignatureTest(t *testing.T, repo RepoData) {

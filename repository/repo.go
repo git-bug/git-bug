@@ -147,6 +147,7 @@ type RepoData interface {
 	UpdateRef(ref string, hash Hash) error
 
 	// RemoveRef will remove a Git reference
+	// RemoveRef is idempotent.
 	RemoveRef(ref string) error
 
 	// ListRefs will return a list of Git ref matching the given refspec
