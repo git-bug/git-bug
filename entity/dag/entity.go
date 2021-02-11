@@ -35,14 +35,18 @@ type Definition struct {
 
 // Entity is a data structure stored in a chain of git objects, supporting actions like Push, Pull and Merge.
 type Entity struct {
+	// A Lamport clock is a logical clock that allow to order event
+	// inside a distributed system.
+	// It must be the first field in this struct due to https://github.com/golang/go/issues/36606
+	createTime lamport.Time
+	editTime   lamport.Time
+
 	Definition
 
 	// operations that are already stored in the repository
 	ops []Operation
 	// operations not yet stored in the repository
 	staging []Operation
-
-	// TODO: add here createTime and editTime
 
 	lastCommit repository.Hash
 }
@@ -210,9 +214,17 @@ func read(def Definition, repo repository.ClockedRepo, ref string) (*Entity, err
 	// Now that we ordered the operationPacks, we have the order of the Operations
 
 	ops := make([]Operation, 0, opsCount)
+	var createTime lamport.Time
+	var editTime lamport.Time
 	for _, pack := range oppSlice {
 		for _, operation := range pack.Operations {
 			ops = append(ops, operation)
+		}
+		if pack.CreateTime > createTime {
+			createTime = pack.CreateTime
+		}
+		if pack.EditTime > editTime {
+			editTime = pack.EditTime
 		}
 	}
 
@@ -220,6 +232,8 @@ func read(def Definition, repo repository.ClockedRepo, ref string) (*Entity, err
 		Definition: def,
 		ops:        ops,
 		lastCommit: rootHash,
+		createTime: createTime,
+		editTime:   editTime,
 	}, nil
 }
 
@@ -349,7 +363,8 @@ func (e *Entity) Commit(repo repository.ClockedRepo) error {
 		return fmt.Errorf("can't commit an entity with no pending operation")
 	}
 
-	if err := e.Validate(); err != nil {
+	err := e.Validate()
+	if err != nil {
 		return errors.Wrapf(err, "can't commit a %s with invalid data", e.Definition.typename)
 	}
 
@@ -361,23 +376,23 @@ func (e *Entity) Commit(repo repository.ClockedRepo) error {
 		author = op.Author()
 	}
 
-	editTime, err := repo.Increment(fmt.Sprintf(editClockPattern, e.namespace))
+	e.editTime, err = repo.Increment(fmt.Sprintf(editClockPattern, e.namespace))
 	if err != nil {
 		return err
-	}
-	var creationTime lamport.Time
-	if e.lastCommit == "" {
-		creationTime, err = repo.Increment(fmt.Sprintf(creationClockPattern, e.namespace))
-		if err != nil {
-			return err
-		}
 	}
 
 	opp := &operationPack{
 		Author:     author,
 		Operations: e.staging,
-		CreateTime: creationTime,
-		EditTime:   editTime,
+		EditTime:   e.editTime,
+	}
+
+	if e.lastCommit == "" {
+		e.createTime, err = repo.Increment(fmt.Sprintf(creationClockPattern, e.namespace))
+		if err != nil {
+			return err
+		}
+		opp.CreateTime = e.createTime
 	}
 
 	var commitHash repository.Hash
@@ -400,4 +415,14 @@ func (e *Entity) Commit(repo repository.ClockedRepo) error {
 	// is fast-forward, that is no data has been overwritten.
 	ref := fmt.Sprintf(refsPattern, e.namespace, e.Id().String())
 	return repo.UpdateRef(ref, commitHash)
+}
+
+// CreateLamportTime return the Lamport time of creation
+func (e *Entity) CreateLamportTime() lamport.Time {
+	return e.createTime
+}
+
+// EditLamportTime return the Lamport time of the last edition
+func (e *Entity) EditLamportTime() lamport.Time {
+	return e.editTime
 }
