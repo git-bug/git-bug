@@ -1,5 +1,17 @@
 # git-bug rich web UI
 
+## Prerequisites
+
+<div align="center">
+<img height="119px" alt="ReactJS" src="https://www.pinclipart.com/picdir/big/537-5374089_react-js-logo-clipart.png">
+<img width="150px" src="https://material-ui.com/static/logo_raw.svg">
+<img height="119px" src="https://upload.wikimedia.org/wikipedia/commons/1/17/GraphQL_Logo.svg">
+<img height="119px" src="https://cdn.worldvectorlogo.com/logos/apollo-graphql-compact.svg">
+</div>
+<div align="center">
+ReactJS | Material UI | GraphQL | Apollo GraphQL
+</div>
+
 ## How to develop
 
 ### Run GraphQL backend
