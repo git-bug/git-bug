@@ -39,3 +39,4 @@ The development version of the WebUI is configured to query the backend on the p
 ## Bundle the web UI
 
 Once the webUI is good enough for a new release, run `make pack-webui` from the root directory to bundle the compiled js into the go binary.
+   - You must have Go installed on Your machine to run this command.
