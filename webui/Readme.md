@@ -3,10 +3,10 @@
 ## Prerequisites
 
 <div align="center">
-<img height="119px" alt="ReactJS" src="https://www.pinclipart.com/picdir/big/537-5374089_react-js-logo-clipart.png">
-<img width="150px" src="https://material-ui.com/static/logo_raw.svg">
-<img height="119px" src="https://upload.wikimedia.org/wikipedia/commons/1/17/GraphQL_Logo.svg">
-<img height="119px" src="https://cdn.worldvectorlogo.com/logos/apollo-graphql-compact.svg">
+<img height="119px" alt="ReactJS" src="/public/reactjs_logo.png">
+<img width="150px" src="/public/materialui_logo.svg">
+<img height="119px" src="/public/graphql_logo.svg">
+<img height="119px" src="/public/apollo_logo.svg">
 </div>
 <div align="center">
 ReactJS | Material UI | GraphQL | Apollo GraphQL
