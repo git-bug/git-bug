@@ -12,7 +12,7 @@ import (
 
 // ListLocalIds list all the available local Entity's Id
 func ListLocalIds(def Definition, repo repository.RepoData) ([]entity.Id, error) {
-	refs, err := repo.ListRefs(fmt.Sprintf("refs/%s/", def.namespace))
+	refs, err := repo.ListRefs(fmt.Sprintf("refs/%s/", def.Namespace))
 	if err != nil {
 		return nil, err
 	}
@@ -22,12 +22,12 @@ func ListLocalIds(def Definition, repo repository.RepoData) ([]entity.Id, error)
 // Fetch retrieve updates from a remote
 // This does not change the local entity state
 func Fetch(def Definition, repo repository.Repo, remote string) (string, error) {
-	return repo.FetchRefs(remote, def.namespace)
+	return repo.FetchRefs(remote, def.Namespace)
 }
 
 // Push update a remote with the local changes
 func Push(def Definition, repo repository.Repo, remote string) (string, error) {
-	return repo.PushRefs(remote, def.namespace)
+	return repo.PushRefs(remote, def.Namespace)
 }
 
 // Pull will do a Fetch + MergeAll
@@ -74,7 +74,7 @@ func MergeAll(def Definition, repo repository.ClockedRepo, resolver identity.Res
 	go func() {
 		defer close(out)
 
-		remoteRefSpec := fmt.Sprintf("refs/remotes/%s/%s/", remote, def.namespace)
+		remoteRefSpec := fmt.Sprintf("refs/remotes/%s/%s/", remote, def.Namespace)
 		remoteRefs, err := repo.ListRefs(remoteRefSpec)
 		if err != nil {
 			out <- entity.MergeResult{Err: err}
@@ -101,16 +101,16 @@ func merge(def Definition, repo repository.ClockedRepo, resolver identity.Resolv
 	remoteEntity, err := read(def, repo, resolver, remoteRef)
 	if err != nil {
 		return entity.NewMergeInvalidStatus(id,
-			errors.Wrapf(err, "remote %s is not readable", def.typename).Error())
+			errors.Wrapf(err, "remote %s is not readable", def.Typename).Error())
 	}
 
 	// Check for error in remote data
 	if err := remoteEntity.Validate(); err != nil {
 		return entity.NewMergeInvalidStatus(id,
-			errors.Wrapf(err, "remote %s data is invalid", def.typename).Error())
+			errors.Wrapf(err, "remote %s data is invalid", def.Typename).Error())
 	}
 
-	localRef := fmt.Sprintf("refs/%s/%s", def.namespace, id.String())
+	localRef := fmt.Sprintf("refs/%s/%s", def.Namespace, id.String())
 
 	// SCENARIO 1
 	// if the remote Entity doesn't exist locally, it's created
@@ -202,7 +202,7 @@ func merge(def Definition, repo repository.ClockedRepo, resolver identity.Resolv
 		return entity.NewMergeError(err, id)
 	}
 
-	editTime, err := repo.Increment(fmt.Sprintf(editClockPattern, def.namespace))
+	editTime, err := repo.Increment(fmt.Sprintf(editClockPattern, def.Namespace))
 	if err != nil {
 		return entity.NewMergeError(err, id)
 	}
@@ -236,7 +236,7 @@ func merge(def Definition, repo repository.ClockedRepo, resolver identity.Resolv
 func Remove(def Definition, repo repository.ClockedRepo, id entity.Id) error {
 	var matches []string
 
-	ref := fmt.Sprintf("refs/%s/%s", def.namespace, id.String())
+	ref := fmt.Sprintf("refs/%s/%s", def.Namespace, id.String())
 	matches = append(matches, ref)
 
 	remotes, err := repo.GetRemotes()
@@ -245,7 +245,7 @@ func Remove(def Definition, repo repository.ClockedRepo, id entity.Id) error {
 	}
 
 	for remote := range remotes {
-		ref = fmt.Sprintf("refs/remotes/%s/%s/%s", remote, def.namespace, id.String())
+		ref = fmt.Sprintf("refs/remotes/%s/%s/%s", remote, def.Namespace, id.String())
 		matches = append(matches, ref)
 	}
 

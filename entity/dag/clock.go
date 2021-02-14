@@ -11,8 +11,8 @@ import (
 func ClockLoader(defs ...Definition) repository.ClockLoader {
 	clocks := make([]string, len(defs)*2)
 	for _, def := range defs {
-		clocks = append(clocks, fmt.Sprintf(creationClockPattern, def.namespace))
-		clocks = append(clocks, fmt.Sprintf(editClockPattern, def.namespace))
+		clocks = append(clocks, fmt.Sprintf(creationClockPattern, def.Namespace))
+		clocks = append(clocks, fmt.Sprintf(editClockPattern, def.Namespace))
 	}
 
 	return repository.ClockLoader{

@@ -22,13 +22,13 @@ const editClockPattern = "%s-edit"
 // Definition hold the details defining one specialization of an Entity.
 type Definition struct {
 	// the name of the entity (bug, pull-request, ...)
-	typename string
-	// the namespace in git (bugs, prs, ...)
-	namespace string
+	Typename string
+	// the Namespace in git (bugs, prs, ...)
+	Namespace string
 	// a function decoding a JSON message into an Operation
-	operationUnmarshaler func(author identity.Interface, raw json.RawMessage) (Operation, error)
+	OperationUnmarshaler func(author identity.Interface, raw json.RawMessage) (Operation, error)
 	// the expected format version number, that can be used for data migration/upgrade
-	formatVersion uint
+	FormatVersion uint
 }
 
 // Entity is a data structure stored in a chain of git objects, supporting actions like Push, Pull and Merge.
@@ -62,7 +62,7 @@ func Read(def Definition, repo repository.ClockedRepo, resolver identity.Resolve
 		return nil, errors.Wrap(err, "invalid id")
 	}
 
-	ref := fmt.Sprintf("refs/%s/%s", def.namespace, id.String())
+	ref := fmt.Sprintf("refs/%s/%s", def.Namespace, id.String())
 
 	return read(def, repo, resolver, ref)
 }
@@ -73,7 +73,7 @@ func readRemote(def Definition, repo repository.ClockedRepo, resolver identity.R
 		return nil, errors.Wrap(err, "invalid id")
 	}
 
-	ref := fmt.Sprintf("refs/remotes/%s/%s/%s", def.namespace, remote, id.String())
+	ref := fmt.Sprintf("refs/remotes/%s/%s/%s", def.Namespace, remote, id.String())
 
 	return read(def, repo, resolver, ref)
 }
@@ -179,11 +179,11 @@ func read(def Definition, repo repository.ClockedRepo, resolver identity.Resolve
 
 	// The clocks are fine, we witness them
 	for _, opp := range oppMap {
-		err = repo.Witness(fmt.Sprintf(creationClockPattern, def.namespace), opp.CreateTime)
+		err = repo.Witness(fmt.Sprintf(creationClockPattern, def.Namespace), opp.CreateTime)
 		if err != nil {
 			return nil, err
 		}
-		err = repo.Witness(fmt.Sprintf(editClockPattern, def.namespace), opp.EditTime)
+		err = repo.Witness(fmt.Sprintf(editClockPattern, def.Namespace), opp.EditTime)
 		if err != nil {
 			return nil, err
 		}
@@ -247,7 +247,7 @@ func ReadAll(def Definition, repo repository.ClockedRepo, resolver identity.Reso
 	go func() {
 		defer close(out)
 
-		refPrefix := fmt.Sprintf("refs/%s/", def.namespace)
+		refPrefix := fmt.Sprintf("refs/%s/", def.Namespace)
 
 		refs, err := repo.ListRefs(refPrefix)
 		if err != nil {
@@ -346,9 +346,9 @@ func (e *Entity) NeedCommit() bool {
 	return len(e.staging) > 0
 }
 
-// CommitAdNeeded execute a Commit only if necessary. This function is useful to avoid getting an error if the Entity
+// CommitAsNeeded execute a Commit only if necessary. This function is useful to avoid getting an error if the Entity
 // is already in sync with the repository.
-func (e *Entity) CommitAdNeeded(repo repository.ClockedRepo) error {
+func (e *Entity) CommitAsNeeded(repo repository.ClockedRepo) error {
 	if e.NeedCommit() {
 		return e.Commit(repo)
 	}
@@ -363,56 +363,65 @@ func (e *Entity) Commit(repo repository.ClockedRepo) error {
 
 	err := e.Validate()
 	if err != nil {
-		return errors.Wrapf(err, "can't commit a %s with invalid data", e.Definition.typename)
+		return errors.Wrapf(err, "can't commit a %s with invalid data", e.Definition.Typename)
 	}
 
-	var author identity.Interface
-	for _, op := range e.staging {
-		if author != nil && op.Author() != author {
-			return fmt.Errorf("operations with different author")
+	for len(e.staging) > 0 {
+		var author identity.Interface
+		var toCommit []Operation
+
+		// Split into chunks with the same author
+		for len(e.staging) > 0 {
+			op := e.staging[0]
+			if author != nil && op.Author().Id() != author.Id() {
+				break
+			}
+			author = e.staging[0].Author()
+			toCommit = append(toCommit, op)
+			e.staging = e.staging[1:]
 		}
-		author = op.Author()
-	}
 
-	e.editTime, err = repo.Increment(fmt.Sprintf(editClockPattern, e.namespace))
-	if err != nil {
-		return err
-	}
-
-	opp := &operationPack{
-		Author:     author,
-		Operations: e.staging,
-		EditTime:   e.editTime,
-	}
-
-	if e.lastCommit == "" {
-		e.createTime, err = repo.Increment(fmt.Sprintf(creationClockPattern, e.namespace))
+		e.editTime, err = repo.Increment(fmt.Sprintf(editClockPattern, e.Namespace))
 		if err != nil {
 			return err
 		}
-		opp.CreateTime = e.createTime
+
+		opp := &operationPack{
+			Author:     author,
+			Operations: toCommit,
+			EditTime:   e.editTime,
+		}
+
+		if e.lastCommit == "" {
+			e.createTime, err = repo.Increment(fmt.Sprintf(creationClockPattern, e.Namespace))
+			if err != nil {
+				return err
+			}
+			opp.CreateTime = e.createTime
+		}
+
+		var parentCommit []repository.Hash
+		if e.lastCommit != "" {
+			parentCommit = []repository.Hash{e.lastCommit}
+		}
+
+		commitHash, err := opp.Write(e.Definition, repo, parentCommit...)
+		if err != nil {
+			return err
+		}
+
+		e.lastCommit = commitHash
+		e.ops = append(e.ops, toCommit...)
 	}
 
-	var commitHash repository.Hash
-	if e.lastCommit == "" {
-		commitHash, err = opp.Write(e.Definition, repo)
-	} else {
-		commitHash, err = opp.Write(e.Definition, repo, e.lastCommit)
-	}
-
-	if err != nil {
-		return err
-	}
-
-	e.lastCommit = commitHash
-	e.ops = append(e.ops, e.staging...)
+	// not strictly necessary but make equality testing easier in tests
 	e.staging = nil
 
 	// Create or update the Git reference for this entity
 	// When pushing later, the remote will ensure that this ref update
 	// is fast-forward, that is no data has been overwritten.
-	ref := fmt.Sprintf(refsPattern, e.namespace, e.Id().String())
-	return repo.UpdateRef(ref, commitHash)
+	ref := fmt.Sprintf(refsPattern, e.Namespace, e.Id().String())
+	return repo.UpdateRef(ref, e.lastCommit)
 }
 
 // CreateLamportTime return the Lamport time of creation

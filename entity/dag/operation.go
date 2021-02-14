@@ -23,11 +23,3 @@ type Operation interface {
 	// Author returns the author of this operation
 	Author() identity.Interface
 }
-
-// TODO: remove?
-type operationBase struct {
-	author identity.Interface
-
-	// Not serialized. Store the op's id in memory.
-	id entity.Id
-}

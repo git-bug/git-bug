@@ -7,7 +7,7 @@ import (
 )
 
 func TestWriteRead(t *testing.T) {
-	repo, id1, id2, def := makeTestContext()
+	repo, id1, id2, resolver, def := makeTestContext()
 
 	entity := New(def)
 	require.False(t, entity.NeedCommit())
@@ -16,15 +16,34 @@ func TestWriteRead(t *testing.T) {
 	entity.Append(newOp2(id1, "bar"))
 
 	require.True(t, entity.NeedCommit())
-	require.NoError(t, entity.CommitAdNeeded(repo))
+	require.NoError(t, entity.CommitAsNeeded(repo))
 	require.False(t, entity.NeedCommit())
 
 	entity.Append(newOp2(id2, "foobar"))
 	require.True(t, entity.NeedCommit())
-	require.NoError(t, entity.CommitAdNeeded(repo))
+	require.NoError(t, entity.CommitAsNeeded(repo))
 	require.False(t, entity.NeedCommit())
 
-	read, err := Read(def, repo, entity.Id())
+	read, err := Read(def, repo, resolver, entity.Id())
+	require.NoError(t, err)
+
+	assertEqualEntities(t, entity, read)
+}
+
+func TestWriteReadMultipleAuthor(t *testing.T) {
+	repo, id1, id2, resolver, def := makeTestContext()
+
+	entity := New(def)
+
+	entity.Append(newOp1(id1, "foo"))
+	entity.Append(newOp2(id2, "bar"))
+
+	require.NoError(t, entity.CommitAsNeeded(repo))
+
+	entity.Append(newOp2(id1, "foobar"))
+	require.NoError(t, entity.CommitAsNeeded(repo))
+
+	read, err := Read(def, repo, resolver, entity.Id())
 	require.NoError(t, err)
 
 	assertEqualEntities(t, entity, read)
@@ -34,23 +53,15 @@ func assertEqualEntities(t *testing.T, a, b *Entity) {
 	// testify doesn't support comparing functions and systematically fail if they are not nil
 	// so we have to set them to nil temporarily
 
-	backOpUnA := a.Definition.operationUnmarshaler
-	backOpUnB := b.Definition.operationUnmarshaler
+	backOpUnA := a.Definition.OperationUnmarshaler
+	backOpUnB := b.Definition.OperationUnmarshaler
 
-	a.Definition.operationUnmarshaler = nil
-	b.Definition.operationUnmarshaler = nil
-
-	backIdResA := a.Definition.identityResolver
-	backIdResB := b.Definition.identityResolver
-
-	a.Definition.identityResolver = nil
-	b.Definition.identityResolver = nil
+	a.Definition.OperationUnmarshaler = nil
+	b.Definition.OperationUnmarshaler = nil
 
 	defer func() {
-		a.Definition.operationUnmarshaler = backOpUnA
-		b.Definition.operationUnmarshaler = backOpUnB
-		a.Definition.identityResolver = backIdResA
-		b.Definition.identityResolver = backIdResB
+		a.Definition.OperationUnmarshaler = backOpUnA
+		b.Definition.OperationUnmarshaler = backOpUnB
 	}()
 
 	require.Equal(t, a, b)

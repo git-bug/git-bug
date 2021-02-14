@@ -72,7 +72,7 @@ func (opp *operationPack) Validate() error {
 		return fmt.Errorf("missing author")
 	}
 	for _, op := range opp.Operations {
-		if op.Author() != opp.Author {
+		if op.Author().Id() != opp.Author.Id() {
 			return fmt.Errorf("operation has different author than the operationPack's")
 		}
 	}
@@ -120,7 +120,7 @@ func (opp *operationPack) Write(def Definition, repo repository.Repo, parentComm
 	// - clocks
 	tree := []repository.TreeEntry{
 		{ObjectType: repository.Blob, Hash: emptyBlobHash,
-			Name: fmt.Sprintf(versionEntryPrefix+"%d", def.formatVersion)},
+			Name: fmt.Sprintf(versionEntryPrefix+"%d", def.FormatVersion)},
 		{ObjectType: repository.Blob, Hash: hash,
 			Name: opsEntryName},
 		{ObjectType: repository.Blob, Hash: emptyBlobHash,
@@ -188,10 +188,10 @@ func readOperationPack(def Definition, repo repository.RepoData, resolver identi
 		}
 	}
 	if version == 0 {
-		return nil, entity.NewErrUnknowFormat(def.formatVersion)
+		return nil, entity.NewErrUnknowFormat(def.FormatVersion)
 	}
-	if version != def.formatVersion {
-		return nil, entity.NewErrInvalidFormat(version, def.formatVersion)
+	if version != def.FormatVersion {
+		return nil, entity.NewErrInvalidFormat(version, def.FormatVersion)
 	}
 
 	var id entity.Id
@@ -230,7 +230,7 @@ func readOperationPack(def Definition, repo repository.RepoData, resolver identi
 	}
 
 	// Verify signature if we expect one
-	keys := author.ValidKeysAtTime(fmt.Sprintf(editClockPattern, def.namespace), editTime)
+	keys := author.ValidKeysAtTime(fmt.Sprintf(editClockPattern, def.Namespace), editTime)
 	if len(keys) > 0 {
 		keyring := PGPKeyring(keys)
 		_, err = openpgp.CheckDetachedSignature(keyring, commit.SignedData, commit.Signature)
@@ -274,7 +274,7 @@ func unmarshallPack(def Definition, resolver identity.Resolver, data []byte) ([]
 
 	for _, raw := range aux.Operations {
 		// delegate to specialized unmarshal function
-		op, err := def.operationUnmarshaler(author, raw)
+		op, err := def.OperationUnmarshaler(author, raw)
 		if err != nil {
 			return nil, nil, err
 		}

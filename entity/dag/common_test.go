@@ -152,10 +152,10 @@ func makeTestContextInternal(repo repository.ClockedRepo) (identity.Interface, i
 	})
 
 	def := Definition{
-		typename:             "foo",
-		namespace:            "foos",
-		operationUnmarshaler: unmarshaler,
-		formatVersion:        1,
+		Typename:             "foo",
+		Namespace:            "foos",
+		OperationUnmarshaler: unmarshaler,
+		FormatVersion:        1,
 	}
 
 	return id1, id2, resolver, def

@@ -244,7 +244,7 @@ func TestMerge(t *testing.T) {
 		},
 	}, results)
 
-	assertEqualRefs(t, repoA, repoB, "refs/"+def.namespace)
+	assertEqualRefs(t, repoA, repoB, "refs/"+def.Namespace)
 
 	// SCENARIO 2
 	// if the remote and local Entity have the same state, nothing is changed
@@ -262,7 +262,7 @@ func TestMerge(t *testing.T) {
 		},
 	}, results)
 
-	assertEqualRefs(t, repoA, repoB, "refs/"+def.namespace)
+	assertEqualRefs(t, repoA, repoB, "refs/"+def.Namespace)
 
 	// SCENARIO 3
 	// if the local Entity has new commits but the remote don't, nothing is changed
@@ -288,7 +288,7 @@ func TestMerge(t *testing.T) {
 		},
 	}, results)
 
-	assertNotEqualRefs(t, repoA, repoB, "refs/"+def.namespace)
+	assertNotEqualRefs(t, repoA, repoB, "refs/"+def.Namespace)
 
 	// SCENARIO 4
 	// if the remote has new commit, the local bug is updated to match the same history
@@ -313,7 +313,7 @@ func TestMerge(t *testing.T) {
 		},
 	}, results)
 
-	assertEqualRefs(t, repoA, repoB, "refs/"+def.namespace)
+	assertEqualRefs(t, repoA, repoB, "refs/"+def.Namespace)
 
 	// SCENARIO 5
 	// if both local and remote Entity have new commits (that is, we have a concurrent edition),
@@ -360,7 +360,7 @@ func TestMerge(t *testing.T) {
 		},
 	}, results)
 
-	assertNotEqualRefs(t, repoA, repoB, "refs/"+def.namespace)
+	assertNotEqualRefs(t, repoA, repoB, "refs/"+def.Namespace)
 
 	_, err = Push(def, repoB, "remote")
 	require.NoError(t, err)
@@ -368,7 +368,7 @@ func TestMerge(t *testing.T) {
 	_, err = Fetch(def, repoA, "remote")
 	require.NoError(t, err)
 
-	results = MergeAll(def, repoA, "remote", id1)
+	results = MergeAll(def, repoA, resolver, "remote", id1)
 
 	assertMergeResults(t, []entity.MergeResult{
 		{
@@ -383,7 +383,7 @@ func TestMerge(t *testing.T) {
 
 	// make sure that the graphs become stable over multiple repo, due to the
 	// fast-forward
-	assertEqualRefs(t, repoA, repoB, "refs/"+def.namespace)
+	assertEqualRefs(t, repoA, repoB, "refs/"+def.Namespace)
 }
 
 func TestRemove(t *testing.T) {
