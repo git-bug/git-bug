@@ -3,10 +3,10 @@
 ## Prerequisites
 
 <div align="center">
-<img height="119px" alt="ReactJS" src="/public/reactjs_logo.png">
-<img width="150px" src="/public/materialui_logo.svg">
-<img height="119px" src="/public/graphql_logo.svg">
-<img height="119px" src="/public/apollo_logo.svg">
+<img height="119px" alt="ReactJS" src="./public/reactjs_logo.png">
+<img width="150px" src="./public/materialui_logo.svg">
+<img height="119px" src="./public/graphql_logo.svg">
+<img height="119px" src="./public/apollo_logo.svg">
 </div>
 <div align="center">
 ReactJS | Material UI | GraphQL | Apollo GraphQL
