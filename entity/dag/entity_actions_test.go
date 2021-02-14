@@ -24,7 +24,7 @@ func allEntities(t testing.TB, bugs <-chan StreamedEntity) []*Entity {
 }
 
 func TestPushPull(t *testing.T) {
-	repoA, repoB, remote, id1, id2, def := makeTestContextRemote(t)
+	repoA, repoB, remote, id1, id2, resolver, def := makeTestContextRemote(t)
 	defer repository.CleanupTestRepos(repoA, repoB, remote)
 
 	// A --> remote --> B
@@ -37,10 +37,10 @@ func TestPushPull(t *testing.T) {
 	_, err = Push(def, repoA, "remote")
 	require.NoError(t, err)
 
-	err = Pull(def, repoB, "remote", id1)
+	err = Pull(def, repoB, resolver, "remote", id1)
 	require.NoError(t, err)
 
-	entities := allEntities(t, ReadAll(def, repoB))
+	entities := allEntities(t, ReadAll(def, repoB, resolver))
 	require.Len(t, entities, 1)
 
 	// B --> remote --> A
@@ -53,15 +53,15 @@ func TestPushPull(t *testing.T) {
 	_, err = Push(def, repoB, "remote")
 	require.NoError(t, err)
 
-	err = Pull(def, repoA, "remote", id1)
+	err = Pull(def, repoA, resolver, "remote", id1)
 	require.NoError(t, err)
 
-	entities = allEntities(t, ReadAll(def, repoB))
+	entities = allEntities(t, ReadAll(def, repoB, resolver))
 	require.Len(t, entities, 2)
 }
 
 func TestListLocalIds(t *testing.T) {
-	repoA, repoB, remote, id1, id2, def := makeTestContextRemote(t)
+	repoA, repoB, remote, id1, id2, resolver, def := makeTestContextRemote(t)
 	defer repository.CleanupTestRepos(repoA, repoB, remote)
 
 	// A --> remote --> B
@@ -87,7 +87,7 @@ func TestListLocalIds(t *testing.T) {
 	listLocalIds(t, def, repoA, 2)
 	listLocalIds(t, def, repoB, 0)
 
-	err = Pull(def, repoB, "remote", id1)
+	err = Pull(def, repoB, resolver, "remote", id1)
 	require.NoError(t, err)
 
 	listLocalIds(t, def, repoA, 2)
@@ -206,7 +206,7 @@ func assertNotEqualRefs(t *testing.T, repoA, repoB repository.RepoData, prefix s
 }
 
 func TestMerge(t *testing.T) {
-	repoA, repoB, remote, id1, id2, def := makeTestContextRemote(t)
+	repoA, repoB, remote, id1, id2, resolver, def := makeTestContextRemote(t)
 	defer repository.CleanupTestRepos(repoA, repoB, remote)
 
 	// SCENARIO 1
@@ -231,7 +231,7 @@ func TestMerge(t *testing.T) {
 	_, err = Fetch(def, repoB, "remote")
 	require.NoError(t, err)
 
-	results := MergeAll(def, repoB, "remote", id1)
+	results := MergeAll(def, repoB, resolver, "remote", id1)
 
 	assertMergeResults(t, []entity.MergeResult{
 		{
@@ -249,7 +249,7 @@ func TestMerge(t *testing.T) {
 	// SCENARIO 2
 	// if the remote and local Entity have the same state, nothing is changed
 
-	results = MergeAll(def, repoB, "remote", id1)
+	results = MergeAll(def, repoB, resolver, "remote", id1)
 
 	assertMergeResults(t, []entity.MergeResult{
 		{
@@ -275,7 +275,7 @@ func TestMerge(t *testing.T) {
 	err = e2A.Commit(repoA)
 	require.NoError(t, err)
 
-	results = MergeAll(def, repoA, "remote", id1)
+	results = MergeAll(def, repoA, resolver, "remote", id1)
 
 	assertMergeResults(t, []entity.MergeResult{
 		{
@@ -300,7 +300,7 @@ func TestMerge(t *testing.T) {
 	_, err = Fetch(def, repoB, "remote")
 	require.NoError(t, err)
 
-	results = MergeAll(def, repoB, "remote", id1)
+	results = MergeAll(def, repoB, resolver, "remote", id1)
 
 	assertMergeResults(t, []entity.MergeResult{
 		{
@@ -327,10 +327,10 @@ func TestMerge(t *testing.T) {
 	err = e2A.Commit(repoA)
 	require.NoError(t, err)
 
-	e1B, err := Read(def, repoB, e1A.Id())
+	e1B, err := Read(def, repoB, resolver, e1A.Id())
 	require.NoError(t, err)
 
-	e2B, err := Read(def, repoB, e2A.Id())
+	e2B, err := Read(def, repoB, resolver, e2A.Id())
 	require.NoError(t, err)
 
 	e1B.Append(newOp1(id1, "barbarfoofoo"))
@@ -347,7 +347,7 @@ func TestMerge(t *testing.T) {
 	_, err = Fetch(def, repoB, "remote")
 	require.NoError(t, err)
 
-	results = MergeAll(def, repoB, "remote", id1)
+	results = MergeAll(def, repoB, resolver, "remote", id1)
 
 	assertMergeResults(t, []entity.MergeResult{
 		{
@@ -387,7 +387,7 @@ func TestMerge(t *testing.T) {
 }
 
 func TestRemove(t *testing.T) {
-	repoA, repoB, remote, id1, _, def := makeTestContextRemote(t)
+	repoA, repoB, remote, id1, _, resolver, def := makeTestContextRemote(t)
 	defer repository.CleanupTestRepos(repoA, repoB, remote)
 
 	e := New(def)
@@ -400,10 +400,10 @@ func TestRemove(t *testing.T) {
 	err = Remove(def, repoA, e.Id())
 	require.NoError(t, err)
 
-	_, err = Read(def, repoA, e.Id())
+	_, err = Read(def, repoA, resolver, e.Id())
 	require.Error(t, err)
 
-	_, err = readRemote(def, repoA, "remote", e.Id())
+	_, err = readRemote(def, repoA, resolver, "remote", e.Id())
 	require.Error(t, err)
 
 	// Remove is idempotent

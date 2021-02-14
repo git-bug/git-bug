@@ -22,14 +22,10 @@ func ClockLoader(defs ...Definition) repository.ClockLoader {
 			resolver := identity.NewStubResolver()
 
 			for _, def := range defs {
-				// override the resolver
-				def := def
-				def.identityResolver = resolver
-
 				// we actually just need to read all entities,
 				// as that will create and update the clocks
 				// TODO: concurrent loading to be faster?
-				for b := range ReadAll(def, repo) {
+				for b := range ReadAll(def, repo, resolver) {
 					if b.Err != nil {
 						return b.Err
 					}

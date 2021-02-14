@@ -27,8 +27,6 @@ type Definition struct {
 	namespace string
 	// a function decoding a JSON message into an Operation
 	operationUnmarshaler func(author identity.Interface, raw json.RawMessage) (Operation, error)
-	// a function loading an identity.Identity from its Id
-	identityResolver identity.Resolver
 	// the expected format version number, that can be used for data migration/upgrade
 	formatVersion uint
 }
@@ -59,29 +57,29 @@ func New(definition Definition) *Entity {
 }
 
 // Read will read and decode a stored local Entity from a repository
-func Read(def Definition, repo repository.ClockedRepo, id entity.Id) (*Entity, error) {
+func Read(def Definition, repo repository.ClockedRepo, resolver identity.Resolver, id entity.Id) (*Entity, error) {
 	if err := id.Validate(); err != nil {
 		return nil, errors.Wrap(err, "invalid id")
 	}
 
 	ref := fmt.Sprintf("refs/%s/%s", def.namespace, id.String())
 
-	return read(def, repo, ref)
+	return read(def, repo, resolver, ref)
 }
 
 // readRemote will read and decode a stored remote Entity from a repository
-func readRemote(def Definition, repo repository.ClockedRepo, remote string, id entity.Id) (*Entity, error) {
+func readRemote(def Definition, repo repository.ClockedRepo, resolver identity.Resolver, remote string, id entity.Id) (*Entity, error) {
 	if err := id.Validate(); err != nil {
 		return nil, errors.Wrap(err, "invalid id")
 	}
 
 	ref := fmt.Sprintf("refs/remotes/%s/%s/%s", def.namespace, remote, id.String())
 
-	return read(def, repo, ref)
+	return read(def, repo, resolver, ref)
 }
 
 // read fetch from git and decode an Entity at an arbitrary git reference.
-func read(def Definition, repo repository.ClockedRepo, ref string) (*Entity, error) {
+func read(def Definition, repo repository.ClockedRepo, resolver identity.Resolver, ref string) (*Entity, error) {
 	rootHash, err := repo.ResolveRef(ref)
 	if err != nil {
 		return nil, err
@@ -140,7 +138,7 @@ func read(def Definition, repo repository.ClockedRepo, ref string) (*Entity, err
 			return nil, fmt.Errorf("multiple leafs in the entity DAG")
 		}
 
-		opp, err := readOperationPack(def, repo, commit)
+		opp, err := readOperationPack(def, repo, resolver, commit)
 		if err != nil {
 			return nil, err
 		}
@@ -243,7 +241,7 @@ type StreamedEntity struct {
 }
 
 // ReadAll read and parse all local Entity
-func ReadAll(def Definition, repo repository.ClockedRepo) <-chan StreamedEntity {
+func ReadAll(def Definition, repo repository.ClockedRepo, resolver identity.Resolver) <-chan StreamedEntity {
 	out := make(chan StreamedEntity)
 
 	go func() {
@@ -258,7 +256,7 @@ func ReadAll(def Definition, repo repository.ClockedRepo) <-chan StreamedEntity 
 		}
 
 		for _, ref := range refs {
-			e, err := read(def, repo, ref)
+			e, err := read(def, repo, resolver, ref)
 
 			if err != nil {
 				out <- StreamedEntity{Err: err}

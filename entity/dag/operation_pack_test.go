@@ -9,7 +9,7 @@ import (
 )
 
 func TestOperationPackReadWrite(t *testing.T) {
-	repo, id1, _, def := makeTestContext()
+	repo, id1, _, resolver, def := makeTestContext()
 
 	opp := &operationPack{
 		Author: id1,
@@ -27,7 +27,7 @@ func TestOperationPackReadWrite(t *testing.T) {
 	commit, err := repo.ReadCommit(commitHash)
 	require.NoError(t, err)
 
-	opp2, err := readOperationPack(def, repo, commit)
+	opp2, err := readOperationPack(def, repo, resolver, commit)
 	require.NoError(t, err)
 
 	require.Equal(t, opp, opp2)
@@ -46,7 +46,7 @@ func TestOperationPackReadWrite(t *testing.T) {
 }
 
 func TestOperationPackSignedReadWrite(t *testing.T) {
-	repo, id1, _, def := makeTestContext()
+	repo, id1, _, resolver, def := makeTestContext()
 
 	err := id1.(*identity.Identity).Mutate(repo, func(orig *identity.Mutator) {
 		orig.Keys = append(orig.Keys, identity.GenerateKey())
@@ -69,7 +69,7 @@ func TestOperationPackSignedReadWrite(t *testing.T) {
 	commit, err := repo.ReadCommit(commitHash)
 	require.NoError(t, err)
 
-	opp2, err := readOperationPack(def, repo, commit)
+	opp2, err := readOperationPack(def, repo, resolver, commit)
 	require.NoError(t, err)
 
 	require.Equal(t, opp, opp2)

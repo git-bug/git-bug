@@ -166,7 +166,7 @@ func (opp *operationPack) Write(def Definition, repo repository.Repo, parentComm
 // readOperationPack read the operationPack encoded in git at the given Tree hash.
 //
 // Validity of the Lamport clocks is left for the caller to decide.
-func readOperationPack(def Definition, repo repository.RepoData, commit repository.Commit) (*operationPack, error) {
+func readOperationPack(def Definition, repo repository.RepoData, resolver identity.Resolver, commit repository.Commit) (*operationPack, error) {
 	entries, err := repo.ReadTree(commit.TreeHash)
 	if err != nil {
 		return nil, err
@@ -207,7 +207,7 @@ func readOperationPack(def Definition, repo repository.RepoData, commit reposito
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to read git blob data")
 			}
-			ops, author, err = unmarshallPack(def, data)
+			ops, author, err = unmarshallPack(def, resolver, data)
 			if err != nil {
 				return nil, err
 			}
@@ -251,7 +251,7 @@ func readOperationPack(def Definition, repo repository.RepoData, commit reposito
 // unmarshallPack delegate the unmarshalling of the Operation's JSON to the decoding
 // function provided by the concrete entity. This gives access to the concrete type of each
 // Operation.
-func unmarshallPack(def Definition, data []byte) ([]Operation, identity.Interface, error) {
+func unmarshallPack(def Definition, resolver identity.Resolver, data []byte) ([]Operation, identity.Interface, error) {
 	aux := struct {
 		Author     identity.IdentityStub `json:"author"`
 		Operations []json.RawMessage     `json:"ops"`
@@ -265,7 +265,7 @@ func unmarshallPack(def Definition, data []byte) ([]Operation, identity.Interfac
 		return nil, nil, fmt.Errorf("missing author")
 	}
 
-	author, err := def.identityResolver.ResolveIdentity(aux.Author.Id())
+	author, err := resolver.ResolveIdentity(aux.Author.Id())
 	if err != nil {
 		return nil, nil, err
 	}

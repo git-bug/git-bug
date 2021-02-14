@@ -91,13 +91,13 @@ func unmarshaler(author identity.Interface, raw json.RawMessage) (Operation, err
   Identities + repo + definition
 */
 
-func makeTestContext() (repository.ClockedRepo, identity.Interface, identity.Interface, Definition) {
+func makeTestContext() (repository.ClockedRepo, identity.Interface, identity.Interface, identity.Resolver, Definition) {
 	repo := repository.NewMockRepo()
-	id1, id2, def := makeTestContextInternal(repo)
-	return repo, id1, id2, def
+	id1, id2, resolver, def := makeTestContextInternal(repo)
+	return repo, id1, id2, resolver, def
 }
 
-func makeTestContextRemote(t *testing.T) (repository.ClockedRepo, repository.ClockedRepo, repository.ClockedRepo, identity.Interface, identity.Interface, Definition) {
+func makeTestContextRemote(t *testing.T) (repository.ClockedRepo, repository.ClockedRepo, repository.ClockedRepo, identity.Interface, identity.Interface, identity.Resolver, Definition) {
 	repoA := repository.CreateGoGitTestRepo(false)
 	repoB := repository.CreateGoGitTestRepo(false)
 	remote := repository.CreateGoGitTestRepo(true)
@@ -111,7 +111,7 @@ func makeTestContextRemote(t *testing.T) (repository.ClockedRepo, repository.Clo
 	err = repoB.AddRemote("repoA", repoA.GetLocalRemote())
 	require.NoError(t, err)
 
-	id1, id2, def := makeTestContextInternal(repoA)
+	id1, id2, resolver, def := makeTestContextInternal(repoA)
 
 	// distribute the identities
 	_, err = identity.Push(repoA, "remote")
@@ -119,10 +119,10 @@ func makeTestContextRemote(t *testing.T) (repository.ClockedRepo, repository.Clo
 	err = identity.Pull(repoB, "remote")
 	require.NoError(t, err)
 
-	return repoA, repoB, remote, id1, id2, def
+	return repoA, repoB, remote, id1, id2, resolver, def
 }
 
-func makeTestContextInternal(repo repository.ClockedRepo) (identity.Interface, identity.Interface, Definition) {
+func makeTestContextInternal(repo repository.ClockedRepo) (identity.Interface, identity.Interface, identity.Resolver, Definition) {
 	id1, err := identity.NewIdentity(repo, "name1", "email1")
 	if err != nil {
 		panic(err)
@@ -155,11 +155,10 @@ func makeTestContextInternal(repo repository.ClockedRepo) (identity.Interface, i
 		typename:             "foo",
 		namespace:            "foos",
 		operationUnmarshaler: unmarshaler,
-		identityResolver:     resolver,
 		formatVersion:        1,
 	}
 
-	return id1, id2, def
+	return id1, id2, resolver, def
 }
 
 type identityResolverFunc func(id entity.Id) (identity.Interface, error)

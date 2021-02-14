@@ -32,13 +32,13 @@ func Push(def Definition, repo repository.Repo, remote string) (string, error) {
 
 // Pull will do a Fetch + MergeAll
 // Contrary to MergeAll, this function will return an error if a merge fail.
-func Pull(def Definition, repo repository.ClockedRepo, remote string, author identity.Interface) error {
+func Pull(def Definition, repo repository.ClockedRepo, resolver identity.Resolver, remote string, author identity.Interface) error {
 	_, err := Fetch(def, repo, remote)
 	if err != nil {
 		return err
 	}
 
-	for merge := range MergeAll(def, repo, remote, author) {
+	for merge := range MergeAll(def, repo, resolver, remote, author) {
 		if merge.Err != nil {
 			return merge.Err
 		}
@@ -65,7 +65,10 @@ func Pull(def Definition, repo repository.ClockedRepo, remote string, author ide
 // 5. if both local and remote Entity have new commits (that is, we have a concurrent edition),
 //    a merge commit with an empty operationPack is created to join both branch and form a DAG.
 //    --> emit entity.MergeStatusUpdated
-func MergeAll(def Definition, repo repository.ClockedRepo, remote string, author identity.Interface) <-chan entity.MergeResult {
+//
+// Note: an author is necessary for the case where a merge commit is created, as this commit will
+// have an author and may be signed if a signing key is available.
+func MergeAll(def Definition, repo repository.ClockedRepo, resolver identity.Resolver, remote string, author identity.Interface) <-chan entity.MergeResult {
 	out := make(chan entity.MergeResult)
 
 	go func() {
@@ -79,7 +82,7 @@ func MergeAll(def Definition, repo repository.ClockedRepo, remote string, author
 		}
 
 		for _, remoteRef := range remoteRefs {
-			out <- merge(def, repo, remoteRef, author)
+			out <- merge(def, repo, resolver, remoteRef, author)
 		}
 	}()
 
@@ -88,14 +91,14 @@ func MergeAll(def Definition, repo repository.ClockedRepo, remote string, author
 
 // merge perform a merge to make sure a local Entity is up to date.
 // See MergeAll for more details.
-func merge(def Definition, repo repository.ClockedRepo, remoteRef string, author identity.Interface) entity.MergeResult {
+func merge(def Definition, repo repository.ClockedRepo, resolver identity.Resolver, remoteRef string, author identity.Interface) entity.MergeResult {
 	id := entity.RefToId(remoteRef)
 
 	if err := id.Validate(); err != nil {
 		return entity.NewMergeInvalidStatus(id, errors.Wrap(err, "invalid ref").Error())
 	}
 
-	remoteEntity, err := read(def, repo, remoteRef)
+	remoteEntity, err := read(def, repo, resolver, remoteRef)
 	if err != nil {
 		return entity.NewMergeInvalidStatus(id,
 			errors.Wrapf(err, "remote %s is not readable", def.typename).Error())
@@ -194,7 +197,7 @@ func merge(def Definition, repo repository.ClockedRepo, remoteRef string, author
 	// an empty operationPack.
 	// First step is to collect those clocks.
 
-	localEntity, err := read(def, repo, localRef)
+	localEntity, err := read(def, repo, resolver, localRef)
 	if err != nil {
 		return entity.NewMergeError(err, id)
 	}
