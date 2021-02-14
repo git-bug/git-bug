@@ -123,6 +123,10 @@ func TestPushPull(t *testing.T) {
 	require.NoError(t, err)
 	err = cacheA.SetUserIdentity(reneA)
 	require.NoError(t, err)
+	isaacB, err := cacheB.NewIdentity("Isaac Newton", "isaac@newton.uk")
+	require.NoError(t, err)
+	err = cacheB.SetUserIdentity(isaacB)
+	require.NoError(t, err)
 
 	// distribute the identity
 	_, err = cacheA.Push("origin")

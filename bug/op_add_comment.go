@@ -24,23 +24,19 @@ type AddCommentOperation struct {
 // Sign-post method for gqlgen
 func (op *AddCommentOperation) IsOperation() {}
 
-func (op *AddCommentOperation) base() *OpBase {
-	return &op.OpBase
-}
-
 func (op *AddCommentOperation) Id() entity.Id {
-	return idOperation(op)
+	return idOperation(op, &op.OpBase)
 }
 
 func (op *AddCommentOperation) Apply(snapshot *Snapshot) {
-	snapshot.addActor(op.Author)
-	snapshot.addParticipant(op.Author)
+	snapshot.addActor(op.Author_)
+	snapshot.addParticipant(op.Author_)
 
 	commentId := entity.CombineIds(snapshot.Id(), op.Id())
 	comment := Comment{
 		id:       commentId,
 		Message:  op.Message,
-		Author:   op.Author,
+		Author:   op.Author_,
 		Files:    op.Files,
 		UnixTime: timestamp.Timestamp(op.UnixTime),
 	}
@@ -59,7 +55,7 @@ func (op *AddCommentOperation) GetFiles() []repository.Hash {
 }
 
 func (op *AddCommentOperation) Validate() error {
-	if err := opBaseValidate(op, AddCommentOp); err != nil {
+	if err := op.OpBase.Validate(op, AddCommentOp); err != nil {
 		return err
 	}
 

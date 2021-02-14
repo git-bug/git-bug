@@ -120,8 +120,8 @@ func TestSetMetadataSerialize(t *testing.T) {
 	before.Id()
 
 	// Replace the identity stub with the real thing
-	require.Equal(t, rene.Id(), after.base().Author.Id())
-	after.Author = rene
+	require.Equal(t, rene.Id(), after.Author().Id())
+	after.Author_ = rene
 
 	require.Equal(t, before, &after)
 }

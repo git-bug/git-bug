@@ -42,13 +42,15 @@ func (mr MergeResult) String() string {
 	case MergeStatusNothing:
 		return "nothing to do"
 	case MergeStatusError:
-		return fmt.Sprintf("merge error on %s: %s", mr.Id, mr.Err.Error())
+		if mr.Id != "" {
+			return fmt.Sprintf("merge error on %s: %s", mr.Id, mr.Err.Error())
+		}
+		return fmt.Sprintf("merge error: %s", mr.Err.Error())
 	default:
 		panic("unknown merge status")
 	}
 }
 
-// TODO: Interface --> *Entity ?
 func NewMergeNewStatus(id Id, entity Interface) MergeResult {
 	return MergeResult{
 		Id:     id,

@@ -27,19 +27,15 @@ type EditCommentOperation struct {
 // Sign-post method for gqlgen
 func (op *EditCommentOperation) IsOperation() {}
 
-func (op *EditCommentOperation) base() *OpBase {
-	return &op.OpBase
-}
-
 func (op *EditCommentOperation) Id() entity.Id {
-	return idOperation(op)
+	return idOperation(op, &op.OpBase)
 }
 
 func (op *EditCommentOperation) Apply(snapshot *Snapshot) {
 	// Todo: currently any message can be edited, even by a different author
 	// crypto signature are needed.
 
-	snapshot.addActor(op.Author)
+	snapshot.addActor(op.Author_)
 
 	var target TimelineItem
 
@@ -85,7 +81,7 @@ func (op *EditCommentOperation) GetFiles() []repository.Hash {
 }
 
 func (op *EditCommentOperation) Validate() error {
-	if err := opBaseValidate(op, EditCommentOp); err != nil {
+	if err := op.OpBase.Validate(op, EditCommentOp); err != nil {
 		return err
 	}
 

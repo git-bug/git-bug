@@ -182,29 +182,24 @@ func TestGithubImporter(t *testing.T) {
 
 			for i, op := range tt.bug.Operations {
 				require.IsType(t, ops[i], op)
+				require.Equal(t, op.Author().Name(), ops[i].Author().Name())
 
-				switch op.(type) {
+				switch op := op.(type) {
 				case *bug.CreateOperation:
-					require.Equal(t, op.(*bug.CreateOperation).Title, ops[i].(*bug.CreateOperation).Title)
-					require.Equal(t, op.(*bug.CreateOperation).Message, ops[i].(*bug.CreateOperation).Message)
-					require.Equal(t, op.(*bug.CreateOperation).Author.Name(), ops[i].(*bug.CreateOperation).Author.Name())
+					require.Equal(t, op.Title, ops[i].(*bug.CreateOperation).Title)
+					require.Equal(t, op.Message, ops[i].(*bug.CreateOperation).Message)
 				case *bug.SetStatusOperation:
-					require.Equal(t, op.(*bug.SetStatusOperation).Status, ops[i].(*bug.SetStatusOperation).Status)
-					require.Equal(t, op.(*bug.SetStatusOperation).Author.Name(), ops[i].(*bug.SetStatusOperation).Author.Name())
+					require.Equal(t, op.Status, ops[i].(*bug.SetStatusOperation).Status)
 				case *bug.SetTitleOperation:
-					require.Equal(t, op.(*bug.SetTitleOperation).Was, ops[i].(*bug.SetTitleOperation).Was)
-					require.Equal(t, op.(*bug.SetTitleOperation).Title, ops[i].(*bug.SetTitleOperation).Title)
-					require.Equal(t, op.(*bug.SetTitleOperation).Author.Name(), ops[i].(*bug.SetTitleOperation).Author.Name())
+					require.Equal(t, op.Was, ops[i].(*bug.SetTitleOperation).Was)
+					require.Equal(t, op.Title, ops[i].(*bug.SetTitleOperation).Title)
 				case *bug.LabelChangeOperation:
-					require.ElementsMatch(t, op.(*bug.LabelChangeOperation).Added, ops[i].(*bug.LabelChangeOperation).Added)
-					require.ElementsMatch(t, op.(*bug.LabelChangeOperation).Removed, ops[i].(*bug.LabelChangeOperation).Removed)
-					require.Equal(t, op.(*bug.LabelChangeOperation).Author.Name(), ops[i].(*bug.LabelChangeOperation).Author.Name())
+					require.ElementsMatch(t, op.Added, ops[i].(*bug.LabelChangeOperation).Added)
+					require.ElementsMatch(t, op.Removed, ops[i].(*bug.LabelChangeOperation).Removed)
 				case *bug.AddCommentOperation:
-					require.Equal(t, op.(*bug.AddCommentOperation).Message, ops[i].(*bug.AddCommentOperation).Message)
-					require.Equal(t, op.(*bug.AddCommentOperation).Author.Name(), ops[i].(*bug.AddCommentOperation).Author.Name())
+					require.Equal(t, op.Message, ops[i].(*bug.AddCommentOperation).Message)
 				case *bug.EditCommentOperation:
-					require.Equal(t, op.(*bug.EditCommentOperation).Message, ops[i].(*bug.EditCommentOperation).Message)
-					require.Equal(t, op.(*bug.EditCommentOperation).Author.Name(), ops[i].(*bug.EditCommentOperation).Author.Name())
+					require.Equal(t, op.Message, ops[i].(*bug.EditCommentOperation).Message)
 
 				default:
 					panic("unknown operation type")

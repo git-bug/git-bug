@@ -111,52 +111,6 @@ func generateRandomBugsWithSeed(opts Options, seed int64) []*bug.Bug {
 	return result
 }
 
-func GenerateRandomOperationPacks(packNumber int, opNumber int) []*bug.OperationPack {
-	return GenerateRandomOperationPacksWithSeed(packNumber, opNumber, time.Now().UnixNano())
-}
-
-func GenerateRandomOperationPacksWithSeed(packNumber int, opNumber int, seed int64) []*bug.OperationPack {
-	// Note: this is a bit crude, only generate a Create + Comments
-
-	panic("this piece of code needs to be updated to make sure that the identities " +
-		"are properly commit before usage. That is, generateRandomPersons() need to be called.")
-
-	rand.Seed(seed)
-	fake.Seed(seed)
-
-	result := make([]*bug.OperationPack, packNumber)
-
-	for i := 0; i < packNumber; i++ {
-		opp := &bug.OperationPack{}
-
-		var op bug.Operation
-
-		op = bug.NewCreateOp(
-			randomPerson(),
-			time.Now().Unix(),
-			fake.Sentence(),
-			paragraphs(),
-			nil,
-		)
-
-		opp.Append(op)
-
-		for j := 0; j < opNumber-1; j++ {
-			op = bug.NewAddCommentOp(
-				randomPerson(),
-				time.Now().Unix(),
-				paragraphs(),
-				nil,
-			)
-			opp.Append(op)
-		}
-
-		result[i] = opp
-	}
-
-	return result
-}
-
 func person(repo repository.RepoClock) (*identity.Identity, error) {
 	return identity.NewIdentity(repo, fake.FullName(), fake.EmailAddress())
 }

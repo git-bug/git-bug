@@ -20,38 +20,25 @@ type SetMetadataOperation struct {
 // Sign-post method for gqlgen
 func (op *SetMetadataOperation) IsOperation() {}
 
-func (op *SetMetadataOperation) base() *OpBase {
-	return &op.OpBase
-}
-
 func (op *SetMetadataOperation) Id() entity.Id {
-	return idOperation(op)
+	return idOperation(op, &op.OpBase)
 }
 
 func (op *SetMetadataOperation) Apply(snapshot *Snapshot) {
 	for _, target := range snapshot.Operations {
 		if target.Id() == op.Target {
-			base := target.base()
-
-			if base.extraMetadata == nil {
-				base.extraMetadata = make(map[string]string)
-			}
-
 			// Apply the metadata in an immutable way: if a metadata already
 			// exist, it's not possible to override it.
-			for key, val := range op.NewMetadata {
-				if _, exist := base.extraMetadata[key]; !exist {
-					base.extraMetadata[key] = val
-				}
+			for key, value := range op.NewMetadata {
+				target.setExtraMetadataImmutable(key, value)
 			}
-
 			return
 		}
 	}
 }
 
 func (op *SetMetadataOperation) Validate() error {
-	if err := opBaseValidate(op, SetMetadataOp); err != nil {
+	if err := op.OpBase.Validate(op, SetMetadataOp); err != nil {
 		return err
 	}
 

@@ -7,11 +7,11 @@ func (b BugsByCreationTime) Len() int {
 }
 
 func (b BugsByCreationTime) Less(i, j int) bool {
-	if b[i].createTime < b[j].createTime {
+	if b[i].CreateLamportTime() < b[j].CreateLamportTime() {
 		return true
 	}
 
-	if b[i].createTime > b[j].createTime {
+	if b[i].CreateLamportTime() > b[j].CreateLamportTime() {
 		return false
 	}
 
@@ -35,11 +35,11 @@ func (b BugsByEditTime) Len() int {
 }
 
 func (b BugsByEditTime) Less(i, j int) bool {
-	if b[i].editTime < b[j].editTime {
+	if b[i].EditLamportTime() < b[j].EditLamportTime() {
 		return true
 	}
 
-	if b[i].editTime > b[j].editTime {
+	if b[i].EditLamportTime() > b[j].EditLamportTime() {
 		return false
 	}
 

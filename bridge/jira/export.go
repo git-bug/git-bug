@@ -309,7 +309,7 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, out ch
 			continue
 		}
 
-		opAuthor := op.GetAuthor()
+		opAuthor := op.Author()
 		client, err := je.getClientForIdentity(opAuthor.Id())
 		if err != nil {
 			out <- core.NewExportError(

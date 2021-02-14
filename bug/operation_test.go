@@ -45,7 +45,7 @@ func TestValidate(t *testing.T) {
 		NewSetStatusOp(makeIdentity(t, "René \nDescartes", "rene@descartes.fr"), unix, ClosedStatus),
 		NewSetStatusOp(makeIdentity(t, "René Descartes", "rene@\ndescartes.fr"), unix, ClosedStatus),
 		&CreateOperation{OpBase: OpBase{
-			Author:        rene,
+			Author_:       rene,
 			UnixTime:      0,
 			OperationType: CreateOp,
 		},
@@ -121,7 +121,7 @@ func TestID(t *testing.T) {
 		require.NoError(t, id2.Validate())
 		require.Equal(t, id1, id2)
 
-		b2, err := ReadLocal(repo, b.Id())
+		b2, err := Read(repo, b.Id())
 		require.NoError(t, err)
 
 		op3 := b2.FirstOp()

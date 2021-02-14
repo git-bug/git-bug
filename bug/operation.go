@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/MichaelMure/git-bug/entity"
+	"github.com/MichaelMure/git-bug/entity/dag"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 )
@@ -29,34 +30,31 @@ const (
 
 // Operation define the interface to fulfill for an edit operation of a Bug
 type Operation interface {
-	// base return the OpBase of the Operation, for package internal use
-	base() *OpBase
-	// Id return the identifier of the operation, to be used for back references
-	Id() entity.Id
+	dag.Operation
+
+	// Type return the type of the operation
+	Type() OperationType
+
 	// Time return the time when the operation was added
 	Time() time.Time
 	// GetFiles return the files needed by this operation
 	GetFiles() []repository.Hash
 	// Apply the operation to a Snapshot to create the final state
 	Apply(snapshot *Snapshot)
-	// Validate check if the operation is valid (ex: a title is a single line)
-	Validate() error
 	// SetMetadata store arbitrary metadata about the operation
 	SetMetadata(key string, value string)
 	// GetMetadata retrieve arbitrary metadata about the operation
 	GetMetadata(key string) (string, bool)
 	// AllMetadata return all metadata for this operation
 	AllMetadata() map[string]string
-	// GetAuthor return the author identity
-	GetAuthor() identity.Interface
+
+	setExtraMetadataImmutable(key string, value string)
 
 	// sign-post method for gqlgen
 	IsOperation()
 }
 
-func idOperation(op Operation) entity.Id {
-	base := op.base()
-
+func idOperation(op Operation, base *OpBase) entity.Id {
 	if base.id == "" {
 		// something went really wrong
 		panic("op's id not set")
@@ -77,10 +75,69 @@ func idOperation(op Operation) entity.Id {
 	return base.id
 }
 
+func operationUnmarshaller(author identity.Interface, raw json.RawMessage) (dag.Operation, error) {
+	var t struct {
+		OperationType OperationType `json:"type"`
+	}
+
+	if err := json.Unmarshal(raw, &t); err != nil {
+		return nil, err
+	}
+
+	var op Operation
+
+	switch t.OperationType {
+	case AddCommentOp:
+		op = &AddCommentOperation{}
+	case CreateOp:
+		op = &CreateOperation{}
+	case EditCommentOp:
+		op = &EditCommentOperation{}
+	case LabelChangeOp:
+		op = &LabelChangeOperation{}
+	case NoOpOp:
+		op = &NoOpOperation{}
+	case SetMetadataOp:
+		op = &SetMetadataOperation{}
+	case SetStatusOp:
+		op = &SetStatusOperation{}
+	case SetTitleOp:
+		op = &SetTitleOperation{}
+	default:
+		panic(fmt.Sprintf("unknown operation type %v", t.OperationType))
+	}
+
+	err := json.Unmarshal(raw, &op)
+	if err != nil {
+		return nil, err
+	}
+
+	switch op := op.(type) {
+	case *AddCommentOperation:
+		op.Author_ = author
+	case *CreateOperation:
+		op.Author_ = author
+	case *LabelChangeOperation:
+		op.Author_ = author
+	case *NoOpOperation:
+		op.Author_ = author
+	case *SetMetadataOperation:
+		op.Author_ = author
+	case *SetStatusOperation:
+		op.Author_ = author
+	case *SetTitleOperation:
+		op.Author_ = author
+	default:
+		panic(fmt.Sprintf("unknown operation type %T", op))
+	}
+
+	return op, nil
+}
+
 // OpBase implement the common code for all operations
 type OpBase struct {
 	OperationType OperationType      `json:"type"`
-	Author        identity.Interface `json:"author"`
+	Author_       identity.Interface `json:"author"`
 	// TODO: part of the data model upgrade, this should eventually be a timestamp + lamport
 	UnixTime int64             `json:"timestamp"`
 	Metadata map[string]string `json:"metadata,omitempty"`
@@ -95,15 +152,15 @@ type OpBase struct {
 func newOpBase(opType OperationType, author identity.Interface, unixTime int64) OpBase {
 	return OpBase{
 		OperationType: opType,
-		Author:        author,
+		Author_:       author,
 		UnixTime:      unixTime,
 		id:            entity.UnsetId,
 	}
 }
 
-func (op *OpBase) UnmarshalJSON(data []byte) error {
+func (base *OpBase) UnmarshalJSON(data []byte) error {
 	// Compute the Id when loading the op from disk.
-	op.id = entity.DeriveId(data)
+	base.id = entity.DeriveId(data)
 
 	aux := struct {
 		OperationType OperationType     `json:"type"`
@@ -122,39 +179,43 @@ func (op *OpBase) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	op.OperationType = aux.OperationType
-	op.Author = author
-	op.UnixTime = aux.UnixTime
-	op.Metadata = aux.Metadata
+	base.OperationType = aux.OperationType
+	base.Author_ = author
+	base.UnixTime = aux.UnixTime
+	base.Metadata = aux.Metadata
 
 	return nil
 }
 
+func (base *OpBase) Type() OperationType {
+	return base.OperationType
+}
+
 // Time return the time when the operation was added
-func (op *OpBase) Time() time.Time {
-	return time.Unix(op.UnixTime, 0)
+func (base *OpBase) Time() time.Time {
+	return time.Unix(base.UnixTime, 0)
 }
 
 // GetFiles return the files needed by this operation
-func (op *OpBase) GetFiles() []repository.Hash {
+func (base *OpBase) GetFiles() []repository.Hash {
 	return nil
 }
 
 // Validate check the OpBase for errors
-func opBaseValidate(op Operation, opType OperationType) error {
-	if op.base().OperationType != opType {
-		return fmt.Errorf("incorrect operation type (expected: %v, actual: %v)", opType, op.base().OperationType)
+func (base *OpBase) Validate(op Operation, opType OperationType) error {
+	if base.OperationType != opType {
+		return fmt.Errorf("incorrect operation type (expected: %v, actual: %v)", opType, base.OperationType)
 	}
 
 	if op.Time().Unix() == 0 {
 		return fmt.Errorf("time not set")
 	}
 
-	if op.base().Author == nil {
+	if base.Author_ == nil {
 		return fmt.Errorf("author not set")
 	}
 
-	if err := op.base().Author.Validate(); err != nil {
+	if err := op.Author().Validate(); err != nil {
 		return errors.Wrap(err, "author")
 	}
 
@@ -168,46 +229,55 @@ func opBaseValidate(op Operation, opType OperationType) error {
 }
 
 // SetMetadata store arbitrary metadata about the operation
-func (op *OpBase) SetMetadata(key string, value string) {
-	if op.Metadata == nil {
-		op.Metadata = make(map[string]string)
+func (base *OpBase) SetMetadata(key string, value string) {
+	if base.Metadata == nil {
+		base.Metadata = make(map[string]string)
 	}
 
-	op.Metadata[key] = value
-	op.id = entity.UnsetId
+	base.Metadata[key] = value
+	base.id = entity.UnsetId
 }
 
 // GetMetadata retrieve arbitrary metadata about the operation
-func (op *OpBase) GetMetadata(key string) (string, bool) {
-	val, ok := op.Metadata[key]
+func (base *OpBase) GetMetadata(key string) (string, bool) {
+	val, ok := base.Metadata[key]
 
 	if ok {
 		return val, true
 	}
 
 	// extraMetadata can't replace the original operations value if any
-	val, ok = op.extraMetadata[key]
+	val, ok = base.extraMetadata[key]
 
 	return val, ok
 }
 
 // AllMetadata return all metadata for this operation
-func (op *OpBase) AllMetadata() map[string]string {
+func (base *OpBase) AllMetadata() map[string]string {
 	result := make(map[string]string)
 
-	for key, val := range op.extraMetadata {
+	for key, val := range base.extraMetadata {
 		result[key] = val
 	}
 
 	// Original metadata take precedence
-	for key, val := range op.Metadata {
+	for key, val := range base.Metadata {
 		result[key] = val
 	}
 
 	return result
 }
 
-// GetAuthor return author identity
-func (op *OpBase) GetAuthor() identity.Interface {
-	return op.Author
+func (base *OpBase) setExtraMetadataImmutable(key string, value string) {
+	if base.extraMetadata == nil {
+		base.extraMetadata = make(map[string]string)
+	}
+	if _, exist := base.extraMetadata[key]; !exist {
+		base.extraMetadata[key] = value
+	}
+}
+
+// Author return author identity
+func (base *OpBase) Author() identity.Interface {
+	return base.Author_
 }

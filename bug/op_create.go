@@ -30,12 +30,8 @@ type CreateOperation struct {
 // Sign-post method for gqlgen
 func (op *CreateOperation) IsOperation() {}
 
-func (op *CreateOperation) base() *OpBase {
-	return &op.OpBase
-}
-
 func (op *CreateOperation) Id() entity.Id {
-	return idOperation(op)
+	return idOperation(op, &op.OpBase)
 }
 
 // OVERRIDE
@@ -61,8 +57,8 @@ func (op *CreateOperation) Apply(snapshot *Snapshot) {
 
 	snapshot.id = op.Id()
 
-	snapshot.addActor(op.Author)
-	snapshot.addParticipant(op.Author)
+	snapshot.addActor(op.Author_)
+	snapshot.addParticipant(op.Author_)
 
 	snapshot.Title = op.Title
 
@@ -70,12 +66,12 @@ func (op *CreateOperation) Apply(snapshot *Snapshot) {
 	comment := Comment{
 		id:       commentId,
 		Message:  op.Message,
-		Author:   op.Author,
+		Author:   op.Author_,
 		UnixTime: timestamp.Timestamp(op.UnixTime),
 	}
 
 	snapshot.Comments = []Comment{comment}
-	snapshot.Author = op.Author
+	snapshot.Author = op.Author_
 	snapshot.CreateTime = op.Time()
 
 	snapshot.Timeline = []TimelineItem{
@@ -90,7 +86,7 @@ func (op *CreateOperation) GetFiles() []repository.Hash {
 }
 
 func (op *CreateOperation) Validate() error {
-	if err := opBaseValidate(op, CreateOp); err != nil {
+	if err := op.OpBase.Validate(op, CreateOp); err != nil {
 		return err
 	}
 
