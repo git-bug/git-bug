@@ -159,11 +159,8 @@ func (v *version) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if aux.FormatVersion < formatVersion {
-		return entity.NewErrOldFormatVersion(aux.FormatVersion)
-	}
-	if aux.FormatVersion > formatVersion {
-		return entity.NewErrNewFormatVersion(aux.FormatVersion)
+	if aux.FormatVersion != formatVersion {
+		return entity.NewErrInvalidFormat(aux.FormatVersion, formatVersion)
 	}
 
 	v.id = entity.DeriveId(data)

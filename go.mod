@@ -8,7 +8,6 @@ require (
 	github.com/MichaelMure/go-term-text v0.2.10
 	github.com/araddon/dateparse v0.0.0-20190622164848-0fb0a474d195
 	github.com/awesome-gocui/gocui v0.6.1-0.20191115151952-a34ffb055986
-	github.com/blang/semver v3.5.1+incompatible
 	github.com/blevesearch/bleve v1.0.14
 	github.com/cheekybits/genny v0.0.0-20170328200008-9127e812e1e9
 	github.com/corpix/uarand v0.1.1 // indirect
@@ -30,7 +29,6 @@ require (
 	github.com/skratchdot/open-golang v0.0.0-20190402232053-79abb63cd66e
 	github.com/spf13/cobra v1.1.1
 	github.com/stretchr/testify v1.7.0
-	github.com/tecbot/gorocksdb v0.0.0-20191217155057-f0fad39f321c // indirect
 	github.com/vektah/gqlparser v1.3.1
 	github.com/xanzy/go-gitlab v0.40.1
 	github.com/xanzy/ssh-agent v0.3.0 // indirect

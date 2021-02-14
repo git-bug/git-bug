@@ -188,7 +188,7 @@ func readOperationPack(def Definition, repo repository.RepoData, resolver identi
 		}
 	}
 	if version == 0 {
-		return nil, entity.NewErrUnknowFormat(def.FormatVersion)
+		return nil, entity.NewErrUnknownFormat(def.FormatVersion)
 	}
 	if version != def.FormatVersion {
 		return nil, entity.NewErrInvalidFormat(version, def.FormatVersion)

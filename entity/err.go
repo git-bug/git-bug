@@ -43,7 +43,7 @@ func NewErrInvalidFormat(version uint, expected uint) *ErrInvalidFormat {
 	}
 }
 
-func NewErrUnknowFormat(expected uint) *ErrInvalidFormat {
+func NewErrUnknownFormat(expected uint) *ErrInvalidFormat {
 	return &ErrInvalidFormat{
 		version:  0,
 		expected: expected,
