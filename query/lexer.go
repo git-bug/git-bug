@@ -11,15 +11,19 @@ type tokenKind int
 const (
 	_ tokenKind = iota
 	tokenKindKV
+	tokenKindKVV
 	tokenKindSearch
 )
 
 type token struct {
 	kind tokenKind
 
-	// KV
+	// KV and KVV
 	qualifier string
 	value     string
+
+	// KVV only
+	subQualifier string
 
 	// Search
 	term string
@@ -29,6 +33,15 @@ func newTokenKV(qualifier, value string) token {
 	return token{
 		kind:      tokenKindKV,
 		qualifier: qualifier,
+		value:     value,
+	}
+}
+
+func newTokenKVV(qualifier, subQualifier, value string) token {
+	return token{
+		kind:      tokenKindKVV,
+		qualifier: qualifier,
+		subQualifier: subQualifier,
 		value:     value,
 	}
 }
@@ -50,7 +63,23 @@ func tokenize(query string) ([]token, error) {
 
 	var tokens []token
 	for _, field := range fields {
-		split := strings.Split(field, ":")
+		// Split using ':' as separator, but separators inside '"' don't count.
+		quoted := false
+		split := strings.FieldsFunc(field, func(r rune) bool {
+			if r == '"' {
+				quoted = !quoted
+			}
+			return !quoted && r == ':'
+		})
+		if (strings.HasPrefix(field, ":")) {
+			split = append([]string{""}, split...)
+		}
+		if (strings.HasSuffix(field, ":")) {
+			split = append(split, "")
+		}
+		if (quoted) {
+			return nil, fmt.Errorf("can't tokenize \"%s\": unmatched quote", field)
+		}
 
 		// full text search
 		if len(split) == 1 {
@@ -58,18 +87,31 @@ func tokenize(query string) ([]token, error) {
 			continue
 		}
 
-		if len(split) != 2 {
-			return nil, fmt.Errorf("can't tokenize \"%s\"", field)
+		if len(split) > 3 {
+			return nil, fmt.Errorf("can't tokenize \"%s\": too many separators", field)
 		}
 
 		if len(split[0]) == 0 {
 			return nil, fmt.Errorf("can't tokenize \"%s\": empty qualifier", field)
 		}
-		if len(split[1]) == 0 {
-			return nil, fmt.Errorf("empty value for qualifier \"%s\"", split[0])
-		}
 
-		tokens = append(tokens, newTokenKV(split[0], removeQuote(split[1])))
+		if len(split) == 2 {
+			if len(split[1]) == 0 {
+				return nil, fmt.Errorf("empty value for qualifier \"%s\"", split[0])
+			}
+
+			tokens = append(tokens, newTokenKV(split[0], removeQuote(split[1])))
+		} else {
+			if len(split[1]) == 0 {
+				return nil, fmt.Errorf("empty sub-qualifier for qualifier \"%s\"", split[0])
+			}
+
+			if len(split[2]) == 0 {
+				return nil, fmt.Errorf("empty value for qualifier \"%s:%s\"", split[0], split[1])
+			}
+
+			tokens = append(tokens, newTokenKVV(split[0], removeQuote(split[1]), removeQuote(split[2])))
+		}
 	}
 	return tokens, nil
 }

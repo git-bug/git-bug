@@ -37,6 +37,14 @@ func TestTokenize(t *testing.T) {
 		{`key:'value value`, nil},
 		{`key:value value'`, nil},
 
+		// sub-qualifier posive testing
+		{`key:subkey:"value:value"`, []token{newTokenKVV("key", "subkey", "value:value")}},
+
+		// sub-qualifier negative testing
+		{`key:subkey:value:value`, nil},
+		{`key:subkey:`, nil},
+		{`key:subkey:"value`, nil},
+
 		// full text search
 		{"search", []token{newTokenSearch("search")}},
 		{"search more terms", []token{

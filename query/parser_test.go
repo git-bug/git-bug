@@ -84,6 +84,11 @@ func TestParse(t *testing.T) {
 				OrderDirection: OrderDescending,
 			},
 		},
+
+		// Metadata
+		{`metadata:key:"https://www.example.com/"`, &Query{
+			Filters: Filters{Metadata: []StringPair{{"key", "https://www.example.com/"}}},
+		}},
 	}
 
 	for _, tc := range tests {

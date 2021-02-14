@@ -23,10 +23,17 @@ func NewQuery() *Query {
 
 type Search []string
 
+// Used for key-value pairs when filtering based on metadata
+type StringPair struct {
+	Key string
+	Value string
+}
+
 // Filters is a collection of Filter that implement a complex filter
 type Filters struct {
 	Status      []bug.Status
 	Author      []string
+	Metadata    []StringPair
 	Actor       []string
 	Participant []string
 	Label       []string
