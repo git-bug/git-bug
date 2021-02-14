@@ -31,7 +31,7 @@ func (op *NoOpOperation) Validate() error {
 	return op.OpBase.Validate(op, NoOpOp)
 }
 
-// UnmarshalJSON is a two step JSON unmarshaling
+// UnmarshalJSON is a two step JSON unmarshalling
 // This workaround is necessary to avoid the inner OpBase.MarshalJSON
 // overriding the outer op's MarshalJSON
 func (op *NoOpOperation) UnmarshalJSON(data []byte) error {

@@ -3,7 +3,7 @@
 Edit an existing comment on a bug.
 
 ```
-git-bug comment edit <commentid> [flags]
+git-bug comment edit [COMMENT_ID] [flags]
 ```
 
 ### Options

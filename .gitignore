@@ -7,3 +7,4 @@ git-bug
 dist
 coverage.txt
 .idea/
+.git_bak*
