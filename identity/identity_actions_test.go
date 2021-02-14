@@ -8,7 +8,7 @@ import (
 	"github.com/MichaelMure/git-bug/repository"
 )
 
-func TestPushPull(t *testing.T) {
+func TestIdentityPushPull(t *testing.T) {
 	repoA, repoB, remote := repository.SetupGoGitReposAndRemote()
 	defer repository.CleanupTestRepos(repoA, repoB, remote)
 

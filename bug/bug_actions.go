@@ -49,7 +49,26 @@ func MergeAll(repo repository.ClockedRepo, remote string, author identity.Interf
 	// invalidate entities if necessary.
 	identityResolver := identity.NewSimpleResolver(repo)
 
-	return dag.MergeAll(def, repo, identityResolver, remote, author)
+	out := make(chan entity.MergeResult)
+
+	go func() {
+		defer close(out)
+
+		results := dag.MergeAll(def, repo, identityResolver, remote, author)
+
+		// wrap the dag.Entity into a complete Bug
+		for result := range results {
+			result := result
+			if result.Entity != nil {
+				result.Entity = &Bug{
+					Entity: result.Entity.(*dag.Entity),
+				}
+			}
+			out <- result
+		}
+	}()
+
+	return out
 }
 
 // RemoveBug will remove a local bug from its entity.Id

@@ -108,7 +108,7 @@ func TestCache(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestPushPull(t *testing.T) {
+func TestCachePushPull(t *testing.T) {
 	repoA, repoB, remote := repository.SetupGoGitReposAndRemote()
 	defer repository.CleanupTestRepos(repoA, repoB, remote)
 

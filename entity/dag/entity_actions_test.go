@@ -23,7 +23,7 @@ func allEntities(t testing.TB, bugs <-chan StreamedEntity) []*Entity {
 	return result
 }
 
-func TestPushPull(t *testing.T) {
+func TestEntityPushPull(t *testing.T) {
 	repoA, repoB, remote, id1, id2, resolver, def := makeTestContextRemote(t)
 	defer repository.CleanupTestRepos(repoA, repoB, remote)
 
