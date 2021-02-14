@@ -148,6 +148,10 @@ func read(def Definition, repo repository.ClockedRepo, resolver identity.Resolve
 			return nil, err
 		}
 
+		if isMerge && len(opp.Operations) > 0 {
+			return nil, fmt.Errorf("merge commit cannot have operations")
+		}
+
 		// Check that the create lamport clock is set (not checked in Validate() as it's optional)
 		if isFirstCommit && opp.CreateTime <= 0 {
 			return nil, fmt.Errorf("creation lamport time not set")
