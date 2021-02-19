@@ -1,5 +1,8 @@
 # git-bug rich web UI
 
+## Prerequisites
+[ReactJS](https://reactjs.org/) | [Material UI](https://material-ui.com/) | [GraphQL](https://graphql.org/) | [Apollo GraphQL](https://www.apollographql.com/docs/react/)
+
 ## How to develop
 
 ### Run GraphQL backend
@@ -26,4 +29,7 @@ The development version of the WebUI is configured to query the backend on the p
 
 ## Bundle the web UI
 
-Once the webUI is good enough for a new release, run `make pack-webui` from the root directory to bundle the compiled js into the go binary.
+Once the webUI is good enough for a new release:
+1. run `make build` from webui folder
+2. run `make pack-webui` from the *root directory* to bundle the compiled js into the go binary.
+   - You must have Go installed on Your machine to run this command.
