@@ -11,7 +11,6 @@ import (
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
 	"github.com/MichaelMure/git-bug/identity"
-	"github.com/MichaelMure/git-bug/repository"
 )
 
 // OperationType is an operation type identifier
@@ -38,10 +37,9 @@ type Operation interface {
 
 	// Time return the time when the operation was added
 	Time() time.Time
-	// GetFiles return the files needed by this operation
-	GetFiles() []repository.Hash
 	// Apply the operation to a Snapshot to create the final state
 	Apply(snapshot *Snapshot)
+
 	// SetMetadata store arbitrary metadata about the operation
 	SetMetadata(key string, value string)
 	// GetMetadata retrieve arbitrary metadata about the operation
@@ -212,11 +210,6 @@ func (base *OpBase) Time() time.Time {
 	return time.Unix(base.UnixTime, 0)
 }
 
-// GetFiles return the files needed by this operation
-func (base *OpBase) GetFiles() []repository.Hash {
-	return nil
-}
-
 // Validate check the OpBase for errors
 func (base *OpBase) Validate(op Operation, opType OperationType) error {
 	if base.OperationType != opType {
@@ -235,9 +228,11 @@ func (base *OpBase) Validate(op Operation, opType OperationType) error {
 		return errors.Wrap(err, "author")
 	}
 
-	for _, hash := range op.GetFiles() {
-		if !hash.IsValid() {
-			return fmt.Errorf("file with invalid hash %v", hash)
+	if op, ok := op.(dag.OperationWithFiles); ok {
+		for _, hash := range op.GetFiles() {
+			if !hash.IsValid() {
+				return fmt.Errorf("file with invalid hash %v", hash)
+			}
 		}
 	}
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/MichaelMure/git-bug/entity"
+	"github.com/MichaelMure/git-bug/entity/dag"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/text"
@@ -12,6 +13,7 @@ import (
 )
 
 var _ Operation = &AddCommentOperation{}
+var _ dag.OperationWithFiles = &AddCommentOperation{}
 
 // AddCommentOperation will add a new comment in the bug
 type AddCommentOperation struct {

@@ -1,6 +1,7 @@
 package dag
 
 import (
+	"math/rand"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -11,10 +12,16 @@ import (
 func TestOperationPackReadWrite(t *testing.T) {
 	repo, id1, _, resolver, def := makeTestContext()
 
+	blobHash1, err := repo.StoreData(randomData())
+	require.NoError(t, err)
+
+	blobHash2, err := repo.StoreData(randomData())
+	require.NoError(t, err)
+
 	opp := &operationPack{
 		Author: id1,
 		Operations: []Operation{
-			newOp1(id1, "foo"),
+			newOp1(id1, "foo", blobHash1, blobHash2),
 			newOp2(id1, "bar"),
 		},
 		CreateTime: 123,
@@ -36,7 +43,7 @@ func TestOperationPackReadWrite(t *testing.T) {
 	opp3 := &operationPack{
 		Author: id1,
 		Operations: []Operation{
-			newOp1(id1, "foo"),
+			newOp1(id1, "foo", blobHash1, blobHash2),
 			newOp2(id1, "bar"),
 		},
 		CreateTime: 123,
@@ -85,4 +92,13 @@ func TestOperationPackSignedReadWrite(t *testing.T) {
 		EditTime:   456,
 	}
 	require.Equal(t, opp.Id(), opp3.Id())
+}
+
+func randomData() []byte {
+	var letterRunes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	b := make([]byte, 32)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return b
 }

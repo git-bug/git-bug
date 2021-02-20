@@ -23,10 +23,11 @@ type op1 struct {
 
 	OperationType int    `json:"type"`
 	Field1        string `json:"field_1"`
+	Files         []repository.Hash
 }
 
-func newOp1(author identity.Interface, field1 string) *op1 {
-	return &op1{author: author, OperationType: 1, Field1: field1}
+func newOp1(author identity.Interface, field1 string, files ...repository.Hash) *op1 {
+	return &op1{author: author, OperationType: 1, Field1: field1, Files: files}
 }
 
 func (o *op1) Id() entity.Id {
@@ -34,11 +35,15 @@ func (o *op1) Id() entity.Id {
 	return entity.DeriveId(data)
 }
 
+func (o *op1) Validate() error { return nil }
+
 func (o *op1) Author() identity.Interface {
 	return o.author
 }
 
-func (o *op1) Validate() error { return nil }
+func (o *op1) GetFiles() []repository.Hash {
+	return o.Files
+}
 
 type op2 struct {
 	author identity.Interface
@@ -56,11 +61,11 @@ func (o *op2) Id() entity.Id {
 	return entity.DeriveId(data)
 }
 
+func (o *op2) Validate() error { return nil }
+
 func (o *op2) Author() identity.Interface {
 	return o.author
 }
-
-func (o *op2) Validate() error { return nil }
 
 func unmarshaler(author identity.Interface, raw json.RawMessage) (Operation, error) {
 	var t struct {

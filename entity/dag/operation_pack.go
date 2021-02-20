@@ -15,10 +15,8 @@ import (
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
-// TODO: extra data tree
-const extraEntryName = "extra"
-
 const opsEntryName = "ops"
+const extraEntryName = "extra"
 const versionEntryPrefix = "version-"
 const createClockEntryPrefix = "create-clock-"
 const editClockEntryPrefix = "edit-clock-"
@@ -118,6 +116,7 @@ func (opp *operationPack) Write(def Definition, repo repository.Repo, parentComm
 	// Make a Git tree referencing this blob and encoding the other values:
 	// - format version
 	// - clocks
+	// - extra data
 	tree := []repository.TreeEntry{
 		{ObjectType: repository.Blob, Hash: emptyBlobHash,
 			Name: fmt.Sprintf(versionEntryPrefix+"%d", def.FormatVersion)},
@@ -131,6 +130,17 @@ func (opp *operationPack) Write(def Definition, repo repository.Repo, parentComm
 			ObjectType: repository.Blob,
 			Hash:       emptyBlobHash,
 			Name:       fmt.Sprintf(createClockEntryPrefix+"%d", opp.CreateTime),
+		})
+	}
+	if extraTree := opp.makeExtraTree(); len(extraTree) > 0 {
+		extraTreeHash, err := repo.StoreTree(extraTree)
+		if err != nil {
+			return "", err
+		}
+		tree = append(tree, repository.TreeEntry{
+			ObjectType: repository.Tree,
+			Hash:       extraTreeHash,
+			Name:       extraEntryName,
 		})
 	}
 
@@ -161,6 +171,35 @@ func (opp *operationPack) Write(def Definition, repo repository.Repo, parentComm
 	}
 
 	return commitHash, nil
+}
+
+func (opp *operationPack) makeExtraTree() []repository.TreeEntry {
+	var tree []repository.TreeEntry
+	counter := 0
+	added := make(map[repository.Hash]interface{})
+
+	for _, ops := range opp.Operations {
+		ops, ok := ops.(OperationWithFiles)
+		if !ok {
+			continue
+		}
+
+		for _, file := range ops.GetFiles() {
+			if _, has := added[file]; !has {
+				tree = append(tree, repository.TreeEntry{
+					ObjectType: repository.Blob,
+					Hash:       file,
+					// The name is not important here, we only need to
+					// reference the blob.
+					Name: fmt.Sprintf("file%d", counter),
+				})
+				counter++
+				added[file] = struct{}{}
+			}
+		}
+	}
+
+	return tree
 }
 
 // readOperationPack read the operationPack encoded in git at the given Tree hash.

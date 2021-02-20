@@ -3,6 +3,7 @@ package dag
 import (
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/repository"
 )
 
 // Operation is a piece of data defining a change to reflect on the state of an Entity.
@@ -32,4 +33,12 @@ type Operation interface {
 	Validate() error
 	// Author returns the author of this operation
 	Author() identity.Interface
+}
+
+// OperationWithFiles is an extended Operation that has files dependency, stored in git.
+type OperationWithFiles interface {
+	Operation
+
+	// GetFiles return the files needed by this operation
+	GetFiles() []repository.Hash
 }

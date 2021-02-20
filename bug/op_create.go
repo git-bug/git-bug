@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/MichaelMure/git-bug/entity"
+	"github.com/MichaelMure/git-bug/entity/dag"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/text"
@@ -13,6 +14,7 @@ import (
 )
 
 var _ Operation = &CreateOperation{}
+var _ dag.OperationWithFiles = &CreateOperation{}
 
 // CreateOperation define the initial creation of a bug
 type CreateOperation struct {
