@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -27,6 +29,7 @@ import (
 const webUIOpenConfigKey = "git-bug.webui.open"
 
 type webUIOptions struct {
+	host     string
 	port     int
 	open     bool
 	noOpen   bool
@@ -54,6 +57,7 @@ Available git config:
 	flags := cmd.Flags()
 	flags.SortFlags = false
 
+	flags.StringVar(&options.host, "host", "127.0.0.1", "Network address or hostname to listen to (default 127.0.0.1)")
 	flags.BoolVar(&options.open, "open", false, "Automatically open the web UI in the default browser")
 	flags.BoolVar(&options.noOpen, "no-open", false, "Prevent the automatic opening of the web UI in the default browser")
 	flags.IntVarP(&options.port, "port", "p", 0, "Port to listen to (default is random)")
@@ -71,7 +75,7 @@ func runWebUI(env *Env, opts webUIOptions, args []string) error {
 		}
 	}
 
-	addr := fmt.Sprintf("127.0.0.1:%d", opts.port)
+	addr := net.JoinHostPort(opts.host, strconv.Itoa(opts.port))
 	webUiAddr := fmt.Sprintf("http://%s", addr)
 
 	router := mux.NewRouter()
