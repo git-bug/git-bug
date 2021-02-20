@@ -18,9 +18,6 @@ type SetStatusOperation struct {
 	Status Status `json:"status"`
 }
 
-// Sign-post method for gqlgen
-func (op *SetStatusOperation) IsOperation() {}
-
 func (op *SetStatusOperation) Id() entity.Id {
 	return idOperation(op, &op.OpBase)
 }

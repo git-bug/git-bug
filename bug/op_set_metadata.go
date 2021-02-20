@@ -17,9 +17,6 @@ type SetMetadataOperation struct {
 	NewMetadata map[string]string `json:"new_metadata"`
 }
 
-// Sign-post method for gqlgen
-func (op *SetMetadataOperation) IsOperation() {}
-
 func (op *SetMetadataOperation) Id() entity.Id {
 	return idOperation(op, &op.OpBase)
 }

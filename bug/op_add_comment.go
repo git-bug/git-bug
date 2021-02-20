@@ -21,9 +21,6 @@ type AddCommentOperation struct {
 	Files []repository.Hash `json:"files"`
 }
 
-// Sign-post method for gqlgen
-func (op *AddCommentOperation) IsOperation() {}
-
 func (op *AddCommentOperation) Id() entity.Id {
 	return idOperation(op, &op.OpBase)
 }

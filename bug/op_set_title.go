@@ -21,9 +21,6 @@ type SetTitleOperation struct {
 	Was   string `json:"was"`
 }
 
-// Sign-post method for gqlgen
-func (op *SetTitleOperation) IsOperation() {}
-
 func (op *SetTitleOperation) Id() entity.Id {
 	return idOperation(op, &op.OpBase)
 }

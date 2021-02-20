@@ -27,9 +27,6 @@ type CreateOperation struct {
 	Files   []repository.Hash `json:"files"`
 }
 
-// Sign-post method for gqlgen
-func (op *CreateOperation) IsOperation() {}
-
 func (op *CreateOperation) Id() entity.Id {
 	return idOperation(op, &op.OpBase)
 }

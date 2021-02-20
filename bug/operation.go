@@ -49,9 +49,6 @@ type Operation interface {
 	AllMetadata() map[string]string
 
 	setExtraMetadataImmutable(key string, value string)
-
-	// sign-post method for gqlgen
-	IsOperation()
 }
 
 func idOperation(op Operation, base *OpBase) entity.Id {

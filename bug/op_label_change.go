@@ -21,9 +21,6 @@ type LabelChangeOperation struct {
 	Removed []Label `json:"removed"`
 }
 
-// Sign-post method for gqlgen
-func (op *LabelChangeOperation) IsOperation() {}
-
 func (op *LabelChangeOperation) Id() entity.Id {
 	return idOperation(op, &op.OpBase)
 }

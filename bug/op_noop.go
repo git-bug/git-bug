@@ -16,9 +16,6 @@ type NoOpOperation struct {
 	OpBase
 }
 
-// Sign-post method for gqlgen
-func (op *NoOpOperation) IsOperation() {}
-
 func (op *NoOpOperation) Id() entity.Id {
 	return idOperation(op, &op.OpBase)
 }
