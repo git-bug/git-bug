@@ -5,6 +5,7 @@ import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import { makeStyles } from '@material-ui/core/styles';
 
+import { LightSwitch } from '../../components/Themer';
 import CurrentIdentity from '../CurrentIdentity/CurrentIdentity';
 
 const useStyles = makeStyles((theme) => ({
@@ -20,6 +21,9 @@ const useStyles = makeStyles((theme) => ({
     textDecoration: 'none',
     display: 'flex',
     alignItems: 'center',
+  },
+  lightSwitch: {
+    padding: '0 20px',
   },
   logo: {
     height: '42px',
@@ -39,6 +43,9 @@ function Header() {
             git-bug
           </Link>
           <div className={classes.filler}></div>
+          <div className={classes.lightSwitch}>
+            <LightSwitch />
+          </div>
           <CurrentIdentity />
         </Toolbar>
       </AppBar>
