@@ -56,10 +56,10 @@ const useStyles = makeStyles<Theme, StylesProps>((theme) => ({
   },
   search: {
     borderRadius: theme.shape.borderRadius,
-    borderColor: fade(theme.palette.primary.main, 0.2),
+    borderColor: theme.palette.divider,
     borderStyle: 'solid',
     borderWidth: '1px',
-    backgroundColor: fade(theme.palette.primary.main, 0.05),
+    backgroundColor: fade(theme.palette.text.hint, 0.05),
     padding: theme.spacing(0, 1),
     width: ({ searching }) => (searching ? '20rem' : '15rem'),
     transition: theme.transitions.create([
