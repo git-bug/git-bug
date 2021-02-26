@@ -1,7 +1,7 @@
 import React from 'react';
 
 import Paper from '@material-ui/core/Paper';
-import { makeStyles } from '@material-ui/core/styles';
+import { fade, makeStyles } from '@material-ui/core/styles';
 
 import Author, { Avatar } from 'src/components/Author';
 import Content from 'src/components/Content';
@@ -27,11 +27,11 @@ const useStyles = makeStyles((theme) => ({
   },
   header: {
     ...theme.typography.body1,
-    color: '#444',
+    color: theme.palette.text.secondary,
     padding: '0.5rem 1rem',
-    borderBottom: '1px solid #ddd',
+    borderBottom: `1px solid ${theme.palette.divider}`,
     display: 'flex',
-    backgroundColor: '#e2f1ff',
+    backgroundColor: fade(theme.palette.text.hint, 0.05),
   },
   title: {
     flex: 1,
