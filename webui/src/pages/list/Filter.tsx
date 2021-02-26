@@ -65,7 +65,7 @@ function stringify(params: Query): string {
 const useStyles = makeStyles((theme) => ({
   element: {
     ...theme.typography.body2,
-    color: '#444',
+    color: theme.palette.text.secondary,
     padding: theme.spacing(0, 1),
     fontWeight: 400,
     textDecoration: 'none',
@@ -75,7 +75,7 @@ const useStyles = makeStyles((theme) => ({
   },
   itemActive: {
     fontWeight: 600,
-    color: '#333',
+    color: theme.palette.text.primary,
   },
   icon: {
     paddingRight: theme.spacing(0.5),
