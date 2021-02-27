@@ -67,6 +67,15 @@ func Parse(query string) (*Query, error) {
 			default:
 				return nil, fmt.Errorf("unknown qualifier \"%s\"", t.qualifier)
 			}
+
+		case tokenKindKVV:
+			switch t.qualifier {
+			case "metadata":
+				q.Metadata = append(q.Metadata, StringPair{Key: t.subQualifier, Value: t.value})
+
+			default:
+				return nil, fmt.Errorf("unknown qualifier \"%s:%s\"", t.qualifier, t.subQualifier)
+			}
 		}
 	}
 	return q, nil

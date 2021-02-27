@@ -38,6 +38,16 @@ func AuthorFilter(query string) Filter {
 	}
 }
 
+// MetadataFilter return a Filter that match a bug metadata at creation time
+func MetadataFilter(pair query.StringPair) Filter {
+	return func(excerpt *BugExcerpt, resolver resolver) bool {
+		if value, ok := excerpt.CreateMetadata[pair.Key]; ok {
+			return value == pair.Value
+		}
+		return false
+	}
+}
+
 // LabelFilter return a Filter that match a label
 func LabelFilter(label string) Filter {
 	return func(excerpt *BugExcerpt, resolver resolver) bool {
@@ -109,6 +119,7 @@ func NoLabelFilter() Filter {
 type Matcher struct {
 	Status      []Filter
 	Author      []Filter
+	Metadata    []Filter
 	Actor       []Filter
 	Participant []Filter
 	Label       []Filter
@@ -126,6 +137,9 @@ func compileMatcher(filters query.Filters) *Matcher {
 	}
 	for _, value := range filters.Author {
 		result.Author = append(result.Author, AuthorFilter(value))
+	}
+	for _, value := range filters.Metadata {
+		result.Metadata = append(result.Metadata, MetadataFilter(value))
 	}
 	for _, value := range filters.Actor {
 		result.Actor = append(result.Actor, ActorFilter(value))
@@ -150,6 +164,10 @@ func (f *Matcher) Match(excerpt *BugExcerpt, resolver resolver) bool {
 	}
 
 	if match := f.orMatch(f.Author, excerpt, resolver); !match {
+		return false
+	}
+
+	if match := f.orMatch(f.Metadata, excerpt, resolver); !match {
 		return false
 	}
 

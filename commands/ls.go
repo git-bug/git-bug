@@ -19,6 +19,7 @@ import (
 type lsOptions struct {
 	statusQuery      []string
 	authorQuery      []string
+	metadataQuery    []string
 	participantQuery []string
 	actorQuery       []string
 	labelQuery       []string
@@ -65,6 +66,8 @@ git bug ls status:open --by creation "foo bar" baz
 		"Filter by status. Valid values are [open,closed]")
 	flags.StringSliceVarP(&options.authorQuery, "author", "a", nil,
 		"Filter by author")
+	flags.StringSliceVarP(&options.metadataQuery, "metadata", "m", nil,
+		"Filter by metadata. Example: github-url=URL")
 	flags.StringSliceVarP(&options.participantQuery, "participant", "p", nil,
 		"Filter by participant")
 	flags.StringSliceVarP(&options.actorQuery, "actor", "A", nil,
@@ -337,6 +340,16 @@ func completeQuery(q *query.Query, opts lsOptions) error {
 	}
 
 	q.Author = append(q.Author, opts.authorQuery...)
+	for _, str := range opts.metadataQuery {
+		tokens := strings.Split(str, "=")
+		if len(tokens) < 2 {
+			return fmt.Errorf("no \"=\" in key=value metadata markup")
+		}
+		var pair query.StringPair
+		pair.Key = tokens[0]
+		pair.Value = tokens[1]
+		q.Metadata = append(q.Metadata, pair)
+	}
 	q.Participant = append(q.Participant, opts.participantQuery...)
 	q.Actor = append(q.Actor, opts.actorQuery...)
 	q.Label = append(q.Label, opts.labelQuery...)

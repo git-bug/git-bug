@@ -146,6 +146,8 @@ Register-ArgumentCompleter -Native -CommandName 'git-bug' -ScriptBlock {
             [CompletionResult]::new('--status', 'status', [CompletionResultType]::ParameterName, 'Filter by status. Valid values are [open,closed]')
             [CompletionResult]::new('-a', 'a', [CompletionResultType]::ParameterName, 'Filter by author')
             [CompletionResult]::new('--author', 'author', [CompletionResultType]::ParameterName, 'Filter by author')
+            [CompletionResult]::new('-m', 'm', [CompletionResultType]::ParameterName, 'Filter by metadata. Example: github-url=URL')
+            [CompletionResult]::new('--metadata', 'metadata', [CompletionResultType]::ParameterName, 'Filter by metadata. Example: github-url=URL')
             [CompletionResult]::new('-p', 'p', [CompletionResultType]::ParameterName, 'Filter by participant')
             [CompletionResult]::new('--participant', 'participant', [CompletionResultType]::ParameterName, 'Filter by participant')
             [CompletionResult]::new('-A', 'A', [CompletionResultType]::ParameterName, 'Filter by actor')
