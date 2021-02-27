@@ -29,6 +29,13 @@ const useStyles = makeStyles((theme) => ({
     height: '42px',
     marginRight: theme.spacing(2),
   },
+  greenButton: {
+    backgroundColor: '#2ea44fd9',
+    color: '#fff',
+    '&:hover': {
+      backgroundColor: '#2ea44f',
+    },
+  },
 }));
 
 function Header() {
