@@ -23,9 +23,9 @@ func NewQuery() *Query {
 
 type Search []string
 
-// Used for key-value pairs when filtering based on metadata
+// StringPair is a key/value pair of strings
 type StringPair struct {
-	Key string
+	Key   string
 	Value string
 }
 

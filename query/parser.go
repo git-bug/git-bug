@@ -71,13 +71,7 @@ func Parse(query string) (*Query, error) {
 		case tokenKindKVV:
 			switch t.qualifier {
 			case "metadata":
-				if len(t.subQualifier) == 0 {
-					return nil, fmt.Errorf("empty value for sub-qualifier \"metadata:%s\"", t.subQualifier)
-				}
-				var pair StringPair
-				pair.Key = t.subQualifier
-				pair.Value = t.value
-				q.Metadata = append(q.Metadata, pair)
+				q.Metadata = append(q.Metadata, StringPair{Key: t.subQualifier, Value: t.value})
 
 			default:
 				return nil, fmt.Errorf("unknown qualifier \"%s:%s\"", t.qualifier, t.subQualifier)

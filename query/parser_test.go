@@ -3,7 +3,7 @@ package query
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/MichaelMure/git-bug/bug"
 )
@@ -62,6 +62,11 @@ func TestParse(t *testing.T) {
 		}},
 		{"sort:unknown", nil},
 
+		// KVV
+		{`metadata:key:"https://www.example.com/"`, &Query{
+			Filters: Filters{Metadata: []StringPair{{"key", "https://www.example.com/"}}},
+		}},
+
 		// Search
 		{"search", &Query{
 			Search: []string{"search"},
@@ -84,28 +89,23 @@ func TestParse(t *testing.T) {
 				OrderDirection: OrderDescending,
 			},
 		},
-
-		// Metadata
-		{`metadata:key:"https://www.example.com/"`, &Query{
-			Filters: Filters{Metadata: []StringPair{{"key", "https://www.example.com/"}}},
-		}},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.input, func(t *testing.T) {
 			query, err := Parse(tc.input)
 			if tc.output == nil {
-				assert.Error(t, err)
-				assert.Nil(t, query)
+				require.Error(t, err)
+				require.Nil(t, query)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				if tc.output.OrderBy != 0 {
-					assert.Equal(t, tc.output.OrderBy, query.OrderBy)
+					require.Equal(t, tc.output.OrderBy, query.OrderBy)
 				}
 				if tc.output.OrderDirection != 0 {
-					assert.Equal(t, tc.output.OrderDirection, query.OrderDirection)
+					require.Equal(t, tc.output.OrderDirection, query.OrderDirection)
 				}
-				assert.Equal(t, tc.output.Filters, query.Filters)
+				require.Equal(t, tc.output.Filters, query.Filters)
 			}
 		})
 	}
