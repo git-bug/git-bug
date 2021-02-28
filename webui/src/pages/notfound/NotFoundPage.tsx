@@ -1,4 +1,3 @@
-import wrap from '@arrows/composition/internal/wrap';
 import React from 'react';
 
 import { makeStyles } from '@material-ui/core/styles';
@@ -40,7 +39,7 @@ function NotFoundPage() {
       <img
         src="/logo-alpha-flat-outline.svg"
         className={classes.logo}
-        alt="git-bug"
+        alt="git-bug Logo"
       />
       <a href="/" className={classes.backLink}>
         <h2 className={classes.header}>Go back to start page</h2>

@@ -39,13 +39,6 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
       backgroundColor: '#2ea44f',
     },
   },
-  backButton: {
-    backgroundColor: '#574142',
-    color: '#fff',
-    '&:hover': {
-      backgroundColor: '#610B0B',
-    },
-  },
 }));
 
 type Props = {
@@ -109,9 +102,6 @@ function CommentForm({ bug }: Props) {
           onChange={(comment: string) => setIssueComment(comment)}
         />
         <div className={classes.actions}>
-          <Button className={classes.backButton} variant="contained" href="/">
-            Back to List
-          </Button>
           {bug.status === 'OPEN' ? getCloseButton() : getReopenButton()}
           <Button
             className={classes.greenButton}

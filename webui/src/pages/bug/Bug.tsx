@@ -1,6 +1,8 @@
 import React from 'react';
 
+import Button from '@material-ui/core/Button';
 import { makeStyles } from '@material-ui/core/styles';
+import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 
 import BugTitleForm from 'src/components/BugTitleForm/BugTitleForm';
 import IfLoggedIn from 'src/components/IfLoggedIn/IfLoggedIn';
@@ -18,7 +20,6 @@ const useStyles = makeStyles((theme) => ({
     maxWidth: 1000,
     margin: 'auto',
     marginTop: theme.spacing(4),
-    overflow: 'hidden',
   },
   header: {
     marginLeft: theme.spacing(3) + 40,
@@ -61,6 +62,16 @@ const useStyles = makeStyles((theme) => ({
   commentForm: {
     marginLeft: 48,
   },
+  backButton: {
+    position: 'sticky',
+    marginTop: theme.spacing(1),
+    top: '80px',
+    backgroundColor: '#574142',
+    color: '#fff',
+    '&:hover': {
+      backgroundColor: '#610B0B',
+    },
+  },
 }));
 
 type Props = {
@@ -99,6 +110,15 @@ function Bug({ bug }: Props) {
               </li>
             ))}
           </ul>
+          <Button
+            variant="contained"
+            className={classes.backButton}
+            aria-label="back"
+            href="/"
+          >
+            <ArrowBackIcon />
+            Back to List
+          </Button>
         </div>
       </div>
     </main>
