@@ -1,19 +1,10 @@
 import React, { createContext, useContext, useState } from 'react';
 
-import { PaletteType, ThemeProvider, useMediaQuery } from '@material-ui/core';
+import { ThemeProvider, useMediaQuery } from '@material-ui/core';
 import IconButton from '@material-ui/core/IconButton/IconButton';
 import Tooltip from '@material-ui/core/Tooltip/Tooltip';
-import { createMuiTheme } from '@material-ui/core/styles';
+import { Theme } from '@material-ui/core/styles';
 import { NightsStayRounded, WbSunnyRounded } from '@material-ui/icons';
-
-const defaultTheme = {
-  palette: {
-    type: 'light',
-    primary: {
-      main: '#263238',
-    },
-  },
-};
 
 const ThemeContext = createContext({
   toggleMode: () => {},
@@ -22,10 +13,11 @@ const ThemeContext = createContext({
 
 const LightSwitch = () => {
   const { mode, toggleMode } = useContext(ThemeContext);
+  const description = `Switch to ${mode === 'light' ? 'dark' : 'light'} theme`;
 
   return (
-    <Tooltip title="Toggle Dark-/Lightmode">
-      <IconButton onClick={toggleMode} aria-label="Toggle Dark-/Lightmode">
+    <Tooltip title={description}>
+      <IconButton onClick={toggleMode} aria-label={description}>
         {mode === 'light' ? (
           <WbSunnyRounded color="secondary" />
         ) : (
@@ -36,40 +28,29 @@ const LightSwitch = () => {
   );
 };
 
-type Props = { children: React.ReactNode };
-const Themer = ({ children }: Props) => {
-  const [theme, setTheme] = useState(defaultTheme);
+type Props = {
+  children: React.ReactNode;
+  lightTheme: Theme;
+  darkTheme: Theme;
+};
+const Themer = ({ children, lightTheme, darkTheme }: Props) => {
   const preferseDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
   const browserMode = preferseDarkMode ? 'dark' : 'light';
-  const preferedMode = localStorage.getItem('themeMode');
-  const curMode = preferedMode != null ? preferedMode : browserMode;
-
-  const adjustedTheme = {
-    ...theme,
-    palette: {
-      ...theme.palette,
-      type: (curMode === 'dark' ? 'dark' : 'light') as PaletteType,
-    },
-  };
+  const savedMode = localStorage.getItem('themeMode');
+  const preferedMode = savedMode != null ? savedMode : browserMode;
+  const [curMode, setMode] = useState(preferedMode);
 
   const toggleMode = () => {
-    const preferedMode = curMode === 'dark' ? 'light' : 'dark';
+    const preferedMode = curMode === 'light' ? 'dark' : 'light';
     localStorage.setItem('themeMode', preferedMode);
-    const adjustedTheme = {
-      ...theme,
-      palette: {
-        ...theme.palette,
-        type: preferedMode as PaletteType,
-      },
-    };
-    setTheme(adjustedTheme);
+    setMode(preferedMode);
   };
+
+  const preferedTheme = preferedMode === 'dark' ? darkTheme : lightTheme;
 
   return (
     <ThemeContext.Provider value={{ toggleMode: toggleMode, mode: curMode }}>
-      <ThemeProvider theme={createMuiTheme(adjustedTheme)}>
-        {children}
-      </ThemeProvider>
+      <ThemeProvider theme={preferedTheme}>{children}</ThemeProvider>
     </ThemeContext.Provider>
   );
 };
