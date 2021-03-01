@@ -1,5 +1,5 @@
 import React from 'react';
-import { RouteComponentProps } from 'react-router-dom';
+import { Redirect, RouteComponentProps } from 'react-router-dom';
 
 import CircularProgress from '@material-ui/core/CircularProgress';
 
@@ -15,8 +15,8 @@ const BugQuery: React.FC<Props> = ({ match }: Props) => {
     variables: { id: match.params.id },
   });
   if (loading) return <CircularProgress />;
+  if (!data?.repository?.bug) return <Redirect to="/404bug" />;
   if (error) return <p>Error: {error}</p>;
-  if (!data?.repository?.bug) return <p>404.</p>;
   return <Bug bug={data.repository.bug} />;
 };
 

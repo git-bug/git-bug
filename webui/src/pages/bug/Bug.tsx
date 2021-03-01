@@ -17,13 +17,20 @@ import TimelineQuery from './TimelineQuery';
  */
 const useStyles = makeStyles((theme) => ({
   main: {
-    maxWidth: 1000,
+    maxWidth: 1200,
     margin: 'auto',
     marginTop: theme.spacing(4),
   },
   header: {
-    marginLeft: theme.spacing(3) + 40,
     marginRight: theme.spacing(2),
+    marginLeft: theme.spacing(3) + 205,
+  },
+  title: {
+    ...theme.typography.h5,
+  },
+  id: {
+    ...theme.typography.subtitle1,
+    marginLeft: theme.spacing(1),
   },
   container: {
     display: 'flex',
@@ -37,11 +44,15 @@ const useStyles = makeStyles((theme) => ({
     marginRight: theme.spacing(2),
     minWidth: 400,
   },
-  sidebar: {
+  leftSidebar: {
+    marginTop: theme.spacing(2),
+    marginRight: theme.spacing(2),
+  },
+  rightSidebar: {
     marginTop: theme.spacing(2),
     flex: '0 0 200px',
   },
-  sidebarTitle: {
+  rightSidebarTitle: {
     fontWeight: 'bold',
   },
   labelList: {
@@ -64,7 +75,6 @@ const useStyles = makeStyles((theme) => ({
   },
   backButton: {
     position: 'sticky',
-    marginTop: theme.spacing(1),
     top: '80px',
     backgroundColor: '#574142',
     color: '#fff',
@@ -86,8 +96,18 @@ function Bug({ bug }: Props) {
       <div className={classes.header}>
         <BugTitleForm bug={bug} />
       </div>
-
       <div className={classes.container}>
+        <div className={classes.leftSidebar}>
+          <Button
+            variant="contained"
+            className={classes.backButton}
+            aria-label="back to issue list"
+            href="/"
+          >
+            <ArrowBackIcon />
+            Back to List
+          </Button>
+        </div>
         <div className={classes.timeline}>
           <TimelineQuery id={bug.id} />
           <IfLoggedIn>
@@ -98,8 +118,8 @@ function Bug({ bug }: Props) {
             )}
           </IfLoggedIn>
         </div>
-        <div className={classes.sidebar}>
-          <span className={classes.sidebarTitle}>Labels</span>
+        <div className={classes.rightSidebar}>
+          <span className={classes.rightSidebarTitle}>Labels</span>
           <ul className={classes.labelList}>
             {bug.labels.length === 0 && (
               <span className={classes.noLabel}>None yet</span>
@@ -110,15 +130,6 @@ function Bug({ bug }: Props) {
               </li>
             ))}
           </ul>
-          <Button
-            variant="contained"
-            className={classes.backButton}
-            aria-label="back"
-            href="/"
-          >
-            <ArrowBackIcon />
-            Back to List
-          </Button>
         </div>
       </div>
     </main>

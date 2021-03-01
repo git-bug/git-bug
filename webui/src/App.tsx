@@ -13,6 +13,7 @@ export default function App() {
       <Switch>
         <Route path="/" exact component={ListPage} />
         <Route path="/new" exact component={NewBugPage} />
+        <Route path="/404bug" exact component={NotFoundPage} />
         <Route path="/bug/:id" exact component={BugPage} />
         <Route component={NotFoundPage} />
       </Switch>
