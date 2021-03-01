@@ -13,7 +13,8 @@ const ThemeContext = createContext({
 
 const LightSwitch = () => {
   const { mode, toggleMode } = useContext(ThemeContext);
-  const description = `Switch to ${mode === 'light' ? 'dark' : 'light'} theme`;
+  const nextMode = mode === 'light' ? 'dark' : 'light';
+  const description = `Switch to ${nextMode} theme`;
 
   return (
     <Tooltip title={description}>
