@@ -9,13 +9,4 @@ const defaultLightTheme = createMuiTheme({
   },
 });
 
-const defaultDarkTheme = createMuiTheme({
-  palette: {
-    type: 'dark',
-    primary: {
-      main: '#263238',
-    },
-  },
-});
-
-export { defaultLightTheme, defaultDarkTheme };
+export default defaultLightTheme;
