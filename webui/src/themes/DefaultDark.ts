@@ -5,6 +5,14 @@ const defaultDarkTheme = createMuiTheme({
     type: 'dark',
     primary: {
       main: '#263238',
+      light: '#525252',
+    },
+    error: {
+      main: '#f44336',
+      dark: '#ff4949',
+    },
+    info: {
+      main: '#2a393e',
     },
   },
 });

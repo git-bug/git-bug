@@ -3,7 +3,7 @@ import { LocationDescriptor } from 'history';
 import React from 'react';
 
 import Toolbar from '@material-ui/core/Toolbar';
-import { fade, makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from '@material-ui/core/styles';
 import CheckCircleOutline from '@material-ui/icons/CheckCircleOutline';
 import ErrorOutline from '@material-ui/icons/ErrorOutline';
 
@@ -19,7 +19,7 @@ import { useBugCountQuery } from './FilterToolbar.generated';
 
 const useStyles = makeStyles((theme) => ({
   toolbar: {
-    backgroundColor: fade(theme.palette.text.hint, 0.05),
+    backgroundColor: theme.palette.primary.light,
     borderColor: theme.palette.divider,
     borderWidth: '1px 0',
     borderStyle: 'solid',

@@ -6,7 +6,7 @@ import { Button } from '@material-ui/core';
 import IconButton from '@material-ui/core/IconButton';
 import InputBase from '@material-ui/core/InputBase';
 import Paper from '@material-ui/core/Paper';
-import { fade, makeStyles, Theme } from '@material-ui/core/styles';
+import { makeStyles, Theme } from '@material-ui/core/styles';
 import ErrorOutline from '@material-ui/icons/ErrorOutline';
 import KeyboardArrowLeft from '@material-ui/icons/KeyboardArrowLeft';
 import KeyboardArrowRight from '@material-ui/icons/KeyboardArrowRight';
@@ -56,10 +56,11 @@ const useStyles = makeStyles<Theme, StylesProps>((theme) => ({
   },
   search: {
     borderRadius: theme.shape.borderRadius,
+    color: theme.palette.text.secondary,
     borderColor: theme.palette.divider,
     borderStyle: 'solid',
     borderWidth: '1px',
-    backgroundColor: fade(theme.palette.text.hint, 0.05),
+    backgroundColor: theme.palette.primary.light,
     padding: theme.spacing(0, 1),
     width: ({ searching }) => (searching ? '20rem' : '15rem'),
     transition: theme.transitions.create([
@@ -69,13 +70,11 @@ const useStyles = makeStyles<Theme, StylesProps>((theme) => ({
     ]),
   },
   searchFocused: {
-    borderColor: fade(theme.palette.primary.main, 0.4),
     backgroundColor: theme.palette.background.paper,
-    width: '20rem!important',
   },
   placeholderRow: {
     padding: theme.spacing(1),
-    borderBottomColor: theme.palette.grey['300'],
+    borderBottomColor: theme.palette.divider,
     borderBottomWidth: '1px',
     borderBottomStyle: 'solid',
     display: 'flex',
@@ -91,7 +90,8 @@ const useStyles = makeStyles<Theme, StylesProps>((theme) => ({
     ...theme.typography.h5,
     padding: theme.spacing(8),
     textAlign: 'center',
-    borderBottomColor: theme.palette.grey['300'],
+    color: theme.palette.text.hint,
+    borderBottomColor: theme.palette.divider,
     borderBottomWidth: '1px',
     borderBottomStyle: 'solid',
     '& > p': {
@@ -99,12 +99,15 @@ const useStyles = makeStyles<Theme, StylesProps>((theme) => ({
     },
   },
   errorBox: {
-    color: theme.palette.error.main,
+    color: theme.palette.error.dark,
     '& > pre': {
       fontSize: '1rem',
       textAlign: 'left',
-      backgroundColor: theme.palette.grey['900'],
-      color: theme.palette.common.white,
+      borderColor: theme.palette.divider,
+      borderWidth: '1px',
+      borderRadius: theme.shape.borderRadius,
+      borderStyle: 'solid',
+      color: theme.palette.text.primary,
       marginTop: theme.spacing(4),
       padding: theme.spacing(2, 3),
     },
