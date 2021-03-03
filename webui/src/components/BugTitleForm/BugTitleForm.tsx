@@ -49,6 +49,9 @@ const useStyles = makeStyles((theme) => ({
     backgroundColor: theme.palette.success.main,
     color: theme.palette.success.contrastText,
   },
+  saveButton: {
+    marginRight: theme.spacing(1),
+  },
 }));
 
 interface Props {
@@ -117,6 +120,7 @@ function BugTitleForm({ bug }: Props) {
         />
         <div className={classes.editButtonContainer}>
           <Button
+            className={classes.saveButton}
             size="small"
             variant="contained"
             type="submit"
