@@ -49,7 +49,7 @@ const useStyles = makeStyles((theme) => ({
   },
   body: {
     ...theme.typography.body2,
-    padding: '0 1rem',
+    padding: '0.5rem',
   },
 }));
 
