@@ -1,12 +1,6 @@
 import React, { useState } from 'react';
 
-import {
-  Button,
-  fade,
-  makeStyles,
-  TextField,
-  Typography,
-} from '@material-ui/core';
+import { Button, makeStyles, Typography } from '@material-ui/core';
 
 import { TimelineDocument } from '../../pages/bug/TimelineQuery.generated';
 import IfLoggedIn from '../IfLoggedIn/IfLoggedIn';
@@ -14,6 +8,7 @@ import Author from 'src/components/Author';
 import Date from 'src/components/Date';
 import { BugFragment } from 'src/pages/bug/Bug.generated';
 
+import BugTitleInput from './BugTitleInput';
 import { useSetTitleMutation } from './SetTitle.generated';
 
 /**
@@ -108,10 +103,11 @@ function BugTitleForm({ bug }: Props) {
   function editableBugTitle() {
     return (
       <form className={classes.headerTitle} onSubmit={submitNewTitle}>
-        <TextField
+        <BugTitleInput
           inputRef={(node) => {
             issueTitleInput = node;
           }}
+          label="Title"
           variant="outlined"
           fullWidth
           margin="dense"
