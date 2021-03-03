@@ -15,6 +15,11 @@ const defaultDarkTheme = createMuiTheme({
       main: '#2a393e',
     },
   },
+  typography: {
+    button: {
+      textTransform: 'none',
+    },
+  },
 });
 
 export default defaultDarkTheme;

@@ -45,26 +45,9 @@ const useStyles = makeStyles((theme) => ({
     marginLeft: theme.spacing(2),
   },
   greenButton: {
-    marginLeft: '8px',
-    backgroundColor: '#2ea44fd9',
-    color: '#fff',
-    '&:hover': {
-      backgroundColor: '#2ea44f',
-    },
-  },
-  titleInput: {
-    borderRadius: theme.shape.borderRadius,
-    borderColor: fade(theme.palette.primary.main, 0.2),
-    borderStyle: 'solid',
-    borderWidth: '1px',
-    backgroundColor: fade(theme.palette.primary.main, 0.05),
-    padding: theme.spacing(0, 0),
-    minWidth: 336,
-    transition: theme.transitions.create([
-      'width',
-      'borderColor',
-      'backgroundColor',
-    ]),
+    marginLeft: theme.spacing(1),
+    backgroundColor: theme.palette.success.main,
+    color: theme.palette.success.contrastText,
   },
 }));
 
@@ -126,7 +109,6 @@ function BugTitleForm({ bug }: Props) {
           inputRef={(node) => {
             issueTitleInput = node;
           }}
-          className={classes.titleInput}
           variant="outlined"
           fullWidth
           margin="dense"

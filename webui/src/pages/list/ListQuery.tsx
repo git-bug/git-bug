@@ -112,12 +112,9 @@ const useStyles = makeStyles<Theme, StylesProps>((theme) => ({
       padding: theme.spacing(2, 3),
     },
   },
-  greenButton: {
-    backgroundColor: '#2ea44fd9',
-    color: '#fff',
-    '&:hover': {
-      backgroundColor: '#2ea44f',
-    },
+  newIssueButton: {
+    backgroundColor: theme.palette.success.main,
+    color: theme.palette.success.contrastText,
   },
 }));
 
@@ -318,7 +315,7 @@ function ListQuery() {
         <IfLoggedIn>
           {() => (
             <Button
-              className={classes.greenButton}
+              className={classes.newIssueButton}
               variant="contained"
               href="/new"
             >
