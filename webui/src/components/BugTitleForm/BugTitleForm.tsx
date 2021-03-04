@@ -173,7 +173,7 @@ function BugTitleForm({ bug }: Props) {
       <div className="classes.headerSubtitle">
         <Typography color={'textSecondary'}>
           <Author author={bug.author} />
-          {' opened this bug '}
+          {' opened this issue '}
           <Date date={bug.createdAt} />
         </Typography>
       </div>
