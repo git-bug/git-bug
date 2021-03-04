@@ -2,9 +2,9 @@ import React, { FormEvent, useState } from 'react';
 
 import { Button } from '@material-ui/core';
 import Paper from '@material-ui/core/Paper';
-import TextField from '@material-ui/core/TextField/TextField';
 import { makeStyles, Theme } from '@material-ui/core/styles';
 
+import BugTitleInput from '../../components/BugTitleForm/BugTitleInput';
 import CommentInput from '../../components/CommentInput/CommentInput';
 
 import { useNewBugMutation } from './NewBug.generated';
@@ -69,7 +69,7 @@ function NewBugPage() {
   return (
     <Paper className={classes.main}>
       <form className={classes.form} onSubmit={submitNewIssue}>
-        <TextField
+        <BugTitleInput
           inputRef={(node) => {
             issueTitleInput = node;
           }}
