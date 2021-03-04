@@ -13,6 +13,7 @@ const defaultDarkTheme = createMuiTheme({
     },
     info: {
       main: '#2a393e',
+      contrastText: '#ffffffb3',
     },
     success: {
       main: '#2ea44fd9',

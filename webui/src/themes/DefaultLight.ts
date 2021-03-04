@@ -9,6 +9,7 @@ const defaultLightTheme = createMuiTheme({
     },
     info: {
       main: '#e2f1ff',
+      contrastText: '#555',
     },
     success: {
       main: '#2ea44fd9',
