@@ -14,10 +14,9 @@ const defaultDarkTheme = createMuiTheme({
     info: {
       main: '#2a393e',
     },
-  },
-  typography: {
-    button: {
-      textTransform: 'none',
+    success: {
+      main: '#2ea44fd9',
+      contrastText: '#fff',
     },
   },
 });
