@@ -7,7 +7,7 @@ type userQuery struct {
 	User      user      `graphql:"user(login: $login)"`
 }
 
-func (q userQuery) rateLimit() rateLimit {
+func (q *userQuery) rateLimit() rateLimit {
 	return q.RateLimit
 }
 
@@ -40,7 +40,7 @@ type issueQuery struct {
 	} `graphql:"repository(owner: $owner, name: $name)"`
 }
 
-func (q issueQuery) rateLimit() rateLimit {
+func (q *issueQuery) rateLimit() rateLimit {
 	return q.RateLimit
 }
 
@@ -54,7 +54,7 @@ type issueEditQuery struct {
 	} `graphql:"node(id: $gqlNodeId)"`
 }
 
-func (q issueEditQuery) rateLimit() rateLimit {
+func (q *issueEditQuery) rateLimit() rateLimit {
 	return q.RateLimit
 }
 
@@ -68,7 +68,7 @@ type timelineQuery struct {
 	} `graphql:"node(id: $gqlNodeId)"`
 }
 
-func (q timelineQuery) rateLimit() rateLimit {
+func (q *timelineQuery) rateLimit() rateLimit {
 	return q.RateLimit
 }
 
@@ -82,7 +82,7 @@ type commentEditQuery struct {
 	} `graphql:"node(id: $gqlNodeId)"`
 }
 
-func (q commentEditQuery) rateLimit() rateLimit {
+func (q *commentEditQuery) rateLimit() rateLimit {
 	return q.RateLimit
 }
 

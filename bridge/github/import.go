@@ -3,7 +3,6 @@ package github
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/shurcooL/githubv4"
@@ -16,6 +15,8 @@ import (
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
+const EMPTY_TITLE_PLACEHOLDER = "<empty string>"
+
 // githubImporter implement the Importer interface
 type githubImporter struct {
 	conf core.Configuration
@@ -25,9 +26,6 @@ type githubImporter struct {
 
 	// send only channel
 	out chan<- core.ImportResult
-
-	// closure to get the username from github without any additional parameters
-	ghUser func(string) (*user, error)
 }
 
 func (gi *githubImporter) Init(_ context.Context, _ *cache.RepoCache, conf core.Configuration) error {
@@ -51,9 +49,6 @@ func (gi *githubImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 	}
 	client := buildClient(creds[0].(*auth.Token))
 	gi.mediator = NewImportMediator(ctx, client, gi.conf[confKeyOwner], gi.conf[confKeyProject], since)
-	gi.ghUser = func(login string) (*user, error) {
-		return gi.mediator.User(ctx, login)
-	}
 	out := make(chan core.ImportResult)
 	gi.out = out
 
@@ -62,19 +57,17 @@ func (gi *githubImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 
 		// Loop over all matching issues
 		for issue := range gi.mediator.Issues() {
-			// fmt.Println("issue loop")
 			// create issue
-			b, err := gi.ensureIssue(repo, &issue)
+			b, err := gi.ensureIssue(ctx, repo, &issue)
 			if err != nil {
 				err := fmt.Errorf("issue creation: %v", err)
 				out <- core.NewImportError(err, "")
 				return
 			}
 
-			// fmt.Println("Just before timeline items loop")
 			// loop over timeline items
 			for item := range gi.mediator.TimelineItems(&issue) {
-				err := gi.ensureTimelineItem(repo, b, item)
+				err := gi.ensureTimelineItem(ctx, repo, b, item)
 				if err != nil {
 					err = fmt.Errorf("timeline item creation: %v", err)
 					out <- core.NewImportError(err, "")
@@ -100,9 +93,8 @@ func (gi *githubImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 	return out, nil
 }
 
-func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue *issue) (*cache.BugCache, error) {
-	// fmt.Printf("ensureIssue()\n")
-	author, err := gi.ensurePerson(repo, issue.Author)
+func (gi *githubImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache, issue *issue) (*cache.BugCache, error) {
+	author, err := gi.ensurePerson(ctx, repo, issue.Author)
 	if err != nil {
 		return nil, err
 	}
@@ -119,15 +111,15 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue *issue) (*cac
 	// get first issue edit
 	// if it exists, then it holds the bug creation
 	firstEdit, hasEdit := <-gi.mediator.IssueEdits(issue)
-	// fmt.Printf("hasEdit == %v\n", hasEdit)
-	//fmt.Printf("%v\n", firstEdit)
 
+	// At Github there exist issues with seemingly empty titles. An example is
+	// https://github.com/NixOS/nixpkgs/issues/72730 .
+	// The title provided by the GraphQL API actually consists of a space followed by a
+	// zero width space (U+200B). This title would cause the NewBugRaw() function to
+	// return an error: empty title.
 	title := string(issue.Title)
-	if title == "" {
-		fmt.Printf("%v\n", issue)
-		fmt.Println("title == \"\" holds")
-		title = "#" + strconv.Itoa(int(issue.Number))
-		fmt.Println("setting title := ", title)
+	if title == " \u200b" { // U+200B == zero width space
+		title = EMPTY_TITLE_PLACEHOLDER
 	}
 
 	if err == bug.ErrBugNotExist {
@@ -156,7 +148,6 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue *issue) (*cac
 				metaKeyGithubUrl:   issue.Url.String(),
 			})
 		if err != nil {
-			fmt.Printf("%v\n", issue)
 			return nil, err
 		}
 		// importing a new bug
@@ -178,7 +169,7 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue *issue) (*cac
 			return nil, err
 		}
 
-		err = gi.ensureCommentEdit(repo, b, target, edit)
+		err = gi.ensureCommentEdit(ctx, repo, b, target, edit)
 		if err != nil {
 			return nil, err
 		}
@@ -186,11 +177,11 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue *issue) (*cac
 	return b, nil
 }
 
-func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.BugCache, item timelineItem) error {
+func (gi *githubImporter) ensureTimelineItem(ctx context.Context, repo *cache.RepoCache, b *cache.BugCache, item timelineItem) error {
 
 	switch item.Typename {
 	case "IssueComment":
-		err := gi.ensureComment(repo, b, &item.IssueComment)
+		err := gi.ensureComment(ctx, repo, b, &item.IssueComment)
 		if err != nil {
 			return fmt.Errorf("timeline comment creation: %v", err)
 		}
@@ -206,7 +197,7 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 		if err != cache.ErrNoMatchingOp {
 			return err
 		}
-		author, err := gi.ensurePerson(repo, item.LabeledEvent.Actor)
+		author, err := gi.ensurePerson(ctx, repo, item.LabeledEvent.Actor)
 		if err != nil {
 			return err
 		}
@@ -235,7 +226,7 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 		if err != cache.ErrNoMatchingOp {
 			return err
 		}
-		author, err := gi.ensurePerson(repo, item.UnlabeledEvent.Actor)
+		author, err := gi.ensurePerson(ctx, repo, item.UnlabeledEvent.Actor)
 		if err != nil {
 			return err
 		}
@@ -265,7 +256,7 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 		if err == nil {
 			return nil
 		}
-		author, err := gi.ensurePerson(repo, item.ClosedEvent.Actor)
+		author, err := gi.ensurePerson(ctx, repo, item.ClosedEvent.Actor)
 		if err != nil {
 			return err
 		}
@@ -291,7 +282,7 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 		if err == nil {
 			return nil
 		}
-		author, err := gi.ensurePerson(repo, item.ReopenedEvent.Actor)
+		author, err := gi.ensurePerson(ctx, repo, item.ReopenedEvent.Actor)
 		if err != nil {
 			return err
 		}
@@ -317,14 +308,25 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 		if err == nil {
 			return nil
 		}
-		author, err := gi.ensurePerson(repo, item.RenamedTitleEvent.Actor)
+		author, err := gi.ensurePerson(ctx, repo, item.RenamedTitleEvent.Actor)
 		if err != nil {
 			return err
 		}
+
+		// At Github there exist issues with seemingly empty titles. An example is
+		// https://github.com/NixOS/nixpkgs/issues/72730 .
+		// The title provided by the GraphQL API actually consists of a space followed
+		// by a zero width space (U+200B). This title would cause the NewBugRaw()
+		// function to return an error: empty title.
+		title := string(item.RenamedTitleEvent.CurrentTitle)
+		if title == " \u200b" { // U+200B == zero width space
+			title = EMPTY_TITLE_PLACEHOLDER
+		}
+
 		op, err := b.SetTitleRaw(
 			author,
 			item.RenamedTitleEvent.CreatedAt.Unix(),
-			string(item.RenamedTitleEvent.CurrentTitle),
+			title,
 			map[string]string{metaKeyGithubId: id},
 		)
 		if err != nil {
@@ -338,8 +340,8 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 	return nil
 }
 
-func (gi *githubImporter) ensureComment(repo *cache.RepoCache, b *cache.BugCache, comment *issueComment) error {
-	author, err := gi.ensurePerson(repo, comment.Author)
+func (gi *githubImporter) ensureComment(ctx context.Context, repo *cache.RepoCache, b *cache.BugCache, comment *issueComment) error {
+	author, err := gi.ensurePerson(ctx, repo, comment.Author)
 	if err != nil {
 		return err
 	}
@@ -388,12 +390,12 @@ func (gi *githubImporter) ensureComment(repo *cache.RepoCache, b *cache.BugCache
 	// process remaining comment edits, if they exist
 	for edit := range gi.mediator.CommentEdits(comment) {
 		// ensure editor identity
-		_, err := gi.ensurePerson(repo, edit.Editor)
+		_, err := gi.ensurePerson(ctx, repo, edit.Editor)
 		if err != nil {
 			return err
 		}
 
-		err = gi.ensureCommentEdit(repo, b, targetOpID, edit)
+		err = gi.ensureCommentEdit(ctx, repo, b, targetOpID, edit)
 		if err != nil {
 			return err
 		}
@@ -401,7 +403,7 @@ func (gi *githubImporter) ensureComment(repo *cache.RepoCache, b *cache.BugCache
 	return nil
 }
 
-func (gi *githubImporter) ensureCommentEdit(repo *cache.RepoCache, b *cache.BugCache, target entity.Id, edit userContentEdit) error {
+func (gi *githubImporter) ensureCommentEdit(ctx context.Context, repo *cache.RepoCache, b *cache.BugCache, target entity.Id, edit userContentEdit) error {
 	_, err := b.ResolveOperationWithMetadata(metaKeyGithubId, parseId(edit.Id))
 	if err == nil {
 		return nil
@@ -411,7 +413,7 @@ func (gi *githubImporter) ensureCommentEdit(repo *cache.RepoCache, b *cache.BugC
 		return err
 	}
 
-	editor, err := gi.ensurePerson(repo, edit.Editor)
+	editor, err := gi.ensurePerson(ctx, repo, edit.Editor)
 	if err != nil {
 		return err
 	}
@@ -450,11 +452,11 @@ func (gi *githubImporter) ensureCommentEdit(repo *cache.RepoCache, b *cache.BugC
 }
 
 // ensurePerson create a bug.Person from the Github data
-func (gi *githubImporter) ensurePerson(repo *cache.RepoCache, actor *actor) (*cache.IdentityCache, error) {
+func (gi *githubImporter) ensurePerson(ctx context.Context, repo *cache.RepoCache, actor *actor) (*cache.IdentityCache, error) {
 	// When a user has been deleted, Github return a null actor, while displaying a profile named "ghost"
 	// in it's UI. So we need a special case to get it.
 	if actor == nil {
-		return gi.getGhost(repo)
+		return gi.getGhost(ctx, repo)
 	}
 
 	// Look first in the cache
@@ -509,7 +511,7 @@ func (gi *githubImporter) ensurePerson(repo *cache.RepoCache, actor *actor) (*ca
 	return i, nil
 }
 
-func (gi *githubImporter) getGhost(repo *cache.RepoCache) (*cache.IdentityCache, error) {
+func (gi *githubImporter) getGhost(ctx context.Context, repo *cache.RepoCache) (*cache.IdentityCache, error) {
 	loginName := "ghost"
 	// Look first in the cache
 	i, err := repo.ResolveIdentityImmutableMetadata(metaKeyGithubLogin, loginName)
@@ -519,7 +521,7 @@ func (gi *githubImporter) getGhost(repo *cache.RepoCache) (*cache.IdentityCache,
 	if entity.IsErrMultipleMatch(err) {
 		return nil, err
 	}
-	user, err := gi.ghUser(loginName)
+	user, err := gi.mediator.User(ctx, loginName)
 	userName := ""
 	if user.Name != nil {
 		userName = string(*user.Name)
@@ -535,7 +537,7 @@ func (gi *githubImporter) getGhost(repo *cache.RepoCache) (*cache.IdentityCache,
 	)
 }
 
-// parseId convert the unusable githubv4.ID (an interface{}) into a string
+// parseId converts the unusable githubv4.ID (an interface{}) into a string
 func parseId(id githubv4.ID) string {
 	return fmt.Sprintf("%v", id)
 }
