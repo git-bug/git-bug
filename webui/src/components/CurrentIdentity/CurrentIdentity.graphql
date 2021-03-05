@@ -1,6 +1,8 @@
 query CurrentIdentity {
   repository {
     userIdentity {
+      humanId
+      email
       displayName
       avatarUrl
     }
