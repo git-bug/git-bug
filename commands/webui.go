@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"strconv"
@@ -34,6 +35,7 @@ type webUIOptions struct {
 	open     bool
 	noOpen   bool
 	readOnly bool
+	query string
 }
 
 func newWebUICommand() *cobra.Command {
@@ -62,6 +64,7 @@ Available git config:
 	flags.BoolVar(&options.noOpen, "no-open", false, "Prevent the automatic opening of the web UI in the default browser")
 	flags.IntVarP(&options.port, "port", "p", 0, "Port to listen to (default to random available port)")
 	flags.BoolVar(&options.readOnly, "read-only", false, "Whether to run the web UI in read-only mode")
+	flags.StringVar(&options.query, "query", "", "Set a custom query")
 
 	return cmd
 }
@@ -77,6 +80,11 @@ func runWebUI(env *Env, opts webUIOptions, args []string) error {
 
 	addr := net.JoinHostPort(opts.host, strconv.Itoa(opts.port))
 	webUiAddr := fmt.Sprintf("http://%s", addr)
+
+	if len(opts.query) > 0 {
+		// Explicitly set the query parameter instead of going with a default one.
+		webUiAddr = fmt.Sprintf("%s/?q=%s", webUiAddr, url.QueryEscape(opts.query))
+	}
 
 	router := mux.NewRouter()
 
