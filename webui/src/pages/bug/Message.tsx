@@ -27,11 +27,13 @@ const useStyles = makeStyles((theme) => ({
   },
   header: {
     ...theme.typography.body1,
-    color: '#444',
     padding: '0.5rem 1rem',
-    borderBottom: '1px solid #ddd',
+    borderBottom: `1px solid ${theme.palette.divider}`,
     display: 'flex',
-    backgroundColor: '#e2f1ff',
+    borderTopRightRadius: theme.shape.borderRadius,
+    borderTopLeftRadius: theme.shape.borderRadius,
+    backgroundColor: theme.palette.info.main,
+    color: theme.palette.info.contrastText,
   },
   title: {
     flex: 1,
@@ -47,7 +49,7 @@ const useStyles = makeStyles((theme) => ({
   },
   body: {
     ...theme.typography.body2,
-    padding: '0 1rem',
+    padding: '0.5rem',
   },
 }));
 

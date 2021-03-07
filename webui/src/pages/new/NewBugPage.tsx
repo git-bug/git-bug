@@ -2,9 +2,9 @@ import React, { FormEvent, useState } from 'react';
 
 import { Button } from '@material-ui/core';
 import Paper from '@material-ui/core/Paper';
-import TextField from '@material-ui/core/TextField/TextField';
-import { fade, makeStyles, Theme } from '@material-ui/core/styles';
+import { makeStyles, Theme } from '@material-ui/core/styles';
 
+import BugTitleInput from '../../components/BugTitleForm/BugTitleInput';
 import CommentInput from '../../components/CommentInput/CommentInput';
 
 import { useNewBugMutation } from './NewBug.generated';
@@ -21,19 +21,6 @@ const useStyles = makeStyles((theme: Theme) => ({
     padding: theme.spacing(2),
     overflow: 'hidden',
   },
-  titleInput: {
-    borderRadius: theme.shape.borderRadius,
-    borderColor: fade(theme.palette.primary.main, 0.2),
-    borderStyle: 'solid',
-    borderWidth: '1px',
-    backgroundColor: fade(theme.palette.primary.main, 0.05),
-    padding: theme.spacing(0, 0),
-    transition: theme.transitions.create([
-      'width',
-      'borderColor',
-      'backgroundColor',
-    ]),
-  },
   form: {
     display: 'flex',
     flexDirection: 'column',
@@ -43,11 +30,8 @@ const useStyles = makeStyles((theme: Theme) => ({
     justifyContent: 'flex-end',
   },
   greenButton: {
-    backgroundColor: '#2ea44fd9',
-    color: '#fff',
-    '&:hover': {
-      backgroundColor: '#2ea44f',
-    },
+    backgroundColor: theme.palette.success.main,
+    color: theme.palette.success.contrastText,
   },
 }));
 
@@ -85,12 +69,11 @@ function NewBugPage() {
   return (
     <Paper className={classes.main}>
       <form className={classes.form} onSubmit={submitNewIssue}>
-        <TextField
+        <BugTitleInput
           inputRef={(node) => {
             issueTitleInput = node;
           }}
           label="Title"
-          className={classes.titleInput}
           variant="outlined"
           fullWidth
           margin="dense"

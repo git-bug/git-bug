@@ -19,8 +19,8 @@ import { useBugCountQuery } from './FilterToolbar.generated';
 
 const useStyles = makeStyles((theme) => ({
   toolbar: {
-    backgroundColor: theme.palette.grey['100'],
-    borderColor: theme.palette.grey['300'],
+    backgroundColor: theme.palette.primary.light,
+    borderColor: theme.palette.divider,
     borderWidth: '1px 0',
     borderStyle: 'solid',
     margin: theme.spacing(0, -1),
