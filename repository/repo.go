@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	// ErrNotARepo is the error returned when the git repo root wan't be found
+	// ErrNotARepo is the error returned when the git repo root can't be found
 	ErrNotARepo = errors.New("not a git repository")
 	// ErrClockNotExist is the error returned when a clock can't be found
 	ErrClockNotExist = errors.New("clock doesn't exist")
