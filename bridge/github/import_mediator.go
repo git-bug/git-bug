@@ -19,9 +19,7 @@ const ( // These values influence how fast the github graphql rate limit is exha
 	CHAN_CAPACITY = 128
 )
 
-type varmap map[string]interface{}
-
-// importMediator provides an interface to retrieve Github issues.
+// importMediator provides a convenient interface to retrieve issues from the Github GraphQL API.
 type importMediator struct {
 	// Github graphql client
 	gc *githubv4.Client
@@ -32,28 +30,30 @@ type importMediator struct {
 	// name of the Github repository
 	project string
 
-	// The importMediator will only query issues updated or created after the date given in
-	// the variable since.
+	// since specifies which issues to import. Issues that have been updated at or after the
+	// given date should be imported.
 	since time.Time
 
-	// channel for the issues
-	issues chan issue
-
-	// channel for issue edits
-	issueEdits    map[githubv4.ID]chan userContentEdit
-	issueEditsMut sync.Mutex
-
-	// channel for timeline items
-	timelineItems    map[githubv4.ID]chan timelineItem
-	timelineItemsMut sync.Mutex
-
-	// channel for comment edits
-	commentEdits    map[githubv4.ID]chan userContentEdit
-	commentEditsMut sync.Mutex
+	// issues is a channel holding bundles of issues to be imported. Each bundle holds the data
+	// associated with one issue.
+	issues chan issueBundle
 
 	// Sticky error
-	err    error
+	err error
+
+	// errMut is a mutex to synchronize access to the sticky error variable err.
 	errMut sync.Mutex
+}
+
+type issueBundle struct {
+	issue           issue
+	issueEdits      <-chan userContentEdit
+	timelineBundles <-chan timelineBundle
+}
+
+type timelineBundle struct {
+	timelineItem     timelineItem
+	userContentEdits <-chan userContentEdit
 }
 
 func (mm *importMediator) setError(err error) {
@@ -64,18 +64,12 @@ func (mm *importMediator) setError(err error) {
 
 func NewImportMediator(ctx context.Context, client *githubv4.Client, owner, project string, since time.Time) *importMediator {
 	mm := importMediator{
-		gc:               client,
-		owner:            owner,
-		project:          project,
-		since:            since,
-		issues:           make(chan issue, CHAN_CAPACITY),
-		issueEdits:       make(map[githubv4.ID]chan userContentEdit),
-		issueEditsMut:    sync.Mutex{},
-		timelineItems:    make(map[githubv4.ID]chan timelineItem),
-		timelineItemsMut: sync.Mutex{},
-		commentEdits:     make(map[githubv4.ID]chan userContentEdit),
-		commentEditsMut:  sync.Mutex{},
-		err:              nil,
+		gc:      client,
+		owner:   owner,
+		project: project,
+		since:   since,
+		issues:  make(chan issueBundle, CHAN_CAPACITY),
+		err:     nil,
 	}
 	go func() {
 		mm.fillIssues(ctx)
@@ -83,6 +77,8 @@ func NewImportMediator(ctx context.Context, client *githubv4.Client, owner, proj
 	}()
 	return &mm
 }
+
+type varmap map[string]interface{}
 
 func newIssueVars(owner, project string, since time.Time) varmap {
 	return varmap{
@@ -119,29 +115,8 @@ func newCommentEditVars() varmap {
 	}
 }
 
-func (mm *importMediator) Issues() <-chan issue {
+func (mm *importMediator) Issues() <-chan issueBundle {
 	return mm.issues
-}
-
-func (mm *importMediator) IssueEdits(issue *issue) <-chan userContentEdit {
-	mm.issueEditsMut.Lock()
-	channel := mm.issueEdits[issue.Id]
-	mm.issueEditsMut.Unlock()
-	return channel
-}
-
-func (mm *importMediator) TimelineItems(issue *issue) <-chan timelineItem {
-	mm.timelineItemsMut.Lock()
-	channel := mm.timelineItems[issue.Id]
-	mm.timelineItemsMut.Unlock()
-	return channel
-}
-
-func (mm *importMediator) CommentEdits(comment *issueComment) <-chan userContentEdit {
-	mm.commentEditsMut.Lock()
-	channel := mm.commentEdits[comment.Id]
-	mm.commentEditsMut.Unlock()
-	return channel
 }
 
 func (mm *importMediator) Error() error {
@@ -165,26 +140,14 @@ func (mm *importMediator) fillIssues(ctx context.Context) {
 	issues, hasIssues := mm.queryIssue(ctx, initialCursor)
 	for hasIssues {
 		for _, node := range issues.Nodes {
-			// The order of statements in this loop is crucial for the correct concurrent
-			// execution.
-			//
-			// The issue edit channel and the timeline channel need to be added to the
-			// corresponding maps before the issue is sent in the issue channel.
-			// Otherwise, the client could try to retrieve issue edits and timeline itmes
-			// before these channels are even created. In this case the client would
-			// receive a nil channel.
+			// We need to send an issue-bundle over the issue channel before we start
+			// filling the issue edits and the timeline items to avoid deadlocks.
 			issueEditChan := make(chan userContentEdit, CHAN_CAPACITY)
-			timelineChan := make(chan timelineItem, CHAN_CAPACITY)
-			mm.issueEditsMut.Lock()
-			mm.issueEdits[node.issue.Id] = issueEditChan
-			mm.issueEditsMut.Unlock()
-			mm.timelineItemsMut.Lock()
-			mm.timelineItems[node.issue.Id] = timelineChan
-			mm.timelineItemsMut.Unlock()
+			timelineBundleChan := make(chan timelineBundle, CHAN_CAPACITY)
 			select {
 			case <-ctx.Done():
 				return
-			case mm.issues <- node.issue:
+			case mm.issues <- issueBundle{node.issue, issueEditChan, timelineBundleChan}:
 			}
 
 			// We do not know whether the client reads from the issue edit channel
@@ -196,8 +159,8 @@ func (mm *importMediator) fillIssues(ctx context.Context) {
 				close(issueEditChan)
 			}(node)
 			go func(node issueNode) {
-				mm.fillTimeline(ctx, &node, timelineChan)
-				close(timelineChan)
+				mm.fillTimeline(ctx, &node, timelineBundleChan)
+				close(timelineBundleChan)
 			}(node)
 		}
 		if !issues.PageInfo.HasNextPage {
@@ -231,21 +194,22 @@ func (mm *importMediator) fillIssueEdits(ctx context.Context, issueNode *issueNo
 	}
 }
 
-func (mm *importMediator) fillTimeline(ctx context.Context, issueNode *issueNode, channel chan timelineItem) {
+func (mm *importMediator) fillTimeline(ctx context.Context, issueNode *issueNode, channel chan timelineBundle) {
 	items := &issueNode.TimelineItems
 	hasItems := true
 	for hasItems {
 		for _, item := range items.Nodes {
 			if item.Typename == "IssueComment" {
-				// Here the order of statements is crucial for correct concurrency.
+				// Issue comments are different than other timeline items in that
+				// they may have associated user content edits.
+				//
+				// Send over the timeline-channel before starting to fill the comment
+				// edits.
 				commentEditChan := make(chan userContentEdit, CHAN_CAPACITY)
-				mm.commentEditsMut.Lock()
-				mm.commentEdits[item.IssueComment.Id] = commentEditChan
-				mm.commentEditsMut.Unlock()
 				select {
 				case <-ctx.Done():
 					return
-				case channel <- item:
+				case channel <- timelineBundle{item, commentEditChan}:
 				}
 				// We need to create a new goroutine for filling the comment edit
 				// channel.
@@ -257,7 +221,7 @@ func (mm *importMediator) fillTimeline(ctx context.Context, issueNode *issueNode
 				select {
 				case <-ctx.Done():
 					return
-				case channel <- item:
+				case channel <- timelineBundle{item, nil}:
 				}
 			}
 		}
