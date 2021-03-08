@@ -1,10 +1,14 @@
 query CurrentIdentity {
   repository {
     userIdentity {
+      id
       humanId
-      email
       displayName
+      email
+      name
       avatarUrl
+      isProtected
+      login
     }
   }
 }

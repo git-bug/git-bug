@@ -71,9 +71,15 @@ const CurrentIdentity = () => {
             <Paper>
               <ClickAwayListener onClickAway={handleClose}>
                 <MenuList autoFocusItem={open} id="menu-list-grow">
-                  <MenuItem>Display Name: {user.displayName}</MenuItem>
-                  <MenuItem>Human Id: {user.humanId}</MenuItem>
-                  <MenuItem>Email: {user.email}</MenuItem>
+                  <MenuItem>Name: {user.name ? user.name : 'none'}</MenuItem>
+                  <MenuItem title={user.id}>
+                    Id: {user.humanId ? user.humanId : 'none'}
+                  </MenuItem>
+                  <MenuItem>Email: {user.email ? user.email : 'none'}</MenuItem>
+                  <MenuItem>Login: {user.login ? user.login : 'none'}</MenuItem>
+                  <MenuItem>
+                    Protected: {user.isProtected ? user.login : 'not set'}
+                  </MenuItem>
                 </MenuList>
               </ClickAwayListener>
             </Paper>
