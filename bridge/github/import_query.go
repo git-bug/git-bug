@@ -47,14 +47,9 @@ type userContentEdit struct {
 }
 
 type issueComment struct {
-	authorEvent
-	Body githubv4.String
-	Url  githubv4.URI
-
-	UserContentEdits struct {
-		Nodes    []userContentEdit
-		PageInfo pageInfo
-	} `graphql:"userContentEdits(last: $commentEditLast, before: $commentEditBefore)"`
+	authorEvent // NOTE: contains Id
+	Body        githubv4.String
+	Url         githubv4.URI
 }
 
 type timelineItem struct {
@@ -96,70 +91,6 @@ type timelineItem struct {
 	} `graphql:"... on RenamedTitleEvent"`
 }
 
-type issueTimeline struct {
-	authorEvent
-	Title string
-	Body  githubv4.String
-	Url   githubv4.URI
-
-	TimelineItems struct {
-		Edges []struct {
-			Cursor githubv4.String
-			Node   timelineItem
-		}
-		PageInfo pageInfo
-	} `graphql:"timelineItems(first: $timelineFirst, after: $timelineAfter)"`
-
-	UserContentEdits struct {
-		Nodes    []userContentEdit
-		PageInfo pageInfo
-	} `graphql:"userContentEdits(last: $issueEditLast, before: $issueEditBefore)"`
-}
-
-type issueEdit struct {
-	UserContentEdits struct {
-		Nodes    []userContentEdit
-		PageInfo pageInfo
-	} `graphql:"userContentEdits(last: $issueEditLast, before: $issueEditBefore)"`
-}
-
-type issueTimelineQuery struct {
-	Repository struct {
-		Issues struct {
-			Nodes    []issueTimeline
-			PageInfo pageInfo
-		} `graphql:"issues(first: $issueFirst, after: $issueAfter, orderBy: {field: CREATED_AT, direction: ASC}, filterBy: {since: $issueSince})"`
-	} `graphql:"repository(owner: $owner, name: $name)"`
-}
-
-type issueEditQuery struct {
-	Repository struct {
-		Issues struct {
-			Nodes    []issueEdit
-			PageInfo pageInfo
-		} `graphql:"issues(first: $issueFirst, after: $issueAfter, orderBy: {field: CREATED_AT, direction: ASC}, filterBy: {since: $issueSince})"`
-	} `graphql:"repository(owner: $owner, name: $name)"`
-}
-
-type commentEditQuery struct {
-	Repository struct {
-		Issues struct {
-			Nodes []struct {
-				Timeline struct {
-					Nodes []struct {
-						IssueComment struct {
-							UserContentEdits struct {
-								Nodes    []userContentEdit
-								PageInfo pageInfo
-							} `graphql:"userContentEdits(last: $commentEditLast, before: $commentEditBefore)"`
-						} `graphql:"... on IssueComment"`
-					}
-				} `graphql:"timeline(first: $timelineFirst, after: $timelineAfter)"`
-			}
-		} `graphql:"issues(first: $issueFirst, after: $issueAfter, orderBy: {field: CREATED_AT, direction: ASC}, filterBy: {since: $issueSince})"`
-	} `graphql:"repository(owner: $owner, name: $name)"`
-}
-
 type ghostQuery struct {
 	User struct {
 		Login     githubv4.String
@@ -186,4 +117,58 @@ type loginQuery struct {
 	Viewer struct {
 		Login string `graphql:"login"`
 	} `graphql:"viewer"`
+}
+
+type issueQuery struct {
+	Repository struct {
+		Issues struct {
+			Nodes    []issue
+			PageInfo pageInfo
+		} `graphql:"issues(first: $issueFirst, after: $issueAfter, orderBy: {field: CREATED_AT, direction: ASC}, filterBy: {since: $issueSince})"`
+	} `graphql:"repository(owner: $owner, name: $name)"`
+}
+
+type issue struct {
+	authorEvent
+	Title  string
+	Number githubv4.Int
+	Body   githubv4.String
+	Url    githubv4.URI
+}
+
+type issueEditQuery struct {
+	Node struct {
+		Typename githubv4.String `graphql:"__typename"`
+		Issue    struct {
+			UserContentEdits struct {
+				Nodes      []userContentEdit
+				TotalCount githubv4.Int
+				PageInfo   pageInfo
+			} `graphql:"userContentEdits(last: $issueEditLast, before: $issueEditBefore)"`
+		} `graphql:"... on Issue"`
+	} `graphql:"node(id: $gqlNodeId)"`
+}
+
+type timelineQuery struct {
+	Node struct {
+		Typename githubv4.String `graphql:"__typename"`
+		Issue    struct {
+			TimelineItems struct {
+				Nodes    []timelineItem
+				PageInfo pageInfo
+			} `graphql:"timelineItems(first: $timelineFirst, after: $timelineAfter)"`
+		} `graphql:"... on Issue"`
+	} `graphql:"node(id: $gqlNodeId)"`
+}
+
+type commentEditQuery struct {
+	Node struct {
+		Typename     githubv4.String `graphql:"__typename"`
+		IssueComment struct {
+			UserContentEdits struct {
+				Nodes    []userContentEdit
+				PageInfo pageInfo
+			} `graphql:"userContentEdits(last: $commentEditLast, before: $commentEditBefore)"`
+		} `graphql:"... on IssueComment"`
+	} `graphql:"node(id: $gqlNodeId)"`
 }

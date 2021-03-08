@@ -1,0 +1,7 @@
+mutation setTitle($input: SetTitleInput!) {
+  setTitle(input: $input) {
+      bug {
+        id
+      }
+  }
+}

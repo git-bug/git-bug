@@ -57,10 +57,10 @@ Available git config:
 	flags := cmd.Flags()
 	flags.SortFlags = false
 
-	flags.StringVar(&options.host, "host", "127.0.0.1", "Network address or hostname to listen to (default 127.0.0.1)")
+	flags.StringVar(&options.host, "host", "127.0.0.1", "Network address or hostname to listen to (default to 127.0.0.1)")
 	flags.BoolVar(&options.open, "open", false, "Automatically open the web UI in the default browser")
 	flags.BoolVar(&options.noOpen, "no-open", false, "Prevent the automatic opening of the web UI in the default browser")
-	flags.IntVarP(&options.port, "port", "p", 0, "Port to listen to (default is random)")
+	flags.IntVarP(&options.port, "port", "p", 0, "Port to listen to (default to random available port)")
 	flags.BoolVar(&options.readOnly, "read-only", false, "Whether to run the web UI in read-only mode")
 
 	return cmd

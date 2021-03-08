@@ -2,13 +2,13 @@ import React, { useState, useRef } from 'react';
 
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
-import Tab from '@material-ui/core/Tab';
-import Tabs from '@material-ui/core/Tabs';
-import TextField from '@material-ui/core/TextField';
 import { makeStyles, Theme } from '@material-ui/core/styles';
 
-import Content from 'src/components/Content';
+import CommentInput from '../../components/CommentInput/CommentInput';
+import CloseBugButton from 'src/components/CloseBugButton/CloseBugButton';
+import ReopenBugButton from 'src/components/ReopenBugButton/ReopenBugButton';
 
+import { BugFragment } from './Bug.generated';
 import { useAddCommentMutation } from './CommentForm.generated';
 import { TimelineDocument } from './TimelineQuery.generated';
 
@@ -30,40 +30,24 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
     display: 'flex',
     justifyContent: 'flex-end',
   },
+  greenButton: {
+    marginLeft: '8px',
+    backgroundColor: '#2ea44fd9',
+    color: '#fff',
+    '&:hover': {
+      backgroundColor: '#2ea44f',
+    },
+  },
 }));
 
-type TabPanelProps = {
-  children: React.ReactNode;
-  value: number;
-  index: number;
-} & React.HTMLProps<HTMLDivElement>;
-function TabPanel({ children, value, index, ...props }: TabPanelProps) {
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`editor-tabpanel-${index}`}
-      aria-labelledby={`editor-tab-${index}`}
-      {...props}
-    >
-      {value === index && children}
-    </div>
-  );
-}
-
-const a11yProps = (index: number) => ({
-  id: `editor-tab-${index}`,
-  'aria-controls': `editor-tabpanel-${index}`,
-});
-
 type Props = {
-  bugId: string;
+  bug: BugFragment;
 };
 
-function CommentForm({ bugId }: Props) {
+function CommentForm({ bug }: Props) {
   const [addComment, { loading }] = useAddCommentMutation();
-  const [input, setInput] = useState<string>('');
-  const [tab, setTab] = useState(0);
+  const [issueComment, setIssueComment] = useState('');
+  const [inputProp, setInputProp] = useState<any>('');
   const classes = useStyles({ loading });
   const form = useRef<HTMLFormElement>(null);
 
@@ -71,8 +55,8 @@ function CommentForm({ bugId }: Props) {
     addComment({
       variables: {
         input: {
-          prefix: bugId,
-          message: input,
+          prefix: bug.id,
+          message: issueComment,
         },
       },
       refetchQueries: [
@@ -80,60 +64,50 @@ function CommentForm({ bugId }: Props) {
         {
           query: TimelineDocument,
           variables: {
-            id: bugId,
+            id: bug.id,
             first: 100,
           },
         },
       ],
       awaitRefetchQueries: true,
-    }).then(() => setInput(''));
+    }).then(() => resetForm());
   };
+
+  function resetForm() {
+    setInputProp({
+      value: '',
+    });
+  }
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    submit();
+    if (issueComment.length > 0) submit();
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
-    // Submit on cmd/ctrl+enter
-    if ((e.metaKey || e.altKey) && e.keyCode === 13) {
-      submit();
-    }
-  };
+  function getCloseButton() {
+    return <CloseBugButton bug={bug} disabled={issueComment.length > 0} />;
+  }
+
+  function getReopenButton() {
+    return <ReopenBugButton bug={bug} disabled={issueComment.length > 0} />;
+  }
 
   return (
     <Paper className={classes.container}>
       <form onSubmit={handleSubmit} ref={form}>
-        <Tabs value={tab} onChange={(_, t) => setTab(t)}>
-          <Tab label="Write" {...a11yProps(0)} />
-          <Tab label="Preview" {...a11yProps(1)} />
-        </Tabs>
-        <div className={classes.tabContent}>
-          <TabPanel value={tab} index={0}>
-            <TextField
-              onKeyDown={handleKeyDown}
-              fullWidth
-              label="Comment"
-              placeholder="Leave a comment"
-              className={classes.textarea}
-              multiline
-              value={input}
-              variant="filled"
-              rows="4" // TODO: rowsMin support
-              onChange={(e: any) => setInput(e.target.value)}
-              disabled={loading}
-            />
-          </TabPanel>
-          <TabPanel value={tab} index={1} className={classes.preview}>
-            <Content markdown={input} />
-          </TabPanel>
-        </div>
+        <CommentInput
+          inputProps={inputProp}
+          loading={loading}
+          onChange={(comment: string) => setIssueComment(comment)}
+        />
         <div className={classes.actions}>
+          {bug.status === 'OPEN' ? getCloseButton() : getReopenButton()}
           <Button
+            className={classes.greenButton}
             variant="contained"
             color="primary"
             type="submit"
-            disabled={loading}
+            disabled={loading || issueComment.length === 0}
           >
             Comment
           </Button>

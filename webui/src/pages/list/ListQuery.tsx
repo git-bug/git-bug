@@ -2,14 +2,17 @@ import { ApolloError } from '@apollo/client';
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useHistory, Link } from 'react-router-dom';
 
+import { Button } from '@material-ui/core';
 import IconButton from '@material-ui/core/IconButton';
 import InputBase from '@material-ui/core/InputBase';
 import Paper from '@material-ui/core/Paper';
-import { fade, makeStyles, Theme } from '@material-ui/core/styles';
+import { makeStyles, Theme } from '@material-ui/core/styles';
 import ErrorOutline from '@material-ui/icons/ErrorOutline';
 import KeyboardArrowLeft from '@material-ui/icons/KeyboardArrowLeft';
 import KeyboardArrowRight from '@material-ui/icons/KeyboardArrowRight';
 import Skeleton from '@material-ui/lab/Skeleton';
+
+import IfLoggedIn from 'src/components/IfLoggedIn/IfLoggedIn';
 
 import FilterToolbar from './FilterToolbar';
 import List from './List';
@@ -40,12 +43,24 @@ const useStyles = makeStyles<Theme, StylesProps>((theme) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  filterissueLabel: {
+    fontSize: '14px',
+    fontWeight: 'bold',
+    paddingRight: '12px',
+  },
+  filterissueContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContents: 'left',
+  },
   search: {
     borderRadius: theme.shape.borderRadius,
-    borderColor: fade(theme.palette.primary.main, 0.2),
+    color: theme.palette.text.secondary,
+    borderColor: theme.palette.divider,
     borderStyle: 'solid',
     borderWidth: '1px',
-    backgroundColor: fade(theme.palette.primary.main, 0.05),
+    backgroundColor: theme.palette.primary.light,
     padding: theme.spacing(0, 1),
     width: ({ searching }) => (searching ? '20rem' : '15rem'),
     transition: theme.transitions.create([
@@ -55,13 +70,11 @@ const useStyles = makeStyles<Theme, StylesProps>((theme) => ({
     ]),
   },
   searchFocused: {
-    borderColor: fade(theme.palette.primary.main, 0.4),
     backgroundColor: theme.palette.background.paper,
-    width: '20rem!important',
   },
   placeholderRow: {
     padding: theme.spacing(1),
-    borderBottomColor: theme.palette.grey['300'],
+    borderBottomColor: theme.palette.divider,
     borderBottomWidth: '1px',
     borderBottomStyle: 'solid',
     display: 'flex',
@@ -77,7 +90,8 @@ const useStyles = makeStyles<Theme, StylesProps>((theme) => ({
     ...theme.typography.h5,
     padding: theme.spacing(8),
     textAlign: 'center',
-    borderBottomColor: theme.palette.grey['300'],
+    color: theme.palette.text.hint,
+    borderBottomColor: theme.palette.divider,
     borderBottomWidth: '1px',
     borderBottomStyle: 'solid',
     '& > p': {
@@ -85,15 +99,22 @@ const useStyles = makeStyles<Theme, StylesProps>((theme) => ({
     },
   },
   errorBox: {
-    color: theme.palette.error.main,
+    color: theme.palette.error.dark,
     '& > pre': {
       fontSize: '1rem',
       textAlign: 'left',
-      backgroundColor: theme.palette.grey['900'],
-      color: theme.palette.common.white,
+      borderColor: theme.palette.divider,
+      borderWidth: '1px',
+      borderRadius: theme.shape.borderRadius,
+      borderStyle: 'solid',
+      color: theme.palette.text.primary,
       marginTop: theme.spacing(4),
       padding: theme.spacing(2, 3),
     },
+  },
+  greenButton: {
+    backgroundColor: theme.palette.success.main,
+    color: theme.palette.success.contrastText,
   },
 }));
 
@@ -271,21 +292,37 @@ function ListQuery() {
   return (
     <Paper className={classes.main}>
       <header className={classes.header}>
-        <h1>Issues</h1>
-        <form onSubmit={formSubmit}>
-          <InputBase
-            placeholder="Filter"
-            value={input}
-            onInput={(e: any) => setInput(e.target.value)}
-            classes={{
-              root: classes.search,
-              focused: classes.searchFocused,
-            }}
-          />
-          <button type="submit" hidden>
-            Search
-          </button>
-        </form>
+        <div className="filterissueContainer">
+          <form onSubmit={formSubmit}>
+            <label className={classes.filterissueLabel} htmlFor="issuefilter">
+              Filter
+            </label>
+            <InputBase
+              id="issuefilter"
+              placeholder="Filter"
+              value={input}
+              onInput={(e: any) => setInput(e.target.value)}
+              classes={{
+                root: classes.search,
+                focused: classes.searchFocused,
+              }}
+            />
+            <button type="submit" hidden>
+              Search
+            </button>
+          </form>
+        </div>
+        <IfLoggedIn>
+          {() => (
+            <Button
+              className={classes.greenButton}
+              variant="contained"
+              href="/new"
+            >
+              New issue
+            </Button>
+          )}
+        </IfLoggedIn>
       </header>
       <FilterToolbar query={query} queryLocation={queryLocation} />
       {content}

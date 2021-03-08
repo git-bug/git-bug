@@ -34,6 +34,7 @@ git bug ls status:open --by creation "foo bar" baz
 ```
   -s, --status strings        Filter by status. Valid values are [open,closed]
   -a, --author strings        Filter by author
+  -m, --metadata strings      Filter by metadata. Example: github-url=URL
   -p, --participant strings   Filter by participant
   -A, --actor strings         Filter by actor
   -l, --label strings         Filter by label

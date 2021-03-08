@@ -100,7 +100,7 @@ func (gi *githubImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 	return out, nil
 }
 
-func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issueTimeline) (*cache.BugCache, error) {
+func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issue) (*cache.BugCache, error) {
 	// ensure issue author
 	author, err := gi.ensurePerson(repo, issue.Author)
 	if err != nil {

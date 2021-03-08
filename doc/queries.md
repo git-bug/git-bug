@@ -10,8 +10,8 @@ A few tips:
 
 - queries are case insensitive.
 - you can combine as many qualifiers as you want.
-- you can use double quotes for multi-word search terms. For example, `author:"René Descartes"` searches for bugs opened by René Descartes, whereas `author:René Descartes` will throw an error since full-text search is not yet supported.
-- instead of a complete ID, you can use any prefix length. For example `participant=9ed1a`.
+- you can use double quotes for multi-word search terms. For example, `author:"René Descartes"` searches for bugs opened by René Descartes, whereas `author:René Descartes` will search for bug with René as the author and containing Descartes in a text.
+- instead of a complete ID, you can use any prefix length, as long as there is no ambiguity. For example `participant=9ed1a`.
 
 
 ## Filtering
@@ -36,7 +36,7 @@ You can filter based on the person who opened the bug.
 
 ### Filtering by participant
 
-You can filter based on the person who participated in any activity related to the bug (Opened bug or added a comment).
+You can filter based on the person who participated in any activity related to the bug (opened bug or added a comment).
 
 | Qualifier           | Example                                                                                            |
 | ---                 | ---                                                                                                |
@@ -51,7 +51,6 @@ You can filter based on the person who interacted with the bug.
 | ---           | ---                                                                             |
 | `actor:QUERY` | `actor:descartes` matches bugs edited by `René Descartes` or `Robert Descartes` |
 |               | `actor:"rené descartes"` matches bugs edited by `René Descartes`                |
-| `
 
 **NOTE**: interaction with bugs include: opening the bug, adding comments, adding/removing labels etc...
 
@@ -90,8 +89,8 @@ Note: to deal with differently-set clocks on distributed computers, `git-bug` us
 
 ### Sort by Id
 
-| Qualifier                  | Example                                              |
-| ---                        | ---                                                  |
+| Qualifier                  | Example                                               |
+| ---                        | ---                                                   |
 | `sort:id-desc`             | `sort:id-desc` will sort bugs by their descending Ids |
 | `sort:id` or `sort:id-asc` | `sort:id` will sort bugs by their ascending Ids       |
 
@@ -99,8 +98,8 @@ Note: to deal with differently-set clocks on distributed computers, `git-bug` us
 
 You can sort bugs by their creation time.
 
-| Qualifier                               | Example                                                            |
-| ---                                     | ---                                                                |
+| Qualifier                               | Example                                                             |
+| ---                                     | ---                                                                 |
 | `sort:creation` or `sort:creation-desc` | `sort:creation` will sort bugs by their descending creation time    |
 | `sort:creation-asc`                     | `sort:creation-asc` will sort bugs by their ascending creation time |
 
@@ -108,7 +107,7 @@ You can sort bugs by their creation time.
 
 You can sort bugs by their edit time.
 
-| Qualifier                       | Example                                                            |
-| ---                             | ---                                                                |
+| Qualifier                       | Example                                                             |
+| ---                             | ---                                                                 |
 | `sort:edit` or `sort:edit-desc` | `sort:edit` will sort bugs by their descending last edition time    |
 | `sort:edit-asc`                 | `sort:edit-asc` will sort bugs by their ascending last edition time |
