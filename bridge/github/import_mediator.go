@@ -359,8 +359,30 @@ type rateLimiter interface {
 // and it is used to populate the response into it. It should be a pointer to a struct that
 // corresponds to the Github graphql schema and it has to implement the rateLimiter interface. If
 // there is a Github rate limiting error, then the function sleeps and retries after the rate limit
-// is expired.
+// is expired. If there is another error, then the method will retry before giving up.
 func (mm *importMediator) mQuery(ctx context.Context, query rateLimiter, vars map[string]interface{}) error {
+	if err := mm.queryOnce(ctx, query, vars); err == nil {
+		// success: done
+		return nil
+	}
+	// failure: we will retry
+	// This is important for importing projects with a big number of issues.
+	retries := 3
+	var err error
+	for i := 0; i < retries; i++ {
+		// wait a few seconds before retry
+		sleepTime := 8 * (i + 1)
+		time.Sleep(time.Duration(sleepTime) * time.Second)
+		err = mm.queryOnce(ctx, query, vars)
+		if err == nil {
+			// success: done
+			return nil
+		}
+	}
+	return err
+}
+
+func (mm *importMediator) queryOnce(ctx context.Context, query rateLimiter, vars map[string]interface{}) error {
 	// first: just send the query to the graphql api
 	vars["dryRun"] = githubv4.Boolean(false)
 	qctx, cancel := context.WithTimeout(ctx, defaultTimeout)
