@@ -15,9 +15,13 @@ const useStyles = makeStyles((theme) => ({
   filler: {
     flexGrow: 1,
   },
+  appBar: {
+    backgroundColor: theme.palette.primary.dark,
+    color: theme.palette.primary.contrastText,
+  },
   appTitle: {
     ...theme.typography.h6,
-    color: 'white',
+    color: theme.palette.primary.contrastText,
     textDecoration: 'none',
     display: 'flex',
     alignItems: 'center',
@@ -36,7 +40,7 @@ function Header() {
 
   return (
     <>
-      <AppBar position="fixed" color="primary">
+      <AppBar position="fixed" className={classes.appBar}>
         <Toolbar>
           <Link to="/" className={classes.appTitle}>
             <img src="/logo.svg" className={classes.logo} alt="git-bug" />
