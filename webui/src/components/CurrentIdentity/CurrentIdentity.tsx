@@ -11,12 +11,16 @@ import {
 } from '@material-ui/core';
 import Avatar from '@material-ui/core/Avatar';
 import { makeStyles } from '@material-ui/core/styles';
+import LockIcon from '@material-ui/icons/Lock';
 
 import { useCurrentIdentityQuery } from './CurrentIdentity.generated';
 
 const useStyles = makeStyles((theme) => ({
   displayName: {
     marginLeft: theme.spacing(2),
+  },
+  hidden: {
+    display: 'none',
   },
 }));
 
@@ -30,6 +34,7 @@ const CurrentIdentity = () => {
   if (error || loading || !data?.repository?.userIdentity) return null;
 
   const user = data.repository.userIdentity;
+
   const handleToggle = () => {
     setOpen((prevOpen) => !prevOpen);
   };
@@ -53,6 +58,7 @@ const CurrentIdentity = () => {
           {user.displayName.charAt(0).toUpperCase()}
         </Avatar>
       </Button>
+      <LockIcon color="primary" className={!user.isProtected ? '' : ''} />
       <Popper
         open={open}
         anchorEl={anchorRef.current}
@@ -77,8 +83,8 @@ const CurrentIdentity = () => {
                   </MenuItem>
                   <MenuItem>Email: {user.email ? user.email : 'none'}</MenuItem>
                   <MenuItem>Login: {user.login ? user.login : 'none'}</MenuItem>
-                  <MenuItem>
-                    Protected: {user.isProtected ? user.login : 'not set'}
+                  <MenuItem className={user.isProtected ? '' : classes.hidden}>
+                    Protected: {user.isProtected}
                   </MenuItem>
                 </MenuList>
               </ClickAwayListener>
