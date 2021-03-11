@@ -31,7 +31,7 @@ require (
 	github.com/spf13/cobra v1.1.3
 	github.com/stretchr/testify v1.7.0
 	github.com/vektah/gqlparser v1.3.1
-	github.com/xanzy/go-gitlab v0.44.0
+	github.com/xanzy/go-gitlab v0.47.0
 	github.com/xanzy/ssh-agent v0.3.0 // indirect
 	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897
 	golang.org/x/net v0.0.0-20201024042810-be3efd7ff127 // indirect
