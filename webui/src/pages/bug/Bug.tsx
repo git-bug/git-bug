@@ -1,13 +1,12 @@
 import React from 'react';
 
-import Button from '@material-ui/core/Button';
 import { makeStyles } from '@material-ui/core/styles';
-import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 
 import BugTitleForm from 'src/components/BugTitleForm/BugTitleForm';
 import IfLoggedIn from 'src/components/IfLoggedIn/IfLoggedIn';
 import Label from 'src/components/Label';
 
+import BackButton from './BackButton';
 import { BugFragment } from './Bug.generated';
 import CommentForm from './CommentForm';
 import TimelineQuery from './TimelineQuery';
@@ -73,16 +72,6 @@ const useStyles = makeStyles((theme) => ({
   commentForm: {
     marginLeft: 48,
   },
-  backButton: {
-    position: 'sticky',
-    top: '80px',
-    backgroundColor: theme.palette.primary.dark,
-    color: theme.palette.primary.contrastText,
-    '&:hover': {
-      backgroundColor: theme.palette.primary.main,
-      color: theme.palette.primary.contrastText,
-    },
-  },
 }));
 
 type Props = {
@@ -99,15 +88,7 @@ function Bug({ bug }: Props) {
       </div>
       <div className={classes.container}>
         <div className={classes.leftSidebar}>
-          <Button
-            variant="contained"
-            className={classes.backButton}
-            aria-label="back to issue list"
-            href="/"
-          >
-            <ArrowBackIcon />
-            Back to List
-          </Button>
+          <BackButton />
         </div>
         <div className={classes.timeline}>
           <TimelineQuery id={bug.id} />

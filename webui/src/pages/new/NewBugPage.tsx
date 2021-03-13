@@ -1,12 +1,12 @@
 import React, { FormEvent, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 
-import { Button } from '@material-ui/core';
-import Paper from '@material-ui/core/Paper';
+import { Button, Paper } from '@material-ui/core';
 import { makeStyles, Theme } from '@material-ui/core/styles';
 
 import BugTitleInput from '../../components/BugTitleForm/BugTitleInput';
 import CommentInput from '../../components/CommentInput/CommentInput';
+import BackButton from '../bug/BackButton';
 
 import { useNewBugMutation } from './NewBug.generated';
 
@@ -15,12 +15,17 @@ import { useNewBugMutation } from './NewBug.generated';
  */
 const useStyles = makeStyles((theme: Theme) => ({
   main: {
-    maxWidth: 800,
+    maxWidth: 1200,
     margin: 'auto',
     marginTop: theme.spacing(4),
     marginBottom: theme.spacing(4),
     padding: theme.spacing(2),
-    overflow: 'hidden',
+  },
+  container: {
+    display: 'flex',
+    marginBottom: theme.spacing(1),
+    marginRight: theme.spacing(2),
+    marginLeft: theme.spacing(2),
   },
   form: {
     display: 'flex',
@@ -33,6 +38,21 @@ const useStyles = makeStyles((theme: Theme) => ({
   greenButton: {
     backgroundColor: theme.palette.success.main,
     color: theme.palette.success.contrastText,
+  },
+  leftSidebar: {
+    marginTop: theme.spacing(2),
+    marginRight: theme.spacing(2),
+  },
+  rightSidebar: {
+    marginTop: theme.spacing(2),
+    flex: '0 0 200px',
+  },
+  timeline: {
+    flex: 1,
+    marginTop: theme.spacing(2),
+    marginRight: theme.spacing(2),
+    minWidth: 400,
+    padding: theme.spacing(1),
   },
 }));
 
@@ -73,34 +93,42 @@ function NewBugPage() {
   if (error) return <div>Error</div>;
 
   return (
-    <Paper className={classes.main}>
-      <form className={classes.form} onSubmit={submitNewIssue}>
-        <BugTitleInput
-          inputRef={(node) => {
-            issueTitleInput = node;
-          }}
-          label="Title"
-          variant="outlined"
-          fullWidth
-          margin="dense"
-          onChange={(event: any) => setIssueTitle(event.target.value)}
-        />
-        <CommentInput
-          loading={false}
-          onChange={(comment: string) => setIssueComment(comment)}
-        />
-        <div className={classes.actions}>
-          <Button
-            className={classes.greenButton}
-            variant="contained"
-            type="submit"
-            disabled={isFormValid() ? false : true}
-          >
-            Submit new issue
-          </Button>
+    <main className={classes.main}>
+      <div className={classes.container}>
+        <div className={classes.leftSidebar}>
+          <BackButton />
         </div>
-      </form>
-    </Paper>
+        <Paper className={classes.timeline}>
+          <form className={classes.form} onSubmit={submitNewIssue}>
+            <BugTitleInput
+              inputRef={(node) => {
+                issueTitleInput = node;
+              }}
+              label="Title"
+              variant="outlined"
+              fullWidth
+              margin="dense"
+              onChange={(event: any) => setIssueTitle(event.target.value)}
+            />
+            <CommentInput
+              loading={false}
+              onChange={(comment: string) => setIssueComment(comment)}
+            />
+            <div className={classes.actions}>
+              <Button
+                className={classes.greenButton}
+                variant="contained"
+                type="submit"
+                disabled={isFormValid() ? false : true}
+              >
+                Submit new issue
+              </Button>
+            </div>
+          </form>
+        </Paper>
+        <div className={classes.rightSidebar}></div>
+      </div>
+    </main>
   );
 }
 
