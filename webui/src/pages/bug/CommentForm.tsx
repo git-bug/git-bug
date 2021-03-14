@@ -32,10 +32,11 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
   },
   greenButton: {
     marginLeft: '8px',
-    backgroundColor: '#2ea44fd9',
-    color: '#fff',
+    backgroundColor: theme.palette.success.main,
+    color: theme.palette.success.contrastText,
     '&:hover': {
-      backgroundColor: '#2ea44f',
+      backgroundColor: theme.palette.success.dark,
+      color: theme.palette.primary.contrastText,
     },
   },
 }));

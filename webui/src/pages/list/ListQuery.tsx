@@ -115,6 +115,10 @@ const useStyles = makeStyles<Theme, StylesProps>((theme) => ({
   greenButton: {
     backgroundColor: theme.palette.success.main,
     color: theme.palette.success.contrastText,
+    '&:hover': {
+      backgroundColor: theme.palette.success.dark,
+      color: theme.palette.primary.contrastText,
+    },
   },
 }));
 
