@@ -159,7 +159,7 @@ function BugTitleForm({ bug }: Props) {
                 variant="contained"
                 href="/new"
               >
-                New issue
+                New bug
               </Button>
             </div>
           )}

@@ -323,7 +323,7 @@ function ListQuery() {
               variant="contained"
               href="/new"
             >
-              New issue
+              New bug
             </Button>
           )}
         </IfLoggedIn>

@@ -94,7 +94,7 @@ function NewBugPage() {
             type="submit"
             disabled={isFormValid() ? false : true}
           >
-            Submit new issue
+            Submit new bug
           </Button>
         </div>
       </form>
