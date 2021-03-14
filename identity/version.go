@@ -37,7 +37,7 @@ type version struct {
 	keys []*Key
 
 	// mandatory random bytes to ensure a better randomness of the data of the first
-	// version of a bug, used to later generate the ID
+	// version of an identity, used to later generate the ID
 	// len(Nonce) should be > 20 and < 64 bytes
 	// It has no functional purpose and should be ignored.
 	// TODO: optional after first version?

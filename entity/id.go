@@ -18,7 +18,7 @@ const UnsetId = Id("unset")
 // Id is an identifier for an entity or part of an entity
 type Id string
 
-// DeriveId generate an Id from some data, taken from a root part of the entity.
+// DeriveId generate an Id from the serialization of the object or part of the object.
 func DeriveId(data []byte) Id {
 	// My understanding is that sha256 is enough to prevent collision (git use that, so ...?)
 	// If you read this code, I'd be happy to be schooled.

@@ -1,7 +1,6 @@
 package bug
 
 import (
-	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -18,10 +17,6 @@ var _ Operation = &CreateOperation{}
 // CreateOperation define the initial creation of a bug
 type CreateOperation struct {
 	OpBase
-	// mandatory random bytes to ensure a better randomness of the data of the first
-	// operation of a bug, used to later generate the ID
-	// len(Nonce) should be > 20 and < 64 bytes
-	Nonce   []byte            `json:"nonce"`
 	Title   string            `json:"title"`
 	Message string            `json:"message"`
 	Files   []repository.Hash `json:"files"`
@@ -147,19 +142,9 @@ func (op *CreateOperation) UnmarshalJSON(data []byte) error {
 // Sign post method for gqlgen
 func (op *CreateOperation) IsAuthored() {}
 
-func makeNonce(len int) []byte {
-	result := make([]byte, len)
-	_, err := rand.Read(result)
-	if err != nil {
-		panic(err)
-	}
-	return result
-}
-
 func NewCreateOp(author identity.Interface, unixTime int64, title, message string, files []repository.Hash) *CreateOperation {
 	return &CreateOperation{
 		OpBase:  newOpBase(CreateOp, author, unixTime),
-		Nonce:   makeNonce(20),
 		Title:   title,
 		Message: message,
 		Files:   files,

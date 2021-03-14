@@ -1,6 +1,7 @@
 package bug
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -138,6 +139,12 @@ type OpBase struct {
 	// TODO: part of the data model upgrade, this should eventually be a timestamp + lamport
 	UnixTime int64             `json:"timestamp"`
 	Metadata map[string]string `json:"metadata,omitempty"`
+
+	// mandatory random bytes to ensure a better randomness of the data used to later generate the ID
+	// len(Nonce) should be > 20 and < 64 bytes
+	// It has no functional purpose and should be ignored.
+	Nonce []byte `json:"nonce"`
+
 	// Not serialized. Store the op's id in memory.
 	id entity.Id
 	// Not serialized. Store the extra metadata in memory,
@@ -151,8 +158,18 @@ func newOpBase(opType OperationType, author identity.Interface, unixTime int64) 
 		OperationType: opType,
 		Author_:       author,
 		UnixTime:      unixTime,
+		Nonce:         makeNonce(20),
 		id:            entity.UnsetId,
 	}
+}
+
+func makeNonce(len int) []byte {
+	result := make([]byte, len)
+	_, err := rand.Read(result)
+	if err != nil {
+		panic(err)
+	}
+	return result
 }
 
 func (base *OpBase) UnmarshalJSON(data []byte) error {
@@ -164,6 +181,7 @@ func (base *OpBase) UnmarshalJSON(data []byte) error {
 		Author        json.RawMessage   `json:"author"`
 		UnixTime      int64             `json:"timestamp"`
 		Metadata      map[string]string `json:"metadata,omitempty"`
+		Nonce         []byte            `json:"nonce"`
 	}{}
 
 	if err := json.Unmarshal(data, &aux); err != nil {
@@ -180,6 +198,7 @@ func (base *OpBase) UnmarshalJSON(data []byte) error {
 	base.Author_ = author
 	base.UnixTime = aux.UnixTime
 	base.Metadata = aux.Metadata
+	base.Nonce = aux.Nonce
 
 	return nil
 }
@@ -220,6 +239,13 @@ func (base *OpBase) Validate(op Operation, opType OperationType) error {
 		if !hash.IsValid() {
 			return fmt.Errorf("file with invalid hash %v", hash)
 		}
+	}
+
+	if len(base.Nonce) > 64 {
+		return fmt.Errorf("nonce is too big")
+	}
+	if len(base.Nonce) < 20 {
+		return fmt.Errorf("nonce is too small")
 	}
 
 	return nil
