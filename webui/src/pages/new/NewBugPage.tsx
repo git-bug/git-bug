@@ -4,7 +4,7 @@ import { useHistory } from 'react-router-dom';
 import { Button, Paper } from '@material-ui/core';
 import { makeStyles, Theme } from '@material-ui/core/styles';
 
-import BackToListButton from '../../components/BackToListButton/BackToListButton';
+import BackToListButton from '../../components/BackToListButton';
 import BugTitleInput from '../../components/BugTitleForm/BugTitleInput';
 import CommentInput from '../../components/CommentInput/CommentInput';
 
@@ -40,7 +40,7 @@ const useStyles = makeStyles((theme: Theme) => ({
     color: theme.palette.success.contrastText,
   },
   leftSidebar: {
-    marginTop: theme.spacing(2),
+    marginTop: theme.spacing(4),
     marginRight: theme.spacing(2),
   },
   rightSidebar: {
