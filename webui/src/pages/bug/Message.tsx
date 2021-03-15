@@ -1,7 +1,10 @@
 import React from 'react';
 
+import IconButton from '@material-ui/core/IconButton';
 import Paper from '@material-ui/core/Paper';
+import Tooltip from '@material-ui/core/Tooltip/Tooltip';
 import { makeStyles } from '@material-ui/core/styles';
+import EditIcon from '@material-ui/icons/Edit';
 
 import Author, { Avatar } from 'src/components/Author';
 import Content from 'src/components/Content';
@@ -51,6 +54,14 @@ const useStyles = makeStyles((theme) => ({
     ...theme.typography.body2,
     padding: '0.5rem',
   },
+  editButton: {
+    color: theme.palette.info.contrastText,
+    padding: '0rem',
+    fontSize: '0.75rem',
+    '&:hover': {
+      backgroundColor: 'inherit',
+    },
+  },
 }));
 
 type Props = {
@@ -70,6 +81,15 @@ function Message({ op }: Props) {
             <Date date={op.createdAt} />
           </div>
           {op.edited && <div className={classes.tag}>Edited</div>}
+          <Tooltip title="Edit Message" placement="top" arrow={true}>
+            <IconButton
+              disableRipple
+              className={classes.editButton}
+              aria-label="edit message"
+            >
+              <EditIcon />
+            </IconButton>
+          </Tooltip>
         </header>
         <section className={classes.body}>
           <Content markdown={op.message} />
