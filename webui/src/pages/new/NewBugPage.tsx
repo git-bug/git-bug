@@ -4,9 +4,9 @@ import { useHistory } from 'react-router-dom';
 import { Button, Paper } from '@material-ui/core';
 import { makeStyles, Theme } from '@material-ui/core/styles';
 
+import BackToListButton from '../../components/BackToListButton/BackToListButton';
 import BugTitleInput from '../../components/BugTitleForm/BugTitleInput';
 import CommentInput from '../../components/CommentInput/CommentInput';
-import BackButton from '../bug/BackButton';
 
 import { useNewBugMutation } from './NewBug.generated';
 
@@ -96,7 +96,7 @@ function NewBugPage() {
     <main className={classes.main}>
       <div className={classes.container}>
         <div className={classes.leftSidebar}>
-          <BackButton />
+          <BackToListButton />
         </div>
         <Paper className={classes.timeline}>
           <form className={classes.form} onSubmit={submitNewIssue}>

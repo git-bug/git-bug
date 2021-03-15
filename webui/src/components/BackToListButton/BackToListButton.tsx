@@ -17,7 +17,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function BackButton() {
+function BackToListButton() {
   const classes = useStyles();
 
   return (
@@ -33,4 +33,4 @@ function BackButton() {
   );
 }
 
-export default BackButton;
+export default BackToListButton;

@@ -2,11 +2,11 @@ import React from 'react';
 
 import { makeStyles } from '@material-ui/core/styles';
 
+import BackToListButton from '../../components/BackToListButton/BackToListButton';
 import BugTitleForm from 'src/components/BugTitleForm/BugTitleForm';
 import IfLoggedIn from 'src/components/IfLoggedIn/IfLoggedIn';
 import Label from 'src/components/Label';
 
-import BackButton from './BackButton';
 import { BugFragment } from './Bug.generated';
 import CommentForm from './CommentForm';
 import TimelineQuery from './TimelineQuery';
@@ -88,7 +88,7 @@ function Bug({ bug }: Props) {
       </div>
       <div className={classes.container}>
         <div className={classes.leftSidebar}>
-          <BackButton />
+          <BackToListButton />
         </div>
         <div className={classes.timeline}>
           <TimelineQuery id={bug.id} />
