@@ -4,6 +4,7 @@ import {
   Button,
   ClickAwayListener,
   Grow,
+  Link,
   MenuItem,
   MenuList,
   Paper,
@@ -21,6 +22,9 @@ const useStyles = makeStyles((theme) => ({
   },
   hidden: {
     display: 'none',
+  },
+  profileLink: {
+    ...theme.typography.button,
   },
 }));
 
@@ -58,7 +62,10 @@ const CurrentIdentity = () => {
           {user.displayName.charAt(0).toUpperCase()}
         </Avatar>
       </Button>
-      <LockIcon color="primary" className={!user.isProtected ? '' : ''} />
+      <LockIcon
+        color="secondary"
+        className={user.isProtected ? '' : classes.hidden}
+      />
       <Popper
         open={open}
         anchorEl={anchorRef.current}
@@ -77,14 +84,14 @@ const CurrentIdentity = () => {
             <Paper>
               <ClickAwayListener onClickAway={handleClose}>
                 <MenuList autoFocusItem={open} id="menu-list-grow">
-                  <MenuItem>Name: {user.name ? user.name : 'none'}</MenuItem>
-                  <MenuItem title={user.id}>
-                    Id: {user.humanId ? user.humanId : 'none'}
-                  </MenuItem>
-                  <MenuItem>Email: {user.email ? user.email : 'none'}</MenuItem>
-                  <MenuItem>Login: {user.login ? user.login : 'none'}</MenuItem>
-                  <MenuItem className={user.isProtected ? '' : classes.hidden}>
-                    Protected: {user.isProtected}
+                  <MenuItem>
+                    <Link
+                      color="inherit"
+                      className={classes.profileLink}
+                      href="/user"
+                    >
+                      Open profile
+                    </Link>
                   </MenuItem>
                 </MenuList>
               </ClickAwayListener>

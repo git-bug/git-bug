@@ -49,20 +49,23 @@ const useStyles = makeStyles((theme) => ({
   control: {
     paddingBottom: theme.spacing(3),
   },
+  header: {
+    ...theme.typography.h5,
+  },
 }));
 
 const Identity = () => {
-  // eslint-disable-next-line
   const classes = useStyles();
-  // eslint-disable-next-line
-  const { loading, error, data } = useCurrentIdentityQuery();
+  const { data } = useCurrentIdentityQuery();
   const user = data?.repository?.userIdentity;
   console.log(user);
   return (
     <main className={classes.main}>
       <div className={classes.container}>
         <div className={classes.leftSidebar}>
-          <h1>{user?.displayName ? user?.displayName : 'none'}</h1>
+          <h1 className={classes.header}>
+            {user?.displayName ? user?.displayName : 'none'}
+          </h1>
           <Avatar src={user?.avatarUrl ? user.avatarUrl : undefined}>
             {user?.displayName.charAt(0).toUpperCase()}
           </Avatar>
