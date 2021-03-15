@@ -1,7 +1,8 @@
 import React from 'react';
 
 import { makeStyles } from '@material-ui/core/styles';
-import ArrowBackIcon from '@material-ui/icons/ArrowBack';
+
+import BackToListButton from '../../components/BackToListButton';
 
 const useStyles = makeStyles((theme) => ({
   main: {
@@ -22,8 +23,8 @@ const useStyles = makeStyles((theme) => ({
     fontSize: '80px',
   },
   backLink: {
-    textDecoration: 'none',
-    color: theme.palette.text.primary,
+    marginTop: theme.spacing(1),
+    textAlign: 'center',
   },
   header: {
     fontSize: '30px',
@@ -41,10 +42,9 @@ function NotFoundPage() {
         className={classes.logo}
         alt="git-bug Logo"
       />
-      <a href="/" className={classes.backLink}>
-        <h2 className={classes.header}>Go back to start page</h2>
-        <ArrowBackIcon className={classes.icon} />
-      </a>
+      <div className={classes.backLink}>
+        <BackToListButton />
+      </div>
     </main>
   );
 }
