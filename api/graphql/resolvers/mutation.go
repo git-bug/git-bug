@@ -89,6 +89,34 @@ func (r mutationResolver) AddComment(ctx context.Context, input models.AddCommen
 	}, nil
 }
 
+func (r mutationResolver) EditComment(ctx context.Context, input models.EditCommentInput) (*models.EditCommentPayload, error) {
+	repo, b, err := r.getBug(input.RepoRef, input.Prefix)
+	if err != nil {
+		return nil, err
+	}
+
+	author, err := auth.UserFromCtx(ctx, repo)
+	if err != nil {
+		return nil, err
+	}
+
+	op, err := b.EditCommentRaw(author, time.Now().Unix(), input.Message, input.Files, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	err = b.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.EditCommentPayload{
+		ClientMutationID: input.ClientMutationID,
+		Bug:              models.NewLoadedBug(b.Snapshot()),
+		Operation:        op,
+	}, nil
+}
+
 func (r mutationResolver) ChangeLabels(ctx context.Context, input *models.ChangeLabelInput) (*models.ChangeLabelPayload, error) {
 	repo, b, err := r.getBug(input.RepoRef, input.Prefix)
 	if err != nil {
