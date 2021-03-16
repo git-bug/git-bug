@@ -38,6 +38,28 @@ type AddCommentPayload struct {
 	Operation *bug.AddCommentOperation `json:"operation"`
 }
 
+type EditCommentInput struct {
+	// A unique identifier for the client performing the mutation.
+	ClientMutationID *string `json:"clientMutationId"`
+	// "The name of the repository. If not set, the default repository is used.
+	RepoRef *string `json:"repoRef"`
+	// The bug ID's prefix.
+	Prefix string `json:"prefix"`
+	// The first message of the new bug.
+	Message string `json:"message"`
+	// The collection of file's hash required for the first message.
+	Files []repository.Hash `json:"files"`
+}
+
+type EditCommentPayload struct {
+	// A unique identifier for the client performing the mutation.
+	ClientMutationID *string `json:"clientMutationId"`
+	// The affected bug.
+	Bug BugWrapper `json:"bug"`
+	// The resulting operation.
+	Operation *bug.EditCommentOperation `json:"operation"`
+}
+
 // The connection type for Bug.
 type BugConnection struct {
 	// A list of edges.
