@@ -8,7 +8,6 @@ import (
 	"strconv"
 
 	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
@@ -37,30 +36,6 @@ type AddCommentPayload struct {
 	Bug BugWrapper `json:"bug"`
 	// The resulting operation.
 	Operation *bug.AddCommentOperation `json:"operation"`
-}
-
-type EditCommentInput struct {
-	// A unique identifier for the client performing the mutation.
-	ClientMutationID *string `json:"clientMutationId"`
-	// "The name of the repository. If not set, the default repository is used.
-	RepoRef *string `json:"repoRef"`
-	// The bug ID's prefix.
-	Prefix string `json:"prefix"`
-	// Target
-    Target entity.Id `json:"target"`
-	// The new message to be set.
-	Message string `json:"message"`
-	// The collection of file's hash required for the first message.
-	Files []repository.Hash `json:"files"`
-}
-
-type EditCommentPayload struct {
-	// A unique identifier for the client performing the mutation.
-	ClientMutationID *string `json:"clientMutationId"`
-	// The affected bug.
-	Bug BugWrapper `json:"bug"`
-	// The resulting operation.
-	Operation *bug.EditCommentOperation `json:"operation"`
 }
 
 // The connection type for Bug.
@@ -134,6 +109,30 @@ type CommentConnection struct {
 type CommentEdge struct {
 	Cursor string       `json:"cursor"`
 	Node   *bug.Comment `json:"node"`
+}
+
+type EditCommentInput struct {
+	// A unique identifier for the client performing the mutation.
+	ClientMutationID *string `json:"clientMutationId"`
+	// "The name of the repository. If not set, the default repository is used.
+	RepoRef *string `json:"repoRef"`
+	// The bug ID's prefix.
+	Prefix string `json:"prefix"`
+	// The target.
+	Target string `json:"target"`
+	// The new message to be set.
+	Message string `json:"message"`
+	// The collection of file's hash required for the first message.
+	Files []repository.Hash `json:"files"`
+}
+
+type EditCommentPayload struct {
+	// A unique identifier for the client performing the mutation.
+	ClientMutationID *string `json:"clientMutationId"`
+	// The affected bug.
+	Bug BugWrapper `json:"bug"`
+	// The resulting operation.
+	Operation *bug.EditCommentOperation `json:"operation"`
 }
 
 type IdentityConnection struct {
