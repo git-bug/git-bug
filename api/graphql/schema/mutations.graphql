@@ -49,6 +49,8 @@ input EditCommentInput {
     repoRef: String
     """The bug ID's prefix."""
     prefix: String!
+    """The target."""
+    target: String!
     """The new message to be set."""
     message: String!
     """The collection of file's hash required for the first message."""
