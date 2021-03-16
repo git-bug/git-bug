@@ -100,7 +100,7 @@ func (r mutationResolver) EditComment(ctx context.Context, input models.EditComm
 		return nil, err
 	}
 
-	op, err := b.EditCommentRaw(author, time.Now().Unix(), input.Message, input.Files, nil)
+	op, err := b.EditCommentRaw(author, time.Now().Unix(), input.Target, input.Message, nil)
 	if err != nil {
 		return nil, err
 	}

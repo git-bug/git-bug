@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
@@ -45,7 +46,9 @@ type EditCommentInput struct {
 	RepoRef *string `json:"repoRef"`
 	// The bug ID's prefix.
 	Prefix string `json:"prefix"`
-	// The first message of the new bug.
+	// Target
+    Target entity.Id `json:"target"`
+	// The new message to be set.
 	Message string `json:"message"`
 	// The collection of file's hash required for the first message.
 	Files []repository.Hash `json:"files"`
