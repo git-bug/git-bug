@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/MichaelMure/git-bug/api/auth"
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/api/graphql/graph"
 	"github.com/MichaelMure/git-bug/api/graphql/models"
 	"github.com/MichaelMure/git-bug/bug"
@@ -100,7 +101,7 @@ func (r mutationResolver) EditComment(ctx context.Context, input models.EditComm
 		return nil, err
 	}
 
-	op, err := b.EditCommentRaw(author, time.Now().Unix(), input.Target, input.Message, nil)
+	op, err := b.EditCommentRaw(author, time.Now().Unix(), entity.Id(input.Target), input.Message, nil)
 	if err != nil {
 		return nil, err
 	}
