@@ -59,6 +59,7 @@ const useStyles = makeStyles((theme) => ({
     ...theme.typography.body2,
   },
   commentForm: {
+    marginTop: theme.spacing(2),
     marginLeft: 48,
   },
 }));

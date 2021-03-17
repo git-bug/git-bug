@@ -15,7 +15,6 @@ import { TimelineDocument } from './TimelineQuery.generated';
 type StyleProps = { loading: boolean };
 const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
   container: {
-    margin: theme.spacing(2, 0),
     padding: theme.spacing(0, 2, 2, 2),
   },
   textarea: {},
