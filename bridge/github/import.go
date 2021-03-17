@@ -56,10 +56,21 @@ func (gi *githubImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 		defer close(gi.out)
 
 		// Loop over all matching issues
-		for bundle := range gi.mediator.Issues() {
-			issue := bundle.issue
-			issueEdits := bundle.issueEdits
-			timelineBundles := bundle.timelineBundles
+		for event := range gi.mediator.Issues {
+			var issue issue
+			var issueEdits <-chan userContentEditEvent
+			var timelineItems <-chan timelineEvent
+			switch e := event.(type) {
+			case messageEvent:
+				fmt.Println(e.msg)
+				continue
+			case issueData:
+				issue = e.issue
+				issueEdits = e.issueEdits
+				timelineItems = e.timelineItems
+			default:
+				panic(fmt.Sprint("Unknown event type"))
+			}
 			// create issue
 			b, err := gi.ensureIssue(ctx, repo, &issue, issueEdits)
 			if err != nil {
@@ -69,9 +80,19 @@ func (gi *githubImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 			}
 
 			// loop over timeline items
-			for bundle := range timelineBundles {
-				item := bundle.timelineItem
-				edits := bundle.userContentEdits
+			for event := range timelineItems {
+				var item timelineItem
+				var edits <-chan userContentEditEvent
+				switch e := event.(type) {
+				case messageEvent:
+					fmt.Println(e.msg)
+					continue
+				case timelineData:
+					item = e.timelineItem
+					edits = e.userContentEdits
+				default:
+					panic(fmt.Sprint("Unknown event type"))
+				}
 				err := gi.ensureTimelineItem(ctx, repo, b, &item, edits)
 				if err != nil {
 					err = fmt.Errorf("timeline item creation: %v", err)
@@ -98,7 +119,27 @@ func (gi *githubImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 	return out, nil
 }
 
-func (gi *githubImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache, issue *issue, issueEdits <-chan userContentEdit) (*cache.BugCache, error) {
+// getNextUserContentEdit reads the input channel, handles messages, and returns the next
+// userContentEditData.
+func getNextUserContentEdit(in <-chan userContentEditEvent) (*userContentEditData, bool) {
+	for {
+		event, hasEvent := <-in
+		if !hasEvent {
+			return nil, false
+		}
+		switch e := event.(type) {
+		case messageEvent:
+			fmt.Println(e.msg)
+			continue
+		case userContentEditData:
+			return &e, true
+		default:
+			panic(fmt.Sprint("Unknown event type"))
+		}
+	}
+}
+
+func (gi *githubImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache, issue *issue, issueEditEvents <-chan userContentEditEvent) (*cache.BugCache, error) {
 	author, err := gi.ensurePerson(ctx, repo, issue.Author)
 	if err != nil {
 		return nil, err
@@ -115,7 +156,7 @@ func (gi *githubImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache
 
 	// get first issue edit
 	// if it exists, then it holds the bug creation
-	firstEdit, hasEdit := <-issueEdits
+	firstEdit, hasEdit := getNextUserContentEdit(issueEditEvents)
 
 	// At Github there exist issues with seemingly empty titles. An example is
 	// https://github.com/NixOS/nixpkgs/issues/72730 .
@@ -162,7 +203,11 @@ func (gi *githubImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache
 		return nil, fmt.Errorf("finding or creating issue")
 	}
 	// process remaining issue edits, if they exist
-	for edit := range issueEdits {
+	for {
+		edit, hasEdit := getNextUserContentEdit(issueEditEvents)
+		if !hasEdit {
+			break
+		}
 		// other edits will be added as CommentEdit operations
 		target, err := b.ResolveOperationWithMetadata(metaKeyGithubId, parseId(issue.Id))
 		if err == cache.ErrNoMatchingOp {
@@ -174,7 +219,7 @@ func (gi *githubImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache
 			return nil, err
 		}
 
-		err = gi.ensureCommentEdit(ctx, repo, b, target, &edit)
+		err = gi.ensureCommentEdit(ctx, repo, b, target, &edit.userContentEdit)
 		if err != nil {
 			return nil, err
 		}
@@ -182,7 +227,7 @@ func (gi *githubImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache
 	return b, nil
 }
 
-func (gi *githubImporter) ensureTimelineItem(ctx context.Context, repo *cache.RepoCache, b *cache.BugCache, item *timelineItem, commentEdits <-chan userContentEdit) error {
+func (gi *githubImporter) ensureTimelineItem(ctx context.Context, repo *cache.RepoCache, b *cache.BugCache, item *timelineItem, commentEdits <-chan userContentEditEvent) error {
 
 	switch item.Typename {
 	case "IssueComment":
@@ -345,7 +390,7 @@ func (gi *githubImporter) ensureTimelineItem(ctx context.Context, repo *cache.Re
 	return nil
 }
 
-func (gi *githubImporter) ensureComment(ctx context.Context, repo *cache.RepoCache, b *cache.BugCache, comment *issueComment, commentEdits <-chan userContentEdit) error {
+func (gi *githubImporter) ensureComment(ctx context.Context, repo *cache.RepoCache, b *cache.BugCache, comment *issueComment, commentEditEvents <-chan userContentEditEvent) error {
 	author, err := gi.ensurePerson(ctx, repo, comment.Author)
 	if err != nil {
 		return err
@@ -356,7 +401,7 @@ func (gi *githubImporter) ensureComment(ctx context.Context, repo *cache.RepoCac
 		// real error
 		return err
 	}
-	firstEdit, hasEdit := <-commentEdits
+	firstEdit, hasEdit := getNextUserContentEdit(commentEditEvents)
 	if err == cache.ErrNoMatchingOp {
 		var textInput string
 		if hasEdit {
@@ -393,14 +438,18 @@ func (gi *githubImporter) ensureComment(ctx context.Context, repo *cache.RepoCac
 		return fmt.Errorf("finding or creating issue comment")
 	}
 	// process remaining comment edits, if they exist
-	for edit := range commentEdits {
+	for {
+		edit, hasEdit := getNextUserContentEdit(commentEditEvents)
+		if !hasEdit {
+			break
+		}
 		// ensure editor identity
 		_, err := gi.ensurePerson(ctx, repo, edit.Editor)
 		if err != nil {
 			return err
 		}
 
-		err = gi.ensureCommentEdit(ctx, repo, b, targetOpID, &edit)
+		err = gi.ensureCommentEdit(ctx, repo, b, targetOpID, &edit.userContentEdit)
 		if err != nil {
 			return err
 		}
