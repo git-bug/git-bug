@@ -9,7 +9,10 @@ import EditIcon from '@material-ui/icons/Edit';
 import Author, { Avatar } from 'src/components/Author';
 import Content from 'src/components/Content';
 import Date from 'src/components/Date';
+import IfLoggedIn from 'src/components/IfLoggedIn/IfLoggedIn';
 
+import { BugFragment } from './Bug.generated';
+import CommentForm from './CommentForm';
 import { AddCommentFragment } from './MessageCommentFragment.generated';
 import { CreateFragment } from './MessageCreateFragment.generated';
 
@@ -65,10 +68,11 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 type Props = {
+  bug: BugFragment;
   op: AddCommentFragment | CreateFragment;
 };
 
-function Message({ op }: Props) {
+function Message({ bug, op }: Props) {
   const classes = useStyles();
 
   const editComment = (id: String) => {
@@ -101,6 +105,13 @@ function Message({ op }: Props) {
           <Content markdown={op.message} />
         </section>
       </Paper>
+      <IfLoggedIn>
+        {() => (
+          <div>
+            <CommentForm bug={bug} />
+          </div>
+        )}
+      </IfLoggedIn>
     </article>
   );
 }

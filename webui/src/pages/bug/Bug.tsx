@@ -78,7 +78,7 @@ function Bug({ bug }: Props) {
 
       <div className={classes.container}>
         <div className={classes.timeline}>
-          <TimelineQuery id={bug.id} />
+          <TimelineQuery bug={bug} />
           <IfLoggedIn>
             {() => (
               <div className={classes.commentForm}>
