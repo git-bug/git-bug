@@ -78,7 +78,6 @@ function Message({ bug, op: comment }: Props) {
 
   const editComment = (id: String) => {
     switchToEditMode(true);
-    console.log(id);
   };
 
   function readMessageView() {
@@ -118,13 +117,18 @@ function Message({ bug, op: comment }: Props) {
       switchToEditMode(false);
     };
 
+    const onPostSubmit = (comments: AddCommentFragment | CreateFragment) => {
+      console.log('posted: ' + comments.message);
+      switchToEditMode(false);
+    };
+
     return (
       <div className={classes.bubble}>
         <EditCommentForm
           bug={bug}
           onCancelClick={cancelEdition}
           // Close edit view after submitted changes
-          onPostSubmit={cancelEdition}
+          onPostSubmit={onPostSubmit}
           comment={comment}
         />
       </div>
