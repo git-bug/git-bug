@@ -7,7 +7,7 @@ import { makeStyles, Theme } from '@material-ui/core/styles';
 import CommentInput from '../../components/CommentInput/CommentInput';
 
 import { BugFragment } from './Bug.generated';
-import { useAddCommentMutation } from './CommentForm.generated';
+import { useEditCommentMutation } from './EditCommentform.generated';
 import { AddCommentFragment } from './MessageCommentFragment.generated';
 import { CreateFragment } from './MessageCreateFragment.generated';
 
@@ -46,14 +46,23 @@ type Props = {
 };
 
 function EditCommentForm({ bug, comment, onCancelClick, onPostSubmit }: Props) {
-  const [addComment, { loading }] = useAddCommentMutation();
-  const [issueComment, setIssueComment] = useState<string>(comment.message);
+  const [editComment, { loading }] = useEditCommentMutation();
+  const [message, setMessage] = useState<string>(comment.message);
   const [inputProp, setInputProp] = useState<any>('');
   const classes = useStyles({ loading });
   const form = useRef<HTMLFormElement>(null);
 
   const submit = () => {
-    console.log('submit: ' + issueComment);
+    console.log('submit: ' + message + '\nTo: ' + comment.id);
+    editComment({
+      variables: {
+        input: {
+          prefix: bug.id,
+          message: message,
+          target: comment.id,
+        },
+      },
+    });
     resetForm();
     if (onPostSubmit) onPostSubmit();
   };
@@ -66,7 +75,7 @@ function EditCommentForm({ bug, comment, onCancelClick, onPostSubmit }: Props) {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (issueComment.length > 0) submit();
+    if (message.length > 0) submit();
   };
 
   function getCancelButton() {
@@ -83,7 +92,7 @@ function EditCommentForm({ bug, comment, onCancelClick, onPostSubmit }: Props) {
         <CommentInput
           inputProps={inputProp}
           loading={loading}
-          onChange={(comment: string) => setIssueComment(comment)}
+          onChange={(message: string) => setMessage(message)}
           inputText={comment.message}
         />
         <div className={classes.actions}>
@@ -93,7 +102,7 @@ function EditCommentForm({ bug, comment, onCancelClick, onPostSubmit }: Props) {
             variant="contained"
             color="primary"
             type="submit"
-            disabled={loading || issueComment.length === 0}
+            disabled={loading || message.length === 0}
           >
             Update Comment
           </Button>

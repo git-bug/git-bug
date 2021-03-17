@@ -1,0 +1,7 @@
+mutation EditComment($input: EditCommentInput!) {
+  editComment(input: $input) {
+    bug {
+      id
+    }
+  }
+}
