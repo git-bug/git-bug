@@ -7,7 +7,7 @@ import { makeStyles, Theme } from '@material-ui/core/styles';
 import CommentInput from '../../components/CommentInput/CommentInput';
 
 import { BugFragment } from './Bug.generated';
-import { useEditCommentMutation } from './EditCommentform.generated';
+import { useEditCommentMutation } from './EditCommentForm.generated';
 import { AddCommentFragment } from './MessageCommentFragment.generated';
 import { CreateFragment } from './MessageCreateFragment.generated';
 
@@ -43,7 +43,7 @@ type Props = {
   bug: BugFragment;
   comment: AddCommentFragment | CreateFragment;
   onCancelClick?: () => void;
-  onPostSubmit?: () => void;
+  onPostSubmit?: (comments: any) => void;
 };
 
 function EditCommentForm({ bug, comment, onCancelClick, onPostSubmit }: Props) {
@@ -54,7 +54,6 @@ function EditCommentForm({ bug, comment, onCancelClick, onPostSubmit }: Props) {
   const form = useRef<HTMLFormElement>(null);
 
   const submit = () => {
-    console.log('submit: ' + message + '\nTo: ' + comment.id);
     editComment({
       variables: {
         input: {
@@ -63,9 +62,13 @@ function EditCommentForm({ bug, comment, onCancelClick, onPostSubmit }: Props) {
           target: comment.id,
         },
       },
+    }).then((result) => {
+      const comments = result.data?.editComment.bug.timeline.comments;
+      const coms = comments as (AddCommentFragment | CreateFragment)[];
+      const res = coms.find((elem) => elem.id === comment.id);
+      if (onPostSubmit) onPostSubmit(res);
     });
     resetForm();
-    if (onPostSubmit) onPostSubmit();
   };
 
   function resetForm() {
