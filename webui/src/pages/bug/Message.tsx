@@ -72,7 +72,7 @@ type Props = {
   op: AddCommentFragment | CreateFragment;
 };
 
-function Message({ bug, op }: Props) {
+function Message({ bug, op: comment }: Props) {
   const classes = useStyles();
   const [editMode, switchToEditMode] = useState(false);
 
@@ -86,11 +86,11 @@ function Message({ bug, op }: Props) {
       <Paper elevation={1} className={classes.bubble}>
         <header className={classes.header}>
           <div className={classes.title}>
-            <Author className={classes.author} author={op.author} />
+            <Author className={classes.author} author={comment.author} />
             <span> commented </span>
-            <Date date={op.createdAt} />
+            <Date date={comment.createdAt} />
           </div>
-          {op.edited && <div className={classes.tag}>Edited</div>}
+          {comment.edited && <div className={classes.tag}>Edited</div>}
           <IfLoggedIn>
             {() => (
               <Tooltip title="Edit Message" placement="top" arrow={true}>
@@ -98,7 +98,7 @@ function Message({ bug, op }: Props) {
                   disableRipple
                   className={classes.editButton}
                   aria-label="edit message"
-                  onClick={() => editComment(op.id)}
+                  onClick={() => editComment(comment.id)}
                 >
                   <EditIcon />
                 </IconButton>
@@ -107,14 +107,14 @@ function Message({ bug, op }: Props) {
           </IfLoggedIn>
         </header>
         <section className={classes.body}>
-          <Content markdown={op.message} />
+          <Content markdown={comment.message} />
         </section>
       </Paper>
     );
   }
 
   function editMessageView() {
-    const cancleEdition = () => {
+    const cancelEdition = () => {
       switchToEditMode(false);
     };
 
@@ -122,8 +122,10 @@ function Message({ bug, op }: Props) {
       <div className={classes.bubble}>
         <EditCommentForm
           bug={bug}
-          onCancleClick={cancleEdition}
-          commentId={op.id}
+          onCancelClick={cancelEdition}
+          // Close edit view after submitted changes
+          onPostSubmit={cancelEdition}
+          comment={comment}
         />
       </div>
     );
@@ -131,7 +133,7 @@ function Message({ bug, op }: Props) {
 
   return (
     <article className={classes.container}>
-      <Avatar author={op.author} className={classes.avatar} />
+      <Avatar author={comment.author} className={classes.avatar} />
       {editMode ? editMessageView() : readMessageView()}
     </article>
   );

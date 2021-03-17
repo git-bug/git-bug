@@ -8,7 +8,8 @@ import CommentInput from '../../components/CommentInput/CommentInput';
 
 import { BugFragment } from './Bug.generated';
 import { useAddCommentMutation } from './CommentForm.generated';
-import { TimelineDocument } from './TimelineQuery.generated';
+import { AddCommentFragment } from './MessageCommentFragment.generated';
+import { CreateFragment } from './MessageCreateFragment.generated';
 
 type StyleProps = { loading: boolean };
 const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
@@ -39,37 +40,22 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
 
 type Props = {
   bug: BugFragment;
-  commentId: string;
-  onCancleClick?: () => void;
+  comment: AddCommentFragment | CreateFragment;
+  onCancelClick?: () => void;
+  onPostSubmit?: () => void;
 };
 
-function EditCommentForm({ bug, commentId, onCancleClick }: Props) {
+function EditCommentForm({ bug, comment, onCancelClick, onPostSubmit }: Props) {
   const [addComment, { loading }] = useAddCommentMutation();
-  const [issueComment, setIssueComment] = useState('');
+  const [issueComment, setIssueComment] = useState<string>(comment.message);
   const [inputProp, setInputProp] = useState<any>('');
   const classes = useStyles({ loading });
   const form = useRef<HTMLFormElement>(null);
 
   const submit = () => {
-    addComment({
-      variables: {
-        input: {
-          prefix: bug.id,
-          message: issueComment,
-        },
-      },
-      refetchQueries: [
-        // TODO: update the cache instead of refetching
-        {
-          query: TimelineDocument,
-          variables: {
-            id: bug.id,
-            first: 100,
-          },
-        },
-      ],
-      awaitRefetchQueries: true,
-    }).then(() => resetForm());
+    console.log('submit: ' + issueComment);
+    resetForm();
+    if (onPostSubmit) onPostSubmit();
   };
 
   function resetForm() {
@@ -83,10 +69,10 @@ function EditCommentForm({ bug, commentId, onCancleClick }: Props) {
     if (issueComment.length > 0) submit();
   };
 
-  function getCancleButton() {
+  function getCancelButton() {
     return (
-      <Button onClick={onCancleClick} variant="contained">
-        Cancle
+      <Button onClick={onCancelClick} variant="contained">
+        Cancel
       </Button>
     );
   }
@@ -98,9 +84,10 @@ function EditCommentForm({ bug, commentId, onCancleClick }: Props) {
           inputProps={inputProp}
           loading={loading}
           onChange={(comment: string) => setIssueComment(comment)}
+          inputText={comment.message}
         />
         <div className={classes.actions}>
-          {onCancleClick ? getCancleButton() : ''}
+          {onCancelClick ? getCancelButton() : ''}
           <Button
             className={classes.greenButton}
             variant="contained"
