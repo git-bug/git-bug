@@ -1,6 +1,7 @@
 #import "../../components/fragments.graphql"
 
 fragment Create on CreateTimelineItem {
+  id
   createdAt
   ...authored
   edited

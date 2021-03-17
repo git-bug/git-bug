@@ -70,6 +70,11 @@ type Props = {
 
 function Message({ op }: Props) {
   const classes = useStyles();
+
+  const editComment = (id: String) => {
+    console.log(id);
+  };
+
   return (
     <article className={classes.container}>
       <Avatar author={op.author} className={classes.avatar} />
@@ -86,6 +91,7 @@ function Message({ op }: Props) {
               disableRipple
               className={classes.editButton}
               aria-label="edit message"
+              onClick={() => editComment(op.id)}
             >
               <EditIcon />
             </IconButton>
