@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import IconButton from '@material-ui/core/IconButton';
 import Paper from '@material-ui/core/Paper';
@@ -74,14 +74,15 @@ type Props = {
 
 function Message({ bug, op }: Props) {
   const classes = useStyles();
+  const [editMode, switchToEditMode] = useState(false);
 
   const editComment = (id: String) => {
+    switchToEditMode(true);
     console.log(id);
   };
 
-  return (
-    <article className={classes.container}>
-      <Avatar author={op.author} className={classes.avatar} />
+  function readMessageView() {
+    return (
       <Paper elevation={1} className={classes.bubble}>
         <header className={classes.header}>
           <div className={classes.title}>
@@ -90,28 +91,40 @@ function Message({ bug, op }: Props) {
             <Date date={op.createdAt} />
           </div>
           {op.edited && <div className={classes.tag}>Edited</div>}
-          <Tooltip title="Edit Message" placement="top" arrow={true}>
-            <IconButton
-              disableRipple
-              className={classes.editButton}
-              aria-label="edit message"
-              onClick={() => editComment(op.id)}
-            >
-              <EditIcon />
-            </IconButton>
-          </Tooltip>
+          <IfLoggedIn>
+            {() => (
+              <Tooltip title="Edit Message" placement="top" arrow={true}>
+                <IconButton
+                  disableRipple
+                  className={classes.editButton}
+                  aria-label="edit message"
+                  onClick={() => editComment(op.id)}
+                >
+                  <EditIcon />
+                </IconButton>
+              </Tooltip>
+            )}
+          </IfLoggedIn>
         </header>
         <section className={classes.body}>
           <Content markdown={op.message} />
         </section>
       </Paper>
-      <IfLoggedIn>
-        {() => (
-          <div>
-            <CommentForm bug={bug} />
-          </div>
-        )}
-      </IfLoggedIn>
+    );
+  }
+
+  function editMessageView() {
+    return (
+      <div className={classes.bubble}>
+        <CommentForm bug={bug} />
+      </div>
+    );
+  }
+
+  return (
+    <article className={classes.container}>
+      <Avatar author={op.author} className={classes.avatar} />
+      {editMode ? editMessageView() : readMessageView()}
     </article>
   );
 }
