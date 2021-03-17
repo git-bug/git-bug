@@ -2,17 +2,18 @@ import React from 'react';
 
 import CircularProgress from '@material-ui/core/CircularProgress';
 
+import { BugFragment } from './Bug.generated';
 import Timeline from './Timeline';
 import { useTimelineQuery } from './TimelineQuery.generated';
 
 type Props = {
-  id: string;
+  bug: BugFragment;
 };
 
-const TimelineQuery = ({ id }: Props) => {
+const TimelineQuery = ({ bug }: Props) => {
   const { loading, error, data } = useTimelineQuery({
     variables: {
-      id,
+      id: bug.id,
       first: 100,
     },
   });
@@ -25,7 +26,7 @@ const TimelineQuery = ({ id }: Props) => {
     return null;
   }
 
-  return <Timeline ops={nodes} />;
+  return <Timeline ops={nodes} bug={bug} />;
 };
 
 export default TimelineQuery;
