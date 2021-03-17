@@ -12,7 +12,7 @@ import Date from 'src/components/Date';
 import IfLoggedIn from 'src/components/IfLoggedIn/IfLoggedIn';
 
 import { BugFragment } from './Bug.generated';
-import CommentForm from './CommentForm';
+import EditCommentForm from './EditCommentForm';
 import { AddCommentFragment } from './MessageCommentFragment.generated';
 import { CreateFragment } from './MessageCreateFragment.generated';
 
@@ -114,9 +114,17 @@ function Message({ bug, op }: Props) {
   }
 
   function editMessageView() {
+    const cancleEdition = () => {
+      switchToEditMode(false);
+    };
+
     return (
       <div className={classes.bubble}>
-        <CommentForm bug={bug} />
+        <EditCommentForm
+          bug={bug}
+          onCancleClick={cancleEdition}
+          commentId={op.id}
+        />
       </div>
     );
   }
