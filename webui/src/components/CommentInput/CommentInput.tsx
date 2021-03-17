@@ -51,6 +51,7 @@ const a11yProps = (index: number) => ({
 
 type Props = {
   inputProps?: any;
+  inputText?: string;
   loading: boolean;
   onChange: (comment: string) => void;
 };
@@ -62,8 +63,8 @@ type Props = {
  * @param loading Disable input when component not ready yet
  * @param onChange Callback to return input value changes
  */
-function CommentInput({ inputProps, loading, onChange }: Props) {
-  const [input, setInput] = useState<string>('');
+function CommentInput({ inputProps, inputText, loading, onChange }: Props) {
+  const [input, setInput] = useState<string>(inputText ? inputText : '');
   const [tab, setTab] = useState(0);
   const classes = useStyles();
 
