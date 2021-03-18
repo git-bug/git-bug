@@ -65,7 +65,7 @@ function FilterToolbar({ query, queryLocation }: Props) {
   const classes = useStyles();
   const params: Query = parse(query);
   const { data: identitiesData } = useListIdentitiesQuery();
-  const { data: labelsData } = useListLabelsQuery()
+  const { data: labelsData } = useListLabelsQuery();
 
   let identities: any = [];
   let labels: any = [];
@@ -153,13 +153,15 @@ function FilterToolbar({ query, queryLocation }: Props) {
       >
         Author
       </FilterDropdown>
-      <FilterDropdown
-        dropdown={labels}
-        itemActive={(key) => hasValue('label', key)}
-        to={(key) => pipe(replaceParam('label', key), loc)(params)}
-      >
-        Label
-      </FilterDropdown>
+      {labels.length ? (
+        <FilterDropdown
+          dropdown={labels}
+          itemActive={(key) => hasValue('label', key)}
+          to={(key) => pipe(replaceParam('label', key), loc)(params)}
+        >
+          Label
+        </FilterDropdown>
+      ) : null}
       <FilterDropdown
         dropdown={[
           ['id', 'ID'],
