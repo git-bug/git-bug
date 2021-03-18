@@ -66,7 +66,10 @@ const CurrentIdentity = () => {
           {user.displayName.charAt(0).toUpperCase()}
         </Avatar>
         <div className={classes.displayName}>{user.displayName}</div>
-        <LockIcon color="secondary" className={user.isProtected ? '' : ''} />
+        <LockIcon
+          color="secondary"
+          className={user.isProtected ? '' : classes.hidden}
+        />
       </Button>
       <Popper
         open={open}
