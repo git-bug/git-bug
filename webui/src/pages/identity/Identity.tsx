@@ -14,6 +14,9 @@ import Avatar from '@material-ui/core/Avatar';
 import { makeStyles } from '@material-ui/core/styles';
 
 import { useCurrentIdentityQuery } from '../../components/CurrentIdentity/CurrentIdentity.generated';
+
+import BugList from './BugList';
+
 const useStyles = makeStyles((theme) => ({
   main: {
     maxWidth: 1200,
@@ -59,6 +62,7 @@ const Identity = () => {
   const { data } = useCurrentIdentityQuery();
   const user = data?.repository?.userIdentity;
   console.log(user);
+
   return (
     <main className={classes.main}>
       <div className={classes.container}>
@@ -126,6 +130,7 @@ const Identity = () => {
           </Avatar>
         </div>
       </div>
+      <BugList humanId={user?.humanId ? user?.humanId : ''} />
     </main>
   );
 };

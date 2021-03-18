@@ -17,6 +17,10 @@ type Repository {
         query: String
     ): BugConnection!
 
+    allBugsDetail(
+        query: String
+    ): [Bug]!
+
     bug(prefix: String!): Bug
 
     """All the identities"""

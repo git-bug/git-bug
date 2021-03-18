@@ -1,0 +1,10 @@
+query GetBugsByUser ($query: String){
+    repository {
+        allBugs(query: $query) {
+            nodes {
+                id
+                title
+            }
+        }
+    }
+}
