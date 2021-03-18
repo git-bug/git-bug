@@ -60,6 +60,7 @@ const useStyles = makeStyles((theme) => ({
   editButton: {
     color: theme.palette.info.contrastText,
     padding: '0rem',
+    marginLeft: theme.spacing(1),
     fontSize: '0.75rem',
     '&:hover': {
       backgroundColor: 'inherit',
