@@ -57,7 +57,7 @@ function CloseBugButton({ bug, disabled }: Props) {
         disabled={bug.status === 'CLOSED' || disabled}
         startIcon={<ErrorOutlineIcon className={classes.closeIssueIcon} />}
       >
-        Close issue
+        Close bug
       </Button>
     </div>
   );

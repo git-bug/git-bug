@@ -32,6 +32,10 @@ const useStyles = makeStyles((theme: Theme) => ({
   greenButton: {
     backgroundColor: theme.palette.success.main,
     color: theme.palette.success.contrastText,
+    '&:hover': {
+      backgroundColor: theme.palette.success.dark,
+      color: theme.palette.primary.contrastText,
+    },
   },
 }));
 
@@ -90,7 +94,7 @@ function NewBugPage() {
             type="submit"
             disabled={isFormValid() ? false : true}
           >
-            Submit new issue
+            Submit new bug
           </Button>
         </div>
       </form>

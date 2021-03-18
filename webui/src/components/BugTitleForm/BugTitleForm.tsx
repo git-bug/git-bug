@@ -43,6 +43,10 @@ const useStyles = makeStyles((theme) => ({
     marginLeft: theme.spacing(1),
     backgroundColor: theme.palette.success.main,
     color: theme.palette.success.contrastText,
+    '&:hover': {
+      backgroundColor: theme.palette.success.dark,
+      color: theme.palette.primary.contrastText,
+    },
   },
   saveButton: {
     marginRight: theme.spacing(1),
@@ -155,7 +159,7 @@ function BugTitleForm({ bug }: Props) {
                 variant="contained"
                 href="/new"
               >
-                New issue
+                New bug
               </Button>
             </div>
           )}
