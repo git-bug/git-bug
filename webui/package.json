@@ -47,7 +47,7 @@
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
     "generate": "graphql-codegen",
-    "lint": "eslint src --ext .ts --ext .tsx --ext .js --ext .jsx --ext .graphql",
+    "lint": "eslint --fix src --ext .ts --ext .tsx --ext .js --ext .jsx --ext .graphql",
     "clean": "rimraf src/**.generated.* src/schema.json src/gqlTypes.* src/fragmentTypes.*"
   },
   "browserslist": [

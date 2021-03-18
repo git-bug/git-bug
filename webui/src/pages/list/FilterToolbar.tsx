@@ -8,14 +8,15 @@ import CheckCircleOutline from '@material-ui/icons/CheckCircleOutline';
 import ErrorOutline from '@material-ui/icons/ErrorOutline';
 
 import {
+  Filter,
   FilterDropdown,
   FilterProps,
-  Filter,
   parse,
-  stringify,
   Query,
+  stringify,
 } from './Filter';
 import { useBugCountQuery } from './FilterToolbar.generated';
+import { useListIdentitiesQuery } from './ListIdentities.generated';
 
 const useStyles = makeStyles((theme) => ({
   toolbar: {
@@ -35,6 +36,7 @@ type CountingFilterProps = {
   query: string; // the query used as a source to count the number of element
   children: React.ReactNode;
 } & FilterProps;
+
 function CountingFilter({ query, children, ...props }: CountingFilterProps) {
   const { data, loading, error } = useBugCountQuery({
     variables: { query },
@@ -57,9 +59,24 @@ type Props = {
   query: string;
   queryLocation: (query: string) => LocationDescriptor;
 };
+
 function FilterToolbar({ query, queryLocation }: Props) {
   const classes = useStyles();
   const params: Query = parse(query);
+  const { data } = useListIdentitiesQuery();
+
+  let identities: any = [];
+
+  if (
+    data?.repository &&
+    data.repository.allIdentities &&
+    data.repository.allIdentities.nodes
+  ) {
+    identities = data.repository.allIdentities.nodes.map((node) => [
+      node.name,
+      node.name,
+    ]);
+  }
 
   const hasKey = (key: string): boolean =>
     params[key] && params[key].length > 0;
@@ -115,6 +132,13 @@ function FilterToolbar({ query, queryLocation }: Props) {
       <Filter active={hasKey('author')}>Author</Filter>
       <Filter active={hasKey('label')}>Label</Filter>
       */}
+      <FilterDropdown
+        dropdown={identities}
+        itemActive={(key) => hasValue('author', key)}
+        to={(key) => pipe(replaceParam('author', key), loc)(params)}
+      >
+        Author
+      </FilterDropdown>
       <FilterDropdown
         dropdown={[
           ['id', 'ID'],
