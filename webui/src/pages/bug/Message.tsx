@@ -96,6 +96,8 @@ function Message({ bug, op }: Props) {
           {comment.edited && (
             <EditHistoryMenu
               iconBtnProps={{ className: classes.headerActions }}
+              bugId={bug.id}
+              commentId={comment.id}
             />
           )}
           <IfLoggedIn>

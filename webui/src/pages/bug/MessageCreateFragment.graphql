@@ -6,4 +6,8 @@ fragment Create on CreateTimelineItem {
   ...authored
   edited
   message
+  history {
+    message
+    date
+  }
 }
