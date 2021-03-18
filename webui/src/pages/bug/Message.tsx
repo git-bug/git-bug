@@ -13,6 +13,7 @@ import IfLoggedIn from 'src/components/IfLoggedIn/IfLoggedIn';
 
 import { BugFragment } from './Bug.generated';
 import EditCommentForm from './EditCommentForm';
+import EditHistoryMenu from './EditHistoryMenu';
 import { AddCommentFragment } from './MessageCommentFragment.generated';
 import { CreateFragment } from './MessageCreateFragment.generated';
 
@@ -57,7 +58,8 @@ const useStyles = makeStyles((theme) => ({
     ...theme.typography.body2,
     padding: '0.5rem',
   },
-  editButton: {
+  headerActions2: {},
+  headerActions: {
     color: theme.palette.info.contrastText,
     padding: '0rem',
     marginLeft: theme.spacing(1),
@@ -91,13 +93,17 @@ function Message({ bug, op }: Props) {
             <span> commented </span>
             <Date date={comment.createdAt} />
           </div>
-          {comment.edited && <div className={classes.tag}>Edited</div>}
+          {comment.edited && (
+            <EditHistoryMenu
+              iconBtnProps={{ className: classes.headerActions }}
+            />
+          )}
           <IfLoggedIn>
             {() => (
               <Tooltip title="Edit Message" placement="top" arrow={true}>
                 <IconButton
                   disableRipple
-                  className={classes.editButton}
+                  className={classes.headerActions}
                   aria-label="edit message"
                   onClick={() => editComment(comment.id)}
                 >
@@ -129,7 +135,6 @@ function Message({ bug, op }: Props) {
         <EditCommentForm
           bug={bug}
           onCancelClick={cancelEdition}
-          // Close edit view after submitted changes
           onPostSubmit={onPostSubmit}
           comment={comment}
         />
