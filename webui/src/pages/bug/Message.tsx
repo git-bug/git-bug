@@ -72,9 +72,10 @@ type Props = {
   op: AddCommentFragment | CreateFragment;
 };
 
-function Message({ bug, op: comment }: Props) {
+function Message({ bug, op }: Props) {
   const classes = useStyles();
   const [editMode, switchToEditMode] = useState(false);
+  const [comment, setComment] = useState(op);
 
   const editComment = (id: String) => {
     switchToEditMode(true);
@@ -117,8 +118,8 @@ function Message({ bug, op: comment }: Props) {
       switchToEditMode(false);
     };
 
-    const onPostSubmit = (comments: AddCommentFragment | CreateFragment) => {
-      console.log('posted: ' + comments.message);
+    const onPostSubmit = (comment: AddCommentFragment | CreateFragment) => {
+      setComment(comment);
       switchToEditMode(false);
     };
 
