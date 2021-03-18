@@ -17,6 +17,7 @@ import {
 } from './Filter';
 import { useBugCountQuery } from './FilterToolbar.generated';
 import { useListIdentitiesQuery } from './ListIdentities.generated';
+import { useListLabelsQuery } from './ListLabels.generated';
 
 const useStyles = makeStyles((theme) => ({
   toolbar: {
@@ -63,16 +64,29 @@ type Props = {
 function FilterToolbar({ query, queryLocation }: Props) {
   const classes = useStyles();
   const params: Query = parse(query);
-  const { data } = useListIdentitiesQuery();
+  const { data: identitiesData } = useListIdentitiesQuery();
+  const { data: labelsData } = useListLabelsQuery()
 
   let identities: any = [];
+  let labels: any = [];
 
   if (
-    data?.repository &&
-    data.repository.allIdentities &&
-    data.repository.allIdentities.nodes
+    identitiesData?.repository &&
+    identitiesData.repository.allIdentities &&
+    identitiesData.repository.allIdentities.nodes
   ) {
-    identities = data.repository.allIdentities.nodes.map((node) => [
+    identities = identitiesData.repository.allIdentities.nodes.map((node) => [
+      node.name,
+      node.name,
+    ]);
+  }
+
+  if (
+    labelsData?.repository &&
+    labelsData.repository.validLabels &&
+    labelsData.repository.validLabels.nodes
+  ) {
+    labels = labelsData.repository.validLabels.nodes.map((node) => [
       node.name,
       node.name,
     ]);
@@ -138,6 +152,13 @@ function FilterToolbar({ query, queryLocation }: Props) {
         to={(key) => pipe(replaceParam('author', key), loc)(params)}
       >
         Author
+      </FilterDropdown>
+      <FilterDropdown
+        dropdown={labels}
+        itemActive={(key) => hasValue('label', key)}
+        to={(key) => pipe(replaceParam('label', key), loc)(params)}
+      >
+        Label
       </FilterDropdown>
       <FilterDropdown
         dropdown={[
