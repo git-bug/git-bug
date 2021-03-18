@@ -6,4 +6,8 @@ fragment AddComment on AddCommentTimelineItem {
   ...authored
   edited
   message
+  history {
+    message
+    date
+  }
 }
