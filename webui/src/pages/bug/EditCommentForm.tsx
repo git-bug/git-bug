@@ -63,10 +63,14 @@ function EditCommentForm({ bug, comment, onCancelClick, onPostSubmit }: Props) {
         },
       },
     }).then((result) => {
-      const comments = result.data?.editComment.bug.timeline.comments;
-      const coms = comments as (AddCommentFragment | CreateFragment)[];
-      const res = coms.find((elem) => elem.id === comment.id);
-      if (onPostSubmit) onPostSubmit(res);
+      const comments = result.data?.editComment.bug.timeline.comments as (
+        | AddCommentFragment
+        | CreateFragment
+      )[];
+      // NOTE Searching for the changed comment could be dropped if GraphQL get
+      // filter by id argument for timelineitems
+      const modifiedComment = comments.find((elem) => elem.id === comment.id);
+      if (onPostSubmit) onPostSubmit(modifiedComment);
     });
     resetForm();
   };
