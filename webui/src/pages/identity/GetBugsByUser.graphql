@@ -4,6 +4,8 @@ query GetBugsByUser ($query: String){
             nodes {
                 id
                 title
+                createdAt
+                lastEdit
             }
         }
     }

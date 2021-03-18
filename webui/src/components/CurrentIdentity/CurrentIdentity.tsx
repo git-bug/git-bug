@@ -26,6 +26,9 @@ const useStyles = makeStyles((theme) => ({
   profileLink: {
     ...theme.typography.button,
   },
+  popupButton: {
+    textTransform: 'none',
+  },
 }));
 
 const CurrentIdentity = () => {
@@ -57,15 +60,14 @@ const CurrentIdentity = () => {
         aria-controls={open ? 'menu-list-grow' : undefined}
         aria-haspopup="true"
         onClick={handleToggle}
+        className={classes.popupButton}
       >
         <Avatar src={user.avatarUrl ? user.avatarUrl : undefined}>
           {user.displayName.charAt(0).toUpperCase()}
         </Avatar>
+        <div className={classes.displayName}>{user.displayName}</div>
+        <LockIcon color="secondary" className={user.isProtected ? '' : ''} />
       </Button>
-      <LockIcon
-        color="secondary"
-        className={user.isProtected ? '' : classes.hidden}
-      />
       <Popper
         open={open}
         anchorEl={anchorRef.current}
@@ -99,7 +101,6 @@ const CurrentIdentity = () => {
           </Grow>
         )}
       </Popper>
-      <div className={classes.displayName}>{user.displayName}</div>
     </>
   );
 };
