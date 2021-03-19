@@ -76,6 +76,10 @@ const useStyles = makeStyles((theme) => ({
       display: 'inline-block',
     },
   },
+  commentCount: {
+    fontSize: '1rem',
+    marginLeft: theme.spacing(0.5),
+  },
 }));
 
 type Props = {
@@ -84,6 +88,8 @@ type Props = {
 
 function BugRow({ bug }: Props) {
   const classes = useStyles();
+  // Subtract 1 from totalCount as 1 comment is the bug description
+  const commentCount = bug.comments.totalCount - 1;
   return (
     <TableRow hover>
       <TableCell className={classes.cell}>
@@ -109,12 +115,16 @@ function BugRow({ bug }: Props) {
         </div>
       </TableCell>
       <TableCell>
-        <Grid container wrap="nowrap">
-          <Grid item>
-            <CommentOutlinedIcon aria-label="Comment count" />
+        {commentCount > 0 && (
+          <Grid container wrap="nowrap">
+            <Grid item>
+              <CommentOutlinedIcon aria-label="Comment count" />
+            </Grid>
+            <Grid item>
+              <span className={classes.commentCount}>{commentCount}</span>
+            </Grid>
           </Grid>
-          <Grid item>Count</Grid>
-        </Grid>
+        )}
       </TableCell>
     </TableRow>
   );

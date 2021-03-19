@@ -9,5 +9,8 @@ fragment BugRow on Bug {
   labels {
     ...Label
   }
+  comments {
+    totalCount
+  }
   ...authored
 }
