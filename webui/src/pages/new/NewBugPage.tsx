@@ -86,7 +86,7 @@ function NewBugPage() {
   }
 
   function isFormValid() {
-    return issueTitle.length > 0 && issueComment.length > 0 ? true : false;
+    return issueTitle.length > 0;
   }
 
   if (loading) return <div>Loading...</div>;
@@ -119,14 +119,14 @@ function NewBugPage() {
                 className={classes.greenButton}
                 variant="contained"
                 type="submit"
-                disabled={isFormValid() ? false : true}
+                disabled={!isFormValid()}
               >
                 Submit new issue
               </Button>
             </div>
           </form>
         </Paper>
-        <div className={classes.rightSidebar}></div>
+        <div className={classes.rightSidebar} />
       </div>
     </main>
   );

@@ -40,7 +40,7 @@ function CountingFilter({ query, children, ...props }: CountingFilterProps) {
     variables: { query },
   });
 
-  var prefix;
+  let prefix;
   if (loading) prefix = '...';
   else if (error || !data?.repository) prefix = '???';
   // TODO: better prefixes & error handling

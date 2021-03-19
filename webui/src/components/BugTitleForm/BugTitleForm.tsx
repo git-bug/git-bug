@@ -66,7 +66,7 @@ function BugTitleForm({ bug }: Props) {
 
   function isFormValid() {
     if (issueTitleInput) {
-      return issueTitleInput.value.length > 0 ? true : false;
+      return issueTitleInput.value.length > 0;
     } else {
       return false;
     }

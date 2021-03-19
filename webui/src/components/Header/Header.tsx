@@ -46,7 +46,7 @@ function Header() {
             <img src="/logo.svg" className={classes.logo} alt="git-bug" />
             git-bug
           </Link>
-          <div className={classes.filler}></div>
+          <div className={classes.filler} />
           <div className={classes.lightSwitch}>
             <LightSwitch />
           </div>
