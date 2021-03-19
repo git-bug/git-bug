@@ -176,7 +176,7 @@ function Message({ bug, op }: Props) {
       <div className={classes.bubble}>
         <EditCommentForm
           bug={bug}
-          onCancelClick={cancelEdition}
+          onCancel={cancelEdition}
           onPostSubmit={onPostSubmit}
           comment={comment}
         />

@@ -42,11 +42,11 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
 type Props = {
   bug: BugFragment;
   comment: AddCommentFragment | CreateFragment;
-  onCancelClick?: () => void;
+  onCancel?: () => void;
   onPostSubmit?: (comments: any) => void;
 };
 
-function EditCommentForm({ bug, comment, onCancelClick, onPostSubmit }: Props) {
+function EditCommentForm({ bug, comment, onCancel, onPostSubmit }: Props) {
   const [editComment, { loading }] = useEditCommentMutation();
   const [message, setMessage] = useState<string>(comment.message);
   const [inputProp, setInputProp] = useState<any>('');
@@ -88,7 +88,7 @@ function EditCommentForm({ bug, comment, onCancelClick, onPostSubmit }: Props) {
 
   function getCancelButton() {
     return (
-      <Button onClick={onCancelClick} variant="contained">
+      <Button onClick={onCancel} variant="contained">
         Cancel
       </Button>
     );
@@ -104,7 +104,7 @@ function EditCommentForm({ bug, comment, onCancelClick, onPostSubmit }: Props) {
           inputText={comment.message}
         />
         <div className={classes.actions}>
-          {onCancelClick ? getCancelButton() : ''}
+          {onCancel && getCancelButton()}
           <Button
             className={classes.greenButton}
             variant="contained"
