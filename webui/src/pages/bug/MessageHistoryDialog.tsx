@@ -202,10 +202,12 @@ function MessageHistoryDialog({ bugId, commentId, open, onClose }: Props) {
               aria-controls="panel1d-content"
               id="panel1d-header"
             >
-              <Tooltip title={moment(edit.date).format('LLLL')}>
-                <Moment date={edit.date} format="on ll" />
-              </Tooltip>
-              {index === 0 && '• (most recent edit)'}
+              <Typography>
+                <Tooltip title={moment(edit.date).format('LLLL')}>
+                  <Moment date={edit.date} format="on ll" />
+                </Tooltip>
+                {index === 0 && '• (most recent edit)'}
+              </Typography>
             </AccordionSummary>
             <AccordionDetails>{edit.message}</AccordionDetails>
           </Accordion>
