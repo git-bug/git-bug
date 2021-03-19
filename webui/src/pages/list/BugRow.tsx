@@ -1,11 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
+import Grid from '@material-ui/core/Grid';
 import TableCell from '@material-ui/core/TableCell/TableCell';
 import TableRow from '@material-ui/core/TableRow/TableRow';
 import Tooltip from '@material-ui/core/Tooltip/Tooltip';
 import { makeStyles } from '@material-ui/core/styles';
 import CheckCircleOutline from '@material-ui/icons/CheckCircleOutline';
+import CommentOutlinedIcon from '@material-ui/icons/CommentOutlined';
 import ErrorOutline from '@material-ui/icons/ErrorOutline';
 
 import Date from 'src/components/Date';
@@ -105,6 +107,14 @@ function BugRow({ bug }: Props) {
             &nbsp;by {bug.author.displayName}
           </div>
         </div>
+      </TableCell>
+      <TableCell>
+        <Grid container wrap="nowrap">
+          <Grid item>
+            <CommentOutlinedIcon aria-label="Comment count" />
+          </Grid>
+          <Grid item>Count</Grid>
+        </Grid>
       </TableCell>
     </TableRow>
   );
