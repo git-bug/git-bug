@@ -5,6 +5,7 @@ import Paper from '@material-ui/core/Paper';
 import Tooltip from '@material-ui/core/Tooltip/Tooltip';
 import { makeStyles } from '@material-ui/core/styles';
 import EditIcon from '@material-ui/icons/Edit';
+import HistoryIcon from '@material-ui/icons/History';
 
 import Author, { Avatar } from 'src/components/Author';
 import Content from 'src/components/Content';
@@ -58,7 +59,6 @@ const useStyles = makeStyles((theme) => ({
     ...theme.typography.body2,
     padding: '0.5rem',
   },
-  headerActions2: {},
   headerActions: {
     color: theme.palette.info.contrastText,
     padding: '0rem',
@@ -70,11 +70,55 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+//TODO move button out of this component and let only menu as component with
+//query. Then the query won't execute unless button click renders menu with
+//query.
+//TODO Fix display of load button spinner.
+//TODO Move this button and menu in separate component directory
+//TODO fix failing pipeline due to eslint error
+type HistBtnProps = {
+  bugId: string;
+  commentId: string;
+};
+function HistoryMenuToggleButton({ bugId, commentId }: HistBtnProps) {
+  const classes = useStyles();
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  return (
+    <div>
+      <IconButton
+        aria-label="more"
+        aria-controls="long-menu"
+        aria-haspopup="true"
+        onClick={handleClick}
+        className={classes.headerActions}
+      >
+        <HistoryIcon />
+      </IconButton>
+      {anchorEl && (
+        <EditHistoryMenu
+          bugId={bugId}
+          commentId={commentId}
+          anchor={anchorEl}
+          onClose={handleClose}
+        />
+      )}
+    </div>
+  );
+}
+
 type Props = {
   bug: BugFragment;
   op: AddCommentFragment | CreateFragment;
 };
-
 function Message({ bug, op }: Props) {
   const classes = useStyles();
   const [editMode, switchToEditMode] = useState(false);
@@ -94,11 +138,7 @@ function Message({ bug, op }: Props) {
             <Date date={comment.createdAt} />
           </div>
           {comment.edited && (
-            <EditHistoryMenu
-              iconBtnProps={{ className: classes.headerActions }}
-              bugId={bug.id}
-              commentId={comment.id}
-            />
+            <HistoryMenuToggleButton bugId={bug.id} commentId={comment.id} />
           )}
           <IfLoggedIn>
             {() => (

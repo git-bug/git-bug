@@ -1,10 +1,8 @@
 import React from 'react';
 
 import CircularProgress from '@material-ui/core/CircularProgress';
-import IconButton, { IconButtonProps } from '@material-ui/core/IconButton';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
-import HistoryIcon from '@material-ui/icons/History';
 
 import Date from 'src/components/Date';
 
@@ -15,13 +13,13 @@ import { useMessageEditHistoryQuery } from './MessageEditHistory.generated';
 const ITEM_HEIGHT = 48;
 
 type Props = {
+  anchor: null | HTMLElement;
   bugId: string;
   commentId: string;
-  iconBtnProps?: IconButtonProps;
+  onClose: () => void;
 };
-function EditHistoryMenu({ iconBtnProps, bugId, commentId }: Props) {
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const open = Boolean(anchorEl);
+function EditHistoryMenu({ anchor, bugId, commentId, onClose }: Props) {
+  const open = Boolean(anchor);
 
   const { loading, error, data } = useMessageEditHistoryQuery({
     variables: { bugIdPrefix: bugId },
@@ -38,31 +36,14 @@ function EditHistoryMenu({ iconBtnProps, bugId, commentId }: Props) {
   const comment = comments.find((elem) => elem.id === commentId);
   const history = comment?.history;
 
-  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
   return (
     <div>
-      <IconButton
-        aria-label="more"
-        aria-controls="long-menu"
-        aria-haspopup="true"
-        onClick={handleClick}
-        {...iconBtnProps}
-      >
-        <HistoryIcon />
-      </IconButton>
       <Menu
         id="long-menu"
-        anchorEl={anchorEl}
+        anchorEl={anchor}
         keepMounted
         open={open}
-        onClose={handleClose}
+        onClose={onClose}
         PaperProps={{
           style: {
             maxHeight: ITEM_HEIGHT * 4.5,
@@ -74,7 +55,7 @@ function EditHistoryMenu({ iconBtnProps, bugId, commentId }: Props) {
           Edited {history?.length} times.
         </MenuItem>
         {history?.map((edit, index) => (
-          <MenuItem key={index} onClick={handleClose}>
+          <MenuItem key={index} onClick={onClose}>
             <Date date={edit.date} />
           </MenuItem>
         ))}
