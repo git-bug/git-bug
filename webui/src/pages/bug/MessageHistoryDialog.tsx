@@ -169,7 +169,9 @@ function MessageHistoryDialog({ bugId, commentId, open, onClose }: Props) {
   // NOTE Searching for the changed comment could be dropped if GraphQL get
   // filter by id argument for timelineitems
   const comment = comments.find((elem) => elem.id === commentId);
-  const history = comment?.history;
+  // Sort by most recent edit. Must create a copy of constant history as
+  // reverse() modifies inplace.
+  const history = comment?.history.slice().reverse();
 
   const handleChange = (panel: string) => (
     event: React.ChangeEvent<{}>,
@@ -203,6 +205,7 @@ function MessageHistoryDialog({ bugId, commentId, open, onClose }: Props) {
               <Tooltip title={moment(edit.date).format('LLLL')}>
                 <Moment date={edit.date} format="on ll" />
               </Tooltip>
+              {index === 0 && '• (most recent edit)'}
             </AccordionSummary>
             <AccordionDetails>{edit.message}</AccordionDetails>
           </Accordion>
