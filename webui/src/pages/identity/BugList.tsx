@@ -39,12 +39,11 @@ function BugList({ humanId }: Props) {
   if (error) return <p>Error: {error}</p>;
   const bugs = data?.repository?.allBugs.nodes;
 
-  console.log(bugs);
   return (
     <div className={classes.main}>
       {bugs?.map((bug, index) => {
         return (
-          <Card className={classes.cards}>
+          <Card className={classes.cards} key={index}>
             <Typography variant="overline" component="h2">
               <Link
                 className={classes.bugLink}

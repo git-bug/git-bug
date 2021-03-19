@@ -28,6 +28,7 @@ const useStyles = makeStyles((theme) => ({
   },
   popupButton: {
     textTransform: 'none',
+    color: theme.palette.primary.contrastText,
   },
 }));
 
