@@ -1,7 +1,7 @@
 #import "./MessageCommentFragment.graphql"
 #import "./MessageCreateFragment.graphql"
 
-query MessageEditHistory($bugIdPrefix: String!) {
+query MessageHistory($bugIdPrefix: String!) {
   repository {
     bug(prefix: $bugIdPrefix) {
       timeline {

@@ -23,7 +23,7 @@ import CloseIcon from '@material-ui/icons/Close';
 
 import { AddCommentFragment } from './MessageCommentFragment.generated';
 import { CreateFragment } from './MessageCreateFragment.generated';
-import { useMessageEditHistoryQuery } from './MessageEditHistory.generated';
+import { useMessageHistoryQuery } from './MessageHistory.generated';
 
 const styles = (theme: Theme) =>
   createStyles({
@@ -120,7 +120,7 @@ type Props = {
 function MessageHistoryDialog({ bugId, commentId, open, onClose }: Props) {
   const [expanded, setExpanded] = React.useState<string | false>('panel0');
 
-  const { loading, error, data } = useMessageEditHistoryQuery({
+  const { loading, error, data } = useMessageHistoryQuery({
     variables: { bugIdPrefix: bugId },
   });
   if (loading) {
