@@ -14,9 +14,9 @@ import IfLoggedIn from 'src/components/IfLoggedIn/IfLoggedIn';
 
 import { BugFragment } from './Bug.generated';
 import EditCommentForm from './EditCommentForm';
-import EditHistoryMenu from './EditHistoryMenu';
 import { AddCommentFragment } from './MessageCommentFragment.generated';
 import { CreateFragment } from './MessageCreateFragment.generated';
+import MessageHistoryDialog from './MessageHistoryDialog';
 
 const useStyles = makeStyles((theme) => ({
   author: {
@@ -70,10 +70,6 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-//TODO move button out of this component and let only menu as component with
-//query. Then the query won't execute unless button click renders menu with
-//query.
-//TODO Fix display of load button spinner.
 //TODO Move this button and menu in separate component directory
 //TODO fix failing pipeline due to eslint error
 type HistBtnProps = {
@@ -82,14 +78,14 @@ type HistBtnProps = {
 };
 function HistoryMenuToggleButton({ bugId, commentId }: HistBtnProps) {
   const classes = useStyles();
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [open, setOpen] = React.useState(false);
 
-  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
+  const handleClickOpen = () => {
+    setOpen(true);
   };
 
   const handleClose = () => {
-    setAnchorEl(null);
+    setOpen(false);
   };
 
   return (
@@ -98,19 +94,23 @@ function HistoryMenuToggleButton({ bugId, commentId }: HistBtnProps) {
         aria-label="more"
         aria-controls="long-menu"
         aria-haspopup="true"
-        onClick={handleClick}
+        onClick={handleClickOpen}
         className={classes.headerActions}
       >
         <HistoryIcon />
       </IconButton>
-      {anchorEl && (
-        <EditHistoryMenu
-          bugId={bugId}
-          commentId={commentId}
-          anchor={anchorEl}
-          onClose={handleClose}
-        />
-      )}
+      {
+        // Render CustomizedDialogs on open to prevent fetching the history
+        // before opening the history menu.
+        open && (
+          <MessageHistoryDialog
+            bugId={bugId}
+            commentId={commentId}
+            open={open}
+            onClose={handleClose}
+          />
+        )
+      }
     </div>
   );
 }
