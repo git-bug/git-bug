@@ -203,10 +203,11 @@ function MessageHistoryDialog({ bugId, commentId, open, onClose }: Props) {
               id="panel1d-header"
             >
               <Typography>
+                {`#${index + 1} • Edited `}
                 <Tooltip title={moment(edit.date).format('LLLL')}>
                   <Moment date={edit.date} format="on ll" />
                 </Tooltip>
-                {index === 0 && '• (most recent edit)'}
+                {index === 0 && ' (most recent edit)'}
               </Typography>
             </AccordionSummary>
             <AccordionDetails>{edit.message}</AccordionDetails>
