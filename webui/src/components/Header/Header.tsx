@@ -2,6 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 import AppBar from '@material-ui/core/AppBar';
+import Tab from '@material-ui/core/Tab';
+import Tabs from '@material-ui/core/Tabs';
 import Toolbar from '@material-ui/core/Toolbar';
 import { makeStyles } from '@material-ui/core/styles';
 
@@ -35,6 +37,45 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+function a11yProps(index: any) {
+  return {
+    id: `nav-tab-${index}`,
+    'aria-controls': `nav-tabpanel-${index}`,
+  };
+}
+
+function NavTabs() {
+  const [value, setValue] = React.useState(0);
+
+  //TODO page refresh resets state. Must parse url to determine which tab is
+  //highlighted
+  const handleChange = (event: React.ChangeEvent<{}>, newValue: number) => {
+    setValue(newValue);
+  };
+
+
+  return (
+    <Tabs
+      variant="fullWidth"
+      value={value}
+      onChange={handleChange}
+      aria-label="nav tabs example"
+    >
+      <Tab label="Code" component="a" href="/code" {...a11yProps(0)} />
+      <Tab label="Bugs" component="a" href="/" {...a11yProps(1)} />
+      <Tab
+        label="Pull Requests"
+        component="a"
+        href="/pulls"
+        {...a11yProps(2)}
+      />
+      <Tab label="Projects" component="a" href="/projects" {...a11yProps(3)} />
+      <Tab label="Wiki" component="a" href="/wiki" {...a11yProps(4)} />
+      <Tab label="Settings" component="a" href="/settings" {...a11yProps(5)} />
+    </Tabs>
+  );
+}
+
 function Header() {
   const classes = useStyles();
 
@@ -54,6 +95,7 @@ function Header() {
         </Toolbar>
       </AppBar>
       <div className={classes.offset} />
+      <NavTabs />
     </>
   );
 }
