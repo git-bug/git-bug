@@ -70,8 +70,6 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-//TODO Move this button and menu in separate component directory
-//TODO fix failing pipeline due to eslint error
 type HistBtnProps = {
   bugId: string;
   commentId: string;
