@@ -49,7 +49,7 @@ input EditCommentInput {
     repoRef: String
     """The bug ID's prefix."""
     prefix: String!
-    """The target."""
+    """The ID of the comment to be changed."""
     target: String!
     """The new message to be set."""
     message: String!
