@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { Typography } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 
 import Author from 'src/components/Author';
@@ -10,11 +11,12 @@ import { LabelChangeFragment } from './LabelChangeFragment.generated';
 
 const useStyles = makeStyles((theme) => ({
   main: {
-    ...theme.typography.body2,
+    color: theme.palette.text.secondary,
     marginLeft: theme.spacing(1) + 40,
   },
   author: {
     fontWeight: 'bold',
+    color: theme.palette.text.secondary,
   },
   label: {
     maxWidth: '50ch',
@@ -31,7 +33,7 @@ function LabelChange({ op }: Props) {
   const { added, removed } = op;
   const classes = useStyles();
   return (
-    <div className={classes.main}>
+    <Typography className={classes.main}>
       <Author author={op.author} className={classes.author} />
       {added.length > 0 && <span> added the </span>}
       {added.map((label, index) => (
@@ -48,7 +50,7 @@ function LabelChange({ op }: Props) {
         {added.length + removed.length > 1 && 's'}{' '}
       </span>
       <Date date={op.date} />
-    </div>
+    </Typography>
   );
 }
 

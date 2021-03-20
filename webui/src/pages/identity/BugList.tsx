@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Card, Link, Typography } from '@material-ui/core';
+import { Card, Divider, Link, Typography } from '@material-ui/core';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import { makeStyles } from '@material-ui/core/styles';
 
@@ -53,6 +53,7 @@ function BugList({ humanId }: Props) {
                 {bug.title}
               </Link>
             </Typography>
+            <Divider />
             <Typography variant="subtitle2">
               Created&nbsp;
               <Date date={bug.createdAt} />
@@ -64,6 +65,7 @@ function BugList({ humanId }: Props) {
           </Card>
         );
       })}
+      {bugs?.length === 0 && <p>No authored bugs by this user found.</p>}
     </div>
   );
 }

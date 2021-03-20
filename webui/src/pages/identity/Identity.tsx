@@ -1,124 +1,145 @@
 import React from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 
-import {
-  Checkbox,
-  FormControlLabel,
-  Link,
-  Paper,
-  Typography,
-} from '@material-ui/core';
+import { Link, Paper, Typography } from '@material-ui/core';
 import Avatar from '@material-ui/core/Avatar';
+import CircularProgress from '@material-ui/core/CircularProgress';
+import Grid from '@material-ui/core/Grid';
 import { makeStyles } from '@material-ui/core/styles';
 import InfoIcon from '@material-ui/icons/Info';
 import MailOutlineIcon from '@material-ui/icons/MailOutline';
 
-import { useCurrentIdentityQuery } from '../../components/CurrentIdentity/CurrentIdentity.generated';
+import { IdentityFragment } from '../../components/Identity/IdentityFragment.generated';
 
-import BugList from './BugList';
+import { useGetUserStatisticQuery } from './GetUserStatistic.generated';
 
 const useStyles = makeStyles((theme) => ({
   main: {
     maxWidth: 1000,
     margin: 'auto',
-    marginTop: theme.spacing(4),
-    padding: theme.spacing(3, 2),
-    display: 'flex',
-  },
-  container: {
-    display: 'flex',
-    marginBottom: theme.spacing(1),
-  },
-  leftSidebar: {
-    marginTop: theme.spacing(2),
-    flex: '0 0 200px',
+    marginTop: theme.spacing(3),
   },
   content: {
-    marginTop: theme.spacing(5),
-    padding: theme.spacing(3, 2),
-    minWidth: 800,
-    backgroundColor: theme.palette.background.paper,
-  },
-  rightSidebar: {
-    marginTop: theme.spacing(5),
-    flex: '0 0 200px',
+    padding: theme.spacing(0.5, 2, 2, 2),
+    wordWrap: 'break-word',
   },
   large: {
-    width: theme.spacing(20),
-    height: theme.spacing(20),
+    minWidth: 200,
+    minHeight: 200,
+    margin: 'auto',
+    maxWidth: '100%',
+    maxHeight: '100%',
   },
-  control: {
-    paddingBottom: theme.spacing(3),
+  heading: {
+    marginTop: theme.spacing(3),
   },
   header: {
     ...theme.typography.h4,
+    wordBreak: 'break-word',
+  },
+  infoIcon: {
+    verticalAlign: 'bottom',
   },
 }));
 
-const Identity = () => {
+type Props = {
+  identity: IdentityFragment;
+};
+const Identity = ({ identity }: Props) => {
   const classes = useStyles();
-  const { data } = useCurrentIdentityQuery();
-  const user = data?.repository?.userIdentity;
-  console.log(user);
+  const user = identity;
+
+  const { loading, error, data } = useGetUserStatisticQuery({
+    variables: {
+      authorQuery: 'author:' + user?.humanId,
+      participantQuery: 'participant:' + user?.humanId,
+      actionQuery: 'actor:' + user?.humanId,
+    },
+  });
+
+  if (loading) return <CircularProgress />;
+  if (error) return <p>Error: {error}</p>;
+  const statistic = data?.repository;
+  const authoredCount = statistic?.authored?.totalCount;
+  const participatedCount = statistic?.participated?.totalCount;
+  const actionCount = statistic?.actions?.totalCount;
 
   return (
     <main className={classes.main}>
-      <div className={classes.container}>
-        <div className={classes.leftSidebar}>
-          <h1 className={classes.header}>
-            {user?.displayName ? user?.displayName : 'none'}
-          </h1>
-          <Avatar
-            src={user?.avatarUrl ? user.avatarUrl : undefined}
-            className={classes.large}
-          >
-            {user?.displayName.charAt(0).toUpperCase()}
-          </Avatar>
-          <Typography variant="h5" component="h2">
-            Your account
-          </Typography>
-          <Typography variant="subtitle2" component="h2">
-            Name: {user?.name ? user?.name : '---'}
-          </Typography>
-          <Typography variant="subtitle2" component="h3">
-            Id (truncated): {user?.humanId ? user?.humanId : '---'}
-            <InfoIcon
-              fontSize={'small'}
-              titleAccess={user?.id ? user?.id : '---'}
-            />
-          </Typography>
-          <Typography variant="subtitle2" component="h3">
-            Login: {user?.login ? user?.login : '---'}
-          </Typography>
-          <Typography
-            variant="subtitle2"
-            component="h3"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-            }}
-          >
-            <MailOutlineIcon />
-            <Link href={'mailto:' + user?.email} color={'inherit'}>
-              {user?.email ? user?.email : '---'}
-            </Link>
-          </Typography>
-          <FormControlLabel
-            className={classes.control}
-            label="Protected"
-            labelPlacement="end"
-            value={user?.isProtected}
-            control={<Checkbox color="secondary" indeterminate />}
-          />
-        </div>
-        <Paper className={classes.content}>
-          <Typography variant="h5" component="h2">
-            Bugs authored by {user?.displayName}
-          </Typography>
-          <BugList humanId={user?.humanId ? user?.humanId : ''} />
-        </Paper>
-        <div className={classes.rightSidebar}></div>
-      </div>
+      <Paper elevation={3} className={classes.content}>
+        <Grid spacing={2} container direction="row">
+          <Grid xs={12} sm={4} className={classes.heading} item>
+            <Avatar
+              src={user?.avatarUrl ? user.avatarUrl : undefined}
+              className={classes.large}
+            >
+              {user?.displayName.charAt(0).toUpperCase()}
+            </Avatar>
+          </Grid>
+          <Grid xs={12} sm={4} item>
+            <section>
+              <h1 className={classes.header}>{user?.name}</h1>
+              <Typography variant="subtitle1">
+                Name: {user?.displayName ? user?.displayName : '---'}
+              </Typography>
+              <Typography variant="subtitle1">
+                Id (truncated): {user?.humanId ? user?.humanId : '---'}
+                <InfoIcon
+                  titleAccess={user?.id ? user?.id : '---'}
+                  className={classes.infoIcon}
+                />
+              </Typography>
+              {user?.email && (
+                <Typography
+                  variant="subtitle1"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <MailOutlineIcon />
+                  <Link href={'mailto:' + user?.email} color={'inherit'}>
+                    {user?.email}
+                  </Link>
+                </Typography>
+              )}
+            </section>
+          </Grid>
+          <Grid xs={12} sm={4} item>
+            <section>
+              <h1 className={classes.header}>Statistics</h1>
+              <Link
+                component={RouterLink}
+                to={`/?q=author%3A${user?.humanId}+sort%3Acreation`}
+                color={'inherit'}
+              >
+                <Typography variant="subtitle1">
+                  Created {authoredCount} bugs.
+                </Typography>
+              </Link>
+              <Link
+                component={RouterLink}
+                to={`/?q=participant%3A${user?.humanId}+sort%3Acreation`}
+                color={'inherit'}
+              >
+                <Typography variant="subtitle1">
+                  Participated to {participatedCount} bugs.
+                </Typography>
+              </Link>
+              <Link
+                component={RouterLink}
+                to={`/?q=actor%3A${user?.humanId}+sort%3Acreation`}
+                color={'inherit'}
+              >
+                <Typography variant="subtitle1">
+                  Interacted with {actionCount} bugs.
+                </Typography>
+              </Link>
+            </section>
+          </Grid>
+        </Grid>
+      </Paper>
     </main>
   );
 };

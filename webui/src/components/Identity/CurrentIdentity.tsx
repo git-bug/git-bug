@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 
 import {
   Button,
@@ -94,7 +95,8 @@ const CurrentIdentity = () => {
                     <Link
                       color="inherit"
                       className={classes.profileLink}
-                      href="/user"
+                      component={RouterLink}
+                      to={`/user/${user.humanId}`}
                     >
                       Open profile
                     </Link>

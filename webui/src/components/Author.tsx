@@ -1,6 +1,8 @@
 import React from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 
 import MAvatar from '@material-ui/core/Avatar';
+import Link from '@material-ui/core/Link';
 import Tooltip from '@material-ui/core/Tooltip/Tooltip';
 
 import { AuthoredFragment } from '../graphql/fragments.generated';
@@ -11,13 +13,11 @@ type Props = AuthoredFragment & {
 };
 
 const Author = ({ author, ...props }: Props) => {
-  if (!author.email) {
-    return <span {...props}>{author.displayName}</span>;
-  }
-
   return (
-    <Tooltip title={author.email}>
-      <span {...props}>{author.displayName}</span>
+    <Tooltip title={`Goto the ${author.displayName}'s profile.`}>
+      <Link {...props} component={RouterLink} to={`/user/${author.humanId}`}>
+        {author.displayName}
+      </Link>
     </Tooltip>
   );
 };

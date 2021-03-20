@@ -9,6 +9,7 @@ import CheckCircleOutline from '@material-ui/icons/CheckCircleOutline';
 import CommentOutlinedIcon from '@material-ui/icons/CommentOutlined';
 import ErrorOutline from '@material-ui/icons/ErrorOutline';
 
+import Author from 'src/components/Author';
 import Date from 'src/components/Date';
 import Label from 'src/components/Label';
 import { Status } from 'src/gqlTypes';
@@ -117,7 +118,8 @@ function BugRow({ bug }: Props) {
           <div className={classes.details}>
             {bug.humanId} opened&nbsp;
             <Date date={bug.createdAt} />
-            &nbsp;by {bug.author.displayName}
+            &nbsp;by&nbsp;
+            <Author className={classes.details} author={bug.author} />
           </div>
         </div>
         <span className={classes.commentCountCell}>

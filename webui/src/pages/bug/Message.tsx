@@ -21,6 +21,7 @@ import MessageHistoryDialog from './MessageHistoryDialog';
 const useStyles = makeStyles((theme) => ({
   author: {
     fontWeight: 'bold',
+    color: theme.palette.info.contrastText,
   },
   container: {
     display: 'flex',
