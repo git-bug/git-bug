@@ -20,6 +20,7 @@ import {
   WithStyles,
 } from '@material-ui/core/styles';
 import CloseIcon from '@material-ui/icons/Close';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 
 import { AddCommentFragment } from './MessageCommentFragment.generated';
 import { CreateFragment } from './MessageCreateFragment.generated';
@@ -199,15 +200,17 @@ function MessageHistoryDialog({ bugId, commentId, open, onClose }: Props) {
             onChange={handleChange('panel' + index)}
           >
             <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
               aria-controls="panel1d-content"
               id="panel1d-header"
             >
               <Typography>
-                {`#${index + 1} • Edited `}
+                {`#${history?.length - index} • Edited `}
                 <Tooltip title={moment(edit.date).format('LLLL')}>
                   <Moment date={edit.date} format="on ll" />
                 </Tooltip>
                 {index === 0 && ' (most recent edit)'}
+                {index === history?.length - 1 && ' (Initial description)'}
               </Typography>
             </AccordionSummary>
             <AccordionDetails>{edit.message}</AccordionDetails>
