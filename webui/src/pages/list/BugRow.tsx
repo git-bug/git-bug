@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-import Grid from '@material-ui/core/Grid';
 import TableCell from '@material-ui/core/TableCell/TableCell';
 import TableRow from '@material-ui/core/TableRow/TableRow';
 import Tooltip from '@material-ui/core/Tooltip/Tooltip';
@@ -80,6 +79,9 @@ const useStyles = makeStyles((theme) => ({
     fontSize: '1rem',
     marginLeft: theme.spacing(0.5),
   },
+  commentCountCell: {
+    display: 'inline-flex',
+  },
 }));
 
 type Props = {
@@ -113,17 +115,11 @@ function BugRow({ bug }: Props) {
             &nbsp;by {bug.author.displayName}
           </div>
         </div>
-      </TableCell>
-      <TableCell>
         {commentCount > 0 && (
-          <Grid container wrap="nowrap">
-            <Grid item>
-              <CommentOutlinedIcon aria-label="Comment count" />
-            </Grid>
-            <Grid item>
-              <span className={classes.commentCount}>{commentCount}</span>
-            </Grid>
-          </Grid>
+          <span className={classes.commentCountCell}>
+            <CommentOutlinedIcon aria-label="Comment count" />
+            <span className={classes.commentCount}>{commentCount}</span>
+          </span>
         )}
       </TableCell>
     </TableRow>
