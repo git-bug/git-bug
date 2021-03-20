@@ -53,7 +53,6 @@ function NavTabs() {
     setValue(newValue);
   };
 
-
   return (
     <Tabs
       variant="fullWidth"
