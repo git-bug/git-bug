@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"os/exec"
 	"strings"
+
+	"golang.org/x/sys/execabs"
 )
 
 // gitCli is a helper to launch CLI git commands
@@ -21,7 +22,7 @@ func (cli gitCli) runGitCommandWithIO(stdin io.Reader, stdout, stderr io.Writer,
 
 	// fmt.Printf("[%s] Running git %s\n", path, strings.Join(args, " "))
 
-	cmd := exec.Command("git", args...)
+	cmd := execabs.Command("git", args...)
 	cmd.Dir = path
 	cmd.Stdin = stdin
 	cmd.Stdout = stdout
