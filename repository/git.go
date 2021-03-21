@@ -5,11 +5,11 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"os/exec"
 	"path"
 	"strings"
 
 	"github.com/pkg/errors"
+	"golang.org/x/sys/execabs"
 
 	"github.com/MichaelMure/git-bug/util/git"
 	"github.com/MichaelMure/git-bug/util/lamport"
@@ -57,7 +57,7 @@ func (repo *GitRepo) runGitCommandWithIO(stdin io.Reader, stdout, stderr io.Writ
 	}
 	// fmt.Printf("[%s] Running git %s\n", repopath, strings.Join(args, " "))
 
-	cmd := exec.Command("git", args...)
+	cmd := execabs.Command("git", args...)
 	cmd.Dir = repopath
 	cmd.Stdin = stdin
 	cmd.Stdout = stdout
