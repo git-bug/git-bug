@@ -8,8 +8,8 @@ import Toolbar from '@material-ui/core/Toolbar';
 import Tooltip from '@material-ui/core/Tooltip/Tooltip';
 import { makeStyles } from '@material-ui/core/styles';
 
-import { LightSwitch } from '../../components/Themer';
 import CurrentIdentity from '../CurrentIdentity/CurrentIdentity';
+import { LightSwitch } from '../Themer';
 
 const useStyles = makeStyles((theme) => ({
   offset: {
@@ -55,7 +55,6 @@ const DisabledTabWithTooltip = (props: TabProps) => {
    * the span element to the Tab component.
    */
   const msg = `This feature doesn't exist yet. Come help us build it.`;
-  console.log(props);
   return (
     <Tooltip title={msg}>
       <span>
@@ -69,7 +68,6 @@ function Header() {
   const classes = useStyles();
   const location = useLocation();
   const [selectedTab, setTab] = React.useState(location.pathname);
-  console.log(location.pathname);
 
   const handleTabClick = (
     event: React.ChangeEvent<{}>,
@@ -101,7 +99,7 @@ function Header() {
         aria-label="nav tabs"
       >
         <DisabledTabWithTooltip label="Code" value="/code" {...a11yProps(1)} />
-        <Tab label="Bugs" value="/" href="/" {...a11yProps(2)} />
+        <Tab label="Bugs" value="/" component={Link} to="/" {...a11yProps(2)} />
         <DisabledTabWithTooltip
           label="Pull Requests"
           value="/pulls"
