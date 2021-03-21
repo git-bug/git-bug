@@ -83,11 +83,7 @@ function Header() {
       <AppBar position="fixed" className={classes.appBar}>
         <Toolbar>
           <Link to="/" className={classes.appTitle}>
-            <img
-              src="/logo.svg"
-              className={classes.logo}
-              alt="git-bug logo"
-            />
+            <img src="/logo.svg" className={classes.logo} alt="git-bug logo" />
             git-bug
           </Link>
           <div className={classes.filler} />
@@ -104,11 +100,7 @@ function Header() {
         onChange={handleTabClick}
         aria-label="nav tabs"
       >
-        <DisabledTabWithTooltip
-          label="Code"
-          value="/code"
-          {...a11yProps(1)}
-        />
+        <DisabledTabWithTooltip label="Code" value="/code" {...a11yProps(1)} />
         <Tab label="Bugs" value="/" href="/" {...a11yProps(2)} />
         <DisabledTabWithTooltip
           label="Pull Requests"
