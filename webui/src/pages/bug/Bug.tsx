@@ -2,7 +2,6 @@ import React from 'react';
 
 import { makeStyles } from '@material-ui/core/styles';
 
-import BackToListButton from '../../components/BackToListButton';
 import BugTitleForm from 'src/components/BugTitleForm/BugTitleForm';
 import IfLoggedIn from 'src/components/IfLoggedIn/IfLoggedIn';
 import Label from 'src/components/Label';
@@ -16,13 +15,13 @@ import TimelineQuery from './TimelineQuery';
  */
 const useStyles = makeStyles((theme) => ({
   main: {
-    maxWidth: 1200,
+    maxWidth: 1000,
     margin: 'auto',
     marginTop: theme.spacing(4),
   },
   header: {
     marginRight: theme.spacing(2),
-    marginLeft: theme.spacing(3) + 205,
+    marginLeft: theme.spacing(3) + 40,
   },
   title: {
     ...theme.typography.h5,
@@ -42,10 +41,6 @@ const useStyles = makeStyles((theme) => ({
     marginTop: theme.spacing(2),
     marginRight: theme.spacing(2),
     minWidth: 400,
-  },
-  leftSidebar: {
-    marginTop: theme.spacing(2),
-    marginRight: theme.spacing(2),
   },
   rightSidebar: {
     marginTop: theme.spacing(2),
@@ -87,9 +82,6 @@ function Bug({ bug }: Props) {
         <BugTitleForm bug={bug} />
       </div>
       <div className={classes.container}>
-        <div className={classes.leftSidebar}>
-          <BackToListButton />
-        </div>
         <div className={classes.timeline}>
           <TimelineQuery id={bug.id} />
           <IfLoggedIn>
