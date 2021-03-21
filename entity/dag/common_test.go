@@ -21,9 +21,9 @@ import (
 type op1 struct {
 	author identity.Interface
 
-	OperationType int    `json:"type"`
-	Field1        string `json:"field_1"`
-	Files         []repository.Hash
+	OperationType int               `json:"type"`
+	Field1        string            `json:"field_1"`
+	Files         []repository.Hash `json:"files"`
 }
 
 func newOp1(author identity.Interface, field1 string, files ...repository.Hash) *op1 {
