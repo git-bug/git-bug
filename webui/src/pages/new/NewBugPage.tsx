@@ -1,7 +1,7 @@
 import React, { FormEvent, useState } from 'react';
+import { useHistory } from 'react-router-dom';
 
-import { Button } from '@material-ui/core';
-import Paper from '@material-ui/core/Paper';
+import { Button, Paper } from '@material-ui/core';
 import { makeStyles, Theme } from '@material-ui/core/styles';
 
 import BugTitleInput from '../../components/BugTitleForm/BugTitleInput';
@@ -47,7 +47,9 @@ function NewBugPage() {
   const [issueTitle, setIssueTitle] = useState('');
   const [issueComment, setIssueComment] = useState('');
   const classes = useStyles();
+
   let issueTitleInput: any;
+  let history = useHistory();
 
   function submitNewIssue(e: FormEvent) {
     e.preventDefault();
@@ -59,12 +61,15 @@ function NewBugPage() {
           message: issueComment,
         },
       },
+    }).then(function (data) {
+      const id = data.data?.newBug.bug.humanId;
+      history.push('/bug/' + id);
     });
     issueTitleInput.value = '';
   }
 
   function isFormValid() {
-    return issueTitle.length > 0 && issueComment.length > 0 ? true : false;
+    return issueTitle.length > 0;
   }
 
   if (loading) return <div>Loading...</div>;

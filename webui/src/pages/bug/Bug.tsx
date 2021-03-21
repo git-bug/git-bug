@@ -18,11 +18,17 @@ const useStyles = makeStyles((theme) => ({
     maxWidth: 1000,
     margin: 'auto',
     marginTop: theme.spacing(4),
-    overflow: 'hidden',
   },
   header: {
-    marginLeft: theme.spacing(3) + 40,
     marginRight: theme.spacing(2),
+    marginLeft: theme.spacing(3) + 40,
+  },
+  title: {
+    ...theme.typography.h5,
+  },
+  id: {
+    ...theme.typography.subtitle1,
+    marginLeft: theme.spacing(1),
   },
   container: {
     display: 'flex',
@@ -36,11 +42,11 @@ const useStyles = makeStyles((theme) => ({
     marginRight: theme.spacing(2),
     minWidth: 400,
   },
-  sidebar: {
+  rightSidebar: {
     marginTop: theme.spacing(2),
     flex: '0 0 200px',
   },
-  sidebarTitle: {
+  rightSidebarTitle: {
     fontWeight: 'bold',
   },
   labelList: {
@@ -75,7 +81,6 @@ function Bug({ bug }: Props) {
       <div className={classes.header}>
         <BugTitleForm bug={bug} />
       </div>
-
       <div className={classes.container}>
         <div className={classes.timeline}>
           <TimelineQuery id={bug.id} />
@@ -87,8 +92,8 @@ function Bug({ bug }: Props) {
             )}
           </IfLoggedIn>
         </div>
-        <div className={classes.sidebar}>
-          <span className={classes.sidebarTitle}>Labels</span>
+        <div className={classes.rightSidebar}>
+          <span className={classes.rightSidebarTitle}>Labels</span>
           <ul className={classes.labelList}>
             {bug.labels.length === 0 && (
               <span className={classes.noLabel}>None yet</span>

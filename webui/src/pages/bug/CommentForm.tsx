@@ -28,6 +28,7 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
   },
   actions: {
     display: 'flex',
+    gap: '1em',
     justifyContent: 'flex-end',
   },
   greenButton: {

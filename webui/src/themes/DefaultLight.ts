@@ -4,8 +4,10 @@ const defaultLightTheme = createMuiTheme({
   palette: {
     type: 'light',
     primary: {
-      main: '#263238',
+      dark: '#263238',
+      main: '#5a6b73',
       light: '#f5f5f5',
+      contrastText: '#fff',
     },
     info: {
       main: '#e2f1ff',
