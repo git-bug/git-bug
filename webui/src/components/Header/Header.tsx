@@ -1,8 +1,8 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 import AppBar from '@material-ui/core/AppBar';
-import Tab from '@material-ui/core/Tab';
+import Tab, { TabProps } from '@material-ui/core/Tab';
 import Tabs from '@material-ui/core/Tabs';
 import Toolbar from '@material-ui/core/Toolbar';
 import Tooltip from '@material-ui/core/Tooltip/Tooltip';
@@ -45,75 +45,45 @@ function a11yProps(index: any) {
   };
 }
 
-function NavTabs() {
-  const [value, setValue] = React.useState(0);
-
-  //TODO page refresh resets state. Must parse url to determine which tab is
-  //highlighted
-  const handleChange = (event: React.ChangeEvent<{}>, newValue: number) => {
-    setValue(newValue);
-  };
-
-  const tooltipMsg = `This feature doesn't exist yet. Come help us build it.`;
-
+const DisabledTabWithTooltip = (props: TabProps) => {
   /*The span elements around disabled tabs are needed, as the tooltip
    * won't be triggered by disabled elements.
    * See: https://material-ui.com/components/tooltips/#disabled-elements
+   * This must be done in a wrapper component, otherwise the TabS component
+   * cannot pass it styles down to the Tab component. Resulting in (console)
+   * warnings. This wrapper acceps the passed down TabProps and pass it around
+   * the span element to the Tab component.
    */
+  const msg = `This feature doesn't exist yet. Come help us build it.`;
+  console.log(props);
   return (
-    <Tabs
-      centered
-      value={value}
-      onChange={handleChange}
-      aria-label="nav tabs example"
-    >
-      <Tooltip title={tooltipMsg}>
-        <span>
-          <Tab
-            disabled
-            label="Code"
-            component="a"
-            href="/code"
-            {...a11yProps(0)}
-          />
-        </span>
-      </Tooltip>
-      <Tab label="Bugs" component="a" href="/" {...a11yProps(1)} />
-      <Tooltip title={tooltipMsg}>
-        <span>
-          <Tab
-            disabled
-            label="Pull Requests"
-            component="a"
-            href="/pulls"
-            {...a11yProps(2)}
-          />
-        </span>
-      </Tooltip>
-      <Tooltip title={tooltipMsg}>
-        <span>
-          <Tab
-            disabled
-            label="Settings"
-            component="a"
-            href="/settings"
-            {...a11yProps(3)}
-          />
-        </span>
-      </Tooltip>
-    </Tabs>
+    <Tooltip title={msg}>
+      <span>
+        <Tab disabled {...props} />
+      </span>
+    </Tooltip>
   );
-}
+};
 
 function Header() {
   const classes = useStyles();
+  const location = useLocation();
+  const [selectedTab, setTab] = React.useState(location.pathname);
+  console.log(location.pathname);
+
+  const handleTabClick = (
+    event: React.ChangeEvent<{}>,
+    newTabValue: string
+  ) => {
+    setTab(newTabValue);
+  };
 
   return (
     <>
       <AppBar position="fixed" className={classes.appBar}>
         <Toolbar>
           <Link to="/" className={classes.appTitle}>
-            <img src="/logo.svg" className={classes.logo} alt="git-bug" />
+            <img src="/logo.svg" className={classes.logo} alt="git-bug logo" />
             git-bug
           </Link>
           <div className={classes.filler} />
@@ -124,7 +94,25 @@ function Header() {
         </Toolbar>
       </AppBar>
       <div className={classes.offset} />
-      <NavTabs />
+      <Tabs
+        centered
+        value={selectedTab}
+        onChange={handleTabClick}
+        aria-label="nav tabs"
+      >
+        <DisabledTabWithTooltip label="Code" value="/code" {...a11yProps(1)} />
+        <Tab label="Bugs" value="/" href="/" {...a11yProps(2)} />
+        <DisabledTabWithTooltip
+          label="Pull Requests"
+          value="/pulls"
+          {...a11yProps(3)}
+        />
+        <DisabledTabWithTooltip
+          label="Settings"
+          value="/settings"
+          {...a11yProps(4)}
+        />
+      </Tabs>
     </>
   );
 }
