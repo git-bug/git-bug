@@ -55,22 +55,27 @@ function NavTabs() {
 
   return (
     <Tabs
-      variant="fullWidth"
+      centered
       value={value}
       onChange={handleChange}
       aria-label="nav tabs example"
     >
-      <Tab label="Code" component="a" href="/code" {...a11yProps(0)} />
+      <Tab disabled label="Code" component="a" href="/code" {...a11yProps(0)} />
       <Tab label="Bugs" component="a" href="/" {...a11yProps(1)} />
       <Tab
+        disabled
         label="Pull Requests"
         component="a"
         href="/pulls"
         {...a11yProps(2)}
       />
-      <Tab label="Projects" component="a" href="/projects" {...a11yProps(3)} />
-      <Tab label="Wiki" component="a" href="/wiki" {...a11yProps(4)} />
-      <Tab label="Settings" component="a" href="/settings" {...a11yProps(5)} />
+      <Tab
+        disabled
+        label="Settings"
+        component="a"
+        href="/settings"
+        {...a11yProps(3)}
+      />
     </Tabs>
   );
 }
