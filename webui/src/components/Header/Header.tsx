@@ -5,6 +5,7 @@ import AppBar from '@material-ui/core/AppBar';
 import Tab from '@material-ui/core/Tab';
 import Tabs from '@material-ui/core/Tabs';
 import Toolbar from '@material-ui/core/Toolbar';
+import Tooltip from '@material-ui/core/Tooltip/Tooltip';
 import { makeStyles } from '@material-ui/core/styles';
 
 import { LightSwitch } from '../../components/Themer';
@@ -53,6 +54,12 @@ function NavTabs() {
     setValue(newValue);
   };
 
+  const tooltipMsg = `This feature doesn't exist yet. Come help us build it.`;
+
+  /*The span elements around disabled tabs are needed, as the tooltip
+   * won't be triggered by disabled elements.
+   * See: https://material-ui.com/components/tooltips/#disabled-elements
+   */
   return (
     <Tabs
       centered
@@ -60,22 +67,40 @@ function NavTabs() {
       onChange={handleChange}
       aria-label="nav tabs example"
     >
-      <Tab disabled label="Code" component="a" href="/code" {...a11yProps(0)} />
+      <Tooltip title={tooltipMsg}>
+        <span>
+          <Tab
+            disabled
+            label="Code"
+            component="a"
+            href="/code"
+            {...a11yProps(0)}
+          />
+        </span>
+      </Tooltip>
       <Tab label="Bugs" component="a" href="/" {...a11yProps(1)} />
-      <Tab
-        disabled
-        label="Pull Requests"
-        component="a"
-        href="/pulls"
-        {...a11yProps(2)}
-      />
-      <Tab
-        disabled
-        label="Settings"
-        component="a"
-        href="/settings"
-        {...a11yProps(3)}
-      />
+      <Tooltip title={tooltipMsg}>
+        <span>
+          <Tab
+            disabled
+            label="Pull Requests"
+            component="a"
+            href="/pulls"
+            {...a11yProps(2)}
+          />
+        </span>
+      </Tooltip>
+      <Tooltip title={tooltipMsg}>
+        <span>
+          <Tab
+            disabled
+            label="Settings"
+            component="a"
+            href="/settings"
+            {...a11yProps(3)}
+          />
+        </span>
+      </Tooltip>
     </Tabs>
   );
 }
