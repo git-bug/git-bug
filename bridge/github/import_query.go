@@ -2,6 +2,19 @@ package github
 
 import "github.com/shurcooL/githubv4"
 
+type rateLimit struct {
+	Cost      githubv4.Int
+	Limit     githubv4.Int
+	NodeCount githubv4.Int
+	Remaining githubv4.Int
+	ResetAt   githubv4.DateTime
+	Used      githubv4.Int
+}
+
+type rateLimiter interface {
+	rateLimit() rateLimit
+}
+
 type userQuery struct {
 	RateLimit rateLimit `graphql:"rateLimit(dryRun: $dryRun)"`
 	User      user      `graphql:"user(login: $login)"`
@@ -210,13 +223,4 @@ type pageInfo struct {
 	HasNextPage     bool
 	StartCursor     githubv4.String
 	HasPreviousPage bool
-}
-
-type rateLimit struct {
-	Cost      githubv4.Int
-	Limit     githubv4.Int
-	NodeCount githubv4.Int
-	Remaining githubv4.Int
-	ResetAt   githubv4.DateTime
-	Used      githubv4.Int
 }
