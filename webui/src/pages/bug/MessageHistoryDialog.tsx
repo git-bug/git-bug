@@ -173,12 +173,30 @@ function MessageHistoryDialog({ bugId, commentId, open, onClose }: Props) {
   // Sort by most recent edit. Must create a copy of constant history as
   // reverse() modifies inplace.
   const history = comment?.history.slice().reverse();
+  const editCount = history?.length === undefined ? 0 : history?.length - 1;
 
   const handleChange = (panel: string) => (
     event: React.ChangeEvent<{}>,
     newExpanded: boolean
   ) => {
     setExpanded(newExpanded ? panel : false);
+  };
+
+  const getSummary = (index: number, date: Date) => {
+    const desc =
+      index === editCount ? 'Created ' : `#${editCount - index} • Edited `;
+    const mostRecent = index === 0 ? ' (most recent)' : '';
+    return (
+      <>
+        <Tooltip title={moment(date).format('LLLL')}>
+          <span>
+            {desc}
+            <Moment date={date} format="on ll" />
+            {mostRecent}
+          </span>
+        </Tooltip>
+      </>
+    );
   };
 
   return (
@@ -190,7 +208,7 @@ function MessageHistoryDialog({ bugId, commentId, open, onClose }: Props) {
       maxWidth="md"
     >
       <DialogTitle id="customized-dialog-title" onClose={onClose}>
-        Edited {history?.length} times.
+        {`Edited ${editCount} ${editCount > 1 ? 'times' : 'time'}.`}
       </DialogTitle>
       <DialogContent dividers>
         {history?.map((edit, index) => (
@@ -204,14 +222,7 @@ function MessageHistoryDialog({ bugId, commentId, open, onClose }: Props) {
               aria-controls="panel1d-content"
               id="panel1d-header"
             >
-              <Typography>
-                {`#${history?.length - index} • Edited `}
-                <Tooltip title={moment(edit.date).format('LLLL')}>
-                  <Moment date={edit.date} format="on ll" />
-                </Tooltip>
-                {index === 0 && ' (most recent edit)'}
-                {index === history?.length - 1 && ' (Initial description)'}
-              </Typography>
+              <Typography>{getSummary(index, edit.date)}</Typography>
             </AccordionSummary>
             <AccordionDetails>{edit.message}</AccordionDetails>
           </Accordion>
