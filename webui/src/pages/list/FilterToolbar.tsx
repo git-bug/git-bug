@@ -109,6 +109,20 @@ function FilterToolbar({ query, queryLocation }: Props) {
     ...params,
     [key]: params[key] && params[key].includes(value) ? [] : [value],
   });
+  const toggleOrAddParam = (key: string, value: string) => (
+    params: Query
+  ): Query => {
+    const values = params[key];
+    return {
+      ...params,
+      [key]:
+        params[key] && params[key].includes(value)
+          ? values.filter((v) => v !== value)
+          : values
+          ? [...values, value]
+          : [value],
+    };
+  };
   const clearParam = (key: string) => (params: Query): Query => ({
     ...params,
     [key]: [],
@@ -150,18 +164,18 @@ function FilterToolbar({ query, queryLocation }: Props) {
         dropdown={identities}
         itemActive={(key) => hasValue('author', key)}
         to={(key) => pipe(replaceParam('author', key), loc)(params)}
+        hasFilter
       >
         Author
       </FilterDropdown>
-      {labels.length ? (
-        <FilterDropdown
-          dropdown={labels}
-          itemActive={(key) => hasValue('label', key)}
-          to={(key) => pipe(replaceParam('label', key), loc)(params)}
-        >
-          Label
-        </FilterDropdown>
-      ) : null}
+      <FilterDropdown
+        dropdown={labels}
+        itemActive={(key) => hasValue('label', key)}
+        to={(key) => pipe(toggleOrAddParam('label', key), loc)(params)}
+        hasFilter
+      >
+        Label
+      </FilterDropdown>
       <FilterDropdown
         dropdown={[
           ['id', 'ID'],
@@ -171,7 +185,7 @@ function FilterToolbar({ query, queryLocation }: Props) {
           ['edit-asc', 'Least recently updated'],
         ]}
         itemActive={(key) => hasValue('sort', key)}
-        to={(key) => pipe(replaceParam('sort', key), loc)(params)}
+        to={(key) => pipe(toggleParam('sort', key), loc)(params)}
       >
         Sort
       </FilterDropdown>
