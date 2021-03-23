@@ -1,13 +1,25 @@
 import clsx from 'clsx';
 import { LocationDescriptor } from 'history';
-import React, { useState, useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import { SvgIconProps } from '@material-ui/core/SvgIcon';
-import { makeStyles } from '@material-ui/core/styles';
+import TextField from '@material-ui/core/TextField';
+import { makeStyles, withStyles } from '@material-ui/core/styles';
 import ArrowDropDown from '@material-ui/icons/ArrowDropDown';
+
+const CustomTextField = withStyles({
+  root: {
+    margin: '0 8px 12px 8px',
+    '& label.Mui-focused': {
+      margin: '0 2px',
+    },
+  },
+})(TextField);
+
+const ITEM_HEIGHT = 48;
 
 export type Query = { [key: string]: string[] };
 
@@ -90,6 +102,7 @@ type FilterDropdownProps = {
   itemActive: (key: string) => boolean;
   icon?: React.ComponentType<SvgIconProps>;
   to: (key: string) => LocationDescriptor;
+  hasFilter?: boolean;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>;
 
 function FilterDropdown({
@@ -98,9 +111,11 @@ function FilterDropdown({
   itemActive,
   icon: Icon,
   to,
+  hasFilter,
   ...props
 }: FilterDropdownProps) {
   const [open, setOpen] = useState(false);
+  const [filter, setFilter] = useState<string>('');
   const buttonRef = useRef<HTMLButtonElement>(null);
   const classes = useStyles({ active: false });
 
@@ -135,18 +150,36 @@ function FilterDropdown({
         open={open}
         onClose={() => setOpen(false)}
         anchorEl={buttonRef.current}
+        PaperProps={{
+          style: {
+            maxHeight: ITEM_HEIGHT * 4.5,
+            width: '20ch',
+          },
+        }}
       >
-        {dropdown.map(([key, value]) => (
-          <MenuItem
-            component={Link}
-            to={to(key)}
-            className={itemActive(key) ? classes.itemActive : undefined}
-            onClick={() => setOpen(false)}
-            key={key}
-          >
-            {value}
-          </MenuItem>
-        ))}
+        {hasFilter && (
+          <CustomTextField
+            onChange={(e) => {
+              const { value } = e.target;
+              setFilter(value);
+            }}
+            value={filter}
+            label={`Filter ${children}`}
+          />
+        )}
+        {dropdown
+          .filter((d) => d[1].toLowerCase().includes(filter.toLowerCase()))
+          .map(([key, value]) => (
+            <MenuItem
+              component={Link}
+              to={to(key)}
+              className={itemActive(key) ? classes.itemActive : undefined}
+              onClick={() => setOpen(false)}
+              key={key}
+            >
+              {value}
+            </MenuItem>
+          ))}
       </Menu>
     </>
   );
@@ -158,6 +191,7 @@ export type FilterProps = {
   icon?: React.ComponentType<SvgIconProps>;
   children: React.ReactNode;
 };
+
 function Filter({ active, to, children, icon: Icon }: FilterProps) {
   const classes = useStyles();
 
