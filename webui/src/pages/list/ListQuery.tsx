@@ -1,19 +1,23 @@
 import { ApolloError } from '@apollo/client';
+import { pipe } from '@arrows/composition';
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useHistory, Link } from 'react-router-dom';
 
-import { Button } from '@material-ui/core';
+import { Button, FormControl, Menu, MenuItem } from '@material-ui/core';
 import IconButton from '@material-ui/core/IconButton';
 import InputBase from '@material-ui/core/InputBase';
 import Paper from '@material-ui/core/Paper';
 import { makeStyles, Theme } from '@material-ui/core/styles';
+import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
 import ErrorOutline from '@material-ui/icons/ErrorOutline';
 import KeyboardArrowLeft from '@material-ui/icons/KeyboardArrowLeft';
 import KeyboardArrowRight from '@material-ui/icons/KeyboardArrowRight';
 import Skeleton from '@material-ui/lab/Skeleton';
 
+import { useCurrentIdentityQuery } from '../../components/CurrentIdentity/CurrentIdentity.generated';
 import IfLoggedIn from 'src/components/IfLoggedIn/IfLoggedIn';
 
+import { parse, Query, stringify } from './Filter';
 import FilterToolbar from './FilterToolbar';
 import List from './List';
 import { useListBugsQuery } from './ListQuery.generated';
@@ -192,6 +196,8 @@ function ListQuery() {
   const query = params.has('q') ? params.get('q') || '' : 'status:open';
 
   const [input, setInput] = useState(query);
+  const [filterMenuIsOpen, setFilterMenuIsOpen] = useState(false);
+  const filterButtonRef = useRef<HTMLButtonElement>(null);
 
   const classes = useStyles({ searching: !!input });
 
@@ -293,14 +299,65 @@ function ListQuery() {
     history.push(queryLocation(input));
   };
 
+  const {
+    loading: ciqLoading,
+    error: ciqError,
+    data: ciqData,
+  } = useCurrentIdentityQuery();
+  if (ciqError || ciqLoading || !ciqData?.repository?.userIdentity) {
+    return null;
+  }
+  const user = ciqData.repository.userIdentity;
+
+  const loc = pipe(stringify, queryLocation);
+  const qparams: Query = parse(query);
+  const replaceParam = (key: string, value: string) => (
+    params: Query
+  ): Query => ({
+    ...params,
+    [key]: [value],
+  });
+
   return (
     <Paper className={classes.main}>
       <header className={classes.header}>
         <div className="filterissueContainer">
           <form onSubmit={formSubmit}>
-            <label className={classes.filterissueLabel} htmlFor="issuefilter">
-              Filter
-            </label>
+            <FormControl>
+              <Button
+                aria-haspopup="true"
+                ref={filterButtonRef}
+                onClick={(e) => setFilterMenuIsOpen(true)}
+              >
+                Filter <ArrowDropDownIcon />
+              </Button>
+              <Menu
+                open={filterMenuIsOpen}
+                onClose={() => setFilterMenuIsOpen(false)}
+                getContentAnchorEl={null}
+                anchorEl={filterButtonRef.current}
+                anchorOrigin={{
+                  vertical: 'bottom',
+                  horizontal: 'left',
+                }}
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'left',
+                }}
+              >
+                <MenuItem
+                  component={Link}
+                  to={pipe(
+                    replaceParam('author', user.displayName),
+                    replaceParam('sort', 'creation'),
+                    loc
+                  )(qparams)}
+                  onClick={() => setFilterMenuIsOpen(false)}
+                >
+                  Your newest issues
+                </MenuItem>
+              </Menu>
+            </FormControl>
             <InputBase
               id="issuefilter"
               placeholder="Filter"
