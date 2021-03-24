@@ -5,12 +5,11 @@ import Paper from '@material-ui/core/Paper';
 import { makeStyles, Theme } from '@material-ui/core/styles';
 
 import CommentInput from '../../components/CommentInput/CommentInput';
-import CloseBugButton from 'src/components/CloseBugButton/CloseBugButton';
-import ReopenBugButton from 'src/components/ReopenBugButton/ReopenBugButton';
 
 import { BugFragment } from './Bug.generated';
-import { useAddCommentMutation } from './CommentForm.generated';
-import { TimelineDocument } from './TimelineQuery.generated';
+import { useEditCommentMutation } from './EditCommentForm.generated';
+import { AddCommentFragment } from './MessageCommentFragment.generated';
+import { CreateFragment } from './MessageCreateFragment.generated';
 
 type StyleProps = { loading: boolean };
 const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
@@ -27,7 +26,6 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
   },
   actions: {
     display: 'flex',
-    gap: '1em',
     justifyContent: 'flex-end',
   },
   greenButton: {
@@ -36,42 +34,45 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
     color: theme.palette.success.contrastText,
     '&:hover': {
       backgroundColor: theme.palette.success.dark,
-      color: theme.palette.primary.contrastText,
+      color: theme.palette.success.contrastText,
     },
   },
 }));
 
 type Props = {
   bug: BugFragment;
+  comment: AddCommentFragment | CreateFragment;
+  onCancel?: () => void;
+  onPostSubmit?: (comments: any) => void;
 };
 
-function CommentForm({ bug }: Props) {
-  const [addComment, { loading }] = useAddCommentMutation();
-  const [issueComment, setIssueComment] = useState('');
+function EditCommentForm({ bug, comment, onCancel, onPostSubmit }: Props) {
+  const [editComment, { loading }] = useEditCommentMutation();
+  const [message, setMessage] = useState<string>(comment.message);
   const [inputProp, setInputProp] = useState<any>('');
   const classes = useStyles({ loading });
   const form = useRef<HTMLFormElement>(null);
 
   const submit = () => {
-    addComment({
+    editComment({
       variables: {
         input: {
           prefix: bug.id,
-          message: issueComment,
+          message: message,
+          target: comment.id,
         },
       },
-      refetchQueries: [
-        // TODO: update the cache instead of refetching
-        {
-          query: TimelineDocument,
-          variables: {
-            id: bug.id,
-            first: 100,
-          },
-        },
-      ],
-      awaitRefetchQueries: true,
-    }).then(() => resetForm());
+    }).then((result) => {
+      const comments = result.data?.editComment.bug.timeline.comments as (
+        | AddCommentFragment
+        | CreateFragment
+      )[];
+      // NOTE Searching for the changed comment could be dropped if GraphQL get
+      // filter by id argument for timelineitems
+      const modifiedComment = comments.find((elem) => elem.id === comment.id);
+      if (onPostSubmit) onPostSubmit(modifiedComment);
+    });
+    resetForm();
   };
 
   function resetForm() {
@@ -82,15 +83,15 @@ function CommentForm({ bug }: Props) {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (issueComment.length > 0) submit();
+    if (message.length > 0) submit();
   };
 
-  function getCloseButton() {
-    return <CloseBugButton bug={bug} disabled={issueComment.length > 0} />;
-  }
-
-  function getReopenButton() {
-    return <ReopenBugButton bug={bug} disabled={issueComment.length > 0} />;
+  function getCancelButton() {
+    return (
+      <Button onClick={onCancel} variant="contained">
+        Cancel
+      </Button>
+    );
   }
 
   return (
@@ -99,18 +100,19 @@ function CommentForm({ bug }: Props) {
         <CommentInput
           inputProps={inputProp}
           loading={loading}
-          onChange={(comment: string) => setIssueComment(comment)}
+          onChange={(message: string) => setMessage(message)}
+          inputText={comment.message}
         />
         <div className={classes.actions}>
-          {bug.status === 'OPEN' ? getCloseButton() : getReopenButton()}
+          {onCancel && getCancelButton()}
           <Button
             className={classes.greenButton}
             variant="contained"
             color="primary"
             type="submit"
-            disabled={loading || issueComment.length === 0}
+            disabled={loading || message.length === 0}
           >
-            Comment
+            Update Comment
           </Button>
         </div>
       </form>
@@ -118,4 +120,4 @@ function CommentForm({ bug }: Props) {
   );
 }
 
-export default CommentForm;
+export default EditCommentForm;

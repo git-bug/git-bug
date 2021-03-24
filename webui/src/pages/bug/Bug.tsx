@@ -65,6 +65,7 @@ const useStyles = makeStyles((theme) => ({
     ...theme.typography.body2,
   },
   commentForm: {
+    marginTop: theme.spacing(2),
     marginLeft: 48,
   },
 }));
@@ -83,7 +84,7 @@ function Bug({ bug }: Props) {
       </div>
       <div className={classes.container}>
         <div className={classes.timeline}>
-          <TimelineQuery id={bug.id} />
+          <TimelineQuery bug={bug} />
           <IfLoggedIn>
             {() => (
               <div className={classes.commentForm}>

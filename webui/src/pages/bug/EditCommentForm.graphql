@@ -1,0 +1,16 @@
+#import "./MessageCommentFragment.graphql"
+#import "./MessageCreateFragment.graphql"
+
+mutation EditComment($input: EditCommentInput!) {
+  editComment(input: $input) {
+    bug {
+      id
+      timeline {
+        comments: nodes {
+          ...Create
+          ...AddComment
+        }
+      }
+    }
+  }
+}

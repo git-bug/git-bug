@@ -193,6 +193,12 @@ type ComplexityRoot struct {
 		Target  func(childComplexity int) int
 	}
 
+	EditCommentPayload struct {
+		Bug              func(childComplexity int) int
+		ClientMutationID func(childComplexity int) int
+		Operation        func(childComplexity int) int
+	}
+
 	Identity struct {
 		AvatarUrl   func(childComplexity int) int
 		DisplayName func(childComplexity int) int
@@ -258,6 +264,7 @@ type ComplexityRoot struct {
 		AddComment   func(childComplexity int, input models.AddCommentInput) int
 		ChangeLabels func(childComplexity int, input *models.ChangeLabelInput) int
 		CloseBug     func(childComplexity int, input models.CloseBugInput) int
+		EditComment  func(childComplexity int, input models.EditCommentInput) int
 		NewBug       func(childComplexity int, input models.NewBugInput) int
 		OpenBug      func(childComplexity int, input models.OpenBugInput) int
 		SetTitle     func(childComplexity int, input models.SetTitleInput) int
@@ -433,6 +440,7 @@ type LabelChangeTimelineItemResolver interface {
 type MutationResolver interface {
 	NewBug(ctx context.Context, input models.NewBugInput) (*models.NewBugPayload, error)
 	AddComment(ctx context.Context, input models.AddCommentInput) (*models.AddCommentPayload, error)
+	EditComment(ctx context.Context, input models.EditCommentInput) (*models.EditCommentPayload, error)
 	ChangeLabels(ctx context.Context, input *models.ChangeLabelInput) (*models.ChangeLabelPayload, error)
 	OpenBug(ctx context.Context, input models.OpenBugInput) (*models.OpenBugPayload, error)
 	CloseBug(ctx context.Context, input models.CloseBugInput) (*models.CloseBugPayload, error)
@@ -1059,6 +1067,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.EditCommentOperation.Target(childComplexity), true
 
+	case "EditCommentPayload.bug":
+		if e.complexity.EditCommentPayload.Bug == nil {
+			break
+		}
+
+		return e.complexity.EditCommentPayload.Bug(childComplexity), true
+
+	case "EditCommentPayload.clientMutationId":
+		if e.complexity.EditCommentPayload.ClientMutationID == nil {
+			break
+		}
+
+		return e.complexity.EditCommentPayload.ClientMutationID(childComplexity), true
+
+	case "EditCommentPayload.operation":
+		if e.complexity.EditCommentPayload.Operation == nil {
+			break
+		}
+
+		return e.complexity.EditCommentPayload.Operation(childComplexity), true
+
 	case "Identity.avatarUrl":
 		if e.complexity.Identity.AvatarUrl == nil {
 			break
@@ -1332,6 +1361,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CloseBug(childComplexity, args["input"].(models.CloseBugInput)), true
+
+	case "Mutation.editComment":
+		if e.complexity.Mutation.EditComment == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_editComment_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.EditComment(childComplexity, args["input"].(models.EditCommentInput)), true
 
 	case "Mutation.newBug":
 		if e.complexity.Mutation.NewBug == nil {
@@ -2034,6 +2075,30 @@ type AddCommentPayload {
     operation: AddCommentOperation!
 }
 
+input EditCommentInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """"The name of the repository. If not set, the default repository is used."""
+    repoRef: String
+    """The bug ID's prefix."""
+    prefix: String!
+    """The target."""
+    target: String!
+    """The new message to be set."""
+    message: String!
+    """The collection of file's hash required for the first message."""
+    files: [Hash!]
+}
+
+type EditCommentPayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The affected bug."""
+    bug: Bug!
+    """The resulting operation."""
+    operation: EditCommentOperation!
+}
+
 input ChangeLabelInput {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
@@ -2290,6 +2355,8 @@ type Mutation {
     newBug(input: NewBugInput!): NewBugPayload!
     """Add a new comment to a bug"""
     addComment(input: AddCommentInput!): AddCommentPayload!
+    """Change a comment of a bug"""
+    editComment(input: EditCommentInput!): EditCommentPayload!
     """Add or remove a set of label on a bug"""
     changeLabels(input: ChangeLabelInput): ChangeLabelPayload!
     """Change a bug's status to open"""
@@ -2649,6 +2716,20 @@ func (ec *executionContext) field_Mutation_closeBug_args(ctx context.Context, ra
 	var arg0 models.CloseBugInput
 	if tmp, ok := rawArgs["input"]; ok {
 		arg0, err = ec.unmarshalNCloseBugInput2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐCloseBugInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_editComment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 models.EditCommentInput
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalNEditCommentInput2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐEditCommentInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -5591,6 +5672,105 @@ func (ec *executionContext) _EditCommentOperation_files(ctx context.Context, fie
 	return ec.marshalNHash2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋrepositoryᚐHashᚄ(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _EditCommentPayload_clientMutationId(ctx context.Context, field graphql.CollectedField, obj *models.EditCommentPayload) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "EditCommentPayload",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ClientMutationID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _EditCommentPayload_bug(ctx context.Context, field graphql.CollectedField, obj *models.EditCommentPayload) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "EditCommentPayload",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Bug, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(models.BugWrapper)
+	fc.Result = res
+	return ec.marshalNBug2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugWrapper(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _EditCommentPayload_operation(ctx context.Context, field graphql.CollectedField, obj *models.EditCommentPayload) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "EditCommentPayload",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Operation, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*bug.EditCommentOperation)
+	fc.Result = res
+	return ec.marshalNEditCommentOperation2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐEditCommentOperation(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Identity_id(ctx context.Context, field graphql.CollectedField, obj models.IdentityWrapper) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -6815,6 +6995,47 @@ func (ec *executionContext) _Mutation_addComment(ctx context.Context, field grap
 	res := resTmp.(*models.AddCommentPayload)
 	fc.Result = res
 	return ec.marshalNAddCommentPayload2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐAddCommentPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_editComment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_editComment_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().EditComment(rctx, args["input"].(models.EditCommentInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.EditCommentPayload)
+	fc.Result = res
+	return ec.marshalNEditCommentPayload2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐEditCommentPayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_changeLabels(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -9971,6 +10192,54 @@ func (ec *executionContext) unmarshalInputCloseBugInput(ctx context.Context, obj
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputEditCommentInput(ctx context.Context, obj interface{}) (models.EditCommentInput, error) {
+	var it models.EditCommentInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "clientMutationId":
+			var err error
+			it.ClientMutationID, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "repoRef":
+			var err error
+			it.RepoRef, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "prefix":
+			var err error
+			it.Prefix, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "target":
+			var err error
+			it.Target, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "message":
+			var err error
+			it.Message, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "files":
+			var err error
+			it.Files, err = ec.unmarshalOHash2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋrepositoryᚐHashᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputNewBugInput(ctx context.Context, obj interface{}) (models.NewBugInput, error) {
 	var it models.NewBugInput
 	var asMap = obj.(map[string]interface{})
@@ -11254,6 +11523,40 @@ func (ec *executionContext) _EditCommentOperation(ctx context.Context, sel ast.S
 	return out
 }
 
+var editCommentPayloadImplementors = []string{"EditCommentPayload"}
+
+func (ec *executionContext) _EditCommentPayload(ctx context.Context, sel ast.SelectionSet, obj *models.EditCommentPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, editCommentPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EditCommentPayload")
+		case "clientMutationId":
+			out.Values[i] = ec._EditCommentPayload_clientMutationId(ctx, field, obj)
+		case "bug":
+			out.Values[i] = ec._EditCommentPayload_bug(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "operation":
+			out.Values[i] = ec._EditCommentPayload_operation(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var identityImplementors = []string{"Identity"}
 
 func (ec *executionContext) _Identity(ctx context.Context, sel ast.SelectionSet, obj models.IdentityWrapper) graphql.Marshaler {
@@ -11731,6 +12034,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "addComment":
 			out.Values[i] = ec._Mutation_addComment(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "editComment":
+			out.Values[i] = ec._Mutation_editComment(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -13128,6 +13436,38 @@ func (ec *executionContext) marshalNCreateOperation2ᚖgithubᚗcomᚋMichaelMur
 		return graphql.Null
 	}
 	return ec._CreateOperation(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNEditCommentInput2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐEditCommentInput(ctx context.Context, v interface{}) (models.EditCommentInput, error) {
+	return ec.unmarshalInputEditCommentInput(ctx, v)
+}
+
+func (ec *executionContext) marshalNEditCommentOperation2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐEditCommentOperation(ctx context.Context, sel ast.SelectionSet, v bug.EditCommentOperation) graphql.Marshaler {
+	return ec._EditCommentOperation(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNEditCommentOperation2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐEditCommentOperation(ctx context.Context, sel ast.SelectionSet, v *bug.EditCommentOperation) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._EditCommentOperation(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEditCommentPayload2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐEditCommentPayload(ctx context.Context, sel ast.SelectionSet, v models.EditCommentPayload) graphql.Marshaler {
+	return ec._EditCommentPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNEditCommentPayload2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐEditCommentPayload(ctx context.Context, sel ast.SelectionSet, v *models.EditCommentPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._EditCommentPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNHash2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋrepositoryᚐHash(ctx context.Context, v interface{}) (repository.Hash, error) {
