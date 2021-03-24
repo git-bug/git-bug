@@ -96,6 +96,8 @@ function FilterToolbar({ query, queryLocation }: Props) {
     params[key] && params[key].length > 0;
   const hasValue = (key: string, value: string): boolean =>
     hasKey(key) && params[key].includes(value);
+  const containsValue = (key: string, value: string): boolean =>
+    hasKey(key) && params[key].indexOf(value) !== -1;
   const loc = pipe(stringify, queryLocation);
   const replaceParam = (key: string, value: string) => (
     params: Query
@@ -170,7 +172,10 @@ function FilterToolbar({ query, queryLocation }: Props) {
       </FilterDropdown>
       <FilterDropdown
         dropdown={labels}
-        itemActive={(key) => hasValue('label', key)}
+        itemActive={(key) => {
+          console.log(params, params[key], key);
+          return containsValue('label', key);
+        }}
         to={(key) => pipe(toggleOrAddParam('label', key), loc)(params)}
         hasFilter
       >
