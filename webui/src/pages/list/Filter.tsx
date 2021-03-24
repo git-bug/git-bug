@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 import { LocationDescriptor } from 'history';
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 import Menu from '@material-ui/core/Menu';
@@ -117,7 +117,12 @@ function FilterDropdown({
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState<string>('');
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const searchRef = useRef<HTMLButtonElement>(null);
   const classes = useStyles({ active: false });
+
+  useEffect(() => {
+    searchRef && searchRef.current && searchRef.current.focus();
+  }, [filter]);
 
   const content = (
     <>
@@ -139,6 +144,7 @@ function FilterDropdown({
       </button>
       <Menu
         getContentAnchorEl={null}
+        ref={searchRef}
         anchorOrigin={{
           vertical: 'bottom',
           horizontal: 'left',
@@ -163,6 +169,7 @@ function FilterDropdown({
               const { value } = e.target;
               setFilter(value);
             }}
+            onKeyDown={(e) => e.stopPropagation()}
             value={filter}
             label={`Filter ${children}`}
           />
