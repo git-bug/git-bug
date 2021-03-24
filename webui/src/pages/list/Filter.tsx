@@ -10,14 +10,21 @@ import TextField from '@material-ui/core/TextField';
 import { makeStyles, withStyles } from '@material-ui/core/styles';
 import ArrowDropDown from '@material-ui/icons/ArrowDropDown';
 
-const CustomTextField = withStyles({
+const CustomTextField = withStyles((theme) => ({
   root: {
     margin: '0 8px 12px 8px',
     '& label.Mui-focused': {
       margin: '0 2px',
+      color: theme.palette.text.secondary,
+    },
+    '& .MuiInput-underline::before': {
+      borderBottomColor: theme.palette.divider,
+    },
+    '& .MuiInput-underline::after': {
+      borderBottomColor: theme.palette.divider,
     },
   },
-})(TextField);
+}))(TextField);
 
 const ITEM_HEIGHT = 48;
 
