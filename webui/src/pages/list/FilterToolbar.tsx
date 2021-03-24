@@ -172,10 +172,7 @@ function FilterToolbar({ query, queryLocation }: Props) {
       </FilterDropdown>
       <FilterDropdown
         dropdown={labels}
-        itemActive={(key) => {
-          console.log(params, params[key], key);
-          return containsValue('label', key);
-        }}
+        itemActive={(key) => containsValue('label', key)}
         to={(key) => pipe(toggleOrAddParam('label', key), loc)(params)}
         hasFilter
       >
