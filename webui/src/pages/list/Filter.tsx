@@ -8,7 +8,10 @@ import MenuItem from '@material-ui/core/MenuItem';
 import { SvgIconProps } from '@material-ui/core/SvgIcon';
 import TextField from '@material-ui/core/TextField';
 import { makeStyles, withStyles } from '@material-ui/core/styles';
+import { darken } from '@material-ui/core/styles/colorManipulator';
 import ArrowDropDown from '@material-ui/icons/ArrowDropDown';
+
+import { Color } from '../../gqlTypes';
 
 const CustomTextField = withStyles((theme) => ({
   root: {
@@ -99,9 +102,26 @@ const useStyles = makeStyles((theme) => ({
   icon: {
     paddingRight: theme.spacing(0.5),
   },
+  labelcolor: {
+    minWidth: '15px',
+    minHeight: '15px',
+    display: 'flex',
+    backgroundColor: 'blue',
+    borderRadius: '0.25rem',
+    marginRight: '5px',
+    marginLeft: '3px',
+  },
 }));
+const _rgb = (color: Color) =>
+  'rgb(' + color.R + ',' + color.G + ',' + color.B + ')';
 
-type DropdownTuple = [string, string];
+// Create a style object from the label RGB colors
+const createStyle = (color: Color) => ({
+  backgroundColor: _rgb(color),
+  borderBottomColor: darken(_rgb(color), 0.2),
+});
+
+type DropdownTuple = [string, string, Color?];
 
 type FilterDropdownProps = {
   children: React.ReactNode;
@@ -183,14 +203,21 @@ function FilterDropdown({
         )}
         {dropdown
           .filter((d) => d[1].toLowerCase().includes(filter.toLowerCase()))
-          .map(([key, value]) => (
+          .map(([key, value, color]) => (
             <MenuItem
+              style={{ whiteSpace: 'normal', wordBreak: 'break-all' }}
               component={Link}
               to={to(key)}
               className={itemActive(key) ? classes.itemActive : undefined}
               onClick={() => setOpen(false)}
               key={key}
             >
+              {color && (
+                <div
+                  className={classes.labelcolor}
+                  style={createStyle(color)}
+                />
+              )}
               {value}
             </MenuItem>
           ))}

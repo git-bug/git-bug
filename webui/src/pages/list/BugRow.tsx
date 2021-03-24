@@ -71,9 +71,6 @@ const useStyles = makeStyles((theme) => ({
   },
   labels: {
     paddingLeft: theme.spacing(1),
-    '& > *': {
-      display: 'inline-block',
-    },
   },
   commentCount: {
     fontSize: '1rem',

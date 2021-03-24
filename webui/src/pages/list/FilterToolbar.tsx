@@ -89,6 +89,7 @@ function FilterToolbar({ query, queryLocation }: Props) {
     labels = labelsData.repository.validLabels.nodes.map((node) => [
       node.name,
       node.name,
+      node.color,
     ]);
   }
 
