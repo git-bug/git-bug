@@ -67,14 +67,23 @@ const DisabledTabWithTooltip = (props: TabProps) => {
 function Header() {
   const classes = useStyles();
   const location = useLocation();
-  const [selectedTab, setTab] = React.useState(location.pathname);
 
-  const handleTabClick = (
-    event: React.ChangeEvent<{}>,
-    newTabValue: string
-  ) => {
-    setTab(newTabValue);
-  };
+  // Prevents error of invalid tab selection in <Tabs>
+  function highlightTab() {
+    switch (location.pathname) {
+      case '/':
+        return '/';
+      case '/code':
+        return '/code';
+      case '/pulls':
+        return '/pulls';
+      case '/settings':
+        return '/settings';
+      default:
+        // using false as value for tabs will result in no selected tab
+        return false;
+    }
+  }
 
   return (
     <>
@@ -92,12 +101,7 @@ function Header() {
         </Toolbar>
       </AppBar>
       <div className={classes.offset} />
-      <Tabs
-        centered
-        value={selectedTab}
-        onChange={handleTabClick}
-        aria-label="nav tabs"
-      >
+      <Tabs centered value={highlightTab()} aria-label="nav tabs">
         <DisabledTabWithTooltip label="Code" value="/code" {...a11yProps(1)} />
         <Tab label="Bugs" value="/" component={Link} to="/" {...a11yProps(2)} />
         <DisabledTabWithTooltip
