@@ -39,24 +39,17 @@ const useStyles = makeStyles<Theme, StylesProps>((theme) => ({
   },
   header: {
     display: 'flex',
-    padding: theme.spacing(2),
-    '& > h1': {
-      ...theme.typography.h6,
-      margin: theme.spacing(0, 2),
-    },
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    padding: theme.spacing(1),
   },
   filterissueLabel: {
     fontSize: '14px',
     fontWeight: 'bold',
     paddingRight: '12px',
   },
-  filterissueContainer: {
+  form: {
     display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContents: 'left',
+    flexGrow: 1,
+    marginRight: theme.spacing(1),
   },
   search: {
     borderRadius: theme.shape.borderRadius,
@@ -66,7 +59,7 @@ const useStyles = makeStyles<Theme, StylesProps>((theme) => ({
     borderWidth: '1px',
     backgroundColor: theme.palette.primary.light,
     padding: theme.spacing(0, 1),
-    width: ({ searching }) => (searching ? '20rem' : '15rem'),
+    width: '100%',
     transition: theme.transitions.create([
       'width',
       'borderColor',
@@ -321,58 +314,56 @@ function ListQuery() {
   return (
     <Paper className={classes.main}>
       <header className={classes.header}>
-        <div className="filterissueContainer">
-          <form onSubmit={formSubmit}>
-            <FormControl>
-              <Button
-                aria-haspopup="true"
-                ref={filterButtonRef}
-                onClick={(e) => setFilterMenuIsOpen(true)}
-              >
-                Filter <ArrowDropDownIcon />
-              </Button>
-              <Menu
-                open={filterMenuIsOpen}
-                onClose={() => setFilterMenuIsOpen(false)}
-                getContentAnchorEl={null}
-                anchorEl={filterButtonRef.current}
-                anchorOrigin={{
-                  vertical: 'bottom',
-                  horizontal: 'left',
-                }}
-                transformOrigin={{
-                  vertical: 'top',
-                  horizontal: 'left',
-                }}
-              >
-                <MenuItem
-                  component={Link}
-                  to={pipe(
-                    replaceParam('author', user.displayName),
-                    replaceParam('sort', 'creation'),
-                    loc
-                  )(qparams)}
-                  onClick={() => setFilterMenuIsOpen(false)}
-                >
-                  Your newest issues
-                </MenuItem>
-              </Menu>
-            </FormControl>
-            <InputBase
-              id="issuefilter"
-              placeholder="Filter"
-              value={input}
-              onInput={(e: any) => setInput(e.target.value)}
-              classes={{
-                root: classes.search,
-                focused: classes.searchFocused,
+        <form className={classes.form} onSubmit={formSubmit}>
+          <FormControl>
+            <Button
+              aria-haspopup="true"
+              ref={filterButtonRef}
+              onClick={(e) => setFilterMenuIsOpen(true)}
+            >
+              Filter <ArrowDropDownIcon />
+            </Button>
+            <Menu
+              open={filterMenuIsOpen}
+              onClose={() => setFilterMenuIsOpen(false)}
+              getContentAnchorEl={null}
+              anchorEl={filterButtonRef.current}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'left',
               }}
-            />
-            <button type="submit" hidden>
-              Search
-            </button>
-          </form>
-        </div>
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'left',
+              }}
+            >
+              <MenuItem
+                component={Link}
+                to={pipe(
+                  replaceParam('author', user.displayName),
+                  replaceParam('sort', 'creation'),
+                  loc
+                )(qparams)}
+                onClick={() => setFilterMenuIsOpen(false)}
+              >
+                Your newest issues
+              </MenuItem>
+            </Menu>
+          </FormControl>
+          <InputBase
+            id="issuefilter"
+            placeholder="Filter"
+            value={input}
+            onInput={(e: any) => setInput(e.target.value)}
+            classes={{
+              root: classes.search,
+              focused: classes.searchFocused,
+            }}
+          />
+          <button type="submit" hidden>
+            Search
+          </button>
+        </form>
         <IfLoggedIn>
           {() => (
             <Button
