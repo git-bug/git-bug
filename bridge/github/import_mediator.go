@@ -358,8 +358,14 @@ func (mm *importMediator) mQuery(ctx context.Context, query rateLimiter, vars ma
 	var err error
 	for i := 0; i < retries; i++ {
 		// wait a few seconds before retry
-		sleepTime := 8 * (i + 1)
-		time.Sleep(time.Duration(sleepTime) * time.Second)
+		sleepTime := time.Duration(8*(i+1)) * time.Second
+		timer := time.NewTimer(sleepTime)
+		select {
+		case <-ctx.Done():
+			stop(timer)
+			return ctx.Err()
+		case <-timer.C:
+		}
 		err = mm.queryOnce(ctx, query, vars)
 		if err == nil {
 			// success: done
