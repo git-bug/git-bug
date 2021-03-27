@@ -67,7 +67,6 @@ func (gi *githubImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 			if currEvent == nil {
 				break
 			}
-			nextEvent = gi.mediator.NextImportEvent()
 
 			switch event := currEvent.(type) {
 			case MessageEvent:
@@ -79,6 +78,7 @@ func (gi *githubImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 					return
 				}
 				// second: create new issue
+				nextEvent = gi.mediator.NextImportEvent()
 				switch next := nextEvent.(type) {
 				case IssueEditEvent:
 					// consuming and using next event
@@ -100,6 +100,7 @@ func (gi *githubImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 					return
 				}
 			case TimelineEvent:
+				nextEvent = gi.mediator.NextImportEvent()
 				if next, ok := nextEvent.(CommentEditEvent); ok && event.Typename == "IssueComment" {
 					// consuming and using next event
 					nextEvent = nil
