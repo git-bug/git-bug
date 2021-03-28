@@ -62,11 +62,12 @@ func (gi *githubImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 			// We need the current event and one look ahead event.
 			currEvent = nextEvent
 			if currEvent == nil {
-				currEvent = gi.mediator.NextImportEvent()
+				currEvent = gi.getEventHandleMsgs()
 			}
 			if currEvent == nil {
 				break
 			}
+			nextEvent = gi.getEventHandleMsgs()
 
 			switch event := currEvent.(type) {
 			case MessageEvent:
@@ -78,7 +79,6 @@ func (gi *githubImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 					return
 				}
 				// second: create new issue
-				nextEvent = gi.mediator.NextImportEvent()
 				switch next := nextEvent.(type) {
 				case IssueEditEvent:
 					// consuming and using next event
@@ -100,7 +100,6 @@ func (gi *githubImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 					return
 				}
 			case TimelineEvent:
-				nextEvent = gi.mediator.NextImportEvent()
 				if next, ok := nextEvent.(CommentEditEvent); ok && event.Typename == "IssueComment" {
 					// consuming and using next event
 					nextEvent = nil
@@ -134,6 +133,19 @@ func (gi *githubImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 	}()
 
 	return out, nil
+}
+
+func (gi *githubImporter) getEventHandleMsgs() ImportEvent {
+	for {
+		// read event from import mediator
+		event := gi.mediator.NextImportEvent()
+		// consume (and use) all message events
+		if e, ok := event.(MessageEvent); ok {
+			fmt.Println(e.msg)
+			continue
+		}
+		return event
+	}
 }
 
 func (gi *githubImporter) commit(b *cache.BugCache, out chan<- core.ImportResult) error {
