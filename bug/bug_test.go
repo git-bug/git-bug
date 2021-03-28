@@ -25,10 +25,7 @@ func TestBugId(t *testing.T) {
 	bug1.Append(createOp)
 
 	err = bug1.Commit(mockRepo)
-
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	bug1.Id()
 }
