@@ -369,7 +369,8 @@ function ListQuery() {
             <Button
               className={classes.greenButton}
               variant="contained"
-              href="/new"
+              component={Link}
+              to="/new"
             >
               New bug
             </Button>
