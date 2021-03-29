@@ -6,6 +6,7 @@ import TableRow from '@material-ui/core/TableRow/TableRow';
 import Tooltip from '@material-ui/core/Tooltip/Tooltip';
 import { makeStyles } from '@material-ui/core/styles';
 import CheckCircleOutline from '@material-ui/icons/CheckCircleOutline';
+import CommentOutlinedIcon from '@material-ui/icons/CommentOutlined';
 import ErrorOutline from '@material-ui/icons/ErrorOutline';
 
 import Date from 'src/components/Date';
@@ -74,6 +75,13 @@ const useStyles = makeStyles((theme) => ({
       display: 'inline-block',
     },
   },
+  commentCount: {
+    fontSize: '1rem',
+    marginLeft: theme.spacing(0.5),
+  },
+  commentCountCell: {
+    display: 'inline-flex',
+  },
 }));
 
 type Props = {
@@ -82,6 +90,8 @@ type Props = {
 
 function BugRow({ bug }: Props) {
   const classes = useStyles();
+  // Subtract 1 from totalCount as 1 comment is the bug description
+  const commentCount = bug.comments.totalCount - 1;
   return (
     <TableRow hover>
       <TableCell className={classes.cell}>
@@ -105,6 +115,12 @@ function BugRow({ bug }: Props) {
             &nbsp;by {bug.author.displayName}
           </div>
         </div>
+        {commentCount > 0 && (
+          <span className={classes.commentCountCell}>
+            <CommentOutlinedIcon aria-label="Comment count" />
+            <span className={classes.commentCount}>{commentCount}</span>
+          </span>
+        )}
       </TableCell>
     </TableRow>
   );

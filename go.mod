@@ -27,16 +27,16 @@ require (
 	github.com/shurcooL/githubv4 v0.0.0-20190601194912-068505affed7
 	github.com/shurcooL/graphql v0.0.0-20181231061246-d48a9a75455f // indirect
 	github.com/skratchdot/open-golang v0.0.0-20190402232053-79abb63cd66e
-	github.com/spf13/cobra v1.1.1
+	github.com/spf13/cobra v1.1.3
 	github.com/stretchr/testify v1.7.0
 	github.com/vektah/gqlparser v1.3.1
-	github.com/xanzy/go-gitlab v0.40.1
+	github.com/xanzy/go-gitlab v0.44.0
 	github.com/xanzy/ssh-agent v0.3.0 // indirect
 	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897
 	golang.org/x/net v0.0.0-20201024042810-be3efd7ff127 // indirect
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
-	golang.org/x/sys v0.0.0-20201020230747-6e5568b54d1a // indirect
+	golang.org/x/sys v0.0.0-20210320140829-1e4c9ba3b0c4
 	golang.org/x/text v0.3.5
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e // indirect
 	google.golang.org/appengine v1.6.7 // indirect

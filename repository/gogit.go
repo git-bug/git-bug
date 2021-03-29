@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -21,6 +20,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"golang.org/x/crypto/openpgp"
+	"golang.org/x/sys/execabs"
 
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
@@ -264,7 +264,7 @@ func (repo *GoGitRepo) GetCoreEditor() (string, error) {
 	}
 
 	for _, cmd := range priorities {
-		if _, err = exec.LookPath(cmd); err == nil {
+		if _, err = execabs.LookPath(cmd); err == nil {
 			return cmd, nil
 		}
 

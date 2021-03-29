@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/MichaelMure/git-bug/api/auth"
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/api/graphql/graph"
 	"github.com/MichaelMure/git-bug/api/graphql/models"
 	"github.com/MichaelMure/git-bug/bug"
@@ -83,6 +84,34 @@ func (r mutationResolver) AddComment(ctx context.Context, input models.AddCommen
 	}
 
 	return &models.AddCommentPayload{
+		ClientMutationID: input.ClientMutationID,
+		Bug:              models.NewLoadedBug(b.Snapshot()),
+		Operation:        op,
+	}, nil
+}
+
+func (r mutationResolver) EditComment(ctx context.Context, input models.EditCommentInput) (*models.EditCommentPayload, error) {
+	repo, b, err := r.getBug(input.RepoRef, input.Prefix)
+	if err != nil {
+		return nil, err
+	}
+
+	author, err := auth.UserFromCtx(ctx, repo)
+	if err != nil {
+		return nil, err
+	}
+
+	op, err := b.EditCommentRaw(author, time.Now().Unix(), entity.Id(input.Target), input.Message, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	err = b.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.EditCommentPayload{
 		ClientMutationID: input.ClientMutationID,
 		Bug:              models.NewLoadedBug(b.Snapshot()),
 		Operation:        op,

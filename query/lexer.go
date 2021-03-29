@@ -11,15 +11,19 @@ type tokenKind int
 const (
 	_ tokenKind = iota
 	tokenKindKV
+	tokenKindKVV
 	tokenKindSearch
 )
 
 type token struct {
 	kind tokenKind
 
-	// KV
+	// KV and KVV
 	qualifier string
 	value     string
+
+	// KVV only
+	subQualifier string
 
 	// Search
 	term string
@@ -33,6 +37,15 @@ func newTokenKV(qualifier, value string) token {
 	}
 }
 
+func newTokenKVV(qualifier, subQualifier, value string) token {
+	return token{
+		kind:         tokenKindKVV,
+		qualifier:    qualifier,
+		subQualifier: subQualifier,
+		value:        value,
+	}
+}
+
 func newTokenSearch(term string) token {
 	return token{
 		kind: tokenKindSearch,
@@ -43,86 +56,45 @@ func newTokenSearch(term string) token {
 // tokenize parse and break a input into tokens ready to be
 // interpreted later by a parser to get the semantic.
 func tokenize(query string) ([]token, error) {
-	fields, err := splitQuery(query)
+	fields, err := splitFunc(query, unicode.IsSpace)
 	if err != nil {
 		return nil, err
 	}
 
 	var tokens []token
 	for _, field := range fields {
-		split := strings.Split(field, ":")
-
-		// full text search
-		if len(split) == 1 {
-			tokens = append(tokens, newTokenSearch(removeQuote(field)))
-			continue
+		chunks, err := splitFunc(field, func(r rune) bool { return r == ':' })
+		if err != nil {
+			return nil, err
 		}
 
-		if len(split) != 2 {
-			return nil, fmt.Errorf("can't tokenize \"%s\"", field)
+		if strings.HasPrefix(field, ":") || strings.HasSuffix(field, ":") {
+			return nil, fmt.Errorf("empty qualifier or value")
 		}
 
-		if len(split[0]) == 0 {
-			return nil, fmt.Errorf("can't tokenize \"%s\": empty qualifier", field)
-		}
-		if len(split[1]) == 0 {
-			return nil, fmt.Errorf("empty value for qualifier \"%s\"", split[0])
+		// pre-process chunks
+		for i, chunk := range chunks {
+			if len(chunk) == 0 {
+				return nil, fmt.Errorf("empty qualifier or value")
+			}
+			chunks[i] = removeQuote(chunk)
 		}
 
-		tokens = append(tokens, newTokenKV(split[0], removeQuote(split[1])))
+		switch len(chunks) {
+		case 1: // full text search
+			tokens = append(tokens, newTokenSearch(chunks[0]))
+
+		case 2: // KV
+			tokens = append(tokens, newTokenKV(chunks[0], chunks[1]))
+
+		case 3: // KVV
+			tokens = append(tokens, newTokenKVV(chunks[0], chunks[1], chunks[2]))
+
+		default:
+			return nil, fmt.Errorf("can't tokenize \"%s\": too many separators", field)
+		}
 	}
 	return tokens, nil
-}
-
-// split the query into chunks by splitting on whitespaces but respecting
-// quotes
-func splitQuery(query string) ([]string, error) {
-	lastQuote := rune(0)
-	inQuote := false
-
-	isToken := func(r rune) bool {
-		switch {
-		case !inQuote && isQuote(r):
-			lastQuote = r
-			inQuote = true
-			return true
-		case inQuote && r == lastQuote:
-			lastQuote = rune(0)
-			inQuote = false
-			return true
-		case inQuote:
-			return true
-		default:
-			return !unicode.IsSpace(r)
-		}
-	}
-
-	var result []string
-	var token strings.Builder
-	for _, r := range query {
-		if isToken(r) {
-			token.WriteRune(r)
-		} else {
-			if token.Len() > 0 {
-				result = append(result, token.String())
-				token.Reset()
-			}
-		}
-	}
-
-	if inQuote {
-		return nil, fmt.Errorf("unmatched quote")
-	}
-
-	if token.Len() > 0 {
-		result = append(result, token.String())
-	}
-
-	return result, nil
-}
-
-func isQuote(r rune) bool {
-	return r == '"' || r == '\''
 }
 
 func removeQuote(field string) string {
@@ -136,4 +108,56 @@ func removeQuote(field string) string {
 		}
 	}
 	return field
+}
+
+// split the input into chunks by splitting according to separatorFunc but respecting
+// quotes
+func splitFunc(input string, separatorFunc func(r rune) bool) ([]string, error) {
+	lastQuote := rune(0)
+	inQuote := false
+
+	// return true if it's part of a chunk, or false if it's a rune that delimit one, as determined by the separatorFunc.
+	isChunk := func(r rune) bool {
+		switch {
+		case !inQuote && isQuote(r):
+			lastQuote = r
+			inQuote = true
+			return true
+		case inQuote && r == lastQuote:
+			lastQuote = rune(0)
+			inQuote = false
+			return true
+		case inQuote:
+			return true
+		default:
+			return !separatorFunc(r)
+		}
+	}
+
+	var result []string
+	var chunk strings.Builder
+	for _, r := range input {
+		if isChunk(r) {
+			chunk.WriteRune(r)
+		} else {
+			if chunk.Len() > 0 {
+				result = append(result, chunk.String())
+				chunk.Reset()
+			}
+		}
+	}
+
+	if inQuote {
+		return nil, fmt.Errorf("unmatched quote")
+	}
+
+	if chunk.Len() > 0 {
+		result = append(result, chunk.String())
+	}
+
+	return result, nil
+}
+
+func isQuote(r rune) bool {
+	return r == '"' || r == '\''
 }

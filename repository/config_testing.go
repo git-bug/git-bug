@@ -113,4 +113,43 @@ func testConfig(t *testing.T, config Config) {
 		"section.subsection.subsection.opt1": "foo5",
 		"section.subsection.subsection.opt2": "foo6",
 	}, all)
+
+	// missing section + case insensitive
+	val, err = config.ReadString("section2.opt1")
+	require.Error(t, err)
+
+	val, err = config.ReadString("section.opt1")
+	require.NoError(t, err)
+	require.Equal(t, "foo", val)
+
+	val, err = config.ReadString("SECTION.OPT1")
+	require.NoError(t, err)
+	require.Equal(t, "foo", val)
+
+	_, err = config.ReadString("SECTION2.OPT3")
+	require.Error(t, err)
+
+	// missing subsection + case insensitive
+	val, err = config.ReadString("section.subsection.opt1")
+	require.NoError(t, err)
+	require.Equal(t, "foo3", val)
+
+	// for some weird reason, subsection ARE case sensitive
+	_, err = config.ReadString("SECTION.SUBSECTION.OPT1")
+	require.Error(t, err)
+
+	_, err = config.ReadString("SECTION.SUBSECTION1.OPT1")
+	require.Error(t, err)
+
+	// missing sub-subsection + case insensitive
+	val, err = config.ReadString("section.subsection.subsection.opt1")
+	require.NoError(t, err)
+	require.Equal(t, "foo5", val)
+
+	// for some weird reason, subsection ARE case sensitive
+	_, err = config.ReadString("SECTION.SUBSECTION.SUBSECTION.OPT1")
+	require.Error(t, err)
+
+	_, err = config.ReadString("SECTION.SUBSECTION.SUBSECTION1.OPT1")
+	require.Error(t, err)
 }

@@ -42,6 +42,30 @@ type AddCommentPayload {
     operation: AddCommentOperation!
 }
 
+input EditCommentInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """"The name of the repository. If not set, the default repository is used."""
+    repoRef: String
+    """The bug ID's prefix."""
+    prefix: String!
+    """The ID of the comment to be changed."""
+    target: String!
+    """The new message to be set."""
+    message: String!
+    """The collection of file's hash required for the first message."""
+    files: [Hash!]
+}
+
+type EditCommentPayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The affected bug."""
+    bug: Bug!
+    """The resulting operation."""
+    operation: EditCommentOperation!
+}
+
 input ChangeLabelInput {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String

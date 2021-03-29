@@ -3,11 +3,12 @@ package auth
 import (
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
@@ -159,7 +160,8 @@ func List(repo repository.RepoKeyring, opts ...ListOption) ([]Credential, error)
 
 		item, err := repo.Keyring().Get(key)
 		if err != nil {
-			return nil, err
+			// skip unreadable items, nothing much we can do for them anyway
+			continue
 		}
 
 		cred, err := decode(item)

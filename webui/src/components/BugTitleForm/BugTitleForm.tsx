@@ -1,12 +1,6 @@
 import React, { useState } from 'react';
 
-import {
-  Button,
-  fade,
-  makeStyles,
-  TextField,
-  Typography,
-} from '@material-ui/core';
+import { Button, makeStyles, Typography } from '@material-ui/core';
 
 import { TimelineDocument } from '../../pages/bug/TimelineQuery.generated';
 import IfLoggedIn from '../IfLoggedIn/IfLoggedIn';
@@ -14,6 +8,7 @@ import Author from 'src/components/Author';
 import Date from 'src/components/Date';
 import { BugFragment } from 'src/pages/bug/Bug.generated';
 
+import BugTitleInput from './BugTitleInput';
 import { useSetTitleMutation } from './SetTitle.generated';
 
 /**
@@ -45,26 +40,16 @@ const useStyles = makeStyles((theme) => ({
     marginLeft: theme.spacing(2),
   },
   greenButton: {
-    marginLeft: '8px',
-    backgroundColor: '#2ea44fd9',
-    color: '#fff',
+    marginLeft: theme.spacing(1),
+    backgroundColor: theme.palette.success.main,
+    color: theme.palette.success.contrastText,
     '&:hover': {
-      backgroundColor: '#2ea44f',
+      backgroundColor: theme.palette.success.dark,
+      color: theme.palette.primary.contrastText,
     },
   },
-  titleInput: {
-    borderRadius: theme.shape.borderRadius,
-    borderColor: fade(theme.palette.primary.main, 0.2),
-    borderStyle: 'solid',
-    borderWidth: '1px',
-    backgroundColor: fade(theme.palette.primary.main, 0.05),
-    padding: theme.spacing(0, 0),
-    minWidth: 336,
-    transition: theme.transitions.create([
-      'width',
-      'borderColor',
-      'backgroundColor',
-    ]),
+  saveButton: {
+    marginRight: theme.spacing(1),
   },
 }));
 
@@ -85,7 +70,7 @@ function BugTitleForm({ bug }: Props) {
 
   function isFormValid() {
     if (issueTitleInput) {
-      return issueTitleInput.value.length > 0 ? true : false;
+      return issueTitleInput.value.length > 0;
     } else {
       return false;
     }
@@ -122,11 +107,11 @@ function BugTitleForm({ bug }: Props) {
   function editableBugTitle() {
     return (
       <form className={classes.headerTitle} onSubmit={submitNewTitle}>
-        <TextField
+        <BugTitleInput
           inputRef={(node) => {
             issueTitleInput = node;
           }}
-          className={classes.titleInput}
+          label="Title"
           variant="outlined"
           fullWidth
           margin="dense"
@@ -135,6 +120,7 @@ function BugTitleForm({ bug }: Props) {
         />
         <div className={classes.editButtonContainer}>
           <Button
+            className={classes.saveButton}
             size="small"
             variant="contained"
             type="submit"
@@ -173,7 +159,7 @@ function BugTitleForm({ bug }: Props) {
                 variant="contained"
                 href="/new"
               >
-                New issue
+                New bug
               </Button>
             </div>
           )}

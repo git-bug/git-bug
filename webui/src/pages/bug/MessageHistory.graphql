@@ -1,0 +1,15 @@
+#import "./MessageCommentFragment.graphql"
+#import "./MessageCreateFragment.graphql"
+
+query MessageHistory($bugIdPrefix: String!) {
+  repository {
+    bug(prefix: $bugIdPrefix) {
+      timeline {
+        comments: nodes {
+          ...Create
+          ...AddComment
+        }
+      }
+    }
+  }
+}

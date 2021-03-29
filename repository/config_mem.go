@@ -20,6 +20,7 @@ func NewMemConfig() *MemConfig {
 }
 
 func (mc *MemConfig) StoreString(key, value string) error {
+	key = normalizeKey(key)
 	mc.config[key] = value
 	return nil
 }
@@ -33,6 +34,7 @@ func (mc *MemConfig) StoreTimestamp(key string, value time.Time) error {
 }
 
 func (mc *MemConfig) ReadAll(keyPrefix string) (map[string]string, error) {
+	keyPrefix = normalizeKey(keyPrefix)
 	result := make(map[string]string)
 	for key, val := range mc.config {
 		if strings.HasPrefix(key, keyPrefix) {
@@ -44,6 +46,7 @@ func (mc *MemConfig) ReadAll(keyPrefix string) (map[string]string, error) {
 
 func (mc *MemConfig) ReadString(key string) (string, error) {
 	// unlike git, the mock can only store one value for the same key
+	key = normalizeKey(key)
 	val, ok := mc.config[key]
 	if !ok {
 		return "", ErrNoConfigEntry
@@ -54,9 +57,9 @@ func (mc *MemConfig) ReadString(key string) (string, error) {
 
 func (mc *MemConfig) ReadBool(key string) (bool, error) {
 	// unlike git, the mock can only store one value for the same key
-	val, ok := mc.config[key]
-	if !ok {
-		return false, ErrNoConfigEntry
+	val, err := mc.ReadString(key)
+	if err != nil {
+		return false, err
 	}
 
 	return strconv.ParseBool(val)
@@ -78,6 +81,7 @@ func (mc *MemConfig) ReadTimestamp(key string) (time.Time, error) {
 
 // RmConfigs remove all key/value pair matching the key prefix
 func (mc *MemConfig) RemoveAll(keyPrefix string) error {
+	keyPrefix = normalizeKey(keyPrefix)
 	found := false
 	for key := range mc.config {
 		if strings.HasPrefix(key, keyPrefix) {
@@ -91,4 +95,13 @@ func (mc *MemConfig) RemoveAll(keyPrefix string) error {
 	}
 
 	return nil
+}
+
+func normalizeKey(key string) string {
+	// this feels so wrong, but that's apparently how git behave.
+	// only section and final segment are case insensitive, subsection in between are not.
+	s := strings.Split(key, ".")
+	s[0] = strings.ToLower(s[0])
+	s[len(s)-1] = strings.ToLower(s[len(s)-1])
+	return strings.Join(s, ".")
 }

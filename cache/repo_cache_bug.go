@@ -8,12 +8,14 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"unicode/utf8"
+
+	"github.com/blevesearch/bleve"
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/query"
 	"github.com/MichaelMure/git-bug/repository"
-	"github.com/blevesearch/bleve"
 )
 
 const bugCacheFile = "bug-cache"
@@ -523,11 +525,24 @@ func (c *RepoCache) addBugToSearchIndex(snap *bug.Snapshot) error {
 		Text []string
 	}{}
 
-	for _, comment := range snap.Comments {
-		searchableBug.Text = append(searchableBug.Text, comment.Message)
+	// See https://github.com/blevesearch/bleve/issues/1576
+	var sb strings.Builder
+	normalize := func(text string) string {
+		sb.Reset()
+		for _, field := range strings.Fields(text) {
+			if utf8.RuneCountInString(field) < 100 {
+				sb.WriteString(field)
+				sb.WriteRune(' ')
+			}
+		}
+		return sb.String()
 	}
 
-	searchableBug.Text = append(searchableBug.Text, snap.Title)
+	for _, comment := range snap.Comments {
+		searchableBug.Text = append(searchableBug.Text, normalize(comment.Message))
+	}
+
+	searchableBug.Text = append(searchableBug.Text, normalize(snap.Title))
 
 	index, err := c.repo.GetBleveIndex("bug")
 	if err != nil {
