@@ -1,7 +1,9 @@
 package cache
 
 import (
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -273,4 +275,22 @@ func checkBugPresence(t *testing.T, cache *RepoCache, bug *BugCache, presence bo
 	if ok {
 		require.Equal(t, bug, b)
 	}
+}
+
+func TestLongDescription(t *testing.T) {
+	// See https://github.com/MichaelMure/git-bug/issues/606
+
+	text := strings.Repeat("x", 65536)
+
+	repo := repository.CreateGoGitTestRepo(false)
+	defer repository.CleanupTestRepos(repo)
+
+	backend, err := NewRepoCache(repo)
+	require.NoError(t, err)
+
+	i, err := backend.NewIdentity("René Descartes", "rene@descartes.fr")
+	require.NoError(t, err)
+
+	_, _, err = backend.NewBugRaw(i, time.Now().Unix(), text, text, nil, nil)
+	require.NoError(t, err)
 }
