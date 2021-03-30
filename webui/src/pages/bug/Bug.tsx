@@ -104,7 +104,7 @@ function Bug({ bug }: Props) {
             )}
             {bug.labels.map((l) => (
               <li className={classes.label} key={l.name}>
-                <Label label={l} key={l.name} />
+                <Label label={l} key={l.name} maxWidth="25ch" />
               </li>
             ))}
           </ul>
