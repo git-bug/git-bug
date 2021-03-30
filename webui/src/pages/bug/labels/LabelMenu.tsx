@@ -226,7 +226,6 @@ function LabelMenu({ bug }: Props) {
 
   const [setLabelMutation] = useSetLabelMutation();
 
-  useEffect(() => {});
   function toggleLabel(key: string, active: boolean) {
     const labels: string[] = active
       ? selectedLabels.filter((label) => label !== key)
@@ -237,10 +236,6 @@ function LabelMenu({ bug }: Props) {
   }
 
   function diff(oldState: string[], newState: string[]) {
-    console.log('oldState / Buglabels');
-    console.log(oldState);
-    console.log('newState / Selected');
-    console.log(newState);
     const added = newState.filter((x) => !oldState.includes(x));
     const removed = oldState.filter((x) => !newState.includes(x));
     return {
@@ -249,15 +244,14 @@ function LabelMenu({ bug }: Props) {
     };
   }
 
-  const changeBugLabels = (
-    bugLabels = bug.labels.map((l) => l.name),
-    selectedLabel = selectedLabels
-  ) => {
-    const labels = diff(bugLabels, selectedLabel);
-    console.log('changeBugLabels');
-    console.log(labels);
-    console.log('bugLabelNames');
+  const changeBugLabels = (selectedLabels: string[]) => {
+    console.log('CBL');
+    console.log('selected labels');
+    console.log(selectedLabels);
+    console.log('buglabels');
     console.log(bugLabelNames);
+    const labels = diff(bugLabelNames, selectedLabels);
+    console.log(labels);
     if (labels.added.length > 0 || labels.removed.length > 0) {
       setLabelMutation({
         variables: {
@@ -281,6 +275,7 @@ function LabelMenu({ bug }: Props) {
       })
         .then((res) => {
           console.log(res);
+          setSelectedLabels(selectedLabels);
           setBugLabelNames(selectedLabels);
         })
         .catch((e) => console.log(e));
@@ -291,39 +286,10 @@ function LabelMenu({ bug }: Props) {
     return selectedLabels.includes(key);
   }
 
+  //TODO label wont removed, if a filter hides it!
   function createNewLabel(name: string) {
-    console.log('CREATE NEW LABEL');
-    setLabelMutation({
-      variables: {
-        input: {
-          prefix: bug.id,
-          added: [name],
-        },
-      },
-      refetchQueries: [
-        // TODO: update the cache instead of refetching
-        {
-          query: GetBugDocument,
-          variables: { id: bug.id },
-        },
-        {
-          query: ListLabelsDocument,
-        },
-      ],
-      awaitRefetchQueries: true,
-    })
-      .then((res) => {
-        console.log(res);
-
-        const tmp = selectedLabels.concat([name]);
-        console.log(tmp);
-        console.log('tmp');
-        setSelectedLabels(tmp);
-        setBugLabelNames(bugLabelNames.concat([name]));
-
-        changeBugLabels(bugLabelNames.concat([name]), tmp);
-      })
-      .catch((e) => console.log('createnewLabelError' + e));
+    console.log('CREATE NEW LABEL: ' + name);
+    changeBugLabels(selectedLabels.concat([name]));
   }
 
   let labels: any = [];
@@ -341,7 +307,7 @@ function LabelMenu({ bug }: Props) {
 
   return (
     <FilterDropdown
-      onClose={changeBugLabels}
+      onClose={() => changeBugLabels(selectedLabels)}
       itemActive={isActive}
       toggleLabel={toggleLabel}
       dropdown={labels}
