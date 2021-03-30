@@ -10,6 +10,7 @@ import TextField from '@material-ui/core/TextField';
 import { makeStyles, withStyles } from '@material-ui/core/styles';
 import { darken } from '@material-ui/core/styles/colorManipulator';
 import ArrowDropDown from '@material-ui/icons/ArrowDropDown';
+import CheckIcon from '@material-ui/icons/Check';
 
 import { Color } from '../../gqlTypes';
 
@@ -102,11 +103,21 @@ const useStyles = makeStyles((theme) => ({
   icon: {
     paddingRight: theme.spacing(0.5),
   },
-  labelcolor: {
-    minWidth: '15px',
-    minHeight: '15px',
+  labelMenu: {
+    '& .MuiMenu-paper': {
+      //somehow using "width" won't override the default width...
+      minWidth: '35ch',
+    },
+  },
+  labelMenuItem: {
+    whiteSpace: 'normal',
+    wordBreak: 'break-word',
     display: 'flex',
-    backgroundColor: 'blue',
+    alignItems: 'initial',
+  },
+  labelcolor: {
+    minWidth: '0.5rem',
+    display: 'flex',
     borderRadius: '0.25rem',
     marginRight: '5px',
     marginLeft: '3px',
@@ -170,6 +181,7 @@ function FilterDropdown({
         <ArrowDropDown fontSize="small" />
       </button>
       <Menu
+        className={classes.labelMenu}
         getContentAnchorEl={null}
         ref={searchRef}
         anchorOrigin={{
@@ -205,13 +217,14 @@ function FilterDropdown({
           .filter((d) => d[1].toLowerCase().includes(filter.toLowerCase()))
           .map(([key, value, color]) => (
             <MenuItem
-              style={{ whiteSpace: 'normal', wordBreak: 'break-all' }}
               component={Link}
               to={to(key)}
-              className={itemActive(key) ? classes.itemActive : undefined}
+              className={classes.labelMenuItem}
+              selected={itemActive(key)}
               onClick={() => setOpen(false)}
               key={key}
             >
+              {itemActive(key) && <CheckIcon />}
               {color && (
                 <div
                   className={classes.labelcolor}

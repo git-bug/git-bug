@@ -67,10 +67,8 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   labelcolor: {
-    minWidth: '1rem',
-    minHeight: '1rem',
+    minWidth: '0.5rem',
     display: 'flex',
-    backgroundColor: 'blue',
     borderRadius: '0.25rem',
     marginRight: '5px',
     marginLeft: '3px',
@@ -81,8 +79,7 @@ const useStyles = makeStyles((theme) => ({
   },
   menuRow: {
     display: 'flex',
-    alignItems: 'center',
-    flexWrap: 'wrap',
+    alignItems: 'initial',
   },
 }));
 
@@ -194,7 +191,7 @@ function FilterDropdown({
               selected={itemActive(key)}
             >
               <div className={classes.menuRow}>
-                {itemActive(key) && <CheckIcon fontSize={'small'} />}
+                {itemActive(key) && <CheckIcon />}
                 <div
                   className={classes.labelcolor}
                   style={createStyle(color)}
