@@ -35,7 +35,7 @@ function parse(query: string): Query {
   const params: Query = {};
 
   // TODO: support escaping without quotes
-  const re = /(\w+):([A-Za-z0-9-]+|"([^"]*)")/g;
+  const re = /(\w+):([A-Za-z0-9-]+|(["'])(([^\3]|\\.)*)\3)+/g;
   let matches;
   while ((matches = re.exec(query)) !== null) {
     if (!params[matches[1]]) {
@@ -43,8 +43,8 @@ function parse(query: string): Query {
     }
 
     let value;
-    if (matches[3]) {
-      value = matches[3];
+    if (matches[4]) {
+      value = matches[4];
     } else {
       value = matches[2];
     }
