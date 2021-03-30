@@ -8,8 +8,7 @@ import {
 } from '@material-ui/core/styles/colorManipulator';
 
 import { Color } from '../gqlTypes';
-
-import { LabelFragment } from './fragments.generated';
+import { LabelFragment } from '../graphql/fragments.generated';
 
 const _rgb = (color: Color) =>
   'rgb(' + color.R + ',' + color.G + ',' + color.B + ')';
