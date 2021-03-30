@@ -78,6 +78,10 @@ function BugTitleForm({ bug }: Props) {
 
   function submitNewTitle() {
     if (!isFormValid()) return;
+    if (bug.title === issueTitleInput.value) {
+      cancelChange();
+      return;
+    }
     setTitle({
       variables: {
         input: {
@@ -106,7 +110,7 @@ function BugTitleForm({ bug }: Props) {
 
   function editableBugTitle() {
     return (
-      <form className={classes.headerTitle} onSubmit={submitNewTitle}>
+      <form className={classes.headerTitle}>
         <BugTitleInput
           inputRef={(node) => {
             issueTitleInput = node;
@@ -123,7 +127,7 @@ function BugTitleForm({ bug }: Props) {
             className={classes.saveButton}
             size="small"
             variant="contained"
-            type="submit"
+            onClick={() => submitNewTitle()}
             disabled={issueTitle.length === 0}
           >
             Save
