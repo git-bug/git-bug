@@ -224,8 +224,6 @@ function LabelMenu({ bug }: Props) {
       ? selectedLabels.filter((label) => label !== key)
       : selectedLabels.concat([key]);
     setSelectedLabels(labels);
-    console.log('toggle (selected)');
-    console.log(labels);
   }
 
   function diff(oldState: string[], newState: string[]) {
@@ -238,13 +236,7 @@ function LabelMenu({ bug }: Props) {
   }
 
   const changeBugLabels = (selectedLabels: string[]) => {
-    console.log('CBL');
-    console.log('selected labels');
-    console.log(selectedLabels);
-    console.log('buglabels');
-    console.log(bugLabelNames);
     const labels = diff(bugLabelNames, selectedLabels);
-    console.log(labels);
     if (labels.added.length > 0 || labels.removed.length > 0) {
       setLabelMutation({
         variables: {
@@ -267,7 +259,6 @@ function LabelMenu({ bug }: Props) {
         awaitRefetchQueries: true,
       })
         .then((res) => {
-          console.log(res);
           setSelectedLabels(selectedLabels);
           setBugLabelNames(selectedLabels);
         })
@@ -279,9 +270,7 @@ function LabelMenu({ bug }: Props) {
     return selectedLabels.includes(key);
   }
 
-  //TODO label wont removed, if a filter hides it!
   function createNewLabel(name: string) {
-    console.log('CREATE NEW LABEL: ' + name);
     changeBugLabels(selectedLabels.concat([name]));
   }
 
