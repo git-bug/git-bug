@@ -168,6 +168,20 @@ function FilterDropdown({
             label={`Filter ${children}`}
           />
         )}
+        {filter !== '' &&
+          dropdown.filter((d) => d[1].toLowerCase() === filter.toLowerCase())
+            .length <= 0 && (
+            <MenuItem
+              style={{ whiteSpace: 'normal', wordBreak: 'break-all' }}
+              onClick={() => {
+                onNewItem(filter);
+                setFilter('');
+                setOpen(false);
+              }}
+            >
+              Create new label '{filter}'
+            </MenuItem>
+          )}
         {dropdown
           .sort(function (x, y) {
             // true values first
@@ -193,20 +207,6 @@ function FilterDropdown({
               </div>
             </MenuItem>
           ))}
-        {filter !== '' &&
-          dropdown.filter((d) => d[1].toLowerCase() === filter.toLowerCase())
-            .length <= 0 && (
-            <MenuItem
-              style={{ whiteSpace: 'normal', wordBreak: 'break-all' }}
-              onClick={() => {
-                onNewItem(filter);
-                setFilter('');
-                setOpen(false);
-              }}
-            >
-              Create new label '{filter}'
-            </MenuItem>
-          )}
       </Menu>
     </>
   );
