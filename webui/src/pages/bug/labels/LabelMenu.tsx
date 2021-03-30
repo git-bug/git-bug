@@ -50,7 +50,7 @@ const CustomTextField = withStyles((theme) => ({
 const ITEM_HEIGHT = 48;
 
 const useStyles = makeStyles((theme) => ({
-  element: {
+  gearBtn: {
     ...theme.typography.body2,
     color: theme.palette.text.secondary,
     padding: theme.spacing(0, 1),
@@ -61,15 +61,14 @@ const useStyles = makeStyles((theme) => ({
     border: 'none',
   },
   menu: {
-    witdh: 'auto',
-  },
-  itemActive: {
-    fontWeight: 600,
-    color: theme.palette.text.primary,
+    '& .MuiMenu-paper': {
+      //somehow using "width" won't override the default width...
+      minWidth: '35ch',
+    },
   },
   labelcolor: {
-    width: '15px',
-    height: '15px',
+    minWidth: '1rem',
+    minHeight: '1rem',
     display: 'flex',
     backgroundColor: 'blue',
     borderRadius: '0.25rem',
@@ -82,7 +81,6 @@ const useStyles = makeStyles((theme) => ({
   },
   menuRow: {
     display: 'flex',
-    flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
   },
@@ -123,7 +121,7 @@ function FilterDropdown({
         <IconButton
           ref={buttonRef}
           onClick={() => setOpen(!open)}
-          className={classes.element}
+          className={classes.gearBtn}
         >
           <SettingsIcon fontSize={'small'} />
         </IconButton>
@@ -193,10 +191,10 @@ function FilterDropdown({
                 toggleLabel(key, itemActive(key));
               }}
               key={key}
-              className={itemActive(key) ? classes.itemActive : undefined}
+              selected={itemActive(key)}
             >
               <div className={classes.menuRow}>
-                {itemActive(key) ? <CheckIcon fontSize={'small'} /> : null}
+                {itemActive(key) && <CheckIcon fontSize={'small'} />}
                 <div
                   className={classes.labelcolor}
                   style={createStyle(color)}
