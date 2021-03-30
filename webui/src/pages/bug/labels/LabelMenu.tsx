@@ -3,7 +3,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { IconButton } from '@material-ui/core';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
-import { SvgIconProps } from '@material-ui/core/SvgIcon';
 import TextField from '@material-ui/core/TextField';
 import { makeStyles, withStyles } from '@material-ui/core/styles';
 import { darken } from '@material-ui/core/styles/colorManipulator';
@@ -25,7 +24,6 @@ type DropdownTuple = [string, string, Color];
 type FilterDropdownProps = {
   children: React.ReactNode;
   dropdown: DropdownTuple[];
-  icon?: React.ComponentType<SvgIconProps>;
   hasFilter?: boolean;
   itemActive: (key: string) => boolean;
   onClose: () => void;
@@ -62,12 +60,12 @@ const useStyles = makeStyles((theme) => ({
     background: 'none',
     border: 'none',
   },
+  menu: {
+    witdh: 'auto',
+  },
   itemActive: {
     fontWeight: 600,
     color: theme.palette.text.primary,
-  },
-  icon: {
-    paddingRight: theme.spacing(0.5),
   },
   labelcolor: {
     width: '15px',
@@ -102,7 +100,6 @@ const createStyle = (color: Color) => ({
 function FilterDropdown({
   children,
   dropdown,
-  icon: Icon,
   hasFilter,
   itemActive,
   onClose,
@@ -133,6 +130,7 @@ function FilterDropdown({
       </div>
 
       <Menu
+        className={classes.menu}
         getContentAnchorEl={null}
         ref={searchRef}
         anchorOrigin={{
@@ -190,7 +188,7 @@ function FilterDropdown({
           .filter((d) => d[1].toLowerCase().includes(filter.toLowerCase()))
           .map(([key, value, color]) => (
             <MenuItem
-              style={{ whiteSpace: 'normal', wordBreak: 'break-all' }}
+              style={{ whiteSpace: 'normal', wordBreak: 'break-word' }}
               onClick={() => {
                 toggleLabel(key, itemActive(key));
               }}
