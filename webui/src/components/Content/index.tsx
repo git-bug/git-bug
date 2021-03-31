@@ -4,23 +4,25 @@ import parse from 'remark-parse';
 import remark2react from 'remark-react';
 import unified from 'unified';
 
+import BlockQuoteTag from './BlockQuoteTag';
 import ImageTag from './ImageTag';
 import PreTag from './PreTag';
 
 type Props = { markdown: string };
 const Content: React.FC<Props> = ({ markdown }: Props) => {
-  const processor = unified()
+  const content = unified()
     .use(parse)
     .use(html)
     .use(remark2react, {
       remarkReactComponents: {
         img: ImageTag,
         pre: PreTag,
+        blockquote: BlockQuoteTag,
       },
-    });
+    })
+    .processSync(markdown).result;
 
-  const contents: React.ReactNode = processor.processSync(markdown).contents;
-  return <>{contents}</>;
+  return <>{content}</>;
 };
 
 export default Content;

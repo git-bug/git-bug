@@ -17,14 +17,6 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
   container: {
     padding: theme.spacing(0, 2, 2, 2),
   },
-  textarea: {},
-  tabContent: {
-    margin: theme.spacing(2, 0),
-  },
-  preview: {
-    borderBottom: `solid 3px ${theme.palette.grey['200']}`,
-    minHeight: '5rem',
-  },
   actions: {
     display: 'flex',
     gap: '1em',

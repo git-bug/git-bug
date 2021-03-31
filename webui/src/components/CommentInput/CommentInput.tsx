@@ -5,7 +5,7 @@ import Tabs from '@material-ui/core/Tabs';
 import TextField from '@material-ui/core/TextField';
 import { makeStyles } from '@material-ui/core/styles';
 
-import Content from 'src/components/Content';
+import Content from '../Content';
 
 /**
  * Styles

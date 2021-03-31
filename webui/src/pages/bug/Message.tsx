@@ -57,7 +57,8 @@ const useStyles = makeStyles((theme) => ({
   },
   body: {
     ...theme.typography.body2,
-    padding: '0.5rem',
+    paddingLeft: theme.spacing(1),
+    paddingRight: theme.spacing(1),
   },
   headerActions: {
     color: theme.palette.info.contrastText,
