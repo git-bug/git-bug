@@ -1,4 +1,5 @@
 import React from 'react';
+import gemoji from 'remark-gemoji';
 import html from 'remark-html';
 import parse from 'remark-parse';
 import remark2react from 'remark-react';
@@ -12,6 +13,7 @@ type Props = { markdown: string };
 const Content: React.FC<Props> = ({ markdown }: Props) => {
   const content = unified()
     .use(parse)
+    .use(gemoji)
     .use(html)
     .use(remark2react, {
       remarkReactComponents: {
