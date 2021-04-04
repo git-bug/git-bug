@@ -86,11 +86,12 @@ func TestCache(t *testing.T) {
 	require.Empty(t, cache.identities)
 	require.Empty(t, cache.identitiesExcerpts)
 
-	// Reload, only excerpt are loaded
+	// Reload, only excerpt are loaded, but as we need to load the identities used in the bugs
+	// to check the signatures, we also load the identity used above
 	cache, err = NewRepoCache(repo)
 	require.NoError(t, err)
 	require.Empty(t, cache.bugs)
-	require.Empty(t, cache.identities)
+	require.Len(t, cache.identities, 1)
 	require.Len(t, cache.bugExcerpts, 2)
 	require.Len(t, cache.identitiesExcerpts, 2)
 

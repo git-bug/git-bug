@@ -113,6 +113,8 @@ func operationUnmarshaller(author identity.Interface, raw json.RawMessage) (dag.
 		op.Author_ = author
 	case *CreateOperation:
 		op.Author_ = author
+	case *EditCommentOperation:
+		op.Author_ = author
 	case *LabelChangeOperation:
 		op.Author_ = author
 	case *NoOpOperation:
