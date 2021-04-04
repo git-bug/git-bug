@@ -18,24 +18,17 @@ type SetStatusOperation struct {
 	Status Status `json:"status"`
 }
 
-// Sign-post method for gqlgen
-func (op *SetStatusOperation) IsOperation() {}
-
-func (op *SetStatusOperation) base() *OpBase {
-	return &op.OpBase
-}
-
 func (op *SetStatusOperation) Id() entity.Id {
-	return idOperation(op)
+	return idOperation(op, &op.OpBase)
 }
 
 func (op *SetStatusOperation) Apply(snapshot *Snapshot) {
 	snapshot.Status = op.Status
-	snapshot.addActor(op.Author)
+	snapshot.addActor(op.Author_)
 
 	item := &SetStatusTimelineItem{
 		id:       op.Id(),
-		Author:   op.Author,
+		Author:   op.Author_,
 		UnixTime: timestamp.Timestamp(op.UnixTime),
 		Status:   op.Status,
 	}
@@ -44,7 +37,7 @@ func (op *SetStatusOperation) Apply(snapshot *Snapshot) {
 }
 
 func (op *SetStatusOperation) Validate() error {
-	if err := opBaseValidate(op, SetStatusOp); err != nil {
+	if err := op.OpBase.Validate(op, SetStatusOp); err != nil {
 		return err
 	}
 
@@ -55,7 +48,7 @@ func (op *SetStatusOperation) Validate() error {
 	return nil
 }
 
-// UnmarshalJSON is a two step JSON unmarshaling
+// UnmarshalJSON is a two step JSON unmarshalling
 // This workaround is necessary to avoid the inner OpBase.MarshalJSON
 // overriding the outer op's MarshalJSON
 func (op *SetStatusOperation) UnmarshalJSON(data []byte) error {

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/MichaelMure/git-bug/entity"
+	"github.com/MichaelMure/git-bug/entity/dag"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/text"
@@ -13,6 +14,7 @@ import (
 )
 
 var _ Operation = &CreateOperation{}
+var _ dag.OperationWithFiles = &CreateOperation{}
 
 // CreateOperation define the initial creation of a bug
 type CreateOperation struct {
@@ -22,37 +24,53 @@ type CreateOperation struct {
 	Files   []repository.Hash `json:"files"`
 }
 
-// Sign-post method for gqlgen
-func (op *CreateOperation) IsOperation() {}
-
-func (op *CreateOperation) base() *OpBase {
-	return &op.OpBase
+func (op *CreateOperation) Id() entity.Id {
+	return idOperation(op, &op.OpBase)
 }
 
-func (op *CreateOperation) Id() entity.Id {
-	return idOperation(op)
+// OVERRIDE
+func (op *CreateOperation) SetMetadata(key string, value string) {
+	// sanity check: we make sure we are not in the following scenario:
+	// - the bug is created with a first operation
+	// - Id() is used
+	// - metadata are added, which will change the Id
+	// - Id() is used again
+
+	if op.id != entity.UnsetId {
+		panic("usage of Id() after changing the first operation")
+	}
+
+	op.OpBase.SetMetadata(key, value)
 }
 
 func (op *CreateOperation) Apply(snapshot *Snapshot) {
-	snapshot.addActor(op.Author)
-	snapshot.addParticipant(op.Author)
+	// sanity check: will fail when adding a second Create
+	if snapshot.id != "" && snapshot.id != entity.UnsetId && snapshot.id != op.Id() {
+		panic("adding a second Create operation")
+	}
+
+	snapshot.id = op.Id()
+
+	snapshot.addActor(op.Author_)
+	snapshot.addParticipant(op.Author_)
 
 	snapshot.Title = op.Title
 
+	commentId := entity.CombineIds(snapshot.Id(), op.Id())
 	comment := Comment{
-		id:       op.Id(),
+		id:       commentId,
 		Message:  op.Message,
-		Author:   op.Author,
+		Author:   op.Author_,
 		UnixTime: timestamp.Timestamp(op.UnixTime),
 	}
 
 	snapshot.Comments = []Comment{comment}
-	snapshot.Author = op.Author
+	snapshot.Author = op.Author_
 	snapshot.CreateTime = op.Time()
 
 	snapshot.Timeline = []TimelineItem{
 		&CreateTimelineItem{
-			CommentTimelineItem: NewCommentTimelineItem(op.Id(), comment),
+			CommentTimelineItem: NewCommentTimelineItem(commentId, comment),
 		},
 	}
 }
@@ -62,18 +80,23 @@ func (op *CreateOperation) GetFiles() []repository.Hash {
 }
 
 func (op *CreateOperation) Validate() error {
-	if err := opBaseValidate(op, CreateOp); err != nil {
+	if err := op.OpBase.Validate(op, CreateOp); err != nil {
 		return err
+	}
+
+	if len(op.Nonce) > 64 {
+		return fmt.Errorf("create nonce is too big")
+	}
+	if len(op.Nonce) < 20 {
+		return fmt.Errorf("create nonce is too small")
 	}
 
 	if text.Empty(op.Title) {
 		return fmt.Errorf("title is empty")
 	}
-
 	if strings.Contains(op.Title, "\n") {
 		return fmt.Errorf("title should be a single line")
 	}
-
 	if !text.Safe(op.Title) {
 		return fmt.Errorf("title is not fully printable")
 	}
@@ -85,7 +108,7 @@ func (op *CreateOperation) Validate() error {
 	return nil
 }
 
-// UnmarshalJSON is a two step JSON unmarshaling
+// UnmarshalJSON is a two step JSON unmarshalling
 // This workaround is necessary to avoid the inner OpBase.MarshalJSON
 // overriding the outer op's MarshalJSON
 func (op *CreateOperation) UnmarshalJSON(data []byte) error {
@@ -98,6 +121,7 @@ func (op *CreateOperation) UnmarshalJSON(data []byte) error {
 	}
 
 	aux := struct {
+		Nonce   []byte            `json:"nonce"`
 		Title   string            `json:"title"`
 		Message string            `json:"message"`
 		Files   []repository.Hash `json:"files"`
@@ -109,6 +133,7 @@ func (op *CreateOperation) UnmarshalJSON(data []byte) error {
 	}
 
 	op.OpBase = base
+	op.Nonce = aux.Nonce
 	op.Title = aux.Title
 	op.Message = aux.Message
 	op.Files = aux.Files

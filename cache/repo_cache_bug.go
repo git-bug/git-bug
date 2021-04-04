@@ -18,10 +18,7 @@ import (
 	"github.com/MichaelMure/git-bug/repository"
 )
 
-const (
-	bugCacheFile   = "bug-cache"
-	searchCacheDir = "search-cache"
-)
+const bugCacheFile = "bug-cache"
 
 var errBugNotInCache = errors.New("bug missing from cache")
 
@@ -156,7 +153,7 @@ func (c *RepoCache) ResolveBug(id entity.Id) (*BugCache, error) {
 	}
 	c.muBug.RUnlock()
 
-	b, err := bug.ReadLocalWithResolver(c.repo, newIdentityCacheResolver(c), id)
+	b, err := bug.ReadWithResolver(c.repo, newIdentityCacheResolver(c), id)
 	if err != nil {
 		return nil, err
 	}
@@ -261,6 +258,53 @@ func (c *RepoCache) resolveBugMatcher(f func(*BugExcerpt) bool) (entity.Id, erro
 	}
 
 	return matching[0], nil
+}
+
+// ResolveComment search for a Bug/Comment combination matching the merged
+// bug/comment Id prefix. Returns the Bug containing the Comment and the Comment's
+// Id.
+func (c *RepoCache) ResolveComment(prefix string) (*BugCache, entity.Id, error) {
+	bugPrefix, _ := entity.SeparateIds(prefix)
+	bugCandidate := make([]entity.Id, 0, 5)
+
+	// build a list of possible matching bugs
+	c.muBug.RLock()
+	for _, excerpt := range c.bugExcerpts {
+		if excerpt.Id.HasPrefix(bugPrefix) {
+			bugCandidate = append(bugCandidate, excerpt.Id)
+		}
+	}
+	c.muBug.RUnlock()
+
+	matchingBugIds := make([]entity.Id, 0, 5)
+	matchingCommentId := entity.UnsetId
+	var matchingBug *BugCache
+
+	// search for matching comments
+	// searching every bug candidate allow for some collision with the bug prefix only,
+	// before being refined with the full comment prefix
+	for _, bugId := range bugCandidate {
+		b, err := c.ResolveBug(bugId)
+		if err != nil {
+			return nil, entity.UnsetId, err
+		}
+
+		for _, comment := range b.Snapshot().Comments {
+			if comment.Id().HasPrefix(prefix) {
+				matchingBugIds = append(matchingBugIds, bugId)
+				matchingBug = b
+				matchingCommentId = comment.Id()
+			}
+		}
+	}
+
+	if len(matchingBugIds) > 1 {
+		return nil, entity.UnsetId, entity.NewErrMultipleMatch("bug/comment", matchingBugIds)
+	} else if len(matchingBugIds) == 0 {
+		return nil, entity.UnsetId, errors.New("comment doesn't exist")
+	}
+
+	return matchingBug, matchingCommentId, nil
 }
 
 // QueryBugs return the id of all Bug matching the given Query

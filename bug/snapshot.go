@@ -28,6 +28,11 @@ type Snapshot struct {
 
 // Return the Bug identifier
 func (snap *Snapshot) Id() entity.Id {
+	if snap.id == "" {
+		// simply panic as it would be a coding error
+		// (using an id of a bug not stored yet)
+		panic("no id yet")
+	}
 	return snap.id
 }
 

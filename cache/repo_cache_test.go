@@ -110,8 +110,8 @@ func TestCache(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestPushPull(t *testing.T) {
-	repoA, repoB, remote := repository.SetupReposAndRemote()
+func TestCachePushPull(t *testing.T) {
+	repoA, repoB, remote := repository.SetupGoGitReposAndRemote()
 	defer repository.CleanupTestRepos(repoA, repoB, remote)
 
 	cacheA, err := NewRepoCache(repoA)
@@ -124,6 +124,10 @@ func TestPushPull(t *testing.T) {
 	reneA, err := cacheA.NewIdentity("René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
 	err = cacheA.SetUserIdentity(reneA)
+	require.NoError(t, err)
+	isaacB, err := cacheB.NewIdentity("Isaac Newton", "isaac@newton.uk")
+	require.NoError(t, err)
+	err = cacheB.SetUserIdentity(isaacB)
 	require.NoError(t, err)
 
 	// distribute the identity

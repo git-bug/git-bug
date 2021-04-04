@@ -18,7 +18,8 @@ import (
 // 1: original format
 // 2: added cache for identities with a reference in the bug cache
 // 3: no more legacy identity
-const formatVersion = 3
+// 4: entities make their IDs from data, not git commit
+const formatVersion = 4
 
 // The maximum number of bugs loaded in memory. After that, eviction will be done.
 const defaultMaxLoadedBugs = 1000
@@ -194,7 +195,7 @@ func (c *RepoCache) buildCache() error {
 
 	c.bugExcerpts = make(map[entity.Id]*BugExcerpt)
 
-	allBugs := bug.ReadAllLocal(c.repo)
+	allBugs := bug.ReadAll(c.repo)
 
 	// wipe the index just to be sure
 	err := c.repo.ClearBleveIndex("bug")

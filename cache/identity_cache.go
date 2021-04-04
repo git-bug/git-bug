@@ -2,6 +2,7 @@ package cache
 
 import (
 	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/repository"
 )
 
 var _ identity.Interface = &IdentityCache{}
@@ -23,8 +24,11 @@ func (i *IdentityCache) notifyUpdated() error {
 	return i.repoCache.identityUpdated(i.Identity.Id())
 }
 
-func (i *IdentityCache) Mutate(f func(identity.Mutator) identity.Mutator) error {
-	i.Identity.Mutate(f)
+func (i *IdentityCache) Mutate(repo repository.RepoClock, f func(*identity.Mutator)) error {
+	err := i.Identity.Mutate(repo, f)
+	if err != nil {
+		return err
+	}
 	return i.notifyUpdated()
 }
 

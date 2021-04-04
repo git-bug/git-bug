@@ -267,7 +267,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 			continue
 		}
 
-		opAuthor := op.GetAuthor()
+		opAuthor := op.Author()
 		client, err := ge.getIdentityClient(opAuthor.Id())
 		if err != nil {
 			continue

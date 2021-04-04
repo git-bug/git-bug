@@ -95,6 +95,12 @@ func (c *RepoCache) MergeAll(remote string) <-chan entity.MergeResult {
 	go func() {
 		defer close(out)
 
+		author, err := c.GetUserIdentity()
+		if err != nil {
+			out <- entity.NewMergeError(err, "")
+			return
+		}
+
 		results := identity.MergeAll(c.repo, remote)
 		for result := range results {
 			out <- result
@@ -112,7 +118,7 @@ func (c *RepoCache) MergeAll(remote string) <-chan entity.MergeResult {
 			}
 		}
 
-		results = bug.MergeAll(c.repo, remote)
+		results = bug.MergeAll(c.repo, remote, author)
 		for result := range results {
 			out <- result
 
@@ -130,11 +136,10 @@ func (c *RepoCache) MergeAll(remote string) <-chan entity.MergeResult {
 			}
 		}
 
-		err := c.write()
-
-		// No easy way out here ..
+		err = c.write()
 		if err != nil {
-			panic(err)
+			out <- entity.NewMergeError(err, "")
+			return
 		}
 	}()
 

@@ -196,6 +196,7 @@ func (ji *jiraImporter) ensurePerson(repo *cache.RepoCache, user User) (*cache.I
 		user.EmailAddress,
 		user.Key,
 		"",
+		nil,
 		map[string]string{
 			metaKeyJiraUser: user.Key,
 		},

@@ -11,7 +11,7 @@ import (
 )
 
 func TestCredential(t *testing.T) {
-	repo := repository.NewMockRepoForTest()
+	repo := repository.NewMockRepo()
 
 	storeToken := func(val string, target string) *Token {
 		token := NewToken(target, val)
@@ -102,7 +102,7 @@ func sameIds(t *testing.T, a []Credential, b []Credential) {
 }
 
 func testCredentialSerial(t *testing.T, original Credential) Credential {
-	repo := repository.NewMockRepoForTest()
+	repo := repository.NewMockRepo()
 
 	original.SetMetadata("test", "value")
 

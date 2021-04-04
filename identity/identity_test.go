@@ -6,120 +6,108 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
+	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
 // Test the commit and load of an Identity with multiple versions
 func TestIdentityCommitLoad(t *testing.T) {
-	mockRepo := repository.NewMockRepoForTest()
+	repo := makeIdentityTestRepo(t)
 
 	// single version
 
-	identity := &Identity{
-		id: entity.UnsetId,
-		versions: []*Version{
-			{
-				name:  "René Descartes",
-				email: "rene.descartes@example.com",
-			},
-		},
-	}
-
-	err := identity.Commit(mockRepo)
-
+	identity, err := NewIdentity(repo, "René Descartes", "rene.descartes@example.com")
 	require.NoError(t, err)
-	require.NotEmpty(t, identity.id)
 
-	loaded, err := ReadLocal(mockRepo, identity.id)
+	idBeforeCommit := identity.Id()
+
+	err = identity.Commit(repo)
+	require.NoError(t, err)
+
+	commitsAreSet(t, identity)
+	require.NotEmpty(t, identity.Id())
+	require.Equal(t, idBeforeCommit, identity.Id())
+	require.Equal(t, idBeforeCommit, identity.versions[0].Id())
+
+	loaded, err := ReadLocal(repo, identity.Id())
 	require.NoError(t, err)
 	commitsAreSet(t, loaded)
 	require.Equal(t, identity, loaded)
 
-	// multiple version
+	// multiple versions
 
-	identity = &Identity{
-		id: entity.UnsetId,
-		versions: []*Version{
-			{
-				time:  100,
-				name:  "René Descartes",
-				email: "rene.descartes@example.com",
-				keys: []*Key{
-					{PubKey: "pubkeyA"},
-				},
-			},
-			{
-				time:  200,
-				name:  "René Descartes",
-				email: "rene.descartes@example.com",
-				keys: []*Key{
-					{PubKey: "pubkeyB"},
-				},
-			},
-			{
-				time:  201,
-				name:  "René Descartes",
-				email: "rene.descartes@example.com",
-				keys: []*Key{
-					{PubKey: "pubkeyC"},
-				},
-			},
-		},
-	}
-
-	err = identity.Commit(mockRepo)
-
+	identity, err = NewIdentityFull(repo, "René Descartes", "rene.descartes@example.com", "", "", []*Key{generatePublicKey()})
 	require.NoError(t, err)
-	require.NotEmpty(t, identity.id)
 
-	loaded, err = ReadLocal(mockRepo, identity.id)
+	idBeforeCommit = identity.Id()
+
+	err = identity.Mutate(repo, func(orig *Mutator) {
+		orig.Keys = []*Key{generatePublicKey()}
+	})
+	require.NoError(t, err)
+
+	err = identity.Mutate(repo, func(orig *Mutator) {
+		orig.Keys = []*Key{generatePublicKey()}
+	})
+	require.NoError(t, err)
+
+	require.Equal(t, idBeforeCommit, identity.Id())
+
+	err = identity.Commit(repo)
+	require.NoError(t, err)
+
+	commitsAreSet(t, identity)
+	require.NotEmpty(t, identity.Id())
+	require.Equal(t, idBeforeCommit, identity.Id())
+	require.Equal(t, idBeforeCommit, identity.versions[0].Id())
+
+	loaded, err = ReadLocal(repo, identity.Id())
 	require.NoError(t, err)
 	commitsAreSet(t, loaded)
 	require.Equal(t, identity, loaded)
 
 	// add more version
 
-	identity.addVersionForTest(&Version{
-		time:  201,
-		name:  "René Descartes",
-		email: "rene.descartes@example.com",
-		keys: []*Key{
-			{PubKey: "pubkeyD"},
-		},
+	err = identity.Mutate(repo, func(orig *Mutator) {
+		orig.Email = "rene@descartes.com"
+		orig.Keys = []*Key{generatePublicKey()}
 	})
-
-	identity.addVersionForTest(&Version{
-		time:  300,
-		name:  "René Descartes",
-		email: "rene.descartes@example.com",
-		keys: []*Key{
-			{PubKey: "pubkeyE"},
-		},
-	})
-
-	err = identity.Commit(mockRepo)
-
 	require.NoError(t, err)
-	require.NotEmpty(t, identity.id)
 
-	loaded, err = ReadLocal(mockRepo, identity.id)
+	err = identity.Mutate(repo, func(orig *Mutator) {
+		orig.Email = "rene@descartes.com"
+		orig.Keys = []*Key{generatePublicKey(), generatePublicKey()}
+	})
+	require.NoError(t, err)
+
+	err = identity.Commit(repo)
+	require.NoError(t, err)
+
+	commitsAreSet(t, identity)
+	require.NotEmpty(t, identity.Id())
+	require.Equal(t, idBeforeCommit, identity.Id())
+	require.Equal(t, idBeforeCommit, identity.versions[0].Id())
+
+	loaded, err = ReadLocal(repo, identity.Id())
 	require.NoError(t, err)
 	commitsAreSet(t, loaded)
 	require.Equal(t, identity, loaded)
 }
 
 func TestIdentityMutate(t *testing.T) {
-	identity := NewIdentity("René Descartes", "rene.descartes@example.com")
+	repo := makeIdentityTestRepo(t)
+
+	identity, err := NewIdentity(repo, "René Descartes", "rene.descartes@example.com")
+	require.NoError(t, err)
 
 	require.Len(t, identity.versions, 1)
 
-	identity.Mutate(func(orig Mutator) Mutator {
+	err = identity.Mutate(repo, func(orig *Mutator) {
 		orig.Email = "rene@descartes.fr"
 		orig.Name = "René"
 		orig.Login = "rene"
-		return orig
 	})
+	require.NoError(t, err)
 
 	require.Len(t, identity.versions, 2)
 	require.Equal(t, identity.Email(), "rene@descartes.fr")
@@ -135,97 +123,93 @@ func commitsAreSet(t *testing.T, identity *Identity) {
 
 // Test that the correct crypto keys are returned for a given lamport time
 func TestIdentity_ValidKeysAtTime(t *testing.T) {
+	pubKeyA := generatePublicKey()
+	pubKeyB := generatePublicKey()
+	pubKeyC := generatePublicKey()
+	pubKeyD := generatePublicKey()
+	pubKeyE := generatePublicKey()
+
 	identity := Identity{
-		id: entity.UnsetId,
-		versions: []*Version{
+		versions: []*version{
 			{
-				time:  100,
-				name:  "René Descartes",
-				email: "rene.descartes@example.com",
-				keys: []*Key{
-					{PubKey: "pubkeyA"},
-				},
+				times: map[string]lamport.Time{"foo": 100},
+				keys:  []*Key{pubKeyA},
 			},
 			{
-				time:  200,
-				name:  "René Descartes",
-				email: "rene.descartes@example.com",
-				keys: []*Key{
-					{PubKey: "pubkeyB"},
-				},
+				times: map[string]lamport.Time{"foo": 200},
+				keys:  []*Key{pubKeyB},
 			},
 			{
-				time:  201,
-				name:  "René Descartes",
-				email: "rene.descartes@example.com",
-				keys: []*Key{
-					{PubKey: "pubkeyC"},
-				},
+				times: map[string]lamport.Time{"foo": 201},
+				keys:  []*Key{pubKeyC},
 			},
 			{
-				time:  201,
-				name:  "René Descartes",
-				email: "rene.descartes@example.com",
-				keys: []*Key{
-					{PubKey: "pubkeyD"},
-				},
+				times: map[string]lamport.Time{"foo": 201},
+				keys:  []*Key{pubKeyD},
 			},
 			{
-				time:  300,
-				name:  "René Descartes",
-				email: "rene.descartes@example.com",
-				keys: []*Key{
-					{PubKey: "pubkeyE"},
-				},
+				times: map[string]lamport.Time{"foo": 300},
+				keys:  []*Key{pubKeyE},
 			},
 		},
 	}
 
-	require.Nil(t, identity.ValidKeysAtTime(10))
-	require.Equal(t, identity.ValidKeysAtTime(100), []*Key{{PubKey: "pubkeyA"}})
-	require.Equal(t, identity.ValidKeysAtTime(140), []*Key{{PubKey: "pubkeyA"}})
-	require.Equal(t, identity.ValidKeysAtTime(200), []*Key{{PubKey: "pubkeyB"}})
-	require.Equal(t, identity.ValidKeysAtTime(201), []*Key{{PubKey: "pubkeyD"}})
-	require.Equal(t, identity.ValidKeysAtTime(202), []*Key{{PubKey: "pubkeyD"}})
-	require.Equal(t, identity.ValidKeysAtTime(300), []*Key{{PubKey: "pubkeyE"}})
-	require.Equal(t, identity.ValidKeysAtTime(3000), []*Key{{PubKey: "pubkeyE"}})
+	require.Nil(t, identity.ValidKeysAtTime("foo", 10))
+	require.Equal(t, identity.ValidKeysAtTime("foo", 100), []*Key{pubKeyA})
+	require.Equal(t, identity.ValidKeysAtTime("foo", 140), []*Key{pubKeyA})
+	require.Equal(t, identity.ValidKeysAtTime("foo", 200), []*Key{pubKeyB})
+	require.Equal(t, identity.ValidKeysAtTime("foo", 201), []*Key{pubKeyD})
+	require.Equal(t, identity.ValidKeysAtTime("foo", 202), []*Key{pubKeyD})
+	require.Equal(t, identity.ValidKeysAtTime("foo", 300), []*Key{pubKeyE})
+	require.Equal(t, identity.ValidKeysAtTime("foo", 3000), []*Key{pubKeyE})
 }
 
 // Test the immutable or mutable metadata search
 func TestMetadata(t *testing.T) {
-	mockRepo := repository.NewMockRepoForTest()
+	repo := makeIdentityTestRepo(t)
 
-	identity := NewIdentity("René Descartes", "rene.descartes@example.com")
+	identity, err := NewIdentity(repo, "René Descartes", "rene.descartes@example.com")
+	require.NoError(t, err)
 
 	identity.SetMetadata("key1", "value1")
 	assertHasKeyValue(t, identity.ImmutableMetadata(), "key1", "value1")
 	assertHasKeyValue(t, identity.MutableMetadata(), "key1", "value1")
 
-	err := identity.Commit(mockRepo)
+	err = identity.Commit(repo)
 	require.NoError(t, err)
 
 	assertHasKeyValue(t, identity.ImmutableMetadata(), "key1", "value1")
 	assertHasKeyValue(t, identity.MutableMetadata(), "key1", "value1")
 
 	// try override
-	identity.addVersionForTest(&Version{
-		name:  "René Descartes",
-		email: "rene.descartes@example.com",
+	err = identity.Mutate(repo, func(orig *Mutator) {
+		orig.Email = "rene@descartes.fr"
 	})
+	require.NoError(t, err)
 
 	identity.SetMetadata("key1", "value2")
 	assertHasKeyValue(t, identity.ImmutableMetadata(), "key1", "value1")
 	assertHasKeyValue(t, identity.MutableMetadata(), "key1", "value2")
 
-	err = identity.Commit(mockRepo)
+	err = identity.Commit(repo)
 	require.NoError(t, err)
 
 	// reload
-	loaded, err := ReadLocal(mockRepo, identity.id)
+	loaded, err := ReadLocal(repo, identity.Id())
 	require.NoError(t, err)
 
 	assertHasKeyValue(t, loaded.ImmutableMetadata(), "key1", "value1")
 	assertHasKeyValue(t, loaded.MutableMetadata(), "key1", "value2")
+
+	// set metadata after commit
+	versionCount := len(identity.versions)
+	identity.SetMetadata("foo", "bar")
+	require.True(t, identity.NeedCommit())
+	require.Len(t, identity.versions, versionCount+1)
+
+	err = identity.Commit(repo)
+	require.NoError(t, err)
+	require.Len(t, identity.versions, versionCount+1)
 }
 
 func assertHasKeyValue(t *testing.T, metadata map[string]string, key, value string) {
@@ -235,22 +219,15 @@ func assertHasKeyValue(t *testing.T, metadata map[string]string, key, value stri
 }
 
 func TestJSON(t *testing.T) {
-	mockRepo := repository.NewMockRepoForTest()
+	repo := makeIdentityTestRepo(t)
 
-	identity := &Identity{
-		id: entity.UnsetId,
-		versions: []*Version{
-			{
-				name:  "René Descartes",
-				email: "rene.descartes@example.com",
-			},
-		},
-	}
+	identity, err := NewIdentity(repo, "René Descartes", "rene.descartes@example.com")
+	require.NoError(t, err)
 
 	// commit to make sure we have an Id
-	err := identity.Commit(mockRepo)
+	err = identity.Commit(repo)
 	require.NoError(t, err)
-	require.NotEmpty(t, identity.id)
+	require.NotEmpty(t, identity.Id())
 
 	// serialize
 	data, err := json.Marshal(identity)
@@ -260,10 +237,10 @@ func TestJSON(t *testing.T) {
 	var i Interface
 	i, err = UnmarshalJSON(data)
 	require.NoError(t, err)
-	require.Equal(t, identity.id, i.Id())
+	require.Equal(t, identity.Id(), i.Id())
 
 	// make sure we can load the identity properly
-	i, err = ReadLocal(mockRepo, i.Id())
+	i, err = ReadLocal(repo, i.Id())
 	require.NoError(t, err)
 }
 
@@ -280,7 +257,9 @@ func TestIdentityRemove(t *testing.T) {
 	require.NoError(t, err)
 
 	// generate an identity for testing
-	rene := NewIdentity("René Descartes", "rene@descartes.fr")
+	rene, err := NewIdentity(repo, "René Descartes", "rene@descartes.fr")
+	require.NoError(t, err)
+
 	err = rene.Commit(repo)
 	require.NoError(t, err)
 

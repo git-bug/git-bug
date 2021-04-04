@@ -1,6 +1,6 @@
 module github.com/MichaelMure/git-bug
 
-go 1.13
+go 1.15
 
 require (
 	github.com/99designs/gqlgen v0.10.3-0.20200209012558-b7a58a1c0e4b
@@ -8,7 +8,6 @@ require (
 	github.com/MichaelMure/go-term-text v0.2.10
 	github.com/araddon/dateparse v0.0.0-20190622164848-0fb0a474d195
 	github.com/awesome-gocui/gocui v0.6.1-0.20191115151952-a34ffb055986
-	github.com/blang/semver v3.5.1+incompatible
 	github.com/blevesearch/bleve v1.0.14
 	github.com/cheekybits/genny v0.0.0-20170328200008-9127e812e1e9
 	github.com/corpix/uarand v0.1.1 // indirect

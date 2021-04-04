@@ -14,9 +14,9 @@ import (
 )
 
 func TestNoopSerialize(t *testing.T) {
-	repo := repository.NewMockRepoForTest()
-	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
-	err := rene.Commit(repo)
+	repo := repository.NewMockRepo()
+
+	rene, err := identity.NewIdentity(repo, "René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
 
 	unix := time.Now().Unix()
@@ -33,8 +33,8 @@ func TestNoopSerialize(t *testing.T) {
 	before.Id()
 
 	// Replace the identity stub with the real thing
-	assert.Equal(t, rene.Id(), after.base().Author.Id())
-	after.Author = rene
+	assert.Equal(t, rene.Id(), after.Author().Id())
+	after.Author_ = rene
 
 	assert.Equal(t, before, &after)
 }

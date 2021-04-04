@@ -21,20 +21,13 @@ type LabelChangeOperation struct {
 	Removed []Label `json:"removed"`
 }
 
-// Sign-post method for gqlgen
-func (op *LabelChangeOperation) IsOperation() {}
-
-func (op *LabelChangeOperation) base() *OpBase {
-	return &op.OpBase
-}
-
 func (op *LabelChangeOperation) Id() entity.Id {
-	return idOperation(op)
+	return idOperation(op, &op.OpBase)
 }
 
 // Apply apply the operation
 func (op *LabelChangeOperation) Apply(snapshot *Snapshot) {
-	snapshot.addActor(op.Author)
+	snapshot.addActor(op.Author_)
 
 	// Add in the set
 AddLoop:
@@ -66,7 +59,7 @@ AddLoop:
 
 	item := &LabelChangeTimelineItem{
 		id:       op.Id(),
-		Author:   op.Author,
+		Author:   op.Author_,
 		UnixTime: timestamp.Timestamp(op.UnixTime),
 		Added:    op.Added,
 		Removed:  op.Removed,
@@ -76,7 +69,7 @@ AddLoop:
 }
 
 func (op *LabelChangeOperation) Validate() error {
-	if err := opBaseValidate(op, LabelChangeOp); err != nil {
+	if err := op.OpBase.Validate(op, LabelChangeOp); err != nil {
 		return err
 	}
 
@@ -99,7 +92,7 @@ func (op *LabelChangeOperation) Validate() error {
 	return nil
 }
 
-// UnmarshalJSON is a two step JSON unmarshaling
+// UnmarshalJSON is a two step JSON unmarshalling
 // This workaround is necessary to avoid the inner OpBase.MarshalJSON
 // overriding the outer op's MarshalJSON
 func (op *LabelChangeOperation) UnmarshalJSON(data []byte) error {

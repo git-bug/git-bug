@@ -16,16 +16,14 @@ type Interface interface {
 	// Append an operation into the staging area, to be committed later
 	Append(op Operation)
 
+	// Operations return the ordered operations
+	Operations() []Operation
+
 	// Indicate that the in-memory state changed and need to be commit in the repository
 	NeedCommit() bool
 
 	// Commit write the staging area in Git and move the operations to the packs
 	Commit(repo repository.ClockedRepo) error
-
-	// Merge a different version of the same bug by rebasing operations of this bug
-	// that are not present in the other on top of the chain of operations of the
-	// other version.
-	Merge(repo repository.Repo, other Interface) (bool, error)
 
 	// Lookup for the very first operation of the bug.
 	// For a valid Bug, this operation should be a CreateOp

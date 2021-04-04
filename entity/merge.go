@@ -8,14 +8,15 @@ import (
 type MergeStatus int
 
 const (
-	_ MergeStatus = iota
-	MergeStatusNew
-	MergeStatusInvalid
-	MergeStatusUpdated
-	MergeStatusNothing
-	MergeStatusError
+	_                  MergeStatus = iota
+	MergeStatusNew                 // a new Entity was created locally
+	MergeStatusInvalid             // the remote data is invalid
+	MergeStatusUpdated             // a local Entity has been updated
+	MergeStatusNothing             // no changes were made to a local Entity (already up to date)
+	MergeStatusError               // a terminal error happened
 )
 
+// MergeResult hold the result of a merge operation on an Entity.
 type MergeResult struct {
 	// Err is set when a terminal error occur in the process
 	Err error
@@ -23,10 +24,10 @@ type MergeResult struct {
 	Id     Id
 	Status MergeStatus
 
-	// Only set for invalid status
+	// Only set for Invalid status
 	Reason string
 
-	// Not set for invalid status
+	// Only set for New or Updated status
 	Entity Interface
 }
 
@@ -41,26 +42,19 @@ func (mr MergeResult) String() string {
 	case MergeStatusNothing:
 		return "nothing to do"
 	case MergeStatusError:
-		return fmt.Sprintf("merge error on %s: %s", mr.Id, mr.Err.Error())
+		if mr.Id != "" {
+			return fmt.Sprintf("merge error on %s: %s", mr.Id, mr.Err.Error())
+		}
+		return fmt.Sprintf("merge error: %s", mr.Err.Error())
 	default:
 		panic("unknown merge status")
 	}
 }
 
-func NewMergeError(err error, id Id) MergeResult {
-	return MergeResult{
-		Err:    err,
-		Id:     id,
-		Status: MergeStatusError,
-	}
-}
-
-func NewMergeStatus(status MergeStatus, id Id, entity Interface) MergeResult {
+func NewMergeNewStatus(id Id, entity Interface) MergeResult {
 	return MergeResult{
 		Id:     id,
-		Status: status,
-
-		// Entity is not set for an invalid merge result
+		Status: MergeStatusNew,
 		Entity: entity,
 	}
 }
@@ -70,5 +64,28 @@ func NewMergeInvalidStatus(id Id, reason string) MergeResult {
 		Id:     id,
 		Status: MergeStatusInvalid,
 		Reason: reason,
+	}
+}
+
+func NewMergeUpdatedStatus(id Id, entity Interface) MergeResult {
+	return MergeResult{
+		Id:     id,
+		Status: MergeStatusUpdated,
+		Entity: entity,
+	}
+}
+
+func NewMergeNothingStatus(id Id) MergeResult {
+	return MergeResult{
+		Id:     id,
+		Status: MergeStatusNothing,
+	}
+}
+
+func NewMergeError(err error, id Id) MergeResult {
+	return MergeResult{
+		Id:     id,
+		Status: MergeStatusError,
+		Err:    err,
 	}
 }

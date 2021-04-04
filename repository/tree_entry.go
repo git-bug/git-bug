@@ -100,3 +100,13 @@ func readTreeEntries(s string) ([]TreeEntry, error) {
 
 	return casted, nil
 }
+
+// SearchTreeEntry search a TreeEntry by name from an array
+func SearchTreeEntry(entries []TreeEntry, name string) (TreeEntry, bool) {
+	for _, entry := range entries {
+		if entry.Name == name {
+			return entry, true
+		}
+	}
+	return TreeEntry{}, false
+}
