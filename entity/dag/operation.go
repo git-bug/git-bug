@@ -40,5 +40,9 @@ type OperationWithFiles interface {
 	Operation
 
 	// GetFiles return the files needed by this operation
+	// This implies that the Operation maintain and store internally the references to those files. This is how
+	// this information is read later, when loading from storage.
+	// For example, an operation that has a text value referencing some files would maintain a mapping (text ref -->
+	// hash).
 	GetFiles() []repository.Hash
 }
