@@ -5,6 +5,7 @@ import parse from 'remark-parse';
 import remark2react from 'remark-react';
 import unified from 'unified';
 
+import AnchorTag from './AnchorTag';
 import BlockQuoteTag from './BlockQuoteTag';
 import ImageTag from './ImageTag';
 import PreTag from './PreTag';
@@ -19,6 +20,7 @@ const Content: React.FC<Props> = ({ markdown }: Props) => {
       remarkReactComponents: {
         img: ImageTag,
         pre: PreTag,
+        a: AnchorTag,
         blockquote: BlockQuoteTag,
       },
     })
