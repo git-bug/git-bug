@@ -165,7 +165,7 @@ function FilterToolbar({ query, queryLocation }: Props) {
       <FilterDropdown
         dropdown={identities}
         itemActive={(key) => hasValue('author', key)}
-        to={(key) => pipe(toggleParam('author', key), loc)(params)}
+        to={(key) => pipe(toggleOrAddParam('author', key), loc)(params)}
         hasFilter
       >
         Author
