@@ -59,7 +59,16 @@ func (gi *githubImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 		var nextEvent ImportEvent
 		var err error
 		for {
-			// We need the current event and one look ahead event.
+			// An IssueEvent contains the issue in its most recent state. If an issue
+			// has at least one issue edit, then the history of the issue edits is
+			// represented by IssueEditEvents. That is, the unedited (original) issue
+			// might be saved only in the IssueEditEvent following the IssueEvent.
+			// Since we replicate the edit history we need to either use the IssueEvent
+			// (if there are no edits) or the IssueEvent together with its first
+			// IssueEditEvent (if there are edits).
+			// Exactly the same is true for comments and comment edits.
+			// As a consequence we need to look at the current event and one look ahead
+			// event.
 			currEvent = nextEvent
 			if currEvent == nil {
 				currEvent = gi.getEventHandleMsgs()
