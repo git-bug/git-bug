@@ -69,20 +69,11 @@ function Header() {
   const location = useLocation();
 
   // Prevents error of invalid tab selection in <Tabs>
+  // Will return a valid tab path or false if path is unkown.
   function highlightTab() {
-    switch (location.pathname) {
-      case '/':
-        return '/';
-      case '/code':
-        return '/code';
-      case '/pulls':
-        return '/pulls';
-      case '/settings':
-        return '/settings';
-      default:
-        // using false as value for tabs will result in no selected tab
-        return false;
-    }
+    const validTabs = ['/', '/code', '/pulls', '/settings'];
+    const tab = validTabs.find((tabPath) => tabPath === location.pathname);
+    return tab === undefined ? false : tab;
   }
 
   return (
