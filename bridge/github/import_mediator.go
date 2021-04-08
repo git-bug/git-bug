@@ -47,11 +47,11 @@ type ImportEvent interface {
 	isImportEvent()
 }
 
-type MessageEvent struct {
+type RateLimitingEvent struct {
 	msg string
 }
 
-func (MessageEvent) isImportEvent() {}
+func (RateLimitingEvent) isImportEvent() {}
 
 type IssueEvent struct {
 	issue
@@ -404,11 +404,11 @@ func (mm *importMediator) queryOnce(ctx context.Context, query rateLimiter, vars
 		resetTime := rateLimit.ResetAt.Time
 		// Add a few seconds (8) for good measure
 		resetTime = resetTime.Add(8 * time.Second)
-		msg := fmt.Sprintf("Github GraphQL API rate limit exhausted. Sleeping until %s", resetTime.String())
+		msg := fmt.Sprintf("Github GraphQL API: import will sleep until %s", resetTime.String())
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case mm.importEvents <- MessageEvent{msg}:
+		case mm.importEvents <- RateLimitingEvent{msg}:
 		}
 		timer := time.NewTimer(time.Until(resetTime))
 		select {

@@ -79,8 +79,8 @@ func (gi *githubImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 			nextEvent = gi.getEventHandleMsgs()
 
 			switch event := currEvent.(type) {
-			case MessageEvent:
-				fmt.Println(event.msg)
+			case RateLimitingEvent:
+				out <- core.NewImportRateLimiting(event.msg)
 			case IssueEvent:
 				// first: commit what is being held in currBug
 				if err = gi.commit(currBug, out); err != nil {
@@ -148,9 +148,9 @@ func (gi *githubImporter) getEventHandleMsgs() ImportEvent {
 	for {
 		// read event from import mediator
 		event := gi.mediator.NextImportEvent()
-		// consume (and use) all message events
-		if e, ok := event.(MessageEvent); ok {
-			fmt.Println(e.msg)
+		// consume (and use) all rate limiting events
+		if e, ok := event.(RateLimitingEvent); ok {
+			gi.out <- core.NewImportRateLimiting(e.msg)
 			continue
 		}
 		return event

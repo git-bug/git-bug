@@ -34,6 +34,9 @@ const (
 	// but not severe enough to consider the import a failure.
 	ImportEventWarning
 
+	// The import system (web API) has reached the rate limit
+	ImportEventRateLimiting
+
 	// Error happened during import
 	ImportEventError
 )
@@ -87,6 +90,8 @@ func (er ImportResult) String() string {
 			parts = append(parts, fmt.Sprintf("err: %s", er.Err))
 		}
 		return strings.Join(parts, " ")
+	case ImportEventRateLimiting:
+		return fmt.Sprintf("rate limiting: %s", er.Reason)
 
 	default:
 		panic("unknown import result")
@@ -163,5 +168,12 @@ func NewImportIdentity(id entity.Id) ImportResult {
 	return ImportResult{
 		ID:    id,
 		Event: ImportEventIdentity,
+	}
+}
+
+func NewImportRateLimiting(msg string) ImportResult {
+	return ImportResult{
+		Reason: msg,
+		Event:  ImportEventRateLimiting,
 	}
 }
