@@ -26,21 +26,22 @@ const createStyle = (color: Color, maxWidth?: string) => ({
   backgroundColor: _rgb(color),
   color: getTextColor(_rgb(color)),
   borderBottomColor: darken(_rgb(color), 0.2),
-  margin: '3px',
   maxWidth: maxWidth,
 });
 
 type Props = {
   label: LabelFragment;
   maxWidth?: string;
+  className?: string;
 };
-function Label({ label, maxWidth }: Props) {
+function Label({ label, maxWidth, className }: Props) {
   return (
     <Chip
       size={'small'}
       label={label.name}
+      className={className}
       style={createStyle(label.color, maxWidth)}
-    ></Chip>
+    />
   );
 }
 export default Label;

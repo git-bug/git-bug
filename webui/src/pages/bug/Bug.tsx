@@ -61,6 +61,8 @@ const useStyles = makeStyles((theme) => ({
   label: {
     marginTop: theme.spacing(0.1),
     marginBottom: theme.spacing(0.1),
+    marginLeft: theme.spacing(0.25),
+    marginRight: theme.spacing(0.25),
   },
   noLabel: {
     ...theme.typography.body2,

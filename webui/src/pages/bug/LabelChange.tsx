@@ -16,6 +16,11 @@ const useStyles = makeStyles((theme) => ({
   author: {
     fontWeight: 'bold',
   },
+  label: {
+    maxWidth: '50ch',
+    marginLeft: theme.spacing(0.25),
+    marginRight: theme.spacing(0.25),
+  },
 }));
 
 type Props = {
@@ -30,12 +35,12 @@ function LabelChange({ op }: Props) {
       <Author author={op.author} className={classes.author} />
       {added.length > 0 && <span> added the </span>}
       {added.map((label, index) => (
-        <Label key={index} label={label} maxWidth="50ch" />
+        <Label key={index} label={label} className={classes.label} />
       ))}
       {added.length > 0 && removed.length > 0 && <span> and</span>}
       {removed.length > 0 && <span> removed the </span>}
       {removed.map((label, index) => (
-        <Label key={index} label={label} maxWidth="50ch" />
+        <Label key={index} label={label} className={classes.label} />
       ))}
       <span>
         {' '}
