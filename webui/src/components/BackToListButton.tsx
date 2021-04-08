@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 import Button from '@material-ui/core/Button';
 import { makeStyles } from '@material-ui/core/styles';
@@ -25,7 +26,8 @@ function BackToListButton() {
       variant="contained"
       className={classes.backButton}
       aria-label="back to issue list"
-      href="/"
+      component={Link}
+      to="/"
     >
       <ArrowBackIcon />
       Back to List
