@@ -1,6 +1,8 @@
 package identity
 
 import (
+	"sync"
+
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 )
@@ -33,4 +35,37 @@ func NewStubResolver() *StubResolver {
 
 func (s *StubResolver) ResolveIdentity(id entity.Id) (Interface, error) {
 	return &IdentityStub{id: id}, nil
+}
+
+// CachedResolver is a resolver ensuring that loading is done only once through another Resolver.
+type CachedResolver struct {
+	mu         sync.RWMutex
+	resolver   Resolver
+	identities map[entity.Id]Interface
+}
+
+func NewCachedResolver(resolver Resolver) *CachedResolver {
+	return &CachedResolver{
+		resolver:   resolver,
+		identities: make(map[entity.Id]Interface),
+	}
+}
+
+func (c *CachedResolver) ResolveIdentity(id entity.Id) (Interface, error) {
+	c.mu.RLock()
+	if i, ok := c.identities[id]; ok {
+		c.mu.RUnlock()
+		return i, nil
+	}
+	c.mu.RUnlock()
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	i, err := c.resolver.ResolveIdentity(id)
+	if err != nil {
+		return nil, err
+	}
+	c.identities[id] = i
+	return i, nil
 }

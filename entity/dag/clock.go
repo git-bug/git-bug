@@ -9,7 +9,7 @@ import (
 
 // ClockLoader is the repository.ClockLoader for Entity
 func ClockLoader(defs ...Definition) repository.ClockLoader {
-	clocks := make([]string, len(defs)*2)
+	clocks := make([]string, 0, len(defs)*2)
 	for _, def := range defs {
 		clocks = append(clocks, fmt.Sprintf(creationClockPattern, def.Namespace))
 		clocks = append(clocks, fmt.Sprintf(editClockPattern, def.Namespace))
@@ -18,8 +18,9 @@ func ClockLoader(defs ...Definition) repository.ClockLoader {
 	return repository.ClockLoader{
 		Clocks: clocks,
 		Witnesser: func(repo repository.ClockedRepo) error {
-			// We don't care about the actual identity so an IdentityStub will do
-			resolver := identity.NewStubResolver()
+			// we need to actually load the identities because of the commit signature check when reading,
+			// which require the full identities with crypto keys
+			resolver := identity.NewCachedResolver(identity.NewSimpleResolver(repo))
 
 			for _, def := range defs {
 				// we actually just need to read all entities,

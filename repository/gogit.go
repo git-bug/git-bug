@@ -335,7 +335,7 @@ func (repo *GoGitRepo) ClearBleveIndex(name string) error {
 	repo.indexesMutex.Lock()
 	defer repo.indexesMutex.Unlock()
 
-	path := filepath.Join(repo.path, "indexes", name)
+	path := filepath.Join(repo.path, "git-bug", "indexes", name)
 
 	err := os.RemoveAll(path)
 	if err != nil {

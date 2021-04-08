@@ -195,7 +195,7 @@ func (c *RepoCache) buildCache() error {
 
 	c.bugExcerpts = make(map[entity.Id]*BugExcerpt)
 
-	allBugs := bug.ReadAll(c.repo)
+	allBugs := bug.ReadAllWithResolver(c.repo, newIdentityCacheResolverNoLock(c))
 
 	// wipe the index just to be sure
 	err := c.repo.ClearBleveIndex("bug")
