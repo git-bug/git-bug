@@ -59,6 +59,10 @@ const useStyles = makeStyles((theme) => ({
     display: 'flex',
     background: 'none',
     border: 'none',
+    '&:hover': {
+      backgroundColor: 'transparent',
+      color: theme.palette.text.primary,
+    },
   },
   menu: {
     '& .MuiMenu-paper': {
@@ -119,6 +123,7 @@ function FilterDropdown({
           ref={buttonRef}
           onClick={() => setOpen(!open)}
           className={classes.gearBtn}
+          disableRipple
         >
           <SettingsIcon fontSize={'small'} />
         </IconButton>
