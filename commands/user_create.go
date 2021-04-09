@@ -48,7 +48,7 @@ func runUserCreate(env *Env) error {
 		return err
 	}
 
-	id, err := env.backend.NewIdentityRaw(name, email, "", avatarURL, nil)
+	id, err := env.backend.NewIdentityRaw(name, email, "", avatarURL, nil, nil)
 	if err != nil {
 		return err
 	}

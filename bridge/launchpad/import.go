@@ -35,6 +35,7 @@ func (li *launchpadImporter) ensurePerson(repo *cache.RepoCache, owner LPPerson)
 		"",
 		owner.Login,
 		"",
+		nil,
 		map[string]string{
 			metaKeyLaunchpadLogin: owner.Login,
 		},

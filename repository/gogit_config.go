@@ -134,7 +134,7 @@ func (cr *goGitConfigReader) ReadString(key string) (string, error) {
 		}
 		return section.Option(optionName), nil
 	default:
-		subsectionName := strings.Join(split[1:len(split)-2], ".")
+		subsectionName := strings.Join(split[1:len(split)-1], ".")
 		optionName := split[len(split)-1]
 		if !section.HasSubsection(subsectionName) {
 			return "", ErrNoConfigEntry

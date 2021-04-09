@@ -6,9 +6,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"golang.org/x/crypto/openpgp"
 
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
+
+// TODO: add tests for RepoBleve
+// TODO: add tests for RepoStorage
 
 func CleanupTestRepos(repos ...Repo) {
 	var firstErr error
@@ -44,6 +48,7 @@ func RepoTest(t *testing.T, creator RepoCreator, cleaner RepoCleaner) {
 
 			t.Run("Data", func(t *testing.T) {
 				RepoDataTest(t, repo)
+				RepoDataSignatureTest(t, repo)
 			})
 
 			t.Run("Config", func(t *testing.T) {
@@ -135,7 +140,8 @@ func RepoDataTest(t *testing.T, repo RepoData) {
 	require.NoError(t, err)
 	require.Equal(t, treeHash1, treeHash1Read)
 
-	commit2, err := repo.StoreCommitWithParent(treeHash2, commit1)
+	// commit with a parent
+	commit2, err := repo.StoreCommit(treeHash2, commit1)
 	require.NoError(t, err)
 	require.True(t, commit2.IsValid())
 
@@ -147,6 +153,11 @@ func RepoDataTest(t *testing.T, repo RepoData) {
 	tree1read, err := repo.ReadTree(commit1)
 	require.NoError(t, err)
 	require.Equal(t, tree1read, tree1)
+
+	c2, err := repo.ReadCommit(commit2)
+	require.NoError(t, err)
+	c2expected := Commit{Hash: commit2, Parents: []Hash{commit1}, TreeHash: treeHash2}
+	require.Equal(t, c2expected, c2)
 
 	// Ref
 
@@ -160,6 +171,10 @@ func RepoDataTest(t *testing.T, repo RepoData) {
 	exist1, err = repo.RefExist("refs/bugs/ref1")
 	require.NoError(t, err)
 	require.True(t, exist1)
+
+	h, err := repo.ResolveRef("refs/bugs/ref1")
+	require.NoError(t, err)
+	require.Equal(t, commit2, h)
 
 	ls, err := repo.ListRefs("refs/bugs")
 	require.NoError(t, err)
@@ -178,7 +193,7 @@ func RepoDataTest(t *testing.T, repo RepoData) {
 
 	// Graph
 
-	commit3, err := repo.StoreCommitWithParent(treeHash1, commit1)
+	commit3, err := repo.StoreCommit(treeHash1, commit1)
 	require.NoError(t, err)
 
 	ancestorHash, err := repo.FindCommonAncestor(commit2, commit3)
@@ -187,17 +202,73 @@ func RepoDataTest(t *testing.T, repo RepoData) {
 
 	err = repo.RemoveRef("refs/bugs/ref1")
 	require.NoError(t, err)
+
+	// RemoveRef is idempotent
+	err = repo.RemoveRef("refs/bugs/ref1")
+	require.NoError(t, err)
+}
+
+func RepoDataSignatureTest(t *testing.T, repo RepoData) {
+	data := randomData()
+
+	blobHash, err := repo.StoreData(data)
+	require.NoError(t, err)
+
+	treeHash, err := repo.StoreTree([]TreeEntry{
+		{
+			ObjectType: Blob,
+			Hash:       blobHash,
+			Name:       "blob",
+		},
+	})
+	require.NoError(t, err)
+
+	pgpEntity1, err := openpgp.NewEntity("", "", "", nil)
+	require.NoError(t, err)
+	keyring1 := openpgp.EntityList{pgpEntity1}
+
+	pgpEntity2, err := openpgp.NewEntity("", "", "", nil)
+	require.NoError(t, err)
+	keyring2 := openpgp.EntityList{pgpEntity2}
+
+	commitHash1, err := repo.StoreSignedCommit(treeHash, pgpEntity1)
+	require.NoError(t, err)
+
+	commit1, err := repo.ReadCommit(commitHash1)
+	require.NoError(t, err)
+
+	_, err = openpgp.CheckDetachedSignature(keyring1, commit1.SignedData, commit1.Signature)
+	require.NoError(t, err)
+
+	_, err = openpgp.CheckDetachedSignature(keyring2, commit1.SignedData, commit1.Signature)
+	require.Error(t, err)
+
+	commitHash2, err := repo.StoreSignedCommit(treeHash, pgpEntity1, commitHash1)
+	require.NoError(t, err)
+
+	commit2, err := repo.ReadCommit(commitHash2)
+	require.NoError(t, err)
+
+	_, err = openpgp.CheckDetachedSignature(keyring1, commit2.SignedData, commit2.Signature)
+	require.NoError(t, err)
+
+	_, err = openpgp.CheckDetachedSignature(keyring2, commit2.SignedData, commit2.Signature)
+	require.Error(t, err)
 }
 
 // helper to test a RepoClock
 func RepoClockTest(t *testing.T, repo RepoClock) {
+	allClocks, err := repo.AllClocks()
+	require.NoError(t, err)
+	require.Len(t, allClocks, 0)
+
 	clock, err := repo.GetOrCreateClock("foo")
 	require.NoError(t, err)
 	require.Equal(t, lamport.Time(1), clock.Time())
 
 	time, err := clock.Increment()
 	require.NoError(t, err)
-	require.Equal(t, lamport.Time(1), time)
+	require.Equal(t, lamport.Time(2), time)
 	require.Equal(t, lamport.Time(2), clock.Time())
 
 	clock2, err := repo.GetOrCreateClock("foo")
@@ -207,6 +278,13 @@ func RepoClockTest(t *testing.T, repo RepoClock) {
 	clock3, err := repo.GetOrCreateClock("bar")
 	require.NoError(t, err)
 	require.Equal(t, lamport.Time(1), clock3.Time())
+
+	allClocks, err = repo.AllClocks()
+	require.NoError(t, err)
+	require.Equal(t, map[string]lamport.Clock{
+		"foo": clock,
+		"bar": clock3,
+	}, allClocks)
 }
 
 func randomData() []byte {

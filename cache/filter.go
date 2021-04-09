@@ -153,6 +153,9 @@ func compileMatcher(filters query.Filters) *Matcher {
 	for _, value := range filters.Title {
 		result.Title = append(result.Title, TitleFilter(value))
 	}
+	if filters.NoLabel {
+		result.NoFilters = append(result.NoFilters, NoLabelFilter())
+	}
 
 	return result
 }

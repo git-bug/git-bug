@@ -1,0 +1,13 @@
+query ListIdentities {
+    repository {
+        allIdentities {
+            nodes {
+                id
+                humanId
+                name
+                email
+                displayName
+            }
+        }
+    }
+}

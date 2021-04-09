@@ -21,24 +21,17 @@ type SetTitleOperation struct {
 	Was   string `json:"was"`
 }
 
-// Sign-post method for gqlgen
-func (op *SetTitleOperation) IsOperation() {}
-
-func (op *SetTitleOperation) base() *OpBase {
-	return &op.OpBase
-}
-
 func (op *SetTitleOperation) Id() entity.Id {
-	return idOperation(op)
+	return idOperation(op, &op.OpBase)
 }
 
 func (op *SetTitleOperation) Apply(snapshot *Snapshot) {
 	snapshot.Title = op.Title
-	snapshot.addActor(op.Author)
+	snapshot.addActor(op.Author_)
 
 	item := &SetTitleTimelineItem{
 		id:       op.Id(),
-		Author:   op.Author,
+		Author:   op.Author_,
 		UnixTime: timestamp.Timestamp(op.UnixTime),
 		Title:    op.Title,
 		Was:      op.Was,
@@ -48,7 +41,7 @@ func (op *SetTitleOperation) Apply(snapshot *Snapshot) {
 }
 
 func (op *SetTitleOperation) Validate() error {
-	if err := opBaseValidate(op, SetTitleOp); err != nil {
+	if err := op.OpBase.Validate(op, SetTitleOp); err != nil {
 		return err
 	}
 
@@ -75,7 +68,7 @@ func (op *SetTitleOperation) Validate() error {
 	return nil
 }
 
-// UnmarshalJSON is a two step JSON unmarshaling
+// UnmarshalJSON is a two step JSON unmarshalling
 // This workaround is necessary to avoid the inner OpBase.MarshalJSON
 // overriding the outer op's MarshalJSON
 func (op *SetTitleOperation) UnmarshalJSON(data []byte) error {
@@ -132,19 +125,17 @@ func (s *SetTitleTimelineItem) IsAuthored() {}
 
 // Convenience function to apply the operation
 func SetTitle(b Interface, author identity.Interface, unixTime int64, title string) (*SetTitleOperation, error) {
-	it := NewOperationIterator(b)
-
-	var lastTitleOp Operation
-	for it.Next() {
-		op := it.Value()
-		if op.base().OperationType == SetTitleOp {
+	var lastTitleOp *SetTitleOperation
+	for _, op := range b.Operations() {
+		switch op := op.(type) {
+		case *SetTitleOperation:
 			lastTitleOp = op
 		}
 	}
 
 	var was string
 	if lastTitleOp != nil {
-		was = lastTitleOp.(*SetTitleOperation).Title
+		was = lastTitleOp.Title
 	} else {
 		was = b.FirstOp().(*CreateOperation).Title
 	}

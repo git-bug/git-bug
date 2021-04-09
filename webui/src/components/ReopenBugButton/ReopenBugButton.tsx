@@ -46,7 +46,7 @@ function ReopenBugButton({ bug, disabled }: Props) {
         onClick={() => openBugAction()}
         disabled={bug.status === 'OPEN' || disabled}
       >
-        Reopen issue
+        Reopen bug
       </Button>
     </div>
   );

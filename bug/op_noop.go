@@ -16,15 +16,8 @@ type NoOpOperation struct {
 	OpBase
 }
 
-// Sign-post method for gqlgen
-func (op *NoOpOperation) IsOperation() {}
-
-func (op *NoOpOperation) base() *OpBase {
-	return &op.OpBase
-}
-
 func (op *NoOpOperation) Id() entity.Id {
-	return idOperation(op)
+	return idOperation(op, &op.OpBase)
 }
 
 func (op *NoOpOperation) Apply(snapshot *Snapshot) {
@@ -32,10 +25,10 @@ func (op *NoOpOperation) Apply(snapshot *Snapshot) {
 }
 
 func (op *NoOpOperation) Validate() error {
-	return opBaseValidate(op, NoOpOp)
+	return op.OpBase.Validate(op, NoOpOp)
 }
 
-// UnmarshalJSON is a two step JSON unmarshaling
+// UnmarshalJSON is a two step JSON unmarshalling
 // This workaround is necessary to avoid the inner OpBase.MarshalJSON
 // overriding the outer op's MarshalJSON
 func (op *NoOpOperation) UnmarshalJSON(data []byte) error {

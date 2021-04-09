@@ -35,7 +35,7 @@ func newUserCommand() *cobra.Command {
 	flags.SortFlags = false
 
 	flags.StringVarP(&options.fields, "field", "f", "",
-		"Select field to display. Valid values are [email,humanId,id,lastModification,lastModificationLamport,login,metadata,name]")
+		"Select field to display. Valid values are [email,humanId,id,lastModification,lastModificationLamports,login,metadata,name]")
 
 	return cmd
 }
@@ -71,7 +71,9 @@ func runUser(env *Env, opts userOptions, args []string) error {
 			env.out.Printf("%s\n", id.LastModification().
 				Time().Format("Mon Jan 2 15:04:05 2006 +0200"))
 		case "lastModificationLamport":
-			env.out.Printf("%d\n", id.LastModificationLamport())
+			for name, t := range id.LastModificationLamports() {
+				env.out.Printf("%s\n%d\n", name, t)
+			}
 		case "metadata":
 			for key, value := range id.ImmutableMetadata() {
 				env.out.Printf("%s\n%s\n", key, value)
@@ -90,9 +92,11 @@ func runUser(env *Env, opts userOptions, args []string) error {
 	env.out.Printf("Name: %s\n", id.Name())
 	env.out.Printf("Email: %s\n", id.Email())
 	env.out.Printf("Login: %s\n", id.Login())
-	env.out.Printf("Last modification: %s (lamport %d)\n",
-		id.LastModification().Time().Format("Mon Jan 2 15:04:05 2006 +0200"),
-		id.LastModificationLamport())
+	env.out.Printf("Last modification: %s\n", id.LastModification().Time().Format("Mon Jan 2 15:04:05 2006 +0200"))
+	env.out.Printf("Last moditication (lamport):\n")
+	for name, t := range id.LastModificationLamports() {
+		env.out.Printf("\t%s: %d", name, t)
+	}
 	env.out.Println("Metadata:")
 	for key, value := range id.ImmutableMetadata() {
 		env.out.Printf("    %s --> %s\n", key, value)

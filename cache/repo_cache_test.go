@@ -1,7 +1,9 @@
 package cache
 
 import (
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -84,11 +86,12 @@ func TestCache(t *testing.T) {
 	require.Empty(t, cache.identities)
 	require.Empty(t, cache.identitiesExcerpts)
 
-	// Reload, only excerpt are loaded
+	// Reload, only excerpt are loaded, but as we need to load the identities used in the bugs
+	// to check the signatures, we also load the identity used above
 	cache, err = NewRepoCache(repo)
 	require.NoError(t, err)
 	require.Empty(t, cache.bugs)
-	require.Empty(t, cache.identities)
+	require.Len(t, cache.identities, 1)
 	require.Len(t, cache.bugExcerpts, 2)
 	require.Len(t, cache.identitiesExcerpts, 2)
 
@@ -108,8 +111,8 @@ func TestCache(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestPushPull(t *testing.T) {
-	repoA, repoB, remote := repository.SetupReposAndRemote()
+func TestCachePushPull(t *testing.T) {
+	repoA, repoB, remote := repository.SetupGoGitReposAndRemote()
 	defer repository.CleanupTestRepos(repoA, repoB, remote)
 
 	cacheA, err := NewRepoCache(repoA)
@@ -122,6 +125,10 @@ func TestPushPull(t *testing.T) {
 	reneA, err := cacheA.NewIdentity("René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
 	err = cacheA.SetUserIdentity(reneA)
+	require.NoError(t, err)
+	isaacB, err := cacheB.NewIdentity("Isaac Newton", "isaac@newton.uk")
+	require.NoError(t, err)
+	err = cacheB.SetUserIdentity(isaacB)
 	require.NoError(t, err)
 
 	// distribute the identity
@@ -273,4 +280,22 @@ func checkBugPresence(t *testing.T, cache *RepoCache, bug *BugCache, presence bo
 	if ok {
 		require.Equal(t, bug, b)
 	}
+}
+
+func TestLongDescription(t *testing.T) {
+	// See https://github.com/MichaelMure/git-bug/issues/606
+
+	text := strings.Repeat("x", 65536)
+
+	repo := repository.CreateGoGitTestRepo(false)
+	defer repository.CleanupTestRepos(repo)
+
+	backend, err := NewRepoCache(repo)
+	require.NoError(t, err)
+
+	i, err := backend.NewIdentity("René Descartes", "rene@descartes.fr")
+	require.NoError(t, err)
+
+	_, _, err = backend.NewBugRaw(i, time.Now().Unix(), text, text, nil, nil)
+	require.NoError(t, err)
 }

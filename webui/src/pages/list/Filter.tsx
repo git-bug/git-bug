@@ -1,13 +1,32 @@
 import clsx from 'clsx';
 import { LocationDescriptor } from 'history';
-import React, { useState, useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import { SvgIconProps } from '@material-ui/core/SvgIcon';
-import { makeStyles } from '@material-ui/core/styles';
+import TextField from '@material-ui/core/TextField';
+import { makeStyles, withStyles } from '@material-ui/core/styles';
 import ArrowDropDown from '@material-ui/icons/ArrowDropDown';
+
+const CustomTextField = withStyles((theme) => ({
+  root: {
+    margin: '0 8px 12px 8px',
+    '& label.Mui-focused': {
+      margin: '0 2px',
+      color: theme.palette.text.secondary,
+    },
+    '& .MuiInput-underline::before': {
+      borderBottomColor: theme.palette.divider,
+    },
+    '& .MuiInput-underline::after': {
+      borderBottomColor: theme.palette.divider,
+    },
+  },
+}))(TextField);
+
+const ITEM_HEIGHT = 48;
 
 export type Query = { [key: string]: string[] };
 
@@ -65,7 +84,7 @@ function stringify(params: Query): string {
 const useStyles = makeStyles((theme) => ({
   element: {
     ...theme.typography.body2,
-    color: '#444',
+    color: theme.palette.text.secondary,
     padding: theme.spacing(0, 1),
     fontWeight: 400,
     textDecoration: 'none',
@@ -75,7 +94,7 @@ const useStyles = makeStyles((theme) => ({
   },
   itemActive: {
     fontWeight: 600,
-    color: '#333',
+    color: theme.palette.text.primary,
   },
   icon: {
     paddingRight: theme.spacing(0.5),
@@ -90,6 +109,7 @@ type FilterDropdownProps = {
   itemActive: (key: string) => boolean;
   icon?: React.ComponentType<SvgIconProps>;
   to: (key: string) => LocationDescriptor;
+  hasFilter?: boolean;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>;
 
 function FilterDropdown({
@@ -98,11 +118,18 @@ function FilterDropdown({
   itemActive,
   icon: Icon,
   to,
+  hasFilter,
   ...props
 }: FilterDropdownProps) {
   const [open, setOpen] = useState(false);
+  const [filter, setFilter] = useState<string>('');
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const searchRef = useRef<HTMLButtonElement>(null);
   const classes = useStyles({ active: false });
+
+  useEffect(() => {
+    searchRef && searchRef.current && searchRef.current.focus();
+  }, [filter]);
 
   const content = (
     <>
@@ -124,6 +151,7 @@ function FilterDropdown({
       </button>
       <Menu
         getContentAnchorEl={null}
+        ref={searchRef}
         anchorOrigin={{
           vertical: 'bottom',
           horizontal: 'left',
@@ -135,18 +163,37 @@ function FilterDropdown({
         open={open}
         onClose={() => setOpen(false)}
         anchorEl={buttonRef.current}
+        PaperProps={{
+          style: {
+            maxHeight: ITEM_HEIGHT * 4.5,
+            width: '25ch',
+          },
+        }}
       >
-        {dropdown.map(([key, value]) => (
-          <MenuItem
-            component={Link}
-            to={to(key)}
-            className={itemActive(key) ? classes.itemActive : undefined}
-            onClick={() => setOpen(false)}
-            key={key}
-          >
-            {value}
-          </MenuItem>
-        ))}
+        {hasFilter && (
+          <CustomTextField
+            onChange={(e) => {
+              const { value } = e.target;
+              setFilter(value);
+            }}
+            onKeyDown={(e) => e.stopPropagation()}
+            value={filter}
+            label={`Filter ${children}`}
+          />
+        )}
+        {dropdown
+          .filter((d) => d[1].toLowerCase().includes(filter.toLowerCase()))
+          .map(([key, value]) => (
+            <MenuItem
+              component={Link}
+              to={to(key)}
+              className={itemActive(key) ? classes.itemActive : undefined}
+              onClick={() => setOpen(false)}
+              key={key}
+            >
+              {value}
+            </MenuItem>
+          ))}
       </Menu>
     </>
   );
@@ -158,6 +205,7 @@ export type FilterProps = {
   icon?: React.ComponentType<SvgIconProps>;
   children: React.ReactNode;
 };
+
 function Filter({ active, to, children, icon: Icon }: FilterProps) {
   const classes = useStyles();
 

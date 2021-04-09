@@ -3,15 +3,17 @@ package repository
 
 import (
 	"errors"
+	"io"
 
 	"github.com/blevesearch/bleve"
 	"github.com/go-git/go-billy/v5"
+	"golang.org/x/crypto/openpgp"
 
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
 var (
-	// ErrNotARepo is the error returned when the git repo root wan't be found
+	// ErrNotARepo is the error returned when the git repo root can't be found
 	ErrNotARepo = errors.New("not a git repository")
 	// ErrClockNotExist is the error returned when a clock can't be found
 	ErrClockNotExist = errors.New("clock doesn't exist")
@@ -22,9 +24,9 @@ type Repo interface {
 	RepoConfig
 	RepoKeyring
 	RepoCommon
-	RepoData
 	RepoStorage
 	RepoBleve
+	RepoData
 
 	Close() error
 }
@@ -88,13 +90,28 @@ type RepoBleve interface {
 	ClearBleveIndex(name string) error
 }
 
+type Commit struct {
+	Hash       Hash
+	Parents    []Hash    // hashes of the parents, if any
+	TreeHash   Hash      // hash of the git Tree
+	SignedData io.Reader // if signed, reader for the signed data (likely, the serialized commit)
+	Signature  io.Reader // if signed, reader for the (non-armored) signature
+}
+
 // RepoData give access to the git data storage
 type RepoData interface {
-	// FetchRefs fetch git refs from a remote
-	FetchRefs(remote string, refSpec string) (string, error)
+	// FetchRefs fetch git refs matching a directory prefix to a remote
+	// Ex: prefix="foo" will fetch any remote refs matching "refs/foo/*" locally.
+	// The equivalent git refspec would be "refs/foo/*:refs/remotes/<remote>/foo/*"
+	FetchRefs(remote string, prefix string) (string, error)
 
-	// PushRefs push git refs to a remote
-	PushRefs(remote string, refSpec string) (string, error)
+	// PushRefs push git refs matching a directory prefix to a remote
+	// Ex: prefix="foo" will push any local refs matching "refs/foo/*" to the remote.
+	// The equivalent git refspec would be "refs/foo/*:refs/foo/*"
+	//
+	// Additionally, PushRefs will update the local references in refs/remotes/<remote>/foo to match
+	// the remote state.
+	PushRefs(remote string, prefix string) (string, error)
 
 	// StoreData will store arbitrary data and return the corresponding hash
 	StoreData(data []byte) (Hash, error)
@@ -110,21 +127,27 @@ type RepoData interface {
 	ReadTree(hash Hash) ([]TreeEntry, error)
 
 	// StoreCommit will store a Git commit with the given Git tree
-	StoreCommit(treeHash Hash) (Hash, error)
+	StoreCommit(treeHash Hash, parents ...Hash) (Hash, error)
 
-	// StoreCommit will store a Git commit with the given Git tree
-	StoreCommitWithParent(treeHash Hash, parent Hash) (Hash, error)
+	// StoreCommit will store a Git commit with the given Git tree. If signKey is not nil, the commit
+	// will be signed accordingly.
+	StoreSignedCommit(treeHash Hash, signKey *openpgp.Entity, parents ...Hash) (Hash, error)
+
+	// ReadCommit read a Git commit and returns some of its characteristic
+	ReadCommit(hash Hash) (Commit, error)
 
 	// GetTreeHash return the git tree hash referenced in a commit
+	// Deprecated
 	GetTreeHash(commit Hash) (Hash, error)
 
-	// FindCommonAncestor will return the last common ancestor of two chain of commit
-	FindCommonAncestor(commit1 Hash, commit2 Hash) (Hash, error)
+	// ResolveRef returns the hash of the target commit of the given ref
+	ResolveRef(ref string) (Hash, error)
 
 	// UpdateRef will create or update a Git reference
 	UpdateRef(ref string, hash Hash) error
 
 	// RemoveRef will remove a Git reference
+	// RemoveRef is idempotent.
 	RemoveRef(ref string) error
 
 	// ListRefs will return a list of Git ref matching the given refspec
@@ -136,15 +159,28 @@ type RepoData interface {
 	// CopyRef will create a new reference with the same value as another one
 	CopyRef(source string, dest string) error
 
+	// FindCommonAncestor will return the last common ancestor of two chain of commit
+	// Deprecated
+	FindCommonAncestor(commit1 Hash, commit2 Hash) (Hash, error)
+
 	// ListCommits will return the list of tree hashes of a ref, in chronological order
 	ListCommits(ref string) ([]Hash, error)
 }
 
 // RepoClock give access to Lamport clocks
 type RepoClock interface {
+	// AllClocks return all the known clocks
+	AllClocks() (map[string]lamport.Clock, error)
+
 	// GetOrCreateClock return a Lamport clock stored in the Repo.
 	// If the clock doesn't exist, it's created.
 	GetOrCreateClock(name string) (lamport.Clock, error)
+
+	// Increment is equivalent to c = GetOrCreateClock(name) + c.Increment()
+	Increment(name string) (lamport.Time, error)
+
+	// Witness is equivalent to c = GetOrCreateClock(name) + c.Witness(time)
+	Witness(name string, time lamport.Time) error
 }
 
 // ClockLoader hold which logical clock need to exist for an entity and

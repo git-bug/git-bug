@@ -722,6 +722,38 @@ _git-bug_comment_add()
     noun_aliases=()
 }
 
+_git-bug_comment_edit()
+{
+    last_command="git-bug_comment_edit"
+
+    command_aliases=()
+
+    commands=()
+
+    flags=()
+    two_word_flags=()
+    local_nonpersistent_flags=()
+    flags_with_completion=()
+    flags_completion=()
+
+    flags+=("--file=")
+    two_word_flags+=("--file")
+    two_word_flags+=("-F")
+    local_nonpersistent_flags+=("--file")
+    local_nonpersistent_flags+=("--file=")
+    local_nonpersistent_flags+=("-F")
+    flags+=("--message=")
+    two_word_flags+=("--message")
+    two_word_flags+=("-m")
+    local_nonpersistent_flags+=("--message")
+    local_nonpersistent_flags+=("--message=")
+    local_nonpersistent_flags+=("-m")
+
+    must_have_one_flag=()
+    must_have_one_noun=()
+    noun_aliases=()
+}
+
 _git-bug_comment()
 {
     last_command="git-bug_comment"
@@ -730,6 +762,7 @@ _git-bug_comment()
 
     commands=()
     commands+=("add")
+    commands+=("edit")
 
     flags=()
     two_word_flags=()
@@ -1331,6 +1364,10 @@ _git-bug_webui()
     flags_with_completion=()
     flags_completion=()
 
+    flags+=("--host=")
+    two_word_flags+=("--host")
+    local_nonpersistent_flags+=("--host")
+    local_nonpersistent_flags+=("--host=")
     flags+=("--open")
     local_nonpersistent_flags+=("--open")
     flags+=("--no-open")
@@ -1343,6 +1380,12 @@ _git-bug_webui()
     local_nonpersistent_flags+=("-p")
     flags+=("--read-only")
     local_nonpersistent_flags+=("--read-only")
+    flags+=("--query=")
+    two_word_flags+=("--query")
+    two_word_flags+=("-q")
+    local_nonpersistent_flags+=("--query")
+    local_nonpersistent_flags+=("--query=")
+    local_nonpersistent_flags+=("-q")
 
     must_have_one_flag=()
     must_have_one_noun=()

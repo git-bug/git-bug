@@ -47,12 +47,6 @@ func (b *WithSnapshot) Commit(repo repository.ClockedRepo) error {
 		return nil
 	}
 
-	b.snap.id = b.Bug.id
+	b.snap.id = b.Bug.Id()
 	return nil
-}
-
-// Merge intercept Bug.Merge() and clear the snapshot
-func (b *WithSnapshot) Merge(repo repository.Repo, other Interface) (bool, error) {
-	b.snap = nil
-	return b.Bug.Merge(repo, other)
 }

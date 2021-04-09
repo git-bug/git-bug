@@ -11,7 +11,7 @@ const useStyles = makeStyles({
 
 const PreTag = (props: React.HTMLProps<HTMLPreElement>) => {
   const classes = useStyles();
-  return <pre className={classes.tag} {...props}></pre>;
+  return <pre className={classes.tag} {...props} />;
 };
 
 export default PreTag;

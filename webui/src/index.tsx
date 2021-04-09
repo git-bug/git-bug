@@ -3,18 +3,17 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { BrowserRouter } from 'react-router-dom';
 
-import ThemeProvider from '@material-ui/styles/ThemeProvider';
-
 import App from './App';
 import apolloClient from './apollo';
-import theme from './theme';
+import Themer from './components/Themer';
+import { defaultLightTheme, defaultDarkTheme } from './themes/index';
 
 ReactDOM.render(
   <ApolloProvider client={apolloClient}>
     <BrowserRouter>
-      <ThemeProvider theme={theme}>
+      <Themer lightTheme={defaultLightTheme} darkTheme={defaultDarkTheme}>
         <App />
-      </ThemeProvider>
+      </Themer>
     </BrowserRouter>
   </ApolloProvider>,
   document.getElementById('root')

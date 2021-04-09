@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/MichaelMure/git-bug/identity"
@@ -15,9 +14,9 @@ import (
 func TestEdit(t *testing.T) {
 	snapshot := Snapshot{}
 
-	repo := repository.NewMockRepoForTest()
-	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
-	err := rene.Commit(repo)
+	repo := repository.NewMockRepo()
+
+	rene, err := identity.NewIdentity(repo, "René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
 
 	unix := time.Now().Unix()
@@ -44,62 +43,62 @@ func TestEdit(t *testing.T) {
 	id3 := comment2.Id()
 	require.NoError(t, id3.Validate())
 
-	edit := NewEditCommentOp(rene, unix, id1, "create edited", nil)
+	edit := NewEditCommentOp(rene, unix, snapshot.Comments[0].Id(), "create edited", nil)
 	edit.Apply(&snapshot)
 
-	assert.Equal(t, len(snapshot.Timeline), 4)
-	assert.Equal(t, len(snapshot.Timeline[0].(*CreateTimelineItem).History), 2)
-	assert.Equal(t, len(snapshot.Timeline[1].(*AddCommentTimelineItem).History), 1)
-	assert.Equal(t, len(snapshot.Timeline[3].(*AddCommentTimelineItem).History), 1)
-	assert.Equal(t, snapshot.Comments[0].Message, "create edited")
-	assert.Equal(t, snapshot.Comments[1].Message, "comment 1")
-	assert.Equal(t, snapshot.Comments[2].Message, "comment 2")
+	require.Len(t, snapshot.Timeline, 4)
+	require.Len(t, snapshot.Timeline[0].(*CreateTimelineItem).History, 2)
+	require.Len(t, snapshot.Timeline[1].(*AddCommentTimelineItem).History, 1)
+	require.Len(t, snapshot.Timeline[3].(*AddCommentTimelineItem).History, 1)
+	require.Equal(t, snapshot.Comments[0].Message, "create edited")
+	require.Equal(t, snapshot.Comments[1].Message, "comment 1")
+	require.Equal(t, snapshot.Comments[2].Message, "comment 2")
 
-	edit2 := NewEditCommentOp(rene, unix, id2, "comment 1 edited", nil)
+	edit2 := NewEditCommentOp(rene, unix, snapshot.Comments[1].Id(), "comment 1 edited", nil)
 	edit2.Apply(&snapshot)
 
-	assert.Equal(t, len(snapshot.Timeline), 4)
-	assert.Equal(t, len(snapshot.Timeline[0].(*CreateTimelineItem).History), 2)
-	assert.Equal(t, len(snapshot.Timeline[1].(*AddCommentTimelineItem).History), 2)
-	assert.Equal(t, len(snapshot.Timeline[3].(*AddCommentTimelineItem).History), 1)
-	assert.Equal(t, snapshot.Comments[0].Message, "create edited")
-	assert.Equal(t, snapshot.Comments[1].Message, "comment 1 edited")
-	assert.Equal(t, snapshot.Comments[2].Message, "comment 2")
+	require.Len(t, snapshot.Timeline, 4)
+	require.Len(t, snapshot.Timeline[0].(*CreateTimelineItem).History, 2)
+	require.Len(t, snapshot.Timeline[1].(*AddCommentTimelineItem).History, 2)
+	require.Len(t, snapshot.Timeline[3].(*AddCommentTimelineItem).History, 1)
+	require.Equal(t, snapshot.Comments[0].Message, "create edited")
+	require.Equal(t, snapshot.Comments[1].Message, "comment 1 edited")
+	require.Equal(t, snapshot.Comments[2].Message, "comment 2")
 
-	edit3 := NewEditCommentOp(rene, unix, id3, "comment 2 edited", nil)
+	edit3 := NewEditCommentOp(rene, unix, snapshot.Comments[2].Id(), "comment 2 edited", nil)
 	edit3.Apply(&snapshot)
 
-	assert.Equal(t, len(snapshot.Timeline), 4)
-	assert.Equal(t, len(snapshot.Timeline[0].(*CreateTimelineItem).History), 2)
-	assert.Equal(t, len(snapshot.Timeline[1].(*AddCommentTimelineItem).History), 2)
-	assert.Equal(t, len(snapshot.Timeline[3].(*AddCommentTimelineItem).History), 2)
-	assert.Equal(t, snapshot.Comments[0].Message, "create edited")
-	assert.Equal(t, snapshot.Comments[1].Message, "comment 1 edited")
-	assert.Equal(t, snapshot.Comments[2].Message, "comment 2 edited")
+	require.Len(t, snapshot.Timeline, 4)
+	require.Len(t, snapshot.Timeline[0].(*CreateTimelineItem).History, 2)
+	require.Len(t, snapshot.Timeline[1].(*AddCommentTimelineItem).History, 2)
+	require.Len(t, snapshot.Timeline[3].(*AddCommentTimelineItem).History, 2)
+	require.Equal(t, snapshot.Comments[0].Message, "create edited")
+	require.Equal(t, snapshot.Comments[1].Message, "comment 1 edited")
+	require.Equal(t, snapshot.Comments[2].Message, "comment 2 edited")
 }
 
 func TestEditCommentSerialize(t *testing.T) {
-	repo := repository.NewMockRepoForTest()
-	rene := identity.NewIdentity("René Descartes", "rene@descartes.fr")
-	err := rene.Commit(repo)
+	repo := repository.NewMockRepo()
+
+	rene, err := identity.NewIdentity(repo, "René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
 
 	unix := time.Now().Unix()
 	before := NewEditCommentOp(rene, unix, "target", "message", nil)
 
 	data, err := json.Marshal(before)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	var after EditCommentOperation
 	err = json.Unmarshal(data, &after)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// enforce creating the ID
 	before.Id()
 
 	// Replace the identity stub with the real thing
-	assert.Equal(t, rene.Id(), after.base().Author.Id())
-	after.Author = rene
+	require.Equal(t, rene.Id(), after.Author().Id())
+	after.Author_ = rene
 
-	assert.Equal(t, before, &after)
+	require.Equal(t, before, &after)
 }

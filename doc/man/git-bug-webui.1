@@ -22,6 +22,10 @@ Available git config:
 
 .SH OPTIONS
 .PP
+\fB\-\-host\fP="127.0.0.1"
+	Network address or hostname to listen to (default to 127.0.0.1)
+
+.PP
 \fB\-\-open\fP[=false]
 	Automatically open the web UI in the default browser
 
@@ -31,11 +35,15 @@ Available git config:
 
 .PP
 \fB\-p\fP, \fB\-\-port\fP=0
-	Port to listen to (default is random)
+	Port to listen to (default to random available port)
 
 .PP
 \fB\-\-read\-only\fP[=false]
 	Whether to run the web UI in read\-only mode
+
+.PP
+\fB\-q\fP, \fB\-\-query\fP=""
+	The query to open in the web UI bug list
 
 .PP
 \fB\-h\fP, \fB\-\-help\fP[=false]

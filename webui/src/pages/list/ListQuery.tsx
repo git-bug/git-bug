@@ -1,19 +1,23 @@
 import { ApolloError } from '@apollo/client';
+import { pipe } from '@arrows/composition';
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useHistory, Link } from 'react-router-dom';
 
-import { Button } from '@material-ui/core';
+import { Button, FormControl, Menu, MenuItem } from '@material-ui/core';
 import IconButton from '@material-ui/core/IconButton';
 import InputBase from '@material-ui/core/InputBase';
 import Paper from '@material-ui/core/Paper';
-import { fade, makeStyles, Theme } from '@material-ui/core/styles';
+import { makeStyles, Theme } from '@material-ui/core/styles';
+import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
 import ErrorOutline from '@material-ui/icons/ErrorOutline';
 import KeyboardArrowLeft from '@material-ui/icons/KeyboardArrowLeft';
 import KeyboardArrowRight from '@material-ui/icons/KeyboardArrowRight';
 import Skeleton from '@material-ui/lab/Skeleton';
 
+import { useCurrentIdentityQuery } from '../../components/CurrentIdentity/CurrentIdentity.generated';
 import IfLoggedIn from 'src/components/IfLoggedIn/IfLoggedIn';
 
+import { parse, Query, stringify } from './Filter';
 import FilterToolbar from './FilterToolbar';
 import List from './List';
 import { useListBugsQuery } from './ListQuery.generated';
@@ -35,33 +39,27 @@ const useStyles = makeStyles<Theme, StylesProps>((theme) => ({
   },
   header: {
     display: 'flex',
-    padding: theme.spacing(2),
-    '& > h1': {
-      ...theme.typography.h6,
-      margin: theme.spacing(0, 2),
-    },
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    padding: theme.spacing(1),
   },
   filterissueLabel: {
     fontSize: '14px',
     fontWeight: 'bold',
     paddingRight: '12px',
   },
-  filterissueContainer: {
+  form: {
     display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContents: 'left',
+    flexGrow: 1,
+    marginRight: theme.spacing(1),
   },
   search: {
     borderRadius: theme.shape.borderRadius,
-    borderColor: fade(theme.palette.primary.main, 0.2),
+    color: theme.palette.text.secondary,
+    borderColor: theme.palette.divider,
     borderStyle: 'solid',
     borderWidth: '1px',
-    backgroundColor: fade(theme.palette.primary.main, 0.05),
+    backgroundColor: theme.palette.primary.light,
     padding: theme.spacing(0, 1),
-    width: ({ searching }) => (searching ? '20rem' : '15rem'),
+    width: '100%',
     transition: theme.transitions.create([
       'width',
       'borderColor',
@@ -69,13 +67,11 @@ const useStyles = makeStyles<Theme, StylesProps>((theme) => ({
     ]),
   },
   searchFocused: {
-    borderColor: fade(theme.palette.primary.main, 0.4),
     backgroundColor: theme.palette.background.paper,
-    width: '20rem!important',
   },
   placeholderRow: {
     padding: theme.spacing(1),
-    borderBottomColor: theme.palette.grey['300'],
+    borderBottomColor: theme.palette.divider,
     borderBottomWidth: '1px',
     borderBottomStyle: 'solid',
     display: 'flex',
@@ -91,7 +87,8 @@ const useStyles = makeStyles<Theme, StylesProps>((theme) => ({
     ...theme.typography.h5,
     padding: theme.spacing(8),
     textAlign: 'center',
-    borderBottomColor: theme.palette.grey['300'],
+    color: theme.palette.text.hint,
+    borderBottomColor: theme.palette.divider,
     borderBottomWidth: '1px',
     borderBottomStyle: 'solid',
     '& > p': {
@@ -99,21 +96,25 @@ const useStyles = makeStyles<Theme, StylesProps>((theme) => ({
     },
   },
   errorBox: {
-    color: theme.palette.error.main,
+    color: theme.palette.error.dark,
     '& > pre': {
       fontSize: '1rem',
       textAlign: 'left',
-      backgroundColor: theme.palette.grey['900'],
-      color: theme.palette.common.white,
+      borderColor: theme.palette.divider,
+      borderWidth: '1px',
+      borderRadius: theme.shape.borderRadius,
+      borderStyle: 'solid',
+      color: theme.palette.text.primary,
       marginTop: theme.spacing(4),
       padding: theme.spacing(2, 3),
     },
   },
   greenButton: {
-    backgroundColor: '#2ea44fd9',
-    color: '#fff',
+    backgroundColor: theme.palette.success.main,
+    color: theme.palette.success.contrastText,
     '&:hover': {
-      backgroundColor: '#2ea44f',
+      backgroundColor: theme.palette.success.dark,
+      color: theme.palette.primary.contrastText,
     },
   },
 }));
@@ -188,6 +189,8 @@ function ListQuery() {
   const query = params.has('q') ? params.get('q') || '' : 'status:open';
 
   const [input, setInput] = useState(query);
+  const [filterMenuIsOpen, setFilterMenuIsOpen] = useState(false);
+  const filterButtonRef = useRef<HTMLButtonElement>(null);
 
   const classes = useStyles({ searching: !!input });
 
@@ -289,37 +292,87 @@ function ListQuery() {
     history.push(queryLocation(input));
   };
 
+  const {
+    loading: ciqLoading,
+    error: ciqError,
+    data: ciqData,
+  } = useCurrentIdentityQuery();
+  if (ciqError || ciqLoading || !ciqData?.repository?.userIdentity) {
+    return null;
+  }
+  const user = ciqData.repository.userIdentity;
+
+  const loc = pipe(stringify, queryLocation);
+  const qparams: Query = parse(query);
+  const replaceParam = (key: string, value: string) => (
+    params: Query
+  ): Query => ({
+    ...params,
+    [key]: [value],
+  });
+
   return (
     <Paper className={classes.main}>
       <header className={classes.header}>
-        <div className="filterissueContainer">
-          <form onSubmit={formSubmit}>
-            <label className={classes.filterissueLabel} htmlFor="issuefilter">
-              Filter
-            </label>
-            <InputBase
-              id="issuefilter"
-              placeholder="Filter"
-              value={input}
-              onInput={(e: any) => setInput(e.target.value)}
-              classes={{
-                root: classes.search,
-                focused: classes.searchFocused,
+        <form className={classes.form} onSubmit={formSubmit}>
+          <FormControl>
+            <Button
+              aria-haspopup="true"
+              ref={filterButtonRef}
+              onClick={(e) => setFilterMenuIsOpen(true)}
+            >
+              Filter <ArrowDropDownIcon />
+            </Button>
+            <Menu
+              open={filterMenuIsOpen}
+              onClose={() => setFilterMenuIsOpen(false)}
+              getContentAnchorEl={null}
+              anchorEl={filterButtonRef.current}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'left',
               }}
-            />
-            <button type="submit" hidden>
-              Search
-            </button>
-          </form>
-        </div>
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'left',
+              }}
+            >
+              <MenuItem
+                component={Link}
+                to={pipe(
+                  replaceParam('author', user.displayName),
+                  replaceParam('sort', 'creation'),
+                  loc
+                )(qparams)}
+                onClick={() => setFilterMenuIsOpen(false)}
+              >
+                Your newest issues
+              </MenuItem>
+            </Menu>
+          </FormControl>
+          <InputBase
+            id="issuefilter"
+            placeholder="Filter"
+            value={input}
+            onInput={(e: any) => setInput(e.target.value)}
+            classes={{
+              root: classes.search,
+              focused: classes.searchFocused,
+            }}
+          />
+          <button type="submit" hidden>
+            Search
+          </button>
+        </form>
         <IfLoggedIn>
           {() => (
             <Button
               className={classes.greenButton}
               variant="contained"
-              href="/new"
+              component={Link}
+              to="/new"
             >
-              New issue
+              New bug
             </Button>
           )}
         </IfLoggedIn>

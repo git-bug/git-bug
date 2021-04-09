@@ -51,9 +51,7 @@ func (c *BugCache) ResolveOperationWithMetadata(key string, value string) (entit
 	// preallocate but empty
 	matching := make([]entity.Id, 0, 5)
 
-	it := bug.NewOperationIterator(c.bug)
-	for it.Next() {
-		op := it.Value()
+	for _, op := range c.bug.Operations() {
 		opValue, ok := op.GetMetadata(key)
 		if ok && value == opValue {
 			matching = append(matching, op.Id())

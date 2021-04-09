@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/MichaelMure/git-bug/entity"
+	"github.com/MichaelMure/git-bug/entity/dag"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/timestamp"
@@ -15,6 +16,7 @@ import (
 )
 
 var _ Operation = &EditCommentOperation{}
+var _ dag.OperationWithFiles = &EditCommentOperation{}
 
 // EditCommentOperation will change a comment in the bug
 type EditCommentOperation struct {
@@ -24,22 +26,15 @@ type EditCommentOperation struct {
 	Files   []repository.Hash `json:"files"`
 }
 
-// Sign-post method for gqlgen
-func (op *EditCommentOperation) IsOperation() {}
-
-func (op *EditCommentOperation) base() *OpBase {
-	return &op.OpBase
-}
-
 func (op *EditCommentOperation) Id() entity.Id {
-	return idOperation(op)
+	return idOperation(op, &op.OpBase)
 }
 
 func (op *EditCommentOperation) Apply(snapshot *Snapshot) {
 	// Todo: currently any message can be edited, even by a different author
 	// crypto signature are needed.
 
-	snapshot.addActor(op.Author)
+	snapshot.addActor(op.Author_)
 
 	var target TimelineItem
 
@@ -85,7 +80,7 @@ func (op *EditCommentOperation) GetFiles() []repository.Hash {
 }
 
 func (op *EditCommentOperation) Validate() error {
-	if err := opBaseValidate(op, EditCommentOp); err != nil {
+	if err := op.OpBase.Validate(op, EditCommentOp); err != nil {
 		return err
 	}
 
@@ -100,7 +95,7 @@ func (op *EditCommentOperation) Validate() error {
 	return nil
 }
 
-// UnmarshalJSON is a two step JSON unmarshaling
+// UnmarshalJSON is a two step JSON unmarshalling
 // This workaround is necessary to avoid the inner OpBase.MarshalJSON
 // overriding the outer op's MarshalJSON
 func (op *EditCommentOperation) UnmarshalJSON(data []byte) error {

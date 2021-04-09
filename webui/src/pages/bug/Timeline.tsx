@@ -2,6 +2,7 @@ import React from 'react';
 
 import { makeStyles } from '@material-ui/core/styles';
 
+import { BugFragment } from './Bug.generated';
 import LabelChange from './LabelChange';
 import Message from './Message';
 import SetStatus from './SetStatus';
@@ -18,9 +19,10 @@ const useStyles = makeStyles((theme) => ({
 
 type Props = {
   ops: Array<TimelineItemFragment>;
+  bug: BugFragment;
 };
 
-function Timeline({ ops }: Props) {
+function Timeline({ bug, ops }: Props) {
   const classes = useStyles();
 
   return (
@@ -28,9 +30,9 @@ function Timeline({ ops }: Props) {
       {ops.map((op, index) => {
         switch (op.__typename) {
           case 'CreateTimelineItem':
-            return <Message key={index} op={op} />;
+            return <Message key={index} op={op} bug={bug} />;
           case 'AddCommentTimelineItem':
-            return <Message key={index} op={op} />;
+            return <Message key={index} op={op} bug={bug} />;
           case 'LabelChangeTimelineItem':
             return <LabelChange key={index} op={op} />;
           case 'SetTitleTimelineItem':

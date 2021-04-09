@@ -15,7 +15,6 @@ import { TimelineDocument } from './TimelineQuery.generated';
 type StyleProps = { loading: boolean };
 const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
   container: {
-    margin: theme.spacing(2, 0),
     padding: theme.spacing(0, 2, 2, 2),
   },
   textarea: {},
@@ -28,14 +27,16 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
   },
   actions: {
     display: 'flex',
+    gap: '1em',
     justifyContent: 'flex-end',
   },
   greenButton: {
     marginLeft: '8px',
-    backgroundColor: '#2ea44fd9',
-    color: '#fff',
+    backgroundColor: theme.palette.success.main,
+    color: theme.palette.success.contrastText,
     '&:hover': {
-      backgroundColor: '#2ea44f',
+      backgroundColor: theme.palette.success.dark,
+      color: theme.palette.primary.contrastText,
     },
   },
 }));
