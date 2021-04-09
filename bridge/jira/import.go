@@ -34,12 +34,6 @@ type jiraImporter struct {
 // Init .
 func (ji *jiraImporter) Init(ctx context.Context, repo *cache.RepoCache, conf core.Configuration) error {
 	ji.conf = conf
-	return nil
-}
-
-// ImportAll iterate over all the configured repository issues and ensure the
-// creation of the missing issues / timeline items / edits / label events ...
-func (ji *jiraImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, since time.Time) (<-chan core.ImportResult, error) {
 
 	var cred auth.Credential
 
@@ -47,40 +41,44 @@ func (ji *jiraImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, si
 	creds, err := auth.List(repo,
 		auth.WithTarget(target),
 		auth.WithKind(auth.KindLoginPassword),
-		auth.WithMeta(auth.MetaKeyBaseURL, ji.conf[confKeyBaseUrl]),
-		auth.WithMeta(auth.MetaKeyLogin, ji.conf[confKeyDefaultLogin]),
+		auth.WithMeta(auth.MetaKeyBaseURL, conf[confKeyBaseUrl]),
+		auth.WithMeta(auth.MetaKeyLogin, conf[confKeyDefaultLogin]),
 	)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if len(creds) > 0 {
 		cred = creds[0]
-	} else {
-		creds, err = auth.List(repo,
-			auth.WithTarget(target),
-			auth.WithKind(auth.KindLogin),
-			auth.WithMeta(auth.MetaKeyBaseURL, ji.conf[confKeyBaseUrl]),
-			auth.WithMeta(auth.MetaKeyLogin, ji.conf[confKeyDefaultLogin]),
-		)
-		if err != nil {
-			return nil, err
-		}
-		if len(creds) > 0 {
-			cred = creds[0]
-		}
+		goto end
 	}
 
+	creds, err = auth.List(repo,
+		auth.WithTarget(target),
+		auth.WithKind(auth.KindLogin),
+		auth.WithMeta(auth.MetaKeyBaseURL, conf[confKeyBaseUrl]),
+		auth.WithMeta(auth.MetaKeyLogin, conf[confKeyDefaultLogin]),
+	)
+	if err != nil {
+		return err
+	}
+	if len(creds) > 0 {
+		cred = creds[0]
+	}
+
+end:
 	if cred == nil {
-		return nil, fmt.Errorf("no credential for this bridge")
+		return fmt.Errorf("no credential for this bridge")
 	}
 
 	// TODO(josh)[da52062]: Validate token and if it is expired then prompt for
 	// credentials and generate a new one
-	ji.client, err = buildClient(ctx, ji.conf[confKeyBaseUrl], ji.conf[confKeyCredentialType], cred)
-	if err != nil {
-		return nil, err
-	}
+	ji.client, err = buildClient(ctx, conf[confKeyBaseUrl], conf[confKeyCredentialType], cred)
+	return err
+}
 
+// ImportAll iterate over all the configured repository issues and ensure the
+// creation of the missing issues / timeline items / edits / label events ...
+func (ji *jiraImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, since time.Time) (<-chan core.ImportResult, error) {
 	sinceStr := since.Format("2006-01-02 15:04")
 	project := ji.conf[confKeyProject]
 

@@ -33,29 +33,32 @@ type gitlabImporter struct {
 
 func (gi *gitlabImporter) Init(_ context.Context, repo *cache.RepoCache, conf core.Configuration) error {
 	gi.conf = conf
+
+	creds, err := auth.List(repo,
+		auth.WithTarget(target),
+		auth.WithKind(auth.KindToken),
+		auth.WithMeta(auth.MetaKeyBaseURL, conf[confKeyGitlabBaseUrl]),
+		auth.WithMeta(auth.MetaKeyLogin, conf[confKeyDefaultLogin]),
+	)
+	if err != nil {
+		return err
+	}
+
+	if len(creds) == 0 {
+		return ErrMissingIdentityToken
+	}
+
+	gi.client, err = buildClient(conf[confKeyGitlabBaseUrl], creds[0].(*auth.Token))
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 // ImportAll iterate over all the configured repository issues (notes) and ensure the creation
 // of the missing issues / comments / label events / title changes ...
 func (gi *gitlabImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, since time.Time) (<-chan core.ImportResult, error) {
-	creds, err := auth.List(repo,
-		auth.WithTarget(target),
-		auth.WithKind(auth.KindToken),
-		auth.WithMeta(auth.MetaKeyBaseURL, gi.conf[confKeyGitlabBaseUrl]),
-		auth.WithMeta(auth.MetaKeyLogin, gi.conf[confKeyDefaultLogin]),
-	)
-	if err != nil {
-		return nil, err
-	}
-	if len(creds) == 0 {
-		return nil, ErrMissingIdentityToken
-	}
-	gi.client, err = buildClient(gi.conf[confKeyGitlabBaseUrl], creds[0].(*auth.Token))
-	if err != nil {
-		return nil, err
-	}
-
 	gi.iterator = iterator.NewIterator(ctx, gi.client, 10, gi.conf[confKeyProjectID], since)
 	out := make(chan core.ImportResult)
 	gi.out = out
