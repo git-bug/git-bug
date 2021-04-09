@@ -21,6 +21,9 @@ const EmptyTitlePlaceholder = "<empty string>"
 type githubImporter struct {
 	conf core.Configuration
 
+	// default client
+	client *githubv4.Client
+
 	// mediator to access the Github API
 	mediator *importMediator
 
@@ -28,27 +31,28 @@ type githubImporter struct {
 	out chan<- core.ImportResult
 }
 
-func (gi *githubImporter) Init(_ context.Context, _ *cache.RepoCache, conf core.Configuration) error {
+func (gi *githubImporter) Init(_ context.Context, repo *cache.RepoCache, conf core.Configuration) error {
 	gi.conf = conf
+	creds, err := auth.List(repo,
+		auth.WithTarget(target),
+		auth.WithKind(auth.KindToken),
+		auth.WithMeta(auth.MetaKeyLogin, conf[confKeyDefaultLogin]),
+	)
+	if err != nil {
+		return err
+	}
+	if len(creds) <= 0 {
+		return ErrMissingIdentityToken
+	}
+	gi.client = buildClient(creds[0].(*auth.Token))
+
 	return nil
 }
 
 // ImportAll iterate over all the configured repository issues and ensure the creation of the
 // missing issues / timeline items / edits / label events ...
 func (gi *githubImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, since time.Time) (<-chan core.ImportResult, error) {
-	creds, err := auth.List(repo,
-		auth.WithTarget(target),
-		auth.WithKind(auth.KindToken),
-		auth.WithMeta(auth.MetaKeyLogin, gi.conf[confKeyDefaultLogin]),
-	)
-	if err != nil {
-		return nil, err
-	}
-	if len(creds) <= 0 {
-		return nil, ErrMissingIdentityToken
-	}
-	client := buildClient(creds[0].(*auth.Token))
-	gi.mediator = NewImportMediator(ctx, client, gi.conf[confKeyOwner], gi.conf[confKeyProject], since)
+	gi.mediator = NewImportMediator(ctx, gi.client, gi.conf[confKeyOwner], gi.conf[confKeyProject], since)
 	out := make(chan core.ImportResult)
 	gi.out = out
 
