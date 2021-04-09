@@ -15,7 +15,7 @@ import (
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
-const EMPTY_TITLE_PLACEHOLDER = "<empty string>"
+const EmptyTitlePlaceholder = "<empty string>"
 
 // githubImporter implement the Importer interface
 type githubImporter struct {
@@ -196,7 +196,7 @@ func (gi *githubImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache
 	// return an error: empty title.
 	title := string(issue.Title)
 	if title == " \u200b" { // U+200B == zero width space
-		title = EMPTY_TITLE_PLACEHOLDER
+		title = EmptyTitlePlaceholder
 	}
 
 	var textInput string
@@ -380,7 +380,7 @@ func (gi *githubImporter) ensureTimelineItem(ctx context.Context, repo *cache.Re
 		// function to return an error: empty title.
 		title := string(item.RenamedTitleEvent.CurrentTitle)
 		if title == " \u200b" { // U+200B == zero width space
-			title = EMPTY_TITLE_PLACEHOLDER
+			title = EmptyTitlePlaceholder
 		}
 
 		op, err := b.SetTitleRaw(
@@ -568,6 +568,9 @@ func (gi *githubImporter) getGhost(ctx context.Context, repo *cache.RepoCache) (
 		return nil, err
 	}
 	user, err := gi.mediator.User(ctx, loginName)
+	if err != nil {
+		return nil, err
+	}
 	userName := ""
 	if user.Name != nil {
 		userName = string(*user.Name)

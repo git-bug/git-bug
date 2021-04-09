@@ -11,12 +11,12 @@ import (
 
 const (
 	// These values influence how fast the github graphql rate limit is exhausted.
-	NUM_ISSUES         = 40
-	NUM_ISSUE_EDITS    = 100
-	NUM_TIMELINE_ITEMS = 100
-	NUM_COMMENT_EDITS  = 100
+	NumIssues        = 40
+	NumIssueEdits    = 100
+	NumTimelineItems = 100
+	NumCommentEdits  = 100
 
-	CHAN_CAPACITY = 128
+	ChanCapacity = 128
 )
 
 // importMediator provides a convenient interface to retrieve issues from the Github GraphQL API.
@@ -90,7 +90,7 @@ func NewImportMediator(ctx context.Context, client *githubv4.Client, owner, proj
 		owner:        owner,
 		project:      project,
 		since:        since,
-		importEvents: make(chan ImportEvent, CHAN_CAPACITY),
+		importEvents: make(chan ImportEvent, ChanCapacity),
 		err:          nil,
 	}
 	go func() {
@@ -107,33 +107,33 @@ func newIssueVars(owner, project string, since time.Time) varmap {
 		"owner":             githubv4.String(owner),
 		"name":              githubv4.String(project),
 		"issueSince":        githubv4.DateTime{Time: since},
-		"issueFirst":        githubv4.Int(NUM_ISSUES),
-		"issueEditLast":     githubv4.Int(NUM_ISSUE_EDITS),
+		"issueFirst":        githubv4.Int(NumIssues),
+		"issueEditLast":     githubv4.Int(NumIssueEdits),
 		"issueEditBefore":   (*githubv4.String)(nil),
-		"timelineFirst":     githubv4.Int(NUM_TIMELINE_ITEMS),
+		"timelineFirst":     githubv4.Int(NumTimelineItems),
 		"timelineAfter":     (*githubv4.String)(nil),
-		"commentEditLast":   githubv4.Int(NUM_COMMENT_EDITS),
+		"commentEditLast":   githubv4.Int(NumCommentEdits),
 		"commentEditBefore": (*githubv4.String)(nil),
 	}
 }
 
 func newIssueEditVars() varmap {
 	return varmap{
-		"issueEditLast": githubv4.Int(NUM_ISSUE_EDITS),
+		"issueEditLast": githubv4.Int(NumIssueEdits),
 	}
 }
 
 func newTimelineVars() varmap {
 	return varmap{
-		"timelineFirst":     githubv4.Int(NUM_TIMELINE_ITEMS),
-		"commentEditLast":   githubv4.Int(NUM_COMMENT_EDITS),
+		"timelineFirst":     githubv4.Int(NumTimelineItems),
+		"commentEditLast":   githubv4.Int(NumCommentEdits),
 		"commentEditBefore": (*githubv4.String)(nil),
 	}
 }
 
 func newCommentEditVars() varmap {
 	return varmap{
-		"commentEditLast": githubv4.Int(NUM_COMMENT_EDITS),
+		"commentEditLast": githubv4.Int(NumCommentEdits),
 	}
 }
 
@@ -316,7 +316,7 @@ func (mm *importMediator) queryIssue(ctx context.Context, cursor githubv4.String
 	if cursor == "" {
 		vars["issueAfter"] = (*githubv4.String)(nil)
 	} else {
-		vars["issueAfter"] = githubv4.String(cursor)
+		vars["issueAfter"] = cursor
 	}
 	query := issueQuery{}
 	if err := mm.mQuery(ctx, &query, vars); err != nil {

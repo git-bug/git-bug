@@ -251,7 +251,7 @@ func promptUserToGoToBrowser(url, userCode string) {
 	fmt.Println("Please visit the following Github URL in a browser and enter your user authentication code.")
 	fmt.Println()
 	fmt.Println("  URL:", url)
-	fmt.Println("  user authentiation code:", userCode)
+	fmt.Println("  user authentication code:", userCode)
 	fmt.Println()
 }
 
