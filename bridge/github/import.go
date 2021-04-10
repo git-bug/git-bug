@@ -15,6 +15,8 @@ import (
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
+const EmptyTitlePlaceholder = "<empty string>"
+
 // githubImporter implement the Importer interface
 type githubImporter struct {
 	conf core.Configuration
@@ -22,8 +24,8 @@ type githubImporter struct {
 	// default client
 	client *githubv4.Client
 
-	// iterator
-	iterator *iterator
+	// mediator to access the Github API
+	mediator *importMediator
 
 	// send only channel
 	out chan<- core.ImportResult
@@ -31,7 +33,6 @@ type githubImporter struct {
 
 func (gi *githubImporter) Init(_ context.Context, repo *cache.RepoCache, conf core.Configuration) error {
 	gi.conf = conf
-
 	creds, err := auth.List(repo,
 		auth.WithTarget(target),
 		auth.WithKind(auth.KindToken),
@@ -40,11 +41,9 @@ func (gi *githubImporter) Init(_ context.Context, repo *cache.RepoCache, conf co
 	if err != nil {
 		return err
 	}
-
-	if len(creds) == 0 {
+	if len(creds) <= 0 {
 		return ErrMissingIdentityToken
 	}
-
 	gi.client = buildClient(creds[0].(*auth.Token))
 
 	return nil
@@ -53,46 +52,95 @@ func (gi *githubImporter) Init(_ context.Context, repo *cache.RepoCache, conf co
 // ImportAll iterate over all the configured repository issues and ensure the creation of the
 // missing issues / timeline items / edits / label events ...
 func (gi *githubImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, since time.Time) (<-chan core.ImportResult, error) {
-	gi.iterator = NewIterator(ctx, gi.client, 10, gi.conf[confKeyOwner], gi.conf[confKeyProject], since)
+	gi.mediator = NewImportMediator(ctx, gi.client, gi.conf[confKeyOwner], gi.conf[confKeyProject], since)
 	out := make(chan core.ImportResult)
 	gi.out = out
 
 	go func() {
 		defer close(gi.out)
-
-		// Loop over all matching issues
-		for gi.iterator.NextIssue() {
-			issue := gi.iterator.IssueValue()
-			// create issue
-			b, err := gi.ensureIssue(repo, issue)
-			if err != nil {
-				err := fmt.Errorf("issue creation: %v", err)
-				out <- core.NewImportError(err, "")
-				return
+		var currBug *cache.BugCache
+		var currEvent ImportEvent
+		var nextEvent ImportEvent
+		var err error
+		for {
+			// An IssueEvent contains the issue in its most recent state. If an issue
+			// has at least one issue edit, then the history of the issue edits is
+			// represented by IssueEditEvents. That is, the unedited (original) issue
+			// might be saved only in the IssueEditEvent following the IssueEvent.
+			// Since we replicate the edit history we need to either use the IssueEvent
+			// (if there are no edits) or the IssueEvent together with its first
+			// IssueEditEvent (if there are edits).
+			// Exactly the same is true for comments and comment edits.
+			// As a consequence we need to look at the current event and one look ahead
+			// event.
+			currEvent = nextEvent
+			if currEvent == nil {
+				currEvent = gi.getEventHandleMsgs()
 			}
+			if currEvent == nil {
+				break
+			}
+			nextEvent = gi.getEventHandleMsgs()
 
-			// loop over timeline items
-			for gi.iterator.NextTimelineItem() {
-				item := gi.iterator.TimelineItemValue()
-				err := gi.ensureTimelineItem(repo, b, item)
+			switch event := currEvent.(type) {
+			case RateLimitingEvent:
+				out <- core.NewImportRateLimiting(event.msg)
+			case IssueEvent:
+				// first: commit what is being held in currBug
+				if err = gi.commit(currBug, out); err != nil {
+					out <- core.NewImportError(err, "")
+					return
+				}
+				// second: create new issue
+				switch next := nextEvent.(type) {
+				case IssueEditEvent:
+					// consuming and using next event
+					nextEvent = nil
+					currBug, err = gi.ensureIssue(ctx, repo, &event.issue, &next.userContentEdit)
+				default:
+					currBug, err = gi.ensureIssue(ctx, repo, &event.issue, nil)
+				}
+				if err != nil {
+					err := fmt.Errorf("issue creation: %v", err)
+					out <- core.NewImportError(err, "")
+					return
+				}
+			case IssueEditEvent:
+				err = gi.ensureIssueEdit(ctx, repo, currBug, event.issueId, &event.userContentEdit)
+				if err != nil {
+					err = fmt.Errorf("issue edit: %v", err)
+					out <- core.NewImportError(err, "")
+					return
+				}
+			case TimelineEvent:
+				if next, ok := nextEvent.(CommentEditEvent); ok && event.Typename == "IssueComment" {
+					// consuming and using next event
+					nextEvent = nil
+					err = gi.ensureComment(ctx, repo, currBug, &event.timelineItem.IssueComment, &next.userContentEdit)
+				} else {
+					err = gi.ensureTimelineItem(ctx, repo, currBug, &event.timelineItem)
+				}
 				if err != nil {
 					err = fmt.Errorf("timeline item creation: %v", err)
 					out <- core.NewImportError(err, "")
 					return
 				}
-			}
-
-			if !b.NeedCommit() {
-				out <- core.NewImportNothing(b.Id(), "no imported operation")
-			} else if err := b.Commit(); err != nil {
-				// commit bug state
-				err = fmt.Errorf("bug commit: %v", err)
-				out <- core.NewImportError(err, "")
-				return
+			case CommentEditEvent:
+				err = gi.ensureCommentEdit(ctx, repo, currBug, event.commentId, &event.userContentEdit)
+				if err != nil {
+					err = fmt.Errorf("comment edit: %v", err)
+					out <- core.NewImportError(err, "")
+					return
+				}
+			default:
+				panic("Unknown event type")
 			}
 		}
-
-		if err := gi.iterator.Error(); err != nil {
+		// commit what is being held in currBug before returning
+		if err = gi.commit(currBug, out); err != nil {
+			out <- core.NewImportError(err, "")
+		}
+		if err = gi.mediator.Error(); err != nil {
 			gi.out <- core.NewImportError(err, "")
 		}
 	}()
@@ -100,9 +148,35 @@ func (gi *githubImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 	return out, nil
 }
 
-func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issue) (*cache.BugCache, error) {
-	// ensure issue author
-	author, err := gi.ensurePerson(repo, issue.Author)
+func (gi *githubImporter) getEventHandleMsgs() ImportEvent {
+	for {
+		// read event from import mediator
+		event := gi.mediator.NextImportEvent()
+		// consume (and use) all rate limiting events
+		if e, ok := event.(RateLimitingEvent); ok {
+			gi.out <- core.NewImportRateLimiting(e.msg)
+			continue
+		}
+		return event
+	}
+}
+
+func (gi *githubImporter) commit(b *cache.BugCache, out chan<- core.ImportResult) error {
+	if b == nil {
+		return nil
+	}
+	if !b.NeedCommit() {
+		out <- core.NewImportNothing(b.Id(), "no imported operation")
+		return nil
+	} else if err := b.Commit(); err != nil {
+		// commit bug state
+		return fmt.Errorf("bug commit: %v", err)
+	}
+	return nil
+}
+
+func (gi *githubImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache, issue *issue, issueEdit *userContentEdit) (*cache.BugCache, error) {
+	author, err := gi.ensurePerson(ctx, repo, issue.Author)
 	if err != nil {
 		return nil, err
 	}
@@ -112,113 +186,66 @@ func (gi *githubImporter) ensureIssue(repo *cache.RepoCache, issue issue) (*cach
 		return excerpt.CreateMetadata[core.MetaKeyOrigin] == target &&
 			excerpt.CreateMetadata[metaKeyGithubId] == parseId(issue.Id)
 	})
-	if err != nil && err != bug.ErrBugNotExist {
+	if err == nil {
+		return b, nil
+	}
+	if err != bug.ErrBugNotExist {
 		return nil, err
 	}
 
-	// get issue edits
-	var issueEdits []userContentEdit
-	for gi.iterator.NextIssueEdit() {
-		issueEdits = append(issueEdits, gi.iterator.IssueEditValue())
+	// At Github there exist issues with seemingly empty titles. An example is
+	// https://github.com/NixOS/nixpkgs/issues/72730 .
+	// The title provided by the GraphQL API actually consists of a space followed by a
+	// zero width space (U+200B). This title would cause the NewBugRaw() function to
+	// return an error: empty title.
+	title := string(issue.Title)
+	if title == " \u200b" { // U+200B == zero width space
+		title = EmptyTitlePlaceholder
 	}
 
-	// if issueEdits is empty
-	if len(issueEdits) == 0 {
-		if err == bug.ErrBugNotExist {
-			cleanText, err := text.Cleanup(string(issue.Body))
-			if err != nil {
-				return nil, err
-			}
-
-			// create bug
-			b, _, err = repo.NewBugRaw(
-				author,
-				issue.CreatedAt.Unix(),
-				issue.Title,
-				cleanText,
-				nil,
-				map[string]string{
-					core.MetaKeyOrigin: target,
-					metaKeyGithubId:    parseId(issue.Id),
-					metaKeyGithubUrl:   issue.Url.String(),
-				})
-			if err != nil {
-				return nil, err
-			}
-
-			// importing a new bug
-			gi.out <- core.NewImportBug(b.Id())
-		}
+	var textInput string
+	if issueEdit != nil {
+		// use the first issue edit: it represents the bug creation itself
+		textInput = string(*issueEdit.Diff)
 	} else {
-		// create bug from given issueEdits
-		for i, edit := range issueEdits {
-			if i == 0 && b != nil {
-				// The first edit in the github result is the issue creation itself, we already have that
-				continue
-			}
-
-			cleanText, err := text.Cleanup(string(*edit.Diff))
-			if err != nil {
-				return nil, err
-			}
-
-			// if the bug doesn't exist
-			if b == nil {
-				// we create the bug as soon as we have a legit first edition
-				b, _, err = repo.NewBugRaw(
-					author,
-					issue.CreatedAt.Unix(),
-					issue.Title, // TODO: this is the *current* title, not the original one
-					cleanText,
-					nil,
-					map[string]string{
-						core.MetaKeyOrigin: target,
-						metaKeyGithubId:    parseId(issue.Id),
-						metaKeyGithubUrl:   issue.Url.String(),
-					},
-				)
-
-				if err != nil {
-					return nil, err
-				}
-				// importing a new bug
-				gi.out <- core.NewImportBug(b.Id())
-				continue
-			}
-
-			// other edits will be added as CommentEdit operations
-			target, err := b.ResolveOperationWithMetadata(metaKeyGithubId, parseId(issue.Id))
-			if err == cache.ErrNoMatchingOp {
-				// original comment is missing somehow, issuing a warning
-				gi.out <- core.NewImportWarning(fmt.Errorf("comment ID %s to edit is missing", parseId(issue.Id)), b.Id())
-				continue
-			}
-			if err != nil {
-				return nil, err
-			}
-
-			err = gi.ensureCommentEdit(repo, b, target, edit)
-			if err != nil {
-				return nil, err
-			}
-		}
+		// if there are no issue edits then the issue struct holds the bug creation
+		textInput = string(issue.Body)
 	}
+	cleanText, err := text.Cleanup(textInput)
+	if err != nil {
+		return nil, err
+	}
+
+	// create bug
+	b, _, err = repo.NewBugRaw(
+		author,
+		issue.CreatedAt.Unix(),
+		title, // TODO: this is the *current* title, not the original one
+		cleanText,
+		nil,
+		map[string]string{
+			core.MetaKeyOrigin: target,
+			metaKeyGithubId:    parseId(issue.Id),
+			metaKeyGithubUrl:   issue.Url.String(),
+		})
+	if err != nil {
+		return nil, err
+	}
+	// importing a new bug
+	gi.out <- core.NewImportBug(b.Id())
 
 	return b, nil
 }
 
-func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.BugCache, item timelineItem) error {
+func (gi *githubImporter) ensureIssueEdit(ctx context.Context, repo *cache.RepoCache, bug *cache.BugCache, ghIssueId githubv4.ID, edit *userContentEdit) error {
+	return gi.ensureCommentEdit(ctx, repo, bug, ghIssueId, edit)
+}
+
+func (gi *githubImporter) ensureTimelineItem(ctx context.Context, repo *cache.RepoCache, b *cache.BugCache, item *timelineItem) error {
 
 	switch item.Typename {
 	case "IssueComment":
-		// collect all comment edits
-		var commentEdits []userContentEdit
-		for gi.iterator.NextCommentEdit() {
-			commentEdits = append(commentEdits, gi.iterator.CommentEditValue())
-		}
-
-		// ensureTimelineComment send import events over out chanel
-		err := gi.ensureTimelineComment(repo, b, item.IssueComment, commentEdits)
+		err := gi.ensureComment(ctx, repo, b, &item.IssueComment, nil)
 		if err != nil {
 			return fmt.Errorf("timeline comment creation: %v", err)
 		}
@@ -234,7 +261,7 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 		if err != cache.ErrNoMatchingOp {
 			return err
 		}
-		author, err := gi.ensurePerson(repo, item.LabeledEvent.Actor)
+		author, err := gi.ensurePerson(ctx, repo, item.LabeledEvent.Actor)
 		if err != nil {
 			return err
 		}
@@ -263,7 +290,7 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 		if err != cache.ErrNoMatchingOp {
 			return err
 		}
-		author, err := gi.ensurePerson(repo, item.UnlabeledEvent.Actor)
+		author, err := gi.ensurePerson(ctx, repo, item.UnlabeledEvent.Actor)
 		if err != nil {
 			return err
 		}
@@ -293,7 +320,7 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 		if err == nil {
 			return nil
 		}
-		author, err := gi.ensurePerson(repo, item.ClosedEvent.Actor)
+		author, err := gi.ensurePerson(ctx, repo, item.ClosedEvent.Actor)
 		if err != nil {
 			return err
 		}
@@ -319,7 +346,7 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 		if err == nil {
 			return nil
 		}
-		author, err := gi.ensurePerson(repo, item.ReopenedEvent.Actor)
+		author, err := gi.ensurePerson(ctx, repo, item.ReopenedEvent.Actor)
 		if err != nil {
 			return err
 		}
@@ -345,14 +372,25 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 		if err == nil {
 			return nil
 		}
-		author, err := gi.ensurePerson(repo, item.RenamedTitleEvent.Actor)
+		author, err := gi.ensurePerson(ctx, repo, item.RenamedTitleEvent.Actor)
 		if err != nil {
 			return err
 		}
+
+		// At Github there exist issues with seemingly empty titles. An example is
+		// https://github.com/NixOS/nixpkgs/issues/72730 .
+		// The title provided by the GraphQL API actually consists of a space followed
+		// by a zero width space (U+200B). This title would cause the NewBugRaw()
+		// function to return an error: empty title.
+		title := string(item.RenamedTitleEvent.CurrentTitle)
+		if title == " \u200b" { // U+200B == zero width space
+			title = EmptyTitlePlaceholder
+		}
+
 		op, err := b.SetTitleRaw(
 			author,
 			item.RenamedTitleEvent.CreatedAt.Unix(),
-			string(item.RenamedTitleEvent.CurrentTitle),
+			title,
 			map[string]string{metaKeyGithubId: id},
 		)
 		if err != nil {
@@ -366,97 +404,13 @@ func (gi *githubImporter) ensureTimelineItem(repo *cache.RepoCache, b *cache.Bug
 	return nil
 }
 
-func (gi *githubImporter) ensureTimelineComment(repo *cache.RepoCache, b *cache.BugCache, item issueComment, edits []userContentEdit) error {
-	// ensure person
-	author, err := gi.ensurePerson(repo, item.Author)
+func (gi *githubImporter) ensureCommentEdit(ctx context.Context, repo *cache.RepoCache, b *cache.BugCache, ghTargetId githubv4.ID, edit *userContentEdit) error {
+	// find comment
+	target, err := b.ResolveOperationWithMetadata(metaKeyGithubId, parseId(ghTargetId))
 	if err != nil {
 		return err
 	}
-
-	targetOpID, err := b.ResolveOperationWithMetadata(metaKeyGithubId, parseId(item.Id))
-	if err != nil && err != cache.ErrNoMatchingOp {
-		// real error
-		return err
-	}
-
-	// if no edits are given we create the comment
-	if len(edits) == 0 {
-		if err == cache.ErrNoMatchingOp {
-			cleanText, err := text.Cleanup(string(item.Body))
-			if err != nil {
-				return err
-			}
-
-			// add comment operation
-			op, err := b.AddCommentRaw(
-				author,
-				item.CreatedAt.Unix(),
-				cleanText,
-				nil,
-				map[string]string{
-					metaKeyGithubId:  parseId(item.Id),
-					metaKeyGithubUrl: parseId(item.Url.String()),
-				},
-			)
-			if err != nil {
-				return err
-			}
-
-			gi.out <- core.NewImportComment(op.Id())
-			return nil
-		}
-
-	} else {
-		for i, edit := range edits {
-			if i == 0 && targetOpID != "" {
-				// The first edit in the github result is the comment creation itself, we already have that
-				continue
-			}
-
-			// ensure editor identity
-			editor, err := gi.ensurePerson(repo, edit.Editor)
-			if err != nil {
-				return err
-			}
-
-			// create comment when target is empty
-			if targetOpID == "" {
-				cleanText, err := text.Cleanup(string(*edit.Diff))
-				if err != nil {
-					return err
-				}
-
-				op, err := b.AddCommentRaw(
-					editor,
-					edit.CreatedAt.Unix(),
-					cleanText,
-					nil,
-					map[string]string{
-						metaKeyGithubId:  parseId(item.Id),
-						metaKeyGithubUrl: item.Url.String(),
-					},
-				)
-				if err != nil {
-					return err
-				}
-				gi.out <- core.NewImportComment(op.Id())
-
-				// set target for the next edit now that the comment is created
-				targetOpID = op.Id()
-				continue
-			}
-
-			err = gi.ensureCommentEdit(repo, b, targetOpID, edit)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func (gi *githubImporter) ensureCommentEdit(repo *cache.RepoCache, b *cache.BugCache, target entity.Id, edit userContentEdit) error {
-	_, err := b.ResolveOperationWithMetadata(metaKeyGithubId, parseId(edit.Id))
+	_, err = b.ResolveOperationWithMetadata(metaKeyGithubId, parseId(edit.Id))
 	if err == nil {
 		return nil
 	}
@@ -465,50 +419,93 @@ func (gi *githubImporter) ensureCommentEdit(repo *cache.RepoCache, b *cache.BugC
 		return err
 	}
 
-	editor, err := gi.ensurePerson(repo, edit.Editor)
+	editor, err := gi.ensurePerson(ctx, repo, edit.Editor)
 	if err != nil {
 		return err
 	}
 
-	switch {
-	case edit.DeletedAt != nil:
+	if edit.DeletedAt != nil {
 		// comment deletion, not supported yet
 		return nil
+	}
 
-	case edit.DeletedAt == nil:
+	cleanText, err := text.Cleanup(string(*edit.Diff))
+	if err != nil {
+		return err
+	}
 
-		cleanText, err := text.Cleanup(string(*edit.Diff))
-		if err != nil {
-			return err
-		}
+	// comment edition
+	op, err := b.EditCommentRaw(
+		editor,
+		edit.CreatedAt.Unix(),
+		target,
+		cleanText,
+		map[string]string{
+			metaKeyGithubId: parseId(edit.Id),
+		},
+	)
 
-		// comment edition
-		op, err := b.EditCommentRaw(
-			editor,
-			edit.CreatedAt.Unix(),
-			target,
-			cleanText,
-			map[string]string{
-				metaKeyGithubId: parseId(edit.Id),
-			},
-		)
+	if err != nil {
+		return err
+	}
 
-		if err != nil {
-			return err
-		}
+	gi.out <- core.NewImportCommentEdition(op.Id())
+	return nil
+}
 
-		gi.out <- core.NewImportCommentEdition(op.Id())
+func (gi *githubImporter) ensureComment(ctx context.Context, repo *cache.RepoCache, b *cache.BugCache, comment *issueComment, firstEdit *userContentEdit) error {
+	author, err := gi.ensurePerson(ctx, repo, comment.Author)
+	if err != nil {
+		return err
+	}
+
+	_, err = b.ResolveOperationWithMetadata(metaKeyGithubId, parseId(comment.Id))
+	if err == nil {
 		return nil
 	}
+	if err != cache.ErrNoMatchingOp {
+		// real error
+		return err
+	}
+
+	var textInput string
+	if firstEdit != nil {
+		// use the first comment edit: it represents the comment creation itself
+		textInput = string(*firstEdit.Diff)
+	} else {
+		// if there are not comment edits, then the comment struct holds the comment creation
+		textInput = string(comment.Body)
+	}
+	cleanText, err := text.Cleanup(textInput)
+	if err != nil {
+		return err
+	}
+
+	// add comment operation
+	op, err := b.AddCommentRaw(
+		author,
+		comment.CreatedAt.Unix(),
+		cleanText,
+		nil,
+		map[string]string{
+			metaKeyGithubId:  parseId(comment.Id),
+			metaKeyGithubUrl: comment.Url.String(),
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	gi.out <- core.NewImportComment(op.Id())
 	return nil
 }
 
 // ensurePerson create a bug.Person from the Github data
-func (gi *githubImporter) ensurePerson(repo *cache.RepoCache, actor *actor) (*cache.IdentityCache, error) {
+func (gi *githubImporter) ensurePerson(ctx context.Context, repo *cache.RepoCache, actor *actor) (*cache.IdentityCache, error) {
 	// When a user has been deleted, Github return a null actor, while displaying a profile named "ghost"
 	// in it's UI. So we need a special case to get it.
 	if actor == nil {
-		return gi.getGhost(repo)
+		return gi.getGhost(ctx, repo)
 	}
 
 	// Look first in the cache
@@ -521,7 +518,6 @@ func (gi *githubImporter) ensurePerson(repo *cache.RepoCache, actor *actor) (*ca
 	}
 
 	// importing a new identity
-
 	var name string
 	var email string
 
@@ -565,48 +561,37 @@ func (gi *githubImporter) ensurePerson(repo *cache.RepoCache, actor *actor) (*ca
 	return i, nil
 }
 
-func (gi *githubImporter) getGhost(repo *cache.RepoCache) (*cache.IdentityCache, error) {
+func (gi *githubImporter) getGhost(ctx context.Context, repo *cache.RepoCache) (*cache.IdentityCache, error) {
+	loginName := "ghost"
 	// Look first in the cache
-	i, err := repo.ResolveIdentityImmutableMetadata(metaKeyGithubLogin, "ghost")
+	i, err := repo.ResolveIdentityImmutableMetadata(metaKeyGithubLogin, loginName)
 	if err == nil {
 		return i, nil
 	}
 	if entity.IsErrMultipleMatch(err) {
 		return nil, err
 	}
-
-	var q ghostQuery
-
-	variables := map[string]interface{}{
-		"login": githubv4.String("ghost"),
-	}
-
-	ctx, cancel := context.WithTimeout(gi.iterator.ctx, defaultTimeout)
-	defer cancel()
-
-	err = gi.client.Query(ctx, &q, variables)
+	user, err := gi.mediator.User(ctx, loginName)
 	if err != nil {
 		return nil, err
 	}
-
-	var name string
-	if q.User.Name != nil {
-		name = string(*q.User.Name)
+	userName := ""
+	if user.Name != nil {
+		userName = string(*user.Name)
 	}
-
 	return repo.NewIdentityRaw(
-		name,
+		userName,
 		"",
-		string(q.User.Login),
-		string(q.User.AvatarUrl),
+		string(user.Login),
+		string(user.AvatarUrl),
 		nil,
 		map[string]string{
-			metaKeyGithubLogin: string(q.User.Login),
+			metaKeyGithubLogin: string(user.Login),
 		},
 	)
 }
 
-// parseId convert the unusable githubv4.ID (an interface{}) into a string
+// parseId converts the unusable githubv4.ID (an interface{}) into a string
 func parseId(id githubv4.ID) string {
 	return fmt.Sprintf("%v", id)
 }

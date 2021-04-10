@@ -268,7 +268,7 @@ func TestGithubPushPull(t *testing.T) {
 			require.True(t, ok)
 			require.Equal(t, issueOrigin, target)
 
-			//TODO: maybe more tests to ensure bug final state
+			// TODO: maybe more tests to ensure bug final state
 		})
 	}
 }

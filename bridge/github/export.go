@@ -504,7 +504,7 @@ func (ge *githubExporter) cacheGithubLabels(ctx context.Context, gc *githubv4.Cl
 	return nil
 }
 
-func (ge *githubExporter) getLabelID(gc *githubv4.Client, label string) (string, error) {
+func (ge *githubExporter) getLabelID(label string) (string, error) {
 	label = strings.ToLower(label)
 	for cachedLabel, ID := range ge.cachedLabels {
 		if label == strings.ToLower(cachedLabel) {
@@ -598,7 +598,7 @@ func (ge *githubExporter) createGithubLabelV4(gc *githubv4.Client, label, labelC
 
 func (ge *githubExporter) getOrCreateGithubLabelID(ctx context.Context, gc *githubv4.Client, repositoryID string, label bug.Label) (string, error) {
 	// try to get label id from cache
-	labelID, err := ge.getLabelID(gc, string(label))
+	labelID, err := ge.getLabelID(string(label))
 	if err == nil {
 		return labelID, nil
 	}
