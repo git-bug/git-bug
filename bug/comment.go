@@ -11,6 +11,8 @@ import (
 
 // Comment represent a comment in a Bug
 type Comment struct {
+	// id should be the result of entity.CombineIds with the Bug id and the id
+	// of the Operation that created the comment
 	id      entity.Id
 	Author  identity.Interface
 	Message string
@@ -24,9 +26,8 @@ type Comment struct {
 // Id return the Comment identifier
 func (c Comment) Id() entity.Id {
 	if c.id == "" {
-		// simply panic as it would be a coding error
-		// (using an id of an identity not stored yet)
-		panic("no id yet")
+		// simply panic as it would be a coding error (no id provided at construction)
+		panic("no id")
 	}
 	return c.id
 }
