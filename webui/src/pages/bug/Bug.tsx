@@ -9,6 +9,7 @@ import Label from 'src/components/Label';
 import { BugFragment } from './Bug.generated';
 import CommentForm from './CommentForm';
 import TimelineQuery from './TimelineQuery';
+import LabelMenu from './labels/LabelMenu';
 
 /**
  * Css in JS Styles
@@ -53,13 +54,15 @@ const useStyles = makeStyles((theme) => ({
     listStyle: 'none',
     padding: 0,
     margin: 0,
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
   },
   label: {
-    marginTop: theme.spacing(1),
-    marginBottom: theme.spacing(1),
-    '& > *': {
-      display: 'block',
-    },
+    marginTop: theme.spacing(0.1),
+    marginBottom: theme.spacing(0.1),
+    marginLeft: theme.spacing(0.25),
+    marginRight: theme.spacing(0.25),
   },
   noLabel: {
     ...theme.typography.body2,
@@ -94,14 +97,16 @@ function Bug({ bug }: Props) {
           </IfLoggedIn>
         </div>
         <div className={classes.rightSidebar}>
-          <span className={classes.rightSidebarTitle}>Labels</span>
+          <span className={classes.rightSidebarTitle}>
+            <LabelMenu bug={bug} />
+          </span>
           <ul className={classes.labelList}>
             {bug.labels.length === 0 && (
               <span className={classes.noLabel}>None yet</span>
             )}
             {bug.labels.map((l) => (
               <li className={classes.label} key={l.name}>
-                <Label label={l} key={l.name} />
+                <Label label={l} key={l.name} maxWidth="25ch" />
               </li>
             ))}
           </ul>

@@ -8,7 +8,11 @@ import MenuItem from '@material-ui/core/MenuItem';
 import { SvgIconProps } from '@material-ui/core/SvgIcon';
 import TextField from '@material-ui/core/TextField';
 import { makeStyles, withStyles } from '@material-ui/core/styles';
+import { darken } from '@material-ui/core/styles/colorManipulator';
 import ArrowDropDown from '@material-ui/icons/ArrowDropDown';
+import CheckIcon from '@material-ui/icons/Check';
+
+import { Color } from '../../gqlTypes';
 
 const CustomTextField = withStyles((theme) => ({
   root: {
@@ -99,9 +103,36 @@ const useStyles = makeStyles((theme) => ({
   icon: {
     paddingRight: theme.spacing(0.5),
   },
+  labelMenu: {
+    '& .MuiMenu-paper': {
+      //somehow using "width" won't override the default width...
+      minWidth: '35ch',
+    },
+  },
+  labelMenuItem: {
+    whiteSpace: 'normal',
+    wordBreak: 'break-word',
+    display: 'flex',
+    alignItems: 'initial',
+  },
+  labelcolor: {
+    minWidth: '0.5rem',
+    display: 'flex',
+    borderRadius: '0.25rem',
+    marginRight: '5px',
+    marginLeft: '3px',
+  },
 }));
+const _rgb = (color: Color) =>
+  'rgb(' + color.R + ',' + color.G + ',' + color.B + ')';
 
-type DropdownTuple = [string, string];
+// Create a style object from the label RGB colors
+const createStyle = (color: Color) => ({
+  backgroundColor: _rgb(color),
+  borderBottomColor: darken(_rgb(color), 0.2),
+});
+
+type DropdownTuple = [string, string, Color?];
 
 type FilterDropdownProps = {
   children: React.ReactNode;
@@ -150,6 +181,7 @@ function FilterDropdown({
         <ArrowDropDown fontSize="small" />
       </button>
       <Menu
+        className={classes.labelMenu}
         getContentAnchorEl={null}
         ref={searchRef}
         anchorOrigin={{
@@ -183,14 +215,22 @@ function FilterDropdown({
         )}
         {dropdown
           .filter((d) => d[1].toLowerCase().includes(filter.toLowerCase()))
-          .map(([key, value]) => (
+          .map(([key, value, color]) => (
             <MenuItem
               component={Link}
               to={to(key)}
-              className={itemActive(key) ? classes.itemActive : undefined}
+              className={classes.labelMenuItem}
+              selected={itemActive(key)}
               onClick={() => setOpen(false)}
               key={key}
             >
+              {itemActive(key) && <CheckIcon />}
+              {color && (
+                <div
+                  className={classes.labelcolor}
+                  style={createStyle(color)}
+                />
+              )}
               {value}
             </MenuItem>
           ))}

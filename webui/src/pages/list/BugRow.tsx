@@ -59,21 +59,27 @@ const useStyles = makeStyles((theme) => ({
     width: '100%',
     lineHeight: '20px',
   },
+  bugTitleWrapper: {
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    //alignItems: 'center',
+  },
   title: {
     display: 'inline',
     color: theme.palette.text.primary,
     fontSize: '1.3rem',
     fontWeight: 500,
+    marginBottom: theme.spacing(1),
+  },
+  label: {
+    maxWidth: '40ch',
+    marginLeft: theme.spacing(0.25),
+    marginRight: theme.spacing(0.25),
   },
   details: {
     lineHeight: '1.5rem',
     color: theme.palette.text.secondary,
-  },
-  labels: {
-    paddingLeft: theme.spacing(1),
-    '& > *': {
-      display: 'inline-block',
-    },
   },
   commentCount: {
     fontSize: '1rem',
@@ -81,6 +87,8 @@ const useStyles = makeStyles((theme) => ({
   },
   commentCountCell: {
     display: 'inline-flex',
+    minWidth: theme.spacing(5),
+    marginLeft: theme.spacing(0.5),
   },
 }));
 
@@ -98,15 +106,12 @@ function BugRow({ bug }: Props) {
         <BugStatus status={bug.status} className={classes.status} />
         <div className={classes.expand}>
           <Link to={'bug/' + bug.humanId}>
-            <div className={classes.expand}>
+            <div className={classes.bugTitleWrapper}>
               <span className={classes.title}>{bug.title}</span>
-              {bug.labels.length > 0 && (
-                <span className={classes.labels}>
-                  {bug.labels.map((l) => (
-                    <Label key={l.name} label={l} />
-                  ))}
-                </span>
-              )}
+              {bug.labels.length > 0 &&
+                bug.labels.map((l) => (
+                  <Label key={l.name} label={l} className={classes.label} />
+                ))}
             </div>
           </Link>
           <div className={classes.details}>
@@ -115,12 +120,14 @@ function BugRow({ bug }: Props) {
             &nbsp;by {bug.author.displayName}
           </div>
         </div>
-        {commentCount > 0 && (
-          <span className={classes.commentCountCell}>
-            <CommentOutlinedIcon aria-label="Comment count" />
-            <span className={classes.commentCount}>{commentCount}</span>
-          </span>
-        )}
+        <span className={classes.commentCountCell}>
+          {commentCount > 0 && (
+            <>
+              <CommentOutlinedIcon aria-label="Comment count" />
+              <span className={classes.commentCount}>{commentCount}</span>
+            </>
+          )}
+        </span>
       </TableCell>
     </TableRow>
   );
