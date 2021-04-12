@@ -22,6 +22,8 @@ import {
 import CloseIcon from '@material-ui/icons/Close';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 
+import Content from '../../components/Content';
+
 import { AddCommentFragment } from './MessageCommentFragment.generated';
 import { CreateFragment } from './MessageCreateFragment.generated';
 import { useMessageHistoryQuery } from './MessageHistory.generated';
@@ -108,6 +110,7 @@ const AccordionSummary = withStyles((theme) => ({
 
 const AccordionDetails = withStyles((theme) => ({
   root: {
+    display: 'block',
     padding: theme.spacing(2),
   },
 }))(MuiAccordionDetails);
@@ -214,6 +217,7 @@ function MessageHistoryDialog({ bugId, commentId, open, onClose }: Props) {
         {history?.map((edit, index) => (
           <Accordion
             square
+            key={index}
             expanded={expanded === 'panel' + index}
             onChange={handleChange('panel' + index)}
           >
@@ -224,7 +228,9 @@ function MessageHistoryDialog({ bugId, commentId, open, onClose }: Props) {
             >
               <Typography>{getSummary(index, edit.date)}</Typography>
             </AccordionSummary>
-            <AccordionDetails>{edit.message}</AccordionDetails>
+            <AccordionDetails>
+              <Content markdown={edit.message} />
+            </AccordionDetails>
           </Accordion>
         ))}
       </DialogContent>

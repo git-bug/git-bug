@@ -22,6 +22,7 @@
     "react-router": "^5.2.0",
     "react-router-dom": "^5.2.0",
     "react-scripts": "^4.0.0-next.98",
+    "remark-gemoji": "^6.0.0",
     "remark-html": "^12.0.0",
     "remark-parse": "^8.0.3",
     "remark-react": "^7.0.1",
