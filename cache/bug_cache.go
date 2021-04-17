@@ -235,6 +235,7 @@ func (c *BugCache) SetTitleRaw(author *IdentityCache, unixTime int64, title stri
 	return op, c.notifyUpdated()
 }
 
+// Convenience function to edit the body of a bug (the first comment)
 func (c *BugCache) EditCreateComment(body string) (*bug.EditCommentOperation, error) {
 	author, err := c.repoCache.GetUserIdentity()
 	if err != nil {
@@ -244,6 +245,7 @@ func (c *BugCache) EditCreateComment(body string) (*bug.EditCommentOperation, er
 	return c.EditCreateCommentRaw(author, time.Now().Unix(), body, nil)
 }
 
+// Convenience function to edit the body of a bug (the first comment)
 func (c *BugCache) EditCreateCommentRaw(author *IdentityCache, unixTime int64, body string, metadata map[string]string) (*bug.EditCommentOperation, error) {
 	c.mu.Lock()
 	op, err := bug.EditCreateComment(c.bug, author.Identity, unixTime, body)

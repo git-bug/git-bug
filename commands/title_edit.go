@@ -5,6 +5,7 @@ import (
 
 	_select "github.com/MichaelMure/git-bug/commands/select"
 	"github.com/MichaelMure/git-bug/input"
+	"github.com/MichaelMure/git-bug/util/text"
 )
 
 type titleEditOptions struct {
@@ -58,7 +59,7 @@ func runTitleEdit(env *Env, opts titleEditOptions, args []string) error {
 		env.err.Println("No change, aborting.")
 	}
 
-	_, err = b.SetTitle(opts.title)
+	_, err = b.SetTitle(text.CleanupOneLine(opts.title))
 	if err != nil {
 		return err
 	}

@@ -2,11 +2,13 @@ package bug
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/pkg/errors"
 
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/util/text"
 )
 
 var _ Operation = &SetMetadataOperation{}
@@ -41,6 +43,15 @@ func (op *SetMetadataOperation) Validate() error {
 
 	if err := op.Target.Validate(); err != nil {
 		return errors.Wrap(err, "target invalid")
+	}
+
+	for key, val := range op.NewMetadata {
+		if !text.SafeOneLine(key) {
+			return fmt.Errorf("metadata key is unsafe")
+		}
+		if !text.Safe(val) {
+			return fmt.Errorf("metadata value is not fully printable")
+		}
 	}
 
 	return nil

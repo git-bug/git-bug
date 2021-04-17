@@ -9,6 +9,7 @@ import (
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
+	"github.com/MichaelMure/git-bug/util/text"
 )
 
 type launchpadImporter struct {
@@ -83,8 +84,8 @@ func (li *launchpadImporter) ImportAll(ctx context.Context, repo *cache.RepoCach
 					b, _, err = repo.NewBugRaw(
 						owner,
 						createdAt.Unix(),
-						lpBug.Title,
-						lpBug.Description,
+						text.CleanupOneLine(lpBug.Title),
+						text.Cleanup(lpBug.Description),
 						nil,
 						map[string]string{
 							core.MetaKeyOrigin: target,
@@ -133,7 +134,7 @@ func (li *launchpadImporter) ImportAll(ctx context.Context, repo *cache.RepoCach
 					op, err := b.AddCommentRaw(
 						owner,
 						createdAt.Unix(),
-						lpMessage.Content,
+						text.Cleanup(lpMessage.Content),
 						nil,
 						map[string]string{
 							metaKeyLaunchpadID: lpMessage.ID,

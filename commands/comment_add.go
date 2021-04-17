@@ -5,6 +5,7 @@ import (
 
 	_select "github.com/MichaelMure/git-bug/commands/select"
 	"github.com/MichaelMure/git-bug/input"
+	"github.com/MichaelMure/git-bug/util/text"
 )
 
 type commentAddOptions struct {
@@ -62,7 +63,7 @@ func runCommentAdd(env *Env, opts commentAddOptions, args []string) error {
 		}
 	}
 
-	_, err = b.AddComment(opts.message)
+	_, err = b.AddComment(text.Cleanup(opts.message))
 	if err != nil {
 		return err
 	}

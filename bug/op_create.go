@@ -3,7 +3,6 @@ package bug
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
@@ -94,11 +93,8 @@ func (op *CreateOperation) Validate() error {
 	if text.Empty(op.Title) {
 		return fmt.Errorf("title is empty")
 	}
-	if strings.Contains(op.Title, "\n") {
-		return fmt.Errorf("title should be a single line")
-	}
-	if !text.Safe(op.Title) {
-		return fmt.Errorf("title is not fully printable")
+	if !text.SafeOneLine(op.Title) {
+		return fmt.Errorf("title has unsafe characters")
 	}
 
 	if !text.Safe(op.Message) {
