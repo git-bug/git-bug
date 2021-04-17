@@ -4,6 +4,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/MichaelMure/git-bug/input"
+	"github.com/MichaelMure/git-bug/util/text"
 )
 
 type addOptions struct {
@@ -60,7 +61,10 @@ func runAdd(env *Env, opts addOptions) error {
 		}
 	}
 
-	b, _, err := env.backend.NewBug(opts.title, opts.message)
+	b, _, err := env.backend.NewBug(
+		text.CleanupOneLine(opts.title),
+		text.Cleanup(opts.message),
+	)
 	if err != nil {
 		return err
 	}

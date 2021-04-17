@@ -3,7 +3,6 @@ package bug
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/identity"
@@ -49,20 +48,12 @@ func (op *SetTitleOperation) Validate() error {
 		return fmt.Errorf("title is empty")
 	}
 
-	if strings.Contains(op.Title, "\n") {
-		return fmt.Errorf("title should be a single line")
+	if !text.SafeOneLine(op.Title) {
+		return fmt.Errorf("title has unsafe characters")
 	}
 
-	if !text.Safe(op.Title) {
-		return fmt.Errorf("title should be fully printable")
-	}
-
-	if strings.Contains(op.Was, "\n") {
-		return fmt.Errorf("previous title should be a single line")
-	}
-
-	if !text.Safe(op.Was) {
-		return fmt.Errorf("previous title should be fully printable")
+	if !text.SafeOneLine(op.Was) {
+		return fmt.Errorf("previous title has unsafe characters")
 	}
 
 	return nil

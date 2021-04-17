@@ -137,22 +137,12 @@ func (gi *gitlabImporter) ensureIssue(repo *cache.RepoCache, issue *gitlab.Issue
 		return nil, err
 	}
 
-	// if bug was never imported
-	cleanTitle, err := text.Cleanup(issue.Title)
-	if err != nil {
-		return nil, err
-	}
-	cleanDesc, err := text.Cleanup(issue.Description)
-	if err != nil {
-		return nil, err
-	}
-
-	// create bug
+	// if bug was never imported, create bug
 	b, _, err = repo.NewBugRaw(
 		author,
 		issue.CreatedAt.Unix(),
-		cleanTitle,
-		cleanDesc,
+		text.CleanupOneLine(issue.Title),
+		text.Cleanup(issue.Description),
 		nil,
 		map[string]string{
 			core.MetaKeyOrigin:   target,
@@ -238,7 +228,7 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 				author,
 				note.UpdatedAt.Unix(),
 				firstComment.Id(),
-				issue.Description,
+				text.Cleanup(issue.Description),
 				map[string]string{
 					metaKeyGitlabId: gitlabID,
 				},
@@ -251,10 +241,7 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 		}
 
 	case NOTE_COMMENT:
-		cleanText, err := text.Cleanup(body)
-		if err != nil {
-			return err
-		}
+		cleanText := text.Cleanup(body)
 
 		// if we didn't import the comment
 		if errResolve == cache.ErrNoMatchingOp {
@@ -312,7 +299,7 @@ func (gi *gitlabImporter) ensureNote(repo *cache.RepoCache, b *cache.BugCache, n
 		op, err := b.SetTitleRaw(
 			author,
 			note.CreatedAt.Unix(),
-			body,
+			text.CleanupOneLine(body),
 			map[string]string{
 				metaKeyGitlabId: gitlabID,
 			},
@@ -361,7 +348,7 @@ func (gi *gitlabImporter) ensureLabelEvent(repo *cache.RepoCache, b *cache.BugCa
 		_, err = b.ForceChangeLabelsRaw(
 			author,
 			labelEvent.CreatedAt.Unix(),
-			[]string{labelEvent.Label.Name},
+			[]string{text.CleanupOneLine(labelEvent.Label.Name)},
 			nil,
 			map[string]string{
 				metaKeyGitlabId: parseID(labelEvent.ID),
@@ -373,7 +360,7 @@ func (gi *gitlabImporter) ensureLabelEvent(repo *cache.RepoCache, b *cache.BugCa
 			author,
 			labelEvent.CreatedAt.Unix(),
 			nil,
-			[]string{labelEvent.Label.Name},
+			[]string{text.CleanupOneLine(labelEvent.Label.Name)},
 			map[string]string{
 				metaKeyGitlabId: parseID(labelEvent.ID),
 			},

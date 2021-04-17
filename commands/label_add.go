@@ -4,6 +4,7 @@ import (
 	"github.com/spf13/cobra"
 
 	_select "github.com/MichaelMure/git-bug/commands/select"
+	"github.com/MichaelMure/git-bug/util/text"
 )
 
 func newLabelAddCommand() *cobra.Command {
@@ -30,7 +31,7 @@ func runLabelAdd(env *Env, args []string) error {
 
 	added := args
 
-	changes, _, err := b.ChangeLabels(added, nil)
+	changes, _, err := b.ChangeLabels(text.CleanupOneLineArray(added), nil)
 
 	for _, change := range changes {
 		env.out.Println(change)

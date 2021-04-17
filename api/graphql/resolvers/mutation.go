@@ -5,11 +5,12 @@ import (
 	"time"
 
 	"github.com/MichaelMure/git-bug/api/auth"
-	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/api/graphql/graph"
 	"github.com/MichaelMure/git-bug/api/graphql/models"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/entity"
+	"github.com/MichaelMure/git-bug/util/text"
 )
 
 var _ graph.MutationResolver = &mutationResolver{}
@@ -50,7 +51,12 @@ func (r mutationResolver) NewBug(ctx context.Context, input models.NewBugInput) 
 		return nil, err
 	}
 
-	b, op, err := repo.NewBugRaw(author, time.Now().Unix(), input.Title, input.Message, input.Files, nil)
+	b, op, err := repo.NewBugRaw(author,
+		time.Now().Unix(),
+		text.CleanupOneLine(input.Title),
+		text.Cleanup(input.Message),
+		input.Files,
+		nil)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +79,11 @@ func (r mutationResolver) AddComment(ctx context.Context, input models.AddCommen
 		return nil, err
 	}
 
-	op, err := b.AddCommentRaw(author, time.Now().Unix(), input.Message, input.Files, nil)
+	op, err := b.AddCommentRaw(author,
+		time.Now().Unix(),
+		text.Cleanup(input.Message),
+		input.Files,
+		nil)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +111,13 @@ func (r mutationResolver) EditComment(ctx context.Context, input models.EditComm
 		return nil, err
 	}
 
-	op, err := b.EditCommentRaw(author, time.Now().Unix(), entity.Id(input.Target), input.Message, nil)
+	op, err := b.EditCommentRaw(
+		author,
+		time.Now().Unix(),
+		entity.Id(input.Target),
+		text.Cleanup(input.Message),
+		nil,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +145,13 @@ func (r mutationResolver) ChangeLabels(ctx context.Context, input *models.Change
 		return nil, err
 	}
 
-	results, op, err := b.ChangeLabelsRaw(author, time.Now().Unix(), input.Added, input.Removed, nil)
+	results, op, err := b.ChangeLabelsRaw(
+		author,
+		time.Now().Unix(),
+		text.CleanupOneLineArray(input.Added),
+		text.CleanupOneLineArray(input.Removed),
+		nil,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -219,7 +241,12 @@ func (r mutationResolver) SetTitle(ctx context.Context, input models.SetTitleInp
 		return nil, err
 	}
 
-	op, err := b.SetTitleRaw(author, time.Now().Unix(), input.Title, nil)
+	op, err := b.SetTitleRaw(
+		author,
+		time.Now().Unix(),
+		text.CleanupOneLine(input.Title),
+		nil,
+	)
 	if err != nil {
 		return nil, err
 	}

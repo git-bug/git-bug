@@ -211,17 +211,13 @@ func (gi *githubImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache
 		// if there are no issue edits then the issue struct holds the bug creation
 		textInput = string(issue.Body)
 	}
-	cleanText, err := text.Cleanup(textInput)
-	if err != nil {
-		return nil, err
-	}
 
 	// create bug
 	b, _, err = repo.NewBugRaw(
 		author,
 		issue.CreatedAt.Unix(),
-		title, // TODO: this is the *current* title, not the original one
-		cleanText,
+		text.CleanupOneLine(title), // TODO: this is the *current* title, not the original one
+		text.Cleanup(textInput),
 		nil,
 		map[string]string{
 			core.MetaKeyOrigin: target,
@@ -269,7 +265,7 @@ func (gi *githubImporter) ensureTimelineItem(ctx context.Context, repo *cache.Re
 			author,
 			item.LabeledEvent.CreatedAt.Unix(),
 			[]string{
-				string(item.LabeledEvent.Label.Name),
+				text.CleanupOneLine(string(item.LabeledEvent.Label.Name)),
 			},
 			nil,
 			map[string]string{metaKeyGithubId: id},
@@ -300,7 +296,7 @@ func (gi *githubImporter) ensureTimelineItem(ctx context.Context, repo *cache.Re
 			item.UnlabeledEvent.CreatedAt.Unix(),
 			nil,
 			[]string{
-				string(item.UnlabeledEvent.Label.Name),
+				text.CleanupOneLine(string(item.UnlabeledEvent.Label.Name)),
 			},
 			map[string]string{metaKeyGithubId: id},
 		)
@@ -382,7 +378,7 @@ func (gi *githubImporter) ensureTimelineItem(ctx context.Context, repo *cache.Re
 		// The title provided by the GraphQL API actually consists of a space followed
 		// by a zero width space (U+200B). This title would cause the NewBugRaw()
 		// function to return an error: empty title.
-		title := string(item.RenamedTitleEvent.CurrentTitle)
+		title := text.CleanupOneLine(string(item.RenamedTitleEvent.CurrentTitle))
 		if title == " \u200b" { // U+200B == zero width space
 			title = EmptyTitlePlaceholder
 		}
@@ -429,17 +425,12 @@ func (gi *githubImporter) ensureCommentEdit(ctx context.Context, repo *cache.Rep
 		return nil
 	}
 
-	cleanText, err := text.Cleanup(string(*edit.Diff))
-	if err != nil {
-		return err
-	}
-
 	// comment edition
 	op, err := b.EditCommentRaw(
 		editor,
 		edit.CreatedAt.Unix(),
 		target,
-		cleanText,
+		text.Cleanup(string(*edit.Diff)),
 		map[string]string{
 			metaKeyGithubId: parseId(edit.Id),
 		},
@@ -476,16 +467,12 @@ func (gi *githubImporter) ensureComment(ctx context.Context, repo *cache.RepoCac
 		// if there are not comment edits, then the comment struct holds the comment creation
 		textInput = string(comment.Body)
 	}
-	cleanText, err := text.Cleanup(textInput)
-	if err != nil {
-		return err
-	}
 
 	// add comment operation
 	op, err := b.AddCommentRaw(
 		author,
 		comment.CreatedAt.Unix(),
-		cleanText,
+		text.Cleanup(textInput),
 		nil,
 		map[string]string{
 			metaKeyGithubId:  parseId(comment.Id),

@@ -11,6 +11,7 @@ import (
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/input"
 	"github.com/MichaelMure/git-bug/query"
+	"github.com/MichaelMure/git-bug/util/text"
 )
 
 var errTerminateMainloop = errors.New("terminate gocui mainloop")
@@ -199,7 +200,10 @@ func newBugWithEditor(repo *cache.RepoCache) error {
 
 		return errTerminateMainloop
 	} else {
-		b, _, err = repo.NewBug(title, message)
+		b, _, err = repo.NewBug(
+			text.CleanupOneLine(title),
+			text.Cleanup(message),
+		)
 		if err != nil {
 			return err
 		}
@@ -235,7 +239,7 @@ func addCommentWithEditor(bug *cache.BugCache) error {
 	if err == input.ErrEmptyMessage {
 		ui.msgPopup.Activate(msgPopupErrorTitle, "Empty message, aborting.")
 	} else {
-		_, err := bug.AddComment(message)
+		_, err := bug.AddComment(text.Cleanup(message))
 		if err != nil {
 			return err
 		}
@@ -270,7 +274,7 @@ func editCommentWithEditor(bug *cache.BugCache, target entity.Id, preMessage str
 	} else if message == preMessage {
 		ui.msgPopup.Activate(msgPopupErrorTitle, "No changes found, aborting.")
 	} else {
-		_, err := bug.EditComment(target, message)
+		_, err := bug.EditComment(target, text.Cleanup(message))
 		if err != nil {
 			return err
 		}
@@ -307,7 +311,7 @@ func setTitleWithEditor(bug *cache.BugCache) error {
 	} else if title == snap.Title {
 		ui.msgPopup.Activate(msgPopupErrorTitle, "No change, aborting.")
 	} else {
-		_, err := bug.SetTitle(title)
+		_, err := bug.SetTitle(text.CleanupOneLine(title))
 		if err != nil {
 			return err
 		}

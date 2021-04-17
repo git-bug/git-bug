@@ -4,6 +4,7 @@ import (
 	"github.com/spf13/cobra"
 
 	_select "github.com/MichaelMure/git-bug/commands/select"
+	"github.com/MichaelMure/git-bug/util/text"
 )
 
 func newLabelRmCommand() *cobra.Command {
@@ -30,7 +31,7 @@ func runLabelRm(env *Env, args []string) error {
 
 	removed := args
 
-	changes, _, err := b.ChangeLabels(nil, removed)
+	changes, _, err := b.ChangeLabels(nil, text.CleanupOneLineArray(removed))
 
 	for _, change := range changes {
 		env.out.Println(change)

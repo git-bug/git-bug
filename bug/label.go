@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"image/color"
-	"strings"
 
 	fcolor "github.com/fatih/color"
 
@@ -58,12 +57,8 @@ func (l Label) Validate() error {
 		return fmt.Errorf("empty")
 	}
 
-	if strings.Contains(str, "\n") {
-		return fmt.Errorf("should be a single line")
-	}
-
-	if !text.Safe(str) {
-		return fmt.Errorf("not fully printable")
+	if !text.SafeOneLine(str) {
+		return fmt.Errorf("label has unsafe characters")
 	}
 
 	return nil

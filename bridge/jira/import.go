@@ -232,19 +232,11 @@ func (ji *jiraImporter) ensureIssue(repo *cache.RepoCache, issue Issue) (*cache.
 	}
 
 	if err == bug.ErrBugNotExist {
-		cleanText, err := text.Cleanup(string(issue.Fields.Description))
-		if err != nil {
-			return nil, err
-		}
-
-		// NOTE(josh): newlines in titles appears to be rare, but it has been seen
-		// in the wild. It does not appear to be allowed in the JIRA web interface.
-		title := strings.Replace(issue.Fields.Summary, "\n", "", -1)
 		b, _, err = repo.NewBugRaw(
 			author,
 			issue.Fields.Created.Unix(),
-			title,
-			cleanText,
+			text.CleanupOneLine(issue.Fields.Summary),
+			text.Cleanup(issue.Fields.Description),
 			nil,
 			map[string]string{
 				core.MetaKeyOrigin: target,
@@ -289,10 +281,7 @@ func (ji *jiraImporter) ensureComment(repo *cache.RepoCache, b *cache.BugCache, 
 			// We don't know the original text... we only have the updated text.
 			cleanText = ""
 		} else {
-			cleanText, err = text.Cleanup(string(item.Body))
-			if err != nil {
-				return err
-			}
+			cleanText = text.Cleanup(item.Body)
 		}
 
 		// add comment operation
@@ -340,15 +329,11 @@ func (ji *jiraImporter) ensureComment(repo *cache.RepoCache, b *cache.BugCache, 
 	}
 
 	// comment edition
-	cleanText, err := text.Cleanup(string(item.Body))
-	if err != nil {
-		return err
-	}
 	op, err := b.EditCommentRaw(
 		editor,
 		item.Updated.Unix(),
 		targetOpID,
-		cleanText,
+		text.Cleanup(item.Body),
 		map[string]string{
 			metaKeyJiraId: derivedID,
 		},
@@ -513,8 +498,8 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 			op, err := b.ForceChangeLabelsRaw(
 				author,
 				entry.Created.Unix(),
-				addedLabels,
-				removedLabels,
+				text.CleanupOneLineArray(addedLabels),
+				text.CleanupOneLineArray(removedLabels),
 				map[string]string{
 					metaKeyJiraId:        entry.ID,
 					metaKeyJiraDerivedId: derivedID,
@@ -571,7 +556,7 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 			op, err := b.SetTitleRaw(
 				author,
 				entry.Created.Unix(),
-				string(item.ToString),
+				text.CleanupOneLine(item.ToString),
 				map[string]string{
 					metaKeyJiraId:        entry.ID,
 					metaKeyJiraDerivedId: derivedID,
@@ -589,7 +574,7 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 			op, err := b.EditCreateCommentRaw(
 				author,
 				entry.Created.Unix(),
-				string(item.ToString),
+				text.Cleanup(item.ToString),
 				map[string]string{
 					metaKeyJiraId:        entry.ID,
 					metaKeyJiraDerivedId: derivedID,
