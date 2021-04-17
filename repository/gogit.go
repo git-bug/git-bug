@@ -31,8 +31,13 @@ var _ ClockedRepo = &GoGitRepo{}
 var _ TestedRepo = &GoGitRepo{}
 
 type GoGitRepo struct {
-	r    *gogit.Repository
-	path string
+	// Unfortunately, some parts of go-git are not thread-safe so we have to cover them with a big fat mutex here.
+	// See https://github.com/go-git/go-git/issues/48
+	// See https://github.com/go-git/go-git/issues/208
+	// See https://github.com/go-git/go-git/pull/186
+	rMutex sync.Mutex
+	r      *gogit.Repository
+	path   string
 
 	clocksMutex sync.Mutex
 	clocks      map[string]lamport.Clock
@@ -448,6 +453,9 @@ func (repo *GoGitRepo) StoreData(data []byte) (Hash, error) {
 
 // ReadData will attempt to read arbitrary data from the given hash
 func (repo *GoGitRepo) ReadData(hash Hash) ([]byte, error) {
+	repo.rMutex.Lock()
+	defer repo.rMutex.Unlock()
+
 	obj, err := repo.r.BlobObject(plumbing.NewHash(hash.String()))
 	if err != nil {
 		return nil, err
