@@ -30,10 +30,8 @@ func TestCreate(t *testing.T) {
 	id := create.Id()
 	require.NoError(t, id.Validate())
 
-	commentId := entity.CombineIds(create.Id(), create.Id())
-
 	comment := Comment{
-		id:       commentId,
+		id:       entity.CombineIds(create.Id(), create.Id()),
 		Author:   rene,
 		Message:  "message",
 		UnixTime: timestamp.Timestamp(create.UnixTime),
@@ -51,7 +49,7 @@ func TestCreate(t *testing.T) {
 		CreateTime:   create.Time(),
 		Timeline: []TimelineItem{
 			&CreateTimelineItem{
-				CommentTimelineItem: NewCommentTimelineItem(commentId, comment),
+				CommentTimelineItem: NewCommentTimelineItem(comment),
 			},
 		},
 	}

@@ -34,12 +34,12 @@ func (op *EditCommentOperation) Apply(snapshot *Snapshot) {
 	// Todo: currently any message can be edited, even by a different author
 	// crypto signature are needed.
 
-	snapshot.addActor(op.Author_)
+	// Recreate the Comment Id to match on
+	commentId := entity.CombineIds(snapshot.Id(), op.Target)
 
 	var target TimelineItem
-
 	for i, item := range snapshot.Timeline {
-		if item.Id() == op.Target {
+		if item.Id() == commentId {
 			target = snapshot.Timeline[i]
 			break
 		}
@@ -51,7 +51,7 @@ func (op *EditCommentOperation) Apply(snapshot *Snapshot) {
 	}
 
 	comment := Comment{
-		id:       op.Target,
+		id:       commentId,
 		Message:  op.Message,
 		Files:    op.Files,
 		UnixTime: timestamp.Timestamp(op.UnixTime),
@@ -62,12 +62,18 @@ func (op *EditCommentOperation) Apply(snapshot *Snapshot) {
 		target.Append(comment)
 	case *AddCommentTimelineItem:
 		target.Append(comment)
+	default:
+		// somehow, the target matched on something that is not a comment
+		// we make the op a no-op
+		return
 	}
+
+	snapshot.addActor(op.Author_)
 
 	// Updating the corresponding comment
 
 	for i := range snapshot.Comments {
-		if snapshot.Comments[i].Id() == op.Target {
+		if snapshot.Comments[i].Id() == commentId {
 			snapshot.Comments[i].Message = op.Message
 			snapshot.Comments[i].Files = op.Files
 			break

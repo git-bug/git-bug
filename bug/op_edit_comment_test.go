@@ -24,14 +24,12 @@ func TestEdit(t *testing.T) {
 	create := NewCreateOp(rene, unix, "title", "create", nil)
 	create.Apply(&snapshot)
 
-	id1 := create.Id()
-	require.NoError(t, id1.Validate())
+	require.NoError(t, create.Id().Validate())
 
 	comment1 := NewAddCommentOp(rene, unix, "comment 1", nil)
 	comment1.Apply(&snapshot)
 
-	id2 := comment1.Id()
-	require.NoError(t, id2.Validate())
+	require.NoError(t, comment1.Id().Validate())
 
 	// add another unrelated op in between
 	setTitle := NewSetTitleOp(rene, unix, "edited title", "title")
@@ -40,10 +38,9 @@ func TestEdit(t *testing.T) {
 	comment2 := NewAddCommentOp(rene, unix, "comment 2", nil)
 	comment2.Apply(&snapshot)
 
-	id3 := comment2.Id()
-	require.NoError(t, id3.Validate())
+	require.NoError(t, comment2.Id().Validate())
 
-	edit := NewEditCommentOp(rene, unix, snapshot.Comments[0].Id(), "create edited", nil)
+	edit := NewEditCommentOp(rene, unix, create.Id(), "create edited", nil)
 	edit.Apply(&snapshot)
 
 	require.Len(t, snapshot.Timeline, 4)
@@ -54,7 +51,7 @@ func TestEdit(t *testing.T) {
 	require.Equal(t, snapshot.Comments[1].Message, "comment 1")
 	require.Equal(t, snapshot.Comments[2].Message, "comment 2")
 
-	edit2 := NewEditCommentOp(rene, unix, snapshot.Comments[1].Id(), "comment 1 edited", nil)
+	edit2 := NewEditCommentOp(rene, unix, comment1.Id(), "comment 1 edited", nil)
 	edit2.Apply(&snapshot)
 
 	require.Len(t, snapshot.Timeline, 4)
@@ -65,7 +62,7 @@ func TestEdit(t *testing.T) {
 	require.Equal(t, snapshot.Comments[1].Message, "comment 1 edited")
 	require.Equal(t, snapshot.Comments[2].Message, "comment 2")
 
-	edit3 := NewEditCommentOp(rene, unix, snapshot.Comments[2].Id(), "comment 2 edited", nil)
+	edit3 := NewEditCommentOp(rene, unix, comment2.Id(), "comment 2 edited", nil)
 	edit3.Apply(&snapshot)
 
 	require.Len(t, snapshot.Timeline, 4)
