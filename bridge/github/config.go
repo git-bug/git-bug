@@ -365,12 +365,13 @@ func promptToken() (*auth.Token, error) {
 	fmt.Println("  - 'repo'       : to be able to read private repositories")
 	fmt.Println()
 
-	re := regexp.MustCompile(`^[a-zA-Z0-9]{40}$`)
+	legacyRe := regexp.MustCompile(`^[a-zA-Z0-9]{40}$`)
+	re := regexp.MustCompile(`^(?:ghp|gho|ghu|ghs|ghr)_[a-zA-Z0-9]{36,255}$`)
 
 	var login string
 
 	validator := func(name string, value string) (complaint string, err error) {
-		if !re.MatchString(value) {
+		if !re.MatchString(value) && !legacyRe.MatchString(value) {
 			return "token has incorrect format", nil
 		}
 		login, err = getLoginFromToken(auth.NewToken(target, value))
