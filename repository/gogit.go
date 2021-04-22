@@ -518,6 +518,9 @@ func (repo *GoGitRepo) StoreTree(mapping []TreeEntry) (Hash, error) {
 
 // ReadTree will return the list of entries in a Git tree
 func (repo *GoGitRepo) ReadTree(hash Hash) ([]TreeEntry, error) {
+	repo.rMutex.Lock()
+	defer repo.rMutex.Unlock()
+
 	h := plumbing.NewHash(hash.String())
 
 	// the given hash could be a tree or a commit
@@ -630,6 +633,9 @@ func (repo *GoGitRepo) StoreSignedCommit(treeHash Hash, signKey *openpgp.Entity,
 
 // GetTreeHash return the git tree hash referenced in a commit
 func (repo *GoGitRepo) GetTreeHash(commit Hash) (Hash, error) {
+	repo.rMutex.Lock()
+	defer repo.rMutex.Unlock()
+
 	obj, err := repo.r.CommitObject(plumbing.NewHash(commit.String()))
 	if err != nil {
 		return "", err
@@ -640,6 +646,9 @@ func (repo *GoGitRepo) GetTreeHash(commit Hash) (Hash, error) {
 
 // FindCommonAncestor will return the last common ancestor of two chain of commit
 func (repo *GoGitRepo) FindCommonAncestor(commit1 Hash, commit2 Hash) (Hash, error) {
+	repo.rMutex.Lock()
+	defer repo.rMutex.Unlock()
+
 	obj1, err := repo.r.CommitObject(plumbing.NewHash(commit1.String()))
 	if err != nil {
 		return "", err
@@ -723,6 +732,9 @@ func (repo *GoGitRepo) ListCommits(ref string) ([]Hash, error) {
 }
 
 func (repo *GoGitRepo) ReadCommit(hash Hash) (Commit, error) {
+	repo.rMutex.Lock()
+	defer repo.rMutex.Unlock()
+
 	commit, err := repo.r.CommitObject(plumbing.NewHash(hash.String()))
 	if err != nil {
 		return Commit{}, err
