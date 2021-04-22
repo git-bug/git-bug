@@ -173,6 +173,10 @@ func TestGithubPushPull(t *testing.T) {
 
 	fmt.Println("created repository", projectName)
 
+	// Let Github handle the repo creation and update all their internal caches.
+	// Avoid HTTP error 404 retrieving repository node id
+	time.Sleep(10 * time.Second)
+
 	// Make sure to remove the Github repository when the test end
 	defer func(t *testing.T) {
 		if err := deleteRepository(projectName, envUser, envToken); err != nil {
