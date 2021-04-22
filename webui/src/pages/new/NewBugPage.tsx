@@ -62,7 +62,7 @@ function NewBugPage() {
         },
       },
     }).then(function (data) {
-      const id = data.data?.newBug.bug.humanId;
+      const id = data.data?.newBug.bug.id;
       history.push('/bug/' + id);
     });
     issueTitleInput.value = '';

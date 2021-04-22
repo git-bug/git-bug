@@ -96,7 +96,7 @@ const CurrentIdentity = () => {
                       color="inherit"
                       className={classes.profileLink}
                       component={RouterLink}
-                      to={`/user/${user.humanId}`}
+                      to={`/user/${user.id}`}
                     >
                       Open profile
                     </Link>

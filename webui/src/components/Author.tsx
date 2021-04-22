@@ -15,7 +15,7 @@ type Props = AuthoredFragment & {
 const Author = ({ author, ...props }: Props) => {
   return (
     <Tooltip title={`Goto the ${author.displayName}'s profile.`}>
-      <Link {...props} component={RouterLink} to={`/user/${author.humanId}`}>
+      <Link {...props} component={RouterLink} to={`/user/${author.id}`}>
         {author.displayName}
       </Link>
     </Tooltip>

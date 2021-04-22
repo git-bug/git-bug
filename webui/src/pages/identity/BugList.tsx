@@ -24,14 +24,14 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 type Props = {
-  humanId: string;
+  id: string;
 };
 
-function BugList({ humanId }: Props) {
+function BugList({ id }: Props) {
   const classes = useStyles();
   const { loading, error, data } = useGetBugsByUserQuery({
     variables: {
-      query: 'author:' + humanId + ' sort:creation',
+      query: 'author:' + id + ' sort:creation',
     },
   });
 

@@ -90,7 +90,7 @@ function BugTitleForm({ bug }: Props) {
     setTitle({
       variables: {
         input: {
-          prefix: bug.humanId,
+          prefix: bug.id,
           title: issueTitleInput.value,
         },
       },

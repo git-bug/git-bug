@@ -106,7 +106,7 @@ function BugRow({ bug }: Props) {
       <TableCell className={classes.cell}>
         <BugStatus status={bug.status} className={classes.status} />
         <div className={classes.expand}>
-          <Link to={'bug/' + bug.humanId}>
+          <Link to={'bug/' + bug.id}>
             <div className={classes.bugTitleWrapper}>
               <span className={classes.title}>{bug.title}</span>
               {bug.labels.length > 0 &&

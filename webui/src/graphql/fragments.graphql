@@ -16,5 +16,6 @@ fragment authored on Authored {
     displayName
     avatarUrl
     humanId
+    id
   }
 }

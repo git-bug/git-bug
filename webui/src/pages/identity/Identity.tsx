@@ -51,9 +51,9 @@ const Identity = ({ identity }: Props) => {
 
   const { loading, error, data } = useGetUserStatisticQuery({
     variables: {
-      authorQuery: 'author:' + user?.humanId,
-      participantQuery: 'participant:' + user?.humanId,
-      actionQuery: 'actor:' + user?.humanId,
+      authorQuery: 'author:' + user?.id,
+      participantQuery: 'participant:' + user?.id,
+      actionQuery: 'actor:' + user?.id,
     },
   });
 
@@ -111,7 +111,7 @@ const Identity = ({ identity }: Props) => {
               <h1 className={classes.header}>Statistics</h1>
               <Link
                 component={RouterLink}
-                to={`/?q=author%3A${user?.humanId}+sort%3Acreation`}
+                to={`/?q=author%3A${user?.id}+sort%3Acreation`}
                 color={'inherit'}
               >
                 <Typography variant="subtitle1">
@@ -120,7 +120,7 @@ const Identity = ({ identity }: Props) => {
               </Link>
               <Link
                 component={RouterLink}
-                to={`/?q=participant%3A${user?.humanId}+sort%3Acreation`}
+                to={`/?q=participant%3A${user?.id}+sort%3Acreation`}
                 color={'inherit'}
               >
                 <Typography variant="subtitle1">
@@ -129,7 +129,7 @@ const Identity = ({ identity }: Props) => {
               </Link>
               <Link
                 component={RouterLink}
-                to={`/?q=actor%3A${user?.humanId}+sort%3Acreation`}
+                to={`/?q=actor%3A${user?.id}+sort%3Acreation`}
                 color={'inherit'}
               >
                 <Typography variant="subtitle1">
