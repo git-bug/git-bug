@@ -1,7 +1,7 @@
 mutation newBug($input: NewBugInput!) {
   newBug(input: $input) {
     bug {
-      humanId
+      id
     }
   }
 }

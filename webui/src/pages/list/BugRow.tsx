@@ -9,6 +9,7 @@ import CheckCircleOutline from '@material-ui/icons/CheckCircleOutline';
 import CommentOutlinedIcon from '@material-ui/icons/CommentOutlined';
 import ErrorOutline from '@material-ui/icons/ErrorOutline';
 
+import Author from 'src/components/Author';
 import Date from 'src/components/Date';
 import Label from 'src/components/Label';
 import { Status } from 'src/gqlTypes';
@@ -105,7 +106,7 @@ function BugRow({ bug }: Props) {
       <TableCell className={classes.cell}>
         <BugStatus status={bug.status} className={classes.status} />
         <div className={classes.expand}>
-          <Link to={'bug/' + bug.humanId}>
+          <Link to={'bug/' + bug.id}>
             <div className={classes.bugTitleWrapper}>
               <span className={classes.title}>{bug.title}</span>
               {bug.labels.length > 0 &&
@@ -117,7 +118,8 @@ function BugRow({ bug }: Props) {
           <div className={classes.details}>
             {bug.humanId} opened&nbsp;
             <Date date={bug.createdAt} />
-            &nbsp;by {bug.author.displayName}
+            &nbsp;by&nbsp;
+            <Author className={classes.details} author={bug.author} />
           </div>
         </div>
         <span className={classes.commentCountCell}>

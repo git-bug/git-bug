@@ -1,8 +1,9 @@
+#import "./IdentityFragment.graphql"
+
 query CurrentIdentity {
   repository {
     userIdentity {
-      displayName
-      avatarUrl
+      ...Identity
     }
   }
 }

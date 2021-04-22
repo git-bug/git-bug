@@ -14,7 +14,7 @@ import KeyboardArrowLeft from '@material-ui/icons/KeyboardArrowLeft';
 import KeyboardArrowRight from '@material-ui/icons/KeyboardArrowRight';
 import Skeleton from '@material-ui/lab/Skeleton';
 
-import { useCurrentIdentityQuery } from '../../components/CurrentIdentity/CurrentIdentity.generated';
+import { useCurrentIdentityQuery } from '../../components/Identity/CurrentIdentity.generated';
 import IfLoggedIn from 'src/components/IfLoggedIn/IfLoggedIn';
 
 import { parse, Query, stringify } from './Filter';

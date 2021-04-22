@@ -1,0 +1,10 @@
+fragment Identity on Identity {
+  id
+  humanId
+  displayName
+  email
+  name
+  avatarUrl
+  isProtected
+  login
+}

@@ -15,5 +15,7 @@ fragment authored on Authored {
     email
     displayName
     avatarUrl
+    humanId
+    id
   }
 }

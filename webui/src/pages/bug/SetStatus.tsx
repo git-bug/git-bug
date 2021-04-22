@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { Typography } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 
 import { Status } from '../../gqlTypes';
@@ -10,11 +11,12 @@ import { SetStatusFragment } from './SetStatusFragment.generated';
 
 const useStyles = makeStyles((theme) => ({
   main: {
-    ...theme.typography.body2,
+    color: theme.palette.text.secondary,
     marginLeft: theme.spacing(1) + 40,
   },
   author: {
     fontWeight: 'bold',
+    color: theme.palette.text.secondary,
   },
 }));
 
@@ -29,11 +31,11 @@ function SetStatus({ op }: Props) {
   ];
 
   return (
-    <div className={classes.main}>
+    <Typography className={classes.main}>
       <Author author={op.author} className={classes.author} />
       <span> {status} this </span>
       <Date date={op.date} />
-    </div>
+    </Typography>
   );
 }
 

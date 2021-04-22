@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { Typography } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 
 import Author from 'src/components/Author';
@@ -9,11 +10,12 @@ import { SetTitleFragment } from './SetTitleFragment.generated';
 
 const useStyles = makeStyles((theme) => ({
   main: {
-    ...theme.typography.body2,
+    color: theme.palette.text.secondary,
     marginLeft: theme.spacing(1) + 40,
   },
   author: {
     fontWeight: 'bold',
+    color: theme.palette.text.secondary,
   },
   before: {
     fontWeight: 'bold',
@@ -31,14 +33,14 @@ type Props = {
 function SetTitle({ op }: Props) {
   const classes = useStyles();
   return (
-    <div className={classes.main}>
+    <Typography className={classes.main}>
       <Author author={op.author} className={classes.author} />
       <span> changed the title from </span>
       <span className={classes.before}>{op.was}</span>
       <span> to </span>
       <span className={classes.after}>{op.title}</span>&nbsp;
       <Date date={op.date} />
-    </div>
+    </Typography>
   );
 }
 

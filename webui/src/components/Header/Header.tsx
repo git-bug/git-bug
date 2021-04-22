@@ -8,7 +8,7 @@ import Toolbar from '@material-ui/core/Toolbar';
 import Tooltip from '@material-ui/core/Tooltip/Tooltip';
 import { makeStyles } from '@material-ui/core/styles';
 
-import CurrentIdentity from '../CurrentIdentity/CurrentIdentity';
+import CurrentIdentity from '../Identity/CurrentIdentity';
 import { LightSwitch } from '../Themer';
 
 const useStyles = makeStyles((theme) => ({

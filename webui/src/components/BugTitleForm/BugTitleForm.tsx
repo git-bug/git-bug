@@ -52,6 +52,10 @@ const useStyles = makeStyles((theme) => ({
   saveButton: {
     marginRight: theme.spacing(1),
   },
+  author: {
+    fontWeight: 'bold',
+    color: theme.palette.text.secondary,
+  },
 }));
 
 interface Props {
@@ -86,7 +90,7 @@ function BugTitleForm({ bug }: Props) {
     setTitle({
       variables: {
         input: {
-          prefix: bug.humanId,
+          prefix: bug.id,
           title: issueTitleInput.value,
         },
       },
@@ -182,7 +186,7 @@ function BugTitleForm({ bug }: Props) {
       {bugTitleEdition ? editableBugTitle() : readonlyBugTitle()}
       <div className="classes.headerSubtitle">
         <Typography color={'textSecondary'}>
-          <Author author={bug.author} />
+          <Author author={bug.author} className={classes.author} />
           {' opened this bug '}
           <Date date={bug.createdAt} />
         </Typography>
