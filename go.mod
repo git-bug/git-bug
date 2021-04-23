@@ -13,7 +13,7 @@ require (
 	github.com/corpix/uarand v0.1.1 // indirect
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fatih/color v1.10.0
-	github.com/go-git/go-billy/v5 v5.1.0
+	github.com/go-git/go-billy/v5 v5.2.0
 	github.com/go-git/go-git/v5 v5.3.0
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/gorilla/mux v1.8.0
