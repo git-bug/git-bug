@@ -9,6 +9,7 @@ import (
 	"github.com/xanzy/go-gitlab"
 )
 
+// Issues returns a channel with gitlab project issues, ascending order.
 func Issues(ctx context.Context, client *gitlab.Client, pid string, since time.Time) <-chan *gitlab.Issue {
 
 	out := make(chan *gitlab.Issue)
@@ -43,6 +44,7 @@ func Issues(ctx context.Context, client *gitlab.Client, pid string, since time.T
 	return out
 }
 
+// Issues returns a channel with merged, but unsorted gitlab note, label and state change events.
 func IssueEvents(ctx context.Context, client *gitlab.Client, issue *gitlab.Issue) <-chan Event {
 	cs := []<-chan Event{
 		Notes(ctx, client, issue),
@@ -73,6 +75,7 @@ func IssueEvents(ctx context.Context, client *gitlab.Client, issue *gitlab.Issue
 	return out
 }
 
+// Notes returns a channel with note events
 func Notes(ctx context.Context, client *gitlab.Client, issue *gitlab.Issue) <-chan Event {
 
 	out := make(chan Event)
@@ -107,6 +110,7 @@ func Notes(ctx context.Context, client *gitlab.Client, issue *gitlab.Issue) <-ch
 	return out
 }
 
+// LabelEvents returns a channel with label events.
 func LabelEvents(ctx context.Context, client *gitlab.Client, issue *gitlab.Issue) <-chan Event {
 
 	out := make(chan Event)
@@ -140,6 +144,7 @@ func LabelEvents(ctx context.Context, client *gitlab.Client, issue *gitlab.Issue
 	return out
 }
 
+// StateEvents returns a channel with state change events.
 func StateEvents(ctx context.Context, client *gitlab.Client, issue *gitlab.Issue) <-chan Event {
 
 	out := make(chan Event)

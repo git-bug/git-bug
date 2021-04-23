@@ -10,6 +10,14 @@ import (
 	"github.com/xanzy/go-gitlab"
 )
 
+// Event represents a unified GitLab event (note, label or state event).
+type Event interface {
+	ID() string
+	UserID() int
+	Kind() EventKind
+	CreatedAt() time.Time
+}
+
 type EventKind int
 
 const (
@@ -33,23 +41,6 @@ const (
 	EventMentionedInIssue
 	EventMentionedInMergeRequest
 )
-
-type Event interface {
-	ID() string
-	UserID() int
-	Kind() EventKind
-	CreatedAt() time.Time
-}
-
-type ErrorEvent struct {
-	Err  error
-	Time time.Time
-}
-
-func (e ErrorEvent) ID() string           { return "" }
-func (e ErrorEvent) UserID() int          { return -1 }
-func (e ErrorEvent) CreatedAt() time.Time { return e.Time }
-func (e ErrorEvent) Kind() EventKind      { return EventError }
 
 type NoteEvent struct{ gitlab.Note }
 
@@ -149,6 +140,17 @@ func (s StateEvent) Kind() EventKind {
 	}
 }
 
+type ErrorEvent struct {
+	Err  error
+	Time time.Time
+}
+
+func (e ErrorEvent) ID() string           { return "" }
+func (e ErrorEvent) UserID() int          { return -1 }
+func (e ErrorEvent) CreatedAt() time.Time { return e.Time }
+func (e ErrorEvent) Kind() EventKind      { return EventError }
+
+// SortedEvents consumes an Event-channel and returns an event slice, sorted by creation date, using CreatedAt-method.
 func SortedEvents(c <-chan Event) []Event {
 	var events []Event
 	for e := range c {
