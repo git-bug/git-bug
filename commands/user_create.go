@@ -6,49 +6,68 @@ import (
 	"github.com/MichaelMure/git-bug/input"
 )
 
+type createUserOptions struct {
+	name      string
+	email     string
+	avatarURL string
+}
+
 func newUserCreateCommand() *cobra.Command {
 	env := newEnv()
 
+	options := createUserOptions{}
 	cmd := &cobra.Command{
 		Use:      "create",
 		Short:    "Create a new identity.",
 		PreRunE:  loadBackend(env),
 		PostRunE: closeBackend(env),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runUserCreate(env)
+			return runUserCreate(env, options)
 		},
 	}
+
+	flags := cmd.Flags()
+	flags.StringVarP(&options.name, "name", "n", "", "Name to identify the user")
+	flags.StringVarP(&options.email, "email", "e", "", "Email ID of the user")
+	flags.StringVarP(&options.avatarURL, "avatar", "a", "", "Avatar URL")
 
 	return cmd
 }
 
-func runUserCreate(env *Env) error {
-	preName, err := env.backend.GetUserName()
-	if err != nil {
-		return err
+func runUserCreate(env *Env, opts createUserOptions) error {
+
+	if opts.name == "" {
+		preName, err := env.backend.GetUserName()
+		if err != nil {
+			return err
+		}
+		opts.name, err = input.PromptDefault("Name", "name", preName, input.Required)
+		if err != nil {
+			return err
+		}
 	}
 
-	name, err := input.PromptDefault("Name", "name", preName, input.Required)
-	if err != nil {
-		return err
+	if opts.email == "" {
+		preEmail, err := env.backend.GetUserEmail()
+		if err != nil {
+			return err
+		}
+
+		opts.email, err = input.PromptDefault("Email", "email", preEmail, input.Required)
+		if err != nil {
+			return err
+		}
 	}
 
-	preEmail, err := env.backend.GetUserEmail()
-	if err != nil {
-		return err
+	if opts.avatarURL == "" {
+		var err error
+		opts.avatarURL, err = input.Prompt("Avatar URL", "avatar")
+		if err != nil {
+			return err
+		}
 	}
 
-	email, err := input.PromptDefault("Email", "email", preEmail, input.Required)
-	if err != nil {
-		return err
-	}
-
-	avatarURL, err := input.Prompt("Avatar URL", "avatar")
-	if err != nil {
-		return err
-	}
-
-	id, err := env.backend.NewIdentityRaw(name, email, "", avatarURL, nil, nil)
+	id, err := env.backend.NewIdentityRaw(opts.name, opts.email, "", opts.avatarURL, nil, nil)
 	if err != nil {
 		return err
 	}
