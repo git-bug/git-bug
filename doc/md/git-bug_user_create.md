@@ -10,7 +10,7 @@ git-bug user create [flags]
 
 ```
   -a, --avatar string   Avatar URL
-  -e, --email string    Email ID of the user
+  -e, --email string    Email of the user
   -h, --help            help for create
   -n, --name string     Name to identify the user
 ```
