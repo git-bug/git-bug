@@ -28,7 +28,7 @@ func newUserCreateCommand() *cobra.Command {
 
 	flags := cmd.Flags()
 	flags.StringVarP(&options.name, "name", "n", "", "Name to identify the user")
-	flags.StringVarP(&options.email, "email", "e", "", "Email ID of the user")
+	flags.StringVarP(&options.email, "email", "e", "", "Email of the user")
 	flags.StringVarP(&options.avatarURL, "avatar", "a", "", "Avatar URL")
 
 	return cmd
