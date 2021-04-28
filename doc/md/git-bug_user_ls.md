@@ -13,6 +13,12 @@ git-bug user ls [flags]
   -h, --help            help for ls
 ```
 
+### Options inherited from parent commands
+
+```
+      --non-interactive   Do not ask for user input
+```
+
 ### SEE ALSO
 
 * [git-bug user](git-bug_user.md)	 - Display or change the user identity.

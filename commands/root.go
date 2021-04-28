@@ -15,6 +15,12 @@ var GitCommit string
 var GitLastTag string
 var GitExactTag string
 
+type GlobalOptions struct {
+	nonInteractive bool
+}
+
+var rootOptions GlobalOptions
+
 func NewRootCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   rootCommandName,
@@ -60,6 +66,7 @@ _git_bug() {
 `,
 	}
 
+	cmd.PersistentFlags().BoolVar(&rootOptions.nonInteractive, "non-interactive", false, "Do not ask for user input")
 	cmd.AddCommand(newAddCommand())
 	cmd.AddCommand(newBridgeCommand())
 	cmd.AddCommand(newCommandsCommand())

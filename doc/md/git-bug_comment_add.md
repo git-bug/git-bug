@@ -14,6 +14,12 @@ git-bug comment add [ID] [flags]
   -h, --help             help for add
 ```
 
+### Options inherited from parent commands
+
+```
+      --non-interactive   Do not ask for user input
+```
+
 ### SEE ALSO
 
 * [git-bug comment](git-bug_comment.md)	 - Display or add comments to a bug.

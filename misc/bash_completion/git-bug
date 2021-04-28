@@ -390,6 +390,7 @@ _git-bug_add()
     local_nonpersistent_flags+=("--file")
     local_nonpersistent_flags+=("--file=")
     local_nonpersistent_flags+=("-F")
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -428,6 +429,7 @@ _git-bug_bridge_auth_add-token()
     local_nonpersistent_flags+=("--user")
     local_nonpersistent_flags+=("--user=")
     local_nonpersistent_flags+=("-u")
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -448,6 +450,7 @@ _git-bug_bridge_auth_rm()
     flags_with_completion=()
     flags_completion=()
 
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -468,6 +471,7 @@ _git-bug_bridge_auth_show()
     flags_with_completion=()
     flags_completion=()
 
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -491,6 +495,7 @@ _git-bug_bridge_auth()
     flags_with_completion=()
     flags_completion=()
 
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -565,6 +570,7 @@ _git-bug_bridge_configure()
     local_nonpersistent_flags+=("--project")
     local_nonpersistent_flags+=("--project=")
     local_nonpersistent_flags+=("-p")
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -595,6 +601,7 @@ _git-bug_bridge_pull()
     local_nonpersistent_flags+=("--since")
     local_nonpersistent_flags+=("--since=")
     local_nonpersistent_flags+=("-s")
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -615,6 +622,7 @@ _git-bug_bridge_push()
     flags_with_completion=()
     flags_completion=()
 
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -635,6 +643,7 @@ _git-bug_bridge_rm()
     flags_with_completion=()
     flags_completion=()
 
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -660,6 +669,7 @@ _git-bug_bridge()
     flags_with_completion=()
     flags_completion=()
 
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -684,6 +694,7 @@ _git-bug_commands()
     flags+=("-p")
     local_nonpersistent_flags+=("--pretty")
     local_nonpersistent_flags+=("-p")
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -716,6 +727,7 @@ _git-bug_comment_add()
     local_nonpersistent_flags+=("--message")
     local_nonpersistent_flags+=("--message=")
     local_nonpersistent_flags+=("-m")
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -748,6 +760,7 @@ _git-bug_comment_edit()
     local_nonpersistent_flags+=("--message")
     local_nonpersistent_flags+=("--message=")
     local_nonpersistent_flags+=("-m")
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -770,6 +783,7 @@ _git-bug_comment()
     flags_with_completion=()
     flags_completion=()
 
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -790,6 +804,7 @@ _git-bug_deselect()
     flags_with_completion=()
     flags_completion=()
 
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -810,6 +825,7 @@ _git-bug_label_add()
     flags_with_completion=()
     flags_completion=()
 
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -830,6 +846,7 @@ _git-bug_label_rm()
     flags_with_completion=()
     flags_completion=()
 
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -852,6 +869,7 @@ _git-bug_label()
     flags_with_completion=()
     flags_completion=()
 
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -938,6 +956,7 @@ _git-bug_ls()
     local_nonpersistent_flags+=("--format")
     local_nonpersistent_flags+=("--format=")
     local_nonpersistent_flags+=("-f")
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -958,6 +977,7 @@ _git-bug_ls-id()
     flags_with_completion=()
     flags_completion=()
 
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -978,6 +998,7 @@ _git-bug_ls-label()
     flags_with_completion=()
     flags_completion=()
 
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -998,6 +1019,7 @@ _git-bug_pull()
     flags_with_completion=()
     flags_completion=()
 
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -1018,6 +1040,7 @@ _git-bug_push()
     flags_with_completion=()
     flags_completion=()
 
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -1038,6 +1061,7 @@ _git-bug_rm()
     flags_with_completion=()
     flags_completion=()
 
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -1058,6 +1082,7 @@ _git-bug_select()
     flags_with_completion=()
     flags_completion=()
 
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -1088,6 +1113,7 @@ _git-bug_show()
     local_nonpersistent_flags+=("--format")
     local_nonpersistent_flags+=("--format=")
     local_nonpersistent_flags+=("-f")
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -1108,6 +1134,7 @@ _git-bug_status_close()
     flags_with_completion=()
     flags_completion=()
 
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -1128,6 +1155,7 @@ _git-bug_status_open()
     flags_with_completion=()
     flags_completion=()
 
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -1150,6 +1178,7 @@ _git-bug_status()
     flags_with_completion=()
     flags_completion=()
 
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -1170,6 +1199,7 @@ _git-bug_termui()
     flags_with_completion=()
     flags_completion=()
 
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -1196,6 +1226,7 @@ _git-bug_title_edit()
     local_nonpersistent_flags+=("--title")
     local_nonpersistent_flags+=("--title=")
     local_nonpersistent_flags+=("-t")
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -1217,6 +1248,7 @@ _git-bug_title()
     flags_with_completion=()
     flags_completion=()
 
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -1237,6 +1269,7 @@ _git-bug_user_adopt()
     flags_with_completion=()
     flags_completion=()
 
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -1277,6 +1310,7 @@ _git-bug_user_create()
     local_nonpersistent_flags+=("-n")
     flags+=("--skipAvatar")
     local_nonpersistent_flags+=("--skipAvatar")
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -1303,6 +1337,7 @@ _git-bug_user_ls()
     local_nonpersistent_flags+=("--format")
     local_nonpersistent_flags+=("--format=")
     local_nonpersistent_flags+=("-f")
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -1332,6 +1367,7 @@ _git-bug_user()
     local_nonpersistent_flags+=("--field")
     local_nonpersistent_flags+=("--field=")
     local_nonpersistent_flags+=("-f")
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -1364,6 +1400,7 @@ _git-bug_version()
     flags+=("-a")
     local_nonpersistent_flags+=("--all")
     local_nonpersistent_flags+=("-a")
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -1406,6 +1443,7 @@ _git-bug_webui()
     local_nonpersistent_flags+=("--query")
     local_nonpersistent_flags+=("--query=")
     local_nonpersistent_flags+=("-q")
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()
@@ -1450,6 +1488,7 @@ _git-bug_root_command()
     flags_with_completion=()
     flags_completion=()
 
+    flags+=("--non-interactive")
 
     must_have_one_flag=()
     must_have_one_noun=()

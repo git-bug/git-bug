@@ -16,6 +16,12 @@ git-bug user create [flags]
       --skipAvatar      Do not ask for avatar URL
 ```
 
+### Options inherited from parent commands
+
+```
+      --non-interactive   Do not ask for user input
+```
+
 ### SEE ALSO
 
 * [git-bug user](git-bug_user.md)	 - Display or change the user identity.
