@@ -1308,8 +1308,6 @@ _git-bug_user_create()
     local_nonpersistent_flags+=("--name")
     local_nonpersistent_flags+=("--name=")
     local_nonpersistent_flags+=("-n")
-    flags+=("--skipAvatar")
-    local_nonpersistent_flags+=("--skipAvatar")
     flags+=("--non-interactive")
 
     must_have_one_flag=()

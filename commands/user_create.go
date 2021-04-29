@@ -7,10 +7,9 @@ import (
 )
 
 type createUserOptions struct {
-	name       string
-	email      string
-	avatarURL  string
-	skipAvatar bool
+	name      string
+	email     string
+	avatarURL string
 }
 
 func newUserCreateCommand() *cobra.Command {
@@ -31,14 +30,13 @@ func newUserCreateCommand() *cobra.Command {
 	flags.StringVarP(&options.name, "name", "n", "", "Name to identify the user")
 	flags.StringVarP(&options.email, "email", "e", "", "Email of the user")
 	flags.StringVarP(&options.avatarURL, "avatar", "a", "", "Avatar URL")
-	flags.BoolVar(&options.skipAvatar, "skipAvatar", false, "Do not ask for avatar URL")
 
 	return cmd
 }
 
 func runUserCreate(env *Env, opts createUserOptions) error {
 
-	if opts.name == "" {
+	if !rootOptions.nonInteractive && opts.name == "" {
 		preName, err := env.backend.GetUserName()
 		if err != nil {
 			return err
@@ -49,7 +47,7 @@ func runUserCreate(env *Env, opts createUserOptions) error {
 		}
 	}
 
-	if opts.email == "" {
+	if !rootOptions.nonInteractive && opts.email == "" {
 		preEmail, err := env.backend.GetUserEmail()
 		if err != nil {
 			return err
@@ -61,7 +59,7 @@ func runUserCreate(env *Env, opts createUserOptions) error {
 		}
 	}
 
-	if !opts.skipAvatar && opts.avatarURL == "" {
+	if !rootOptions.nonInteractive && opts.avatarURL == "" {
 		var err error
 		opts.avatarURL, err = input.Prompt("Avatar URL", "avatar")
 		if err != nil {

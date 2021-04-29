@@ -13,7 +13,6 @@ git-bug user create [flags]
   -e, --email string    Email of the user
   -h, --help            help for create
   -n, --name string     Name to identify the user
-      --skipAvatar      Do not ask for avatar URL
 ```
 
 ### Options inherited from parent commands
