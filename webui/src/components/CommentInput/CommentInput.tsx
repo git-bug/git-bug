@@ -20,6 +20,7 @@ const useStyles = makeStyles((theme) => ({
     margin: theme.spacing(2, 0),
   },
   preview: {
+    overflow: 'auto',
     borderBottom: `solid 3px ${theme.palette.grey['200']}`,
     minHeight: '5rem',
   },

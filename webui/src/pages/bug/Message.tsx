@@ -57,6 +57,7 @@ const useStyles = makeStyles((theme) => ({
     marginLeft: '0.5rem',
   },
   body: {
+    overflow: 'auto',
     ...theme.typography.body2,
     paddingLeft: theme.spacing(1),
     paddingRight: theme.spacing(1),
