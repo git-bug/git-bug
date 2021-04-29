@@ -111,6 +111,7 @@ const AccordionSummary = withStyles((theme) => ({
 const AccordionDetails = withStyles((theme) => ({
   root: {
     display: 'block',
+    overflow: 'auto',
     padding: theme.spacing(2),
   },
 }))(MuiAccordionDetails);
