@@ -52,6 +52,10 @@ func runCommentEdit(env *Env, opts commentEditOptions, args []string) error {
 	}
 
 	if opts.messageFile == "" && opts.message == "" {
+		if rootOptions.nonInteractive {
+			env.err.Println("No message given. Use -m or -F option to specify a message. Aborting.")
+			return nil
+		}
 		opts.message, err = input.BugCommentEditorInput(env.backend, "")
 		if err == input.ErrEmptyMessage {
 			env.err.Println("Empty message, aborting.")
