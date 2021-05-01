@@ -230,7 +230,11 @@ function MessageHistoryDialog({ bugId, commentId, open, onClose }: Props) {
               <Typography>{getSummary(index, edit.date)}</Typography>
             </AccordionSummary>
             <AccordionDetails>
-              <Content markdown={edit.message} />
+              {edit.message !== '' ? (
+                <Content markdown={edit.message} />
+              ) : (
+                <Content markdown="*No description provided.*" />
+              )}
             </AccordionDetails>
           </Accordion>
         ))}

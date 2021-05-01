@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
+import { Typography } from '@material-ui/core';
 import Tab from '@material-ui/core/Tab';
 import Tabs from '@material-ui/core/Tabs';
 import TextField from '@material-ui/core/TextField';
@@ -23,6 +24,10 @@ const useStyles = makeStyles((theme) => ({
     overflow: 'auto',
     borderBottom: `solid 3px ${theme.palette.grey['200']}`,
     minHeight: '5rem',
+  },
+  previewPlaceholder: {
+    color: theme.palette.text.secondary,
+    fontStyle: 'italic',
   },
 }));
 
@@ -99,7 +104,13 @@ function CommentInput({ inputProps, inputText, loading, onChange }: Props) {
           />
         </TabPanel>
         <TabPanel value={tab} index={1} className={classes.preview}>
-          <Content markdown={input} />
+          {input !== '' ? (
+            <Content markdown={input} />
+          ) : (
+            <Typography className={classes.previewPlaceholder}>
+              Nothing to preview.
+            </Typography>
+          )}
         </TabPanel>
       </div>
     </div>

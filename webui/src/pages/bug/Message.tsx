@@ -157,7 +157,11 @@ function Message({ bug, op }: Props) {
           </IfLoggedIn>
         </header>
         <section className={classes.body}>
-          <Content markdown={comment.message} />
+          {comment.message !== '' ? (
+            <Content markdown={comment.message} />
+          ) : (
+            <Content markdown="*No description provided.*" />
+          )}
         </section>
       </Paper>
     );
