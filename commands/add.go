@@ -49,7 +49,7 @@ func runAdd(env *Env, opts addOptions) error {
 		}
 	}
 
-	if opts.messageFile == "" && (opts.message == "" || opts.title == "") {
+	if !rootOptions.nonInteractive && opts.messageFile == "" && (opts.message == "" || opts.title == "") {
 		opts.title, opts.message, err = input.BugCreateEditorInput(env.backend, opts.title, opts.message)
 
 		if err == input.ErrEmptyTitle {
