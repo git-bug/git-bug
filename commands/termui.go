@@ -24,5 +24,9 @@ func newTermUICommand() *cobra.Command {
 }
 
 func runTermUI(env *Env) error {
+	if rootOptions.nonInteractive {
+		env.err.Println("The TermUI only works in interactive mode.")
+		return nil
+	}
 	return termui.Run(env.backend)
 }
