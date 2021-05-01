@@ -136,14 +136,14 @@ func runBridgeConfigure(env *Env, opts bridgeConfigureOptions) error {
 		opts.params.TokenRaw = opts.token
 	}
 
-	if opts.target == "" {
+	if !rootOptions.nonInteractive && opts.target == "" {
 		opts.target, err = promptTarget()
 		if err != nil {
 			return err
 		}
 	}
 
-	if opts.name == "" {
+	if !rootOptions.nonInteractive && opts.name == "" {
 		opts.name, err = promptName(env.repo)
 		if err != nil {
 			return err
