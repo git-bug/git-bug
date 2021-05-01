@@ -15,7 +15,11 @@ const useStyles = makeStyles((theme) => ({
     margin: theme.spacing(2, 0),
     padding: theme.spacing(0, 2, 2, 2),
   },
-  textarea: {},
+  textarea: {
+    '& textarea.MuiInputBase-input': {
+      resize: 'vertical',
+    },
+  },
   tabContent: {
     margin: theme.spacing(2, 0),
   },
