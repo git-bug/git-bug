@@ -45,6 +45,10 @@ func runTitleEdit(env *Env, opts titleEditOptions, args []string) error {
 	snap := b.Snapshot()
 
 	if opts.title == "" {
+		if rootOptions.nonInteractive {
+			env.err.Println("No title given. Use -m or -F option to specify a title. Aborting.")
+			return nil
+		}
 		opts.title, err = input.BugTitleEditorInput(env.repo, snap.Title)
 		if err == input.ErrEmptyTitle {
 			env.out.Println("Empty title, aborting.")
