@@ -46,12 +46,6 @@ git bug ls status:open --by creation "foo bar" baz
   -h, --help                  help for ls
 ```
 
-### Options inherited from parent commands
-
-```
-      --non-interactive   Do not ask for user input
-```
-
 ### SEE ALSO
 
 * [git-bug](git-bug.md)	 - A bug tracker embedded in Git.

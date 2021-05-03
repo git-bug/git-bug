@@ -19,8 +19,7 @@ git-bug [flags]
 ### Options
 
 ```
-  -h, --help              help for git-bug
-      --non-interactive   Do not ask for user input
+  -h, --help   help for git-bug
 ```
 
 ### SEE ALSO
