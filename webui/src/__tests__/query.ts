@@ -24,7 +24,6 @@ it('parses a query with multiple filters', () => {
     in: [''],
     freetext: [''],
   });
-
 });
 
 it('parses a quoted query', () => {
@@ -55,9 +54,23 @@ it('parses a quoted query', () => {
   expect(parse(`label:"with:quoated:colon"`)).toEqual({
     label: [`"with:quoated:colon"`],
   });
+});
 
-  expect(parse(`foo:'escaped\\' quotes'`)).toEqual({
-    foo: [`'escaped\\' quotes'`],
+it('should not escape nested quotes', () => {
+  expect(parse(`foo:'do not escape this ->'<- quote'`)).toEqual({
+    foo: [`'do not escape this ->'<- quote'`],
+  });
+
+  expect(parse(`foo:'do not escape this ->"<- quote'`)).toEqual({
+    foo: [`'do not escape this ->"<- quote'`],
+  });
+
+  expect(parse(`foo:"do not escape this ->"<- quote"`)).toEqual({
+    foo: [`"do not escape this ->"<- quote"`],
+  });
+
+  expect(parse(`foo:"do not escape this ->'<- quote"`)).toEqual({
+    foo: [`"do not escape this ->'<- quote"`],
   });
 });
 
@@ -76,9 +89,11 @@ it('parses a complex query', () => {
 });
 
 it('parses a key:value:value query', () => {
-  expect(parse(`meta:github:"https://github.com/MichaelMure/git-bug"`)).toEqual({
-    meta: [`github:"https://github.com/MichaelMure/git-bug"`],
-  });
+  expect(parse(`meta:github:"https://github.com/MichaelMure/git-bug"`)).toEqual(
+    {
+      meta: [`github:"https://github.com/MichaelMure/git-bug"`],
+    }
+  );
 });
 
 it('quotes values', () => {
