@@ -20,7 +20,7 @@ func (Launchpad) ValidParams() map[string]interface{} {
 	}
 }
 
-func (l *Launchpad) Configure(repo *cache.RepoCache, params core.BridgeParams) (core.Configuration, error) {
+func (l *Launchpad) Configure(repo *cache.RepoCache, params core.BridgeParams, isNonInteractive bool) (core.Configuration, error) {
 	var err error
 	var project string
 

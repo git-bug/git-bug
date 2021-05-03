@@ -32,7 +32,7 @@ func (g *Gitlab) ValidParams() map[string]interface{} {
 	}
 }
 
-func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams) (core.Configuration, error) {
+func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams, isNonInteractive bool) (core.Configuration, error) {
 	var err error
 	var baseUrl string
 

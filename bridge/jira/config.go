@@ -37,7 +37,7 @@ func (*Jira) ValidParams() map[string]interface{} {
 }
 
 // Configure sets up the bridge configuration
-func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams) (core.Configuration, error) {
+func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams, isNonInteractive bool) (core.Configuration, error) {
 	var err error
 
 	baseURL := params.BaseURL
