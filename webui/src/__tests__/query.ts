@@ -11,16 +11,6 @@ it('parses a query with multiple filters', () => {
     foo: ['bar'],
     baz: ['foo-bar'],
   });
-});
-
-it('parses a quoted query', () => {
-  expect(parse(`foo:"bar"`)).toEqual({
-    foo: [`"bar"`],
-  });
-
-  expect(parse(`foo:'bar'`)).toEqual({
-    foo: [`'bar'`],
-  });
 
   expect(parse(`label:abc freetext`)).toEqual({
     label: [`abc`],
@@ -33,6 +23,17 @@ it('parses a quoted query', () => {
     quotes: [''],
     in: [''],
     freetext: [''],
+  });
+
+});
+
+it('parses a quoted query', () => {
+  expect(parse(`foo:"bar"`)).toEqual({
+    foo: [`"bar"`],
+  });
+
+  expect(parse(`foo:'bar'`)).toEqual({
+    foo: [`'bar'`],
   });
 
   expect(parse(`label:'multi word label'`)).toEqual({
@@ -51,6 +52,10 @@ it('parses a quoted query', () => {
     label: [`"multi word label with 'nested' quotes"`],
   });
 
+  expect(parse(`label:"with:quoated:colon"`)).toEqual({
+    label: [`"with:quoated:colon"`],
+  });
+
   expect(parse(`foo:'escaped\\' quotes'`)).toEqual({
     foo: [`'escaped\\' quotes'`],
   });
@@ -67,6 +72,12 @@ it('parses a complex query', () => {
     foo: ['bar', 'baz'],
     baz: [`"foobar"`],
     idont: [`'know'`],
+  });
+});
+
+it('parses a key:value:value query', () => {
+  expect(parse(`meta:github:"https://github.com/MichaelMure/git-bug"`)).toEqual({
+    meta: [`github:"https://github.com/MichaelMure/git-bug"`],
   });
 });
 
