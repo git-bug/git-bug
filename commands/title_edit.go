@@ -9,7 +9,8 @@ import (
 )
 
 type titleEditOptions struct {
-	title string
+	title          string
+	nonInteractive bool
 }
 
 func newTitleEditCommand() *cobra.Command {
@@ -32,6 +33,7 @@ func newTitleEditCommand() *cobra.Command {
 	flags.StringVarP(&options.title, "title", "t", "",
 		"Provide a title to describe the issue",
 	)
+	flags.BoolVar(&options.nonInteractive, "non-interactive", false, "Do not ask for user input")
 
 	return cmd
 }
@@ -45,7 +47,7 @@ func runTitleEdit(env *Env, opts titleEditOptions, args []string) error {
 	snap := b.Snapshot()
 
 	if opts.title == "" {
-		if rootOptions.nonInteractive {
+		if opts.nonInteractive {
 			env.err.Println("No title given. Use -m or -F option to specify a title. Aborting.")
 			return nil
 		}
