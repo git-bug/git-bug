@@ -26,11 +26,13 @@ func (op *SetStatusOperation) Apply(snapshot *Snapshot) {
 	snapshot.Status = op.Status
 	snapshot.addActor(op.Author())
 
+	id := op.Id()
 	item := &SetStatusTimelineItem{
-		id:       op.Id(),
-		Author:   op.Author(),
-		UnixTime: timestamp.Timestamp(op.UnixTime),
-		Status:   op.Status,
+		// id:         id,
+		combinedId: entity.CombineIds(snapshot.Id(), id),
+		Author:     op.Author(),
+		UnixTime:   timestamp.Timestamp(op.UnixTime),
+		Status:     op.Status,
 	}
 
 	snapshot.Timeline = append(snapshot.Timeline, item)
@@ -56,18 +58,19 @@ func NewSetStatusOp(author identity.Interface, unixTime int64, status common.Sta
 }
 
 type SetStatusTimelineItem struct {
-	id       entity.Id
-	Author   identity.Interface
-	UnixTime timestamp.Timestamp
-	Status   common.Status
+	// id         entity.Id
+	combinedId entity.CombinedId
+	Author     identity.Interface
+	UnixTime   timestamp.Timestamp
+	Status     common.Status
 }
 
-func (s SetStatusTimelineItem) Id() entity.Id {
-	return s.id
+func (s SetStatusTimelineItem) CombinedId() entity.CombinedId {
+	return s.combinedId
 }
 
 // IsAuthored is a sign post method for gqlgen
-func (s SetStatusTimelineItem) IsAuthored() {}
+func (s *SetStatusTimelineItem) IsAuthored() {}
 
 // Open is a convenience function to change a bugs state to Open
 func Open(b Interface, author identity.Interface, unixTime int64, metadata map[string]string) (*SetStatusOperation, error) {

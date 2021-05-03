@@ -47,7 +47,7 @@ func (gfh *gitFileHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: this mean that the whole file will he buffered in memory
+	// TODO: this mean that the whole file will be buffered in memory
 	// This can be a problem for big files. There might be a way around
 	// that by implementing a io.ReadSeeker that would read and discard
 	// data when a seek is called.

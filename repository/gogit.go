@@ -476,6 +476,7 @@ func (repo *GoGitRepo) ReadData(hash Hash) ([]byte, error) {
 		return nil, err
 	}
 
+	// TODO: return a io.Reader instead
 	return ioutil.ReadAll(r)
 }
 

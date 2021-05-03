@@ -15,6 +15,7 @@ import (
 	"github.com/MichaelMure/git-bug/api/graphql/models"
 	"github.com/MichaelMure/git-bug/entities/bug"
 	"github.com/MichaelMure/git-bug/entities/common"
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -22,7 +23,6 @@ import (
 // region    ************************** generated!.gotpl **************************
 
 type BugResolver interface {
-	ID(ctx context.Context, obj models.BugWrapper) (string, error)
 	HumanID(ctx context.Context, obj models.BugWrapper) (string, error)
 
 	Actors(ctx context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*models.IdentityConnection, error)
@@ -32,6 +32,7 @@ type BugResolver interface {
 	Operations(ctx context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*models.OperationConnection, error)
 }
 type CommentResolver interface {
+	ID(ctx context.Context, obj *bug.Comment) (entity.CombinedId, error)
 	Author(ctx context.Context, obj *bug.Comment) (models.IdentityWrapper, error)
 }
 
@@ -271,7 +272,7 @@ func (ec *executionContext) _Bug_id(ctx context.Context, field graphql.Collected
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Bug().ID(rctx, obj)
+		return obj.Id(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -283,9 +284,9 @@ func (ec *executionContext) _Bug_id(ctx context.Context, field graphql.Collected
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(entity.Id)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentityᚐId(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Bug_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -293,9 +294,9 @@ func (ec *executionContext) fieldContext_Bug_id(ctx context.Context, field graph
 		Object:     "Bug",
 		Field:      field,
 		IsMethod:   true,
-		IsResolver: true,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -1294,6 +1295,50 @@ func (ec *executionContext) fieldContext_BugEdge_node(ctx context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _Comment_id(ctx context.Context, field graphql.CollectedField, obj *bug.Comment) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Comment_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Comment().ID(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(entity.CombinedId)
+	fc.Result = res
+	return ec.marshalNCombinedId2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentityᚐCombinedId(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Comment_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Comment",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type CombinedId does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Comment_author(ctx context.Context, field graphql.CollectedField, obj *bug.Comment) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Comment_author(ctx, field)
 	if err != nil {
@@ -1533,6 +1578,8 @@ func (ec *executionContext) fieldContext_CommentConnection_nodes(ctx context.Con
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "id":
+				return ec.fieldContext_Comment_id(ctx, field)
 			case "author":
 				return ec.fieldContext_Comment_author(ctx, field)
 			case "message":
@@ -1727,6 +1774,8 @@ func (ec *executionContext) fieldContext_CommentEdge_node(ctx context.Context, f
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "id":
+				return ec.fieldContext_Comment_id(ctx, field)
 			case "author":
 				return ec.fieldContext_Comment_author(ctx, field)
 			case "message":
@@ -1763,25 +1812,12 @@ func (ec *executionContext) _Bug(ctx context.Context, sel ast.SelectionSet, obj 
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Bug")
 		case "id":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Bug_id(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._Bug_id(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "humanId":
 			field := field
 
@@ -2049,6 +2085,26 @@ func (ec *executionContext) _Comment(ctx context.Context, sel ast.SelectionSet, 
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Comment")
+		case "id":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Comment_id(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "author":
 			field := field
 

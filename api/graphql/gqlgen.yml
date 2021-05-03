@@ -6,17 +6,18 @@ exec:
 model:
   filename: models/gen_models.go
 
-skip_mod_tidy: true
-
 autobind:
   - "github.com/MichaelMure/git-bug/api/graphql/models"
   - "github.com/MichaelMure/git-bug/repository"
+  - "github.com/MichaelMure/git-bug/entity"
   - "github.com/MichaelMure/git-bug/entity/dag"
   - "github.com/MichaelMure/git-bug/entities/common"
   - "github.com/MichaelMure/git-bug/entities/bug"
   - "github.com/MichaelMure/git-bug/entities/identity"
 
 models:
+  ID:
+    model: github.com/MichaelMure/git-bug/entity.Id
   Bug:
     model: github.com/MichaelMure/git-bug/api/graphql/models.BugWrapper
   Color:

@@ -161,10 +161,8 @@ type EditCommentInput struct {
 	ClientMutationID *string `json:"clientMutationId"`
 	// The name of the repository. If not set, the default repository is used.
 	RepoRef *string `json:"repoRef"`
-	// The bug ID's prefix.
-	Prefix string `json:"prefix"`
-	// The ID of the comment to be changed.
-	Target string `json:"target"`
+	// A prefix of the CombinedId of the comment to be changed.
+	TargetPrefix string `json:"targetPrefix"`
 	// The new message to be set.
 	Message string `json:"message"`
 	// The collection of file's hash required for the first message.

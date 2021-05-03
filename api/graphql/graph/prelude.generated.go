@@ -11,6 +11,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -2170,6 +2171,16 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNID2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentityᚐId(ctx context.Context, v interface{}) (entity.Id, error) {
+	var res entity.Id
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNID2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentityᚐId(ctx context.Context, sel ast.SelectionSet, v entity.Id) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {

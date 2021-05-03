@@ -55,7 +55,6 @@ func (gi *gitlabImporter) Init(_ context.Context, repo *cache.RepoCache, conf co
 // ImportAll iterate over all the configured repository issues (notes) and ensure the creation
 // of the missing issues / comments / label events / title changes ...
 func (gi *gitlabImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, since time.Time) (<-chan core.ImportResult, error) {
-
 	out := make(chan core.ImportResult)
 	gi.out = out
 
@@ -150,7 +149,6 @@ func (gi *gitlabImporter) ensureIssue(repo *cache.RepoCache, issue *gitlab.Issue
 }
 
 func (gi *gitlabImporter) ensureIssueEvent(repo *cache.RepoCache, b *cache.BugCache, issue *gitlab.Issue, event Event) error {
-
 	id, errResolve := b.ResolveOperationWithMetadata(metaKeyGitlabId, event.ID())
 	if errResolve != nil && errResolve != cache.ErrNoMatchingOp {
 		return errResolve
@@ -205,13 +203,14 @@ func (gi *gitlabImporter) ensureIssueEvent(repo *cache.RepoCache, b *cache.BugCa
 		// since gitlab doesn't provide the issue history
 		// we should check for "changed the description" notes and compare issue texts
 		// TODO: Check only one time and ignore next 'description change' within one issue
-		if errResolve == cache.ErrNoMatchingOp && issue.Description != firstComment.Message {
+		cleanedDesc := text.Cleanup(issue.Description)
+		if errResolve == cache.ErrNoMatchingOp && cleanedDesc != firstComment.Message {
 			// comment edition
 			op, err := b.EditCommentRaw(
 				author,
 				event.(NoteEvent).UpdatedAt.Unix(),
-				firstComment.Id(),
-				text.Cleanup(issue.Description),
+				firstComment.CombinedId(),
+				cleanedDesc,
 				map[string]string{
 					metaKeyGitlabId: event.ID(),
 				},
@@ -249,7 +248,7 @@ func (gi *gitlabImporter) ensureIssueEvent(repo *cache.RepoCache, b *cache.BugCa
 		// if comment was already exported
 
 		// search for last comment update
-		comment, err := b.Snapshot().SearchComment(id)
+		comment, err := b.Snapshot().SearchCommentByOpId(id)
 		if err != nil {
 			return err
 		}
@@ -260,7 +259,7 @@ func (gi *gitlabImporter) ensureIssueEvent(repo *cache.RepoCache, b *cache.BugCa
 			op, err := b.EditCommentRaw(
 				author,
 				event.(NoteEvent).UpdatedAt.Unix(),
-				comment.Id(),
+				comment.CombinedId(),
 				cleanText,
 				nil,
 			)

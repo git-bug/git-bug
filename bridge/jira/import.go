@@ -270,8 +270,7 @@ func (ji *jiraImporter) ensureComment(repo *cache.RepoCache, b *cache.BugCache, 
 		return err
 	}
 
-	targetOpID, err := b.ResolveOperationWithMetadata(
-		metaKeyJiraId, item.ID)
+	targetOpID, err := b.ResolveOperationWithMetadata(metaKeyJiraId, item.ID)
 	if err != nil && err != cache.ErrNoMatchingOp {
 		return err
 	}
@@ -334,7 +333,7 @@ func (ji *jiraImporter) ensureComment(repo *cache.RepoCache, b *cache.BugCache, 
 	op, err := b.EditCommentRaw(
 		editor,
 		item.Updated.Unix(),
-		targetOpID,
+		entity.CombineIds(b.Id(), targetOpID),
 		text.Cleanup(item.Body),
 		map[string]string{
 			metaKeyJiraId: derivedID,

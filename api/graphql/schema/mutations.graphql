@@ -95,10 +95,8 @@ input EditCommentInput {
     clientMutationId: String
     """The name of the repository. If not set, the default repository is used."""
     repoRef: String
-    """The bug ID's prefix."""
-    prefix: String!
-    """The ID of the comment to be changed."""
-    target: String!
+    """A prefix of the CombinedId of the comment to be changed."""
+    targetPrefix: String!
     """The new message to be set."""
     message: String!
     """The collection of file's hash required for the first message."""

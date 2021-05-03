@@ -209,7 +209,7 @@ func (c *BugCache) EditCreateCommentRaw(author *IdentityCache, unixTime int64, b
 	return op, c.notifyUpdated()
 }
 
-func (c *BugCache) EditComment(target entity.Id, message string) (*bug.EditCommentOperation, error) {
+func (c *BugCache) EditComment(target entity.CombinedId, message string) (*bug.EditCommentOperation, error) {
 	author, err := c.repoCache.GetUserIdentity()
 	if err != nil {
 		return nil, err
@@ -218,9 +218,14 @@ func (c *BugCache) EditComment(target entity.Id, message string) (*bug.EditComme
 	return c.EditCommentRaw(author, time.Now().Unix(), target, message, nil)
 }
 
-func (c *BugCache) EditCommentRaw(author *IdentityCache, unixTime int64, target entity.Id, message string, metadata map[string]string) (*bug.EditCommentOperation, error) {
+func (c *BugCache) EditCommentRaw(author *IdentityCache, unixTime int64, target entity.CombinedId, message string, metadata map[string]string) (*bug.EditCommentOperation, error) {
+	comment, err := c.Snapshot().SearchComment(target)
+	if err != nil {
+		return nil, err
+	}
+
 	c.mu.Lock()
-	op, err := bug.EditComment(c.bug, author.Identity, unixTime, target, message, nil, metadata)
+	op, err := bug.EditComment(c.bug, author.Identity, unixTime, comment.TargetId(), message, nil, metadata)
 	c.mu.Unlock()
 	if err != nil {
 		return nil, err

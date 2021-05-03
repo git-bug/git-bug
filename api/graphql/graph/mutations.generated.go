@@ -2097,7 +2097,7 @@ func (ec *executionContext) unmarshalInputEditCommentInput(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"clientMutationId", "repoRef", "prefix", "target", "message", "files"}
+	fieldsInOrder := [...]string{"clientMutationId", "repoRef", "targetPrefix", "message", "files"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -2120,19 +2120,11 @@ func (ec *executionContext) unmarshalInputEditCommentInput(ctx context.Context, 
 			if err != nil {
 				return it, err
 			}
-		case "prefix":
+		case "targetPrefix":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("prefix"))
-			it.Prefix, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "target":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("target"))
-			it.Target, err = ec.unmarshalNString2string(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetPrefix"))
+			it.TargetPrefix, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}

@@ -15,6 +15,7 @@ import (
 	"github.com/MichaelMure/git-bug/api/graphql/models"
 	"github.com/MichaelMure/git-bug/entities/bug"
 	"github.com/MichaelMure/git-bug/entities/common"
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -22,7 +23,7 @@ import (
 // region    ************************** generated!.gotpl **************************
 
 type AddCommentTimelineItemResolver interface {
-	ID(ctx context.Context, obj *bug.AddCommentTimelineItem) (string, error)
+	ID(ctx context.Context, obj *bug.AddCommentTimelineItem) (entity.CombinedId, error)
 	Author(ctx context.Context, obj *bug.AddCommentTimelineItem) (models.IdentityWrapper, error)
 
 	CreatedAt(ctx context.Context, obj *bug.AddCommentTimelineItem) (*time.Time, error)
@@ -32,24 +33,24 @@ type CommentHistoryStepResolver interface {
 	Date(ctx context.Context, obj *bug.CommentHistoryStep) (*time.Time, error)
 }
 type CreateTimelineItemResolver interface {
-	ID(ctx context.Context, obj *bug.CreateTimelineItem) (string, error)
+	ID(ctx context.Context, obj *bug.CreateTimelineItem) (entity.CombinedId, error)
 	Author(ctx context.Context, obj *bug.CreateTimelineItem) (models.IdentityWrapper, error)
 
 	CreatedAt(ctx context.Context, obj *bug.CreateTimelineItem) (*time.Time, error)
 	LastEdit(ctx context.Context, obj *bug.CreateTimelineItem) (*time.Time, error)
 }
 type LabelChangeTimelineItemResolver interface {
-	ID(ctx context.Context, obj *bug.LabelChangeTimelineItem) (string, error)
+	ID(ctx context.Context, obj *bug.LabelChangeTimelineItem) (entity.CombinedId, error)
 	Author(ctx context.Context, obj *bug.LabelChangeTimelineItem) (models.IdentityWrapper, error)
 	Date(ctx context.Context, obj *bug.LabelChangeTimelineItem) (*time.Time, error)
 }
 type SetStatusTimelineItemResolver interface {
-	ID(ctx context.Context, obj *bug.SetStatusTimelineItem) (string, error)
+	ID(ctx context.Context, obj *bug.SetStatusTimelineItem) (entity.CombinedId, error)
 	Author(ctx context.Context, obj *bug.SetStatusTimelineItem) (models.IdentityWrapper, error)
 	Date(ctx context.Context, obj *bug.SetStatusTimelineItem) (*time.Time, error)
 }
 type SetTitleTimelineItemResolver interface {
-	ID(ctx context.Context, obj *bug.SetTitleTimelineItem) (string, error)
+	ID(ctx context.Context, obj *bug.SetTitleTimelineItem) (entity.CombinedId, error)
 	Author(ctx context.Context, obj *bug.SetTitleTimelineItem) (models.IdentityWrapper, error)
 	Date(ctx context.Context, obj *bug.SetTitleTimelineItem) (*time.Time, error)
 }
@@ -92,9 +93,9 @@ func (ec *executionContext) _AddCommentTimelineItem_id(ctx context.Context, fiel
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(entity.CombinedId)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNCombinedId2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentityᚐCombinedId(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AddCommentTimelineItem_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -104,7 +105,7 @@ func (ec *executionContext) fieldContext_AddCommentTimelineItem_id(ctx context.C
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type CombinedId does not have child fields")
 		},
 	}
 	return fc, nil
@@ -600,9 +601,9 @@ func (ec *executionContext) _CreateTimelineItem_id(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(entity.CombinedId)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNCombinedId2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentityᚐCombinedId(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreateTimelineItem_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -612,7 +613,7 @@ func (ec *executionContext) fieldContext_CreateTimelineItem_id(ctx context.Conte
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type CombinedId does not have child fields")
 		},
 	}
 	return fc, nil
@@ -1020,9 +1021,9 @@ func (ec *executionContext) _LabelChangeTimelineItem_id(ctx context.Context, fie
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(entity.CombinedId)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNCombinedId2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentityᚐCombinedId(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_LabelChangeTimelineItem_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1032,7 +1033,7 @@ func (ec *executionContext) fieldContext_LabelChangeTimelineItem_id(ctx context.
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type CombinedId does not have child fields")
 		},
 	}
 	return fc, nil
@@ -1270,9 +1271,9 @@ func (ec *executionContext) _SetStatusTimelineItem_id(ctx context.Context, field
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(entity.CombinedId)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNCombinedId2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentityᚐCombinedId(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SetStatusTimelineItem_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1282,7 +1283,7 @@ func (ec *executionContext) fieldContext_SetStatusTimelineItem_id(ctx context.Co
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type CombinedId does not have child fields")
 		},
 	}
 	return fc, nil
@@ -1464,9 +1465,9 @@ func (ec *executionContext) _SetTitleTimelineItem_id(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(entity.CombinedId)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNCombinedId2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentityᚐCombinedId(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SetTitleTimelineItem_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1476,7 +1477,7 @@ func (ec *executionContext) fieldContext_SetTitleTimelineItem_id(ctx context.Con
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type CombinedId does not have child fields")
 		},
 	}
 	return fc, nil

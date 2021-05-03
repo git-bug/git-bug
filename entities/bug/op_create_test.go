@@ -6,55 +6,37 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/MichaelMure/git-bug/entities/common"
 	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
 	"github.com/MichaelMure/git-bug/repository"
-	"github.com/MichaelMure/git-bug/util/timestamp"
 )
 
 func TestCreate(t *testing.T) {
-	snapshot := Snapshot{}
-
-	repo := repository.NewMockRepoClock()
+	repo := repository.NewMockRepo()
 
 	rene, err := identity.NewIdentity(repo, "René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
 
-	unix := time.Now().Unix()
+	b, op, err := Create(rene, time.Now().Unix(), "title", "message", nil, nil)
+	require.NoError(t, err)
 
-	create := NewCreateOp(rene, unix, "title", "message", nil)
+	require.Equal(t, "title", op.Title)
+	require.Equal(t, "message", op.Message)
 
-	create.Apply(&snapshot)
+	// Create generate the initial operation and create a new timeline item
+	snap := b.Compile()
+	require.Equal(t, common.OpenStatus, snap.Status)
+	require.Equal(t, rene, snap.Author)
+	require.Equal(t, "title", snap.Title)
+	require.Len(t, snap.Operations, 1)
+	require.Equal(t, op, snap.Operations[0])
 
-	id := create.Id()
-	require.NoError(t, id.Validate())
-
-	comment := Comment{
-		id:       entity.CombineIds(create.Id(), create.Id()),
-		Author:   rene,
-		Message:  "message",
-		UnixTime: timestamp.Timestamp(create.UnixTime),
-	}
-
-	expected := Snapshot{
-		id:    create.Id(),
-		Title: "title",
-		Comments: []Comment{
-			comment,
-		},
-		Author:       rene,
-		Participants: []identity.Interface{rene},
-		Actors:       []identity.Interface{rene},
-		CreateTime:   create.Time(),
-		Timeline: []TimelineItem{
-			&CreateTimelineItem{
-				CommentTimelineItem: NewCommentTimelineItem(comment),
-			},
-		},
-	}
-
-	require.Equal(t, expected, snapshot)
+	require.Len(t, snap.Timeline, 1)
+	require.Equal(t, entity.CombineIds(b.Id(), op.Id()), snap.Timeline[0].CombinedId())
+	require.Equal(t, rene, snap.Timeline[0].(*CreateTimelineItem).Author)
+	require.Equal(t, "message", snap.Timeline[0].(*CreateTimelineItem).Message)
 }
 
 func TestCreateSerialize(t *testing.T) {
