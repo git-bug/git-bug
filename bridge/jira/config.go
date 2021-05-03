@@ -79,8 +79,6 @@ func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams, isNonI
 			return nil, fmt.Errorf("credential doesn't have a login")
 		}
 		login = l
-	case TokenRaw != "":
-		credType = "TOKEN"
 	default:
 		if params.Login == "" {
 			if isNonInteractive {
@@ -109,6 +107,8 @@ func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams, isNonI
 			if err != nil {
 				return nil, err
 			}
+		} else {
+			credType = "TOKEN"
 		}
 	}
 
