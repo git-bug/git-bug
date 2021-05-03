@@ -33,6 +33,7 @@ func (*Jira) ValidParams() map[string]interface{} {
 		"Login":      nil,
 		"CredPrefix": nil,
 		"Project":    nil,
+		"TokenRaw":	  nil,
 	}
 }
 
@@ -42,6 +43,9 @@ func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams, isNonI
 
 	baseURL := params.BaseURL
 	if baseURL == "" {
+		if isNonInteractive {
+			return nil, fmt.Errorf("Non-interactive-mode is active. Please specify the JIRA server URL via the --base-url option.")
+		}
 		// terminal prompt
 		baseURL, err = input.Prompt("JIRA server URL", "URL", input.Required, input.IsURL)
 		if err != nil {
@@ -51,20 +55,17 @@ func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams, isNonI
 
 	project := params.Project
 	if project == "" {
+		if isNonInteractive {
+			return nil, fmt.Errorf("Non-interactive-mode is active. Please specify the JIRA project key via the --project option.")
+		}
 		project, err = input.Prompt("JIRA project key", "project", input.Required)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	fmt.Println(credTypeText)
-	credTypeInput, err := input.PromptChoice("Authentication mechanism", []string{"SESSION", "TOKEN"})
-	if err != nil {
-		return nil, err
-	}
-	credType := []string{"SESSION", "TOKEN"}[credTypeInput]
-
 	var login string
+	var credType string
 	var cred auth.Credential
 
 	switch {
@@ -78,8 +79,13 @@ func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams, isNonI
 			return nil, fmt.Errorf("credential doesn't have a login")
 		}
 		login = l
+	case TokenRaw != "":
+		credType = "TOKEN"
 	default:
 		if params.Login == "" {
+			if isNonInteractive {
+				return nil, fmt.Errorf("Non-interactive-mode is active. Please specify the login name via the --login option.")
+			}
 			// TODO: validate username
 			login, err = input.Prompt("JIRA login", "login", input.Required)
 		} else {
@@ -89,9 +95,20 @@ func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams, isNonI
 		if err != nil {
 			return nil, err
 		}
-		cred, err = promptCredOptions(repo, login, baseURL)
-		if err != nil {
-			return nil, err
+		if params.TokenRaw == "" {
+			if isNonInteractive {
+				return nil, fmt.Errorf("Non-interactive-mode is active. Please specify the access token via the --token option.")
+			}
+			fmt.Println(credTypeText)
+			credTypeInput, err := input.PromptChoice("Authentication mechanism", []string{"SESSION", "TOKEN"})
+			if err != nil {
+				return nil, err
+			}
+			credType = []string{"SESSION", "TOKEN"}[credTypeInput]
+			cred, err = promptCredOptions(repo, login, baseURL)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
