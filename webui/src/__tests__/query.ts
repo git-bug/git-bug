@@ -17,11 +17,11 @@ it('parses a query with multiple filters', () => {
     freetext: [''],
   });
 
-  expect(parse(`label:abc with "quotes" in freetext`)).toEqual({
+  expect(parse(`label:abc with "quotes" 'in' freetext`)).toEqual({
     label: [`abc`],
     with: [''],
-    quotes: [''],
-    in: [''],
+    '"quotes"': [''],
+    "'in'": [''],
     freetext: [''],
   });
 });
@@ -54,11 +54,44 @@ it('parses a quoted query', () => {
   expect(parse(`label:"with:quoated:colon"`)).toEqual({
     label: [`"with:quoated:colon"`],
   });
+
+  expect(parse(`label:'name ends after this ->' quote'`)).toEqual({
+    label: [`'name ends after this ->'`],
+    "quote'": [``],
+  });
+
+  expect(parse(`label:"name ends after this ->" quote"`)).toEqual({
+    label: [`"name ends after this ->"`],
+    'quote"': [``],
+  });
+
+  expect(parse(`label:'this ->"<- quote belongs to label name'`)).toEqual({
+    label: [`'this ->"<- quote belongs to label name'`],
+  });
+
+  expect(parse(`label:"this ->'<- quote belongs to label name"`)).toEqual({
+    label: [`"this ->'<- quote belongs to label name"`],
+  });
+
+  expect(parse(`label:'names end with'whitespace not with quotes`)).toEqual({
+    label: [`'names end with'whitespace`],
+    not: [``],
+    with: [``],
+    quotes: [``],
+  });
+
+  expect(parse(`label:"names end with"whitespace not with quotes`)).toEqual({
+    label: [`"names end with"whitespace`],
+    not: [``],
+    with: [``],
+    quotes: [``],
+  });
 });
 
 it('should not escape nested quotes', () => {
   expect(parse(`foo:'do not escape this ->'<- quote'`)).toEqual({
-    foo: [`'do not escape this ->'<- quote'`],
+    foo: [`'do not escape this ->'<-`],
+    "quote'": [``],
   });
 
   expect(parse(`foo:'do not escape this ->"<- quote'`)).toEqual({
@@ -66,7 +99,8 @@ it('should not escape nested quotes', () => {
   });
 
   expect(parse(`foo:"do not escape this ->"<- quote"`)).toEqual({
-    foo: [`"do not escape this ->"<- quote"`],
+    foo: [`"do not escape this ->"<-`],
+    'quote"': [``],
   });
 
   expect(parse(`foo:"do not escape this ->'<- quote"`)).toEqual({

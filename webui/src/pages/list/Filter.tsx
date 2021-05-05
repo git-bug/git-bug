@@ -36,7 +36,7 @@ export type Query = { [key: string]: string[] };
 
 function parse(query: string): Query {
   const params: Query = {};
-  let re = new RegExp(/(\w+)(:('.*'|".*"|\S*))?/, 'g');
+  let re = new RegExp(/([^:\s]+)(:('[^']*'\S*|"[^"]*"\S*|\S*))?/, 'g');
   let matches;
   while ((matches = re.exec(query)) !== null) {
     if (!params[matches[1]]) {
@@ -53,8 +53,8 @@ function parse(query: string): Query {
 
 function quote(value: string): string {
   const hasSpaces = value.includes(' ');
-  const isDoubleQuotedRegEx = RegExp(/^'.*'$/);
-  const isSingleQuotedRegEx = RegExp(/^".*"$/);
+  const isSingleQuotedRegEx = RegExp(/^'.*'$/);
+  const isDoubleQuotedRegEx = RegExp(/^".*"$/);
   const isQuoted = () =>
     isDoubleQuotedRegEx.test(value) || isSingleQuotedRegEx.test(value);
 
