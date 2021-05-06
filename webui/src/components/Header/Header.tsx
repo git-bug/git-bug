@@ -6,7 +6,7 @@ import Tab, { TabProps } from '@material-ui/core/Tab';
 import Tabs from '@material-ui/core/Tabs';
 import Toolbar from '@material-ui/core/Toolbar';
 import Tooltip from '@material-ui/core/Tooltip/Tooltip';
-import { makeStyles } from '@material-ui/core/styles';
+import { fade, makeStyles } from '@material-ui/core/styles';
 
 import CurrentIdentity from '../Identity/CurrentIdentity';
 import { LightSwitch } from '../Themer';
@@ -30,7 +30,8 @@ const useStyles = makeStyles((theme) => ({
     alignItems: 'center',
   },
   lightSwitch: {
-    padding: '0 20px',
+    marginRight: '20px',
+    color: fade(theme.palette.primary.contrastText, 0.5),
   },
   logo: {
     height: '42px',
@@ -85,9 +86,7 @@ function Header() {
             git-bug
           </Link>
           <div className={classes.filler} />
-          <div className={classes.lightSwitch}>
-            <LightSwitch />
-          </div>
+          <LightSwitch className={classes.lightSwitch} />
           <CurrentIdentity />
         </Toolbar>
       </AppBar>
