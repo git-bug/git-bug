@@ -16,11 +16,12 @@ import (
 )
 
 type bridgeConfigureOptions struct {
-	name       string
-	target     string
-	params     core.BridgeParams
-	token      string
-	tokenStdin bool
+	name           string
+	target         string
+	params         core.BridgeParams
+	token          string
+	tokenStdin     bool
+	nonInteractive bool
 }
 
 func newBridgeConfigureCommand() *cobra.Command {
@@ -105,6 +106,7 @@ git bug bridge configure \
 	flags.BoolVar(&options.tokenStdin, "token-stdin", false, "Will read the token from stdin and ignore --token")
 	flags.StringVarP(&options.params.Owner, "owner", "o", "", "The owner of the remote repository")
 	flags.StringVarP(&options.params.Project, "project", "p", "", "The name of the remote repository")
+	flags.BoolVar(&options.nonInteractive, "non-interactive", false, "Do not ask for user input")
 
 	return cmd
 }
@@ -136,14 +138,14 @@ func runBridgeConfigure(env *Env, opts bridgeConfigureOptions) error {
 		opts.params.TokenRaw = opts.token
 	}
 
-	if opts.target == "" {
+	if !opts.nonInteractive && opts.target == "" {
 		opts.target, err = promptTarget()
 		if err != nil {
 			return err
 		}
 	}
 
-	if opts.name == "" {
+	if !opts.nonInteractive && opts.name == "" {
 		opts.name, err = promptName(env.repo)
 		if err != nil {
 			return err
@@ -155,7 +157,7 @@ func runBridgeConfigure(env *Env, opts bridgeConfigureOptions) error {
 		return err
 	}
 
-	err = b.Configure(opts.params)
+	err = b.Configure(opts.params, !opts.nonInteractive)
 	if err != nil {
 		return err
 	}

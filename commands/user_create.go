@@ -7,9 +7,10 @@ import (
 )
 
 type createUserOptions struct {
-	name      string
-	email     string
-	avatarURL string
+	name           string
+	email          string
+	avatarURL      string
+	nonInteractive bool
 }
 
 func newUserCreateCommand() *cobra.Command {
@@ -30,13 +31,14 @@ func newUserCreateCommand() *cobra.Command {
 	flags.StringVarP(&options.name, "name", "n", "", "Name to identify the user")
 	flags.StringVarP(&options.email, "email", "e", "", "Email of the user")
 	flags.StringVarP(&options.avatarURL, "avatar", "a", "", "Avatar URL")
+	flags.BoolVar(&options.nonInteractive, "non-interactive", false, "Do not ask for user input")
 
 	return cmd
 }
 
 func runUserCreate(env *Env, opts createUserOptions) error {
 
-	if opts.name == "" {
+	if !opts.nonInteractive && opts.name == "" {
 		preName, err := env.backend.GetUserName()
 		if err != nil {
 			return err
@@ -47,7 +49,7 @@ func runUserCreate(env *Env, opts createUserOptions) error {
 		}
 	}
 
-	if opts.email == "" {
+	if !opts.nonInteractive && opts.email == "" {
 		preEmail, err := env.backend.GetUserEmail()
 		if err != nil {
 			return err
@@ -59,7 +61,7 @@ func runUserCreate(env *Env, opts createUserOptions) error {
 		}
 	}
 
-	if opts.avatarURL == "" {
+	if !opts.nonInteractive && opts.avatarURL == "" {
 		var err error
 		opts.avatarURL, err = input.Prompt("Avatar URL", "avatar")
 		if err != nil {

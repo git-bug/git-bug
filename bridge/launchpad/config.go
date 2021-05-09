@@ -20,7 +20,7 @@ func (Launchpad) ValidParams() map[string]interface{} {
 	}
 }
 
-func (l *Launchpad) Configure(repo *cache.RepoCache, params core.BridgeParams) (core.Configuration, error) {
+func (l *Launchpad) Configure(repo *cache.RepoCache, params core.BridgeParams, interactive bool) (core.Configuration, error) {
 	var err error
 	var project string
 
@@ -31,6 +31,9 @@ func (l *Launchpad) Configure(repo *cache.RepoCache, params core.BridgeParams) (
 		// get project name from url
 		project, err = splitURL(params.URL)
 	default:
+		if !interactive {
+			return nil, fmt.Errorf("Non-interactive-mode is active. Please specify the project name with the --project option.")
+		}
 		// get project name from terminal prompt
 		project, err = input.Prompt("Launchpad project name", "project name", input.Required)
 	}

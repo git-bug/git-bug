@@ -20,8 +20,8 @@ type BridgeImpl interface {
 	NewExporter() Exporter
 
 	// Configure handle the user interaction and return a key/value configuration
-	// for future use
-	Configure(repo *cache.RepoCache, params BridgeParams) (Configuration, error)
+	// for future use.
+	Configure(repo *cache.RepoCache, params BridgeParams, interactive bool) (Configuration, error)
 
 	// The set of the BridgeParams fields supported
 	ValidParams() map[string]interface{}

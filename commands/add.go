@@ -8,9 +8,10 @@ import (
 )
 
 type addOptions struct {
-	title       string
-	message     string
-	messageFile string
+	title          string
+	message        string
+	messageFile    string
+	nonInteractive bool
 }
 
 func newAddCommand() *cobra.Command {
@@ -36,6 +37,7 @@ func newAddCommand() *cobra.Command {
 		"Provide a message to describe the issue")
 	flags.StringVarP(&options.messageFile, "file", "F", "",
 		"Take the message from the given file. Use - to read the message from the standard input")
+	flags.BoolVar(&options.nonInteractive, "non-interactive", false, "Do not ask for user input")
 
 	return cmd
 }
@@ -49,7 +51,7 @@ func runAdd(env *Env, opts addOptions) error {
 		}
 	}
 
-	if opts.messageFile == "" && (opts.message == "" || opts.title == "") {
+	if !opts.nonInteractive && opts.messageFile == "" && (opts.message == "" || opts.title == "") {
 		opts.title, opts.message, err = input.BugCreateEditorInput(env.backend, opts.title, opts.message)
 
 		if err == input.ErrEmptyTitle {
