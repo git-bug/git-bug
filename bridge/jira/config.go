@@ -33,17 +33,17 @@ func (*Jira) ValidParams() map[string]interface{} {
 		"Login":      nil,
 		"CredPrefix": nil,
 		"Project":    nil,
-		"TokenRaw":	  nil,
+		"TokenRaw":   nil,
 	}
 }
 
 // Configure sets up the bridge configuration
-func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams, isNonInteractive bool) (core.Configuration, error) {
+func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams, interactive bool) (core.Configuration, error) {
 	var err error
 
 	baseURL := params.BaseURL
 	if baseURL == "" {
-		if isNonInteractive {
+		if !interactive {
 			return nil, fmt.Errorf("Non-interactive-mode is active. Please specify the JIRA server URL via the --base-url option.")
 		}
 		// terminal prompt
@@ -55,7 +55,7 @@ func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams, isNonI
 
 	project := params.Project
 	if project == "" {
-		if isNonInteractive {
+		if !interactive {
 			return nil, fmt.Errorf("Non-interactive-mode is active. Please specify the JIRA project key via the --project option.")
 		}
 		project, err = input.Prompt("JIRA project key", "project", input.Required)
@@ -81,20 +81,20 @@ func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams, isNonI
 		login = l
 	default:
 		if params.Login == "" {
-			if isNonInteractive {
+			if !interactive {
 				return nil, fmt.Errorf("Non-interactive-mode is active. Please specify the login name via the --login option.")
 			}
-			// TODO: validate username
 			login, err = input.Prompt("JIRA login", "login", input.Required)
+			if err != nil {
+				return nil, err
+			}
 		} else {
-			// TODO: validate username
 			login = params.Login
 		}
-		if err != nil {
-			return nil, err
-		}
+		// TODO: validate username
+
 		if params.TokenRaw == "" {
-			if isNonInteractive {
+			if !interactive {
 				return nil, fmt.Errorf("Non-interactive-mode is active. Please specify the access token via the --token option.")
 			}
 			fmt.Println(credTypeText)

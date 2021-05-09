@@ -157,7 +157,7 @@ func runBridgeConfigure(env *Env, opts bridgeConfigureOptions) error {
 		return err
 	}
 
-	err = b.Configure(opts.params, opts.nonInteractive)
+	err = b.Configure(opts.params, !opts.nonInteractive)
 	if err != nil {
 		return err
 	}

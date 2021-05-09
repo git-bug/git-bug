@@ -32,7 +32,7 @@ func (g *Gitlab) ValidParams() map[string]interface{} {
 	}
 }
 
-func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams, isNonInteractive bool) (core.Configuration, error) {
+func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams, interactive bool) (core.Configuration, error) {
 	var err error
 	var baseUrl string
 
@@ -40,7 +40,7 @@ func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams, isNo
 	case params.BaseURL != "":
 		baseUrl = params.BaseURL
 	default:
-		if isNonInteractive {
+		if !interactive {
 			return nil, fmt.Errorf("Non-interactive-mode is active. Please specify the gitlab instance URL via the --base-url option.")
 		}
 		baseUrl, err = input.PromptDefault("Gitlab server URL", "URL", defaultBaseURL, input.Required, input.IsURL)
@@ -57,7 +57,7 @@ func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams, isNo
 		projectURL = params.URL
 	default:
 		// terminal prompt
-		if isNonInteractive {
+		if !interactive {
 			return nil, fmt.Errorf("Non-interactive-mode is active. Please specify the gitlab project URL via the --url option.")
 		}
 		projectURL, err = promptProjectURL(repo, baseUrl)
@@ -95,7 +95,7 @@ func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams, isNo
 		cred = token
 	default:
 		if params.Login == "" {
-			if isNonInteractive {
+			if !interactive {
 				return nil, fmt.Errorf("Non-interactive-mode is active. Please specify the login name via the --login option.")
 			}
 			// TODO: validate username
@@ -107,7 +107,7 @@ func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams, isNo
 		if err != nil {
 			return nil, err
 		}
-		if isNonInteractive {
+		if !interactive {
 			return nil, fmt.Errorf("Non-interactive-mode is active. Please specify the access token via the --token option.")
 		}
 		cred, err = promptTokenOptions(repo, login, baseUrl)

@@ -40,7 +40,7 @@ func (g *Github) ValidParams() map[string]interface{} {
 	}
 }
 
-func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams, isNonInteractive bool) (core.Configuration, error) {
+func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams, interactive bool) (core.Configuration, error) {
 	var err error
 	var owner string
 	var project string
@@ -60,7 +60,7 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams, isNo
 		}
 	default:
 		// terminal prompt
-		if isNonInteractive {
+		if !interactive {
 			return nil, fmt.Errorf("Non-interactive-mode is active. Please specify the remote repository with --owner and --project, or via --url option.")
 		}
 		owner, project, err = promptURL(repo)
@@ -102,7 +102,7 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams, isNo
 		cred = token
 	default:
 		if params.Login == "" {
-			if isNonInteractive {
+			if !interactive {
 				return nil, fmt.Errorf("Non-interactive-mode is active. Please specify a login via the --login option.")
 			}
 			login, err = promptLogin()
@@ -117,7 +117,7 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams, isNo
 			return nil, err
 		}
 
-		if isNonInteractive {
+		if !interactive {
 			return nil, fmt.Errorf("Non-interactive-mode is active. Please specify a access token via the --token option.")
 		}
 		cred, err = promptTokenOptions(repo, login, owner, project)
