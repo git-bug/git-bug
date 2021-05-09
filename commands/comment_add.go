@@ -19,13 +19,12 @@ func newCommentAddCommand() *cobra.Command {
 	options := commentAddOptions{}
 
 	cmd := &cobra.Command{
-		Use:      "add [ID]",
-		Short:    "Add a new comment to a bug.",
-		PreRunE:  loadBackendEnsureUser(env),
-		PostRunE: closeBackend(env),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Use:     "add [ID]",
+		Short:   "Add a new comment to a bug.",
+		PreRunE: loadBackendEnsureUser(env),
+		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runCommentAdd(env, options, args)
-		},
+		}),
 	}
 
 	flags := cmd.Flags()

@@ -12,13 +12,12 @@ func newPullCommand() *cobra.Command {
 	env := newEnv()
 
 	cmd := &cobra.Command{
-		Use:      "pull [REMOTE]",
-		Short:    "Pull bugs update from a git remote.",
-		PreRunE:  loadBackend(env),
-		PostRunE: closeBackend(env),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Use:     "pull [REMOTE]",
+		Short:   "Pull bugs update from a git remote.",
+		PreRunE: loadBackend(env),
+		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runPull(env, args)
-		},
+		}),
 	}
 
 	return cmd

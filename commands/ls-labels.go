@@ -13,11 +13,10 @@ func newLsLabelCommand() *cobra.Command {
 		Long: `List valid labels.
 
 Note: in the future, a proper label policy could be implemented where valid labels are defined in a configuration file. Until that, the default behavior is to return the list of labels already used.`,
-		PreRunE:  loadBackend(env),
-		PostRunE: closeBackend(env),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		PreRunE: loadBackend(env),
+		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runLsLabel(env)
-		},
+		}),
 	}
 
 	return cmd

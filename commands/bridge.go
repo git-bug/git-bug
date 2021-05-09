@@ -10,13 +10,12 @@ func newBridgeCommand() *cobra.Command {
 	env := newEnv()
 
 	cmd := &cobra.Command{
-		Use:      "bridge",
-		Short:    "Configure and use bridges to other bug trackers.",
-		PreRunE:  loadBackend(env),
-		PostRunE: closeBackend(env),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Use:     "bridge",
+		Short:   "Configure and use bridges to other bug trackers.",
+		PreRunE: loadBackend(env),
+		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runBridge(env)
-		},
+		}),
 		Args: cobra.NoArgs,
 	}
 

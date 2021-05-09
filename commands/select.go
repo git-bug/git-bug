@@ -27,11 +27,10 @@ instead of
 
 The complementary command is "git bug deselect" performing the opposite operation.
 `,
-		PreRunE:  loadBackend(env),
-		PostRunE: closeBackend(env),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		PreRunE: loadBackend(env),
+		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runSelect(env, args)
-		},
+		}),
 	}
 
 	return cmd

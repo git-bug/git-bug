@@ -18,13 +18,12 @@ func newTitleEditCommand() *cobra.Command {
 	options := titleEditOptions{}
 
 	cmd := &cobra.Command{
-		Use:      "edit [ID]",
-		Short:    "Edit a title of a bug.",
-		PreRunE:  loadBackendEnsureUser(env),
-		PostRunE: closeBackend(env),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Use:     "edit [ID]",
+		Short:   "Edit a title of a bug.",
+		PreRunE: loadBackendEnsureUser(env),
+		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runTitleEdit(env, options, args)
-		},
+		}),
 	}
 
 	flags := cmd.Flags()

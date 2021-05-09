@@ -17,13 +17,12 @@ func newBridgePushCommand() *cobra.Command {
 	env := newEnv()
 
 	cmd := &cobra.Command{
-		Use:      "push [NAME]",
-		Short:    "Push updates.",
-		PreRunE:  loadBackendEnsureUser(env),
-		PostRunE: closeBackend(env),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Use:     "push [NAME]",
+		Short:   "Push updates.",
+		PreRunE: loadBackendEnsureUser(env),
+		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runBridgePush(env, args)
-		},
+		}),
 		Args: cobra.MaximumNArgs(1),
 	}
 

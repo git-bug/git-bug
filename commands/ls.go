@@ -52,11 +52,10 @@ git bug ls "foo bar" baz
 Use queries, flags, and full text search:
 git bug ls status:open --by creation "foo bar" baz
 `,
-		PreRunE:  loadBackend(env),
-		PostRunE: closeBackend(env),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		PreRunE: loadBackend(env),
+		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runLs(env, options, args)
-		},
+		}),
 	}
 
 	flags := cmd.Flags()

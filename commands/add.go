@@ -19,13 +19,12 @@ func newAddCommand() *cobra.Command {
 	options := addOptions{}
 
 	cmd := &cobra.Command{
-		Use:      "add",
-		Short:    "Create a new bug.",
-		PreRunE:  loadBackendEnsureUser(env),
-		PostRunE: closeBackend(env),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Use:     "add",
+		Short:   "Create a new bug.",
+		PreRunE: loadBackendEnsureUser(env),
+		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runAdd(env, options)
-		},
+		}),
 	}
 
 	flags := cmd.Flags()

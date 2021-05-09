@@ -17,11 +17,10 @@ git bug comment
 git bug status
 git bug deselect
 `,
-		PreRunE:  loadBackend(env),
-		PostRunE: closeBackend(env),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		PreRunE: loadBackend(env),
+		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runDeselect(env)
-		},
+		}),
 	}
 
 	return cmd

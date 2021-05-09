@@ -10,13 +10,12 @@ func newLabelCommand() *cobra.Command {
 	env := newEnv()
 
 	cmd := &cobra.Command{
-		Use:      "label [ID]",
-		Short:    "Display, add or remove labels to/from a bug.",
-		PreRunE:  loadBackend(env),
-		PostRunE: closeBackend(env),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Use:     "label [ID]",
+		Short:   "Display, add or remove labels to/from a bug.",
+		PreRunE: loadBackend(env),
+		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runLabel(env, args)
-		},
+		}),
 	}
 
 	cmd.AddCommand(newLabelAddCommand())

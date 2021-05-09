@@ -23,13 +23,12 @@ func newShowCommand() *cobra.Command {
 	options := showOptions{}
 
 	cmd := &cobra.Command{
-		Use:      "show [ID]",
-		Short:    "Display the details of a bug.",
-		PreRunE:  loadBackend(env),
-		PostRunE: closeBackend(env),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Use:     "show [ID]",
+		Short:   "Display the details of a bug.",
+		PreRunE: loadBackend(env),
+		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runShow(env, options, args)
-		},
+		}),
 	}
 
 	flags := cmd.Flags()
