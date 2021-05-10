@@ -9,13 +9,12 @@ func newStatusCommand() *cobra.Command {
 	env := newEnv()
 
 	cmd := &cobra.Command{
-		Use:      "status [ID]",
-		Short:    "Display or change a bug status.",
-		PreRunE:  loadBackend(env),
-		PostRunE: closeBackend(env),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Use:     "status [ID]",
+		Short:   "Display or change a bug status.",
+		PreRunE: loadBackend(env),
+		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runStatus(env, args)
-		},
+		}),
 	}
 
 	cmd.AddCommand(newStatusCloseCommand())

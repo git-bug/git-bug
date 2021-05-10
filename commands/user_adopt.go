@@ -8,14 +8,13 @@ func newUserAdoptCommand() *cobra.Command {
 	env := newEnv()
 
 	cmd := &cobra.Command{
-		Use:      "adopt USER-ID",
-		Short:    "Adopt an existing identity as your own.",
-		Args:     cobra.ExactArgs(1),
-		PreRunE:  loadBackend(env),
-		PostRunE: closeBackend(env),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Use:     "adopt USER-ID",
+		Short:   "Adopt an existing identity as your own.",
+		Args:    cobra.ExactArgs(1),
+		PreRunE: loadBackend(env),
+		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runUserAdopt(env, args)
-		},
+		}),
 	}
 
 	return cmd

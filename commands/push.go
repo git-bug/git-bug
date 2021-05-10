@@ -10,13 +10,12 @@ func newPushCommand() *cobra.Command {
 	env := newEnv()
 
 	cmd := &cobra.Command{
-		Use:      "push [REMOTE]",
-		Short:    "Push bugs update to a git remote.",
-		PreRunE:  loadBackend(env),
-		PostRunE: closeBackend(env),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Use:     "push [REMOTE]",
+		Short:   "Push bugs update to a git remote.",
+		PreRunE: loadBackend(env),
+		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runPush(env, args)
-		},
+		}),
 	}
 
 	return cmd

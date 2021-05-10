@@ -10,14 +10,13 @@ func newTermUICommand() *cobra.Command {
 	env := newEnv()
 
 	cmd := &cobra.Command{
-		Use:      "termui",
-		Aliases:  []string{"tui"},
-		Short:    "Launch the terminal UI.",
-		PreRunE:  loadBackendEnsureUser(env),
-		PostRunE: closeBackend(env),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Use:     "termui",
+		Aliases: []string{"tui"},
+		Short:   "Launch the terminal UI.",
+		PreRunE: loadBackendEnsureUser(env),
+		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runTermUI(env)
-		},
+		}),
 	}
 
 	return cmd

@@ -19,13 +19,12 @@ func newUserLsCommand() *cobra.Command {
 	options := userLsOptions{}
 
 	cmd := &cobra.Command{
-		Use:      "ls",
-		Short:    "List identities.",
-		PreRunE:  loadBackend(env),
-		PostRunE: closeBackend(env),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Use:     "ls",
+		Short:   "List identities.",
+		PreRunE: loadBackend(env),
+		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runUserLs(env, options)
-		},
+		}),
 	}
 
 	flags := cmd.Flags()

@@ -9,13 +9,12 @@ func newStatusCloseCommand() *cobra.Command {
 	env := newEnv()
 
 	cmd := &cobra.Command{
-		Use:      "close [ID]",
-		Short:    "Mark a bug as closed.",
-		PreRunE:  loadBackendEnsureUser(env),
-		PostRunE: closeBackend(env),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Use:     "close [ID]",
+		Short:   "Mark a bug as closed.",
+		PreRunE: loadBackendEnsureUser(env),
+		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runStatusClose(env, args)
-		},
+		}),
 	}
 
 	return cmd

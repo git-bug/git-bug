@@ -17,14 +17,13 @@ func newCommentEditCommand() *cobra.Command {
 	options := commentEditOptions{}
 
 	cmd := &cobra.Command{
-		Use:      "edit [COMMENT_ID]",
-		Short:    "Edit an existing comment on a bug.",
-		Args:     cobra.ExactArgs(1),
-		PreRunE:  loadBackendEnsureUser(env),
-		PostRunE: closeBackend(env),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Use:     "edit [COMMENT_ID]",
+		Short:   "Edit an existing comment on a bug.",
+		Args:    cobra.ExactArgs(1),
+		PreRunE: loadBackendEnsureUser(env),
+		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runCommentEdit(env, options, args)
-		},
+		}),
 	}
 
 	flags := cmd.Flags()

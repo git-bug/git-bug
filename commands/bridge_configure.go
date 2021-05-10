@@ -85,11 +85,10 @@ git bug bridge configure \
     --target=github \
     --url=https://github.com/michaelmure/git-bug \
     --token=$(TOKEN)`,
-		PreRunE:  loadBackend(env),
-		PostRunE: closeBackend(env),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		PreRunE: loadBackend(env),
+		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runBridgeConfigure(env, options)
-		},
+		}),
 	}
 
 	flags := cmd.Flags()

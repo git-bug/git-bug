@@ -18,13 +18,12 @@ func newUserCreateCommand() *cobra.Command {
 
 	options := createUserOptions{}
 	cmd := &cobra.Command{
-		Use:      "create",
-		Short:    "Create a new identity.",
-		PreRunE:  loadBackend(env),
-		PostRunE: closeBackend(env),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Use:     "create",
+		Short:   "Create a new identity.",
+		PreRunE: loadBackend(env),
+		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runUserCreate(env, options)
-		},
+		}),
 	}
 
 	flags := cmd.Flags()

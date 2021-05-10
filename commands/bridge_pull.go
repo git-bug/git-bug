@@ -26,13 +26,12 @@ func newBridgePullCommand() *cobra.Command {
 	options := bridgePullOptions{}
 
 	cmd := &cobra.Command{
-		Use:      "pull [NAME]",
-		Short:    "Pull updates.",
-		PreRunE:  loadBackend(env),
-		PostRunE: closeBackend(env),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Use:     "pull [NAME]",
+		Short:   "Pull updates.",
+		PreRunE: loadBackend(env),
+		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runBridgePull(env, options, args)
-		},
+		}),
 		Args: cobra.MaximumNArgs(1),
 	}
 

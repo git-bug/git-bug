@@ -15,13 +15,12 @@ func newBridgeAuthShow() *cobra.Command {
 	env := newEnv()
 
 	cmd := &cobra.Command{
-		Use:      "show",
-		Short:    "Display an authentication credential.",
-		PreRunE:  loadBackend(env),
-		PostRunE: closeBackend(env),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Use:     "show",
+		Short:   "Display an authentication credential.",
+		PreRunE: loadBackend(env),
+		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runBridgeAuthShow(env, args)
-		},
+		}),
 		Args: cobra.ExactArgs(1),
 	}
 

@@ -27,13 +27,12 @@ func newBridgeAuthAddTokenCommand() *cobra.Command {
 	options := bridgeAuthAddTokenOptions{}
 
 	cmd := &cobra.Command{
-		Use:      "add-token [TOKEN]",
-		Short:    "Store a new token",
-		PreRunE:  loadBackendEnsureUser(env),
-		PostRunE: closeBackend(env),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Use:     "add-token [TOKEN]",
+		Short:   "Store a new token",
+		PreRunE: loadBackendEnsureUser(env),
+		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runBridgeAuthAddToken(env, options, args)
-		},
+		}),
 		Args: cobra.MaximumNArgs(1),
 	}
 

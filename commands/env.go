@@ -136,15 +136,23 @@ func loadBackendEnsureUser(env *Env) func(*cobra.Command, []string) error {
 	}
 }
 
-// closeBackend is a post-run function that will close the backend properly
+// closeBackend is a wrapper for a RunE function that will close the backend properly
 // if it has been opened.
-func closeBackend(env *Env) func(*cobra.Command, []string) error {
+// This wrapper style is necessary because a Cobra PostE function does not run if RunE return an error.
+func closeBackend(env *Env, runE func(cmd *cobra.Command, args []string) error) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
+		errRun := runE(cmd, args)
+
 		if env.backend == nil {
 			return nil
 		}
 		err := env.backend.Close()
 		env.backend = nil
+
+		// prioritize the RunE error
+		if errRun != nil {
+			return errRun
+		}
 		return err
 	}
 }

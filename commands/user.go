@@ -18,13 +18,12 @@ func newUserCommand() *cobra.Command {
 	options := userOptions{}
 
 	cmd := &cobra.Command{
-		Use:      "user [USER-ID]",
-		Short:    "Display or change the user identity.",
-		PreRunE:  loadBackendEnsureUser(env),
-		PostRunE: closeBackend(env),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Use:     "user [USER-ID]",
+		Short:   "Display or change the user identity.",
+		PreRunE: loadBackendEnsureUser(env),
+		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runUser(env, options, args)
-		},
+		}),
 	}
 
 	cmd.AddCommand(newUserAdoptCommand())

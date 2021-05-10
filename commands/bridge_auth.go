@@ -16,13 +16,12 @@ func newBridgeAuthCommand() *cobra.Command {
 	env := newEnv()
 
 	cmd := &cobra.Command{
-		Use:      "auth",
-		Short:    "List all known bridge authentication credentials.",
-		PreRunE:  loadBackend(env),
-		PostRunE: closeBackend(env),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Use:     "auth",
+		Short:   "List all known bridge authentication credentials.",
+		PreRunE: loadBackend(env),
+		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runBridgeAuth(env)
-		},
+		}),
 		Args: cobra.NoArgs,
 	}
 
