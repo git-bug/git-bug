@@ -3,6 +3,7 @@ module github.com/MichaelMure/git-bug
 go 1.18
 
 require (
+	code.gitea.io/sdk/gitea v0.14.0
 	github.com/99designs/gqlgen v0.17.17
 	github.com/99designs/keyring v1.2.1
 	github.com/MichaelMure/go-term-text v0.3.1
@@ -35,6 +36,7 @@ require (
 )
 
 require (
+	github.com/hashicorp/go-version v1.2.1 // indirect
 	github.com/lithammer/dedent v1.1.0 // indirect
 	github.com/owenrumney/go-sarif v1.0.11 // indirect
 	github.com/segmentio/fasthash v1.0.3 // indirect
