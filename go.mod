@@ -3,8 +3,10 @@ module github.com/git-bug/git-bug
 go 1.25.0
 
 require (
+	code.gitea.io/sdk/gitea v0.19.0
 	github.com/99designs/gqlgen v0.17.73
 	github.com/99designs/keyring v1.2.2
+	github.com/MichaelMure/git-bug v0.8.0
 	github.com/MichaelMure/go-term-text v0.3.1
 	github.com/ProtonMail/go-crypto v1.1.6
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
@@ -44,14 +46,23 @@ require (
 tool github.com/99designs/gqlgen
 
 require (
+	github.com/davidmz/go-pageant v1.0.2 // indirect
+	github.com/go-fed/httpsig v1.1.0 // indirect
+	github.com/hashicorp/go-version v1.6.0 // indirect
+	github.com/hashicorp/golang-lru v0.5.4 // indirect
+)
+
+require (
 	dario.cat/mergo v1.0.1 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
+	github.com/RoaringBitmap/roaring v0.4.23 // indirect
 	github.com/RoaringBitmap/roaring/v2 v2.4.5 // indirect
 	github.com/VividCortex/ewma v1.2.0 // indirect
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d // indirect
 	github.com/agnivade/levenshtein v1.2.1 // indirect
 	github.com/bits-and-blooms/bitset v1.22.0 // indirect
+	github.com/blevesearch/bleve v1.0.14 // indirect
 	github.com/blevesearch/bleve_index_api v1.2.8 // indirect
 	github.com/blevesearch/geo v0.2.3 // indirect
 	github.com/blevesearch/go-faiss v1.0.25 // indirect
@@ -63,6 +74,11 @@ require (
 	github.com/blevesearch/snowballstem v0.9.0 // indirect
 	github.com/blevesearch/upsidedown_store_api v1.0.2 // indirect
 	github.com/blevesearch/vellum v1.1.0 // indirect
+	github.com/blevesearch/zap/v11 v11.0.14 // indirect
+	github.com/blevesearch/zap/v12 v12.0.14 // indirect
+	github.com/blevesearch/zap/v13 v13.0.6 // indirect
+	github.com/blevesearch/zap/v14 v14.0.5 // indirect
+	github.com/blevesearch/zap/v15 v15.0.3 // indirect
 	github.com/blevesearch/zapx/v11 v11.4.2 // indirect
 	github.com/blevesearch/zapx/v12 v12.4.2 // indirect
 	github.com/blevesearch/zapx/v13 v13.4.2 // indirect
@@ -71,6 +87,7 @@ require (
 	github.com/blevesearch/zapx/v16 v16.2.3 // indirect
 	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/corpix/uarand v0.2.0 // indirect
+	github.com/couchbase/vellum v1.0.2 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.5 // indirect
 	github.com/cyphar/filepath-securejoin v0.4.1 // indirect
 	github.com/danieljoos/wincred v1.2.2 // indirect
@@ -79,6 +96,7 @@ require (
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/gdamore/encoding v1.0.1 // indirect
 	github.com/gdamore/tcell/v2 v2.7.4 // indirect
+	github.com/glycerine/go-unsnap-stream v0.0.0-20181221182339-f9677308dec2 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2 // indirect
@@ -99,6 +117,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/mschoch/smat v0.2.0 // indirect
 	github.com/mtibben/percent v0.2.1 // indirect
+	github.com/philhofer/fwd v1.0.0 // indirect
 	github.com/pjbgf/sha1cd v0.3.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
@@ -108,8 +127,11 @@ require (
 	github.com/skeema/knownhosts v1.3.1 // indirect
 	github.com/sosodev/duration v1.3.1 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
+	github.com/steveyen/gtreap v0.1.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
+	github.com/tinylib/msgp v1.1.0 // indirect
 	github.com/urfave/cli/v2 v2.27.6 // indirect
+	github.com/willf/bitset v1.1.10 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	go.etcd.io/bbolt v1.4.0 // indirect
