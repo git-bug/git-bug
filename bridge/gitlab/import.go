@@ -383,7 +383,7 @@ func (gi *gitlabImporter) ensurePerson(repo *cache.RepoCache, id int) (*cache.Id
 		return nil, err
 	}
 
-	user, _, err := gi.client.Users.GetUser(id)
+	user, _, err := gi.client.Users.GetUser(id, gitlab.GetUsersOptions{})
 	if err != nil {
 		return nil, err
 	}
