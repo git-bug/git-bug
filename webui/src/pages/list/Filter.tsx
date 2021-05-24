@@ -35,52 +35,50 @@ const ITEM_HEIGHT = 48;
 export type Query = { [key: string]: string[] };
 
 function parse(query: string): Query {
-  // TODO: extract the rest of the query?
   const params: Query = {};
-
-  // TODO: support escaping without quotes
-  const re = /(\w+):([A-Za-z0-9-]+|(["'])(([^\3]|\\.)*)\3)+/g;
+  let re = new RegExp(/([^:\s]+)(:('[^']*'\S*|"[^"]*"\S*|\S*))?/, 'g');
   let matches;
   while ((matches = re.exec(query)) !== null) {
     if (!params[matches[1]]) {
       params[matches[1]] = [];
     }
-
-    let value;
-    if (matches[4]) {
-      value = matches[4];
+    if (matches[3] !== undefined) {
+      params[matches[1]].push(matches[3]);
     } else {
-      value = matches[2];
+      params[matches[1]].push('');
     }
-    value = value.replace(/\\(.)/g, '$1');
-    params[matches[1]].push(value);
   }
   return params;
 }
 
 function quote(value: string): string {
-  const hasSingle = value.includes("'");
-  const hasDouble = value.includes('"');
   const hasSpaces = value.includes(' ');
-  if (!hasSingle && !hasDouble && !hasSpaces) {
-    return value;
+  const isSingleQuotedRegEx = RegExp(/^'.*'$/);
+  const isDoubleQuotedRegEx = RegExp(/^".*"$/);
+  const isQuoted = () =>
+    isDoubleQuotedRegEx.test(value) || isSingleQuotedRegEx.test(value);
+
+  //Test if label name contains whitespace between quotes. If no quoates but
+  //whitespace, then quote string.
+  if (!isQuoted() && hasSpaces) {
+    value = `"${value}"`;
   }
 
-  if (!hasDouble) {
-    return `"${value}"`;
+  //Convert single quote (tick) to double quote. This way quoting is always
+  //uniform and can be relied upon by the label menu
+  const hasSingle = value.includes(`'`);
+  if (hasSingle) {
+    value = value.replace(/'/g, `"`);
   }
 
-  if (!hasSingle) {
-    return `'${value}'`;
-  }
-
-  value = value.replace(/"/g, '\\"');
-  return `"${value}"`;
+  return value;
 }
 
 function stringify(params: Query): string {
   const parts: string[][] = Object.entries(params).map(([key, values]) => {
-    return values.map((value) => `${key}:${quote(value)}`);
+    return values.map((value) =>
+      value.length > 0 ? `${key}:${quote(value)}` : key
+    );
   });
   return new Array<string>().concat(...parts).join(' ');
 }

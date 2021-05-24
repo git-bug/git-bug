@@ -56,6 +56,16 @@ function CountingFilter({ query, children, ...props }: CountingFilterProps) {
   );
 }
 
+function quoteLabel(value: string) {
+  const hasUnquotedColon = RegExp(/^[^'"].*:.*[^'"]$/);
+  if (hasUnquotedColon.test(value)) {
+    //quote values which contain a colon but are not quoted.
+    //E.g. abc:abc becomes "abc:abc"
+    return `"${value}"`;
+  }
+  return value;
+}
+
 type Props = {
   query: string;
   queryLocation: (query: string) => LocationDescriptor;
@@ -87,7 +97,7 @@ function FilterToolbar({ query, queryLocation }: Props) {
     labelsData.repository.validLabels.nodes
   ) {
     labels = labelsData.repository.validLabels.nodes.map((node) => [
-      node.name,
+      quoteLabel(node.name),
       node.name,
       node.color,
     ]);
@@ -131,7 +141,6 @@ function FilterToolbar({ query, queryLocation }: Props) {
     [key]: [],
   });
 
-  // TODO: author/label filters
   return (
     <Toolbar className={classes.toolbar}>
       <CountingFilter
