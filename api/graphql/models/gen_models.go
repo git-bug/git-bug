@@ -16,14 +16,38 @@ type Authored interface {
 	IsAuthored()
 }
 
-type AddCommentInput struct {
+type AddCommentAndCloseBugInput struct {
 	// A unique identifier for the client performing the mutation.
 	ClientMutationID *string `json:"clientMutationId"`
-	// "The name of the repository. If not set, the default repository is used.
+	// The name of the repository. If not set, the default repository is used.
 	RepoRef *string `json:"repoRef"`
 	// The bug ID's prefix.
 	Prefix string `json:"prefix"`
-	// The first message of the new bug.
+	// The message to be added to the bug.
+	Message string `json:"message"`
+	// The collection of file's hash required for the first message.
+	Files []repository.Hash `json:"files"`
+}
+
+type AddCommentAndCloseBugPayload struct {
+	// A unique identifier for the client performing the mutation.
+	ClientMutationID *string `json:"clientMutationId"`
+	// The affected bug.
+	Bug BugWrapper `json:"bug"`
+	// The resulting AddComment operation.
+	CommentOperation *bug.AddCommentOperation `json:"commentOperation"`
+	// The resulting SetStatusOperation.
+	StatusOperation *bug.SetStatusOperation `json:"statusOperation"`
+}
+
+type AddCommentInput struct {
+	// A unique identifier for the client performing the mutation.
+	ClientMutationID *string `json:"clientMutationId"`
+	// The name of the repository. If not set, the default repository is used.
+	RepoRef *string `json:"repoRef"`
+	// The bug ID's prefix.
+	Prefix string `json:"prefix"`
+	// The message to be added to the bug.
 	Message string `json:"message"`
 	// The collection of file's hash required for the first message.
 	Files []repository.Hash `json:"files"`
@@ -60,7 +84,7 @@ type BugEdge struct {
 type ChangeLabelInput struct {
 	// A unique identifier for the client performing the mutation.
 	ClientMutationID *string `json:"clientMutationId"`
-	// "The name of the repository. If not set, the default repository is used.
+	// The name of the repository. If not set, the default repository is used.
 	RepoRef *string `json:"repoRef"`
 	// The bug ID's prefix.
 	Prefix string `json:"prefix"`
@@ -84,7 +108,7 @@ type ChangeLabelPayload struct {
 type CloseBugInput struct {
 	// A unique identifier for the client performing the mutation.
 	ClientMutationID *string `json:"clientMutationId"`
-	// "The name of the repository. If not set, the default repository is used.
+	// The name of the repository. If not set, the default repository is used.
 	RepoRef *string `json:"repoRef"`
 	// The bug ID's prefix.
 	Prefix string `json:"prefix"`
@@ -114,11 +138,11 @@ type CommentEdge struct {
 type EditCommentInput struct {
 	// A unique identifier for the client performing the mutation.
 	ClientMutationID *string `json:"clientMutationId"`
-	// "The name of the repository. If not set, the default repository is used.
+	// The name of the repository. If not set, the default repository is used.
 	RepoRef *string `json:"repoRef"`
 	// The bug ID's prefix.
 	Prefix string `json:"prefix"`
-	// The target.
+	// The ID of the comment to be changed.
 	Target string `json:"target"`
 	// The new message to be set.
 	Message string `json:"message"`
@@ -162,7 +186,7 @@ type LabelEdge struct {
 type NewBugInput struct {
 	// A unique identifier for the client performing the mutation.
 	ClientMutationID *string `json:"clientMutationId"`
-	// "The name of the repository. If not set, the default repository is used.
+	// The name of the repository. If not set, the default repository is used.
 	RepoRef *string `json:"repoRef"`
 	// The title of the new bug.
 	Title string `json:"title"`
@@ -184,7 +208,7 @@ type NewBugPayload struct {
 type OpenBugInput struct {
 	// A unique identifier for the client performing the mutation.
 	ClientMutationID *string `json:"clientMutationId"`
-	// "The name of the repository. If not set, the default repository is used.
+	// The name of the repository. If not set, the default repository is used.
 	RepoRef *string `json:"repoRef"`
 	// The bug ID's prefix.
 	Prefix string `json:"prefix"`
@@ -228,7 +252,7 @@ type PageInfo struct {
 type SetTitleInput struct {
 	// A unique identifier for the client performing the mutation.
 	ClientMutationID *string `json:"clientMutationId"`
-	// "The name of the repository. If not set, the default repository is used.
+	// The name of the repository. If not set, the default repository is used.
 	RepoRef *string `json:"repoRef"`
 	// The bug ID's prefix.
 	Prefix string `json:"prefix"`

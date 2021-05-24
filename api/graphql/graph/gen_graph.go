@@ -67,6 +67,13 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	AddCommentAndCloseBugPayload struct {
+		Bug              func(childComplexity int) int
+		ClientMutationID func(childComplexity int) int
+		CommentOperation func(childComplexity int) int
+		StatusOperation  func(childComplexity int) int
+	}
+
 	AddCommentOperation struct {
 		Author  func(childComplexity int) int
 		Date    func(childComplexity int) int
@@ -261,13 +268,14 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AddComment   func(childComplexity int, input models.AddCommentInput) int
-		ChangeLabels func(childComplexity int, input *models.ChangeLabelInput) int
-		CloseBug     func(childComplexity int, input models.CloseBugInput) int
-		EditComment  func(childComplexity int, input models.EditCommentInput) int
-		NewBug       func(childComplexity int, input models.NewBugInput) int
-		OpenBug      func(childComplexity int, input models.OpenBugInput) int
-		SetTitle     func(childComplexity int, input models.SetTitleInput) int
+		AddComment         func(childComplexity int, input models.AddCommentInput) int
+		AddCommentAndClose func(childComplexity int, input models.AddCommentAndCloseBugInput) int
+		ChangeLabels       func(childComplexity int, input *models.ChangeLabelInput) int
+		CloseBug           func(childComplexity int, input models.CloseBugInput) int
+		EditComment        func(childComplexity int, input models.EditCommentInput) int
+		NewBug             func(childComplexity int, input models.NewBugInput) int
+		OpenBug            func(childComplexity int, input models.OpenBugInput) int
+		SetTitle           func(childComplexity int, input models.SetTitleInput) int
 	}
 
 	NewBugPayload struct {
@@ -440,6 +448,7 @@ type LabelChangeTimelineItemResolver interface {
 type MutationResolver interface {
 	NewBug(ctx context.Context, input models.NewBugInput) (*models.NewBugPayload, error)
 	AddComment(ctx context.Context, input models.AddCommentInput) (*models.AddCommentPayload, error)
+	AddCommentAndClose(ctx context.Context, input models.AddCommentAndCloseBugInput) (*models.AddCommentAndCloseBugPayload, error)
 	EditComment(ctx context.Context, input models.EditCommentInput) (*models.EditCommentPayload, error)
 	ChangeLabels(ctx context.Context, input *models.ChangeLabelInput) (*models.ChangeLabelPayload, error)
 	OpenBug(ctx context.Context, input models.OpenBugInput) (*models.OpenBugPayload, error)
@@ -495,6 +504,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "AddCommentAndCloseBugPayload.bug":
+		if e.complexity.AddCommentAndCloseBugPayload.Bug == nil {
+			break
+		}
+
+		return e.complexity.AddCommentAndCloseBugPayload.Bug(childComplexity), true
+
+	case "AddCommentAndCloseBugPayload.clientMutationId":
+		if e.complexity.AddCommentAndCloseBugPayload.ClientMutationID == nil {
+			break
+		}
+
+		return e.complexity.AddCommentAndCloseBugPayload.ClientMutationID(childComplexity), true
+
+	case "AddCommentAndCloseBugPayload.commentOperation":
+		if e.complexity.AddCommentAndCloseBugPayload.CommentOperation == nil {
+			break
+		}
+
+		return e.complexity.AddCommentAndCloseBugPayload.CommentOperation(childComplexity), true
+
+	case "AddCommentAndCloseBugPayload.statusOperation":
+		if e.complexity.AddCommentAndCloseBugPayload.StatusOperation == nil {
+			break
+		}
+
+		return e.complexity.AddCommentAndCloseBugPayload.StatusOperation(childComplexity), true
 
 	case "AddCommentOperation.author":
 		if e.complexity.AddCommentOperation.Author == nil {
@@ -1338,6 +1375,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.AddComment(childComplexity, args["input"].(models.AddCommentInput)), true
 
+	case "Mutation.addCommentAndClose":
+		if e.complexity.Mutation.AddCommentAndClose == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_addCommentAndClose_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AddCommentAndClose(childComplexity, args["input"].(models.AddCommentAndCloseBugInput)), true
+
 	case "Mutation.changeLabels":
 		if e.complexity.Mutation.ChangeLabels == nil {
 			break
@@ -2034,7 +2083,7 @@ type LabelEdge {
 	&ast.Source{Name: "schema/mutations.graphql", Input: `input NewBugInput {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
-    """"The name of the repository. If not set, the default repository is used."""
+    """The name of the repository. If not set, the default repository is used."""
     repoRef: String
     """The title of the new bug."""
     title: String!
@@ -2056,11 +2105,11 @@ type NewBugPayload {
 input AddCommentInput {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
-    """"The name of the repository. If not set, the default repository is used."""
+    """The name of the repository. If not set, the default repository is used."""
     repoRef: String
     """The bug ID's prefix."""
     prefix: String!
-    """The first message of the new bug."""
+    """The message to be added to the bug."""
     message: String!
     """The collection of file's hash required for the first message."""
     files: [Hash!]
@@ -2075,14 +2124,38 @@ type AddCommentPayload {
     operation: AddCommentOperation!
 }
 
-input EditCommentInput {
+input AddCommentAndCloseBugInput {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
-    """"The name of the repository. If not set, the default repository is used."""
+    """The name of the repository. If not set, the default repository is used."""
     repoRef: String
     """The bug ID's prefix."""
     prefix: String!
-    """The target."""
+    """The message to be added to the bug."""
+    message: String!
+    """The collection of file's hash required for the first message."""
+    files: [Hash!]
+}
+
+type AddCommentAndCloseBugPayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The affected bug."""
+    bug: Bug!
+    """The resulting AddComment operation."""
+    commentOperation: AddCommentOperation!
+    """The resulting SetStatusOperation."""
+    statusOperation: SetStatusOperation!
+}
+
+input EditCommentInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The name of the repository. If not set, the default repository is used."""
+    repoRef: String
+    """The bug ID's prefix."""
+    prefix: String!
+    """The ID of the comment to be changed."""
     target: String!
     """The new message to be set."""
     message: String!
@@ -2102,7 +2175,7 @@ type EditCommentPayload {
 input ChangeLabelInput {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
-    """"The name of the repository. If not set, the default repository is used."""
+    """The name of the repository. If not set, the default repository is used."""
     repoRef: String
     """The bug ID's prefix."""
     prefix: String!
@@ -2141,7 +2214,7 @@ type ChangeLabelPayload {
 input OpenBugInput {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
-    """"The name of the repository. If not set, the default repository is used."""
+    """The name of the repository. If not set, the default repository is used."""
     repoRef: String
     """The bug ID's prefix."""
     prefix: String!
@@ -2159,7 +2232,7 @@ type OpenBugPayload {
 input CloseBugInput {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
-    """"The name of the repository. If not set, the default repository is used."""
+    """The name of the repository. If not set, the default repository is used."""
     repoRef: String
     """The bug ID's prefix."""
     prefix: String!
@@ -2177,7 +2250,7 @@ type CloseBugPayload {
 input SetTitleInput {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
-    """"The name of the repository. If not set, the default repository is used."""
+    """The name of the repository. If not set, the default repository is used."""
     repoRef: String
     """The bug ID's prefix."""
     prefix: String!
@@ -2344,7 +2417,8 @@ type Repository {
         """Returns the last _n_ elements from the list."""
         last: Int
     ): LabelConnection!
-}`, BuiltIn: false},
+}
+`, BuiltIn: false},
 	&ast.Source{Name: "schema/root.graphql", Input: `type Query {
     """Access a repository by reference/name. If no ref is given, the default repository is returned if any."""
     repository(ref: String): Repository
@@ -2355,6 +2429,8 @@ type Mutation {
     newBug(input: NewBugInput!): NewBugPayload!
     """Add a new comment to a bug"""
     addComment(input: AddCommentInput!): AddCommentPayload!
+    """Add a new comment to a bug and close it"""
+    addCommentAndClose(input: AddCommentAndCloseBugInput!): AddCommentAndCloseBugPayload!
     """Change a comment of a bug"""
     editComment(input: EditCommentInput!): EditCommentPayload!
     """Add or remove a set of label on a bug"""
@@ -2682,6 +2758,20 @@ func (ec *executionContext) field_Bug_timeline_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_addCommentAndClose_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 models.AddCommentAndCloseBugInput
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalNAddCommentAndCloseBugInput2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐAddCommentAndCloseBugInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_addComment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -2993,6 +3083,139 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _AddCommentAndCloseBugPayload_clientMutationId(ctx context.Context, field graphql.CollectedField, obj *models.AddCommentAndCloseBugPayload) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "AddCommentAndCloseBugPayload",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ClientMutationID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _AddCommentAndCloseBugPayload_bug(ctx context.Context, field graphql.CollectedField, obj *models.AddCommentAndCloseBugPayload) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "AddCommentAndCloseBugPayload",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Bug, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(models.BugWrapper)
+	fc.Result = res
+	return ec.marshalNBug2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugWrapper(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _AddCommentAndCloseBugPayload_commentOperation(ctx context.Context, field graphql.CollectedField, obj *models.AddCommentAndCloseBugPayload) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "AddCommentAndCloseBugPayload",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CommentOperation, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*bug.AddCommentOperation)
+	fc.Result = res
+	return ec.marshalNAddCommentOperation2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐAddCommentOperation(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _AddCommentAndCloseBugPayload_statusOperation(ctx context.Context, field graphql.CollectedField, obj *models.AddCommentAndCloseBugPayload) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "AddCommentAndCloseBugPayload",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.StatusOperation, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*bug.SetStatusOperation)
+	fc.Result = res
+	return ec.marshalNSetStatusOperation2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋbugᚐSetStatusOperation(ctx, field.Selections, res)
+}
 
 func (ec *executionContext) _AddCommentOperation_id(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentOperation) (ret graphql.Marshaler) {
 	defer func() {
@@ -6997,6 +7220,47 @@ func (ec *executionContext) _Mutation_addComment(ctx context.Context, field grap
 	return ec.marshalNAddCommentPayload2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐAddCommentPayload(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_addCommentAndClose(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_addCommentAndClose_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().AddCommentAndClose(rctx, args["input"].(models.AddCommentAndCloseBugInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.AddCommentAndCloseBugPayload)
+	fc.Result = res
+	return ec.marshalNAddCommentAndCloseBugPayload2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐAddCommentAndCloseBugPayload(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Mutation_editComment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -10078,6 +10342,48 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputAddCommentAndCloseBugInput(ctx context.Context, obj interface{}) (models.AddCommentAndCloseBugInput, error) {
+	var it models.AddCommentAndCloseBugInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "clientMutationId":
+			var err error
+			it.ClientMutationID, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "repoRef":
+			var err error
+			it.RepoRef, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "prefix":
+			var err error
+			it.Prefix, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "message":
+			var err error
+			it.Message, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "files":
+			var err error
+			it.Files, err = ec.unmarshalOHash2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋrepositoryᚐHashᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputAddCommentInput(ctx context.Context, obj interface{}) (models.AddCommentInput, error) {
 	var it models.AddCommentInput
 	var asMap = obj.(map[string]interface{})
@@ -10510,6 +10816,45 @@ func (ec *executionContext) _TimelineItem(ctx context.Context, sel ast.Selection
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
+
+var addCommentAndCloseBugPayloadImplementors = []string{"AddCommentAndCloseBugPayload"}
+
+func (ec *executionContext) _AddCommentAndCloseBugPayload(ctx context.Context, sel ast.SelectionSet, obj *models.AddCommentAndCloseBugPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, addCommentAndCloseBugPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AddCommentAndCloseBugPayload")
+		case "clientMutationId":
+			out.Values[i] = ec._AddCommentAndCloseBugPayload_clientMutationId(ctx, field, obj)
+		case "bug":
+			out.Values[i] = ec._AddCommentAndCloseBugPayload_bug(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "commentOperation":
+			out.Values[i] = ec._AddCommentAndCloseBugPayload_commentOperation(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "statusOperation":
+			out.Values[i] = ec._AddCommentAndCloseBugPayload_statusOperation(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
 
 var addCommentOperationImplementors = []string{"AddCommentOperation", "Operation", "Authored"}
 
@@ -12037,6 +12382,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "addCommentAndClose":
+			out.Values[i] = ec._Mutation_addCommentAndClose(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "editComment":
 			out.Values[i] = ec._Mutation_editComment(ctx, field)
 			if out.Values[i] == graphql.Null {
@@ -13062,6 +13412,24 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 // endregion **************************** object.gotpl ****************************
 
 // region    ***************************** type.gotpl *****************************
+
+func (ec *executionContext) unmarshalNAddCommentAndCloseBugInput2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐAddCommentAndCloseBugInput(ctx context.Context, v interface{}) (models.AddCommentAndCloseBugInput, error) {
+	return ec.unmarshalInputAddCommentAndCloseBugInput(ctx, v)
+}
+
+func (ec *executionContext) marshalNAddCommentAndCloseBugPayload2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐAddCommentAndCloseBugPayload(ctx context.Context, sel ast.SelectionSet, v models.AddCommentAndCloseBugPayload) graphql.Marshaler {
+	return ec._AddCommentAndCloseBugPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAddCommentAndCloseBugPayload2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐAddCommentAndCloseBugPayload(ctx context.Context, sel ast.SelectionSet, v *models.AddCommentAndCloseBugPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._AddCommentAndCloseBugPayload(ctx, sel, v)
+}
 
 func (ec *executionContext) unmarshalNAddCommentInput2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐAddCommentInput(ctx context.Context, v interface{}) (models.AddCommentInput, error) {
 	return ec.unmarshalInputAddCommentInput(ctx, v)

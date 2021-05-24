@@ -1,7 +1,7 @@
 input NewBugInput {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
-    """"The name of the repository. If not set, the default repository is used."""
+    """The name of the repository. If not set, the default repository is used."""
     repoRef: String
     """The title of the new bug."""
     title: String!
@@ -23,11 +23,11 @@ type NewBugPayload {
 input AddCommentInput {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
-    """"The name of the repository. If not set, the default repository is used."""
+    """The name of the repository. If not set, the default repository is used."""
     repoRef: String
     """The bug ID's prefix."""
     prefix: String!
-    """The first message of the new bug."""
+    """The message to be added to the bug."""
     message: String!
     """The collection of file's hash required for the first message."""
     files: [Hash!]
@@ -42,10 +42,34 @@ type AddCommentPayload {
     operation: AddCommentOperation!
 }
 
+input AddCommentAndCloseBugInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The name of the repository. If not set, the default repository is used."""
+    repoRef: String
+    """The bug ID's prefix."""
+    prefix: String!
+    """The message to be added to the bug."""
+    message: String!
+    """The collection of file's hash required for the first message."""
+    files: [Hash!]
+}
+
+type AddCommentAndCloseBugPayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The affected bug."""
+    bug: Bug!
+    """The resulting AddComment operation."""
+    commentOperation: AddCommentOperation!
+    """The resulting SetStatusOperation."""
+    statusOperation: SetStatusOperation!
+}
+
 input EditCommentInput {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
-    """"The name of the repository. If not set, the default repository is used."""
+    """The name of the repository. If not set, the default repository is used."""
     repoRef: String
     """The bug ID's prefix."""
     prefix: String!
@@ -69,7 +93,7 @@ type EditCommentPayload {
 input ChangeLabelInput {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
-    """"The name of the repository. If not set, the default repository is used."""
+    """The name of the repository. If not set, the default repository is used."""
     repoRef: String
     """The bug ID's prefix."""
     prefix: String!
@@ -108,7 +132,7 @@ type ChangeLabelPayload {
 input OpenBugInput {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
-    """"The name of the repository. If not set, the default repository is used."""
+    """The name of the repository. If not set, the default repository is used."""
     repoRef: String
     """The bug ID's prefix."""
     prefix: String!
@@ -126,7 +150,7 @@ type OpenBugPayload {
 input CloseBugInput {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
-    """"The name of the repository. If not set, the default repository is used."""
+    """The name of the repository. If not set, the default repository is used."""
     repoRef: String
     """The bug ID's prefix."""
     prefix: String!
@@ -144,7 +168,7 @@ type CloseBugPayload {
 input SetTitleInput {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
-    """"The name of the repository. If not set, the default repository is used."""
+    """The name of the repository. If not set, the default repository is used."""
     repoRef: String
     """The bug ID's prefix."""
     prefix: String!

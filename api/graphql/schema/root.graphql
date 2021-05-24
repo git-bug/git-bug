@@ -8,6 +8,8 @@ type Mutation {
     newBug(input: NewBugInput!): NewBugPayload!
     """Add a new comment to a bug"""
     addComment(input: AddCommentInput!): AddCommentPayload!
+    """Add a new comment to a bug and close it"""
+    addCommentAndClose(input: AddCommentAndCloseBugInput!): AddCommentAndCloseBugPayload!
     """Change a comment of a bug"""
     editComment(input: EditCommentInput!): EditCommentPayload!
     """Add or remove a set of label on a bug"""
