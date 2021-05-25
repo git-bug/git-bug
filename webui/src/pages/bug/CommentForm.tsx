@@ -5,10 +5,10 @@ import Paper from '@material-ui/core/Paper';
 import { makeStyles, Theme } from '@material-ui/core/styles';
 
 import CommentInput from '../../components/CommentInput/CommentInput';
-import CloseBugButton from 'src/components/CloseBugButton/CloseBugButton';
-import CloseBugWithCommentButton from 'src/components/CloseBugWithCommentButton/CloseBugWithCommentButton';
-import ReopenBugButton from 'src/components/ReopenBugButton/ReopenBugButton';
-import ReopenBugWithCommentButton from 'src/components/ReopenBugWithCommentButton/ReopenBugWithCommentButton';
+import CloseBugButton from 'src/components/CloseBugButton';
+import CloseBugWithCommentButton from 'src/components/CloseBugWithCommentButton';
+import ReopenBugButton from 'src/components/ReopenBugButton';
+import ReopenBugWithCommentButton from 'src/components/ReopenBugWithCommentButton';
 
 import { BugFragment } from './Bug.generated';
 import { useAddCommentMutation } from './CommentForm.generated';
