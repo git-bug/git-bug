@@ -81,11 +81,11 @@ function CommentForm({ bug }: Props) {
   function getBugStatusButton() {
     if (bug.status === 'OPEN' && issueComment.length > 0) {
       return <CloseBugWithCommentButton bug={bug} comment={issueComment} />;
-    } else if (bug.status === 'OPEN') {
-      return <CloseBugButton bug={bug} />;
-    } else {
-      return <ReopenBugButton bug={bug} disabled={issueComment.length > 0} />;
     }
+    if (bug.status === 'OPEN') {
+      return <CloseBugButton bug={bug} />;
+    }
+    return <ReopenBugButton bug={bug} disabled={issueComment.length > 0} />;
   }
 
   return (
