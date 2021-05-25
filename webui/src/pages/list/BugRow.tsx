@@ -84,7 +84,9 @@ const useStyles = makeStyles((theme) => ({
   },
   commentCount: {
     fontSize: '1rem',
+    minWidth: '2rem',
     marginLeft: theme.spacing(0.5),
+    marginRight: theme.spacing(1),
   },
   commentCountCell: {
     display: 'inline-flex',
