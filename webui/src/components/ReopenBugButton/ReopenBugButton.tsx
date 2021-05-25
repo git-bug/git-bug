@@ -9,7 +9,7 @@ import { useOpenBugMutation } from './OpenBug.generated';
 
 interface Props {
   bug: BugFragment;
-  disabled: boolean;
+  disabled?: boolean;
 }
 
 function ReopenBugButton({ bug, disabled }: Props) {

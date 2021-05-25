@@ -2,20 +2,11 @@ import React from 'react';
 
 import Button from '@material-ui/core/Button';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import { makeStyles, Theme } from '@material-ui/core/styles';
-import ErrorOutlineIcon from '@material-ui/icons/ErrorOutline';
 
 import { BugFragment } from 'src/pages/bug/Bug.generated';
 import { TimelineDocument } from 'src/pages/bug/TimelineQuery.generated';
 
-import { useAddCommentAndCloseBugMutation } from './CloseBugWithComment.generated';
-
-const useStyles = makeStyles((theme: Theme) => ({
-  closeIssueIcon: {
-    color: theme.palette.secondary.dark,
-    paddingTop: '0.1rem',
-  },
-}));
+import { useAddCommentAndReopenBugMutation } from './ReopenBugWithComment.generated';
 
 interface Props {
   bug: BugFragment;
@@ -23,15 +14,14 @@ interface Props {
   postClick?: () => void;
 }
 
-function CloseBugWithCommentButton({ bug, comment, postClick }: Props) {
+function ReopenBugWithCommentButton({ bug, comment, postClick }: Props) {
   const [
-    addCommentAndCloseBug,
+    addCommentAndReopenBug,
     { loading, error },
-  ] = useAddCommentAndCloseBugMutation();
-  const classes = useStyles();
+  ] = useAddCommentAndReopenBugMutation();
 
-  function addCommentAndCloseBugAction() {
-    addCommentAndCloseBug({
+  function addCommentAndReopenBugAction() {
+    addCommentAndReopenBug({
       variables: {
         input: {
           prefix: bug.id,
@@ -63,13 +53,13 @@ function CloseBugWithCommentButton({ bug, comment, postClick }: Props) {
     <div>
       <Button
         variant="contained"
-        onClick={() => addCommentAndCloseBugAction()}
-        startIcon={<ErrorOutlineIcon className={classes.closeIssueIcon} />}
+        type="submit"
+        onClick={() => addCommentAndReopenBugAction()}
       >
-        Close bug with comment
+        Reopen bug with comment
       </Button>
     </div>
   );
 }
 
-export default CloseBugWithCommentButton;
+export default ReopenBugWithCommentButton;
