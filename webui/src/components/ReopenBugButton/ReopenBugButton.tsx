@@ -1,6 +1,7 @@
 import React from 'react';
 
 import Button from '@material-ui/core/Button';
+import CircularProgress from '@material-ui/core/CircularProgress';
 
 import { BugFragment } from 'src/pages/bug/Bug.generated';
 import { TimelineDocument } from 'src/pages/bug/TimelineQuery.generated';
@@ -36,7 +37,7 @@ function ReopenBugButton({ bug, disabled }: Props) {
     });
   }
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <CircularProgress />;
   if (error) return <div>Error</div>;
 
   return (
