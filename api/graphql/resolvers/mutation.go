@@ -138,6 +138,44 @@ func (r mutationResolver) AddCommentAndClose(ctx context.Context, input models.A
 	}, nil
 }
 
+func (r mutationResolver) AddCommentAndReopen(ctx context.Context, input models.AddCommentAndReopenBugInput) (*models.AddCommentAndReopenBugPayload, error) {
+	repo, b, err := r.getBug(input.RepoRef, input.Prefix)
+	if err != nil {
+		return nil, err
+	}
+
+	author, err := auth.UserFromCtx(ctx, repo)
+	if err != nil {
+		return nil, err
+	}
+
+	opAddComment, err := b.AddCommentRaw(author,
+		time.Now().Unix(),
+		text.Cleanup(input.Message),
+		input.Files,
+		nil)
+	if err != nil {
+		return nil, err
+	}
+
+	opReopen, err := b.OpenRaw(author, time.Now().Unix(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	err = b.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.AddCommentAndReopenBugPayload{
+		ClientMutationID: input.ClientMutationID,
+		Bug:              models.NewLoadedBug(b.Snapshot()),
+		CommentOperation: opAddComment,
+		StatusOperation:  opReopen,
+	}, nil
+}
+
 func (r mutationResolver) EditComment(ctx context.Context, input models.EditCommentInput) (*models.EditCommentPayload, error) {
 	repo, b, err := r.getBug(input.RepoRef, input.Prefix)
 	if err != nil {

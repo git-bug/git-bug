@@ -66,6 +66,30 @@ type AddCommentAndCloseBugPayload {
     statusOperation: SetStatusOperation!
 }
 
+input AddCommentAndReopenBugInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The name of the repository. If not set, the default repository is used."""
+    repoRef: String
+    """The bug ID's prefix."""
+    prefix: String!
+    """The message to be added to the bug."""
+    message: String!
+    """The collection of file's hash required for the first message."""
+    files: [Hash!]
+}
+
+type AddCommentAndReopenBugPayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The affected bug."""
+    bug: Bug!
+    """The resulting AddComment operation."""
+    commentOperation: AddCommentOperation!
+    """The resulting SetStatusOperation."""
+    statusOperation: SetStatusOperation!
+}
+
 input EditCommentInput {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
