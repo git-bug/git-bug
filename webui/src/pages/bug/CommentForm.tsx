@@ -6,6 +6,7 @@ import { makeStyles, Theme } from '@material-ui/core/styles';
 
 import CommentInput from '../../components/CommentInput/CommentInput';
 import CloseBugButton from 'src/components/CloseBugButton/CloseBugButton';
+import CloseBugWithCommentButton from 'src/components/CloseBugWithCommentButton/CloseBugWithCommentButton';
 import ReopenBugButton from 'src/components/ReopenBugButton/ReopenBugButton';
 
 import { BugFragment } from './Bug.generated';
@@ -77,11 +78,13 @@ function CommentForm({ bug }: Props) {
     if (issueComment.length > 0) submit();
   };
 
-  function getCloseButton() {
-    return <CloseBugButton bug={bug} disabled={issueComment.length > 0} />;
-  }
-
-  function getReopenButton() {
+  function getBugStatusButton() {
+    if (bug.status === 'OPEN' && issueComment.length > 0) {
+      return <CloseBugWithCommentButton bug={bug} comment={issueComment} />;
+    }
+    if (bug.status === 'OPEN') {
+      return <CloseBugButton bug={bug} />;
+    }
     return <ReopenBugButton bug={bug} disabled={issueComment.length > 0} />;
   }
 
@@ -94,7 +97,7 @@ function CommentForm({ bug }: Props) {
           onChange={(comment: string) => setIssueComment(comment)}
         />
         <div className={classes.actions}>
-          {bug.status === 'OPEN' ? getCloseButton() : getReopenButton()}
+          {getBugStatusButton()}
           <Button
             className={classes.greenButton}
             variant="contained"
