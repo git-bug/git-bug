@@ -12,7 +12,7 @@ require (
 	github.com/cheekybits/genny v0.0.0-20170328200008-9127e812e1e9
 	github.com/corpix/uarand v0.1.1 // indirect
 	github.com/dustin/go-humanize v1.0.0
-	github.com/fatih/color v1.11.0
+	github.com/fatih/color v1.12.0
 	github.com/go-git/go-billy/v5 v5.3.1
 	github.com/go-git/go-git/v5 v5.4.0
 	github.com/golang/protobuf v1.4.3 // indirect
