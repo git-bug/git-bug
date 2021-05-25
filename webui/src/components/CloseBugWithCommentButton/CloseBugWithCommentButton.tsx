@@ -7,7 +7,7 @@ import ErrorOutlineIcon from '@material-ui/icons/ErrorOutline';
 import { BugFragment } from 'src/pages/bug/Bug.generated';
 import { TimelineDocument } from 'src/pages/bug/TimelineQuery.generated';
 
-import { useCloseBugMutation } from './CloseBug.generated';
+import { useAddCommentAndCloseBugMutation } from './CloseBugWithComment.generated';
 
 const useStyles = makeStyles((theme: Theme) => ({
   closeIssueIcon: {
@@ -18,18 +18,22 @@ const useStyles = makeStyles((theme: Theme) => ({
 
 interface Props {
   bug: BugFragment;
-  disabled?: boolean;
+  comment: string;
 }
 
-function CloseBugButton({ bug, disabled }: Props) {
-  const [closeBug, { loading, error }] = useCloseBugMutation();
+function CloseBugWithCommentButton({ bug, comment }: Props) {
+  const [
+    addCommentAndCloseBug,
+    { loading, error },
+  ] = useAddCommentAndCloseBugMutation();
   const classes = useStyles();
 
-  function closeBugAction() {
-    closeBug({
+  function addCommentAndCloseBugAction() {
+    addCommentAndCloseBug({
       variables: {
         input: {
           prefix: bug.id,
+          message: comment,
         },
       },
       refetchQueries: [
@@ -53,14 +57,13 @@ function CloseBugButton({ bug, disabled }: Props) {
     <div>
       <Button
         variant="contained"
-        onClick={() => closeBugAction()}
-        disabled={bug.status === 'CLOSED' || disabled}
+        onClick={() => addCommentAndCloseBugAction()}
         startIcon={<ErrorOutlineIcon className={classes.closeIssueIcon} />}
       >
-        Close bug
+        Close bug with comment
       </Button>
     </div>
   );
 }
 
-export default CloseBugButton;
+export default CloseBugWithCommentButton;
