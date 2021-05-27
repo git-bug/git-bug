@@ -5,9 +5,10 @@ import Paper from '@material-ui/core/Paper';
 import { makeStyles, Theme } from '@material-ui/core/styles';
 
 import CommentInput from '../../components/CommentInput/CommentInput';
-import CloseBugButton from 'src/components/CloseBugButton/CloseBugButton';
-import CloseBugWithCommentButton from 'src/components/CloseBugWithCommentButton/CloseBugWithCommentButton';
-import ReopenBugButton from 'src/components/ReopenBugButton/ReopenBugButton';
+import CloseBugButton from 'src/components/CloseBugButton';
+import CloseBugWithCommentButton from 'src/components/CloseBugWithCommentButton';
+import ReopenBugButton from 'src/components/ReopenBugButton';
+import ReopenBugWithCommentButton from 'src/components/ReopenBugWithCommentButton';
 
 import { BugFragment } from './Bug.generated';
 import { useAddCommentMutation } from './CommentForm.generated';
@@ -80,12 +81,27 @@ function CommentForm({ bug }: Props) {
 
   function getBugStatusButton() {
     if (bug.status === 'OPEN' && issueComment.length > 0) {
-      return <CloseBugWithCommentButton bug={bug} comment={issueComment} />;
+      return (
+        <CloseBugWithCommentButton
+          bug={bug}
+          comment={issueComment}
+          postClick={resetForm}
+        />
+      );
     }
     if (bug.status === 'OPEN') {
       return <CloseBugButton bug={bug} />;
     }
-    return <ReopenBugButton bug={bug} disabled={issueComment.length > 0} />;
+    if (bug.status === 'CLOSED' && issueComment.length > 0) {
+      return (
+        <ReopenBugWithCommentButton
+          bug={bug}
+          comment={issueComment}
+          postClick={resetForm}
+        />
+      );
+    }
+    return <ReopenBugButton bug={bug} />;
   }
 
   return (

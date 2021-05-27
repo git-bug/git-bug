@@ -1,6 +1,7 @@
 import React from 'react';
 
 import Button from '@material-ui/core/Button';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import { makeStyles, Theme } from '@material-ui/core/styles';
 import ErrorOutlineIcon from '@material-ui/icons/ErrorOutline';
 
@@ -19,9 +20,10 @@ const useStyles = makeStyles((theme: Theme) => ({
 interface Props {
   bug: BugFragment;
   comment: string;
+  postClick?: () => void;
 }
 
-function CloseBugWithCommentButton({ bug, comment }: Props) {
+function CloseBugWithCommentButton({ bug, comment, postClick }: Props) {
   const [
     addCommentAndCloseBug,
     { loading, error },
@@ -47,10 +49,14 @@ function CloseBugWithCommentButton({ bug, comment }: Props) {
         },
       ],
       awaitRefetchQueries: true,
+    }).then(() => {
+      if (postClick) {
+        postClick();
+      }
     });
   }
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <CircularProgress />;
   if (error) return <div>Error</div>;
 
   return (

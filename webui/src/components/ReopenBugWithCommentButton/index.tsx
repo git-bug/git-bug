@@ -1,25 +1,31 @@
 import React from 'react';
 
 import Button from '@material-ui/core/Button';
+import CircularProgress from '@material-ui/core/CircularProgress';
 
 import { BugFragment } from 'src/pages/bug/Bug.generated';
 import { TimelineDocument } from 'src/pages/bug/TimelineQuery.generated';
 
-import { useOpenBugMutation } from './OpenBug.generated';
+import { useAddCommentAndReopenBugMutation } from './ReopenBugWithComment.generated';
 
 interface Props {
   bug: BugFragment;
-  disabled: boolean;
+  comment: string;
+  postClick?: () => void;
 }
 
-function ReopenBugButton({ bug, disabled }: Props) {
-  const [openBug, { loading, error }] = useOpenBugMutation();
+function ReopenBugWithCommentButton({ bug, comment, postClick }: Props) {
+  const [
+    addCommentAndReopenBug,
+    { loading, error },
+  ] = useAddCommentAndReopenBugMutation();
 
-  function openBugAction() {
-    openBug({
+  function addCommentAndReopenBugAction() {
+    addCommentAndReopenBug({
       variables: {
         input: {
           prefix: bug.id,
+          message: comment,
         },
       },
       refetchQueries: [
@@ -33,23 +39,27 @@ function ReopenBugButton({ bug, disabled }: Props) {
         },
       ],
       awaitRefetchQueries: true,
+    }).then(() => {
+      if (postClick) {
+        postClick();
+      }
     });
   }
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <CircularProgress />;
   if (error) return <div>Error</div>;
 
   return (
     <div>
       <Button
         variant="contained"
-        onClick={() => openBugAction()}
-        disabled={bug.status === 'OPEN' || disabled}
+        type="submit"
+        onClick={() => addCommentAndReopenBugAction()}
       >
-        Reopen bug
+        Reopen bug with comment
       </Button>
     </div>
   );
 }
 
-export default ReopenBugButton;
+export default ReopenBugWithCommentButton;
