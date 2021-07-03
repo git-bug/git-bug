@@ -57,9 +57,7 @@ func (c *client) queryWithLimitEvents(ctx context.Context, query interface{}, va
 
 // queryPrintMsgs calls the github api with a graphql query and it prints for ever rate limiting event a message to stdout.
 func (c *client) queryPrintMsgs(ctx context.Context, query interface{}, vars map[string]interface{}) error {
-	queryFun := func(ctx context.Context) error {
-		return c.sc.Query(ctx, query, vars)
-	}
+	// print rate limiting events directly to stdout.
 	limitEvents := make(chan RateLimitingEvent)
 	defer close(limitEvents)
 	go func() {
@@ -67,7 +65,7 @@ func (c *client) queryPrintMsgs(ctx context.Context, query interface{}, vars map
 			fmt.Println(e.msg)
 		}
 	}()
-	return c.callWithRetry(queryFun, ctx, limitEvents)
+	return c.queryWithLimitEvents(ctx, query, vars, limitEvents)
 }
 
 // queryWithImportEvents calls the github api with a graphql query and it sends rate limiting events to the channel of import events.
