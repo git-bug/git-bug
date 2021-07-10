@@ -26,7 +26,8 @@ type RateLimitingEvent struct {
 	msg string
 }
 
-// mutate calls the github api with a graphql mutation and it emits for each rate limiting event an export result.
+// mutate calls the github api with a graphql mutation and for each rate limiting event it sends an
+// export result.
 func (c *client) mutate(ctx context.Context, m interface{}, input githubv4.Input, vars map[string]interface{}, out chan<- core.ExportResult) error {
 	// prepare a closure for the mutation
 	mutFun := func(ctx context.Context) error {
@@ -43,32 +44,21 @@ func (c *client) mutate(ctx context.Context, m interface{}, input githubv4.Input
 			}
 		}
 	}()
-	return c.callWithRetry(mutFun, ctx, limitEvents)
+	return c.callAPIAndRetry(mutFun, ctx, limitEvents)
 }
 
-// queryWithLimitEvents calls the github api with a graphql query and it sends rate limiting events on the channel limitEvents.
+// queryWithLimitEvents calls the github api with a graphql query and it sends rate limiting events
+// to a given channel of type RateLimitingEvent.
 func (c *client) queryWithLimitEvents(ctx context.Context, query interface{}, vars map[string]interface{}, limitEvents chan<- RateLimitingEvent) error {
 	// prepare a closure fot the query
 	queryFun := func(ctx context.Context) error {
 		return c.sc.Query(ctx, query, vars)
 	}
-	return c.callWithRetry(queryFun, ctx, limitEvents)
+	return c.callAPIAndRetry(queryFun, ctx, limitEvents)
 }
 
-// queryPrintMsgs calls the github api with a graphql query and it prints for ever rate limiting event a message to stdout.
-func (c *client) queryPrintMsgs(ctx context.Context, query interface{}, vars map[string]interface{}) error {
-	// print rate limiting events directly to stdout.
-	limitEvents := make(chan RateLimitingEvent)
-	defer close(limitEvents)
-	go func() {
-		for e := range limitEvents {
-			fmt.Println(e.msg)
-		}
-	}()
-	return c.queryWithLimitEvents(ctx, query, vars, limitEvents)
-}
-
-// queryWithImportEvents calls the github api with a graphql query and it sends rate limiting events to the channel of import events.
+// queryWithImportEvents calls the github api with a graphql query and it sends rate limiting events
+// to a given channel of type ImportEvent.
 func (c *client) queryWithImportEvents(ctx context.Context, query interface{}, vars map[string]interface{}, importEvents chan<- ImportEvent) error {
 	// forward rate limiting events to channel of import events
 	limitEvents := make(chan RateLimitingEvent)
@@ -85,9 +75,26 @@ func (c *client) queryWithImportEvents(ctx context.Context, query interface{}, v
 	return c.queryWithLimitEvents(ctx, query, vars, limitEvents)
 }
 
-func (c *client) callWithRetry(fun func(context.Context) error, ctx context.Context, events chan<- RateLimitingEvent) error {
+// queryPrintMsgs calls the github api with a graphql query and it prints for ever rate limiting
+// event a message to stdout.
+func (c *client) queryPrintMsgs(ctx context.Context, query interface{}, vars map[string]interface{}) error {
+	// print rate limiting events directly to stdout.
+	limitEvents := make(chan RateLimitingEvent)
+	defer close(limitEvents)
+	go func() {
+		for e := range limitEvents {
+			fmt.Println(e.msg)
+		}
+	}()
+	return c.queryWithLimitEvents(ctx, query, vars, limitEvents)
+}
+
+// callAPIAndRetry calls the Github GraphQL API (inderectely through callAPIDealWithLimit) and in
+// case of error it repeats the request to the Github API. The parameter `apiCall` is intended to be
+// a closure containing a query or a mutation to the Github GraphQL API.
+func (c *client) callAPIAndRetry(apiCall func(context.Context) error, ctx context.Context, events chan<- RateLimitingEvent) error {
 	var err error
-	if err = c.callWithLimit(fun, ctx, events); err == nil {
+	if err = c.callAPIDealWithLimit(apiCall, ctx, events); err == nil {
 		return nil
 	}
 	// failure; the reason may be temporary network problems or internal errors
@@ -103,7 +110,7 @@ func (c *client) callWithRetry(fun func(context.Context) error, ctx context.Cont
 			stop(timer)
 			return ctx.Err()
 		case <-timer.C:
-			err = c.callWithLimit(fun, ctx, events)
+			err = c.callAPIDealWithLimit(apiCall, ctx, events)
 			if err == nil {
 				return nil
 			}
@@ -112,11 +119,15 @@ func (c *client) callWithRetry(fun func(context.Context) error, ctx context.Cont
 	return err
 }
 
-func (c *client) callWithLimit(fun func(context.Context) error, ctx context.Context, events chan<- RateLimitingEvent) error {
+// callAPIDealWithLimit calls the Githubf GraphQL API and if the Github API returns a rate limiting
+// error, then it waits until the rate limit is reset and it repeats the request to the API. The
+// parameter `apiCall` is intended to be a closure containing a query or a mutation to the Github
+// GraphQL API.
+func (c *client) callAPIDealWithLimit(apiCall func(context.Context) error, ctx context.Context, events chan<- RateLimitingEvent) error {
 	qctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	// call the function fun()
-	err := fun(qctx)
+	err := apiCall(qctx)
 	if err == nil {
 		return nil
 	}
@@ -134,7 +145,10 @@ func (c *client) callWithLimit(fun func(context.Context) error, ctx context.Cont
 		resetTime := limitQuery.RateLimit.ResetAt.Time
 		// Add a few seconds for good measure
 		resetTime = resetTime.Add(8 * time.Second)
-		msg := fmt.Sprintf("Github GraphQL API rate limit. This process will sleep until %s.", resetTime.String())
+		msg := fmt.Sprintf(
+			"Github GraphQL API rate limit. This process will sleep until %s.",
+			resetTime.String(),
+		)
 		// Send message about rate limiting event.
 		select {
 		case <-ctx.Done():
@@ -152,7 +166,7 @@ func (c *client) callWithLimit(fun func(context.Context) error, ctx context.Cont
 		// call the function fun() again
 		qctx, cancel = context.WithTimeout(ctx, defaultTimeout)
 		defer cancel()
-		err = fun(qctx)
+		err = apiCall(qctx)
 		return err // might be nil
 	} else {
 		return err
