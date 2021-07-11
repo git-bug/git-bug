@@ -597,11 +597,9 @@ func (ge *githubExporter) createGithubLabelV4(gc *githubv4.Client, label, labelC
 		Color:        githubv4.String(labelColor),
 	}
 
-	parentCtx := context.Background()
-	ctx, cancel := context.WithTimeout(parentCtx, defaultTimeout)
-	defer cancel()
+	ctx := context.Background()
 
-	if err := gc.Mutate(ctx, &m, input, nil); err != nil {
+	if err := gc.mutate(ctx, &m, input, nil); err != nil {
 		return "", err
 	}
 
@@ -664,9 +662,6 @@ func (ge *githubExporter) createGithubIssue(ctx context.Context, gc *client, rep
 		Body:         (*githubv4.String)(&body),
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
-	defer cancel()
-
 	if err := gc.mutate(ctx, m, input, nil, ge.out); err != nil {
 		return "", "", err
 	}
@@ -683,9 +678,6 @@ func (ge *githubExporter) addCommentGithubIssue(ctx context.Context, gc *client,
 		Body:      githubv4.String(body),
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
-	defer cancel()
-
 	if err := gc.mutate(ctx, m, input, nil, ge.out); err != nil {
 		return "", "", err
 	}
@@ -700,9 +692,6 @@ func (ge *githubExporter) editCommentGithubIssue(ctx context.Context, gc *client
 		ID:   commentID,
 		Body: githubv4.String(body),
 	}
-
-	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
-	defer cancel()
 
 	if err := gc.mutate(ctx, m, input, nil, ge.out); err != nil {
 		return "", "", err
@@ -731,9 +720,6 @@ func (ge *githubExporter) updateGithubIssueStatus(ctx context.Context, gc *clien
 		State: &state,
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
-	defer cancel()
-
 	if err := gc.mutate(ctx, m, input, nil, ge.out); err != nil {
 		return err
 	}
@@ -747,9 +733,6 @@ func (ge *githubExporter) updateGithubIssueBody(ctx context.Context, gc *client,
 		ID:   id,
 		Body: (*githubv4.String)(&body),
 	}
-
-	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
-	defer cancel()
 
 	if err := gc.mutate(ctx, m, input, nil, ge.out); err != nil {
 		return err
@@ -765,9 +748,6 @@ func (ge *githubExporter) updateGithubIssueTitle(ctx context.Context, gc *client
 		Title: (*githubv4.String)(&title),
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
-	defer cancel()
-
 	if err := gc.mutate(ctx, m, input, nil, ge.out); err != nil {
 		return err
 	}
@@ -777,8 +757,6 @@ func (ge *githubExporter) updateGithubIssueTitle(ctx context.Context, gc *client
 
 // update github issue labels
 func (ge *githubExporter) updateGithubIssueLabels(ctx context.Context, gc *client, labelableID string, added, removed []bug.Label) error {
-	reqCtx, cancel := context.WithTimeout(ctx, defaultTimeout)
-	defer cancel()
 
 	wg, ctx := errgroup.WithContext(ctx)
 	if len(added) > 0 {
@@ -795,7 +773,7 @@ func (ge *githubExporter) updateGithubIssueLabels(ctx context.Context, gc *clien
 			}
 
 			// add labels
-			if err := gc.mutate(reqCtx, m, inputAdd, nil, ge.out); err != nil {
+			if err := gc.mutate(ctx, m, inputAdd, nil, ge.out); err != nil {
 				return err
 			}
 			return nil
@@ -816,7 +794,7 @@ func (ge *githubExporter) updateGithubIssueLabels(ctx context.Context, gc *clien
 			}
 
 			// remove label labels
-			if err := gc.mutate(reqCtx, m2, inputRemove, nil, ge.out); err != nil {
+			if err := gc.mutate(ctx, m2, inputRemove, nil, ge.out); err != nil {
 				return err
 			}
 			return nil
