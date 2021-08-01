@@ -32,12 +32,12 @@ type githubExporter struct {
 	conf core.Configuration
 
 	// cache identities clients
-	identityClient map[entity.Id]*client
+	identityClient map[entity.Id]*rateLimitHandlerClient
 
 	// the client to use for non user-specific queries
 	// it's the client associated to the "default-login" config
 	// used for the github V4 API (graphql)
-	defaultClient *client
+	defaultClient *rateLimitHandlerClient
 
 	// the token of the default user
 	// it's the token associated to the "default-login" config
@@ -61,7 +61,7 @@ type githubExporter struct {
 // Init .
 func (ge *githubExporter) Init(_ context.Context, repo *cache.RepoCache, conf core.Configuration) error {
 	ge.conf = conf
-	ge.identityClient = make(map[entity.Id]*client)
+	ge.identityClient = make(map[entity.Id]*rateLimitHandlerClient)
 	ge.cachedOperationIDs = make(map[entity.Id]string)
 	ge.cachedLabels = make(map[string]string)
 
@@ -117,7 +117,7 @@ func (ge *githubExporter) cacheAllClient(repo *cache.RepoCache) error {
 }
 
 // getClientForIdentity return a githubv4 API client configured with the access token of the given identity.
-func (ge *githubExporter) getClientForIdentity(userId entity.Id) (*client, error) {
+func (ge *githubExporter) getClientForIdentity(userId entity.Id) (*rateLimitHandlerClient, error) {
 	client, ok := ge.identityClient[userId]
 	if ok {
 		return client, nil
@@ -477,7 +477,7 @@ func markOperationAsExported(b *cache.BugCache, target entity.Id, githubID, gith
 	return err
 }
 
-func (ge *githubExporter) cacheGithubLabels(ctx context.Context, gc *client) error {
+func (ge *githubExporter) cacheGithubLabels(ctx context.Context, gc *rateLimitHandlerClient) error {
 	variables := map[string]interface{}{
 		"owner": githubv4.String(ge.conf[confKeyOwner]),
 		"name":  githubv4.String(ge.conf[confKeyProject]),
@@ -607,7 +607,7 @@ func (ge *githubExporter) createGithubLabelV4(gc *githubv4.Client, label, labelC
 }
 */
 
-func (ge *githubExporter) getOrCreateGithubLabelID(ctx context.Context, gc *client, repositoryID string, label bug.Label) (string, error) {
+func (ge *githubExporter) getOrCreateGithubLabelID(ctx context.Context, gc *rateLimitHandlerClient, repositoryID string, label bug.Label) (string, error) {
 	// try to get label id from cache
 	labelID, err := ge.getLabelID(string(label))
 	if err == nil {
@@ -629,7 +629,7 @@ func (ge *githubExporter) getOrCreateGithubLabelID(ctx context.Context, gc *clie
 	return labelID, nil
 }
 
-func (ge *githubExporter) getLabelsIDs(ctx context.Context, gc *client, repositoryID string, labels []bug.Label) ([]githubv4.ID, error) {
+func (ge *githubExporter) getLabelsIDs(ctx context.Context, gc *rateLimitHandlerClient, repositoryID string, labels []bug.Label) ([]githubv4.ID, error) {
 	ids := make([]githubv4.ID, 0, len(labels))
 	var err error
 
@@ -654,7 +654,7 @@ func (ge *githubExporter) getLabelsIDs(ctx context.Context, gc *client, reposito
 }
 
 // create a github issue and return it ID
-func (ge *githubExporter) createGithubIssue(ctx context.Context, gc *client, repositoryID, title, body string) (string, string, error) {
+func (ge *githubExporter) createGithubIssue(ctx context.Context, gc *rateLimitHandlerClient, repositoryID, title, body string) (string, string, error) {
 	m := &createIssueMutation{}
 	input := githubv4.CreateIssueInput{
 		RepositoryID: repositoryID,
@@ -671,7 +671,7 @@ func (ge *githubExporter) createGithubIssue(ctx context.Context, gc *client, rep
 }
 
 // add a comment to an issue and return it ID
-func (ge *githubExporter) addCommentGithubIssue(ctx context.Context, gc *client, subjectID string, body string) (string, string, error) {
+func (ge *githubExporter) addCommentGithubIssue(ctx context.Context, gc *rateLimitHandlerClient, subjectID string, body string) (string, string, error) {
 	m := &addCommentToIssueMutation{}
 	input := githubv4.AddCommentInput{
 		SubjectID: subjectID,
@@ -686,7 +686,7 @@ func (ge *githubExporter) addCommentGithubIssue(ctx context.Context, gc *client,
 	return node.ID, node.URL, nil
 }
 
-func (ge *githubExporter) editCommentGithubIssue(ctx context.Context, gc *client, commentID, body string) (string, string, error) {
+func (ge *githubExporter) editCommentGithubIssue(ctx context.Context, gc *rateLimitHandlerClient, commentID, body string) (string, string, error) {
 	m := &updateIssueCommentMutation{}
 	input := githubv4.UpdateIssueCommentInput{
 		ID:   commentID,
@@ -700,7 +700,7 @@ func (ge *githubExporter) editCommentGithubIssue(ctx context.Context, gc *client
 	return commentID, m.UpdateIssueComment.IssueComment.URL, nil
 }
 
-func (ge *githubExporter) updateGithubIssueStatus(ctx context.Context, gc *client, id string, status bug.Status) error {
+func (ge *githubExporter) updateGithubIssueStatus(ctx context.Context, gc *rateLimitHandlerClient, id string, status bug.Status) error {
 	m := &updateIssueMutation{}
 
 	// set state
@@ -727,7 +727,7 @@ func (ge *githubExporter) updateGithubIssueStatus(ctx context.Context, gc *clien
 	return nil
 }
 
-func (ge *githubExporter) updateGithubIssueBody(ctx context.Context, gc *client, id string, body string) error {
+func (ge *githubExporter) updateGithubIssueBody(ctx context.Context, gc *rateLimitHandlerClient, id string, body string) error {
 	m := &updateIssueMutation{}
 	input := githubv4.UpdateIssueInput{
 		ID:   id,
@@ -741,7 +741,7 @@ func (ge *githubExporter) updateGithubIssueBody(ctx context.Context, gc *client,
 	return nil
 }
 
-func (ge *githubExporter) updateGithubIssueTitle(ctx context.Context, gc *client, id, title string) error {
+func (ge *githubExporter) updateGithubIssueTitle(ctx context.Context, gc *rateLimitHandlerClient, id, title string) error {
 	m := &updateIssueMutation{}
 	input := githubv4.UpdateIssueInput{
 		ID:    id,
@@ -756,7 +756,7 @@ func (ge *githubExporter) updateGithubIssueTitle(ctx context.Context, gc *client
 }
 
 // update github issue labels
-func (ge *githubExporter) updateGithubIssueLabels(ctx context.Context, gc *client, labelableID string, added, removed []bug.Label) error {
+func (ge *githubExporter) updateGithubIssueLabels(ctx context.Context, gc *rateLimitHandlerClient, labelableID string, added, removed []bug.Label) error {
 
 	wg, ctx := errgroup.WithContext(ctx)
 	if len(added) > 0 {

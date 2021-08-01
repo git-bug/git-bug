@@ -20,7 +20,7 @@ const (
 // importMediator provides a convenient interface to retrieve issues from the Github GraphQL API.
 type importMediator struct {
 	// Github graphql client
-	gh *client
+	gh *rateLimitHandlerClient
 
 	// name of the repository owner on Github
 	owner string
@@ -78,7 +78,7 @@ func (mm *importMediator) NextImportEvent() ImportEvent {
 	return <-mm.importEvents
 }
 
-func NewImportMediator(ctx context.Context, client *client, owner, project string, since time.Time) *importMediator {
+func NewImportMediator(ctx context.Context, client *rateLimitHandlerClient, owner, project string, since time.Time) *importMediator {
 	mm := importMediator{
 		gh:           client,
 		owner:        owner,

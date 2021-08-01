@@ -46,11 +46,10 @@ func (*Github) NewExporter() core.Exporter {
 	return &githubExporter{}
 }
 
-func buildClient(token *auth.Token) *client {
+func buildClient(token *auth.Token) *rateLimitHandlerClient {
 	src := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token.Value},
 	)
 	httpClient := oauth2.NewClient(context.TODO(), src)
-
-	return newClient(httpClient)
+	return newRateLimitHandlerClient(httpClient)
 }
