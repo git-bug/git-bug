@@ -113,6 +113,26 @@ type userContentEdit struct {
 	Diff      *githubv4.String
 }
 
+type label struct {
+	Name githubv4.String
+}
+
+type labeledEvent struct {
+	actorEvent
+	Label label
+}
+
+type unlabeledEvent struct {
+	actorEvent
+	Label label
+}
+
+type renamedTitleEvent struct {
+	actorEvent
+	CurrentTitle  githubv4.String
+	PreviousTitle githubv4.String
+}
+
 type timelineItem struct {
 	Typename githubv4.String `graphql:"__typename"`
 
@@ -120,20 +140,8 @@ type timelineItem struct {
 	IssueComment issueComment `graphql:"... on IssueComment"`
 
 	// Label
-	LabeledEvent struct {
-		actorEvent
-		Label struct {
-			// Color githubv4.String
-			Name githubv4.String
-		}
-	} `graphql:"... on LabeledEvent"`
-	UnlabeledEvent struct {
-		actorEvent
-		Label struct {
-			// Color githubv4.String
-			Name githubv4.String
-		}
-	} `graphql:"... on UnlabeledEvent"`
+	LabeledEvent   labeledEvent   `graphql:"... on LabeledEvent"`
+	UnlabeledEvent unlabeledEvent `graphql:"... on UnlabeledEvent"`
 
 	// Status
 	ClosedEvent struct {
@@ -145,11 +153,7 @@ type timelineItem struct {
 	} `graphql:"... on  ReopenedEvent"`
 
 	// Title
-	RenamedTitleEvent struct {
-		actorEvent
-		CurrentTitle  githubv4.String
-		PreviousTitle githubv4.String
-	} `graphql:"... on RenamedTitleEvent"`
+	RenamedTitleEvent renamedTitleEvent `graphql:"... on RenamedTitleEvent"`
 }
 
 type issueComment struct {
@@ -160,14 +164,20 @@ type issueComment struct {
 	UserContentEdits userContentEditConnection `graphql:"userContentEdits(last: $commentEditLast, before: $commentEditBefore)"`
 }
 
+type userActor struct {
+	Name  *githubv4.String
+	Email githubv4.String
+}
+
 type actor struct {
 	Typename  githubv4.String `graphql:"__typename"`
 	Login     githubv4.String
 	AvatarUrl githubv4.String
-	User      struct {
-		Name  *githubv4.String
-		Email githubv4.String
-	} `graphql:"... on User"`
+	// User      struct {
+	// 	Name  *githubv4.String
+	// 	Email githubv4.String
+	// } `graphql:"... on User"`
+	User         userActor `graphql:"... on User"`
 	Organization struct {
 		Name  *githubv4.String
 		Email *githubv4.String
