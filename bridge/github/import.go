@@ -22,7 +22,7 @@ type githubImporter struct {
 	conf core.Configuration
 
 	// default client
-	client *githubv4.Client
+	client *rateLimitHandlerClient
 
 	// mediator to access the Github API
 	mediator *importMediator
@@ -73,6 +73,7 @@ func (gi *githubImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 			// Exactly the same is true for comments and comment edits.
 			// As a consequence we need to look at the current event and one look ahead
 			// event.
+
 			currEvent = nextEvent
 			if currEvent == nil {
 				currEvent = gi.getEventHandleMsgs()
