@@ -48,6 +48,15 @@ That's all !
 
 </details>
 
+<details><summary>Windows packages</summary>
+
+* [Scoop](https://github.com/ScoopInstaller/Main/blob/master/bucket/git-bug.json)
+  ```
+  scoop install git-bug
+  ```
+
+</details>
+
 <details><summary>Linux packages</summary>
 
 * [Archlinux (AUR)](https://aur.archlinux.org/packages/?K=git-bug)
