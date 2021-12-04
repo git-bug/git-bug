@@ -133,6 +133,8 @@ func runLs(env *Env, opts lsOptions, args []string) error {
 		return lsPlainFormatter(env, bugExcerpt)
 	case "json":
 		return lsJsonFormatter(env, bugExcerpt)
+	case "compact":
+		return lsCompactFormatter(env, bugExcerpt)
 	case "default":
 		return lsDefaultFormatter(env, bugExcerpt)
 	default:
@@ -200,6 +202,32 @@ func lsJsonFormatter(env *Env, bugExcerpts []*cache.BugExcerpt) error {
 	}
 	jsonObject, _ := json.MarshalIndent(jsonBugs, "", "    ")
 	env.out.Printf("%s\n", jsonObject)
+	return nil
+}
+
+func lsCompactFormatter(env *Env, bugExcerpts []*cache.BugExcerpt) error {
+	for _, b := range bugExcerpts {
+		author, err := env.backend.ResolveIdentityExcerpt(b.AuthorId)
+		if err != nil {
+			return err
+		}
+
+		var labelsTxt strings.Builder
+		for _, l := range b.Labels {
+			lc256 := l.Color().Term256()
+			labelsTxt.WriteString(lc256.Escape())
+			labelsTxt.WriteString("◼")
+			labelsTxt.WriteString(lc256.Unescape())
+		}
+
+		env.out.Printf("%s %s %s %s %s\n",
+			colors.Cyan(b.Id.Human()),
+			colors.Yellow(b.Status),
+			text.LeftPadMaxLine(strings.TrimSpace(b.Title), 40, 0),
+			text.LeftPadMaxLine(labelsTxt.String(), 5, 0),
+			colors.Magenta(text.TruncateMax(author.DisplayName(), 15)),
+		)
+	}
 	return nil
 }
 
