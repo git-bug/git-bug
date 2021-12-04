@@ -195,12 +195,11 @@ func (gi *githubImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache
 	}
 
 	// At Github there exist issues with seemingly empty titles. An example is
-	// https://github.com/NixOS/nixpkgs/issues/72730 .
-	// The title provided by the GraphQL API actually consists of a space followed by a
-	// zero width space (U+200B). This title would cause the NewBugRaw() function to
-	// return an error: empty title.
-	title := string(issue.Title)
-	if title == " \u200b" { // U+200B == zero width space
+	// https://github.com/NixOS/nixpkgs/issues/72730 (here the title is actually
+	// a zero width space U+200B).
+	// Set title to some non-empty string, since git-bug does not accept empty titles.
+	title := text.CleanupOneLine(string(issue.Title))
+	if text.Empty(title) {
 		title = EmptyTitlePlaceholder
 	}
 
@@ -375,12 +374,11 @@ func (gi *githubImporter) ensureTimelineItem(ctx context.Context, repo *cache.Re
 		}
 
 		// At Github there exist issues with seemingly empty titles. An example is
-		// https://github.com/NixOS/nixpkgs/issues/72730 .
-		// The title provided by the GraphQL API actually consists of a space followed
-		// by a zero width space (U+200B). This title would cause the NewBugRaw()
-		// function to return an error: empty title.
+		// https://github.com/NixOS/nixpkgs/issues/72730 (here the title is actually
+		// a zero width space U+200B).
+		// Set title to some non-empty string, since git-bug does not accept empty titles.
 		title := text.CleanupOneLine(string(item.RenamedTitleEvent.CurrentTitle))
-		if title == " \u200b" { // U+200B == zero width space
+		if text.Empty(title) {
 			title = EmptyTitlePlaceholder
 		}
 
