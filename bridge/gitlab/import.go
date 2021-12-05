@@ -71,7 +71,13 @@ func (gi *gitlabImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 				return
 			}
 
-			for _, e := range SortedEvents(IssueEvents(ctx, gi.client, issue)) {
+			issueEvents := SortedEvents(
+				Notes(ctx, gi.client, issue),
+				LabelEvents(ctx, gi.client, issue),
+				StateEvents(ctx, gi.client, issue),
+			)
+
+			for e := range issueEvents {
 				if e, ok := e.(ErrorEvent); ok {
 					out <- core.NewImportError(e.Err, "")
 					continue

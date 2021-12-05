@@ -2,7 +2,6 @@ package gitlab
 
 import (
 	"context"
-	"sync"
 	"time"
 
 	"github.com/MichaelMure/git-bug/util/text"
@@ -11,7 +10,6 @@ import (
 
 // Issues returns a channel with gitlab project issues, ascending order.
 func Issues(ctx context.Context, client *gitlab.Client, pid string, since time.Time) <-chan *gitlab.Issue {
-
 	out := make(chan *gitlab.Issue)
 
 	go func() {
@@ -24,7 +22,7 @@ func Issues(ctx context.Context, client *gitlab.Client, pid string, since time.T
 		}
 
 		for {
-			issues, resp, err := client.Issues.ListProjectIssues(pid, &opts)
+			issues, resp, err := client.Issues.ListProjectIssues(pid, &opts, gitlab.WithContext(ctx))
 			if err != nil {
 				return
 			}
@@ -44,40 +42,8 @@ func Issues(ctx context.Context, client *gitlab.Client, pid string, since time.T
 	return out
 }
 
-// Issues returns a channel with merged, but unsorted gitlab note, label and state change events.
-func IssueEvents(ctx context.Context, client *gitlab.Client, issue *gitlab.Issue) <-chan Event {
-	cs := []<-chan Event{
-		Notes(ctx, client, issue),
-		LabelEvents(ctx, client, issue),
-		StateEvents(ctx, client, issue),
-	}
-
-	var wg sync.WaitGroup
-	out := make(chan Event)
-
-	output := func(c <-chan Event) {
-		for n := range c {
-			out <- n
-		}
-		wg.Done()
-	}
-
-	wg.Add(len(cs))
-	for _, c := range cs {
-		go output(c)
-	}
-
-	go func() {
-		wg.Wait()
-		close(out)
-	}()
-
-	return out
-}
-
 // Notes returns a channel with note events
 func Notes(ctx context.Context, client *gitlab.Client, issue *gitlab.Issue) <-chan Event {
-
 	out := make(chan Event)
 
 	go func() {
@@ -89,7 +55,7 @@ func Notes(ctx context.Context, client *gitlab.Client, issue *gitlab.Issue) <-ch
 		}
 
 		for {
-			notes, resp, err := client.Notes.ListIssueNotes(issue.ProjectID, issue.IID, &opts)
+			notes, resp, err := client.Notes.ListIssueNotes(issue.ProjectID, issue.IID, &opts, gitlab.WithContext(ctx))
 
 			if err != nil {
 				out <- ErrorEvent{Err: err, Time: time.Now()}
@@ -112,7 +78,6 @@ func Notes(ctx context.Context, client *gitlab.Client, issue *gitlab.Issue) <-ch
 
 // LabelEvents returns a channel with label events.
 func LabelEvents(ctx context.Context, client *gitlab.Client, issue *gitlab.Issue) <-chan Event {
-
 	out := make(chan Event)
 
 	go func() {
@@ -121,7 +86,7 @@ func LabelEvents(ctx context.Context, client *gitlab.Client, issue *gitlab.Issue
 		opts := gitlab.ListLabelEventsOptions{}
 
 		for {
-			events, resp, err := client.ResourceLabelEvents.ListIssueLabelEvents(issue.ProjectID, issue.IID, &opts)
+			events, resp, err := client.ResourceLabelEvents.ListIssueLabelEvents(issue.ProjectID, issue.IID, &opts, gitlab.WithContext(ctx))
 
 			if err != nil {
 				out <- ErrorEvent{Err: err, Time: time.Now()}
@@ -146,7 +111,6 @@ func LabelEvents(ctx context.Context, client *gitlab.Client, issue *gitlab.Issue
 
 // StateEvents returns a channel with state change events.
 func StateEvents(ctx context.Context, client *gitlab.Client, issue *gitlab.Issue) <-chan Event {
-
 	out := make(chan Event)
 
 	go func() {
@@ -155,7 +119,7 @@ func StateEvents(ctx context.Context, client *gitlab.Client, issue *gitlab.Issue
 		opts := gitlab.ListStateEventsOptions{}
 
 		for {
-			events, resp, err := client.ResourceStateEvents.ListIssueStateEvents(issue.ProjectID, issue.IID, &opts)
+			events, resp, err := client.ResourceStateEvents.ListIssueStateEvents(issue.ProjectID, issue.IID, &opts, gitlab.WithContext(ctx))
 			if err != nil {
 				out <- ErrorEvent{Err: err, Time: time.Now()}
 			}

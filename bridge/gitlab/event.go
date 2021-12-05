@@ -2,7 +2,6 @@ package gitlab
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 	"time"
 
@@ -41,6 +40,8 @@ const (
 	EventMentionedInIssue
 	EventMentionedInMergeRequest
 )
+
+var _ Event = &NoteEvent{}
 
 type NoteEvent struct{ gitlab.Note }
 
@@ -108,6 +109,8 @@ func (n NoteEvent) Title() string {
 	return text.CleanupOneLine(n.Body)
 }
 
+var _ Event = &LabelEvent{}
+
 type LabelEvent struct{ gitlab.LabelEvent }
 
 func (l LabelEvent) ID() string           { return fmt.Sprintf("%d", l.LabelEvent.ID) }
@@ -123,6 +126,8 @@ func (l LabelEvent) Kind() EventKind {
 		return EventUnknown
 	}
 }
+
+var _ Event = &StateEvent{}
 
 type StateEvent struct{ gitlab.StateEvent }
 
@@ -140,6 +145,8 @@ func (s StateEvent) Kind() EventKind {
 	}
 }
 
+var _ Event = &ErrorEvent{}
+
 type ErrorEvent struct {
 	Err  error
 	Time time.Time
@@ -150,28 +157,50 @@ func (e ErrorEvent) UserID() int          { return -1 }
 func (e ErrorEvent) CreatedAt() time.Time { return e.Time }
 func (e ErrorEvent) Kind() EventKind      { return EventError }
 
-// SortedEvents consumes an Event-channel and returns an event slice, sorted by creation date, using CreatedAt-method.
-func SortedEvents(c <-chan Event) []Event {
-	var events []Event
-	for e := range c {
-		events = append(events, e)
-	}
-	sort.Sort(eventsByCreation(events))
-	return events
-}
+// SortedEvents fan-in some Event-channels into one, sorted by creation date, using CreatedAt-method.
+// This function assume that each channel is pre-ordered.
+func SortedEvents(inputs ...<-chan Event) chan Event {
+	out := make(chan Event)
 
-type eventsByCreation []Event
+	go func() {
+		defer close(out)
 
-func (e eventsByCreation) Len() int {
-	return len(e)
-}
+		heads := make([]Event, len(inputs))
 
-func (e eventsByCreation) Less(i, j int) bool {
-	return e[i].CreatedAt().Before(e[j].CreatedAt())
-}
+		// pre-fill the head view
+		for i, input := range inputs {
+			if event, ok := <-input; ok {
+				heads[i] = event
+			}
+		}
 
-func (e eventsByCreation) Swap(i, j int) {
-	e[i], e[j] = e[j], e[i]
+		for {
+			var earliestEvent Event
+			var originChannel int
+
+			// pick the earliest event of the heads
+			for i, head := range heads {
+				if head != nil && (earliestEvent == nil || head.CreatedAt().Before(earliestEvent.CreatedAt())) {
+					earliestEvent = head
+					originChannel = i
+				}
+			}
+
+			if earliestEvent == nil {
+				// no event anymore, we are done
+				return
+			}
+
+			// we have an event: consume it and replace it if possible
+			heads[originChannel] = nil
+			if event, ok := <-inputs[originChannel]; ok {
+				heads[originChannel] = event
+			}
+			out <- earliestEvent
+		}
+	}()
+
+	return out
 }
 
 // getNewTitle parses body diff given by gitlab api and return it final form
