@@ -242,11 +242,6 @@ func TestGitlabPushPull(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.name == "bug changed status" {
-				t.Skip("test known as broken, see https://github.com/MichaelMure/git-bug/issues/435 and complain to gitlab")
-				// TODO: fix, somehow, someday, or drop support.
-			}
-
 			// for each operation a SetMetadataOperation will be added
 			// so number of operations should double
 			require.Len(t, tt.bug.Snapshot().Operations, tt.numOpExp)
