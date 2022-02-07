@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/99designs/gqlgen v0.10.3-0.20200209012558-b7a58a1c0e4b
-	github.com/99designs/keyring v1.1.6
+	github.com/99designs/keyring v1.2.0
 	github.com/MichaelMure/go-term-text v0.3.1
 	github.com/araddon/dateparse v0.0.0-20190622164848-0fb0a474d195
 	github.com/awesome-gocui/gocui v0.6.1-0.20191115151952-a34ffb055986
@@ -29,10 +29,10 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/vektah/gqlparser v1.3.1
 	github.com/xanzy/go-gitlab v0.54.3
-	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
+	golang.org/x/crypto v0.0.0-20220131195533-30dcbda58838
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20211205182925-97ca703d548d
+	golang.org/x/sys v0.0.0-20220204135822-1c1b9b1eba6a
 	golang.org/x/text v0.3.7
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e // indirect
 )
