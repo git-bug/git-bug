@@ -1,6 +1,7 @@
 package termui
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -114,7 +115,7 @@ func (ls *labelSelect) layout(g *gocui.Gui) error {
 
 	v, err := g.SetView(labelSelectView, x0, 0, x0+width, maxY-2, 0)
 	if err != nil {
-		if !gocui.IsUnknownView(err) {
+		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
 
@@ -124,7 +125,7 @@ func (ls *labelSelect) layout(g *gocui.Gui) error {
 	for i, label := range ls.labels {
 		viewname := fmt.Sprintf("labeledit%d", i)
 		v, err := g.SetView(viewname, x0+2, y0, x0+width+2, y0+2, 0)
-		if err != nil && !gocui.IsUnknownView(err) {
+		if err != nil && !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
 		ls.childViews = append(ls.childViews, viewname)
@@ -146,7 +147,7 @@ func (ls *labelSelect) layout(g *gocui.Gui) error {
 	v, err = g.SetView(labelSelectInstructionsView, -1, maxY-2, maxX, maxY, 0)
 	ls.childViews = append(ls.childViews, labelSelectInstructionsView)
 	if err != nil {
-		if !gocui.IsUnknownView(err) {
+		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
 		v.Frame = false
@@ -165,7 +166,7 @@ func (ls *labelSelect) layout(g *gocui.Gui) error {
 
 func (ls *labelSelect) disable(g *gocui.Gui) error {
 	for _, view := range ls.childViews {
-		if err := g.DeleteView(view); err != nil && !gocui.IsUnknownView(err) {
+		if err := g.DeleteView(view); err != nil && !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
 	}

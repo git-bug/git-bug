@@ -2,6 +2,7 @@ package termui
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -69,7 +70,7 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 	v, err := g.SetView(bugTableHeaderView, -1, -1, maxX, 1, 0)
 
 	if err != nil {
-		if !gocui.IsUnknownView(err) {
+		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
 
@@ -82,7 +83,7 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 	v, err = g.SetView(bugTableView, -1, 0, maxX, maxY-3, 0)
 
 	if err != nil {
-		if !gocui.IsUnknownView(err) {
+		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
 
@@ -108,7 +109,7 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 	v, err = g.SetView(bugTableFooterView, -1, maxY-4, maxX, maxY, 0)
 
 	if err != nil {
-		if !gocui.IsUnknownView(err) {
+		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
 
@@ -121,7 +122,7 @@ func (bt *bugTable) layout(g *gocui.Gui) error {
 	v, err = g.SetView(bugTableInstructionView, -1, maxY-2, maxX, maxY, 0)
 
 	if err != nil {
-		if !gocui.IsUnknownView(err) {
+		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
 
@@ -221,16 +222,16 @@ func (bt *bugTable) keybindings(g *gocui.Gui) error {
 }
 
 func (bt *bugTable) disable(g *gocui.Gui) error {
-	if err := g.DeleteView(bugTableView); err != nil && !gocui.IsUnknownView(err) {
+	if err := g.DeleteView(bugTableView); err != nil && !errors.Is(err, gocui.ErrUnknownView) {
 		return err
 	}
-	if err := g.DeleteView(bugTableHeaderView); err != nil && !gocui.IsUnknownView(err) {
+	if err := g.DeleteView(bugTableHeaderView); err != nil && !errors.Is(err, gocui.ErrUnknownView) {
 		return err
 	}
-	if err := g.DeleteView(bugTableFooterView); err != nil && !gocui.IsUnknownView(err) {
+	if err := g.DeleteView(bugTableFooterView); err != nil && !errors.Is(err, gocui.ErrUnknownView) {
 		return err
 	}
-	if err := g.DeleteView(bugTableInstructionView); err != nil && !gocui.IsUnknownView(err) {
+	if err := g.DeleteView(bugTableInstructionView); err != nil && !errors.Is(err, gocui.ErrUnknownView) {
 		return err
 	}
 	return nil

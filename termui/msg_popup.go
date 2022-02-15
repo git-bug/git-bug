@@ -1,9 +1,10 @@
 package termui
 
 import (
+	"errors"
 	"fmt"
 
-	"github.com/MichaelMure/go-term-text"
+	text "github.com/MichaelMure/go-term-text"
 	"github.com/awesome-gocui/gocui"
 )
 
@@ -52,7 +53,7 @@ func (ep *msgPopup) layout(g *gocui.Gui) error {
 
 	v, err := g.SetView(msgPopupView, x0, y0, x0+width, y0+height, 0)
 	if err != nil {
-		if !gocui.IsUnknownView(err) {
+		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
 

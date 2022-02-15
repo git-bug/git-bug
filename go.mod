@@ -8,7 +8,7 @@ require (
 	github.com/MichaelMure/go-term-text v0.3.1
 	github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7
 	github.com/araddon/dateparse v0.0.0-20190622164848-0fb0a474d195
-	github.com/awesome-gocui/gocui v0.6.1-0.20191115151952-a34ffb055986
+	github.com/awesome-gocui/gocui v1.1.0
 	github.com/blevesearch/bleve v1.0.14
 	github.com/cheekybits/genny v0.0.0-20170328200008-9127e812e1e9
 	github.com/corpix/uarand v0.1.1 // indirect

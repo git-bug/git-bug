@@ -1,6 +1,7 @@
 package termui
 
 import (
+	"errors"
 	"io/ioutil"
 
 	"github.com/awesome-gocui/gocui"
@@ -48,7 +49,7 @@ func (ip *inputPopup) layout(g *gocui.Gui) error {
 
 	v, err := g.SetView(inputPopupView, x0, y0, x0+width, y0+height, 0)
 	if err != nil {
-		if !gocui.IsUnknownView(err) {
+		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
 
