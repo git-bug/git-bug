@@ -6,8 +6,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/ProtonMail/go-crypto/openpgp"
+	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	"github.com/pkg/errors"
-	"golang.org/x/crypto/openpgp"
 
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/identity"
@@ -272,7 +273,7 @@ func readOperationPack(def Definition, repo repository.RepoData, resolver identi
 	keys := author.ValidKeysAtTime(fmt.Sprintf(editClockPattern, def.Namespace), editTime)
 	if len(keys) > 0 {
 		keyring := PGPKeyring(keys)
-		_, err = openpgp.CheckDetachedSignature(keyring, commit.SignedData, commit.Signature)
+		_, err = openpgp.CheckDetachedSignature(keyring, commit.SignedData, commit.Signature, nil)
 		if err != nil {
 			return nil, fmt.Errorf("signature failure: %v", err)
 		}
@@ -335,6 +336,9 @@ func (pk PGPKeyring) KeysById(id uint64) []openpgp.Key {
 			result = append(result, openpgp.Key{
 				PublicKey:  key.Public(),
 				PrivateKey: key.Private(),
+				SelfSignature: &packet.Signature{
+					IsPrimaryId: func() *bool { b := true; return &b }(),
+				},
 			})
 		}
 	}
@@ -347,12 +351,13 @@ func (pk PGPKeyring) KeysByIdUsage(id uint64, requiredUsage byte) []openpgp.Key 
 }
 
 func (pk PGPKeyring) DecryptionKeys() []openpgp.Key {
-	result := make([]openpgp.Key, len(pk))
-	for i, key := range pk {
-		result[i] = openpgp.Key{
-			PublicKey:  key.Public(),
-			PrivateKey: key.Private(),
-		}
-	}
-	return result
+	// result := make([]openpgp.Key, len(pk))
+	// for i, key := range pk {
+	// 	result[i] = openpgp.Key{
+	// 		PublicKey:  key.Public(),
+	// 		PrivateKey: key.Private(),
+	// 	}
+	// }
+	// return result
+	return nil
 }

@@ -5,9 +5,9 @@ import (
 	"errors"
 	"io"
 
+	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/blevesearch/bleve"
 	"github.com/go-git/go-billy/v5"
-	"golang.org/x/crypto/openpgp"
 
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
@@ -129,7 +129,7 @@ type RepoData interface {
 	// StoreCommit will store a Git commit with the given Git tree
 	StoreCommit(treeHash Hash, parents ...Hash) (Hash, error)
 
-	// StoreCommit will store a Git commit with the given Git tree. If signKey is not nil, the commit
+	// StoreSignedCommit will store a Git commit with the given Git tree. If signKey is not nil, the commit
 	// will be signed accordingly.
 	StoreSignedCommit(treeHash Hash, signKey *openpgp.Entity, parents ...Hash) (Hash, error)
 

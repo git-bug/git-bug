@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ProtonMail/go-crypto/openpgp"
+	"github.com/ProtonMail/go-crypto/openpgp/armor"
+	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	"github.com/pkg/errors"
-	"golang.org/x/crypto/openpgp"
-	"golang.org/x/crypto/openpgp/armor"
-	"golang.org/x/crypto/openpgp/packet"
 
 	"github.com/MichaelMure/git-bug/repository"
 )
@@ -217,8 +217,18 @@ func (k *Key) storePrivate(repo repository.RepoKeyring) error {
 }
 
 func (k *Key) PGPEntity() *openpgp.Entity {
+	uid := packet.NewUserId("", "", "")
 	return &openpgp.Entity{
 		PrimaryKey: k.public,
 		PrivateKey: k.private,
+		Identities: map[string]*openpgp.Identity{
+			uid.Id: {
+				Name:   uid.Id,
+				UserId: uid,
+				SelfSignature: &packet.Signature{
+					IsPrimaryId: func() *bool { b := true; return &b }(),
+				},
+			},
+		},
 	}
 }

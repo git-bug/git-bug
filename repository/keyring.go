@@ -13,13 +13,13 @@ var ErrKeyringKeyNotFound = keyring.ErrKeyNotFound
 
 // Keyring provides the uniform interface over the underlying backends
 type Keyring interface {
-	// Returns an Item matching the key or ErrKeyringKeyNotFound
+	// Get returns an Item matching the key or ErrKeyringKeyNotFound
 	Get(key string) (Item, error)
-	// Stores an Item on the keyring. Set is idempotent.
+	// Set stores an Item on the keyring. Set is idempotent.
 	Set(item Item) error
-	// Removes the item with matching key
+	// Remove removes the item with matching key
 	Remove(key string) error
-	// Provides a slice of all keys stored on the keyring
+	// Keys provides a slice of all keys stored on the keyring
 	Keys() ([]string, error)
 }
 
