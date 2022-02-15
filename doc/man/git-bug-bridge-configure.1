@@ -1,14 +1,14 @@
 .nh
-.TH "GIT\-BUG" "1" "Apr 2019" "Generated from git\-bug's source code" ""
+.TH "GIT-BUG" "1" "Apr 2019" "Generated from git-bug's source code" ""
 
 .SH NAME
 .PP
-git\-bug\-bridge\-configure \- Configure a new bridge.
+git-bug-bridge-configure - Configure a new bridge.
 
 
 .SH SYNOPSIS
 .PP
-\fBgit\-bug bridge configure [flags]\fP
+\fBgit-bug bridge configure [flags]\fP
 
 
 .SH DESCRIPTION
@@ -24,51 +24,51 @@ Configure a new bridge by passing flags or/and using interactive terminal prompt
 
 .SH OPTIONS
 .PP
-\fB\-n\fP, \fB\-\-name\fP=""
+\fB-n\fP, \fB--name\fP=""
 	A distinctive name to identify the bridge
 
 .PP
-\fB\-t\fP, \fB\-\-target\fP=""
-	The target of the bridge. Valid values are [github,gitlab,jira,launchpad\-preview]
+\fB-t\fP, \fB--target\fP=""
+	The target of the bridge. Valid values are [github,gitlab,jira,launchpad-preview]
 
 .PP
-\fB\-u\fP, \fB\-\-url\fP=""
+\fB-u\fP, \fB--url\fP=""
 	The URL of the remote repository
 
 .PP
-\fB\-b\fP, \fB\-\-base\-url\fP=""
+\fB-b\fP, \fB--base-url\fP=""
 	The base URL of your remote issue tracker
 
 .PP
-\fB\-l\fP, \fB\-\-login\fP=""
+\fB-l\fP, \fB--login\fP=""
 	The login on your remote issue tracker
 
 .PP
-\fB\-c\fP, \fB\-\-credential\fP=""
-	The identifier or prefix of an already known credential for your remote issue tracker (see "git\-bug bridge auth")
+\fB-c\fP, \fB--credential\fP=""
+	The identifier or prefix of an already known credential for your remote issue tracker (see "git-bug bridge auth")
 
 .PP
-\fB\-\-token\fP=""
+\fB--token\fP=""
 	A raw authentication token for the remote issue tracker
 
 .PP
-\fB\-\-token\-stdin\fP[=false]
-	Will read the token from stdin and ignore \-\-token
+\fB--token-stdin\fP[=false]
+	Will read the token from stdin and ignore --token
 
 .PP
-\fB\-o\fP, \fB\-\-owner\fP=""
+\fB-o\fP, \fB--owner\fP=""
 	The owner of the remote repository
 
 .PP
-\fB\-p\fP, \fB\-\-project\fP=""
+\fB-p\fP, \fB--project\fP=""
 	The name of the remote repository
 
 .PP
-\fB\-\-non\-interactive\fP[=false]
+\fB--non-interactive\fP[=false]
 	Do not ask for user input
 
 .PP
-\fB\-h\fP, \fB\-\-help\fP[=false]
+\fB-h\fP, \fB--help\fP[=false]
 	help for configure
 
 
@@ -81,14 +81,14 @@ Configure a new bridge by passing flags or/and using interactive terminal prompt
 [1]: github
 [2]: gitlab
 [3]: jira
-[4]: launchpad\-preview
+[4]: launchpad-preview
 
 target: 1
 name [default]: default
 
 Detected projects:
-[1]: github.com/a\-hilaly/git\-bug
-[2]: github.com/MichaelMure/git\-bug
+[1]: github.com/a-hilaly/git-bug
+[2]: github.com/MichaelMure/git-bug
 
 [0]: Another project
 
@@ -103,33 +103,33 @@ Choose 'Generate new token' and set the necessary access scope for your reposito
 
 The access scope depend on the type of repository.
 Public:
-	\- 'public\_repo': to be able to read public repositories
+	- 'public_repo': to be able to read public repositories
 Private:
-	\- 'repo'       : to be able to read private repositories
+	- 'repo'       : to be able to read private repositories
 
 Enter token: 87cf5c03b64029f18ea5f9ca5679daa08ccbd700
 Successfully configured bridge: default
 
 # For GitHub
 git bug bridge configure \\
-    \-\-name=default \\
-    \-\-target=github \\
-    \-\-owner=$(OWNER) \\
-    \-\-project=$(PROJECT) \\
-    \-\-token=$(TOKEN)
+    --name=default \\
+    --target=github \\
+    --owner=$(OWNER) \\
+    --project=$(PROJECT) \\
+    --token=$(TOKEN)
 
 # For Launchpad
 git bug bridge configure \\
-    \-\-name=default \\
-    \-\-target=launchpad\-preview \\
-	\-\-url=https://bugs.launchpad.net/ubuntu/
+    --name=default \\
+    --target=launchpad-preview \\
+	--url=https://bugs.launchpad.net/ubuntu/
 
 # For Gitlab
 git bug bridge configure \\
-    \-\-name=default \\
-    \-\-target=github \\
-    \-\-url=https://github.com/michaelmure/git\-bug \\
-    \-\-token=$(TOKEN)
+    --name=default \\
+    --target=github \\
+    --url=https://github.com/michaelmure/git-bug \\
+    --token=$(TOKEN)
 
 .fi
 .RE
@@ -137,4 +137,4 @@ git bug bridge configure \\
 
 .SH SEE ALSO
 .PP
-\fBgit\-bug\-bridge(1)\fP
+\fBgit-bug-bridge(1)\fP

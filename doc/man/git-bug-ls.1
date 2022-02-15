@@ -1,14 +1,14 @@
 .nh
-.TH "GIT\-BUG" "1" "Apr 2019" "Generated from git\-bug's source code" ""
+.TH "GIT-BUG" "1" "Apr 2019" "Generated from git-bug's source code" ""
 
 .SH NAME
 .PP
-git\-bug\-ls \- List bugs.
+git-bug-ls - List bugs.
 
 
 .SH SYNOPSIS
 .PP
-\fBgit\-bug ls [QUERY] [flags]\fP
+\fBgit-bug ls [QUERY] [flags]\fP
 
 
 .SH DESCRIPTION
@@ -21,51 +21,51 @@ You can pass an additional query to filter and order the list. This query can be
 
 .SH OPTIONS
 .PP
-\fB\-s\fP, \fB\-\-status\fP=[]
+\fB-s\fP, \fB--status\fP=[]
 	Filter by status. Valid values are [open,closed]
 
 .PP
-\fB\-a\fP, \fB\-\-author\fP=[]
+\fB-a\fP, \fB--author\fP=[]
 	Filter by author
 
 .PP
-\fB\-m\fP, \fB\-\-metadata\fP=[]
-	Filter by metadata. Example: github\-url=URL
+\fB-m\fP, \fB--metadata\fP=[]
+	Filter by metadata. Example: github-url=URL
 
 .PP
-\fB\-p\fP, \fB\-\-participant\fP=[]
+\fB-p\fP, \fB--participant\fP=[]
 	Filter by participant
 
 .PP
-\fB\-A\fP, \fB\-\-actor\fP=[]
+\fB-A\fP, \fB--actor\fP=[]
 	Filter by actor
 
 .PP
-\fB\-l\fP, \fB\-\-label\fP=[]
+\fB-l\fP, \fB--label\fP=[]
 	Filter by label
 
 .PP
-\fB\-t\fP, \fB\-\-title\fP=[]
+\fB-t\fP, \fB--title\fP=[]
 	Filter by title
 
 .PP
-\fB\-n\fP, \fB\-\-no\fP=[]
+\fB-n\fP, \fB--no\fP=[]
 	Filter by absence of something. Valid values are [label]
 
 .PP
-\fB\-b\fP, \fB\-\-by\fP="creation"
+\fB-b\fP, \fB--by\fP="creation"
 	Sort the results by a characteristic. Valid values are [id,creation,edit]
 
 .PP
-\fB\-d\fP, \fB\-\-direction\fP="asc"
+\fB-d\fP, \fB--direction\fP="asc"
 	Select the sorting direction. Valid values are [asc,desc]
 
 .PP
-\fB\-f\fP, \fB\-\-format\fP="default"
-	Select the output formatting style. Valid values are [default,plain,json,org\-mode]
+\fB-f\fP, \fB--format\fP="default"
+	Select the output formatting style. Valid values are [default,plain,json,org-mode]
 
 .PP
-\fB\-h\fP, \fB\-\-help\fP[=false]
+\fB-h\fP, \fB--help\fP[=false]
 	help for ls
 
 
@@ -75,16 +75,16 @@ You can pass an additional query to filter and order the list. This query can be
 
 .nf
 List open bugs sorted by last edition with a query:
-git bug ls status:open sort:edit\-desc
+git bug ls status:open sort:edit-desc
 
 List closed bugs sorted by creation with flags:
-git bug ls \-\-status closed \-\-by creation
+git bug ls --status closed --by creation
 
 Do a full text search of all bugs:
 git bug ls "foo bar" baz
 
 Use queries, flags, and full text search:
-git bug ls status:open \-\-by creation "foo bar" baz
+git bug ls status:open --by creation "foo bar" baz
 
 
 .fi
@@ -93,4 +93,4 @@ git bug ls status:open \-\-by creation "foo bar" baz
 
 .SH SEE ALSO
 .PP
-\fBgit\-bug(1)\fP
+\fBgit-bug(1)\fP

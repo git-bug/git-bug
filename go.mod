@@ -3,7 +3,7 @@ module github.com/MichaelMure/git-bug
 go 1.15
 
 require (
-	github.com/99designs/gqlgen v0.10.3-0.20200209012558-b7a58a1c0e4b
+	github.com/99designs/gqlgen v0.16.0
 	github.com/99designs/keyring v1.1.6
 	github.com/MichaelMure/go-term-text v0.3.1
 	github.com/araddon/dateparse v0.0.0-20190622164848-0fb0a474d195
@@ -16,7 +16,6 @@ require (
 	github.com/go-git/go-billy/v5 v5.3.1
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/gorilla/mux v1.8.0
-	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/icrowley/fake v0.0.0-20180203215853-4178557ae428
 	github.com/mattn/go-isatty v0.0.14
@@ -27,7 +26,7 @@ require (
 	github.com/skratchdot/open-golang v0.0.0-20190402232053-79abb63cd66e
 	github.com/spf13/cobra v1.3.0
 	github.com/stretchr/testify v1.7.0
-	github.com/vektah/gqlparser v1.3.1
+	github.com/vektah/gqlparser/v2 v2.2.0
 	github.com/xanzy/go-gitlab v0.54.3
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
