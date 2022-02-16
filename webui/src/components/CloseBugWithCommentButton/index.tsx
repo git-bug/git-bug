@@ -24,10 +24,8 @@ interface Props {
 }
 
 function CloseBugWithCommentButton({ bug, comment, postClick }: Props) {
-  const [
-    addCommentAndCloseBug,
-    { loading, error },
-  ] = useAddCommentAndCloseBugMutation();
+  const [addCommentAndCloseBug, { loading, error }] =
+    useAddCommentAndCloseBugMutation();
   const classes = useStyles();
 
   function addCommentAndCloseBugAction() {

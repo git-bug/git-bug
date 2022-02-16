@@ -1,7 +1,7 @@
 module.exports = {
   extends: [
     'react-app',
-    'prettier/@typescript-eslint',
+    'prettier',
     'plugin:prettier/recommended',
   ],
   plugins: ['graphql'],

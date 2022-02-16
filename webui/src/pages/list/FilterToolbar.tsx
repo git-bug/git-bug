@@ -110,36 +110,38 @@ function FilterToolbar({ query, queryLocation }: Props) {
   const containsValue = (key: string, value: string): boolean =>
     hasKey(key) && params[key].indexOf(value) !== -1;
   const loc = pipe(stringify, queryLocation);
-  const replaceParam = (key: string, value: string) => (
-    params: Query
-  ): Query => ({
-    ...params,
-    [key]: [value],
-  });
-  const toggleParam = (key: string, value: string) => (
-    params: Query
-  ): Query => ({
-    ...params,
-    [key]: params[key] && params[key].includes(value) ? [] : [value],
-  });
-  const toggleOrAddParam = (key: string, value: string) => (
-    params: Query
-  ): Query => {
-    const values = params[key];
-    return {
+  const replaceParam =
+    (key: string, value: string) =>
+    (params: Query): Query => ({
       ...params,
-      [key]:
-        params[key] && params[key].includes(value)
-          ? values.filter((v) => v !== value)
-          : values
-          ? [...values, value]
-          : [value],
+      [key]: [value],
+    });
+  const toggleParam =
+    (key: string, value: string) =>
+    (params: Query): Query => ({
+      ...params,
+      [key]: params[key] && params[key].includes(value) ? [] : [value],
+    });
+  const toggleOrAddParam =
+    (key: string, value: string) =>
+    (params: Query): Query => {
+      const values = params[key];
+      return {
+        ...params,
+        [key]:
+          params[key] && params[key].includes(value)
+            ? values.filter((v) => v !== value)
+            : values
+            ? [...values, value]
+            : [value],
+      };
     };
-  };
-  const clearParam = (key: string) => (params: Query): Query => ({
-    ...params,
-    [key]: [],
-  });
+  const clearParam =
+    (key: string) =>
+    (params: Query): Query => ({
+      ...params,
+      [key]: [],
+    });
 
   return (
     <Toolbar className={classes.toolbar}>

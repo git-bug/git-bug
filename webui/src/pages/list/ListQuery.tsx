@@ -304,12 +304,12 @@ function ListQuery() {
 
   const loc = pipe(stringify, queryLocation);
   const qparams: Query = parse(query);
-  const replaceParam = (key: string, value: string) => (
-    params: Query
-  ): Query => ({
-    ...params,
-    [key]: [value],
-  });
+  const replaceParam =
+    (key: string, value: string) =>
+    (params: Query): Query => ({
+      ...params,
+      [key]: [value],
+    });
 
   return (
     <Paper className={classes.main}>

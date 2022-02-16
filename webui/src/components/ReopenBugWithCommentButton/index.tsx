@@ -15,10 +15,8 @@ interface Props {
 }
 
 function ReopenBugWithCommentButton({ bug, comment, postClick }: Props) {
-  const [
-    addCommentAndReopenBug,
-    { loading, error },
-  ] = useAddCommentAndReopenBugMutation();
+  const [addCommentAndReopenBug, { loading, error }] =
+    useAddCommentAndReopenBugMutation();
 
   function addCommentAndReopenBugAction() {
     addCommentAndReopenBug({

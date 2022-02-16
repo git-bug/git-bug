@@ -9,7 +9,10 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const AnchorTag = ({ children, href }: React.HTMLProps<HTMLAnchorElement>) => {
+const AnchorTag: React.FC = ({
+  children,
+  href,
+}: React.HTMLProps<HTMLAnchorElement>) => {
   const classes = useStyles();
   const origin = window.location.origin;
   const destination = href === undefined ? '' : href;

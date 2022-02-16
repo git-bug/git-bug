@@ -1,13 +1,19 @@
 mutation SetLabel($input: ChangeLabelInput) {
-    changeLabels(input: $input) {
-        results{
-            status,
-            label{
-                name,
-                color{R},
-                color{G},
-                color{B}
-            }
+  changeLabels(input: $input) {
+    results {
+      status
+      label {
+        name
+        color {
+          R
         }
+        color {
+          G
+        }
+        color {
+          B
+        }
+      }
     }
+  }
 }

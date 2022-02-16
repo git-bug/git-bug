@@ -9,7 +9,7 @@ const useStyles = makeStyles({
   },
 });
 
-const PreTag = (props: React.HTMLProps<HTMLPreElement>) => {
+const PreTag: React.FC<React.HTMLProps<HTMLPreElement>> = (props) => {
   const classes = useStyles();
   return <pre className={classes.tag} {...props} />;
 };

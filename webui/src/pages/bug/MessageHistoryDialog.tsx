@@ -179,12 +179,10 @@ function MessageHistoryDialog({ bugId, commentId, open, onClose }: Props) {
   const history = comment?.history.slice().reverse();
   const editCount = history?.length === undefined ? 0 : history?.length - 1;
 
-  const handleChange = (panel: string) => (
-    event: React.ChangeEvent<{}>,
-    newExpanded: boolean
-  ) => {
-    setExpanded(newExpanded ? panel : false);
-  };
+  const handleChange =
+    (panel: string) => (event: React.ChangeEvent<{}>, newExpanded: boolean) => {
+      setExpanded(newExpanded ? panel : false);
+    };
 
   const getSummary = (index: number, date: Date) => {
     const desc =

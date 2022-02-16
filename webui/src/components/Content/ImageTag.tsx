@@ -8,10 +8,10 @@ const useStyles = makeStyles({
   },
 });
 
-const ImageTag = ({
+const ImageTag: React.FC<React.ImgHTMLAttributes<HTMLImageElement>> = ({
   alt,
   ...props
-}: React.ImgHTMLAttributes<HTMLImageElement>) => {
+}) => {
   const classes = useStyles();
   return (
     <>

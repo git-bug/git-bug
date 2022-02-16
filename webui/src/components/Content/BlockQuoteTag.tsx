@@ -13,7 +13,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const BlockQuoteTag = (props: React.HTMLProps<HTMLPreElement>) => {
+const BlockQuoteTag: React.FC<React.HTMLProps<HTMLElement>> = (props) => {
   const classes = useStyles();
   return <blockquote className={classes.tag} {...props} />;
 };

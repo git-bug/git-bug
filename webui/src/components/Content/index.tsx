@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { createElement, Fragment, useEffect, useState } from 'react';
+import rehypeReact from 'rehype-react';
 import gemoji from 'remark-gemoji';
 import html from 'remark-html';
 import parse from 'remark-parse';
-import remark2react from 'remark-react';
-import unified from 'unified';
+import remarkRehype from 'remark-rehype';
+import { unified } from 'unified';
 
 import AnchorTag from './AnchorTag';
 import BlockQuoteTag from './BlockQuoteTag';
@@ -12,21 +13,31 @@ import PreTag from './PreTag';
 
 type Props = { markdown: string };
 const Content: React.FC<Props> = ({ markdown }: Props) => {
-  const content = unified()
-    .use(parse)
-    .use(gemoji)
-    .use(html)
-    .use(remark2react, {
-      remarkReactComponents: {
-        img: ImageTag,
-        pre: PreTag,
-        a: AnchorTag,
-        blockquote: BlockQuoteTag,
-      },
-    })
-    .processSync(markdown).result;
+  const [Content, setContent] = useState(<></>);
 
-  return <>{content}</>;
+  useEffect(() => {
+    unified()
+      .use(parse)
+      .use(gemoji)
+      .use(html)
+      .use(remarkRehype)
+      .use(rehypeReact, {
+        createElement,
+        Fragment,
+        components: {
+          img: ImageTag,
+          pre: PreTag,
+          a: AnchorTag,
+          blockquote: BlockQuoteTag,
+        },
+      })
+      .process(markdown)
+      .then((file) => {
+        setContent(file.result);
+      });
+  }, [markdown]);
+
+  return Content;
 };
 
 export default Content;
