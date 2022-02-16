@@ -1,6 +1,6 @@
 import { pipe } from '@arrows/composition';
 import { LocationDescriptor } from 'history';
-import React from 'react';
+import * as React from 'react';
 
 import Toolbar from '@material-ui/core/Toolbar';
 import { makeStyles } from '@material-ui/core/styles';

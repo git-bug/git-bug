@@ -1,4 +1,5 @@
-import React, { createElement, Fragment, useEffect, useState } from 'react';
+import { createElement, Fragment, useEffect, useState } from 'react';
+import * as React from 'react';
 import rehypeReact from 'rehype-react';
 import gemoji from 'remark-gemoji';
 import html from 'remark-html';

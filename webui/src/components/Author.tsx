@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
 import MAvatar from '@material-ui/core/Avatar';

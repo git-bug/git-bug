@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Chip } from '@material-ui/core';
 import { common } from '@material-ui/core/colors';
 import {

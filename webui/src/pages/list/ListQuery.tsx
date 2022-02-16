@@ -1,6 +1,7 @@
 import { ApolloError } from '@apollo/client';
 import { pipe } from '@arrows/composition';
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import * as React from 'react';
 import { useLocation, useHistory, Link } from 'react-router-dom';
 
 import { Button, FormControl, Menu, MenuItem } from '@material-ui/core';

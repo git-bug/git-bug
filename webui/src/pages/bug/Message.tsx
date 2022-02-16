@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import * as React from 'react';
 
 import IconButton from '@material-ui/core/IconButton';
 import Paper from '@material-ui/core/Paper';

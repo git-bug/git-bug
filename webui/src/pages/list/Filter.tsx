@@ -1,6 +1,7 @@
 import clsx from 'clsx';
 import { LocationDescriptor } from 'history';
-import React, { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
+import * as React from 'react';
 import { Link } from 'react-router-dom';
 
 import Menu from '@material-ui/core/Menu';

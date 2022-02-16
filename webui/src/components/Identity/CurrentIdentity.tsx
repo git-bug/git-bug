@@ -1,4 +1,4 @@
-import React from 'react';
+import { useState, useRef } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
 import {
@@ -37,8 +37,8 @@ const CurrentIdentity = () => {
   const classes = useStyles();
   const { loading, error, data } = useCurrentIdentityQuery();
 
-  const [open, setOpen] = React.useState(false);
-  const anchorRef = React.useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+  const anchorRef = useRef<HTMLButtonElement>(null);
 
   if (error || loading || !data?.repository?.userIdentity) return null;
 

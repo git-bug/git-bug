@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState } from 'react';
+import * as React from 'react';
 
 import { ThemeProvider } from '@material-ui/core';
 import IconButton from '@material-ui/core/IconButton';
