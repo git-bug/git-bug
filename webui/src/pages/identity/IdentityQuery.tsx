@@ -9,7 +9,7 @@ import Identity from './Identity';
 
 const UserQuery: React.FC = () => {
   const params = useParams<'id'>();
-  if (params.id === undefined) throw new Error();
+  if (params.id === undefined) throw new Error('missing route parameters');
 
   const { loading, error, data } = useGetUserByIdQuery({
     variables: { userId: params.id },

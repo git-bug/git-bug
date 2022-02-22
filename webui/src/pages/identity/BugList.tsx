@@ -1,6 +1,6 @@
-import { Card, Divider, Link, Typography } from '@material-ui/core';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import { makeStyles } from '@material-ui/core/styles';
+import { Card, Divider, Link, Typography } from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress';
+import makeStyles from '@mui/styles/makeStyles';
 
 import Date from '../../components/Date';
 
@@ -47,6 +47,7 @@ function BugList({ id }: Props) {
                 className={classes.bugLink}
                 href={'/bug/' + bug.id}
                 color={'inherit'}
+                underline="hover"
               >
                 {bug.title}
               </Link>

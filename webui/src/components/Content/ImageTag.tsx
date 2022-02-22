@@ -1,6 +1,5 @@
+import { makeStyles } from '@mui/styles';
 import * as React from 'react';
-
-import { makeStyles } from '@material-ui/styles';
 
 const useStyles = makeStyles({
   tag: {

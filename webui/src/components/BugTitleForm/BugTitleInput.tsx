@@ -1,5 +1,7 @@
-import { createStyles, fade, withStyles, TextField } from '@material-ui/core';
-import { Theme } from '@material-ui/core/styles';
+import { alpha, TextField } from '@mui/material';
+import { Theme } from '@mui/material/styles';
+import createStyles from '@mui/styles/createStyles';
+import withStyles from '@mui/styles/withStyles';
 
 const BugTitleInput = withStyles((theme: Theme) =>
   createStyles({
@@ -14,7 +16,7 @@ const BugTitleInput = withStyles((theme: Theme) =>
       },
       '& input:valid:hover + fieldset': {
         color: theme.palette.text.primary,
-        borderColor: fade(theme.palette.divider, 0.3),
+        borderColor: alpha(theme.palette.divider, 0.3),
         borderWidth: 2,
       },
       '& input:valid:focus + fieldset': {

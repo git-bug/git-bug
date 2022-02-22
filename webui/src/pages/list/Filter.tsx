@@ -1,16 +1,16 @@
+import ArrowDropDown from '@mui/icons-material/ArrowDropDown';
+import CheckIcon from '@mui/icons-material/Check';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import { SvgIconProps } from '@mui/material/SvgIcon';
+import TextField from '@mui/material/TextField';
+import { darken } from '@mui/material/styles';
+import makeStyles from '@mui/styles/makeStyles';
+import withStyles from '@mui/styles/withStyles';
 import clsx from 'clsx';
-import { useRef, useState, useEffect } from 'react';
 import * as React from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Location, Link } from 'react-router-dom';
-
-import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem';
-import { SvgIconProps } from '@material-ui/core/SvgIcon';
-import TextField from '@material-ui/core/TextField';
-import { makeStyles, withStyles } from '@material-ui/core/styles';
-import { darken } from '@material-ui/core/styles/colorManipulator';
-import ArrowDropDown from '@material-ui/icons/ArrowDropDown';
-import CheckIcon from '@material-ui/icons/Check';
 
 import { Color } from '../../gqlTypes';
 
@@ -153,7 +153,7 @@ function FilterDropdown({
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState<string>('');
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const searchRef = useRef<HTMLButtonElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
   const classes = useStyles({ active: false });
 
   useEffect(() => {
@@ -180,8 +180,6 @@ function FilterDropdown({
       </button>
       <Menu
         className={classes.labelMenu}
-        getContentAnchorEl={null}
-        ref={searchRef}
         anchorOrigin={{
           vertical: 'bottom',
           horizontal: 'left',
@@ -202,6 +200,7 @@ function FilterDropdown({
       >
         {hasFilter && (
           <CustomTextField
+            inputRef={searchRef}
             onChange={(e) => {
               const { value } = e.target;
               setFilter(value);

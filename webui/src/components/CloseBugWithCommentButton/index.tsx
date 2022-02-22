@@ -1,19 +1,11 @@
-import Button from '@material-ui/core/Button';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import { makeStyles, Theme } from '@material-ui/core/styles';
-import ErrorOutlineIcon from '@material-ui/icons/ErrorOutline';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import Button from '@mui/material/Button';
+import CircularProgress from '@mui/material/CircularProgress';
 
 import { BugFragment } from 'src/pages/bug/Bug.generated';
 import { TimelineDocument } from 'src/pages/bug/TimelineQuery.generated';
 
 import { useAddCommentAndCloseBugMutation } from './CloseBugWithComment.generated';
-
-const useStyles = makeStyles((theme: Theme) => ({
-  closeIssueIcon: {
-    color: theme.palette.secondary.dark,
-    paddingTop: '0.1rem',
-  },
-}));
 
 interface Props {
   bug: BugFragment;
@@ -24,7 +16,6 @@ interface Props {
 function CloseBugWithCommentButton({ bug, comment, postClick }: Props) {
   const [addCommentAndCloseBug, { loading, error }] =
     useAddCommentAndCloseBugMutation();
-  const classes = useStyles();
 
   function addCommentAndCloseBugAction() {
     addCommentAndCloseBug({
@@ -60,7 +51,7 @@ function CloseBugWithCommentButton({ bug, comment, postClick }: Props) {
       <Button
         variant="contained"
         onClick={() => addCommentAndCloseBugAction()}
-        startIcon={<ErrorOutlineIcon className={classes.closeIssueIcon} />}
+        startIcon={<ErrorOutlineIcon />}
       >
         Close bug with comment
       </Button>

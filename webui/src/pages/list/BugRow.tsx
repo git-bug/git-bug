@@ -1,13 +1,12 @@
+import CheckCircleOutline from '@mui/icons-material/CheckCircleOutline';
+import CommentOutlinedIcon from '@mui/icons-material/CommentOutlined';
+import ErrorOutline from '@mui/icons-material/ErrorOutline';
+import TableCell from '@mui/material/TableCell/TableCell';
+import TableRow from '@mui/material/TableRow/TableRow';
+import Tooltip from '@mui/material/Tooltip/Tooltip';
+import makeStyles from '@mui/styles/makeStyles';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-
-import TableCell from '@material-ui/core/TableCell/TableCell';
-import TableRow from '@material-ui/core/TableRow/TableRow';
-import Tooltip from '@material-ui/core/Tooltip/Tooltip';
-import { makeStyles } from '@material-ui/core/styles';
-import CheckCircleOutline from '@material-ui/icons/CheckCircleOutline';
-import CommentOutlinedIcon from '@material-ui/icons/CommentOutlined';
-import ErrorOutline from '@material-ui/icons/ErrorOutline';
 
 import Author from 'src/components/Author';
 import Date from 'src/components/Date';

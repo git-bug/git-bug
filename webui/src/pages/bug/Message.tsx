@@ -1,12 +1,11 @@
-import { useState } from 'react';
+import EditIcon from '@mui/icons-material/Edit';
+import HistoryIcon from '@mui/icons-material/History';
+import IconButton from '@mui/material/IconButton';
+import Paper from '@mui/material/Paper';
+import Tooltip from '@mui/material/Tooltip/Tooltip';
+import makeStyles from '@mui/styles/makeStyles';
 import * as React from 'react';
-
-import IconButton from '@material-ui/core/IconButton';
-import Paper from '@material-ui/core/Paper';
-import Tooltip from '@material-ui/core/Tooltip/Tooltip';
-import { makeStyles } from '@material-ui/core/styles';
-import EditIcon from '@material-ui/icons/Edit';
-import HistoryIcon from '@material-ui/icons/History';
+import { useState } from 'react';
 
 import Author, { Avatar } from 'src/components/Author';
 import Content from 'src/components/Content';
@@ -98,6 +97,7 @@ function HistoryMenuToggleButton({ bugId, commentId }: HistBtnProps) {
         aria-haspopup="true"
         onClick={handleClickOpen}
         className={classes.headerActions}
+        size="large"
       >
         <HistoryIcon />
       </IconButton>
@@ -150,6 +150,7 @@ function Message({ bug, op }: Props) {
                   className={classes.headerActions}
                   aria-label="edit message"
                   onClick={() => editComment(comment.id)}
+                  size="large"
                 >
                   <EditIcon />
                 </IconButton>

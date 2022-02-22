@@ -1,14 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
+import CheckIcon from '@mui/icons-material/Check';
+import SettingsIcon from '@mui/icons-material/Settings';
+import { IconButton } from '@mui/material';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import TextField from '@mui/material/TextField';
+import { darken } from '@mui/material/styles';
+import makeStyles from '@mui/styles/makeStyles';
+import withStyles from '@mui/styles/withStyles';
 import * as React from 'react';
-
-import { IconButton } from '@material-ui/core';
-import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem';
-import TextField from '@material-ui/core/TextField';
-import { makeStyles, withStyles } from '@material-ui/core/styles';
-import { darken } from '@material-ui/core/styles/colorManipulator';
-import CheckIcon from '@material-ui/icons/Check';
-import SettingsIcon from '@material-ui/icons/Settings';
+import { useEffect, useRef, useState } from 'react';
 
 import { Color } from '../../../gqlTypes';
 import {
@@ -109,7 +109,7 @@ function FilterDropdown({
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState<string>('');
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const searchRef = useRef<HTMLButtonElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
   const classes = useStyles({ active: false });
 
   useEffect(() => {
@@ -125,6 +125,7 @@ function FilterDropdown({
           onClick={() => setOpen(!open)}
           className={classes.gearBtn}
           disableRipple
+          size="large"
         >
           <SettingsIcon fontSize={'small'} />
         </IconButton>
@@ -132,8 +133,6 @@ function FilterDropdown({
 
       <Menu
         className={classes.menu}
-        getContentAnchorEl={null}
-        ref={searchRef}
         anchorOrigin={{
           vertical: 'bottom',
           horizontal: 'left',
@@ -147,7 +146,6 @@ function FilterDropdown({
           setOpen(false);
           onClose();
         }}
-        onExited={() => setFilter('')}
         anchorEl={buttonRef.current}
         PaperProps={{
           style: {
@@ -155,9 +153,13 @@ function FilterDropdown({
             width: '25ch',
           },
         }}
+        TransitionProps={{
+          onExited: () => setFilter(''),
+        }}
       >
         {hasFilter && (
           <CustomTextField
+            inputRef={searchRef}
             onChange={(e) => {
               const { value } = e.target;
               setFilter(value);

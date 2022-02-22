@@ -1,9 +1,6 @@
-import { Chip } from '@material-ui/core';
-import { common } from '@material-ui/core/colors';
-import {
-  darken,
-  getContrastRatio,
-} from '@material-ui/core/styles/colorManipulator';
+import { Chip } from '@mui/material';
+import { common } from '@mui/material/colors';
+import { darken, getContrastRatio } from '@mui/material/styles';
 
 import { Color } from '../gqlTypes';
 import { LabelFragment } from '../graphql/fragments.generated';

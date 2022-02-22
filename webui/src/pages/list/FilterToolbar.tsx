@@ -1,11 +1,10 @@
 import { pipe } from '@arrows/composition';
+import CheckCircleOutline from '@mui/icons-material/CheckCircleOutline';
+import ErrorOutline from '@mui/icons-material/ErrorOutline';
+import Toolbar from '@mui/material/Toolbar';
+import makeStyles from '@mui/styles/makeStyles';
 import * as React from 'react';
 import { Location } from 'react-router-dom';
-
-import Toolbar from '@material-ui/core/Toolbar';
-import { makeStyles } from '@material-ui/core/styles';
-import CheckCircleOutline from '@material-ui/icons/CheckCircleOutline';
-import ErrorOutline from '@material-ui/icons/ErrorOutline';
 
 import {
   Filter,

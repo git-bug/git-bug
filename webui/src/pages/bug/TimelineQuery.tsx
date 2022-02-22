@@ -1,4 +1,4 @@
-import CircularProgress from '@material-ui/core/CircularProgress';
+import CircularProgress from '@mui/material/CircularProgress';
 
 import { BugFragment } from './Bug.generated';
 import Timeline from './Timeline';
