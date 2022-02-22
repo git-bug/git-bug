@@ -1,5 +1,5 @@
 import { FormEvent, useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import { Button, Paper } from '@material-ui/core';
 import { makeStyles, Theme } from '@material-ui/core/styles';
@@ -49,7 +49,7 @@ function NewBugPage() {
   const classes = useStyles();
 
   let issueTitleInput: any;
-  let history = useHistory();
+  let navigate = useNavigate();
 
   function submitNewIssue(e: FormEvent) {
     e.preventDefault();
@@ -63,7 +63,7 @@ function NewBugPage() {
       },
     }).then(function (data) {
       const id = data.data?.newBug.bug.id;
-      history.push('/bug/' + id);
+      navigate('/bug/' + id);
     });
     issueTitleInput.value = '';
   }

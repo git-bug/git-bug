@@ -1,8 +1,7 @@
 import clsx from 'clsx';
-import { LocationDescriptor } from 'history';
 import { useRef, useState, useEffect } from 'react';
 import * as React from 'react';
-import { Link } from 'react-router-dom';
+import { Location, Link } from 'react-router-dom';
 
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
@@ -138,7 +137,7 @@ type FilterDropdownProps = {
   dropdown: DropdownTuple[];
   itemActive: (key: string) => boolean;
   icon?: React.ComponentType<SvgIconProps>;
-  to: (key: string) => LocationDescriptor;
+  to: (key: string) => Location;
   hasFilter?: boolean;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>;
 
@@ -240,7 +239,7 @@ function FilterDropdown({
 
 export type FilterProps = {
   active: boolean;
-  to: LocationDescriptor; // the target on click
+  to: Location; // the target on click
   icon?: React.ComponentType<SvgIconProps>;
   children: React.ReactNode;
 };

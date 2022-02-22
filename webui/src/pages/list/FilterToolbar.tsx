@@ -1,6 +1,6 @@
 import { pipe } from '@arrows/composition';
-import { LocationDescriptor } from 'history';
 import * as React from 'react';
+import { Location } from 'react-router-dom';
 
 import Toolbar from '@material-ui/core/Toolbar';
 import { makeStyles } from '@material-ui/core/styles';
@@ -68,7 +68,7 @@ function quoteLabel(value: string) {
 
 type Props = {
   query: string;
-  queryLocation: (query: string) => LocationDescriptor;
+  queryLocation: (query: string) => Location;
 };
 
 function FilterToolbar({ query, queryLocation }: Props) {

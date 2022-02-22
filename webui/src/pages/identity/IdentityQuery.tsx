@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { RouteComponentProps } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 
 import CircularProgress from '@material-ui/core/CircularProgress';
 
@@ -7,13 +7,12 @@ import { useGetUserByIdQuery } from '../../components/Identity/UserIdentity.gene
 
 import Identity from './Identity';
 
-type Props = RouteComponentProps<{
-  id: string;
-}>;
+const UserQuery: React.FC = () => {
+  const params = useParams<'id'>();
+  if (params.id === undefined) throw new Error();
 
-const UserQuery: React.FC<Props> = ({ match }: Props) => {
   const { loading, error, data } = useGetUserByIdQuery({
-    variables: { userId: match.params.id },
+    variables: { userId: params.id },
   });
   if (loading) return <CircularProgress />;
   if (error) return <p>Error: {error}</p>;

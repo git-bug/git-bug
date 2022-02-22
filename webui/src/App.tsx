@@ -1,4 +1,4 @@
-import { Route, Switch } from 'react-router';
+import { Route, Routes } from 'react-router-dom';
 
 import Layout from './components/Header';
 import BugPage from './pages/bug';
@@ -10,13 +10,13 @@ import NotFoundPage from './pages/notfound/NotFoundPage';
 export default function App() {
   return (
     <Layout>
-      <Switch>
-        <Route path="/" exact component={ListPage} />
-        <Route path="/new" exact component={NewBugPage} />
-        <Route path="/bug/:id" exact component={BugPage} />
-        <Route path="/user/:id" exact component={IdentityPage} />
-        <Route component={NotFoundPage} />
-      </Switch>
+      <Routes>
+        <Route path="/" element={<ListPage />} />
+        <Route path="/new" element={<NewBugPage />} />
+        <Route path="/bug/:id" element={<BugPage />} />
+        <Route path="/user/:id" element={<IdentityPage />} />
+        <Route element={<NotFoundPage />} />
+      </Routes>
     </Layout>
   );
 }

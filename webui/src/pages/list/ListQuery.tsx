@@ -2,7 +2,7 @@ import { ApolloError } from '@apollo/client';
 import { pipe } from '@arrows/composition';
 import { useState, useEffect, useRef } from 'react';
 import * as React from 'react';
-import { useLocation, useHistory, Link } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 
 import { Button, FormControl, Menu, MenuItem } from '@material-ui/core';
 import IconButton from '@material-ui/core/IconButton';
@@ -185,7 +185,7 @@ const Error: React.FC<ErrorProps> = ({ error }: ErrorProps) => {
 
 function ListQuery() {
   const location = useLocation();
-  const history = useHistory();
+  const navigate = useNavigate();
   const params = new URLSearchParams(location.search);
   const query = params.has('q') ? params.get('q') || '' : 'status:open';
 
@@ -290,7 +290,7 @@ function ListQuery() {
 
   const formSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    history.push(queryLocation(input));
+    navigate(queryLocation(input));
   };
 
   const {
