@@ -1,18 +1,6 @@
 module.exports = {
-  extends: [
-    'react-app',
-    'prettier',
-    'plugin:prettier/recommended',
-  ],
-  plugins: ['graphql'],
+  extends: ['react-app', 'prettier', 'plugin:prettier/recommended'],
   rules: {
-    'graphql/template-strings': [
-      'error',
-      {
-        schemaJson: require('./src/schema.json'),
-        env: 'literal',
-      },
-    ],
     'import/order': [
       'error',
       {
@@ -29,8 +17,12 @@ module.exports = {
             position: 'after',
           },
         ],
-        pathGroupsExcludedImportTypes: ["builtin"],
-        groups: [['builtin', 'external'], ['internal', 'parent'], ['sibling', 'index']],
+        pathGroupsExcludedImportTypes: ['builtin'],
+        groups: [
+          ['builtin', 'external'],
+          ['internal', 'parent'],
+          ['sibling', 'index'],
+        ],
         'newlines-between': 'always',
       },
     ],
@@ -39,4 +31,19 @@ module.exports = {
     'import/internal-regex': '^src/',
   },
   ignorePatterns: ['**/*.generated.tsx'],
+
+  overrides: [
+    {
+      files: ['*.graphql'],
+      parser: '@graphql-eslint/eslint-plugin',
+      plugins: ['@graphql-eslint'],
+      rules: {
+        '@graphql-eslint/known-type-names': 'error',
+      },
+      parserOptions: {
+        schema: './src/schema.json',
+        operations: './src/**/*.graphql'
+      }
+    },
+  ],
 };
