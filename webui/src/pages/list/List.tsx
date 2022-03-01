@@ -1,7 +1,5 @@
-import React from 'react';
-
-import Table from '@material-ui/core/Table/Table';
-import TableBody from '@material-ui/core/TableBody/TableBody';
+import Table from '@mui/material/Table/Table';
+import TableBody from '@mui/material/TableBody/TableBody';
 
 import BugRow from './BugRow';
 import { BugListFragment } from './ListQuery.generated';

@@ -1,6 +1,5 @@
-import React from 'react';
-
-import { makeStyles } from '@material-ui/styles';
+import { makeStyles } from '@mui/styles';
+import * as React from 'react';
 
 const useStyles = makeStyles({
   tag: {
@@ -9,7 +8,7 @@ const useStyles = makeStyles({
   },
 });
 
-const PreTag = (props: React.HTMLProps<HTMLPreElement>) => {
+const PreTag: React.FC<React.HTMLProps<HTMLPreElement>> = (props) => {
   const classes = useStyles();
   return <pre className={classes.tag} {...props} />;
 };

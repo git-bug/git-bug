@@ -1,18 +1,19 @@
 import { ApolloError } from '@apollo/client';
 import { pipe } from '@arrows/composition';
-import React, { useState, useEffect, useRef } from 'react';
-import { useLocation, useHistory, Link } from 'react-router-dom';
-
-import { Button, FormControl, Menu, MenuItem } from '@material-ui/core';
-import IconButton from '@material-ui/core/IconButton';
-import InputBase from '@material-ui/core/InputBase';
-import Paper from '@material-ui/core/Paper';
-import { makeStyles, Theme } from '@material-ui/core/styles';
-import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
-import ErrorOutline from '@material-ui/icons/ErrorOutline';
-import KeyboardArrowLeft from '@material-ui/icons/KeyboardArrowLeft';
-import KeyboardArrowRight from '@material-ui/icons/KeyboardArrowRight';
-import Skeleton from '@material-ui/lab/Skeleton';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import ErrorOutline from '@mui/icons-material/ErrorOutline';
+import KeyboardArrowLeft from '@mui/icons-material/KeyboardArrowLeft';
+import KeyboardArrowRight from '@mui/icons-material/KeyboardArrowRight';
+import { Button, FormControl, Menu, MenuItem } from '@mui/material';
+import IconButton from '@mui/material/IconButton';
+import InputBase from '@mui/material/InputBase';
+import Paper from '@mui/material/Paper';
+import Skeleton from '@mui/material/Skeleton';
+import { Theme } from '@mui/material/styles';
+import makeStyles from '@mui/styles/makeStyles';
+import * as React from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 
 import { useCurrentIdentityQuery } from '../../components/Identity/CurrentIdentity.generated';
 import IfLoggedIn from 'src/components/IfLoggedIn/IfLoggedIn';
@@ -87,7 +88,7 @@ const useStyles = makeStyles<Theme, StylesProps>((theme) => ({
     ...theme.typography.h5,
     padding: theme.spacing(8),
     textAlign: 'center',
-    color: theme.palette.text.hint,
+    color: theme.palette.text.primary,
     borderBottomColor: theme.palette.divider,
     borderBottomWidth: '1px',
     borderBottomStyle: 'solid',
@@ -140,7 +141,7 @@ const Placeholder: React.FC<PlaceholderProps> = ({
         <div key={i} className={classes.placeholderRow}>
           <Skeleton
             className={classes.placeholderRowStatus}
-            variant="circle"
+            variant="circular"
             width={20}
             height={20}
           />
@@ -184,7 +185,7 @@ const Error: React.FC<ErrorProps> = ({ error }: ErrorProps) => {
 
 function ListQuery() {
   const location = useLocation();
-  const history = useHistory();
+  const navigate = useNavigate();
   const params = new URLSearchParams(location.search);
   const query = params.has('q') ? params.get('q') || '' : 'status:open';
 
@@ -289,7 +290,7 @@ function ListQuery() {
 
   const formSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    history.push(queryLocation(input));
+    navigate(queryLocation(input));
   };
 
   const {
@@ -304,12 +305,12 @@ function ListQuery() {
 
   const loc = pipe(stringify, queryLocation);
   const qparams: Query = parse(query);
-  const replaceParam = (key: string, value: string) => (
-    params: Query
-  ): Query => ({
-    ...params,
-    [key]: [value],
-  });
+  const replaceParam =
+    (key: string, value: string) =>
+    (params: Query): Query => ({
+      ...params,
+      [key]: [value],
+    });
 
   return (
     <Paper className={classes.main}>
@@ -326,7 +327,6 @@ function ListQuery() {
             <Menu
               open={filterMenuIsOpen}
               onClose={() => setFilterMenuIsOpen(false)}
-              getContentAnchorEl={null}
               anchorEl={filterButtonRef.current}
               anchorOrigin={{
                 vertical: 'bottom',
@@ -381,21 +381,21 @@ function ListQuery() {
       {content}
       <div className={classes.pagination}>
         {previousPage ? (
-          <IconButton component={Link} to={previousPage}>
+          <IconButton component={Link} to={previousPage} size="large">
             <KeyboardArrowLeft />
           </IconButton>
         ) : (
-          <IconButton disabled>
+          <IconButton disabled size="large">
             <KeyboardArrowLeft />
           </IconButton>
         )}
         <div>{loading ? 'Loading' : `Total: ${count}`}</div>
         {nextPage ? (
-          <IconButton component={Link} to={nextPage}>
+          <IconButton component={Link} to={nextPage} size="large">
             <KeyboardArrowRight />
           </IconButton>
         ) : (
-          <IconButton disabled>
+          <IconButton disabled size="large">
             <KeyboardArrowRight />
           </IconButton>
         )}

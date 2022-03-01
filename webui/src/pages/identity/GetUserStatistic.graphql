@@ -1,8 +1,12 @@
-query GetUserStatistic($authorQuery: String!, $participantQuery: String!, $actionQuery: String!) {
+query GetUserStatistic(
+  $authorQuery: String!
+  $participantQuery: String!
+  $actionQuery: String!
+) {
   repository {
     authored: allBugs(query: $authorQuery) {
       totalCount
-    },
+    }
     participated: allBugs(query: $participantQuery) {
       totalCount
     }

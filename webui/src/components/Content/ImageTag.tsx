@@ -1,6 +1,5 @@
-import React from 'react';
-
-import { makeStyles } from '@material-ui/styles';
+import { makeStyles } from '@mui/styles';
+import * as React from 'react';
 
 const useStyles = makeStyles({
   tag: {
@@ -8,10 +7,10 @@ const useStyles = makeStyles({
   },
 });
 
-const ImageTag = ({
+const ImageTag: React.FC<React.ImgHTMLAttributes<HTMLImageElement>> = ({
   alt,
   ...props
-}: React.ImgHTMLAttributes<HTMLImageElement>) => {
+}) => {
   const classes = useStyles();
   return (
     <>

@@ -1,10 +1,15 @@
-import React, { createContext, useContext, useState } from 'react';
+import { NightsStayRounded, WbSunnyRounded } from '@mui/icons-material';
+import { ThemeProvider, StyledEngineProvider } from '@mui/material';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import { Theme } from '@mui/material/styles';
+import * as React from 'react';
+import { createContext, useContext, useState } from 'react';
 
-import { ThemeProvider } from '@material-ui/core';
-import IconButton from '@material-ui/core/IconButton';
-import Tooltip from '@material-ui/core/Tooltip';
-import { Theme } from '@material-ui/core/styles';
-import { NightsStayRounded, WbSunnyRounded } from '@material-ui/icons';
+declare module '@mui/styles/defaultTheme' {
+  // eslint-disable-next-line @typescript-eslint/no-empty-interface
+  interface DefaultTheme extends Theme {}
+}
 
 const ThemeContext = createContext({
   toggleMode: () => {},
@@ -25,6 +30,7 @@ const LightSwitch = ({ className }: LightSwitchProps) => {
         onClick={toggleMode}
         aria-label={description}
         className={className}
+        size="large"
       >
         {mode === 'light' ? <WbSunnyRounded /> : <NightsStayRounded />}
       </IconButton>
@@ -52,7 +58,9 @@ const Themer = ({ children, lightTheme, darkTheme }: Props) => {
 
   return (
     <ThemeContext.Provider value={{ toggleMode: toggleMode, mode: mode }}>
-      <ThemeProvider theme={preferedTheme}>{children}</ThemeProvider>
+      <StyledEngineProvider injectFirst>
+        <ThemeProvider theme={preferedTheme}>{children}</ThemeProvider>
+      </StyledEngineProvider>
     </ThemeContext.Provider>
   );
 };

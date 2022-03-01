@@ -1,13 +1,11 @@
-import React from 'react';
+import InfoIcon from '@mui/icons-material/Info';
+import MailOutlineIcon from '@mui/icons-material/MailOutline';
+import { Link, Paper, Typography } from '@mui/material';
+import Avatar from '@mui/material/Avatar';
+import CircularProgress from '@mui/material/CircularProgress';
+import Grid from '@mui/material/Grid';
+import makeStyles from '@mui/styles/makeStyles';
 import { Link as RouterLink } from 'react-router-dom';
-
-import { Link, Paper, Typography } from '@material-ui/core';
-import Avatar from '@material-ui/core/Avatar';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import Grid from '@material-ui/core/Grid';
-import { makeStyles } from '@material-ui/core/styles';
-import InfoIcon from '@material-ui/icons/Info';
-import MailOutlineIcon from '@material-ui/icons/MailOutline';
 
 import { IdentityFragment } from '../../components/Identity/IdentityFragment.generated';
 
@@ -99,7 +97,11 @@ const Identity = ({ identity }: Props) => {
                   }}
                 >
                   <MailOutlineIcon />
-                  <Link href={'mailto:' + user?.email} color={'inherit'}>
+                  <Link
+                    href={'mailto:' + user?.email}
+                    color={'inherit'}
+                    underline="hover"
+                  >
                     {user?.email}
                   </Link>
                 </Typography>
@@ -113,6 +115,7 @@ const Identity = ({ identity }: Props) => {
                 component={RouterLink}
                 to={`/?q=author%3A${user?.id}+sort%3Acreation`}
                 color={'inherit'}
+                underline="hover"
               >
                 <Typography variant="subtitle1">
                   Created {authoredCount} bugs.
@@ -122,6 +125,7 @@ const Identity = ({ identity }: Props) => {
                 component={RouterLink}
                 to={`/?q=participant%3A${user?.id}+sort%3Acreation`}
                 color={'inherit'}
+                underline="hover"
               >
                 <Typography variant="subtitle1">
                   Participated to {participatedCount} bugs.
@@ -131,6 +135,7 @@ const Identity = ({ identity }: Props) => {
                 component={RouterLink}
                 to={`/?q=actor%3A${user?.id}+sort%3Acreation`}
                 color={'inherit'}
+                underline="hover"
               >
                 <Typography variant="subtitle1">
                   Interacted with {actionCount} bugs.

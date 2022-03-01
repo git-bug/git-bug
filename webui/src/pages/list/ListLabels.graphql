@@ -1,10 +1,14 @@
 query ListLabels {
-    repository {
-        validLabels {
-            nodes {
-                name,
-                color{R,G,B}
-            }
+  repository {
+    validLabels {
+      nodes {
+        name
+        color {
+          R
+          G
+          B
         }
+      }
     }
+  }
 }

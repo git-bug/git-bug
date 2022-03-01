@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import { Button, Typography } from '@mui/material';
+import makeStyles from '@mui/styles/makeStyles';
+import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-
-import { Button, makeStyles, Typography } from '@material-ui/core';
 
 import { TimelineDocument } from '../../pages/bug/TimelineQuery.generated';
 import IfLoggedIn from '../IfLoggedIn/IfLoggedIn';
@@ -71,11 +71,11 @@ function BugTitleForm({ bug }: Props) {
   const [setTitle, { loading, error }] = useSetTitleMutation();
   const [issueTitle, setIssueTitle] = useState(bug.title);
   const classes = useStyles();
-  let issueTitleInput: any;
+  const issueTitleInput = useRef<HTMLInputElement>();
 
   function isFormValid() {
-    if (issueTitleInput) {
-      return issueTitleInput.value.length > 0;
+    if (issueTitleInput.current) {
+      return issueTitleInput.current.value.length > 0;
     } else {
       return false;
     }
@@ -83,7 +83,7 @@ function BugTitleForm({ bug }: Props) {
 
   function submitNewTitle() {
     if (!isFormValid()) return;
-    if (bug.title === issueTitleInput.value) {
+    if (bug.title === issueTitleInput.current?.value) {
       cancelChange();
       return;
     }
@@ -91,7 +91,7 @@ function BugTitleForm({ bug }: Props) {
       variables: {
         input: {
           prefix: bug.id,
-          title: issueTitleInput.value,
+          title: issueTitleInput.current!!.value,
         },
       },
       refetchQueries: [
@@ -117,9 +117,7 @@ function BugTitleForm({ bug }: Props) {
     return (
       <form className={classes.headerTitle}>
         <BugTitleInput
-          inputRef={(node) => {
-            issueTitleInput = node;
-          }}
+          inputRef={issueTitleInput}
           label="Title"
           variant="outlined"
           fullWidth

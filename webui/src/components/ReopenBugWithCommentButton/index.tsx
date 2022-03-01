@@ -1,7 +1,5 @@
-import React from 'react';
-
-import Button from '@material-ui/core/Button';
-import CircularProgress from '@material-ui/core/CircularProgress';
+import Button from '@mui/material/Button';
+import CircularProgress from '@mui/material/CircularProgress';
 
 import { BugFragment } from 'src/pages/bug/Bug.generated';
 import { TimelineDocument } from 'src/pages/bug/TimelineQuery.generated';
@@ -15,10 +13,8 @@ interface Props {
 }
 
 function ReopenBugWithCommentButton({ bug, comment, postClick }: Props) {
-  const [
-    addCommentAndReopenBug,
-    { loading, error },
-  ] = useAddCommentAndReopenBugMutation();
+  const [addCommentAndReopenBug, { loading, error }] =
+    useAddCommentAndReopenBugMutation();
 
   function addCommentAndReopenBugAction() {
     addCommentAndReopenBug({

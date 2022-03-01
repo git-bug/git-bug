@@ -1,7 +1,6 @@
-import React from 'react';
+import makeStyles from '@mui/styles/makeStyles';
+import * as React from 'react';
 import { Link } from 'react-router-dom';
-
-import { makeStyles } from '@material-ui/core/styles';
 
 const useStyles = makeStyles((theme) => ({
   tag: {
@@ -9,7 +8,10 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const AnchorTag = ({ children, href }: React.HTMLProps<HTMLAnchorElement>) => {
+const AnchorTag: React.FC = ({
+  children,
+  href,
+}: React.HTMLProps<HTMLAnchorElement>) => {
   const classes = useStyles();
   const origin = window.location.origin;
   const destination = href === undefined ? '' : href;

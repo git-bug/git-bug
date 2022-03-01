@@ -1,8 +1,9 @@
-import React, { useState, useRef } from 'react';
-
-import Button from '@material-ui/core/Button';
-import Paper from '@material-ui/core/Paper';
-import { makeStyles, Theme } from '@material-ui/core/styles';
+import Button from '@mui/material/Button';
+import Paper from '@mui/material/Paper';
+import { Theme } from '@mui/material/styles';
+import makeStyles from '@mui/styles/makeStyles';
+import * as React from 'react';
+import { useState, useRef } from 'react';
 
 import CommentInput from '../../components/CommentInput/CommentInput';
 import CloseBugButton from 'src/components/CloseBugButton';

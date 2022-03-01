@@ -1,8 +1,8 @@
-import React, { FormEvent, useState } from 'react';
-import { useHistory } from 'react-router-dom';
-
-import { Button, Paper } from '@material-ui/core';
-import { makeStyles, Theme } from '@material-ui/core/styles';
+import { Button, Paper } from '@mui/material';
+import { Theme } from '@mui/material/styles';
+import makeStyles from '@mui/styles/makeStyles';
+import { FormEvent, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import BugTitleInput from '../../components/BugTitleForm/BugTitleInput';
 import CommentInput from '../../components/CommentInput/CommentInput';
@@ -48,8 +48,8 @@ function NewBugPage() {
   const [issueComment, setIssueComment] = useState('');
   const classes = useStyles();
 
-  let issueTitleInput: any;
-  let history = useHistory();
+  const issueTitleInput = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
 
   function submitNewIssue(e: FormEvent) {
     e.preventDefault();
@@ -63,9 +63,12 @@ function NewBugPage() {
       },
     }).then(function (data) {
       const id = data.data?.newBug.bug.id;
-      history.push('/bug/' + id);
+      navigate('/bug/' + id);
     });
-    issueTitleInput.value = '';
+
+    if (issueTitleInput.current) {
+      issueTitleInput.current.value = '';
+    }
   }
 
   function isFormValid() {
@@ -79,9 +82,7 @@ function NewBugPage() {
     <Paper className={classes.main}>
       <form className={classes.form} onSubmit={submitNewIssue}>
         <BugTitleInput
-          inputRef={(node) => {
-            issueTitleInput = node;
-          }}
+          inputRef={issueTitleInput}
           label="Title"
           variant="outlined"
           fullWidth

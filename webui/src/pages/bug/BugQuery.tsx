@@ -1,20 +1,18 @@
-import React from 'react';
-import { RouteComponentProps } from 'react-router-dom';
-
-import CircularProgress from '@material-ui/core/CircularProgress';
+import CircularProgress from '@mui/material/CircularProgress';
+import * as React from 'react';
+import { useParams } from 'react-router-dom';
 
 import NotFoundPage from '../notfound/NotFoundPage';
 
 import Bug from './Bug';
 import { useGetBugQuery } from './BugQuery.generated';
 
-type Props = RouteComponentProps<{
-  id: string;
-}>;
+const BugQuery: React.FC = () => {
+  const params = useParams<'id'>();
+  if (params.id === undefined) throw new Error('missing route parameters');
 
-const BugQuery: React.FC<Props> = ({ match }: Props) => {
   const { loading, error, data } = useGetBugQuery({
-    variables: { id: match.params.id },
+    variables: { id: params.id },
   });
   if (loading) return <CircularProgress />;
   if (!data?.repository?.bug) return <NotFoundPage />;

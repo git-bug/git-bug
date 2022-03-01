@@ -1,9 +1,7 @@
-import React from 'react';
+import MAvatar from '@mui/material/Avatar';
+import Link from '@mui/material/Link';
+import Tooltip from '@mui/material/Tooltip/Tooltip';
 import { Link as RouterLink } from 'react-router-dom';
-
-import MAvatar from '@material-ui/core/Avatar';
-import Link from '@material-ui/core/Link';
-import Tooltip from '@material-ui/core/Tooltip/Tooltip';
 
 import { AuthoredFragment } from '../graphql/fragments.generated';
 
@@ -15,7 +13,12 @@ type Props = AuthoredFragment & {
 const Author = ({ author, ...props }: Props) => {
   return (
     <Tooltip title={`Goto the ${author.displayName}'s profile.`}>
-      <Link {...props} component={RouterLink} to={`/user/${author.id}`}>
+      <Link
+        {...props}
+        component={RouterLink}
+        to={`/user/${author.id}`}
+        underline="hover"
+      >
         {author.displayName}
       </Link>
     </Tooltip>

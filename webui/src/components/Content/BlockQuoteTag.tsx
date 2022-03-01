@@ -1,6 +1,5 @@
-import React from 'react';
-
-import { makeStyles } from '@material-ui/core/styles';
+import makeStyles from '@mui/styles/makeStyles';
+import * as React from 'react';
 
 const useStyles = makeStyles((theme) => ({
   tag: {
@@ -13,7 +12,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const BlockQuoteTag = (props: React.HTMLProps<HTMLPreElement>) => {
+const BlockQuoteTag: React.FC<React.HTMLProps<HTMLElement>> = (props) => {
   const classes = useStyles();
   return <blockquote className={classes.tag} {...props} />;
 };

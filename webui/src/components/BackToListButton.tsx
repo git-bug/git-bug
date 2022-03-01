@@ -1,9 +1,7 @@
-import React from 'react';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import Button from '@mui/material/Button';
+import makeStyles from '@mui/styles/makeStyles';
 import { Link } from 'react-router-dom';
-
-import Button from '@material-ui/core/Button';
-import { makeStyles } from '@material-ui/core/styles';
-import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 
 const useStyles = makeStyles((theme) => ({
   backButton: {

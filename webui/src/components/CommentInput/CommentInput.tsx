@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-
-import { Typography } from '@material-ui/core';
-import Tab from '@material-ui/core/Tab';
-import Tabs from '@material-ui/core/Tabs';
-import TextField from '@material-ui/core/TextField';
-import { makeStyles } from '@material-ui/core/styles';
+import { Typography } from '@mui/material';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
+import TextField from '@mui/material/TextField';
+import makeStyles from '@mui/styles/makeStyles';
+import * as React from 'react';
+import { useState, useEffect } from 'react';
 
 import Content from '../Content';
 

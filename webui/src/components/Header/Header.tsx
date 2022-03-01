@@ -1,12 +1,11 @@
-import React from 'react';
+import AppBar from '@mui/material/AppBar';
+import Tab, { TabProps } from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
+import Toolbar from '@mui/material/Toolbar';
+import Tooltip from '@mui/material/Tooltip/Tooltip';
+import { alpha } from '@mui/material/styles';
+import makeStyles from '@mui/styles/makeStyles';
 import { Link, useLocation } from 'react-router-dom';
-
-import AppBar from '@material-ui/core/AppBar';
-import Tab, { TabProps } from '@material-ui/core/Tab';
-import Tabs from '@material-ui/core/Tabs';
-import Toolbar from '@material-ui/core/Toolbar';
-import Tooltip from '@material-ui/core/Tooltip/Tooltip';
-import { fade, makeStyles } from '@material-ui/core/styles';
 
 import CurrentIdentity from '../Identity/CurrentIdentity';
 import { LightSwitch } from '../Themer';
@@ -31,7 +30,7 @@ const useStyles = makeStyles((theme) => ({
   },
   lightSwitch: {
     marginRight: '20px',
-    color: fade(theme.palette.primary.contrastText, 0.5),
+    color: alpha(theme.palette.primary.contrastText, 0.5),
   },
   logo: {
     height: '42px',

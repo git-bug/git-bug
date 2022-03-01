@@ -1,6 +1,4 @@
-import React from 'react';
-import { Link as RouterLink } from 'react-router-dom';
-
+import LockIcon from '@mui/icons-material/Lock';
 import {
   Button,
   ClickAwayListener,
@@ -10,10 +8,11 @@ import {
   MenuList,
   Paper,
   Popper,
-} from '@material-ui/core';
-import Avatar from '@material-ui/core/Avatar';
-import { makeStyles } from '@material-ui/core/styles';
-import LockIcon from '@material-ui/icons/Lock';
+} from '@mui/material';
+import Avatar from '@mui/material/Avatar';
+import makeStyles from '@mui/styles/makeStyles';
+import { useState, useRef } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 
 import { useCurrentIdentityQuery } from './CurrentIdentity.generated';
 
@@ -37,8 +36,8 @@ const CurrentIdentity = () => {
   const classes = useStyles();
   const { loading, error, data } = useCurrentIdentityQuery();
 
-  const [open, setOpen] = React.useState(false);
-  const anchorRef = React.useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+  const anchorRef = useRef<HTMLButtonElement>(null);
 
   if (error || loading || !data?.repository?.userIdentity) return null;
 
@@ -97,6 +96,7 @@ const CurrentIdentity = () => {
                       className={classes.profileLink}
                       component={RouterLink}
                       to={`/user/${user.id}`}
+                      underline="hover"
                     >
                       Open profile
                     </Link>
