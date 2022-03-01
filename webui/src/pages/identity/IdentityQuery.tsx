@@ -1,7 +1,6 @@
+import CircularProgress from '@mui/material/CircularProgress';
 import * as React from 'react';
 import { useParams } from 'react-router-dom';
-
-import CircularProgress from '@material-ui/core/CircularProgress';
 
 import { useGetUserByIdQuery } from '../../components/Identity/UserIdentity.generated';
 
