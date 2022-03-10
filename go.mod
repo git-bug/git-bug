@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/99designs/gqlgen v0.16.0
-	github.com/99designs/keyring v1.2.0
+	github.com/99designs/keyring v1.2.1
 	github.com/MichaelMure/go-term-text v0.3.1
 	github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7
 	github.com/araddon/dateparse v0.0.0-20190622164848-0fb0a474d195
