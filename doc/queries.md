@@ -21,7 +21,7 @@ A few tips:
 You can filter bugs based on their status.
 
 | Qualifier       | Example                             |
-| ---             | ---                                 |
+|-----------------|-------------------------------------|
 | `status:open`   | `status:open` matches open bugs     |
 | `status:closed` | `status:closed` matches closed bugs |
 
@@ -30,7 +30,7 @@ You can filter bugs based on their status.
 You can filter based on the person who opened the bug.
 
 | Qualifier      | Example                                                                          |
-| ---            | ---                                                                              |
+|----------------|----------------------------------------------------------------------------------|
 | `author:QUERY` | `author:descartes` matches bugs opened by `René Descartes` or `Robert Descartes` |
 |                | `author:"rené descartes"` matches bugs opened by `René Descartes`                |
 
@@ -39,7 +39,7 @@ You can filter based on the person who opened the bug.
 You can filter based on the person who participated in any activity related to the bug (opened bug or added a comment).
 
 | Qualifier           | Example                                                                                            |
-| ---                 | ---                                                                                                |
+|---------------------|----------------------------------------------------------------------------------------------------|
 | `participant:QUERY` | `participant:descartes` matches bugs opened or commented by `René Descartes` or `Robert Descartes` |
 |                     | `participant:"rené descartes"` matches bugs opened or commented by `René Descartes`                |
 
@@ -48,7 +48,7 @@ You can filter based on the person who participated in any activity related to t
 You can filter based on the person who interacted with the bug.
 
 | Qualifier     | Example                                                                         |
-| ---           | ---                                                                             |
+|---------------|---------------------------------------------------------------------------------|
 | `actor:QUERY` | `actor:descartes` matches bugs edited by `René Descartes` or `Robert Descartes` |
 |               | `actor:"rené descartes"` matches bugs edited by `René Descartes`                |
 
@@ -59,7 +59,7 @@ You can filter based on the person who interacted with the bug.
 You can filter based on the bug's label.
 
 | Qualifier     | Example                                                                   |
-| ---           | ---                                                                       |
+|---------------|---------------------------------------------------------------------------|
 | `label:LABEL` | `label:prod` matches bugs with the label `prod`                           |
 |               | `label:"Good first issue"` matches bugs with the label `Good first issue` |
 
@@ -68,7 +68,7 @@ You can filter based on the bug's label.
 You can filter based on the bug's title.
 
 | Qualifier     | Example                                                                        |
-| ---           | ---                                                                            |
+|---------------|--------------------------------------------------------------------------------|
 | `title:TITLE` | `title:Critical` matches bugs with a title containing `Critical`               |
 |               | `title:"Typo in string"` matches bugs with a title containing `Typo in string` |
 
@@ -78,7 +78,7 @@ You can filter based on the bug's title.
 You can filter bugs based on the absence of something.
 
 | Qualifier  | Example                                |
-| ---        | ---                                    |
+|------------|----------------------------------------|
 | `no:label` | `no:label` matches bugs with no labels |
 
 ## Sorting
@@ -90,7 +90,7 @@ Note: to deal with differently-set clocks on distributed computers, `git-bug` us
 ### Sort by Id
 
 | Qualifier                  | Example                                               |
-| ---                        | ---                                                   |
+|----------------------------|-------------------------------------------------------|
 | `sort:id-desc`             | `sort:id-desc` will sort bugs by their descending Ids |
 | `sort:id` or `sort:id-asc` | `sort:id` will sort bugs by their ascending Ids       |
 
@@ -99,7 +99,7 @@ Note: to deal with differently-set clocks on distributed computers, `git-bug` us
 You can sort bugs by their creation time.
 
 | Qualifier                               | Example                                                             |
-| ---                                     | ---                                                                 |
+|-----------------------------------------|---------------------------------------------------------------------|
 | `sort:creation` or `sort:creation-desc` | `sort:creation` will sort bugs by their descending creation time    |
 | `sort:creation-asc`                     | `sort:creation-asc` will sort bugs by their ascending creation time |
 
@@ -108,6 +108,6 @@ You can sort bugs by their creation time.
 You can sort bugs by their edit time.
 
 | Qualifier                       | Example                                                             |
-| ---                             | ---                                                                 |
+|---------------------------------|---------------------------------------------------------------------|
 | `sort:edit` or `sort:edit-desc` | `sort:edit` will sort bugs by their descending last edition time    |
 | `sort:edit-asc`                 | `sort:edit-asc` will sort bugs by their ascending last edition time |

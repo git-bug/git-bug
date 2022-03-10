@@ -381,9 +381,9 @@ func (i *Identity) NeedCommit() bool {
 //
 // To make sure that an Identity history can't be altered, a strict fast-forward
 // only policy is applied here. As an Identity should be tied to a single user, this
-// should work in practice but it does leave a possibility that a user would edit his
+// should work in practice, but it does leave a possibility that a user would edit his
 // Identity from two different repo concurrently and push the changes in a non-centralized
-// network of repositories. In this case, it would result in some of the repo accepting one
+// network of repositories. In this case, it would result in some repo accepting one
 // version and some other accepting another, preventing the network in general to converge
 // to the same result. This would create a sort of partition of the network, and manual
 // cleaning would be required.
@@ -396,9 +396,9 @@ func (i *Identity) NeedCommit() bool {
 // However, this approach leave the possibility, in the case of a compromised crypto keys,
 // of forging a new version with a bogus Lamport time to be inserted before a legit version,
 // invalidating the correct version and hijacking the Identity. There would only be a short
-// period of time where this would be possible (before the network converge) but I'm not
+// period of time when this would be possible (before the network converge) but I'm not
 // confident enough to implement that. I choose the strict fast-forward only approach,
-// despite it's potential problem with two different version as mentioned above.
+// despite its potential problem with two different version as mentioned above.
 func (i *Identity) Merge(repo repository.Repo, other *Identity) (bool, error) {
 	if i.Id() != other.Id() {
 		return false, errors.New("merging unrelated identities is not supported")

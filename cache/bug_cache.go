@@ -12,10 +12,10 @@ import (
 
 var ErrNoMatchingOp = fmt.Errorf("no matching operation found")
 
-// BugCache is a wrapper around a Bug. It provide multiple functions:
+// BugCache is a wrapper around a Bug. It provides multiple functions:
 //
 // 1. Provide a higher level API to use than the raw API from Bug.
-// 2. Maintain an up to date Snapshot available.
+// 2. Maintain an up-to-date Snapshot available.
 // 3. Deal with concurrency.
 type BugCache struct {
 	repoCache *RepoCache
@@ -235,7 +235,7 @@ func (c *BugCache) SetTitleRaw(author *IdentityCache, unixTime int64, title stri
 	return op, c.notifyUpdated()
 }
 
-// Convenience function to edit the body of a bug (the first comment)
+// EditCreateComment is a convenience function to edit the body of a bug (the first comment)
 func (c *BugCache) EditCreateComment(body string) (*bug.EditCommentOperation, error) {
 	author, err := c.repoCache.GetUserIdentity()
 	if err != nil {
@@ -245,7 +245,7 @@ func (c *BugCache) EditCreateComment(body string) (*bug.EditCommentOperation, er
 	return c.EditCreateCommentRaw(author, time.Now().Unix(), body, nil)
 }
 
-// Convenience function to edit the body of a bug (the first comment)
+// EditCreateCommentRaw is a convenience function to edit the body of a bug (the first comment)
 func (c *BugCache) EditCreateCommentRaw(author *IdentityCache, unixTime int64, body string, metadata map[string]string) (*bug.EditCommentOperation, error) {
 	c.mu.Lock()
 	op, err := bug.EditCreateComment(c.bug, author.Identity, unixTime, body)

@@ -22,7 +22,7 @@ import (
 //
 // A complete interleaved Id hold 50 characters for the primary and 14 for the
 // secondary, which give a key space of 36^50 for the primary (~6 * 10^77) and
-// 36^14 for the secondary (~6 * 10^21). This asymmetry assume a reasonable number
+// 36^14 for the secondary (~6 * 10^21). This asymmetry assumes a reasonable number
 // of secondary within a primary Entity, while still allowing for a vast key space
 // for the primary (that is, a globally merged database) with a low risk of collision.
 //

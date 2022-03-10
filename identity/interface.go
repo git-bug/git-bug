@@ -57,6 +57,6 @@ type Interface interface {
 	// Validate check if the Identity data is valid
 	Validate() error
 
-	// Indicate that the in-memory state changed and need to be commit in the repository
+	// NeedCommit indicate that the in-memory state changed and need to be committed in the repository
 	NeedCommit() bool
 }

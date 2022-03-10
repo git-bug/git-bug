@@ -81,7 +81,7 @@ func (opp *operationPack) Validate() error {
 	return nil
 }
 
-// Write write the OperationPack in git, with zero, one or more parent commits.
+// Write writes the OperationPack in git, with zero, one or more parent commits.
 // If the repository has a keypair able to sign (that is, with a private key), the resulting commit is signed with that key.
 // Return the hash of the created commit.
 func (opp *operationPack) Write(def Definition, repo repository.Repo, parentCommit ...repository.Hash) (repository.Hash, error) {

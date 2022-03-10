@@ -89,7 +89,7 @@ func MergeAll(def Definition, repo repository.ClockedRepo, resolver identity.Res
 	return out
 }
 
-// merge perform a merge to make sure a local Entity is up to date.
+// merge perform a merge to make sure a local Entity is up-to-date.
 // See MergeAll for more details.
 func merge(def Definition, repo repository.ClockedRepo, resolver identity.Resolver, remoteRef string, author identity.Interface) entity.MergeResult {
 	id := entity.RefToId(remoteRef)

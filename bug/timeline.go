@@ -10,7 +10,7 @@ import (
 )
 
 type TimelineItem interface {
-	// ID return the identifier of the item
+	// Id return the identifier of the item
 	Id() entity.Id
 }
 

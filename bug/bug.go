@@ -28,7 +28,7 @@ var def = dag.Definition{
 
 var ClockLoader = dag.ClockLoader(def)
 
-// Bug hold the data of a bug thread, organized in a way close to
+// Bug holds the data of a bug thread, organized in a way close to
 // how it will be persisted inside Git. This is the data structure
 // used to merge two different version of the same Bug.
 type Bug struct {

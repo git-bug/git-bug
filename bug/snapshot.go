@@ -26,7 +26,7 @@ type Snapshot struct {
 	Operations []Operation
 }
 
-// Return the Bug identifier
+// Id returns the Bug identifier
 func (snap *Snapshot) Id() entity.Id {
 	if snap.id == "" {
 		// simply panic as it would be a coding error (no id provided at construction)
@@ -35,7 +35,7 @@ func (snap *Snapshot) Id() entity.Id {
 	return snap.id
 }
 
-// Return the last time a bug was modified
+// EditTime returns the last time a bug was modified
 func (snap *Snapshot) EditTime() time.Time {
 	if len(snap.Operations) == 0 {
 		return time.Unix(0, 0)
