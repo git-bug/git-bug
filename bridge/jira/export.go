@@ -110,7 +110,7 @@ func (je *jiraExporter) cacheAllClient(ctx context.Context, repo *cache.RepoCach
 		}
 
 		if _, ok := je.identityClient[user.Id()]; !ok {
-			client, err := buildClient(ctx, je.conf[confKeyBaseUrl], je.conf[confKeyCredentialType], creds[0])
+			client, err := buildClient(ctx, je.conf[confKeyBaseUrl], je.conf[confKeyCredentialType], cred)
 			if err != nil {
 				return err
 			}
