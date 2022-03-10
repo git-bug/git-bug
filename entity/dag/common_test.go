@@ -67,7 +67,7 @@ func (o *op2) Author() identity.Interface {
 	return o.author
 }
 
-func unmarshaler(author identity.Interface, raw json.RawMessage) (Operation, error) {
+func unmarshaler(author identity.Interface, raw json.RawMessage, resolver identity.Resolver) (Operation, error) {
 	var t struct {
 		OperationType int `json:"type"`
 	}
