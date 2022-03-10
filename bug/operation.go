@@ -71,7 +71,7 @@ func idOperation(op Operation, base *OpBase) entity.Id {
 	return base.id
 }
 
-func operationUnmarshaller(author identity.Interface, raw json.RawMessage) (dag.Operation, error) {
+func operationUnmarshaller(author identity.Interface, raw json.RawMessage, resolver identity.Resolver) (dag.Operation, error) {
 	var t struct {
 		OperationType OperationType `json:"type"`
 	}

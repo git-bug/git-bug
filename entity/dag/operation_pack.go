@@ -314,7 +314,7 @@ func unmarshallPack(def Definition, resolver identity.Resolver, data []byte) ([]
 
 	for _, raw := range aux.Operations {
 		// delegate to specialized unmarshal function
-		op, err := def.OperationUnmarshaler(author, raw)
+		op, err := def.OperationUnmarshaler(author, raw, resolver)
 		if err != nil {
 			return nil, nil, err
 		}

@@ -26,7 +26,7 @@ type Definition struct {
 	// the Namespace in git references (bugs, prs, ...)
 	Namespace string
 	// a function decoding a JSON message into an Operation
-	OperationUnmarshaler func(author identity.Interface, raw json.RawMessage) (Operation, error)
+	OperationUnmarshaler func(author identity.Interface, raw json.RawMessage, resolver identity.Resolver) (Operation, error)
 	// the expected format version number, that can be used for data migration/upgrade
 	FormatVersion uint
 }
