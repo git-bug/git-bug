@@ -457,7 +457,7 @@ func (c *RepoCache) NewBugWithFiles(title string, message string, files []reposi
 	return c.NewBugRaw(author, time.Now().Unix(), title, message, files, nil)
 }
 
-// NewBugWithFilesMeta create a new bug with attached files for the message, as
+// NewBugRaw create a new bug with attached files for the message, as
 // well as metadata for the Create operation.
 // The new bug is written in the repository (commit)
 func (c *RepoCache) NewBugRaw(author *IdentityCache, unixTime int64, title string, message string, files []repository.Hash, metadata map[string]string) (*BugCache, *bug.CreateOperation, error) {

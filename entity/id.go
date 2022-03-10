@@ -63,7 +63,7 @@ func (i Id) MarshalGQL(w io.Writer) {
 	_, _ = w.Write([]byte(`"` + i.String() + `"`))
 }
 
-// IsValid tell if the Id is valid
+// Validate tell if the Id is valid
 func (i Id) Validate() error {
 	// Special case to detect outdated repo
 	if len(i) == 40 {

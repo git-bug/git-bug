@@ -21,9 +21,9 @@ const editClockPattern = "%s-edit"
 
 // Definition hold the details defining one specialization of an Entity.
 type Definition struct {
-	// the name of the entity (bug, pull-request, ...)
+	// the name of the entity (bug, pull-request, ...), for human consumption
 	Typename string
-	// the Namespace in git (bugs, prs, ...)
+	// the Namespace in git references (bugs, prs, ...)
 	Namespace string
 	// a function decoding a JSON message into an Operation
 	OperationUnmarshaler func(author identity.Interface, raw json.RawMessage) (Operation, error)
@@ -121,7 +121,7 @@ func read(def Definition, repo repository.ClockedRepo, resolver identity.Resolve
 
 	// Next step is to:
 	// 1) read the operationPacks
-	// 2) make sure that the clocks causality respect the DAG topology.
+	// 2) make sure that clocks causality respect the DAG topology.
 
 	oppMap := make(map[repository.Hash]*operationPack)
 	var opsCount int
