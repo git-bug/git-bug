@@ -40,25 +40,49 @@ func main() {
 }
 
 func genBash(root *cobra.Command) error {
-	cwd, _ := os.Getwd()
-	dir := filepath.Join(cwd, "misc", "bash_completion", "git-bug")
-	return root.GenBashCompletionFile(dir)
+	cwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	f, err := os.Create(filepath.Join(cwd, "misc", "bash_completion", "git-bug"))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	// Custom bash code to connect the git completion for "git bug" to the
+	// git-bug completion for "git-bug"
+	_, err = f.WriteString(`#TODO: completion code to map "git bug" to "git-bug"`)
+	if err != nil {
+		return err
+	}
+
+	return root.GenBashCompletionV2(f, true)
 }
 
 func genFish(root *cobra.Command) error {
-	cwd, _ := os.Getwd()
+	cwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
 	dir := filepath.Join(cwd, "misc", "fish_completion", "git-bug")
 	return root.GenFishCompletionFile(dir, true)
 }
 
 func genPowerShell(root *cobra.Command) error {
-	cwd, _ := os.Getwd()
+	cwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
 	path := filepath.Join(cwd, "misc", "powershell_completion", "git-bug")
 	return root.GenPowerShellCompletionFile(path)
 }
 
 func genZsh(root *cobra.Command) error {
-	cwd, _ := os.Getwd()
+	cwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
 	path := filepath.Join(cwd, "misc", "zsh_completion", "git-bug")
 	return root.GenZshCompletionFile(path)
 }
