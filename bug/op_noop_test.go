@@ -32,8 +32,7 @@ func TestNoopSerialize(t *testing.T) {
 	// enforce creating the ID
 	before.Id()
 
-	// Replace the identity stub with the real thing
-	assert.Equal(t, rene.Id(), after.Author().Id())
+	// Replace the identity as it's not serialized
 	after.Author_ = rene
 
 	assert.Equal(t, before, &after)
