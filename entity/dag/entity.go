@@ -205,7 +205,7 @@ func read(def Definition, repo repository.ClockedRepo, resolver identity.Resolve
 		if oppSlice[i].EditTime != oppSlice[j].EditTime {
 			return oppSlice[i].EditTime < oppSlice[j].EditTime
 		}
-		// We have equal EditTime, which means we have concurrent edition over different machines and we
+		// We have equal EditTime, which means we have concurrent edition over different machines, and we
 		// can't tell which one came first. So, what now? We still need a total ordering and the most stable possible.
 		// As a secondary ordering, we can order based on a hash of the serialized Operations in the
 		// operationPack. It doesn't carry much meaning but it's unbiased and hard to abuse.
