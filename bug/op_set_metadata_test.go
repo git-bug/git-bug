@@ -119,8 +119,7 @@ func TestSetMetadataSerialize(t *testing.T) {
 	// enforce creating the ID
 	before.Id()
 
-	// Replace the identity stub with the real thing
-	require.Equal(t, rene.Id(), after.Author().Id())
+	// Replace the identity as it's not serialized
 	after.Author_ = rene
 
 	require.Equal(t, before, &after)

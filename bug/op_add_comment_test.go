@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/MichaelMure/git-bug/identity"
@@ -22,18 +21,17 @@ func TestAddCommentSerialize(t *testing.T) {
 	before := NewAddCommentOp(rene, unix, "message", nil)
 
 	data, err := json.Marshal(before)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	var after AddCommentOperation
 	err = json.Unmarshal(data, &after)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// enforce creating the ID
 	before.Id()
 
-	// Replace the identity stub with the real thing
-	assert.Equal(t, rene.Id(), after.Author().Id())
+	// Replace the identity as it's not serialized
 	after.Author_ = rene
 
-	assert.Equal(t, before, &after)
+	require.Equal(t, before, &after)
 }
