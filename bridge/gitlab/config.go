@@ -200,7 +200,7 @@ func promptToken(baseUrl string) (*auth.Token, error) {
 	fmt.Println("'api' access scope: to be able to make api calls")
 	fmt.Println()
 
-	re := regexp.MustCompile(`^[a-zA-Z0-9\-\_]{20}$`)
+	re := regexp.MustCompile(`^(glpat-)?[a-zA-Z0-9\-\_]{20}$`)
 
 	var login string
 
