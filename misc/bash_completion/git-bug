@@ -1,4 +1,4 @@
-#TODO: completion code to map "git bug" to "git-bug"# bash completion V2 for git-bug                              -*- shell-script -*-
+# bash completion V2 for git-bug                              -*- shell-script -*-
 
 __git-bug_debug()
 {
@@ -286,3 +286,37 @@ else
 fi
 
 # ex: ts=4 sw=4 et filetype=sh
+
+_git_bug() {
+    local cur prev words cword split
+
+    COMPREPLY=()
+
+    # Call _init_completion from the bash-completion package
+    # to prepare the arguments properly
+    if declare -F _init_completion >/dev/null 2>&1; then
+        _init_completion -n "=:" || return
+    else
+        __git-bug_init_completion -n "=:" || return
+    fi
+
+	# START PATCH
+	# replace in the array ("git","bug", ...) to ("git-bug", ...) and adjust the index in cword 
+    words=("git-bug" "${words[@]:2}")
+    cword=$(($cword-1))
+	# END PATCH
+
+    __git-bug_debug
+    __git-bug_debug "========= starting completion logic =========="
+    __git-bug_debug "cur is ${cur}, words[*] is ${words[*]}, #words[@] is ${#words[@]}, cword is $cword"
+
+    # The user could have moved the cursor backwards on the command-line.
+    # We need to trigger completion from the $cword location, so we need
+    # to truncate the command-line ($words) up to the $cword location.
+    words=("${words[@]:0:$cword+1}")
+    __git-bug_debug "Truncated words[*]: ${words[*]},"
+
+    local out directive
+    __git-bug_get_completion_results
+    __git-bug_process_completion_results
+}

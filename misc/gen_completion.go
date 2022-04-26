@@ -50,14 +50,51 @@ func genBash(root *cobra.Command) error {
 	}
 	defer f.Close()
 
-	// Custom bash code to connect the git completion for "git bug" to the
-	// git-bug completion for "git-bug"
-	_, err = f.WriteString(`#TODO: completion code to map "git bug" to "git-bug"`)
+	const patch = `
+_git_bug() {
+    local cur prev words cword split
+
+    COMPREPLY=()
+
+    # Call _init_completion from the bash-completion package
+    # to prepare the arguments properly
+    if declare -F _init_completion >/dev/null 2>&1; then
+        _init_completion -n "=:" || return
+    else
+        __git-bug_init_completion -n "=:" || return
+    fi
+
+	# START PATCH
+	# replace in the array ("git","bug", ...) to ("git-bug", ...) and adjust the index in cword 
+    words=("git-bug" "${words[@]:2}")
+    cword=$(($cword-1))
+	# END PATCH
+
+    __git-bug_debug
+    __git-bug_debug "========= starting completion logic =========="
+    __git-bug_debug "cur is ${cur}, words[*] is ${words[*]}, #words[@] is ${#words[@]}, cword is $cword"
+
+    # The user could have moved the cursor backwards on the command-line.
+    # We need to trigger completion from the $cword location, so we need
+    # to truncate the command-line ($words) up to the $cword location.
+    words=("${words[@]:0:$cword+1}")
+    __git-bug_debug "Truncated words[*]: ${words[*]},"
+
+    local out directive
+    __git-bug_get_completion_results
+    __git-bug_process_completion_results
+}
+`
+	err = root.GenBashCompletionV2(f, true)
 	if err != nil {
 		return err
 	}
 
-	return root.GenBashCompletionV2(f, true)
+	// Custom bash code to connect the git completion for "git bug" to the
+	// git-bug completion for "git-bug"
+	_, err = f.WriteString(patch)
+
+	return err
 }
 
 func genFish(root *cobra.Command) error {
