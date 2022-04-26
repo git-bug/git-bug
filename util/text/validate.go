@@ -33,7 +33,7 @@ func Safe(s string) bool {
 	return true
 }
 
-// Safe will tell if a character in the string is considered unsafe
+// SafeOneLine will tell if a character in the string is considered unsafe
 // Currently trigger on all unicode control character
 func SafeOneLine(s string) bool {
 	for _, r := range s {

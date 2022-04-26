@@ -359,5 +359,5 @@ func (pk PGPKeyring) DecryptionKeys() []openpgp.Key {
 	// 	}
 	// }
 	// return result
-	return nil
+	panic("not implemented")
 }
