@@ -17,6 +17,7 @@ func newLabelRmCommand() *cobra.Command {
 		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runLabelRm(env, args)
 		}),
+		ValidArgsFunction: completeBugAndLabels(env, false),
 	}
 
 	return cmd

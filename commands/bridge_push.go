@@ -23,7 +23,8 @@ func newBridgePushCommand() *cobra.Command {
 		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runBridgePush(env, args)
 		}),
-		Args: cobra.MaximumNArgs(1),
+		Args:              cobra.MaximumNArgs(1),
+		ValidArgsFunction: completeBridge(env),
 	}
 
 	return cmd

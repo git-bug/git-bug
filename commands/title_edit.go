@@ -24,6 +24,7 @@ func newTitleEditCommand() *cobra.Command {
 		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runTitleEdit(env, options, args)
 		}),
+		ValidArgsFunction: completeBug(env),
 	}
 
 	flags := cmd.Flags()

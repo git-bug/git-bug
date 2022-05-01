@@ -50,14 +50,6 @@ the same git remote you are already using to collaborate with other people.
 
 		SilenceUsage:      true,
 		DisableAutoGenTag: true,
-
-		// Custom bash code to connect the git completion for "git bug" to the
-		// git-bug completion for "git-bug"
-		BashCompletionFunction: `
-_git_bug() {
-    __start_git-bug "$@"
-}
-`,
 	}
 
 	cmd.AddCommand(newAddCommand())

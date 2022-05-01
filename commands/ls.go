@@ -56,6 +56,7 @@ git bug ls status:open --by creation "foo bar" baz
 		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runLs(env, options, args)
 		}),
+		ValidArgsFunction: completeLs(env),
 	}
 
 	flags := cmd.Flags()
@@ -63,26 +64,36 @@ git bug ls status:open --by creation "foo bar" baz
 
 	flags.StringSliceVarP(&options.statusQuery, "status", "s", nil,
 		"Filter by status. Valid values are [open,closed]")
+	cmd.RegisterFlagCompletionFunc("status", completeFrom([]string{"open", "closed"}))
 	flags.StringSliceVarP(&options.authorQuery, "author", "a", nil,
 		"Filter by author")
 	flags.StringSliceVarP(&options.metadataQuery, "metadata", "m", nil,
 		"Filter by metadata. Example: github-url=URL")
+	cmd.RegisterFlagCompletionFunc("author", completeUserForQuery(env))
 	flags.StringSliceVarP(&options.participantQuery, "participant", "p", nil,
 		"Filter by participant")
+	cmd.RegisterFlagCompletionFunc("participant", completeUserForQuery(env))
 	flags.StringSliceVarP(&options.actorQuery, "actor", "A", nil,
 		"Filter by actor")
+	cmd.RegisterFlagCompletionFunc("actor", completeUserForQuery(env))
 	flags.StringSliceVarP(&options.labelQuery, "label", "l", nil,
 		"Filter by label")
+	cmd.RegisterFlagCompletionFunc("label", completeLabel(env))
 	flags.StringSliceVarP(&options.titleQuery, "title", "t", nil,
 		"Filter by title")
 	flags.StringSliceVarP(&options.noQuery, "no", "n", nil,
 		"Filter by absence of something. Valid values are [label]")
+	cmd.RegisterFlagCompletionFunc("no", completeLabel(env))
 	flags.StringVarP(&options.sortBy, "by", "b", "creation",
 		"Sort the results by a characteristic. Valid values are [id,creation,edit]")
+	cmd.RegisterFlagCompletionFunc("by", completeFrom([]string{"id", "creation", "edit"}))
 	flags.StringVarP(&options.sortDirection, "direction", "d", "asc",
 		"Select the sorting direction. Valid values are [asc,desc]")
+	cmd.RegisterFlagCompletionFunc("direction", completeFrom([]string{"asc", "desc"}))
 	flags.StringVarP(&options.outputFormat, "format", "f", "default",
 		"Select the output formatting style. Valid values are [default,plain,json,org-mode]")
+	cmd.RegisterFlagCompletionFunc("format",
+		completeFrom([]string{"default", "plain", "json", "org-mode"}))
 
 	return cmd
 }
@@ -92,13 +103,9 @@ func runLs(env *Env, opts lsOptions, args []string) error {
 	var err error
 
 	if len(args) >= 1 {
-		// either the shell or cobra remove the quotes, we need them back for the parsing
-		for i, arg := range args {
-			if strings.Contains(arg, " ") {
-				args[i] = fmt.Sprintf("\"%s\"", arg)
-			}
-		}
-		assembled := strings.Join(args, " ")
+		// either the shell or cobra remove the quotes, we need them back for the query parsing
+		assembled := repairQuery(args)
+
 		q, err = query.Parse(assembled)
 		if err != nil {
 			return err
@@ -140,6 +147,19 @@ func runLs(env *Env, opts lsOptions, args []string) error {
 	default:
 		return fmt.Errorf("unknown format %s", opts.outputFormat)
 	}
+}
+
+func repairQuery(args []string) string {
+	for i, arg := range args {
+		split := strings.Split(arg, ":")
+		for j, s := range split {
+			if strings.Contains(s, " ") {
+				split[j] = fmt.Sprintf("\"%s\"", s)
+			}
+		}
+		args[i] = strings.Join(split, ":")
+	}
+	return strings.Join(args, " ")
 }
 
 type JSONBugExcerpt struct {
