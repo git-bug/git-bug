@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 
@@ -21,9 +22,6 @@ func completionHandlerError(err error) (completions []string, directives cobra.S
 
 func completeBridge(env *Env) validArgsFunction {
 	return func(cmd *cobra.Command, args []string, toComplete string) (completions []string, directives cobra.ShellCompDirective) {
-		if len(args) > 0 {
-			return nil, cobra.ShellCompDirectiveNoFileComp
-		}
 		if err := loadBackend(env)(cmd, args); err != nil {
 			return completionHandlerError(err)
 		}
@@ -41,15 +39,12 @@ func completeBridge(env *Env) validArgsFunction {
 			completions[i] = bridge + "\t" + "Bridge"
 		}
 
-		return completions, cobra.ShellCompDirectiveDefault
+		return completions, cobra.ShellCompDirectiveNoFileComp
 	}
 }
 
 func completeBridgeAuth(env *Env) validArgsFunction {
 	return func(cmd *cobra.Command, args []string, toComplete string) (completions []string, directives cobra.ShellCompDirective) {
-		if len(args) > 0 {
-			return nil, cobra.ShellCompDirectiveNoFileComp
-		}
 		if err := loadBackend(env)(cmd, args); err != nil {
 			return completionHandlerError(err)
 		}
@@ -74,15 +69,12 @@ func completeBridgeAuth(env *Env) validArgsFunction {
 			completions[i] = cred.ID().Human() + "\t" + cred.Target() + " " + string(cred.Kind()) + " " + metaFmt
 		}
 
-		return completions, cobra.ShellCompDirectiveDefault
+		return completions, cobra.ShellCompDirectiveNoFileComp
 	}
 }
 
 func completeBug(env *Env) validArgsFunction {
 	return func(cmd *cobra.Command, args []string, toComplete string) (completions []string, directives cobra.ShellCompDirective) {
-		if len(args) > 0 {
-			return nil, cobra.ShellCompDirectiveNoFileComp
-		}
 		if err := loadBackend(env)(cmd, args); err != nil {
 			return completionHandlerError(err)
 		}
@@ -90,30 +82,32 @@ func completeBug(env *Env) validArgsFunction {
 			_ = env.backend.Close()
 		}()
 
-		allIds := env.backend.AllBugsIds()
-		bugExcerpt := make([]*cache.BugExcerpt, len(allIds))
-		for i, id := range allIds {
-			var err error
-			bugExcerpt[i], err = env.backend.ResolveBugExcerpt(id)
-			if err != nil {
-				return completionHandlerError(err)
-			}
-		}
-
-		completions = make([]string, len(allIds))
-		for i, id := range allIds {
-			completions[i] = id.Human() + "\t" + bugExcerpt[i].Title
-		}
-		return completions, cobra.ShellCompDirectiveDefault
+		return completeBugWithBackend(env.backend, toComplete)
 	}
+}
+
+func completeBugWithBackend(backend *cache.RepoCache, toComplete string) (completions []string, directives cobra.ShellCompDirective) {
+	allIds := backend.AllBugsIds()
+	bugExcerpt := make([]*cache.BugExcerpt, len(allIds))
+	for i, id := range allIds {
+		var err error
+		bugExcerpt[i], err = backend.ResolveBugExcerpt(id)
+		if err != nil {
+			return completionHandlerError(err)
+		}
+	}
+
+	for i, id := range allIds {
+		if strings.Contains(id.String(), strings.TrimSpace(toComplete)) {
+			completions = append(completions, id.Human()+"\t"+bugExcerpt[i].Title)
+		}
+	}
+
+	return completions, cobra.ShellCompDirectiveNoFileComp
 }
 
 func completeBugAndLabels(env *Env, addOrRemove bool) validArgsFunction {
 	return func(cmd *cobra.Command, args []string, toComplete string) (completions []string, directives cobra.ShellCompDirective) {
-		if len(args) == 0 {
-			return completeBug(env)(cmd, args, toComplete)
-		}
-
 		if err := loadBackend(env)(cmd, args); err != nil {
 			return completionHandlerError(err)
 		}
@@ -122,6 +116,10 @@ func completeBugAndLabels(env *Env, addOrRemove bool) validArgsFunction {
 		}()
 
 		b, args, err := _select.ResolveBug(env.backend, args)
+		if err == _select.ErrNoValidId {
+			// we need a bug first to complete labels
+			return completeBugWithBackend(env.backend, toComplete)
+		}
 		if err != nil {
 			return completionHandlerError(err)
 		}
@@ -160,21 +158,18 @@ func completeBugAndLabels(env *Env, addOrRemove bool) validArgsFunction {
 			completions[i] = string(label) + "\t" + "Label"
 		}
 
-		return completions, cobra.ShellCompDirectiveDefault
+		return completions, cobra.ShellCompDirectiveNoFileComp
 	}
 }
 
 func completeFrom(choices []string) validArgsFunction {
 	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		return choices, cobra.ShellCompDirectiveDefault
+		return choices, cobra.ShellCompDirectiveNoFileComp
 	}
 }
 
 func completeGitRemote(env *Env) validArgsFunction {
 	return func(cmd *cobra.Command, args []string, toComplete string) (completions []string, directives cobra.ShellCompDirective) {
-		if len(args) > 0 {
-			return nil, cobra.ShellCompDirectiveNoFileComp
-		}
 		if err := loadBackend(env)(cmd, args); err != nil {
 			return completionHandlerError(err)
 		}
@@ -191,15 +186,12 @@ func completeGitRemote(env *Env) validArgsFunction {
 			completions = append(completions, remote+"\t"+"Remote: "+url)
 		}
 		sort.Strings(completions)
-		return completions, cobra.ShellCompDirectiveDefault
+		return completions, cobra.ShellCompDirectiveNoFileComp
 	}
 }
 
 func completeLabel(env *Env) validArgsFunction {
 	return func(cmd *cobra.Command, args []string, toComplete string) (completions []string, directives cobra.ShellCompDirective) {
-		if len(args) > 0 {
-			return nil, cobra.ShellCompDirectiveNoFileComp
-		}
 		if err := loadBackend(env)(cmd, args); err != nil {
 			return completionHandlerError(err)
 		}
@@ -210,9 +202,13 @@ func completeLabel(env *Env) validArgsFunction {
 		labels := env.backend.ValidLabels()
 		completions = make([]string, len(labels))
 		for i, label := range labels {
-			completions[i] = string(label) + "\t" + "Label"
+			if strings.Contains(label.String(), " ") {
+				completions[i] = fmt.Sprintf("\"%s\"\tLabel", label.String())
+			} else {
+				completions[i] = fmt.Sprintf("%s\tLabel", label.String())
+			}
 		}
-		return completions, cobra.ShellCompDirectiveDefault
+		return completions, cobra.ShellCompDirectiveNoFileComp
 	}
 }
 
@@ -262,7 +258,7 @@ func completeLs(env *Env) validArgsFunction {
 				}
 				completions[i] = key + handle + "\t" + user.DisplayName()
 			}
-			return completions, cobra.ShellCompDirectiveDefault
+			return completions, cobra.ShellCompDirectiveNoFileComp
 		}
 
 		for _, key := range byLabel {
@@ -272,9 +268,13 @@ func completeLs(env *Env) validArgsFunction {
 			labels := env.backend.ValidLabels()
 			completions = make([]string, len(labels))
 			for i, label := range labels {
-				completions[i] = key + string(label)
+				if strings.Contains(label.String(), " ") {
+					completions[i] = key + "\"" + string(label) + "\""
+				} else {
+					completions[i] = key + string(label)
+				}
 			}
-			return completions, cobra.ShellCompDirectiveDefault
+			return completions, cobra.ShellCompDirectiveNoFileComp
 		}
 
 		completions = []string{
@@ -292,10 +292,6 @@ func completeLs(env *Env) validArgsFunction {
 
 func completeUser(env *Env) validArgsFunction {
 	return func(cmd *cobra.Command, args []string, toComplete string) (completions []string, directives cobra.ShellCompDirective) {
-		if len(args) > 0 {
-			return nil, cobra.ShellCompDirectiveNoFileComp
-		}
-
 		if err := loadBackend(env)(cmd, args); err != nil {
 			return completionHandlerError(err)
 		}
@@ -312,16 +308,12 @@ func completeUser(env *Env) validArgsFunction {
 			}
 			completions[i] = user.Id.Human() + "\t" + user.DisplayName()
 		}
-		return completions, cobra.ShellCompDirectiveDefault
+		return completions, cobra.ShellCompDirectiveNoFileComp
 	}
 }
 
 func completeUserForQuery(env *Env) validArgsFunction {
 	return func(cmd *cobra.Command, args []string, toComplete string) (completions []string, directives cobra.ShellCompDirective) {
-		if len(args) > 0 {
-			return nil, cobra.ShellCompDirectiveNoFileComp
-		}
-
 		if err := loadBackend(env)(cmd, args); err != nil {
 			return completionHandlerError(err)
 		}
@@ -345,6 +337,6 @@ func completeUserForQuery(env *Env) validArgsFunction {
 			}
 			completions[i] = handle + "\t" + user.DisplayName()
 		}
-		return completions, cobra.ShellCompDirectiveDefault
+		return completions, cobra.ShellCompDirectiveNoFileComp
 	}
 }
