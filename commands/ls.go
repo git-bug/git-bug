@@ -103,13 +103,9 @@ func runLs(env *Env, opts lsOptions, args []string) error {
 	var err error
 
 	if len(args) >= 1 {
-		// either the shell or cobra remove the quotes, we need them back for the parsing
-		for i, arg := range args {
-			if strings.Contains(arg, " ") {
-				args[i] = fmt.Sprintf("\"%s\"", arg)
-			}
-		}
-		assembled := strings.Join(args, " ")
+		// either the shell or cobra remove the quotes, we need them back for the query parsing
+		assembled := repairQuery(args)
+
 		q, err = query.Parse(assembled)
 		if err != nil {
 			return err
@@ -151,6 +147,19 @@ func runLs(env *Env, opts lsOptions, args []string) error {
 	default:
 		return fmt.Errorf("unknown format %s", opts.outputFormat)
 	}
+}
+
+func repairQuery(args []string) string {
+	for i, arg := range args {
+		split := strings.Split(arg, ":")
+		for j, s := range split {
+			if strings.Contains(s, " ") {
+				split[j] = fmt.Sprintf("\"%s\"", s)
+			}
+		}
+		args[i] = strings.Join(split, ":")
+	}
+	return strings.Join(args, " ")
 }
 
 type JSONBugExcerpt struct {
