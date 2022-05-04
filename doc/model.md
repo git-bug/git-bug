@@ -118,12 +118,14 @@ git-bug apply the following algorithm:
 
 Step 2 is providing and enforcing a constraint over the `Operation`'s logical clocks. What that means is that we inherit the implicit ordering given by the DAG. Later, logical clocks refine that ordering. This, coupled with signed commit has the nice property of limiting how this data model can be abused.
 
-Here is an example of such an ordering. We can see that:
+Here is an example of such an ordering:
+
+![merge scenario 1](merge1.png)
+
+We can see that:
 
 - Lamport clocks respect the DAG structure
 - the final `Operation` order is [A,B,C,D,E,F], according to those clocks
-
-![merge scenario 1](merge1.png)
 
 When we have a concurrent edition, we apply a secondary ordering based on the `OperationPack`'s identifier:
 
