@@ -71,11 +71,11 @@ Instead, we are going to use [Lamport logical clock](https://en.wikipedia.org/wi
 - if L1 == L2, we can't tell which happened first: it's a concurrent edition
 
 
-Each time we are appending something to the data (create an Entity, add an `Operation`) a logical time will be attached, with the highest time value we are aware of plus one. This declares a causality in the event and allows ordering entities and operations.
+Each time we are appending something to the data (create an `Entity`, add an `Operation`) a logical time will be attached, with the highest time value we are aware of plus one. This declares a causality in the event and allows ordering entities and operations.
 
-The first commit of an Entity will have both a creation time and edit time clock, while a later commit will only have an edit time clock. These clocks value are serialized directly in the `Tree` entry name (for example: `"create-clock-4"`). As a Tree entry needs to reference something, we reference the git `Blob` with an empty content. As all of these entries will reference the same `Blob`, no network transfer is needed as long as you already have any entity in your repository.
+The first commit of an `Entity` will have both a creation time and edit time clock, while a later commit will only have an edit time clock. These clocks value are serialized directly in the `Tree` entry name (for example: `"create-clock-4"`). As a `Tree` entry needs to reference something, we reference the git `Blob` with an empty content. As all of these entries will reference the same `Blob`, no network transfer is needed as long as you already have any entity in your repository.
 
-Example of Tree of the first commit of an entity:
+Example of a `Tree` of the first commit of an entity:
 ```
 100644 blob e69de29bb2d1d6434b8b29ae775ad8c2e48c5391	create-clock-14
 100644 blob e69de29bb2d1d6434b8b29ae775ad8c2e48c5391	edit-clock-137
@@ -83,7 +83,7 @@ Example of Tree of the first commit of an entity:
 ```
 Note that both `"ops"` and `"root"` entry reference the same OperationPack as it's the first commit in the chain.
 
-Example of Tree of a later commit of an entity:
+Example of a `Tree` of a later commit of an entity:
 ```
 100644 blob e69de29bb2d1d6434b8b29ae775ad8c2e48c5391	edit-clock-154
 100644 blob 68383346c1a9503f28eec888efd300e9fc179ca0	ops
