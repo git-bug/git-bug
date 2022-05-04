@@ -16,6 +16,7 @@ To get the final state of an entity, we apply these `Operation`s in the correct 
 ## Entities are stored in git objects
 
 An `Operation` is a piece of data including:
+
 - a type identifier
 - an author (a reference to another entity)
 - a timestamp (there is also 1 or 2 Lamport time that we will describe later)
@@ -64,6 +65,7 @@ Here is the complete picture:
 It would be very tempting to use the `Operation`'s timestamp to give us the order to compile the final state. However, you can't rely on the time provided by other people (their clock might be off) for anything other than just display. This is a fundamental limitation of distributed system, and even more so when actors might want to game the system.
 
 Instead, we are going to use [Lamport logical clock](https://en.wikipedia.org/wiki/Lamport_timestamps). A Lamport clock is a simple counter of events. This logical clock gives us a partial ordering:
+
 - if L1 < L2, L1 happened before L2
 - if L1 > L2, L1 happened after L2
 - if L1 == L2, we can't tell which happened first: it's a concurrent edition
@@ -98,6 +100,7 @@ The same way as git does, this hash is displayed truncated to a 7 characters str
 ## Entities support conflict resolution
 
 Now that we have all that, we can finally merge our entities without conflict and collaborate with other users. Let's start by getting rid of two simple scenario:
+
 - if we simply pull updates, we move forward our local reference. We get an update of our graph that we read as usual.
 - if we push fast-forward updates, we move forward the remote reference and other users can update their reference as well.
 
@@ -106,6 +109,7 @@ The tricky part happens when we have concurrent edition. If we pull updates whil
 As we don't have a purely linear series of commits/`Operations`s, we need a deterministic ordering to always apply operations in the same order.
 
 git-bug apply the following algorithm:
+
 1. load and read all the commits and the associated `OperationPack`s
 2. make sure that the Lamport clocks respect the DAG structure: a parent commit/`OperationPack` (that is, towards the head) cannot have a clock that is higher or equal than its direct child. If such a problem happen, the commit is refused/discarded.
 3. individual `Operation`s are assembled together and ordered given the following priorities:
@@ -115,6 +119,7 @@ git-bug apply the following algorithm:
 Step 2 is providing and enforcing a constraint over the `Operation`'s logical clocks. What that means is that we inherit the implicit ordering given by the DAG. Later, logical clocks refine that ordering. This, coupled with signed commit has the nice property of limiting how this data model can be abused.
 
 Here is an example of such an ordering. We can see that:
+
 - Lamport clocks respect the DAG structure
 - the final `Operation` order is [A,B,C,D,E,F], according to those clocks
 
