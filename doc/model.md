@@ -21,7 +21,7 @@ An `Operation` is a piece of data including:
 - an author (a reference to another entity)
 - a timestamp (there is also 1 or 2 Lamport time that we will describe later)
 - all the data required by that operation type (a message, a status ...)
-- a random nonce to ensure we have enough entropy, as the operation identifier is a hash of that data (more on that later)
+- a random [nonce](https://en.wikipedia.org/wiki/Cryptographic_nonce) to ensure we have enough entropy, as the operation identifier is a hash of that data (more on that later)
 
 These `Operation`s are aggregated in an `OperationPack`, a simple array. An `OperationPack` represents an edit session of a bug. As the operation's author is the same for all the `OperationPack` we only store it once. 
 
