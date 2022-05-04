@@ -3,19 +3,19 @@ Entities data model
 
 If you are not familiar with [git internals](https://git-scm.com/book/en/v1/Git-Internals), you might first want to read about them, as the `git-bug` data model is built on top of them.
 
-## Entities (bugs, ...) are a series of edit operations
+## Entities (bug, author, ...) are a series of edit operations
 
-As entities are stored and edited in multiple process at the same time, it's not possible to store the current state like it would be done in a normal application. If two process change the same entity and later try to merge the states, we wouldn't know which change takes precedence or how to merge those states.
+As entities are stored and edited in multiple processes at the same time, it's not possible to store the current state like it would be done in a normal application. If two processes change the same entity and later try to merge the states, we wouldn't know which change takes precedence or how to merge those states.
 
 To deal with this problem, you need a way to merge these changes in a meaningful way. Instead of storing the final bug data directly, we store a series of edit `Operation`s. This is a common idea, notably with [Operation-based CRDTs](https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type#Operation-based_CRDTs).
 
 ![ordered operations](operations.png)
 
-To get the final state of an entity, we apply these `Operation`s in the correct order on an empty state to compute ("compile") our view. 
+To get the final state of an entity, we apply these `Operation`s in the correct order on an empty state, to compute ("compile") our view.
 
 ## Entities are stored in git objects
 
-An `Operation` is a piece of data including:
+An `Operation` is a piece of data, including:
 
 - a type identifier
 - an author (a reference to another entity)
@@ -90,7 +90,7 @@ Example of a `Tree` of a later commit of an entity:
 
 ## Entities and Operation's ID
 
-`Operation`s can be referenced in the data model or by users with an identifier. This identifier is computed from the `Operation`'s data itself, with a hash of that data: `id = hash(json(op))`
+`Operation`s can be referenced - in the data model or by users - with an identifier. This identifier is computed from the `Operation`'s data itself, with a hash of that data: `id = hash(json(op))`
 
 For entities, `git-bug` uses as identifier the hash of the first `Operation` of the entity, as serialized on disk.
 
@@ -98,24 +98,24 @@ The same way as git does, this hash is displayed truncated to a 7 characters str
 
 ## Entities support conflict resolution
 
-Now that we have all that, we can finally merge our entities without conflict and collaborate with other users. Let's start by getting rid of two simple scenario:
+Now that we have all that, we can finally merge our entities without conflict, and collaborate with other users. Let's start by getting rid of two simple scenarios:
 
 - if we simply pull updates, we move forward our local reference. We get an update of our graph that we read as usual.
 - if we push fast-forward updates, we move forward the remote reference and other users can update their reference as well.
 
-The tricky part happens when we have concurrent edition. If we pull updates while we have local changes (non-straightforward in git term), git-bug create the equivalent of a merge commit to merge both branches into a DAG. This DAG has a single root containing the first operation, but can have branches that get merged back into a single head pointed by the reference.
+The tricky part happens when we have concurrent editions. If we pull updates while we have local changes (non-straightforward in git term), git-bug creates the equivalent of a merge commit to merge both branches into a DAG. This DAG has a single root containing the first operation, but can have branches that get merged back into a single head pointed by the reference.
 
 As we don't have a purely linear series of commits/`Operations`s, we need a deterministic ordering to always apply operations in the same order.
 
-git-bug apply the following algorithm:
+git-bug applies the following algorithm:
 
 1. load and read all the commits and the associated `OperationPack`s
-2. make sure that the Lamport clocks respect the DAG structure: a parent commit/`OperationPack` (that is, towards the head) cannot have a clock that is higher or equal than its direct child. If such a problem happen, the commit is refused/discarded.
+2. make sure that the Lamport clocks respect the DAG structure: a parent commit/`OperationPack` (that is, towards the head) cannot have a clock that is higher or equal than its direct child. If such a problem happens, the commit is refused/discarded.
 3. individual `Operation`s are assembled together and ordered given the following priorities:
    1. the edition's lamport clock if not concurrent
    2. the lexicographic order of the `OperationPack`'s identifier
 
-Step 2 is providing and enforcing a constraint over the `Operation`'s logical clocks. What that means is that we inherit the implicit ordering given by the DAG. Later, logical clocks refine that ordering. This, coupled with signed commit has the nice property of limiting how this data model can be abused.
+Step 2 is providing and enforcing a constraint over the `Operation`'s logical clocks. What that means, is that we inherit the implicit ordering given by the DAG. Later, logical clocks refine that ordering. This - coupled with signed commits - has the nice property of limiting how this data model can be abused.
 
 Here is an example of such an ordering:
 
@@ -126,7 +126,7 @@ We can see that:
 - Lamport clocks respect the DAG structure
 - the final `Operation` order is [A,B,C,D,E,F], according to those clocks
 
-When we have a concurrent edition, we apply a secondary ordering based on the `OperationPack`'s identifier:
+When we have concurrent editions, we apply a secondary ordering, based on the `OperationPack`'s identifier:
 
 ![merge scenario 2](merge2.png)
 
