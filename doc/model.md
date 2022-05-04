@@ -81,7 +81,6 @@ Example of a `Tree` of the first commit of an entity:
 100644 blob e69de29bb2d1d6434b8b29ae775ad8c2e48c5391	edit-clock-137
 100644 blob a020a85baa788e12699a4d83dd735578f0d78c75	ops
 ```
-Note that both `"ops"` and `"root"` entry reference the same OperationPack as it's the first commit in the chain.
 
 Example of a `Tree` of a later commit of an entity:
 ```
