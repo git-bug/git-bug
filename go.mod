@@ -3,7 +3,7 @@ module github.com/MichaelMure/git-bug
 go 1.16
 
 require (
-	github.com/99designs/gqlgen v0.17.1
+	github.com/99designs/gqlgen v0.17.6
 	github.com/99designs/keyring v1.2.1
 	github.com/MichaelMure/go-term-text v0.3.1
 	github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7
@@ -27,7 +27,7 @@ require (
 	github.com/skratchdot/open-golang v0.0.0-20190402232053-79abb63cd66e
 	github.com/spf13/cobra v1.4.0
 	github.com/stretchr/testify v1.7.1
-	github.com/vektah/gqlparser/v2 v2.4.1
+	github.com/vektah/gqlparser/v2 v2.4.3-0.20220508162109-d3d9eb001575
 	github.com/xanzy/go-gitlab v0.64.0
 	golang.org/x/crypto v0.0.0-20220131195533-30dcbda58838
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
