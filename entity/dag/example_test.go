@@ -336,14 +336,15 @@ func Read(repo repository.ClockedRepo, id entity.Id) (*ProjectConfig, error) {
 }
 
 func Example_entity() {
+	const gitBugApplicationName = "git-bug"
 	// Note: this example ignore errors for readability
 	// Note: variable names get a little confusing as we are simulating both side in the same function
 
 	// Let's start by defining two git repository and connecting them as remote
 	repoRenePath, _ := os.MkdirTemp("", "")
 	repoIsaacPath, _ := os.MkdirTemp("", "")
-	repoRene, _ := repository.InitGoGitRepo(repoRenePath)
-	repoIsaac, _ := repository.InitGoGitRepo(repoIsaacPath)
+	repoRene, _ := repository.InitGoGitRepo(repoRenePath, gitBugApplicationName)
+	repoIsaac, _ := repository.InitGoGitRepo(repoIsaacPath, gitBugApplicationName)
 	_ = repoRene.AddRemote("origin", repoIsaacPath)
 	_ = repoIsaac.AddRemote("origin", repoRenePath)
 

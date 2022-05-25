@@ -26,6 +26,7 @@ import (
 )
 
 const clockPath = "clocks"
+const indexPath = "indexes"
 
 var _ ClockedRepo = &GoGitRepo{}
 var _ TestedRepo = &GoGitRepo{}
@@ -49,8 +50,11 @@ type GoGitRepo struct {
 	localStorage billy.Filesystem
 }
 
-// OpenGoGitRepo open an already existing repo at the given path
-func OpenGoGitRepo(path string, clockLoaders []ClockLoader) (*GoGitRepo, error) {
+// OpenGoGitRepo opens an already existing repo at the given path and with
+// the specified application name.  Given a repository path of "~/myrepo"
+// and an application name of "git-bug", local storage for the application
+// will be configured at "~/myrepo/.git/git-bug".
+func OpenGoGitRepo(path, application string, clockLoaders []ClockLoader) (*GoGitRepo, error) {
 	path, err := detectGitPath(path)
 	if err != nil {
 		return nil, err
@@ -72,7 +76,7 @@ func OpenGoGitRepo(path string, clockLoaders []ClockLoader) (*GoGitRepo, error) 
 		clocks:       make(map[string]lamport.Clock),
 		indexes:      make(map[string]bleve.Index),
 		keyring:      k,
-		localStorage: osfs.New(filepath.Join(path, "git-bug")),
+		localStorage: osfs.New(filepath.Join(path, application)),
 	}
 
 	for _, loader := range clockLoaders {
@@ -94,8 +98,11 @@ func OpenGoGitRepo(path string, clockLoaders []ClockLoader) (*GoGitRepo, error) 
 	return repo, nil
 }
 
-// InitGoGitRepo create a new empty git repo at the given path
-func InitGoGitRepo(path string) (*GoGitRepo, error) {
+// InitGoGitRepo creates a new empty git repo at the given path and with
+// the specified application name.  Given a repository path of "~/myrepo"
+// and an application name of "git-bug", local storage for the application
+// will be configured at "~/myrepo/.git/git-bug".
+func InitGoGitRepo(path, application string) (*GoGitRepo, error) {
 	r, err := gogit.PlainInit(path, false)
 	if err != nil {
 		return nil, err
@@ -112,12 +119,15 @@ func InitGoGitRepo(path string) (*GoGitRepo, error) {
 		clocks:       make(map[string]lamport.Clock),
 		indexes:      make(map[string]bleve.Index),
 		keyring:      k,
-		localStorage: osfs.New(filepath.Join(path, ".git", "git-bug")),
+		localStorage: osfs.New(filepath.Join(path, ".git", application)),
 	}, nil
 }
 
-// InitBareGoGitRepo create a new --bare empty git repo at the given path
-func InitBareGoGitRepo(path string) (*GoGitRepo, error) {
+// InitBareGoGitRepo creates a new --bare empty git repo at the given path
+// and with the specified application name.  Given a repository path of
+// "~/myrepo" and an application name of "git-bug", local storage for the
+// application will be configured at "~/myrepo/.git/git-bug".
+func InitBareGoGitRepo(path, application string) (*GoGitRepo, error) {
 	r, err := gogit.PlainInit(path, true)
 	if err != nil {
 		return nil, err
@@ -134,7 +144,7 @@ func InitBareGoGitRepo(path string) (*GoGitRepo, error) {
 		clocks:       make(map[string]lamport.Clock),
 		indexes:      make(map[string]bleve.Index),
 		keyring:      k,
-		localStorage: osfs.New(filepath.Join(path, "git-bug")),
+		localStorage: osfs.New(filepath.Join(path, application)),
 	}, nil
 }
 
@@ -295,7 +305,8 @@ func (repo *GoGitRepo) GetRemotes() (map[string]string, error) {
 	return result, nil
 }
 
-// LocalStorage return a billy.Filesystem giving access to $RepoPath/.git/git-bug
+// LocalStorage returns a billy.Filesystem giving access to
+// $RepoPath/.git/$ApplicationName.
 func (repo *GoGitRepo) LocalStorage() billy.Filesystem {
 	return repo.localStorage
 }
@@ -309,7 +320,8 @@ func (repo *GoGitRepo) GetBleveIndex(name string) (bleve.Index, error) {
 		return index, nil
 	}
 
-	path := filepath.Join(repo.path, "git-bug", "indexes", name)
+	// path := filepath.Join(repo.path, "git-bug", "indexes", name)
+	path := filepath.Join(repo.localStorage.Root(), indexPath, name)
 
 	index, err := bleve.Open(path)
 	if err == nil {
@@ -340,7 +352,8 @@ func (repo *GoGitRepo) ClearBleveIndex(name string) error {
 	repo.indexesMutex.Lock()
 	defer repo.indexesMutex.Unlock()
 
-	path := filepath.Join(repo.path, "git-bug", "indexes", name)
+	// path := filepath.Join(repo.path, "git-bug", "indexes", name)
+	path := filepath.Join(repo.localStorage.Root(), indexPath, name)
 
 	err := os.RemoveAll(path)
 	if err != nil {
@@ -781,7 +794,8 @@ func (repo *GoGitRepo) AllClocks() (map[string]lamport.Clock, error) {
 
 	result := make(map[string]lamport.Clock)
 
-	files, err := ioutil.ReadDir(filepath.Join(repo.path, "git-bug", clockPath))
+	// files, err := ioutil.ReadDir(filepath.Join(repo.path, "git-bug", clockPath))
+	files, err := ioutil.ReadDir(filepath.Join(repo.localStorage.Root(), clockPath))
 	if os.IsNotExist(err) {
 		return nil, nil
 	}
