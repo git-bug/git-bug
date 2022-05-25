@@ -320,7 +320,6 @@ func (repo *GoGitRepo) GetBleveIndex(name string) (bleve.Index, error) {
 		return index, nil
 	}
 
-	// path := filepath.Join(repo.path, "git-bug", "indexes", name)
 	path := filepath.Join(repo.localStorage.Root(), indexPath, name)
 
 	index, err := bleve.Open(path)
@@ -352,7 +351,6 @@ func (repo *GoGitRepo) ClearBleveIndex(name string) error {
 	repo.indexesMutex.Lock()
 	defer repo.indexesMutex.Unlock()
 
-	// path := filepath.Join(repo.path, "git-bug", "indexes", name)
 	path := filepath.Join(repo.localStorage.Root(), indexPath, name)
 
 	err := os.RemoveAll(path)
@@ -794,7 +792,6 @@ func (repo *GoGitRepo) AllClocks() (map[string]lamport.Clock, error) {
 
 	result := make(map[string]lamport.Clock)
 
-	// files, err := ioutil.ReadDir(filepath.Join(repo.path, "git-bug", clockPath))
 	files, err := ioutil.ReadDir(filepath.Join(repo.localStorage.Root(), clockPath))
 	if os.IsNotExist(err) {
 		return nil, nil
