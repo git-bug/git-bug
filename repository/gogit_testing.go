@@ -7,7 +7,7 @@ import (
 	"github.com/99designs/keyring"
 )
 
-const testApplicationName = "git-bug"
+const namespace = "git-bug"
 
 // This is intended for testing only
 
@@ -25,7 +25,7 @@ func CreateGoGitTestRepo(bare bool) TestedRepo {
 		creator = InitGoGitRepo
 	}
 
-	repo, err := creator(dir, testApplicationName)
+	repo, err := creator(dir, namespace)
 	if err != nil {
 		log.Fatal(err)
 	}

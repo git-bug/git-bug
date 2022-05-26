@@ -11,7 +11,7 @@ import (
 // This program will randomly generate a collection of bugs in the repository
 // of the current path
 func main() {
-	const gitBugApplicationName = "git-bug"
+	const gitBugNamespace = "git-bug"
 
 	dir, err := os.Getwd()
 	if err != nil {
@@ -22,7 +22,7 @@ func main() {
 		bug.ClockLoader,
 	}
 
-	repo, err := repository.OpenGoGitRepo(dir, gitBugApplicationName, loaders)
+	repo, err := repository.OpenGoGitRepo(dir, gitBugNamespace, loaders)
 	if err != nil {
 		panic(err)
 	}
