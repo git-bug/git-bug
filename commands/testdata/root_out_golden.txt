@@ -1,0 +1,38 @@
+git-bug is a bug tracker embedded in git.
+
+git-bug use git objects to store the bug tracking separated from the files
+history. As bugs are regular git objects, they can be pushed and pulled from/to
+the same git remote you are already using to collaborate with other people.
+
+Usage:
+  git-bug [flags]
+  git-bug [command]
+
+Available Commands:
+  add         Create a new bug.
+  bridge      Configure and use bridges to other bug trackers.
+  commands    Display available commands.
+  comment     Display or add comments to a bug.
+  completion  Generate the autocompletion script for the specified shell
+  deselect    Clear the implicitly selected bug.
+  help        Help about any command
+  label       Display, add or remove labels to/from a bug.
+  ls          List bugs.
+  ls-id       List bug identifiers.
+  ls-label    List valid labels.
+  pull        Pull bugs update from a git remote.
+  push        Push bugs update to a git remote.
+  rm          Remove an existing bug.
+  select      Select a bug for implicit use in future commands.
+  show        Display the details of a bug.
+  status      Display or change a bug status.
+  termui      Launch the terminal UI.
+  title       Display or change a title of a bug.
+  user        Display or change the user identity.
+  version     Show git-bug version information.
+  webui       Launch the web UI.
+
+Flags:
+  -h, --help   help for git-bug
+
+Use "git-bug [command] --help" for more information about a command.
