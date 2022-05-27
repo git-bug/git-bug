@@ -46,12 +46,26 @@ func (o out) Println(a ...interface{}) {
 	_, _ = fmt.Fprintln(o, a...)
 }
 
+func getCWD(cmd *cobra.Command, args []string) (string, error) {
+	cwd, ok := cmd.Context().Value("cwd").(string)
+	if cwd != "" && ok {
+		return cwd, nil
+	}
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		return "", fmt.Errorf("unable to get the current working directory: %q", err)
+	}
+
+	return cwd, nil
+}
+
 // loadRepo is a pre-run function that load the repository for use in a command
 func loadRepo(env *Env) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		cwd, err := os.Getwd()
+		cwd, err := getCWD(cmd, args)
 		if err != nil {
-			return fmt.Errorf("unable to get the current working directory: %q", err)
+			return err
 		}
 
 		env.repo, err = repository.OpenGoGitRepo(cwd, []repository.ClockLoader{bug.ClockLoader})
