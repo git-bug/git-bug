@@ -23,8 +23,10 @@ func newTestEnvAndUser(t *testing.T) (*testEnv, string) {
 		})
 
 	testEnv.Execute(t)
+	userID := strings.TrimSpace(testEnv.out.String())
+	testEnv.out.Reset()
 
-	return testEnv, strings.TrimSpace(testEnv.out.String())
+	return testEnv, userID
 }
 
 func TestUserCreateCommand(t *testing.T) {
