@@ -344,7 +344,9 @@ func Example_entity() {
 	repoRenePath, _ := os.MkdirTemp("", "")
 	repoIsaacPath, _ := os.MkdirTemp("", "")
 	repoRene, _ := repository.InitGoGitRepo(repoRenePath, gitBugNamespace)
+	defer repoRene.Close()
 	repoIsaac, _ := repository.InitGoGitRepo(repoIsaacPath, gitBugNamespace)
+	defer repoIsaac.Close()
 	_ = repoRene.AddRemote("origin", repoIsaacPath)
 	_ = repoIsaac.AddRemote("origin", repoRenePath)
 

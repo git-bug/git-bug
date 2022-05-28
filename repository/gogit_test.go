@@ -15,19 +15,25 @@ func TestNewGoGitRepo(t *testing.T) {
 	// Plain
 	plainRoot, err := ioutil.TempDir("", "")
 	require.NoError(t, err)
-	defer os.RemoveAll(plainRoot)
+	t.Cleanup(func() {
+		require.NoError(t, os.RemoveAll(plainRoot))
+	})
 
-	_, err = InitGoGitRepo(plainRoot, namespace)
+	plainRepo, err := InitGoGitRepo(plainRoot, namespace)
 	require.NoError(t, err)
+	require.NoError(t, plainRepo.Close())
 	plainGitDir := filepath.Join(plainRoot, ".git")
 
 	// Bare
 	bareRoot, err := ioutil.TempDir("", "")
 	require.NoError(t, err)
-	defer os.RemoveAll(bareRoot)
+	t.Cleanup(func() {
+		require.NoError(t, os.RemoveAll(bareRoot))
+	})
 
-	_, err = InitBareGoGitRepo(bareRoot, namespace)
+	bareRepo, err := InitBareGoGitRepo(bareRoot, namespace)
 	require.NoError(t, err)
+	require.NoError(t, bareRepo.Close())
 	bareGitDir := bareRoot
 
 	tests := []struct {
@@ -59,6 +65,7 @@ func TestNewGoGitRepo(t *testing.T) {
 		} else {
 			require.NoError(t, err, i)
 			assert.Equal(t, filepath.ToSlash(tc.outPath), filepath.ToSlash(r.path), i)
+			require.NoError(t, r.Close())
 		}
 	}
 }
@@ -72,10 +79,15 @@ func TestGoGitRepo_Indexes(t *testing.T) {
 
 	plainRoot, err := ioutil.TempDir("", "")
 	require.NoError(t, err)
-	// defer os.RemoveAll(plainRoot)
+	t.Cleanup(func() {
+		require.NoError(t, os.RemoveAll(plainRoot))
+	})
 
 	repo, err := InitGoGitRepo(plainRoot, namespace)
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, repo.Close())
+	})
 
 	// Can create indices
 	indexA, err := repo.GetBleveIndex("a")
