@@ -72,10 +72,15 @@ func TestGoGitRepo_Indexes(t *testing.T) {
 
 	plainRoot, err := ioutil.TempDir("", "")
 	require.NoError(t, err)
-	// defer os.RemoveAll(plainRoot)
+	t.Cleanup(func() {
+		require.NoError(t, os.RemoveAll(plainRoot))
+	})
 
 	repo, err := InitGoGitRepo(plainRoot, namespace)
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, repo.Close())
+	})
 
 	// Can create indices
 	indexA, err := repo.GetBleveIndex("a")
