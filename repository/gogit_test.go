@@ -75,11 +75,7 @@ func TestGoGitRepo(t *testing.T) {
 }
 
 func TestGoGitRepo_Indexes(t *testing.T) {
-	plainRoot, err := ioutil.TempDir("", "")
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		require.NoError(t, os.RemoveAll(plainRoot))
-	})
+	plainRoot := t.TempDir()
 
 	repo, err := InitGoGitRepo(plainRoot, namespace)
 	require.NoError(t, err)
