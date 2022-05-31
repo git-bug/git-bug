@@ -94,10 +94,17 @@ func TestGoGitRepo_Indexes(t *testing.T) {
 	require.FileExists(t, filepath.Join(plainRoot, ".git", namespace, "indexes", "a", "index_meta.json"))
 	require.FileExists(t, filepath.Join(plainRoot, ".git", namespace, "indexes", "a", "store"))
 
+	t.Cleanup(func() {
+		require.NoError(t, indexA.Close())
+	})
+
 	indexB, err := repo.GetBleveIndex("b")
 	require.NoError(t, err)
 	require.NotZero(t, indexB)
-	require.DirExists(t, filepath.Join(plainRoot, ".git", namespace, "indexes", "b"))
+
+	t.Cleanup(func() {
+		require.NoError(t, indexB.Close())
+	})
 
 	// Can get an existing index
 	indexA, err = repo.GetBleveIndex("a")
