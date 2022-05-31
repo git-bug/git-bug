@@ -1,8 +1,8 @@
 git-bug
-!/misc/bash_completion/git-bug
-!/misc/fish_completion/git-bug
-!/misc/powershell_completion/git-bug
-!/misc/zsh_completion/git-bug
+!/misc/completion/bash/git-bug
+!/misc/completion/fish/git-bug
+!/misc/completion/powershell/git-bug
+!/misc/completion/zsh/git-bug
 .gitkeep
 dist
 coverage.txt

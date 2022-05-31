@@ -287,6 +287,8 @@ fi
 
 # ex: ts=4 sw=4 et filetype=sh
 
+# Custom bash code to connect the git completion for "git bug" to the
+# git-bug completion for "git-bug"
 _git_bug() {
     local cur prev words cword split
 
