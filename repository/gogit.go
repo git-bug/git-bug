@@ -351,19 +351,18 @@ func (repo *GoGitRepo) ClearBleveIndex(name string) error {
 	repo.indexesMutex.Lock()
 	defer repo.indexesMutex.Unlock()
 
-	path := filepath.Join(repo.localStorage.Root(), indexPath, name)
-
-	err := os.RemoveAll(path)
-	if err != nil {
-		return err
-	}
-
 	if index, ok := repo.indexes[name]; ok {
-		err = index.Close()
+		err := index.Close()
 		if err != nil {
 			return err
 		}
 		delete(repo.indexes, name)
+	}
+
+	path := filepath.Join(repo.localStorage.Root(), indexPath, name)
+	err := os.RemoveAll(path)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -580,7 +579,7 @@ func (repo *GoGitRepo) StoreCommit(treeHash Hash, parents ...Hash) (Hash, error)
 	return repo.StoreSignedCommit(treeHash, nil, parents...)
 }
 
-// StoreCommit will store a Git commit with the given Git tree. If signKey is not nil, the commit
+// StoreSignedCommit will store a Git commit with the given Git tree. If signKey is not nil, the commit
 // will be signed accordingly.
 func (repo *GoGitRepo) StoreSignedCommit(treeHash Hash, signKey *openpgp.Entity, parents ...Hash) (Hash, error) {
 	cfg, err := repo.r.Config()
