@@ -3,6 +3,8 @@ Entities data model
 
 If you are not familiar with [git internals](https://git-scm.com/book/en/v1/Git-Internals), you might first want to read about them, as the `git-bug` data model is built on top of them.
 
+In a different format, see how you can easily make your own [distributed data structure](../entity/dag/example_test.go).
+
 ## Entities (bug, author, ...) are a series of edit operations
 
 As entities are stored and edited in multiple processes at the same time, it's not possible to store the current state like it would be done in a normal application. If two processes change the same entity and later try to merge the states, we wouldn't know which change takes precedence or how to merge those states.
