@@ -12,6 +12,8 @@ import (
 )
 
 func TestNewGoGitRepo(t *testing.T) {
+	t.Parallel()
+
 	// Plain
 	plainRoot, err := ioutil.TempDir("", "")
 	require.NoError(t, err)
