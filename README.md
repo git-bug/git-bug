@@ -268,7 +268,11 @@ git bug bridge rm [<name>]
 
 ## Internals
 
-Interested by how it works ? Have a look at the [data model](doc/model.md) and the [internal bird-view](doc/architecture.md).
+Interested in how it works ? Have a look at the [data model](doc/model.md) and the [internal bird-view](doc/architecture.md).
+
+Or maybe you want to [make your own distributed data-structure in git](entity/dag/example_test.go) ?
+
+See also all the [docs](doc).
 
 ## Misc
 
@@ -279,7 +283,7 @@ Interested by how it works ? Have a look at the [data model](doc/model.md) and t
 
 - media embedding
 - more bridges
-- extendable data model to support arbitrary bug tracker
+- webUI that can be used as a public portal to accept user's input
 - inflatable raptor
 
 ## Contribute
