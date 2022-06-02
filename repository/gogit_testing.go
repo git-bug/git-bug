@@ -1,21 +1,25 @@
 package repository
 
 import (
-	"io/ioutil"
 	"log"
+	"testing"
 
 	"github.com/99designs/keyring"
 )
 
 const namespace = "git-bug"
 
+type CreateGoGitTestRepoT interface {
+	Helper()
+	TempDir() string
+}
+
 // This is intended for testing only
 
-func CreateGoGitTestRepo(bare bool) TestedRepo {
-	dir, err := ioutil.TempDir("", "")
-	if err != nil {
-		log.Fatal(err)
-	}
+func CreateGoGitTestRepo(t CreateGoGitTestRepoT, bare bool) TestedRepo {
+	t.Helper()
+
+	dir := t.TempDir()
 
 	var creator func(string, string) (*GoGitRepo, error)
 
@@ -45,10 +49,10 @@ func CreateGoGitTestRepo(bare bool) TestedRepo {
 	}
 }
 
-func SetupGoGitReposAndRemote() (repoA, repoB, remote TestedRepo) {
-	repoA = CreateGoGitTestRepo(false)
-	repoB = CreateGoGitTestRepo(false)
-	remote = CreateGoGitTestRepo(true)
+func SetupGoGitReposAndRemote(t *testing.T) (repoA, repoB, remote TestedRepo) {
+	repoA = CreateGoGitTestRepo(t, false)
+	repoB = CreateGoGitTestRepo(t, false)
+	remote = CreateGoGitTestRepo(t, true)
 
 	err := repoA.AddRemote("origin", remote.GetLocalRemote())
 	if err != nil {
