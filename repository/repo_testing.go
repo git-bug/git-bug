@@ -32,7 +32,7 @@ import (
 // 	}
 // }
 
-type RepoCreator func(t CreateGoGitTestRepoT, bare bool) TestedRepo
+type RepoCreator func(t TestingT, bare bool) TestedRepo
 
 // type RepoCleaner func(repos ...Repo) // TODO
 

@@ -5,18 +5,22 @@ import (
 	"testing"
 
 	"github.com/99designs/keyring"
+	"github.com/stretchr/testify/require"
 )
 
 const namespace = "git-bug"
 
-type CreateGoGitTestRepoT interface {
+type TestingT interface {
+	Cleanup(func())
+	Errorf(string, ...interface{})
+	FailNow()
 	Helper()
 	TempDir() string
 }
 
 // This is intended for testing only
 
-func CreateGoGitTestRepo(t CreateGoGitTestRepoT, bare bool) TestedRepo {
+func CreateGoGitTestRepo(t TestingT, bare bool) TestedRepo {
 	t.Helper()
 
 	dir := t.TempDir()
@@ -33,6 +37,10 @@ func CreateGoGitTestRepo(t CreateGoGitTestRepoT, bare bool) TestedRepo {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	t.Cleanup(func() {
+		require.NoError(t, repo.Close())
+	})
 
 	config := repo.LocalConfig()
 	if err := config.StoreString("user.name", "testuser"); err != nil {
