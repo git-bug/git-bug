@@ -24,6 +24,8 @@ func allEntities(t testing.TB, bugs <-chan StreamedEntity) []*Entity {
 }
 
 func TestEntityPushPull(t *testing.T) {
+	t.Parallel()
+
 	repoA, repoB, _, id1, id2, resolver, def := makeTestContextRemote(t)
 
 	// A --> remote --> B
@@ -60,6 +62,8 @@ func TestEntityPushPull(t *testing.T) {
 }
 
 func TestListLocalIds(t *testing.T) {
+	t.Parallel()
+
 	repoA, repoB, _, id1, id2, resolver, def := makeTestContextRemote(t)
 
 	// A --> remote --> B
@@ -204,6 +208,8 @@ func assertNotEqualRefs(t *testing.T, repoA, repoB repository.RepoData, prefix s
 }
 
 func TestMerge(t *testing.T) {
+	t.Parallel()
+
 	repoA, repoB, _, id1, id2, resolver, def := makeTestContextRemote(t)
 
 	// SCENARIO 1
@@ -384,6 +390,8 @@ func TestMerge(t *testing.T) {
 }
 
 func TestRemove(t *testing.T) {
+	t.Parallel()
+
 	repoA, _, _, id1, _, resolver, def := makeTestContextRemote(t)
 
 	e := New(def)

@@ -63,6 +63,8 @@ func TestNewGoGitRepo(t *testing.T) {
 }
 
 func TestGoGitRepo(t *testing.T) {
+	t.Parallel()
+
 	RepoTest(t, CreateGoGitTestRepo)
 }
 

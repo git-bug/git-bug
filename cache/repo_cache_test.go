@@ -14,6 +14,8 @@ import (
 )
 
 func TestCache(t *testing.T) {
+	t.Parallel()
+
 	repo := repository.CreateGoGitTestRepo(t, false)
 
 	cache, err := NewRepoCache(repo)
@@ -111,6 +113,8 @@ func TestCache(t *testing.T) {
 }
 
 func TestCachePushPull(t *testing.T) {
+	t.Parallel()
+
 	repoA, repoB, _ := repository.SetupGoGitReposAndRemote(t)
 
 	cacheA, err := NewRepoCache(repoA)
@@ -169,6 +173,8 @@ func TestCachePushPull(t *testing.T) {
 }
 
 func TestRemove(t *testing.T) {
+	t.Parallel()
+
 	repo := repository.CreateGoGitTestRepo(t, false)
 	remoteA := repository.CreateGoGitTestRepo(t, true)
 	remoteB := repository.CreateGoGitTestRepo(t, true)
@@ -217,6 +223,8 @@ func TestRemove(t *testing.T) {
 }
 
 func TestCacheEviction(t *testing.T) {
+	t.Parallel()
+
 	repo := repository.CreateGoGitTestRepo(t, false)
 	repoCache, err := NewRepoCache(repo)
 	require.NoError(t, err)
@@ -280,6 +288,8 @@ func checkBugPresence(t *testing.T, cache *RepoCache, bug *BugCache, presence bo
 }
 
 func TestLongDescription(t *testing.T) {
+	t.Parallel()
+
 	// See https://github.com/MichaelMure/git-bug/issues/606
 
 	text := strings.Repeat("x", 65536)
