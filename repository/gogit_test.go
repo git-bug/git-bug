@@ -68,35 +68,35 @@ func TestGoGitRepo(t *testing.T) {
 	RepoTest(t, CreateGoGitTestRepo)
 }
 
-func TestGoGitRepo_Indexes(t *testing.T) {
-	t.Parallel()
+// func TestGoGitRepo_Indexes(t *testing.T) {
+// 	t.Parallel()
 
-	plainRoot := t.TempDir()
+// 	plainRoot := t.TempDir()
 
-	repo, err := InitGoGitRepo(plainRoot, namespace)
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		require.NoError(t, repo.Close())
-	})
+// 	repo, err := InitGoGitRepo(plainRoot, namespace)
+// 	require.NoError(t, err)
+// 	t.Cleanup(func() {
+// 		require.NoError(t, repo.Close())
+// 	})
 
-	// Can create indices
-	indexA, err := repo.GetBleveIndex("a")
-	require.NoError(t, err)
-	require.NotZero(t, indexA)
-	require.FileExists(t, filepath.Join(plainRoot, ".git", namespace, "indexes", "a", "index_meta.json"))
-	require.FileExists(t, filepath.Join(plainRoot, ".git", namespace, "indexes", "a", "store"))
+// 	// Can create indices
+// 	indexA, err := repo.GetBleveIndex("a")
+// 	require.NoError(t, err)
+// 	require.NotZero(t, indexA)
+// 	require.FileExists(t, filepath.Join(plainRoot, ".git", namespace, "indexes", "a", "index_meta.json"))
+// 	require.FileExists(t, filepath.Join(plainRoot, ".git", namespace, "indexes", "a", "store"))
 
-	indexB, err := repo.GetBleveIndex("b")
-	require.NoError(t, err)
-	require.NotZero(t, indexB)
+// 	indexB, err := repo.GetBleveIndex("b")
+// 	require.NoError(t, err)
+// 	require.NotZero(t, indexB)
 
-	// Can get an existing index
-	indexA, err = repo.GetBleveIndex("a")
-	require.NoError(t, err)
-	require.NotZero(t, indexA)
+// 	// Can get an existing index
+// 	indexA, err = repo.GetBleveIndex("a")
+// 	require.NoError(t, err)
+// 	require.NotZero(t, indexA)
 
-	// Can delete an index
-	err = repo.ClearBleveIndex("a")
-	require.NoError(t, err)
-	require.NoDirExists(t, filepath.Join(plainRoot, ".git", namespace, "indexes", "a"))
-}
+// 	// Can delete an index
+// 	err = repo.ClearBleveIndex("a")
+// 	require.NoError(t, err)
+// 	require.NoDirExists(t, filepath.Join(plainRoot, ".git", namespace, "indexes", "a"))
+// }
