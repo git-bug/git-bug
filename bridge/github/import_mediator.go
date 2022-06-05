@@ -89,6 +89,7 @@ func NewImportMediator(ctx context.Context, client *rateLimitHandlerClient, owne
 	}
 	go func() {
 		mm.fillImportEvents(ctx)
+		ctx.Done()
 		close(mm.importEvents)
 	}()
 	return &mm
