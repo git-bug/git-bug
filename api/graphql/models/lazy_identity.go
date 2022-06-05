@@ -41,12 +41,12 @@ func NewLazyIdentity(cache *cache.RepoCache, excerpt *cache.IdentityExcerpt) *la
 }
 
 func (li *lazyIdentity) load() (*cache.IdentityCache, error) {
+	li.mu.Lock()
+	defer li.mu.Unlock()
+
 	if li.id != nil {
 		return li.id, nil
 	}
-
-	li.mu.Lock()
-	defer li.mu.Unlock()
 
 	id, err := li.cache.ResolveIdentity(li.excerpt.Id)
 	if err != nil {
