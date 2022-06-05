@@ -486,23 +486,10 @@ func (ge *githubExporter) cacheGithubLabels(ctx context.Context, gc *rateLimitHa
 	}
 
 	q := labelsQuery{}
-	// When performing the queries we have to forward rate limiting events to the
-	// current channel of export results.
-	events := make(chan RateLimitingEvent)
-	defer close(events)
-	go func() {
-		for e := range events {
-			select {
-			case <-ctx.Done():
-				return
-			case ge.out <- core.NewExportRateLimiting(e.msg):
-			}
-		}
-	}()
 
 	hasNextPage := true
 	for hasNextPage {
-		if err := gc.queryWithLimitEvents(ctx, &q, variables, events); err != nil {
+		if err := gc.queryExport(ctx, &q, variables, ge.out); err != nil {
 			return err
 		}
 
