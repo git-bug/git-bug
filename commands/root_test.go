@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/MichaelMure/git-bug/commands"
@@ -63,6 +64,9 @@ func (e *testEnv) Execute(t *testing.T) {
 func requireGoldenFileEqual(t *testing.T, path string, act []byte) {
 	t.Helper()
 
+	// Replace Windows line terminators
+	act = []byte(strings.ReplaceAll(string(act), "\r\n", "\n"))
+
 	path = filepath.Join("testdata", path)
 
 	if *update {
@@ -71,7 +75,7 @@ func requireGoldenFileEqual(t *testing.T, path string, act []byte) {
 
 	exp, err := ioutil.ReadFile(path)
 	require.NoError(t, err)
-	require.Equal(t, exp, act)
+	require.Equal(t, string(exp), string(act))
 }
 
 func TestNewRootCommand(t *testing.T) {
