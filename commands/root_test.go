@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/MichaelMure/git-bug/commands"
@@ -65,7 +64,7 @@ func requireGoldenFileEqual(t *testing.T, path string, act []byte) {
 	t.Helper()
 
 	// Replace Windows line terminators
-	act = []byte(strings.ReplaceAll(string(act), "\r\n", "\n"))
+	// act = []byte(strings.ReplaceAll(string(act), "\r\n", "\n"))
 
 	path = filepath.Join("testdata", path)
 
