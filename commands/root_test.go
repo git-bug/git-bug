@@ -34,7 +34,7 @@ func newTestEnv(t *testing.T) *testEnv {
 		require.NoError(t, os.RemoveAll(cwd))
 	})
 
-	repo, err := repository.InitGoGitRepo(cwd)
+	repo, err := repository.InitGoGitRepo(cwd, commands.GitBugNamespace)
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		require.NoError(t, repo.Close())
