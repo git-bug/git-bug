@@ -14,6 +14,8 @@ import (
 	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
+const gitBugNamespace = "git-bug"
+
 // Env is the environment of a command
 type Env struct {
 	repo    repository.ClockedRepo
@@ -54,7 +56,7 @@ func loadRepo(env *Env) func(*cobra.Command, []string) error {
 			return fmt.Errorf("unable to get the current working directory: %q", err)
 		}
 
-		env.repo, err = repository.OpenGoGitRepo(cwd, []repository.ClockLoader{bug.ClockLoader})
+		env.repo, err = repository.OpenGoGitRepo(cwd, gitBugNamespace, []repository.ClockLoader{bug.ClockLoader})
 		if err == repository.ErrNotARepo {
 			return fmt.Errorf("%s must be run from within a git repo", rootCommandName)
 		}
