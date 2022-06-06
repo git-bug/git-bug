@@ -22,9 +22,6 @@ func newUserCreateCommand() *cobra.Command {
 		Short:   "Create a new identity.",
 		PreRunE: loadBackend(env),
 		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
-			env.err = out{Writer: cmd.ErrOrStderr()}
-			env.out = out{Writer: cmd.OutOrStdout()}
-
 			return runUserCreate(env, options)
 		}),
 	}
