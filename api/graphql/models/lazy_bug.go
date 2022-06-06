@@ -49,12 +49,12 @@ func NewLazyBug(cache *cache.RepoCache, excerpt *cache.BugExcerpt) *lazyBug {
 }
 
 func (lb *lazyBug) load() error {
+	lb.mu.Lock()
+	defer lb.mu.Unlock()
+
 	if lb.snap != nil {
 		return nil
 	}
-
-	lb.mu.Lock()
-	defer lb.mu.Unlock()
 
 	b, err := lb.cache.ResolveBug(lb.excerpt.Id)
 	if err != nil {

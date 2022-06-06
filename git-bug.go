@@ -1,5 +1,5 @@
 //go:generate go run doc/gen_docs.go
-//go:generate go run misc/gen_completion.go
+//go:generate go run misc/completion/gen_completion.go
 
 package main
 

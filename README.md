@@ -268,20 +268,22 @@ git bug bridge rm [<name>]
 
 ## Internals
 
-Interested by how it works ? Have a look at the [data model](doc/model.md) and the [internal bird-view](doc/architecture.md).
+Interested in how it works ? Have a look at the [data model](doc/model.md) and the [internal bird-view](doc/architecture.md).
+
+Or maybe you want to [make your own distributed data-structure in git](entity/dag/example_test.go) ?
+
+See also all the [docs](doc).
 
 ## Misc
 
-- [Bash completion](misc/bash_completion)
-- [Zsh completion](misc/zsh_completion)
-- [PowerShell completion](misc/powershell_completion)
+- [Bash, Zsh, fish, powershell completion](misc/completion)
 - [ManPages](doc/man)
 
 ## Planned features
 
 - media embedding
 - more bridges
-- extendable data model to support arbitrary bug tracker
+- webUI that can be used as a public portal to accept user's input
 - inflatable raptor
 
 ## Contribute

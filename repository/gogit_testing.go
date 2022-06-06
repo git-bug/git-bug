@@ -7,6 +7,8 @@ import (
 	"github.com/99designs/keyring"
 )
 
+const namespace = "git-bug"
+
 // This is intended for testing only
 
 func CreateGoGitTestRepo(bare bool) TestedRepo {
@@ -15,7 +17,7 @@ func CreateGoGitTestRepo(bare bool) TestedRepo {
 		log.Fatal(err)
 	}
 
-	var creator func(string) (*GoGitRepo, error)
+	var creator func(string, string) (*GoGitRepo, error)
 
 	if bare {
 		creator = InitBareGoGitRepo
@@ -23,7 +25,7 @@ func CreateGoGitTestRepo(bare bool) TestedRepo {
 		creator = InitGoGitRepo
 	}
 
-	repo, err := creator(dir)
+	repo, err := creator(dir, namespace)
 	if err != nil {
 		log.Fatal(err)
 	}
