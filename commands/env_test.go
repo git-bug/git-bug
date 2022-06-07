@@ -8,10 +8,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/MichaelMure/git-bug/commands"
-	"github.com/MichaelMure/git-bug/repository"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
+
+	"github.com/MichaelMure/git-bug/commands"
+	"github.com/MichaelMure/git-bug/repository"
 )
 
 var update = flag.Bool("update", false, "pass -update to the test runner to update golden files")
