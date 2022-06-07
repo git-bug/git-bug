@@ -48,7 +48,13 @@ func (o out) Println(a ...interface{}) {
 	_, _ = fmt.Fprintln(o, a...)
 }
 
-func getCWD(cmd *cobra.Command, args []string) (string, error) {
+// getCWD returns the current working directory.  Normal operation simply
+// returns the working directory reported by the OS (as an OS-compatible
+// filepath.)  During tests, temporary repositories are created outside
+// the test execution's CWD.  In this case, it's possible to provide an
+// alternate CWD filepath by adding a value to the command's context
+// with the key "cwd".
+func getCWD(cmd *cobra.Command) (string, error) {
 	cwd, ok := cmd.Context().Value("cwd").(string)
 	if cwd != "" && ok {
 		return cwd, nil
@@ -65,7 +71,7 @@ func getCWD(cmd *cobra.Command, args []string) (string, error) {
 // loadRepo is a pre-run function that load the repository for use in a command
 func loadRepo(env *Env) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		cwd, err := getCWD(cmd, args)
+		cwd, err := getCWD(cmd)
 		if err != nil {
 			return err
 		}
