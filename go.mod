@@ -26,7 +26,7 @@ require (
 	github.com/shurcooL/graphql v0.0.0-20181231061246-d48a9a75455f // indirect
 	github.com/skratchdot/open-golang v0.0.0-20190402232053-79abb63cd66e
 	github.com/spf13/cobra v1.4.0
-	github.com/stretchr/testify v1.7.1
+	github.com/stretchr/testify v1.7.2
 	github.com/vektah/gqlparser/v2 v2.4.1
 	github.com/xanzy/go-gitlab v0.64.0
 	golang.org/x/crypto v0.0.0-20220131195533-30dcbda58838
