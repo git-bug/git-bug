@@ -1,4 +1,4 @@
-package commands_test
+package commands
 
 import (
 	"path/filepath"
@@ -13,16 +13,15 @@ func newTestEnvAndUser(t *testing.T) (*testEnv, string) {
 
 	testEnv := newTestEnv(t)
 
-	testEnv.cmd.SetArgs(
-		[]string{
-			"user",
-			"create",
-			"--non-interactive",
-			"-n John Doe",
-			"-e jdoe@example.com",
-		})
+	opts := createUserOptions{
+		name:           "John Doe",
+		email:          "jdoe@example.com",
+		avatarURL:      "",
+		nonInteractive: true,
+	}
 
-	testEnv.Execute(t)
+	require.NoError(t, runUserCreate(testEnv.env, opts))
+
 	userID := strings.TrimSpace(testEnv.out.String())
 	testEnv.out.Reset()
 
@@ -31,8 +30,6 @@ func newTestEnvAndUser(t *testing.T) (*testEnv, string) {
 
 func TestUserCreateCommand(t *testing.T) {
 	testEnv, userID := newTestEnvAndUser(t)
-
-	t.Log("CWD:", testEnv.cwd)
 
 	require.FileExists(t, filepath.Join(testEnv.cwd, ".git", "refs", "identities", userID))
 	require.FileExists(t, filepath.Join(testEnv.cwd, ".git", "git-bug", "identity-cache"))

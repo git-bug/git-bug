@@ -14,7 +14,7 @@ import (
 	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
-const GitBugNamespace = "git-bug"
+const gitBugNamespace = "git-bug"
 
 // Env is the environment of a command
 type Env struct {
@@ -48,35 +48,15 @@ func (o out) Println(a ...interface{}) {
 	_, _ = fmt.Fprintln(o, a...)
 }
 
-// getCWD returns the current working directory.  Normal operation simply
-// returns the working directory reported by the OS (as an OS-compatible
-// filepath.)  During tests, temporary repositories are created outside
-// the test execution's CWD.  In this case, it's possible to provide an
-// alternate CWD filepath by adding a value to the command's context
-// with the key "cwd".
-func getCWD(cmd *cobra.Command) (string, error) {
-	cwd, ok := cmd.Context().Value("cwd").(string)
-	if cwd != "" && ok {
-		return cwd, nil
-	}
-
-	cwd, err := os.Getwd()
-	if err != nil {
-		return "", fmt.Errorf("unable to get the current working directory: %q", err)
-	}
-
-	return cwd, nil
-}
-
 // loadRepo is a pre-run function that load the repository for use in a command
 func loadRepo(env *Env) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		cwd, err := getCWD(cmd)
+		cwd, err := os.Getwd()
 		if err != nil {
-			return err
+			return fmt.Errorf("unable to get the current working directory: %q", err)
 		}
 
-		env.repo, err = repository.OpenGoGitRepo(cwd, GitBugNamespace, []repository.ClockLoader{bug.ClockLoader})
+		env.repo, err = repository.OpenGoGitRepo(cwd, gitBugNamespace, []repository.ClockLoader{bug.ClockLoader})
 		if err == repository.ErrNotARepo {
 			return fmt.Errorf("%s must be run from within a git repo", rootCommandName)
 		}
@@ -163,9 +143,6 @@ func loadBackendEnsureUser(env *Env) func(*cobra.Command, []string) error {
 // This wrapper style is necessary because a Cobra PostE function does not run if RunE return an error.
 func closeBackend(env *Env, runE func(cmd *cobra.Command, args []string) error) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		env.err = out{Writer: cmd.ErrOrStderr()}
-		env.out = out{Writer: cmd.OutOrStdout()}
-
 		errRun := runE(cmd, args)
 
 		if env.backend == nil {

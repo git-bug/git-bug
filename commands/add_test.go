@@ -1,4 +1,4 @@
-package commands_test
+package commands
 
 import (
 	"strings"
@@ -11,15 +11,14 @@ func newTestEnvUserAndBug(t *testing.T) (*testEnv, string, string) {
 	t.Helper()
 
 	testEnv, userID := newTestEnvAndUser(t)
+	opts := addOptions{
+		title:          "this is a bug title",
+		message:        "this is a bug message",
+		messageFile:    "",
+		nonInteractive: true,
+	}
 
-	testEnv.cmd.SetArgs([]string{
-		"add",
-		"--non-interactive",
-		"-t 'this is a bug title'",
-		"-m 'this is a bug message'",
-	})
-
-	testEnv.Execute(t)
+	require.NoError(t, runAdd(testEnv.env, opts))
 	require.Regexp(t, "^[0-9A-Fa-f]{7} created\n$", testEnv.out)
 	bugID := strings.Split(testEnv.out.String(), " ")[0]
 	testEnv.out.Reset()
