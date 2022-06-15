@@ -8,7 +8,6 @@ import (
 
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/repository"
-	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
 type testEnv struct {
@@ -32,8 +31,11 @@ func newTestEnv(t *testing.T) *testEnv {
 
 	backend, err := cache.NewRepoCache(repo)
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		backend.Close()
+	})
 
-	testEnv := &testEnv{
+	return &testEnv{
 		env: &Env{
 			repo:    repo,
 			backend: backend,
@@ -43,20 +45,4 @@ func newTestEnv(t *testing.T) *testEnv {
 		cwd: cwd,
 		out: buf,
 	}
-
-	cleaner := func(env *Env) interrupt.CleanerFunc {
-		return func() error {
-			if env.backend != nil {
-				err := env.backend.Close()
-				env.backend = nil
-				return err
-			}
-			return nil
-		}
-	}
-
-	// Cleanup properly on interrupt
-	interrupt.RegisterCleaner(cleaner(testEnv.env))
-
-	return testEnv
 }
