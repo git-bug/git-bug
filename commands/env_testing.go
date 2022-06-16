@@ -21,6 +21,8 @@ func newTestEnv(t *testing.T) *testEnv {
 
 	cwd := t.TempDir()
 
+	// r := repository.CreateGoGitTestRepo(t, false) // TODO
+
 	repo, err := repository.InitGoGitRepo(cwd, gitBugNamespace)
 	require.NoError(t, err)
 	t.Cleanup(func() {

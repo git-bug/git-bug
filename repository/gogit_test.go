@@ -71,7 +71,7 @@ func TestNewGoGitRepo(t *testing.T) {
 }
 
 func TestGoGitRepo(t *testing.T) {
-	RepoTest(t, CreateGoGitTestRepo, CleanupTestRepos)
+	RepoTest(t, CreateGoGitTestRepo)
 }
 
 func TestGoGitRepo_Indexes(t *testing.T) {
