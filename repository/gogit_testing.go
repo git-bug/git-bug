@@ -2,6 +2,8 @@ package repository
 
 import (
 	"log"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/99designs/keyring"
@@ -72,4 +74,19 @@ func SetupGoGitReposAndRemote(t *testing.T) (repoA, repoB, remote TestedRepo) {
 	}
 
 	return repoA, repoB, remote
+}
+
+func RepoDir(t *testing.T, repo TestedRepo) string {
+	t.Helper()
+
+	dir := repo.GetLocalRemote()
+	if strings.HasSuffix(dir, ".git") {
+		dir, _ = filepath.Split(dir)
+	}
+
+	if dir[len(dir)-1] == filepath.Separator {
+		dir = dir[:len(dir)-1]
+	}
+
+	return dir
 }

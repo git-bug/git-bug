@@ -19,15 +19,8 @@ type testEnv struct {
 func newTestEnv(t *testing.T) *testEnv {
 	t.Helper()
 
-	cwd := t.TempDir()
-
-	// r := repository.CreateGoGitTestRepo(t, false) // TODO
-
-	repo, err := repository.InitGoGitRepo(cwd, gitBugNamespace)
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		require.NoError(t, repo.Close())
-	})
+	repo := repository.CreateGoGitTestRepo(t, false)
+	cwd := repository.RepoDir(t, repo)
 
 	buf := new(bytes.Buffer)
 
