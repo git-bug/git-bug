@@ -9,7 +9,7 @@ const client = new ApolloClient({
     typePolicies: {
       // TODO: For now, we only query the default repository, so consider it as a singleton
       Repository: {
-        keyFields: [],
+        keyFields: ['name'],
       },
     },
   }),

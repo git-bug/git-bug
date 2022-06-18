@@ -7,6 +7,7 @@ import (
 )
 
 const lockfile = "lock"
+const defaultRepoName = "__default"
 
 // MultiRepoCache is the root cache, holding multiple RepoCache.
 type MultiRepoCache struct {
@@ -37,7 +38,7 @@ func (c *MultiRepoCache) RegisterDefaultRepository(repo repository.ClockedRepo) 
 		return nil, err
 	}
 
-	c.repos[""] = r
+	c.repos[defaultRepoName] = r
 	return r, nil
 }
 
