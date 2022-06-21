@@ -13,7 +13,7 @@ import (
 // TODO: add tests for RepoBleve
 // TODO: add tests for RepoStorage
 
-type RepoCreator func(t TestingT, bare bool) TestedRepo
+type RepoCreator func(t testing.TB, bare bool) TestedRepo
 
 // Test suite for a Repo implementation
 func RepoTest(t *testing.T, creator RepoCreator) {

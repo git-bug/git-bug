@@ -9,17 +9,11 @@ import (
 	"github.com/99designs/keyring"
 )
 
-type TestingT interface {
-	Cleanup(func())
-	Helper()
-	TempDir() string
-}
-
 const namespace = "git-bug"
 
 // This is intended for testing only
 
-func CreateGoGitTestRepo(t TestingT, bare bool) TestedRepo {
+func CreateGoGitTestRepo(t testing.TB, bare bool) TestedRepo {
 	t.Helper()
 
 	dir := t.TempDir()
