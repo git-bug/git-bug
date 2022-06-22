@@ -12,13 +12,13 @@ import (
 func TestNewGoGitRepo(t *testing.T) {
 	// Plain
 	plainRepo := CreateGoGitTestRepo(t, false)
-	plainRoot := RepoDir(t, plainRepo)
+	plainRoot := goGitRepoDir(t, plainRepo)
 	require.NoError(t, plainRepo.Close())
 	plainGitDir := filepath.Join(plainRoot, ".git")
 
 	// Bare
 	bareRepo := CreateGoGitTestRepo(t, true)
-	bareRoot := RepoDir(t, bareRepo)
+	bareRoot := goGitRepoDir(t, bareRepo)
 	require.NoError(t, bareRepo.Close())
 	bareGitDir := bareRoot
 
@@ -62,7 +62,7 @@ func TestGoGitRepo(t *testing.T) {
 
 func TestGoGitRepo_Indexes(t *testing.T) {
 	repo := CreateGoGitTestRepo(t, false)
-	plainRoot := RepoDir(t, repo)
+	plainRoot := goGitRepoDir(t, repo)
 
 	// Can create indices
 	indexA, err := repo.GetBleveIndex("a")

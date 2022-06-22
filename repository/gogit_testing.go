@@ -70,7 +70,7 @@ func SetupGoGitReposAndRemote(t *testing.T) (repoA, repoB, remote TestedRepo) {
 	return repoA, repoB, remote
 }
 
-func RepoDir(t *testing.T, repo TestedRepo) string {
+func goGitRepoDir(t *testing.T, repo TestedRepo) string {
 	t.Helper()
 
 	dir := repo.GetLocalRemote()
