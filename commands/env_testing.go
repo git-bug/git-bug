@@ -12,7 +12,6 @@ import (
 
 type testEnv struct {
 	env *Env
-	cwd string
 	out *bytes.Buffer
 }
 
@@ -20,7 +19,6 @@ func newTestEnv(t *testing.T) *testEnv {
 	t.Helper()
 
 	repo := repository.CreateGoGitTestRepo(t, false)
-	cwd := repository.RepoDir(t, repo)
 
 	buf := new(bytes.Buffer)
 
@@ -37,7 +35,6 @@ func newTestEnv(t *testing.T) *testEnv {
 			out:     out{Writer: buf},
 			err:     out{Writer: buf},
 		},
-		cwd: cwd,
 		out: buf,
 	}
 }

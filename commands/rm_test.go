@@ -7,7 +7,7 @@ import (
 )
 
 func TestRm(t *testing.T) {
-	testEnv, _, bugID := newTestEnvUserAndBug(t)
+	testEnv, bugID := newTestEnvAndBug(t)
 
 	exp := "bug " + bugID + " removed\n"
 
