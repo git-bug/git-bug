@@ -1,8 +1,6 @@
 package repository
 
 import (
-	"io/ioutil"
-	"os"
 	"path"
 	"path/filepath"
 	"testing"
@@ -13,26 +11,14 @@ import (
 
 func TestNewGoGitRepo(t *testing.T) {
 	// Plain
-	plainRoot, err := ioutil.TempDir("", "")
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		require.NoError(t, os.RemoveAll(plainRoot))
-	})
-
-	plainRepo, err := InitGoGitRepo(plainRoot, namespace)
-	require.NoError(t, err)
+	plainRepo := CreateGoGitTestRepo(t, false)
+	plainRoot := goGitRepoDir(t, plainRepo)
 	require.NoError(t, plainRepo.Close())
 	plainGitDir := filepath.Join(plainRoot, ".git")
 
 	// Bare
-	bareRoot, err := ioutil.TempDir("", "")
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		require.NoError(t, os.RemoveAll(bareRoot))
-	})
-
-	bareRepo, err := InitBareGoGitRepo(bareRoot, namespace)
-	require.NoError(t, err)
+	bareRepo := CreateGoGitTestRepo(t, true)
+	bareRoot := goGitRepoDir(t, bareRepo)
 	require.NoError(t, bareRepo.Close())
 	bareGitDir := bareRoot
 
@@ -71,17 +57,12 @@ func TestNewGoGitRepo(t *testing.T) {
 }
 
 func TestGoGitRepo(t *testing.T) {
-	RepoTest(t, CreateGoGitTestRepo, CleanupTestRepos)
+	RepoTest(t, CreateGoGitTestRepo)
 }
 
 func TestGoGitRepo_Indexes(t *testing.T) {
-	plainRoot := t.TempDir()
-
-	repo, err := InitGoGitRepo(plainRoot, namespace)
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		require.NoError(t, repo.Close())
-	})
+	repo := CreateGoGitTestRepo(t, false)
+	plainRoot := goGitRepoDir(t, repo)
 
 	// Can create indices
 	indexA, err := repo.GetBleveIndex("a")

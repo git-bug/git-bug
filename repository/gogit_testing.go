@@ -1,8 +1,10 @@
 package repository
 
 import (
-	"io/ioutil"
 	"log"
+	"path/filepath"
+	"strings"
+	"testing"
 
 	"github.com/99designs/keyring"
 )
@@ -11,11 +13,10 @@ const namespace = "git-bug"
 
 // This is intended for testing only
 
-func CreateGoGitTestRepo(bare bool) TestedRepo {
-	dir, err := ioutil.TempDir("", "")
-	if err != nil {
-		log.Fatal(err)
-	}
+func CreateGoGitTestRepo(t testing.TB, bare bool) TestedRepo {
+	t.Helper()
+
+	dir := t.TempDir()
 
 	var creator func(string, string) (*GoGitRepo, error)
 
@@ -29,6 +30,10 @@ func CreateGoGitTestRepo(bare bool) TestedRepo {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	t.Cleanup(func() {
+		repo.Close()
+	})
 
 	config := repo.LocalConfig()
 	if err := config.StoreString("user.name", "testuser"); err != nil {
@@ -45,10 +50,12 @@ func CreateGoGitTestRepo(bare bool) TestedRepo {
 	}
 }
 
-func SetupGoGitReposAndRemote() (repoA, repoB, remote TestedRepo) {
-	repoA = CreateGoGitTestRepo(false)
-	repoB = CreateGoGitTestRepo(false)
-	remote = CreateGoGitTestRepo(true)
+func SetupGoGitReposAndRemote(t *testing.T) (repoA, repoB, remote TestedRepo) {
+	t.Helper()
+
+	repoA = CreateGoGitTestRepo(t, false)
+	repoB = CreateGoGitTestRepo(t, false)
+	remote = CreateGoGitTestRepo(t, true)
 
 	err := repoA.AddRemote("origin", remote.GetLocalRemote())
 	if err != nil {
@@ -61,4 +68,19 @@ func SetupGoGitReposAndRemote() (repoA, repoB, remote TestedRepo) {
 	}
 
 	return repoA, repoB, remote
+}
+
+func goGitRepoDir(t *testing.T, repo TestedRepo) string {
+	t.Helper()
+
+	dir := repo.GetLocalRemote()
+	if strings.HasSuffix(dir, ".git") {
+		dir, _ = filepath.Split(dir)
+	}
+
+	if dir[len(dir)-1] == filepath.Separator {
+		dir = dir[:len(dir)-1]
+	}
+
+	return dir
 }

@@ -1,11 +1,15 @@
 package commands
 
 import (
-	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+)
+
+const (
+	testUserName  = "John Doe"
+	testUserEmail = "jdoe@example.com"
 )
 
 func newTestEnvAndUser(t *testing.T) (*testEnv, string) {
@@ -14,8 +18,8 @@ func newTestEnvAndUser(t *testing.T) (*testEnv, string) {
 	testEnv := newTestEnv(t)
 
 	opts := createUserOptions{
-		name:           "John Doe",
-		email:          "jdoe@example.com",
+		name:           testUserName,
+		email:          testUserEmail,
 		avatarURL:      "",
 		nonInteractive: true,
 	}
@@ -29,8 +33,6 @@ func newTestEnvAndUser(t *testing.T) (*testEnv, string) {
 }
 
 func TestUserCreateCommand(t *testing.T) {
-	testEnv, userID := newTestEnvAndUser(t)
-
-	require.FileExists(t, filepath.Join(testEnv.cwd, ".git", "refs", "identities", userID))
-	require.FileExists(t, filepath.Join(testEnv.cwd, ".git", "git-bug", "identity-cache"))
+	_, userID := newTestEnvAndUser(t)
+	require.Regexp(t, "[0-9a-f]{64}", userID)
 }

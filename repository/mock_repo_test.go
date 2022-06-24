@@ -5,8 +5,7 @@ import (
 )
 
 func TestMockRepo(t *testing.T) {
-	creator := func(bare bool) TestedRepo { return NewMockRepo() }
-	cleaner := func(repos ...Repo) {}
+	creator := func(t testing.TB, bare bool) TestedRepo { return NewMockRepo() }
 
-	RepoTest(t, creator, cleaner)
+	RepoTest(t, creator)
 }
