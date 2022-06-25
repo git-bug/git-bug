@@ -1,9 +1,17 @@
 Entities data model
 ===================
 
-If you are not familiar with [git internals](https://git-scm.com/book/en/v1/Git-Internals), you might first want to read about them, as the `git-bug` data model is built on top of them.
+This document explains how git-bug's reusable distributed data structure in git is working. This data structure is capable of:
+- storing an entity and its complete history in git
+- carry signed authorship of editions
+- use git remotes as a medium for synchronisation and collaboration
+- merge conflicts
+- respect the rules you define as to what edition are possible
+- carry attached media 
 
-In a different format, see how you can easily make your own [distributed data structure](../entity/dag/example_test.go).
+If you are looking for a different format or to see how you can easily make your own, checkout [the example code](../entity/dag/example_test.go).
+
+If you are not familiar with [git internals](https://git-scm.com/book/en/v1/Git-Internals), you might first want to read about them, as the `git-bug` data model is built on top of them.
 
 ## Entities (bug, author, ...) are a series of edit operations
 

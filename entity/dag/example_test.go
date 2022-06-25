@@ -11,7 +11,10 @@ import (
 	"github.com/MichaelMure/git-bug/repository"
 )
 
-// This file explains how to define a replicated data structure, stored and using git as a medium for
+// Note: you can find explanations about the underlying data model here:
+// https://github.com/MichaelMure/git-bug/blob/master/doc/model.md
+
+// This file explains how to define a replicated data structure, stored in and using git as a medium for
 // synchronisation. To do this, we'll use the entity/dag package, which will do all the complex handling.
 //
 // The example we'll use here is a small shared configuration with two fields. One of them is special as
