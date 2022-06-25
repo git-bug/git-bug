@@ -1,5 +1,5 @@
-Entities data model
-===================
+git-bug's reusable entity data model
+====================================
 
 This document explains how git-bug's reusable distributed data structure in git is working. This data structure is capable of:
 - storing an entity (bug, pull-request, config...) and its complete history in git
