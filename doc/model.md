@@ -2,16 +2,16 @@ Entities data model
 ===================
 
 This document explains how git-bug's reusable distributed data structure in git is working. This data structure is capable of:
-- storing an entity and its complete history in git
+- storing an entity (bug, pull-request, config...) and its complete history in git
 - carry signed authorship of editions
 - use git remotes as a medium for synchronisation and collaboration
 - merge conflicts
 - respect the rules you define as to what edition are possible
 - carry attached media 
 
-If you are looking for a different format or to see how you can easily make your own, checkout [the example code](../entity/dag/example_test.go).
+If you are looking for a different writing format or to see how you can easily make your own, checkout [the example code](../entity/dag/example_test.go).
 
-If you are not familiar with [git internals](https://git-scm.com/book/en/v1/Git-Internals), you might first want to read about them, as the `git-bug` data model is built on top of them.
+If you are not familiar with [git internals](https://git-scm.com/book/en/v2/Git-Internals-Git-Objects), you might first want to read about them, as the `git-bug` data model is built on top of them.
 
 ## Entities (bug, author, ...) are a series of edit operations
 
@@ -21,7 +21,7 @@ To deal with this problem, you need a way to merge these changes in a meaningful
 
 ![ordered operations](operations.png)
 
-To get the final state of an entity, we apply these `Operation`s in the correct order on an empty state, to compute ("compile") our view.
+To get the final state of an entity, we apply these `Operation`s in the correct order on an empty state, to compute (aka "compile") our view.
 
 ## Entities are stored in git objects
 
@@ -29,11 +29,11 @@ An `Operation` is a piece of data, including:
 
 - a type identifier
 - an author (a reference to another entity)
-- a timestamp (there is also 1 or 2 [Lamport time](#time-is-unreliable))
+- a timestamp (there is also one or two [Lamport time](#time-is-unreliable))
 - all the data required by that operation type (a message, a status ...)
 - a random [nonce](https://en.wikipedia.org/wiki/Cryptographic_nonce) to ensure we have enough entropy, as the operation identifier is a hash of that data (more on that later)
 
-These `Operation`s are aggregated in an `OperationPack`, a simple array. An `OperationPack` represents an edit session of a bug. As the operation's author is the same for all the `OperationPack` we only store it once. 
+These `Operation`s are aggregated in an `OperationPack`, a simple array. An `OperationPack` represents an edit session of the entity. As the operation's author is the same for all the `OperationPack` we only store it once. 
 
 We store this pack in git as a git `Blob`; that consists of a string containing a JSON array of operations. One such pack -- here with two operations -- might look like this:
 
@@ -60,17 +60,19 @@ We store this pack in git as a git `Blob`; that consists of a string containing 
 }
 ```
 
-To reference our `OperationPack`, we create a git `Tree`; it references our `OperationPack` `Blob` under `"/ops"`. If any edit operation includes a media (for instance in a message), we can store that media as a `Blob` and reference it here under `"/media"`.
+To reference our `OperationPack`, we create a git `Tree`; it references our `OperationPack` `Blob` under `"/ops"`. If any edit operation includes a media (for instance in a text message), we can store that media as a `Blob` and reference it here under `"/media"`.
 
 To complete the picture, we create a git `Commit` that references our `Tree`. Each time we add more `Operation`s to our bug, we add a new `Commit` with the same data-structure to form a chain of `Commit`s.
 
-This chain of `Commit`s is made available as a git `Reference` under `refs/bugs/<bug-id>`. We can later use this reference to push our data to a git remote. As git will push any data needed as well, everything will be pushed to the remote, including the media.
+This chain of `Commit`s is made available as a git `Reference` under `refs/<namespace>/<id>`. We can later use this reference to push our data to a git remote. As git will push any data needed as well, everything will be pushed to the remote, including the media.
 
 Here is the complete picture:
 
 ![git graph of a simple bug](bug-graph-1.png)
 
 ## Time is unreliable
+
+Before being able to merge conflicts, let's start with some building blocks.
 
 It would be very tempting to use the `Operation`'s timestamp to give us the order to compile the final state. However, you can't rely on the time provided by other people (their clock might be off) for anything other than just display. This is a fundamental limitation of distributed system, and even more so when actors might want to game the system.
 
@@ -81,7 +83,7 @@ Instead, we are going to use [Lamport logical clock](https://en.wikipedia.org/wi
 - if L1 == L2, we can't tell which happened first: it's a concurrent edition
 
 
-Each time we are appending something to the data (create an `Entity`, add an `Operation`) a logical time will be attached, with the highest time value we are aware of plus one. This declares a causality in the event and allows ordering entities and operations.
+Each time we are appending something to the data (create an `Entity`, add an `Operation`) a logical time will be attached, with the highest time value we are aware of, plus one. This declares a causality in the events and allows ordering entities and operations.
 
 The first commit of an `Entity` will have both a creation time and edit time clock, while a later commit will only have an edit time clock. These clocks value are serialized directly in the `Tree` entry name (for example: `"create-clock-4"`). As a `Tree` entry needs to reference something, we reference the git `Blob` with an empty content. As all of these entries will reference the same `Blob`, no network transfer is needed as long as you already have any entity in your repository.
 
@@ -113,11 +115,11 @@ Now that we have all that, we can finally merge our entities without conflict, a
 - if we simply pull updates, we move forward our local reference. We get an update of our graph that we read as usual.
 - if we push fast-forward updates, we move forward the remote reference and other users can update their reference as well.
 
-The tricky part happens when we have concurrent editions. If we pull updates while we have local changes (non-straightforward in git term), git-bug creates the equivalent of a merge commit to merge both branches into a DAG. This DAG has a single root containing the first operation, but can have branches that get merged back into a single head pointed by the reference.
+The tricky part happens when we have concurrent editions. If we pull updates while we have local changes (non-straightforward in git term), `git-bug` creates the equivalent of a merge commit to merge both branches into a DAG. This DAG has a single root containing the first operation, but can have branches that get merged back into a single head pointed by the reference.
 
 As we don't have a purely linear series of commits/`Operations`s, we need a deterministic ordering to always apply operations in the same order.
 
-git-bug applies the following algorithm:
+`git-bug` applies the following algorithm:
 
 1. load and read all the commits and the associated `OperationPack`s
 2. make sure that the Lamport clocks respect the DAG structure: a parent commit/`OperationPack` (that is, towards the head) cannot have a clock that is higher or equal than its direct child. If such a problem happens, the commit is refused/discarded.
@@ -125,7 +127,7 @@ git-bug applies the following algorithm:
    1. the edition's lamport clock if not concurrent
    2. the lexicographic order of the `OperationPack`'s identifier
 
-Step 2 is providing and enforcing a constraint over the `Operation`'s logical clocks. What that means, is that we inherit the implicit ordering given by the DAG. Later, logical clocks refine that ordering. This - coupled with signed commits - has the nice property of limiting how this data model can be abused.
+Step 2 is providing and enforcing a constraint over the `Operation`'s logical clocks. What that means, is that **we inherit the implicit ordering given by the DAG**. Later, logical clocks refine that ordering. This - coupled with signed commits - has the nice property of limiting how this data model can be abused.
 
 Here is an example of such an ordering:
 

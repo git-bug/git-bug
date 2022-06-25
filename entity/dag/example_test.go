@@ -18,10 +18,11 @@ import (
 // synchronisation. To do this, we'll use the entity/dag package, which will do all the complex handling.
 //
 // The example we'll use here is a small shared configuration with two fields. One of them is special as
-// it also defines who is allowed to change said configuration. Note: this example is voluntarily a bit
-// complex with operation linking to identities and logic rules, to show that how something more complex
-// than a toy would look like. That said, it's still a simplified example: in git-bug for example, more
-// layers are added for caching, memory handling and to provide an easier to use API.
+// it also defines who is allowed to change said configuration.
+// Note: this example is voluntarily a bit complex with operation linking to identities and logic rules,
+// to show that how something more complex than a toy would look like. That said, it's still a simplified
+// example: in git-bug for example, more layers are added for caching, memory handling and to provide an
+// easier to use API.
 //
 // Let's start by defining the document/structure we are going to share:
 
