@@ -37,7 +37,9 @@ func runRm(env *Env, args []string) (err error) {
 		return
 	}
 
-	env.out.Printf("bug %s removed\n", args[0])
+	env.err.Print("bug ")
+	env.out.Printf("%s", args[0])
+	env.err.Println(" removed")
 
 	return
 }
