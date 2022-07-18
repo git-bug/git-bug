@@ -91,7 +91,8 @@ func runUserCreate(env *Env, opts createUserOptions) error {
 	}
 
 	env.err.Println()
-	env.out.Println(id.Id())
+	env.out.Print(id.Id())
+	env.err.Println()
 
 	return nil
 }

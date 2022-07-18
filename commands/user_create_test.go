@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -12,7 +11,7 @@ const (
 	testUserEmail = "jdoe@example.com"
 )
 
-func newTestEnvAndUser(t *testing.T) (*testEnv, string) {
+func newTestEnvAndUser(t *testing.T) (*testEnv, string, string) {
 	t.Helper()
 
 	testEnv := newTestEnv(t)
@@ -26,13 +25,16 @@ func newTestEnvAndUser(t *testing.T) (*testEnv, string) {
 
 	require.NoError(t, runUserCreate(testEnv.env, opts))
 
-	userID := strings.TrimSpace(testEnv.out.String())
+	userID := testEnv.out.String()
 	testEnv.out.Reset()
+	humanText := testEnv.err.String()
+	testEnv.err.Reset()
 
-	return testEnv, userID
+	return testEnv, userID, humanText
 }
 
 func TestUserCreateCommand(t *testing.T) {
-	_, userID := newTestEnvAndUser(t)
-	require.Regexp(t, "[0-9a-f]{64}", userID)
+	_, userID, humanText := newTestEnvAndUser(t)
+	require.Regexp(t, "^[0-9a-f]{64}$", userID)
+	require.Equal(t, "\n\n", humanText)
 }
