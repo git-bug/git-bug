@@ -70,7 +70,8 @@ func runAdd(env *Env, opts addOptions) error {
 		return err
 	}
 
-	env.out.Printf("%s created\n", b.Id().Human())
+	env.out.Printf("%s", b.Id().Human())
+	env.err.Println(" created")
 
 	return nil
 }

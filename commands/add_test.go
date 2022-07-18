@@ -1,16 +1,15 @@
 package commands
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
-func newTestEnvAndBug(t *testing.T) (*testEnv, string) {
+func newTestEnvAndBug(t *testing.T) (*testEnv, string, string) {
 	t.Helper()
 
-	testEnv, _ := newTestEnvAndUser(t)
+	testEnv, _, _ := newTestEnvAndUser(t)
 	opts := addOptions{
 		title:          "this is a bug title",
 		message:        "this is a bug message",
@@ -19,14 +18,18 @@ func newTestEnvAndBug(t *testing.T) (*testEnv, string) {
 	}
 
 	require.NoError(t, runAdd(testEnv.env, opts))
-	require.Regexp(t, "^[0-9A-Fa-f]{7} created\n$", testEnv.out)
-	bugID := strings.Split(testEnv.out.String(), " ")[0]
+	// require.Regexp(t, "^[0-9A-Fa-f]{7} created\n$", testEnv.out)
+	// bugID := strings.Split(testEnv.out.String(), " ")[0]
+	bugID := testEnv.out.String()
 	testEnv.out.Reset()
+	humanText := testEnv.err.String()
+	testEnv.err.Reset()
 
-	return testEnv, bugID
+	return testEnv, bugID, humanText
 }
 
 func TestAdd(t *testing.T) {
-	_, bugID := newTestEnvAndBug(t)
+	_, bugID, humanText := newTestEnvAndBug(t)
 	require.Regexp(t, "^[0-9A-Fa-f]{7}$", bugID)
+	require.Equal(t, " created\n", humanText)
 }
