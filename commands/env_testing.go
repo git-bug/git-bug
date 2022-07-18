@@ -13,6 +13,7 @@ import (
 type testEnv struct {
 	env *Env
 	out *bytes.Buffer
+	err *bytes.Buffer
 }
 
 func newTestEnv(t *testing.T) *testEnv {
@@ -20,7 +21,8 @@ func newTestEnv(t *testing.T) *testEnv {
 
 	repo := repository.CreateGoGitTestRepo(t, false)
 
-	buf := new(bytes.Buffer)
+	outBuf := new(bytes.Buffer)
+	errBuf := new(bytes.Buffer)
 
 	backend, err := cache.NewRepoCache(repo)
 	require.NoError(t, err)
@@ -32,9 +34,10 @@ func newTestEnv(t *testing.T) *testEnv {
 		env: &Env{
 			repo:    repo,
 			backend: backend,
-			out:     out{Writer: buf},
-			err:     out{Writer: buf},
+			out:     out{Writer: outBuf},
+			err:     out{Writer: errBuf},
 		},
-		out: buf,
+		out: outBuf,
+		err: errBuf,
 	}
 }
