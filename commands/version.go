@@ -19,7 +19,7 @@ func newVersionCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "version",
 		Short: "Show git-bug version information.",
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(cmd *cobra.Command, _ []string) {
 			runVersion(env, options, cmd.Root())
 		},
 	}
@@ -42,21 +42,32 @@ func newVersionCommand() *cobra.Command {
 
 func runVersion(env *Env, opts versionOptions, root *cobra.Command) {
 	if opts.all {
-		env.out.Printf("%s version: %s\n", rootCommandName, root.Version)
-		env.out.Printf("System version: %s/%s\n", runtime.GOARCH, runtime.GOOS)
-		env.out.Printf("Golang version: %s\n", runtime.Version())
+		env.err.Printf("%s version: ", rootCommandName)
+		env.out.Printf("%s\n", root.Version)
+		env.err.Print("System version: ")
+		env.out.Printf("%s/%s\n", runtime.GOARCH, runtime.GOOS)
+		env.err.Print("Golang version: ")
+		env.out.Printf("%s\n", runtime.Version())
 		return
 	}
 
 	if opts.number {
-		env.out.Println(root.Version)
+		env.out.Print(root.Version)
+		env.err.Println()
 		return
 	}
 
 	if opts.commit {
-		env.out.Println(GitCommit)
+		env.out.Print(GitCommit)
+		env.err.Println()
 		return
 	}
 
-	env.out.Printf("%s version: %s\n", rootCommandName, root.Version)
+	printVersion(env, root)
+}
+
+func printVersion(env *Env, root *cobra.Command) {
+	env.err.Printf("%s version: ", rootCommandName)
+	env.out.Printf("%s", root.Version)
+	env.err.Println()
 }
