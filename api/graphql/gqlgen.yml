@@ -28,6 +28,8 @@ models:
     model: github.com/MichaelMure/git-bug/bug.Comment
   Identity:
     model: github.com/MichaelMure/git-bug/api/graphql/models.IdentityWrapper
+  IdentityConnection:
+    model: github.com/MichaelMure/git-bug/api/graphql/connections.Result
   Label:
     model: github.com/MichaelMure/git-bug/bug.Label
   Hash:

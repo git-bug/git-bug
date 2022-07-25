@@ -7,6 +7,7 @@ import (
 	"github.com/MichaelMure/git-bug/api/graphql/graph"
 	"github.com/MichaelMure/git-bug/api/graphql/models"
 	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/entity/dag"
 )
 
 var _ graph.BugResolver = &bugResolver{}
@@ -26,18 +27,16 @@ func (bugResolver) Status(_ context.Context, obj models.BugWrapper) (models.Stat
 }
 
 func (bugResolver) Comments(_ context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*models.CommentConnection, error) {
-	input := models.ConnectionInput{
+	input := connections.Input{
 		Before: before,
 		After:  after,
 		First:  first,
 		Last:   last,
 	}
 
-	edger := func(comment bug.Comment, offset int) connections.Edge {
-		return models.CommentEdge{
-			Node:   &comment,
-			Cursor: connections.OffsetToCursor(offset),
-		}
+	comments, err := obj.Comments()
+	if err != nil {
+		return nil, err
 	}
 
 	conMaker := func(edges []*models.CommentEdge, nodes []bug.Comment, info *models.PageInfo, totalCount int) (*models.CommentConnection, error) {
@@ -53,36 +52,15 @@ func (bugResolver) Comments(_ context.Context, obj models.BugWrapper, after *str
 		}, nil
 	}
 
-	comments, err := obj.Comments()
-	if err != nil {
-		return nil, err
-	}
-
-	return connections.CommentCon(comments, edger, conMaker, input)
+	return connections.Paginate(comments, input)
 }
 
-func (bugResolver) Operations(_ context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*models.OperationConnection, error) {
-	input := models.ConnectionInput{
+func (bugResolver) Operations(_ context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*connections.Result[dag.Operation], error) {
+	input := connections.Input{
 		Before: before,
 		After:  after,
 		First:  first,
 		Last:   last,
-	}
-
-	edger := func(op bug.Operation, offset int) connections.Edge {
-		return models.OperationEdge{
-			Node:   op,
-			Cursor: connections.OffsetToCursor(offset),
-		}
-	}
-
-	conMaker := func(edges []*models.OperationEdge, nodes []bug.Operation, info *models.PageInfo, totalCount int) (*models.OperationConnection, error) {
-		return &models.OperationConnection{
-			Edges:      edges,
-			Nodes:      nodes,
-			PageInfo:   info,
-			TotalCount: totalCount,
-		}, nil
 	}
 
 	ops, err := obj.Operations()
@@ -90,31 +68,15 @@ func (bugResolver) Operations(_ context.Context, obj models.BugWrapper, after *s
 		return nil, err
 	}
 
-	return connections.OperationCon(ops, edger, conMaker, input)
+	return connections.Paginate(ops, input)
 }
 
-func (bugResolver) Timeline(_ context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*models.TimelineItemConnection, error) {
-	input := models.ConnectionInput{
+func (bugResolver) Timeline(_ context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*connections.Result[bug.TimelineItem], error) {
+	input := connections.Input{
 		Before: before,
 		After:  after,
 		First:  first,
 		Last:   last,
-	}
-
-	edger := func(op bug.TimelineItem, offset int) connections.Edge {
-		return models.TimelineItemEdge{
-			Node:   op,
-			Cursor: connections.OffsetToCursor(offset),
-		}
-	}
-
-	conMaker := func(edges []*models.TimelineItemEdge, nodes []bug.TimelineItem, info *models.PageInfo, totalCount int) (*models.TimelineItemConnection, error) {
-		return &models.TimelineItemConnection{
-			Edges:      edges,
-			Nodes:      nodes,
-			PageInfo:   info,
-			TotalCount: totalCount,
-		}, nil
 	}
 
 	timeline, err := obj.Timeline()
@@ -122,31 +84,15 @@ func (bugResolver) Timeline(_ context.Context, obj models.BugWrapper, after *str
 		return nil, err
 	}
 
-	return connections.TimelineItemCon(timeline, edger, conMaker, input)
+	return connections.Paginate(timeline, input)
 }
 
-func (bugResolver) Actors(_ context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*models.IdentityConnection, error) {
-	input := models.ConnectionInput{
+func (bugResolver) Actors(_ context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*connections.Result[models.IdentityWrapper], error) {
+	input := connections.Input{
 		Before: before,
 		After:  after,
 		First:  first,
 		Last:   last,
-	}
-
-	edger := func(actor models.IdentityWrapper, offset int) connections.Edge {
-		return models.IdentityEdge{
-			Node:   actor,
-			Cursor: connections.OffsetToCursor(offset),
-		}
-	}
-
-	conMaker := func(edges []*models.IdentityEdge, nodes []models.IdentityWrapper, info *models.PageInfo, totalCount int) (*models.IdentityConnection, error) {
-		return &models.IdentityConnection{
-			Edges:      edges,
-			Nodes:      nodes,
-			PageInfo:   info,
-			TotalCount: totalCount,
-		}, nil
 	}
 
 	actors, err := obj.Actors()
@@ -154,31 +100,15 @@ func (bugResolver) Actors(_ context.Context, obj models.BugWrapper, after *strin
 		return nil, err
 	}
 
-	return connections.IdentityCon(actors, edger, conMaker, input)
+	return connections.Paginate(actors, input)
 }
 
-func (bugResolver) Participants(_ context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*models.IdentityConnection, error) {
-	input := models.ConnectionInput{
+func (bugResolver) Participants(_ context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*connections.Result[models.IdentityWrapper], error) {
+	input := connections.Input{
 		Before: before,
 		After:  after,
 		First:  first,
 		Last:   last,
-	}
-
-	edger := func(participant models.IdentityWrapper, offset int) connections.Edge {
-		return models.IdentityEdge{
-			Node:   participant,
-			Cursor: connections.OffsetToCursor(offset),
-		}
-	}
-
-	conMaker := func(edges []*models.IdentityEdge, nodes []models.IdentityWrapper, info *models.PageInfo, totalCount int) (*models.IdentityConnection, error) {
-		return &models.IdentityConnection{
-			Edges:      edges,
-			Nodes:      nodes,
-			PageInfo:   info,
-			TotalCount: totalCount,
-		}, nil
 	}
 
 	participants, err := obj.Participants()
@@ -186,5 +116,5 @@ func (bugResolver) Participants(_ context.Context, obj models.BugWrapper, after 
 		return nil, err
 	}
 
-	return connections.IdentityCon(participants, edger, conMaker, input)
+	return connections.Paginate(participants, input)
 }
