@@ -1,7 +1,6 @@
 package bug
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/pkg/errors"
@@ -20,14 +19,14 @@ var _ dag.OperationWithFiles = &EditCommentOperation{}
 
 // EditCommentOperation will change a comment in the bug
 type EditCommentOperation struct {
-	OpBase
+	dag.OpBase
 	Target  entity.Id         `json:"target"`
 	Message string            `json:"message"`
 	Files   []repository.Hash `json:"files"`
 }
 
 func (op *EditCommentOperation) Id() entity.Id {
-	return idOperation(op, &op.OpBase)
+	return dag.IdOperation(op, &op.OpBase)
 }
 
 func (op *EditCommentOperation) Apply(snapshot *Snapshot) {
@@ -68,7 +67,7 @@ func (op *EditCommentOperation) Apply(snapshot *Snapshot) {
 		return
 	}
 
-	snapshot.addActor(op.Author_)
+	snapshot.addActor(op.Author())
 
 	// Updating the corresponding comment
 
@@ -101,43 +100,9 @@ func (op *EditCommentOperation) Validate() error {
 	return nil
 }
 
-// UnmarshalJSON is two steps JSON unmarshalling
-// This workaround is necessary to avoid the inner OpBase.MarshalJSON
-// overriding the outer op's MarshalJSON
-func (op *EditCommentOperation) UnmarshalJSON(data []byte) error {
-	// Unmarshal OpBase and the op separately
-
-	base := OpBase{}
-	err := json.Unmarshal(data, &base)
-	if err != nil {
-		return err
-	}
-
-	aux := struct {
-		Target  entity.Id         `json:"target"`
-		Message string            `json:"message"`
-		Files   []repository.Hash `json:"files"`
-	}{}
-
-	err = json.Unmarshal(data, &aux)
-	if err != nil {
-		return err
-	}
-
-	op.OpBase = base
-	op.Target = aux.Target
-	op.Message = aux.Message
-	op.Files = aux.Files
-
-	return nil
-}
-
-// Sign post method for gqlgen
-func (op *EditCommentOperation) IsAuthored() {}
-
 func NewEditCommentOp(author identity.Interface, unixTime int64, target entity.Id, message string, files []repository.Hash) *EditCommentOperation {
 	return &EditCommentOperation{
-		OpBase:  newOpBase(EditCommentOp, author, unixTime),
+		OpBase:  dag.NewOpBase(EditCommentOp, author, unixTime),
 		Target:  target,
 		Message: message,
 		Files:   files,

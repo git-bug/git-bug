@@ -13,6 +13,7 @@ import (
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/entity/dag"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/interrupt"
@@ -44,7 +45,7 @@ func TestGithubImporter(t *testing.T) {
 			name: "simple issue",
 			url:  "https://github.com/MichaelMure/git-bug-test-github-bridge/issues/1",
 			bug: &bug.Snapshot{
-				Operations: []bug.Operation{
+				Operations: []dag.Operation{
 					bug.NewCreateOp(author, 0, "simple issue", "initial comment", nil),
 					bug.NewAddCommentOp(author, 0, "first comment", nil),
 					bug.NewAddCommentOp(author, 0, "second comment", nil),
@@ -55,7 +56,7 @@ func TestGithubImporter(t *testing.T) {
 			name: "empty issue",
 			url:  "https://github.com/MichaelMure/git-bug-test-github-bridge/issues/2",
 			bug: &bug.Snapshot{
-				Operations: []bug.Operation{
+				Operations: []dag.Operation{
 					bug.NewCreateOp(author, 0, "empty issue", "", nil),
 				},
 			},
@@ -64,7 +65,7 @@ func TestGithubImporter(t *testing.T) {
 			name: "complex issue",
 			url:  "https://github.com/MichaelMure/git-bug-test-github-bridge/issues/3",
 			bug: &bug.Snapshot{
-				Operations: []bug.Operation{
+				Operations: []dag.Operation{
 					bug.NewCreateOp(author, 0, "complex issue", "initial comment", nil),
 					bug.NewLabelChangeOperation(author, 0, []bug.Label{"bug"}, []bug.Label{}),
 					bug.NewLabelChangeOperation(author, 0, []bug.Label{"duplicate"}, []bug.Label{}),
@@ -81,7 +82,7 @@ func TestGithubImporter(t *testing.T) {
 			name: "editions",
 			url:  "https://github.com/MichaelMure/git-bug-test-github-bridge/issues/4",
 			bug: &bug.Snapshot{
-				Operations: []bug.Operation{
+				Operations: []dag.Operation{
 					bug.NewCreateOp(author, 0, "editions", "initial comment edited", nil),
 					bug.NewEditCommentOp(author, 0, "", "erased then edited again", nil),
 					bug.NewAddCommentOp(author, 0, "first comment", nil),
@@ -93,7 +94,7 @@ func TestGithubImporter(t *testing.T) {
 			name: "comment deletion",
 			url:  "https://github.com/MichaelMure/git-bug-test-github-bridge/issues/5",
 			bug: &bug.Snapshot{
-				Operations: []bug.Operation{
+				Operations: []dag.Operation{
 					bug.NewCreateOp(author, 0, "comment deletion", "", nil),
 				},
 			},
@@ -102,7 +103,7 @@ func TestGithubImporter(t *testing.T) {
 			name: "edition deletion",
 			url:  "https://github.com/MichaelMure/git-bug-test-github-bridge/issues/6",
 			bug: &bug.Snapshot{
-				Operations: []bug.Operation{
+				Operations: []dag.Operation{
 					bug.NewCreateOp(author, 0, "edition deletion", "initial comment", nil),
 					bug.NewEditCommentOp(author, 0, "", "initial comment edited again", nil),
 					bug.NewAddCommentOp(author, 0, "first comment", nil),
@@ -114,7 +115,7 @@ func TestGithubImporter(t *testing.T) {
 			name: "hidden comment",
 			url:  "https://github.com/MichaelMure/git-bug-test-github-bridge/issues/7",
 			bug: &bug.Snapshot{
-				Operations: []bug.Operation{
+				Operations: []dag.Operation{
 					bug.NewCreateOp(author, 0, "hidden comment", "initial comment", nil),
 					bug.NewAddCommentOp(author, 0, "first comment", nil),
 				},
@@ -124,7 +125,7 @@ func TestGithubImporter(t *testing.T) {
 			name: "transfered issue",
 			url:  "https://github.com/MichaelMure/git-bug-test-github-bridge/issues/8",
 			bug: &bug.Snapshot{
-				Operations: []bug.Operation{
+				Operations: []dag.Operation{
 					bug.NewCreateOp(author, 0, "transfered issue", "", nil),
 				},
 			},
@@ -133,7 +134,7 @@ func TestGithubImporter(t *testing.T) {
 			name: "unicode control characters",
 			url:  "https://github.com/MichaelMure/git-bug-test-github-bridge/issues/10",
 			bug: &bug.Snapshot{
-				Operations: []bug.Operation{
+				Operations: []dag.Operation{
 					bug.NewCreateOp(author, 0, "unicode control characters", "u0000: \nu0001: \nu0002: \nu0003: \nu0004: \nu0005: \nu0006: \nu0007: \nu0008: \nu0009: \t\nu0010: \nu0011: \nu0012: \nu0013: \nu0014: \nu0015: \nu0016: \nu0017: \nu0018: \nu0019:", nil),
 				},
 			},

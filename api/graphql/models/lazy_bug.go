@@ -7,6 +7,7 @@ import (
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
+	"github.com/MichaelMure/git-bug/entity/dag"
 )
 
 // BugWrapper is an interface used by the GraphQL resolvers to handle a bug.
@@ -24,7 +25,7 @@ type BugWrapper interface {
 	Participants() ([]IdentityWrapper, error)
 	CreatedAt() time.Time
 	Timeline() ([]bug.TimelineItem, error)
-	Operations() ([]bug.Operation, error)
+	Operations() ([]dag.Operation, error)
 
 	IsAuthored()
 }
@@ -144,7 +145,7 @@ func (lb *lazyBug) Timeline() ([]bug.TimelineItem, error) {
 	return lb.snap.Timeline, nil
 }
 
-func (lb *lazyBug) Operations() ([]bug.Operation, error) {
+func (lb *lazyBug) Operations() ([]dag.Operation, error) {
 	err := lb.load()
 	if err != nil {
 		return nil, err
@@ -210,6 +211,6 @@ func (l *loadedBug) Timeline() ([]bug.TimelineItem, error) {
 	return l.Snapshot.Timeline, nil
 }
 
-func (l *loadedBug) Operations() ([]bug.Operation, error) {
+func (l *loadedBug) Operations() ([]dag.Operation, error) {
 	return l.Snapshot.Operations, nil
 }

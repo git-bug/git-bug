@@ -11,13 +11,13 @@ import (
 )
 
 func TestOperationPackReadWrite(t *testing.T) {
-	repo, id1, _, resolver, def := makeTestContext()
+	repo, author, _, resolver, def := makeTestContext()
 
 	opp := &operationPack{
-		Author: id1,
+		Author: author,
 		Operations: []Operation{
-			newOp1(id1, "foo"),
-			newOp2(id1, "bar"),
+			newOp1(author, "foo"),
+			newOp2(author, "bar"),
 		},
 		CreateTime: 123,
 		EditTime:   456,
@@ -32,34 +32,26 @@ func TestOperationPackReadWrite(t *testing.T) {
 	opp2, err := readOperationPack(def, repo, resolver, commit)
 	require.NoError(t, err)
 
-	require.Equal(t, opp, opp2)
-
-	// make sure we get the same Id with the same data
-	opp3 := &operationPack{
-		Author: id1,
-		Operations: []Operation{
-			newOp1(id1, "foo"),
-			newOp2(id1, "bar"),
-		},
-		CreateTime: 123,
-		EditTime:   456,
+	for _, op := range opp.Operations {
+		// force the creation of the id
+		op.Id()
 	}
-	require.Equal(t, opp.Id(), opp3.Id())
+	require.Equal(t, opp, opp2)
 }
 
 func TestOperationPackSignedReadWrite(t *testing.T) {
-	repo, id1, _, resolver, def := makeTestContext()
+	repo, author, _, resolver, def := makeTestContext()
 
-	err := id1.(*identity.Identity).Mutate(repo, func(orig *identity.Mutator) {
+	err := author.(*identity.Identity).Mutate(repo, func(orig *identity.Mutator) {
 		orig.Keys = append(orig.Keys, identity.GenerateKey())
 	})
 	require.NoError(t, err)
 
 	opp := &operationPack{
-		Author: id1,
+		Author: author,
 		Operations: []Operation{
-			newOp1(id1, "foo"),
-			newOp2(id1, "bar"),
+			newOp1(author, "foo"),
+			newOp2(author, "bar"),
 		},
 		CreateTime: 123,
 		EditTime:   456,
@@ -74,23 +66,15 @@ func TestOperationPackSignedReadWrite(t *testing.T) {
 	opp2, err := readOperationPack(def, repo, resolver, commit)
 	require.NoError(t, err)
 
-	require.Equal(t, opp, opp2)
-
-	// make sure we get the same Id with the same data
-	opp3 := &operationPack{
-		Author: id1,
-		Operations: []Operation{
-			newOp1(id1, "foo"),
-			newOp2(id1, "bar"),
-		},
-		CreateTime: 123,
-		EditTime:   456,
+	for _, op := range opp.Operations {
+		// force the creation of the id
+		op.Id()
 	}
-	require.Equal(t, opp.Id(), opp3.Id())
+	require.Equal(t, opp, opp2)
 }
 
 func TestOperationPackFiles(t *testing.T) {
-	repo, id1, _, resolver, def := makeTestContext()
+	repo, author, _, resolver, def := makeTestContext()
 
 	blobHash1, err := repo.StoreData(randomData())
 	require.NoError(t, err)
@@ -99,10 +83,10 @@ func TestOperationPackFiles(t *testing.T) {
 	require.NoError(t, err)
 
 	opp := &operationPack{
-		Author: id1,
+		Author: author,
 		Operations: []Operation{
-			newOp1(id1, "foo", blobHash1, blobHash2),
-			newOp1(id1, "foo", blobHash2),
+			newOp1(author, "foo", blobHash1, blobHash2),
+			newOp1(author, "foo", blobHash2),
 		},
 		CreateTime: 123,
 		EditTime:   456,
@@ -117,6 +101,10 @@ func TestOperationPackFiles(t *testing.T) {
 	opp2, err := readOperationPack(def, repo, resolver, commit)
 	require.NoError(t, err)
 
+	for _, op := range opp.Operations {
+		// force the creation of the id
+		op.Id()
+	}
 	require.Equal(t, opp, opp2)
 
 	require.ElementsMatch(t, opp2.Operations[0].(OperationWithFiles).GetFiles(), []repository.Hash{

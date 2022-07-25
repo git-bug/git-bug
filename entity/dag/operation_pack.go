@@ -314,10 +314,15 @@ func unmarshallPack(def Definition, resolver identity.Resolver, data []byte) ([]
 
 	for _, raw := range aux.Operations {
 		// delegate to specialized unmarshal function
-		op, err := def.OperationUnmarshaler(author, raw, resolver)
+		op, err := def.OperationUnmarshaler(raw, resolver)
 		if err != nil {
 			return nil, nil, err
 		}
+		// Set the id from the serialized data
+		op.setId(entity.DeriveId(raw))
+		// Set the author, taken from the OperationPack
+		op.setAuthor(author)
+
 		ops = append(ops, op)
 	}
 

@@ -1,10 +1,10 @@
 package bug
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/MichaelMure/git-bug/entity"
+	"github.com/MichaelMure/git-bug/entity/dag"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/timestamp"
 
@@ -15,22 +15,22 @@ var _ Operation = &SetTitleOperation{}
 
 // SetTitleOperation will change the title of a bug
 type SetTitleOperation struct {
-	OpBase
+	dag.OpBase
 	Title string `json:"title"`
 	Was   string `json:"was"`
 }
 
 func (op *SetTitleOperation) Id() entity.Id {
-	return idOperation(op, &op.OpBase)
+	return dag.IdOperation(op, &op.OpBase)
 }
 
 func (op *SetTitleOperation) Apply(snapshot *Snapshot) {
 	snapshot.Title = op.Title
-	snapshot.addActor(op.Author_)
+	snapshot.addActor(op.Author())
 
 	item := &SetTitleTimelineItem{
 		id:       op.Id(),
-		Author:   op.Author_,
+		Author:   op.Author(),
 		UnixTime: timestamp.Timestamp(op.UnixTime),
 		Title:    op.Title,
 		Was:      op.Was,
@@ -59,41 +59,9 @@ func (op *SetTitleOperation) Validate() error {
 	return nil
 }
 
-// UnmarshalJSON is a two step JSON unmarshalling
-// This workaround is necessary to avoid the inner OpBase.MarshalJSON
-// overriding the outer op's MarshalJSON
-func (op *SetTitleOperation) UnmarshalJSON(data []byte) error {
-	// Unmarshal OpBase and the op separately
-
-	base := OpBase{}
-	err := json.Unmarshal(data, &base)
-	if err != nil {
-		return err
-	}
-
-	aux := struct {
-		Title string `json:"title"`
-		Was   string `json:"was"`
-	}{}
-
-	err = json.Unmarshal(data, &aux)
-	if err != nil {
-		return err
-	}
-
-	op.OpBase = base
-	op.Title = aux.Title
-	op.Was = aux.Was
-
-	return nil
-}
-
-// Sign post method for gqlgen
-func (op *SetTitleOperation) IsAuthored() {}
-
 func NewSetTitleOp(author identity.Interface, unixTime int64, title string, was string) *SetTitleOperation {
 	return &SetTitleOperation{
-		OpBase: newOpBase(SetTitleOp, author, unixTime),
+		OpBase: dag.NewOpBase(SetTitleOp, author, unixTime),
 		Title:  title,
 		Was:    was,
 	}
@@ -111,7 +79,7 @@ func (s SetTitleTimelineItem) Id() entity.Id {
 	return s.id
 }
 
-// Sign post method for gqlgen
+// IsAuthored is a sign post method for gqlgen
 func (s *SetTitleTimelineItem) IsAuthored() {}
 
 // Convenience function to apply the operation

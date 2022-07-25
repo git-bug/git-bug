@@ -1,13 +1,13 @@
 package bug
 
 import (
-	"encoding/json"
 	"fmt"
 	"sort"
 
 	"github.com/pkg/errors"
 
 	"github.com/MichaelMure/git-bug/entity"
+	"github.com/MichaelMure/git-bug/entity/dag"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/timestamp"
 )
@@ -16,18 +16,18 @@ var _ Operation = &LabelChangeOperation{}
 
 // LabelChangeOperation define a Bug operation to add or remove labels
 type LabelChangeOperation struct {
-	OpBase
+	dag.OpBase
 	Added   []Label `json:"added"`
 	Removed []Label `json:"removed"`
 }
 
 func (op *LabelChangeOperation) Id() entity.Id {
-	return idOperation(op, &op.OpBase)
+	return dag.IdOperation(op, &op.OpBase)
 }
 
 // Apply apply the operation
 func (op *LabelChangeOperation) Apply(snapshot *Snapshot) {
-	snapshot.addActor(op.Author_)
+	snapshot.addActor(op.Author())
 
 	// Add in the set
 AddLoop:
@@ -59,7 +59,7 @@ AddLoop:
 
 	item := &LabelChangeTimelineItem{
 		id:       op.Id(),
-		Author:   op.Author_,
+		Author:   op.Author(),
 		UnixTime: timestamp.Timestamp(op.UnixTime),
 		Added:    op.Added,
 		Removed:  op.Removed,
@@ -92,41 +92,9 @@ func (op *LabelChangeOperation) Validate() error {
 	return nil
 }
 
-// UnmarshalJSON is a two step JSON unmarshalling
-// This workaround is necessary to avoid the inner OpBase.MarshalJSON
-// overriding the outer op's MarshalJSON
-func (op *LabelChangeOperation) UnmarshalJSON(data []byte) error {
-	// Unmarshal OpBase and the op separately
-
-	base := OpBase{}
-	err := json.Unmarshal(data, &base)
-	if err != nil {
-		return err
-	}
-
-	aux := struct {
-		Added   []Label `json:"added"`
-		Removed []Label `json:"removed"`
-	}{}
-
-	err = json.Unmarshal(data, &aux)
-	if err != nil {
-		return err
-	}
-
-	op.OpBase = base
-	op.Added = aux.Added
-	op.Removed = aux.Removed
-
-	return nil
-}
-
-// Sign post method for gqlgen
-func (op *LabelChangeOperation) IsAuthored() {}
-
 func NewLabelChangeOperation(author identity.Interface, unixTime int64, added, removed []Label) *LabelChangeOperation {
 	return &LabelChangeOperation{
-		OpBase:  newOpBase(LabelChangeOp, author, unixTime),
+		OpBase:  dag.NewOpBase(LabelChangeOp, author, unixTime),
 		Added:   added,
 		Removed: removed,
 	}
@@ -144,7 +112,7 @@ func (l LabelChangeTimelineItem) Id() entity.Id {
 	return l.id
 }
 
-// Sign post method for gqlgen
+// IsAuthored is a sign post method for gqlgen
 func (l *LabelChangeTimelineItem) IsAuthored() {}
 
 // ChangeLabels is a convenience function to apply the operation

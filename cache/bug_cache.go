@@ -7,6 +7,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/entity"
+	"github.com/MichaelMure/git-bug/entity/dag"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
@@ -287,7 +288,7 @@ func (c *BugCache) EditCommentRaw(author *IdentityCache, unixTime int64, target 
 	return op, c.notifyUpdated()
 }
 
-func (c *BugCache) SetMetadata(target entity.Id, newMetadata map[string]string) (*bug.SetMetadataOperation, error) {
+func (c *BugCache) SetMetadata(target entity.Id, newMetadata map[string]string) (*dag.SetMetadataOperation[*bug.Snapshot], error) {
 	author, err := c.repoCache.GetUserIdentity()
 	if err != nil {
 		return nil, err
@@ -296,7 +297,7 @@ func (c *BugCache) SetMetadata(target entity.Id, newMetadata map[string]string) 
 	return c.SetMetadataRaw(author, time.Now().Unix(), target, newMetadata)
 }
 
-func (c *BugCache) SetMetadataRaw(author *IdentityCache, unixTime int64, target entity.Id, newMetadata map[string]string) (*bug.SetMetadataOperation, error) {
+func (c *BugCache) SetMetadataRaw(author *IdentityCache, unixTime int64, target entity.Id, newMetadata map[string]string) (*dag.SetMetadataOperation[*bug.Snapshot], error) {
 	c.mu.Lock()
 	op, err := bug.SetMetadata(c.bug, author.Identity, unixTime, target, newMetadata)
 	if err != nil {
