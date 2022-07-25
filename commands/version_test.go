@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -8,6 +9,10 @@ import (
 
 func TestVersionCommand(t *testing.T) {
 	t.Helper()
+
+	const (
+		OSArch = runtime.GOARCH + "/" + runtime.GOOS
+	)
 
 	GitCommit = "36ff9c93"
 	GitLastTag = "v1.2.3"
@@ -43,7 +48,7 @@ func TestVersionCommand(t *testing.T) {
 		{
 			name:   "all option",
 			opts:   versionOptions{all: true},
-			expOut: "v1.2.3-dev-36ff9c93\namd64/linux\ngo1.17\n",
+			expOut: root.Version + "\n" + OSArch + "\n" + runtime.Version() + "\n",
 			expErr: "git-bug version: System version: Golang version: ",
 		},
 	}
