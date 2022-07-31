@@ -104,7 +104,7 @@ func TestID(t *testing.T) {
 		err = rene.Commit(repo)
 		require.NoError(t, err)
 
-		b, op, err := Create(rene, time.Now().Unix(), "title", "message")
+		b, op, err := Create(rene, time.Now().Unix(), "title", "message", nil, nil)
 		require.NoError(t, err)
 
 		id1 := op.Id()

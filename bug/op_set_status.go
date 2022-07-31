@@ -66,11 +66,14 @@ func (s SetStatusTimelineItem) Id() entity.Id {
 }
 
 // IsAuthored is a sign post method for gqlgen
-func (s *SetStatusTimelineItem) IsAuthored() {}
+func (s SetStatusTimelineItem) IsAuthored() {}
 
-// Convenience function to apply the operation
-func Open(b Interface, author identity.Interface, unixTime int64) (*SetStatusOperation, error) {
+// Open is a convenience function to change a bugs state to Open
+func Open(b Interface, author identity.Interface, unixTime int64, metadata map[string]string) (*SetStatusOperation, error) {
 	op := NewSetStatusOp(author, unixTime, OpenStatus)
+	for key, value := range metadata {
+		op.SetMetadata(key, value)
+	}
 	if err := op.Validate(); err != nil {
 		return nil, err
 	}
@@ -78,9 +81,12 @@ func Open(b Interface, author identity.Interface, unixTime int64) (*SetStatusOpe
 	return op, nil
 }
 
-// Convenience function to apply the operation
-func Close(b Interface, author identity.Interface, unixTime int64) (*SetStatusOperation, error) {
+// Close is a convenience function to change a bugs state to Close
+func Close(b Interface, author identity.Interface, unixTime int64, metadata map[string]string) (*SetStatusOperation, error) {
 	op := NewSetStatusOp(author, unixTime, ClosedStatus)
+	for key, value := range metadata {
+		op.SetMetadata(key, value)
+	}
 	if err := op.Validate(); err != nil {
 		return nil, err
 	}

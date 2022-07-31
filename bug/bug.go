@@ -140,14 +140,14 @@ func (bug *Bug) Operations() []Operation {
 }
 
 // Compile a bug in a easily usable snapshot
-func (bug *Bug) Compile() Snapshot {
-	snap := Snapshot{
+func (bug *Bug) Compile() *Snapshot {
+	snap := &Snapshot{
 		id:     bug.Id(),
 		Status: OpenStatus,
 	}
 
 	for _, op := range bug.Operations() {
-		op.Apply(&snap)
+		op.Apply(snap)
 		snap.Operations = append(snap.Operations, op)
 	}
 

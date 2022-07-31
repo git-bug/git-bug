@@ -97,20 +97,16 @@ type CreateTimelineItem struct {
 // IsAuthored is a sign post method for gqlgen
 func (c *CreateTimelineItem) IsAuthored() {}
 
-// Convenience function to apply the operation
-func Create(author identity.Interface, unixTime int64, title, message string) (*Bug, *CreateOperation, error) {
-	return CreateWithFiles(author, unixTime, title, message, nil)
-}
-
-func CreateWithFiles(author identity.Interface, unixTime int64, title, message string, files []repository.Hash) (*Bug, *CreateOperation, error) {
-	newBug := NewBug()
-	createOp := NewCreateOp(author, unixTime, title, message, files)
-
-	if err := createOp.Validate(); err != nil {
-		return nil, createOp, err
+// Create is a convenience function to create a bug
+func Create(author identity.Interface, unixTime int64, title, message string, files []repository.Hash, metadata map[string]string) (*Bug, *CreateOperation, error) {
+	b := NewBug()
+	op := NewCreateOp(author, unixTime, title, message, files)
+	for key, val := range metadata {
+		op.SetMetadata(key, val)
 	}
-
-	newBug.Append(createOp)
-
-	return newBug, createOp, nil
+	if err := op.Validate(); err != nil {
+		return nil, op, err
+	}
+	b.Append(op)
+	return b, op, nil
 }

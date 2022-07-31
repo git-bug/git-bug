@@ -110,27 +110,20 @@ func NewEditCommentOp(author identity.Interface, unixTime int64, target entity.I
 }
 
 // EditComment is a convenience function to apply the operation
-func EditComment(b Interface, author identity.Interface, unixTime int64, target entity.Id, message string) (*EditCommentOperation, error) {
-	return EditCommentWithFiles(b, author, unixTime, target, message, nil)
-}
-
-func EditCommentWithFiles(b Interface, author identity.Interface, unixTime int64, target entity.Id, message string, files []repository.Hash) (*EditCommentOperation, error) {
-	editCommentOp := NewEditCommentOp(author, unixTime, target, message, files)
-	if err := editCommentOp.Validate(); err != nil {
+func EditComment(b Interface, author identity.Interface, unixTime int64, target entity.Id, message string, files []repository.Hash, metadata map[string]string) (*EditCommentOperation, error) {
+	op := NewEditCommentOp(author, unixTime, target, message, files)
+	for key, val := range metadata {
+		op.SetMetadata(key, val)
+	}
+	if err := op.Validate(); err != nil {
 		return nil, err
 	}
-	b.Append(editCommentOp)
-	return editCommentOp, nil
+	b.Append(op)
+	return op, nil
 }
 
 // EditCreateComment is a convenience function to edit the body of a bug (the first comment)
-func EditCreateComment(b Interface, author identity.Interface, unixTime int64, message string) (*EditCommentOperation, error) {
+func EditCreateComment(b Interface, author identity.Interface, unixTime int64, message string, files []repository.Hash, metadata map[string]string) (*EditCommentOperation, error) {
 	createOp := b.FirstOp().(*CreateOperation)
-	return EditComment(b, author, unixTime, createOp.Id(), message)
-}
-
-// EditCreateCommentWithFiles is a convenience function to edit the body of a bug (the first comment)
-func EditCreateCommentWithFiles(b Interface, author identity.Interface, unixTime int64, message string, files []repository.Hash) (*EditCommentOperation, error) {
-	createOp := b.FirstOp().(*CreateOperation)
-	return EditCommentWithFiles(b, author, unixTime, createOp.Id(), message, files)
+	return EditComment(b, author, unixTime, createOp.Id(), message, files, metadata)
 }

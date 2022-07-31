@@ -80,10 +80,10 @@ func (s SetTitleTimelineItem) Id() entity.Id {
 }
 
 // IsAuthored is a sign post method for gqlgen
-func (s *SetTitleTimelineItem) IsAuthored() {}
+func (s SetTitleTimelineItem) IsAuthored() {}
 
-// Convenience function to apply the operation
-func SetTitle(b Interface, author identity.Interface, unixTime int64, title string) (*SetTitleOperation, error) {
+// SetTitle is a convenience function to change a bugs title
+func SetTitle(b Interface, author identity.Interface, unixTime int64, title string, metadata map[string]string) (*SetTitleOperation, error) {
 	var lastTitleOp *SetTitleOperation
 	for _, op := range b.Operations() {
 		switch op := op.(type) {
@@ -99,12 +99,14 @@ func SetTitle(b Interface, author identity.Interface, unixTime int64, title stri
 		was = b.FirstOp().(*CreateOperation).Title
 	}
 
-	setTitleOp := NewSetTitleOp(author, unixTime, title, was)
-
-	if err := setTitleOp.Validate(); err != nil {
+	op := NewSetTitleOp(author, unixTime, title, was)
+	for key, value := range metadata {
+		op.SetMetadata(key, value)
+	}
+	if err := op.Validate(); err != nil {
 		return nil, err
 	}
 
-	b.Append(setTitleOp)
-	return setTitleOp, nil
+	b.Append(op)
+	return op, nil
 }

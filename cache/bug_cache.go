@@ -34,7 +34,7 @@ func NewBugCache(repoCache *RepoCache, b *bug.Bug) *BugCache {
 func (c *BugCache) Snapshot() *bug.Snapshot {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	return c.bug.Snapshot()
+	return c.bug.Compile()
 }
 
 func (c *BugCache) Id() entity.Id {
@@ -85,18 +85,11 @@ func (c *BugCache) AddCommentWithFiles(message string, files []repository.Hash) 
 
 func (c *BugCache) AddCommentRaw(author *IdentityCache, unixTime int64, message string, files []repository.Hash, metadata map[string]string) (*bug.AddCommentOperation, error) {
 	c.mu.Lock()
-	op, err := bug.AddCommentWithFiles(c.bug, author.Identity, unixTime, message, files)
+	op, err := bug.AddComment(c.bug, author, unixTime, message, files, metadata)
+	c.mu.Unlock()
 	if err != nil {
-		c.mu.Unlock()
 		return nil, err
 	}
-
-	for key, value := range metadata {
-		op.SetMetadata(key, value)
-	}
-
-	c.mu.Unlock()
-
 	return op, c.notifyUpdated()
 }
 
@@ -111,24 +104,12 @@ func (c *BugCache) ChangeLabels(added []string, removed []string) ([]bug.LabelCh
 
 func (c *BugCache) ChangeLabelsRaw(author *IdentityCache, unixTime int64, added []string, removed []string, metadata map[string]string) ([]bug.LabelChangeResult, *bug.LabelChangeOperation, error) {
 	c.mu.Lock()
-	changes, op, err := bug.ChangeLabels(c.bug, author.Identity, unixTime, added, removed)
+	changes, op, err := bug.ChangeLabels(c.bug, author.Identity, unixTime, added, removed, metadata)
+	c.mu.Unlock()
 	if err != nil {
-		c.mu.Unlock()
 		return changes, nil, err
 	}
-
-	for key, value := range metadata {
-		op.SetMetadata(key, value)
-	}
-
-	c.mu.Unlock()
-
-	err = c.notifyUpdated()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return changes, op, nil
+	return changes, op, c.notifyUpdated()
 }
 
 func (c *BugCache) ForceChangeLabels(added []string, removed []string) (*bug.LabelChangeOperation, error) {
@@ -142,23 +123,12 @@ func (c *BugCache) ForceChangeLabels(added []string, removed []string) (*bug.Lab
 
 func (c *BugCache) ForceChangeLabelsRaw(author *IdentityCache, unixTime int64, added []string, removed []string, metadata map[string]string) (*bug.LabelChangeOperation, error) {
 	c.mu.Lock()
-	op, err := bug.ForceChangeLabels(c.bug, author.Identity, unixTime, added, removed)
-	if err != nil {
-		c.mu.Unlock()
-		return nil, err
-	}
-
-	for key, value := range metadata {
-		op.SetMetadata(key, value)
-	}
-
+	op, err := bug.ForceChangeLabels(c.bug, author.Identity, unixTime, added, removed, metadata)
 	c.mu.Unlock()
-	err = c.notifyUpdated()
 	if err != nil {
 		return nil, err
 	}
-
-	return op, nil
+	return op, c.notifyUpdated()
 }
 
 func (c *BugCache) Open() (*bug.SetStatusOperation, error) {
@@ -172,17 +142,11 @@ func (c *BugCache) Open() (*bug.SetStatusOperation, error) {
 
 func (c *BugCache) OpenRaw(author *IdentityCache, unixTime int64, metadata map[string]string) (*bug.SetStatusOperation, error) {
 	c.mu.Lock()
-	op, err := bug.Open(c.bug, author.Identity, unixTime)
+	op, err := bug.Open(c.bug, author.Identity, unixTime, metadata)
+	c.mu.Unlock()
 	if err != nil {
-		c.mu.Unlock()
 		return nil, err
 	}
-
-	for key, value := range metadata {
-		op.SetMetadata(key, value)
-	}
-
-	c.mu.Unlock()
 	return op, c.notifyUpdated()
 }
 
@@ -197,17 +161,11 @@ func (c *BugCache) Close() (*bug.SetStatusOperation, error) {
 
 func (c *BugCache) CloseRaw(author *IdentityCache, unixTime int64, metadata map[string]string) (*bug.SetStatusOperation, error) {
 	c.mu.Lock()
-	op, err := bug.Close(c.bug, author.Identity, unixTime)
+	op, err := bug.Close(c.bug, author.Identity, unixTime, metadata)
+	c.mu.Unlock()
 	if err != nil {
-		c.mu.Unlock()
 		return nil, err
 	}
-
-	for key, value := range metadata {
-		op.SetMetadata(key, value)
-	}
-
-	c.mu.Unlock()
 	return op, c.notifyUpdated()
 }
 
@@ -222,17 +180,11 @@ func (c *BugCache) SetTitle(title string) (*bug.SetTitleOperation, error) {
 
 func (c *BugCache) SetTitleRaw(author *IdentityCache, unixTime int64, title string, metadata map[string]string) (*bug.SetTitleOperation, error) {
 	c.mu.Lock()
-	op, err := bug.SetTitle(c.bug, author.Identity, unixTime, title)
+	op, err := bug.SetTitle(c.bug, author.Identity, unixTime, title, metadata)
+	c.mu.Unlock()
 	if err != nil {
-		c.mu.Unlock()
 		return nil, err
 	}
-
-	for key, value := range metadata {
-		op.SetMetadata(key, value)
-	}
-
-	c.mu.Unlock()
 	return op, c.notifyUpdated()
 }
 
@@ -249,17 +201,11 @@ func (c *BugCache) EditCreateComment(body string) (*bug.EditCommentOperation, er
 // EditCreateCommentRaw is a convenience function to edit the body of a bug (the first comment)
 func (c *BugCache) EditCreateCommentRaw(author *IdentityCache, unixTime int64, body string, metadata map[string]string) (*bug.EditCommentOperation, error) {
 	c.mu.Lock()
-	op, err := bug.EditCreateComment(c.bug, author.Identity, unixTime, body)
+	op, err := bug.EditCreateComment(c.bug, author.Identity, unixTime, body, nil, metadata)
+	c.mu.Unlock()
 	if err != nil {
-		c.mu.Unlock()
 		return nil, err
 	}
-
-	for key, value := range metadata {
-		op.SetMetadata(key, value)
-	}
-
-	c.mu.Unlock()
 	return op, c.notifyUpdated()
 }
 
@@ -274,17 +220,11 @@ func (c *BugCache) EditComment(target entity.Id, message string) (*bug.EditComme
 
 func (c *BugCache) EditCommentRaw(author *IdentityCache, unixTime int64, target entity.Id, message string, metadata map[string]string) (*bug.EditCommentOperation, error) {
 	c.mu.Lock()
-	op, err := bug.EditComment(c.bug, author.Identity, unixTime, target, message)
+	op, err := bug.EditComment(c.bug, author.Identity, unixTime, target, message, nil, metadata)
+	c.mu.Unlock()
 	if err != nil {
-		c.mu.Unlock()
 		return nil, err
 	}
-
-	for key, value := range metadata {
-		op.SetMetadata(key, value)
-	}
-
-	c.mu.Unlock()
 	return op, c.notifyUpdated()
 }
 
@@ -300,12 +240,10 @@ func (c *BugCache) SetMetadata(target entity.Id, newMetadata map[string]string) 
 func (c *BugCache) SetMetadataRaw(author *IdentityCache, unixTime int64, target entity.Id, newMetadata map[string]string) (*dag.SetMetadataOperation[*bug.Snapshot], error) {
 	c.mu.Lock()
 	op, err := bug.SetMetadata(c.bug, author.Identity, unixTime, target, newMetadata)
+	c.mu.Unlock()
 	if err != nil {
-		c.mu.Unlock()
 		return nil, err
 	}
-
-	c.mu.Unlock()
 	return op, c.notifyUpdated()
 }
 

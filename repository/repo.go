@@ -60,9 +60,9 @@ type RepoKeyring interface {
 	Keyring() Keyring
 }
 
-// RepoCommon represent the common function the we want all the repo to implement
+// RepoCommon represent the common function we want all repos to implement
 type RepoCommon interface {
-	// GetUserName returns the name the the user has used to configure git
+	// GetUserName returns the name the user has used to configure git
 	GetUserName() (string, error)
 
 	// GetUserEmail returns the email address that the user has used to configure git.

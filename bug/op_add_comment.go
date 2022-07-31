@@ -79,16 +79,15 @@ type AddCommentTimelineItem struct {
 // IsAuthored is a sign post method for gqlgen
 func (a *AddCommentTimelineItem) IsAuthored() {}
 
-// Convenience function to apply the operation
-func AddComment(b Interface, author identity.Interface, unixTime int64, message string) (*AddCommentOperation, error) {
-	return AddCommentWithFiles(b, author, unixTime, message, nil)
-}
-
-func AddCommentWithFiles(b Interface, author identity.Interface, unixTime int64, message string, files []repository.Hash) (*AddCommentOperation, error) {
-	addCommentOp := NewAddCommentOp(author, unixTime, message, files)
-	if err := addCommentOp.Validate(); err != nil {
+// AddComment is a convenience function to add a comment to a bug
+func AddComment(b Interface, author identity.Interface, unixTime int64, message string, files []repository.Hash, metadata map[string]string) (*AddCommentOperation, error) {
+	op := NewAddCommentOp(author, unixTime, message, files)
+	for key, val := range metadata {
+		op.SetMetadata(key, val)
+	}
+	if err := op.Validate(); err != nil {
 		return nil, err
 	}
-	b.Append(addCommentOp)
-	return addCommentOp, nil
+	b.Append(op)
+	return op, nil
 }

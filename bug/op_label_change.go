@@ -25,7 +25,7 @@ func (op *LabelChangeOperation) Id() entity.Id {
 	return dag.IdOperation(op, &op.OpBase)
 }
 
-// Apply apply the operation
+// Apply applies the operation
 func (op *LabelChangeOperation) Apply(snapshot *Snapshot) {
 	snapshot.addActor(op.Author())
 
@@ -113,10 +113,10 @@ func (l LabelChangeTimelineItem) Id() entity.Id {
 }
 
 // IsAuthored is a sign post method for gqlgen
-func (l *LabelChangeTimelineItem) IsAuthored() {}
+func (l LabelChangeTimelineItem) IsAuthored() {}
 
-// ChangeLabels is a convenience function to apply the operation
-func ChangeLabels(b Interface, author identity.Interface, unixTime int64, add, remove []string) ([]LabelChangeResult, *LabelChangeOperation, error) {
+// ChangeLabels is a convenience function to change labels on a bug
+func ChangeLabels(b Interface, author identity.Interface, unixTime int64, add, remove []string, metadata map[string]string) ([]LabelChangeResult, *LabelChangeOperation, error) {
 	var added, removed []Label
 	var results []LabelChangeResult
 
@@ -164,23 +164,25 @@ func ChangeLabels(b Interface, author identity.Interface, unixTime int64, add, r
 		return results, nil, fmt.Errorf("no label added or removed")
 	}
 
-	labelOp := NewLabelChangeOperation(author, unixTime, added, removed)
-
-	if err := labelOp.Validate(); err != nil {
+	op := NewLabelChangeOperation(author, unixTime, added, removed)
+	for key, val := range metadata {
+		op.SetMetadata(key, val)
+	}
+	if err := op.Validate(); err != nil {
 		return nil, nil, err
 	}
 
-	b.Append(labelOp)
+	b.Append(op)
 
-	return results, labelOp, nil
+	return results, op, nil
 }
 
 // ForceChangeLabels is a convenience function to apply the operation
 // The difference with ChangeLabels is that no checks of deduplications are done. You are entirely
-// responsible of what you are doing. In the general case, you want to use ChangeLabels instead.
+// responsible for what you are doing. In the general case, you want to use ChangeLabels instead.
 // The intended use of this function is to allow importers to create legal but unexpected label changes,
 // like removing a label with no information of when it was added before.
-func ForceChangeLabels(b Interface, author identity.Interface, unixTime int64, add, remove []string) (*LabelChangeOperation, error) {
+func ForceChangeLabels(b Interface, author identity.Interface, unixTime int64, add, remove []string, metadata map[string]string) (*LabelChangeOperation, error) {
 	added := make([]Label, len(add))
 	for i, str := range add {
 		added[i] = Label(str)
@@ -191,15 +193,18 @@ func ForceChangeLabels(b Interface, author identity.Interface, unixTime int64, a
 		removed[i] = Label(str)
 	}
 
-	labelOp := NewLabelChangeOperation(author, unixTime, added, removed)
+	op := NewLabelChangeOperation(author, unixTime, added, removed)
 
-	if err := labelOp.Validate(); err != nil {
+	for key, val := range metadata {
+		op.SetMetadata(key, val)
+	}
+	if err := op.Validate(); err != nil {
 		return nil, err
 	}
 
-	b.Append(labelOp)
+	b.Append(op)
 
-	return labelOp, nil
+	return op, nil
 }
 
 func labelExist(labels []Label, label Label) bool {
