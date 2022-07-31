@@ -1,4 +1,4 @@
-// +build debugwebui
+//go:build debugwebui
 
 package webui
 
