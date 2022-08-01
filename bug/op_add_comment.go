@@ -1,7 +1,6 @@
 package bug
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/MichaelMure/git-bug/entity"
@@ -17,24 +16,24 @@ var _ dag.OperationWithFiles = &AddCommentOperation{}
 
 // AddCommentOperation will add a new comment in the bug
 type AddCommentOperation struct {
-	OpBase
+	dag.OpBase
 	Message string `json:"message"`
 	// TODO: change for a map[string]util.hash to store the filename ?
 	Files []repository.Hash `json:"files"`
 }
 
 func (op *AddCommentOperation) Id() entity.Id {
-	return idOperation(op, &op.OpBase)
+	return dag.IdOperation(op, &op.OpBase)
 }
 
 func (op *AddCommentOperation) Apply(snapshot *Snapshot) {
-	snapshot.addActor(op.Author_)
-	snapshot.addParticipant(op.Author_)
+	snapshot.addActor(op.Author())
+	snapshot.addParticipant(op.Author())
 
 	comment := Comment{
 		id:       entity.CombineIds(snapshot.Id(), op.Id()),
 		Message:  op.Message,
-		Author:   op.Author_,
+		Author:   op.Author(),
 		Files:    op.Files,
 		UnixTime: timestamp.Timestamp(op.UnixTime),
 	}
@@ -64,64 +63,31 @@ func (op *AddCommentOperation) Validate() error {
 	return nil
 }
 
-// UnmarshalJSON is a two-steps JSON unmarshalling
-// This workaround is necessary to avoid the inner OpBase.MarshalJSON
-// overriding the outer op's MarshalJSON
-func (op *AddCommentOperation) UnmarshalJSON(data []byte) error {
-	// Unmarshal OpBase and the op separately
-
-	base := OpBase{}
-	err := json.Unmarshal(data, &base)
-	if err != nil {
-		return err
-	}
-
-	aux := struct {
-		Message string            `json:"message"`
-		Files   []repository.Hash `json:"files"`
-	}{}
-
-	err = json.Unmarshal(data, &aux)
-	if err != nil {
-		return err
-	}
-
-	op.OpBase = base
-	op.Message = aux.Message
-	op.Files = aux.Files
-
-	return nil
-}
-
-// Sign post method for gqlgen
-func (op *AddCommentOperation) IsAuthored() {}
-
 func NewAddCommentOp(author identity.Interface, unixTime int64, message string, files []repository.Hash) *AddCommentOperation {
 	return &AddCommentOperation{
-		OpBase:  newOpBase(AddCommentOp, author, unixTime),
+		OpBase:  dag.NewOpBase(AddCommentOp, author, unixTime),
 		Message: message,
 		Files:   files,
 	}
 }
 
-// CreateTimelineItem replace a AddComment operation in the Timeline and hold its edition history
+// AddCommentTimelineItem hold a comment in the timeline
 type AddCommentTimelineItem struct {
 	CommentTimelineItem
 }
 
-// Sign post method for gqlgen
+// IsAuthored is a sign post method for gqlgen
 func (a *AddCommentTimelineItem) IsAuthored() {}
 
-// Convenience function to apply the operation
-func AddComment(b Interface, author identity.Interface, unixTime int64, message string) (*AddCommentOperation, error) {
-	return AddCommentWithFiles(b, author, unixTime, message, nil)
-}
-
-func AddCommentWithFiles(b Interface, author identity.Interface, unixTime int64, message string, files []repository.Hash) (*AddCommentOperation, error) {
-	addCommentOp := NewAddCommentOp(author, unixTime, message, files)
-	if err := addCommentOp.Validate(); err != nil {
+// AddComment is a convenience function to add a comment to a bug
+func AddComment(b Interface, author identity.Interface, unixTime int64, message string, files []repository.Hash, metadata map[string]string) (*AddCommentOperation, error) {
+	op := NewAddCommentOp(author, unixTime, message, files)
+	for key, val := range metadata {
+		op.SetMetadata(key, val)
+	}
+	if err := op.Validate(); err != nil {
 		return nil, err
 	}
-	b.Append(addCommentOp)
-	return addCommentOp, nil
+	b.Append(op)
+	return op, nil
 }

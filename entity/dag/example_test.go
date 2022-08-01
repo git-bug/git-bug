@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
@@ -64,10 +65,8 @@ type Operation interface {
 	Apply(snapshot *Snapshot)
 }
 
-type OperationType int
-
 const (
-	_ OperationType = iota
+	_ dag.OperationType = iota
 	SetSignatureRequiredOp
 	AddAdministratorOp
 	RemoveAdministratorOp
@@ -75,37 +74,30 @@ const (
 
 // SetSignatureRequired is an operation to set/unset if git signature are required.
 type SetSignatureRequired struct {
-	author        identity.Interface
-	OperationType OperationType `json:"type"`
-	Value         bool          `json:"value"`
+	dag.OpBase
+	Value bool `json:"value"`
 }
 
 func NewSetSignatureRequired(author identity.Interface, value bool) *SetSignatureRequired {
-	return &SetSignatureRequired{author: author, OperationType: SetSignatureRequiredOp, Value: value}
+	return &SetSignatureRequired{
+		OpBase: dag.NewOpBase(SetSignatureRequiredOp, author, time.Now().Unix()),
+		Value:  value,
+	}
 }
 
 func (ssr *SetSignatureRequired) Id() entity.Id {
 	// the Id of the operation is the hash of the serialized data.
-	// we could memorize the Id when deserializing, but that will do
-	data, _ := json.Marshal(ssr)
-	return entity.DeriveId(data)
+	return dag.IdOperation(ssr, &ssr.OpBase)
 }
 
 func (ssr *SetSignatureRequired) Validate() error {
-	if ssr.author == nil {
-		return fmt.Errorf("author not set")
-	}
-	return ssr.author.Validate()
-}
-
-func (ssr *SetSignatureRequired) Author() identity.Interface {
-	return ssr.author
+	return ssr.OpBase.Validate(ssr, SetSignatureRequiredOp)
 }
 
 // Apply is the function that makes changes on the snapshot
 func (ssr *SetSignatureRequired) Apply(snapshot *Snapshot) {
 	// check that we are allowed to change the config
-	if _, ok := snapshot.Administrator[ssr.author]; !ok {
+	if _, ok := snapshot.Administrator[ssr.Author()]; !ok {
 		return
 	}
 	snapshot.SignatureRequired = ssr.Value
@@ -113,24 +105,20 @@ func (ssr *SetSignatureRequired) Apply(snapshot *Snapshot) {
 
 // AddAdministrator is an operation to add a new administrator in the set
 type AddAdministrator struct {
-	author        identity.Interface
-	OperationType OperationType        `json:"type"`
-	ToAdd         []identity.Interface `json:"to_add"`
-}
-
-// addAdministratorJson is a helper struct to deserialize identities with a concrete type.
-type addAdministratorJson struct {
-	ToAdd []identity.IdentityStub `json:"to_add"`
+	dag.OpBase
+	ToAdd []identity.Interface `json:"to_add"`
 }
 
 func NewAddAdministratorOp(author identity.Interface, toAdd ...identity.Interface) *AddAdministrator {
-	return &AddAdministrator{author: author, OperationType: AddAdministratorOp, ToAdd: toAdd}
+	return &AddAdministrator{
+		OpBase: dag.NewOpBase(AddAdministratorOp, author, time.Now().Unix()),
+		ToAdd:  toAdd,
+	}
 }
 
 func (aa *AddAdministrator) Id() entity.Id {
-	// we could memorize the Id when deserializing, but that will do
-	data, _ := json.Marshal(aa)
-	return entity.DeriveId(data)
+	// the Id of the operation is the hash of the serialized data.
+	return dag.IdOperation(aa, &aa.OpBase)
 }
 
 func (aa *AddAdministrator) Validate() error {
@@ -138,20 +126,13 @@ func (aa *AddAdministrator) Validate() error {
 	if len(aa.ToAdd) == 0 {
 		return fmt.Errorf("nothing to add")
 	}
-	if aa.author == nil {
-		return fmt.Errorf("author not set")
-	}
-	return aa.author.Validate()
-}
-
-func (aa *AddAdministrator) Author() identity.Interface {
-	return aa.author
+	return aa.OpBase.Validate(aa, AddAdministratorOp)
 }
 
 // Apply is the function that makes changes on the snapshot
 func (aa *AddAdministrator) Apply(snapshot *Snapshot) {
 	// check that we are allowed to change the config ... or if there is no admin yet
-	if !snapshot.HasAdministrator(aa.author) && len(snapshot.Administrator) != 0 {
+	if !snapshot.HasAdministrator(aa.Author()) && len(snapshot.Administrator) != 0 {
 		return
 	}
 	for _, toAdd := range aa.ToAdd {
@@ -161,25 +142,20 @@ func (aa *AddAdministrator) Apply(snapshot *Snapshot) {
 
 // RemoveAdministrator is an operation to remove an administrator from the set
 type RemoveAdministrator struct {
-	author        identity.Interface
-	OperationType OperationType        `json:"type"`
-	ToRemove      []identity.Interface `json:"to_remove"`
-}
-
-// removeAdministratorJson is a helper struct to deserialize identities with a concrete type.
-type removeAdministratorJson struct {
+	dag.OpBase
 	ToRemove []identity.Interface `json:"to_remove"`
 }
 
 func NewRemoveAdministratorOp(author identity.Interface, toRemove ...identity.Interface) *RemoveAdministrator {
-	return &RemoveAdministrator{author: author, OperationType: RemoveAdministratorOp, ToRemove: toRemove}
+	return &RemoveAdministrator{
+		OpBase:   dag.NewOpBase(RemoveAdministratorOp, author, time.Now().Unix()),
+		ToRemove: toRemove,
+	}
 }
 
 func (ra *RemoveAdministrator) Id() entity.Id {
 	// the Id of the operation is the hash of the serialized data.
-	// we could memorize the Id when deserializing, but that will do
-	data, _ := json.Marshal(ra)
-	return entity.DeriveId(data)
+	return dag.IdOperation(ra, &ra.OpBase)
 }
 
 func (ra *RemoveAdministrator) Validate() error {
@@ -188,26 +164,19 @@ func (ra *RemoveAdministrator) Validate() error {
 	if len(ra.ToRemove) == 0 {
 		return fmt.Errorf("nothing to remove")
 	}
-	if ra.author == nil {
-		return fmt.Errorf("author not set")
-	}
-	return ra.author.Validate()
-}
-
-func (ra *RemoveAdministrator) Author() identity.Interface {
-	return ra.author
+	return ra.OpBase.Validate(ra, RemoveAdministratorOp)
 }
 
 // Apply is the function that makes changes on the snapshot
 func (ra *RemoveAdministrator) Apply(snapshot *Snapshot) {
 	// check if we are allowed to make changes
-	if !snapshot.HasAdministrator(ra.author) {
+	if !snapshot.HasAdministrator(ra.Author()) {
 		return
 	}
 	// special rule: we can't end up with no administrator
 	stillSome := false
 	for admin, _ := range snapshot.Administrator {
-		if admin != ra.author {
+		if admin != ra.Author() {
 			stillSome = true
 			break
 		}
@@ -245,71 +214,52 @@ var def = dag.Definition{
 
 // operationUnmarshaller is a function doing the de-serialization of the JSON data into our own
 // concrete Operations. If needed, we can use the resolver to connect to other entities.
-func operationUnmarshaller(author identity.Interface, raw json.RawMessage, resolver identity.Resolver) (dag.Operation, error) {
+func operationUnmarshaller(raw json.RawMessage, resolver identity.Resolver) (dag.Operation, error) {
 	var t struct {
-		OperationType OperationType `json:"type"`
+		OperationType dag.OperationType `json:"type"`
 	}
 
 	if err := json.Unmarshal(raw, &t); err != nil {
 		return nil, err
 	}
 
-	var value interface{}
+	var op dag.Operation
 
 	switch t.OperationType {
 	case AddAdministratorOp:
-		value = &addAdministratorJson{}
+		op = &AddAdministrator{}
 	case RemoveAdministratorOp:
-		value = &removeAdministratorJson{}
+		op = &RemoveAdministrator{}
 	case SetSignatureRequiredOp:
-		value = &SetSignatureRequired{}
+		op = &SetSignatureRequired{}
 	default:
 		panic(fmt.Sprintf("unknown operation type %v", t.OperationType))
 	}
 
-	err := json.Unmarshal(raw, &value)
+	err := json.Unmarshal(raw, &op)
 	if err != nil {
 		return nil, err
 	}
 
-	var op Operation
-
-	switch value := value.(type) {
-	case *SetSignatureRequired:
-		value.author = author
-		op = value
-	case *addAdministratorJson:
-		// We need something less straightforward to deserialize and resolve identities
-		aa := &AddAdministrator{
-			author:        author,
-			OperationType: AddAdministratorOp,
-			ToAdd:         make([]identity.Interface, len(value.ToAdd)),
-		}
-		for i, stub := range value.ToAdd {
+	switch op := op.(type) {
+	case *AddAdministrator:
+		// We need to resolve identities
+		for i, stub := range op.ToAdd {
 			iden, err := resolver.ResolveIdentity(stub.Id())
 			if err != nil {
 				return nil, err
 			}
-			aa.ToAdd[i] = iden
+			op.ToAdd[i] = iden
 		}
-		op = aa
-	case *removeAdministratorJson:
-		// We need something less straightforward to deserialize and resolve identities
-		ra := &RemoveAdministrator{
-			author:        author,
-			OperationType: RemoveAdministratorOp,
-			ToRemove:      make([]identity.Interface, len(value.ToRemove)),
-		}
-		for i, stub := range value.ToRemove {
+	case *RemoveAdministrator:
+		// We need to resolve identities
+		for i, stub := range op.ToRemove {
 			iden, err := resolver.ResolveIdentity(stub.Id())
 			if err != nil {
 				return nil, err
 			}
-			ra.ToRemove[i] = iden
+			op.ToRemove[i] = iden
 		}
-		op = ra
-	default:
-		panic(fmt.Sprintf("unknown operation type %T", value))
 	}
 
 	return op, nil

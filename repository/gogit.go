@@ -235,7 +235,7 @@ func (repo *GoGitRepo) Keyring() Keyring {
 	return repo.keyring
 }
 
-// GetUserName returns the name the the user has used to configure git
+// GetUserName returns the name the user has used to configure git
 func (repo *GoGitRepo) GetUserName() (string, error) {
 	return repo.AnyConfig().ReadString("user.name")
 }

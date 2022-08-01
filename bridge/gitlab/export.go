@@ -15,6 +15,7 @@ import (
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
+	"github.com/MichaelMure/git-bug/entity/dag"
 	"github.com/MichaelMure/git-bug/identity"
 )
 
@@ -256,7 +257,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 	labelSet := make(map[string]struct{})
 	for _, op := range snapshot.Operations[1:] {
 		// ignore SetMetadata operations
-		if _, ok := op.(*bug.SetMetadataOperation); ok {
+		if _, ok := op.(dag.OperationDoesntChangeSnapshot); ok {
 			continue
 		}
 

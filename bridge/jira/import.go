@@ -14,6 +14,7 @@ import (
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
+	"github.com/MichaelMure/git-bug/entity/dag"
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
@@ -377,7 +378,7 @@ func labelSetsMatch(jiraSet []string, gitbugSet []bug.Label) bool {
 
 // Create a bug.Operation (or a series of operations) from a JIRA changelog
 // entry
-func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, entry ChangeLogEntry, potentialOp bug.Operation) error {
+func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, entry ChangeLogEntry, potentialOp dag.Operation) error {
 
 	// If we have an operation which is already mapped to the entire changelog
 	// entry then that means this changelog entry was induced by an export

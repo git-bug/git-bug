@@ -1,13 +1,13 @@
 package bug
 
 import (
-	"encoding/json"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/MichaelMure/git-bug/entity"
+	"github.com/MichaelMure/git-bug/entity/dag"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/timestamp"
@@ -58,26 +58,10 @@ func TestCreate(t *testing.T) {
 }
 
 func TestCreateSerialize(t *testing.T) {
-	repo := repository.NewMockRepo()
-
-	rene, err := identity.NewIdentity(repo, "René Descartes", "rene@descartes.fr")
-	require.NoError(t, err)
-
-	unix := time.Now().Unix()
-	before := NewCreateOp(rene, unix, "title", "message", nil)
-
-	data, err := json.Marshal(before)
-	require.NoError(t, err)
-
-	var after CreateOperation
-	err = json.Unmarshal(data, &after)
-	require.NoError(t, err)
-
-	// enforce creating the ID
-	before.Id()
-
-	// Replace the identity as it's not serialized
-	after.Author_ = rene
-
-	require.Equal(t, before, &after)
+	dag.SerializeRoundTripTest(t, func(author identity.Interface, unixTime int64) *CreateOperation {
+		return NewCreateOp(author, unixTime, "title", "message", nil)
+	})
+	dag.SerializeRoundTripTest(t, func(author identity.Interface, unixTime int64) *CreateOperation {
+		return NewCreateOp(author, unixTime, "title", "message", []repository.Hash{"hash1", "hash2"})
+	})
 }

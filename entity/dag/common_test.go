@@ -18,78 +18,73 @@ import (
  Operations
 */
 
-type op1 struct {
-	author identity.Interface
+const (
+	_ OperationType = iota
+	Op1
+	Op2
+)
 
-	OperationType int               `json:"type"`
-	Field1        string            `json:"field_1"`
-	Files         []repository.Hash `json:"files"`
+type op1 struct {
+	OpBase
+	Field1 string            `json:"field_1"`
+	Files  []repository.Hash `json:"files"`
 }
 
 func newOp1(author identity.Interface, field1 string, files ...repository.Hash) *op1 {
-	return &op1{author: author, OperationType: 1, Field1: field1, Files: files}
+	return &op1{OpBase: NewOpBase(Op1, author, 0), Field1: field1, Files: files}
 }
 
-func (o *op1) Id() entity.Id {
-	data, _ := json.Marshal(o)
-	return entity.DeriveId(data)
+func (op *op1) Id() entity.Id {
+	return IdOperation(op, &op.OpBase)
 }
 
-func (o *op1) Validate() error { return nil }
+func (op *op1) Validate() error { return nil }
 
-func (o *op1) Author() identity.Interface {
-	return o.author
-}
-
-func (o *op1) GetFiles() []repository.Hash {
-	return o.Files
+func (op *op1) GetFiles() []repository.Hash {
+	return op.Files
 }
 
 type op2 struct {
-	author identity.Interface
-
-	OperationType int    `json:"type"`
-	Field2        string `json:"field_2"`
+	OpBase
+	Field2 string `json:"field_2"`
 }
 
 func newOp2(author identity.Interface, field2 string) *op2 {
-	return &op2{author: author, OperationType: 2, Field2: field2}
+	return &op2{OpBase: NewOpBase(Op2, author, 0), Field2: field2}
 }
 
-func (o *op2) Id() entity.Id {
-	data, _ := json.Marshal(o)
-	return entity.DeriveId(data)
+func (op *op2) Id() entity.Id {
+	return IdOperation(op, &op.OpBase)
 }
 
-func (o *op2) Validate() error { return nil }
+func (op *op2) Validate() error { return nil }
 
-func (o *op2) Author() identity.Interface {
-	return o.author
-}
-
-func unmarshaler(author identity.Interface, raw json.RawMessage, resolver identity.Resolver) (Operation, error) {
+func unmarshaler(raw json.RawMessage, resolver identity.Resolver) (Operation, error) {
 	var t struct {
-		OperationType int `json:"type"`
+		OperationType OperationType `json:"type"`
 	}
 
 	if err := json.Unmarshal(raw, &t); err != nil {
 		return nil, err
 	}
 
+	var op Operation
+
 	switch t.OperationType {
-	case 1:
-		op := &op1{}
-		err := json.Unmarshal(raw, &op)
-		op.author = author
-		return op, err
-	case 2:
-		op := &op2{}
-		err := json.Unmarshal(raw, &op)
-		op.author = author
-		return op, err
+	case Op1:
+		op = &op1{}
+	case Op2:
+		op = &op2{}
 	default:
 		return nil, fmt.Errorf("unknown operation type %v", t.OperationType)
 	}
+
+	err := json.Unmarshal(raw, &op)
+	if err != nil {
+		return nil, err
+	}
+
+	return op, nil
 }
 
 /*

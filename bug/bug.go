@@ -44,11 +44,7 @@ func NewBug() *Bug {
 
 // Read will read a bug from a repository
 func Read(repo repository.ClockedRepo, id entity.Id) (*Bug, error) {
-	e, err := dag.Read(def, repo, identity.NewSimpleResolver(repo), id)
-	if err != nil {
-		return nil, err
-	}
-	return &Bug{Entity: e}, nil
+	return ReadWithResolver(repo, identity.NewSimpleResolver(repo), id)
 }
 
 // ReadWithResolver will read a bug from its Id, with a custom identity.Resolver
@@ -144,21 +140,21 @@ func (bug *Bug) Operations() []Operation {
 }
 
 // Compile a bug in a easily usable snapshot
-func (bug *Bug) Compile() Snapshot {
-	snap := Snapshot{
+func (bug *Bug) Compile() *Snapshot {
+	snap := &Snapshot{
 		id:     bug.Id(),
 		Status: OpenStatus,
 	}
 
 	for _, op := range bug.Operations() {
-		op.Apply(&snap)
+		op.Apply(snap)
 		snap.Operations = append(snap.Operations, op)
 	}
 
 	return snap
 }
 
-// Lookup for the very first operation of the bug.
+// FirstOp lookup for the very first operation of the bug.
 // For a valid Bug, this operation should be a CreateOp
 func (bug *Bug) FirstOp() Operation {
 	if fo := bug.Entity.FirstOp(); fo != nil {
@@ -167,7 +163,7 @@ func (bug *Bug) FirstOp() Operation {
 	return nil
 }
 
-// Lookup for the very last operation of the bug.
+// LastOp lookup for the very last operation of the bug.
 // For a valid Bug, should never be nil
 func (bug *Bug) LastOp() Operation {
 	if lo := bug.Entity.LastOp(); lo != nil {

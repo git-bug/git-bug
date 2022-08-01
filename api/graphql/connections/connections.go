@@ -1,7 +1,7 @@
 //go:generate genny -in=connection_template.go -out=gen_lazy_bug.go gen "Name=LazyBug NodeType=entity.Id EdgeType=LazyBugEdge ConnectionType=models.BugConnection"
 //go:generate genny -in=connection_template.go -out=gen_lazy_identity.go gen "Name=LazyIdentity NodeType=entity.Id EdgeType=LazyIdentityEdge ConnectionType=models.IdentityConnection"
 //go:generate genny -in=connection_template.go -out=gen_identity.go gen "Name=Identity NodeType=models.IdentityWrapper EdgeType=models.IdentityEdge ConnectionType=models.IdentityConnection"
-//go:generate genny -in=connection_template.go -out=gen_operation.go gen "Name=Operation NodeType=bug.Operation EdgeType=models.OperationEdge ConnectionType=models.OperationConnection"
+//go:generate genny -in=connection_template.go -out=gen_operation.go gen "Name=Operation NodeType=dag.Operation EdgeType=models.OperationEdge ConnectionType=models.OperationConnection"
 //go:generate genny -in=connection_template.go -out=gen_comment.go gen "Name=Comment NodeType=bug.Comment EdgeType=models.CommentEdge ConnectionType=models.CommentConnection"
 //go:generate genny -in=connection_template.go -out=gen_timeline.go gen "Name=TimelineItem NodeType=bug.TimelineItem EdgeType=models.TimelineItemEdge ConnectionType=models.TimelineItemConnection"
 //go:generate genny -in=connection_template.go -out=gen_label.go gen "Name=Label NodeType=bug.Label EdgeType=models.LabelEdge ConnectionType=models.LabelConnection"

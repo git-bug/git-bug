@@ -5,8 +5,11 @@ import (
 	"time"
 
 	"github.com/MichaelMure/git-bug/entity"
+	"github.com/MichaelMure/git-bug/entity/dag"
 	"github.com/MichaelMure/git-bug/identity"
 )
+
+var _ dag.Snapshot = &Snapshot{}
 
 // Snapshot is a compiled form of the Bug data structure used for storage and merge
 type Snapshot struct {
@@ -23,7 +26,7 @@ type Snapshot struct {
 
 	Timeline []TimelineItem
 
-	Operations []Operation
+	Operations []dag.Operation
 }
 
 // Id returns the Bug identifier
@@ -33,6 +36,10 @@ func (snap *Snapshot) Id() entity.Id {
 		panic("no id")
 	}
 	return snap.id
+}
+
+func (snap *Snapshot) AllOperations() []dag.Operation {
+	return snap.Operations
 }
 
 // EditTime returns the last time a bug was modified
@@ -133,5 +140,5 @@ func (snap *Snapshot) HasAnyActor(ids ...entity.Id) bool {
 	return false
 }
 
-// Sign post method for gqlgen
+// IsAuthored is a sign post method for gqlgen
 func (snap *Snapshot) IsAuthored() {}

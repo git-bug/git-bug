@@ -1,6 +1,8 @@
 package bug
 
-import "github.com/MichaelMure/git-bug/repository"
+import (
+	"github.com/MichaelMure/git-bug/repository"
+)
 
 var _ Interface = &WithSnapshot{}
 
@@ -10,11 +12,10 @@ type WithSnapshot struct {
 	snap *Snapshot
 }
 
-// Snapshot return the current snapshot
-func (b *WithSnapshot) Snapshot() *Snapshot {
+func (b *WithSnapshot) Compile() *Snapshot {
 	if b.snap == nil {
 		snap := b.Bug.Compile()
-		b.snap = &snap
+		b.snap = snap
 	}
 	return b.snap
 }

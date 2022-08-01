@@ -7,6 +7,7 @@ import (
 	"github.com/MichaelMure/git-bug/api/graphql/graph"
 	"github.com/MichaelMure/git-bug/api/graphql/models"
 	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/entity/dag"
 )
 
 var _ graph.BugResolver = &bugResolver{}
@@ -69,14 +70,14 @@ func (bugResolver) Operations(_ context.Context, obj models.BugWrapper, after *s
 		Last:   last,
 	}
 
-	edger := func(op bug.Operation, offset int) connections.Edge {
+	edger := func(op dag.Operation, offset int) connections.Edge {
 		return models.OperationEdge{
 			Node:   op,
 			Cursor: connections.OffsetToCursor(offset),
 		}
 	}
 
-	conMaker := func(edges []*models.OperationEdge, nodes []bug.Operation, info *models.PageInfo, totalCount int) (*models.OperationConnection, error) {
+	conMaker := func(edges []*models.OperationEdge, nodes []dag.Operation, info *models.PageInfo, totalCount int) (*models.OperationConnection, error) {
 		return &models.OperationConnection{
 			Edges:      edges,
 			Nodes:      nodes,

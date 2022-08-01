@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/entity/dag"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
@@ -250,7 +251,7 @@ type OpenBugPayload struct {
 // The connection type for an Operation
 type OperationConnection struct {
 	Edges      []*OperationEdge `json:"edges"`
-	Nodes      []bug.Operation  `json:"nodes"`
+	Nodes      []dag.Operation  `json:"nodes"`
 	PageInfo   *PageInfo        `json:"pageInfo"`
 	TotalCount int              `json:"totalCount"`
 }
@@ -258,7 +259,7 @@ type OperationConnection struct {
 // Represent an Operation
 type OperationEdge struct {
 	Cursor string        `json:"cursor"`
-	Node   bug.Operation `json:"node"`
+	Node   dag.Operation `json:"node"`
 }
 
 // Information about pagination in a connection.
