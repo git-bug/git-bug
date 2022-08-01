@@ -9,8 +9,6 @@ import (
 func TestRm(t *testing.T) {
 	testEnv, bugID, _ := newTestEnvAndBug(t)
 
-	// exp := "bug " + bugID + " removed\n"
-
 	require.NoError(t, runRm(testEnv.env, []string{bugID}))
 	require.Equal(t, bugID, testEnv.out.String())
 	require.Equal(t, "bug  removed\n", testEnv.err.String())
