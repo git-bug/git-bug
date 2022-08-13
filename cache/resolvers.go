@@ -2,10 +2,16 @@ package cache
 
 import (
 	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/identity"
 )
 
-var _ identity.Resolver = &identityCacheResolver{}
+func makeResolvers(cache *RepoCache) entity.Resolvers {
+	return entity.Resolvers{
+		&IdentityCache{}: newIdentityCacheResolver(cache),
+		&BugCache{}:      newBugCacheResolver(cache),
+	}
+}
+
+var _ entity.Resolver = &identityCacheResolver{}
 
 // identityCacheResolver is an identity Resolver that retrieve identities from
 // the cache
@@ -17,35 +23,20 @@ func newIdentityCacheResolver(cache *RepoCache) *identityCacheResolver {
 	return &identityCacheResolver{cache: cache}
 }
 
-func (i *identityCacheResolver) ResolveIdentity(id entity.Id) (identity.Interface, error) {
+func (i *identityCacheResolver) Resolve(id entity.Id) (entity.Interface, error) {
 	return i.cache.ResolveIdentity(id)
 }
 
-var _ identity.Resolver = &identityCacheResolverNoLock{}
+var _ entity.Resolver = &bugCacheResolver{}
 
-// identityCacheResolverNoLock is an identity Resolver that retrieve identities from
-// the cache, without locking it.
-type identityCacheResolverNoLock struct {
+type bugCacheResolver struct {
 	cache *RepoCache
 }
 
-func newIdentityCacheResolverNoLock(cache *RepoCache) *identityCacheResolverNoLock {
-	return &identityCacheResolverNoLock{cache: cache}
+func newBugCacheResolver(cache *RepoCache) *bugCacheResolver {
+	return &bugCacheResolver{cache: cache}
 }
 
-func (ir *identityCacheResolverNoLock) ResolveIdentity(id entity.Id) (identity.Interface, error) {
-	cached, ok := ir.cache.identities[id]
-	if ok {
-		return cached, nil
-	}
-
-	i, err := identity.ReadLocal(ir.cache.repo, id)
-	if err != nil {
-		return nil, err
-	}
-
-	cached = NewIdentityCache(ir.cache, i)
-	ir.cache.identities[id] = cached
-
-	return cached, nil
+func (b *bugCacheResolver) Resolve(id entity.Id) (entity.Interface, error) {
+	return b.cache.ResolveBug(id)
 }

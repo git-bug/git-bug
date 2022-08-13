@@ -214,7 +214,7 @@ var def = dag.Definition{
 
 // operationUnmarshaller is a function doing the de-serialization of the JSON data into our own
 // concrete Operations. If needed, we can use the resolver to connect to other entities.
-func operationUnmarshaller(raw json.RawMessage, resolver identity.Resolver) (dag.Operation, error) {
+func operationUnmarshaller(raw json.RawMessage, resolvers entity.Resolvers) (dag.Operation, error) {
 	var t struct {
 		OperationType dag.OperationType `json:"type"`
 	}
@@ -245,7 +245,7 @@ func operationUnmarshaller(raw json.RawMessage, resolver identity.Resolver) (dag
 	case *AddAdministrator:
 		// We need to resolve identities
 		for i, stub := range op.ToAdd {
-			iden, err := resolver.ResolveIdentity(stub.Id())
+			iden, err := entity.Resolve[identity.Interface](resolvers, stub.Id())
 			if err != nil {
 				return nil, err
 			}
@@ -254,7 +254,7 @@ func operationUnmarshaller(raw json.RawMessage, resolver identity.Resolver) (dag
 	case *RemoveAdministrator:
 		// We need to resolve identities
 		for i, stub := range op.ToRemove {
-			iden, err := resolver.ResolveIdentity(stub.Id())
+			iden, err := entity.Resolve[identity.Interface](resolvers, stub.Id())
 			if err != nil {
 				return nil, err
 			}
@@ -282,11 +282,19 @@ func (pc ProjectConfig) Compile() *Snapshot {
 
 // Read is a helper to load a ProjectConfig from a Repository
 func Read(repo repository.ClockedRepo, id entity.Id) (*ProjectConfig, error) {
-	e, err := dag.Read(def, repo, identity.NewSimpleResolver(repo), id)
+	e, err := dag.Read(def, repo, simpleResolvers(repo), id)
 	if err != nil {
 		return nil, err
 	}
 	return &ProjectConfig{Entity: e}, nil
+}
+
+func simpleResolvers(repo repository.ClockedRepo) entity.Resolvers {
+	// resolvers can look a bit complex or out of place here, but it's an important concept
+	// to allow caching and flexibility when constructing the final app.
+	return entity.Resolvers{
+		&identity.Identity{}: identity.NewSimpleResolver(repo),
+	}
 }
 
 func Example_entity() {
@@ -323,7 +331,7 @@ func Example_entity() {
 	_ = confRene.Commit(repoRene)
 
 	// Isaac pull and read the config
-	_ = dag.Pull(def, repoIsaac, identity.NewSimpleResolver(repoIsaac), "origin", isaac)
+	_ = dag.Pull(def, repoIsaac, simpleResolvers(repoIsaac), "origin", isaac)
 	confIsaac, _ := Read(repoIsaac, confRene.Id())
 
 	// Compile gives the current state of the config

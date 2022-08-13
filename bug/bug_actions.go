@@ -24,13 +24,13 @@ func Push(repo repository.Repo, remote string) (string, error) {
 // This function will return an error if a merge fail
 // Note: an author is necessary for the case where a merge commit is created, as this commit will
 // have an author and may be signed if a signing key is available.
-func Pull(repo repository.ClockedRepo, remote string, mergeAuthor identity.Interface) error {
+func Pull(repo repository.ClockedRepo, resolvers entity.Resolvers, remote string, mergeAuthor identity.Interface) error {
 	_, err := Fetch(repo, remote)
 	if err != nil {
 		return err
 	}
 
-	for merge := range MergeAll(repo, remote, mergeAuthor) {
+	for merge := range MergeAll(repo, resolvers, remote, mergeAuthor) {
 		if merge.Err != nil {
 			return merge.Err
 		}
@@ -45,18 +45,13 @@ func Pull(repo repository.ClockedRepo, remote string, mergeAuthor identity.Inter
 // MergeAll will merge all the available remote bug
 // Note: an author is necessary for the case where a merge commit is created, as this commit will
 // have an author and may be signed if a signing key is available.
-func MergeAll(repo repository.ClockedRepo, remote string, mergeAuthor identity.Interface) <-chan entity.MergeResult {
-	// no caching for the merge, we load everything from git even if that means multiple
-	// copy of the same entity in memory. The cache layer will intercept the results to
-	// invalidate entities if necessary.
-	identityResolver := identity.NewSimpleResolver(repo)
-
+func MergeAll(repo repository.ClockedRepo, resolvers entity.Resolvers, remote string, mergeAuthor identity.Interface) <-chan entity.MergeResult {
 	out := make(chan entity.MergeResult)
 
 	go func() {
 		defer close(out)
 
-		results := dag.MergeAll(def, repo, identityResolver, remote, mergeAuthor)
+		results := dag.MergeAll(def, repo, resolvers, remote, mergeAuthor)
 
 		// wrap the dag.Entity into a complete Bug
 		for result := range results {
