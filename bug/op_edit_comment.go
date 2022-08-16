@@ -1,7 +1,6 @@
 package bug
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/pkg/errors"
@@ -20,14 +19,14 @@ var _ dag.OperationWithFiles = &EditCommentOperation{}
 
 // EditCommentOperation will change a comment in the bug
 type EditCommentOperation struct {
-	OpBase
+	dag.OpBase
 	Target  entity.Id         `json:"target"`
 	Message string            `json:"message"`
 	Files   []repository.Hash `json:"files"`
 }
 
 func (op *EditCommentOperation) Id() entity.Id {
-	return idOperation(op, &op.OpBase)
+	return dag.IdOperation(op, &op.OpBase)
 }
 
 func (op *EditCommentOperation) Apply(snapshot *Snapshot) {
@@ -68,7 +67,7 @@ func (op *EditCommentOperation) Apply(snapshot *Snapshot) {
 		return
 	}
 
-	snapshot.addActor(op.Author_)
+	snapshot.addActor(op.Author())
 
 	// Updating the corresponding comment
 
@@ -101,43 +100,9 @@ func (op *EditCommentOperation) Validate() error {
 	return nil
 }
 
-// UnmarshalJSON is two steps JSON unmarshalling
-// This workaround is necessary to avoid the inner OpBase.MarshalJSON
-// overriding the outer op's MarshalJSON
-func (op *EditCommentOperation) UnmarshalJSON(data []byte) error {
-	// Unmarshal OpBase and the op separately
-
-	base := OpBase{}
-	err := json.Unmarshal(data, &base)
-	if err != nil {
-		return err
-	}
-
-	aux := struct {
-		Target  entity.Id         `json:"target"`
-		Message string            `json:"message"`
-		Files   []repository.Hash `json:"files"`
-	}{}
-
-	err = json.Unmarshal(data, &aux)
-	if err != nil {
-		return err
-	}
-
-	op.OpBase = base
-	op.Target = aux.Target
-	op.Message = aux.Message
-	op.Files = aux.Files
-
-	return nil
-}
-
-// Sign post method for gqlgen
-func (op *EditCommentOperation) IsAuthored() {}
-
 func NewEditCommentOp(author identity.Interface, unixTime int64, target entity.Id, message string, files []repository.Hash) *EditCommentOperation {
 	return &EditCommentOperation{
-		OpBase:  newOpBase(EditCommentOp, author, unixTime),
+		OpBase:  dag.NewOpBase(EditCommentOp, author, unixTime),
 		Target:  target,
 		Message: message,
 		Files:   files,
@@ -145,27 +110,20 @@ func NewEditCommentOp(author identity.Interface, unixTime int64, target entity.I
 }
 
 // EditComment is a convenience function to apply the operation
-func EditComment(b Interface, author identity.Interface, unixTime int64, target entity.Id, message string) (*EditCommentOperation, error) {
-	return EditCommentWithFiles(b, author, unixTime, target, message, nil)
-}
-
-func EditCommentWithFiles(b Interface, author identity.Interface, unixTime int64, target entity.Id, message string, files []repository.Hash) (*EditCommentOperation, error) {
-	editCommentOp := NewEditCommentOp(author, unixTime, target, message, files)
-	if err := editCommentOp.Validate(); err != nil {
+func EditComment(b Interface, author identity.Interface, unixTime int64, target entity.Id, message string, files []repository.Hash, metadata map[string]string) (*EditCommentOperation, error) {
+	op := NewEditCommentOp(author, unixTime, target, message, files)
+	for key, val := range metadata {
+		op.SetMetadata(key, val)
+	}
+	if err := op.Validate(); err != nil {
 		return nil, err
 	}
-	b.Append(editCommentOp)
-	return editCommentOp, nil
+	b.Append(op)
+	return op, nil
 }
 
 // EditCreateComment is a convenience function to edit the body of a bug (the first comment)
-func EditCreateComment(b Interface, author identity.Interface, unixTime int64, message string) (*EditCommentOperation, error) {
+func EditCreateComment(b Interface, author identity.Interface, unixTime int64, message string, files []repository.Hash, metadata map[string]string) (*EditCommentOperation, error) {
 	createOp := b.FirstOp().(*CreateOperation)
-	return EditComment(b, author, unixTime, createOp.Id(), message)
-}
-
-// EditCreateCommentWithFiles is a convenience function to edit the body of a bug (the first comment)
-func EditCreateCommentWithFiles(b Interface, author identity.Interface, unixTime int64, message string, files []repository.Hash) (*EditCommentOperation, error) {
-	createOp := b.FirstOp().(*CreateOperation)
-	return EditCommentWithFiles(b, author, unixTime, createOp.Id(), message, files)
+	return EditComment(b, author, unixTime, createOp.Id(), message, files, metadata)
 }

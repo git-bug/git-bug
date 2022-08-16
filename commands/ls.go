@@ -91,9 +91,9 @@ git bug ls status:open --by creation "foo bar" baz
 		"Select the sorting direction. Valid values are [asc,desc]")
 	cmd.RegisterFlagCompletionFunc("direction", completeFrom([]string{"asc", "desc"}))
 	flags.StringVarP(&options.outputFormat, "format", "f", "default",
-		"Select the output formatting style. Valid values are [default,plain,json,org-mode]")
+		"Select the output formatting style. Valid values are [default,plain,compact,json,org-mode]")
 	cmd.RegisterFlagCompletionFunc("format",
-		completeFrom([]string{"default", "plain", "json", "org-mode"}))
+		completeFrom([]string{"default", "plain", "compact", "json", "org-mode"}))
 
 	return cmd
 }

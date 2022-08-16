@@ -50,6 +50,8 @@ func TestWriteReadMultipleAuthor(t *testing.T) {
 }
 
 func assertEqualEntities(t *testing.T, a, b *Entity) {
+	t.Helper()
+
 	// testify doesn't support comparing functions and systematically fail if they are not nil
 	// so we have to set them to nil temporarily
 

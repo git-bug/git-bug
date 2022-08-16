@@ -33,7 +33,7 @@ models:
   Hash:
     model: github.com/MichaelMure/git-bug/repository.Hash
   Operation:
-    model: github.com/MichaelMure/git-bug/bug.Operation
+    model: github.com/MichaelMure/git-bug/entity/dag.Operation
   CreateOperation:
     model: github.com/MichaelMure/git-bug/bug.CreateOperation
   SetTitleOperation:

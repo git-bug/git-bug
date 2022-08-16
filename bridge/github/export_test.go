@@ -15,8 +15,8 @@ import (
 
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
-	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/entity/dag"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/interrupt"
 )
@@ -245,7 +245,7 @@ func TestGithubPushPull(t *testing.T) {
 			// verify operation have correct metadata
 			for _, op := range tt.bug.Snapshot().Operations {
 				// Check if the originals operations (*not* SetMetadata) are tagged properly
-				if _, ok := op.(*bug.SetMetadataOperation); !ok {
+				if _, ok := op.(dag.OperationDoesntChangeSnapshot); !ok {
 					_, haveIDMetadata := op.GetMetadata(metaKeyGithubId)
 					require.True(t, haveIDMetadata)
 

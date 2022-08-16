@@ -87,6 +87,7 @@ func generateRandomBugsWithSeed(opts Options, seed int64) []*bug.Bug {
 			time.Now().Unix(),
 			fake.Sentence(),
 			paragraphs(),
+			nil, nil,
 		)
 
 		if err != nil {
@@ -143,19 +144,19 @@ func paragraphs() string {
 }
 
 func comment(b bug.Interface, p identity.Interface, timestamp int64) {
-	_, _ = bug.AddComment(b, p, timestamp, paragraphs())
+	_, _ = bug.AddComment(b, p, timestamp, paragraphs(), nil, nil)
 }
 
 func title(b bug.Interface, p identity.Interface, timestamp int64) {
-	_, _ = bug.SetTitle(b, p, timestamp, fake.Sentence())
+	_, _ = bug.SetTitle(b, p, timestamp, fake.Sentence(), nil)
 }
 
 func open(b bug.Interface, p identity.Interface, timestamp int64) {
-	_, _ = bug.Open(b, p, timestamp)
+	_, _ = bug.Open(b, p, timestamp, nil)
 }
 
 func close(b bug.Interface, p identity.Interface, timestamp int64) {
-	_, _ = bug.Close(b, p, timestamp)
+	_, _ = bug.Close(b, p, timestamp, nil)
 }
 
 var addedLabels []string
@@ -182,5 +183,5 @@ func labels(b bug.Interface, p identity.Interface, timestamp int64) {
 	// ignore error
 	// if the randomisation produce no changes, no op
 	// is added to the bug
-	_, _, _ = bug.ChangeLabels(b, p, timestamp, added, removed)
+	_, _, _ = bug.ChangeLabels(b, p, timestamp, added, removed, nil)
 }

@@ -6,9 +6,12 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/MichaelMure/git-bug/entity/dag"
 	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 )
+
+// TODO: move to entity/dag?
 
 func TestValidate(t *testing.T) {
 	repo := repository.NewMockRepoClock()
@@ -44,11 +47,7 @@ func TestValidate(t *testing.T) {
 		NewSetStatusOp(makeIdentity(t, "René Descartes", "rene@descartes.fr\u001b"), unix, ClosedStatus),
 		NewSetStatusOp(makeIdentity(t, "René \nDescartes", "rene@descartes.fr"), unix, ClosedStatus),
 		NewSetStatusOp(makeIdentity(t, "René Descartes", "rene@\ndescartes.fr"), unix, ClosedStatus),
-		&CreateOperation{OpBase: OpBase{
-			Author_:       rene,
-			UnixTime:      0,
-			OperationType: CreateOp,
-		},
+		&CreateOperation{OpBase: dag.NewOpBase(CreateOp, rene, 0),
 			Title:   "title",
 			Message: "message",
 		},
@@ -105,7 +104,7 @@ func TestID(t *testing.T) {
 		err = rene.Commit(repo)
 		require.NoError(t, err)
 
-		b, op, err := Create(rene, time.Now().Unix(), "title", "message")
+		b, op, err := Create(rene, time.Now().Unix(), "title", "message", nil, nil)
 		require.NoError(t, err)
 
 		id1 := op.Id()

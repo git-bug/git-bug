@@ -209,9 +209,9 @@ func (c *RepoCache) buildCache() error {
 		}
 
 		snap := b.Bug.Compile()
-		c.bugExcerpts[b.Bug.Id()] = NewBugExcerpt(b.Bug, &snap)
+		c.bugExcerpts[b.Bug.Id()] = NewBugExcerpt(b.Bug, snap)
 
-		if err := c.addBugToSearchIndex(&snap); err != nil {
+		if err := c.addBugToSearchIndex(snap); err != nil {
 			return err
 		}
 	}
@@ -222,7 +222,7 @@ func (c *RepoCache) buildCache() error {
 }
 
 // repoIsAvailable check is the given repository is locked by a Cache.
-// Note: this is a smart function that will cleanup the lock file if the
+// Note: this is a smart function that will clean the lock file if the
 // corresponding process is not there anymore.
 // If no error is returned, the repo is free to edit.
 func repoIsAvailable(repo repository.RepoStorage) error {

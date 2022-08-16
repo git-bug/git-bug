@@ -461,13 +461,9 @@ func (c *RepoCache) NewBugWithFiles(title string, message string, files []reposi
 // well as metadata for the Create operation.
 // The new bug is written in the repository (commit)
 func (c *RepoCache) NewBugRaw(author *IdentityCache, unixTime int64, title string, message string, files []repository.Hash, metadata map[string]string) (*BugCache, *bug.CreateOperation, error) {
-	b, op, err := bug.CreateWithFiles(author.Identity, unixTime, title, message, files)
+	b, op, err := bug.Create(author.Identity, unixTime, title, message, files, metadata)
 	if err != nil {
 		return nil, nil, err
-	}
-
-	for key, value := range metadata {
-		op.SetMetadata(key, value)
 	}
 
 	err = b.Commit(c.repo)

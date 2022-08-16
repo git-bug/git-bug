@@ -11,11 +11,12 @@ import (
 
 	"github.com/xanzy/go-gitlab"
 
+	"github.com/MichaelMure/git-bug/entity/dag"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
-	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/interrupt"
@@ -247,7 +248,7 @@ func TestGitlabPushPull(t *testing.T) {
 			// verify operation have correct metadata
 			for _, op := range tt.bug.Snapshot().Operations {
 				// Check if the originals operations (*not* SetMetadata) are tagged properly
-				if _, ok := op.(*bug.SetMetadataOperation); !ok {
+				if _, ok := op.(dag.OperationDoesntChangeSnapshot); !ok {
 					_, haveIDMetadata := op.GetMetadata(metaKeyGitlabId)
 					require.True(t, haveIDMetadata)
 
@@ -272,7 +273,7 @@ func TestGitlabPushPull(t *testing.T) {
 			require.True(t, ok)
 			require.Equal(t, issueOrigin, target)
 
-			//TODO: maybe more tests to ensure bug final state
+			// TODO: maybe more tests to ensure bug final state
 		})
 	}
 }

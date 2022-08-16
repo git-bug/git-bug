@@ -36,7 +36,7 @@ func (c *RepoCache) Keyring() repository.Keyring {
 	return c.repo.Keyring()
 }
 
-// GetUserName returns the name the the user has used to configure git
+// GetUserName returns the name the user has used to configure git
 func (c *RepoCache) GetUserName() (string, error) {
 	return c.repo.GetUserName()
 }
@@ -131,7 +131,7 @@ func (c *RepoCache) MergeAll(remote string) <-chan entity.MergeResult {
 				b := result.Entity.(*bug.Bug)
 				snap := b.Compile()
 				c.muBug.Lock()
-				c.bugExcerpts[result.Id] = NewBugExcerpt(b, &snap)
+				c.bugExcerpts[result.Id] = NewBugExcerpt(b, snap)
 				c.muBug.Unlock()
 			}
 		}
