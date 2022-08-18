@@ -22,7 +22,7 @@ import (
 	"github.com/MichaelMure/git-bug/api/graphql"
 	httpapi "github.com/MichaelMure/git-bug/api/http"
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/webui"
 )

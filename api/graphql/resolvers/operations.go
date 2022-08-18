@@ -2,12 +2,11 @@ package resolvers
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/MichaelMure/git-bug/api/graphql/graph"
 	"github.com/MichaelMure/git-bug/api/graphql/models"
-	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/entities/bug"
 )
 
 var _ graph.CreateOperationResolver = createOperationResolver{}
@@ -99,10 +98,6 @@ func (setStatusOperationResolver) Date(_ context.Context, obj *bug.SetStatusOper
 	return &t, nil
 }
 
-func (setStatusOperationResolver) Status(_ context.Context, obj *bug.SetStatusOperation) (models.Status, error) {
-	return convertStatus(obj.Status)
-}
-
 var _ graph.SetTitleOperationResolver = setTitleOperationResolver{}
 
 type setTitleOperationResolver struct{}
@@ -118,15 +113,4 @@ func (setTitleOperationResolver) Author(_ context.Context, obj *bug.SetTitleOper
 func (setTitleOperationResolver) Date(_ context.Context, obj *bug.SetTitleOperation) (*time.Time, error) {
 	t := obj.Time()
 	return &t, nil
-}
-
-func convertStatus(status bug.Status) (models.Status, error) {
-	switch status {
-	case bug.OpenStatus:
-		return models.StatusOpen, nil
-	case bug.ClosedStatus:
-		return models.StatusClosed, nil
-	}
-
-	return "", fmt.Errorf("unknown status")
 }

@@ -131,7 +131,7 @@ enum LabelChangeStatus {
     ADDED
     REMOVED
     DUPLICATE_IN_OP
-    ALREADY_EXIST
+    ALREADY_SET
     DOESNT_EXIST
 }
 

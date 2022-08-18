@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/entities/identity"
 )
 
 func FinishConfig(repo *cache.RepoCache, metaKey string, login string) error {

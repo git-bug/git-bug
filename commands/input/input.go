@@ -14,9 +14,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/MichaelMure/git-bug/repository"
 	"github.com/go-git/go-billy/v5/util"
 	"github.com/pkg/errors"
+
+	"github.com/MichaelMure/git-bug/repository"
 )
 
 const messageFilename = "BUG_MESSAGE_EDITMSG"

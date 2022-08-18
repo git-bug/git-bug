@@ -3,7 +3,7 @@ package query
 import (
 	"fmt"
 
-	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/entities/bug"
 )
 
 // Parse parse a query DSL

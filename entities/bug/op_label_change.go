@@ -2,13 +2,15 @@ package bug
 
 import (
 	"fmt"
+	"io"
 	"sort"
+	"strconv"
 
 	"github.com/pkg/errors"
 
+	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
-	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/timestamp"
 )
 
@@ -227,6 +229,45 @@ const (
 	LabelChangeAlreadySet
 	LabelChangeDoesntExist
 )
+
+func (l LabelChangeStatus) MarshalGQL(w io.Writer) {
+	switch l {
+	case LabelChangeAdded:
+		_, _ = fmt.Fprintf(w, strconv.Quote("ADDED"))
+	case LabelChangeRemoved:
+		_, _ = fmt.Fprintf(w, strconv.Quote("REMOVED"))
+	case LabelChangeDuplicateInOp:
+		_, _ = fmt.Fprintf(w, strconv.Quote("DUPLICATE_IN_OP"))
+	case LabelChangeAlreadySet:
+		_, _ = fmt.Fprintf(w, strconv.Quote("ALREADY_EXIST"))
+	case LabelChangeDoesntExist:
+		_, _ = fmt.Fprintf(w, strconv.Quote("DOESNT_EXIST"))
+	default:
+		panic("missing case")
+	}
+}
+
+func (l *LabelChangeStatus) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+	switch str {
+	case "ADDED":
+		*l = LabelChangeAdded
+	case "REMOVED":
+		*l = LabelChangeRemoved
+	case "DUPLICATE_IN_OP":
+		*l = LabelChangeDuplicateInOp
+	case "ALREADY_EXIST":
+		*l = LabelChangeAlreadySet
+	case "DOESNT_EXIST":
+		*l = LabelChangeDoesntExist
+	default:
+		return fmt.Errorf("%s is not a valid LabelChangeStatus", str)
+	}
+	return nil
+}
 
 type LabelChangeResult struct {
 	Label  Label

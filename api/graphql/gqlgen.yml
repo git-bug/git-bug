@@ -1,64 +1,24 @@
 schema: "schema/*.graphql"
 exec:
-  filename: graph/gen_graph.go
+  layout: follow-schema
+  dir: graph
+  package: graph
 model:
   filename: models/gen_models.go
 
+skip_mod_tidy: true
+
+autobind:
+  - "github.com/MichaelMure/git-bug/api/graphql/models"
+  - "github.com/MichaelMure/git-bug/repository"
+  - "github.com/MichaelMure/git-bug/entity/dag"
+  - "github.com/MichaelMure/git-bug/entities/bug"
+  - "github.com/MichaelMure/git-bug/entities/identity"
+
 models:
-  Repository:
-    model: github.com/MichaelMure/git-bug/api/graphql/models.Repository
-  RepositoryMutation:
-    model: github.com/MichaelMure/git-bug/api/graphql/models.RepositoryMutation
   Bug:
     model: github.com/MichaelMure/git-bug/api/graphql/models.BugWrapper
-    fields:
-      actors:
-        resolver: true
-      participants:
-        resolver: true
-      comments:
-        resolver: true
-      timeline:
-        resolver: true
-      operations:
-        resolver: true
   Color:
     model: image/color.RGBA
-  Comment:
-    model: github.com/MichaelMure/git-bug/bug.Comment
   Identity:
     model: github.com/MichaelMure/git-bug/api/graphql/models.IdentityWrapper
-  Label:
-    model: github.com/MichaelMure/git-bug/bug.Label
-  Hash:
-    model: github.com/MichaelMure/git-bug/repository.Hash
-  Operation:
-    model: github.com/MichaelMure/git-bug/entity/dag.Operation
-  CreateOperation:
-    model: github.com/MichaelMure/git-bug/bug.CreateOperation
-  SetTitleOperation:
-    model: github.com/MichaelMure/git-bug/bug.SetTitleOperation
-  AddCommentOperation:
-    model: github.com/MichaelMure/git-bug/bug.AddCommentOperation
-  EditCommentOperation:
-    model: github.com/MichaelMure/git-bug/bug.EditCommentOperation
-  SetStatusOperation:
-    model: github.com/MichaelMure/git-bug/bug.SetStatusOperation
-  LabelChangeOperation:
-    model: github.com/MichaelMure/git-bug/bug.LabelChangeOperation
-  TimelineItem:
-    model: github.com/MichaelMure/git-bug/bug.TimelineItem
-  CommentHistoryStep:
-    model: github.com/MichaelMure/git-bug/bug.CommentHistoryStep
-  CreateTimelineItem:
-    model: github.com/MichaelMure/git-bug/bug.CreateTimelineItem
-  AddCommentTimelineItem:
-    model: github.com/MichaelMure/git-bug/bug.AddCommentTimelineItem
-  LabelChangeTimelineItem:
-    model: github.com/MichaelMure/git-bug/bug.LabelChangeTimelineItem
-  SetStatusTimelineItem:
-    model: github.com/MichaelMure/git-bug/bug.SetStatusTimelineItem
-  SetTitleTimelineItem:
-    model: github.com/MichaelMure/git-bug/bug.SetTitleTimelineItem
-  LabelChangeResult:
-    model: github.com/MichaelMure/git-bug/bug.LabelChangeResult
