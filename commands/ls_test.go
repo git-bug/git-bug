@@ -74,12 +74,11 @@ $`
 		name := fmt.Sprintf("with %s format", testcase.format)
 
 		t.Run(name, func(t *testing.T) {
-			env, _, _ := newTestEnvAndBug(t)
+			env, _ := newTestEnvAndBug(t)
 
 			require.NoError(t, runLs(env.env, opts, []string{}))
 			t.Log(env.out.String())
 			require.Regexp(t, testcase.exp, env.out.String())
-			require.Equal(t, "", env.err.String())
 		})
 	}
 
@@ -90,13 +89,12 @@ $`
 			outputFormat:  "json",
 		}
 
-		env, _, _ := newTestEnvAndBug(t)
+		env, _ := newTestEnvAndBug(t)
 
 		require.NoError(t, runLs(env.env, opts, []string{}))
 
 		bugs := []JSONBugExcerpt{}
 		require.NoError(t, json.Unmarshal(env.out.Bytes(), &bugs))
-		require.Empty(t, env.err.Bytes())
 
 		require.Len(t, bugs, 1)
 	})
