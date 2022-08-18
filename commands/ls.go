@@ -279,7 +279,7 @@ func lsDefaultFormatter(env *Env, bugExcerpts []*cache.BugExcerpt) error {
 			comments = "  ∞ 💬"
 		}
 
-		env.out.Printf("%s %s\t%s\t%s\t%s\n",
+		env.out.Printf("%s\t%s\t%s\t%s\t%s\n",
 			colors.Cyan(b.Id.Human()),
 			colors.Yellow(b.Status),
 			titleFmt+labelsFmt,
