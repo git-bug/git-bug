@@ -42,14 +42,20 @@ func NewBug() *Bug {
 	}
 }
 
-// Read will read a bug from a repository
-func Read(repo repository.ClockedRepo, id entity.Id) (*Bug, error) {
-	return ReadWithResolver(repo, identity.NewSimpleResolver(repo), id)
+func simpleResolvers(repo repository.ClockedRepo) entity.Resolvers {
+	return entity.Resolvers{
+		&identity.Identity{}: identity.NewSimpleResolver(repo),
+	}
 }
 
-// ReadWithResolver will read a bug from its Id, with a custom identity.Resolver
-func ReadWithResolver(repo repository.ClockedRepo, identityResolver identity.Resolver, id entity.Id) (*Bug, error) {
-	e, err := dag.Read(def, repo, identityResolver, id)
+// Read will read a bug from a repository
+func Read(repo repository.ClockedRepo, id entity.Id) (*Bug, error) {
+	return ReadWithResolver(repo, simpleResolvers(repo), id)
+}
+
+// ReadWithResolver will read a bug from its Id, with custom resolvers
+func ReadWithResolver(repo repository.ClockedRepo, resolvers entity.Resolvers, id entity.Id) (*Bug, error) {
+	e, err := dag.Read(def, repo, resolvers, id)
 	if err != nil {
 		return nil, err
 	}
@@ -63,22 +69,22 @@ type StreamedBug struct {
 
 // ReadAll read and parse all local bugs
 func ReadAll(repo repository.ClockedRepo) <-chan StreamedBug {
-	return readAll(repo, identity.NewSimpleResolver(repo))
+	return readAll(repo, simpleResolvers(repo))
 }
 
 // ReadAllWithResolver read and parse all local bugs
-func ReadAllWithResolver(repo repository.ClockedRepo, identityResolver identity.Resolver) <-chan StreamedBug {
-	return readAll(repo, identityResolver)
+func ReadAllWithResolver(repo repository.ClockedRepo, resolvers entity.Resolvers) <-chan StreamedBug {
+	return readAll(repo, resolvers)
 }
 
 // Read and parse all available bug with a given ref prefix
-func readAll(repo repository.ClockedRepo, identityResolver identity.Resolver) <-chan StreamedBug {
+func readAll(repo repository.ClockedRepo, resolvers entity.Resolvers) <-chan StreamedBug {
 	out := make(chan StreamedBug)
 
 	go func() {
 		defer close(out)
 
-		for streamedEntity := range dag.ReadAll(def, repo, identityResolver) {
+		for streamedEntity := range dag.ReadAll(def, repo, resolvers) {
 			if streamedEntity.Err != nil {
 				out <- StreamedBug{
 					Err: streamedEntity.Err,

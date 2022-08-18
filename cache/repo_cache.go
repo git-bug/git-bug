@@ -49,6 +49,9 @@ type RepoCache struct {
 	// the name of the repository, as defined in the MultiRepoCache
 	name string
 
+	// resolvers for all known entities
+	resolvers entity.Resolvers
+
 	// maximum number of loaded bugs
 	maxLoadedBugs int
 
@@ -83,6 +86,8 @@ func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, error
 		loadedBugs:    NewLRUIdCache(),
 		identities:    make(map[entity.Id]*IdentityCache),
 	}
+
+	c.resolvers = makeResolvers(c)
 
 	err := c.lock()
 	if err != nil {
@@ -168,13 +173,6 @@ func (c *RepoCache) Close() error {
 }
 
 func (c *RepoCache) buildCache() error {
-	// TODO: make that parallel
-
-	c.muBug.Lock()
-	defer c.muBug.Unlock()
-	c.muIdentity.Lock()
-	defer c.muIdentity.Unlock()
-
 	_, _ = fmt.Fprintf(os.Stderr, "Building identity cache... ")
 
 	c.identitiesExcerpts = make(map[entity.Id]*IdentityExcerpt)
@@ -195,7 +193,7 @@ func (c *RepoCache) buildCache() error {
 
 	c.bugExcerpts = make(map[entity.Id]*BugExcerpt)
 
-	allBugs := bug.ReadAllWithResolver(c.repo, newIdentityCacheResolverNoLock(c))
+	allBugs := bug.ReadAllWithResolver(c.repo, c.resolvers)
 
 	// wipe the index just to be sure
 	err := c.repo.ClearBleveIndex("bug")

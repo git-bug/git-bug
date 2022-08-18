@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
-	"github.com/MichaelMure/git-bug/identity"
 )
 
 const (
@@ -32,7 +32,7 @@ type Operation interface {
 var _ Operation = &dag.NoOpOperation[*Snapshot]{}
 var _ Operation = &dag.SetMetadataOperation[*Snapshot]{}
 
-func operationUnmarshaller(raw json.RawMessage, resolver identity.Resolver) (dag.Operation, error) {
+func operationUnmarshaller(raw json.RawMessage, resolvers entity.Resolvers) (dag.Operation, error) {
 	var t struct {
 		OperationType dag.OperationType `json:"type"`
 	}

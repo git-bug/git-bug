@@ -118,7 +118,7 @@ func (c *RepoCache) MergeAll(remote string) <-chan entity.MergeResult {
 			}
 		}
 
-		results = bug.MergeAll(c.repo, remote, author)
+		results = bug.MergeAll(c.repo, c.resolvers, remote, author)
 		for result := range results {
 			out <- result
 
