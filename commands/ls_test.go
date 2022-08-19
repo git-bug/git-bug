@@ -77,7 +77,6 @@ $`
 			env, _ := newTestEnvAndBug(t)
 
 			require.NoError(t, runLs(env.env, opts, []string{}))
-			t.Log(env.out.String())
 			require.Regexp(t, testcase.exp, env.out.String())
 		})
 	}
