@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/MichaelMure/git-bug/entities/common"
 	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
@@ -15,7 +16,7 @@ var _ dag.Snapshot = &Snapshot{}
 type Snapshot struct {
 	id entity.Id
 
-	Status       Status
+	Status       common.Status
 	Title        string
 	Comments     []Comment
 	Labels       []Label

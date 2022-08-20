@@ -19,6 +19,7 @@ import (
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entities/bug"
+	"github.com/MichaelMure/git-bug/entities/common"
 	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
@@ -688,16 +689,16 @@ func (ge *githubExporter) editCommentGithubIssue(ctx context.Context, gc *rateLi
 	return commentID, m.UpdateIssueComment.IssueComment.URL, nil
 }
 
-func (ge *githubExporter) updateGithubIssueStatus(ctx context.Context, gc *rateLimitHandlerClient, id string, status bug.Status) error {
+func (ge *githubExporter) updateGithubIssueStatus(ctx context.Context, gc *rateLimitHandlerClient, id string, status common.Status) error {
 	m := &updateIssueMutation{}
 
 	// set state
 	var state githubv4.IssueState
 
 	switch status {
-	case bug.OpenStatus:
+	case common.OpenStatus:
 		state = githubv4.IssueStateOpen
-	case bug.ClosedStatus:
+	case common.ClosedStatus:
 		state = githubv4.IssueStateClosed
 	default:
 		panic("unknown bug state")

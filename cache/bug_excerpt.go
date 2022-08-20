@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/MichaelMure/git-bug/entities/bug"
+	"github.com/MichaelMure/git-bug/entities/common"
 	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/util/lamport"
@@ -27,7 +28,7 @@ type BugExcerpt struct {
 	EditUnixTime      int64
 
 	AuthorId     entity.Id
-	Status       bug.Status
+	Status       common.Status
 	Labels       []bug.Label
 	Title        string
 	LenComments  int

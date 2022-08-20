@@ -14,6 +14,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/MichaelMure/git-bug/api/graphql/models"
 	"github.com/MichaelMure/git-bug/entities/bug"
+	"github.com/MichaelMure/git-bug/entities/common"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -370,9 +371,9 @@ func (ec *executionContext) _Bug_status(ctx context.Context, field graphql.Colle
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bug.Status)
+	res := resTmp.(common.Status)
 	fc.Result = res
-	return ec.marshalNStatus2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentitiesᚋbugᚐStatus(ctx, field.Selections, res)
+	return ec.marshalNStatus2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentitiesᚋcommonᚐStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Bug_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2425,13 +2426,13 @@ func (ec *executionContext) marshalNCommentEdge2ᚖgithubᚗcomᚋMichaelMureᚋ
 	return ec._CommentEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNStatus2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentitiesᚋbugᚐStatus(ctx context.Context, v interface{}) (bug.Status, error) {
-	var res bug.Status
+func (ec *executionContext) unmarshalNStatus2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentitiesᚋcommonᚐStatus(ctx context.Context, v interface{}) (common.Status, error) {
+	var res common.Status
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNStatus2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentitiesᚋbugᚐStatus(ctx context.Context, sel ast.SelectionSet, v bug.Status) graphql.Marshaler {
+func (ec *executionContext) marshalNStatus2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentitiesᚋcommonᚐStatus(ctx context.Context, sel ast.SelectionSet, v common.Status) graphql.Marshaler {
 	return v
 }
 
