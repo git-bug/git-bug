@@ -424,6 +424,8 @@ func (ec *executionContext) _Authored(ctx context.Context, sel ast.SelectionSet,
 			return graphql.Null
 		}
 		return ec._SetStatusTimelineItem(ctx, sel, obj)
+	case bug.SetTitleTimelineItem:
+		return ec._SetTitleTimelineItem(ctx, sel, &obj)
 	case *bug.SetTitleTimelineItem:
 		if obj == nil {
 			return graphql.Null

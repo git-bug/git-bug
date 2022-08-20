@@ -11,6 +11,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entities/bug"
+	"github.com/MichaelMure/git-bug/entities/common"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/util/colors"
 )
@@ -624,10 +625,10 @@ func (sb *showBug) setTitle(g *gocui.Gui, v *gocui.View) error {
 
 func (sb *showBug) toggleOpenClose(g *gocui.Gui, v *gocui.View) error {
 	switch sb.bug.Snapshot().Status {
-	case bug.OpenStatus:
+	case common.OpenStatus:
 		_, err := sb.bug.Close()
 		return err
-	case bug.ClosedStatus:
+	case common.ClosedStatus:
 		_, err := sb.bug.Open()
 		return err
 	default:

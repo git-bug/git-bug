@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/MichaelMure/git-bug/entities/bug"
+	"github.com/MichaelMure/git-bug/entities/common"
 )
 
 func TestParse(t *testing.T) {
@@ -18,10 +18,10 @@ func TestParse(t *testing.T) {
 		{":value", nil},
 
 		{"status:open", &Query{
-			Filters: Filters{Status: []bug.Status{bug.OpenStatus}},
+			Filters: Filters{Status: []common.Status{common.OpenStatus}},
 		}},
 		{"status:closed", &Query{
-			Filters: Filters{Status: []bug.Status{bug.ClosedStatus}},
+			Filters: Filters{Status: []common.Status{common.ClosedStatus}},
 		}},
 		{"status:unknown", nil},
 
@@ -84,7 +84,7 @@ func TestParse(t *testing.T) {
 			&Query{
 				Search: []string{"search", "more terms"},
 				Filters: Filters{
-					Status:      []bug.Status{bug.OpenStatus},
+					Status:      []common.Status{common.OpenStatus},
 					Author:      []string{"René Descartes"},
 					Participant: []string{"leonhard"},
 					Label:       []string{"hello", "Good first issue"},

@@ -14,6 +14,7 @@ import (
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entities/bug"
+	"github.com/MichaelMure/git-bug/entities/common"
 	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
@@ -469,13 +470,13 @@ func editCommentGitlabIssue(ctx context.Context, gc *gitlab.Client, repositoryID
 	return err
 }
 
-func updateGitlabIssueStatus(ctx context.Context, gc *gitlab.Client, repositoryID string, issueID int, status bug.Status) error {
+func updateGitlabIssueStatus(ctx context.Context, gc *gitlab.Client, repositoryID string, issueID int, status common.Status) error {
 	var state string
 
 	switch status {
-	case bug.OpenStatus:
+	case common.OpenStatus:
 		state = "reopen"
-	case bug.ClosedStatus:
+	case common.ClosedStatus:
 		state = "close"
 	default:
 		panic("unknown bug state")

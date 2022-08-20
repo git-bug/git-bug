@@ -3,7 +3,7 @@ package query
 import (
 	"fmt"
 
-	"github.com/MichaelMure/git-bug/entities/bug"
+	"github.com/MichaelMure/git-bug/entities/common"
 )
 
 // Parse parse a query DSL
@@ -32,7 +32,7 @@ func Parse(query string) (*Query, error) {
 		case tokenKindKV:
 			switch t.qualifier {
 			case "status", "state":
-				status, err := bug.StatusFromString(t.value)
+				status, err := common.StatusFromString(t.value)
 				if err != nil {
 					return nil, err
 				}

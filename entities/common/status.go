@@ -1,4 +1,4 @@
-package bug
+package common
 
 import (
 	"fmt"

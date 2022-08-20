@@ -3,6 +3,7 @@ package bug
 import (
 	"github.com/pkg/errors"
 
+	"github.com/MichaelMure/git-bug/entities/common"
 	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
@@ -14,7 +15,7 @@ var _ Operation = &SetStatusOperation{}
 // SetStatusOperation will change the status of a bug
 type SetStatusOperation struct {
 	dag.OpBase
-	Status Status `json:"status"`
+	Status common.Status `json:"status"`
 }
 
 func (op *SetStatusOperation) Id() entity.Id {
@@ -47,7 +48,7 @@ func (op *SetStatusOperation) Validate() error {
 	return nil
 }
 
-func NewSetStatusOp(author identity.Interface, unixTime int64, status Status) *SetStatusOperation {
+func NewSetStatusOp(author identity.Interface, unixTime int64, status common.Status) *SetStatusOperation {
 	return &SetStatusOperation{
 		OpBase: dag.NewOpBase(SetStatusOp, author, unixTime),
 		Status: status,
@@ -58,7 +59,7 @@ type SetStatusTimelineItem struct {
 	id       entity.Id
 	Author   identity.Interface
 	UnixTime timestamp.Timestamp
-	Status   Status
+	Status   common.Status
 }
 
 func (s SetStatusTimelineItem) Id() entity.Id {
@@ -70,7 +71,7 @@ func (s SetStatusTimelineItem) IsAuthored() {}
 
 // Open is a convenience function to change a bugs state to Open
 func Open(b Interface, author identity.Interface, unixTime int64, metadata map[string]string) (*SetStatusOperation, error) {
-	op := NewSetStatusOp(author, unixTime, OpenStatus)
+	op := NewSetStatusOp(author, unixTime, common.OpenStatus)
 	for key, value := range metadata {
 		op.SetMetadata(key, value)
 	}
@@ -83,7 +84,7 @@ func Open(b Interface, author identity.Interface, unixTime int64, metadata map[s
 
 // Close is a convenience function to change a bugs state to Close
 func Close(b Interface, author identity.Interface, unixTime int64, metadata map[string]string) (*SetStatusOperation, error) {
-	op := NewSetStatusOp(author, unixTime, ClosedStatus)
+	op := NewSetStatusOp(author, unixTime, common.ClosedStatus)
 	for key, value := range metadata {
 		op.SetMetadata(key, value)
 	}

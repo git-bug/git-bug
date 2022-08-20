@@ -4,6 +4,7 @@ package bug
 import (
 	"fmt"
 
+	"github.com/MichaelMure/git-bug/entities/common"
 	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
@@ -149,7 +150,7 @@ func (bug *Bug) Operations() []Operation {
 func (bug *Bug) Compile() *Snapshot {
 	snap := &Snapshot{
 		id:     bug.Id(),
-		Status: OpenStatus,
+		Status: common.OpenStatus,
 	}
 
 	for _, op := range bug.Operations() {

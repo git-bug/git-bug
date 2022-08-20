@@ -6,6 +6,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entities/bug"
+	"github.com/MichaelMure/git-bug/entities/common"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
 )
@@ -16,7 +17,7 @@ import (
 type BugWrapper interface {
 	Id() entity.Id
 	LastEdit() time.Time
-	Status() bug.Status
+	Status() common.Status
 	Title() string
 	Comments() ([]bug.Comment, error)
 	Labels() []bug.Label
@@ -85,7 +86,7 @@ func (lb *lazyBug) LastEdit() time.Time {
 	return lb.excerpt.EditTime()
 }
 
-func (lb *lazyBug) Status() bug.Status {
+func (lb *lazyBug) Status() common.Status {
 	return lb.excerpt.Status
 }
 
@@ -167,7 +168,7 @@ func (l *loadedBug) LastEdit() time.Time {
 	return l.Snapshot.EditTime()
 }
 
-func (l *loadedBug) Status() bug.Status {
+func (l *loadedBug) Status() common.Status {
 	return l.Snapshot.Status
 }
 

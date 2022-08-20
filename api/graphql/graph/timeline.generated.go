@@ -14,6 +14,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/MichaelMure/git-bug/api/graphql/models"
 	"github.com/MichaelMure/git-bug/entities/bug"
+	"github.com/MichaelMure/git-bug/entities/common"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -1419,9 +1420,9 @@ func (ec *executionContext) _SetStatusTimelineItem_status(ctx context.Context, f
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bug.Status)
+	res := resTmp.(common.Status)
 	fc.Result = res
-	return ec.marshalNStatus2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentitiesᚋbugᚐStatus(ctx, field.Selections, res)
+	return ec.marshalNStatus2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentitiesᚋcommonᚐStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SetStatusTimelineItem_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1991,6 +1992,8 @@ func (ec *executionContext) _TimelineItem(ctx context.Context, sel ast.Selection
 			return graphql.Null
 		}
 		return ec._SetStatusTimelineItem(ctx, sel, obj)
+	case bug.SetTitleTimelineItem:
+		return ec._SetTitleTimelineItem(ctx, sel, &obj)
 	case *bug.SetTitleTimelineItem:
 		if obj == nil {
 			return graphql.Null
