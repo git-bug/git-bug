@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
-	"github.com/MichaelMure/git-bug/identity"
 )
 
 var _ dag.Snapshot = &Snapshot{}

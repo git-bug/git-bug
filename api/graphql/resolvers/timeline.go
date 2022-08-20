@@ -6,7 +6,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/api/graphql/graph"
 	"github.com/MichaelMure/git-bug/api/graphql/models"
-	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/entities/bug"
 )
 
 var _ graph.CommentHistoryStepResolver = commentHistoryStepResolver{}
@@ -94,10 +94,6 @@ func (i setStatusTimelineItem) Author(_ context.Context, obj *bug.SetStatusTimel
 func (setStatusTimelineItem) Date(_ context.Context, obj *bug.SetStatusTimelineItem) (*time.Time, error) {
 	t := obj.UnixTime.Time()
 	return &t, nil
-}
-
-func (setStatusTimelineItem) Status(_ context.Context, obj *bug.SetStatusTimelineItem) (models.Status, error) {
-	return convertStatus(obj.Status)
 }
 
 var _ graph.SetTitleTimelineItemResolver = setTitleTimelineItem{}

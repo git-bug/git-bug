@@ -3,7 +3,7 @@ package dag
 import (
 	"testing"
 
-	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/entities/identity"
 )
 
 func TestNoopSerialize(t *testing.T) {

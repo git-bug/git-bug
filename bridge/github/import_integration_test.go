@@ -6,15 +6,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MichaelMure/git-bug/bridge/github/mocks"
-	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/repository"
-	"github.com/MichaelMure/git-bug/util/interrupt"
 	"github.com/pkg/errors"
 	"github.com/shurcooL/githubv4"
 	m "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/MichaelMure/git-bug/bridge/github/mocks"
+	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/entities/bug"
+	"github.com/MichaelMure/git-bug/repository"
+	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
 // using testify/mock and mockery

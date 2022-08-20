@@ -8,7 +8,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/input"
+	"github.com/MichaelMure/git-bug/commands/input"
 )
 
 var ErrBadProjectURL = errors.New("bad Launchpad project URL")

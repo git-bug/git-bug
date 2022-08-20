@@ -10,8 +10,8 @@ import (
 	text "github.com/MichaelMure/go-term-text"
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/entities/bug"
 	"github.com/MichaelMure/git-bug/query"
 	"github.com/MichaelMure/git-bug/util/colors"
 )

@@ -9,9 +9,9 @@ import (
 
 	"github.com/MichaelMure/git-bug/bridge"
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
-	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	_select "github.com/MichaelMure/git-bug/commands/select"
+	"github.com/MichaelMure/git-bug/entities/bug"
 )
 
 type validArgsFunction func(cmd *cobra.Command, args []string, toComplete string) (completions []string, directives cobra.ShellCompDirective)

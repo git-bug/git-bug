@@ -9,8 +9,8 @@ import (
 	text "github.com/MichaelMure/go-term-text"
 	"github.com/awesome-gocui/gocui"
 
-	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/entities/bug"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/util/colors"
 )

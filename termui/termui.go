@@ -8,8 +8,8 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/commands/input"
 	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/input"
 	"github.com/MichaelMure/git-bug/query"
 	"github.com/MichaelMure/git-bug/util/text"
 )

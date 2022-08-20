@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
 

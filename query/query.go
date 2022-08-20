@@ -1,6 +1,6 @@
 package query
 
-import "github.com/MichaelMure/git-bug/bug"
+import "github.com/MichaelMure/git-bug/entities/bug"
 
 // Query is the intermediary representation of a Bug's query. It is either
 // produced by parsing a query string (ex: "status:open author:rene") or created

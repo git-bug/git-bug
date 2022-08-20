@@ -16,7 +16,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/entities/bug"
 )
 
 var errDone = errors.New("Iteration Done")

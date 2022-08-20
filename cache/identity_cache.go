@@ -1,7 +1,7 @@
 package cache
 
 import (
-	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/repository"
 )
 

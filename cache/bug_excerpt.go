@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/entities/bug"
+	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
