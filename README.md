@@ -298,6 +298,13 @@ You can now run `make` to build the project, or `make install` to install the bi
 
 To work on the web UI, have a look at [the dedicated Readme.](webui/Readme.md)
 
+Some tests for the CLI use golden files, if the output of CLI commands is
+changed, run the following command, then inspect the changed files in
+`commands/testdata/...` to make sure the output text is as expected:
+
+```shell
+go test ./commands -update
+```
 
 ## Contributors :heart:
 
