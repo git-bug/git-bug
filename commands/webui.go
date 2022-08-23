@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -30,12 +31,13 @@ import (
 const webUIOpenConfigKey = "git-bug.webui.open"
 
 type webUIOptions struct {
-	host     string
-	port     int
-	open     bool
-	noOpen   bool
-	readOnly bool
-	query    string
+	host      string
+	port      int
+	open      bool
+	noOpen    bool
+	readOnly  bool
+	logErrors bool
+	query     string
 }
 
 func newWebUICommand() *cobra.Command {
@@ -52,7 +54,7 @@ Available git config:
 `,
 		PreRunE: loadRepo(env),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runWebUI(env, options, args)
+			return runWebUI(env, options)
 		},
 	}
 
@@ -64,12 +66,13 @@ Available git config:
 	flags.BoolVar(&options.noOpen, "no-open", false, "Prevent the automatic opening of the web UI in the default browser")
 	flags.IntVarP(&options.port, "port", "p", 0, "Port to listen to (default to random available port)")
 	flags.BoolVar(&options.readOnly, "read-only", false, "Whether to run the web UI in read-only mode")
+	flags.BoolVar(&options.logErrors, "log-errors", false, "Whether to log errors")
 	flags.StringVarP(&options.query, "query", "q", "", "The query to open in the web UI bug list")
 
 	return cmd
 }
 
-func runWebUI(env *Env, opts webUIOptions, args []string) error {
+func runWebUI(env *Env, opts webUIOptions) error {
 	if opts.port == 0 {
 		var err error
 		opts.port, err = freeport.GetFreePort()
@@ -106,7 +109,12 @@ func runWebUI(env *Env, opts webUIOptions, args []string) error {
 		return err
 	}
 
-	graphqlHandler := graphql.NewHandler(mrc)
+	var errOut io.Writer
+	if opts.logErrors {
+		errOut = env.err
+	}
+
+	graphqlHandler := graphql.NewHandler(mrc, errOut)
 
 	// Routes
 	router.Path("/playground").Handler(playground.Handler("git-bug", "/graphql"))

@@ -22,7 +22,7 @@ func TestQueries(t *testing.T) {
 	_, err := mrc.RegisterDefaultRepository(repo)
 	require.NoError(t, err)
 
-	handler := NewHandler(mrc)
+	handler := NewHandler(mrc, nil)
 
 	c := client.New(handler)
 

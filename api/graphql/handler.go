@@ -20,10 +20,14 @@ type Handler struct {
 	io.Closer
 }
 
-func NewHandler(mrc *cache.MultiRepoCache) Handler {
+func NewHandler(mrc *cache.MultiRepoCache, errorOut io.Writer) Handler {
 	rootResolver := resolvers.NewRootResolver(mrc)
 	config := graph.Config{Resolvers: rootResolver}
 	h := handler.NewDefaultServer(graph.NewExecutableSchema(config))
+
+	if errorOut != nil {
+		h.Use(&Tracer{Out: errorOut})
+	}
 
 	return Handler{
 		Handler: h,
