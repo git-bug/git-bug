@@ -3,4 +3,4 @@
     this is a bug message
 
 
-    this is a bug comment
+    this is an altered bug comment
