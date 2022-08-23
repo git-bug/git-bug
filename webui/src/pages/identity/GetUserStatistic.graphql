@@ -4,6 +4,7 @@ query GetUserStatistic(
   $actionQuery: String!
 ) {
   repository {
+    name
     authored: allBugs(query: $authorQuery) {
       totalCount
     }

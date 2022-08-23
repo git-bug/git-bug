@@ -3,9 +3,9 @@ package bug
 import (
 	"fmt"
 
+	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
-	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/util/timestamp"
 
 	"github.com/MichaelMure/git-bug/util/text"
@@ -28,12 +28,14 @@ func (op *SetTitleOperation) Apply(snapshot *Snapshot) {
 	snapshot.Title = op.Title
 	snapshot.addActor(op.Author())
 
+	id := op.Id()
 	item := &SetTitleTimelineItem{
-		id:       op.Id(),
-		Author:   op.Author(),
-		UnixTime: timestamp.Timestamp(op.UnixTime),
-		Title:    op.Title,
-		Was:      op.Was,
+		id:         id,
+		combinedId: entity.CombineIds(snapshot.Id(), id),
+		Author:     op.Author(),
+		UnixTime:   timestamp.Timestamp(op.UnixTime),
+		Title:      op.Title,
+		Was:        op.Was,
 	}
 
 	snapshot.Timeline = append(snapshot.Timeline, item)
@@ -68,19 +70,24 @@ func NewSetTitleOp(author identity.Interface, unixTime int64, title string, was 
 }
 
 type SetTitleTimelineItem struct {
-	id       entity.Id
-	Author   identity.Interface
-	UnixTime timestamp.Timestamp
-	Title    string
-	Was      string
+	id         entity.Id
+	combinedId entity.CombinedId
+	Author     identity.Interface
+	UnixTime   timestamp.Timestamp
+	Title      string
+	Was        string
 }
 
 func (s SetTitleTimelineItem) Id() entity.Id {
 	return s.id
 }
 
+func (s SetTitleTimelineItem) CombinedId() entity.CombinedId {
+	return s.combinedId
+}
+
 // IsAuthored is a sign post method for gqlgen
-func (s SetTitleTimelineItem) IsAuthored() {}
+func (s *SetTitleTimelineItem) IsAuthored() {}
 
 // SetTitle is a convenience function to change a bugs title
 func SetTitle(b Interface, author identity.Interface, unixTime int64, title string, metadata map[string]string) (*SetTitleOperation, error) {

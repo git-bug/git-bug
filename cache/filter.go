@@ -3,7 +3,7 @@ package cache
 import (
 	"strings"
 
-	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/entities/common"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/query"
 )
@@ -18,7 +18,7 @@ type resolver interface {
 type Filter func(excerpt *BugExcerpt, resolver resolver) bool
 
 // StatusFilter return a Filter that match a bug status
-func StatusFilter(status bug.Status) Filter {
+func StatusFilter(status common.Status) Filter {
 	return func(excerpt *BugExcerpt, resolver resolver) bool {
 		return excerpt.Status == status
 	}

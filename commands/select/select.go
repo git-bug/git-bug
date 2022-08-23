@@ -8,8 +8,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/entities/bug"
 	"github.com/MichaelMure/git-bug/entity"
 )
 

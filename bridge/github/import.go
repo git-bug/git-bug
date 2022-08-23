@@ -9,8 +9,8 @@ import (
 
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
-	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/entities/bug"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/util/text"
 )
@@ -405,6 +405,7 @@ func (gi *githubImporter) ensureCommentEdit(ctx context.Context, repo *cache.Rep
 	if err != nil {
 		return err
 	}
+	// check if the comment edition already exist
 	_, err = b.ResolveOperationWithMetadata(metaKeyGithubId, parseId(edit.Id))
 	if err == nil {
 		return nil
@@ -428,7 +429,7 @@ func (gi *githubImporter) ensureCommentEdit(ctx context.Context, repo *cache.Rep
 	op, err := b.EditCommentRaw(
 		editor,
 		edit.CreatedAt.Unix(),
-		target,
+		entity.CombineIds(b.Id(), target),
 		text.Cleanup(string(*edit.Diff)),
 		map[string]string{
 			metaKeyGithubId: parseId(edit.Id),

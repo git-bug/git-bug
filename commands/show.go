@@ -8,8 +8,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/bug"
 	_select "github.com/MichaelMure/git-bug/commands/select"
+	"github.com/MichaelMure/git-bug/entities/bug"
 	"github.com/MichaelMure/git-bug/util/colors"
 )
 
@@ -163,7 +163,7 @@ func showDefaultFormatter(env *Env, snapshot *bug.Snapshot) error {
 		var message string
 		env.out.Printf("%s%s #%d %s <%s>\n\n",
 			indent,
-			comment.Id().Human(),
+			comment.CombinedId().Human(),
 			i,
 			comment.Author.DisplayName(),
 			comment.Author.Email(),
@@ -207,8 +207,8 @@ type JSONComment struct {
 
 func NewJSONComment(comment bug.Comment) JSONComment {
 	return JSONComment{
-		Id:      comment.Id().String(),
-		HumanId: comment.Id().Human(),
+		Id:      comment.CombinedId().String(),
+		HumanId: comment.CombinedId().Human(),
 		Author:  NewJSONIdentity(comment.Author),
 		Message: comment.Message,
 	}

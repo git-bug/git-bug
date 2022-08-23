@@ -1,5 +1,6 @@
 query ListLabels {
   repository {
+    name
     validLabels {
       nodes {
         name

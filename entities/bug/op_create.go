@@ -3,9 +3,9 @@ package bug
 import (
 	"fmt"
 
+	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
-	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/text"
 	"github.com/MichaelMure/git-bug/util/timestamp"
@@ -32,7 +32,9 @@ func (op *CreateOperation) Apply(snapshot *Snapshot) {
 		return
 	}
 
-	snapshot.id = op.Id()
+	// the Id of the Bug/Snapshot is the Id of the first Operation: CreateOperation
+	opId := op.Id()
+	snapshot.id = opId
 
 	snapshot.addActor(op.Author())
 	snapshot.addParticipant(op.Author())
@@ -40,10 +42,11 @@ func (op *CreateOperation) Apply(snapshot *Snapshot) {
 	snapshot.Title = op.Title
 
 	comment := Comment{
-		id:       entity.CombineIds(snapshot.Id(), op.Id()),
-		Message:  op.Message,
-		Author:   op.Author(),
-		UnixTime: timestamp.Timestamp(op.UnixTime),
+		combinedId: entity.CombineIds(snapshot.id, opId),
+		targetId:   opId,
+		Message:    op.Message,
+		Author:     op.Author(),
+		unixTime:   timestamp.Timestamp(op.UnixTime),
 	}
 
 	snapshot.Comments = []Comment{comment}

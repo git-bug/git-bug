@@ -2,6 +2,7 @@
 
 query CurrentIdentity {
   repository {
+    name
     userIdentity {
       ...Identity
     }

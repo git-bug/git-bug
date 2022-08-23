@@ -3,8 +3,8 @@ package commands
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/MichaelMure/git-bug/commands/input"
 	_select "github.com/MichaelMure/git-bug/commands/select"
-	"github.com/MichaelMure/git-bug/input"
 	"github.com/MichaelMure/git-bug/util/text"
 )
 

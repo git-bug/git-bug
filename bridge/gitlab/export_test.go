@@ -11,6 +11,7 @@ import (
 
 	"github.com/xanzy/go-gitlab"
 
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
 
 	"github.com/stretchr/testify/require"
@@ -63,13 +64,15 @@ func testCases(t *testing.T, repo *cache.RepoCache) []*testCase {
 	bugWithCommentEditions, createOp, err := repo.NewBug("bug with comments editions", "new bug")
 	require.NoError(t, err)
 
-	_, err = bugWithCommentEditions.EditComment(createOp.Id(), "first comment edited")
+	_, err = bugWithCommentEditions.EditComment(
+		entity.CombineIds(bugWithCommentEditions.Id(), createOp.Id()), "first comment edited")
 	require.NoError(t, err)
 
 	commentOp, err := bugWithCommentEditions.AddComment("first comment")
 	require.NoError(t, err)
 
-	_, err = bugWithCommentEditions.EditComment(commentOp.Id(), "first comment edited")
+	_, err = bugWithCommentEditions.EditComment(
+		entity.CombineIds(bugWithCommentEditions.Id(), commentOp.Id()), "first comment edited")
 	require.NoError(t, err)
 
 	// bug status changed

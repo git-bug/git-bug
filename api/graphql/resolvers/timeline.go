@@ -6,7 +6,8 @@ import (
 
 	"github.com/MichaelMure/git-bug/api/graphql/graph"
 	"github.com/MichaelMure/git-bug/api/graphql/models"
-	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/entities/bug"
+	"github.com/MichaelMure/git-bug/entity"
 )
 
 var _ graph.CommentHistoryStepResolver = commentHistoryStepResolver{}
@@ -22,8 +23,8 @@ var _ graph.AddCommentTimelineItemResolver = addCommentTimelineItemResolver{}
 
 type addCommentTimelineItemResolver struct{}
 
-func (addCommentTimelineItemResolver) ID(_ context.Context, obj *bug.AddCommentTimelineItem) (string, error) {
-	return obj.Id().String(), nil
+func (addCommentTimelineItemResolver) ID(_ context.Context, obj *bug.AddCommentTimelineItem) (entity.CombinedId, error) {
+	return obj.CombinedId(), nil
 }
 
 func (addCommentTimelineItemResolver) Author(_ context.Context, obj *bug.AddCommentTimelineItem) (models.IdentityWrapper, error) {
@@ -44,8 +45,8 @@ var _ graph.CreateTimelineItemResolver = createTimelineItemResolver{}
 
 type createTimelineItemResolver struct{}
 
-func (createTimelineItemResolver) ID(_ context.Context, obj *bug.CreateTimelineItem) (string, error) {
-	return obj.Id().String(), nil
+func (createTimelineItemResolver) ID(_ context.Context, obj *bug.CreateTimelineItem) (entity.CombinedId, error) {
+	return obj.CombinedId(), nil
 }
 
 func (r createTimelineItemResolver) Author(_ context.Context, obj *bug.CreateTimelineItem) (models.IdentityWrapper, error) {
@@ -66,8 +67,8 @@ var _ graph.LabelChangeTimelineItemResolver = labelChangeTimelineItem{}
 
 type labelChangeTimelineItem struct{}
 
-func (labelChangeTimelineItem) ID(_ context.Context, obj *bug.LabelChangeTimelineItem) (string, error) {
-	return obj.Id().String(), nil
+func (labelChangeTimelineItem) ID(_ context.Context, obj *bug.LabelChangeTimelineItem) (entity.CombinedId, error) {
+	return obj.CombinedId(), nil
 }
 
 func (i labelChangeTimelineItem) Author(_ context.Context, obj *bug.LabelChangeTimelineItem) (models.IdentityWrapper, error) {
@@ -83,8 +84,8 @@ var _ graph.SetStatusTimelineItemResolver = setStatusTimelineItem{}
 
 type setStatusTimelineItem struct{}
 
-func (setStatusTimelineItem) ID(_ context.Context, obj *bug.SetStatusTimelineItem) (string, error) {
-	return obj.Id().String(), nil
+func (setStatusTimelineItem) ID(_ context.Context, obj *bug.SetStatusTimelineItem) (entity.CombinedId, error) {
+	return obj.CombinedId(), nil
 }
 
 func (i setStatusTimelineItem) Author(_ context.Context, obj *bug.SetStatusTimelineItem) (models.IdentityWrapper, error) {
@@ -96,16 +97,12 @@ func (setStatusTimelineItem) Date(_ context.Context, obj *bug.SetStatusTimelineI
 	return &t, nil
 }
 
-func (setStatusTimelineItem) Status(_ context.Context, obj *bug.SetStatusTimelineItem) (models.Status, error) {
-	return convertStatus(obj.Status)
-}
-
 var _ graph.SetTitleTimelineItemResolver = setTitleTimelineItem{}
 
 type setTitleTimelineItem struct{}
 
-func (setTitleTimelineItem) ID(_ context.Context, obj *bug.SetTitleTimelineItem) (string, error) {
-	return obj.Id().String(), nil
+func (setTitleTimelineItem) ID(_ context.Context, obj *bug.SetTitleTimelineItem) (entity.CombinedId, error) {
+	return obj.CombinedId(), nil
 }
 
 func (i setTitleTimelineItem) Author(_ context.Context, obj *bug.SetTitleTimelineItem) (models.IdentityWrapper, error) {

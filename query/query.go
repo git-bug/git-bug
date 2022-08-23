@@ -1,6 +1,8 @@
 package query
 
-import "github.com/MichaelMure/git-bug/bug"
+import (
+	"github.com/MichaelMure/git-bug/entities/common"
+)
 
 // Query is the intermediary representation of a Bug's query. It is either
 // produced by parsing a query string (ex: "status:open author:rene") or created
@@ -31,7 +33,7 @@ type StringPair struct {
 
 // Filters is a collection of Filter that implement a complex filter
 type Filters struct {
-	Status      []bug.Status
+	Status      []common.Status
 	Author      []string
 	Metadata    []StringPair
 	Actor       []string

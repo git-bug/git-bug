@@ -5,9 +5,9 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
-	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/timestamp"
 
@@ -33,12 +33,12 @@ func (op *EditCommentOperation) Apply(snapshot *Snapshot) {
 	// Todo: currently any message can be edited, even by a different author
 	// crypto signature are needed.
 
-	// Recreate the Comment Id to match on
-	commentId := entity.CombineIds(snapshot.Id(), op.Target)
+	// Recreate the combined Id to match on
+	combinedId := entity.CombineIds(snapshot.Id(), op.Target)
 
 	var target TimelineItem
 	for i, item := range snapshot.Timeline {
-		if item.Id() == commentId {
+		if item.CombinedId() == combinedId {
 			target = snapshot.Timeline[i]
 			break
 		}
@@ -50,10 +50,11 @@ func (op *EditCommentOperation) Apply(snapshot *Snapshot) {
 	}
 
 	comment := Comment{
-		id:       commentId,
-		Message:  op.Message,
-		Files:    op.Files,
-		UnixTime: timestamp.Timestamp(op.UnixTime),
+		combinedId: combinedId,
+		targetId:   op.Target,
+		Message:    op.Message,
+		Files:      op.Files,
+		unixTime:   timestamp.Timestamp(op.UnixTime),
 	}
 
 	switch target := target.(type) {
@@ -72,7 +73,7 @@ func (op *EditCommentOperation) Apply(snapshot *Snapshot) {
 	// Updating the corresponding comment
 
 	for i := range snapshot.Comments {
-		if snapshot.Comments[i].Id() == commentId {
+		if snapshot.Comments[i].CombinedId() == combinedId {
 			snapshot.Comments[i].Message = op.Message
 			snapshot.Comments[i].Files = op.Files
 			break

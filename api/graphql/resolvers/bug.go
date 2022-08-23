@@ -6,7 +6,7 @@ import (
 	"github.com/MichaelMure/git-bug/api/graphql/connections"
 	"github.com/MichaelMure/git-bug/api/graphql/graph"
 	"github.com/MichaelMure/git-bug/api/graphql/models"
-	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/entities/bug"
 	"github.com/MichaelMure/git-bug/entity/dag"
 )
 
@@ -14,16 +14,8 @@ var _ graph.BugResolver = &bugResolver{}
 
 type bugResolver struct{}
 
-func (bugResolver) ID(_ context.Context, obj models.BugWrapper) (string, error) {
-	return obj.Id().String(), nil
-}
-
 func (bugResolver) HumanID(_ context.Context, obj models.BugWrapper) (string, error) {
 	return obj.Id().Human(), nil
-}
-
-func (bugResolver) Status(_ context.Context, obj models.BugWrapper) (models.Status, error) {
-	return convertStatus(obj.Status())
 }
 
 func (bugResolver) Comments(_ context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*models.CommentConnection, error) {

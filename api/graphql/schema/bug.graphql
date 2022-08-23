@@ -1,5 +1,7 @@
 """Represents a comment on a bug."""
 type Comment implements Authored {
+  id: CombinedId!
+
   """The author of this comment."""
   author: Identity!
 
@@ -29,7 +31,7 @@ enum Status {
 
 type Bug implements Authored {
   """The identifier for this bug"""
-  id: String!
+  id: ID!
   """The human version (truncated) identifier for this bug"""
   humanId: String!
   status: Status!

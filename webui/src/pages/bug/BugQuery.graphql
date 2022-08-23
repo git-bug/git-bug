@@ -2,6 +2,7 @@
 
 query GetBug($id: String!) {
   repository {
+    name
     bug(prefix: $id) {
       ...Bug
     }

@@ -10,8 +10,9 @@ import (
 	text "github.com/MichaelMure/go-term-text"
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/entities/bug"
+	"github.com/MichaelMure/git-bug/entities/common"
 	"github.com/MichaelMure/git-bug/query"
 	"github.com/MichaelMure/git-bug/util/colors"
 )
@@ -379,7 +380,7 @@ func lsOrgmodeFormatter(env *Env, bugExcerpts []*cache.BugExcerpt) error {
 // Finish the command flags transformation into the query.Query
 func completeQuery(q *query.Query, opts lsOptions) error {
 	for _, str := range opts.statusQuery {
-		status, err := bug.StatusFromString(str)
+		status, err := common.StatusFromString(str)
 		if err != nil {
 			return err
 		}

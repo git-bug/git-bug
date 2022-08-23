@@ -5,8 +5,8 @@ import (
 	"encoding/gob"
 	"fmt"
 
+	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/identity"
 )
 
 const identityCacheFile = "identity-cache"

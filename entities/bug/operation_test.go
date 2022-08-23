@@ -6,8 +6,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/MichaelMure/git-bug/entities/common"
+	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity/dag"
-	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
@@ -30,7 +31,7 @@ func TestValidate(t *testing.T) {
 		NewCreateOp(rene, unix, "title", "message", nil),
 		NewSetTitleOp(rene, unix, "title2", "title1"),
 		NewAddCommentOp(rene, unix, "message2", nil),
-		NewSetStatusOp(rene, unix, ClosedStatus),
+		NewSetStatusOp(rene, unix, common.ClosedStatus),
 		NewLabelChangeOperation(rene, unix, []Label{"added"}, []Label{"removed"}),
 	}
 
@@ -42,11 +43,11 @@ func TestValidate(t *testing.T) {
 
 	bad := []Operation{
 		// opbase
-		NewSetStatusOp(makeIdentity(t, "", "rene@descartes.fr"), unix, ClosedStatus),
-		NewSetStatusOp(makeIdentity(t, "René Descartes\u001b", "rene@descartes.fr"), unix, ClosedStatus),
-		NewSetStatusOp(makeIdentity(t, "René Descartes", "rene@descartes.fr\u001b"), unix, ClosedStatus),
-		NewSetStatusOp(makeIdentity(t, "René \nDescartes", "rene@descartes.fr"), unix, ClosedStatus),
-		NewSetStatusOp(makeIdentity(t, "René Descartes", "rene@\ndescartes.fr"), unix, ClosedStatus),
+		NewSetStatusOp(makeIdentity(t, "", "rene@descartes.fr"), unix, common.ClosedStatus),
+		NewSetStatusOp(makeIdentity(t, "René Descartes\u001b", "rene@descartes.fr"), unix, common.ClosedStatus),
+		NewSetStatusOp(makeIdentity(t, "René Descartes", "rene@descartes.fr\u001b"), unix, common.ClosedStatus),
+		NewSetStatusOp(makeIdentity(t, "René \nDescartes", "rene@descartes.fr"), unix, common.ClosedStatus),
+		NewSetStatusOp(makeIdentity(t, "René Descartes", "rene@\ndescartes.fr"), unix, common.ClosedStatus),
 		&CreateOperation{OpBase: dag.NewOpBase(CreateOp, rene, 0),
 			Title:   "title",
 			Message: "message",

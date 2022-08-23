@@ -101,7 +101,3 @@ func (RootResolver) SetStatusOperation() graph.SetStatusOperationResolver {
 func (RootResolver) SetTitleOperation() graph.SetTitleOperationResolver {
 	return &setTitleOperationResolver{}
 }
-
-func (r RootResolver) LabelChangeResult() graph.LabelChangeResultResolver {
-	return &labelChangeResultResolver{}
-}

@@ -11,8 +11,9 @@ import (
 
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
-	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/entities/bug"
+	"github.com/MichaelMure/git-bug/entities/common"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
 	"github.com/MichaelMure/git-bug/util/text"
@@ -269,8 +270,7 @@ func (ji *jiraImporter) ensureComment(repo *cache.RepoCache, b *cache.BugCache, 
 		return err
 	}
 
-	targetOpID, err := b.ResolveOperationWithMetadata(
-		metaKeyJiraId, item.ID)
+	targetOpID, err := b.ResolveOperationWithMetadata(metaKeyJiraId, item.ID)
 	if err != nil && err != cache.ErrNoMatchingOp {
 		return err
 	}
@@ -333,7 +333,7 @@ func (ji *jiraImporter) ensureComment(repo *cache.RepoCache, b *cache.BugCache, 
 	op, err := b.EditCommentRaw(
 		editor,
 		item.Updated.Unix(),
-		targetOpID,
+		entity.CombineIds(b.Id(), targetOpID),
 		text.Cleanup(item.Body),
 		map[string]string{
 			metaKeyJiraId: derivedID,
@@ -516,7 +516,7 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 			statusStr, hasMap := statusMap[item.To]
 			if hasMap {
 				switch statusStr {
-				case bug.OpenStatus.String():
+				case common.OpenStatus.String():
 					op, err := b.OpenRaw(
 						author,
 						entry.Created.Unix(),
@@ -530,7 +530,7 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 					}
 					ji.out <- core.NewImportStatusChange(op.Id())
 
-				case bug.ClosedStatus.String():
+				case common.ClosedStatus.String():
 					op, err := b.CloseRaw(
 						author,
 						entry.Created.Unix(),
@@ -608,8 +608,8 @@ func getStatusMap(conf core.Configuration) (map[string]string, error) {
 	mapStr, hasConf := conf[confKeyIDMap]
 	if !hasConf {
 		return map[string]string{
-			bug.OpenStatus.String():   "1",
-			bug.ClosedStatus.String(): "6",
+			common.OpenStatus.String():   "1",
+			common.ClosedStatus.String(): "6",
 		}, nil
 	}
 
