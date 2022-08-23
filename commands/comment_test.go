@@ -155,6 +155,6 @@ func requireCommentsEqual(t *testing.T, golden string, env *testEnv) {
 		fileName := fmt.Sprintf(goldenFilePatter, golden, i)
 		exp, err := ioutil.ReadFile(fileName)
 		require.NoError(t, err)
-		require.Equal(t, string(exp), comment.message)
+		require.Equal(t, string(exp), strings.ReplaceAll(comment.message, "\r", ""))
 	}
 }
