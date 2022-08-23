@@ -1,5 +1,6 @@
 query ListIdentities {
   repository {
+    name
     allIdentities {
       nodes {
         id

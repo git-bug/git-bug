@@ -290,7 +290,7 @@ func (c *RepoCache) ResolveComment(prefix string) (*BugCache, entity.CombinedId,
 		}
 
 		for _, comment := range b.Snapshot().Comments {
-			if comment.TargetId().HasPrefix(prefix) {
+			if comment.CombinedId().HasPrefix(prefix) {
 				matchingBugIds = append(matchingBugIds, bugId)
 				matchingBug = b
 				matchingCommentId = comment.CombinedId()

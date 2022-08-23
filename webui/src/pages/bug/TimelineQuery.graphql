@@ -6,6 +6,7 @@
 
 query Timeline($id: String!, $first: Int = 10, $after: String) {
   repository {
+    name
     bug(prefix: $id) {
       timeline(first: $first, after: $after) {
         nodes {
