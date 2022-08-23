@@ -8,6 +8,7 @@ query ListBugs(
   $query: String
 ) {
   repository {
+    name
     bugs: allBugs(
       first: $first
       last: $last

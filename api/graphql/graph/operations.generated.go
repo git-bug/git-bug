@@ -15,6 +15,7 @@ import (
 	"github.com/MichaelMure/git-bug/api/graphql/models"
 	"github.com/MichaelMure/git-bug/entities/bug"
 	"github.com/MichaelMure/git-bug/entities/common"
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -23,33 +24,27 @@ import (
 // region    ************************** generated!.gotpl **************************
 
 type AddCommentOperationResolver interface {
-	ID(ctx context.Context, obj *bug.AddCommentOperation) (string, error)
 	Author(ctx context.Context, obj *bug.AddCommentOperation) (models.IdentityWrapper, error)
 	Date(ctx context.Context, obj *bug.AddCommentOperation) (*time.Time, error)
 }
 type CreateOperationResolver interface {
-	ID(ctx context.Context, obj *bug.CreateOperation) (string, error)
 	Author(ctx context.Context, obj *bug.CreateOperation) (models.IdentityWrapper, error)
 	Date(ctx context.Context, obj *bug.CreateOperation) (*time.Time, error)
 }
 type EditCommentOperationResolver interface {
-	ID(ctx context.Context, obj *bug.EditCommentOperation) (string, error)
 	Author(ctx context.Context, obj *bug.EditCommentOperation) (models.IdentityWrapper, error)
 	Date(ctx context.Context, obj *bug.EditCommentOperation) (*time.Time, error)
 	Target(ctx context.Context, obj *bug.EditCommentOperation) (string, error)
 }
 type LabelChangeOperationResolver interface {
-	ID(ctx context.Context, obj *bug.LabelChangeOperation) (string, error)
 	Author(ctx context.Context, obj *bug.LabelChangeOperation) (models.IdentityWrapper, error)
 	Date(ctx context.Context, obj *bug.LabelChangeOperation) (*time.Time, error)
 }
 type SetStatusOperationResolver interface {
-	ID(ctx context.Context, obj *bug.SetStatusOperation) (string, error)
 	Author(ctx context.Context, obj *bug.SetStatusOperation) (models.IdentityWrapper, error)
 	Date(ctx context.Context, obj *bug.SetStatusOperation) (*time.Time, error)
 }
 type SetTitleOperationResolver interface {
-	ID(ctx context.Context, obj *bug.SetTitleOperation) (string, error)
 	Author(ctx context.Context, obj *bug.SetTitleOperation) (models.IdentityWrapper, error)
 	Date(ctx context.Context, obj *bug.SetTitleOperation) (*time.Time, error)
 }
@@ -80,7 +75,7 @@ func (ec *executionContext) _AddCommentOperation_id(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.AddCommentOperation().ID(rctx, obj)
+		return obj.Id(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -92,9 +87,9 @@ func (ec *executionContext) _AddCommentOperation_id(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(entity.Id)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentityᚐId(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AddCommentOperation_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -102,9 +97,9 @@ func (ec *executionContext) fieldContext_AddCommentOperation_id(ctx context.Cont
 		Object:     "AddCommentOperation",
 		Field:      field,
 		IsMethod:   true,
-		IsResolver: true,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -318,7 +313,7 @@ func (ec *executionContext) _CreateOperation_id(ctx context.Context, field graph
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.CreateOperation().ID(rctx, obj)
+		return obj.Id(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -330,9 +325,9 @@ func (ec *executionContext) _CreateOperation_id(ctx context.Context, field graph
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(entity.Id)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentityᚐId(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreateOperation_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -340,9 +335,9 @@ func (ec *executionContext) fieldContext_CreateOperation_id(ctx context.Context,
 		Object:     "CreateOperation",
 		Field:      field,
 		IsMethod:   true,
-		IsResolver: true,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -600,7 +595,7 @@ func (ec *executionContext) _EditCommentOperation_id(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.EditCommentOperation().ID(rctx, obj)
+		return obj.Id(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -612,9 +607,9 @@ func (ec *executionContext) _EditCommentOperation_id(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(entity.Id)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentityᚐId(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_EditCommentOperation_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -622,9 +617,9 @@ func (ec *executionContext) fieldContext_EditCommentOperation_id(ctx context.Con
 		Object:     "EditCommentOperation",
 		Field:      field,
 		IsMethod:   true,
-		IsResolver: true,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -882,7 +877,7 @@ func (ec *executionContext) _LabelChangeOperation_id(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.LabelChangeOperation().ID(rctx, obj)
+		return obj.Id(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -894,9 +889,9 @@ func (ec *executionContext) _LabelChangeOperation_id(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(entity.Id)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentityᚐId(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_LabelChangeOperation_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -904,9 +899,9 @@ func (ec *executionContext) fieldContext_LabelChangeOperation_id(ctx context.Con
 		Object:     "LabelChangeOperation",
 		Field:      field,
 		IsMethod:   true,
-		IsResolver: true,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -1412,7 +1407,7 @@ func (ec *executionContext) _SetStatusOperation_id(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.SetStatusOperation().ID(rctx, obj)
+		return obj.Id(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1424,9 +1419,9 @@ func (ec *executionContext) _SetStatusOperation_id(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(entity.Id)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentityᚐId(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SetStatusOperation_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1434,9 +1429,9 @@ func (ec *executionContext) fieldContext_SetStatusOperation_id(ctx context.Conte
 		Object:     "SetStatusOperation",
 		Field:      field,
 		IsMethod:   true,
-		IsResolver: true,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -1606,7 +1601,7 @@ func (ec *executionContext) _SetTitleOperation_id(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.SetTitleOperation().ID(rctx, obj)
+		return obj.Id(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1618,9 +1613,9 @@ func (ec *executionContext) _SetTitleOperation_id(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(entity.Id)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentityᚐId(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SetTitleOperation_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1628,9 +1623,9 @@ func (ec *executionContext) fieldContext_SetTitleOperation_id(ctx context.Contex
 		Object:     "SetTitleOperation",
 		Field:      field,
 		IsMethod:   true,
-		IsResolver: true,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -1892,25 +1887,12 @@ func (ec *executionContext) _AddCommentOperation(ctx context.Context, sel ast.Se
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("AddCommentOperation")
 		case "id":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._AddCommentOperation_id(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._AddCommentOperation_id(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "author":
 			field := field
 
@@ -1987,25 +1969,12 @@ func (ec *executionContext) _CreateOperation(ctx context.Context, sel ast.Select
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("CreateOperation")
 		case "id":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._CreateOperation_id(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._CreateOperation_id(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "author":
 			field := field
 
@@ -2089,25 +2058,12 @@ func (ec *executionContext) _EditCommentOperation(ctx context.Context, sel ast.S
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("EditCommentOperation")
 		case "id":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._EditCommentOperation_id(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._EditCommentOperation_id(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "author":
 			field := field
 
@@ -2204,25 +2160,12 @@ func (ec *executionContext) _LabelChangeOperation(ctx context.Context, sel ast.S
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("LabelChangeOperation")
 		case "id":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._LabelChangeOperation_id(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._LabelChangeOperation_id(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "author":
 			field := field
 
@@ -2383,25 +2326,12 @@ func (ec *executionContext) _SetStatusOperation(ctx context.Context, sel ast.Sel
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("SetStatusOperation")
 		case "id":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._SetStatusOperation_id(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._SetStatusOperation_id(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "author":
 			field := field
 
@@ -2471,25 +2401,12 @@ func (ec *executionContext) _SetTitleOperation(ctx context.Context, sel ast.Sele
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("SetTitleOperation")
 		case "id":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._SetTitleOperation_id(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._SetTitleOperation_id(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "author":
 			field := field
 

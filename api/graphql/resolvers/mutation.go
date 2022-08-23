@@ -9,7 +9,6 @@ import (
 	"github.com/MichaelMure/git-bug/api/graphql/models"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entities/bug"
-	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
@@ -177,7 +176,12 @@ func (r mutationResolver) AddCommentAndReopen(ctx context.Context, input models.
 }
 
 func (r mutationResolver) EditComment(ctx context.Context, input models.EditCommentInput) (*models.EditCommentPayload, error) {
-	repo, b, err := r.getBug(input.RepoRef, input.Prefix)
+	repo, err := r.getRepo(input.RepoRef)
+	if err != nil {
+		return nil, err
+	}
+
+	b, target, err := repo.ResolveComment(input.TargetPrefix)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +194,7 @@ func (r mutationResolver) EditComment(ctx context.Context, input models.EditComm
 	op, err := b.EditCommentRaw(
 		author,
 		time.Now().Unix(),
-		entity.Id(input.Target),
+		target,
 		text.Cleanup(input.Message),
 		nil,
 	)

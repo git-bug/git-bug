@@ -3,6 +3,7 @@
 
 query MessageHistory($bugIdPrefix: String!) {
   repository {
+    name
     bug(prefix: $bugIdPrefix) {
       timeline {
         comments: nodes {

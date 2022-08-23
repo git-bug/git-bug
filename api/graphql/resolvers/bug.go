@@ -14,10 +14,6 @@ var _ graph.BugResolver = &bugResolver{}
 
 type bugResolver struct{}
 
-func (bugResolver) ID(_ context.Context, obj models.BugWrapper) (string, error) {
-	return obj.Id().String(), nil
-}
-
 func (bugResolver) HumanID(_ context.Context, obj models.BugWrapper) (string, error) {
 	return obj.Id().Human(), nil
 }

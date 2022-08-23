@@ -74,7 +74,7 @@ type ComplexityRoot struct {
 		Author  func(childComplexity int) int
 		Date    func(childComplexity int) int
 		Files   func(childComplexity int) int
-		ID      func(childComplexity int) int
+		Id      func(childComplexity int) int
 		Message func(childComplexity int) int
 	}
 
@@ -102,7 +102,7 @@ type ComplexityRoot struct {
 		Comments     func(childComplexity int, after *string, before *string, first *int, last *int) int
 		CreatedAt    func(childComplexity int) int
 		HumanID      func(childComplexity int) int
-		ID           func(childComplexity int) int
+		Id           func(childComplexity int) int
 		Labels       func(childComplexity int) int
 		LastEdit     func(childComplexity int) int
 		Operations   func(childComplexity int, after *string, before *string, first *int, last *int) int
@@ -146,6 +146,7 @@ type ComplexityRoot struct {
 	Comment struct {
 		Author  func(childComplexity int) int
 		Files   func(childComplexity int) int
+		ID      func(childComplexity int) int
 		Message func(childComplexity int) int
 	}
 
@@ -170,7 +171,7 @@ type ComplexityRoot struct {
 		Author  func(childComplexity int) int
 		Date    func(childComplexity int) int
 		Files   func(childComplexity int) int
-		ID      func(childComplexity int) int
+		Id      func(childComplexity int) int
 		Message func(childComplexity int) int
 		Title   func(childComplexity int) int
 	}
@@ -191,7 +192,7 @@ type ComplexityRoot struct {
 		Author  func(childComplexity int) int
 		Date    func(childComplexity int) int
 		Files   func(childComplexity int) int
-		ID      func(childComplexity int) int
+		Id      func(childComplexity int) int
 		Message func(childComplexity int) int
 		Target  func(childComplexity int) int
 	}
@@ -207,7 +208,7 @@ type ComplexityRoot struct {
 		DisplayName func(childComplexity int) int
 		Email       func(childComplexity int) int
 		HumanID     func(childComplexity int) int
-		ID          func(childComplexity int) int
+		Id          func(childComplexity int) int
 		IsProtected func(childComplexity int) int
 		Login       func(childComplexity int) int
 		Name        func(childComplexity int) int
@@ -234,7 +235,7 @@ type ComplexityRoot struct {
 		Added   func(childComplexity int) int
 		Author  func(childComplexity int) int
 		Date    func(childComplexity int) int
-		ID      func(childComplexity int) int
+		Id      func(childComplexity int) int
 		Removed func(childComplexity int) int
 	}
 
@@ -323,7 +324,7 @@ type ComplexityRoot struct {
 	SetStatusOperation struct {
 		Author func(childComplexity int) int
 		Date   func(childComplexity int) int
-		ID     func(childComplexity int) int
+		Id     func(childComplexity int) int
 		Status func(childComplexity int) int
 	}
 
@@ -337,7 +338,7 @@ type ComplexityRoot struct {
 	SetTitleOperation struct {
 		Author func(childComplexity int) int
 		Date   func(childComplexity int) int
-		ID     func(childComplexity int) int
+		Id     func(childComplexity int) int
 		Title  func(childComplexity int) int
 		Was    func(childComplexity int) int
 	}
@@ -462,11 +463,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.AddCommentOperation.Files(childComplexity), true
 
 	case "AddCommentOperation.id":
-		if e.complexity.AddCommentOperation.ID == nil {
+		if e.complexity.AddCommentOperation.Id == nil {
 			break
 		}
 
-		return e.complexity.AddCommentOperation.ID(childComplexity), true
+		return e.complexity.AddCommentOperation.Id(childComplexity), true
 
 	case "AddCommentOperation.message":
 		if e.complexity.AddCommentOperation.Message == nil {
@@ -605,11 +606,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.Bug.HumanID(childComplexity), true
 
 	case "Bug.id":
-		if e.complexity.Bug.ID == nil {
+		if e.complexity.Bug.Id == nil {
 			break
 		}
 
-		return e.complexity.Bug.ID(childComplexity), true
+		return e.complexity.Bug.Id(childComplexity), true
 
 	case "Bug.labels":
 		if e.complexity.Bug.Labels == nil {
@@ -801,6 +802,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Comment.Files(childComplexity), true
 
+	case "Comment.id":
+		if e.complexity.Comment.ID == nil {
+			break
+		}
+
+		return e.complexity.Comment.ID(childComplexity), true
+
 	case "Comment.message":
 		if e.complexity.Comment.Message == nil {
 			break
@@ -886,11 +894,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.CreateOperation.Files(childComplexity), true
 
 	case "CreateOperation.id":
-		if e.complexity.CreateOperation.ID == nil {
+		if e.complexity.CreateOperation.Id == nil {
 			break
 		}
 
-		return e.complexity.CreateOperation.ID(childComplexity), true
+		return e.complexity.CreateOperation.Id(childComplexity), true
 
 	case "CreateOperation.message":
 		if e.complexity.CreateOperation.Message == nil {
@@ -991,11 +999,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.EditCommentOperation.Files(childComplexity), true
 
 	case "EditCommentOperation.id":
-		if e.complexity.EditCommentOperation.ID == nil {
+		if e.complexity.EditCommentOperation.Id == nil {
 			break
 		}
 
-		return e.complexity.EditCommentOperation.ID(childComplexity), true
+		return e.complexity.EditCommentOperation.Id(childComplexity), true
 
 	case "EditCommentOperation.message":
 		if e.complexity.EditCommentOperation.Message == nil {
@@ -1061,11 +1069,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.Identity.HumanID(childComplexity), true
 
 	case "Identity.id":
-		if e.complexity.Identity.ID == nil {
+		if e.complexity.Identity.Id == nil {
 			break
 		}
 
-		return e.complexity.Identity.ID(childComplexity), true
+		return e.complexity.Identity.Id(childComplexity), true
 
 	case "Identity.isProtected":
 		if e.complexity.Identity.IsProtected == nil {
@@ -1166,11 +1174,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.LabelChangeOperation.Date(childComplexity), true
 
 	case "LabelChangeOperation.id":
-		if e.complexity.LabelChangeOperation.ID == nil {
+		if e.complexity.LabelChangeOperation.Id == nil {
 			break
 		}
 
-		return e.complexity.LabelChangeOperation.ID(childComplexity), true
+		return e.complexity.LabelChangeOperation.Id(childComplexity), true
 
 	case "LabelChangeOperation.removed":
 		if e.complexity.LabelChangeOperation.Removed == nil {
@@ -1591,11 +1599,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.SetStatusOperation.Date(childComplexity), true
 
 	case "SetStatusOperation.id":
-		if e.complexity.SetStatusOperation.ID == nil {
+		if e.complexity.SetStatusOperation.Id == nil {
 			break
 		}
 
-		return e.complexity.SetStatusOperation.ID(childComplexity), true
+		return e.complexity.SetStatusOperation.Id(childComplexity), true
 
 	case "SetStatusOperation.status":
 		if e.complexity.SetStatusOperation.Status == nil {
@@ -1647,11 +1655,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.SetTitleOperation.Date(childComplexity), true
 
 	case "SetTitleOperation.id":
-		if e.complexity.SetTitleOperation.ID == nil {
+		if e.complexity.SetTitleOperation.Id == nil {
 			break
 		}
 
-		return e.complexity.SetTitleOperation.ID(childComplexity), true
+		return e.complexity.SetTitleOperation.Id(childComplexity), true
 
 	case "SetTitleOperation.title":
 		if e.complexity.SetTitleOperation.Title == nil {
@@ -1844,6 +1852,8 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 var sources = []*ast.Source{
 	{Name: "../schema/bug.graphql", Input: `"""Represents a comment on a bug."""
 type Comment implements Authored {
+  id: CombinedId!
+
   """The author of this comment."""
   author: Identity!
 
@@ -1873,7 +1883,7 @@ enum Status {
 
 type Bug implements Authored {
   """The identifier for this bug"""
-  id: String!
+  id: ID!
   """The human version (truncated) identifier for this bug"""
   humanId: String!
   status: Status!
@@ -1964,7 +1974,7 @@ type BugEdge {
 	{Name: "../schema/identity.graphql", Input: `"""Represents an identity"""
 type Identity {
     """The identifier for this identity"""
-    id: String!
+    id: ID!
     """The human version (truncated) identifier for this identity"""
     humanId: String!
     """The name of the person, if known."""
@@ -2109,10 +2119,8 @@ input EditCommentInput {
     clientMutationId: String
     """The name of the repository. If not set, the default repository is used."""
     repoRef: String
-    """The bug ID's prefix."""
-    prefix: String!
-    """The ID of the comment to be changed."""
-    target: String!
+    """A prefix of the CombinedId of the comment to be changed."""
+    targetPrefix: String!
     """The new message to be set."""
     message: String!
     """The collection of file's hash required for the first message."""
@@ -2226,7 +2234,7 @@ type SetTitlePayload {
 	{Name: "../schema/operations.graphql", Input: `"""An operation applied to a bug."""
 interface Operation {
     """The identifier of the operation"""
-    id: String!
+    id: ID!
     """The operations author."""
     author: Identity!
     """The datetime when this operation was issued."""
@@ -2253,7 +2261,7 @@ type OperationEdge {
 
 type CreateOperation implements Operation & Authored {
     """The identifier of the operation"""
-    id: String!
+    id: ID!
     """The author of this object."""
     author: Identity!
     """The datetime when this operation was issued."""
@@ -2266,7 +2274,7 @@ type CreateOperation implements Operation & Authored {
 
 type SetTitleOperation implements Operation & Authored {
     """The identifier of the operation"""
-    id: String!
+    id: ID!
     """The author of this object."""
     author: Identity!
     """The datetime when this operation was issued."""
@@ -2278,7 +2286,7 @@ type SetTitleOperation implements Operation & Authored {
 
 type AddCommentOperation implements Operation & Authored {
     """The identifier of the operation"""
-    id: String!
+    id: ID!
     """The author of this object."""
     author: Identity!
     """The datetime when this operation was issued."""
@@ -2290,7 +2298,7 @@ type AddCommentOperation implements Operation & Authored {
 
 type EditCommentOperation implements Operation & Authored {
     """The identifier of the operation"""
-    id: String!
+    id: ID!
     """The author of this object."""
     author: Identity!
     """The datetime when this operation was issued."""
@@ -2303,7 +2311,7 @@ type EditCommentOperation implements Operation & Authored {
 
 type SetStatusOperation implements Operation & Authored {
     """The identifier of the operation"""
-    id: String!
+    id: ID!
     """The author of this object."""
     author: Identity!
     """The datetime when this operation was issued."""
@@ -2314,7 +2322,7 @@ type SetStatusOperation implements Operation & Authored {
 
 type LabelChangeOperation implements Operation & Authored {
     """The identifier of the operation"""
-    id: String!
+    id: ID!
     """The author of this object."""
     author: Identity!
     """The datetime when this operation was issued."""
@@ -2404,7 +2412,7 @@ type Mutation {
 	{Name: "../schema/timeline.graphql", Input: `"""An item in the timeline of events"""
 interface TimelineItem {
     """The identifier of the source operation"""
-    id: String!
+    id: CombinedId!
 }
 
 """CommentHistoryStep hold one version of a message in the history"""
@@ -2434,7 +2442,7 @@ type TimelineItemEdge {
 """CreateTimelineItem is a TimelineItem that represent the creation of a bug and its message edition history"""
 type CreateTimelineItem implements TimelineItem & Authored {
     """The identifier of the source operation"""
-    id: String!
+    id: CombinedId!
     author: Identity!
     message: String!
     messageIsEmpty: Boolean!
@@ -2448,7 +2456,7 @@ type CreateTimelineItem implements TimelineItem & Authored {
 """AddCommentTimelineItem is a TimelineItem that represent a Comment and its edition history"""
 type AddCommentTimelineItem implements TimelineItem & Authored {
     """The identifier of the source operation"""
-    id: String!
+    id: CombinedId!
     author: Identity!
     message: String!
     messageIsEmpty: Boolean!
@@ -2462,7 +2470,7 @@ type AddCommentTimelineItem implements TimelineItem & Authored {
 """LabelChangeTimelineItem is a TimelineItem that represent a change in the labels of a bug"""
 type LabelChangeTimelineItem implements TimelineItem & Authored {
     """The identifier of the source operation"""
-    id: String!
+    id: CombinedId!
     author: Identity!
     date: Time!
     added: [Label!]!
@@ -2472,7 +2480,7 @@ type LabelChangeTimelineItem implements TimelineItem & Authored {
 """SetStatusTimelineItem is a TimelineItem that represent a change in the status of a bug"""
 type SetStatusTimelineItem implements TimelineItem & Authored {
     """The identifier of the source operation"""
-    id: String!
+    id: CombinedId!
     author: Identity!
     date: Time!
     status: Status!
@@ -2481,14 +2489,15 @@ type SetStatusTimelineItem implements TimelineItem & Authored {
 """LabelChangeTimelineItem is a TimelineItem that represent a change in the title of a bug"""
 type SetTitleTimelineItem implements TimelineItem & Authored {
     """The identifier of the source operation"""
-    id: String!
+    id: CombinedId!
     author: Identity!
     date: Time!
     title: String!
     was: String!
 }
 `, BuiltIn: false},
-	{Name: "../schema/types.graphql", Input: `scalar Time
+	{Name: "../schema/types.graphql", Input: `scalar CombinedId
+scalar Time
 scalar Hash
 
 """Defines a color by red, green and blue components."""

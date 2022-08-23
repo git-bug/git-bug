@@ -30,12 +30,15 @@ func (op *AddCommentOperation) Apply(snapshot *Snapshot) {
 	snapshot.addActor(op.Author())
 	snapshot.addParticipant(op.Author())
 
+	opId := op.Id()
+
 	comment := Comment{
-		id:       entity.CombineIds(snapshot.Id(), op.Id()),
-		Message:  op.Message,
-		Author:   op.Author(),
-		Files:    op.Files,
-		UnixTime: timestamp.Timestamp(op.UnixTime),
+		combinedId: entity.CombineIds(snapshot.Id(), opId),
+		targetId:   opId,
+		Message:    op.Message,
+		Author:     op.Author(),
+		Files:      op.Files,
+		unixTime:   timestamp.Timestamp(op.UnixTime),
 	}
 
 	snapshot.Comments = append(snapshot.Comments, comment)
@@ -71,7 +74,7 @@ func NewAddCommentOp(author identity.Interface, unixTime int64, message string, 
 	}
 }
 
-// AddCommentTimelineItem hold a comment in the timeline
+// AddCommentTimelineItem replace a AddComment operation in the Timeline and hold its edition history
 type AddCommentTimelineItem struct {
 	CommentTimelineItem
 }

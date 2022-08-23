@@ -14,6 +14,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/MichaelMure/git-bug/api/graphql/models"
 	"github.com/MichaelMure/git-bug/entities/bug"
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -410,22 +411,16 @@ func (ec *executionContext) _Authored(ctx context.Context, sel ast.SelectionSet,
 			return graphql.Null
 		}
 		return ec._AddCommentTimelineItem(ctx, sel, obj)
-	case bug.LabelChangeTimelineItem:
-		return ec._LabelChangeTimelineItem(ctx, sel, &obj)
 	case *bug.LabelChangeTimelineItem:
 		if obj == nil {
 			return graphql.Null
 		}
 		return ec._LabelChangeTimelineItem(ctx, sel, obj)
-	case bug.SetStatusTimelineItem:
-		return ec._SetStatusTimelineItem(ctx, sel, &obj)
 	case *bug.SetStatusTimelineItem:
 		if obj == nil {
 			return graphql.Null
 		}
 		return ec._SetStatusTimelineItem(ctx, sel, obj)
-	case bug.SetTitleTimelineItem:
-		return ec._SetTitleTimelineItem(ctx, sel, &obj)
 	case *bug.SetTitleTimelineItem:
 		if obj == nil {
 			return graphql.Null
@@ -586,6 +581,16 @@ func (ec *executionContext) marshalNColor2ᚖimageᚋcolorᚐRGBA(ctx context.Co
 		return graphql.Null
 	}
 	return ec._Color(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNCombinedId2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentityᚐCombinedId(ctx context.Context, v interface{}) (entity.CombinedId, error) {
+	var res entity.CombinedId
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCombinedId2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentityᚐCombinedId(ctx context.Context, sel ast.SelectionSet, v entity.CombinedId) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) unmarshalNHash2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋrepositoryᚐHash(ctx context.Context, v interface{}) (repository.Hash, error) {

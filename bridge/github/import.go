@@ -405,6 +405,7 @@ func (gi *githubImporter) ensureCommentEdit(ctx context.Context, repo *cache.Rep
 	if err != nil {
 		return err
 	}
+	// check if the comment edition already exist
 	_, err = b.ResolveOperationWithMetadata(metaKeyGithubId, parseId(edit.Id))
 	if err == nil {
 		return nil
@@ -428,7 +429,7 @@ func (gi *githubImporter) ensureCommentEdit(ctx context.Context, repo *cache.Rep
 	op, err := b.EditCommentRaw(
 		editor,
 		edit.CreatedAt.Unix(),
-		target,
+		entity.CombineIds(b.Id(), target),
 		text.Cleanup(string(*edit.Diff)),
 		map[string]string{
 			metaKeyGithubId: parseId(edit.Id),

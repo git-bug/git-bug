@@ -89,8 +89,10 @@ require (
 	github.com/steveyen/gtreap v0.1.0 // indirect
 	github.com/stretchr/objx v0.4.0 // indirect
 	github.com/tinylib/msgp v1.1.0 // indirect
+	github.com/urfave/cli/v2 v2.8.1 // indirect
 	github.com/willf/bitset v1.1.10 // indirect
 	github.com/xanzy/ssh-agent v0.3.0 // indirect
+	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	go.etcd.io/bbolt v1.3.5 // indirect
 	golang.org/x/net v0.0.0-20220805013720-a33c5aa5df48 // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
