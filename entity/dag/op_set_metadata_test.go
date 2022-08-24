@@ -1,10 +1,12 @@
 package dag
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
 	"github.com/MichaelMure/git-bug/entities/identity"
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 
 	"github.com/stretchr/testify/require"
@@ -97,10 +99,14 @@ func TestSetMetadata(t *testing.T) {
 }
 
 func TestSetMetadataSerialize(t *testing.T) {
-	SerializeRoundTripTest(t, func(author identity.Interface, unixTime int64) *SetMetadataOperation[*snapshotMock] {
+	SerializeRoundTripTest(t, func(raw json.RawMessage, resolver entity.Resolvers) (Operation, error) {
+		var op SetMetadataOperation[*snapshotMock]
+		err := json.Unmarshal(raw, &op)
+		return &op, err
+	}, func(author identity.Interface, unixTime int64) (*SetMetadataOperation[*snapshotMock], entity.Resolvers) {
 		return NewSetMetadataOp[*snapshotMock](1, author, unixTime, "message", map[string]string{
 			"key1": "value1",
 			"key2": "value2",
-		})
+		}), nil
 	})
 }

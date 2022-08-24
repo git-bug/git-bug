@@ -72,3 +72,15 @@ type ResolverFunc func(id Id) (Interface, error)
 func (fn ResolverFunc) Resolve(id Id) (Interface, error) {
 	return fn(id)
 }
+
+// MakeResolver create a resolver able to return the given entities.
+func MakeResolver(entities ...Interface) Resolver {
+	return ResolverFunc(func(id Id) (Interface, error) {
+		for _, entity := range entities {
+			if entity.Id() == id {
+				return entity, nil
+			}
+		}
+		return nil, fmt.Errorf("entity not found")
+	})
+}
