@@ -141,16 +141,7 @@ func makeTestContextInternal(repo repository.ClockedRepo) (identity.Interface, i
 	}
 
 	resolvers := entity.Resolvers{
-		&identity.Identity{}: entity.ResolverFunc(func(id entity.Id) (entity.Interface, error) {
-			switch id {
-			case id1.Id():
-				return id1, nil
-			case id2.Id():
-				return id2, nil
-			default:
-				return nil, identity.ErrIdentityNotExist
-			}
-		}),
+		&identity.Identity{}: entity.MakeResolver(id1, id2),
 	}
 
 	def := Definition{

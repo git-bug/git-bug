@@ -32,7 +32,7 @@ type Operation interface {
 var _ Operation = &dag.NoOpOperation[*Snapshot]{}
 var _ Operation = &dag.SetMetadataOperation[*Snapshot]{}
 
-func operationUnmarshaller(raw json.RawMessage, resolvers entity.Resolvers) (dag.Operation, error) {
+func operationUnmarshaler(raw json.RawMessage, resolvers entity.Resolvers) (dag.Operation, error) {
 	var t struct {
 		OperationType dag.OperationType `json:"type"`
 	}

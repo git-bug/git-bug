@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/MichaelMure/git-bug/entities/identity"
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
 	"github.com/MichaelMure/git-bug/repository"
 )
@@ -75,10 +76,10 @@ func TestEdit(t *testing.T) {
 }
 
 func TestEditCommentSerialize(t *testing.T) {
-	dag.SerializeRoundTripTest(t, func(author identity.Interface, unixTime int64) *EditCommentOperation {
-		return NewEditCommentOp(author, unixTime, "target", "message", nil)
+	dag.SerializeRoundTripTest(t, operationUnmarshaler, func(author identity.Interface, unixTime int64) (*EditCommentOperation, entity.Resolvers) {
+		return NewEditCommentOp(author, unixTime, "target", "message", nil), nil
 	})
-	dag.SerializeRoundTripTest(t, func(author identity.Interface, unixTime int64) *EditCommentOperation {
-		return NewEditCommentOp(author, unixTime, "target", "message", []repository.Hash{"hash1", "hash2"})
+	dag.SerializeRoundTripTest(t, operationUnmarshaler, func(author identity.Interface, unixTime int64) (*EditCommentOperation, entity.Resolvers) {
+		return NewEditCommentOp(author, unixTime, "target", "message", []repository.Hash{"hash1", "hash2"}), nil
 	})
 }

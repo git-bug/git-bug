@@ -19,6 +19,8 @@ const refsPattern = "refs/%s/%s"
 const creationClockPattern = "%s-create"
 const editClockPattern = "%s-edit"
 
+type OperationUnmarshaler func(raw json.RawMessage, resolver entity.Resolvers) (Operation, error)
+
 // Definition hold the details defining one specialization of an Entity.
 type Definition struct {
 	// the name of the entity (bug, pull-request, ...), for human consumption
@@ -26,7 +28,7 @@ type Definition struct {
 	// the Namespace in git references (bugs, prs, ...)
 	Namespace string
 	// a function decoding a JSON message into an Operation
-	OperationUnmarshaler func(raw json.RawMessage, resolver entity.Resolvers) (Operation, error)
+	OperationUnmarshaler OperationUnmarshaler
 	// the expected format version number, that can be used for data migration/upgrade
 	FormatVersion uint
 }

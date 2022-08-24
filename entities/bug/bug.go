@@ -23,7 +23,7 @@ const formatVersion = 4
 var def = dag.Definition{
 	Typename:             "bug",
 	Namespace:            "bugs",
-	OperationUnmarshaler: operationUnmarshaller,
+	OperationUnmarshaler: operationUnmarshaler,
 	FormatVersion:        formatVersion,
 }
 

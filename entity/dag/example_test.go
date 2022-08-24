@@ -208,13 +208,13 @@ func NewProjectConfig() *ProjectConfig {
 var def = dag.Definition{
 	Typename:             "project config",
 	Namespace:            "conf",
-	OperationUnmarshaler: operationUnmarshaller,
+	OperationUnmarshaler: operationUnmarshaler,
 	FormatVersion:        1,
 }
 
-// operationUnmarshaller is a function doing the de-serialization of the JSON data into our own
+// operationUnmarshaler is a function doing the de-serialization of the JSON data into our own
 // concrete Operations. If needed, we can use the resolver to connect to other entities.
-func operationUnmarshaller(raw json.RawMessage, resolvers entity.Resolvers) (dag.Operation, error) {
+func operationUnmarshaler(raw json.RawMessage, resolvers entity.Resolvers) (dag.Operation, error) {
 	var t struct {
 		OperationType dag.OperationType `json:"type"`
 	}
