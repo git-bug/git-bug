@@ -1,8 +1,6 @@
 package bug
 
 import (
-	"github.com/pkg/errors"
-
 	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
@@ -25,21 +23,7 @@ func Push(repo repository.Repo, remote string) (string, error) {
 // Note: an author is necessary for the case where a merge commit is created, as this commit will
 // have an author and may be signed if a signing key is available.
 func Pull(repo repository.ClockedRepo, resolvers entity.Resolvers, remote string, mergeAuthor identity.Interface) error {
-	_, err := Fetch(repo, remote)
-	if err != nil {
-		return err
-	}
-
-	for merge := range MergeAll(repo, resolvers, remote, mergeAuthor) {
-		if merge.Err != nil {
-			return merge.Err
-		}
-		if merge.Status == entity.MergeStatusInvalid {
-			return errors.Errorf("merge failure: %s", merge.Reason)
-		}
-	}
-
-	return nil
+	return dag.Pull(def, repo, resolvers, remote, mergeAuthor)
 }
 
 // MergeAll will merge all the available remote bug
@@ -68,7 +52,7 @@ func MergeAll(repo repository.ClockedRepo, resolvers entity.Resolvers, remote st
 	return out
 }
 
-// RemoveBug will remove a local bug from its entity.Id
-func RemoveBug(repo repository.ClockedRepo, id entity.Id) error {
+// Remove will remove a local bug from its entity.Id
+func Remove(repo repository.ClockedRepo, id entity.Id) error {
 	return dag.Remove(def, repo, id)
 }

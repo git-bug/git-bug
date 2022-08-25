@@ -1,4 +1,4 @@
-package bug
+package dag
 
 import (
 	"github.com/MichaelMure/git-bug/entity"
@@ -6,35 +6,34 @@ import (
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
-type Interface interface {
-	// Id returns the Bug identifier
-	Id() entity.Id
+// Interface define the extended interface of a dag.Entity
+type Interface[SnapT Snapshot, OpT Operation] interface {
+	entity.Interface
 
-	// Validate checks if the Bug data is valid
+	// Validate checks if the Entity data is valid
 	Validate() error
 
 	// Append an operation into the staging area, to be committed later
-	Append(op Operation)
+	Append(op OpT)
 
 	// Operations returns the ordered operations
-	Operations() []Operation
+	Operations() []OpT
 
-	// NeedCommit indicates that the in-memory state changed and need to be commit in the repository
+	// NeedCommit indicates that the in-memory state changed and need to be committed in the repository
 	NeedCommit() bool
 
 	// Commit writes the staging area in Git and move the operations to the packs
 	Commit(repo repository.ClockedRepo) error
 
-	// FirstOp lookup for the very first operation of the bug.
-	// For a valid Bug, this operation should be a CreateOp
-	FirstOp() Operation
+	// FirstOp lookup for the very first operation of the Entity.
+	FirstOp() OpT
 
-	// LastOp lookup for the very last operation of the bug.
-	// For a valid Bug, should never be nil
-	LastOp() Operation
+	// LastOp lookup for the very last operation of the Entity.
+	// For a valid Entity, should never be nil
+	LastOp() OpT
 
 	// Compile a bug in an easily usable snapshot
-	Compile() *Snapshot
+	Compile() SnapT
 
 	// CreateLamportTime return the Lamport time of creation
 	CreateLamportTime() lamport.Time

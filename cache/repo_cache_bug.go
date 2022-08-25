@@ -501,7 +501,7 @@ func (c *RepoCache) RemoveBug(prefix string) error {
 	}
 
 	c.muBug.Lock()
-	err = bug.RemoveBug(c.repo, b.Id())
+	err = bug.Remove(c.repo, b.Id())
 
 	delete(c.bugs, b.Id())
 	delete(c.bugExcerpts, b.Id())

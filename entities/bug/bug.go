@@ -29,6 +29,10 @@ var def = dag.Definition{
 
 var ClockLoader = dag.ClockLoader(def)
 
+type Interface interface {
+	dag.Interface[*Snapshot, Operation]
+}
+
 // Bug holds the data of a bug thread, organized in a way close to
 // how it will be persisted inside Git. This is the data structure
 // used to merge two different version of the same Bug.
@@ -119,7 +123,7 @@ func (bug *Bug) Validate() error {
 	}
 
 	// Check that there is no more CreateOp op
-	for i, op := range bug.Operations() {
+	for i, op := range bug.Entity.Operations() {
 		if i == 0 {
 			continue
 		}
@@ -146,7 +150,7 @@ func (bug *Bug) Operations() []Operation {
 	return result
 }
 
-// Compile a bug in a easily usable snapshot
+// Compile a bug in an easily usable snapshot
 func (bug *Bug) Compile() *Snapshot {
 	snap := &Snapshot{
 		id:     bug.Id(),
