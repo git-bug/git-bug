@@ -361,7 +361,7 @@ func (e *Entity) Validate() error {
 		return fmt.Errorf("entity has no operations")
 	}
 
-	// check if each operations are valid
+	// check if each operation are valid
 	for _, op := range e.ops {
 		if err := op.Validate(); err != nil {
 			return err
