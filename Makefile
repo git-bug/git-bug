@@ -69,4 +69,4 @@ clean-remote-identities:
 	git ls-remote origin "refs/identities/*" | cut -f 2 | $(XARGS) git push origin -d
 
 .PHONY: build install releases test pack-webui debug-webui clean-local-bugs clean-remote-bugs
-.PHONY: secure secure-vulnerabilities secure-practice
+.PHONY: secure secure-vulnerabilities secure-practices
