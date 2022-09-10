@@ -3,39 +3,32 @@ package commands
 import (
 	"github.com/spf13/cobra"
 
-	_select "github.com/MichaelMure/git-bug/commands/select"
+	"github.com/MichaelMure/git-bug/commands/execenv"
 )
 
 func newLabelCommand() *cobra.Command {
-	env := newEnv()
+	env := execenv.NewEnv()
 
 	cmd := &cobra.Command{
-		Use:     "label [ID]",
-		Short:   "Display, add or remove labels to/from a bug.",
-		PreRunE: loadBackend(env),
-		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
-			return runLabel(env, args)
-		}),
-		ValidArgsFunction: completeBug(env),
-	}
+		Use:   "label",
+		Short: "List valid labels",
+		Long: `List valid labels.
 
-	cmd.AddCommand(newLabelAddCommand())
-	cmd.AddCommand(newLabelLsCommand())
-	cmd.AddCommand(newLabelRmCommand())
+Note: in the future, a proper label policy could be implemented where valid labels are defined in a configuration file. Until that, the default behavior is to return the list of labels already used.`,
+		PreRunE: execenv.LoadBackend(env),
+		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
+			return runLabel(env)
+		}),
+	}
 
 	return cmd
 }
 
-func runLabel(env *Env, args []string) error {
-	b, _, err := _select.ResolveBug(env.backend, args)
-	if err != nil {
-		return err
-	}
+func runLabel(env *execenv.Env) error {
+	labels := env.Backend.ValidLabels()
 
-	snap := b.Snapshot()
-
-	for _, l := range snap.Labels {
-		env.out.Println(l)
+	for _, l := range labels {
+		env.Out.Println(l)
 	}
 
 	return nil

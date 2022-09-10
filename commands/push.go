@@ -4,25 +4,28 @@ import (
 	"errors"
 
 	"github.com/spf13/cobra"
+
+	"github.com/MichaelMure/git-bug/commands/completion"
+	"github.com/MichaelMure/git-bug/commands/execenv"
 )
 
 func newPushCommand() *cobra.Command {
-	env := newEnv()
+	env := execenv.NewEnv()
 
 	cmd := &cobra.Command{
 		Use:     "push [REMOTE]",
-		Short:   "Push bugs update to a git remote.",
-		PreRunE: loadBackend(env),
-		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
+		Short:   "Push updates to a git remote",
+		PreRunE: execenv.LoadBackend(env),
+		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runPush(env, args)
 		}),
-		ValidArgsFunction: completeGitRemote(env),
+		ValidArgsFunction: completion.GitRemote(env),
 	}
 
 	return cmd
 }
 
-func runPush(env *Env, args []string) error {
+func runPush(env *execenv.Env, args []string) error {
 	if len(args) > 1 {
 		return errors.New("Only pushing to one remote at a time is supported")
 	}
@@ -32,12 +35,12 @@ func runPush(env *Env, args []string) error {
 		remote = args[0]
 	}
 
-	stdout, err := env.backend.Push(remote)
+	stdout, err := env.Backend.Push(remote)
 	if err != nil {
 		return err
 	}
 
-	env.out.Println(stdout)
+	env.Out.Println(stdout)
 
 	return nil
 }

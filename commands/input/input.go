@@ -25,7 +25,7 @@ const messageFilename = "BUG_MESSAGE_EDITMSG"
 // ErrEmptyMessage is returned when the required message has not been entered
 var ErrEmptyMessage = errors.New("empty message")
 
-// ErrEmptyMessage is returned when the required title has not been entered
+// ErrEmptyTitle is returned when the required title has not been entered
 var ErrEmptyTitle = errors.New("empty title")
 
 const bugTitleCommentTemplate = `%s%s

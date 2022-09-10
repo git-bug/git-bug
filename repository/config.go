@@ -26,7 +26,7 @@ type ConfigRead interface {
 	// there is zero or more than one entry for this key
 	ReadBool(key string) (bool, error)
 
-	// ReadBool read a single string value from the config
+	// ReadString read a single string value from the config
 	// Return ErrNoConfigEntry or ErrMultipleConfigEntry if
 	// there is zero or more than one entry for this key
 	ReadString(key string) (string, error)
@@ -38,13 +38,13 @@ type ConfigRead interface {
 }
 
 type ConfigWrite interface {
-	// Store writes a single key/value pair in the config
+	// StoreString writes a single string key/value pair in the config
 	StoreString(key, value string) error
 
-	// Store writes a key and timestamp value to the config
+	// StoreTimestamp writes a key and timestamp value to the config
 	StoreTimestamp(key string, value time.Time) error
 
-	// Store writes a key and boolean value to the config
+	// StoreBool writes a key and boolean value to the config
 	StoreBool(key string, value bool) error
 
 	// RemoveAll removes all key/value pair matching the key prefix

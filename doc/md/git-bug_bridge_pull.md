@@ -1,6 +1,6 @@
 ## git-bug bridge pull
 
-Pull updates.
+Pull updates from a remote bug tracker
 
 ```
 git-bug bridge pull [NAME] [flags]
@@ -16,5 +16,5 @@ git-bug bridge pull [NAME] [flags]
 
 ### SEE ALSO
 
-* [git-bug bridge](git-bug_bridge.md)	 - Configure and use bridges to other bug trackers.
+* [git-bug bridge](git-bug_bridge.md)	 - List bridges to other bug trackers
 

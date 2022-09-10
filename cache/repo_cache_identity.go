@@ -147,7 +147,7 @@ func (c *RepoCache) ResolveIdentityPrefix(prefix string) (*IdentityCache, error)
 }
 
 // ResolveIdentityImmutableMetadata retrieve an Identity that has the exact given metadata on
-// one of it's version. If multiple version have the same key, the first defined take precedence.
+// one of its version. If multiple version have the same key, the first defined take precedence.
 func (c *RepoCache) ResolveIdentityImmutableMetadata(key string, value string) (*IdentityCache, error) {
 	return c.ResolveIdentityMatcher(func(excerpt *IdentityExcerpt) bool {
 		return excerpt.ImmutableMetadata[key] == value

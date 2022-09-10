@@ -5,26 +5,28 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/MichaelMure/git-bug/commands/completion"
+	"github.com/MichaelMure/git-bug/commands/execenv"
 	"github.com/MichaelMure/git-bug/entity"
 )
 
 func newPullCommand() *cobra.Command {
-	env := newEnv()
+	env := execenv.NewEnv()
 
 	cmd := &cobra.Command{
 		Use:     "pull [REMOTE]",
-		Short:   "Pull bugs update from a git remote.",
-		PreRunE: loadBackend(env),
-		RunE: closeBackend(env, func(cmd *cobra.Command, args []string) error {
+		Short:   "Pull updates from a git remote",
+		PreRunE: execenv.LoadBackend(env),
+		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runPull(env, args)
 		}),
-		ValidArgsFunction: completeGitRemote(env),
+		ValidArgsFunction: completion.GitRemote(env),
 	}
 
 	return cmd
 }
 
-func runPull(env *Env, args []string) error {
+func runPull(env *execenv.Env, args []string) error {
 	if len(args) > 1 {
 		return errors.New("Only pulling from one remote at a time is supported")
 	}
@@ -34,24 +36,24 @@ func runPull(env *Env, args []string) error {
 		remote = args[0]
 	}
 
-	env.out.Println("Fetching remote ...")
+	env.Out.Println("Fetching remote ...")
 
-	stdout, err := env.backend.Fetch(remote)
+	stdout, err := env.Backend.Fetch(remote)
 	if err != nil {
 		return err
 	}
 
-	env.out.Println(stdout)
+	env.Out.Println(stdout)
 
-	env.out.Println("Merging data ...")
+	env.Out.Println("Merging data ...")
 
-	for result := range env.backend.MergeAll(remote) {
+	for result := range env.Backend.MergeAll(remote) {
 		if result.Err != nil {
-			env.err.Println(result.Err)
+			env.Err.Println(result.Err)
 		}
 
 		if result.Status != entity.MergeStatusNothing {
-			env.out.Printf("%s: %s\n", result.Id.Human(), result)
+			env.Out.Printf("%s: %s\n", result.Id.Human(), result)
 		}
 	}
 

@@ -4,6 +4,8 @@ import (
 	"sort"
 
 	"github.com/spf13/cobra"
+
+	"github.com/MichaelMure/git-bug/commands/execenv"
 )
 
 type commandOptions struct {
@@ -11,7 +13,7 @@ type commandOptions struct {
 }
 
 func newCommandsCommand() *cobra.Command {
-	env := newEnv()
+	env := execenv.NewEnv()
 	options := commandOptions{}
 
 	cmd := &cobra.Command{
@@ -32,7 +34,7 @@ func newCommandsCommand() *cobra.Command {
 	return cmd
 }
 
-func runCommands(env *Env, opts commandOptions) error {
+func runCommands(env *execenv.Env, opts commandOptions) error {
 	first := true
 
 	var allCmds []*cobra.Command
@@ -49,24 +51,24 @@ func runCommands(env *Env, opts commandOptions) error {
 
 	for _, cmd := range allCmds {
 		if !first {
-			env.out.Println()
+			env.Out.Println()
 		}
 
 		first = false
 
 		if opts.desc {
-			env.out.Printf("# %s\n", cmd.Short)
+			env.Out.Printf("# %s\n", cmd.Short)
 		}
 
-		env.out.Print(cmd.UseLine())
+		env.Out.Print(cmd.UseLine())
 
 		if opts.desc {
-			env.out.Println()
+			env.Out.Println()
 		}
 	}
 
 	if !opts.desc {
-		env.out.Println()
+		env.Out.Println()
 	}
 
 	return nil

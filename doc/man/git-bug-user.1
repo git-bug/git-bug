@@ -3,23 +3,23 @@
 
 .SH NAME
 .PP
-git-bug-user - Display or change the user identity.
+git-bug-user - List identities
 
 
 .SH SYNOPSIS
 .PP
-\fBgit-bug user [USER-ID] [flags]\fP
+\fBgit-bug user [flags]\fP
 
 
 .SH DESCRIPTION
 .PP
-Display or change the user identity.
+List identities
 
 
 .SH OPTIONS
 .PP
-\fB-f\fP, \fB--field\fP=""
-	Select field to display. Valid values are [email,humanId,id,lastModification,lastModificationLamports,login,metadata,name]
+\fB-f\fP, \fB--format\fP="default"
+	Select the output formatting style. Valid values are [default,json]
 
 .PP
 \fB-h\fP, \fB--help\fP[=false]
@@ -28,4 +28,4 @@ Display or change the user identity.
 
 .SH SEE ALSO
 .PP
-\fBgit-bug(1)\fP, \fBgit-bug-user-adopt(1)\fP, \fBgit-bug-user-create(1)\fP, \fBgit-bug-user-ls(1)\fP
+\fBgit-bug(1)\fP, \fBgit-bug-user-adopt(1)\fP, \fBgit-bug-user-new(1)\fP, \fBgit-bug-user-user(1)\fP

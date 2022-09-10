@@ -22,7 +22,7 @@ const identityConfigKey = "git-bug.identity"
 var ErrNonFastForwardMerge = errors.New("non fast-forward identity merge")
 var ErrNoIdentitySet = errors.New("No identity is set.\n" +
 	"To interact with bugs, an identity first needs to be created using " +
-	"\"git bug user create\" or adopted with \"git bug user adopt\"")
+	"\"git bug user new\" or adopted with \"git bug user adopt\"")
 var ErrMultipleIdentitiesSet = errors.New("multiple user identities set")
 
 func NewErrMultipleMatchIdentity(matching []entity.Id) *entity.ErrMultipleMatch {
