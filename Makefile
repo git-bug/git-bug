@@ -31,6 +31,16 @@ releases:
 	go generate
 	gox -ldflags "$(LDFLAGS)" -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}"
 
+secure: secure-practices secure-vulnerabilities
+
+secure-practices:
+	go install github.com/praetorian-inc/gokart
+	gokart scan
+
+secure-vulnerabilities:
+	go install golang.org/x/vuln/cmd/govulncheck@latest
+	govulncheck ./... 
+
 test:
 	go test -v -bench=. ./...
 
@@ -59,3 +69,4 @@ clean-remote-identities:
 	git ls-remote origin "refs/identities/*" | cut -f 2 | $(XARGS) git push origin -d
 
 .PHONY: build install releases test pack-webui debug-webui clean-local-bugs clean-remote-bugs
+.PHONY: secure secure-vulnerabilities secure-practices

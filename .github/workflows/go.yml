@@ -53,3 +53,6 @@ jobs:
 
       - name: Check Code Formatting
         run: find . -name "*.go" | while read line; do [ -z "$(gofmt -d "$line" | head)" ] || exit 1; done
+
+      - name: Check Security (vulnerable dependencies and insecure practices)
+        run: make secure
