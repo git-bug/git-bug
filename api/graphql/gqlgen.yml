@@ -15,12 +15,14 @@ autobind:
   - "github.com/MichaelMure/git-bug/entities/bug"
   - "github.com/MichaelMure/git-bug/entities/identity"
 
+omit_getters: true
+
 models:
   ID:
     model: github.com/MichaelMure/git-bug/entity.Id
-  Bug:
-    model: github.com/MichaelMure/git-bug/api/graphql/models.BugWrapper
   Color:
     model: image/color.RGBA
   Identity:
     model: github.com/MichaelMure/git-bug/api/graphql/models.IdentityWrapper
+  Bug:
+    model: github.com/MichaelMure/git-bug/api/graphql/models.BugWrapper
