@@ -1,0 +1,17 @@
+name: govulncheck
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Running govulncheck
+        uses: Templum/govulncheck-action@v0.0.5
+        with:
+          go-version: 1.18
+          vulncheck-version: latest
+          package: ./...
+        #  github-token: ${{ secrets.GITHUB_TOKEN }}
