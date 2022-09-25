@@ -20,13 +20,14 @@ func newLabelCommand() *cobra.Command {
 	}
 
 	cmd.AddCommand(newLabelAddCommand())
+	cmd.AddCommand(newLabelLsCommand())
 	cmd.AddCommand(newLabelRmCommand())
 
 	return cmd
 }
 
 func runLabel(env *Env, args []string) error {
-	b, args, err := _select.ResolveBug(env.backend, args)
+	b, _, err := _select.ResolveBug(env.backend, args)
 	if err != nil {
 		return err
 	}
