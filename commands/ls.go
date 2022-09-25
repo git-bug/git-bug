@@ -92,9 +92,9 @@ git bug ls status:open --by creation "foo bar" baz
 		"Select the sorting direction. Valid values are [asc,desc]")
 	cmd.RegisterFlagCompletionFunc("direction", completeFrom([]string{"asc", "desc"}))
 	flags.StringVarP(&options.outputFormat, "format", "f", "default",
-		"Select the output formatting style. Valid values are [default,plain,compact,json,org-mode]")
+		"Select the output formatting style. Valid values are [default,plain,compact,id,json,org-mode]")
 	cmd.RegisterFlagCompletionFunc("format",
-		completeFrom([]string{"default", "plain", "compact", "json", "org-mode"}))
+		completeFrom([]string{"default", "plain", "compact", "id", "json", "org-mode"}))
 
 	return cmd
 }
@@ -143,6 +143,8 @@ func runLs(env *Env, opts lsOptions, args []string) error {
 		return lsJsonFormatter(env, bugExcerpt)
 	case "compact":
 		return lsCompactFormatter(env, bugExcerpt)
+	case "id":
+		return lsIDFormatter(env, bugExcerpt)
 	case "default":
 		return lsDefaultFormatter(env, bugExcerpt)
 	default:
@@ -249,6 +251,14 @@ func lsCompactFormatter(env *Env, bugExcerpts []*cache.BugExcerpt) error {
 			colors.Magenta(text.TruncateMax(author.DisplayName(), 15)),
 		)
 	}
+	return nil
+}
+
+func lsIDFormatter(env *Env, bugExcerpts []*cache.BugExcerpt) error {
+	for _, b := range bugExcerpts {
+		env.out.Println(b.Id.String())
+	}
+
 	return nil
 }
 

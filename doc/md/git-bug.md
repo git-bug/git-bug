@@ -31,7 +31,6 @@ git-bug [flags]
 * [git-bug deselect](git-bug_deselect.md)	 - Clear the implicitly selected bug.
 * [git-bug label](git-bug_label.md)	 - Display, add or remove labels to/from a bug.
 * [git-bug ls](git-bug_ls.md)	 - List bugs.
-* [git-bug ls-id](git-bug_ls-id.md)	 - List bug identifiers.
 * [git-bug ls-label](git-bug_ls-label.md)	 - List valid labels.
 * [git-bug pull](git-bug_pull.md)	 - Pull bugs update from a git remote.
 * [git-bug push](git-bug_push.md)	 - Push bugs update to a git remote.
