@@ -61,6 +61,7 @@ $`
 		{"default", "^[0-9a-f]{7}\topen\tthis is a bug title                               \tJohn Doe       \t\n$"},
 		{"plain", "^[0-9a-f]{7} \\[open\\] this is a bug title\n$"},
 		{"compact", "^[0-9a-f]{7} open this is a bug title                            John Doe\n$"},
+		{"id", "^[0-9a-f]{64}\n$"},
 		{"org-mode", expOrgMode},
 	}
 
