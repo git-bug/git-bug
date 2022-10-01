@@ -21,8 +21,10 @@ import (
 func TestGitFileHandlers(t *testing.T) {
 	repo := repository.CreateGoGitTestRepo(t, false)
 
+	stderr := &bytes.Buffer{}
+
 	mrc := cache.NewMultiRepoCache()
-	repoCache, err := mrc.RegisterDefaultRepository(repo)
+	repoCache, err := mrc.RegisterDefaultRepository(repo, stderr)
 	require.NoError(t, err)
 
 	author, err := repoCache.NewIdentity("test identity", "test@test.org")
@@ -87,4 +89,6 @@ func TestGitFileHandlers(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	assert.Equal(t, data.Bytes(), w.Body.Bytes())
+
+	require.Equal(t, cache.ExpectedCacheInitializationMessage, stderr.String())
 }

@@ -1,6 +1,7 @@
 package graphql
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/99designs/gqlgen/client"
@@ -18,8 +19,10 @@ func TestQueries(t *testing.T) {
 
 	random_bugs.FillRepoWithSeed(repo, 10, 42)
 
+	stderr := &bytes.Buffer{}
+
 	mrc := cache.NewMultiRepoCache()
-	_, err := mrc.RegisterDefaultRepository(repo)
+	_, err := mrc.RegisterDefaultRepository(repo, stderr)
 	require.NoError(t, err)
 
 	handler := NewHandler(mrc, nil)
@@ -216,4 +219,6 @@ func TestQueries(t *testing.T) {
 
 	err = c.Post(query, &resp)
 	assert.NoError(t, err)
+
+	require.Equal(t, cache.ExpectedCacheInitializationMessage, stderr.String())
 }

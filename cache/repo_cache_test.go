@@ -15,9 +15,7 @@ import (
 
 func TestCache(t *testing.T) {
 	repo := repository.CreateGoGitTestRepo(t, false)
-
-	cache, err := NewRepoCache(repo)
-	require.NoError(t, err)
+	cache, stderr := NewTestRepoCache(t, repo)
 
 	// Create, set and get user identity
 	iden1, err := cache.NewIdentity("René Descartes", "rene@descartes.fr")
@@ -85,10 +83,12 @@ func TestCache(t *testing.T) {
 	require.Empty(t, cache.identities)
 	require.Empty(t, cache.identitiesExcerpts)
 
+	// There should be no output to stderr
+	require.Empty(t, stderr.String())
+
 	// Reload, only excerpt are loaded, but as we need to load the identities used in the bugs
 	// to check the signatures, we also load the identity used above
-	cache, err = NewRepoCache(repo)
-	require.NoError(t, err)
+	cache, stderr = NewTestRepoCache(t, repo)
 	require.Empty(t, cache.bugs)
 	require.Len(t, cache.identities, 1)
 	require.Len(t, cache.bugExcerpts, 2)
@@ -108,16 +108,14 @@ func TestCache(t *testing.T) {
 	require.NoError(t, err)
 	_, err = cache.ResolveBugPrefix(bug1.Id().String()[:10])
 	require.NoError(t, err)
+
+	require.Empty(t, stderr.String())
 }
 
 func TestCachePushPull(t *testing.T) {
 	repoA, repoB, _ := repository.SetupGoGitReposAndRemote(t)
-
-	cacheA, err := NewRepoCache(repoA)
-	require.NoError(t, err)
-
-	cacheB, err := NewRepoCache(repoB)
-	require.NoError(t, err)
+	cacheA, stderrA := NewTestRepoCache(t, repoA)
+	cacheB, stderrB := NewTestRepoCache(t, repoB)
 
 	// Create, set and get user identity
 	reneA, err := cacheA.NewIdentity("René Descartes", "rene@descartes.fr")
@@ -166,6 +164,9 @@ func TestCachePushPull(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, cacheA.AllBugsIds(), 2)
+
+	require.Empty(t, stderrA.String())
+	require.Empty(t, stderrB.String())
 }
 
 func TestRemove(t *testing.T) {
@@ -179,8 +180,7 @@ func TestRemove(t *testing.T) {
 	err = repo.AddRemote("remoteB", remoteB.GetLocalRemote())
 	require.NoError(t, err)
 
-	repoCache, err := NewRepoCache(repo)
-	require.NoError(t, err)
+	repoCache, stderr := NewTestRepoCache(t, repo)
 
 	rene, err := repoCache.NewIdentity("René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
@@ -214,12 +214,13 @@ func TestRemove(t *testing.T) {
 
 	_, err = repoCache.ResolveBug(b1.Id())
 	assert.Error(t, bug.ErrBugNotExist, err)
+
+	require.Empty(t, stderr.String())
 }
 
 func TestCacheEviction(t *testing.T) {
 	repo := repository.CreateGoGitTestRepo(t, false)
-	repoCache, err := NewRepoCache(repo)
-	require.NoError(t, err)
+	repoCache, stderr := NewTestRepoCache(t, repo)
 	repoCache.setCacheSize(2)
 
 	require.Equal(t, 2, repoCache.maxLoadedBugs)
@@ -267,6 +268,8 @@ func TestCacheEviction(t *testing.T) {
 	checkBugPresence(t, repoCache, bug3, true)
 	require.Equal(t, 2, repoCache.loadedBugs.Len())
 	require.Equal(t, 2, len(repoCache.bugs))
+
+	require.Empty(t, stderr.String())
 }
 
 func checkBugPresence(t *testing.T, cache *RepoCache, bug *BugCache, presence bool) {
@@ -286,12 +289,13 @@ func TestLongDescription(t *testing.T) {
 
 	repo := repository.CreateGoGitTestRepo(t, false)
 
-	backend, err := NewRepoCache(repo)
-	require.NoError(t, err)
+	backend, stderr := NewTestRepoCache(t, repo)
 
 	i, err := backend.NewIdentity("René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
 
 	_, _, err = backend.NewBugRaw(i, time.Now().Unix(), text, text, nil, nil)
 	require.NoError(t, err)
+
+	require.Empty(t, stderr.String())
 }

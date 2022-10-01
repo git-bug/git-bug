@@ -30,14 +30,14 @@ var _ repository.RepoKeyring = &RepoCache{}
 
 // RepoCache is a cache for a Repository. This cache has multiple functions:
 //
-// 1. After being loaded, a Bug is kept in memory in the cache, allowing for fast
-// 		access later.
-// 2. The cache maintain in memory and on disk a pre-digested excerpt for each bug,
-// 		allowing for fast querying the whole set of bugs without having to load
-//		them individually.
-// 3. The cache guarantee that a single instance of a Bug is loaded at once, avoiding
-// 		loss of data that we could have with multiple copies in the same process.
-// 4. The same way, the cache maintain in memory a single copy of the loaded identities.
+//  1. After being loaded, a Bug is kept in memory in the cache, allowing for fast
+//     access later.
+//  2. The cache maintain in memory and on disk a pre-digested excerpt for each bug,
+//     allowing for fast querying the whole set of bugs without having to load
+//     them individually.
+//  3. The cache guarantee that a single instance of a Bug is loaded at once, avoiding
+//     loss of data that we could have with multiple copies in the same process.
+//  4. The same way, the cache maintain in memory a single copy of the loaded identities.
 //
 // The cache also protect the on-disk data by locking the git repository for its
 // own usage, by writing a lock file. Of course, normal git operations are not
@@ -71,13 +71,16 @@ type RepoCache struct {
 
 	// the user identity's id, if known
 	userIdentityId entity.Id
+
+	// the io.Writer where messages to (human) users should be written
+	stderr io.Writer
 }
 
-func NewRepoCache(r repository.ClockedRepo) (*RepoCache, error) {
-	return NewNamedRepoCache(r, "")
+func NewRepoCache(r repository.ClockedRepo, stderr io.Writer) (*RepoCache, error) {
+	return NewNamedRepoCache(r, "", stderr)
 }
 
-func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, error) {
+func NewNamedRepoCache(r repository.ClockedRepo, name string, stderr io.Writer) (*RepoCache, error) {
 	c := &RepoCache{
 		repo:          r,
 		name:          name,
@@ -85,6 +88,7 @@ func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, error
 		bugs:          make(map[entity.Id]*BugCache),
 		loadedBugs:    NewLRUIdCache(),
 		identities:    make(map[entity.Id]*IdentityCache),
+		stderr:        stderr,
 	}
 
 	c.resolvers = makeResolvers(c)
@@ -173,7 +177,7 @@ func (c *RepoCache) Close() error {
 }
 
 func (c *RepoCache) buildCache() error {
-	_, _ = fmt.Fprintf(os.Stderr, "Building identity cache... ")
+	_, _ = fmt.Fprintf(c.stderr, "Building identity cache... ")
 
 	c.identitiesExcerpts = make(map[entity.Id]*IdentityExcerpt)
 
@@ -187,9 +191,9 @@ func (c *RepoCache) buildCache() error {
 		c.identitiesExcerpts[i.Identity.Id()] = NewIdentityExcerpt(i.Identity)
 	}
 
-	_, _ = fmt.Fprintln(os.Stderr, "Done.")
+	_, _ = fmt.Fprintln(c.stderr, "Done.")
 
-	_, _ = fmt.Fprintf(os.Stderr, "Building bug cache... ")
+	_, _ = fmt.Fprintf(c.stderr, "Building bug cache... ")
 
 	c.bugExcerpts = make(map[entity.Id]*BugExcerpt)
 
@@ -214,7 +218,7 @@ func (c *RepoCache) buildCache() error {
 		}
 	}
 
-	_, _ = fmt.Fprintln(os.Stderr, "Done.")
+	_, _ = fmt.Fprintln(c.stderr, "Done.")
 
 	return nil
 }

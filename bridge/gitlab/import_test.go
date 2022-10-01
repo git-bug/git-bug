@@ -33,8 +33,7 @@ func TestGitlabImport(t *testing.T) {
 
 	repo := repository.CreateGoGitTestRepo(t, false)
 
-	backend, err := cache.NewRepoCache(repo)
-	require.NoError(t, err)
+	backend, stderr := cache.NewTestRepoCache(t, repo)
 
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
@@ -164,4 +163,6 @@ func TestGitlabImport(t *testing.T) {
 			}
 		})
 	}
+
+	require.Empty(t, stderr.String())
 }

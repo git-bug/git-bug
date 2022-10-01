@@ -13,10 +13,9 @@ import (
 func TestSelect(t *testing.T) {
 	repo := repository.CreateGoGitTestRepo(t, false)
 
-	repoCache, err := cache.NewRepoCache(repo)
-	require.NoError(t, err)
+	repoCache, stderr := cache.NewTestRepoCache(t, repo)
 
-	_, _, err = ResolveBug(repoCache, []string{})
+	_, _, err := ResolveBug(repoCache, []string{})
 	require.Equal(t, ErrNoValidId, err)
 
 	err = Select(repoCache, "invalid")
@@ -76,4 +75,6 @@ func TestSelect(t *testing.T) {
 	// Resolve without a pattern should error again after clearing the selected bug
 	_, _, err = ResolveBug(repoCache, []string{})
 	require.Error(t, err)
+
+	require.Empty(t, stderr.String())
 }

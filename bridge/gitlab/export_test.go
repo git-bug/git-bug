@@ -148,8 +148,7 @@ func TestGitlabPushPull(t *testing.T) {
 	// create repo backend
 	repo := repository.CreateGoGitTestRepo(t, false)
 
-	backend, err := cache.NewRepoCache(repo)
-	require.NoError(t, err)
+	backend, stderr := cache.NewTestRepoCache(t, repo)
 
 	// set author identity
 	login := "test-identity"
@@ -215,14 +214,14 @@ func TestGitlabPushPull(t *testing.T) {
 		require.NoError(t, result.Err)
 	}
 	require.NoError(t, err)
+	require.Empty(t, stderr.String())
 
 	fmt.Printf("test repository exported in %f seconds\n", time.Since(start).Seconds())
 
 	repoTwo := repository.CreateGoGitTestRepo(t, false)
 
 	// create a second backend
-	backendTwo, err := cache.NewRepoCache(repoTwo)
-	require.NoError(t, err)
+	backendTwo, stderr := cache.NewTestRepoCache(t, repoTwo)
 
 	importer := &gitlabImporter{}
 	err = importer.Init(ctx, backend, core.Configuration{
@@ -279,6 +278,8 @@ func TestGitlabPushPull(t *testing.T) {
 			// TODO: maybe more tests to ensure bug final state
 		})
 	}
+
+	require.Empty(t, stderr.String())
 }
 
 func generateRepoName() string {

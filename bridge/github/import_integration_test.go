@@ -34,11 +34,9 @@ func TestGithubImporterIntegration(t *testing.T) {
 
 	// arrange
 	repo := repository.CreateGoGitTestRepo(t, false)
-	backend, err := cache.NewRepoCache(repo)
-	require.NoError(t, err)
+	backend, stderr := cache.NewTestRepoCache(t, repo)
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
-	require.NoError(t, err)
 
 	// act
 	events, err := importer.ImportAll(context.Background(), backend, time.Time{})
@@ -71,6 +69,7 @@ func TestGithubImporterIntegration(t *testing.T) {
 	ops4 := b4.Snapshot().Operations
 	require.Equal(t, "edited", ops4[1].(*bug.EditCommentOperation).Message)
 
+	require.Empty(t, stderr.String())
 }
 
 func setupExpectations(t *testing.T, mock *mocks.Client) {

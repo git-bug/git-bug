@@ -2,6 +2,7 @@ package cache
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/MichaelMure/git-bug/repository"
 )
@@ -21,8 +22,8 @@ func NewMultiRepoCache() *MultiRepoCache {
 }
 
 // RegisterRepository register a named repository. Use this for multi-repo setup
-func (c *MultiRepoCache) RegisterRepository(ref string, repo repository.ClockedRepo) (*RepoCache, error) {
-	r, err := NewRepoCache(repo)
+func (c *MultiRepoCache) RegisterRepository(ref string, repo repository.ClockedRepo, stderr io.Writer) (*RepoCache, error) {
+	r, err := NewRepoCache(repo, stderr)
 	if err != nil {
 		return nil, err
 	}
@@ -32,14 +33,15 @@ func (c *MultiRepoCache) RegisterRepository(ref string, repo repository.ClockedR
 }
 
 // RegisterDefaultRepository register a unnamed repository. Use this for mono-repo setup
-func (c *MultiRepoCache) RegisterDefaultRepository(repo repository.ClockedRepo) (*RepoCache, error) {
-	r, err := NewRepoCache(repo)
-	if err != nil {
-		return nil, err
-	}
+func (c *MultiRepoCache) RegisterDefaultRepository(repo repository.ClockedRepo, stderr io.Writer) (*RepoCache, error) {
+	return c.RegisterRepository(defaultRepoName, repo, stderr)
+	// r, err := NewRepoCache(repo)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	c.repos[defaultRepoName] = r
-	return r, nil
+	// c.repos[defaultRepoName] = r
+	// return r, nil
 }
 
 // DefaultRepo retrieve the default repository
