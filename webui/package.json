@@ -33,7 +33,7 @@
   },
   "devDependencies": {
     "@babel/runtime": "^7.17.2",
-    "@graphql-codegen/cli": "^2.6.1",
+    "@graphql-codegen/cli": "^2.13.1",
     "@graphql-codegen/fragment-matcher": "^3.2.1",
     "@graphql-codegen/introspection": "^2.1.1",
     "@graphql-codegen/near-operation-file-preset": "^2.2.4",
