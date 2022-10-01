@@ -501,7 +501,13 @@ func (c *RepoCache) RemoveBug(prefix string) error {
 	}
 
 	c.muBug.Lock()
+
 	err = bug.Remove(c.repo, b.Id())
+	if err != nil {
+		c.muBug.Unlock()
+
+		return err
+	}
 
 	delete(c.bugs, b.Id())
 	delete(c.bugExcerpts, b.Id())
