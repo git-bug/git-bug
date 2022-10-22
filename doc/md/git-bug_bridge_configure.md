@@ -58,7 +58,7 @@ git bug bridge configure \
 git bug bridge configure \
     --name=default \
     --target=launchpad-preview \
-	--url=https://bugs.launchpad.net/ubuntu/
+    --url=https://bugs.launchpad.net/ubuntu/
 
 # For Gitlab
 git bug bridge configure \
