@@ -30,7 +30,6 @@ func (op *SetTitleOperation) Apply(snapshot *Snapshot) {
 
 	id := op.Id()
 	item := &SetTitleTimelineItem{
-		id:         id,
 		combinedId: entity.CombineIds(snapshot.Id(), id),
 		Author:     op.Author(),
 		UnixTime:   timestamp.Timestamp(op.UnixTime),
@@ -70,16 +69,11 @@ func NewSetTitleOp(author identity.Interface, unixTime int64, title string, was 
 }
 
 type SetTitleTimelineItem struct {
-	id         entity.Id
 	combinedId entity.CombinedId
 	Author     identity.Interface
 	UnixTime   timestamp.Timestamp
 	Title      string
 	Was        string
-}
-
-func (s SetTitleTimelineItem) Id() entity.Id {
-	return s.id
 }
 
 func (s SetTitleTimelineItem) CombinedId() entity.CombinedId {

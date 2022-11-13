@@ -105,7 +105,6 @@ func NewLabelChangeOperation(author identity.Interface, unixTime int64, added, r
 }
 
 type LabelChangeTimelineItem struct {
-	// id         entity.Id
 	combinedId entity.CombinedId
 	Author     identity.Interface
 	UnixTime   timestamp.Timestamp

@@ -131,7 +131,7 @@ func (li *launchpadImporter) ImportAll(ctx context.Context, repo *cache.RepoCach
 
 					// This is a new comment, we can add it.
 					createdAt, _ := time.Parse(time.RFC3339, lpMessage.CreatedAt)
-					op, err := b.AddCommentRaw(
+					commentId, _, err := b.AddCommentRaw(
 						owner,
 						createdAt.Unix(),
 						text.Cleanup(lpMessage.Content),
@@ -144,7 +144,7 @@ func (li *launchpadImporter) ImportAll(ctx context.Context, repo *cache.RepoCach
 						return
 					}
 
-					out <- core.NewImportComment(op.Id())
+					out <- core.NewImportComment(b.Id(), commentId)
 				}
 
 				if !b.NeedCommit() {

@@ -315,7 +315,7 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, out ch
 		if err != nil {
 			out <- core.NewExportError(
 				fmt.Errorf("missing operation author credentials for user %.8s",
-					author.Id().String()), op.Id())
+					author.Id().String()), b.Id())
 			continue
 		}
 
@@ -330,7 +330,7 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, out ch
 				return err
 			}
 			id = comment.ID
-			out <- core.NewExportComment(op.Id())
+			out <- core.NewExportComment(b.Id())
 
 			// cache comment id
 			je.cachedOperationIDs[op.Id()] = id
@@ -345,7 +345,7 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, out ch
 					out <- core.NewExportError(err, b.Id())
 					return err
 				}
-				out <- core.NewExportCommentEdition(op.Id())
+				out <- core.NewExportCommentEdition(b.Id())
 				id = bugJiraID
 			} else {
 				// Otherwise it's an edit to an actual comment. A comment cannot be
@@ -363,7 +363,7 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, out ch
 					out <- core.NewExportError(err, b.Id())
 					return err
 				}
-				out <- core.NewExportCommentEdition(op.Id())
+				out <- core.NewExportCommentEdition(b.Id())
 				// JIRA doesn't track all comment edits, they will only tell us about
 				// the most recent one. We must invent a consistent id for the operation
 				// so we use the comment ID plus the timestamp of the update, as
@@ -384,7 +384,7 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, out ch
 					// update. In this case, just don't export the operation.
 					continue
 				}
-				out <- core.NewExportStatusChange(op.Id())
+				out <- core.NewExportStatusChange(b.Id())
 				id = bugJiraID
 			} else {
 				out <- core.NewExportError(fmt.Errorf(
@@ -398,7 +398,7 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, out ch
 				out <- core.NewExportError(err, b.Id())
 				return err
 			}
-			out <- core.NewExportTitleEdition(op.Id())
+			out <- core.NewExportTitleEdition(b.Id())
 			id = bugJiraID
 
 		case *bug.LabelChangeOperation:
@@ -409,7 +409,7 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, out ch
 				out <- core.NewExportError(err, b.Id())
 				return err
 			}
-			out <- core.NewExportLabelChange(op.Id())
+			out <- core.NewExportLabelChange(b.Id())
 			id = bugJiraID
 
 		default:

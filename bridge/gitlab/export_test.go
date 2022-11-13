@@ -44,7 +44,7 @@ func testCases(t *testing.T, repo *cache.RepoCache) []*testCase {
 	bugWithComments, _, err := repo.NewBug("bug with comments", "new bug")
 	require.NoError(t, err)
 
-	_, err = bugWithComments.AddComment("new comment")
+	_, _, err = bugWithComments.AddComment("new comment")
 	require.NoError(t, err)
 
 	// bug with label changes
@@ -68,11 +68,10 @@ func testCases(t *testing.T, repo *cache.RepoCache) []*testCase {
 		entity.CombineIds(bugWithCommentEditions.Id(), createOp.Id()), "first comment edited")
 	require.NoError(t, err)
 
-	commentOp, err := bugWithCommentEditions.AddComment("first comment")
+	commentId, _, err := bugWithCommentEditions.AddComment("first comment")
 	require.NoError(t, err)
 
-	_, err = bugWithCommentEditions.EditComment(
-		entity.CombineIds(bugWithCommentEditions.Id(), commentOp.Id()), "first comment edited")
+	_, err = bugWithCommentEditions.EditComment(commentId, "first comment edited")
 	require.NoError(t, err)
 
 	// bug status changed

@@ -78,7 +78,7 @@ func (r mutationResolver) AddComment(ctx context.Context, input models.AddCommen
 		return nil, err
 	}
 
-	op, err := b.AddCommentRaw(author,
+	_, op, err := b.AddCommentRaw(author,
 		time.Now().Unix(),
 		text.Cleanup(input.Message),
 		input.Files,
@@ -110,7 +110,7 @@ func (r mutationResolver) AddCommentAndClose(ctx context.Context, input models.A
 		return nil, err
 	}
 
-	opAddComment, err := b.AddCommentRaw(author,
+	_, opAddComment, err := b.AddCommentRaw(author,
 		time.Now().Unix(),
 		text.Cleanup(input.Message),
 		input.Files,
@@ -148,7 +148,7 @@ func (r mutationResolver) AddCommentAndReopen(ctx context.Context, input models.
 		return nil, err
 	}
 
-	opAddComment, err := b.AddCommentRaw(author,
+	_, opAddComment, err := b.AddCommentRaw(author,
 		time.Now().Unix(),
 		text.Cleanup(input.Message),
 		input.Files,

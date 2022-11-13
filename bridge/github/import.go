@@ -274,7 +274,7 @@ func (gi *githubImporter) ensureTimelineItem(ctx context.Context, repo *cache.Re
 			return err
 		}
 
-		gi.out <- core.NewImportLabelChange(op.Id())
+		gi.out <- core.NewImportLabelChange(b.Id(), op.Id())
 		return nil
 
 	case "UnlabeledEvent":
@@ -304,7 +304,7 @@ func (gi *githubImporter) ensureTimelineItem(ctx context.Context, repo *cache.Re
 			return err
 		}
 
-		gi.out <- core.NewImportLabelChange(op.Id())
+		gi.out <- core.NewImportLabelChange(b.Id(), op.Id())
 		return nil
 
 	case "ClosedEvent":
@@ -330,7 +330,7 @@ func (gi *githubImporter) ensureTimelineItem(ctx context.Context, repo *cache.Re
 			return err
 		}
 
-		gi.out <- core.NewImportStatusChange(op.Id())
+		gi.out <- core.NewImportStatusChange(b.Id(), op.Id())
 		return nil
 
 	case "ReopenedEvent":
@@ -356,7 +356,7 @@ func (gi *githubImporter) ensureTimelineItem(ctx context.Context, repo *cache.Re
 			return err
 		}
 
-		gi.out <- core.NewImportStatusChange(op.Id())
+		gi.out <- core.NewImportStatusChange(b.Id(), op.Id())
 		return nil
 
 	case "RenamedTitleEvent":
@@ -392,7 +392,7 @@ func (gi *githubImporter) ensureTimelineItem(ctx context.Context, repo *cache.Re
 			return err
 		}
 
-		gi.out <- core.NewImportTitleEdition(op.Id())
+		gi.out <- core.NewImportTitleEdition(b.Id(), op.Id())
 		return nil
 	}
 
@@ -425,11 +425,13 @@ func (gi *githubImporter) ensureCommentEdit(ctx context.Context, repo *cache.Rep
 		return nil
 	}
 
+	commentId := entity.CombineIds(b.Id(), target)
+
 	// comment edition
-	op, err := b.EditCommentRaw(
+	_, err = b.EditCommentRaw(
 		editor,
 		edit.CreatedAt.Unix(),
-		entity.CombineIds(b.Id(), target),
+		commentId,
 		text.Cleanup(string(*edit.Diff)),
 		map[string]string{
 			metaKeyGithubId: parseId(edit.Id),
@@ -440,7 +442,7 @@ func (gi *githubImporter) ensureCommentEdit(ctx context.Context, repo *cache.Rep
 		return err
 	}
 
-	gi.out <- core.NewImportCommentEdition(op.Id())
+	gi.out <- core.NewImportCommentEdition(b.Id(), commentId)
 	return nil
 }
 
@@ -469,7 +471,7 @@ func (gi *githubImporter) ensureComment(ctx context.Context, repo *cache.RepoCac
 	}
 
 	// add comment operation
-	op, err := b.AddCommentRaw(
+	commentId, _, err := b.AddCommentRaw(
 		author,
 		comment.CreatedAt.Unix(),
 		text.Cleanup(textInput),
@@ -483,7 +485,7 @@ func (gi *githubImporter) ensureComment(ctx context.Context, repo *cache.RepoCac
 		return err
 	}
 
-	gi.out <- core.NewImportComment(op.Id())
+	gi.out <- core.NewImportComment(b.Id(), commentId)
 	return nil
 }
 

@@ -69,7 +69,7 @@ func runCommentAdd(env *Env, opts commentAddOptions, args []string) error {
 		}
 	}
 
-	_, err = b.AddComment(text.Cleanup(opts.message))
+	_, _, err = b.AddComment(text.Cleanup(opts.message))
 	if err != nil {
 		return err
 	}

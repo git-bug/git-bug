@@ -318,7 +318,7 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 				return
 			}
 
-			out <- core.NewExportComment(op.Id())
+			out <- core.NewExportComment(b.Id())
 
 			// cache comment id
 			ge.cachedOperationIDs[op.Id()] = id
@@ -334,7 +334,7 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 					return
 				}
 
-				out <- core.NewExportCommentEdition(op.Id())
+				out <- core.NewExportCommentEdition(b.Id())
 
 				id = bugGithubID
 				url = bugGithubURL
@@ -354,7 +354,7 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 					return
 				}
 
-				out <- core.NewExportCommentEdition(op.Id())
+				out <- core.NewExportCommentEdition(b.Id())
 
 				// use comment id/url instead of issue id/url
 				id = eid
@@ -368,7 +368,7 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 				return
 			}
 
-			out <- core.NewExportStatusChange(op.Id())
+			out <- core.NewExportStatusChange(b.Id())
 
 			id = bugGithubID
 			url = bugGithubURL
@@ -380,7 +380,7 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 				return
 			}
 
-			out <- core.NewExportTitleEdition(op.Id())
+			out <- core.NewExportTitleEdition(b.Id())
 
 			id = bugGithubID
 			url = bugGithubURL
@@ -392,7 +392,7 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 				return
 			}
 
-			out <- core.NewExportLabelChange(op.Id())
+			out <- core.NewExportLabelChange(b.Id())
 
 			id = bugGithubID
 			url = bugGithubURL
@@ -659,7 +659,7 @@ func (ge *githubExporter) createGithubIssue(ctx context.Context, gc *rateLimitHa
 	return issue.ID, issue.URL, nil
 }
 
-// add a comment to an issue and return it ID
+// add a comment to an issue and return its ID
 func (ge *githubExporter) addCommentGithubIssue(ctx context.Context, gc *rateLimitHandlerClient, subjectID string, body string) (string, string, error) {
 	m := &addCommentToIssueMutation{}
 	input := githubv4.AddCommentInput{

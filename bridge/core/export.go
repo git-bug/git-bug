@@ -42,39 +42,39 @@ const (
 // allow calling code to report on what is happening, collect metrics or
 // display meaningful errors if something went wrong.
 type ExportResult struct {
-	Err    error
-	Event  ExportEvent
-	ID     entity.Id
-	Reason string
+	Err      error
+	Event    ExportEvent
+	EntityId entity.Id // optional for err, warning
+	Reason   string
 }
 
 func (er ExportResult) String() string {
 	switch er.Event {
 	case ExportEventBug:
-		return fmt.Sprintf("new issue: %s", er.ID)
+		return fmt.Sprintf("[%s] new issue: %s", er.EntityId.Human(), er.EntityId)
 	case ExportEventComment:
-		return fmt.Sprintf("new comment: %s", er.ID)
+		return fmt.Sprintf("[%s] new comment", er.EntityId.Human())
 	case ExportEventCommentEdition:
-		return fmt.Sprintf("updated comment: %s", er.ID)
+		return fmt.Sprintf("[%s] updated comment", er.EntityId.Human())
 	case ExportEventStatusChange:
-		return fmt.Sprintf("changed status: %s", er.ID)
+		return fmt.Sprintf("[%s] changed status", er.EntityId.Human())
 	case ExportEventTitleEdition:
-		return fmt.Sprintf("changed title: %s", er.ID)
+		return fmt.Sprintf("[%s] changed title", er.EntityId.Human())
 	case ExportEventLabelChange:
-		return fmt.Sprintf("changed label: %s", er.ID)
+		return fmt.Sprintf("[%s] changed label", er.EntityId.Human())
 	case ExportEventNothing:
-		if er.ID != "" {
-			return fmt.Sprintf("no actions taken for event %s: %s", er.ID, er.Reason)
+		if er.EntityId != "" {
+			return fmt.Sprintf("no actions taken on entity %s: %s", er.EntityId, er.Reason)
 		}
 		return fmt.Sprintf("no actions taken: %s", er.Reason)
 	case ExportEventError:
-		if er.ID != "" {
-			return fmt.Sprintf("export error at %s: %s", er.ID, er.Err.Error())
+		if er.EntityId != "" {
+			return fmt.Sprintf("export error on entity %s: %s", er.EntityId, er.Err.Error())
 		}
 		return fmt.Sprintf("export error: %s", er.Err.Error())
 	case ExportEventWarning:
-		if er.ID != "" {
-			return fmt.Sprintf("warning at %s: %s", er.ID, er.Err.Error())
+		if er.EntityId != "" {
+			return fmt.Sprintf("warning on entity %s: %s", er.EntityId, er.Err.Error())
 		}
 		return fmt.Sprintf("warning: %s", er.Err.Error())
 	case ExportEventRateLimiting:
@@ -85,69 +85,69 @@ func (er ExportResult) String() string {
 	}
 }
 
-func NewExportError(err error, id entity.Id) ExportResult {
+func NewExportError(err error, entityId entity.Id) ExportResult {
 	return ExportResult{
-		ID:    id,
-		Err:   err,
-		Event: ExportEventError,
+		EntityId: entityId,
+		Err:      err,
+		Event:    ExportEventError,
 	}
 }
 
-func NewExportWarning(err error, id entity.Id) ExportResult {
+func NewExportWarning(err error, entityId entity.Id) ExportResult {
 	return ExportResult{
-		ID:    id,
-		Err:   err,
-		Event: ExportEventWarning,
+		EntityId: entityId,
+		Err:      err,
+		Event:    ExportEventWarning,
 	}
 }
 
-func NewExportNothing(id entity.Id, reason string) ExportResult {
+func NewExportNothing(entityId entity.Id, reason string) ExportResult {
 	return ExportResult{
-		ID:     id,
-		Reason: reason,
-		Event:  ExportEventNothing,
+		EntityId: entityId,
+		Reason:   reason,
+		Event:    ExportEventNothing,
 	}
 }
 
-func NewExportBug(id entity.Id) ExportResult {
+func NewExportBug(entityId entity.Id) ExportResult {
 	return ExportResult{
-		ID:    id,
-		Event: ExportEventBug,
+		EntityId: entityId,
+		Event:    ExportEventBug,
 	}
 }
 
-func NewExportComment(id entity.Id) ExportResult {
+func NewExportComment(entityId entity.Id) ExportResult {
 	return ExportResult{
-		ID:    id,
-		Event: ExportEventComment,
+		EntityId: entityId,
+		Event:    ExportEventComment,
 	}
 }
 
-func NewExportCommentEdition(id entity.Id) ExportResult {
+func NewExportCommentEdition(entityId entity.Id) ExportResult {
 	return ExportResult{
-		ID:    id,
-		Event: ExportEventCommentEdition,
+		EntityId: entityId,
+		Event:    ExportEventCommentEdition,
 	}
 }
 
-func NewExportStatusChange(id entity.Id) ExportResult {
+func NewExportStatusChange(entityId entity.Id) ExportResult {
 	return ExportResult{
-		ID:    id,
-		Event: ExportEventStatusChange,
+		EntityId: entityId,
+		Event:    ExportEventStatusChange,
 	}
 }
 
-func NewExportLabelChange(id entity.Id) ExportResult {
+func NewExportLabelChange(entityId entity.Id) ExportResult {
 	return ExportResult{
-		ID:    id,
-		Event: ExportEventLabelChange,
+		EntityId: entityId,
+		Event:    ExportEventLabelChange,
 	}
 }
 
-func NewExportTitleEdition(id entity.Id) ExportResult {
+func NewExportTitleEdition(entityId entity.Id) ExportResult {
 	return ExportResult{
-		ID:    id,
-		Event: ExportEventTitleEdition,
+		EntityId: entityId,
+		Event:    ExportEventTitleEdition,
 	}
 }
 
