@@ -20,6 +20,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"golang.org/x/sync/errgroup"
 	"golang.org/x/sys/execabs"
 
 	"github.com/MichaelMure/git-bug/util/lamport"
@@ -79,7 +80,9 @@ func OpenGoGitRepo(path, namespace string, clockLoaders []ClockLoader) (*GoGitRe
 		localStorage: osfs.New(filepath.Join(path, namespace)),
 	}
 
+	loaderToRun := make([]ClockLoader, len(clockLoaders))
 	for _, loader := range clockLoaders {
+		loader := loader
 		allExist := true
 		for _, name := range loader.Clocks {
 			if _, err := repo.getClock(name); err != nil {
@@ -88,11 +91,20 @@ func OpenGoGitRepo(path, namespace string, clockLoaders []ClockLoader) (*GoGitRe
 		}
 
 		if !allExist {
-			err = loader.Witnesser(repo)
-			if err != nil {
-				return nil, err
-			}
+			loaderToRun = append(loaderToRun, loader)
 		}
+	}
+
+	var errG errgroup.Group
+	for _, loader := range loaderToRun {
+		loader := loader
+		errG.Go(func() error {
+			return loader.Witnesser(repo)
+		})
+	}
+	err = errG.Wait()
+	if err != nil {
+		return nil, err
 	}
 
 	return repo, nil

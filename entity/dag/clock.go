@@ -21,6 +21,7 @@ func ClockLoader(defs ...Definition) repository.ClockLoader {
 		Witnesser: func(repo repository.ClockedRepo) error {
 			var errG errgroup.Group
 			for _, def := range defs {
+				def := def
 				errG.Go(func() error {
 					return ReadAllClocksNoCheck(def, repo)
 				})
