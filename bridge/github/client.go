@@ -87,7 +87,7 @@ func (c *rateLimitHandlerClient) queryPrintMsgs(ctx context.Context, query inter
 	return c.callAPIAndRetry(ctx, queryFun, callback)
 }
 
-// callAPIAndRetry calls the Github GraphQL API (inderectely through callAPIDealWithLimit) and in
+// callAPIAndRetry calls the Github GraphQL API (indirectly through callAPIDealWithLimit) and in
 // case of error it repeats the request to the Github API. The parameter `apiCall` is intended to be
 // a closure containing a query or a mutation to the Github GraphQL API.
 func (c *rateLimitHandlerClient) callAPIAndRetry(ctx context.Context, apiCall func(context.Context) error, rateLimitEvent func(msg string)) error {
@@ -149,8 +149,17 @@ func (c *rateLimitHandlerClient) callAPIDealWithLimit(ctx context.Context, apiCa
 		// Send message about rate limiting event.
 		rateLimitCallback(msg)
 
+		// sanitize the reset time, in case the local clock is wrong
+		waitTime := time.Until(resetTime)
+		if waitTime < 0 {
+			waitTime = 10 * time.Second
+		}
+		if waitTime > 30*time.Second {
+			waitTime = 30 * time.Second
+		}
+
 		// Pause current goroutine
-		timer := time.NewTimer(time.Until(resetTime))
+		timer := time.NewTimer(waitTime)
 		select {
 		case <-ctx.Done():
 			stop(timer)
