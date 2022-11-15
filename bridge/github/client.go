@@ -130,7 +130,8 @@ func (c *rateLimitHandlerClient) callAPIDealWithLimit(ctx context.Context, apiCa
 		return nil
 	}
 	// matching the error string
-	if strings.Contains(err.Error(), "API rate limit exceeded") {
+	if strings.Contains(err.Error(), "API rate limit exceeded") ||
+		strings.Contains(err.Error(), "was submitted too quickly") {
 		// a rate limit error
 		qctx, cancel = context.WithTimeout(ctx, defaultTimeout)
 		defer cancel()
