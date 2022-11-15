@@ -288,7 +288,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 				return
 			}
 
-			out <- core.NewExportComment(op.Id())
+			out <- core.NewExportComment(b.Id())
 
 			idString = strconv.Itoa(id)
 			// cache comment id
@@ -307,7 +307,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 					return
 				}
 
-				out <- core.NewExportCommentEdition(op.Id())
+				out <- core.NewExportCommentEdition(b.Id())
 				id = bugGitlabID
 
 			} else {
@@ -315,13 +315,13 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 				// case comment edition operation: we need to edit the Gitlab comment
 				commentID, ok := ge.cachedOperationIDs[targetId]
 				if !ok {
-					out <- core.NewExportError(fmt.Errorf("unexpected error: comment id not found"), op.Target)
+					out <- core.NewExportError(fmt.Errorf("unexpected error: comment id not found"), b.Id())
 					return
 				}
 
 				commentIDint, err := strconv.Atoi(commentID)
 				if err != nil {
-					out <- core.NewExportError(fmt.Errorf("unexpected comment id format"), op.Target)
+					out <- core.NewExportError(fmt.Errorf("unexpected comment id format"), b.Id())
 					return
 				}
 
@@ -331,7 +331,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 					return
 				}
 
-				out <- core.NewExportCommentEdition(op.Id())
+				out <- core.NewExportCommentEdition(b.Id())
 				id = commentIDint
 			}
 
@@ -342,7 +342,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 				return
 			}
 
-			out <- core.NewExportStatusChange(op.Id())
+			out <- core.NewExportStatusChange(b.Id())
 			id = bugGitlabID
 
 		case *bug.SetTitleOperation:
@@ -352,7 +352,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 				return
 			}
 
-			out <- core.NewExportTitleEdition(op.Id())
+			out <- core.NewExportTitleEdition(b.Id())
 			id = bugGitlabID
 
 		case *bug.LabelChangeOperation:
@@ -378,7 +378,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 				return
 			}
 
-			out <- core.NewExportLabelChange(op.Id())
+			out <- core.NewExportLabelChange(b.Id())
 			id = bugGitlabID
 		default:
 			panic("unhandled operation type case")

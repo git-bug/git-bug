@@ -239,7 +239,7 @@ func addCommentWithEditor(bug *cache.BugCache) error {
 	if err == input.ErrEmptyMessage {
 		ui.msgPopup.Activate(msgPopupErrorTitle, "Empty message, aborting.")
 	} else {
-		_, err := bug.AddComment(text.Cleanup(message))
+		_, _, err := bug.AddComment(text.Cleanup(message))
 		if err != nil {
 			return err
 		}

@@ -58,7 +58,6 @@ func NewSetStatusOp(author identity.Interface, unixTime int64, status common.Sta
 }
 
 type SetStatusTimelineItem struct {
-	// id         entity.Id
 	combinedId entity.CombinedId
 	Author     identity.Interface
 	UnixTime   timestamp.Timestamp

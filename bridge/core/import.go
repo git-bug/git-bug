@@ -45,43 +45,45 @@ const (
 // allow calling code to report on what is happening, collect metrics or
 // display meaningful errors if something went wrong.
 type ImportResult struct {
-	Err    error
-	Event  ImportEvent
-	ID     entity.Id
-	Reason string
+	Err         error
+	Event       ImportEvent
+	EntityId    entity.Id         // optional for err, warnings
+	OperationId entity.Id         // optional
+	ComponentId entity.CombinedId // optional
+	Reason      string
 }
 
 func (er ImportResult) String() string {
 	switch er.Event {
 	case ImportEventBug:
-		return fmt.Sprintf("new issue: %s", er.ID)
+		return fmt.Sprintf("[%s] new issue: %s", er.EntityId.Human(), er.EntityId)
 	case ImportEventComment:
-		return fmt.Sprintf("new comment: %s", er.ID)
+		return fmt.Sprintf("[%s] new comment: %s", er.EntityId.Human(), er.ComponentId)
 	case ImportEventCommentEdition:
-		return fmt.Sprintf("updated comment: %s", er.ID)
+		return fmt.Sprintf("[%s] updated comment: %s", er.EntityId.Human(), er.ComponentId)
 	case ImportEventStatusChange:
-		return fmt.Sprintf("changed status: %s", er.ID)
+		return fmt.Sprintf("[%s] changed status with op: %s", er.EntityId.Human(), er.OperationId)
 	case ImportEventTitleEdition:
-		return fmt.Sprintf("changed title: %s", er.ID)
+		return fmt.Sprintf("[%s] changed title with op: %s", er.EntityId.Human(), er.OperationId)
 	case ImportEventLabelChange:
-		return fmt.Sprintf("changed label: %s", er.ID)
+		return fmt.Sprintf("[%s] changed label with op: %s", er.EntityId.Human(), er.OperationId)
 	case ImportEventIdentity:
-		return fmt.Sprintf("new identity: %s", er.ID)
+		return fmt.Sprintf("[%s] new identity: %s", er.EntityId.Human(), er.EntityId)
 	case ImportEventNothing:
-		if er.ID != "" {
-			return fmt.Sprintf("no action taken for event %s: %s", er.ID, er.Reason)
+		if er.EntityId != "" {
+			return fmt.Sprintf("no action taken on entity %s: %s", er.EntityId, er.Reason)
 		}
 		return fmt.Sprintf("no action taken: %s", er.Reason)
 	case ImportEventError:
-		if er.ID != "" {
-			return fmt.Sprintf("import error at id %s: %s", er.ID, er.Err.Error())
+		if er.EntityId != "" {
+			return fmt.Sprintf("import error on entity %s: %s", er.EntityId, er.Err.Error())
 		}
 		return fmt.Sprintf("import error: %s", er.Err.Error())
 	case ImportEventWarning:
 		parts := make([]string, 0, 4)
 		parts = append(parts, "warning:")
-		if er.ID != "" {
-			parts = append(parts, fmt.Sprintf("at id %s", er.ID))
+		if er.EntityId != "" {
+			parts = append(parts, fmt.Sprintf("on entity %s", er.EntityId))
 		}
 		if er.Reason != "" {
 			parts = append(parts, fmt.Sprintf("reason: %s", er.Reason))
@@ -98,76 +100,81 @@ func (er ImportResult) String() string {
 	}
 }
 
-func NewImportError(err error, id entity.Id) ImportResult {
+func NewImportError(err error, entityId entity.Id) ImportResult {
 	return ImportResult{
-		Err:   err,
-		ID:    id,
-		Event: ImportEventError,
+		Err:      err,
+		EntityId: entityId,
+		Event:    ImportEventError,
 	}
 }
 
-func NewImportWarning(err error, id entity.Id) ImportResult {
+func NewImportWarning(err error, entityId entity.Id) ImportResult {
 	return ImportResult{
-		Err:   err,
-		ID:    id,
-		Event: ImportEventWarning,
+		Err:      err,
+		EntityId: entityId,
+		Event:    ImportEventWarning,
 	}
 }
 
-func NewImportNothing(id entity.Id, reason string) ImportResult {
+func NewImportNothing(entityId entity.Id, reason string) ImportResult {
 	return ImportResult{
-		ID:     id,
-		Reason: reason,
-		Event:  ImportEventNothing,
+		EntityId: entityId,
+		Reason:   reason,
+		Event:    ImportEventNothing,
 	}
 }
 
-func NewImportBug(id entity.Id) ImportResult {
+func NewImportBug(entityId entity.Id) ImportResult {
 	return ImportResult{
-		ID:    id,
-		Event: ImportEventBug,
+		EntityId: entityId,
+		Event:    ImportEventBug,
 	}
 }
 
-func NewImportComment(id entity.Id) ImportResult {
+func NewImportComment(entityId entity.Id, commentId entity.CombinedId) ImportResult {
 	return ImportResult{
-		ID:    id,
-		Event: ImportEventComment,
+		EntityId:    entityId,
+		ComponentId: commentId,
+		Event:       ImportEventComment,
 	}
 }
 
-func NewImportCommentEdition(id entity.Id) ImportResult {
+func NewImportCommentEdition(entityId entity.Id, commentId entity.CombinedId) ImportResult {
 	return ImportResult{
-		ID:    id,
-		Event: ImportEventCommentEdition,
+		EntityId:    entityId,
+		ComponentId: commentId,
+		Event:       ImportEventCommentEdition,
 	}
 }
 
-func NewImportStatusChange(id entity.Id) ImportResult {
+func NewImportStatusChange(entityId entity.Id, opId entity.Id) ImportResult {
 	return ImportResult{
-		ID:    id,
-		Event: ImportEventStatusChange,
+		EntityId:    entityId,
+		OperationId: opId,
+		Event:       ImportEventStatusChange,
 	}
 }
 
-func NewImportLabelChange(id entity.Id) ImportResult {
+func NewImportLabelChange(entityId entity.Id, opId entity.Id) ImportResult {
 	return ImportResult{
-		ID:    id,
-		Event: ImportEventLabelChange,
+		EntityId:    entityId,
+		OperationId: opId,
+		Event:       ImportEventLabelChange,
 	}
 }
 
-func NewImportTitleEdition(id entity.Id) ImportResult {
+func NewImportTitleEdition(entityId entity.Id, opId entity.Id) ImportResult {
 	return ImportResult{
-		ID:    id,
-		Event: ImportEventTitleEdition,
+		EntityId:    entityId,
+		OperationId: opId,
+		Event:       ImportEventTitleEdition,
 	}
 }
 
-func NewImportIdentity(id entity.Id) ImportResult {
+func NewImportIdentity(entityId entity.Id) ImportResult {
 	return ImportResult{
-		ID:    id,
-		Event: ImportEventIdentity,
+		EntityId: entityId,
+		Event:    ImportEventIdentity,
 	}
 }
 

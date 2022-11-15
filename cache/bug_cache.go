@@ -70,27 +70,27 @@ func (c *BugCache) ResolveOperationWithMetadata(key string, value string) (entit
 	return matching[0], nil
 }
 
-func (c *BugCache) AddComment(message string) (*bug.AddCommentOperation, error) {
+func (c *BugCache) AddComment(message string) (entity.CombinedId, *bug.AddCommentOperation, error) {
 	return c.AddCommentWithFiles(message, nil)
 }
 
-func (c *BugCache) AddCommentWithFiles(message string, files []repository.Hash) (*bug.AddCommentOperation, error) {
+func (c *BugCache) AddCommentWithFiles(message string, files []repository.Hash) (entity.CombinedId, *bug.AddCommentOperation, error) {
 	author, err := c.repoCache.GetUserIdentity()
 	if err != nil {
-		return nil, err
+		return entity.UnsetCombinedId, nil, err
 	}
 
 	return c.AddCommentRaw(author, time.Now().Unix(), message, files, nil)
 }
 
-func (c *BugCache) AddCommentRaw(author *IdentityCache, unixTime int64, message string, files []repository.Hash, metadata map[string]string) (*bug.AddCommentOperation, error) {
+func (c *BugCache) AddCommentRaw(author *IdentityCache, unixTime int64, message string, files []repository.Hash, metadata map[string]string) (entity.CombinedId, *bug.AddCommentOperation, error) {
 	c.mu.Lock()
-	op, err := bug.AddComment(c.bug, author, unixTime, message, files, metadata)
+	commentId, op, err := bug.AddComment(c.bug, author, unixTime, message, files, metadata)
 	c.mu.Unlock()
 	if err != nil {
-		return nil, err
+		return entity.UnsetCombinedId, nil, err
 	}
-	return op, c.notifyUpdated()
+	return commentId, op, c.notifyUpdated()
 }
 
 func (c *BugCache) ChangeLabels(added []string, removed []string) ([]bug.LabelChangeResult, *bug.LabelChangeOperation, error) {
@@ -189,24 +189,24 @@ func (c *BugCache) SetTitleRaw(author *IdentityCache, unixTime int64, title stri
 }
 
 // EditCreateComment is a convenience function to edit the body of a bug (the first comment)
-func (c *BugCache) EditCreateComment(body string) (*bug.EditCommentOperation, error) {
+func (c *BugCache) EditCreateComment(body string) (entity.CombinedId, *bug.EditCommentOperation, error) {
 	author, err := c.repoCache.GetUserIdentity()
 	if err != nil {
-		return nil, err
+		return entity.UnsetCombinedId, nil, err
 	}
 
 	return c.EditCreateCommentRaw(author, time.Now().Unix(), body, nil)
 }
 
 // EditCreateCommentRaw is a convenience function to edit the body of a bug (the first comment)
-func (c *BugCache) EditCreateCommentRaw(author *IdentityCache, unixTime int64, body string, metadata map[string]string) (*bug.EditCommentOperation, error) {
+func (c *BugCache) EditCreateCommentRaw(author *IdentityCache, unixTime int64, body string, metadata map[string]string) (entity.CombinedId, *bug.EditCommentOperation, error) {
 	c.mu.Lock()
-	op, err := bug.EditCreateComment(c.bug, author.Identity, unixTime, body, nil, metadata)
+	commentId, op, err := bug.EditCreateComment(c.bug, author.Identity, unixTime, body, nil, metadata)
 	c.mu.Unlock()
 	if err != nil {
-		return nil, err
+		return entity.UnsetCombinedId, nil, err
 	}
-	return op, c.notifyUpdated()
+	return commentId, op, c.notifyUpdated()
 }
 
 func (c *BugCache) EditComment(target entity.CombinedId, message string) (*bug.EditCommentOperation, error) {
@@ -225,10 +225,13 @@ func (c *BugCache) EditCommentRaw(author *IdentityCache, unixTime int64, target 
 	}
 
 	c.mu.Lock()
-	op, err := bug.EditComment(c.bug, author.Identity, unixTime, comment.TargetId(), message, nil, metadata)
+	commentId, op, err := bug.EditComment(c.bug, author.Identity, unixTime, comment.TargetId(), message, nil, metadata)
 	c.mu.Unlock()
 	if err != nil {
 		return nil, err
+	}
+	if commentId != target {
+		panic("EditComment returned unexpected comment id")
 	}
 	return op, c.notifyUpdated()
 }

@@ -178,7 +178,7 @@ func (gi *gitlabImporter) ensureIssueEvent(repo *cache.RepoCache, b *cache.BugCa
 			return err
 		}
 
-		gi.out <- core.NewImportStatusChange(op.Id())
+		gi.out <- core.NewImportStatusChange(b.Id(), op.Id())
 
 	case EventReopened:
 		if errResolve == nil {
@@ -196,7 +196,7 @@ func (gi *gitlabImporter) ensureIssueEvent(repo *cache.RepoCache, b *cache.BugCa
 			return err
 		}
 
-		gi.out <- core.NewImportStatusChange(op.Id())
+		gi.out <- core.NewImportStatusChange(b.Id(), op.Id())
 
 	case EventDescriptionChanged:
 		firstComment := b.Snapshot().Comments[0]
@@ -219,7 +219,7 @@ func (gi *gitlabImporter) ensureIssueEvent(repo *cache.RepoCache, b *cache.BugCa
 				return err
 			}
 
-			gi.out <- core.NewImportTitleEdition(op.Id())
+			gi.out <- core.NewImportTitleEdition(b.Id(), op.Id())
 		}
 
 	case EventComment:
@@ -229,7 +229,7 @@ func (gi *gitlabImporter) ensureIssueEvent(repo *cache.RepoCache, b *cache.BugCa
 		if errResolve == cache.ErrNoMatchingOp {
 
 			// add comment operation
-			op, err := b.AddCommentRaw(
+			commentId, _, err := b.AddCommentRaw(
 				author,
 				event.CreatedAt().Unix(),
 				cleanText,
@@ -241,7 +241,7 @@ func (gi *gitlabImporter) ensureIssueEvent(repo *cache.RepoCache, b *cache.BugCa
 			if err != nil {
 				return err
 			}
-			gi.out <- core.NewImportComment(op.Id())
+			gi.out <- core.NewImportComment(b.Id(), commentId)
 			return nil
 		}
 
@@ -256,7 +256,7 @@ func (gi *gitlabImporter) ensureIssueEvent(repo *cache.RepoCache, b *cache.BugCa
 		// compare local bug comment with the new event body
 		if comment.Message != cleanText {
 			// comment edition
-			op, err := b.EditCommentRaw(
+			_, err := b.EditCommentRaw(
 				author,
 				event.(NoteEvent).UpdatedAt.Unix(),
 				comment.CombinedId(),
@@ -267,7 +267,7 @@ func (gi *gitlabImporter) ensureIssueEvent(repo *cache.RepoCache, b *cache.BugCa
 			if err != nil {
 				return err
 			}
-			gi.out <- core.NewImportCommentEdition(op.Id())
+			gi.out <- core.NewImportCommentEdition(b.Id(), comment.CombinedId())
 		}
 
 		return nil
@@ -290,7 +290,7 @@ func (gi *gitlabImporter) ensureIssueEvent(repo *cache.RepoCache, b *cache.BugCa
 			return err
 		}
 
-		gi.out <- core.NewImportTitleEdition(op.Id())
+		gi.out <- core.NewImportTitleEdition(b.Id(), op.Id())
 
 	case EventAddLabel:
 		_, err = b.ForceChangeLabelsRaw(

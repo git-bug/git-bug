@@ -286,7 +286,7 @@ func (ji *jiraImporter) ensureComment(repo *cache.RepoCache, b *cache.BugCache, 
 		}
 
 		// add comment operation
-		op, err := b.AddCommentRaw(
+		commentId, op, err := b.AddCommentRaw(
 			author,
 			item.Created.Unix(),
 			cleanText,
@@ -299,7 +299,7 @@ func (ji *jiraImporter) ensureComment(repo *cache.RepoCache, b *cache.BugCache, 
 			return err
 		}
 
-		ji.out <- core.NewImportComment(op.Id())
+		ji.out <- core.NewImportComment(b.Id(), commentId)
 		targetOpID = op.Id()
 	}
 
@@ -329,11 +329,13 @@ func (ji *jiraImporter) ensureComment(repo *cache.RepoCache, b *cache.BugCache, 
 		return err
 	}
 
+	commentId := entity.CombineIds(b.Id(), targetOpID)
+
 	// comment edition
-	op, err := b.EditCommentRaw(
+	_, err = b.EditCommentRaw(
 		editor,
 		item.Updated.Unix(),
-		entity.CombineIds(b.Id(), targetOpID),
+		commentId,
 		text.Cleanup(item.Body),
 		map[string]string{
 			metaKeyJiraId: derivedID,
@@ -344,7 +346,7 @@ func (ji *jiraImporter) ensureComment(repo *cache.RepoCache, b *cache.BugCache, 
 		return err
 	}
 
-	ji.out <- core.NewImportCommentEdition(op.Id())
+	ji.out <- core.NewImportCommentEdition(b.Id(), commentId)
 
 	return nil
 }
@@ -510,7 +512,7 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 				return err
 			}
 
-			ji.out <- core.NewImportLabelChange(op.Id())
+			ji.out <- core.NewImportLabelChange(b.Id(), op.Id())
 
 		case "status":
 			statusStr, hasMap := statusMap[item.To]
@@ -528,7 +530,7 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 					if err != nil {
 						return err
 					}
-					ji.out <- core.NewImportStatusChange(op.Id())
+					ji.out <- core.NewImportStatusChange(b.Id(), op.Id())
 
 				case common.ClosedStatus.String():
 					op, err := b.CloseRaw(
@@ -542,7 +544,7 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 					if err != nil {
 						return err
 					}
-					ji.out <- core.NewImportStatusChange(op.Id())
+					ji.out <- core.NewImportStatusChange(b.Id(), op.Id())
 				}
 			} else {
 				ji.out <- core.NewImportError(
@@ -567,12 +569,12 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 				return err
 			}
 
-			ji.out <- core.NewImportTitleEdition(op.Id())
+			ji.out <- core.NewImportTitleEdition(b.Id(), op.Id())
 
 		case "description":
 			// NOTE(josh): JIRA calls it "description", which sounds more like the
 			// title but it's actually the body
-			op, err := b.EditCreateCommentRaw(
+			commentId, _, err := b.EditCreateCommentRaw(
 				author,
 				entry.Created.Unix(),
 				text.Cleanup(item.ToString),
@@ -585,7 +587,7 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 				return err
 			}
 
-			ji.out <- core.NewImportCommentEdition(op.Id())
+			ji.out <- core.NewImportCommentEdition(b.Id(), commentId)
 
 		default:
 			ji.out <- core.NewImportWarning(
