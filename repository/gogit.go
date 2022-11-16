@@ -80,7 +80,7 @@ func OpenGoGitRepo(path, namespace string, clockLoaders []ClockLoader) (*GoGitRe
 		localStorage: osfs.New(filepath.Join(path, namespace)),
 	}
 
-	loaderToRun := make([]ClockLoader, len(clockLoaders))
+	loaderToRun := make([]ClockLoader, 0, len(clockLoaders))
 	for _, loader := range clockLoaders {
 		loader := loader
 		allExist := true
