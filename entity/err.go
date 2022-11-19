@@ -5,6 +5,23 @@ import (
 	"strings"
 )
 
+type ErrNotFound struct {
+	typename string
+}
+
+func NewErrNotFound(typename string) *ErrNotFound {
+	return &ErrNotFound{typename: typename}
+}
+
+func (e ErrNotFound) Error() string {
+	return fmt.Sprintf("%s doesn't exist", e.typename)
+}
+
+func IsErrNotFound(err error) bool {
+	_, ok := err.(*ErrNotFound)
+	return ok
+}
+
 type ErrMultipleMatch struct {
 	entityType string
 	Matching   []Id

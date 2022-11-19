@@ -31,7 +31,7 @@ func (c *MultiRepoCache) RegisterRepository(ref string, repo repository.ClockedR
 	return r, nil
 }
 
-// RegisterDefaultRepository register a unnamed repository. Use this for mono-repo setup
+// RegisterDefaultRepository register an unnamed repository. Use this for mono-repo setup
 func (c *MultiRepoCache) RegisterDefaultRepository(repo repository.ClockedRepo) (*RepoCache, error) {
 	r, err := NewRepoCache(repo)
 	if err != nil {

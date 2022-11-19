@@ -75,7 +75,7 @@ func (ge *gitlabExporter) cacheAllClient(repo *cache.RepoCache, baseURL string) 
 		}
 
 		user, err := repo.ResolveIdentityImmutableMetadata(metaKeyGitlabLogin, login)
-		if err == identity.ErrIdentityNotExist {
+		if entity.IsErrNotFound(err) {
 			continue
 		}
 		if err != nil {

@@ -68,7 +68,7 @@ func (li *launchpadImporter) ImportAll(ctx context.Context, repo *cache.RepoCach
 					return excerpt.CreateMetadata[core.MetaKeyOrigin] == target &&
 						excerpt.CreateMetadata[metaKeyLaunchpadID] == lpBugID
 				})
-				if err != nil && err != bug.ErrBugNotExist {
+				if err != nil && !entity.IsErrNotFound(err) {
 					out <- core.NewImportError(err, entity.Id(lpBugID))
 					return
 				}
@@ -79,7 +79,7 @@ func (li *launchpadImporter) ImportAll(ctx context.Context, repo *cache.RepoCach
 					return
 				}
 
-				if err == bug.ErrBugNotExist {
+				if entity.IsErrNotFound(err) {
 					createdAt, _ := time.Parse(time.RFC3339, lpBug.CreatedAt)
 					b, _, err = repo.NewBugRaw(
 						owner,

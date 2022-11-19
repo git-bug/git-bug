@@ -23,7 +23,7 @@ func GetUserIdentity(repo repository.Repo) (*Identity, error) {
 	}
 
 	i, err := ReadLocal(repo, id)
-	if err == ErrIdentityNotExist {
+	if entity.IsErrNotFound(err) {
 		innerErr := repo.LocalConfig().RemoveAll(identityConfigKey)
 		if innerErr != nil {
 			_, _ = fmt.Fprintln(os.Stderr, errors.Wrap(innerErr, "can't clear user identity").Error())

@@ -103,7 +103,7 @@ func (je *jiraExporter) cacheAllClient(ctx context.Context, repo *cache.RepoCach
 		}
 
 		user, err := repo.ResolveIdentityImmutableMetadata(metaKeyJiraLogin, login)
-		if err == identity.ErrIdentityNotExist {
+		if entity.IsErrNotFound(err) {
 			continue
 		}
 		if err != nil {

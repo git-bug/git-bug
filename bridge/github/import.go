@@ -190,7 +190,7 @@ func (gi *githubImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache
 	if err == nil {
 		return b, nil
 	}
-	if err != bug.ErrBugNotExist {
+	if !entity.IsErrNotFound(err) {
 		return nil, err
 	}
 

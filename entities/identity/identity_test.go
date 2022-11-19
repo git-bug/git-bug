@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
@@ -278,13 +279,13 @@ func TestIdentityRemove(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = ReadLocal(repo, rene.Id())
-	require.Error(t, ErrIdentityNotExist, err)
+	require.ErrorAs(t, entity.ErrNotFound{}, err)
 
 	_, err = ReadRemote(repo, "remoteA", string(rene.Id()))
-	require.Error(t, ErrIdentityNotExist, err)
+	require.ErrorAs(t, entity.ErrNotFound{}, err)
 
 	_, err = ReadRemote(repo, "remoteB", string(rene.Id()))
-	require.Error(t, ErrIdentityNotExist, err)
+	require.ErrorAs(t, entity.ErrNotFound{}, err)
 
 	ids, err := ListLocalIds(repo)
 	require.NoError(t, err)

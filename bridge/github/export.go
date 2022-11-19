@@ -90,7 +90,7 @@ func (ge *githubExporter) cacheAllClient(repo *cache.RepoCache) error {
 		}
 
 		user, err := repo.ResolveIdentityImmutableMetadata(metaKeyGithubLogin, login)
-		if err == identity.ErrIdentityNotExist {
+		if entity.IsErrNotFound(err) {
 			continue
 		}
 		if err != nil {

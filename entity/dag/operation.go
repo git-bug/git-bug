@@ -63,6 +63,13 @@ type Operation interface {
 	setExtraMetadataImmutable(key string, value string)
 }
 
+type OperationWithApply[SnapT Snapshot] interface {
+	Operation
+
+	// Apply the operation to a Snapshot to create the final state
+	Apply(snapshot SnapT)
+}
+
 // OperationWithFiles is an optional extension for an Operation that has files dependency, stored in git.
 type OperationWithFiles interface {
 	// GetFiles return the files needed by this operation

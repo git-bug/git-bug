@@ -109,7 +109,7 @@ func read(repo repository.Repo, ref string) (*Identity, error) {
 
 	hashes, err := repo.ListCommits(ref)
 	if err != nil {
-		return nil, ErrIdentityNotExist
+		return nil, entity.NewErrNotFound("identity")
 	}
 	if len(hashes) == 0 {
 		return nil, fmt.Errorf("empty identity")
@@ -202,7 +202,7 @@ func RemoveIdentity(repo repository.ClockedRepo, id entity.Id) error {
 	}
 
 	if len(fullMatches) == 0 {
-		return ErrIdentityNotExist
+		return entity.NewErrNotFound("identity")
 	}
 
 	for _, ref := range fullMatches {

@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/MichaelMure/git-bug/entities/bug"
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/query"
 	"github.com/MichaelMure/git-bug/repository"
 )
@@ -213,7 +214,7 @@ func TestRemove(t *testing.T) {
 	assert.Equal(t, 1, len(repoCache.bugExcerpts))
 
 	_, err = repoCache.ResolveBug(b1.Id())
-	assert.Error(t, bug.ErrBugNotExist, err)
+	assert.ErrorIs(t, entity.ErrNotFound{}, err)
 }
 
 func TestCacheEviction(t *testing.T) {

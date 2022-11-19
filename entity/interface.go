@@ -10,3 +10,15 @@ type Interface interface {
 	// It is acceptable to use such a hash and keep mutating that data as long as Id() is not called.
 	Id() Id
 }
+
+// type Commitable interface {
+// 	Interface
+// 	NeedCommit() bool
+// 	CommitAsNeeded(repo repository.ClockedRepo) error
+// 	Commit(repo repository.ClockedRepo) error
+// }
+
+//
+// type Operation interface {
+//
+// }

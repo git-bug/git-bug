@@ -118,7 +118,7 @@ func (gi *gitlabImporter) ensureIssue(repo *cache.RepoCache, issue *gitlab.Issue
 	if err == nil {
 		return b, nil
 	}
-	if err != bug.ErrBugNotExist {
+	if !entity.IsErrNotFound(err) {
 		return nil, err
 	}
 

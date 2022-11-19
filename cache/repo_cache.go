@@ -52,16 +52,7 @@ type RepoCache struct {
 	// resolvers for all known entities
 	resolvers entity.Resolvers
 
-	// maximum number of loaded bugs
-	maxLoadedBugs int
-
-	muBug sync.RWMutex
-	// excerpt of bugs data for all bugs
-	bugExcerpts map[entity.Id]*BugExcerpt
-	// bug loaded in memory
-	bugs map[entity.Id]*BugCache
-	// loadedBugs is an LRU cache that records which bugs the cache has loaded in
-	loadedBugs *LRUIdCache
+	bugs *RepoCacheBug
 
 	muIdentity sync.RWMutex
 	// excerpt of identities data for all identities
@@ -79,12 +70,13 @@ func NewRepoCache(r repository.ClockedRepo) (*RepoCache, error) {
 
 func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, error) {
 	c := &RepoCache{
-		repo:          r,
-		name:          name,
-		maxLoadedBugs: defaultMaxLoadedBugs,
-		bugs:          make(map[entity.Id]*BugCache),
-		loadedBugs:    NewLRUIdCache(),
-		identities:    make(map[entity.Id]*IdentityCache),
+		repo: r,
+		name: name,
+		bugs: NewCache(r),
+		// maxLoadedBugs: defaultMaxLoadedBugs,
+		// bugs:          make(map[entity.Id]*BugCache),
+		// loadedBugs:    newLRUIdCache(),
+		// identities:    make(map[entity.Id]*IdentityCache),
 	}
 
 	c.resolvers = makeResolvers(c)
@@ -106,6 +98,11 @@ func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, error
 	}
 
 	return c, c.write()
+}
+
+// Bugs gives access to the Bug entities
+func (c *RepoCache) Bugs() *RepoCacheBug {
+	return c.bugs
 }
 
 // setCacheSize change the maximum number of loaded bugs

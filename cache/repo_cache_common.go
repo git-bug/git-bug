@@ -126,9 +126,13 @@ func (c *RepoCache) MergeAll(remote string) <-chan entity.MergeResult {
 				continue
 			}
 
+			// TODO: have subcache do the merging?
 			switch result.Status {
-			case entity.MergeStatusNew, entity.MergeStatusUpdated:
+			case entity.MergeStatusNew:
 				b := result.Entity.(*bug.Bug)
+				_, err := c.bugs.add(b)
+			case entity.MergeStatusUpdated:
+				_, err := c.bugs.entityUpdated(b)
 				snap := b.Compile()
 				c.muBug.Lock()
 				c.bugExcerpts[result.Id] = NewBugExcerpt(b, snap)

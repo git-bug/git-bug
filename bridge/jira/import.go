@@ -229,11 +229,11 @@ func (ji *jiraImporter) ensureIssue(repo *cache.RepoCache, issue Issue) (*cache.
 			excerpt.CreateMetadata[metaKeyJiraId] == issue.ID &&
 			excerpt.CreateMetadata[metaKeyJiraProject] == ji.conf[confKeyProject]
 	})
-	if err != nil && err != bug.ErrBugNotExist {
+	if err != nil && !entity.IsErrNotFound(err) {
 		return nil, err
 	}
 
-	if err == bug.ErrBugNotExist {
+	if entity.IsErrNotFound(err) {
 		b, _, err = repo.NewBugRaw(
 			author,
 			issue.Fields.Created.Unix(),

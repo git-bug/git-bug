@@ -18,7 +18,7 @@ const selectFile = "select"
 var ErrNoValidId = errors.New("you must provide a bug id or use the \"select\" command first")
 
 // ResolveBug first try to resolve a bug using the first argument of the command
-// line. If it fails, it fallback to the select mechanism.
+// line. If it fails, it falls back to the select mechanism.
 //
 // Returns:
 // - the bug if any
@@ -34,7 +34,7 @@ func ResolveBug(repo *cache.RepoCache, args []string) (*cache.BugCache, []string
 			return b, args[1:], nil
 		}
 
-		if err != bug.ErrBugNotExist {
+		if !entity.IsErrNotFound(err) {
 			return nil, nil, err
 		}
 	}
@@ -44,7 +44,7 @@ func ResolveBug(repo *cache.RepoCache, args []string) (*cache.BugCache, []string
 	b, err := selected(repo)
 
 	// selected bug is invalid
-	if err == bug.ErrBugNotExist {
+	if entity.IsErrNotFound(err) {
 		// we clear the selected bug
 		err = Clear(repo)
 		if err != nil {
