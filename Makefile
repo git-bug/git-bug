@@ -33,7 +33,7 @@ install:
 .PHONY: releases
 releases:
 	go generate
-	go run github.com/mitchellh/gox@v1.0.1 -ldflags "$(LDFLAGS)" -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}"
+	go run github.com/mitchellh/gox@v1.0.1 -ldflags "$(LDFLAGS)" -osarch '!darwin/386' -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}"
 
 secure: secure-practices secure-vulnerabilities
 
