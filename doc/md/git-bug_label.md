@@ -1,9 +1,15 @@
 ## git-bug label
 
-Display, add or remove labels to/from a bug.
+List valid labels
+
+### Synopsis
+
+List valid labels.
+
+Note: in the future, a proper label policy could be implemented where valid labels are defined in a configuration file. Until that, the default behavior is to return the list of labels already used.
 
 ```
-git-bug label [ID] [flags]
+git-bug label [flags]
 ```
 
 ### Options
@@ -14,8 +20,5 @@ git-bug label [ID] [flags]
 
 ### SEE ALSO
 
-* [git-bug](git-bug.md)	 - A bug tracker embedded in Git.
-* [git-bug label add](git-bug_label_add.md)	 - Add a label to a bug.
-* [git-bug label ls](git-bug_label_ls.md)	 - List valid labels.
-* [git-bug label rm](git-bug_label_rm.md)	 - Remove a label from a bug.
+* [git-bug](git-bug.md)	 - A bug tracker embedded in Git
 

@@ -1,6 +1,6 @@
 ## git-bug bridge rm
 
-Delete a configured bridge.
+Delete a configured bridge
 
 ```
 git-bug bridge rm NAME [flags]
@@ -14,5 +14,5 @@ git-bug bridge rm NAME [flags]
 
 ### SEE ALSO
 
-* [git-bug bridge](git-bug_bridge.md)	 - Configure and use bridges to other bug trackers.
+* [git-bug bridge](git-bug_bridge.md)	 - List bridges to other bug trackers
 

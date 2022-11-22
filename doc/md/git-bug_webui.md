@@ -1,6 +1,6 @@
 ## git-bug webui
 
-Launch the web UI.
+Launch the web UI
 
 ### Synopsis
 
@@ -29,5 +29,5 @@ git-bug webui [flags]
 
 ### SEE ALSO
 
-* [git-bug](git-bug.md)	 - A bug tracker embedded in Git.
+* [git-bug](git-bug.md)	 - A bug tracker embedded in Git
 

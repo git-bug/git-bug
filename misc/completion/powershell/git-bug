@@ -10,7 +10,7 @@ filter __git-bug_escapeStringWithSpecialChars {
     $_ -replace '\s|#|@|\$|;|,|''|\{|\}|\(|\)|"|`|\||<|>|&','`$&'
 }
 
-Register-ArgumentCompleter -CommandName 'git-bug' -ScriptBlock {
+[scriptblock]$__git_bugCompleterBlock = {
     param(
             $WordToComplete,
             $CommandAst,
@@ -226,3 +226,5 @@ Register-ArgumentCompleter -CommandName 'git-bug' -ScriptBlock {
 
     }
 }
+
+Register-ArgumentCompleter -CommandName 'git-bug' -ScriptBlock $__git_bugCompleterBlock

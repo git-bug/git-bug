@@ -1,6 +1,6 @@
 ## git-bug version
 
-Show git-bug version information.
+Show git-bug version information
 
 ```
 git-bug version [flags]
@@ -17,5 +17,5 @@ git-bug version [flags]
 
 ### SEE ALSO
 
-* [git-bug](git-bug.md)	 - A bug tracker embedded in Git.
+* [git-bug](git-bug.md)	 - A bug tracker embedded in Git
 

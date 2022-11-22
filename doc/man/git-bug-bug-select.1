@@ -1,0 +1,50 @@
+.nh
+.TH "GIT-BUG" "1" "Apr 2019" "Generated from git-bug's source code" ""
+
+.SH NAME
+.PP
+git-bug-bug-select - Select a bug for implicit use in future commands
+
+
+.SH SYNOPSIS
+.PP
+\fBgit-bug bug select BUG_ID [flags]\fP
+
+
+.SH DESCRIPTION
+.PP
+Select a bug for implicit use in future commands.
+
+.PP
+This command allows you to omit any bug ID argument, for example:
+  git bug show
+instead of
+  git bug show 2f153ca
+
+.PP
+The complementary command is "git bug deselect" performing the opposite operation.
+
+
+.SH OPTIONS
+.PP
+\fB-h\fP, \fB--help\fP[=false]
+	help for select
+
+
+.SH EXAMPLE
+.PP
+.RS
+
+.nf
+git bug select 2f15
+git bug comment
+git bug status
+
+
+.fi
+.RE
+
+
+.SH SEE ALSO
+.PP
+\fBgit-bug-bug(1)\fP
