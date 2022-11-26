@@ -38,6 +38,7 @@ func NewRepoCacheBug(repo repository.ClockedRepo,
 		ReadWithResolver:    bug.ReadWithResolver,
 		ReadAllWithResolver: bug.ReadAllWithResolver,
 		Remove:              bug.Remove,
+		RemoveAll:           bug.RemoveAll,
 		MergeAll:            bug.MergeAll,
 	}
 

@@ -76,10 +76,15 @@ type RepoCommon interface {
 	GetRemotes() (map[string]string, error)
 }
 
+type LocalStorage interface {
+	billy.Filesystem
+	RemoveAll(path string) error
+}
+
 // RepoStorage give access to the filesystem
 type RepoStorage interface {
 	// LocalStorage return a billy.Filesystem giving access to $RepoPath/.git/git-bug
-	LocalStorage() billy.Filesystem
+	LocalStorage() LocalStorage
 }
 
 // RepoIndex gives access to full-text search indexes
@@ -102,6 +107,9 @@ type Index interface {
 
 	// DocCount returns the number of document in the index.
 	DocCount() (uint64, error)
+
+	// Remove delete one document in the index.
+	Remove(id string) error
 
 	// Clear empty the index.
 	Clear() error

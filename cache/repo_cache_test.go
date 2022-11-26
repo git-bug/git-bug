@@ -135,6 +135,39 @@ func TestCache(t *testing.T) {
 	_, err = cache.Bugs().ResolvePrefix(bug1.Id().String()[:10])
 	require.NoError(t, err)
 
+	require.Len(t, cache.bugs.cached, 1)
+	require.Len(t, cache.bugs.excerpts, 2)
+	require.Len(t, cache.identities.cached, 1)
+	require.Len(t, cache.identities.excerpts, 2)
+	require.Equal(t, uint64(2), indexCount(t, identity.Namespace))
+	require.Equal(t, uint64(2), indexCount(t, bug.Namespace))
+
+	// Remove + RemoveAll
+	err = cache.Identities().Remove(iden1.Id().String()[:10])
+	require.NoError(t, err)
+	err = cache.Bugs().Remove(bug1.Id().String()[:10])
+	require.NoError(t, err)
+	require.Len(t, cache.bugs.cached, 0)
+	require.Len(t, cache.bugs.excerpts, 1)
+	require.Len(t, cache.identities.cached, 0)
+	require.Len(t, cache.identities.excerpts, 1)
+	require.Equal(t, uint64(1), indexCount(t, identity.Namespace))
+	require.Equal(t, uint64(1), indexCount(t, bug.Namespace))
+
+	_, err = cache.Identities().New("René Descartes", "rene@descartes.fr")
+	require.NoError(t, err)
+	_, _, err = cache.Bugs().NewRaw(iden2, time.Now().Unix(), "title", "message", nil, nil)
+	require.NoError(t, err)
+
+	err = cache.RemoveAll()
+	require.NoError(t, err)
+	require.Len(t, cache.bugs.cached, 0)
+	require.Len(t, cache.bugs.excerpts, 0)
+	require.Len(t, cache.identities.cached, 0)
+	require.Len(t, cache.identities.excerpts, 0)
+	require.Equal(t, uint64(0), indexCount(t, identity.Namespace))
+	require.Equal(t, uint64(0), indexCount(t, bug.Namespace))
+
 	// Close
 	require.NoError(t, cache.Close())
 	require.Empty(t, cache.bugs.cached)

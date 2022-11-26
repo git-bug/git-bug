@@ -81,6 +81,7 @@ the same git remote you are already using to collaborate with other people.
 
 	cmd.AddCommand(newCommandsCommand())
 	cmd.AddCommand(newVersionCommand())
+	cmd.AddCommand(newWipeCommand())
 
 	return cmd
 }

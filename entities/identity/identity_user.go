@@ -15,6 +15,10 @@ func SetUserIdentity(repo repository.RepoConfig, identity *Identity) error {
 	return repo.LocalConfig().StoreString(identityConfigKey, identity.Id().String())
 }
 
+func ClearUserIdentity(repo repository.RepoConfig) error {
+	return repo.LocalConfig().RemoveAll(identityConfigKey)
+}
+
 // GetUserIdentity read the current user identity, set with a git config entry
 func GetUserIdentity(repo repository.Repo) (*Identity, error) {
 	id, err := GetUserIdentityId(repo)

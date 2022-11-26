@@ -258,3 +258,19 @@ func Remove(def Definition, repo repository.ClockedRepo, id entity.Id) error {
 
 	return nil
 }
+
+// RemoveAll delete all Entity matching the Definition.
+// RemoveAll is idempotent.
+func RemoveAll(def Definition, repo repository.ClockedRepo) error {
+	localIds, err := ListLocalIds(def, repo)
+	if err != nil {
+		return err
+	}
+	for _, id := range localIds {
+		err = Remove(def, repo, id)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}

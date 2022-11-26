@@ -129,6 +129,13 @@ func (b *bleveIndex) DocCount() (uint64, error) {
 	return b.index.DocCount()
 }
 
+func (b *bleveIndex) Remove(id string) error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	return b.index.Delete(id)
+}
+
 func (b *bleveIndex) Clear() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
