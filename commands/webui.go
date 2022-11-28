@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -162,7 +163,7 @@ func runWebUI(env *execenv.Env, opts webUIOptions) error {
 	env.Out.Println("Press Ctrl+c to quit")
 
 	configOpen, err := env.Repo.AnyConfig().ReadBool(webUIOpenConfigKey)
-	if err == repository.ErrNoConfigEntry {
+	if errors.Is(err, repository.ErrNoConfigEntry) {
 		// default to true
 		configOpen = true
 	} else if err != nil {

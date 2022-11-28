@@ -96,7 +96,7 @@ func (m *mergedConfig) ReadBool(key string) (bool, error) {
 	if err == nil {
 		return v, nil
 	}
-	if err != ErrNoConfigEntry && err != ErrMultipleConfigEntry {
+	if !errors.Is(err, ErrNoConfigEntry) && err != ErrMultipleConfigEntry {
 		return false, err
 	}
 	return m.global.ReadBool(key)
@@ -107,7 +107,7 @@ func (m *mergedConfig) ReadString(key string) (string, error) {
 	if err == nil {
 		return val, nil
 	}
-	if err != ErrNoConfigEntry && err != ErrMultipleConfigEntry {
+	if !errors.Is(err, ErrNoConfigEntry) && err != ErrMultipleConfigEntry {
 		return "", err
 	}
 	return m.global.ReadString(key)
@@ -118,7 +118,7 @@ func (m *mergedConfig) ReadTimestamp(key string) (time.Time, error) {
 	if err == nil {
 		return val, nil
 	}
-	if err != ErrNoConfigEntry && err != ErrMultipleConfigEntry {
+	if !errors.Is(err, ErrNoConfigEntry) && err != ErrMultipleConfigEntry {
 		return time.Time{}, err
 	}
 	return m.global.ReadTimestamp(key)

@@ -53,7 +53,7 @@ func testConfig(t *testing.T, config Config) {
 	}, configs)
 
 	_, err = config.ReadBool("section.true")
-	require.Equal(t, ErrNoConfigEntry, err)
+	require.ErrorIs(t, err, ErrNoConfigEntry)
 
 	err = config.RemoveAll("section.nonexistingkey")
 	require.Error(t, err)
@@ -62,7 +62,7 @@ func testConfig(t *testing.T, config Config) {
 	require.NoError(t, err)
 
 	_, err = config.ReadString("section.key")
-	require.Equal(t, ErrNoConfigEntry, err)
+	require.ErrorIs(t, err, ErrNoConfigEntry)
 
 	err = config.RemoveAll("nonexistingsection")
 	require.Error(t, err)
