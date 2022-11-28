@@ -49,7 +49,7 @@ func (mc *MemConfig) ReadString(key string) (string, error) {
 	key = normalizeKey(key)
 	val, ok := mc.config[key]
 	if !ok {
-		return "", fmt.Errorf("%w: missing key %s", ErrNoConfigEntry, key)
+		return "", newErrNoConfigEntry(key)
 	}
 
 	return val, nil

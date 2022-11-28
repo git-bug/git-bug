@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 )
@@ -10,6 +11,14 @@ var (
 	ErrNoConfigEntry       = errors.New("no config entry for the given key")
 	ErrMultipleConfigEntry = errors.New("multiple config entry for the given key")
 )
+
+func newErrNoConfigEntry(key string) error {
+	return fmt.Errorf("%w: missing key %s", ErrNoConfigEntry, key)
+}
+
+func newErrMultipleConfigEntry(key string) error {
+	return fmt.Errorf("%w: duplicated key %s", ErrMultipleConfigEntry, key)
+}
 
 // Config represent the common function interacting with the repository config storage
 type Config interface {

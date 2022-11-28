@@ -119,7 +119,7 @@ func (cr *goGitConfigReader) ReadString(key string) (string, error) {
 
 	sectionName := split[0]
 	if !cfg.Raw.HasSection(sectionName) {
-		return "", fmt.Errorf("%w: missing key %s", ErrNoConfigEntry, key)
+		return "", newErrNoConfigEntry(key)
 	}
 	section := cfg.Raw.Section(sectionName)
 
@@ -127,24 +127,24 @@ func (cr *goGitConfigReader) ReadString(key string) (string, error) {
 	case len(split) == 2:
 		optionName := split[1]
 		if !section.HasOption(optionName) {
-			return "", fmt.Errorf("%w: missing key %s", ErrNoConfigEntry, key)
+			return "", newErrNoConfigEntry(key)
 		}
 		if len(section.OptionAll(optionName)) > 1 {
-			return "", fmt.Errorf("%w: duplicated key %s", ErrMultipleConfigEntry, key)
+			return "", newErrMultipleConfigEntry(key)
 		}
 		return section.Option(optionName), nil
 	default:
 		subsectionName := strings.Join(split[1:len(split)-1], ".")
 		optionName := split[len(split)-1]
 		if !section.HasSubsection(subsectionName) {
-			return "", fmt.Errorf("%w: missing key %s", ErrNoConfigEntry, key)
+			return "", newErrNoConfigEntry(key)
 		}
 		subsection := section.Subsection(subsectionName)
 		if !subsection.HasOption(optionName) {
-			return "", fmt.Errorf("%w: missing key %s", ErrNoConfigEntry, key)
+			return "", newErrNoConfigEntry(key)
 		}
 		if len(subsection.OptionAll(optionName)) > 1 {
-			return "", fmt.Errorf("%w: duplicated key %s", ErrMultipleConfigEntry, key)
+			return "", newErrMultipleConfigEntry(key)
 		}
 		return subsection.Option(optionName), nil
 	}
