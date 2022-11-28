@@ -130,7 +130,7 @@ func (cr *goGitConfigReader) ReadString(key string) (string, error) {
 			return "", fmt.Errorf("%w: missing key %s", ErrNoConfigEntry, key)
 		}
 		if len(section.OptionAll(optionName)) > 1 {
-			return "", ErrMultipleConfigEntry
+			return "", fmt.Errorf("%w: duplicated key %s", ErrMultipleConfigEntry, key)
 		}
 		return section.Option(optionName), nil
 	default:
@@ -144,7 +144,7 @@ func (cr *goGitConfigReader) ReadString(key string) (string, error) {
 			return "", fmt.Errorf("%w: missing key %s", ErrNoConfigEntry, key)
 		}
 		if len(subsection.OptionAll(optionName)) > 1 {
-			return "", ErrMultipleConfigEntry
+			return "", fmt.Errorf("%w: duplicated key %s", ErrMultipleConfigEntry, key)
 		}
 		return subsection.Option(optionName), nil
 	}

@@ -39,7 +39,7 @@ func GetUserIdentityId(repo repository.Repo) (entity.Id, error) {
 	if errors.Is(err, repository.ErrNoConfigEntry) {
 		return entity.UnsetId, ErrNoIdentitySet
 	}
-	if err == repository.ErrMultipleConfigEntry {
+	if errors.Is(err, repository.ErrMultipleConfigEntry) {
 		return entity.UnsetId, ErrMultipleIdentitiesSet
 	}
 	if err != nil {
