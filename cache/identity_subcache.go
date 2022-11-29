@@ -7,7 +7,7 @@ import (
 )
 
 type RepoCacheIdentity struct {
-	SubCache[*IdentityExcerpt, *IdentityCache]
+	SubCache[*IdentityExcerpt, *IdentityCache, identity.Interface]
 }
 
 // ResolveIdentityImmutableMetadata retrieve an Identity that has the exact given metadata on

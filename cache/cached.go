@@ -104,6 +104,12 @@ func (e *CachedEntityBase[SnapT, OpT]) ResolveOperationWithMetadata(key string, 
 	return matching[0], nil
 }
 
+func (e *CachedEntityBase[SnapT, OpT]) Validate() error {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	return e.entity.Validate()
+}
+
 func (e *CachedEntityBase[SnapT, OpT]) Commit() error {
 	e.mu.Lock()
 	err := e.entity.Commit(e.repo)

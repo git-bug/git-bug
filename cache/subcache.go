@@ -9,7 +9,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/MichaelMure/git-bug/entities/bug"
-	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 )
@@ -22,11 +21,18 @@ type CacheEntity interface {
 	NeedCommit() bool
 }
 
-type getUserIdentityFunc func() (identity.Interface, error)
+type cacheMgmt interface {
+	Load() error
+	Write() error
+	Build() error
+	Close() error
+}
+
+type getUserIdentityFunc func() (*IdentityCache, error)
 
 type SubCache[ExcerptT Excerpt, CacheT CacheEntity, EntityT entity.Interface] struct {
 	repo      repository.ClockedRepo
-	resolvers entity.Resolvers
+	resolvers func() entity.Resolvers
 
 	getUserIdentity  getUserIdentityFunc
 	readWithResolver func(repository.ClockedRepo, entity.Resolvers, entity.Id) (EntityT, error)
@@ -46,8 +52,8 @@ type SubCache[ExcerptT Excerpt, CacheT CacheEntity, EntityT entity.Interface] st
 
 func NewSubCache[ExcerptT Excerpt, CacheT CacheEntity, EntityT entity.Interface](
 	repo repository.ClockedRepo,
-	resolvers entity.Resolvers,
-	getUserIdentity func() (identity.Interface, error),
+	resolvers func() entity.Resolvers,
+	getUserIdentity getUserIdentityFunc,
 	typename, namespace string,
 	version uint, maxLoaded int) *SubCache[ExcerptT, CacheT, EntityT] {
 	return &SubCache[ExcerptT, CacheT, EntityT]{
@@ -144,8 +150,16 @@ func (sc *SubCache[ExcerptT, CacheT, EntityT]) Write() error {
 	return f.Close()
 }
 
-func (sc *SubCache[ExcerptT, CacheT, EntityT]) Build() {
+func (sc *SubCache[ExcerptT, CacheT, EntityT]) Build() error {
 
+}
+
+func (sc *SubCache[ExcerptT, CacheT, EntityT]) Close() error {
+	sc.mu.Lock()
+	defer sc.mu.Unlock()
+	sc.excerpts = nil
+	sc.cached = make(map[entity.Id]CacheT)
+	return nil
 }
 
 // AllIds return all known bug ids
@@ -175,7 +189,7 @@ func (sc *SubCache[ExcerptT, CacheT, EntityT]) Resolve(id entity.Id) (CacheT, er
 	}
 	sc.mu.RUnlock()
 
-	b, err := sc.readWithResolver(sc.repo, sc.resolvers, id)
+	b, err := sc.readWithResolver(sc.repo, sc.resolvers(), id)
 	if err != nil {
 		return nil, err
 	}

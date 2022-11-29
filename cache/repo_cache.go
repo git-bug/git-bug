@@ -6,7 +6,8 @@ import (
 	"io/ioutil"
 	"os"
 	"strconv"
-	"sync"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/MichaelMure/git-bug/entities/bug"
 	"github.com/MichaelMure/git-bug/entities/identity"
@@ -52,13 +53,10 @@ type RepoCache struct {
 	// resolvers for all known entities
 	resolvers entity.Resolvers
 
-	bugs *RepoCacheBug
+	bugs       *RepoCacheBug
+	identities *RepoCacheIdentity
 
-	muIdentity sync.RWMutex
-	// excerpt of identities data for all identities
-	identitiesExcerpts map[entity.Id]*IdentityExcerpt
-	// identities loaded in memory
-	identities map[entity.Id]*IdentityCache
+	subcaches []cacheMgmt
 
 	// the user identity's id, if known
 	userIdentityId entity.Id
@@ -72,14 +70,20 @@ func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, error
 	c := &RepoCache{
 		repo: r,
 		name: name,
-		bugs: NewCache(r),
-		// maxLoadedBugs: defaultMaxLoadedBugs,
-		// bugs:          make(map[entity.Id]*BugCache),
-		// loadedBugs:    newLRUIdCache(),
-		// identities:    make(map[entity.Id]*IdentityCache),
 	}
 
-	c.resolvers = makeResolvers(c)
+	bugs := NewSubCache[*BugExcerpt, *BugCache, bug.Interface](r,
+		c.getResolvers, c.GetUserIdentity,
+		"bug", "bugs",
+		formatVersion, defaultMaxLoadedBugs)
+
+	c.subcaches = append(c.subcaches, bugs)
+	c.bugs = &RepoCacheBug{SubCache: *bugs}
+
+	c.resolvers = entity.Resolvers{
+		&IdentityCache{}: entity.ResolverFunc((func(id entity.Id) (entity.Interface, error)(c.identities.Resolve)),
+		&BugCache{}:      c.bugs,
+	}
 
 	err := c.lock()
 	if err != nil {
@@ -105,6 +109,15 @@ func (c *RepoCache) Bugs() *RepoCacheBug {
 	return c.bugs
 }
 
+// Identities gives access to the Identity entities
+func (c *RepoCache) Identities() *RepoCacheIdentity {
+	return c.identities
+}
+
+func (c *RepoCache) getResolvers() entity.Resolvers {
+	return c.resolvers
+}
+
 // setCacheSize change the maximum number of loaded bugs
 func (c *RepoCache) setCacheSize(size int) {
 	c.maxLoadedBugs = size
@@ -113,21 +126,20 @@ func (c *RepoCache) setCacheSize(size int) {
 
 // load will try to read from the disk all the cache files
 func (c *RepoCache) load() error {
-	err := c.loadBugCache()
-	if err != nil {
-		return err
+	var errG errgroup.Group
+	for _, mgmt := range c.subcaches {
+		errG.Go(mgmt.Load)
 	}
-
-	return c.loadIdentityCache()
+	return errG.Wait()
 }
 
 // write will serialize on disk all the cache files
 func (c *RepoCache) write() error {
-	err := c.writeBugCache()
-	if err != nil {
-		return err
+	var errG errgroup.Group
+	for _, mgmt := range c.subcaches {
+		errG.Go(mgmt.Write)
 	}
-	return c.writeIdentityCache()
+	return errG.Wait()
 }
 
 func (c *RepoCache) lock() error {
@@ -151,17 +163,16 @@ func (c *RepoCache) lock() error {
 }
 
 func (c *RepoCache) Close() error {
-	c.muBug.Lock()
-	defer c.muBug.Unlock()
-	c.muIdentity.Lock()
-	defer c.muIdentity.Unlock()
+	var errG errgroup.Group
+	for _, mgmt := range c.subcaches {
+		errG.Go(mgmt.Close)
+	}
+	err := errG.Wait()
+	if err != nil {
+		return err
+	}
 
-	c.identities = make(map[entity.Id]*IdentityCache)
-	c.identitiesExcerpts = nil
-	c.bugs = make(map[entity.Id]*BugCache)
-	c.bugExcerpts = nil
-
-	err := c.repo.Close()
+	err = c.repo.Close()
 	if err != nil {
 		return err
 	}

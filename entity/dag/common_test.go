@@ -88,6 +88,18 @@ func unmarshaler(raw json.RawMessage, resolvers entity.Resolvers) (Operation, er
 }
 
 /*
+  Entity
+*/
+
+type Foo struct {
+	*Entity
+}
+
+func wrapper(e *Entity) *Foo {
+	return &Foo{Entity: e}
+}
+
+/*
   Identities + repo + definition
 */
 

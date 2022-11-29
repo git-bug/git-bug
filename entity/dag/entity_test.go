@@ -9,7 +9,7 @@ import (
 func TestWriteRead(t *testing.T) {
 	repo, id1, id2, resolver, def := makeTestContext()
 
-	entity := New(def)
+	entity := wrapper(New(def))
 	require.False(t, entity.NeedCommit())
 
 	entity.Append(newOp1(id1, "foo"))
@@ -24,16 +24,16 @@ func TestWriteRead(t *testing.T) {
 	require.NoError(t, entity.CommitAsNeeded(repo))
 	require.False(t, entity.NeedCommit())
 
-	read, err := Read(def, repo, resolver, entity.Id())
+	read, err := Read(def, wrapper, repo, resolver, entity.Id())
 	require.NoError(t, err)
 
-	assertEqualEntities(t, entity, read)
+	assertEqualEntities(t, entity.Entity, read.Entity)
 }
 
 func TestWriteReadMultipleAuthor(t *testing.T) {
 	repo, id1, id2, resolver, def := makeTestContext()
 
-	entity := New(def)
+	entity := wrapper(New(def))
 
 	entity.Append(newOp1(id1, "foo"))
 	entity.Append(newOp2(id2, "bar"))
@@ -43,10 +43,10 @@ func TestWriteReadMultipleAuthor(t *testing.T) {
 	entity.Append(newOp2(id1, "foobar"))
 	require.NoError(t, entity.CommitAsNeeded(repo))
 
-	read, err := Read(def, repo, resolver, entity.Id())
+	read, err := Read(def, wrapper, repo, resolver, entity.Id())
 	require.NoError(t, err)
 
-	assertEqualEntities(t, entity, read)
+	assertEqualEntities(t, entity.Entity, read.Entity)
 }
 
 func assertEqualEntities(t *testing.T, a, b *Entity) {

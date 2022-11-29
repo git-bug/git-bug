@@ -233,31 +233,6 @@ func (c *RepoCacheBug) NewRaw(author identity.Interface, unixTime int64, title s
 	return cached, op, nil
 }
 
-// Remove removes a bug from the cache and repo given a bug id prefix
-func (c *RepoCacheBug) Remove(prefix string) error {
-	b, err := c.ResolveBugPrefix(prefix)
-	if err != nil {
-		return err
-	}
-
-	c.muBug.Lock()
-
-	err = bug.Remove(c.repo, b.Id())
-	if err != nil {
-		c.muBug.Unlock()
-
-		return err
-	}
-
-	delete(c.bugs, b.Id())
-	delete(c.bugExcerpts, b.Id())
-	c.loadedBugs.Remove(b.Id())
-
-	c.muBug.Unlock()
-
-	return c.writeBugCache()
-}
-
 func (c *RepoCacheBug) addBugToSearchIndex(snap *bug.Snapshot) error {
 	searchableBug := struct {
 		Text []string

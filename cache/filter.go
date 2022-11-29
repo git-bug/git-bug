@@ -9,7 +9,7 @@ import (
 )
 
 // resolver has the resolving functions needed by filters.
-// This exist mainly to go through the functions of the cache with proper locking.
+// This exists mainly to go through the functions of the cache with proper locking.
 type resolver interface {
 	ResolveIdentityExcerpt(id entity.Id) (*IdentityExcerpt, error)
 }
@@ -211,7 +211,7 @@ func (*Matcher) orMatch(filters []Filter, excerpt *BugExcerpt, resolver resolver
 	return match
 }
 
-// Check if all of the filters provided match the bug
+// Check if all the filters provided match the bug
 func (*Matcher) andMatch(filters []Filter, excerpt *BugExcerpt, resolver resolver) bool {
 	if len(filters) == 0 {
 		return true

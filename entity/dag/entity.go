@@ -33,6 +33,19 @@ type Definition struct {
 	FormatVersion uint
 }
 
+type Actions[EntityT entity.Interface] struct {
+	Wrap             func(e *Entity) EntityT
+	New              func() EntityT
+	Read             func(repo repository.ClockedRepo, id entity.Id) (EntityT, error)
+	ReadWithResolver func(repo repository.ClockedRepo, resolvers entity.Resolvers, id entity.Id) (EntityT, error)
+	ReadAll          func(repo repository.ClockedRepo) <-chan StreamedEntity[EntityT]
+	ListLocalIds     func(repo repository.Repo) ([]entity.Id, error)
+	Fetch            func(repo repository.Repo, remote string) (string, error)
+	Push             func(repo repository.Repo, remote string) (string, error)
+	Pull             func(repo repository.ClockedRepo, resolvers entity.Resolvers, remote string, mergeAuthor identity.Interface) error
+	MergeAll         func(repo repository.ClockedRepo, resolvers entity.Resolvers, remote string, mergeAuthor identity.Interface) <-chan entity.MergeResult
+}
+
 // Entity is a data structure stored in a chain of git objects, supporting actions like Push, Pull and Merge.
 type Entity struct {
 	// A Lamport clock is a logical clock that allow to order event
@@ -59,32 +72,32 @@ func New(definition Definition) *Entity {
 }
 
 // Read will read and decode a stored local Entity from a repository
-func Read(def Definition, repo repository.ClockedRepo, resolvers entity.Resolvers, id entity.Id) (*Entity, error) {
+func Read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.ClockedRepo, resolvers entity.Resolvers, id entity.Id) (EntityT, error) {
 	if err := id.Validate(); err != nil {
-		return nil, errors.Wrap(err, "invalid id")
+		return *new(EntityT), errors.Wrap(err, "invalid id")
 	}
 
 	ref := fmt.Sprintf("refs/%s/%s", def.Namespace, id.String())
 
-	return read(def, repo, resolvers, ref)
+	return read[EntityT](def, wrapper, repo, resolvers, ref)
 }
 
 // readRemote will read and decode a stored remote Entity from a repository
-func readRemote(def Definition, repo repository.ClockedRepo, resolvers entity.Resolvers, remote string, id entity.Id) (*Entity, error) {
+func readRemote[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.ClockedRepo, resolvers entity.Resolvers, remote string, id entity.Id) (EntityT, error) {
 	if err := id.Validate(); err != nil {
-		return nil, errors.Wrap(err, "invalid id")
+		return *new(EntityT), errors.Wrap(err, "invalid id")
 	}
 
 	ref := fmt.Sprintf("refs/remotes/%s/%s/%s", def.Namespace, remote, id.String())
 
-	return read(def, repo, resolvers, ref)
+	return read[EntityT](def, wrapper, repo, resolvers, ref)
 }
 
 // read fetch from git and decode an Entity at an arbitrary git reference.
-func read(def Definition, repo repository.ClockedRepo, resolvers entity.Resolvers, ref string) (*Entity, error) {
+func read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.ClockedRepo, resolvers entity.Resolvers, ref string) (EntityT, error) {
 	rootHash, err := repo.ResolveRef(ref)
 	if err != nil {
-		return nil, err
+		return *new(EntityT), err
 	}
 
 	// Perform a breadth-first search to get a topological order of the DAG where we discover the
@@ -104,7 +117,7 @@ func read(def Definition, repo repository.ClockedRepo, resolvers entity.Resolver
 
 		commit, err := repo.ReadCommit(hash)
 		if err != nil {
-			return nil, err
+			return *new(EntityT), err
 		}
 
 		BFSOrder = append(BFSOrder, commit)
@@ -137,26 +150,26 @@ func read(def Definition, repo repository.ClockedRepo, resolvers entity.Resolver
 		// can have no parents. Said otherwise, the DAG need to have exactly
 		// one leaf.
 		if !isFirstCommit && len(commit.Parents) == 0 {
-			return nil, fmt.Errorf("multiple leafs in the entity DAG")
+			return *new(EntityT), fmt.Errorf("multiple leafs in the entity DAG")
 		}
 
 		opp, err := readOperationPack(def, repo, resolvers, commit)
 		if err != nil {
-			return nil, err
+			return *new(EntityT), err
 		}
 
 		err = opp.Validate()
 		if err != nil {
-			return nil, err
+			return *new(EntityT), err
 		}
 
 		if isMerge && len(opp.Operations) > 0 {
-			return nil, fmt.Errorf("merge commit cannot have operations")
+			return *new(EntityT), fmt.Errorf("merge commit cannot have operations")
 		}
 
 		// Check that the create lamport clock is set (not checked in Validate() as it's optional)
 		if isFirstCommit && opp.CreateTime <= 0 {
-			return nil, fmt.Errorf("creation lamport time not set")
+			return *new(EntityT), fmt.Errorf("creation lamport time not set")
 		}
 
 		// make sure that the lamport clocks causality match the DAG topology
@@ -167,7 +180,7 @@ func read(def Definition, repo repository.ClockedRepo, resolvers entity.Resolver
 			}
 
 			if parentPack.EditTime >= opp.EditTime {
-				return nil, fmt.Errorf("lamport clock ordering doesn't match the DAG")
+				return *new(EntityT), fmt.Errorf("lamport clock ordering doesn't match the DAG")
 			}
 
 			// to avoid an attack where clocks are pushed toward the uint64 rollover, make sure
@@ -175,7 +188,7 @@ func read(def Definition, repo repository.ClockedRepo, resolvers entity.Resolver
 			// we ignore merge commits here to allow merging after a loooong time without breaking anything,
 			// as long as there is one valid chain of small hops, it's fine.
 			if !isMerge && opp.EditTime-parentPack.EditTime > 1_000_000 {
-				return nil, fmt.Errorf("lamport clock jumping too far in the future, likely an attack")
+				return *new(EntityT), fmt.Errorf("lamport clock jumping too far in the future, likely an attack")
 			}
 		}
 
@@ -187,11 +200,11 @@ func read(def Definition, repo repository.ClockedRepo, resolvers entity.Resolver
 	for _, opp := range oppMap {
 		err = repo.Witness(fmt.Sprintf(creationClockPattern, def.Namespace), opp.CreateTime)
 		if err != nil {
-			return nil, err
+			return *new(EntityT), err
 		}
 		err = repo.Witness(fmt.Sprintf(editClockPattern, def.Namespace), opp.EditTime)
 		if err != nil {
-			return nil, err
+			return *new(EntityT), err
 		}
 	}
 
@@ -232,13 +245,13 @@ func read(def Definition, repo repository.ClockedRepo, resolvers entity.Resolver
 		}
 	}
 
-	return &Entity{
+	return wrapper(&Entity{
 		Definition: def,
 		ops:        ops,
 		lastCommit: rootHash,
 		createTime: createTime,
 		editTime:   editTime,
-	}, nil
+	}), nil
 }
 
 // readClockNoCheck fetch from git, read and witness the clocks of an Entity at an arbitrary git reference.
@@ -293,14 +306,14 @@ func readClockNoCheck(def Definition, repo repository.ClockedRepo, ref string) e
 	return nil
 }
 
-type StreamedEntity struct {
-	Entity *Entity
+type StreamedEntity[EntityT entity.Interface] struct {
+	Entity EntityT
 	Err    error
 }
 
 // ReadAll read and parse all local Entity
-func ReadAll(def Definition, repo repository.ClockedRepo, resolvers entity.Resolvers) <-chan StreamedEntity {
-	out := make(chan StreamedEntity)
+func ReadAll[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.ClockedRepo, resolvers entity.Resolvers) <-chan StreamedEntity[EntityT] {
+	out := make(chan StreamedEntity[EntityT])
 
 	go func() {
 		defer close(out)
@@ -309,19 +322,19 @@ func ReadAll(def Definition, repo repository.ClockedRepo, resolvers entity.Resol
 
 		refs, err := repo.ListRefs(refPrefix)
 		if err != nil {
-			out <- StreamedEntity{Err: err}
+			out <- StreamedEntity[EntityT]{Err: err}
 			return
 		}
 
 		for _, ref := range refs {
-			e, err := read(def, repo, resolvers, ref)
+			e, err := read[EntityT](def, wrapper, repo, resolvers, ref)
 
 			if err != nil {
-				out <- StreamedEntity{Err: err}
+				out <- StreamedEntity[EntityT]{Err: err}
 				return
 			}
 
-			out <- StreamedEntity{Entity: e}
+			out <- StreamedEntity[EntityT]{Entity: e}
 		}
 	}()
 

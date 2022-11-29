@@ -200,7 +200,11 @@ type ProjectConfig struct {
 }
 
 func NewProjectConfig() *ProjectConfig {
-	return &ProjectConfig{Entity: dag.New(def)}
+	return wrapper(dag.New(def))
+}
+
+func wrapper(e *dag.Entity) *ProjectConfig {
+	return &ProjectConfig{Entity: e}
 }
 
 // a Definition describes a few properties of the Entity, a sort of configuration to manipulate the
@@ -282,11 +286,7 @@ func (pc ProjectConfig) Compile() *Snapshot {
 
 // Read is a helper to load a ProjectConfig from a Repository
 func Read(repo repository.ClockedRepo, id entity.Id) (*ProjectConfig, error) {
-	e, err := dag.Read(def, repo, simpleResolvers(repo), id)
-	if err != nil {
-		return nil, err
-	}
-	return &ProjectConfig{Entity: e}, nil
+	return dag.Read(def, wrapper, repo, simpleResolvers(repo), id)
 }
 
 func simpleResolvers(repo repository.ClockedRepo) entity.Resolvers {
@@ -331,7 +331,7 @@ func Example_entity() {
 	_ = confRene.Commit(repoRene)
 
 	// Isaac pull and read the config
-	_ = dag.Pull(def, repoIsaac, simpleResolvers(repoIsaac), "origin", isaac)
+	_ = dag.Pull(def, wrapper, repoIsaac, simpleResolvers(repoIsaac), "origin", isaac)
 	confIsaac, _ := Read(repoIsaac, confRene.Id())
 
 	// Compile gives the current state of the config
