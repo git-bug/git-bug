@@ -31,15 +31,13 @@ require (
 	golang.org/x/oauth2 v0.0.0-20220722155238-128564f6959c
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
 	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab
-	golang.org/x/text v0.4.0
+	golang.org/x/text v0.5.0
 )
 
 require (
 	github.com/lithammer/dedent v1.1.0 // indirect
 	github.com/owenrumney/go-sarif v1.0.11 // indirect
 	github.com/segmentio/fasthash v1.0.3 // indirect
-	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749 // indirect
-	github.com/shurcooL/vfsgen v0.0.0-20200824052919-0d455de96546 // indirect
 	github.com/zclconf/go-cty v1.8.4 // indirect
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e // indirect
 )
