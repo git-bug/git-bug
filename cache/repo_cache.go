@@ -6,13 +6,13 @@ import (
 	"io/ioutil"
 	"os"
 	"strconv"
-
-	"golang.org/x/sync/errgroup"
+	"sync"
 
 	"github.com/MichaelMure/git-bug/entities/bug"
 	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
+	"github.com/MichaelMure/git-bug/util/multierr"
 	"github.com/MichaelMure/git-bug/util/process"
 )
 
@@ -28,6 +28,14 @@ const defaultMaxLoadedBugs = 1000
 var _ repository.RepoCommon = &RepoCache{}
 var _ repository.RepoConfig = &RepoCache{}
 var _ repository.RepoKeyring = &RepoCache{}
+
+type cacheMgmt interface {
+	Typename() string
+	Load() error
+	Write() error
+	Build() error
+	Close() error
+}
 
 // RepoCache is a cache for a Repository. This cache has multiple functions:
 //
@@ -62,11 +70,11 @@ type RepoCache struct {
 	userIdentityId entity.Id
 }
 
-func NewRepoCache(r repository.ClockedRepo) (*RepoCache, error) {
+func NewRepoCache(r repository.ClockedRepo) (*RepoCache, chan BuildEvent, error) {
 	return NewNamedRepoCache(r, "")
 }
 
-func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, error) {
+func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, chan BuildEvent, error) {
 	c := &RepoCache{
 		repo: r,
 		name: name,
@@ -87,12 +95,12 @@ func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, error
 
 	err := c.lock()
 	if err != nil {
-		return &RepoCache{}, err
+		return &RepoCache{}, nil, err
 	}
 
 	err = c.load()
 	if err == nil {
-		return c, nil
+		return c, nil, nil
 	}
 
 	// Cache is either missing, broken or outdated. Rebuilding.
@@ -126,20 +134,20 @@ func (c *RepoCache) setCacheSize(size int) {
 
 // load will try to read from the disk all the cache files
 func (c *RepoCache) load() error {
-	var errG errgroup.Group
+	var errWait multierr.ErrWaitGroup
 	for _, mgmt := range c.subcaches {
-		errG.Go(mgmt.Load)
+		errWait.Go(mgmt.Load)
 	}
-	return errG.Wait()
+	return errWait.Wait()
 }
 
 // write will serialize on disk all the cache files
 func (c *RepoCache) write() error {
-	var errG errgroup.Group
+	var errWait multierr.ErrWaitGroup
 	for _, mgmt := range c.subcaches {
-		errG.Go(mgmt.Write)
+		errWait.Go(mgmt.Write)
 	}
-	return errG.Wait()
+	return errWait.Wait()
 }
 
 func (c *RepoCache) lock() error {
@@ -163,11 +171,11 @@ func (c *RepoCache) lock() error {
 }
 
 func (c *RepoCache) Close() error {
-	var errG errgroup.Group
+	var errWait multierr.ErrWaitGroup
 	for _, mgmt := range c.subcaches {
-		errG.Go(mgmt.Close)
+		errWait.Go(mgmt.Close)
 	}
-	err := errG.Wait()
+	err := errWait.Wait()
 	if err != nil {
 		return err
 	}
@@ -180,7 +188,56 @@ func (c *RepoCache) Close() error {
 	return c.repo.LocalStorage().Remove(lockfile)
 }
 
-func (c *RepoCache) buildCache() error {
+type BuildEventType int
+
+const (
+	_ BuildEventType = iota
+	BuildEventStarted
+	BuildEventFinished
+)
+
+type BuildEvent struct {
+	Typename string
+	Event BuildEventType
+	Err error
+}
+
+func (c *RepoCache) buildCache() chan BuildEvent {
+	out := make(chan BuildEvent)
+
+	go func() {
+		defer close(out)
+
+		var wg sync.WaitGroup
+		for _, subcache := range c.subcaches {
+			wg.Add(1)
+			go func(subcache cacheMgmt) {
+				defer wg.Done()
+				out <- BuildEvent{
+					Typename: subcache.Typename(),
+					Event:    BuildEventStarted,
+				}
+
+				err := subcache.Build()
+				if err != nil {
+					out <- BuildEvent{
+						Typename: subcache.Typename(),
+						Err: err,
+					}
+					return
+				}
+
+				out <- BuildEvent{
+					Typename: subcache.Typename(),
+					Event: BuildEventFinished,
+				}
+			}(subcache)
+		}
+		wg.Wait()
+	}()
+
+	return out
+
 	_, _ = fmt.Fprintf(os.Stderr, "Building identity cache... ")
 
 	c.identitiesExcerpts = make(map[entity.Id]*IdentityExcerpt)

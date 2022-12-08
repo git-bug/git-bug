@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+	"os"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -21,13 +22,6 @@ type CacheEntity interface {
 	NeedCommit() bool
 }
 
-type cacheMgmt interface {
-	Load() error
-	Write() error
-	Build() error
-	Close() error
-}
-
 type getUserIdentityFunc func() (*IdentityCache, error)
 
 type SubCache[ExcerptT Excerpt, CacheT CacheEntity, EntityT entity.Interface] struct {
@@ -38,6 +32,7 @@ type SubCache[ExcerptT Excerpt, CacheT CacheEntity, EntityT entity.Interface] st
 	readWithResolver func(repository.ClockedRepo, entity.Resolvers, entity.Id) (EntityT, error)
 	makeCached       func(*SubCache[ExcerptT, CacheT, EntityT], getUserIdentityFunc, EntityT) CacheT
 	makeExcerpt      func() Excerpt
+	indexingCallback func(CacheT) error
 
 	typename  string
 	namespace string
@@ -68,6 +63,10 @@ func NewSubCache[ExcerptT Excerpt, CacheT CacheEntity, EntityT entity.Interface]
 		cached:          make(map[entity.Id]CacheT),
 		lru:             newLRUIdCache(),
 	}
+}
+
+func (sc *SubCache[ExcerptT, CacheT, EntityT]) Typename() string {
+	return sc.typename
 }
 
 // Load will try to read from the disk the entity cache file
@@ -151,7 +150,32 @@ func (sc *SubCache[ExcerptT, CacheT, EntityT]) Write() error {
 }
 
 func (sc *SubCache[ExcerptT, CacheT, EntityT]) Build() error {
+	sc.excerpts = make(map[entity.Id]ExcerptT)
 
+	sc.readWithResolver
+
+	allBugs := bug.ReadAllWithResolver(c.repo, c.resolvers)
+
+	// wipe the index just to be sure
+	err := c.repo.ClearBleveIndex("bug")
+	if err != nil {
+		return err
+	}
+
+	for b := range allBugs {
+		if b.Err != nil {
+			return b.Err
+		}
+
+		snap := b.Bug.Compile()
+		c.bugExcerpts[b.Bug.Id()] = NewBugExcerpt(b.Bug, snap)
+
+		if err := c.addBugToSearchIndex(snap); err != nil {
+			return err
+		}
+	}
+
+	_, _ = fmt.Fprintln(os.Stderr, "Done.")
 }
 
 func (sc *SubCache[ExcerptT, CacheT, EntityT]) Close() error {
@@ -191,7 +215,7 @@ func (sc *SubCache[ExcerptT, CacheT, EntityT]) Resolve(id entity.Id) (CacheT, er
 
 	b, err := sc.readWithResolver(sc.repo, sc.resolvers(), id)
 	if err != nil {
-		return nil, err
+		return *new(CacheT), err
 	}
 
 	cached = sc.makeCached(sc, sc.getUserIdentity, b)
@@ -217,7 +241,7 @@ func (sc *SubCache[ExcerptT, CacheT, EntityT]) ResolvePrefix(prefix string) (Cac
 func (sc *SubCache[ExcerptT, CacheT, EntityT]) ResolveMatcher(f func(ExcerptT) bool) (CacheT, error) {
 	id, err := sc.resolveMatcher(f)
 	if err != nil {
-		return nil, err
+		return *new(CacheT), err
 	}
 	return sc.Resolve(id)
 }
@@ -229,7 +253,7 @@ func (sc *SubCache[ExcerptT, CacheT, EntityT]) ResolveExcerpt(id entity.Id) (Exc
 
 	excerpt, ok := sc.excerpts[id]
 	if !ok {
-		return nil, entity.NewErrNotFound(sc.typename)
+		return *new(ExcerptT), entity.NewErrNotFound(sc.typename)
 	}
 
 	return excerpt, nil
@@ -246,7 +270,7 @@ func (sc *SubCache[ExcerptT, CacheT, EntityT]) ResolveExcerptPrefix(prefix strin
 func (sc *SubCache[ExcerptT, CacheT, EntityT]) ResolveExcerptMatcher(f func(ExcerptT) bool) (ExcerptT, error) {
 	id, err := sc.resolveMatcher(f)
 	if err != nil {
-		return nil, err
+		return *new(ExcerptT), err
 	}
 	return sc.ResolveExcerpt(id)
 }
@@ -281,7 +305,7 @@ func (sc *SubCache[ExcerptT, CacheT, EntityT]) add(e EntityT) (CacheT, error) {
 	sc.mu.Lock()
 	if _, has := sc.cached[e.Id()]; has {
 		sc.mu.Unlock()
-		return nil, fmt.Errorf("entity %s already exist in the cache", e.Id())
+		return *new(CacheT), fmt.Errorf("entity %s already exist in the cache", e.Id())
 	}
 
 	cached := sc.makeCached(sc, sc.getUserIdentity, e)
@@ -294,7 +318,7 @@ func (sc *SubCache[ExcerptT, CacheT, EntityT]) add(e EntityT) (CacheT, error) {
 	// force the write of the excerpt
 	err := sc.entityUpdated(e.Id())
 	if err != nil {
-		return nil, err
+		return *new(CacheT), err
 	}
 
 	return cached, nil

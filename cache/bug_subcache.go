@@ -18,7 +18,7 @@ import (
 )
 
 type RepoCacheBug struct {
-	SubCache[*BugExcerpt, *BugCache, bug.Interface]
+	*SubCache[*BugExcerpt, *BugCache, bug.Interface]
 }
 
 // ResolveBugCreateMetadata retrieve a bug that has the exact given metadata on
