@@ -297,8 +297,8 @@ github.com/vmihailenco/msgpack/v4 v4.3.12/go.mod h1:gborTTJjAo/GWTqqRjrLCn9pgNN+
 github.com/vmihailenco/tagparser v0.1.1/go.mod h1:OeAg3pn3UbLjkWt+rN9oFYB6u/cQgqMEUPoW2WPyhdI=
 github.com/willf/bitset v1.1.10 h1:NotGKqX0KwQ72NUzqrjZq5ipPNDQex9lo3WpaS8L2sc=
 github.com/willf/bitset v1.1.10/go.mod h1:RjeCKbqT1RxIR/KWY6phxZiaY1IyutSBfGjNPySAYV4=
-github.com/xanzy/go-gitlab v0.76.0 h1:mkmuB27RDVZY/iXR61pEUfIqJ15Iivfu1kc3KZtBICI=
-github.com/xanzy/go-gitlab v0.76.0/go.mod h1:d/a0vswScO7Agg1CZNz15Ic6SSvBG9vfw8egL99t4kA=
+github.com/xanzy/go-gitlab v0.77.0 h1:UrbGlxkWVCbkpa6Fk6cM8ARh+rLACWemkJnsawT7t98=
+github.com/xanzy/go-gitlab v0.77.0/go.mod h1:d/a0vswScO7Agg1CZNz15Ic6SSvBG9vfw8egL99t4kA=
 github.com/xanzy/ssh-agent v0.3.0 h1:wUMzuKtKilRgBAD1sUb8gOwwRr2FGoBVumcjoOACClI=
 github.com/xanzy/ssh-agent v0.3.0/go.mod h1:3s9xbODqPuuhK9JV1R321M/FlMZSBvE5aY6eAcqrDh0=
 github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77/go.mod h1:aYKd//L2LvnjZzWKhF00oedf4jCCReLcmhLdhm1A27Q=
