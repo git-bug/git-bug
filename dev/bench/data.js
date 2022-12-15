@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1670498984081,
+  "lastUpdate": 1671100028253,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -124,6 +124,48 @@ window.BENCHMARK_DATA = {
             "value": 1077064473,
             "unit": "ns/op\t839962688 B/op\t  834640 allocs/op",
             "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "840f14d6b319c07177e076e89c8ab9c381a72f0e",
+          "message": "Merge pull request #955 from waldyrious/patch-1\n\ndoc/README: normalize verb tense and fix typo",
+          "timestamp": "2022-12-15T11:25:49+01:00",
+          "tree_id": "8776f2a3d19b962df29522a9f737ac4cae5fa0b5",
+          "url": "https://github.com/MichaelMure/git-bug/commit/840f14d6b319c07177e076e89c8ab9c381a72f0e"
+        },
+        "date": 1671100026891,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 25877232,
+            "unit": "ns/op\t25063629 B/op\t   25146 allocs/op",
+            "extra": "50 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 138616537,
+            "unit": "ns/op\t140656869 B/op\t  139688 allocs/op",
+            "extra": "8 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 884503290,
+            "unit": "ns/op\t840143292 B/op\t  834848 allocs/op",
+            "extra": "2 times\n2 procs"
           }
         ]
       }
