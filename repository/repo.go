@@ -6,7 +6,6 @@ import (
 	"io"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
-	"github.com/blevesearch/bleve"
 	"github.com/go-git/go-billy/v5"
 
 	"github.com/MichaelMure/git-bug/util/lamport"
@@ -25,7 +24,7 @@ type Repo interface {
 	RepoKeyring
 	RepoCommon
 	RepoStorage
-	RepoBleve
+	RepoIndex
 	RepoData
 
 	Close() error
@@ -81,13 +80,33 @@ type RepoStorage interface {
 	LocalStorage() billy.Filesystem
 }
 
-// RepoBleve give access to Bleve to implement full-text search indexes.
-type RepoBleve interface {
-	// GetBleveIndex return a bleve.Index that can be used to index documents
-	GetBleveIndex(name string) (bleve.Index, error)
+// RepoIndex gives access to full-text search indexes
+type RepoIndex interface {
+	GetIndex(name string) (Index, error)
+}
 
-	// ClearBleveIndex will wipe the given index
-	ClearBleveIndex(name string) error
+// Index is a full-text search index
+type Index interface {
+	// IndexOne indexes one document, for the given ID. If the document already exist,
+	// it replaces it.
+	IndexOne(id string, texts []string) error
+
+	// IndexBatch start a batch indexing. The returned indexer function is used the same
+	// way as IndexOne, and the closer function complete the batch insertion.
+	IndexBatch() (indexer func(id string, texts []string) error, closer func() error)
+
+	// Search returns the list of IDs matching the given terms.
+	Search(terms []string) (ids []string, err error)
+
+	// DocCount returns the number of document in the index.
+	DocCount() (uint64, error)
+
+	// Clear empty the index.
+	Clear() error
+
+	// Close closes the index and make sure everything is safely written. After this call
+	// the index can't be used anymore.
+	Close() error
 }
 
 type Commit struct {

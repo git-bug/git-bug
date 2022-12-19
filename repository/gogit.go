@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
-	"github.com/blevesearch/bleve"
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/osfs"
 	gogit "github.com/go-git/go-git/v5"
@@ -45,7 +44,7 @@ type GoGitRepo struct {
 	clocks      map[string]lamport.Clock
 
 	indexesMutex sync.Mutex
-	indexes      map[string]bleve.Index
+	indexes      map[string]Index
 
 	keyring      Keyring
 	localStorage billy.Filesystem
@@ -75,7 +74,7 @@ func OpenGoGitRepo(path, namespace string, clockLoaders []ClockLoader) (*GoGitRe
 		r:            r,
 		path:         path,
 		clocks:       make(map[string]lamport.Clock),
-		indexes:      make(map[string]bleve.Index),
+		indexes:      make(map[string]Index),
 		keyring:      k,
 		localStorage: osfs.New(filepath.Join(path, namespace)),
 	}
@@ -129,7 +128,7 @@ func InitGoGitRepo(path, namespace string) (*GoGitRepo, error) {
 		r:            r,
 		path:         filepath.Join(path, ".git"),
 		clocks:       make(map[string]lamport.Clock),
-		indexes:      make(map[string]bleve.Index),
+		indexes:      make(map[string]Index),
 		keyring:      k,
 		localStorage: osfs.New(filepath.Join(path, ".git", namespace)),
 	}, nil
@@ -154,7 +153,7 @@ func InitBareGoGitRepo(path, namespace string) (*GoGitRepo, error) {
 		r:            r,
 		path:         path,
 		clocks:       make(map[string]lamport.Clock),
-		indexes:      make(map[string]bleve.Index),
+		indexes:      make(map[string]Index),
 		keyring:      k,
 		localStorage: osfs.New(filepath.Join(path, namespace)),
 	}, nil
@@ -323,8 +322,7 @@ func (repo *GoGitRepo) LocalStorage() billy.Filesystem {
 	return repo.localStorage
 }
 
-// GetBleveIndex return a bleve.Index that can be used to index documents
-func (repo *GoGitRepo) GetBleveIndex(name string) (bleve.Index, error) {
+func (repo *GoGitRepo) GetIndex(name string) (Index, error) {
 	repo.indexesMutex.Lock()
 	defer repo.indexesMutex.Unlock()
 
@@ -334,50 +332,11 @@ func (repo *GoGitRepo) GetBleveIndex(name string) (bleve.Index, error) {
 
 	path := filepath.Join(repo.localStorage.Root(), indexPath, name)
 
-	index, err := bleve.Open(path)
+	index, err := openBleveIndex(path)
 	if err == nil {
 		repo.indexes[name] = index
-		return index, nil
 	}
-
-	err = os.MkdirAll(path, os.ModePerm)
-	if err != nil {
-		return nil, err
-	}
-
-	mapping := bleve.NewIndexMapping()
-	mapping.DefaultAnalyzer = "en"
-
-	index, err = bleve.New(path, mapping)
-	if err != nil {
-		return nil, err
-	}
-
-	repo.indexes[name] = index
-
-	return index, nil
-}
-
-// ClearBleveIndex will wipe the given index
-func (repo *GoGitRepo) ClearBleveIndex(name string) error {
-	repo.indexesMutex.Lock()
-	defer repo.indexesMutex.Unlock()
-
-	if index, ok := repo.indexes[name]; ok {
-		err := index.Close()
-		if err != nil {
-			return err
-		}
-		delete(repo.indexes, name)
-	}
-
-	path := filepath.Join(repo.localStorage.Root(), indexPath, name)
-	err := os.RemoveAll(path)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return index, err
 }
 
 // FetchRefs fetch git refs matching a directory prefix to a remote

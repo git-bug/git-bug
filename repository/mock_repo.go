@@ -9,7 +9,6 @@ import (
 
 	"github.com/99designs/keyring"
 	"github.com/ProtonMail/go-crypto/openpgp"
-	"github.com/blevesearch/bleve"
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/memfs"
 
@@ -25,7 +24,7 @@ type mockRepo struct {
 	*mockRepoKeyring
 	*mockRepoCommon
 	*mockRepoStorage
-	*mockRepoBleve
+	*mockRepoIndex
 	*mockRepoData
 	*mockRepoClock
 	*mockRepoTest
@@ -39,7 +38,7 @@ func NewMockRepo() *mockRepo {
 		mockRepoKeyring: NewMockRepoKeyring(),
 		mockRepoCommon:  NewMockRepoCommon(),
 		mockRepoStorage: NewMockRepoStorage(),
-		mockRepoBleve:   newMockRepoBleve(),
+		mockRepoIndex:   newMockRepoIndex(),
 		mockRepoData:    NewMockRepoData(),
 		mockRepoClock:   NewMockRepoClock(),
 		mockRepoTest:    NewMockRepoTest(),
@@ -135,20 +134,20 @@ func (m *mockRepoStorage) LocalStorage() billy.Filesystem {
 	return m.localFs
 }
 
-var _ RepoBleve = &mockRepoBleve{}
+var _ RepoIndex = &mockRepoIndex{}
 
-type mockRepoBleve struct {
+type mockRepoIndex struct {
 	indexesMutex sync.Mutex
-	indexes      map[string]bleve.Index
+	indexes      map[string]Index
 }
 
-func newMockRepoBleve() *mockRepoBleve {
-	return &mockRepoBleve{
-		indexes: make(map[string]bleve.Index),
+func newMockRepoIndex() *mockRepoIndex {
+	return &mockRepoIndex{
+		indexes: make(map[string]Index),
 	}
 }
 
-func (m *mockRepoBleve) GetBleveIndex(name string) (bleve.Index, error) {
+func (m *mockRepoIndex) GetIndex(name string) (Index, error) {
 	m.indexesMutex.Lock()
 	defer m.indexesMutex.Unlock()
 
@@ -156,24 +155,63 @@ func (m *mockRepoBleve) GetBleveIndex(name string) (bleve.Index, error) {
 		return index, nil
 	}
 
-	mapping := bleve.NewIndexMapping()
-	mapping.DefaultAnalyzer = "en"
-
-	index, err := bleve.NewMemOnly(mapping)
-	if err != nil {
-		return nil, err
-	}
-
+	index := newIndex()
 	m.indexes[name] = index
-
 	return index, nil
 }
 
-func (m *mockRepoBleve) ClearBleveIndex(name string) error {
-	m.indexesMutex.Lock()
-	defer m.indexesMutex.Unlock()
+var _ Index = &mockIndex{}
 
-	delete(m.indexes, name)
+type mockIndex map[string][]string
+
+func newIndex() *mockIndex {
+	m := make(map[string][]string)
+	return (*mockIndex)(&m)
+}
+
+func (m *mockIndex) IndexOne(id string, texts []string) error {
+	(*m)[id] = texts
+	return nil
+}
+
+func (m *mockIndex) IndexBatch() (indexer func(id string, texts []string) error, closer func() error) {
+	indexer = func(id string, texts []string) error {
+		(*m)[id] = texts
+		return nil
+	}
+	closer = func() error { return nil }
+	return indexer, closer
+}
+
+func (m *mockIndex) Search(terms []string) (ids []string, err error) {
+loop:
+	for id, texts := range *m {
+		for _, text := range texts {
+			for _, s := range strings.Fields(text) {
+				for _, term := range terms {
+					if s == term {
+						ids = append(ids, id)
+						continue loop
+					}
+				}
+			}
+		}
+	}
+	return ids, nil
+}
+
+func (m *mockIndex) DocCount() (uint64, error) {
+	return uint64(len(*m)), nil
+}
+
+func (m *mockIndex) Clear() error {
+	for k, _ := range *m {
+		delete(*m, k)
+	}
+	return nil
+}
+
+func (m *mockIndex) Close() error {
 	return nil
 }
 

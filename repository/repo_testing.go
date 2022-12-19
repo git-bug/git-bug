@@ -10,7 +10,6 @@ import (
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
-// TODO: add tests for RepoBleve
 // TODO: add tests for RepoStorage
 
 type RepoCreator func(t testing.TB, bare bool) TestedRepo
@@ -31,6 +30,10 @@ func RepoTest(t *testing.T, creator RepoCreator) {
 
 			t.Run("Config", func(t *testing.T) {
 				RepoConfigTest(t, repo)
+			})
+
+			t.Run("Index", func(t *testing.T) {
+				RepoIndexTest(t, repo)
 			})
 
 			t.Run("Clocks", func(t *testing.T) {
@@ -232,6 +235,48 @@ func RepoDataSignatureTest(t *testing.T, repo RepoData) {
 
 	_, err = openpgp.CheckDetachedSignature(keyring2, commit2.SignedData, commit2.Signature, nil)
 	require.Error(t, err)
+}
+
+func RepoIndexTest(t *testing.T, repo RepoIndex) {
+	idx, err := repo.GetIndex("a")
+	require.NoError(t, err)
+
+	// simple indexing
+	err = idx.IndexOne("id1", []string{"foo", "bar", "foobar barfoo"})
+	require.NoError(t, err)
+
+	// batched indexing
+	indexer, closer := idx.IndexBatch()
+	err = indexer("id2", []string{"hello", "foo bar"})
+	require.NoError(t, err)
+	err = indexer("id3", []string{"Hola", "Esta bien"})
+	require.NoError(t, err)
+	err = closer()
+	require.NoError(t, err)
+
+	// search
+	res, err := idx.Search([]string{"foobar"})
+	require.NoError(t, err)
+	require.ElementsMatch(t, []string{"id1"}, res)
+
+	res, err = idx.Search([]string{"foo"})
+	require.NoError(t, err)
+	require.ElementsMatch(t, []string{"id1", "id2"}, res)
+
+	// re-indexing an item replace previous versions
+	err = idx.IndexOne("id2", []string{"hello"})
+	require.NoError(t, err)
+
+	res, err = idx.Search([]string{"foo"})
+	require.NoError(t, err)
+	require.ElementsMatch(t, []string{"id1"}, res)
+
+	err = idx.Clear()
+	require.NoError(t, err)
+
+	res, err = idx.Search([]string{"foo"})
+	require.NoError(t, err)
+	require.Empty(t, res)
 }
 
 // helper to test a RepoClock
