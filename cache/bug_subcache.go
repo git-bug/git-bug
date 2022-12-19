@@ -2,13 +2,8 @@ package cache
 
 import (
 	"errors"
-	"fmt"
 	"sort"
-	"strings"
 	"time"
-	"unicode/utf8"
-
-	"github.com/blevesearch/bleve"
 
 	"github.com/MichaelMure/git-bug/entities/bug"
 	"github.com/MichaelMure/git-bug/entities/identity"
@@ -18,7 +13,39 @@ import (
 )
 
 type RepoCacheBug struct {
-	*SubCache[*BugExcerpt, *BugCache, bug.Interface]
+	*SubCache[*bug.Bug, *BugExcerpt, *BugCache]
+}
+
+func NewRepoCacheBug(repo repository.ClockedRepo,
+	resolvers func() entity.Resolvers,
+	getUserIdentity getUserIdentityFunc) *RepoCacheBug {
+
+	makeCached := func(b *bug.Bug, entityUpdated func(id entity.Id) error) *BugCache {
+		return NewBugCache(b, repo, getUserIdentity, entityUpdated)
+	}
+
+	makeExcerpt := func(b *bug.Bug) *BugExcerpt {
+		return NewBugExcerpt(b, b.Compile())
+	}
+
+	makeIndex := func(b *BugCache) []string {
+		snap := b.Snapshot()
+		var res []string
+		for _, comment := range snap.Comments {
+			res = append(res, comment.Message)
+		}
+		res = append(res, snap.Title)
+		return res
+	}
+
+	sc := NewSubCache[*bug.Bug, *BugExcerpt, *BugCache](
+		repo, resolvers, getUserIdentity,
+		makeCached, makeExcerpt, makeIndex,
+		"bug", "bugs",
+		formatVersion, defaultMaxLoadedBugs,
+	)
+
+	return &RepoCacheBug{SubCache: sc}
 }
 
 // ResolveBugCreateMetadata retrieve a bug that has the exact given metadata on
@@ -94,29 +121,19 @@ func (c *RepoCacheBug) QueryBugs(q *query.Query) ([]entity.Id, error) {
 	if q.Search != nil {
 		foundBySearch = map[entity.Id]*BugExcerpt{}
 
-		terms := make([]string, len(q.Search))
-		copy(terms, q.Search)
-		for i, search := range q.Search {
-			if strings.Contains(search, " ") {
-				terms[i] = fmt.Sprintf("\"%s\"", search)
-			}
-		}
-
-		bleveQuery := bleve.NewQueryStringQuery(strings.Join(terms, " "))
-		bleveSearch := bleve.NewSearchRequest(bleveQuery)
-
-		index, err := c.repo.GetBleveIndex("bug")
+		index, err := c.repo.GetIndex("bug")
 		if err != nil {
 			return nil, err
 		}
 
-		searchResults, err := index.Search(bleveSearch)
+		res, err := index.Search(q.Search)
 		if err != nil {
 			return nil, err
 		}
 
-		for _, hit := range searchResults.Hits {
-			foundBySearch[entity.Id(hit.ID)] = c.excerpts[entity.Id(hit.ID)]
+		for _, hit := range res {
+			id := entity.Id(hit)
+			foundBySearch[id] = c.excerpts[id]
 		}
 	} else {
 		foundBySearch = c.excerpts
@@ -231,41 +248,4 @@ func (c *RepoCacheBug) NewRaw(author identity.Interface, unixTime int64, title s
 	}
 
 	return cached, op, nil
-}
-
-func (c *RepoCacheBug) addBugToSearchIndex(snap *bug.Snapshot) error {
-	searchableBug := struct {
-		Text []string
-	}{}
-
-	// See https://github.com/blevesearch/bleve/issues/1576
-	var sb strings.Builder
-	normalize := func(text string) string {
-		sb.Reset()
-		for _, field := range strings.Fields(text) {
-			if utf8.RuneCountInString(field) < 100 {
-				sb.WriteString(field)
-				sb.WriteRune(' ')
-			}
-		}
-		return sb.String()
-	}
-
-	for _, comment := range snap.Comments {
-		searchableBug.Text = append(searchableBug.Text, normalize(comment.Message))
-	}
-
-	searchableBug.Text = append(searchableBug.Text, normalize(snap.Title))
-
-	index, err := c.repo.GetBleveIndex("bug")
-	if err != nil {
-		return err
-	}
-
-	err = index.Index(snap.Id().String(), searchableBug)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

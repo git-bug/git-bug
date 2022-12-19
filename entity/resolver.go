@@ -64,18 +64,18 @@ func (c *CachedResolver) Resolve(id Id) (Interface, error) {
 	return i, nil
 }
 
-var _ Resolver = ResolverFunc(nil)
+var _ Resolver = ResolverFunc[Interface](nil)
 
 // ResolverFunc is a helper to morph a function resolver into a Resolver
-type ResolverFunc func(id Id) (Interface, error)
+type ResolverFunc[T Interface] func(id Id) (T, error)
 
-func (fn ResolverFunc) Resolve(id Id) (Interface, error) {
+func (fn ResolverFunc[T]) Resolve(id Id) (Interface, error) {
 	return fn(id)
 }
 
 // MakeResolver create a resolver able to return the given entities.
 func MakeResolver(entities ...Interface) Resolver {
-	return ResolverFunc(func(id Id) (Interface, error) {
+	return ResolverFunc[Interface](func(id Id) (Interface, error) {
 		for _, entity := range entities {
 			if entity.Id() == id {
 				return entity, nil

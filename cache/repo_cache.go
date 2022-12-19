@@ -8,8 +8,6 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/MichaelMure/git-bug/entities/bug"
-	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/multierr"
@@ -67,6 +65,7 @@ type RepoCache struct {
 	subcaches []cacheMgmt
 
 	// the user identity's id, if known
+	muUserIdentity sync.RWMutex
 	userIdentityId entity.Id
 }
 
@@ -80,17 +79,15 @@ func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, chan 
 		name: name,
 	}
 
-	bugs := NewSubCache[*BugExcerpt, *BugCache, bug.Interface](r,
-		c.getResolvers, c.GetUserIdentity,
-		"bug", "bugs",
-		formatVersion, defaultMaxLoadedBugs)
+	c.identities = NewRepoCacheIdentity(r, c.getResolvers, c.GetUserIdentity)
+	c.subcaches = append(c.subcaches, c.identities)
 
-	c.subcaches = append(c.subcaches, bugs)
-	c.bugs = &RepoCacheBug{SubCache: *bugs}
+	c.bugs = NewRepoCacheBug(r, c.getResolvers, c.GetUserIdentity)
+	c.subcaches = append(c.subcaches, c.bugs)
 
 	c.resolvers = entity.Resolvers{
-		&IdentityCache{}: entity.ResolverFunc((func(id entity.Id) (entity.Interface, error)(c.identities.Resolve)),
-		&BugCache{}:      c.bugs,
+		&IdentityCache{}: entity.ResolverFunc[*IdentityCache](c.identities.Resolve),
+		&BugCache{}:      entity.ResolverFunc[*BugCache](c.bugs.Resolve),
 	}
 
 	err := c.lock()
@@ -104,12 +101,9 @@ func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, chan 
 	}
 
 	// Cache is either missing, broken or outdated. Rebuilding.
-	err = c.buildCache()
-	if err != nil {
-		return nil, err
-	}
+	events := c.buildCache()
 
-	return c, c.write()
+	return c, events, nil
 }
 
 // Bugs gives access to the Bug entities
@@ -198,8 +192,8 @@ const (
 
 type BuildEvent struct {
 	Typename string
-	Event BuildEventType
-	Err error
+	Event    BuildEventType
+	Err      error
 }
 
 func (c *RepoCache) buildCache() chan BuildEvent {
@@ -222,14 +216,23 @@ func (c *RepoCache) buildCache() chan BuildEvent {
 				if err != nil {
 					out <- BuildEvent{
 						Typename: subcache.Typename(),
-						Err: err,
+						Err:      err,
+					}
+					return
+				}
+
+				err = subcache.Write()
+				if err != nil {
+					out <- BuildEvent{
+						Typename: subcache.Typename(),
+						Err:      err,
 					}
 					return
 				}
 
 				out <- BuildEvent{
 					Typename: subcache.Typename(),
-					Event: BuildEventFinished,
+					Event:    BuildEventFinished,
 				}
 			}(subcache)
 		}
@@ -237,51 +240,6 @@ func (c *RepoCache) buildCache() chan BuildEvent {
 	}()
 
 	return out
-
-	_, _ = fmt.Fprintf(os.Stderr, "Building identity cache... ")
-
-	c.identitiesExcerpts = make(map[entity.Id]*IdentityExcerpt)
-
-	allIdentities := identity.ReadAllLocal(c.repo)
-
-	for i := range allIdentities {
-		if i.Err != nil {
-			return i.Err
-		}
-
-		c.identitiesExcerpts[i.Identity.Id()] = NewIdentityExcerpt(i.Identity)
-	}
-
-	_, _ = fmt.Fprintln(os.Stderr, "Done.")
-
-	_, _ = fmt.Fprintf(os.Stderr, "Building bug cache... ")
-
-	c.bugExcerpts = make(map[entity.Id]*BugExcerpt)
-
-	allBugs := bug.ReadAllWithResolver(c.repo, c.resolvers)
-
-	// wipe the index just to be sure
-	err := c.repo.ClearBleveIndex("bug")
-	if err != nil {
-		return err
-	}
-
-	for b := range allBugs {
-		if b.Err != nil {
-			return b.Err
-		}
-
-		snap := b.Bug.Compile()
-		c.bugExcerpts[b.Bug.Id()] = NewBugExcerpt(b.Bug, snap)
-
-		if err := c.addBugToSearchIndex(snap); err != nil {
-			return err
-		}
-	}
-
-	_, _ = fmt.Fprintln(os.Stderr, "Done.")
-
-	return nil
 }
 
 // repoIsAvailable check is the given repository is locked by a Cache.

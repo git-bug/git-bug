@@ -4,7 +4,6 @@ import (
 	"sync"
 
 	"github.com/MichaelMure/git-bug/entities/bug"
-	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
 	"github.com/MichaelMure/git-bug/repository"
@@ -57,9 +56,9 @@ import (
 // }
 
 type CachedEntityBase[SnapT dag.Snapshot, OpT dag.Operation] struct {
-	entityUpdated   func(id entity.Id) error
-	getUserIdentity func() (identity.Interface, error)
 	repo            repository.ClockedRepo
+	entityUpdated   func(id entity.Id) error
+	getUserIdentity getUserIdentityFunc
 
 	mu     sync.RWMutex
 	entity dag.Interface[SnapT, OpT]

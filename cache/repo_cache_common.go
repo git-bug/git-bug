@@ -1,8 +1,6 @@
 package cache
 
 import (
-	"fmt"
-
 	"github.com/go-git/go-billy/v5"
 	"github.com/pkg/errors"
 
@@ -186,17 +184,17 @@ func (c *RepoCache) Pull(remote string) error {
 }
 
 func (c *RepoCache) SetUserIdentity(i *IdentityCache) error {
+	c.muUserIdentity.RLock()
+	defer c.muUserIdentity.RUnlock()
+
+	// Make sure that everything is fine
+	if _, err := c.identities.Resolve(i.Id()); err != nil {
+		panic("SetUserIdentity while the identity is not from the cache, something is wrong")
+	}
+
 	err := identity.SetUserIdentity(c.repo, i.Identity)
 	if err != nil {
 		return err
-	}
-
-	c.muIdentity.RLock()
-	defer c.muIdentity.RUnlock()
-
-	// Make sure that everything is fine
-	if _, ok := c.identities[i.Id()]; !ok {
-		panic("SetUserIdentity while the identity is not from the cache, something is wrong")
 	}
 
 	c.userIdentityId = i.Id()
@@ -205,45 +203,45 @@ func (c *RepoCache) SetUserIdentity(i *IdentityCache) error {
 }
 
 func (c *RepoCache) GetUserIdentity() (*IdentityCache, error) {
+	c.muUserIdentity.RLock()
 	if c.userIdentityId != "" {
-		i, ok := c.identities[c.userIdentityId]
-		if ok {
-			return i, nil
-		}
+		defer c.muUserIdentity.RUnlock()
+		return c.identities.Resolve(c.userIdentityId)
 	}
+	c.muUserIdentity.RUnlock()
 
-	c.muIdentity.Lock()
-	defer c.muIdentity.Unlock()
+	c.muUserIdentity.Lock()
+	defer c.muUserIdentity.Unlock()
 
-	i, err := identity.GetUserIdentity(c.repo)
+	i, err := identity.GetUserIdentityId(c.repo)
 	if err != nil {
 		return nil, err
 	}
 
-	cached := NewIdentityCache(c, i)
-	c.identities[i.Id()] = cached
-	c.userIdentityId = i.Id()
+	c.userIdentityId = i
 
-	return cached, nil
+	return c.identities.Resolve(i)
 }
 
 func (c *RepoCache) GetUserIdentityExcerpt() (*IdentityExcerpt, error) {
-	if c.userIdentityId == "" {
-		id, err := identity.GetUserIdentityId(c.repo)
-		if err != nil {
-			return nil, err
-		}
-		c.userIdentityId = id
+	c.muUserIdentity.RLock()
+	if c.userIdentityId != "" {
+		defer c.muUserIdentity.RUnlock()
+		return c.identities.ResolveExcerpt(c.userIdentityId)
+	}
+	c.muUserIdentity.RUnlock()
+
+	c.muUserIdentity.Lock()
+	defer c.muUserIdentity.Unlock()
+
+	i, err := identity.GetUserIdentityId(c.repo)
+	if err != nil {
+		return nil, err
 	}
 
-	c.muIdentity.RLock()
-	defer c.muIdentity.RUnlock()
+	c.userIdentityId = i
 
-	excerpt, ok := c.identitiesExcerpts[c.userIdentityId]
-	if !ok {
-		return nil, fmt.Errorf("cache: missing identity excerpt %v", c.userIdentityId)
-	}
-	return excerpt, nil
+	return c.identities.ResolveExcerpt(i)
 }
 
 func (c *RepoCache) IsUserIdentitySet() (bool, error) {

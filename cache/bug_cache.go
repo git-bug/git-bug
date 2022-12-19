@@ -22,12 +22,12 @@ type BugCache struct {
 	CachedEntityBase[*bug.Snapshot, bug.Operation]
 }
 
-func NewBugCache(subcache *RepoCacheBug, getUserIdentity func() (identity.Interface, error), b *bug.Bug) *BugCache {
+func NewBugCache(b *bug.Bug, repo repository.ClockedRepo, getUserIdentity getUserIdentityFunc, entityUpdated func(id entity.Id) error) *BugCache {
 	return &BugCache{
 		CachedEntityBase: CachedEntityBase[*bug.Snapshot, bug.Operation]{
-			entityUpdated:   subcache.entityUpdated,
+			repo:            repo,
+			entityUpdated:   entityUpdated,
 			getUserIdentity: getUserIdentity,
-			repo:            subcache.repo,
 			entity:          &bug.WithSnapshot{Bug: b},
 		},
 	}

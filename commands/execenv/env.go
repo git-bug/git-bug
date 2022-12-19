@@ -128,9 +128,28 @@ func LoadBackend(env *Env) func(*cobra.Command, []string) error {
 			return err
 		}
 
-		env.Backend, err = cache.NewRepoCache(env.Repo)
+		var events chan cache.BuildEvent
+		env.Backend, events, err = cache.NewRepoCache(env.Repo)
 		if err != nil {
 			return err
+		}
+
+		if events != nil {
+			_, _ = fmt.Fprintln(os.Stderr, "Building cache... ")
+		}
+
+		for event := range events {
+			if event.Err != nil {
+				_, _ = fmt.Fprintf(os.Stderr, "Cache building error [%s]: %v\n", event.Typename, event.Err)
+				continue
+			}
+
+			switch event.Event {
+			case cache.BuildEventStarted:
+				_, _ = fmt.Fprintf(os.Stderr, "[%s] started\n", event.Typename)
+			case cache.BuildEventFinished:
+				_, _ = fmt.Fprintf(os.Stderr, "[%s] done\n", event.Typename)
+			}
 		}
 
 		cleaner := func(env *Env) interrupt.CleanerFunc {

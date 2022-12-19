@@ -4,10 +4,39 @@ import (
 	"fmt"
 
 	"github.com/MichaelMure/git-bug/entities/identity"
+	"github.com/MichaelMure/git-bug/entity"
+	"github.com/MichaelMure/git-bug/repository"
 )
 
 type RepoCacheIdentity struct {
-	SubCache[*IdentityExcerpt, *IdentityCache, identity.Interface]
+	*SubCache[*identity.Identity, *IdentityExcerpt, *IdentityCache]
+}
+
+func NewRepoCacheIdentity(repo repository.ClockedRepo,
+	resolvers func() entity.Resolvers,
+	getUserIdentity getUserIdentityFunc) *RepoCacheIdentity {
+
+	makeCached := func(i *identity.Identity, entityUpdated func(id entity.Id) error) *IdentityCache {
+		return NewIdentityCache(i, repo, entityUpdated)
+	}
+
+	makeExcerpt := func(i *identity.Identity) *IdentityExcerpt {
+		return NewIdentityExcerpt(i)
+	}
+
+	makeIndex := func(i *IdentityCache) []string {
+		// no indexing
+		return nil
+	}
+
+	sc := NewSubCache[*identity.Identity, *IdentityExcerpt, *IdentityCache](
+		repo, resolvers, getUserIdentity,
+		makeCached, makeExcerpt, makeIndex,
+		"identity", "identities",
+		formatVersion, defaultMaxLoadedBugs,
+	)
+
+	return &RepoCacheIdentity{SubCache: sc}
 }
 
 // ResolveIdentityImmutableMetadata retrieve an Identity that has the exact given metadata on
@@ -65,7 +94,7 @@ func (c *RepoCacheIdentity) finishIdentity(i *identity.Identity, metadata map[st
 		return nil, fmt.Errorf("identity %s already exist in the cache", i.Id())
 	}
 
-	cached := NewIdentityCache(c, i)
+	cached := NewIdentityCache(i, c.repo, c.entityUpdated)
 	c.cached[i.Id()] = cached
 	c.mu.Unlock()
 

@@ -10,17 +10,17 @@ var _ identity.Interface = &IdentityCache{}
 
 // IdentityCache is a wrapper around an Identity for caching.
 type IdentityCache struct {
-	entityUpdated func(id entity.Id) error
 	repo          repository.ClockedRepo
+	entityUpdated func(id entity.Id) error
 
 	*identity.Identity
 }
 
-func NewIdentityCache(subcache *RepoCacheIdentity, id *identity.Identity) *IdentityCache {
+func NewIdentityCache(i *identity.Identity, repo repository.ClockedRepo, entityUpdated func(id entity.Id) error) *IdentityCache {
 	return &IdentityCache{
-		entityUpdated: subcache.entityUpdated,
-		repo:          subcache.repo,
-		Identity:      id,
+		repo:          repo,
+		entityUpdated: entityUpdated,
+		Identity:      i,
 	}
 }
 

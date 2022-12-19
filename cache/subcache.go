@@ -19,20 +19,21 @@ type Excerpt interface {
 }
 
 type CacheEntity interface {
+	Id() entity.Id
 	NeedCommit() bool
 }
 
 type getUserIdentityFunc func() (*IdentityCache, error)
 
-type SubCache[ExcerptT Excerpt, CacheT CacheEntity, EntityT entity.Interface] struct {
+type SubCache[EntityT entity.Interface, ExcerptT Excerpt, CacheT CacheEntity] struct {
 	repo      repository.ClockedRepo
 	resolvers func() entity.Resolvers
 
 	getUserIdentity  getUserIdentityFunc
 	readWithResolver func(repository.ClockedRepo, entity.Resolvers, entity.Id) (EntityT, error)
-	makeCached       func(*SubCache[ExcerptT, CacheT, EntityT], getUserIdentityFunc, EntityT) CacheT
-	makeExcerpt      func() Excerpt
-	indexingCallback func(CacheT) error
+	makeCached       func(entity EntityT, entityUpdated func(id entity.Id) error) CacheT
+	makeExcerpt      func(EntityT) ExcerptT
+	makeIndex        func(CacheT) []string
 
 	typename  string
 	namespace string
@@ -45,13 +46,15 @@ type SubCache[ExcerptT Excerpt, CacheT CacheEntity, EntityT entity.Interface] st
 	lru      *lruIdCache
 }
 
-func NewSubCache[ExcerptT Excerpt, CacheT CacheEntity, EntityT entity.Interface](
+func NewSubCache[EntityT entity.Interface, ExcerptT Excerpt, CacheT CacheEntity](
 	repo repository.ClockedRepo,
-	resolvers func() entity.Resolvers,
-	getUserIdentity getUserIdentityFunc,
+	resolvers func() entity.Resolvers, getUserIdentity getUserIdentityFunc,
+	makeCached func(entity EntityT, entityUpdated func(id entity.Id) error) CacheT,
+	makeExcerpt func(EntityT) ExcerptT,
+	makeIndex func(CacheT) []string,
 	typename, namespace string,
-	version uint, maxLoaded int) *SubCache[ExcerptT, CacheT, EntityT] {
-	return &SubCache[ExcerptT, CacheT, EntityT]{
+	version uint, maxLoaded int) *SubCache[EntityT, ExcerptT, CacheT] {
+	return &SubCache[EntityT, ExcerptT, CacheT]{
 		repo:            repo,
 		resolvers:       resolvers,
 		getUserIdentity: getUserIdentity,
@@ -65,12 +68,12 @@ func NewSubCache[ExcerptT Excerpt, CacheT CacheEntity, EntityT entity.Interface]
 	}
 }
 
-func (sc *SubCache[ExcerptT, CacheT, EntityT]) Typename() string {
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) Typename() string {
 	return sc.typename
 }
 
 // Load will try to read from the disk the entity cache file
-func (sc *SubCache[ExcerptT, CacheT, EntityT]) Load() error {
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) Load() error {
 	sc.mu.Lock()
 	defer sc.mu.Unlock()
 
@@ -97,7 +100,7 @@ func (sc *SubCache[ExcerptT, CacheT, EntityT]) Load() error {
 
 	sc.excerpts = aux.Excerpts
 
-	index, err := sc.repo.GetBleveIndex("bug")
+	index, err := sc.repo.GetIndex(sc.typename)
 	if err != nil {
 		return err
 	}
@@ -115,7 +118,7 @@ func (sc *SubCache[ExcerptT, CacheT, EntityT]) Load() error {
 }
 
 // Write will serialize on disk the entity cache file
-func (sc *SubCache[ExcerptT, CacheT, EntityT]) Write() error {
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) Write() error {
 	sc.mu.RLock()
 	defer sc.mu.RUnlock()
 
@@ -149,18 +152,25 @@ func (sc *SubCache[ExcerptT, CacheT, EntityT]) Write() error {
 	return f.Close()
 }
 
-func (sc *SubCache[ExcerptT, CacheT, EntityT]) Build() error {
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) Build() error {
 	sc.excerpts = make(map[entity.Id]ExcerptT)
 
 	sc.readWithResolver
 
 	allBugs := bug.ReadAllWithResolver(c.repo, c.resolvers)
 
-	// wipe the index just to be sure
-	err := c.repo.ClearBleveIndex("bug")
+	index, err := sc.repo.GetIndex(sc.typename)
 	if err != nil {
 		return err
 	}
+
+	// wipe the index just to be sure
+	err = index.Clear()
+	if err != nil {
+		return err
+	}
+
+	indexer, indexEnd := index.IndexBatch()
 
 	for b := range allBugs {
 		if b.Err != nil {
@@ -170,15 +180,21 @@ func (sc *SubCache[ExcerptT, CacheT, EntityT]) Build() error {
 		snap := b.Bug.Compile()
 		c.bugExcerpts[b.Bug.Id()] = NewBugExcerpt(b.Bug, snap)
 
-		if err := c.addBugToSearchIndex(snap); err != nil {
+		if err := indexer(snap); err != nil {
 			return err
 		}
 	}
 
+	err = indexEnd()
+	if err != nil {
+		return err
+	}
+
 	_, _ = fmt.Fprintln(os.Stderr, "Done.")
+	return nil
 }
 
-func (sc *SubCache[ExcerptT, CacheT, EntityT]) Close() error {
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) Close() error {
 	sc.mu.Lock()
 	defer sc.mu.Unlock()
 	sc.excerpts = nil
@@ -187,7 +203,7 @@ func (sc *SubCache[ExcerptT, CacheT, EntityT]) Close() error {
 }
 
 // AllIds return all known bug ids
-func (sc *SubCache[ExcerptT, CacheT, EntityT]) AllIds() []entity.Id {
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) AllIds() []entity.Id {
 	sc.mu.RLock()
 	defer sc.mu.RUnlock()
 
@@ -203,7 +219,7 @@ func (sc *SubCache[ExcerptT, CacheT, EntityT]) AllIds() []entity.Id {
 }
 
 // Resolve retrieve an entity matching the exact given id
-func (sc *SubCache[ExcerptT, CacheT, EntityT]) Resolve(id entity.Id) (CacheT, error) {
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) Resolve(id entity.Id) (CacheT, error) {
 	sc.mu.RLock()
 	cached, ok := sc.cached[id]
 	if ok {
@@ -213,12 +229,12 @@ func (sc *SubCache[ExcerptT, CacheT, EntityT]) Resolve(id entity.Id) (CacheT, er
 	}
 	sc.mu.RUnlock()
 
-	b, err := sc.readWithResolver(sc.repo, sc.resolvers(), id)
+	e, err := sc.readWithResolver(sc.repo, sc.resolvers(), id)
 	if err != nil {
 		return *new(CacheT), err
 	}
 
-	cached = sc.makeCached(sc, sc.getUserIdentity, b)
+	cached = sc.makeCached(e, sc.entityUpdated)
 
 	sc.mu.Lock()
 	sc.cached[id] = cached
@@ -232,13 +248,13 @@ func (sc *SubCache[ExcerptT, CacheT, EntityT]) Resolve(id entity.Id) (CacheT, er
 
 // ResolvePrefix retrieve an entity matching an id prefix. It fails if multiple
 // entity match.
-func (sc *SubCache[ExcerptT, CacheT, EntityT]) ResolvePrefix(prefix string) (CacheT, error) {
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) ResolvePrefix(prefix string) (CacheT, error) {
 	return sc.ResolveMatcher(func(excerpt ExcerptT) bool {
 		return excerpt.Id().HasPrefix(prefix)
 	})
 }
 
-func (sc *SubCache[ExcerptT, CacheT, EntityT]) ResolveMatcher(f func(ExcerptT) bool) (CacheT, error) {
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) ResolveMatcher(f func(ExcerptT) bool) (CacheT, error) {
 	id, err := sc.resolveMatcher(f)
 	if err != nil {
 		return *new(CacheT), err
@@ -247,7 +263,7 @@ func (sc *SubCache[ExcerptT, CacheT, EntityT]) ResolveMatcher(f func(ExcerptT) b
 }
 
 // ResolveExcerpt retrieve an Excerpt matching the exact given id
-func (sc *SubCache[ExcerptT, CacheT, EntityT]) ResolveExcerpt(id entity.Id) (ExcerptT, error) {
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) ResolveExcerpt(id entity.Id) (ExcerptT, error) {
 	sc.mu.RLock()
 	defer sc.mu.RUnlock()
 
@@ -261,13 +277,13 @@ func (sc *SubCache[ExcerptT, CacheT, EntityT]) ResolveExcerpt(id entity.Id) (Exc
 
 // ResolveExcerptPrefix retrieve an Excerpt matching an id prefix. It fails if multiple
 // entity match.
-func (sc *SubCache[ExcerptT, CacheT, EntityT]) ResolveExcerptPrefix(prefix string) (ExcerptT, error) {
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) ResolveExcerptPrefix(prefix string) (ExcerptT, error) {
 	return sc.ResolveExcerptMatcher(func(excerpt ExcerptT) bool {
 		return excerpt.Id().HasPrefix(prefix)
 	})
 }
 
-func (sc *SubCache[ExcerptT, CacheT, EntityT]) ResolveExcerptMatcher(f func(ExcerptT) bool) (ExcerptT, error) {
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) ResolveExcerptMatcher(f func(ExcerptT) bool) (ExcerptT, error) {
 	id, err := sc.resolveMatcher(f)
 	if err != nil {
 		return *new(ExcerptT), err
@@ -275,7 +291,7 @@ func (sc *SubCache[ExcerptT, CacheT, EntityT]) ResolveExcerptMatcher(f func(Exce
 	return sc.ResolveExcerpt(id)
 }
 
-func (sc *SubCache[ExcerptT, CacheT, EntityT]) resolveMatcher(f func(ExcerptT) bool) (entity.Id, error) {
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) resolveMatcher(f func(ExcerptT) bool) (entity.Id, error) {
 	sc.mu.RLock()
 	defer sc.mu.RUnlock()
 
@@ -301,14 +317,14 @@ func (sc *SubCache[ExcerptT, CacheT, EntityT]) resolveMatcher(f func(ExcerptT) b
 
 var errNotInCache = errors.New("entity missing from cache")
 
-func (sc *SubCache[ExcerptT, CacheT, EntityT]) add(e EntityT) (CacheT, error) {
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) add(e EntityT) (CacheT, error) {
 	sc.mu.Lock()
 	if _, has := sc.cached[e.Id()]; has {
 		sc.mu.Unlock()
 		return *new(CacheT), fmt.Errorf("entity %s already exist in the cache", e.Id())
 	}
 
-	cached := sc.makeCached(sc, sc.getUserIdentity, e)
+	cached := sc.makeCached(e, sc.entityUpdated)
 	sc.cached[e.Id()] = cached
 	sc.lru.Add(e.Id())
 	sc.mu.Unlock()
@@ -324,7 +340,7 @@ func (sc *SubCache[ExcerptT, CacheT, EntityT]) add(e EntityT) (CacheT, error) {
 	return cached, nil
 }
 
-func (sc *SubCache[ExcerptT, CacheT, EntityT]) Remove(prefix string) error {
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) Remove(prefix string) error {
 	e, err := sc.ResolvePrefix(prefix)
 	if err != nil {
 		return err
@@ -349,7 +365,7 @@ func (sc *SubCache[ExcerptT, CacheT, EntityT]) Remove(prefix string) error {
 }
 
 // entityUpdated is a callback to trigger when the excerpt of an entity changed
-func (sc *SubCache[ExcerptT, CacheT, EntityT]) entityUpdated(id entity.Id) error {
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) entityUpdated(id entity.Id) error {
 	sc.mu.Lock()
 	b, ok := sc.cached[id]
 	if !ok {
@@ -376,7 +392,7 @@ func (sc *SubCache[ExcerptT, CacheT, EntityT]) entityUpdated(id entity.Id) error
 }
 
 // evictIfNeeded will evict an entity from the cache if needed
-func (sc *SubCache[ExcerptT, CacheT, EntityT]) evictIfNeeded() {
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) evictIfNeeded() {
 	sc.mu.Lock()
 	defer sc.mu.Unlock()
 	if sc.lru.Len() <= sc.maxLoaded {
