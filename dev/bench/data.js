@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1671100066241,
+  "lastUpdate": 1671661013676,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -208,6 +208,48 @@ window.BENCHMARK_DATA = {
             "value": 1211197183,
             "unit": "ns/op\t840074568 B/op\t  834789 allocs/op",
             "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "02510cb197993b9f5c6acec431f1432cd02341f1",
+          "message": "Merge pull request #956 from MichaelMure/dependabot/go_modules/github.com/99designs/keyring-1.2.2\n\nbuild(deps): bump github.com/99designs/keyring from 1.2.1 to 1.2.2",
+          "timestamp": "2022-12-21T23:15:33+01:00",
+          "tree_id": "84bc74f0b1c9bbab0fecc1cfe1ca462e1e00f5cc",
+          "url": "https://github.com/MichaelMure/git-bug/commit/02510cb197993b9f5c6acec431f1432cd02341f1"
+        },
+        "date": 1671661012936,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 29496058,
+            "unit": "ns/op\t25065323 B/op\t   25156 allocs/op",
+            "extra": "42 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 175189076,
+            "unit": "ns/op\t140660546 B/op\t  139693 allocs/op",
+            "extra": "7 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 837047688,
+            "unit": "ns/op\t840115836 B/op\t  834795 allocs/op",
+            "extra": "2 times\n2 procs"
           }
         ]
       }
