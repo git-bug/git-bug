@@ -11,7 +11,7 @@ import (
 	"github.com/MichaelMure/git-bug/repository"
 )
 
-func allEntities(t testing.TB, bugs <-chan StreamedEntity[*Foo]) []*Foo {
+func allEntities(t testing.TB, bugs <-chan entity.StreamedEntity[*Foo]) []*Foo {
 	t.Helper()
 
 	var result []*Foo

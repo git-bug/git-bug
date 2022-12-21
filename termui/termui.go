@@ -200,7 +200,7 @@ func newBugWithEditor(repo *cache.RepoCache) error {
 
 		return errTerminateMainloop
 	} else {
-		b, _, err = repo.NewBug(
+		b, _, err = repo.Bugs().New(
 			text.CleanupOneLine(title),
 			text.Cleanup(message),
 		)

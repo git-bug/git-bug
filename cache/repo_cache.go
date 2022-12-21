@@ -30,8 +30,10 @@ var _ repository.RepoKeyring = &RepoCache{}
 type cacheMgmt interface {
 	Typename() string
 	Load() error
-	Write() error
 	Build() error
+	SetCacheSize(size int)
+	MergeAll(remote string) <-chan entity.MergeResult
+	GetNamespace() string
 	Close() error
 }
 
@@ -86,18 +88,24 @@ func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, chan 
 	c.subcaches = append(c.subcaches, c.bugs)
 
 	c.resolvers = entity.Resolvers{
-		&IdentityCache{}: entity.ResolverFunc[*IdentityCache](c.identities.Resolve),
-		&BugCache{}:      entity.ResolverFunc[*BugCache](c.bugs.Resolve),
+		&IdentityCache{}:   entity.ResolverFunc[*IdentityCache](c.identities.Resolve),
+		&IdentityExcerpt{}: entity.ResolverFunc[*IdentityExcerpt](c.identities.ResolveExcerpt),
+		&BugCache{}:        entity.ResolverFunc[*BugCache](c.bugs.Resolve),
+		&BugExcerpt{}:      entity.ResolverFunc[*BugExcerpt](c.bugs.ResolveExcerpt),
 	}
 
 	err := c.lock()
 	if err != nil {
-		return &RepoCache{}, nil, err
+		closed := make(chan BuildEvent)
+		close(closed)
+		return &RepoCache{}, closed, err
 	}
 
 	err = c.load()
 	if err == nil {
-		return c, nil, nil
+		closed := make(chan BuildEvent)
+		close(closed)
+		return c, closed, nil
 	}
 
 	// Cache is either missing, broken or outdated. Rebuilding.
@@ -122,8 +130,9 @@ func (c *RepoCache) getResolvers() entity.Resolvers {
 
 // setCacheSize change the maximum number of loaded bugs
 func (c *RepoCache) setCacheSize(size int) {
-	c.maxLoadedBugs = size
-	c.evictIfNeeded()
+	for _, subcache := range c.subcaches {
+		subcache.SetCacheSize(size)
+	}
 }
 
 // load will try to read from the disk all the cache files
@@ -131,15 +140,6 @@ func (c *RepoCache) load() error {
 	var errWait multierr.ErrWaitGroup
 	for _, mgmt := range c.subcaches {
 		errWait.Go(mgmt.Load)
-	}
-	return errWait.Wait()
-}
-
-// write will serialize on disk all the cache files
-func (c *RepoCache) write() error {
-	var errWait multierr.ErrWaitGroup
-	for _, mgmt := range c.subcaches {
-		errWait.Go(mgmt.Write)
 	}
 	return errWait.Wait()
 }
@@ -190,10 +190,14 @@ const (
 	BuildEventFinished
 )
 
+// BuildEvent carry an event happening during the cache build process.
 type BuildEvent struct {
+	// Err carry an error if the build process failed. If set, no other field matter.
+	Err error
+	// Typename is the name of the entity of which the event relate to.
 	Typename string
-	Event    BuildEventType
-	Err      error
+	// Event is the type of the event.
+	Event BuildEventType
 }
 
 func (c *RepoCache) buildCache() chan BuildEvent {
@@ -213,15 +217,6 @@ func (c *RepoCache) buildCache() chan BuildEvent {
 				}
 
 				err := subcache.Build()
-				if err != nil {
-					out <- BuildEvent{
-						Typename: subcache.Typename(),
-						Err:      err,
-					}
-					return
-				}
-
-				err = subcache.Write()
 				if err != nil {
 					out <- BuildEvent{
 						Typename: subcache.Typename(),

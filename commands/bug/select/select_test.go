@@ -13,8 +13,11 @@ import (
 func TestSelect(t *testing.T) {
 	repo := repository.CreateGoGitTestRepo(t, false)
 
-	repoCache, err := cache.NewRepoCache(repo)
+	repoCache, events, err := cache.NewRepoCache(repo)
 	require.NoError(t, err)
+	for event := range events {
+		require.NoError(t, event.Err)
+	}
 
 	_, _, err = ResolveBug(repoCache, []string{})
 	require.Equal(t, ErrNoValidId, err)
@@ -28,18 +31,18 @@ func TestSelect(t *testing.T) {
 
 	// generate a bunch of bugs
 
-	rene, err := repoCache.NewIdentity("René Descartes", "rene@descartes.fr")
+	rene, err := repoCache.Identities().New("René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
-		_, _, err := repoCache.NewBugRaw(rene, time.Now().Unix(), "title", "message", nil, nil)
+		_, _, err := repoCache.Bugs().NewRaw(rene, time.Now().Unix(), "title", "message", nil, nil)
 		require.NoError(t, err)
 	}
 
 	// and two more for testing
-	b1, _, err := repoCache.NewBugRaw(rene, time.Now().Unix(), "title", "message", nil, nil)
+	b1, _, err := repoCache.Bugs().NewRaw(rene, time.Now().Unix(), "title", "message", nil, nil)
 	require.NoError(t, err)
-	b2, _, err := repoCache.NewBugRaw(rene, time.Now().Unix(), "title", "message", nil, nil)
+	b2, _, err := repoCache.Bugs().NewRaw(rene, time.Now().Unix(), "title", "message", nil, nil)
 	require.NoError(t, err)
 
 	err = Select(repoCache, b1.Id())

@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/repository"
-	"github.com/stretchr/testify/require"
 )
 
 type TestOut struct {
@@ -33,8 +34,12 @@ func NewTestEnv(t *testing.T) *Env {
 
 	buf := new(bytes.Buffer)
 
-	backend, err := cache.NewRepoCache(repo)
+	backend, events, err := cache.NewRepoCache(repo)
 	require.NoError(t, err)
+	for event := range events {
+		require.NoError(t, event.Err)
+	}
+
 	t.Cleanup(func() {
 		backend.Close()
 	})

@@ -25,10 +25,6 @@ var ErrNoIdentitySet = errors.New("No identity is set.\n" +
 	"\"git bug user new\" or adopted with \"git bug user adopt\"")
 var ErrMultipleIdentitiesSet = errors.New("multiple user identities set")
 
-func NewErrMultipleMatchIdentity(matching []entity.Id) *entity.ErrMultipleMatch {
-	return entity.NewErrMultipleMatch("identity", matching)
-}
-
 var _ Interface = &Identity{}
 var _ entity.Interface = &Identity{}
 
@@ -174,7 +170,7 @@ func RemoveIdentity(repo repository.ClockedRepo, id entity.Id) error {
 		return err
 	}
 	if len(refs) > 1 {
-		return NewErrMultipleMatchIdentity(entity.RefsToIds(refs))
+		return entity.NewErrMultipleMatch("identity", entity.RefsToIds(refs))
 	}
 	if len(refs) == 1 {
 		// we have the identity locally
@@ -193,7 +189,7 @@ func RemoveIdentity(repo repository.ClockedRepo, id entity.Id) error {
 			return err
 		}
 		if len(remoteRefs) > 1 {
-			return NewErrMultipleMatchIdentity(entity.RefsToIds(refs))
+			return entity.NewErrMultipleMatch("identity", entity.RefsToIds(refs))
 		}
 		if len(remoteRefs) == 1 {
 			// found the identity in a remote
@@ -215,44 +211,39 @@ func RemoveIdentity(repo repository.ClockedRepo, id entity.Id) error {
 	return nil
 }
 
-type StreamedIdentity struct {
-	Identity *Identity
-	Err      error
-}
-
 // ReadAllLocal read and parse all local Identity
-func ReadAllLocal(repo repository.ClockedRepo) <-chan StreamedIdentity {
+func ReadAllLocal(repo repository.ClockedRepo) <-chan entity.StreamedEntity[*Identity] {
 	return readAll(repo, identityRefPattern)
 }
 
 // ReadAllRemote read and parse all remote Identity for a given remote
-func ReadAllRemote(repo repository.ClockedRepo, remote string) <-chan StreamedIdentity {
+func ReadAllRemote(repo repository.ClockedRepo, remote string) <-chan entity.StreamedEntity[*Identity] {
 	refPrefix := fmt.Sprintf(identityRemoteRefPattern, remote)
 	return readAll(repo, refPrefix)
 }
 
 // readAll read and parse all available bug with a given ref prefix
-func readAll(repo repository.ClockedRepo, refPrefix string) <-chan StreamedIdentity {
-	out := make(chan StreamedIdentity)
+func readAll(repo repository.ClockedRepo, refPrefix string) <-chan entity.StreamedEntity[*Identity] {
+	out := make(chan entity.StreamedEntity[*Identity])
 
 	go func() {
 		defer close(out)
 
 		refs, err := repo.ListRefs(refPrefix)
 		if err != nil {
-			out <- StreamedIdentity{Err: err}
+			out <- entity.StreamedEntity[*Identity]{Err: err}
 			return
 		}
 
 		for _, ref := range refs {
-			b, err := read(repo, ref)
+			i, err := read(repo, ref)
 
 			if err != nil {
-				out <- StreamedIdentity{Err: err}
+				out <- entity.StreamedEntity[*Identity]{Err: err}
 				return
 			}
 
-			out <- StreamedIdentity{Identity: b}
+			out <- entity.StreamedEntity[*Identity]{Entity: i}
 		}
 	}()
 
@@ -308,7 +299,7 @@ func (i *Identity) Mutate(repo repository.RepoClock, f func(orig *Mutator)) erro
 	return nil
 }
 
-// Write the identity into the Repository. In particular, this ensure that
+// Commit write the identity into the Repository. In particular, this ensures that
 // the Id is properly set.
 func (i *Identity) Commit(repo repository.ClockedRepo) error {
 	if !i.NeedCommit() {

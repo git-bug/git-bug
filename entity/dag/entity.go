@@ -33,19 +33,6 @@ type Definition struct {
 	FormatVersion uint
 }
 
-type Actions[EntityT entity.Interface] struct {
-	Wrap             func(e *Entity) EntityT
-	New              func() EntityT
-	Read             func(repo repository.ClockedRepo, id entity.Id) (EntityT, error)
-	ReadWithResolver func(repo repository.ClockedRepo, resolvers entity.Resolvers, id entity.Id) (EntityT, error)
-	ReadAll          func(repo repository.ClockedRepo) <-chan StreamedEntity[EntityT]
-	ListLocalIds     func(repo repository.Repo) ([]entity.Id, error)
-	Fetch            func(repo repository.Repo, remote string) (string, error)
-	Push             func(repo repository.Repo, remote string) (string, error)
-	Pull             func(repo repository.ClockedRepo, resolvers entity.Resolvers, remote string, mergeAuthor identity.Interface) error
-	MergeAll         func(repo repository.ClockedRepo, resolvers entity.Resolvers, remote string, mergeAuthor identity.Interface) <-chan entity.MergeResult
-}
-
 // Entity is a data structure stored in a chain of git objects, supporting actions like Push, Pull and Merge.
 type Entity struct {
 	// A Lamport clock is a logical clock that allow to order event
@@ -96,6 +83,9 @@ func readRemote[EntityT entity.Interface](def Definition, wrapper func(e *Entity
 // read fetch from git and decode an Entity at an arbitrary git reference.
 func read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.ClockedRepo, resolvers entity.Resolvers, ref string) (EntityT, error) {
 	rootHash, err := repo.ResolveRef(ref)
+	if err == repository.ErrNotFound {
+		return *new(EntityT), entity.NewErrNotFound(def.Typename)
+	}
 	if err != nil {
 		return *new(EntityT), err
 	}
@@ -260,6 +250,9 @@ func read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Enti
 // operation blobs can be implemented instead.
 func readClockNoCheck(def Definition, repo repository.ClockedRepo, ref string) error {
 	rootHash, err := repo.ResolveRef(ref)
+	if err == repository.ErrNotFound {
+		return entity.NewErrNotFound(def.Typename)
+	}
 	if err != nil {
 		return err
 	}
@@ -306,14 +299,9 @@ func readClockNoCheck(def Definition, repo repository.ClockedRepo, ref string) e
 	return nil
 }
 
-type StreamedEntity[EntityT entity.Interface] struct {
-	Entity EntityT
-	Err    error
-}
-
 // ReadAll read and parse all local Entity
-func ReadAll[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.ClockedRepo, resolvers entity.Resolvers) <-chan StreamedEntity[EntityT] {
-	out := make(chan StreamedEntity[EntityT])
+func ReadAll[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.ClockedRepo, resolvers entity.Resolvers) <-chan entity.StreamedEntity[EntityT] {
+	out := make(chan entity.StreamedEntity[EntityT])
 
 	go func() {
 		defer close(out)
@@ -322,7 +310,7 @@ func ReadAll[EntityT entity.Interface](def Definition, wrapper func(e *Entity) E
 
 		refs, err := repo.ListRefs(refPrefix)
 		if err != nil {
-			out <- StreamedEntity[EntityT]{Err: err}
+			out <- entity.StreamedEntity[EntityT]{Err: err}
 			return
 		}
 
@@ -330,11 +318,11 @@ func ReadAll[EntityT entity.Interface](def Definition, wrapper func(e *Entity) E
 			e, err := read[EntityT](def, wrapper, repo, resolvers, ref)
 
 			if err != nil {
-				out <- StreamedEntity[EntityT]{Err: err}
+				out <- entity.StreamedEntity[EntityT]{Err: err}
 				return
 			}
 
-			out <- StreamedEntity[EntityT]{Entity: e}
+			out <- entity.StreamedEntity[EntityT]{Entity: e}
 		}
 	}()
 

@@ -3,10 +3,10 @@ package cache
 import (
 	"sync"
 
-	"github.com/MichaelMure/git-bug/entities/bug"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
 	"github.com/MichaelMure/git-bug/repository"
+	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
 // type withSnapshot[SnapT dag.Snapshot, OpT dag.OperationWithApply[SnapT]] struct {
@@ -97,7 +97,7 @@ func (e *CachedEntityBase[SnapT, OpT]) ResolveOperationWithMetadata(key string, 
 	}
 
 	if len(matching) > 1 {
-		return "", bug.NewErrMultipleMatchOp(matching)
+		return "", entity.NewErrMultipleMatch("operation", matching)
 	}
 
 	return matching[0], nil
@@ -135,4 +135,16 @@ func (e *CachedEntityBase[SnapT, OpT]) NeedCommit() bool {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 	return e.entity.NeedCommit()
+}
+
+func (e *CachedEntityBase[SnapT, OpT]) CreateLamportTime() lamport.Time {
+	return e.entity.CreateLamportTime()
+}
+
+func (e *CachedEntityBase[SnapT, OpT]) EditLamportTime() lamport.Time {
+	return e.entity.EditLamportTime()
+}
+
+func (e *CachedEntityBase[SnapT, OpT]) FirstOp() OpT {
+	return e.entity.FirstOp()
 }

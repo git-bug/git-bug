@@ -1,10 +1,11 @@
 package cache
 
 import (
+	"sync"
+
 	"github.com/go-git/go-billy/v5"
 	"github.com/pkg/errors"
 
-	"github.com/MichaelMure/git-bug/entities/bug"
 	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
@@ -72,76 +73,40 @@ func (c *RepoCache) StoreData(data []byte) (repository.Hash, error) {
 // Fetch retrieve updates from a remote
 // This does not change the local bugs or identities state
 func (c *RepoCache) Fetch(remote string) (string, error) {
-	stdout1, err := identity.Fetch(c.repo, remote)
-	if err != nil {
-		return stdout1, err
+	prefixes := make([]string, len(c.subcaches))
+	for i, subcache := range c.subcaches {
+		prefixes[i] = subcache.GetNamespace()
 	}
 
-	stdout2, err := bug.Fetch(c.repo, remote)
-	if err != nil {
-		return stdout2, err
-	}
-
-	return stdout1 + stdout2, nil
+	// fetch everything at once, to have a single auth step if required.
+	return c.repo.FetchRefs(remote, prefixes...)
 }
 
 // MergeAll will merge all the available remote bug and identities
 func (c *RepoCache) MergeAll(remote string) <-chan entity.MergeResult {
 	out := make(chan entity.MergeResult)
 
-	// Intercept merge results to update the cache properly
+	dependency := [][]cacheMgmt{
+		{c.identities},
+		{c.bugs},
+	}
+
+	// run MergeAll according to entities dependencies and merge the results
 	go func() {
 		defer close(out)
 
-		author, err := c.GetUserIdentity()
-		if err != nil {
-			out <- entity.NewMergeError(err, "")
-			return
-		}
-
-		results := identity.MergeAll(c.repo, remote)
-		for result := range results {
-			out <- result
-
-			if result.Err != nil {
-				continue
+		for _, subcaches := range dependency {
+			var wg sync.WaitGroup
+			for _, subcache := range subcaches {
+				wg.Add(1)
+				go func(subcache cacheMgmt) {
+					for res := range subcache.MergeAll(remote) {
+						out <- res
+					}
+					wg.Done()
+				}(subcache)
 			}
-
-			switch result.Status {
-			case entity.MergeStatusNew, entity.MergeStatusUpdated:
-				i := result.Entity.(*identity.Identity)
-				c.muIdentity.Lock()
-				c.identitiesExcerpts[result.Id] = NewIdentityExcerpt(i)
-				c.muIdentity.Unlock()
-			}
-		}
-
-		results = bug.MergeAll(c.repo, c.resolvers, remote, author)
-		for result := range results {
-			out <- result
-
-			if result.Err != nil {
-				continue
-			}
-
-			// TODO: have subcache do the merging?
-			switch result.Status {
-			case entity.MergeStatusNew:
-				b := result.Entity.(*bug.Bug)
-				_, err := c.bugs.add(b)
-			case entity.MergeStatusUpdated:
-				_, err := c.bugs.entityUpdated(b)
-				snap := b.Compile()
-				c.muBug.Lock()
-				c.bugExcerpts[result.Id] = NewBugExcerpt(b, snap)
-				c.muBug.Unlock()
-			}
-		}
-
-		err = c.write()
-		if err != nil {
-			out <- entity.NewMergeError(err, "")
-			return
+			wg.Wait()
 		}
 	}()
 
@@ -150,17 +115,13 @@ func (c *RepoCache) MergeAll(remote string) <-chan entity.MergeResult {
 
 // Push update a remote with the local changes
 func (c *RepoCache) Push(remote string) (string, error) {
-	stdout1, err := identity.Push(c.repo, remote)
-	if err != nil {
-		return stdout1, err
+	prefixes := make([]string, len(c.subcaches))
+	for i, subcache := range c.subcaches {
+		prefixes[i] = subcache.GetNamespace()
 	}
 
-	stdout2, err := bug.Push(c.repo, remote)
-	if err != nil {
-		return stdout2, err
-	}
-
-	return stdout1 + stdout2, nil
+	// push everything at once, to have a single auth step if required
+	return c.repo.PushRefs(remote, prefixes...)
 }
 
 // Pull will do a Fetch + MergeAll

@@ -10,7 +10,6 @@ import (
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/entities/bug"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/util/text"
 )
@@ -183,7 +182,7 @@ func (gi *githubImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache
 	}
 
 	// resolve bug
-	b, err := repo.ResolveBugMatcher(func(excerpt *cache.BugExcerpt) bool {
+	b, err := repo.Bugs().ResolveMatcher(func(excerpt *cache.BugExcerpt) bool {
 		return excerpt.CreateMetadata[metaKeyGithubUrl] == issue.Url.String() &&
 			excerpt.CreateMetadata[metaKeyGithubId] == parseId(issue.Id)
 	})
@@ -213,7 +212,7 @@ func (gi *githubImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache
 	}
 
 	// create bug
-	b, _, err = repo.NewBugRaw(
+	b, _, err = repo.Bugs().NewRaw(
 		author,
 		issue.CreatedAt.Unix(),
 		text.CleanupOneLine(title), // TODO: this is the *current* title, not the original one
@@ -498,7 +497,7 @@ func (gi *githubImporter) ensurePerson(ctx context.Context, repo *cache.RepoCach
 	}
 
 	// Look first in the cache
-	i, err := repo.ResolveIdentityImmutableMetadata(metaKeyGithubLogin, string(actor.Login))
+	i, err := repo.Identities().ResolveIdentityImmutableMetadata(metaKeyGithubLogin, string(actor.Login))
 	if err == nil {
 		return i, nil
 	}
@@ -531,7 +530,7 @@ func (gi *githubImporter) ensurePerson(ctx context.Context, repo *cache.RepoCach
 		name = string(actor.Login)
 	}
 
-	i, err = repo.NewIdentityRaw(
+	i, err = repo.Identities().NewRaw(
 		name,
 		email,
 		string(actor.Login),
@@ -553,7 +552,7 @@ func (gi *githubImporter) ensurePerson(ctx context.Context, repo *cache.RepoCach
 func (gi *githubImporter) getGhost(ctx context.Context, repo *cache.RepoCache) (*cache.IdentityCache, error) {
 	loginName := "ghost"
 	// Look first in the cache
-	i, err := repo.ResolveIdentityImmutableMetadata(metaKeyGithubLogin, loginName)
+	i, err := repo.Identities().ResolveIdentityImmutableMetadata(metaKeyGithubLogin, loginName)
 	if err == nil {
 		return i, nil
 	}
@@ -568,7 +567,7 @@ func (gi *githubImporter) getGhost(ctx context.Context, repo *cache.RepoCache) (
 	if user.Name != nil {
 		userName = string(*user.Name)
 	}
-	return repo.NewIdentityRaw(
+	return repo.Identities().NewRaw(
 		userName,
 		"",
 		string(user.Login),

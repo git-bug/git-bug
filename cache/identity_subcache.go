@@ -20,18 +20,34 @@ func NewRepoCacheIdentity(repo repository.ClockedRepo,
 		return NewIdentityCache(i, repo, entityUpdated)
 	}
 
-	makeExcerpt := func(i *identity.Identity) *IdentityExcerpt {
-		return NewIdentityExcerpt(i)
-	}
-
 	makeIndex := func(i *IdentityCache) []string {
 		// no indexing
 		return nil
 	}
 
+	// TODO: this is terribly ugly, but we are currently stuck with the fact that identities are NOT using the fancy dag framework.
+	//   This lead to various complication here and there to handle entities generically, and avoid large code duplication.
+	//   TL;DR: something has to give, and this is the less ugly solution I found. This "normalize" identities as just another "dag framework"
+	//   entity. Ideally identities would be converted to the dag framework, but right now that could lead to potential attack: if an old
+	//   private key is leaked, it would be possible to craft a legal identity update that take over the most recent version. While this is
+	//   meaningless in the case of a normal entity, it's really an issues for identities.
+
+	actions := Actions[*identity.Identity]{
+		ReadWithResolver: func(repo repository.ClockedRepo, resolvers entity.Resolvers, id entity.Id) (*identity.Identity, error) {
+			return identity.ReadLocal(repo, id)
+		},
+		ReadAllWithResolver: func(repo repository.ClockedRepo, resolvers entity.Resolvers) <-chan entity.StreamedEntity[*identity.Identity] {
+			return identity.ReadAllLocal(repo)
+		},
+		Remove: identity.RemoveIdentity,
+		MergeAll: func(repo repository.ClockedRepo, resolvers entity.Resolvers, remote string, mergeAuthor identity.Interface) <-chan entity.MergeResult {
+			return identity.MergeAll(repo, remote)
+		},
+	}
+
 	sc := NewSubCache[*identity.Identity, *IdentityExcerpt, *IdentityCache](
 		repo, resolvers, getUserIdentity,
-		makeCached, makeExcerpt, makeIndex,
+		makeCached, NewIdentityExcerpt, makeIndex, actions,
 		"identity", "identities",
 		formatVersion, defaultMaxLoadedBugs,
 	)
@@ -47,32 +63,32 @@ func (c *RepoCacheIdentity) ResolveIdentityImmutableMetadata(key string, value s
 	})
 }
 
-func (c *RepoCacheIdentity) NewIdentityFromGitUser() (*IdentityCache, error) {
-	return c.NewIdentityFromGitUserRaw(nil)
+// New create a new identity
+// The new identity is written in the repository (commit)
+func (c *RepoCacheIdentity) New(name string, email string) (*IdentityCache, error) {
+	return c.NewRaw(name, email, "", "", nil, nil)
 }
 
-func (c *RepoCacheIdentity) NewIdentityFromGitUserRaw(metadata map[string]string) (*IdentityCache, error) {
-	i, err := identity.NewFromGitUser(c.repo)
+// NewFull create a new identity
+// The new identity is written in the repository (commit)
+func (c *RepoCacheIdentity) NewFull(name string, email string, login string, avatarUrl string, keys []*identity.Key) (*IdentityCache, error) {
+	return c.NewRaw(name, email, login, avatarUrl, keys, nil)
+}
+
+func (c *RepoCacheIdentity) NewRaw(name string, email string, login string, avatarUrl string, keys []*identity.Key, metadata map[string]string) (*IdentityCache, error) {
+	i, err := identity.NewIdentityFull(c.repo, name, email, login, avatarUrl, keys)
 	if err != nil {
 		return nil, err
 	}
 	return c.finishIdentity(i, metadata)
 }
 
-// NewIdentity create a new identity
-// The new identity is written in the repository (commit)
-func (c *RepoCacheIdentity) NewIdentity(name string, email string) (*IdentityCache, error) {
-	return c.NewIdentityRaw(name, email, "", "", nil, nil)
+func (c *RepoCacheIdentity) NewFromGitUser() (*IdentityCache, error) {
+	return c.NewFromGitUserRaw(nil)
 }
 
-// NewIdentityFull create a new identity
-// The new identity is written in the repository (commit)
-func (c *RepoCacheIdentity) NewIdentityFull(name string, email string, login string, avatarUrl string, keys []*identity.Key) (*IdentityCache, error) {
-	return c.NewIdentityRaw(name, email, login, avatarUrl, keys, nil)
-}
-
-func (c *RepoCacheIdentity) NewIdentityRaw(name string, email string, login string, avatarUrl string, keys []*identity.Key, metadata map[string]string) (*IdentityCache, error) {
-	i, err := identity.NewIdentityFull(c.repo, name, email, login, avatarUrl, keys)
+func (c *RepoCacheIdentity) NewFromGitUserRaw(metadata map[string]string) (*IdentityCache, error) {
+	i, err := identity.NewFromGitUser(c.repo)
 	if err != nil {
 		return nil, err
 	}

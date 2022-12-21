@@ -26,8 +26,8 @@ func NewIdentity(i identity.Interface) Identity {
 
 func NewIdentityFromExcerpt(excerpt *cache.IdentityExcerpt) Identity {
 	return Identity{
-		Id:      excerpt.Id.String(),
-		HumanId: excerpt.Id.Human(),
+		Id:      excerpt.Id().String(),
+		HumanId: excerpt.Id().Human(),
 		Name:    excerpt.Name,
 		Login:   excerpt.Login,
 	}

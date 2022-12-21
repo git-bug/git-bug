@@ -105,7 +105,7 @@ func runWebUI(env *execenv.Env, opts webUIOptions) error {
 	}
 
 	mrc := cache.NewMultiRepoCache()
-	_, err := mrc.RegisterDefaultRepository(env.Repo)
+	_, _, err := mrc.RegisterDefaultRepository(env.Repo)
 	if err != nil {
 		return err
 	}

@@ -27,15 +27,6 @@ var def = dag.Definition{
 	FormatVersion:        formatVersion,
 }
 
-var Actions = dag.Actions[*Bug]{
-	Wrap:             wrapper,
-	New:              NewBug,
-	Read:             Read,
-	ReadWithResolver: ReadWithResolver,
-	ReadAll:          ReadAll,
-	ListLocalIds:     ListLocalIds,
-}
-
 var ClockLoader = dag.ClockLoader(def)
 
 type Interface interface {
@@ -75,12 +66,12 @@ func ReadWithResolver(repo repository.ClockedRepo, resolvers entity.Resolvers, i
 }
 
 // ReadAll read and parse all local bugs
-func ReadAll(repo repository.ClockedRepo) <-chan dag.StreamedEntity[*Bug] {
+func ReadAll(repo repository.ClockedRepo) <-chan entity.StreamedEntity[*Bug] {
 	return dag.ReadAll(def, wrapper, repo, simpleResolvers(repo))
 }
 
 // ReadAllWithResolver read and parse all local bugs
-func ReadAllWithResolver(repo repository.ClockedRepo, resolvers entity.Resolvers) <-chan dag.StreamedEntity[*Bug] {
+func ReadAllWithResolver(repo repository.ClockedRepo, resolvers entity.Resolvers) <-chan entity.StreamedEntity[*Bug] {
 	return dag.ReadAll(def, wrapper, repo, resolvers)
 }
 

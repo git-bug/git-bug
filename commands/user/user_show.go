@@ -49,7 +49,7 @@ func runUserShow(env *execenv.Env, opts userShowOptions, args []string) error {
 	var id *cache.IdentityCache
 	var err error
 	if len(args) == 1 {
-		id, err = env.Backend.ResolveIdentityPrefix(args[0])
+		id, err = env.Backend.Identities().ResolvePrefix(args[0])
 	} else {
 		id, err = env.Backend.GetUserIdentity()
 	}

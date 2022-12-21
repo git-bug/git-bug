@@ -142,14 +142,14 @@ func runBug(env *execenv.Env, opts bugOptions, args []string) error {
 		return err
 	}
 
-	allIds, err := env.Backend.QueryBugs(q)
+	allIds, err := env.Backend.Bugs().Query(q)
 	if err != nil {
 		return err
 	}
 
 	bugExcerpt := make([]*cache.BugExcerpt, len(allIds))
 	for i, id := range allIds {
-		b, err := env.Backend.ResolveBugExcerpt(id)
+		b, err := env.Backend.Bugs().ResolveExcerpt(id)
 		if err != nil {
 			return err
 		}
@@ -208,8 +208,8 @@ func bugsJsonFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) error 
 	jsonBugs := make([]JSONBugExcerpt, len(bugExcerpts))
 	for i, b := range bugExcerpts {
 		jsonBug := JSONBugExcerpt{
-			Id:         b.Id.String(),
-			HumanId:    b.Id.Human(),
+			Id:         b.Id().String(),
+			HumanId:    b.Id().Human(),
 			CreateTime: cmdjson.NewTime(b.CreateTime(), b.CreateLamportTime),
 			EditTime:   cmdjson.NewTime(b.EditTime(), b.EditLamportTime),
 			Status:     b.Status.String(),
@@ -219,7 +219,7 @@ func bugsJsonFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) error 
 			Metadata:   b.CreateMetadata,
 		}
 
-		author, err := env.Backend.ResolveIdentityExcerpt(b.AuthorId)
+		author, err := env.Backend.Identities().ResolveExcerpt(b.AuthorId)
 		if err != nil {
 			return err
 		}
@@ -227,7 +227,7 @@ func bugsJsonFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) error 
 
 		jsonBug.Actors = make([]cmdjson.Identity, len(b.Actors))
 		for i, element := range b.Actors {
-			actor, err := env.Backend.ResolveIdentityExcerpt(element)
+			actor, err := env.Backend.Identities().ResolveExcerpt(element)
 			if err != nil {
 				return err
 			}
@@ -236,7 +236,7 @@ func bugsJsonFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) error 
 
 		jsonBug.Participants = make([]cmdjson.Identity, len(b.Participants))
 		for i, element := range b.Participants {
-			participant, err := env.Backend.ResolveIdentityExcerpt(element)
+			participant, err := env.Backend.Identities().ResolveExcerpt(element)
 			if err != nil {
 				return err
 			}
@@ -252,7 +252,7 @@ func bugsJsonFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) error 
 
 func bugsCompactFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) error {
 	for _, b := range bugExcerpts {
-		author, err := env.Backend.ResolveIdentityExcerpt(b.AuthorId)
+		author, err := env.Backend.Identities().ResolveExcerpt(b.AuthorId)
 		if err != nil {
 			return err
 		}
@@ -266,7 +266,7 @@ func bugsCompactFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) err
 		}
 
 		env.Out.Printf("%s %s %s %s %s\n",
-			colors.Cyan(b.Id.Human()),
+			colors.Cyan(b.Id().Human()),
 			colors.Yellow(b.Status),
 			text.LeftPadMaxLine(strings.TrimSpace(b.Title), 40, 0),
 			text.LeftPadMaxLine(labelsTxt.String(), 5, 0),
@@ -278,7 +278,7 @@ func bugsCompactFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) err
 
 func bugsIDFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) error {
 	for _, b := range bugExcerpts {
-		env.Out.Println(b.Id.String())
+		env.Out.Println(b.Id().String())
 	}
 
 	return nil
@@ -286,7 +286,7 @@ func bugsIDFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) error {
 
 func bugsDefaultFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) error {
 	for _, b := range bugExcerpts {
-		author, err := env.Backend.ResolveIdentityExcerpt(b.AuthorId)
+		author, err := env.Backend.Identities().ResolveExcerpt(b.AuthorId)
 		if err != nil {
 			return err
 		}
@@ -313,7 +313,7 @@ func bugsDefaultFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) err
 		}
 
 		env.Out.Printf("%s\t%s\t%s\t%s\t%s\n",
-			colors.Cyan(b.Id.Human()),
+			colors.Cyan(b.Id().Human()),
 			colors.Yellow(b.Status),
 			titleFmt+labelsFmt,
 			colors.Magenta(authorFmt),
@@ -325,7 +325,7 @@ func bugsDefaultFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) err
 
 func bugsPlainFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) error {
 	for _, b := range bugExcerpts {
-		env.Out.Printf("%s [%s] %s\n", b.Id.Human(), b.Status, strings.TrimSpace(b.Title))
+		env.Out.Printf("%s [%s] %s\n", b.Id().Human(), b.Status, strings.TrimSpace(b.Title))
 	}
 	return nil
 }
@@ -353,7 +353,7 @@ func bugsOrgmodeFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) err
 			title = b.Title
 		}
 
-		author, err := env.Backend.ResolveIdentityExcerpt(b.AuthorId)
+		author, err := env.Backend.Identities().ResolveExcerpt(b.AuthorId)
 		if err != nil {
 			return err
 		}
@@ -370,7 +370,7 @@ func bugsOrgmodeFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) err
 
 		env.Out.Printf("* %-6s %s %s %s: %s %s\n",
 			status,
-			b.Id.Human(),
+			b.Id().Human(),
 			formatTime(b.CreateTime()),
 			author.DisplayName(),
 			title,
@@ -381,26 +381,26 @@ func bugsOrgmodeFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) err
 
 		env.Out.Printf("** Actors:\n")
 		for _, element := range b.Actors {
-			actor, err := env.Backend.ResolveIdentityExcerpt(element)
+			actor, err := env.Backend.Identities().ResolveExcerpt(element)
 			if err != nil {
 				return err
 			}
 
 			env.Out.Printf(": %s %s\n",
-				actor.Id.Human(),
+				actor.Id().Human(),
 				actor.DisplayName(),
 			)
 		}
 
 		env.Out.Printf("** Participants:\n")
 		for _, element := range b.Participants {
-			participant, err := env.Backend.ResolveIdentityExcerpt(element)
+			participant, err := env.Backend.Identities().ResolveExcerpt(element)
 			if err != nil {
 				return err
 			}
 
 			env.Out.Printf(": %s %s\n",
-				participant.Id.Human(),
+				participant.Id().Human(),
 				participant.DisplayName(),
 			)
 		}

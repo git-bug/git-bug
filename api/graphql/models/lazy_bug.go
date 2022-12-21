@@ -58,7 +58,7 @@ func (lb *lazyBug) load() error {
 		return nil
 	}
 
-	b, err := lb.cache.ResolveBug(lb.excerpt.Id)
+	b, err := lb.cache.Bugs().Resolve(lb.excerpt.Id())
 	if err != nil {
 		return err
 	}
@@ -68,7 +68,7 @@ func (lb *lazyBug) load() error {
 }
 
 func (lb *lazyBug) identity(id entity.Id) (IdentityWrapper, error) {
-	i, err := lb.cache.ResolveIdentityExcerpt(id)
+	i, err := lb.cache.Identities().ResolveExcerpt(id)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func (lb *lazyBug) identity(id entity.Id) (IdentityWrapper, error) {
 func (lb *lazyBug) IsAuthored() {}
 
 func (lb *lazyBug) Id() entity.Id {
-	return lb.excerpt.Id
+	return lb.excerpt.Id()
 }
 
 func (lb *lazyBug) LastEdit() time.Time {

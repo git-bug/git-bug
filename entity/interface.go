@@ -12,15 +12,3 @@ type Interface interface {
 	// Validate check if the Entity data is valid
 	Validate() error
 }
-
-// type Commitable interface {
-// 	Interface
-// 	NeedCommit() bool
-// 	CommitAsNeeded(repo repository.ClockedRepo) error
-// 	Commit(repo repository.ClockedRepo) error
-// }
-
-//
-// type Operation interface {
-//
-// }

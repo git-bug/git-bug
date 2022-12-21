@@ -19,7 +19,7 @@ func TestQueries(t *testing.T) {
 	random_bugs.FillRepoWithSeed(repo, 10, 42)
 
 	mrc := cache.NewMultiRepoCache()
-	_, err := mrc.RegisterDefaultRepository(repo)
+	_, _, err := mrc.RegisterDefaultRepository(repo)
 	require.NoError(t, err)
 
 	handler := NewHandler(mrc, nil)

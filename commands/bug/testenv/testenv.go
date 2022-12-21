@@ -19,7 +19,7 @@ func NewTestEnvAndUser(t *testing.T) (*execenv.Env, entity.Id) {
 
 	testEnv := execenv.NewTestEnv(t)
 
-	i, err := testEnv.Backend.NewIdentity(testUserName, testUserEmail)
+	i, err := testEnv.Backend.Identities().New(testUserName, testUserEmail)
 	require.NoError(t, err)
 
 	err = testEnv.Backend.SetUserIdentity(i)
@@ -38,7 +38,7 @@ func NewTestEnvAndBug(t *testing.T) (*execenv.Env, entity.Id) {
 
 	testEnv, _ := NewTestEnvAndUser(t)
 
-	b, _, err := testEnv.Backend.NewBug(testBugTitle, testBugMessage)
+	b, _, err := testEnv.Backend.Bugs().New(testBugTitle, testBugMessage)
 	require.NoError(t, err)
 
 	return testEnv, b.Id()
@@ -53,7 +53,7 @@ func NewTestEnvAndBugWithComment(t *testing.T) (*execenv.Env, entity.Id, entity.
 
 	env, bugID := NewTestEnvAndBug(t)
 
-	b, err := env.Backend.ResolveBug(bugID)
+	b, err := env.Backend.Bugs().Resolve(bugID)
 	require.NoError(t, err)
 
 	commentId, _, err := b.AddComment(testCommentMessage)

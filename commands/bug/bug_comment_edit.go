@@ -41,7 +41,7 @@ func newBugCommentEditCommand() *cobra.Command {
 }
 
 func runBugCommentEdit(env *execenv.Env, opts bugCommentEditOptions, args []string) error {
-	b, commentId, err := env.Backend.ResolveComment(args[0])
+	b, commentId, err := env.Backend.Bugs().ResolveComment(args[0])
 	if err != nil {
 		return err
 	}

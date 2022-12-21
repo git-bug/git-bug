@@ -24,11 +24,7 @@ func NewRepoCacheBug(repo repository.ClockedRepo,
 		return NewBugCache(b, repo, getUserIdentity, entityUpdated)
 	}
 
-	makeExcerpt := func(b *bug.Bug) *BugExcerpt {
-		return NewBugExcerpt(b, b.Compile())
-	}
-
-	makeIndex := func(b *BugCache) []string {
+	makeIndexData := func(b *BugCache) []string {
 		snap := b.Snapshot()
 		var res []string
 		for _, comment := range snap.Comments {
@@ -38,9 +34,16 @@ func NewRepoCacheBug(repo repository.ClockedRepo,
 		return res
 	}
 
+	actions := Actions[*bug.Bug]{
+		ReadWithResolver:    bug.ReadWithResolver,
+		ReadAllWithResolver: bug.ReadAllWithResolver,
+		Remove:              bug.Remove,
+		MergeAll:            bug.MergeAll,
+	}
+
 	sc := NewSubCache[*bug.Bug, *BugExcerpt, *BugCache](
 		repo, resolvers, getUserIdentity,
-		makeCached, makeExcerpt, makeIndex,
+		makeCached, NewBugExcerpt, makeIndexData, actions,
 		"bug", "bugs",
 		formatVersion, defaultMaxLoadedBugs,
 	)
@@ -104,8 +107,8 @@ func (c *RepoCacheBug) ResolveComment(prefix string) (*BugCache, entity.Combined
 	return matchingBug, matchingCommentId, nil
 }
 
-// QueryBugs return the id of all Bug matching the given Query
-func (c *RepoCacheBug) QueryBugs(q *query.Query) ([]entity.Id, error) {
+// Query return the id of all Bug matching the given Query
+func (c *RepoCacheBug) Query(q *query.Query) ([]entity.Id, error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
@@ -140,7 +143,7 @@ func (c *RepoCacheBug) QueryBugs(q *query.Query) ([]entity.Id, error) {
 	}
 
 	for _, excerpt := range foundBySearch {
-		if matcher.Match(excerpt, c) {
+		if matcher.Match(excerpt, c.resolvers()) {
 			filtered = append(filtered, excerpt)
 		}
 	}

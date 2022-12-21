@@ -11,7 +11,6 @@ import (
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/entities/bug"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/util/text"
 )
@@ -109,7 +108,7 @@ func (gi *gitlabImporter) ensureIssue(repo *cache.RepoCache, issue *gitlab.Issue
 	}
 
 	// resolve bug
-	b, err := repo.ResolveBugMatcher(func(excerpt *cache.BugExcerpt) bool {
+	b, err := repo.Bugs().ResolveMatcher(func(excerpt *cache.BugExcerpt) bool {
 		return excerpt.CreateMetadata[core.MetaKeyOrigin] == target &&
 			excerpt.CreateMetadata[metaKeyGitlabId] == fmt.Sprintf("%d", issue.IID) &&
 			excerpt.CreateMetadata[metaKeyGitlabBaseUrl] == gi.conf[confKeyGitlabBaseUrl] &&
@@ -123,7 +122,7 @@ func (gi *gitlabImporter) ensureIssue(repo *cache.RepoCache, issue *gitlab.Issue
 	}
 
 	// if bug was never imported, create bug
-	b, _, err = repo.NewBugRaw(
+	b, _, err = repo.Bugs().NewRaw(
 		author,
 		issue.CreatedAt.Unix(),
 		text.CleanupOneLine(issue.Title),
@@ -338,7 +337,7 @@ func (gi *gitlabImporter) ensureIssueEvent(repo *cache.RepoCache, b *cache.BugCa
 
 func (gi *gitlabImporter) ensurePerson(repo *cache.RepoCache, id int) (*cache.IdentityCache, error) {
 	// Look first in the cache
-	i, err := repo.ResolveIdentityImmutableMetadata(metaKeyGitlabId, strconv.Itoa(id))
+	i, err := repo.Identities().ResolveIdentityImmutableMetadata(metaKeyGitlabId, strconv.Itoa(id))
 	if err == nil {
 		return i, nil
 	}
@@ -351,7 +350,7 @@ func (gi *gitlabImporter) ensurePerson(repo *cache.RepoCache, id int) (*cache.Id
 		return nil, err
 	}
 
-	i, err = repo.NewIdentityRaw(
+	i, err = repo.Identities().NewRaw(
 		user.Name,
 		user.PublicEmail,
 		user.Username,

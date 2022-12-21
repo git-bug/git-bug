@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+// ErrNotFound is to be returned when an entity, item, element is
+// not found.
 type ErrNotFound struct {
 	typename string
 }
@@ -22,13 +24,15 @@ func IsErrNotFound(err error) bool {
 	return ok
 }
 
+// ErrMultipleMatch is to be returned when more than one entity, item, element
+// is found, where only one was expected.
 type ErrMultipleMatch struct {
-	entityType string
-	Matching   []Id
+	typename string
+	Matching []Id
 }
 
-func NewErrMultipleMatch(entityType string, matching []Id) *ErrMultipleMatch {
-	return &ErrMultipleMatch{entityType: entityType, Matching: matching}
+func NewErrMultipleMatch(typename string, matching []Id) *ErrMultipleMatch {
+	return &ErrMultipleMatch{typename: typename, Matching: matching}
 }
 
 func (e ErrMultipleMatch) Error() string {
@@ -39,7 +43,7 @@ func (e ErrMultipleMatch) Error() string {
 	}
 
 	return fmt.Sprintf("Multiple matching %s found:\n%s",
-		e.entityType,
+		e.typename,
 		strings.Join(matching, "\n"))
 }
 
@@ -48,6 +52,8 @@ func IsErrMultipleMatch(err error) bool {
 	return ok
 }
 
+// ErrInvalidFormat is to be returned when reading on-disk data with an unexpected
+// format or version.
 type ErrInvalidFormat struct {
 	version  uint
 	expected uint

@@ -46,7 +46,7 @@ func runBugSelect(env *execenv.Env, args []string) error {
 
 	prefix := args[0]
 
-	b, err := env.Backend.ResolveBugPrefix(prefix)
+	b, err := env.Backend.Bugs().ResolvePrefix(prefix)
 	if err != nil {
 		return err
 	}

@@ -15,6 +15,8 @@ func init() {
 	gob.Register(BugExcerpt{})
 }
 
+var _ Excerpt = &BugExcerpt{}
+
 // BugExcerpt hold a subset of the bug values to be able to sort and filter bugs
 // efficiently without having to read and compile each raw bugs.
 type BugExcerpt struct {
@@ -36,7 +38,8 @@ type BugExcerpt struct {
 	CreateMetadata map[string]string
 }
 
-func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
+func NewBugExcerpt(b *BugCache) *BugExcerpt {
+	snap := b.Snapshot()
 	participantsIds := make([]entity.Id, 0, len(snap.Participants))
 	for _, participant := range snap.Participants {
 		participantsIds = append(participantsIds, participant.Id())
@@ -64,6 +67,10 @@ func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
 	}
 
 	return e
+}
+
+func (b *BugExcerpt) setId(id entity.Id) {
+	b.id = id
 }
 
 func (b *BugExcerpt) Id() entity.Id {

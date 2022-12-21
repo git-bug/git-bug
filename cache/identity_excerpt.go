@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 )
 
@@ -13,6 +12,8 @@ import (
 func init() {
 	gob.Register(IdentityExcerpt{})
 }
+
+var _ Excerpt = &IdentityExcerpt{}
 
 // IdentityExcerpt hold a subset of the identity values to be able to sort and
 // filter identities efficiently without having to read and compile each raw
@@ -25,13 +26,17 @@ type IdentityExcerpt struct {
 	ImmutableMetadata map[string]string
 }
 
-func NewIdentityExcerpt(i *identity.Identity) *IdentityExcerpt {
+func NewIdentityExcerpt(i *IdentityCache) *IdentityExcerpt {
 	return &IdentityExcerpt{
 		id:                i.Id(),
 		Name:              i.Name(),
 		Login:             i.Login(),
 		ImmutableMetadata: i.ImmutableMetadata(),
 	}
+}
+
+func (i *IdentityExcerpt) setId(id entity.Id) {
+	i.id = id
 }
 
 func (i *IdentityExcerpt) Id() entity.Id {
