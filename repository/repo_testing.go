@@ -48,6 +48,15 @@ func RepoConfigTest(t *testing.T, repo RepoConfig) {
 	testConfig(t, repo.LocalConfig())
 }
 
+func randomHash() Hash {
+	var letterRunes = "abcdef0123456789"
+	b := make([]byte, idLengthSHA256)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return Hash(b)
+}
+
 // helper to test a RepoData
 func RepoDataTest(t *testing.T, repo RepoData) {
 	// Blob
@@ -61,6 +70,9 @@ func RepoDataTest(t *testing.T, repo RepoData) {
 	blob1Read, err := repo.ReadData(blobHash1)
 	require.NoError(t, err)
 	require.Equal(t, data, blob1Read)
+
+	_, err = repo.ReadData(randomHash())
+	require.ErrorIs(t, err, ErrNotFound)
 
 	// Tree
 
@@ -111,24 +123,19 @@ func RepoDataTest(t *testing.T, repo RepoData) {
 	require.NoError(t, err)
 	require.ElementsMatch(t, tree2, tree2Read)
 
+	_, err = repo.ReadTree(randomHash())
+	require.ErrorIs(t, err, ErrNotFound)
+
 	// Commit
 
 	commit1, err := repo.StoreCommit(treeHash1)
 	require.NoError(t, err)
 	require.True(t, commit1.IsValid())
 
-	treeHash1Read, err := repo.GetTreeHash(commit1)
-	require.NoError(t, err)
-	require.Equal(t, treeHash1, treeHash1Read)
-
 	// commit with a parent
 	commit2, err := repo.StoreCommit(treeHash2, commit1)
 	require.NoError(t, err)
 	require.True(t, commit2.IsValid())
-
-	treeHash2Read, err := repo.GetTreeHash(commit2)
-	require.NoError(t, err)
-	require.Equal(t, treeHash2, treeHash2Read)
 
 	// ReadTree should accept tree and commit hashes
 	tree1read, err := repo.ReadTree(commit1)
@@ -139,6 +146,9 @@ func RepoDataTest(t *testing.T, repo RepoData) {
 	require.NoError(t, err)
 	c2expected := Commit{Hash: commit2, Parents: []Hash{commit1}, TreeHash: treeHash2}
 	require.Equal(t, c2expected, c2)
+
+	_, err = repo.ReadCommit(randomHash())
+	require.ErrorIs(t, err, ErrNotFound)
 
 	// Ref
 
@@ -172,14 +182,13 @@ func RepoDataTest(t *testing.T, repo RepoData) {
 	require.NoError(t, err)
 	require.Equal(t, []Hash{commit1, commit2}, commits)
 
-	// Graph
+	_, err = repo.ResolveRef("/refs/bugs/refnotexist")
+	require.ErrorIs(t, err, ErrNotFound)
 
-	commit3, err := repo.StoreCommit(treeHash1, commit1)
-	require.NoError(t, err)
+	err = repo.CopyRef("/refs/bugs/refnotexist", "refs/foo")
+	require.ErrorIs(t, err, ErrNotFound)
 
-	ancestorHash, err := repo.FindCommonAncestor(commit2, commit3)
-	require.NoError(t, err)
-	require.Equal(t, commit1, ancestorHash)
+	// Cleanup
 
 	err = repo.RemoveRef("refs/bugs/ref1")
 	require.NoError(t, err)

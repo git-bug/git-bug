@@ -239,12 +239,12 @@ func NewMockRepoData() *mockRepoData {
 	}
 }
 
-func (r *mockRepoData) FetchRefs(remote string, prefix string) (string, error) {
+func (r *mockRepoData) FetchRefs(remote string, prefixes ...string) (string, error) {
 	panic("implement me")
 }
 
 // PushRefs push git refs to a remote
-func (r *mockRepoData) PushRefs(remote string, prefix string) (string, error) {
+func (r *mockRepoData) PushRefs(remote string, prefixes ...string) (string, error) {
 	panic("implement me")
 }
 
@@ -258,7 +258,7 @@ func (r *mockRepoData) StoreData(data []byte) (Hash, error) {
 func (r *mockRepoData) ReadData(hash Hash) ([]byte, error) {
 	data, ok := r.blobs[hash]
 	if !ok {
-		return nil, fmt.Errorf("unknown hash")
+		return nil, ErrNotFound
 	}
 
 	return data, nil
@@ -283,13 +283,13 @@ func (r *mockRepoData) ReadTree(hash Hash) ([]TreeEntry, error) {
 		commit, ok := r.commits[hash]
 
 		if !ok {
-			return nil, fmt.Errorf("unknown hash")
+			return nil, ErrNotFound
 		}
 
 		data, ok = r.trees[commit.treeHash]
 
 		if !ok {
-			return nil, fmt.Errorf("unknown hash")
+			return nil, ErrNotFound
 		}
 	}
 
@@ -327,7 +327,7 @@ func (r *mockRepoData) StoreSignedCommit(treeHash Hash, signKey *openpgp.Entity,
 func (r *mockRepoData) ReadCommit(hash Hash) (Commit, error) {
 	c, ok := r.commits[hash]
 	if !ok {
-		return Commit{}, fmt.Errorf("unknown commit")
+		return Commit{}, ErrNotFound
 	}
 
 	result := Commit{
@@ -346,19 +346,10 @@ func (r *mockRepoData) ReadCommit(hash Hash) (Commit, error) {
 	return result, nil
 }
 
-func (r *mockRepoData) GetTreeHash(commit Hash) (Hash, error) {
-	c, ok := r.commits[commit]
-	if !ok {
-		return "", fmt.Errorf("unknown commit")
-	}
-
-	return c.treeHash, nil
-}
-
 func (r *mockRepoData) ResolveRef(ref string) (Hash, error) {
 	h, ok := r.refs[ref]
 	if !ok {
-		return "", fmt.Errorf("unknown ref")
+		return "", ErrNotFound
 	}
 	return h, nil
 }
@@ -394,46 +385,11 @@ func (r *mockRepoData) CopyRef(source string, dest string) error {
 	hash, exist := r.refs[source]
 
 	if !exist {
-		return fmt.Errorf("Unknown ref")
+		return ErrNotFound
 	}
 
 	r.refs[dest] = hash
 	return nil
-}
-
-func (r *mockRepoData) FindCommonAncestor(hash1 Hash, hash2 Hash) (Hash, error) {
-	ancestor1 := []Hash{hash1}
-
-	for hash1 != "" {
-		c, ok := r.commits[hash1]
-		if !ok {
-			return "", fmt.Errorf("unknown commit %v", hash1)
-		}
-		if len(c.parents) == 0 {
-			break
-		}
-		ancestor1 = append(ancestor1, c.parents[0])
-		hash1 = c.parents[0]
-	}
-
-	for {
-		for _, ancestor := range ancestor1 {
-			if ancestor == hash2 {
-				return ancestor, nil
-			}
-		}
-
-		c, ok := r.commits[hash2]
-		if !ok {
-			return "", fmt.Errorf("unknown commit %v", hash1)
-		}
-
-		if c.parents[0] == "" {
-			return "", fmt.Errorf("no ancestor found")
-		}
-
-		hash2 = c.parents[0]
-	}
 }
 
 func (r *mockRepoData) ListCommits(ref string) ([]Hash, error) {

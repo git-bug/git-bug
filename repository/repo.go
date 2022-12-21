@@ -16,6 +16,8 @@ var (
 	ErrNotARepo = errors.New("not a git repository")
 	// ErrClockNotExist is the error returned when a clock can't be found
 	ErrClockNotExist = errors.New("clock doesn't exist")
+	// ErrNotFound is the error returned when a git object can't be found
+	ErrNotFound = errors.New("ref not found")
 )
 
 // Repo represents a source code repository.
@@ -122,7 +124,7 @@ type RepoData interface {
 	// FetchRefs fetch git refs matching a directory prefix to a remote
 	// Ex: prefix="foo" will fetch any remote refs matching "refs/foo/*" locally.
 	// The equivalent git refspec would be "refs/foo/*:refs/remotes/<remote>/foo/*"
-	FetchRefs(remote string, prefix string) (string, error)
+	FetchRefs(remote string, prefixes ...string) (string, error)
 
 	// PushRefs push git refs matching a directory prefix to a remote
 	// Ex: prefix="foo" will push any local refs matching "refs/foo/*" to the remote.
@@ -130,12 +132,13 @@ type RepoData interface {
 	//
 	// Additionally, PushRefs will update the local references in refs/remotes/<remote>/foo to match
 	// the remote state.
-	PushRefs(remote string, prefix string) (string, error)
+	PushRefs(remote string, prefixes ...string) (string, error)
 
 	// StoreData will store arbitrary data and return the corresponding hash
 	StoreData(data []byte) (Hash, error)
 
 	// ReadData will attempt to read arbitrary data from the given hash
+	// Returns ErrNotFound if not found.
 	ReadData(hash Hash) ([]byte, error)
 
 	// StoreTree will store a mapping key-->Hash as a Git tree
@@ -143,6 +146,7 @@ type RepoData interface {
 
 	// ReadTree will return the list of entries in a Git tree
 	// The given hash could be from either a commit or a tree
+	// Returns ErrNotFound if not found.
 	ReadTree(hash Hash) ([]TreeEntry, error)
 
 	// StoreCommit will store a Git commit with the given Git tree
@@ -153,13 +157,11 @@ type RepoData interface {
 	StoreSignedCommit(treeHash Hash, signKey *openpgp.Entity, parents ...Hash) (Hash, error)
 
 	// ReadCommit read a Git commit and returns some of its characteristic
+	// Returns ErrNotFound if not found.
 	ReadCommit(hash Hash) (Commit, error)
 
-	// GetTreeHash return the git tree hash referenced in a commit
-	// Deprecated
-	GetTreeHash(commit Hash) (Hash, error)
-
 	// ResolveRef returns the hash of the target commit of the given ref
+	// Returns ErrNotFound if not found.
 	ResolveRef(ref string) (Hash, error)
 
 	// UpdateRef will create or update a Git reference
@@ -176,11 +178,8 @@ type RepoData interface {
 	RefExist(ref string) (bool, error)
 
 	// CopyRef will create a new reference with the same value as another one
+	// Returns ErrNotFound if not found.
 	CopyRef(source string, dest string) error
-
-	// FindCommonAncestor will return the last common ancestor of two chain of commit
-	// Deprecated
-	FindCommonAncestor(commit1 Hash, commit2 Hash) (Hash, error)
 
 	// ListCommits will return the list of tree hashes of a ref, in chronological order
 	ListCommits(ref string) ([]Hash, error)
