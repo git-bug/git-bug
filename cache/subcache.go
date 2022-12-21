@@ -198,9 +198,10 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) Build() error {
 			return e.Err
 		}
 
-		// TODO: doesn't actually record in cache, should we?
 		cached := sc.makeCached(e.Entity, sc.entityUpdated)
 		sc.excerpts[e.Entity.Id()] = sc.makeExcerpt(cached)
+		// might as well keep them in memory
+		sc.cached[e.Entity.Id()] = cached
 
 		indexData := sc.makeIndexData(cached)
 		if err := indexer(e.Entity.Id().String(), indexData); err != nil {
@@ -417,12 +418,12 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) MergeAll(remote string) <-chan en
 			switch result.Status {
 			case entity.MergeStatusNew, entity.MergeStatusUpdated:
 				e := result.Entity.(EntityT)
-
-				// TODO: doesn't actually record in cache, should we?
 				cached := sc.makeCached(e, sc.entityUpdated)
 
 				sc.mu.Lock()
 				sc.excerpts[result.Id] = sc.makeExcerpt(cached)
+				// might as well keep them in memory
+				sc.cached[result.Id] = cached
 				sc.mu.Unlock()
 			}
 		}

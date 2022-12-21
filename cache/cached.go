@@ -9,52 +9,7 @@ import (
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
-// type withSnapshot[SnapT dag.Snapshot, OpT dag.OperationWithApply[SnapT]] struct {
-// 	dag.Interface[SnapT, OpT]
-// 	snap dag.Snapshot
-// }
-//
-//
-// func (ws *withSnapshot[SnapT, OpT]) Compile() dag.Snapshot {
-// 	if ws.snap == nil {
-// 		snap := ws.Interface.Compile()
-// 		ws.snap = snap
-// 	}
-// 	return ws.snap
-// }
-//
-// // Append intercept Bug.Append() to update the snapshot efficiently
-// func (ws *withSnapshot[SnapT, OpT]) Append(op OpT) {
-// 	ws.Interface.Append(op)
-//
-// 	if ws.snap == nil {
-// 		return
-// 	}
-//
-// 	op.Apply(ws.snap)
-// 	ws.snap. = append(ws.snap.Operations, op)
-// }
-//
-// // Commit intercept Bug.Commit() to update the snapshot efficiently
-// func (ws *withSnapshot[SnapT, OpT]) Commit(repo repository.ClockedRepo) error {
-// 	err := ws.Interface.Commit(repo)
-//
-// 	if err != nil {
-// 		ws.snap = nil
-// 		return err
-// 	}
-//
-// 	// Commit() shouldn't change anything of the bug state apart from the
-// 	// initial ID set
-//
-// 	if ws.snap == nil {
-// 		return nil
-// 	}
-//
-// 	ws.snap.id = ws.Interface.Id()
-// 	return nil
-// }
-
+// CachedEntityBase provide the base function of an entity managed by the cache.
 type CachedEntityBase[SnapT dag.Snapshot, OpT dag.Operation] struct {
 	repo            repository.ClockedRepo
 	entityUpdated   func(id entity.Id) error

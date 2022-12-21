@@ -135,20 +135,20 @@ func LoadBackend(env *Env) func(*cobra.Command, []string) error {
 		}
 
 		if events != nil {
-			_, _ = fmt.Fprintln(os.Stderr, "Building cache... ")
+			env.Err.Println("Building cache... ")
 		}
 
 		for event := range events {
 			if event.Err != nil {
-				_, _ = fmt.Fprintf(os.Stderr, "Cache building error [%s]: %v\n", event.Typename, event.Err)
+				env.Err.Printf("Cache building error [%s]: %v\n", event.Typename, event.Err)
 				continue
 			}
 
 			switch event.Event {
 			case cache.BuildEventStarted:
-				_, _ = fmt.Fprintf(os.Stderr, "[%s] started\n", event.Typename)
+				env.Err.Printf("[%s] started\n", event.Typename)
 			case cache.BuildEventFinished:
-				_, _ = fmt.Fprintf(os.Stderr, "[%s] done\n", event.Typename)
+				env.Err.Printf("[%s] done\n", event.Typename)
 			}
 		}
 

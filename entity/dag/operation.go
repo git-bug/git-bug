@@ -90,6 +90,8 @@ type OperationDoesntChangeSnapshot interface {
 type Snapshot interface {
 	// AllOperations returns all the operations that have been applied to that snapshot, in order
 	AllOperations() []Operation
+	// AppendOperation add an operation in the list
+	AppendOperation(op Operation)
 }
 
 // OpBase implement the common feature that every Operation should support.

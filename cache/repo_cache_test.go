@@ -98,7 +98,7 @@ func TestCache(t *testing.T) {
 	cache, events, err = NewRepoCache(repo)
 	noBuildEventErrors(t, events)
 	require.NoError(t, err)
-	require.Empty(t, cache.bugs.cached)
+	require.Len(t, cache.bugs.cached, 0)
 	require.Len(t, cache.bugs.excerpts, 2)
 	require.Len(t, cache.identities.cached, 0)
 	require.Len(t, cache.identities.excerpts, 2)
