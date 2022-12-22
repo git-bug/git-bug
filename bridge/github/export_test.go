@@ -158,10 +158,17 @@ func TestGithubPushPull(t *testing.T) {
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
 
+	// Setup token + cleanup
 	token := auth.NewToken(target, envToken)
 	token.SetMetadata(auth.MetaKeyLogin, login)
 	err = auth.Store(repo, token)
 	require.NoError(t, err)
+
+	cleanToken := func() error {
+		return auth.Remove(repo, token.ID())
+	}
+	defer cleanToken()
+	interrupt.RegisterCleaner(cleanToken)
 
 	tests := testCases(t, backend)
 
