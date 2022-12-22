@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1671661013676,
+  "lastUpdate": 1671749714909,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -249,6 +249,48 @@ window.BENCHMARK_DATA = {
             "name": "BenchmarkReadBugs150",
             "value": 837047688,
             "unit": "ns/op\t840115836 B/op\t  834795 allocs/op",
+            "extra": "2 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "distinct": true,
+          "id": "108518530e822e3bdf59c8bfc333ad0bbe2d5fc8",
+          "message": "github: cleanup test token when test is done",
+          "timestamp": "2022-12-22T23:53:13+01:00",
+          "tree_id": "fc8a7a5c02fc3bf811978e75c1a974479797b295",
+          "url": "https://github.com/MichaelMure/git-bug/commit/108518530e822e3bdf59c8bfc333ad0bbe2d5fc8"
+        },
+        "date": 1671749714091,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 31374332,
+            "unit": "ns/op\t25061477 B/op\t   25139 allocs/op",
+            "extra": "37 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 175985771,
+            "unit": "ns/op\t140640804 B/op\t  139670 allocs/op",
+            "extra": "6 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 994160248,
+            "unit": "ns/op\t840130112 B/op\t  834909 allocs/op",
             "extra": "2 times\n2 procs"
           }
         ]
