@@ -13,12 +13,12 @@ import (
 // Fetch retrieve updates from a remote
 // This does not change the local identities state
 func Fetch(repo repository.Repo, remote string) (string, error) {
-	return repo.FetchRefs(remote, "identities")
+	return repo.FetchRefs(remote, Namespace)
 }
 
 // Push update a remote with the local changes
 func Push(repo repository.Repo, remote string) (string, error) {
-	return repo.PushRefs(remote, "identities")
+	return repo.PushRefs(remote, Namespace)
 }
 
 // Pull will do a Fetch + MergeAll

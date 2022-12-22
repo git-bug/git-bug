@@ -217,11 +217,12 @@ func isGitDir(path string) (bool, error) {
 
 func (repo *GoGitRepo) Close() error {
 	var firstErr error
-	for _, index := range repo.indexes {
+	for name, index := range repo.indexes {
 		err := index.Close()
 		if err != nil && firstErr == nil {
 			firstErr = err
 		}
+		delete(repo.indexes, name)
 	}
 	return firstErr
 }

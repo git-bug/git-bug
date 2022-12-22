@@ -44,7 +44,7 @@ func NewRepoCacheBug(repo repository.ClockedRepo,
 	sc := NewSubCache[*bug.Bug, *BugExcerpt, *BugCache](
 		repo, resolvers, getUserIdentity,
 		makeCached, NewBugExcerpt, makeIndexData, actions,
-		"bug", "bugs",
+		bug.Typename, bug.Namespace,
 		formatVersion, defaultMaxLoadedBugs,
 	)
 
@@ -124,7 +124,7 @@ func (c *RepoCacheBug) Query(q *query.Query) ([]entity.Id, error) {
 	if q.Search != nil {
 		foundBySearch = map[entity.Id]*BugExcerpt{}
 
-		index, err := c.repo.GetIndex("bug")
+		index, err := c.repo.GetIndex("bugs")
 		if err != nil {
 			return nil, err
 		}

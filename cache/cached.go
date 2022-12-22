@@ -9,6 +9,8 @@ import (
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
+var _ CacheEntity = &CachedEntityBase[dag.Snapshot, dag.Operation]{}
+
 // CachedEntityBase provide the base function of an entity managed by the cache.
 type CachedEntityBase[SnapT dag.Snapshot, OpT dag.Operation] struct {
 	repo            repository.ClockedRepo
@@ -90,6 +92,10 @@ func (e *CachedEntityBase[SnapT, OpT]) NeedCommit() bool {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 	return e.entity.NeedCommit()
+}
+
+func (e *CachedEntityBase[SnapT, OpT]) Lock() {
+	e.mu.Lock()
 }
 
 func (e *CachedEntityBase[SnapT, OpT]) CreateLamportTime() lamport.Time {

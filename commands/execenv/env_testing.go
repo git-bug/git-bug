@@ -34,11 +34,8 @@ func NewTestEnv(t *testing.T) *Env {
 
 	buf := new(bytes.Buffer)
 
-	backend, events, err := cache.NewRepoCache(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo)
 	require.NoError(t, err)
-	for event := range events {
-		require.NoError(t, event.Err)
-	}
 
 	t.Cleanup(func() {
 		backend.Close()

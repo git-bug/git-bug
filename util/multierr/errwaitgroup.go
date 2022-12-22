@@ -63,7 +63,7 @@ func (g *ErrWaitGroup) Go(f func() error) {
 
 		if err := f(); err != nil {
 			g.mu.Lock()
-			err = Join(g.err, err)
+			g.err = Join(g.err, err)
 			g.mu.Unlock()
 		}
 	}()

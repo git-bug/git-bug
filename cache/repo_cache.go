@@ -27,6 +27,7 @@ var _ repository.RepoCommon = &RepoCache{}
 var _ repository.RepoConfig = &RepoCache{}
 var _ repository.RepoKeyring = &RepoCache{}
 
+// cacheMgmt is the expected interface for a sub-cache.
 type cacheMgmt interface {
 	Typename() string
 	Load() error
@@ -58,7 +59,7 @@ type RepoCache struct {
 	// the name of the repository, as defined in the MultiRepoCache
 	name string
 
-	// resolvers for all known entities
+	// resolvers for all known entities and excerpts
 	resolvers entity.Resolvers
 
 	bugs       *RepoCacheBug
@@ -71,10 +72,16 @@ type RepoCache struct {
 	userIdentityId entity.Id
 }
 
+// NewRepoCache create or open an unnamed (aka default) cache on top of a raw repository.
+// If the returned BuildEvent channel is not nil, the caller is expected to read all events before the cache is considered
+// ready to use.
 func NewRepoCache(r repository.ClockedRepo) (*RepoCache, chan BuildEvent, error) {
 	return NewNamedRepoCache(r, "")
 }
 
+// NewNamedRepoCache create or open a named cache on top of a raw repository.
+// If the returned BuildEvent channel is not nil, the caller is expected to read all events before the cache is considered
+// ready to use.
 func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, chan BuildEvent, error) {
 	c := &RepoCache{
 		repo: r,
@@ -96,22 +103,35 @@ func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, chan 
 
 	err := c.lock()
 	if err != nil {
-		closed := make(chan BuildEvent)
-		close(closed)
-		return &RepoCache{}, closed, err
+		return &RepoCache{}, nil, err
 	}
 
 	err = c.load()
 	if err == nil {
-		closed := make(chan BuildEvent)
-		close(closed)
-		return c, closed, nil
+		return c, nil, nil
 	}
 
 	// Cache is either missing, broken or outdated. Rebuilding.
 	events := c.buildCache()
 
 	return c, events, nil
+}
+
+func NewRepoCacheNoEvents(r repository.ClockedRepo) (*RepoCache, error) {
+	cache, events, err := NewRepoCache(r)
+	if err != nil {
+		return nil, err
+	}
+	if events != nil {
+		for event := range events {
+			if event.Err != nil {
+				for range events {
+				}
+				return nil, err
+			}
+		}
+	}
+	return cache, nil
 }
 
 // Bugs gives access to the Bug entities

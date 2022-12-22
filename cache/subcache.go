@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+	"path/filepath"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -21,6 +22,7 @@ type Excerpt interface {
 type CacheEntity interface {
 	Id() entity.Id
 	NeedCommit() bool
+	Lock()
 }
 
 type getUserIdentityFunc func() (*IdentityCache, error)
@@ -94,7 +96,7 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) Load() error {
 	sc.mu.Lock()
 	defer sc.mu.Unlock()
 
-	f, err := sc.repo.LocalStorage().Open(sc.namespace + "-file")
+	f, err := sc.repo.LocalStorage().Open(filepath.Join("cache", sc.namespace))
 	if err != nil {
 		return err
 	}
@@ -123,7 +125,7 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) Load() error {
 
 	sc.excerpts = aux.Excerpts
 
-	index, err := sc.repo.GetIndex(sc.typename)
+	index, err := sc.repo.GetIndex(sc.namespace)
 	if err != nil {
 		return err
 	}
@@ -162,7 +164,7 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) write() error {
 		return err
 	}
 
-	f, err := sc.repo.LocalStorage().Create(sc.namespace + "-file")
+	f, err := sc.repo.LocalStorage().Create(filepath.Join("cache", sc.namespace))
 	if err != nil {
 		return err
 	}
@@ -180,7 +182,7 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) Build() error {
 
 	allEntities := sc.actions.ReadAllWithResolver(sc.repo, sc.resolvers())
 
-	index, err := sc.repo.GetIndex(sc.typename)
+	index, err := sc.repo.GetIndex(sc.namespace)
 	if err != nil {
 		return err
 	}
@@ -462,7 +464,7 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) entityUpdated(id entity.Id) error
 	sc.excerpts[id] = sc.makeExcerpt(e)
 	sc.mu.Unlock()
 
-	index, err := sc.repo.GetIndex(sc.typename)
+	index, err := sc.repo.GetIndex(sc.namespace)
 	if err != nil {
 		return err
 	}
@@ -489,8 +491,10 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) evictIfNeeded() {
 			continue
 		}
 
-		// TODO
-		// b.Lock()
+		// as a form of assurance that evicted entities don't get manipulated, we lock them here.
+		// if something try to do it anyway, it will lock the program and make it obvious.
+		b.Lock()
+
 		sc.lru.Remove(id)
 		delete(sc.cached, id)
 

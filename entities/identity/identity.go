@@ -19,6 +19,9 @@ const identityRemoteRefPattern = "refs/remotes/%s/identities/"
 const versionEntryName = "version"
 const identityConfigKey = "git-bug.identity"
 
+const Typename = "identity"
+const Namespace = "identities"
+
 var ErrNonFastForwardMerge = errors.New("non fast-forward identity merge")
 var ErrNoIdentitySet = errors.New("No identity is set.\n" +
 	"To interact with bugs, an identity first needs to be created using " +
@@ -105,7 +108,7 @@ func read(repo repository.Repo, ref string) (*Identity, error) {
 
 	hashes, err := repo.ListCommits(ref)
 	if err != nil {
-		return nil, entity.NewErrNotFound("identity")
+		return nil, entity.NewErrNotFound(Typename)
 	}
 	if len(hashes) == 0 {
 		return nil, fmt.Errorf("empty identity")
@@ -170,7 +173,7 @@ func RemoveIdentity(repo repository.ClockedRepo, id entity.Id) error {
 		return err
 	}
 	if len(refs) > 1 {
-		return entity.NewErrMultipleMatch("identity", entity.RefsToIds(refs))
+		return entity.NewErrMultipleMatch(Typename, entity.RefsToIds(refs))
 	}
 	if len(refs) == 1 {
 		// we have the identity locally
@@ -189,7 +192,7 @@ func RemoveIdentity(repo repository.ClockedRepo, id entity.Id) error {
 			return err
 		}
 		if len(remoteRefs) > 1 {
-			return entity.NewErrMultipleMatch("identity", entity.RefsToIds(refs))
+			return entity.NewErrMultipleMatch(Typename, entity.RefsToIds(refs))
 		}
 		if len(remoteRefs) == 1 {
 			// found the identity in a remote
@@ -198,7 +201,7 @@ func RemoveIdentity(repo repository.ClockedRepo, id entity.Id) error {
 	}
 
 	if len(fullMatches) == 0 {
-		return entity.NewErrNotFound("identity")
+		return entity.NewErrNotFound(Typename)
 	}
 
 	for _, ref := range fullMatches {

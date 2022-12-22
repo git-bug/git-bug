@@ -48,7 +48,7 @@ func NewRepoCacheIdentity(repo repository.ClockedRepo,
 	sc := NewSubCache[*identity.Identity, *IdentityExcerpt, *IdentityCache](
 		repo, resolvers, getUserIdentity,
 		makeCached, NewIdentityExcerpt, makeIndex, actions,
-		"identity", "identities",
+		identity.Typename, identity.Namespace,
 		formatVersion, defaultMaxLoadedBugs,
 	)
 

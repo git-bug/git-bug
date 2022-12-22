@@ -13,11 +13,8 @@ import (
 func TestSelect(t *testing.T) {
 	repo := repository.CreateGoGitTestRepo(t, false)
 
-	repoCache, events, err := cache.NewRepoCache(repo)
+	repoCache, err := cache.NewRepoCacheNoEvents(repo)
 	require.NoError(t, err)
-	for event := range events {
-		require.NoError(t, event.Err)
-	}
 
 	_, _, err = ResolveBug(repoCache, []string{})
 	require.Equal(t, ErrNoValidId, err)

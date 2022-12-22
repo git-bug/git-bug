@@ -141,11 +141,8 @@ func TestGithubPushPull(t *testing.T) {
 	// create repo backend
 	repo := repository.CreateGoGitTestRepo(t, false)
 
-	backend, events, err := cache.NewRepoCache(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo)
 	require.NoError(t, err)
-	for event := range events {
-		require.NoError(t, event.Err)
-	}
 
 	// set author identity
 	login := "identity-test"
@@ -220,11 +217,8 @@ func TestGithubPushPull(t *testing.T) {
 	repoTwo := repository.CreateGoGitTestRepo(t, false)
 
 	// create a second backend
-	backendTwo, events, err := cache.NewRepoCache(repoTwo)
+	backendTwo, err := cache.NewRepoCacheNoEvents(repoTwo)
 	require.NoError(t, err)
-	for event := range events {
-		require.NoError(t, event.Err)
-	}
 
 	importer := &githubImporter{}
 	err = importer.Init(ctx, backend, core.Configuration{

@@ -20,9 +20,12 @@ var _ entity.Interface = &Bug{}
 // 4: with DAG entity framework
 const formatVersion = 4
 
+const Typename = "bug"
+const Namespace = "bugs"
+
 var def = dag.Definition{
-	Typename:             "bug",
-	Namespace:            "bugs",
+	Typename:             Typename,
+	Namespace:            Namespace,
 	OperationUnmarshaler: operationUnmarshaler,
 	FormatVersion:        formatVersion,
 }

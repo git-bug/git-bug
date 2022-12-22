@@ -28,11 +28,8 @@ func TestGithubImporter(t *testing.T) {
 
 	repo := repository.CreateGoGitTestRepo(t, false)
 
-	backend, buildEvents, err := cache.NewRepoCache(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo)
 	require.NoError(t, err)
-	for event := range buildEvents {
-		require.NoError(t, event.Err)
-	}
 
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
