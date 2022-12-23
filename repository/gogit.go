@@ -2,6 +2,7 @@ package repository
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -270,7 +271,7 @@ func (repo *GoGitRepo) GetCoreEditor() (string, error) {
 	if err == nil && val != "" {
 		return val, nil
 	}
-	if err != nil && err != ErrNoConfigEntry {
+	if err != nil && !errors.Is(err, ErrNoConfigEntry) {
 		return "", err
 	}
 

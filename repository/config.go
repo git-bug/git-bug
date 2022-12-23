@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 )
@@ -10,6 +11,14 @@ var (
 	ErrNoConfigEntry       = errors.New("no config entry for the given key")
 	ErrMultipleConfigEntry = errors.New("multiple config entry for the given key")
 )
+
+func newErrNoConfigEntry(key string) error {
+	return fmt.Errorf("%w: missing key %s", ErrNoConfigEntry, key)
+}
+
+func newErrMultipleConfigEntry(key string) error {
+	return fmt.Errorf("%w: duplicated key %s", ErrMultipleConfigEntry, key)
+}
 
 // Config represent the common function interacting with the repository config storage
 type Config interface {
@@ -96,7 +105,7 @@ func (m *mergedConfig) ReadBool(key string) (bool, error) {
 	if err == nil {
 		return v, nil
 	}
-	if err != ErrNoConfigEntry && err != ErrMultipleConfigEntry {
+	if !errors.Is(err, ErrNoConfigEntry) && !errors.Is(err, ErrMultipleConfigEntry) {
 		return false, err
 	}
 	return m.global.ReadBool(key)
@@ -107,7 +116,7 @@ func (m *mergedConfig) ReadString(key string) (string, error) {
 	if err == nil {
 		return val, nil
 	}
-	if err != ErrNoConfigEntry && err != ErrMultipleConfigEntry {
+	if !errors.Is(err, ErrNoConfigEntry) && !errors.Is(err, ErrMultipleConfigEntry) {
 		return "", err
 	}
 	return m.global.ReadString(key)
@@ -118,7 +127,7 @@ func (m *mergedConfig) ReadTimestamp(key string) (time.Time, error) {
 	if err == nil {
 		return val, nil
 	}
-	if err != ErrNoConfigEntry && err != ErrMultipleConfigEntry {
+	if !errors.Is(err, ErrNoConfigEntry) && !errors.Is(err, ErrMultipleConfigEntry) {
 		return time.Time{}, err
 	}
 	return m.global.ReadTimestamp(key)

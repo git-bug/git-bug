@@ -36,10 +36,10 @@ func GetUserIdentity(repo repository.Repo) (*Identity, error) {
 
 func GetUserIdentityId(repo repository.Repo) (entity.Id, error) {
 	val, err := repo.LocalConfig().ReadString(identityConfigKey)
-	if err == repository.ErrNoConfigEntry {
+	if errors.Is(err, repository.ErrNoConfigEntry) {
 		return entity.UnsetId, ErrNoIdentitySet
 	}
-	if err == repository.ErrMultipleConfigEntry {
+	if errors.Is(err, repository.ErrMultipleConfigEntry) {
 		return entity.UnsetId, ErrMultipleIdentitiesSet
 	}
 	if err != nil {
@@ -58,7 +58,7 @@ func GetUserIdentityId(repo repository.Repo) (entity.Id, error) {
 // IsUserIdentitySet say if the user has set his identity
 func IsUserIdentitySet(repo repository.Repo) (bool, error) {
 	_, err := repo.LocalConfig().ReadString(identityConfigKey)
-	if err == repository.ErrNoConfigEntry {
+	if errors.Is(err, repository.ErrNoConfigEntry) {
 		return false, nil
 	}
 	if err != nil {
