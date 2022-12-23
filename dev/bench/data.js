@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1671756607778,
+  "lastUpdate": 1671797875475,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -333,6 +333,48 @@ window.BENCHMARK_DATA = {
             "name": "BenchmarkReadBugs150",
             "value": 700665760,
             "unit": "ns/op\t840134724 B/op\t  834866 allocs/op",
+            "extra": "2 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "smoyer1@selesy.com",
+            "name": "Steve Moyer",
+            "username": "smoyer64"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f94616ec76e01145a7b2b90c11b27a25d4a4be96",
+          "message": "Merge pull request #936 from MichaelMure/feat/935/disambiguate-config-errors\n\nfeat(935): disambiguate config errors",
+          "timestamp": "2022-12-23T07:16:36-05:00",
+          "tree_id": "885844b5412f824b4ba9aad3725080dded0d27fe",
+          "url": "https://github.com/MichaelMure/git-bug/commit/f94616ec76e01145a7b2b90c11b27a25d4a4be96"
+        },
+        "date": 1671797874787,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 22856069,
+            "unit": "ns/op\t25062816 B/op\t   25158 allocs/op",
+            "extra": "52 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 128631368,
+            "unit": "ns/op\t140654511 B/op\t  139676 allocs/op",
+            "extra": "8 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 830180581,
+            "unit": "ns/op\t840051552 B/op\t  834814 allocs/op",
             "extra": "2 times\n2 procs"
           }
         ]
