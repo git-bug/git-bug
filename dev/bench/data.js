@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1671749714909,
+  "lastUpdate": 1671756607778,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -291,6 +291,48 @@ window.BENCHMARK_DATA = {
             "name": "BenchmarkReadBugs150",
             "value": 994160248,
             "unit": "ns/op\t840130112 B/op\t  834909 allocs/op",
+            "extra": "2 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0a5a0ec1ef4ad98bc2116a953e201f96474941ab",
+          "message": "Merge pull request #938 from MichaelMure/cache-reorg\n\nGeneric cache layer",
+          "timestamp": "2022-12-23T01:48:14+01:00",
+          "tree_id": "660a9b17b5247fe2f954bfa814cce3193c5afa23",
+          "url": "https://github.com/MichaelMure/git-bug/commit/0a5a0ec1ef4ad98bc2116a953e201f96474941ab"
+        },
+        "date": 1671756607346,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 22342043,
+            "unit": "ns/op\t25064074 B/op\t   25149 allocs/op",
+            "extra": "52 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 134921337,
+            "unit": "ns/op\t140654522 B/op\t  139674 allocs/op",
+            "extra": "8 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 700665760,
+            "unit": "ns/op\t840134724 B/op\t  834866 allocs/op",
             "extra": "2 times\n2 procs"
           }
         ]
