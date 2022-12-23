@@ -5,16 +5,23 @@ import (
 	"sync"
 )
 
+// Resolved is a minimal interface on which Resolver operates on.
+// Notably, this operates on Entity and Excerpt in the cache.
+type Resolved interface {
+	// Id returns the object identifier.
+	Id() Id
+}
+
 // Resolver is an interface to find an Entity from its Id
 type Resolver interface {
-	Resolve(id Id) (Interface, error)
+	Resolve(id Id) (Resolved, error)
 }
 
 // Resolvers is a collection of Resolver, for different type of Entity
-type Resolvers map[Interface]Resolver
+type Resolvers map[Resolved]Resolver
 
 // Resolve use the appropriate sub-resolver for the given type and find the Entity matching the Id.
-func Resolve[T Interface](rs Resolvers, id Id) (T, error) {
+func Resolve[T Resolved](rs Resolvers, id Id) (T, error) {
 	var zero T
 	for t, resolver := range rs {
 		switch t.(type) {
@@ -35,17 +42,17 @@ var _ Resolver = &CachedResolver{}
 type CachedResolver struct {
 	resolver Resolver
 	mu       sync.RWMutex
-	entities map[Id]Interface
+	entities map[Id]Resolved
 }
 
 func NewCachedResolver(resolver Resolver) *CachedResolver {
 	return &CachedResolver{
 		resolver: resolver,
-		entities: make(map[Id]Interface),
+		entities: make(map[Id]Resolved),
 	}
 }
 
-func (c *CachedResolver) Resolve(id Id) (Interface, error) {
+func (c *CachedResolver) Resolve(id Id) (Resolved, error) {
 	c.mu.RLock()
 	if i, ok := c.entities[id]; ok {
 		c.mu.RUnlock()
@@ -64,18 +71,18 @@ func (c *CachedResolver) Resolve(id Id) (Interface, error) {
 	return i, nil
 }
 
-var _ Resolver = ResolverFunc(nil)
+var _ Resolver = ResolverFunc[Resolved](nil)
 
 // ResolverFunc is a helper to morph a function resolver into a Resolver
-type ResolverFunc func(id Id) (Interface, error)
+type ResolverFunc[EntityT Resolved] func(id Id) (EntityT, error)
 
-func (fn ResolverFunc) Resolve(id Id) (Interface, error) {
+func (fn ResolverFunc[EntityT]) Resolve(id Id) (Resolved, error) {
 	return fn(id)
 }
 
 // MakeResolver create a resolver able to return the given entities.
-func MakeResolver(entities ...Interface) Resolver {
-	return ResolverFunc(func(id Id) (Interface, error) {
+func MakeResolver(entities ...Resolved) Resolver {
+	return ResolverFunc[Resolved](func(id Id) (Resolved, error) {
 		for _, entity := range entities {
 			if entity.Id() == id {
 				return entity, nil

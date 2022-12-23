@@ -32,7 +32,7 @@ func (r mutationResolver) getBug(repoRef *string, bugPrefix string) (*cache.Repo
 		return nil, nil, err
 	}
 
-	b, err := repo.ResolveBugPrefix(bugPrefix)
+	b, err := repo.Bugs().ResolvePrefix(bugPrefix)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -50,7 +50,7 @@ func (r mutationResolver) NewBug(ctx context.Context, input models.NewBugInput) 
 		return nil, err
 	}
 
-	b, op, err := repo.NewBugRaw(author,
+	b, op, err := repo.Bugs().NewRaw(author,
 		time.Now().Unix(),
 		text.CleanupOneLine(input.Title),
 		text.Cleanup(input.Message),
@@ -181,7 +181,7 @@ func (r mutationResolver) EditComment(ctx context.Context, input models.EditComm
 		return nil, err
 	}
 
-	b, target, err := repo.ResolveComment(input.TargetPrefix)
+	b, target, err := repo.Bugs().ResolveComment(input.TargetPrefix)
 	if err != nil {
 		return nil, err
 	}

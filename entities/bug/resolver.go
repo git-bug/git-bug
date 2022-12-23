@@ -16,6 +16,6 @@ func NewSimpleResolver(repo repository.ClockedRepo) *SimpleResolver {
 	return &SimpleResolver{repo: repo}
 }
 
-func (r *SimpleResolver) Resolve(id entity.Id) (entity.Interface, error) {
+func (r *SimpleResolver) Resolve(id entity.Id) (entity.Resolved, error) {
 	return Read(r.repo, id)
 }

@@ -9,7 +9,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/entities/bug"
 	"github.com/MichaelMure/git-bug/entity"
 )
 
@@ -18,7 +17,7 @@ const selectFile = "select"
 var ErrNoValidId = errors.New("you must provide a bug id or use the \"select\" command first")
 
 // ResolveBug first try to resolve a bug using the first argument of the command
-// line. If it fails, it fallback to the select mechanism.
+// line. If it fails, it falls back to the select mechanism.
 //
 // Returns:
 // - the bug if any
@@ -28,13 +27,13 @@ var ErrNoValidId = errors.New("you must provide a bug id or use the \"select\" c
 func ResolveBug(repo *cache.RepoCache, args []string) (*cache.BugCache, []string, error) {
 	// At first, try to use the first argument as a bug prefix
 	if len(args) > 0 {
-		b, err := repo.ResolveBugPrefix(args[0])
+		b, err := repo.Bugs().ResolvePrefix(args[0])
 
 		if err == nil {
 			return b, args[1:], nil
 		}
 
-		if err != bug.ErrBugNotExist {
+		if !entity.IsErrNotFound(err) {
 			return nil, nil, err
 		}
 	}
@@ -44,7 +43,7 @@ func ResolveBug(repo *cache.RepoCache, args []string) (*cache.BugCache, []string
 	b, err := selected(repo)
 
 	// selected bug is invalid
-	if err == bug.ErrBugNotExist {
+	if entity.IsErrNotFound(err) {
 		// we clear the selected bug
 		err = Clear(repo)
 		if err != nil {
@@ -115,7 +114,7 @@ func selected(repo *cache.RepoCache) (*cache.BugCache, error) {
 		return nil, fmt.Errorf("select file in invalid, removing it")
 	}
 
-	b, err := repo.ResolveBug(id)
+	b, err := repo.Bugs().Resolve(id)
 	if err != nil {
 		return nil, err
 	}

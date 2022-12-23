@@ -15,7 +15,6 @@ import (
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entities/bug"
 	"github.com/MichaelMure/git-bug/entities/common"
-	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
 )
@@ -74,8 +73,8 @@ func (ge *gitlabExporter) cacheAllClient(repo *cache.RepoCache, baseURL string) 
 			continue
 		}
 
-		user, err := repo.ResolveIdentityImmutableMetadata(metaKeyGitlabLogin, login)
-		if err == identity.ErrIdentityNotExist {
+		user, err := repo.Identities().ResolveIdentityImmutableMetadata(metaKeyGitlabLogin, login)
+		if entity.IsErrNotFound(err) {
 			continue
 		}
 		if err != nil {
@@ -116,14 +115,14 @@ func (ge *gitlabExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, 
 			allIdentitiesIds = append(allIdentitiesIds, id)
 		}
 
-		allBugsIds := repo.AllBugsIds()
+		allBugsIds := repo.Bugs().AllIds()
 
 		for _, id := range allBugsIds {
 			select {
 			case <-ctx.Done():
 				return
 			default:
-				b, err := repo.ResolveBug(id)
+				b, err := repo.Bugs().Resolve(id)
 				if err != nil {
 					out <- core.NewExportError(err, id)
 					return

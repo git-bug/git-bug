@@ -37,7 +37,7 @@ func newLabelSelect() *labelSelect {
 func (ls *labelSelect) SetBug(cache *cache.RepoCache, bug *cache.BugCache) {
 	ls.cache = cache
 	ls.bug = bug
-	ls.labels = cache.ValidLabels()
+	ls.labels = cache.Bugs().ValidLabels()
 
 	// Find which labels are currently applied to the bug
 	bugLabels := bug.Snapshot().Labels

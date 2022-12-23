@@ -63,7 +63,7 @@ func runBugNew(env *execenv.Env, opts bugNewOptions) error {
 		}
 	}
 
-	b, _, err := env.Backend.NewBug(
+	b, _, err := env.Backend.Bugs().New(
 		text.CleanupOneLine(opts.title),
 		text.Cleanup(opts.message),
 	)

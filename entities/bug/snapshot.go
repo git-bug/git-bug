@@ -43,6 +43,10 @@ func (snap *Snapshot) AllOperations() []dag.Operation {
 	return snap.Operations
 }
 
+func (snap *Snapshot) AppendOperation(op dag.Operation) {
+	snap.Operations = append(snap.Operations, op)
+}
+
 // EditTime returns the last time a bug was modified
 func (snap *Snapshot) EditTime() time.Time {
 	if len(snap.Operations) == 0 {

@@ -239,7 +239,7 @@ func (bt *bugTable) disable(g *gocui.Gui) error {
 
 func (bt *bugTable) paginate(max int) error {
 	var err error
-	bt.allIds, err = bt.repo.QueryBugs(bt.query)
+	bt.allIds, err = bt.repo.Bugs().Query(bt.query)
 	if err != nil {
 		return err
 	}
@@ -265,7 +265,7 @@ func (bt *bugTable) doPaginate(max int) error {
 	bt.excerpts = make([]*cache.BugExcerpt, len(ids))
 
 	for i, id := range ids {
-		excerpt, err := bt.repo.ResolveBugExcerpt(id)
+		excerpt, err := bt.repo.Bugs().ResolveExcerpt(id)
 		if err != nil {
 			return err
 		}
@@ -319,12 +319,12 @@ func (bt *bugTable) render(v *gocui.View, maxX int) {
 			labelsTxt.WriteString(lc256.Unescape())
 		}
 
-		author, err := bt.repo.ResolveIdentityExcerpt(excerpt.AuthorId)
+		author, err := bt.repo.Identities().ResolveExcerpt(excerpt.AuthorId)
 		if err != nil {
 			panic(err)
 		}
 
-		id := text.LeftPadMaxLine(excerpt.Id.Human(), columnWidths["id"], 0)
+		id := text.LeftPadMaxLine(excerpt.Id().Human(), columnWidths["id"], 0)
 		status := text.LeftPadMaxLine(excerpt.Status.String(), columnWidths["status"], 0)
 		labels := text.TruncateMax(labelsTxt.String(), minInt(columnWidths["title"]-2, 10))
 		title := text.LeftPadMaxLine(strings.TrimSpace(excerpt.Title), columnWidths["title"]-text.Len(labels), 0)
@@ -451,8 +451,8 @@ func (bt *bugTable) openBug(g *gocui.Gui, v *gocui.View) error {
 		// There are no open bugs, just do nothing
 		return nil
 	}
-	id := bt.excerpts[bt.selectCursor].Id
-	b, err := bt.repo.ResolveBug(id)
+	id := bt.excerpts[bt.selectCursor].Id()
+	b, err := bt.repo.Bugs().Resolve(id)
 	if err != nil {
 		return err
 	}

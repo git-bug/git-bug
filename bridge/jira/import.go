@@ -184,7 +184,7 @@ func (ji *jiraImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, si
 // Create a bug.Person from a JIRA user
 func (ji *jiraImporter) ensurePerson(repo *cache.RepoCache, user User) (*cache.IdentityCache, error) {
 	// Look first in the cache
-	i, err := repo.ResolveIdentityImmutableMetadata(
+	i, err := repo.Identities().ResolveIdentityImmutableMetadata(
 		metaKeyJiraUser, string(user.Key))
 	if err == nil {
 		return i, nil
@@ -193,7 +193,7 @@ func (ji *jiraImporter) ensurePerson(repo *cache.RepoCache, user User) (*cache.I
 		return nil, err
 	}
 
-	i, err = repo.NewIdentityRaw(
+	i, err = repo.Identities().NewRaw(
 		user.DisplayName,
 		user.EmailAddress,
 		user.Key,
@@ -219,7 +219,7 @@ func (ji *jiraImporter) ensureIssue(repo *cache.RepoCache, issue Issue) (*cache.
 		return nil, err
 	}
 
-	b, err := repo.ResolveBugMatcher(func(excerpt *cache.BugExcerpt) bool {
+	b, err := repo.Bugs().ResolveMatcher(func(excerpt *cache.BugExcerpt) bool {
 		if _, ok := excerpt.CreateMetadata[metaKeyJiraBaseUrl]; ok &&
 			excerpt.CreateMetadata[metaKeyJiraBaseUrl] != ji.conf[confKeyBaseUrl] {
 			return false
@@ -229,12 +229,12 @@ func (ji *jiraImporter) ensureIssue(repo *cache.RepoCache, issue Issue) (*cache.
 			excerpt.CreateMetadata[metaKeyJiraId] == issue.ID &&
 			excerpt.CreateMetadata[metaKeyJiraProject] == ji.conf[confKeyProject]
 	})
-	if err != nil && err != bug.ErrBugNotExist {
+	if err != nil && !entity.IsErrNotFound(err) {
 		return nil, err
 	}
 
-	if err == bug.ErrBugNotExist {
-		b, _, err = repo.NewBugRaw(
+	if entity.IsErrNotFound(err) {
+		b, _, err = repo.Bugs().NewRaw(
 			author,
 			issue.Fields.Created.Unix(),
 			text.CleanupOneLine(issue.Fields.Summary),

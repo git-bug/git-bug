@@ -12,12 +12,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var _ Snapshot = &snapshotMock{}
+
 type snapshotMock struct {
 	ops []Operation
 }
 
 func (s *snapshotMock) AllOperations() []Operation {
 	return s.ops
+}
+
+func (s *snapshotMock) AppendOperation(op Operation) {
+	s.ops = append(s.ops, op)
 }
 
 func TestSetMetadata(t *testing.T) {

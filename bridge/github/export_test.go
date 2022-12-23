@@ -34,18 +34,18 @@ type testCase struct {
 
 func testCases(t *testing.T, repo *cache.RepoCache) []*testCase {
 	// simple bug
-	simpleBug, _, err := repo.NewBug("simple bug", "new bug")
+	simpleBug, _, err := repo.Bugs().New("simple bug", "new bug")
 	require.NoError(t, err)
 
 	// bug with comments
-	bugWithComments, _, err := repo.NewBug("bug with comments", "new bug")
+	bugWithComments, _, err := repo.Bugs().New("bug with comments", "new bug")
 	require.NoError(t, err)
 
 	_, _, err = bugWithComments.AddComment("new comment")
 	require.NoError(t, err)
 
 	// bug with label changes
-	bugLabelChange, _, err := repo.NewBug("bug label change", "new bug")
+	bugLabelChange, _, err := repo.Bugs().New("bug label change", "new bug")
 	require.NoError(t, err)
 
 	_, _, err = bugLabelChange.ChangeLabels([]string{"bug"}, nil)
@@ -64,7 +64,7 @@ func testCases(t *testing.T, repo *cache.RepoCache) []*testCase {
 	require.NoError(t, err)
 
 	// bug with comments editions
-	bugWithCommentEditions, createOp, err := repo.NewBug("bug with comments editions", "new bug")
+	bugWithCommentEditions, createOp, err := repo.Bugs().New("bug with comments editions", "new bug")
 	require.NoError(t, err)
 
 	_, err = bugWithCommentEditions.EditComment(
@@ -78,7 +78,7 @@ func testCases(t *testing.T, repo *cache.RepoCache) []*testCase {
 	require.NoError(t, err)
 
 	// bug status changed
-	bugStatusChanged, _, err := repo.NewBug("bug status changed", "new bug")
+	bugStatusChanged, _, err := repo.Bugs().New("bug status changed", "new bug")
 	require.NoError(t, err)
 
 	_, err = bugStatusChanged.Close()
@@ -88,7 +88,7 @@ func testCases(t *testing.T, repo *cache.RepoCache) []*testCase {
 	require.NoError(t, err)
 
 	// bug title changed
-	bugTitleEdited, _, err := repo.NewBug("bug title edited", "new bug")
+	bugTitleEdited, _, err := repo.Bugs().New("bug title edited", "new bug")
 	require.NoError(t, err)
 
 	_, err = bugTitleEdited.SetTitle("bug title edited again")
@@ -141,12 +141,12 @@ func TestGithubPushPull(t *testing.T) {
 	// create repo backend
 	repo := repository.CreateGoGitTestRepo(t, false)
 
-	backend, err := cache.NewRepoCache(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo)
 	require.NoError(t, err)
 
 	// set author identity
 	login := "identity-test"
-	author, err := backend.NewIdentity("test identity", "test@test.org")
+	author, err := backend.Identities().New("test identity", "test@test.org")
 	require.NoError(t, err)
 	author.SetMetadata(metaKeyGithubLogin, login)
 	err = author.Commit()
@@ -224,7 +224,7 @@ func TestGithubPushPull(t *testing.T) {
 	repoTwo := repository.CreateGoGitTestRepo(t, false)
 
 	// create a second backend
-	backendTwo, err := cache.NewRepoCache(repoTwo)
+	backendTwo, err := cache.NewRepoCacheNoEvents(repoTwo)
 	require.NoError(t, err)
 
 	importer := &githubImporter{}
@@ -243,7 +243,7 @@ func TestGithubPushPull(t *testing.T) {
 		require.NoError(t, result.Err)
 	}
 
-	require.Len(t, backendTwo.AllBugsIds(), len(tests))
+	require.Len(t, backendTwo.Bugs().AllIds(), len(tests))
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -268,7 +268,7 @@ func TestGithubPushPull(t *testing.T) {
 			require.True(t, ok)
 
 			// retrieve bug from backendTwo
-			importedBug, err := backendTwo.ResolveBugCreateMetadata(metaKeyGithubId, bugGithubID)
+			importedBug, err := backendTwo.Bugs().ResolveBugCreateMetadata(metaKeyGithubId, bugGithubID)
 			require.NoError(t, err)
 
 			// verify bug have same number of original operations

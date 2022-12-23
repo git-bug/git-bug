@@ -46,10 +46,10 @@ func NewUserCommand() *cobra.Command {
 }
 
 func runUser(env *execenv.Env, opts userOptions) error {
-	ids := env.Backend.AllIdentityIds()
+	ids := env.Backend.Identities().AllIds()
 	var users []*cache.IdentityExcerpt
 	for _, id := range ids {
-		user, err := env.Backend.ResolveIdentityExcerpt(id)
+		user, err := env.Backend.Identities().ResolveExcerpt(id)
 		if err != nil {
 			return err
 		}
@@ -69,7 +69,7 @@ func runUser(env *execenv.Env, opts userOptions) error {
 func userDefaultFormatter(env *execenv.Env, users []*cache.IdentityExcerpt) error {
 	for _, user := range users {
 		env.Out.Printf("%s %s\n",
-			colors.Cyan(user.Id.Human()),
+			colors.Cyan(user.Id().Human()),
 			user.DisplayName(),
 		)
 	}

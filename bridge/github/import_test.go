@@ -28,7 +28,7 @@ func TestGithubImporter(t *testing.T) {
 
 	repo := repository.CreateGoGitTestRepo(t, false)
 
-	backend, err := cache.NewRepoCache(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo)
 	require.NoError(t, err)
 
 	defer backend.Close()
@@ -171,11 +171,11 @@ func TestGithubImporter(t *testing.T) {
 
 	fmt.Printf("test repository imported in %f seconds\n", time.Since(start).Seconds())
 
-	require.Len(t, backend.AllBugsIds(), len(tests))
+	require.Len(t, backend.Bugs().AllIds(), len(tests))
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b, err := backend.ResolveBugCreateMetadata(metaKeyGithubUrl, tt.url)
+			b, err := backend.Bugs().ResolveBugCreateMetadata(metaKeyGithubUrl, tt.url)
 			require.NoError(t, err)
 
 			ops := b.Snapshot().Operations

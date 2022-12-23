@@ -25,6 +25,10 @@ type Interface[SnapT Snapshot, OpT Operation] interface {
 	// Commit writes the staging area in Git and move the operations to the packs
 	Commit(repo repository.ClockedRepo) error
 
+	// CommitAsNeeded execute a Commit only if necessary. This function is useful to avoid getting an error if the Entity
+	// is already in sync with the repository.
+	CommitAsNeeded(repo repository.ClockedRepo) error
+
 	// FirstOp lookup for the very first operation of the Entity.
 	FirstOp() OpT
 
@@ -32,7 +36,7 @@ type Interface[SnapT Snapshot, OpT Operation] interface {
 	// For a valid Entity, should never be nil
 	LastOp() OpT
 
-	// Compile a bug in an easily usable snapshot
+	// Compile an Entity in an easily usable snapshot
 	Compile() SnapT
 
 	// CreateLamportTime return the Lamport time of creation

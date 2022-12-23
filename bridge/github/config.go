@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"math/rand"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -317,17 +316,6 @@ func pollGithubForAuthorization(deviceCode string, intervalSec int64) (string, e
 			return "", fmt.Errorf("error creating token: %v, %v", apiError, values.Get("error_description"))
 		}
 	}
-}
-
-func randomFingerprint() string {
-	// Doesn't have to be crypto secure, it's just to avoid token collision
-	rand.Seed(time.Now().UnixNano())
-	var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-	b := make([]rune, 32)
-	for i := range b {
-		b[i] = letterRunes[rand.Intn(len(letterRunes))]
-	}
-	return string(b)
 }
 
 func promptTokenOptions(repo repository.RepoKeyring, login, owner, project string) (auth.Credential, error) {

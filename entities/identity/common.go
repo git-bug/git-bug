@@ -2,17 +2,8 @@ package identity
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-
-	"github.com/MichaelMure/git-bug/entity"
 )
-
-var ErrIdentityNotExist = errors.New("identity doesn't exist")
-
-func NewErrMultipleMatch(matching []entity.Id) *entity.ErrMultipleMatch {
-	return entity.NewErrMultipleMatch("identity", matching)
-}
 
 // Custom unmarshaling function to allow package user to delegate
 // the decoding of an Identity and distinguish between an Identity

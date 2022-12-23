@@ -20,9 +20,12 @@ var _ entity.Interface = &Bug{}
 // 4: with DAG entity framework
 const formatVersion = 4
 
+const Typename = "bug"
+const Namespace = "bugs"
+
 var def = dag.Definition{
-	Typename:             "bug",
-	Namespace:            "bugs",
+	Typename:             Typename,
+	Namespace:            Namespace,
 	OperationUnmarshaler: operationUnmarshaler,
 	FormatVersion:        formatVersion,
 }
@@ -42,9 +45,11 @@ type Bug struct {
 
 // NewBug create a new Bug
 func NewBug() *Bug {
-	return &Bug{
-		Entity: dag.New(def),
-	}
+	return wrapper(dag.New(def))
+}
+
+func wrapper(e *dag.Entity) *Bug {
+	return &Bug{Entity: e}
 }
 
 func simpleResolvers(repo repository.ClockedRepo) entity.Resolvers {
@@ -60,49 +65,17 @@ func Read(repo repository.ClockedRepo, id entity.Id) (*Bug, error) {
 
 // ReadWithResolver will read a bug from its Id, with custom resolvers
 func ReadWithResolver(repo repository.ClockedRepo, resolvers entity.Resolvers, id entity.Id) (*Bug, error) {
-	e, err := dag.Read(def, repo, resolvers, id)
-	if err != nil {
-		return nil, err
-	}
-	return &Bug{Entity: e}, nil
-}
-
-type StreamedBug struct {
-	Bug *Bug
-	Err error
+	return dag.Read(def, wrapper, repo, resolvers, id)
 }
 
 // ReadAll read and parse all local bugs
-func ReadAll(repo repository.ClockedRepo) <-chan StreamedBug {
-	return readAll(repo, simpleResolvers(repo))
+func ReadAll(repo repository.ClockedRepo) <-chan entity.StreamedEntity[*Bug] {
+	return dag.ReadAll(def, wrapper, repo, simpleResolvers(repo))
 }
 
 // ReadAllWithResolver read and parse all local bugs
-func ReadAllWithResolver(repo repository.ClockedRepo, resolvers entity.Resolvers) <-chan StreamedBug {
-	return readAll(repo, resolvers)
-}
-
-// Read and parse all available bug with a given ref prefix
-func readAll(repo repository.ClockedRepo, resolvers entity.Resolvers) <-chan StreamedBug {
-	out := make(chan StreamedBug)
-
-	go func() {
-		defer close(out)
-
-		for streamedEntity := range dag.ReadAll(def, repo, resolvers) {
-			if streamedEntity.Err != nil {
-				out <- StreamedBug{
-					Err: streamedEntity.Err,
-				}
-			} else {
-				out <- StreamedBug{
-					Bug: &Bug{Entity: streamedEntity.Entity},
-				}
-			}
-		}
-	}()
-
-	return out
+func ReadAllWithResolver(repo repository.ClockedRepo, resolvers entity.Resolvers) <-chan entity.StreamedEntity[*Bug] {
+	return dag.ReadAll(def, wrapper, repo, resolvers)
 }
 
 // ListLocalIds list all the available local bug ids

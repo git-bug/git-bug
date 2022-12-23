@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
@@ -145,13 +146,13 @@ func TestIdentityPushPull(t *testing.T) {
 	}
 }
 
-func allIdentities(t testing.TB, identities <-chan StreamedIdentity) []*Identity {
+func allIdentities(t testing.TB, identities <-chan entity.StreamedEntity[*Identity]) []*Identity {
 	var result []*Identity
 	for streamed := range identities {
 		if streamed.Err != nil {
 			t.Fatal(streamed.Err)
 		}
-		result = append(result, streamed.Identity)
+		result = append(result, streamed.Entity)
 	}
 	return result
 }

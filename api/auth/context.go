@@ -24,5 +24,5 @@ func UserFromCtx(ctx context.Context, r *cache.RepoCache) (*cache.IdentityCache,
 	if !ok {
 		return nil, ErrNotAuthenticated
 	}
-	return r.ResolveIdentity(id)
+	return r.Identities().Resolve(id)
 }

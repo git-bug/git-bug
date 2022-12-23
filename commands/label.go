@@ -25,7 +25,7 @@ Note: in the future, a proper label policy could be implemented where valid labe
 }
 
 func runLabel(env *execenv.Env) error {
-	labels := env.Backend.ValidLabels()
+	labels := env.Backend.Bugs().ValidLabels()
 
 	for _, l := range labels {
 		env.Out.Println(l)

@@ -9,7 +9,6 @@ import (
 
 	"github.com/99designs/keyring"
 	"github.com/ProtonMail/go-crypto/openpgp"
-	"github.com/blevesearch/bleve"
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/memfs"
 
@@ -25,7 +24,7 @@ type mockRepo struct {
 	*mockRepoKeyring
 	*mockRepoCommon
 	*mockRepoStorage
-	*mockRepoBleve
+	*mockRepoIndex
 	*mockRepoData
 	*mockRepoClock
 	*mockRepoTest
@@ -39,7 +38,7 @@ func NewMockRepo() *mockRepo {
 		mockRepoKeyring: NewMockRepoKeyring(),
 		mockRepoCommon:  NewMockRepoCommon(),
 		mockRepoStorage: NewMockRepoStorage(),
-		mockRepoBleve:   newMockRepoBleve(),
+		mockRepoIndex:   newMockRepoIndex(),
 		mockRepoData:    NewMockRepoData(),
 		mockRepoClock:   NewMockRepoClock(),
 		mockRepoTest:    NewMockRepoTest(),
@@ -135,20 +134,20 @@ func (m *mockRepoStorage) LocalStorage() billy.Filesystem {
 	return m.localFs
 }
 
-var _ RepoBleve = &mockRepoBleve{}
+var _ RepoIndex = &mockRepoIndex{}
 
-type mockRepoBleve struct {
+type mockRepoIndex struct {
 	indexesMutex sync.Mutex
-	indexes      map[string]bleve.Index
+	indexes      map[string]Index
 }
 
-func newMockRepoBleve() *mockRepoBleve {
-	return &mockRepoBleve{
-		indexes: make(map[string]bleve.Index),
+func newMockRepoIndex() *mockRepoIndex {
+	return &mockRepoIndex{
+		indexes: make(map[string]Index),
 	}
 }
 
-func (m *mockRepoBleve) GetBleveIndex(name string) (bleve.Index, error) {
+func (m *mockRepoIndex) GetIndex(name string) (Index, error) {
 	m.indexesMutex.Lock()
 	defer m.indexesMutex.Unlock()
 
@@ -156,24 +155,63 @@ func (m *mockRepoBleve) GetBleveIndex(name string) (bleve.Index, error) {
 		return index, nil
 	}
 
-	mapping := bleve.NewIndexMapping()
-	mapping.DefaultAnalyzer = "en"
-
-	index, err := bleve.NewMemOnly(mapping)
-	if err != nil {
-		return nil, err
-	}
-
+	index := newIndex()
 	m.indexes[name] = index
-
 	return index, nil
 }
 
-func (m *mockRepoBleve) ClearBleveIndex(name string) error {
-	m.indexesMutex.Lock()
-	defer m.indexesMutex.Unlock()
+var _ Index = &mockIndex{}
 
-	delete(m.indexes, name)
+type mockIndex map[string][]string
+
+func newIndex() *mockIndex {
+	m := make(map[string][]string)
+	return (*mockIndex)(&m)
+}
+
+func (m *mockIndex) IndexOne(id string, texts []string) error {
+	(*m)[id] = texts
+	return nil
+}
+
+func (m *mockIndex) IndexBatch() (indexer func(id string, texts []string) error, closer func() error) {
+	indexer = func(id string, texts []string) error {
+		(*m)[id] = texts
+		return nil
+	}
+	closer = func() error { return nil }
+	return indexer, closer
+}
+
+func (m *mockIndex) Search(terms []string) (ids []string, err error) {
+loop:
+	for id, texts := range *m {
+		for _, text := range texts {
+			for _, s := range strings.Fields(text) {
+				for _, term := range terms {
+					if s == term {
+						ids = append(ids, id)
+						continue loop
+					}
+				}
+			}
+		}
+	}
+	return ids, nil
+}
+
+func (m *mockIndex) DocCount() (uint64, error) {
+	return uint64(len(*m)), nil
+}
+
+func (m *mockIndex) Clear() error {
+	for k, _ := range *m {
+		delete(*m, k)
+	}
+	return nil
+}
+
+func (m *mockIndex) Close() error {
 	return nil
 }
 
@@ -201,12 +239,12 @@ func NewMockRepoData() *mockRepoData {
 	}
 }
 
-func (r *mockRepoData) FetchRefs(remote string, prefix string) (string, error) {
+func (r *mockRepoData) FetchRefs(remote string, prefixes ...string) (string, error) {
 	panic("implement me")
 }
 
 // PushRefs push git refs to a remote
-func (r *mockRepoData) PushRefs(remote string, prefix string) (string, error) {
+func (r *mockRepoData) PushRefs(remote string, prefixes ...string) (string, error) {
 	panic("implement me")
 }
 
@@ -220,7 +258,7 @@ func (r *mockRepoData) StoreData(data []byte) (Hash, error) {
 func (r *mockRepoData) ReadData(hash Hash) ([]byte, error) {
 	data, ok := r.blobs[hash]
 	if !ok {
-		return nil, fmt.Errorf("unknown hash")
+		return nil, ErrNotFound
 	}
 
 	return data, nil
@@ -245,13 +283,13 @@ func (r *mockRepoData) ReadTree(hash Hash) ([]TreeEntry, error) {
 		commit, ok := r.commits[hash]
 
 		if !ok {
-			return nil, fmt.Errorf("unknown hash")
+			return nil, ErrNotFound
 		}
 
 		data, ok = r.trees[commit.treeHash]
 
 		if !ok {
-			return nil, fmt.Errorf("unknown hash")
+			return nil, ErrNotFound
 		}
 	}
 
@@ -289,7 +327,7 @@ func (r *mockRepoData) StoreSignedCommit(treeHash Hash, signKey *openpgp.Entity,
 func (r *mockRepoData) ReadCommit(hash Hash) (Commit, error) {
 	c, ok := r.commits[hash]
 	if !ok {
-		return Commit{}, fmt.Errorf("unknown commit")
+		return Commit{}, ErrNotFound
 	}
 
 	result := Commit{
@@ -308,19 +346,10 @@ func (r *mockRepoData) ReadCommit(hash Hash) (Commit, error) {
 	return result, nil
 }
 
-func (r *mockRepoData) GetTreeHash(commit Hash) (Hash, error) {
-	c, ok := r.commits[commit]
-	if !ok {
-		return "", fmt.Errorf("unknown commit")
-	}
-
-	return c.treeHash, nil
-}
-
 func (r *mockRepoData) ResolveRef(ref string) (Hash, error) {
 	h, ok := r.refs[ref]
 	if !ok {
-		return "", fmt.Errorf("unknown ref")
+		return "", ErrNotFound
 	}
 	return h, nil
 }
@@ -356,46 +385,11 @@ func (r *mockRepoData) CopyRef(source string, dest string) error {
 	hash, exist := r.refs[source]
 
 	if !exist {
-		return fmt.Errorf("Unknown ref")
+		return ErrNotFound
 	}
 
 	r.refs[dest] = hash
 	return nil
-}
-
-func (r *mockRepoData) FindCommonAncestor(hash1 Hash, hash2 Hash) (Hash, error) {
-	ancestor1 := []Hash{hash1}
-
-	for hash1 != "" {
-		c, ok := r.commits[hash1]
-		if !ok {
-			return "", fmt.Errorf("unknown commit %v", hash1)
-		}
-		if len(c.parents) == 0 {
-			break
-		}
-		ancestor1 = append(ancestor1, c.parents[0])
-		hash1 = c.parents[0]
-	}
-
-	for {
-		for _, ancestor := range ancestor1 {
-			if ancestor == hash2 {
-				return ancestor, nil
-			}
-		}
-
-		c, ok := r.commits[hash2]
-		if !ok {
-			return "", fmt.Errorf("unknown commit %v", hash1)
-		}
-
-		if c.parents[0] == "" {
-			return "", fmt.Errorf("no ancestor found")
-		}
-
-		hash2 = c.parents[0]
-	}
 }
 
 func (r *mockRepoData) ListCommits(ref string) ([]Hash, error) {

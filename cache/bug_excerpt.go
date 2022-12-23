@@ -2,12 +2,10 @@ package cache
 
 import (
 	"encoding/gob"
-	"fmt"
 	"time"
 
 	"github.com/MichaelMure/git-bug/entities/bug"
 	"github.com/MichaelMure/git-bug/entities/common"
-	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
@@ -17,10 +15,12 @@ func init() {
 	gob.Register(BugExcerpt{})
 }
 
+var _ Excerpt = &BugExcerpt{}
+
 // BugExcerpt hold a subset of the bug values to be able to sort and filter bugs
 // efficiently without having to read and compile each raw bugs.
 type BugExcerpt struct {
-	Id entity.Id
+	id entity.Id
 
 	CreateLamportTime lamport.Time
 	EditLamportTime   lamport.Time
@@ -38,26 +38,8 @@ type BugExcerpt struct {
 	CreateMetadata map[string]string
 }
 
-// identity.Bare data are directly embedded in the bug excerpt
-type LegacyAuthorExcerpt struct {
-	Name  string
-	Login string
-}
-
-func (l LegacyAuthorExcerpt) DisplayName() string {
-	switch {
-	case l.Name == "" && l.Login != "":
-		return l.Login
-	case l.Name != "" && l.Login == "":
-		return l.Name
-	case l.Name != "" && l.Login != "":
-		return fmt.Sprintf("%s (%s)", l.Name, l.Login)
-	}
-
-	panic("invalid person data")
-}
-
-func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
+func NewBugExcerpt(b *BugCache) *BugExcerpt {
+	snap := b.Snapshot()
 	participantsIds := make([]entity.Id, 0, len(snap.Participants))
 	for _, participant := range snap.Participants {
 		participantsIds = append(participantsIds, participant.Id())
@@ -69,11 +51,12 @@ func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
 	}
 
 	e := &BugExcerpt{
-		Id:                b.Id(),
+		id:                b.Id(),
 		CreateLamportTime: b.CreateLamportTime(),
 		EditLamportTime:   b.EditLamportTime(),
 		CreateUnixTime:    b.FirstOp().Time().Unix(),
 		EditUnixTime:      snap.EditTime().Unix(),
+		AuthorId:          snap.Author.Id(),
 		Status:            snap.Status,
 		Labels:            snap.Labels,
 		Actors:            actorsIds,
@@ -83,14 +66,15 @@ func NewBugExcerpt(b bug.Interface, snap *bug.Snapshot) *BugExcerpt {
 		CreateMetadata:    b.FirstOp().AllMetadata(),
 	}
 
-	switch snap.Author.(type) {
-	case *identity.Identity, *identity.IdentityStub, *IdentityCache:
-		e.AuthorId = snap.Author.Id()
-	default:
-		panic("unhandled identity type")
-	}
-
 	return e
+}
+
+func (b *BugExcerpt) setId(id entity.Id) {
+	b.id = id
+}
+
+func (b *BugExcerpt) Id() entity.Id {
+	return b.id
 }
 
 func (b *BugExcerpt) CreateTime() time.Time {
@@ -112,7 +96,7 @@ func (b BugsById) Len() int {
 }
 
 func (b BugsById) Less(i, j int) bool {
-	return b[i].Id < b[j].Id
+	return b[i].id < b[j].id
 }
 
 func (b BugsById) Swap(i, j int) {

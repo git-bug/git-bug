@@ -21,12 +21,7 @@ const (
 )
 
 // Operation define the interface to fulfill for an edit operation of a Bug
-type Operation interface {
-	dag.Operation
-
-	// Apply the operation to a Snapshot to create the final state
-	Apply(snapshot *Snapshot)
-}
+type Operation = dag.OperationWithApply[*Snapshot]
 
 // make sure that package external operations do conform to our interface
 var _ Operation = &dag.NoOpOperation[*Snapshot]{}

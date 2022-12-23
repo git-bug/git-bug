@@ -88,11 +88,11 @@ func Bug(env *execenv.Env) ValidArgsFunction {
 }
 
 func bugWithBackend(backend *cache.RepoCache, toComplete string) (completions []string, directives cobra.ShellCompDirective) {
-	allIds := backend.AllBugsIds()
+	allIds := backend.Bugs().AllIds()
 	bugExcerpt := make([]*cache.BugExcerpt, len(allIds))
 	for i, id := range allIds {
 		var err error
-		bugExcerpt[i], err = backend.ResolveBugExcerpt(id)
+		bugExcerpt[i], err = backend.Bugs().ResolveExcerpt(id)
 		if err != nil {
 			return handleError(err)
 		}
@@ -138,7 +138,7 @@ func BugAndLabels(env *execenv.Env, addOrRemove bool) ValidArgsFunction {
 				seenLabels[label] = true
 			}
 
-			allLabels := env.Backend.ValidLabels()
+			allLabels := env.Backend.Bugs().ValidLabels()
 			labels = make([]bug.Label, 0, len(allLabels))
 			for _, label := range allLabels {
 				if !seenLabels[label] {
@@ -200,7 +200,7 @@ func Label(env *execenv.Env) ValidArgsFunction {
 			_ = env.Backend.Close()
 		}()
 
-		labels := env.Backend.ValidLabels()
+		labels := env.Backend.Bugs().ValidLabels()
 		completions = make([]string, len(labels))
 		for i, label := range labels {
 			if strings.Contains(label.String(), " ") {
@@ -243,10 +243,10 @@ func Ls(env *execenv.Env) ValidArgsFunction {
 			if !strings.HasPrefix(toComplete, key) {
 				continue
 			}
-			ids := env.Backend.AllIdentityIds()
+			ids := env.Backend.Identities().AllIds()
 			completions = make([]string, len(ids))
 			for i, id := range ids {
-				user, err := env.Backend.ResolveIdentityExcerpt(id)
+				user, err := env.Backend.Identities().ResolveExcerpt(id)
 				if err != nil {
 					return handleError(err)
 				}
@@ -266,7 +266,7 @@ func Ls(env *execenv.Env) ValidArgsFunction {
 			if !strings.HasPrefix(toComplete, key) {
 				continue
 			}
-			labels := env.Backend.ValidLabels()
+			labels := env.Backend.Bugs().ValidLabels()
 			completions = make([]string, len(labels))
 			for i, label := range labels {
 				if strings.Contains(label.String(), " ") {
@@ -300,14 +300,14 @@ func User(env *execenv.Env) ValidArgsFunction {
 			_ = env.Backend.Close()
 		}()
 
-		ids := env.Backend.AllIdentityIds()
+		ids := env.Backend.Identities().AllIds()
 		completions = make([]string, len(ids))
 		for i, id := range ids {
-			user, err := env.Backend.ResolveIdentityExcerpt(id)
+			user, err := env.Backend.Identities().ResolveExcerpt(id)
 			if err != nil {
 				return handleError(err)
 			}
-			completions[i] = user.Id.Human() + "\t" + user.DisplayName()
+			completions[i] = user.Id().Human() + "\t" + user.DisplayName()
 		}
 		return completions, cobra.ShellCompDirectiveNoFileComp
 	}
@@ -322,10 +322,10 @@ func UserForQuery(env *execenv.Env) ValidArgsFunction {
 			_ = env.Backend.Close()
 		}()
 
-		ids := env.Backend.AllIdentityIds()
+		ids := env.Backend.Identities().AllIds()
 		completions = make([]string, len(ids))
 		for i, id := range ids {
-			user, err := env.Backend.ResolveIdentityExcerpt(id)
+			user, err := env.Backend.Identities().ResolveExcerpt(id)
 			if err != nil {
 				return handleError(err)
 			}

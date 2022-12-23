@@ -34,7 +34,7 @@ func runBugRm(env *execenv.Env, args []string) (err error) {
 		return errors.New("you must provide a bug prefix to remove")
 	}
 
-	err = env.Backend.RemoveBug(args[0])
+	err = env.Backend.Bugs().Remove(args[0])
 
 	if err != nil {
 		return

@@ -14,7 +14,6 @@ import (
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entities/bug"
-	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
 )
@@ -102,8 +101,8 @@ func (je *jiraExporter) cacheAllClient(ctx context.Context, repo *cache.RepoCach
 			continue
 		}
 
-		user, err := repo.ResolveIdentityImmutableMetadata(metaKeyJiraLogin, login)
-		if err == identity.ErrIdentityNotExist {
+		user, err := repo.Identities().ResolveIdentityImmutableMetadata(metaKeyJiraLogin, login)
+		if entity.IsErrNotFound(err) {
 			continue
 		}
 		if err != nil {
@@ -146,10 +145,10 @@ func (je *jiraExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, si
 			allIdentitiesIds = append(allIdentitiesIds, id)
 		}
 
-		allBugsIds := repo.AllBugsIds()
+		allBugsIds := repo.Bugs().AllIds()
 
 		for _, id := range allBugsIds {
-			b, err := repo.ResolveBug(id)
+			b, err := repo.Bugs().Resolve(id)
 			if err != nil {
 				out <- core.NewExportError(errors.Wrap(err, "can't load bug"), id)
 				return
