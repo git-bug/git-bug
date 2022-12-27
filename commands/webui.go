@@ -111,19 +111,18 @@ func runWebUI(env *execenv.Env, opts webUIOptions) error {
 		return err
 	}
 
-	if events != nil {
-		env.Err.Println("Building cache... ")
-		for event := range events {
-			if event.Err != nil {
-				env.Err.Printf("Cache building error [%s]: %v\n", event.Typename, event.Err)
-				continue
-			}
-			switch event.Event {
-			case cache.BuildEventStarted:
-				env.Err.Printf("[%s] started\n", event.Typename)
-			case cache.BuildEventFinished:
-				env.Err.Printf("[%s] done\n", event.Typename)
-			}
+	for event := range events {
+		if event.Err != nil {
+			env.Err.Printf("Cache building error [%s]: %v\n", event.Typename, event.Err)
+			continue
+		}
+		switch event.Event {
+		case cache.BuildEventCacheIsBuilt:
+			env.Err.Println("Building cache... ")
+		case cache.BuildEventStarted:
+			env.Err.Printf("[%s] started\n", event.Typename)
+		case cache.BuildEventFinished:
+			env.Err.Printf("[%s] done\n", event.Typename)
 		}
 	}
 
