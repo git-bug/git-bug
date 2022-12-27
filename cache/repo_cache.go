@@ -76,7 +76,7 @@ type RepoCache struct {
 // If the returned BuildEvent channel is not nil, the caller is expected to read all events before the cache is considered
 // ready to use.
 func NewRepoCache(r repository.ClockedRepo) (*RepoCache, chan BuildEvent, error) {
-	return NewNamedRepoCache(r, "")
+	return NewNamedRepoCache(r, defaultRepoName)
 }
 
 // NewNamedRepoCache create or open a named cache on top of a raw repository.
@@ -101,18 +101,22 @@ func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, chan 
 		&BugExcerpt{}:      entity.ResolverFunc[*BugExcerpt](c.bugs.ResolveExcerpt),
 	}
 
-	err := c.lock()
+	// small buffer so that below functions can emit an event without blocking
+	events := make(chan BuildEvent, 10)
+	defer close(events)
+
+	err := c.lock(events)
 	if err != nil {
-		return &RepoCache{}, nil, err
+		return &RepoCache{}, events, err
 	}
 
 	err = c.load()
 	if err == nil {
-		return c, nil, nil
+		return c, events, nil
 	}
 
 	// Cache is either missing, broken or outdated. Rebuilding.
-	events := c.buildCache()
+	c.buildCache(events)
 
 	return c, events, nil
 }
@@ -122,13 +126,11 @@ func NewRepoCacheNoEvents(r repository.ClockedRepo) (*RepoCache, error) {
 	if err != nil {
 		return nil, err
 	}
-	if events != nil {
-		for event := range events {
-			if event.Err != nil {
-				for range events {
-				}
-				return nil, err
+	for event := range events {
+		if event.Err != nil {
+			for range events {
 			}
+			return nil, err
 		}
 	}
 	return cache, nil
@@ -164,8 +166,8 @@ func (c *RepoCache) load() error {
 	return errWait.Wait()
 }
 
-func (c *RepoCache) lock() error {
-	err := repoIsAvailable(c.repo)
+func (c *RepoCache) lock(events chan BuildEvent) error {
+	err := repoIsAvailable(c.repo, events)
 	if err != nil {
 		return err
 	}
@@ -206,6 +208,8 @@ type BuildEventType int
 
 const (
 	_ BuildEventType = iota
+	BuildEventCacheIsBuilt
+	BuildEventRemoveLock
 	BuildEventStarted
 	BuildEventFinished
 )
@@ -214,54 +218,48 @@ const (
 type BuildEvent struct {
 	// Err carry an error if the build process failed. If set, no other field matter.
 	Err error
-	// Typename is the name of the entity of which the event relate to.
+	// Typename is the name of the entity of which the event relate to. Can be empty if not particular entity is involved.
 	Typename string
 	// Event is the type of the event.
 	Event BuildEventType
 }
 
-func (c *RepoCache) buildCache() chan BuildEvent {
-	out := make(chan BuildEvent)
+func (c *RepoCache) buildCache(events chan BuildEvent) {
+	events <- BuildEvent{Event: BuildEventCacheIsBuilt}
 
-	go func() {
-		defer close(out)
+	var wg sync.WaitGroup
+	for _, subcache := range c.subcaches {
+		wg.Add(1)
+		go func(subcache cacheMgmt) {
+			defer wg.Done()
+			events <- BuildEvent{
+				Typename: subcache.Typename(),
+				Event:    BuildEventStarted,
+			}
 
-		var wg sync.WaitGroup
-		for _, subcache := range c.subcaches {
-			wg.Add(1)
-			go func(subcache cacheMgmt) {
-				defer wg.Done()
-				out <- BuildEvent{
+			err := subcache.Build()
+			if err != nil {
+				events <- BuildEvent{
 					Typename: subcache.Typename(),
-					Event:    BuildEventStarted,
+					Err:      err,
 				}
+				return
+			}
 
-				err := subcache.Build()
-				if err != nil {
-					out <- BuildEvent{
-						Typename: subcache.Typename(),
-						Err:      err,
-					}
-					return
-				}
-
-				out <- BuildEvent{
-					Typename: subcache.Typename(),
-					Event:    BuildEventFinished,
-				}
-			}(subcache)
-		}
-		wg.Wait()
-	}()
-
-	return out
+			events <- BuildEvent{
+				Typename: subcache.Typename(),
+				Event:    BuildEventFinished,
+			}
+		}(subcache)
+	}
+	wg.Wait()
 }
 
 // repoIsAvailable check is the given repository is locked by a Cache.
 // Note: this is a smart function that will clean the lock file if the
 // corresponding process is not there anymore.
 // If no error is returned, the repo is free to edit.
-func repoIsAvailable(repo repository.RepoStorage) error {
+func repoIsAvailable(repo repository.RepoStorage, events chan BuildEvent) error {
 	// Todo: this leave way for a racey access to the repo between the test
 	// if the file exist and the actual write. It's probably not a problem in
 	// practice because using a repository will be done from user interaction
@@ -299,7 +297,7 @@ func repoIsAvailable(repo repository.RepoStorage) error {
 
 		// The lock file is just laying there after a crash, clean it
 
-		fmt.Println("A lock file is present but the corresponding process is not, removing it.")
+		events <- BuildEvent{Event: BuildEventRemoveLock}
 		err = f.Close()
 		if err != nil {
 			return err
