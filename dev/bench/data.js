@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1672158774112,
+  "lastUpdate": 1672166962813,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -459,6 +459,48 @@ window.BENCHMARK_DATA = {
             "name": "BenchmarkReadBugs150",
             "value": 776771402,
             "unit": "ns/op\t840136824 B/op\t  834868 allocs/op",
+            "extra": "2 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b11f60f5c02bd1c86cf14e58e90de4fe5e454e7c",
+          "message": "Merge pull request #961 from MichaelMure/cache-events\n\ncache: simplify cache building events handling",
+          "timestamp": "2022-12-27T19:48:06+01:00",
+          "tree_id": "d04c5e9b3baf91a14c32aa742938ada718f07914",
+          "url": "https://github.com/MichaelMure/git-bug/commit/b11f60f5c02bd1c86cf14e58e90de4fe5e454e7c"
+        },
+        "date": 1672166962050,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 23276713,
+            "unit": "ns/op\t25063050 B/op\t   25144 allocs/op",
+            "extra": "46 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 158475991,
+            "unit": "ns/op\t140652107 B/op\t  139684 allocs/op",
+            "extra": "8 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 748129550,
+            "unit": "ns/op\t840051876 B/op\t  834799 allocs/op",
             "extra": "2 times\n2 procs"
           }
         ]
