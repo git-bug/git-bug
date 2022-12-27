@@ -3,8 +3,6 @@ package bugcmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/commands/bug/select"
-	"github.com/MichaelMure/git-bug/commands/completion"
 	"github.com/MichaelMure/git-bug/commands/execenv"
 	"github.com/MichaelMure/git-bug/util/text"
 )
@@ -19,14 +17,14 @@ func newBugLabelRmCommand() *cobra.Command {
 		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runBugLabelRm(env, args)
 		}),
-		ValidArgsFunction: completion.BugAndLabels(env, false),
+		ValidArgsFunction: BugAndLabelsCompletion(env, false),
 	}
 
 	return cmd
 }
 
 func runBugLabelRm(env *execenv.Env, args []string) error {
-	b, args, err := _select.ResolveBug(env.Backend, args)
+	b, args, err := ResolveSelected(env.Backend, args)
 	if err != nil {
 		return err
 	}

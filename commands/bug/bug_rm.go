@@ -5,7 +5,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/commands/completion"
 	"github.com/MichaelMure/git-bug/commands/execenv"
 )
 
@@ -20,7 +19,7 @@ func newBugRmCommand() *cobra.Command {
 		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runBugRm(env, args)
 		}),
-		ValidArgsFunction: completion.Bug(env),
+		ValidArgsFunction: BugCompletion(env),
 	}
 
 	flags := cmd.Flags()

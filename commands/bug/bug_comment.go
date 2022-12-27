@@ -4,8 +4,6 @@ import (
 	text "github.com/MichaelMure/go-term-text"
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/commands/bug/select"
-	"github.com/MichaelMure/git-bug/commands/completion"
 	"github.com/MichaelMure/git-bug/commands/execenv"
 	"github.com/MichaelMure/git-bug/util/colors"
 )
@@ -20,7 +18,7 @@ func newBugCommentCommand() *cobra.Command {
 		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runBugComment(env, args)
 		}),
-		ValidArgsFunction: completion.Bug(env),
+		ValidArgsFunction: BugCompletion(env),
 	}
 
 	cmd.AddCommand(newBugCommentNewCommand())
@@ -30,7 +28,7 @@ func newBugCommentCommand() *cobra.Command {
 }
 
 func runBugComment(env *execenv.Env, args []string) error {
-	b, args, err := _select.ResolveBug(env.Backend, args)
+	b, args, err := ResolveSelected(env.Backend, args)
 	if err != nil {
 		return err
 	}

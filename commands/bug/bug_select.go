@@ -5,10 +5,15 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/commands/bug/select"
-	"github.com/MichaelMure/git-bug/commands/completion"
+	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/commands/execenv"
+	_select "github.com/MichaelMure/git-bug/commands/select"
+	"github.com/MichaelMure/git-bug/entities/bug"
 )
+
+func ResolveSelected(repo *cache.RepoCache, args []string) (*cache.BugCache, []string, error) {
+	return _select.Resolve[*cache.BugCache](repo, bug.Typename, bug.Namespace, repo.Bugs(), args)
+}
 
 func newBugSelectCommand() *cobra.Command {
 	env := execenv.NewEnv()
@@ -33,7 +38,7 @@ The complementary command is "git bug deselect" performing the opposite operatio
 		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runBugSelect(env, args)
 		}),
-		ValidArgsFunction: completion.Bug(env),
+		ValidArgsFunction: BugCompletion(env),
 	}
 
 	return cmd
@@ -51,7 +56,7 @@ func runBugSelect(env *execenv.Env, args []string) error {
 		return err
 	}
 
-	err = _select.Select(env.Backend, b.Id())
+	err = _select.Select(env.Backend, bug.Namespace, b.Id())
 	if err != nil {
 		return err
 	}

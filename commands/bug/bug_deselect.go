@@ -3,8 +3,9 @@ package bugcmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/commands/bug/select"
 	"github.com/MichaelMure/git-bug/commands/execenv"
+	_select "github.com/MichaelMure/git-bug/commands/select"
+	"github.com/MichaelMure/git-bug/entities/bug"
 )
 
 func newBugDeselectCommand() *cobra.Command {
@@ -28,7 +29,7 @@ git bug deselect
 }
 
 func runBugDeselect(env *execenv.Env) error {
-	err := _select.Clear(env.Backend)
+	err := _select.Clear(env.Backend, bug.Namespace)
 	if err != nil {
 		return err
 	}
