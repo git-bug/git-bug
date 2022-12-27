@@ -3,8 +3,8 @@ package bugcmd
 import (
 	"github.com/spf13/cobra"
 
+	buginput "github.com/MichaelMure/git-bug/commands/bug/input"
 	"github.com/MichaelMure/git-bug/commands/execenv"
-	"github.com/MichaelMure/git-bug/commands/input"
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
@@ -45,16 +45,16 @@ func newBugNewCommand() *cobra.Command {
 func runBugNew(env *execenv.Env, opts bugNewOptions) error {
 	var err error
 	if opts.messageFile != "" && opts.message == "" {
-		opts.title, opts.message, err = input.BugCreateFileInput(opts.messageFile)
+		opts.title, opts.message, err = buginput.BugCreateFileInput(opts.messageFile)
 		if err != nil {
 			return err
 		}
 	}
 
 	if !opts.nonInteractive && opts.messageFile == "" && (opts.message == "" || opts.title == "") {
-		opts.title, opts.message, err = input.BugCreateEditorInput(env.Backend, opts.title, opts.message)
+		opts.title, opts.message, err = buginput.BugCreateEditorInput(env.Backend, opts.title, opts.message)
 
-		if err == input.ErrEmptyTitle {
+		if err == buginput.ErrEmptyTitle {
 			env.Out.Println("Empty title, aborting.")
 			return nil
 		}
