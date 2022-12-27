@@ -3,10 +3,10 @@ package bugcmd
 import (
 	"github.com/spf13/cobra"
 
+	buginput "github.com/MichaelMure/git-bug/commands/bug/input"
 	"github.com/MichaelMure/git-bug/commands/bug/select"
 	"github.com/MichaelMure/git-bug/commands/completion"
 	"github.com/MichaelMure/git-bug/commands/execenv"
-	"github.com/MichaelMure/git-bug/commands/input"
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
@@ -53,8 +53,8 @@ func runBugTitleEdit(env *execenv.Env, opts bugTitleEditOptions, args []string) 
 			env.Err.Println("No title given. Use -m or -F option to specify a title. Aborting.")
 			return nil
 		}
-		opts.title, err = input.BugTitleEditorInput(env.Repo, snap.Title)
-		if err == input.ErrEmptyTitle {
+		opts.title, err = buginput.BugTitleEditorInput(env.Repo, snap.Title)
+		if err == buginput.ErrEmptyTitle {
 			env.Out.Println("Empty title, aborting.")
 			return nil
 		}

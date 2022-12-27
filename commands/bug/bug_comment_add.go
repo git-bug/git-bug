@@ -3,10 +3,10 @@ package bugcmd
 import (
 	"github.com/spf13/cobra"
 
+	buginput "github.com/MichaelMure/git-bug/commands/bug/input"
 	"github.com/MichaelMure/git-bug/commands/bug/select"
 	"github.com/MichaelMure/git-bug/commands/completion"
 	"github.com/MichaelMure/git-bug/commands/execenv"
-	"github.com/MichaelMure/git-bug/commands/input"
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
@@ -50,7 +50,7 @@ func runBugCommentNew(env *execenv.Env, opts bugCommentNewOptions, args []string
 	}
 
 	if opts.messageFile != "" && opts.message == "" {
-		opts.message, err = input.BugCommentFileInput(opts.messageFile)
+		opts.message, err = buginput.BugCommentFileInput(opts.messageFile)
 		if err != nil {
 			return err
 		}
@@ -61,8 +61,8 @@ func runBugCommentNew(env *execenv.Env, opts bugCommentNewOptions, args []string
 			env.Err.Println("No message given. Use -m or -F option to specify a message. Aborting.")
 			return nil
 		}
-		opts.message, err = input.BugCommentEditorInput(env.Backend, "")
-		if err == input.ErrEmptyMessage {
+		opts.message, err = buginput.BugCommentEditorInput(env.Backend, "")
+		if err == buginput.ErrEmptyMessage {
 			env.Err.Println("Empty message, aborting.")
 			return nil
 		}
