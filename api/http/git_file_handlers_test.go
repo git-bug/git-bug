@@ -22,8 +22,7 @@ func TestGitFileHandlers(t *testing.T) {
 	repo := repository.CreateGoGitTestRepo(t, false)
 
 	mrc := cache.NewMultiRepoCache()
-	repoCache, events, err := mrc.RegisterDefaultRepository(repo)
-	require.NoError(t, err)
+	repoCache, events := mrc.RegisterDefaultRepository(repo)
 	for event := range events {
 		require.NoError(t, event.Err)
 	}

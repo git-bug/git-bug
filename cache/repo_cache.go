@@ -72,17 +72,17 @@ type RepoCache struct {
 	userIdentityId entity.Id
 }
 
-// NewRepoCache create or open an unnamed (aka default) cache on top of a raw repository.
-// If the returned BuildEvent channel is not nil, the caller is expected to read all events before the cache is considered
+// NewRepoCache create or open a cache on top of a raw repository.
+// The caller is expected to read all returned events before the cache is considered
 // ready to use.
-func NewRepoCache(r repository.ClockedRepo) (*RepoCache, chan BuildEvent, error) {
+func NewRepoCache(r repository.ClockedRepo) (*RepoCache, chan BuildEvent) {
 	return NewNamedRepoCache(r, defaultRepoName)
 }
 
 // NewNamedRepoCache create or open a named cache on top of a raw repository.
-// If the returned BuildEvent channel is not nil, the caller is expected to read all events before the cache is considered
+// The caller is expected to read all returned events before the cache is considered
 // ready to use.
-func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, chan BuildEvent, error) {
+func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, chan BuildEvent) {
 	c := &RepoCache{
 		repo: r,
 		name: name,
@@ -102,35 +102,36 @@ func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, chan 
 	}
 
 	// small buffer so that below functions can emit an event without blocking
-	events := make(chan BuildEvent, 10)
-	defer close(events)
+	events := make(chan BuildEvent)
 
-	err := c.lock(events)
-	if err != nil {
-		return &RepoCache{}, events, err
-	}
+	go func() {
+		defer close(events)
 
-	err = c.load()
-	if err == nil {
-		return c, events, nil
-	}
+		err := c.lock(events)
+		if err != nil {
+			events <- BuildEvent{Err: err}
+			return
+		}
 
-	// Cache is either missing, broken or outdated. Rebuilding.
-	c.buildCache(events)
+		err = c.load()
+		if err == nil {
+			return
+		}
 
-	return c, events, nil
+		// Cache is either missing, broken or outdated. Rebuilding.
+		c.buildCache(events)
+	}()
+
+	return c, events
 }
 
 func NewRepoCacheNoEvents(r repository.ClockedRepo) (*RepoCache, error) {
-	cache, events, err := NewRepoCache(r)
-	if err != nil {
-		return nil, err
-	}
+	cache, events := NewRepoCache(r)
 	for event := range events {
 		if event.Err != nil {
 			for range events {
 			}
-			return nil, err
+			return nil, event.Err
 		}
 	}
 	return cache, nil

@@ -19,8 +19,7 @@ func TestQueries(t *testing.T) {
 	random_bugs.FillRepoWithSeed(repo, 10, 42)
 
 	mrc := cache.NewMultiRepoCache()
-	_, events, err := mrc.RegisterDefaultRepository(repo)
-	require.NoError(t, err)
+	_, events := mrc.RegisterDefaultRepository(repo)
 	for event := range events {
 		require.NoError(t, event.Err)
 	}
@@ -217,6 +216,6 @@ func TestQueries(t *testing.T) {
 		}
 	}
 
-	err = c.Post(query, &resp)
+	err := c.Post(query, &resp)
 	assert.NoError(t, err)
 }

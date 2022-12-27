@@ -21,25 +21,30 @@ func NewMultiRepoCache() *MultiRepoCache {
 }
 
 // RegisterRepository register a named repository. Use this for multi-repo setup
-func (c *MultiRepoCache) RegisterRepository(name string, repo repository.ClockedRepo) (*RepoCache, chan BuildEvent, error) {
-	r, events, err := NewNamedRepoCache(repo, name)
-	if err != nil {
-		return nil, nil, err
-	}
+func (c *MultiRepoCache) RegisterRepository(repo repository.ClockedRepo, name string) (*RepoCache, chan BuildEvent) {
+	r, events := NewNamedRepoCache(repo, name)
 
-	c.repos[name] = r
-	return r, events, nil
+	// intercept events to make sure the cache building process succeed properly
+	out := make(chan BuildEvent)
+	go func() {
+		defer close(out)
+
+		for event := range events {
+			out <- event
+			if event.Err != nil {
+				return
+			}
+		}
+
+		c.repos[name] = r
+	}()
+
+	return r, out
 }
 
-// RegisterDefaultRepository register an unnamed repository. Use this for mono-repo setup
-func (c *MultiRepoCache) RegisterDefaultRepository(repo repository.ClockedRepo) (*RepoCache, chan BuildEvent, error) {
-	r, events, err := NewRepoCache(repo)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	c.repos[defaultRepoName] = r
-	return r, events, nil
+// RegisterDefaultRepository register an unnamed repository. Use this for single-repo setup
+func (c *MultiRepoCache) RegisterDefaultRepository(repo repository.ClockedRepo) (*RepoCache, chan BuildEvent) {
+	return c.RegisterRepository(repo, defaultRepoName)
 }
 
 // DefaultRepo retrieve the default repository
