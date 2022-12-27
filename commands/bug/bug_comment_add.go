@@ -4,8 +4,6 @@ import (
 	"github.com/spf13/cobra"
 
 	buginput "github.com/MichaelMure/git-bug/commands/bug/input"
-	"github.com/MichaelMure/git-bug/commands/bug/select"
-	"github.com/MichaelMure/git-bug/commands/completion"
 	"github.com/MichaelMure/git-bug/commands/execenv"
 	"github.com/MichaelMure/git-bug/util/text"
 )
@@ -27,7 +25,7 @@ func newBugCommentNewCommand() *cobra.Command {
 		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runBugCommentNew(env, options, args)
 		}),
-		ValidArgsFunction: completion.Bug(env),
+		ValidArgsFunction: BugCompletion(env),
 	}
 
 	flags := cmd.Flags()
@@ -44,7 +42,7 @@ func newBugCommentNewCommand() *cobra.Command {
 }
 
 func runBugCommentNew(env *execenv.Env, opts bugCommentNewOptions, args []string) error {
-	b, args, err := _select.ResolveBug(env.Backend, args)
+	b, args, err := ResolveSelected(env.Backend, args)
 	if err != nil {
 		return err
 	}

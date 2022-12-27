@@ -9,22 +9,19 @@ import (
 
 	"github.com/MichaelMure/git-bug/bridge"
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
-	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/commands/bug/select"
 	"github.com/MichaelMure/git-bug/commands/execenv"
-	"github.com/MichaelMure/git-bug/entities/bug"
 )
 
 type ValidArgsFunction func(cmd *cobra.Command, args []string, toComplete string) (completions []string, directives cobra.ShellCompDirective)
 
-func handleError(err error) (completions []string, directives cobra.ShellCompDirective) {
+func HandleError(err error) (completions []string, directives cobra.ShellCompDirective) {
 	return nil, cobra.ShellCompDirectiveError
 }
 
 func Bridge(env *execenv.Env) ValidArgsFunction {
 	return func(cmd *cobra.Command, args []string, toComplete string) (completions []string, directives cobra.ShellCompDirective) {
 		if err := execenv.LoadBackend(env)(cmd, args); err != nil {
-			return handleError(err)
+			return HandleError(err)
 		}
 		defer func() {
 			_ = env.Backend.Close()
@@ -32,7 +29,7 @@ func Bridge(env *execenv.Env) ValidArgsFunction {
 
 		bridges, err := bridge.ConfiguredBridges(env.Backend)
 		if err != nil {
-			return handleError(err)
+			return HandleError(err)
 		}
 
 		completions = make([]string, len(bridges))
@@ -47,7 +44,7 @@ func Bridge(env *execenv.Env) ValidArgsFunction {
 func BridgeAuth(env *execenv.Env) ValidArgsFunction {
 	return func(cmd *cobra.Command, args []string, toComplete string) (completions []string, directives cobra.ShellCompDirective) {
 		if err := execenv.LoadBackend(env)(cmd, args); err != nil {
-			return handleError(err)
+			return HandleError(err)
 		}
 		defer func() {
 			_ = env.Backend.Close()
@@ -55,7 +52,7 @@ func BridgeAuth(env *execenv.Env) ValidArgsFunction {
 
 		creds, err := auth.List(env.Backend)
 		if err != nil {
-			return handleError(err)
+			return HandleError(err)
 		}
 
 		completions = make([]string, len(creds))
@@ -74,95 +71,6 @@ func BridgeAuth(env *execenv.Env) ValidArgsFunction {
 	}
 }
 
-func Bug(env *execenv.Env) ValidArgsFunction {
-	return func(cmd *cobra.Command, args []string, toComplete string) (completions []string, directives cobra.ShellCompDirective) {
-		if err := execenv.LoadBackend(env)(cmd, args); err != nil {
-			return handleError(err)
-		}
-		defer func() {
-			_ = env.Backend.Close()
-		}()
-
-		return bugWithBackend(env.Backend, toComplete)
-	}
-}
-
-func bugWithBackend(backend *cache.RepoCache, toComplete string) (completions []string, directives cobra.ShellCompDirective) {
-	allIds := backend.Bugs().AllIds()
-	bugExcerpt := make([]*cache.BugExcerpt, len(allIds))
-	for i, id := range allIds {
-		var err error
-		bugExcerpt[i], err = backend.Bugs().ResolveExcerpt(id)
-		if err != nil {
-			return handleError(err)
-		}
-	}
-
-	for i, id := range allIds {
-		if strings.Contains(id.String(), strings.TrimSpace(toComplete)) {
-			completions = append(completions, id.Human()+"\t"+bugExcerpt[i].Title)
-		}
-	}
-
-	return completions, cobra.ShellCompDirectiveNoFileComp
-}
-
-func BugAndLabels(env *execenv.Env, addOrRemove bool) ValidArgsFunction {
-	return func(cmd *cobra.Command, args []string, toComplete string) (completions []string, directives cobra.ShellCompDirective) {
-		if err := execenv.LoadBackend(env)(cmd, args); err != nil {
-			return handleError(err)
-		}
-		defer func() {
-			_ = env.Backend.Close()
-		}()
-
-		b, args, err := _select.ResolveBug(env.Backend, args)
-		if err == _select.ErrNoValidId {
-			// we need a bug first to complete labels
-			return bugWithBackend(env.Backend, toComplete)
-		}
-		if err != nil {
-			return handleError(err)
-		}
-
-		snap := b.Snapshot()
-
-		seenLabels := map[bug.Label]bool{}
-		for _, label := range args {
-			seenLabels[bug.Label(label)] = addOrRemove
-		}
-
-		var labels []bug.Label
-		if addOrRemove {
-			for _, label := range snap.Labels {
-				seenLabels[label] = true
-			}
-
-			allLabels := env.Backend.Bugs().ValidLabels()
-			labels = make([]bug.Label, 0, len(allLabels))
-			for _, label := range allLabels {
-				if !seenLabels[label] {
-					labels = append(labels, label)
-				}
-			}
-		} else {
-			labels = make([]bug.Label, 0, len(snap.Labels))
-			for _, label := range snap.Labels {
-				if seenLabels[label] {
-					labels = append(labels, label)
-				}
-			}
-		}
-
-		completions = make([]string, len(labels))
-		for i, label := range labels {
-			completions[i] = string(label) + "\t" + "Label"
-		}
-
-		return completions, cobra.ShellCompDirectiveNoFileComp
-	}
-}
-
 func From(choices []string) ValidArgsFunction {
 	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return choices, cobra.ShellCompDirectiveNoFileComp
@@ -172,7 +80,7 @@ func From(choices []string) ValidArgsFunction {
 func GitRemote(env *execenv.Env) ValidArgsFunction {
 	return func(cmd *cobra.Command, args []string, toComplete string) (completions []string, directives cobra.ShellCompDirective) {
 		if err := execenv.LoadBackend(env)(cmd, args); err != nil {
-			return handleError(err)
+			return HandleError(err)
 		}
 		defer func() {
 			_ = env.Backend.Close()
@@ -180,7 +88,7 @@ func GitRemote(env *execenv.Env) ValidArgsFunction {
 
 		remoteMap, err := env.Backend.GetRemotes()
 		if err != nil {
-			return handleError(err)
+			return HandleError(err)
 		}
 		completions = make([]string, 0, len(remoteMap))
 		for remote, url := range remoteMap {
@@ -194,7 +102,7 @@ func GitRemote(env *execenv.Env) ValidArgsFunction {
 func Label(env *execenv.Env) ValidArgsFunction {
 	return func(cmd *cobra.Command, args []string, toComplete string) (completions []string, directives cobra.ShellCompDirective) {
 		if err := execenv.LoadBackend(env)(cmd, args); err != nil {
-			return handleError(err)
+			return HandleError(err)
 		}
 		defer func() {
 			_ = env.Backend.Close()
@@ -232,7 +140,7 @@ func Ls(env *execenv.Env) ValidArgsFunction {
 
 		if needBackend {
 			if err := execenv.LoadBackend(env)(cmd, args); err != nil {
-				return handleError(err)
+				return HandleError(err)
 			}
 			defer func() {
 				_ = env.Backend.Close()
@@ -248,7 +156,7 @@ func Ls(env *execenv.Env) ValidArgsFunction {
 			for i, id := range ids {
 				user, err := env.Backend.Identities().ResolveExcerpt(id)
 				if err != nil {
-					return handleError(err)
+					return HandleError(err)
 				}
 				var handle string
 				if user.Login != "" {
@@ -294,7 +202,7 @@ func Ls(env *execenv.Env) ValidArgsFunction {
 func User(env *execenv.Env) ValidArgsFunction {
 	return func(cmd *cobra.Command, args []string, toComplete string) (completions []string, directives cobra.ShellCompDirective) {
 		if err := execenv.LoadBackend(env)(cmd, args); err != nil {
-			return handleError(err)
+			return HandleError(err)
 		}
 		defer func() {
 			_ = env.Backend.Close()
@@ -305,7 +213,7 @@ func User(env *execenv.Env) ValidArgsFunction {
 		for i, id := range ids {
 			user, err := env.Backend.Identities().ResolveExcerpt(id)
 			if err != nil {
-				return handleError(err)
+				return HandleError(err)
 			}
 			completions[i] = user.Id().Human() + "\t" + user.DisplayName()
 		}
@@ -316,7 +224,7 @@ func User(env *execenv.Env) ValidArgsFunction {
 func UserForQuery(env *execenv.Env) ValidArgsFunction {
 	return func(cmd *cobra.Command, args []string, toComplete string) (completions []string, directives cobra.ShellCompDirective) {
 		if err := execenv.LoadBackend(env)(cmd, args); err != nil {
-			return handleError(err)
+			return HandleError(err)
 		}
 		defer func() {
 			_ = env.Backend.Close()
@@ -327,7 +235,7 @@ func UserForQuery(env *execenv.Env) ValidArgsFunction {
 		for i, id := range ids {
 			user, err := env.Backend.Identities().ResolveExcerpt(id)
 			if err != nil {
-				return handleError(err)
+				return HandleError(err)
 			}
 			var handle string
 			if user.Login != "" {
