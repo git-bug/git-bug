@@ -1,15 +1,15 @@
 package board
 
 import (
-	"github.com/MichaelMure/git-bug/entities/bug"
-	"github.com/MichaelMure/git-bug/entity"
+	"github.com/git-bug/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/entity"
 )
 
 var _ Item = &BugItem{}
 
 type BugItem struct {
 	combinedId entity.CombinedId
-	bug        bug.Interface
+	Bug        bug.Interface
 }
 
 func (e *BugItem) CombinedId() entity.CombinedId {

@@ -3,10 +3,10 @@ package board
 import (
 	"fmt"
 
-	"github.com/MichaelMure/git-bug/entities/identity"
-	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/entity/dag"
-	"github.com/MichaelMure/git-bug/util/text"
+	"github.com/git-bug/git-bug/entities/identity"
+	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/entity/dag"
+	"github.com/git-bug/git-bug/util/text"
 )
 
 var _ Operation = &SetTitleOperation{}
@@ -44,7 +44,7 @@ func (op *SetTitleOperation) Validate() error {
 
 func (op *SetTitleOperation) Apply(snapshot *Snapshot) {
 	snapshot.Title = op.Title
-	snapshot.addActor(op.Author())
+	snapshot.addParticipant(op.Author())
 }
 
 func NewSetTitleOp(author identity.Interface, unixTime int64, title string, was string) *SetTitleOperation {

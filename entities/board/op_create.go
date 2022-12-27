@@ -3,11 +3,11 @@ package board
 import (
 	"fmt"
 
-	"github.com/MichaelMure/git-bug/entities/identity"
+	"github.com/git-bug/git-bug/entities/identity"
 
-	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/entity/dag"
-	"github.com/MichaelMure/git-bug/util/text"
+	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/entity/dag"
+	"github.com/git-bug/git-bug/util/text"
 )
 
 var DefaultColumns = []string{"To Do", "In Progress", "Done"}
@@ -96,7 +96,7 @@ func (op *CreateOperation) Apply(snap *Snapshot) {
 		})
 	}
 
-	snap.addActor(op.Author())
+	snap.addParticipant(op.Author())
 }
 
 // CreateDefaultColumns is a convenience function to create a board with the default columns
