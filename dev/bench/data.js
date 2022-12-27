@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1671797875475,
+  "lastUpdate": 1672137173695,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -375,6 +375,48 @@ window.BENCHMARK_DATA = {
             "name": "BenchmarkReadBugs150",
             "value": 830180581,
             "unit": "ns/op\t840051552 B/op\t  834814 allocs/op",
+            "extra": "2 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4c7043e8ed994d7863cfd706f6cfd2e1f91850df",
+          "message": "Merge pull request #959 from MichaelMure/core-event\n\ncache: tie the last printf in an event to make the core print free",
+          "timestamp": "2022-12-27T11:31:25+01:00",
+          "tree_id": "b96a90acf330f4172e6c0ba935b6599f2a1aa9f8",
+          "url": "https://github.com/MichaelMure/git-bug/commit/4c7043e8ed994d7863cfd706f6cfd2e1f91850df"
+        },
+        "date": 1672137172836,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 32457739,
+            "unit": "ns/op\t25058942 B/op\t   25145 allocs/op",
+            "extra": "33 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 180777001,
+            "unit": "ns/op\t140640862 B/op\t  139643 allocs/op",
+            "extra": "6 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 1012788060,
+            "unit": "ns/op\t839966964 B/op\t  834660 allocs/op",
             "extra": "2 times\n2 procs"
           }
         ]
