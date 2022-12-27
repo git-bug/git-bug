@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1672137173695,
+  "lastUpdate": 1672158774112,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -417,6 +417,48 @@ window.BENCHMARK_DATA = {
             "name": "BenchmarkReadBugs150",
             "value": 1012788060,
             "unit": "ns/op\t839966964 B/op\t  834660 allocs/op",
+            "extra": "2 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8cea6c7515e42cb8821a03c9bfebb0a8f63a01be",
+          "message": "Merge pull request #960 from MichaelMure/inputs\n\ncommands: move bug specific input code into commands/bug/input",
+          "timestamp": "2022-12-27T17:31:32+01:00",
+          "tree_id": "2eaf6c403e0f6e8bf1fd1327afd275a226d93f1f",
+          "url": "https://github.com/MichaelMure/git-bug/commit/8cea6c7515e42cb8821a03c9bfebb0a8f63a01be"
+        },
+        "date": 1672158773111,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 26009430,
+            "unit": "ns/op\t25062515 B/op\t   25163 allocs/op",
+            "extra": "46 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 131976912,
+            "unit": "ns/op\t140656430 B/op\t  139671 allocs/op",
+            "extra": "8 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 776771402,
+            "unit": "ns/op\t840136824 B/op\t  834868 allocs/op",
             "extra": "2 times\n2 procs"
           }
         ]
