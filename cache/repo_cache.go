@@ -64,6 +64,7 @@ type RepoCache struct {
 	// resolvers for all known entities and excerpts
 	resolvers entity.Resolvers
 
+	boards     *RepoCacheBoard
 	bugs       *RepoCacheBug
 	identities *RepoCacheIdentity
 
@@ -104,11 +105,16 @@ func NewRepoCache(r repository.Repo, changes repository.ChangeSource) (*RepoCach
 	c.bugs = NewRepoCacheBug(r, c.getResolvers, c.GetUserIdentity)
 	c.subcaches = append(c.subcaches, c.bugs)
 
+	c.boards = NewRepoCacheBoard(r, c.getResolvers, c.GetUserIdentity)
+	c.subcaches = append(c.subcaches, c.boards)
+
 	c.resolvers = entity.Resolvers{
 		&IdentityCache{}:   entity.ResolverFunc[*IdentityCache](c.identities.Resolve),
 		&IdentityExcerpt{}: entity.ResolverFunc[*IdentityExcerpt](c.identities.ResolveExcerpt),
 		&BugCache{}:        entity.ResolverFunc[*BugCache](c.bugs.Resolve),
 		&BugExcerpt{}:      entity.ResolverFunc[*BugExcerpt](c.bugs.ResolveExcerpt),
+		&BoardCache{}:      entity.ResolverFunc[*BoardCache](c.boards.Resolve),
+		&BoardExcerpt{}:    entity.ResolverFunc[*BoardExcerpt](c.boards.ResolveExcerpt),
 	}
 
 	// small buffer so that the functions below can emit an event without blocking
@@ -156,6 +162,11 @@ func NewRepoCacheNoEvents(r repository.Repo, changes repository.ChangeSource) (*
 		}
 	}
 	return cache, nil
+}
+
+// Boards gives access to the Board entities
+func (c *RepoCache) Boards() *RepoCacheBoard {
+	return c.boards
 }
 
 // Bugs gives access to the Bug entities
