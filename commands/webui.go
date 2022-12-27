@@ -106,11 +106,8 @@ func runWebUI(env *execenv.Env, opts webUIOptions) error {
 	}
 
 	mrc := cache.NewMultiRepoCache()
-	_, events, err := mrc.RegisterDefaultRepository(env.Repo)
-	if err != nil {
-		return err
-	}
 
+	_, events := mrc.RegisterDefaultRepository(env.Repo)
 	for event := range events {
 		if event.Err != nil {
 			env.Err.Printf("Cache building error [%s]: %v\n", event.Typename, event.Err)

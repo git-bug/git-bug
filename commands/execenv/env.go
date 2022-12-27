@@ -129,15 +129,11 @@ func LoadBackend(env *Env) func(*cobra.Command, []string) error {
 		}
 
 		var events chan cache.BuildEvent
-		env.Backend, events, err = cache.NewRepoCache(env.Repo)
-		if err != nil {
-			return err
-		}
+		env.Backend, events = cache.NewRepoCache(env.Repo)
 
 		for event := range events {
 			if event.Err != nil {
-				env.Err.Printf("Cache building error [%s]: %v\n", event.Typename, event.Err)
-				continue
+				return event.Err
 			}
 			switch event.Event {
 			case cache.BuildEventCacheIsBuilt:
