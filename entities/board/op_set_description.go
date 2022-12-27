@@ -3,10 +3,10 @@ package board
 import (
 	"fmt"
 
-	"github.com/MichaelMure/git-bug/entities/identity"
-	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/entity/dag"
-	"github.com/MichaelMure/git-bug/util/text"
+	"github.com/git-bug/git-bug/entities/identity"
+	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/entity/dag"
+	"github.com/git-bug/git-bug/util/text"
 )
 
 var _ Operation = &SetDescriptionOperation{}
@@ -44,7 +44,7 @@ func (op *SetDescriptionOperation) Validate() error {
 
 func (op *SetDescriptionOperation) Apply(snapshot *Snapshot) {
 	snapshot.Description = op.Description
-	snapshot.addActor(op.Author())
+	snapshot.addParticipant(op.Author())
 }
 
 func NewSetDescriptionOp(author identity.Interface, unixTime int64, description string, was string) *SetDescriptionOperation {

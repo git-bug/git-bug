@@ -1,10 +1,10 @@
 package board
 
 import (
-	"github.com/MichaelMure/git-bug/entities/identity"
-	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/entity/dag"
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/git-bug/git-bug/entities/identity"
+	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/entity/dag"
+	"github.com/git-bug/git-bug/repository"
 )
 
 // Fetch retrieve updates from a remote

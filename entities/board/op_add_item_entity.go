@@ -3,10 +3,10 @@ package board
 import (
 	"fmt"
 
-	"github.com/MichaelMure/git-bug/entities/bug"
-	"github.com/MichaelMure/git-bug/entities/identity"
-	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/entity/dag"
+	"github.com/git-bug/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/entities/identity"
+	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/entity/dag"
 )
 
 // itemEntityType indicate the type of entity board item
@@ -57,7 +57,7 @@ func (op *AddItemEntityOperation) Apply(snapshot *Snapshot) {
 		return
 	}
 
-	snapshot.addActor(op.Author())
+	snapshot.addParticipant(op.Author())
 
 	for _, column := range snapshot.Columns {
 		if column.Id == op.ColumnId {
@@ -65,7 +65,7 @@ func (op *AddItemEntityOperation) Apply(snapshot *Snapshot) {
 			case bug.Interface:
 				column.Items = append(column.Items, &BugItem{
 					combinedId: entity.CombineIds(snapshot.Id(), e.Id()),
-					bug:        e,
+					Bug:        e,
 				})
 			}
 			return

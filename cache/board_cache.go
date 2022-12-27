@@ -3,10 +3,10 @@ package cache
 import (
 	"time"
 
-	"github.com/MichaelMure/git-bug/entities/board"
-	"github.com/MichaelMure/git-bug/entities/identity"
-	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/git-bug/git-bug/entities/board"
+	"github.com/git-bug/git-bug/entities/identity"
+	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/repository"
 )
 
 // BoardCache is a wrapper around a Board. It provides multiple functions:

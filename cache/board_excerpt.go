@@ -4,8 +4,8 @@ import (
 	"encoding/gob"
 	"time"
 
-	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/util/lamport"
+	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/util/lamport"
 )
 
 // Package initialisation used to register the type for (de)serialization
@@ -25,10 +25,10 @@ type BoardExcerpt struct {
 	CreateUnixTime    int64
 	EditUnixTime      int64
 
-	Title       string
-	Description string
-	ItemCount   int
-	Actors      []entity.Id
+	Title        string
+	Description  string
+	ItemCount    int
+	Participants []entity.Id
 
 	CreateMetadata map[string]string
 }
@@ -36,9 +36,9 @@ type BoardExcerpt struct {
 func NewBoardExcerpt(b *BoardCache) *BoardExcerpt {
 	snap := b.Snapshot()
 
-	actorsIds := make([]entity.Id, 0, len(snap.Actors))
-	for _, actor := range snap.Actors {
-		actorsIds = append(actorsIds, actor.Id())
+	participantsIds := make([]entity.Id, 0, len(snap.Participants))
+	for _, participant := range snap.Participants {
+		participantsIds = append(participantsIds, participant.Id())
 	}
 
 	return &BoardExcerpt{
@@ -50,7 +50,7 @@ func NewBoardExcerpt(b *BoardCache) *BoardExcerpt {
 		Title:             snap.Title,
 		Description:       snap.Description,
 		ItemCount:         snap.ItemCount(),
-		Actors:            actorsIds,
+		Participants:      participantsIds,
 		CreateMetadata:    b.FirstOp().AllMetadata(),
 	}
 }
