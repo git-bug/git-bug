@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1672314849332,
+  "lastUpdate": 1672316324292,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -628,6 +628,48 @@ window.BENCHMARK_DATA = {
             "value": 1505176668,
             "unit": "ns/op\t839936768 B/op\t  834577 allocs/op",
             "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c8ad1576b1472cb5723def810dfbcc30b40c70b7",
+          "message": "Merge pull request #966 from MichaelMure/cmdjson\n\ncommands: share JSON creation",
+          "timestamp": "2022-12-29T13:17:23+01:00",
+          "tree_id": "e0a22258e29c12bec617b18298bea6bb377aede6",
+          "url": "https://github.com/MichaelMure/git-bug/commit/c8ad1576b1472cb5723def810dfbcc30b40c70b7"
+        },
+        "date": 1672316323316,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 27780658,
+            "unit": "ns/op\t25063084 B/op\t   25161 allocs/op",
+            "extra": "40 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 176656687,
+            "unit": "ns/op\t140654192 B/op\t  139686 allocs/op",
+            "extra": "8 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 852099578,
+            "unit": "ns/op\t840086408 B/op\t  834809 allocs/op",
+            "extra": "2 times\n2 procs"
           }
         ]
       }
