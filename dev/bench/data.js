@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1672307450119,
+  "lastUpdate": 1672314849332,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -586,6 +586,48 @@ window.BENCHMARK_DATA = {
             "value": 739476395,
             "unit": "ns/op\t840100896 B/op\t  834871 allocs/op",
             "extra": "2 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "211a038c6057c5cfdcbf4c7d4cc8b4e93d8dc8db",
+          "message": "Merge pull request #967 from MichaelMure/ci\n\nCI: remove lint security step as it's crashing",
+          "timestamp": "2022-12-29T12:52:34+01:00",
+          "tree_id": "9694e3b527348a4e93a4c4959fa8c9e0762419b2",
+          "url": "https://github.com/MichaelMure/git-bug/commit/211a038c6057c5cfdcbf4c7d4cc8b4e93d8dc8db"
+        },
+        "date": 1672314848249,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 55483057,
+            "unit": "ns/op\t25062047 B/op\t   25162 allocs/op",
+            "extra": "21 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 298470111,
+            "unit": "ns/op\t140640892 B/op\t  139673 allocs/op",
+            "extra": "4 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 1505176668,
+            "unit": "ns/op\t839936768 B/op\t  834577 allocs/op",
+            "extra": "1 times\n2 procs"
           }
         ]
       }
