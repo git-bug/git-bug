@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1672316324292,
+  "lastUpdate": 1672316345591,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -669,6 +669,48 @@ window.BENCHMARK_DATA = {
             "name": "BenchmarkReadBugs150",
             "value": 852099578,
             "unit": "ns/op\t840086408 B/op\t  834809 allocs/op",
+            "extra": "2 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e6517006fa61f16269762a3dacad9c154848e369",
+          "message": "Merge pull request #964 from MichaelMure/dependabot/go_modules/github.com/mattn/go-isatty-0.0.17\n\nbuild(deps): bump github.com/mattn/go-isatty from 0.0.16 to 0.0.17",
+          "timestamp": "2022-12-29T13:17:41+01:00",
+          "tree_id": "916e6aa3381b3358842c68fc5dc05fd4707fe798",
+          "url": "https://github.com/MichaelMure/git-bug/commit/e6517006fa61f16269762a3dacad9c154848e369"
+        },
+        "date": 1672316344809,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 31351484,
+            "unit": "ns/op\t25061836 B/op\t   25150 allocs/op",
+            "extra": "40 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 144466738,
+            "unit": "ns/op\t140656771 B/op\t  139688 allocs/op",
+            "extra": "8 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 789757900,
+            "unit": "ns/op\t840046192 B/op\t  834789 allocs/op",
             "extra": "2 times\n2 procs"
           }
         ]
