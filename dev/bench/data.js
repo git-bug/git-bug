@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1672166979263,
+  "lastUpdate": 1672307450119,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -543,6 +543,48 @@ window.BENCHMARK_DATA = {
             "name": "BenchmarkReadBugs150",
             "value": 890678898,
             "unit": "ns/op\t840131136 B/op\t  834846 allocs/op",
+            "extra": "2 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2a62c131a25e03fc791ff066563a564c7cb8b879",
+          "message": "Merge pull request #965 from MichaelMure/nitpic\n\ncommands: don't double build the lamport clocks",
+          "timestamp": "2022-12-29T10:49:24+01:00",
+          "tree_id": "378b255e07158643e5a498c50a62bf2241181ebf",
+          "url": "https://github.com/MichaelMure/git-bug/commit/2a62c131a25e03fc791ff066563a564c7cb8b879"
+        },
+        "date": 1672307449474,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 27772917,
+            "unit": "ns/op\t25063532 B/op\t   25151 allocs/op",
+            "extra": "44 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 147328082,
+            "unit": "ns/op\t140652010 B/op\t  139689 allocs/op",
+            "extra": "8 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 739476395,
+            "unit": "ns/op\t840100896 B/op\t  834871 allocs/op",
             "extra": "2 times\n2 procs"
           }
         ]
