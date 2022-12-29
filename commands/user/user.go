@@ -1,14 +1,12 @@
 package usercmd
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
 
-	json2 "github.com/MichaelMure/git-bug/commands/cmdjson"
-
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/commands/cmdjson"
 	"github.com/MichaelMure/git-bug/commands/completion"
 	"github.com/MichaelMure/git-bug/commands/execenv"
 	"github.com/MichaelMure/git-bug/util/colors"
@@ -78,12 +76,10 @@ func userDefaultFormatter(env *execenv.Env, users []*cache.IdentityExcerpt) erro
 }
 
 func userJsonFormatter(env *execenv.Env, users []*cache.IdentityExcerpt) error {
-	jsonUsers := make([]json2.Identity, len(users))
+	jsonUsers := make([]cmdjson.Identity, len(users))
 	for i, user := range users {
-		jsonUsers[i] = json2.NewIdentityFromExcerpt(user)
+		jsonUsers[i] = cmdjson.NewIdentityFromExcerpt(user)
 	}
 
-	jsonObject, _ := json.MarshalIndent(jsonUsers, "", "    ")
-	env.Out.Printf("%s\n", jsonObject)
-	return nil
+	return env.Out.PrintJSON(jsonUsers)
 }
