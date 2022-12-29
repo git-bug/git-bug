@@ -1,6 +1,7 @@
 package execenv
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -38,6 +39,7 @@ type Out interface {
 	Printf(format string, a ...interface{})
 	Print(a ...interface{})
 	Println(a ...interface{})
+	PrintJSON(v interface{}) error
 
 	// String returns what have been written in the output before, as a string.
 	// This only works in test scenario.
@@ -64,6 +66,15 @@ func (o out) Print(a ...interface{}) {
 
 func (o out) Println(a ...interface{}) {
 	_, _ = fmt.Fprintln(o, a...)
+}
+
+func (o out) PrintJSON(v interface{}) error {
+	raw, err := json.MarshalIndent(v, "", "    ")
+	if err != nil {
+		return err
+	}
+	o.Println(string(raw))
+	return nil
 }
 
 func (o out) String() string {

@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/MichaelMure/git-bug/commands/bug/testenv"
+	"github.com/MichaelMure/git-bug/commands/cmdjson"
 )
 
 func Test_repairQuery(t *testing.T) {
@@ -95,7 +96,7 @@ $`
 
 		require.NoError(t, runBug(env, opts, []string{}))
 
-		var bugs []JSONBugExcerpt
+		var bugs []cmdjson.BugExcerpt
 		require.NoError(t, json.Unmarshal(env.Out.Bytes(), &bugs))
 
 		require.Len(t, bugs, 1)

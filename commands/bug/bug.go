@@ -1,7 +1,6 @@
 package bugcmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
@@ -187,67 +186,16 @@ func repairQuery(args []string) string {
 	return strings.Join(args, " ")
 }
 
-type JSONBugExcerpt struct {
-	Id         string       `json:"id"`
-	HumanId    string       `json:"human_id"`
-	CreateTime cmdjson.Time `json:"create_time"`
-	EditTime   cmdjson.Time `json:"edit_time"`
-
-	Status       string             `json:"status"`
-	Labels       []bug.Label        `json:"labels"`
-	Title        string             `json:"title"`
-	Actors       []cmdjson.Identity `json:"actors"`
-	Participants []cmdjson.Identity `json:"participants"`
-	Author       cmdjson.Identity   `json:"author"`
-
-	Comments int               `json:"comments"`
-	Metadata map[string]string `json:"metadata"`
-}
-
 func bugsJsonFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) error {
-	jsonBugs := make([]JSONBugExcerpt, len(bugExcerpts))
+	jsonBugs := make([]cmdjson.BugExcerpt, len(bugExcerpts))
 	for i, b := range bugExcerpts {
-		jsonBug := JSONBugExcerpt{
-			Id:         b.Id().String(),
-			HumanId:    b.Id().Human(),
-			CreateTime: cmdjson.NewTime(b.CreateTime(), b.CreateLamportTime),
-			EditTime:   cmdjson.NewTime(b.EditTime(), b.EditLamportTime),
-			Status:     b.Status.String(),
-			Labels:     b.Labels,
-			Title:      b.Title,
-			Comments:   b.LenComments,
-			Metadata:   b.CreateMetadata,
-		}
-
-		author, err := env.Backend.Identities().ResolveExcerpt(b.AuthorId)
+		jsonBug, err := cmdjson.NewBugExcerpt(env.Backend, b)
 		if err != nil {
 			return err
 		}
-		jsonBug.Author = cmdjson.NewIdentityFromExcerpt(author)
-
-		jsonBug.Actors = make([]cmdjson.Identity, len(b.Actors))
-		for i, element := range b.Actors {
-			actor, err := env.Backend.Identities().ResolveExcerpt(element)
-			if err != nil {
-				return err
-			}
-			jsonBug.Actors[i] = cmdjson.NewIdentityFromExcerpt(actor)
-		}
-
-		jsonBug.Participants = make([]cmdjson.Identity, len(b.Participants))
-		for i, element := range b.Participants {
-			participant, err := env.Backend.Identities().ResolveExcerpt(element)
-			if err != nil {
-				return err
-			}
-			jsonBug.Participants[i] = cmdjson.NewIdentityFromExcerpt(participant)
-		}
-
 		jsonBugs[i] = jsonBug
 	}
-	jsonObject, _ := json.MarshalIndent(jsonBugs, "", "    ")
-	env.Out.Printf("%s\n", jsonObject)
-	return nil
+	return env.Out.PrintJSON(jsonBugs)
 }
 
 func bugsCompactFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) error {

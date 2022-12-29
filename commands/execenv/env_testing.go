@@ -2,6 +2,7 @@ package execenv
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -25,6 +26,15 @@ func (te *TestOut) Print(a ...interface{}) {
 
 func (te *TestOut) Println(a ...interface{}) {
 	_, _ = fmt.Fprintln(te.Buffer, a...)
+}
+
+func (te *TestOut) PrintJSON(v interface{}) error {
+	raw, err := json.MarshalIndent(v, "", "    ")
+	if err != nil {
+		return err
+	}
+	te.Println(string(raw))
+	return nil
 }
 
 func NewTestEnv(t *testing.T) *Env {
