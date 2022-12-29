@@ -139,6 +139,8 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) Load() error {
 		return fmt.Errorf("count mismatch between bleve and %s excerpts", sc.namespace)
 	}
 
+	// TODO: find a way to check lamport clocks
+
 	return nil
 }
 

@@ -8,7 +8,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/entities/bug"
 	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/interrupt"
@@ -87,11 +86,13 @@ func LoadRepo(env *Env) func(*cobra.Command, []string) error {
 			return fmt.Errorf("unable to get the current working directory: %q", err)
 		}
 
-		env.Repo, err = repository.OpenGoGitRepo(cwd, gitBugNamespace, []repository.ClockLoader{bug.ClockLoader})
+		// Note: we are not loading clocks here because we assume that LoadRepo is only used
+		//  when we don't manipulate entities, or as a child call of LoadBackend which will
+		//  read all clocks anyway.
+		env.Repo, err = repository.OpenGoGitRepo(cwd, gitBugNamespace, nil)
 		if err == repository.ErrNotARepo {
 			return fmt.Errorf("%s must be run from within a git Repo", RootCommandName)
 		}
-
 		if err != nil {
 			return err
 		}
