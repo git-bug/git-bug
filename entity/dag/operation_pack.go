@@ -373,6 +373,13 @@ func (pk PGPKeyring) KeysById(id uint64) []openpgp.Key {
 			result = append(result, openpgp.Key{
 				PublicKey:  key.Public(),
 				PrivateKey: key.Private(),
+				Entity: &openpgp.Entity{
+					PrimaryKey: key.Public(),
+					PrivateKey: key.Private(),
+					Identities: map[string]*openpgp.Identity{
+						"": {},
+					},
+				},
 				SelfSignature: &packet.Signature{
 					IsPrimaryId: func() *bool { b := true; return &b }(),
 				},
