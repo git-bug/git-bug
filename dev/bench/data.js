@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1672664967245,
+  "lastUpdate": 1672684021682,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -754,6 +754,48 @@ window.BENCHMARK_DATA = {
             "value": 730501324,
             "unit": "ns/op\t165696152 B/op\t  803004 allocs/op",
             "extra": "2 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "smoyer1@selesy.com",
+            "name": "Steve Moyer",
+            "username": "smoyer64"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3915d2b76e17ae7058510d3b4cd91b24786bb526",
+          "message": "Merge pull request #969 from MichaelMure/dependabot/go_modules/github.com/go-git/go-billy/v5-5.4.0\n\nbuild(deps): bump github.com/go-git/go-billy/v5 from 5.3.1 to 5.4.0",
+          "timestamp": "2023-01-02T13:25:26-05:00",
+          "tree_id": "3d677c3589236ae7caeb8ba08d44ce3bbbe332e0",
+          "url": "https://github.com/MichaelMure/git-bug/commit/3915d2b76e17ae7058510d3b4cd91b24786bb526"
+        },
+        "date": 1672684020512,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 47451199,
+            "unit": "ns/op\t 4960745 B/op\t   24206 allocs/op",
+            "extra": "27 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 263564491,
+            "unit": "ns/op\t27897568 B/op\t  134380 allocs/op",
+            "extra": "4 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 1538735298,
+            "unit": "ns/op\t165806792 B/op\t  803183 allocs/op",
+            "extra": "1 times\n2 procs"
           }
         ]
       }
