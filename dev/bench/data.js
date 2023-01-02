@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1672316345591,
+  "lastUpdate": 1672664967245,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -711,6 +711,48 @@ window.BENCHMARK_DATA = {
             "name": "BenchmarkReadBugs150",
             "value": 789757900,
             "unit": "ns/op\t840046192 B/op\t  834789 allocs/op",
+            "extra": "2 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "smoyer1@selesy.com",
+            "name": "Steve Moyer",
+            "username": "smoyer64"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a4cee7539b2fcddcdd717b784be366f67e358b09",
+          "message": "Merge pull request #963 from MichaelMure/feat/upgrade-go-git-v5.1.1\n\nfeat: upgrade go-git to v5.5.1",
+          "timestamp": "2023-01-02T08:08:03-05:00",
+          "tree_id": "4290490163dc41e2abb8440f0569936f0d4dd6da",
+          "url": "https://github.com/MichaelMure/git-bug/commit/a4cee7539b2fcddcdd717b784be366f67e358b09"
+        },
+        "date": 1672664966763,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 21637003,
+            "unit": "ns/op\t 4953871 B/op\t   24207 allocs/op",
+            "extra": "54 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 121474393,
+            "unit": "ns/op\t27809425 B/op\t  134357 allocs/op",
+            "extra": "9 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 730501324,
+            "unit": "ns/op\t165696152 B/op\t  803004 allocs/op",
             "extra": "2 times\n2 procs"
           }
         ]
