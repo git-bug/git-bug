@@ -1,7 +1,6 @@
 package bugcmd
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -186,67 +185,9 @@ func showDefaultFormatter(env *execenv.Env, snapshot *bug.Snapshot) error {
 	return nil
 }
 
-type JSONBugSnapshot struct {
-	Id           string             `json:"id"`
-	HumanId      string             `json:"human_id"`
-	CreateTime   cmdjson.Time       `json:"create_time"`
-	EditTime     cmdjson.Time       `json:"edit_time"`
-	Status       string             `json:"status"`
-	Labels       []bug.Label        `json:"labels"`
-	Title        string             `json:"title"`
-	Author       cmdjson.Identity   `json:"author"`
-	Actors       []cmdjson.Identity `json:"actors"`
-	Participants []cmdjson.Identity `json:"participants"`
-	Comments     []JSONBugComment   `json:"comments"`
-}
-
-type JSONBugComment struct {
-	Id      string           `json:"id"`
-	HumanId string           `json:"human_id"`
-	Author  cmdjson.Identity `json:"author"`
-	Message string           `json:"message"`
-}
-
-func NewJSONComment(comment bug.Comment) JSONBugComment {
-	return JSONBugComment{
-		Id:      comment.CombinedId().String(),
-		HumanId: comment.CombinedId().Human(),
-		Author:  cmdjson.NewIdentity(comment.Author),
-		Message: comment.Message,
-	}
-}
-
-func showJsonFormatter(env *execenv.Env, snapshot *bug.Snapshot) error {
-	jsonBug := JSONBugSnapshot{
-		Id:         snapshot.Id().String(),
-		HumanId:    snapshot.Id().Human(),
-		CreateTime: cmdjson.NewTime(snapshot.CreateTime, 0),
-		EditTime:   cmdjson.NewTime(snapshot.EditTime(), 0),
-		Status:     snapshot.Status.String(),
-		Labels:     snapshot.Labels,
-		Title:      snapshot.Title,
-		Author:     cmdjson.NewIdentity(snapshot.Author),
-	}
-
-	jsonBug.Actors = make([]cmdjson.Identity, len(snapshot.Actors))
-	for i, element := range snapshot.Actors {
-		jsonBug.Actors[i] = cmdjson.NewIdentity(element)
-	}
-
-	jsonBug.Participants = make([]cmdjson.Identity, len(snapshot.Participants))
-	for i, element := range snapshot.Participants {
-		jsonBug.Participants[i] = cmdjson.NewIdentity(element)
-	}
-
-	jsonBug.Comments = make([]JSONBugComment, len(snapshot.Comments))
-	for i, comment := range snapshot.Comments {
-		jsonBug.Comments[i] = NewJSONComment(comment)
-	}
-
-	jsonObject, _ := json.MarshalIndent(jsonBug, "", "    ")
-	env.Out.Printf("%s\n", jsonObject)
-
-	return nil
+func showJsonFormatter(env *execenv.Env, snap *bug.Snapshot) error {
+	jsonBug := cmdjson.NewBugSnapshot(snap)
+	return env.Out.PrintJSON(jsonBug)
 }
 
 func showOrgModeFormatter(env *execenv.Env, snapshot *bug.Snapshot) error {
