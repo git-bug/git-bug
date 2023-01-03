@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1672684021682,
+  "lastUpdate": 1672768444841,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -796,6 +796,48 @@ window.BENCHMARK_DATA = {
             "value": 1538735298,
             "unit": "ns/op\t165806792 B/op\t  803183 allocs/op",
             "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5b9f88208fd4b1e87b8fd40195aafbf7da2ecd01",
+          "message": "Merge pull request #974 from MichaelMure/fix/972/gokart-panic\n\nfix(972): use prerelease of GoKart with repaired panic",
+          "timestamp": "2023-01-03T18:52:40+01:00",
+          "tree_id": "e84c2c8f33d7610ea83da9a8c2ed774a8da0fa48",
+          "url": "https://github.com/MichaelMure/git-bug/commit/5b9f88208fd4b1e87b8fd40195aafbf7da2ecd01"
+        },
+        "date": 1672768443795,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 19969053,
+            "unit": "ns/op\t 4955489 B/op\t   24197 allocs/op",
+            "extra": "61 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 123469105,
+            "unit": "ns/op\t27770881 B/op\t  134340 allocs/op",
+            "extra": "10 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 576353298,
+            "unit": "ns/op\t165530628 B/op\t  802999 allocs/op",
+            "extra": "2 times\n2 procs"
           }
         ]
       }
