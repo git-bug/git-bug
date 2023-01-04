@@ -130,6 +130,13 @@ func TestCache(t *testing.T) {
 	require.NoError(t, err)
 	_, err = cache.Bugs().ResolvePrefix(bug1.Id().String()[:10])
 	require.NoError(t, err)
+
+	// Close
+	require.NoError(t, cache.Close())
+	require.Empty(t, cache.bugs.cached)
+	require.Empty(t, cache.bugs.excerpts)
+	require.Empty(t, cache.identities.cached)
+	require.Empty(t, cache.identities.excerpts)
 }
 
 func TestCachePushPull(t *testing.T) {
