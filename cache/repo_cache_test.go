@@ -18,88 +18,87 @@ import (
 func TestCache(t *testing.T) {
 	repo := repository.CreateGoGitTestRepo(t, false)
 
-	cache, err := NewRepoCacheNoEvents(repo)
-	require.NoError(t, err)
+	var (
+		cache *RepoCache
+		bug1  *BugCache
+		iden1 *IdentityCache
+	)
 
-	// Create, set and get user identity
-	iden1, err := cache.Identities().New("René Descartes", "rene@descartes.fr")
-	require.NoError(t, err)
-	err = cache.SetUserIdentity(iden1)
-	require.NoError(t, err)
-	userIden, err := cache.GetUserIdentity()
-	require.NoError(t, err)
-	require.Equal(t, iden1.Id(), userIden.Id())
+	t.Run("entity operations on cache", func(t *testing.T) {
+		cache = createTestRepoCacheNoEvents(t, repo)
+		var err error
 
-	// it's possible to create two identical identities
-	iden2, err := cache.Identities().New("René Descartes", "rene@descartes.fr")
-	require.NoError(t, err)
-
-	// Two identical identities yield a different id
-	require.NotEqual(t, iden1.Id(), iden2.Id())
-
-	indexCount := func(name string) uint64 {
-		idx, err := repo.GetIndex(name)
+		// Create, set and get user identity
+		iden1, err = cache.Identities().New("René Descartes", "rene@descartes.fr")
 		require.NoError(t, err)
-		count, err := idx.DocCount()
+		err = cache.SetUserIdentity(iden1)
 		require.NoError(t, err)
-		return count
-	}
+		userIden, err := cache.GetUserIdentity()
+		require.NoError(t, err)
+		require.Equal(t, iden1.Id(), userIden.Id())
 
-	// There is now two identities in the cache
-	require.Len(t, cache.Identities().AllIds(), 2)
-	require.Len(t, cache.identities.excerpts, 2)
-	require.Len(t, cache.identities.cached, 2)
-	require.Equal(t, uint64(2), indexCount(identity.Namespace))
-	require.Equal(t, uint64(0), indexCount(bug.Namespace))
+		// it's possible to create two identical identities
+		iden2, err := cache.Identities().New("René Descartes", "rene@descartes.fr")
+		require.NoError(t, err)
 
-	// Create a bug
-	bug1, _, err := cache.Bugs().New("title", "message")
-	require.NoError(t, err)
+		// Two identical identities yield a different id
+		require.NotEqual(t, iden1.Id(), iden2.Id())
 
-	// It's possible to create two identical bugs
-	bug2, _, err := cache.Bugs().New("title", "marker")
-	require.NoError(t, err)
+		// There is now two identities in the cache
+		require.Len(t, cache.Identities().AllIds(), 2)
+		require.Len(t, cache.identities.excerpts, 2)
+		require.Len(t, cache.identities.cached, 2)
+		require.Equal(t, uint64(2), indexCount(t, repo, identity.Namespace))
+		require.Equal(t, uint64(0), indexCount(t, repo, bug.Namespace))
 
-	// two identical bugs yield a different id
-	require.NotEqual(t, bug1.Id(), bug2.Id())
+		// Create a bug
+		bug1, _, err = cache.Bugs().New("title", "message")
+		require.NoError(t, err)
 
-	// There is now two bugs in the cache
-	require.Len(t, cache.Bugs().AllIds(), 2)
-	require.Len(t, cache.bugs.excerpts, 2)
-	require.Len(t, cache.bugs.cached, 2)
-	require.Equal(t, uint64(2), indexCount(identity.Namespace))
-	require.Equal(t, uint64(2), indexCount(bug.Namespace))
+		// It's possible to create two identical bugs
+		bug2, _, err := cache.Bugs().New("title", "marker")
+		require.NoError(t, err)
 
-	// Resolving
-	_, err = cache.Identities().Resolve(iden1.Id())
-	require.NoError(t, err)
-	_, err = cache.Identities().ResolveExcerpt(iden1.Id())
-	require.NoError(t, err)
-	_, err = cache.Identities().ResolvePrefix(iden1.Id().String()[:10])
-	require.NoError(t, err)
+		// two identical bugs yield a different id
+		require.NotEqual(t, bug1.Id(), bug2.Id())
 
-	_, err = cache.Bugs().Resolve(bug1.Id())
-	require.NoError(t, err)
-	_, err = cache.Bugs().ResolveExcerpt(bug1.Id())
-	require.NoError(t, err)
-	_, err = cache.Bugs().ResolvePrefix(bug1.Id().String()[:10])
-	require.NoError(t, err)
+		// There is now two bugs in the cache
+		require.Len(t, cache.Bugs().AllIds(), 2)
+		require.Len(t, cache.bugs.excerpts, 2)
+		require.Len(t, cache.bugs.cached, 2)
+		require.Equal(t, uint64(2), indexCount(t, repo, identity.Namespace))
+		require.Equal(t, uint64(2), indexCount(t, repo, bug.Namespace))
 
-	// Querying
-	q, err := query.Parse("status:open author:descartes sort:edit-asc")
-	require.NoError(t, err)
-	res, err := cache.Bugs().Query(q)
-	require.NoError(t, err)
-	require.Len(t, res, 2)
+		// Resolving
+		_, err = cache.Identities().Resolve(iden1.Id())
+		require.NoError(t, err)
+		_, err = cache.Identities().ResolveExcerpt(iden1.Id())
+		require.NoError(t, err)
+		_, err = cache.Identities().ResolvePrefix(iden1.Id().String()[:10])
+		require.NoError(t, err)
 
-	q, err = query.Parse("status:open marker") // full-text search
-	require.NoError(t, err)
-	res, err = cache.Bugs().Query(q)
-	require.NoError(t, err)
-	require.Len(t, res, 1)
+		_, err = cache.Bugs().Resolve(bug1.Id())
+		require.NoError(t, err)
+		_, err = cache.Bugs().ResolveExcerpt(bug1.Id())
+		require.NoError(t, err)
+		_, err = cache.Bugs().ResolvePrefix(bug1.Id().String()[:10])
+		require.NoError(t, err)
 
-	// Close
-	require.NoError(t, cache.Close())
+		// Querying
+		q, err := query.Parse("status:open author:descartes sort:edit-asc")
+		require.NoError(t, err)
+		res, err := cache.Bugs().Query(q)
+		require.NoError(t, err)
+		require.Len(t, res, 2)
+
+		q, err = query.Parse("status:open marker") // full-text search
+		require.NoError(t, err)
+		res, err = cache.Bugs().Query(q)
+		require.NoError(t, err)
+		require.Len(t, res, 1)
+	})
+
+	// Close (repository is closed by t.Cleanup() when the function above is exited)
 	require.Empty(t, cache.bugs.cached)
 	require.Empty(t, cache.bugs.excerpts)
 	require.Empty(t, cache.identities.cached)
@@ -107,17 +106,17 @@ func TestCache(t *testing.T) {
 
 	// Reload, only excerpt are loaded, but as we need to load the identities used in the bugs
 	// to check the signatures, we also load the identity used above
-	cache, err = NewRepoCacheNoEvents(repo)
-	require.NoError(t, err)
+	cache = createTestRepoCacheNoEvents(t, repo)
+
 	require.Len(t, cache.bugs.cached, 0)
 	require.Len(t, cache.bugs.excerpts, 2)
 	require.Len(t, cache.identities.cached, 0)
 	require.Len(t, cache.identities.excerpts, 2)
-	require.Equal(t, uint64(2), indexCount(identity.Namespace))
-	require.Equal(t, uint64(2), indexCount(bug.Namespace))
+	require.Equal(t, uint64(2), indexCount(t, repo, identity.Namespace))
+	require.Equal(t, uint64(2), indexCount(t, repo, bug.Namespace))
 
 	// Resolving load from the disk
-	_, err = cache.Identities().Resolve(iden1.Id())
+	_, err := cache.Identities().Resolve(iden1.Id())
 	require.NoError(t, err)
 	_, err = cache.Identities().ResolveExcerpt(iden1.Id())
 	require.NoError(t, err)
@@ -130,23 +129,13 @@ func TestCache(t *testing.T) {
 	require.NoError(t, err)
 	_, err = cache.Bugs().ResolvePrefix(bug1.Id().String()[:10])
 	require.NoError(t, err)
-
-	// Close
-	require.NoError(t, cache.Close())
-	require.Empty(t, cache.bugs.cached)
-	require.Empty(t, cache.bugs.excerpts)
-	require.Empty(t, cache.identities.cached)
-	require.Empty(t, cache.identities.excerpts)
 }
 
 func TestCachePushPull(t *testing.T) {
 	repoA, repoB, _ := repository.SetupGoGitReposAndRemote(t)
 
-	cacheA, err := NewRepoCacheNoEvents(repoA)
-	require.NoError(t, err)
-
-	cacheB, err := NewRepoCacheNoEvents(repoB)
-	require.NoError(t, err)
+	cacheA := createTestRepoCacheNoEvents(t, repoA)
+	cacheB := createTestRepoCacheNoEvents(t, repoB)
 
 	// Create, set and get user identity
 	reneA, err := cacheA.Identities().New("René Descartes", "rene@descartes.fr")
@@ -208,8 +197,7 @@ func TestRemove(t *testing.T) {
 	err = repo.AddRemote("remoteB", remoteB.GetLocalRemote())
 	require.NoError(t, err)
 
-	repoCache, err := NewRepoCacheNoEvents(repo)
-	require.NoError(t, err)
+	repoCache := createTestRepoCacheNoEvents(t, repo)
 
 	rene, err := repoCache.Identities().New("René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
@@ -247,8 +235,7 @@ func TestRemove(t *testing.T) {
 
 func TestCacheEviction(t *testing.T) {
 	repo := repository.CreateGoGitTestRepo(t, false)
-	repoCache, err := NewRepoCacheNoEvents(repo)
-	require.NoError(t, err)
+	repoCache := createTestRepoCacheNoEvents(t, repo)
 	repoCache.setCacheSize(2)
 
 	require.Equal(t, 2, repoCache.bugs.maxLoaded)
@@ -298,7 +285,25 @@ func TestCacheEviction(t *testing.T) {
 	require.Equal(t, 2, repoCache.bugs.lru.Len())
 }
 
+func TestLongDescription(t *testing.T) {
+	// See https://github.com/MichaelMure/git-bug/issues/606
+
+	text := strings.Repeat("x", 65536)
+
+	repo := repository.CreateGoGitTestRepo(t, false)
+
+	backend := createTestRepoCacheNoEvents(t, repo)
+
+	i, err := backend.Identities().New("René Descartes", "rene@descartes.fr")
+	require.NoError(t, err)
+
+	_, _, err = backend.Bugs().NewRaw(i, time.Now().Unix(), text, text, nil, nil)
+	require.NoError(t, err)
+}
+
 func checkBugPresence(t *testing.T, cache *RepoCache, bug *BugCache, presence bool) {
+	t.Helper()
+
 	id := bug.Id()
 	require.Equal(t, presence, cache.bugs.lru.Contains(id))
 	b, ok := cache.bugs.cached[id]
@@ -308,19 +313,26 @@ func checkBugPresence(t *testing.T, cache *RepoCache, bug *BugCache, presence bo
 	}
 }
 
-func TestLongDescription(t *testing.T) {
-	// See https://github.com/MichaelMure/git-bug/issues/606
+func createTestRepoCacheNoEvents(t *testing.T, repo repository.TestedRepo) *RepoCache {
+	t.Helper()
 
-	text := strings.Repeat("x", 65536)
-
-	repo := repository.CreateGoGitTestRepo(t, false)
-
-	backend, err := NewRepoCacheNoEvents(repo)
+	cache, err := NewRepoCacheNoEvents(repo)
 	require.NoError(t, err)
 
-	i, err := backend.Identities().New("René Descartes", "rene@descartes.fr")
+	t.Cleanup(func() {
+		require.NoError(t, cache.Close())
+	})
+
+	return cache
+}
+
+func indexCount(t *testing.T, repo repository.TestedRepo, name string) uint64 {
+	t.Helper()
+
+	idx, err := repo.GetIndex(name)
+	require.NoError(t, err)
+	count, err := idx.DocCount()
 	require.NoError(t, err)
 
-	_, _, err = backend.Bugs().NewRaw(i, time.Now().Unix(), text, text, nil, nil)
-	require.NoError(t, err)
+	return count
 }
