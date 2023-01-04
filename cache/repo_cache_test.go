@@ -137,7 +137,6 @@ func TestCache(t *testing.T) {
 	require.Empty(t, cache.bugs.excerpts)
 	require.Empty(t, cache.identities.cached)
 	require.Empty(t, cache.identities.excerpts)
-
 }
 
 func TestCachePushPull(t *testing.T) {
