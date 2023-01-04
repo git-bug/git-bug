@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1672768444841,
+  "lastUpdate": 1672840714537,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -837,6 +837,48 @@ window.BENCHMARK_DATA = {
             "name": "BenchmarkReadBugs150",
             "value": 576353298,
             "unit": "ns/op\t165530628 B/op\t  802999 allocs/op",
+            "extra": "2 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b1253bd238714233cdaa6db34105b23bace4c08d",
+          "message": "Merge pull request #978 from MichaelMure/fix/eliminate-tempdir-test-failures\n\nfix(TestCache): eliminate hanging Windows tests",
+          "timestamp": "2023-01-04T14:57:18+01:00",
+          "tree_id": "099282b053683905d2e178500dbad2256c325810",
+          "url": "https://github.com/MichaelMure/git-bug/commit/b1253bd238714233cdaa6db34105b23bace4c08d"
+        },
+        "date": 1672840713995,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 18827507,
+            "unit": "ns/op\t 4957605 B/op\t   24204 allocs/op",
+            "extra": "57 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 110704980,
+            "unit": "ns/op\t27840841 B/op\t  134382 allocs/op",
+            "extra": "10 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 590449396,
+            "unit": "ns/op\t165618624 B/op\t  803136 allocs/op",
             "extra": "2 times\n2 procs"
           }
         ]
