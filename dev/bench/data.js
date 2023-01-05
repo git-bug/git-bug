@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1672929065531,
+  "lastUpdate": 1672929807348,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -922,6 +922,48 @@ window.BENCHMARK_DATA = {
             "value": 838268218,
             "unit": "ns/op\t165534716 B/op\t  803096 allocs/op",
             "extra": "2 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "30198e17b6ce771c6a1937fbcb193a892b7f9be8",
+          "message": "Merge pull request #982 from MichaelMure/dependabot/go_modules/golang.org/x/crypto-0.5.0\n\nbuild(deps): bump golang.org/x/crypto from 0.4.0 to 0.5.0",
+          "timestamp": "2023-01-05T15:42:02+01:00",
+          "tree_id": "8dc8c919435e36ec2ec436520b58da37645e1ca2",
+          "url": "https://github.com/MichaelMure/git-bug/commit/30198e17b6ce771c6a1937fbcb193a892b7f9be8"
+        },
+        "date": 1672929806242,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 34892664,
+            "unit": "ns/op\t 4965355 B/op\t   24209 allocs/op",
+            "extra": "31 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 218181196,
+            "unit": "ns/op\t27795048 B/op\t  134371 allocs/op",
+            "extra": "6 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 1032215589,
+            "unit": "ns/op\t165472728 B/op\t  803021 allocs/op",
+            "extra": "1 times\n2 procs"
           }
         ]
       }
