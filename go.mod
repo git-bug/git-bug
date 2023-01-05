@@ -32,7 +32,7 @@ require (
 	golang.org/x/oauth2 v0.0.0-20220722155238-128564f6959c
 	golang.org/x/sync v0.1.0
 	golang.org/x/sys v0.3.0
-	golang.org/x/text v0.5.0
+	golang.org/x/text v0.6.0
 )
 
 require (
