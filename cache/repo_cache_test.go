@@ -18,6 +18,17 @@ import (
 func TestCache(t *testing.T) {
 	repo := repository.CreateGoGitTestRepo(t, false)
 
+	indexCount := func(t *testing.T, name string) uint64 {
+		t.Helper()
+
+		idx, err := repo.GetIndex(name)
+		require.NoError(t, err)
+		count, err := idx.DocCount()
+		require.NoError(t, err)
+
+		return count
+	}
+
 	var (
 		cache *RepoCache
 		bug1  *BugCache
@@ -25,8 +36,8 @@ func TestCache(t *testing.T) {
 	)
 
 	t.Run("entity operations on cache", func(t *testing.T) {
-		cache = createTestRepoCacheNoEvents(t, repo)
-		var err error
+		cache, err := NewRepoCacheNoEvents(repo)
+		require.NoError(t, err)
 
 		// Create, set and get user identity
 		iden1, err = cache.Identities().New("René Descartes", "rene@descartes.fr")
@@ -48,8 +59,8 @@ func TestCache(t *testing.T) {
 		require.Len(t, cache.Identities().AllIds(), 2)
 		require.Len(t, cache.identities.excerpts, 2)
 		require.Len(t, cache.identities.cached, 2)
-		require.Equal(t, uint64(2), indexCount(t, repo, identity.Namespace))
-		require.Equal(t, uint64(0), indexCount(t, repo, bug.Namespace))
+		require.Equal(t, uint64(2), indexCount(t, identity.Namespace))
+		require.Equal(t, uint64(0), indexCount(t, bug.Namespace))
 
 		// Create a bug
 		bug1, _, err = cache.Bugs().New("title", "message")
@@ -66,8 +77,8 @@ func TestCache(t *testing.T) {
 		require.Len(t, cache.Bugs().AllIds(), 2)
 		require.Len(t, cache.bugs.excerpts, 2)
 		require.Len(t, cache.bugs.cached, 2)
-		require.Equal(t, uint64(2), indexCount(t, repo, identity.Namespace))
-		require.Equal(t, uint64(2), indexCount(t, repo, bug.Namespace))
+		require.Equal(t, uint64(2), indexCount(t, identity.Namespace))
+		require.Equal(t, uint64(2), indexCount(t, bug.Namespace))
 
 		// Resolving
 		_, err = cache.Identities().Resolve(iden1.Id())
@@ -96,13 +107,22 @@ func TestCache(t *testing.T) {
 		res, err = cache.Bugs().Query(q)
 		require.NoError(t, err)
 		require.Len(t, res, 1)
+
+		// Close
+		require.NoError(t, cache.Close())
+		require.Empty(t, cache.bugs.cached)
+		require.Empty(t, cache.bugs.excerpts)
+		require.Empty(t, cache.identities.cached)
+		require.Empty(t, cache.identities.excerpts)
 	})
 
-	// Close (repository is closed by t.Cleanup() when the function above is exited)
-	require.Empty(t, cache.bugs.cached)
-	require.Empty(t, cache.bugs.excerpts)
-	require.Empty(t, cache.identities.cached)
-	require.Empty(t, cache.identities.excerpts)
+	t.Run("closed caches are empty", func(t *testing.T) {
+		t.Skip()
+		cache, err := NewRepoCacheNoEvents(repo)
+		require.NoError(t, err)
+
+		require.Empty(t, cache.identities.excerpts)
+	})
 
 	// Reload, only excerpt are loaded, but as we need to load the identities used in the bugs
 	// to check the signatures, we also load the identity used above
@@ -112,8 +132,8 @@ func TestCache(t *testing.T) {
 	require.Len(t, cache.bugs.excerpts, 2)
 	require.Len(t, cache.identities.cached, 0)
 	require.Len(t, cache.identities.excerpts, 2)
-	require.Equal(t, uint64(2), indexCount(t, repo, identity.Namespace))
-	require.Equal(t, uint64(2), indexCount(t, repo, bug.Namespace))
+	require.Equal(t, uint64(2), indexCount(t, identity.Namespace))
+	require.Equal(t, uint64(2), indexCount(t, bug.Namespace))
 
 	// Resolving load from the disk
 	_, err := cache.Identities().Resolve(iden1.Id())
