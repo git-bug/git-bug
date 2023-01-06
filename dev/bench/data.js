@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1672929807348,
+  "lastUpdate": 1673001941936,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -964,6 +964,48 @@ window.BENCHMARK_DATA = {
             "value": 1032215589,
             "unit": "ns/op\t165472728 B/op\t  803021 allocs/op",
             "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "smoyer1@selesy.com",
+            "name": "Steve Moyer",
+            "username": "smoyer64"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "51161a8fdb97814daa0543692c63b0d8a25a83ff",
+          "message": "Merge pull request #979 from MichaelMure/fix/eliminate-tempdir-test-failures\n\nrefactor(TestCache): guarantee test caches are closed when tests finish",
+          "timestamp": "2023-01-06T05:44:27-05:00",
+          "tree_id": "6ccaaa8eea5afe72ae507aa14c8844a0519107c2",
+          "url": "https://github.com/MichaelMure/git-bug/commit/51161a8fdb97814daa0543692c63b0d8a25a83ff"
+        },
+        "date": 1673001941458,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 19257638,
+            "unit": "ns/op\t 4949376 B/op\t   24186 allocs/op",
+            "extra": "55 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 122169055,
+            "unit": "ns/op\t27753126 B/op\t  134338 allocs/op",
+            "extra": "10 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 568280254,
+            "unit": "ns/op\t165452460 B/op\t  803059 allocs/op",
+            "extra": "2 times\n2 procs"
           }
         ]
       }
