@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1673176464509,
+  "lastUpdate": 1673176633558,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -1089,6 +1089,48 @@ window.BENCHMARK_DATA = {
             "name": "BenchmarkReadBugs150",
             "value": 1229984828,
             "unit": "ns/op\t166283912 B/op\t  803321 allocs/op",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5d7a10fbb246d2bbcefe0eabc4403afe22e26124",
+          "message": "Merge pull request #983 from MichaelMure/dependabot/go_modules/github.com/go-git/go-git/v5-5.5.2\n\nbuild(deps): bump github.com/go-git/go-git/v5 from 5.5.1 to 5.5.2",
+          "timestamp": "2023-01-08T12:14:56+01:00",
+          "tree_id": "3cb3a017a68796ab21b4f54c010ec22b44ca05a0",
+          "url": "https://github.com/MichaelMure/git-bug/commit/5d7a10fbb246d2bbcefe0eabc4403afe22e26124"
+        },
+        "date": 1673176632804,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 26026627,
+            "unit": "ns/op\t 4971600 B/op\t   24215 allocs/op",
+            "extra": "42 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 145818484,
+            "unit": "ns/op\t27793226 B/op\t  134400 allocs/op",
+            "extra": "8 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 1013265111,
+            "unit": "ns/op\t165638424 B/op\t  803192 allocs/op",
             "extra": "1 times\n2 procs"
           }
         ]
