@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1673001941936,
+  "lastUpdate": 1673176425398,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -1006,6 +1006,48 @@ window.BENCHMARK_DATA = {
             "value": 568280254,
             "unit": "ns/op\t165452460 B/op\t  803059 allocs/op",
             "extra": "2 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c7662a13acf6db50a45d22e70e7beac3276fe784",
+          "message": "Merge pull request #976 from MichaelMure/fix/975/patch-security-vulnerabilities\n\nfix: resolve Go vulnerabilities",
+          "timestamp": "2023-01-08T12:11:53+01:00",
+          "tree_id": "630bd8655a65049bcb58ccada82631d948a07bb1",
+          "url": "https://github.com/MichaelMure/git-bug/commit/c7662a13acf6db50a45d22e70e7beac3276fe784"
+        },
+        "date": 1673176424403,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 43756094,
+            "unit": "ns/op\t 4962050 B/op\t   24204 allocs/op",
+            "extra": "28 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 183625573,
+            "unit": "ns/op\t27870418 B/op\t  134389 allocs/op",
+            "extra": "6 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 1486423402,
+            "unit": "ns/op\t165959224 B/op\t  803253 allocs/op",
+            "extra": "1 times\n2 procs"
           }
         ]
       }
