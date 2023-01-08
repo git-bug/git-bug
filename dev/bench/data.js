@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1673176425398,
+  "lastUpdate": 1673176464509,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -1047,6 +1047,48 @@ window.BENCHMARK_DATA = {
             "name": "BenchmarkReadBugs150",
             "value": 1486423402,
             "unit": "ns/op\t165959224 B/op\t  803253 allocs/op",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "978552bb69e742e9e81ddc2ebb66e1e12dba91fe",
+          "message": "Merge pull request #984 from MichaelMure/fix/926/tests-fail-with-color\n\nfix(commands): run tests in ./commands/... without ANSI color",
+          "timestamp": "2023-01-08T12:12:51+01:00",
+          "tree_id": "bc9b44d46271348e8f0f25744a41616ad1a059fd",
+          "url": "https://github.com/MichaelMure/git-bug/commit/978552bb69e742e9e81ddc2ebb66e1e12dba91fe"
+        },
+        "date": 1673176463415,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 39070913,
+            "unit": "ns/op\t 4973780 B/op\t   24203 allocs/op",
+            "extra": "31 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 257741351,
+            "unit": "ns/op\t27921526 B/op\t  134430 allocs/op",
+            "extra": "4 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 1229984828,
+            "unit": "ns/op\t166283912 B/op\t  803321 allocs/op",
             "extra": "1 times\n2 procs"
           }
         ]
