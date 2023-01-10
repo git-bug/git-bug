@@ -7,6 +7,8 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/vbauerster/mpb/v8"
+	"github.com/vbauerster/mpb/v8/decor"
 
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entities/identity"
@@ -50,6 +52,10 @@ type Out interface {
 	// Reset clear what has been recorded as written in the output before.
 	// This only works in test scenario.
 	Reset()
+
+	// Raw return the underlying io.Writer, or itself if not.
+	// This is useful if something need to access the raw file descriptor.
+	Raw() io.Writer
 }
 
 type out struct {
@@ -87,6 +93,10 @@ func (o out) Bytes() []byte {
 
 func (o out) Reset() {
 	panic("only work with a test env")
+}
+
+func (o out) Raw() io.Writer {
+	return o.Writer
 }
 
 // LoadRepo is a pre-run function that load the repository for use in a command
@@ -143,18 +153,9 @@ func LoadBackend(env *Env) func(*cobra.Command, []string) error {
 		var events chan cache.BuildEvent
 		env.Backend, events = cache.NewRepoCache(env.Repo)
 
-		for event := range events {
-			if event.Err != nil {
-				return event.Err
-			}
-			switch event.Event {
-			case cache.BuildEventCacheIsBuilt:
-				env.Err.Println("Building cache... ")
-			case cache.BuildEventStarted:
-				env.Err.Printf("[%s] started\n", event.Typename)
-			case cache.BuildEventFinished:
-				env.Err.Printf("[%s] done\n", event.Typename)
-			}
+		err = CacheBuildProgressBar(env, events)
+		if err != nil {
+			return err
 		}
 
 		cleaner := func(env *Env) interrupt.CleanerFunc {
@@ -212,4 +213,42 @@ func CloseBackend(env *Env, runE func(cmd *cobra.Command, args []string) error) 
 		}
 		return err
 	}
+}
+
+func CacheBuildProgressBar(env *Env, events chan cache.BuildEvent) error {
+	var progress *mpb.Progress
+	var bars = make(map[string]*mpb.Bar)
+
+	for event := range events {
+		if event.Err != nil {
+			return event.Err
+		}
+
+		if progress == nil {
+			progress = mpb.New(mpb.WithOutput(env.Err.Raw()))
+		}
+
+		switch event.Event {
+		case cache.BuildEventCacheIsBuilt:
+			env.Err.Println("Building cache... ")
+		case cache.BuildEventStarted:
+			bars[event.Typename] = progress.AddBar(-1,
+				mpb.BarRemoveOnComplete(),
+				mpb.PrependDecorators(
+					decor.Name(event.Typename, decor.WCSyncSpace),
+					decor.CountersNoUnit("%d / %d", decor.WCSyncSpace),
+				),
+				mpb.AppendDecorators(decor.Percentage(decor.WCSyncSpace)),
+			)
+		case cache.BuildEventProgress:
+			bars[event.Typename].SetTotal(event.Total, false)
+			bars[event.Typename].SetCurrent(event.Progress)
+		}
+	}
+
+	if progress != nil {
+		progress.Shutdown()
+	}
+
+	return nil
 }

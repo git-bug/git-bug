@@ -238,6 +238,9 @@ func readAll(repo repository.ClockedRepo, refPrefix string) <-chan entity.Stream
 			return
 		}
 
+		total := int64(len(refs))
+		current := int64(1)
+
 		for _, ref := range refs {
 			i, err := read(repo, ref)
 
@@ -246,7 +249,12 @@ func readAll(repo repository.ClockedRepo, refPrefix string) <-chan entity.Stream
 				return
 			}
 
-			out <- entity.StreamedEntity[*Identity]{Entity: i}
+			out <- entity.StreamedEntity[*Identity]{
+				Entity:        i,
+				CurrentEntity: current,
+				TotalEntities: total,
+			}
+			current++
 		}
 	}()
 

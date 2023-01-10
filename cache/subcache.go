@@ -185,51 +185,98 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) write() error {
 	return f.Close()
 }
 
-func (sc *SubCache[EntityT, ExcerptT, CacheT]) Build() error {
-	sc.excerpts = make(map[entity.Id]ExcerptT)
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) Build() <-chan BuildEvent {
+	out := make(chan BuildEvent)
 
-	allEntities := sc.actions.ReadAllWithResolver(sc.repo, sc.resolvers())
+	go func() {
+		defer close(out)
 
-	index, err := sc.repo.GetIndex(sc.namespace)
-	if err != nil {
-		return err
-	}
-
-	// wipe the index just to be sure
-	err = index.Clear()
-	if err != nil {
-		return err
-	}
-
-	indexer, indexEnd := index.IndexBatch()
-
-	for e := range allEntities {
-		if e.Err != nil {
-			return e.Err
+		out <- BuildEvent{
+			Typename: sc.typename,
+			Event:    BuildEventStarted,
 		}
 
-		cached := sc.makeCached(e.Entity, sc.entityUpdated)
-		sc.excerpts[e.Entity.Id()] = sc.makeExcerpt(cached)
-		// might as well keep them in memory
-		sc.cached[e.Entity.Id()] = cached
+		sc.excerpts = make(map[entity.Id]ExcerptT)
 
-		indexData := sc.makeIndexData(cached)
-		if err := indexer(e.Entity.Id().String(), indexData); err != nil {
-			return err
+		allEntities := sc.actions.ReadAllWithResolver(sc.repo, sc.resolvers())
+
+		index, err := sc.repo.GetIndex(sc.namespace)
+		if err != nil {
+			out <- BuildEvent{
+				Typename: sc.typename,
+				Err:      err,
+			}
+			return
 		}
-	}
 
-	err = indexEnd()
-	if err != nil {
-		return err
-	}
+		// wipe the index just to be sure
+		err = index.Clear()
+		if err != nil {
+			out <- BuildEvent{
+				Typename: sc.typename,
+				Err:      err,
+			}
+			return
+		}
 
-	err = sc.write()
-	if err != nil {
-		return err
-	}
+		indexer, indexEnd := index.IndexBatch()
 
-	return nil
+		for e := range allEntities {
+			if e.Err != nil {
+				out <- BuildEvent{
+					Typename: sc.typename,
+					Err:      e.Err,
+				}
+				return
+			}
+
+			cached := sc.makeCached(e.Entity, sc.entityUpdated)
+			sc.excerpts[e.Entity.Id()] = sc.makeExcerpt(cached)
+			// might as well keep them in memory
+			sc.cached[e.Entity.Id()] = cached
+
+			indexData := sc.makeIndexData(cached)
+			if err := indexer(e.Entity.Id().String(), indexData); err != nil {
+				out <- BuildEvent{
+					Typename: sc.typename,
+					Err:      err,
+				}
+				return
+			}
+
+			out <- BuildEvent{
+				Typename: sc.typename,
+				Event:    BuildEventProgress,
+				Progress: e.CurrentEntity,
+				Total:    e.TotalEntities,
+			}
+		}
+
+		err = indexEnd()
+		if err != nil {
+			out <- BuildEvent{
+				Typename: sc.typename,
+				Err:      err,
+			}
+			return
+		}
+
+		err = sc.write()
+		if err != nil {
+			out <- BuildEvent{
+				Typename: sc.typename,
+				Err:      err,
+			}
+			return
+		}
+
+		out <- BuildEvent{
+			Typename: sc.typename,
+			Event:    BuildEventFinished,
+		}
+	}()
+
+	return out
 }
 
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) SetCacheSize(size int) {

@@ -30,7 +30,7 @@ var _ repository.RepoKeyring = &RepoCache{}
 type cacheMgmt interface {
 	Typename() string
 	Load() error
-	Build() error
+	Build() <-chan BuildEvent
 	SetCacheSize(size int)
 	MergeAll(remote string) <-chan entity.MergeResult
 	GetNamespace() string
@@ -212,6 +212,7 @@ const (
 	BuildEventCacheIsBuilt
 	BuildEventRemoveLock
 	BuildEventStarted
+	BuildEventProgress
 	BuildEventFinished
 )
 
@@ -223,6 +224,10 @@ type BuildEvent struct {
 	Typename string
 	// Event is the type of the event.
 	Event BuildEventType
+	// Total is the total number of element being built. Set if Event is BuildEventStarted.
+	Total int64
+	// Progress is the current count of processed element. Set if Event is BuildEventProgress.
+	Progress int64
 }
 
 func (c *RepoCache) buildCache(events chan BuildEvent) {
@@ -233,23 +238,13 @@ func (c *RepoCache) buildCache(events chan BuildEvent) {
 		wg.Add(1)
 		go func(subcache cacheMgmt) {
 			defer wg.Done()
-			events <- BuildEvent{
-				Typename: subcache.Typename(),
-				Event:    BuildEventStarted,
-			}
 
-			err := subcache.Build()
-			if err != nil {
-				events <- BuildEvent{
-					Typename: subcache.Typename(),
-					Err:      err,
+			buildEvents := subcache.Build()
+			for buildEvent := range buildEvents {
+				events <- buildEvent
+				if buildEvent.Err != nil {
+					return
 				}
-				return
-			}
-
-			events <- BuildEvent{
-				Typename: subcache.Typename(),
-				Event:    BuildEventFinished,
 			}
 		}(subcache)
 	}
