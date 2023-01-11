@@ -3,7 +3,6 @@ package cache
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"sync"
@@ -181,6 +180,7 @@ func (c *RepoCache) lock(events chan BuildEvent) error {
 	pid := fmt.Sprintf("%d", os.Getpid())
 	_, err = f.Write([]byte(pid))
 	if err != nil {
+		_ = f.Close()
 		return err
 	}
 
@@ -279,11 +279,18 @@ func repoIsAvailable(repo repository.RepoStorage, events chan BuildEvent) error 
 
 	if err == nil {
 		// lock file already exist
-		buf, err := ioutil.ReadAll(io.LimitReader(f, 10))
+		buf, err := io.ReadAll(io.LimitReader(f, 10))
+		if err != nil {
+			_ = f.Close()
+			return err
+		}
+
+		err = f.Close()
 		if err != nil {
 			return err
 		}
-		if len(buf) == 10 {
+
+		if len(buf) >= 10 {
 			return fmt.Errorf("the lock file should be < 10 bytes")
 		}
 
@@ -299,10 +306,6 @@ func repoIsAvailable(repo repository.RepoStorage, events chan BuildEvent) error 
 		// The lock file is just laying there after a crash, clean it
 
 		events <- BuildEvent{Event: BuildEventRemoveLock}
-		err = f.Close()
-		if err != nil {
-			return err
-		}
 
 		err = repo.LocalStorage().Remove(lockfile)
 		if err != nil {
