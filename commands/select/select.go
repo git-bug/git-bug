@@ -39,10 +39,10 @@ type Resolver[CacheT cache.CacheEntity] interface {
 // line. If it fails, it falls back to the select mechanism.
 //
 // Returns:
-// - the entity if any
-// - the new list of command line arguments with the entity prefix removed if it
-//   has been used
-// - an error if the process failed
+//   - the entity if any
+//   - the new list of command line arguments with the entity prefix removed if it
+//     has been used
+//   - an error if the process failed
 func Resolve[CacheT cache.CacheEntity](repo *cache.RepoCache,
 	typename string, namespace string, resolver Resolver[CacheT],
 	args []string) (CacheT, []string, error) {

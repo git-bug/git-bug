@@ -53,18 +53,18 @@ func Pull[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Enti
 // MergeAll will merge all the available remote Entity:
 //
 // Multiple scenario exist:
-// 1. if the remote Entity doesn't exist locally, it's created
-//    --> emit entity.MergeStatusNew
-// 2. if the remote and local Entity have the same state, nothing is changed
-//    --> emit entity.MergeStatusNothing
-// 3. if the local Entity has new commits but the remote don't, nothing is changed
-//    --> emit entity.MergeStatusNothing
-// 4. if the remote has new commit, the local bug is updated to match the same history
-//    (fast-forward update)
-//    --> emit entity.MergeStatusUpdated
-// 5. if both local and remote Entity have new commits (that is, we have a concurrent edition),
-//    a merge commit with an empty operationPack is created to join both branch and form a DAG.
-//    --> emit entity.MergeStatusUpdated
+//  1. if the remote Entity doesn't exist locally, it's created
+//     --> emit entity.MergeStatusNew
+//  2. if the remote and local Entity have the same state, nothing is changed
+//     --> emit entity.MergeStatusNothing
+//  3. if the local Entity has new commits but the remote don't, nothing is changed
+//     --> emit entity.MergeStatusNothing
+//  4. if the remote has new commit, the local bug is updated to match the same history
+//     (fast-forward update)
+//     --> emit entity.MergeStatusUpdated
+//  5. if both local and remote Entity have new commits (that is, we have a concurrent edition),
+//     a merge commit with an empty operationPack is created to join both branch and form a DAG.
+//     --> emit entity.MergeStatusUpdated
 //
 // Note: an author is necessary for the case where a merge commit is created, as this commit will
 // have an author and may be signed if a signing key is available.

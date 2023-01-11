@@ -15,8 +15,8 @@ import (
 )
 
 // 1: original format
-// 2: Identity Ids are generated from the first version serialized data instead of from the first git commit
-//    + Identity hold multiple lamport clocks from other entities, instead of just bug edit
+// 2: Identity Ids are generated from the first version serialized data instead of from the first git
+// commit + Identity hold multiple lamport clocks from other entities, instead of just bug edit
 const formatVersion = 2
 
 // version is a complete set of information about an Identity at a point in time.
@@ -31,7 +31,7 @@ type version struct {
 	unixTime int64
 
 	// The set of keys valid at that time, from this version onward, until they get removed
-	// in a new version. This allow to have multiple key for the same identity (e.g. one per
+	// in a new version. This allows to have multiple key for the same identity (e.g. one per
 	// device) as well as revoke key.
 	keys []*Key
 

@@ -383,9 +383,9 @@ func (i *Identity) NeedCommit() bool {
 // cleaning would be required.
 //
 // An alternative approach would be to have a determinist rebase:
-// - any commits present in both local and remote version would be kept, never changed.
-// - newer commits would be merged in a linear chain of commits, ordered based on the
-//   Lamport time
+//   - any commits present in both local and remote version would be kept, never changed.
+//   - newer commits would be merged in a linear chain of commits, ordered based on the
+//     Lamport time
 //
 // However, this approach leave the possibility, in the case of a compromised crypto keys,
 // of forging a new version with a bogus Lamport time to be inserted before a legit version,
