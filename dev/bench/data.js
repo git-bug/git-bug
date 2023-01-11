@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1673176633558,
+  "lastUpdate": 1673440651702,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -1132,6 +1132,48 @@ window.BENCHMARK_DATA = {
             "value": 1013265111,
             "unit": "ns/op\t165638424 B/op\t  803192 allocs/op",
             "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "76100380978418dbfa6fa880f05d335c9a4aafcd",
+          "message": "Merge pull request #988 from MichaelMure/fix-cache-test\n\ncache: fix tests?",
+          "timestamp": "2023-01-11T13:36:10+01:00",
+          "tree_id": "c843bf0f26bc9b3d8483895ee0d6d0fc7f568470",
+          "url": "https://github.com/MichaelMure/git-bug/commit/76100380978418dbfa6fa880f05d335c9a4aafcd"
+        },
+        "date": 1673440650859,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 19487713,
+            "unit": "ns/op\t 4977928 B/op\t   24215 allocs/op",
+            "extra": "56 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 122298340,
+            "unit": "ns/op\t27861862 B/op\t  134412 allocs/op",
+            "extra": "10 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 590984482,
+            "unit": "ns/op\t165914840 B/op\t  803231 allocs/op",
+            "extra": "2 times\n2 procs"
           }
         ]
       }
