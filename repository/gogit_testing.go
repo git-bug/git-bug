@@ -32,7 +32,10 @@ func CreateGoGitTestRepo(t testing.TB, bare bool) TestedRepo {
 	}
 
 	t.Cleanup(func() {
-		repo.Close()
+		err := repo.Close()
+		if err != nil {
+			log.Println(err)
+		}
 	})
 
 	config := repo.LocalConfig()
