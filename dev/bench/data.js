@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1673440651702,
+  "lastUpdate": 1673443951873,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -1174,6 +1174,48 @@ window.BENCHMARK_DATA = {
             "value": 590984482,
             "unit": "ns/op\t165914840 B/op\t  803231 allocs/op",
             "extra": "2 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9c50a359704f4edd2f33df6d256e032feae3a576",
+          "message": "Merge pull request #989 from MichaelMure/fix-tests\n\nrepo: check error when closing a repo in tests",
+          "timestamp": "2023-01-11T14:30:52+01:00",
+          "tree_id": "1c6732eb1a87ee9f65da62a6cf156bd441a2f02a",
+          "url": "https://github.com/MichaelMure/git-bug/commit/9c50a359704f4edd2f33df6d256e032feae3a576"
+        },
+        "date": 1673443950703,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 42612209,
+            "unit": "ns/op\t 4963160 B/op\t   24205 allocs/op",
+            "extra": "27 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 209205791,
+            "unit": "ns/op\t27868548 B/op\t  134356 allocs/op",
+            "extra": "5 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 1352866392,
+            "unit": "ns/op\t166068848 B/op\t  803284 allocs/op",
+            "extra": "1 times\n2 procs"
           }
         ]
       }
