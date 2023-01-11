@@ -29,104 +29,89 @@ func TestCache(t *testing.T) {
 		return count
 	}
 
-	var (
-		cache *RepoCache
-		bug1  *BugCache
-		iden1 *IdentityCache
-	)
+	cache, err := NewRepoCacheNoEvents(repo)
+	require.NoError(t, err)
 
-	t.Run("entity operations on cache", func(t *testing.T) {
-		cache, err := NewRepoCacheNoEvents(repo)
-		require.NoError(t, err)
+	// Create, set and get user identity
+	iden1, err := cache.Identities().New("René Descartes", "rene@descartes.fr")
+	require.NoError(t, err)
+	err = cache.SetUserIdentity(iden1)
+	require.NoError(t, err)
+	userIden, err := cache.GetUserIdentity()
+	require.NoError(t, err)
+	require.Equal(t, iden1.Id(), userIden.Id())
 
-		// Create, set and get user identity
-		iden1, err = cache.Identities().New("René Descartes", "rene@descartes.fr")
-		require.NoError(t, err)
-		err = cache.SetUserIdentity(iden1)
-		require.NoError(t, err)
-		userIden, err := cache.GetUserIdentity()
-		require.NoError(t, err)
-		require.Equal(t, iden1.Id(), userIden.Id())
+	// it's possible to create two identical identities
+	iden2, err := cache.Identities().New("René Descartes", "rene@descartes.fr")
+	require.NoError(t, err)
 
-		// it's possible to create two identical identities
-		iden2, err := cache.Identities().New("René Descartes", "rene@descartes.fr")
-		require.NoError(t, err)
+	// Two identical identities yield a different id
+	require.NotEqual(t, iden1.Id(), iden2.Id())
 
-		// Two identical identities yield a different id
-		require.NotEqual(t, iden1.Id(), iden2.Id())
+	// There is now two identities in the cache
+	require.Len(t, cache.Identities().AllIds(), 2)
+	require.Len(t, cache.identities.excerpts, 2)
+	require.Len(t, cache.identities.cached, 2)
+	require.Equal(t, uint64(2), indexCount(t, identity.Namespace))
+	require.Equal(t, uint64(0), indexCount(t, bug.Namespace))
 
-		// There is now two identities in the cache
-		require.Len(t, cache.Identities().AllIds(), 2)
-		require.Len(t, cache.identities.excerpts, 2)
-		require.Len(t, cache.identities.cached, 2)
-		require.Equal(t, uint64(2), indexCount(t, identity.Namespace))
-		require.Equal(t, uint64(0), indexCount(t, bug.Namespace))
+	// Create a bug
+	bug1, _, err := cache.Bugs().New("title", "message")
+	require.NoError(t, err)
 
-		// Create a bug
-		bug1, _, err = cache.Bugs().New("title", "message")
-		require.NoError(t, err)
+	// It's possible to create two identical bugs
+	bug2, _, err := cache.Bugs().New("title", "marker")
+	require.NoError(t, err)
 
-		// It's possible to create two identical bugs
-		bug2, _, err := cache.Bugs().New("title", "marker")
-		require.NoError(t, err)
+	// two identical bugs yield a different id
+	require.NotEqual(t, bug1.Id(), bug2.Id())
 
-		// two identical bugs yield a different id
-		require.NotEqual(t, bug1.Id(), bug2.Id())
+	// There is now two bugs in the cache
+	require.Len(t, cache.Bugs().AllIds(), 2)
+	require.Len(t, cache.bugs.excerpts, 2)
+	require.Len(t, cache.bugs.cached, 2)
+	require.Equal(t, uint64(2), indexCount(t, identity.Namespace))
+	require.Equal(t, uint64(2), indexCount(t, bug.Namespace))
 
-		// There is now two bugs in the cache
-		require.Len(t, cache.Bugs().AllIds(), 2)
-		require.Len(t, cache.bugs.excerpts, 2)
-		require.Len(t, cache.bugs.cached, 2)
-		require.Equal(t, uint64(2), indexCount(t, identity.Namespace))
-		require.Equal(t, uint64(2), indexCount(t, bug.Namespace))
+	// Resolving
+	_, err = cache.Identities().Resolve(iden1.Id())
+	require.NoError(t, err)
+	_, err = cache.Identities().ResolveExcerpt(iden1.Id())
+	require.NoError(t, err)
+	_, err = cache.Identities().ResolvePrefix(iden1.Id().String()[:10])
+	require.NoError(t, err)
 
-		// Resolving
-		_, err = cache.Identities().Resolve(iden1.Id())
-		require.NoError(t, err)
-		_, err = cache.Identities().ResolveExcerpt(iden1.Id())
-		require.NoError(t, err)
-		_, err = cache.Identities().ResolvePrefix(iden1.Id().String()[:10])
-		require.NoError(t, err)
+	_, err = cache.Bugs().Resolve(bug1.Id())
+	require.NoError(t, err)
+	_, err = cache.Bugs().ResolveExcerpt(bug1.Id())
+	require.NoError(t, err)
+	_, err = cache.Bugs().ResolvePrefix(bug1.Id().String()[:10])
+	require.NoError(t, err)
 
-		_, err = cache.Bugs().Resolve(bug1.Id())
-		require.NoError(t, err)
-		_, err = cache.Bugs().ResolveExcerpt(bug1.Id())
-		require.NoError(t, err)
-		_, err = cache.Bugs().ResolvePrefix(bug1.Id().String()[:10])
-		require.NoError(t, err)
+	// Querying
+	q, err := query.Parse("status:open author:descartes sort:edit-asc")
+	require.NoError(t, err)
+	res, err := cache.Bugs().Query(q)
+	require.NoError(t, err)
+	require.Len(t, res, 2)
 
-		// Querying
-		q, err := query.Parse("status:open author:descartes sort:edit-asc")
-		require.NoError(t, err)
-		res, err := cache.Bugs().Query(q)
-		require.NoError(t, err)
-		require.Len(t, res, 2)
+	q, err = query.Parse("status:open marker") // full-text search
+	require.NoError(t, err)
+	res, err = cache.Bugs().Query(q)
+	require.NoError(t, err)
+	require.Len(t, res, 1)
 
-		q, err = query.Parse("status:open marker") // full-text search
-		require.NoError(t, err)
-		res, err = cache.Bugs().Query(q)
-		require.NoError(t, err)
-		require.Len(t, res, 1)
-
-		// Close
-		require.NoError(t, cache.Close())
-		require.Empty(t, cache.bugs.cached)
-		require.Empty(t, cache.bugs.excerpts)
-		require.Empty(t, cache.identities.cached)
-		require.Empty(t, cache.identities.excerpts)
-	})
-
-	t.Run("closed caches are empty", func(t *testing.T) {
-		t.Skip()
-		cache, err := NewRepoCacheNoEvents(repo)
-		require.NoError(t, err)
-
-		require.Empty(t, cache.identities.excerpts)
-	})
+	// Close
+	require.NoError(t, cache.Close())
+	require.Empty(t, cache.bugs.cached)
+	require.Empty(t, cache.bugs.excerpts)
+	require.Empty(t, cache.identities.cached)
+	require.Empty(t, cache.identities.excerpts)
 
 	// Reload, only excerpt are loaded, but as we need to load the identities used in the bugs
 	// to check the signatures, we also load the identity used above
-	cache = createTestRepoCacheNoEvents(t, repo)
+	cache, err = NewRepoCacheNoEvents(repo)
+	require.NoError(t, err)
 
 	require.Len(t, cache.bugs.cached, 0)
 	require.Len(t, cache.bugs.excerpts, 2)
@@ -136,7 +121,7 @@ func TestCache(t *testing.T) {
 	require.Equal(t, uint64(2), indexCount(t, bug.Namespace))
 
 	// Resolving load from the disk
-	_, err := cache.Identities().Resolve(iden1.Id())
+	_, err = cache.Identities().Resolve(iden1.Id())
 	require.NoError(t, err)
 	_, err = cache.Identities().ResolveExcerpt(iden1.Id())
 	require.NoError(t, err)
@@ -351,15 +336,4 @@ func createTestRepoCacheNoEvents(t *testing.T, repo repository.TestedRepo) *Repo
 	})
 
 	return cache
-}
-
-func indexCount(t *testing.T, repo repository.TestedRepo, name string) uint64 {
-	t.Helper()
-
-	idx, err := repo.GetIndex(name)
-	require.NoError(t, err)
-	count, err := idx.DocCount()
-	require.NoError(t, err)
-
-	return count
 }
