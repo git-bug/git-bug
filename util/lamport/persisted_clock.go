@@ -3,7 +3,7 @@ package lamport
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 
 	"github.com/go-git/go-billy/v5"
@@ -77,9 +77,14 @@ func (pc *PersistedClock) read() error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
 
-	content, err := ioutil.ReadAll(f)
+	content, err := io.ReadAll(f)
+	if err != nil {
+		_ = f.Close()
+		return err
+	}
+
+	err = f.Close()
 	if err != nil {
 		return err
 	}

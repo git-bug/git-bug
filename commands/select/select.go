@@ -3,7 +3,6 @@ package _select
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -101,6 +100,7 @@ func Select(repo *cache.RepoCache, namespace string, id entity.Id) error {
 
 	_, err = f.Write([]byte(id.String()))
 	if err != nil {
+		_ = f.Close()
 		return err
 	}
 
@@ -124,11 +124,18 @@ func selected[CacheT cache.CacheEntity](repo *cache.RepoCache, resolver Resolver
 		}
 	}
 
-	buf, err := ioutil.ReadAll(io.LimitReader(f, 100))
+	buf, err := io.ReadAll(io.LimitReader(f, 100))
+	if err != nil {
+		_ = f.Close()
+		return nil, err
+	}
+
+	err = f.Close()
 	if err != nil {
 		return nil, err
 	}
-	if len(buf) == 100 {
+
+	if len(buf) >= 100 {
 		return nil, fmt.Errorf("the select file should be < 100 bytes")
 	}
 
@@ -143,11 +150,6 @@ func selected[CacheT cache.CacheEntity](repo *cache.RepoCache, resolver Resolver
 	}
 
 	cached, err := resolver.Resolve(id)
-	if err != nil {
-		return nil, err
-	}
-
-	err = f.Close()
 	if err != nil {
 		return nil, err
 	}

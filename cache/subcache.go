@@ -101,14 +101,19 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) Load() error {
 		return err
 	}
 
-	decoder := gob.NewDecoder(f)
-
 	aux := struct {
 		Version  uint
 		Excerpts map[entity.Id]ExcerptT
 	}{}
 
+	decoder := gob.NewDecoder(f)
 	err = decoder.Decode(&aux)
+	if err != nil {
+		_ = f.Close()
+		return err
+	}
+
+	err = f.Close()
 	if err != nil {
 		return err
 	}
@@ -173,6 +178,7 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) write() error {
 
 	_, err = f.Write(data.Bytes())
 	if err != nil {
+		_ = f.Close()
 		return err
 	}
 
