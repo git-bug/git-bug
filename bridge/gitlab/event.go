@@ -5,8 +5,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/MichaelMure/git-bug/util/text"
 	"github.com/xanzy/go-gitlab"
+
+	"github.com/MichaelMure/git-bug/util/text"
 )
 
 // Event represents a unified GitLab event (note, label or state event).
@@ -204,9 +205,9 @@ func SortedEvents(inputs ...<-chan Event) chan Event {
 }
 
 // getNewTitle parses body diff given by gitlab api and return it final form
-// examples: "changed title from **fourth issue** to **fourth issue{+ changed+}**"
-//           "changed title from **fourth issue{- changed-}** to **fourth issue**"
-// because Gitlab
+// examples:
+// - "changed title from **fourth issue** to **fourth issue{+ changed+}**"
+// - "changed title from **fourth issue{- changed-}** to **fourth issue**"
 func getNewTitle(diff string) string {
 	newTitle := strings.Split(diff, "** to **")[1]
 	newTitle = strings.Replace(newTitle, "{+", "", -1)

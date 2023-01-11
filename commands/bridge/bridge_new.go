@@ -33,7 +33,7 @@ func newBridgeNewCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "new",
 		Short: "Configure a new bridge",
-		Long: `	Configure a new bridge by passing flags or/and using interactive terminal prompts. You can avoid all the terminal prompts by passing all the necessary flags to configure your bridge.`,
+		Long:  "Configure a new bridge by passing flags or/and using interactive terminal prompts. You can avoid all the terminal prompts by passing all the necessary flags to configure your bridge.",
 		Example: `# Interactive example
 [1]: github
 [2]: gitlab

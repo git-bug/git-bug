@@ -40,14 +40,14 @@ type cacheMgmt interface {
 
 // RepoCache is a cache for a Repository. This cache has multiple functions:
 //
-// 1. After being loaded, a Bug is kept in memory in the cache, allowing for fast
-// 		access later.
-// 2. The cache maintain in memory and on disk a pre-digested excerpt for each bug,
-// 		allowing for fast querying the whole set of bugs without having to load
-//		them individually.
-// 3. The cache guarantee that a single instance of a Bug is loaded at once, avoiding
-// 		loss of data that we could have with multiple copies in the same process.
-// 4. The same way, the cache maintain in memory a single copy of the loaded identities.
+//  1. After being loaded, a Bug is kept in memory in the cache, allowing for fast
+//     access later.
+//  2. The cache maintain in memory and on disk a pre-digested excerpt for each bug,
+//     allowing for fast querying the whole set of bugs without having to load
+//     them individually.
+//  3. The cache guarantee that a single instance of a Bug is loaded at once, avoiding
+//     loss of data that we could have with multiple copies in the same process.
+//  4. The same way, the cache maintain in memory a single copy of the loaded identities.
 //
 // The cache also protect the on-disk data by locking the git repository for its
 // own usage, by writing a lock file. Of course, normal git operations are not
