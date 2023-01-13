@@ -4,6 +4,9 @@ package commands
 import (
 	"fmt"
 	"os"
+	"os/exec"
+	"runtime/debug"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -31,6 +34,8 @@ the same git remote you are already using to collaborate with other people.
 `,
 
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			GitLastTag, GitExactTag, GitCommit = getTagsAndCommit()
+
 			root := cmd.Root()
 
 			if GitExactTag == "undefined" {
@@ -89,4 +94,41 @@ func Execute() {
 	if err := NewRootCommand().Execute(); err != nil {
 		os.Exit(1)
 	}
+}
+
+func getTagsAndCommit() (tag, exacttag, commit string) {
+	var t, e, c string
+
+	info, ok := debug.ReadBuildInfo()
+
+	if !ok {
+		fmt.Println("could not get commit")
+	}
+
+	for _, kv := range info.Settings {
+		switch kv.Key {
+		case "vcs.revision":
+			c = kv.Value
+		}
+	}
+
+	cmd := exec.Command("git", "describe", "--tags", "--abbrev=0")
+	stdout, err := cmd.Output()
+
+	if err != nil {
+		fmt.Printf("could not get last tag: %v\n", err.Error())
+	}
+
+	t = strings.TrimSuffix(string(stdout), "\n")
+
+	cmd = exec.Command("git", "name-rev", "--name-only", "--tags", "HEAD")
+	stdout, err = cmd.Output()
+
+	if err != nil {
+		fmt.Printf("could not get exact tag: %v\n", err.Error())
+	}
+
+	e = strings.TrimSuffix(string(stdout), "\n")
+
+	return t, e, c
 }
