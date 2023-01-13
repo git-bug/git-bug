@@ -40,6 +40,7 @@ const (
 	EventRemoveLabel
 	EventMentionedInIssue
 	EventMentionedInMergeRequest
+	EventMentionedInCommit
 )
 
 var _ Event = &NoteEvent{}
@@ -96,6 +97,9 @@ func (n NoteEvent) Kind() EventKind {
 
 	case strings.HasPrefix(n.Body, "mentioned in merge request"):
 		return EventMentionedInMergeRequest
+
+	case strings.HasPrefix(n.Body, "mentioned in commit"):
+		return EventMentionedInCommit
 
 	default:
 		return EventUnknown

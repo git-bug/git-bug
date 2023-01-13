@@ -324,7 +324,8 @@ func (gi *gitlabImporter) ensureIssueEvent(repo *cache.RepoCache, b *cache.BugCa
 		EventLocked,
 		EventUnlocked,
 		EventMentionedInIssue,
-		EventMentionedInMergeRequest:
+		EventMentionedInMergeRequest,
+		EventMentionedInCommit:
 
 		return nil
 
