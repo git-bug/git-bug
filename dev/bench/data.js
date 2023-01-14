@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1673704245835,
+  "lastUpdate": 1673704264203,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -1342,6 +1342,48 @@ window.BENCHMARK_DATA = {
             "value": 652527844,
             "unit": "ns/op\t166329372 B/op\t  803403 allocs/op",
             "extra": "2 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2a78fd9c94960d86264e39d37e5a3e25b0a8358d",
+          "message": "Merge pull request #990 from buestad/master\n\nadded EventMentionedInCommit",
+          "timestamp": "2023-01-14T14:49:36+01:00",
+          "tree_id": "9c850c163c17595bce95a6bfe1c5ad5716371fc2",
+          "url": "https://github.com/MichaelMure/git-bug/commit/2a78fd9c94960d86264e39d37e5a3e25b0a8358d"
+        },
+        "date": 1673704263068,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 32880688,
+            "unit": "ns/op\t 4966299 B/op\t   24209 allocs/op",
+            "extra": "38 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 201891906,
+            "unit": "ns/op\t27900772 B/op\t  134425 allocs/op",
+            "extra": "7 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 1282991367,
+            "unit": "ns/op\t166069456 B/op\t  803280 allocs/op",
+            "extra": "1 times\n2 procs"
           }
         ]
       }
