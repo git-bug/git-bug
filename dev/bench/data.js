@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1673703868302,
+  "lastUpdate": 1673704245835,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -1299,6 +1299,48 @@ window.BENCHMARK_DATA = {
             "name": "BenchmarkReadBugs150",
             "value": 718771982,
             "unit": "ns/op\t165681860 B/op\t  803235 allocs/op",
+            "extra": "2 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6e5ea512ac82972c6e0da78976f967006e5fe5c4",
+          "message": "Merge pull request #987 from MichaelMure/cache-progress-bar\n\ncommands: add a nice terminal progress bar when building the cache",
+          "timestamp": "2023-01-14T14:49:25+01:00",
+          "tree_id": "7727fc721b4bd82fcf7869fb48f9656504cbb3af",
+          "url": "https://github.com/MichaelMure/git-bug/commit/6e5ea512ac82972c6e0da78976f967006e5fe5c4"
+        },
+        "date": 1673704245350,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 19489651,
+            "unit": "ns/op\t 4969961 B/op\t   24219 allocs/op",
+            "extra": "55 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 109234692,
+            "unit": "ns/op\t27870844 B/op\t  134425 allocs/op",
+            "extra": "10 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 652527844,
+            "unit": "ns/op\t166329372 B/op\t  803403 allocs/op",
             "extra": "2 times\n2 procs"
           }
         ]
