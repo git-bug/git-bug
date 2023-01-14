@@ -63,6 +63,9 @@ func RepoStorageTest(t *testing.T, repo RepoStorage) {
 	_, err = f.Write([]byte("hello"))
 	require.NoError(t, err)
 
+	err = f.Close()
+	require.NoError(t, err)
+
 	// remove all
 	err = storage.RemoveAll(".")
 	require.NoError(t, err)
