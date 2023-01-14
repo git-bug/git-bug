@@ -15,6 +15,7 @@ import (
 	"github.com/MichaelMure/git-bug/commands/execenv"
 	"github.com/MichaelMure/git-bug/entities/bug"
 	"github.com/MichaelMure/git-bug/entities/common"
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/query"
 	"github.com/MichaelMure/git-bug/util/colors"
 )
@@ -233,6 +234,24 @@ func bugsIDFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) error {
 }
 
 func bugsDefaultFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) error {
+	width := env.Out.Width()
+	widthId := entity.HumanIdLength
+	widthStatus := len("closed")
+	widthComment := 6
+
+	widthRemaining := width -
+		widthId - 1 -
+		widthStatus - 1 -
+		widthComment - 1
+
+	widthTitle := int(float32(widthRemaining-3) * 0.7)
+	if widthTitle < 0 {
+		widthTitle = 0
+	}
+
+	widthRemaining = widthRemaining - widthTitle - 3 - 2
+	widthAuthor := widthRemaining
+
 	for _, b := range bugExcerpts {
 		author, err := env.Backend.Identities().ResolveExcerpt(b.AuthorId)
 		if err != nil {
@@ -249,8 +268,8 @@ func bugsDefaultFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) err
 
 		// truncate + pad if needed
 		labelsFmt := text.TruncateMax(labelsTxt.String(), 10)
-		titleFmt := text.LeftPadMaxLine(strings.TrimSpace(b.Title), 50-text.Len(labelsFmt), 0)
-		authorFmt := text.LeftPadMaxLine(author.DisplayName(), 15, 0)
+		titleFmt := text.LeftPadMaxLine(strings.TrimSpace(b.Title), widthTitle-text.Len(labelsFmt), 0)
+		authorFmt := text.LeftPadMaxLine(author.DisplayName(), widthAuthor, 0)
 
 		comments := fmt.Sprintf("%3d 💬", b.LenComments-1)
 		if b.LenComments-1 <= 0 {
@@ -260,7 +279,7 @@ func bugsDefaultFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) err
 			comments = "  ∞ 💬"
 		}
 
-		env.Out.Printf("%s\t%s\t%s\t%s\t%s\n",
+		env.Out.Printf("%s\t%s\t%s   %s %s\n",
 			colors.Cyan(b.Id().Human()),
 			colors.Yellow(b.Status),
 			titleFmt+labelsFmt,
