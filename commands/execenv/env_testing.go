@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -11,6 +12,8 @@ import (
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/repository"
 )
+
+var _ Out = &TestOut{}
 
 type TestOut struct {
 	*bytes.Buffer
@@ -35,6 +38,10 @@ func (te *TestOut) PrintJSON(v interface{}) error {
 	}
 	te.Println(string(raw))
 	return nil
+}
+
+func (te *TestOut) Raw() io.Writer {
+	return te.Buffer
 }
 
 func NewTestEnv(t *testing.T) *Env {

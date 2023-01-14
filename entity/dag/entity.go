@@ -314,6 +314,9 @@ func ReadAll[EntityT entity.Interface](def Definition, wrapper func(e *Entity) E
 			return
 		}
 
+		total := int64(len(refs))
+		current := int64(1)
+
 		for _, ref := range refs {
 			e, err := read[EntityT](def, wrapper, repo, resolvers, ref)
 
@@ -322,7 +325,12 @@ func ReadAll[EntityT entity.Interface](def Definition, wrapper func(e *Entity) E
 				return
 			}
 
-			out <- entity.StreamedEntity[EntityT]{Entity: e}
+			out <- entity.StreamedEntity[EntityT]{
+				Entity:        e,
+				CurrentEntity: current,
+				TotalEntities: total,
+			}
+			current++
 		}
 	}()
 
