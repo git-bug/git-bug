@@ -11,7 +11,7 @@ require (
 	github.com/awesome-gocui/gocui v1.1.0
 	github.com/blevesearch/bleve v1.0.14
 	github.com/cheekybits/genny v1.0.0
-	github.com/dustin/go-humanize v1.0.0
+	github.com/dustin/go-humanize v1.0.1
 	github.com/fatih/color v1.13.0
 	github.com/go-git/go-billy/v5 v5.4.0
 	github.com/go-git/go-git/v5 v5.5.2
