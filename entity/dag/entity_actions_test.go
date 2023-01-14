@@ -406,3 +406,34 @@ func TestRemove(t *testing.T) {
 	err = Remove(def, repoA, e.Id())
 	require.NoError(t, err)
 }
+
+func TestRemoveAll(t *testing.T) {
+	repoA, _, _, id1, _, resolvers, def := makeTestContextRemote(t)
+
+	var ids []entity.Id
+
+	for i := 0; i < 10; i++ {
+		e := New(def)
+		e.Append(newOp1(id1, "foo"))
+		require.NoError(t, e.Commit(repoA))
+		ids = append(ids, e.Id())
+	}
+
+	_, err := Push(def, repoA, "remote")
+	require.NoError(t, err)
+
+	err = RemoveAll(def, repoA)
+	require.NoError(t, err)
+
+	for _, id := range ids {
+		_, err = Read(def, wrapper, repoA, resolvers, id)
+		require.Error(t, err)
+
+		_, err = readRemote(def, wrapper, repoA, resolvers, "remote", id)
+		require.Error(t, err)
+	}
+
+	// Remove is idempotent
+	err = RemoveAll(def, repoA)
+	require.NoError(t, err)
+}

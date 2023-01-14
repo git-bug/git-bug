@@ -2,6 +2,7 @@ package repository
 
 import (
 	"math/rand"
+	"os"
 	"testing"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
@@ -9,8 +10,6 @@ import (
 
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
-
-// TODO: add tests for RepoStorage
 
 type RepoCreator func(t testing.TB, bare bool) TestedRepo
 
@@ -32,6 +31,10 @@ func RepoTest(t *testing.T, creator RepoCreator) {
 				RepoConfigTest(t, repo)
 			})
 
+			t.Run("Storage", func(t *testing.T) {
+				RepoStorageTest(t, repo)
+			})
+
 			t.Run("Index", func(t *testing.T) {
 				RepoIndexTest(t, repo)
 			})
@@ -46,6 +49,36 @@ func RepoTest(t *testing.T, creator RepoCreator) {
 // helper to test a RepoConfig
 func RepoConfigTest(t *testing.T, repo RepoConfig) {
 	testConfig(t, repo.LocalConfig())
+}
+
+func RepoStorageTest(t *testing.T, repo RepoStorage) {
+	storage := repo.LocalStorage()
+
+	err := storage.MkdirAll("foo/bar", 0755)
+	require.NoError(t, err)
+
+	f, err := storage.Create("foo/bar/foofoo")
+	require.NoError(t, err)
+
+	_, err = f.Write([]byte("hello"))
+	require.NoError(t, err)
+
+	err = f.Close()
+	require.NoError(t, err)
+
+	// remove all
+	err = storage.RemoveAll(".")
+	require.NoError(t, err)
+
+	fi, err := storage.ReadDir(".")
+	// a real FS would remove the root directory with RemoveAll and subsequent call would fail
+	// a memory FS would still have a virtual root and subsequent call would succeed
+	// not ideal, but will do for now
+	if err == nil {
+		require.Empty(t, fi)
+	} else {
+		require.True(t, os.IsNotExist(err))
+	}
 }
 
 func randomHash() Hash {

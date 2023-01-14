@@ -9,7 +9,6 @@ import (
 
 	"github.com/99designs/keyring"
 	"github.com/ProtonMail/go-crypto/openpgp"
-	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/memfs"
 
 	"github.com/MichaelMure/git-bug/util/lamport"
@@ -123,14 +122,14 @@ func (r *mockRepoCommon) GetRemotes() (map[string]string, error) {
 var _ RepoStorage = &mockRepoStorage{}
 
 type mockRepoStorage struct {
-	localFs billy.Filesystem
+	localFs LocalStorage
 }
 
 func NewMockRepoStorage() *mockRepoStorage {
-	return &mockRepoStorage{localFs: memfs.New()}
+	return &mockRepoStorage{localFs: billyLocalStorage{Filesystem: memfs.New()}}
 }
 
-func (m *mockRepoStorage) LocalStorage() billy.Filesystem {
+func (m *mockRepoStorage) LocalStorage() LocalStorage {
 	return m.localFs
 }
 
@@ -202,6 +201,11 @@ loop:
 
 func (m *mockIndex) DocCount() (uint64, error) {
 	return uint64(len(*m)), nil
+}
+
+func (m *mockIndex) Remove(id string) error {
+	delete(*m, id)
+	return nil
 }
 
 func (m *mockIndex) Clear() error {

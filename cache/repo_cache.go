@@ -32,6 +32,7 @@ type cacheMgmt interface {
 	Load() error
 	Build() error
 	SetCacheSize(size int)
+	RemoveAll() error
 	MergeAll(remote string) <-chan entity.MergeResult
 	GetNamespace() string
 	Close() error

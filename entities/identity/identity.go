@@ -164,56 +164,6 @@ func ListLocalIds(repo repository.Repo) ([]entity.Id, error) {
 	return entity.RefsToIds(refs), nil
 }
 
-// RemoveIdentity will remove a local identity from its entity.Id
-func RemoveIdentity(repo repository.ClockedRepo, id entity.Id) error {
-	var fullMatches []string
-
-	refs, err := repo.ListRefs(identityRefPattern + id.String())
-	if err != nil {
-		return err
-	}
-	if len(refs) > 1 {
-		return entity.NewErrMultipleMatch(Typename, entity.RefsToIds(refs))
-	}
-	if len(refs) == 1 {
-		// we have the identity locally
-		fullMatches = append(fullMatches, refs[0])
-	}
-
-	remotes, err := repo.GetRemotes()
-	if err != nil {
-		return err
-	}
-
-	for remote := range remotes {
-		remotePrefix := fmt.Sprintf(identityRemoteRefPattern+id.String(), remote)
-		remoteRefs, err := repo.ListRefs(remotePrefix)
-		if err != nil {
-			return err
-		}
-		if len(remoteRefs) > 1 {
-			return entity.NewErrMultipleMatch(Typename, entity.RefsToIds(refs))
-		}
-		if len(remoteRefs) == 1 {
-			// found the identity in a remote
-			fullMatches = append(fullMatches, remoteRefs[0])
-		}
-	}
-
-	if len(fullMatches) == 0 {
-		return entity.NewErrNotFound(Typename)
-	}
-
-	for _, ref := range fullMatches {
-		err = repo.RemoveRef(ref)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 // ReadAllLocal read and parse all local Identity
 func ReadAllLocal(repo repository.ClockedRepo) <-chan entity.StreamedEntity[*Identity] {
 	return readAll(repo, identityRefPattern)

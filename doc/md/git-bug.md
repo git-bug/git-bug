@@ -34,4 +34,5 @@ git-bug [flags]
 * [git-bug user](git-bug_user.md)	 - List identities
 * [git-bug version](git-bug_version.md)	 - Show git-bug version information
 * [git-bug webui](git-bug_webui.md)	 - Launch the web UI
+* [git-bug wipe](git-bug_wipe.md)	 - Wipe git-bug from the git repository
 

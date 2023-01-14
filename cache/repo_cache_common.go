@@ -3,12 +3,12 @@ package cache
 import (
 	"sync"
 
-	"github.com/go-git/go-billy/v5"
 	"github.com/pkg/errors"
 
 	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
+	"github.com/MichaelMure/git-bug/util/multierr"
 )
 
 func (c *RepoCache) Name() string {
@@ -56,7 +56,7 @@ func (c *RepoCache) GetRemotes() (map[string]string, error) {
 }
 
 // LocalStorage return a billy.Filesystem giving access to $RepoPath/.git/git-bug
-func (c *RepoCache) LocalStorage() billy.Filesystem {
+func (c *RepoCache) LocalStorage() repository.LocalStorage {
 	return c.repo.LocalStorage()
 }
 
@@ -80,6 +80,15 @@ func (c *RepoCache) Fetch(remote string) (string, error) {
 
 	// fetch everything at once, to have a single auth step if required.
 	return c.repo.FetchRefs(remote, prefixes...)
+}
+
+// RemoveAll deletes all entities from the cache and the disk.
+func (c *RepoCache) RemoveAll() error {
+	var errWait multierr.ErrWaitGroup
+	for _, mgmt := range c.subcaches {
+		errWait.Go(mgmt.RemoveAll)
+	}
+	return errWait.Wait()
 }
 
 // MergeAll will merge all the available remote bug and identities
@@ -160,6 +169,19 @@ func (c *RepoCache) SetUserIdentity(i *IdentityCache) error {
 
 	c.userIdentityId = i.Id()
 
+	return nil
+}
+
+func (c *RepoCache) ClearUserIdentity() error {
+	c.muUserIdentity.Lock()
+	defer c.muUserIdentity.Unlock()
+
+	err := identity.ClearUserIdentity(c.repo)
+	if err != nil {
+		return err
+	}
+
+	c.userIdentityId = ""
 	return nil
 }
 

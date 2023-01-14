@@ -275,7 +275,7 @@ func TestIdentityRemove(t *testing.T) {
 	_, err = Fetch(repo, "remoteB")
 	require.NoError(t, err)
 
-	err = RemoveIdentity(repo, rene.Id())
+	err = Remove(repo, rene.Id())
 	require.NoError(t, err)
 
 	_, err = ReadLocal(repo, rene.Id())

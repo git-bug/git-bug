@@ -34,6 +34,7 @@ type Actions[EntityT entity.Interface] struct {
 	ReadWithResolver    func(repo repository.ClockedRepo, resolvers entity.Resolvers, id entity.Id) (EntityT, error)
 	ReadAllWithResolver func(repo repository.ClockedRepo, resolvers entity.Resolvers) <-chan entity.StreamedEntity[EntityT]
 	Remove              func(repo repository.ClockedRepo, id entity.Id) error
+	RemoveAll           func(repo repository.ClockedRepo) error
 	MergeAll            func(repo repository.ClockedRepo, resolvers entity.Resolvers, remote string, mergeAuthor identity.Interface) <-chan entity.MergeResult
 }
 
@@ -399,7 +400,49 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) Remove(prefix string) error {
 	delete(sc.excerpts, e.Id())
 	sc.lru.Remove(e.Id())
 
+	index, err := sc.repo.GetIndex(sc.namespace)
+	if err != nil {
+		sc.mu.Unlock()
+		return err
+	}
+
+	err = index.Remove(e.Id().String())
 	sc.mu.Unlock()
+	if err != nil {
+		return err
+	}
+
+	return sc.write()
+}
+
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) RemoveAll() error {
+	sc.mu.Lock()
+
+	err := sc.actions.RemoveAll(sc.repo)
+	if err != nil {
+		sc.mu.Unlock()
+		return err
+	}
+
+	for id, _ := range sc.cached {
+		delete(sc.cached, id)
+		sc.lru.Remove(id)
+	}
+	for id, _ := range sc.excerpts {
+		delete(sc.excerpts, id)
+	}
+
+	index, err := sc.repo.GetIndex(sc.namespace)
+	if err != nil {
+		sc.mu.Unlock()
+		return err
+	}
+
+	err = index.Clear()
+	sc.mu.Unlock()
+	if err != nil {
+		return err
+	}
 
 	return sc.write()
 }

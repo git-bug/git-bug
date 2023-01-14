@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
-	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/osfs"
 	gogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
@@ -48,7 +47,7 @@ type GoGitRepo struct {
 	indexes      map[string]Index
 
 	keyring      Keyring
-	localStorage billy.Filesystem
+	localStorage LocalStorage
 }
 
 // OpenGoGitRepo opens an already existing repo at the given path and
@@ -77,7 +76,7 @@ func OpenGoGitRepo(path, namespace string, clockLoaders []ClockLoader) (*GoGitRe
 		clocks:       make(map[string]lamport.Clock),
 		indexes:      make(map[string]Index),
 		keyring:      k,
-		localStorage: osfs.New(filepath.Join(path, namespace)),
+		localStorage: billyLocalStorage{Filesystem: osfs.New(filepath.Join(path, namespace))},
 	}
 
 	loaderToRun := make([]ClockLoader, 0, len(clockLoaders))
@@ -131,7 +130,7 @@ func InitGoGitRepo(path, namespace string) (*GoGitRepo, error) {
 		clocks:       make(map[string]lamport.Clock),
 		indexes:      make(map[string]Index),
 		keyring:      k,
-		localStorage: osfs.New(filepath.Join(path, ".git", namespace)),
+		localStorage: billyLocalStorage{Filesystem: osfs.New(filepath.Join(path, ".git", namespace))},
 	}, nil
 }
 
@@ -156,7 +155,7 @@ func InitBareGoGitRepo(path, namespace string) (*GoGitRepo, error) {
 		clocks:       make(map[string]lamport.Clock),
 		indexes:      make(map[string]Index),
 		keyring:      k,
-		localStorage: osfs.New(filepath.Join(path, namespace)),
+		localStorage: billyLocalStorage{Filesystem: osfs.New(filepath.Join(path, namespace))},
 	}, nil
 }
 
@@ -320,7 +319,7 @@ func (repo *GoGitRepo) GetRemotes() (map[string]string, error) {
 
 // LocalStorage returns a billy.Filesystem giving access to
 // $RepoPath/.git/$Namespace.
-func (repo *GoGitRepo) LocalStorage() billy.Filesystem {
+func (repo *GoGitRepo) LocalStorage() LocalStorage {
 	return repo.localStorage
 }
 

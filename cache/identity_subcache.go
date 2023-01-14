@@ -39,7 +39,8 @@ func NewRepoCacheIdentity(repo repository.ClockedRepo,
 		ReadAllWithResolver: func(repo repository.ClockedRepo, resolvers entity.Resolvers) <-chan entity.StreamedEntity[*identity.Identity] {
 			return identity.ReadAllLocal(repo)
 		},
-		Remove: identity.RemoveIdentity,
+		Remove:    identity.Remove,
+		RemoveAll: identity.RemoveAll,
 		MergeAll: func(repo repository.ClockedRepo, resolvers entity.Resolvers, remote string, mergeAuthor identity.Interface) <-chan entity.MergeResult {
 			return identity.MergeAll(repo, remote)
 		},

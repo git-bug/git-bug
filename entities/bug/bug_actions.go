@@ -37,3 +37,9 @@ func MergeAll(repo repository.ClockedRepo, resolvers entity.Resolvers, remote st
 func Remove(repo repository.ClockedRepo, id entity.Id) error {
 	return dag.Remove(def, repo, id)
 }
+
+// RemoveAll will remove all local bugs.
+// RemoveAll is idempotent.
+func RemoveAll(repo repository.ClockedRepo) error {
+	return dag.RemoveAll(def, repo)
+}
