@@ -35,6 +35,9 @@ require (
 	golang.org/x/text v0.6.0
 )
 
+// https://github.com/go-git/go-git/pull/659
+replace github.com/go-git/go-git/v5 => github.com/MichaelMure/go-git/v5 v5.1.1-0.20230114115943-17400561a81c
+
 require (
 	github.com/cloudflare/circl v1.3.1 // indirect
 	github.com/lithammer/dedent v1.1.0 // indirect
