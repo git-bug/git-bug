@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1673702554263,
+  "lastUpdate": 1673703868302,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -1257,6 +1257,48 @@ window.BENCHMARK_DATA = {
             "name": "BenchmarkReadBugs150",
             "value": 718843269,
             "unit": "ns/op\t165793428 B/op\t  803270 allocs/op",
+            "extra": "2 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a1eec9aadfa24bad4804edc5fbb1c0753f4690cb",
+          "message": "Merge pull request #992 from MichaelMure/dependabot/go_modules/github.com/dustin/go-humanize-1.0.1\n\nbuild(deps): bump github.com/dustin/go-humanize from 1.0.0 to 1.0.1",
+          "timestamp": "2023-01-14T14:42:59+01:00",
+          "tree_id": "10a482c77b9f4e4a3fd74cfe41691b405bd6ef6d",
+          "url": "https://github.com/MichaelMure/git-bug/commit/a1eec9aadfa24bad4804edc5fbb1c0753f4690cb"
+        },
+        "date": 1673703867562,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 20122171,
+            "unit": "ns/op\t 4972530 B/op\t   24212 allocs/op",
+            "extra": "60 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 115050476,
+            "unit": "ns/op\t27858655 B/op\t  134383 allocs/op",
+            "extra": "10 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 718771982,
+            "unit": "ns/op\t165681860 B/op\t  803235 allocs/op",
             "extra": "2 times\n2 procs"
           }
         ]
