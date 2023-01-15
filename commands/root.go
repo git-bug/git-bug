@@ -4,16 +4,14 @@ package commands
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"runtime/debug"
-	"strings"
 
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/commands/bridge"
-	"github.com/MichaelMure/git-bug/commands/bug"
+	bridgecmd "github.com/MichaelMure/git-bug/commands/bridge"
+	bugcmd "github.com/MichaelMure/git-bug/commands/bug"
 	"github.com/MichaelMure/git-bug/commands/execenv"
-	"github.com/MichaelMure/git-bug/commands/user"
+	usercmd "github.com/MichaelMure/git-bug/commands/user"
 )
 
 // These variables are initialized externally during the build. See the Makefile.
@@ -34,16 +32,30 @@ the same git remote you are already using to collaborate with other people.
 `,
 
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			GitLastTag, GitExactTag, GitCommit = getTagsAndCommit()
-
 			root := cmd.Root()
 
 			if GitExactTag == "undefined" {
 				GitExactTag = ""
 			}
+
+			// release version
 			root.Version = GitLastTag
+
+			// dev version
 			if GitExactTag == "" {
-				root.Version = fmt.Sprintf("%s-dev-%.10s", root.Version, GitCommit)
+				if root.Version != "" {
+					// if we have a tag, append the commit hash
+					root.Version = fmt.Sprintf("%s-dev-%.10s", root.Version, GitCommit)
+				} else {
+					// if we don't have a tag, try to read
+					// commit and dirty state from the build info
+					commit, dirty := getCommitAndDirty()
+					root.Version = fmt.Sprintf("dev-%.10s", commit)
+
+					if dirty != "" {
+						root.Version = fmt.Sprintf("%s-dirty", root.Version)
+					}
+				}
 			}
 		},
 
@@ -96,8 +108,8 @@ func Execute() {
 	}
 }
 
-func getTagsAndCommit() (tag, exacttag, commit string) {
-	var t, e, c string
+func getCommitAndDirty() (commit, dirty string) {
+	var d, c string
 
 	info, ok := debug.ReadBuildInfo()
 
@@ -105,30 +117,18 @@ func getTagsAndCommit() (tag, exacttag, commit string) {
 		fmt.Println("could not get commit")
 	}
 
+	// get the commit and
+	// modified status (that is the flag for repository dirty or not)
 	for _, kv := range info.Settings {
 		switch kv.Key {
 		case "vcs.revision":
 			c = kv.Value
+		case "vcs.modified":
+			if kv.Value == "true" {
+				d = "dirty"
+			}
 		}
 	}
 
-	cmd := exec.Command("git", "describe", "--tags", "--abbrev=0")
-	stdout, err := cmd.Output()
-
-	if err != nil {
-		fmt.Printf("could not get last tag: %v\n", err.Error())
-	}
-
-	t = strings.TrimSuffix(string(stdout), "\n")
-
-	cmd = exec.Command("git", "name-rev", "--name-only", "--tags", "HEAD")
-	stdout, err = cmd.Output()
-
-	if err != nil {
-		fmt.Printf("could not get exact tag: %v\n", err.Error())
-	}
-
-	e = strings.TrimSuffix(string(stdout), "\n")
-
-	return t, e, c
+	return c, d
 }

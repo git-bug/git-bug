@@ -1,5 +1,8 @@
 all: build
 
+GIT_COMMIT:=$(shell git rev-parse --short HEAD)
+GIT_LAST_TAG:=$(shell git describe --dirty --tags)
+GIT_EXACT_TAG:=$(shell git name-rev --name-only --tags HEAD)
 UNAME_S := $(shell uname -s)
 XARGS:=xargs -r
 ifeq ($(UNAME_S),Darwin)
@@ -7,27 +10,30 @@ ifeq ($(UNAME_S),Darwin)
 endif
 
 COMMANDS_PATH:=github.com/MichaelMure/git-bug/commands
+LDFLAGS:=-X ${COMMANDS_PATH}.GitCommit=${GIT_COMMIT} \
+	-X ${COMMANDS_PATH}.GitLastTag=${GIT_LAST_TAG} \
+	-X ${COMMANDS_PATH}.GitExactTag=${GIT_EXACT_TAG}
 
 .PHONY: build
 build:
 	go generate
-	go build .
+	go build -ldflags "$(LDFLAGS)" .
 
 # produce a build debugger friendly
 .PHONY: debug-build
 debug-build:
 	go generate
-	go build -gcflags=all="-N -l" .
+	go build -ldflags "$(LDFLAGS)" -gcflags=all="-N -l" .
 
 .PHONY: install
 install:
 	go generate
-	go install .
+	go install -ldflags "$(LDFLAGS)" .
 
 .PHONY: releases
 releases:
 	go generate
-	go run github.com/mitchellh/gox@v1.0.1 -osarch '!darwin/386' -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}"
+	go run github.com/mitchellh/gox@v1.0.1 -ldflags "$(LDFLAGS)" -osarch '!darwin/386' -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}"
 
 secure: secure-practices secure-vulnerabilities
 
@@ -56,7 +62,7 @@ pack-webui:
 # produce a build that will fetch the web UI from the filesystem instead of from the binary
 .PHONY: debug-webui
 debug-webui:
-	go build -tags=debugwebui
+	go build -ldflags "$(LDFLAGS)" -tags=debugwebui
 
 .PHONY: clean-local-bugs
 clean-local-bugs:
