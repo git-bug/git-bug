@@ -20,19 +20,46 @@ const RootCommandName = "git-bug"
 
 const gitBugNamespace = "git-bug"
 
+type IOMode int
+
+const (
+	UnknownIOMode IOMode = iota
+	TerminalIOMode
+	PipedOrRedirectedIOMode
+)
+
+func getIOMode(io *os.File) IOMode {
+	info, err := io.Stat()
+	if err != nil {
+		panic("only os.StdIn or os.Stdout should be passed to this method")
+	}
+
+	if (info.Mode() & os.ModeCharDevice) == os.ModeCharDevice {
+		return TerminalIOMode
+	}
+
+	return PipedOrRedirectedIOMode
+}
+
 // Env is the environment of a command
 type Env struct {
 	Repo    repository.ClockedRepo
 	Backend *cache.RepoCache
+	In      io.Reader
+	InMode  IOMode
 	Out     Out
+	OutMode IOMode
 	Err     Out
 }
 
 func NewEnv() *Env {
 	return &Env{
-		Repo: nil,
-		Out:  out{Writer: os.Stdout},
-		Err:  out{Writer: os.Stderr},
+		Repo:    nil,
+		In:      os.Stdin,
+		InMode:  getIOMode(os.Stdin),
+		Out:     out{Writer: os.Stdout},
+		OutMode: getIOMode(os.Stdout),
+		Err:     out{Writer: os.Stderr},
 	}
 }
 
