@@ -9,7 +9,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
-	"github.com/MichaelMure/git-bug/input"
+	"github.com/MichaelMure/git-bug/commands/input"
 )
 
 const (

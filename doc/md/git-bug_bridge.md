@@ -1,6 +1,6 @@
 ## git-bug bridge
 
-Configure and use bridges to other bug trackers.
+List bridges to other bug trackers
 
 ```
 git-bug bridge [flags]
@@ -14,10 +14,10 @@ git-bug bridge [flags]
 
 ### SEE ALSO
 
-* [git-bug](git-bug.md)	 - A bug tracker embedded in Git.
-* [git-bug bridge auth](git-bug_bridge_auth.md)	 - List all known bridge authentication credentials.
-* [git-bug bridge configure](git-bug_bridge_configure.md)	 - Configure a new bridge.
-* [git-bug bridge pull](git-bug_bridge_pull.md)	 - Pull updates.
-* [git-bug bridge push](git-bug_bridge_push.md)	 - Push updates.
-* [git-bug bridge rm](git-bug_bridge_rm.md)	 - Delete a configured bridge.
+* [git-bug](git-bug.md)	 - A bug tracker embedded in Git
+* [git-bug bridge auth](git-bug_bridge_auth.md)	 - List all known bridge authentication credentials
+* [git-bug bridge new](git-bug_bridge_new.md)	 - Configure a new bridge
+* [git-bug bridge pull](git-bug_bridge_pull.md)	 - Pull updates from a remote bug tracker
+* [git-bug bridge push](git-bug_bridge_push.md)	 - Push updates to remote bug tracker
+* [git-bug bridge rm](git-bug_bridge_rm.md)	 - Delete a configured bridge
 

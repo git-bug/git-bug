@@ -40,7 +40,7 @@ Those interfaces are implemented by `GitRepo` as well as a mock for testing.
 
 ## identity
 
-The package `identity` contains the identity data model and the related low-level functions.
+The package `entities/identity` contains the identity data model and the related low-level functions.
 
 In particular, this package contains:
 - `Identity`, the fully-featured identity, holding a series of `Version` stored in its dedicated structure in git
@@ -48,7 +48,7 @@ In particular, this package contains:
 
 ## bug
 
-The package `bug` contains the bug data model and the related low-level functions.
+The package `entities/bug` contains the bug data model and the related low-level functions.
 
 In particular, this package contains:
 - `Operation`, the interface to fulfill for an edit operation of a Bug

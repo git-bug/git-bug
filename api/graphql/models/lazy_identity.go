@@ -5,8 +5,8 @@ import (
 	"sync"
 
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/identity"
 )
 
 // IdentityWrapper is an interface used by the GraphQL resolvers to handle an identity.
@@ -48,16 +48,16 @@ func (li *lazyIdentity) load() (*cache.IdentityCache, error) {
 		return li.id, nil
 	}
 
-	id, err := li.cache.ResolveIdentity(li.excerpt.Id)
+	id, err := li.cache.Identities().Resolve(li.excerpt.Id())
 	if err != nil {
-		return nil, fmt.Errorf("cache: missing identity %v", li.excerpt.Id)
+		return nil, fmt.Errorf("cache: missing identity %v", li.excerpt.Id())
 	}
 	li.id = id
 	return id, nil
 }
 
 func (li *lazyIdentity) Id() entity.Id {
-	return li.excerpt.Id
+	return li.excerpt.Id()
 }
 
 func (li *lazyIdentity) Name() string {

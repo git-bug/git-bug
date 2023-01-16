@@ -11,10 +11,11 @@ import (
 
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
-	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/entities/bug"
+	"github.com/MichaelMure/git-bug/entities/common"
+	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity/dag"
-	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/interrupt"
 )
@@ -27,7 +28,7 @@ func TestGithubImporter(t *testing.T) {
 
 	repo := repository.CreateGoGitTestRepo(t, false)
 
-	backend, err := cache.NewRepoCache(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo)
 	require.NoError(t, err)
 
 	defer backend.Close()
@@ -73,8 +74,8 @@ func TestGithubImporter(t *testing.T) {
 					bug.NewAddCommentOp(author, 0, "### header\n\n**bold**\n\n_italic_\n\n> with quote\n\n`inline code`\n\n```\nmultiline code\n```\n\n- bulleted\n- list\n\n1. numbered\n1. list\n\n- [ ] task\n- [x] list\n\n@MichaelMure mention\n\n#2 reference issue\n#3 auto-reference issue\n\n![image](https://user-images.githubusercontent.com/294669/56870222-811faf80-6a0c-11e9-8f2c-f0beb686303f.png)", nil),
 					bug.NewSetTitleOp(author, 0, "complex issue edited", "complex issue"),
 					bug.NewSetTitleOp(author, 0, "complex issue", "complex issue edited"),
-					bug.NewSetStatusOp(author, 0, bug.ClosedStatus),
-					bug.NewSetStatusOp(author, 0, bug.OpenStatus),
+					bug.NewSetStatusOp(author, 0, common.ClosedStatus),
+					bug.NewSetStatusOp(author, 0, common.OpenStatus),
 				},
 			},
 		},
@@ -170,11 +171,11 @@ func TestGithubImporter(t *testing.T) {
 
 	fmt.Printf("test repository imported in %f seconds\n", time.Since(start).Seconds())
 
-	require.Len(t, backend.AllBugsIds(), len(tests))
+	require.Len(t, backend.Bugs().AllIds(), len(tests))
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b, err := backend.ResolveBugCreateMetadata(metaKeyGithubUrl, tt.url)
+			b, err := backend.Bugs().ResolveBugCreateMetadata(metaKeyGithubUrl, tt.url)
 			require.NoError(t, err)
 
 			ops := b.Snapshot().Operations

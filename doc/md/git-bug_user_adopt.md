@@ -1,9 +1,9 @@
 ## git-bug user adopt
 
-Adopt an existing identity as your own.
+Adopt an existing identity as your own
 
 ```
-git-bug user adopt USER-ID [flags]
+git-bug user adopt USER_ID [flags]
 ```
 
 ### Options
@@ -14,5 +14,5 @@ git-bug user adopt USER-ID [flags]
 
 ### SEE ALSO
 
-* [git-bug user](git-bug_user.md)	 - Display or change the user identity.
+* [git-bug user](git-bug_user.md)	 - List identities
 

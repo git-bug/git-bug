@@ -8,8 +8,8 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
@@ -63,6 +63,13 @@ type Operation interface {
 	setExtraMetadataImmutable(key string, value string)
 }
 
+type OperationWithApply[SnapT Snapshot] interface {
+	Operation
+
+	// Apply the operation to a Snapshot to create the final state
+	Apply(snapshot SnapT)
+}
+
 // OperationWithFiles is an optional extension for an Operation that has files dependency, stored in git.
 type OperationWithFiles interface {
 	// GetFiles return the files needed by this operation
@@ -83,6 +90,8 @@ type OperationDoesntChangeSnapshot interface {
 type Snapshot interface {
 	// AllOperations returns all the operations that have been applied to that snapshot, in order
 	AllOperations() []Operation
+	// AppendOperation add an operation in the list
+	AppendOperation(op Operation)
 }
 
 // OpBase implement the common feature that every Operation should support.

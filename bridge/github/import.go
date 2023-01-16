@@ -9,7 +9,6 @@ import (
 
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
-	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/util/text"
@@ -183,14 +182,14 @@ func (gi *githubImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache
 	}
 
 	// resolve bug
-	b, err := repo.ResolveBugMatcher(func(excerpt *cache.BugExcerpt) bool {
+	b, err := repo.Bugs().ResolveMatcher(func(excerpt *cache.BugExcerpt) bool {
 		return excerpt.CreateMetadata[metaKeyGithubUrl] == issue.Url.String() &&
 			excerpt.CreateMetadata[metaKeyGithubId] == parseId(issue.Id)
 	})
 	if err == nil {
 		return b, nil
 	}
-	if err != bug.ErrBugNotExist {
+	if !entity.IsErrNotFound(err) {
 		return nil, err
 	}
 
@@ -213,7 +212,7 @@ func (gi *githubImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache
 	}
 
 	// create bug
-	b, _, err = repo.NewBugRaw(
+	b, _, err = repo.Bugs().NewRaw(
 		author,
 		issue.CreatedAt.Unix(),
 		text.CleanupOneLine(title), // TODO: this is the *current* title, not the original one
@@ -274,7 +273,7 @@ func (gi *githubImporter) ensureTimelineItem(ctx context.Context, repo *cache.Re
 			return err
 		}
 
-		gi.out <- core.NewImportLabelChange(op.Id())
+		gi.out <- core.NewImportLabelChange(b.Id(), op.Id())
 		return nil
 
 	case "UnlabeledEvent":
@@ -304,7 +303,7 @@ func (gi *githubImporter) ensureTimelineItem(ctx context.Context, repo *cache.Re
 			return err
 		}
 
-		gi.out <- core.NewImportLabelChange(op.Id())
+		gi.out <- core.NewImportLabelChange(b.Id(), op.Id())
 		return nil
 
 	case "ClosedEvent":
@@ -330,7 +329,7 @@ func (gi *githubImporter) ensureTimelineItem(ctx context.Context, repo *cache.Re
 			return err
 		}
 
-		gi.out <- core.NewImportStatusChange(op.Id())
+		gi.out <- core.NewImportStatusChange(b.Id(), op.Id())
 		return nil
 
 	case "ReopenedEvent":
@@ -356,7 +355,7 @@ func (gi *githubImporter) ensureTimelineItem(ctx context.Context, repo *cache.Re
 			return err
 		}
 
-		gi.out <- core.NewImportStatusChange(op.Id())
+		gi.out <- core.NewImportStatusChange(b.Id(), op.Id())
 		return nil
 
 	case "RenamedTitleEvent":
@@ -392,7 +391,7 @@ func (gi *githubImporter) ensureTimelineItem(ctx context.Context, repo *cache.Re
 			return err
 		}
 
-		gi.out <- core.NewImportTitleEdition(op.Id())
+		gi.out <- core.NewImportTitleEdition(b.Id(), op.Id())
 		return nil
 	}
 
@@ -405,6 +404,7 @@ func (gi *githubImporter) ensureCommentEdit(ctx context.Context, repo *cache.Rep
 	if err != nil {
 		return err
 	}
+	// check if the comment edition already exist
 	_, err = b.ResolveOperationWithMetadata(metaKeyGithubId, parseId(edit.Id))
 	if err == nil {
 		return nil
@@ -424,11 +424,13 @@ func (gi *githubImporter) ensureCommentEdit(ctx context.Context, repo *cache.Rep
 		return nil
 	}
 
+	commentId := entity.CombineIds(b.Id(), target)
+
 	// comment edition
-	op, err := b.EditCommentRaw(
+	_, err = b.EditCommentRaw(
 		editor,
 		edit.CreatedAt.Unix(),
-		target,
+		commentId,
 		text.Cleanup(string(*edit.Diff)),
 		map[string]string{
 			metaKeyGithubId: parseId(edit.Id),
@@ -439,7 +441,7 @@ func (gi *githubImporter) ensureCommentEdit(ctx context.Context, repo *cache.Rep
 		return err
 	}
 
-	gi.out <- core.NewImportCommentEdition(op.Id())
+	gi.out <- core.NewImportCommentEdition(b.Id(), commentId)
 	return nil
 }
 
@@ -468,7 +470,7 @@ func (gi *githubImporter) ensureComment(ctx context.Context, repo *cache.RepoCac
 	}
 
 	// add comment operation
-	op, err := b.AddCommentRaw(
+	commentId, _, err := b.AddCommentRaw(
 		author,
 		comment.CreatedAt.Unix(),
 		text.Cleanup(textInput),
@@ -482,7 +484,7 @@ func (gi *githubImporter) ensureComment(ctx context.Context, repo *cache.RepoCac
 		return err
 	}
 
-	gi.out <- core.NewImportComment(op.Id())
+	gi.out <- core.NewImportComment(b.Id(), commentId)
 	return nil
 }
 
@@ -495,7 +497,7 @@ func (gi *githubImporter) ensurePerson(ctx context.Context, repo *cache.RepoCach
 	}
 
 	// Look first in the cache
-	i, err := repo.ResolveIdentityImmutableMetadata(metaKeyGithubLogin, string(actor.Login))
+	i, err := repo.Identities().ResolveIdentityImmutableMetadata(metaKeyGithubLogin, string(actor.Login))
 	if err == nil {
 		return i, nil
 	}
@@ -528,7 +530,7 @@ func (gi *githubImporter) ensurePerson(ctx context.Context, repo *cache.RepoCach
 		name = string(actor.Login)
 	}
 
-	i, err = repo.NewIdentityRaw(
+	i, err = repo.Identities().NewRaw(
 		name,
 		email,
 		string(actor.Login),
@@ -550,7 +552,7 @@ func (gi *githubImporter) ensurePerson(ctx context.Context, repo *cache.RepoCach
 func (gi *githubImporter) getGhost(ctx context.Context, repo *cache.RepoCache) (*cache.IdentityCache, error) {
 	loginName := "ghost"
 	// Look first in the cache
-	i, err := repo.ResolveIdentityImmutableMetadata(metaKeyGithubLogin, loginName)
+	i, err := repo.Identities().ResolveIdentityImmutableMetadata(metaKeyGithubLogin, loginName)
 	if err == nil {
 		return i, nil
 	}
@@ -565,7 +567,7 @@ func (gi *githubImporter) getGhost(ctx context.Context, repo *cache.RepoCache) (
 	if user.Name != nil {
 		userName = string(*user.Name)
 	}
-	return repo.NewIdentityRaw(
+	return repo.Identities().NewRaw(
 		userName,
 		"",
 		string(user.Login),

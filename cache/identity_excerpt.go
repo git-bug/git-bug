@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/identity"
 )
 
 // Package initialisation used to register the type for (de)serialization
@@ -14,24 +13,34 @@ func init() {
 	gob.Register(IdentityExcerpt{})
 }
 
+var _ Excerpt = &IdentityExcerpt{}
+
 // IdentityExcerpt hold a subset of the identity values to be able to sort and
 // filter identities efficiently without having to read and compile each raw
 // identity.
 type IdentityExcerpt struct {
-	Id entity.Id
+	id entity.Id
 
 	Name              string
 	Login             string
 	ImmutableMetadata map[string]string
 }
 
-func NewIdentityExcerpt(i *identity.Identity) *IdentityExcerpt {
+func NewIdentityExcerpt(i *IdentityCache) *IdentityExcerpt {
 	return &IdentityExcerpt{
-		Id:                i.Id(),
+		id:                i.Id(),
 		Name:              i.Name(),
 		Login:             i.Login(),
 		ImmutableMetadata: i.ImmutableMetadata(),
 	}
+}
+
+func (i *IdentityExcerpt) setId(id entity.Id) {
+	i.id = id
+}
+
+func (i *IdentityExcerpt) Id() entity.Id {
+	return i.id
 }
 
 // DisplayName return a non-empty string to display, representing the
@@ -51,7 +60,7 @@ func (i *IdentityExcerpt) DisplayName() string {
 
 // Match matches a query with the identity name, login and ID prefixes
 func (i *IdentityExcerpt) Match(query string) bool {
-	return i.Id.HasPrefix(query) ||
+	return i.id.HasPrefix(query) ||
 		strings.Contains(strings.ToLower(i.Name), query) ||
 		strings.Contains(strings.ToLower(i.Login), query)
 }
@@ -67,7 +76,7 @@ func (b IdentityById) Len() int {
 }
 
 func (b IdentityById) Less(i, j int) bool {
-	return b[i].Id < b[j].Id
+	return b[i].id < b[j].id
 }
 
 func (b IdentityById) Swap(i, j int) {

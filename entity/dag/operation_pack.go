@@ -10,8 +10,8 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	"github.com/pkg/errors"
 
+	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
@@ -206,7 +206,7 @@ func (opp *operationPack) makeExtraTree() []repository.TreeEntry {
 // readOperationPack read the operationPack encoded in git at the given Tree hash.
 //
 // Validity of the Lamport clocks is left for the caller to decide.
-func readOperationPack(def Definition, repo repository.RepoData, resolver identity.Resolver, commit repository.Commit) (*operationPack, error) {
+func readOperationPack(def Definition, repo repository.RepoData, resolvers entity.Resolvers, commit repository.Commit) (*operationPack, error) {
 	entries, err := repo.ReadTree(commit.TreeHash)
 	if err != nil {
 		return nil, err
@@ -247,7 +247,7 @@ func readOperationPack(def Definition, repo repository.RepoData, resolver identi
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to read git blob data")
 			}
-			ops, author, err = unmarshallPack(def, resolver, data)
+			ops, author, err = unmarshallPack(def, resolvers, data)
 			if err != nil {
 				return nil, err
 			}
@@ -288,10 +288,42 @@ func readOperationPack(def Definition, repo repository.RepoData, resolver identi
 	}, nil
 }
 
+// readOperationPackClock is similar to readOperationPack but only read and decode the Lamport clocks.
+// Validity of those is left for the caller to decide.
+func readOperationPackClock(repo repository.RepoData, commit repository.Commit) (lamport.Time, lamport.Time, error) {
+	entries, err := repo.ReadTree(commit.TreeHash)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	var createTime lamport.Time
+	var editTime lamport.Time
+
+	for _, entry := range entries {
+		switch {
+		case strings.HasPrefix(entry.Name, createClockEntryPrefix):
+			v, err := strconv.ParseUint(strings.TrimPrefix(entry.Name, createClockEntryPrefix), 10, 64)
+			if err != nil {
+				return 0, 0, errors.Wrap(err, "can't read creation lamport time")
+			}
+			createTime = lamport.Time(v)
+
+		case strings.HasPrefix(entry.Name, editClockEntryPrefix):
+			v, err := strconv.ParseUint(strings.TrimPrefix(entry.Name, editClockEntryPrefix), 10, 64)
+			if err != nil {
+				return 0, 0, errors.Wrap(err, "can't read edit lamport time")
+			}
+			editTime = lamport.Time(v)
+		}
+	}
+
+	return createTime, editTime, nil
+}
+
 // unmarshallPack delegate the unmarshalling of the Operation's JSON to the decoding
 // function provided by the concrete entity. This gives access to the concrete type of each
 // Operation.
-func unmarshallPack(def Definition, resolver identity.Resolver, data []byte) ([]Operation, identity.Interface, error) {
+func unmarshallPack(def Definition, resolvers entity.Resolvers, data []byte) ([]Operation, identity.Interface, error) {
 	aux := struct {
 		Author     identity.IdentityStub `json:"author"`
 		Operations []json.RawMessage     `json:"ops"`
@@ -305,7 +337,7 @@ func unmarshallPack(def Definition, resolver identity.Resolver, data []byte) ([]
 		return nil, nil, fmt.Errorf("missing author")
 	}
 
-	author, err := resolver.ResolveIdentity(aux.Author.Id())
+	author, err := entity.Resolve[identity.Interface](resolvers, aux.Author.Id())
 	if err != nil {
 		return nil, nil, err
 	}
@@ -314,7 +346,7 @@ func unmarshallPack(def Definition, resolver identity.Resolver, data []byte) ([]
 
 	for _, raw := range aux.Operations {
 		// delegate to specialized unmarshal function
-		op, err := def.OperationUnmarshaler(raw, resolver)
+		op, err := def.OperationUnmarshaler(raw, resolvers)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -341,6 +373,13 @@ func (pk PGPKeyring) KeysById(id uint64) []openpgp.Key {
 			result = append(result, openpgp.Key{
 				PublicKey:  key.Public(),
 				PrivateKey: key.Private(),
+				Entity: &openpgp.Entity{
+					PrimaryKey: key.Public(),
+					PrivateKey: key.Private(),
+					Identities: map[string]*openpgp.Identity{
+						"": {},
+					},
+				},
 				SelfSignature: &packet.Signature{
 					IsPrimaryId: func() *bool { b := true; return &b }(),
 				},

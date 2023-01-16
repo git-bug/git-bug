@@ -49,7 +49,7 @@ func (mc *MemConfig) ReadString(key string) (string, error) {
 	key = normalizeKey(key)
 	val, ok := mc.config[key]
 	if !ok {
-		return "", ErrNoConfigEntry
+		return "", newErrNoConfigEntry(key)
 	}
 
 	return val, nil

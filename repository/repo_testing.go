@@ -2,6 +2,7 @@ package repository
 
 import (
 	"math/rand"
+	"os"
 	"testing"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
@@ -9,9 +10,6 @@ import (
 
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
-
-// TODO: add tests for RepoBleve
-// TODO: add tests for RepoStorage
 
 type RepoCreator func(t testing.TB, bare bool) TestedRepo
 
@@ -33,6 +31,14 @@ func RepoTest(t *testing.T, creator RepoCreator) {
 				RepoConfigTest(t, repo)
 			})
 
+			t.Run("Storage", func(t *testing.T) {
+				RepoStorageTest(t, repo)
+			})
+
+			t.Run("Index", func(t *testing.T) {
+				RepoIndexTest(t, repo)
+			})
+
 			t.Run("Clocks", func(t *testing.T) {
 				RepoClockTest(t, repo)
 			})
@@ -43,6 +49,45 @@ func RepoTest(t *testing.T, creator RepoCreator) {
 // helper to test a RepoConfig
 func RepoConfigTest(t *testing.T, repo RepoConfig) {
 	testConfig(t, repo.LocalConfig())
+}
+
+func RepoStorageTest(t *testing.T, repo RepoStorage) {
+	storage := repo.LocalStorage()
+
+	err := storage.MkdirAll("foo/bar", 0755)
+	require.NoError(t, err)
+
+	f, err := storage.Create("foo/bar/foofoo")
+	require.NoError(t, err)
+
+	_, err = f.Write([]byte("hello"))
+	require.NoError(t, err)
+
+	err = f.Close()
+	require.NoError(t, err)
+
+	// remove all
+	err = storage.RemoveAll(".")
+	require.NoError(t, err)
+
+	fi, err := storage.ReadDir(".")
+	// a real FS would remove the root directory with RemoveAll and subsequent call would fail
+	// a memory FS would still have a virtual root and subsequent call would succeed
+	// not ideal, but will do for now
+	if err == nil {
+		require.Empty(t, fi)
+	} else {
+		require.True(t, os.IsNotExist(err))
+	}
+}
+
+func randomHash() Hash {
+	var letterRunes = "abcdef0123456789"
+	b := make([]byte, idLengthSHA256)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return Hash(b)
 }
 
 // helper to test a RepoData
@@ -58,6 +103,9 @@ func RepoDataTest(t *testing.T, repo RepoData) {
 	blob1Read, err := repo.ReadData(blobHash1)
 	require.NoError(t, err)
 	require.Equal(t, data, blob1Read)
+
+	_, err = repo.ReadData(randomHash())
+	require.ErrorIs(t, err, ErrNotFound)
 
 	// Tree
 
@@ -108,24 +156,19 @@ func RepoDataTest(t *testing.T, repo RepoData) {
 	require.NoError(t, err)
 	require.ElementsMatch(t, tree2, tree2Read)
 
+	_, err = repo.ReadTree(randomHash())
+	require.ErrorIs(t, err, ErrNotFound)
+
 	// Commit
 
 	commit1, err := repo.StoreCommit(treeHash1)
 	require.NoError(t, err)
 	require.True(t, commit1.IsValid())
 
-	treeHash1Read, err := repo.GetTreeHash(commit1)
-	require.NoError(t, err)
-	require.Equal(t, treeHash1, treeHash1Read)
-
 	// commit with a parent
 	commit2, err := repo.StoreCommit(treeHash2, commit1)
 	require.NoError(t, err)
 	require.True(t, commit2.IsValid())
-
-	treeHash2Read, err := repo.GetTreeHash(commit2)
-	require.NoError(t, err)
-	require.Equal(t, treeHash2, treeHash2Read)
 
 	// ReadTree should accept tree and commit hashes
 	tree1read, err := repo.ReadTree(commit1)
@@ -136,6 +179,9 @@ func RepoDataTest(t *testing.T, repo RepoData) {
 	require.NoError(t, err)
 	c2expected := Commit{Hash: commit2, Parents: []Hash{commit1}, TreeHash: treeHash2}
 	require.Equal(t, c2expected, c2)
+
+	_, err = repo.ReadCommit(randomHash())
+	require.ErrorIs(t, err, ErrNotFound)
 
 	// Ref
 
@@ -169,14 +215,13 @@ func RepoDataTest(t *testing.T, repo RepoData) {
 	require.NoError(t, err)
 	require.Equal(t, []Hash{commit1, commit2}, commits)
 
-	// Graph
+	_, err = repo.ResolveRef("/refs/bugs/refnotexist")
+	require.ErrorIs(t, err, ErrNotFound)
 
-	commit3, err := repo.StoreCommit(treeHash1, commit1)
-	require.NoError(t, err)
+	err = repo.CopyRef("/refs/bugs/refnotexist", "refs/foo")
+	require.ErrorIs(t, err, ErrNotFound)
 
-	ancestorHash, err := repo.FindCommonAncestor(commit2, commit3)
-	require.NoError(t, err)
-	require.Equal(t, commit1, ancestorHash)
+	// Cleanup
 
 	err = repo.RemoveRef("refs/bugs/ref1")
 	require.NoError(t, err)
@@ -232,6 +277,48 @@ func RepoDataSignatureTest(t *testing.T, repo RepoData) {
 
 	_, err = openpgp.CheckDetachedSignature(keyring2, commit2.SignedData, commit2.Signature, nil)
 	require.Error(t, err)
+}
+
+func RepoIndexTest(t *testing.T, repo RepoIndex) {
+	idx, err := repo.GetIndex("a")
+	require.NoError(t, err)
+
+	// simple indexing
+	err = idx.IndexOne("id1", []string{"foo", "bar", "foobar barfoo"})
+	require.NoError(t, err)
+
+	// batched indexing
+	indexer, closer := idx.IndexBatch()
+	err = indexer("id2", []string{"hello", "foo bar"})
+	require.NoError(t, err)
+	err = indexer("id3", []string{"Hola", "Esta bien"})
+	require.NoError(t, err)
+	err = closer()
+	require.NoError(t, err)
+
+	// search
+	res, err := idx.Search([]string{"foobar"})
+	require.NoError(t, err)
+	require.ElementsMatch(t, []string{"id1"}, res)
+
+	res, err = idx.Search([]string{"foo"})
+	require.NoError(t, err)
+	require.ElementsMatch(t, []string{"id1", "id2"}, res)
+
+	// re-indexing an item replace previous versions
+	err = idx.IndexOne("id2", []string{"hello"})
+	require.NoError(t, err)
+
+	res, err = idx.Search([]string{"foo"})
+	require.NoError(t, err)
+	require.ElementsMatch(t, []string{"id1"}, res)
+
+	err = idx.Clear()
+	require.NoError(t, err)
+
+	res, err = idx.Search([]string{"foo"})
+	require.NoError(t, err)
+	require.Empty(t, res)
 }
 
 // helper to test a RepoClock

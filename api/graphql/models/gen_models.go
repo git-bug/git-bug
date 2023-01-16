@@ -3,11 +3,7 @@
 package models
 
 import (
-	"fmt"
-	"io"
-	"strconv"
-
-	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/entities/bug"
 	"github.com/MichaelMure/git-bug/entity/dag"
 	"github.com/MichaelMure/git-bug/repository"
 )
@@ -165,10 +161,8 @@ type EditCommentInput struct {
 	ClientMutationID *string `json:"clientMutationId"`
 	// The name of the repository. If not set, the default repository is used.
 	RepoRef *string `json:"repoRef"`
-	// The bug ID's prefix.
-	Prefix string `json:"prefix"`
-	// The ID of the comment to be changed.
-	Target string `json:"target"`
+	// A prefix of the CombinedId of the comment to be changed.
+	TargetPrefix string `json:"targetPrefix"`
 	// The new message to be set.
 	Message string `json:"message"`
 	// The collection of file's hash required for the first message.
@@ -306,92 +300,4 @@ type TimelineItemConnection struct {
 type TimelineItemEdge struct {
 	Cursor string           `json:"cursor"`
 	Node   bug.TimelineItem `json:"node"`
-}
-
-type LabelChangeStatus string
-
-const (
-	LabelChangeStatusAdded         LabelChangeStatus = "ADDED"
-	LabelChangeStatusRemoved       LabelChangeStatus = "REMOVED"
-	LabelChangeStatusDuplicateInOp LabelChangeStatus = "DUPLICATE_IN_OP"
-	LabelChangeStatusAlreadyExist  LabelChangeStatus = "ALREADY_EXIST"
-	LabelChangeStatusDoesntExist   LabelChangeStatus = "DOESNT_EXIST"
-)
-
-var AllLabelChangeStatus = []LabelChangeStatus{
-	LabelChangeStatusAdded,
-	LabelChangeStatusRemoved,
-	LabelChangeStatusDuplicateInOp,
-	LabelChangeStatusAlreadyExist,
-	LabelChangeStatusDoesntExist,
-}
-
-func (e LabelChangeStatus) IsValid() bool {
-	switch e {
-	case LabelChangeStatusAdded, LabelChangeStatusRemoved, LabelChangeStatusDuplicateInOp, LabelChangeStatusAlreadyExist, LabelChangeStatusDoesntExist:
-		return true
-	}
-	return false
-}
-
-func (e LabelChangeStatus) String() string {
-	return string(e)
-}
-
-func (e *LabelChangeStatus) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = LabelChangeStatus(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid LabelChangeStatus", str)
-	}
-	return nil
-}
-
-func (e LabelChangeStatus) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-type Status string
-
-const (
-	StatusOpen   Status = "OPEN"
-	StatusClosed Status = "CLOSED"
-)
-
-var AllStatus = []Status{
-	StatusOpen,
-	StatusClosed,
-}
-
-func (e Status) IsValid() bool {
-	switch e {
-	case StatusOpen, StatusClosed:
-		return true
-	}
-	return false
-}
-
-func (e Status) String() string {
-	return string(e)
-}
-
-func (e *Status) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = Status(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid Status", str)
-	}
-	return nil
-}
-
-func (e Status) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
 }

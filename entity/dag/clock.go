@@ -3,7 +3,8 @@ package dag
 import (
 	"fmt"
 
-	"github.com/MichaelMure/git-bug/identity"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/MichaelMure/git-bug/repository"
 )
 
@@ -18,21 +19,14 @@ func ClockLoader(defs ...Definition) repository.ClockLoader {
 	return repository.ClockLoader{
 		Clocks: clocks,
 		Witnesser: func(repo repository.ClockedRepo) error {
-			// we need to actually load the identities because of the commit signature check when reading,
-			// which require the full identities with crypto keys
-			resolver := identity.NewCachedResolver(identity.NewSimpleResolver(repo))
-
+			var errG errgroup.Group
 			for _, def := range defs {
-				// we actually just need to read all entities,
-				// as that will create and update the clocks
-				// TODO: concurrent loading to be faster?
-				for b := range ReadAll(def, repo, resolver) {
-					if b.Err != nil {
-						return b.Err
-					}
-				}
+				def := def
+				errG.Go(func() error {
+					return ReadAllClocksNoCheck(def, repo)
+				})
 			}
-			return nil
+			return errG.Wait()
 		},
 	}
 }

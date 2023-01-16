@@ -8,8 +8,8 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/MichaelMure/git-bug/cache"
+	buginput "github.com/MichaelMure/git-bug/commands/bug/input"
 	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/input"
 	"github.com/MichaelMure/git-bug/query"
 	"github.com/MichaelMure/git-bug/util/text"
 )
@@ -187,20 +187,20 @@ func newBugWithEditor(repo *cache.RepoCache) error {
 	ui.g.Close()
 	ui.g = nil
 
-	title, message, err := input.BugCreateEditorInput(ui.cache, "", "")
+	title, message, err := buginput.BugCreateEditorInput(ui.cache, "", "")
 
-	if err != nil && err != input.ErrEmptyTitle {
+	if err != nil && err != buginput.ErrEmptyTitle {
 		return err
 	}
 
 	var b *cache.BugCache
-	if err == input.ErrEmptyTitle {
+	if err == buginput.ErrEmptyTitle {
 		ui.msgPopup.Activate(msgPopupErrorTitle, "Empty title, aborting.")
 		initGui(nil)
 
 		return errTerminateMainloop
 	} else {
-		b, _, err = repo.NewBug(
+		b, _, err = repo.Bugs().New(
 			text.CleanupOneLine(title),
 			text.Cleanup(message),
 		)
@@ -230,16 +230,14 @@ func addCommentWithEditor(bug *cache.BugCache) error {
 	ui.g.Close()
 	ui.g = nil
 
-	message, err := input.BugCommentEditorInput(ui.cache, "")
-
-	if err != nil && err != input.ErrEmptyMessage {
+	message, err := buginput.BugCommentEditorInput(ui.cache, "")
+	if err != nil && err != buginput.ErrEmptyMessage {
 		return err
 	}
-
-	if err == input.ErrEmptyMessage {
+	if err == buginput.ErrEmptyMessage {
 		ui.msgPopup.Activate(msgPopupErrorTitle, "Empty message, aborting.")
 	} else {
-		_, err := bug.AddComment(text.Cleanup(message))
+		_, _, err := bug.AddComment(text.Cleanup(message))
 		if err != nil {
 			return err
 		}
@@ -250,7 +248,7 @@ func addCommentWithEditor(bug *cache.BugCache) error {
 	return errTerminateMainloop
 }
 
-func editCommentWithEditor(bug *cache.BugCache, target entity.Id, preMessage string) error {
+func editCommentWithEditor(bug *cache.BugCache, target entity.CombinedId, preMessage string) error {
 	// This is somewhat hacky.
 	// As there is no way to pause gocui, run the editor and restart gocui,
 	// we have to stop it entirely and start a new one later.
@@ -263,12 +261,12 @@ func editCommentWithEditor(bug *cache.BugCache, target entity.Id, preMessage str
 	ui.g.Close()
 	ui.g = nil
 
-	message, err := input.BugCommentEditorInput(ui.cache, preMessage)
-	if err != nil && err != input.ErrEmptyMessage {
+	message, err := buginput.BugCommentEditorInput(ui.cache, preMessage)
+	if err != nil && err != buginput.ErrEmptyMessage {
 		return err
 	}
 
-	if err == input.ErrEmptyMessage {
+	if err == buginput.ErrEmptyMessage {
 		// TODO: Allow comments to be deleted?
 		ui.msgPopup.Activate(msgPopupErrorTitle, "Empty message, aborting.")
 	} else if message == preMessage {
@@ -300,13 +298,13 @@ func setTitleWithEditor(bug *cache.BugCache) error {
 
 	snap := bug.Snapshot()
 
-	title, err := input.BugTitleEditorInput(ui.cache, snap.Title)
+	title, err := buginput.BugTitleEditorInput(ui.cache, snap.Title)
 
-	if err != nil && err != input.ErrEmptyTitle {
+	if err != nil && err != buginput.ErrEmptyTitle {
 		return err
 	}
 
-	if err == input.ErrEmptyTitle {
+	if err == buginput.ErrEmptyTitle {
 		ui.msgPopup.Activate(msgPopupErrorTitle, "Empty title, aborting.")
 	} else if title == snap.Title {
 		ui.msgPopup.Activate(msgPopupErrorTitle, "No change, aborting.")
@@ -335,7 +333,7 @@ func editQueryWithEditor(bt *bugTable) error {
 	ui.g.Close()
 	ui.g = nil
 
-	queryStr, err := input.QueryEditorInput(bt.repo, bt.queryStr)
+	queryStr, err := buginput.QueryEditorInput(bt.repo, bt.queryStr)
 
 	if err != nil {
 		return err

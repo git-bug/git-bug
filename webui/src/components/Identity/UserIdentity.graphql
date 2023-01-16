@@ -2,6 +2,7 @@
 
 query GetUserById($userId: String!) {
   repository {
+    name
     identity(prefix: $userId) {
       ...Identity
     }

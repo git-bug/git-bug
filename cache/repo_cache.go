@@ -3,15 +3,13 @@ package cache
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"sync"
 
-	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
+	"github.com/MichaelMure/git-bug/util/multierr"
 	"github.com/MichaelMure/git-bug/util/process"
 )
 
@@ -28,16 +26,28 @@ var _ repository.RepoCommon = &RepoCache{}
 var _ repository.RepoConfig = &RepoCache{}
 var _ repository.RepoKeyring = &RepoCache{}
 
+// cacheMgmt is the expected interface for a sub-cache.
+type cacheMgmt interface {
+	Typename() string
+	Load() error
+	Build() <-chan BuildEvent
+	SetCacheSize(size int)
+	RemoveAll() error
+	MergeAll(remote string) <-chan entity.MergeResult
+	GetNamespace() string
+	Close() error
+}
+
 // RepoCache is a cache for a Repository. This cache has multiple functions:
 //
-// 1. After being loaded, a Bug is kept in memory in the cache, allowing for fast
-// 		access later.
-// 2. The cache maintain in memory and on disk a pre-digested excerpt for each bug,
-// 		allowing for fast querying the whole set of bugs without having to load
-//		them individually.
-// 3. The cache guarantee that a single instance of a Bug is loaded at once, avoiding
-// 		loss of data that we could have with multiple copies in the same process.
-// 4. The same way, the cache maintain in memory a single copy of the loaded identities.
+//  1. After being loaded, a Bug is kept in memory in the cache, allowing for fast
+//     access later.
+//  2. The cache maintain in memory and on disk a pre-digested excerpt for each bug,
+//     allowing for fast querying the whole set of bugs without having to load
+//     them individually.
+//  3. The cache guarantee that a single instance of a Bug is loaded at once, avoiding
+//     loss of data that we could have with multiple copies in the same process.
+//  4. The same way, the cache maintain in memory a single copy of the loaded identities.
 //
 // The cache also protect the on-disk data by locking the git repository for its
 // own usage, by writing a lock file. Of course, normal git operations are not
@@ -49,87 +59,116 @@ type RepoCache struct {
 	// the name of the repository, as defined in the MultiRepoCache
 	name string
 
-	// maximum number of loaded bugs
-	maxLoadedBugs int
+	// resolvers for all known entities and excerpts
+	resolvers entity.Resolvers
 
-	muBug sync.RWMutex
-	// excerpt of bugs data for all bugs
-	bugExcerpts map[entity.Id]*BugExcerpt
-	// bug loaded in memory
-	bugs map[entity.Id]*BugCache
-	// loadedBugs is an LRU cache that records which bugs the cache has loaded in
-	loadedBugs *LRUIdCache
+	bugs       *RepoCacheBug
+	identities *RepoCacheIdentity
 
-	muIdentity sync.RWMutex
-	// excerpt of identities data for all identities
-	identitiesExcerpts map[entity.Id]*IdentityExcerpt
-	// identities loaded in memory
-	identities map[entity.Id]*IdentityCache
+	subcaches []cacheMgmt
 
 	// the user identity's id, if known
+	muUserIdentity sync.RWMutex
 	userIdentityId entity.Id
 }
 
-func NewRepoCache(r repository.ClockedRepo) (*RepoCache, error) {
-	return NewNamedRepoCache(r, "")
+// NewRepoCache create or open a cache on top of a raw repository.
+// The caller is expected to read all returned events before the cache is considered
+// ready to use.
+func NewRepoCache(r repository.ClockedRepo) (*RepoCache, chan BuildEvent) {
+	return NewNamedRepoCache(r, defaultRepoName)
 }
 
-func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, error) {
+// NewNamedRepoCache create or open a named cache on top of a raw repository.
+// The caller is expected to read all returned events before the cache is considered
+// ready to use.
+func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, chan BuildEvent) {
 	c := &RepoCache{
-		repo:          r,
-		name:          name,
-		maxLoadedBugs: defaultMaxLoadedBugs,
-		bugs:          make(map[entity.Id]*BugCache),
-		loadedBugs:    NewLRUIdCache(),
-		identities:    make(map[entity.Id]*IdentityCache),
+		repo: r,
+		name: name,
 	}
 
-	err := c.lock()
-	if err != nil {
-		return &RepoCache{}, err
+	c.identities = NewRepoCacheIdentity(r, c.getResolvers, c.GetUserIdentity)
+	c.subcaches = append(c.subcaches, c.identities)
+
+	c.bugs = NewRepoCacheBug(r, c.getResolvers, c.GetUserIdentity)
+	c.subcaches = append(c.subcaches, c.bugs)
+
+	c.resolvers = entity.Resolvers{
+		&IdentityCache{}:   entity.ResolverFunc[*IdentityCache](c.identities.Resolve),
+		&IdentityExcerpt{}: entity.ResolverFunc[*IdentityExcerpt](c.identities.ResolveExcerpt),
+		&BugCache{}:        entity.ResolverFunc[*BugCache](c.bugs.Resolve),
+		&BugExcerpt{}:      entity.ResolverFunc[*BugExcerpt](c.bugs.ResolveExcerpt),
 	}
 
-	err = c.load()
-	if err == nil {
-		return c, nil
-	}
+	// small buffer so that below functions can emit an event without blocking
+	events := make(chan BuildEvent)
 
-	// Cache is either missing, broken or outdated. Rebuilding.
-	err = c.buildCache()
-	if err != nil {
-		return nil, err
-	}
+	go func() {
+		defer close(events)
 
-	return c, c.write()
+		err := c.lock(events)
+		if err != nil {
+			events <- BuildEvent{Err: err}
+			return
+		}
+
+		err = c.load()
+		if err == nil {
+			return
+		}
+
+		// Cache is either missing, broken or outdated. Rebuilding.
+		c.buildCache(events)
+	}()
+
+	return c, events
+}
+
+func NewRepoCacheNoEvents(r repository.ClockedRepo) (*RepoCache, error) {
+	cache, events := NewRepoCache(r)
+	for event := range events {
+		if event.Err != nil {
+			for range events {
+			}
+			return nil, event.Err
+		}
+	}
+	return cache, nil
+}
+
+// Bugs gives access to the Bug entities
+func (c *RepoCache) Bugs() *RepoCacheBug {
+	return c.bugs
+}
+
+// Identities gives access to the Identity entities
+func (c *RepoCache) Identities() *RepoCacheIdentity {
+	return c.identities
+}
+
+func (c *RepoCache) getResolvers() entity.Resolvers {
+	return c.resolvers
 }
 
 // setCacheSize change the maximum number of loaded bugs
 func (c *RepoCache) setCacheSize(size int) {
-	c.maxLoadedBugs = size
-	c.evictIfNeeded()
+	for _, subcache := range c.subcaches {
+		subcache.SetCacheSize(size)
+	}
 }
 
 // load will try to read from the disk all the cache files
 func (c *RepoCache) load() error {
-	err := c.loadBugCache()
-	if err != nil {
-		return err
+	var errWait multierr.ErrWaitGroup
+	for _, mgmt := range c.subcaches {
+		errWait.Go(mgmt.Load)
 	}
-
-	return c.loadIdentityCache()
+	return errWait.Wait()
 }
 
-// write will serialize on disk all the cache files
-func (c *RepoCache) write() error {
-	err := c.writeBugCache()
-	if err != nil {
-		return err
-	}
-	return c.writeIdentityCache()
-}
-
-func (c *RepoCache) lock() error {
-	err := repoIsAvailable(c.repo)
+func (c *RepoCache) lock(events chan BuildEvent) error {
+	err := repoIsAvailable(c.repo, events)
 	if err != nil {
 		return err
 	}
@@ -142,6 +181,7 @@ func (c *RepoCache) lock() error {
 	pid := fmt.Sprintf("%d", os.Getpid())
 	_, err = f.Write([]byte(pid))
 	if err != nil {
+		_ = f.Close()
 		return err
 	}
 
@@ -149,17 +189,16 @@ func (c *RepoCache) lock() error {
 }
 
 func (c *RepoCache) Close() error {
-	c.muBug.Lock()
-	defer c.muBug.Unlock()
-	c.muIdentity.Lock()
-	defer c.muIdentity.Unlock()
+	var errWait multierr.ErrWaitGroup
+	for _, mgmt := range c.subcaches {
+		errWait.Go(mgmt.Close)
+	}
+	err := errWait.Wait()
+	if err != nil {
+		return err
+	}
 
-	c.identities = make(map[entity.Id]*IdentityCache)
-	c.identitiesExcerpts = nil
-	c.bugs = make(map[entity.Id]*BugCache)
-	c.bugExcerpts = nil
-
-	err := c.repo.Close()
+	err = c.repo.Close()
 	if err != nil {
 		return err
 	}
@@ -167,65 +206,57 @@ func (c *RepoCache) Close() error {
 	return c.repo.LocalStorage().Remove(lockfile)
 }
 
-func (c *RepoCache) buildCache() error {
-	// TODO: make that parallel
+type BuildEventType int
 
-	c.muBug.Lock()
-	defer c.muBug.Unlock()
-	c.muIdentity.Lock()
-	defer c.muIdentity.Unlock()
+const (
+	_ BuildEventType = iota
+	BuildEventCacheIsBuilt
+	BuildEventRemoveLock
+	BuildEventStarted
+	BuildEventProgress
+	BuildEventFinished
+)
 
-	_, _ = fmt.Fprintf(os.Stderr, "Building identity cache... ")
+// BuildEvent carry an event happening during the cache build process.
+type BuildEvent struct {
+	// Err carry an error if the build process failed. If set, no other field matter.
+	Err error
+	// Typename is the name of the entity of which the event relate to. Can be empty if not particular entity is involved.
+	Typename string
+	// Event is the type of the event.
+	Event BuildEventType
+	// Total is the total number of element being built. Set if Event is BuildEventStarted.
+	Total int64
+	// Progress is the current count of processed element. Set if Event is BuildEventProgress.
+	Progress int64
+}
 
-	c.identitiesExcerpts = make(map[entity.Id]*IdentityExcerpt)
+func (c *RepoCache) buildCache(events chan BuildEvent) {
+	events <- BuildEvent{Event: BuildEventCacheIsBuilt}
 
-	allIdentities := identity.ReadAllLocal(c.repo)
+	var wg sync.WaitGroup
+	for _, subcache := range c.subcaches {
+		wg.Add(1)
+		go func(subcache cacheMgmt) {
+			defer wg.Done()
 
-	for i := range allIdentities {
-		if i.Err != nil {
-			return i.Err
-		}
-
-		c.identitiesExcerpts[i.Identity.Id()] = NewIdentityExcerpt(i.Identity)
+			buildEvents := subcache.Build()
+			for buildEvent := range buildEvents {
+				events <- buildEvent
+				if buildEvent.Err != nil {
+					return
+				}
+			}
+		}(subcache)
 	}
-
-	_, _ = fmt.Fprintln(os.Stderr, "Done.")
-
-	_, _ = fmt.Fprintf(os.Stderr, "Building bug cache... ")
-
-	c.bugExcerpts = make(map[entity.Id]*BugExcerpt)
-
-	allBugs := bug.ReadAllWithResolver(c.repo, newIdentityCacheResolverNoLock(c))
-
-	// wipe the index just to be sure
-	err := c.repo.ClearBleveIndex("bug")
-	if err != nil {
-		return err
-	}
-
-	for b := range allBugs {
-		if b.Err != nil {
-			return b.Err
-		}
-
-		snap := b.Bug.Compile()
-		c.bugExcerpts[b.Bug.Id()] = NewBugExcerpt(b.Bug, snap)
-
-		if err := c.addBugToSearchIndex(snap); err != nil {
-			return err
-		}
-	}
-
-	_, _ = fmt.Fprintln(os.Stderr, "Done.")
-
-	return nil
+	wg.Wait()
 }
 
 // repoIsAvailable check is the given repository is locked by a Cache.
 // Note: this is a smart function that will clean the lock file if the
 // corresponding process is not there anymore.
 // If no error is returned, the repo is free to edit.
-func repoIsAvailable(repo repository.RepoStorage) error {
+func repoIsAvailable(repo repository.RepoStorage, events chan BuildEvent) error {
 	// Todo: this leave way for a racey access to the repo between the test
 	// if the file exist and the actual write. It's probably not a problem in
 	// practice because using a repository will be done from user interaction
@@ -244,11 +275,18 @@ func repoIsAvailable(repo repository.RepoStorage) error {
 
 	if err == nil {
 		// lock file already exist
-		buf, err := ioutil.ReadAll(io.LimitReader(f, 10))
+		buf, err := io.ReadAll(io.LimitReader(f, 10))
+		if err != nil {
+			_ = f.Close()
+			return err
+		}
+
+		err = f.Close()
 		if err != nil {
 			return err
 		}
-		if len(buf) == 10 {
+
+		if len(buf) >= 10 {
 			return fmt.Errorf("the lock file should be < 10 bytes")
 		}
 
@@ -263,11 +301,7 @@ func repoIsAvailable(repo repository.RepoStorage) error {
 
 		// The lock file is just laying there after a crash, clean it
 
-		fmt.Println("A lock file is present but the corresponding process is not, removing it.")
-		err = f.Close()
-		if err != nil {
-			return err
-		}
+		events <- BuildEvent{Event: BuildEventRemoveLock}
 
 		err = repo.LocalStorage().Remove(lockfile)
 		if err != nil {

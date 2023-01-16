@@ -21,25 +21,30 @@ func NewMultiRepoCache() *MultiRepoCache {
 }
 
 // RegisterRepository register a named repository. Use this for multi-repo setup
-func (c *MultiRepoCache) RegisterRepository(ref string, repo repository.ClockedRepo) (*RepoCache, error) {
-	r, err := NewRepoCache(repo)
-	if err != nil {
-		return nil, err
-	}
+func (c *MultiRepoCache) RegisterRepository(repo repository.ClockedRepo, name string) (*RepoCache, chan BuildEvent) {
+	r, events := NewNamedRepoCache(repo, name)
 
-	c.repos[ref] = r
-	return r, nil
+	// intercept events to make sure the cache building process succeed properly
+	out := make(chan BuildEvent)
+	go func() {
+		defer close(out)
+
+		for event := range events {
+			out <- event
+			if event.Err != nil {
+				return
+			}
+		}
+
+		c.repos[name] = r
+	}()
+
+	return r, out
 }
 
-// RegisterDefaultRepository register a unnamed repository. Use this for mono-repo setup
-func (c *MultiRepoCache) RegisterDefaultRepository(repo repository.ClockedRepo) (*RepoCache, error) {
-	r, err := NewRepoCache(repo)
-	if err != nil {
-		return nil, err
-	}
-
-	c.repos[defaultRepoName] = r
-	return r, nil
+// RegisterDefaultRepository register an unnamed repository. Use this for single-repo setup
+func (c *MultiRepoCache) RegisterDefaultRepository(repo repository.ClockedRepo) (*RepoCache, chan BuildEvent) {
+	return c.RegisterRepository(repo, defaultRepoName)
 }
 
 // DefaultRepo retrieve the default repository
@@ -55,9 +60,9 @@ func (c *MultiRepoCache) DefaultRepo() (*RepoCache, error) {
 	panic("unreachable")
 }
 
-// ResolveRepo retrieve a repository with a reference
-func (c *MultiRepoCache) ResolveRepo(ref string) (*RepoCache, error) {
-	r, ok := c.repos[ref]
+// ResolveRepo retrieve a repository by name
+func (c *MultiRepoCache) ResolveRepo(name string) (*RepoCache, error) {
+	r, ok := c.repos[name]
 	if !ok {
 		return nil, fmt.Errorf("unknown repo")
 	}

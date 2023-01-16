@@ -10,7 +10,6 @@ import (
 
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
-	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/util/text"
@@ -55,7 +54,6 @@ func (gi *gitlabImporter) Init(_ context.Context, repo *cache.RepoCache, conf co
 // ImportAll iterate over all the configured repository issues (notes) and ensure the creation
 // of the missing issues / comments / label events / title changes ...
 func (gi *gitlabImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, since time.Time) (<-chan core.ImportResult, error) {
-
 	out := make(chan core.ImportResult)
 	gi.out = out
 
@@ -110,7 +108,7 @@ func (gi *gitlabImporter) ensureIssue(repo *cache.RepoCache, issue *gitlab.Issue
 	}
 
 	// resolve bug
-	b, err := repo.ResolveBugMatcher(func(excerpt *cache.BugExcerpt) bool {
+	b, err := repo.Bugs().ResolveMatcher(func(excerpt *cache.BugExcerpt) bool {
 		return excerpt.CreateMetadata[core.MetaKeyOrigin] == target &&
 			excerpt.CreateMetadata[metaKeyGitlabId] == fmt.Sprintf("%d", issue.IID) &&
 			excerpt.CreateMetadata[metaKeyGitlabBaseUrl] == gi.conf[confKeyGitlabBaseUrl] &&
@@ -119,12 +117,12 @@ func (gi *gitlabImporter) ensureIssue(repo *cache.RepoCache, issue *gitlab.Issue
 	if err == nil {
 		return b, nil
 	}
-	if err != bug.ErrBugNotExist {
+	if !entity.IsErrNotFound(err) {
 		return nil, err
 	}
 
 	// if bug was never imported, create bug
-	b, _, err = repo.NewBugRaw(
+	b, _, err = repo.Bugs().NewRaw(
 		author,
 		issue.CreatedAt.Unix(),
 		text.CleanupOneLine(issue.Title),
@@ -150,7 +148,6 @@ func (gi *gitlabImporter) ensureIssue(repo *cache.RepoCache, issue *gitlab.Issue
 }
 
 func (gi *gitlabImporter) ensureIssueEvent(repo *cache.RepoCache, b *cache.BugCache, issue *gitlab.Issue, event Event) error {
-
 	id, errResolve := b.ResolveOperationWithMetadata(metaKeyGitlabId, event.ID())
 	if errResolve != nil && errResolve != cache.ErrNoMatchingOp {
 		return errResolve
@@ -180,7 +177,7 @@ func (gi *gitlabImporter) ensureIssueEvent(repo *cache.RepoCache, b *cache.BugCa
 			return err
 		}
 
-		gi.out <- core.NewImportStatusChange(op.Id())
+		gi.out <- core.NewImportStatusChange(b.Id(), op.Id())
 
 	case EventReopened:
 		if errResolve == nil {
@@ -198,20 +195,21 @@ func (gi *gitlabImporter) ensureIssueEvent(repo *cache.RepoCache, b *cache.BugCa
 			return err
 		}
 
-		gi.out <- core.NewImportStatusChange(op.Id())
+		gi.out <- core.NewImportStatusChange(b.Id(), op.Id())
 
 	case EventDescriptionChanged:
 		firstComment := b.Snapshot().Comments[0]
 		// since gitlab doesn't provide the issue history
 		// we should check for "changed the description" notes and compare issue texts
 		// TODO: Check only one time and ignore next 'description change' within one issue
-		if errResolve == cache.ErrNoMatchingOp && issue.Description != firstComment.Message {
+		cleanedDesc := text.Cleanup(issue.Description)
+		if errResolve == cache.ErrNoMatchingOp && cleanedDesc != firstComment.Message {
 			// comment edition
 			op, err := b.EditCommentRaw(
 				author,
 				event.(NoteEvent).UpdatedAt.Unix(),
-				firstComment.Id(),
-				text.Cleanup(issue.Description),
+				firstComment.CombinedId(),
+				cleanedDesc,
 				map[string]string{
 					metaKeyGitlabId: event.ID(),
 				},
@@ -220,7 +218,7 @@ func (gi *gitlabImporter) ensureIssueEvent(repo *cache.RepoCache, b *cache.BugCa
 				return err
 			}
 
-			gi.out <- core.NewImportTitleEdition(op.Id())
+			gi.out <- core.NewImportTitleEdition(b.Id(), op.Id())
 		}
 
 	case EventComment:
@@ -230,7 +228,7 @@ func (gi *gitlabImporter) ensureIssueEvent(repo *cache.RepoCache, b *cache.BugCa
 		if errResolve == cache.ErrNoMatchingOp {
 
 			// add comment operation
-			op, err := b.AddCommentRaw(
+			commentId, _, err := b.AddCommentRaw(
 				author,
 				event.CreatedAt().Unix(),
 				cleanText,
@@ -242,14 +240,14 @@ func (gi *gitlabImporter) ensureIssueEvent(repo *cache.RepoCache, b *cache.BugCa
 			if err != nil {
 				return err
 			}
-			gi.out <- core.NewImportComment(op.Id())
+			gi.out <- core.NewImportComment(b.Id(), commentId)
 			return nil
 		}
 
 		// if comment was already exported
 
 		// search for last comment update
-		comment, err := b.Snapshot().SearchComment(id)
+		comment, err := b.Snapshot().SearchCommentByOpId(id)
 		if err != nil {
 			return err
 		}
@@ -257,10 +255,10 @@ func (gi *gitlabImporter) ensureIssueEvent(repo *cache.RepoCache, b *cache.BugCa
 		// compare local bug comment with the new event body
 		if comment.Message != cleanText {
 			// comment edition
-			op, err := b.EditCommentRaw(
+			_, err := b.EditCommentRaw(
 				author,
 				event.(NoteEvent).UpdatedAt.Unix(),
-				comment.Id(),
+				comment.CombinedId(),
 				cleanText,
 				nil,
 			)
@@ -268,7 +266,7 @@ func (gi *gitlabImporter) ensureIssueEvent(repo *cache.RepoCache, b *cache.BugCa
 			if err != nil {
 				return err
 			}
-			gi.out <- core.NewImportCommentEdition(op.Id())
+			gi.out <- core.NewImportCommentEdition(b.Id(), comment.CombinedId())
 		}
 
 		return nil
@@ -291,7 +289,7 @@ func (gi *gitlabImporter) ensureIssueEvent(repo *cache.RepoCache, b *cache.BugCa
 			return err
 		}
 
-		gi.out <- core.NewImportTitleEdition(op.Id())
+		gi.out <- core.NewImportTitleEdition(b.Id(), op.Id())
 
 	case EventAddLabel:
 		_, err = b.ForceChangeLabelsRaw(
@@ -326,7 +324,8 @@ func (gi *gitlabImporter) ensureIssueEvent(repo *cache.RepoCache, b *cache.BugCa
 		EventLocked,
 		EventUnlocked,
 		EventMentionedInIssue,
-		EventMentionedInMergeRequest:
+		EventMentionedInMergeRequest,
+		EventMentionedInCommit:
 
 		return nil
 
@@ -339,7 +338,7 @@ func (gi *gitlabImporter) ensureIssueEvent(repo *cache.RepoCache, b *cache.BugCa
 
 func (gi *gitlabImporter) ensurePerson(repo *cache.RepoCache, id int) (*cache.IdentityCache, error) {
 	// Look first in the cache
-	i, err := repo.ResolveIdentityImmutableMetadata(metaKeyGitlabId, strconv.Itoa(id))
+	i, err := repo.Identities().ResolveIdentityImmutableMetadata(metaKeyGitlabId, strconv.Itoa(id))
 	if err == nil {
 		return i, nil
 	}
@@ -352,7 +351,7 @@ func (gi *gitlabImporter) ensurePerson(repo *cache.RepoCache, id int) (*cache.Id
 		return nil, err
 	}
 
-	i, err = repo.NewIdentityRaw(
+	i, err = repo.Identities().NewRaw(
 		user.Name,
 		user.PublicEmail,
 		user.Username,

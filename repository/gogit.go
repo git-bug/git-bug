@@ -2,6 +2,7 @@ package repository
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -12,14 +13,13 @@ import (
 	"time"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
-	"github.com/blevesearch/bleve"
-	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/osfs"
 	gogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"golang.org/x/sync/errgroup"
 	"golang.org/x/sys/execabs"
 
 	"github.com/MichaelMure/git-bug/util/lamport"
@@ -44,10 +44,10 @@ type GoGitRepo struct {
 	clocks      map[string]lamport.Clock
 
 	indexesMutex sync.Mutex
-	indexes      map[string]bleve.Index
+	indexes      map[string]Index
 
 	keyring      Keyring
-	localStorage billy.Filesystem
+	localStorage LocalStorage
 }
 
 // OpenGoGitRepo opens an already existing repo at the given path and
@@ -74,12 +74,14 @@ func OpenGoGitRepo(path, namespace string, clockLoaders []ClockLoader) (*GoGitRe
 		r:            r,
 		path:         path,
 		clocks:       make(map[string]lamport.Clock),
-		indexes:      make(map[string]bleve.Index),
+		indexes:      make(map[string]Index),
 		keyring:      k,
-		localStorage: osfs.New(filepath.Join(path, namespace)),
+		localStorage: billyLocalStorage{Filesystem: osfs.New(filepath.Join(path, namespace))},
 	}
 
+	loaderToRun := make([]ClockLoader, 0, len(clockLoaders))
 	for _, loader := range clockLoaders {
+		loader := loader
 		allExist := true
 		for _, name := range loader.Clocks {
 			if _, err := repo.getClock(name); err != nil {
@@ -88,11 +90,20 @@ func OpenGoGitRepo(path, namespace string, clockLoaders []ClockLoader) (*GoGitRe
 		}
 
 		if !allExist {
-			err = loader.Witnesser(repo)
-			if err != nil {
-				return nil, err
-			}
+			loaderToRun = append(loaderToRun, loader)
 		}
+	}
+
+	var errG errgroup.Group
+	for _, loader := range loaderToRun {
+		loader := loader
+		errG.Go(func() error {
+			return loader.Witnesser(repo)
+		})
+	}
+	err = errG.Wait()
+	if err != nil {
+		return nil, err
 	}
 
 	return repo, nil
@@ -117,9 +128,9 @@ func InitGoGitRepo(path, namespace string) (*GoGitRepo, error) {
 		r:            r,
 		path:         filepath.Join(path, ".git"),
 		clocks:       make(map[string]lamport.Clock),
-		indexes:      make(map[string]bleve.Index),
+		indexes:      make(map[string]Index),
 		keyring:      k,
-		localStorage: osfs.New(filepath.Join(path, ".git", namespace)),
+		localStorage: billyLocalStorage{Filesystem: osfs.New(filepath.Join(path, ".git", namespace))},
 	}, nil
 }
 
@@ -142,9 +153,9 @@ func InitBareGoGitRepo(path, namespace string) (*GoGitRepo, error) {
 		r:            r,
 		path:         path,
 		clocks:       make(map[string]lamport.Clock),
-		indexes:      make(map[string]bleve.Index),
+		indexes:      make(map[string]Index),
 		keyring:      k,
-		localStorage: osfs.New(filepath.Join(path, namespace)),
+		localStorage: billyLocalStorage{Filesystem: osfs.New(filepath.Join(path, namespace))},
 	}, nil
 }
 
@@ -206,11 +217,12 @@ func isGitDir(path string) (bool, error) {
 
 func (repo *GoGitRepo) Close() error {
 	var firstErr error
-	for _, index := range repo.indexes {
+	for name, index := range repo.indexes {
 		err := index.Close()
 		if err != nil && firstErr == nil {
 			firstErr = err
 		}
+		delete(repo.indexes, name)
 	}
 	return firstErr
 }
@@ -258,7 +270,7 @@ func (repo *GoGitRepo) GetCoreEditor() (string, error) {
 	if err == nil && val != "" {
 		return val, nil
 	}
-	if err != nil && err != ErrNoConfigEntry {
+	if err != nil && !errors.Is(err, ErrNoConfigEntry) {
 		return "", err
 	}
 
@@ -307,12 +319,11 @@ func (repo *GoGitRepo) GetRemotes() (map[string]string, error) {
 
 // LocalStorage returns a billy.Filesystem giving access to
 // $RepoPath/.git/$Namespace.
-func (repo *GoGitRepo) LocalStorage() billy.Filesystem {
+func (repo *GoGitRepo) LocalStorage() LocalStorage {
 	return repo.localStorage
 }
 
-// GetBleveIndex return a bleve.Index that can be used to index documents
-func (repo *GoGitRepo) GetBleveIndex(name string) (bleve.Index, error) {
+func (repo *GoGitRepo) GetIndex(name string) (Index, error) {
 	repo.indexesMutex.Lock()
 	defer repo.indexesMutex.Unlock()
 
@@ -322,63 +333,28 @@ func (repo *GoGitRepo) GetBleveIndex(name string) (bleve.Index, error) {
 
 	path := filepath.Join(repo.localStorage.Root(), indexPath, name)
 
-	index, err := bleve.Open(path)
+	index, err := openBleveIndex(path)
 	if err == nil {
 		repo.indexes[name] = index
-		return index, nil
 	}
-
-	err = os.MkdirAll(path, os.ModePerm)
-	if err != nil {
-		return nil, err
-	}
-
-	mapping := bleve.NewIndexMapping()
-	mapping.DefaultAnalyzer = "en"
-
-	index, err = bleve.New(path, mapping)
-	if err != nil {
-		return nil, err
-	}
-
-	repo.indexes[name] = index
-
-	return index, nil
-}
-
-// ClearBleveIndex will wipe the given index
-func (repo *GoGitRepo) ClearBleveIndex(name string) error {
-	repo.indexesMutex.Lock()
-	defer repo.indexesMutex.Unlock()
-
-	if index, ok := repo.indexes[name]; ok {
-		err := index.Close()
-		if err != nil {
-			return err
-		}
-		delete(repo.indexes, name)
-	}
-
-	path := filepath.Join(repo.localStorage.Root(), indexPath, name)
-	err := os.RemoveAll(path)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return index, err
 }
 
 // FetchRefs fetch git refs matching a directory prefix to a remote
 // Ex: prefix="foo" will fetch any remote refs matching "refs/foo/*" locally.
 // The equivalent git refspec would be "refs/foo/*:refs/remotes/<remote>/foo/*"
-func (repo *GoGitRepo) FetchRefs(remote string, prefix string) (string, error) {
-	refspec := fmt.Sprintf("refs/%s/*:refs/remotes/%s/%s/*", prefix, remote, prefix)
+func (repo *GoGitRepo) FetchRefs(remote string, prefixes ...string) (string, error) {
+	refSpecs := make([]config.RefSpec, len(prefixes))
+
+	for i, prefix := range prefixes {
+		refSpecs[i] = config.RefSpec(fmt.Sprintf("refs/%s/*:refs/remotes/%s/%s/*", prefix, remote, prefix))
+	}
 
 	buf := bytes.NewBuffer(nil)
 
 	err := repo.r.Fetch(&gogit.FetchOptions{
 		RemoteName: remote,
-		RefSpecs:   []config.RefSpec{config.RefSpec(refspec)},
+		RefSpecs:   refSpecs,
 		Progress:   buf,
 	})
 	if err == gogit.NoErrAlreadyUpToDate {
@@ -397,35 +373,41 @@ func (repo *GoGitRepo) FetchRefs(remote string, prefix string) (string, error) {
 //
 // Additionally, PushRefs will update the local references in refs/remotes/<remote>/foo to match
 // the remote state.
-func (repo *GoGitRepo) PushRefs(remote string, prefix string) (string, error) {
-	refspec := fmt.Sprintf("refs/%s/*:refs/%s/*", prefix, prefix)
-
+func (repo *GoGitRepo) PushRefs(remote string, prefixes ...string) (string, error) {
 	remo, err := repo.r.Remote(remote)
 	if err != nil {
 		return "", err
 	}
 
-	// to make sure that the push also create the corresponding refs/remotes/<remote>/... references,
-	// we need to have a default fetch refspec configured on the remote, to make our refs "track" the remote ones.
-	// This does not change the config on disk, only on memory.
-	hasCustomFetch := false
-	fetchRefspec := fmt.Sprintf("refs/%s/*:refs/remotes/%s/%s/*", prefix, remote, prefix)
-	for _, r := range remo.Config().Fetch {
-		if string(r) == fetchRefspec {
-			hasCustomFetch = true
-			break
-		}
-	}
+	refSpecs := make([]config.RefSpec, len(prefixes))
 
-	if !hasCustomFetch {
-		remo.Config().Fetch = append(remo.Config().Fetch, config.RefSpec(fetchRefspec))
+	for i, prefix := range prefixes {
+		refspec := fmt.Sprintf("refs/%s/*:refs/%s/*", prefix, prefix)
+
+		// to make sure that the push also create the corresponding refs/remotes/<remote>/... references,
+		// we need to have a default fetch refspec configured on the remote, to make our refs "track" the remote ones.
+		// This does not change the config on disk, only on memory.
+		hasCustomFetch := false
+		fetchRefspec := fmt.Sprintf("refs/%s/*:refs/remotes/%s/%s/*", prefix, remote, prefix)
+		for _, r := range remo.Config().Fetch {
+			if string(r) == fetchRefspec {
+				hasCustomFetch = true
+				break
+			}
+		}
+
+		if !hasCustomFetch {
+			remo.Config().Fetch = append(remo.Config().Fetch, config.RefSpec(fetchRefspec))
+		}
+
+		refSpecs[i] = config.RefSpec(refspec)
 	}
 
 	buf := bytes.NewBuffer(nil)
 
 	err = remo.Push(&gogit.PushOptions{
 		RemoteName: remote,
-		RefSpecs:   []config.RefSpec{config.RefSpec(refspec)},
+		RefSpecs:   refSpecs,
 		Progress:   buf,
 	})
 	if err == gogit.NoErrAlreadyUpToDate {
@@ -467,6 +449,9 @@ func (repo *GoGitRepo) ReadData(hash Hash) ([]byte, error) {
 	defer repo.rMutex.Unlock()
 
 	obj, err := repo.r.BlobObject(plumbing.NewHash(hash.String()))
+	if err == plumbing.ErrObjectNotFound {
+		return nil, ErrNotFound
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -476,6 +461,7 @@ func (repo *GoGitRepo) ReadData(hash Hash) ([]byte, error) {
 		return nil, err
 	}
 
+	// TODO: return a io.Reader instead
 	return ioutil.ReadAll(r)
 }
 
@@ -535,6 +521,9 @@ func (repo *GoGitRepo) ReadTree(hash Hash) ([]TreeEntry, error) {
 
 	// the given hash could be a tree or a commit
 	obj, err := repo.r.Storer.EncodedObject(plumbing.AnyObject, h)
+	if err == plumbing.ErrObjectNotFound {
+		return nil, ErrNotFound
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -641,43 +630,11 @@ func (repo *GoGitRepo) StoreSignedCommit(treeHash Hash, signKey *openpgp.Entity,
 	return Hash(hash.String()), nil
 }
 
-// GetTreeHash return the git tree hash referenced in a commit
-func (repo *GoGitRepo) GetTreeHash(commit Hash) (Hash, error) {
-	repo.rMutex.Lock()
-	defer repo.rMutex.Unlock()
-
-	obj, err := repo.r.CommitObject(plumbing.NewHash(commit.String()))
-	if err != nil {
-		return "", err
-	}
-
-	return Hash(obj.TreeHash.String()), nil
-}
-
-// FindCommonAncestor will return the last common ancestor of two chain of commit
-func (repo *GoGitRepo) FindCommonAncestor(commit1 Hash, commit2 Hash) (Hash, error) {
-	repo.rMutex.Lock()
-	defer repo.rMutex.Unlock()
-
-	obj1, err := repo.r.CommitObject(plumbing.NewHash(commit1.String()))
-	if err != nil {
-		return "", err
-	}
-	obj2, err := repo.r.CommitObject(plumbing.NewHash(commit2.String()))
-	if err != nil {
-		return "", err
-	}
-
-	commits, err := obj1.MergeBase(obj2)
-	if err != nil {
-		return "", err
-	}
-
-	return Hash(commits[0].Hash.String()), nil
-}
-
 func (repo *GoGitRepo) ResolveRef(ref string) (Hash, error) {
 	r, err := repo.r.Reference(plumbing.ReferenceName(ref), false)
+	if err == plumbing.ErrReferenceNotFound {
+		return "", ErrNotFound
+	}
 	if err != nil {
 		return "", err
 	}
@@ -730,6 +687,9 @@ func (repo *GoGitRepo) RefExist(ref string) (bool, error) {
 // CopyRef will create a new reference with the same value as another one
 func (repo *GoGitRepo) CopyRef(source string, dest string) error {
 	r, err := repo.r.Reference(plumbing.ReferenceName(source), false)
+	if err == plumbing.ErrReferenceNotFound {
+		return ErrNotFound
+	}
 	if err != nil {
 		return err
 	}
@@ -746,6 +706,9 @@ func (repo *GoGitRepo) ReadCommit(hash Hash) (Commit, error) {
 	defer repo.rMutex.Unlock()
 
 	commit, err := repo.r.CommitObject(plumbing.NewHash(hash.String()))
+	if err == plumbing.ErrObjectNotFound {
+		return Commit{}, ErrNotFound
+	}
 	if err != nil {
 		return Commit{}, err
 	}

@@ -1,7 +1,7 @@
 """Represents an identity"""
 type Identity {
     """The identifier for this identity"""
-    id: String!
+    id: ID!
     """The human version (truncated) identifier for this identity"""
     humanId: String!
     """The name of the person, if known."""

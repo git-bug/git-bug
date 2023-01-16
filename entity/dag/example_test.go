@@ -6,9 +6,9 @@ import (
 	"os"
 	"time"
 
+	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
-	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
@@ -200,7 +200,11 @@ type ProjectConfig struct {
 }
 
 func NewProjectConfig() *ProjectConfig {
-	return &ProjectConfig{Entity: dag.New(def)}
+	return wrapper(dag.New(def))
+}
+
+func wrapper(e *dag.Entity) *ProjectConfig {
+	return &ProjectConfig{Entity: e}
 }
 
 // a Definition describes a few properties of the Entity, a sort of configuration to manipulate the
@@ -208,13 +212,13 @@ func NewProjectConfig() *ProjectConfig {
 var def = dag.Definition{
 	Typename:             "project config",
 	Namespace:            "conf",
-	OperationUnmarshaler: operationUnmarshaller,
+	OperationUnmarshaler: operationUnmarshaler,
 	FormatVersion:        1,
 }
 
-// operationUnmarshaller is a function doing the de-serialization of the JSON data into our own
+// operationUnmarshaler is a function doing the de-serialization of the JSON data into our own
 // concrete Operations. If needed, we can use the resolver to connect to other entities.
-func operationUnmarshaller(raw json.RawMessage, resolver identity.Resolver) (dag.Operation, error) {
+func operationUnmarshaler(raw json.RawMessage, resolvers entity.Resolvers) (dag.Operation, error) {
 	var t struct {
 		OperationType dag.OperationType `json:"type"`
 	}
@@ -245,7 +249,7 @@ func operationUnmarshaller(raw json.RawMessage, resolver identity.Resolver) (dag
 	case *AddAdministrator:
 		// We need to resolve identities
 		for i, stub := range op.ToAdd {
-			iden, err := resolver.ResolveIdentity(stub.Id())
+			iden, err := entity.Resolve[identity.Interface](resolvers, stub.Id())
 			if err != nil {
 				return nil, err
 			}
@@ -254,7 +258,7 @@ func operationUnmarshaller(raw json.RawMessage, resolver identity.Resolver) (dag
 	case *RemoveAdministrator:
 		// We need to resolve identities
 		for i, stub := range op.ToRemove {
-			iden, err := resolver.ResolveIdentity(stub.Id())
+			iden, err := entity.Resolve[identity.Interface](resolvers, stub.Id())
 			if err != nil {
 				return nil, err
 			}
@@ -282,11 +286,15 @@ func (pc ProjectConfig) Compile() *Snapshot {
 
 // Read is a helper to load a ProjectConfig from a Repository
 func Read(repo repository.ClockedRepo, id entity.Id) (*ProjectConfig, error) {
-	e, err := dag.Read(def, repo, identity.NewSimpleResolver(repo), id)
-	if err != nil {
-		return nil, err
+	return dag.Read(def, wrapper, repo, simpleResolvers(repo), id)
+}
+
+func simpleResolvers(repo repository.ClockedRepo) entity.Resolvers {
+	// resolvers can look a bit complex or out of place here, but it's an important concept
+	// to allow caching and flexibility when constructing the final app.
+	return entity.Resolvers{
+		&identity.Identity{}: identity.NewSimpleResolver(repo),
 	}
-	return &ProjectConfig{Entity: e}, nil
 }
 
 func Example_entity() {
@@ -323,7 +331,7 @@ func Example_entity() {
 	_ = confRene.Commit(repoRene)
 
 	// Isaac pull and read the config
-	_ = dag.Pull(def, repoIsaac, identity.NewSimpleResolver(repoIsaac), "origin", isaac)
+	_ = dag.Pull(def, wrapper, repoIsaac, simpleResolvers(repoIsaac), "origin", isaac)
 	confIsaac, _ := Read(repoIsaac, confRene.Id())
 
 	// Compile gives the current state of the config

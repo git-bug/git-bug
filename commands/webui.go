@@ -2,7 +2,9 @@ package commands
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -22,7 +24,8 @@ import (
 	"github.com/MichaelMure/git-bug/api/graphql"
 	httpapi "github.com/MichaelMure/git-bug/api/http"
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/commands/execenv"
+	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/webui"
 )
@@ -30,29 +33,30 @@ import (
 const webUIOpenConfigKey = "git-bug.webui.open"
 
 type webUIOptions struct {
-	host     string
-	port     int
-	open     bool
-	noOpen   bool
-	readOnly bool
-	query    string
+	host      string
+	port      int
+	open      bool
+	noOpen    bool
+	readOnly  bool
+	logErrors bool
+	query     string
 }
 
 func newWebUICommand() *cobra.Command {
-	env := newEnv()
+	env := execenv.NewEnv()
 	options := webUIOptions{}
 
 	cmd := &cobra.Command{
 		Use:   "webui",
-		Short: "Launch the web UI.",
+		Short: "Launch the web UI",
 		Long: `Launch the web UI.
 
 Available git config:
   git-bug.webui.open [bool]: control the automatic opening of the web UI in the default browser
 `,
-		PreRunE: loadRepo(env),
+		PreRunE: execenv.LoadRepo(env),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runWebUI(env, options, args)
+			return runWebUI(env, options)
 		},
 	}
 
@@ -64,12 +68,13 @@ Available git config:
 	flags.BoolVar(&options.noOpen, "no-open", false, "Prevent the automatic opening of the web UI in the default browser")
 	flags.IntVarP(&options.port, "port", "p", 0, "Port to listen to (default to random available port)")
 	flags.BoolVar(&options.readOnly, "read-only", false, "Whether to run the web UI in read-only mode")
+	flags.BoolVar(&options.logErrors, "log-errors", false, "Whether to log errors")
 	flags.StringVarP(&options.query, "query", "q", "", "The query to open in the web UI bug list")
 
 	return cmd
 }
 
-func runWebUI(env *Env, opts webUIOptions, args []string) error {
+func runWebUI(env *execenv.Env, opts webUIOptions) error {
 	if opts.port == 0 {
 		var err error
 		opts.port, err = freeport.GetFreePort()
@@ -93,7 +98,7 @@ func runWebUI(env *Env, opts webUIOptions, args []string) error {
 	// fixed identity: the default user of the repo
 	// TODO: support dynamic authentication with OAuth
 	if !opts.readOnly {
-		author, err := identity.GetUserIdentity(env.repo)
+		author, err := identity.GetUserIdentity(env.Repo)
 		if err != nil {
 			return err
 		}
@@ -101,12 +106,20 @@ func runWebUI(env *Env, opts webUIOptions, args []string) error {
 	}
 
 	mrc := cache.NewMultiRepoCache()
-	_, err := mrc.RegisterDefaultRepository(env.repo)
+
+	_, events := mrc.RegisterDefaultRepository(env.Repo)
+
+	err := execenv.CacheBuildProgressBar(env, events)
 	if err != nil {
 		return err
 	}
 
-	graphqlHandler := graphql.NewHandler(mrc)
+	var errOut io.Writer
+	if opts.logErrors {
+		errOut = env.Err
+	}
+
+	graphqlHandler := graphql.NewHandler(mrc, errOut)
 
 	// Routes
 	router.Path("/playground").Handler(playground.Handler("git-bug", "/graphql"))
@@ -128,7 +141,7 @@ func runWebUI(env *Env, opts webUIOptions, args []string) error {
 
 	go func() {
 		<-quit
-		env.out.Println("WebUI is shutting down...")
+		env.Out.Println("WebUI is shutting down...")
 
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
@@ -141,19 +154,19 @@ func runWebUI(env *Env, opts webUIOptions, args []string) error {
 		// Teardown
 		err := graphqlHandler.Close()
 		if err != nil {
-			env.out.Println(err)
+			env.Out.Println(err)
 		}
 
 		close(done)
 	}()
 
-	env.out.Printf("Web UI: %s\n", webUiAddr)
-	env.out.Printf("Graphql API: http://%s/graphql\n", addr)
-	env.out.Printf("Graphql Playground: http://%s/playground\n", addr)
-	env.out.Println("Press Ctrl+c to quit")
+	env.Out.Printf("Web UI: %s\n", webUiAddr)
+	env.Out.Printf("Graphql API: http://%s/graphql\n", addr)
+	env.Out.Printf("Graphql Playground: http://%s/playground\n", addr)
+	env.Out.Println("Press Ctrl+c to quit")
 
-	configOpen, err := env.repo.AnyConfig().ReadBool(webUIOpenConfigKey)
-	if err == repository.ErrNoConfigEntry {
+	configOpen, err := env.Repo.AnyConfig().ReadBool(webUIOpenConfigKey)
+	if errors.Is(err, repository.ErrNoConfigEntry) {
 		// default to true
 		configOpen = true
 	} else if err != nil {
@@ -165,7 +178,7 @@ func runWebUI(env *Env, opts webUIOptions, args []string) error {
 	if shouldOpen {
 		err = open.Run(toOpen)
 		if err != nil {
-			env.out.Println(err)
+			env.Out.Println(err)
 		}
 	}
 
@@ -176,6 +189,6 @@ func runWebUI(env *Env, opts webUIOptions, args []string) error {
 
 	<-done
 
-	env.out.Println("WebUI stopped")
+	env.Out.Println("WebUI stopped")
 	return nil
 }

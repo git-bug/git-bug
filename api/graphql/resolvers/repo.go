@@ -7,7 +7,7 @@ import (
 	"github.com/MichaelMure/git-bug/api/graphql/connections"
 	"github.com/MichaelMure/git-bug/api/graphql/graph"
 	"github.com/MichaelMure/git-bug/api/graphql/models"
-	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/entities/bug"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/query"
 )
@@ -41,7 +41,7 @@ func (repoResolver) AllBugs(_ context.Context, obj *models.Repository, after *st
 	}
 
 	// Simply pass a []string with the ids to the pagination algorithm
-	source, err := obj.Repo.QueryBugs(q)
+	source, err := obj.Repo.Bugs().Query(q)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func (repoResolver) AllBugs(_ context.Context, obj *models.Repository, after *st
 		nodes := make([]models.BugWrapper, len(lazyBugEdges))
 
 		for i, lazyBugEdge := range lazyBugEdges {
-			excerpt, err := obj.Repo.ResolveBugExcerpt(lazyBugEdge.Id)
+			excerpt, err := obj.Repo.Bugs().ResolveExcerpt(lazyBugEdge.Id)
 			if err != nil {
 				return nil, err
 			}
@@ -86,7 +86,7 @@ func (repoResolver) AllBugs(_ context.Context, obj *models.Repository, after *st
 }
 
 func (repoResolver) Bug(_ context.Context, obj *models.Repository, prefix string) (models.BugWrapper, error) {
-	excerpt, err := obj.Repo.ResolveBugExcerptPrefix(prefix)
+	excerpt, err := obj.Repo.Bugs().ResolveExcerptPrefix(prefix)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func (repoResolver) AllIdentities(_ context.Context, obj *models.Repository, aft
 	}
 
 	// Simply pass a []string with the ids to the pagination algorithm
-	source := obj.Repo.AllIdentityIds()
+	source := obj.Repo.Identities().AllIds()
 
 	// The edger create a custom edge holding just the id
 	edger := func(id entity.Id, offset int) connections.Edge {
@@ -119,7 +119,7 @@ func (repoResolver) AllIdentities(_ context.Context, obj *models.Repository, aft
 		nodes := make([]models.IdentityWrapper, len(lazyIdentityEdges))
 
 		for k, lazyIdentityEdge := range lazyIdentityEdges {
-			excerpt, err := obj.Repo.ResolveIdentityExcerpt(lazyIdentityEdge.Id)
+			excerpt, err := obj.Repo.Identities().ResolveExcerpt(lazyIdentityEdge.Id)
 			if err != nil {
 				return nil, err
 			}
@@ -145,7 +145,7 @@ func (repoResolver) AllIdentities(_ context.Context, obj *models.Repository, aft
 }
 
 func (repoResolver) Identity(_ context.Context, obj *models.Repository, prefix string) (models.IdentityWrapper, error) {
-	excerpt, err := obj.Repo.ResolveIdentityExcerptPrefix(prefix)
+	excerpt, err := obj.Repo.Identities().ResolveExcerptPrefix(prefix)
 	if err != nil {
 		return nil, err
 	}
@@ -187,5 +187,5 @@ func (repoResolver) ValidLabels(_ context.Context, obj *models.Repository, after
 		}, nil
 	}
 
-	return connections.LabelCon(obj.Repo.ValidLabels(), edger, conMaker, input)
+	return connections.LabelCon(obj.Repo.Bugs().ValidLabels(), edger, conMaker, input)
 }

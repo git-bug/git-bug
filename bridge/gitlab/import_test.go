@@ -11,10 +11,11 @@ import (
 
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
-	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/entities/bug"
+	"github.com/MichaelMure/git-bug/entities/common"
+	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity/dag"
-	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/interrupt"
 )
@@ -32,7 +33,7 @@ func TestGitlabImport(t *testing.T) {
 
 	repo := repository.CreateGoGitTestRepo(t, false)
 
-	backend, err := cache.NewRepoCache(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo)
 	require.NoError(t, err)
 
 	defer backend.Close()
@@ -75,8 +76,8 @@ func TestGitlabImport(t *testing.T) {
 					bug.NewAddCommentOp(author, 0, "### header\n\n**bold**\n\n_italic_\n\n> with quote\n\n`inline code`\n\n```\nmultiline code\n```\n\n- bulleted\n- list\n\n1. numbered\n1. list\n\n- [ ] task\n- [x] list\n\n@MichaelMure mention\n\n#2 reference issue\n#3 auto-reference issue", nil),
 					bug.NewSetTitleOp(author, 0, "complex issue edited", "complex issue"),
 					bug.NewSetTitleOp(author, 0, "complex issue", "complex issue edited"),
-					bug.NewSetStatusOp(author, 0, bug.ClosedStatus),
-					bug.NewSetStatusOp(author, 0, bug.OpenStatus),
+					bug.NewSetStatusOp(author, 0, common.ClosedStatus),
+					bug.NewSetStatusOp(author, 0, common.OpenStatus),
 					bug.NewLabelChangeOperation(author, 0, []bug.Label{"bug"}, []bug.Label{}),
 					bug.NewLabelChangeOperation(author, 0, []bug.Label{"critical"}, []bug.Label{}),
 					bug.NewLabelChangeOperation(author, 0, []bug.Label{}, []bug.Label{"critical"}),
@@ -125,11 +126,11 @@ func TestGitlabImport(t *testing.T) {
 
 	fmt.Printf("test repository imported in %f seconds\n", time.Since(start).Seconds())
 
-	require.Len(t, backend.AllBugsIds(), len(tests))
+	require.Len(t, backend.Bugs().AllIds(), len(tests))
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b, err := backend.ResolveBugCreateMetadata(metaKeyGitlabUrl, tt.url)
+			b, err := backend.Bugs().ResolveBugCreateMetadata(metaKeyGitlabUrl, tt.url)
 			require.NoError(t, err)
 
 			ops := b.Snapshot().Operations

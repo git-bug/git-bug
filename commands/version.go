@@ -4,6 +4,8 @@ import (
 	"runtime"
 
 	"github.com/spf13/cobra"
+
+	"github.com/MichaelMure/git-bug/commands/execenv"
 )
 
 type versionOptions struct {
@@ -13,13 +15,13 @@ type versionOptions struct {
 }
 
 func newVersionCommand() *cobra.Command {
-	env := newEnv()
+	env := execenv.NewEnv()
 	options := versionOptions{}
 
 	cmd := &cobra.Command{
 		Use:   "version",
-		Short: "Show git-bug version information.",
-		Run: func(cmd *cobra.Command, _ []string) {
+		Short: "Show git-bug version information",
+		Run: func(cmd *cobra.Command, args []string) {
 			runVersion(env, options, cmd.Root())
 		},
 	}
@@ -40,34 +42,23 @@ func newVersionCommand() *cobra.Command {
 	return cmd
 }
 
-func runVersion(env *Env, opts versionOptions, root *cobra.Command) {
+func runVersion(env *execenv.Env, opts versionOptions, root *cobra.Command) {
 	if opts.all {
-		env.err.Printf("%s version: ", rootCommandName)
-		env.out.Printf("%s\n", root.Version)
-		env.err.Print("System version: ")
-		env.out.Printf("%s/%s\n", runtime.GOARCH, runtime.GOOS)
-		env.err.Print("Golang version: ")
-		env.out.Printf("%s\n", runtime.Version())
+		env.Out.Printf("%s version: %s\n", execenv.RootCommandName, root.Version)
+		env.Out.Printf("System version: %s/%s\n", runtime.GOARCH, runtime.GOOS)
+		env.Out.Printf("Golang version: %s\n", runtime.Version())
 		return
 	}
 
 	if opts.number {
-		env.out.Print(root.Version)
-		env.err.Println()
+		env.Out.Println(root.Version)
 		return
 	}
 
 	if opts.commit {
-		env.out.Print(GitCommit)
-		env.err.Println()
+		env.Out.Println(GitCommit)
 		return
 	}
 
-	printVersion(env, root)
-}
-
-func printVersion(env *Env, root *cobra.Command) {
-	env.err.Printf("%s version: ", rootCommandName)
-	env.out.Printf("%s", root.Version)
-	env.err.Println()
+	env.Out.Printf("%s version: %s\n", execenv.RootCommandName, root.Version)
 }

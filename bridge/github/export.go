@@ -17,11 +17,11 @@ import (
 
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
-	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/entities/bug"
+	"github.com/MichaelMure/git-bug/entities/common"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
-	"github.com/MichaelMure/git-bug/identity"
 )
 
 var (
@@ -88,8 +88,8 @@ func (ge *githubExporter) cacheAllClient(repo *cache.RepoCache) error {
 			continue
 		}
 
-		user, err := repo.ResolveIdentityImmutableMetadata(metaKeyGithubLogin, login)
-		if err == identity.ErrIdentityNotExist {
+		user, err := repo.Identities().ResolveIdentityImmutableMetadata(metaKeyGithubLogin, login)
+		if entity.IsErrNotFound(err) {
 			continue
 		}
 		if err != nil {
@@ -159,10 +159,10 @@ func (ge *githubExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, 
 			allIdentitiesIds = append(allIdentitiesIds, id)
 		}
 
-		allBugsIds := repo.AllBugsIds()
+		allBugsIds := repo.Bugs().AllIds()
 
 		for _, id := range allBugsIds {
-			b, err := repo.ResolveBug(id)
+			b, err := repo.Bugs().Resolve(id)
 			if err != nil {
 				out <- core.NewExportError(errors.Wrap(err, "can't load bug"), id)
 				return
@@ -317,7 +317,7 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 				return
 			}
 
-			out <- core.NewExportComment(op.Id())
+			out <- core.NewExportComment(b.Id())
 
 			// cache comment id
 			ge.cachedOperationIDs[op.Id()] = id
@@ -333,7 +333,7 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 					return
 				}
 
-				out <- core.NewExportCommentEdition(op.Id())
+				out <- core.NewExportCommentEdition(b.Id())
 
 				id = bugGithubID
 				url = bugGithubURL
@@ -353,7 +353,7 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 					return
 				}
 
-				out <- core.NewExportCommentEdition(op.Id())
+				out <- core.NewExportCommentEdition(b.Id())
 
 				// use comment id/url instead of issue id/url
 				id = eid
@@ -367,7 +367,7 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 				return
 			}
 
-			out <- core.NewExportStatusChange(op.Id())
+			out <- core.NewExportStatusChange(b.Id())
 
 			id = bugGithubID
 			url = bugGithubURL
@@ -379,7 +379,7 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 				return
 			}
 
-			out <- core.NewExportTitleEdition(op.Id())
+			out <- core.NewExportTitleEdition(b.Id())
 
 			id = bugGithubID
 			url = bugGithubURL
@@ -391,7 +391,7 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 				return
 			}
 
-			out <- core.NewExportLabelChange(op.Id())
+			out <- core.NewExportLabelChange(b.Id())
 
 			id = bugGithubID
 			url = bugGithubURL
@@ -658,7 +658,7 @@ func (ge *githubExporter) createGithubIssue(ctx context.Context, gc *rateLimitHa
 	return issue.ID, issue.URL, nil
 }
 
-// add a comment to an issue and return it ID
+// add a comment to an issue and return its ID
 func (ge *githubExporter) addCommentGithubIssue(ctx context.Context, gc *rateLimitHandlerClient, subjectID string, body string) (string, string, error) {
 	m := &addCommentToIssueMutation{}
 	input := githubv4.AddCommentInput{
@@ -688,16 +688,16 @@ func (ge *githubExporter) editCommentGithubIssue(ctx context.Context, gc *rateLi
 	return commentID, m.UpdateIssueComment.IssueComment.URL, nil
 }
 
-func (ge *githubExporter) updateGithubIssueStatus(ctx context.Context, gc *rateLimitHandlerClient, id string, status bug.Status) error {
+func (ge *githubExporter) updateGithubIssueStatus(ctx context.Context, gc *rateLimitHandlerClient, id string, status common.Status) error {
 	m := &updateIssueMutation{}
 
 	// set state
 	var state githubv4.IssueState
 
 	switch status {
-	case bug.OpenStatus:
+	case common.OpenStatus:
 		state = githubv4.IssueStateOpen
-	case bug.ClosedStatus:
+	case common.ClosedStatus:
 		state = githubv4.IssueStateClosed
 	default:
 		panic("unknown bug state")

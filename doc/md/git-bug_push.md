@@ -1,6 +1,6 @@
 ## git-bug push
 
-Push bugs update to a git remote.
+Push updates to a git remote
 
 ```
 git-bug push [REMOTE] [flags]
@@ -14,5 +14,5 @@ git-bug push [REMOTE] [flags]
 
 ### SEE ALSO
 
-* [git-bug](git-bug.md)	 - A bug tracker embedded in Git.
+* [git-bug](git-bug.md)	 - A bug tracker embedded in Git
 

@@ -65,24 +65,19 @@ func TestGoGitRepo_Indexes(t *testing.T) {
 	plainRoot := goGitRepoDir(t, repo)
 
 	// Can create indices
-	indexA, err := repo.GetBleveIndex("a")
+	indexA, err := repo.GetIndex("a")
 	require.NoError(t, err)
 	require.NotZero(t, indexA)
 	require.FileExists(t, filepath.Join(plainRoot, ".git", namespace, "indexes", "a", "index_meta.json"))
 	require.FileExists(t, filepath.Join(plainRoot, ".git", namespace, "indexes", "a", "store"))
 
-	indexB, err := repo.GetBleveIndex("b")
+	indexB, err := repo.GetIndex("b")
 	require.NoError(t, err)
 	require.NotZero(t, indexB)
 	require.DirExists(t, filepath.Join(plainRoot, ".git", namespace, "indexes", "b"))
 
 	// Can get an existing index
-	indexA, err = repo.GetBleveIndex("a")
+	indexA, err = repo.GetIndex("a")
 	require.NoError(t, err)
 	require.NotZero(t, indexA)
-
-	// Can delete an index
-	err = repo.ClearBleveIndex("a")
-	require.NoError(t, err)
-	require.NoDirExists(t, filepath.Join(plainRoot, ".git", namespace, "indexes", "a"))
 }

@@ -12,11 +12,11 @@ import (
 
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
-	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/entities/bug"
+	"github.com/MichaelMure/git-bug/entities/common"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
-	"github.com/MichaelMure/git-bug/identity"
 )
 
 var (
@@ -73,8 +73,8 @@ func (ge *gitlabExporter) cacheAllClient(repo *cache.RepoCache, baseURL string) 
 			continue
 		}
 
-		user, err := repo.ResolveIdentityImmutableMetadata(metaKeyGitlabLogin, login)
-		if err == identity.ErrIdentityNotExist {
+		user, err := repo.Identities().ResolveIdentityImmutableMetadata(metaKeyGitlabLogin, login)
+		if entity.IsErrNotFound(err) {
 			continue
 		}
 		if err != nil {
@@ -115,14 +115,14 @@ func (ge *gitlabExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, 
 			allIdentitiesIds = append(allIdentitiesIds, id)
 		}
 
-		allBugsIds := repo.AllBugsIds()
+		allBugsIds := repo.Bugs().AllIds()
 
 		for _, id := range allBugsIds {
 			select {
 			case <-ctx.Done():
 				return
 			default:
-				b, err := repo.ResolveBug(id)
+				b, err := repo.Bugs().Resolve(id)
 				if err != nil {
 					out <- core.NewExportError(err, id)
 					return
@@ -287,7 +287,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 				return
 			}
 
-			out <- core.NewExportComment(op.Id())
+			out <- core.NewExportComment(b.Id())
 
 			idString = strconv.Itoa(id)
 			// cache comment id
@@ -306,7 +306,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 					return
 				}
 
-				out <- core.NewExportCommentEdition(op.Id())
+				out <- core.NewExportCommentEdition(b.Id())
 				id = bugGitlabID
 
 			} else {
@@ -314,13 +314,13 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 				// case comment edition operation: we need to edit the Gitlab comment
 				commentID, ok := ge.cachedOperationIDs[targetId]
 				if !ok {
-					out <- core.NewExportError(fmt.Errorf("unexpected error: comment id not found"), op.Target)
+					out <- core.NewExportError(fmt.Errorf("unexpected error: comment id not found"), b.Id())
 					return
 				}
 
 				commentIDint, err := strconv.Atoi(commentID)
 				if err != nil {
-					out <- core.NewExportError(fmt.Errorf("unexpected comment id format"), op.Target)
+					out <- core.NewExportError(fmt.Errorf("unexpected comment id format"), b.Id())
 					return
 				}
 
@@ -330,7 +330,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 					return
 				}
 
-				out <- core.NewExportCommentEdition(op.Id())
+				out <- core.NewExportCommentEdition(b.Id())
 				id = commentIDint
 			}
 
@@ -341,7 +341,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 				return
 			}
 
-			out <- core.NewExportStatusChange(op.Id())
+			out <- core.NewExportStatusChange(b.Id())
 			id = bugGitlabID
 
 		case *bug.SetTitleOperation:
@@ -351,7 +351,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 				return
 			}
 
-			out <- core.NewExportTitleEdition(op.Id())
+			out <- core.NewExportTitleEdition(b.Id())
 			id = bugGitlabID
 
 		case *bug.LabelChangeOperation:
@@ -377,7 +377,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 				return
 			}
 
-			out <- core.NewExportLabelChange(op.Id())
+			out <- core.NewExportLabelChange(b.Id())
 			id = bugGitlabID
 		default:
 			panic("unhandled operation type case")
@@ -469,13 +469,13 @@ func editCommentGitlabIssue(ctx context.Context, gc *gitlab.Client, repositoryID
 	return err
 }
 
-func updateGitlabIssueStatus(ctx context.Context, gc *gitlab.Client, repositoryID string, issueID int, status bug.Status) error {
+func updateGitlabIssueStatus(ctx context.Context, gc *gitlab.Client, repositoryID string, issueID int, status common.Status) error {
 	var state string
 
 	switch status {
-	case bug.OpenStatus:
+	case common.OpenStatus:
 		state = "reopen"
-	case bug.ClosedStatus:
+	case common.ClosedStatus:
 		state = "close"
 	default:
 		panic("unknown bug state")

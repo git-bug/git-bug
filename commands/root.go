@@ -6,9 +6,12 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-)
 
-const rootCommandName = "git-bug"
+	"github.com/MichaelMure/git-bug/commands/bridge"
+	"github.com/MichaelMure/git-bug/commands/bug"
+	"github.com/MichaelMure/git-bug/commands/execenv"
+	"github.com/MichaelMure/git-bug/commands/user"
+)
 
 // These variables are initialized externally during the build. See the Makefile.
 var GitCommit string
@@ -17,8 +20,8 @@ var GitExactTag string
 
 func NewRootCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   rootCommandName,
-		Short: "A bug tracker embedded in Git.",
+		Use:   execenv.RootCommandName,
+		Short: "A bug tracker embedded in Git",
 		Long: `git-bug is a bug tracker embedded in git.
 
 git-bug use git objects to store the bug tracking separated from the files
@@ -52,26 +55,33 @@ the same git remote you are already using to collaborate with other people.
 		DisableAutoGenTag: true,
 	}
 
-	cmd.AddCommand(newAddCommand())
-	cmd.AddCommand(newBridgeCommand())
+	const entityGroup = "entity"
+	const uiGroup = "ui"
+	const remoteGroup = "remote"
+
+	cmd.AddGroup(&cobra.Group{ID: entityGroup, Title: "Entities"})
+	cmd.AddGroup(&cobra.Group{ID: uiGroup, Title: "Interactive interfaces"})
+	cmd.AddGroup(&cobra.Group{ID: remoteGroup, Title: "Interaction with the outside world"})
+
+	addCmdWithGroup := func(child *cobra.Command, groupID string) {
+		cmd.AddCommand(child)
+		child.GroupID = groupID
+	}
+
+	addCmdWithGroup(bugcmd.NewBugCommand(), entityGroup)
+	addCmdWithGroup(usercmd.NewUserCommand(), entityGroup)
+	addCmdWithGroup(newLabelCommand(), entityGroup)
+
+	addCmdWithGroup(newTermUICommand(), uiGroup)
+	addCmdWithGroup(newWebUICommand(), uiGroup)
+
+	addCmdWithGroup(newPullCommand(), remoteGroup)
+	addCmdWithGroup(newPushCommand(), remoteGroup)
+	addCmdWithGroup(bridgecmd.NewBridgeCommand(), remoteGroup)
+
 	cmd.AddCommand(newCommandsCommand())
-	cmd.AddCommand(newCommentCommand())
-	cmd.AddCommand(newDeselectCommand())
-	cmd.AddCommand(newLabelCommand())
-	cmd.AddCommand(newLsCommand())
-	cmd.AddCommand(newLsIdCommand())
-	cmd.AddCommand(newLsLabelCommand())
-	cmd.AddCommand(newPullCommand())
-	cmd.AddCommand(newPushCommand())
-	cmd.AddCommand(newRmCommand())
-	cmd.AddCommand(newSelectCommand())
-	cmd.AddCommand(newShowCommand())
-	cmd.AddCommand(newStatusCommand())
-	cmd.AddCommand(newTermUICommand())
-	cmd.AddCommand(newTitleCommand())
-	cmd.AddCommand(newUserCommand())
 	cmd.AddCommand(newVersionCommand())
-	cmd.AddCommand(newWebUICommand())
+	cmd.AddCommand(newWipeCommand())
 
 	return cmd
 }

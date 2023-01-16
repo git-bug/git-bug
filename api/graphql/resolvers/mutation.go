@@ -7,9 +7,8 @@ import (
 	"github.com/MichaelMure/git-bug/api/auth"
 	"github.com/MichaelMure/git-bug/api/graphql/graph"
 	"github.com/MichaelMure/git-bug/api/graphql/models"
-	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/entity"
+	"github.com/MichaelMure/git-bug/entities/bug"
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
@@ -33,7 +32,7 @@ func (r mutationResolver) getBug(repoRef *string, bugPrefix string) (*cache.Repo
 		return nil, nil, err
 	}
 
-	b, err := repo.ResolveBugPrefix(bugPrefix)
+	b, err := repo.Bugs().ResolvePrefix(bugPrefix)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -51,7 +50,7 @@ func (r mutationResolver) NewBug(ctx context.Context, input models.NewBugInput) 
 		return nil, err
 	}
 
-	b, op, err := repo.NewBugRaw(author,
+	b, op, err := repo.Bugs().NewRaw(author,
 		time.Now().Unix(),
 		text.CleanupOneLine(input.Title),
 		text.Cleanup(input.Message),
@@ -79,7 +78,7 @@ func (r mutationResolver) AddComment(ctx context.Context, input models.AddCommen
 		return nil, err
 	}
 
-	op, err := b.AddCommentRaw(author,
+	_, op, err := b.AddCommentRaw(author,
 		time.Now().Unix(),
 		text.Cleanup(input.Message),
 		input.Files,
@@ -111,7 +110,7 @@ func (r mutationResolver) AddCommentAndClose(ctx context.Context, input models.A
 		return nil, err
 	}
 
-	opAddComment, err := b.AddCommentRaw(author,
+	_, opAddComment, err := b.AddCommentRaw(author,
 		time.Now().Unix(),
 		text.Cleanup(input.Message),
 		input.Files,
@@ -149,7 +148,7 @@ func (r mutationResolver) AddCommentAndReopen(ctx context.Context, input models.
 		return nil, err
 	}
 
-	opAddComment, err := b.AddCommentRaw(author,
+	_, opAddComment, err := b.AddCommentRaw(author,
 		time.Now().Unix(),
 		text.Cleanup(input.Message),
 		input.Files,
@@ -177,7 +176,12 @@ func (r mutationResolver) AddCommentAndReopen(ctx context.Context, input models.
 }
 
 func (r mutationResolver) EditComment(ctx context.Context, input models.EditCommentInput) (*models.EditCommentPayload, error) {
-	repo, b, err := r.getBug(input.RepoRef, input.Prefix)
+	repo, err := r.getRepo(input.RepoRef)
+	if err != nil {
+		return nil, err
+	}
+
+	b, target, err := repo.Bugs().ResolveComment(input.TargetPrefix)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +194,7 @@ func (r mutationResolver) EditComment(ctx context.Context, input models.EditComm
 	op, err := b.EditCommentRaw(
 		author,
 		time.Now().Unix(),
-		entity.Id(input.Target),
+		target,
 		text.Cleanup(input.Message),
 		nil,
 	)

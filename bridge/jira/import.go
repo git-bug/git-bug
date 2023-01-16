@@ -11,8 +11,9 @@ import (
 
 	"github.com/MichaelMure/git-bug/bridge/core"
 	"github.com/MichaelMure/git-bug/bridge/core/auth"
-	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/entities/bug"
+	"github.com/MichaelMure/git-bug/entities/common"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
 	"github.com/MichaelMure/git-bug/util/text"
@@ -183,7 +184,7 @@ func (ji *jiraImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, si
 // Create a bug.Person from a JIRA user
 func (ji *jiraImporter) ensurePerson(repo *cache.RepoCache, user User) (*cache.IdentityCache, error) {
 	// Look first in the cache
-	i, err := repo.ResolveIdentityImmutableMetadata(
+	i, err := repo.Identities().ResolveIdentityImmutableMetadata(
 		metaKeyJiraUser, string(user.Key))
 	if err == nil {
 		return i, nil
@@ -192,7 +193,7 @@ func (ji *jiraImporter) ensurePerson(repo *cache.RepoCache, user User) (*cache.I
 		return nil, err
 	}
 
-	i, err = repo.NewIdentityRaw(
+	i, err = repo.Identities().NewRaw(
 		user.DisplayName,
 		user.EmailAddress,
 		user.Key,
@@ -218,7 +219,7 @@ func (ji *jiraImporter) ensureIssue(repo *cache.RepoCache, issue Issue) (*cache.
 		return nil, err
 	}
 
-	b, err := repo.ResolveBugMatcher(func(excerpt *cache.BugExcerpt) bool {
+	b, err := repo.Bugs().ResolveMatcher(func(excerpt *cache.BugExcerpt) bool {
 		if _, ok := excerpt.CreateMetadata[metaKeyJiraBaseUrl]; ok &&
 			excerpt.CreateMetadata[metaKeyJiraBaseUrl] != ji.conf[confKeyBaseUrl] {
 			return false
@@ -228,12 +229,12 @@ func (ji *jiraImporter) ensureIssue(repo *cache.RepoCache, issue Issue) (*cache.
 			excerpt.CreateMetadata[metaKeyJiraId] == issue.ID &&
 			excerpt.CreateMetadata[metaKeyJiraProject] == ji.conf[confKeyProject]
 	})
-	if err != nil && err != bug.ErrBugNotExist {
+	if err != nil && !entity.IsErrNotFound(err) {
 		return nil, err
 	}
 
-	if err == bug.ErrBugNotExist {
-		b, _, err = repo.NewBugRaw(
+	if entity.IsErrNotFound(err) {
+		b, _, err = repo.Bugs().NewRaw(
 			author,
 			issue.Fields.Created.Unix(),
 			text.CleanupOneLine(issue.Fields.Summary),
@@ -269,8 +270,7 @@ func (ji *jiraImporter) ensureComment(repo *cache.RepoCache, b *cache.BugCache, 
 		return err
 	}
 
-	targetOpID, err := b.ResolveOperationWithMetadata(
-		metaKeyJiraId, item.ID)
+	targetOpID, err := b.ResolveOperationWithMetadata(metaKeyJiraId, item.ID)
 	if err != nil && err != cache.ErrNoMatchingOp {
 		return err
 	}
@@ -286,7 +286,7 @@ func (ji *jiraImporter) ensureComment(repo *cache.RepoCache, b *cache.BugCache, 
 		}
 
 		// add comment operation
-		op, err := b.AddCommentRaw(
+		commentId, op, err := b.AddCommentRaw(
 			author,
 			item.Created.Unix(),
 			cleanText,
@@ -299,7 +299,7 @@ func (ji *jiraImporter) ensureComment(repo *cache.RepoCache, b *cache.BugCache, 
 			return err
 		}
 
-		ji.out <- core.NewImportComment(op.Id())
+		ji.out <- core.NewImportComment(b.Id(), commentId)
 		targetOpID = op.Id()
 	}
 
@@ -329,11 +329,13 @@ func (ji *jiraImporter) ensureComment(repo *cache.RepoCache, b *cache.BugCache, 
 		return err
 	}
 
+	commentId := entity.CombineIds(b.Id(), targetOpID)
+
 	// comment edition
-	op, err := b.EditCommentRaw(
+	_, err = b.EditCommentRaw(
 		editor,
 		item.Updated.Unix(),
-		targetOpID,
+		commentId,
 		text.Cleanup(item.Body),
 		map[string]string{
 			metaKeyJiraId: derivedID,
@@ -344,7 +346,7 @@ func (ji *jiraImporter) ensureComment(repo *cache.RepoCache, b *cache.BugCache, 
 		return err
 	}
 
-	ji.out <- core.NewImportCommentEdition(op.Id())
+	ji.out <- core.NewImportCommentEdition(b.Id(), commentId)
 
 	return nil
 }
@@ -510,13 +512,13 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 				return err
 			}
 
-			ji.out <- core.NewImportLabelChange(op.Id())
+			ji.out <- core.NewImportLabelChange(b.Id(), op.Id())
 
 		case "status":
 			statusStr, hasMap := statusMap[item.To]
 			if hasMap {
 				switch statusStr {
-				case bug.OpenStatus.String():
+				case common.OpenStatus.String():
 					op, err := b.OpenRaw(
 						author,
 						entry.Created.Unix(),
@@ -528,9 +530,9 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 					if err != nil {
 						return err
 					}
-					ji.out <- core.NewImportStatusChange(op.Id())
+					ji.out <- core.NewImportStatusChange(b.Id(), op.Id())
 
-				case bug.ClosedStatus.String():
+				case common.ClosedStatus.String():
 					op, err := b.CloseRaw(
 						author,
 						entry.Created.Unix(),
@@ -542,7 +544,7 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 					if err != nil {
 						return err
 					}
-					ji.out <- core.NewImportStatusChange(op.Id())
+					ji.out <- core.NewImportStatusChange(b.Id(), op.Id())
 				}
 			} else {
 				ji.out <- core.NewImportError(
@@ -567,12 +569,12 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 				return err
 			}
 
-			ji.out <- core.NewImportTitleEdition(op.Id())
+			ji.out <- core.NewImportTitleEdition(b.Id(), op.Id())
 
 		case "description":
 			// NOTE(josh): JIRA calls it "description", which sounds more like the
 			// title but it's actually the body
-			op, err := b.EditCreateCommentRaw(
+			commentId, _, err := b.EditCreateCommentRaw(
 				author,
 				entry.Created.Unix(),
 				text.Cleanup(item.ToString),
@@ -585,7 +587,7 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 				return err
 			}
 
-			ji.out <- core.NewImportCommentEdition(op.Id())
+			ji.out <- core.NewImportCommentEdition(b.Id(), commentId)
 
 		default:
 			ji.out <- core.NewImportWarning(
@@ -608,8 +610,8 @@ func getStatusMap(conf core.Configuration) (map[string]string, error) {
 	mapStr, hasConf := conf[confKeyIDMap]
 	if !hasConf {
 		return map[string]string{
-			bug.OpenStatus.String():   "1",
-			bug.ClosedStatus.String(): "6",
+			common.OpenStatus.String():   "1",
+			common.ClosedStatus.String(): "6",
 		}, nil
 	}
 

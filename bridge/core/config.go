@@ -4,13 +4,14 @@ import (
 	"fmt"
 
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/entities/identity"
+	"github.com/MichaelMure/git-bug/entity"
 )
 
 func FinishConfig(repo *cache.RepoCache, metaKey string, login string) error {
 	// if no user exist with the given login metadata
-	_, err := repo.ResolveIdentityImmutableMetadata(metaKey, login)
-	if err != nil && err != identity.ErrIdentityNotExist {
+	_, err := repo.Identities().ResolveIdentityImmutableMetadata(metaKey, login)
+	if err != nil && !entity.IsErrNotFound(err) {
 		// real error
 		return err
 	}
@@ -33,7 +34,7 @@ func FinishConfig(repo *cache.RepoCache, metaKey string, login string) error {
 	}
 
 	// otherwise create a user with that metadata
-	i, err := repo.NewIdentityFromGitUserRaw(map[string]string{
+	i, err := repo.Identities().NewFromGitUserRaw(map[string]string{
 		metaKey: login,
 	})
 	if err != nil {

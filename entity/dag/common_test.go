@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
@@ -59,7 +59,7 @@ func (op *op2) Id() entity.Id {
 
 func (op *op2) Validate() error { return nil }
 
-func unmarshaler(raw json.RawMessage, resolver identity.Resolver) (Operation, error) {
+func unmarshaler(raw json.RawMessage, resolvers entity.Resolvers) (Operation, error) {
 	var t struct {
 		OperationType OperationType `json:"type"`
 	}
@@ -88,16 +88,28 @@ func unmarshaler(raw json.RawMessage, resolver identity.Resolver) (Operation, er
 }
 
 /*
+  Entity
+*/
+
+type Foo struct {
+	*Entity
+}
+
+func wrapper(e *Entity) *Foo {
+	return &Foo{Entity: e}
+}
+
+/*
   Identities + repo + definition
 */
 
-func makeTestContext() (repository.ClockedRepo, identity.Interface, identity.Interface, identity.Resolver, Definition) {
+func makeTestContext() (repository.ClockedRepo, identity.Interface, identity.Interface, entity.Resolvers, Definition) {
 	repo := repository.NewMockRepo()
-	id1, id2, resolver, def := makeTestContextInternal(repo)
-	return repo, id1, id2, resolver, def
+	id1, id2, resolvers, def := makeTestContextInternal(repo)
+	return repo, id1, id2, resolvers, def
 }
 
-func makeTestContextRemote(t *testing.T) (repository.ClockedRepo, repository.ClockedRepo, repository.ClockedRepo, identity.Interface, identity.Interface, identity.Resolver, Definition) {
+func makeTestContextRemote(t *testing.T) (repository.ClockedRepo, repository.ClockedRepo, repository.ClockedRepo, identity.Interface, identity.Interface, entity.Resolvers, Definition) {
 	repoA := repository.CreateGoGitTestRepo(t, false)
 	repoB := repository.CreateGoGitTestRepo(t, false)
 	remote := repository.CreateGoGitTestRepo(t, true)
@@ -122,7 +134,7 @@ func makeTestContextRemote(t *testing.T) (repository.ClockedRepo, repository.Clo
 	return repoA, repoB, remote, id1, id2, resolver, def
 }
 
-func makeTestContextInternal(repo repository.ClockedRepo) (identity.Interface, identity.Interface, identity.Resolver, Definition) {
+func makeTestContextInternal(repo repository.ClockedRepo) (identity.Interface, identity.Interface, entity.Resolvers, Definition) {
 	id1, err := identity.NewIdentity(repo, "name1", "email1")
 	if err != nil {
 		panic(err)
@@ -140,16 +152,9 @@ func makeTestContextInternal(repo repository.ClockedRepo) (identity.Interface, i
 		panic(err)
 	}
 
-	resolver := identityResolverFunc(func(id entity.Id) (identity.Interface, error) {
-		switch id {
-		case id1.Id():
-			return id1, nil
-		case id2.Id():
-			return id2, nil
-		default:
-			return nil, identity.ErrIdentityNotExist
-		}
-	})
+	resolvers := entity.Resolvers{
+		&identity.Identity{}: entity.MakeResolver(id1, id2),
+	}
 
 	def := Definition{
 		Typename:             "foo",
@@ -158,11 +163,5 @@ func makeTestContextInternal(repo repository.ClockedRepo) (identity.Interface, i
 		FormatVersion:        1,
 	}
 
-	return id1, id2, resolver, def
-}
-
-type identityResolverFunc func(id entity.Id) (identity.Interface, error)
-
-func (fn identityResolverFunc) ResolveIdentity(id entity.Id) (identity.Interface, error) {
-	return fn(id)
+	return id1, id2, resolvers, def
 }

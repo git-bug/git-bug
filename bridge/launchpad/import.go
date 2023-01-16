@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/MichaelMure/git-bug/bridge/core"
-	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/util/text"
@@ -23,7 +22,7 @@ func (li *launchpadImporter) Init(_ context.Context, repo *cache.RepoCache, conf
 
 func (li *launchpadImporter) ensurePerson(repo *cache.RepoCache, owner LPPerson) (*cache.IdentityCache, error) {
 	// Look first in the cache
-	i, err := repo.ResolveIdentityImmutableMetadata(metaKeyLaunchpadLogin, owner.Login)
+	i, err := repo.Identities().ResolveIdentityImmutableMetadata(metaKeyLaunchpadLogin, owner.Login)
 	if err == nil {
 		return i, nil
 	}
@@ -31,7 +30,7 @@ func (li *launchpadImporter) ensurePerson(repo *cache.RepoCache, owner LPPerson)
 		return nil, err
 	}
 
-	return repo.NewIdentityRaw(
+	return repo.Identities().NewRaw(
 		owner.Name,
 		"",
 		owner.Login,
@@ -64,11 +63,11 @@ func (li *launchpadImporter) ImportAll(ctx context.Context, repo *cache.RepoCach
 				return
 			default:
 				lpBugID := fmt.Sprintf("%d", lpBug.ID)
-				b, err := repo.ResolveBugMatcher(func(excerpt *cache.BugExcerpt) bool {
+				b, err := repo.Bugs().ResolveMatcher(func(excerpt *cache.BugExcerpt) bool {
 					return excerpt.CreateMetadata[core.MetaKeyOrigin] == target &&
 						excerpt.CreateMetadata[metaKeyLaunchpadID] == lpBugID
 				})
-				if err != nil && err != bug.ErrBugNotExist {
+				if err != nil && !entity.IsErrNotFound(err) {
 					out <- core.NewImportError(err, entity.Id(lpBugID))
 					return
 				}
@@ -79,9 +78,9 @@ func (li *launchpadImporter) ImportAll(ctx context.Context, repo *cache.RepoCach
 					return
 				}
 
-				if err == bug.ErrBugNotExist {
+				if entity.IsErrNotFound(err) {
 					createdAt, _ := time.Parse(time.RFC3339, lpBug.CreatedAt)
-					b, _, err = repo.NewBugRaw(
+					b, _, err = repo.Bugs().NewRaw(
 						owner,
 						createdAt.Unix(),
 						text.CleanupOneLine(lpBug.Title),
@@ -131,7 +130,7 @@ func (li *launchpadImporter) ImportAll(ctx context.Context, repo *cache.RepoCach
 
 					// This is a new comment, we can add it.
 					createdAt, _ := time.Parse(time.RFC3339, lpMessage.CreatedAt)
-					op, err := b.AddCommentRaw(
+					commentId, _, err := b.AddCommentRaw(
 						owner,
 						createdAt.Unix(),
 						text.Cleanup(lpMessage.Content),
@@ -144,7 +143,7 @@ func (li *launchpadImporter) ImportAll(ctx context.Context, repo *cache.RepoCach
 						return
 					}
 
-					out <- core.NewImportComment(op.Id())
+					out <- core.NewImportComment(b.Id(), commentId)
 				}
 
 				if !b.NeedCommit() {

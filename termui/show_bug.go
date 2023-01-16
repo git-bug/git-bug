@@ -9,8 +9,9 @@ import (
 	text "github.com/MichaelMure/go-term-text"
 	"github.com/awesome-gocui/gocui"
 
-	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/entities/bug"
+	"github.com/MichaelMure/git-bug/entities/common"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/util/colors"
 )
@@ -243,7 +244,7 @@ func (sb *showBug) renderMain(g *gocui.Gui, mainView *gocui.View) error {
 	y0 += lines + 1
 
 	for _, op := range snap.Timeline {
-		viewName := op.Id().String()
+		viewName := op.CombinedId().String()
 
 		// TODO: me might skip the rendering of blocks that are outside of the view
 		// but to do that we need to rework how sb.mainSelectableView is maintained
@@ -624,10 +625,10 @@ func (sb *showBug) setTitle(g *gocui.Gui, v *gocui.View) error {
 
 func (sb *showBug) toggleOpenClose(g *gocui.Gui, v *gocui.View) error {
 	switch sb.bug.Snapshot().Status {
-	case bug.OpenStatus:
+	case common.OpenStatus:
 		_, err := sb.bug.Close()
 		return err
-	case bug.ClosedStatus:
+	case common.ClosedStatus:
 		_, err := sb.bug.Open()
 		return err
 	default:
@@ -646,16 +647,16 @@ func (sb *showBug) edit(g *gocui.Gui, v *gocui.View) error {
 		return nil
 	}
 
-	op, err := snap.SearchTimelineItem(entity.Id(sb.selected))
+	op, err := snap.SearchTimelineItem(entity.CombinedId(sb.selected))
 	if err != nil {
 		return err
 	}
 
 	switch op := op.(type) {
 	case *bug.AddCommentTimelineItem:
-		return editCommentWithEditor(sb.bug, op.Id(), op.Message)
+		return editCommentWithEditor(sb.bug, op.CombinedId(), op.Message)
 	case *bug.CreateTimelineItem:
-		return editCommentWithEditor(sb.bug, op.Id(), op.Message)
+		return editCommentWithEditor(sb.bug, op.CombinedId(), op.Message)
 	case *bug.LabelChangeTimelineItem:
 		return sb.editLabels(g, snap)
 	}

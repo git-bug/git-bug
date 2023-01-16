@@ -4,8 +4,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
+	"github.com/MichaelMure/git-bug/entities/bug"
+	"github.com/MichaelMure/git-bug/entities/common"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
 )
@@ -16,7 +17,7 @@ import (
 type BugWrapper interface {
 	Id() entity.Id
 	LastEdit() time.Time
-	Status() bug.Status
+	Status() common.Status
 	Title() string
 	Comments() ([]bug.Comment, error)
 	Labels() []bug.Label
@@ -57,7 +58,7 @@ func (lb *lazyBug) load() error {
 		return nil
 	}
 
-	b, err := lb.cache.ResolveBug(lb.excerpt.Id)
+	b, err := lb.cache.Bugs().Resolve(lb.excerpt.Id())
 	if err != nil {
 		return err
 	}
@@ -67,7 +68,7 @@ func (lb *lazyBug) load() error {
 }
 
 func (lb *lazyBug) identity(id entity.Id) (IdentityWrapper, error) {
-	i, err := lb.cache.ResolveIdentityExcerpt(id)
+	i, err := lb.cache.Identities().ResolveExcerpt(id)
 	if err != nil {
 		return nil, err
 	}
@@ -78,14 +79,14 @@ func (lb *lazyBug) identity(id entity.Id) (IdentityWrapper, error) {
 func (lb *lazyBug) IsAuthored() {}
 
 func (lb *lazyBug) Id() entity.Id {
-	return lb.excerpt.Id
+	return lb.excerpt.Id()
 }
 
 func (lb *lazyBug) LastEdit() time.Time {
 	return lb.excerpt.EditTime()
 }
 
-func (lb *lazyBug) Status() bug.Status {
+func (lb *lazyBug) Status() common.Status {
 	return lb.excerpt.Status
 }
 
@@ -167,7 +168,7 @@ func (l *loadedBug) LastEdit() time.Time {
 	return l.Snapshot.EditTime()
 }
 
-func (l *loadedBug) Status() bug.Status {
+func (l *loadedBug) Status() common.Status {
 	return l.Snapshot.Status
 }
 

@@ -9,8 +9,8 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/identity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
@@ -19,6 +19,8 @@ const refsPattern = "refs/%s/%s"
 const creationClockPattern = "%s-create"
 const editClockPattern = "%s-edit"
 
+type OperationUnmarshaler func(raw json.RawMessage, resolver entity.Resolvers) (Operation, error)
+
 // Definition hold the details defining one specialization of an Entity.
 type Definition struct {
 	// the name of the entity (bug, pull-request, ...), for human consumption
@@ -26,7 +28,7 @@ type Definition struct {
 	// the Namespace in git references (bugs, prs, ...)
 	Namespace string
 	// a function decoding a JSON message into an Operation
-	OperationUnmarshaler func(raw json.RawMessage, resolver identity.Resolver) (Operation, error)
+	OperationUnmarshaler OperationUnmarshaler
 	// the expected format version number, that can be used for data migration/upgrade
 	FormatVersion uint
 }
@@ -57,32 +59,35 @@ func New(definition Definition) *Entity {
 }
 
 // Read will read and decode a stored local Entity from a repository
-func Read(def Definition, repo repository.ClockedRepo, resolver identity.Resolver, id entity.Id) (*Entity, error) {
+func Read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.ClockedRepo, resolvers entity.Resolvers, id entity.Id) (EntityT, error) {
 	if err := id.Validate(); err != nil {
-		return nil, errors.Wrap(err, "invalid id")
+		return *new(EntityT), errors.Wrap(err, "invalid id")
 	}
 
 	ref := fmt.Sprintf("refs/%s/%s", def.Namespace, id.String())
 
-	return read(def, repo, resolver, ref)
+	return read[EntityT](def, wrapper, repo, resolvers, ref)
 }
 
 // readRemote will read and decode a stored remote Entity from a repository
-func readRemote(def Definition, repo repository.ClockedRepo, resolver identity.Resolver, remote string, id entity.Id) (*Entity, error) {
+func readRemote[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.ClockedRepo, resolvers entity.Resolvers, remote string, id entity.Id) (EntityT, error) {
 	if err := id.Validate(); err != nil {
-		return nil, errors.Wrap(err, "invalid id")
+		return *new(EntityT), errors.Wrap(err, "invalid id")
 	}
 
 	ref := fmt.Sprintf("refs/remotes/%s/%s/%s", def.Namespace, remote, id.String())
 
-	return read(def, repo, resolver, ref)
+	return read[EntityT](def, wrapper, repo, resolvers, ref)
 }
 
 // read fetch from git and decode an Entity at an arbitrary git reference.
-func read(def Definition, repo repository.ClockedRepo, resolver identity.Resolver, ref string) (*Entity, error) {
+func read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.ClockedRepo, resolvers entity.Resolvers, ref string) (EntityT, error) {
 	rootHash, err := repo.ResolveRef(ref)
+	if err == repository.ErrNotFound {
+		return *new(EntityT), entity.NewErrNotFound(def.Typename)
+	}
 	if err != nil {
-		return nil, err
+		return *new(EntityT), err
 	}
 
 	// Perform a breadth-first search to get a topological order of the DAG where we discover the
@@ -102,7 +107,7 @@ func read(def Definition, repo repository.ClockedRepo, resolver identity.Resolve
 
 		commit, err := repo.ReadCommit(hash)
 		if err != nil {
-			return nil, err
+			return *new(EntityT), err
 		}
 
 		BFSOrder = append(BFSOrder, commit)
@@ -135,26 +140,26 @@ func read(def Definition, repo repository.ClockedRepo, resolver identity.Resolve
 		// can have no parents. Said otherwise, the DAG need to have exactly
 		// one leaf.
 		if !isFirstCommit && len(commit.Parents) == 0 {
-			return nil, fmt.Errorf("multiple leafs in the entity DAG")
+			return *new(EntityT), fmt.Errorf("multiple leafs in the entity DAG")
 		}
 
-		opp, err := readOperationPack(def, repo, resolver, commit)
+		opp, err := readOperationPack(def, repo, resolvers, commit)
 		if err != nil {
-			return nil, err
+			return *new(EntityT), err
 		}
 
 		err = opp.Validate()
 		if err != nil {
-			return nil, err
+			return *new(EntityT), err
 		}
 
 		if isMerge && len(opp.Operations) > 0 {
-			return nil, fmt.Errorf("merge commit cannot have operations")
+			return *new(EntityT), fmt.Errorf("merge commit cannot have operations")
 		}
 
 		// Check that the create lamport clock is set (not checked in Validate() as it's optional)
 		if isFirstCommit && opp.CreateTime <= 0 {
-			return nil, fmt.Errorf("creation lamport time not set")
+			return *new(EntityT), fmt.Errorf("creation lamport time not set")
 		}
 
 		// make sure that the lamport clocks causality match the DAG topology
@@ -165,7 +170,7 @@ func read(def Definition, repo repository.ClockedRepo, resolver identity.Resolve
 			}
 
 			if parentPack.EditTime >= opp.EditTime {
-				return nil, fmt.Errorf("lamport clock ordering doesn't match the DAG")
+				return *new(EntityT), fmt.Errorf("lamport clock ordering doesn't match the DAG")
 			}
 
 			// to avoid an attack where clocks are pushed toward the uint64 rollover, make sure
@@ -173,7 +178,7 @@ func read(def Definition, repo repository.ClockedRepo, resolver identity.Resolve
 			// we ignore merge commits here to allow merging after a loooong time without breaking anything,
 			// as long as there is one valid chain of small hops, it's fine.
 			if !isMerge && opp.EditTime-parentPack.EditTime > 1_000_000 {
-				return nil, fmt.Errorf("lamport clock jumping too far in the future, likely an attack")
+				return *new(EntityT), fmt.Errorf("lamport clock jumping too far in the future, likely an attack")
 			}
 		}
 
@@ -185,11 +190,11 @@ func read(def Definition, repo repository.ClockedRepo, resolver identity.Resolve
 	for _, opp := range oppMap {
 		err = repo.Witness(fmt.Sprintf(creationClockPattern, def.Namespace), opp.CreateTime)
 		if err != nil {
-			return nil, err
+			return *new(EntityT), err
 		}
 		err = repo.Witness(fmt.Sprintf(editClockPattern, def.Namespace), opp.EditTime)
 		if err != nil {
-			return nil, err
+			return *new(EntityT), err
 		}
 	}
 
@@ -230,23 +235,73 @@ func read(def Definition, repo repository.ClockedRepo, resolver identity.Resolve
 		}
 	}
 
-	return &Entity{
+	return wrapper(&Entity{
 		Definition: def,
 		ops:        ops,
 		lastCommit: rootHash,
 		createTime: createTime,
 		editTime:   editTime,
-	}, nil
+	}), nil
 }
 
-type StreamedEntity struct {
-	Entity *Entity
-	Err    error
+// readClockNoCheck fetch from git, read and witness the clocks of an Entity at an arbitrary git reference.
+// Note: readClockNoCheck does not verify the integrity of the Entity and could witness incorrect or incomplete
+// clocks if so. If data integrity check is a requirement, a flow similar to read without actually reading/decoding
+// operation blobs can be implemented instead.
+func readClockNoCheck(def Definition, repo repository.ClockedRepo, ref string) error {
+	rootHash, err := repo.ResolveRef(ref)
+	if err == repository.ErrNotFound {
+		return entity.NewErrNotFound(def.Typename)
+	}
+	if err != nil {
+		return err
+	}
+
+	commit, err := repo.ReadCommit(rootHash)
+	if err != nil {
+		return err
+	}
+
+	createTime, editTime, err := readOperationPackClock(repo, commit)
+	if err != nil {
+		return err
+	}
+
+	// if we have more than one commit, we need to find the root to have the create time
+	if len(commit.Parents) > 0 {
+		for len(commit.Parents) > 0 {
+			// The path to the root is irrelevant.
+			commit, err = repo.ReadCommit(commit.Parents[0])
+			if err != nil {
+				return err
+			}
+		}
+		createTime, _, err = readOperationPackClock(repo, commit)
+		if err != nil {
+			return err
+		}
+	}
+
+	if createTime <= 0 {
+		return fmt.Errorf("creation lamport time not set")
+	}
+	if editTime <= 0 {
+		return fmt.Errorf("creation lamport time not set")
+	}
+	err = repo.Witness(fmt.Sprintf(creationClockPattern, def.Namespace), createTime)
+	if err != nil {
+		return err
+	}
+	err = repo.Witness(fmt.Sprintf(editClockPattern, def.Namespace), editTime)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // ReadAll read and parse all local Entity
-func ReadAll(def Definition, repo repository.ClockedRepo, resolver identity.Resolver) <-chan StreamedEntity {
-	out := make(chan StreamedEntity)
+func ReadAll[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.ClockedRepo, resolvers entity.Resolvers) <-chan entity.StreamedEntity[EntityT] {
+	out := make(chan entity.StreamedEntity[EntityT])
 
 	go func() {
 		defer close(out)
@@ -255,23 +310,51 @@ func ReadAll(def Definition, repo repository.ClockedRepo, resolver identity.Reso
 
 		refs, err := repo.ListRefs(refPrefix)
 		if err != nil {
-			out <- StreamedEntity{Err: err}
+			out <- entity.StreamedEntity[EntityT]{Err: err}
 			return
 		}
 
+		total := int64(len(refs))
+		current := int64(1)
+
 		for _, ref := range refs {
-			e, err := read(def, repo, resolver, ref)
+			e, err := read[EntityT](def, wrapper, repo, resolvers, ref)
 
 			if err != nil {
-				out <- StreamedEntity{Err: err}
+				out <- entity.StreamedEntity[EntityT]{Err: err}
 				return
 			}
 
-			out <- StreamedEntity{Entity: e}
+			out <- entity.StreamedEntity[EntityT]{
+				Entity:        e,
+				CurrentEntity: current,
+				TotalEntities: total,
+			}
+			current++
 		}
 	}()
 
 	return out
+}
+
+// ReadAllClocksNoCheck goes over all entities matching Definition and read/witness the corresponding clocks so that the
+// repo end up with correct clocks for the next write.
+func ReadAllClocksNoCheck(def Definition, repo repository.ClockedRepo) error {
+	refPrefix := fmt.Sprintf("refs/%s/", def.Namespace)
+
+	refs, err := repo.ListRefs(refPrefix)
+	if err != nil {
+		return err
+	}
+
+	for _, ref := range refs {
+		err = readClockNoCheck(def, repo, ref)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // Id return the Entity identifier
@@ -287,7 +370,7 @@ func (e *Entity) Validate() error {
 		return fmt.Errorf("entity has no operations")
 	}
 
-	// check if each operations are valid
+	// check if each operation are valid
 	for _, op := range e.ops {
 		if err := op.Validate(); err != nil {
 			return err

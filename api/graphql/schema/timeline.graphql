@@ -1,7 +1,7 @@
 """An item in the timeline of events"""
 interface TimelineItem {
     """The identifier of the source operation"""
-    id: String!
+    id: CombinedId!
 }
 
 """CommentHistoryStep hold one version of a message in the history"""
@@ -31,7 +31,7 @@ type TimelineItemEdge {
 """CreateTimelineItem is a TimelineItem that represent the creation of a bug and its message edition history"""
 type CreateTimelineItem implements TimelineItem & Authored {
     """The identifier of the source operation"""
-    id: String!
+    id: CombinedId!
     author: Identity!
     message: String!
     messageIsEmpty: Boolean!
@@ -45,7 +45,7 @@ type CreateTimelineItem implements TimelineItem & Authored {
 """AddCommentTimelineItem is a TimelineItem that represent a Comment and its edition history"""
 type AddCommentTimelineItem implements TimelineItem & Authored {
     """The identifier of the source operation"""
-    id: String!
+    id: CombinedId!
     author: Identity!
     message: String!
     messageIsEmpty: Boolean!
@@ -59,7 +59,7 @@ type AddCommentTimelineItem implements TimelineItem & Authored {
 """LabelChangeTimelineItem is a TimelineItem that represent a change in the labels of a bug"""
 type LabelChangeTimelineItem implements TimelineItem & Authored {
     """The identifier of the source operation"""
-    id: String!
+    id: CombinedId!
     author: Identity!
     date: Time!
     added: [Label!]!
@@ -69,7 +69,7 @@ type LabelChangeTimelineItem implements TimelineItem & Authored {
 """SetStatusTimelineItem is a TimelineItem that represent a change in the status of a bug"""
 type SetStatusTimelineItem implements TimelineItem & Authored {
     """The identifier of the source operation"""
-    id: String!
+    id: CombinedId!
     author: Identity!
     date: Time!
     status: Status!
@@ -78,7 +78,7 @@ type SetStatusTimelineItem implements TimelineItem & Authored {
 """LabelChangeTimelineItem is a TimelineItem that represent a change in the title of a bug"""
 type SetTitleTimelineItem implements TimelineItem & Authored {
     """The identifier of the source operation"""
-    id: String!
+    id: CombinedId!
     author: Identity!
     date: Time!
     title: String!

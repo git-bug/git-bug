@@ -7,8 +7,8 @@ import (
 
 	"github.com/icrowley/fake"
 
-	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/identity"
+	"github.com/MichaelMure/git-bug/entities/bug"
+	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
@@ -144,7 +144,7 @@ func paragraphs() string {
 }
 
 func comment(b bug.Interface, p identity.Interface, timestamp int64) {
-	_, _ = bug.AddComment(b, p, timestamp, paragraphs(), nil, nil)
+	_, _, _ = bug.AddComment(b, p, timestamp, paragraphs(), nil, nil)
 }
 
 func title(b bug.Interface, p identity.Interface, timestamp int64) {

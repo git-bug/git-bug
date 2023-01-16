@@ -58,9 +58,8 @@ function EditCommentForm({ bug, comment, onCancel, onPostSubmit }: Props) {
     editComment({
       variables: {
         input: {
-          prefix: bug.id,
+          targetPrefix: comment.id,
           message: message,
-          target: comment.id,
         },
       },
     }).then((result) => {

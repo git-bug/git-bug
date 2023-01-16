@@ -8,7 +8,7 @@ import (
 	"fmt"
 
 	"github.com/MichaelMure/git-bug/api/graphql/models"
-	"github.com/MichaelMure/git-bug/bug"
+	"github.com/MichaelMure/git-bug/entities/bug"
 )
 
 // BugTimelineItemEdgeMaker define a function that take a bug.TimelineItem and an offset and
