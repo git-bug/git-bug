@@ -6,14 +6,10 @@ import (
 	"io"
 	"os"
 
-	"github.com/spf13/cobra"
-	"github.com/vbauerster/mpb/v8"
-	"github.com/vbauerster/mpb/v8/decor"
+	"github.com/mattn/go-isatty"
 
 	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/repository"
-	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
 const RootCommandName = "git-bug"
@@ -24,6 +20,7 @@ const gitBugNamespace = "git-bug"
 type Env struct {
 	Repo    repository.ClockedRepo
 	Backend *cache.RepoCache
+	In      In
 	Out     Out
 	Err     Out
 }
@@ -31,17 +28,39 @@ type Env struct {
 func NewEnv() *Env {
 	return &Env{
 		Repo: nil,
+		In:   in{Reader: os.Stdin},
 		Out:  out{Writer: os.Stdout},
 		Err:  out{Writer: os.Stderr},
 	}
 }
 
+type In interface {
+	io.Reader
+
+	// IsTerminal tells if the input is a user terminal (rather than a buffer,
+	// a pipe ...), which tells if we can use interactive features.
+	IsTerminal() bool
+
+	// ForceIsTerminal allow to force the returned value of IsTerminal
+	// This only works in test scenario.
+	ForceIsTerminal(value bool)
+}
+
 type Out interface {
 	io.Writer
+
 	Printf(format string, a ...interface{})
 	Print(a ...interface{})
 	Println(a ...interface{})
 	PrintJSON(v interface{}) error
+
+	// IsTerminal tells if the output is a user terminal (rather than a buffer,
+	// a pipe ...), which tells if we can use colors and other interactive features.
+	IsTerminal() bool
+
+	// Raw return the underlying io.Writer, or itself if not.
+	// This is useful if something need to access the raw file descriptor.
+	Raw() io.Writer
 
 	// String returns what have been written in the output before, as a string.
 	// This only works in test scenario.
@@ -52,10 +71,24 @@ type Out interface {
 	// Reset clear what has been recorded as written in the output before.
 	// This only works in test scenario.
 	Reset()
+	// ForceIsTerminal allow to force the returned value of IsTerminal
+	// This only works in test scenario.
+	ForceIsTerminal(value bool)
+}
 
-	// Raw return the underlying io.Writer, or itself if not.
-	// This is useful if something need to access the raw file descriptor.
-	Raw() io.Writer
+type in struct {
+	io.Reader
+}
+
+func (i in) IsTerminal() bool {
+	if f, ok := i.Reader.(*os.File); ok {
+		return isTerminal(f)
+	}
+	return false
+}
+
+func (i in) ForceIsTerminal(_ bool) {
+	panic("only work with a test env")
 }
 
 type out struct {
@@ -83,6 +116,17 @@ func (o out) PrintJSON(v interface{}) error {
 	return nil
 }
 
+func (o out) IsTerminal() bool {
+	if f, ok := o.Writer.(*os.File); ok {
+		return isTerminal(f)
+	}
+	return false
+}
+
+func (o out) Raw() io.Writer {
+	return o.Writer
+}
+
 func (o out) String() string {
 	panic("only work with a test env")
 }
@@ -95,160 +139,10 @@ func (o out) Reset() {
 	panic("only work with a test env")
 }
 
-func (o out) Raw() io.Writer {
-	return o.Writer
+func (o out) ForceIsTerminal(_ bool) {
+	panic("only work with a test env")
 }
 
-// LoadRepo is a pre-run function that load the repository for use in a command
-func LoadRepo(env *Env) func(*cobra.Command, []string) error {
-	return func(cmd *cobra.Command, args []string) error {
-		cwd, err := os.Getwd()
-		if err != nil {
-			return fmt.Errorf("unable to get the current working directory: %q", err)
-		}
-
-		// Note: we are not loading clocks here because we assume that LoadRepo is only used
-		//  when we don't manipulate entities, or as a child call of LoadBackend which will
-		//  read all clocks anyway.
-		env.Repo, err = repository.OpenGoGitRepo(cwd, gitBugNamespace, nil)
-		if err == repository.ErrNotARepo {
-			return fmt.Errorf("%s must be run from within a git Repo", RootCommandName)
-		}
-		if err != nil {
-			return err
-		}
-
-		return nil
-	}
-}
-
-// LoadRepoEnsureUser is the same as LoadRepo, but also ensure that the user has configured
-// an identity. Use this pre-run function when an error after using the configured user won't
-// do.
-func LoadRepoEnsureUser(env *Env) func(*cobra.Command, []string) error {
-	return func(cmd *cobra.Command, args []string) error {
-		err := LoadRepo(env)(cmd, args)
-		if err != nil {
-			return err
-		}
-
-		_, err = identity.GetUserIdentity(env.Repo)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	}
-}
-
-// LoadBackend is a pre-run function that load the repository and the Backend for use in a command
-// When using this function you also need to use CloseBackend as a post-run
-func LoadBackend(env *Env) func(*cobra.Command, []string) error {
-	return func(cmd *cobra.Command, args []string) error {
-		err := LoadRepo(env)(cmd, args)
-		if err != nil {
-			return err
-		}
-
-		var events chan cache.BuildEvent
-		env.Backend, events = cache.NewRepoCache(env.Repo)
-
-		err = CacheBuildProgressBar(env, events)
-		if err != nil {
-			return err
-		}
-
-		cleaner := func(env *Env) interrupt.CleanerFunc {
-			return func() error {
-				if env.Backend != nil {
-					err := env.Backend.Close()
-					env.Backend = nil
-					return err
-				}
-				return nil
-			}
-		}
-
-		// Cleanup properly on interrupt
-		interrupt.RegisterCleaner(cleaner(env))
-		return nil
-	}
-}
-
-// LoadBackendEnsureUser is the same as LoadBackend, but also ensure that the user has configured
-// an identity. Use this pre-run function when an error after using the configured user won't
-// do.
-func LoadBackendEnsureUser(env *Env) func(*cobra.Command, []string) error {
-	return func(cmd *cobra.Command, args []string) error {
-		err := LoadBackend(env)(cmd, args)
-		if err != nil {
-			return err
-		}
-
-		_, err = identity.GetUserIdentity(env.Repo)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	}
-}
-
-// CloseBackend is a wrapper for a RunE function that will close the Backend properly
-// if it has been opened.
-// This wrapper style is necessary because a Cobra PostE function does not run if RunE return an error.
-func CloseBackend(env *Env, runE func(cmd *cobra.Command, args []string) error) func(*cobra.Command, []string) error {
-	return func(cmd *cobra.Command, args []string) error {
-		errRun := runE(cmd, args)
-
-		if env.Backend == nil {
-			return nil
-		}
-		err := env.Backend.Close()
-		env.Backend = nil
-
-		// prioritize the RunE error
-		if errRun != nil {
-			return errRun
-		}
-		return err
-	}
-}
-
-func CacheBuildProgressBar(env *Env, events chan cache.BuildEvent) error {
-	var progress *mpb.Progress
-	var bars = make(map[string]*mpb.Bar)
-
-	for event := range events {
-		if event.Err != nil {
-			return event.Err
-		}
-
-		if progress == nil {
-			progress = mpb.New(mpb.WithOutput(env.Err.Raw()))
-		}
-
-		switch event.Event {
-		case cache.BuildEventCacheIsBuilt:
-			env.Err.Println("Building cache... ")
-		case cache.BuildEventStarted:
-			bars[event.Typename] = progress.AddBar(-1,
-				mpb.BarRemoveOnComplete(),
-				mpb.PrependDecorators(
-					decor.Name(event.Typename, decor.WCSyncSpace),
-					decor.CountersNoUnit("%d / %d", decor.WCSyncSpace),
-				),
-				mpb.AppendDecorators(decor.Percentage(decor.WCSyncSpace)),
-			)
-		case cache.BuildEventProgress:
-			bars[event.Typename].SetTotal(event.Total, false)
-			bars[event.Typename].SetCurrent(event.Progress)
-		}
-	}
-
-	if progress != nil {
-		progress.Shutdown()
-	}
-
-	return nil
+func isTerminal(file *os.File) bool {
+	return isatty.IsTerminal(file.Fd()) || isatty.IsCygwinTerminal(file.Fd())
 }
