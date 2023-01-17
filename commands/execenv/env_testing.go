@@ -49,8 +49,6 @@ func NewTestEnv(t *testing.T) *Env {
 
 	repo := repository.CreateGoGitTestRepo(t, false)
 
-	buf := new(bytes.Buffer)
-
 	backend, err := cache.NewRepoCacheNoEvents(repo)
 	require.NoError(t, err)
 
@@ -61,7 +59,7 @@ func NewTestEnv(t *testing.T) *Env {
 	return &Env{
 		Repo:    repo,
 		Backend: backend,
-		Out:     &TestOut{buf},
-		Err:     &TestOut{buf},
+		Out:     &TestOut{&bytes.Buffer{}},
+		Err:     &TestOut{&bytes.Buffer{}},
 	}
 }

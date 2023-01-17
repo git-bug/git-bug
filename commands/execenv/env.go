@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 	"github.com/vbauerster/mpb/v8"
 	"github.com/vbauerster/mpb/v8/decor"
@@ -20,46 +21,29 @@ const RootCommandName = "git-bug"
 
 const gitBugNamespace = "git-bug"
 
-type IOMode int
-
-const (
-	UnknownIOMode IOMode = iota
-	TerminalIOMode
-	PipedOrRedirectedIOMode
-)
-
-func getIOMode(io *os.File) IOMode {
-	info, err := io.Stat()
-	if err != nil {
-		panic("only os.StdIn or os.Stdout should be passed to this method")
-	}
-
-	if (info.Mode() & os.ModeCharDevice) == os.ModeCharDevice {
-		return TerminalIOMode
-	}
-
-	return PipedOrRedirectedIOMode
+func getIOMode(io *os.File) bool {
+	return !isatty.IsTerminal(io.Fd()) && !isatty.IsCygwinTerminal(io.Fd())
 }
 
 // Env is the environment of a command
 type Env struct {
-	Repo    repository.ClockedRepo
-	Backend *cache.RepoCache
-	In      io.Reader
-	InMode  IOMode
-	Out     Out
-	OutMode IOMode
-	Err     Out
+	Repo           repository.ClockedRepo
+	Backend        *cache.RepoCache
+	In             io.Reader
+	InRedirection  bool
+	Out            Out
+	OutRedirection bool
+	Err            Out
 }
 
 func NewEnv() *Env {
 	return &Env{
-		Repo:    nil,
-		In:      os.Stdin,
-		InMode:  getIOMode(os.Stdin),
-		Out:     out{Writer: os.Stdout},
-		OutMode: getIOMode(os.Stdout),
-		Err:     out{Writer: os.Stderr},
+		Repo:           nil,
+		In:             os.Stdin,
+		InRedirection:  getIOMode(os.Stdin),
+		Out:            out{Writer: os.Stdout},
+		OutRedirection: getIOMode(os.Stdout),
+		Err:            out{Writer: os.Stderr},
 	}
 }
 

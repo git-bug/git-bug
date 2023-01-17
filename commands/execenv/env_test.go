@@ -15,36 +15,36 @@ func TestGetIOMode(t *testing.T) {
 		name       string
 		in         *os.File
 		out        *os.File
-		expInMode  IOMode
-		expOutMode IOMode
+		expInMode  bool
+		expOutMode bool
 	}{
 		{
 			name:       "neither redirected",
 			in:         os.Stdin,
 			out:        os.Stdout,
-			expInMode:  TerminalIOMode,
-			expOutMode: TerminalIOMode,
+			expInMode:  false,
+			expOutMode: false,
 		},
 		{
 			name:       "in redirected",
 			in:         w,
 			out:        os.Stdout,
-			expInMode:  TerminalIOMode,
-			expOutMode: TerminalIOMode,
+			expInMode:  true,
+			expOutMode: false,
 		},
 		{
 			name:       "out redirected",
 			in:         os.Stdin,
 			out:        r,
-			expInMode:  TerminalIOMode,
-			expOutMode: TerminalIOMode,
+			expInMode:  false,
+			expOutMode: true,
 		},
 		{
 			name:       "both redirected",
 			in:         w,
 			out:        r,
-			expInMode:  PipedOrRedirectedIOMode,
-			expOutMode: PipedOrRedirectedIOMode,
+			expInMode:  true,
+			expOutMode: true,
 		},
 	}
 
