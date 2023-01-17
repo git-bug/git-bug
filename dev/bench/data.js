@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1673704264203,
+  "lastUpdate": 1673982929948,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -1384,6 +1384,48 @@ window.BENCHMARK_DATA = {
             "value": 1282991367,
             "unit": "ns/op\t166069456 B/op\t  803280 allocs/op",
             "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e689cc506775ec1daccaae9ec35c7a28b48b2f05",
+          "message": "Merge pull request #994 from MichaelMure/feat/detect-stdin-stdout-mode\n\nfeat: detect `os.Stdin`/`os.Stdout` redirection/pipe mode",
+          "timestamp": "2023-01-17T20:14:10+01:00",
+          "tree_id": "7d86adb1fb9d290f5acfa3b36f606f4e24f01fa7",
+          "url": "https://github.com/MichaelMure/git-bug/commit/e689cc506775ec1daccaae9ec35c7a28b48b2f05"
+        },
+        "date": 1673982929388,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 20606017,
+            "unit": "ns/op\t 4971500 B/op\t   24193 allocs/op",
+            "extra": "56 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 117083674,
+            "unit": "ns/op\t27873665 B/op\t  134392 allocs/op",
+            "extra": "10 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 691016318,
+            "unit": "ns/op\t166112644 B/op\t  803321 allocs/op",
+            "extra": "2 times\n2 procs"
           }
         ]
       }
