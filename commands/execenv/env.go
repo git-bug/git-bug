@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/mattn/go-isatty"
+	"golang.org/x/term"
 
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/repository"
@@ -57,6 +58,8 @@ type Out interface {
 	// IsTerminal tells if the output is a user terminal (rather than a buffer,
 	// a pipe ...), which tells if we can use colors and other interactive features.
 	IsTerminal() bool
+	// Width return the width of the attached terminal, or a good enough value.
+	Width() int
 
 	// Raw return the underlying io.Writer, or itself if not.
 	// This is useful if something need to access the raw file descriptor.
@@ -121,6 +124,16 @@ func (o out) IsTerminal() bool {
 		return isTerminal(f)
 	}
 	return false
+}
+
+func (o out) Width() int {
+	if f, ok := o.Raw().(*os.File); ok {
+		width, _, err := term.GetSize(int(f.Fd()))
+		if err == nil {
+			return width
+		}
+	}
+	return 80
 }
 
 func (o out) Raw() io.Writer {

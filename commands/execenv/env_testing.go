@@ -20,12 +20,12 @@ type TestIn struct {
 	forceIsTerminal bool
 }
 
-func (t *TestIn) ForceIsTerminal(value bool) {
-	t.forceIsTerminal = value
-}
-
 func (t *TestIn) IsTerminal() bool {
 	return t.forceIsTerminal
+}
+
+func (t *TestIn) ForceIsTerminal(value bool) {
+	t.forceIsTerminal = value
 }
 
 var _ Out = &TestOut{}
@@ -58,6 +58,10 @@ func (te *TestOut) PrintJSON(v interface{}) error {
 
 func (te *TestOut) IsTerminal() bool {
 	return te.forceIsTerminal
+}
+
+func (te *TestOut) Width() int {
+	return 80
 }
 
 func (te *TestOut) Raw() io.Writer {

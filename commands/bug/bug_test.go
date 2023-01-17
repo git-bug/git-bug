@@ -2,7 +2,6 @@ package bugcmd
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -61,44 +60,33 @@ $`
 		format string
 		exp    string
 	}{
-		{"default", "^[0-9a-f]{7}\topen\tthis is a bug title                               \tJohn Doe       \t\n$"},
-		{"plain", "^[0-9a-f]{7} \\[open\\] this is a bug title\n$"},
-		{"compact", "^[0-9a-f]{7} open this is a bug title                            John Doe\n$"},
+		{"default", "^[0-9a-f]{7}\topen\tthis is a bug title                      John Doe        \n$"},
+		{"plain", "^[0-9a-f]{7}\topen\tthis is a bug title\n$"},
 		{"id", "^[0-9a-f]{64}\n$"},
 		{"org-mode", expOrgMode},
+		{"json", ".*"},
 	}
 
 	for _, testcase := range cases {
-		opts := bugOptions{
-			sortDirection: "asc",
-			sortBy:        "creation",
-			outputFormat:  testcase.format,
-		}
-
-		name := fmt.Sprintf("with %s format", testcase.format)
-
-		t.Run(name, func(t *testing.T) {
+		t.Run(testcase.format, func(t *testing.T) {
 			env, _ := testenv.NewTestEnvAndBug(t)
 
+			opts := bugOptions{
+				sortDirection: "asc",
+				sortBy:        "creation",
+				outputFormat:  testcase.format,
+			}
+
 			require.NoError(t, runBug(env, opts, []string{}))
-			require.Regexp(t, testcase.exp, env.Out.String())
+
+			switch testcase.format {
+			case "json":
+				var bugs []cmdjson.BugExcerpt
+				require.NoError(t, json.Unmarshal(env.Out.Bytes(), &bugs))
+				require.Len(t, bugs, 1)
+			default:
+				require.Regexp(t, testcase.exp, env.Out.String())
+			}
 		})
 	}
-
-	t.Run("with JSON format", func(t *testing.T) {
-		opts := bugOptions{
-			sortDirection: "asc",
-			sortBy:        "creation",
-			outputFormat:  "json",
-		}
-
-		env, _ := testenv.NewTestEnvAndBug(t)
-
-		require.NoError(t, runBug(env, opts, []string{}))
-
-		var bugs []cmdjson.BugExcerpt
-		require.NoError(t, json.Unmarshal(env.Out.Bytes(), &bugs))
-
-		require.Len(t, bugs, 1)
-	})
 }
