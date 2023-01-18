@@ -28,9 +28,9 @@ require (
 	github.com/stretchr/testify v1.8.1
 	github.com/vbauerster/mpb/v8 v8.1.4
 	github.com/vektah/gqlparser/v2 v2.5.1
-	github.com/xanzy/go-gitlab v0.77.0
+	github.com/xanzy/go-gitlab v0.78.0
 	golang.org/x/crypto v0.5.0
-	golang.org/x/oauth2 v0.0.0-20220722155238-128564f6959c
+	golang.org/x/oauth2 v0.3.0
 	golang.org/x/sync v0.1.0
 	golang.org/x/sys v0.4.0
 	golang.org/x/text v0.6.0
@@ -115,7 +115,7 @@ require (
 	golang.org/x/mod v0.7.0 // indirect
 	golang.org/x/net v0.5.0 // indirect
 	golang.org/x/term v0.4.0
-	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9 // indirect
+	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.4.0 // indirect
 	golang.org/x/vuln v0.0.0-20220908155419-5537ad2271a7
 	google.golang.org/appengine v1.6.7 // indirect
