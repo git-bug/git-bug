@@ -9,9 +9,7 @@ import (
 	"github.com/MichaelMure/git-bug/commands/execenv"
 )
 
-func newPushCommand() *cobra.Command {
-	env := execenv.NewEnv()
-
+func newPushCommand(env *execenv.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "push [REMOTE]",
 		Short:   "Push updates to a git remote",

@@ -6,9 +6,7 @@ import (
 	"github.com/MichaelMure/git-bug/commands/execenv"
 )
 
-func newBugLabelCommand() *cobra.Command {
-	env := execenv.NewEnv()
-
+func newBugLabelCommand(env *execenv.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "label [BUG_ID]",
 		Short:   "Display labels of a bug",
@@ -19,8 +17,8 @@ func newBugLabelCommand() *cobra.Command {
 		ValidArgsFunction: BugCompletion(env),
 	}
 
-	cmd.AddCommand(newBugLabelNewCommand())
-	cmd.AddCommand(newBugLabelRmCommand())
+	cmd.AddCommand(newBugLabelNewCommand(env))
+	cmd.AddCommand(newBugLabelRmCommand(env))
 
 	return cmd
 }

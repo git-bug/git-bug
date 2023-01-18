@@ -23,8 +23,7 @@ type bridgePullOptions struct {
 	noResume    bool
 }
 
-func newBridgePullCommand() *cobra.Command {
-	env := execenv.NewEnv()
+func newBridgePullCommand(env *execenv.Env) *cobra.Command {
 	options := bridgePullOptions{}
 
 	cmd := &cobra.Command{

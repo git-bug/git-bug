@@ -34,8 +34,7 @@ type bugOptions struct {
 	outputFormat     string
 }
 
-func NewBugCommand() *cobra.Command {
-	env := execenv.NewEnv()
+func NewBugCommand(env *execenv.Env) *cobra.Command {
 	options := bugOptions{}
 
 	cmd := &cobra.Command{
@@ -107,16 +106,16 @@ git bug status:open --by creation "foo bar" baz
 		child.GroupID = groupID
 	}
 
-	addCmdWithGroup(newBugDeselectCommand(), selectGroup)
-	addCmdWithGroup(newBugSelectCommand(), selectGroup)
+	addCmdWithGroup(newBugDeselectCommand(env), selectGroup)
+	addCmdWithGroup(newBugSelectCommand(env), selectGroup)
 
-	cmd.AddCommand(newBugCommentCommand())
-	cmd.AddCommand(newBugLabelCommand())
-	cmd.AddCommand(newBugNewCommand())
-	cmd.AddCommand(newBugRmCommand())
-	cmd.AddCommand(newBugShowCommand())
-	cmd.AddCommand(newBugStatusCommand())
-	cmd.AddCommand(newBugTitleCommand())
+	cmd.AddCommand(newBugCommentCommand(env))
+	cmd.AddCommand(newBugLabelCommand(env))
+	cmd.AddCommand(newBugNewCommand(env))
+	cmd.AddCommand(newBugRmCommand(env))
+	cmd.AddCommand(newBugShowCommand(env))
+	cmd.AddCommand(newBugStatusCommand(env))
+	cmd.AddCommand(newBugTitleCommand(env))
 
 	return cmd
 }

@@ -6,9 +6,7 @@ import (
 	"github.com/MichaelMure/git-bug/commands/execenv"
 )
 
-func newWipeCommand() *cobra.Command {
-	env := execenv.NewEnv()
-
+func newWipeCommand(env *execenv.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "wipe",
 		Short:   "Wipe git-bug from the git repository",

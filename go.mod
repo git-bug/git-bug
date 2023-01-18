@@ -114,7 +114,7 @@ require (
 	go.etcd.io/bbolt v1.3.5 // indirect
 	golang.org/x/mod v0.7.0 // indirect
 	golang.org/x/net v0.5.0 // indirect
-	golang.org/x/term v0.4.0 // indirect
+	golang.org/x/term v0.4.0
 	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9 // indirect
 	golang.org/x/tools v0.4.0 // indirect
 	golang.org/x/vuln v0.0.0-20220908155419-5537ad2271a7

@@ -42,8 +42,7 @@ type webUIOptions struct {
 	query     string
 }
 
-func newWebUICommand() *cobra.Command {
-	env := execenv.NewEnv()
+func newWebUICommand(env *execenv.Env) *cobra.Command {
 	options := webUIOptions{}
 
 	cmd := &cobra.Command{

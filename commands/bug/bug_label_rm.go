@@ -7,9 +7,7 @@ import (
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
-func newBugLabelRmCommand() *cobra.Command {
-	env := execenv.NewEnv()
-
+func newBugLabelRmCommand(env *execenv.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "rm [BUG_ID] LABEL...",
 		Short:   "Remove a label from a bug",

@@ -10,9 +10,7 @@ import (
 	"github.com/MichaelMure/git-bug/entity"
 )
 
-func newPullCommand() *cobra.Command {
-	env := execenv.NewEnv()
-
+func newPullCommand(env *execenv.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "pull [REMOTE]",
 		Short:   "Pull updates from a git remote",

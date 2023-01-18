@@ -16,8 +16,7 @@ type userShowOptions struct {
 	fields string
 }
 
-func newUserShowCommand() *cobra.Command {
-	env := execenv.NewEnv()
+func newUserShowCommand(env *execenv.Env) *cobra.Command {
 	options := userShowOptions{}
 
 	cmd := &cobra.Command{

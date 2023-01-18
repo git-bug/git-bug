@@ -13,8 +13,7 @@ type bugCommentEditOptions struct {
 	nonInteractive bool
 }
 
-func newBugCommentEditCommand() *cobra.Command {
-	env := execenv.NewEnv()
+func newBugCommentEditCommand(env *execenv.Env) *cobra.Command {
 	options := bugCommentEditOptions{}
 
 	cmd := &cobra.Command{

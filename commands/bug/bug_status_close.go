@@ -6,9 +6,7 @@ import (
 	"github.com/MichaelMure/git-bug/commands/execenv"
 )
 
-func newBugStatusCloseCommand() *cobra.Command {
-	env := execenv.NewEnv()
-
+func newBugStatusCloseCommand(env *execenv.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "close [BUG_ID]",
 		Short:   "Mark a bug as closed",

@@ -7,9 +7,7 @@ import (
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
-func newBugLabelNewCommand() *cobra.Command {
-	env := execenv.NewEnv()
-
+func newBugLabelNewCommand(env *execenv.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "new [BUG_ID] LABEL...",
 		Short:   "Add a label to a bug",

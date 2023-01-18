@@ -12,8 +12,7 @@ type commandOptions struct {
 	desc bool
 }
 
-func newCommandsCommand() *cobra.Command {
-	env := execenv.NewEnv()
+func newCommandsCommand(env *execenv.Env) *cobra.Command {
 	options := commandOptions{}
 
 	cmd := &cobra.Command{

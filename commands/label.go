@@ -6,9 +6,7 @@ import (
 	"github.com/MichaelMure/git-bug/commands/execenv"
 )
 
-func newLabelCommand() *cobra.Command {
-	env := execenv.NewEnv()
-
+func newLabelCommand(env *execenv.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "label",
 		Short: "List valid labels",

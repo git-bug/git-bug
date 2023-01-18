@@ -8,9 +8,7 @@ import (
 	"github.com/MichaelMure/git-bug/commands/execenv"
 )
 
-func newBridgeRm() *cobra.Command {
-	env := execenv.NewEnv()
-
+func newBridgeRm(env *execenv.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "rm NAME",
 		Short:   "Delete a configured bridge",

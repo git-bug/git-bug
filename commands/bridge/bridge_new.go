@@ -26,8 +26,7 @@ type bridgeNewOptions struct {
 	nonInteractive bool
 }
 
-func newBridgeNewCommand() *cobra.Command {
-	env := execenv.NewEnv()
+func newBridgeNewCommand(env *execenv.Env) *cobra.Command {
 	options := bridgeNewOptions{}
 
 	cmd := &cobra.Command{

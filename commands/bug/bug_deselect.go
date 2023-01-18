@@ -8,9 +8,7 @@ import (
 	"github.com/MichaelMure/git-bug/entities/bug"
 )
 
-func newBugDeselectCommand() *cobra.Command {
-	env := execenv.NewEnv()
-
+func newBugDeselectCommand(env *execenv.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "deselect",
 		Short: "Clear the implicitly selected bug",

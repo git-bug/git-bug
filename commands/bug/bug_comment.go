@@ -8,9 +8,7 @@ import (
 	"github.com/MichaelMure/git-bug/util/colors"
 )
 
-func newBugCommentCommand() *cobra.Command {
-	env := execenv.NewEnv()
-
+func newBugCommentCommand(env *execenv.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "comment [BUG_ID]",
 		Short:   "List a bug's comments",
@@ -21,8 +19,8 @@ func newBugCommentCommand() *cobra.Command {
 		ValidArgsFunction: BugCompletion(env),
 	}
 
-	cmd.AddCommand(newBugCommentNewCommand())
-	cmd.AddCommand(newBugCommentEditCommand())
+	cmd.AddCommand(newBugCommentNewCommand(env))
+	cmd.AddCommand(newBugCommentEditCommand(env))
 
 	return cmd
 }

@@ -15,9 +15,7 @@ import (
 	"github.com/MichaelMure/git-bug/util/interrupt"
 )
 
-func newBridgePushCommand() *cobra.Command {
-	env := execenv.NewEnv()
-
+func newBridgePushCommand(env *execenv.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "push [NAME]",
 		Short:   "Push updates to remote bug tracker",

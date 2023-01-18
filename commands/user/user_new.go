@@ -14,9 +14,7 @@ type userNewOptions struct {
 	nonInteractive bool
 }
 
-func newUserNewCommand() *cobra.Command {
-	env := execenv.NewEnv()
-
+func newUserNewCommand(env *execenv.Env) *cobra.Command {
 	options := userNewOptions{}
 	cmd := &cobra.Command{
 		Use:     "new",

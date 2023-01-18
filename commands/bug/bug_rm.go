@@ -8,9 +8,7 @@ import (
 	"github.com/MichaelMure/git-bug/commands/execenv"
 )
 
-func newBugRmCommand() *cobra.Command {
-	env := execenv.NewEnv()
-
+func newBugRmCommand(env *execenv.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "rm BUG_ID",
 		Short:   "Remove an existing bug",

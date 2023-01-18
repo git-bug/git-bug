@@ -7,9 +7,7 @@ import (
 	"github.com/MichaelMure/git-bug/commands/execenv"
 )
 
-func NewBridgeCommand() *cobra.Command {
-	env := execenv.NewEnv()
-
+func NewBridgeCommand(env *execenv.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "bridge",
 		Short:   "List bridges to other bug trackers",
@@ -20,11 +18,11 @@ func NewBridgeCommand() *cobra.Command {
 		Args: cobra.NoArgs,
 	}
 
-	cmd.AddCommand(newBridgeAuthCommand())
-	cmd.AddCommand(newBridgeNewCommand())
-	cmd.AddCommand(newBridgePullCommand())
-	cmd.AddCommand(newBridgePushCommand())
-	cmd.AddCommand(newBridgeRm())
+	cmd.AddCommand(newBridgeAuthCommand(env))
+	cmd.AddCommand(newBridgeNewCommand(env))
+	cmd.AddCommand(newBridgePullCommand(env))
+	cmd.AddCommand(newBridgePushCommand(env))
+	cmd.AddCommand(newBridgeRm(env))
 
 	return cmd
 }
