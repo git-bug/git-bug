@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1674026552931,
+  "lastUpdate": 1674058213940,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -1467,6 +1467,48 @@ window.BENCHMARK_DATA = {
             "name": "BenchmarkReadBugs150",
             "value": 655655086,
             "unit": "ns/op\t166116312 B/op\t  803347 allocs/op",
+            "extra": "2 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "distinct": true,
+          "id": "374d3fd2efe6afc53fc803a55fab6ff6790cc8ed",
+          "message": "commands: different pattern to detect changed flags",
+          "timestamp": "2023-01-18T17:08:02+01:00",
+          "tree_id": "614e47713172b81d21926bde1d96fa73aa508bff",
+          "url": "https://github.com/MichaelMure/git-bug/commit/374d3fd2efe6afc53fc803a55fab6ff6790cc8ed"
+        },
+        "date": 1674058213062,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 21998376,
+            "unit": "ns/op\t 4972812 B/op\t   24222 allocs/op",
+            "extra": "50 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 132732724,
+            "unit": "ns/op\t27851209 B/op\t  134392 allocs/op",
+            "extra": "10 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 780754542,
+            "unit": "ns/op\t165989800 B/op\t  803249 allocs/op",
             "extra": "2 times\n2 procs"
           }
         ]
