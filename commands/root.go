@@ -53,7 +53,7 @@ the same git remote you are already using to collaborate with other people.
 					if commit, dirty, err := getCommitAndDirty(); err == nil {
 						root.Version = fmt.Sprintf("dev-%.10s", commit)
 
-						if dirty != "" {
+						if dirty {
 							root.Version = fmt.Sprintf("%s-dirty", root.Version)
 						}
 					} else {
@@ -112,13 +112,14 @@ func Execute() {
 	}
 }
 
-func getCommitAndDirty() (commit, dirty string, err error) {
-	var d, c string
+func getCommitAndDirty() (commit string, dirty bool, err error) {
+	var c string
+	var d bool
 
 	info, ok := debug.ReadBuildInfo()
 
 	if !ok {
-		return d, c, errors.New("unable to read build info")
+		return c, d, errors.New("unable to read build info")
 	}
 
 	// get the commit and modified status
@@ -129,7 +130,7 @@ func getCommitAndDirty() (commit, dirty string, err error) {
 			c = kv.Value
 		case "vcs.modified":
 			if kv.Value == "true" {
-				d = "dirty"
+				d = true
 			}
 		}
 	}
