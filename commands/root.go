@@ -2,6 +2,7 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"runtime/debug"
@@ -49,11 +50,14 @@ the same git remote you are already using to collaborate with other people.
 				} else {
 					// if we don't have a tag, try to read
 					// commit and dirty state from the build info
-					commit, dirty := getCommitAndDirty()
-					root.Version = fmt.Sprintf("dev-%.10s", commit)
+					if commit, dirty, err := getCommitAndDirty(); err == nil {
+						root.Version = fmt.Sprintf("dev-%.10s", commit)
 
-					if dirty != "" {
-						root.Version = fmt.Sprintf("%s-dirty", root.Version)
+						if dirty != "" {
+							root.Version = fmt.Sprintf("%s-dirty", root.Version)
+						}
+					} else {
+						root.Version = "dev-unknown"
 					}
 				}
 			}
@@ -108,17 +112,17 @@ func Execute() {
 	}
 }
 
-func getCommitAndDirty() (commit, dirty string) {
+func getCommitAndDirty() (commit, dirty string, err error) {
 	var d, c string
 
 	info, ok := debug.ReadBuildInfo()
 
 	if !ok {
-		fmt.Println("could not get commit")
+		return d, c, errors.New("unable to read build info")
 	}
 
-	// get the commit and
-	// modified status (that is the flag for repository dirty or not)
+	// get the commit and modified status
+	// (that is the flag for repository dirty or not)
 	for _, kv := range info.Settings {
 		switch kv.Key {
 		case "vcs.revision":
@@ -130,5 +134,5 @@ func getCommitAndDirty() (commit, dirty string) {
 		}
 	}
 
-	return c, d
+	return c, d, nil
 }

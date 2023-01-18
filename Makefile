@@ -1,6 +1,6 @@
 all: build
 
-GIT_COMMIT:=$(shell git rev-parse --short HEAD)
+GIT_COMMIT:=$(shell git rev-list -1 HEAD)
 GIT_LAST_TAG:=$(shell git describe --dirty --tags)
 GIT_EXACT_TAG:=$(shell git name-rev --name-only --tags HEAD)
 UNAME_S := $(shell uname -s)
