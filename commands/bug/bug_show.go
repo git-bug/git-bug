@@ -47,7 +47,7 @@ func newBugShowCommand(env *execenv.Env) *cobra.Command {
 }
 
 func runBugShow(env *execenv.Env, opts bugShowOptions, args []string) error {
-	b, args, err := ResolveSelected(env.Backend, args)
+	b, _, err := ResolveSelected(env.Backend, args)
 	if err != nil {
 		return err
 	}
@@ -91,7 +91,9 @@ func runBugShow(env *execenv.Env, opts bugShowOptions, args []string) error {
 		case "title":
 			env.Out.Printf("%s\n", snap.Title)
 		default:
-			return fmt.Errorf("\nUnsupported field: %s\n", opts.fields)
+			env.Out.Println()
+
+			return fmt.Errorf("unsupported field: %s", opts.fields)
 		}
 
 		return nil

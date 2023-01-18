@@ -26,7 +26,7 @@ func newBugCommentCommand(env *execenv.Env) *cobra.Command {
 }
 
 func runBugComment(env *execenv.Env, args []string) error {
-	b, args, err := ResolveSelected(env.Backend, args)
+	b, _, err := ResolveSelected(env.Backend, args)
 	if err != nil {
 		return err
 	}
