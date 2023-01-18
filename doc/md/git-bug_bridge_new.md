@@ -4,7 +4,7 @@ Configure a new bridge
 
 ### Synopsis
 
-	Configure a new bridge by passing flags or/and using interactive terminal prompts. You can avoid all the terminal prompts by passing all the necessary flags to configure your bridge.
+Configure a new bridge by passing flags or/and using interactive terminal prompts. You can avoid all the terminal prompts by passing all the necessary flags to configure your bridge.
 
 ```
 git-bug bridge new [flags]

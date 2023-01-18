@@ -15,6 +15,7 @@ import (
 	"github.com/MichaelMure/git-bug/commands/execenv"
 	"github.com/MichaelMure/git-bug/entities/bug"
 	"github.com/MichaelMure/git-bug/entities/common"
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/query"
 	"github.com/MichaelMure/git-bug/util/colors"
 )
@@ -92,10 +93,10 @@ git bug status:open --by creation "foo bar" baz
 	flags.StringVarP(&options.sortDirection, "direction", "d", "asc",
 		"Select the sorting direction. Valid values are [asc,desc]")
 	cmd.RegisterFlagCompletionFunc("direction", completion.From([]string{"asc", "desc"}))
-	flags.StringVarP(&options.outputFormat, "format", "f", "default",
-		"Select the output formatting style. Valid values are [default,plain,compact,id,json,org-mode]")
+	flags.StringVarP(&options.outputFormat, "format", "f", "",
+		"Select the output formatting style. Valid values are [default,plain,id,json,org-mode]")
 	cmd.RegisterFlagCompletionFunc("format",
-		completion.From([]string{"default", "plain", "compact", "id", "json", "org-mode"}))
+		completion.From([]string{"default", "plain", "id", "json", "org-mode"}))
 
 	const selectGroup = "select"
 	cmd.AddGroup(&cobra.Group{ID: selectGroup, Title: "Implicit selection"})
@@ -145,28 +146,32 @@ func runBug(env *execenv.Env, opts bugOptions, args []string) error {
 		return err
 	}
 
-	bugExcerpt := make([]*cache.BugExcerpt, len(allIds))
+	excerpts := make([]*cache.BugExcerpt, len(allIds))
 	for i, id := range allIds {
 		b, err := env.Backend.Bugs().ResolveExcerpt(id)
 		if err != nil {
 			return err
 		}
-		bugExcerpt[i] = b
+		excerpts[i] = b
 	}
 
 	switch opts.outputFormat {
-	case "org-mode":
-		return bugsOrgmodeFormatter(env, bugExcerpt)
-	case "plain":
-		return bugsPlainFormatter(env, bugExcerpt)
-	case "json":
-		return bugsJsonFormatter(env, bugExcerpt)
-	case "compact":
-		return bugsCompactFormatter(env, bugExcerpt)
-	case "id":
-		return bugsIDFormatter(env, bugExcerpt)
+	case "":
+		if env.Out.IsTerminal() {
+			return bugsDefaultFormatter(env, excerpts)
+		} else {
+			return bugsPlainFormatter(env, excerpts)
+		}
 	case "default":
-		return bugsDefaultFormatter(env, bugExcerpt)
+		return bugsDefaultFormatter(env, excerpts)
+	case "id":
+		return bugsIDFormatter(env, excerpts)
+	case "plain":
+		return bugsPlainFormatter(env, excerpts)
+	case "json":
+		return bugsJsonFormatter(env, excerpts)
+	case "org-mode":
+		return bugsOrgmodeFormatter(env, excerpts)
 	default:
 		return fmt.Errorf("unknown format %s", opts.outputFormat)
 	}
@@ -185,9 +190,9 @@ func repairQuery(args []string) string {
 	return strings.Join(args, " ")
 }
 
-func bugsJsonFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) error {
-	jsonBugs := make([]cmdjson.BugExcerpt, len(bugExcerpts))
-	for i, b := range bugExcerpts {
+func bugsJsonFormatter(env *execenv.Env, excerpts []*cache.BugExcerpt) error {
+	jsonBugs := make([]cmdjson.BugExcerpt, len(excerpts))
+	for i, b := range excerpts {
 		jsonBug, err := cmdjson.NewBugExcerpt(env.Backend, b)
 		if err != nil {
 			return err
@@ -197,42 +202,34 @@ func bugsJsonFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) error 
 	return env.Out.PrintJSON(jsonBugs)
 }
 
-func bugsCompactFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) error {
-	for _, b := range bugExcerpts {
-		author, err := env.Backend.Identities().ResolveExcerpt(b.AuthorId)
-		if err != nil {
-			return err
-		}
-
-		var labelsTxt strings.Builder
-		for _, l := range b.Labels {
-			lc256 := l.Color().Term256()
-			labelsTxt.WriteString(lc256.Escape())
-			labelsTxt.WriteString("◼")
-			labelsTxt.WriteString(lc256.Unescape())
-		}
-
-		env.Out.Printf("%s %s %s %s %s\n",
-			colors.Cyan(b.Id().Human()),
-			colors.Yellow(b.Status),
-			text.LeftPadMaxLine(strings.TrimSpace(b.Title), 40, 0),
-			text.LeftPadMaxLine(labelsTxt.String(), 5, 0),
-			colors.Magenta(text.TruncateMax(author.DisplayName(), 15)),
-		)
-	}
-	return nil
-}
-
-func bugsIDFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) error {
-	for _, b := range bugExcerpts {
+func bugsIDFormatter(env *execenv.Env, excerpts []*cache.BugExcerpt) error {
+	for _, b := range excerpts {
 		env.Out.Println(b.Id().String())
 	}
 
 	return nil
 }
 
-func bugsDefaultFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) error {
-	for _, b := range bugExcerpts {
+func bugsDefaultFormatter(env *execenv.Env, excerpts []*cache.BugExcerpt) error {
+	width := env.Out.Width()
+	widthId := entity.HumanIdLength
+	widthStatus := len("closed")
+	widthComment := 6
+
+	widthRemaining := width -
+		widthId - 1 -
+		widthStatus - 1 -
+		widthComment - 1
+
+	widthTitle := int(float32(widthRemaining-3) * 0.7)
+	if widthTitle < 0 {
+		widthTitle = 0
+	}
+
+	widthRemaining = widthRemaining - widthTitle - 3 - 2
+	widthAuthor := widthRemaining
+
+	for _, b := range excerpts {
 		author, err := env.Backend.Identities().ResolveExcerpt(b.AuthorId)
 		if err != nil {
 			return err
@@ -248,8 +245,8 @@ func bugsDefaultFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) err
 
 		// truncate + pad if needed
 		labelsFmt := text.TruncateMax(labelsTxt.String(), 10)
-		titleFmt := text.LeftPadMaxLine(strings.TrimSpace(b.Title), 50-text.Len(labelsFmt), 0)
-		authorFmt := text.LeftPadMaxLine(author.DisplayName(), 15, 0)
+		titleFmt := text.LeftPadMaxLine(strings.TrimSpace(b.Title), widthTitle-text.Len(labelsFmt), 0)
+		authorFmt := text.LeftPadMaxLine(author.DisplayName(), widthAuthor, 0)
 
 		comments := fmt.Sprintf("%3d 💬", b.LenComments-1)
 		if b.LenComments-1 <= 0 {
@@ -259,7 +256,7 @@ func bugsDefaultFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) err
 			comments = "  ∞ 💬"
 		}
 
-		env.Out.Printf("%s\t%s\t%s\t%s\t%s\n",
+		env.Out.Printf("%s\t%s\t%s   %s %s\n",
 			colors.Cyan(b.Id().Human()),
 			colors.Yellow(b.Status),
 			titleFmt+labelsFmt,
@@ -270,14 +267,14 @@ func bugsDefaultFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) err
 	return nil
 }
 
-func bugsPlainFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) error {
-	for _, b := range bugExcerpts {
-		env.Out.Printf("%s [%s] %s\n", b.Id().Human(), b.Status, strings.TrimSpace(b.Title))
+func bugsPlainFormatter(env *execenv.Env, excerpts []*cache.BugExcerpt) error {
+	for _, b := range excerpts {
+		env.Out.Printf("%s\t%s\t%s\n", b.Id().Human(), b.Status, strings.TrimSpace(b.Title))
 	}
 	return nil
 }
 
-func bugsOrgmodeFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) error {
+func bugsOrgmodeFormatter(env *execenv.Env, excerpts []*cache.BugExcerpt) error {
 	// see https://orgmode.org/manual/Tags.html
 	orgTagRe := regexp.MustCompile("[^[:alpha:]_@]")
 	formatTag := func(l bug.Label) string {
@@ -290,7 +287,7 @@ func bugsOrgmodeFormatter(env *execenv.Env, bugExcerpts []*cache.BugExcerpt) err
 
 	env.Out.Println("#+TODO: OPEN | CLOSED")
 
-	for _, b := range bugExcerpts {
+	for _, b := range excerpts {
 		status := strings.ToUpper(b.Status.String())
 
 		var title string

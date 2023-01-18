@@ -2,7 +2,7 @@ package bugcmd
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/MichaelMure/git-bug/commands/bug/testenv"
-	"github.com/MichaelMure/git-bug/commands/cmdtest"
 	"github.com/MichaelMure/git-bug/commands/execenv"
 )
 
@@ -143,7 +142,7 @@ func requireCommentsEqual(t *testing.T, golden string, env *execenv.Env) {
 		t.Log("Got here")
 		for i, comment := range comments {
 			fileName := fmt.Sprintf(goldenFilePattern, golden, i)
-			require.NoError(t, ioutil.WriteFile(fileName, []byte(comment.message), 0644))
+			require.NoError(t, os.WriteFile(fileName, []byte(comment.message), 0644))
 		}
 	}
 
@@ -157,7 +156,7 @@ func requireCommentsEqual(t *testing.T, golden string, env *execenv.Env) {
 		require.Equal(t, date.Add(time.Duration(i)*time.Minute), comment.date)
 
 		fileName := fmt.Sprintf(goldenFilePattern, golden, i)
-		exp, err := ioutil.ReadFile(fileName)
+		exp, err := os.ReadFile(fileName)
 		require.NoError(t, err)
 		require.Equal(t, strings.ReplaceAll(string(exp), "\r", ""), strings.ReplaceAll(comment.message, "\r", ""))
 	}

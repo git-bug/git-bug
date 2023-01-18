@@ -22,7 +22,7 @@ func (ci CombinedId) String() string {
 
 // Human return the identifier, shortened for human consumption
 func (ci CombinedId) Human() string {
-	format := fmt.Sprintf("%%.%ds", humanIdLength)
+	format := fmt.Sprintf("%%.%ds", HumanIdLength)
 	return fmt.Sprintf(format, ci)
 }
 
