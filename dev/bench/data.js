@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1673982929948,
+  "lastUpdate": 1674026552931,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -1425,6 +1425,48 @@ window.BENCHMARK_DATA = {
             "name": "BenchmarkReadBugs150",
             "value": 691016318,
             "unit": "ns/op\t166112644 B/op\t  803321 allocs/op",
+            "extra": "2 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "248486708911105e7067cb1061607b712c39a60e",
+          "message": "Merge pull request #998 from MichaelMure/fix/996/create-env-once\n\nfix(commands): create env.Env once for all Cobra commands",
+          "timestamp": "2023-01-18T08:21:08+01:00",
+          "tree_id": "414ad9f66ce05acdb169dcdb033c72ac2793f3c6",
+          "url": "https://github.com/MichaelMure/git-bug/commit/248486708911105e7067cb1061607b712c39a60e"
+        },
+        "date": 1674026552143,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 19660602,
+            "unit": "ns/op\t 4967397 B/op\t   24214 allocs/op",
+            "extra": "52 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 110413244,
+            "unit": "ns/op\t27897812 B/op\t  134398 allocs/op",
+            "extra": "10 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 655655086,
+            "unit": "ns/op\t166116312 B/op\t  803347 allocs/op",
             "extra": "2 times\n2 procs"
           }
         ]
