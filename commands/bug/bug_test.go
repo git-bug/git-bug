@@ -72,9 +72,10 @@ $`
 			env, _ := testenv.NewTestEnvAndBug(t)
 
 			opts := bugOptions{
-				sortDirection: "asc",
-				sortBy:        "creation",
-				outputFormat:  testcase.format,
+				sortDirection:       "asc",
+				sortBy:              "creation",
+				outputFormat:        testcase.format,
+				outputFormatChanged: true, // disable auto-detect
 			}
 
 			require.NoError(t, runBug(env, opts, []string{}))
