@@ -15,9 +15,7 @@ func ResolveSelected(repo *cache.RepoCache, args []string) (*cache.BugCache, []s
 	return _select.Resolve[*cache.BugCache](repo, bug.Typename, bug.Namespace, repo.Bugs(), args)
 }
 
-func newBugSelectCommand() *cobra.Command {
-	env := execenv.NewEnv()
-
+func newBugSelectCommand(env *execenv.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "select BUG_ID",
 		Short: "Select a bug for implicit use in future commands",

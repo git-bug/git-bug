@@ -7,9 +7,7 @@ import (
 	"github.com/MichaelMure/git-bug/termui"
 )
 
-func newTermUICommand() *cobra.Command {
-	env := execenv.NewEnv()
-
+func newTermUICommand(env *execenv.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "termui",
 		Aliases: []string{"tui"},

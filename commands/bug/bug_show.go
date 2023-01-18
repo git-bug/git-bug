@@ -19,8 +19,7 @@ type bugShowOptions struct {
 	format string
 }
 
-func newBugShowCommand() *cobra.Command {
-	env := execenv.NewEnv()
+func newBugShowCommand(env *execenv.Env) *cobra.Command {
 	options := bugShowOptions{}
 
 	cmd := &cobra.Command{

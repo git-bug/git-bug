@@ -7,10 +7,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/commands/bridge"
-	"github.com/MichaelMure/git-bug/commands/bug"
+	bridgecmd "github.com/MichaelMure/git-bug/commands/bridge"
+	bugcmd "github.com/MichaelMure/git-bug/commands/bug"
 	"github.com/MichaelMure/git-bug/commands/execenv"
-	"github.com/MichaelMure/git-bug/commands/user"
+	usercmd "github.com/MichaelMure/git-bug/commands/user"
 )
 
 // These variables are initialized externally during the build. See the Makefile.
@@ -68,20 +68,22 @@ the same git remote you are already using to collaborate with other people.
 		child.GroupID = groupID
 	}
 
-	addCmdWithGroup(bugcmd.NewBugCommand(), entityGroup)
-	addCmdWithGroup(usercmd.NewUserCommand(), entityGroup)
-	addCmdWithGroup(newLabelCommand(), entityGroup)
+	env := execenv.NewEnv()
 
-	addCmdWithGroup(newTermUICommand(), uiGroup)
-	addCmdWithGroup(newWebUICommand(), uiGroup)
+	addCmdWithGroup(bugcmd.NewBugCommand(env), entityGroup)
+	addCmdWithGroup(usercmd.NewUserCommand(env), entityGroup)
+	addCmdWithGroup(newLabelCommand(env), entityGroup)
 
-	addCmdWithGroup(newPullCommand(), remoteGroup)
-	addCmdWithGroup(newPushCommand(), remoteGroup)
-	addCmdWithGroup(bridgecmd.NewBridgeCommand(), remoteGroup)
+	addCmdWithGroup(newTermUICommand(env), uiGroup)
+	addCmdWithGroup(newWebUICommand(env), uiGroup)
 
-	cmd.AddCommand(newCommandsCommand())
-	cmd.AddCommand(newVersionCommand())
-	cmd.AddCommand(newWipeCommand())
+	addCmdWithGroup(newPullCommand(env), remoteGroup)
+	addCmdWithGroup(newPushCommand(env), remoteGroup)
+	addCmdWithGroup(bridgecmd.NewBridgeCommand(env), remoteGroup)
+
+	cmd.AddCommand(newCommandsCommand(env))
+	cmd.AddCommand(newVersionCommand(env))
+	cmd.AddCommand(newWipeCommand(env))
 
 	return cmd
 }

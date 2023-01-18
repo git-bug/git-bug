@@ -7,9 +7,7 @@ import (
 	"github.com/MichaelMure/git-bug/commands/execenv"
 )
 
-func newUserAdoptCommand() *cobra.Command {
-	env := execenv.NewEnv()
-
+func newUserAdoptCommand(env *execenv.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "adopt USER_ID",
 		Short:   "Adopt an existing identity as your own",

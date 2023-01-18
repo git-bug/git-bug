@@ -6,9 +6,7 @@ import (
 	"github.com/MichaelMure/git-bug/commands/execenv"
 )
 
-func newBugStatusCommand() *cobra.Command {
-	env := execenv.NewEnv()
-
+func newBugStatusCommand(env *execenv.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "status [BUG_ID]",
 		Short:   "Display the status of a bug",
@@ -19,8 +17,8 @@ func newBugStatusCommand() *cobra.Command {
 		ValidArgsFunction: BugCompletion(env),
 	}
 
-	cmd.AddCommand(newBugStatusCloseCommand())
-	cmd.AddCommand(newBugStatusOpenCommand())
+	cmd.AddCommand(newBugStatusCloseCommand(env))
+	cmd.AddCommand(newBugStatusOpenCommand(env))
 
 	return cmd
 }

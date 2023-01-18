@@ -24,8 +24,7 @@ type bridgeAuthAddTokenOptions struct {
 	user   string
 }
 
-func newBridgeAuthAddTokenCommand() *cobra.Command {
-	env := execenv.NewEnv()
+func newBridgeAuthAddTokenCommand(env *execenv.Env) *cobra.Command {
 	options := bridgeAuthAddTokenOptions{}
 
 	cmd := &cobra.Command{

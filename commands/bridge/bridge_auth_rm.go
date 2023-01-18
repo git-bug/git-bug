@@ -8,9 +8,7 @@ import (
 	"github.com/MichaelMure/git-bug/commands/execenv"
 )
 
-func newBridgeAuthRm() *cobra.Command {
-	env := execenv.NewEnv()
-
+func newBridgeAuthRm(env *execenv.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "rm BRIDGE_ID",
 		Short:   "Remove a credential",

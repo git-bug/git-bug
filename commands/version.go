@@ -14,8 +14,7 @@ type versionOptions struct {
 	all    bool
 }
 
-func newVersionCommand() *cobra.Command {
-	env := execenv.NewEnv()
+func newVersionCommand(env *execenv.Env) *cobra.Command {
 	options := versionOptions{}
 
 	cmd := &cobra.Command{

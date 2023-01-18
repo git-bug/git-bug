@@ -16,8 +16,7 @@ type userOptions struct {
 	format string
 }
 
-func NewUserCommand() *cobra.Command {
-	env := execenv.NewEnv()
+func NewUserCommand(env *execenv.Env) *cobra.Command {
 	options := userOptions{}
 
 	cmd := &cobra.Command{
@@ -29,9 +28,9 @@ func NewUserCommand() *cobra.Command {
 		}),
 	}
 
-	cmd.AddCommand(newUserNewCommand())
-	cmd.AddCommand(newUserShowCommand())
-	cmd.AddCommand(newUserAdoptCommand())
+	cmd.AddCommand(newUserNewCommand(env))
+	cmd.AddCommand(newUserShowCommand(env))
+	cmd.AddCommand(newUserAdoptCommand(env))
 
 	flags := cmd.Flags()
 	flags.SortFlags = false

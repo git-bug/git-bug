@@ -6,9 +6,7 @@ import (
 	"github.com/MichaelMure/git-bug/commands/execenv"
 )
 
-func newBugStatusOpenCommand() *cobra.Command {
-	env := execenv.NewEnv()
-
+func newBugStatusOpenCommand(env *execenv.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "open [BUG_ID]",
 		Short:   "Mark a bug as open",

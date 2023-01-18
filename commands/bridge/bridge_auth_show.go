@@ -13,9 +13,7 @@ import (
 	"github.com/MichaelMure/git-bug/commands/execenv"
 )
 
-func newBridgeAuthShow() *cobra.Command {
-	env := execenv.NewEnv()
-
+func newBridgeAuthShow(env *execenv.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "show",
 		Short:   "Display an authentication credential",

@@ -6,9 +6,7 @@ import (
 	"github.com/MichaelMure/git-bug/commands/execenv"
 )
 
-func newBugTitleCommand() *cobra.Command {
-	env := execenv.NewEnv()
-
+func newBugTitleCommand(env *execenv.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "title [BUG_ID]",
 		Short:   "Display the title of a bug",
@@ -19,7 +17,7 @@ func newBugTitleCommand() *cobra.Command {
 		ValidArgsFunction: BugCompletion(env),
 	}
 
-	cmd.AddCommand(newBugTitleEditCommand())
+	cmd.AddCommand(newBugTitleEditCommand(env))
 
 	return cmd
 }

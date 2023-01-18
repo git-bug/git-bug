@@ -15,8 +15,7 @@ type bugNewOptions struct {
 	nonInteractive bool
 }
 
-func newBugNewCommand() *cobra.Command {
-	env := execenv.NewEnv()
+func newBugNewCommand(env *execenv.Env) *cobra.Command {
 	options := bugNewOptions{}
 
 	cmd := &cobra.Command{
