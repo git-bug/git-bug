@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1674120460856,
+  "lastUpdate": 1674123224216,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -1594,6 +1594,48 @@ window.BENCHMARK_DATA = {
             "value": 1127272719,
             "unit": "ns/op\t166542824 B/op\t  803328 allocs/op",
             "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "06e8396e6fe83c691bbdfd74cfdd6bc28a0d20f1",
+          "message": "Merge pull request #991 from vasser/fix/issue-928-version-info\n\nFixed version info be set when go install",
+          "timestamp": "2023-01-19T11:12:13+01:00",
+          "tree_id": "b0dac3095804a7e601a31e8801ea878a8b243d34",
+          "url": "https://github.com/MichaelMure/git-bug/commit/06e8396e6fe83c691bbdfd74cfdd6bc28a0d20f1"
+        },
+        "date": 1674123223389,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 23280937,
+            "unit": "ns/op\t 4963870 B/op\t   24200 allocs/op",
+            "extra": "49 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 124171904,
+            "unit": "ns/op\t27861851 B/op\t  134368 allocs/op",
+            "extra": "9 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 823925229,
+            "unit": "ns/op\t165957228 B/op\t  803287 allocs/op",
+            "extra": "2 times\n2 procs"
           }
         ]
       }
