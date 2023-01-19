@@ -21,17 +21,18 @@ import (
 )
 
 type bugOptions struct {
-	statusQuery      []string
-	authorQuery      []string
-	metadataQuery    []string
-	participantQuery []string
-	actorQuery       []string
-	labelQuery       []string
-	titleQuery       []string
-	noQuery          []string
-	sortBy           string
-	sortDirection    string
-	outputFormat     string
+	statusQuery         []string
+	authorQuery         []string
+	metadataQuery       []string
+	participantQuery    []string
+	actorQuery          []string
+	labelQuery          []string
+	titleQuery          []string
+	noQuery             []string
+	sortBy              string
+	sortDirection       string
+	outputFormat        string
+	outputFormatChanged bool
 }
 
 func NewBugCommand(env *execenv.Env) *cobra.Command {
@@ -57,6 +58,7 @@ git bug status:open --by creation "foo bar" baz
 `,
 		PreRunE: execenv.LoadBackend(env),
 		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
+			options.outputFormatChanged = cmd.Flags().Changed("format")
 			return runBug(env, options, args)
 		}),
 		ValidArgsFunction: completion.Ls(env),
@@ -93,7 +95,7 @@ git bug status:open --by creation "foo bar" baz
 	flags.StringVarP(&options.sortDirection, "direction", "d", "asc",
 		"Select the sorting direction. Valid values are [asc,desc]")
 	cmd.RegisterFlagCompletionFunc("direction", completion.From([]string{"asc", "desc"}))
-	flags.StringVarP(&options.outputFormat, "format", "f", "",
+	flags.StringVarP(&options.outputFormat, "format", "f", "default",
 		"Select the output formatting style. Valid values are [default,plain,id,json,org-mode]")
 	cmd.RegisterFlagCompletionFunc("format",
 		completion.From([]string{"default", "plain", "id", "json", "org-mode"}))
@@ -156,14 +158,15 @@ func runBug(env *execenv.Env, opts bugOptions, args []string) error {
 	}
 
 	switch opts.outputFormat {
-	case "":
+	case "default":
+		if opts.outputFormatChanged {
+			return bugsDefaultFormatter(env, excerpts)
+		}
 		if env.Out.IsTerminal() {
 			return bugsDefaultFormatter(env, excerpts)
 		} else {
 			return bugsPlainFormatter(env, excerpts)
 		}
-	case "default":
-		return bugsDefaultFormatter(env, excerpts)
 	case "id":
 		return bugsIDFormatter(env, excerpts)
 	case "plain":

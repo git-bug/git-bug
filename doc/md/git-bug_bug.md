@@ -42,7 +42,7 @@ git bug status:open --by creation "foo bar" baz
   -n, --no strings            Filter by absence of something. Valid values are [label]
   -b, --by string             Sort the results by a characteristic. Valid values are [id,creation,edit] (default "creation")
   -d, --direction string      Select the sorting direction. Valid values are [asc,desc] (default "asc")
-  -f, --format string         Select the output formatting style. Valid values are [default,plain,id,json,org-mode]
+  -f, --format string         Select the output formatting style. Valid values are [default,plain,id,json,org-mode] (default "default")
   -h, --help                  help for bug
 ```
 
