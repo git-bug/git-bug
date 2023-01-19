@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1674058241518,
+  "lastUpdate": 1674120460856,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -1552,6 +1552,48 @@ window.BENCHMARK_DATA = {
             "value": 730694170,
             "unit": "ns/op\t165592212 B/op\t  803090 allocs/op",
             "extra": "2 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a35bd4cda22586a35caf9529c1e51ec641b9168e",
+          "message": "Merge pull request #1002 from MichaelMure/changed-flag\n\ncommands: different pattern to detect changed flags",
+          "timestamp": "2023-01-19T10:25:49+01:00",
+          "tree_id": "9c4bbe3fc62b0fa429a3e0392329d06d0ff47f45",
+          "url": "https://github.com/MichaelMure/git-bug/commit/a35bd4cda22586a35caf9529c1e51ec641b9168e"
+        },
+        "date": 1674120459653,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 36025309,
+            "unit": "ns/op\t 4963580 B/op\t   24203 allocs/op",
+            "extra": "33 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 200104701,
+            "unit": "ns/op\t27840211 B/op\t  134386 allocs/op",
+            "extra": "5 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 1127272719,
+            "unit": "ns/op\t166542824 B/op\t  803328 allocs/op",
+            "extra": "1 times\n2 procs"
           }
         ]
       }
