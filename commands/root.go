@@ -2,7 +2,6 @@
 package commands
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"runtime/debug"
@@ -34,33 +33,7 @@ the same git remote you are already using to collaborate with other people.
 
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			root := cmd.Root()
-
-			if GitExactTag == "undefined" {
-				GitExactTag = ""
-			}
-
-			// release version
-			root.Version = GitLastTag
-
-			// dev version
-			if GitExactTag == "" {
-				if root.Version != "" {
-					// if we have a tag, append the commit hash
-					root.Version = fmt.Sprintf("%s-dev-%.10s", root.Version, GitCommit)
-				} else {
-					// if we don't have a tag, try to read
-					// commit and dirty state from the build info
-					if commit, dirty, err := getCommitAndDirty(); err == nil {
-						root.Version = fmt.Sprintf("dev-%.10s", commit)
-
-						if dirty {
-							root.Version = fmt.Sprintf("%s-dirty", root.Version)
-						}
-					} else {
-						root.Version = "dev-unknown"
-					}
-				}
-			}
+			root.Version = getVersion()
 		},
 
 		// For the root command, force the execution of the PreRun
@@ -112,28 +85,57 @@ func Execute() {
 	}
 }
 
-func getCommitAndDirty() (commit string, dirty bool, err error) {
-	var c string
-	var d bool
-
-	info, ok := debug.ReadBuildInfo()
-
-	if !ok {
-		return c, d, errors.New("unable to read build info")
+func getVersion() string {
+	if GitExactTag == "undefined" {
+		GitExactTag = ""
 	}
+
+	if GitExactTag != "" {
+		// we are exactly on a tag --> release version
+		return GitLastTag
+	}
+
+	if GitLastTag != "" {
+		// not exactly on a tag --> dev version
+		return fmt.Sprintf("%s-dev-%.10s", GitLastTag, GitCommit)
+	}
+
+	// we don't have commit information, try golang build info
+	if commit, dirty, err := getCommitAndDirty(); err == nil {
+		if dirty {
+			return fmt.Sprintf("dev-%.10s-dirty", commit)
+		}
+		return fmt.Sprintf("dev-%.10s", commit)
+	}
+
+	return "dev-unknown"
+}
+
+func getCommitAndDirty() (commit string, dirty bool, err error) {
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return "", false, fmt.Errorf("unable to read build info")
+	}
+
+	var commitFound bool
 
 	// get the commit and modified status
 	// (that is the flag for repository dirty or not)
 	for _, kv := range info.Settings {
 		switch kv.Key {
 		case "vcs.revision":
-			c = kv.Value
+			commit = kv.Value
+			commitFound = true
 		case "vcs.modified":
 			if kv.Value == "true" {
-				d = true
+				dirty = true
 			}
 		}
 	}
 
-	return c, d, nil
+	if !commitFound {
+		return "", false, fmt.Errorf("no commit found")
+	}
+
+	return commit, dirty, nil
 }
