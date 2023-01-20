@@ -50,7 +50,7 @@ func BugAndLabelsCompletion(env *execenv.Env, addOrRemove bool) completion.Valid
 			_ = env.Backend.Close()
 		}()
 
-		b, args, err := ResolveSelected(env.Backend, args)
+		b, cleanArgs, err := ResolveSelected(env.Backend, args)
 		if _select.IsErrNoValidId(err) {
 			// we need a bug first to complete labels
 			return bugWithBackend(env.Backend, toComplete)
@@ -62,7 +62,7 @@ func BugAndLabelsCompletion(env *execenv.Env, addOrRemove bool) completion.Valid
 		snap := b.Snapshot()
 
 		seenLabels := map[bug.Label]bool{}
-		for _, label := range args {
+		for _, label := range cleanArgs {
 			seenLabels[bug.Label(label)] = addOrRemove
 		}
 

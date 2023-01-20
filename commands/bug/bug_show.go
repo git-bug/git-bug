@@ -91,8 +91,6 @@ func runBugShow(env *execenv.Env, opts bugShowOptions, args []string) error {
 		case "title":
 			env.Out.Printf("%s\n", snap.Title)
 		default:
-			env.Out.Println()
-
 			return fmt.Errorf("unsupported field: %s", opts.fields)
 		}
 

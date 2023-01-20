@@ -22,12 +22,10 @@ func newBugLabelRmCommand(env *execenv.Env) *cobra.Command {
 }
 
 func runBugLabelRm(env *execenv.Env, args []string) error {
-	b, args, err := ResolveSelected(env.Backend, args)
+	b, removed, err := ResolveSelected(env.Backend, args)
 	if err != nil {
 		return err
 	}
-
-	removed := args
 
 	changes, _, err := b.ChangeLabels(nil, text.CleanupOneLineArray(removed))
 
