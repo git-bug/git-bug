@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
@@ -170,6 +171,28 @@ func detectGitPath(path string) (string, error) {
 		fi, err := os.Stat(filepath.Join(path, ".git"))
 		if err == nil {
 			if !fi.IsDir() {
+				// See if our .git item is a dotfile that holds a submodule reference
+				dotfile, err := os.Open(fi.Name())
+				if err != nil {
+					// Can't open" error
+					return "", fmt.Errorf(".git exists but is not a directory or a readable file: %w", err)
+				}
+				// We aren't going to defer the dotfile.Close, because we might keep looping, so we have to be sure to
+				// clean up before returning an error
+				reader := bufio.NewReader(dotfile)
+				line, _, err := reader.ReadLine()
+				if err != nil {
+					_ = dotfile.Close()
+					return "", fmt.Errorf(".git exists but is not a direcctory and cannot be read: %w", err)
+				}
+				dotContent := string(line)
+				if strings.HasPrefix(dotContent, "gitdir:") {
+					_ = dotfile.Close()
+					// This is a submodule parent path link. Strip the prefix, clean the string of whitespace just to
+					// be safe, and return
+					dotContent = strings.TrimSpace(dotContent[7:])
+					return dotContent, nil
+				}
 				return "", fmt.Errorf(".git exist but is not a directory")
 			}
 			return filepath.Join(path, ".git"), nil
