@@ -140,7 +140,6 @@ func requireCommentsEqual(t *testing.T, golden string, env *execenv.Env) {
 	comments = normalizeParsedComments(t, comments)
 
 	if *cmdtest.Update {
-		t.Log("Got here")
 		for i, comment := range comments {
 			fileName := fmt.Sprintf(goldenFilePattern, golden, i)
 			require.NoError(t, os.WriteFile(fileName, []byte(comment.message), 0644))

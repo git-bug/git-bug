@@ -44,7 +44,7 @@ The complementary command is "git bug deselect" performing the opposite operatio
 
 func runBugSelect(env *execenv.Env, args []string) error {
 	if len(args) == 0 {
-		return errors.New("You must provide a bug id")
+		return errors.New("a bug id must be provided")
 	}
 
 	prefix := args[0]
