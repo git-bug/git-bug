@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1674123224216,
+  "lastUpdate": 1674395022896,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -1635,6 +1635,48 @@ window.BENCHMARK_DATA = {
             "name": "BenchmarkReadBugs150",
             "value": 823925229,
             "unit": "ns/op\t165957228 B/op\t  803287 allocs/op",
+            "extra": "2 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "05be19d3bdfcafbfb4cf39d0dfc0ae480c5e062d",
+          "message": "Merge pull request #1005 from MichaelMure/cli-testing\n\ncommands: add a helper to generate testing regex for CLI output",
+          "timestamp": "2023-01-22T14:42:09+01:00",
+          "tree_id": "c25a2b194ed4633dd23b2af53aa52ef45d49e344",
+          "url": "https://github.com/MichaelMure/git-bug/commit/05be19d3bdfcafbfb4cf39d0dfc0ae480c5e062d"
+        },
+        "date": 1674395022130,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 23195678,
+            "unit": "ns/op\t 4947392 B/op\t   24211 allocs/op",
+            "extra": "45 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 138258078,
+            "unit": "ns/op\t27839333 B/op\t  134376 allocs/op",
+            "extra": "8 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 710339067,
+            "unit": "ns/op\t166158268 B/op\t  803336 allocs/op",
             "extra": "2 times\n2 procs"
           }
         ]
