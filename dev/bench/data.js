@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1674396040317,
+  "lastUpdate": 1674396048747,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -1719,6 +1719,48 @@ window.BENCHMARK_DATA = {
             "name": "BenchmarkReadBugs150",
             "value": 1504833233,
             "unit": "ns/op\t166519280 B/op\t  803272 allocs/op",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "574716518009d341c8abd54285719e448ddbb844",
+          "message": "Merge pull request #1001 from MichaelMure/style/clean-up-linter-issues\n\nstyle: clean up linter complaints",
+          "timestamp": "2023-01-22T14:59:03+01:00",
+          "tree_id": "491df144c41dc1a8a71f0631b1eb808dd525fdc3",
+          "url": "https://github.com/MichaelMure/git-bug/commit/574716518009d341c8abd54285719e448ddbb844"
+        },
+        "date": 1674396047907,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 34351352,
+            "unit": "ns/op\t 4977629 B/op\t   24211 allocs/op",
+            "extra": "36 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 212631800,
+            "unit": "ns/op\t27869312 B/op\t  134400 allocs/op",
+            "extra": "6 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 1158285114,
+            "unit": "ns/op\t165864992 B/op\t  803170 allocs/op",
             "extra": "1 times\n2 procs"
           }
         ]
