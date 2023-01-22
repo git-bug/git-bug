@@ -1,13 +1,12 @@
 package bugcmd
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/MichaelMure/git-bug/commands/bug/testenv"
-	"github.com/MichaelMure/git-bug/commands/cmdjson"
+	. "github.com/MichaelMure/git-bug/commands/cmdtest"
 )
 
 func Test_repairQuery(t *testing.T) {
@@ -47,24 +46,69 @@ func Test_repairQuery(t *testing.T) {
 }
 
 func TestBug_Format(t *testing.T) {
-	const expOrgMode = `^#+TODO: OPEN | CLOSED
-[*] OPEN   [0-9a-f]{7} \[\d\d\d\d-\d\d-\d\d [[:alpha:]]{3} \d\d:\d\d\] John Doe: this is a bug title ::
-[*]{2} Last Edited: \[\d\d\d\d-\d\d-\d\d [[:alpha:]]{3} \d\d:\d\d\]
-[*]{2} Actors:
-: [0-9a-f]{7} John Doe
-[*]{2} Participants:
-: [0-9a-f]{7} John Doe
-$`
+	const expOrgMode = `#+TODO: OPEN | CLOSED
+* OPEN   ` + ExpHumanId + ` [` + ExpOrgModeDate + `] John Doe: this is a bug title ::
+** Last Edited: [` + ExpOrgModeDate + `]
+** Actors:
+: ` + ExpHumanId + ` John Doe
+** Participants:
+: ` + ExpHumanId + ` John Doe
+`
+
+	const expJson = `[
+    {
+        "id": "` + ExpId + `",
+        "human_id": "` + ExpHumanId + `",
+        "create_time": {
+            "timestamp": ` + ExpTimestamp + `,
+            "time": "` + ExpISO8601 + `",
+            "lamport": 2
+        },
+        "edit_time": {
+            "timestamp": ` + ExpTimestamp + `,
+            "time": "` + ExpISO8601 + `",
+            "lamport": 2
+        },
+        "status": "open",
+        "labels": null,
+        "title": "this is a bug title",
+        "actors": [
+            {
+                "id": "` + ExpId + `",
+                "human_id": "` + ExpHumanId + `",
+                "name": "John Doe",
+                "login": ""
+            }
+        ],
+        "participants": [
+            {
+                "id": "` + ExpId + `",
+                "human_id": "` + ExpHumanId + `",
+                "name": "John Doe",
+                "login": ""
+            }
+        ],
+        "author": {
+            "id": "` + ExpId + `",
+            "human_id": "` + ExpHumanId + `",
+            "name": "John Doe",
+            "login": ""
+        },
+        "comments": 1,
+        "metadata": {}
+    }
+]
+`
 
 	cases := []struct {
 		format string
 		exp    string
 	}{
-		{"default", "^[0-9a-f]{7}\topen\tthis is a bug title                      John Doe        \n$"},
-		{"plain", "^[0-9a-f]{7}\topen\tthis is a bug title\n$"},
-		{"id", "^[0-9a-f]{64}\n$"},
+		{"default", ExpHumanId + "\topen\tthis is a bug title                      John Doe        \n"},
+		{"plain", ExpHumanId + "\topen\tthis is a bug title\n"},
+		{"id", ExpId + "\n"},
 		{"org-mode", expOrgMode},
-		{"json", ".*"},
+		{"json", expJson},
 	}
 
 	for _, testcase := range cases {
@@ -79,15 +123,7 @@ $`
 			}
 
 			require.NoError(t, runBug(env, opts, []string{}))
-
-			switch testcase.format {
-			case "json":
-				var bugs []cmdjson.BugExcerpt
-				require.NoError(t, json.Unmarshal(env.Out.Bytes(), &bugs))
-				require.Len(t, bugs, 1)
-			default:
-				require.Regexp(t, testcase.exp, env.Out.String())
-			}
+			require.Regexp(t, MakeExpectedRegex(testcase.exp), env.Out.String())
 		})
 	}
 }
