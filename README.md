@@ -25,8 +25,6 @@
 - **integrates with your tooling**: use the UI you like (CLI, terminal, web) or integrate with your existing tools through the CLI or the GraphQL API
 - **bridges to other bug trackers**: use [bridges](#bridges) to import and export to other trackers.
 
-:construction: This is now more than a proof of concept, but still not fully stable. Expect dragons and unfinished business. :construction:
-
 ## Help needed!
 
 This project has grown bigger than I can handle by myself, especially with a day job. I'm looking for people to help on or maintain part of it:
@@ -182,7 +180,7 @@ An interactive terminal UI is available using the command `git bug termui` to br
 
 ![Termui recording](misc/termui_recording.gif)
 
-## Web UI (status: WIP)
+## Web UI
 
 You can launch a rich Web UI with `git bug webui`.
 
@@ -200,34 +198,28 @@ The web UI interact with the backend through a GraphQL API. The schema is availa
 
 ## Bridges
 
+✅: working  🟠: partial implementation  ❌: not working
+
 ### Importer implementations
 
-|                                                 | Github             | Gitlab             | Jira               | Launchpad          |
-|-------------------------------------------------|:------------------:|:------------------:|:------------------:|:------------------:|
-| **incremental**<br/>(can import more than once) | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:                |
-| **with resume**<br/>(download only new data)    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:                |
-| **identities**                                  | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| identities update                               | :x:                | :x:                | :x:                | :x:                |
-| **bug**                                         | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| comments                                        | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| comment editions                                | :heavy_check_mark: | :x:                | :heavy_check_mark: | :x:                |
-| labels                                          | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:                |
-| status                                          | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:                |
-| title edition                                   | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:                |
-| **media/files**                                 | :x:                | :x:                | :x:                | :x:                |
-| **automated test suite**                        | :heavy_check_mark: | :heavy_check_mark: | :x:                | :x:                |
+|                                                 | Github | Gitlab | Jira | Launchpad |
+|-------------------------------------------------|:------:|:------:|:----:|:---------:|
+| **incremental**<br/>(can import more than once) |   ✅    |   ✅    |  ✅   |     ❌     |
+| **with resume**<br/>(download only new data)    |   ✅    |   ✅    |  ✅   |     ❌     |
+| **identities**                                  |   🟠   |   🟠   |  🟠  |    🟠     |
+| **bugs**                                        |   ✅    |   ✅    |  ✅   |    🟠     |
+| **board**                                       |   ❌    |   ❌    |  ❌   |     ❌     |
+| **media/files**                                 |   ❌    |   ❌    |  ❌   |     ❌     |
+| **automated test suite**                        |   ✅    |   ✅    |  ❌   |     ❌     |
 
 ### Exporter implementations
 
-|                          | Github             | Gitlab             | Jira               | Launchpad |
-|--------------------------|:------------------:|:------------------:|:------------------:|:---------:|
-| **bug**                  | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:       |
-| comments                 | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:       |
-| comment editions         | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:       |
-| labels                   | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:       |
-| status                   | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:       |
-| title edition            | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:       |
-| **automated test suite** | :heavy_check_mark: | :heavy_check_mark: | :x:                | :x:       |
+|                          | Github | Gitlab | Jira | Launchpad |
+|--------------------------|:------:|:------:|:----:|:---------:|
+| **identities**           |   🟠   |   🟠   |  🟠  |    🟠     |
+| **bug**                  |   ✅    |   ✅    |  ✅   |     ❌     |
+| **board**                |   ❌    |   ❌    |  ❌   |     ❌     |
+| **automated test suite** |   ✅    |   ✅    |  ❌   |     ❌     |
 
 #### Bridge usage
 
@@ -281,14 +273,15 @@ See also all the [docs](doc).
 
 ## Planned features
 
-- media embedding
-- more bridges
+The [feature matrix](doc/feature_matrix.md) gives a good overview of what is planned, without being exhaustive.
+
+Additional planned feature:
 - webUI that can be used as a public portal to accept user's input
 - inflatable raptor
 
 ## Contribute
 
-PRs accepted. Drop by the [Gitter lobby](https://gitter.im/the-git-bug/Lobby) for a chat or browse the issues to see what is worked on or discussed.
+PRs accepted. Drop by the [Gitter lobby](https://gitter.im/the-git-bug/Lobby) or the [Matrix room](https://matrix.to/#/#the-git-bug_Lobby:gitter.im) for a chat, look at the [feature matrix](doc/feature_matrix.md) or browse the issues to see what is worked on or discussed.
 
 ```shell
 git clone git@github.com:MichaelMure/git-bug.git

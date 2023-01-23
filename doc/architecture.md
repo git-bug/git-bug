@@ -88,7 +88,7 @@ The package `termui` contains the interactive terminal user interface, implement
 
 ## graphql
 
-The package `graphql` implement the GraphQL API, mapping the data model and providing read/write access from outside of the process. This API is in particular used by the webUI but could be used to implement other user interfaces or bridges with other systems.
+The package `graphql` implement the GraphQL API, mapping the data model and providing read/write access from outside the process. This API is in particular used by the webUI but could be used to implement other user interfaces or bridges with other systems.
 
 ## webui
 
@@ -96,7 +96,7 @@ The package `webui` hold the web based user interface, implemented in both go an
 
 The javascript code is compiled and packaged inside the go binary, allowing for a single file distribution of git-bug.
 
-When the webUI is started from the CLI command, a localhost HTTP server is started to serve the webUI resources (html, js, css), as well as the GraphQL API. When the webUI is loaded in the browser, it interact with the git-bug process through the GraphQL API to load and edit bugs.
+When the webUI is started from the CLI command, a localhost HTTP server is started to serve the webUI resources (html, js, css), as well as the GraphQL API. When the webUI is loaded in the browser, it interacts with the git-bug process through the GraphQL API to load and edit bugs.
 
 ## bridge
 
