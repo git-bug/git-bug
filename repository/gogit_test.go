@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"os"
 	"path"
 	"path/filepath"
 	"testing"
@@ -80,4 +81,22 @@ func TestGoGitRepo_Indexes(t *testing.T) {
 	indexA, err = repo.GetIndex("a")
 	require.NoError(t, err)
 	require.NotZero(t, indexA)
+}
+
+func TestGoGit_DetectsSubmodules(t *testing.T) {
+	expectedPath := "../foo/bar"
+	submoduleData := "gitdir: " + expectedPath
+	d := t.TempDir()
+	if f, err := os.Create(filepath.Join(d, ".git")); err != nil {
+		t.Fatal("could not create necessary temp file:", err)
+	} else {
+		t.Log(f.Name())
+		if _, err := f.Write([]byte(submoduleData)); err != nil {
+			t.Fatal("could not write necessary data to temp file:", err)
+		}
+		_ = f.Close()
+	}
+	result, err := detectGitPath(d)
+	assert.Empty(t, err)
+	assert.Equal(t, expectedPath, result)
 }
