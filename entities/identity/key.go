@@ -23,7 +23,7 @@ type Key struct {
 	private *packet.PrivateKey
 }
 
-// GenerateKey generate a keypair (public+private)
+// GenerateKey generate a key pair (public+private)
 // The type and configuration of the key is determined by the default value in go's OpenPGP.
 func GenerateKey() *Key {
 	entity, err := openpgp.NewEntity("", "", "", &packet.Config{

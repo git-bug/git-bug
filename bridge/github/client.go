@@ -20,7 +20,7 @@ type Client interface {
 	Query(context.Context, interface{}, map[string]interface{}) error
 }
 
-// rateLimitHandlerClient wrapps the Github client and adds improved error handling and handling of
+// rateLimitHandlerClient wraps the Github client and adds improved error handling and handling of
 // Github's GraphQL rate limit.
 type rateLimitHandlerClient struct {
 	sc Client

@@ -356,7 +356,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 
 		case *bug.LabelChangeOperation:
 			// we need to set the actual list of labels at each label change operation
-			// because gitlab update issue requests need directly the latest list of the verison
+			// because gitlab update issue requests need directly the latest list of the version
 
 			for _, label := range op.Added {
 				labelSet[label.String()] = struct{}{}
