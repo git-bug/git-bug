@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1674396048747,
+  "lastUpdate": 1674510668474,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -1762,6 +1762,48 @@ window.BENCHMARK_DATA = {
             "value": 1158285114,
             "unit": "ns/op\t165864992 B/op\t  803170 allocs/op",
             "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3be417020dded90f21a4d7aaf7f5568db98cc7d1",
+          "message": "Merge pull request #997 from MichaelMure/feature-matrix\n\ndoc: add a feature matrix",
+          "timestamp": "2023-01-23T22:49:34+01:00",
+          "tree_id": "cc47beafa38facb8e98e32dcb20807af5f828a67",
+          "url": "https://github.com/MichaelMure/git-bug/commit/3be417020dded90f21a4d7aaf7f5568db98cc7d1"
+        },
+        "date": 1674510667438,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 23353200,
+            "unit": "ns/op\t 4970845 B/op\t   24200 allocs/op",
+            "extra": "54 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 118045290,
+            "unit": "ns/op\t27859489 B/op\t  134401 allocs/op",
+            "extra": "9 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 743625059,
+            "unit": "ns/op\t165963944 B/op\t  803288 allocs/op",
+            "extra": "2 times\n2 procs"
           }
         ]
       }
