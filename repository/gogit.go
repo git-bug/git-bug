@@ -192,7 +192,7 @@ func detectGitPath(path string) (string, error) {
 					dotContent = strings.TrimSpace(strings.TrimPrefix(dotContent, "gitdir: "))
 					return dotContent, nil
 				}
-				return "", fmt.Errorf(".git exist but is not a directory")
+				return "", fmt.Errorf(".git exist but is not a directory or module/workspace file")
 			}
 			return filepath.Join(path, ".git"), nil
 		}
