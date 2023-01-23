@@ -54,7 +54,7 @@ func TestSetMetadata(t *testing.T) {
 
 	target1Metadata := snap.AllOperations()[0].AllMetadata()
 	require.Len(t, target1Metadata, 2)
-	// original key is not overrided
+	// original key is not overridden
 	require.Equal(t, target1Metadata["key"], "value")
 	// new key is set
 	require.Equal(t, target1Metadata["key2"], "value")
@@ -78,7 +78,7 @@ func TestSetMetadata(t *testing.T) {
 
 	target2Metadata = snap.AllOperations()[1].AllMetadata()
 	require.Len(t, target2Metadata, 2)
-	// original key is not overrided
+	// original key is not overridden
 	require.Equal(t, target2Metadata["key2"], "value2")
 	// new key is set
 	require.Equal(t, target2Metadata["key3"], "value3")
@@ -93,9 +93,9 @@ func TestSetMetadata(t *testing.T) {
 
 	target1Metadata = snap.AllOperations()[0].AllMetadata()
 	require.Len(t, target1Metadata, 2)
-	// original key is not overrided
+	// original key is not overridden
 	require.Equal(t, target1Metadata["key"], "value")
-	// previously set key is not overrided
+	// previously set key is not overridden
 	require.Equal(t, target1Metadata["key2"], "value")
 
 	target2Metadata = snap.AllOperations()[1].AllMetadata()
