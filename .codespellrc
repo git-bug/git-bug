@@ -1,0 +1,6 @@
+[codespell]
+skip = .git,.venv,*.svg,package-lock.json
+# ot,fo,te - used as short variable names
+# optionall - OptionAll but codespell is case insensitive
+# testing - TestIn
+ignore-words-list = ot,fo,te,optionall,testin
