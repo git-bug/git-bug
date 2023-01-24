@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1674510668474,
+  "lastUpdate": 1674564738080,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -1803,6 +1803,48 @@ window.BENCHMARK_DATA = {
             "name": "BenchmarkReadBugs150",
             "value": 743625059,
             "unit": "ns/op\t165963944 B/op\t  803288 allocs/op",
+            "extra": "2 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6a31d4fd793a6df88b66b3a5ea9aac23c693a13c",
+          "message": "Merge pull request #1011 from MichaelMure/faster-cache\n\ncache: faster indexing by caping Bleve batch count",
+          "timestamp": "2023-01-24T13:50:45+01:00",
+          "tree_id": "61e0619c06e352a95d71aa1ea5fb3a8533ce481e",
+          "url": "https://github.com/MichaelMure/git-bug/commit/6a31d4fd793a6df88b66b3a5ea9aac23c693a13c"
+        },
+        "date": 1674564736160,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 23441496,
+            "unit": "ns/op\t 4947846 B/op\t   24209 allocs/op",
+            "extra": "43 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 128654097,
+            "unit": "ns/op\t27798523 B/op\t  134371 allocs/op",
+            "extra": "8 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 791260588,
+            "unit": "ns/op\t166047560 B/op\t  803168 allocs/op",
             "extra": "2 times\n2 procs"
           }
         ]
