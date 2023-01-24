@@ -187,6 +187,27 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) write() error {
 }
 
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) Build() <-chan BuildEvent {
+	// value chosen experimentally as giving the fasted indexing, while
+	// not driving the cache size on disk too high.
+	//
+	// | batchCount | bugIndex (MB) | idIndex (kB) | time (s) |
+	// |:----------:|:-------------:|:------------:|:--------:|
+	// |     10     |      24       |      84      |   1,59   |
+	// |     30     |      26       |      84      |  1,388   |
+	// |     50     |      26       |      84      |   1,44   |
+	// |     60     |      26       |      80      |  1,377   |
+	// |     68     |      27       |      80      |  1,385   |
+	// |     75     |      26       |      84      |   1,32   |
+	// |     80     |      26       |      80      |   1,37   |
+	// |     85     |      27       |      80      |  1,317   |
+	// |    100     |      26       |      80      |  1,455   |
+	// |    150     |      26       |      80      |  2,066   |
+	// |    200     |      28       |      80      |  2,885   |
+	// |    250     |      30       |      72      |  3,555   |
+	// |    300     |      31       |      72      |  4,787   |
+	// |    500     |      23       |      72      |   5,4    |
+	const maxBatchCount = 75
+
 	out := make(chan BuildEvent)
 
 	go func() {
@@ -221,6 +242,7 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) Build() <-chan BuildEvent {
 		}
 
 		indexer, indexEnd := index.IndexBatch()
+		var batchCount int
 
 		for e := range allEntities {
 			if e.Err != nil {
@@ -245,6 +267,21 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) Build() <-chan BuildEvent {
 				return
 			}
 
+			batchCount++
+			if batchCount >= maxBatchCount {
+				err = indexEnd()
+				if err != nil {
+					out <- BuildEvent{
+						Typename: sc.typename,
+						Err:      err,
+					}
+					return
+				}
+
+				indexer, indexEnd = index.IndexBatch()
+				batchCount = 0
+			}
+
 			out <- BuildEvent{
 				Typename: sc.typename,
 				Event:    BuildEventProgress,
@@ -253,13 +290,15 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) Build() <-chan BuildEvent {
 			}
 		}
 
-		err = indexEnd()
-		if err != nil {
-			out <- BuildEvent{
-				Typename: sc.typename,
-				Err:      err,
+		if batchCount > 0 {
+			err = indexEnd()
+			if err != nil {
+				out <- BuildEvent{
+					Typename: sc.typename,
+					Err:      err,
+				}
+				return
 			}
-			return
 		}
 
 		err = sc.write()
