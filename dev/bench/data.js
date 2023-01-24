@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1674564738080,
+  "lastUpdate": 1674592942983,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -1846,6 +1846,48 @@ window.BENCHMARK_DATA = {
             "value": 791260588,
             "unit": "ns/op\t166047560 B/op\t  803168 allocs/op",
             "extra": "2 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "distinct": true,
+          "id": "1ae31b342b57ace44131f5ecd03c506814a25e62",
+          "message": "add more ideas in the feature matrix",
+          "timestamp": "2023-01-24T21:40:15+01:00",
+          "tree_id": "574815b4de01e2989545f5569f507bb869180a3c",
+          "url": "https://github.com/MichaelMure/git-bug/commit/1ae31b342b57ace44131f5ecd03c506814a25e62"
+        },
+        "date": 1674592941912,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 37665086,
+            "unit": "ns/op\t 4979810 B/op\t   24207 allocs/op",
+            "extra": "33 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 230621791,
+            "unit": "ns/op\t27831312 B/op\t  134416 allocs/op",
+            "extra": "6 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 1322924151,
+            "unit": "ns/op\t165866320 B/op\t  803193 allocs/op",
+            "extra": "1 times\n2 procs"
           }
         ]
       }
