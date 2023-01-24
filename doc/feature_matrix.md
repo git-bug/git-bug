@@ -8,16 +8,29 @@ This document however does not show all the untold work required to support thos
 
 ✅: working  🟠: partial implementation  ❌: not working
 
+## Other goals
+
+Some goals don't really fit below, so I'll mention them here:
+- have the webUI accept external OAuth (Github, ...) and act as a public portal where user outside the project can browse and interact with the project
+- project configuration (valid labels, ...)
+- commit signature to fully authenticate user's interaction
+- interface with the system keyring, to distribute and expose known public keys and allow checking signed commit in normal git workflow
+- privileged roles (admin, ...) and enforcing the corresponding rules
+- package the webui as a desktop app
+
+Additionally, some other are captured as [Github issues](https://github.com/MichaelMure/git-bug/issues) or [Discussions](https://github.com/MichaelMure/git-bug/discussions). 
+
 ## Entities
 
 The most high level overview of what kind of entities are supported and where.
 
-|              | Core | CLI | TermUI | WebUI |
-|--------------|:----:|:---:|:------:|:-----:|
-| Identities   |  ✅   |  ✅  |   ✅    |   ✅   |
-| Bug          |  ✅   |  ✅  |   ✅    |   ✅   |
-| Board        |  🟠  | 🟠  |   ❌    |   ❌   |
-| Pull-request |  ❌   |  ❌  |   ❌    |   ❌   |
+|                | Core | CLI | TermUI | WebUI |
+|----------------|:----:|:---:|:------:|:-----:|
+| Identities     |  ✅   |  ✅  |   ✅    |   ✅   |
+| Bug            |  ✅   |  ✅  |   ✅    |   ✅   |
+| Board          |  🟠  | 🟠  |   ❌    |   ❌   |
+| Pull-request   |  ❌   |  ❌  |   ❌    |   ❌   |
+| Project Config |  ❌   |  ❌  |   ❌    |   ❌   |
 
 More specific features across the board.
 
