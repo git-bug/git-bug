@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1674592942983,
+  "lastUpdate": 1676558843184,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -1888,6 +1888,48 @@ window.BENCHMARK_DATA = {
             "value": 1322924151,
             "unit": "ns/op\t165866320 B/op\t  803193 allocs/op",
             "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "smoyer1@selesy.com",
+            "name": "Steve Moyer",
+            "username": "smoyer64"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "55e4046b4bb77139e25ee6ad7adcfc829d4e6ba5",
+          "message": "Merge pull request #1008 from yarikoptic/enh-codespell\n\nFix typos, provide configuration and github workflow for codespell",
+          "timestamp": "2023-02-16T09:45:53-05:00",
+          "tree_id": "2c09f86115b08ca3484f7b1b69f4836daf18f693",
+          "url": "https://github.com/MichaelMure/git-bug/commit/55e4046b4bb77139e25ee6ad7adcfc829d4e6ba5"
+        },
+        "date": 1676558842684,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 21807298,
+            "unit": "ns/op\t 4971280 B/op\t   24210 allocs/op",
+            "extra": "52 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 129804130,
+            "unit": "ns/op\t27877661 B/op\t  134397 allocs/op",
+            "extra": "9 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 625822089,
+            "unit": "ns/op\t165797052 B/op\t  803220 allocs/op",
+            "extra": "2 times\n2 procs"
           }
         ]
       }
