@@ -10,7 +10,7 @@ package launchpad
  * - SearchTasks should yield bugs one by one
  *
  * TODO (maybe):
- * - Authentication (this might help retrieving email adresses)
+ * - Authentication (this might help retrieving email addresses)
  */
 
 import (
@@ -83,7 +83,7 @@ func (lapi *launchpadAPI) SearchTasks(ctx context.Context, project string) ([]LP
 	var bugs []LPBug
 
 	// First, let us build the URL. Not all statuses are included by
-	// default, so we have to explicitely enumerate them.
+	// default, so we have to explicitly enumerate them.
 	validStatuses := [13]string{
 		"New", "Incomplete", "Opinion", "Invalid",
 		"Won't Fix", "Expired", "Confirmed", "Triaged",

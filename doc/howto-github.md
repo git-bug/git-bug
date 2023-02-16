@@ -72,7 +72,7 @@ For a richer and more user friendly UI, `git-bug` proposes a web UI (read-only a
 
 ## Want more?
 
-If you interested to read more about `git-bug`, have a look at the followings:
+If you interested to read more about `git-bug`, have a look at the following:
 - [the project itself, with a more complete readme](https://github.com/MichaelMure/git-bug)
 - [a bird view of the internals](https://github.com/MichaelMure/git-bug/blob/master/doc/architecture.md)
 - [a description of the data model](https://github.com/MichaelMure/git-bug/blob/master/doc/model.md)

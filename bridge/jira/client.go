@@ -1361,7 +1361,7 @@ func (client *Client) DoTransition(issueKeyOrID string, transitionID string) (ti
 
 	// TODO(josh)[767ee72]: Figure out a good way to "configure" the
 	// open/close state mapping. It would be *great* if we could actually
-	// *compute* the necessary transitions and prompt for missing metatdata...
+	// *compute* the necessary transitions and prompt for missing metadata...
 	// but that is complex
 	var buffer bytes.Buffer
 	_, _ = fmt.Fprintf(&buffer,
