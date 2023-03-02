@@ -8,9 +8,9 @@ import (
 )
 
 // IsRunning tells if a git-bug process is running
-func IsRunning(pid int) bool {
+func IsRunning(pid int32) bool {
 	// never returns no error in a unix system
-	findproc, err := os.FindProcess(pid)
+	findproc, err := os.FindProcess(int(pid))
 
 	if err != nil {
 		return false
@@ -18,7 +18,7 @@ func IsRunning(pid int) bool {
 
 	// Signal 0 doesn't do anything but allow testing the process
 	err = findproc.Signal(syscall.Signal(0))
-	proc, _ := process.NewProcess(int32(pid))
+	proc, _ := process.NewProcess(pid)
 	procname, _ := proc.Name()
 	if !strings.Contains(procname, "git-bug") {
 		return false

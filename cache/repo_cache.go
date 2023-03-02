@@ -290,12 +290,12 @@ func repoIsAvailable(repo repository.RepoStorage, events chan BuildEvent) error 
 			return fmt.Errorf("the lock file should be < 10 bytes")
 		}
 
-		pid, err := strconv.Atoi(string(buf))
+		pid, err := strconv.ParseInt(string(buf), 10, 32)
 		if err != nil {
 			return err
 		}
 
-		if findproc.IsRunning(pid) {
+		if findproc.IsRunning(int32(pid)) {
 			return fmt.Errorf("The repository you want to access is already locked by the git-bug process pid %d", pid)
 		}
 
