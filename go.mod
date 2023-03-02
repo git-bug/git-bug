@@ -44,11 +44,15 @@ require (
 	github.com/VividCortex/ewma v1.2.0 // indirect
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d // indirect
 	github.com/cloudflare/circl v1.3.1 // indirect
+	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/lithammer/dedent v1.1.0 // indirect
 	github.com/owenrumney/go-sarif v1.0.11 // indirect
 	github.com/pjbgf/sha1cd v0.2.3 // indirect
 	github.com/segmentio/fasthash v1.0.3 // indirect
 	github.com/skeema/knownhosts v1.1.0 // indirect
+	github.com/tklauser/go-sysconf v0.3.11 // indirect
+	github.com/tklauser/numcpus v0.6.0 // indirect
+	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	github.com/zclconf/go-cty v1.8.4 // indirect
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e // indirect
 )
