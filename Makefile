@@ -39,16 +39,11 @@ secure: secure-practices secure-vulnerabilities
 
 .PHONY: secure-practices
 secure-practices:
-# TODO: change pinned version of GoKart to "latest" once PR #84 is merged
-#       https://github.com/praetorian-inc/gokart/pull/84
-# go install github.com/praetorian-inc/gokart@latest
-	go install github.com/selesy/gokart-pre
-	gokart scan
+	go run github.com/praetorian-inc/gokart scan
 
 .PHONY: secure-vulnerabilities
 secure-vulnerabilities:
-	go install golang.org/x/vuln/cmd/govulncheck
-	govulncheck ./... 
+	go run golang.org/x/vuln/cmd/govulncheck ./...
 
 .PHONY: test
 test:
