@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1677939983505,
+  "lastUpdate": 1677940103740,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -2181,6 +2181,48 @@ window.BENCHMARK_DATA = {
             "name": "BenchmarkReadBugs150",
             "value": 1659682210,
             "unit": "ns/op\t165816552 B/op\t  803284 allocs/op",
+            "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "56202ec0c2da653239988b2e13f5a323210d8ab3",
+          "message": "Merge pull request #1029 from MichaelMure/dependabot/go_modules/golang.org/x/net-0.7.0\n\nbuild(deps): bump golang.org/x/net from 0.5.0 to 0.7.0",
+          "timestamp": "2023-03-04T15:24:53+01:00",
+          "tree_id": "a96e95a95820009119d8184f5ee175cc386c48d0",
+          "url": "https://github.com/MichaelMure/git-bug/commit/56202ec0c2da653239988b2e13f5a323210d8ab3"
+        },
+        "date": 1677940102701,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 43050837,
+            "unit": "ns/op\t 4972885 B/op\t   24214 allocs/op",
+            "extra": "30 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 233921648,
+            "unit": "ns/op\t27897892 B/op\t  134404 allocs/op",
+            "extra": "5 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 1490149130,
+            "unit": "ns/op\t165980952 B/op\t  803291 allocs/op",
             "extra": "1 times\n2 procs"
           }
         ]
