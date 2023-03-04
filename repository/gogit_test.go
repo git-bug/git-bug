@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"fmt"
+	"os"
 	"path"
 	"path/filepath"
 	"testing"
@@ -80,4 +82,17 @@ func TestGoGitRepo_Indexes(t *testing.T) {
 	indexA, err = repo.GetIndex("a")
 	require.NoError(t, err)
 	require.NotZero(t, indexA)
+}
+
+func TestGoGit_DetectsSubmodules(t *testing.T) {
+	repo := CreateGoGitTestRepo(t, false)
+	expected := filepath.Join(goGitRepoDir(t, repo), "/.git")
+
+	d := t.TempDir()
+	err := os.WriteFile(filepath.Join(d, ".git"), []byte(fmt.Sprintf("gitdir: %s", expected)), 0600)
+	require.NoError(t, err)
+
+	result, err := detectGitPath(d, 0)
+	assert.Empty(t, err)
+	assert.Equal(t, expected, result)
 }

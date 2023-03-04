@@ -1,9 +1,11 @@
 package repository
 
 import (
+	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -55,7 +57,7 @@ type GoGitRepo struct {
 // of "~/myrepo" and a namespace of "git-bug", local storage for the
 // GoGitRepo will be configured at "~/myrepo/.git/git-bug".
 func OpenGoGitRepo(path, namespace string, clockLoaders []ClockLoader) (*GoGitRepo, error) {
-	path, err := detectGitPath(path)
+	path, err := detectGitPath(path, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +161,11 @@ func InitBareGoGitRepo(path, namespace string) (*GoGitRepo, error) {
 	}, nil
 }
 
-func detectGitPath(path string) (string, error) {
+func detectGitPath(path string, depth int) (string, error) {
+	if depth >= 10 {
+		return "", fmt.Errorf("gitdir loop detected")
+	}
+
 	// normalize the path
 	path, err := filepath.Abs(path)
 	if err != nil {
@@ -170,7 +176,32 @@ func detectGitPath(path string) (string, error) {
 		fi, err := os.Stat(filepath.Join(path, ".git"))
 		if err == nil {
 			if !fi.IsDir() {
-				return "", fmt.Errorf(".git exist but is not a directory")
+				// See if our .git item is a dotfile that holds a submodule reference
+				dotfile, err := os.Open(filepath.Join(path, fi.Name()))
+				if err != nil {
+					// Can't open error
+					return "", fmt.Errorf(".git exists but is not a directory or a readable file: %w", err)
+				}
+				// We aren't going to defer the dotfile.Close, because we might keep looping, so we have to be sure to
+				// clean up before returning an error
+				reader := bufio.NewReader(io.LimitReader(dotfile, 2048))
+				line, _, err := reader.ReadLine()
+				_ = dotfile.Close()
+				if err != nil {
+					return "", fmt.Errorf(".git exists but is not a directory and cannot be read: %w", err)
+				}
+				dotContent := string(line)
+				if strings.HasPrefix(dotContent, "gitdir:") {
+					// This is a submodule parent path link. Strip the prefix, clean the string of whitespace just to
+					// be safe, and return
+					dotContent = strings.TrimSpace(strings.TrimPrefix(dotContent, "gitdir: "))
+					p, err := detectGitPath(dotContent, depth+1)
+					if err != nil {
+						return "", fmt.Errorf(".git gitdir error: %w", err)
+					}
+					return p, nil
+				}
+				return "", fmt.Errorf(".git exist but is not a directory or module/workspace file")
 			}
 			return filepath.Join(path, ".git"), nil
 		}
