@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1677927799248,
+  "lastUpdate": 1677928748636,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -1972,6 +1972,48 @@ window.BENCHMARK_DATA = {
             "value": 1256902412,
             "unit": "ns/op\t165971016 B/op\t  803299 allocs/op",
             "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e1899b671e7db6e70644747ae61045b9641ddea0",
+          "message": "Merge pull request #1015 from MichaelMure/dependabot/go_modules/github.com/xanzy/go-gitlab-0.79.1\n\nbuild(deps): bump github.com/xanzy/go-gitlab from 0.78.0 to 0.79.1",
+          "timestamp": "2023-03-04T12:17:30+01:00",
+          "tree_id": "6016d073c507da8982c708fe887cdad1cad5d04e",
+          "url": "https://github.com/MichaelMure/git-bug/commit/e1899b671e7db6e70644747ae61045b9641ddea0"
+        },
+        "date": 1677928747932,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 20693545,
+            "unit": "ns/op\t 4981675 B/op\t   24222 allocs/op",
+            "extra": "58 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 117733818,
+            "unit": "ns/op\t27869060 B/op\t  134387 allocs/op",
+            "extra": "9 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 656990681,
+            "unit": "ns/op\t166506420 B/op\t  803441 allocs/op",
+            "extra": "2 times\n2 procs"
           }
         ]
       }
