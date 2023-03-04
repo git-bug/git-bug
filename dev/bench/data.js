@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1677939895478,
+  "lastUpdate": 1677939983505,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -2140,6 +2140,48 @@ window.BENCHMARK_DATA = {
             "value": 711494620,
             "unit": "ns/op\t166445400 B/op\t  803381 allocs/op",
             "extra": "2 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9dfd62985cb9fc23637fdfd83440d14bd4225d0d",
+          "message": "Merge pull request #1031 from MichaelMure/better-isrunning\n\nutil: better IsRunning(pid)",
+          "timestamp": "2023-03-04T15:24:33+01:00",
+          "tree_id": "7fbba9b85705c929ae96ed390fb9c28663037525",
+          "url": "https://github.com/MichaelMure/git-bug/commit/9dfd62985cb9fc23637fdfd83440d14bd4225d0d"
+        },
+        "date": 1677939982461,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 48073188,
+            "unit": "ns/op\t 4970114 B/op\t   24200 allocs/op",
+            "extra": "22 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 273598572,
+            "unit": "ns/op\t27812232 B/op\t  134370 allocs/op",
+            "extra": "4 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 1659682210,
+            "unit": "ns/op\t165816552 B/op\t  803284 allocs/op",
+            "extra": "1 times\n2 procs"
           }
         ]
       }
