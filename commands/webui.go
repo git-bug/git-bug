@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"syscall"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -136,7 +137,7 @@ func runWebUI(env *execenv.Env, opts webUIOptions) error {
 	quit := make(chan os.Signal, 1)
 
 	// register as handler of the interrupt signal to trigger the teardown
-	signal.Notify(quit, os.Interrupt)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 
 	go func() {
 		<-quit
