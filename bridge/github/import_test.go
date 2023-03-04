@@ -127,7 +127,7 @@ func TestGithubImporter(t *testing.T) {
 			url:  "https://github.com/MichaelMure/git-bug-test-github-bridge/issues/8",
 			bug: &bug.Snapshot{
 				Operations: []dag.Operation{
-					bug.NewCreateOp(author, 0, "transferred issue", "", nil),
+					bug.NewCreateOp(author, 0, "transfered issue", "", nil),
 				},
 			},
 		},
