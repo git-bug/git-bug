@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1676558843184,
+  "lastUpdate": 1677927799248,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -1930,6 +1930,48 @@ window.BENCHMARK_DATA = {
             "value": 625822089,
             "unit": "ns/op\t165797052 B/op\t  803220 allocs/op",
             "extra": "2 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ccb4c437472f2625f0a40b532c90fa60c74cc2da",
+          "message": "Merge pull request #1006 from MichaelMure/dependabot/go_modules/golang.org/x/oauth2-0.4.0\n\nbuild(deps): bump golang.org/x/oauth2 from 0.3.0 to 0.4.0",
+          "timestamp": "2023-03-04T12:01:28+01:00",
+          "tree_id": "62d73041d445bdeb1cb8d4bfbed22196e1f4f9ac",
+          "url": "https://github.com/MichaelMure/git-bug/commit/ccb4c437472f2625f0a40b532c90fa60c74cc2da"
+        },
+        "date": 1677927798208,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 37528095,
+            "unit": "ns/op\t 4972087 B/op\t   24213 allocs/op",
+            "extra": "28 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 235783366,
+            "unit": "ns/op\t27891638 B/op\t  134404 allocs/op",
+            "extra": "6 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 1256902412,
+            "unit": "ns/op\t165971016 B/op\t  803299 allocs/op",
+            "extra": "1 times\n2 procs"
           }
         ]
       }
