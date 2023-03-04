@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1677937503238,
+  "lastUpdate": 1677939895478,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -2097,6 +2097,48 @@ window.BENCHMARK_DATA = {
             "name": "BenchmarkReadBugs150",
             "value": 592961388,
             "unit": "ns/op\t166558864 B/op\t  803314 allocs/op",
+            "extra": "2 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c038e5d44c05ec6e186b305bb89f57463da64532",
+          "message": "Merge pull request #1030 from MichaelMure/webui-sigterm\n\nwebui: also teardown cleanly on SIGTERM",
+          "timestamp": "2023-03-04T15:23:29+01:00",
+          "tree_id": "0de49f0e36d4fc154338b1e7e21a7eca6c5f5f87",
+          "url": "https://github.com/MichaelMure/git-bug/commit/c038e5d44c05ec6e186b305bb89f57463da64532"
+        },
+        "date": 1677939894938,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 22350668,
+            "unit": "ns/op\t 4965161 B/op\t   24212 allocs/op",
+            "extra": "49 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 132358804,
+            "unit": "ns/op\t27862928 B/op\t  134407 allocs/op",
+            "extra": "9 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 711494620,
+            "unit": "ns/op\t166445400 B/op\t  803381 allocs/op",
             "extra": "2 times\n2 procs"
           }
         ]
