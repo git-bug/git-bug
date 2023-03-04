@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1677932975200,
+  "lastUpdate": 1677937503238,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -2055,6 +2055,48 @@ window.BENCHMARK_DATA = {
             "name": "BenchmarkReadBugs150",
             "value": 781939110,
             "unit": "ns/op\t165982748 B/op\t  803252 allocs/op",
+            "extra": "2 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "852380f2212a41342cb5440d13cf723ae50b61ea",
+          "message": "Merge pull request #1028 from MichaelMure/fix-tools\n\ntools: fix how security tools are setup and launched",
+          "timestamp": "2023-03-04T14:43:34+01:00",
+          "tree_id": "8a56d5666bd62851dfc6ddce0411d698127d915e",
+          "url": "https://github.com/MichaelMure/git-bug/commit/852380f2212a41342cb5440d13cf723ae50b61ea"
+        },
+        "date": 1677937502467,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 21004233,
+            "unit": "ns/op\t 4971107 B/op\t   24214 allocs/op",
+            "extra": "49 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 120868402,
+            "unit": "ns/op\t27878304 B/op\t  134405 allocs/op",
+            "extra": "9 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 592961388,
+            "unit": "ns/op\t166558864 B/op\t  803314 allocs/op",
             "extra": "2 times\n2 procs"
           }
         ]
