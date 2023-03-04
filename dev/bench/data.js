@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1677928748636,
+  "lastUpdate": 1677932975200,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -2013,6 +2013,48 @@ window.BENCHMARK_DATA = {
             "name": "BenchmarkReadBugs150",
             "value": 656990681,
             "unit": "ns/op\t166506420 B/op\t  803441 allocs/op",
+            "extra": "2 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a1015493875963d75b3ca24caa31a2b65203309e",
+          "message": "Merge pull request #1004 from Kintar/fix-971-submodule-processing\n\nfix(#971): parse submodule .git files instead of erroring",
+          "timestamp": "2023-03-04T13:27:59+01:00",
+          "tree_id": "8bbd475ca6795ac0cd25f88a51b609a198247eb0",
+          "url": "https://github.com/MichaelMure/git-bug/commit/a1015493875963d75b3ca24caa31a2b65203309e"
+        },
+        "date": 1677932974422,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 21456501,
+            "unit": "ns/op\t 4982175 B/op\t   24214 allocs/op",
+            "extra": "50 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 200786410,
+            "unit": "ns/op\t27842240 B/op\t  134406 allocs/op",
+            "extra": "7 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 781939110,
+            "unit": "ns/op\t165982748 B/op\t  803252 allocs/op",
             "extra": "2 times\n2 procs"
           }
         ]
