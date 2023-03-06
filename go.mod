@@ -13,7 +13,7 @@ require (
 	github.com/cheekybits/genny v1.0.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/fatih/color v1.13.0
-	github.com/go-git/go-billy/v5 v5.4.0
+	github.com/go-git/go-billy/v5 v5.4.1
 	github.com/go-git/go-git/v5 v5.5.2
 	github.com/gorilla/mux v1.8.0
 	github.com/hashicorp/golang-lru v0.5.4
