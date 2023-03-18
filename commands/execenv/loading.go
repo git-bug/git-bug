@@ -156,13 +156,17 @@ func CacheBuildProgressBar(env *Env, events chan cache.BuildEvent) error {
 				mpb.AppendDecorators(decor.Percentage(decor.WCSyncSpace)),
 			)
 		case cache.BuildEventProgress:
-			bars[event.Typename].SetTotal(event.Total, false)
 			bars[event.Typename].SetCurrent(event.Progress)
+			bars[event.Typename].SetTotal(event.Total, event.Progress == event.Total)
+		case cache.BuildEventFinished:
+			if bar := bars[event.Typename]; !bar.Completed() {
+				bar.SetTotal(0, true)
+			}
 		}
 	}
 
 	if progress != nil {
-		progress.Shutdown()
+		progress.Wait()
 	}
 
 	return nil
