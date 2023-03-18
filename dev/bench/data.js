@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1677940103740,
+  "lastUpdate": 1679170601167,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -2224,6 +2224,48 @@ window.BENCHMARK_DATA = {
             "value": 1490149130,
             "unit": "ns/op\t165980952 B/op\t  803291 allocs/op",
             "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "distinct": true,
+          "id": "281d4a642d87a23ed62045db899ff967abf8b818",
+          "message": "execenv: fix some cache building progress bar artifact\n\nStill one issue remaining: the last bar doesn't dissapear. Looks like a mbp issue.",
+          "timestamp": "2023-03-18T21:13:27+01:00",
+          "tree_id": "97b4436d20983874925a864d33223f4d9a541bef",
+          "url": "https://github.com/MichaelMure/git-bug/commit/281d4a642d87a23ed62045db899ff967abf8b818"
+        },
+        "date": 1679170600674,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 19408620,
+            "unit": "ns/op\t 4968155 B/op\t   24214 allocs/op",
+            "extra": "55 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 107944828,
+            "unit": "ns/op\t27852974 B/op\t  134387 allocs/op",
+            "extra": "10 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 656203916,
+            "unit": "ns/op\t166234788 B/op\t  803257 allocs/op",
+            "extra": "2 times\n2 procs"
           }
         ]
       }
