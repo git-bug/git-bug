@@ -83,7 +83,7 @@ General capabilities of importers:
 
 |                                                 | Github | Gitlab | Jira | Launchpad | Gitea |
 | ----------------------------------------------- | :----: | :----: | :--: | :-------: | :---: |
-| **incremental**<br/>(can import more than once) |   ✅   |   ✅   |  ✅  |    ❌     |  ❌   |
+| **incremental**<br/>(can import more than once) |   ✅   |   ✅   |  ✅  |    ❌     |  🟠   |
 | **with resume**<br/>(download only new data)    |   ✅   |   ✅   |  ✅  |    ❌     |  ❌   |
 | **media/files**                                 |   ❌   |   ❌   |  ❌  |    ❌     |  ❌   |
 | **automated test suite**                        |   ✅   |   ✅   |  ❌  |    ❌     |  ❌   |
@@ -92,7 +92,7 @@ Identity support:
 
 |                   | Github | Gitlab | Jira | Launchpad | Gitea |
 | ----------------- | :----: | :----: | :--: | :-------: | :---: |
-| **identities**    |   ✅   |   ✅   |  ✅  |    ✅     |  ❌   |
+| **identities**    |   ✅   |   ✅   |  ✅  |    ✅     |  🟠   |
 | identities update |   ❌   |   ❌   |  ❌  |    ❌     |  ❌   |
 | public keys       |   ❌   |   ❌   |  ❌  |    ❌     |  ❌   |
 
@@ -100,7 +100,7 @@ Bug support:
 
 |                  | Github | Gitlab | Jira | Launchpad | Gitea |
 | ---------------- | :----: | :----: | :--: | :-------: | :---: |
-| **bug**          |   ✅   |   ✅   |  ✅  |    ✅     |  ❌   |
+| **bug**          |   ✅   |   ✅   |  ✅  |    ✅     |  🟠   |
 | comments         |   ✅   |   ✅   |  ✅  |    ✅     |  ❌   |
 | comment editions |   ✅   |   ❌   |  ✅  |    ❌     |  ❌   |
 | labels           |   ✅   |   ✅   |  ✅  |    ❌     |  ❌   |
