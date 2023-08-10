@@ -32,7 +32,7 @@ require (
 	golang.org/x/oauth2 v0.8.0
 	golang.org/x/sync v0.1.0
 	golang.org/x/sys v0.8.0
-	golang.org/x/text v0.9.0
+	golang.org/x/text v0.12.0
 )
 
 // https://github.com/go-git/go-git/pull/659
