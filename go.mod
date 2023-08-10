@@ -28,7 +28,7 @@ require (
 	github.com/vbauerster/mpb/v8 v8.5.2
 	github.com/vektah/gqlparser/v2 v2.5.1
 	github.com/xanzy/go-gitlab v0.90.0
-	golang.org/x/crypto v0.5.0
+	golang.org/x/crypto v0.12.0
 	golang.org/x/oauth2 v0.8.0
 	golang.org/x/sync v0.1.0
 	golang.org/x/sys v0.11.0
