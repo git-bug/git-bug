@@ -1,6 +1,7 @@
 [codespell]
-skip = .git,.venv,*.svg,package-lock.json
+skip = .git,.venv,*.svg,package-lock.json,go.mod,go.sum
 # ot,fo,te - used as short variable names
 # optionall - OptionAll but codespell is case insensitive
 # testing - TestIn
-ignore-words-list = ot,fo,te,optionall,testin
+# transfered - github import test: the test repo to be imported has that typo, and it's not easy to change
+ignore-words-list = ot,fo,te,optionall,testin,transfered
