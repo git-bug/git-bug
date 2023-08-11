@@ -15,20 +15,20 @@ type Authored interface {
 
 type AddCommentAndCloseBugInput struct {
 	// A unique identifier for the client performing the mutation.
-	ClientMutationID *string `json:"clientMutationId"`
+	ClientMutationID *string `json:"clientMutationId,omitempty"`
 	// The name of the repository. If not set, the default repository is used.
-	RepoRef *string `json:"repoRef"`
+	RepoRef *string `json:"repoRef,omitempty"`
 	// The bug ID's prefix.
 	Prefix string `json:"prefix"`
 	// The message to be added to the bug.
 	Message string `json:"message"`
 	// The collection of file's hash required for the first message.
-	Files []repository.Hash `json:"files"`
+	Files []repository.Hash `json:"files,omitempty"`
 }
 
 type AddCommentAndCloseBugPayload struct {
 	// A unique identifier for the client performing the mutation.
-	ClientMutationID *string `json:"clientMutationId"`
+	ClientMutationID *string `json:"clientMutationId,omitempty"`
 	// The affected bug.
 	Bug BugWrapper `json:"bug"`
 	// The resulting AddComment operation.
@@ -39,20 +39,20 @@ type AddCommentAndCloseBugPayload struct {
 
 type AddCommentAndReopenBugInput struct {
 	// A unique identifier for the client performing the mutation.
-	ClientMutationID *string `json:"clientMutationId"`
+	ClientMutationID *string `json:"clientMutationId,omitempty"`
 	// The name of the repository. If not set, the default repository is used.
-	RepoRef *string `json:"repoRef"`
+	RepoRef *string `json:"repoRef,omitempty"`
 	// The bug ID's prefix.
 	Prefix string `json:"prefix"`
 	// The message to be added to the bug.
 	Message string `json:"message"`
 	// The collection of file's hash required for the first message.
-	Files []repository.Hash `json:"files"`
+	Files []repository.Hash `json:"files,omitempty"`
 }
 
 type AddCommentAndReopenBugPayload struct {
 	// A unique identifier for the client performing the mutation.
-	ClientMutationID *string `json:"clientMutationId"`
+	ClientMutationID *string `json:"clientMutationId,omitempty"`
 	// The affected bug.
 	Bug BugWrapper `json:"bug"`
 	// The resulting AddComment operation.
@@ -63,20 +63,20 @@ type AddCommentAndReopenBugPayload struct {
 
 type AddCommentInput struct {
 	// A unique identifier for the client performing the mutation.
-	ClientMutationID *string `json:"clientMutationId"`
+	ClientMutationID *string `json:"clientMutationId,omitempty"`
 	// The name of the repository. If not set, the default repository is used.
-	RepoRef *string `json:"repoRef"`
+	RepoRef *string `json:"repoRef,omitempty"`
 	// The bug ID's prefix.
 	Prefix string `json:"prefix"`
 	// The message to be added to the bug.
 	Message string `json:"message"`
 	// The collection of file's hash required for the first message.
-	Files []repository.Hash `json:"files"`
+	Files []repository.Hash `json:"files,omitempty"`
 }
 
 type AddCommentPayload struct {
 	// A unique identifier for the client performing the mutation.
-	ClientMutationID *string `json:"clientMutationId"`
+	ClientMutationID *string `json:"clientMutationId,omitempty"`
 	// The affected bug.
 	Bug BugWrapper `json:"bug"`
 	// The resulting operation.
@@ -104,20 +104,20 @@ type BugEdge struct {
 
 type ChangeLabelInput struct {
 	// A unique identifier for the client performing the mutation.
-	ClientMutationID *string `json:"clientMutationId"`
+	ClientMutationID *string `json:"clientMutationId,omitempty"`
 	// The name of the repository. If not set, the default repository is used.
-	RepoRef *string `json:"repoRef"`
+	RepoRef *string `json:"repoRef,omitempty"`
 	// The bug ID's prefix.
 	Prefix string `json:"prefix"`
 	// The list of label to add.
-	Added []string `json:"added"`
+	Added []string `json:"added,omitempty"`
 	// The list of label to remove.
-	Removed []string `json:"Removed"`
+	Removed []string `json:"Removed,omitempty"`
 }
 
 type ChangeLabelPayload struct {
 	// A unique identifier for the client performing the mutation.
-	ClientMutationID *string `json:"clientMutationId"`
+	ClientMutationID *string `json:"clientMutationId,omitempty"`
 	// The affected bug.
 	Bug BugWrapper `json:"bug"`
 	// The resulting operation.
@@ -128,16 +128,16 @@ type ChangeLabelPayload struct {
 
 type CloseBugInput struct {
 	// A unique identifier for the client performing the mutation.
-	ClientMutationID *string `json:"clientMutationId"`
+	ClientMutationID *string `json:"clientMutationId,omitempty"`
 	// The name of the repository. If not set, the default repository is used.
-	RepoRef *string `json:"repoRef"`
+	RepoRef *string `json:"repoRef,omitempty"`
 	// The bug ID's prefix.
 	Prefix string `json:"prefix"`
 }
 
 type CloseBugPayload struct {
 	// A unique identifier for the client performing the mutation.
-	ClientMutationID *string `json:"clientMutationId"`
+	ClientMutationID *string `json:"clientMutationId,omitempty"`
 	// The affected bug.
 	Bug BugWrapper `json:"bug"`
 	// The resulting operation.
@@ -158,20 +158,20 @@ type CommentEdge struct {
 
 type EditCommentInput struct {
 	// A unique identifier for the client performing the mutation.
-	ClientMutationID *string `json:"clientMutationId"`
+	ClientMutationID *string `json:"clientMutationId,omitempty"`
 	// The name of the repository. If not set, the default repository is used.
-	RepoRef *string `json:"repoRef"`
+	RepoRef *string `json:"repoRef,omitempty"`
 	// A prefix of the CombinedId of the comment to be changed.
 	TargetPrefix string `json:"targetPrefix"`
 	// The new message to be set.
 	Message string `json:"message"`
 	// The collection of file's hash required for the first message.
-	Files []repository.Hash `json:"files"`
+	Files []repository.Hash `json:"files,omitempty"`
 }
 
 type EditCommentPayload struct {
 	// A unique identifier for the client performing the mutation.
-	ClientMutationID *string `json:"clientMutationId"`
+	ClientMutationID *string `json:"clientMutationId,omitempty"`
 	// The affected bug.
 	Bug BugWrapper `json:"bug"`
 	// The resulting operation.
@@ -204,20 +204,20 @@ type LabelEdge struct {
 
 type NewBugInput struct {
 	// A unique identifier for the client performing the mutation.
-	ClientMutationID *string `json:"clientMutationId"`
+	ClientMutationID *string `json:"clientMutationId,omitempty"`
 	// The name of the repository. If not set, the default repository is used.
-	RepoRef *string `json:"repoRef"`
+	RepoRef *string `json:"repoRef,omitempty"`
 	// The title of the new bug.
 	Title string `json:"title"`
 	// The first message of the new bug.
 	Message string `json:"message"`
 	// The collection of file's hash required for the first message.
-	Files []repository.Hash `json:"files"`
+	Files []repository.Hash `json:"files,omitempty"`
 }
 
 type NewBugPayload struct {
 	// A unique identifier for the client performing the mutation.
-	ClientMutationID *string `json:"clientMutationId"`
+	ClientMutationID *string `json:"clientMutationId,omitempty"`
 	// The created bug.
 	Bug BugWrapper `json:"bug"`
 	// The resulting operation.
@@ -226,16 +226,16 @@ type NewBugPayload struct {
 
 type OpenBugInput struct {
 	// A unique identifier for the client performing the mutation.
-	ClientMutationID *string `json:"clientMutationId"`
+	ClientMutationID *string `json:"clientMutationId,omitempty"`
 	// The name of the repository. If not set, the default repository is used.
-	RepoRef *string `json:"repoRef"`
+	RepoRef *string `json:"repoRef,omitempty"`
 	// The bug ID's prefix.
 	Prefix string `json:"prefix"`
 }
 
 type OpenBugPayload struct {
 	// A unique identifier for the client performing the mutation.
-	ClientMutationID *string `json:"clientMutationId"`
+	ClientMutationID *string `json:"clientMutationId,omitempty"`
 	// The affected bug.
 	Bug BugWrapper `json:"bug"`
 	// The resulting operation.
@@ -270,9 +270,9 @@ type PageInfo struct {
 
 type SetTitleInput struct {
 	// A unique identifier for the client performing the mutation.
-	ClientMutationID *string `json:"clientMutationId"`
+	ClientMutationID *string `json:"clientMutationId,omitempty"`
 	// The name of the repository. If not set, the default repository is used.
-	RepoRef *string `json:"repoRef"`
+	RepoRef *string `json:"repoRef,omitempty"`
 	// The bug ID's prefix.
 	Prefix string `json:"prefix"`
 	// The new title.
@@ -281,7 +281,7 @@ type SetTitleInput struct {
 
 type SetTitlePayload struct {
 	// A unique identifier for the client performing the mutation.
-	ClientMutationID *string `json:"clientMutationId"`
+	ClientMutationID *string `json:"clientMutationId,omitempty"`
 	// The affected bug.
 	Bug BugWrapper `json:"bug"`
 	// The resulting operation

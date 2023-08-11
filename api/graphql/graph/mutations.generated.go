@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strconv"
 	"sync"
+	"sync/atomic"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/MichaelMure/git-bug/api/graphql/models"
@@ -1824,42 +1825,47 @@ func (ec *executionContext) unmarshalInputAddCommentAndCloseBugInput(ctx context
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clientMutationId"))
-			it.ClientMutationID, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ClientMutationID = data
 		case "repoRef":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("repoRef"))
-			it.RepoRef, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.RepoRef = data
 		case "prefix":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("prefix"))
-			it.Prefix, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Prefix = data
 		case "message":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
-			it.Message, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Message = data
 		case "files":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("files"))
-			it.Files, err = ec.unmarshalOHash2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋrepositoryᚐHashᚄ(ctx, v)
+			data, err := ec.unmarshalOHash2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋrepositoryᚐHashᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Files = data
 		}
 	}
 
@@ -1884,42 +1890,47 @@ func (ec *executionContext) unmarshalInputAddCommentAndReopenBugInput(ctx contex
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clientMutationId"))
-			it.ClientMutationID, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ClientMutationID = data
 		case "repoRef":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("repoRef"))
-			it.RepoRef, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.RepoRef = data
 		case "prefix":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("prefix"))
-			it.Prefix, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Prefix = data
 		case "message":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
-			it.Message, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Message = data
 		case "files":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("files"))
-			it.Files, err = ec.unmarshalOHash2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋrepositoryᚐHashᚄ(ctx, v)
+			data, err := ec.unmarshalOHash2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋrepositoryᚐHashᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Files = data
 		}
 	}
 
@@ -1944,42 +1955,47 @@ func (ec *executionContext) unmarshalInputAddCommentInput(ctx context.Context, o
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clientMutationId"))
-			it.ClientMutationID, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ClientMutationID = data
 		case "repoRef":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("repoRef"))
-			it.RepoRef, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.RepoRef = data
 		case "prefix":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("prefix"))
-			it.Prefix, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Prefix = data
 		case "message":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
-			it.Message, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Message = data
 		case "files":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("files"))
-			it.Files, err = ec.unmarshalOHash2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋrepositoryᚐHashᚄ(ctx, v)
+			data, err := ec.unmarshalOHash2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋrepositoryᚐHashᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Files = data
 		}
 	}
 
@@ -2004,42 +2020,47 @@ func (ec *executionContext) unmarshalInputChangeLabelInput(ctx context.Context, 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clientMutationId"))
-			it.ClientMutationID, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ClientMutationID = data
 		case "repoRef":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("repoRef"))
-			it.RepoRef, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.RepoRef = data
 		case "prefix":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("prefix"))
-			it.Prefix, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Prefix = data
 		case "added":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("added"))
-			it.Added, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Added = data
 		case "Removed":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Removed"))
-			it.Removed, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Removed = data
 		}
 	}
 
@@ -2064,26 +2085,29 @@ func (ec *executionContext) unmarshalInputCloseBugInput(ctx context.Context, obj
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clientMutationId"))
-			it.ClientMutationID, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ClientMutationID = data
 		case "repoRef":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("repoRef"))
-			it.RepoRef, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.RepoRef = data
 		case "prefix":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("prefix"))
-			it.Prefix, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Prefix = data
 		}
 	}
 
@@ -2108,42 +2132,47 @@ func (ec *executionContext) unmarshalInputEditCommentInput(ctx context.Context, 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clientMutationId"))
-			it.ClientMutationID, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ClientMutationID = data
 		case "repoRef":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("repoRef"))
-			it.RepoRef, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.RepoRef = data
 		case "targetPrefix":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetPrefix"))
-			it.TargetPrefix, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.TargetPrefix = data
 		case "message":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
-			it.Message, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Message = data
 		case "files":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("files"))
-			it.Files, err = ec.unmarshalOHash2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋrepositoryᚐHashᚄ(ctx, v)
+			data, err := ec.unmarshalOHash2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋrepositoryᚐHashᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Files = data
 		}
 	}
 
@@ -2168,42 +2197,47 @@ func (ec *executionContext) unmarshalInputNewBugInput(ctx context.Context, obj i
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clientMutationId"))
-			it.ClientMutationID, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ClientMutationID = data
 		case "repoRef":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("repoRef"))
-			it.RepoRef, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.RepoRef = data
 		case "title":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
-			it.Title, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Title = data
 		case "message":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
-			it.Message, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Message = data
 		case "files":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("files"))
-			it.Files, err = ec.unmarshalOHash2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋrepositoryᚐHashᚄ(ctx, v)
+			data, err := ec.unmarshalOHash2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋrepositoryᚐHashᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Files = data
 		}
 	}
 
@@ -2228,26 +2262,29 @@ func (ec *executionContext) unmarshalInputOpenBugInput(ctx context.Context, obj 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clientMutationId"))
-			it.ClientMutationID, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ClientMutationID = data
 		case "repoRef":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("repoRef"))
-			it.RepoRef, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.RepoRef = data
 		case "prefix":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("prefix"))
-			it.Prefix, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Prefix = data
 		}
 	}
 
@@ -2272,34 +2309,38 @@ func (ec *executionContext) unmarshalInputSetTitleInput(ctx context.Context, obj
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clientMutationId"))
-			it.ClientMutationID, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ClientMutationID = data
 		case "repoRef":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("repoRef"))
-			it.RepoRef, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.RepoRef = data
 		case "prefix":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("prefix"))
-			it.Prefix, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Prefix = data
 		case "title":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
-			it.Title, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Title = data
 		}
 	}
 
@@ -2318,45 +2359,50 @@ var addCommentAndCloseBugPayloadImplementors = []string{"AddCommentAndCloseBugPa
 
 func (ec *executionContext) _AddCommentAndCloseBugPayload(ctx context.Context, sel ast.SelectionSet, obj *models.AddCommentAndCloseBugPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, addCommentAndCloseBugPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("AddCommentAndCloseBugPayload")
 		case "clientMutationId":
-
 			out.Values[i] = ec._AddCommentAndCloseBugPayload_clientMutationId(ctx, field, obj)
-
 		case "bug":
-
 			out.Values[i] = ec._AddCommentAndCloseBugPayload_bug(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "commentOperation":
-
 			out.Values[i] = ec._AddCommentAndCloseBugPayload_commentOperation(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "statusOperation":
-
 			out.Values[i] = ec._AddCommentAndCloseBugPayload_statusOperation(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -2364,45 +2410,50 @@ var addCommentAndReopenBugPayloadImplementors = []string{"AddCommentAndReopenBug
 
 func (ec *executionContext) _AddCommentAndReopenBugPayload(ctx context.Context, sel ast.SelectionSet, obj *models.AddCommentAndReopenBugPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, addCommentAndReopenBugPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("AddCommentAndReopenBugPayload")
 		case "clientMutationId":
-
 			out.Values[i] = ec._AddCommentAndReopenBugPayload_clientMutationId(ctx, field, obj)
-
 		case "bug":
-
 			out.Values[i] = ec._AddCommentAndReopenBugPayload_bug(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "commentOperation":
-
 			out.Values[i] = ec._AddCommentAndReopenBugPayload_commentOperation(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "statusOperation":
-
 			out.Values[i] = ec._AddCommentAndReopenBugPayload_statusOperation(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -2410,38 +2461,45 @@ var addCommentPayloadImplementors = []string{"AddCommentPayload"}
 
 func (ec *executionContext) _AddCommentPayload(ctx context.Context, sel ast.SelectionSet, obj *models.AddCommentPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, addCommentPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("AddCommentPayload")
 		case "clientMutationId":
-
 			out.Values[i] = ec._AddCommentPayload_clientMutationId(ctx, field, obj)
-
 		case "bug":
-
 			out.Values[i] = ec._AddCommentPayload_bug(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "operation":
-
 			out.Values[i] = ec._AddCommentPayload_operation(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -2449,45 +2507,50 @@ var changeLabelPayloadImplementors = []string{"ChangeLabelPayload"}
 
 func (ec *executionContext) _ChangeLabelPayload(ctx context.Context, sel ast.SelectionSet, obj *models.ChangeLabelPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, changeLabelPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ChangeLabelPayload")
 		case "clientMutationId":
-
 			out.Values[i] = ec._ChangeLabelPayload_clientMutationId(ctx, field, obj)
-
 		case "bug":
-
 			out.Values[i] = ec._ChangeLabelPayload_bug(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "operation":
-
 			out.Values[i] = ec._ChangeLabelPayload_operation(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "results":
-
 			out.Values[i] = ec._ChangeLabelPayload_results(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -2495,38 +2558,45 @@ var closeBugPayloadImplementors = []string{"CloseBugPayload"}
 
 func (ec *executionContext) _CloseBugPayload(ctx context.Context, sel ast.SelectionSet, obj *models.CloseBugPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, closeBugPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("CloseBugPayload")
 		case "clientMutationId":
-
 			out.Values[i] = ec._CloseBugPayload_clientMutationId(ctx, field, obj)
-
 		case "bug":
-
 			out.Values[i] = ec._CloseBugPayload_bug(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "operation":
-
 			out.Values[i] = ec._CloseBugPayload_operation(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -2534,38 +2604,45 @@ var editCommentPayloadImplementors = []string{"EditCommentPayload"}
 
 func (ec *executionContext) _EditCommentPayload(ctx context.Context, sel ast.SelectionSet, obj *models.EditCommentPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, editCommentPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("EditCommentPayload")
 		case "clientMutationId":
-
 			out.Values[i] = ec._EditCommentPayload_clientMutationId(ctx, field, obj)
-
 		case "bug":
-
 			out.Values[i] = ec._EditCommentPayload_bug(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "operation":
-
 			out.Values[i] = ec._EditCommentPayload_operation(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -2573,34 +2650,43 @@ var labelChangeResultImplementors = []string{"LabelChangeResult"}
 
 func (ec *executionContext) _LabelChangeResult(ctx context.Context, sel ast.SelectionSet, obj *bug.LabelChangeResult) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, labelChangeResultImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("LabelChangeResult")
 		case "label":
-
 			out.Values[i] = ec._LabelChangeResult_label(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "status":
-
 			out.Values[i] = ec._LabelChangeResult_status(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -2608,38 +2694,45 @@ var newBugPayloadImplementors = []string{"NewBugPayload"}
 
 func (ec *executionContext) _NewBugPayload(ctx context.Context, sel ast.SelectionSet, obj *models.NewBugPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, newBugPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("NewBugPayload")
 		case "clientMutationId":
-
 			out.Values[i] = ec._NewBugPayload_clientMutationId(ctx, field, obj)
-
 		case "bug":
-
 			out.Values[i] = ec._NewBugPayload_bug(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "operation":
-
 			out.Values[i] = ec._NewBugPayload_operation(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -2647,38 +2740,45 @@ var openBugPayloadImplementors = []string{"OpenBugPayload"}
 
 func (ec *executionContext) _OpenBugPayload(ctx context.Context, sel ast.SelectionSet, obj *models.OpenBugPayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, openBugPayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("OpenBugPayload")
 		case "clientMutationId":
-
 			out.Values[i] = ec._OpenBugPayload_clientMutationId(ctx, field, obj)
-
 		case "bug":
-
 			out.Values[i] = ec._OpenBugPayload_bug(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "operation":
-
 			out.Values[i] = ec._OpenBugPayload_operation(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -2686,38 +2786,45 @@ var setTitlePayloadImplementors = []string{"SetTitlePayload"}
 
 func (ec *executionContext) _SetTitlePayload(ctx context.Context, sel ast.SelectionSet, obj *models.SetTitlePayload) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, setTitlePayloadImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("SetTitlePayload")
 		case "clientMutationId":
-
 			out.Values[i] = ec._SetTitlePayload_clientMutationId(ctx, field, obj)
-
 		case "bug":
-
 			out.Values[i] = ec._SetTitlePayload_bug(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "operation":
-
 			out.Values[i] = ec._SetTitlePayload_operation(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
