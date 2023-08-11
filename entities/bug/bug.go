@@ -13,7 +13,7 @@ import (
 )
 
 var _ Interface = &Bug{}
-var _ entity.Interface[*Snapshot, Operation] = &Bug{}
+var _ entity.Interface[Operation, *Snapshot] = &Bug{}
 
 // 1: original format
 // 2: no more legacy identities
@@ -34,7 +34,7 @@ var def = dag.Definition{
 var ClockLoader = dag.ClockLoader(def)
 
 type Interface interface {
-	entity.Interface[*Snapshot, Operation]
+	entity.Interface[Operation, *Snapshot]
 }
 
 // Bug holds the data of a bug thread, organized in a way close to

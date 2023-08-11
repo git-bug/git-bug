@@ -50,7 +50,7 @@ type Operation interface {
 	AllMetadata() map[string]string
 }
 
-type OperationWithApply[SnapT Snapshot] interface {
+type OperationWithApply[OpT Operation, SnapT Snapshot] interface {
 	Operation
 
 	// Apply the operation to a Snapshot to create the final state

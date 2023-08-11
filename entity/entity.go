@@ -9,9 +9,9 @@ import (
 type Bare bootstrap.Entity
 
 // Interface define the extended interface of an Entity
-type Interface[SnapT Snapshot, OpT Operation] interface {
+type Interface[OpT Operation, SnapT Snapshot] interface {
 	Bare
-	CompileToSnapshot[SnapT]
+	CompileToSnapshot[OpT, SnapT]
 
 	// Validate checks if the Entity data is valid
 	Validate() error
@@ -36,8 +36,8 @@ type Interface[SnapT Snapshot, OpT Operation] interface {
 	EditLamportTime() lamport.Time
 }
 
-type WithCommit[SnapT Snapshot, OpT Operation] interface {
-	Interface[SnapT, OpT]
+type WithCommit[OpT Operation, SnapT Snapshot] interface {
+	Interface[OpT, SnapT]
 	Committer
 }
 

@@ -12,6 +12,7 @@ import (
 )
 
 var _ Operation = &AddCommentOperation{}
+var _ dag.Operation = &AddCommentOperation{}
 var _ entity.OperationWithFiles = &AddCommentOperation{}
 
 // AddCommentOperation will add a new comment in the bug

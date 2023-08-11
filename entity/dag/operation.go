@@ -12,6 +12,8 @@ import (
 	"github.com/MichaelMure/git-bug/entity"
 )
 
+type Snapshot entity.SnapshotT[Operation]
+
 // Operation is an extended interface for an entity.Operation working with the dag package.
 type Operation interface {
 	entity.Operation
@@ -24,7 +26,7 @@ type Operation interface {
 	setExtraMetadataImmutable(key string, value string)
 }
 
-type OperationWithApply[SnapT entity.Snapshot] interface {
+type OperationWithApply[SnapT Snapshot] interface {
 	Operation
 
 	// Apply the operation to a Snapshot to create the final state

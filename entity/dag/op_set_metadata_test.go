@@ -12,17 +12,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var _ entity.Snapshot = &snapshotMock{}
+var _ Snapshot = &snapshotMock{}
 
 type snapshotMock struct {
-	ops []entity.Operation
+	ops []Operation
 }
 
-func (s *snapshotMock) AllOperations() []entity.Operation {
+func (s *snapshotMock) AllOperations() []Operation {
 	return s.ops
 }
 
-func (s *snapshotMock) AppendOperation(op entity.Operation) {
+func (s *snapshotMock) AppendOperation(op Operation) {
 	s.ops = append(s.ops, op)
 }
 

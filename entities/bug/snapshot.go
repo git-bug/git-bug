@@ -9,7 +9,7 @@ import (
 	"github.com/MichaelMure/git-bug/entity"
 )
 
-var _ entity.Snapshot = &Snapshot{}
+// var _ entity.Snapshot = &Snapshot{}
 
 // Snapshot is a compiled form of the Bug data structure used for storage and merge
 type Snapshot struct {
@@ -26,7 +26,7 @@ type Snapshot struct {
 
 	Timeline []TimelineItem
 
-	Operations []entity.Operation
+	Operations []Operation
 }
 
 // Id returns the Bug identifier
@@ -38,11 +38,11 @@ func (snap *Snapshot) Id() entity.Id {
 	return snap.id
 }
 
-func (snap *Snapshot) AllOperations() []entity.Operation {
+func (snap *Snapshot) AllOperations() []Operation {
 	return snap.Operations
 }
 
-func (snap *Snapshot) AppendOperation(op entity.Operation) {
+func (snap *Snapshot) AppendOperation(op Operation) {
 	snap.Operations = append(snap.Operations, op)
 }
 

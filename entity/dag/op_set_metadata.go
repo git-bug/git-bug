@@ -10,16 +10,16 @@ import (
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
-var _ Operation = &SetMetadataOperation[entity.Snapshot]{}
-var _ entity.OperationDoesntChangeSnapshot = &SetMetadataOperation[entity.Snapshot]{}
+var _ Operation = &SetMetadataOperation[Snapshot]{}
+var _ entity.OperationDoesntChangeSnapshot = &SetMetadataOperation[Snapshot]{}
 
-type SetMetadataOperation[SnapT entity.Snapshot] struct {
+type SetMetadataOperation[SnapT Snapshot] struct {
 	OpBase
 	Target      entity.Id         `json:"target"`
 	NewMetadata map[string]string `json:"new_metadata"`
 }
 
-func NewSetMetadataOp[SnapT entity.Snapshot](opType entity.OperationType, author identity.Interface, unixTime int64, target entity.Id, newMetadata map[string]string) *SetMetadataOperation[SnapT] {
+func NewSetMetadataOp[SnapT Snapshot](opType entity.OperationType, author identity.Interface, unixTime int64, target entity.Id, newMetadata map[string]string) *SetMetadataOperation[SnapT] {
 	return &SetMetadataOperation[SnapT]{
 		OpBase:      NewOpBase(opType, author, unixTime),
 		Target:      target,
