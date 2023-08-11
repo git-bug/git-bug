@@ -16,7 +16,7 @@ require (
 	github.com/go-git/go-billy/v5 v5.4.1
 	github.com/go-git/go-git/v5 v5.5.2
 	github.com/gorilla/mux v1.8.0
-	github.com/hashicorp/golang-lru v0.5.4
+	github.com/hashicorp/golang-lru v1.0.2
 	github.com/icrowley/fake v0.0.0-20180203215853-4178557ae428
 	github.com/mattn/go-isatty v0.0.19
 	github.com/phayes/freeport v0.0.0-20171002181615-b8543db493a5
