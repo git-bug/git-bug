@@ -58,7 +58,7 @@ type SubCache[EntityT entity.Interface, ExcerptT Excerpt, CacheT CacheEntity] st
 	mu       sync.RWMutex
 	excerpts map[entity.Id]ExcerptT
 	cached   map[entity.Id]CacheT
-	lru      *lruIdCache
+	lru      lruIdCache
 }
 
 func NewSubCache[EntityT entity.Interface, ExcerptT Excerpt, CacheT CacheEntity](
@@ -377,7 +377,7 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) Resolve(id entity.Id) (CacheT, er
 }
 
 // ResolvePrefix retrieve an entity matching an id prefix. It fails if multiple
-// entity match.
+// entities match.
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) ResolvePrefix(prefix string) (CacheT, error) {
 	return sc.ResolveMatcher(func(excerpt ExcerptT) bool {
 		return excerpt.Id().HasPrefix(prefix)
@@ -406,7 +406,7 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) ResolveExcerpt(id entity.Id) (Exc
 }
 
 // ResolveExcerptPrefix retrieve an Excerpt matching an id prefix. It fails if multiple
-// entity match.
+// entities match.
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) ResolveExcerptPrefix(prefix string) (ExcerptT, error) {
 	return sc.ResolveExcerptMatcher(func(excerpt ExcerptT) bool {
 		return excerpt.Id().HasPrefix(prefix)
@@ -629,7 +629,7 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) evictIfNeeded() {
 		}
 
 		// as a form of assurance that evicted entities don't get manipulated, we lock them here.
-		// if something try to do it anyway, it will lock the program and make it obvious.
+		// if something tries to do it anyway, it will lock the program and make it obvious.
 		b.Lock()
 
 		sc.lru.Remove(id)
