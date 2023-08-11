@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1691759822863,
+  "lastUpdate": 1691760135748,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -3358,6 +3358,84 @@ window.BENCHMARK_DATA = {
             "value": 803215,
             "unit": "allocs/op",
             "extra": "1 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "37034639efaff1b59af25f66d0528204901e8f8d",
+          "message": "Merge pull request #1092 from MichaelMure/dependabot/go_modules/github.com/hashicorp/golang-lru-1.0.2\n\nbuild(deps): bump github.com/hashicorp/golang-lru from 0.5.4 to 1.0.2",
+          "timestamp": "2023-08-11T15:20:30+02:00",
+          "tree_id": "019a5ea2d73cc8afe18d5cc8eaa0a4d2801bbfdc",
+          "url": "https://github.com/MichaelMure/git-bug/commit/37034639efaff1b59af25f66d0528204901e8f8d"
+        },
+        "date": 1691760134651,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 31732116,
+            "unit": "ns/op",
+            "extra": "36 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 4966566,
+            "unit": "B/op",
+            "extra": "36 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 24212,
+            "unit": "allocs/op",
+            "extra": "36 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 178288961,
+            "unit": "ns/op",
+            "extra": "7 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 27737492,
+            "unit": "B/op",
+            "extra": "7 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 134363,
+            "unit": "allocs/op",
+            "extra": "7 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 930051775,
+            "unit": "ns/op",
+            "extra": "2 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 165646132,
+            "unit": "B/op",
+            "extra": "2 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 803237,
+            "unit": "allocs/op",
+            "extra": "2 times\n2 procs"
           }
         ]
       }
