@@ -318,7 +318,7 @@ func TestCacheEviction(t *testing.T) {
 	checkBugPresence(t, repoCache, bug2, true)
 	checkBugPresence(t, repoCache, bug3, true)
 
-	// Accessing bug should update position in lruCache and therefore it should not be evicted
+	// Accessing bug should update position in lruCache, and therefore it should not be evicted
 	repoCache.bugs.lru.Get(bug2.Id())
 	oldestId, _ := repoCache.bugs.lru.GetOldest()
 	require.Equal(t, bug3.Id(), oldestId)
