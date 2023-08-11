@@ -1,5 +1,5 @@
 [codespell]
-skip = .git,.venv,*.svg,package-lock.json,go.mod,go.sum
+skip = .git,.venv,*.svg,package-lock.json,go.mod,go.sum,./misc/completion/*
 # ot,fo,te - used as short variable names
 # optionall - OptionAll but codespell is case insensitive
 # testing - TestIn
