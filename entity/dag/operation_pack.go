@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
-	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	"github.com/pkg/errors"
 
 	"github.com/MichaelMure/git-bug/entities/identity"
@@ -23,7 +22,7 @@ const createClockEntryPrefix = "create-clock-"
 const editClockEntryPrefix = "edit-clock-"
 
 // operationPack is a wrapper structure to store multiple operations in a single git blob.
-// Additionally, it holds and store the metadata for those operations.
+// Additionally, it holds and stores the metadata for those operations.
 type operationPack struct {
 	// An identifier, taken from a hash of the serialized Operations.
 	id entity.Id
@@ -272,7 +271,12 @@ func readOperationPack(def Definition, repo repository.RepoData, resolvers entit
 	// Verify signature if we expect one
 	keys := author.ValidKeysAtTime(fmt.Sprintf(editClockPattern, def.Namespace), editTime)
 	if len(keys) > 0 {
-		keyring := PGPKeyring(keys)
+		// this is a *very* convoluted and inefficient way to make OpenPGP accept to check a signature, but anything
+		// else goes against the grain and make it very unhappy.
+		keyring := openpgp.EntityList{}
+		for _, key := range keys {
+			keyring = append(keyring, key.PGPEntity())
+		}
 		_, err = openpgp.CheckDetachedSignature(keyring, commit.SignedData, commit.Signature, nil)
 		if err != nil {
 			return nil, fmt.Errorf("signature failure: %v", err)
@@ -359,49 +363,4 @@ func unmarshallPack(def Definition, resolvers entity.Resolvers, data []byte) ([]
 	}
 
 	return ops, author, nil
-}
-
-var _ openpgp.KeyRing = &PGPKeyring{}
-
-// PGPKeyring implement a openpgp.KeyRing from an slice of Key
-type PGPKeyring []*identity.Key
-
-func (pk PGPKeyring) KeysById(id uint64) []openpgp.Key {
-	var result []openpgp.Key
-	for _, key := range pk {
-		if key.Public().KeyId == id {
-			result = append(result, openpgp.Key{
-				PublicKey:  key.Public(),
-				PrivateKey: key.Private(),
-				Entity: &openpgp.Entity{
-					PrimaryKey: key.Public(),
-					PrivateKey: key.Private(),
-					Identities: map[string]*openpgp.Identity{
-						"": {},
-					},
-				},
-				SelfSignature: &packet.Signature{
-					IsPrimaryId: func() *bool { b := true; return &b }(),
-				},
-			})
-		}
-	}
-	return result
-}
-
-func (pk PGPKeyring) KeysByIdUsage(id uint64, requiredUsage byte) []openpgp.Key {
-	// the only usage we care about is the ability to sign, which all keys should already be capable of
-	return pk.KeysById(id)
-}
-
-func (pk PGPKeyring) DecryptionKeys() []openpgp.Key {
-	// result := make([]openpgp.Key, len(pk))
-	// for i, key := range pk {
-	// 	result[i] = openpgp.Key{
-	// 		PublicKey:  key.Public(),
-	// 		PrivateKey: key.Private(),
-	// 	}
-	// }
-	// return result
-	panic("not implemented")
 }

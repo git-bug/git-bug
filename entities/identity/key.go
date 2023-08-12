@@ -217,18 +217,15 @@ func (k *Key) storePrivate(repo repository.RepoKeyring) error {
 }
 
 func (k *Key) PGPEntity() *openpgp.Entity {
-	uid := packet.NewUserId("", "", "")
-	return &openpgp.Entity{
+	e := &openpgp.Entity{
 		PrimaryKey: k.public,
 		PrivateKey: k.private,
-		Identities: map[string]*openpgp.Identity{
-			uid.Id: {
-				Name:   uid.Id,
-				UserId: uid,
-				SelfSignature: &packet.Signature{
-					IsPrimaryId: func() *bool { b := true; return &b }(),
-				},
-			},
-		},
+		Identities: map[string]*openpgp.Identity{},
 	}
+	// somehow initialize the proper fields with identity, self-signature ...
+	err := e.AddUserId("name", "", "", nil)
+	if err != nil {
+		panic(err)
+	}
+	return e
 }

@@ -109,6 +109,12 @@ func makeTestContext() (repository.ClockedRepo, identity.Interface, identity.Int
 	return repo, id1, id2, resolvers, def
 }
 
+func makeTestContextGoGit(t *testing.T) (repository.ClockedRepo, identity.Interface, identity.Interface, entity.Resolvers, Definition) {
+	repo := repository.CreateGoGitTestRepo(t, false)
+	id1, id2, resolvers, def := makeTestContextInternal(repo)
+	return repo, id1, id2, resolvers, def
+}
+
 func makeTestContextRemote(t *testing.T) (repository.ClockedRepo, repository.ClockedRepo, repository.ClockedRepo, identity.Interface, identity.Interface, entity.Resolvers, Definition) {
 	repoA := repository.CreateGoGitTestRepo(t, false)
 	repoB := repository.CreateGoGitTestRepo(t, false)
