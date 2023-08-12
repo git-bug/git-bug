@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/MichaelMure/git-bug/entities/identity"
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
@@ -40,37 +41,46 @@ func TestOperationPackReadWrite(t *testing.T) {
 }
 
 func TestOperationPackSignedReadWrite(t *testing.T) {
-	repo, author, _, resolver, def := makeTestContext()
+	type makerFn func() (repository.ClockedRepo, identity.Interface, identity.Interface, entity.Resolvers, Definition)
 
-	err := author.(*identity.Identity).Mutate(repo, func(orig *identity.Mutator) {
-		orig.Keys = append(orig.Keys, identity.GenerateKey())
-	})
-	require.NoError(t, err)
-
-	opp := &operationPack{
-		Author: author,
-		Operations: []Operation{
-			newOp1(author, "foo"),
-			newOp2(author, "bar"),
+	for _, maker := range []makerFn{
+		makeTestContext,
+		func() (repository.ClockedRepo, identity.Interface, identity.Interface, entity.Resolvers, Definition) {
+			return makeTestContextGoGit(t)
 		},
-		CreateTime: 123,
-		EditTime:   456,
+	} {
+		repo, author, _, resolver, def := maker()
+
+		err := author.(*identity.Identity).Mutate(repo, func(orig *identity.Mutator) {
+			orig.Keys = append(orig.Keys, identity.GenerateKey())
+		})
+		require.NoError(t, err)
+
+		opp := &operationPack{
+			Author: author,
+			Operations: []Operation{
+				newOp1(author, "foo"),
+				newOp2(author, "bar"),
+			},
+			CreateTime: 123,
+			EditTime:   456,
+		}
+
+		commitHash, err := opp.Write(def, repo)
+		require.NoError(t, err)
+
+		commit, err := repo.ReadCommit(commitHash)
+		require.NoError(t, err)
+
+		opp2, err := readOperationPack(def, repo, resolver, commit)
+		require.NoError(t, err)
+
+		for _, op := range opp.Operations {
+			// force the creation of the id
+			op.Id()
+		}
+		require.Equal(t, opp, opp2)
 	}
-
-	commitHash, err := opp.Write(def, repo)
-	require.NoError(t, err)
-
-	commit, err := repo.ReadCommit(commitHash)
-	require.NoError(t, err)
-
-	opp2, err := readOperationPack(def, repo, resolver, commit)
-	require.NoError(t, err)
-
-	for _, op := range opp.Operations {
-		// force the creation of the id
-		op.Id()
-	}
-	require.Equal(t, opp, opp2)
 }
 
 func TestOperationPackFiles(t *testing.T) {
