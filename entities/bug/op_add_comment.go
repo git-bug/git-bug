@@ -3,7 +3,6 @@ package bug
 import (
 	"fmt"
 
-	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
 	"github.com/MichaelMure/git-bug/repository"
@@ -72,7 +71,7 @@ func (op *AddCommentOperation) Validate() error {
 	return nil
 }
 
-func NewAddCommentOp(author identity.Interface, unixTime int64, message string, files []repository.Hash) *AddCommentOperation {
+func NewAddCommentOp(author entity.Identity, unixTime int64, message string, files []repository.Hash) *AddCommentOperation {
 	return &AddCommentOperation{
 		OpBase:  dag.NewOpBase(AddCommentOp, author, unixTime),
 		Message: message,
@@ -89,7 +88,7 @@ type AddCommentTimelineItem struct {
 func (a *AddCommentTimelineItem) IsAuthored() {}
 
 // AddComment is a convenience function to add a comment to a bug
-func AddComment(b Interface, author identity.Interface, unixTime int64, message string, files []repository.Hash, metadata map[string]string) (entity.CombinedId, *AddCommentOperation, error) {
+func AddComment(b Interface, author entity.Identity, unixTime int64, message string, files []repository.Hash, metadata map[string]string) (entity.CombinedId, *AddCommentOperation, error) {
 	op := NewAddCommentOp(author, unixTime, message, files)
 	for key, val := range metadata {
 		op.SetMetadata(key, val)

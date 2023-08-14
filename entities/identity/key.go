@@ -13,6 +13,7 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	"github.com/pkg/errors"
 
+	bootstrap "github.com/MichaelMure/git-bug/entity/boostrap"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
@@ -75,7 +76,7 @@ func (k *Key) Validate() error {
 	return nil
 }
 
-func (k *Key) Clone() *Key {
+func (k *Key) Clone() bootstrap.Key {
 	clone := &Key{}
 
 	pub := *k.public
@@ -185,9 +186,9 @@ func (k *Key) loadPrivate(repo repository.RepoKeyring) error {
 	return nil
 }
 
-// ensurePrivateKey attempt to load the corresponding private key if it is not loaded already.
+// EnsurePrivateKey attempt to load the corresponding private key if it is not loaded already.
 // If no private key is found, returns errNoPrivateKey
-func (k *Key) ensurePrivateKey(repo repository.RepoKeyring) error {
+func (k *Key) EnsurePrivateKey(repo repository.RepoKeyring) error {
 	if k.private != nil {
 		return nil
 	}

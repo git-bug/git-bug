@@ -1,7 +1,6 @@
 package bug
 
 import (
-	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
 	"github.com/MichaelMure/git-bug/repository"
@@ -22,14 +21,14 @@ func Push(repo repository.Repo, remote string) (string, error) {
 // This function will return an error if a merge fail
 // Note: an author is necessary for the case where a merge commit is created, as this commit will
 // have an author and may be signed if a signing key is available.
-func Pull(repo repository.ClockedRepo, resolvers entity.Resolvers, remote string, mergeAuthor identity.Interface) error {
+func Pull(repo repository.ClockedRepo, resolvers entity.Resolvers, remote string, mergeAuthor entity.Identity) error {
 	return dag.Pull(def, wrapper, repo, resolvers, remote, mergeAuthor)
 }
 
 // MergeAll will merge all the available remote bug
 // Note: an author is necessary for the case where a merge commit is created, as this commit will
 // have an author and may be signed if a signing key is available.
-func MergeAll(repo repository.ClockedRepo, resolvers entity.Resolvers, remote string, mergeAuthor identity.Interface) <-chan entity.MergeResult {
+func MergeAll(repo repository.ClockedRepo, resolvers entity.Resolvers, remote string, mergeAuthor entity.Identity) <-chan entity.MergeResult {
 	return dag.MergeAll(def, wrapper, repo, resolvers, remote, mergeAuthor)
 }
 

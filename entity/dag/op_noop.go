@@ -1,7 +1,6 @@
 package dag
 
 import (
-	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 )
 
@@ -15,7 +14,7 @@ type NoOpOperation[SnapT entity.Snapshot] struct {
 	OpBase
 }
 
-func NewNoOpOp[SnapT entity.Snapshot](opType entity.OperationType, author identity.Interface, unixTime int64) *NoOpOperation[SnapT] {
+func NewNoOpOp[SnapT entity.Snapshot](opType entity.OperationType, author entity.Identity, unixTime int64) *NoOpOperation[SnapT] {
 	return &NoOpOperation[SnapT]{
 		OpBase: NewOpBase(opType, author, unixTime),
 	}

@@ -76,10 +76,10 @@ func TestEdit(t *testing.T) {
 }
 
 func TestEditCommentSerialize(t *testing.T) {
-	dag.SerializeRoundTripTest(t, operationUnmarshaler, func(author identity.Interface, unixTime int64) (*EditCommentOperation, entity.Resolvers) {
+	dag.SerializeRoundTripTest(t, operationUnmarshaler, func(author entity.Identity, unixTime int64) (*EditCommentOperation, entity.Resolvers) {
 		return NewEditCommentOp(author, unixTime, "target", "message", nil), nil
 	})
-	dag.SerializeRoundTripTest(t, operationUnmarshaler, func(author identity.Interface, unixTime int64) (*EditCommentOperation, entity.Resolvers) {
+	dag.SerializeRoundTripTest(t, operationUnmarshaler, func(author entity.Identity, unixTime int64) (*EditCommentOperation, entity.Resolvers) {
 		return NewEditCommentOp(author, unixTime, "target", "message", []repository.Hash{"hash1", "hash2"}), nil
 	})
 }

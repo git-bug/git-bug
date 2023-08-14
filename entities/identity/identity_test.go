@@ -37,18 +37,18 @@ func TestIdentityCommitLoad(t *testing.T) {
 
 	// multiple versions
 
-	identity, err = NewIdentityFull(repo, "René Descartes", "rene.descartes@example.com", "", "", []*Key{generatePublicKey()})
+	identity, err = NewIdentityFull(repo, "René Descartes", "rene.descartes@example.com", "", "", []bootstrap.Key{generatePublicKey()})
 	require.NoError(t, err)
 
 	idBeforeCommit = identity.Id()
 
 	err = identity.Mutate(repo, func(orig *Mutator) {
-		orig.Keys = []*Key{generatePublicKey()}
+		orig.Keys = []bootstrap.Key{generatePublicKey()}
 	})
 	require.NoError(t, err)
 
 	err = identity.Mutate(repo, func(orig *Mutator) {
-		orig.Keys = []*Key{generatePublicKey()}
+		orig.Keys = []bootstrap.Key{generatePublicKey()}
 	})
 	require.NoError(t, err)
 
@@ -71,13 +71,13 @@ func TestIdentityCommitLoad(t *testing.T) {
 
 	err = identity.Mutate(repo, func(orig *Mutator) {
 		orig.Email = "rene@descartes.com"
-		orig.Keys = []*Key{generatePublicKey()}
+		orig.Keys = []bootstrap.Key{generatePublicKey()}
 	})
 	require.NoError(t, err)
 
 	err = identity.Mutate(repo, func(orig *Mutator) {
 		orig.Email = "rene@descartes.com"
-		orig.Keys = []*Key{generatePublicKey(), generatePublicKey()}
+		orig.Keys = []bootstrap.Key{generatePublicKey(), generatePublicKey()}
 	})
 	require.NoError(t, err)
 
@@ -134,35 +134,35 @@ func TestIdentity_ValidKeysAtTime(t *testing.T) {
 		versions: []*version{
 			{
 				times: map[string]lamport.Time{"foo": 100},
-				keys:  []*Key{pubKeyA},
+				keys:  []bootstrap.Key{pubKeyA},
 			},
 			{
 				times: map[string]lamport.Time{"foo": 200},
-				keys:  []*Key{pubKeyB},
+				keys:  []bootstrap.Key{pubKeyB},
 			},
 			{
 				times: map[string]lamport.Time{"foo": 201},
-				keys:  []*Key{pubKeyC},
+				keys:  []bootstrap.Key{pubKeyC},
 			},
 			{
 				times: map[string]lamport.Time{"foo": 201},
-				keys:  []*Key{pubKeyD},
+				keys:  []bootstrap.Key{pubKeyD},
 			},
 			{
 				times: map[string]lamport.Time{"foo": 300},
-				keys:  []*Key{pubKeyE},
+				keys:  []bootstrap.Key{pubKeyE},
 			},
 		},
 	}
 
 	require.Nil(t, identity.ValidKeysAtTime("foo", 10))
-	require.Equal(t, identity.ValidKeysAtTime("foo", 100), []*Key{pubKeyA})
-	require.Equal(t, identity.ValidKeysAtTime("foo", 140), []*Key{pubKeyA})
-	require.Equal(t, identity.ValidKeysAtTime("foo", 200), []*Key{pubKeyB})
-	require.Equal(t, identity.ValidKeysAtTime("foo", 201), []*Key{pubKeyD})
-	require.Equal(t, identity.ValidKeysAtTime("foo", 202), []*Key{pubKeyD})
-	require.Equal(t, identity.ValidKeysAtTime("foo", 300), []*Key{pubKeyE})
-	require.Equal(t, identity.ValidKeysAtTime("foo", 3000), []*Key{pubKeyE})
+	require.Equal(t, identity.ValidKeysAtTime("foo", 100), []bootstrap.Key{pubKeyA})
+	require.Equal(t, identity.ValidKeysAtTime("foo", 140), []bootstrap.Key{pubKeyA})
+	require.Equal(t, identity.ValidKeysAtTime("foo", 200), []bootstrap.Key{pubKeyB})
+	require.Equal(t, identity.ValidKeysAtTime("foo", 201), []bootstrap.Key{pubKeyD})
+	require.Equal(t, identity.ValidKeysAtTime("foo", 202), []bootstrap.Key{pubKeyD})
+	require.Equal(t, identity.ValidKeysAtTime("foo", 300), []bootstrap.Key{pubKeyE})
+	require.Equal(t, identity.ValidKeysAtTime("foo", 3000), []bootstrap.Key{pubKeyE})
 }
 
 // Test the immutable or mutable metadata search
@@ -235,7 +235,7 @@ func TestJSON(t *testing.T) {
 	require.NoError(t, err)
 
 	// deserialize, got a IdentityStub with the same id
-	var i Interface
+	var i bootstrap.Identity
 	i, err = UnmarshalJSON(data)
 	require.NoError(t, err)
 	require.Equal(t, identity.Id(), i.Id())

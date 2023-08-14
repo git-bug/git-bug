@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/MichaelMure/git-bug/entity"
+	bootstrap "github.com/MichaelMure/git-bug/entity/boostrap"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
@@ -29,17 +30,17 @@ type getUserIdentityFunc func() (*IdentityCache, error)
 // Actions expose a number of action functions on Entities, to give upper layers (cache) a way to normalize interactions.
 // Note: ideally this wouldn't exist, the cache layer would assume that everything is an entity/dag, and directly use the
 // functions from this package, but right now identities are not using that framework.
-type Actions[EntityT entity.Interface] struct {
+type Actions[EntityT entity.Bare] struct {
 	ReadWithResolver    func(repo repository.ClockedRepo, resolvers entity.Resolvers, id entity.Id) (EntityT, error)
-	ReadAllWithResolver func(repo repository.ClockedRepo, resolvers entity.Resolvers) <-chan entity.StreamedEntity[EntityT]
+	ReadAllWithResolver func(repo repository.ClockedRepo, resolvers entity.Resolvers) <-chan bootstrap.StreamedEntity[EntityT]
 	Remove              func(repo repository.ClockedRepo, id entity.Id) error
 	RemoveAll           func(repo repository.ClockedRepo) error
-	MergeAll            func(repo repository.ClockedRepo, resolvers entity.Resolvers, remote string, mergeAuthor entity.Interface) <-chan entity.MergeResult
+	MergeAll            func(repo repository.ClockedRepo, resolvers entity.Resolvers, remote string, mergeAuthor entity.Identity) <-chan entity.MergeResult
 }
 
-var _ cacheMgmt = &SubCache[entity.Interface, Excerpt, CacheEntity]{}
+var _ cacheMgmt = &SubCache[entity.Bare, Excerpt, CacheEntity]{}
 
-type SubCache[EntityT entity.Interface, ExcerptT Excerpt, CacheT CacheEntity] struct {
+type SubCache[EntityT entity.Bare, ExcerptT Excerpt, CacheT CacheEntity] struct {
 	repo      repository.ClockedRepo
 	resolvers func() entity.Resolvers
 
@@ -60,7 +61,7 @@ type SubCache[EntityT entity.Interface, ExcerptT Excerpt, CacheT CacheEntity] st
 	lru      *lruIdCache
 }
 
-func NewSubCache[EntityT entity.Interface, ExcerptT Excerpt, CacheT CacheEntity](
+func NewSubCache[EntityT entity.Bare, ExcerptT Excerpt, CacheT CacheEntity](
 	repo repository.ClockedRepo,
 	resolvers func() entity.Resolvers, getUserIdentity getUserIdentityFunc,
 	makeCached func(entity EntityT, entityUpdated func(id entity.Id) error) CacheT,

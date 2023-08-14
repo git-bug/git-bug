@@ -9,7 +9,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 	bootstrap "github.com/MichaelMure/git-bug/entity/boostrap"
 	"github.com/MichaelMure/git-bug/repository"
@@ -455,7 +454,7 @@ func (e *Entity) Commit(repo repository.ClockedRepo) error {
 	}
 
 	for len(e.staging) > 0 {
-		var author identity.Interface
+		var author entity.Identity
 		var toCommit []Operation
 
 		// Split into chunks with the same author

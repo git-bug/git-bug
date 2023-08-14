@@ -8,6 +8,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/MichaelMure/git-bug/entity"
 	bootstrap "github.com/MichaelMure/git-bug/entity/boostrap"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/lamport"
@@ -28,7 +29,7 @@ var ErrNoIdentitySet = errors.New("No identity is set.\n" +
 	"\"git bug user new\" or adopted with \"git bug user adopt\"")
 var ErrMultipleIdentitiesSet = errors.New("multiple user identities set")
 
-var _ Interface = &Identity{}
+var _ entity.Identity = &Identity{}
 var _ bootstrap.Entity = &Identity{}
 
 type Identity struct {
@@ -40,7 +41,7 @@ func NewIdentity(repo repository.RepoClock, name string, email string) (*Identit
 	return NewIdentityFull(repo, name, email, "", "", nil)
 }
 
-func NewIdentityFull(repo repository.RepoClock, name string, email string, login string, avatarUrl string, keys []*Key) (*Identity, error) {
+func NewIdentityFull(repo repository.RepoClock, name string, email string, login string, avatarUrl string, keys []bootstrap.Key) (*Identity, error) {
 	v, err := newVersion(repo, name, email, login, avatarUrl, keys)
 	if err != nil {
 		return nil, err
@@ -216,13 +217,13 @@ type Mutator struct {
 	Login     string
 	Email     string
 	AvatarUrl string
-	Keys      []*Key
+	Keys      []bootstrap.Key
 }
 
 // Mutate allow to create a new version of the Identity in one go
 func (i *Identity) Mutate(repo repository.RepoClock, f func(orig *Mutator)) error {
-	copyKeys := func(keys []*Key) []*Key {
-		result := make([]*Key, len(keys))
+	copyKeys := func(keys []bootstrap.Key) []bootstrap.Key {
+		result := make([]bootstrap.Key, len(keys))
 		for i, key := range keys {
 			result[i] = key.Clone()
 		}
@@ -466,15 +467,15 @@ func (i *Identity) AvatarUrl() string {
 }
 
 // Keys return the last version of the valid keys
-func (i *Identity) Keys() []*Key {
+func (i *Identity) Keys() []bootstrap.Key {
 	return i.lastVersion().keys
 }
 
 // SigningKey return the key that should be used to sign new messages. If no key is available, return nil.
-func (i *Identity) SigningKey(repo repository.RepoKeyring) (*Key, error) {
+func (i *Identity) SigningKey(repo repository.RepoKeyring) (bootstrap.Key, error) {
 	keys := i.Keys()
 	for _, key := range keys {
-		err := key.ensurePrivateKey(repo)
+		err := key.EnsurePrivateKey(repo)
 		if err == errNoPrivateKey {
 			continue
 		}
@@ -487,8 +488,8 @@ func (i *Identity) SigningKey(repo repository.RepoKeyring) (*Key, error) {
 }
 
 // ValidKeysAtTime return the set of keys valid at a given lamport time
-func (i *Identity) ValidKeysAtTime(clockName string, time lamport.Time) []*Key {
-	var result []*Key
+func (i *Identity) ValidKeysAtTime(clockName string, time lamport.Time) []bootstrap.Key {
+	var result []bootstrap.Key
 
 	var lastTime lamport.Time
 	for _, v := range i.versions {

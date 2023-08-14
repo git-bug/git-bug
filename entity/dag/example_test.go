@@ -30,13 +30,13 @@ import (
 // Snapshot is the compiled view of a ProjectConfig
 type Snapshot struct {
 	// Administrator is the set of users with the higher level of access
-	Administrator map[identity.Interface]struct{}
+	Administrator map[entity.Identity]struct{}
 	// SignatureRequired indicate that all git commit need to be signed
 	SignatureRequired bool
 }
 
 // HasAdministrator returns true if the given identity is included in the administrator.
-func (snap *Snapshot) HasAdministrator(i identity.Interface) bool {
+func (snap *Snapshot) HasAdministrator(i entity.Identity) bool {
 	for admin, _ := range snap.Administrator {
 		if admin.Id() == i.Id() {
 			return true
@@ -78,7 +78,7 @@ type SetSignatureRequired struct {
 	Value bool `json:"value"`
 }
 
-func NewSetSignatureRequired(author identity.Interface, value bool) *SetSignatureRequired {
+func NewSetSignatureRequired(author entity.Identity, value bool) *SetSignatureRequired {
 	return &SetSignatureRequired{
 		OpBase: dag.NewOpBase(SetSignatureRequiredOp, author, time.Now().Unix()),
 		Value:  value,
@@ -106,10 +106,10 @@ func (ssr *SetSignatureRequired) Apply(snapshot *Snapshot) {
 // AddAdministrator is an operation to add a new administrator in the set
 type AddAdministrator struct {
 	dag.OpBase
-	ToAdd []identity.Interface `json:"to_add"`
+	ToAdd []entity.Identity `json:"to_add"`
 }
 
-func NewAddAdministratorOp(author identity.Interface, toAdd ...identity.Interface) *AddAdministrator {
+func NewAddAdministratorOp(author entity.Identity, toAdd ...entity.Identity) *AddAdministrator {
 	return &AddAdministrator{
 		OpBase: dag.NewOpBase(AddAdministratorOp, author, time.Now().Unix()),
 		ToAdd:  toAdd,
@@ -143,10 +143,10 @@ func (aa *AddAdministrator) Apply(snapshot *Snapshot) {
 // RemoveAdministrator is an operation to remove an administrator from the set
 type RemoveAdministrator struct {
 	dag.OpBase
-	ToRemove []identity.Interface `json:"to_remove"`
+	ToRemove []entity.Identity `json:"to_remove"`
 }
 
-func NewRemoveAdministratorOp(author identity.Interface, toRemove ...identity.Interface) *RemoveAdministrator {
+func NewRemoveAdministratorOp(author entity.Identity, toRemove ...entity.Identity) *RemoveAdministrator {
 	return &RemoveAdministrator{
 		OpBase:   dag.NewOpBase(RemoveAdministratorOp, author, time.Now().Unix()),
 		ToRemove: toRemove,
@@ -249,7 +249,7 @@ func operationUnmarshaler(raw json.RawMessage, resolvers entity.Resolvers) (dag.
 	case *AddAdministrator:
 		// We need to resolve identities
 		for i, stub := range op.ToAdd {
-			iden, err := entity.Resolve[identity.Interface](resolvers, stub.Id())
+			iden, err := entity.Resolve[entity.Identity](resolvers, stub.Id())
 			if err != nil {
 				return nil, err
 			}
@@ -258,7 +258,7 @@ func operationUnmarshaler(raw json.RawMessage, resolvers entity.Resolvers) (dag.
 	case *RemoveAdministrator:
 		// We need to resolve identities
 		for i, stub := range op.ToRemove {
-			iden, err := entity.Resolve[identity.Interface](resolvers, stub.Id())
+			iden, err := entity.Resolve[entity.Identity](resolvers, stub.Id())
 			if err != nil {
 				return nil, err
 			}
@@ -275,7 +275,7 @@ func (pc ProjectConfig) Compile() *Snapshot {
 	// Note: this would benefit from caching, but it's a simple example
 	snap := &Snapshot{
 		// default value
-		Administrator:     make(map[identity.Interface]struct{}),
+		Administrator:     make(map[entity.Identity]struct{}),
 		SignatureRequired: false,
 	}
 	for _, op := range pc.Operations() {

@@ -109,7 +109,7 @@ func TestSetMetadataSerialize(t *testing.T) {
 		var op SetMetadataOperation[*snapshotMock]
 		err := json.Unmarshal(raw, &op)
 		return &op, err
-	}, func(author identity.Interface, unixTime int64) (*SetMetadataOperation[*snapshotMock], entity.Resolvers) {
+	}, func(author entity.Identity, unixTime int64) (*SetMetadataOperation[*snapshotMock], entity.Resolvers) {
 		return NewSetMetadataOp[*snapshotMock](1, author, unixTime, "message", map[string]string{
 			"key1": "value1",
 			"key2": "value2",

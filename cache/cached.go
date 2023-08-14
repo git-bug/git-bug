@@ -9,17 +9,17 @@ import (
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
 
-var _ dag.Interface[dag.Snapshot, dag.Operation] = &CachedEntityBase[dag.Snapshot, dag.Operation]{}
-var _ CacheEntity = &CachedEntityBase[dag.Snapshot, dag.Operation]{}
+var _ entity.Interface[entity.Snapshot, dag.Operation] = &CachedEntityBase[entity.Snapshot, dag.Operation]{}
+var _ CacheEntity = &CachedEntityBase[entity.Snapshot, dag.Operation]{}
 
 // CachedEntityBase provide the base function of an entity managed by the cache.
-type CachedEntityBase[SnapT dag.Snapshot, OpT dag.Operation] struct {
+type CachedEntityBase[SnapT entity.Snapshot, OpT dag.Operation] struct {
 	repo            repository.ClockedRepo
 	entityUpdated   func(id entity.Id) error
 	getUserIdentity getUserIdentityFunc
 
 	mu     sync.RWMutex
-	entity dag.Interface[SnapT, OpT]
+	entity entity.WithCommit[SnapT, OpT]
 }
 
 func (e *CachedEntityBase[SnapT, OpT]) Id() entity.Id {

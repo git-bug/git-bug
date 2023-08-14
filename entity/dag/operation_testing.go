@@ -17,7 +17,7 @@ import (
 func SerializeRoundTripTest[OpT Operation](
 	t *testing.T,
 	unmarshaler OperationUnmarshaler,
-	maker func(author identity.Interface, unixTime int64) (OpT, entity.Resolvers),
+	maker func(author entity.Identity, unixTime int64) (OpT, entity.Resolvers),
 ) {
 	repo := repository.NewMockRepo()
 

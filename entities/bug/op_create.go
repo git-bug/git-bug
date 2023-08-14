@@ -3,7 +3,6 @@ package bug
 import (
 	"fmt"
 
-	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
 	"github.com/MichaelMure/git-bug/repository"
@@ -89,7 +88,7 @@ func (op *CreateOperation) Validate() error {
 	return nil
 }
 
-func NewCreateOp(author identity.Interface, unixTime int64, title, message string, files []repository.Hash) *CreateOperation {
+func NewCreateOp(author entity.Identity, unixTime int64, title, message string, files []repository.Hash) *CreateOperation {
 	return &CreateOperation{
 		OpBase:  dag.NewOpBase(CreateOp, author, unixTime),
 		Title:   title,
@@ -107,7 +106,7 @@ type CreateTimelineItem struct {
 func (c *CreateTimelineItem) IsAuthored() {}
 
 // Create is a convenience function to create a bug
-func Create(author identity.Interface, unixTime int64, title, message string, files []repository.Hash, metadata map[string]string) (*Bug, *CreateOperation, error) {
+func Create(author entity.Identity, unixTime int64, title, message string, files []repository.Hash, metadata map[string]string) (*Bug, *CreateOperation, error) {
 	b := NewBug()
 	op := NewCreateOp(author, unixTime, title, message, files)
 	for key, val := range metadata {

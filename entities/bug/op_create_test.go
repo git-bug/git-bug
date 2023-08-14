@@ -40,10 +40,10 @@ func TestCreate(t *testing.T) {
 }
 
 func TestCreateSerialize(t *testing.T) {
-	dag.SerializeRoundTripTest(t, operationUnmarshaler, func(author identity.Interface, unixTime int64) (*CreateOperation, entity.Resolvers) {
+	dag.SerializeRoundTripTest(t, operationUnmarshaler, func(author entity.Identity, unixTime int64) (*CreateOperation, entity.Resolvers) {
 		return NewCreateOp(author, unixTime, "title", "message", nil), nil
 	})
-	dag.SerializeRoundTripTest(t, operationUnmarshaler, func(author identity.Interface, unixTime int64) (*CreateOperation, entity.Resolvers) {
+	dag.SerializeRoundTripTest(t, operationUnmarshaler, func(author entity.Identity, unixTime int64) (*CreateOperation, entity.Resolvers) {
 		return NewCreateOp(author, unixTime, "title", "message", []repository.Hash{"hash1", "hash2"}), nil
 	})
 }

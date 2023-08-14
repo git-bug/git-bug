@@ -1,14 +1,32 @@
-package identity
+package bootstrap
 
 import (
-	bootstrap "github.com/MichaelMure/git-bug/entity/boostrap"
+	"fmt"
+
+	"github.com/ProtonMail/go-crypto/openpgp"
+	"github.com/ProtonMail/go-crypto/openpgp/packet"
+
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/lamport"
 	"github.com/MichaelMure/git-bug/util/timestamp"
 )
 
-type Interface interface {
-	bootstrap.Entity
+var ErrNoPrivateKey = fmt.Errorf("no private key")
+
+type Key interface {
+	Public() *packet.PublicKey
+	Private() *packet.PrivateKey
+	Validate() error
+	Clone() Key
+	PGPEntity() *openpgp.Entity
+
+	// EnsurePrivateKey attempt to load the corresponding private key if it is not loaded already.
+	// If no private key is found, returns ErrNoPrivateKey
+	EnsurePrivateKey(repo repository.RepoKeyring) error
+}
+
+type Identity interface {
+	Entity
 
 	// Name return the last version of the name
 	// Can be empty.
@@ -35,14 +53,14 @@ type Interface interface {
 
 	// Keys return the last version of the valid keys
 	// Can be empty.
-	Keys() []*Key
+	Keys() []Key
 
 	// SigningKey return the key that should be used to sign new messages. If no key is available, return nil.
-	SigningKey(repo repository.RepoKeyring) (*Key, error)
+	SigningKey(repo repository.RepoKeyring) (Key, error)
 
 	// ValidKeysAtTime return the set of keys valid at a given lamport time for a given clock of another entity
 	// Can be empty.
-	ValidKeysAtTime(clockName string, time lamport.Time) []*Key
+	ValidKeysAtTime(clockName string, time lamport.Time) []Key
 
 	// LastModification return the timestamp at which the last version of the identity became valid.
 	LastModification() timestamp.Timestamp

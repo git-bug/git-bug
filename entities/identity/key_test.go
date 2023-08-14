@@ -43,7 +43,7 @@ func TestStoreLoad(t *testing.T) {
 	err = json.Unmarshal(dataJSON, &read)
 	require.NoError(t, err)
 
-	err = read.ensurePrivateKey(repo)
+	err = read.EnsurePrivateKey(repo)
 	require.NoError(t, err)
 
 	require.Equal(t, k.public, read.public)

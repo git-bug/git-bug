@@ -32,7 +32,7 @@ func makeIdentityTestRepo(t *testing.T) repository.ClockedRepo {
 func TestVersionJSON(t *testing.T) {
 	repo := makeIdentityTestRepo(t)
 
-	keys := []*Key{
+	keys := []bootstrap.Key{
 		generatePublicKey(),
 		generatePublicKey(),
 	}

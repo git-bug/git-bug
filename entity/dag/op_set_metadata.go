@@ -5,7 +5,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/util/text"
 )
@@ -19,7 +18,7 @@ type SetMetadataOperation[SnapT entity.Snapshot] struct {
 	NewMetadata map[string]string `json:"new_metadata"`
 }
 
-func NewSetMetadataOp[SnapT entity.Snapshot](opType entity.OperationType, author identity.Interface, unixTime int64, target entity.Id, newMetadata map[string]string) *SetMetadataOperation[SnapT] {
+func NewSetMetadataOp[SnapT entity.Snapshot](opType entity.OperationType, author entity.Identity, unixTime int64, target entity.Id, newMetadata map[string]string) *SetMetadataOperation[SnapT] {
 	return &SetMetadataOperation[SnapT]{
 		OpBase:      NewOpBase(opType, author, unixTime),
 		Target:      target,
@@ -33,13 +32,16 @@ func (op *SetMetadataOperation[SnapT]) Id() entity.Id {
 
 func (op *SetMetadataOperation[SnapT]) Apply(snapshot SnapT) {
 	for _, target := range snapshot.AllOperations() {
-		if target.Id() == op.Target {
-			// Apply the metadata in an immutable way: if a metadata already
-			// exist, it's not possible to override it.
-			for key, value := range op.NewMetadata {
-				target.setExtraMetadataImmutable(key, value)
+		// cast to dag.Operation to have the private methods
+		if target, ok := target.(Operation); ok {
+			if target.Id() == op.Target {
+				// Apply the metadata in an immutable way: if a metadata already
+				// exist, it's not possible to override it.
+				for key, value := range op.NewMetadata {
+					target.setExtraMetadataImmutable(key, value)
+				}
+				return
 			}
-			return
 		}
 	}
 }

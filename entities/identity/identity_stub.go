@@ -9,7 +9,7 @@ import (
 	"github.com/MichaelMure/git-bug/util/timestamp"
 )
 
-var _ Interface = &IdentityStub{}
+var _ bootstrap.Identity = &IdentityStub{}
 
 // IdentityStub is an almost empty Identity, holding only the id.
 // When a normal Identity is serialized into JSON, only the id is serialized.
@@ -68,15 +68,15 @@ func (IdentityStub) AvatarUrl() string {
 	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 
-func (IdentityStub) Keys() []*Key {
+func (IdentityStub) Keys() []bootstrap.Key {
 	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 
-func (i *IdentityStub) SigningKey(repo repository.RepoKeyring) (*Key, error) {
+func (i *IdentityStub) SigningKey(repo repository.RepoKeyring) (bootstrap.Key, error) {
 	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 
-func (IdentityStub) ValidKeysAtTime(_ string, _ lamport.Time) []*Key {
+func (IdentityStub) ValidKeysAtTime(_ string, _ lamport.Time) []bootstrap.Key {
 	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 

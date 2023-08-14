@@ -8,7 +8,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 )
 
@@ -19,7 +18,7 @@ type Operation interface {
 	// setId allow to set the Id, used when unmarshalling only
 	setId(id entity.Id)
 	// setAuthor allow to set the author, used when unmarshalling only
-	setAuthor(author identity.Interface)
+	setAuthor(author entity.Identity)
 	// setExtraMetadataImmutable add a metadata not carried by the operation itself on the operation
 	setExtraMetadataImmutable(key string, value string)
 }
@@ -36,7 +35,7 @@ type OpBase struct {
 	// Not serialized. Store the op's id in memory.
 	id entity.Id
 	// Not serialized
-	author identity.Interface
+	author entity.Identity
 
 	OperationType entity.OperationType `json:"type"`
 	UnixTime      int64                `json:"timestamp"`
@@ -52,7 +51,7 @@ type OpBase struct {
 	extraMetadata map[string]string
 }
 
-func NewOpBase(opType entity.OperationType, author identity.Interface, unixTime int64) OpBase {
+func NewOpBase(opType entity.OperationType, author entity.Identity, unixTime int64) OpBase {
 	return OpBase{
 		OperationType: opType,
 		author:        author,
@@ -144,7 +143,7 @@ func (base *OpBase) Validate(op entity.Operation, opType entity.OperationType) e
 func (base *OpBase) IsAuthored() {}
 
 // Author return author identity
-func (base *OpBase) Author() identity.Interface {
+func (base *OpBase) Author() entity.Identity {
 	return base.author
 }
 
@@ -204,7 +203,7 @@ func (base *OpBase) setId(id entity.Id) {
 }
 
 // setAuthor allow to set the author, used when unmarshalling only
-func (base *OpBase) setAuthor(author identity.Interface) {
+func (base *OpBase) setAuthor(author entity.Identity) {
 	base.author = author
 }
 

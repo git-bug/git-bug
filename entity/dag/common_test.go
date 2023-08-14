@@ -30,7 +30,7 @@ type op1 struct {
 	Files  []repository.Hash `json:"files"`
 }
 
-func newOp1(author identity.Interface, field1 string, files ...repository.Hash) *op1 {
+func newOp1(author entity.Identity, field1 string, files ...repository.Hash) *op1 {
 	return &op1{OpBase: NewOpBase(Op1, author, 0), Field1: field1, Files: files}
 }
 
@@ -49,7 +49,7 @@ type op2 struct {
 	Field2 string `json:"field_2"`
 }
 
-func newOp2(author identity.Interface, field2 string) *op2 {
+func newOp2(author entity.Identity, field2 string) *op2 {
 	return &op2{OpBase: NewOpBase(Op2, author, 0), Field2: field2}
 }
 
@@ -103,13 +103,13 @@ func wrapper(e *Entity) *Foo {
   Identities + repo + definition
 */
 
-func makeTestContext() (repository.ClockedRepo, identity.Interface, identity.Interface, entity.Resolvers, Definition) {
+func makeTestContext() (repository.ClockedRepo, entity.Identity, entity.Identity, entity.Resolvers, Definition) {
 	repo := repository.NewMockRepo()
 	id1, id2, resolvers, def := makeTestContextInternal(repo)
 	return repo, id1, id2, resolvers, def
 }
 
-func makeTestContextRemote(t *testing.T) (repository.ClockedRepo, repository.ClockedRepo, repository.ClockedRepo, identity.Interface, identity.Interface, entity.Resolvers, Definition) {
+func makeTestContextRemote(t *testing.T) (repository.ClockedRepo, repository.ClockedRepo, repository.ClockedRepo, entity.Identity, entity.Identity, entity.Resolvers, Definition) {
 	repoA := repository.CreateGoGitTestRepo(t, false)
 	repoB := repository.CreateGoGitTestRepo(t, false)
 	remote := repository.CreateGoGitTestRepo(t, true)
@@ -134,7 +134,7 @@ func makeTestContextRemote(t *testing.T) (repository.ClockedRepo, repository.Clo
 	return repoA, repoB, remote, id1, id2, resolver, def
 }
 
-func makeTestContextInternal(repo repository.ClockedRepo) (identity.Interface, identity.Interface, entity.Resolvers, Definition) {
+func makeTestContextInternal(repo repository.ClockedRepo) (entity.Identity, entity.Identity, entity.Resolvers, Definition) {
 	id1, err := identity.NewIdentity(repo, "name1", "email1")
 	if err != nil {
 		panic(err)

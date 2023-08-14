@@ -33,7 +33,7 @@ type version struct {
 	// The set of keys valid at that time, from this version onward, until they get removed
 	// in a new version. This allows to have multiple key for the same identity (e.g. one per
 	// device) as well as revoke key.
-	keys []*Key
+	keys []bootstrap.Key
 
 	// mandatory random bytes to ensure a better randomness of the data of the first
 	// version of an identity, used to later generate the ID
@@ -51,7 +51,7 @@ type version struct {
 	commitHash repository.Hash
 }
 
-func newVersion(repo repository.RepoClock, name string, email string, login string, avatarURL string, keys []*Key) (*version, error) {
+func newVersion(repo repository.RepoClock, name string, email string, login string, avatarURL string, keys []bootstrap.Key) (*version, error) {
 	clocks, err := repo.AllClocks()
 	if err != nil {
 		return nil, err
@@ -123,7 +123,7 @@ func (v *version) Clone() *version {
 		clone.times[name] = t
 	}
 
-	clone.keys = make([]*Key, len(v.keys))
+	clone.keys = make([]bootstrap.Key, len(v.keys))
 	for i, key := range v.keys {
 		clone.keys[i] = key.Clone()
 	}

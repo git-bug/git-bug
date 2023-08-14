@@ -111,10 +111,10 @@ func (li *lazyIdentity) IsProtected() (bool, error) {
 var _ IdentityWrapper = &loadedIdentity{}
 
 type loadedIdentity struct {
-	identity.Interface
+	entity.Identity
 }
 
-func NewLoadedIdentity(id identity.Interface) *loadedIdentity {
+func NewLoadedIdentity(id entity.Identity) *loadedIdentity {
 	return &loadedIdentity{Interface: id}
 }
 

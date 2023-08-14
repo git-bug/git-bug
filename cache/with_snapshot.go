@@ -3,15 +3,16 @@ package cache
 import (
 	"sync"
 
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
-var _ dag.Interface[dag.Snapshot, dag.OperationWithApply[dag.Snapshot]] = &withSnapshot[dag.Snapshot, dag.OperationWithApply[dag.Snapshot]]{}
+var _ entity.Interface[entity.Snapshot, dag.OperationWithApply[entity.Snapshot]] = &withSnapshot[entity.Snapshot, dag.OperationWithApply[entity.Snapshot]]{}
 
 // withSnapshot encapsulate an entity and maintain a snapshot efficiently.
-type withSnapshot[SnapT dag.Snapshot, OpT dag.OperationWithApply[SnapT]] struct {
-	dag.Interface[SnapT, OpT]
+type withSnapshot[SnapT entity.Snapshot, OpT dag.OperationWithApply[SnapT]] struct {
+	entity.WithCommit[SnapT, OpT]
 	mu   sync.Mutex
 	snap *SnapT
 }
@@ -20,7 +21,7 @@ func (ws *withSnapshot[SnapT, OpT]) Compile() SnapT {
 	ws.mu.Lock()
 	defer ws.mu.Unlock()
 	if ws.snap == nil {
-		snap := ws.Interface.Compile()
+		snap := ws.WithCommit.Compile()
 		ws.snap = &snap
 	}
 	return *ws.snap
@@ -31,7 +32,7 @@ func (ws *withSnapshot[SnapT, OpT]) Append(op OpT) {
 	ws.mu.Lock()
 	defer ws.mu.Unlock()
 
-	ws.Interface.Append(op)
+	ws.WithCommit.Append(op)
 
 	if ws.snap == nil {
 		return
@@ -46,7 +47,7 @@ func (ws *withSnapshot[SnapT, OpT]) Commit(repo repository.ClockedRepo) error {
 	ws.mu.Lock()
 	defer ws.mu.Unlock()
 
-	err := ws.Interface.Commit(repo)
+	err := ws.WithCommit.Commit(repo)
 	if err != nil {
 		ws.snap = nil
 		return err

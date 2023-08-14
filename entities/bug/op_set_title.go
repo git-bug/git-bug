@@ -3,7 +3,6 @@ package bug
 import (
 	"fmt"
 
-	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
 	"github.com/MichaelMure/git-bug/util/timestamp"
@@ -60,7 +59,7 @@ func (op *SetTitleOperation) Validate() error {
 	return nil
 }
 
-func NewSetTitleOp(author identity.Interface, unixTime int64, title string, was string) *SetTitleOperation {
+func NewSetTitleOp(author entity.Identity, unixTime int64, title string, was string) *SetTitleOperation {
 	return &SetTitleOperation{
 		OpBase: dag.NewOpBase(SetTitleOp, author, unixTime),
 		Title:  title,
@@ -70,7 +69,7 @@ func NewSetTitleOp(author identity.Interface, unixTime int64, title string, was 
 
 type SetTitleTimelineItem struct {
 	combinedId entity.CombinedId
-	Author     identity.Interface
+	Author     entity.Identity
 	UnixTime   timestamp.Timestamp
 	Title      string
 	Was        string
@@ -84,7 +83,7 @@ func (s SetTitleTimelineItem) CombinedId() entity.CombinedId {
 func (s *SetTitleTimelineItem) IsAuthored() {}
 
 // SetTitle is a convenience function to change a bugs title
-func SetTitle(b Interface, author identity.Interface, unixTime int64, title string, metadata map[string]string) (*SetTitleOperation, error) {
+func SetTitle(b Interface, author entity.Identity, unixTime int64, title string, metadata map[string]string) (*SetTitleOperation, error) {
 	var lastTitleOp *SetTitleOperation
 	for _, op := range b.Operations() {
 		switch op := op.(type) {

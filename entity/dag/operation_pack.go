@@ -12,6 +12,7 @@ import (
 
 	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
+	bootstrap "github.com/MichaelMure/git-bug/entity/boostrap"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/lamport"
 )
@@ -29,7 +30,7 @@ type operationPack struct {
 	id entity.Id
 
 	// The author of the Operations. Must be the same author for all the Operations.
-	Author identity.Interface
+	Author entity.Identity
 	// The list of Operation stored in the operationPack
 	Operations []Operation
 	// Encode the entity's logical time of creation across all entities of the same type.
@@ -58,8 +59,8 @@ func (opp *operationPack) Id() entity.Id {
 
 func (opp *operationPack) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		Author     identity.Interface `json:"author"`
-		Operations []Operation        `json:"ops"`
+		Author     entity.Identity `json:"author"`
+		Operations []Operation     `json:"ops"`
 	}{
 		Author:     opp.Author,
 		Operations: opp.Operations,
@@ -235,7 +236,7 @@ func readOperationPack(def Definition, repo repository.RepoData, resolvers entit
 	}
 
 	var id entity.Id
-	var author identity.Interface
+	var author entity.Identity
 	var ops []Operation
 	var createTime lamport.Time
 	var editTime lamport.Time
@@ -323,7 +324,7 @@ func readOperationPackClock(repo repository.RepoData, commit repository.Commit) 
 // unmarshallPack delegate the unmarshalling of the Operation's JSON to the decoding
 // function provided by the concrete entity. This gives access to the concrete type of each
 // Operation.
-func unmarshallPack(def Definition, resolvers entity.Resolvers, data []byte) ([]Operation, identity.Interface, error) {
+func unmarshallPack(def Definition, resolvers entity.Resolvers, data []byte) ([]Operation, entity.Identity, error) {
 	aux := struct {
 		Author     identity.IdentityStub `json:"author"`
 		Operations []json.RawMessage     `json:"ops"`
@@ -337,7 +338,7 @@ func unmarshallPack(def Definition, resolvers entity.Resolvers, data []byte) ([]
 		return nil, nil, fmt.Errorf("missing author")
 	}
 
-	author, err := entity.Resolve[identity.Interface](resolvers, aux.Author.Id())
+	author, err := entity.Resolve[entity.Identity](resolvers, aux.Author.Id())
 	if err != nil {
 		return nil, nil, err
 	}
@@ -364,7 +365,7 @@ func unmarshallPack(def Definition, resolvers entity.Resolvers, data []byte) ([]
 var _ openpgp.KeyRing = &PGPKeyring{}
 
 // PGPKeyring implement a openpgp.KeyRing from an slice of Key
-type PGPKeyring []*identity.Key
+type PGPKeyring []bootstrap.Key
 
 func (pk PGPKeyring) KeysById(id uint64) []openpgp.Key {
 	var result []openpgp.Key

@@ -3,6 +3,8 @@ package identity
 import (
 	"encoding/json"
 	"fmt"
+
+	bootstrap "github.com/MichaelMure/git-bug/entity/boostrap"
 )
 
 // Custom unmarshaling function to allow package user to delegate
@@ -10,7 +12,7 @@ import (
 // and a Bare.
 //
 // If the given message has a "id" field, it's considered being a proper Identity.
-func UnmarshalJSON(raw json.RawMessage) (Interface, error) {
+func UnmarshalJSON(raw json.RawMessage) (bootstrap.Identity, error) {
 	aux := &IdentityStub{}
 
 	// First try to decode and load as a normal Identity

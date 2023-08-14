@@ -3,7 +3,6 @@ package bug
 import (
 	"github.com/dustin/go-humanize"
 
-	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 	"github.com/MichaelMure/git-bug/util/timestamp"
@@ -18,7 +17,7 @@ type Comment struct {
 	// targetId is the Id of the Operation that originally created that Comment
 	targetId entity.Id
 
-	Author  identity.Interface
+	Author  entity.Identity
 	Message string
 	Files   []repository.Hash
 

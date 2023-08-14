@@ -3,7 +3,6 @@ package entity
 import (
 	"time"
 
-	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
@@ -38,7 +37,7 @@ type Operation interface {
 	// Validate check if the Operation data is valid
 	Validate() error
 	// Author returns the author of this operation
-	Author() identity.Interface
+	Author() Identity
 	// Time return the time when the operation was added
 	Time() time.Time
 

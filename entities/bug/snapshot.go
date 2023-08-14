@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/MichaelMure/git-bug/entities/common"
-	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 )
 
@@ -19,9 +18,9 @@ type Snapshot struct {
 	Title        string
 	Comments     []Comment
 	Labels       []Label
-	Author       identity.Interface
-	Actors       []identity.Interface
-	Participants []identity.Interface
+	Author       entity.Identity
+	Actors       []entity.Identity
+	Participants []entity.Identity
 	CreateTime   time.Time
 
 	Timeline []TimelineItem
@@ -94,7 +93,7 @@ func (snap *Snapshot) SearchCommentByOpId(id entity.Id) (*Comment, error) {
 }
 
 // append the operation author to the actors list
-func (snap *Snapshot) addActor(actor identity.Interface) {
+func (snap *Snapshot) addActor(actor entity.Identity) {
 	for _, a := range snap.Actors {
 		if actor.Id() == a.Id() {
 			return
@@ -105,7 +104,7 @@ func (snap *Snapshot) addActor(actor identity.Interface) {
 }
 
 // append the operation author to the participants list
-func (snap *Snapshot) addParticipant(participant identity.Interface) {
+func (snap *Snapshot) addParticipant(participant entity.Identity) {
 	for _, p := range snap.Participants {
 		if participant.Id() == p.Id() {
 			return

@@ -8,7 +8,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/MichaelMure/git-bug/entities/identity"
 	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/entity/dag"
 	"github.com/MichaelMure/git-bug/util/timestamp"
@@ -96,7 +95,7 @@ func (op *LabelChangeOperation) Validate() error {
 	return nil
 }
 
-func NewLabelChangeOperation(author identity.Interface, unixTime int64, added, removed []Label) *LabelChangeOperation {
+func NewLabelChangeOperation(author entity.Identity, unixTime int64, added, removed []Label) *LabelChangeOperation {
 	return &LabelChangeOperation{
 		OpBase:  dag.NewOpBase(LabelChangeOp, author, unixTime),
 		Added:   added,
@@ -106,7 +105,7 @@ func NewLabelChangeOperation(author identity.Interface, unixTime int64, added, r
 
 type LabelChangeTimelineItem struct {
 	combinedId entity.CombinedId
-	Author     identity.Interface
+	Author     entity.Identity
 	UnixTime   timestamp.Timestamp
 	Added      []Label
 	Removed    []Label
@@ -120,7 +119,7 @@ func (l LabelChangeTimelineItem) CombinedId() entity.CombinedId {
 func (l *LabelChangeTimelineItem) IsAuthored() {}
 
 // ChangeLabels is a convenience function to change labels on a bug
-func ChangeLabels(b Interface, author identity.Interface, unixTime int64, add, remove []string, metadata map[string]string) ([]LabelChangeResult, *LabelChangeOperation, error) {
+func ChangeLabels(b Interface, author entity.Identity, unixTime int64, add, remove []string, metadata map[string]string) ([]LabelChangeResult, *LabelChangeOperation, error) {
 	var added, removed []Label
 	var results []LabelChangeResult
 
@@ -186,7 +185,7 @@ func ChangeLabels(b Interface, author identity.Interface, unixTime int64, add, r
 // responsible for what you are doing. In the general case, you want to use ChangeLabels instead.
 // The intended use of this function is to allow importers to create legal but unexpected label changes,
 // like removing a label with no information of when it was added before.
-func ForceChangeLabels(b Interface, author identity.Interface, unixTime int64, add, remove []string, metadata map[string]string) (*LabelChangeOperation, error) {
+func ForceChangeLabels(b Interface, author entity.Identity, unixTime int64, add, remove []string, metadata map[string]string) (*LabelChangeOperation, error) {
 	added := make([]Label, len(add))
 	for i, str := range add {
 		added[i] = Label(str)

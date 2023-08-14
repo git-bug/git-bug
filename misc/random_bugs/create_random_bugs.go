@@ -9,10 +9,11 @@ import (
 
 	"github.com/MichaelMure/git-bug/entities/bug"
 	"github.com/MichaelMure/git-bug/entities/identity"
+	"github.com/MichaelMure/git-bug/entity"
 	"github.com/MichaelMure/git-bug/repository"
 )
 
-type opsGenerator func(bug.Interface, identity.Interface, int64)
+type opsGenerator func(bug.Interface, entity.Identity, int64)
 
 type Options struct {
 	BugNumber    int
@@ -133,7 +134,7 @@ func generateRandomPersons(repo repository.ClockedRepo, n int) {
 	}
 }
 
-func randomPerson() identity.Interface {
+func randomPerson() entity.Identity {
 	index := rand.Intn(len(persons))
 	return persons[index]
 }
@@ -143,25 +144,25 @@ func paragraphs() string {
 	return strings.Replace(p, "\t", "\n\n", -1)
 }
 
-func comment(b bug.Interface, p identity.Interface, timestamp int64) {
+func comment(b bug.Interface, p entity.Identity, timestamp int64) {
 	_, _, _ = bug.AddComment(b, p, timestamp, paragraphs(), nil, nil)
 }
 
-func title(b bug.Interface, p identity.Interface, timestamp int64) {
+func title(b bug.Interface, p entity.Identity, timestamp int64) {
 	_, _ = bug.SetTitle(b, p, timestamp, fake.Sentence(), nil)
 }
 
-func open(b bug.Interface, p identity.Interface, timestamp int64) {
+func open(b bug.Interface, p entity.Identity, timestamp int64) {
 	_, _ = bug.Open(b, p, timestamp, nil)
 }
 
-func close(b bug.Interface, p identity.Interface, timestamp int64) {
+func close(b bug.Interface, p entity.Identity, timestamp int64) {
 	_, _ = bug.Close(b, p, timestamp, nil)
 }
 
 var addedLabels []string
 
-func labels(b bug.Interface, p identity.Interface, timestamp int64) {
+func labels(b bug.Interface, p entity.Identity, timestamp int64) {
 	var removed []string
 	nbRemoved := rand.Intn(3)
 	for nbRemoved > 0 && len(addedLabels) > 0 {
