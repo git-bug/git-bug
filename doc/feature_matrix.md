@@ -2,7 +2,7 @@
 
 This document tries to give an overview of what is currently supported, and by extension where effort can be focused to bring feature completion and parity.
 
-As git-bug is a free software project, accept and rely on contributor, those feature matrices kinda define a roadmap, in the sense than anything mentioned below is a planned feature and can be worked on. This does not mean that a feature not mentioned here should not be considered, just maybe check the issue tracker and come talk about it.
+As git-bug is a free software project, accept and rely on contributor, those feature matrices kinda define a roadmap, in the sense that anything mentioned below is a planned feature and can be worked on. This does not mean that a feature not mentioned here should not be considered, just maybe check the issue tracker and come talk about it.
 
 This document however does not show all the untold work required to support those user-facing capabilities. There has been a ton of work behind the scene and more will be required over time.
 
