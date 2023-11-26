@@ -36,18 +36,20 @@ func main() {
 		commentLen = 3
 	)
 
+	idStyle := lipgloss.NewStyle().Width(idLen).MarginRight(1).Foreground(lipgloss.ANSIColor(cyan))
+	statusStyle := lipgloss.NewStyle().Width(statusLen).MarginRight(2).Foreground(lipgloss.ANSIColor(yellow))
+	titleStyle := lipgloss.NewStyle().MarginRight(6).Foreground(lipgloss.ANSIColor(gray))
+	authorStyle := lipgloss.NewStyle().MarginRight(1).Foreground(lipgloss.ANSIColor(magenta))
+	commentStyle := lipgloss.NewStyle().Width(commentLen).MarginRight(1).Foreground(lipgloss.ANSIColor(gray)).Align(lipgloss.Right)
+	commentMarker := lipgloss.NewStyle().Width(2).MarginRight(1).Foreground(lipgloss.ANSIColor(gray))
+
 	title, author := titleText, authorText
 	if termenv.DefaultOutput().Profile != termenv.Ascii {
 		title = truncate.StringWithTail(titleText, titleLen, ellipsisIndicator)
+		titleStyle = titleStyle.Width(titleLen)
 		author = truncate.StringWithTail(authorText, authorLen, ellipsisIndicator)
+		authorStyle = authorStyle.Width(authorLen)
 	}
-
-	idStyle := lipgloss.NewStyle().Width(idLen).MarginRight(1).Foreground(lipgloss.ANSIColor(cyan))
-	statusStyle := lipgloss.NewStyle().Width(statusLen).MarginRight(2).Foreground(lipgloss.ANSIColor(yellow))
-	titleStyle := lipgloss.NewStyle().Width(titleLen).MarginRight(6).Foreground(lipgloss.ANSIColor(gray))
-	authorStyle := lipgloss.NewStyle().Width(authorLen).MarginRight(1).Foreground(lipgloss.ANSIColor(magenta))
-	commentStyle := lipgloss.NewStyle().Width(commentLen).MarginRight(1).Foreground(lipgloss.ANSIColor(gray)).Align(lipgloss.Right)
-	commentMarker := lipgloss.NewStyle().Width(2).MarginRight(1).Foreground(lipgloss.ANSIColor(gray))
 
 	str := strings.Join(
 		[]string{
