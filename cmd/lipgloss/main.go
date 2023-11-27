@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"os"
 	"strings"
 
@@ -36,31 +37,79 @@ func main() {
 		commentLen = 3
 	)
 
-	idStyle := lipgloss.NewStyle().Width(idLen).MarginRight(1).Foreground(lipgloss.ANSIColor(cyan))
-	statusStyle := lipgloss.NewStyle().Width(statusLen).MarginRight(2).Foreground(lipgloss.ANSIColor(yellow))
-	titleStyle := lipgloss.NewStyle().MarginRight(6).Foreground(lipgloss.ANSIColor(gray))
-	authorStyle := lipgloss.NewStyle().MarginRight(1).Foreground(lipgloss.ANSIColor(magenta))
-	commentStyle := lipgloss.NewStyle().Width(commentLen).MarginRight(1).Foreground(lipgloss.ANSIColor(gray)).Align(lipgloss.Right)
-	commentMarker := lipgloss.NewStyle().Width(2).MarginRight(1).Foreground(lipgloss.ANSIColor(gray))
+	idStyle := lipgloss.NewStyle()
+	statusStyle := lipgloss.NewStyle()
+	titleStyle := lipgloss.NewStyle()
+	authorStyle := lipgloss.NewStyle()
+	commentStyle := lipgloss.NewStyle()
+	commentMarker := lipgloss.NewStyle()
+
+	separator := "\t"
 
 	title, author := titleText, authorText
 	if termenv.DefaultOutput().Profile != termenv.Ascii {
 		title = truncate.StringWithTail(titleText, titleLen, ellipsisIndicator)
-		titleStyle = titleStyle.Width(titleLen)
 		author = truncate.StringWithTail(authorText, authorLen, ellipsisIndicator)
-		authorStyle = authorStyle.Width(authorLen)
+
+		idStyle = idStyle.Width(idLen).MarginRight(1).Foreground(lipgloss.ANSIColor(cyan))
+		statusStyle = statusStyle.Width(statusLen).MarginRight(2).Foreground(lipgloss.ANSIColor(yellow))
+		titleStyle = titleStyle.Width(titleLen).MarginRight(6).Foreground(lipgloss.ANSIColor(gray))
+		authorStyle = authorStyle.Width(authorLen).MarginRight(1).Foreground(lipgloss.ANSIColor(magenta))
+		commentStyle = commentStyle.Width(commentLen).MarginRight(1).Foreground(lipgloss.ANSIColor(gray)).Align(lipgloss.Right)
+		commentMarker = commentMarker.Width(2).MarginRight(1).Foreground(lipgloss.ANSIColor(gray))
+
+		separator = ""
 	}
 
-	str := strings.Join(
-		[]string{
-			idStyle.Render(idText),
-			statusStyle.Render(statusText),
-			titleStyle.Render(title),
-			authorStyle.Render(author),
-			commentStyle.Render(commentText),
-			commentMarker.Render(commentIndicator),
-			"\n",
-		}, "")
+	type formatFunc func() string
 
-	os.Stderr.Write([]byte(str))
+	defaultFormatFunc := func() string {
+		return strings.Join(
+			[]string{
+				idStyle.Render(idText),
+				statusStyle.Render(statusText),
+				titleStyle.Render(title),
+				authorStyle.Render(author),
+				commentStyle.Render(commentText),
+				commentMarker.Render(commentIndicator),
+				"\n",
+			}, separator)
+	}
+
+	idFormatFunc := func() string {
+		return idStyle.Render(idText) + "\n"
+	}
+
+	compactFormatFunc := func() string {
+		return strings.Join(
+			[]string{
+				idStyle.Render(idText),
+				statusStyle.Render(statusText),
+				titleStyle.Render(title),
+				authorStyle.Render(author),
+				"\n",
+			}, separator)
+	}
+
+	var (
+		_ formatFunc = defaultFormatFunc
+		_ formatFunc = idFormatFunc
+		_ formatFunc = compactFormatFunc
+	)
+
+	var format string
+
+	flag.StringVar(&format, "format", "default", "")
+	flag.Parse()
+
+	fn := defaultFormatFunc
+
+	switch format {
+	case "compact":
+		fn = compactFormatFunc
+	case "id":
+		fn = idFormatFunc
+	}
+
+	os.Stderr.Write([]byte(fn()))
 }
