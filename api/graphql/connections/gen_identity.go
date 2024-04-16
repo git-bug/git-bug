@@ -10,7 +10,7 @@ import (
 	"github.com/MichaelMure/git-bug/api/graphql/models"
 )
 
-// ModelsIdentityWrapperEdgeMaker define a function that take a models.IdentityWrapper and an offset and
+// IdentityEdgeMaker define a function that take a models.IdentityWrapper and an offset and
 // create an Edge.
 type IdentityEdgeMaker func(value models.IdentityWrapper, offset int) Edge
 

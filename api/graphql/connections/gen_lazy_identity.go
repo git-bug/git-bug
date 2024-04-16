@@ -11,7 +11,7 @@ import (
 	"github.com/MichaelMure/git-bug/entity"
 )
 
-// EntityIdEdgeMaker define a function that take a entity.Id and an offset and
+// LazyIdentityEdgeMaker define a function that take a entity.Id and an offset and
 // create an Edge.
 type LazyIdentityEdgeMaker func(value entity.Id, offset int) Edge
 
