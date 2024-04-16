@@ -20,7 +20,7 @@ type EdgeType generic.Type
 // ConnectionType define the connection type handled by this relay connection
 type ConnectionType generic.Type
 
-// NodeTypeEdgeMaker define a function that take a NodeType and an offset and
+// NameEdgeMaker define a function that take a NodeType and an offset and
 // create an Edge.
 type NameEdgeMaker func(value NodeType, offset int) Edge
 
