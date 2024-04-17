@@ -89,6 +89,7 @@ Or from the ports collection
 
 ```shell
 git clone https://github.com/MichaelMure/git-bug.git
+cd git-bug
 make install
 ```
 
