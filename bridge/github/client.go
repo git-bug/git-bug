@@ -60,7 +60,7 @@ func (c *rateLimitHandlerClient) queryImport(ctx context.Context, query interfac
 	return c.callAPIAndRetry(ctx, queryFun, callback)
 }
 
-// queryImport calls the github api with a graphql query, and sends a core.ExportResult for each rate limiting event
+// queryExport calls the github api with a graphql query, and sends a core.ExportResult for each rate limiting event
 func (c *rateLimitHandlerClient) queryExport(ctx context.Context, query interface{}, vars map[string]interface{}, out chan<- core.ExportResult) error {
 	// prepare a closure for the query
 	queryFun := func(ctx context.Context) error {
