@@ -17,7 +17,7 @@ const (
 	ExportEventComment
 	// Comment has been edited on the remote tracker
 	ExportEventCommentEdition
-	// Bug's status has been changed on on the remote tracker
+	// Bug's status has been changed on the remote tracker
 	ExportEventStatusChange
 	// Bug's title has been changed on the remote tracker
 	ExportEventTitleEdition

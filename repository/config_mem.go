@@ -79,7 +79,7 @@ func (mc *MemConfig) ReadTimestamp(key string) (time.Time, error) {
 	return time.Unix(int64(timestamp), 0), nil
 }
 
-// RmConfigs remove all key/value pair matching the key prefix
+// RemoveAll remove all key/value pair matching the key prefix
 func (mc *MemConfig) RemoveAll(keyPrefix string) error {
 	keyPrefix = normalizeKey(keyPrefix)
 	found := false
