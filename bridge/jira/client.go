@@ -6,7 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
@@ -421,12 +421,12 @@ func (client *Client) RefreshSessionTokenRaw(credentialsJSON []byte) error {
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
-		content, _ := ioutil.ReadAll(response.Body)
+		content, _ := io.ReadAll(response.Body)
 		return fmt.Errorf(
 			"error creating token %v: %s", response.StatusCode, content)
 	}
 
-	data, _ := ioutil.ReadAll(response.Body)
+	data, _ := io.ReadAll(response.Body)
 	var aux SessionResponse
 	err = json.Unmarshal(data, &aux)
 	if err != nil {
@@ -495,7 +495,7 @@ func (client *Client) Search(jql string, maxResults int, startAt int) (*SearchRe
 
 	var message SearchResult
 
-	data, _ := ioutil.ReadAll(response.Body)
+	data, _ := io.ReadAll(response.Body)
 	err = json.Unmarshal(data, &message)
 	if err != nil {
 		err := fmt.Errorf("Decoding response %v", err)
@@ -623,7 +623,7 @@ func (client *Client) GetIssue(idOrKey string, fields []string, expand []string,
 
 	var issue Issue
 
-	data, _ := ioutil.ReadAll(response.Body)
+	data, _ := io.ReadAll(response.Body)
 	err = json.Unmarshal(data, &issue)
 	if err != nil {
 		err := fmt.Errorf("Decoding response %v", err)
@@ -677,7 +677,7 @@ func (client *Client) GetComments(idOrKey string, maxResults int, startAt int) (
 
 	var comments CommentPage
 
-	data, _ := ioutil.ReadAll(response.Body)
+	data, _ := io.ReadAll(response.Body)
 	err = json.Unmarshal(data, &comments)
 	if err != nil {
 		err := fmt.Errorf("Decoding response %v", err)
@@ -819,7 +819,7 @@ func (client *Client) GetChangeLog(idOrKey string, maxResults int, startAt int) 
 
 	var changelog ChangeLogPage
 
-	data, _ := ioutil.ReadAll(response.Body)
+	data, _ := io.ReadAll(response.Body)
 	err = json.Unmarshal(data, &changelog)
 	if err != nil {
 		err := fmt.Errorf("Decoding response %v", err)
@@ -937,7 +937,7 @@ func (client *Client) GetProject(projectIDOrKey string) (*Project, error) {
 
 	var project Project
 
-	data, _ := ioutil.ReadAll(response.Body)
+	data, _ := io.ReadAll(response.Body)
 	err = json.Unmarshal(data, &project)
 	if err != nil {
 		err := fmt.Errorf("Decoding response %v", err)
@@ -996,7 +996,7 @@ func (client *Client) CreateIssue(projectIDOrKey, title, body string,
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusCreated {
-		content, _ := ioutil.ReadAll(response.Body)
+		content, _ := io.ReadAll(response.Body)
 		err := fmt.Errorf(
 			"HTTP response %d, query was %s\n  data: %s\n  response: %s",
 			response.StatusCode, request.URL.String(), data, content)
@@ -1005,7 +1005,7 @@ func (client *Client) CreateIssue(projectIDOrKey, title, body string,
 
 	var result IssueCreateResult
 
-	data, _ = ioutil.ReadAll(response.Body)
+	data, _ = io.ReadAll(response.Body)
 	err = json.Unmarshal(data, &result)
 	if err != nil {
 		err := fmt.Errorf("Decoding response %v", err)
@@ -1048,7 +1048,7 @@ func (client *Client) UpdateIssueTitle(issueKeyOrID, title string) (time.Time, e
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusNoContent {
-		content, _ := ioutil.ReadAll(response.Body)
+		content, _ := io.ReadAll(response.Body)
 		err := fmt.Errorf(
 			"HTTP response %d, query was %s\n  data: %s\n  response: %s",
 			response.StatusCode, request.URL.String(), data, content)
@@ -1108,7 +1108,7 @@ func (client *Client) UpdateIssueBody(issueKeyOrID, body string) (time.Time, err
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusNoContent {
-		content, _ := ioutil.ReadAll(response.Body)
+		content, _ := io.ReadAll(response.Body)
 		err := fmt.Errorf(
 			"HTTP response %d, query was %s\n  data: %s\n  response: %s",
 			response.StatusCode, request.URL.String(), data, content)
@@ -1160,7 +1160,7 @@ func (client *Client) AddComment(issueKeyOrID, body string) (*Comment, error) {
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusCreated {
-		content, _ := ioutil.ReadAll(response.Body)
+		content, _ := io.ReadAll(response.Body)
 		err := fmt.Errorf(
 			"HTTP response %d, query was %s\n  data: %s\n  response: %s",
 			response.StatusCode, request.URL.String(), data, content)
@@ -1169,7 +1169,7 @@ func (client *Client) AddComment(issueKeyOrID, body string) (*Comment, error) {
 
 	var result Comment
 
-	data, _ = ioutil.ReadAll(response.Body)
+	data, _ = io.ReadAll(response.Body)
 	err = json.Unmarshal(data, &result)
 	if err != nil {
 		err := fmt.Errorf("Decoding response %v", err)
@@ -1219,7 +1219,7 @@ func (client *Client) UpdateComment(issueKeyOrID, commentID, body string) (
 
 	var result Comment
 
-	data, _ = ioutil.ReadAll(response.Body)
+	data, _ = io.ReadAll(response.Body)
 	err = json.Unmarshal(data, &result)
 	if err != nil {
 		err := fmt.Errorf("Decoding response %v", err)
@@ -1276,7 +1276,7 @@ func (client *Client) UpdateLabels(issueKeyOrID string, added, removed []bug.Lab
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusNoContent {
-		content, _ := ioutil.ReadAll(response.Body)
+		content, _ := io.ReadAll(response.Body)
 		err := fmt.Errorf(
 			"HTTP response %d, query was %s\n  data: %s\n  response: %s",
 			response.StatusCode, request.URL.String(), data, content)
@@ -1332,7 +1332,7 @@ func (client *Client) GetTransitions(issueKeyOrID string) (*TransitionList, erro
 
 	var message TransitionList
 
-	data, _ := ioutil.ReadAll(response.Body)
+	data, _ := io.ReadAll(response.Body)
 	err = json.Unmarshal(data, &message)
 	if err != nil {
 		err := fmt.Errorf("Decoding response %v", err)
@@ -1440,7 +1440,7 @@ func (client *Client) GetServerInfo() (*ServerInfo, error) {
 
 	var message ServerInfo
 
-	data, _ := ioutil.ReadAll(response.Body)
+	data, _ := io.ReadAll(response.Body)
 	err = json.Unmarshal(data, &message)
 	if err != nil {
 		err := fmt.Errorf("Decoding response %v", err)

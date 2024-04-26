@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -233,7 +233,7 @@ func requestUserVerificationCode(scope string) (*githRespT, error) {
 		return nil, fmt.Errorf("unexpected response status code %d from Github API", resp.StatusCode)
 	}
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, errors.Wrap(err, "error requesting user verification code")
 	}
@@ -284,7 +284,7 @@ func pollGithubForAuthorization(deviceCode string, intervalSec int64) (string, e
 			return "", fmt.Errorf("unexpected response status code %d from Github API", resp.StatusCode)
 		}
 
-		data, err := ioutil.ReadAll(resp.Body)
+		data, err := io.ReadAll(resp.Body)
 		if err != nil {
 			_ = resp.Body.Close()
 			return "", errors.Wrap(err, "error polling the Github API")
@@ -490,7 +490,7 @@ func validateUsername(username string) (bool, string, error) {
 		return false, "", nil
 	}
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return false, "", err
 	}
