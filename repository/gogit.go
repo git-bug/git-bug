@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -493,7 +492,7 @@ func (repo *GoGitRepo) ReadData(hash Hash) ([]byte, error) {
 	}
 
 	// TODO: return a io.Reader instead
-	return ioutil.ReadAll(r)
+	return io.ReadAll(r)
 }
 
 // StoreTree will store a mapping key-->Hash as a Git tree
@@ -785,7 +784,7 @@ func (repo *GoGitRepo) AllClocks() (map[string]lamport.Clock, error) {
 
 	result := make(map[string]lamport.Clock)
 
-	files, err := ioutil.ReadDir(filepath.Join(repo.localStorage.Root(), clockPath))
+	files, err := os.ReadDir(filepath.Join(repo.localStorage.Root(), clockPath))
 	if os.IsNotExist(err) {
 		return nil, nil
 	}

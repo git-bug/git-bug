@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -452,7 +452,7 @@ func getRepositoryNodeID(ctx context.Context, token *auth.Token, owner, project 
 		NodeID string `json:"node_id"`
 	}{}
 
-	data, _ := ioutil.ReadAll(resp.Body)
+	data, _ := io.ReadAll(resp.Body)
 	err = resp.Body.Close()
 	if err != nil {
 		return "", err
@@ -564,7 +564,7 @@ func (ge *githubExporter) createGithubLabel(ctx context.Context, label, color st
 		Color  string `json:"color"`
 	}{}
 
-	data, _ = ioutil.ReadAll(resp.Body)
+	data, _ = io.ReadAll(resp.Body)
 	defer resp.Body.Close()
 
 	err = json.Unmarshal(data, &aux)
