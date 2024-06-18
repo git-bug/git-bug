@@ -1,6 +1,8 @@
 module github.com/MichaelMure/git-bug
 
-go 1.19
+go 1.21
+
+toolchain go1.22.4
 
 // https://github.com/praetorian-inc/gokart/pull/84
 replace github.com/praetorian-inc/gokart v0.5.1 => github.com/selesy/gokart v0.5.2-rc1
@@ -33,9 +35,14 @@ require (
 	github.com/xanzy/go-gitlab v0.90.0
 	golang.org/x/crypto v0.12.0
 	golang.org/x/oauth2 v0.11.0
-	golang.org/x/sync v0.3.0
-	golang.org/x/sys v0.11.0
+	golang.org/x/sync v0.5.0
+	golang.org/x/sys v0.21.0
 	golang.org/x/text v0.12.0
+)
+
+require (
+	github.com/shurcooL/httpfs v0.0.0-20230704072500-f1e31cf0ba5c // indirect
+	github.com/shurcooL/vfsgen v0.0.0-20230704071429-0000e147ea92 // indirect
 )
 
 require (
@@ -107,7 +114,7 @@ require (
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	github.com/zclconf/go-cty v1.8.4 // indirect
-	go.etcd.io/bbolt v1.3.5 // indirect
+	go.etcd.io/bbolt v1.3.10 // indirect
 	golang.org/x/mod v0.10.0 // indirect
 	golang.org/x/net v0.14.0 // indirect
 	golang.org/x/term v0.11.0
