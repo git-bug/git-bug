@@ -15,13 +15,13 @@ require (
 	github.com/blevesearch/bleve v1.0.14
 	github.com/cheekybits/genny v1.0.0
 	github.com/dustin/go-humanize v1.0.1
-	github.com/fatih/color v1.15.0
+	github.com/fatih/color v1.16.0
 	github.com/go-git/go-billy/v5 v5.4.1
 	github.com/go-git/go-git/v5 v5.8.1
 	github.com/gorilla/mux v1.8.0
 	github.com/hashicorp/golang-lru/v2 v2.0.5
 	github.com/icrowley/fake v0.0.0-20180203215853-4178557ae428
-	github.com/mattn/go-isatty v0.0.19
+	github.com/mattn/go-isatty v0.0.20
 	github.com/phayes/freeport v0.0.0-20171002181615-b8543db493a5
 	github.com/pkg/errors v0.9.1
 	github.com/shurcooL/githubv4 v0.0.0-20190601194912-068505affed7
@@ -34,7 +34,7 @@ require (
 	golang.org/x/crypto v0.21.0
 	golang.org/x/oauth2 v0.21.0
 	golang.org/x/sync v0.3.0
-	golang.org/x/sys v0.18.0
+	golang.org/x/sys v0.20.0
 	golang.org/x/text v0.14.0
 )
 
@@ -76,7 +76,7 @@ require (
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/gsterjov/go-libsecret v0.0.0-20161001094733-a6f4afe4910c // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
-	github.com/hashicorp/go-retryablehttp v0.7.2 // indirect
+	github.com/hashicorp/go-retryablehttp v0.7.7 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
