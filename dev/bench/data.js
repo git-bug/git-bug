@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1721087349361,
+  "lastUpdate": 1721089273683,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -4226,6 +4226,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 802911,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f0ab00b6c939b6a64a5889510c1bed4a132bcfaf",
+          "message": "build(deps): bump github.com/xanzy/go-gitlab from 0.90.0 to 0.106.0 (#1167)\n\n* build(deps): bump github.com/xanzy/go-gitlab from 0.90.0 to 0.106.0\r\n\r\nBumps [github.com/xanzy/go-gitlab](https://github.com/xanzy/go-gitlab) from 0.90.0 to 0.106.0.\r\n- [Changelog](https://github.com/xanzy/go-gitlab/blob/main/releases_test.go)\r\n- [Commits](https://github.com/xanzy/go-gitlab/compare/v0.90.0...v0.106.0)\r\n\r\n---\r\nupdated-dependencies:\r\n- dependency-name: github.com/xanzy/go-gitlab\r\n  dependency-type: direct:production\r\n  update-type: version-update:semver-minor\r\n...\r\n\r\nSigned-off-by: dependabot[bot] <support@github.com>\r\n\r\n* migrate\r\n\r\n---------\r\n\r\nSigned-off-by: dependabot[bot] <support@github.com>\r\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>\r\nCo-authored-by: 6543 <6543@obermui.de>",
+          "timestamp": "2024-07-16T02:20:07+02:00",
+          "tree_id": "bb2ae1dc18a4eca3a6799b138540cf7ab3ef32b8",
+          "url": "https://github.com/MichaelMure/git-bug/commit/f0ab00b6c939b6a64a5889510c1bed4a132bcfaf"
+        },
+        "date": 1721089273131,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 24441964,
+            "unit": "ns/op\t 2601092 B/op\t   24198 allocs/op",
+            "extra": "52 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 24441964,
+            "unit": "ns/op",
+            "extra": "52 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 2601092,
+            "unit": "B/op",
+            "extra": "52 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 24198,
+            "unit": "allocs/op",
+            "extra": "52 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 132085538,
+            "unit": "ns/op\t14645691 B/op\t  134300 allocs/op",
+            "extra": "8 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 132085538,
+            "unit": "ns/op",
+            "extra": "8 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 14645691,
+            "unit": "B/op",
+            "extra": "8 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 134300,
+            "unit": "allocs/op",
+            "extra": "8 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 677808612,
+            "unit": "ns/op\t86831460 B/op\t  802842 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 677808612,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 86831460,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 802842,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
