@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1721089592260,
+  "lastUpdate": 1721089788073,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -4514,6 +4514,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 802775,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9ebeba512aeb3eff0db14d805f91106eda6e6326",
+          "message": "build(deps): bump github.com/hashicorp/go-retryablehttp (#1162)\n\nBumps [github.com/hashicorp/go-retryablehttp](https://github.com/hashicorp/go-retryablehttp) from 0.7.2 to 0.7.7.\r\n- [Changelog](https://github.com/hashicorp/go-retryablehttp/blob/main/CHANGELOG.md)\r\n- [Commits](https://github.com/hashicorp/go-retryablehttp/compare/v0.7.2...v0.7.7)\r\n\r\n---\r\nupdated-dependencies:\r\n- dependency-name: github.com/hashicorp/go-retryablehttp\r\n  dependency-type: indirect\r\n...\r\n\r\nSigned-off-by: dependabot[bot] <support@github.com>\r\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2024-07-16T02:28:11+02:00",
+          "tree_id": "d3ff352594e107bed99454160066eff058c41c6f",
+          "url": "https://github.com/MichaelMure/git-bug/commit/9ebeba512aeb3eff0db14d805f91106eda6e6326"
+        },
+        "date": 1721089787000,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 19920322,
+            "unit": "ns/op\t 2598982 B/op\t   24183 allocs/op",
+            "extra": "60 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 19920322,
+            "unit": "ns/op",
+            "extra": "60 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 2598982,
+            "unit": "B/op",
+            "extra": "60 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 24183,
+            "unit": "allocs/op",
+            "extra": "60 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 111629972,
+            "unit": "ns/op\t14569353 B/op\t  134299 allocs/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 111629972,
+            "unit": "ns/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 14569353,
+            "unit": "B/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 134299,
+            "unit": "allocs/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 598823074,
+            "unit": "ns/op\t86759496 B/op\t  802881 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 598823074,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 86759496,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 802881,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
