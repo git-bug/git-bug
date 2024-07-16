@@ -27,9 +27,9 @@ require (
 	github.com/shurcooL/githubv4 v0.0.0-20190601194912-068505affed7
 	github.com/skratchdot/open-golang v0.0.0-20190402232053-79abb63cd66e
 	github.com/spf13/cobra v1.7.0
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	github.com/vbauerster/mpb/v8 v8.5.2
-	github.com/vektah/gqlparser/v2 v2.5.8
+	github.com/vektah/gqlparser/v2 v2.5.15
 	github.com/xanzy/go-gitlab v0.106.0
 	golang.org/x/crypto v0.21.0
 	golang.org/x/oauth2 v0.21.0
@@ -100,7 +100,7 @@ require (
 	github.com/skeema/knownhosts v1.2.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/steveyen/gtreap v0.1.0 // indirect
-	github.com/stretchr/objx v0.5.0 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/tinylib/msgp v1.1.0 // indirect
 	github.com/urfave/cli/v2 v2.25.5 // indirect
 	github.com/willf/bitset v1.1.10 // indirect
