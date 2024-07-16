@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1721089788073,
+  "lastUpdate": 1721089922710,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -4610,6 +4610,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 802881,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "82b2459190c8c7deef18f0dfeed713542be31f8b",
+          "message": "build(deps): bump github.com/vektah/gqlparser/v2 from 2.5.8 to 2.5.15 (#1164)\n\nBumps [github.com/vektah/gqlparser/v2](https://github.com/vektah/gqlparser) from 2.5.8 to 2.5.15.\r\n- [Release notes](https://github.com/vektah/gqlparser/releases)\r\n- [Commits](https://github.com/vektah/gqlparser/compare/v2.5.8...v2.5.15)\r\n\r\n---\r\nupdated-dependencies:\r\n- dependency-name: github.com/vektah/gqlparser/v2\r\n  dependency-type: direct:production\r\n...\r\n\r\nSigned-off-by: dependabot[bot] <support@github.com>\r\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2024-07-16T02:31:00+02:00",
+          "tree_id": "1d4f7e09b282cbad1e7ca9ec4b96486f2e1be658",
+          "url": "https://github.com/MichaelMure/git-bug/commit/82b2459190c8c7deef18f0dfeed713542be31f8b"
+        },
+        "date": 1721089922206,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 18187659,
+            "unit": "ns/op\t 2600516 B/op\t   24176 allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 18187659,
+            "unit": "ns/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 2600516,
+            "unit": "B/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 24176,
+            "unit": "allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 103286402,
+            "unit": "ns/op\t14588226 B/op\t  134327 allocs/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 103286402,
+            "unit": "ns/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 14588226,
+            "unit": "B/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 134327,
+            "unit": "allocs/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 566734728,
+            "unit": "ns/op\t86675616 B/op\t  802850 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 566734728,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 86675616,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 802850,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
