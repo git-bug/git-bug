@@ -28,7 +28,7 @@ require (
 	github.com/skratchdot/open-golang v0.0.0-20190402232053-79abb63cd66e
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.9.0
-	github.com/vbauerster/mpb/v8 v8.5.2
+	github.com/vbauerster/mpb/v8 v8.7.3
 	github.com/vektah/gqlparser/v2 v2.5.15
 	github.com/xanzy/go-gitlab v0.106.0
 	golang.org/x/crypto v0.25.0
@@ -85,7 +85,7 @@ require (
 	github.com/lithammer/dedent v1.1.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.0.3 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-runewidth v0.0.14 // indirect
+	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mschoch/smat v0.2.0 // indirect
 	github.com/mtibben/percent v0.2.1 // indirect
@@ -94,7 +94,7 @@ require (
 	github.com/pjbgf/sha1cd v0.3.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/praetorian-inc/gokart v0.5.1
-	github.com/rivo/uniseg v0.4.4 // indirect
+	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/segmentio/fasthash v1.0.3 // indirect
 	github.com/sergi/go-diff v1.3.1 // indirect
