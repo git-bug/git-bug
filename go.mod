@@ -9,7 +9,7 @@ require (
 	github.com/99designs/gqlgen v0.17.36
 	github.com/99designs/keyring v1.2.2
 	github.com/MichaelMure/go-term-text v0.3.1
-	github.com/ProtonMail/go-crypto v0.0.0-20230717121422-5aa5874ade95
+	github.com/ProtonMail/go-crypto v1.1.0-alpha.3-proton
 	github.com/araddon/dateparse v0.0.0-20190622164848-0fb0a474d195
 	github.com/awesome-gocui/gocui v1.1.0
 	github.com/blevesearch/bleve v1.0.14
@@ -58,7 +58,7 @@ require (
 	github.com/blevesearch/zap/v13 v13.0.6 // indirect
 	github.com/blevesearch/zap/v14 v14.0.5 // indirect
 	github.com/blevesearch/zap/v15 v15.0.3 // indirect
-	github.com/cloudflare/circl v1.3.3 // indirect
+	github.com/cloudflare/circl v1.3.7 // indirect
 	github.com/corpix/uarand v0.1.1 // indirect
 	github.com/couchbase/vellum v1.0.2 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
