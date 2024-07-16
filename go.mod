@@ -34,7 +34,7 @@ require (
 	golang.org/x/crypto v0.23.0
 	golang.org/x/oauth2 v0.21.0
 	golang.org/x/sync v0.7.0
-	golang.org/x/sys v0.20.0
+	golang.org/x/sys v0.22.0
 	golang.org/x/text v0.16.0
 )
 
@@ -110,7 +110,7 @@ require (
 	go.etcd.io/bbolt v1.3.5 // indirect
 	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/net v0.25.0 // indirect
-	golang.org/x/term v0.20.0
+	golang.org/x/term v0.22.0
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
 	golang.org/x/vuln v1.0.0
