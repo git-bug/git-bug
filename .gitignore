@@ -8,3 +8,9 @@ dist
 coverage.txt
 .idea/
 .git_bak*
+
+# nix and direnv related tooling
+.envrc
+.envrc.local
+/.direnv/
+!/.envrc
