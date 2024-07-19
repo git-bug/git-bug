@@ -14,7 +14,8 @@
 # - The `type` MUST be present.
 #
 # - The `body` MAY be present, and should include verbose, detailed information
-#   about why the change was necessary and what the new behavior is
+#   about what the old behavior was, why the change was necessary, and what the
+#   new behavior is
 #
 # - The `footer` MAY be prsent, and should include any relevant trailers and
 #   other metadata

@@ -28,6 +28,11 @@
             nixfmt-rfc-style
             nodePackages.prettier
           ];
+
+          shellHook = ''
+            # Use //:.gitmessage as the commit message template
+            ${pkgs.git}/bin/git config --local commit.template ".gitmessage"
+          '';
         };
       }
     );
