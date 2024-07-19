@@ -32,6 +32,10 @@
           shellHook = ''
             # Use //:.gitmessage as the commit message template
             ${pkgs.git}/bin/git config --local commit.template ".gitmessage"
+
+            # Use a common, shared file as the default for running
+            # git-blame with the `--ignore-revs` flag
+            ${pkgs.git}/bin/git config --local blame.ignoreRevsFile ".git-blame-ignore-revs"
           '';
         };
       }
