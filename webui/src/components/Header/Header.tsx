@@ -51,7 +51,7 @@ const DisabledTabWithTooltip = (props: TabProps) => {
    * See: https://material-ui.com/components/tooltips/#disabled-elements
    * This must be done in a wrapper component, otherwise the TabS component
    * cannot pass it styles down to the Tab component. Resulting in (console)
-   * warnings. This wrapper acceps the passed down TabProps and pass it around
+   * warnings. This wrapper accepts the passed down TabProps and pass it around
    * the span element to the Tab component.
    */
   const msg = `This feature doesn't exist yet. Come help us build it.`;
