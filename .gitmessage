@@ -1,0 +1,33 @@
+
+################################################################################
+# COMMIT MESSAGE FORMAT
+#
+# ```
+# <type>: <subject>
+# <BLANK LINE>
+# [body]
+# <BLANK LINE>
+# [footer]
+# ```
+#
+# General notes:
+# - The `type` MUST be present.
+#
+# - The `body` MAY be present, and should include verbose, detailed information
+#   about what the old behavior was, why the change was necessary, and what the
+#   new behavior is
+#
+# - The `footer` MAY be prsent, and should include any relevant trailers and
+#   other metadata
+#
+# Valid values for <type>:
+#   - deprecation: a change related to deprecation of a reosurce or interface
+#   - design: a change related to design that does not change an interface or
+#     any application/business logic
+#   - doc: a change related to documentation
+#   - feat: changes that introduce new behavior or a new feature
+#   - fix: Changes that fix an issue
+#   - refactor: Changes which neither fix an issue or add a feature
+#   - style: Changes to formatting, blank space, alignment, etc.
+#   - test: Changes which add missing tests or correct existing tests
+################################################################################
