@@ -5,6 +5,10 @@ on:
     branches:
       - master
 
+concurrency:
+  group: benchmark-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   # deployments permission to deploy GitHub pages website
   deployments: write

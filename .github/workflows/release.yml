@@ -6,6 +6,10 @@ on:
     tags:
       - "v*"
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-release:
     runs-on: "ubuntu-latest"

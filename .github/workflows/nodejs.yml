@@ -7,6 +7,10 @@ on:
     branches: [ master ]
   workflow_dispatch:
 
+concurrency:
+  group: nodejs-${{ github.ref }}
+  cancel-in-progress: true
+
 defaults:
   run:
     working-directory: webui

@@ -9,6 +9,10 @@ on:
   schedule:
     - cron: '0 12 * * 6'
 
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   CodeQL-Build:
 
