@@ -12,17 +12,18 @@ jobs:
       issues: write
     steps:
       - uses: actions/stale@v9
-        stale-issue-label: lifecycle/stale
-        stale-pr-label: lifecycle/stale
-        days-before-stale: 90
-        days-before-close: 30
-        stale-issue-message: |
-          This bot triages untriaged issues and PRs according to the following rules:
+        with:
+          stale-issue-label: lifecycle/stale
+          stale-pr-label: lifecycle/stale
+          days-before-stale: 90
+          days-before-close: 30
+          stale-issue-message: |
+            This bot triages untriaged issues and PRs according to the following rules:
 
-          - After 90 days of inactivity, the `lifecycle/stale` label is applied
-          - After 30 days of inactivity since `lifecycle/stale` was applied, the issue is closed
+            - After 90 days of inactivity, the `lifecycle/stale` label is applied
+            - After 30 days of inactivity since `lifecycle/stale` was applied, the issue is closed
 
-          To remove the stale status, you can:
+            To remove the stale status, you can:
 
-          - Remove the `lifecycle/stale` label
-          - Comment on this issue
+            - Remove the `lifecycle/stale` label
+            - Comment on this issue
