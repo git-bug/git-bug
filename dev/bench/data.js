@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1721708643277,
+  "lastUpdate": 1721709368296,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -6050,6 +6050,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 743964,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "9c001b67637a@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "distinct": true,
+          "id": "480fb4d98700a25c9d8a6850a551a9e4df6bfd9f",
+          "message": "build(deps): bump ua-parser-js from 0.7.31 to 0.7.33 in /webui\n\nBumps [ua-parser-js](https://github.com/faisalman/ua-parser-js) from 0.7.31 to 0.7.33.\n- [Release notes](https://github.com/faisalman/ua-parser-js/releases)\n- [Changelog](https://github.com/faisalman/ua-parser-js/blob/master/changelog.md)\n- [Commits](https://github.com/faisalman/ua-parser-js/compare/0.7.31...0.7.33)\n\n---\nupdated-dependencies:\n- dependency-name: ua-parser-js\n  dependency-type: indirect\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+          "timestamp": "2024-07-22T21:35:01-07:00",
+          "tree_id": "70054faa843a1ccc3260648dc96ca29ab2820c42",
+          "url": "https://github.com/MichaelMure/git-bug/commit/480fb4d98700a25c9d8a6850a551a9e4df6bfd9f"
+        },
+        "date": 1721709367320,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 23008506,
+            "unit": "ns/op\t 2583337 B/op\t   22434 allocs/op",
+            "extra": "60 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 23008506,
+            "unit": "ns/op",
+            "extra": "60 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 2583337,
+            "unit": "B/op",
+            "extra": "60 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 22434,
+            "unit": "allocs/op",
+            "extra": "60 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 143432017,
+            "unit": "ns/op\t14459983 B/op\t  124445 allocs/op",
+            "extra": "8 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 143432017,
+            "unit": "ns/op",
+            "extra": "8 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 14459983,
+            "unit": "B/op",
+            "extra": "8 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 124445,
+            "unit": "allocs/op",
+            "extra": "8 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 862650008,
+            "unit": "ns/op\t86318480 B/op\t  743987 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 862650008,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 86318480,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 743987,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
