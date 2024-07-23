@@ -16,7 +16,7 @@ require (
 	github.com/cheekybits/genny v1.0.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/fatih/color v1.17.0
-	github.com/go-git/go-billy/v5 v5.4.1
+	github.com/go-git/go-billy/v5 v5.5.0
 	github.com/go-git/go-git/v5 v5.8.1
 	github.com/gorilla/mux v1.8.1
 	github.com/hashicorp/golang-lru/v2 v2.0.7
@@ -38,7 +38,10 @@ require (
 	golang.org/x/text v0.16.0
 )
 
-require golang.org/x/telemetry v0.0.0-20240522233618-39ace7a40ae7 // indirect
+require (
+	github.com/cyphar/filepath-securejoin v0.2.4 // indirect
+	golang.org/x/telemetry v0.0.0-20240522233618-39ace7a40ae7 // indirect
+)
 
 require (
 	dario.cat/mergo v1.0.0 // indirect
