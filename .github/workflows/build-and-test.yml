@@ -1,29 +1,17 @@
-name: Go build and test
+name: build-and-test
 
 on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
-  workflow_dispatch:
-
-concurrency:
-  group: go-${{ github.ref }}
-  cancel-in-progress: true
+  workflow_call:
 
 jobs:
-  build:
-
+  with-go:
     strategy:
       matrix:
         go-version: [1.22.5]
         platform: [ubuntu-latest, macos-latest, windows-latest]
-
     runs-on: ${{ matrix.platform }}
-
     steps:
-
-      - name: Set up Go ${{ matrix.node-version }}
+      - name: Set up Go ${{ matrix.go-version }}
         uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go-version }}
@@ -43,17 +31,29 @@ jobs:
           GITHUB_TOKEN_PUBLIC: ${{ secrets._GITHUB_TOKEN_PUBLIC }}
           GITLAB_API_TOKEN: ${{ secrets.GITLAB_API_TOKEN }}
           GITLAB_PROJECT_ID: ${{ secrets.GITLAB_PROJECT_ID }}
-  
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Install Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: 1.19.4
 
-      - name: Checkout code
+  with-node:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [12.x, 14.x, 16.x]
+    defaults:
+      run:
+        working-directory: webui
+    steps:
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Check out code
         uses: actions/checkout@v4
 
-      - name: Check Code Formatting
-        run: find . -name "*.go" | while read line; do [ -z "$(gofmt -d "$line" | head)" ] || exit 1; done
+      - name: Install
+        run: make install
+
+      - name: Build
+        run: make build
+
+      - name: Test
+        run: make test
