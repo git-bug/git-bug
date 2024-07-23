@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1721711320258,
+  "lastUpdate": 1721711441805,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -6530,6 +6530,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 744263,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "9c001b67637a@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "distinct": true,
+          "id": "6664fcd445adde4be420163d0e2387a9a11c59ab",
+          "message": "build(deps): bump github.com/99designs/gqlgen from 0.17.36 to 0.17.49\n\nBumps [github.com/99designs/gqlgen](https://github.com/99designs/gqlgen) from 0.17.36 to 0.17.49.\n- [Release notes](https://github.com/99designs/gqlgen/releases)\n- [Changelog](https://github.com/99designs/gqlgen/blob/master/CHANGELOG.md)\n- [Commits](https://github.com/99designs/gqlgen/compare/v0.17.36...v0.17.49)\n\n---\nupdated-dependencies:\n- dependency-name: github.com/99designs/gqlgen\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+          "timestamp": "2024-07-22T22:09:26-07:00",
+          "tree_id": "292149a2eef869401ae22dbc1a5a94f78a521feb",
+          "url": "https://github.com/MichaelMure/git-bug/commit/6664fcd445adde4be420163d0e2387a9a11c59ab"
+        },
+        "date": 1721711440913,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 23529679,
+            "unit": "ns/op\t 2585586 B/op\t   22468 allocs/op",
+            "extra": "43 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 23529679,
+            "unit": "ns/op",
+            "extra": "43 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 2585586,
+            "unit": "B/op",
+            "extra": "43 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 22468,
+            "unit": "allocs/op",
+            "extra": "43 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 141914180,
+            "unit": "ns/op\t14390470 B/op\t  124494 allocs/op",
+            "extra": "8 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 141914180,
+            "unit": "ns/op",
+            "extra": "8 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 14390470,
+            "unit": "B/op",
+            "extra": "8 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 124494,
+            "unit": "allocs/op",
+            "extra": "8 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 791788947,
+            "unit": "ns/op\t85850000 B/op\t  744123 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 791788947,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 85850000,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 744123,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
