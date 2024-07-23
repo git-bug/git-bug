@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1721712994137,
+  "lastUpdate": 1721716086618,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -7106,6 +7106,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 744312,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "committer": {
+            "email": "9c001b67637a@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "distinct": true,
+          "id": "5eabe549e4f7fc98bbdf4e7b285cec00e5da4e99",
+          "message": "feat: refactor pipelines into reusable workflows\n\nThis change refactors the build, test, and benchmarking pipelines to a\n`presubmit` and `trunk` parent workflow which invokes other reusable\nworkflows. This simplifies the deluge of pipelines that are executed,\nallowing for better orchestration and reduced noise on failures (only\none email will be sent instead of several).\n\nCloses: michaelmure/git-bug#1198\nChange-Id: I52407c39366bb9fbfd8fc1455a4f4a1d94f04897",
+          "timestamp": "2024-07-22T23:27:09-07:00",
+          "tree_id": "acc81e739fc19376e4c9791a6525dd2874eef14c",
+          "url": "https://github.com/MichaelMure/git-bug/commit/5eabe549e4f7fc98bbdf4e7b285cec00e5da4e99"
+        },
+        "date": 1721716086298,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 20781987,
+            "unit": "ns/op\t 2598458 B/op\t   22475 allocs/op",
+            "extra": "57 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 20781987,
+            "unit": "ns/op",
+            "extra": "57 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 2598458,
+            "unit": "B/op",
+            "extra": "57 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 22475,
+            "unit": "allocs/op",
+            "extra": "57 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 110355036,
+            "unit": "ns/op\t14526284 B/op\t  124543 allocs/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 110355036,
+            "unit": "ns/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 14526284,
+            "unit": "B/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 124543,
+            "unit": "allocs/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 608714130,
+            "unit": "ns/op\t86484628 B/op\t  744291 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 608714130,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 86484628,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 744291,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
