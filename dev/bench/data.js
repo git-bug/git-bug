@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1721711606779,
+  "lastUpdate": 1721711754691,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -6722,6 +6722,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 744296,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "9c001b67637a@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "distinct": true,
+          "id": "968362e7a4b10165f069f676c763754698ebd2cb",
+          "message": "build(deps): bump graphql from 16.6.0 to 16.8.1 in /webui\n\nBumps [graphql](https://github.com/graphql/graphql-js) from 16.6.0 to 16.8.1.\n- [Release notes](https://github.com/graphql/graphql-js/releases)\n- [Commits](https://github.com/graphql/graphql-js/compare/v16.6.0...v16.8.1)\n\n---\nupdated-dependencies:\n- dependency-name: graphql\n  dependency-type: direct:production\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+          "timestamp": "2024-07-22T22:14:55-07:00",
+          "tree_id": "2f6160762ea6bbede4fdb264e5ff7d3bb32598a0",
+          "url": "https://github.com/MichaelMure/git-bug/commit/968362e7a4b10165f069f676c763754698ebd2cb"
+        },
+        "date": 1721711754324,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 21355061,
+            "unit": "ns/op\t 2585630 B/op\t   22471 allocs/op",
+            "extra": "55 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 21355061,
+            "unit": "ns/op",
+            "extra": "55 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 2585630,
+            "unit": "B/op",
+            "extra": "55 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 22471,
+            "unit": "allocs/op",
+            "extra": "55 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 126401210,
+            "unit": "ns/op\t14445160 B/op\t  124509 allocs/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 126401210,
+            "unit": "ns/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 14445160,
+            "unit": "B/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 124509,
+            "unit": "allocs/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 705264006,
+            "unit": "ns/op\t86155872 B/op\t  744189 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 705264006,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 86155872,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 744189,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
