@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1721708254754,
+  "lastUpdate": 1721708643277,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -5954,6 +5954,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 743884,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "9c001b67637a@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "distinct": true,
+          "id": "02d89bc00aa68d5bacad56fa3f9335a8374b3f52",
+          "message": "build(deps): bump github.com/vektah/gqlparser/v2 from 2.5.15 to 2.5.16\n\nBumps [github.com/vektah/gqlparser/v2](https://github.com/vektah/gqlparser) from 2.5.15 to 2.5.16.\n- [Release notes](https://github.com/vektah/gqlparser/releases)\n- [Commits](https://github.com/vektah/gqlparser/compare/v2.5.15...v2.5.16)\n\n---\nupdated-dependencies:\n- dependency-name: github.com/vektah/gqlparser/v2\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+          "timestamp": "2024-07-22T21:23:07-07:00",
+          "tree_id": "ec0673fda8f56b574b192223cb1fc1a508d9ce9e",
+          "url": "https://github.com/MichaelMure/git-bug/commit/02d89bc00aa68d5bacad56fa3f9335a8374b3f52"
+        },
+        "date": 1721708642963,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 20205201,
+            "unit": "ns/op\t 2584877 B/op\t   22436 allocs/op",
+            "extra": "57 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 20205201,
+            "unit": "ns/op",
+            "extra": "57 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 2584877,
+            "unit": "B/op",
+            "extra": "57 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 22436,
+            "unit": "allocs/op",
+            "extra": "57 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 114652888,
+            "unit": "ns/op\t14454855 B/op\t  124448 allocs/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 114652888,
+            "unit": "ns/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 14454855,
+            "unit": "B/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 124448,
+            "unit": "allocs/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 618269168,
+            "unit": "ns/op\t86070828 B/op\t  743964 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 618269168,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 86070828,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 743964,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
