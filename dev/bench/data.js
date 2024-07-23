@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1721704245463,
+  "lastUpdate": 1721706845618,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -5570,6 +5570,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 743783,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "9c001b67637a@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "distinct": true,
+          "id": "8ff5505e1b359d877bab388f8dec703c182e4b2c",
+          "message": "build(deps): bump minimatch and recursive-readdir in /webui\n\nBumps [minimatch](https://github.com/isaacs/minimatch) and [recursive-readdir](https://github.com/jergason/recursive-readdir). These dependencies needed to be updated together.\n\nUpdates `minimatch` from 3.0.4 to 3.1.2\n- [Release notes](https://github.com/isaacs/minimatch/releases)\n- [Commits](https://github.com/isaacs/minimatch/compare/v3.0.4...v3.1.2)\n\nUpdates `recursive-readdir` from 2.2.2 to 2.2.3\n- [Release notes](https://github.com/jergason/recursive-readdir/releases)\n- [Changelog](https://github.com/jergason/recursive-readdir/blob/master/CHANGELOG.md)\n- [Commits](https://github.com/jergason/recursive-readdir/commits/v2.2.3)\n\n---\nupdated-dependencies:\n- dependency-name: minimatch\n  dependency-type: indirect\n- dependency-name: recursive-readdir\n  dependency-type: indirect\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+          "timestamp": "2024-07-22T20:53:05-07:00",
+          "tree_id": "b774d56d2074816592eba4c070ed763f6bb00a92",
+          "url": "https://github.com/MichaelMure/git-bug/commit/8ff5505e1b359d877bab388f8dec703c182e4b2c"
+        },
+        "date": 1721706844716,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 21133350,
+            "unit": "ns/op\t 2562396 B/op\t   22441 allocs/op",
+            "extra": "62 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 21133350,
+            "unit": "ns/op",
+            "extra": "62 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 2562396,
+            "unit": "B/op",
+            "extra": "62 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 22441,
+            "unit": "allocs/op",
+            "extra": "62 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 108299070,
+            "unit": "ns/op\t14510715 B/op\t  124491 allocs/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 108299070,
+            "unit": "ns/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 14510715,
+            "unit": "B/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 124491,
+            "unit": "allocs/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 708862242,
+            "unit": "ns/op\t86012136 B/op\t  743867 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 708862242,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 86012136,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 743867,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
