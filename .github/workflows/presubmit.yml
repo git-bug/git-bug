@@ -1,0 +1,25 @@
+# //.github/workflows:presubmit.yml
+#
+# This file exists to define the steps executed for a push to each tree matching
+# the pattern `refs/heads/*`, excluding the default ref. For configuring the
+# steps that occur after a push to the trunk branch, see
+# `//.github/workflows:trunk.yml`.
+---
+name: presubmit
+
+on:
+  push:
+    branches-ignore:
+      - master
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    uses: ./.github/workflows/lint.yml
+
+  build-and-test:
+    uses: ./.github/workflows/build-and-test.yml
+    secrets: inherit

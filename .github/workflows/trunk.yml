@@ -1,0 +1,48 @@
+# //.github/workflows:trunk.yml
+#
+# This file exists to define the steps executed for a push to the default tree.
+# For configuring the steps that occur after a push to all other branches under
+# the refs/heads namespace, see `//.github/workflows:presubmit.yml`.
+---
+name: trunk
+
+on:
+  push:
+    branches:
+      - master
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    uses: ./.github/workflows/lint.yml
+
+  build-and-test:
+    uses: ./.github/workflows/build-and-test.yml
+    secrets: inherit
+
+  benchmark:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      deployments: write
+    steps:
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 1.22.5
+
+      - uses: actions/checkout@v4
+
+      - name: Run benchmark
+        run: go test -v ./... -bench=. -run=xxx -benchmem | tee output.txt
+
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          tool: 'go'
+          output-file-path: output.txt
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          comment-on-alert: true
+          auto-push: true

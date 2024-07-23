@@ -1,7 +1,6 @@
 name: Build release binaries
 
 on:
-  workflow_dispatch:
   push:
     tags:
       - "v*"
@@ -13,7 +12,6 @@ concurrency:
 jobs:
   build-release:
     runs-on: "ubuntu-latest"
-
     steps:
       - name: Set up Go
         uses: actions/setup-go@v5
