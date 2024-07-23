@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1721706845618,
+  "lastUpdate": 1721707386149,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -5666,6 +5666,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 743867,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "9c001b67637a@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "distinct": true,
+          "id": "3bf251ad03c1093573b701584f9c5e3705e31f85",
+          "message": "build(deps): bump loader-utils from 2.0.2 to 2.0.4 in /webui\n\nBumps [loader-utils](https://github.com/webpack/loader-utils) from 2.0.2 to 2.0.4.\n- [Release notes](https://github.com/webpack/loader-utils/releases)\n- [Changelog](https://github.com/webpack/loader-utils/blob/v2.0.4/CHANGELOG.md)\n- [Commits](https://github.com/webpack/loader-utils/compare/v2.0.2...v2.0.4)\n\n---\nupdated-dependencies:\n- dependency-name: loader-utils\n  dependency-type: indirect\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+          "timestamp": "2024-07-22T21:02:07-07:00",
+          "tree_id": "e0a1fb8bf581b204ee155ec0a85330c514e0c654",
+          "url": "https://github.com/MichaelMure/git-bug/commit/3bf251ad03c1093573b701584f9c5e3705e31f85"
+        },
+        "date": 1721707385235,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 18784631,
+            "unit": "ns/op\t 2580624 B/op\t   22440 allocs/op",
+            "extra": "61 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 18784631,
+            "unit": "ns/op",
+            "extra": "61 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 2580624,
+            "unit": "B/op",
+            "extra": "61 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 22440,
+            "unit": "allocs/op",
+            "extra": "61 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 104328101,
+            "unit": "ns/op\t14481200 B/op\t  124446 allocs/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 104328101,
+            "unit": "ns/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 14481200,
+            "unit": "B/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 124446,
+            "unit": "allocs/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 600695688,
+            "unit": "ns/op\t86288228 B/op\t  743982 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 600695688,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 86288228,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 743982,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
