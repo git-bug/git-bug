@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1721711754691,
+  "lastUpdate": 1721711881481,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -6818,6 +6818,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 744189,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "9c001b67637a@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "distinct": true,
+          "id": "1700c8b968752922ee1947d902a39a4a5651f3ca",
+          "message": "build(deps): bump github.com/xanzy/go-gitlab from 0.106.0 to 0.107.0\n\nBumps [github.com/xanzy/go-gitlab](https://github.com/xanzy/go-gitlab) from 0.106.0 to 0.107.0.\n- [Changelog](https://github.com/xanzy/go-gitlab/blob/main/releases_test.go)\n- [Commits](https://github.com/xanzy/go-gitlab/compare/v0.106.0...v0.107.0)\n\n---\nupdated-dependencies:\n- dependency-name: github.com/xanzy/go-gitlab\n  dependency-type: direct:production\n  update-type: version-update:semver-minor\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+          "timestamp": "2024-07-22T22:17:00-07:00",
+          "tree_id": "7ff45fc295c95f1ac684de79485e00c62b484fdc",
+          "url": "https://github.com/MichaelMure/git-bug/commit/1700c8b968752922ee1947d902a39a4a5651f3ca"
+        },
+        "date": 1721711880928,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 19558306,
+            "unit": "ns/op\t 2577197 B/op\t   22469 allocs/op",
+            "extra": "57 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 19558306,
+            "unit": "ns/op",
+            "extra": "57 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 2577197,
+            "unit": "B/op",
+            "extra": "57 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 22469,
+            "unit": "allocs/op",
+            "extra": "57 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 111871627,
+            "unit": "ns/op\t14551016 B/op\t  124540 allocs/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 111871627,
+            "unit": "ns/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 14551016,
+            "unit": "B/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 124540,
+            "unit": "allocs/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 700847516,
+            "unit": "ns/op\t86200012 B/op\t  744215 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 700847516,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 86200012,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 744215,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
