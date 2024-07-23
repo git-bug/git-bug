@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1721707386149,
+  "lastUpdate": 1721707842682,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -5762,6 +5762,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 743982,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "9c001b67637a@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "distinct": true,
+          "id": "4b0090166e6c2091db580102cf194b5ce6f9cbf2",
+          "message": "build(deps): bump json5 from 1.0.1 to 1.0.2 in /webui\n\nBumps [json5](https://github.com/json5/json5) from 1.0.1 to 1.0.2.\n- [Release notes](https://github.com/json5/json5/releases)\n- [Changelog](https://github.com/json5/json5/blob/main/CHANGELOG.md)\n- [Commits](https://github.com/json5/json5/compare/v1.0.1...v1.0.2)\n\n---\nupdated-dependencies:\n- dependency-name: json5\n  dependency-type: indirect\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+          "timestamp": "2024-07-22T21:09:46-07:00",
+          "tree_id": "c110ddae797bbd86a5005b3f32f5de8ded4d7f46",
+          "url": "https://github.com/MichaelMure/git-bug/commit/4b0090166e6c2091db580102cf194b5ce6f9cbf2"
+        },
+        "date": 1721707842324,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 21128693,
+            "unit": "ns/op\t 2578740 B/op\t   22423 allocs/op",
+            "extra": "48 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 21128693,
+            "unit": "ns/op",
+            "extra": "48 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 2578740,
+            "unit": "B/op",
+            "extra": "48 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 22423,
+            "unit": "allocs/op",
+            "extra": "48 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 119483769,
+            "unit": "ns/op\t14435024 B/op\t  124468 allocs/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 119483769,
+            "unit": "ns/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 14435024,
+            "unit": "B/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 124468,
+            "unit": "allocs/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 741430034,
+            "unit": "ns/op\t85971672 B/op\t  743826 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 741430034,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 85971672,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 743826,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
