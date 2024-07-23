@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1721712908065,
+  "lastUpdate": 1721712994137,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -7010,6 +7010,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 744316,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "9c001b67637a@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "distinct": true,
+          "id": "e4c74ef58671c64c029837b7f3869f6b127f00a7",
+          "message": "build(deps): bump jsonwebtoken and @graphql-tools/prisma-loader\n\nRemoves [jsonwebtoken](https://github.com/auth0/node-jsonwebtoken). It's no longer used after updating ancestor dependency [@graphql-tools/prisma-loader](https://github.com/ardatan/graphql-tools/tree/HEAD/packages/loaders/prisma). These dependencies need to be updated together.\n\n\nRemoves `jsonwebtoken`\n\nUpdates `@graphql-tools/prisma-loader` from 7.2.24 to 7.2.72\n- [Release notes](https://github.com/ardatan/graphql-tools/releases)\n- [Changelog](https://github.com/ardatan/graphql-tools/blob/master/packages/loaders/prisma/CHANGELOG.md)\n- [Commits](https://github.com/ardatan/graphql-tools/commits/@graphql-tools/prisma-loader@7.2.72/packages/loaders/prisma)\n\n---\nupdated-dependencies:\n- dependency-name: jsonwebtoken\n  dependency-type: indirect\n- dependency-name: \"@graphql-tools/prisma-loader\"\n  dependency-type: indirect\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+          "timestamp": "2024-07-22T22:35:30-07:00",
+          "tree_id": "265bf5309583c8303e25ef32b577cca1b82794ff",
+          "url": "https://github.com/MichaelMure/git-bug/commit/e4c74ef58671c64c029837b7f3869f6b127f00a7"
+        },
+        "date": 1721712993729,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 20629126,
+            "unit": "ns/op\t 2576245 B/op\t   22475 allocs/op",
+            "extra": "51 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 20629126,
+            "unit": "ns/op",
+            "extra": "51 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 2576245,
+            "unit": "B/op",
+            "extra": "51 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 22475,
+            "unit": "allocs/op",
+            "extra": "51 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 120885625,
+            "unit": "ns/op\t14507982 B/op\t  124529 allocs/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 120885625,
+            "unit": "ns/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 14507982,
+            "unit": "B/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 124529,
+            "unit": "allocs/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 728748824,
+            "unit": "ns/op\t86447644 B/op\t  744312 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 728748824,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 86447644,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 744312,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
