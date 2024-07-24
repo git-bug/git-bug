@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1721791400168,
+  "lastUpdate": 1721797258990,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -7490,6 +7490,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 744205,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "committer": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "distinct": true,
+          "id": "5893f948197b669b4bcbe2b8018bb50df9e814fd",
+          "message": "fix: run the presubmit pipeline for PRs\n\ncommit 5eabe549e4f7fc98bbdf4e7b285cec00e5da4e99 refactored the workflows\nso that they were orchestrated with reusable workflows. an unintended\nside-effect of the rules that were created prevents the presubmit\npipeline from executing for pull requests made against this repository.\n\nthis change refactors this, so that the presubmit pipeline will _only_\nrun for pull requests against the default tree of this repository. we\nexplicitly remove the `on: push` event for it, in order to avoid overlap\nthat will occur for commits made in this repository that are also part\nof a PR.\n\nChange-Id: I56abc35c98cc40a06066952f2b6ed9194b1ab903",
+          "timestamp": "2024-07-23T22:00:00-07:00",
+          "tree_id": "df9a7fa37ca3022cc900eecc8edadca4a5e2d10b",
+          "url": "https://github.com/MichaelMure/git-bug/commit/5893f948197b669b4bcbe2b8018bb50df9e814fd"
+        },
+        "date": 1721797258088,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 18421469,
+            "unit": "ns/op\t 2571508 B/op\t   22454 allocs/op",
+            "extra": "62 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 18421469,
+            "unit": "ns/op",
+            "extra": "62 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 2571508,
+            "unit": "B/op",
+            "extra": "62 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 22454,
+            "unit": "allocs/op",
+            "extra": "62 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 101870480,
+            "unit": "ns/op\t14490310 B/op\t  124530 allocs/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 101870480,
+            "unit": "ns/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 14490310,
+            "unit": "B/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 124530,
+            "unit": "allocs/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 620091210,
+            "unit": "ns/op\t85800220 B/op\t  744199 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 620091210,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 85800220,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 744199,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
