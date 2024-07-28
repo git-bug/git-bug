@@ -15,7 +15,6 @@ jobs:
     steps:
       - uses: actions/stale@v9
         with:
-          operations-per-run: 1000
           stale-issue-label: lifecycle/stale
           stale-pr-label: lifecycle/stale
           days-before-stale: 90
