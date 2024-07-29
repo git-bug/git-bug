@@ -34,7 +34,7 @@ require (
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.9.0
-	github.com/vbauerster/mpb/v8 v8.7.4
+	github.com/vbauerster/mpb/v8 v8.7.5
 	github.com/vektah/gqlparser/v2 v2.5.16
 	github.com/xanzy/go-gitlab v0.107.0
 	golang.org/x/crypto v0.25.0
