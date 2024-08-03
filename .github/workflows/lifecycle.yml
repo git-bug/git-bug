@@ -1,0 +1,95 @@
+name: lifecycle
+
+on:
+  workflow_call:
+    inputs:
+      issue-message:
+        type: string
+        default: |
+          This bot triages issues in order to help the maintainers identify what
+          needs attention, according to the following lifecycle rules:
+
+          - After 90 days of inactivity, `lifecycle/stale` is applied
+          - After 90 days of inactivity since `lifecycle/stale` was applied,
+            `lifecycle/rotten` is applied
+
+          **This bot will not automatically close stale issues.**
+
+          To remove the stale status, you can:
+
+          - Remove the stale label from this issue
+          - Comment on this issue
+          - Close this issue
+          - Offer to help out with triaging
+
+          ---
+
+          To avoid automatic lifecycle management of this issue, add
+          `lifecycle/frozen`.
+
+      pr-message:
+        type: string
+        default: |
+          This bot triages pull requests in order to help the maintainers
+          identify what needs attention, according to the following lifecycle
+          rules:
+
+          - After 90 days of inactivity, `lifecycle/stale` is applied
+          - After 90 days of inactivity since `lifecycle/stale` was applied,
+            `lifecycle/rotten` is applied
+
+          **This bot will not automatically close stale pull requests.**
+
+          To remove the stale status, you can:
+
+          - Remove the stale label from this pull request
+          - Comment on this issue
+          - Close this issue
+          - Offer to help out with triage and code review
+
+          ---
+
+          To avoid automatic lifecycle management of this pull request, add
+          `lifecycle/frozen`.
+
+jobs:
+  stale:
+    name: stale
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/stale@v9
+        with:
+          days-before-close: -1
+          days-before-stale: 90
+          exempt-all-milestones: true
+          exempt-issue-labels: lifecycle/frozen,lifecycle/rotten,lifecycle/stale
+          exempt-pr-labels: lifecycle/frozen,lifecycle/rotten,lifecycle/stale
+          labels-to-remove-when-stale: lifecycle/active
+          stale-issue-label: lifecycle/stale
+          stale-issue-message: ${{ inputs.issue-message }}
+          stale-pr-label: lifecycle/stale
+          stale-pr-message: ${{ inputs.pr-message }}
+
+  rotten:
+    name: rotten
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/stale@v9
+        with:
+          days-before-close: -1
+          days-before-stale: 180
+          exempt-all-milestones: true
+          labels-to-remove-when-stale: lifecycle/active,lifecycle/stale
+          exempt-issue-labels: lifecycle/frozen
+          exempt-pr-labels: lifecycle/frozen
+          only-labels: lifecycle/stale
+          stale-issue-label: lifecycle/rotten
+          stale-issue-message: ${{ inputs.issue-message }}
+          stale-pr-label: lifecycle/rotten
+          stale-pr-message: ${{ inputs.pr-message }}
