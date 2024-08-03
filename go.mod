@@ -1,8 +1,6 @@
 module github.com/MichaelMure/git-bug
 
-go 1.21
-
-toolchain go1.22.5
+go 1.22.5
 
 // https://github.com/praetorian-inc/gokart/pull/84
 replace github.com/praetorian-inc/gokart v0.5.1 => github.com/selesy/gokart v0.5.2-rc1
