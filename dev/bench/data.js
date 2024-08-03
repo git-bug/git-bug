@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1722488869798,
+  "lastUpdate": 1722700198790,
   "repoUrl": "https://github.com/MichaelMure/git-bug",
   "entries": {
     "Benchmark": [
@@ -7874,6 +7874,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 744200,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "committer": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "distinct": true,
+          "id": "91fa676c2677f6e9331f8ff225b446d0cabb8056",
+          "message": "feat: improved lifecycle management with stale-bot\n\nThis change refactors the automatic lifecycle management workflow that\nuses the `stale-bot` action library, such that neither issues nor pull\nrequests will be closed.\n\nAn additional label of `lifecycle/rotten` has been added to indicate\nissues or pull requests which have been inactive for 180 days or more.\n\nChange-Id: Ia748552c91ada43b4a762879db469132131956f0",
+          "timestamp": "2024-08-03T08:48:59-07:00",
+          "tree_id": "5dd799c78af6eb22701551c14b1c119d984ebdac",
+          "url": "https://github.com/MichaelMure/git-bug/commit/91fa676c2677f6e9331f8ff225b446d0cabb8056"
+        },
+        "date": 1722700198472,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 22687396,
+            "unit": "ns/op\t 2574858 B/op\t   22466 allocs/op",
+            "extra": "50 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 22687396,
+            "unit": "ns/op",
+            "extra": "50 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 2574858,
+            "unit": "B/op",
+            "extra": "50 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 22466,
+            "unit": "allocs/op",
+            "extra": "50 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 123023804,
+            "unit": "ns/op\t14480743 B/op\t  124529 allocs/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 123023804,
+            "unit": "ns/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 14480743,
+            "unit": "B/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 124529,
+            "unit": "allocs/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 759702538,
+            "unit": "ns/op\t85648948 B/op\t  744116 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 759702538,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 85648948,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 744116,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
