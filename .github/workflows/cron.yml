@@ -7,4 +7,4 @@ on:
 jobs:
   lifecycle:
     if: github.event.schedule == '17 3 * * *'
-    uses: ./.github/workflows/stale-bot.yml
+    uses: ./.github/workflows/lifecycle.yml
