@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1722891903873,
+  "lastUpdate": 1722894125512,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -8450,6 +8450,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 744262,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "distinct": true,
+          "id": "4726ec4ceac735ee68ed172e37f60ee2f4f26c84",
+          "message": "build(deps): bump golang.org/x/sys from 0.22.0 to 0.23.0\n\nBumps [golang.org/x/sys](https://github.com/golang/sys) from 0.22.0 to 0.23.0.\n- [Commits](https://github.com/golang/sys/compare/v0.22.0...v0.23.0)\n\n---\nupdated-dependencies:\n- dependency-name: golang.org/x/sys\n  dependency-type: direct:production\n  update-type: version-update:semver-minor\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+          "timestamp": "2024-08-05T14:41:01-07:00",
+          "tree_id": "d872a1c7fb75a1593d159e26adb7347bd9023614",
+          "url": "https://github.com/git-bug/git-bug/commit/4726ec4ceac735ee68ed172e37f60ee2f4f26c84"
+        },
+        "date": 1722894125112,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 22106314,
+            "unit": "ns/op\t 2595095 B/op\t   22463 allocs/op",
+            "extra": "51 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 22106314,
+            "unit": "ns/op",
+            "extra": "51 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 2595095,
+            "unit": "B/op",
+            "extra": "51 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 22463,
+            "unit": "allocs/op",
+            "extra": "51 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 115555255,
+            "unit": "ns/op\t14428722 B/op\t  124528 allocs/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 115555255,
+            "unit": "ns/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 14428722,
+            "unit": "B/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 124528,
+            "unit": "allocs/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 839904725,
+            "unit": "ns/op\t85994692 B/op\t  744152 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 839904725,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 85994692,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 744152,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
