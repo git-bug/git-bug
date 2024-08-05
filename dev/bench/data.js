@@ -1,6 +1,6 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1722891350456,
-  "repoUrl": "https://github.com/MichaelMure/git-bug",
+  "lastUpdate": 1722891903873,
+  "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
       {
@@ -8354,6 +8354,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 744235,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "distinct": true,
+          "id": "832dc02c140120fa55d6e261d8a5ab589c0208b7",
+          "message": "build(deps): bump golang.org/x/oauth2 from 0.21.0 to 0.22.0\n\nBumps [golang.org/x/oauth2](https://github.com/golang/oauth2) from 0.21.0 to 0.22.0.\n- [Commits](https://github.com/golang/oauth2/compare/v0.21.0...v0.22.0)\n\n---\nupdated-dependencies:\n- dependency-name: golang.org/x/oauth2\n  dependency-type: direct:production\n  update-type: version-update:semver-minor\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+          "timestamp": "2024-08-05T14:03:55-07:00",
+          "tree_id": "cd618edb983a6531d707b262bde67576a1ce95fa",
+          "url": "https://github.com/git-bug/git-bug/commit/832dc02c140120fa55d6e261d8a5ab589c0208b7"
+        },
+        "date": 1722891902887,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 22340524,
+            "unit": "ns/op\t 2590089 B/op\t   22459 allocs/op",
+            "extra": "63 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 22340524,
+            "unit": "ns/op",
+            "extra": "63 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 2590089,
+            "unit": "B/op",
+            "extra": "63 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 22459,
+            "unit": "allocs/op",
+            "extra": "63 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 118910169,
+            "unit": "ns/op\t14514384 B/op\t  124552 allocs/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 118910169,
+            "unit": "ns/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 14514384,
+            "unit": "B/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 124552,
+            "unit": "allocs/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 619140340,
+            "unit": "ns/op\t86440784 B/op\t  744262 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 619140340,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 86440784,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 744262,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
