@@ -21,6 +21,7 @@
         devShell = pkgs.mkShell {
           packages = with pkgs; [
             codespell
+            delve
             gh
             git
             go
