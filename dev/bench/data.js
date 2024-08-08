@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1723038870251,
+  "lastUpdate": 1723088670381,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -8930,6 +8930,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 744292,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0c0228d3ce629d31a41dd833b4a1ee73533d2da7",
+          "message": "feat: add package to dev shell: delve (#1240)\n\nThis change adds `delve`, the de facto debugger for go, to the\r\ndevelopment shell..\r\n\r\nChange-Id: I0bcda2b3569926dc16d8cbd653845f371ef33452",
+          "timestamp": "2024-08-07T20:43:24-07:00",
+          "tree_id": "c00ac99792005dd86ec6f7957963498d0a395715",
+          "url": "https://github.com/git-bug/git-bug/commit/0c0228d3ce629d31a41dd833b4a1ee73533d2da7"
+        },
+        "date": 1723088669424,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 26883915,
+            "unit": "ns/op\t 2587187 B/op\t   22484 allocs/op",
+            "extra": "54 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 26883915,
+            "unit": "ns/op",
+            "extra": "54 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 2587187,
+            "unit": "B/op",
+            "extra": "54 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 22484,
+            "unit": "allocs/op",
+            "extra": "54 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 150981332,
+            "unit": "ns/op\t14495948 B/op\t  124524 allocs/op",
+            "extra": "7 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 150981332,
+            "unit": "ns/op",
+            "extra": "7 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 14495948,
+            "unit": "B/op",
+            "extra": "7 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 124524,
+            "unit": "allocs/op",
+            "extra": "7 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 772947739,
+            "unit": "ns/op\t86168192 B/op\t  744136 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 772947739,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 86168192,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 744136,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
