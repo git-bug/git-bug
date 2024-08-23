@@ -15,6 +15,7 @@ type OperationType dag.OperationType
 const (
 	_ dag.OperationType = iota
 	CreateOp
+	SetMetadataOp
 	SetTitleOp
 	SetDescriptionOp
 	AddItemEntityOp
@@ -45,6 +46,8 @@ func operationUnmarshaler(raw json.RawMessage, resolvers entity.Resolvers) (dag.
 	switch t.OperationType {
 	case CreateOp:
 		op = &CreateOperation{}
+	case SetMetadataOp:
+		op = &dag.SetMetadataOperation[*Snapshot]{}
 	case SetTitleOp:
 		op = &SetTitleOperation{}
 	case SetDescriptionOp:
@@ -66,7 +69,7 @@ func operationUnmarshaler(raw json.RawMessage, resolvers entity.Resolvers) (dag.
 	case *AddItemEntityOperation:
 		switch op.EntityType {
 		case EntityTypeBug:
-			op.entity, err = entity.Resolve[bug.Interface](resolvers, op.EntityId)
+			op.entity, err = entity.Resolve[bug.ReadOnly](resolvers, op.EntityId)
 		default:
 			return nil, fmt.Errorf("unknown entity type")
 		}

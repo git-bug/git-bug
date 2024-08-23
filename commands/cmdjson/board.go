@@ -59,7 +59,7 @@ func NewBoardColumn(column *board.Column) BoardColumn {
 		case *board.Draft:
 			jsonColumn.Items[j] = NewBoardDraftItem(item)
 		case *board.BugItem:
-			jsonColumn.Items[j] = NewBugSnapshot(item.Bug.Compile())
+			jsonColumn.Items[j] = NewBoardBugItem(item)
 		default:
 			panic("unknown item type")
 		}
@@ -68,6 +68,7 @@ func NewBoardColumn(column *board.Column) BoardColumn {
 }
 
 type BoardDraftItem struct {
+	Type    string   `json:"type"`
 	Id      string   `json:"id"`
 	HumanId string   `json:"human_id"`
 	Author  Identity `json:"author"`
@@ -77,11 +78,31 @@ type BoardDraftItem struct {
 
 func NewBoardDraftItem(item *board.Draft) BoardDraftItem {
 	return BoardDraftItem{
+		Type:    "draft",
 		Id:      item.CombinedId().String(),
 		HumanId: item.CombinedId().Human(),
-		Author:  NewIdentity(item.Author),
-		Title:   item.Title,
+		Author:  NewIdentity(item.Author()),
+		Title:   item.Title(),
 		Message: item.Message,
+	}
+}
+
+type BoardBugItem struct {
+	Type    string   `json:"type"`
+	Id      string   `json:"id"`
+	HumanId string   `json:"human_id"`
+	Author  Identity `json:"author"`
+	BugId   string   `json:"bug_id"`
+}
+
+func NewBoardBugItem(item *board.BugItem) BoardBugItem {
+	return BoardBugItem{
+		Type:    "bug",
+		Id:      item.CombinedId().String(),
+		HumanId: item.CombinedId().Human(),
+		Author:  NewIdentity(item.Author()),
+		BugId:   item.Bug.Snapshot().Id().String(),
+		// TODO: add more?
 	}
 }
 

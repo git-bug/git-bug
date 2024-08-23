@@ -62,12 +62,13 @@ func (op *AddItemDraftOperation) Apply(snapshot *Snapshot) {
 	// Recreate the combined Id to match on
 	combinedId := entity.CombineIds(snapshot.Id(), op.ColumnId)
 
+	// search the column
 	for _, column := range snapshot.Columns {
 		if column.CombinedId == combinedId {
 			column.Items = append(column.Items, &Draft{
 				combinedId: entity.CombineIds(snapshot.id, op.Id()),
-				Author:     op.Author(),
-				Title:      op.Title,
+				author:     op.Author(),
+				title:      op.Title,
 				Message:    op.Message,
 				unixTime:   timestamp.Timestamp(op.UnixTime),
 			})
@@ -89,7 +90,7 @@ func NewAddItemDraftOp(author identity.Interface, unixTime int64, columnId entit
 }
 
 // AddItemDraft is a convenience function to add a draft item to a Board
-func AddItemDraft(b Interface, author identity.Interface, unixTime int64, columnId entity.Id, title, message string, files []repository.Hash, metadata map[string]string) (entity.CombinedId, *AddItemDraftOperation, error) {
+func AddItemDraft(b ReadWrite, author identity.Interface, unixTime int64, columnId entity.Id, title, message string, files []repository.Hash, metadata map[string]string) (entity.CombinedId, *AddItemDraftOperation, error) {
 	op := NewAddItemDraftOp(author, unixTime, columnId, title, message, files)
 	for key, val := range metadata {
 		op.SetMetadata(key, val)

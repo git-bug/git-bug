@@ -1,15 +1,10 @@
 package boardcmd
 
 import (
-	"fmt"
-	"strconv"
-
 	"github.com/spf13/cobra"
 
 	bugcmd "github.com/git-bug/git-bug/commands/bug"
 	"github.com/git-bug/git-bug/commands/execenv"
-	_select "github.com/git-bug/git-bug/commands/select"
-	"github.com/git-bug/git-bug/entity"
 )
 
 type boardAddBugOptions struct {
@@ -41,32 +36,8 @@ func newBoardAddBugCommand() *cobra.Command {
 }
 
 func runBoardAddBug(env *execenv.Env, opts boardAddBugOptions, args []string) error {
-	board, args, err := ResolveSelected(env.Backend, args)
+	b, columnId, err := resolveColumnId(env, opts.column, args)
 	if err != nil {
-		return err
-	}
-
-	var columnId entity.CombinedId
-
-	switch {
-	case err == nil:
-		// try to parse as column number
-		index, err := strconv.Atoi(opts.column)
-		if err == nil {
-			if index-1 >= 0 && index-1 < len(board.Snapshot().Columns) {
-				columnId = board.Snapshot().Columns[index-1].CombinedId
-			} else {
-				return fmt.Errorf("invalid column")
-			}
-		}
-		fallthrough // could be an Id
-	case _select.IsErrNoValidId(err):
-		board, columnId, err = env.Backend.Boards().ResolveColumn(opts.column)
-		if err != nil {
-			return err
-		}
-	default:
-		// actual error
 		return err
 	}
 
@@ -75,12 +46,12 @@ func runBoardAddBug(env *execenv.Env, opts boardAddBugOptions, args []string) er
 		return err
 	}
 
-	id, _, err := board.AddItemEntity(columnId, bug)
+	id, _, err := b.AddItemEntity(columnId, bug)
 	if err != nil {
 		return err
 	}
 
 	env.Out.Printf("%s created\n", id.Human())
 
-	return board.Commit()
+	return b.Commit()
 }

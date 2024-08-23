@@ -11,7 +11,9 @@ import (
 	"github.com/git-bug/git-bug/repository"
 )
 
-var _ Interface = &Board{}
+var _ ReadOnly = &Board{}
+var _ ReadWrite = &Board{}
+var _ entity.Interface = &Board{}
 
 // 1: original format
 const formatVersion = 1
@@ -28,9 +30,8 @@ var def = dag.Definition{
 
 var ClockLoader = dag.ClockLoader(def)
 
-type Interface interface {
-	dag.Interface[*Snapshot, Operation]
-}
+type ReadOnly dag.ReadOnly[*Snapshot, Operation]
+type ReadWrite dag.ReadWrite[*Snapshot, Operation]
 
 // Board holds the data of a project board.
 type Board struct {
@@ -115,8 +116,8 @@ func (board *Board) Operations() []Operation {
 	return result
 }
 
-// Compile a board in an easily usable snapshot
-func (board *Board) Compile() *Snapshot {
+// Snapshot compiles a board in an easily usable snapshot
+func (board *Board) Snapshot() *Snapshot {
 	snap := &Snapshot{
 		id: board.Id(),
 	}

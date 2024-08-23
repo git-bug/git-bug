@@ -16,8 +16,8 @@ type Draft struct {
 	// of the Operation that created the Draft
 	combinedId entity.CombinedId
 
-	Author  identity.Interface
-	Title   string
+	author  identity.Interface
+	title   string
 	Message string
 
 	// Creation time of the comment.
@@ -31,6 +31,14 @@ func (d *Draft) CombinedId() entity.CombinedId {
 		panic("no combined id")
 	}
 	return d.combinedId
+}
+
+func (d *Draft) Author() identity.Interface {
+	return d.author
+}
+
+func (d *Draft) Title() string {
+	return d.title
 }
 
 // FormatTimeRel format the UnixTime of the comment for human consumption

@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/git-bug/git-bug/cache"
 	buginput "github.com/git-bug/git-bug/commands/bug/input"
 	"github.com/git-bug/git-bug/commands/execenv"
 	_select "github.com/git-bug/git-bug/commands/select"
@@ -52,29 +53,8 @@ func newBoardAddDraftCommand() *cobra.Command {
 }
 
 func runBoardAddDraft(env *execenv.Env, opts boardAddDraftOptions, args []string) error {
-	b, args, err := ResolveSelected(env.Backend, args)
-
-	var columnId entity.CombinedId
-
-	switch {
-	case err == nil:
-		// try to parse as column number
-		index, err := strconv.Atoi(opts.column)
-		if err == nil {
-			if index-1 >= 0 && index-1 < len(b.Snapshot().Columns) {
-				columnId = b.Snapshot().Columns[index-1].CombinedId
-			} else {
-				return fmt.Errorf("invalid column")
-			}
-		}
-		fallthrough // could be an Id
-	case _select.IsErrNoValidId(err):
-		b, columnId, err = env.Backend.Boards().ResolveColumn(opts.column)
-		if err != nil {
-			return err
-		}
-	default:
-		// actual error
+	b, columnId, err := resolveColumnId(env, opts.column, args)
+	if err != nil {
 		return err
 	}
 
@@ -105,4 +85,28 @@ func runBoardAddDraft(env *execenv.Env, opts boardAddDraftOptions, args []string
 	env.Out.Printf("%s created\n", id.Human())
 
 	return b.Commit()
+}
+
+func resolveColumnId(env *execenv.Env, column string, args []string) (*cache.BoardCache, entity.CombinedId, error) {
+	if column == "" {
+		return nil, entity.UnsetCombinedId, fmt.Errorf("flag --column is required")
+	}
+
+	b, args, err := ResolveSelected(env.Backend, args)
+
+	switch {
+	case err == nil:
+		// we have a pre-selected board, try to parse as column number
+		index, err := strconv.Atoi(column)
+		if err == nil && index-1 >= 0 && index-1 < len(b.Snapshot().Columns) {
+			return b, b.Snapshot().Columns[index-1].CombinedId, nil
+		}
+		fallthrough // could be an Id
+	case _select.IsErrNoValidId(err):
+		return env.Backend.Boards().ResolveColumn(column)
+
+	default:
+		// actual error
+		return nil, entity.UnsetCombinedId, err
+	}
 }

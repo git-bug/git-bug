@@ -11,7 +11,7 @@ import (
 
 // BoardCache is a wrapper around a Board. It provides multiple functions:
 //
-// 1. Provide a higher level API to use than the raw API from Board.
+// 1. Provides a higher level API to use than the raw API from Board.
 // 2. Maintain an up-to-date Snapshot available.
 // 3. Deal with concurrency.
 type BoardCache struct {
@@ -24,7 +24,7 @@ func NewBoardCache(b *board.Board, repo repository.ClockedRepo, getUserIdentity 
 			repo:            repo,
 			entityUpdated:   entityUpdated,
 			getUserIdentity: getUserIdentity,
-			entity:          &withSnapshot[*board.Snapshot, board.Operation]{Interface: b},
+			entity:          newWithSnapshot[*board.Snapshot, board.Operation](b),
 		},
 	}
 }

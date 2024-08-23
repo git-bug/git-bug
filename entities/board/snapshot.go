@@ -20,6 +20,10 @@ type Column struct {
 
 type Item interface {
 	CombinedId() entity.CombinedId
+
+	Author() identity.Interface
+	Title() string
+
 	// TODO: all items have status?
 	// Status() common.Status
 }
@@ -106,6 +110,7 @@ func (snap *Snapshot) HasAnyParticipant(ids ...entity.Id) bool {
 	return false
 }
 
+// ItemCount returns the number of items (draft, entity) in the board.
 func (snap *Snapshot) ItemCount() int {
 	var count int
 	for _, column := range snap.Columns {

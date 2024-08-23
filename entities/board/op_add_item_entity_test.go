@@ -20,6 +20,6 @@ func TestAddItemEntityOpSerialize(t *testing.T) {
 			&bug.Bug{}: entity.MakeResolver(b),
 		}
 
-		return NewAddItemEntityOp(author, unixTime, "foo", b), resolvers
+		return NewAddItemEntityOp(author, unixTime, "foo", EntityTypeBug, b), resolvers
 	})
 }
