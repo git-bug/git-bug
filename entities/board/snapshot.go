@@ -18,14 +18,22 @@ type Column struct {
 	Items      []Item
 }
 
+// Item is the interface that board item (draft, bug ...) need to implement.
 type Item interface {
+	// CombinedId returns the global identifier of the item.
 	CombinedId() entity.CombinedId
 
+	// Author returns the author of the item.
 	Author() identity.Interface
+
+	// Title returns the title of the item.
 	Title() string
 
-	// TODO: all items have status?
+	// TODO: add status, show bug's status, draft has no status
 	// Status() common.Status
+
+	// TODO: add labels, show bug's label, draft has no label
+	// Labels() []common.Label
 }
 
 var _ dag.Snapshot = &Snapshot{}
