@@ -1,4 +1,4 @@
-package bug
+package board
 
 import (
 	"github.com/git-bug/git-bug/entities/identity"

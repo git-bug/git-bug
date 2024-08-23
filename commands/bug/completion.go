@@ -12,7 +12,7 @@ import (
 	"github.com/git-bug/git-bug/entities/common"
 )
 
-// BugCompletion complete a bug id
+// BugCompletion perform bug completion (id, title) on the environment backend
 func BugCompletion(env *execenv.Env) completion.ValidArgsFunction {
 	return func(cmd *cobra.Command, args []string, toComplete string) (completions []string, directives cobra.ShellCompDirective) {
 		if err := execenv.LoadBackend(env)(cmd, args); err != nil {
@@ -26,6 +26,7 @@ func BugCompletion(env *execenv.Env) completion.ValidArgsFunction {
 	}
 }
 
+// BugWithBackend perform bug completion (id, title) on the given backend
 func BugWithBackend(backend *cache.RepoCache, toComplete string) (completions []string, directives cobra.ShellCompDirective) {
 	for _, id := range backend.Bugs().AllIds() {
 		if strings.Contains(id.String(), strings.TrimSpace(toComplete)) {

@@ -54,19 +54,21 @@ func (op *AddItemEntityOperation) Validate() error {
 
 func (op *AddItemEntityOperation) Apply(snapshot *Snapshot) {
 	if op.entity == nil {
+		// entity was not found while unmarshalling/resolving
 		return
 	}
 
 	// Recreate the combined Id to match on
 	combinedId := entity.CombineIds(snapshot.Id(), op.ColumnId)
 
+	// search the column
 	for _, column := range snapshot.Columns {
 		if column.CombinedId == combinedId {
 			switch op.EntityType {
 			case EntityTypeBug:
 				column.Items = append(column.Items, &BugItem{
-					combinedId: entity.CombineIds(snapshot.Id(), op.entity.Id()),
-					Bug:        op.entity.(bug.Interface),
+					combinedId: entity.CombineIds(snapshot.Id(), op.Id()),
+					Bug:        op.entity.(dag.CompileTo[*bug.Snapshot]),
 				})
 			}
 			snapshot.addParticipant(op.Author())
@@ -76,7 +78,7 @@ func (op *AddItemEntityOperation) Apply(snapshot *Snapshot) {
 }
 
 func NewAddItemEntityOp(author identity.Interface, unixTime int64, columnId entity.Id, entityType ItemEntityType, e entity.Interface) *AddItemEntityOperation {
-	// Note: due to import cycle we are not able to properly check the type of the entity here;
+	// Note: due to import cycle we are not able to sanity check the type of the entity here;
 	// proceed with caution!
 	return &AddItemEntityOperation{
 		OpBase:     dag.NewOpBase(AddItemEntityOp, author, unixTime),
@@ -88,7 +90,7 @@ func NewAddItemEntityOp(author identity.Interface, unixTime int64, columnId enti
 }
 
 // AddItemEntity is a convenience function to add an entity item to a Board
-func AddItemEntity(b Interface, author identity.Interface, unixTime int64, columnId entity.Id, entityType ItemEntityType, e entity.Interface, metadata map[string]string) (entity.CombinedId, *AddItemEntityOperation, error) {
+func AddItemEntity(b ReadWrite, author identity.Interface, unixTime int64, columnId entity.Id, entityType ItemEntityType, e entity.Interface, metadata map[string]string) (entity.CombinedId, *AddItemEntityOperation, error) {
 	op := NewAddItemEntityOp(author, unixTime, columnId, entityType, e)
 	for key, val := range metadata {
 		op.SetMetadata(key, val)

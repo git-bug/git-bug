@@ -31,6 +31,7 @@ func NewRepoCacheBoard(repo repository.ClockedRepo,
 		ReadWithResolver:    board.ReadWithResolver,
 		ReadAllWithResolver: board.ReadAllWithResolver,
 		Remove:              board.Remove,
+		RemoveAll:           board.RemoveAll,
 		MergeAll:            board.MergeAll,
 	}
 
@@ -44,6 +45,15 @@ func NewRepoCacheBoard(repo repository.ClockedRepo,
 	return &RepoCacheBoard{SubCache: sc}
 }
 
+// ResolveBoardCreateMetadata retrieve a board that has the exact given metadata on its Create operation, that is, the first operation.
+// It fails if multiple bugs match.
+func (c *RepoCacheBoard) ResolveBoardCreateMetadata(key string, value string) (*BoardCache, error) {
+	return c.ResolveMatcher(func(excerpt *BoardExcerpt) bool {
+		return excerpt.CreateMetadata[key] == value
+	})
+}
+
+// ResolveColumn finds the board and column id that matches the given prefix.
 func (c *RepoCacheBoard) ResolveColumn(prefix string) (*BoardCache, entity.CombinedId, error) {
 	boardPrefix, _ := entity.SeparateIds(prefix)
 	boardCandidate := make([]entity.Id, 0, 5)
@@ -88,6 +98,10 @@ func (c *RepoCacheBoard) ResolveColumn(prefix string) (*BoardCache, entity.Combi
 	return matchingBoard, matchingColumnId, nil
 }
 
+// TODO: resolve item?
+
+// New creates a new board.
+// The new board is written in the repository (commit)
 func (c *RepoCacheBoard) New(title, description string, columns []string) (*BoardCache, *board.CreateOperation, error) {
 	author, err := c.getUserIdentity()
 	if err != nil {
@@ -97,11 +111,13 @@ func (c *RepoCacheBoard) New(title, description string, columns []string) (*Boar
 	return c.NewRaw(author, time.Now().Unix(), title, description, columns, nil)
 }
 
+// NewDefaultColumns creates a new board with the default columns.
+// The new board is written in the repository (commit)
 func (c *RepoCacheBoard) NewDefaultColumns(title, description string) (*BoardCache, *board.CreateOperation, error) {
 	return c.New(title, description, board.DefaultColumns)
 }
 
-// NewRaw create a new board with the given title, description and columns.
+// NewRaw create a new board with the given title, description, and columns.
 // The new board is written in the repository (commit).
 func (c *RepoCacheBoard) NewRaw(author identity.Interface, unixTime int64, title, description string, columns []string, metadata map[string]string) (*BoardCache, *board.CreateOperation, error) {
 	b, op, err := board.Create(author, unixTime, title, description, columns, metadata)

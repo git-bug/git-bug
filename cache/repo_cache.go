@@ -105,12 +105,12 @@ func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, chan 
 		identity.Interface(nil): entity.ResolverFunc[*IdentityCache](c.identities.Resolve),
 		&IdentityCache{}:        entity.ResolverFunc[*IdentityCache](c.identities.Resolve),
 		&IdentityExcerpt{}:      entity.ResolverFunc[*IdentityExcerpt](c.identities.ResolveExcerpt),
-		bug.Interface(nil):      entity.ResolverFunc[*BugCache](c.bugs.Resolve),
+		bug.ReadOnly(nil):       entity.ResolverFunc[*BugCache](c.bugs.Resolve),
 		&bug.Bug{}:              entity.ResolverFunc[*BugCache](c.bugs.Resolve),
 		&BugCache{}:             entity.ResolverFunc[*BugCache](c.bugs.Resolve),
 		&BugExcerpt{}:           entity.ResolverFunc[*BugExcerpt](c.bugs.ResolveExcerpt),
-		board.Interface(nil):    entity.ResolverFunc[*BoardCache](c.boards.Resolve),
-		&bug.Bug{}:              entity.ResolverFunc[*BoardCache](c.boards.Resolve),
+		board.ReadOnly(nil):     entity.ResolverFunc[*BoardCache](c.boards.Resolve),
+		&board.Board{}:          entity.ResolverFunc[*BoardCache](c.boards.Resolve),
 		&BoardCache{}:           entity.ResolverFunc[*BoardCache](c.boards.Resolve),
 		&BoardExcerpt{}:         entity.ResolverFunc[*BoardExcerpt](c.boards.ResolveExcerpt),
 	}
@@ -249,9 +249,9 @@ type BuildEvent struct {
 	Typename string
 	// Event is the type of the event.
 	Event BuildEventType
-	// Total is the total number of element being built. Set if Event is BuildEventStarted.
+	// Total is the total number of elements being built. Set if Event is BuildEventStarted.
 	Total int64
-	// Progress is the current count of processed element. Set if Event is BuildEventProgress.
+	// Progress is the current count of processed elements. Set if Event is BuildEventProgress.
 	Progress int64
 }
 

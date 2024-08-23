@@ -269,9 +269,9 @@ func operationUnmarshaler(raw json.RawMessage, resolvers entity.Resolvers) (dag.
 	return op, nil
 }
 
-// Compile compute a view of the final state. This is what we would use to display the state
+// Snapshot computes a view of the final state. This is what we would use to display the state
 // in a user interface.
-func (pc ProjectConfig) Compile() *Snapshot {
+func (pc ProjectConfig) Snapshot() *Snapshot {
 	// Note: this would benefit from caching, but it's a simple example
 	snap := &Snapshot{
 		// default value
@@ -335,7 +335,7 @@ func Example_entity() {
 	confIsaac, _ := Read(repoIsaac, confRene.Id())
 
 	// Compile gives the current state of the config
-	snapshot := confIsaac.Compile()
+	snapshot := confIsaac.Snapshot()
 	for admin, _ := range snapshot.Administrator {
 		fmt.Println(admin.DisplayName())
 	}
