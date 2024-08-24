@@ -23,7 +23,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sys/execabs"
 
-	"github.com/MichaelMure/git-bug/util/lamport"
+	"github.com/git-bug/git-bug/util/lamport"
 )
 
 const clockPath = "clocks"

@@ -21,14 +21,14 @@ import (
 	"github.com/skratchdot/open-golang/open"
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/api/auth"
-	"github.com/MichaelMure/git-bug/api/graphql"
-	httpapi "github.com/MichaelMure/git-bug/api/http"
-	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/commands/execenv"
-	"github.com/MichaelMure/git-bug/entities/identity"
-	"github.com/MichaelMure/git-bug/repository"
-	"github.com/MichaelMure/git-bug/webui"
+	"github.com/git-bug/git-bug/api/auth"
+	"github.com/git-bug/git-bug/api/graphql"
+	httpapi "github.com/git-bug/git-bug/api/http"
+	"github.com/git-bug/git-bug/cache"
+	"github.com/git-bug/git-bug/commands/execenv"
+	"github.com/git-bug/git-bug/entities/identity"
+	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/webui"
 )
 
 const webUIOpenConfigKey = "git-bug.webui.open"

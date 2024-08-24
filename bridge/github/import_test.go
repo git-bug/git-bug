@@ -9,15 +9,15 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/MichaelMure/git-bug/bridge/core"
-	"github.com/MichaelMure/git-bug/bridge/core/auth"
-	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/entities/bug"
-	"github.com/MichaelMure/git-bug/entities/common"
-	"github.com/MichaelMure/git-bug/entities/identity"
-	"github.com/MichaelMure/git-bug/entity/dag"
-	"github.com/MichaelMure/git-bug/repository"
-	"github.com/MichaelMure/git-bug/util/interrupt"
+	"github.com/git-bug/git-bug/bridge/core"
+	"github.com/git-bug/git-bug/bridge/core/auth"
+	"github.com/git-bug/git-bug/cache"
+	"github.com/git-bug/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/entities/common"
+	"github.com/git-bug/git-bug/entities/identity"
+	"github.com/git-bug/git-bug/entity/dag"
+	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/util/interrupt"
 )
 
 func TestGithubImporter(t *testing.T) {
@@ -34,7 +34,7 @@ func TestGithubImporter(t *testing.T) {
 	defer backend.Close()
 	interrupt.RegisterCleaner(backend.Close)
 
-	author, err := identity.NewIdentity(repo, "Michael Muré", "batolettre@gmail.com")
+	author, err := identity.NewIdentity(repo, "git-bug", "no-reply@git-bug.test")
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -44,7 +44,7 @@ func TestGithubImporter(t *testing.T) {
 	}{
 		{
 			name: "simple issue",
-			url:  "https://github.com/MichaelMure/git-bug-test-github-bridge/issues/1",
+			url:  "https://github.com/git-bug/git-bug-test-github-bridge/issues/1",
 			bug: &bug.Snapshot{
 				Operations: []dag.Operation{
 					bug.NewCreateOp(author, 0, "simple issue", "initial comment", nil),
@@ -55,7 +55,7 @@ func TestGithubImporter(t *testing.T) {
 		},
 		{
 			name: "empty issue",
-			url:  "https://github.com/MichaelMure/git-bug-test-github-bridge/issues/2",
+			url:  "https://github.com/git-bug/git-bug-test-github-bridge/issues/2",
 			bug: &bug.Snapshot{
 				Operations: []dag.Operation{
 					bug.NewCreateOp(author, 0, "empty issue", "", nil),
@@ -64,14 +64,14 @@ func TestGithubImporter(t *testing.T) {
 		},
 		{
 			name: "complex issue",
-			url:  "https://github.com/MichaelMure/git-bug-test-github-bridge/issues/3",
+			url:  "https://github.com/git-bug/git-bug-test-github-bridge/issues/3",
 			bug: &bug.Snapshot{
 				Operations: []dag.Operation{
 					bug.NewCreateOp(author, 0, "complex issue", "initial comment", nil),
 					bug.NewLabelChangeOperation(author, 0, []bug.Label{"bug"}, []bug.Label{}),
 					bug.NewLabelChangeOperation(author, 0, []bug.Label{"duplicate"}, []bug.Label{}),
 					bug.NewLabelChangeOperation(author, 0, []bug.Label{}, []bug.Label{"duplicate"}),
-					bug.NewAddCommentOp(author, 0, "### header\n\n**bold**\n\n_italic_\n\n> with quote\n\n`inline code`\n\n```\nmultiline code\n```\n\n- bulleted\n- list\n\n1. numbered\n1. list\n\n- [ ] task\n- [x] list\n\n@MichaelMure mention\n\n#2 reference issue\n#3 auto-reference issue\n\n![image](https://user-images.githubusercontent.com/294669/56870222-811faf80-6a0c-11e9-8f2c-f0beb686303f.png)", nil),
+					bug.NewAddCommentOp(author, 0, "### header\n\n**bold**\n\n_italic_\n\n> with quote\n\n`inline code`\n\n```\nmultiline code\n```\n\n- bulleted\n- list\n\n1. numbered\n1. list\n\n- [ ] task\n- [x] list\n\n@git-bug mention\n\n#2 reference issue\n#3 auto-reference issue\n\n![image](https://user-images.githubusercontent.com/294669/56870222-811faf80-6a0c-11e9-8f2c-f0beb686303f.png)", nil),
 					bug.NewSetTitleOp(author, 0, "complex issue edited", "complex issue"),
 					bug.NewSetTitleOp(author, 0, "complex issue", "complex issue edited"),
 					bug.NewSetStatusOp(author, 0, common.ClosedStatus),
@@ -81,7 +81,7 @@ func TestGithubImporter(t *testing.T) {
 		},
 		{
 			name: "editions",
-			url:  "https://github.com/MichaelMure/git-bug-test-github-bridge/issues/4",
+			url:  "https://github.com/git-bug/git-bug-test-github-bridge/issues/4",
 			bug: &bug.Snapshot{
 				Operations: []dag.Operation{
 					bug.NewCreateOp(author, 0, "editions", "initial comment edited", nil),
@@ -93,7 +93,7 @@ func TestGithubImporter(t *testing.T) {
 		},
 		{
 			name: "comment deletion",
-			url:  "https://github.com/MichaelMure/git-bug-test-github-bridge/issues/5",
+			url:  "https://github.com/git-bug/git-bug-test-github-bridge/issues/5",
 			bug: &bug.Snapshot{
 				Operations: []dag.Operation{
 					bug.NewCreateOp(author, 0, "comment deletion", "", nil),
@@ -102,7 +102,7 @@ func TestGithubImporter(t *testing.T) {
 		},
 		{
 			name: "edition deletion",
-			url:  "https://github.com/MichaelMure/git-bug-test-github-bridge/issues/6",
+			url:  "https://github.com/git-bug/git-bug-test-github-bridge/issues/6",
 			bug: &bug.Snapshot{
 				Operations: []dag.Operation{
 					bug.NewCreateOp(author, 0, "edition deletion", "initial comment", nil),
@@ -114,7 +114,7 @@ func TestGithubImporter(t *testing.T) {
 		},
 		{
 			name: "hidden comment",
-			url:  "https://github.com/MichaelMure/git-bug-test-github-bridge/issues/7",
+			url:  "https://github.com/git-bug/git-bug-test-github-bridge/issues/7",
 			bug: &bug.Snapshot{
 				Operations: []dag.Operation{
 					bug.NewCreateOp(author, 0, "hidden comment", "initial comment", nil),
@@ -124,7 +124,7 @@ func TestGithubImporter(t *testing.T) {
 		},
 		{
 			name: "transferred issue",
-			url:  "https://github.com/MichaelMure/git-bug-test-github-bridge/issues/8",
+			url:  "https://github.com/git-bug/git-bug-test-github-bridge/issues/8",
 			bug: &bug.Snapshot{
 				Operations: []dag.Operation{
 					bug.NewCreateOp(author, 0, "transfered issue", "", nil),
@@ -133,7 +133,7 @@ func TestGithubImporter(t *testing.T) {
 		},
 		{
 			name: "unicode control characters",
-			url:  "https://github.com/MichaelMure/git-bug-test-github-bridge/issues/10",
+			url:  "https://github.com/git-bug/git-bug-test-github-bridge/issues/10",
 			bug: &bug.Snapshot{
 				Operations: []dag.Operation{
 					bug.NewCreateOp(author, 0, "unicode control characters", "u0000: \nu0001: \nu0002: \nu0003: \nu0004: \nu0005: \nu0006: \nu0007: \nu0008: \nu0009: \t\nu0010: \nu0011: \nu0012: \nu0013: \nu0014: \nu0015: \nu0016: \nu0017: \nu0018: \nu0019:", nil),
@@ -154,7 +154,7 @@ func TestGithubImporter(t *testing.T) {
 
 	importer := &githubImporter{}
 	err = importer.Init(ctx, backend, core.Configuration{
-		confKeyOwner:        "MichaelMure",
+		confKeyOwner:        "git-bug",
 		confKeyProject:      "git-bug-test-github-bridge",
 		confKeyDefaultLogin: login,
 	})

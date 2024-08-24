@@ -10,7 +10,7 @@ import (
 	"sync/atomic"
 
 	"github.com/99designs/gqlgen/graphql"
-	"github.com/MichaelMure/git-bug/api/graphql/models"
+	"github.com/git-bug/git-bug/api/graphql/models"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 

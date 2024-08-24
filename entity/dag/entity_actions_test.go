@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/repository"
 )
 
 func allEntities(t testing.TB, bugs <-chan entity.StreamedEntity[*Foo]) []*Foo {

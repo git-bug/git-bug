@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/repository"
 )
 
 func TestCredential(t *testing.T) {

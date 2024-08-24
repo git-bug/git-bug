@@ -4,7 +4,7 @@ import (
 	"context"
 	"image/color"
 
-	"github.com/MichaelMure/git-bug/api/graphql/graph"
+	"github.com/git-bug/git-bug/api/graphql/graph"
 )
 
 var _ graph.ColorResolver = &colorResolver{}

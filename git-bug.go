@@ -4,7 +4,7 @@
 package main
 
 import (
-	"github.com/MichaelMure/git-bug/commands"
+	"github.com/git-bug/git-bug/commands"
 )
 
 func main() {

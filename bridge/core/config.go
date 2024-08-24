@@ -3,9 +3,9 @@ package core
 import (
 	"fmt"
 
-	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/entities/identity"
-	"github.com/MichaelMure/git-bug/entity"
+	"github.com/git-bug/git-bug/cache"
+	"github.com/git-bug/git-bug/entities/identity"
+	"github.com/git-bug/git-bug/entity"
 )
 
 func FinishConfig(repo *cache.RepoCache, metaKey string, login string) error {

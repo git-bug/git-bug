@@ -7,8 +7,8 @@ package connections
 import (
 	"fmt"
 
-	"github.com/MichaelMure/git-bug/api/graphql/models"
-	"github.com/MichaelMure/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/api/graphql/models"
+	"github.com/git-bug/git-bug/entities/bug"
 )
 
 // BugCommentEdgeMaker define a function that take a bug.Comment and an offset and

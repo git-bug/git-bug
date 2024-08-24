@@ -7,8 +7,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/MichaelMure/git-bug/commands/input"
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/git-bug/git-bug/commands/input"
+	"github.com/git-bug/git-bug/repository"
 )
 
 const messageFilename = "BUG_MESSAGE_EDITMSG"

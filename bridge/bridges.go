@@ -2,13 +2,13 @@
 package bridge
 
 import (
-	"github.com/MichaelMure/git-bug/bridge/core"
-	"github.com/MichaelMure/git-bug/bridge/github"
-	"github.com/MichaelMure/git-bug/bridge/gitlab"
-	"github.com/MichaelMure/git-bug/bridge/jira"
-	"github.com/MichaelMure/git-bug/bridge/launchpad"
-	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/git-bug/git-bug/bridge/core"
+	"github.com/git-bug/git-bug/bridge/github"
+	"github.com/git-bug/git-bug/bridge/gitlab"
+	"github.com/git-bug/git-bug/bridge/jira"
+	"github.com/git-bug/git-bug/bridge/launchpad"
+	"github.com/git-bug/git-bug/cache"
+	"github.com/git-bug/git-bug/repository"
 )
 
 func init() {

@@ -5,7 +5,7 @@ import (
 
 	lru "github.com/hashicorp/golang-lru/v2"
 
-	"github.com/MichaelMure/git-bug/entity"
+	"github.com/git-bug/git-bug/entity"
 )
 
 type lruIdCache struct {

@@ -6,9 +6,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/repository"
-	"github.com/MichaelMure/git-bug/util/lamport"
+	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/util/lamport"
 )
 
 // Test the commit and load of an Identity with multiple versions

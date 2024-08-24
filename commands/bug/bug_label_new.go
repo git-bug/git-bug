@@ -3,8 +3,8 @@ package bugcmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/commands/execenv"
-	"github.com/MichaelMure/git-bug/util/text"
+	"github.com/git-bug/git-bug/commands/execenv"
+	"github.com/git-bug/git-bug/util/text"
 )
 
 func newBugLabelNewCommand(env *execenv.Env) *cobra.Command {

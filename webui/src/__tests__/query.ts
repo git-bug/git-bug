@@ -123,9 +123,9 @@ it('parses a complex query', () => {
 });
 
 it('parses a key:value:value query', () => {
-  expect(parse(`meta:github:"https://github.com/MichaelMure/git-bug"`)).toEqual(
+  expect(parse(`meta:github:"https://github.com/git-bug/git-bug"`)).toEqual(
     {
-      meta: [`github:"https://github.com/MichaelMure/git-bug"`],
+      meta: [`github:"https://github.com/git-bug/git-bug"`],
     }
   );
 });

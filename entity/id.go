@@ -67,7 +67,7 @@ func (i Id) MarshalGQL(w io.Writer) {
 func (i Id) Validate() error {
 	// Special case to detect outdated repo
 	if len(i) == 40 {
-		return fmt.Errorf("outdated repository format, please use https://github.com/MichaelMure/git-bug-migration to upgrade")
+		return fmt.Errorf("outdated repository format, please use https://github.com/git-bug/git-bug-migration to upgrade")
 	}
 	if len(i) != idLength {
 		return fmt.Errorf("invalid length")

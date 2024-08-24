@@ -5,7 +5,7 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/git-bug/git-bug/repository"
 )
 
 // ClockLoader is the repository.ClockLoader for Entity

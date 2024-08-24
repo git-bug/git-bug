@@ -4,8 +4,8 @@ import (
 	"context"
 	"image/color"
 
-	"github.com/MichaelMure/git-bug/api/graphql/graph"
-	"github.com/MichaelMure/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/api/graphql/graph"
+	"github.com/git-bug/git-bug/entities/bug"
 )
 
 var _ graph.LabelResolver = &labelResolver{}

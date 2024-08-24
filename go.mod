@@ -1,4 +1,4 @@
-module github.com/MichaelMure/git-bug
+module github.com/git-bug/git-bug
 
 go 1.22.5
 

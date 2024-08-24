@@ -3,9 +3,9 @@ package bridgecmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/bridge/core/auth"
-	"github.com/MichaelMure/git-bug/commands/completion"
-	"github.com/MichaelMure/git-bug/commands/execenv"
+	"github.com/git-bug/git-bug/bridge/core/auth"
+	"github.com/git-bug/git-bug/commands/completion"
+	"github.com/git-bug/git-bug/commands/execenv"
 )
 
 func newBridgeAuthRm(env *execenv.Env) *cobra.Command {

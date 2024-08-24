@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/MichaelMure/git-bug/bridge/core/auth"
+	"github.com/git-bug/git-bug/bridge/core/auth"
 )
 
 func TestSplitURL(t *testing.T) {
@@ -26,10 +26,10 @@ func TestSplitURL(t *testing.T) {
 		{
 			name: "default url",
 			args: args{
-				url: "https://github.com/MichaelMure/git-bug",
+				url: "https://github.com/git-bug/git-bug",
 			},
 			want: want{
-				owner:   "MichaelMure",
+				owner:   "git-bug",
 				project: "git-bug",
 				err:     nil,
 			},
@@ -37,10 +37,10 @@ func TestSplitURL(t *testing.T) {
 		{
 			name: "default issues url",
 			args: args{
-				url: "https://github.com/MichaelMure/git-bug/issues",
+				url: "https://github.com/git-bug/git-bug/issues",
 			},
 			want: want{
-				owner:   "MichaelMure",
+				owner:   "git-bug",
 				project: "git-bug",
 				err:     nil,
 			},
@@ -48,10 +48,10 @@ func TestSplitURL(t *testing.T) {
 		{
 			name: "default url with git extension",
 			args: args{
-				url: "https://github.com/MichaelMure/git-bug.git",
+				url: "https://github.com/git-bug/git-bug.git",
 			},
 			want: want{
-				owner:   "MichaelMure",
+				owner:   "git-bug",
 				project: "git-bug",
 				err:     nil,
 			},
@@ -59,10 +59,10 @@ func TestSplitURL(t *testing.T) {
 		{
 			name: "url with git protocol",
 			args: args{
-				url: "git://github.com/MichaelMure/git-bug.git",
+				url: "git://github.com/git-bug/git-bug.git",
 			},
 			want: want{
-				owner:   "MichaelMure",
+				owner:   "git-bug",
 				project: "git-bug",
 				err:     nil,
 			},
@@ -70,10 +70,10 @@ func TestSplitURL(t *testing.T) {
 		{
 			name: "ssh url",
 			args: args{
-				url: "git@github.com:MichaelMure/git-bug.git",
+				url: "git@github.com:git-bug/git-bug.git",
 			},
 			want: want{
-				owner:   "MichaelMure",
+				owner:   "git-bug",
 				project: "git-bug",
 				err:     nil,
 			},
@@ -81,7 +81,7 @@ func TestSplitURL(t *testing.T) {
 		{
 			name: "bad url",
 			args: args{
-				url: "https://githb.com/MichaelMure/git-bug.git",
+				url: "https://githb.com/git-bug/git-bug.git",
 			},
 			want: want{
 				err: ErrBadProjectURL,
@@ -115,26 +115,26 @@ func TestValidateUsername(t *testing.T) {
 	}{
 		{
 			name:  "existing username",
-			input: "MichaelMure",
-			fixed: "MichaelMure",
+			input: "git-bug",
+			fixed: "git-bug",
 			ok:    true,
 		},
 		{
 			name:  "existing username with bad case",
-			input: "MicHaelmurE",
-			fixed: "MichaelMure",
+			input: "GiT-bUg",
+			fixed: "git-bug",
 			ok:    true,
 		},
 		{
 			name:  "existing organisation",
-			input: "ipfs",
-			fixed: "ipfs",
+			input: "git-bug",
+			fixed: "git-bug",
 			ok:    true,
 		},
 		{
 			name:  "existing organisation with bad case",
-			input: "iPfS",
-			fixed: "ipfs",
+			input: "gIt-BuG",
+			fixed: "git-bug",
 			ok:    true,
 		},
 		{
@@ -183,7 +183,7 @@ func TestValidateProject(t *testing.T) {
 			name: "public repository and token with scope 'public_repo'",
 			args: args{
 				project: "git-bug",
-				owner:   "MichaelMure",
+				owner:   "git-bug",
 				token:   tokenPublic,
 			},
 			want: true,
@@ -192,7 +192,7 @@ func TestValidateProject(t *testing.T) {
 			name: "private repository and token with scope 'repo'",
 			args: args{
 				project: "git-bug-test-github-bridge",
-				owner:   "MichaelMure",
+				owner:   "git-bug",
 				token:   tokenPrivate,
 			},
 			want: true,
@@ -201,7 +201,7 @@ func TestValidateProject(t *testing.T) {
 			name: "private repository and token with scope 'public_repo'",
 			args: args{
 				project: "git-bug-test-github-bridge",
-				owner:   "MichaelMure",
+				owner:   "git-bug",
 				token:   tokenPublic,
 			},
 			want: false,

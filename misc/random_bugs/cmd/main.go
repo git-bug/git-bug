@@ -3,9 +3,9 @@ package main
 import (
 	"os"
 
-	"github.com/MichaelMure/git-bug/entities/bug"
-	rb "github.com/MichaelMure/git-bug/misc/random_bugs"
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/git-bug/git-bug/entities/bug"
+	rb "github.com/git-bug/git-bug/misc/random_bugs"
+	"github.com/git-bug/git-bug/repository"
 )
 
 // This program will randomly generate a collection of bugs in the repository

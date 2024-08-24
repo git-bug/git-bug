@@ -15,11 +15,11 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/MichaelMure/git-bug/bridge/core"
-	"github.com/MichaelMure/git-bug/bridge/core/auth"
-	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/commands/input"
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/git-bug/git-bug/bridge/core"
+	"github.com/git-bug/git-bug/bridge/core/auth"
+	"github.com/git-bug/git-bug/cache"
+	"github.com/git-bug/git-bug/commands/input"
+	"github.com/git-bug/git-bug/repository"
 )
 
 const githubClientID = "ce3600aa56c2e69f18a5" // git-bug org

@@ -13,9 +13,9 @@ import (
 
 	"golang.org/x/crypto/ssh/terminal"
 
-	"github.com/MichaelMure/git-bug/bridge/core/auth"
-	"github.com/MichaelMure/git-bug/util/colors"
-	"github.com/MichaelMure/git-bug/util/interrupt"
+	"github.com/git-bug/git-bug/bridge/core/auth"
+	"github.com/git-bug/git-bug/util/colors"
+	"github.com/git-bug/git-bug/util/interrupt"
 )
 
 // PromptValidator is a validator for a user entry

@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/MichaelMure/git-bug/commands/bug/testenv"
+	"github.com/git-bug/git-bug/commands/bug/testenv"
 )
 
 func TestBugCommentNew(t *testing.T) {

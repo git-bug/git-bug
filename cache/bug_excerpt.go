@@ -4,10 +4,10 @@ import (
 	"encoding/gob"
 	"time"
 
-	"github.com/MichaelMure/git-bug/entities/bug"
-	"github.com/MichaelMure/git-bug/entities/common"
-	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/util/lamport"
+	"github.com/git-bug/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/entities/common"
+	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/util/lamport"
 )
 
 // Package initialisation used to register the type for (de)serialization

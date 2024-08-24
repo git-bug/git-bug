@@ -11,11 +11,11 @@ import (
 	m "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/MichaelMure/git-bug/bridge/github/mocks"
-	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/entities/bug"
-	"github.com/MichaelMure/git-bug/repository"
-	"github.com/MichaelMure/git-bug/util/interrupt"
+	"github.com/git-bug/git-bug/bridge/github/mocks"
+	"github.com/git-bug/git-bug/cache"
+	"github.com/git-bug/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/util/interrupt"
 )
 
 // using testify/mock and mockery

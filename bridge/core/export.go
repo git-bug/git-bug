@@ -3,7 +3,7 @@ package core
 import (
 	"fmt"
 
-	"github.com/MichaelMure/git-bug/entity"
+	"github.com/git-bug/git-bug/entity"
 )
 
 type ExportEvent int

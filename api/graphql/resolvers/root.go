@@ -2,8 +2,8 @@
 package resolvers
 
 import (
-	"github.com/MichaelMure/git-bug/api/graphql/graph"
-	"github.com/MichaelMure/git-bug/cache"
+	"github.com/git-bug/git-bug/api/graphql/graph"
+	"github.com/git-bug/git-bug/cache"
 )
 
 var _ graph.ResolverRoot = &RootResolver{}

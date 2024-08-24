@@ -7,11 +7,11 @@ import (
 	"github.com/awesome-gocui/gocui"
 	"github.com/pkg/errors"
 
-	"github.com/MichaelMure/git-bug/cache"
-	buginput "github.com/MichaelMure/git-bug/commands/bug/input"
-	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/query"
-	"github.com/MichaelMure/git-bug/util/text"
+	"github.com/git-bug/git-bug/cache"
+	buginput "github.com/git-bug/git-bug/commands/bug/input"
+	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/query"
+	"github.com/git-bug/git-bug/util/text"
 )
 
 var errTerminateMainloop = errors.New("terminate gocui mainloop")

@@ -3,8 +3,8 @@ package usercmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/commands/completion"
-	"github.com/MichaelMure/git-bug/commands/execenv"
+	"github.com/git-bug/git-bug/commands/completion"
+	"github.com/git-bug/git-bug/commands/execenv"
 )
 
 func newUserAdoptCommand(env *execenv.Env) *cobra.Command {

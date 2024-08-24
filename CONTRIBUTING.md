@@ -11,7 +11,7 @@ show a command that [clones the repository][how-to-clone] using SSH, and places
 it in `~/code/git-bug`.
 
 ```
-git clone git@github.com:MichaelMure/git-bug ~/code/git-bug
+git clone git@github.com:git-bug/git-bug ~/code/git-bug
 ```
 
 > [!IMPORTANT]

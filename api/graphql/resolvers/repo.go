@@ -3,13 +3,13 @@ package resolvers
 import (
 	"context"
 
-	"github.com/MichaelMure/git-bug/api/auth"
-	"github.com/MichaelMure/git-bug/api/graphql/connections"
-	"github.com/MichaelMure/git-bug/api/graphql/graph"
-	"github.com/MichaelMure/git-bug/api/graphql/models"
-	"github.com/MichaelMure/git-bug/entities/bug"
-	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/query"
+	"github.com/git-bug/git-bug/api/auth"
+	"github.com/git-bug/git-bug/api/graphql/connections"
+	"github.com/git-bug/git-bug/api/graphql/graph"
+	"github.com/git-bug/git-bug/api/graphql/models"
+	"github.com/git-bug/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/query"
 )
 
 var _ graph.RepositoryResolver = &repoResolver{}

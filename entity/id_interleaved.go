@@ -55,7 +55,7 @@ func (ci CombinedId) MarshalGQL(w io.Writer) {
 func (ci CombinedId) Validate() error {
 	// Special case to detect outdated repo
 	if len(ci) == 40 {
-		return fmt.Errorf("outdated repository format, please use https://github.com/MichaelMure/git-bug-migration to upgrade")
+		return fmt.Errorf("outdated repository format, please use https://github.com/git-bug/git-bug-migration to upgrade")
 	}
 	if len(ci) != idLength {
 		return fmt.Errorf("invalid length")

@@ -3,9 +3,9 @@ package bugcmd
 import (
 	"github.com/spf13/cobra"
 
-	buginput "github.com/MichaelMure/git-bug/commands/bug/input"
-	"github.com/MichaelMure/git-bug/commands/execenv"
-	"github.com/MichaelMure/git-bug/util/text"
+	buginput "github.com/git-bug/git-bug/commands/bug/input"
+	"github.com/git-bug/git-bug/commands/execenv"
+	"github.com/git-bug/git-bug/util/text"
 )
 
 type bugCommentNewOptions struct {
