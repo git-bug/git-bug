@@ -11,7 +11,7 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/go-git/go-billy/v5/memfs"
 
-	"github.com/MichaelMure/git-bug/util/lamport"
+	"github.com/git-bug/git-bug/util/lamport"
 )
 
 var _ ClockedRepo = &mockRepo{}
@@ -115,7 +115,7 @@ func (r *mockRepoCommon) GetCoreEditor() (string, error) {
 // GetRemotes returns the configured remotes repositories.
 func (r *mockRepoCommon) GetRemotes() (map[string]string, error) {
 	return map[string]string{
-		"origin": "git://github.com/MichaelMure/git-bug",
+		"origin": "git://github.com/git-bug/git-bug",
 	}, nil
 }
 

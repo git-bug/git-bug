@@ -9,7 +9,7 @@ import (
 
 	"github.com/shurcooL/githubv4"
 
-	"github.com/MichaelMure/git-bug/bridge/core"
+	"github.com/git-bug/git-bug/bridge/core"
 )
 
 var _ Client = &githubv4.Client{}

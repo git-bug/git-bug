@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/MichaelMure/git-bug/bridge/core"
-	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/commands/input"
+	"github.com/git-bug/git-bug/bridge/core"
+	"github.com/git-bug/git-bug/cache"
+	"github.com/git-bug/git-bug/commands/input"
 )
 
 var ErrBadProjectURL = errors.New("bad Launchpad project URL")

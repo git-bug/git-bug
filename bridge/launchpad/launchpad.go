@@ -4,7 +4,7 @@ package launchpad
 import (
 	"time"
 
-	"github.com/MichaelMure/git-bug/bridge/core"
+	"github.com/git-bug/git-bug/bridge/core"
 )
 
 const (

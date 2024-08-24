@@ -3,8 +3,8 @@ package commands
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/commands/execenv"
-	"github.com/MichaelMure/git-bug/termui"
+	"github.com/git-bug/git-bug/commands/execenv"
+	"github.com/git-bug/git-bug/termui"
 )
 
 func newTermUICommand(env *execenv.Env) *cobra.Command {

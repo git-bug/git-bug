@@ -3,8 +3,8 @@ package cache
 import (
 	"sync"
 
-	"github.com/MichaelMure/git-bug/entity/dag"
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/git-bug/git-bug/entity/dag"
+	"github.com/git-bug/git-bug/repository"
 )
 
 var _ dag.Interface[dag.Snapshot, dag.OperationWithApply[dag.Snapshot]] = &withSnapshot[dag.Snapshot, dag.OperationWithApply[dag.Snapshot]]{}

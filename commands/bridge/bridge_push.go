@@ -8,11 +8,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/bridge"
-	"github.com/MichaelMure/git-bug/bridge/core"
-	"github.com/MichaelMure/git-bug/commands/completion"
-	"github.com/MichaelMure/git-bug/commands/execenv"
-	"github.com/MichaelMure/git-bug/util/interrupt"
+	"github.com/git-bug/git-bug/bridge"
+	"github.com/git-bug/git-bug/bridge/core"
+	"github.com/git-bug/git-bug/commands/completion"
+	"github.com/git-bug/git-bug/commands/execenv"
+	"github.com/git-bug/git-bug/util/interrupt"
 )
 
 func newBridgePushCommand(env *execenv.Env) *cobra.Command {

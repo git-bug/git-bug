@@ -3,12 +3,12 @@ package bug
 import (
 	"fmt"
 
-	"github.com/MichaelMure/git-bug/entities/identity"
-	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/entity/dag"
-	"github.com/MichaelMure/git-bug/repository"
-	"github.com/MichaelMure/git-bug/util/text"
-	"github.com/MichaelMure/git-bug/util/timestamp"
+	"github.com/git-bug/git-bug/entities/identity"
+	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/entity/dag"
+	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/util/text"
+	"github.com/git-bug/git-bug/util/timestamp"
 )
 
 var _ Operation = &CreateOperation{}

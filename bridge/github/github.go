@@ -7,8 +7,8 @@ import (
 
 	"golang.org/x/oauth2"
 
-	"github.com/MichaelMure/git-bug/bridge/core"
-	"github.com/MichaelMure/git-bug/bridge/core/auth"
+	"github.com/git-bug/git-bug/bridge/core"
+	"github.com/git-bug/git-bug/bridge/core/auth"
 )
 
 const (

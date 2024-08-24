@@ -10,10 +10,10 @@ import (
 	"github.com/awesome-gocui/gocui"
 	"github.com/dustin/go-humanize"
 
-	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/query"
-	"github.com/MichaelMure/git-bug/util/colors"
+	"github.com/git-bug/git-bug/cache"
+	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/query"
+	"github.com/git-bug/git-bug/util/colors"
 )
 
 const bugTableView = "bugTableView"

@@ -22,57 +22,57 @@ func TestProjectPath(t *testing.T) {
 		{
 			name: "default url",
 			args: args{
-				url: "https://gitlab.com/MichaelMure/git-bug",
+				url: "https://gitlab.com/git-bug/git-bug",
 			},
 			want: want{
-				path: "MichaelMure/git-bug",
+				path: "git-bug/git-bug",
 				err:  nil,
 			},
 		},
 		{
 			name: "multiple sub groups",
 			args: args{
-				url: "https://gitlab.com/MichaelMure/group/subgroup/git-bug",
+				url: "https://gitlab.com/git-bug/group/subgroup/git-bug",
 			},
 			want: want{
-				path: "MichaelMure/group/subgroup/git-bug",
+				path: "git-bug/group/subgroup/git-bug",
 				err:  nil,
 			},
 		},
 		{
 			name: "default url with git extension",
 			args: args{
-				url: "https://gitlab.com/MichaelMure/git-bug.git",
+				url: "https://gitlab.com/git-bug/git-bug.git",
 			},
 			want: want{
-				path: "MichaelMure/git-bug",
+				path: "git-bug/git-bug",
 				err:  nil,
 			},
 		},
 		{
 			name: "url with git protocol",
 			args: args{
-				url: "git://gitlab.com/MichaelMure/git-bug.git",
+				url: "git://gitlab.com/git-bug/git-bug.git",
 			},
 			want: want{
-				path: "MichaelMure/git-bug",
+				path: "git-bug/git-bug",
 				err:  nil,
 			},
 		},
 		{
 			name: "ssh url",
 			args: args{
-				url: "git@gitlab.com/MichaelMure/git-bug.git",
+				url: "git@gitlab.com/git-bug/git-bug.git",
 			},
 			want: want{
-				path: "MichaelMure/git-bug",
+				path: "git-bug/git-bug",
 				err:  nil,
 			},
 		},
 		{
 			name: "bad url",
 			args: args{
-				url: "---,%gitlab.com/MichaelMure/git-bug.git",
+				url: "---,%gitlab.com/git-bug/git-bug.git",
 			},
 			want: want{
 				err: ErrBadProjectURL,

@@ -24,7 +24,7 @@ name [default]: default
 
 Detected projects:
 [1]: github.com/a-hilaly/git-bug
-[2]: github.com/MichaelMure/git-bug
+[2]: github.com/git-bug/git-bug
 
 [0]: Another project
 
@@ -63,8 +63,8 @@ git bug bridge new \
 # For Gitlab
 git bug bridge new \
     --name=default \
-    --target=github \
-    --url=https://github.com/michaelmure/git-bug \
+    --target=gitlab \
+    --url=https://gitlab.com/git-bug/git-bug \
     --token=$(TOKEN)
 ```
 

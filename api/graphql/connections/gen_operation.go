@@ -7,8 +7,8 @@ package connections
 import (
 	"fmt"
 
-	"github.com/MichaelMure/git-bug/api/graphql/models"
-	"github.com/MichaelMure/git-bug/entity/dag"
+	"github.com/git-bug/git-bug/api/graphql/models"
+	"github.com/git-bug/git-bug/entity/dag"
 )
 
 // DagOperationEdgeMaker define a function that take a dag.Operation and an offset and

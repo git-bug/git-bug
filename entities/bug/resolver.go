@@ -1,8 +1,8 @@
 package bug
 
 import (
-	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/repository"
 )
 
 var _ entity.Resolver = &SimpleResolver{}

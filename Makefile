@@ -9,7 +9,7 @@ ifeq ($(UNAME_S),Darwin)
     XARGS:=xargs
 endif
 
-COMMANDS_PATH:=github.com/MichaelMure/git-bug/commands
+COMMANDS_PATH:=github.com/git-bug/git-bug/commands
 LDFLAGS:=-X ${COMMANDS_PATH}.GitCommit=${GIT_COMMIT} \
 	-X ${COMMANDS_PATH}.GitLastTag=${GIT_LAST_TAG} \
 	-X ${COMMANDS_PATH}.GitExactTag=${GIT_EXACT_TAG}

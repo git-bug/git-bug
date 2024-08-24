@@ -6,7 +6,7 @@ import (
 
 	text "github.com/MichaelMure/go-term-text"
 
-	"github.com/MichaelMure/git-bug/util/colors"
+	"github.com/git-bug/git-bug/util/colors"
 )
 
 type helpBar []struct {

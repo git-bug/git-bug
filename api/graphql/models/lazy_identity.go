@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/entities/identity"
-	"github.com/MichaelMure/git-bug/entity"
+	"github.com/git-bug/git-bug/cache"
+	"github.com/git-bug/git-bug/entities/identity"
+	"github.com/git-bug/git-bug/entity"
 )
 
 // IdentityWrapper is an interface used by the GraphQL resolvers to handle an identity.

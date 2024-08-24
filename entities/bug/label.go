@@ -7,7 +7,7 @@ import (
 
 	fcolor "github.com/fatih/color"
 
-	"github.com/MichaelMure/git-bug/util/text"
+	"github.com/git-bug/git-bug/util/text"
 )
 
 type Label string

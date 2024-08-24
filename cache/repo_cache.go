@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/repository"
-	"github.com/MichaelMure/git-bug/util/multierr"
-	"github.com/MichaelMure/git-bug/util/process"
+	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/util/multierr"
+	"github.com/git-bug/git-bug/util/process"
 )
 
 // 1: original format

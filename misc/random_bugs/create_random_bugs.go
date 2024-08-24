@@ -7,9 +7,9 @@ import (
 
 	"github.com/icrowley/fake"
 
-	"github.com/MichaelMure/git-bug/entities/bug"
-	"github.com/MichaelMure/git-bug/entities/identity"
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/git-bug/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/entities/identity"
+	"github.com/git-bug/git-bug/repository"
 )
 
 type opsGenerator func(bug.Interface, identity.Interface, int64)

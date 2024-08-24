@@ -8,11 +8,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/MichaelMure/git-bug/entities/bug"
-	"github.com/MichaelMure/git-bug/entities/identity"
-	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/query"
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/git-bug/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/entities/identity"
+	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/query"
+	"github.com/git-bug/git-bug/repository"
 )
 
 func TestCache(t *testing.T) {
@@ -331,7 +331,7 @@ func TestCacheEviction(t *testing.T) {
 }
 
 func TestLongDescription(t *testing.T) {
-	// See https://github.com/MichaelMure/git-bug/issues/606
+	// See https://github.com/git-bug/git-bug/issues/606
 
 	text := strings.Repeat("x", 65536)
 

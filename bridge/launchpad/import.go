@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/MichaelMure/git-bug/bridge/core"
-	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/util/text"
+	"github.com/git-bug/git-bug/bridge/core"
+	"github.com/git-bug/git-bug/cache"
+	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/util/text"
 )
 
 type launchpadImporter struct {

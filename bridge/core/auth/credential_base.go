@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/MichaelMure/git-bug/bridge/core"
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/git-bug/git-bug/bridge/core"
+	"github.com/git-bug/git-bug/repository"
 )
 
 type credentialBase struct {

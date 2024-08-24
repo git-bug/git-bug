@@ -5,8 +5,8 @@ import (
 
 	"github.com/xanzy/go-gitlab"
 
-	"github.com/MichaelMure/git-bug/bridge/core"
-	"github.com/MichaelMure/git-bug/bridge/core/auth"
+	"github.com/git-bug/git-bug/bridge/core"
+	"github.com/git-bug/git-bug/bridge/core/auth"
 )
 
 const (

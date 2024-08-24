@@ -3,9 +3,9 @@ package cache
 import (
 	"strings"
 
-	"github.com/MichaelMure/git-bug/entities/common"
-	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/query"
+	"github.com/git-bug/git-bug/entities/common"
+	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/query"
 )
 
 // Filter is a predicate that match a subset of bugs

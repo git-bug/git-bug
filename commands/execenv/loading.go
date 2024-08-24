@@ -8,10 +8,10 @@ import (
 	"github.com/vbauerster/mpb/v8"
 	"github.com/vbauerster/mpb/v8/decor"
 
-	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/entities/identity"
-	"github.com/MichaelMure/git-bug/repository"
-	"github.com/MichaelMure/git-bug/util/interrupt"
+	"github.com/git-bug/git-bug/cache"
+	"github.com/git-bug/git-bug/entities/identity"
+	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/util/interrupt"
 )
 
 // LoadRepo is a pre-run function that load the repository for use in a command

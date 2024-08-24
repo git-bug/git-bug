@@ -4,8 +4,8 @@ package auth
 import (
 	"context"
 
-	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/entity"
+	"github.com/git-bug/git-bug/cache"
+	"github.com/git-bug/git-bug/entity"
 )
 
 // identityCtxKey is a unique context key, accessible only in this package.

@@ -7,7 +7,7 @@ import (
 
 	"github.com/xanzy/go-gitlab"
 
-	"github.com/MichaelMure/git-bug/util/text"
+	"github.com/git-bug/git-bug/util/text"
 )
 
 // Event represents a unified GitLab event (note, label or state event).

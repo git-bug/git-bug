@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 
-	"github.com/MichaelMure/git-bug/commands"
+	"github.com/git-bug/git-bug/commands"
 )
 
 func main() {

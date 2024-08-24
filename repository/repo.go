@@ -8,7 +8,7 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/go-git/go-billy/v5"
 
-	"github.com/MichaelMure/git-bug/util/lamport"
+	"github.com/git-bug/git-bug/util/lamport"
 )
 
 var (

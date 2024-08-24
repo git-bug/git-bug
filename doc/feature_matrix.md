@@ -18,7 +18,7 @@ Some goals don't really fit below, so I'll mention them here:
 - privileged roles (admin, ...) and enforcing the corresponding rules
 - package the webui as a desktop app
 
-Additionally, some other are captured as [Github issues](https://github.com/MichaelMure/git-bug/issues) or [Discussions](https://github.com/MichaelMure/git-bug/discussions). 
+Additionally, some other are captured as [Github issues](https://github.com/git-bug/git-bug/issues) or [Discussions](https://github.com/git-bug/git-bug/discussions). 
 
 ## Entities
 

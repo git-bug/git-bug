@@ -1,8 +1,8 @@
 package dag
 
 import (
-	"github.com/MichaelMure/git-bug/entities/identity"
-	"github.com/MichaelMure/git-bug/entity"
+	"github.com/git-bug/git-bug/entities/identity"
+	"github.com/git-bug/git-bug/entity"
 )
 
 var _ Operation = &NoOpOperation[Snapshot]{}
