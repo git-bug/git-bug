@@ -8,10 +8,10 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/repository"
-	"github.com/MichaelMure/git-bug/util/lamport"
-	"github.com/MichaelMure/git-bug/util/text"
+	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/util/lamport"
+	"github.com/git-bug/git-bug/util/text"
 )
 
 // 1: original format

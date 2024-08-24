@@ -5,7 +5,7 @@ import (
 
 	"github.com/cheekybits/genny/generic"
 
-	"github.com/MichaelMure/git-bug/api/graphql/models"
+	"github.com/git-bug/git-bug/api/graphql/models"
 )
 
 // Name define the name of the connection

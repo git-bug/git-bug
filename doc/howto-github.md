@@ -1,6 +1,6 @@
 # How-to: Read and edit offline your Github/Gitlab/Jira issues with git-bug
 
-[git-bug](https://github.com/MichaelMure/git-bug) is a standalone distributed bug-tracker that is embedded in git. In short, if you have a git repository you can use it to store bugs alongside your code (without mixing them though!), push and pull them to/from a normal git remote to collaborate.
+[git-bug](https://github.com/git-bug/git-bug) is a standalone distributed bug-tracker that is embedded in git. In short, if you have a git repository you can use it to store bugs alongside your code (without mixing them though!), push and pull them to/from a normal git remote to collaborate.
 
 <p align="center">
     <img src="../misc/diagrams/native_workflow.png" alt="Native workflow">
@@ -22,7 +22,7 @@ Note: at the moment, Gitlab and Jira are also fully supported.
 
 ## Installation
 
-Follow the [installation instruction](https://github.com/MichaelMure/git-bug#installation). The simplest way is to download a pre-compiled binary from [the latest release](https://github.com/MichaelMure/git-bug/releases/latest) and to put it anywhere in your `$PATH`.
+Follow the [installation instruction](https://github.com/git-bug/git-bug#installation). The simplest way is to download a pre-compiled binary from [the latest release](https://github.com/git-bug/git-bug/releases/latest) and to put it anywhere in your `$PATH`.
 
 Check that `git-bug` is properly installed by running `git bug version`. If everything is alright, the version of the binary will be displayed.
 
@@ -31,7 +31,7 @@ Check that `git-bug` is properly installed by running `git bug version`. If ever
 1. From within the git repository you care about, run `git bug bridge configure` and follow the wizard's steps:
     1. Choose `github`.
     1. Type a name for the bridge configuration. As you can configure multiple bridges, this name will allow you to choose when there is an ambiguity.
-    1. Setup the remote Github project. The wizard is smart enough to inspect the git remote and detect the potential project. Otherwise, enter the project URL like this: `https://github.com/MichaelMure/git-bug`
+    1. Setup the remote Github project. The wizard is smart enough to inspect the git remote and detect the potential project. Otherwise, enter the project URL like this: `https://github.com/git-bug/git-bug`
     1. Enter your login on Github
     1. Setup an authentication token. You can either use the interactive token creation, enter your own token or select an existing token, if any.
 1. Run `git bug bridge pull` and let it run to import the issues and identities.
@@ -73,8 +73,8 @@ For a richer and more user friendly UI, `git-bug` proposes a web UI (read-only a
 ## Want more?
 
 If you interested to read more about `git-bug`, have a look at the following:
-- [the project itself, with a more complete readme](https://github.com/MichaelMure/git-bug)
-- [a bird view of the internals](https://github.com/MichaelMure/git-bug/blob/master/doc/architecture.md)
-- [a description of the data model](https://github.com/MichaelMure/git-bug/blob/master/doc/model.md)
+- [the project itself, with a more complete readme](https://github.com/git-bug/git-bug)
+- [a bird view of the internals](https://github.com/git-bug/git-bug/blob/master/doc/architecture.md)
+- [a description of the data model](https://github.com/git-bug/git-bug/blob/master/doc/model.md)
 
 Of course, if you want to contribute the door is way open :-)

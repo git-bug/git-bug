@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/git-bug/git-bug/cache"
+	"github.com/git-bug/git-bug/repository"
 )
 
 func TestSelect(t *testing.T) {

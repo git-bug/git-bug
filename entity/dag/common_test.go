@@ -7,9 +7,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/MichaelMure/git-bug/entities/identity"
-	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/git-bug/git-bug/entities/identity"
+	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/repository"
 )
 
 // This file contains an example dummy entity to be used in the tests

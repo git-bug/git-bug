@@ -7,11 +7,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/commands/cmdjson"
-	"github.com/MichaelMure/git-bug/commands/completion"
-	"github.com/MichaelMure/git-bug/commands/execenv"
-	"github.com/MichaelMure/git-bug/entities/bug"
-	"github.com/MichaelMure/git-bug/util/colors"
+	"github.com/git-bug/git-bug/commands/cmdjson"
+	"github.com/git-bug/git-bug/commands/completion"
+	"github.com/git-bug/git-bug/commands/execenv"
+	"github.com/git-bug/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/util/colors"
 )
 
 type bugShowOptions struct {

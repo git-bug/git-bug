@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/MichaelMure/git-bug/api/graphql/graph"
-	"github.com/MichaelMure/git-bug/api/graphql/models"
-	"github.com/MichaelMure/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/api/graphql/graph"
+	"github.com/git-bug/git-bug/api/graphql/models"
+	"github.com/git-bug/git-bug/entities/bug"
 )
 
 var _ graph.CreateOperationResolver = createOperationResolver{}

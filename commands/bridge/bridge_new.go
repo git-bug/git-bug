@@ -9,12 +9,12 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/bridge"
-	"github.com/MichaelMure/git-bug/bridge/core"
-	"github.com/MichaelMure/git-bug/bridge/core/auth"
-	"github.com/MichaelMure/git-bug/commands/completion"
-	"github.com/MichaelMure/git-bug/commands/execenv"
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/git-bug/git-bug/bridge"
+	"github.com/git-bug/git-bug/bridge/core"
+	"github.com/git-bug/git-bug/bridge/core/auth"
+	"github.com/git-bug/git-bug/commands/completion"
+	"github.com/git-bug/git-bug/commands/execenv"
+	"github.com/git-bug/git-bug/repository"
 )
 
 type bridgeNewOptions struct {
@@ -43,8 +43,7 @@ target: 1
 name [default]: default
 
 Detected projects:
-[1]: github.com/a-hilaly/git-bug
-[2]: github.com/MichaelMure/git-bug
+[1]: github.com/git-bug/git-bug
 
 [0]: Another project
 
@@ -70,9 +69,9 @@ Successfully configured bridge: default
 git bug bridge new \
     --name=default \
     --target=github \
-    --owner=$(OWNER) \
-    --project=$(PROJECT) \
-    --token=$(TOKEN)
+    --owner=example-owner
+    --project=example-repo \
+    --token=$TOKEN
 
 # For Launchpad
 git bug bridge new \
@@ -83,9 +82,9 @@ git bug bridge new \
 # For Gitlab
 git bug bridge new \
     --name=default \
-    --target=github \
-    --url=https://github.com/michaelmure/git-bug \
-    --token=$(TOKEN)`,
+    --target=gitlab \
+    --url=https://github.com/example-org/example-repo \
+    --token=$TOKEN`,
 		PreRunE: execenv.LoadBackend(env),
 		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runBridgeNew(env, options)

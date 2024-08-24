@@ -3,7 +3,7 @@ package auth
 import (
 	"net/http"
 
-	"github.com/MichaelMure/git-bug/entity"
+	"github.com/git-bug/git-bug/entity"
 )
 
 func Middleware(fixedUserId entity.Id) func(http.Handler) http.Handler {

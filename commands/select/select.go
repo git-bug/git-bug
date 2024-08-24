@@ -8,8 +8,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/entity"
+	"github.com/git-bug/git-bug/cache"
+	"github.com/git-bug/git-bug/entity"
 )
 
 type ErrNoValidId struct {

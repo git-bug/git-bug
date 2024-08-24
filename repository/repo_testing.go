@@ -8,7 +8,7 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/stretchr/testify/require"
 
-	"github.com/MichaelMure/git-bug/util/lamport"
+	"github.com/git-bug/git-bug/util/lamport"
 )
 
 type RepoCreator func(t testing.TB, bare bool) TestedRepo

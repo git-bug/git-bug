@@ -9,8 +9,8 @@ import (
 	"github.com/mattn/go-isatty"
 	"golang.org/x/term"
 
-	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/git-bug/git-bug/cache"
+	"github.com/git-bug/git-bug/repository"
 )
 
 const RootCommandName = "git-bug"

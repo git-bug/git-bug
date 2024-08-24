@@ -1,5 +1,5 @@
 <p align="center">
-    <img width="150px" src="https://cdn.rawgit.com/MichaelMure/git-bug/master/misc/logo/logo-alpha-flat-bg.svg">
+    <img width="150px" src="https://cdn.rawgit.com/git-bug/git-bug/master/misc/logo/logo-alpha-flat-bg.svg">
 </p>
 <h1 align="center">git-bug</h1>
 
@@ -8,8 +8,8 @@
 [![Backers on Open Collective](https://opencollective.com/git-bug/backers/badge.svg)](#backers)
 [![Sponsors on Open Collective](https://opencollective.com/git-bug/sponsors/badge.svg)](#sponsors)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3+-blue.svg)](http://www.gnu.org/licenses/gpl-3.0)
-[![GoDoc](https://godoc.org/github.com/MichaelMure/git-bug?status.svg)](https://godoc.org/github.com/MichaelMure/git-bug)
-[![Go Report Card](https://goreportcard.com/badge/github.com/MichaelMure/git-bug)](https://goreportcard.com/report/github.com/MichaelMure/git-bug)
+[![GoDoc](https://godoc.org/github.com/git-bug/git-bug?status.svg)](https://godoc.org/github.com/git-bug/git-bug)
+[![Go Report Card](https://goreportcard.com/badge/github.com/git-bug/git-bug)](https://goreportcard.com/report/github.com/git-bug/git-bug)
 [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/the-git-bug/Lobby)
 
 </div>
@@ -38,7 +38,7 @@ Individually, those pieces are not especially complex but doing everything make 
 
 <details><summary>Pre-compiled binaries</summary>
 
-1. Go to the [release page](https://github.com/MichaelMure/git-bug/releases/latest) and download the appropriate binary for your system.
+1. Go to the [release page](https://github.com/git-bug/git-bug/releases/latest) and download the appropriate binary for your system.
 2. Copy the binary anywhere in your $PATH
 3. Rename the binary to `git-bug` (or `git-bug.exe` on windows)
 
@@ -88,7 +88,7 @@ Or from the ports collection
 <details><summary>Compile from git (unstable)</summary>
 
 ```shell
-git clone https://github.com/MichaelMure/git-bug.git
+git clone https://github.com/git-bug/git-bug.git
 cd git-bug
 make install
 ```
@@ -110,7 +110,7 @@ There are multiple ways to use `git-bug`:
     <img src="misc/diagrams/native_workflow.png" alt="Native workflow">
 </p>
 
-This is the pure `git-bug` experience. In a similar fashion as with code, use `git bug push` and `git bug pull` to push and pull your bugs between git remotes and collaborate with your teammate. 
+This is the pure `git-bug` experience. In a similar fashion as with code, use `git bug push` and `git bug pull` to push and pull your bugs between git remotes and collaborate with your teammate.
 
 </details>
 
@@ -236,7 +236,7 @@ Or manually:
 git bug bridge new \
     --name=<bridge> \
     --target=github \
-    --url=https://github.com/MichaelMure/git-bug \
+    --url=https://github.com/git-bug/git-bug \
     --login=<login> \
     --token=<token>
 ```
@@ -285,7 +285,7 @@ Additional planned feature:
 PRs accepted. Drop by the [Gitter lobby](https://gitter.im/the-git-bug/Lobby) or the [Matrix room](https://matrix.to/#/#the-git-bug_Lobby:gitter.im) for a chat, look at the [feature matrix](doc/feature_matrix.md) or browse the issues to see what is worked on or discussed.
 
 ```shell
-git clone git@github.com:MichaelMure/git-bug.git
+git clone git@github.com:git-bug/git-bug.git
 ```
 
 You can now run `make` to build the project, or `make install` to install the binary in `$GOPATH/bin/`.
@@ -303,7 +303,7 @@ go test ./commands -update
 ## Contributors :heart:
 
 This project exists thanks to all the people who contribute.
-<a href="https://github.com/MichaelMure/git-bug/graphs/contributors"><img src="https://opencollective.com/git-bug/contributors.svg?width=890&button=false" /></a>
+<a href="https://github.com/git-bug/git-bug/graphs/contributors"><img src="https://opencollective.com/git-bug/contributors.svg?width=890&button=false" /></a>
 
 
 ## Backers

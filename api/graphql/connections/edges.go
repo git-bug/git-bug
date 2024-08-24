@@ -1,6 +1,6 @@
 package connections
 
-import "github.com/MichaelMure/git-bug/entity"
+import "github.com/git-bug/git-bug/entity"
 
 // LazyBugEdge is a special relay edge used to implement a lazy loading connection
 type LazyBugEdge struct {

@@ -12,7 +12,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
-	"github.com/MichaelMure/git-bug/entity"
+	"github.com/git-bug/git-bug/entity"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 

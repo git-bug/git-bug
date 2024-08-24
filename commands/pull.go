@@ -5,9 +5,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/commands/completion"
-	"github.com/MichaelMure/git-bug/commands/execenv"
-	"github.com/MichaelMure/git-bug/entity"
+	"github.com/git-bug/git-bug/commands/completion"
+	"github.com/git-bug/git-bug/commands/execenv"
+	"github.com/git-bug/git-bug/entity"
 )
 
 func newPullCommand(env *execenv.Env) *cobra.Command {

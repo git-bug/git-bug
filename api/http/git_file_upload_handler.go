@@ -8,8 +8,8 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/MichaelMure/git-bug/api/auth"
-	"github.com/MichaelMure/git-bug/cache"
+	"github.com/git-bug/git-bug/api/auth"
+	"github.com/git-bug/git-bug/cache"
 )
 
 // implement a http.Handler that will accept and store content into git blob.

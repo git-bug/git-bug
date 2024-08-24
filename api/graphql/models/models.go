@@ -2,7 +2,7 @@
 package models
 
 import (
-	"github.com/MichaelMure/git-bug/cache"
+	"github.com/git-bug/git-bug/cache"
 )
 
 type ConnectionInput struct {

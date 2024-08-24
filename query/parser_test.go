@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/MichaelMure/git-bug/entities/common"
+	"github.com/git-bug/git-bug/entities/common"
 )
 
 func TestParse(t *testing.T) {

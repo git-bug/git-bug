@@ -9,7 +9,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 
-	"github.com/MichaelMure/git-bug/util/colors"
+	"github.com/git-bug/git-bug/util/colors"
 )
 
 // adapted from https://github.com/99designs/gqlgen/blob/master/graphql/handler/debug/tracer.go

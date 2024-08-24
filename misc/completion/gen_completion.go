@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/commands"
+	"github.com/git-bug/git-bug/commands"
 )
 
 func main() {

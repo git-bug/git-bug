@@ -4,7 +4,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 
-	"github.com/MichaelMure/git-bug/entity"
+	"github.com/git-bug/git-bug/entity"
 )
 
 const (

@@ -7,9 +7,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/bridge"
-	"github.com/MichaelMure/git-bug/bridge/core/auth"
-	"github.com/MichaelMure/git-bug/commands/execenv"
+	"github.com/git-bug/git-bug/bridge"
+	"github.com/git-bug/git-bug/bridge/core/auth"
+	"github.com/git-bug/git-bug/commands/execenv"
 )
 
 type ValidArgsFunction func(cmd *cobra.Command, args []string, toComplete string) (completions []string, directives cobra.ShellCompDirective)

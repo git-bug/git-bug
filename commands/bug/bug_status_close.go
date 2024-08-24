@@ -3,7 +3,7 @@ package bugcmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/commands/execenv"
+	"github.com/git-bug/git-bug/commands/execenv"
 )
 
 func newBugStatusCloseCommand(env *execenv.Env) *cobra.Command {

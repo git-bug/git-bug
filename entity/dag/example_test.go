@@ -6,14 +6,14 @@ import (
 	"os"
 	"time"
 
-	"github.com/MichaelMure/git-bug/entities/identity"
-	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/entity/dag"
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/git-bug/git-bug/entities/identity"
+	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/entity/dag"
+	"github.com/git-bug/git-bug/repository"
 )
 
 // Note: you can find explanations about the underlying data model here:
-// https://github.com/MichaelMure/git-bug/blob/master/doc/model.md
+// https://github.com/git-bug/git-bug/blob/master/doc/model.md
 
 // This file explains how to define a replicated data structure, stored in and using git as a medium for
 // synchronisation. To do this, we'll use the entity/dag package, which will do all the complex handling.

@@ -9,9 +9,9 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 
-	"github.com/MichaelMure/git-bug/api/graphql/graph"
-	"github.com/MichaelMure/git-bug/api/graphql/resolvers"
-	"github.com/MichaelMure/git-bug/cache"
+	"github.com/git-bug/git-bug/api/graphql/graph"
+	"github.com/git-bug/git-bug/api/graphql/resolvers"
+	"github.com/git-bug/git-bug/cache"
 )
 
 // Handler is the root GraphQL http handler

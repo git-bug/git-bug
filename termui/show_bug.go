@@ -9,11 +9,11 @@ import (
 	text "github.com/MichaelMure/go-term-text"
 	"github.com/awesome-gocui/gocui"
 
-	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/entities/bug"
-	"github.com/MichaelMure/git-bug/entities/common"
-	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/util/colors"
+	"github.com/git-bug/git-bug/cache"
+	"github.com/git-bug/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/entities/common"
+	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/util/colors"
 )
 
 const showBugView = "showBugView"

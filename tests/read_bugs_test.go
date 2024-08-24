@@ -3,9 +3,9 @@ package tests
 import (
 	"testing"
 
-	"github.com/MichaelMure/git-bug/entities/bug"
-	"github.com/MichaelMure/git-bug/misc/random_bugs"
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/git-bug/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/misc/random_bugs"
+	"github.com/git-bug/git-bug/repository"
 )
 
 func TestReadBugs(t *testing.T) {

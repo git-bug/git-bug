@@ -6,8 +6,8 @@ import (
 	"github.com/fatih/color"
 	"github.com/stretchr/testify/require"
 
-	"github.com/MichaelMure/git-bug/commands/execenv"
-	"github.com/MichaelMure/git-bug/entity"
+	"github.com/git-bug/git-bug/commands/execenv"
+	"github.com/git-bug/git-bug/entity"
 )
 
 const (
@@ -28,7 +28,7 @@ func NewTestEnvAndUser(t *testing.T) (*execenv.Env, entity.Id) {
 	// git-bug command output is consistent in all test scenarios.
 	//
 	// See:
-	// - https://github.com/MichaelMure/git-bug/issues/926
+	// - https://github.com/git-bug/git-bug/issues/926
 	// - https://github.com/golang/go/issues/57671
 	// - https://github.com/golang/go/blob/f721fa3be9bb52524f97b409606f9423437535e8/src/cmd/go/internal/test/test.go#L1180-L1208
 	// - https://github.com/golang/go/issues/34877

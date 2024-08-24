@@ -3,9 +3,9 @@
 package models
 
 import (
-	"github.com/MichaelMure/git-bug/entities/bug"
-	"github.com/MichaelMure/git-bug/entity/dag"
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/git-bug/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/entity/dag"
+	"github.com/git-bug/git-bug/repository"
 )
 
 // An object that has an author.

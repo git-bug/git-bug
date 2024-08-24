@@ -13,8 +13,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/git-bug/git-bug/cache"
+	"github.com/git-bug/git-bug/repository"
 )
 
 var ErrImportNotSupported = errors.New("import is not supported")

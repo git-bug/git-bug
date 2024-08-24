@@ -7,8 +7,8 @@ package connections
 import (
 	"fmt"
 
-	"github.com/MichaelMure/git-bug/api/graphql/models"
-	"github.com/MichaelMure/git-bug/entity"
+	"github.com/git-bug/git-bug/api/graphql/models"
+	"github.com/git-bug/git-bug/entity"
 )
 
 // LazyBugEdgeMaker define a function that take a entity.Id and an offset and

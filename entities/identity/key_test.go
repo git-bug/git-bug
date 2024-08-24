@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/git-bug/git-bug/repository"
 )
 
 func TestPublicKeyJSON(t *testing.T) {

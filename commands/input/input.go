@@ -15,7 +15,7 @@ import (
 
 	"github.com/go-git/go-billy/v5/util"
 
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/git-bug/git-bug/repository"
 )
 
 // LaunchEditorWithTemplate will launch an editor as LaunchEditor do, but with a

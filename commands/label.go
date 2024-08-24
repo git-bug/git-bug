@@ -3,7 +3,7 @@ package commands
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/commands/execenv"
+	"github.com/git-bug/git-bug/commands/execenv"
 )
 
 func newLabelCommand(env *execenv.Env) *cobra.Command {

@@ -75,10 +75,10 @@ func NewErrUnknownFormat(expected uint) *ErrInvalidFormat {
 
 func (e ErrInvalidFormat) Error() string {
 	if e.version == 0 {
-		return fmt.Sprintf("unreadable data, you likely have an outdated repository format, please use https://github.com/MichaelMure/git-bug-migration to upgrade to format version %v", e.expected)
+		return fmt.Sprintf("unreadable data, you likely have an outdated repository format, please use https://github.com/git-bug/git-bug-migration to upgrade to format version %v", e.expected)
 	}
 	if e.version < e.expected {
-		return fmt.Sprintf("outdated repository format %v, please use https://github.com/MichaelMure/git-bug-migration to upgrade to format version %v", e.version, e.expected)
+		return fmt.Sprintf("outdated repository format %v, please use https://github.com/git-bug/git-bug-migration to upgrade to format version %v", e.version, e.expected)
 	}
 	return fmt.Sprintf("your version of git-bug is too old for this repository (format version %v, expected %v), please upgrade to the latest version", e.version, e.expected)
 }

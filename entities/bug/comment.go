@@ -3,10 +3,10 @@ package bug
 import (
 	"github.com/dustin/go-humanize"
 
-	"github.com/MichaelMure/git-bug/entities/identity"
-	"github.com/MichaelMure/git-bug/entity"
-	"github.com/MichaelMure/git-bug/repository"
-	"github.com/MichaelMure/git-bug/util/timestamp"
+	"github.com/git-bug/git-bug/entities/identity"
+	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/util/timestamp"
 )
 
 // Comment represent a comment in a Bug

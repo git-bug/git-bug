@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/MichaelMure/git-bug/entity"
+	"github.com/git-bug/git-bug/entity"
 )
 
 // Package initialisation used to register the type for (de)serialization

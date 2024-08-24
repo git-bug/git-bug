@@ -13,7 +13,7 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	"github.com/pkg/errors"
 
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/git-bug/git-bug/repository"
 )
 
 var errNoPrivateKey = fmt.Errorf("no private key")

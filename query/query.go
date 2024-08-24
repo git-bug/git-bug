@@ -1,7 +1,7 @@
 package query
 
 import (
-	"github.com/MichaelMure/git-bug/entities/common"
+	"github.com/git-bug/git-bug/entities/common"
 )
 
 // Query is the intermediary representation of a Bug's query. It is either

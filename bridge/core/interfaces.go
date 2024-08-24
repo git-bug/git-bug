@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/MichaelMure/git-bug/cache"
+	"github.com/git-bug/git-bug/cache"
 )
 
 type Configuration map[string]string

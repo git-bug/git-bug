@@ -4,18 +4,18 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/MichaelMure/git-bug/bridge/core"
-	"github.com/MichaelMure/git-bug/bridge/core/auth"
-	"github.com/MichaelMure/git-bug/cache"
-	"github.com/MichaelMure/git-bug/commands/input"
-	"github.com/MichaelMure/git-bug/repository"
+	"github.com/git-bug/git-bug/bridge/core"
+	"github.com/git-bug/git-bug/bridge/core/auth"
+	"github.com/git-bug/git-bug/cache"
+	"github.com/git-bug/git-bug/commands/input"
+	"github.com/git-bug/git-bug/repository"
 )
 
 const moreConfigText = `
 NOTE: There are a few optional configuration values that you can additionally
 set in your git configuration to influence the behavior of the bridge. Please
 see the notes at:
-https://github.com/MichaelMure/git-bug/blob/master/doc/jira_bridge.md
+https://github.com/git-bug/git-bug/blob/master/doc/jira_bridge.md
 `
 
 const credTypeText = `

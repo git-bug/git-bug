@@ -8,10 +8,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	bridgecmd "github.com/MichaelMure/git-bug/commands/bridge"
-	bugcmd "github.com/MichaelMure/git-bug/commands/bug"
-	"github.com/MichaelMure/git-bug/commands/execenv"
-	usercmd "github.com/MichaelMure/git-bug/commands/user"
+	bridgecmd "github.com/git-bug/git-bug/commands/bridge"
+	bugcmd "github.com/git-bug/git-bug/commands/bug"
+	"github.com/git-bug/git-bug/commands/execenv"
+	usercmd "github.com/git-bug/git-bug/commands/user"
 )
 
 // These variables are initialized externally during the build. See the Makefile.
