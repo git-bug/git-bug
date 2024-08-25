@@ -70,10 +70,7 @@ You can pass an additional query to filter and order the list. This query can be
 
 
 .SH EXAMPLE
-.PP
-.RS
-
-.nf
+.EX
 List open bugs sorted by last edition with a query:
 git bug status:open sort:edit-desc
 
@@ -86,9 +83,7 @@ git bug "foo bar" baz
 Use queries, flags, and full text search:
 git bug status:open --by creation "foo bar" baz
 
-
-.fi
-.RE
+.EE
 
 
 .SH SEE ALSO

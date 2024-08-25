@@ -10,7 +10,7 @@ filter __git-bug_escapeStringWithSpecialChars {
     $_ -replace '\s|#|@|\$|;|,|''|\{|\}|\(|\)|"|`|\||<|>|&','`$&'
 }
 
-[scriptblock]$__git_bugCompleterBlock = {
+[scriptblock]${__git_bugCompleterBlock} = {
     param(
             $WordToComplete,
             $CommandAst,
@@ -85,7 +85,7 @@ filter __git-bug_escapeStringWithSpecialChars {
 
     __git-bug_debug "Calling $RequestComp"
     # First disable ActiveHelp which is not supported for Powershell
-    $env:GIT_BUG_ACTIVE_HELP=0
+    ${env:GIT_BUG_ACTIVE_HELP}=0
 
     #call the command store the output in $out and redirect stderr and stdout to null
     # $Out is an array contains each line per element
@@ -242,4 +242,4 @@ filter __git-bug_escapeStringWithSpecialChars {
     }
 }
 
-Register-ArgumentCompleter -CommandName 'git-bug' -ScriptBlock $__git_bugCompleterBlock
+Register-ArgumentCompleter -CommandName 'git-bug' -ScriptBlock ${__git_bugCompleterBlock}
