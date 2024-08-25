@@ -357,7 +357,7 @@ func getIndexDerivedID(jiraID string, idx int) string {
 	return fmt.Sprintf("%s-%d", jiraID, idx)
 }
 
-func labelSetsMatch(jiraSet []string, gitbugSet []bug.Label) bool {
+func labelSetsMatch(jiraSet []string, gitbugSet []common.Label) bool {
 	if len(jiraSet) != len(gitbugSet) {
 		return false
 	}

@@ -16,7 +16,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/git-bug/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/entities/common"
 )
 
 var errDone = errors.New("Iteration Done")
@@ -1230,7 +1230,7 @@ func (client *Client) UpdateComment(issueKeyOrID, commentID, body string) (
 }
 
 // UpdateLabels changes labels for an issue
-func (client *Client) UpdateLabels(issueKeyOrID string, added, removed []bug.Label) (time.Time, error) {
+func (client *Client) UpdateLabels(issueKeyOrID string, added, removed []common.Label) (time.Time, error) {
 	url := fmt.Sprintf(
 		"%s/rest/api/2/issue/%s/", client.serverURL, issueKeyOrID)
 	var responseTime time.Time

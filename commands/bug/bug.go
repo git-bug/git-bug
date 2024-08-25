@@ -13,7 +13,6 @@ import (
 	"github.com/git-bug/git-bug/commands/cmdjson"
 	"github.com/git-bug/git-bug/commands/completion"
 	"github.com/git-bug/git-bug/commands/execenv"
-	"github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entities/common"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/query"
@@ -280,7 +279,7 @@ func bugsPlainFormatter(env *execenv.Env, excerpts []*cache.BugExcerpt) error {
 func bugsOrgmodeFormatter(env *execenv.Env, excerpts []*cache.BugExcerpt) error {
 	// see https://orgmode.org/manual/Tags.html
 	orgTagRe := regexp.MustCompile("[^[:alpha:]_@]")
-	formatTag := func(l bug.Label) string {
+	formatTag := func(l common.Label) string {
 		return orgTagRe.ReplaceAllString(l.String(), "_")
 	}
 

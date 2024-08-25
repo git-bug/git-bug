@@ -4,6 +4,7 @@ package models
 
 import (
 	"github.com/git-bug/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/entities/common"
 	"github.com/git-bug/git-bug/entity/dag"
 	"github.com/git-bug/git-bug/repository"
 )
@@ -191,15 +192,18 @@ type IdentityEdge struct {
 }
 
 type LabelConnection struct {
-	Edges      []*LabelEdge `json:"edges"`
-	Nodes      []bug.Label  `json:"nodes"`
-	PageInfo   *PageInfo    `json:"pageInfo"`
-	TotalCount int          `json:"totalCount"`
+	Edges      []*LabelEdge   `json:"edges"`
+	Nodes      []common.Label `json:"nodes"`
+	PageInfo   *PageInfo      `json:"pageInfo"`
+	TotalCount int            `json:"totalCount"`
 }
 
 type LabelEdge struct {
-	Cursor string    `json:"cursor"`
-	Node   bug.Label `json:"node"`
+	Cursor string       `json:"cursor"`
+	Node   common.Label `json:"node"`
+}
+
+type Mutation struct {
 }
 
 type NewBugInput struct {
@@ -266,6 +270,9 @@ type PageInfo struct {
 	StartCursor string `json:"startCursor"`
 	// When paginating forwards, the cursor to continue.
 	EndCursor string `json:"endCursor"`
+}
+
+type Query struct {
 }
 
 type SetTitleInput struct {

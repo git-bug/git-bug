@@ -595,7 +595,7 @@ func (ge *githubExporter) createGithubLabelV4(gc *githubv4.Client, label, labelC
 }
 */
 
-func (ge *githubExporter) getOrCreateGithubLabelID(ctx context.Context, gc *rateLimitHandlerClient, repositoryID string, label bug.Label) (string, error) {
+func (ge *githubExporter) getOrCreateGithubLabelID(ctx context.Context, gc *rateLimitHandlerClient, repositoryID string, label common.Label) (string, error) {
 	// try to get label id from cache
 	labelID, err := ge.getLabelID(string(label))
 	if err == nil {
@@ -617,7 +617,7 @@ func (ge *githubExporter) getOrCreateGithubLabelID(ctx context.Context, gc *rate
 	return labelID, nil
 }
 
-func (ge *githubExporter) getLabelsIDs(ctx context.Context, gc *rateLimitHandlerClient, repositoryID string, labels []bug.Label) ([]githubv4.ID, error) {
+func (ge *githubExporter) getLabelsIDs(ctx context.Context, gc *rateLimitHandlerClient, repositoryID string, labels []common.Label) ([]githubv4.ID, error) {
 	ids := make([]githubv4.ID, 0, len(labels))
 	var err error
 
@@ -744,7 +744,7 @@ func (ge *githubExporter) updateGithubIssueTitle(ctx context.Context, gc *rateLi
 }
 
 // update github issue labels
-func (ge *githubExporter) updateGithubIssueLabels(ctx context.Context, gc *rateLimitHandlerClient, labelableID string, added, removed []bug.Label) error {
+func (ge *githubExporter) updateGithubIssueLabels(ctx context.Context, gc *rateLimitHandlerClient, labelableID string, added, removed []common.Label) error {
 
 	wg, ctx := errgroup.WithContext(ctx)
 	if len(added) > 0 {

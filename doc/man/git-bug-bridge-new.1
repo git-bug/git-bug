@@ -67,10 +67,7 @@ Configure a new bridge by passing flags or/and using interactive terminal prompt
 
 
 .SH EXAMPLE
-.PP
-.RS
-
-.nf
+.EX
 # Interactive example
 [1]: github
 [2]: gitlab
@@ -81,8 +78,7 @@ target: 1
 name [default]: default
 
 Detected projects:
-[1]: github.com/a-hilaly/git-bug
-[2]: github.com/git-bug/git-bug
+[1]: github.com/git-bug/git-bug
 
 [0]: Another project
 
@@ -108,9 +104,9 @@ Successfully configured bridge: default
 git bug bridge new \\
     --name=default \\
     --target=github \\
-    --owner=$(OWNER) \\
-    --project=$(PROJECT) \\
-    --token=$(TOKEN)
+    --owner=example-owner
+    --project=example-repo \\
+    --token=$TOKEN
 
 # For Launchpad
 git bug bridge new \\
@@ -121,12 +117,10 @@ git bug bridge new \\
 # For Gitlab
 git bug bridge new \\
     --name=default \\
-    --target=github \\
-    --url=https://gitlab.com/git-bug/git-bug \\
-    --token=$(TOKEN)
-
-.fi
-.RE
+    --target=gitlab \\
+    --url=https://github.com/example-org/example-repo \\
+    --token=$TOKEN
+.EE
 
 
 .SH SEE ALSO

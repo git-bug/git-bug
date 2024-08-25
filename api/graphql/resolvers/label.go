@@ -5,18 +5,18 @@ import (
 	"image/color"
 
 	"github.com/git-bug/git-bug/api/graphql/graph"
-	"github.com/git-bug/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/entities/common"
 )
 
 var _ graph.LabelResolver = &labelResolver{}
 
 type labelResolver struct{}
 
-func (labelResolver) Name(ctx context.Context, obj *bug.Label) (string, error) {
+func (labelResolver) Name(ctx context.Context, obj *common.Label) (string, error) {
 	return obj.String(), nil
 }
 
-func (labelResolver) Color(ctx context.Context, obj *bug.Label) (*color.RGBA, error) {
+func (labelResolver) Color(ctx context.Context, obj *common.Label) (*color.RGBA, error) {
 	rgba := obj.Color().RGBA()
 	return &rgba, nil
 }

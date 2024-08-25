@@ -41,7 +41,7 @@ func (ec *executionContext) field_Mutation_addCommentAndClose_args(ctx context.C
 	var arg0 models.AddCommentAndCloseBugInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNAddCommentAndCloseBugInput2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐAddCommentAndCloseBugInput(ctx, tmp)
+		arg0, err = ec.unmarshalNAddCommentAndCloseBugInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐAddCommentAndCloseBugInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -56,7 +56,7 @@ func (ec *executionContext) field_Mutation_addCommentAndReopen_args(ctx context.
 	var arg0 models.AddCommentAndReopenBugInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNAddCommentAndReopenBugInput2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐAddCommentAndReopenBugInput(ctx, tmp)
+		arg0, err = ec.unmarshalNAddCommentAndReopenBugInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐAddCommentAndReopenBugInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -71,7 +71,7 @@ func (ec *executionContext) field_Mutation_addComment_args(ctx context.Context, 
 	var arg0 models.AddCommentInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNAddCommentInput2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐAddCommentInput(ctx, tmp)
+		arg0, err = ec.unmarshalNAddCommentInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐAddCommentInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -86,7 +86,7 @@ func (ec *executionContext) field_Mutation_changeLabels_args(ctx context.Context
 	var arg0 *models.ChangeLabelInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalOChangeLabelInput2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐChangeLabelInput(ctx, tmp)
+		arg0, err = ec.unmarshalOChangeLabelInput2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐChangeLabelInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -101,7 +101,7 @@ func (ec *executionContext) field_Mutation_closeBug_args(ctx context.Context, ra
 	var arg0 models.CloseBugInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNCloseBugInput2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐCloseBugInput(ctx, tmp)
+		arg0, err = ec.unmarshalNCloseBugInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐCloseBugInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -116,7 +116,7 @@ func (ec *executionContext) field_Mutation_editComment_args(ctx context.Context,
 	var arg0 models.EditCommentInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNEditCommentInput2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐEditCommentInput(ctx, tmp)
+		arg0, err = ec.unmarshalNEditCommentInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐEditCommentInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -131,7 +131,7 @@ func (ec *executionContext) field_Mutation_newBug_args(ctx context.Context, rawA
 	var arg0 models.NewBugInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNNewBugInput2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐNewBugInput(ctx, tmp)
+		arg0, err = ec.unmarshalNNewBugInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐNewBugInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -146,7 +146,7 @@ func (ec *executionContext) field_Mutation_openBug_args(ctx context.Context, raw
 	var arg0 models.OpenBugInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNOpenBugInput2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐOpenBugInput(ctx, tmp)
+		arg0, err = ec.unmarshalNOpenBugInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐOpenBugInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -161,7 +161,7 @@ func (ec *executionContext) field_Mutation_setTitle_args(ctx context.Context, ra
 	var arg0 models.SetTitleInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNSetTitleInput2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐSetTitleInput(ctx, tmp)
+		arg0, err = ec.unmarshalNSetTitleInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐSetTitleInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -236,7 +236,7 @@ func (ec *executionContext) _Mutation_newBug(ctx context.Context, field graphql.
 	}
 	res := resTmp.(*models.NewBugPayload)
 	fc.Result = res
-	return ec.marshalNNewBugPayload2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐNewBugPayload(ctx, field.Selections, res)
+	return ec.marshalNNewBugPayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐNewBugPayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_newBug(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -299,7 +299,7 @@ func (ec *executionContext) _Mutation_addComment(ctx context.Context, field grap
 	}
 	res := resTmp.(*models.AddCommentPayload)
 	fc.Result = res
-	return ec.marshalNAddCommentPayload2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐAddCommentPayload(ctx, field.Selections, res)
+	return ec.marshalNAddCommentPayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐAddCommentPayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_addComment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -362,7 +362,7 @@ func (ec *executionContext) _Mutation_addCommentAndClose(ctx context.Context, fi
 	}
 	res := resTmp.(*models.AddCommentAndCloseBugPayload)
 	fc.Result = res
-	return ec.marshalNAddCommentAndCloseBugPayload2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐAddCommentAndCloseBugPayload(ctx, field.Selections, res)
+	return ec.marshalNAddCommentAndCloseBugPayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐAddCommentAndCloseBugPayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_addCommentAndClose(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -427,7 +427,7 @@ func (ec *executionContext) _Mutation_addCommentAndReopen(ctx context.Context, f
 	}
 	res := resTmp.(*models.AddCommentAndReopenBugPayload)
 	fc.Result = res
-	return ec.marshalNAddCommentAndReopenBugPayload2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐAddCommentAndReopenBugPayload(ctx, field.Selections, res)
+	return ec.marshalNAddCommentAndReopenBugPayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐAddCommentAndReopenBugPayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_addCommentAndReopen(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -492,7 +492,7 @@ func (ec *executionContext) _Mutation_editComment(ctx context.Context, field gra
 	}
 	res := resTmp.(*models.EditCommentPayload)
 	fc.Result = res
-	return ec.marshalNEditCommentPayload2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐEditCommentPayload(ctx, field.Selections, res)
+	return ec.marshalNEditCommentPayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐEditCommentPayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_editComment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -555,7 +555,7 @@ func (ec *executionContext) _Mutation_changeLabels(ctx context.Context, field gr
 	}
 	res := resTmp.(*models.ChangeLabelPayload)
 	fc.Result = res
-	return ec.marshalNChangeLabelPayload2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐChangeLabelPayload(ctx, field.Selections, res)
+	return ec.marshalNChangeLabelPayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐChangeLabelPayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_changeLabels(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -620,7 +620,7 @@ func (ec *executionContext) _Mutation_openBug(ctx context.Context, field graphql
 	}
 	res := resTmp.(*models.OpenBugPayload)
 	fc.Result = res
-	return ec.marshalNOpenBugPayload2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐOpenBugPayload(ctx, field.Selections, res)
+	return ec.marshalNOpenBugPayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐOpenBugPayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_openBug(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -683,7 +683,7 @@ func (ec *executionContext) _Mutation_closeBug(ctx context.Context, field graphq
 	}
 	res := resTmp.(*models.CloseBugPayload)
 	fc.Result = res
-	return ec.marshalNCloseBugPayload2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐCloseBugPayload(ctx, field.Selections, res)
+	return ec.marshalNCloseBugPayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐCloseBugPayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_closeBug(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -746,7 +746,7 @@ func (ec *executionContext) _Mutation_setTitle(ctx context.Context, field graphq
 	}
 	res := resTmp.(*models.SetTitlePayload)
 	fc.Result = res
-	return ec.marshalNSetTitlePayload2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐSetTitlePayload(ctx, field.Selections, res)
+	return ec.marshalNSetTitlePayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐSetTitlePayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_setTitle(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -806,7 +806,7 @@ func (ec *executionContext) _Query_repository(ctx context.Context, field graphql
 	}
 	res := resTmp.(*models.Repository)
 	fc.Result = res
-	return ec.marshalORepository2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐRepository(ctx, field.Selections, res)
+	return ec.marshalORepository2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐRepository(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_repository(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -951,7 +951,7 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	return ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query___schema(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -1117,7 +1117,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "repository":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))

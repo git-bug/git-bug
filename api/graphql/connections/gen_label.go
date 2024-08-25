@@ -8,23 +8,23 @@ import (
 	"fmt"
 
 	"github.com/git-bug/git-bug/api/graphql/models"
-	"github.com/git-bug/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/entities/common"
 )
 
 // BugLabelEdgeMaker define a function that take a bug.Label and an offset and
 // create an Edge.
-type LabelEdgeMaker func(value bug.Label, offset int) Edge
+type LabelEdgeMaker func(value common.Label, offset int) Edge
 
 // LabelConMaker define a function that create a models.LabelConnection
 type LabelConMaker func(
 	edges []*models.LabelEdge,
-	nodes []bug.Label,
+	nodes []common.Label,
 	info *models.PageInfo,
 	totalCount int) (*models.LabelConnection, error)
 
 // LabelCon will paginate a source according to the input of a relay connection
-func LabelCon(source []bug.Label, edgeMaker LabelEdgeMaker, conMaker LabelConMaker, input models.ConnectionInput) (*models.LabelConnection, error) {
-	var nodes []bug.Label
+func LabelCon(source []common.Label, edgeMaker LabelEdgeMaker, conMaker LabelConMaker, input models.ConnectionInput) (*models.LabelConnection, error) {
+	var nodes []common.Label
 	var edges []*models.LabelEdge
 	var cursors []string
 	var pageInfo = &models.PageInfo{}

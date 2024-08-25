@@ -3,20 +3,21 @@ package cmdjson
 import (
 	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/entities/common"
 )
 
 type BugSnapshot struct {
-	Id           string       `json:"id"`
-	HumanId      string       `json:"human_id"`
-	CreateTime   Time         `json:"create_time"`
-	EditTime     Time         `json:"edit_time"`
-	Status       string       `json:"status"`
-	Labels       []bug.Label  `json:"labels"`
-	Title        string       `json:"title"`
-	Author       Identity     `json:"author"`
-	Actors       []Identity   `json:"actors"`
-	Participants []Identity   `json:"participants"`
-	Comments     []BugComment `json:"comments"`
+	Id           string         `json:"id"`
+	HumanId      string         `json:"human_id"`
+	CreateTime   Time           `json:"create_time"`
+	EditTime     Time           `json:"edit_time"`
+	Status       string         `json:"status"`
+	Labels       []common.Label `json:"labels"`
+	Title        string         `json:"title"`
+	Author       Identity       `json:"author"`
+	Actors       []Identity     `json:"actors"`
+	Participants []Identity     `json:"participants"`
+	Comments     []BugComment   `json:"comments"`
 }
 
 func NewBugSnapshot(snap *bug.Snapshot) BugSnapshot {
@@ -71,12 +72,12 @@ type BugExcerpt struct {
 	CreateTime Time   `json:"create_time"`
 	EditTime   Time   `json:"edit_time"`
 
-	Status       string      `json:"status"`
-	Labels       []bug.Label `json:"labels"`
-	Title        string      `json:"title"`
-	Actors       []Identity  `json:"actors"`
-	Participants []Identity  `json:"participants"`
-	Author       Identity    `json:"author"`
+	Status       string         `json:"status"`
+	Labels       []common.Label `json:"labels"`
+	Title        string         `json:"title"`
+	Actors       []Identity     `json:"actors"`
+	Participants []Identity     `json:"participants"`
+	Author       Identity       `json:"author"`
 
 	Comments int               `json:"comments"`
 	Metadata map[string]string `json:"metadata"`

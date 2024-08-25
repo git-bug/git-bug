@@ -23,8 +23,7 @@ target: 1
 name [default]: default
 
 Detected projects:
-[1]: github.com/a-hilaly/git-bug
-[2]: github.com/git-bug/git-bug
+[1]: github.com/git-bug/git-bug
 
 [0]: Another project
 
@@ -50,9 +49,9 @@ Successfully configured bridge: default
 git bug bridge new \
     --name=default \
     --target=github \
-    --owner=$(OWNER) \
-    --project=$(PROJECT) \
-    --token=$(TOKEN)
+    --owner=example-owner
+    --project=example-repo \
+    --token=$TOKEN
 
 # For Launchpad
 git bug bridge new \
@@ -64,8 +63,8 @@ git bug bridge new \
 git bug bridge new \
     --name=default \
     --target=gitlab \
-    --url=https://gitlab.com/git-bug/git-bug \
-    --token=$(TOKEN)
+    --url=https://github.com/example-org/example-repo \
+    --token=$TOKEN
 ```
 
 ### Options

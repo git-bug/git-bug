@@ -72,9 +72,9 @@ func TestGithubImporter(t *testing.T) {
 			bug: &bug.Snapshot{
 				Operations: []dag.Operation{
 					bug.NewCreateOp(author, 0, "complex issue", "initial comment", nil),
-					bug.NewLabelChangeOperation(author, 0, []bug.Label{"bug"}, []bug.Label{}),
-					bug.NewLabelChangeOperation(author, 0, []bug.Label{"duplicate"}, []bug.Label{}),
-					bug.NewLabelChangeOperation(author, 0, []bug.Label{}, []bug.Label{"duplicate"}),
+					bug.NewLabelChangeOperation(author, 0, []common.Label{"bug"}, []common.Label{}),
+					bug.NewLabelChangeOperation(author, 0, []common.Label{"duplicate"}, []common.Label{}),
+					bug.NewLabelChangeOperation(author, 0, []common.Label{}, []common.Label{"duplicate"}),
 					bug.NewAddCommentOp(author, 0, strings.Join([]string{
 						"### header",
 						"**bold**",
