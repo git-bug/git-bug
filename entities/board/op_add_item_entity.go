@@ -71,7 +71,7 @@ func (op *AddItemEntityOperation) Apply(snapshot *Snapshot) {
 					Bug:        op.entity.(dag.CompileTo[*bug.Snapshot]),
 				})
 			}
-			snapshot.addParticipant(op.Author())
+			snapshot.addActor(op.Author())
 			return
 		}
 	}

@@ -44,7 +44,7 @@ func (op *SetDescriptionOperation) Validate() error {
 
 func (op *SetDescriptionOperation) Apply(snapshot *Snapshot) {
 	snapshot.Description = op.Description
-	snapshot.addParticipant(op.Author())
+	snapshot.addActor(op.Author())
 }
 
 func NewSetDescriptionOp(author identity.Interface, unixTime int64, description string, was string) *SetDescriptionOperation {
