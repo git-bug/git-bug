@@ -82,7 +82,7 @@ func (repoResolver) AllBugs(_ context.Context, obj *models.Repository, after *st
 		}, nil
 	}
 
-	return connections.LazyBugCon(source, edger, conMaker, input)
+	return connections.Connection(source, edger, conMaker, input)
 }
 
 func (repoResolver) Bug(_ context.Context, obj *models.Repository, prefix string) (models.BugWrapper, error) {
@@ -141,7 +141,7 @@ func (repoResolver) AllIdentities(_ context.Context, obj *models.Repository, aft
 		}, nil
 	}
 
-	return connections.LazyIdentityCon(source, edger, conMaker, input)
+	return connections.Connection(source, edger, conMaker, input)
 }
 
 func (repoResolver) Identity(_ context.Context, obj *models.Repository, prefix string) (models.IdentityWrapper, error) {
@@ -187,5 +187,5 @@ func (repoResolver) ValidLabels(_ context.Context, obj *models.Repository, after
 		}, nil
 	}
 
-	return connections.LabelCon(obj.Repo.Bugs().ValidLabels(), edger, conMaker, input)
+	return connections.Connection(obj.Repo.Bugs().ValidLabels(), edger, conMaker, input)
 }

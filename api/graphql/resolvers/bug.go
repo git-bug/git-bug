@@ -51,7 +51,7 @@ func (bugResolver) Comments(_ context.Context, obj models.BugWrapper, after *str
 		return nil, err
 	}
 
-	return connections.CommentCon(comments, edger, conMaker, input)
+	return connections.Connection(comments, edger, conMaker, input)
 }
 
 func (bugResolver) Operations(_ context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*models.OperationConnection, error) {
@@ -83,7 +83,7 @@ func (bugResolver) Operations(_ context.Context, obj models.BugWrapper, after *s
 		return nil, err
 	}
 
-	return connections.OperationCon(ops, edger, conMaker, input)
+	return connections.Connection(ops, edger, conMaker, input)
 }
 
 func (bugResolver) Timeline(_ context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*models.TimelineItemConnection, error) {
@@ -115,7 +115,7 @@ func (bugResolver) Timeline(_ context.Context, obj models.BugWrapper, after *str
 		return nil, err
 	}
 
-	return connections.TimelineItemCon(timeline, edger, conMaker, input)
+	return connections.Connection(timeline, edger, conMaker, input)
 }
 
 func (bugResolver) Actors(_ context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*models.IdentityConnection, error) {
@@ -147,7 +147,7 @@ func (bugResolver) Actors(_ context.Context, obj models.BugWrapper, after *strin
 		return nil, err
 	}
 
-	return connections.IdentityCon(actors, edger, conMaker, input)
+	return connections.Connection(actors, edger, conMaker, input)
 }
 
 func (bugResolver) Participants(_ context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*models.IdentityConnection, error) {
@@ -179,5 +179,5 @@ func (bugResolver) Participants(_ context.Context, obj models.BugWrapper, after 
 		return nil, err
 	}
 
-	return connections.IdentityCon(participants, edger, conMaker, input)
+	return connections.Connection(participants, edger, conMaker, input)
 }
