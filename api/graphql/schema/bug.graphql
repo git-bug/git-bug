@@ -1,34 +1,3 @@
-"""Represents a comment on a bug."""
-type Comment implements Authored {
-  id: CombinedId!
-
-  """The author of this comment."""
-  author: Identity!
-
-  """The message of this comment."""
-  message: String!
-
-  """All media's hash referenced in this comment"""
-  files: [Hash!]!
-}
-
-type CommentConnection {
-  edges: [CommentEdge!]!
-  nodes: [Comment!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
-type CommentEdge {
-  cursor: String!
-  node: Comment!
-}
-
-enum Status {
-  OPEN
-  CLOSED
-}
-
 type Bug implements Authored {
   """The identifier for this bug"""
   id: ID!
@@ -75,7 +44,7 @@ type Bug implements Authored {
     first: Int
     """Returns the last _n_ elements from the list."""
     last: Int
-  ): CommentConnection!
+  ): BugCommentConnection!
 
   timeline(
     """Returns the elements in the list that come after the specified cursor."""
@@ -86,7 +55,7 @@ type Bug implements Authored {
     first: Int
     """Returns the last _n_ elements from the list."""
     last: Int
-  ): TimelineItemConnection!
+  ): BugTimelineItemConnection!
 
   operations(
     """Returns the elements in the list that come after the specified cursor."""

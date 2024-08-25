@@ -172,7 +172,7 @@ func (ec *executionContext) _AddCommentAndCloseBugPayload_commentOperation(ctx c
 	}
 	res := resTmp.(*bug.AddCommentOperation)
 	fc.Result = res
-	return ec.marshalNAddCommentOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐAddCommentOperation(ctx, field.Selections, res)
+	return ec.marshalNBugAddCommentOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐAddCommentOperation(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AddCommentAndCloseBugPayload_commentOperation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -184,17 +184,17 @@ func (ec *executionContext) fieldContext_AddCommentAndCloseBugPayload_commentOpe
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_AddCommentOperation_id(ctx, field)
+				return ec.fieldContext_BugAddCommentOperation_id(ctx, field)
 			case "author":
-				return ec.fieldContext_AddCommentOperation_author(ctx, field)
+				return ec.fieldContext_BugAddCommentOperation_author(ctx, field)
 			case "date":
-				return ec.fieldContext_AddCommentOperation_date(ctx, field)
+				return ec.fieldContext_BugAddCommentOperation_date(ctx, field)
 			case "message":
-				return ec.fieldContext_AddCommentOperation_message(ctx, field)
+				return ec.fieldContext_BugAddCommentOperation_message(ctx, field)
 			case "files":
-				return ec.fieldContext_AddCommentOperation_files(ctx, field)
+				return ec.fieldContext_BugAddCommentOperation_files(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type AddCommentOperation", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BugAddCommentOperation", field.Name)
 		},
 	}
 	return fc, nil
@@ -228,7 +228,7 @@ func (ec *executionContext) _AddCommentAndCloseBugPayload_statusOperation(ctx co
 	}
 	res := resTmp.(*bug.SetStatusOperation)
 	fc.Result = res
-	return ec.marshalNSetStatusOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐSetStatusOperation(ctx, field.Selections, res)
+	return ec.marshalNBugSetStatusOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐSetStatusOperation(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AddCommentAndCloseBugPayload_statusOperation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -240,15 +240,15 @@ func (ec *executionContext) fieldContext_AddCommentAndCloseBugPayload_statusOper
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_SetStatusOperation_id(ctx, field)
+				return ec.fieldContext_BugSetStatusOperation_id(ctx, field)
 			case "author":
-				return ec.fieldContext_SetStatusOperation_author(ctx, field)
+				return ec.fieldContext_BugSetStatusOperation_author(ctx, field)
 			case "date":
-				return ec.fieldContext_SetStatusOperation_date(ctx, field)
+				return ec.fieldContext_BugSetStatusOperation_date(ctx, field)
 			case "status":
-				return ec.fieldContext_SetStatusOperation_status(ctx, field)
+				return ec.fieldContext_BugSetStatusOperation_status(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type SetStatusOperation", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BugSetStatusOperation", field.Name)
 		},
 	}
 	return fc, nil
@@ -395,7 +395,7 @@ func (ec *executionContext) _AddCommentAndReopenBugPayload_commentOperation(ctx 
 	}
 	res := resTmp.(*bug.AddCommentOperation)
 	fc.Result = res
-	return ec.marshalNAddCommentOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐAddCommentOperation(ctx, field.Selections, res)
+	return ec.marshalNBugAddCommentOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐAddCommentOperation(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AddCommentAndReopenBugPayload_commentOperation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -407,17 +407,17 @@ func (ec *executionContext) fieldContext_AddCommentAndReopenBugPayload_commentOp
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_AddCommentOperation_id(ctx, field)
+				return ec.fieldContext_BugAddCommentOperation_id(ctx, field)
 			case "author":
-				return ec.fieldContext_AddCommentOperation_author(ctx, field)
+				return ec.fieldContext_BugAddCommentOperation_author(ctx, field)
 			case "date":
-				return ec.fieldContext_AddCommentOperation_date(ctx, field)
+				return ec.fieldContext_BugAddCommentOperation_date(ctx, field)
 			case "message":
-				return ec.fieldContext_AddCommentOperation_message(ctx, field)
+				return ec.fieldContext_BugAddCommentOperation_message(ctx, field)
 			case "files":
-				return ec.fieldContext_AddCommentOperation_files(ctx, field)
+				return ec.fieldContext_BugAddCommentOperation_files(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type AddCommentOperation", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BugAddCommentOperation", field.Name)
 		},
 	}
 	return fc, nil
@@ -451,7 +451,7 @@ func (ec *executionContext) _AddCommentAndReopenBugPayload_statusOperation(ctx c
 	}
 	res := resTmp.(*bug.SetStatusOperation)
 	fc.Result = res
-	return ec.marshalNSetStatusOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐSetStatusOperation(ctx, field.Selections, res)
+	return ec.marshalNBugSetStatusOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐSetStatusOperation(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AddCommentAndReopenBugPayload_statusOperation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -463,15 +463,15 @@ func (ec *executionContext) fieldContext_AddCommentAndReopenBugPayload_statusOpe
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_SetStatusOperation_id(ctx, field)
+				return ec.fieldContext_BugSetStatusOperation_id(ctx, field)
 			case "author":
-				return ec.fieldContext_SetStatusOperation_author(ctx, field)
+				return ec.fieldContext_BugSetStatusOperation_author(ctx, field)
 			case "date":
-				return ec.fieldContext_SetStatusOperation_date(ctx, field)
+				return ec.fieldContext_BugSetStatusOperation_date(ctx, field)
 			case "status":
-				return ec.fieldContext_SetStatusOperation_status(ctx, field)
+				return ec.fieldContext_BugSetStatusOperation_status(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type SetStatusOperation", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BugSetStatusOperation", field.Name)
 		},
 	}
 	return fc, nil
@@ -618,7 +618,7 @@ func (ec *executionContext) _AddCommentPayload_operation(ctx context.Context, fi
 	}
 	res := resTmp.(*bug.AddCommentOperation)
 	fc.Result = res
-	return ec.marshalNAddCommentOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐAddCommentOperation(ctx, field.Selections, res)
+	return ec.marshalNBugAddCommentOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐAddCommentOperation(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AddCommentPayload_operation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -630,17 +630,17 @@ func (ec *executionContext) fieldContext_AddCommentPayload_operation(_ context.C
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_AddCommentOperation_id(ctx, field)
+				return ec.fieldContext_BugAddCommentOperation_id(ctx, field)
 			case "author":
-				return ec.fieldContext_AddCommentOperation_author(ctx, field)
+				return ec.fieldContext_BugAddCommentOperation_author(ctx, field)
 			case "date":
-				return ec.fieldContext_AddCommentOperation_date(ctx, field)
+				return ec.fieldContext_BugAddCommentOperation_date(ctx, field)
 			case "message":
-				return ec.fieldContext_AddCommentOperation_message(ctx, field)
+				return ec.fieldContext_BugAddCommentOperation_message(ctx, field)
 			case "files":
-				return ec.fieldContext_AddCommentOperation_files(ctx, field)
+				return ec.fieldContext_BugAddCommentOperation_files(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type AddCommentOperation", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BugAddCommentOperation", field.Name)
 		},
 	}
 	return fc, nil
@@ -787,7 +787,7 @@ func (ec *executionContext) _ChangeLabelPayload_operation(ctx context.Context, f
 	}
 	res := resTmp.(*bug.LabelChangeOperation)
 	fc.Result = res
-	return ec.marshalNLabelChangeOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐLabelChangeOperation(ctx, field.Selections, res)
+	return ec.marshalNBugLabelChangeOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐLabelChangeOperation(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ChangeLabelPayload_operation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -799,17 +799,17 @@ func (ec *executionContext) fieldContext_ChangeLabelPayload_operation(_ context.
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_LabelChangeOperation_id(ctx, field)
+				return ec.fieldContext_BugLabelChangeOperation_id(ctx, field)
 			case "author":
-				return ec.fieldContext_LabelChangeOperation_author(ctx, field)
+				return ec.fieldContext_BugLabelChangeOperation_author(ctx, field)
 			case "date":
-				return ec.fieldContext_LabelChangeOperation_date(ctx, field)
+				return ec.fieldContext_BugLabelChangeOperation_date(ctx, field)
 			case "added":
-				return ec.fieldContext_LabelChangeOperation_added(ctx, field)
+				return ec.fieldContext_BugLabelChangeOperation_added(ctx, field)
 			case "removed":
-				return ec.fieldContext_LabelChangeOperation_removed(ctx, field)
+				return ec.fieldContext_BugLabelChangeOperation_removed(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type LabelChangeOperation", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BugLabelChangeOperation", field.Name)
 		},
 	}
 	return fc, nil
@@ -1006,7 +1006,7 @@ func (ec *executionContext) _CloseBugPayload_operation(ctx context.Context, fiel
 	}
 	res := resTmp.(*bug.SetStatusOperation)
 	fc.Result = res
-	return ec.marshalNSetStatusOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐSetStatusOperation(ctx, field.Selections, res)
+	return ec.marshalNBugSetStatusOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐSetStatusOperation(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CloseBugPayload_operation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1018,15 +1018,15 @@ func (ec *executionContext) fieldContext_CloseBugPayload_operation(_ context.Con
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_SetStatusOperation_id(ctx, field)
+				return ec.fieldContext_BugSetStatusOperation_id(ctx, field)
 			case "author":
-				return ec.fieldContext_SetStatusOperation_author(ctx, field)
+				return ec.fieldContext_BugSetStatusOperation_author(ctx, field)
 			case "date":
-				return ec.fieldContext_SetStatusOperation_date(ctx, field)
+				return ec.fieldContext_BugSetStatusOperation_date(ctx, field)
 			case "status":
-				return ec.fieldContext_SetStatusOperation_status(ctx, field)
+				return ec.fieldContext_BugSetStatusOperation_status(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type SetStatusOperation", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BugSetStatusOperation", field.Name)
 		},
 	}
 	return fc, nil
@@ -1173,7 +1173,7 @@ func (ec *executionContext) _EditCommentPayload_operation(ctx context.Context, f
 	}
 	res := resTmp.(*bug.EditCommentOperation)
 	fc.Result = res
-	return ec.marshalNEditCommentOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐEditCommentOperation(ctx, field.Selections, res)
+	return ec.marshalNBugEditCommentOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐEditCommentOperation(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_EditCommentPayload_operation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1185,19 +1185,19 @@ func (ec *executionContext) fieldContext_EditCommentPayload_operation(_ context.
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_EditCommentOperation_id(ctx, field)
+				return ec.fieldContext_BugEditCommentOperation_id(ctx, field)
 			case "author":
-				return ec.fieldContext_EditCommentOperation_author(ctx, field)
+				return ec.fieldContext_BugEditCommentOperation_author(ctx, field)
 			case "date":
-				return ec.fieldContext_EditCommentOperation_date(ctx, field)
+				return ec.fieldContext_BugEditCommentOperation_date(ctx, field)
 			case "target":
-				return ec.fieldContext_EditCommentOperation_target(ctx, field)
+				return ec.fieldContext_BugEditCommentOperation_target(ctx, field)
 			case "message":
-				return ec.fieldContext_EditCommentOperation_message(ctx, field)
+				return ec.fieldContext_BugEditCommentOperation_message(ctx, field)
 			case "files":
-				return ec.fieldContext_EditCommentOperation_files(ctx, field)
+				return ec.fieldContext_BugEditCommentOperation_files(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type EditCommentOperation", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BugEditCommentOperation", field.Name)
 		},
 	}
 	return fc, nil
@@ -1438,7 +1438,7 @@ func (ec *executionContext) _NewBugPayload_operation(ctx context.Context, field 
 	}
 	res := resTmp.(*bug.CreateOperation)
 	fc.Result = res
-	return ec.marshalNCreateOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐCreateOperation(ctx, field.Selections, res)
+	return ec.marshalNBugCreateOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐCreateOperation(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_NewBugPayload_operation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1450,19 +1450,19 @@ func (ec *executionContext) fieldContext_NewBugPayload_operation(_ context.Conte
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_CreateOperation_id(ctx, field)
+				return ec.fieldContext_BugCreateOperation_id(ctx, field)
 			case "author":
-				return ec.fieldContext_CreateOperation_author(ctx, field)
+				return ec.fieldContext_BugCreateOperation_author(ctx, field)
 			case "date":
-				return ec.fieldContext_CreateOperation_date(ctx, field)
+				return ec.fieldContext_BugCreateOperation_date(ctx, field)
 			case "title":
-				return ec.fieldContext_CreateOperation_title(ctx, field)
+				return ec.fieldContext_BugCreateOperation_title(ctx, field)
 			case "message":
-				return ec.fieldContext_CreateOperation_message(ctx, field)
+				return ec.fieldContext_BugCreateOperation_message(ctx, field)
 			case "files":
-				return ec.fieldContext_CreateOperation_files(ctx, field)
+				return ec.fieldContext_BugCreateOperation_files(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type CreateOperation", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BugCreateOperation", field.Name)
 		},
 	}
 	return fc, nil
@@ -1609,7 +1609,7 @@ func (ec *executionContext) _OpenBugPayload_operation(ctx context.Context, field
 	}
 	res := resTmp.(*bug.SetStatusOperation)
 	fc.Result = res
-	return ec.marshalNSetStatusOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐSetStatusOperation(ctx, field.Selections, res)
+	return ec.marshalNBugSetStatusOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐSetStatusOperation(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_OpenBugPayload_operation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1621,15 +1621,15 @@ func (ec *executionContext) fieldContext_OpenBugPayload_operation(_ context.Cont
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_SetStatusOperation_id(ctx, field)
+				return ec.fieldContext_BugSetStatusOperation_id(ctx, field)
 			case "author":
-				return ec.fieldContext_SetStatusOperation_author(ctx, field)
+				return ec.fieldContext_BugSetStatusOperation_author(ctx, field)
 			case "date":
-				return ec.fieldContext_SetStatusOperation_date(ctx, field)
+				return ec.fieldContext_BugSetStatusOperation_date(ctx, field)
 			case "status":
-				return ec.fieldContext_SetStatusOperation_status(ctx, field)
+				return ec.fieldContext_BugSetStatusOperation_status(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type SetStatusOperation", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BugSetStatusOperation", field.Name)
 		},
 	}
 	return fc, nil
@@ -1776,7 +1776,7 @@ func (ec *executionContext) _SetTitlePayload_operation(ctx context.Context, fiel
 	}
 	res := resTmp.(*bug.SetTitleOperation)
 	fc.Result = res
-	return ec.marshalNSetTitleOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐSetTitleOperation(ctx, field.Selections, res)
+	return ec.marshalNBugSetTitleOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐSetTitleOperation(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SetTitlePayload_operation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1788,17 +1788,17 @@ func (ec *executionContext) fieldContext_SetTitlePayload_operation(_ context.Con
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_SetTitleOperation_id(ctx, field)
+				return ec.fieldContext_BugSetTitleOperation_id(ctx, field)
 			case "author":
-				return ec.fieldContext_SetTitleOperation_author(ctx, field)
+				return ec.fieldContext_BugSetTitleOperation_author(ctx, field)
 			case "date":
-				return ec.fieldContext_SetTitleOperation_date(ctx, field)
+				return ec.fieldContext_BugSetTitleOperation_date(ctx, field)
 			case "title":
-				return ec.fieldContext_SetTitleOperation_title(ctx, field)
+				return ec.fieldContext_BugSetTitleOperation_title(ctx, field)
 			case "was":
-				return ec.fieldContext_SetTitleOperation_was(ctx, field)
+				return ec.fieldContext_BugSetTitleOperation_was(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type SetTitleOperation", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BugSetTitleOperation", field.Name)
 		},
 	}
 	return fc, nil

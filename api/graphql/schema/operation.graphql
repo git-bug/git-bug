@@ -1,0 +1,25 @@
+"""An operation applied to an entity."""
+interface Operation {
+    """The identifier of the operation"""
+    id: ID!
+    """The operations author."""
+    author: Identity!
+    """The datetime when this operation was issued."""
+    date: Time! @goField(name: "Time")
+}
+
+# Connection
+
+"""The connection type for an Operation"""
+type OperationConnection {
+    edges: [OperationEdge!]!
+    nodes: [Operation!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+"""Represent an Operation"""
+type OperationEdge {
+    cursor: String!
+    node: Operation!
+}

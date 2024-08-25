@@ -17,7 +17,7 @@ type NewBugPayload {
     """The created bug."""
     bug: Bug!
     """The resulting operation."""
-    operation: CreateOperation!
+    operation: BugCreateOperation!
 }
 
 input AddCommentInput {
@@ -39,7 +39,7 @@ type AddCommentPayload {
     """The affected bug."""
     bug: Bug!
     """The resulting operation."""
-    operation: AddCommentOperation!
+    operation: BugAddCommentOperation!
 }
 
 input AddCommentAndCloseBugInput {
@@ -61,9 +61,9 @@ type AddCommentAndCloseBugPayload {
     """The affected bug."""
     bug: Bug!
     """The resulting AddComment operation."""
-    commentOperation: AddCommentOperation!
+    commentOperation: BugAddCommentOperation!
     """The resulting SetStatusOperation."""
-    statusOperation: SetStatusOperation!
+    statusOperation: BugSetStatusOperation!
 }
 
 input AddCommentAndReopenBugInput {
@@ -85,9 +85,9 @@ type AddCommentAndReopenBugPayload {
     """The affected bug."""
     bug: Bug!
     """The resulting AddComment operation."""
-    commentOperation: AddCommentOperation!
+    commentOperation: BugAddCommentOperation!
     """The resulting SetStatusOperation."""
-    statusOperation: SetStatusOperation!
+    statusOperation: BugSetStatusOperation!
 }
 
 input EditCommentInput {
@@ -109,7 +109,7 @@ type EditCommentPayload {
     """The affected bug."""
     bug: Bug!
     """The resulting operation."""
-    operation: EditCommentOperation!
+    operation: BugEditCommentOperation!
 }
 
 input ChangeLabelInput {
@@ -146,7 +146,7 @@ type ChangeLabelPayload {
     """The affected bug."""
     bug: Bug!
     """The resulting operation."""
-    operation: LabelChangeOperation!
+    operation: BugLabelChangeOperation!
     """The effect each source label had."""
     results: [LabelChangeResult]!
 }
@@ -166,7 +166,7 @@ type OpenBugPayload {
     """The affected bug."""
     bug: Bug!
     """The resulting operation."""
-    operation: SetStatusOperation!
+    operation: BugSetStatusOperation!
 }
 
 input CloseBugInput {
@@ -184,7 +184,7 @@ type CloseBugPayload {
     """The affected bug."""
     bug: Bug!
     """The resulting operation."""
-    operation: SetStatusOperation!
+    operation: BugSetStatusOperation!
 }
 
 input SetTitleInput {
@@ -204,5 +204,5 @@ type SetTitlePayload {
     """The affected bug."""
     bug: Bug!
     """The resulting operation"""
-    operation: SetTitleOperation!
+    operation: BugSetTitleOperation!
 }

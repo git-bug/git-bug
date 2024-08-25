@@ -33,26 +33,26 @@ type Config struct {
 }
 
 type ResolverRoot interface {
-	AddCommentOperation() AddCommentOperationResolver
-	AddCommentTimelineItem() AddCommentTimelineItemResolver
 	Bug() BugResolver
+	BugAddCommentOperation() BugAddCommentOperationResolver
+	BugAddCommentTimelineItem() BugAddCommentTimelineItemResolver
+	BugComment() BugCommentResolver
+	BugCommentHistoryStep() BugCommentHistoryStepResolver
+	BugCreateOperation() BugCreateOperationResolver
+	BugCreateTimelineItem() BugCreateTimelineItemResolver
+	BugEditCommentOperation() BugEditCommentOperationResolver
+	BugLabelChangeOperation() BugLabelChangeOperationResolver
+	BugLabelChangeTimelineItem() BugLabelChangeTimelineItemResolver
+	BugSetStatusOperation() BugSetStatusOperationResolver
+	BugSetStatusTimelineItem() BugSetStatusTimelineItemResolver
+	BugSetTitleOperation() BugSetTitleOperationResolver
+	BugSetTitleTimelineItem() BugSetTitleTimelineItemResolver
 	Color() ColorResolver
-	Comment() CommentResolver
-	CommentHistoryStep() CommentHistoryStepResolver
-	CreateOperation() CreateOperationResolver
-	CreateTimelineItem() CreateTimelineItemResolver
-	EditCommentOperation() EditCommentOperationResolver
 	Identity() IdentityResolver
 	Label() LabelResolver
-	LabelChangeOperation() LabelChangeOperationResolver
-	LabelChangeTimelineItem() LabelChangeTimelineItemResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
 	Repository() RepositoryResolver
-	SetStatusOperation() SetStatusOperationResolver
-	SetStatusTimelineItem() SetStatusTimelineItemResolver
-	SetTitleOperation() SetTitleOperationResolver
-	SetTitleTimelineItem() SetTitleTimelineItemResolver
 }
 
 type DirectiveRoot struct {
@@ -73,30 +73,10 @@ type ComplexityRoot struct {
 		StatusOperation  func(childComplexity int) int
 	}
 
-	AddCommentOperation struct {
-		Author  func(childComplexity int) int
-		Date    func(childComplexity int) int
-		Files   func(childComplexity int) int
-		Id      func(childComplexity int) int
-		Message func(childComplexity int) int
-	}
-
 	AddCommentPayload struct {
 		Bug              func(childComplexity int) int
 		ClientMutationID func(childComplexity int) int
 		Operation        func(childComplexity int) int
-	}
-
-	AddCommentTimelineItem struct {
-		Author         func(childComplexity int) int
-		CreatedAt      func(childComplexity int) int
-		Edited         func(childComplexity int) int
-		Files          func(childComplexity int) int
-		History        func(childComplexity int) int
-		ID             func(childComplexity int) int
-		LastEdit       func(childComplexity int) int
-		Message        func(childComplexity int) int
-		MessageIsEmpty func(childComplexity int) int
 	}
 
 	Bug struct {
@@ -115,6 +95,50 @@ type ComplexityRoot struct {
 		Title        func(childComplexity int) int
 	}
 
+	BugAddCommentOperation struct {
+		Author  func(childComplexity int) int
+		Files   func(childComplexity int) int
+		Id      func(childComplexity int) int
+		Message func(childComplexity int) int
+		Time    func(childComplexity int) int
+	}
+
+	BugAddCommentTimelineItem struct {
+		Author         func(childComplexity int) int
+		CombinedId     func(childComplexity int) int
+		CreatedAt      func(childComplexity int) int
+		Edited         func(childComplexity int) int
+		Files          func(childComplexity int) int
+		History        func(childComplexity int) int
+		LastEdit       func(childComplexity int) int
+		Message        func(childComplexity int) int
+		MessageIsEmpty func(childComplexity int) int
+	}
+
+	BugComment struct {
+		Author     func(childComplexity int) int
+		CombinedId func(childComplexity int) int
+		Files      func(childComplexity int) int
+		Message    func(childComplexity int) int
+	}
+
+	BugCommentConnection struct {
+		Edges      func(childComplexity int) int
+		Nodes      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	BugCommentEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	BugCommentHistoryStep struct {
+		Date    func(childComplexity int) int
+		Message func(childComplexity int) int
+	}
+
 	BugConnection struct {
 		Edges      func(childComplexity int) int
 		Nodes      func(childComplexity int) int
@@ -122,7 +146,95 @@ type ComplexityRoot struct {
 		TotalCount func(childComplexity int) int
 	}
 
+	BugCreateOperation struct {
+		Author  func(childComplexity int) int
+		Files   func(childComplexity int) int
+		Id      func(childComplexity int) int
+		Message func(childComplexity int) int
+		Time    func(childComplexity int) int
+		Title   func(childComplexity int) int
+	}
+
+	BugCreateTimelineItem struct {
+		Author         func(childComplexity int) int
+		CombinedId     func(childComplexity int) int
+		CreatedAt      func(childComplexity int) int
+		Edited         func(childComplexity int) int
+		Files          func(childComplexity int) int
+		History        func(childComplexity int) int
+		LastEdit       func(childComplexity int) int
+		Message        func(childComplexity int) int
+		MessageIsEmpty func(childComplexity int) int
+	}
+
 	BugEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	BugEditCommentOperation struct {
+		Author  func(childComplexity int) int
+		Files   func(childComplexity int) int
+		Id      func(childComplexity int) int
+		Message func(childComplexity int) int
+		Target  func(childComplexity int) int
+		Time    func(childComplexity int) int
+	}
+
+	BugLabelChangeOperation struct {
+		Added   func(childComplexity int) int
+		Author  func(childComplexity int) int
+		Id      func(childComplexity int) int
+		Removed func(childComplexity int) int
+		Time    func(childComplexity int) int
+	}
+
+	BugLabelChangeTimelineItem struct {
+		Added      func(childComplexity int) int
+		Author     func(childComplexity int) int
+		CombinedId func(childComplexity int) int
+		Date       func(childComplexity int) int
+		Removed    func(childComplexity int) int
+	}
+
+	BugSetStatusOperation struct {
+		Author func(childComplexity int) int
+		Id     func(childComplexity int) int
+		Status func(childComplexity int) int
+		Time   func(childComplexity int) int
+	}
+
+	BugSetStatusTimelineItem struct {
+		Author     func(childComplexity int) int
+		CombinedId func(childComplexity int) int
+		Date       func(childComplexity int) int
+		Status     func(childComplexity int) int
+	}
+
+	BugSetTitleOperation struct {
+		Author func(childComplexity int) int
+		Id     func(childComplexity int) int
+		Time   func(childComplexity int) int
+		Title  func(childComplexity int) int
+		Was    func(childComplexity int) int
+	}
+
+	BugSetTitleTimelineItem struct {
+		Author     func(childComplexity int) int
+		CombinedId func(childComplexity int) int
+		Date       func(childComplexity int) int
+		Title      func(childComplexity int) int
+		Was        func(childComplexity int) int
+	}
+
+	BugTimelineItemConnection struct {
+		Edges      func(childComplexity int) int
+		Nodes      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	BugTimelineItemEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
 	}
@@ -144,60 +256,6 @@ type ComplexityRoot struct {
 		B func(childComplexity int) int
 		G func(childComplexity int) int
 		R func(childComplexity int) int
-	}
-
-	Comment struct {
-		Author  func(childComplexity int) int
-		Files   func(childComplexity int) int
-		ID      func(childComplexity int) int
-		Message func(childComplexity int) int
-	}
-
-	CommentConnection struct {
-		Edges      func(childComplexity int) int
-		Nodes      func(childComplexity int) int
-		PageInfo   func(childComplexity int) int
-		TotalCount func(childComplexity int) int
-	}
-
-	CommentEdge struct {
-		Cursor func(childComplexity int) int
-		Node   func(childComplexity int) int
-	}
-
-	CommentHistoryStep struct {
-		Date    func(childComplexity int) int
-		Message func(childComplexity int) int
-	}
-
-	CreateOperation struct {
-		Author  func(childComplexity int) int
-		Date    func(childComplexity int) int
-		Files   func(childComplexity int) int
-		Id      func(childComplexity int) int
-		Message func(childComplexity int) int
-		Title   func(childComplexity int) int
-	}
-
-	CreateTimelineItem struct {
-		Author         func(childComplexity int) int
-		CreatedAt      func(childComplexity int) int
-		Edited         func(childComplexity int) int
-		Files          func(childComplexity int) int
-		History        func(childComplexity int) int
-		ID             func(childComplexity int) int
-		LastEdit       func(childComplexity int) int
-		Message        func(childComplexity int) int
-		MessageIsEmpty func(childComplexity int) int
-	}
-
-	EditCommentOperation struct {
-		Author  func(childComplexity int) int
-		Date    func(childComplexity int) int
-		Files   func(childComplexity int) int
-		Id      func(childComplexity int) int
-		Message func(childComplexity int) int
-		Target  func(childComplexity int) int
 	}
 
 	EditCommentPayload struct {
@@ -234,25 +292,9 @@ type ComplexityRoot struct {
 		Name  func(childComplexity int) int
 	}
 
-	LabelChangeOperation struct {
-		Added   func(childComplexity int) int
-		Author  func(childComplexity int) int
-		Date    func(childComplexity int) int
-		Id      func(childComplexity int) int
-		Removed func(childComplexity int) int
-	}
-
 	LabelChangeResult struct {
 		Label  func(childComplexity int) int
 		Status func(childComplexity int) int
-	}
-
-	LabelChangeTimelineItem struct {
-		Added   func(childComplexity int) int
-		Author  func(childComplexity int) int
-		Date    func(childComplexity int) int
-		ID      func(childComplexity int) int
-		Removed func(childComplexity int) int
 	}
 
 	LabelConnection struct {
@@ -324,52 +366,10 @@ type ComplexityRoot struct {
 		ValidLabels   func(childComplexity int, after *string, before *string, first *int, last *int) int
 	}
 
-	SetStatusOperation struct {
-		Author func(childComplexity int) int
-		Date   func(childComplexity int) int
-		Id     func(childComplexity int) int
-		Status func(childComplexity int) int
-	}
-
-	SetStatusTimelineItem struct {
-		Author func(childComplexity int) int
-		Date   func(childComplexity int) int
-		ID     func(childComplexity int) int
-		Status func(childComplexity int) int
-	}
-
-	SetTitleOperation struct {
-		Author func(childComplexity int) int
-		Date   func(childComplexity int) int
-		Id     func(childComplexity int) int
-		Title  func(childComplexity int) int
-		Was    func(childComplexity int) int
-	}
-
 	SetTitlePayload struct {
 		Bug              func(childComplexity int) int
 		ClientMutationID func(childComplexity int) int
 		Operation        func(childComplexity int) int
-	}
-
-	SetTitleTimelineItem struct {
-		Author func(childComplexity int) int
-		Date   func(childComplexity int) int
-		ID     func(childComplexity int) int
-		Title  func(childComplexity int) int
-		Was    func(childComplexity int) int
-	}
-
-	TimelineItemConnection struct {
-		Edges      func(childComplexity int) int
-		Nodes      func(childComplexity int) int
-		PageInfo   func(childComplexity int) int
-		TotalCount func(childComplexity int) int
-	}
-
-	TimelineItemEdge struct {
-		Cursor func(childComplexity int) int
-		Node   func(childComplexity int) int
 	}
 }
 
@@ -448,41 +448,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.AddCommentAndReopenBugPayload.StatusOperation(childComplexity), true
 
-	case "AddCommentOperation.author":
-		if e.complexity.AddCommentOperation.Author == nil {
-			break
-		}
-
-		return e.complexity.AddCommentOperation.Author(childComplexity), true
-
-	case "AddCommentOperation.date":
-		if e.complexity.AddCommentOperation.Date == nil {
-			break
-		}
-
-		return e.complexity.AddCommentOperation.Date(childComplexity), true
-
-	case "AddCommentOperation.files":
-		if e.complexity.AddCommentOperation.Files == nil {
-			break
-		}
-
-		return e.complexity.AddCommentOperation.Files(childComplexity), true
-
-	case "AddCommentOperation.id":
-		if e.complexity.AddCommentOperation.Id == nil {
-			break
-		}
-
-		return e.complexity.AddCommentOperation.Id(childComplexity), true
-
-	case "AddCommentOperation.message":
-		if e.complexity.AddCommentOperation.Message == nil {
-			break
-		}
-
-		return e.complexity.AddCommentOperation.Message(childComplexity), true
-
 	case "AddCommentPayload.bug":
 		if e.complexity.AddCommentPayload.Bug == nil {
 			break
@@ -503,69 +468,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.AddCommentPayload.Operation(childComplexity), true
-
-	case "AddCommentTimelineItem.author":
-		if e.complexity.AddCommentTimelineItem.Author == nil {
-			break
-		}
-
-		return e.complexity.AddCommentTimelineItem.Author(childComplexity), true
-
-	case "AddCommentTimelineItem.createdAt":
-		if e.complexity.AddCommentTimelineItem.CreatedAt == nil {
-			break
-		}
-
-		return e.complexity.AddCommentTimelineItem.CreatedAt(childComplexity), true
-
-	case "AddCommentTimelineItem.edited":
-		if e.complexity.AddCommentTimelineItem.Edited == nil {
-			break
-		}
-
-		return e.complexity.AddCommentTimelineItem.Edited(childComplexity), true
-
-	case "AddCommentTimelineItem.files":
-		if e.complexity.AddCommentTimelineItem.Files == nil {
-			break
-		}
-
-		return e.complexity.AddCommentTimelineItem.Files(childComplexity), true
-
-	case "AddCommentTimelineItem.history":
-		if e.complexity.AddCommentTimelineItem.History == nil {
-			break
-		}
-
-		return e.complexity.AddCommentTimelineItem.History(childComplexity), true
-
-	case "AddCommentTimelineItem.id":
-		if e.complexity.AddCommentTimelineItem.ID == nil {
-			break
-		}
-
-		return e.complexity.AddCommentTimelineItem.ID(childComplexity), true
-
-	case "AddCommentTimelineItem.lastEdit":
-		if e.complexity.AddCommentTimelineItem.LastEdit == nil {
-			break
-		}
-
-		return e.complexity.AddCommentTimelineItem.LastEdit(childComplexity), true
-
-	case "AddCommentTimelineItem.message":
-		if e.complexity.AddCommentTimelineItem.Message == nil {
-			break
-		}
-
-		return e.complexity.AddCommentTimelineItem.Message(childComplexity), true
-
-	case "AddCommentTimelineItem.messageIsEmpty":
-		if e.complexity.AddCommentTimelineItem.MessageIsEmpty == nil {
-			break
-		}
-
-		return e.complexity.AddCommentTimelineItem.MessageIsEmpty(childComplexity), true
 
 	case "Bug.actors":
 		if e.complexity.Bug.Actors == nil {
@@ -683,6 +585,188 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Bug.Title(childComplexity), true
 
+	case "BugAddCommentOperation.author":
+		if e.complexity.BugAddCommentOperation.Author == nil {
+			break
+		}
+
+		return e.complexity.BugAddCommentOperation.Author(childComplexity), true
+
+	case "BugAddCommentOperation.files":
+		if e.complexity.BugAddCommentOperation.Files == nil {
+			break
+		}
+
+		return e.complexity.BugAddCommentOperation.Files(childComplexity), true
+
+	case "BugAddCommentOperation.id":
+		if e.complexity.BugAddCommentOperation.Id == nil {
+			break
+		}
+
+		return e.complexity.BugAddCommentOperation.Id(childComplexity), true
+
+	case "BugAddCommentOperation.message":
+		if e.complexity.BugAddCommentOperation.Message == nil {
+			break
+		}
+
+		return e.complexity.BugAddCommentOperation.Message(childComplexity), true
+
+	case "BugAddCommentOperation.date":
+		if e.complexity.BugAddCommentOperation.Time == nil {
+			break
+		}
+
+		return e.complexity.BugAddCommentOperation.Time(childComplexity), true
+
+	case "BugAddCommentTimelineItem.author":
+		if e.complexity.BugAddCommentTimelineItem.Author == nil {
+			break
+		}
+
+		return e.complexity.BugAddCommentTimelineItem.Author(childComplexity), true
+
+	case "BugAddCommentTimelineItem.id":
+		if e.complexity.BugAddCommentTimelineItem.CombinedId == nil {
+			break
+		}
+
+		return e.complexity.BugAddCommentTimelineItem.CombinedId(childComplexity), true
+
+	case "BugAddCommentTimelineItem.createdAt":
+		if e.complexity.BugAddCommentTimelineItem.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.BugAddCommentTimelineItem.CreatedAt(childComplexity), true
+
+	case "BugAddCommentTimelineItem.edited":
+		if e.complexity.BugAddCommentTimelineItem.Edited == nil {
+			break
+		}
+
+		return e.complexity.BugAddCommentTimelineItem.Edited(childComplexity), true
+
+	case "BugAddCommentTimelineItem.files":
+		if e.complexity.BugAddCommentTimelineItem.Files == nil {
+			break
+		}
+
+		return e.complexity.BugAddCommentTimelineItem.Files(childComplexity), true
+
+	case "BugAddCommentTimelineItem.history":
+		if e.complexity.BugAddCommentTimelineItem.History == nil {
+			break
+		}
+
+		return e.complexity.BugAddCommentTimelineItem.History(childComplexity), true
+
+	case "BugAddCommentTimelineItem.lastEdit":
+		if e.complexity.BugAddCommentTimelineItem.LastEdit == nil {
+			break
+		}
+
+		return e.complexity.BugAddCommentTimelineItem.LastEdit(childComplexity), true
+
+	case "BugAddCommentTimelineItem.message":
+		if e.complexity.BugAddCommentTimelineItem.Message == nil {
+			break
+		}
+
+		return e.complexity.BugAddCommentTimelineItem.Message(childComplexity), true
+
+	case "BugAddCommentTimelineItem.messageIsEmpty":
+		if e.complexity.BugAddCommentTimelineItem.MessageIsEmpty == nil {
+			break
+		}
+
+		return e.complexity.BugAddCommentTimelineItem.MessageIsEmpty(childComplexity), true
+
+	case "BugComment.author":
+		if e.complexity.BugComment.Author == nil {
+			break
+		}
+
+		return e.complexity.BugComment.Author(childComplexity), true
+
+	case "BugComment.id":
+		if e.complexity.BugComment.CombinedId == nil {
+			break
+		}
+
+		return e.complexity.BugComment.CombinedId(childComplexity), true
+
+	case "BugComment.files":
+		if e.complexity.BugComment.Files == nil {
+			break
+		}
+
+		return e.complexity.BugComment.Files(childComplexity), true
+
+	case "BugComment.message":
+		if e.complexity.BugComment.Message == nil {
+			break
+		}
+
+		return e.complexity.BugComment.Message(childComplexity), true
+
+	case "BugCommentConnection.edges":
+		if e.complexity.BugCommentConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.BugCommentConnection.Edges(childComplexity), true
+
+	case "BugCommentConnection.nodes":
+		if e.complexity.BugCommentConnection.Nodes == nil {
+			break
+		}
+
+		return e.complexity.BugCommentConnection.Nodes(childComplexity), true
+
+	case "BugCommentConnection.pageInfo":
+		if e.complexity.BugCommentConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.BugCommentConnection.PageInfo(childComplexity), true
+
+	case "BugCommentConnection.totalCount":
+		if e.complexity.BugCommentConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.BugCommentConnection.TotalCount(childComplexity), true
+
+	case "BugCommentEdge.cursor":
+		if e.complexity.BugCommentEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.BugCommentEdge.Cursor(childComplexity), true
+
+	case "BugCommentEdge.node":
+		if e.complexity.BugCommentEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.BugCommentEdge.Node(childComplexity), true
+
+	case "BugCommentHistoryStep.date":
+		if e.complexity.BugCommentHistoryStep.Date == nil {
+			break
+		}
+
+		return e.complexity.BugCommentHistoryStep.Date(childComplexity), true
+
+	case "BugCommentHistoryStep.message":
+		if e.complexity.BugCommentHistoryStep.Message == nil {
+			break
+		}
+
+		return e.complexity.BugCommentHistoryStep.Message(childComplexity), true
+
 	case "BugConnection.edges":
 		if e.complexity.BugConnection.Edges == nil {
 			break
@@ -711,6 +795,111 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.BugConnection.TotalCount(childComplexity), true
 
+	case "BugCreateOperation.author":
+		if e.complexity.BugCreateOperation.Author == nil {
+			break
+		}
+
+		return e.complexity.BugCreateOperation.Author(childComplexity), true
+
+	case "BugCreateOperation.files":
+		if e.complexity.BugCreateOperation.Files == nil {
+			break
+		}
+
+		return e.complexity.BugCreateOperation.Files(childComplexity), true
+
+	case "BugCreateOperation.id":
+		if e.complexity.BugCreateOperation.Id == nil {
+			break
+		}
+
+		return e.complexity.BugCreateOperation.Id(childComplexity), true
+
+	case "BugCreateOperation.message":
+		if e.complexity.BugCreateOperation.Message == nil {
+			break
+		}
+
+		return e.complexity.BugCreateOperation.Message(childComplexity), true
+
+	case "BugCreateOperation.date":
+		if e.complexity.BugCreateOperation.Time == nil {
+			break
+		}
+
+		return e.complexity.BugCreateOperation.Time(childComplexity), true
+
+	case "BugCreateOperation.title":
+		if e.complexity.BugCreateOperation.Title == nil {
+			break
+		}
+
+		return e.complexity.BugCreateOperation.Title(childComplexity), true
+
+	case "BugCreateTimelineItem.author":
+		if e.complexity.BugCreateTimelineItem.Author == nil {
+			break
+		}
+
+		return e.complexity.BugCreateTimelineItem.Author(childComplexity), true
+
+	case "BugCreateTimelineItem.id":
+		if e.complexity.BugCreateTimelineItem.CombinedId == nil {
+			break
+		}
+
+		return e.complexity.BugCreateTimelineItem.CombinedId(childComplexity), true
+
+	case "BugCreateTimelineItem.createdAt":
+		if e.complexity.BugCreateTimelineItem.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.BugCreateTimelineItem.CreatedAt(childComplexity), true
+
+	case "BugCreateTimelineItem.edited":
+		if e.complexity.BugCreateTimelineItem.Edited == nil {
+			break
+		}
+
+		return e.complexity.BugCreateTimelineItem.Edited(childComplexity), true
+
+	case "BugCreateTimelineItem.files":
+		if e.complexity.BugCreateTimelineItem.Files == nil {
+			break
+		}
+
+		return e.complexity.BugCreateTimelineItem.Files(childComplexity), true
+
+	case "BugCreateTimelineItem.history":
+		if e.complexity.BugCreateTimelineItem.History == nil {
+			break
+		}
+
+		return e.complexity.BugCreateTimelineItem.History(childComplexity), true
+
+	case "BugCreateTimelineItem.lastEdit":
+		if e.complexity.BugCreateTimelineItem.LastEdit == nil {
+			break
+		}
+
+		return e.complexity.BugCreateTimelineItem.LastEdit(childComplexity), true
+
+	case "BugCreateTimelineItem.message":
+		if e.complexity.BugCreateTimelineItem.Message == nil {
+			break
+		}
+
+		return e.complexity.BugCreateTimelineItem.Message(childComplexity), true
+
+	case "BugCreateTimelineItem.messageIsEmpty":
+		if e.complexity.BugCreateTimelineItem.MessageIsEmpty == nil {
+			break
+		}
+
+		return e.complexity.BugCreateTimelineItem.MessageIsEmpty(childComplexity), true
+
 	case "BugEdge.cursor":
 		if e.complexity.BugEdge.Cursor == nil {
 			break
@@ -724,6 +913,286 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.BugEdge.Node(childComplexity), true
+
+	case "BugEditCommentOperation.author":
+		if e.complexity.BugEditCommentOperation.Author == nil {
+			break
+		}
+
+		return e.complexity.BugEditCommentOperation.Author(childComplexity), true
+
+	case "BugEditCommentOperation.files":
+		if e.complexity.BugEditCommentOperation.Files == nil {
+			break
+		}
+
+		return e.complexity.BugEditCommentOperation.Files(childComplexity), true
+
+	case "BugEditCommentOperation.id":
+		if e.complexity.BugEditCommentOperation.Id == nil {
+			break
+		}
+
+		return e.complexity.BugEditCommentOperation.Id(childComplexity), true
+
+	case "BugEditCommentOperation.message":
+		if e.complexity.BugEditCommentOperation.Message == nil {
+			break
+		}
+
+		return e.complexity.BugEditCommentOperation.Message(childComplexity), true
+
+	case "BugEditCommentOperation.target":
+		if e.complexity.BugEditCommentOperation.Target == nil {
+			break
+		}
+
+		return e.complexity.BugEditCommentOperation.Target(childComplexity), true
+
+	case "BugEditCommentOperation.date":
+		if e.complexity.BugEditCommentOperation.Time == nil {
+			break
+		}
+
+		return e.complexity.BugEditCommentOperation.Time(childComplexity), true
+
+	case "BugLabelChangeOperation.added":
+		if e.complexity.BugLabelChangeOperation.Added == nil {
+			break
+		}
+
+		return e.complexity.BugLabelChangeOperation.Added(childComplexity), true
+
+	case "BugLabelChangeOperation.author":
+		if e.complexity.BugLabelChangeOperation.Author == nil {
+			break
+		}
+
+		return e.complexity.BugLabelChangeOperation.Author(childComplexity), true
+
+	case "BugLabelChangeOperation.id":
+		if e.complexity.BugLabelChangeOperation.Id == nil {
+			break
+		}
+
+		return e.complexity.BugLabelChangeOperation.Id(childComplexity), true
+
+	case "BugLabelChangeOperation.removed":
+		if e.complexity.BugLabelChangeOperation.Removed == nil {
+			break
+		}
+
+		return e.complexity.BugLabelChangeOperation.Removed(childComplexity), true
+
+	case "BugLabelChangeOperation.date":
+		if e.complexity.BugLabelChangeOperation.Time == nil {
+			break
+		}
+
+		return e.complexity.BugLabelChangeOperation.Time(childComplexity), true
+
+	case "BugLabelChangeTimelineItem.added":
+		if e.complexity.BugLabelChangeTimelineItem.Added == nil {
+			break
+		}
+
+		return e.complexity.BugLabelChangeTimelineItem.Added(childComplexity), true
+
+	case "BugLabelChangeTimelineItem.author":
+		if e.complexity.BugLabelChangeTimelineItem.Author == nil {
+			break
+		}
+
+		return e.complexity.BugLabelChangeTimelineItem.Author(childComplexity), true
+
+	case "BugLabelChangeTimelineItem.id":
+		if e.complexity.BugLabelChangeTimelineItem.CombinedId == nil {
+			break
+		}
+
+		return e.complexity.BugLabelChangeTimelineItem.CombinedId(childComplexity), true
+
+	case "BugLabelChangeTimelineItem.date":
+		if e.complexity.BugLabelChangeTimelineItem.Date == nil {
+			break
+		}
+
+		return e.complexity.BugLabelChangeTimelineItem.Date(childComplexity), true
+
+	case "BugLabelChangeTimelineItem.removed":
+		if e.complexity.BugLabelChangeTimelineItem.Removed == nil {
+			break
+		}
+
+		return e.complexity.BugLabelChangeTimelineItem.Removed(childComplexity), true
+
+	case "BugSetStatusOperation.author":
+		if e.complexity.BugSetStatusOperation.Author == nil {
+			break
+		}
+
+		return e.complexity.BugSetStatusOperation.Author(childComplexity), true
+
+	case "BugSetStatusOperation.id":
+		if e.complexity.BugSetStatusOperation.Id == nil {
+			break
+		}
+
+		return e.complexity.BugSetStatusOperation.Id(childComplexity), true
+
+	case "BugSetStatusOperation.status":
+		if e.complexity.BugSetStatusOperation.Status == nil {
+			break
+		}
+
+		return e.complexity.BugSetStatusOperation.Status(childComplexity), true
+
+	case "BugSetStatusOperation.date":
+		if e.complexity.BugSetStatusOperation.Time == nil {
+			break
+		}
+
+		return e.complexity.BugSetStatusOperation.Time(childComplexity), true
+
+	case "BugSetStatusTimelineItem.author":
+		if e.complexity.BugSetStatusTimelineItem.Author == nil {
+			break
+		}
+
+		return e.complexity.BugSetStatusTimelineItem.Author(childComplexity), true
+
+	case "BugSetStatusTimelineItem.id":
+		if e.complexity.BugSetStatusTimelineItem.CombinedId == nil {
+			break
+		}
+
+		return e.complexity.BugSetStatusTimelineItem.CombinedId(childComplexity), true
+
+	case "BugSetStatusTimelineItem.date":
+		if e.complexity.BugSetStatusTimelineItem.Date == nil {
+			break
+		}
+
+		return e.complexity.BugSetStatusTimelineItem.Date(childComplexity), true
+
+	case "BugSetStatusTimelineItem.status":
+		if e.complexity.BugSetStatusTimelineItem.Status == nil {
+			break
+		}
+
+		return e.complexity.BugSetStatusTimelineItem.Status(childComplexity), true
+
+	case "BugSetTitleOperation.author":
+		if e.complexity.BugSetTitleOperation.Author == nil {
+			break
+		}
+
+		return e.complexity.BugSetTitleOperation.Author(childComplexity), true
+
+	case "BugSetTitleOperation.id":
+		if e.complexity.BugSetTitleOperation.Id == nil {
+			break
+		}
+
+		return e.complexity.BugSetTitleOperation.Id(childComplexity), true
+
+	case "BugSetTitleOperation.date":
+		if e.complexity.BugSetTitleOperation.Time == nil {
+			break
+		}
+
+		return e.complexity.BugSetTitleOperation.Time(childComplexity), true
+
+	case "BugSetTitleOperation.title":
+		if e.complexity.BugSetTitleOperation.Title == nil {
+			break
+		}
+
+		return e.complexity.BugSetTitleOperation.Title(childComplexity), true
+
+	case "BugSetTitleOperation.was":
+		if e.complexity.BugSetTitleOperation.Was == nil {
+			break
+		}
+
+		return e.complexity.BugSetTitleOperation.Was(childComplexity), true
+
+	case "BugSetTitleTimelineItem.author":
+		if e.complexity.BugSetTitleTimelineItem.Author == nil {
+			break
+		}
+
+		return e.complexity.BugSetTitleTimelineItem.Author(childComplexity), true
+
+	case "BugSetTitleTimelineItem.id":
+		if e.complexity.BugSetTitleTimelineItem.CombinedId == nil {
+			break
+		}
+
+		return e.complexity.BugSetTitleTimelineItem.CombinedId(childComplexity), true
+
+	case "BugSetTitleTimelineItem.date":
+		if e.complexity.BugSetTitleTimelineItem.Date == nil {
+			break
+		}
+
+		return e.complexity.BugSetTitleTimelineItem.Date(childComplexity), true
+
+	case "BugSetTitleTimelineItem.title":
+		if e.complexity.BugSetTitleTimelineItem.Title == nil {
+			break
+		}
+
+		return e.complexity.BugSetTitleTimelineItem.Title(childComplexity), true
+
+	case "BugSetTitleTimelineItem.was":
+		if e.complexity.BugSetTitleTimelineItem.Was == nil {
+			break
+		}
+
+		return e.complexity.BugSetTitleTimelineItem.Was(childComplexity), true
+
+	case "BugTimelineItemConnection.edges":
+		if e.complexity.BugTimelineItemConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.BugTimelineItemConnection.Edges(childComplexity), true
+
+	case "BugTimelineItemConnection.nodes":
+		if e.complexity.BugTimelineItemConnection.Nodes == nil {
+			break
+		}
+
+		return e.complexity.BugTimelineItemConnection.Nodes(childComplexity), true
+
+	case "BugTimelineItemConnection.pageInfo":
+		if e.complexity.BugTimelineItemConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.BugTimelineItemConnection.PageInfo(childComplexity), true
+
+	case "BugTimelineItemConnection.totalCount":
+		if e.complexity.BugTimelineItemConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.BugTimelineItemConnection.TotalCount(childComplexity), true
+
+	case "BugTimelineItemEdge.cursor":
+		if e.complexity.BugTimelineItemEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.BugTimelineItemEdge.Cursor(childComplexity), true
+
+	case "BugTimelineItemEdge.node":
+		if e.complexity.BugTimelineItemEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.BugTimelineItemEdge.Node(childComplexity), true
 
 	case "ChangeLabelPayload.bug":
 		if e.complexity.ChangeLabelPayload.Bug == nil {
@@ -794,237 +1263,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Color.R(childComplexity), true
-
-	case "Comment.author":
-		if e.complexity.Comment.Author == nil {
-			break
-		}
-
-		return e.complexity.Comment.Author(childComplexity), true
-
-	case "Comment.files":
-		if e.complexity.Comment.Files == nil {
-			break
-		}
-
-		return e.complexity.Comment.Files(childComplexity), true
-
-	case "Comment.id":
-		if e.complexity.Comment.ID == nil {
-			break
-		}
-
-		return e.complexity.Comment.ID(childComplexity), true
-
-	case "Comment.message":
-		if e.complexity.Comment.Message == nil {
-			break
-		}
-
-		return e.complexity.Comment.Message(childComplexity), true
-
-	case "CommentConnection.edges":
-		if e.complexity.CommentConnection.Edges == nil {
-			break
-		}
-
-		return e.complexity.CommentConnection.Edges(childComplexity), true
-
-	case "CommentConnection.nodes":
-		if e.complexity.CommentConnection.Nodes == nil {
-			break
-		}
-
-		return e.complexity.CommentConnection.Nodes(childComplexity), true
-
-	case "CommentConnection.pageInfo":
-		if e.complexity.CommentConnection.PageInfo == nil {
-			break
-		}
-
-		return e.complexity.CommentConnection.PageInfo(childComplexity), true
-
-	case "CommentConnection.totalCount":
-		if e.complexity.CommentConnection.TotalCount == nil {
-			break
-		}
-
-		return e.complexity.CommentConnection.TotalCount(childComplexity), true
-
-	case "CommentEdge.cursor":
-		if e.complexity.CommentEdge.Cursor == nil {
-			break
-		}
-
-		return e.complexity.CommentEdge.Cursor(childComplexity), true
-
-	case "CommentEdge.node":
-		if e.complexity.CommentEdge.Node == nil {
-			break
-		}
-
-		return e.complexity.CommentEdge.Node(childComplexity), true
-
-	case "CommentHistoryStep.date":
-		if e.complexity.CommentHistoryStep.Date == nil {
-			break
-		}
-
-		return e.complexity.CommentHistoryStep.Date(childComplexity), true
-
-	case "CommentHistoryStep.message":
-		if e.complexity.CommentHistoryStep.Message == nil {
-			break
-		}
-
-		return e.complexity.CommentHistoryStep.Message(childComplexity), true
-
-	case "CreateOperation.author":
-		if e.complexity.CreateOperation.Author == nil {
-			break
-		}
-
-		return e.complexity.CreateOperation.Author(childComplexity), true
-
-	case "CreateOperation.date":
-		if e.complexity.CreateOperation.Date == nil {
-			break
-		}
-
-		return e.complexity.CreateOperation.Date(childComplexity), true
-
-	case "CreateOperation.files":
-		if e.complexity.CreateOperation.Files == nil {
-			break
-		}
-
-		return e.complexity.CreateOperation.Files(childComplexity), true
-
-	case "CreateOperation.id":
-		if e.complexity.CreateOperation.Id == nil {
-			break
-		}
-
-		return e.complexity.CreateOperation.Id(childComplexity), true
-
-	case "CreateOperation.message":
-		if e.complexity.CreateOperation.Message == nil {
-			break
-		}
-
-		return e.complexity.CreateOperation.Message(childComplexity), true
-
-	case "CreateOperation.title":
-		if e.complexity.CreateOperation.Title == nil {
-			break
-		}
-
-		return e.complexity.CreateOperation.Title(childComplexity), true
-
-	case "CreateTimelineItem.author":
-		if e.complexity.CreateTimelineItem.Author == nil {
-			break
-		}
-
-		return e.complexity.CreateTimelineItem.Author(childComplexity), true
-
-	case "CreateTimelineItem.createdAt":
-		if e.complexity.CreateTimelineItem.CreatedAt == nil {
-			break
-		}
-
-		return e.complexity.CreateTimelineItem.CreatedAt(childComplexity), true
-
-	case "CreateTimelineItem.edited":
-		if e.complexity.CreateTimelineItem.Edited == nil {
-			break
-		}
-
-		return e.complexity.CreateTimelineItem.Edited(childComplexity), true
-
-	case "CreateTimelineItem.files":
-		if e.complexity.CreateTimelineItem.Files == nil {
-			break
-		}
-
-		return e.complexity.CreateTimelineItem.Files(childComplexity), true
-
-	case "CreateTimelineItem.history":
-		if e.complexity.CreateTimelineItem.History == nil {
-			break
-		}
-
-		return e.complexity.CreateTimelineItem.History(childComplexity), true
-
-	case "CreateTimelineItem.id":
-		if e.complexity.CreateTimelineItem.ID == nil {
-			break
-		}
-
-		return e.complexity.CreateTimelineItem.ID(childComplexity), true
-
-	case "CreateTimelineItem.lastEdit":
-		if e.complexity.CreateTimelineItem.LastEdit == nil {
-			break
-		}
-
-		return e.complexity.CreateTimelineItem.LastEdit(childComplexity), true
-
-	case "CreateTimelineItem.message":
-		if e.complexity.CreateTimelineItem.Message == nil {
-			break
-		}
-
-		return e.complexity.CreateTimelineItem.Message(childComplexity), true
-
-	case "CreateTimelineItem.messageIsEmpty":
-		if e.complexity.CreateTimelineItem.MessageIsEmpty == nil {
-			break
-		}
-
-		return e.complexity.CreateTimelineItem.MessageIsEmpty(childComplexity), true
-
-	case "EditCommentOperation.author":
-		if e.complexity.EditCommentOperation.Author == nil {
-			break
-		}
-
-		return e.complexity.EditCommentOperation.Author(childComplexity), true
-
-	case "EditCommentOperation.date":
-		if e.complexity.EditCommentOperation.Date == nil {
-			break
-		}
-
-		return e.complexity.EditCommentOperation.Date(childComplexity), true
-
-	case "EditCommentOperation.files":
-		if e.complexity.EditCommentOperation.Files == nil {
-			break
-		}
-
-		return e.complexity.EditCommentOperation.Files(childComplexity), true
-
-	case "EditCommentOperation.id":
-		if e.complexity.EditCommentOperation.Id == nil {
-			break
-		}
-
-		return e.complexity.EditCommentOperation.Id(childComplexity), true
-
-	case "EditCommentOperation.message":
-		if e.complexity.EditCommentOperation.Message == nil {
-			break
-		}
-
-		return e.complexity.EditCommentOperation.Message(childComplexity), true
-
-	case "EditCommentOperation.target":
-		if e.complexity.EditCommentOperation.Target == nil {
-			break
-		}
-
-		return e.complexity.EditCommentOperation.Target(childComplexity), true
 
 	case "EditCommentPayload.bug":
 		if e.complexity.EditCommentPayload.Bug == nil {
@@ -1159,41 +1397,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Label.Name(childComplexity), true
 
-	case "LabelChangeOperation.added":
-		if e.complexity.LabelChangeOperation.Added == nil {
-			break
-		}
-
-		return e.complexity.LabelChangeOperation.Added(childComplexity), true
-
-	case "LabelChangeOperation.author":
-		if e.complexity.LabelChangeOperation.Author == nil {
-			break
-		}
-
-		return e.complexity.LabelChangeOperation.Author(childComplexity), true
-
-	case "LabelChangeOperation.date":
-		if e.complexity.LabelChangeOperation.Date == nil {
-			break
-		}
-
-		return e.complexity.LabelChangeOperation.Date(childComplexity), true
-
-	case "LabelChangeOperation.id":
-		if e.complexity.LabelChangeOperation.Id == nil {
-			break
-		}
-
-		return e.complexity.LabelChangeOperation.Id(childComplexity), true
-
-	case "LabelChangeOperation.removed":
-		if e.complexity.LabelChangeOperation.Removed == nil {
-			break
-		}
-
-		return e.complexity.LabelChangeOperation.Removed(childComplexity), true
-
 	case "LabelChangeResult.label":
 		if e.complexity.LabelChangeResult.Label == nil {
 			break
@@ -1207,41 +1410,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.LabelChangeResult.Status(childComplexity), true
-
-	case "LabelChangeTimelineItem.added":
-		if e.complexity.LabelChangeTimelineItem.Added == nil {
-			break
-		}
-
-		return e.complexity.LabelChangeTimelineItem.Added(childComplexity), true
-
-	case "LabelChangeTimelineItem.author":
-		if e.complexity.LabelChangeTimelineItem.Author == nil {
-			break
-		}
-
-		return e.complexity.LabelChangeTimelineItem.Author(childComplexity), true
-
-	case "LabelChangeTimelineItem.date":
-		if e.complexity.LabelChangeTimelineItem.Date == nil {
-			break
-		}
-
-		return e.complexity.LabelChangeTimelineItem.Date(childComplexity), true
-
-	case "LabelChangeTimelineItem.id":
-		if e.complexity.LabelChangeTimelineItem.ID == nil {
-			break
-		}
-
-		return e.complexity.LabelChangeTimelineItem.ID(childComplexity), true
-
-	case "LabelChangeTimelineItem.removed":
-		if e.complexity.LabelChangeTimelineItem.Removed == nil {
-			break
-		}
-
-		return e.complexity.LabelChangeTimelineItem.Removed(childComplexity), true
 
 	case "LabelConnection.edges":
 		if e.complexity.LabelConnection.Edges == nil {
@@ -1591,97 +1759,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Repository.ValidLabels(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
 
-	case "SetStatusOperation.author":
-		if e.complexity.SetStatusOperation.Author == nil {
-			break
-		}
-
-		return e.complexity.SetStatusOperation.Author(childComplexity), true
-
-	case "SetStatusOperation.date":
-		if e.complexity.SetStatusOperation.Date == nil {
-			break
-		}
-
-		return e.complexity.SetStatusOperation.Date(childComplexity), true
-
-	case "SetStatusOperation.id":
-		if e.complexity.SetStatusOperation.Id == nil {
-			break
-		}
-
-		return e.complexity.SetStatusOperation.Id(childComplexity), true
-
-	case "SetStatusOperation.status":
-		if e.complexity.SetStatusOperation.Status == nil {
-			break
-		}
-
-		return e.complexity.SetStatusOperation.Status(childComplexity), true
-
-	case "SetStatusTimelineItem.author":
-		if e.complexity.SetStatusTimelineItem.Author == nil {
-			break
-		}
-
-		return e.complexity.SetStatusTimelineItem.Author(childComplexity), true
-
-	case "SetStatusTimelineItem.date":
-		if e.complexity.SetStatusTimelineItem.Date == nil {
-			break
-		}
-
-		return e.complexity.SetStatusTimelineItem.Date(childComplexity), true
-
-	case "SetStatusTimelineItem.id":
-		if e.complexity.SetStatusTimelineItem.ID == nil {
-			break
-		}
-
-		return e.complexity.SetStatusTimelineItem.ID(childComplexity), true
-
-	case "SetStatusTimelineItem.status":
-		if e.complexity.SetStatusTimelineItem.Status == nil {
-			break
-		}
-
-		return e.complexity.SetStatusTimelineItem.Status(childComplexity), true
-
-	case "SetTitleOperation.author":
-		if e.complexity.SetTitleOperation.Author == nil {
-			break
-		}
-
-		return e.complexity.SetTitleOperation.Author(childComplexity), true
-
-	case "SetTitleOperation.date":
-		if e.complexity.SetTitleOperation.Date == nil {
-			break
-		}
-
-		return e.complexity.SetTitleOperation.Date(childComplexity), true
-
-	case "SetTitleOperation.id":
-		if e.complexity.SetTitleOperation.Id == nil {
-			break
-		}
-
-		return e.complexity.SetTitleOperation.Id(childComplexity), true
-
-	case "SetTitleOperation.title":
-		if e.complexity.SetTitleOperation.Title == nil {
-			break
-		}
-
-		return e.complexity.SetTitleOperation.Title(childComplexity), true
-
-	case "SetTitleOperation.was":
-		if e.complexity.SetTitleOperation.Was == nil {
-			break
-		}
-
-		return e.complexity.SetTitleOperation.Was(childComplexity), true
-
 	case "SetTitlePayload.bug":
 		if e.complexity.SetTitlePayload.Bug == nil {
 			break
@@ -1702,83 +1779,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.SetTitlePayload.Operation(childComplexity), true
-
-	case "SetTitleTimelineItem.author":
-		if e.complexity.SetTitleTimelineItem.Author == nil {
-			break
-		}
-
-		return e.complexity.SetTitleTimelineItem.Author(childComplexity), true
-
-	case "SetTitleTimelineItem.date":
-		if e.complexity.SetTitleTimelineItem.Date == nil {
-			break
-		}
-
-		return e.complexity.SetTitleTimelineItem.Date(childComplexity), true
-
-	case "SetTitleTimelineItem.id":
-		if e.complexity.SetTitleTimelineItem.ID == nil {
-			break
-		}
-
-		return e.complexity.SetTitleTimelineItem.ID(childComplexity), true
-
-	case "SetTitleTimelineItem.title":
-		if e.complexity.SetTitleTimelineItem.Title == nil {
-			break
-		}
-
-		return e.complexity.SetTitleTimelineItem.Title(childComplexity), true
-
-	case "SetTitleTimelineItem.was":
-		if e.complexity.SetTitleTimelineItem.Was == nil {
-			break
-		}
-
-		return e.complexity.SetTitleTimelineItem.Was(childComplexity), true
-
-	case "TimelineItemConnection.edges":
-		if e.complexity.TimelineItemConnection.Edges == nil {
-			break
-		}
-
-		return e.complexity.TimelineItemConnection.Edges(childComplexity), true
-
-	case "TimelineItemConnection.nodes":
-		if e.complexity.TimelineItemConnection.Nodes == nil {
-			break
-		}
-
-		return e.complexity.TimelineItemConnection.Nodes(childComplexity), true
-
-	case "TimelineItemConnection.pageInfo":
-		if e.complexity.TimelineItemConnection.PageInfo == nil {
-			break
-		}
-
-		return e.complexity.TimelineItemConnection.PageInfo(childComplexity), true
-
-	case "TimelineItemConnection.totalCount":
-		if e.complexity.TimelineItemConnection.TotalCount == nil {
-			break
-		}
-
-		return e.complexity.TimelineItemConnection.TotalCount(childComplexity), true
-
-	case "TimelineItemEdge.cursor":
-		if e.complexity.TimelineItemEdge.Cursor == nil {
-			break
-		}
-
-		return e.complexity.TimelineItemEdge.Cursor(childComplexity), true
-
-	case "TimelineItemEdge.node":
-		if e.complexity.TimelineItemEdge.Node == nil {
-			break
-		}
-
-		return e.complexity.TimelineItemEdge.Node(childComplexity), true
 
 	}
 	return 0, false
@@ -1894,38 +1894,68 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "../schema/bug.graphql", Input: `"""Represents a comment on a bug."""
-type Comment implements Authored {
-  id: CombinedId!
-
-  """The author of this comment."""
-  author: Identity!
-
-  """The message of this comment."""
-  message: String!
-
-  """All media's hash referenced in this comment"""
-  files: [Hash!]!
-}
-
-type CommentConnection {
-  edges: [CommentEdge!]!
-  nodes: [Comment!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
-type CommentEdge {
-  cursor: String!
-  node: Comment!
-}
-
-enum Status {
-  OPEN
-  CLOSED
-}
-
-type Bug implements Authored {
+	{Name: "../schema/board.graphql", Input: `#type Board {
+#    """The identifier for this board"""
+#    id: ID!
+#    """The human version (truncated) identifier for this board"""
+#    humanId: String!
+#
+#    createdAt: Time!
+#    lastEdit: Time!
+#
+#    title: String!
+#    description: String!
+#
+#
+#
+#    # TODO columns
+#    # TODO status
+#    # TODO: labels
+#
+#    """The actors of the board. Actors are Identity that have interacted with the board."""
+#    actors(
+#        """Returns the elements in the list that come after the specified cursor."""
+#        after: String
+#        """Returns the elements in the list that come before the specified cursor."""
+#        before: String
+#        """Returns the first _n_ elements from the list."""
+#        first: Int
+#        """Returns the last _n_ elements from the list."""
+#        last: Int
+#    ): IdentityConnection!
+#
+#    operations(
+#        """Returns the elements in the list that come after the specified cursor."""
+#        after: String
+#        """Returns the elements in the list that come before the specified cursor."""
+#        before: String
+#        """Returns the first _n_ elements from the list."""
+#        first: Int
+#        """Returns the last _n_ elements from the list."""
+#        last: Int
+#    ): OperationConnection!
+#}
+#
+#"""The connection type for Board."""
+#type BoardConnection {
+#    """A list of edges."""
+#    edges: [BoardEdge!]!
+#    nodes: [Board!]!
+#    """Information to aid in pagination."""
+#    pageInfo: PageInfo!
+#    """Identifies the total count of items in the connection."""
+#    totalCount: Int!
+#}
+#
+#"""An edge in a connection."""
+#type BoardEdge {
+#    """A cursor for use in pagination."""
+#    cursor: String!
+#    """The item at the end of the edge."""
+#    node: Board!
+#}
+`, BuiltIn: false},
+	{Name: "../schema/bug.graphql", Input: `type Bug implements Authored {
   """The identifier for this bug"""
   id: ID!
   """The human version (truncated) identifier for this bug"""
@@ -1971,7 +2001,7 @@ type Bug implements Authored {
     first: Int
     """Returns the last _n_ elements from the list."""
     last: Int
-  ): CommentConnection!
+  ): BugCommentConnection!
 
   timeline(
     """Returns the elements in the list that come after the specified cursor."""
@@ -1982,7 +2012,7 @@ type Bug implements Authored {
     first: Int
     """Returns the last _n_ elements from the list."""
     last: Int
-  ): TimelineItemConnection!
+  ): BugTimelineItemConnection!
 
   operations(
     """Returns the elements in the list that come after the specified cursor."""
@@ -2014,6 +2044,434 @@ type BugEdge {
   """The item at the end of the edge."""
   node: Bug!
 }
+`, BuiltIn: false},
+	{Name: "../schema/bug_comment.graphql", Input: `"""Represents a comment on a bug."""
+type BugComment implements Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.Comment") {
+    id: CombinedId! @goField(name: "CombinedId")
+
+    """The author of this comment."""
+    author: Identity!
+
+    """The message of this comment."""
+    message: String!
+
+    """All media's hash referenced in this comment"""
+    files: [Hash!]!
+}
+
+type BugCommentConnection {
+    edges: [BugCommentEdge!]!
+    nodes: [BugComment!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type BugCommentEdge {
+    cursor: String!
+    node: BugComment!
+}
+`, BuiltIn: false},
+	{Name: "../schema/bug_mutations.graphql", Input: `input NewBugInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The name of the repository. If not set, the default repository is used."""
+    repoRef: String
+    """The title of the new bug."""
+    title: String!
+    """The first message of the new bug."""
+    message: String!
+    """The collection of file's hash required for the first message."""
+    files: [Hash!]
+}
+
+type NewBugPayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The created bug."""
+    bug: Bug!
+    """The resulting operation."""
+    operation: BugCreateOperation!
+}
+
+input AddCommentInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The name of the repository. If not set, the default repository is used."""
+    repoRef: String
+    """The bug ID's prefix."""
+    prefix: String!
+    """The message to be added to the bug."""
+    message: String!
+    """The collection of file's hash required for the first message."""
+    files: [Hash!]
+}
+
+type AddCommentPayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The affected bug."""
+    bug: Bug!
+    """The resulting operation."""
+    operation: BugAddCommentOperation!
+}
+
+input AddCommentAndCloseBugInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The name of the repository. If not set, the default repository is used."""
+    repoRef: String
+    """The bug ID's prefix."""
+    prefix: String!
+    """The message to be added to the bug."""
+    message: String!
+    """The collection of file's hash required for the first message."""
+    files: [Hash!]
+}
+
+type AddCommentAndCloseBugPayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The affected bug."""
+    bug: Bug!
+    """The resulting AddComment operation."""
+    commentOperation: BugAddCommentOperation!
+    """The resulting SetStatusOperation."""
+    statusOperation: BugSetStatusOperation!
+}
+
+input AddCommentAndReopenBugInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The name of the repository. If not set, the default repository is used."""
+    repoRef: String
+    """The bug ID's prefix."""
+    prefix: String!
+    """The message to be added to the bug."""
+    message: String!
+    """The collection of file's hash required for the first message."""
+    files: [Hash!]
+}
+
+type AddCommentAndReopenBugPayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The affected bug."""
+    bug: Bug!
+    """The resulting AddComment operation."""
+    commentOperation: BugAddCommentOperation!
+    """The resulting SetStatusOperation."""
+    statusOperation: BugSetStatusOperation!
+}
+
+input EditCommentInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The name of the repository. If not set, the default repository is used."""
+    repoRef: String
+    """A prefix of the CombinedId of the comment to be changed."""
+    targetPrefix: String!
+    """The new message to be set."""
+    message: String!
+    """The collection of file's hash required for the first message."""
+    files: [Hash!]
+}
+
+type EditCommentPayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The affected bug."""
+    bug: Bug!
+    """The resulting operation."""
+    operation: BugEditCommentOperation!
+}
+
+input ChangeLabelInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The name of the repository. If not set, the default repository is used."""
+    repoRef: String
+    """The bug ID's prefix."""
+    prefix: String!
+    """The list of label to add."""
+    added: [String!]
+    """The list of label to remove."""
+    Removed: [String!]
+}
+
+enum LabelChangeStatus {
+    ADDED
+    REMOVED
+    DUPLICATE_IN_OP
+    ALREADY_SET
+    DOESNT_EXIST
+}
+
+type LabelChangeResult {
+    """The source label."""
+    label: Label!
+    """The effect this label had."""
+    status: LabelChangeStatus!
+}
+
+type ChangeLabelPayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The affected bug."""
+    bug: Bug!
+    """The resulting operation."""
+    operation: BugLabelChangeOperation!
+    """The effect each source label had."""
+    results: [LabelChangeResult]!
+}
+
+input OpenBugInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The name of the repository. If not set, the default repository is used."""
+    repoRef: String
+    """The bug ID's prefix."""
+    prefix: String!
+}
+
+type OpenBugPayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The affected bug."""
+    bug: Bug!
+    """The resulting operation."""
+    operation: BugSetStatusOperation!
+}
+
+input CloseBugInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The name of the repository. If not set, the default repository is used."""
+    repoRef: String
+    """The bug ID's prefix."""
+    prefix: String!
+}
+
+type CloseBugPayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The affected bug."""
+    bug: Bug!
+    """The resulting operation."""
+    operation: BugSetStatusOperation!
+}
+
+input SetTitleInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The name of the repository. If not set, the default repository is used."""
+    repoRef: String
+    """The bug ID's prefix."""
+    prefix: String!
+    """The new title."""
+    title: String!
+}
+
+type SetTitlePayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The affected bug."""
+    bug: Bug!
+    """The resulting operation"""
+    operation: BugSetTitleOperation!
+}
+`, BuiltIn: false},
+	{Name: "../schema/bug_operations.graphql", Input: `type BugCreateOperation implements Operation & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.CreateOperation") {
+    """The identifier of the operation"""
+    id: ID!
+    """The author of this object."""
+    author: Identity!
+    """The datetime when this operation was issued."""
+    date: Time! @goField(name: "Time")
+
+    title: String!
+    message: String!
+    files: [Hash!]!
+}
+
+type BugSetTitleOperation implements Operation & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.SetTitleOperation") {
+    """The identifier of the operation"""
+    id: ID!
+    """The author of this object."""
+    author: Identity!
+    """The datetime when this operation was issued."""
+    date: Time! @goField(name: "Time")
+
+    title: String!
+    was: String!
+}
+
+type BugAddCommentOperation implements Operation & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.AddCommentOperation") {
+    """The identifier of the operation"""
+    id: ID!
+    """The author of this object."""
+    author: Identity!
+    """The datetime when this operation was issued."""
+    date: Time! @goField(name: "Time")
+
+    message: String!
+    files: [Hash!]!
+}
+
+type BugEditCommentOperation implements Operation & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.EditCommentOperation") {
+    """The identifier of the operation"""
+    id: ID!
+    """The author of this object."""
+    author: Identity!
+    """The datetime when this operation was issued."""
+    date: Time! @goField(name: "Time")
+
+    target: String!
+    message: String!
+    files: [Hash!]!
+}
+
+type BugSetStatusOperation implements Operation & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.SetStatusOperation") {
+    """The identifier of the operation"""
+    id: ID!
+    """The author of this object."""
+    author: Identity!
+    """The datetime when this operation was issued."""
+    date: Time! @goField(name: "Time")
+
+    status: Status!
+}
+
+type BugLabelChangeOperation implements Operation & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.LabelChangeOperation") {
+    """The identifier of the operation"""
+    id: ID!
+    """The author of this object."""
+    author: Identity!
+    """The datetime when this operation was issued."""
+    date: Time! @goField(name: "Time")
+
+    added: [Label!]!
+    removed: [Label!]!
+}
+`, BuiltIn: false},
+	{Name: "../schema/bug_timeline.graphql", Input: `"""An item in the timeline of bug events"""
+interface BugTimelineItem
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.TimelineItem") {
+    """The identifier of the source operation"""
+    id: CombinedId!
+}
+
+"""CommentHistoryStep hold one version of a message in the history"""
+type BugCommentHistoryStep
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.CommentHistoryStep") {
+    message: String!
+    date: Time!
+}
+
+# Connection
+
+"""The connection type for TimelineItem"""
+type BugTimelineItemConnection {
+    edges: [BugTimelineItemEdge!]!
+    nodes: [BugTimelineItem!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+"""Represent a TimelineItem"""
+type BugTimelineItemEdge {
+    cursor: String!
+    node: BugTimelineItem!
+}
+
+# Items
+
+"""BugCreateTimelineItem is a BugTimelineItem that represent the creation of a bug and its message edition history"""
+type BugCreateTimelineItem implements BugTimelineItem & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.CreateTimelineItem") {
+    """The identifier of the source operation"""
+    id: CombinedId! @goField(name: "CombinedId")
+    author: Identity!
+    message: String!
+    messageIsEmpty: Boolean!
+    files: [Hash!]!
+    createdAt: Time!
+    lastEdit: Time!
+    edited: Boolean!
+    history: [BugCommentHistoryStep!]!
+}
+
+"""BugAddCommentTimelineItem is a BugTimelineItem that represent a BugComment and its edition history"""
+type BugAddCommentTimelineItem implements BugTimelineItem & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.AddCommentTimelineItem") {
+    """The identifier of the source operation"""
+    id: CombinedId! @goField(name: "CombinedId")
+    author: Identity!
+    message: String!
+    messageIsEmpty: Boolean!
+    files: [Hash!]!
+    createdAt: Time!
+    lastEdit: Time!
+    edited: Boolean!
+    history: [BugCommentHistoryStep!]!
+}
+
+"""BugLabelChangeTimelineItem is a BugTimelineItem that represent a change in the labels of a bug"""
+type BugLabelChangeTimelineItem implements BugTimelineItem & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.LabelChangeTimelineItem") {
+    """The identifier of the source operation"""
+    id: CombinedId! @goField(name: "CombinedId")
+    author: Identity!
+    date: Time!
+    added: [Label!]!
+    removed: [Label!]!
+}
+
+"""BugSetStatusTimelineItem is a BugTimelineItem that represent a change in the status of a bug"""
+type BugSetStatusTimelineItem implements BugTimelineItem & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.SetStatusTimelineItem") {
+    """The identifier of the source operation"""
+    id: CombinedId! @goField(name: "CombinedId")
+    author: Identity!
+    date: Time!
+    status: Status!
+}
+
+"""BugLabelChangeTimelineItem is a BugTimelineItem that represent a change in the title of a bug"""
+type BugSetTitleTimelineItem implements BugTimelineItem & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.SetTitleTimelineItem") {
+    """The identifier of the source operation"""
+    id: CombinedId! @goField(name: "CombinedId")
+    author: Identity!
+    date: Time!
+    title: String!
+    was: String!
+}
+`, BuiltIn: false},
+	{Name: "../schema/directives.graphql", Input: `# Below are directives defined by gqlgen, see https://gqlgen.com/config/
+
+directive @goModel(
+    model: String
+    models: [String!]
+    forceGenerate: Boolean
+) on OBJECT | INPUT_OBJECT | SCALAR | ENUM | INTERFACE | UNION
+
+directive @goField(
+    forceResolver: Boolean
+    name: String
+    omittable: Boolean
+) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+
+directive @goTag(
+    key: String!
+    value: String
+) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 `, BuiltIn: false},
 	{Name: "../schema/identity.graphql", Input: `"""Represents an identity"""
 type Identity {
@@ -2066,223 +2524,14 @@ type LabelEdge {
     cursor: String!
     node: Label!
 }`, BuiltIn: false},
-	{Name: "../schema/mutations.graphql", Input: `input NewBugInput {
-    """A unique identifier for the client performing the mutation."""
-    clientMutationId: String
-    """The name of the repository. If not set, the default repository is used."""
-    repoRef: String
-    """The title of the new bug."""
-    title: String!
-    """The first message of the new bug."""
-    message: String!
-    """The collection of file's hash required for the first message."""
-    files: [Hash!]
-}
-
-type NewBugPayload {
-    """A unique identifier for the client performing the mutation."""
-    clientMutationId: String
-    """The created bug."""
-    bug: Bug!
-    """The resulting operation."""
-    operation: CreateOperation!
-}
-
-input AddCommentInput {
-    """A unique identifier for the client performing the mutation."""
-    clientMutationId: String
-    """The name of the repository. If not set, the default repository is used."""
-    repoRef: String
-    """The bug ID's prefix."""
-    prefix: String!
-    """The message to be added to the bug."""
-    message: String!
-    """The collection of file's hash required for the first message."""
-    files: [Hash!]
-}
-
-type AddCommentPayload {
-    """A unique identifier for the client performing the mutation."""
-    clientMutationId: String
-    """The affected bug."""
-    bug: Bug!
-    """The resulting operation."""
-    operation: AddCommentOperation!
-}
-
-input AddCommentAndCloseBugInput {
-    """A unique identifier for the client performing the mutation."""
-    clientMutationId: String
-    """The name of the repository. If not set, the default repository is used."""
-    repoRef: String
-    """The bug ID's prefix."""
-    prefix: String!
-    """The message to be added to the bug."""
-    message: String!
-    """The collection of file's hash required for the first message."""
-    files: [Hash!]
-}
-
-type AddCommentAndCloseBugPayload {
-    """A unique identifier for the client performing the mutation."""
-    clientMutationId: String
-    """The affected bug."""
-    bug: Bug!
-    """The resulting AddComment operation."""
-    commentOperation: AddCommentOperation!
-    """The resulting SetStatusOperation."""
-    statusOperation: SetStatusOperation!
-}
-
-input AddCommentAndReopenBugInput {
-    """A unique identifier for the client performing the mutation."""
-    clientMutationId: String
-    """The name of the repository. If not set, the default repository is used."""
-    repoRef: String
-    """The bug ID's prefix."""
-    prefix: String!
-    """The message to be added to the bug."""
-    message: String!
-    """The collection of file's hash required for the first message."""
-    files: [Hash!]
-}
-
-type AddCommentAndReopenBugPayload {
-    """A unique identifier for the client performing the mutation."""
-    clientMutationId: String
-    """The affected bug."""
-    bug: Bug!
-    """The resulting AddComment operation."""
-    commentOperation: AddCommentOperation!
-    """The resulting SetStatusOperation."""
-    statusOperation: SetStatusOperation!
-}
-
-input EditCommentInput {
-    """A unique identifier for the client performing the mutation."""
-    clientMutationId: String
-    """The name of the repository. If not set, the default repository is used."""
-    repoRef: String
-    """A prefix of the CombinedId of the comment to be changed."""
-    targetPrefix: String!
-    """The new message to be set."""
-    message: String!
-    """The collection of file's hash required for the first message."""
-    files: [Hash!]
-}
-
-type EditCommentPayload {
-    """A unique identifier for the client performing the mutation."""
-    clientMutationId: String
-    """The affected bug."""
-    bug: Bug!
-    """The resulting operation."""
-    operation: EditCommentOperation!
-}
-
-input ChangeLabelInput {
-    """A unique identifier for the client performing the mutation."""
-    clientMutationId: String
-    """The name of the repository. If not set, the default repository is used."""
-    repoRef: String
-    """The bug ID's prefix."""
-    prefix: String!
-    """The list of label to add."""
-    added: [String!]
-    """The list of label to remove."""
-    Removed: [String!]
-}
-
-enum LabelChangeStatus {
-    ADDED
-    REMOVED
-    DUPLICATE_IN_OP
-    ALREADY_SET
-    DOESNT_EXIST
-}
-
-type LabelChangeResult {
-    """The source label."""
-    label: Label!
-    """The effect this label had."""
-    status: LabelChangeStatus!
-}
-
-type ChangeLabelPayload {
-    """A unique identifier for the client performing the mutation."""
-    clientMutationId: String
-    """The affected bug."""
-    bug: Bug!
-    """The resulting operation."""
-    operation: LabelChangeOperation!
-    """The effect each source label had."""
-    results: [LabelChangeResult]!
-}
-
-input OpenBugInput {
-    """A unique identifier for the client performing the mutation."""
-    clientMutationId: String
-    """The name of the repository. If not set, the default repository is used."""
-    repoRef: String
-    """The bug ID's prefix."""
-    prefix: String!
-}
-
-type OpenBugPayload {
-    """A unique identifier for the client performing the mutation."""
-    clientMutationId: String
-    """The affected bug."""
-    bug: Bug!
-    """The resulting operation."""
-    operation: SetStatusOperation!
-}
-
-input CloseBugInput {
-    """A unique identifier for the client performing the mutation."""
-    clientMutationId: String
-    """The name of the repository. If not set, the default repository is used."""
-    repoRef: String
-    """The bug ID's prefix."""
-    prefix: String!
-}
-
-type CloseBugPayload {
-    """A unique identifier for the client performing the mutation."""
-    clientMutationId: String
-    """The affected bug."""
-    bug: Bug!
-    """The resulting operation."""
-    operation: SetStatusOperation!
-}
-
-input SetTitleInput {
-    """A unique identifier for the client performing the mutation."""
-    clientMutationId: String
-    """The name of the repository. If not set, the default repository is used."""
-    repoRef: String
-    """The bug ID's prefix."""
-    prefix: String!
-    """The new title."""
-    title: String!
-}
-
-type SetTitlePayload {
-    """A unique identifier for the client performing the mutation."""
-    clientMutationId: String
-    """The affected bug."""
-    bug: Bug!
-    """The resulting operation"""
-    operation: SetTitleOperation!
-}
-`, BuiltIn: false},
-	{Name: "../schema/operations.graphql", Input: `"""An operation applied to a bug."""
+	{Name: "../schema/operation.graphql", Input: `"""An operation applied to an entity."""
 interface Operation {
     """The identifier of the operation"""
     id: ID!
     """The operations author."""
     author: Identity!
     """The datetime when this operation was issued."""
-    date: Time!
+    date: Time! @goField(name: "Time")
 }
 
 # Connection
@@ -2299,81 +2548,6 @@ type OperationConnection {
 type OperationEdge {
     cursor: String!
     node: Operation!
-}
-
-# Operations
-
-type CreateOperation implements Operation & Authored {
-    """The identifier of the operation"""
-    id: ID!
-    """The author of this object."""
-    author: Identity!
-    """The datetime when this operation was issued."""
-    date: Time!
-
-    title: String!
-    message: String!
-    files: [Hash!]!
-}
-
-type SetTitleOperation implements Operation & Authored {
-    """The identifier of the operation"""
-    id: ID!
-    """The author of this object."""
-    author: Identity!
-    """The datetime when this operation was issued."""
-    date: Time!
-
-    title: String!
-    was: String!
-}
-
-type AddCommentOperation implements Operation & Authored {
-    """The identifier of the operation"""
-    id: ID!
-    """The author of this object."""
-    author: Identity!
-    """The datetime when this operation was issued."""
-    date: Time!
-
-    message: String!
-    files: [Hash!]!
-}
-
-type EditCommentOperation implements Operation & Authored {
-    """The identifier of the operation"""
-    id: ID!
-    """The author of this object."""
-    author: Identity!
-    """The datetime when this operation was issued."""
-    date: Time!
-
-    target: String!
-    message: String!
-    files: [Hash!]!
-}
-
-type SetStatusOperation implements Operation & Authored {
-    """The identifier of the operation"""
-    id: ID!
-    """The author of this object."""
-    author: Identity!
-    """The datetime when this operation was issued."""
-    date: Time!
-
-    status: Status!
-}
-
-type LabelChangeOperation implements Operation & Authored {
-    """The identifier of the operation"""
-    id: ID!
-    """The author of this object."""
-    author: Identity!
-    """The datetime when this operation was issued."""
-    date: Time!
-
-    added: [Label!]!
-    removed: [Label!]!
 }
 `, BuiltIn: false},
 	{Name: "../schema/repository.graphql", Input: `
@@ -2453,91 +2627,9 @@ type Mutation {
     setTitle(input: SetTitleInput!): SetTitlePayload!
 }
 `, BuiltIn: false},
-	{Name: "../schema/timeline.graphql", Input: `"""An item in the timeline of events"""
-interface TimelineItem {
-    """The identifier of the source operation"""
-    id: CombinedId!
-}
-
-"""CommentHistoryStep hold one version of a message in the history"""
-type CommentHistoryStep {
-    message: String!
-    date: Time!
-}
-
-# Connection
-
-"""The connection type for TimelineItem"""
-type TimelineItemConnection {
-    edges: [TimelineItemEdge!]!
-    nodes: [TimelineItem!]!
-    pageInfo: PageInfo!
-    totalCount: Int!
-}
-
-"""Represent a TimelineItem"""
-type TimelineItemEdge {
-    cursor: String!
-    node: TimelineItem!
-}
-
-# Items
-
-"""CreateTimelineItem is a TimelineItem that represent the creation of a bug and its message edition history"""
-type CreateTimelineItem implements TimelineItem & Authored {
-    """The identifier of the source operation"""
-    id: CombinedId!
-    author: Identity!
-    message: String!
-    messageIsEmpty: Boolean!
-    files: [Hash!]!
-    createdAt: Time!
-    lastEdit: Time!
-    edited: Boolean!
-    history: [CommentHistoryStep!]!
-}
-
-"""AddCommentTimelineItem is a TimelineItem that represent a Comment and its edition history"""
-type AddCommentTimelineItem implements TimelineItem & Authored {
-    """The identifier of the source operation"""
-    id: CombinedId!
-    author: Identity!
-    message: String!
-    messageIsEmpty: Boolean!
-    files: [Hash!]!
-    createdAt: Time!
-    lastEdit: Time!
-    edited: Boolean!
-    history: [CommentHistoryStep!]!
-}
-
-"""LabelChangeTimelineItem is a TimelineItem that represent a change in the labels of a bug"""
-type LabelChangeTimelineItem implements TimelineItem & Authored {
-    """The identifier of the source operation"""
-    id: CombinedId!
-    author: Identity!
-    date: Time!
-    added: [Label!]!
-    removed: [Label!]!
-}
-
-"""SetStatusTimelineItem is a TimelineItem that represent a change in the status of a bug"""
-type SetStatusTimelineItem implements TimelineItem & Authored {
-    """The identifier of the source operation"""
-    id: CombinedId!
-    author: Identity!
-    date: Time!
-    status: Status!
-}
-
-"""LabelChangeTimelineItem is a TimelineItem that represent a change in the title of a bug"""
-type SetTitleTimelineItem implements TimelineItem & Authored {
-    """The identifier of the source operation"""
-    id: CombinedId!
-    author: Identity!
-    date: Time!
-    title: String!
-    was: String!
+	{Name: "../schema/status.graphql", Input: `enum Status {
+    OPEN
+    CLOSED
 }
 `, BuiltIn: false},
 	{Name: "../schema/types.graphql", Input: `scalar CombinedId

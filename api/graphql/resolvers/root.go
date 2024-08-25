@@ -30,6 +30,18 @@ func (r RootResolver) Mutation() graph.MutationResolver {
 	}
 }
 
+func (RootResolver) Color() graph.ColorResolver {
+	return &colorResolver{}
+}
+
+func (r RootResolver) Identity() graph.IdentityResolver {
+	return &identityResolver{}
+}
+
+func (RootResolver) Label() graph.LabelResolver {
+	return &labelResolver{}
+}
+
 func (RootResolver) Repository() graph.RepositoryResolver {
 	return &repoResolver{}
 }
@@ -38,66 +50,54 @@ func (RootResolver) Bug() graph.BugResolver {
 	return &bugResolver{}
 }
 
-func (RootResolver) Color() graph.ColorResolver {
-	return &colorResolver{}
+func (RootResolver) BugAddCommentOperation() graph.BugAddCommentOperationResolver {
+	return &bugAddCommentOperationResolver{}
 }
 
-func (r RootResolver) Comment() graph.CommentResolver {
+func (RootResolver) BugAddCommentTimelineItem() graph.BugAddCommentTimelineItemResolver {
+	return &bugAddCommentTimelineItemResolver{}
+}
+
+func (r RootResolver) BugComment() graph.BugCommentResolver {
 	return &commentResolver{}
 }
 
-func (RootResolver) Label() graph.LabelResolver {
-	return &labelResolver{}
+func (RootResolver) BugCommentHistoryStep() graph.BugCommentHistoryStepResolver {
+	return &bugCommentHistoryStepResolver{}
 }
 
-func (r RootResolver) Identity() graph.IdentityResolver {
-	return &identityResolver{}
+func (RootResolver) BugCreateOperation() graph.BugCreateOperationResolver {
+	return &bugCreateOperationResolver{}
 }
 
-func (RootResolver) CommentHistoryStep() graph.CommentHistoryStepResolver {
-	return &commentHistoryStepResolver{}
+func (RootResolver) BugCreateTimelineItem() graph.BugCreateTimelineItemResolver {
+	return &bugCreateTimelineItemResolver{}
 }
 
-func (RootResolver) AddCommentTimelineItem() graph.AddCommentTimelineItemResolver {
-	return &addCommentTimelineItemResolver{}
+func (r RootResolver) BugEditCommentOperation() graph.BugEditCommentOperationResolver {
+	return &bugEditCommentOperationResolver{}
 }
 
-func (RootResolver) CreateTimelineItem() graph.CreateTimelineItemResolver {
-	return &createTimelineItemResolver{}
+func (RootResolver) BugLabelChangeOperation() graph.BugLabelChangeOperationResolver {
+	return &bugLabelChangeOperationResolver{}
 }
 
-func (r RootResolver) LabelChangeTimelineItem() graph.LabelChangeTimelineItemResolver {
-	return &labelChangeTimelineItem{}
+func (r RootResolver) BugLabelChangeTimelineItem() graph.BugLabelChangeTimelineItemResolver {
+	return &bugLabelChangeTimelineItem{}
 }
 
-func (r RootResolver) SetStatusTimelineItem() graph.SetStatusTimelineItemResolver {
-	return &setStatusTimelineItem{}
+func (RootResolver) BugSetStatusOperation() graph.BugSetStatusOperationResolver {
+	return &bugSetStatusOperationResolver{}
 }
 
-func (r RootResolver) SetTitleTimelineItem() graph.SetTitleTimelineItemResolver {
-	return &setTitleTimelineItem{}
+func (r RootResolver) BugSetStatusTimelineItem() graph.BugSetStatusTimelineItemResolver {
+	return &bugSetStatusTimelineItem{}
 }
 
-func (RootResolver) CreateOperation() graph.CreateOperationResolver {
-	return &createOperationResolver{}
+func (r RootResolver) BugSetTitleOperation() graph.BugSetTitleOperationResolver {
+	return &bugSetTitleOperationResolver{}
 }
 
-func (RootResolver) AddCommentOperation() graph.AddCommentOperationResolver {
-	return &addCommentOperationResolver{}
-}
-
-func (r RootResolver) EditCommentOperation() graph.EditCommentOperationResolver {
-	return &editCommentOperationResolver{}
-}
-
-func (RootResolver) LabelChangeOperation() graph.LabelChangeOperationResolver {
-	return &labelChangeOperationResolver{}
-}
-
-func (RootResolver) SetStatusOperation() graph.SetStatusOperationResolver {
-	return &setStatusOperationResolver{}
-}
-
-func (RootResolver) SetTitleOperation() graph.SetTitleOperationResolver {
-	return &setTitleOperationResolver{}
+func (r RootResolver) BugSetTitleTimelineItem() graph.BugSetTitleTimelineItemResolver {
+	return &bugSetTitleTimelineItem{}
 }

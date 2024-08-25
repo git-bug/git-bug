@@ -1,99 +1,77 @@
-"""An operation applied to a bug."""
-interface Operation {
-    """The identifier of the operation"""
-    id: ID!
-    """The operations author."""
-    author: Identity!
-    """The datetime when this operation was issued."""
-    date: Time!
-}
-
-# Connection
-
-"""The connection type for an Operation"""
-type OperationConnection {
-    edges: [OperationEdge!]!
-    nodes: [Operation!]!
-    pageInfo: PageInfo!
-    totalCount: Int!
-}
-
-"""Represent an Operation"""
-type OperationEdge {
-    cursor: String!
-    node: Operation!
-}
-
-# Operations
-
-type CreateOperation implements Operation & Authored {
+type BugCreateOperation implements Operation & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.CreateOperation") {
     """The identifier of the operation"""
     id: ID!
     """The author of this object."""
     author: Identity!
     """The datetime when this operation was issued."""
-    date: Time!
+    date: Time! @goField(name: "Time")
 
     title: String!
     message: String!
     files: [Hash!]!
 }
 
-type SetTitleOperation implements Operation & Authored {
+type BugSetTitleOperation implements Operation & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.SetTitleOperation") {
     """The identifier of the operation"""
     id: ID!
     """The author of this object."""
     author: Identity!
     """The datetime when this operation was issued."""
-    date: Time!
+    date: Time! @goField(name: "Time")
 
     title: String!
     was: String!
 }
 
-type AddCommentOperation implements Operation & Authored {
+type BugAddCommentOperation implements Operation & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.AddCommentOperation") {
     """The identifier of the operation"""
     id: ID!
     """The author of this object."""
     author: Identity!
     """The datetime when this operation was issued."""
-    date: Time!
+    date: Time! @goField(name: "Time")
 
     message: String!
     files: [Hash!]!
 }
 
-type EditCommentOperation implements Operation & Authored {
+type BugEditCommentOperation implements Operation & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.EditCommentOperation") {
     """The identifier of the operation"""
     id: ID!
     """The author of this object."""
     author: Identity!
     """The datetime when this operation was issued."""
-    date: Time!
+    date: Time! @goField(name: "Time")
 
     target: String!
     message: String!
     files: [Hash!]!
 }
 
-type SetStatusOperation implements Operation & Authored {
+type BugSetStatusOperation implements Operation & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.SetStatusOperation") {
     """The identifier of the operation"""
     id: ID!
     """The author of this object."""
     author: Identity!
     """The datetime when this operation was issued."""
-    date: Time!
+    date: Time! @goField(name: "Time")
 
     status: Status!
 }
 
-type LabelChangeOperation implements Operation & Authored {
+type BugLabelChangeOperation implements Operation & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.LabelChangeOperation") {
     """The identifier of the operation"""
     id: ID!
     """The author of this object."""
     author: Identity!
     """The datetime when this operation was issued."""
-    date: Time!
+    date: Time! @goField(name: "Time")
 
     added: [Label!]!
     removed: [Label!]!

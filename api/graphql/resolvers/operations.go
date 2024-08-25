@@ -2,91 +2,60 @@ package resolvers
 
 import (
 	"context"
-	"time"
 
 	"github.com/git-bug/git-bug/api/graphql/graph"
 	"github.com/git-bug/git-bug/api/graphql/models"
 	"github.com/git-bug/git-bug/entities/bug"
 )
 
-var _ graph.CreateOperationResolver = createOperationResolver{}
+var _ graph.BugCreateOperationResolver = bugCreateOperationResolver{}
 
-type createOperationResolver struct{}
+type bugCreateOperationResolver struct{}
 
-func (createOperationResolver) Author(_ context.Context, obj *bug.CreateOperation) (models.IdentityWrapper, error) {
+func (bugCreateOperationResolver) Author(_ context.Context, obj *bug.CreateOperation) (models.IdentityWrapper, error) {
 	return models.NewLoadedIdentity(obj.Author()), nil
 }
 
-func (createOperationResolver) Date(_ context.Context, obj *bug.CreateOperation) (*time.Time, error) {
-	t := obj.Time()
-	return &t, nil
-}
+var _ graph.BugAddCommentOperationResolver = bugAddCommentOperationResolver{}
 
-var _ graph.AddCommentOperationResolver = addCommentOperationResolver{}
+type bugAddCommentOperationResolver struct{}
 
-type addCommentOperationResolver struct{}
-
-func (addCommentOperationResolver) Author(_ context.Context, obj *bug.AddCommentOperation) (models.IdentityWrapper, error) {
+func (bugAddCommentOperationResolver) Author(_ context.Context, obj *bug.AddCommentOperation) (models.IdentityWrapper, error) {
 	return models.NewLoadedIdentity(obj.Author()), nil
 }
 
-func (addCommentOperationResolver) Date(_ context.Context, obj *bug.AddCommentOperation) (*time.Time, error) {
-	t := obj.Time()
-	return &t, nil
-}
+var _ graph.BugEditCommentOperationResolver = bugEditCommentOperationResolver{}
 
-var _ graph.EditCommentOperationResolver = editCommentOperationResolver{}
+type bugEditCommentOperationResolver struct{}
 
-type editCommentOperationResolver struct{}
-
-func (editCommentOperationResolver) Target(_ context.Context, obj *bug.EditCommentOperation) (string, error) {
+func (bugEditCommentOperationResolver) Target(_ context.Context, obj *bug.EditCommentOperation) (string, error) {
 	return obj.Target.String(), nil
 }
 
-func (editCommentOperationResolver) Author(_ context.Context, obj *bug.EditCommentOperation) (models.IdentityWrapper, error) {
+func (bugEditCommentOperationResolver) Author(_ context.Context, obj *bug.EditCommentOperation) (models.IdentityWrapper, error) {
 	return models.NewLoadedIdentity(obj.Author()), nil
 }
 
-func (editCommentOperationResolver) Date(_ context.Context, obj *bug.EditCommentOperation) (*time.Time, error) {
-	t := obj.Time()
-	return &t, nil
-}
+var _ graph.BugLabelChangeOperationResolver = bugLabelChangeOperationResolver{}
 
-var _ graph.LabelChangeOperationResolver = labelChangeOperationResolver{}
+type bugLabelChangeOperationResolver struct{}
 
-type labelChangeOperationResolver struct{}
-
-func (labelChangeOperationResolver) Author(_ context.Context, obj *bug.LabelChangeOperation) (models.IdentityWrapper, error) {
+func (bugLabelChangeOperationResolver) Author(_ context.Context, obj *bug.LabelChangeOperation) (models.IdentityWrapper, error) {
 	return models.NewLoadedIdentity(obj.Author()), nil
 }
 
-func (labelChangeOperationResolver) Date(_ context.Context, obj *bug.LabelChangeOperation) (*time.Time, error) {
-	t := obj.Time()
-	return &t, nil
-}
+var _ graph.BugSetStatusOperationResolver = bugSetStatusOperationResolver{}
 
-var _ graph.SetStatusOperationResolver = setStatusOperationResolver{}
+type bugSetStatusOperationResolver struct{}
 
-type setStatusOperationResolver struct{}
-
-func (setStatusOperationResolver) Author(_ context.Context, obj *bug.SetStatusOperation) (models.IdentityWrapper, error) {
+func (bugSetStatusOperationResolver) Author(_ context.Context, obj *bug.SetStatusOperation) (models.IdentityWrapper, error) {
 	return models.NewLoadedIdentity(obj.Author()), nil
 }
 
-func (setStatusOperationResolver) Date(_ context.Context, obj *bug.SetStatusOperation) (*time.Time, error) {
-	t := obj.Time()
-	return &t, nil
-}
+var _ graph.BugSetTitleOperationResolver = bugSetTitleOperationResolver{}
 
-var _ graph.SetTitleOperationResolver = setTitleOperationResolver{}
+type bugSetTitleOperationResolver struct{}
 
-type setTitleOperationResolver struct{}
-
-func (setTitleOperationResolver) Author(_ context.Context, obj *bug.SetTitleOperation) (models.IdentityWrapper, error) {
+func (bugSetTitleOperationResolver) Author(_ context.Context, obj *bug.SetTitleOperation) (models.IdentityWrapper, error) {
 	return models.NewLoadedIdentity(obj.Author()), nil
-}
-
-func (setTitleOperationResolver) Date(_ context.Context, obj *bug.SetTitleOperation) (*time.Time, error) {
-	t := obj.Time()
-	return &t, nil
 }

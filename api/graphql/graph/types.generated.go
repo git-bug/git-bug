@@ -363,69 +363,69 @@ func (ec *executionContext) _Authored(ctx context.Context, sel ast.SelectionSet,
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._SetStatusOperation(ctx, sel, obj)
+		return ec._BugSetStatusOperation(ctx, sel, obj)
 	case *bug.CreateOperation:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._CreateOperation(ctx, sel, obj)
+		return ec._BugCreateOperation(ctx, sel, obj)
 	case *bug.SetTitleOperation:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._SetTitleOperation(ctx, sel, obj)
+		return ec._BugSetTitleOperation(ctx, sel, obj)
 	case *bug.AddCommentOperation:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._AddCommentOperation(ctx, sel, obj)
+		return ec._BugAddCommentOperation(ctx, sel, obj)
 	case *bug.EditCommentOperation:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._EditCommentOperation(ctx, sel, obj)
+		return ec._BugEditCommentOperation(ctx, sel, obj)
 	case *bug.LabelChangeOperation:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._LabelChangeOperation(ctx, sel, obj)
+		return ec._BugLabelChangeOperation(ctx, sel, obj)
 	case *bug.CreateTimelineItem:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._CreateTimelineItem(ctx, sel, obj)
+		return ec._BugCreateTimelineItem(ctx, sel, obj)
 	case *bug.AddCommentTimelineItem:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._AddCommentTimelineItem(ctx, sel, obj)
+		return ec._BugAddCommentTimelineItem(ctx, sel, obj)
 	case *bug.LabelChangeTimelineItem:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._LabelChangeTimelineItem(ctx, sel, obj)
+		return ec._BugLabelChangeTimelineItem(ctx, sel, obj)
 	case *bug.SetStatusTimelineItem:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._SetStatusTimelineItem(ctx, sel, obj)
+		return ec._BugSetStatusTimelineItem(ctx, sel, obj)
 	case *bug.SetTitleTimelineItem:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._SetTitleTimelineItem(ctx, sel, obj)
+		return ec._BugSetTitleTimelineItem(ctx, sel, obj)
+	case bug.Comment:
+		return ec._BugComment(ctx, sel, &obj)
+	case *bug.Comment:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BugComment(ctx, sel, obj)
 	case models.BugWrapper:
 		if obj == nil {
 			return graphql.Null
 		}
 		return ec._Bug(ctx, sel, obj)
-	case bug.Comment:
-		return ec._Comment(ctx, sel, &obj)
-	case *bug.Comment:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._Comment(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}

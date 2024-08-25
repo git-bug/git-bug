@@ -18,7 +18,7 @@ func (bugResolver) HumanID(_ context.Context, obj models.BugWrapper) (string, er
 	return obj.Id().Human(), nil
 }
 
-func (bugResolver) Comments(_ context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*models.CommentConnection, error) {
+func (bugResolver) Comments(_ context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*models.BugCommentConnection, error) {
 	input := models.ConnectionInput{
 		Before: before,
 		After:  after,
@@ -27,18 +27,18 @@ func (bugResolver) Comments(_ context.Context, obj models.BugWrapper, after *str
 	}
 
 	edger := func(comment bug.Comment, offset int) connections.Edge {
-		return models.CommentEdge{
+		return models.BugCommentEdge{
 			Node:   &comment,
 			Cursor: connections.OffsetToCursor(offset),
 		}
 	}
 
-	conMaker := func(edges []*models.CommentEdge, nodes []bug.Comment, info *models.PageInfo, totalCount int) (*models.CommentConnection, error) {
+	conMaker := func(edges []*models.BugCommentEdge, nodes []bug.Comment, info *models.PageInfo, totalCount int) (*models.BugCommentConnection, error) {
 		var commentNodes []*bug.Comment
 		for _, c := range nodes {
 			commentNodes = append(commentNodes, &c)
 		}
-		return &models.CommentConnection{
+		return &models.BugCommentConnection{
 			Edges:      edges,
 			Nodes:      commentNodes,
 			PageInfo:   info,
@@ -86,7 +86,7 @@ func (bugResolver) Operations(_ context.Context, obj models.BugWrapper, after *s
 	return connections.Connection(ops, edger, conMaker, input)
 }
 
-func (bugResolver) Timeline(_ context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*models.TimelineItemConnection, error) {
+func (bugResolver) Timeline(_ context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*models.BugTimelineItemConnection, error) {
 	input := models.ConnectionInput{
 		Before: before,
 		After:  after,
@@ -95,14 +95,14 @@ func (bugResolver) Timeline(_ context.Context, obj models.BugWrapper, after *str
 	}
 
 	edger := func(op bug.TimelineItem, offset int) connections.Edge {
-		return models.TimelineItemEdge{
+		return models.BugTimelineItemEdge{
 			Node:   op,
 			Cursor: connections.OffsetToCursor(offset),
 		}
 	}
 
-	conMaker := func(edges []*models.TimelineItemEdge, nodes []bug.TimelineItem, info *models.PageInfo, totalCount int) (*models.TimelineItemConnection, error) {
-		return &models.TimelineItemConnection{
+	conMaker := func(edges []*models.BugTimelineItemEdge, nodes []bug.TimelineItem, info *models.PageInfo, totalCount int) (*models.BugTimelineItemConnection, error) {
+		return &models.BugTimelineItemConnection{
 			Edges:      edges,
 			Nodes:      nodes,
 			PageInfo:   info,

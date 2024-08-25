@@ -84,6 +84,18 @@ type AddCommentPayload struct {
 	Operation *bug.AddCommentOperation `json:"operation"`
 }
 
+type BugCommentConnection struct {
+	Edges      []*BugCommentEdge `json:"edges"`
+	Nodes      []*bug.Comment    `json:"nodes"`
+	PageInfo   *PageInfo         `json:"pageInfo"`
+	TotalCount int               `json:"totalCount"`
+}
+
+type BugCommentEdge struct {
+	Cursor string       `json:"cursor"`
+	Node   *bug.Comment `json:"node"`
+}
+
 // The connection type for Bug.
 type BugConnection struct {
 	// A list of edges.
@@ -101,6 +113,20 @@ type BugEdge struct {
 	Cursor string `json:"cursor"`
 	// The item at the end of the edge.
 	Node BugWrapper `json:"node"`
+}
+
+// The connection type for TimelineItem
+type BugTimelineItemConnection struct {
+	Edges      []*BugTimelineItemEdge `json:"edges"`
+	Nodes      []bug.TimelineItem     `json:"nodes"`
+	PageInfo   *PageInfo              `json:"pageInfo"`
+	TotalCount int                    `json:"totalCount"`
+}
+
+// Represent a TimelineItem
+type BugTimelineItemEdge struct {
+	Cursor string           `json:"cursor"`
+	Node   bug.TimelineItem `json:"node"`
 }
 
 type ChangeLabelInput struct {
@@ -143,18 +169,6 @@ type CloseBugPayload struct {
 	Bug BugWrapper `json:"bug"`
 	// The resulting operation.
 	Operation *bug.SetStatusOperation `json:"operation"`
-}
-
-type CommentConnection struct {
-	Edges      []*CommentEdge `json:"edges"`
-	Nodes      []*bug.Comment `json:"nodes"`
-	PageInfo   *PageInfo      `json:"pageInfo"`
-	TotalCount int            `json:"totalCount"`
-}
-
-type CommentEdge struct {
-	Cursor string       `json:"cursor"`
-	Node   *bug.Comment `json:"node"`
 }
 
 type EditCommentInput struct {
@@ -293,18 +307,4 @@ type SetTitlePayload struct {
 	Bug BugWrapper `json:"bug"`
 	// The resulting operation
 	Operation *bug.SetTitleOperation `json:"operation"`
-}
-
-// The connection type for TimelineItem
-type TimelineItemConnection struct {
-	Edges      []*TimelineItemEdge `json:"edges"`
-	Nodes      []bug.TimelineItem  `json:"nodes"`
-	PageInfo   *PageInfo           `json:"pageInfo"`
-	TotalCount int                 `json:"totalCount"`
-}
-
-// Represent a TimelineItem
-type TimelineItemEdge struct {
-	Cursor string           `json:"cursor"`
-	Node   bug.TimelineItem `json:"node"`
 }
