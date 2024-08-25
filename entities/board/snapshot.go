@@ -41,12 +41,14 @@ var _ dag.Snapshot = &Snapshot{}
 type Snapshot struct {
 	id entity.Id
 
-	Title        string
-	Description  string
-	Columns      []*Column
-	Participants []identity.Interface
+	CreateTime  time.Time
+	Title       string
+	Description string
+	Columns     []*Column
 
-	CreateTime time.Time
+	// Actors are all the identities that have interacted with the board (add items ...)
+	Actors []identity.Interface
+
 	Operations []dag.Operation
 }
 
@@ -87,20 +89,20 @@ func (snap *Snapshot) SearchColumn(id entity.CombinedId) (*Column, error) {
 	return nil, fmt.Errorf("column not found")
 }
 
-// append the operation author to the participants list
-func (snap *Snapshot) addParticipant(participant identity.Interface) {
-	for _, p := range snap.Participants {
-		if participant.Id() == p.Id() {
+// append the operation author to the actors list
+func (snap *Snapshot) addActor(actor identity.Interface) {
+	for _, a := range snap.Actors {
+		if actor.Id() == a.Id() {
 			return
 		}
 	}
 
-	snap.Participants = append(snap.Participants, participant)
+	snap.Actors = append(snap.Actors, actor)
 }
 
-// HasParticipant return true if the id is a participant
-func (snap *Snapshot) HasParticipant(id entity.Id) bool {
-	for _, p := range snap.Participants {
+// HasActor return true if the id is a actor
+func (snap *Snapshot) HasActor(id entity.Id) bool {
+	for _, p := range snap.Actors {
 		if p.Id() == id {
 			return true
 		}
@@ -108,10 +110,10 @@ func (snap *Snapshot) HasParticipant(id entity.Id) bool {
 	return false
 }
 
-// HasAnyParticipant return true if one of the ids is a participant
-func (snap *Snapshot) HasAnyParticipant(ids ...entity.Id) bool {
+// HasAnyActor return true if one of the ids is a actor
+func (snap *Snapshot) HasAnyActor(ids ...entity.Id) bool {
 	for _, id := range ids {
-		if snap.HasParticipant(id) {
+		if snap.HasActor(id) {
 			return true
 		}
 	}
@@ -126,6 +128,3 @@ func (snap *Snapshot) ItemCount() int {
 	}
 	return count
 }
-
-// IsAuthored is a sign post method for gqlgen
-func (snap *Snapshot) IsAuthored() {}

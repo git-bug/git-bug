@@ -11,10 +11,10 @@ type BoardSnapshot struct {
 	CreateTime Time   `json:"create_time"`
 	EditTime   Time   `json:"edit_time"`
 
-	Title        string        `json:"title"`
-	Description  string        `json:"description"`
-	Participants []Identity    `json:"participants"`
-	Columns      []BoardColumn `json:"columns"`
+	Title       string        `json:"title"`
+	Description string        `json:"description"`
+	Actors      []Identity    `json:"participants"`
+	Columns     []BoardColumn `json:"columns"`
 }
 
 func NewBoardSnapshot(snapshot *board.Snapshot) BoardSnapshot {
@@ -27,9 +27,9 @@ func NewBoardSnapshot(snapshot *board.Snapshot) BoardSnapshot {
 		Description: snapshot.Description,
 	}
 
-	jsonBoard.Participants = make([]Identity, len(snapshot.Participants))
-	for i, element := range snapshot.Participants {
-		jsonBoard.Participants[i] = NewIdentity(element)
+	jsonBoard.Actors = make([]Identity, len(snapshot.Actors))
+	for i, element := range snapshot.Actors {
+		jsonBoard.Actors[i] = NewIdentity(element)
 	}
 
 	jsonBoard.Columns = make([]BoardColumn, len(snapshot.Columns))
@@ -112,9 +112,9 @@ type BoardExcerpt struct {
 	CreateTime Time   `json:"create_time"`
 	EditTime   Time   `json:"edit_time"`
 
-	Title        string     `json:"title"`
-	Description  string     `json:"description"`
-	Participants []Identity `json:"participants"`
+	Title       string     `json:"title"`
+	Description string     `json:"description"`
+	Actors      []Identity `json:"participants"`
 
 	Items    int               `json:"items"`
 	Metadata map[string]string `json:"metadata"`
@@ -132,13 +132,13 @@ func NewBoardExcerpt(backend *cache.RepoCache, b *cache.BoardExcerpt) (BoardExce
 		Metadata:    b.CreateMetadata,
 	}
 
-	jsonBoard.Participants = make([]Identity, len(b.Participants))
-	for i, element := range b.Participants {
+	jsonBoard.Actors = make([]Identity, len(b.Actors))
+	for i, element := range b.Actors {
 		participant, err := backend.Identities().ResolveExcerpt(element)
 		if err != nil {
 			return BoardExcerpt{}, err
 		}
-		jsonBoard.Participants[i] = NewIdentityFromExcerpt(participant)
+		jsonBoard.Actors[i] = NewIdentityFromExcerpt(participant)
 	}
 	return jsonBoard, nil
 }

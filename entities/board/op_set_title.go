@@ -44,7 +44,7 @@ func (op *SetTitleOperation) Validate() error {
 
 func (op *SetTitleOperation) Apply(snapshot *Snapshot) {
 	snapshot.Title = op.Title
-	snapshot.addParticipant(op.Author())
+	snapshot.addActor(op.Author())
 }
 
 func NewSetTitleOp(author identity.Interface, unixTime int64, title string, was string) *SetTitleOperation {

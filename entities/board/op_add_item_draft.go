@@ -73,7 +73,7 @@ func (op *AddItemDraftOperation) Apply(snapshot *Snapshot) {
 				unixTime:   timestamp.Timestamp(op.UnixTime),
 			})
 
-			snapshot.addParticipant(op.Author())
+			snapshot.addActor(op.Author())
 			return
 		}
 	}
