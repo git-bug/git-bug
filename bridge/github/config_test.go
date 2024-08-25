@@ -191,7 +191,7 @@ func TestValidateProject(t *testing.T) {
 		{
 			name: "private repository and token with scope 'repo'",
 			args: args{
-				project: "git-bug-test-github-bridge",
+				project: "test-github-bridge",
 				owner:   "git-bug",
 				token:   tokenPrivate,
 			},
@@ -200,7 +200,7 @@ func TestValidateProject(t *testing.T) {
 		{
 			name: "private repository and token with scope 'public_repo'",
 			args: args{
-				project: "git-bug-test-github-bridge",
+				project: "test-github-bridge",
 				owner:   "git-bug",
 				token:   tokenPublic,
 			},
