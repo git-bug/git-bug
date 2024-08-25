@@ -1,4 +1,4 @@
-package bug
+package common
 
 import (
 	"crypto/sha256"

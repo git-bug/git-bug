@@ -7,7 +7,7 @@ import (
 	"github.com/git-bug/git-bug/api/graphql/connections"
 	"github.com/git-bug/git-bug/api/graphql/graph"
 	"github.com/git-bug/git-bug/api/graphql/models"
-	"github.com/git-bug/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/entities/common"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/query"
 )
@@ -82,7 +82,7 @@ func (repoResolver) AllBugs(_ context.Context, obj *models.Repository, after *st
 		}, nil
 	}
 
-	return connections.LazyBugCon(source, edger, conMaker, input)
+	return connections.Connection(source, edger, conMaker, input)
 }
 
 func (repoResolver) Bug(_ context.Context, obj *models.Repository, prefix string) (models.BugWrapper, error) {
@@ -141,7 +141,7 @@ func (repoResolver) AllIdentities(_ context.Context, obj *models.Repository, aft
 		}, nil
 	}
 
-	return connections.LazyIdentityCon(source, edger, conMaker, input)
+	return connections.Connection(source, edger, conMaker, input)
 }
 
 func (repoResolver) Identity(_ context.Context, obj *models.Repository, prefix string) (models.IdentityWrapper, error) {
@@ -171,14 +171,14 @@ func (repoResolver) ValidLabels(_ context.Context, obj *models.Repository, after
 		Last:   last,
 	}
 
-	edger := func(label bug.Label, offset int) connections.Edge {
+	edger := func(label common.Label, offset int) connections.Edge {
 		return models.LabelEdge{
 			Node:   label,
 			Cursor: connections.OffsetToCursor(offset),
 		}
 	}
 
-	conMaker := func(edges []*models.LabelEdge, nodes []bug.Label, info *models.PageInfo, totalCount int) (*models.LabelConnection, error) {
+	conMaker := func(edges []*models.LabelEdge, nodes []common.Label, info *models.PageInfo, totalCount int) (*models.LabelConnection, error) {
 		return &models.LabelConnection{
 			Edges:      edges,
 			Nodes:      nodes,
@@ -187,5 +187,5 @@ func (repoResolver) ValidLabels(_ context.Context, obj *models.Repository, after
 		}, nil
 	}
 
-	return connections.LabelCon(obj.Repo.Bugs().ValidLabels(), edger, conMaker, input)
+	return connections.Connection(obj.Repo.Bugs().ValidLabels(), edger, conMaker, input)
 }

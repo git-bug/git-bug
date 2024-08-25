@@ -9,7 +9,7 @@ import (
 	"github.com/git-bug/git-bug/commands/completion"
 	"github.com/git-bug/git-bug/commands/execenv"
 	_select "github.com/git-bug/git-bug/commands/select"
-	"github.com/git-bug/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/entities/common"
 )
 
 // BugCompletion complete a bug id
@@ -61,26 +61,26 @@ func BugAndLabelsCompletion(env *execenv.Env, addOrRemove bool) completion.Valid
 
 		snap := b.Snapshot()
 
-		seenLabels := map[bug.Label]bool{}
+		seenLabels := map[common.Label]bool{}
 		for _, label := range cleanArgs {
-			seenLabels[bug.Label(label)] = addOrRemove
+			seenLabels[common.Label(label)] = addOrRemove
 		}
 
-		var labels []bug.Label
+		var labels []common.Label
 		if addOrRemove {
 			for _, label := range snap.Labels {
 				seenLabels[label] = true
 			}
 
 			allLabels := env.Backend.Bugs().ValidLabels()
-			labels = make([]bug.Label, 0, len(allLabels))
+			labels = make([]common.Label, 0, len(allLabels))
 			for _, label := range allLabels {
 				if !seenLabels[label] {
 					labels = append(labels, label)
 				}
 			}
 		} else {
-			labels = make([]bug.Label, 0, len(snap.Labels))
+			labels = make([]common.Label, 0, len(snap.Labels))
 			for _, label := range snap.Labels {
 				if seenLabels[label] {
 					labels = append(labels, label)

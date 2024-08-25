@@ -286,10 +286,10 @@ func (ec *executionContext) _Bug_id(ctx context.Context, field graphql.Collected
 	}
 	res := resTmp.(entity.Id)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentityᚐId(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚐId(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Bug_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Bug_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Bug",
 		Field:      field,
@@ -333,7 +333,7 @@ func (ec *executionContext) _Bug_humanId(ctx context.Context, field graphql.Coll
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Bug_humanId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Bug_humanId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Bug",
 		Field:      field,
@@ -374,10 +374,10 @@ func (ec *executionContext) _Bug_status(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.(common.Status)
 	fc.Result = res
-	return ec.marshalNStatus2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentitiesᚋcommonᚐStatus(ctx, field.Selections, res)
+	return ec.marshalNStatus2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋcommonᚐStatus(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Bug_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Bug_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Bug",
 		Field:      field,
@@ -421,7 +421,7 @@ func (ec *executionContext) _Bug_title(ctx context.Context, field graphql.Collec
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Bug_title(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Bug_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Bug",
 		Field:      field,
@@ -460,12 +460,12 @@ func (ec *executionContext) _Bug_labels(ctx context.Context, field graphql.Colle
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]bug.Label)
+	res := resTmp.([]common.Label)
 	fc.Result = res
-	return ec.marshalNLabel2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋentitiesᚋbugᚐLabelᚄ(ctx, field.Selections, res)
+	return ec.marshalNLabel2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋcommonᚐLabelᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Bug_labels(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Bug_labels(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Bug",
 		Field:      field,
@@ -512,10 +512,10 @@ func (ec *executionContext) _Bug_author(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.(models.IdentityWrapper)
 	fc.Result = res
-	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
+	return ec.marshalNIdentity2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Bug_author(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Bug_author(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Bug",
 		Field:      field,
@@ -577,7 +577,7 @@ func (ec *executionContext) _Bug_createdAt(ctx context.Context, field graphql.Co
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Bug_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Bug_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Bug",
 		Field:      field,
@@ -621,7 +621,7 @@ func (ec *executionContext) _Bug_lastEdit(ctx context.Context, field graphql.Col
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Bug_lastEdit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Bug_lastEdit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Bug",
 		Field:      field,
@@ -662,7 +662,7 @@ func (ec *executionContext) _Bug_actors(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.(*models.IdentityConnection)
 	fc.Result = res
-	return ec.marshalNIdentityConnection2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐIdentityConnection(ctx, field.Selections, res)
+	return ec.marshalNIdentityConnection2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐIdentityConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Bug_actors(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -727,7 +727,7 @@ func (ec *executionContext) _Bug_participants(ctx context.Context, field graphql
 	}
 	res := resTmp.(*models.IdentityConnection)
 	fc.Result = res
-	return ec.marshalNIdentityConnection2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐIdentityConnection(ctx, field.Selections, res)
+	return ec.marshalNIdentityConnection2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐIdentityConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Bug_participants(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -792,7 +792,7 @@ func (ec *executionContext) _Bug_comments(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.(*models.CommentConnection)
 	fc.Result = res
-	return ec.marshalNCommentConnection2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐCommentConnection(ctx, field.Selections, res)
+	return ec.marshalNCommentConnection2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐCommentConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Bug_comments(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -857,7 +857,7 @@ func (ec *executionContext) _Bug_timeline(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.(*models.TimelineItemConnection)
 	fc.Result = res
-	return ec.marshalNTimelineItemConnection2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐTimelineItemConnection(ctx, field.Selections, res)
+	return ec.marshalNTimelineItemConnection2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐTimelineItemConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Bug_timeline(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -922,7 +922,7 @@ func (ec *executionContext) _Bug_operations(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(*models.OperationConnection)
 	fc.Result = res
-	return ec.marshalNOperationConnection2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐOperationConnection(ctx, field.Selections, res)
+	return ec.marshalNOperationConnection2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐOperationConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Bug_operations(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -987,10 +987,10 @@ func (ec *executionContext) _BugConnection_edges(ctx context.Context, field grap
 	}
 	res := resTmp.([]*models.BugEdge)
 	fc.Result = res
-	return ec.marshalNBugEdge2ᚕᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugEdgeᚄ(ctx, field.Selections, res)
+	return ec.marshalNBugEdge2ᚕᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugEdgeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_BugConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "BugConnection",
 		Field:      field,
@@ -1037,10 +1037,10 @@ func (ec *executionContext) _BugConnection_nodes(ctx context.Context, field grap
 	}
 	res := resTmp.([]models.BugWrapper)
 	fc.Result = res
-	return ec.marshalNBug2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugWrapperᚄ(ctx, field.Selections, res)
+	return ec.marshalNBug2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugWrapperᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_BugConnection_nodes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugConnection_nodes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "BugConnection",
 		Field:      field,
@@ -1109,10 +1109,10 @@ func (ec *executionContext) _BugConnection_pageInfo(ctx context.Context, field g
 	}
 	res := resTmp.(*models.PageInfo)
 	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐPageInfo(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_BugConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "BugConnection",
 		Field:      field,
@@ -1166,7 +1166,7 @@ func (ec *executionContext) _BugConnection_totalCount(ctx context.Context, field
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_BugConnection_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "BugConnection",
 		Field:      field,
@@ -1210,7 +1210,7 @@ func (ec *executionContext) _BugEdge_cursor(ctx context.Context, field graphql.C
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_BugEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "BugEdge",
 		Field:      field,
@@ -1251,10 +1251,10 @@ func (ec *executionContext) _BugEdge_node(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.(models.BugWrapper)
 	fc.Result = res
-	return ec.marshalNBug2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugWrapper(ctx, field.Selections, res)
+	return ec.marshalNBug2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugWrapper(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_BugEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "BugEdge",
 		Field:      field,
@@ -1323,10 +1323,10 @@ func (ec *executionContext) _Comment_id(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.(entity.CombinedId)
 	fc.Result = res
-	return ec.marshalNCombinedId2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentityᚐCombinedId(ctx, field.Selections, res)
+	return ec.marshalNCombinedId2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚐCombinedId(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Comment_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Comment_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Comment",
 		Field:      field,
@@ -1367,10 +1367,10 @@ func (ec *executionContext) _Comment_author(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(models.IdentityWrapper)
 	fc.Result = res
-	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
+	return ec.marshalNIdentity2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Comment_author(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Comment_author(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Comment",
 		Field:      field,
@@ -1432,7 +1432,7 @@ func (ec *executionContext) _Comment_message(ctx context.Context, field graphql.
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Comment_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Comment_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Comment",
 		Field:      field,
@@ -1473,10 +1473,10 @@ func (ec *executionContext) _Comment_files(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.([]repository.Hash)
 	fc.Result = res
-	return ec.marshalNHash2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋrepositoryᚐHashᚄ(ctx, field.Selections, res)
+	return ec.marshalNHash2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐHashᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Comment_files(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Comment_files(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Comment",
 		Field:      field,
@@ -1517,10 +1517,10 @@ func (ec *executionContext) _CommentConnection_edges(ctx context.Context, field 
 	}
 	res := resTmp.([]*models.CommentEdge)
 	fc.Result = res
-	return ec.marshalNCommentEdge2ᚕᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐCommentEdgeᚄ(ctx, field.Selections, res)
+	return ec.marshalNCommentEdge2ᚕᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐCommentEdgeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CommentConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CommentConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CommentConnection",
 		Field:      field,
@@ -1567,10 +1567,10 @@ func (ec *executionContext) _CommentConnection_nodes(ctx context.Context, field 
 	}
 	res := resTmp.([]*bug.Comment)
 	fc.Result = res
-	return ec.marshalNComment2ᚕᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋentitiesᚋbugᚐCommentᚄ(ctx, field.Selections, res)
+	return ec.marshalNComment2ᚕᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐCommentᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CommentConnection_nodes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CommentConnection_nodes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CommentConnection",
 		Field:      field,
@@ -1621,10 +1621,10 @@ func (ec *executionContext) _CommentConnection_pageInfo(ctx context.Context, fie
 	}
 	res := resTmp.(*models.PageInfo)
 	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐPageInfo(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CommentConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CommentConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CommentConnection",
 		Field:      field,
@@ -1678,7 +1678,7 @@ func (ec *executionContext) _CommentConnection_totalCount(ctx context.Context, f
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CommentConnection_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CommentConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CommentConnection",
 		Field:      field,
@@ -1722,7 +1722,7 @@ func (ec *executionContext) _CommentEdge_cursor(ctx context.Context, field graph
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CommentEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CommentEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CommentEdge",
 		Field:      field,
@@ -1763,10 +1763,10 @@ func (ec *executionContext) _CommentEdge_node(ctx context.Context, field graphql
 	}
 	res := resTmp.(*bug.Comment)
 	fc.Result = res
-	return ec.marshalNComment2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋentitiesᚋbugᚐComment(ctx, field.Selections, res)
+	return ec.marshalNComment2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐComment(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CommentEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CommentEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CommentEdge",
 		Field:      field,
@@ -2402,7 +2402,7 @@ func (ec *executionContext) _CommentEdge(ctx context.Context, sel ast.SelectionS
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNBug2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugWrapper(ctx context.Context, sel ast.SelectionSet, v models.BugWrapper) graphql.Marshaler {
+func (ec *executionContext) marshalNBug2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugWrapper(ctx context.Context, sel ast.SelectionSet, v models.BugWrapper) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -2412,7 +2412,7 @@ func (ec *executionContext) marshalNBug2githubᚗcomᚋMichaelMureᚋgitᚑbug�
 	return ec._Bug(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNBug2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugWrapperᚄ(ctx context.Context, sel ast.SelectionSet, v []models.BugWrapper) graphql.Marshaler {
+func (ec *executionContext) marshalNBug2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugWrapperᚄ(ctx context.Context, sel ast.SelectionSet, v []models.BugWrapper) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -2436,7 +2436,7 @@ func (ec *executionContext) marshalNBug2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbu
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNBug2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugWrapper(ctx, sel, v[i])
+			ret[i] = ec.marshalNBug2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugWrapper(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -2456,11 +2456,11 @@ func (ec *executionContext) marshalNBug2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbu
 	return ret
 }
 
-func (ec *executionContext) marshalNBugConnection2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugConnection(ctx context.Context, sel ast.SelectionSet, v models.BugConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNBugConnection2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugConnection(ctx context.Context, sel ast.SelectionSet, v models.BugConnection) graphql.Marshaler {
 	return ec._BugConnection(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNBugConnection2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugConnection(ctx context.Context, sel ast.SelectionSet, v *models.BugConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNBugConnection2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugConnection(ctx context.Context, sel ast.SelectionSet, v *models.BugConnection) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -2470,7 +2470,7 @@ func (ec *executionContext) marshalNBugConnection2ᚖgithubᚗcomᚋMichaelMure�
 	return ec._BugConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNBugEdge2ᚕᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.BugEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNBugEdge2ᚕᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.BugEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -2494,7 +2494,7 @@ func (ec *executionContext) marshalNBugEdge2ᚕᚖgithubᚗcomᚋMichaelMureᚋg
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNBugEdge2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalNBugEdge2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -2514,7 +2514,7 @@ func (ec *executionContext) marshalNBugEdge2ᚕᚖgithubᚗcomᚋMichaelMureᚋg
 	return ret
 }
 
-func (ec *executionContext) marshalNBugEdge2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugEdge(ctx context.Context, sel ast.SelectionSet, v *models.BugEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNBugEdge2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugEdge(ctx context.Context, sel ast.SelectionSet, v *models.BugEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -2524,7 +2524,7 @@ func (ec *executionContext) marshalNBugEdge2ᚖgithubᚗcomᚋMichaelMureᚋgit�
 	return ec._BugEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNComment2ᚕᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋentitiesᚋbugᚐCommentᚄ(ctx context.Context, sel ast.SelectionSet, v []*bug.Comment) graphql.Marshaler {
+func (ec *executionContext) marshalNComment2ᚕᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐCommentᚄ(ctx context.Context, sel ast.SelectionSet, v []*bug.Comment) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -2548,7 +2548,7 @@ func (ec *executionContext) marshalNComment2ᚕᚖgithubᚗcomᚋMichaelMureᚋg
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNComment2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋentitiesᚋbugᚐComment(ctx, sel, v[i])
+			ret[i] = ec.marshalNComment2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐComment(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -2568,7 +2568,7 @@ func (ec *executionContext) marshalNComment2ᚕᚖgithubᚗcomᚋMichaelMureᚋg
 	return ret
 }
 
-func (ec *executionContext) marshalNComment2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋentitiesᚋbugᚐComment(ctx context.Context, sel ast.SelectionSet, v *bug.Comment) graphql.Marshaler {
+func (ec *executionContext) marshalNComment2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐComment(ctx context.Context, sel ast.SelectionSet, v *bug.Comment) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -2578,11 +2578,11 @@ func (ec *executionContext) marshalNComment2ᚖgithubᚗcomᚋMichaelMureᚋgit�
 	return ec._Comment(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNCommentConnection2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐCommentConnection(ctx context.Context, sel ast.SelectionSet, v models.CommentConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNCommentConnection2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐCommentConnection(ctx context.Context, sel ast.SelectionSet, v models.CommentConnection) graphql.Marshaler {
 	return ec._CommentConnection(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNCommentConnection2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐCommentConnection(ctx context.Context, sel ast.SelectionSet, v *models.CommentConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNCommentConnection2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐCommentConnection(ctx context.Context, sel ast.SelectionSet, v *models.CommentConnection) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -2592,7 +2592,7 @@ func (ec *executionContext) marshalNCommentConnection2ᚖgithubᚗcomᚋMichaelM
 	return ec._CommentConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNCommentEdge2ᚕᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐCommentEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.CommentEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNCommentEdge2ᚕᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐCommentEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.CommentEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -2616,7 +2616,7 @@ func (ec *executionContext) marshalNCommentEdge2ᚕᚖgithubᚗcomᚋMichaelMure
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNCommentEdge2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐCommentEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalNCommentEdge2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐCommentEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -2636,7 +2636,7 @@ func (ec *executionContext) marshalNCommentEdge2ᚕᚖgithubᚗcomᚋMichaelMure
 	return ret
 }
 
-func (ec *executionContext) marshalNCommentEdge2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐCommentEdge(ctx context.Context, sel ast.SelectionSet, v *models.CommentEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNCommentEdge2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐCommentEdge(ctx context.Context, sel ast.SelectionSet, v *models.CommentEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -2646,17 +2646,17 @@ func (ec *executionContext) marshalNCommentEdge2ᚖgithubᚗcomᚋMichaelMureᚋ
 	return ec._CommentEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNStatus2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentitiesᚋcommonᚐStatus(ctx context.Context, v interface{}) (common.Status, error) {
+func (ec *executionContext) unmarshalNStatus2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋcommonᚐStatus(ctx context.Context, v interface{}) (common.Status, error) {
 	var res common.Status
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNStatus2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentitiesᚋcommonᚐStatus(ctx context.Context, sel ast.SelectionSet, v common.Status) graphql.Marshaler {
+func (ec *executionContext) marshalNStatus2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋcommonᚐStatus(ctx context.Context, sel ast.SelectionSet, v common.Status) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) marshalOBug2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugWrapper(ctx context.Context, sel ast.SelectionSet, v models.BugWrapper) graphql.Marshaler {
+func (ec *executionContext) marshalOBug2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugWrapper(ctx context.Context, sel ast.SelectionSet, v models.BugWrapper) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

@@ -14,6 +14,7 @@ import (
 	"github.com/git-bug/git-bug/bridge/github/mocks"
 	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/entities/common"
 	"github.com/git-bug/git-bug/repository"
 	"github.com/git-bug/git-bug/util/interrupt"
 )
@@ -64,7 +65,7 @@ func TestGithubImporterIntegration(t *testing.T) {
 	ops3 := b3.Snapshot().Operations
 	require.Equal(t, "issue 3 comment 1", ops3[1].(*bug.AddCommentOperation).Message)
 	require.Equal(t, "issue 3 comment 2", ops3[2].(*bug.AddCommentOperation).Message)
-	require.Equal(t, []bug.Label{"bug"}, ops3[3].(*bug.LabelChangeOperation).Added)
+	require.Equal(t, []common.Label{"bug"}, ops3[3].(*bug.LabelChangeOperation).Added)
 	require.Equal(t, "title 3, edit 1", ops3[4].(*bug.SetTitleOperation).Title)
 
 	b4, err := backend.Bugs().ResolveBugCreateMetadata(metaKeyGithubUrl, "https://github.com/marcus/to-himself/issues/4")

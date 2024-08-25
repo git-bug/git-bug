@@ -19,7 +19,7 @@ type Snapshot struct {
 	Status       common.Status
 	Title        string
 	Comments     []Comment
-	Labels       []Label
+	Labels       []common.Label
 	Author       identity.Interface
 	Actors       []identity.Interface
 	Participants []identity.Interface

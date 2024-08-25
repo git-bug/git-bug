@@ -32,7 +32,7 @@ func TestValidate(t *testing.T) {
 		NewSetTitleOp(rene, unix, "title2", "title1"),
 		NewAddCommentOp(rene, unix, "message2", nil),
 		NewSetStatusOp(rene, unix, common.ClosedStatus),
-		NewLabelChangeOperation(rene, unix, []Label{"added"}, []Label{"removed"}),
+		NewLabelChangeOperation(rene, unix, []common.Label{"added"}, []common.Label{"removed"}),
 	}
 
 	for _, op := range good {
@@ -65,8 +65,8 @@ func TestValidate(t *testing.T) {
 		NewAddCommentOp(rene, unix, "message", []repository.Hash{repository.Hash("invalid")}),
 		NewSetStatusOp(rene, unix, 1000),
 		NewSetStatusOp(rene, unix, 0),
-		NewLabelChangeOperation(rene, unix, []Label{}, []Label{}),
-		NewLabelChangeOperation(rene, unix, []Label{"multi\nline"}, []Label{}),
+		NewLabelChangeOperation(rene, unix, []common.Label{}, []common.Label{}),
+		NewLabelChangeOperation(rene, unix, []common.Label{"multi\nline"}, []common.Label{}),
 	}
 
 	for i, op := range bad {

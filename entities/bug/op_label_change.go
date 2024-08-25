@@ -8,6 +8,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/git-bug/git-bug/entities/common"
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/entity/dag"
@@ -19,8 +20,8 @@ var _ Operation = &LabelChangeOperation{}
 // LabelChangeOperation define a Bug operation to add or remove labels
 type LabelChangeOperation struct {
 	dag.OpBase
-	Added   []Label `json:"added"`
-	Removed []Label `json:"removed"`
+	Added   []common.Label `json:"added"`
+	Removed []common.Label `json:"removed"`
 }
 
 func (op *LabelChangeOperation) Id() entity.Id {
@@ -96,7 +97,7 @@ func (op *LabelChangeOperation) Validate() error {
 	return nil
 }
 
-func NewLabelChangeOperation(author identity.Interface, unixTime int64, added, removed []Label) *LabelChangeOperation {
+func NewLabelChangeOperation(author identity.Interface, unixTime int64, added, removed []common.Label) *LabelChangeOperation {
 	return &LabelChangeOperation{
 		OpBase:  dag.NewOpBase(LabelChangeOp, author, unixTime),
 		Added:   added,
@@ -108,8 +109,8 @@ type LabelChangeTimelineItem struct {
 	combinedId entity.CombinedId
 	Author     identity.Interface
 	UnixTime   timestamp.Timestamp
-	Added      []Label
-	Removed    []Label
+	Added      []common.Label
+	Removed    []common.Label
 }
 
 func (l LabelChangeTimelineItem) CombinedId() entity.CombinedId {
@@ -121,13 +122,13 @@ func (l *LabelChangeTimelineItem) IsAuthored() {}
 
 // ChangeLabels is a convenience function to change labels on a bug
 func ChangeLabels(b Interface, author identity.Interface, unixTime int64, add, remove []string, metadata map[string]string) ([]LabelChangeResult, *LabelChangeOperation, error) {
-	var added, removed []Label
+	var added, removed []common.Label
 	var results []LabelChangeResult
 
 	snap := b.Compile()
 
 	for _, str := range add {
-		label := Label(str)
+		label := common.Label(str)
 
 		// check for duplicate
 		if labelExist(added, label) {
@@ -146,7 +147,7 @@ func ChangeLabels(b Interface, author identity.Interface, unixTime int64, add, r
 	}
 
 	for _, str := range remove {
-		label := Label(str)
+		label := common.Label(str)
 
 		// check for duplicate
 		if labelExist(removed, label) {
@@ -187,14 +188,14 @@ func ChangeLabels(b Interface, author identity.Interface, unixTime int64, add, r
 // The intended use of this function is to allow importers to create legal but unexpected label changes,
 // like removing a label with no information of when it was added before.
 func ForceChangeLabels(b Interface, author identity.Interface, unixTime int64, add, remove []string, metadata map[string]string) (*LabelChangeOperation, error) {
-	added := make([]Label, len(add))
+	added := make([]common.Label, len(add))
 	for i, str := range add {
-		added[i] = Label(str)
+		added[i] = common.Label(str)
 	}
 
-	removed := make([]Label, len(remove))
+	removed := make([]common.Label, len(remove))
 	for i, str := range remove {
-		removed[i] = Label(str)
+		removed[i] = common.Label(str)
 	}
 
 	op := NewLabelChangeOperation(author, unixTime, added, removed)
@@ -211,7 +212,7 @@ func ForceChangeLabels(b Interface, author identity.Interface, unixTime int64, a
 	return op, nil
 }
 
-func labelExist(labels []Label, label Label) bool {
+func labelExist(labels []common.Label, label common.Label) bool {
 	for _, l := range labels {
 		if l == label {
 			return true
@@ -272,7 +273,7 @@ func (l *LabelChangeStatus) UnmarshalGQL(v interface{}) error {
 }
 
 type LabelChangeResult struct {
-	Label  Label
+	Label  common.Label
 	Status LabelChangeStatus
 }
 

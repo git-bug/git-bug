@@ -8,7 +8,7 @@ import (
 	"github.com/awesome-gocui/gocui"
 
 	"github.com/git-bug/git-bug/cache"
-	"github.com/git-bug/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/entities/common"
 )
 
 const labelSelectView = "labelSelectView"
@@ -23,7 +23,7 @@ var labelSelectHelp = helpBar{
 type labelSelect struct {
 	cache       *cache.RepoCache
 	bug         *cache.BugCache
-	labels      []bug.Label
+	labels      []common.Label
 	labelSelect []bool
 	selected    int
 	scroll      int
@@ -254,7 +254,7 @@ func (ls *labelSelect) addItem(g *gocui.Gui, v *gocui.View) error {
 		}
 
 		// Add new label, make it selected, and focus
-		ls.labels = append(ls.labels, bug.Label(input))
+		ls.labels = append(ls.labels, common.Label(input))
 		ls.labelSelect = append(ls.labelSelect, true)
 		ls.selected = len(ls.labels) - 1
 
@@ -272,7 +272,7 @@ func (ls *labelSelect) abort(g *gocui.Gui, v *gocui.View) error {
 
 func (ls *labelSelect) saveAndReturn(g *gocui.Gui, v *gocui.View) error {
 	bugLabels := ls.bug.Snapshot().Labels
-	var selectedLabels []bug.Label
+	var selectedLabels []common.Label
 	for i, label := range ls.labels {
 		if ls.labelSelect[i] {
 			selectedLabels = append(selectedLabels, label)

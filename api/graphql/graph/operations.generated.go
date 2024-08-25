@@ -89,10 +89,10 @@ func (ec *executionContext) _AddCommentOperation_id(ctx context.Context, field g
 	}
 	res := resTmp.(entity.Id)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentityᚐId(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚐId(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AddCommentOperation_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_AddCommentOperation_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AddCommentOperation",
 		Field:      field,
@@ -133,10 +133,10 @@ func (ec *executionContext) _AddCommentOperation_author(ctx context.Context, fie
 	}
 	res := resTmp.(models.IdentityWrapper)
 	fc.Result = res
-	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
+	return ec.marshalNIdentity2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AddCommentOperation_author(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_AddCommentOperation_author(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AddCommentOperation",
 		Field:      field,
@@ -198,7 +198,7 @@ func (ec *executionContext) _AddCommentOperation_date(ctx context.Context, field
 	return ec.marshalNTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AddCommentOperation_date(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_AddCommentOperation_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AddCommentOperation",
 		Field:      field,
@@ -242,7 +242,7 @@ func (ec *executionContext) _AddCommentOperation_message(ctx context.Context, fi
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AddCommentOperation_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_AddCommentOperation_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AddCommentOperation",
 		Field:      field,
@@ -283,10 +283,10 @@ func (ec *executionContext) _AddCommentOperation_files(ctx context.Context, fiel
 	}
 	res := resTmp.([]repository.Hash)
 	fc.Result = res
-	return ec.marshalNHash2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋrepositoryᚐHashᚄ(ctx, field.Selections, res)
+	return ec.marshalNHash2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐHashᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AddCommentOperation_files(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_AddCommentOperation_files(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AddCommentOperation",
 		Field:      field,
@@ -327,10 +327,10 @@ func (ec *executionContext) _CreateOperation_id(ctx context.Context, field graph
 	}
 	res := resTmp.(entity.Id)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentityᚐId(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚐId(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreateOperation_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CreateOperation_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CreateOperation",
 		Field:      field,
@@ -371,10 +371,10 @@ func (ec *executionContext) _CreateOperation_author(ctx context.Context, field g
 	}
 	res := resTmp.(models.IdentityWrapper)
 	fc.Result = res
-	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
+	return ec.marshalNIdentity2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreateOperation_author(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CreateOperation_author(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CreateOperation",
 		Field:      field,
@@ -436,7 +436,7 @@ func (ec *executionContext) _CreateOperation_date(ctx context.Context, field gra
 	return ec.marshalNTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreateOperation_date(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CreateOperation_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CreateOperation",
 		Field:      field,
@@ -480,7 +480,7 @@ func (ec *executionContext) _CreateOperation_title(ctx context.Context, field gr
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreateOperation_title(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CreateOperation_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CreateOperation",
 		Field:      field,
@@ -524,7 +524,7 @@ func (ec *executionContext) _CreateOperation_message(ctx context.Context, field 
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreateOperation_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CreateOperation_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CreateOperation",
 		Field:      field,
@@ -565,10 +565,10 @@ func (ec *executionContext) _CreateOperation_files(ctx context.Context, field gr
 	}
 	res := resTmp.([]repository.Hash)
 	fc.Result = res
-	return ec.marshalNHash2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋrepositoryᚐHashᚄ(ctx, field.Selections, res)
+	return ec.marshalNHash2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐHashᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreateOperation_files(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CreateOperation_files(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CreateOperation",
 		Field:      field,
@@ -609,10 +609,10 @@ func (ec *executionContext) _EditCommentOperation_id(ctx context.Context, field 
 	}
 	res := resTmp.(entity.Id)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentityᚐId(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚐId(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_EditCommentOperation_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_EditCommentOperation_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "EditCommentOperation",
 		Field:      field,
@@ -653,10 +653,10 @@ func (ec *executionContext) _EditCommentOperation_author(ctx context.Context, fi
 	}
 	res := resTmp.(models.IdentityWrapper)
 	fc.Result = res
-	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
+	return ec.marshalNIdentity2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_EditCommentOperation_author(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_EditCommentOperation_author(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "EditCommentOperation",
 		Field:      field,
@@ -718,7 +718,7 @@ func (ec *executionContext) _EditCommentOperation_date(ctx context.Context, fiel
 	return ec.marshalNTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_EditCommentOperation_date(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_EditCommentOperation_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "EditCommentOperation",
 		Field:      field,
@@ -762,7 +762,7 @@ func (ec *executionContext) _EditCommentOperation_target(ctx context.Context, fi
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_EditCommentOperation_target(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_EditCommentOperation_target(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "EditCommentOperation",
 		Field:      field,
@@ -806,7 +806,7 @@ func (ec *executionContext) _EditCommentOperation_message(ctx context.Context, f
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_EditCommentOperation_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_EditCommentOperation_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "EditCommentOperation",
 		Field:      field,
@@ -847,10 +847,10 @@ func (ec *executionContext) _EditCommentOperation_files(ctx context.Context, fie
 	}
 	res := resTmp.([]repository.Hash)
 	fc.Result = res
-	return ec.marshalNHash2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋrepositoryᚐHashᚄ(ctx, field.Selections, res)
+	return ec.marshalNHash2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐHashᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_EditCommentOperation_files(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_EditCommentOperation_files(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "EditCommentOperation",
 		Field:      field,
@@ -891,10 +891,10 @@ func (ec *executionContext) _LabelChangeOperation_id(ctx context.Context, field 
 	}
 	res := resTmp.(entity.Id)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentityᚐId(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚐId(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_LabelChangeOperation_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_LabelChangeOperation_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "LabelChangeOperation",
 		Field:      field,
@@ -935,10 +935,10 @@ func (ec *executionContext) _LabelChangeOperation_author(ctx context.Context, fi
 	}
 	res := resTmp.(models.IdentityWrapper)
 	fc.Result = res
-	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
+	return ec.marshalNIdentity2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_LabelChangeOperation_author(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_LabelChangeOperation_author(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "LabelChangeOperation",
 		Field:      field,
@@ -1000,7 +1000,7 @@ func (ec *executionContext) _LabelChangeOperation_date(ctx context.Context, fiel
 	return ec.marshalNTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_LabelChangeOperation_date(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_LabelChangeOperation_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "LabelChangeOperation",
 		Field:      field,
@@ -1039,12 +1039,12 @@ func (ec *executionContext) _LabelChangeOperation_added(ctx context.Context, fie
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]bug.Label)
+	res := resTmp.([]common.Label)
 	fc.Result = res
-	return ec.marshalNLabel2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋentitiesᚋbugᚐLabelᚄ(ctx, field.Selections, res)
+	return ec.marshalNLabel2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋcommonᚐLabelᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_LabelChangeOperation_added(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_LabelChangeOperation_added(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "LabelChangeOperation",
 		Field:      field,
@@ -1089,12 +1089,12 @@ func (ec *executionContext) _LabelChangeOperation_removed(ctx context.Context, f
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]bug.Label)
+	res := resTmp.([]common.Label)
 	fc.Result = res
-	return ec.marshalNLabel2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋentitiesᚋbugᚐLabelᚄ(ctx, field.Selections, res)
+	return ec.marshalNLabel2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋcommonᚐLabelᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_LabelChangeOperation_removed(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_LabelChangeOperation_removed(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "LabelChangeOperation",
 		Field:      field,
@@ -1141,10 +1141,10 @@ func (ec *executionContext) _OperationConnection_edges(ctx context.Context, fiel
 	}
 	res := resTmp.([]*models.OperationEdge)
 	fc.Result = res
-	return ec.marshalNOperationEdge2ᚕᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐOperationEdgeᚄ(ctx, field.Selections, res)
+	return ec.marshalNOperationEdge2ᚕᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐOperationEdgeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_OperationConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_OperationConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "OperationConnection",
 		Field:      field,
@@ -1191,10 +1191,10 @@ func (ec *executionContext) _OperationConnection_nodes(ctx context.Context, fiel
 	}
 	res := resTmp.([]dag.Operation)
 	fc.Result = res
-	return ec.marshalNOperation2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋentityᚋdagᚐOperationᚄ(ctx, field.Selections, res)
+	return ec.marshalNOperation2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚋdagᚐOperationᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_OperationConnection_nodes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_OperationConnection_nodes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "OperationConnection",
 		Field:      field,
@@ -1235,10 +1235,10 @@ func (ec *executionContext) _OperationConnection_pageInfo(ctx context.Context, f
 	}
 	res := resTmp.(*models.PageInfo)
 	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐPageInfo(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_OperationConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_OperationConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "OperationConnection",
 		Field:      field,
@@ -1292,7 +1292,7 @@ func (ec *executionContext) _OperationConnection_totalCount(ctx context.Context,
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_OperationConnection_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_OperationConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "OperationConnection",
 		Field:      field,
@@ -1336,7 +1336,7 @@ func (ec *executionContext) _OperationEdge_cursor(ctx context.Context, field gra
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_OperationEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_OperationEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "OperationEdge",
 		Field:      field,
@@ -1377,10 +1377,10 @@ func (ec *executionContext) _OperationEdge_node(ctx context.Context, field graph
 	}
 	res := resTmp.(dag.Operation)
 	fc.Result = res
-	return ec.marshalNOperation2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentityᚋdagᚐOperation(ctx, field.Selections, res)
+	return ec.marshalNOperation2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚋdagᚐOperation(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_OperationEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_OperationEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "OperationEdge",
 		Field:      field,
@@ -1421,10 +1421,10 @@ func (ec *executionContext) _SetStatusOperation_id(ctx context.Context, field gr
 	}
 	res := resTmp.(entity.Id)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentityᚐId(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚐId(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SetStatusOperation_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SetStatusOperation_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SetStatusOperation",
 		Field:      field,
@@ -1465,10 +1465,10 @@ func (ec *executionContext) _SetStatusOperation_author(ctx context.Context, fiel
 	}
 	res := resTmp.(models.IdentityWrapper)
 	fc.Result = res
-	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
+	return ec.marshalNIdentity2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SetStatusOperation_author(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SetStatusOperation_author(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SetStatusOperation",
 		Field:      field,
@@ -1530,7 +1530,7 @@ func (ec *executionContext) _SetStatusOperation_date(ctx context.Context, field 
 	return ec.marshalNTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SetStatusOperation_date(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SetStatusOperation_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SetStatusOperation",
 		Field:      field,
@@ -1571,10 +1571,10 @@ func (ec *executionContext) _SetStatusOperation_status(ctx context.Context, fiel
 	}
 	res := resTmp.(common.Status)
 	fc.Result = res
-	return ec.marshalNStatus2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentitiesᚋcommonᚐStatus(ctx, field.Selections, res)
+	return ec.marshalNStatus2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋcommonᚐStatus(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SetStatusOperation_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SetStatusOperation_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SetStatusOperation",
 		Field:      field,
@@ -1615,10 +1615,10 @@ func (ec *executionContext) _SetTitleOperation_id(ctx context.Context, field gra
 	}
 	res := resTmp.(entity.Id)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentityᚐId(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚐId(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SetTitleOperation_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SetTitleOperation_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SetTitleOperation",
 		Field:      field,
@@ -1659,10 +1659,10 @@ func (ec *executionContext) _SetTitleOperation_author(ctx context.Context, field
 	}
 	res := resTmp.(models.IdentityWrapper)
 	fc.Result = res
-	return ec.marshalNIdentity2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
+	return ec.marshalNIdentity2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SetTitleOperation_author(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SetTitleOperation_author(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SetTitleOperation",
 		Field:      field,
@@ -1724,7 +1724,7 @@ func (ec *executionContext) _SetTitleOperation_date(ctx context.Context, field g
 	return ec.marshalNTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SetTitleOperation_date(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SetTitleOperation_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SetTitleOperation",
 		Field:      field,
@@ -1768,7 +1768,7 @@ func (ec *executionContext) _SetTitleOperation_title(ctx context.Context, field 
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SetTitleOperation_title(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SetTitleOperation_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SetTitleOperation",
 		Field:      field,
@@ -1812,7 +1812,7 @@ func (ec *executionContext) _SetTitleOperation_was(ctx context.Context, field gr
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SetTitleOperation_was(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SetTitleOperation_was(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SetTitleOperation",
 		Field:      field,
@@ -2740,7 +2740,7 @@ func (ec *executionContext) _SetTitleOperation(ctx context.Context, sel ast.Sele
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNAddCommentOperation2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋentitiesᚋbugᚐAddCommentOperation(ctx context.Context, sel ast.SelectionSet, v *bug.AddCommentOperation) graphql.Marshaler {
+func (ec *executionContext) marshalNAddCommentOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐAddCommentOperation(ctx context.Context, sel ast.SelectionSet, v *bug.AddCommentOperation) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -2750,7 +2750,7 @@ func (ec *executionContext) marshalNAddCommentOperation2ᚖgithubᚗcomᚋMichae
 	return ec._AddCommentOperation(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNCreateOperation2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋentitiesᚋbugᚐCreateOperation(ctx context.Context, sel ast.SelectionSet, v *bug.CreateOperation) graphql.Marshaler {
+func (ec *executionContext) marshalNCreateOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐCreateOperation(ctx context.Context, sel ast.SelectionSet, v *bug.CreateOperation) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -2760,7 +2760,7 @@ func (ec *executionContext) marshalNCreateOperation2ᚖgithubᚗcomᚋMichaelMur
 	return ec._CreateOperation(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNEditCommentOperation2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋentitiesᚋbugᚐEditCommentOperation(ctx context.Context, sel ast.SelectionSet, v *bug.EditCommentOperation) graphql.Marshaler {
+func (ec *executionContext) marshalNEditCommentOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐEditCommentOperation(ctx context.Context, sel ast.SelectionSet, v *bug.EditCommentOperation) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -2770,7 +2770,7 @@ func (ec *executionContext) marshalNEditCommentOperation2ᚖgithubᚗcomᚋMicha
 	return ec._EditCommentOperation(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNLabelChangeOperation2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋentitiesᚋbugᚐLabelChangeOperation(ctx context.Context, sel ast.SelectionSet, v *bug.LabelChangeOperation) graphql.Marshaler {
+func (ec *executionContext) marshalNLabelChangeOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐLabelChangeOperation(ctx context.Context, sel ast.SelectionSet, v *bug.LabelChangeOperation) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -2780,7 +2780,7 @@ func (ec *executionContext) marshalNLabelChangeOperation2ᚖgithubᚗcomᚋMicha
 	return ec._LabelChangeOperation(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNOperation2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentityᚋdagᚐOperation(ctx context.Context, sel ast.SelectionSet, v dag.Operation) graphql.Marshaler {
+func (ec *executionContext) marshalNOperation2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚋdagᚐOperation(ctx context.Context, sel ast.SelectionSet, v dag.Operation) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -2790,7 +2790,7 @@ func (ec *executionContext) marshalNOperation2githubᚗcomᚋMichaelMureᚋgit�
 	return ec._Operation(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNOperation2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋentityᚋdagᚐOperationᚄ(ctx context.Context, sel ast.SelectionSet, v []dag.Operation) graphql.Marshaler {
+func (ec *executionContext) marshalNOperation2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚋdagᚐOperationᚄ(ctx context.Context, sel ast.SelectionSet, v []dag.Operation) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -2814,7 +2814,7 @@ func (ec *executionContext) marshalNOperation2ᚕgithubᚗcomᚋMichaelMureᚋgi
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNOperation2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentityᚋdagᚐOperation(ctx, sel, v[i])
+			ret[i] = ec.marshalNOperation2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚋdagᚐOperation(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -2834,11 +2834,11 @@ func (ec *executionContext) marshalNOperation2ᚕgithubᚗcomᚋMichaelMureᚋgi
 	return ret
 }
 
-func (ec *executionContext) marshalNOperationConnection2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐOperationConnection(ctx context.Context, sel ast.SelectionSet, v models.OperationConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNOperationConnection2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐOperationConnection(ctx context.Context, sel ast.SelectionSet, v models.OperationConnection) graphql.Marshaler {
 	return ec._OperationConnection(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNOperationConnection2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐOperationConnection(ctx context.Context, sel ast.SelectionSet, v *models.OperationConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNOperationConnection2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐOperationConnection(ctx context.Context, sel ast.SelectionSet, v *models.OperationConnection) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -2848,7 +2848,7 @@ func (ec *executionContext) marshalNOperationConnection2ᚖgithubᚗcomᚋMichae
 	return ec._OperationConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNOperationEdge2ᚕᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐOperationEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.OperationEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNOperationEdge2ᚕᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐOperationEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.OperationEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -2872,7 +2872,7 @@ func (ec *executionContext) marshalNOperationEdge2ᚕᚖgithubᚗcomᚋMichaelMu
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNOperationEdge2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐOperationEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalNOperationEdge2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐOperationEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -2892,7 +2892,7 @@ func (ec *executionContext) marshalNOperationEdge2ᚕᚖgithubᚗcomᚋMichaelMu
 	return ret
 }
 
-func (ec *executionContext) marshalNOperationEdge2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐOperationEdge(ctx context.Context, sel ast.SelectionSet, v *models.OperationEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNOperationEdge2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐOperationEdge(ctx context.Context, sel ast.SelectionSet, v *models.OperationEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -2902,7 +2902,7 @@ func (ec *executionContext) marshalNOperationEdge2ᚖgithubᚗcomᚋMichaelMure�
 	return ec._OperationEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNSetStatusOperation2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋentitiesᚋbugᚐSetStatusOperation(ctx context.Context, sel ast.SelectionSet, v *bug.SetStatusOperation) graphql.Marshaler {
+func (ec *executionContext) marshalNSetStatusOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐSetStatusOperation(ctx context.Context, sel ast.SelectionSet, v *bug.SetStatusOperation) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -2912,7 +2912,7 @@ func (ec *executionContext) marshalNSetStatusOperation2ᚖgithubᚗcomᚋMichael
 	return ec._SetStatusOperation(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNSetTitleOperation2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋentitiesᚋbugᚐSetTitleOperation(ctx context.Context, sel ast.SelectionSet, v *bug.SetTitleOperation) graphql.Marshaler {
+func (ec *executionContext) marshalNSetTitleOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐSetTitleOperation(ctx context.Context, sel ast.SelectionSet, v *bug.SetTitleOperation) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")

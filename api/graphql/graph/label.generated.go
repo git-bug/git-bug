@@ -13,15 +13,15 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/git-bug/git-bug/api/graphql/models"
-	"github.com/git-bug/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/entities/common"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
 // region    ************************** generated!.gotpl **************************
 
 type LabelResolver interface {
-	Name(ctx context.Context, obj *bug.Label) (string, error)
-	Color(ctx context.Context, obj *bug.Label) (*color.RGBA, error)
+	Name(ctx context.Context, obj *common.Label) (string, error)
+	Color(ctx context.Context, obj *common.Label) (*color.RGBA, error)
 }
 
 // endregion ************************** generated!.gotpl **************************
@@ -36,7 +36,7 @@ type LabelResolver interface {
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _Label_name(ctx context.Context, field graphql.CollectedField, obj *bug.Label) (ret graphql.Marshaler) {
+func (ec *executionContext) _Label_name(ctx context.Context, field graphql.CollectedField, obj *common.Label) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Label_name(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -67,7 +67,7 @@ func (ec *executionContext) _Label_name(ctx context.Context, field graphql.Colle
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Label_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Label_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Label",
 		Field:      field,
@@ -80,7 +80,7 @@ func (ec *executionContext) fieldContext_Label_name(ctx context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Label_color(ctx context.Context, field graphql.CollectedField, obj *bug.Label) (ret graphql.Marshaler) {
+func (ec *executionContext) _Label_color(ctx context.Context, field graphql.CollectedField, obj *common.Label) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Label_color(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -111,7 +111,7 @@ func (ec *executionContext) _Label_color(ctx context.Context, field graphql.Coll
 	return ec.marshalNColor2ᚖimageᚋcolorᚐRGBA(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Label_color(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Label_color(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Label",
 		Field:      field,
@@ -160,10 +160,10 @@ func (ec *executionContext) _LabelConnection_edges(ctx context.Context, field gr
 	}
 	res := resTmp.([]*models.LabelEdge)
 	fc.Result = res
-	return ec.marshalNLabelEdge2ᚕᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐLabelEdgeᚄ(ctx, field.Selections, res)
+	return ec.marshalNLabelEdge2ᚕᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐLabelEdgeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_LabelConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_LabelConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "LabelConnection",
 		Field:      field,
@@ -208,12 +208,12 @@ func (ec *executionContext) _LabelConnection_nodes(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]bug.Label)
+	res := resTmp.([]common.Label)
 	fc.Result = res
-	return ec.marshalNLabel2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋentitiesᚋbugᚐLabelᚄ(ctx, field.Selections, res)
+	return ec.marshalNLabel2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋcommonᚐLabelᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_LabelConnection_nodes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_LabelConnection_nodes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "LabelConnection",
 		Field:      field,
@@ -260,10 +260,10 @@ func (ec *executionContext) _LabelConnection_pageInfo(ctx context.Context, field
 	}
 	res := resTmp.(*models.PageInfo)
 	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐPageInfo(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_LabelConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_LabelConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "LabelConnection",
 		Field:      field,
@@ -317,7 +317,7 @@ func (ec *executionContext) _LabelConnection_totalCount(ctx context.Context, fie
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_LabelConnection_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_LabelConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "LabelConnection",
 		Field:      field,
@@ -361,7 +361,7 @@ func (ec *executionContext) _LabelEdge_cursor(ctx context.Context, field graphql
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_LabelEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_LabelEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "LabelEdge",
 		Field:      field,
@@ -400,12 +400,12 @@ func (ec *executionContext) _LabelEdge_node(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bug.Label)
+	res := resTmp.(common.Label)
 	fc.Result = res
-	return ec.marshalNLabel2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentitiesᚋbugᚐLabel(ctx, field.Selections, res)
+	return ec.marshalNLabel2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋcommonᚐLabel(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_LabelEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_LabelEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "LabelEdge",
 		Field:      field,
@@ -438,7 +438,7 @@ func (ec *executionContext) fieldContext_LabelEdge_node(ctx context.Context, fie
 
 var labelImplementors = []string{"Label"}
 
-func (ec *executionContext) _Label(ctx context.Context, sel ast.SelectionSet, obj *bug.Label) graphql.Marshaler {
+func (ec *executionContext) _Label(ctx context.Context, sel ast.SelectionSet, obj *common.Label) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, labelImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -644,11 +644,11 @@ func (ec *executionContext) _LabelEdge(ctx context.Context, sel ast.SelectionSet
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNLabel2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentitiesᚋbugᚐLabel(ctx context.Context, sel ast.SelectionSet, v bug.Label) graphql.Marshaler {
+func (ec *executionContext) marshalNLabel2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋcommonᚐLabel(ctx context.Context, sel ast.SelectionSet, v common.Label) graphql.Marshaler {
 	return ec._Label(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNLabel2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋentitiesᚋbugᚐLabelᚄ(ctx context.Context, sel ast.SelectionSet, v []bug.Label) graphql.Marshaler {
+func (ec *executionContext) marshalNLabel2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋcommonᚐLabelᚄ(ctx context.Context, sel ast.SelectionSet, v []common.Label) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -672,7 +672,7 @@ func (ec *executionContext) marshalNLabel2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNLabel2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋentitiesᚋbugᚐLabel(ctx, sel, v[i])
+			ret[i] = ec.marshalNLabel2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋcommonᚐLabel(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -692,11 +692,11 @@ func (ec *executionContext) marshalNLabel2ᚕgithubᚗcomᚋMichaelMureᚋgitᚑ
 	return ret
 }
 
-func (ec *executionContext) marshalNLabelConnection2githubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐLabelConnection(ctx context.Context, sel ast.SelectionSet, v models.LabelConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNLabelConnection2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐLabelConnection(ctx context.Context, sel ast.SelectionSet, v models.LabelConnection) graphql.Marshaler {
 	return ec._LabelConnection(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNLabelConnection2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐLabelConnection(ctx context.Context, sel ast.SelectionSet, v *models.LabelConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNLabelConnection2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐLabelConnection(ctx context.Context, sel ast.SelectionSet, v *models.LabelConnection) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -706,7 +706,7 @@ func (ec *executionContext) marshalNLabelConnection2ᚖgithubᚗcomᚋMichaelMur
 	return ec._LabelConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNLabelEdge2ᚕᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐLabelEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.LabelEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNLabelEdge2ᚕᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐLabelEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.LabelEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -730,7 +730,7 @@ func (ec *executionContext) marshalNLabelEdge2ᚕᚖgithubᚗcomᚋMichaelMure�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNLabelEdge2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐLabelEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalNLabelEdge2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐLabelEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -750,7 +750,7 @@ func (ec *executionContext) marshalNLabelEdge2ᚕᚖgithubᚗcomᚋMichaelMure�
 	return ret
 }
 
-func (ec *executionContext) marshalNLabelEdge2ᚖgithubᚗcomᚋMichaelMureᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐLabelEdge(ctx context.Context, sel ast.SelectionSet, v *models.LabelEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNLabelEdge2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐLabelEdge(ctx context.Context, sel ast.SelectionSet, v *models.LabelEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")

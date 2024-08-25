@@ -17,7 +17,6 @@ require (
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/awesome-gocui/gocui v1.1.0
 	github.com/blevesearch/bleve v1.0.14
-	github.com/cheekybits/genny v1.0.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/fatih/color v1.17.0
 	github.com/go-git/go-billy/v5 v5.5.0
@@ -43,15 +42,6 @@ require (
 )
 
 require (
-	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
-	github.com/bits-and-blooms/bitset v1.13.0 // indirect
-	github.com/cyphar/filepath-securejoin v0.3.0 // indirect
-	github.com/google/uuid v1.6.0 // indirect
-	github.com/sosodev/duration v1.3.1 // indirect
-	golang.org/x/telemetry v0.0.0-20240723021908-ccdfb411a0c4 // indirect
-)
-
-require (
 	dario.cat/mergo v1.0.0 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
@@ -59,6 +49,8 @@ require (
 	github.com/VividCortex/ewma v1.2.0 // indirect
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d // indirect
 	github.com/agnivade/levenshtein v1.1.1 // indirect
+	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
+	github.com/bits-and-blooms/bitset v1.13.0 // indirect
 	github.com/blevesearch/go-porterstemmer v1.0.3 // indirect
 	github.com/blevesearch/mmap-go v1.0.4 // indirect
 	github.com/blevesearch/segment v0.9.1 // indirect
@@ -72,6 +64,7 @@ require (
 	github.com/corpix/uarand v0.2.0 // indirect
 	github.com/couchbase/vellum v1.0.2 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
+	github.com/cyphar/filepath-securejoin v0.3.0 // indirect
 	github.com/danieljoos/wincred v1.2.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dvsekhvalnov/jose2go v1.7.0 // indirect
@@ -84,6 +77,7 @@ require (
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/gsterjov/go-libsecret v0.0.0-20161001094733-a6f4afe4910c // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
@@ -108,6 +102,7 @@ require (
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
 	github.com/shurcooL/graphql v0.0.0-20230722043721-ed46e5a46466 // indirect
 	github.com/skeema/knownhosts v1.3.0 // indirect
+	github.com/sosodev/duration v1.3.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/steveyen/gtreap v0.1.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
@@ -119,6 +114,7 @@ require (
 	go.etcd.io/bbolt v1.3.10 // indirect
 	golang.org/x/mod v0.19.0 // indirect
 	golang.org/x/net v0.27.0 // indirect
+	golang.org/x/telemetry v0.0.0-20240723021908-ccdfb411a0c4 // indirect
 	golang.org/x/term v0.23.0
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.23.0 // indirect
