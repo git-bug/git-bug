@@ -2072,7 +2072,28 @@ type BugCommentEdge {
     node: BugComment!
 }
 `, BuiltIn: false},
-	{Name: "../schema/bug_mutations.graphql", Input: `input NewBugInput {
+	{Name: "../schema/bug_mutations.graphql", Input: `extend type Mutation {
+    """Create a new bug"""
+    newBug(input: NewBugInput!): NewBugPayload!
+    """Add a new comment to a bug"""
+    addComment(input: AddCommentInput!): AddCommentPayload!
+    """Add a new comment to a bug and close it"""
+    addCommentAndClose(input: AddCommentAndCloseBugInput!): AddCommentAndCloseBugPayload!
+    """Add a new comment to a bug and reopen it"""
+    addCommentAndReopen(input: AddCommentAndReopenBugInput!): AddCommentAndReopenBugPayload!
+    """Change a comment of a bug"""
+    editComment(input: EditCommentInput!): EditCommentPayload!
+    """Add or remove a set of label on a bug"""
+    changeLabels(input: ChangeLabelInput): ChangeLabelPayload!
+    """Change a bug's status to open"""
+    openBug(input: OpenBugInput!): OpenBugPayload!
+    """Change a bug's status to closed"""
+    closeBug(input: CloseBugInput!): CloseBugPayload!
+    """Change a bug's title"""
+    setTitle(input: SetTitleInput!): SetTitlePayload!
+}
+
+input NewBugInput {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
     """The name of the repository. If not set, the default repository is used."""
@@ -2504,7 +2525,8 @@ type IdentityConnection {
 type IdentityEdge {
     cursor: String!
     node: Identity!
-}`, BuiltIn: false},
+}
+`, BuiltIn: false},
 	{Name: "../schema/label.graphql", Input: `"""Label for a bug."""
 type Label {
     """The name of the label."""
@@ -2523,7 +2545,8 @@ type LabelConnection {
 type LabelEdge {
     cursor: String!
     node: Label!
-}`, BuiltIn: false},
+}
+`, BuiltIn: false},
 	{Name: "../schema/operation.graphql", Input: `"""An operation applied to an entity."""
 interface Operation {
     """The identifier of the operation"""
@@ -2550,8 +2573,7 @@ type OperationEdge {
     node: Operation!
 }
 `, BuiltIn: false},
-	{Name: "../schema/repository.graphql", Input: `
-type Repository {
+	{Name: "../schema/repository.graphql", Input: `type Repository {
     """The name of the repository"""
     name: String
 
@@ -2606,26 +2628,7 @@ type Repository {
     repository(ref: String): Repository
 }
 
-type Mutation {
-    """Create a new bug"""
-    newBug(input: NewBugInput!): NewBugPayload!
-    """Add a new comment to a bug"""
-    addComment(input: AddCommentInput!): AddCommentPayload!
-    """Add a new comment to a bug and close it"""
-    addCommentAndClose(input: AddCommentAndCloseBugInput!): AddCommentAndCloseBugPayload!
-    """Add a new comment to a bug and reopen it"""
-    addCommentAndReopen(input: AddCommentAndReopenBugInput!): AddCommentAndReopenBugPayload!
-    """Change a comment of a bug"""
-    editComment(input: EditCommentInput!): EditCommentPayload!
-    """Add or remove a set of label on a bug"""
-    changeLabels(input: ChangeLabelInput): ChangeLabelPayload!
-    """Change a bug's status to open"""
-    openBug(input: OpenBugInput!): OpenBugPayload!
-    """Change a bug's status to closed"""
-    closeBug(input: CloseBugInput!): CloseBugPayload!
-    """Change a bug's title"""
-    setTitle(input: SetTitleInput!): SetTitlePayload!
-}
+type Mutation # See each entity mutations
 `, BuiltIn: false},
 	{Name: "../schema/status.graphql", Input: `enum Status {
     OPEN

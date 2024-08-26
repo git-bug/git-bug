@@ -14,30 +14,19 @@ import (
 
 // adapted from https://github.com/99designs/gqlgen/blob/master/graphql/handler/debug/tracer.go
 
+var _ graphql.HandlerExtension = &Tracer{}
+var _ graphql.ResponseInterceptor = &Tracer{}
+
 type Tracer struct {
 	Out io.Writer
 }
-
-var _ interface {
-	graphql.HandlerExtension
-	graphql.ResponseInterceptor
-} = &Tracer{}
 
 func (a Tracer) ExtensionName() string {
 	return "error tracer"
 }
 
-func (a *Tracer) Validate(schema graphql.ExecutableSchema) error {
+func (a Tracer) Validate(schema graphql.ExecutableSchema) error {
 	return nil
-}
-
-func stringify(value interface{}) string {
-	valueJson, err := json.MarshalIndent(value, "  ", "  ")
-	if err == nil {
-		return string(valueJson)
-	}
-
-	return fmt.Sprint(value)
 }
 
 func (a Tracer) InterceptResponse(ctx context.Context, next graphql.ResponseHandler) *graphql.Response {
@@ -64,4 +53,13 @@ func (a Tracer) InterceptResponse(ctx context.Context, next graphql.ResponseHand
 	_, _ = fmt.Fprintln(a.Out, "}")
 	_, _ = fmt.Fprintln(a.Out)
 	return resp
+}
+
+func stringify(value interface{}) string {
+	valueJson, err := json.MarshalIndent(value, "  ", "  ")
+	if err == nil {
+		return string(valueJson)
+	}
+
+	return fmt.Sprint(value)
 }

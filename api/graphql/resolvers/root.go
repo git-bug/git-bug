@@ -10,6 +10,7 @@ var _ graph.ResolverRoot = &RootResolver{}
 
 type RootResolver struct {
 	*cache.MultiRepoCache
+	bugRootSubResolver
 }
 
 func NewRootResolver(mrc *cache.MultiRepoCache) *RootResolver {
@@ -48,56 +49,4 @@ func (RootResolver) Repository() graph.RepositoryResolver {
 
 func (RootResolver) Bug() graph.BugResolver {
 	return &bugResolver{}
-}
-
-func (RootResolver) BugAddCommentOperation() graph.BugAddCommentOperationResolver {
-	return &bugAddCommentOperationResolver{}
-}
-
-func (RootResolver) BugAddCommentTimelineItem() graph.BugAddCommentTimelineItemResolver {
-	return &bugAddCommentTimelineItemResolver{}
-}
-
-func (r RootResolver) BugComment() graph.BugCommentResolver {
-	return &commentResolver{}
-}
-
-func (RootResolver) BugCommentHistoryStep() graph.BugCommentHistoryStepResolver {
-	return &bugCommentHistoryStepResolver{}
-}
-
-func (RootResolver) BugCreateOperation() graph.BugCreateOperationResolver {
-	return &bugCreateOperationResolver{}
-}
-
-func (RootResolver) BugCreateTimelineItem() graph.BugCreateTimelineItemResolver {
-	return &bugCreateTimelineItemResolver{}
-}
-
-func (r RootResolver) BugEditCommentOperation() graph.BugEditCommentOperationResolver {
-	return &bugEditCommentOperationResolver{}
-}
-
-func (RootResolver) BugLabelChangeOperation() graph.BugLabelChangeOperationResolver {
-	return &bugLabelChangeOperationResolver{}
-}
-
-func (r RootResolver) BugLabelChangeTimelineItem() graph.BugLabelChangeTimelineItemResolver {
-	return &bugLabelChangeTimelineItem{}
-}
-
-func (RootResolver) BugSetStatusOperation() graph.BugSetStatusOperationResolver {
-	return &bugSetStatusOperationResolver{}
-}
-
-func (r RootResolver) BugSetStatusTimelineItem() graph.BugSetStatusTimelineItemResolver {
-	return &bugSetStatusTimelineItem{}
-}
-
-func (r RootResolver) BugSetTitleOperation() graph.BugSetTitleOperationResolver {
-	return &bugSetTitleOperationResolver{}
-}
-
-func (r RootResolver) BugSetTitleTimelineItem() graph.BugSetTitleTimelineItemResolver {
-	return &bugSetTitleTimelineItem{}
 }

@@ -181,3 +181,11 @@ func (bugResolver) Participants(_ context.Context, obj models.BugWrapper, after 
 
 	return connections.Connection(participants, edger, conMaker, input)
 }
+
+var _ graph.BugCommentResolver = &commentResolver{}
+
+type commentResolver struct{}
+
+func (c commentResolver) Author(_ context.Context, obj *bug.Comment) (models.IdentityWrapper, error) {
+	return models.NewLoadedIdentity(obj.Author), nil
+}

@@ -1,3 +1,24 @@
+extend type Mutation {
+    """Create a new bug"""
+    newBug(input: NewBugInput!): NewBugPayload!
+    """Add a new comment to a bug"""
+    addComment(input: AddCommentInput!): AddCommentPayload!
+    """Add a new comment to a bug and close it"""
+    addCommentAndClose(input: AddCommentAndCloseBugInput!): AddCommentAndCloseBugPayload!
+    """Add a new comment to a bug and reopen it"""
+    addCommentAndReopen(input: AddCommentAndReopenBugInput!): AddCommentAndReopenBugPayload!
+    """Change a comment of a bug"""
+    editComment(input: EditCommentInput!): EditCommentPayload!
+    """Add or remove a set of label on a bug"""
+    changeLabels(input: ChangeLabelInput): ChangeLabelPayload!
+    """Change a bug's status to open"""
+    openBug(input: OpenBugInput!): OpenBugPayload!
+    """Change a bug's status to closed"""
+    closeBug(input: CloseBugInput!): CloseBugPayload!
+    """Change a bug's title"""
+    setTitle(input: SetTitleInput!): SetTitlePayload!
+}
+
 input NewBugInput {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
