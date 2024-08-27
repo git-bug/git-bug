@@ -28,6 +28,8 @@ require (
 	github.com/phayes/freeport v0.0.0-20220201140144-74d24b5ae9f5
 	github.com/pkg/errors v0.9.1
 	github.com/shurcooL/githubv4 v0.0.0-20240429030203-be2daab69064
+	github.com/shurcooL/httpfs v0.0.0-20230704072500-f1e31cf0ba5c
+	github.com/shurcooL/vfsgen v0.0.0-20230704071429-0000e147ea92
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.9.0
