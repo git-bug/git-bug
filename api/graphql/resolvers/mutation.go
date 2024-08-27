@@ -39,7 +39,7 @@ func (r mutationResolver) getBug(repoRef *string, bugPrefix string) (*cache.Repo
 	return repo, b, nil
 }
 
-func (r mutationResolver) NewBug(ctx context.Context, input models.NewBugInput) (*models.NewBugPayload, error) {
+func (r mutationResolver) BugCreate(ctx context.Context, input models.BugCreateInput) (*models.BugCreatePayload, error) {
 	repo, err := r.getRepo(input.RepoRef)
 	if err != nil {
 		return nil, err
@@ -60,14 +60,14 @@ func (r mutationResolver) NewBug(ctx context.Context, input models.NewBugInput) 
 		return nil, err
 	}
 
-	return &models.NewBugPayload{
+	return &models.BugCreatePayload{
 		ClientMutationID: input.ClientMutationID,
 		Bug:              models.NewLoadedBug(b.Snapshot()),
 		Operation:        op,
 	}, nil
 }
 
-func (r mutationResolver) AddComment(ctx context.Context, input models.AddCommentInput) (*models.AddCommentPayload, error) {
+func (r mutationResolver) BugAddComment(ctx context.Context, input models.BugAddCommentInput) (*models.BugAddCommentPayload, error) {
 	repo, b, err := r.getBug(input.RepoRef, input.Prefix)
 	if err != nil {
 		return nil, err
@@ -92,14 +92,14 @@ func (r mutationResolver) AddComment(ctx context.Context, input models.AddCommen
 		return nil, err
 	}
 
-	return &models.AddCommentPayload{
+	return &models.BugAddCommentPayload{
 		ClientMutationID: input.ClientMutationID,
 		Bug:              models.NewLoadedBug(b.Snapshot()),
 		Operation:        op,
 	}, nil
 }
 
-func (r mutationResolver) AddCommentAndClose(ctx context.Context, input models.AddCommentAndCloseBugInput) (*models.AddCommentAndCloseBugPayload, error) {
+func (r mutationResolver) BugAddCommentAndClose(ctx context.Context, input models.BugAddCommentAndCloseInput) (*models.BugAddCommentAndClosePayload, error) {
 	repo, b, err := r.getBug(input.RepoRef, input.Prefix)
 	if err != nil {
 		return nil, err
@@ -129,7 +129,7 @@ func (r mutationResolver) AddCommentAndClose(ctx context.Context, input models.A
 		return nil, err
 	}
 
-	return &models.AddCommentAndCloseBugPayload{
+	return &models.BugAddCommentAndClosePayload{
 		ClientMutationID: input.ClientMutationID,
 		Bug:              models.NewLoadedBug(b.Snapshot()),
 		CommentOperation: opAddComment,
@@ -137,7 +137,7 @@ func (r mutationResolver) AddCommentAndClose(ctx context.Context, input models.A
 	}, nil
 }
 
-func (r mutationResolver) AddCommentAndReopen(ctx context.Context, input models.AddCommentAndReopenBugInput) (*models.AddCommentAndReopenBugPayload, error) {
+func (r mutationResolver) BugAddCommentAndReopen(ctx context.Context, input models.BugAddCommentAndReopenInput) (*models.BugAddCommentAndReopenPayload, error) {
 	repo, b, err := r.getBug(input.RepoRef, input.Prefix)
 	if err != nil {
 		return nil, err
@@ -167,7 +167,7 @@ func (r mutationResolver) AddCommentAndReopen(ctx context.Context, input models.
 		return nil, err
 	}
 
-	return &models.AddCommentAndReopenBugPayload{
+	return &models.BugAddCommentAndReopenPayload{
 		ClientMutationID: input.ClientMutationID,
 		Bug:              models.NewLoadedBug(b.Snapshot()),
 		CommentOperation: opAddComment,
@@ -175,7 +175,7 @@ func (r mutationResolver) AddCommentAndReopen(ctx context.Context, input models.
 	}, nil
 }
 
-func (r mutationResolver) EditComment(ctx context.Context, input models.EditCommentInput) (*models.EditCommentPayload, error) {
+func (r mutationResolver) BugEditComment(ctx context.Context, input models.BugEditCommentInput) (*models.BugEditCommentPayload, error) {
 	repo, err := r.getRepo(input.RepoRef)
 	if err != nil {
 		return nil, err
@@ -207,14 +207,14 @@ func (r mutationResolver) EditComment(ctx context.Context, input models.EditComm
 		return nil, err
 	}
 
-	return &models.EditCommentPayload{
+	return &models.BugEditCommentPayload{
 		ClientMutationID: input.ClientMutationID,
 		Bug:              models.NewLoadedBug(b.Snapshot()),
 		Operation:        op,
 	}, nil
 }
 
-func (r mutationResolver) ChangeLabels(ctx context.Context, input *models.ChangeLabelInput) (*models.ChangeLabelPayload, error) {
+func (r mutationResolver) BugChangeLabels(ctx context.Context, input *models.BugChangeLabelInput) (*models.BugChangeLabelPayload, error) {
 	repo, b, err := r.getBug(input.RepoRef, input.Prefix)
 	if err != nil {
 		return nil, err
@@ -246,7 +246,7 @@ func (r mutationResolver) ChangeLabels(ctx context.Context, input *models.Change
 		resultsPtr[i] = &result
 	}
 
-	return &models.ChangeLabelPayload{
+	return &models.BugChangeLabelPayload{
 		ClientMutationID: input.ClientMutationID,
 		Bug:              models.NewLoadedBug(b.Snapshot()),
 		Operation:        op,
@@ -254,7 +254,7 @@ func (r mutationResolver) ChangeLabels(ctx context.Context, input *models.Change
 	}, nil
 }
 
-func (r mutationResolver) OpenBug(ctx context.Context, input models.OpenBugInput) (*models.OpenBugPayload, error) {
+func (r mutationResolver) BugStatusOpen(ctx context.Context, input models.BugStatusOpenInput) (*models.BugStatusOpenPayload, error) {
 	repo, b, err := r.getBug(input.RepoRef, input.Prefix)
 	if err != nil {
 		return nil, err
@@ -275,14 +275,14 @@ func (r mutationResolver) OpenBug(ctx context.Context, input models.OpenBugInput
 		return nil, err
 	}
 
-	return &models.OpenBugPayload{
+	return &models.BugStatusOpenPayload{
 		ClientMutationID: input.ClientMutationID,
 		Bug:              models.NewLoadedBug(b.Snapshot()),
 		Operation:        op,
 	}, nil
 }
 
-func (r mutationResolver) CloseBug(ctx context.Context, input models.CloseBugInput) (*models.CloseBugPayload, error) {
+func (r mutationResolver) BugStatusClose(ctx context.Context, input models.BugStatusCloseInput) (*models.BugStatusClosePayload, error) {
 	repo, b, err := r.getBug(input.RepoRef, input.Prefix)
 	if err != nil {
 		return nil, err
@@ -303,14 +303,14 @@ func (r mutationResolver) CloseBug(ctx context.Context, input models.CloseBugInp
 		return nil, err
 	}
 
-	return &models.CloseBugPayload{
+	return &models.BugStatusClosePayload{
 		ClientMutationID: input.ClientMutationID,
 		Bug:              models.NewLoadedBug(b.Snapshot()),
 		Operation:        op,
 	}, nil
 }
 
-func (r mutationResolver) SetTitle(ctx context.Context, input models.SetTitleInput) (*models.SetTitlePayload, error) {
+func (r mutationResolver) BugSetTitle(ctx context.Context, input models.BugSetTitleInput) (*models.BugSetTitlePayload, error) {
 	repo, b, err := r.getBug(input.RepoRef, input.Prefix)
 	if err != nil {
 		return nil, err
@@ -336,7 +336,7 @@ func (r mutationResolver) SetTitle(ctx context.Context, input models.SetTitleInp
 		return nil, err
 	}
 
-	return &models.SetTitlePayload{
+	return &models.BugSetTitlePayload{
 		ClientMutationID: input.ClientMutationID,
 		Bug:              models.NewLoadedBug(b.Snapshot()),
 		Operation:        op,

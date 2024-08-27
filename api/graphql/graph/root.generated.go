@@ -17,15 +17,15 @@ import (
 // region    ************************** generated!.gotpl **************************
 
 type MutationResolver interface {
-	NewBug(ctx context.Context, input models.NewBugInput) (*models.NewBugPayload, error)
-	AddComment(ctx context.Context, input models.AddCommentInput) (*models.AddCommentPayload, error)
-	AddCommentAndClose(ctx context.Context, input models.AddCommentAndCloseBugInput) (*models.AddCommentAndCloseBugPayload, error)
-	AddCommentAndReopen(ctx context.Context, input models.AddCommentAndReopenBugInput) (*models.AddCommentAndReopenBugPayload, error)
-	EditComment(ctx context.Context, input models.EditCommentInput) (*models.EditCommentPayload, error)
-	ChangeLabels(ctx context.Context, input *models.ChangeLabelInput) (*models.ChangeLabelPayload, error)
-	OpenBug(ctx context.Context, input models.OpenBugInput) (*models.OpenBugPayload, error)
-	CloseBug(ctx context.Context, input models.CloseBugInput) (*models.CloseBugPayload, error)
-	SetTitle(ctx context.Context, input models.SetTitleInput) (*models.SetTitlePayload, error)
+	BugCreate(ctx context.Context, input models.BugCreateInput) (*models.BugCreatePayload, error)
+	BugAddComment(ctx context.Context, input models.BugAddCommentInput) (*models.BugAddCommentPayload, error)
+	BugAddCommentAndClose(ctx context.Context, input models.BugAddCommentAndCloseInput) (*models.BugAddCommentAndClosePayload, error)
+	BugAddCommentAndReopen(ctx context.Context, input models.BugAddCommentAndReopenInput) (*models.BugAddCommentAndReopenPayload, error)
+	BugEditComment(ctx context.Context, input models.BugEditCommentInput) (*models.BugEditCommentPayload, error)
+	BugChangeLabels(ctx context.Context, input *models.BugChangeLabelInput) (*models.BugChangeLabelPayload, error)
+	BugStatusOpen(ctx context.Context, input models.BugStatusOpenInput) (*models.BugStatusOpenPayload, error)
+	BugStatusClose(ctx context.Context, input models.BugStatusCloseInput) (*models.BugStatusClosePayload, error)
+	BugSetTitle(ctx context.Context, input models.BugSetTitleInput) (*models.BugSetTitlePayload, error)
 }
 type QueryResolver interface {
 	Repository(ctx context.Context, ref *string) (*models.Repository, error)
@@ -35,13 +35,13 @@ type QueryResolver interface {
 
 // region    ***************************** args.gotpl *****************************
 
-func (ec *executionContext) field_Mutation_addCommentAndClose_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_bugAddCommentAndClose_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 models.AddCommentAndCloseBugInput
+	var arg0 models.BugAddCommentAndCloseInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNAddCommentAndCloseBugInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐAddCommentAndCloseBugInput(ctx, tmp)
+		arg0, err = ec.unmarshalNBugAddCommentAndCloseInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugAddCommentAndCloseInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -50,13 +50,13 @@ func (ec *executionContext) field_Mutation_addCommentAndClose_args(ctx context.C
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_addCommentAndReopen_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_bugAddCommentAndReopen_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 models.AddCommentAndReopenBugInput
+	var arg0 models.BugAddCommentAndReopenInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNAddCommentAndReopenBugInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐAddCommentAndReopenBugInput(ctx, tmp)
+		arg0, err = ec.unmarshalNBugAddCommentAndReopenInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugAddCommentAndReopenInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -65,13 +65,13 @@ func (ec *executionContext) field_Mutation_addCommentAndReopen_args(ctx context.
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_addComment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_bugAddComment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 models.AddCommentInput
+	var arg0 models.BugAddCommentInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNAddCommentInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐAddCommentInput(ctx, tmp)
+		arg0, err = ec.unmarshalNBugAddCommentInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugAddCommentInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -80,13 +80,13 @@ func (ec *executionContext) field_Mutation_addComment_args(ctx context.Context, 
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_changeLabels_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_bugChangeLabels_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *models.ChangeLabelInput
+	var arg0 *models.BugChangeLabelInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalOChangeLabelInput2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐChangeLabelInput(ctx, tmp)
+		arg0, err = ec.unmarshalOBugChangeLabelInput2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugChangeLabelInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -95,13 +95,13 @@ func (ec *executionContext) field_Mutation_changeLabels_args(ctx context.Context
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_closeBug_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_bugCreate_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 models.CloseBugInput
+	var arg0 models.BugCreateInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNCloseBugInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐCloseBugInput(ctx, tmp)
+		arg0, err = ec.unmarshalNBugCreateInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugCreateInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -110,13 +110,13 @@ func (ec *executionContext) field_Mutation_closeBug_args(ctx context.Context, ra
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_editComment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_bugEditComment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 models.EditCommentInput
+	var arg0 models.BugEditCommentInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNEditCommentInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐEditCommentInput(ctx, tmp)
+		arg0, err = ec.unmarshalNBugEditCommentInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugEditCommentInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -125,13 +125,13 @@ func (ec *executionContext) field_Mutation_editComment_args(ctx context.Context,
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_newBug_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_bugSetTitle_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 models.NewBugInput
+	var arg0 models.BugSetTitleInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNNewBugInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐNewBugInput(ctx, tmp)
+		arg0, err = ec.unmarshalNBugSetTitleInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugSetTitleInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -140,13 +140,13 @@ func (ec *executionContext) field_Mutation_newBug_args(ctx context.Context, rawA
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_openBug_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_bugStatusClose_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 models.OpenBugInput
+	var arg0 models.BugStatusCloseInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNOpenBugInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐOpenBugInput(ctx, tmp)
+		arg0, err = ec.unmarshalNBugStatusCloseInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugStatusCloseInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -155,13 +155,13 @@ func (ec *executionContext) field_Mutation_openBug_args(ctx context.Context, raw
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_setTitle_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_bugStatusOpen_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 models.SetTitleInput
+	var arg0 models.BugStatusOpenInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNSetTitleInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐSetTitleInput(ctx, tmp)
+		arg0, err = ec.unmarshalNBugStatusOpenInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugStatusOpenInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -208,8 +208,8 @@ func (ec *executionContext) field_Query_repository_args(ctx context.Context, raw
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _Mutation_newBug(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_newBug(ctx, field)
+func (ec *executionContext) _Mutation_bugCreate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_bugCreate(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -222,7 +222,7 @@ func (ec *executionContext) _Mutation_newBug(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().NewBug(rctx, fc.Args["input"].(models.NewBugInput))
+		return ec.resolvers.Mutation().BugCreate(rctx, fc.Args["input"].(models.BugCreateInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -234,12 +234,12 @@ func (ec *executionContext) _Mutation_newBug(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*models.NewBugPayload)
+	res := resTmp.(*models.BugCreatePayload)
 	fc.Result = res
-	return ec.marshalNNewBugPayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐNewBugPayload(ctx, field.Selections, res)
+	return ec.marshalNBugCreatePayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugCreatePayload(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_newBug(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_bugCreate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -248,13 +248,13 @@ func (ec *executionContext) fieldContext_Mutation_newBug(ctx context.Context, fi
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "clientMutationId":
-				return ec.fieldContext_NewBugPayload_clientMutationId(ctx, field)
+				return ec.fieldContext_BugCreatePayload_clientMutationId(ctx, field)
 			case "bug":
-				return ec.fieldContext_NewBugPayload_bug(ctx, field)
+				return ec.fieldContext_BugCreatePayload_bug(ctx, field)
 			case "operation":
-				return ec.fieldContext_NewBugPayload_operation(ctx, field)
+				return ec.fieldContext_BugCreatePayload_operation(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type NewBugPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BugCreatePayload", field.Name)
 		},
 	}
 	defer func() {
@@ -264,15 +264,15 @@ func (ec *executionContext) fieldContext_Mutation_newBug(ctx context.Context, fi
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_newBug_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_bugCreate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_addComment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_addComment(ctx, field)
+func (ec *executionContext) _Mutation_bugAddComment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_bugAddComment(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -285,7 +285,7 @@ func (ec *executionContext) _Mutation_addComment(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().AddComment(rctx, fc.Args["input"].(models.AddCommentInput))
+		return ec.resolvers.Mutation().BugAddComment(rctx, fc.Args["input"].(models.BugAddCommentInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -297,12 +297,12 @@ func (ec *executionContext) _Mutation_addComment(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*models.AddCommentPayload)
+	res := resTmp.(*models.BugAddCommentPayload)
 	fc.Result = res
-	return ec.marshalNAddCommentPayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐAddCommentPayload(ctx, field.Selections, res)
+	return ec.marshalNBugAddCommentPayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugAddCommentPayload(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_addComment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_bugAddComment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -311,13 +311,13 @@ func (ec *executionContext) fieldContext_Mutation_addComment(ctx context.Context
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "clientMutationId":
-				return ec.fieldContext_AddCommentPayload_clientMutationId(ctx, field)
+				return ec.fieldContext_BugAddCommentPayload_clientMutationId(ctx, field)
 			case "bug":
-				return ec.fieldContext_AddCommentPayload_bug(ctx, field)
+				return ec.fieldContext_BugAddCommentPayload_bug(ctx, field)
 			case "operation":
-				return ec.fieldContext_AddCommentPayload_operation(ctx, field)
+				return ec.fieldContext_BugAddCommentPayload_operation(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type AddCommentPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BugAddCommentPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -327,15 +327,15 @@ func (ec *executionContext) fieldContext_Mutation_addComment(ctx context.Context
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_addComment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_bugAddComment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_addCommentAndClose(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_addCommentAndClose(ctx, field)
+func (ec *executionContext) _Mutation_bugAddCommentAndClose(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_bugAddCommentAndClose(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -348,7 +348,7 @@ func (ec *executionContext) _Mutation_addCommentAndClose(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().AddCommentAndClose(rctx, fc.Args["input"].(models.AddCommentAndCloseBugInput))
+		return ec.resolvers.Mutation().BugAddCommentAndClose(rctx, fc.Args["input"].(models.BugAddCommentAndCloseInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -360,12 +360,12 @@ func (ec *executionContext) _Mutation_addCommentAndClose(ctx context.Context, fi
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*models.AddCommentAndCloseBugPayload)
+	res := resTmp.(*models.BugAddCommentAndClosePayload)
 	fc.Result = res
-	return ec.marshalNAddCommentAndCloseBugPayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐAddCommentAndCloseBugPayload(ctx, field.Selections, res)
+	return ec.marshalNBugAddCommentAndClosePayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugAddCommentAndClosePayload(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_addCommentAndClose(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_bugAddCommentAndClose(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -374,15 +374,15 @@ func (ec *executionContext) fieldContext_Mutation_addCommentAndClose(ctx context
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "clientMutationId":
-				return ec.fieldContext_AddCommentAndCloseBugPayload_clientMutationId(ctx, field)
+				return ec.fieldContext_BugAddCommentAndClosePayload_clientMutationId(ctx, field)
 			case "bug":
-				return ec.fieldContext_AddCommentAndCloseBugPayload_bug(ctx, field)
+				return ec.fieldContext_BugAddCommentAndClosePayload_bug(ctx, field)
 			case "commentOperation":
-				return ec.fieldContext_AddCommentAndCloseBugPayload_commentOperation(ctx, field)
+				return ec.fieldContext_BugAddCommentAndClosePayload_commentOperation(ctx, field)
 			case "statusOperation":
-				return ec.fieldContext_AddCommentAndCloseBugPayload_statusOperation(ctx, field)
+				return ec.fieldContext_BugAddCommentAndClosePayload_statusOperation(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type AddCommentAndCloseBugPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BugAddCommentAndClosePayload", field.Name)
 		},
 	}
 	defer func() {
@@ -392,15 +392,15 @@ func (ec *executionContext) fieldContext_Mutation_addCommentAndClose(ctx context
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_addCommentAndClose_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_bugAddCommentAndClose_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_addCommentAndReopen(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_addCommentAndReopen(ctx, field)
+func (ec *executionContext) _Mutation_bugAddCommentAndReopen(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_bugAddCommentAndReopen(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -413,7 +413,7 @@ func (ec *executionContext) _Mutation_addCommentAndReopen(ctx context.Context, f
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().AddCommentAndReopen(rctx, fc.Args["input"].(models.AddCommentAndReopenBugInput))
+		return ec.resolvers.Mutation().BugAddCommentAndReopen(rctx, fc.Args["input"].(models.BugAddCommentAndReopenInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -425,12 +425,12 @@ func (ec *executionContext) _Mutation_addCommentAndReopen(ctx context.Context, f
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*models.AddCommentAndReopenBugPayload)
+	res := resTmp.(*models.BugAddCommentAndReopenPayload)
 	fc.Result = res
-	return ec.marshalNAddCommentAndReopenBugPayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐAddCommentAndReopenBugPayload(ctx, field.Selections, res)
+	return ec.marshalNBugAddCommentAndReopenPayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugAddCommentAndReopenPayload(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_addCommentAndReopen(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_bugAddCommentAndReopen(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -439,15 +439,15 @@ func (ec *executionContext) fieldContext_Mutation_addCommentAndReopen(ctx contex
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "clientMutationId":
-				return ec.fieldContext_AddCommentAndReopenBugPayload_clientMutationId(ctx, field)
+				return ec.fieldContext_BugAddCommentAndReopenPayload_clientMutationId(ctx, field)
 			case "bug":
-				return ec.fieldContext_AddCommentAndReopenBugPayload_bug(ctx, field)
+				return ec.fieldContext_BugAddCommentAndReopenPayload_bug(ctx, field)
 			case "commentOperation":
-				return ec.fieldContext_AddCommentAndReopenBugPayload_commentOperation(ctx, field)
+				return ec.fieldContext_BugAddCommentAndReopenPayload_commentOperation(ctx, field)
 			case "statusOperation":
-				return ec.fieldContext_AddCommentAndReopenBugPayload_statusOperation(ctx, field)
+				return ec.fieldContext_BugAddCommentAndReopenPayload_statusOperation(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type AddCommentAndReopenBugPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BugAddCommentAndReopenPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -457,15 +457,15 @@ func (ec *executionContext) fieldContext_Mutation_addCommentAndReopen(ctx contex
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_addCommentAndReopen_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_bugAddCommentAndReopen_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_editComment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_editComment(ctx, field)
+func (ec *executionContext) _Mutation_bugEditComment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_bugEditComment(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -478,7 +478,7 @@ func (ec *executionContext) _Mutation_editComment(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().EditComment(rctx, fc.Args["input"].(models.EditCommentInput))
+		return ec.resolvers.Mutation().BugEditComment(rctx, fc.Args["input"].(models.BugEditCommentInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -490,12 +490,12 @@ func (ec *executionContext) _Mutation_editComment(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*models.EditCommentPayload)
+	res := resTmp.(*models.BugEditCommentPayload)
 	fc.Result = res
-	return ec.marshalNEditCommentPayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐEditCommentPayload(ctx, field.Selections, res)
+	return ec.marshalNBugEditCommentPayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugEditCommentPayload(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_editComment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_bugEditComment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -504,13 +504,13 @@ func (ec *executionContext) fieldContext_Mutation_editComment(ctx context.Contex
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "clientMutationId":
-				return ec.fieldContext_EditCommentPayload_clientMutationId(ctx, field)
+				return ec.fieldContext_BugEditCommentPayload_clientMutationId(ctx, field)
 			case "bug":
-				return ec.fieldContext_EditCommentPayload_bug(ctx, field)
+				return ec.fieldContext_BugEditCommentPayload_bug(ctx, field)
 			case "operation":
-				return ec.fieldContext_EditCommentPayload_operation(ctx, field)
+				return ec.fieldContext_BugEditCommentPayload_operation(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type EditCommentPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BugEditCommentPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -520,15 +520,15 @@ func (ec *executionContext) fieldContext_Mutation_editComment(ctx context.Contex
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_editComment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_bugEditComment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_changeLabels(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_changeLabels(ctx, field)
+func (ec *executionContext) _Mutation_bugChangeLabels(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_bugChangeLabels(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -541,7 +541,7 @@ func (ec *executionContext) _Mutation_changeLabels(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().ChangeLabels(rctx, fc.Args["input"].(*models.ChangeLabelInput))
+		return ec.resolvers.Mutation().BugChangeLabels(rctx, fc.Args["input"].(*models.BugChangeLabelInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -553,12 +553,12 @@ func (ec *executionContext) _Mutation_changeLabels(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*models.ChangeLabelPayload)
+	res := resTmp.(*models.BugChangeLabelPayload)
 	fc.Result = res
-	return ec.marshalNChangeLabelPayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐChangeLabelPayload(ctx, field.Selections, res)
+	return ec.marshalNBugChangeLabelPayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugChangeLabelPayload(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_changeLabels(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_bugChangeLabels(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -567,15 +567,15 @@ func (ec *executionContext) fieldContext_Mutation_changeLabels(ctx context.Conte
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "clientMutationId":
-				return ec.fieldContext_ChangeLabelPayload_clientMutationId(ctx, field)
+				return ec.fieldContext_BugChangeLabelPayload_clientMutationId(ctx, field)
 			case "bug":
-				return ec.fieldContext_ChangeLabelPayload_bug(ctx, field)
+				return ec.fieldContext_BugChangeLabelPayload_bug(ctx, field)
 			case "operation":
-				return ec.fieldContext_ChangeLabelPayload_operation(ctx, field)
+				return ec.fieldContext_BugChangeLabelPayload_operation(ctx, field)
 			case "results":
-				return ec.fieldContext_ChangeLabelPayload_results(ctx, field)
+				return ec.fieldContext_BugChangeLabelPayload_results(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type ChangeLabelPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BugChangeLabelPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -585,15 +585,15 @@ func (ec *executionContext) fieldContext_Mutation_changeLabels(ctx context.Conte
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_changeLabels_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_bugChangeLabels_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_openBug(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_openBug(ctx, field)
+func (ec *executionContext) _Mutation_bugStatusOpen(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_bugStatusOpen(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -606,7 +606,7 @@ func (ec *executionContext) _Mutation_openBug(ctx context.Context, field graphql
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().OpenBug(rctx, fc.Args["input"].(models.OpenBugInput))
+		return ec.resolvers.Mutation().BugStatusOpen(rctx, fc.Args["input"].(models.BugStatusOpenInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -618,12 +618,12 @@ func (ec *executionContext) _Mutation_openBug(ctx context.Context, field graphql
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*models.OpenBugPayload)
+	res := resTmp.(*models.BugStatusOpenPayload)
 	fc.Result = res
-	return ec.marshalNOpenBugPayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐOpenBugPayload(ctx, field.Selections, res)
+	return ec.marshalNBugStatusOpenPayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugStatusOpenPayload(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_openBug(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_bugStatusOpen(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -632,13 +632,13 @@ func (ec *executionContext) fieldContext_Mutation_openBug(ctx context.Context, f
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "clientMutationId":
-				return ec.fieldContext_OpenBugPayload_clientMutationId(ctx, field)
+				return ec.fieldContext_BugStatusOpenPayload_clientMutationId(ctx, field)
 			case "bug":
-				return ec.fieldContext_OpenBugPayload_bug(ctx, field)
+				return ec.fieldContext_BugStatusOpenPayload_bug(ctx, field)
 			case "operation":
-				return ec.fieldContext_OpenBugPayload_operation(ctx, field)
+				return ec.fieldContext_BugStatusOpenPayload_operation(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type OpenBugPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BugStatusOpenPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -648,15 +648,15 @@ func (ec *executionContext) fieldContext_Mutation_openBug(ctx context.Context, f
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_openBug_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_bugStatusOpen_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_closeBug(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_closeBug(ctx, field)
+func (ec *executionContext) _Mutation_bugStatusClose(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_bugStatusClose(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -669,7 +669,7 @@ func (ec *executionContext) _Mutation_closeBug(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CloseBug(rctx, fc.Args["input"].(models.CloseBugInput))
+		return ec.resolvers.Mutation().BugStatusClose(rctx, fc.Args["input"].(models.BugStatusCloseInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -681,12 +681,12 @@ func (ec *executionContext) _Mutation_closeBug(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*models.CloseBugPayload)
+	res := resTmp.(*models.BugStatusClosePayload)
 	fc.Result = res
-	return ec.marshalNCloseBugPayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐCloseBugPayload(ctx, field.Selections, res)
+	return ec.marshalNBugStatusClosePayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugStatusClosePayload(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_closeBug(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_bugStatusClose(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -695,13 +695,13 @@ func (ec *executionContext) fieldContext_Mutation_closeBug(ctx context.Context, 
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "clientMutationId":
-				return ec.fieldContext_CloseBugPayload_clientMutationId(ctx, field)
+				return ec.fieldContext_BugStatusClosePayload_clientMutationId(ctx, field)
 			case "bug":
-				return ec.fieldContext_CloseBugPayload_bug(ctx, field)
+				return ec.fieldContext_BugStatusClosePayload_bug(ctx, field)
 			case "operation":
-				return ec.fieldContext_CloseBugPayload_operation(ctx, field)
+				return ec.fieldContext_BugStatusClosePayload_operation(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type CloseBugPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BugStatusClosePayload", field.Name)
 		},
 	}
 	defer func() {
@@ -711,15 +711,15 @@ func (ec *executionContext) fieldContext_Mutation_closeBug(ctx context.Context, 
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_closeBug_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_bugStatusClose_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_setTitle(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_setTitle(ctx, field)
+func (ec *executionContext) _Mutation_bugSetTitle(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_bugSetTitle(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -732,7 +732,7 @@ func (ec *executionContext) _Mutation_setTitle(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().SetTitle(rctx, fc.Args["input"].(models.SetTitleInput))
+		return ec.resolvers.Mutation().BugSetTitle(rctx, fc.Args["input"].(models.BugSetTitleInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -744,12 +744,12 @@ func (ec *executionContext) _Mutation_setTitle(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*models.SetTitlePayload)
+	res := resTmp.(*models.BugSetTitlePayload)
 	fc.Result = res
-	return ec.marshalNSetTitlePayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐSetTitlePayload(ctx, field.Selections, res)
+	return ec.marshalNBugSetTitlePayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugSetTitlePayload(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_setTitle(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_bugSetTitle(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -758,13 +758,13 @@ func (ec *executionContext) fieldContext_Mutation_setTitle(ctx context.Context, 
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "clientMutationId":
-				return ec.fieldContext_SetTitlePayload_clientMutationId(ctx, field)
+				return ec.fieldContext_BugSetTitlePayload_clientMutationId(ctx, field)
 			case "bug":
-				return ec.fieldContext_SetTitlePayload_bug(ctx, field)
+				return ec.fieldContext_BugSetTitlePayload_bug(ctx, field)
 			case "operation":
-				return ec.fieldContext_SetTitlePayload_operation(ctx, field)
+				return ec.fieldContext_BugSetTitlePayload_operation(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type SetTitlePayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BugSetTitlePayload", field.Name)
 		},
 	}
 	defer func() {
@@ -774,7 +774,7 @@ func (ec *executionContext) fieldContext_Mutation_setTitle(ctx context.Context, 
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_setTitle_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_bugSetTitle_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -1009,65 +1009,65 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Mutation")
-		case "newBug":
+		case "bugCreate":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_newBug(ctx, field)
+				return ec._Mutation_bugCreate(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "addComment":
+		case "bugAddComment":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_addComment(ctx, field)
+				return ec._Mutation_bugAddComment(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "addCommentAndClose":
+		case "bugAddCommentAndClose":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_addCommentAndClose(ctx, field)
+				return ec._Mutation_bugAddCommentAndClose(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "addCommentAndReopen":
+		case "bugAddCommentAndReopen":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_addCommentAndReopen(ctx, field)
+				return ec._Mutation_bugAddCommentAndReopen(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "editComment":
+		case "bugEditComment":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_editComment(ctx, field)
+				return ec._Mutation_bugEditComment(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "changeLabels":
+		case "bugChangeLabels":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_changeLabels(ctx, field)
+				return ec._Mutation_bugChangeLabels(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "openBug":
+		case "bugStatusOpen":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_openBug(ctx, field)
+				return ec._Mutation_bugStatusOpen(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "closeBug":
+		case "bugStatusClose":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_closeBug(ctx, field)
+				return ec._Mutation_bugStatusClose(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "setTitle":
+		case "bugSetTitle":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_setTitle(ctx, field)
+				return ec._Mutation_bugSetTitle(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++

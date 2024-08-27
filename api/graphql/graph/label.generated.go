@@ -13,6 +13,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/git-bug/git-bug/api/graphql/models"
+	"github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entities/common"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -127,6 +128,100 @@ func (ec *executionContext) fieldContext_Label_color(_ context.Context, field gr
 				return ec.fieldContext_Color_B(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Color", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LabelChangeResult_label(ctx context.Context, field graphql.CollectedField, obj *bug.LabelChangeResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LabelChangeResult_label(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Label, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(common.Label)
+	fc.Result = res
+	return ec.marshalNLabel2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋcommonᚐLabel(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LabelChangeResult_label(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LabelChangeResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_Label_name(ctx, field)
+			case "color":
+				return ec.fieldContext_Label_color(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Label", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LabelChangeResult_status(ctx context.Context, field graphql.CollectedField, obj *bug.LabelChangeResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LabelChangeResult_status(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bug.LabelChangeStatus)
+	fc.Result = res
+	return ec.marshalNLabelChangeStatus2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐLabelChangeStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LabelChangeResult_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LabelChangeResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type LabelChangeStatus does not have child fields")
 		},
 	}
 	return fc, nil
@@ -542,6 +637,50 @@ func (ec *executionContext) _Label(ctx context.Context, sel ast.SelectionSet, ob
 	return out
 }
 
+var labelChangeResultImplementors = []string{"LabelChangeResult"}
+
+func (ec *executionContext) _LabelChangeResult(ctx context.Context, sel ast.SelectionSet, obj *bug.LabelChangeResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, labelChangeResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("LabelChangeResult")
+		case "label":
+			out.Values[i] = ec._LabelChangeResult_label(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "status":
+			out.Values[i] = ec._LabelChangeResult_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var labelConnectionImplementors = []string{"LabelConnection"}
 
 func (ec *executionContext) _LabelConnection(ctx context.Context, sel ast.SelectionSet, obj *models.LabelConnection) graphql.Marshaler {
@@ -692,6 +831,54 @@ func (ec *executionContext) marshalNLabel2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbu
 	return ret
 }
 
+func (ec *executionContext) marshalNLabelChangeResult2ᚕᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐLabelChangeResult(ctx context.Context, sel ast.SelectionSet, v []*bug.LabelChangeResult) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOLabelChangeResult2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐLabelChangeResult(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalNLabelChangeStatus2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐLabelChangeStatus(ctx context.Context, v interface{}) (bug.LabelChangeStatus, error) {
+	var res bug.LabelChangeStatus
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNLabelChangeStatus2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐLabelChangeStatus(ctx context.Context, sel ast.SelectionSet, v bug.LabelChangeStatus) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) marshalNLabelConnection2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐLabelConnection(ctx context.Context, sel ast.SelectionSet, v models.LabelConnection) graphql.Marshaler {
 	return ec._LabelConnection(ctx, sel, &v)
 }
@@ -758,6 +945,13 @@ func (ec *executionContext) marshalNLabelEdge2ᚖgithubᚗcomᚋgitᚑbugᚋgit�
 		return graphql.Null
 	}
 	return ec._LabelEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOLabelChangeResult2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐLabelChangeResult(ctx context.Context, sel ast.SelectionSet, v *bug.LabelChangeResult) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._LabelChangeResult(ctx, sel, v)
 }
 
 // endregion ***************************** type.gotpl *****************************
