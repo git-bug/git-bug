@@ -21,20 +21,20 @@ query Timeline($id: String!, $first: Int = 10, $after: String) {
   }
 }
 
-fragment TimelineItem on TimelineItem {
-  ... on LabelChangeTimelineItem {
+fragment TimelineItem on BugTimelineItem {
+  ... on BugLabelChangeTimelineItem {
     ...LabelChange
   }
-  ... on SetStatusTimelineItem {
+  ... on BugSetStatusTimelineItem {
     ...SetStatus
   }
-  ... on SetTitleTimelineItem {
+  ... on BugSetTitleTimelineItem {
     ...SetTitle
   }
-  ... on AddCommentTimelineItem {
+  ... on BugAddCommentTimelineItem {
     ...AddComment
   }
-  ... on CreateTimelineItem {
+  ... on BugCreateTimelineItem {
     ...Create
   }
 }

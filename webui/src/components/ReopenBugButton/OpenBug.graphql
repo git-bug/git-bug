@@ -1,5 +1,5 @@
-mutation openBug($input: OpenBugInput!) {
-  openBug(input: $input) {
+mutation openBug($input: BugStatusOpenInput!) {
+  bugStatusOpen(input: $input) {
     bug {
       id
     }

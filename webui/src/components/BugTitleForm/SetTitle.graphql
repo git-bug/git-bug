@@ -1,5 +1,5 @@
-mutation setTitle($input: SetTitleInput!) {
-  setTitle(input: $input) {
+mutation setTitle($input: BugSetTitleInput!) {
+  bugSetTitle(input: $input) {
     bug {
       id
     }

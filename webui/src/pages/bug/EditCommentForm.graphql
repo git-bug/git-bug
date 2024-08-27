@@ -1,8 +1,8 @@
 #import "./MessageCommentFragment.graphql"
 #import "./MessageCreateFragment.graphql"
 
-mutation EditComment($input: EditCommentInput!) {
-  editComment(input: $input) {
+mutation EditComment($input: BugEditCommentInput!) {
+  bugEditComment(input: $input) {
     bug {
       id
       timeline {
