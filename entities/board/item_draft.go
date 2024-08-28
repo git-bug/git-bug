@@ -16,9 +16,8 @@ type Draft struct {
 	// of the Operation that created the Draft
 	combinedId entity.CombinedId
 
-	author  identity.Interface
-	title   string
-	Message string
+	author identity.Interface
+	title  string
 
 	// Creation time of the comment.
 	// Should be used only for human display, never for ordering as we can't rely on it in a distributed system.
