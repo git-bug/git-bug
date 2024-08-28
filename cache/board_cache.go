@@ -29,23 +29,23 @@ func NewBoardCache(b *board.Board, repo repository.ClockedRepo, getUserIdentity 
 	}
 }
 
-func (c *BoardCache) AddItemDraft(columnId entity.CombinedId, title, message string, files []repository.Hash) (entity.CombinedId, *board.AddItemDraftOperation, error) {
+func (c *BoardCache) AddItemDraft(columnId entity.CombinedId, title string) (entity.CombinedId, *board.AddItemDraftOperation, error) {
 	author, err := c.getUserIdentity()
 	if err != nil {
 		return entity.UnsetCombinedId, nil, err
 	}
 
-	return c.AddItemDraftRaw(author, time.Now().Unix(), columnId, title, message, files, nil)
+	return c.AddItemDraftRaw(author, time.Now().Unix(), columnId, title, nil)
 }
 
-func (c *BoardCache) AddItemDraftRaw(author identity.Interface, unixTime int64, columnId entity.CombinedId, title, message string, files []repository.Hash, metadata map[string]string) (entity.CombinedId, *board.AddItemDraftOperation, error) {
+func (c *BoardCache) AddItemDraftRaw(author identity.Interface, unixTime int64, columnId entity.CombinedId, title string, metadata map[string]string) (entity.CombinedId, *board.AddItemDraftOperation, error) {
 	column, err := c.Snapshot().SearchColumn(columnId)
 	if err != nil {
 		return entity.UnsetCombinedId, nil, err
 	}
 
 	c.mu.Lock()
-	itemId, op, err := board.AddItemDraft(c.entity, author, unixTime, column.Id, title, message, files, metadata)
+	itemId, op, err := board.AddItemDraft(c.entity, author, unixTime, column.Id, title, metadata)
 	c.mu.Unlock()
 	if err != nil {
 		return entity.UnsetCombinedId, nil, err

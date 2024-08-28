@@ -73,7 +73,6 @@ type BoardDraftItem struct {
 	HumanId string   `json:"human_id"`
 	Author  Identity `json:"author"`
 	Title   string   `json:"title"`
-	Message string   `json:"message"`
 }
 
 func NewBoardDraftItem(item *board.Draft) BoardDraftItem {
@@ -83,7 +82,6 @@ func NewBoardDraftItem(item *board.Draft) BoardDraftItem {
 		HumanId: item.CombinedId().Human(),
 		Author:  NewIdentity(item.Author()),
 		Title:   item.Title(),
-		Message: item.Message,
 	}
 }
 
@@ -102,7 +100,6 @@ func NewBoardBugItem(item *board.BugItem) BoardBugItem {
 		HumanId: item.CombinedId().Human(),
 		Author:  NewIdentity(item.Author()),
 		BugId:   item.Bug.Snapshot().Id().String(),
-		// TODO: add more?
 	}
 }
 

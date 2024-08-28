@@ -58,6 +58,8 @@ func runBoardAddDraft(env *execenv.Env, opts boardAddDraftOptions, args []string
 		return err
 	}
 
+	// TODO: editor with single line, no message
+
 	if opts.messageFile != "" && opts.message == "" {
 		// Note: reuse the bug inputs
 		opts.title, opts.message, err = buginput.BugCreateFileInput(opts.messageFile)
@@ -77,7 +79,7 @@ func runBoardAddDraft(env *execenv.Env, opts boardAddDraftOptions, args []string
 		}
 	}
 
-	id, _, err := b.AddItemDraft(columnId, opts.title, opts.message, nil)
+	id, _, err := b.AddItemDraft(columnId, opts.title)
 	if err != nil {
 		return err
 	}
