@@ -16,8 +16,3 @@ type Repository struct {
 	Cache *cache.MultiRepoCache
 	Repo  *cache.RepoCache
 }
-
-type RepositoryMutation struct {
-	Cache *cache.MultiRepoCache
-	Repo  *cache.RepoCache
-}

@@ -1,4 +1,25 @@
-input NewBugInput {
+extend type Mutation {
+    """Create a new bug"""
+    bugCreate(input: BugCreateInput!): BugCreatePayload!
+    """Add a new comment to a bug"""
+    bugAddComment(input: BugAddCommentInput!): BugAddCommentPayload!
+    """Add a new comment to a bug and close it"""
+    bugAddCommentAndClose(input: BugAddCommentAndCloseInput!): BugAddCommentAndClosePayload!
+    """Add a new comment to a bug and reopen it"""
+    bugAddCommentAndReopen(input: BugAddCommentAndReopenInput!): BugAddCommentAndReopenPayload!
+    """Change a comment of a bug"""
+    bugEditComment(input: BugEditCommentInput!): BugEditCommentPayload!
+    """Add or remove a set of label on a bug"""
+    bugChangeLabels(input: BugChangeLabelInput): BugChangeLabelPayload!
+    """Change a bug's status to open"""
+    bugStatusOpen(input: BugStatusOpenInput!): BugStatusOpenPayload!
+    """Change a bug's status to closed"""
+    bugStatusClose(input: BugStatusCloseInput!): BugStatusClosePayload!
+    """Change a bug's title"""
+    bugSetTitle(input: BugSetTitleInput!): BugSetTitlePayload!
+}
+
+input BugCreateInput {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
     """The name of the repository. If not set, the default repository is used."""
@@ -11,16 +32,16 @@ input NewBugInput {
     files: [Hash!]
 }
 
-type NewBugPayload {
+type BugCreatePayload {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
     """The created bug."""
     bug: Bug!
     """The resulting operation."""
-    operation: CreateOperation!
+    operation: BugCreateOperation!
 }
 
-input AddCommentInput {
+input BugAddCommentInput {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
     """The name of the repository. If not set, the default repository is used."""
@@ -33,16 +54,16 @@ input AddCommentInput {
     files: [Hash!]
 }
 
-type AddCommentPayload {
+type BugAddCommentPayload {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
     """The affected bug."""
     bug: Bug!
     """The resulting operation."""
-    operation: AddCommentOperation!
+    operation: BugAddCommentOperation!
 }
 
-input AddCommentAndCloseBugInput {
+input BugAddCommentAndCloseInput {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
     """The name of the repository. If not set, the default repository is used."""
@@ -55,18 +76,18 @@ input AddCommentAndCloseBugInput {
     files: [Hash!]
 }
 
-type AddCommentAndCloseBugPayload {
+type BugAddCommentAndClosePayload {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
     """The affected bug."""
     bug: Bug!
     """The resulting AddComment operation."""
-    commentOperation: AddCommentOperation!
+    commentOperation: BugAddCommentOperation!
     """The resulting SetStatusOperation."""
-    statusOperation: SetStatusOperation!
+    statusOperation: BugSetStatusOperation!
 }
 
-input AddCommentAndReopenBugInput {
+input BugAddCommentAndReopenInput {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
     """The name of the repository. If not set, the default repository is used."""
@@ -79,18 +100,18 @@ input AddCommentAndReopenBugInput {
     files: [Hash!]
 }
 
-type AddCommentAndReopenBugPayload {
+type BugAddCommentAndReopenPayload {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
     """The affected bug."""
     bug: Bug!
     """The resulting AddComment operation."""
-    commentOperation: AddCommentOperation!
+    commentOperation: BugAddCommentOperation!
     """The resulting SetStatusOperation."""
-    statusOperation: SetStatusOperation!
+    statusOperation: BugSetStatusOperation!
 }
 
-input EditCommentInput {
+input BugEditCommentInput {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
     """The name of the repository. If not set, the default repository is used."""
@@ -103,16 +124,16 @@ input EditCommentInput {
     files: [Hash!]
 }
 
-type EditCommentPayload {
+type BugEditCommentPayload {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
     """The affected bug."""
     bug: Bug!
     """The resulting operation."""
-    operation: EditCommentOperation!
+    operation: BugEditCommentOperation!
 }
 
-input ChangeLabelInput {
+input BugChangeLabelInput {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
     """The name of the repository. If not set, the default repository is used."""
@@ -125,33 +146,18 @@ input ChangeLabelInput {
     Removed: [String!]
 }
 
-enum LabelChangeStatus {
-    ADDED
-    REMOVED
-    DUPLICATE_IN_OP
-    ALREADY_SET
-    DOESNT_EXIST
-}
-
-type LabelChangeResult {
-    """The source label."""
-    label: Label!
-    """The effect this label had."""
-    status: LabelChangeStatus!
-}
-
-type ChangeLabelPayload {
+type BugChangeLabelPayload {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
     """The affected bug."""
     bug: Bug!
     """The resulting operation."""
-    operation: LabelChangeOperation!
+    operation: BugLabelChangeOperation!
     """The effect each source label had."""
     results: [LabelChangeResult]!
 }
 
-input OpenBugInput {
+input BugStatusOpenInput {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
     """The name of the repository. If not set, the default repository is used."""
@@ -160,16 +166,16 @@ input OpenBugInput {
     prefix: String!
 }
 
-type OpenBugPayload {
+type BugStatusOpenPayload {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
     """The affected bug."""
     bug: Bug!
     """The resulting operation."""
-    operation: SetStatusOperation!
+    operation: BugSetStatusOperation!
 }
 
-input CloseBugInput {
+input BugStatusCloseInput {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
     """The name of the repository. If not set, the default repository is used."""
@@ -178,16 +184,16 @@ input CloseBugInput {
     prefix: String!
 }
 
-type CloseBugPayload {
+type BugStatusClosePayload {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
     """The affected bug."""
     bug: Bug!
     """The resulting operation."""
-    operation: SetStatusOperation!
+    operation: BugSetStatusOperation!
 }
 
-input SetTitleInput {
+input BugSetTitleInput {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
     """The name of the repository. If not set, the default repository is used."""
@@ -198,11 +204,11 @@ input SetTitleInput {
     title: String!
 }
 
-type SetTitlePayload {
+type BugSetTitlePayload {
     """A unique identifier for the client performing the mutation."""
     clientMutationId: String
     """The affected bug."""
     bug: Bug!
     """The resulting operation"""
-    operation: SetTitleOperation!
+    operation: BugSetTitleOperation!
 }

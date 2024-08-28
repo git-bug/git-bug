@@ -1,6 +1,6 @@
 #import "../../components/fragments.graphql"
 
-fragment LabelChange on LabelChangeTimelineItem {
+fragment LabelChange on BugLabelChangeTimelineItem {
   date
   ...authored
   added {

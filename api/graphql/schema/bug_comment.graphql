@@ -1,0 +1,26 @@
+"""Represents a comment on a bug."""
+type BugComment implements Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.Comment") {
+    id: CombinedId! @goField(name: "CombinedId")
+
+    """The author of this comment."""
+    author: Identity!
+
+    """The message of this comment."""
+    message: String!
+
+    """All media's hash referenced in this comment"""
+    files: [Hash!]!
+}
+
+type BugCommentConnection {
+    edges: [BugCommentEdge!]!
+    nodes: [BugComment!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type BugCommentEdge {
+    cursor: String!
+    node: BugComment!
+}

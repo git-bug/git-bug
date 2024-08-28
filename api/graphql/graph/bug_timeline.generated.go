@@ -22,35 +22,30 @@ import (
 
 // region    ************************** generated!.gotpl **************************
 
-type AddCommentTimelineItemResolver interface {
-	ID(ctx context.Context, obj *bug.AddCommentTimelineItem) (entity.CombinedId, error)
+type BugAddCommentTimelineItemResolver interface {
 	Author(ctx context.Context, obj *bug.AddCommentTimelineItem) (models.IdentityWrapper, error)
 
 	CreatedAt(ctx context.Context, obj *bug.AddCommentTimelineItem) (*time.Time, error)
 	LastEdit(ctx context.Context, obj *bug.AddCommentTimelineItem) (*time.Time, error)
 }
-type CommentHistoryStepResolver interface {
+type BugCommentHistoryStepResolver interface {
 	Date(ctx context.Context, obj *bug.CommentHistoryStep) (*time.Time, error)
 }
-type CreateTimelineItemResolver interface {
-	ID(ctx context.Context, obj *bug.CreateTimelineItem) (entity.CombinedId, error)
+type BugCreateTimelineItemResolver interface {
 	Author(ctx context.Context, obj *bug.CreateTimelineItem) (models.IdentityWrapper, error)
 
 	CreatedAt(ctx context.Context, obj *bug.CreateTimelineItem) (*time.Time, error)
 	LastEdit(ctx context.Context, obj *bug.CreateTimelineItem) (*time.Time, error)
 }
-type LabelChangeTimelineItemResolver interface {
-	ID(ctx context.Context, obj *bug.LabelChangeTimelineItem) (entity.CombinedId, error)
+type BugLabelChangeTimelineItemResolver interface {
 	Author(ctx context.Context, obj *bug.LabelChangeTimelineItem) (models.IdentityWrapper, error)
 	Date(ctx context.Context, obj *bug.LabelChangeTimelineItem) (*time.Time, error)
 }
-type SetStatusTimelineItemResolver interface {
-	ID(ctx context.Context, obj *bug.SetStatusTimelineItem) (entity.CombinedId, error)
+type BugSetStatusTimelineItemResolver interface {
 	Author(ctx context.Context, obj *bug.SetStatusTimelineItem) (models.IdentityWrapper, error)
 	Date(ctx context.Context, obj *bug.SetStatusTimelineItem) (*time.Time, error)
 }
-type SetTitleTimelineItemResolver interface {
-	ID(ctx context.Context, obj *bug.SetTitleTimelineItem) (entity.CombinedId, error)
+type BugSetTitleTimelineItemResolver interface {
 	Author(ctx context.Context, obj *bug.SetTitleTimelineItem) (models.IdentityWrapper, error)
 	Date(ctx context.Context, obj *bug.SetTitleTimelineItem) (*time.Time, error)
 }
@@ -67,8 +62,8 @@ type SetTitleTimelineItemResolver interface {
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _AddCommentTimelineItem_id(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentTimelineItem) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_AddCommentTimelineItem_id(ctx, field)
+func (ec *executionContext) _BugAddCommentTimelineItem_id(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugAddCommentTimelineItem_id(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -81,7 +76,7 @@ func (ec *executionContext) _AddCommentTimelineItem_id(ctx context.Context, fiel
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.AddCommentTimelineItem().ID(rctx, obj)
+		return obj.CombinedId(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -98,12 +93,12 @@ func (ec *executionContext) _AddCommentTimelineItem_id(ctx context.Context, fiel
 	return ec.marshalNCombinedId2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚐCombinedId(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AddCommentTimelineItem_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugAddCommentTimelineItem_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "AddCommentTimelineItem",
+		Object:     "BugAddCommentTimelineItem",
 		Field:      field,
 		IsMethod:   true,
-		IsResolver: true,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type CombinedId does not have child fields")
 		},
@@ -111,8 +106,8 @@ func (ec *executionContext) fieldContext_AddCommentTimelineItem_id(_ context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _AddCommentTimelineItem_author(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentTimelineItem) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_AddCommentTimelineItem_author(ctx, field)
+func (ec *executionContext) _BugAddCommentTimelineItem_author(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugAddCommentTimelineItem_author(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -125,7 +120,7 @@ func (ec *executionContext) _AddCommentTimelineItem_author(ctx context.Context, 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.AddCommentTimelineItem().Author(rctx, obj)
+		return ec.resolvers.BugAddCommentTimelineItem().Author(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -142,9 +137,9 @@ func (ec *executionContext) _AddCommentTimelineItem_author(ctx context.Context, 
 	return ec.marshalNIdentity2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AddCommentTimelineItem_author(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugAddCommentTimelineItem_author(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "AddCommentTimelineItem",
+		Object:     "BugAddCommentTimelineItem",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
@@ -173,8 +168,8 @@ func (ec *executionContext) fieldContext_AddCommentTimelineItem_author(_ context
 	return fc, nil
 }
 
-func (ec *executionContext) _AddCommentTimelineItem_message(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentTimelineItem) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_AddCommentTimelineItem_message(ctx, field)
+func (ec *executionContext) _BugAddCommentTimelineItem_message(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugAddCommentTimelineItem_message(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -204,9 +199,9 @@ func (ec *executionContext) _AddCommentTimelineItem_message(ctx context.Context,
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AddCommentTimelineItem_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugAddCommentTimelineItem_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "AddCommentTimelineItem",
+		Object:     "BugAddCommentTimelineItem",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -217,8 +212,8 @@ func (ec *executionContext) fieldContext_AddCommentTimelineItem_message(_ contex
 	return fc, nil
 }
 
-func (ec *executionContext) _AddCommentTimelineItem_messageIsEmpty(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentTimelineItem) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_AddCommentTimelineItem_messageIsEmpty(ctx, field)
+func (ec *executionContext) _BugAddCommentTimelineItem_messageIsEmpty(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugAddCommentTimelineItem_messageIsEmpty(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -248,9 +243,9 @@ func (ec *executionContext) _AddCommentTimelineItem_messageIsEmpty(ctx context.C
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AddCommentTimelineItem_messageIsEmpty(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugAddCommentTimelineItem_messageIsEmpty(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "AddCommentTimelineItem",
+		Object:     "BugAddCommentTimelineItem",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: false,
@@ -261,8 +256,8 @@ func (ec *executionContext) fieldContext_AddCommentTimelineItem_messageIsEmpty(_
 	return fc, nil
 }
 
-func (ec *executionContext) _AddCommentTimelineItem_files(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentTimelineItem) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_AddCommentTimelineItem_files(ctx, field)
+func (ec *executionContext) _BugAddCommentTimelineItem_files(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugAddCommentTimelineItem_files(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -292,9 +287,9 @@ func (ec *executionContext) _AddCommentTimelineItem_files(ctx context.Context, f
 	return ec.marshalNHash2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐHashᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AddCommentTimelineItem_files(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugAddCommentTimelineItem_files(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "AddCommentTimelineItem",
+		Object:     "BugAddCommentTimelineItem",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -305,8 +300,8 @@ func (ec *executionContext) fieldContext_AddCommentTimelineItem_files(_ context.
 	return fc, nil
 }
 
-func (ec *executionContext) _AddCommentTimelineItem_createdAt(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentTimelineItem) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_AddCommentTimelineItem_createdAt(ctx, field)
+func (ec *executionContext) _BugAddCommentTimelineItem_createdAt(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugAddCommentTimelineItem_createdAt(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -319,7 +314,7 @@ func (ec *executionContext) _AddCommentTimelineItem_createdAt(ctx context.Contex
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.AddCommentTimelineItem().CreatedAt(rctx, obj)
+		return ec.resolvers.BugAddCommentTimelineItem().CreatedAt(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -336,9 +331,9 @@ func (ec *executionContext) _AddCommentTimelineItem_createdAt(ctx context.Contex
 	return ec.marshalNTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AddCommentTimelineItem_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugAddCommentTimelineItem_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "AddCommentTimelineItem",
+		Object:     "BugAddCommentTimelineItem",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
@@ -349,8 +344,8 @@ func (ec *executionContext) fieldContext_AddCommentTimelineItem_createdAt(_ cont
 	return fc, nil
 }
 
-func (ec *executionContext) _AddCommentTimelineItem_lastEdit(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentTimelineItem) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_AddCommentTimelineItem_lastEdit(ctx, field)
+func (ec *executionContext) _BugAddCommentTimelineItem_lastEdit(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugAddCommentTimelineItem_lastEdit(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -363,7 +358,7 @@ func (ec *executionContext) _AddCommentTimelineItem_lastEdit(ctx context.Context
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.AddCommentTimelineItem().LastEdit(rctx, obj)
+		return ec.resolvers.BugAddCommentTimelineItem().LastEdit(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -380,9 +375,9 @@ func (ec *executionContext) _AddCommentTimelineItem_lastEdit(ctx context.Context
 	return ec.marshalNTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AddCommentTimelineItem_lastEdit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugAddCommentTimelineItem_lastEdit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "AddCommentTimelineItem",
+		Object:     "BugAddCommentTimelineItem",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
@@ -393,8 +388,8 @@ func (ec *executionContext) fieldContext_AddCommentTimelineItem_lastEdit(_ conte
 	return fc, nil
 }
 
-func (ec *executionContext) _AddCommentTimelineItem_edited(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentTimelineItem) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_AddCommentTimelineItem_edited(ctx, field)
+func (ec *executionContext) _BugAddCommentTimelineItem_edited(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugAddCommentTimelineItem_edited(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -424,9 +419,9 @@ func (ec *executionContext) _AddCommentTimelineItem_edited(ctx context.Context, 
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AddCommentTimelineItem_edited(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugAddCommentTimelineItem_edited(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "AddCommentTimelineItem",
+		Object:     "BugAddCommentTimelineItem",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: false,
@@ -437,8 +432,8 @@ func (ec *executionContext) fieldContext_AddCommentTimelineItem_edited(_ context
 	return fc, nil
 }
 
-func (ec *executionContext) _AddCommentTimelineItem_history(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentTimelineItem) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_AddCommentTimelineItem_history(ctx, field)
+func (ec *executionContext) _BugAddCommentTimelineItem_history(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugAddCommentTimelineItem_history(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -465,30 +460,30 @@ func (ec *executionContext) _AddCommentTimelineItem_history(ctx context.Context,
 	}
 	res := resTmp.([]bug.CommentHistoryStep)
 	fc.Result = res
-	return ec.marshalNCommentHistoryStep2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐCommentHistoryStepᚄ(ctx, field.Selections, res)
+	return ec.marshalNBugCommentHistoryStep2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐCommentHistoryStepᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AddCommentTimelineItem_history(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugAddCommentTimelineItem_history(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "AddCommentTimelineItem",
+		Object:     "BugAddCommentTimelineItem",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "message":
-				return ec.fieldContext_CommentHistoryStep_message(ctx, field)
+				return ec.fieldContext_BugCommentHistoryStep_message(ctx, field)
 			case "date":
-				return ec.fieldContext_CommentHistoryStep_date(ctx, field)
+				return ec.fieldContext_BugCommentHistoryStep_date(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type CommentHistoryStep", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BugCommentHistoryStep", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _CommentHistoryStep_message(ctx context.Context, field graphql.CollectedField, obj *bug.CommentHistoryStep) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CommentHistoryStep_message(ctx, field)
+func (ec *executionContext) _BugCommentHistoryStep_message(ctx context.Context, field graphql.CollectedField, obj *bug.CommentHistoryStep) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugCommentHistoryStep_message(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -518,9 +513,9 @@ func (ec *executionContext) _CommentHistoryStep_message(ctx context.Context, fie
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CommentHistoryStep_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugCommentHistoryStep_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "CommentHistoryStep",
+		Object:     "BugCommentHistoryStep",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -531,8 +526,8 @@ func (ec *executionContext) fieldContext_CommentHistoryStep_message(_ context.Co
 	return fc, nil
 }
 
-func (ec *executionContext) _CommentHistoryStep_date(ctx context.Context, field graphql.CollectedField, obj *bug.CommentHistoryStep) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CommentHistoryStep_date(ctx, field)
+func (ec *executionContext) _BugCommentHistoryStep_date(ctx context.Context, field graphql.CollectedField, obj *bug.CommentHistoryStep) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugCommentHistoryStep_date(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -545,7 +540,7 @@ func (ec *executionContext) _CommentHistoryStep_date(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.CommentHistoryStep().Date(rctx, obj)
+		return ec.resolvers.BugCommentHistoryStep().Date(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -562,9 +557,9 @@ func (ec *executionContext) _CommentHistoryStep_date(ctx context.Context, field 
 	return ec.marshalNTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CommentHistoryStep_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugCommentHistoryStep_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "CommentHistoryStep",
+		Object:     "BugCommentHistoryStep",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
@@ -575,8 +570,8 @@ func (ec *executionContext) fieldContext_CommentHistoryStep_date(_ context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _CreateTimelineItem_id(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreateTimelineItem_id(ctx, field)
+func (ec *executionContext) _BugCreateTimelineItem_id(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugCreateTimelineItem_id(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -589,7 +584,7 @@ func (ec *executionContext) _CreateTimelineItem_id(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.CreateTimelineItem().ID(rctx, obj)
+		return obj.CombinedId(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -606,12 +601,12 @@ func (ec *executionContext) _CreateTimelineItem_id(ctx context.Context, field gr
 	return ec.marshalNCombinedId2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚐCombinedId(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreateTimelineItem_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugCreateTimelineItem_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "CreateTimelineItem",
+		Object:     "BugCreateTimelineItem",
 		Field:      field,
 		IsMethod:   true,
-		IsResolver: true,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type CombinedId does not have child fields")
 		},
@@ -619,8 +614,8 @@ func (ec *executionContext) fieldContext_CreateTimelineItem_id(_ context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _CreateTimelineItem_author(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreateTimelineItem_author(ctx, field)
+func (ec *executionContext) _BugCreateTimelineItem_author(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugCreateTimelineItem_author(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -633,7 +628,7 @@ func (ec *executionContext) _CreateTimelineItem_author(ctx context.Context, fiel
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.CreateTimelineItem().Author(rctx, obj)
+		return ec.resolvers.BugCreateTimelineItem().Author(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -650,9 +645,9 @@ func (ec *executionContext) _CreateTimelineItem_author(ctx context.Context, fiel
 	return ec.marshalNIdentity2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreateTimelineItem_author(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugCreateTimelineItem_author(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "CreateTimelineItem",
+		Object:     "BugCreateTimelineItem",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
@@ -681,8 +676,8 @@ func (ec *executionContext) fieldContext_CreateTimelineItem_author(_ context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _CreateTimelineItem_message(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreateTimelineItem_message(ctx, field)
+func (ec *executionContext) _BugCreateTimelineItem_message(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugCreateTimelineItem_message(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -712,9 +707,9 @@ func (ec *executionContext) _CreateTimelineItem_message(ctx context.Context, fie
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreateTimelineItem_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugCreateTimelineItem_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "CreateTimelineItem",
+		Object:     "BugCreateTimelineItem",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -725,8 +720,8 @@ func (ec *executionContext) fieldContext_CreateTimelineItem_message(_ context.Co
 	return fc, nil
 }
 
-func (ec *executionContext) _CreateTimelineItem_messageIsEmpty(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreateTimelineItem_messageIsEmpty(ctx, field)
+func (ec *executionContext) _BugCreateTimelineItem_messageIsEmpty(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugCreateTimelineItem_messageIsEmpty(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -756,9 +751,9 @@ func (ec *executionContext) _CreateTimelineItem_messageIsEmpty(ctx context.Conte
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreateTimelineItem_messageIsEmpty(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugCreateTimelineItem_messageIsEmpty(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "CreateTimelineItem",
+		Object:     "BugCreateTimelineItem",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: false,
@@ -769,8 +764,8 @@ func (ec *executionContext) fieldContext_CreateTimelineItem_messageIsEmpty(_ con
 	return fc, nil
 }
 
-func (ec *executionContext) _CreateTimelineItem_files(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreateTimelineItem_files(ctx, field)
+func (ec *executionContext) _BugCreateTimelineItem_files(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugCreateTimelineItem_files(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -800,9 +795,9 @@ func (ec *executionContext) _CreateTimelineItem_files(ctx context.Context, field
 	return ec.marshalNHash2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐHashᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreateTimelineItem_files(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugCreateTimelineItem_files(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "CreateTimelineItem",
+		Object:     "BugCreateTimelineItem",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -813,8 +808,8 @@ func (ec *executionContext) fieldContext_CreateTimelineItem_files(_ context.Cont
 	return fc, nil
 }
 
-func (ec *executionContext) _CreateTimelineItem_createdAt(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreateTimelineItem_createdAt(ctx, field)
+func (ec *executionContext) _BugCreateTimelineItem_createdAt(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugCreateTimelineItem_createdAt(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -827,7 +822,7 @@ func (ec *executionContext) _CreateTimelineItem_createdAt(ctx context.Context, f
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.CreateTimelineItem().CreatedAt(rctx, obj)
+		return ec.resolvers.BugCreateTimelineItem().CreatedAt(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -844,9 +839,9 @@ func (ec *executionContext) _CreateTimelineItem_createdAt(ctx context.Context, f
 	return ec.marshalNTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreateTimelineItem_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugCreateTimelineItem_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "CreateTimelineItem",
+		Object:     "BugCreateTimelineItem",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
@@ -857,8 +852,8 @@ func (ec *executionContext) fieldContext_CreateTimelineItem_createdAt(_ context.
 	return fc, nil
 }
 
-func (ec *executionContext) _CreateTimelineItem_lastEdit(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreateTimelineItem_lastEdit(ctx, field)
+func (ec *executionContext) _BugCreateTimelineItem_lastEdit(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugCreateTimelineItem_lastEdit(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -871,7 +866,7 @@ func (ec *executionContext) _CreateTimelineItem_lastEdit(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.CreateTimelineItem().LastEdit(rctx, obj)
+		return ec.resolvers.BugCreateTimelineItem().LastEdit(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -888,9 +883,9 @@ func (ec *executionContext) _CreateTimelineItem_lastEdit(ctx context.Context, fi
 	return ec.marshalNTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreateTimelineItem_lastEdit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugCreateTimelineItem_lastEdit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "CreateTimelineItem",
+		Object:     "BugCreateTimelineItem",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
@@ -901,8 +896,8 @@ func (ec *executionContext) fieldContext_CreateTimelineItem_lastEdit(_ context.C
 	return fc, nil
 }
 
-func (ec *executionContext) _CreateTimelineItem_edited(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreateTimelineItem_edited(ctx, field)
+func (ec *executionContext) _BugCreateTimelineItem_edited(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugCreateTimelineItem_edited(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -932,9 +927,9 @@ func (ec *executionContext) _CreateTimelineItem_edited(ctx context.Context, fiel
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreateTimelineItem_edited(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugCreateTimelineItem_edited(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "CreateTimelineItem",
+		Object:     "BugCreateTimelineItem",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: false,
@@ -945,8 +940,8 @@ func (ec *executionContext) fieldContext_CreateTimelineItem_edited(_ context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _CreateTimelineItem_history(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreateTimelineItem_history(ctx, field)
+func (ec *executionContext) _BugCreateTimelineItem_history(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugCreateTimelineItem_history(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -973,30 +968,30 @@ func (ec *executionContext) _CreateTimelineItem_history(ctx context.Context, fie
 	}
 	res := resTmp.([]bug.CommentHistoryStep)
 	fc.Result = res
-	return ec.marshalNCommentHistoryStep2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐCommentHistoryStepᚄ(ctx, field.Selections, res)
+	return ec.marshalNBugCommentHistoryStep2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐCommentHistoryStepᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreateTimelineItem_history(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugCreateTimelineItem_history(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "CreateTimelineItem",
+		Object:     "BugCreateTimelineItem",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "message":
-				return ec.fieldContext_CommentHistoryStep_message(ctx, field)
+				return ec.fieldContext_BugCommentHistoryStep_message(ctx, field)
 			case "date":
-				return ec.fieldContext_CommentHistoryStep_date(ctx, field)
+				return ec.fieldContext_BugCommentHistoryStep_date(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type CommentHistoryStep", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BugCommentHistoryStep", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _LabelChangeTimelineItem_id(ctx context.Context, field graphql.CollectedField, obj *bug.LabelChangeTimelineItem) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_LabelChangeTimelineItem_id(ctx, field)
+func (ec *executionContext) _BugLabelChangeTimelineItem_id(ctx context.Context, field graphql.CollectedField, obj *bug.LabelChangeTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugLabelChangeTimelineItem_id(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1009,7 +1004,7 @@ func (ec *executionContext) _LabelChangeTimelineItem_id(ctx context.Context, fie
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.LabelChangeTimelineItem().ID(rctx, obj)
+		return obj.CombinedId(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1026,12 +1021,12 @@ func (ec *executionContext) _LabelChangeTimelineItem_id(ctx context.Context, fie
 	return ec.marshalNCombinedId2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚐCombinedId(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_LabelChangeTimelineItem_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugLabelChangeTimelineItem_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "LabelChangeTimelineItem",
+		Object:     "BugLabelChangeTimelineItem",
 		Field:      field,
 		IsMethod:   true,
-		IsResolver: true,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type CombinedId does not have child fields")
 		},
@@ -1039,8 +1034,8 @@ func (ec *executionContext) fieldContext_LabelChangeTimelineItem_id(_ context.Co
 	return fc, nil
 }
 
-func (ec *executionContext) _LabelChangeTimelineItem_author(ctx context.Context, field graphql.CollectedField, obj *bug.LabelChangeTimelineItem) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_LabelChangeTimelineItem_author(ctx, field)
+func (ec *executionContext) _BugLabelChangeTimelineItem_author(ctx context.Context, field graphql.CollectedField, obj *bug.LabelChangeTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugLabelChangeTimelineItem_author(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1053,7 +1048,7 @@ func (ec *executionContext) _LabelChangeTimelineItem_author(ctx context.Context,
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.LabelChangeTimelineItem().Author(rctx, obj)
+		return ec.resolvers.BugLabelChangeTimelineItem().Author(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1070,9 +1065,9 @@ func (ec *executionContext) _LabelChangeTimelineItem_author(ctx context.Context,
 	return ec.marshalNIdentity2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_LabelChangeTimelineItem_author(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugLabelChangeTimelineItem_author(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "LabelChangeTimelineItem",
+		Object:     "BugLabelChangeTimelineItem",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
@@ -1101,8 +1096,8 @@ func (ec *executionContext) fieldContext_LabelChangeTimelineItem_author(_ contex
 	return fc, nil
 }
 
-func (ec *executionContext) _LabelChangeTimelineItem_date(ctx context.Context, field graphql.CollectedField, obj *bug.LabelChangeTimelineItem) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_LabelChangeTimelineItem_date(ctx, field)
+func (ec *executionContext) _BugLabelChangeTimelineItem_date(ctx context.Context, field graphql.CollectedField, obj *bug.LabelChangeTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugLabelChangeTimelineItem_date(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1115,7 +1110,7 @@ func (ec *executionContext) _LabelChangeTimelineItem_date(ctx context.Context, f
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.LabelChangeTimelineItem().Date(rctx, obj)
+		return ec.resolvers.BugLabelChangeTimelineItem().Date(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1132,9 +1127,9 @@ func (ec *executionContext) _LabelChangeTimelineItem_date(ctx context.Context, f
 	return ec.marshalNTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_LabelChangeTimelineItem_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugLabelChangeTimelineItem_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "LabelChangeTimelineItem",
+		Object:     "BugLabelChangeTimelineItem",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
@@ -1145,8 +1140,8 @@ func (ec *executionContext) fieldContext_LabelChangeTimelineItem_date(_ context.
 	return fc, nil
 }
 
-func (ec *executionContext) _LabelChangeTimelineItem_added(ctx context.Context, field graphql.CollectedField, obj *bug.LabelChangeTimelineItem) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_LabelChangeTimelineItem_added(ctx, field)
+func (ec *executionContext) _BugLabelChangeTimelineItem_added(ctx context.Context, field graphql.CollectedField, obj *bug.LabelChangeTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugLabelChangeTimelineItem_added(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1176,9 +1171,9 @@ func (ec *executionContext) _LabelChangeTimelineItem_added(ctx context.Context, 
 	return ec.marshalNLabel2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋcommonᚐLabelᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_LabelChangeTimelineItem_added(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugLabelChangeTimelineItem_added(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "LabelChangeTimelineItem",
+		Object:     "BugLabelChangeTimelineItem",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -1195,8 +1190,8 @@ func (ec *executionContext) fieldContext_LabelChangeTimelineItem_added(_ context
 	return fc, nil
 }
 
-func (ec *executionContext) _LabelChangeTimelineItem_removed(ctx context.Context, field graphql.CollectedField, obj *bug.LabelChangeTimelineItem) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_LabelChangeTimelineItem_removed(ctx, field)
+func (ec *executionContext) _BugLabelChangeTimelineItem_removed(ctx context.Context, field graphql.CollectedField, obj *bug.LabelChangeTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugLabelChangeTimelineItem_removed(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1226,9 +1221,9 @@ func (ec *executionContext) _LabelChangeTimelineItem_removed(ctx context.Context
 	return ec.marshalNLabel2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋcommonᚐLabelᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_LabelChangeTimelineItem_removed(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugLabelChangeTimelineItem_removed(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "LabelChangeTimelineItem",
+		Object:     "BugLabelChangeTimelineItem",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -1245,8 +1240,8 @@ func (ec *executionContext) fieldContext_LabelChangeTimelineItem_removed(_ conte
 	return fc, nil
 }
 
-func (ec *executionContext) _SetStatusTimelineItem_id(ctx context.Context, field graphql.CollectedField, obj *bug.SetStatusTimelineItem) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SetStatusTimelineItem_id(ctx, field)
+func (ec *executionContext) _BugSetStatusTimelineItem_id(ctx context.Context, field graphql.CollectedField, obj *bug.SetStatusTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugSetStatusTimelineItem_id(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1259,7 +1254,7 @@ func (ec *executionContext) _SetStatusTimelineItem_id(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.SetStatusTimelineItem().ID(rctx, obj)
+		return obj.CombinedId(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1276,12 +1271,12 @@ func (ec *executionContext) _SetStatusTimelineItem_id(ctx context.Context, field
 	return ec.marshalNCombinedId2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚐCombinedId(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SetStatusTimelineItem_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugSetStatusTimelineItem_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "SetStatusTimelineItem",
+		Object:     "BugSetStatusTimelineItem",
 		Field:      field,
 		IsMethod:   true,
-		IsResolver: true,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type CombinedId does not have child fields")
 		},
@@ -1289,8 +1284,8 @@ func (ec *executionContext) fieldContext_SetStatusTimelineItem_id(_ context.Cont
 	return fc, nil
 }
 
-func (ec *executionContext) _SetStatusTimelineItem_author(ctx context.Context, field graphql.CollectedField, obj *bug.SetStatusTimelineItem) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SetStatusTimelineItem_author(ctx, field)
+func (ec *executionContext) _BugSetStatusTimelineItem_author(ctx context.Context, field graphql.CollectedField, obj *bug.SetStatusTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugSetStatusTimelineItem_author(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1303,7 +1298,7 @@ func (ec *executionContext) _SetStatusTimelineItem_author(ctx context.Context, f
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.SetStatusTimelineItem().Author(rctx, obj)
+		return ec.resolvers.BugSetStatusTimelineItem().Author(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1320,9 +1315,9 @@ func (ec *executionContext) _SetStatusTimelineItem_author(ctx context.Context, f
 	return ec.marshalNIdentity2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SetStatusTimelineItem_author(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugSetStatusTimelineItem_author(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "SetStatusTimelineItem",
+		Object:     "BugSetStatusTimelineItem",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
@@ -1351,8 +1346,8 @@ func (ec *executionContext) fieldContext_SetStatusTimelineItem_author(_ context.
 	return fc, nil
 }
 
-func (ec *executionContext) _SetStatusTimelineItem_date(ctx context.Context, field graphql.CollectedField, obj *bug.SetStatusTimelineItem) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SetStatusTimelineItem_date(ctx, field)
+func (ec *executionContext) _BugSetStatusTimelineItem_date(ctx context.Context, field graphql.CollectedField, obj *bug.SetStatusTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugSetStatusTimelineItem_date(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1365,7 +1360,7 @@ func (ec *executionContext) _SetStatusTimelineItem_date(ctx context.Context, fie
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.SetStatusTimelineItem().Date(rctx, obj)
+		return ec.resolvers.BugSetStatusTimelineItem().Date(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1382,9 +1377,9 @@ func (ec *executionContext) _SetStatusTimelineItem_date(ctx context.Context, fie
 	return ec.marshalNTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SetStatusTimelineItem_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugSetStatusTimelineItem_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "SetStatusTimelineItem",
+		Object:     "BugSetStatusTimelineItem",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
@@ -1395,8 +1390,8 @@ func (ec *executionContext) fieldContext_SetStatusTimelineItem_date(_ context.Co
 	return fc, nil
 }
 
-func (ec *executionContext) _SetStatusTimelineItem_status(ctx context.Context, field graphql.CollectedField, obj *bug.SetStatusTimelineItem) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SetStatusTimelineItem_status(ctx, field)
+func (ec *executionContext) _BugSetStatusTimelineItem_status(ctx context.Context, field graphql.CollectedField, obj *bug.SetStatusTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugSetStatusTimelineItem_status(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1426,9 +1421,9 @@ func (ec *executionContext) _SetStatusTimelineItem_status(ctx context.Context, f
 	return ec.marshalNStatus2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋcommonᚐStatus(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SetStatusTimelineItem_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugSetStatusTimelineItem_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "SetStatusTimelineItem",
+		Object:     "BugSetStatusTimelineItem",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -1439,8 +1434,8 @@ func (ec *executionContext) fieldContext_SetStatusTimelineItem_status(_ context.
 	return fc, nil
 }
 
-func (ec *executionContext) _SetTitleTimelineItem_id(ctx context.Context, field graphql.CollectedField, obj *bug.SetTitleTimelineItem) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SetTitleTimelineItem_id(ctx, field)
+func (ec *executionContext) _BugSetTitleTimelineItem_id(ctx context.Context, field graphql.CollectedField, obj *bug.SetTitleTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugSetTitleTimelineItem_id(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1453,7 +1448,7 @@ func (ec *executionContext) _SetTitleTimelineItem_id(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.SetTitleTimelineItem().ID(rctx, obj)
+		return obj.CombinedId(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1470,12 +1465,12 @@ func (ec *executionContext) _SetTitleTimelineItem_id(ctx context.Context, field 
 	return ec.marshalNCombinedId2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚐCombinedId(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SetTitleTimelineItem_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugSetTitleTimelineItem_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "SetTitleTimelineItem",
+		Object:     "BugSetTitleTimelineItem",
 		Field:      field,
 		IsMethod:   true,
-		IsResolver: true,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type CombinedId does not have child fields")
 		},
@@ -1483,8 +1478,8 @@ func (ec *executionContext) fieldContext_SetTitleTimelineItem_id(_ context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _SetTitleTimelineItem_author(ctx context.Context, field graphql.CollectedField, obj *bug.SetTitleTimelineItem) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SetTitleTimelineItem_author(ctx, field)
+func (ec *executionContext) _BugSetTitleTimelineItem_author(ctx context.Context, field graphql.CollectedField, obj *bug.SetTitleTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugSetTitleTimelineItem_author(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1497,7 +1492,7 @@ func (ec *executionContext) _SetTitleTimelineItem_author(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.SetTitleTimelineItem().Author(rctx, obj)
+		return ec.resolvers.BugSetTitleTimelineItem().Author(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1514,9 +1509,9 @@ func (ec *executionContext) _SetTitleTimelineItem_author(ctx context.Context, fi
 	return ec.marshalNIdentity2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SetTitleTimelineItem_author(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugSetTitleTimelineItem_author(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "SetTitleTimelineItem",
+		Object:     "BugSetTitleTimelineItem",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
@@ -1545,8 +1540,8 @@ func (ec *executionContext) fieldContext_SetTitleTimelineItem_author(_ context.C
 	return fc, nil
 }
 
-func (ec *executionContext) _SetTitleTimelineItem_date(ctx context.Context, field graphql.CollectedField, obj *bug.SetTitleTimelineItem) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SetTitleTimelineItem_date(ctx, field)
+func (ec *executionContext) _BugSetTitleTimelineItem_date(ctx context.Context, field graphql.CollectedField, obj *bug.SetTitleTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugSetTitleTimelineItem_date(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1559,7 +1554,7 @@ func (ec *executionContext) _SetTitleTimelineItem_date(ctx context.Context, fiel
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.SetTitleTimelineItem().Date(rctx, obj)
+		return ec.resolvers.BugSetTitleTimelineItem().Date(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1576,9 +1571,9 @@ func (ec *executionContext) _SetTitleTimelineItem_date(ctx context.Context, fiel
 	return ec.marshalNTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SetTitleTimelineItem_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugSetTitleTimelineItem_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "SetTitleTimelineItem",
+		Object:     "BugSetTitleTimelineItem",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
@@ -1589,8 +1584,8 @@ func (ec *executionContext) fieldContext_SetTitleTimelineItem_date(_ context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _SetTitleTimelineItem_title(ctx context.Context, field graphql.CollectedField, obj *bug.SetTitleTimelineItem) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SetTitleTimelineItem_title(ctx, field)
+func (ec *executionContext) _BugSetTitleTimelineItem_title(ctx context.Context, field graphql.CollectedField, obj *bug.SetTitleTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugSetTitleTimelineItem_title(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1620,9 +1615,9 @@ func (ec *executionContext) _SetTitleTimelineItem_title(ctx context.Context, fie
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SetTitleTimelineItem_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugSetTitleTimelineItem_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "SetTitleTimelineItem",
+		Object:     "BugSetTitleTimelineItem",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -1633,8 +1628,8 @@ func (ec *executionContext) fieldContext_SetTitleTimelineItem_title(_ context.Co
 	return fc, nil
 }
 
-func (ec *executionContext) _SetTitleTimelineItem_was(ctx context.Context, field graphql.CollectedField, obj *bug.SetTitleTimelineItem) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SetTitleTimelineItem_was(ctx, field)
+func (ec *executionContext) _BugSetTitleTimelineItem_was(ctx context.Context, field graphql.CollectedField, obj *bug.SetTitleTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugSetTitleTimelineItem_was(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1664,9 +1659,9 @@ func (ec *executionContext) _SetTitleTimelineItem_was(ctx context.Context, field
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SetTitleTimelineItem_was(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugSetTitleTimelineItem_was(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "SetTitleTimelineItem",
+		Object:     "BugSetTitleTimelineItem",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -1677,8 +1672,8 @@ func (ec *executionContext) fieldContext_SetTitleTimelineItem_was(_ context.Cont
 	return fc, nil
 }
 
-func (ec *executionContext) _TimelineItemConnection_edges(ctx context.Context, field graphql.CollectedField, obj *models.TimelineItemConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TimelineItemConnection_edges(ctx, field)
+func (ec *executionContext) _BugTimelineItemConnection_edges(ctx context.Context, field graphql.CollectedField, obj *models.BugTimelineItemConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugTimelineItemConnection_edges(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1703,32 +1698,32 @@ func (ec *executionContext) _TimelineItemConnection_edges(ctx context.Context, f
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*models.TimelineItemEdge)
+	res := resTmp.([]*models.BugTimelineItemEdge)
 	fc.Result = res
-	return ec.marshalNTimelineItemEdge2ᚕᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐTimelineItemEdgeᚄ(ctx, field.Selections, res)
+	return ec.marshalNBugTimelineItemEdge2ᚕᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugTimelineItemEdgeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_TimelineItemConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugTimelineItemConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "TimelineItemConnection",
+		Object:     "BugTimelineItemConnection",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "cursor":
-				return ec.fieldContext_TimelineItemEdge_cursor(ctx, field)
+				return ec.fieldContext_BugTimelineItemEdge_cursor(ctx, field)
 			case "node":
-				return ec.fieldContext_TimelineItemEdge_node(ctx, field)
+				return ec.fieldContext_BugTimelineItemEdge_node(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type TimelineItemEdge", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BugTimelineItemEdge", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _TimelineItemConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *models.TimelineItemConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TimelineItemConnection_nodes(ctx, field)
+func (ec *executionContext) _BugTimelineItemConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *models.BugTimelineItemConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugTimelineItemConnection_nodes(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1755,12 +1750,12 @@ func (ec *executionContext) _TimelineItemConnection_nodes(ctx context.Context, f
 	}
 	res := resTmp.([]bug.TimelineItem)
 	fc.Result = res
-	return ec.marshalNTimelineItem2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐTimelineItemᚄ(ctx, field.Selections, res)
+	return ec.marshalNBugTimelineItem2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐTimelineItemᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_TimelineItemConnection_nodes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugTimelineItemConnection_nodes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "TimelineItemConnection",
+		Object:     "BugTimelineItemConnection",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -1771,8 +1766,8 @@ func (ec *executionContext) fieldContext_TimelineItemConnection_nodes(_ context.
 	return fc, nil
 }
 
-func (ec *executionContext) _TimelineItemConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *models.TimelineItemConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TimelineItemConnection_pageInfo(ctx, field)
+func (ec *executionContext) _BugTimelineItemConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *models.BugTimelineItemConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugTimelineItemConnection_pageInfo(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1802,9 +1797,9 @@ func (ec *executionContext) _TimelineItemConnection_pageInfo(ctx context.Context
 	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐPageInfo(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_TimelineItemConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugTimelineItemConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "TimelineItemConnection",
+		Object:     "BugTimelineItemConnection",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -1825,8 +1820,8 @@ func (ec *executionContext) fieldContext_TimelineItemConnection_pageInfo(_ conte
 	return fc, nil
 }
 
-func (ec *executionContext) _TimelineItemConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *models.TimelineItemConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TimelineItemConnection_totalCount(ctx, field)
+func (ec *executionContext) _BugTimelineItemConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *models.BugTimelineItemConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugTimelineItemConnection_totalCount(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1856,9 +1851,9 @@ func (ec *executionContext) _TimelineItemConnection_totalCount(ctx context.Conte
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_TimelineItemConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugTimelineItemConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "TimelineItemConnection",
+		Object:     "BugTimelineItemConnection",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -1869,8 +1864,8 @@ func (ec *executionContext) fieldContext_TimelineItemConnection_totalCount(_ con
 	return fc, nil
 }
 
-func (ec *executionContext) _TimelineItemEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *models.TimelineItemEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TimelineItemEdge_cursor(ctx, field)
+func (ec *executionContext) _BugTimelineItemEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *models.BugTimelineItemEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugTimelineItemEdge_cursor(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1900,9 +1895,9 @@ func (ec *executionContext) _TimelineItemEdge_cursor(ctx context.Context, field 
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_TimelineItemEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugTimelineItemEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "TimelineItemEdge",
+		Object:     "BugTimelineItemEdge",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -1913,8 +1908,8 @@ func (ec *executionContext) fieldContext_TimelineItemEdge_cursor(_ context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _TimelineItemEdge_node(ctx context.Context, field graphql.CollectedField, obj *models.TimelineItemEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TimelineItemEdge_node(ctx, field)
+func (ec *executionContext) _BugTimelineItemEdge_node(ctx context.Context, field graphql.CollectedField, obj *models.BugTimelineItemEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugTimelineItemEdge_node(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1941,12 +1936,12 @@ func (ec *executionContext) _TimelineItemEdge_node(ctx context.Context, field gr
 	}
 	res := resTmp.(bug.TimelineItem)
 	fc.Result = res
-	return ec.marshalNTimelineItem2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐTimelineItem(ctx, field.Selections, res)
+	return ec.marshalNBugTimelineItem2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐTimelineItem(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_TimelineItemEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugTimelineItemEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "TimelineItemEdge",
+		Object:     "BugTimelineItemEdge",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -1965,7 +1960,7 @@ func (ec *executionContext) fieldContext_TimelineItemEdge_node(_ context.Context
 
 // region    ************************** interface.gotpl ***************************
 
-func (ec *executionContext) _TimelineItem(ctx context.Context, sel ast.SelectionSet, obj bug.TimelineItem) graphql.Marshaler {
+func (ec *executionContext) _BugTimelineItem(ctx context.Context, sel ast.SelectionSet, obj bug.TimelineItem) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
@@ -1973,33 +1968,33 @@ func (ec *executionContext) _TimelineItem(ctx context.Context, sel ast.Selection
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._CreateTimelineItem(ctx, sel, obj)
+		return ec._BugCreateTimelineItem(ctx, sel, obj)
 	case *bug.AddCommentTimelineItem:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._AddCommentTimelineItem(ctx, sel, obj)
+		return ec._BugAddCommentTimelineItem(ctx, sel, obj)
 	case bug.LabelChangeTimelineItem:
-		return ec._LabelChangeTimelineItem(ctx, sel, &obj)
+		return ec._BugLabelChangeTimelineItem(ctx, sel, &obj)
 	case *bug.LabelChangeTimelineItem:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._LabelChangeTimelineItem(ctx, sel, obj)
+		return ec._BugLabelChangeTimelineItem(ctx, sel, obj)
 	case bug.SetStatusTimelineItem:
-		return ec._SetStatusTimelineItem(ctx, sel, &obj)
+		return ec._BugSetStatusTimelineItem(ctx, sel, &obj)
 	case *bug.SetStatusTimelineItem:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._SetStatusTimelineItem(ctx, sel, obj)
+		return ec._BugSetStatusTimelineItem(ctx, sel, obj)
 	case bug.SetTitleTimelineItem:
-		return ec._SetTitleTimelineItem(ctx, sel, &obj)
+		return ec._BugSetTitleTimelineItem(ctx, sel, &obj)
 	case *bug.SetTitleTimelineItem:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._SetTitleTimelineItem(ctx, sel, obj)
+		return ec._BugSetTitleTimelineItem(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -2009,53 +2004,22 @@ func (ec *executionContext) _TimelineItem(ctx context.Context, sel ast.Selection
 
 // region    **************************** object.gotpl ****************************
 
-var addCommentTimelineItemImplementors = []string{"AddCommentTimelineItem", "TimelineItem", "Authored"}
+var bugAddCommentTimelineItemImplementors = []string{"BugAddCommentTimelineItem", "BugTimelineItem", "Authored"}
 
-func (ec *executionContext) _AddCommentTimelineItem(ctx context.Context, sel ast.SelectionSet, obj *bug.AddCommentTimelineItem) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, addCommentTimelineItemImplementors)
+func (ec *executionContext) _BugAddCommentTimelineItem(ctx context.Context, sel ast.SelectionSet, obj *bug.AddCommentTimelineItem) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, bugAddCommentTimelineItemImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("AddCommentTimelineItem")
+			out.Values[i] = graphql.MarshalString("BugAddCommentTimelineItem")
 		case "id":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._AddCommentTimelineItem_id(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._BugAddCommentTimelineItem_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
 			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "author":
 			field := field
 
@@ -2065,7 +2029,7 @@ func (ec *executionContext) _AddCommentTimelineItem(ctx context.Context, sel ast
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._AddCommentTimelineItem_author(ctx, field, obj)
+				res = ec._BugAddCommentTimelineItem_author(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -2093,17 +2057,17 @@ func (ec *executionContext) _AddCommentTimelineItem(ctx context.Context, sel ast
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "message":
-			out.Values[i] = ec._AddCommentTimelineItem_message(ctx, field, obj)
+			out.Values[i] = ec._BugAddCommentTimelineItem_message(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "messageIsEmpty":
-			out.Values[i] = ec._AddCommentTimelineItem_messageIsEmpty(ctx, field, obj)
+			out.Values[i] = ec._BugAddCommentTimelineItem_messageIsEmpty(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "files":
-			out.Values[i] = ec._AddCommentTimelineItem_files(ctx, field, obj)
+			out.Values[i] = ec._BugAddCommentTimelineItem_files(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -2116,7 +2080,7 @@ func (ec *executionContext) _AddCommentTimelineItem(ctx context.Context, sel ast
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._AddCommentTimelineItem_createdAt(ctx, field, obj)
+				res = ec._BugAddCommentTimelineItem_createdAt(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -2152,7 +2116,7 @@ func (ec *executionContext) _AddCommentTimelineItem(ctx context.Context, sel ast
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._AddCommentTimelineItem_lastEdit(ctx, field, obj)
+				res = ec._BugAddCommentTimelineItem_lastEdit(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -2180,12 +2144,12 @@ func (ec *executionContext) _AddCommentTimelineItem(ctx context.Context, sel ast
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "edited":
-			out.Values[i] = ec._AddCommentTimelineItem_edited(ctx, field, obj)
+			out.Values[i] = ec._BugAddCommentTimelineItem_edited(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "history":
-			out.Values[i] = ec._AddCommentTimelineItem_history(ctx, field, obj)
+			out.Values[i] = ec._BugAddCommentTimelineItem_history(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -2212,19 +2176,19 @@ func (ec *executionContext) _AddCommentTimelineItem(ctx context.Context, sel ast
 	return out
 }
 
-var commentHistoryStepImplementors = []string{"CommentHistoryStep"}
+var bugCommentHistoryStepImplementors = []string{"BugCommentHistoryStep"}
 
-func (ec *executionContext) _CommentHistoryStep(ctx context.Context, sel ast.SelectionSet, obj *bug.CommentHistoryStep) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, commentHistoryStepImplementors)
+func (ec *executionContext) _BugCommentHistoryStep(ctx context.Context, sel ast.SelectionSet, obj *bug.CommentHistoryStep) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, bugCommentHistoryStepImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("CommentHistoryStep")
+			out.Values[i] = graphql.MarshalString("BugCommentHistoryStep")
 		case "message":
-			out.Values[i] = ec._CommentHistoryStep_message(ctx, field, obj)
+			out.Values[i] = ec._BugCommentHistoryStep_message(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -2237,7 +2201,7 @@ func (ec *executionContext) _CommentHistoryStep(ctx context.Context, sel ast.Sel
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._CommentHistoryStep_date(ctx, field, obj)
+				res = ec._BugCommentHistoryStep_date(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -2287,53 +2251,22 @@ func (ec *executionContext) _CommentHistoryStep(ctx context.Context, sel ast.Sel
 	return out
 }
 
-var createTimelineItemImplementors = []string{"CreateTimelineItem", "TimelineItem", "Authored"}
+var bugCreateTimelineItemImplementors = []string{"BugCreateTimelineItem", "BugTimelineItem", "Authored"}
 
-func (ec *executionContext) _CreateTimelineItem(ctx context.Context, sel ast.SelectionSet, obj *bug.CreateTimelineItem) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, createTimelineItemImplementors)
+func (ec *executionContext) _BugCreateTimelineItem(ctx context.Context, sel ast.SelectionSet, obj *bug.CreateTimelineItem) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, bugCreateTimelineItemImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("CreateTimelineItem")
+			out.Values[i] = graphql.MarshalString("BugCreateTimelineItem")
 		case "id":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._CreateTimelineItem_id(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._BugCreateTimelineItem_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
 			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "author":
 			field := field
 
@@ -2343,7 +2276,7 @@ func (ec *executionContext) _CreateTimelineItem(ctx context.Context, sel ast.Sel
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._CreateTimelineItem_author(ctx, field, obj)
+				res = ec._BugCreateTimelineItem_author(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -2371,17 +2304,17 @@ func (ec *executionContext) _CreateTimelineItem(ctx context.Context, sel ast.Sel
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "message":
-			out.Values[i] = ec._CreateTimelineItem_message(ctx, field, obj)
+			out.Values[i] = ec._BugCreateTimelineItem_message(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "messageIsEmpty":
-			out.Values[i] = ec._CreateTimelineItem_messageIsEmpty(ctx, field, obj)
+			out.Values[i] = ec._BugCreateTimelineItem_messageIsEmpty(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "files":
-			out.Values[i] = ec._CreateTimelineItem_files(ctx, field, obj)
+			out.Values[i] = ec._BugCreateTimelineItem_files(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -2394,7 +2327,7 @@ func (ec *executionContext) _CreateTimelineItem(ctx context.Context, sel ast.Sel
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._CreateTimelineItem_createdAt(ctx, field, obj)
+				res = ec._BugCreateTimelineItem_createdAt(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -2430,7 +2363,7 @@ func (ec *executionContext) _CreateTimelineItem(ctx context.Context, sel ast.Sel
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._CreateTimelineItem_lastEdit(ctx, field, obj)
+				res = ec._BugCreateTimelineItem_lastEdit(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -2458,12 +2391,12 @@ func (ec *executionContext) _CreateTimelineItem(ctx context.Context, sel ast.Sel
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "edited":
-			out.Values[i] = ec._CreateTimelineItem_edited(ctx, field, obj)
+			out.Values[i] = ec._BugCreateTimelineItem_edited(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "history":
-			out.Values[i] = ec._CreateTimelineItem_history(ctx, field, obj)
+			out.Values[i] = ec._BugCreateTimelineItem_history(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -2490,53 +2423,22 @@ func (ec *executionContext) _CreateTimelineItem(ctx context.Context, sel ast.Sel
 	return out
 }
 
-var labelChangeTimelineItemImplementors = []string{"LabelChangeTimelineItem", "TimelineItem", "Authored"}
+var bugLabelChangeTimelineItemImplementors = []string{"BugLabelChangeTimelineItem", "BugTimelineItem", "Authored"}
 
-func (ec *executionContext) _LabelChangeTimelineItem(ctx context.Context, sel ast.SelectionSet, obj *bug.LabelChangeTimelineItem) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, labelChangeTimelineItemImplementors)
+func (ec *executionContext) _BugLabelChangeTimelineItem(ctx context.Context, sel ast.SelectionSet, obj *bug.LabelChangeTimelineItem) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, bugLabelChangeTimelineItemImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("LabelChangeTimelineItem")
+			out.Values[i] = graphql.MarshalString("BugLabelChangeTimelineItem")
 		case "id":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._LabelChangeTimelineItem_id(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._BugLabelChangeTimelineItem_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
 			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "author":
 			field := field
 
@@ -2546,7 +2448,7 @@ func (ec *executionContext) _LabelChangeTimelineItem(ctx context.Context, sel as
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._LabelChangeTimelineItem_author(ctx, field, obj)
+				res = ec._BugLabelChangeTimelineItem_author(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -2582,7 +2484,7 @@ func (ec *executionContext) _LabelChangeTimelineItem(ctx context.Context, sel as
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._LabelChangeTimelineItem_date(ctx, field, obj)
+				res = ec._BugLabelChangeTimelineItem_date(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -2610,12 +2512,12 @@ func (ec *executionContext) _LabelChangeTimelineItem(ctx context.Context, sel as
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "added":
-			out.Values[i] = ec._LabelChangeTimelineItem_added(ctx, field, obj)
+			out.Values[i] = ec._BugLabelChangeTimelineItem_added(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "removed":
-			out.Values[i] = ec._LabelChangeTimelineItem_removed(ctx, field, obj)
+			out.Values[i] = ec._BugLabelChangeTimelineItem_removed(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -2642,53 +2544,22 @@ func (ec *executionContext) _LabelChangeTimelineItem(ctx context.Context, sel as
 	return out
 }
 
-var setStatusTimelineItemImplementors = []string{"SetStatusTimelineItem", "TimelineItem", "Authored"}
+var bugSetStatusTimelineItemImplementors = []string{"BugSetStatusTimelineItem", "BugTimelineItem", "Authored"}
 
-func (ec *executionContext) _SetStatusTimelineItem(ctx context.Context, sel ast.SelectionSet, obj *bug.SetStatusTimelineItem) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, setStatusTimelineItemImplementors)
+func (ec *executionContext) _BugSetStatusTimelineItem(ctx context.Context, sel ast.SelectionSet, obj *bug.SetStatusTimelineItem) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, bugSetStatusTimelineItemImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("SetStatusTimelineItem")
+			out.Values[i] = graphql.MarshalString("BugSetStatusTimelineItem")
 		case "id":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._SetStatusTimelineItem_id(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._BugSetStatusTimelineItem_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
 			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "author":
 			field := field
 
@@ -2698,7 +2569,7 @@ func (ec *executionContext) _SetStatusTimelineItem(ctx context.Context, sel ast.
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._SetStatusTimelineItem_author(ctx, field, obj)
+				res = ec._BugSetStatusTimelineItem_author(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -2734,7 +2605,7 @@ func (ec *executionContext) _SetStatusTimelineItem(ctx context.Context, sel ast.
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._SetStatusTimelineItem_date(ctx, field, obj)
+				res = ec._BugSetStatusTimelineItem_date(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -2762,7 +2633,7 @@ func (ec *executionContext) _SetStatusTimelineItem(ctx context.Context, sel ast.
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "status":
-			out.Values[i] = ec._SetStatusTimelineItem_status(ctx, field, obj)
+			out.Values[i] = ec._BugSetStatusTimelineItem_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -2789,53 +2660,22 @@ func (ec *executionContext) _SetStatusTimelineItem(ctx context.Context, sel ast.
 	return out
 }
 
-var setTitleTimelineItemImplementors = []string{"SetTitleTimelineItem", "TimelineItem", "Authored"}
+var bugSetTitleTimelineItemImplementors = []string{"BugSetTitleTimelineItem", "BugTimelineItem", "Authored"}
 
-func (ec *executionContext) _SetTitleTimelineItem(ctx context.Context, sel ast.SelectionSet, obj *bug.SetTitleTimelineItem) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, setTitleTimelineItemImplementors)
+func (ec *executionContext) _BugSetTitleTimelineItem(ctx context.Context, sel ast.SelectionSet, obj *bug.SetTitleTimelineItem) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, bugSetTitleTimelineItemImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("SetTitleTimelineItem")
+			out.Values[i] = graphql.MarshalString("BugSetTitleTimelineItem")
 		case "id":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._SetTitleTimelineItem_id(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._BugSetTitleTimelineItem_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
 			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "author":
 			field := field
 
@@ -2845,7 +2685,7 @@ func (ec *executionContext) _SetTitleTimelineItem(ctx context.Context, sel ast.S
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._SetTitleTimelineItem_author(ctx, field, obj)
+				res = ec._BugSetTitleTimelineItem_author(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -2881,7 +2721,7 @@ func (ec *executionContext) _SetTitleTimelineItem(ctx context.Context, sel ast.S
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._SetTitleTimelineItem_date(ctx, field, obj)
+				res = ec._BugSetTitleTimelineItem_date(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -2909,12 +2749,12 @@ func (ec *executionContext) _SetTitleTimelineItem(ctx context.Context, sel ast.S
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "title":
-			out.Values[i] = ec._SetTitleTimelineItem_title(ctx, field, obj)
+			out.Values[i] = ec._BugSetTitleTimelineItem_title(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "was":
-			out.Values[i] = ec._SetTitleTimelineItem_was(ctx, field, obj)
+			out.Values[i] = ec._BugSetTitleTimelineItem_was(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -2941,34 +2781,34 @@ func (ec *executionContext) _SetTitleTimelineItem(ctx context.Context, sel ast.S
 	return out
 }
 
-var timelineItemConnectionImplementors = []string{"TimelineItemConnection"}
+var bugTimelineItemConnectionImplementors = []string{"BugTimelineItemConnection"}
 
-func (ec *executionContext) _TimelineItemConnection(ctx context.Context, sel ast.SelectionSet, obj *models.TimelineItemConnection) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, timelineItemConnectionImplementors)
+func (ec *executionContext) _BugTimelineItemConnection(ctx context.Context, sel ast.SelectionSet, obj *models.BugTimelineItemConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, bugTimelineItemConnectionImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("TimelineItemConnection")
+			out.Values[i] = graphql.MarshalString("BugTimelineItemConnection")
 		case "edges":
-			out.Values[i] = ec._TimelineItemConnection_edges(ctx, field, obj)
+			out.Values[i] = ec._BugTimelineItemConnection_edges(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "nodes":
-			out.Values[i] = ec._TimelineItemConnection_nodes(ctx, field, obj)
+			out.Values[i] = ec._BugTimelineItemConnection_nodes(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "pageInfo":
-			out.Values[i] = ec._TimelineItemConnection_pageInfo(ctx, field, obj)
+			out.Values[i] = ec._BugTimelineItemConnection_pageInfo(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "totalCount":
-			out.Values[i] = ec._TimelineItemConnection_totalCount(ctx, field, obj)
+			out.Values[i] = ec._BugTimelineItemConnection_totalCount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -2995,24 +2835,24 @@ func (ec *executionContext) _TimelineItemConnection(ctx context.Context, sel ast
 	return out
 }
 
-var timelineItemEdgeImplementors = []string{"TimelineItemEdge"}
+var bugTimelineItemEdgeImplementors = []string{"BugTimelineItemEdge"}
 
-func (ec *executionContext) _TimelineItemEdge(ctx context.Context, sel ast.SelectionSet, obj *models.TimelineItemEdge) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, timelineItemEdgeImplementors)
+func (ec *executionContext) _BugTimelineItemEdge(ctx context.Context, sel ast.SelectionSet, obj *models.BugTimelineItemEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, bugTimelineItemEdgeImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("TimelineItemEdge")
+			out.Values[i] = graphql.MarshalString("BugTimelineItemEdge")
 		case "cursor":
-			out.Values[i] = ec._TimelineItemEdge_cursor(ctx, field, obj)
+			out.Values[i] = ec._BugTimelineItemEdge_cursor(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "node":
-			out.Values[i] = ec._TimelineItemEdge_node(ctx, field, obj)
+			out.Values[i] = ec._BugTimelineItemEdge_node(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -3043,11 +2883,11 @@ func (ec *executionContext) _TimelineItemEdge(ctx context.Context, sel ast.Selec
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNCommentHistoryStep2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐCommentHistoryStep(ctx context.Context, sel ast.SelectionSet, v bug.CommentHistoryStep) graphql.Marshaler {
-	return ec._CommentHistoryStep(ctx, sel, &v)
+func (ec *executionContext) marshalNBugCommentHistoryStep2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐCommentHistoryStep(ctx context.Context, sel ast.SelectionSet, v bug.CommentHistoryStep) graphql.Marshaler {
+	return ec._BugCommentHistoryStep(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNCommentHistoryStep2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐCommentHistoryStepᚄ(ctx context.Context, sel ast.SelectionSet, v []bug.CommentHistoryStep) graphql.Marshaler {
+func (ec *executionContext) marshalNBugCommentHistoryStep2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐCommentHistoryStepᚄ(ctx context.Context, sel ast.SelectionSet, v []bug.CommentHistoryStep) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -3071,7 +2911,7 @@ func (ec *executionContext) marshalNCommentHistoryStep2ᚕgithubᚗcomᚋgitᚑb
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNCommentHistoryStep2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐCommentHistoryStep(ctx, sel, v[i])
+			ret[i] = ec.marshalNBugCommentHistoryStep2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐCommentHistoryStep(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -3091,17 +2931,17 @@ func (ec *executionContext) marshalNCommentHistoryStep2ᚕgithubᚗcomᚋgitᚑb
 	return ret
 }
 
-func (ec *executionContext) marshalNTimelineItem2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐTimelineItem(ctx context.Context, sel ast.SelectionSet, v bug.TimelineItem) graphql.Marshaler {
+func (ec *executionContext) marshalNBugTimelineItem2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐTimelineItem(ctx context.Context, sel ast.SelectionSet, v bug.TimelineItem) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._TimelineItem(ctx, sel, v)
+	return ec._BugTimelineItem(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNTimelineItem2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐTimelineItemᚄ(ctx context.Context, sel ast.SelectionSet, v []bug.TimelineItem) graphql.Marshaler {
+func (ec *executionContext) marshalNBugTimelineItem2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐTimelineItemᚄ(ctx context.Context, sel ast.SelectionSet, v []bug.TimelineItem) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -3125,7 +2965,7 @@ func (ec *executionContext) marshalNTimelineItem2ᚕgithubᚗcomᚋgitᚑbugᚋg
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNTimelineItem2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐTimelineItem(ctx, sel, v[i])
+			ret[i] = ec.marshalNBugTimelineItem2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐTimelineItem(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -3145,21 +2985,21 @@ func (ec *executionContext) marshalNTimelineItem2ᚕgithubᚗcomᚋgitᚑbugᚋg
 	return ret
 }
 
-func (ec *executionContext) marshalNTimelineItemConnection2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐTimelineItemConnection(ctx context.Context, sel ast.SelectionSet, v models.TimelineItemConnection) graphql.Marshaler {
-	return ec._TimelineItemConnection(ctx, sel, &v)
+func (ec *executionContext) marshalNBugTimelineItemConnection2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugTimelineItemConnection(ctx context.Context, sel ast.SelectionSet, v models.BugTimelineItemConnection) graphql.Marshaler {
+	return ec._BugTimelineItemConnection(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNTimelineItemConnection2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐTimelineItemConnection(ctx context.Context, sel ast.SelectionSet, v *models.TimelineItemConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNBugTimelineItemConnection2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugTimelineItemConnection(ctx context.Context, sel ast.SelectionSet, v *models.BugTimelineItemConnection) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._TimelineItemConnection(ctx, sel, v)
+	return ec._BugTimelineItemConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNTimelineItemEdge2ᚕᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐTimelineItemEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.TimelineItemEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNBugTimelineItemEdge2ᚕᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugTimelineItemEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.BugTimelineItemEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -3183,7 +3023,7 @@ func (ec *executionContext) marshalNTimelineItemEdge2ᚕᚖgithubᚗcomᚋgitᚑ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNTimelineItemEdge2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐTimelineItemEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalNBugTimelineItemEdge2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugTimelineItemEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -3203,14 +3043,14 @@ func (ec *executionContext) marshalNTimelineItemEdge2ᚕᚖgithubᚗcomᚋgitᚑ
 	return ret
 }
 
-func (ec *executionContext) marshalNTimelineItemEdge2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐTimelineItemEdge(ctx context.Context, sel ast.SelectionSet, v *models.TimelineItemEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNBugTimelineItemEdge2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugTimelineItemEdge(ctx context.Context, sel ast.SelectionSet, v *models.BugTimelineItemEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._TimelineItemEdge(ctx, sel, v)
+	return ec._BugTimelineItemEdge(ctx, sel, v)
 }
 
 // endregion ***************************** type.gotpl *****************************

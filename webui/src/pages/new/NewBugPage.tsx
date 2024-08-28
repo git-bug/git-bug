@@ -62,7 +62,7 @@ function NewBugPage() {
         },
       },
     }).then(function (data) {
-      const id = data.data?.newBug.bug.id;
+      const id = data.data?.bugCreate.bug.id;
       navigate('/bug/' + id);
     });
 

@@ -1,5 +1,5 @@
-mutation AddCommentAndCloseBug($input: AddCommentAndCloseBugInput!) {
-  addCommentAndClose(input: $input) {
+mutation AddCommentAndCloseBug($input: BugAddCommentAndCloseInput!) {
+  bugAddCommentAndClose(input: $input) {
     statusOperation {
       status
     }

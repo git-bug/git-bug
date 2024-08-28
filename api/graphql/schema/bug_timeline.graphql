@@ -1,0 +1,93 @@
+"""An item in the timeline of bug events"""
+interface BugTimelineItem
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.TimelineItem") {
+    """The identifier of the source operation"""
+    id: CombinedId!
+}
+
+"""CommentHistoryStep hold one version of a message in the history"""
+type BugCommentHistoryStep
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.CommentHistoryStep") {
+    message: String!
+    date: Time!
+}
+
+# Connection
+
+"""The connection type for TimelineItem"""
+type BugTimelineItemConnection {
+    edges: [BugTimelineItemEdge!]!
+    nodes: [BugTimelineItem!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+"""Represent a TimelineItem"""
+type BugTimelineItemEdge {
+    cursor: String!
+    node: BugTimelineItem!
+}
+
+# Items
+
+"""BugCreateTimelineItem is a BugTimelineItem that represent the creation of a bug and its message edition history"""
+type BugCreateTimelineItem implements BugTimelineItem & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.CreateTimelineItem") {
+    """The identifier of the source operation"""
+    id: CombinedId! @goField(name: "CombinedId")
+    author: Identity!
+    message: String!
+    messageIsEmpty: Boolean!
+    files: [Hash!]!
+    createdAt: Time!
+    lastEdit: Time!
+    edited: Boolean!
+    history: [BugCommentHistoryStep!]!
+}
+
+"""BugAddCommentTimelineItem is a BugTimelineItem that represent a BugComment and its edition history"""
+type BugAddCommentTimelineItem implements BugTimelineItem & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.AddCommentTimelineItem") {
+    """The identifier of the source operation"""
+    id: CombinedId! @goField(name: "CombinedId")
+    author: Identity!
+    message: String!
+    messageIsEmpty: Boolean!
+    files: [Hash!]!
+    createdAt: Time!
+    lastEdit: Time!
+    edited: Boolean!
+    history: [BugCommentHistoryStep!]!
+}
+
+"""BugLabelChangeTimelineItem is a BugTimelineItem that represent a change in the labels of a bug"""
+type BugLabelChangeTimelineItem implements BugTimelineItem & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.LabelChangeTimelineItem") {
+    """The identifier of the source operation"""
+    id: CombinedId! @goField(name: "CombinedId")
+    author: Identity!
+    date: Time!
+    added: [Label!]!
+    removed: [Label!]!
+}
+
+"""BugSetStatusTimelineItem is a BugTimelineItem that represent a change in the status of a bug"""
+type BugSetStatusTimelineItem implements BugTimelineItem & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.SetStatusTimelineItem") {
+    """The identifier of the source operation"""
+    id: CombinedId! @goField(name: "CombinedId")
+    author: Identity!
+    date: Time!
+    status: Status!
+}
+
+"""BugLabelChangeTimelineItem is a BugTimelineItem that represent a change in the title of a bug"""
+type BugSetTitleTimelineItem implements BugTimelineItem & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.SetTitleTimelineItem") {
+    """The identifier of the source operation"""
+    id: CombinedId! @goField(name: "CombinedId")
+    author: Identity!
+    date: Time!
+    title: String!
+    was: String!
+}

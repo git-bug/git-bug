@@ -1,6 +1,6 @@
 #import "../../components/fragments.graphql"
 
-fragment Create on CreateTimelineItem {
+fragment Create on BugCreateTimelineItem {
   id
   createdAt
   ...authored

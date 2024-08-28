@@ -63,7 +63,7 @@ function EditCommentForm({ bug, comment, onCancel, onPostSubmit }: Props) {
         },
       },
     }).then((result) => {
-      const comments = result.data?.editComment.bug.timeline.comments as (
+      const comments = result.data?.bugEditComment.bug.timeline.comments as (
         | AddCommentFragment
         | CreateFragment
       )[];

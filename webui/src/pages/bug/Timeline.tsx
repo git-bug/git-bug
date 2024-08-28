@@ -27,15 +27,15 @@ function Timeline({ bug, ops }: Props) {
     <div className={classes.main}>
       {ops.map((op, index) => {
         switch (op.__typename) {
-          case 'CreateTimelineItem':
+          case 'BugCreateTimelineItem':
             return <Message key={index} op={op} bug={bug} />;
-          case 'AddCommentTimelineItem':
+          case 'BugAddCommentTimelineItem':
             return <Message key={index} op={op} bug={bug} />;
-          case 'LabelChangeTimelineItem':
+          case 'BugLabelChangeTimelineItem':
             return <LabelChange key={index} op={op} />;
-          case 'SetTitleTimelineItem':
+          case 'BugSetTitleTimelineItem':
             return <SetTitle key={index} op={op} />;
-          case 'SetStatusTimelineItem':
+          case 'BugSetStatusTimelineItem':
             return <SetStatus key={index} op={op} />;
         }
 

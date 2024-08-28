@@ -1,5 +1,5 @@
-mutation newBug($input: NewBugInput!) {
-  newBug(input: $input) {
+mutation newBug($input: BugCreateInput!) {
+  bugCreate(input: $input) {
     bug {
       id
     }

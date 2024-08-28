@@ -6,7 +6,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"image/color"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -14,15 +13,15 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/git-bug/git-bug/api/graphql/models"
 	"github.com/git-bug/git-bug/entities/bug"
-	"github.com/git-bug/git-bug/entities/common"
+	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/repository"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
 // region    ************************** generated!.gotpl **************************
 
-type LabelResolver interface {
-	Name(ctx context.Context, obj *common.Label) (string, error)
-	Color(ctx context.Context, obj *common.Label) (*color.RGBA, error)
+type BugCommentResolver interface {
+	Author(ctx context.Context, obj *bug.Comment) (models.IdentityWrapper, error)
 }
 
 // endregion ************************** generated!.gotpl **************************
@@ -37,8 +36,8 @@ type LabelResolver interface {
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _Label_name(ctx context.Context, field graphql.CollectedField, obj *common.Label) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Label_name(ctx, field)
+func (ec *executionContext) _BugComment_id(ctx context.Context, field graphql.CollectedField, obj *bug.Comment) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugComment_id(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -51,7 +50,113 @@ func (ec *executionContext) _Label_name(ctx context.Context, field graphql.Colle
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Label().Name(rctx, obj)
+		return obj.CombinedId(), nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(entity.CombinedId)
+	fc.Result = res
+	return ec.marshalNCombinedId2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚐCombinedId(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BugComment_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BugComment",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type CombinedId does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BugComment_author(ctx context.Context, field graphql.CollectedField, obj *bug.Comment) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugComment_author(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.BugComment().Author(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(models.IdentityWrapper)
+	fc.Result = res
+	return ec.marshalNIdentity2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BugComment_author(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BugComment",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Identity_id(ctx, field)
+			case "humanId":
+				return ec.fieldContext_Identity_humanId(ctx, field)
+			case "name":
+				return ec.fieldContext_Identity_name(ctx, field)
+			case "email":
+				return ec.fieldContext_Identity_email(ctx, field)
+			case "login":
+				return ec.fieldContext_Identity_login(ctx, field)
+			case "displayName":
+				return ec.fieldContext_Identity_displayName(ctx, field)
+			case "avatarUrl":
+				return ec.fieldContext_Identity_avatarUrl(ctx, field)
+			case "isProtected":
+				return ec.fieldContext_Identity_isProtected(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Identity", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BugComment_message(ctx context.Context, field graphql.CollectedField, obj *bug.Comment) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugComment_message(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Message, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -68,12 +173,12 @@ func (ec *executionContext) _Label_name(ctx context.Context, field graphql.Colle
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Label_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugComment_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Label",
+		Object:     "BugComment",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
@@ -81,8 +186,8 @@ func (ec *executionContext) fieldContext_Label_name(_ context.Context, field gra
 	return fc, nil
 }
 
-func (ec *executionContext) _Label_color(ctx context.Context, field graphql.CollectedField, obj *common.Label) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Label_color(ctx, field)
+func (ec *executionContext) _BugComment_files(ctx context.Context, field graphql.CollectedField, obj *bug.Comment) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugComment_files(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -95,7 +200,7 @@ func (ec *executionContext) _Label_color(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Label().Color(rctx, obj)
+		return obj.Files, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -107,128 +212,26 @@ func (ec *executionContext) _Label_color(ctx context.Context, field graphql.Coll
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*color.RGBA)
+	res := resTmp.([]repository.Hash)
 	fc.Result = res
-	return ec.marshalNColor2ᚖimageᚋcolorᚐRGBA(ctx, field.Selections, res)
+	return ec.marshalNHash2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐHashᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Label_color(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugComment_files(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Label",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "R":
-				return ec.fieldContext_Color_R(ctx, field)
-			case "G":
-				return ec.fieldContext_Color_G(ctx, field)
-			case "B":
-				return ec.fieldContext_Color_B(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Color", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _LabelChangeResult_label(ctx context.Context, field graphql.CollectedField, obj *bug.LabelChangeResult) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_LabelChangeResult_label(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Label, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(common.Label)
-	fc.Result = res
-	return ec.marshalNLabel2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋcommonᚐLabel(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_LabelChangeResult_label(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "LabelChangeResult",
+		Object:     "BugComment",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "name":
-				return ec.fieldContext_Label_name(ctx, field)
-			case "color":
-				return ec.fieldContext_Label_color(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Label", field.Name)
+			return nil, errors.New("field of type Hash does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _LabelChangeResult_status(ctx context.Context, field graphql.CollectedField, obj *bug.LabelChangeResult) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_LabelChangeResult_status(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Status, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bug.LabelChangeStatus)
-	fc.Result = res
-	return ec.marshalNLabelChangeStatus2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐLabelChangeStatus(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_LabelChangeResult_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "LabelChangeResult",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type LabelChangeStatus does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _LabelConnection_edges(ctx context.Context, field graphql.CollectedField, obj *models.LabelConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_LabelConnection_edges(ctx, field)
+func (ec *executionContext) _BugCommentConnection_edges(ctx context.Context, field graphql.CollectedField, obj *models.BugCommentConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugCommentConnection_edges(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -253,32 +256,32 @@ func (ec *executionContext) _LabelConnection_edges(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*models.LabelEdge)
+	res := resTmp.([]*models.BugCommentEdge)
 	fc.Result = res
-	return ec.marshalNLabelEdge2ᚕᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐLabelEdgeᚄ(ctx, field.Selections, res)
+	return ec.marshalNBugCommentEdge2ᚕᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugCommentEdgeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_LabelConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugCommentConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "LabelConnection",
+		Object:     "BugCommentConnection",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "cursor":
-				return ec.fieldContext_LabelEdge_cursor(ctx, field)
+				return ec.fieldContext_BugCommentEdge_cursor(ctx, field)
 			case "node":
-				return ec.fieldContext_LabelEdge_node(ctx, field)
+				return ec.fieldContext_BugCommentEdge_node(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type LabelEdge", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BugCommentEdge", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _LabelConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *models.LabelConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_LabelConnection_nodes(ctx, field)
+func (ec *executionContext) _BugCommentConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *models.BugCommentConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugCommentConnection_nodes(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -303,32 +306,36 @@ func (ec *executionContext) _LabelConnection_nodes(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]common.Label)
+	res := resTmp.([]*bug.Comment)
 	fc.Result = res
-	return ec.marshalNLabel2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋcommonᚐLabelᚄ(ctx, field.Selections, res)
+	return ec.marshalNBugComment2ᚕᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐCommentᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_LabelConnection_nodes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugCommentConnection_nodes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "LabelConnection",
+		Object:     "BugCommentConnection",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "name":
-				return ec.fieldContext_Label_name(ctx, field)
-			case "color":
-				return ec.fieldContext_Label_color(ctx, field)
+			case "id":
+				return ec.fieldContext_BugComment_id(ctx, field)
+			case "author":
+				return ec.fieldContext_BugComment_author(ctx, field)
+			case "message":
+				return ec.fieldContext_BugComment_message(ctx, field)
+			case "files":
+				return ec.fieldContext_BugComment_files(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Label", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BugComment", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _LabelConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *models.LabelConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_LabelConnection_pageInfo(ctx, field)
+func (ec *executionContext) _BugCommentConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *models.BugCommentConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugCommentConnection_pageInfo(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -358,9 +365,9 @@ func (ec *executionContext) _LabelConnection_pageInfo(ctx context.Context, field
 	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐPageInfo(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_LabelConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugCommentConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "LabelConnection",
+		Object:     "BugCommentConnection",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -381,8 +388,8 @@ func (ec *executionContext) fieldContext_LabelConnection_pageInfo(_ context.Cont
 	return fc, nil
 }
 
-func (ec *executionContext) _LabelConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *models.LabelConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_LabelConnection_totalCount(ctx, field)
+func (ec *executionContext) _BugCommentConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *models.BugCommentConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugCommentConnection_totalCount(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -412,9 +419,9 @@ func (ec *executionContext) _LabelConnection_totalCount(ctx context.Context, fie
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_LabelConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugCommentConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "LabelConnection",
+		Object:     "BugCommentConnection",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -425,8 +432,8 @@ func (ec *executionContext) fieldContext_LabelConnection_totalCount(_ context.Co
 	return fc, nil
 }
 
-func (ec *executionContext) _LabelEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *models.LabelEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_LabelEdge_cursor(ctx, field)
+func (ec *executionContext) _BugCommentEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *models.BugCommentEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugCommentEdge_cursor(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -456,9 +463,9 @@ func (ec *executionContext) _LabelEdge_cursor(ctx context.Context, field graphql
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_LabelEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugCommentEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "LabelEdge",
+		Object:     "BugCommentEdge",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -469,8 +476,8 @@ func (ec *executionContext) fieldContext_LabelEdge_cursor(_ context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _LabelEdge_node(ctx context.Context, field graphql.CollectedField, obj *models.LabelEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_LabelEdge_node(ctx, field)
+func (ec *executionContext) _BugCommentEdge_node(ctx context.Context, field graphql.CollectedField, obj *models.BugCommentEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugCommentEdge_node(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -495,25 +502,29 @@ func (ec *executionContext) _LabelEdge_node(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(common.Label)
+	res := resTmp.(*bug.Comment)
 	fc.Result = res
-	return ec.marshalNLabel2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋcommonᚐLabel(ctx, field.Selections, res)
+	return ec.marshalNBugComment2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐComment(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_LabelEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BugCommentEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "LabelEdge",
+		Object:     "BugCommentEdge",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "name":
-				return ec.fieldContext_Label_name(ctx, field)
-			case "color":
-				return ec.fieldContext_Label_color(ctx, field)
+			case "id":
+				return ec.fieldContext_BugComment_id(ctx, field)
+			case "author":
+				return ec.fieldContext_BugComment_author(ctx, field)
+			case "message":
+				return ec.fieldContext_BugComment_message(ctx, field)
+			case "files":
+				return ec.fieldContext_BugComment_files(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Label", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BugComment", field.Name)
 		},
 	}
 	return fc, nil
@@ -531,18 +542,23 @@ func (ec *executionContext) fieldContext_LabelEdge_node(_ context.Context, field
 
 // region    **************************** object.gotpl ****************************
 
-var labelImplementors = []string{"Label"}
+var bugCommentImplementors = []string{"BugComment", "Authored"}
 
-func (ec *executionContext) _Label(ctx context.Context, sel ast.SelectionSet, obj *common.Label) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, labelImplementors)
+func (ec *executionContext) _BugComment(ctx context.Context, sel ast.SelectionSet, obj *bug.Comment) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, bugCommentImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("Label")
-		case "name":
+			out.Values[i] = graphql.MarshalString("BugComment")
+		case "id":
+			out.Values[i] = ec._BugComment_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "author":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -551,7 +567,7 @@ func (ec *executionContext) _Label(ctx context.Context, sel ast.SelectionSet, ob
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Label_name(ctx, field, obj)
+				res = ec._BugComment_author(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -578,85 +594,15 @@ func (ec *executionContext) _Label(ctx context.Context, sel ast.SelectionSet, ob
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "color":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Label_color(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var labelChangeResultImplementors = []string{"LabelChangeResult"}
-
-func (ec *executionContext) _LabelChangeResult(ctx context.Context, sel ast.SelectionSet, obj *bug.LabelChangeResult) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, labelChangeResultImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("LabelChangeResult")
-		case "label":
-			out.Values[i] = ec._LabelChangeResult_label(ctx, field, obj)
+		case "message":
+			out.Values[i] = ec._BugComment_message(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "status":
-			out.Values[i] = ec._LabelChangeResult_status(ctx, field, obj)
+		case "files":
+			out.Values[i] = ec._BugComment_files(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -681,34 +627,34 @@ func (ec *executionContext) _LabelChangeResult(ctx context.Context, sel ast.Sele
 	return out
 }
 
-var labelConnectionImplementors = []string{"LabelConnection"}
+var bugCommentConnectionImplementors = []string{"BugCommentConnection"}
 
-func (ec *executionContext) _LabelConnection(ctx context.Context, sel ast.SelectionSet, obj *models.LabelConnection) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, labelConnectionImplementors)
+func (ec *executionContext) _BugCommentConnection(ctx context.Context, sel ast.SelectionSet, obj *models.BugCommentConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, bugCommentConnectionImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("LabelConnection")
+			out.Values[i] = graphql.MarshalString("BugCommentConnection")
 		case "edges":
-			out.Values[i] = ec._LabelConnection_edges(ctx, field, obj)
+			out.Values[i] = ec._BugCommentConnection_edges(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "nodes":
-			out.Values[i] = ec._LabelConnection_nodes(ctx, field, obj)
+			out.Values[i] = ec._BugCommentConnection_nodes(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "pageInfo":
-			out.Values[i] = ec._LabelConnection_pageInfo(ctx, field, obj)
+			out.Values[i] = ec._BugCommentConnection_pageInfo(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "totalCount":
-			out.Values[i] = ec._LabelConnection_totalCount(ctx, field, obj)
+			out.Values[i] = ec._BugCommentConnection_totalCount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -735,24 +681,24 @@ func (ec *executionContext) _LabelConnection(ctx context.Context, sel ast.Select
 	return out
 }
 
-var labelEdgeImplementors = []string{"LabelEdge"}
+var bugCommentEdgeImplementors = []string{"BugCommentEdge"}
 
-func (ec *executionContext) _LabelEdge(ctx context.Context, sel ast.SelectionSet, obj *models.LabelEdge) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, labelEdgeImplementors)
+func (ec *executionContext) _BugCommentEdge(ctx context.Context, sel ast.SelectionSet, obj *models.BugCommentEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, bugCommentEdgeImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("LabelEdge")
+			out.Values[i] = graphql.MarshalString("BugCommentEdge")
 		case "cursor":
-			out.Values[i] = ec._LabelEdge_cursor(ctx, field, obj)
+			out.Values[i] = ec._BugCommentEdge_cursor(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "node":
-			out.Values[i] = ec._LabelEdge_node(ctx, field, obj)
+			out.Values[i] = ec._BugCommentEdge_node(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -783,11 +729,7 @@ func (ec *executionContext) _LabelEdge(ctx context.Context, sel ast.SelectionSet
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNLabel2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋcommonᚐLabel(ctx context.Context, sel ast.SelectionSet, v common.Label) graphql.Marshaler {
-	return ec._Label(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNLabel2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋcommonᚐLabelᚄ(ctx context.Context, sel ast.SelectionSet, v []common.Label) graphql.Marshaler {
+func (ec *executionContext) marshalNBugComment2ᚕᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐCommentᚄ(ctx context.Context, sel ast.SelectionSet, v []*bug.Comment) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -811,7 +753,7 @@ func (ec *executionContext) marshalNLabel2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbu
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNLabel2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋcommonᚐLabel(ctx, sel, v[i])
+			ret[i] = ec.marshalNBugComment2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐComment(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -831,69 +773,31 @@ func (ec *executionContext) marshalNLabel2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbu
 	return ret
 }
 
-func (ec *executionContext) marshalNLabelChangeResult2ᚕᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐLabelChangeResult(ctx context.Context, sel ast.SelectionSet, v []*bug.LabelChangeResult) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOLabelChangeResult2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐLabelChangeResult(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
-func (ec *executionContext) unmarshalNLabelChangeStatus2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐLabelChangeStatus(ctx context.Context, v interface{}) (bug.LabelChangeStatus, error) {
-	var res bug.LabelChangeStatus
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNLabelChangeStatus2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐLabelChangeStatus(ctx context.Context, sel ast.SelectionSet, v bug.LabelChangeStatus) graphql.Marshaler {
-	return v
-}
-
-func (ec *executionContext) marshalNLabelConnection2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐLabelConnection(ctx context.Context, sel ast.SelectionSet, v models.LabelConnection) graphql.Marshaler {
-	return ec._LabelConnection(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNLabelConnection2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐLabelConnection(ctx context.Context, sel ast.SelectionSet, v *models.LabelConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNBugComment2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐComment(ctx context.Context, sel ast.SelectionSet, v *bug.Comment) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._LabelConnection(ctx, sel, v)
+	return ec._BugComment(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNLabelEdge2ᚕᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐLabelEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.LabelEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNBugCommentConnection2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugCommentConnection(ctx context.Context, sel ast.SelectionSet, v models.BugCommentConnection) graphql.Marshaler {
+	return ec._BugCommentConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNBugCommentConnection2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugCommentConnection(ctx context.Context, sel ast.SelectionSet, v *models.BugCommentConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._BugCommentConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNBugCommentEdge2ᚕᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugCommentEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.BugCommentEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -917,7 +821,7 @@ func (ec *executionContext) marshalNLabelEdge2ᚕᚖgithubᚗcomᚋgitᚑbugᚋg
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNLabelEdge2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐLabelEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalNBugCommentEdge2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugCommentEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -937,21 +841,14 @@ func (ec *executionContext) marshalNLabelEdge2ᚕᚖgithubᚗcomᚋgitᚑbugᚋg
 	return ret
 }
 
-func (ec *executionContext) marshalNLabelEdge2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐLabelEdge(ctx context.Context, sel ast.SelectionSet, v *models.LabelEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNBugCommentEdge2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugCommentEdge(ctx context.Context, sel ast.SelectionSet, v *models.BugCommentEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._LabelEdge(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOLabelChangeResult2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐLabelChangeResult(ctx context.Context, sel ast.SelectionSet, v *bug.LabelChangeResult) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._LabelChangeResult(ctx, sel, v)
+	return ec._BugCommentEdge(ctx, sel, v)
 }
 
 // endregion ***************************** type.gotpl *****************************

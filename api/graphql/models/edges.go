@@ -11,12 +11,12 @@ func (e BugEdge) GetCursor() string {
 }
 
 // GetCursor return the cursor entry of an edge
-func (e CommentEdge) GetCursor() string {
+func (e BugCommentEdge) GetCursor() string {
 	return e.Cursor
 }
 
 // GetCursor return the cursor entry of an edge
-func (e TimelineItemEdge) GetCursor() string {
+func (e BugTimelineItemEdge) GetCursor() string {
 	return e.Cursor
 }
 

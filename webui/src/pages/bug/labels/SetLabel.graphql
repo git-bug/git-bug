@@ -1,5 +1,5 @@
-mutation SetLabel($input: ChangeLabelInput) {
-  changeLabels(input: $input) {
+mutation SetLabel($input: BugChangeLabelInput) {
+  bugChangeLabels(input: $input) {
     results {
       status
       label {
