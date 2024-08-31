@@ -7,8 +7,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/MichaelMure/git-bug/bridge/core"
-	"github.com/MichaelMure/git-bug/cache"
+	"github.com/git-bug/git-bug/bridge/core"
+	"github.com/git-bug/git-bug/cache"
 )
 
 var (

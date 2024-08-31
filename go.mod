@@ -13,7 +13,6 @@ require (
 	code.gitea.io/sdk/gitea v0.19.0
 	github.com/99designs/gqlgen v0.17.49
 	github.com/99designs/keyring v1.2.2
-	github.com/MichaelMure/git-bug v0.8.0
 	github.com/MichaelMure/go-term-text v0.3.1
 	github.com/ProtonMail/go-crypto v1.0.0
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
@@ -49,7 +48,6 @@ require (
 	github.com/davidmz/go-pageant v1.0.2 // indirect
 	github.com/go-fed/httpsig v1.1.0 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
-	github.com/hashicorp/golang-lru v0.5.4 // indirect
 )
 
 require (
