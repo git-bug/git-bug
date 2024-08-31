@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"code.gitea.io/sdk/gitea"
 	"github.com/pkg/errors"
 
 	"github.com/git-bug/git-bug/bridge/core"
@@ -80,14 +81,17 @@ func (g *Gitea) Configure(repo *cache.RepoCache, params core.BridgeParams, inter
 			if !interactive {
 				return nil, fmt.Errorf("Non-interactive-mode is active. Please specify the login name via the --login option.")
 			}
-			// TODO: validate username
 			login, err = input.Prompt("Gitea login", "login", input.Required)
+			if err != nil {
+				return nil, err
+			}
 		} else {
-			// TODO: validate username
 			login = params.Login
 		}
+		// validate username
+		_, err = validateUsername(baseURL, login)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "username validation")
 		}
 		if !interactive {
 			return nil, fmt.Errorf("Non-interactive-mode is active. Please specify the access token via the --token option.")
@@ -263,6 +267,27 @@ func getRemoteURLs(repo repository.RepoCommon) ([]string, error) {
 	sort.Strings(urls)
 
 	return urls, nil
+}
+
+func validateUsername(baseURL, username string) (bool, error) {
+	/* FIXME: We're directly calling gitea.NewClient here because buildClient
+	 * *requires* a token, which we may not have yet. Ideally the token to
+	 * buildClient should be optional. */
+	client, err := gitea.NewClient(baseURL)
+	if err != nil {
+		return false, err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	defer cancel()
+	client.SetContext(ctx)
+
+	_, _, err = client.GetUserInfo(username)
+	if err != nil {
+		return false, errors.Wrap(err, "user not found")
+	}
+
+	return true, nil
 }
 
 func validateProject(baseURL, owner, project string, token *auth.Token) (bool, error) {
