@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	target = "gitea-preview"
+	target = "gitea"
 
 	metaKeyGiteaID      = "gitea-id"
 	metaKeyGiteaLogin   = "gitea-login"
