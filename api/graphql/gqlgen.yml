@@ -20,9 +20,3 @@ omit_getters: true
 models:
   ID:
     model: github.com/git-bug/git-bug/entity.Id
-  Color:
-    model: image/color.RGBA
-  Identity:
-    model: github.com/git-bug/git-bug/api/graphql/models.IdentityWrapper
-  Bug:
-    model: github.com/git-bug/git-bug/api/graphql/models.BugWrapper

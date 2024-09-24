@@ -1,5 +1,7 @@
 """Represents an identity"""
-type Identity {
+type Identity
+@goModel(model: "github.com/git-bug/git-bug/api/graphql/models.IdentityWrapper") {
+
     """The identifier for this identity"""
     id: ID!
     """The human version (truncated) identifier for this identity"""

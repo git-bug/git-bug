@@ -3,6 +3,11 @@
 package models
 
 import (
+	"fmt"
+	"io"
+	"strconv"
+
+	"github.com/git-bug/git-bug/entities/board"
 	"github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entities/common"
 	"github.com/git-bug/git-bug/entity/dag"
@@ -12,6 +17,49 @@ import (
 // An object that has an author.
 type Authored interface {
 	IsAuthored()
+}
+
+type BoardColumnConnection struct {
+	Edges      []*BoardColumnEdge `json:"edges"`
+	Nodes      []*board.Column    `json:"nodes"`
+	PageInfo   *PageInfo          `json:"pageInfo"`
+	TotalCount int                `json:"totalCount"`
+}
+
+type BoardColumnEdge struct {
+	Cursor string        `json:"cursor"`
+	Node   *board.Column `json:"node"`
+}
+
+// The connection type for Board.
+type BoardConnection struct {
+	// A list of edges.
+	Edges []*BoardEdge   `json:"edges"`
+	Nodes []BoardWrapper `json:"nodes"`
+	// Information to aid in pagination.
+	PageInfo *PageInfo `json:"pageInfo"`
+	// Identifies the total count of items in the connection.
+	TotalCount int `json:"totalCount"`
+}
+
+// An edge in a connection.
+type BoardEdge struct {
+	// A cursor for use in pagination.
+	Cursor string `json:"cursor"`
+	// The item at the end of the edge.
+	Node BoardWrapper `json:"node"`
+}
+
+type BoardItemConnection struct {
+	Edges      []*BoardItemEdge `json:"edges"`
+	Nodes      []board.Item     `json:"nodes"`
+	PageInfo   *PageInfo        `json:"pageInfo"`
+	TotalCount int              `json:"totalCount"`
+}
+
+type BoardItemEdge struct {
+	Cursor string     `json:"cursor"`
+	Node   board.Item `json:"node"`
 }
 
 type BugAddCommentAndCloseInput struct {
@@ -307,4 +355,43 @@ type PageInfo struct {
 }
 
 type Query struct {
+}
+
+type BoardItemEntityType string
+
+const (
+	BoardItemEntityTypeBug BoardItemEntityType = "BUG"
+)
+
+var AllBoardItemEntityType = []BoardItemEntityType{
+	BoardItemEntityTypeBug,
+}
+
+func (e BoardItemEntityType) IsValid() bool {
+	switch e {
+	case BoardItemEntityTypeBug:
+		return true
+	}
+	return false
+}
+
+func (e BoardItemEntityType) String() string {
+	return string(e)
+}
+
+func (e *BoardItemEntityType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = BoardItemEntityType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid BoardItemEntityType", str)
+	}
+	return nil
+}
+
+func (e BoardItemEntityType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }

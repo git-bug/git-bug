@@ -26,7 +26,7 @@ func TestCreate(t *testing.T) {
 	require.Equal(t, "message", op.Message)
 
 	// Create generate the initial operation and create a new timeline item
-	snap := b.Compile()
+	snap := b.Snapshot()
 	require.Equal(t, common.OpenStatus, snap.Status)
 	require.Equal(t, rene, snap.Author)
 	require.Equal(t, "title", snap.Title)
