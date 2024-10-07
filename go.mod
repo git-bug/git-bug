@@ -20,7 +20,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/fatih/color v1.17.0
 	github.com/go-git/go-billy/v5 v5.6.0
-	github.com/go-git/go-git/v5 v5.12.0
+	github.com/go-git/go-git/v5 v5.12.1-0.20241007152421-41f08fc53529
 	github.com/gorilla/mux v1.8.1
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/icrowley/fake v0.0.0-20240710202011-f797eb4a99c0
