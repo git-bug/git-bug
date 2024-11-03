@@ -1,20 +1,31 @@
 package commands
 
 import (
+	"strings"
 	"encoding/json"
 
 	"github.com/spf13/cobra"
 
 	"github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/commands/execenv"
+	"github.com/git-bug/git-bug/query"
 )
 
 type exportOptions struct {
-	queryOptions
+	actorQuery          []string
+	authorQuery         []string
+	labelQuery          []string
+	noQuery             []string
+	participantQuery    []string
+	queryOptions        []string
+	statusQuery         []string
+	titleQuery          []string
+	sortBy              string
+	sortDirection       string
 }
 
-func newExportCommand() *cobra.Command {
-	env := newEnv()
+func newExportCommand(env *execenv.Env) *cobra.Command {
 	options := exportOptions{}
 
 	cmd := &cobra.Command{
@@ -26,11 +37,10 @@ The output format is NDJSON (Newline delimited JSON).
 
 You can pass an additional query to filter and order the list. This query can be expressed either with a simple query language, flags, a natural language full text search, or a combination of the aforementioned.`,
 		Example:  `See ls`,
-		PreRunE:  loadBackend(env),
-		PostRunE: closeBackend(env),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		PreRunE:  execenv.LoadBackend(env),
+		PostRunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runExport(env, options, args)
-		},
+		}),
 	}
 
 	flags := cmd.Flags()
@@ -58,18 +68,29 @@ You can pass an additional query to filter and order the list. This query can be
 	return cmd
 }
 
-func runExport(env *Env, opts exportOptions, args []string) error {
-	q, err := makeQuery(args, &opts.queryOptions)
+func runExport(env *execenv.Env, opts exportOptions, args []string) error {
+	var q *query.Query
+	var err error
+
+	if len(args) >= 1 {
+		q, err = query.Parse(strings.Join(args, " "))
+		if err != nil {
+			return err
+		}
+	} else {
+		q = query.NewQuery()
+	}
+
+	// FIXME we are throwing away opts!
+	allIds, err := env.Backend.Bugs().Query(q)
 	if err != nil {
 		return err
 	}
 
-	allIds := env.backend.QueryBugs(q)
-
-	out := json.NewEncoder(env.out)
+	out := json.NewEncoder(env.Out)
 
 	for _, id := range allIds {
-		b, err := env.backend.ResolveBug(id)
+		b, err := env.Backend.Bugs().Resolve(id)
 		if err != nil {
 			return err
 		}
