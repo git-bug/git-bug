@@ -10,6 +10,7 @@ replace github.com/praetorian-inc/gokart v0.5.1 => github.com/selesy/gokart v0.5
 replace github.com/willf/bitset v1.1.11 => github.com/bits-and-blooms/bitset v1.1.11
 
 require (
+	code.gitea.io/sdk/gitea v0.19.0
 	github.com/99designs/gqlgen v0.17.49
 	github.com/99designs/keyring v1.2.2
 	github.com/MichaelMure/go-term-text v0.3.1
@@ -41,6 +42,12 @@ require (
 	golang.org/x/sync v0.8.0
 	golang.org/x/sys v0.25.0
 	golang.org/x/text v0.17.0
+)
+
+require (
+	github.com/davidmz/go-pageant v1.0.2 // indirect
+	github.com/go-fed/httpsig v1.1.0 // indirect
+	github.com/hashicorp/go-version v1.6.0 // indirect
 )
 
 require (
