@@ -5,8 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/MichaelMure/git-bug/bug"
-	"github.com/MichaelMure/git-bug/entity"
+	"github.com/git-bug/git-bug/bug"
+	"github.com/git-bug/git-bug/entity"
 )
 
 type exportOptions struct {
