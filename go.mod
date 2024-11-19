@@ -35,7 +35,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/vbauerster/mpb/v8 v8.8.2
 	github.com/vektah/gqlparser/v2 v2.5.16
-	github.com/xanzy/go-gitlab v0.107.0
+	github.com/xanzy/go-gitlab v0.114.0
 	golang.org/x/crypto v0.26.0
 	golang.org/x/oauth2 v0.22.0
 	golang.org/x/sync v0.8.0
