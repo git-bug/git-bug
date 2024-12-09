@@ -1,6 +1,6 @@
 # Internal architecture
 
-This documentation only provide a bird-eye view of git-bug's internals. For more details, you should read the other documentations and the various comment/documentations scattered in the codebase.
+This documentation only provides a bird's-eye view of git-bug's internals. For more details, you should read the other documentation and the various comment/documentation scattered in the codebase.
 
 ## Overview 
 
@@ -28,7 +28,7 @@ This documentation only provide a bird-eye view of git-bug's internals. For more
 
 Here is the internal architecture of git-bug. As you can see, it's a layered architecture.
 
-As a general rule of thumbs, each layer use the directly underlying layer to access and interact with the data. As an example, the `commands` package will not directly use the `bug` or `repository` package. It will request the data from the `cache` layer and go from there. Of course, the `commands` package will ultimately use types defined in the lower level package like `Bug`, but retrieving and changing the data has to go through the `cache` layer to ensure that bugs are properly deduplicated in memory.
+As a general rule of thumb, each layer uses the directly underlying layer to access and interact with the data. As an example, the `commands` package will not directly use the `bug` or `repository` package. It will request the data from the `cache` layer and go from there. Of course, the `commands` package will ultimately use types defined in the lower level package like `Bug`, but retrieving and changing the data has to go through the `cache` layer to ensure that bugs are properly deduplicated in memory.
 
 ## repository
 
