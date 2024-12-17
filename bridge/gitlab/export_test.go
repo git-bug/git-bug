@@ -319,6 +319,6 @@ func deleteRepository(ctx context.Context, project int, token *auth.Token) error
 		return err
 	}
 
-	_, err = client.Projects.DeleteProject(project, gitlab.WithContext(ctx))
+	_, err = client.Projects.DeleteProject(project, nil, gitlab.WithContext(ctx))
 	return err
 }
