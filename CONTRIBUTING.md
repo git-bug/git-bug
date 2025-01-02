@@ -7,7 +7,7 @@ getting started as a contributor to this project.
 ## Get the source code
 
 Clone this repository to your system in a way you're comfortable with. Below, we
-show a command that [clones the repository][how-to-clone] using SSH, and places
+show a command that clones the repository using SSH, and places
 it in `~/code/git-bug`.
 
 ```
@@ -97,3 +97,4 @@ exact = ["~/code/git-bug/.envrc"]
 [install/nix]: https://nix.dev/install-nix
 [install/direnv]: https://github.com/direnv/direnv/blob/master/docs/installation.md
 [install/direnv/shell]: https://github.com/direnv/direnv/blob/master/docs/hook.md
+[install/install-direnv-without-nix]: #user-content-install-direnv-without-nix
