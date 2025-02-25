@@ -227,17 +227,17 @@ The web UI interact with the backend through a GraphQL API. The schema is availa
 Interactively configure a new github bridge:
 
 ```bash
-git bug bridge new
+git bug bridge configure
 ```
 
 Or manually:
 
 ```bash
-git bug bridge new \
+git bug bridge configure \
     --name=<bridge> \
     --target=github \
-    --url=https://github.com/git-bug/git-bug \
-    --login=<login> \
+    --owner=git-bug \
+    --project=git-bug \
     --token=<token>
 ```
 
