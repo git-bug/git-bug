@@ -63,6 +63,12 @@ func (op *AddCommentOperation) Validate() error {
 		return fmt.Errorf("message is not fully printable")
 	}
 
+	for _, file := range op.Files {
+		if !file.IsValid() {
+			return fmt.Errorf("invalid file hash")
+		}
+	}
+
 	return nil
 }
 
@@ -83,7 +89,7 @@ type AddCommentTimelineItem struct {
 func (a *AddCommentTimelineItem) IsAuthored() {}
 
 // AddComment is a convenience function to add a comment to a bug
-func AddComment(b Interface, author identity.Interface, unixTime int64, message string, files []repository.Hash, metadata map[string]string) (entity.CombinedId, *AddCommentOperation, error) {
+func AddComment(b ReadWrite, author identity.Interface, unixTime int64, message string, files []repository.Hash, metadata map[string]string) (entity.CombinedId, *AddCommentOperation, error) {
 	op := NewAddCommentOp(author, unixTime, message, files)
 	for key, val := range metadata {
 		op.SetMetadata(key, val)
