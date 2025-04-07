@@ -31,7 +31,7 @@ require (
 	github.com/shurcooL/httpfs v0.0.0-20230704072500-f1e31cf0ba5c
 	github.com/shurcooL/vfsgen v0.0.0-20230704071429-0000e147ea92
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
-	github.com/spf13/cobra v1.8.1
+	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.9.0
 	github.com/vbauerster/mpb/v8 v8.8.2
 	github.com/vektah/gqlparser/v2 v2.5.16
@@ -72,7 +72,7 @@ require (
 	github.com/cloudflare/circl v1.3.9 // indirect
 	github.com/corpix/uarand v0.2.0 // indirect
 	github.com/couchbase/vellum v1.0.2 // indirect
-	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.6 // indirect
 	github.com/cyphar/filepath-securejoin v0.3.0 // indirect
 	github.com/danieljoos/wincred v1.2.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -109,7 +109,7 @@ require (
 	github.com/shurcooL/graphql v0.0.0-20230722043721-ed46e5a46466 // indirect
 	github.com/skeema/knownhosts v1.3.0 // indirect
 	github.com/sosodev/duration v1.3.1 // indirect
-	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/steveyen/gtreap v0.1.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/urfave/cli/v2 v2.27.2 // indirect
