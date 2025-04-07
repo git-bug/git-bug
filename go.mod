@@ -10,6 +10,7 @@ replace github.com/praetorian-inc/gokart v0.5.1 => github.com/selesy/gokart v0.5
 replace github.com/willf/bitset v1.1.11 => github.com/bits-and-blooms/bitset v1.1.11
 
 require (
+	code.gitea.io/sdk/gitea v0.19.0
 	github.com/99designs/gqlgen v0.17.49
 	github.com/99designs/keyring v1.2.2
 	github.com/MichaelMure/go-term-text v0.3.1
@@ -48,6 +49,12 @@ require (
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.7 // indirect
 	golang.org/x/time v0.3.0 // indirect
+)
+
+require (
+	github.com/davidmz/go-pageant v1.0.2 // indirect
+	github.com/go-fed/httpsig v1.1.0 // indirect
+	github.com/hashicorp/go-version v1.6.0 // indirect
 )
 
 require (
