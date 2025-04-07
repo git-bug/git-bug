@@ -282,7 +282,7 @@ Additional planned feature:
 
 ## Contribute
 
-PRs accepted. Drop by the [Gitter lobby](https://gitter.im/the-git-bug/Lobby) or the [Matrix room](https://matrix.to/#/#the-git-bug_Lobby:gitter.im) for a chat, look at the [feature matrix](doc/feature_matrix.md) or browse the issues to see what is worked on or discussed.
+PRs accepted. Drop by the [Gitter lobby](https://gitter.im/the-git-bug/Lobby) or the [Matrix room](https://matrix.to/#/#git-bug:matrix.org) for a chat, look at the [feature matrix](doc/feature_matrix.md) or browse the issues to see what is worked on or discussed.
 
 ```shell
 git clone git@github.com:git-bug/git-bug.git
