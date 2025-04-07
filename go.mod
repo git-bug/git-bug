@@ -33,13 +33,13 @@ require (
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.9.0
-	github.com/vbauerster/mpb/v8 v8.8.2
+	github.com/vbauerster/mpb/v8 v8.9.3
 	github.com/vektah/gqlparser/v2 v2.5.16
 	gitlab.com/gitlab-org/api/client-go v0.116.0
 	golang.org/x/crypto v0.31.0
 	golang.org/x/oauth2 v0.22.0
 	golang.org/x/sync v0.10.0
-	golang.org/x/sys v0.28.0
+	golang.org/x/sys v0.30.0
 	golang.org/x/text v0.21.0
 )
 
