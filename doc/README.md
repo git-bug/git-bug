@@ -1,15 +1,27 @@
 # Documentation
 
-## For users
+## Usage
 
-- [data model](model.md) describes how the data model works and why.
-- [query language](queries.md) describes git-bug's query language.
-- [How-to: Read and edit offline your Github/Gitlab/Jira issues with git-bug](howto-github.md)
+The documentation listed below aims to help provide insight into the usage of
+`git-bug`.
+
+- Read about the different [types of workflows](./usage/workflows.md) and check
+  the [feature matrix](./feature-matrix.md) to learn about `git-bug`
+- Check the [CLI documentation](./md/git-bug.md) for commands and options (or
+  run `man git-bug` after [installation](../INSTALLATION.md))
+- Filter results using the [query language](./usage/query-language.md)
+- Learn how to [sync third party issues](./usage/third-party.md) for offline
+  reading and editing
 
 ## For developers
 
-- :exclamation: [data model](model.md) describes how the data model works and why.
-- :exclamation: [internal bird-view](architecture.md) gives an overview of the project architecture.
-- :exclamation: [Entity/DAG](../entity/dag/example_test.go) explains how to easily make your own distributed entity in git. 
-- [query language](queries.md) describes git-bug's query language.
-- [JIRA bridge dev notes](jira_bridge.md)
+- Read through [`//:CONTRIBUTING.md`][contrib]
+- See an [overview of the internal architecture](./design/architecture.md)
+- Read about the [data model](./design/data-model.md) to gain a deeper
+  understanding of the internals that comprise `git-bug`
+- [`//entity/dag:example_test.go`](../entity/dag/example_test.go) is a good
+  reference to learn how to create a new distributed entity
+- Read the [bridge design documents](./design/bridges) to learn more about each
+  bridge
+
+[contrib]: ../CONTRIBUTING.md

@@ -9,19 +9,29 @@ ifeq ($(UNAME_S),Darwin)
     XARGS:=xargs
 endif
 
+SYSTEM=$(shell nix eval --impure --expr 'builtins.currentSystem' --raw 2>/dev/null || echo '')
+
 COMMANDS_PATH:=github.com/git-bug/git-bug/commands
 LDFLAGS:=-X ${COMMANDS_PATH}.GitCommit="${GIT_COMMIT}" \
 	-X ${COMMANDS_PATH}.GitLastTag="${GIT_LAST_TAG}" \
 	-X ${COMMANDS_PATH}.GitExactTag="${GIT_EXACT_TAG}"
+
+.PHONY: list-checks
+list-checks:
+	@if test -z "$(SYSTEM)"; then echo "unable to detect system. is nix installed?" && exit 1; fi
+	@printf "Available checks for $(SYSTEM) (run all with \`nix flake check\`):\n"
+	@nix flake show --json 2>/dev/null |\
+		dasel -r json -w plain '.checks.x86_64-linux.keys().all()' |\
+		xargs -I NAME printf '\t%-20s %s\n' "NAME" "nix build .#checks.linux.NAME"
 
 .PHONY: build
 build:
 	go generate
 	go build -ldflags "$(LDFLAGS)" .
 
-# produce a build debugger friendly
-.PHONY: debug-build
-debug-build:
+# produce a debugger-friendly build
+.PHONY: build/debug
+build/debug:
 	go generate
 	go build -ldflags "$(LDFLAGS)" -gcflags=all="-N -l" .
 
