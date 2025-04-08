@@ -19,7 +19,7 @@ require (
 	github.com/blevesearch/bleve v1.0.14
 	github.com/dustin/go-humanize v1.0.1
 	github.com/fatih/color v1.17.0
-	github.com/go-git/go-billy/v5 v5.6.0
+	github.com/go-git/go-billy/v5 v5.6.2
 	github.com/go-git/go-git/v5 v5.12.1-0.20241007152421-41f08fc53529
 	github.com/gorilla/mux v1.8.1
 	github.com/hashicorp/golang-lru/v2 v2.0.7
@@ -32,14 +32,14 @@ require (
 	github.com/shurcooL/vfsgen v0.0.0-20230704071429-0000e147ea92
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/spf13/cobra v1.8.1
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	github.com/vbauerster/mpb/v8 v8.8.2
 	github.com/vektah/gqlparser/v2 v2.5.16
 	gitlab.com/gitlab-org/api/client-go v0.116.0
-	golang.org/x/crypto v0.31.0
+	golang.org/x/crypto v0.32.0
 	golang.org/x/oauth2 v0.22.0
 	golang.org/x/sync v0.10.0
-	golang.org/x/sys v0.28.0
+	golang.org/x/sys v0.29.0
 	golang.org/x/text v0.21.0
 )
 
@@ -73,7 +73,7 @@ require (
 	github.com/corpix/uarand v0.2.0 // indirect
 	github.com/couchbase/vellum v1.0.2 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
-	github.com/cyphar/filepath-securejoin v0.3.3 // indirect
+	github.com/cyphar/filepath-securejoin v0.3.6 // indirect
 	github.com/danieljoos/wincred v1.2.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dvsekhvalnov/jose2go v1.7.0 // indirect
@@ -119,9 +119,9 @@ require (
 	github.com/zclconf/go-cty v1.15.0 // indirect
 	go.etcd.io/bbolt v1.3.10 // indirect
 	golang.org/x/mod v0.19.0 // indirect
-	golang.org/x/net v0.30.0 // indirect
+	golang.org/x/net v0.34.0 // indirect
 	golang.org/x/telemetry v0.0.0-20240723021908-ccdfb411a0c4 // indirect
-	golang.org/x/term v0.27.0
+	golang.org/x/term v0.28.0
 	golang.org/x/tools v0.23.0 // indirect
 	golang.org/x/vuln v1.1.3
 	google.golang.org/protobuf v1.34.2 // indirect
