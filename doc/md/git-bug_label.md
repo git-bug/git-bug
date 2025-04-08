@@ -6,7 +6,9 @@ List valid labels
 
 List valid labels.
 
-Note: in the future, a proper label policy could be implemented where valid labels are defined in a configuration file. Until that, the default behavior is to return the list of labels already used.
+Note: in the future, a proper label policy could be implemented where valid
+labels are defined in a configuration file. Until that, the default behavior is
+to return the list of labels already used.
 
 ```
 git-bug label [flags]
@@ -20,5 +22,4 @@ git-bug label [flags]
 
 ### SEE ALSO
 
-* [git-bug](git-bug.md)	 - A bug tracker embedded in Git
-
+- [git-bug](git-bug.md) - A bug tracker embedded in Git

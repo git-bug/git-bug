@@ -6,13 +6,11 @@ Select a bug for implicit use in future commands
 
 Select a bug for implicit use in future commands.
 
-This command allows you to omit any bug ID argument, for example:
-  git bug show
-instead of
-  git bug show 2f153ca
+This command allows you to omit any bug ID argument, for example: git bug show
+instead of git bug show 2f153ca
 
-The complementary command is "git bug deselect" performing the opposite operation.
-
+The complementary command is "git bug deselect" performing the opposite
+operation.
 
 ```
 git-bug bug select BUG_ID [flags]
@@ -35,5 +33,4 @@ git bug status
 
 ### SEE ALSO
 
-* [git-bug bug](git-bug_bug.md)	 - List bugs
-
+- [git-bug bug](git-bug_bug.md) - List bugs

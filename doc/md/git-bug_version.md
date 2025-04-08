@@ -17,5 +17,4 @@ git-bug version [flags]
 
 ### SEE ALSO
 
-* [git-bug](git-bug.md)	 - A bug tracker embedded in Git
-
+- [git-bug](git-bug.md) - A bug tracker embedded in Git

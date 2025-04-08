@@ -1,9 +1,12 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -13,8 +16,14 @@ import (
 	"github.com/git-bug/git-bug/commands"
 )
 
+// TaskError holds a given task name and the error it returned (if any)
+type TaskError struct {
+	name string
+	err  error
+}
+
 func main() {
-	fmt.Println("Generating documentation ...")
+	fmt.Println("Generating documentation...")
 
 	tasks := map[string]func(*cobra.Command) error{
 		"ManPage":  genManPage,
@@ -22,6 +31,7 @@ func main() {
 	}
 
 	var wg sync.WaitGroup
+	errs := make(chan TaskError, len(tasks))
 	for name, f := range tasks {
 		wg.Add(1)
 		go func(name string, f func(*cobra.Command) error) {
@@ -29,7 +39,8 @@ func main() {
 			root := commands.NewRootCommand()
 			err := f(root)
 			if err != nil {
-				fmt.Printf("  - %s: %v\n", name, err)
+				fmt.Printf("  - %s: FATAL\n", name)
+				errs <- TaskError{name: name, err: err}
 				return
 			}
 			fmt.Printf("  - %s: ok\n", name)
@@ -37,6 +48,19 @@ func main() {
 	}
 
 	wg.Wait()
+	close(errs)
+
+	if len(errs) > 0 {
+		fmt.Println()
+		for e := range errs {
+			fmt.Printf("  Error generating %s:\n", strings.ToLower(e.name))
+			for _, line := range strings.Split(e.err.Error(), "\n") {
+				fmt.Printf("    %s\n", line)
+			}
+			fmt.Println()
+		}
+		os.Exit(1)
+	}
 }
 
 func genManPage(root *cobra.Command) error {
@@ -80,5 +104,22 @@ func genMarkdown(root *cobra.Command) error {
 		}
 	}
 
-	return doc.GenMarkdownTree(root, dir)
+	if err := doc.GenMarkdownTree(root, dir); err != nil {
+		return err
+	}
+
+	formatter := "nix"
+	if _, err := exec.LookPath(formatter); err != nil {
+		return err
+	}
+
+	format := exec.Command(formatter, "fmt", dir)
+	stderr := new(strings.Builder)
+	format.Stderr = stderr
+
+	if err := format.Run(); err != nil {
+		return errors.New(stderr.String())
+	}
+
+	return nil
 }

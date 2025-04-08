@@ -15,8 +15,8 @@ git-bug user [flags]
 
 ### SEE ALSO
 
-* [git-bug](git-bug.md)	 - A bug tracker embedded in Git
-* [git-bug user adopt](git-bug_user_adopt.md)	 - Adopt an existing identity as your own
-* [git-bug user new](git-bug_user_new.md)	 - Create a new identity
-* [git-bug user user](git-bug_user_user.md)	 - Display a user identity
-
+- [git-bug](git-bug.md) - A bug tracker embedded in Git
+- [git-bug user adopt](git-bug_user_adopt.md) - Adopt an existing identity as
+  your own
+- [git-bug user new](git-bug_user_new.md) - Create a new identity
+- [git-bug user user](git-bug_user_user.md) - Display a user identity

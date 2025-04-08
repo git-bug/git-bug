@@ -18,5 +18,4 @@ git-bug bug new [flags]
 
 ### SEE ALSO
 
-* [git-bug bug](git-bug_bug.md)	 - List bugs
-
+- [git-bug bug](git-bug_bug.md) - List bugs

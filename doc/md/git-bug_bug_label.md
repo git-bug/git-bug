@@ -14,7 +14,6 @@ git-bug bug label [BUG_ID] [flags]
 
 ### SEE ALSO
 
-* [git-bug bug](git-bug_bug.md)	 - List bugs
-* [git-bug bug label new](git-bug_bug_label_new.md)	 - Add a label to a bug
-* [git-bug bug label rm](git-bug_bug_label_rm.md)	 - Remove a label from a bug
-
+- [git-bug bug](git-bug_bug.md) - List bugs
+- [git-bug bug label new](git-bug_bug_label_new.md) - Add a label to a bug
+- [git-bug bug label rm](git-bug_bug_label_rm.md) - Remove a label from a bug

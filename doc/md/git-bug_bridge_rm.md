@@ -14,5 +14,4 @@ git-bug bridge rm NAME [flags]
 
 ### SEE ALSO
 
-* [git-bug bridge](git-bug_bridge.md)	 - List bridges to other bug trackers
-
+- [git-bug bridge](git-bug_bridge.md) - List bridges to other bug trackers

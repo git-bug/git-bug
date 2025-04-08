@@ -1,3 +1,4 @@
+---
 name: build-and-test
 
 on:
@@ -57,3 +58,20 @@ jobs:
 
       - name: Test
         run: make test
+
+  with-nix:
+    strategy:
+      matrix:
+        platform: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.platform }}
+    steps:
+      # refs/tags/4.2.2 @ 2025-04-10
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      # refs/heads/main @ 2025-04-10
+      - uses: DeterminateSystems/nix-installer-action@0d28deea2bab0f135fcdbb0bd8e4c6ba469c7b32
+
+      # refs/heads/main @ 2025-04-10
+      - uses: nicknovitski/nix-develop@5da6ac475f1ffbcf54ee562fa3056646e146be95
+
+      - run: nix flake check

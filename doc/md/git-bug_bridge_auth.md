@@ -14,8 +14,9 @@ git-bug bridge auth [flags]
 
 ### SEE ALSO
 
-* [git-bug bridge](git-bug_bridge.md)	 - List bridges to other bug trackers
-* [git-bug bridge auth add-token](git-bug_bridge_auth_add-token.md)	 - Store a new token
-* [git-bug bridge auth rm](git-bug_bridge_auth_rm.md)	 - Remove a credential
-* [git-bug bridge auth show](git-bug_bridge_auth_show.md)	 - Display an authentication credential
-
+- [git-bug bridge](git-bug_bridge.md) - List bridges to other bug trackers
+- [git-bug bridge auth add-token](git-bug_bridge_auth_add-token.md) - Store a
+  new token
+- [git-bug bridge auth rm](git-bug_bridge_auth_rm.md) - Remove a credential
+- [git-bug bridge auth show](git-bug_bridge_auth_show.md) - Display an
+  authentication credential

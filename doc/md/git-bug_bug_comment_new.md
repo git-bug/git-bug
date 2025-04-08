@@ -17,5 +17,4 @@ git-bug bug comment new [BUG_ID] [flags]
 
 ### SEE ALSO
 
-* [git-bug bug comment](git-bug_bug_comment.md)	 - List a bug's comments
-
+- [git-bug bug comment](git-bug_bug_comment.md) - List a bug's comments
