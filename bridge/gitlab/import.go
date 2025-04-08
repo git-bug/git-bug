@@ -81,7 +81,7 @@ func (gi *gitlabImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 					continue
 				}
 				if err := gi.ensureIssueEvent(repo, b, issue, e); err != nil {
-					err := fmt.Errorf("issue event creation: %v", err)
+					err := fmt.Errorf("issue event creation: %v (%v)", err, e)
 					out <- core.NewImportError(err, entity.Id(e.ID()))
 				}
 			}

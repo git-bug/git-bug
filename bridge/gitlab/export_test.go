@@ -182,12 +182,12 @@ func TestGitlabPushPull(t *testing.T) {
 	fmt.Println("created repository", projectName)
 
 	// Make sure to remove the Gitlab repository when the test end
-	defer func(t *testing.T) {
-		if err := deleteRepository(context.TODO(), projectID, token); err != nil {
-			t.Fatal(err)
-		}
-		fmt.Println("deleted repository:", projectName)
-	}(t)
+	// defer func(t *testing.T) {
+	// 	if err := deleteRepository(context.TODO(), projectID, token); err != nil {
+	// 		t.Fatal(err)
+	// 	}
+	// 	fmt.Println("deleted repository:", projectName)
+	// }(t)
 
 	interrupt.RegisterCleaner(func() error {
 		return deleteRepository(context.TODO(), projectID, token)

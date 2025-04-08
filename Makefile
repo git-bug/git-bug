@@ -19,9 +19,9 @@ build:
 	go generate
 	go build -ldflags "$(LDFLAGS)" .
 
-# produce a build debugger friendly
-.PHONY: debug-build
-debug-build:
+# produce a debugger-friendly build
+.PHONY: build/debug
+build/debug:
 	go generate
 	go build -ldflags "$(LDFLAGS)" -gcflags=all="-N -l" .
 
