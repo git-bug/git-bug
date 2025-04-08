@@ -1,7 +1,7 @@
 all: build
 
 GIT_COMMIT:=$(shell git rev-list -1 HEAD)
-GIT_LAST_TAG:=$(shell git describe --abbrev=0 --tags)
+GIT_LAST_TAG:=$(shell git describe --abbrev=0 --tags 2>/dev/null || true)
 GIT_EXACT_TAG:=$(shell git name-rev --name-only --tags HEAD)
 UNAME_S := $(shell uname -s)
 XARGS:=xargs -r
@@ -10,9 +10,9 @@ ifeq ($(UNAME_S),Darwin)
 endif
 
 COMMANDS_PATH:=github.com/git-bug/git-bug/commands
-LDFLAGS:=-X ${COMMANDS_PATH}.GitCommit=${GIT_COMMIT} \
-	-X ${COMMANDS_PATH}.GitLastTag=${GIT_LAST_TAG} \
-	-X ${COMMANDS_PATH}.GitExactTag=${GIT_EXACT_TAG}
+LDFLAGS:=-X ${COMMANDS_PATH}.GitCommit="${GIT_COMMIT}" \
+	-X ${COMMANDS_PATH}.GitLastTag="${GIT_LAST_TAG}" \
+	-X ${COMMANDS_PATH}.GitExactTag="${GIT_EXACT_TAG}"
 
 .PHONY: build
 build:
