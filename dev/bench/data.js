@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1744105813020,
+  "lastUpdate": 1744107253407,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -9314,6 +9314,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 522316,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "25f755cb588dfbb1834f0c8630ae9a4c448e494f",
+          "message": "fix: set GitLastTag to an empty string when git-describe errors (#1355)\n\nThis change refactors the call to `git-describe` made in `//:Makefile`,\nsuch that if the call made to populate the `GitLastTag` build argument\nfails for any reason, the value is an empty string.\n\nThis resolves a fairly common situation in CI, and reproducible\nelsewhere, if the local repository does not have any tags.\n\nChange-Id: Ie8e06360d5a4016596b96c6371ce4e32ad6a8afb",
+          "timestamp": "2025-04-08T03:13:05-07:00",
+          "tree_id": "cba2539b2ad21801894d12bf8c730f803941d698",
+          "url": "https://github.com/git-bug/git-bug/commit/25f755cb588dfbb1834f0c8630ae9a4c448e494f"
+        },
+        "date": 1744107252958,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 15367281,
+            "unit": "ns/op\t  914156 B/op\t   13869 allocs/op",
+            "extra": "81 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 15367281,
+            "unit": "ns/op",
+            "extra": "81 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 914156,
+            "unit": "B/op",
+            "extra": "81 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 13869,
+            "unit": "allocs/op",
+            "extra": "81 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 84002511,
+            "unit": "ns/op\t 5391585 B/op\t   77804 allocs/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 84002511,
+            "unit": "ns/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 5391585,
+            "unit": "B/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 77804,
+            "unit": "allocs/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 512902304,
+            "unit": "ns/op\t42662744 B/op\t  522202 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 512902304,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 42662744,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 522202,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
