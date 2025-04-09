@@ -11,7 +11,7 @@ func NewSetMetadataOp(author identity.Interface, unixTime int64, target entity.I
 }
 
 // SetMetadata is a convenience function to add metadata on another operation
-func SetMetadata(b Interface, author identity.Interface, unixTime int64, target entity.Id, newMetadata map[string]string) (*dag.SetMetadataOperation[*Snapshot], error) {
+func SetMetadata(b ReadWrite, author identity.Interface, unixTime int64, target entity.Id, newMetadata map[string]string) (*dag.SetMetadataOperation[*Snapshot], error) {
 	op := NewSetMetadataOp(author, unixTime, target, newMetadata)
 	if err := op.Validate(); err != nil {
 		return nil, err
