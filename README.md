@@ -137,13 +137,13 @@ Often, projects needs to have their bug-tracker public and accept editions from 
 Create a new identity:
 
 ```
-git bug user create
+git bug user new
 ```
 
 Create a new bug:
 
 ```
-git bug add
+git bug bug new
 ```
 
 Your favorite editor will open to write a title and a message.
