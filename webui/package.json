@@ -30,7 +30,7 @@
     "unified": "^10.1.2"
   },
   "devDependencies": {
-    "@babel/runtime": "^7.19.0",
+    "@babel/runtime": "^7.27.0",
     "@graphql-codegen/cli": "^2.13.3",
     "@graphql-codegen/fragment-matcher": "^3.3.1",
     "@graphql-codegen/introspection": "^2.2.1",
