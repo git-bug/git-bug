@@ -1,6 +1,7 @@
 module github.com/git-bug/git-bug
 
 go 1.22.5
+toolchain go1.24.1
 
 // https://github.com/praetorian-inc/gokart/pull/84
 replace github.com/praetorian-inc/gokart v0.5.1 => github.com/selesy/gokart v0.5.2-rc1
@@ -38,9 +39,9 @@ require (
 	gitlab.com/gitlab-org/api/client-go v0.116.0
 	golang.org/x/crypto v0.31.0
 	golang.org/x/oauth2 v0.22.0
-	golang.org/x/sync v0.10.0
+	golang.org/x/sync v0.13.0
 	golang.org/x/sys v0.28.0
-	golang.org/x/text v0.21.0
+	golang.org/x/text v0.24.0
 )
 
 require (
