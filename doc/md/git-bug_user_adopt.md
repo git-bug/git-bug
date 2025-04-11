@@ -14,5 +14,4 @@ git-bug user adopt USER_ID [flags]
 
 ### SEE ALSO
 
-* [git-bug user](git-bug_user.md)	 - List identities
-
+- [git-bug user](git-bug_user.md) - List identities

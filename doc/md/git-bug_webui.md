@@ -6,9 +6,8 @@ Launch the web UI
 
 Launch the web UI.
 
-Available git config:
-  git-bug.webui.open [bool]: control the automatic opening of the web UI in the default browser
-
+Available git config: git-bug.webui.open \[bool\]: control the automatic opening
+of the web UI in the default browser
 
 ```
 git-bug webui [flags]
@@ -29,5 +28,4 @@ git-bug webui [flags]
 
 ### SEE ALSO
 
-* [git-bug](git-bug.md)	 - A bug tracker embedded in Git
-
+- [git-bug](git-bug.md) - A bug tracker embedded in Git

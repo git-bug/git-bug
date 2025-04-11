@@ -14,5 +14,5 @@ git-bug bridge auth rm BRIDGE_ID [flags]
 
 ### SEE ALSO
 
-* [git-bug bridge auth](git-bug_bridge_auth.md)	 - List all known bridge authentication credentials
-
+- [git-bug bridge auth](git-bug_bridge_auth.md) - List all known bridge
+  authentication credentials

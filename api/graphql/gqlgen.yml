@@ -1,3 +1,4 @@
+---
 schema: "schema/*.graphql"
 exec:
   layout: follow-schema

@@ -4,7 +4,9 @@ Configure a new bridge
 
 ### Synopsis
 
-Configure a new bridge by passing flags or/and using interactive terminal prompts. You can avoid all the terminal prompts by passing all the necessary flags to configure your bridge.
+Configure a new bridge by passing flags or/and using interactive terminal
+prompts. You can avoid all the terminal prompts by passing all the necessary
+flags to configure your bridge.
 
 ```
 git-bug bridge new [flags]
@@ -86,5 +88,4 @@ git bug bridge new \
 
 ### SEE ALSO
 
-* [git-bug bridge](git-bug_bridge.md)	 - List bridges to other bug trackers
-
+- [git-bug bridge](git-bug_bridge.md) - List bridges to other bug trackers

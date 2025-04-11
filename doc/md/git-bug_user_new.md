@@ -18,5 +18,4 @@ git-bug user new [flags]
 
 ### SEE ALSO
 
-* [git-bug user](git-bug_user.md)	 - List identities
-
+- [git-bug user](git-bug_user.md) - List identities

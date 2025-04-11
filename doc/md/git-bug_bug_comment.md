@@ -14,7 +14,8 @@ git-bug bug comment [BUG_ID] [flags]
 
 ### SEE ALSO
 
-* [git-bug bug](git-bug_bug.md)	 - List bugs
-* [git-bug bug comment edit](git-bug_bug_comment_edit.md)	 - Edit an existing comment on a bug
-* [git-bug bug comment new](git-bug_bug_comment_new.md)	 - Add a new comment to a bug
-
+- [git-bug bug](git-bug_bug.md) - List bugs
+- [git-bug bug comment edit](git-bug_bug_comment_edit.md) - Edit an existing
+  comment on a bug
+- [git-bug bug comment new](git-bug_bug_comment_new.md) - Add a new comment to a
+  bug

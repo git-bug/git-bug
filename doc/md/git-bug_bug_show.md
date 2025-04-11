@@ -16,5 +16,4 @@ git-bug bug show [BUG_ID] [flags]
 
 ### SEE ALSO
 
-* [git-bug bug](git-bug_bug.md)	 - List bugs
-
+- [git-bug bug](git-bug_bug.md) - List bugs

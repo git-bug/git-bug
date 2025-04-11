@@ -16,5 +16,4 @@ git-bug bug title edit [BUG_ID] [flags]
 
 ### SEE ALSO
 
-* [git-bug bug title](git-bug_bug_title.md)	 - Display the title of a bug
-
+- [git-bug bug title](git-bug_bug_title.md) - Display the title of a bug

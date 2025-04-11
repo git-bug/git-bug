@@ -1,6 +1,6 @@
 ## Pattern
 
-CLI commands should consistently follow this pattern: 
+CLI commands should consistently follow this pattern:
 
 ```
 xxx                 --> list xxx things if list, otherwise show one
