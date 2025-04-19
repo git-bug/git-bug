@@ -12,6 +12,9 @@ on:
   merge_group:
     types:
       - checks_requested
+  push:
+    branches:
+      - gitlab-push-pull-test
   pull_request:
     branches:
       - master
