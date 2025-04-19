@@ -7,6 +7,7 @@ import (
 
 	"gitlab.com/gitlab-org/api/client-go"
 
+	"github.com/git-bug/git-bug/bridge/gitlab/parser"
 	"github.com/git-bug/git-bug/util/text"
 )
 
@@ -50,7 +51,11 @@ type NoteEvent struct{ gitlab.Note }
 func (n NoteEvent) ID() string           { return fmt.Sprintf("%d", n.Note.ID) }
 func (n NoteEvent) UserID() int          { return n.Author.ID }
 func (n NoteEvent) CreatedAt() time.Time { return *n.Note.CreatedAt }
+
 func (n NoteEvent) Kind() EventKind {
+	if _, err := parser.NewWithInput(parser.TitleParser, n.Body).Parse(); err == nil {
+		return EventTitleChanged
+	}
 
 	switch {
 	case !n.System:
@@ -70,9 +75,6 @@ func (n NoteEvent) Kind() EventKind {
 
 	case n.Body == "unlocked this issue":
 		return EventUnlocked
-
-	case strings.HasPrefix(n.Body, "changed title from"):
-		return EventTitleChanged
 
 	case strings.HasPrefix(n.Body, "changed due date to"):
 		return EventChangedDuedate
@@ -107,11 +109,15 @@ func (n NoteEvent) Kind() EventKind {
 
 }
 
-func (n NoteEvent) Title() string {
+func (n NoteEvent) Title() (string, error) {
 	if n.Kind() == EventTitleChanged {
-		return getNewTitle(n.Body)
+		t, err := parser.NewWithInput(parser.TitleParser, n.Body).Parse()
+		if err != nil {
+			return "", err
+		}
+		return t, nil
 	}
-	return text.CleanupOneLine(n.Body)
+	return text.CleanupOneLine(n.Body), nil
 }
 
 var _ Event = &LabelEvent{}
@@ -206,15 +212,4 @@ func SortedEvents(inputs ...<-chan Event) chan Event {
 	}()
 
 	return out
-}
-
-// getNewTitle parses body diff given by gitlab api and return it final form
-// examples:
-// - "changed title from **fourth issue** to **fourth issue{+ changed+}**"
-// - "changed title from **fourth issue{- changed-}** to **fourth issue**"
-func getNewTitle(diff string) string {
-	newTitle := strings.Split(diff, "** to **")[1]
-	newTitle = strings.Replace(newTitle, "{+", "", -1)
-	newTitle = strings.Replace(newTitle, "+}", "", -1)
-	return strings.TrimSuffix(newTitle, "**")
 }

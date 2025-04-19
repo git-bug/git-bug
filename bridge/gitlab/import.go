@@ -81,7 +81,7 @@ func (gi *gitlabImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 					continue
 				}
 				if err := gi.ensureIssueEvent(repo, b, issue, e); err != nil {
-					err := fmt.Errorf("issue event creation: %v", err)
+					err := fmt.Errorf("unable to create issue event: %v", err)
 					out <- core.NewImportError(err, entity.Id(e.ID()))
 				}
 			}
@@ -277,10 +277,15 @@ func (gi *gitlabImporter) ensureIssueEvent(repo *cache.RepoCache, b *cache.BugCa
 			return nil
 		}
 
+		title, err := event.(NoteEvent).Title()
+		if err != nil {
+			return err
+		}
+
 		op, err := b.SetTitleRaw(
 			author,
 			event.CreatedAt().Unix(),
-			event.(NoteEvent).Title(),
+			title,
 			map[string]string{
 				metaKeyGitlabId: event.ID(),
 			},
@@ -330,7 +335,7 @@ func (gi *gitlabImporter) ensureIssueEvent(repo *cache.RepoCache, b *cache.BugCa
 		return nil
 
 	default:
-		return fmt.Errorf("unexpected event")
+		return fmt.Errorf("unexpected event: %v", event)
 	}
 
 	return nil
