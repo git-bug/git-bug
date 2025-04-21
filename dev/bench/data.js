@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1745025151289,
+  "lastUpdate": 1745213787233,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -9508,6 +9508,102 @@ window.BENCHMARK_DATA = {
             "value": 522258,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "552cf77d464feb6b406c2fc6f6c264326fccd3fd",
+          "message": "refactor: rename //:git-bug.go to //:main.go (#1373)\n\n`main.go` is and always has been the conventional entrypoint for\nbinaries (this is actually true for libraries as well, e.g. some\ninternal\n`//foo` package would typically have an entrypoint of `//foo:foo.go`)\n\nChange-Id: Ic75db640b06dc5c39a8c88db0d9d73d78f39d772",
+          "timestamp": "2025-04-20T22:35:17-07:00",
+          "tree_id": "07c0e0b4cca8b6b712f6ffc652a2e3b9a0559d12",
+          "url": "https://github.com/git-bug/git-bug/commit/552cf77d464feb6b406c2fc6f6c264326fccd3fd"
+        },
+        "date": 1745213786668,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 14841887,
+            "unit": "ns/op\t  913014 B/op\t   13866 allocs/op",
+            "extra": "86 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 14841887,
+            "unit": "ns/op",
+            "extra": "86 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 913014,
+            "unit": "B/op",
+            "extra": "86 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 13866,
+            "unit": "allocs/op",
+            "extra": "86 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 77146841,
+            "unit": "ns/op\t 5328557 B/op\t   77517 allocs/op",
+            "extra": "14 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 77146841,
+            "unit": "ns/op",
+            "extra": "14 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 5328557,
+            "unit": "B/op",
+            "extra": "14 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 77517,
+            "unit": "allocs/op",
+            "extra": "14 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 488356186,
+            "unit": "ns/op\t38250264 B/op\t  499345 allocs/op",
+            "extra": "3 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 488356186,
+            "unit": "ns/op",
+            "extra": "3 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 38250264,
+            "unit": "B/op",
+            "extra": "3 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 499345,
+            "unit": "allocs/op",
+            "extra": "3 times\n4 procs"
           }
         ]
       }
