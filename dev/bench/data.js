@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1745213787233,
+  "lastUpdate": 1745214678874,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -9604,6 +9604,102 @@ window.BENCHMARK_DATA = {
             "value": 499345,
             "unit": "allocs/op",
             "extra": "3 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3f84d9498d23516344783dd4eb84278a5875afee",
+          "message": "revert: \"Create Dependabot config file\" (#1374)\n\nThis reverts commit cc3b7c328dd4e4ad51de15919962d62f1146ca51,\neffectively disabling Dependabot. This is being done primarily due to\ngit-bug/git-bug#1367, but also because the implementation of this bot is\nnoisy and often broken (failing to run `go mod tidy`, resulting in a CI\nerror that requires manual intervention to fix).\n\nAutomatically updating dependencies is helpful, but not a priority right\nnow. In the future, it is possible to revert this commit, however, I\nwould suggest looking at renovate [0] as an alternative approach, as I\npersonally find it to be far less invasive/noisy (see #1247).\n\n[0]: https://docs.renovatebot.com/\n\nChange-Id: I32f06381e1abf66a2655b5b6ba5c96cca6124720",
+          "timestamp": "2025-04-20T22:50:10-07:00",
+          "tree_id": "fff898d4aa58af9443f6ff138622235b09f2ad97",
+          "url": "https://github.com/git-bug/git-bug/commit/3f84d9498d23516344783dd4eb84278a5875afee"
+        },
+        "date": 1745214678488,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 16967588,
+            "unit": "ns/op\t  915894 B/op\t   13885 allocs/op",
+            "extra": "64 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 16967588,
+            "unit": "ns/op",
+            "extra": "64 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 915894,
+            "unit": "B/op",
+            "extra": "64 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 13885,
+            "unit": "allocs/op",
+            "extra": "64 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 84842433,
+            "unit": "ns/op\t 5340782 B/op\t   77528 allocs/op",
+            "extra": "14 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 84842433,
+            "unit": "ns/op",
+            "extra": "14 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 5340782,
+            "unit": "B/op",
+            "extra": "14 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 77528,
+            "unit": "allocs/op",
+            "extra": "14 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 543962058,
+            "unit": "ns/op\t42643536 B/op\t  522217 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 543962058,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 42643536,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 522217,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
           }
         ]
       }
