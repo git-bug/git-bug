@@ -65,8 +65,8 @@ jobs:
           days-before-close: -1
           days-before-stale: 90
           exempt-all-milestones: true
-          exempt-issue-labels: lifecycle/frozen,lifecycle/rotten,lifecycle/stale
-          exempt-pr-labels: lifecycle/frozen,lifecycle/rotten,lifecycle/stale
+          exempt-issue-labels: lifecycle/pinned,lifecycle/frozen,lifecycle/rotten,lifecycle/stale
+          exempt-pr-labels: lifecycle/pinned,lifecycle/frozen,lifecycle/rotten,lifecycle/stale
           labels-to-remove-when-stale: lifecycle/active
           stale-issue-label: lifecycle/stale
           stale-issue-message: ${{ inputs.issue-message }}
@@ -86,8 +86,8 @@ jobs:
           days-before-stale: 180
           exempt-all-milestones: true
           labels-to-remove-when-stale: lifecycle/active,lifecycle/stale
-          exempt-issue-labels: lifecycle/frozen
-          exempt-pr-labels: lifecycle/frozen
+          exempt-issue-labels: lifecycle/pinned,lifecycle/frozen
+          exempt-pr-labels: lifecycle/pinned,lifecycle/frozen
           only-labels: lifecycle/stale
           stale-issue-label: lifecycle/rotten
           stale-issue-message: ${{ inputs.issue-message }}
