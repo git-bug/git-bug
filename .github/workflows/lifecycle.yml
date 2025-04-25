@@ -25,7 +25,7 @@ on:
           ---
 
           To avoid automatic lifecycle management of this issue, add
-          `lifecycle/frozen`.
+          `lifecycle/pinned`.
 
       pr-message:
         type: string
@@ -50,7 +50,7 @@ on:
           ---
 
           To avoid automatic lifecycle management of this pull request, add
-          `lifecycle/frozen`.
+          `lifecycle/pinned`.
 
 jobs:
   stale:
@@ -65,8 +65,8 @@ jobs:
           days-before-close: -1
           days-before-stale: 90
           exempt-all-milestones: true
-          exempt-issue-labels: lifecycle/pinned,lifecycle/frozen,lifecycle/rotten,lifecycle/stale
-          exempt-pr-labels: lifecycle/pinned,lifecycle/frozen,lifecycle/rotten,lifecycle/stale
+          exempt-issue-labels: lifecycle/pinned,lifecycle/rotten,lifecycle/stale
+          exempt-pr-labels: lifecycle/pinned,lifecycle/rotten,lifecycle/stale
           labels-to-remove-when-stale: lifecycle/active
           stale-issue-label: lifecycle/stale
           stale-issue-message: ${{ inputs.issue-message }}
@@ -86,8 +86,8 @@ jobs:
           days-before-stale: 180
           exempt-all-milestones: true
           labels-to-remove-when-stale: lifecycle/active,lifecycle/stale
-          exempt-issue-labels: lifecycle/pinned,lifecycle/frozen
-          exempt-pr-labels: lifecycle/pinned,lifecycle/frozen
+          exempt-issue-labels: lifecycle/pinned
+          exempt-pr-labels: lifecycle/pinned
           only-labels: lifecycle/stale
           stale-issue-label: lifecycle/rotten
           stale-issue-message: ${{ inputs.issue-message }}
