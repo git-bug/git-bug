@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1745214678874,
+  "lastUpdate": 1745596214679,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -9698,6 +9698,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 522217,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "197eb59912577641e5379daf137e144415abcaa5",
+          "message": "fix: refactor how gitlab title changes are detected (#1370)\n\nThis change refactors how issue title changes from gitlab events are\ndetected, fixing an issue (due to upstream changing the format of the\nevent body from markdown-esque to html), and improving on error\nhandling.\n\nThe error boiled down to a change in the issue title format. Gitlab\nchanged this on April 17 2025 with the release of version 17.11 [0],\nalthough the only place a reference to this change exists is in the\nchangelog [1], which is not linked to from the releases page.\n\nTo account for the potential future in which other fields need to be\nparsed in this way, an internal parser library was introduced at\n`//bridge/gitlab/parser:parser.go` with initial support for parsing\ntitle change messages.\n\nAn issue was opened with the Gitlab team discussing the fact that this\nwas a breaking change [2]. This may lead to moving title changes (or\nmaybe all changes) to `resource_*_events`, which would likely provide a\nsmoother experience for our use case.\n\nDebugging this issue surfaced a few pain points with this bridge:\n\n- Errors are few and far between, and when they do exist and are\n  managed, they are often not propagated, often existing as simple\n  `fmt.Printf` calls\n- Inconsistent and uninformative logging structure when there _are_\n  errors, leading to challenges in debugging unexpected behavior\n- Fragility: we are parsing random text from event fields (for title\n  changes and more). This will likely lead to future breakage should\n  Gitlab change the format of other fields. Ideally, the gitlab SDK\n  would start classifying notes and have fields like `type`, `old`,\n  `new`... but this is unlikely to happen in the short term\n\n[0]: https://about.gitlab.com/releases/2025/04/17/gitlab-17-11-released/\n[1]:\nhttps://gitlab.com/gitlab-org/gitlab/-/commit/b3e1fdcf45f8b18110a2f5217b9964a11616d316#ab09011fa121d0a2bb9fa4ca76094f2482b902b7_5_232\n[2]: https://gitlab.com/gitlab-org/gitlab/-/issues/536827\n\nCloses: #1367\nChange-Id: I3bd7fa1c39a9e4dd2176d6e482e30ab68965f6e7",
+          "timestamp": "2025-04-25T08:49:09-07:00",
+          "tree_id": "e9946e88eeebe19a941def1c784e8a4cfc2097da",
+          "url": "https://github.com/git-bug/git-bug/commit/197eb59912577641e5379daf137e144415abcaa5"
+        },
+        "date": 1745596214320,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 16077757,
+            "unit": "ns/op\t  915159 B/op\t   13877 allocs/op",
+            "extra": "72 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 16077757,
+            "unit": "ns/op",
+            "extra": "72 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 915159,
+            "unit": "B/op",
+            "extra": "72 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 13877,
+            "unit": "allocs/op",
+            "extra": "72 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 83694281,
+            "unit": "ns/op\t 5413308 B/op\t   77809 allocs/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 83694281,
+            "unit": "ns/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 5413308,
+            "unit": "B/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 77809,
+            "unit": "allocs/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 630500602,
+            "unit": "ns/op\t42695040 B/op\t  522241 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 630500602,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 42695040,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 522241,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
