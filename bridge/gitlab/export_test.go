@@ -179,14 +179,14 @@ func TestGitlabPushPull(t *testing.T) {
 	projectID, err := createRepository(context.TODO(), projectName, token)
 	require.NoError(t, err)
 
-	fmt.Println("created repository", projectName)
+	fmt.Printf("created project: %s (%d)\n", projectName, projectID)
 
 	// Make sure to remove the Gitlab repository when the test end
 	defer func(t *testing.T) {
 		if err := deleteRepository(context.TODO(), projectID, token); err != nil {
 			t.Fatal(err)
 		}
-		fmt.Println("deleted repository:", projectName)
+		fmt.Printf("deleted repository: %s (%d)\n", projectName, projectID)
 	}(t)
 
 	interrupt.RegisterCleaner(func() error {
@@ -215,7 +215,7 @@ func TestGitlabPushPull(t *testing.T) {
 	}
 	require.NoError(t, err)
 
-	fmt.Printf("test repository exported in %f seconds\n", time.Since(start).Seconds())
+	fmt.Printf("repository exported in %f seconds\n", time.Since(start).Seconds())
 
 	repoTwo := repository.CreateGoGitTestRepo(t, false)
 
