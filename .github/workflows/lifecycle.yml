@@ -1,95 +1,175 @@
 name: lifecycle
 
 on:
-  workflow_call:
-    inputs:
-      issue-message:
-        type: string
-        default: |
-          This bot triages issues in order to help the maintainers identify what
-          needs attention, according to the following lifecycle rules:
+  issues:
+    types:
+      - assigned
+      - closed
+      - demilestoned
+      - milestoned
+      - pinned
+      - unpinned
+      - reopened
+  issue_comment:
+    types:
+      - created
+  pull_request:
+    types:
+      - assigned
+      - auto_merge_enabled
+      - converted_to_draft
+      - demilestoned
+      - enqueued
+      - milestoned
+      - ready_for_review
+      - reopened
+      - synchronize
+  pull_request_review:
+    types:
+      - submitted
+      - dismissed
+  schedule:
+    - cron: '17 3 * * *' # every day at 03:17 UTC
 
-          - After 90 days of inactivity, `lifecycle/stale` is applied
-          - After 90 days of inactivity since `lifecycle/stale` was applied,
-            `lifecycle/rotten` is applied
-
-          **This bot will not automatically close stale issues.**
-
-          To remove the stale status, you can:
-
-          - Remove the stale label from this issue
-          - Comment on this issue
-          - Close this issue
-          - Offer to help out with triaging
-
-          ---
-
-          To avoid automatic lifecycle management of this issue, add
-          `lifecycle/pinned`.
-
-      pr-message:
-        type: string
-        default: |
-          This bot triages pull requests in order to help the maintainers
-          identify what needs attention, according to the following lifecycle
-          rules:
-
-          - After 90 days of inactivity, `lifecycle/stale` is applied
-          - After 90 days of inactivity since `lifecycle/stale` was applied,
-            `lifecycle/rotten` is applied
-
-          **This bot will not automatically close stale pull requests.**
-
-          To remove the stale status, you can:
-
-          - Remove the stale label from this pull request
-          - Comment on this issue
-          - Close this issue
-          - Offer to help out with triage and code review
-
-          ---
-
-          To avoid automatic lifecycle management of this pull request, add
-          `lifecycle/pinned`.
+concurrency:
+  group: lifecycle-${{ github.event.issue.number || github.event.pull_request.number || 'scheduled' }}
+  cancel-in-progress: false
 
 jobs:
-  stale:
-    name: stale
+  auto-label:
+    name: auto-label
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github/actions
+
+      - name: "add label for pinned or milestoned item: lifecycle/pinned"
+        if: github.event.action == 'pinned' || github.event.action == 'milestoned'
+        uses: ./.github/actions/auto-label
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          add: lifecycle/pinned
+          remove: |
+            lifecycle/idle
+            lifecycle/dormant
+
+      - name: "remove label for unpinned or demilestoned item: lifecycle/pinned"
+        if: github.event.action == 'unpinned' || github.event.action == 'demilestoned'
+        uses: ./.github/actions/auto-label
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          remove: lifecycle/pinned
+
+      - name: "remove lifecycle label due to activity"
+        if: github.event.action != 'pinned' && github.event.action != 'milestoned'
+        uses: ./.github/actions/auto-label
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          remove: |
+            lifecycle/idle
+            lifecycle/dormant
+
+  idle-sweeper:
+    name: idle-sweeper
+    if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
     permissions:
       issues: write
       pull-requests: write
+    env:
+      ISSUE_MESSAGE_DETAILS: |
+        <br /><strong>Issues will <em>not</em> be automatically closed due to
+        inactivity.</strong>
+        <hr />
+        <details>
+        <summary>Learn more</summary>
+
+        This bot triages issues in order to help the maintainers identify what
+        needs attention, according to the following lifecycle rules:
+
+        - After 90 days of inactivity, <code>lifecycle/idle</code> is applied
+        - After 180 days of inactivity, <code>lifecycle/dormant</code> is applied
+
+        The following actions remove the inactive status:
+
+        - Removing the <code>lifecycle/*</code> label from this issue
+        - Commenting on this issue
+        - Adding a new assignee to this issue
+        - Reopening this issue
+        - Adding this issue to a milestone
+        - Pinning this issue to the top of the issue board
+
+        To avoid automatic lifecycle management of this issue, maintainers can
+        add the <code>lifecycle/pinned</code> label.
+        </details>
+      PR_MESSAGE_DETAILS: |
+        <br /><strong>Pull requests will <em>not</em> be closed automatically
+        due to inactivity.</strong>
+
+        <details>
+        <summary>Learn more</summary>
+        This bot triages pull requests in order to help the maintainers identify
+        what needs attention, according to the following lifecycle rules:
+
+        - After 90 days of inactivity, <code>lifecycle/idle</code> is applied
+        - After 90 days of inactivity, <code>lifecycle/dormant</code> is applied
+
+        The following actions remove the inactive status:
+
+        - Removing the <code>lifecycle/*</code> label from this pull request
+        - Commenting on this pull request
+        - Submitting a review for this pull request
+        - Adding a new assignee to this pull request
+        - Reopening this pull request
+        - Adding this pull request to a milestone
+        - Converting this pull request to a draft
+        - Setting this pull request as "ready to review" (not a draft)
+        - Enabling auto-merge, or adding this pull request to the merge queue
+
+        To avoid automatic lifecycle management of this pull request,
+        maintainers can add the <code>lifecycle/pinned</code> label.
+        </details>
     steps:
-      - uses: actions/stale@v9
+      - name: "inactivity check: 90 days"
+        uses: actions/stale@v9
         with:
           days-before-close: -1
           days-before-stale: 90
           exempt-all-milestones: true
-          exempt-issue-labels: lifecycle/pinned,lifecycle/rotten,lifecycle/stale
-          exempt-pr-labels: lifecycle/pinned,lifecycle/rotten,lifecycle/stale
+          exempt-issue-labels: lifecycle/idle,lifecycle/dormant,lifecycle/pinned
+          exempt-pr-labels: lifecycle/idle,lifecycle/dormant,lifecycle/pinned
           labels-to-remove-when-stale: lifecycle/active
-          stale-issue-label: lifecycle/stale
-          stale-issue-message: ${{ inputs.issue-message }}
-          stale-pr-label: lifecycle/stale
-          stale-pr-message: ${{ inputs.pr-message }}
+          stale-issue-label: lifecycle/idle
+          stale-issue-message: |
+            Pinging maintainers. This issue has been inactive for 90 days.
+            ${{ env.ISSUE_MESSAGE_DETAILS }}
+          stale-pr-label: lifecycle/idle
+          stale-pr-message: |
+            Pinging maintainers. This pull request has been inactive for 90 days.
+            ${{ env.PR_MESSAGE_DETAILS }}
 
-  rotten:
-    name: rotten
-    runs-on: ubuntu-latest
-    permissions:
-      issues: write
-      pull-requests: write
-    steps:
-      - uses: actions/stale@v9
+      - name: "inactivity check: 180 days"
+        uses: actions/stale@v9
         with:
           days-before-close: -1
           days-before-stale: 180
           exempt-all-milestones: true
-          labels-to-remove-when-stale: lifecycle/active,lifecycle/stale
-          exempt-issue-labels: lifecycle/pinned
-          exempt-pr-labels: lifecycle/pinned
-          only-labels: lifecycle/stale
-          stale-issue-label: lifecycle/rotten
-          stale-issue-message: ${{ inputs.issue-message }}
-          stale-pr-label: lifecycle/rotten
-          stale-pr-message: ${{ inputs.pr-message }}
+          labels-to-remove-when-stale: lifecycle/idle
+          only-labels: lifecycle/idle
+          stale-issue-label: lifecycle/dormant
+            Pinging maintainers. This issue has been inactive for 180 days.
+            ${{ env.ISSUE_MESSAGE_DETAILS }}
+          stale-pr-label: lifecycle/dormant
+          stale-pr-message: |
+            Pinging maintainers. This pull request has been inactive for 180 days.
+            ${{ env.PR_MESSAGE_DETAILS }}
