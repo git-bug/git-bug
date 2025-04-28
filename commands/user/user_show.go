@@ -69,7 +69,7 @@ func runUserShow(env *execenv.Env, opts userShowOptions, args []string) error {
 			env.Out.Printf("%s\n", id.Id())
 		case "lastModification":
 			env.Out.Printf("%s\n", id.LastModification().
-				Time().Format("Mon Jan 2 15:04:05 2006 +0200"))
+				Time().Format("Mon Jan 2 15:04:05 2006 -0700"))
 		case "lastModificationLamport":
 			for name, t := range id.LastModificationLamports() {
 				env.Out.Printf("%s\n%d\n", name, t)
@@ -92,7 +92,7 @@ func runUserShow(env *execenv.Env, opts userShowOptions, args []string) error {
 	env.Out.Printf("Name: %s\n", id.Name())
 	env.Out.Printf("Email: %s\n", id.Email())
 	env.Out.Printf("Login: %s\n", id.Login())
-	env.Out.Printf("Last modification: %s\n", id.LastModification().Time().Format("Mon Jan 2 15:04:05 2006 +0200"))
+	env.Out.Printf("Last modification: %s\n", id.LastModification().Time().Format("Mon Jan 2 15:04:05 2006 -0700"))
 	env.Out.Printf("Last moditication (lamport):\n")
 	for name, t := range id.LastModificationLamports() {
 		env.Out.Printf("\t%s: %d", name, t)
