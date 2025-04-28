@@ -1,0 +1,13 @@
+name: auto-label
+description: manage labels for issues and pull requests
+author: sudoforge
+inputs:
+  add:
+    description: "List of labels to add"
+    required: false
+  remove:
+    description: "List of labels to remove"
+    required: false
+runs:
+  using: "node20"
+  main: "dist/index.js"

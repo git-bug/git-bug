@@ -28,6 +28,8 @@
             golangci-lint
             nixfmt-rfc-style
             nodePackages.prettier
+            nodejs
+            pnpm
           ];
 
           shellHook = ''
