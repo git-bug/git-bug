@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1745598767152,
+  "lastUpdate": 1745807133029,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -10084,6 +10084,102 @@ window.BENCHMARK_DATA = {
             "value": 522257,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c3ab18db5a09c9a73c7d6f1e86be4f8efc19f454",
+          "message": "feat: add action: auto-label (#1380)\n\nThis change adds a custom github action, `auto-label`, and refactors the\nlifecyle workflow to use it for improving the automation around\nmanagement of the lifecycle label.\n\nThe stale bot's message is updated to make it clear that its goal is\nonly to ping maintainers, with additional information added detailing\neach action that can be performed to remove the lifecycle status from an\nissue or pull request.\n\nHistorically, users have expressed disastisfaction with the stale bot,\nusually due to the presumption that it closes issues. This is not the\ncase, and this change hopes to improve both the automation around\nmanaging the labels, and the messaging presented when items are marked\nwith an idle or dormant life due to inactivity.\n\nChange-Id: Iacefe1e4878562e34c21e4e5875eb4b45b9997d1",
+          "timestamp": "2025-04-27T19:24:23-07:00",
+          "tree_id": "5b3352537bcb218d66ef7b18e84e1a06b8d4cb0d",
+          "url": "https://github.com/git-bug/git-bug/commit/c3ab18db5a09c9a73c7d6f1e86be4f8efc19f454"
+        },
+        "date": 1745807132581,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 13411577,
+            "unit": "ns/op\t  914173 B/op\t   13869 allocs/op",
+            "extra": "81 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 13411577,
+            "unit": "ns/op",
+            "extra": "81 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 914173,
+            "unit": "B/op",
+            "extra": "81 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 13869,
+            "unit": "allocs/op",
+            "extra": "81 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 74589431,
+            "unit": "ns/op\t 5328293 B/op\t   77414 allocs/op",
+            "extra": "15 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 74589431,
+            "unit": "ns/op",
+            "extra": "15 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 5328293,
+            "unit": "B/op",
+            "extra": "15 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 77414,
+            "unit": "allocs/op",
+            "extra": "15 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 504057000,
+            "unit": "ns/op\t38302410 B/op\t  499359 allocs/op",
+            "extra": "3 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 504057000,
+            "unit": "ns/op",
+            "extra": "3 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 38302410,
+            "unit": "B/op",
+            "extra": "3 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 499359,
+            "unit": "allocs/op",
+            "extra": "3 times\n4 procs"
           }
         ]
       }
