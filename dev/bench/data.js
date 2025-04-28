@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1745807133029,
+  "lastUpdate": 1745816370921,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -10180,6 +10180,102 @@ window.BENCHMARK_DATA = {
             "value": 499359,
             "unit": "allocs/op",
             "extra": "3 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "82763563f3ed421e3f232f9e02ab0b913f095d5c",
+          "message": "refactor: remove depdendency on pnpm for auto-label action (#1383)\n\nThis change removes pnpm from the required toolchains. While it does\nprovide some benefits over npm, it can lead to additional contributor\ncomplexity. Given that we do not use this elsewhere in the project, it\nmakes sense to remove it until such a time that it is introduced for all\njs workflows in this repo.\n\nChange-Id: I9d0771f558713d48a69a9d49a7115440039270c2",
+          "timestamp": "2025-04-27T21:58:21-07:00",
+          "tree_id": "7f0c3eaf339f849b1fc04608aea8ecdcca25de33",
+          "url": "https://github.com/git-bug/git-bug/commit/82763563f3ed421e3f232f9e02ab0b913f095d5c"
+        },
+        "date": 1745816370493,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 14688988,
+            "unit": "ns/op\t  913075 B/op\t   13869 allocs/op",
+            "extra": "81 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 14688988,
+            "unit": "ns/op",
+            "extra": "81 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 913075,
+            "unit": "B/op",
+            "extra": "81 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 13869,
+            "unit": "allocs/op",
+            "extra": "81 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 112601535,
+            "unit": "ns/op\t 5419213 B/op\t   77811 allocs/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 112601535,
+            "unit": "ns/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 5419213,
+            "unit": "B/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 77811,
+            "unit": "allocs/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 528069273,
+            "unit": "ns/op\t42794680 B/op\t  522268 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 528069273,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 42794680,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 522268,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
           }
         ]
       }
