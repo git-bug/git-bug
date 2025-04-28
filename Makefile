@@ -30,8 +30,17 @@ install: build-webui
 	go install -tags webui -ldflags "$(LDFLAGS)" .
 
 .PHONY: secure
-secure:
+secure: secure-practices secure-vulnerabilities
+
+.PHONY: secure-practices
+secure-practices:
+	go run github.com/praetorian-inc/gokart scan
+	# eventually go run github.com/securego/gosec/v2/cmd/gosec@latest ./...
+
+.PHONY: secure-vulnerabilities
+secure-vulnerabilities:
 	go tool govulncheck ./...
+
 
 .PHONY: test
 test:
