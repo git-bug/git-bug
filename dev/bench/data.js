@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1745818933868,
+  "lastUpdate": 1745884668248,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -10370,6 +10370,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 522281,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "edbd105cfd42d05b2736746acf041f3fadea6e74",
+          "message": "fix: use -0700 when formatting time (#1388)\n\n+0200 is not a valid reference identifier for the time format string,\nwhich requires a valid layout [0] using the reference time `01/02\n03:04:05PM '06 -0700`.\n\nAs the documentation notes:\n> It is a regrettable historic error that the date uses the American\n> convention of putting the numerical month before the day.\n\nThis, combined with `-0700` being hardcoded into the layout requirements\nis what likely led to the confusion that caused this issue. This change\nis a fix for all `Time.Format()` calls, adjusting the time format in\nplace to use the correct tzdata. As a future potential improvement, we\nshould consider refactoring the format to use one of the constants in\nthe time package that are exported for the different predefined\nformatting strings. This is not being done as part of this change\nbecause the current formatting string used in these calls does not match\nexactly with any of the predefined format strings.\n\n... it isn't clear to me why this passes on CI. Using `+0200` to\nreference the timezone in the format string is invalid according to the\n`time` package documentation.\n\n[0]: https://pkg.go.dev/time#Layout\n\nCloses: #1387\nChange-Id: Ifa198266c407524f7ef33ee33cf94ce9d0158f45",
+          "timestamp": "2025-04-28T16:56:37-07:00",
+          "tree_id": "945e96d6f224a589ce4184890ca2e06e5a0cc626",
+          "url": "https://github.com/git-bug/git-bug/commit/edbd105cfd42d05b2736746acf041f3fadea6e74"
+        },
+        "date": 1745884667630,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 19044661,
+            "unit": "ns/op\t  915586 B/op\t   13881 allocs/op",
+            "extra": "67 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 19044661,
+            "unit": "ns/op",
+            "extra": "67 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 915586,
+            "unit": "B/op",
+            "extra": "67 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 13881,
+            "unit": "allocs/op",
+            "extra": "67 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 104446249,
+            "unit": "ns/op\t 5492731 B/op\t   78190 allocs/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 104446249,
+            "unit": "ns/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 5492731,
+            "unit": "B/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 78190,
+            "unit": "allocs/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 562148110,
+            "unit": "ns/op\t42822488 B/op\t  522255 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 562148110,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 42822488,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 522255,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
