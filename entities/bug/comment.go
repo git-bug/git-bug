@@ -45,7 +45,7 @@ func (c Comment) FormatTimeRel() string {
 }
 
 func (c Comment) FormatTime() string {
-	return c.unixTime.Time().Format("Mon Jan 2 15:04:05 2006 +0200")
+	return c.unixTime.Time().Format("Mon Jan 2 15:04:05 2006 -0700")
 }
 
 // IsAuthored is a sign post method for gqlgen
