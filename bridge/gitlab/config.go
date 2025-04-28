@@ -194,7 +194,7 @@ func promptTokenOptions(repo repository.RepoKeyring, login, baseUrl string) (aut
 }
 
 func promptToken(baseUrl string) (*auth.Token, error) {
-	fmt.Printf("You can generate a new token by visiting %s.\n", strings.TrimSuffix(baseUrl, "/")+"/-/profile/personal_access_tokens")
+	fmt.Printf("You can generate a new token by visiting %s.\n", strings.TrimSuffix(baseUrl, "/")+"/-/user_settings/personal_access_tokens")
 	fmt.Println("Choose 'Create personal access token' and set the necessary access scope for your repository.")
 	fmt.Println()
 	fmt.Println("'api' access scope: to be able to make api calls")
