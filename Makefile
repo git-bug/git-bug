@@ -40,8 +40,15 @@ releases:
 	go generate
 	go run github.com/mitchellh/gox@v1.0.1 -ldflags "$(LDFLAGS)" -osarch '!darwin/386' -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}"
 
-.PHONY: secure
-secure:
+secure: secure-practices secure-vulnerabilities
+
+.PHONY: secure-practices
+secure-practices:
+	go run github.com/praetorian-inc/gokart scan
+	# eventually go run github.com/securego/gosec/v2/cmd/gosec@latest ./...
+
+.PHONY: secure-vulnerabilities
+secure-vulnerabilities:
 	go run golang.org/x/vuln/cmd/govulncheck ./...
 
 .PHONY: test
