@@ -2,19 +2,15 @@
   "name": "auto-labels",
   "version": "1.0.0",
   "description": "manage labels for issues and pull requests",
-  "license": "GPL-3.0",
+  "author": "the git-bug project (https://github.com/git-bug/git-bug)",
+  "license": "GPL-3.0-or-later",
   "main": "index.js",
   "scripts": {
-      "build": "ncc build index.js -o dist",
-      "prepare": "pnpm run build",
       "validate": "node --check index.js"
   },
   "dependencies": {
-    "@actions/core": "^1.10.0",
-    "@actions/github": "^5.1.1"
-  },
-  "devDependencies": {
-    "@vercel/ncc": "^0.34.0"
+    "@actions/core": "^1.11.1",
+    "@actions/github": "^6.0.0"
   }
 }
 
