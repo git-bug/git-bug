@@ -48,7 +48,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           sparse-checkout: |
-            .github/actions
+            .github/actions/auto-label
+
+      - name: "restore cache: node modules"
+        uses: actions/cache@v4
+        with:
+          path: .github/actions/auto-label/node_modules
+          key: auto-label-${{ runner.os }}-${{ hashFiles('.github/actions/auto-label/package-lock.json') }}
+          restore-keys: |
+            auto-label-${{ runner.os }}-
+
+      - name: "install dependencies for //.github/actions/auto-label"
+        working-directory: .github/actions/auto-label
+        run: npm ci
 
       - name: "add label for pinned or milestoned item: lifecycle/pinned"
         if: github.event.action == 'pinned' || github.event.action == 'milestoned'
