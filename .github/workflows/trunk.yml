@@ -29,11 +29,11 @@ jobs:
       contents: write
       deployments: write
     steps:
+      - uses: actions/checkout@v4
+
       - uses: actions/setup-go@v5
         with:
           go-version: 1.24.2
-
-      - uses: actions/checkout@v4
 
       - name: Run benchmark
         run: go test -v ./... -bench=. -run=xxx -benchmem | tee output.txt
