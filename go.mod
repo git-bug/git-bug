@@ -121,7 +121,7 @@ require (
 	github.com/zclconf/go-cty v1.15.0 // indirect
 	go.etcd.io/bbolt v1.3.10 // indirect
 	golang.org/x/mod v0.19.0 // indirect
-	golang.org/x/net v0.38.0 // indirect
+	golang.org/x/net v0.38.0
 	golang.org/x/telemetry v0.0.0-20240723021908-ccdfb411a0c4 // indirect
 	golang.org/x/term v0.30.0
 	golang.org/x/tools v0.23.0 // indirect
