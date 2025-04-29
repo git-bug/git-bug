@@ -71,7 +71,7 @@ git bug bridge new \
 
 ```
   -n, --name string         A distinctive name to identify the bridge
-  -t, --target string       The target of the bridge. Valid values are [github,gitlab,jira,launchpad-preview]
+  -t, --target string       The target of the bridge. Valid values are [github,gitlab,jira,launchpad-preview,todosrht]
   -u, --url string          The URL of the remote repository
   -b, --base-url string     The base URL of your remote issue tracker
   -l, --login string        The login on your remote issue tracker
