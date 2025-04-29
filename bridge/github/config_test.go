@@ -100,6 +100,12 @@ func TestSplitURL(t *testing.T) {
 }
 
 func TestValidateUsername(t *testing.T) {
+	if os.Getenv("CI_GITHUB_TESTS") == "true" {
+		// Run these tests only in CI with a specific environment variable set
+	} else {
+		t.Skip("Skipping test that makes real network requests to GitHub (set CI_GITHUB_TESTS=true to run)")
+	}
+
 	if env := os.Getenv("TRAVIS"); env == "true" {
 		t.Skip("Travis environment: avoiding non authenticated requests")
 	}
