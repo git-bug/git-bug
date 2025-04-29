@@ -43,7 +43,7 @@ func (ec *executionContext) _OperationConnection_edges(ctx context.Context, fiel
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Edges, nil
 	})
@@ -93,7 +93,7 @@ func (ec *executionContext) _OperationConnection_nodes(ctx context.Context, fiel
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Nodes, nil
 	})
@@ -137,7 +137,7 @@ func (ec *executionContext) _OperationConnection_pageInfo(ctx context.Context, f
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.PageInfo, nil
 	})
@@ -191,7 +191,7 @@ func (ec *executionContext) _OperationConnection_totalCount(ctx context.Context,
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.TotalCount, nil
 	})
@@ -235,7 +235,7 @@ func (ec *executionContext) _OperationEdge_cursor(ctx context.Context, field gra
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Cursor, nil
 	})
@@ -279,7 +279,7 @@ func (ec *executionContext) _OperationEdge_node(ctx context.Context, field graph
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Node, nil
 	})
@@ -323,26 +323,11 @@ func (ec *executionContext) _Operation(ctx context.Context, sel ast.SelectionSet
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case *bug.CreateOperation:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._BugCreateOperation(ctx, sel, obj)
 	case *bug.SetTitleOperation:
 		if obj == nil {
 			return graphql.Null
 		}
 		return ec._BugSetTitleOperation(ctx, sel, obj)
-	case *bug.AddCommentOperation:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._BugAddCommentOperation(ctx, sel, obj)
-	case *bug.EditCommentOperation:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._BugEditCommentOperation(ctx, sel, obj)
 	case *bug.SetStatusOperation:
 		if obj == nil {
 			return graphql.Null
@@ -353,6 +338,21 @@ func (ec *executionContext) _Operation(ctx context.Context, sel ast.SelectionSet
 			return graphql.Null
 		}
 		return ec._BugLabelChangeOperation(ctx, sel, obj)
+	case *bug.EditCommentOperation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BugEditCommentOperation(ctx, sel, obj)
+	case *bug.CreateOperation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BugCreateOperation(ctx, sel, obj)
+	case *bug.AddCommentOperation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BugAddCommentOperation(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}

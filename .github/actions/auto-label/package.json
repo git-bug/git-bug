@@ -1,6 +1,7 @@
 {
   "name": "auto-labels",
   "version": "1.0.0",
+  "type": "module",
   "description": "manage labels for issues and pull requests",
   "author": "the git-bug project (https://github.com/git-bug/git-bug)",
   "license": "GPL-3.0-or-later",
