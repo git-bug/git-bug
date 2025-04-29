@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1745894204910,
+  "lastUpdate": 1745895740778,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -10660,6 +10660,102 @@ window.BENCHMARK_DATA = {
             "value": 524570,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5e8efbae0fef3a2944d2eb0e184543a505e325ca",
+          "message": "fix: checkout repo before setting up go environment (#1390)\n\nThis change ensures that the `go.sum` file used by the\n`actions/setup-go` action as the cache identifier exists in the working\ntree.\n\nCloses: #1382\nChange-Id: I0318bfa6e7d7859baf6600ff71715eaef92b401b",
+          "timestamp": "2025-04-28T20:01:05-07:00",
+          "tree_id": "69f0ea6fd71cfd3dc15f9978e57dbe76c896d321",
+          "url": "https://github.com/git-bug/git-bug/commit/5e8efbae0fef3a2944d2eb0e184543a505e325ca"
+        },
+        "date": 1745895740345,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 13591981,
+            "unit": "ns/op\t  900370 B/op\t   13923 allocs/op",
+            "extra": "88 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 13591981,
+            "unit": "ns/op",
+            "extra": "88 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 900370,
+            "unit": "B/op",
+            "extra": "88 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 13923,
+            "unit": "allocs/op",
+            "extra": "88 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 86052092,
+            "unit": "ns/op\t 5335198 B/op\t   78012 allocs/op",
+            "extra": "13 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 86052092,
+            "unit": "ns/op",
+            "extra": "13 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 5335198,
+            "unit": "B/op",
+            "extra": "13 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 78012,
+            "unit": "allocs/op",
+            "extra": "13 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 554793884,
+            "unit": "ns/op\t38277176 B/op\t  501622 allocs/op",
+            "extra": "3 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 554793884,
+            "unit": "ns/op",
+            "extra": "3 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 38277176,
+            "unit": "B/op",
+            "extra": "3 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 501622,
+            "unit": "allocs/op",
+            "extra": "3 times\n4 procs"
           }
         ]
       }
