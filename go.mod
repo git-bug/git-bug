@@ -15,14 +15,14 @@ require (
 	github.com/99designs/gqlgen v0.17.49
 	github.com/99designs/keyring v1.2.2
 	github.com/MichaelMure/go-term-text v0.3.1
-	github.com/ProtonMail/go-crypto v1.0.0
+	github.com/ProtonMail/go-crypto v1.1.3
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/awesome-gocui/gocui v1.1.0
 	github.com/blevesearch/bleve v1.0.14
 	github.com/dustin/go-humanize v1.0.1
 	github.com/fatih/color v1.17.0
 	github.com/go-git/go-billy/v5 v5.6.0
-	github.com/go-git/go-git/v5 v5.12.1-0.20241007152421-41f08fc53529
+	github.com/go-git/go-git/v5 v5.13.0
 	github.com/gorilla/mux v1.8.1
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/icrowley/fake v0.0.0-20240710202011-f797eb4a99c0
@@ -38,11 +38,11 @@ require (
 	github.com/vbauerster/mpb/v8 v8.8.2
 	github.com/vektah/gqlparser/v2 v2.5.25
 	gitlab.com/gitlab-org/api/client-go v0.116.0
-	golang.org/x/crypto v0.36.0
+	golang.org/x/crypto v0.37.0
 	golang.org/x/oauth2 v0.22.0
-	golang.org/x/sync v0.12.0
-	golang.org/x/sys v0.31.0
-	golang.org/x/text v0.23.0
+	golang.org/x/sync v0.13.0
+	golang.org/x/sys v0.32.0
+	golang.org/x/text v0.24.0
 )
 
 require (
@@ -121,9 +121,9 @@ require (
 	github.com/zclconf/go-cty v1.15.0 // indirect
 	go.etcd.io/bbolt v1.3.10 // indirect
 	golang.org/x/mod v0.19.0 // indirect
-	golang.org/x/net v0.38.0
+	golang.org/x/net v0.39.0
 	golang.org/x/telemetry v0.0.0-20240723021908-ccdfb411a0c4 // indirect
-	golang.org/x/term v0.30.0
+	golang.org/x/term v0.31.0
 	golang.org/x/tools v0.23.0 // indirect
 	golang.org/x/vuln v1.1.3
 	google.golang.org/protobuf v1.34.2 // indirect
