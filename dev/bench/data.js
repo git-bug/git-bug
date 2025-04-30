@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1745944763610,
+  "lastUpdate": 1746023819611,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -10946,6 +10946,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 524528,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a150cdb0740d572cd5da9e8fd858168bf5796233",
+          "message": "fix: resolve the remote URI using url.*.insteadOf (#1394)\n\nThis change introduces a new method for resolving the URI for a given\nremote (by name), ensuring that the URI is rewritten following the rules\ndefined in `url.*.insteadOf` configuration.\n\nWhen `go-git@69aefb67315d775bf73df836b1e3ba5a3b321198` lands in a\nrelease (and we update go-git to that release), this should be\nrefactored to use `config.URL.InsteadOfs()`, which supports multiple\n`url.*.insteadOf` configuration blocks instead of the current limitation\nof always taking the last definition.\n\nCloses: #944\nChange-Id: Iffd111a1f4c42eff12613dcbd1b0d27df415f5e8",
+          "timestamp": "2025-04-30T07:36:14-07:00",
+          "tree_id": "63820e108f8c9cab01cf101d055f6abdefea9ec8",
+          "url": "https://github.com/git-bug/git-bug/commit/a150cdb0740d572cd5da9e8fd858168bf5796233"
+        },
+        "date": 1746023818760,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 16618531,
+            "unit": "ns/op\t  907207 B/op\t   13946 allocs/op",
+            "extra": "62 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 16618531,
+            "unit": "ns/op",
+            "extra": "62 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 907207,
+            "unit": "B/op",
+            "extra": "62 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 13946,
+            "unit": "allocs/op",
+            "extra": "62 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 91834173,
+            "unit": "ns/op\t 5360958 B/op\t   78165 allocs/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 91834173,
+            "unit": "ns/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 5360958,
+            "unit": "B/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 78165,
+            "unit": "allocs/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 575271539,
+            "unit": "ns/op\t42950056 B/op\t  524586 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 575271539,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 42950056,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 524586,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
