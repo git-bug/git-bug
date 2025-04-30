@@ -382,8 +382,14 @@ func (repo *GoGitRepo) FetchRefs(remote string, prefixes ...string) (string, err
 
 	buf := bytes.NewBuffer(nil)
 
-	err := repo.r.Fetch(&gogit.FetchOptions{
+	remoteUrl, err := repo.resolveRemote(remote, true)
+	if err != nil {
+		return "", err
+	}
+
+	err = repo.r.Fetch(&gogit.FetchOptions{
 		RemoteName: remote,
+		RemoteURL:  remoteUrl,
 		RefSpecs:   refSpecs,
 		Progress:   buf,
 	})
@@ -395,6 +401,43 @@ func (repo *GoGitRepo) FetchRefs(remote string, prefixes ...string) (string, err
 	}
 
 	return buf.String(), nil
+}
+
+// resolveRemote returns the URI for a given remote
+func (repo *GoGitRepo) resolveRemote(remote string, fetch bool) (string, error) {
+	cfg, err := repo.r.ConfigScoped(config.SystemScope)
+	if err != nil {
+		return "", fmt.Errorf("unable to load system-scoped git config: %v", err)
+	}
+
+	var url string
+	for _, re := range cfg.Remotes {
+		if remote == re.Name {
+			// url is set matching the default logic in go-git's repository.Push
+			// and repository.Fetch logic as of go-git v5.12.1.
+			//
+			// we do this because the push and fetch methods can only take one
+			// remote for both option structs, even though the push method
+			// _should_ push to all of the URLs defined for a given remote.
+			url = re.URLs[len(re.URLs)-1]
+			if fetch {
+				url = re.URLs[0]
+			}
+
+			for _, u := range cfg.URLs {
+				if strings.HasPrefix(url, u.InsteadOf) {
+					url = u.ApplyInsteadOf(url)
+					break
+				}
+			}
+		}
+	}
+
+	if url == "" {
+		return "", fmt.Errorf("unable to resolve URL for remote: %v", err)
+	}
+
+	return url, nil
 }
 
 // PushRefs push git refs matching a directory prefix to a remote
@@ -435,8 +478,14 @@ func (repo *GoGitRepo) PushRefs(remote string, prefixes ...string) (string, erro
 
 	buf := bytes.NewBuffer(nil)
 
+	remoteUrl, err := repo.resolveRemote(remote, false)
+	if err != nil {
+		return "", err
+	}
+
 	err = remo.Push(&gogit.PushOptions{
 		RemoteName: remote,
+		RemoteURL:  remoteUrl,
 		RefSpecs:   refSpecs,
 		Progress:   buf,
 	})
