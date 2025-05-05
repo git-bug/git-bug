@@ -67,7 +67,7 @@ _git_bug() {
     fi
 
 	# START PATCH
-	# replace in the array ("git","bug", ...) to ("git-bug", ...) and adjust the index in cword 
+	# replace in the array ("git","bug", ...) to ("git-bug", ...) and adjust the index in cword
     words=("git-bug" "${words[@]:2}")
     cword=$(($cword-1))
 	# END PATCH

@@ -1,3 +1,4 @@
+---
 name: lifecycle
 
 on:
@@ -45,13 +46,13 @@ jobs:
       issues: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           sparse-checkout: |
             .github/actions/auto-label
 
       - name: "restore cache: node modules"
-        uses: actions/cache@v4
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
           path: .github/actions/auto-label/node_modules
           key: auto-label-${{ runner.os }}-${{ hashFiles('.github/actions/auto-label/package-lock.json') }}
@@ -153,7 +154,7 @@ jobs:
         </details>
     steps:
       - name: "inactivity check: 90 days"
-        uses: actions/stale@v9
+        uses: actions/stale@5bef64f19d7facfb25b37b414482c7164d639639 # v9.1.0
         with:
           days-before-close: -1
           days-before-stale: 90
@@ -171,7 +172,7 @@ jobs:
             ${{ env.PR_MESSAGE_DETAILS }}
 
       - name: "inactivity check: 180 days"
-        uses: actions/stale@v9
+        uses: actions/stale@5bef64f19d7facfb25b37b414482c7164d639639 # v9.1.0
         with:
           days-before-close: -1
           days-before-stale: 180
@@ -179,9 +180,10 @@ jobs:
           labels-to-remove-when-stale: lifecycle/idle
           only-labels: lifecycle/idle
           stale-issue-label: lifecycle/dormant
+          stale-issue-message: |-
             Pinging maintainers. This issue has been inactive for 180 days.
             ${{ env.ISSUE_MESSAGE_DETAILS }}
           stale-pr-label: lifecycle/dormant
-          stale-pr-message: |
+          stale-pr-message: |-
             Pinging maintainers. This pull request has been inactive for 180 days.
             ${{ env.PR_MESSAGE_DETAILS }}

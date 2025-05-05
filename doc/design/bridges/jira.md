@@ -19,18 +19,18 @@ Hopefully the bridge will be able to enable synchronization of these soon.
 ### Credentials
 
 JIRA does not support user/personal access tokens. They have experimental
-3-legged oauth support but that requires an API token for the app configured
-by the server administrator. The only reliable authentication mechanism then is
-the username/password and session-token mechanism. We can acquire a session
-token programmatically from the username/password but these are very short lived
-(i.e. hours or less). As such the bridge currently requires an actual username
-and password as user credentials. It supports three options:
+3-legged oauth support but that requires an API token for the app configured by
+the server administrator. The only reliable authentication mechanism then is the
+username/password and session-token mechanism. We can acquire a session token
+programmatically from the username/password but these are very short lived (i.e.
+hours or less). As such the bridge currently requires an actual username and
+password as user credentials. It supports three options:
 
-1. Storing both username and password in a separate file referred to by
-   the `git-config` (I like to use `.git/jira-credentials.json`)
+1. Storing both username and password in a separate file referred to by the
+   `git-config` (I like to use `.git/jira-credentials.json`)
 2. Storing the username and password in clear-text in the git config
-3. Storing the username only in the git config and asking for the password
-   on each `push` or `pull`.
+3. Storing the username only in the git config and asking for the password on
+   each `push` or `pull`.
 
 ### Issue Creation Defaults
 
@@ -62,7 +62,6 @@ integration activities become easier.
 
 See the configuration section below on how to specify the custom field where the
 JIRA bridge should write this information.
-
 
 ### Workflows and Transitions
 
@@ -128,14 +127,14 @@ identified the match.
 ### Unlogged Changes
 
 Comments (creation and edition) do not show up in the JIRA changelog. However
-JIRA reports both a `created` and `updated` date for each comment. If we
-import a comment which has an `updated` and `created` field which do not match,
-then we treat that as a new comment edition. If we do not already have the
-comment imported, then we import an empty comment followed by a comment edition.
+JIRA reports both a `created` and `updated` date for each comment. If we import
+a comment which has an `updated` and `created` field which do not match, then we
+treat that as a new comment edition. If we do not already have the comment
+imported, then we import an empty comment followed by a comment edition.
 
-Because comment editions are not uniquely identified in JIRA we identify them
-in `git-bug` by concatenating the JIRA issue `id` with the `updated` time of
-the edition.
+Because comment editions are not uniquely identified in JIRA we identify them in
+`git-bug` by concatenating the JIRA issue `id` with the `updated` time of the
+edition.
 
 ### Workflow Validation (future)
 
@@ -171,8 +170,8 @@ configuration. You can set these options in your `.git/config` file:
 
 The format for this config entry is a JSON object containing fields you wish to
 set during issue creation when exporting bugs. If you provide a value for this
-configuration option, it must include at least the `"issuetype"` field, or
-the bridge will not be able to export any new issues.
+configuration option, it must include at least the `"issuetype"` field, or the
+bridge will not be able to export any new issues.
 
 Let's say that we want bugs exported to JIRA to have a default issue type of
 "Story" which is `issuetype` with id `10001`. Then we will add the following
@@ -193,7 +192,6 @@ create-issue-defaults = {"issuetype":"10001","customfield_1234":"default"}
 Note that the content of this value is merged verbatim to the JSON object that
 is `POST`ed to the JIRA rest API, so you can use arbitrary valid JSON.
 
-
 ### Assign git-bug id to field
 
 If you want the bridge to fill a JIRA field with the `git-bug` id when exporting
@@ -207,6 +205,7 @@ create-issue-gitbug-id = "customfield_5678"
 
 You can specify the mapping between `git-bug` status and JIRA status id's using
 the following:
+
 ```
 bug-id-map = {\"open\": \"1\", \"closed\": \"6\"}
 ```
@@ -215,6 +214,7 @@ The format of the map is `<git-bug-status-name>: <jira-status-id>`. In general
 your jira instance will have more statuses than `git-bug` will and you may map
 more than one jira-status to a git-bug status. You can do this with
 `bug-id-revmap`:
+
 ```
 bug-id-revmap = {\"10109\": \"open\", \"10006\": \"open\", \"10814\": \"open\"}
 ```
@@ -230,6 +230,7 @@ requires doublequotes to be escaped (as in the examples above).
 ### Full example
 
 Here is an example configuration with all optional fields set
+
 ```
 [git-bug "bridge.default"]
 	project = PROJ
@@ -244,22 +245,21 @@ Here is an example configuration with all optional fields set
 
 ## To-Do list
 
-* [0cf5c71] Assign git-bug to jira field on import
-* [8acce9c] Download and cache workflow representation
-* [95e3d45] Implement workflow gui
-* [c70e22a] Implement additional query filters for import
-* [9ecefaa] Create JIRA mock and add REST unit tests
-* [67bf520] Create import/export integration tests
-* [1121826] Add unit tests for utilities
-* [0597088] Use OS keyring for credentials
-* [d3e8f79] Don't count on the `Total` value in paginations
-
+- \[0cf5c71\] Assign git-bug to jira field on import
+- \[8acce9c\] Download and cache workflow representation
+- \[95e3d45\] Implement workflow gui
+- \[c70e22a\] Implement additional query filters for import
+- \[9ecefaa\] Create JIRA mock and add REST unit tests
+- \[67bf520\] Create import/export integration tests
+- \[1121826\] Add unit tests for utilities
+- \[0597088\] Use OS keyring for credentials
+- \[d3e8f79\] Don't count on the `Total` value in paginations
 
 ## Using CURL to poke at your JIRA's REST API
 
 If you need to lookup the `id` for any `status`es or the `schema` for any
-creation metadata, you can use CURL to query the API from the command line.
-Here are a couple of examples to get you started.
+creation metadata, you can use CURL to query the API from the command line. Here
+are a couple of examples to get you started.
 
 ### Getting a session token
 
@@ -271,8 +271,9 @@ curl \
   <serverUrl>/rest/auth/1/session
 ```
 
-**Note**: If you have a json pretty printer installed (`sudo apt install jq`),
-pipe the output through through that to make things more readable:
+[!NOTE]
+If you have a json pretty printer installed (`sudo apt install jq`), pipe the
+output through through that to make things more readable:
 
 ```
 curl --silent \
@@ -283,6 +284,7 @@ curl --silent \
 ```
 
 example output:
+
 ```
 {
   "session": {
@@ -316,6 +318,7 @@ curl --silent \
 ```
 
 **example output**:
+
 ```
   {
     "self": "https://jira.example.com/rest/api/2/issuetype/13105",
@@ -338,9 +341,7 @@ curl --silent \
   ...
 ```
 
-
 ### Get a list of statuses
-
 
 ```
 curl --silent \
@@ -351,6 +352,7 @@ curl --silent \
 ```
 
 **example output:**
+
 ```
 [
   {

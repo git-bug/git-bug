@@ -21,9 +21,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint:
-    uses: ./.github/workflows/lint.yml
-
   build-and-test:
     uses: ./.github/workflows/build-and-test.yml
     secrets: inherit
