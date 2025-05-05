@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746023819611,
+  "lastUpdate": 1746484921586,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -11042,6 +11042,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 524586,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "96c7a111a3cb075b5ce485f709c3eb82da121a50",
+          "message": "docs: update install, contrib, and usage documentation (#1222)\n\nThis change refactors documentation, especially //:README.md,\n//:CONTRIBUTING.md, and centralized most of the rest of the contributing\nand usage documentation into `//doc`. There are some additional minor\nchanges to the development shell and pipeline configuration.\n\nDocumentation changes focus on cleaning up erroneous language,\nreformatting, and restructuring docs in order to reduce visual noise -\nthe goals are to enable users and contributors to find what they're\nlooking\nfor much more quickly, reduce (sometimes erroneous) duplication, and\npresent a structured approach for where to put docs.\n\nAdditionally:\n\n- Added CI pipeline badge for the `trunk` workflow in `//:README.md`\n- Converted embedded emoji characters to GitHub's emoji syntax\n- Simplified `//:README.md` by moving inline documentation out to files\n  under `//doc`.\n- Removed most inline CLI \"documentation\" (lists of commands) with a\n  link to the generated CLI documentation.\n- Moved most sections with image and installation instructions into\n  `<details>` elements\n- Replaced references to gitter with matrix\n- Added `treefmt-nix` to the flake, and formatted all non-generated\n  documentation was with `nix fmt` (running `mdformat` under the hood)\n- Regenerated //doc/md and //doc/man and refactored inline docs from\nvarious\n  pages that were iterating out command line details so that they simply\n  point to //doc/md instead\n- Rewrote contributing docs to focus on using `nix`, to ensure that the\n  development shell is used. This enforces consistency across different\n  platforms with the revision and configuration of each tool we use, and\n  simplifies the onboarding story for contributors -- they only need to\n  install and configure nix (and optionally direnv). A dev container\n  will be provided in the future [0] as an alternative for users on\n  Windows (who can use WSL) or want to avoid installing `nix`.\n- Added `pinact` to the flake to support pinning action libraries used\n  in workflows.\n- Added flake checks for codespell and pinact. Combined with treefmt,\n  this entirely replaces //.github/workflows:lint.yml. With this change,\n  codespell's execution was fixed to properly execute on all files, and\n  the configuration file was refactored to properly ignore\n  package-lock.json files.\n- Added a workflow job to run flake checks.\n\n[0]: https://github.com/git-bug/git-bug/issues/1364\n\nCloses: #1212 #1276 #1330 #1357\nChange-Id: I6f4b5f5ca73780cecf66a553cce80aa3f75df2ce",
+          "timestamp": "2025-05-05T15:41:14-07:00",
+          "tree_id": "e8fd98d7a9c7759b4b85a4a7b1fb7ca343f99e94",
+          "url": "https://github.com/git-bug/git-bug/commit/96c7a111a3cb075b5ce485f709c3eb82da121a50"
+        },
+        "date": 1746484920469,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 16274303,
+            "unit": "ns/op\t  908497 B/op\t   13944 allocs/op",
+            "extra": "64 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 16274303,
+            "unit": "ns/op",
+            "extra": "64 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 908497,
+            "unit": "B/op",
+            "extra": "64 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 13944,
+            "unit": "allocs/op",
+            "extra": "64 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 90961856,
+            "unit": "ns/op\t 5343542 B/op\t   78164 allocs/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 90961856,
+            "unit": "ns/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 5343542,
+            "unit": "B/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 78164,
+            "unit": "allocs/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 580605756,
+            "unit": "ns/op\t42643672 B/op\t  524517 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 580605756,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 42643672,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 524517,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
