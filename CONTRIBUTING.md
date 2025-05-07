@@ -13,6 +13,7 @@ getting started as a contributor to this project.
   - [3.0 | Install and configure `direnv`](#30--install-and-configure-direnv)
 - [4.0 | Post-installation tasks](#40--post-installation-tasks)
   - [4.1 | Open a new shell](#41--open-a-new-shell)
+  - [4.2 | Test the development shell](#42--test-the-development-shell)
 - [Useful development commands](#useful-development-commands)
 - [Submitting changes](#submitting-changes)
 
@@ -148,7 +149,7 @@ nix run nixpkgs\#dasel -- -r toml -f ~/.config/direnv/direnv.toml \
   put -t bool -v true ".global.hide_env_diff"
 </pre>
 
-<strong>Automatically activate the development shell</strong>
+<strong>Configure automatic activation of the development shell</strong>
 
 _This is optional, but strongly recommended._
 
@@ -212,6 +213,19 @@ In order for the installation to take effect, you will need to open a new shell.
 It is recommended to do this and complete the test (described below) prior to
 closing the shell you ran the installation script in, just in case you run into
 issues and need to refer to any output it provided.
+
+### 4.2 | Test the development shell<a name="42--test-the-development-shell"></a>
+
+To test that the development shell is active, you will need to move to the
+repository's directory. If you installed and properly configured `direnv` for
+automatic activation, the shell should activate upon changing directories.
+
+```
+{ test -n "$IN_NIX_SHELL" && echo "ACTIVE"; } || echo "INACTIVE"
+```
+
+If you have activated the development shell, you will see `ACTIVE` printed to
+the console. If you have not, you will see `INACTIVE` printed to the console.
 
 ______________________________________________________________________
 
