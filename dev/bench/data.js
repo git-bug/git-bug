@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746663548091,
+  "lastUpdate": 1746675081688,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -11234,6 +11234,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 524516,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "dac71e738c941a3c59502dcd55158d01be30530c",
+          "message": "test: simplify github-related variables (#1396)\n\nThis change removes extraneous variables used for the github bridge\n(e2e) tests, conslidating on GITHUB_USER and GITHUB_TOKEN, which match\nthe variables read by the github CLI and what users would have in their\nenvironment if they are using the vars.\n\nWe leave GITHUB_TOKEN_PRIVATE and GITHUB_TOKEN_PUBLIC for now, as those\nare used in a single test to validate a minimum set of permissions.\nMoving away from these will require additional refactoring.\n\nChange-Id: I8d83e4f0c9b2556133c5ec3daca492fe1a4bd968",
+          "timestamp": "2025-05-07T20:30:33-07:00",
+          "tree_id": "77f9e4b448978c2e977045b49358bdc40f23407b",
+          "url": "https://github.com/git-bug/git-bug/commit/dac71e738c941a3c59502dcd55158d01be30530c"
+        },
+        "date": 1746675080558,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 17554586,
+            "unit": "ns/op\t  907620 B/op\t   13953 allocs/op",
+            "extra": "57 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 17554586,
+            "unit": "ns/op",
+            "extra": "57 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 907620,
+            "unit": "B/op",
+            "extra": "57 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 13953,
+            "unit": "allocs/op",
+            "extra": "57 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 99332444,
+            "unit": "ns/op\t 5367579 B/op\t   78166 allocs/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 99332444,
+            "unit": "ns/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 5367579,
+            "unit": "B/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 78166,
+            "unit": "allocs/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 643766006,
+            "unit": "ns/op\t42746088 B/op\t  524526 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 643766006,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 42746088,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 524526,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
