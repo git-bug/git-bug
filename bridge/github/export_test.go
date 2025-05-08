@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"math/rand"
 	"net/http"
 	"os"
@@ -130,12 +131,15 @@ func testCases(t *testing.T, repo *cache.RepoCache) []*testCase {
 
 func TestGithubPushPull(t *testing.T) {
 	// repo owner
-	envUser := os.Getenv("GITHUB_TEST_USER")
+	envUser := os.Getenv("GITHUB_USER")
+	if envUser == "" {
+		t.Skip("missing required environment variable: GITHUB_USER")
+	}
 
 	// token must have 'repo' and 'delete_repo' scopes
-	envToken := os.Getenv("GITHUB_TOKEN_ADMIN")
+	envToken := os.Getenv("GITHUB_TOKEN")
 	if envToken == "" {
-		t.Skip("Env var GITHUB_TOKEN_ADMIN missing")
+		t.Skip("missing required environment variable: GITHUB_TOKEN")
 	}
 
 	// create repo backend
@@ -179,7 +183,7 @@ func TestGithubPushPull(t *testing.T) {
 	err = createRepository(projectName, envToken)
 	require.NoError(t, err)
 
-	fmt.Println("created repository", projectName)
+	slog.Info("created github repository", "name", projectName)
 
 	// Let Github handle the repo creation and update all their internal caches.
 	// Avoid HTTP error 404 retrieving repository node id

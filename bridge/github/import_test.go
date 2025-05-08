@@ -22,9 +22,9 @@ import (
 )
 
 func TestGithubImporter(t *testing.T) {
-	envToken := os.Getenv("GITHUB_TOKEN_PRIVATE")
+	envToken := os.Getenv("GITHUB_TOKEN")
 	if envToken == "" {
-		t.Skip("Env var GITHUB_TOKEN_PRIVATE missing")
+		t.Skip("missing required environment variable: GITHUB_TOKEN")
 	}
 
 	repo := repository.CreateGoGitTestRepo(t, false)
