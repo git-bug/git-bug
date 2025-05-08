@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746678644585,
+  "lastUpdate": 1746691779966,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -11426,6 +11426,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 524499,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f6e7fb524e3e157f04a5fe90066e55bf1dc692ec",
+          "message": "test: add an internal lib for running flaky tests (#1398)\n\nThis change adds an internal utility library for running flaky tests\nwith built-in support for incremental backoff retries. This can be used\nby packages within this repository by importing `internal/test` and\ninvoking it as such:\n\n    func SomeTest(t *testing.T) {\n        f := test.NewFlaky(t, &test.FlakyOptions{\n            // define options here\n            ...\n        })\n\n        f.Run(func(t testing.TB) {\n            // original test logic here\n            ...\n        }\n    }\n\nChange-Id: I8c6138c39c381bcee408ea6b7fe9d9b6eeb48fed",
+          "timestamp": "2025-05-08T01:08:48-07:00",
+          "tree_id": "8051a9dee5ff762456fc9e8c6e528b43b37f8fb8",
+          "url": "https://github.com/git-bug/git-bug/commit/f6e7fb524e3e157f04a5fe90066e55bf1dc692ec"
+        },
+        "date": 1746691778914,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 23552084,
+            "unit": "ns/op\t  909956 B/op\t   13959 allocs/op",
+            "extra": "52 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 23552084,
+            "unit": "ns/op",
+            "extra": "52 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 909956,
+            "unit": "B/op",
+            "extra": "52 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 13959,
+            "unit": "allocs/op",
+            "extra": "52 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 113976283,
+            "unit": "ns/op\t 5481849 B/op\t   78814 allocs/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 113976283,
+            "unit": "ns/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 5481849,
+            "unit": "B/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 78814,
+            "unit": "allocs/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 695563030,
+            "unit": "ns/op\t42876696 B/op\t  524537 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 695563030,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 42876696,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 524537,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
