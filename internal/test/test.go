@@ -38,15 +38,26 @@ func (f *flaky) Run(fn func(t testing.TB)) {
 	var last error
 
 	for attempt := 1; attempt <= f.o.MaxAttempts; attempt++ {
-		var failed bool
+		f.t.Logf("attempt %d of %d", attempt, f.o.MaxAttempts)
 
-		fn(&recorder{
+		r := &recorder{
 			TB:    f.t,
-			fail:  func(e string) { failed = true; last = errors.New(e) },
-			fatal: func(e string) { failed = true; last = errors.New(e) },
-		})
+			fail:  func(s string) { last = errors.New(s) },
+			fatal: func(s string) { last = errors.New(s) },
+		}
 
-		if !failed {
+		func() {
+			defer func() {
+				if v := recover(); v != nil {
+					if code, ok := v.(int); ok && code != RecorderFailNow {
+						panic(v)
+					}
+				}
+			}()
+			fn(r)
+		}()
+
+		if !r.Failed() {
 			return
 		}
 
@@ -56,7 +67,7 @@ func (f *flaky) Run(fn func(t testing.TB)) {
 		}
 	}
 
-	f.t.Fatalf("[%s] test failed after %d attempts: %s", f.t.Name(), f.o.MaxAttempts, last)
+	f.t.Fatalf("[%s] test failed after %d attempts: %v", f.t.Name(), f.o.MaxAttempts, last)
 }
 
 func applyJitter(d time.Duration, jitter float64) time.Duration {
