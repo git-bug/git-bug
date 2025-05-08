@@ -49,6 +49,7 @@
               git
               go
               golangci-lint
+              gopls
               nodejs
               pinact
             ];
