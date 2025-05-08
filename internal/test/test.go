@@ -3,6 +3,7 @@ package test
 import (
 	"errors"
 	"math/rand"
+	"slices"
 	"testing"
 	"time"
 )
@@ -38,8 +39,6 @@ func (f *flaky) Run(fn func(t testing.TB)) {
 	var last error
 
 	for attempt := 1; attempt <= f.o.MaxAttempts; attempt++ {
-		f.t.Logf("attempt %d of %d", attempt, f.o.MaxAttempts)
-
 		r := &recorder{
 			TB:    f.t,
 			fail:  func(s string) { last = errors.New(s) },
@@ -47,13 +46,15 @@ func (f *flaky) Run(fn func(t testing.TB)) {
 		}
 
 		func() {
+			failCodes := []int{RecorderFailNow, RecorderFatalf, RecorderFatal}
 			defer func() {
-				if v := recover(); v != nil {
-					if code, ok := v.(int); ok && code != RecorderFailNow {
-						panic(v)
+				if rec := recover(); rec != nil {
+					if code, ok := rec.(int); ok && !slices.Contains(failCodes, code) {
+						panic(rec)
 					}
 				}
 			}()
+
 			fn(r)
 		}()
 
