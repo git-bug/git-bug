@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746484921586,
+  "lastUpdate": 1746663548091,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -11138,6 +11138,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 524517,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d753637e35238c658ba4f2a3da82e88872161091",
+          "message": "doc: clarify testing activation of the dev shell (#1395)\n\nThis change adds a missing step to the contributor onboarding\ndocumentation (//:CONTRIBUTING.md): testing that the user has\nsuccessfully activated the development shell. This is a useful step for\nusers who are new to nix, and was referenced in 4.1.\n\nChange-Id: Iea78c5a3a54e62bc8cca8803270db8d7b7f2c872",
+          "timestamp": "2025-05-07T17:18:27-07:00",
+          "tree_id": "ad8ab85493baa06be5eacb73304b8e93c3e4b81d",
+          "url": "https://github.com/git-bug/git-bug/commit/d753637e35238c658ba4f2a3da82e88872161091"
+        },
+        "date": 1746663547473,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 13884950,
+            "unit": "ns/op\t  904439 B/op\t   13935 allocs/op",
+            "extra": "73 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 13884950,
+            "unit": "ns/op",
+            "extra": "73 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 904439,
+            "unit": "B/op",
+            "extra": "73 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 13935,
+            "unit": "allocs/op",
+            "extra": "73 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 81669417,
+            "unit": "ns/op\t 5300944 B/op\t   77884 allocs/op",
+            "extra": "14 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 81669417,
+            "unit": "ns/op",
+            "extra": "14 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 5300944,
+            "unit": "B/op",
+            "extra": "14 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 77884,
+            "unit": "allocs/op",
+            "extra": "14 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 530129451,
+            "unit": "ns/op\t42752328 B/op\t  524516 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 530129451,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 42752328,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 524516,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
