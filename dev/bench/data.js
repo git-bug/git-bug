@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746758432858,
+  "lastUpdate": 1746759306406,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -12002,6 +12002,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 524545,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f3bb756e303e2da50dfbb8312bff7ce6b6e76a5f",
+          "message": "ci: remove workflow: lifecycle (#1406)\n\nThis change removes //.github/workflows:lifecycle.yml, which was\nhistorically used to automatically label and unlabel issues and pull\nrequests based on inactivity. After consideration, it has been decided\nthat this sort of automatic label management introduces unecessary\nnoise.\n\nThe removal of this workflow means that issues and pull requests will no\nlonger be marked as idle or dormant. These labels can be removed:\n\n- lifecycle/idle\n- lifecycle/dormant\n\nChange-Id: I03d8cc6cf11d8fde88029bd64315855d81e3d353",
+          "timestamp": "2025-05-08T19:54:25-07:00",
+          "tree_id": "950b64b419173e036df1939e76ca9e97760386d4",
+          "url": "https://github.com/git-bug/git-bug/commit/f3bb756e303e2da50dfbb8312bff7ce6b6e76a5f"
+        },
+        "date": 1746759305866,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 17287025,
+            "unit": "ns/op\t  909086 B/op\t   13951 allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 17287025,
+            "unit": "ns/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 909086,
+            "unit": "B/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 13951,
+            "unit": "allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 95701536,
+            "unit": "ns/op\t 5345329 B/op\t   78158 allocs/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 95701536,
+            "unit": "ns/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 5345329,
+            "unit": "B/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 78158,
+            "unit": "allocs/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 637566888,
+            "unit": "ns/op\t42703620 B/op\t  524491 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 637566888,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 42703620,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 524491,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
