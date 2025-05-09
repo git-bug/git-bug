@@ -43,3 +43,35 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           comment-on-alert: true
           auto-push: true
+
+  mirror:
+    if: >
+      github.ref == 'refs/heads/master' && github.repository == 'git-bug/git-bug' && github.run_attempt == '1'
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # we use a custom deploy key in order to allow the workflow to bypass
+      # branch protection rules. without this, pushing will be rejected
+      - name: setup authentication
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh-agent.sock
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.TRUNK_MIRROR_KEY }}" > ~/.ssh/id_rsa
+          chmod 0600 ~/.ssh/id_rsa
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add ~/.ssh/id_rsa
+
+      - name: push to trunk
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh-agent.sock
+        run: |-
+          git config user.name git-bug-bot
+          git config user.email no-reply@git-bug.org
+          git remote set-url origin git@github.com:git-bug/git-bug.git
+          git push --atomic origin HEAD:refs/heads/trunk
