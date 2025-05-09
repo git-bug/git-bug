@@ -66,11 +66,11 @@ _git_bug() {
         __git-bug_init_completion -n "=:" || return
     fi
 
-	# START PATCH
-	# replace in the array ("git","bug", ...) to ("git-bug", ...) and adjust the index in cword
+    # START PATCH
+    # replace in the array ("git","bug", ...) to ("git-bug", ...) and adjust the index in cword
     words=("git-bug" "${words[@]:2}")
     cword=$(($cword-1))
-	# END PATCH
+    # END PATCH
 
     __git-bug_debug
     __git-bug_debug "========= starting completion logic =========="
