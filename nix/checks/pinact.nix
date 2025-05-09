@@ -1,7 +1,12 @@
 { pkgs, src }:
 
-pkgs.writeShellApplication {
-  name = "pinact";
-  runtimeInputs = with pkgs; [ pinact ];
-  text = "pinact run --check --verify";
-}
+pkgs.runCommand "pinact"
+  {
+    inherit src;
+    nativeBuildInputs = with pkgs; [ pinact ];
+  }
+  ''
+    cd "$src"
+    pinact run --check --verify
+    touch "$out"
+  ''
