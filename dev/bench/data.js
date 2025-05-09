@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746759306406,
+  "lastUpdate": 1746827034974,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -12098,6 +12098,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 524491,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "65f8ec981abe4374f24a0210067a4a3cb8fd1cf4",
+          "message": "test: use pkgs.runCommand for the pinact check drv (#1407)\n\nThis change refactors the derivation defined in //nix/checks:pinact.nix,\nrewriting it with pkgs.runCommand so that `nix flake check` actually\nexecutes it.\n\nChange-Id: Ic941133bcbedd8505580db71abbaaaf8326fb874",
+          "timestamp": "2025-05-09T14:43:14-07:00",
+          "tree_id": "62835e1854340215916c112a3c5e78e8f3f406fe",
+          "url": "https://github.com/git-bug/git-bug/commit/65f8ec981abe4374f24a0210067a4a3cb8fd1cf4"
+        },
+        "date": 1746827034424,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 16581728,
+            "unit": "ns/op\t  906743 B/op\t   13946 allocs/op",
+            "extra": "62 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 16581728,
+            "unit": "ns/op",
+            "extra": "62 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 906743,
+            "unit": "B/op",
+            "extra": "62 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 13946,
+            "unit": "allocs/op",
+            "extra": "62 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 94224649,
+            "unit": "ns/op\t 5361380 B/op\t   78166 allocs/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 94224649,
+            "unit": "ns/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 5361380,
+            "unit": "B/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 78166,
+            "unit": "allocs/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 612177012,
+            "unit": "ns/op\t42388100 B/op\t  524477 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 612177012,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 42388100,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 524477,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
