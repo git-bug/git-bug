@@ -1,4 +1,4 @@
-# Contributing<a name="contributing"></a>
+# Contributing <a name="contributing"></a>
 
 :wave: Hey there! Thanks for considering taking the time to contribute to
 `git-bug`. This page contains some general guidelines, and instructions for
@@ -265,10 +265,12 @@ ______________________________________________________________________
 
 ##### See more
 
+- [View the commit message guidelines][doc/contrib/commit]
 - [An overview of the architecture][doc/design/arch]
 - [Learn about the data model][doc/design/model]
 - [See how to create a new entity][example-entity]
 
+[doc/contrib/commit]: ./doc/contrib/commit-message-guidelines.md
 [doc/design/arch]: ./doc/design/architecture.md
 [doc/design/model]: ./doc/design/data-model.md
 [envrc]: ./.envrc
