@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746952694346,
+  "lastUpdate": 1746952834174,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -12386,6 +12386,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 524515,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f680ef74a500d8e778157f9591d719cfe5f1b1d2",
+          "message": "docs(dev-infra): define stricter commit message guidelines (#1410)\n\nThis change provides guidelines for writing conventional commit\nmessages, which will be enforced in the future. This change is being\nmade in order to improve ergonomics for browsing the repository and its\nchanges, and to support better changelog generation.\n\nChange-Id: I533ca3c66e697aaafcc1409711600017006e264a",
+          "timestamp": "2025-05-11T01:39:46-07:00",
+          "tree_id": "51dbde8d87446baf8734cf51e0b52aacb02a394f",
+          "url": "https://github.com/git-bug/git-bug/commit/f680ef74a500d8e778157f9591d719cfe5f1b1d2"
+        },
+        "date": 1746952833543,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 23151096,
+            "unit": "ns/op\t  912036 B/op\t   13958 allocs/op",
+            "extra": "54 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 23151096,
+            "unit": "ns/op",
+            "extra": "54 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 912036,
+            "unit": "B/op",
+            "extra": "54 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 13958,
+            "unit": "allocs/op",
+            "extra": "54 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 95750463,
+            "unit": "ns/op\t 5358690 B/op\t   78167 allocs/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 95750463,
+            "unit": "ns/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 5358690,
+            "unit": "B/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 78167,
+            "unit": "allocs/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 610055623,
+            "unit": "ns/op\t42580476 B/op\t  524477 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 610055623,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 42580476,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 524477,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
