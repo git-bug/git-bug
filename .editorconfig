@@ -9,7 +9,7 @@ indent_style = space
 insert_final_newline = true
 trim_trailing_whitespace = true
 
-[*.{graphql,js,json,nix,ts,tsx,yaml,yml}]
+[*.{graphql,js,json,nix,toml,ts,tsx,yaml,yml}]
 indent_size = 2
 
 [{Makefile,go.mod,go.sum,*.go}]

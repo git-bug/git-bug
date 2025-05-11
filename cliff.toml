@@ -1,0 +1,164 @@
+# Documentation: https://git-cliff.org/docs/configuration
+[changelog]
+header = """# Changelog
+
+All notable changes to the project will be documented in this file. It is
+non-exhaustive by design, and only contains public-facing application and API
+changes. Internal, developer-centric changes can be seen by looking at the
+commit log.
+"""
+body = """
+{% if version %}
+  {% set git_log_ref = version -%}
+  {% set v = version | trim_start_matches(pat="v") -%}
+  {% set ts = timestamp | date(format="%Y-%m-%d") -%}
+  ## {{ v ~ " (" ~ ts ~ ")" }}
+  {% if message %}\n{{ message | trim_start_matches(pat="v") }}\n{% endif -%}
+{%- else -%}
+  {% set git_log_ref = "origin/HEAD" %}
+  ## Unreleased
+
+  This section documents the commits which are not yet associated with a
+  released version.
+{% endif %}
+To view the full set of changes, including internal developer-centric changes,
+run the following command:
+
+```
+git log --oneline {%- raw %} {% endraw -%}
+  {% if previous.version %}{{ previous.version }}..{% endif -%}
+  {{ git_log_ref }}
+```
+{% for group, commits in commits
+| filter(attribute="merge_commit",value=false)
+| group_by(attribute="group") %}
+  ### {{ group | striptags | trim | upper_first }}
+  {% for commit in commits
+  | filter(attribute="breaking",value=true)
+  | filter(attribute="scope")
+  | sort(attribute="scope") %}
+    - **BREAKING CHANGE**: **{{ commit.scope }}**:{% raw %} {% endraw -%}
+      {{ commit.message | trim }}{% raw %} {% endraw -%}
+      {%- if commit.remote.username and commit.remote.pr_number -%}
+        by @{{ commit.remote.username }} in #{{ commit.remote.pr_number }}
+      {%- else -%}
+        ({{ commit.id | truncate(length=8,end="") }})
+      {%- endif -%}
+      {%- if commit.breaking_description != commit.message %}
+        {% raw %}  - {% endraw -%}
+        {{ commit.breaking_description | trim | indent(prefix="   ",blank=true) }}
+      {%- endif -%}
+  {% endfor %}
+  {%- for commit in commits | filter(attribute="breaking",value=true) -%}
+    {% if not commit.scope %}
+      - **BREAKING CHANGE**: {{ commit.message | trim }}{% raw %} {% endraw -%}
+        {%- if commit.remote.username and commit.remote.pr_number -%}
+          by @{{ commit.remote.username }} in #{{ commit.remote.pr_number }}
+        {%- else -%}
+          ({{ commit.id | truncate(length=8,end="") }})
+        {%- endif -%}
+        {%- if commit.breaking_description != commit.message %}
+          {% raw %}  - {% endraw -%}
+          {{ commit.breaking_description | trim | indent(prefix="   ",blank=true) }}
+        {%- endif -%}
+    {%- endif -%}
+  {% endfor %}
+  {%- for commit in commits
+  | filter(attribute="scope")
+  | sort(attribute="scope") -%}
+    {% if not commit.breaking %}
+      - **{{commit.scope}}**:{% raw %} {% endraw -%}
+        {{ commit.message | trim }}{% raw %} {% endraw -%}
+        {%- if commit.remote.username and commit.remote.pr_number -%}
+          by @{{ commit.remote.username }} in #{{ commit.remote.pr_number }}
+        {%- else -%}
+          ({{ commit.id | truncate(length=8,end="") }})
+        {%- endif -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- for commit in commits -%}
+    {% if not commit.scope and not commit.breaking %}
+      - {{ commit.message | trim }}{% raw %} {% endraw -%}
+        {%- if commit.remote.username and commit.remote.pr_number -%}
+          by @{{ commit.remote.username }} in #{{ commit.remote.pr_number }}
+        {%- else -%}
+          ({{ commit.id | truncate(length=8,end="") }})
+        {%- endif -%}
+    {%- endif -%}
+  {% endfor %}
+{% endfor -%}
+"""
+trim = true
+
+[bump]
+features_always_bump_minor = true
+breaking_always_bump_major = false  # TODO: set this to true for 1.0.0
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+protect_breaking_commits =  true
+sort_commits = "oldest"
+topo_order = true
+
+commit_preprocessors = [
+  # map various older scopes to new scopes
+  # TODO: remove after init (because we will enforce an append-only workflow)
+  { pattern = '^([^\(]+)\(commands\):', replace = '$1 (cli):' },
+  { pattern = '^[^\(]+\(ci\)', replace = 'ci:' },
+  { pattern = '^[^\(]+\(TestCache\)', replace = 'test:' },
+  { pattern = '^doc: (.+ \(#1395\))', replace = 'docs(dev-infra): $1' },
+  { pattern = '^fix: (.+ \(#1403\))', replace = 'fix(completion): $1' },
+  { pattern = '^docs: (correct mispelled words)', replace = 'fix(dev-infra): $1' },
+  { pattern = '^(.+) \[fix\]$', replace = 'docs: $1' },
+  { pattern = '^fix ', replace = 'fix: ' },
+
+  # remove errata from old commit messages
+  # TODO: remove after init (because we will enforce an append-only workflow)
+  { pattern = '^([^\(]+)\((?:#?\d+|opencollective|git-bug-863)\)', replace = '$1' },
+  { pattern = ', fix https://.+/issues/653', replace = '' },
+
+  # remove quotes from reversions
+  # we do this to clean up the changelog output, since the raw message would
+  # otherwise be surrounded in quotes
+  { pattern = '^[Rr]evert: "(.+)"', replace = 'revert: $1' },
+
+  # convert quotes in subjects to graves
+  # TODO: remove after init (because we will enforce an append-only workflow)
+  { pattern = '"', replace = '`' },
+
+  # escape backslashes
+  # we do this because mdformat will remove isolated backslashes, and there is a
+  # historical commit that contains one
+  # TODO: remove after init (because we will enforce an append-only workflow)
+  { pattern = '\\', replace = '\\' },
+
+  # remove PR references from commit messages, to remove a hard dependency on
+  # github. by default, we show the commit hash (although github usernames and
+  # PR references are added in dynamically during release, for the changes
+  # shown on the release page)
+  { pattern = '\s+\(\#[0-9]+\)', replace = '' },
+]
+
+# these matches are applied in order, so be conscious of any changes you make
+commit_parsers = [
+  # skip commits generated by bots
+  { message = '^[^(]+\(changelog\)', skip = true },
+  { message = '^build\(deps(-dev)?\)', skip = true },
+  { message = '^deps?', skip = true },
+
+  # skip internal changes (non-consumer-facing changes)
+  # note that breaking changes will still be shown
+  { message = '^(?:revert: )?(?:ci|build|test|refactor)', skip = true },
+  { message = '^(?:revert: )?.+\(dev-infra\)', skip = true },
+
+  # assign group based on type
+  { message = '^docs?', group = 'Documentation' },
+  { message = '^feat', group = 'Features' },
+  { message = '^fix', group = 'Bug fixes' },
+  { message = '^perf', group = 'Performance' },
+  { message = '^revert', group = 'Reversions' },
+
+  # catch all other commits
+  { message = '^.+', group = 'Other changes' },
+]

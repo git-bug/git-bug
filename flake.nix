@@ -47,6 +47,7 @@
               delve
               gh
               git
+              git-cliff
               go
               golangci-lint
               gopls
