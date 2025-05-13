@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1747074369319,
+  "lastUpdate": 1747118363397,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -12674,6 +12674,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 524563,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "bd936650ccf44ca33cf9c8bf553fe090534d2ab3",
+          "message": "docs(dev-infra): improve commit message guidelines (#1417)\n\nThis change provides more clarity as to the type and scope requirements,\nand adds in additional information with regard to hyperlinks,\nappropriate trailers to\nuse in the footer, and clarifies the difference between our requirements\nand the conventional commit spec v1.0.0.\n\nChange-Id: I7e3d4646c09728acf27c4efce24655896b8513a7",
+          "timestamp": "2025-05-12T23:38:33-07:00",
+          "tree_id": "d8cfde3d9eb8f5f3000762d0fe38e4b9406c1a9b",
+          "url": "https://github.com/git-bug/git-bug/commit/bd936650ccf44ca33cf9c8bf553fe090534d2ab3"
+        },
+        "date": 1747118362229,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 18700122,
+            "unit": "ns/op\t  905377 B/op\t   13938 allocs/op",
+            "extra": "69 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 18700122,
+            "unit": "ns/op",
+            "extra": "69 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 905377,
+            "unit": "B/op",
+            "extra": "69 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 13938,
+            "unit": "allocs/op",
+            "extra": "69 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 107804706,
+            "unit": "ns/op\t 5456319 B/op\t   78561 allocs/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 107804706,
+            "unit": "ns/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 5456319,
+            "unit": "B/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 78561,
+            "unit": "allocs/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 697971467,
+            "unit": "ns/op\t42788704 B/op\t  524568 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 697971467,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 42788704,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 524568,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
