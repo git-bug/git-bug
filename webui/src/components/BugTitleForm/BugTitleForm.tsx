@@ -1,7 +1,7 @@
 import { Button, Typography } from '@mui/material';
 import makeStyles from '@mui/styles/makeStyles';
 import { useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 import { TimelineDocument } from '../../pages/bug/TimelineQuery.generated';
 import IfLoggedIn from '../IfLoggedIn/IfLoggedIn';

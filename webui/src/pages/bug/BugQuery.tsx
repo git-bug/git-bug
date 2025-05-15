@@ -1,6 +1,6 @@
 import CircularProgress from '@mui/material/CircularProgress';
 import * as React from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 
 import NotFoundPage from '../notfound/NotFoundPage';
 

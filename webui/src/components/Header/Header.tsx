@@ -5,7 +5,7 @@ import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip/Tooltip';
 import { alpha } from '@mui/material/styles';
 import makeStyles from '@mui/styles/makeStyles';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router';
 
 import CurrentIdentity from '../Identity/CurrentIdentity';
 import { LightSwitch } from '../Themer';
