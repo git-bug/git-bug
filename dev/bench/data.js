@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1747284819765,
+  "lastUpdate": 1747320129586,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -12866,6 +12866,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 524627,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "m.gideonse@maxxton.com",
+            "name": "Mischa",
+            "username": "mxt-mischa"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9942337bf52d0b183055690ef0651babe74c51ae",
+          "message": "docs(bridge): correct command used to create a new bridge (#1422)",
+          "timestamp": "2025-05-15T07:41:26-07:00",
+          "tree_id": "8b6cd428be4ed97ac367f91b1faf581a9caadcb1",
+          "url": "https://github.com/git-bug/git-bug/commit/9942337bf52d0b183055690ef0651babe74c51ae"
+        },
+        "date": 1747320129040,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 17905947,
+            "unit": "ns/op\t  908087 B/op\t   13941 allocs/op",
+            "extra": "67 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 17905947,
+            "unit": "ns/op",
+            "extra": "67 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 908087,
+            "unit": "B/op",
+            "extra": "67 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 13941,
+            "unit": "allocs/op",
+            "extra": "67 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 100128925,
+            "unit": "ns/op\t 5460014 B/op\t   78562 allocs/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 100128925,
+            "unit": "ns/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 5460014,
+            "unit": "B/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 78562,
+            "unit": "allocs/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 607040280,
+            "unit": "ns/op\t42858564 B/op\t  524531 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 607040280,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 42858564,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 524531,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
