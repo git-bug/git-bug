@@ -131,8 +131,8 @@ function FilterToolbar({ query, queryLocation }: Props) {
           params[key] && params[key].includes(value)
             ? values.filter((v) => v !== value)
             : values
-            ? [...values, value]
-            : [value],
+              ? [...values, value]
+              : [value],
       };
     };
   const clearParam =

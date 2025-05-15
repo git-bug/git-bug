@@ -102,7 +102,7 @@ function CommentInput({ inputProps, inputText, loading, onChange }: Props) {
             multiline
             value={input}
             variant="filled"
-            rows="4" // TODO: rowsMin support
+            minRows={4}
             onChange={(e: any) => setInput(e.target.value)}
             disabled={loading}
           />

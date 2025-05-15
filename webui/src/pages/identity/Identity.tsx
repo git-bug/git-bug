@@ -56,7 +56,7 @@ const Identity = ({ identity }: Props) => {
   });
 
   if (loading) return <CircularProgress />;
-  if (error) return <p>Error: {error}</p>;
+  if (error) return <p>Error: {error.message}</p>;
   const statistic = data?.repository;
   const authoredCount = statistic?.authored?.totalCount;
   const participatedCount = statistic?.participated?.totalCount;

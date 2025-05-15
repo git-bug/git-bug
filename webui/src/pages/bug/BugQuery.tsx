@@ -16,7 +16,8 @@ const BugQuery: React.FC = () => {
   });
   if (loading) return <CircularProgress />;
   if (!data?.repository?.bug) return <NotFoundPage />;
-  if (error) return <p>Error: {error}</p>;
+  if (error) return <p>Error: {error.message}</p>;
+
   return <Bug bug={data.repository.bug} />;
 };
 
