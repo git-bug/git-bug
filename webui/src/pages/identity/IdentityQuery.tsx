@@ -14,7 +14,7 @@ const UserQuery: React.FC = () => {
     variables: { userId: params.id },
   });
   if (loading) return <CircularProgress />;
-  if (error) return <p>Error: {error}</p>;
+  if (error) return <p>Error: {error.message}</p>;
   if (!data?.repository?.identity) return <p>404.</p>;
   return <Identity identity={data.repository.identity} />;
 };

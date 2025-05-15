@@ -34,7 +34,7 @@ function BugList({ id }: Props) {
   });
 
   if (loading) return <CircularProgress />;
-  if (error) return <p>Error: {error}</p>;
+  if (error) return <p>Error: {error.message}</p>;
   const bugs = data?.repository?.allBugs.nodes;
 
   return (

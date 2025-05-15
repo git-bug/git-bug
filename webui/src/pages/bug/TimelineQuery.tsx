@@ -17,7 +17,7 @@ const TimelineQuery = ({ bug }: Props) => {
   });
 
   if (loading) return <CircularProgress />;
-  if (error) return <p>Error: {error}</p>;
+  if (error) return <p>Error: {error.message}</p>;
 
   const nodes = data?.repository?.bug?.timeline.nodes;
   if (!nodes) {

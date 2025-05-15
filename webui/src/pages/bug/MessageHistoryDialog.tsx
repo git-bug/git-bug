@@ -159,7 +159,7 @@ function MessageHistoryDialog({ bugId, commentId, open, onClose }: Props) {
           Something went wrong...
         </DialogTitle>
         <DialogContent dividers>
-          <p>Error: {error}</p>
+          <p>Error: {error.message}</p>
         </DialogContent>
       </Dialog>
     );
