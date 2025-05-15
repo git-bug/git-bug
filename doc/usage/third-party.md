@@ -53,7 +53,7 @@ _For a full list of the features enabled for each bridge, see the
 
 ## Getting started<a name="getting-started"></a>
 
-1. From within a git repository, run `git bug bridge configure` to start the
+1. From within a git repository, run `git bug bridge new` to start the
    configuration wizard
 2. Choose the type of bridge you want to configure, e.g. `github`
 3. Type a name for the bridge configuration. As you can configure multiple
