@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1747118363397,
+  "lastUpdate": 1747284819765,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -12770,6 +12770,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 524568,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jon@accidental.cc",
+            "name": "Jonathan Raphaelson",
+            "username": "lygaret"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0cff6516bd7e836d20390e7df6427d637572308f",
+          "message": "build(web): upgrade minor NPM dependencies, and React to v18 (#1421)\n\nupgrades outdate npm dependencies to latest minor versions compatible\nwith each other, in prep for larger upgrades to bring up to date.\n\nof note, React 17->18 drops the react-dom library and required some\nmechanical changes due to apollo client errors no longer being\nrenderable.\n\n---\n\nscreenshot to show application still running after upgrades\n\n![Screenshot 2025-05-14 at 10 00\n27 PM](https://github.com/user-attachments/assets/82257a5f-aefb-4fdb-8bc8-a5da12eceaaa)",
+          "timestamp": "2025-05-15T04:48:11Z",
+          "tree_id": "457ab0118126c36ad91df066c3a0675111b401cd",
+          "url": "https://github.com/git-bug/git-bug/commit/0cff6516bd7e836d20390e7df6427d637572308f"
+        },
+        "date": 1747284819268,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 14542022,
+            "unit": "ns/op\t  903022 B/op\t   13927 allocs/op",
+            "extra": "82 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 14542022,
+            "unit": "ns/op",
+            "extra": "82 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 903022,
+            "unit": "B/op",
+            "extra": "82 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 13927,
+            "unit": "allocs/op",
+            "extra": "82 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 81122788,
+            "unit": "ns/op\t 5296357 B/op\t   77881 allocs/op",
+            "extra": "14 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 81122788,
+            "unit": "ns/op",
+            "extra": "14 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 5296357,
+            "unit": "B/op",
+            "extra": "14 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 77881,
+            "unit": "allocs/op",
+            "extra": "14 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 523099932,
+            "unit": "ns/op\t42937012 B/op\t  524627 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 523099932,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 42937012,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 524627,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
