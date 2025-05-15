@@ -71,7 +71,7 @@ function BugTitleForm({ bug }: Props) {
   const [setTitle, { loading, error }] = useSetTitleMutation();
   const [issueTitle, setIssueTitle] = useState(bug.title);
   const classes = useStyles();
-  const issueTitleInput = useRef<HTMLInputElement>();
+  const issueTitleInput = useRef<HTMLInputElement>(null);
 
   function isFormValid() {
     if (issueTitleInput.current) {

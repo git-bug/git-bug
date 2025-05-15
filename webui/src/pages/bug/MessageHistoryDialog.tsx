@@ -17,9 +17,9 @@ import createStyles from '@mui/styles/createStyles';
 import withStyles from '@mui/styles/withStyles';
 import moment from 'moment';
 import * as React from 'react';
-import Moment from 'react-moment';
 
 import Content from '../../components/Content';
+import Moment from '../../components/Moment';
 
 import { AddCommentFragment } from './MessageCommentFragment.generated';
 import { CreateFragment } from './MessageCreateFragment.generated';
