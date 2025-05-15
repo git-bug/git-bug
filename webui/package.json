@@ -35,6 +35,7 @@
     "@graphql-codegen/typescript-operations": "^2.5.13",
     "@graphql-codegen/typescript-react-apollo": "^3.3.7",
     "@graphql-eslint/eslint-plugin": "^3.20.1",
+    "@types/jest": "^29.5.14",
     "@types/node": "^22.15.18",
     "@types/react": "^19.1.4",
     "@types/react-dom": "^19.1.5",
