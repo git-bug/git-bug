@@ -1,0 +1,29 @@
+# This list is used by several git commands automatically, and several others
+# with a flag (or configuration option). It is used to fix a few botched names
+# in the archive, either because the author's name was messed up, misconfigured,
+# or not always written the same way, making contributions from the same person
+# appear to be from different people.
+#
+# See the documentation for gitmailmap (5) for more information:
+#    https://git-scm.com/docs/gitmailmap
+#
+# Names should be added to this file in alphabetical order unless the
+# alphabetical order for the rules you are setting up would cause undesired
+# results. In that event, create a newline after the last line in this file, add
+# an optional comment describing why you need to set up a custom order of rules,
+# and add your remapping rules in their own block. If you are not adding the
+# first custom block, add your block to the existing list of blocks in
+# alphabetical order.
+
+Amine Hilaly <hilalyamine@gmail.com>
+Cláudio Silva <claudio.engdist@gmail.com>
+Dmitry Teplov <siht.pilf@gmail.com> <teplov.work@gmail.com>
+Michael Muré <batolettre@gmail.com> <michael.mure@consensys.net>
+Robin Vobruba <hoijui.quaero@gmail.com>
+
+# This doesn't require special ordering, but it's a bot user. GitHub really
+# likes changing the identity, apparently.
+dependabot[bot] <support@dependabot.com> <27856297+dependabot-preview[bot]@users.noreply.github.com>
+dependabot[bot] <support@dependabot.com> <49699333+dependabot[bot]@users.noreply.github.com>
+dependabot[bot] <support@dependabot.com> <dependabot-preview[bot]@users.noreply.github.com>
+dependabot[bot] <support@dependabot.com> <dependabot[bot]@users.noreply.github.com>
