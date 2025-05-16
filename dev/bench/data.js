@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1747363109845,
+  "lastUpdate": 1747363946637,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -13346,6 +13346,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 524500,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "62bc7eb4b08b1934748389887755f20251278a14",
+          "message": "build(web): generate the web bundle for the go binary (#1428)\n\nRecent changes were made to //webui, but the bundle was not updated.\nThis was missed because it was not validated in CI. This change runs\n`make pack-webui` in order to generate this bundle.\n\nChange-Id: I63ccad91c7edb381813db684ac65f83aa7c048fc",
+          "timestamp": "2025-05-15T19:51:45-07:00",
+          "tree_id": "44f84141f2a68ea6fef4f3eefec6dd5fd16b6bc9",
+          "url": "https://github.com/git-bug/git-bug/commit/62bc7eb4b08b1934748389887755f20251278a14"
+        },
+        "date": 1747363946174,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 15297302,
+            "unit": "ns/op\t  903878 B/op\t   13931 allocs/op",
+            "extra": "76 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 15297302,
+            "unit": "ns/op",
+            "extra": "76 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 903878,
+            "unit": "B/op",
+            "extra": "76 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 13931,
+            "unit": "allocs/op",
+            "extra": "76 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 87437654,
+            "unit": "ns/op\t 5319198 B/op\t   78014 allocs/op",
+            "extra": "13 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 87437654,
+            "unit": "ns/op",
+            "extra": "13 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 5319198,
+            "unit": "B/op",
+            "extra": "13 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 78014,
+            "unit": "allocs/op",
+            "extra": "13 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 565106352,
+            "unit": "ns/op\t42717400 B/op\t  524527 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 565106352,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 42717400,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 524527,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
