@@ -1,13 +1,11 @@
 import AppBar from '@mui/material/AppBar';
-import Tab, { TabProps } from '@mui/material/Tab';
-import Tabs from '@mui/material/Tabs';
 import Toolbar from '@mui/material/Toolbar';
-import Tooltip from '@mui/material/Tooltip/Tooltip';
 import { alpha } from '@mui/material/styles';
 import makeStyles from '@mui/styles/makeStyles';
-import { Link, useLocation } from 'react-router';
+import { Link } from 'react-router';
 
 import CurrentIdentity from '../Identity/CurrentIdentity';
+import CurrentRepository from '../Identity/CurrentRepository';
 import { LightSwitch } from '../Themer';
 
 const useStyles = makeStyles((theme) => ({
@@ -29,7 +27,7 @@ const useStyles = makeStyles((theme) => ({
     alignItems: 'center',
   },
   lightSwitch: {
-    marginRight: '20px',
+    marginRight: theme.spacing(2),
     color: alpha(theme.palette.primary.contrastText, 0.5),
   },
   logo: {
@@ -38,43 +36,8 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function a11yProps(index: any) {
-  return {
-    id: `nav-tab-${index}`,
-    'aria-controls': `nav-tabpanel-${index}`,
-  };
-}
-
-const DisabledTabWithTooltip = (props: TabProps) => {
-  /*The span elements around disabled tabs are needed, as the tooltip
-   * won't be triggered by disabled elements.
-   * See: https://material-ui.com/components/tooltips/#disabled-elements
-   * This must be done in a wrapper component, otherwise the TabS component
-   * cannot pass it styles down to the Tab component. Resulting in (console)
-   * warnings. This wrapper accepts the passed down TabProps and pass it around
-   * the span element to the Tab component.
-   */
-  const msg = `This feature doesn't exist yet. Come help us build it.`;
-  return (
-    <Tooltip title={msg}>
-      <span>
-        <Tab disabled {...props} />
-      </span>
-    </Tooltip>
-  );
-};
-
 function Header() {
   const classes = useStyles();
-  const location = useLocation();
-
-  // Prevents error of invalid tab selection in <Tabs>
-  // Will return a valid tab path or false if path is unknown.
-  function highlightTab() {
-    const validTabs = ['/', '/code', '/pulls', '/settings'];
-    const tab = validTabs.find((tabPath) => tabPath === location.pathname);
-    return tab === undefined ? false : tab;
-  }
 
   return (
     <>
@@ -82,28 +45,14 @@ function Header() {
         <Toolbar>
           <Link to="/" className={classes.appTitle}>
             <img src="/logo.svg" className={classes.logo} alt="git-bug logo" />
-            git-bug
+            <CurrentRepository default="git-bug" />
           </Link>
           <div className={classes.filler} />
           <LightSwitch className={classes.lightSwitch} />
           <CurrentIdentity />
         </Toolbar>
       </AppBar>
-      <div className={classes.offset} />
-      <Tabs centered value={highlightTab()} aria-label="nav tabs">
-        <DisabledTabWithTooltip label="Code" value="/code" {...a11yProps(1)} />
-        <Tab label="Bugs" value="/" component={Link} to="/" {...a11yProps(2)} />
-        <DisabledTabWithTooltip
-          label="Pull Requests"
-          value="/pulls"
-          {...a11yProps(3)}
-        />
-        <DisabledTabWithTooltip
-          label="Settings"
-          value="/settings"
-          {...a11yProps(4)}
-        />
-      </Tabs>
+      <div className={classes.offset}></div>
     </>
   );
 }
