@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1747361115464,
+  "lastUpdate": 1747362232707,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -13154,6 +13154,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 524530,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jon@accidental.cc",
+            "name": "Jonathan Raphaelson",
+            "username": "lygaret"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7e95b169b17e3636efa5969a42c2486268dc73e3",
+          "message": "feat(web): simplify header navigation (#1427)\n\n* removes the tabbed navigation completely\n* makes it possible to see the custom name of the repository\n\n\ntabs (and really all not \"main\" nav) were not in use and the features\nmay not work the same way in the future, so rather than redesigning, the\nwhole tab bare was removed.\n\nfor the custom name, if it's `__default`, the the default `git-bug` text\nis displayed; otherwise, the name of the repo.",
+          "timestamp": "2025-05-16T02:18:48Z",
+          "tree_id": "bd73324a93383e55bdeff2883cc8ca99d4259e28",
+          "url": "https://github.com/git-bug/git-bug/commit/7e95b169b17e3636efa5969a42c2486268dc73e3"
+        },
+        "date": 1747362232198,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 16984961,
+            "unit": "ns/op\t  905976 B/op\t   13935 allocs/op",
+            "extra": "74 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 16984961,
+            "unit": "ns/op",
+            "extra": "74 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 905976,
+            "unit": "B/op",
+            "extra": "74 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 13935,
+            "unit": "allocs/op",
+            "extra": "74 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 89766829,
+            "unit": "ns/op\t 5368630 B/op\t   78172 allocs/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 89766829,
+            "unit": "ns/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 5368630,
+            "unit": "B/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 78172,
+            "unit": "allocs/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 597226579,
+            "unit": "ns/op\t42729968 B/op\t  524559 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 597226579,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 42729968,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 524559,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
