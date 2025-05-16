@@ -1,0 +1,9 @@
+
+.highlight-theme[data-theme="light"], 
+.highlight-theme:not([data-theme="dark"]) {
+  @import "~highlight.js/scss/base16/classic-light.scss";
+}
+
+.highlight-theme[data-theme="dark"] {
+  @import "~highlight.js/scss/base16/classic-dark.scss";
+}
