@@ -3,7 +3,9 @@ import type { Root as MdRoot } from 'mdast';
 import { useEffect, useState } from 'react';
 import * as React from 'react';
 import * as production from 'react/jsx-runtime';
-import rehypeHighlight from 'rehype-highlight';
+import rehypeHighlight, {
+  Options as RehypeHighlightOpts,
+} from 'rehype-highlight';
 import rehypeReact from 'rehype-react';
 import rehypeSanitize from 'rehype-sanitize';
 import remarkBreaks from 'remark-breaks';
@@ -15,6 +17,8 @@ import type { Options as RemarkRehypeOptions } from 'remark-rehype';
 import { unified } from 'unified';
 import type { Plugin, Processor } from 'unified';
 import { Node as UnistNode } from 'unified/lib';
+
+import { ThemeContext } from '../Themer';
 
 import AnchorTag from './AnchorTag';
 import BlockQuoteTag from './BlockQuoteTag';
@@ -50,7 +54,10 @@ const markdownPipeline: Processor<
     allowDangerousHtml: true,
   })
   .use(rehypeSanitize as unknown as RehypePlugin)
-  .use(rehypeHighlight as unknown as RehypePlugin)
+  .use(rehypeHighlight as unknown as RehypePlugin<RehypeHighlightOpts[]>, {
+    detect: true,
+    subset: ['text'],
+  })
   .use(rehypeReact, {
     ...production,
     components: {
@@ -62,6 +69,7 @@ const markdownPipeline: Processor<
   });
 
 const Content: React.FC<Props> = ({ markdown }: Props) => {
+  const theme = React.useContext(ThemeContext);
   const [content, setContent] = useState(<></>);
 
   useEffect(() => {
@@ -78,7 +86,11 @@ const Content: React.FC<Props> = ({ markdown }: Props) => {
       });
   }, [markdown]);
 
-  return content;
+  return (
+    <div className={'highlight-theme'} data-theme={theme.mode}>
+      {content}
+    </div>
+  );
 };
 
 export default Content;

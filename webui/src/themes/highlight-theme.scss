@@ -1,0 +1,13 @@
+@use "sass:meta";
+
+// if highlight.js gets updated to support proper mixins, 
+// meta.load-css won't be necessary; see https://sass-lang.com/documentation/breaking-changes/import/#nested-imports
+
+.highlight-theme[data-theme="light"], 
+.highlight-theme:not([data-theme="dark"]) {
+  @include meta.load-css("~highlight.js/scss/base16/classic-light.scss");
+}
+
+.highlight-theme[data-theme="dark"] {
+  @include meta.load-css("~highlight.js/scss/base16/classic-dark.scss");
+}

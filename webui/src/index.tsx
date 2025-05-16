@@ -7,6 +7,7 @@ import App from './App';
 import apolloClient from './apollo';
 import Themer from './components/Themer';
 import { defaultLightTheme, defaultDarkTheme } from './themes/index';
+import './themes/highlight-theme.scss';
 
 const root = createRoot(document.getElementById('root') as HTMLElement);
 root.render(
