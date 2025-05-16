@@ -12,7 +12,7 @@
     };
 
     mdformat = {
-      enable = true;
+      enable = false;
 
       package = pkgs.mdformat.withPlugins (
         p: with p; [
@@ -42,11 +42,8 @@
       strict = true;
     };
 
-    # this is disabled due to `//webui` not yet being integrated with the flake.
-    # the entire package directory is ignored below in
-    # `settings.global.excludes`.
     prettier = {
-      enable = false;
+      enable = true;
 
       settings = {
         singleQuote = true;
@@ -79,8 +76,17 @@
       "doc/man/*.1" # generated via //doc:generate.go
       "doc/md/*" # generated via //doc:generate.go
       "misc/completion/*/*"
-      "webui/*" # not currently supported, //webui is not yet flakeified
       "Makefile"
     ]
     ++ excludes;
+
+  settings.formatter = {
+    prettier = {
+      excludes = [
+        "*.md"
+        "*.yaml"
+        "*.yml"
+      ];
+    };
+  };
 }

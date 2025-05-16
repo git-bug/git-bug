@@ -1,5 +1,5 @@
 module.exports = {
-  extends: ['react-app', 'prettier', 'plugin:prettier/recommended'],
+  extends: ['react-app'],
   rules: {
     'import/order': [
       'error',
@@ -42,8 +42,8 @@ module.exports = {
       },
       parserOptions: {
         schema: './src/schema.json',
-        operations: './src/**/*.graphql'
-      }
+        operations: './src/**/*.graphql',
+      },
     },
   ],
 };
