@@ -26,14 +26,16 @@ const createStyle = (color: Color, maxWidth?: string) => ({
 
 type Props = {
   label: LabelFragment;
+  inline?: boolean;
   maxWidth?: string;
   className?: string;
 };
-function Label({ label, maxWidth, className }: Props) {
+function Label({ label, inline, maxWidth, className }: Props) {
   return (
     <Chip
       size={'small'}
       label={label.name}
+      component={inline ? 'span' : 'div'}
       className={className}
       style={createStyle(label.color, maxWidth)}
     />
