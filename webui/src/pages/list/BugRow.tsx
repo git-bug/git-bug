@@ -6,7 +6,7 @@ import TableRow from '@mui/material/TableRow/TableRow';
 import Tooltip from '@mui/material/Tooltip/Tooltip';
 import makeStyles from '@mui/styles/makeStyles';
 import * as React from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 import Author from 'src/components/Author';
 import Date from 'src/components/Date';

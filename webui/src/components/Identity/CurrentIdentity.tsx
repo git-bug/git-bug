@@ -12,7 +12,7 @@ import {
 import Avatar from '@mui/material/Avatar';
 import makeStyles from '@mui/styles/makeStyles';
 import { useState, useRef } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router';
 
 import { useCurrentIdentityQuery } from './CurrentIdentity.generated';
 

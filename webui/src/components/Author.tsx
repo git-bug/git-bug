@@ -1,7 +1,7 @@
 import MAvatar from '@mui/material/Avatar';
 import Link from '@mui/material/Link';
 import Tooltip from '@mui/material/Tooltip/Tooltip';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router';
 
 import { AuthoredFragment } from '../graphql/fragments.generated';
 

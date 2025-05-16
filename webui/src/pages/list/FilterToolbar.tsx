@@ -4,7 +4,7 @@ import ErrorOutline from '@mui/icons-material/ErrorOutline';
 import Toolbar from '@mui/material/Toolbar';
 import makeStyles from '@mui/styles/makeStyles';
 import * as React from 'react';
-import { Location } from 'react-router-dom';
+import { Location } from 'react-router';
 
 import {
   Filter,

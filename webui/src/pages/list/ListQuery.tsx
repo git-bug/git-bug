@@ -13,7 +13,7 @@ import { Theme } from '@mui/material/styles';
 import makeStyles from '@mui/styles/makeStyles';
 import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router';
 
 import { useCurrentIdentityQuery } from '../../components/Identity/CurrentIdentity.generated';
 import IfLoggedIn from 'src/components/IfLoggedIn/IfLoggedIn';

@@ -10,7 +10,7 @@ import withStyles from '@mui/styles/withStyles';
 import clsx from 'clsx';
 import * as React from 'react';
 import { useRef, useState, useEffect } from 'react';
-import { Location, Link } from 'react-router-dom';
+import { Location, Link } from 'react-router';
 
 import { Color } from '../../gqlTypes';
 

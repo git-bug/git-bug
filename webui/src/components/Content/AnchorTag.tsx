@@ -1,6 +1,6 @@
 import makeStyles from '@mui/styles/makeStyles';
 import * as React from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 const useStyles = makeStyles((theme) => ({
   tag: {
