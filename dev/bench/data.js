@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1747362232707,
+  "lastUpdate": 1747363109845,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -13250,6 +13250,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 524559,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b3a3f574f688670f7757501b579d9704cb6bd32d",
+          "message": "feat(dev-infra): add initial //:.mailmap (#1426)\n\nThis change adds //.mailmap initialized with mappings for duplicate\nnames and email addresses found in the repository archive. When a\nduplicate was found, the name and email were chosen preferring the\nlongest name for the author, and the most practical email address (e.g.\nif an obvious personal and professional email address existed, the\npersonal address was chosen).\n\nDuplicate names were found with the following command:\n\n    git shortlog -se |\\\nawk 'match($0, /[0-9]+[ \\t]+(.*)[ \\t]+<.*>/, m) { print m[1] }' |\\\n        sort |\\\n        uniq -d\n\nDuplicate email addresses were found with the following command:\n\n    git shortlog -se |\\\nawk 'match($0, /<[^>]+>/) { print substr($0, RSTART+1, RLENGTH-2) }' |\\\n        sort |\\\n        uniq -d\n\nChange-Id: Ie0280ee336098c080cf5af8062dae20cb7a41e8e",
+          "timestamp": "2025-05-16T02:32:39Z",
+          "tree_id": "2a64cf5ba428f9da06cd48ffc267d25204a474c6",
+          "url": "https://github.com/git-bug/git-bug/commit/b3a3f574f688670f7757501b579d9704cb6bd32d"
+        },
+        "date": 1747363109276,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 17882671,
+            "unit": "ns/op\t  908325 B/op\t   13952 allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 17882671,
+            "unit": "ns/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 908325,
+            "unit": "B/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 13952,
+            "unit": "allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 112322121,
+            "unit": "ns/op\t 5449460 B/op\t   78553 allocs/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 112322121,
+            "unit": "ns/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 5449460,
+            "unit": "B/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 78553,
+            "unit": "allocs/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 644515027,
+            "unit": "ns/op\t42508084 B/op\t  524500 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 644515027,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 42508084,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 524500,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
