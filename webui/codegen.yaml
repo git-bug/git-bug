@@ -1,3 +1,4 @@
+---
 schema: '../api/graphql/schema/*.graphql'
 overwrite: true
 documents: src/**/*.graphql
@@ -31,4 +32,4 @@ generates:
 
 hooks:
   afterAllFileWrite:
-    - prettier --write
+    - nix fmt
