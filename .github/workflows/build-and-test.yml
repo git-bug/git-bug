@@ -3,6 +3,9 @@ name: build-and-test
 
 on:
   workflow_call:
+  push:
+    branches:
+      - Ia1ad61e54e305bb073efc6853738d3eed81d576c
 
 permissions:
   contents: read
@@ -29,8 +32,6 @@ jobs:
       - name: Test
         run: make test
         env:
-          GITHUB_USER: ${{ env.TEST_USER_GITHUB }}
-          GITHUB_TOKEN: ${{ secrets.TEST_TOKEN_GITHUB }}
           GITHUB_TOKEN_PRIVATE: ${{ secrets._GITHUB_TOKEN_PRIVATE }}
           GITHUB_TOKEN_PUBLIC: ${{ secrets._GITHUB_TOKEN_PUBLIC }}
           GITLAB_API_TOKEN: ${{ secrets.GITLAB_API_TOKEN }}
