@@ -29,7 +29,7 @@ jobs:
       - name: Test
         run: make test
         env:
-          GITHUB_USER: ${{ env.TEST_USER_GITHUB }}
+          GITHUB_USER: ${{ vars.TEST_USER_GITHUB }}
           GITHUB_TOKEN: ${{ secrets.TEST_TOKEN_GITHUB }}
           GITHUB_TOKEN_PRIVATE: ${{ secrets._GITHUB_TOKEN_PRIVATE }}
           GITHUB_TOKEN_PUBLIC: ${{ secrets._GITHUB_TOKEN_PUBLIC }}
