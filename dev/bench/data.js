@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1747450414980,
+  "lastUpdate": 1747461056424,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -13826,6 +13826,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 524577,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jon@accidental.cc",
+            "name": "Jonathan Raphaelson",
+            "username": "lygaret"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6ee47b96ba40a00eab6a0719fe11eaf247a4fdea",
+          "message": "feat(webui):  remark upgrade + gfm + syntax highlighting (#1444)\n\n* upgrades remark/rehype/unified npm packages, and reconfigures\neverything for 2025\n* `Label` can now be made inline, which fixes a react hydration error on\nthe bug page\n* new remark plugins for GFM, hard line breaks & syntax highlighting",
+          "timestamp": "2025-05-17T05:46:39Z",
+          "tree_id": "745714177a9327fa642c8484634871be70c403f5",
+          "url": "https://github.com/git-bug/git-bug/commit/6ee47b96ba40a00eab6a0719fe11eaf247a4fdea"
+        },
+        "date": 1747461055934,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 16234115,
+            "unit": "ns/op\t  905975 B/op\t   13945 allocs/op",
+            "extra": "62 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 16234115,
+            "unit": "ns/op",
+            "extra": "62 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 905975,
+            "unit": "B/op",
+            "extra": "62 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 13945,
+            "unit": "allocs/op",
+            "extra": "62 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 90812187,
+            "unit": "ns/op\t 5342416 B/op\t   78017 allocs/op",
+            "extra": "13 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 90812187,
+            "unit": "ns/op",
+            "extra": "13 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 5342416,
+            "unit": "B/op",
+            "extra": "13 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 78017,
+            "unit": "allocs/op",
+            "extra": "13 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 573872779,
+            "unit": "ns/op\t42621008 B/op\t  524557 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 573872779,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 42621008,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 524557,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
