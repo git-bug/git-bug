@@ -12,6 +12,9 @@ on:
   merge_group:
     types:
       - checks_requested
+  push:
+    branches:
+      - I738207f8cb254b66f3ef18aa525fce39c71060e2
   pull_request:
     branches:
       - master

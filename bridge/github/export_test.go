@@ -191,10 +191,21 @@ func TestGithubPushPull(t *testing.T) {
 
 	// Make sure to remove the Github repository when the test end
 	defer func(t *testing.T) {
-		if err := deleteRepository(projectName, envUser, envToken); err != nil {
-			t.Fatal(err)
+		ci := os.Getenv("CI") == "true"
+		if !t.Failed() || ci {
+			if err := deleteRepository(projectName, envUser, envToken); err != nil {
+				t.Fatal(err)
+			}
+
+			reason := "test success"
+			if ci {
+				reason = "CI"
+			}
+
+			slog.Info("deleted repository", "reason", reason, "name", projectName)
+		} else {
+			slog.Info("persisted repository", "reason", "test failure", "name", projectName)
 		}
-		fmt.Println("deleted repository:", projectName)
 	}(t)
 
 	interrupt.RegisterCleaner(func() error {
@@ -275,8 +286,22 @@ func TestGithubPushPull(t *testing.T) {
 			importedBug, err := backendTwo.Bugs().ResolveBugCreateMetadata(metaKeyGithubId, bugGithubID)
 			require.NoError(t, err)
 
+			importedOpCount := len(importedBug.Snapshot().Operations)
+
+			if tt.numOrOp != len(importedBug.Snapshot().Operations) {
+				slog.Info("invalid number of ops for imported bug", "github-id", bugGithubID, "title", importedBug.Snapshot().Title, "opCount", importedOpCount, "labels", importedBug.Snapshot().Labels)
+				for _, op := range importedBug.Snapshot().Operations {
+					slog.Info("  operation", "type", op.Type(), "time", op.Time(), "author", op.Author().Name())
+					for k, v := range op.AllMetadata() {
+						slog.Info("    metadata", "key", k, "val", v)
+					}
+				}
+
+				slog.Info("final snapshot", "status", importedBug.Snapshot().Status.String(), "labels", importedBug.Snapshot().Labels)
+			}
+
 			// verify bug have same number of original operations
-			require.Len(t, importedBug.Snapshot().Operations, tt.numOrOp)
+			require.Equal(t, importedOpCount, tt.numOrOp)
 
 			// verify bugs are tagged with origin=github
 			issueOrigin, ok := importedBug.Snapshot().GetCreateMetadata(core.MetaKeyOrigin)
