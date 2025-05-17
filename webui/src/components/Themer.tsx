@@ -11,7 +11,7 @@ declare module '@mui/styles/defaultTheme' {
   interface DefaultTheme extends Theme {}
 }
 
-const ThemeContext = createContext({
+export const ThemeContext = createContext({
   toggleMode: () => {},
   mode: '',
 });
