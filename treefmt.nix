@@ -12,7 +12,7 @@
     };
 
     mdformat = {
-      enable = false;
+      enable = true;
 
       package = pkgs.mdformat.withPlugins (
         p: with p; [
