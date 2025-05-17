@@ -13,6 +13,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/git-bug/git-bug/api/graphql/models"
+	"github.com/git-bug/git-bug/entities/board"
 	"github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
@@ -359,21 +360,61 @@ func (ec *executionContext) _Authored(ctx context.Context, sel ast.SelectionSet,
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case *bug.SetStatusOperation:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._BugSetStatusOperation(ctx, sel, obj)
-	case *bug.CreateOperation:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._BugCreateOperation(ctx, sel, obj)
 	case *bug.SetTitleOperation:
 		if obj == nil {
 			return graphql.Null
 		}
 		return ec._BugSetTitleOperation(ctx, sel, obj)
+	case *bug.LabelChangeTimelineItem:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BugLabelChangeTimelineItem(ctx, sel, obj)
+	case *board.CreateOperation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BoardCreateOperation(ctx, sel, obj)
+	case *board.AddItemDraftOperation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BoardAddItemDraftOperation(ctx, sel, obj)
+	case *board.AddItemEntityOperation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BoardAddItemEntityOperation(ctx, sel, obj)
+	case *board.SetDescriptionOperation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BoardSetDescriptionOperation(ctx, sel, obj)
+	case *board.SetTitleOperation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BoardSetTitleOperation(ctx, sel, obj)
+	case *board.Draft:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BoardItemDraft(ctx, sel, obj)
+	case *bug.SetTitleTimelineItem:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BugSetTitleTimelineItem(ctx, sel, obj)
+	case *board.BugItem:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BoardItemBug(ctx, sel, obj)
+	case *bug.SetStatusTimelineItem:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BugSetStatusTimelineItem(ctx, sel, obj)
 	case *bug.AddCommentOperation:
 		if obj == nil {
 			return graphql.Null
@@ -384,6 +425,11 @@ func (ec *executionContext) _Authored(ctx context.Context, sel ast.SelectionSet,
 			return graphql.Null
 		}
 		return ec._BugEditCommentOperation(ctx, sel, obj)
+	case *bug.SetStatusOperation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BugSetStatusOperation(ctx, sel, obj)
 	case *bug.LabelChangeOperation:
 		if obj == nil {
 			return graphql.Null
@@ -399,21 +445,16 @@ func (ec *executionContext) _Authored(ctx context.Context, sel ast.SelectionSet,
 			return graphql.Null
 		}
 		return ec._BugAddCommentTimelineItem(ctx, sel, obj)
-	case *bug.LabelChangeTimelineItem:
+	case *bug.CreateOperation:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._BugLabelChangeTimelineItem(ctx, sel, obj)
-	case *bug.SetStatusTimelineItem:
+		return ec._BugCreateOperation(ctx, sel, obj)
+	case models.BugWrapper:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._BugSetStatusTimelineItem(ctx, sel, obj)
-	case *bug.SetTitleTimelineItem:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._BugSetTitleTimelineItem(ctx, sel, obj)
+		return ec._Bug(ctx, sel, obj)
 	case bug.Comment:
 		return ec._BugComment(ctx, sel, &obj)
 	case *bug.Comment:
@@ -421,11 +462,6 @@ func (ec *executionContext) _Authored(ctx context.Context, sel ast.SelectionSet,
 			return graphql.Null
 		}
 		return ec._BugComment(ctx, sel, obj)
-	case models.BugWrapper:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._Bug(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}

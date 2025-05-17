@@ -12,7 +12,7 @@ import (
 	"github.com/git-bug/git-bug/repository"
 )
 
-type opsGenerator func(bug.Interface, identity.Interface, int64)
+type opsGenerator func(bug.ReadWrite, identity.Interface, int64)
 
 type Options struct {
 	BugNumber    int
@@ -143,25 +143,25 @@ func paragraphs() string {
 	return strings.Replace(p, "\t", "\n\n", -1)
 }
 
-func comment(b bug.Interface, p identity.Interface, timestamp int64) {
+func comment(b bug.ReadWrite, p identity.Interface, timestamp int64) {
 	_, _, _ = bug.AddComment(b, p, timestamp, paragraphs(), nil, nil)
 }
 
-func title(b bug.Interface, p identity.Interface, timestamp int64) {
+func title(b bug.ReadWrite, p identity.Interface, timestamp int64) {
 	_, _ = bug.SetTitle(b, p, timestamp, fake.Sentence(), nil)
 }
 
-func open(b bug.Interface, p identity.Interface, timestamp int64) {
+func open(b bug.ReadWrite, p identity.Interface, timestamp int64) {
 	_, _ = bug.Open(b, p, timestamp, nil)
 }
 
-func close(b bug.Interface, p identity.Interface, timestamp int64) {
+func close(b bug.ReadWrite, p identity.Interface, timestamp int64) {
 	_, _ = bug.Close(b, p, timestamp, nil)
 }
 
 var addedLabels []string
 
-func labels(b bug.Interface, p identity.Interface, timestamp int64) {
+func labels(b bug.ReadWrite, p identity.Interface, timestamp int64) {
 	var removed []string
 	nbRemoved := rand.Intn(3)
 	for nbRemoved > 0 && len(addedLabels) > 0 {
