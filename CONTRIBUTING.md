@@ -16,6 +16,10 @@ getting started as a contributor to this project.
   - [4.2 | Test the development shell](#42--test-the-development-shell)
 - [Useful development commands](#useful-development-commands)
 - [Submitting changes](#submitting-changes)
+  - [Push early, push often](#push-early-push-often)
+  - [Pull requests are squashed](#pull-requests-are-squashed)
+  - [Draft vs Ready](#draft-vs-ready)
+  - [Singular unit of change](#singular-unit-of-change)
 
 <!-- mdformat-toc end -->
 
@@ -260,6 +264,64 @@ repository, and create a pull request.
 
 If you are in the development shell, you have the `gh` command line tool
 available for use with github.
+
+### Push early, push often<a name="push-early-push-often"></a>
+
+We encourage pushing small changes. There is no such thing as a contribution
+being "too small". If you're working on a big feature or large refactor, we
+encourage you to think about how to introduce it incrementally, in byte-sized
+chunks, and submit those smaller changes frequently.
+
+### Pull requests are _squashed_<a name="pull-requests-are-squashed"></a>
+
+All Pull Requests in this repository are _squash merged_. The resulting commit's
+subject and body is set as such:
+
+- The subject is set to the PR title, appended with the PR's number
+- The body is set to the contents of the PR description, otherwise known as the
+  first comment in the "Discussion" tab
+
+### Draft vs Ready<a name="draft-vs-ready"></a>
+
+Pull Requests can be marked as "ready for review", or as a "draft". Drafts are
+less likely to get reviewed, for the simple fact that in English, the word
+"draft" (in relation to a change) implies that the work is not yet ready, or
+still being worked on. That said, we encourage you to iterate locally,
+especially if you are in the earlier stages of a change.
+
+Any PR, even a draft, triggers the pipelines to run our test suite. Note,
+however, that due to the cost (in terms of time and finance) associated with
+running the pipelines, we may, at our discretion, exclude various parts of our
+test suite from draft PRs.
+
+### Singular unit of change<a name="singular-unit-of-change"></a>
+
+Please keep any one PR limited to a singular unit of change. That is, do your
+best to avoid making multiple different changes in the same tree / PR. This
+helps make it simpler to reason about a change during review, and reduces the
+chance that your proposal ends up spawning five different conversations that
+each dig down their own rabbit hole.
+
+Good examples of a singular unit of change:
+
+- Renaming a function (or method or class or interface or...)
+- Adding a new endpoint
+- Deprecating a thing
+- Removing all of one type of thing (e.g. "remove all unused functions")
+
+Aim to make sure that your change does _one_ thing.
+
+Examples of what we _do not_ want to see in a given PR:
+
+- Rename function Foo and add function Bar
+- Update Baz and Foo
+- Move Thing and upgrade Bar
+- Deprecate Zam and add a new function Zoo
+
+Generally speaking, look out for the word "and". If you find yourself needing to
+write this word in a commit message when describing what your change does,
+consider whether it would be best to split those changes up into individual
+trees.
 
 ______________________________________________________________________
 
