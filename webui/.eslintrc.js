@@ -44,7 +44,7 @@ module.exports = {
         graphQLConfig: {
           schema: './src/schema.json',
           documents: './src/**/*.graphql',
-        }
+        },
       },
     },
   ],
