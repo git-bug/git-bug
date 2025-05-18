@@ -5,6 +5,24 @@ non-exhaustive by design, and only contains public-facing application and API
 changes. Internal, developer-centric changes can be seen by looking at the
 commit log.
 
+## 0.10.0 (2025-05-18)
+
+To view the full set of changes, including internal developer-centric changes,
+run the following command:
+
+```
+git log --oneline v0.9.0..v0.10.0
+```
+
+### Documentation
+
+- **bridge**: correct command used to create a new bridge (9942337b)
+
+### Features
+
+- **web**: simplify header navigation (7e95b169)
+- **web**: remark upgrade + gfm + syntax highlighting (6ee47b96)
+
 ## 0.9.0 (2025-05-12)
 
 This release contains minor improvements and bug fixes.
