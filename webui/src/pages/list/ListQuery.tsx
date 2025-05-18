@@ -26,11 +26,13 @@ import { useListBugsQuery } from './ListQuery.generated';
 type StylesProps = { searching?: boolean };
 const useStyles = makeStyles<Theme, StylesProps>((theme) => ({
   main: {
-    maxWidth: 800,
-    margin: 'auto',
-    marginTop: theme.spacing(4),
-    marginBottom: theme.spacing(4),
     overflow: 'hidden',
+    maxWidth: theme.breakpoints.values.lg,
+
+    margin: theme.spacing(4, 'auto'),
+    [theme.breakpoints.down('lg')]: {
+      margin: 0,
+    },
   },
   pagination: {
     ...theme.typography.overline,

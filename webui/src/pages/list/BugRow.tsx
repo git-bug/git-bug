@@ -46,7 +46,6 @@ const BugStatus: React.FC<StatusProps> = ({
 const useStyles = makeStyles((theme) => ({
   cell: {
     display: 'flex',
-    alignItems: 'center',
     padding: theme.spacing(1),
     '& a': {
       textDecoration: 'none',
@@ -56,41 +55,65 @@ const useStyles = makeStyles((theme) => ({
     margin: theme.spacing(1, 2),
   },
   expand: {
-    width: '100%',
+    flex: 1,
     lineHeight: '20px',
-  },
-  bugTitleWrapper: {
     display: 'flex',
     flexDirection: 'row',
     flexWrap: 'wrap',
-    //alignItems: 'center',
+    alignItems: 'top',
+    [theme.breakpoints.down('md')]: {
+      flexDirection: 'column'
+    }
   },
   title: {
-    display: 'inline',
     color: theme.palette.text.primary,
-    fontSize: '1.3rem',
+    fontSize: '1.1rem',
     fontWeight: 500,
-    marginBottom: theme.spacing(1),
+  },
+  maindataWrapper: {
+    flex: '1 0',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'start',
+
+    [theme.breakpoints.down('md')]: {
+      marginBottom: theme.spacing(1)
+    }
+  },
+  sidedataWrapper: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'end',
+    gap: theme.spacing(1),
+
+    [theme.breakpoints.down('md')]: {
+      flexDirection: 'row',
+      flex: '1 1'
+    }
+  },
+  labelsWrapper: {
+    display: 'flex',
+    flexDirection: 'row',
+    gap: theme.spacing(0.5),
+    [theme.breakpoints.down('md')]: {
+      flex: 1,
+      flexWrap: 'wrap',
+    }
   },
   label: {
     maxWidth: '40ch',
-    marginLeft: theme.spacing(0.25),
-    marginRight: theme.spacing(0.25),
   },
   details: {
-    lineHeight: '1.5rem',
     color: theme.palette.text.secondary,
-  },
-  commentCount: {
-    fontSize: '1rem',
-    minWidth: '2rem',
-    marginLeft: theme.spacing(0.5),
-    marginRight: theme.spacing(1),
+    marginTop: theme.spacing(1),
   },
   commentCountCell: {
-    display: 'inline-flex',
-    minWidth: theme.spacing(5),
-    marginLeft: theme.spacing(0.5),
+    display: 'flex',
+    alignItems: 'center',
+    marginRight: theme.spacing(1),
+  },
+  commentCount: {
+    margin: theme.spacing(0, 1),
   },
 }));
 
@@ -107,30 +130,28 @@ function BugRow({ bug }: Props) {
       <TableCell className={classes.cell}>
         <BugStatus status={bug.status} className={classes.status} />
         <div className={classes.expand}>
-          <Link to={'bug/' + bug.id}>
-            <div className={classes.bugTitleWrapper}>
-              <span className={classes.title}>{bug.title}</span>
-              {bug.labels.length > 0 &&
-                bug.labels.map((l) => (
-                  <Label key={l.name} label={l} className={classes.label} />
-                ))}
+              <div className={classes.maindataWrapper}>
+                <Link to={'bug/' + bug.id}>
+                  <div className={classes.title}>{bug.title}</div>
+                </Link>
+                <div className={classes.details}>
+                  {bug.humanId} opened&nbsp;
+                  <Date date={bug.createdAt} />
+                  &nbsp;by&nbsp;
+                  <Author className={classes.details} author={bug.author} />
+                </div>
+              </div>
+              <div className={classes.sidedataWrapper}>
+                <div className={classes.labelsWrapper}>
+                  {commentCount > 0 &&
+                    <div className={classes.commentCountCell}>
+                      <span className={classes.commentCount}>{commentCount}</span>
+                      <CommentOutlinedIcon aria-label="Comment count" fontSize='small' />
+                    </div>}
+                  {bug.labels.length > 0 && bug.labels.map((l) => <Label key={l.name} label={l} className={classes.label} />)}
+                </div>
+              </div>
             </div>
-          </Link>
-          <div className={classes.details}>
-            {bug.humanId} opened&nbsp;
-            <Date date={bug.createdAt} />
-            &nbsp;by&nbsp;
-            <Author className={classes.details} author={bug.author} />
-          </div>
-        </div>
-        <span className={classes.commentCountCell}>
-          {commentCount > 0 && (
-            <>
-              <CommentOutlinedIcon aria-label="Comment count" />
-              <span className={classes.commentCount}>{commentCount}</span>
-            </>
-          )}
-        </span>
       </TableCell>
     </TableRow>
   );
