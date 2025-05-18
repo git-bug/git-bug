@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1747461056424,
+  "lastUpdate": 1747543001395,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -13922,6 +13922,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 524557,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ab8c5ccf9f9ed02d0358ddeae8d5c6075dc6dda7",
+          "message": "ci: limit default permissions to contents.read (#1447)\n\nThis change refactors all root pipelines (`trunk` and `presubmit`) to\nlimit the contents permission to read. By default, GitHub has taken the\noverly-permissive approach of granting all permissions if the\n`permissions` map is not explicitly defined. Usability wins out over\nsecurity, again.\n\nChange-Id: Idaca851385fb82eefd6c7c9b8ee46b85a3f4901c",
+          "timestamp": "2025-05-17T21:36:03-07:00",
+          "tree_id": "c63aca0672065cd979983daedc3f58db07ed5948",
+          "url": "https://github.com/git-bug/git-bug/commit/ab8c5ccf9f9ed02d0358ddeae8d5c6075dc6dda7"
+        },
+        "date": 1747543000760,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 36036382,
+            "unit": "ns/op\t  905479 B/op\t   13939 allocs/op",
+            "extra": "68 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 36036382,
+            "unit": "ns/op",
+            "extra": "68 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 905479,
+            "unit": "B/op",
+            "extra": "68 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 13939,
+            "unit": "allocs/op",
+            "extra": "68 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 101545143,
+            "unit": "ns/op\t 5349437 B/op\t   78156 allocs/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 101545143,
+            "unit": "ns/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 5349437,
+            "unit": "B/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 78156,
+            "unit": "allocs/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 641201957,
+            "unit": "ns/op\t42764060 B/op\t  524494 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 641201957,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 42764060,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 524494,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
