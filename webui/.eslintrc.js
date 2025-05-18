@@ -41,8 +41,10 @@ module.exports = {
         '@graphql-eslint/known-type-names': 'error',
       },
       parserOptions: {
-        schema: './src/schema.json',
-        operations: './src/**/*.graphql',
+        graphQLConfig: {
+          schema: './src/schema.json',
+          documents: './src/**/*.graphql',
+        },
       },
     },
   ],
