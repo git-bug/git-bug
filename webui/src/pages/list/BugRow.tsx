@@ -72,24 +72,34 @@ const useStyles = makeStyles((theme) => ({
   maindataWrapper: {
     flex: '1 0',
     display: 'flex',
+    flexWrap: 'wrap',
     alignItems: 'start',
-    gap: theme.spacing(0),
+    justifyContent: 'end',
+    gap: theme.spacing(0.5),
 
     [theme.breakpoints.down('md')]: {
       flexDirection: 'column',
-      gap: theme.spacing(1),
     }
   },
   title: {
     display: 'inline-flex',
-    flex: 1,
+    whiteSpace: 'nowrap',
+    flex: '1 0',
     color: theme.palette.text.primary,
     fontSize: '1.1rem',
     fontWeight: 500,
+
+    [theme.breakpoints.down('md')]: {
+      whiteSpace: 'initial',
+    }
   },
   labelsWrapper: {
     display: 'inline-flex',
     gap: theme.spacing(0.5),
+
+    [theme.breakpoints.down('md')]: {
+      flexWrap: 'wrap',
+    }
   },
   sidedataWrapper: {
     display: 'flex',
@@ -97,6 +107,8 @@ const useStyles = makeStyles((theme) => ({
     gap: theme.spacing(1),
 
     [theme.breakpoints.down('md')]: {
+      alignItems: 'start',
+      flexDirection: 'column-reverse'
     }
   },
   label: {

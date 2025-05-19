@@ -27,10 +27,11 @@ type StylesProps = { searching?: boolean };
 const useStyles = makeStyles<Theme, StylesProps>((theme) => ({
   main: {
     overflow: 'hidden',
-    maxWidth: theme.breakpoints.values.lg,
+    maxWidth: `min(${theme.breakpoints.values.xl}px, calc(100% - ${theme.spacing(8)}))`,
 
     margin: theme.spacing(4, 'auto'),
-    [theme.breakpoints.down('lg')]: {
+    [theme.breakpoints.down('md')]: {
+      maxWidth: '100%',
       margin: 0,
     },
   },
@@ -216,10 +217,10 @@ function ListQuery() {
 
   // If nothing set, show the first 10 items
   if (!page.first && !page.last) {
-    page.first = 10;
+    page.first = 25;
   }
 
-  const perPage = (page.first || page.last || 10).toString();
+  const perPage = (page.first || page.last || 25).toString();
 
   const { loading, error, data } = useListBugsQuery({
     variables: {
