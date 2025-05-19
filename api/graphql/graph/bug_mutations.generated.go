@@ -41,7 +41,7 @@ func (ec *executionContext) _BugAddCommentAndClosePayload_clientMutationId(ctx c
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ClientMutationID, nil
 	})
@@ -82,7 +82,7 @@ func (ec *executionContext) _BugAddCommentAndClosePayload_bug(ctx context.Contex
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Bug, nil
 	})
@@ -154,7 +154,7 @@ func (ec *executionContext) _BugAddCommentAndClosePayload_commentOperation(ctx c
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.CommentOperation, nil
 	})
@@ -210,7 +210,7 @@ func (ec *executionContext) _BugAddCommentAndClosePayload_statusOperation(ctx co
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.StatusOperation, nil
 	})
@@ -264,7 +264,7 @@ func (ec *executionContext) _BugAddCommentAndReopenPayload_clientMutationId(ctx 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ClientMutationID, nil
 	})
@@ -305,7 +305,7 @@ func (ec *executionContext) _BugAddCommentAndReopenPayload_bug(ctx context.Conte
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Bug, nil
 	})
@@ -377,7 +377,7 @@ func (ec *executionContext) _BugAddCommentAndReopenPayload_commentOperation(ctx 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.CommentOperation, nil
 	})
@@ -433,7 +433,7 @@ func (ec *executionContext) _BugAddCommentAndReopenPayload_statusOperation(ctx c
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.StatusOperation, nil
 	})
@@ -487,7 +487,7 @@ func (ec *executionContext) _BugAddCommentPayload_clientMutationId(ctx context.C
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ClientMutationID, nil
 	})
@@ -528,7 +528,7 @@ func (ec *executionContext) _BugAddCommentPayload_bug(ctx context.Context, field
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Bug, nil
 	})
@@ -600,7 +600,7 @@ func (ec *executionContext) _BugAddCommentPayload_operation(ctx context.Context,
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Operation, nil
 	})
@@ -656,7 +656,7 @@ func (ec *executionContext) _BugChangeLabelPayload_clientMutationId(ctx context.
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ClientMutationID, nil
 	})
@@ -697,7 +697,7 @@ func (ec *executionContext) _BugChangeLabelPayload_bug(ctx context.Context, fiel
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Bug, nil
 	})
@@ -769,7 +769,7 @@ func (ec *executionContext) _BugChangeLabelPayload_operation(ctx context.Context
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Operation, nil
 	})
@@ -825,7 +825,7 @@ func (ec *executionContext) _BugChangeLabelPayload_results(ctx context.Context, 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Results, nil
 	})
@@ -875,7 +875,7 @@ func (ec *executionContext) _BugCreatePayload_clientMutationId(ctx context.Conte
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ClientMutationID, nil
 	})
@@ -916,7 +916,7 @@ func (ec *executionContext) _BugCreatePayload_bug(ctx context.Context, field gra
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Bug, nil
 	})
@@ -988,7 +988,7 @@ func (ec *executionContext) _BugCreatePayload_operation(ctx context.Context, fie
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Operation, nil
 	})
@@ -1046,7 +1046,7 @@ func (ec *executionContext) _BugEditCommentPayload_clientMutationId(ctx context.
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ClientMutationID, nil
 	})
@@ -1087,7 +1087,7 @@ func (ec *executionContext) _BugEditCommentPayload_bug(ctx context.Context, fiel
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Bug, nil
 	})
@@ -1159,7 +1159,7 @@ func (ec *executionContext) _BugEditCommentPayload_operation(ctx context.Context
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Operation, nil
 	})
@@ -1217,7 +1217,7 @@ func (ec *executionContext) _BugSetTitlePayload_clientMutationId(ctx context.Con
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ClientMutationID, nil
 	})
@@ -1258,7 +1258,7 @@ func (ec *executionContext) _BugSetTitlePayload_bug(ctx context.Context, field g
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Bug, nil
 	})
@@ -1330,7 +1330,7 @@ func (ec *executionContext) _BugSetTitlePayload_operation(ctx context.Context, f
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Operation, nil
 	})
@@ -1386,7 +1386,7 @@ func (ec *executionContext) _BugStatusClosePayload_clientMutationId(ctx context.
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ClientMutationID, nil
 	})
@@ -1427,7 +1427,7 @@ func (ec *executionContext) _BugStatusClosePayload_bug(ctx context.Context, fiel
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Bug, nil
 	})
@@ -1499,7 +1499,7 @@ func (ec *executionContext) _BugStatusClosePayload_operation(ctx context.Context
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Operation, nil
 	})
@@ -1553,7 +1553,7 @@ func (ec *executionContext) _BugStatusOpenPayload_clientMutationId(ctx context.C
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ClientMutationID, nil
 	})
@@ -1594,7 +1594,7 @@ func (ec *executionContext) _BugStatusOpenPayload_bug(ctx context.Context, field
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Bug, nil
 	})
@@ -1666,7 +1666,7 @@ func (ec *executionContext) _BugStatusOpenPayload_operation(ctx context.Context,
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Operation, nil
 	})
@@ -1712,10 +1712,10 @@ func (ec *executionContext) fieldContext_BugStatusOpenPayload_operation(_ contex
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputBugAddCommentAndCloseInput(ctx context.Context, obj interface{}) (models.BugAddCommentAndCloseInput, error) {
+func (ec *executionContext) unmarshalInputBugAddCommentAndCloseInput(ctx context.Context, obj any) (models.BugAddCommentAndCloseInput, error) {
 	var it models.BugAddCommentAndCloseInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
@@ -1767,10 +1767,10 @@ func (ec *executionContext) unmarshalInputBugAddCommentAndCloseInput(ctx context
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputBugAddCommentAndReopenInput(ctx context.Context, obj interface{}) (models.BugAddCommentAndReopenInput, error) {
+func (ec *executionContext) unmarshalInputBugAddCommentAndReopenInput(ctx context.Context, obj any) (models.BugAddCommentAndReopenInput, error) {
 	var it models.BugAddCommentAndReopenInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
@@ -1822,10 +1822,10 @@ func (ec *executionContext) unmarshalInputBugAddCommentAndReopenInput(ctx contex
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputBugAddCommentInput(ctx context.Context, obj interface{}) (models.BugAddCommentInput, error) {
+func (ec *executionContext) unmarshalInputBugAddCommentInput(ctx context.Context, obj any) (models.BugAddCommentInput, error) {
 	var it models.BugAddCommentInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
@@ -1877,10 +1877,10 @@ func (ec *executionContext) unmarshalInputBugAddCommentInput(ctx context.Context
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputBugChangeLabelInput(ctx context.Context, obj interface{}) (models.BugChangeLabelInput, error) {
+func (ec *executionContext) unmarshalInputBugChangeLabelInput(ctx context.Context, obj any) (models.BugChangeLabelInput, error) {
 	var it models.BugChangeLabelInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
@@ -1932,10 +1932,10 @@ func (ec *executionContext) unmarshalInputBugChangeLabelInput(ctx context.Contex
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputBugCreateInput(ctx context.Context, obj interface{}) (models.BugCreateInput, error) {
+func (ec *executionContext) unmarshalInputBugCreateInput(ctx context.Context, obj any) (models.BugCreateInput, error) {
 	var it models.BugCreateInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
@@ -1987,10 +1987,10 @@ func (ec *executionContext) unmarshalInputBugCreateInput(ctx context.Context, ob
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputBugEditCommentInput(ctx context.Context, obj interface{}) (models.BugEditCommentInput, error) {
+func (ec *executionContext) unmarshalInputBugEditCommentInput(ctx context.Context, obj any) (models.BugEditCommentInput, error) {
 	var it models.BugEditCommentInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
@@ -2042,10 +2042,10 @@ func (ec *executionContext) unmarshalInputBugEditCommentInput(ctx context.Contex
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputBugSetTitleInput(ctx context.Context, obj interface{}) (models.BugSetTitleInput, error) {
+func (ec *executionContext) unmarshalInputBugSetTitleInput(ctx context.Context, obj any) (models.BugSetTitleInput, error) {
 	var it models.BugSetTitleInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
@@ -2090,10 +2090,10 @@ func (ec *executionContext) unmarshalInputBugSetTitleInput(ctx context.Context, 
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputBugStatusCloseInput(ctx context.Context, obj interface{}) (models.BugStatusCloseInput, error) {
+func (ec *executionContext) unmarshalInputBugStatusCloseInput(ctx context.Context, obj any) (models.BugStatusCloseInput, error) {
 	var it models.BugStatusCloseInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
@@ -2131,10 +2131,10 @@ func (ec *executionContext) unmarshalInputBugStatusCloseInput(ctx context.Contex
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputBugStatusOpenInput(ctx context.Context, obj interface{}) (models.BugStatusOpenInput, error) {
+func (ec *executionContext) unmarshalInputBugStatusOpenInput(ctx context.Context, obj any) (models.BugStatusOpenInput, error) {
 	var it models.BugStatusOpenInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
@@ -2613,7 +2613,7 @@ func (ec *executionContext) _BugStatusOpenPayload(ctx context.Context, sel ast.S
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) unmarshalNBugAddCommentAndCloseInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugAddCommentAndCloseInput(ctx context.Context, v interface{}) (models.BugAddCommentAndCloseInput, error) {
+func (ec *executionContext) unmarshalNBugAddCommentAndCloseInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugAddCommentAndCloseInput(ctx context.Context, v any) (models.BugAddCommentAndCloseInput, error) {
 	res, err := ec.unmarshalInputBugAddCommentAndCloseInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -2632,7 +2632,7 @@ func (ec *executionContext) marshalNBugAddCommentAndClosePayload2ᚖgithubᚗcom
 	return ec._BugAddCommentAndClosePayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNBugAddCommentAndReopenInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugAddCommentAndReopenInput(ctx context.Context, v interface{}) (models.BugAddCommentAndReopenInput, error) {
+func (ec *executionContext) unmarshalNBugAddCommentAndReopenInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugAddCommentAndReopenInput(ctx context.Context, v any) (models.BugAddCommentAndReopenInput, error) {
 	res, err := ec.unmarshalInputBugAddCommentAndReopenInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -2651,7 +2651,7 @@ func (ec *executionContext) marshalNBugAddCommentAndReopenPayload2ᚖgithubᚗco
 	return ec._BugAddCommentAndReopenPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNBugAddCommentInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugAddCommentInput(ctx context.Context, v interface{}) (models.BugAddCommentInput, error) {
+func (ec *executionContext) unmarshalNBugAddCommentInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugAddCommentInput(ctx context.Context, v any) (models.BugAddCommentInput, error) {
 	res, err := ec.unmarshalInputBugAddCommentInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -2684,7 +2684,7 @@ func (ec *executionContext) marshalNBugChangeLabelPayload2ᚖgithubᚗcomᚋgit�
 	return ec._BugChangeLabelPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNBugCreateInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugCreateInput(ctx context.Context, v interface{}) (models.BugCreateInput, error) {
+func (ec *executionContext) unmarshalNBugCreateInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugCreateInput(ctx context.Context, v any) (models.BugCreateInput, error) {
 	res, err := ec.unmarshalInputBugCreateInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -2703,7 +2703,7 @@ func (ec *executionContext) marshalNBugCreatePayload2ᚖgithubᚗcomᚋgitᚑbug
 	return ec._BugCreatePayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNBugEditCommentInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugEditCommentInput(ctx context.Context, v interface{}) (models.BugEditCommentInput, error) {
+func (ec *executionContext) unmarshalNBugEditCommentInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugEditCommentInput(ctx context.Context, v any) (models.BugEditCommentInput, error) {
 	res, err := ec.unmarshalInputBugEditCommentInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -2722,7 +2722,7 @@ func (ec *executionContext) marshalNBugEditCommentPayload2ᚖgithubᚗcomᚋgit�
 	return ec._BugEditCommentPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNBugSetTitleInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugSetTitleInput(ctx context.Context, v interface{}) (models.BugSetTitleInput, error) {
+func (ec *executionContext) unmarshalNBugSetTitleInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugSetTitleInput(ctx context.Context, v any) (models.BugSetTitleInput, error) {
 	res, err := ec.unmarshalInputBugSetTitleInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -2741,7 +2741,7 @@ func (ec *executionContext) marshalNBugSetTitlePayload2ᚖgithubᚗcomᚋgitᚑb
 	return ec._BugSetTitlePayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNBugStatusCloseInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugStatusCloseInput(ctx context.Context, v interface{}) (models.BugStatusCloseInput, error) {
+func (ec *executionContext) unmarshalNBugStatusCloseInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugStatusCloseInput(ctx context.Context, v any) (models.BugStatusCloseInput, error) {
 	res, err := ec.unmarshalInputBugStatusCloseInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -2760,7 +2760,7 @@ func (ec *executionContext) marshalNBugStatusClosePayload2ᚖgithubᚗcomᚋgit�
 	return ec._BugStatusClosePayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNBugStatusOpenInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugStatusOpenInput(ctx context.Context, v interface{}) (models.BugStatusOpenInput, error) {
+func (ec *executionContext) unmarshalNBugStatusOpenInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugStatusOpenInput(ctx context.Context, v any) (models.BugStatusOpenInput, error) {
 	res, err := ec.unmarshalInputBugStatusOpenInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -2779,7 +2779,7 @@ func (ec *executionContext) marshalNBugStatusOpenPayload2ᚖgithubᚗcomᚋgit�
 	return ec._BugStatusOpenPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOBugChangeLabelInput2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugChangeLabelInput(ctx context.Context, v interface{}) (*models.BugChangeLabelInput, error) {
+func (ec *executionContext) unmarshalOBugChangeLabelInput2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugChangeLabelInput(ctx context.Context, v any) (*models.BugChangeLabelInput, error) {
 	if v == nil {
 		return nil, nil
 	}

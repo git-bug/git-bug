@@ -61,9 +61,9 @@ func (s Status) Validate() error {
 func (s Status) MarshalGQL(w io.Writer) {
 	switch s {
 	case OpenStatus:
-		_, _ = fmt.Fprintf(w, strconv.Quote("OPEN"))
+		_, _ = w.Write([]byte(strconv.Quote("OPEN")))
 	case ClosedStatus:
-		_, _ = fmt.Fprintf(w, strconv.Quote("CLOSED"))
+		_, _ = w.Write([]byte(strconv.Quote("CLOSED")))
 	default:
 		panic("missing case")
 	}
