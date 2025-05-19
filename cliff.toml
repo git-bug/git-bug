@@ -102,36 +102,10 @@ sort_commits = "oldest"
 topo_order = true
 
 commit_preprocessors = [
-  # map various older scopes to new scopes
-  # TODO: remove after init (because we will enforce an append-only workflow)
-  { pattern = '^([^\(]+)\(commands\):', replace = '$1 (cli):' },
-  { pattern = '^[^\(]+\(ci\)', replace = 'ci:' },
-  { pattern = '^[^\(]+\(TestCache\)', replace = 'test:' },
-  { pattern = '^doc: (.+ \(#1395\))', replace = 'docs(dev-infra): $1' },
-  { pattern = '^fix: (.+ \(#1403\))', replace = 'fix(completion): $1' },
-  { pattern = '^docs: (correct mispelled words)', replace = 'fix(dev-infra): $1' },
-  { pattern = '^(.+) \[fix\]$', replace = 'docs: $1' },
-  { pattern = '^fix ', replace = 'fix: ' },
-
-  # remove errata from old commit messages
-  # TODO: remove after init (because we will enforce an append-only workflow)
-  { pattern = '^([^\(]+)\((?:#?\d+|opencollective|git-bug-863)\)', replace = '$1' },
-  { pattern = ', fix https://.+/issues/653', replace = '' },
-
   # remove quotes from reversions
   # we do this to clean up the changelog output, since the raw message would
   # otherwise be surrounded in quotes
   { pattern = '^[Rr]evert: "(.+)"', replace = 'revert: $1' },
-
-  # convert quotes in subjects to graves
-  # TODO: remove after init (because we will enforce an append-only workflow)
-  { pattern = '"', replace = '`' },
-
-  # escape backslashes
-  # we do this because mdformat will remove isolated backslashes, and there is a
-  # historical commit that contains one
-  # TODO: remove after init (because we will enforce an append-only workflow)
-  { pattern = '\\', replace = '\\' },
 
   # remove PR references from commit messages, to remove a hard dependency on
   # github. by default, we show the commit hash (although github usernames and
