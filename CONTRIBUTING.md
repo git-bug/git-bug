@@ -269,7 +269,7 @@ available for use with github.
 ### Commit messages are the source of truth<a name="commit-messages-are-the-source-of-truth"></a>
 
 Commit subjects and messages are the source of truth for a variety of things,
-including the public-facing changelog (\[`//:CHANGELOG.md`\]\[changelog\]) and
+including the public-facing changelog ([`//:CHANGELOG.md`][changelog]) and
 release descriptions. Writing thorough commit messages is beneficial to anyone
 reviewing a commit, including future you!
 
@@ -342,6 +342,7 @@ ______________________________________________________________________
 - [Learn about the data model][doc/design/model]
 - [See how to create a new entity][example-entity]
 
+[changelog]: ./CHANGELOG.md
 [doc/contrib/commit]: ./doc/contrib/commit-message-guidelines.md
 [doc/design/arch]: ./doc/design/architecture.md
 [doc/design/model]: ./doc/design/data-model.md
