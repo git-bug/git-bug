@@ -1,4 +1,4 @@
-//go:generate go run github.com/99designs/gqlgen generate
+//go:generate go tool gqlgen generate
 
 // Package graphql contains the root GraphQL http handler
 package graphql

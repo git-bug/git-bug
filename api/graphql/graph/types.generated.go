@@ -51,7 +51,7 @@ func (ec *executionContext) _Color_R(ctx context.Context, field graphql.Collecte
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Color().R(rctx, obj)
 	})
@@ -95,7 +95,7 @@ func (ec *executionContext) _Color_G(ctx context.Context, field graphql.Collecte
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Color().G(rctx, obj)
 	})
@@ -139,7 +139,7 @@ func (ec *executionContext) _Color_B(ctx context.Context, field graphql.Collecte
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Color().B(rctx, obj)
 	})
@@ -183,7 +183,7 @@ func (ec *executionContext) _PageInfo_hasNextPage(ctx context.Context, field gra
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.HasNextPage, nil
 	})
@@ -227,7 +227,7 @@ func (ec *executionContext) _PageInfo_hasPreviousPage(ctx context.Context, field
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.HasPreviousPage, nil
 	})
@@ -271,7 +271,7 @@ func (ec *executionContext) _PageInfo_startCursor(ctx context.Context, field gra
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.StartCursor, nil
 	})
@@ -315,7 +315,7 @@ func (ec *executionContext) _PageInfo_endCursor(ctx context.Context, field graph
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.EndCursor, nil
 	})
@@ -359,61 +359,61 @@ func (ec *executionContext) _Authored(ctx context.Context, sel ast.SelectionSet,
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case *bug.SetStatusOperation:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._BugSetStatusOperation(ctx, sel, obj)
-	case *bug.CreateOperation:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._BugCreateOperation(ctx, sel, obj)
-	case *bug.SetTitleOperation:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._BugSetTitleOperation(ctx, sel, obj)
-	case *bug.AddCommentOperation:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._BugAddCommentOperation(ctx, sel, obj)
-	case *bug.EditCommentOperation:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._BugEditCommentOperation(ctx, sel, obj)
-	case *bug.LabelChangeOperation:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._BugLabelChangeOperation(ctx, sel, obj)
-	case *bug.CreateTimelineItem:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._BugCreateTimelineItem(ctx, sel, obj)
-	case *bug.AddCommentTimelineItem:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._BugAddCommentTimelineItem(ctx, sel, obj)
-	case *bug.LabelChangeTimelineItem:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._BugLabelChangeTimelineItem(ctx, sel, obj)
-	case *bug.SetStatusTimelineItem:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._BugSetStatusTimelineItem(ctx, sel, obj)
 	case *bug.SetTitleTimelineItem:
 		if obj == nil {
 			return graphql.Null
 		}
 		return ec._BugSetTitleTimelineItem(ctx, sel, obj)
+	case *bug.SetTitleOperation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BugSetTitleOperation(ctx, sel, obj)
+	case *bug.SetStatusTimelineItem:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BugSetStatusTimelineItem(ctx, sel, obj)
+	case *bug.SetStatusOperation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BugSetStatusOperation(ctx, sel, obj)
+	case *bug.LabelChangeTimelineItem:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BugLabelChangeTimelineItem(ctx, sel, obj)
+	case *bug.LabelChangeOperation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BugLabelChangeOperation(ctx, sel, obj)
+	case *bug.EditCommentOperation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BugEditCommentOperation(ctx, sel, obj)
+	case *bug.CreateTimelineItem:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BugCreateTimelineItem(ctx, sel, obj)
+	case *bug.CreateOperation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BugCreateOperation(ctx, sel, obj)
+	case *bug.AddCommentTimelineItem:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BugAddCommentTimelineItem(ctx, sel, obj)
+	case *bug.AddCommentOperation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BugAddCommentOperation(ctx, sel, obj)
 	case bug.Comment:
 		return ec._BugComment(ctx, sel, &obj)
 	case *bug.Comment:
@@ -649,7 +649,7 @@ func (ec *executionContext) marshalNColor2ᚖimageᚋcolorᚐRGBA(ctx context.Co
 	return ec._Color(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNCombinedId2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚐCombinedId(ctx context.Context, v interface{}) (entity.CombinedId, error) {
+func (ec *executionContext) unmarshalNCombinedId2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚐCombinedId(ctx context.Context, v any) (entity.CombinedId, error) {
 	var res entity.CombinedId
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -659,7 +659,7 @@ func (ec *executionContext) marshalNCombinedId2githubᚗcomᚋgitᚑbugᚋgitᚑ
 	return v
 }
 
-func (ec *executionContext) unmarshalNHash2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐHash(ctx context.Context, v interface{}) (repository.Hash, error) {
+func (ec *executionContext) unmarshalNHash2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐHash(ctx context.Context, v any) (repository.Hash, error) {
 	var res repository.Hash
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -669,11 +669,9 @@ func (ec *executionContext) marshalNHash2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋ
 	return v
 }
 
-func (ec *executionContext) unmarshalNHash2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐHashᚄ(ctx context.Context, v interface{}) ([]repository.Hash, error) {
-	var vSlice []interface{}
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
+func (ec *executionContext) unmarshalNHash2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐHashᚄ(ctx context.Context, v any) ([]repository.Hash, error) {
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([]repository.Hash, len(vSlice))
 	for i := range vSlice {
@@ -711,12 +709,13 @@ func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋgitᚑbugᚋgit�
 	return ec._PageInfo(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {
+func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v any) (time.Time, error) {
 	res, err := graphql.UnmarshalTime(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
+	_ = sel
 	res := graphql.MarshalTime(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -726,7 +725,7 @@ func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) unmarshalNTime2ᚖtimeᚐTime(ctx context.Context, v interface{}) (*time.Time, error) {
+func (ec *executionContext) unmarshalNTime2ᚖtimeᚐTime(ctx context.Context, v any) (*time.Time, error) {
 	res, err := graphql.UnmarshalTime(v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
@@ -738,6 +737,7 @@ func (ec *executionContext) marshalNTime2ᚖtimeᚐTime(ctx context.Context, sel
 		}
 		return graphql.Null
 	}
+	_ = sel
 	res := graphql.MarshalTime(*v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -747,14 +747,12 @@ func (ec *executionContext) marshalNTime2ᚖtimeᚐTime(ctx context.Context, sel
 	return res
 }
 
-func (ec *executionContext) unmarshalOHash2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐHashᚄ(ctx context.Context, v interface{}) ([]repository.Hash, error) {
+func (ec *executionContext) unmarshalOHash2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐHashᚄ(ctx context.Context, v any) ([]repository.Hash, error) {
 	if v == nil {
 		return nil, nil
 	}
-	var vSlice []interface{}
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([]repository.Hash, len(vSlice))
 	for i := range vSlice {

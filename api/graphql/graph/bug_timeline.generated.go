@@ -74,7 +74,7 @@ func (ec *executionContext) _BugAddCommentTimelineItem_id(ctx context.Context, f
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.CombinedId(), nil
 	})
@@ -118,7 +118,7 @@ func (ec *executionContext) _BugAddCommentTimelineItem_author(ctx context.Contex
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.BugAddCommentTimelineItem().Author(rctx, obj)
 	})
@@ -180,7 +180,7 @@ func (ec *executionContext) _BugAddCommentTimelineItem_message(ctx context.Conte
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Message, nil
 	})
@@ -224,7 +224,7 @@ func (ec *executionContext) _BugAddCommentTimelineItem_messageIsEmpty(ctx contex
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.MessageIsEmpty(), nil
 	})
@@ -268,7 +268,7 @@ func (ec *executionContext) _BugAddCommentTimelineItem_files(ctx context.Context
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Files, nil
 	})
@@ -312,7 +312,7 @@ func (ec *executionContext) _BugAddCommentTimelineItem_createdAt(ctx context.Con
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.BugAddCommentTimelineItem().CreatedAt(rctx, obj)
 	})
@@ -356,7 +356,7 @@ func (ec *executionContext) _BugAddCommentTimelineItem_lastEdit(ctx context.Cont
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.BugAddCommentTimelineItem().LastEdit(rctx, obj)
 	})
@@ -400,7 +400,7 @@ func (ec *executionContext) _BugAddCommentTimelineItem_edited(ctx context.Contex
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Edited(), nil
 	})
@@ -444,7 +444,7 @@ func (ec *executionContext) _BugAddCommentTimelineItem_history(ctx context.Conte
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.History, nil
 	})
@@ -494,7 +494,7 @@ func (ec *executionContext) _BugCommentHistoryStep_message(ctx context.Context, 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Message, nil
 	})
@@ -538,7 +538,7 @@ func (ec *executionContext) _BugCommentHistoryStep_date(ctx context.Context, fie
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.BugCommentHistoryStep().Date(rctx, obj)
 	})
@@ -582,7 +582,7 @@ func (ec *executionContext) _BugCreateTimelineItem_id(ctx context.Context, field
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.CombinedId(), nil
 	})
@@ -626,7 +626,7 @@ func (ec *executionContext) _BugCreateTimelineItem_author(ctx context.Context, f
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.BugCreateTimelineItem().Author(rctx, obj)
 	})
@@ -688,7 +688,7 @@ func (ec *executionContext) _BugCreateTimelineItem_message(ctx context.Context, 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Message, nil
 	})
@@ -732,7 +732,7 @@ func (ec *executionContext) _BugCreateTimelineItem_messageIsEmpty(ctx context.Co
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.MessageIsEmpty(), nil
 	})
@@ -776,7 +776,7 @@ func (ec *executionContext) _BugCreateTimelineItem_files(ctx context.Context, fi
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Files, nil
 	})
@@ -820,7 +820,7 @@ func (ec *executionContext) _BugCreateTimelineItem_createdAt(ctx context.Context
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.BugCreateTimelineItem().CreatedAt(rctx, obj)
 	})
@@ -864,7 +864,7 @@ func (ec *executionContext) _BugCreateTimelineItem_lastEdit(ctx context.Context,
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.BugCreateTimelineItem().LastEdit(rctx, obj)
 	})
@@ -908,7 +908,7 @@ func (ec *executionContext) _BugCreateTimelineItem_edited(ctx context.Context, f
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Edited(), nil
 	})
@@ -952,7 +952,7 @@ func (ec *executionContext) _BugCreateTimelineItem_history(ctx context.Context, 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.History, nil
 	})
@@ -1002,7 +1002,7 @@ func (ec *executionContext) _BugLabelChangeTimelineItem_id(ctx context.Context, 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.CombinedId(), nil
 	})
@@ -1046,7 +1046,7 @@ func (ec *executionContext) _BugLabelChangeTimelineItem_author(ctx context.Conte
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.BugLabelChangeTimelineItem().Author(rctx, obj)
 	})
@@ -1108,7 +1108,7 @@ func (ec *executionContext) _BugLabelChangeTimelineItem_date(ctx context.Context
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.BugLabelChangeTimelineItem().Date(rctx, obj)
 	})
@@ -1152,7 +1152,7 @@ func (ec *executionContext) _BugLabelChangeTimelineItem_added(ctx context.Contex
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Added, nil
 	})
@@ -1202,7 +1202,7 @@ func (ec *executionContext) _BugLabelChangeTimelineItem_removed(ctx context.Cont
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Removed, nil
 	})
@@ -1252,7 +1252,7 @@ func (ec *executionContext) _BugSetStatusTimelineItem_id(ctx context.Context, fi
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.CombinedId(), nil
 	})
@@ -1296,7 +1296,7 @@ func (ec *executionContext) _BugSetStatusTimelineItem_author(ctx context.Context
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.BugSetStatusTimelineItem().Author(rctx, obj)
 	})
@@ -1358,7 +1358,7 @@ func (ec *executionContext) _BugSetStatusTimelineItem_date(ctx context.Context, 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.BugSetStatusTimelineItem().Date(rctx, obj)
 	})
@@ -1402,7 +1402,7 @@ func (ec *executionContext) _BugSetStatusTimelineItem_status(ctx context.Context
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Status, nil
 	})
@@ -1446,7 +1446,7 @@ func (ec *executionContext) _BugSetTitleTimelineItem_id(ctx context.Context, fie
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.CombinedId(), nil
 	})
@@ -1490,7 +1490,7 @@ func (ec *executionContext) _BugSetTitleTimelineItem_author(ctx context.Context,
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.BugSetTitleTimelineItem().Author(rctx, obj)
 	})
@@ -1552,7 +1552,7 @@ func (ec *executionContext) _BugSetTitleTimelineItem_date(ctx context.Context, f
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.BugSetTitleTimelineItem().Date(rctx, obj)
 	})
@@ -1596,7 +1596,7 @@ func (ec *executionContext) _BugSetTitleTimelineItem_title(ctx context.Context, 
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Title, nil
 	})
@@ -1640,7 +1640,7 @@ func (ec *executionContext) _BugSetTitleTimelineItem_was(ctx context.Context, fi
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Was, nil
 	})
@@ -1684,7 +1684,7 @@ func (ec *executionContext) _BugTimelineItemConnection_edges(ctx context.Context
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Edges, nil
 	})
@@ -1734,7 +1734,7 @@ func (ec *executionContext) _BugTimelineItemConnection_nodes(ctx context.Context
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Nodes, nil
 	})
@@ -1778,7 +1778,7 @@ func (ec *executionContext) _BugTimelineItemConnection_pageInfo(ctx context.Cont
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.PageInfo, nil
 	})
@@ -1832,7 +1832,7 @@ func (ec *executionContext) _BugTimelineItemConnection_totalCount(ctx context.Co
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.TotalCount, nil
 	})
@@ -1876,7 +1876,7 @@ func (ec *executionContext) _BugTimelineItemEdge_cursor(ctx context.Context, fie
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Cursor, nil
 	})
@@ -1920,7 +1920,7 @@ func (ec *executionContext) _BugTimelineItemEdge_node(ctx context.Context, field
 			ret = graphql.Null
 		}
 	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Node, nil
 	})
@@ -1964,6 +1964,27 @@ func (ec *executionContext) _BugTimelineItem(ctx context.Context, sel ast.Select
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
+	case bug.SetTitleTimelineItem:
+		return ec._BugSetTitleTimelineItem(ctx, sel, &obj)
+	case *bug.SetTitleTimelineItem:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BugSetTitleTimelineItem(ctx, sel, obj)
+	case bug.SetStatusTimelineItem:
+		return ec._BugSetStatusTimelineItem(ctx, sel, &obj)
+	case *bug.SetStatusTimelineItem:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BugSetStatusTimelineItem(ctx, sel, obj)
+	case bug.LabelChangeTimelineItem:
+		return ec._BugLabelChangeTimelineItem(ctx, sel, &obj)
+	case *bug.LabelChangeTimelineItem:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BugLabelChangeTimelineItem(ctx, sel, obj)
 	case *bug.CreateTimelineItem:
 		if obj == nil {
 			return graphql.Null
@@ -1974,27 +1995,6 @@ func (ec *executionContext) _BugTimelineItem(ctx context.Context, sel ast.Select
 			return graphql.Null
 		}
 		return ec._BugAddCommentTimelineItem(ctx, sel, obj)
-	case bug.LabelChangeTimelineItem:
-		return ec._BugLabelChangeTimelineItem(ctx, sel, &obj)
-	case *bug.LabelChangeTimelineItem:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._BugLabelChangeTimelineItem(ctx, sel, obj)
-	case bug.SetStatusTimelineItem:
-		return ec._BugSetStatusTimelineItem(ctx, sel, &obj)
-	case *bug.SetStatusTimelineItem:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._BugSetStatusTimelineItem(ctx, sel, obj)
-	case bug.SetTitleTimelineItem:
-		return ec._BugSetTitleTimelineItem(ctx, sel, &obj)
-	case *bug.SetTitleTimelineItem:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._BugSetTitleTimelineItem(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}

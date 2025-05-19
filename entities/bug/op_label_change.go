@@ -236,15 +236,15 @@ const (
 func (l LabelChangeStatus) MarshalGQL(w io.Writer) {
 	switch l {
 	case LabelChangeAdded:
-		_, _ = fmt.Fprintf(w, strconv.Quote("ADDED"))
+		_, _ = w.Write([]byte(strconv.Quote("ADDED")))
 	case LabelChangeRemoved:
-		_, _ = fmt.Fprintf(w, strconv.Quote("REMOVED"))
+		_, _ = w.Write([]byte(strconv.Quote("REMOVED")))
 	case LabelChangeDuplicateInOp:
-		_, _ = fmt.Fprintf(w, strconv.Quote("DUPLICATE_IN_OP"))
+		_, _ = w.Write([]byte(strconv.Quote("DUPLICATE_IN_OP")))
 	case LabelChangeAlreadySet:
-		_, _ = fmt.Fprintf(w, strconv.Quote("ALREADY_EXIST"))
+		_, _ = w.Write([]byte(strconv.Quote("ALREADY_EXIST")))
 	case LabelChangeDoesntExist:
-		_, _ = fmt.Fprintf(w, strconv.Quote("DOESNT_EXIST"))
+		_, _ = w.Write([]byte(strconv.Quote("DOESNT_EXIST")))
 	default:
 		panic("missing case")
 	}
