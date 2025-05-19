@@ -12,6 +12,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/git-bug/git-bug/api/graphql/models"
+	"github.com/git-bug/git-bug/entities/board"
 	"github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entity/dag"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -323,6 +324,31 @@ func (ec *executionContext) _Operation(ctx context.Context, sel ast.SelectionSet
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
+	case *board.CreateOperation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BoardCreateOperation(ctx, sel, obj)
+	case *board.AddItemDraftOperation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BoardAddItemDraftOperation(ctx, sel, obj)
+	case *board.AddItemEntityOperation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BoardAddItemEntityOperation(ctx, sel, obj)
+	case *board.SetDescriptionOperation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BoardSetDescriptionOperation(ctx, sel, obj)
+	case *board.SetTitleOperation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BoardSetTitleOperation(ctx, sel, obj)
 	case *bug.CreateOperation:
 		if obj == nil {
 			return graphql.Null

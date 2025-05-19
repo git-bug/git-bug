@@ -72,7 +72,7 @@ func (s SetStatusTimelineItem) CombinedId() entity.CombinedId {
 func (s *SetStatusTimelineItem) IsAuthored() {}
 
 // Open is a convenience function to change a bugs state to Open
-func Open(b Interface, author identity.Interface, unixTime int64, metadata map[string]string) (*SetStatusOperation, error) {
+func Open(b ReadWrite, author identity.Interface, unixTime int64, metadata map[string]string) (*SetStatusOperation, error) {
 	op := NewSetStatusOp(author, unixTime, common.OpenStatus)
 	for key, value := range metadata {
 		op.SetMetadata(key, value)
@@ -85,7 +85,7 @@ func Open(b Interface, author identity.Interface, unixTime int64, metadata map[s
 }
 
 // Close is a convenience function to change a bugs state to Close
-func Close(b Interface, author identity.Interface, unixTime int64, metadata map[string]string) (*SetStatusOperation, error) {
+func Close(b ReadWrite, author identity.Interface, unixTime int64, metadata map[string]string) (*SetStatusOperation, error) {
 	op := NewSetStatusOp(author, unixTime, common.ClosedStatus)
 	for key, value := range metadata {
 		op.SetMetadata(key, value)
