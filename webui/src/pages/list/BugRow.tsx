@@ -9,6 +9,7 @@ import * as React from 'react';
 import { Link } from 'react-router';
 
 import Author from 'src/components/Author';
+import Content from 'src/components/Content';
 import Date from 'src/components/Date';
 import Label from 'src/components/Label';
 import { Status } from 'src/gqlTypes';
@@ -46,9 +47,13 @@ const BugStatus: React.FC<StatusProps> = ({
 const useStyles = makeStyles((theme) => ({
   cell: {
     display: 'flex',
-    padding: theme.spacing(1),
     '& a': {
       textDecoration: 'none',
+    },
+
+    padding: theme.spacing(1),
+    [theme.breakpoints.down('md')]: {
+      padding: theme.spacing(2, 1),
     },
   },
   status: {
@@ -56,60 +61,54 @@ const useStyles = makeStyles((theme) => ({
   },
   expand: {
     flex: 1,
-    lineHeight: '20px',
     display: 'flex',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'top',
+    flexDirection: 'column',
+    gap: theme.spacing(0.5),
+
     [theme.breakpoints.down('md')]: {
-      flexDirection: 'column'
+      gap: theme.spacing(1)
     }
-  },
-  title: {
-    color: theme.palette.text.primary,
-    fontSize: '1.1rem',
-    fontWeight: 500,
   },
   maindataWrapper: {
     flex: '1 0',
     display: 'flex',
-    flexDirection: 'column',
     alignItems: 'start',
+    gap: theme.spacing(0),
 
     [theme.breakpoints.down('md')]: {
-      marginBottom: theme.spacing(1)
+      flexDirection: 'column',
+      gap: theme.spacing(1),
     }
+  },
+  title: {
+    display: 'inline-flex',
+    flex: 1,
+    color: theme.palette.text.primary,
+    fontSize: '1.1rem',
+    fontWeight: 500,
+  },
+  labelsWrapper: {
+    display: 'inline-flex',
+    gap: theme.spacing(0.5),
   },
   sidedataWrapper: {
     display: 'flex',
-    flexDirection: 'column',
     alignItems: 'end',
     gap: theme.spacing(1),
 
     [theme.breakpoints.down('md')]: {
-      flexDirection: 'row',
-      flex: '1 1'
-    }
-  },
-  labelsWrapper: {
-    display: 'flex',
-    flexDirection: 'row',
-    gap: theme.spacing(0.5),
-    [theme.breakpoints.down('md')]: {
-      flex: 1,
-      flexWrap: 'wrap',
     }
   },
   label: {
     maxWidth: '40ch',
   },
   details: {
+    flex: 1,
     color: theme.palette.text.secondary,
-    marginTop: theme.spacing(1),
   },
   commentCountCell: {
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'end',
     marginRight: theme.spacing(1),
   },
   commentCount: {
@@ -130,28 +129,34 @@ function BugRow({ bug }: Props) {
       <TableCell className={classes.cell}>
         <BugStatus status={bug.status} className={classes.status} />
         <div className={classes.expand}>
-              <div className={classes.maindataWrapper}>
-                <Link to={'bug/' + bug.id}>
-                  <div className={classes.title}>{bug.title}</div>
-                </Link>
-                <div className={classes.details}>
-                  {bug.humanId} opened&nbsp;
-                  <Date date={bug.createdAt} />
-                  &nbsp;by&nbsp;
-                  <Author className={classes.details} author={bug.author} />
-                </div>
-              </div>
-              <div className={classes.sidedataWrapper}>
-                <div className={classes.labelsWrapper}>
-                  {commentCount > 0 &&
-                    <div className={classes.commentCountCell}>
-                      <span className={classes.commentCount}>{commentCount}</span>
-                      <CommentOutlinedIcon aria-label="Comment count" fontSize='small' />
-                    </div>}
-                  {bug.labels.length > 0 && bug.labels.map((l) => <Label key={l.name} label={l} className={classes.label} />)}
-                </div>
-              </div>
+
+          <div className={classes.maindataWrapper}>
+            <Link className={classes.title} to={'bug/' + bug.id}>
+              <Content inline pipeline='title' markdown={bug.title} />
+            </Link>
+            {bug.labels.length > 0 && 
+              <span className={classes.labelsWrapper}>
+                {bug.labels.map((l) => 
+                  <Label inline key={l.name} label={l} className={classes.label} />
+                )}
+              </span>}
+          </div>
+
+          <div className={classes.sidedataWrapper}>
+            <div className={classes.details}>
+              {bug.humanId} opened&nbsp;
+              <Date date={bug.createdAt} />
+              &nbsp;by&nbsp;
+              <Author author={bug.author} />
             </div>
+
+            {commentCount > 0 &&
+              <div className={classes.commentCountCell}>
+                <span className={classes.commentCount}>{commentCount}</span>
+                  <CommentOutlinedIcon aria-label="Comment count" fontSize='small' />
+                </div>}
+              </div>
+          </div>
       </TableCell>
     </TableRow>
   );
