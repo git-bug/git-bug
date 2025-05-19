@@ -212,27 +212,16 @@ func (cw *goGitConfigWriter) RemoveAll(keyPrefix string) error {
 	case len(split) == 1:
 		if cfg.Raw.HasSection(split[0]) {
 			cfg.Raw.RemoveSection(split[0])
-		} else {
-			return fmt.Errorf("invalid key prefix")
 		}
-	default:
-		if !cfg.Raw.HasSection(split[0]) {
-			return fmt.Errorf("invalid key prefix")
-		}
+	case cfg.Raw.HasSection(split[0]):
 		section := cfg.Raw.Section(split[0])
 		rest := strings.Join(split[1:], ".")
 
-		ok := false
 		if section.HasSubsection(rest) {
 			section.RemoveSubsection(rest)
-			ok = true
 		}
 		if section.HasOption(rest) {
 			section.RemoveOption(rest)
-			ok = true
-		}
-		if !ok {
-			return fmt.Errorf("invalid key prefix")
 		}
 	}
 
