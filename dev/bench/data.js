@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1747674574028,
+  "lastUpdate": 1747676567127,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -14882,6 +14882,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 539992,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "170ce48cc898b71f7bb5e8e2bd694dde39fddbe0",
+          "message": "refactor(changelog): remove extraneous commit preprocessors (#1461)\n\nThis change removes several commit preprocessors that were originally\nused to touch up commit subjects on initial import, and are no longer\nneeded.\n\nChange-Id: Ic23cef9cf6aef657c985937f5354b2b2db100fa7",
+          "timestamp": "2025-05-19T10:07:38-07:00",
+          "tree_id": "dd6b0a47b4ebe94177dd51fe57998f68ead7d39e",
+          "url": "https://github.com/git-bug/git-bug/commit/170ce48cc898b71f7bb5e8e2bd694dde39fddbe0"
+        },
+        "date": 1747676566254,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 13590629,
+            "unit": "ns/op\t  764028 B/op\t   11719 allocs/op",
+            "extra": "76 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 13590629,
+            "unit": "ns/op",
+            "extra": "76 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 764028,
+            "unit": "B/op",
+            "extra": "76 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 11719,
+            "unit": "allocs/op",
+            "extra": "76 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 84142554,
+            "unit": "ns/op\t 5072153 B/op\t   75335 allocs/op",
+            "extra": "13 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 84142554,
+            "unit": "ns/op",
+            "extra": "13 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 5072153,
+            "unit": "B/op",
+            "extra": "13 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 75335,
+            "unit": "allocs/op",
+            "extra": "13 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 504613208,
+            "unit": "ns/op\t37572748 B/op\t  460045 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 504613208,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 37572748,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 460045,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
