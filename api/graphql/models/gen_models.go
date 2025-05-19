@@ -3,6 +3,11 @@
 package models
 
 import (
+	"bytes"
+	"fmt"
+	"io"
+	"strconv"
+
 	"github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entities/common"
 	"github.com/git-bug/git-bug/entity/dag"
@@ -82,6 +87,11 @@ type BugAddCommentPayload struct {
 	Bug BugWrapper `json:"bug"`
 	// The resulting operation.
 	Operation *bug.AddCommentOperation `json:"operation"`
+}
+
+type BugChange struct {
+	Type ChangeType `json:"type"`
+	Bug  BugWrapper `json:"bug"`
 }
 
 type BugChangeLabelInput struct {
@@ -307,4 +317,62 @@ type PageInfo struct {
 }
 
 type Query struct {
+}
+
+type Subscription struct {
+}
+
+type ChangeType string
+
+const (
+	ChangeTypeCreated ChangeType = "CREATED"
+	ChangeTypeUpdated ChangeType = "UPDATED"
+)
+
+var AllChangeType = []ChangeType{
+	ChangeTypeCreated,
+	ChangeTypeUpdated,
+}
+
+func (e ChangeType) IsValid() bool {
+	switch e {
+	case ChangeTypeCreated, ChangeTypeUpdated:
+		return true
+	}
+	return false
+}
+
+func (e ChangeType) String() string {
+	return string(e)
+}
+
+func (e *ChangeType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ChangeType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ChangeType", str)
+	}
+	return nil
+}
+
+func (e ChangeType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ChangeType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ChangeType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
 }

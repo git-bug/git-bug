@@ -59,6 +59,9 @@ type SubCache[EntityT entity.Interface, ExcerptT Excerpt, CacheT CacheEntity] st
 	excerpts map[entity.Id]ExcerptT
 	cached   map[entity.Id]CacheT
 	lru      lruIdCache
+
+	muObservers sync.RWMutex
+	observers   map[Observer]struct{}
 }
 
 func NewSubCache[EntityT entity.Interface, ExcerptT Excerpt, CacheT CacheEntity](
@@ -332,6 +335,18 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) Close() error {
 	return nil
 }
 
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) RegisterObserver(observer Observer) {
+	sc.muObservers.Lock()
+	defer sc.muObservers.Unlock()
+	sc.observers[observer] = struct{}{}
+}
+
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) UnregisterObserver(observer Observer) {
+	sc.muObservers.Lock()
+	defer sc.muObservers.Unlock()
+	delete(sc.observers, observer)
+}
+
 // AllIds return all known bug ids
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) AllIds() []entity.Id {
 	sc.mu.RLock()
@@ -460,7 +475,7 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) add(e EntityT) (CacheT, error) {
 	sc.evictIfNeeded()
 
 	// force the write of the excerpt
-	err := sc.entityUpdated(e.Id())
+	err := sc.entityCreated(e.Id())
 	if err != nil {
 		return *new(CacheT), err
 	}
@@ -582,8 +597,28 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) GetNamespace() string {
 	return sc.namespace
 }
 
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) entityCreated(id entity.Id) error {
+	sc.muObservers.RLock()
+	for observer := range sc.observers {
+		observer.EntityCreated(sc.typename, id)
+	}
+	sc.muObservers.RUnlock()
+
+	return sc.updateExcerptAndIndex(id)
+}
+
 // entityUpdated is a callback to trigger when the excerpt of an entity changed
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) entityUpdated(id entity.Id) error {
+	sc.muObservers.RLock()
+	for observer := range sc.observers {
+		observer.EntityCreated(sc.typename, id)
+	}
+	sc.muObservers.RUnlock()
+
+	return sc.updateExcerptAndIndex(id)
+}
+
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) updateExcerptAndIndex(id entity.Id) error {
 	sc.mu.Lock()
 	e, ok := sc.cached[id]
 	if !ok {
@@ -597,7 +632,6 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) entityUpdated(id entity.Id) error
 		return errors.New("entity missing from cache")
 	}
 	sc.lru.Get(id)
-	// sc.excerpts[id] = bug2.NewBugExcerpt(b.bug, b.Snapshot())
 	sc.excerpts[id] = sc.makeExcerpt(e)
 	sc.mu.Unlock()
 
