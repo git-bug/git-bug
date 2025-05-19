@@ -33,6 +33,7 @@ func runWipe(env *execenv.Env) error {
 		_ = env.Backend.Close()
 		return err
 	}
+
 	err = env.Backend.LocalConfig().RemoveAll("git-bug")
 	if err != nil {
 		_ = env.Backend.Close()

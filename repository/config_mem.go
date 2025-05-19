@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -82,16 +81,10 @@ func (mc *MemConfig) ReadTimestamp(key string) (time.Time, error) {
 // RemoveAll remove all key/value pair matching the key prefix
 func (mc *MemConfig) RemoveAll(keyPrefix string) error {
 	keyPrefix = normalizeKey(keyPrefix)
-	found := false
 	for key := range mc.config {
 		if strings.HasPrefix(key, keyPrefix) {
 			delete(mc.config, key)
-			found = true
 		}
-	}
-
-	if !found {
-		return fmt.Errorf("section not found")
 	}
 
 	return nil

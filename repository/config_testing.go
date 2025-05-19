@@ -56,7 +56,7 @@ func testConfig(t *testing.T, config Config) {
 	require.ErrorIs(t, err, ErrNoConfigEntry)
 
 	err = config.RemoveAll("section.nonexistingkey")
-	require.Error(t, err)
+	require.NoError(t, err)
 
 	err = config.RemoveAll("section.key")
 	require.NoError(t, err)
@@ -65,18 +65,15 @@ func testConfig(t *testing.T, config Config) {
 	require.ErrorIs(t, err, ErrNoConfigEntry)
 
 	err = config.RemoveAll("nonexistingsection")
-	require.Error(t, err)
+	require.NoError(t, err)
 
 	err = config.RemoveAll("section.time")
 	require.NoError(t, err)
 
 	err = config.RemoveAll("section")
-	require.Error(t, err)
+	require.NoError(t, err)
 
 	_, err = config.ReadString("section.key")
-	require.Error(t, err)
-
-	err = config.RemoveAll("section.key")
 	require.Error(t, err)
 
 	// section + subsections
