@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1747674500792,
+  "lastUpdate": 1747674574028,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -14786,6 +14786,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 488934,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ddb22a2f65fb58fa229d4f2bfc801066b20d8db7",
+          "message": "fix(cli): ignore missing sections when removing configuration (#1455)\n\nThis change fixes an error typically encountered in the `git-bug-wipe`\ncommand, caused by overly zealous implementations of\n//repository:config.go%ConfigWrite.RemoveAll(). This change refactors\nthese implementations to only attempt to remove sections that exist,\nand ignore non-existent sections.\n\nCloses: #1451\nChange-Id: I66e710239915c8601dd70a78ae65eb625e093ef6",
+          "timestamp": "2025-05-18T21:54:06-07:00",
+          "tree_id": "4eeb19968f7f8b9d0a906e44b6433915953a1ac3",
+          "url": "https://github.com/git-bug/git-bug/commit/ddb22a2f65fb58fa229d4f2bfc801066b20d8db7"
+        },
+        "date": 1747674572877,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 14974518,
+            "unit": "ns/op\t  979618 B/op\t   14520 allocs/op",
+            "extra": "79 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 14974518,
+            "unit": "ns/op",
+            "extra": "79 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 979618,
+            "unit": "B/op",
+            "extra": "79 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 14520,
+            "unit": "allocs/op",
+            "extra": "79 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 82911052,
+            "unit": "ns/op\t 5512766 B/op\t   81654 allocs/op",
+            "extra": "14 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 82911052,
+            "unit": "ns/op",
+            "extra": "14 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 5512766,
+            "unit": "B/op",
+            "extra": "14 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 81654,
+            "unit": "allocs/op",
+            "extra": "14 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 520883492,
+            "unit": "ns/op\t43687272 B/op\t  539992 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 520883492,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 43687272,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 539992,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
