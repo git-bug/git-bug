@@ -53,6 +53,7 @@ type ResolverRoot interface {
 	Mutation() MutationResolver
 	Query() QueryResolver
 	Repository() RepositoryResolver
+	Subscription() SubscriptionResolver
 }
 
 type DirectiveRoot struct {
@@ -113,6 +114,11 @@ type ComplexityRoot struct {
 		LastEdit       func(childComplexity int) int
 		Message        func(childComplexity int) int
 		MessageIsEmpty func(childComplexity int) int
+	}
+
+	BugChange struct {
+		Bug  func(childComplexity int) int
+		Type func(childComplexity int) int
 	}
 
 	BugChangeLabelPayload struct {
@@ -370,6 +376,10 @@ type ComplexityRoot struct {
 		Name          func(childComplexity int) int
 		UserIdentity  func(childComplexity int) int
 		ValidLabels   func(childComplexity int, after *string, before *string, first *int, last *int) int
+	}
+
+	Subscription struct {
+		BugChanged func(childComplexity int, repoRef *string, query *string) int
 	}
 }
 
@@ -682,6 +692,20 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.BugAddCommentTimelineItem.MessageIsEmpty(childComplexity), true
+
+	case "BugChange.bug":
+		if e.complexity.BugChange.Bug == nil {
+			break
+		}
+
+		return e.complexity.BugChange.Bug(childComplexity), true
+
+	case "BugChange.type":
+		if e.complexity.BugChange.Type == nil {
+			break
+		}
+
+		return e.complexity.BugChange.Type(childComplexity), true
 
 	case "BugChangeLabelPayload.bug":
 		if e.complexity.BugChangeLabelPayload.Bug == nil {
@@ -1780,6 +1804,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Repository.ValidLabels(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
 
+	case "Subscription.bugChanged":
+		if e.complexity.Subscription.BugChanged == nil {
+			break
+		}
+
+		args, err := ec.field_Subscription_bugChanged_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.BugChanged(childComplexity, args["repoRef"].(*string), args["query"].(*string)), true
+
 	}
 	return 0, false
 }
@@ -1840,6 +1876,23 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 			ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
 			data := ec._Mutation(ctx, opCtx.Operation.SelectionSet)
 			var buf bytes.Buffer
+			data.MarshalGQL(&buf)
+
+			return &graphql.Response{
+				Data: buf.Bytes(),
+			}
+		}
+	case ast.Subscription:
+		next := ec._Subscription(ctx, opCtx.Operation.SelectionSet)
+
+		var buf bytes.Buffer
+		return func(ctx context.Context) *graphql.Response {
+			buf.Reset()
+			data := next(ctx)
+
+			if data == nil {
+				return nil
+			}
 			data.MarshalGQL(&buf)
 
 			return &graphql.Response{
@@ -2572,6 +2625,20 @@ type Mutation # See each entity mutations
 	{Name: "../schema/status.graphql", Input: `enum Status {
     OPEN
     CLOSED
+}
+`, BuiltIn: false},
+	{Name: "../schema/subscription.graphql", Input: `type Subscription {
+  bugChanged(repoRef: String, query: String): BugChange!
+}
+
+enum ChangeType {
+  CREATED
+  UPDATED
+}
+
+type BugChange {
+  type: ChangeType!
+  bug: Bug!
 }
 `, BuiltIn: false},
 	{Name: "../schema/types.graphql", Input: `scalar CombinedId

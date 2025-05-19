@@ -33,7 +33,7 @@ type BugWrapper interface {
 
 var _ BugWrapper = &lazyBug{}
 
-// lazyBug is a lazy-loading wrapper that fetch data from the cache (BugExcerpt) in priority,
+// lazyBug is a lazy-loading wrapper that fetches data from the cache (BugExcerpt) in priority,
 // and load the complete bug and snapshot only when necessary.
 type lazyBug struct {
 	cache   *cache.RepoCache

@@ -31,6 +31,12 @@ func (r RootResolver) Mutation() graph.MutationResolver {
 	}
 }
 
+func (r RootResolver) Subscription() graph.SubscriptionResolver {
+	return &subscriptionResolver{
+		cache: r.MultiRepoCache,
+	}
+}
+
 func (RootResolver) Color() graph.ColorResolver {
 	return &colorResolver{}
 }

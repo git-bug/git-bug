@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/git-bug/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
 	"github.com/git-bug/git-bug/util/multierr"
@@ -38,18 +40,29 @@ type cacheMgmt interface {
 	Close() error
 }
 
+// Observer gets notified of changes in entities in the cache
+type Observer interface {
+	// EntityCreated notifies that an entity has been created.
+	// The body of that function should NOT block.
+	EntityCreated(typename string, id entity.Id)
+
+	// EntityUpdated notifies that an entity has been updated.
+	// The body of that function should NOT block.
+	EntityUpdated(typename string, id entity.Id)
+}
+
 // RepoCache is a cache for a Repository. This cache has multiple functions:
 //
 //  1. After being loaded, a Bug is kept in memory in the cache, allowing for fast
 //     access later.
-//  2. The cache maintain in memory and on disk a pre-digested excerpt for each bug,
+//  2. The cache maintains in memory and on disk a pre-digested excerpt for each bug,
 //     allowing for fast querying the whole set of bugs without having to load
 //     them individually.
-//  3. The cache guarantee that a single instance of a Bug is loaded at once, avoiding
+//  3. The cache guarantees that a single instance of a Bug is loaded at once, avoiding
 //     loss of data that we could have with multiple copies in the same process.
-//  4. The same way, the cache maintain in memory a single copy of the loaded identities.
+//  4. The same way, the cache maintains in memory a single copy of the loaded identities.
 //
-// The cache also protect the on-disk data by locking the git repository for its
+// The cache also protects the on-disk data by locking the git repository for its
 // own usage, by writing a lock file. Of course, normal git operations are not
 // affected, only git-bug related one.
 type RepoCache struct {
@@ -101,7 +114,7 @@ func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, chan 
 		&BugExcerpt{}:      entity.ResolverFunc[*BugExcerpt](c.bugs.ResolveExcerpt),
 	}
 
-	// small buffer so that below functions can emit an event without blocking
+	// small buffer so that the functions below can emit an event without blocking
 	events := make(chan BuildEvent)
 
 	go func() {
@@ -135,6 +148,28 @@ func NewRepoCacheNoEvents(r repository.ClockedRepo) (*RepoCache, error) {
 		}
 	}
 	return cache, nil
+}
+
+func (c *RepoCache) RegisterObserver(typename string, observer Observer) {
+	switch typename {
+	case bug.Typename:
+		c.bugs.RegisterObserver(observer)
+	case identity.Typename:
+		c.identities.RegisterObserver(observer)
+	default:
+		panic(fmt.Sprintf("unknown typename %q", typename))
+	}
+}
+
+func (c *RepoCache) UnregisterObserver(typename string, observer Observer) {
+	switch typename {
+	case bug.Typename:
+		c.bugs.UnregisterObserver(observer)
+	case identity.Typename:
+		c.identities.UnregisterObserver(observer)
+	default:
+		panic(fmt.Sprintf("unknown typename %q", typename))
+	}
 }
 
 // Bugs gives access to the Bug entities
@@ -224,15 +259,15 @@ const (
 
 // BuildEvent carry an event happening during the cache build process.
 type BuildEvent struct {
-	// Err carry an error if the build process failed. If set, no other field matter.
+	// Err carry an error if the build process failed. If set, no other field matters.
 	Err error
-	// Typename is the name of the entity of which the event relate to. Can be empty if not particular entity is involved.
+	// Typename is the name of the entity of which the event relate to. Can be empty if no particular entity is involved.
 	Typename string
 	// Event is the type of the event.
 	Event BuildEventType
-	// Total is the total number of element being built. Set if Event is BuildEventStarted.
+	// Total is the total number of elements being built. Set if Event is BuildEventStarted.
 	Total int64
-	// Progress is the current count of processed element. Set if Event is BuildEventProgress.
+	// Progress is the current count of processed elements. Set if Event is BuildEventProgress.
 	Progress int64
 }
 

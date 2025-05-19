@@ -23,6 +23,9 @@ type Handler struct {
 func NewHandler(mrc *cache.MultiRepoCache, errorOut io.Writer) Handler {
 	rootResolver := resolvers.NewRootResolver(mrc)
 	config := graph.Config{Resolvers: rootResolver}
+
+	// TODO? https://gqlgen.com/recipes/subscriptions/ says to configure a WS upgrader, but
+	// handler.NewDefaultServer doesn't do it.
 	h := handler.NewDefaultServer(graph.NewExecutableSchema(config))
 
 	if errorOut != nil {

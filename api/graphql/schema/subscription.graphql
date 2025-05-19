@@ -1,0 +1,13 @@
+type Subscription {
+  bugChanged(repoRef: String, query: String): BugChange!
+}
+
+enum ChangeType {
+  CREATED
+  UPDATED
+}
+
+type BugChange {
+  type: ChangeType!
+  bug: Bug!
+}
