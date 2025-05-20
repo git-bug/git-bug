@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1747676567127,
+  "lastUpdate": 1747708941451,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -14978,6 +14978,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 460045,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "93115429840b2527d66c0100e78d6c62df14b4a7",
+          "message": "refactor(cli)!: remove the 'commands' command (#1462)\n\nThis change removes the 'commands' command. This command historically\nprinted out all of the commands, optionally with help text. This is\nsuperfluous, as we ship a manpage for each of the common shells, have\nmarkdown documentation available in the repository, and provide help\ntext via the `--help` flag.\n\nBREAKING-CHANGE: The `commands` command has been removed. There is no\nreplacement\n planned. Users are encouraged to run `--help`, view the markdown\n documentation available online, or run `man git-bug` to view the\n manpage in your terminal.\nChange-Id: I8bbfb03c03c820ec0b56549e59ab76826c45b9cc",
+          "timestamp": "2025-05-19T19:41:33-07:00",
+          "tree_id": "f21a0e90568d9b44caafc15fdcaeb6716798bf8f",
+          "url": "https://github.com/git-bug/git-bug/commit/93115429840b2527d66c0100e78d6c62df14b4a7"
+        },
+        "date": 1747708940520,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 24229217,
+            "unit": "ns/op\t 1112930 B/op\t   17347 allocs/op",
+            "extra": "64 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 24229217,
+            "unit": "ns/op",
+            "extra": "64 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 1112930,
+            "unit": "B/op",
+            "extra": "64 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 17347,
+            "unit": "allocs/op",
+            "extra": "64 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 98995394,
+            "unit": "ns/op\t 4885573 B/op\t   71624 allocs/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 98995394,
+            "unit": "ns/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 4885573,
+            "unit": "B/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 71624,
+            "unit": "allocs/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 682988676,
+            "unit": "ns/op\t42182100 B/op\t  514215 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 682988676,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 42182100,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 514215,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
