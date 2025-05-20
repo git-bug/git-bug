@@ -75,7 +75,6 @@ the same git remote you are already using to collaborate with other people.
 	addCmdWithGroup(newPushCommand(env), remoteGroup)
 	addCmdWithGroup(bridgecmd.NewBridgeCommand(env), remoteGroup)
 
-	cmd.AddCommand(newCommandsCommand(env))
 	cmd.AddCommand(newVersionCommand(env))
 	cmd.AddCommand(newWipeCommand(env))
 
