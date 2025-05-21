@@ -414,6 +414,11 @@ func (ec *executionContext) _Authored(ctx context.Context, sel ast.SelectionSet,
 			return graphql.Null
 		}
 		return ec._BugAddCommentOperation(ctx, sel, obj)
+	case models.BugWrapper:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Bug(ctx, sel, obj)
 	case bug.Comment:
 		return ec._BugComment(ctx, sel, &obj)
 	case *bug.Comment:
@@ -421,11 +426,25 @@ func (ec *executionContext) _Authored(ctx context.Context, sel ast.SelectionSet,
 			return graphql.Null
 		}
 		return ec._BugComment(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
+
+func (ec *executionContext) _Entity(ctx context.Context, sel ast.SelectionSet, obj models.Entity) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
 	case models.BugWrapper:
 		if obj == nil {
 			return graphql.Null
 		}
 		return ec._Bug(ctx, sel, obj)
+	case models.IdentityWrapper:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Identity(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -745,6 +764,13 @@ func (ec *executionContext) marshalNTime2ᚖtimeᚐTime(ctx context.Context, sel
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalOEntity2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐEntity(ctx context.Context, sel ast.SelectionSet, v models.Entity) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Entity(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOHash2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐHashᚄ(ctx context.Context, v any) ([]repository.Hash, error) {

@@ -29,3 +29,12 @@ interface Authored {
     """The author of this object."""
     author: Identity!
 }
+
+
+"""An entity (identity, bug, ...)."""
+interface Entity {
+  """The identifier for this entity"""
+  id: ID!
+  """The human version (truncated) identifier for this entity"""
+  humanId: String!
+}

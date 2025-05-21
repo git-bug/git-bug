@@ -97,7 +97,7 @@ type CreateTimelineItem struct {
 	CommentTimelineItem
 }
 
-// IsAuthored is a sign post method for gqlgen
+// IsAuthored is a sign post-method for gqlgen, to mark compliance to an interface.
 func (c *CreateTimelineItem) IsAuthored() {}
 
 // Create is a convenience function to create a bug

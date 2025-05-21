@@ -1,4 +1,4 @@
-type Bug implements Authored {
+type Bug implements Authored & Entity {
   """The identifier for this bug"""
   id: ID!
   """The human version (truncated) identifier for this bug"""
