@@ -116,11 +116,6 @@ type ComplexityRoot struct {
 		MessageIsEmpty func(childComplexity int) int
 	}
 
-	BugChange struct {
-		Bug  func(childComplexity int) int
-		Type func(childComplexity int) int
-	}
-
 	BugChangeLabelPayload struct {
 		Bug              func(childComplexity int) int
 		ClientMutationID func(childComplexity int) int
@@ -206,6 +201,11 @@ type ComplexityRoot struct {
 		Operation        func(childComplexity int) int
 	}
 
+	BugEvent struct {
+		Bug  func(childComplexity int) int
+		Type func(childComplexity int) int
+	}
+
 	BugLabelChangeOperation struct {
 		Added   func(childComplexity int) int
 		Author  func(childComplexity int) int
@@ -288,6 +288,11 @@ type ComplexityRoot struct {
 		R func(childComplexity int) int
 	}
 
+	EntityEvent struct {
+		Entity func(childComplexity int) int
+		Type   func(childComplexity int) int
+	}
+
 	Identity struct {
 		AvatarUrl   func(childComplexity int) int
 		DisplayName func(childComplexity int) int
@@ -309,6 +314,11 @@ type ComplexityRoot struct {
 	IdentityEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
+	}
+
+	IdentityEvent struct {
+		Identity func(childComplexity int) int
+		Type     func(childComplexity int) int
 	}
 
 	Label struct {
@@ -379,7 +389,9 @@ type ComplexityRoot struct {
 	}
 
 	Subscription struct {
-		BugChanged func(childComplexity int, repoRef *string, query *string) int
+		AllEvents      func(childComplexity int, repoFilter *string) int
+		BugEvents      func(childComplexity int, repoFilter *string, query *string) int
+		IdentityEvents func(childComplexity int, repoFilter *string) int
 	}
 }
 
@@ -692,20 +704,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.BugAddCommentTimelineItem.MessageIsEmpty(childComplexity), true
-
-	case "BugChange.bug":
-		if e.complexity.BugChange.Bug == nil {
-			break
-		}
-
-		return e.complexity.BugChange.Bug(childComplexity), true
-
-	case "BugChange.type":
-		if e.complexity.BugChange.Type == nil {
-			break
-		}
-
-		return e.complexity.BugChange.Type(childComplexity), true
 
 	case "BugChangeLabelPayload.bug":
 		if e.complexity.BugChangeLabelPayload.Bug == nil {
@@ -1050,6 +1048,20 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.BugEditCommentPayload.Operation(childComplexity), true
 
+	case "BugEvent.bug":
+		if e.complexity.BugEvent.Bug == nil {
+			break
+		}
+
+		return e.complexity.BugEvent.Bug(childComplexity), true
+
+	case "BugEvent.type":
+		if e.complexity.BugEvent.Type == nil {
+			break
+		}
+
+		return e.complexity.BugEvent.Type(childComplexity), true
+
 	case "BugLabelChangeOperation.added":
 		if e.complexity.BugLabelChangeOperation.Added == nil {
 			break
@@ -1372,6 +1384,20 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Color.R(childComplexity), true
 
+	case "EntityEvent.entity":
+		if e.complexity.EntityEvent.Entity == nil {
+			break
+		}
+
+		return e.complexity.EntityEvent.Entity(childComplexity), true
+
+	case "EntityEvent.type":
+		if e.complexity.EntityEvent.Type == nil {
+			break
+		}
+
+		return e.complexity.EntityEvent.Type(childComplexity), true
+
 	case "Identity.avatarUrl":
 		if e.complexity.Identity.AvatarUrl == nil {
 			break
@@ -1469,6 +1495,20 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.IdentityEdge.Node(childComplexity), true
+
+	case "IdentityEvent.identity":
+		if e.complexity.IdentityEvent.Identity == nil {
+			break
+		}
+
+		return e.complexity.IdentityEvent.Identity(childComplexity), true
+
+	case "IdentityEvent.type":
+		if e.complexity.IdentityEvent.Type == nil {
+			break
+		}
+
+		return e.complexity.IdentityEvent.Type(childComplexity), true
 
 	case "Label.color":
 		if e.complexity.Label.Color == nil {
@@ -1804,17 +1844,41 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Repository.ValidLabels(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
 
-	case "Subscription.bugChanged":
-		if e.complexity.Subscription.BugChanged == nil {
+	case "Subscription.allEvents":
+		if e.complexity.Subscription.AllEvents == nil {
 			break
 		}
 
-		args, err := ec.field_Subscription_bugChanged_args(ctx, rawArgs)
+		args, err := ec.field_Subscription_allEvents_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Subscription.BugChanged(childComplexity, args["repoRef"].(*string), args["query"].(*string)), true
+		return e.complexity.Subscription.AllEvents(childComplexity, args["repoFilter"].(*string)), true
+
+	case "Subscription.bugEvents":
+		if e.complexity.Subscription.BugEvents == nil {
+			break
+		}
+
+		args, err := ec.field_Subscription_bugEvents_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.BugEvents(childComplexity, args["repoFilter"].(*string), args["query"].(*string)), true
+
+	case "Subscription.identityEvents":
+		if e.complexity.Subscription.IdentityEvents == nil {
+			break
+		}
+
+		args, err := ec.field_Subscription_identityEvents_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.IdentityEvents(childComplexity, args["repoFilter"].(*string)), true
 
 	}
 	return 0, false
@@ -1947,7 +2011,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "../schema/bug.graphql", Input: `type Bug implements Authored {
+	{Name: "../schema/bug.graphql", Input: `type Bug implements Authored & Entity {
   """The identifier for this bug"""
   id: ID!
   """The human version (truncated) identifier for this bug"""
@@ -2472,7 +2536,7 @@ directive @goTag(
 ) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 `, BuiltIn: false},
 	{Name: "../schema/identity.graphql", Input: `"""Represents an identity"""
-type Identity {
+type Identity implements Entity {
     """The identifier for this identity"""
     id: ID!
     """The human version (truncated) identifier for this identity"""
@@ -2628,16 +2692,32 @@ type Mutation # See each entity mutations
 }
 `, BuiltIn: false},
 	{Name: "../schema/subscription.graphql", Input: `type Subscription {
-  bugChanged(repoRef: String, query: String): BugChange!
+  """Subscribe to events on all entities. For events on a specific repo you can provide a repo reference. Without it, you get the unique default repo or all repo events."""
+  allEvents(repoFilter: String): EntityEvent!
+  """Subscribe to identity entity events. For events on a specific repo you can provide a repo reference. Without it, you get the unique default repo or all repo events."""
+  identityEvents(repoFilter: String): IdentityEvent!
+  """Subscribe to bug entity events. For events on a specific repo you can provide a repo reference. Without it, you get the unique default repo or all repo events."""
+  bugEvents(repoFilter: String, query: String): BugEvent!
 }
 
-enum ChangeType {
+enum EventType {
   CREATED
   UPDATED
+  REMOVED
 }
 
-type BugChange {
-  type: ChangeType!
+type EntityEvent {
+  type: EventType!
+  entity: Entity
+}
+
+type IdentityEvent {
+  type: EventType!
+  identity: Identity!
+}
+
+type BugEvent {
+  type: EventType!
   bug: Bug!
 }
 `, BuiltIn: false},
@@ -2671,6 +2751,15 @@ type PageInfo {
 interface Authored {
     """The author of this object."""
     author: Identity!
+}
+
+
+"""An entity (identity, bug, ...)."""
+interface Entity {
+  """The identifier for this entity"""
+  id: ID!
+  """The human version (truncated) identifier for this entity"""
+  humanId: String!
 }
 `, BuiltIn: false},
 }

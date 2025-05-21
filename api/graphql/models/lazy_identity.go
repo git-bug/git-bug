@@ -21,6 +21,9 @@ type IdentityWrapper interface {
 	Keys() ([]*identity.Key, error)
 	DisplayName() string
 	IsProtected() (bool, error)
+
+	// IsEntity is a sign post-method for gqlgen, to mark compliance to an interface.
+	IsEntity()
 }
 
 var _ IdentityWrapper = &lazyIdentity{}
@@ -108,6 +111,9 @@ func (li *lazyIdentity) IsProtected() (bool, error) {
 	return id.IsProtected(), nil
 }
 
+// IsEntity is a sign post-method for gqlgen, to mark compliance to an interface.
+func (li *lazyIdentity) IsEntity() {}
+
 var _ IdentityWrapper = &loadedIdentity{}
 
 type loadedIdentity struct {
@@ -137,3 +143,6 @@ func (l loadedIdentity) Keys() ([]*identity.Key, error) {
 func (l loadedIdentity) IsProtected() (bool, error) {
 	return l.Interface.IsProtected(), nil
 }
+
+// IsEntity is a sign post-method for gqlgen, to mark compliance to an interface.
+func (l loadedIdentity) IsEntity() {}

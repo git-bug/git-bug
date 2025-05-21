@@ -40,17 +40,6 @@ type cacheMgmt interface {
 	Close() error
 }
 
-// Observer gets notified of changes in entities in the cache
-type Observer interface {
-	// EntityCreated notifies that an entity has been created.
-	// The body of that function should NOT block.
-	EntityCreated(typename string, id entity.Id)
-
-	// EntityUpdated notifies that an entity has been updated.
-	// The body of that function should NOT block.
-	EntityUpdated(typename string, id entity.Id)
-}
-
 // RepoCache is a cache for a Repository. This cache has multiple functions:
 //
 //  1. After being loaded, a Bug is kept in memory in the cache, allowing for fast
@@ -150,18 +139,18 @@ func NewRepoCacheNoEvents(r repository.ClockedRepo) (*RepoCache, error) {
 	return cache, nil
 }
 
-func (c *RepoCache) RegisterObserver(typename string, observer Observer) {
+func (c *RepoCache) registerObserver(repoRef string, typename string, observer Observer) {
 	switch typename {
 	case bug.Typename:
-		c.bugs.RegisterObserver(observer)
+		c.bugs.RegisterObserver(repoRef, observer)
 	case identity.Typename:
-		c.identities.RegisterObserver(observer)
+		c.identities.RegisterObserver(repoRef, observer)
 	default:
 		panic(fmt.Sprintf("unknown typename %q", typename))
 	}
 }
 
-func (c *RepoCache) UnregisterObserver(typename string, observer Observer) {
+func (c *RepoCache) unregisterObserver(typename string, observer Observer) {
 	switch typename {
 	case bug.Typename:
 		c.bugs.UnregisterObserver(observer)
@@ -239,36 +228,6 @@ func (c *RepoCache) Close() error {
 	}
 
 	return c.repo.LocalStorage().Remove(lockfile)
-}
-
-type BuildEventType int
-
-const (
-	_ BuildEventType = iota
-	// BuildEventCacheIsBuilt signal that the cache is being built (aka, not skipped)
-	BuildEventCacheIsBuilt
-	// BuildEventRemoveLock signal that an old repo lock has been cleaned
-	BuildEventRemoveLock
-	// BuildEventStarted signal the beginning of a cache build for an entity
-	BuildEventStarted
-	// BuildEventProgress signal progress in the cache building for an entity
-	BuildEventProgress
-	// BuildEventFinished signal the end of a cache build for an entity
-	BuildEventFinished
-)
-
-// BuildEvent carry an event happening during the cache build process.
-type BuildEvent struct {
-	// Err carry an error if the build process failed. If set, no other field matters.
-	Err error
-	// Typename is the name of the entity of which the event relate to. Can be empty if no particular entity is involved.
-	Typename string
-	// Event is the type of the event.
-	Event BuildEventType
-	// Total is the total number of elements being built. Set if Event is BuildEventStarted.
-	Total int64
-	// Progress is the current count of processed elements. Set if Event is BuildEventProgress.
-	Progress int64
 }
 
 func (c *RepoCache) buildCache(events chan BuildEvent) {

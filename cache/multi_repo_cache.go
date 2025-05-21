@@ -24,7 +24,7 @@ func NewMultiRepoCache() *MultiRepoCache {
 func (c *MultiRepoCache) RegisterRepository(repo repository.ClockedRepo, name string) (*RepoCache, chan BuildEvent) {
 	r, events := NewNamedRepoCache(repo, name)
 
-	// intercept events to make sure the cache building process succeed properly
+	// intercept events to make sure the cache building process succeeds properly
 	out := make(chan BuildEvent)
 	go func() {
 		defer close(out)
@@ -67,6 +67,14 @@ func (c *MultiRepoCache) ResolveRepo(name string) (*RepoCache, error) {
 		return nil, fmt.Errorf("unknown repo")
 	}
 	return r, nil
+}
+
+func (c *MultiRepoCache) RegisterObserver(observer Observer) {
+
+}
+
+func (c *MultiRepoCache) UnregisterObserver(observer Observer) {
+
 }
 
 // Close will do anything that is needed to close the cache properly

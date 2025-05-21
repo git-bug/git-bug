@@ -1,13 +1,29 @@
 type Subscription {
-  bugChanged(repoRef: String, query: String): BugChange!
+  """Subscribe to events on all entities. For events on a specific repo you can provide a repo reference. Without it, you get the unique default repo or all repo events."""
+  allEvents(repoFilter: String): EntityEvent!
+  """Subscribe to identity entity events. For events on a specific repo you can provide a repo reference. Without it, you get the unique default repo or all repo events."""
+  identityEvents(repoFilter: String): IdentityEvent!
+  """Subscribe to bug entity events. For events on a specific repo you can provide a repo reference. Without it, you get the unique default repo or all repo events."""
+  bugEvents(repoFilter: String, query: String): BugEvent!
 }
 
-enum ChangeType {
+enum EventType {
   CREATED
   UPDATED
+  REMOVED
 }
 
-type BugChange {
-  type: ChangeType!
+type EntityEvent {
+  type: EventType!
+  entity: Entity
+}
+
+type IdentityEvent {
+  type: EventType!
+  identity: Identity!
+}
+
+type BugEvent {
+  type: EventType!
   bug: Bug!
 }

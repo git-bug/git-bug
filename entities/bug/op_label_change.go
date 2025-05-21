@@ -117,7 +117,7 @@ func (l LabelChangeTimelineItem) CombinedId() entity.CombinedId {
 	return l.combinedId
 }
 
-// IsAuthored is a sign post method for gqlgen
+// IsAuthored is a sign post-method for gqlgen, to mark compliance to an interface.
 func (l *LabelChangeTimelineItem) IsAuthored() {}
 
 // ChangeLabels is a convenience function to change labels on a bug
