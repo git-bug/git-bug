@@ -1,8 +1,6 @@
 package cache
 
 import (
-	"fmt"
-
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
@@ -106,17 +104,7 @@ func (c *RepoCacheIdentity) finishIdentity(i *identity.Identity, metadata map[st
 		return nil, err
 	}
 
-	c.mu.Lock()
-	if _, has := c.cached[i.Id()]; has {
-		return nil, fmt.Errorf("identity %s already exist in the cache", i.Id())
-	}
-
-	cached := NewIdentityCache(i, c.repo, c.entityUpdated)
-	c.cached[i.Id()] = cached
-	c.mu.Unlock()
-
-	// force the write of the excerpt
-	err = c.entityUpdated(i.Id())
+	cached, err := c.add(i)
 	if err != nil {
 		return nil, err
 	}

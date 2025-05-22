@@ -155,6 +155,3 @@ func (snap *Snapshot) HasAnyActor(ids ...entity.Id) bool {
 	}
 	return false
 }
-
-// IsAuthored is a sign post method for gqlgen
-func (snap *Snapshot) IsAuthored() {}

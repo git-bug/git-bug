@@ -702,7 +702,7 @@ func (ec *executionContext) fieldContext_IdentityEdge_node(_ context.Context, fi
 
 // region    **************************** object.gotpl ****************************
 
-var identityImplementors = []string{"Identity"}
+var identityImplementors = []string{"Identity", "Entity"}
 
 func (ec *executionContext) _Identity(ctx context.Context, sel ast.SelectionSet, obj models.IdentityWrapper) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, identityImplementors)

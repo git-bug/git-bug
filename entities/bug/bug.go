@@ -38,7 +38,7 @@ type Interface interface {
 
 // Bug holds the data of a bug thread, organized in a way close to
 // how it will be persisted inside Git. This is the data structure
-// used to merge two different version of the same Bug.
+// used to merge two different versions of the same Bug.
 type Bug struct {
 	*dag.Entity
 }

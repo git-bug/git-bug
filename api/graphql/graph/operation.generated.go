@@ -107,9 +107,9 @@ func (ec *executionContext) _OperationConnection_nodes(ctx context.Context, fiel
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]dag.Operation)
+	res := resTmp.([]dag.OperationWithApply[*bug.Snapshot])
 	fc.Result = res
-	return ec.marshalNOperation2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚋdagᚐOperationᚄ(ctx, field.Selections, res)
+	return ec.marshalNOperation2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚋdagᚐOperationWithApplyᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_OperationConnection_nodes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -293,9 +293,9 @@ func (ec *executionContext) _OperationEdge_node(ctx context.Context, field graph
 		}
 		return graphql.Null
 	}
-	res := resTmp.(dag.Operation)
+	res := resTmp.(dag.OperationWithApply[*bug.Snapshot])
 	fc.Result = res
-	return ec.marshalNOperation2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚋdagᚐOperation(ctx, field.Selections, res)
+	return ec.marshalNOperation2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚋdagᚐOperationWithApply(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_OperationEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -319,7 +319,7 @@ func (ec *executionContext) fieldContext_OperationEdge_node(_ context.Context, f
 
 // region    ************************** interface.gotpl ***************************
 
-func (ec *executionContext) _Operation(ctx context.Context, sel ast.SelectionSet, obj dag.Operation) graphql.Marshaler {
+func (ec *executionContext) _Operation(ctx context.Context, sel ast.SelectionSet, obj dag.OperationWithApply[*bug.Snapshot]) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
@@ -464,7 +464,7 @@ func (ec *executionContext) _OperationEdge(ctx context.Context, sel ast.Selectio
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNOperation2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚋdagᚐOperation(ctx context.Context, sel ast.SelectionSet, v dag.Operation) graphql.Marshaler {
+func (ec *executionContext) marshalNOperation2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚋdagᚐOperationWithApply(ctx context.Context, sel ast.SelectionSet, v dag.OperationWithApply[*bug.Snapshot]) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -474,7 +474,7 @@ func (ec *executionContext) marshalNOperation2githubᚗcomᚋgitᚑbugᚋgitᚑb
 	return ec._Operation(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNOperation2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚋdagᚐOperationᚄ(ctx context.Context, sel ast.SelectionSet, v []dag.Operation) graphql.Marshaler {
+func (ec *executionContext) marshalNOperation2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚋdagᚐOperationWithApplyᚄ(ctx context.Context, sel ast.SelectionSet, v []dag.OperationWithApply[*bug.Snapshot]) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -498,7 +498,7 @@ func (ec *executionContext) marshalNOperation2ᚕgithubᚗcomᚋgitᚑbugᚋgit�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNOperation2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚋdagᚐOperation(ctx, sel, v[i])
+			ret[i] = ec.marshalNOperation2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚋdagᚐOperationWithApply(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)

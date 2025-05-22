@@ -3,6 +3,11 @@
 package models
 
 import (
+	"bytes"
+	"fmt"
+	"io"
+	"strconv"
+
 	"github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entities/common"
 	"github.com/git-bug/git-bug/entity/dag"
@@ -12,6 +17,11 @@ import (
 // An object that has an author.
 type Authored interface {
 	IsAuthored()
+}
+
+// An entity (identity, bug, ...).
+type Entity interface {
+	IsEntity()
 }
 
 type BugAddCommentAndCloseInput struct {
@@ -183,6 +193,11 @@ type BugEditCommentPayload struct {
 	Operation *bug.EditCommentOperation `json:"operation"`
 }
 
+type BugEvent struct {
+	Type EventType  `json:"type"`
+	Bug  BugWrapper `json:"bug"`
+}
+
 type BugSetTitleInput struct {
 	// A unique identifier for the client performing the mutation.
 	ClientMutationID *string `json:"clientMutationId,omitempty"`
@@ -253,6 +268,11 @@ type BugTimelineItemEdge struct {
 	Node   bug.TimelineItem `json:"node"`
 }
 
+type EntityEvent struct {
+	Type   EventType `json:"type"`
+	Entity Entity    `json:"entity,omitempty"`
+}
+
 type IdentityConnection struct {
 	Edges      []*IdentityEdge   `json:"edges"`
 	Nodes      []IdentityWrapper `json:"nodes"`
@@ -263,6 +283,11 @@ type IdentityConnection struct {
 type IdentityEdge struct {
 	Cursor string          `json:"cursor"`
 	Node   IdentityWrapper `json:"node"`
+}
+
+type IdentityEvent struct {
+	Type     EventType       `json:"type"`
+	Identity IdentityWrapper `json:"identity"`
 }
 
 type LabelConnection struct {
@@ -282,16 +307,16 @@ type Mutation struct {
 
 // The connection type for an Operation
 type OperationConnection struct {
-	Edges      []*OperationEdge `json:"edges"`
-	Nodes      []dag.Operation  `json:"nodes"`
-	PageInfo   *PageInfo        `json:"pageInfo"`
-	TotalCount int              `json:"totalCount"`
+	Edges      []*OperationEdge                        `json:"edges"`
+	Nodes      []dag.OperationWithApply[*bug.Snapshot] `json:"nodes"`
+	PageInfo   *PageInfo                               `json:"pageInfo"`
+	TotalCount int                                     `json:"totalCount"`
 }
 
 // Represent an Operation
 type OperationEdge struct {
-	Cursor string        `json:"cursor"`
-	Node   dag.Operation `json:"node"`
+	Cursor string                                `json:"cursor"`
+	Node   dag.OperationWithApply[*bug.Snapshot] `json:"node"`
 }
 
 // Information about pagination in a connection.
@@ -307,4 +332,64 @@ type PageInfo struct {
 }
 
 type Query struct {
+}
+
+type Subscription struct {
+}
+
+type EventType string
+
+const (
+	EventTypeCreated EventType = "CREATED"
+	EventTypeUpdated EventType = "UPDATED"
+	EventTypeRemoved EventType = "REMOVED"
+)
+
+var AllEventType = []EventType{
+	EventTypeCreated,
+	EventTypeUpdated,
+	EventTypeRemoved,
+}
+
+func (e EventType) IsValid() bool {
+	switch e {
+	case EventTypeCreated, EventTypeUpdated, EventTypeRemoved:
+		return true
+	}
+	return false
+}
+
+func (e EventType) String() string {
+	return string(e)
+}
+
+func (e *EventType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = EventType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid EventType", str)
+	}
+	return nil
+}
+
+func (e EventType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *EventType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e EventType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
 }

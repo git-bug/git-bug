@@ -1,5 +1,5 @@
 """Represents an identity"""
-type Identity {
+type Identity implements Entity {
     """The identifier for this identity"""
     id: ID!
     """The human version (truncated) identifier for this identity"""
