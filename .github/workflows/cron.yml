@@ -1,0 +1,40 @@
+---
+name: cron
+
+on:
+  schedule:
+    - cron: '0 10 31 5 *' # 05/31 at 10:00
+
+permissions:
+  contents: read
+
+jobs:
+  rename-default-branch:
+    runs-on: ubuntu-latest
+    if: github.ref_name == "master"
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: configure git remote
+        run: |
+          git remote set-url origin git@github.com:git-bug/git-bug.git
+
+      - name: "merge pull request: 1464"
+        env:
+          GH_TOKEN: ${{ secrets.RENAME_TOKEN_1404 }}
+        run: gh pr merge 1464 --admin --squash
+
+      - name: "set default branch: refs/heads/trunk"
+        env:
+          GH_TOKEN: ${{ secrets.RENAME_TOKEN_1404 }}
+        run: gh repo edit --default-branch trunk
+
+      - name: "set base for all PRs: refs/heads/trunk"
+        env:
+          GH_TOKEN: ${{ secrets.RENAME_TOKEN_1404 }}
+        run: |-
+          for pr in $(gh pr list -B master -s open --json number --jq '.[] | .number'); do
+            gh pr edit "$pr" -B trunk
+          done
