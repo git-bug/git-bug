@@ -4,9 +4,15 @@
 package main
 
 import (
+	"os"
+
 	"github.com/git-bug/git-bug/commands"
 )
 
 func main() {
-	commands.Execute()
+	v, _ := getVersion()
+	root := commands.NewRootCommand(v)
+	if err := root.Execute(); err != nil {
+		os.Exit(1)
+	}
 }

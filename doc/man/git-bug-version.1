@@ -2,7 +2,7 @@
 .TH "GIT-BUG" "1" "Apr 2019" "Generated from git-bug's source code" ""
 
 .SH NAME
-git-bug-version - Show git-bug version information
+git-bug-version - Print version information
 
 
 .SH SYNOPSIS
@@ -10,24 +10,43 @@ git-bug-version - Show git-bug version information
 
 
 .SH DESCRIPTION
-Show git-bug version information
+Print version information.
+
+.PP
+Format:
+  git-bug  [commit[/dirty]]   
+
+.PP
+Format Description:
+   may be one of:
+  	- A semantic version string, prefixed with a "v", e.g. v1.2.3
+  	- "undefined" (if not provided, or built with an invalid version string)
+
+.PP
+[commit], if present, is the commit hash that was checked out during the
+  build. This may be suffixed with '/dirty' if there were local file
+  modifications. This is indicative of your build being patched, or modified in
+  some way from the commit.
+
+.PP
+ is the version of the go compiler used for the build.
+
+.PP
+ is the target platform (GOOS).
+
+.PP
+ is the target architecture (GOARCH).
 
 
 .SH OPTIONS
-\fB-n\fP, \fB--number\fP[=false]
-	Only show the version number
-
-.PP
-\fB-c\fP, \fB--commit\fP[=false]
-	Only show the commit hash
-
-.PP
-\fB-a\fP, \fB--all\fP[=false]
-	Show all version information
-
-.PP
 \fB-h\fP, \fB--help\fP[=false]
 	help for version
+
+
+.SH EXAMPLE
+.EX
+git bug version
+.EE
 
 
 .SH SEE ALSO
