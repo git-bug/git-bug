@@ -1,25 +1,17 @@
-// Package commands contains the CLI commands
 package commands
 
 import (
-	"fmt"
 	"os"
-	"runtime/debug"
 
 	"github.com/spf13/cobra"
 
-	bridgecmd "github.com/git-bug/git-bug/commands/bridge"
-	bugcmd "github.com/git-bug/git-bug/commands/bug"
+	"github.com/git-bug/git-bug/commands/bridge"
+	"github.com/git-bug/git-bug/commands/bug"
 	"github.com/git-bug/git-bug/commands/execenv"
-	usercmd "github.com/git-bug/git-bug/commands/user"
+	"github.com/git-bug/git-bug/commands/user"
 )
 
-// These variables are initialized externally during the build. See the Makefile.
-var GitCommit string
-var GitLastTag string
-var GitExactTag string
-
-func NewRootCommand() *cobra.Command {
+func NewRootCommand(version string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   execenv.RootCommandName,
 		Short: "A bug tracker embedded in Git",
@@ -33,7 +25,7 @@ the same git remote you are already using to collaborate with other people.
 
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			root := cmd.Root()
-			root.Version = getVersion()
+			root.Version = version
 		},
 
 		// For the root command, force the execution of the PreRun
@@ -79,65 +71,4 @@ the same git remote you are already using to collaborate with other people.
 	cmd.AddCommand(newWipeCommand(env))
 
 	return cmd
-}
-
-func Execute() {
-	if err := NewRootCommand().Execute(); err != nil {
-		os.Exit(1)
-	}
-}
-
-func getVersion() string {
-	if GitExactTag == "undefined" {
-		GitExactTag = ""
-	}
-
-	if GitExactTag != "" {
-		// we are exactly on a tag --> release version
-		return GitLastTag
-	}
-
-	if GitLastTag != "" {
-		// not exactly on a tag --> dev version
-		return fmt.Sprintf("%s-dev-%.10s", GitLastTag, GitCommit)
-	}
-
-	// we don't have commit information, try golang build info
-	if commit, dirty, err := getCommitAndDirty(); err == nil {
-		if dirty {
-			return fmt.Sprintf("dev-%.10s-dirty", commit)
-		}
-		return fmt.Sprintf("dev-%.10s", commit)
-	}
-
-	return "dev-unknown"
-}
-
-func getCommitAndDirty() (commit string, dirty bool, err error) {
-	info, ok := debug.ReadBuildInfo()
-	if !ok {
-		return "", false, fmt.Errorf("unable to read build info")
-	}
-
-	var commitFound bool
-
-	// get the commit and modified status
-	// (that is the flag for repository dirty or not)
-	for _, kv := range info.Settings {
-		switch kv.Key {
-		case "vcs.revision":
-			commit = kv.Value
-			commitFound = true
-		case "vcs.modified":
-			if kv.Value == "true" {
-				dirty = true
-			}
-		}
-	}
-
-	if !commitFound {
-		return "", false, fmt.Errorf("no commit found")
-	}
-
-	return commit, dirty, nil
 }

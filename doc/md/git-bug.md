@@ -31,7 +31,7 @@ git-bug [flags]
 * [git-bug push](git-bug_push.md)	 - Push updates to a git remote
 * [git-bug termui](git-bug_termui.md)	 - Launch the terminal UI
 * [git-bug user](git-bug_user.md)	 - List identities
-* [git-bug version](git-bug_version.md)	 - Show git-bug version information
+* [git-bug version](git-bug_version.md)	 - Print version information
 * [git-bug webui](git-bug_webui.md)	 - Launch the web UI
 * [git-bug wipe](git-bug_wipe.md)	 - Wipe git-bug from the git repository
 
