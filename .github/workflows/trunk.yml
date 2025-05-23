@@ -9,7 +9,7 @@ name: trunk
 on:
   push:
     branches:
-      - master
+      - trunk
 
 concurrency:
   group: ${{ github.ref }}
@@ -48,8 +48,7 @@ jobs:
           auto-push: true
 
   mirror:
-    if: >
-      github.ref == 'refs/heads/master' && github.repository == 'git-bug/git-bug' && github.run_attempt == '1'
+    if: github.repository == 'git-bug/git-bug' && github.run_attempt == '1'
     permissions:
       contents: write
     runs-on: ubuntu-latest
@@ -70,11 +69,11 @@ jobs:
           ssh-agent -a $SSH_AUTH_SOCK > /dev/null
           ssh-add ~/.ssh/id_rsa
 
-      - name: push to trunk
+      - name: push to refs/heads/master
         env:
           SSH_AUTH_SOCK: /tmp/ssh-agent.sock
         run: |-
           git config user.name git-bug-bot
           git config user.email no-reply@git-bug.org
           git remote set-url origin git@github.com:git-bug/git-bug.git
-          git push --atomic origin HEAD:refs/heads/trunk
+          git push --atomic origin HEAD:refs/heads/master
