@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1747873058538,
+  "lastUpdate": 1748020097031,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -15170,6 +15170,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 514658,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e49c93d403afd662eeb3579f9a42ac45e75b7bef",
+          "message": "build: reduce complexity for setting the version (#1466)\n\nThis change refactors the implementation of how the version is embedded\nin the binary to reduce the number of variables necessary to determine\nthe version information from 3 to 1.\n\nThe legacy build variables are still supported, however, a warning will\nbe emitted instructing users to contact their package maintainer. The\nlegacy GitExacTag variable, if present, will be used to set main.version\nif it is undefined. This ensures that unmigrated package builds will\ncontinue to provide the correct version information.\n\nThe legacy build variables will be supported until 0.12.0, giving\npackage maintainers some time to migrate.\n\nChange-Id: I05fea97169ea1af87b198174afe5b6663f860fd8",
+          "timestamp": "2025-05-23T10:07:38-07:00",
+          "tree_id": "7826a4bcb1395127f968dd52618670604c4742b2",
+          "url": "https://github.com/git-bug/git-bug/commit/e49c93d403afd662eeb3579f9a42ac45e75b7bef"
+        },
+        "date": 1748020096487,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 21405393,
+            "unit": "ns/op\t 1166880 B/op\t   17242 allocs/op",
+            "extra": "69 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 21405393,
+            "unit": "ns/op",
+            "extra": "69 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 1166880,
+            "unit": "B/op",
+            "extra": "69 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 17242,
+            "unit": "allocs/op",
+            "extra": "69 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 97783012,
+            "unit": "ns/op\t 5406334 B/op\t   79823 allocs/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 97783012,
+            "unit": "ns/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 5406334,
+            "unit": "B/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 79823,
+            "unit": "allocs/op",
+            "extra": "12 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 567366292,
+            "unit": "ns/op\t38711972 B/op\t  473845 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 567366292,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 38711972,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 473845,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
