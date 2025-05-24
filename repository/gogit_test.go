@@ -71,7 +71,7 @@ func TestGoGitRepo_Indexes(t *testing.T) {
 	require.NoError(t, err)
 	require.NotZero(t, indexA)
 	require.FileExists(t, filepath.Join(plainRoot, ".git", namespace, "indexes", "a", "index_meta.json"))
-	require.FileExists(t, filepath.Join(plainRoot, ".git", namespace, "indexes", "a", "store"))
+	require.FileExists(t, filepath.Join(plainRoot, ".git", namespace, "indexes", "a", "store", "root.bolt"))
 
 	indexB, err := repo.GetIndex("b")
 	require.NoError(t, err)

@@ -7,7 +7,8 @@ import (
 	"sync"
 	"unicode/utf8"
 
-	"github.com/blevesearch/bleve"
+	"github.com/blevesearch/bleve/v2"
+	"github.com/blevesearch/bleve/v2/index/upsidedown"
 )
 
 var _ Index = &bleveIndex{}
@@ -21,17 +22,31 @@ type bleveIndex struct {
 
 func openBleveIndex(path string) (*bleveIndex, error) {
 	index, err := bleve.Open(path)
-	if err == nil {
-		return &bleveIndex{path: path, index: index}, nil
-	}
-
-	b := &bleveIndex{path: path}
-	err = b.makeIndex()
 	if err != nil {
-		return nil, err
+		// likely we have no index yet, we make one.
+		b := &bleveIndex{path: path}
+		return b, b.makeIndex()
 	}
 
-	return b, nil
+	adv, err := index.Advanced()
+	if err != nil {
+		_ = index.Close()
+		return nil, fmt.Errorf("bleve: couldn't get the advanced index to assert index type: %v", err)
+	}
+
+	// if we detect the v1 format (upside-down), we force a rebuild to the v2 format (scorch)
+	// which is much smaller.
+	if _, ok := adv.(*upsidedown.UpsideDownCouch); ok {
+		_ = index.Close()
+		err = os.RemoveAll(path)
+		if err != nil {
+			return nil, err
+		}
+		b := &bleveIndex{path: path}
+		return b, b.makeIndex()
+	}
+
+	return &bleveIndex{path: path, index: index}, nil
 }
 
 func (b *bleveIndex) makeIndex() error {
