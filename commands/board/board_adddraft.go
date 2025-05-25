@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/git-bug/git-bug/cache"
-	buginput "github.com/git-bug/git-bug/commands/bug/input"
+	boardinput "github.com/git-bug/git-bug/commands/board/input"
 	"github.com/git-bug/git-bug/commands/execenv"
 	_select "github.com/git-bug/git-bug/commands/select"
 	"github.com/git-bug/git-bug/entity"
@@ -15,8 +15,7 @@ import (
 
 type boardAddDraftOptions struct {
 	title          string
-	messageFile    string
-	message        string
+	titleFile      string
 	column         string
 	nonInteractive bool
 }
@@ -40,10 +39,8 @@ func newBoardAddDraftCommand() *cobra.Command {
 
 	flags.StringVarP(&options.title, "title", "t", "",
 		"Provide the title to describe the draft item")
-	flags.StringVarP(&options.message, "message", "m", "",
-		"Provide the message of the draft item")
-	flags.StringVarP(&options.messageFile, "file", "F", "",
-		"Take the message from the given file. Use - to read the message from the standard input")
+	flags.StringVarP(&options.titleFile, "file", "F", "",
+		"Take the title from the given file. Use - to read the message from the standard input")
 	flags.StringVarP(&options.column, "column", "c", "1",
 		"The column to add to. Either a column Id or prefix, or the column number starting from 1.")
 	_ = cmd.RegisterFlagCompletionFunc("column", ColumnCompletion(env))
@@ -58,19 +55,16 @@ func runBoardAddDraft(env *execenv.Env, opts boardAddDraftOptions, args []string
 		return err
 	}
 
-	// TODO: editor with single line, no message
-
-	if opts.messageFile != "" && opts.message == "" {
-		// Note: reuse the bug inputs
-		opts.title, opts.message, err = buginput.BugCreateFileInput(opts.messageFile)
+	if opts.titleFile != "" && opts.title == "" {
+		opts.title, err = boardinput.BoardTitleFileInput(opts.titleFile)
 		if err != nil {
 			return err
 		}
 	}
 
-	if !opts.nonInteractive && opts.messageFile == "" && (opts.message == "" || opts.title == "") {
-		opts.title, opts.message, err = buginput.BugCreateEditorInput(env.Backend, opts.title, opts.message)
-		if err == buginput.ErrEmptyTitle {
+	if !opts.nonInteractive && opts.titleFile == "" && opts.title == "" {
+		opts.title, err = boardinput.BoardTitleEditorInput(env.Backend, opts.title)
+		if err == boardinput.ErrEmptyTitle {
 			env.Out.Println("Empty title, aborting.")
 			return nil
 		}
