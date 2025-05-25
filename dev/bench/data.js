@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1748020097031,
+  "lastUpdate": 1748171176153,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -15266,6 +15266,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 473845,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b80d27c2a157e9be3a394ad137cc3a05825be7c5",
+          "message": "build(deps)!: upgrade bleve v1.0.14 => v2.5.1 (#1442)\n\nThis change upgrades `bleve`, primarily to remove the need for the\nreplace directive on `github.com/willf/bitset`, but this change upgrades\nfurther to move past a non-impacting vulnerability to the `bleve/http`\npackage [0] [1], even though we do not use it, even indirectly.\n\nNote that even though the GitHub advisory [0] notes that this is patched\nin `v2.5.0`, all that seems to have happened (see [1]) is that a README\nwas added to the package noting the vulnerabilities.\n\nOther CVE databases [2] [3] do not mark this as resolved. Again,\nhowever, git-bug DOES NOT USE this package, so it is not really a\nconcern.\n\nThe cache and indexing format was changed. Index storage gains are\n_significant_ (at the time of writing, with the git-bug repository, this\nchange reduces the index cache from ~51 MiB to less than 4 MiB).\n\nThis does not come with a change to bleve's API. We do have a test that\nvalidates that the index file exists, however, so this change refactors\nthat to check against the appropriate path.\n\n[0]: https://github.com/advisories/GHSA-9w9f-6mg8-jp7w\n[1]:\nhttps://github.com/blevesearch/bleve/commit/1c7509d6a17d36f265c90b4e8f4e3a3182fe79ff\n[2]: https://nvd.nist.gov/vuln/detail/CVE-2022-31022\n[3]: https://pkg.go.dev/vuln/GO-2022-0470\n\nBREAKING-CHANGE:\n This causes a change to the format of the internal, local cache that\n git-bug uses. Users should note that older versions of git-bug will be\n incompatible with this new cache format.\n\n If you wish to downgrade to an older version of git-bug, you should\n first remove the cache by executing `rm -rf .git/git-bug` in a\n terminal, and then initialize the older version of git-bug to build a\n compatible version of the cache.\n\nCo-authored-by: Michael Muré <battoletre@gmail.com>\nChange-Id: I9ab436ade9221bfd91b84ebaf47434f1b3d91cd3\n\nCo-authored-by: Michael Muré <battoletre@gmail.com>",
+          "timestamp": "2025-05-25T10:59:48Z",
+          "tree_id": "2bedf35d155904ced23e34ddb8b0f38a2f01cb16",
+          "url": "https://github.com/git-bug/git-bug/commit/b80d27c2a157e9be3a394ad137cc3a05825be7c5"
+        },
+        "date": 1748171175590,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 25077455,
+            "unit": "ns/op\t 1239003 B/op\t   18593 allocs/op",
+            "extra": "55 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 25077455,
+            "unit": "ns/op",
+            "extra": "55 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 1239003,
+            "unit": "B/op",
+            "extra": "55 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 18593,
+            "unit": "allocs/op",
+            "extra": "55 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 115363739,
+            "unit": "ns/op\t 5072400 B/op\t   74904 allocs/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 115363739,
+            "unit": "ns/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 5072400,
+            "unit": "B/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 74904,
+            "unit": "allocs/op",
+            "extra": "9 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 678781554,
+            "unit": "ns/op\t42034248 B/op\t  513444 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 678781554,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 42034248,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 513444,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
