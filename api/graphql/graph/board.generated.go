@@ -1480,6 +1480,20 @@ func (ec *executionContext) marshalNBoard2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbu
 	return ret
 }
 
+func (ec *executionContext) marshalNBoardConnection2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBoardConnection(ctx context.Context, sel ast.SelectionSet, v models.BoardConnection) graphql.Marshaler {
+	return ec._BoardConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNBoardConnection2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBoardConnection(ctx context.Context, sel ast.SelectionSet, v *models.BoardConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._BoardConnection(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNBoardEdge2ᚕᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBoardEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.BoardEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -1532,6 +1546,13 @@ func (ec *executionContext) marshalNBoardEdge2ᚖgithubᚗcomᚋgitᚑbugᚋgit�
 		return graphql.Null
 	}
 	return ec._BoardEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOBoard2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBoardWrapper(ctx context.Context, sel ast.SelectionSet, v models.BoardWrapper) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Board(ctx, sel, v)
 }
 
 // endregion ***************************** type.gotpl *****************************
