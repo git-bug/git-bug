@@ -482,8 +482,10 @@ type ComplexityRoot struct {
 	}
 
 	Repository struct {
+		AllBoards     func(childComplexity int, after *string, before *string, first *int, last *int, query *string) int
 		AllBugs       func(childComplexity int, after *string, before *string, first *int, last *int, query *string) int
 		AllIdentities func(childComplexity int, after *string, before *string, first *int, last *int) int
+		Board         func(childComplexity int, prefix string) int
 		Bug           func(childComplexity int, prefix string) int
 		Identity      func(childComplexity int, prefix string) int
 		Name          func(childComplexity int) int
@@ -2300,6 +2302,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Query.Repository(childComplexity, args["ref"].(*string)), true
 
+	case "Repository.allBoards":
+		if e.complexity.Repository.AllBoards == nil {
+			break
+		}
+
+		args, err := ec.field_Repository_allBoards_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Repository.AllBoards(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int), args["query"].(*string)), true
+
 	case "Repository.allBugs":
 		if e.complexity.Repository.AllBugs == nil {
 			break
@@ -2323,6 +2337,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Repository.AllIdentities(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
+
+	case "Repository.board":
+		if e.complexity.Repository.Board == nil {
+			break
+		}
+
+		args, err := ec.field_Repository_board_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Repository.Board(childComplexity, args["prefix"].(string)), true
 
 	case "Repository.bug":
 		if e.complexity.Repository.Bug == nil {
@@ -3337,6 +3363,22 @@ type OperationEdge {
 	{Name: "../schema/repository.graphql", Input: `type Repository {
     """The name of the repository"""
     name: String
+
+    """All the boards"""
+    allBoards(
+      """Returns the elements in the list that come after the specified cursor."""
+      after: String
+      """Returns the elements in the list that come before the specified cursor."""
+      before: String
+      """Returns the first _n_ elements from the list."""
+      first: Int
+      """Returns the last _n_ elements from the list."""
+      last: Int
+      """A query to select and order bugs."""
+      query: String
+    ): BoardConnection!
+
+    board(prefix: String!): Board
 
     """All the bugs"""
     allBugs(
