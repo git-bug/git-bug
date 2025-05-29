@@ -55,7 +55,7 @@ the same git remote you are already using to collaborate with other people.
 	}
 
 	env := execenv.NewEnv()
-	cmd.PersistentFlags().StringArrayVarP(&env.RepoPath, "repo-path", "C", []string{}, "Path to the git repository")
+	cmd.PersistentFlags().StringArrayVarP(&env.RepoPath, "repo-path", "C", []string{}, `Run as if git-bug was started in <path> instead of the current working directory.`)
 
 	addCmdWithGroup(bugcmd.NewBugCommand(env), entityGroup)
 	addCmdWithGroup(usercmd.NewUserCommand(env), entityGroup)
