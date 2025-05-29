@@ -5,10 +5,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/git-bug/git-bug/commands/bridge"
-	"github.com/git-bug/git-bug/commands/bug"
+	bridgecmd "github.com/git-bug/git-bug/commands/bridge"
+	bugcmd "github.com/git-bug/git-bug/commands/bug"
 	"github.com/git-bug/git-bug/commands/execenv"
-	"github.com/git-bug/git-bug/commands/user"
+	usercmd "github.com/git-bug/git-bug/commands/user"
 )
 
 func NewRootCommand(version string) *cobra.Command {
@@ -55,6 +55,7 @@ the same git remote you are already using to collaborate with other people.
 	}
 
 	env := execenv.NewEnv()
+	cmd.PersistentFlags().StringArrayVarP(&env.RepoPath, "repo-path", "C", []string{}, "Path to the git repository")
 
 	addCmdWithGroup(bugcmd.NewBugCommand(env), entityGroup)
 	addCmdWithGroup(usercmd.NewUserCommand(env), entityGroup)
