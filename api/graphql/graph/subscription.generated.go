@@ -12,15 +12,16 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/git-bug/git-bug/api/graphql/models"
+	"github.com/git-bug/git-bug/cache"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
 // region    ************************** generated!.gotpl **************************
 
 type SubscriptionResolver interface {
-	AllEvents(ctx context.Context, repoFilter *string) (<-chan *models.EntityEvent, error)
-	IdentityEvents(ctx context.Context, repoFilter *string) (<-chan *models.IdentityEvent, error)
-	BugEvents(ctx context.Context, repoFilter *string, query *string) (<-chan *models.BugEvent, error)
+	AllEvents(ctx context.Context, repoRef *string, typename *string) (<-chan *models.EntityEvent, error)
+	IdentityEvents(ctx context.Context, repoRef *string) (<-chan *models.IdentityEvent, error)
+	BugEvents(ctx context.Context, repoRef *string) (<-chan *models.BugEvent, error)
 }
 
 // endregion ************************** generated!.gotpl **************************
@@ -30,24 +31,47 @@ type SubscriptionResolver interface {
 func (ec *executionContext) field_Subscription_allEvents_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Subscription_allEvents_argsRepoFilter(ctx, rawArgs)
+	arg0, err := ec.field_Subscription_allEvents_argsRepoRef(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["repoFilter"] = arg0
+	args["repoRef"] = arg0
+	arg1, err := ec.field_Subscription_allEvents_argsTypename(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["typename"] = arg1
 	return args, nil
 }
-func (ec *executionContext) field_Subscription_allEvents_argsRepoFilter(
+func (ec *executionContext) field_Subscription_allEvents_argsRepoRef(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*string, error) {
-	if _, ok := rawArgs["repoFilter"]; !ok {
+	if _, ok := rawArgs["repoRef"]; !ok {
 		var zeroVal *string
 		return zeroVal, nil
 	}
 
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("repoFilter"))
-	if tmp, ok := rawArgs["repoFilter"]; ok {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("repoRef"))
+	if tmp, ok := rawArgs["repoRef"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Subscription_allEvents_argsTypename(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*string, error) {
+	if _, ok := rawArgs["typename"]; !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("typename"))
+	if tmp, ok := rawArgs["typename"]; ok {
 		return ec.unmarshalOString2ᚖstring(ctx, tmp)
 	}
 
@@ -58,47 +82,24 @@ func (ec *executionContext) field_Subscription_allEvents_argsRepoFilter(
 func (ec *executionContext) field_Subscription_bugEvents_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Subscription_bugEvents_argsRepoFilter(ctx, rawArgs)
+	arg0, err := ec.field_Subscription_bugEvents_argsRepoRef(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["repoFilter"] = arg0
-	arg1, err := ec.field_Subscription_bugEvents_argsQuery(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["query"] = arg1
+	args["repoRef"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Subscription_bugEvents_argsRepoFilter(
+func (ec *executionContext) field_Subscription_bugEvents_argsRepoRef(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*string, error) {
-	if _, ok := rawArgs["repoFilter"]; !ok {
+	if _, ok := rawArgs["repoRef"]; !ok {
 		var zeroVal *string
 		return zeroVal, nil
 	}
 
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("repoFilter"))
-	if tmp, ok := rawArgs["repoFilter"]; ok {
-		return ec.unmarshalOString2ᚖstring(ctx, tmp)
-	}
-
-	var zeroVal *string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Subscription_bugEvents_argsQuery(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*string, error) {
-	if _, ok := rawArgs["query"]; !ok {
-		var zeroVal *string
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("query"))
-	if tmp, ok := rawArgs["query"]; ok {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("repoRef"))
+	if tmp, ok := rawArgs["repoRef"]; ok {
 		return ec.unmarshalOString2ᚖstring(ctx, tmp)
 	}
 
@@ -109,24 +110,24 @@ func (ec *executionContext) field_Subscription_bugEvents_argsQuery(
 func (ec *executionContext) field_Subscription_identityEvents_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Subscription_identityEvents_argsRepoFilter(ctx, rawArgs)
+	arg0, err := ec.field_Subscription_identityEvents_argsRepoRef(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["repoFilter"] = arg0
+	args["repoRef"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Subscription_identityEvents_argsRepoFilter(
+func (ec *executionContext) field_Subscription_identityEvents_argsRepoRef(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*string, error) {
-	if _, ok := rawArgs["repoFilter"]; !ok {
+	if _, ok := rawArgs["repoRef"]; !ok {
 		var zeroVal *string
 		return zeroVal, nil
 	}
 
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("repoFilter"))
-	if tmp, ok := rawArgs["repoFilter"]; ok {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("repoRef"))
+	if tmp, ok := rawArgs["repoRef"]; ok {
 		return ec.unmarshalOString2ᚖstring(ctx, tmp)
 	}
 
@@ -168,9 +169,9 @@ func (ec *executionContext) _BugEvent_type(ctx context.Context, field graphql.Co
 		}
 		return graphql.Null
 	}
-	res := resTmp.(models.EventType)
+	res := resTmp.(cache.EntityEventType)
 	fc.Result = res
-	return ec.marshalNEventType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐEventType(ctx, field.Selections, res)
+	return ec.marshalNEntityEventType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋcacheᚐEntityEventType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_BugEvent_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -180,7 +181,7 @@ func (ec *executionContext) fieldContext_BugEvent_type(_ context.Context, field 
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type EventType does not have child fields")
+			return nil, errors.New("field of type EntityEventType does not have child fields")
 		},
 	}
 	return fc, nil
@@ -284,9 +285,9 @@ func (ec *executionContext) _EntityEvent_type(ctx context.Context, field graphql
 		}
 		return graphql.Null
 	}
-	res := resTmp.(models.EventType)
+	res := resTmp.(cache.EntityEventType)
 	fc.Result = res
-	return ec.marshalNEventType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐEventType(ctx, field.Selections, res)
+	return ec.marshalNEntityEventType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋcacheᚐEntityEventType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_EntityEvent_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -296,7 +297,7 @@ func (ec *executionContext) fieldContext_EntityEvent_type(_ context.Context, fie
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type EventType does not have child fields")
+			return nil, errors.New("field of type EntityEventType does not have child fields")
 		},
 	}
 	return fc, nil
@@ -369,9 +370,9 @@ func (ec *executionContext) _IdentityEvent_type(ctx context.Context, field graph
 		}
 		return graphql.Null
 	}
-	res := resTmp.(models.EventType)
+	res := resTmp.(cache.EntityEventType)
 	fc.Result = res
-	return ec.marshalNEventType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐEventType(ctx, field.Selections, res)
+	return ec.marshalNEntityEventType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋcacheᚐEntityEventType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_IdentityEvent_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -381,7 +382,7 @@ func (ec *executionContext) fieldContext_IdentityEvent_type(_ context.Context, f
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type EventType does not have child fields")
+			return nil, errors.New("field of type EntityEventType does not have child fields")
 		},
 	}
 	return fc, nil
@@ -463,7 +464,7 @@ func (ec *executionContext) _Subscription_allEvents(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Subscription().AllEvents(rctx, fc.Args["repoFilter"].(*string))
+		return ec.resolvers.Subscription().AllEvents(rctx, fc.Args["repoRef"].(*string), fc.Args["typename"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -538,7 +539,7 @@ func (ec *executionContext) _Subscription_identityEvents(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Subscription().IdentityEvents(rctx, fc.Args["repoFilter"].(*string))
+		return ec.resolvers.Subscription().IdentityEvents(rctx, fc.Args["repoRef"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -613,7 +614,7 @@ func (ec *executionContext) _Subscription_bugEvents(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Subscription().BugEvents(rctx, fc.Args["repoFilter"].(*string), fc.Args["query"].(*string))
+		return ec.resolvers.Subscription().BugEvents(rctx, fc.Args["repoRef"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -871,13 +872,13 @@ func (ec *executionContext) marshalNEntityEvent2ᚖgithubᚗcomᚋgitᚑbugᚋgi
 	return ec._EntityEvent(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNEventType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐEventType(ctx context.Context, v any) (models.EventType, error) {
-	var res models.EventType
+func (ec *executionContext) unmarshalNEntityEventType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋcacheᚐEntityEventType(ctx context.Context, v any) (cache.EntityEventType, error) {
+	var res cache.EntityEventType
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNEventType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐEventType(ctx context.Context, sel ast.SelectionSet, v models.EventType) graphql.Marshaler {
+func (ec *executionContext) marshalNEntityEventType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋcacheᚐEntityEventType(ctx context.Context, sel ast.SelectionSet, v cache.EntityEventType) graphql.Marshaler {
 	return v
 }
 

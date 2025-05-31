@@ -389,9 +389,9 @@ type ComplexityRoot struct {
 	}
 
 	Subscription struct {
-		AllEvents      func(childComplexity int, repoFilter *string) int
-		BugEvents      func(childComplexity int, repoFilter *string, query *string) int
-		IdentityEvents func(childComplexity int, repoFilter *string) int
+		AllEvents      func(childComplexity int, repoRef *string, typename *string) int
+		BugEvents      func(childComplexity int, repoRef *string) int
+		IdentityEvents func(childComplexity int, repoRef *string) int
 	}
 }
 
@@ -1854,7 +1854,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Subscription.AllEvents(childComplexity, args["repoFilter"].(*string)), true
+		return e.complexity.Subscription.AllEvents(childComplexity, args["repoRef"].(*string), args["typename"].(*string)), true
 
 	case "Subscription.bugEvents":
 		if e.complexity.Subscription.BugEvents == nil {
@@ -1866,7 +1866,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Subscription.BugEvents(childComplexity, args["repoFilter"].(*string), args["query"].(*string)), true
+		return e.complexity.Subscription.BugEvents(childComplexity, args["repoRef"].(*string)), true
 
 	case "Subscription.identityEvents":
 		if e.complexity.Subscription.IdentityEvents == nil {
@@ -1878,7 +1878,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Subscription.IdentityEvents(childComplexity, args["repoFilter"].(*string)), true
+		return e.complexity.Subscription.IdentityEvents(childComplexity, args["repoRef"].(*string)), true
 
 	}
 	return 0, false
@@ -2604,7 +2604,8 @@ type LabelChangeResult {
 }
 `, BuiltIn: false},
 	{Name: "../schema/operation.graphql", Input: `"""An operation applied to an entity."""
-interface Operation {
+interface Operation
+@goModel(model: "github.com/git-bug/git-bug/entity/dag.Operation") {
     """The identifier of the operation"""
     id: ID!
     """The operations author."""
@@ -2693,31 +2694,31 @@ type Mutation # See each entity mutations
 `, BuiltIn: false},
 	{Name: "../schema/subscription.graphql", Input: `type Subscription {
   """Subscribe to events on all entities. For events on a specific repo you can provide a repo reference. Without it, you get the unique default repo or all repo events."""
-  allEvents(repoFilter: String): EntityEvent!
+  allEvents(repoRef: String, typename: String): EntityEvent!
   """Subscribe to identity entity events. For events on a specific repo you can provide a repo reference. Without it, you get the unique default repo or all repo events."""
-  identityEvents(repoFilter: String): IdentityEvent!
+  identityEvents(repoRef: String): IdentityEvent!
   """Subscribe to bug entity events. For events on a specific repo you can provide a repo reference. Without it, you get the unique default repo or all repo events."""
-  bugEvents(repoFilter: String, query: String): BugEvent!
+  bugEvents(repoRef: String): BugEvent!
 }
 
-enum EventType {
+enum EntityEventType {
   CREATED
   UPDATED
   REMOVED
 }
 
 type EntityEvent {
-  type: EventType!
+  type: EntityEventType!
   entity: Entity
 }
 
 type IdentityEvent {
-  type: EventType!
+  type: EntityEventType!
   identity: Identity!
 }
 
 type BugEvent {
-  type: EventType!
+  type: EntityEventType!
   bug: Bug!
 }
 `, BuiltIn: false},
