@@ -1,7 +1,6 @@
 package cache
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -22,22 +21,21 @@ type observerEvent struct {
 	id       entity.Id
 }
 
+var _ Observer = &observer{}
+
 type observer struct {
 	created []observerEvent
 	updated []observerEvent
 	removed []observerEvent
 }
 
-func (o *observer) EntityEvent(event EntityEventType, typename string, id entity.Id) {
+func (o *observer) EntityEvent(event EntityEventType, _ string, typename string, id entity.Id) {
 	switch event {
 	case EntityEventCreated:
-		fmt.Printf("Created %s: %s\n", typename, id.Human())
 		o.created = append(o.created, observerEvent{typename, id})
 	case EntityEventUpdated:
-		fmt.Printf("Updated %s: %s\n", typename, id.Human())
 		o.updated = append(o.updated, observerEvent{typename, id})
 	case EntityEventRemoved:
-		fmt.Printf("Removed %s: %s\n", typename, id.Human())
 		o.removed = append(o.removed, observerEvent{typename, id})
 	}
 }
@@ -69,8 +67,8 @@ func TestCache(t *testing.T) {
 		require.NoError(t, err)
 
 		var obsIdentity, obsBug observer
-		cache.RegisterObserver(identity.Typename, &obsIdentity)
-		cache.RegisterObserver(bug.Typename, &obsBug)
+		require.NoError(t, cache.registerObserver("repotest", identity.Typename, &obsIdentity))
+		require.NoError(t, cache.registerObserver("repotest", bug.Typename, &obsBug))
 
 		// Create, set and get user identity
 		iden1, err := cache.Identities().New("René Descartes", "rene@descartes.fr")
@@ -149,6 +147,12 @@ func TestCache(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, res, 1)
 
+		// Updating
+		_, _, err = bug1.AddComment("new comment")
+		require.NoError(t, err)
+		assertOberserverEvent(obsIdentity, 2, 0, 0)
+		assertOberserverEvent(obsBug, 2, 1, 0)
+
 		// Close
 		require.NoError(t, cache.Close())
 		require.Empty(t, cache.bugs.cached)
@@ -160,8 +164,8 @@ func TestCache(t *testing.T) {
 		// to check the signatures, we also load the identity used above
 		cache, err = NewRepoCacheNoEvents(repo)
 		require.NoError(t, err)
-		cache.RegisterObserver(identity.Typename, &obsIdentity)
-		cache.RegisterObserver(bug.Typename, &obsBug)
+		require.NoError(t, cache.registerObserver("repotest", identity.Typename, &obsIdentity))
+		require.NoError(t, cache.registerObserver("repotest", bug.Typename, &obsBug))
 
 		require.Len(t, cache.bugs.cached, 0)
 		require.Len(t, cache.bugs.excerpts, 2)
@@ -196,11 +200,11 @@ func TestCache(t *testing.T) {
 		err = cache.Identities().Remove(iden1.Id().String()[:10])
 		require.NoError(t, err)
 		assertOberserverEvent(obsIdentity, 2, 0, 1)
-		assertOberserverEvent(obsBug, 2, 0, 0)
+		assertOberserverEvent(obsBug, 2, 1, 0)
 		err = cache.Bugs().Remove(bug1.Id().String()[:10])
 		require.NoError(t, err)
 		assertOberserverEvent(obsIdentity, 2, 0, 1)
-		assertOberserverEvent(obsBug, 2, 0, 1)
+		assertOberserverEvent(obsBug, 2, 1, 1)
 		require.Len(t, cache.bugs.cached, 0)
 		require.Len(t, cache.bugs.excerpts, 1)
 		require.Len(t, cache.identities.cached, 0)
@@ -211,16 +215,16 @@ func TestCache(t *testing.T) {
 		_, err = cache.Identities().New("René Descartes", "rene@descartes.fr")
 		require.NoError(t, err)
 		assertOberserverEvent(obsIdentity, 3, 0, 1)
-		assertOberserverEvent(obsBug, 2, 0, 1)
+		assertOberserverEvent(obsBug, 2, 1, 1)
 		_, _, err = cache.Bugs().NewRaw(iden2, time.Now().Unix(), "title", "message", nil, nil)
 		require.NoError(t, err)
 		assertOberserverEvent(obsIdentity, 3, 0, 1)
-		assertOberserverEvent(obsBug, 3, 0, 1)
+		assertOberserverEvent(obsBug, 3, 1, 1)
 
 		err = cache.RemoveAll()
 		require.NoError(t, err)
 		assertOberserverEvent(obsIdentity, 3, 0, 3)
-		assertOberserverEvent(obsBug, 3, 0, 3)
+		assertOberserverEvent(obsBug, 3, 1, 3)
 		require.Len(t, cache.bugs.cached, 0)
 		require.Len(t, cache.bugs.excerpts, 0)
 		require.Len(t, cache.identities.cached, 0)

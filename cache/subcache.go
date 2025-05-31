@@ -61,7 +61,7 @@ type SubCache[EntityT entity.Interface, ExcerptT Excerpt, CacheT CacheEntity] st
 	lru      lruIdCache
 
 	muObservers sync.RWMutex
-	observers   map[Observer]struct{}
+	observers   map[Observer]string // observer --> repo name
 }
 
 func NewSubCache[EntityT entity.Interface, ExcerptT Excerpt, CacheT CacheEntity](
@@ -335,13 +335,13 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) Close() error {
 	return nil
 }
 
-func (sc *SubCache[EntityT, ExcerptT, CacheT]) RegisterObserver(observer Observer) {
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) RegisterObserver(repoName string, observer Observer) {
 	sc.muObservers.Lock()
 	defer sc.muObservers.Unlock()
 	if sc.observers == nil {
-		sc.observers = make(map[Observer]struct{})
+		sc.observers = make(map[Observer]string)
 	}
-	sc.observers[observer] = struct{}{}
+	sc.observers[observer] = repoName
 }
 
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) UnregisterObserver(observer Observer) {
@@ -641,8 +641,8 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) entityUpdated(id entity.Id) error
 // notifyObservers notifies all the observers when something happening for an entity
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) notifyObservers(event EntityEventType, id entity.Id) {
 	sc.muObservers.RLock()
-	for observer := range sc.observers {
-		observer.EntityEvent(event, sc.repo.sc.typename, id)
+	for observer, repoName := range sc.observers {
+		observer.EntityEvent(event, repoName, sc.typename, id)
 	}
 	sc.muObservers.RUnlock()
 }

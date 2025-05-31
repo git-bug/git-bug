@@ -1,29 +1,29 @@
 type Subscription {
   """Subscribe to events on all entities. For events on a specific repo you can provide a repo reference. Without it, you get the unique default repo or all repo events."""
-  allEvents(repoFilter: String): EntityEvent!
+  allEvents(repoRef: String, typename: String): EntityEvent!
   """Subscribe to identity entity events. For events on a specific repo you can provide a repo reference. Without it, you get the unique default repo or all repo events."""
-  identityEvents(repoFilter: String): IdentityEvent!
+  identityEvents(repoRef: String): IdentityEvent!
   """Subscribe to bug entity events. For events on a specific repo you can provide a repo reference. Without it, you get the unique default repo or all repo events."""
-  bugEvents(repoFilter: String, query: String): BugEvent!
+  bugEvents(repoRef: String): BugEvent!
 }
 
-enum EventType {
+enum EntityEventType {
   CREATED
   UPDATED
   REMOVED
 }
 
 type EntityEvent {
-  type: EventType!
+  type: EntityEventType!
   entity: Entity
 }
 
 type IdentityEvent {
-  type: EventType!
+  type: EntityEventType!
   identity: Identity!
 }
 
 type BugEvent {
-  type: EventType!
+  type: EntityEventType!
   bug: Bug!
 }

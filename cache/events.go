@@ -1,6 +1,12 @@
 package cache
 
-import "github.com/git-bug/git-bug/entity"
+import (
+	"fmt"
+	"io"
+	"strconv"
+
+	"github.com/git-bug/git-bug/entity"
+)
 
 type BuildEventType int
 
@@ -43,5 +49,36 @@ const (
 
 // Observer gets notified of changes in entities in the cache
 type Observer interface {
-	EntityEvent(event EntityEventType, repoRef string, typename string, id entity.Id)
+	EntityEvent(event EntityEventType, repoName string, typename string, id entity.Id)
+}
+
+func (e EntityEventType) MarshalGQL(w io.Writer) {
+	switch e {
+	case EntityEventCreated:
+		_, _ = w.Write([]byte(strconv.Quote("CREATED")))
+	case EntityEventUpdated:
+		_, _ = w.Write([]byte(strconv.Quote("UPDATED")))
+	case EntityEventRemoved:
+		_, _ = w.Write([]byte(strconv.Quote("REMOVED")))
+	default:
+		panic("missing case")
+	}
+}
+
+func (e *EntityEventType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+	switch str {
+	case "CREATED":
+		*e = EntityEventCreated
+	case "UPDATED":
+		*e = EntityEventUpdated
+	case "REMOVED":
+		*e = EntityEventRemoved
+	default:
+		return fmt.Errorf("%s is not a valid EntityEventType", str)
+	}
+	return nil
 }

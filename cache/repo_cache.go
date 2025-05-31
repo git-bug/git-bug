@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/git-bug/git-bug/entities/bug"
@@ -37,6 +38,8 @@ type cacheMgmt interface {
 	RemoveAll() error
 	MergeAll(remote string) <-chan entity.MergeResult
 	GetNamespace() string
+	RegisterObserver(repoName string, observer Observer)
+	UnregisterObserver(observer Observer)
 	Close() error
 }
 
@@ -139,28 +142,6 @@ func NewRepoCacheNoEvents(r repository.ClockedRepo) (*RepoCache, error) {
 	return cache, nil
 }
 
-func (c *RepoCache) registerObserver(repoRef string, typename string, observer Observer) {
-	switch typename {
-	case bug.Typename:
-		c.bugs.RegisterObserver(repoRef, observer)
-	case identity.Typename:
-		c.identities.RegisterObserver(repoRef, observer)
-	default:
-		panic(fmt.Sprintf("unknown typename %q", typename))
-	}
-}
-
-func (c *RepoCache) unregisterObserver(typename string, observer Observer) {
-	switch typename {
-	case bug.Typename:
-		c.bugs.UnregisterObserver(observer)
-	case identity.Typename:
-		c.identities.UnregisterObserver(observer)
-	default:
-		panic(fmt.Sprintf("unknown typename %q", typename))
-	}
-}
-
 // Bugs gives access to the Bug entities
 func (c *RepoCache) Bugs() *RepoCacheBug {
 	return c.bugs
@@ -249,6 +230,34 @@ func (c *RepoCache) buildCache(events chan BuildEvent) {
 		}(subcache)
 	}
 	wg.Wait()
+}
+
+func (c *RepoCache) registerObserver(repoName string, typename string, observer Observer) error {
+	switch typename {
+	case bug.Typename:
+		c.bugs.RegisterObserver(repoName, observer)
+	case identity.Typename:
+		c.identities.RegisterObserver(repoName, observer)
+	default:
+		var allTypenames []string
+		for _, subcache := range c.subcaches {
+			allTypenames = append(allTypenames, subcache.Typename())
+		}
+		return fmt.Errorf("unknown typename `%s`, available types are [%s]", typename, strings.Join(allTypenames, ", "))
+	}
+	return nil
+}
+
+func (c *RepoCache) registerAllObservers(repoName string, observer Observer) {
+	for _, subcache := range c.subcaches {
+		subcache.RegisterObserver(repoName, observer)
+	}
+}
+
+func (c *RepoCache) unregisterAllObservers(observer Observer) {
+	for _, subcache := range c.subcaches {
+		subcache.UnregisterObserver(observer)
+	}
 }
 
 // repoIsAvailable check is the given repository is locked by a Cache.
