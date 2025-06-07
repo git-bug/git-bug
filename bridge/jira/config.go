@@ -15,7 +15,7 @@ const moreConfigText = `
 NOTE: There are a few optional configuration values that you can additionally
 set in your git configuration to influence the behavior of the bridge. Please
 see the notes at:
-https://github.com/git-bug/git-bug/blob/master/doc/jira_bridge.md
+https://github.com/git-bug/git-bug/blob/trunk/doc/jira_bridge.md
 `
 
 const credTypeText = `

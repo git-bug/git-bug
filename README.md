@@ -1,6 +1,6 @@
 <div align="center">
 
-<img width="64px" src="https://cdn.rawgit.com/git-bug/git-bug/master/misc/logo/logo-alpha-flat-bg.svg">
+<img width="64px" src="https://cdn.rawgit.com/git-bug/git-bug/trunk/misc/logo/logo-alpha-flat-bg.svg">
 
 # git-bug: a decentralized issue tracker
 
