@@ -348,8 +348,8 @@ ______________________________________________________________________
 [doc/design/model]: ./doc/design/data-model.md
 [envrc]: ./.envrc
 [example-entity]: ./entity/dag/example_test.go
-[install/direnv]: https://github.com/direnv/direnv/blob/master/docs/installation.md
-[install/direnv/shell]: https://github.com/direnv/direnv/blob/master/docs/hook.md
+[install/direnv]: https://github.com/direnv/direnv/blob/trunk/docs/installation.md
+[install/direnv/shell]: https://github.com/direnv/direnv/blob/trunk/docs/hook.md
 [install/nix]: https://nix.dev/install-nix
 [issue/1364]: https://github.com/git-bug/git-bug/issues/1364
 [treefmt]: ./treefmt.nix
