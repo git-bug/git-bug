@@ -19,11 +19,12 @@ const gitBugNamespace = "git-bug"
 
 // Env is the environment of a command
 type Env struct {
-	Repo    repository.ClockedRepo
-	Backend *cache.RepoCache
-	In      In
-	Out     Out
-	Err     Out
+	Repo     repository.ClockedRepo
+	Backend  *cache.RepoCache
+	In       In
+	Out      Out
+	Err      Out
+	RepoPath []string
 }
 
 func NewEnv() *Env {
