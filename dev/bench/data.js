@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749317776824,
+  "lastUpdate": 1749591816738,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -15650,6 +15650,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 500981,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6a3ca9e5c71550327f4d328f681c3a1ee5f9ea20",
+          "message": "build(deps): bump github.com/cloudflare/circl from 1.4.0 to 1.6.1 in the go_modules group across 1 directory (#1472)\n\nBumps the go_modules group with 1 update in the / directory:\n[github.com/cloudflare/circl](https://github.com/cloudflare/circl).\n\nUpdates `github.com/cloudflare/circl` from 1.4.0 to 1.6.1\n<details>\n<summary>Release notes</summary>\n<p><em>Sourced from <a\nhref=\"https://github.com/cloudflare/circl/releases\">github.com/cloudflare/circl's\nreleases</a>.</em></p>\n<blockquote>\n<h2>CIRCL v1.6.1</h2>\n<ul>\n<li>Fixes some point checks on the FourQ curve.</li>\n<li>Hybrid KEM fails on low-order points.</li>\n</ul>\n<h3>What's Changed</h3>\n<ul>\n<li>kem/hybrid: ensure X25519 hybrids fails with low order points by <a\nhref=\"https://github.com/Lekensteyn\"><code>@​Lekensteyn</code></a> in <a\nhref=\"https://redirect.github.com/cloudflare/circl/pull/541\">cloudflare/circl#541</a></li>\n<li>.github: Use native ARM64 builders instead of QEMU by <a\nhref=\"https://github.com/Lekensteyn\"><code>@​Lekensteyn</code></a> in <a\nhref=\"https://redirect.github.com/cloudflare/circl/pull/542\">cloudflare/circl#542</a></li>\n<li>Fixes several errors on twisted Edwards curves. by <a\nhref=\"https://github.com/armfazh\"><code>@​armfazh</code></a> in <a\nhref=\"https://redirect.github.com/cloudflare/circl/pull/545\">cloudflare/circl#545</a></li>\n<li>Release v1.6.1 by <a\nhref=\"https://github.com/armfazh\"><code>@​armfazh</code></a> in <a\nhref=\"https://redirect.github.com/cloudflare/circl/pull/546\">cloudflare/circl#546</a></li>\n</ul>\n<p><strong>Full Changelog</strong>: <a\nhref=\"https://github.com/cloudflare/circl/compare/v1.6.0...v1.6.1\">https://github.com/cloudflare/circl/compare/v1.6.0...v1.6.1</a></p>\n<h2>CIRCL v1.6.0</h2>\n<h3>New!</h3>\n<ul>\n<li><a\nhref=\"https://github.com/cloudflare/circl/blob/main/vdaf/prio3\">Prio3</a>\nVerifiable Distributed Aggregation Function (<a\nhref=\"https://datatracker.ietf.org/doc/draft-irtf-cfrg-vdaf/\">draft-irtf-cfrg-vdaf</a>).</li>\n<li><a\nhref=\"https://github.com/cloudflare/circl/blob/main/kem/xwing\">X-Wing</a>:\ngeneral-purpose hybrid post-quantum KEM (<a\nhref=\"https://datatracker.ietf.org/doc/draft-connolly-cfrg-xwing-kem/\">draft-connolly-cfrg-xwing-kem</a>)</li>\n</ul>\n<h3>What's Changed</h3>\n<ul>\n<li>Add OIDs to ML-DSA by <a\nhref=\"https://github.com/bwesterb\"><code>@​bwesterb</code></a> in <a\nhref=\"https://redirect.github.com/cloudflare/circl/pull/519\">cloudflare/circl#519</a></li>\n<li>Adds Prio3 a set of verifiable distributed aggregation functions. by\n<a href=\"https://github.com/armfazh\"><code>@​armfazh</code></a> in <a\nhref=\"https://redirect.github.com/cloudflare/circl/pull/522\">cloudflare/circl#522</a></li>\n<li>Run semgrep cronjob only in upstream repository. by <a\nhref=\"https://github.com/armfazh\"><code>@​armfazh</code></a> in <a\nhref=\"https://redirect.github.com/cloudflare/circl/pull/526\">cloudflare/circl#526</a></li>\n<li>X-Wing PQ/T hybrid by <a\nhref=\"https://github.com/bwesterb\"><code>@​bwesterb</code></a> in <a\nhref=\"https://redirect.github.com/cloudflare/circl/pull/471\">cloudflare/circl#471</a></li>\n<li>ckem: move crypto/elliptic to crypto/ecdh by <a\nhref=\"https://github.com/MingLLuo\"><code>@​MingLLuo</code></a> in <a\nhref=\"https://redirect.github.com/cloudflare/circl/pull/529\">cloudflare/circl#529</a></li>\n<li>hpke: Update HPKE code to use ecdh stdlib package. by <a\nhref=\"https://github.com/armfazh\"><code>@​armfazh</code></a> in <a\nhref=\"https://redirect.github.com/cloudflare/circl/pull/530\">cloudflare/circl#530</a></li>\n<li>prio3: Adds polynomial multiplication using NTT by <a\nhref=\"https://github.com/armfazh\"><code>@​armfazh</code></a> in <a\nhref=\"https://redirect.github.com/cloudflare/circl/pull/532\">cloudflare/circl#532</a></li>\n<li>Add Prio3 in readme. by <a\nhref=\"https://github.com/armfazh\"><code>@​armfazh</code></a> in <a\nhref=\"https://redirect.github.com/cloudflare/circl/pull/527\">cloudflare/circl#527</a></li>\n</ul>\n<h3>New Contributors</h3>\n<ul>\n<li><a href=\"https://github.com/MingLLuo\"><code>@​MingLLuo</code></a>\nmade their first contribution in <a\nhref=\"https://redirect.github.com/cloudflare/circl/pull/529\">cloudflare/circl#529</a></li>\n</ul>\n<p><strong>Full Changelog</strong>: <a\nhref=\"https://github.com/cloudflare/circl/compare/v1.5.0...v1.6.0\">https://github.com/cloudflare/circl/compare/v1.5.0...v1.6.0</a></p>\n<h1>CIRCL v1.5.0</h1>\n<p><strong>New:</strong> ML-DSA, Module-Lattice-based Digital Signature\nAlgorithm.</p>\n<h3>What's Changed</h3>\n<ul>\n<li>kem: add X25519MLKEM768 TLS hybrid KEM by <a\nhref=\"https://github.com/bwesterb\"><code>@​bwesterb</code></a> in <a\nhref=\"https://redirect.github.com/cloudflare/circl/pull/510\">cloudflare/circl#510</a></li>\n<li>Create semgrep.yml by <a\nhref=\"https://github.com/hrushikeshdeshpande\"><code>@​hrushikeshdeshpande</code></a>\nin <a\nhref=\"https://redirect.github.com/cloudflare/circl/pull/514\">cloudflare/circl#514</a></li>\n<li>repo: Some fixes reported by CodeQL by <a\nhref=\"https://github.com/armfazh\"><code>@​armfazh</code></a> in <a\nhref=\"https://redirect.github.com/cloudflare/circl/pull/515\">cloudflare/circl#515</a></li>\n<li>Add ML-DSA (FIPS204) by <a\nhref=\"https://github.com/bwesterb\"><code>@​bwesterb</code></a> in <a\nhref=\"https://redirect.github.com/cloudflare/circl/pull/480\">cloudflare/circl#480</a></li>\n<li>sign/mldsa: Add test for ML-DSA signature verification. by <a\nhref=\"https://github.com/armfazh\"><code>@​armfazh</code></a> in <a\nhref=\"https://redirect.github.com/cloudflare/circl/pull/517\">cloudflare/circl#517</a></li>\n<li>Release v1.5.0 by <a\nhref=\"https://github.com/armfazh\"><code>@​armfazh</code></a> in <a\nhref=\"https://redirect.github.com/cloudflare/circl/pull/518\">cloudflare/circl#518</a></li>\n</ul>\n<h3>New Contributors</h3>\n<ul>\n<li><a\nhref=\"https://github.com/hrushikeshdeshpande\"><code>@​hrushikeshdeshpande</code></a>\nmade their first contribution in <a\nhref=\"https://redirect.github.com/cloudflare/circl/pull/514\">cloudflare/circl#514</a></li>\n</ul>\n<p><strong>Full Changelog</strong>: <a\nhref=\"https://github.com/cloudflare/circl/compare/v1.4.0...v1.5.0\">https://github.com/cloudflare/circl/compare/v1.4.0...v1.5.0</a></p>\n</blockquote>\n</details>\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a\nhref=\"https://github.com/cloudflare/circl/commit/c6d33e35234ebf5c4319d12ae7d77d7d17053e56\"><code>c6d33e3</code></a>\nRelease v1.6.1</li>\n<li><a\nhref=\"https://github.com/cloudflare/circl/commit/0c3868ef6fc8ce864bc4104863186afdd2947f14\"><code>0c3868e</code></a>\ncurve4q: Shared must fail with low order points.</li>\n<li><a\nhref=\"https://github.com/cloudflare/circl/commit/9fd570dd508eef941d3f42fb94413a899b96d52e\"><code>9fd570d</code></a>\ncurve4q: Test showing DH does not fails on identity point.</li>\n<li><a\nhref=\"https://github.com/cloudflare/circl/commit/c988ceba827fe09896e770c152646dded447903d\"><code>c988ceb</code></a>\nfourq: Correctly unmarshalling point.</li>\n<li><a\nhref=\"https://github.com/cloudflare/circl/commit/ef2611dcde7f6d25e31082412bbb30f2a870d133\"><code>ef2611d</code></a>\nfourq: Test showing point unmarshal fails.</li>\n<li><a\nhref=\"https://github.com/cloudflare/circl/commit/05eba44d1a35f979c5f3ac914bcc50c1122e8ced\"><code>05eba44</code></a>\nfourq: Handle the case of Z=0 for IsOnCurve and IsEqual.</li>\n<li><a\nhref=\"https://github.com/cloudflare/circl/commit/eef08780cc3cb9befa20014e65f731391103be6b\"><code>eef0878</code></a>\nfourq: Test showing isEqual and IsOnCurve fail.</li>\n<li><a\nhref=\"https://github.com/cloudflare/circl/commit/2298474ef688938e4a81ca14990b9a11a8677e2a\"><code>2298474</code></a>\ngoldilocks; Handling points with z=0.</li>\n<li><a\nhref=\"https://github.com/cloudflare/circl/commit/5a940a111507232035d0b753fbf3068c52d6b8ac\"><code>5a940a1</code></a>\ngoldilocks: Test for IsEqual must fail with Z=0</li>\n<li><a\nhref=\"https://github.com/cloudflare/circl/commit/48c3b6a2746a18db4d8b675ab296980514359340\"><code>48c3b6a</code></a>\ned25519: Fix isEqual to handle points with Z=0.</li>\n<li>Additional commits viewable in <a\nhref=\"https://github.com/cloudflare/circl/compare/v1.4.0...v1.6.1\">compare\nview</a></li>\n</ul>\n</details>\n<br />\n\n\n[![Dependabot compatibility\nscore](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=github.com/cloudflare/circl&package-manager=go_modules&previous-version=1.4.0&new-version=1.6.1)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)\n\nDependabot will resolve any conflicts with this PR as long as you don't\nalter it yourself. You can also trigger a rebase manually by commenting\n`@dependabot rebase`.\n\n[//]: # (dependabot-automerge-start)\n[//]: # (dependabot-automerge-end)\n\n---\n\n<details>\n<summary>Dependabot commands and options</summary>\n<br />\n\nYou can trigger Dependabot actions by commenting on this PR:\n- `@dependabot rebase` will rebase this PR\n- `@dependabot recreate` will recreate this PR, overwriting any edits\nthat have been made to it\n- `@dependabot merge` will merge this PR after your CI passes on it\n- `@dependabot squash and merge` will squash and merge this PR after\nyour CI passes on it\n- `@dependabot cancel merge` will cancel a previously requested merge\nand block automerging\n- `@dependabot reopen` will reopen this PR if it is closed\n- `@dependabot close` will close this PR and stop Dependabot recreating\nit. You can achieve the same result by closing it manually\n- `@dependabot show <dependency name> ignore conditions` will show all\nof the ignore conditions of the specified dependency\n- `@dependabot ignore <dependency name> major version` will close this\ngroup update PR and stop Dependabot creating any more for the specific\ndependency's major version (unless you unignore this specific\ndependency's major version or upgrade to it yourself)\n- `@dependabot ignore <dependency name> minor version` will close this\ngroup update PR and stop Dependabot creating any more for the specific\ndependency's minor version (unless you unignore this specific\ndependency's minor version or upgrade to it yourself)\n- `@dependabot ignore <dependency name>` will close this group update PR\nand stop Dependabot creating any more for the specific dependency\n(unless you unignore this specific dependency or upgrade to it yourself)\n- `@dependabot unignore <dependency name>` will remove all of the ignore\nconditions of the specified dependency\n- `@dependabot unignore <dependency name> <ignore condition>` will\nremove the ignore condition of the specified dependency and ignore\nconditions\nYou can disable automated security fix PRs for this repo from the\n[Security Alerts\npage](https://github.com/git-bug/git-bug/network/alerts).\n\n</details>\n\nSigned-off-by: dependabot[bot] <support@github.com>\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2025-06-10T21:38:08Z",
+          "tree_id": "2f120e1d12eca50a7666801cf3df69405f883d6f",
+          "url": "https://github.com/git-bug/git-bug/commit/6a3ca9e5c71550327f4d328f681c3a1ee5f9ea20"
+        },
+        "date": 1749591815419,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 26117681,
+            "unit": "ns/op\t 1124986 B/op\t   17632 allocs/op",
+            "extra": "74 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 26117681,
+            "unit": "ns/op",
+            "extra": "74 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 1124986,
+            "unit": "B/op",
+            "extra": "74 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 17632,
+            "unit": "allocs/op",
+            "extra": "74 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 102076270,
+            "unit": "ns/op\t 5178708 B/op\t   74869 allocs/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 102076270,
+            "unit": "ns/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 5178708,
+            "unit": "B/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 74869,
+            "unit": "allocs/op",
+            "extra": "10 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 706260124,
+            "unit": "ns/op\t40220248 B/op\t  494440 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 706260124,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 40220248,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 494440,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
