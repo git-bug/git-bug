@@ -79,7 +79,7 @@ type AddCommentTimelineItem struct {
 	CommentTimelineItem
 }
 
-// IsAuthored is a sign post method for gqlgen
+// IsAuthored is a sign post-method for gqlgen, to mark compliance to an interface.
 func (a *AddCommentTimelineItem) IsAuthored() {}
 
 // AddComment is a convenience function to add a comment to a bug

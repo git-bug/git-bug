@@ -8,17 +8,17 @@ import (
 	"github.com/git-bug/git-bug/query"
 )
 
-// Filter is a predicate that match a subset of bugs
+// Filter is a predicate that matches a subset of bugs
 type Filter func(excerpt *BugExcerpt, resolvers entity.Resolvers) bool
 
-// StatusFilter return a Filter that match a bug status
+// StatusFilter return a Filter that matches a bug status
 func StatusFilter(status common.Status) Filter {
 	return func(excerpt *BugExcerpt, resolvers entity.Resolvers) bool {
 		return excerpt.Status == status
 	}
 }
 
-// AuthorFilter return a Filter that match a bug author
+// AuthorFilter return a Filter that matches a bug author
 func AuthorFilter(query string) Filter {
 	return func(excerpt *BugExcerpt, resolvers entity.Resolvers) bool {
 		query = strings.ToLower(query)
@@ -32,7 +32,7 @@ func AuthorFilter(query string) Filter {
 	}
 }
 
-// MetadataFilter return a Filter that match a bug metadata at creation time
+// MetadataFilter return a Filter that matches a bug metadata at creation time
 func MetadataFilter(pair query.StringPair) Filter {
 	return func(excerpt *BugExcerpt, resolvers entity.Resolvers) bool {
 		if value, ok := excerpt.CreateMetadata[pair.Key]; ok {
@@ -42,7 +42,7 @@ func MetadataFilter(pair query.StringPair) Filter {
 	}
 }
 
-// LabelFilter return a Filter that match a label
+// LabelFilter return a Filter that matches a label
 func LabelFilter(label string) Filter {
 	return func(excerpt *BugExcerpt, resolvers entity.Resolvers) bool {
 		for _, l := range excerpt.Labels {
@@ -54,7 +54,7 @@ func LabelFilter(label string) Filter {
 	}
 }
 
-// ActorFilter return a Filter that match a bug actor
+// ActorFilter return a Filter that matches a bug actor
 func ActorFilter(query string) Filter {
 	return func(excerpt *BugExcerpt, resolvers entity.Resolvers) bool {
 		query = strings.ToLower(query)
@@ -73,7 +73,7 @@ func ActorFilter(query string) Filter {
 	}
 }
 
-// ParticipantFilter return a Filter that match a bug participant
+// ParticipantFilter return a Filter that matches a bug participant
 func ParticipantFilter(query string) Filter {
 	return func(excerpt *BugExcerpt, resolvers entity.Resolvers) bool {
 		query = strings.ToLower(query)
@@ -92,7 +92,7 @@ func ParticipantFilter(query string) Filter {
 	}
 }
 
-// TitleFilter return a Filter that match if the title contains the given query
+// TitleFilter return a Filter that matches if the title contains the given query
 func TitleFilter(query string) Filter {
 	return func(excerpt *BugExcerpt, resolvers entity.Resolvers) bool {
 		return strings.Contains(
@@ -102,7 +102,7 @@ func TitleFilter(query string) Filter {
 	}
 }
 
-// NoLabelFilter return a Filter that match the absence of labels
+// NoLabelFilter return a Filter that matches the absence of labels
 func NoLabelFilter() Filter {
 	return func(excerpt *BugExcerpt, resolvers entity.Resolvers) bool {
 		return len(excerpt.Labels) == 0
@@ -154,7 +154,7 @@ func compileMatcher(filters query.Filters) *Matcher {
 	return result
 }
 
-// Match check if a bug match the set of filters
+// Match check if a bug matches the set of filters
 func (f *Matcher) Match(excerpt *BugExcerpt, resolvers entity.Resolvers) bool {
 	if match := f.orMatch(f.Status, excerpt, resolvers); !match {
 		return false

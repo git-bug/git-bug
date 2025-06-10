@@ -3,6 +3,7 @@
 package models
 
 import (
+	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entities/common"
 	"github.com/git-bug/git-bug/entity/dag"
@@ -12,6 +13,11 @@ import (
 // An object that has an author.
 type Authored interface {
 	IsAuthored()
+}
+
+// An entity (identity, bug, ...).
+type Entity interface {
+	IsEntity()
 }
 
 type BugAddCommentAndCloseInput struct {
@@ -183,6 +189,11 @@ type BugEditCommentPayload struct {
 	Operation *bug.EditCommentOperation `json:"operation"`
 }
 
+type BugEvent struct {
+	Type cache.EntityEventType `json:"type"`
+	Bug  BugWrapper            `json:"bug"`
+}
+
 type BugSetTitleInput struct {
 	// A unique identifier for the client performing the mutation.
 	ClientMutationID *string `json:"clientMutationId,omitempty"`
@@ -253,6 +264,11 @@ type BugTimelineItemEdge struct {
 	Node   bug.TimelineItem `json:"node"`
 }
 
+type EntityEvent struct {
+	Type   cache.EntityEventType `json:"type"`
+	Entity Entity                `json:"entity,omitempty"`
+}
+
 type IdentityConnection struct {
 	Edges      []*IdentityEdge   `json:"edges"`
 	Nodes      []IdentityWrapper `json:"nodes"`
@@ -263,6 +279,11 @@ type IdentityConnection struct {
 type IdentityEdge struct {
 	Cursor string          `json:"cursor"`
 	Node   IdentityWrapper `json:"node"`
+}
+
+type IdentityEvent struct {
+	Type     cache.EntityEventType `json:"type"`
+	Identity IdentityWrapper       `json:"identity"`
 }
 
 type LabelConnection struct {
@@ -307,4 +328,7 @@ type PageInfo struct {
 }
 
 type Query struct {
+}
+
+type Subscription struct {
 }
