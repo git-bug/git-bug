@@ -21,6 +21,65 @@ func (repoResolver) Name(_ context.Context, obj *models.Repository) (*string, er
 	return &name, nil
 }
 
+func (r repoResolver) AllBoards(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int, query *string) (*models.BoardConnection, error) {
+	input := models.ConnectionInput{
+		Before: before,
+		After:  after,
+		First:  first,
+		Last:   last,
+	}
+
+	// Simply pass a []string with the ids to the pagination algorithm
+	source := obj.Repo.Boards().AllIds()
+
+	// The edger create a custom edge holding just the id
+	edger := func(id entity.Id, offset int) connections.Edge {
+		return connections.LazyBoardEdge{
+			Id:     id,
+			Cursor: connections.OffsetToCursor(offset),
+		}
+	}
+
+	// The conMaker will finally load and compile boards from git to replace the selected edges
+	conMaker := func(lazyBoardEdges []*connections.LazyBoardEdge, lazyNode []entity.Id, info *models.PageInfo, totalCount int) (*models.BoardConnection, error) {
+		edges := make([]*models.BoardEdge, len(lazyBoardEdges))
+		nodes := make([]models.BoardWrapper, len(lazyBoardEdges))
+
+		for k, lazyBoardEdge := range lazyBoardEdges {
+			excerpt, err := obj.Repo.Boards().ResolveExcerpt(lazyBoardEdge.Id)
+			if err != nil {
+				return nil, err
+			}
+
+			i := models.NewLazyBoard(obj.Repo, excerpt)
+
+			edges[k] = &models.BoardEdge{
+				Cursor: lazyBoardEdge.Cursor,
+				Node:   i,
+			}
+			nodes[k] = i
+		}
+
+		return &models.BoardConnection{
+			Edges:      edges,
+			Nodes:      nodes,
+			PageInfo:   info,
+			TotalCount: totalCount,
+		}, nil
+	}
+
+	return connections.Connection(source, edger, conMaker, input)
+}
+
+func (r repoResolver) Board(ctx context.Context, obj *models.Repository, prefix string) (models.BoardWrapper, error) {
+	excerpt, err := obj.Repo.Boards().ResolveExcerptPrefix(prefix)
+	if err != nil {
+		return nil, err
+	}
+
+	return models.NewLazyBoard(obj.Repo, excerpt), nil
+}
+
 func (repoResolver) AllBugs(_ context.Context, obj *models.Repository, after *string, before *string, first *int, last *int, queryStr *string) (*models.BugConnection, error) {
 	input := models.ConnectionInput{
 		Before: before,

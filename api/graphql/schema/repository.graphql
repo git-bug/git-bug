@@ -2,6 +2,22 @@ type Repository {
     """The name of the repository"""
     name: String
 
+    """All the boards"""
+    allBoards(
+      """Returns the elements in the list that come after the specified cursor."""
+      after: String
+      """Returns the elements in the list that come before the specified cursor."""
+      before: String
+      """Returns the first _n_ elements from the list."""
+      first: Int
+      """Returns the last _n_ elements from the list."""
+      last: Int
+      """A query to select and order bugs."""
+      query: String
+    ): BoardConnection!
+
+    board(prefix: String!): Board
+
     """All the bugs"""
     allBugs(
         """Returns the elements in the list that come after the specified cursor."""

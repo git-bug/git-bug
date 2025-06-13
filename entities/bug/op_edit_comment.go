@@ -98,6 +98,12 @@ func (op *EditCommentOperation) Validate() error {
 		return fmt.Errorf("message is not fully printable")
 	}
 
+	for _, file := range op.Files {
+		if !file.IsValid() {
+			return fmt.Errorf("invalid file hash")
+		}
+	}
+
 	return nil
 }
 
@@ -111,7 +117,7 @@ func NewEditCommentOp(author identity.Interface, unixTime int64, target entity.I
 }
 
 // EditComment is a convenience function to apply the operation
-func EditComment(b Interface, author identity.Interface, unixTime int64, target entity.Id, message string, files []repository.Hash, metadata map[string]string) (entity.CombinedId, *EditCommentOperation, error) {
+func EditComment(b ReadWrite, author identity.Interface, unixTime int64, target entity.Id, message string, files []repository.Hash, metadata map[string]string) (entity.CombinedId, *EditCommentOperation, error) {
 	op := NewEditCommentOp(author, unixTime, target, message, files)
 	for key, val := range metadata {
 		op.SetMetadata(key, val)
@@ -124,7 +130,7 @@ func EditComment(b Interface, author identity.Interface, unixTime int64, target 
 }
 
 // EditCreateComment is a convenience function to edit the body of a bug (the first comment)
-func EditCreateComment(b Interface, author identity.Interface, unixTime int64, message string, files []repository.Hash, metadata map[string]string) (entity.CombinedId, *EditCommentOperation, error) {
+func EditCreateComment(b ReadWrite, author identity.Interface, unixTime int64, message string, files []repository.Hash, metadata map[string]string) (entity.CombinedId, *EditCommentOperation, error) {
 	createOp := b.FirstOp().(*CreateOperation)
 	return EditComment(b, author, unixTime, createOp.Id(), message, files, metadata)
 }

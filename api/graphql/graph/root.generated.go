@@ -962,6 +962,10 @@ func (ec *executionContext) fieldContext_Query_repository(ctx context.Context, f
 			switch field.Name {
 			case "name":
 				return ec.fieldContext_Repository_name(ctx, field)
+			case "allBoards":
+				return ec.fieldContext_Repository_allBoards(ctx, field)
+			case "board":
+				return ec.fieldContext_Repository_board(ctx, field)
 			case "allBugs":
 				return ec.fieldContext_Repository_allBugs(ctx, field)
 			case "bug":

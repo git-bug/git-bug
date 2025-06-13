@@ -24,6 +24,7 @@ git-bug [flags]
 
 ### SEE ALSO
 
+* [git-bug board](git-bug_board.md)	 - List boards
 * [git-bug bridge](git-bug_bridge.md)	 - List bridges to other bug trackers
 * [git-bug bug](git-bug_bug.md)	 - List bugs
 * [git-bug label](git-bug_label.md)	 - List valid labels

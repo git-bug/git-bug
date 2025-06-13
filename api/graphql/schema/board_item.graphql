@@ -1,0 +1,48 @@
+"""Represents an Item on a Board's Column."""
+interface BoardItem
+@goModel(model: "github.com/git-bug/git-bug/entities/board.Item") {
+    """The identifier of the item"""
+    id: CombinedId! @goField(name: "CombinedId")
+    """The item's author."""
+    author: Identity!
+    """The item's title."""
+    title: String!
+    """The item's labels."""
+    labels: [Label!]!
+}
+
+type BoardItemConnection {
+    edges: [BoardItemEdge!]!
+    nodes: [BoardItem!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type BoardItemEdge {
+    cursor: String!
+    node: BoardItem!
+}
+
+type BoardItemDraft implements BoardItem & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/board.Draft") {
+    """The identifier of the item"""
+    id: CombinedId! @goField(name: "CombinedId")
+    """The item's author."""
+    author: Identity!
+    """The item's title."""
+    title: String!
+    """The item's labels."""
+    labels: [Label!]!
+}
+
+type BoardItemBug implements BoardItem & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/board.BugItem") {
+    """The identifier of the item"""
+    id: CombinedId! @goField(name: "CombinedId")
+    """The item's author."""
+    author: Identity!
+    """The item's title."""
+    title: String!
+    """The item's labels."""
+    labels: [Label!]!
+}

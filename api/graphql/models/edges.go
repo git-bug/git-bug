@@ -6,6 +6,16 @@ func (e OperationEdge) GetCursor() string {
 }
 
 // GetCursor return the cursor entry of an edge
+func (e BoardColumnEdge) GetCursor() string {
+	return e.Cursor
+}
+
+// GetCursor return the cursor entry of an edge
+func (e BoardItemEdge) GetCursor() string {
+	return e.Cursor
+}
+
+// GetCursor return the cursor entry of an edge
 func (e BugEdge) GetCursor() string {
 	return e.Cursor
 }

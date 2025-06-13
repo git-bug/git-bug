@@ -40,6 +40,7 @@ type Actions[EntityT entity.Interface] struct {
 
 var _ cacheMgmt = &SubCache[entity.Interface, Excerpt, CacheEntity]{}
 
+// SubCache provides caching management for one type of Entity.
 type SubCache[EntityT entity.Interface, ExcerptT Excerpt, CacheT CacheEntity] struct {
 	repo      repository.ClockedRepo
 	resolvers func() entity.Resolvers
@@ -348,7 +349,7 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) AllIds() []entity.Id {
 	return result
 }
 
-// Resolve retrieve an entity matching the exact given id
+// Resolve retrieves an entity matching the exact given id
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) Resolve(id entity.Id) (CacheT, error) {
 	sc.mu.RLock()
 	cached, ok := sc.cached[id]
@@ -376,14 +377,14 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) Resolve(id entity.Id) (CacheT, er
 	return cached, nil
 }
 
-// ResolvePrefix retrieve an entity matching an id prefix. It fails if multiple
-// entities match.
+// ResolvePrefix retrieves an entity matching an id prefix. It fails if multiple entities match.
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) ResolvePrefix(prefix string) (CacheT, error) {
 	return sc.ResolveMatcher(func(excerpt ExcerptT) bool {
 		return excerpt.Id().HasPrefix(prefix)
 	})
 }
 
+// ResolveMatcher retrieves an entity matching the given matched. It fails if multiple entities match.
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) ResolveMatcher(f func(ExcerptT) bool) (CacheT, error) {
 	id, err := sc.resolveMatcher(f)
 	if err != nil {
@@ -405,14 +406,14 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) ResolveExcerpt(id entity.Id) (Exc
 	return excerpt, nil
 }
 
-// ResolveExcerptPrefix retrieve an Excerpt matching an id prefix. It fails if multiple
-// entities match.
+// ResolveExcerptPrefix retrieve an Excerpt matching an id prefix. It fails if multiple entities match.
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) ResolveExcerptPrefix(prefix string) (ExcerptT, error) {
 	return sc.ResolveExcerptMatcher(func(excerpt ExcerptT) bool {
 		return excerpt.Id().HasPrefix(prefix)
 	})
 }
 
+// ResolveExcerptMatcher retrieve an Excerpt matching a given matcher. It fails if multiple entities match.
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) ResolveExcerptMatcher(f func(ExcerptT) bool) (ExcerptT, error) {
 	id, err := sc.resolveMatcher(f)
 	if err != nil {
@@ -421,6 +422,23 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) ResolveExcerptMatcher(f func(Exce
 	return sc.ResolveExcerpt(id)
 }
 
+// QueryExcerptMatcher finds all the Excerpt matching the given matcher.
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) QueryExcerptMatcher(f func(ExcerptT) bool) ([]ExcerptT, error) {
+	ids, err := sc.queryMatcher(f)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]ExcerptT, len(ids))
+	for i, id := range ids {
+		res[i], err = sc.ResolveExcerpt(id)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+// resolveMatcher finds the id of the entity matching the given matcher. It fails if multiple entities match.
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) resolveMatcher(f func(ExcerptT) bool) (entity.Id, error) {
 	sc.mu.RLock()
 	defer sc.mu.RUnlock()
@@ -443,6 +461,25 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) resolveMatcher(f func(ExcerptT) b
 	}
 
 	return matching[0], nil
+}
+
+// queryMatcher find the ids of all the entities matching the given matcher.
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) queryMatcher(f func(ExcerptT) bool) ([]entity.Id, error) {
+	// TODO: this might use some pagination, or better: a go1.23 iterator?
+
+	sc.mu.RLock()
+	defer sc.mu.RUnlock()
+
+	// preallocate but empty
+	matching := make([]entity.Id, 0, 5)
+
+	for _, excerpt := range sc.excerpts {
+		if f(excerpt) {
+			matching = append(matching, excerpt.Id())
+		}
+	}
+
+	return matching, nil
 }
 
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) add(e EntityT) (CacheT, error) {

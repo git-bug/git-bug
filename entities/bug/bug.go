@@ -11,7 +11,8 @@ import (
 	"github.com/git-bug/git-bug/repository"
 )
 
-var _ Interface = &Bug{}
+var _ ReadOnly = &Bug{}
+var _ ReadWrite = &Bug{}
 var _ entity.Interface = &Bug{}
 
 // 1: original format
@@ -32,9 +33,8 @@ var def = dag.Definition{
 
 var ClockLoader = dag.ClockLoader(def)
 
-type Interface interface {
-	dag.Interface[*Snapshot, Operation]
-}
+type ReadOnly dag.ReadOnly[*Snapshot, Operation]
+type ReadWrite dag.ReadWrite[*Snapshot, Operation]
 
 // Bug holds the data of a bug thread, organized in a way close to
 // how it will be persisted inside Git. This is the data structure
@@ -123,8 +123,8 @@ func (bug *Bug) Operations() []Operation {
 	return result
 }
 
-// Compile a bug in an easily usable snapshot
-func (bug *Bug) Compile() *Snapshot {
+// Snapshot compiles a bug in an easily usable snapshot
+func (bug *Bug) Snapshot() *Snapshot {
 	snap := &Snapshot{
 		id:     bug.Id(),
 		Status: common.OpenStatus,
