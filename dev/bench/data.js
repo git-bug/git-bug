@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749591816738,
+  "lastUpdate": 1752328192394,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -15746,6 +15746,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 494440,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "95e53ffb8fa2fbc41ccca89a85e320412e5b5733",
+          "message": "build(deps): bump github.com/go-viper/mapstructure/v2 from 2.2.1 to 2.3.0 in the go_modules group across 1 directory (#1473)\n\nBumps the go_modules group with 1 update in the / directory:\n[github.com/go-viper/mapstructure/v2](https://github.com/go-viper/mapstructure).\n\nUpdates `github.com/go-viper/mapstructure/v2` from 2.2.1 to 2.3.0\n<details>\n<summary>Release notes</summary>\n<p><em>Sourced from <a\nhref=\"https://github.com/go-viper/mapstructure/releases\">github.com/go-viper/mapstructure/v2's\nreleases</a>.</em></p>\n<blockquote>\n<h2>v2.3.0</h2>\n<h2>What's Changed</h2>\n<ul>\n<li>build(deps): bump actions/checkout from 4.1.7 to 4.2.0 by <a\nhref=\"https://github.com/dependabot\"><code>@​dependabot</code></a> in <a\nhref=\"https://redirect.github.com/go-viper/mapstructure/pull/46\">go-viper/mapstructure#46</a></li>\n<li>build(deps): bump golangci/golangci-lint-action from 6.1.0 to 6.1.1\nby <a href=\"https://github.com/dependabot\"><code>@​dependabot</code></a>\nin <a\nhref=\"https://redirect.github.com/go-viper/mapstructure/pull/47\">go-viper/mapstructure#47</a></li>\n<li>[enhancement] Add check for <code>reflect.Value</code> in\n<code>ComposeDecodeHookFunc</code> by <a\nhref=\"https://github.com/mahadzaryab1\"><code>@​mahadzaryab1</code></a>\nin <a\nhref=\"https://redirect.github.com/go-viper/mapstructure/pull/52\">go-viper/mapstructure#52</a></li>\n<li>build(deps): bump actions/setup-go from 5.0.2 to 5.1.0 by <a\nhref=\"https://github.com/dependabot\"><code>@​dependabot</code></a> in <a\nhref=\"https://redirect.github.com/go-viper/mapstructure/pull/51\">go-viper/mapstructure#51</a></li>\n<li>build(deps): bump actions/checkout from 4.2.0 to 4.2.2 by <a\nhref=\"https://github.com/dependabot\"><code>@​dependabot</code></a> in <a\nhref=\"https://redirect.github.com/go-viper/mapstructure/pull/50\">go-viper/mapstructure#50</a></li>\n<li>build(deps): bump actions/setup-go from 5.1.0 to 5.2.0 by <a\nhref=\"https://github.com/dependabot\"><code>@​dependabot</code></a> in <a\nhref=\"https://redirect.github.com/go-viper/mapstructure/pull/55\">go-viper/mapstructure#55</a></li>\n<li>build(deps): bump actions/setup-go from 5.2.0 to 5.3.0 by <a\nhref=\"https://github.com/dependabot\"><code>@​dependabot</code></a> in <a\nhref=\"https://redirect.github.com/go-viper/mapstructure/pull/58\">go-viper/mapstructure#58</a></li>\n<li>ci: add Go 1.24 to the test matrix by <a\nhref=\"https://github.com/sagikazarmark\"><code>@​sagikazarmark</code></a>\nin <a\nhref=\"https://redirect.github.com/go-viper/mapstructure/pull/74\">go-viper/mapstructure#74</a></li>\n<li>build(deps): bump golangci/golangci-lint-action from 6.1.1 to 6.5.0\nby <a href=\"https://github.com/dependabot\"><code>@​dependabot</code></a>\nin <a\nhref=\"https://redirect.github.com/go-viper/mapstructure/pull/72\">go-viper/mapstructure#72</a></li>\n<li>build(deps): bump golangci/golangci-lint-action from 6.5.0 to 6.5.1\nby <a href=\"https://github.com/dependabot\"><code>@​dependabot</code></a>\nin <a\nhref=\"https://redirect.github.com/go-viper/mapstructure/pull/76\">go-viper/mapstructure#76</a></li>\n<li>build(deps): bump actions/setup-go from 5.3.0 to 5.4.0 by <a\nhref=\"https://github.com/dependabot\"><code>@​dependabot</code></a> in <a\nhref=\"https://redirect.github.com/go-viper/mapstructure/pull/78\">go-viper/mapstructure#78</a></li>\n<li>feat: add decode hook for netip.Prefix by <a\nhref=\"https://github.com/tklauser\"><code>@​tklauser</code></a> in <a\nhref=\"https://redirect.github.com/go-viper/mapstructure/pull/85\">go-viper/mapstructure#85</a></li>\n<li>Updates by <a\nhref=\"https://github.com/sagikazarmark\"><code>@​sagikazarmark</code></a>\nin <a\nhref=\"https://redirect.github.com/go-viper/mapstructure/pull/86\">go-viper/mapstructure#86</a></li>\n<li>build(deps): bump github/codeql-action from 2.13.4 to 3.28.15 by <a\nhref=\"https://github.com/dependabot\"><code>@​dependabot</code></a> in <a\nhref=\"https://redirect.github.com/go-viper/mapstructure/pull/87\">go-viper/mapstructure#87</a></li>\n<li>build(deps): bump actions/setup-go from 5.4.0 to 5.5.0 by <a\nhref=\"https://github.com/dependabot\"><code>@​dependabot</code></a> in <a\nhref=\"https://redirect.github.com/go-viper/mapstructure/pull/93\">go-viper/mapstructure#93</a></li>\n<li>build(deps): bump github/codeql-action from 3.28.15 to 3.28.17 by <a\nhref=\"https://github.com/dependabot\"><code>@​dependabot</code></a> in <a\nhref=\"https://redirect.github.com/go-viper/mapstructure/pull/92\">go-viper/mapstructure#92</a></li>\n<li>build(deps): bump github/codeql-action from 3.28.17 to 3.28.19 by <a\nhref=\"https://github.com/dependabot\"><code>@​dependabot</code></a> in <a\nhref=\"https://redirect.github.com/go-viper/mapstructure/pull/97\">go-viper/mapstructure#97</a></li>\n<li>build(deps): bump ossf/scorecard-action from 2.4.1 to 2.4.2 by <a\nhref=\"https://github.com/dependabot\"><code>@​dependabot</code></a> in <a\nhref=\"https://redirect.github.com/go-viper/mapstructure/pull/96\">go-viper/mapstructure#96</a></li>\n<li>Update README.md by <a\nhref=\"https://github.com/peczenyj\"><code>@​peczenyj</code></a> in <a\nhref=\"https://redirect.github.com/go-viper/mapstructure/pull/90\">go-viper/mapstructure#90</a></li>\n<li>Add omitzero tag. by <a\nhref=\"https://github.com/Crystalix007\"><code>@​Crystalix007</code></a>\nin <a\nhref=\"https://redirect.github.com/go-viper/mapstructure/pull/98\">go-viper/mapstructure#98</a></li>\n<li>Use error structs instead of duplicated strings by <a\nhref=\"https://github.com/m1k1o\"><code>@​m1k1o</code></a> in <a\nhref=\"https://redirect.github.com/go-viper/mapstructure/pull/102\">go-viper/mapstructure#102</a></li>\n<li>build(deps): bump github/codeql-action from 3.28.19 to 3.29.0 by <a\nhref=\"https://github.com/dependabot\"><code>@​dependabot</code></a> in <a\nhref=\"https://redirect.github.com/go-viper/mapstructure/pull/101\">go-viper/mapstructure#101</a></li>\n<li>feat: add common error interface by <a\nhref=\"https://github.com/sagikazarmark\"><code>@​sagikazarmark</code></a>\nin <a\nhref=\"https://redirect.github.com/go-viper/mapstructure/pull/105\">go-viper/mapstructure#105</a></li>\n<li>update linter by <a\nhref=\"https://github.com/sagikazarmark\"><code>@​sagikazarmark</code></a>\nin <a\nhref=\"https://redirect.github.com/go-viper/mapstructure/pull/106\">go-viper/mapstructure#106</a></li>\n<li>Feature allow unset pointer by <a\nhref=\"https://github.com/rostislaved\"><code>@​rostislaved</code></a> in\n<a\nhref=\"https://redirect.github.com/go-viper/mapstructure/pull/80\">go-viper/mapstructure#80</a></li>\n</ul>\n<h2>New Contributors</h2>\n<ul>\n<li><a href=\"https://github.com/tklauser\"><code>@​tklauser</code></a>\nmade their first contribution in <a\nhref=\"https://redirect.github.com/go-viper/mapstructure/pull/85\">go-viper/mapstructure#85</a></li>\n<li><a href=\"https://github.com/peczenyj\"><code>@​peczenyj</code></a>\nmade their first contribution in <a\nhref=\"https://redirect.github.com/go-viper/mapstructure/pull/90\">go-viper/mapstructure#90</a></li>\n<li><a\nhref=\"https://github.com/Crystalix007\"><code>@​Crystalix007</code></a>\nmade their first contribution in <a\nhref=\"https://redirect.github.com/go-viper/mapstructure/pull/98\">go-viper/mapstructure#98</a></li>\n<li><a\nhref=\"https://github.com/rostislaved\"><code>@​rostislaved</code></a>\nmade their first contribution in <a\nhref=\"https://redirect.github.com/go-viper/mapstructure/pull/80\">go-viper/mapstructure#80</a></li>\n</ul>\n<p><strong>Full Changelog</strong>: <a\nhref=\"https://github.com/go-viper/mapstructure/compare/v2.2.1...v2.3.0\">https://github.com/go-viper/mapstructure/compare/v2.2.1...v2.3.0</a></p>\n</blockquote>\n</details>\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a\nhref=\"https://github.com/go-viper/mapstructure/commit/8c61ec1924fcfa522f9fc6b4618c672db61d1a38\"><code>8c61ec1</code></a>\nMerge pull request <a\nhref=\"https://redirect.github.com/go-viper/mapstructure/issues/80\">#80</a>\nfrom rostislaved/feature-allow-unset-pointer</li>\n<li><a\nhref=\"https://github.com/go-viper/mapstructure/commit/df765f469ad16a1996fd0f0ae6a32b20535b966a\"><code>df765f4</code></a>\nMerge pull request <a\nhref=\"https://redirect.github.com/go-viper/mapstructure/issues/106\">#106</a>\nfrom go-viper/update-linter</li>\n<li><a\nhref=\"https://github.com/go-viper/mapstructure/commit/5f34b05aa12639380ef7c2af69eb6f8fd629dbd0\"><code>5f34b05</code></a>\nupdate linter</li>\n<li><a\nhref=\"https://github.com/go-viper/mapstructure/commit/36de1e1d74f55681536097ff8467a8ce952ef183\"><code>36de1e1</code></a>\nMerge pull request <a\nhref=\"https://redirect.github.com/go-viper/mapstructure/issues/105\">#105</a>\nfrom go-viper/error-refactor</li>\n<li><a\nhref=\"https://github.com/go-viper/mapstructure/commit/6a283a390ee7bc0f9331f58199db234902e0739f\"><code>6a283a3</code></a>\nchore: update error type doc</li>\n<li><a\nhref=\"https://github.com/go-viper/mapstructure/commit/599cb73236404c044abcf278a45c3928d7480dd0\"><code>599cb73</code></a>\nMerge pull request <a\nhref=\"https://redirect.github.com/go-viper/mapstructure/issues/101\">#101</a>\nfrom go-viper/dependabot/github_actions/github/codeql...</li>\n<li><a\nhref=\"https://github.com/go-viper/mapstructure/commit/ed3f92181528ff776a0324107b8b55026e93766a\"><code>ed3f921</code></a>\nfeat: remove value from error messages</li>\n<li><a\nhref=\"https://github.com/go-viper/mapstructure/commit/a3f8b227dcdae324c070d389152837f0aa635f4b\"><code>a3f8b22</code></a>\nrevert: error message change</li>\n<li><a\nhref=\"https://github.com/go-viper/mapstructure/commit/9661f6d07c319da00ae0508d99df5f3f0c3953bd\"><code>9661f6d</code></a>\nfeat: add common error interface</li>\n<li><a\nhref=\"https://github.com/go-viper/mapstructure/commit/f12f6c76fe743c8e4cc6465c6a9f16fcd8cede57\"><code>f12f6c7</code></a>\nMerge pull request <a\nhref=\"https://redirect.github.com/go-viper/mapstructure/issues/102\">#102</a>\nfrom m1k1o/prettify-errors2</li>\n<li>Additional commits viewable in <a\nhref=\"https://github.com/go-viper/mapstructure/compare/v2.2.1...v2.3.0\">compare\nview</a></li>\n</ul>\n</details>\n<br />\n\n\n[![Dependabot compatibility\nscore](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=github.com/go-viper/mapstructure/v2&package-manager=go_modules&previous-version=2.2.1&new-version=2.3.0)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)\n\nDependabot will resolve any conflicts with this PR as long as you don't\nalter it yourself. You can also trigger a rebase manually by commenting\n`@dependabot rebase`.\n\n[//]: # (dependabot-automerge-start)\n[//]: # (dependabot-automerge-end)\n\n---\n\n<details>\n<summary>Dependabot commands and options</summary>\n<br />\n\nYou can trigger Dependabot actions by commenting on this PR:\n- `@dependabot rebase` will rebase this PR\n- `@dependabot recreate` will recreate this PR, overwriting any edits\nthat have been made to it\n- `@dependabot merge` will merge this PR after your CI passes on it\n- `@dependabot squash and merge` will squash and merge this PR after\nyour CI passes on it\n- `@dependabot cancel merge` will cancel a previously requested merge\nand block automerging\n- `@dependabot reopen` will reopen this PR if it is closed\n- `@dependabot close` will close this PR and stop Dependabot recreating\nit. You can achieve the same result by closing it manually\n- `@dependabot show <dependency name> ignore conditions` will show all\nof the ignore conditions of the specified dependency\n- `@dependabot ignore <dependency name> major version` will close this\ngroup update PR and stop Dependabot creating any more for the specific\ndependency's major version (unless you unignore this specific\ndependency's major version or upgrade to it yourself)\n- `@dependabot ignore <dependency name> minor version` will close this\ngroup update PR and stop Dependabot creating any more for the specific\ndependency's minor version (unless you unignore this specific\ndependency's minor version or upgrade to it yourself)\n- `@dependabot ignore <dependency name>` will close this group update PR\nand stop Dependabot creating any more for the specific dependency\n(unless you unignore this specific dependency or upgrade to it yourself)\n- `@dependabot unignore <dependency name>` will remove all of the ignore\nconditions of the specified dependency\n- `@dependabot unignore <dependency name> <ignore condition>` will\nremove the ignore condition of the specified dependency and ignore\nconditions\nYou can disable automated security fix PRs for this repo from the\n[Security Alerts\npage](https://github.com/git-bug/git-bug/network/alerts).\n\n</details>\n\nSigned-off-by: dependabot[bot] <support@github.com>\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2025-07-12T13:44:26Z",
+          "tree_id": "e7ae7145375297d1152b7d02eb0d2d6ad160a89b",
+          "url": "https://github.com/git-bug/git-bug/commit/95e53ffb8fa2fbc41ccca89a85e320412e5b5733"
+        },
+        "date": 1752328191657,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 16715540,
+            "unit": "ns/op\t  965769 B/op\t   14988 allocs/op",
+            "extra": "79 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 16715540,
+            "unit": "ns/op",
+            "extra": "79 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 965769,
+            "unit": "B/op",
+            "extra": "79 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 14988,
+            "unit": "allocs/op",
+            "extra": "79 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 85617446,
+            "unit": "ns/op\t 5086328 B/op\t   75180 allocs/op",
+            "extra": "13 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 85617446,
+            "unit": "ns/op",
+            "extra": "13 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 5086328,
+            "unit": "B/op",
+            "extra": "13 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 75180,
+            "unit": "allocs/op",
+            "extra": "13 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 548134104,
+            "unit": "ns/op\t42054836 B/op\t  516712 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 548134104,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 42054836,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 516712,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
