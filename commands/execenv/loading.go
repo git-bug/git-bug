@@ -3,6 +3,7 @@ package execenv
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/vbauerster/mpb/v8"
@@ -17,15 +18,15 @@ import (
 // LoadRepo is a pre-run function that load the repository for use in a command
 func LoadRepo(env *Env) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		cwd, err := os.Getwd()
+		repoPath, err := getRepoPath(env)
 		if err != nil {
-			return fmt.Errorf("unable to get the current working directory: %q", err)
+			return err
 		}
 
 		// Note: we are not loading clocks here because we assume that LoadRepo is only used
 		//  when we don't manipulate entities, or as a child call of LoadBackend which will
 		//  read all clocks anyway.
-		env.Repo, err = repository.OpenGoGitRepo(cwd, gitBugNamespace, nil)
+		env.Repo, err = repository.OpenGoGitRepo(repoPath, gitBugNamespace, nil)
 		if err == repository.ErrNotARepo {
 			return fmt.Errorf("%s must be run from within a git Repo", RootCommandName)
 		}
@@ -170,4 +171,16 @@ func CacheBuildProgressBar(env *Env, events chan cache.BuildEvent) error {
 	}
 
 	return nil
+}
+
+func getRepoPath(env *Env) (string, error) {
+	if len(env.RepoPath) > 0 {
+		return filepath.Join(env.RepoPath...), nil
+	}
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		return "", fmt.Errorf("unable to get the current working directory: %q", err)
+	}
+	return cwd, nil
 }
