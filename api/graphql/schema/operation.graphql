@@ -1,5 +1,6 @@
 """An operation applied to an entity."""
-interface Operation {
+interface Operation
+@goModel(model: "github.com/git-bug/git-bug/entity/dag.Operation") {
     """The identifier of the operation"""
     id: ID!
     """The operations author."""

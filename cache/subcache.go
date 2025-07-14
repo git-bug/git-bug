@@ -59,6 +59,9 @@ type SubCache[EntityT entity.Interface, ExcerptT Excerpt, CacheT CacheEntity] st
 	excerpts map[entity.Id]ExcerptT
 	cached   map[entity.Id]CacheT
 	lru      lruIdCache
+
+	muObservers sync.RWMutex
+	observers   map[Observer]string // observer --> repo name
 }
 
 func NewSubCache[EntityT entity.Interface, ExcerptT Excerpt, CacheT CacheEntity](
@@ -332,6 +335,21 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) Close() error {
 	return nil
 }
 
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) RegisterObserver(repoName string, observer Observer) {
+	sc.muObservers.Lock()
+	defer sc.muObservers.Unlock()
+	if sc.observers == nil {
+		sc.observers = make(map[Observer]string)
+	}
+	sc.observers[observer] = repoName
+}
+
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) UnregisterObserver(observer Observer) {
+	sc.muObservers.Lock()
+	defer sc.muObservers.Unlock()
+	delete(sc.observers, observer)
+}
+
 // AllIds return all known bug ids
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) AllIds() []entity.Id {
 	sc.mu.RLock()
@@ -392,7 +410,7 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) ResolveMatcher(f func(ExcerptT) b
 	return sc.Resolve(id)
 }
 
-// ResolveExcerpt retrieve an Excerpt matching the exact given id
+// ResolveExcerpt retrieves an Excerpt matching the exact given id
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) ResolveExcerpt(id entity.Id) (ExcerptT, error) {
 	sc.mu.RLock()
 	defer sc.mu.RUnlock()
@@ -405,7 +423,7 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) ResolveExcerpt(id entity.Id) (Exc
 	return excerpt, nil
 }
 
-// ResolveExcerptPrefix retrieve an Excerpt matching an id prefix. It fails if multiple
+// ResolveExcerptPrefix retrieves an Excerpt matching an id prefix. It fails if multiple
 // entities match.
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) ResolveExcerptPrefix(prefix string) (ExcerptT, error) {
 	return sc.ResolveExcerptMatcher(func(excerpt ExcerptT) bool {
@@ -413,6 +431,7 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) ResolveExcerptPrefix(prefix strin
 	})
 }
 
+// ResolveExcerptMatcher retrieves an Excerpt selected by the given matcher function.
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) ResolveExcerptMatcher(f func(ExcerptT) bool) (ExcerptT, error) {
 	id, err := sc.resolveMatcher(f)
 	if err != nil {
@@ -460,10 +479,13 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) add(e EntityT) (CacheT, error) {
 	sc.evictIfNeeded()
 
 	// force the write of the excerpt
-	err := sc.entityUpdated(e.Id())
+	err := sc.updateExcerptAndIndex(e.Id())
 	if err != nil {
 		return *new(CacheT), err
 	}
+
+	// defer to notify after the release of the mutex
+	defer sc.notifyObservers(EntityEventCreated, e.Id())
 
 	return cached, nil
 }
@@ -498,6 +520,9 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) Remove(prefix string) error {
 		return err
 	}
 
+	// defer to notify after the release of the mutex
+	defer sc.notifyObservers(EntityEventRemoved, e.Id())
+
 	return sc.write()
 }
 
@@ -510,12 +535,16 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) RemoveAll() error {
 		return err
 	}
 
+	ids := make(map[entity.Id]struct{})
+
 	for id, _ := range sc.cached {
 		delete(sc.cached, id)
 		sc.lru.Remove(id)
+		ids[id] = struct{}{}
 	}
 	for id, _ := range sc.excerpts {
 		delete(sc.excerpts, id)
+		ids[id] = struct{}{}
 	}
 
 	index, err := sc.repo.GetIndex(sc.namespace)
@@ -529,6 +558,13 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) RemoveAll() error {
 	if err != nil {
 		return err
 	}
+
+	// defer to notify after the release of the mutex
+	defer func() {
+		for id := range ids {
+			sc.notifyObservers(EntityEventRemoved, id)
+		}
+	}()
 
 	return sc.write()
 }
@@ -555,7 +591,7 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) MergeAll(remote string) <-chan en
 			}
 
 			switch result.Status {
-			case entity.MergeStatusNew, entity.MergeStatusUpdated:
+			case entity.MergeStatusNew:
 				e := result.Entity.(EntityT)
 				cached := sc.makeCached(e, sc.entityUpdated)
 
@@ -564,6 +600,19 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) MergeAll(remote string) <-chan en
 				// might as well keep them in memory
 				sc.cached[result.Id] = cached
 				sc.mu.Unlock()
+				sc.notifyObservers(EntityEventCreated, result.Id)
+
+			case entity.MergeStatusUpdated:
+				// TODO: can that result in multiple copy of the same entity?
+				e := result.Entity.(EntityT)
+				cached := sc.makeCached(e, sc.entityUpdated)
+
+				sc.mu.Lock()
+				sc.excerpts[result.Id] = sc.makeExcerpt(cached)
+				// might as well keep them in memory
+				sc.cached[result.Id] = cached
+				sc.mu.Unlock()
+				sc.notifyObservers(EntityEventUpdated, result.Id)
 			}
 		}
 
@@ -578,12 +627,27 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) MergeAll(remote string) <-chan en
 
 }
 
+// GetNamespace expose the namespace in git where entities are located.
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) GetNamespace() string {
 	return sc.namespace
 }
 
 // entityUpdated is a callback to trigger when the excerpt of an entity changed
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) entityUpdated(id entity.Id) error {
+	sc.notifyObservers(EntityEventUpdated, id)
+	return sc.updateExcerptAndIndex(id)
+}
+
+// notifyObservers notifies all the observers when something happening for an entity
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) notifyObservers(event EntityEventType, id entity.Id) {
+	sc.muObservers.RLock()
+	for observer, repoName := range sc.observers {
+		observer.EntityEvent(event, repoName, sc.typename, id)
+	}
+	sc.muObservers.RUnlock()
+}
+
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) updateExcerptAndIndex(id entity.Id) error {
 	sc.mu.Lock()
 	e, ok := sc.cached[id]
 	if !ok {
@@ -597,7 +661,6 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) entityUpdated(id entity.Id) error
 		return errors.New("entity missing from cache")
 	}
 	sc.lru.Get(id)
-	// sc.excerpts[id] = bug2.NewBugExcerpt(b.bug, b.Snapshot())
 	sc.excerpts[id] = sc.makeExcerpt(e)
 	sc.mu.Unlock()
 

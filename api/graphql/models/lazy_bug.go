@@ -28,12 +28,15 @@ type BugWrapper interface {
 	Timeline() ([]bug.TimelineItem, error)
 	Operations() ([]dag.Operation, error)
 
+	// IsAuthored is a sign-post method for gqlgen, to mark compliance to an interface.
 	IsAuthored()
+	// IsEntity is a sign post-method for gqlgen, to mark compliance to an interface.
+	IsEntity()
 }
 
 var _ BugWrapper = &lazyBug{}
 
-// lazyBug is a lazy-loading wrapper that fetch data from the cache (BugExcerpt) in priority,
+// lazyBug is a lazy-loading wrapper that fetches data from the cache (BugExcerpt) in priority,
 // and load the complete bug and snapshot only when necessary.
 type lazyBug struct {
 	cache   *cache.RepoCache
@@ -74,9 +77,6 @@ func (lb *lazyBug) identity(id entity.Id) (IdentityWrapper, error) {
 	}
 	return &lazyIdentity{cache: lb.cache, excerpt: i}, nil
 }
-
-// Sign post method for gqlgen
-func (lb *lazyBug) IsAuthored() {}
 
 func (lb *lazyBug) Id() entity.Id {
 	return lb.excerpt.Id()
@@ -154,6 +154,12 @@ func (lb *lazyBug) Operations() ([]dag.Operation, error) {
 	return lb.snap.Operations, nil
 }
 
+// IsAuthored is a sign-post method for gqlgen, to mark compliance to an interface.
+func (lb *lazyBug) IsAuthored() {}
+
+// IsEntity is a sign post-method for gqlgen, to mark compliance to an interface.
+func (lb *lazyBug) IsEntity() {}
+
 var _ BugWrapper = &loadedBug{}
 
 type loadedBug struct {
@@ -215,3 +221,9 @@ func (l *loadedBug) Timeline() ([]bug.TimelineItem, error) {
 func (l *loadedBug) Operations() ([]dag.Operation, error) {
 	return l.Snapshot.Operations, nil
 }
+
+// IsAuthored is a sign-post method for gqlgen, to mark compliance to an interface.
+func (l *loadedBug) IsAuthored() {}
+
+// IsEntity is a sign post-method for gqlgen, to mark compliance to an interface.
+func (l *loadedBug) IsEntity() {}

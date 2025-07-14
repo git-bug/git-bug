@@ -1576,7 +1576,7 @@ func (ec *executionContext) fieldContext_BugEdge_node(_ context.Context, field g
 
 // region    **************************** object.gotpl ****************************
 
-var bugImplementors = []string{"Bug", "Authored"}
+var bugImplementors = []string{"Bug", "Authored", "Entity"}
 
 func (ec *executionContext) _Bug(ctx context.Context, sel ast.SelectionSet, obj models.BugWrapper) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, bugImplementors)
