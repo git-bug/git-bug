@@ -32,7 +32,7 @@ require (
 	github.com/vektah/gqlparser/v2 v2.5.26
 	gitlab.com/gitlab-org/api/client-go v0.116.0
 	golang.org/x/crypto v0.37.0
-	golang.org/x/oauth2 v0.22.0
+	golang.org/x/oauth2 v0.27.0
 	golang.org/x/sync v0.13.0
 	golang.org/x/sys v0.32.0
 	golang.org/x/text v0.24.0
