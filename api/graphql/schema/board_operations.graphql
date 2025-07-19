@@ -1,0 +1,70 @@
+type BoardCreateOperation implements Operation & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/board.CreateOperation") {
+    """The identifier of the operation"""
+    id: ID!
+    """The author of this object."""
+    author: Identity!
+    """The datetime when this operation was issued."""
+    date: Time! @goField(name: "Time")
+
+    title: String!
+    description: String!
+    columns: [String!]!
+}
+
+type BoardAddItemDraftOperation implements Operation & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/board.AddItemDraftOperation") {
+    """The identifier of the operation"""
+    id: ID!
+    """The author of this object."""
+    author: Identity!
+    """The datetime when this operation was issued."""
+    date: Time! @goField(name: "Time")
+
+    columnId: ID!
+    title: String!
+}
+
+type BoardAddItemEntityOperation implements Operation & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/board.AddItemEntityOperation") {
+    """The identifier of the operation"""
+    id: ID!
+    """The author of this object."""
+    author: Identity!
+    """The datetime when this operation was issued."""
+    date: Time! @goField(name: "Time")
+
+    columnId: ID!
+    entityType: BoardItemEntityType!
+    entityId: ID!
+}
+
+enum BoardItemEntityType {
+    BUG
+}
+
+type BoardSetDescriptionOperation implements Operation & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/board.SetDescriptionOperation") {
+    """The identifier of the operation"""
+    id: ID!
+    """The author of this object."""
+    author: Identity!
+    """The datetime when this operation was issued."""
+    date: Time! @goField(name: "Time")
+
+    description: String!
+    was: String!
+}
+
+type BoardSetTitleOperation implements Operation & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/board.SetTitleOperation") {
+    """The identifier of the operation"""
+    id: ID!
+    """The author of this object."""
+    author: Identity!
+    """The datetime when this operation was issued."""
+    date: Time! @goField(name: "Time")
+
+    title: String!
+    was: String!
+}

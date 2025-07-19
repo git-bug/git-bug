@@ -113,6 +113,10 @@ func (ec *executionContext) fieldContext_BugAddCommentAndClosePayload_bug(_ cont
 				return ec.fieldContext_Bug_id(ctx, field)
 			case "humanId":
 				return ec.fieldContext_Bug_humanId(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Bug_createdAt(ctx, field)
+			case "lastEdit":
+				return ec.fieldContext_Bug_lastEdit(ctx, field)
 			case "status":
 				return ec.fieldContext_Bug_status(ctx, field)
 			case "title":
@@ -121,10 +125,6 @@ func (ec *executionContext) fieldContext_BugAddCommentAndClosePayload_bug(_ cont
 				return ec.fieldContext_Bug_labels(ctx, field)
 			case "author":
 				return ec.fieldContext_Bug_author(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Bug_createdAt(ctx, field)
-			case "lastEdit":
-				return ec.fieldContext_Bug_lastEdit(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":
@@ -336,6 +336,10 @@ func (ec *executionContext) fieldContext_BugAddCommentAndReopenPayload_bug(_ con
 				return ec.fieldContext_Bug_id(ctx, field)
 			case "humanId":
 				return ec.fieldContext_Bug_humanId(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Bug_createdAt(ctx, field)
+			case "lastEdit":
+				return ec.fieldContext_Bug_lastEdit(ctx, field)
 			case "status":
 				return ec.fieldContext_Bug_status(ctx, field)
 			case "title":
@@ -344,10 +348,6 @@ func (ec *executionContext) fieldContext_BugAddCommentAndReopenPayload_bug(_ con
 				return ec.fieldContext_Bug_labels(ctx, field)
 			case "author":
 				return ec.fieldContext_Bug_author(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Bug_createdAt(ctx, field)
-			case "lastEdit":
-				return ec.fieldContext_Bug_lastEdit(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":
@@ -559,6 +559,10 @@ func (ec *executionContext) fieldContext_BugAddCommentPayload_bug(_ context.Cont
 				return ec.fieldContext_Bug_id(ctx, field)
 			case "humanId":
 				return ec.fieldContext_Bug_humanId(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Bug_createdAt(ctx, field)
+			case "lastEdit":
+				return ec.fieldContext_Bug_lastEdit(ctx, field)
 			case "status":
 				return ec.fieldContext_Bug_status(ctx, field)
 			case "title":
@@ -567,10 +571,6 @@ func (ec *executionContext) fieldContext_BugAddCommentPayload_bug(_ context.Cont
 				return ec.fieldContext_Bug_labels(ctx, field)
 			case "author":
 				return ec.fieldContext_Bug_author(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Bug_createdAt(ctx, field)
-			case "lastEdit":
-				return ec.fieldContext_Bug_lastEdit(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":
@@ -728,6 +728,10 @@ func (ec *executionContext) fieldContext_BugChangeLabelPayload_bug(_ context.Con
 				return ec.fieldContext_Bug_id(ctx, field)
 			case "humanId":
 				return ec.fieldContext_Bug_humanId(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Bug_createdAt(ctx, field)
+			case "lastEdit":
+				return ec.fieldContext_Bug_lastEdit(ctx, field)
 			case "status":
 				return ec.fieldContext_Bug_status(ctx, field)
 			case "title":
@@ -736,10 +740,6 @@ func (ec *executionContext) fieldContext_BugChangeLabelPayload_bug(_ context.Con
 				return ec.fieldContext_Bug_labels(ctx, field)
 			case "author":
 				return ec.fieldContext_Bug_author(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Bug_createdAt(ctx, field)
-			case "lastEdit":
-				return ec.fieldContext_Bug_lastEdit(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":
@@ -947,6 +947,10 @@ func (ec *executionContext) fieldContext_BugCreatePayload_bug(_ context.Context,
 				return ec.fieldContext_Bug_id(ctx, field)
 			case "humanId":
 				return ec.fieldContext_Bug_humanId(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Bug_createdAt(ctx, field)
+			case "lastEdit":
+				return ec.fieldContext_Bug_lastEdit(ctx, field)
 			case "status":
 				return ec.fieldContext_Bug_status(ctx, field)
 			case "title":
@@ -955,10 +959,6 @@ func (ec *executionContext) fieldContext_BugCreatePayload_bug(_ context.Context,
 				return ec.fieldContext_Bug_labels(ctx, field)
 			case "author":
 				return ec.fieldContext_Bug_author(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Bug_createdAt(ctx, field)
-			case "lastEdit":
-				return ec.fieldContext_Bug_lastEdit(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":
@@ -1118,6 +1118,10 @@ func (ec *executionContext) fieldContext_BugEditCommentPayload_bug(_ context.Con
 				return ec.fieldContext_Bug_id(ctx, field)
 			case "humanId":
 				return ec.fieldContext_Bug_humanId(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Bug_createdAt(ctx, field)
+			case "lastEdit":
+				return ec.fieldContext_Bug_lastEdit(ctx, field)
 			case "status":
 				return ec.fieldContext_Bug_status(ctx, field)
 			case "title":
@@ -1126,10 +1130,6 @@ func (ec *executionContext) fieldContext_BugEditCommentPayload_bug(_ context.Con
 				return ec.fieldContext_Bug_labels(ctx, field)
 			case "author":
 				return ec.fieldContext_Bug_author(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Bug_createdAt(ctx, field)
-			case "lastEdit":
-				return ec.fieldContext_Bug_lastEdit(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":
@@ -1289,6 +1289,10 @@ func (ec *executionContext) fieldContext_BugSetTitlePayload_bug(_ context.Contex
 				return ec.fieldContext_Bug_id(ctx, field)
 			case "humanId":
 				return ec.fieldContext_Bug_humanId(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Bug_createdAt(ctx, field)
+			case "lastEdit":
+				return ec.fieldContext_Bug_lastEdit(ctx, field)
 			case "status":
 				return ec.fieldContext_Bug_status(ctx, field)
 			case "title":
@@ -1297,10 +1301,6 @@ func (ec *executionContext) fieldContext_BugSetTitlePayload_bug(_ context.Contex
 				return ec.fieldContext_Bug_labels(ctx, field)
 			case "author":
 				return ec.fieldContext_Bug_author(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Bug_createdAt(ctx, field)
-			case "lastEdit":
-				return ec.fieldContext_Bug_lastEdit(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":
@@ -1458,6 +1458,10 @@ func (ec *executionContext) fieldContext_BugStatusClosePayload_bug(_ context.Con
 				return ec.fieldContext_Bug_id(ctx, field)
 			case "humanId":
 				return ec.fieldContext_Bug_humanId(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Bug_createdAt(ctx, field)
+			case "lastEdit":
+				return ec.fieldContext_Bug_lastEdit(ctx, field)
 			case "status":
 				return ec.fieldContext_Bug_status(ctx, field)
 			case "title":
@@ -1466,10 +1470,6 @@ func (ec *executionContext) fieldContext_BugStatusClosePayload_bug(_ context.Con
 				return ec.fieldContext_Bug_labels(ctx, field)
 			case "author":
 				return ec.fieldContext_Bug_author(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Bug_createdAt(ctx, field)
-			case "lastEdit":
-				return ec.fieldContext_Bug_lastEdit(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":
@@ -1625,6 +1625,10 @@ func (ec *executionContext) fieldContext_BugStatusOpenPayload_bug(_ context.Cont
 				return ec.fieldContext_Bug_id(ctx, field)
 			case "humanId":
 				return ec.fieldContext_Bug_humanId(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Bug_createdAt(ctx, field)
+			case "lastEdit":
+				return ec.fieldContext_Bug_lastEdit(ctx, field)
 			case "status":
 				return ec.fieldContext_Bug_status(ctx, field)
 			case "title":
@@ -1633,10 +1637,6 @@ func (ec *executionContext) fieldContext_BugStatusOpenPayload_bug(_ context.Cont
 				return ec.fieldContext_Bug_labels(ctx, field)
 			case "author":
 				return ec.fieldContext_Bug_author(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Bug_createdAt(ctx, field)
-			case "lastEdit":
-				return ec.fieldContext_Bug_lastEdit(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":
