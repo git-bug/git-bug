@@ -14,9 +14,9 @@ import LabelMenu from './labels/LabelMenu';
  */
 const useStyles = makeStyles((theme) => ({
   main: {
-    maxWidth: 1000,
+    maxWidth: 1100,
     margin: 'auto',
-    marginTop: theme.spacing(4),
+    padding: theme.spacing(3, 2),
   },
   header: {
     marginRight: theme.spacing(2),
