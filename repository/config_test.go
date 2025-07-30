@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -51,4 +52,35 @@ func TestMergedConfig(t *testing.T) {
 		"string":    "bar",
 		"timestamp": "5678",
 	})
+}
+
+func TestGetDefaultString(t *testing.T) {
+	cfg := NewMemConfig()
+
+	// Test with missing key - should return default
+	val, err := GetDefaultString("missing.key", cfg, "default_value")
+	require.NoError(t, err)
+	assert.Equal(t, "default_value", val)
+
+	// Test with existing key - should return actual value
+	require.NoError(t, cfg.StoreString("existing.key", "actual_value"))
+	val, err = GetDefaultString("existing.key", cfg, "default_value")
+	require.NoError(t, err)
+	assert.Equal(t, "actual_value", val)
+
+	// Test with empty string value - should return empty string, not default
+	require.NoError(t, cfg.StoreString("empty.key", ""))
+	val, err = GetDefaultString("empty.key", cfg, "default_value")
+	require.NoError(t, err)
+	assert.Equal(t, "", val)
+
+	// Test the specific git-bug.remote case
+	val, err = GetDefaultString("git-bug.remote", cfg, "origin")
+	require.NoError(t, err)
+	assert.Equal(t, "origin", val)
+
+	require.NoError(t, cfg.StoreString("git-bug.remote", "upstream"))
+	val, err = GetDefaultString("git-bug.remote", cfg, "origin")
+	require.NoError(t, err)
+	assert.Equal(t, "upstream", val)
 }
