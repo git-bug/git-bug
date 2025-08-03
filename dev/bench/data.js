@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1752817804313,
+  "lastUpdate": 1754248071609,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -15938,6 +15938,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 498627,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "791a80d0fe2ab519372ba472e0e148afc3136b6b",
+          "message": "build(deps-dev): bump form-data from 3.0.1 to 3.0.4 in /webui in the npm_and_yarn group across 1 directory (#1479)\n\nBumps the npm_and_yarn group with 1 update in the /webui directory:\n[form-data](https://github.com/form-data/form-data).\n\nUpdates `form-data` from 3.0.1 to 3.0.4\n<details>\n<summary>Release notes</summary>\n<p><em>Sourced from <a\nhref=\"https://github.com/form-data/form-data/releases\">form-data's\nreleases</a>.</em></p>\n<blockquote>\n<h2>v3.0.2</h2>\n<h3>Fixes</h3>\n<ul>\n<li>npmignore temporary build files (<a\nhref=\"https://redirect.github.com/form-data/form-data/issues/532\">#532</a>)</li>\n<li>move util.isArray to Array.isArray (<a\nhref=\"https://redirect.github.com/form-data/form-data/issues/564\">#564</a>)</li>\n</ul>\n<h3>Tests</h3>\n<ul>\n<li>migrate from travis to GHA</li>\n</ul>\n</blockquote>\n</details>\n<details>\n<summary>Changelog</summary>\n<p><em>Sourced from <a\nhref=\"https://github.com/form-data/form-data/blob/v3.0.4/CHANGELOG.md\">form-data's\nchangelog</a>.</em></p>\n<blockquote>\n<h2><a\nhref=\"https://github.com/form-data/form-data/compare/v3.0.3...v3.0.4\">v3.0.4</a>\n- 2025-07-16</h2>\n<h3>Fixed</h3>\n<ul>\n<li>[Fix] <code>append</code>: avoid a crash on nullish values <a\nhref=\"https://redirect.github.com/form-data/form-data/issues/577\"><code>[#577](https://github.com/form-data/form-data/issues/577)</code></a></li>\n</ul>\n<h3>Commits</h3>\n<ul>\n<li>[eslint] update linting config <a\nhref=\"https://github.com/form-data/form-data/commit/f5e7eb024bc3fc7e2074ff80f143a4f4cbc1dbda\"><code>f5e7eb0</code></a></li>\n<li>[meta] add <code>auto-changelog</code> <a\nhref=\"https://github.com/form-data/form-data/commit/d2eb290a3e47ed5bcad7020d027daa15b3cf5ef5\"><code>d2eb290</code></a></li>\n<li>[Tests] handle predict-v8-randomness failures in node &lt; 17 and\nnode &gt; 23 <a\nhref=\"https://github.com/form-data/form-data/commit/e8c574cb07ff3a0de2ecc0912d783ef22e190c1f\"><code>e8c574c</code></a></li>\n<li>[Fix] Switch to using <code>crypto</code> random for boundary values\n<a\nhref=\"https://github.com/form-data/form-data/commit/c6ced61d4fae8f617ee2fd692133ed87baa5d0fd\"><code>c6ced61</code></a></li>\n<li>[Refactor] use <code>hasown</code> <a\nhref=\"https://github.com/form-data/form-data/commit/1a78b5dd05e508d67e97764d812ac7c6d92ea88d\"><code>1a78b5d</code></a></li>\n<li>[Fix] validate boundary type in <code>setBoundary()</code> method <a\nhref=\"https://github.com/form-data/form-data/commit/70bbaa0b395ca0fb975c309de8d7286979254cc4\"><code>70bbaa0</code></a></li>\n<li>[Tests] add tests to check the behavior of <code>getBoundary</code>\nwith non-strings <a\nhref=\"https://github.com/form-data/form-data/commit/b22a64ef94ba4f3f6ff7d1ac72a54cca128567df\"><code>b22a64e</code></a></li>\n<li>[meta] actually ensure the readme backup isn’t published <a\nhref=\"https://github.com/form-data/form-data/commit/01508513ffb26fd662ae7027834b325af8efb9ea\"><code>0150851</code></a></li>\n<li>[meta] remove local commit hooks <a\nhref=\"https://github.com/form-data/form-data/commit/fc42bb9315b641bfa6dae51cb4e188a86bb04769\"><code>fc42bb9</code></a></li>\n<li>[Dev Deps] remove unused deps <a\nhref=\"https://github.com/form-data/form-data/commit/a14d09ea8ed7e0a2e1705269ce6fb54bb7ee6bdb\"><code>a14d09e</code></a></li>\n<li>[meta] fix scripts to use prepublishOnly <a\nhref=\"https://github.com/form-data/form-data/commit/11d9f7338f18a59b431832a3562b49baece0a432\"><code>11d9f73</code></a></li>\n<li>[meta] fix readme capitalization <a\nhref=\"https://github.com/form-data/form-data/commit/fc38b4834a117a1856f3d877eb2f5b7496a24932\"><code>fc38b48</code></a></li>\n</ul>\n<h2><a\nhref=\"https://github.com/form-data/form-data/compare/v3.0.2...v3.0.3\">v3.0.3</a>\n- 2025-02-14</h2>\n<h3>Merged</h3>\n<ul>\n<li>[Fix] set <code>Symbol.toStringTag</code> when available <a\nhref=\"https://redirect.github.com/form-data/form-data/pull/573\"><code>[#573](https://github.com/form-data/form-data/issues/573)</code></a></li>\n</ul>\n<h3>Fixed</h3>\n<ul>\n<li>[Fix] set <code>Symbol.toStringTag</code> when available (<a\nhref=\"https://redirect.github.com/form-data/form-data/issues/573\">#573</a>)\n<a\nhref=\"https://redirect.github.com/form-data/form-data/issues/396\"><code>[#396](https://github.com/form-data/form-data/issues/396)</code></a></li>\n</ul>\n<h3>Commits</h3>\n<ul>\n<li>[Refactor] use <code>Object.prototype.hasOwnProperty.call</code> <a\nhref=\"https://github.com/form-data/form-data/commit/7fecefe4ba8f775634aff86a698776ad95ecffb5\"><code>7fecefe</code></a></li>\n<li>[Dev Deps] update <code>@types/node</code>, <code>browserify</code>,\n<code>coveralls</code>, <code>cross-spawn</code>, <code>eslint</code>,\n<code>formidable</code>, <code>in-publish</code>, <code>pkgfiles</code>,\n<code>pre-commit</code>, <code>puppeteer</code>, <code>request</code>,\n<code>tape</code>, <code>typescript</code> <a\nhref=\"https://github.com/form-data/form-data/commit/8261fcb8bf5944d30ae3bd04b91b71d6a9932ef4\"><code>8261fcb</code></a></li>\n<li>Only apps should have lockfiles <a\nhref=\"https://github.com/form-data/form-data/commit/b82f59093cdbadb4b7ec0922d33ae7ab048b82ff\"><code>b82f590</code></a></li>\n<li>[Dev Deps] pin <code>request</code> which via\n<code>tough-cookie</code> ^2.4 depends on <code>psl</code> <a\nhref=\"https://github.com/form-data/form-data/commit/e5df7f24383342264bd73dee3274818a40d04065\"><code>e5df7f2</code></a></li>\n<li>[Deps] update <code>mime-types</code> <a\nhref=\"https://github.com/form-data/form-data/commit/5a5bafee894fead10da49e1fa2b084e17f2e1034\"><code>5a5bafe</code></a></li>\n</ul>\n<h2><a\nhref=\"https://github.com/form-data/form-data/compare/v3.0.1...v3.0.2\">v3.0.2</a>\n- 2024-10-10</h2>\n<h3>Merged</h3>\n<ul>\n<li>fix (npmignore): ignore temporary build files <a\nhref=\"https://redirect.github.com/form-data/form-data/pull/532\"><code>[#532](https://github.com/form-data/form-data/issues/532)</code></a></li>\n</ul>\n<h3>Commits</h3>\n<ul>\n<li>[Tests] migrate from travis to GHA <a\nhref=\"https://github.com/form-data/form-data/commit/8fdb3bc6b5d001f8909a9fca391d1d1d97ef1d79\"><code>8fdb3bc</code></a></li>\n<li>[eslint] clean up ignores <a\nhref=\"https://github.com/form-data/form-data/commit/3217b3ded8e382e51171d5c74c6038a21cc54440\"><code>3217b3d</code></a></li>\n<li>fix: move util.isArray to Array.isArray (<a\nhref=\"https://redirect.github.com/form-data/form-data/issues/564\">#564</a>)\n<a\nhref=\"https://github.com/form-data/form-data/commit/edb555a811f6f7e4668db4831551cf41c1de1cac\"><code>edb555a</code></a></li>\n</ul>\n</blockquote>\n</details>\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a\nhref=\"https://github.com/form-data/form-data/commit/9c82fcdf0858b2764060a87803a55375ffbee6ed\"><code>9c82fcd</code></a>\nv3.0.4</li>\n<li><a\nhref=\"https://github.com/form-data/form-data/commit/e8c574cb07ff3a0de2ecc0912d783ef22e190c1f\"><code>e8c574c</code></a>\n[Tests] handle predict-v8-randomness failures in node &lt; 17 and node\n&gt; 23</li>\n<li><a\nhref=\"https://github.com/form-data/form-data/commit/c6ced61d4fae8f617ee2fd692133ed87baa5d0fd\"><code>c6ced61</code></a>\n[Fix] Switch to using <code>crypto</code> random for boundary\nvalues</li>\n<li><a\nhref=\"https://github.com/form-data/form-data/commit/01508513ffb26fd662ae7027834b325af8efb9ea\"><code>0150851</code></a>\n[meta] actually ensure the readme backup isn’t published</li>\n<li><a\nhref=\"https://github.com/form-data/form-data/commit/fc38b4834a117a1856f3d877eb2f5b7496a24932\"><code>fc38b48</code></a>\n[meta] fix readme capitalization</li>\n<li><a\nhref=\"https://github.com/form-data/form-data/commit/d2eb290a3e47ed5bcad7020d027daa15b3cf5ef5\"><code>d2eb290</code></a>\n[meta] add <code>auto-changelog</code></li>\n<li><a\nhref=\"https://github.com/form-data/form-data/commit/fc42bb9315b641bfa6dae51cb4e188a86bb04769\"><code>fc42bb9</code></a>\n[meta] remove local commit hooks</li>\n<li><a\nhref=\"https://github.com/form-data/form-data/commit/a14d09ea8ed7e0a2e1705269ce6fb54bb7ee6bdb\"><code>a14d09e</code></a>\n[Dev Deps] remove unused deps</li>\n<li><a\nhref=\"https://github.com/form-data/form-data/commit/002b9b0c4862576305292ac44f7be25ec7ccea0e\"><code>002b9b0</code></a>\n[Fix] <code>append</code>: avoid a crash on nullish values</li>\n<li><a\nhref=\"https://github.com/form-data/form-data/commit/70bbaa0b395ca0fb975c309de8d7286979254cc4\"><code>70bbaa0</code></a>\n[Fix] validate boundary type in <code>setBoundary()</code> method</li>\n<li>Additional commits viewable in <a\nhref=\"https://github.com/form-data/form-data/compare/v3.0.1...v3.0.4\">compare\nview</a></li>\n</ul>\n</details>\n<details>\n<summary>Maintainer changes</summary>\n<p>This version was pushed to npm by <a\nhref=\"https://www.npmjs.com/~ljharb\">ljharb</a>, a new releaser for\nform-data since your current version.</p>\n</details>\n<br />\n\n\n[![Dependabot compatibility\nscore](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=form-data&package-manager=npm_and_yarn&previous-version=3.0.1&new-version=3.0.4)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)\n\nDependabot will resolve any conflicts with this PR as long as you don't\nalter it yourself. You can also trigger a rebase manually by commenting\n`@dependabot rebase`.\n\n[//]: # (dependabot-automerge-start)\n[//]: # (dependabot-automerge-end)\n\n---\n\n<details>\n<summary>Dependabot commands and options</summary>\n<br />\n\nYou can trigger Dependabot actions by commenting on this PR:\n- `@dependabot rebase` will rebase this PR\n- `@dependabot recreate` will recreate this PR, overwriting any edits\nthat have been made to it\n- `@dependabot merge` will merge this PR after your CI passes on it\n- `@dependabot squash and merge` will squash and merge this PR after\nyour CI passes on it\n- `@dependabot cancel merge` will cancel a previously requested merge\nand block automerging\n- `@dependabot reopen` will reopen this PR if it is closed\n- `@dependabot close` will close this PR and stop Dependabot recreating\nit. You can achieve the same result by closing it manually\n- `@dependabot show <dependency name> ignore conditions` will show all\nof the ignore conditions of the specified dependency\n- `@dependabot ignore <dependency name> major version` will close this\ngroup update PR and stop Dependabot creating any more for the specific\ndependency's major version (unless you unignore this specific\ndependency's major version or upgrade to it yourself)\n- `@dependabot ignore <dependency name> minor version` will close this\ngroup update PR and stop Dependabot creating any more for the specific\ndependency's minor version (unless you unignore this specific\ndependency's minor version or upgrade to it yourself)\n- `@dependabot ignore <dependency name>` will close this group update PR\nand stop Dependabot creating any more for the specific dependency\n(unless you unignore this specific dependency or upgrade to it yourself)\n- `@dependabot unignore <dependency name>` will remove all of the ignore\nconditions of the specified dependency\n- `@dependabot unignore <dependency name> <ignore condition>` will\nremove the ignore condition of the specified dependency and ignore\nconditions\nYou can disable automated security fix PRs for this repo from the\n[Security Alerts\npage](https://github.com/git-bug/git-bug/network/alerts).\n\n</details>\n\nSigned-off-by: dependabot[bot] <support@github.com>\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2025-08-03T19:02:24Z",
+          "tree_id": "c4c539b5ee1bfdf05abd3802365994734b391bae",
+          "url": "https://github.com/git-bug/git-bug/commit/791a80d0fe2ab519372ba472e0e148afc3136b6b"
+        },
+        "date": 1754248071084,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 17712885,
+            "unit": "ns/op\t 1015783 B/op\t   15424 allocs/op",
+            "extra": "62 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 17712885,
+            "unit": "ns/op",
+            "extra": "62 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 1015783,
+            "unit": "B/op",
+            "extra": "62 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 15424,
+            "unit": "allocs/op",
+            "extra": "62 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 80053242,
+            "unit": "ns/op\t 4366891 B/op\t   64990 allocs/op",
+            "extra": "14 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 80053242,
+            "unit": "ns/op",
+            "extra": "14 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 4366891,
+            "unit": "B/op",
+            "extra": "14 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 64990,
+            "unit": "allocs/op",
+            "extra": "14 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 510986618,
+            "unit": "ns/op\t42460180 B/op\t  520425 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 510986618,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 42460180,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 520425,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
