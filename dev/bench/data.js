@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1754248071609,
+  "lastUpdate": 1756577526323,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -16034,6 +16034,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 520425,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e9caa403cb28fb6a9f08ad446217afe548434207",
+          "message": "build(deps): bump golang.org/x/oauth2 from 0.22.0 to 0.27.0 in the go_modules group across 1 directory (#1478)\n\nBumps the go_modules group with 1 update in the / directory:\n[golang.org/x/oauth2](https://github.com/golang/oauth2).\n\nUpdates `golang.org/x/oauth2` from 0.22.0 to 0.27.0\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a\nhref=\"https://github.com/golang/oauth2/commit/681b4d8edca1bcfea5bce685d77ea7b82ed3e7b3\"><code>681b4d8</code></a>\njws: split token into fixed number of parts</li>\n<li><a\nhref=\"https://github.com/golang/oauth2/commit/3f78298beea38fb76a3fbca33e3056f4b7eb5502\"><code>3f78298</code></a>\nall: upgrade go directive to at least 1.23.0 [generated]</li>\n<li><a\nhref=\"https://github.com/golang/oauth2/commit/109dabf9017129171d1807e485ca5633ecd095ac\"><code>109dabf</code></a>\nendpoints: add links/provider for Discord</li>\n<li><a\nhref=\"https://github.com/golang/oauth2/commit/ac571fa341c2a2b979d2b2c8341fd24767ef5d47\"><code>ac571fa</code></a>\noauth2: fix docs for Config.DeviceAuth</li>\n<li><a\nhref=\"https://github.com/golang/oauth2/commit/314ee5b92bf23c4973aa8e61eba3ff458e80eef2\"><code>314ee5b</code></a>\nendpoints: add patreon endpoint</li>\n<li><a\nhref=\"https://github.com/golang/oauth2/commit/b9c813be7d0ec3262d46deb8677ba5cda93d95ec\"><code>b9c813b</code></a>\ngoogle: add warning about externally-provided credentials</li>\n<li><a\nhref=\"https://github.com/golang/oauth2/commit/49a531d12a9ad6fa9f5a070d577ac752ada772c9\"><code>49a531d</code></a>\nall: make method and struct comments match the names</li>\n<li><a\nhref=\"https://github.com/golang/oauth2/commit/22134a41033e44c2cd074106770ab5b7ca910d15\"><code>22134a4</code></a>\nREADME: don't recommend go get</li>\n<li><a\nhref=\"https://github.com/golang/oauth2/commit/3e6480915d39dd1a80fa460e56413857f02cc1b9\"><code>3e64809</code></a>\nx/oauth2: add Token.ExpiresIn</li>\n<li><a\nhref=\"https://github.com/golang/oauth2/commit/16a9973a41c72ea3e252e9c14be34fcaa2928211\"><code>16a9973</code></a>\njwt: rename example to avoid vet error</li>\n<li>Additional commits viewable in <a\nhref=\"https://github.com/golang/oauth2/compare/v0.22.0...v0.27.0\">compare\nview</a></li>\n</ul>\n</details>\n<br />\n\n\n[![Dependabot compatibility\nscore](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=golang.org/x/oauth2&package-manager=go_modules&previous-version=0.22.0&new-version=0.27.0)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)\n\nDependabot will resolve any conflicts with this PR as long as you don't\nalter it yourself. You can also trigger a rebase manually by commenting\n`@dependabot rebase`.\n\n[//]: # (dependabot-automerge-start)\n[//]: # (dependabot-automerge-end)\n\n---\n\n<details>\n<summary>Dependabot commands and options</summary>\n<br />\n\nYou can trigger Dependabot actions by commenting on this PR:\n- `@dependabot rebase` will rebase this PR\n- `@dependabot recreate` will recreate this PR, overwriting any edits\nthat have been made to it\n- `@dependabot merge` will merge this PR after your CI passes on it\n- `@dependabot squash and merge` will squash and merge this PR after\nyour CI passes on it\n- `@dependabot cancel merge` will cancel a previously requested merge\nand block automerging\n- `@dependabot reopen` will reopen this PR if it is closed\n- `@dependabot close` will close this PR and stop Dependabot recreating\nit. You can achieve the same result by closing it manually\n- `@dependabot show <dependency name> ignore conditions` will show all\nof the ignore conditions of the specified dependency\n- `@dependabot ignore <dependency name> major version` will close this\ngroup update PR and stop Dependabot creating any more for the specific\ndependency's major version (unless you unignore this specific\ndependency's major version or upgrade to it yourself)\n- `@dependabot ignore <dependency name> minor version` will close this\ngroup update PR and stop Dependabot creating any more for the specific\ndependency's minor version (unless you unignore this specific\ndependency's minor version or upgrade to it yourself)\n- `@dependabot ignore <dependency name>` will close this group update PR\nand stop Dependabot creating any more for the specific dependency\n(unless you unignore this specific dependency or upgrade to it yourself)\n- `@dependabot unignore <dependency name>` will remove all of the ignore\nconditions of the specified dependency\n- `@dependabot unignore <dependency name> <ignore condition>` will\nremove the ignore condition of the specified dependency and ignore\nconditions\nYou can disable automated security fix PRs for this repo from the\n[Security Alerts\npage](https://github.com/git-bug/git-bug/network/alerts).\n\n</details>\n\nSigned-off-by: dependabot[bot] <support@github.com>\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2025-08-30T18:06:12Z",
+          "tree_id": "248a4cbcbe69d36b262a93469799b4ec6b97af51",
+          "url": "https://github.com/git-bug/git-bug/commit/e9caa403cb28fb6a9f08ad446217afe548434207"
+        },
+        "date": 1756577525465,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 16234738,
+            "unit": "ns/op\t  984583 B/op\t   14828 allocs/op",
+            "extra": "70 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 16234738,
+            "unit": "ns/op",
+            "extra": "70 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 984583,
+            "unit": "B/op",
+            "extra": "70 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 14828,
+            "unit": "allocs/op",
+            "extra": "70 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 90557216,
+            "unit": "ns/op\t 4884845 B/op\t   72402 allocs/op",
+            "extra": "14 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 90557216,
+            "unit": "ns/op",
+            "extra": "14 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 4884845,
+            "unit": "B/op",
+            "extra": "14 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 72402,
+            "unit": "allocs/op",
+            "extra": "14 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 520839279,
+            "unit": "ns/op\t40522632 B/op\t  498685 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 520839279,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 40522632,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 498685,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
