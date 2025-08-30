@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1756577526323,
+  "lastUpdate": 1756578101422,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -16130,6 +16130,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 498685,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9427c459ab325d37653453b0c19529ed6b1af61a",
+          "message": "build(deps): bump the npm_and_yarn group across 1 directory with 2 updates (#1482)\n\nBumps the npm_and_yarn group with 2 updates in the /webui directory:\n[tmp](https://github.com/raszi/node-tmp) and\n[inquirer](https://github.com/SBoudrias/Inquirer.js).\n\nRemoves `tmp`\n\nUpdates `inquirer` from 8.2.4 to 8.2.7\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a\nhref=\"https://github.com/SBoudrias/Inquirer.js/commit/9c5259a889d37205829c2255171ef74c6336f7f3\"><code>9c5259a</code></a>\nPublish</li>\n<li><a\nhref=\"https://github.com/SBoudrias/Inquirer.js/commit/e26d21369ae229fe7cab4c6678fb4718fb7758b7\"><code>e26d213</code></a>\nfix: Replace external-editor to remove CVE</li>\n<li><a\nhref=\"https://github.com/SBoudrias/Inquirer.js/commit/30ec0483de28849e56bd6b9b61daaabf8edea16f\"><code>30ec048</code></a>\nPublish</li>\n<li><a\nhref=\"https://github.com/SBoudrias/Inquirer.js/commit/728536ab46d7b33189771bf86ebffff373f24a2a\"><code>728536a</code></a>\nFix coverage on clean clone</li>\n<li><a\nhref=\"https://github.com/SBoudrias/Inquirer.js/commit/516a318067c75ea971e37d621f328e18713ccc04\"><code>516a318</code></a>\nDowngrade wrap-ansi</li>\n<li><a\nhref=\"https://github.com/SBoudrias/Inquirer.js/commit/7a2ade6cf6a3d987f4138c0426493460f6b2515f\"><code>7a2ade6</code></a>\nPublish</li>\n<li><a\nhref=\"https://github.com/SBoudrias/Inquirer.js/commit/42e9f9164474c17d830c77c0b37f68b3bda18699\"><code>42e9f91</code></a>\nFix coverage reporting?</li>\n<li><a\nhref=\"https://github.com/SBoudrias/Inquirer.js/commit/d53072cfc0d61bb2b6f8b129decd9a94434164a8\"><code>d53072c</code></a>\nLegacy fix default clearing on input (<a\nhref=\"https://redirect.github.com/SBoudrias/Inquirer.js/issues/1177\">#1177</a>)</li>\n<li><a\nhref=\"https://github.com/SBoudrias/Inquirer.js/commit/b41b8982c665f1960b99c88cb21bbb98fe5d5ae8\"><code>b41b898</code></a>\nClean branch to make it work with v8 (last common.js release\nbranch)</li>\n<li>See full diff in <a\nhref=\"https://github.com/SBoudrias/Inquirer.js/compare/inquirer@8.2.4...inquirer@8.2.7\">compare\nview</a></li>\n</ul>\n</details>\n<br />\n\n\nDependabot will resolve any conflicts with this PR as long as you don't\nalter it yourself. You can also trigger a rebase manually by commenting\n`@dependabot rebase`.\n\n[//]: # (dependabot-automerge-start)\n[//]: # (dependabot-automerge-end)\n\n---\n\n<details>\n<summary>Dependabot commands and options</summary>\n<br />\n\nYou can trigger Dependabot actions by commenting on this PR:\n- `@dependabot rebase` will rebase this PR\n- `@dependabot recreate` will recreate this PR, overwriting any edits\nthat have been made to it\n- `@dependabot merge` will merge this PR after your CI passes on it\n- `@dependabot squash and merge` will squash and merge this PR after\nyour CI passes on it\n- `@dependabot cancel merge` will cancel a previously requested merge\nand block automerging\n- `@dependabot reopen` will reopen this PR if it is closed\n- `@dependabot close` will close this PR and stop Dependabot recreating\nit. You can achieve the same result by closing it manually\n- `@dependabot show <dependency name> ignore conditions` will show all\nof the ignore conditions of the specified dependency\n- `@dependabot ignore <dependency name> major version` will close this\ngroup update PR and stop Dependabot creating any more for the specific\ndependency's major version (unless you unignore this specific\ndependency's major version or upgrade to it yourself)\n- `@dependabot ignore <dependency name> minor version` will close this\ngroup update PR and stop Dependabot creating any more for the specific\ndependency's minor version (unless you unignore this specific\ndependency's minor version or upgrade to it yourself)\n- `@dependabot ignore <dependency name>` will close this group update PR\nand stop Dependabot creating any more for the specific dependency\n(unless you unignore this specific dependency or upgrade to it yourself)\n- `@dependabot unignore <dependency name>` will remove all of the ignore\nconditions of the specified dependency\n- `@dependabot unignore <dependency name> <ignore condition>` will\nremove the ignore condition of the specified dependency and ignore\nconditions\nYou can disable automated security fix PRs for this repo from the\n[Security Alerts\npage](https://github.com/git-bug/git-bug/network/alerts).\n\n</details>\n\nSigned-off-by: dependabot[bot] <support@github.com>\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2025-08-30T18:16:19Z",
+          "tree_id": "ce1d4fa52aff8396443c6cbf39dc7d92a648791e",
+          "url": "https://github.com/git-bug/git-bug/commit/9427c459ab325d37653453b0c19529ed6b1af61a"
+        },
+        "date": 1756578100678,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 14179570,
+            "unit": "ns/op\t  909694 B/op\t   13832 allocs/op",
+            "extra": "74 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 14179570,
+            "unit": "ns/op",
+            "extra": "74 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 909694,
+            "unit": "B/op",
+            "extra": "74 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 13832,
+            "unit": "allocs/op",
+            "extra": "74 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 78012880,
+            "unit": "ns/op\t 5098553 B/op\t   75242 allocs/op",
+            "extra": "13 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 78012880,
+            "unit": "ns/op",
+            "extra": "13 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 5098553,
+            "unit": "B/op",
+            "extra": "13 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 75242,
+            "unit": "allocs/op",
+            "extra": "13 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 514044820,
+            "unit": "ns/op\t43077572 B/op\t  529762 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 514044820,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 43077572,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 529762,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
