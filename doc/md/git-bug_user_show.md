@@ -1,16 +1,16 @@
-## git-bug user user
+## git-bug user show
 
 Display a user identity
 
 ```
-git-bug user user show [USER_ID] [flags]
+git-bug user show [USER_ID] [flags]
 ```
 
 ### Options
 
 ```
   -f, --field string   Select field to display. Valid values are [email,humanId,id,lastModification,lastModificationLamports,login,metadata,name]
-  -h, --help           help for user
+  -h, --help           help for show
 ```
 
 ### SEE ALSO
