@@ -31,11 +31,16 @@ require (
 	github.com/vbauerster/mpb/v8 v8.8.2
 	github.com/vektah/gqlparser/v2 v2.5.26
 	gitlab.com/gitlab-org/api/client-go v0.116.0
-	golang.org/x/crypto v0.37.0
+	golang.org/x/crypto v0.45.0
 	golang.org/x/oauth2 v0.27.0
-	golang.org/x/sync v0.13.0
-	golang.org/x/sys v0.32.0
-	golang.org/x/text v0.24.0
+	golang.org/x/sync v0.18.0
+	golang.org/x/sys v0.38.0
+	golang.org/x/text v0.31.0
+)
+
+require (
+	golang.org/x/tools/go/packages/packagestest v0.1.1-deprecated // indirect
+	golang.org/x/tools/godoc v0.1.0-deprecated // indirect
 )
 
 require (
@@ -109,12 +114,12 @@ require (
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	go.etcd.io/bbolt v1.4.0 // indirect
-	golang.org/x/mod v0.24.0
-	golang.org/x/net v0.39.0
-	golang.org/x/telemetry v0.0.0-20240723021908-ccdfb411a0c4 // indirect
-	golang.org/x/term v0.31.0
+	golang.org/x/mod v0.29.0
+	golang.org/x/net v0.47.0
+	golang.org/x/telemetry v0.0.0-20251008203120-078029d740a8 // indirect
+	golang.org/x/term v0.37.0
 	golang.org/x/time v0.3.0 // indirect
-	golang.org/x/tools v0.32.0 // indirect
+	golang.org/x/tools v0.38.0 // indirect
 	golang.org/x/vuln v1.1.3
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
