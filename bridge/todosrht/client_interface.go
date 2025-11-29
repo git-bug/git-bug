@@ -7,6 +7,7 @@ import (
 // TodosrhtClient defines the interface for the SourceHut client.
 type TodosrhtClient interface {
 	GetTracker(ctx context.Context, name string) (*Tracker, error)
+	TrackerExists(ctx context.Context, name string) (bool, error)
 	GetTickets(ctx context.Context, trackerID int, cursor *string) ([]Ticket, *string, error)
 	GetEvents(ctx context.Context, ticketID int, cursor *string) ([]Event, *string, error)
 	CreateTicket(ctx context.Context, trackerID int, input SubmitTicketInput) (*Ticket, error)
