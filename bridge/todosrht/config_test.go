@@ -11,6 +11,7 @@ func TestValidParams(t *testing.T) {
 	params := g.ValidParams()
 
 	expected := map[string]interface{}{
+		"URL":        nil,
 		"BaseURL":    nil,
 		"Login":      nil,
 		"CredPrefix": nil,
