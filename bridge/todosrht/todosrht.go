@@ -27,23 +27,32 @@ const (
 var _ core.BridgeImpl = &TodoSourceHut{}
 
 // TodoSourceHut Main object for the bridge
-type TodoSourceHut struct{}
+type TodoSourceHut struct {
+	importer *todosrhtImporter
+	exporter *todosrhtExporter
+}
 
 // Target returns "todosrht"
-func (*TodoSourceHut) Target() string {
+func (b *TodoSourceHut) Target() string {
 	return target
 }
 
-func (*TodoSourceHut) LoginMetaKey() string {
+func (b *TodoSourceHut) LoginMetaKey() string {
 	return metaKeyTodoSourceHutLogin
 }
 
 // NewImporter returns the todosrht importer
-func (*TodoSourceHut) NewImporter() core.Importer {
-	return &todosrhtImporter{}
+func (b *TodoSourceHut) NewImporter() core.Importer {
+	if b.importer == nil {
+		b.importer = &todosrhtImporter{}
+	}
+	return b.importer
 }
 
 // NewExporter returns the todosrht exporter
-func (*TodoSourceHut) NewExporter() core.Exporter {
-	return &todosrhtExporter{}
+func (b *TodoSourceHut) NewExporter() core.Exporter {
+	if b.exporter == nil {
+		b.exporter = &todosrhtExporter{}
+	}
+	return b.exporter
 }

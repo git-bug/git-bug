@@ -3,6 +3,8 @@ package todosrht
 import (
 	"context"
 	"fmt"
+	"net/url"
+	"strings"
 
 	"github.com/git-bug/git-bug/bridge/core"
 	"github.com/git-bug/git-bug/bridge/core/auth"
@@ -18,8 +20,45 @@ see the notes at:
 https://github.com/git-bug/git-bug/blob/master/doc/todosrht_bridge.md
 `
 
+// parseTodoURL extracts base URL and tracker name from a full todo.sr.ht URL
+// Expected format: https://todo.sr.ht/~owner/tracker-name
+func parseTodoURL(fullURL string) (baseURL, trackerName string, err error) {
+	if fullURL == "" {
+		return "", "", nil
+	}
+
+	parsed, err := url.Parse(fullURL)
+	if err != nil {
+		return "", "", fmt.Errorf("invalid URL format: %v", err)
+	}
+
+	// Extract base URL
+	baseURL = fmt.Sprintf("%s://%s", parsed.Scheme, parsed.Host)
+
+	// Extract tracker name from path
+	path := strings.TrimPrefix(parsed.Path, "/")
+	if path == "" {
+		return "", "", fmt.Errorf("URL does not contain a tracker path")
+	}
+
+	// Expected path format: ~owner/tracker-name
+	parts := strings.SplitN(path, "/", 2)
+	if len(parts) != 2 {
+		return "", "", fmt.Errorf("invalid tracker path format, expected ~owner/tracker-name")
+	}
+
+	if !strings.HasPrefix(parts[0], "~") {
+		return "", "", fmt.Errorf("invalid owner format, expected ~owner")
+	}
+
+	trackerName = path // Use the full path ~owner/tracker-name
+
+	return baseURL, trackerName, nil
+}
+
 func (*TodoSourceHut) ValidParams() map[string]interface{} {
 	return map[string]interface{}{
+		"URL":        nil,
 		"BaseURL":    nil,
 		"Login":      nil,
 		"CredPrefix": nil,
@@ -32,26 +71,41 @@ func (*TodoSourceHut) ValidParams() map[string]interface{} {
 func (j *TodoSourceHut) Configure(repo *cache.RepoCache, params core.BridgeParams, interactive bool) (core.Configuration, error) {
 	var err error
 
-	baseURL := params.BaseURL
-	if baseURL == "" {
-		if !interactive {
-			return nil, fmt.Errorf("Non-interactive-mode is active. Please specify the TODOSRHT server URL via the --base-url option.")
-		}
-		// terminal prompt
-		baseURL, err = input.Prompt("TODOSRHT server URL", "URL", input.Required, input.IsURL)
+	var baseURL, trackerName string
+
+	// Try to parse URL if provided
+	if params.URL != "" {
+		baseURL, trackerName, err = parseTodoURL(params.URL)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to parse todo.sr.ht URL: %v", err)
 		}
 	}
 
-	trackerName := params.Project // params.Project is used to pass the tracker name
-	if trackerName == "" {
-		if !interactive {
-			return nil, fmt.Errorf("Non-interactive-mode is active. Please specify the TODOSRHT tracker name via the --tracker option.")
+	// If we couldn't extract from URL, use individual parameters
+	if baseURL == "" {
+		baseURL = params.BaseURL
+		if baseURL == "" {
+			if !interactive {
+				return nil, fmt.Errorf("Non-interactive-mode is active. Please specify the TODOSRHT server URL via the --base-url option or provide a full URL with --url.")
+			}
+			// terminal prompt
+			baseURL, err = input.Prompt("TODOSRHT server URL", "URL", input.Required, input.IsURL)
+			if err != nil {
+				return nil, err
+			}
 		}
-		trackerName, err = input.Prompt("TODOSRHT tracker name", "tracker", input.Required)
-		if err != nil {
-			return nil, err
+	}
+
+	if trackerName == "" {
+		trackerName = params.Project // params.Project is used to pass the tracker name
+		if trackerName == "" {
+			if !interactive {
+				return nil, fmt.Errorf("Non-interactive-mode is active. Please specify the TODOSRHT tracker name via the --tracker option or provide a full URL with --url.")
+			}
+			trackerName, err = input.Prompt("TODOSRHT tracker name", "tracker", input.Required)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -118,13 +172,30 @@ func (j *TodoSourceHut) Configure(repo *cache.RepoCache, params core.BridgeParam
 	fmt.Printf("Attempting to verify credentials...\n")
 	client := NewTodoSClient(context.TODO(), baseURL, tokenCred.Value)
 
-	// verify access to the tracker with credentials
-	fmt.Printf("Checking tracker ...\n")
+	// First check if tracker exists (without authentication)
+	fmt.Printf("Checking tracker existence ...\n")
+	publicClient := NewTodoSClient(context.TODO(), baseURL, "")
+	exists, err := publicClient.TrackerExists(context.TODO(), trackerName)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to check tracker existence: %v", err)
+	}
+	if !exists {
+		return nil, fmt.Errorf("Tracker %s doesn't exist on %s", trackerName, baseURL)
+	}
+
+	// Then verify access to the tracker with credentials
+	tokenPreview := ""
+	if len(tokenCred.Value) > 6 {
+		tokenPreview = tokenCred.Value[:6] + "..."
+	} else {
+		tokenPreview = tokenCred.Value
+	}
+	fmt.Printf("Verifying authentication credentials (token: %s) ...\n", tokenPreview)
 	_, err = client.GetTracker(context.TODO(), trackerName)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"Tracker %s doesn't exist on %s, or authentication credentials for (%s) are invalid",
-			trackerName, baseURL, login)
+			"Authentication credentials for (%s) are invalid or insufficient to access tracker %s.\nFor more details, set GIT_BUG_DEBUG=1 and try again",
+			login, trackerName)
 	}
 
 	// don't forget to store the now known valid token

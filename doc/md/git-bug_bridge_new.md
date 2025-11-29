@@ -65,6 +65,14 @@ git bug bridge new \
     --target=gitlab \
     --url=https://github.com/example-org/example-repo \
     --token=$TOKEN
+
+# For todo.sr.ht
+git bug bridge new \
+    --name=default \
+    --target=todosrht \
+    --url=https://todo.sr.ht/~owner/tracker-name \
+    --login=your-username \
+    --token=$TOKEN
 ```
 
 ### Options

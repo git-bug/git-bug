@@ -6,6 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/http/httputil"
+	"os"
+
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -18,13 +22,47 @@ type TodoSClient struct {
 	client  *http.Client
 }
 
+// debuggingTransport is a http.RoundTripper that prints out the request
+// and response details.
+type debuggingTransport struct {
+	base http.RoundTripper
+}
+
+func (t *debuggingTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	dump, err := httputil.DumpRequestOut(req, true)
+	if err != nil {
+		fmt.Printf("failed to dump request: %v\n", err)
+	} else {
+		fmt.Printf("--- Request ---\n%s\n", string(dump))
+	}
+
+	resp, err := t.base.RoundTrip(req)
+	if err != nil {
+		// Don't dump response on error, as resp might be nil
+		return nil, err
+	}
+
+	dump, err = httputil.DumpResponse(resp, true)
+	if err != nil {
+		fmt.Printf("failed to dump response: %v\n", err)
+	} else {
+		fmt.Printf("--- Response ---\n%s\n", string(dump))
+	}
+
+	return resp, nil
+}
+
 // NewTodoSClient creates a new GraphQL client for todo.sr.ht
 func NewTodoSClient(ctx context.Context, baseURL, token string) *TodoSClient {
+	var baseTransport http.RoundTripper = http.DefaultTransport
+	if os.Getenv("GIT_BUG_DEBUG") == "1" {
+		baseTransport = &debuggingTransport{base: baseTransport}
+	}
 	httpClient := &http.Client{
 		Timeout: 30 * time.Second,
 		Transport: &authTransport{
 			token: token,
-			base:  http.DefaultTransport,
+			base:  baseTransport,
 		},
 	}
 
@@ -280,6 +318,10 @@ func (t *Time) UnmarshalJSON(data []byte) error {
 	var str string
 	if err := json.Unmarshal(data, &str); err != nil {
 		return err
+	}
+	if str == "" {
+		*t = Time(time.Time{})
+		return nil
 	}
 
 	parsed, err := time.Parse(time.RFC3339, str)
@@ -682,6 +724,86 @@ func (c *TodoSClient) GetTracker(ctx context.Context, name string) (*Tracker, er
 	}
 
 	return result.Me.Tracker, nil
+}
+
+// TrackerExists checks if a tracker exists without requiring authentication
+func (c *TodoSClient) TrackerExists(ctx context.Context, name string) (bool, error) {
+	// Create a client without authentication for public access
+	publicClient := &http.Client{
+		Timeout: 30 * time.Second,
+		Transport: &publicTransport{
+			base: http.DefaultTransport,
+		},
+	}
+
+	reqBody := GraphQLRequest{
+		Query: getTrackerQuery,
+		Variables: map[string]interface{}{
+			"name": name,
+		},
+	}
+
+	jsonBody, err := json.Marshal(reqBody)
+	if err != nil {
+		return false, errors.Wrap(err, "failed to marshal request")
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", c.baseURL+"/query", bytes.NewBuffer(jsonBody))
+	if err != nil {
+		return false, errors.Wrap(err, "failed to create request")
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := publicClient.Do(req)
+	if err != nil {
+		return false, errors.Wrap(err, "failed to execute request")
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusUnauthorized {
+		// If we get unauthorized, the tracker might exist but requires auth
+		return true, nil
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return false, nil // Tracker likely doesn't exist
+	}
+
+	var response GraphQLResponse
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return false, errors.Wrap(err, "failed to decode response")
+	}
+
+	if len(response.Errors) > 0 {
+		// Check if the error indicates tracker doesn't exist
+		for _, err := range response.Errors {
+			if strings.Contains(err.Message, "not found") || strings.Contains(err.Message, "does not exist") {
+				return false, nil
+			}
+		}
+		return false, fmt.Errorf("GraphQL errors: %v", response.Errors)
+	}
+
+	var result struct {
+		Tracker *Tracker `json:"tracker"`
+	}
+
+	if err := json.Unmarshal(response.Data, &result); err != nil {
+		return false, errors.Wrap(err, "failed to unmarshal result")
+	}
+
+	return result.Tracker != nil, nil
+}
+
+// publicTransport adds only Content-Type header for public requests
+type publicTransport struct {
+	base http.RoundTripper
+}
+
+func (t *publicTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req.Header.Set("Content-Type", "application/json")
+	return t.base.RoundTrip(req)
 }
 
 // GetTickets fetches tickets from a tracker with pagination

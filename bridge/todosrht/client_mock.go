@@ -8,6 +8,7 @@ import (
 // MockClient is a mock implementation of the TodosrhtClient for testing purposes.
 type MockClient struct {
 	MockGetTracker         func(ctx context.Context, name string) (*Tracker, error)
+	MockTrackerExists      func(ctx context.Context, name string) (bool, error)
 	MockGetTickets         func(ctx context.Context, trackerID int, cursor *string) ([]Ticket, *string, error)
 	MockGetEvents          func(ctx context.Context, ticketID int, cursor *string) ([]Event, *string, error)
 	MockCreateTicket       func(ctx context.Context, trackerID int, input SubmitTicketInput) (*Ticket, error)
@@ -27,6 +28,13 @@ func (m *MockClient) GetTracker(ctx context.Context, name string) (*Tracker, err
 		return m.MockGetTracker(ctx, name)
 	}
 	return nil, fmt.Errorf("GetTracker not implemented")
+}
+
+func (m *MockClient) TrackerExists(ctx context.Context, name string) (bool, error) {
+	if m.MockTrackerExists != nil {
+		return m.MockTrackerExists(ctx, name)
+	}
+	return false, fmt.Errorf("TrackerExists not implemented")
 }
 func (m *MockClient) GetTickets(ctx context.Context, trackerID int, cursor *string) ([]Ticket, *string, error) {
 	if m.MockGetTickets != nil {
