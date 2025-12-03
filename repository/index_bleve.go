@@ -50,7 +50,7 @@ func openBleveIndex(path string) (*bleveIndex, error) {
 }
 
 func (b *bleveIndex) makeIndex() error {
-	err := os.MkdirAll(b.path, os.ModePerm)
+	err := os.MkdirAll(b.path, 0755)
 	if err != nil {
 		return err
 	}
