@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/go-git/go-billy/v5/util"
 
@@ -51,6 +52,9 @@ func LaunchEditor(repo repository.RepoCommonStorage, fileName string) (string, e
 	// bypass the interface but that's ok: we need that because we are communicating
 	// the absolute path to an external program
 	path := filepath.Join(repo.LocalStorage().Root(), fileName)
+	if !strings.HasPrefix(path, repo.LocalStorage().Root()) {
+		return "", fmt.Errorf("security: path traversal attempt")
+	}
 
 	cmd, err := startInlineCommand(editor, path)
 	if err != nil {
