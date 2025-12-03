@@ -129,8 +129,11 @@ func runWebUI(env *execenv.Env, opts webUIOptions) error {
 	router.PathPrefix("/").Handler(webui.NewHandler())
 
 	srv := &http.Server{
-		Addr:    addr,
-		Handler: router,
+		Addr:              addr,
+		Handler:           router,
+		ReadHeaderTimeout: 5 * time.Second,
+		WriteTimeout:      10 * time.Second,
+		IdleTimeout:       120 * time.Second,
 	}
 
 	done := make(chan bool)
