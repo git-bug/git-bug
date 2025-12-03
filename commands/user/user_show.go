@@ -35,7 +35,9 @@ func newUserShowCommand(env *execenv.Env) *cobra.Command {
 	fields := []string{"email", "humanId", "id", "lastModification", "lastModificationLamports", "login", "metadata", "name"}
 	flags.StringVarP(&options.fields, "field", "f", "",
 		"Select field to display. Valid values are ["+strings.Join(fields, ",")+"]")
-	cmd.RegisterFlagCompletionFunc("field", completion.From(fields))
+	if err := cmd.RegisterFlagCompletionFunc("field", completion.From(fields)); err != nil {
+		panic(err)
+	}
 
 	return cmd
 }
