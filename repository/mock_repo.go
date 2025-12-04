@@ -131,7 +131,7 @@ type mockRepoStorage struct {
 }
 
 func NewMockRepoStorage() *mockRepoStorage {
-	return &mockRepoStorage{localFs: billyLocalStorage{Filesystem: memfs.New()}}
+	return &mockRepoStorage{localFs: billyLocalStorage{Filesystem: NewLockedFilesystem(memfs.New())}}
 }
 
 func (m *mockRepoStorage) LocalStorage() LocalStorage {
