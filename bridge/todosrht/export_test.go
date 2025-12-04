@@ -69,6 +69,18 @@ func TestExporter(t *testing.T) {
 		MockGetLabels: func(ctx context.Context, trackerID int, cursor *string) (*LabelCursor, error) {
 			return &LabelCursor{Results: []Label{{Id: 1, Name: "bug"}}}, nil
 		},
+		MockCreateLabel: func(ctx context.Context, trackerID int, name, foregroundColor, backgroundColor string) (*Label, error) {
+			return &Label{Id: 2, Name: name, ForegroundColor: foregroundColor, BackgroundColor: backgroundColor}, nil
+		},
+		MockDeleteLabel: func(ctx context.Context, labelID int) (*Label, error) {
+			return &Label{Id: labelID, Name: "deleted-label"}, nil
+		},
+		MockAssignUser: func(ctx context.Context, trackerID, ticketID, userID int) (*Event, error) {
+			return &Event{Id: 999}, nil
+		},
+		MockUnassignUser: func(ctx context.Context, trackerID, ticketID, userID int) (*Event, error) {
+			return &Event{Id: 998}, nil
+		},
 	}
 
 	exporter := &todosrhtExporter{
@@ -136,4 +148,5 @@ func TestExporter(t *testing.T) {
 			assert.NoError(t, res.Err)
 		}
 	})
+
 }
