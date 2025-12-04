@@ -370,18 +370,28 @@ func (je *todosrhtExporter) exportBug(ctx context.Context, b *cache.BugCache, ou
 
 			// Add labels
 			for _, addedLabel := range opr.Added {
-				labelID, found := findLabelIDByName(allLabels, string(addedLabel))
+				labelName := strings.TrimSpace(string(addedLabel))
+				if labelName == "" {
+					out <- core.NewExportWarning(fmt.Errorf("skipping empty label name"), b.Id())
+					continue
+				}
+
+				labelID, found := findLabelIDByName(allLabels, labelName)
 				if !found {
 					// Create label if it doesn't exist
-					// SourceHut GraphQL API for creating labels is a mutation that returns a Label
-					// This would require a new mutation call if we want to create it on the fly.
-					// For now, we will report a warning if label not found.
-					out <- core.NewExportWarning(fmt.Errorf("label '%s' not found on SourceHut, cannot add", addedLabel), b.Id())
-					continue
+					newLabel, err := createTodoSRHTLabel(ctx, client, je.tracker.Id, labelName)
+					if err != nil {
+						out <- core.NewExportError(fmt.Errorf("failed to create label '%s': %w", labelName, err), b.Id())
+						return err
+					}
+					labelID = newLabel.Id
+					// Add to cache to avoid re-creation
+					allLabels = append(allLabels, *newLabel)
+					out <- core.NewExportWarning(fmt.Errorf("created new label '%s' on SourceHut", labelName), b.Id())
 				}
 				labelEvent, err := addTodoSRHTLabel(ctx, client, je.tracker.Id, bugTodoSourceHutID, labelID)
 				if err != nil {
-					out <- core.NewExportError(errors.Wrap(err, fmt.Sprintf("adding label '%s'", addedLabel)), b.Id())
+					out <- core.NewExportError(fmt.Errorf("failed to add label '%s' to ticket: %w", labelName, err), b.Id())
 					return err
 				}
 				// Use the last label event ID and time
@@ -391,14 +401,20 @@ func (je *todosrhtExporter) exportBug(ctx context.Context, b *cache.BugCache, ou
 
 			// Remove labels
 			for _, removedLabel := range opr.Removed {
-				labelID, found := findLabelIDByName(allLabels, string(removedLabel))
+				labelName := strings.TrimSpace(string(removedLabel))
+				if labelName == "" {
+					out <- core.NewExportWarning(fmt.Errorf("skipping empty label name"), b.Id())
+					continue
+				}
+
+				labelID, found := findLabelIDByName(allLabels, labelName)
 				if !found {
-					out <- core.NewExportWarning(fmt.Errorf("label '%s' not found on SourceHut, cannot remove", removedLabel), b.Id())
+					out <- core.NewExportWarning(fmt.Errorf("label '%s' not found on SourceHut, cannot remove", labelName), b.Id())
 					continue
 				}
 				labelEvent, err := removeTodoSRHTLabel(ctx, client, je.tracker.Id, bugTodoSourceHutID, labelID)
 				if err != nil {
-					out <- core.NewExportError(errors.Wrap(err, fmt.Sprintf("removing label '%s'", removedLabel)), b.Id())
+					out <- core.NewExportError(fmt.Errorf("failed to remove label '%s' from ticket: %w", labelName, err), b.Id())
 					return err
 				}
 				// Use the last label event ID and time
@@ -492,6 +508,28 @@ func addTodoSRHTLabel(ctx context.Context, client TodosrhtClient, trackerID, tic
 
 func removeTodoSRHTLabel(ctx context.Context, client TodosrhtClient, trackerID, ticketID, labelID int) (*Event, error) {
 	return client.RemoveLabel(ctx, trackerID, ticketID, labelID)
+}
+
+func createTodoSRHTLabel(ctx context.Context, client TodosrhtClient, trackerID int, name string) (*Label, error) {
+	// Validate label name
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return nil, fmt.Errorf("label name cannot be empty")
+	}
+	if len(name) > 50 {
+		return nil, fmt.Errorf("label name too long (max 50 characters)")
+	}
+
+	// Use default colors if not specified
+	foregroundColor := "#ffffff" // white text
+	backgroundColor := "#000000" // black background
+
+	label, err := client.CreateLabel(ctx, trackerID, name, foregroundColor, backgroundColor)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create label '%s': %w", name, err)
+	}
+
+	return label, nil
 }
 
 func (je *todosrhtExporter) getAllTrackerLabels(ctx context.Context, client TodosrhtClient) ([]Label, error) {
