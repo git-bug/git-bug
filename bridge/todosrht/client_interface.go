@@ -17,4 +17,8 @@ type TodosrhtClient interface {
 	AddLabel(ctx context.Context, trackerID, ticketID, labelID int) (*Event, error)
 	RemoveLabel(ctx context.Context, trackerID, ticketID, labelID int) (*Event, error)
 	GetLabels(ctx context.Context, trackerID int, cursor *string) (*LabelCursor, error)
+	CreateLabel(ctx context.Context, trackerID int, name, foregroundColor, backgroundColor string) (*Label, error)
+	DeleteLabel(ctx context.Context, labelID int) (*Label, error)
+	AssignUser(ctx context.Context, trackerID, ticketID, userID int) (*Event, error)
+	UnassignUser(ctx context.Context, trackerID, ticketID, userID int) (*Event, error)
 }
