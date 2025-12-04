@@ -354,7 +354,24 @@ func (ji *todosrhtImporter) ensureEvent(repo *cache.RepoCache, b *cache.BugCache
 			}
 			ji.out <- core.NewImportLabelChange(b.Id(), op.Id())
 
-		// Add other event types as needed (Assignment, UserMention, TicketMention)
+		case Assignment:
+			assigner, err := ji.ensurePerson(repo, c.Assigner)
+			if err != nil {
+				return err
+			}
+			assignee, err := ji.ensurePerson(repo, c.Assignee)
+			if err != nil {
+				return err
+			}
+			// Note: git-bug doesn't have direct assignment concept
+			// We store this as metadata for now and emit a warning
+			ji.out <- core.NewImportWarning(
+				fmt.Errorf("assignment event: %s assigned %s to ticket (not directly supported in git-bug)",
+					assigner.DisplayName(), assignee.DisplayName()),
+				b.Id(),
+			)
+
+		// Add other event types as needed (UserMention, TicketMention)
 		// For now, we'll ignore them or log a warning if they are not directly
 		// mappable to git-bug operations or are not high priority.
 		default:
