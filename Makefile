@@ -44,8 +44,8 @@ secure: secure-practices secure-vulnerabilities
 
 .PHONY: secure-practices
 secure-practices:
-	go run github.com/praetorian-inc/gokart scan
-	# eventually go run github.com/securego/gosec/v2/cmd/gosec@latest ./...
+	go run github.com/securego/gosec/v2/cmd/gosec@latest ./...
+	# eventually go run github.com/praetorian-inc/gokart scan
 
 .PHONY: secure-vulnerabilities
 secure-vulnerabilities:
