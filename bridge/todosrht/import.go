@@ -68,9 +68,14 @@ func (ji *todosrhtImporter) ImportAll(ctx context.Context, repo *cache.RepoCache
 			return
 		}
 
+		if tracker == nil {
+			ji.out <- core.NewImportError(fmt.Errorf("tracker '%s' not found", trackerName), "")
+			return
+		}
+
 		var cursor *string
 		for {
-			tickets, nextCursor, err := ji.client.GetTickets(ctx, tracker.Id, cursor)
+			tickets, nextCursor, err := ji.client.GetTickets(ctx, tracker.Name, cursor)
 			if err != nil {
 				ji.out <- core.NewImportError(fmt.Errorf("failed to get tickets: %w", err), "")
 				return
@@ -193,7 +198,12 @@ func (ji *todosrhtImporter) ensurePerson(repo *cache.RepoCache, entities Entity)
 
 // Create a bug.Bug based from a TODOSRHT ticket
 func (ji *todosrhtImporter) ensureIssue(repo *cache.RepoCache, ticket Ticket) (*cache.BugCache, error) {
-	author, err := ji.ensurePerson(repo, ticket.Submitter)
+	submitter, err := ticket.GetSubmitter()
+	if err != nil {
+		ji.out <- core.NewImportError(fmt.Errorf("failed to parse submitter for ticket %d: %w", ticket.Id, err), "")
+		return nil, err
+	}
+	author, err := ji.ensurePerson(repo, submitter)
 	if err != nil {
 		return nil, err
 	}
