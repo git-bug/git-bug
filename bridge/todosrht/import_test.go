@@ -2,6 +2,7 @@ package todosrht
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -57,14 +58,19 @@ func TestImporter(t *testing.T) {
 		userEntity := User{Id: 10, CanonicalName: "test-user", Username: "test-user", Email: "test@example.com"}
 		submitterEntity := User{Id: 11, CanonicalName: "submitter", Username: "submitter", Email: "submitter@example.com"}
 
-		mockClient.MockGetTickets = func(ctx context.Context, trackerID int, cursor *string) ([]Ticket, *string, error) {
-			assert.Equal(t, 1, trackerID)
+		// Convert submitter to JSON raw message
+		submitterJSON, err := json.Marshal(submitterEntity)
+		require.NoError(t, err)
+		submitterRaw := json.RawMessage(submitterJSON)
+
+		mockClient.MockGetTickets = func(ctx context.Context, trackerName string, cursor *string) ([]Ticket, *string, error) {
+			assert.Equal(t, conf[confKeyTrackerName], trackerName)
 			return []Ticket{
 				{
 					Id:        101,
 					Created:   Time(time.Now().Add(-24 * time.Hour)),
 					Updated:   Time(time.Now()),
-					Submitter: submitterEntity,
+					Submitter: &submitterRaw,
 					Ref:       "~test-user/test-tracker/101",
 					Subject:   "Test Ticket Subject",
 					Body:      "Test Ticket Body",
@@ -141,13 +147,18 @@ func TestImporter(t *testing.T) {
 		userEntity := User{Id: 10, CanonicalName: "test-user", Username: "test-user", Email: "test@example.com"}
 		submitterEntity := User{Id: 11, CanonicalName: "submitter", Username: "submitter", Email: "submitter@example.com"}
 
-		mockClient.MockGetTickets = func(ctx context.Context, trackerID int, cursor *string) ([]Ticket, *string, error) {
+		// Convert submitter to JSON raw message
+		submitterJSON2, err := json.Marshal(submitterEntity)
+		require.NoError(t, err)
+		submitterRaw2 := json.RawMessage(submitterJSON2)
+
+		mockClient.MockGetTickets = func(ctx context.Context, trackerName string, cursor *string) ([]Ticket, *string, error) {
 			return []Ticket{
 				{
 					Id:        102,
 					Created:   Time(time.Now().Add(-48 * time.Hour)),
 					Updated:   Time(time.Now()),
-					Submitter: submitterEntity,
+					Submitter: &submitterRaw2,
 					Ref:       "~test-user/test-tracker/102",
 					Subject:   "Label Test Ticket",
 					Body:      "Body",
