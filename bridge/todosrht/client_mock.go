@@ -18,6 +18,10 @@ type MockClient struct {
 	MockAddLabel           func(ctx context.Context, trackerID, ticketID, labelID int) (*Event, error)
 	MockRemoveLabel        func(ctx context.Context, trackerID, ticketID, labelID int) (*Event, error)
 	MockGetLabels          func(ctx context.Context, trackerID int, cursor *string) (*LabelCursor, error)
+	MockCreateLabel        func(ctx context.Context, trackerID int, name, foregroundColor, backgroundColor string) (*Label, error)
+	MockDeleteLabel        func(ctx context.Context, labelID int) (*Label, error)
+	MockAssignUser         func(ctx context.Context, trackerID, ticketID, userID int) (*Event, error)
+	MockUnassignUser       func(ctx context.Context, trackerID, ticketID, userID int) (*Event, error)
 }
 
 // Ensure MockClient implements the TodosrhtClient interface
@@ -89,4 +93,32 @@ func (m *MockClient) GetLabels(ctx context.Context, trackerID int, cursor *strin
 		return m.MockGetLabels(ctx, trackerID, cursor)
 	}
 	return nil, fmt.Errorf("GetLabels not implemented")
+}
+
+func (m *MockClient) CreateLabel(ctx context.Context, trackerID int, name, foregroundColor, backgroundColor string) (*Label, error) {
+	if m.MockCreateLabel != nil {
+		return m.MockCreateLabel(ctx, trackerID, name, foregroundColor, backgroundColor)
+	}
+	return nil, fmt.Errorf("CreateLabel not implemented")
+}
+
+func (m *MockClient) DeleteLabel(ctx context.Context, labelID int) (*Label, error) {
+	if m.MockDeleteLabel != nil {
+		return m.MockDeleteLabel(ctx, labelID)
+	}
+	return nil, fmt.Errorf("DeleteLabel not implemented")
+}
+
+func (m *MockClient) AssignUser(ctx context.Context, trackerID, ticketID, userID int) (*Event, error) {
+	if m.MockAssignUser != nil {
+		return m.MockAssignUser(ctx, trackerID, ticketID, userID)
+	}
+	return nil, fmt.Errorf("AssignUser not implemented")
+}
+
+func (m *MockClient) UnassignUser(ctx context.Context, trackerID, ticketID, userID int) (*Event, error) {
+	if m.MockUnassignUser != nil {
+		return m.MockUnassignUser(ctx, trackerID, ticketID, userID)
+	}
+	return nil, fmt.Errorf("UnassignUser not implemented")
 }
