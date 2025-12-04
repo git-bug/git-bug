@@ -127,7 +127,7 @@ type Ticket struct {
 	Id           int              `json:"id"`
 	Created      Time             `json:"created"`
 	Updated      Time             `json:"updated"`
-	Submitter    Entity           `json:"submitter"`
+	Submitter    *json.RawMessage `json:"submitter"`
 	Tracker      Tracker          `json:"tracker"`
 	Ref          string           `json:"ref"`
 	Subject      string           `json:"subject"`
@@ -341,6 +341,27 @@ func (t Time) Unix() int64 {
 	return time.Time(t).Unix()
 }
 
+// GetSubmitter unmarshals the submitter field into the appropriate Entity type
+func (t *Ticket) GetSubmitter() (Entity, error) {
+	if t.Submitter == nil {
+		return nil, nil
+	}
+
+	// Try to unmarshal as User first
+	var user User
+	if err := json.Unmarshal(*t.Submitter, &user); err == nil {
+		return user, nil
+	}
+
+	// Try to unmarshal as ExternalUser
+	var externalUser ExternalUser
+	if err := json.Unmarshal(*t.Submitter, &externalUser); err == nil {
+		return externalUser, nil
+	}
+
+	return nil, fmt.Errorf("unknown submitter type: %s", string(*t.Submitter))
+}
+
 // GraphQL request/response structures
 type GraphQLRequest struct {
 	Query     string                 `json:"query"`
@@ -358,65 +379,69 @@ type GraphQLError struct {
 
 // GraphQL queries
 const getTrackerQuery = `
-	query GetTracker($name: String!) {
+	query GetTracker {
 		me {
-			tracker(name: $name) {
-				id
-				created
-				updated
-				name
-				description
-				visibility
+			trackers {
+				results {
+					id
+					created
+					updated
+					name
+					description
+					visibility
+				}
 			}
 		}
 	}
 `
 
 const getTicketsQuery = `
-	query GetTickets($trackerId: Int!, $cursor: Cursor) {
-		tracker(id: $trackerId) {
-			tickets(cursor: $cursor) {
-				results {
-					id
-					created
-					updated
-					subject
-					body
-					status
-					resolution
-					ref
-					submitter {
-						... on User {
-							canonicalName
-							username
-							email
-						}
-						... on ExternalUser {
-							canonicalName
-							externalId
-							externalUrl
-						}
-					}
-					labels {
+	query GetTickets($trackerName: String!, $cursor: Cursor) {
+		me {
+			tracker(name: $trackerName) {
+				tickets(cursor: $cursor) {
+					results {
 						id
-						name
-						backgroundColor
-						foregroundColor
-					}
-					assignees {
-						... on User {
-							canonicalName
-							username
-							email
+						created
+						updated
+						subject
+						body
+						status
+						resolution
+						ref
+						submitter {
+							... on User {
+								canonicalName
+								username
+								email
+							}
+							... on ExternalUser {
+								canonicalName
+								externalId
+								externalUrl
+							}
 						}
+						labels {
+							id
+							name
+							backgroundColor
+							foregroundColor
+						}
+						assignees {
+							... on User {
+								canonicalName
+								username
+								email
+							}
 						... on ExternalUser {
 							canonicalName
 							externalId
 							externalUrl
 						}
 					}
+					}
+					cursor
 				}
-				cursor
 			}
 		}
 	}
@@ -710,20 +735,35 @@ var _ TodosrhtClient = &TodoSClient{}
 func (c *TodoSClient) GetTracker(ctx context.Context, name string) (*Tracker, error) {
 	var result struct {
 		Me struct {
-			Tracker *Tracker `json:"tracker"`
+			Trackers struct {
+				Results []Tracker `json:"results"`
+			} `json:"trackers"`
 		} `json:"me"`
 	}
 
-	variables := map[string]interface{}{
-		"name": name,
-	}
-
-	err := c.executeRequest(ctx, getTrackerQuery, variables, &result)
+	err := c.executeRequest(ctx, getTrackerQuery, nil, &result)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch tracker")
 	}
 
-	return result.Me.Tracker, nil
+	// Extract just the tracker name if it contains owner prefix
+	trackerName := name
+	if strings.Contains(name, "/") {
+		parts := strings.SplitN(name, "/", 2)
+		if len(parts) == 2 {
+			trackerName = parts[1]
+		}
+	}
+
+	// Find the tracker by name
+	for _, tracker := range result.Me.Trackers.Results {
+		if tracker.Name == trackerName {
+			return &tracker, nil
+		}
+	}
+
+	// Not found
+	return nil, nil
 }
 
 // TrackerExists checks if a tracker exists without requiring authentication
@@ -807,16 +847,18 @@ func (t *publicTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 }
 
 // GetTickets fetches tickets from a tracker with pagination
-func (c *TodoSClient) GetTickets(ctx context.Context, trackerID int, cursor *string) ([]Ticket, *string, error) {
+func (c *TodoSClient) GetTickets(ctx context.Context, trackerName string, cursor *string) ([]Ticket, *string, error) {
 	var result struct {
-		Tracker struct {
-			Tickets TicketCursor `json:"tickets"`
-		} `json:"tracker"`
+		Me struct {
+			Tracker struct {
+				Tickets TicketCursor `json:"tickets"`
+			} `json:"tracker"`
+		} `json:"me"`
 	}
 
 	variables := map[string]interface{}{
-		"trackerId": trackerID,
-		"cursor":    cursor,
+		"trackerName": trackerName,
+		"cursor":      cursor,
 	}
 
 	err := c.executeRequest(ctx, getTicketsQuery, variables, &result)
@@ -824,7 +866,7 @@ func (c *TodoSClient) GetTickets(ctx context.Context, trackerID int, cursor *str
 		return nil, nil, errors.Wrap(err, "failed to fetch tickets")
 	}
 
-	return result.Tracker.Tickets.Results, result.Tracker.Tickets.Cursor, nil
+	return result.Me.Tracker.Tickets.Results, result.Me.Tracker.Tickets.Cursor, nil
 }
 
 // GetTicket fetches a specific ticket

@@ -51,7 +51,7 @@ func parseTodoURL(fullURL string) (baseURL, trackerName string, err error) {
 		return "", "", fmt.Errorf("invalid owner format, expected ~owner")
 	}
 
-	trackerName = path // Use the full path ~owner/tracker-name
+	trackerName = parts[1] // Use only the tracker-name part
 
 	return baseURL, trackerName, nil
 }

@@ -9,7 +9,7 @@ import (
 type MockClient struct {
 	MockGetTracker         func(ctx context.Context, name string) (*Tracker, error)
 	MockTrackerExists      func(ctx context.Context, name string) (bool, error)
-	MockGetTickets         func(ctx context.Context, trackerID int, cursor *string) ([]Ticket, *string, error)
+	MockGetTickets         func(ctx context.Context, trackerName string, cursor *string) ([]Ticket, *string, error)
 	MockGetEvents          func(ctx context.Context, ticketID int, cursor *string) ([]Event, *string, error)
 	MockCreateTicket       func(ctx context.Context, trackerID int, input SubmitTicketInput) (*Ticket, error)
 	MockCreateComment      func(ctx context.Context, trackerID, ticketID int, input SubmitCommentInput) (*Event, error)
@@ -36,9 +36,9 @@ func (m *MockClient) TrackerExists(ctx context.Context, name string) (bool, erro
 	}
 	return false, fmt.Errorf("TrackerExists not implemented")
 }
-func (m *MockClient) GetTickets(ctx context.Context, trackerID int, cursor *string) ([]Ticket, *string, error) {
+func (m *MockClient) GetTickets(ctx context.Context, trackerName string, cursor *string) ([]Ticket, *string, error) {
 	if m.MockGetTickets != nil {
-		return m.MockGetTickets(ctx, trackerID, cursor)
+		return m.MockGetTickets(ctx, trackerName, cursor)
 	}
 	return nil, nil, fmt.Errorf("GetTickets not implemented")
 }
