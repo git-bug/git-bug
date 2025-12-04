@@ -103,7 +103,7 @@ type User struct {
 	Bio           string `json:"bio"`
 }
 
-func (u User) GetCanonicalName() string { return u.CanonicalName }
+func (u *User) GetCanonicalName() string { return u.CanonicalName }
 
 type ExternalUser struct {
 	CanonicalName string `json:"canonicalName"`
@@ -111,32 +111,40 @@ type ExternalUser struct {
 	ExternalUrl   string `json:"externalUrl"`
 }
 
-func (u ExternalUser) GetCanonicalName() string { return u.CanonicalName }
+func (u *ExternalUser) GetCanonicalName() string { return u.CanonicalName }
+
+type EmailAddress struct {
+	CanonicalName string `json:"canonicalName"`
+	Mailbox       string `json:"mailbox"`
+	Name          string `json:"name"`
+}
+
+func (e *EmailAddress) GetCanonicalName() string { return e.CanonicalName }
 
 type Tracker struct {
-	Id          int        `json:"id"`
-	Created     Time       `json:"created"`
-	Updated     Time       `json:"updated"`
-	Owner       Entity     `json:"owner"`
-	Name        string     `json:"name"`
-	Description string     `json:"description"`
-	Visibility  Visibility `json:"visibility"`
+	Id          int              `json:"id"`
+	Created     Time             `json:"created"`
+	Updated     Time             `json:"updated"`
+	Owner       *json.RawMessage `json:"owner"`
+	Name        string           `json:"name"`
+	Description string           `json:"description"`
+	Visibility  Visibility       `json:"visibility"`
 }
 
 type Ticket struct {
-	Id           int              `json:"id"`
-	Created      Time             `json:"created"`
-	Updated      Time             `json:"updated"`
-	Submitter    *json.RawMessage `json:"submitter"`
-	Tracker      Tracker          `json:"tracker"`
-	Ref          string           `json:"ref"`
-	Subject      string           `json:"subject"`
-	Body         string           `json:"body"`
-	Status       TicketStatus     `json:"status"`
-	Resolution   TicketResolution `json:"resolution"`
-	Authenticity Authenticity     `json:"authenticity"`
-	Labels       []Label          `json:"labels"`
-	Assignees    []Entity         `json:"assignees"`
+	Id           int               `json:"id"`
+	Created      Time              `json:"created"`
+	Updated      Time              `json:"updated"`
+	Submitter    *json.RawMessage  `json:"submitter"`
+	Tracker      Tracker           `json:"tracker"`
+	Ref          string            `json:"ref"`
+	Subject      string            `json:"subject"`
+	Body         string            `json:"body"`
+	Status       TicketStatus      `json:"status"`
+	Resolution   TicketResolution  `json:"resolution"`
+	Authenticity Authenticity      `json:"authenticity"`
+	Labels       []Label           `json:"labels"`
+	Assignees    []json.RawMessage `json:"assignees"`
 }
 
 type Label struct {
@@ -149,91 +157,76 @@ type Label struct {
 }
 
 type Event struct {
-	Id      int           `json:"id"`
-	Created Time          `json:"created"`
-	Changes []EventDetail `json:"changes"`
-	Ticket  Ticket        `json:"ticket"`
+	Id      int               `json:"id"`
+	Created Time              `json:"created"`
+	Changes []json.RawMessage `json:"changes"`
+	Ticket  Ticket            `json:"ticket"`
 }
 
 // Event detail types
 type EventDetail interface {
 	GetEventType() EventType
-	GetTicket() Ticket
 }
 
 type Created struct {
-	EventTypeVal EventType `json:"eventType"`
-	TicketVal    Ticket    `json:"ticket"`
-	Author       Entity    `json:"author"`
+	EventTypeVal EventType        `json:"eventType"`
+	Author       *json.RawMessage `json:"author"`
 }
 
-func (c Created) GetEventType() EventType { return c.EventTypeVal }
-func (c Created) GetTicket() Ticket       { return c.TicketVal }
+func (c *Created) GetEventType() EventType { return c.EventTypeVal }
 
 type Assignment struct {
-	EventTypeVal EventType `json:"eventType"`
-	TicketVal    Ticket    `json:"ticket"`
-	Assigner     Entity    `json:"assigner"`
-	Assignee     Entity    `json:"assignee"`
+	EventTypeVal EventType        `json:"eventType"`
+	Assigner     *json.RawMessage `json:"assigner"`
+	Assignee     *json.RawMessage `json:"assignee"`
 }
 
-func (a Assignment) GetEventType() EventType { return a.EventTypeVal }
-func (a Assignment) GetTicket() Ticket       { return a.TicketVal }
+func (a *Assignment) GetEventType() EventType { return a.EventTypeVal }
 
 type Comment struct {
-	EventTypeVal EventType    `json:"eventType"`
-	TicketVal    Ticket       `json:"ticket"`
-	Author       Entity       `json:"author"`
-	Text         string       `json:"text"`
-	Authenticity Authenticity `json:"authenticity"`
-	SupersededBy *Comment     `json:"supersededBy"`
+	EventTypeVal EventType        `json:"eventType"`
+	Author       *json.RawMessage `json:"author"`
+	Text         string           `json:"text"`
+	Authenticity Authenticity     `json:"authenticity"`
+	SupersededBy *Comment         `json:"supersededBy"`
 }
 
-func (c Comment) GetEventType() EventType { return c.EventTypeVal }
-func (c Comment) GetTicket() Ticket       { return c.TicketVal }
+func (c *Comment) GetEventType() EventType { return c.EventTypeVal }
 
 type LabelUpdate struct {
-	EventTypeVal EventType `json:"eventType"`
-	TicketVal    Ticket    `json:"ticket"`
-	Labeler      Entity    `json:"labeler"`
-	Label        Label     `json:"label"`
+	EventTypeVal EventType        `json:"eventType"`
+	Labeler      *json.RawMessage `json:"labeler"`
+	Label        Label            `json:"label"`
 }
 
-func (l LabelUpdate) GetEventType() EventType { return l.EventTypeVal }
-func (l LabelUpdate) GetTicket() Ticket       { return l.TicketVal }
+func (l *LabelUpdate) GetEventType() EventType { return l.EventTypeVal }
 
 type StatusChange struct {
 	EventTypeVal  EventType        `json:"eventType"`
-	TicketVal     Ticket           `json:"ticket"`
-	Editor        Entity           `json:"editor"`
+	Editor        *json.RawMessage `json:"editor"`
 	OldStatus     TicketStatus     `json:"oldStatus"`
 	NewStatus     TicketStatus     `json:"newStatus"`
 	OldResolution TicketResolution `json:"oldResolution"`
 	NewResolution TicketResolution `json:"newResolution"`
 }
 
-func (s StatusChange) GetEventType() EventType { return s.EventTypeVal }
-func (s StatusChange) GetTicket() Ticket       { return s.TicketVal }
+func (s *StatusChange) GetEventType() EventType { return s.EventTypeVal }
 
 type UserMention struct {
-	EventTypeVal EventType `json:"eventType"`
-	TicketVal    Ticket    `json:"ticket"`
-	Author       Entity    `json:"author"`
-	Mentioned    Entity    `json:"mentioned"`
+	EventTypeVal EventType        `json:"eventType"`
+	Author       *json.RawMessage `json:"author"`
+	Mentioned    *json.RawMessage `json:"mentioned"`
 }
 
-func (u UserMention) GetEventType() EventType { return u.EventTypeVal }
-func (u UserMention) GetTicket() Ticket       { return u.TicketVal }
+func (u *UserMention) GetEventType() EventType { return u.EventTypeVal }
 
 type TicketMention struct {
-	EventTypeVal EventType `json:"eventType"`
-	TicketVal    Ticket    `json:"ticket"`
-	Author       Entity    `json:"author"`
-	Mentioned    Ticket    `json:"mentioned"`
+	EventTypeVal EventType        `json:"eventType"`
+	Author       *json.RawMessage `json:"author"`
+	Mentioned    Ticket           `json:"mentioned"`
 }
 
-func (t TicketMention) GetEventType() EventType { return t.EventTypeVal }
-func (t TicketMention) GetTicket() Ticket       { return t.TicketVal }
+func (t *TicketMention) GetEventType() EventType { return t.EventTypeVal }
 
 // Enums
 type Visibility string
@@ -341,26 +334,93 @@ func (t Time) Unix() int64 {
 	return time.Time(t).Unix()
 }
 
+type typeName struct {
+	TypeName string `json:"__typename"`
+}
+
 // GetSubmitter unmarshals the submitter field into the appropriate Entity type
 func (t *Ticket) GetSubmitter() (Entity, error) {
-	if t.Submitter == nil {
+	return UnmarshalEntity(t.Submitter)
+}
+
+func (t *Ticket) GetAssignees() ([]Entity, error) {
+	var assignees []Entity
+	for _, raw := range t.Assignees {
+		assignee, err := UnmarshalEntity(&raw)
+		if err != nil {
+			return nil, err
+		}
+		assignees = append(assignees, assignee)
+	}
+	return assignees, nil
+}
+
+func UnmarshalEntity(raw *json.RawMessage) (Entity, error) {
+	if raw == nil {
 		return nil, nil
 	}
 
-	// Try to unmarshal as User first
-	var user User
-	if err := json.Unmarshal(*t.Submitter, &user); err == nil {
-		return user, nil
+	var tn typeName
+	if err := json.Unmarshal(*raw, &tn); err != nil {
+		return nil, errors.Wrap(err, "failed to unmarshal __typename for entity")
 	}
 
-	// Try to unmarshal as ExternalUser
-	var externalUser ExternalUser
-	if err := json.Unmarshal(*t.Submitter, &externalUser); err == nil {
-		return externalUser, nil
+	var entity Entity
+	switch tn.TypeName {
+	case "User":
+		entity = &User{}
+	case "ExternalUser":
+		entity = &ExternalUser{}
+	case "EmailAddress":
+		entity = &EmailAddress{}
+	default:
+		// Gracefully handle unknown entity types
+		return nil, nil
 	}
 
-	return nil, fmt.Errorf("unknown submitter type: %s", string(*t.Submitter))
+	if err := json.Unmarshal(*raw, entity); err != nil {
+		return nil, errors.Wrapf(err, "failed to unmarshal entity of type %s", tn.TypeName)
+	}
+
+	return entity, nil
 }
+
+func (e *Event) GetChanges() ([]EventDetail, error) {
+	var changes []EventDetail
+	for _, raw := range e.Changes {
+		var tn typeName
+		if err := json.Unmarshal(raw, &tn); err != nil {
+			return nil, errors.Wrap(err, "failed to unmarshal __typename for event change")
+		}
+
+		var change EventDetail
+		switch tn.TypeName {
+		case "Created":
+			change = &Created{}
+		case "Assignment":
+			change = &Assignment{}
+		case "Comment":
+			change = &Comment{}
+		case "LabelUpdate":
+			change = &LabelUpdate{}
+		case "StatusChange":
+			change = &StatusChange{}
+		case "UserMention":
+			change = &UserMention{}
+		case "TicketMention":
+			change = &TicketMention{}
+		default:
+			// Gracefully handle unknown event types
+			continue
+		}
+		if err := json.Unmarshal(raw, change); err != nil {
+			return nil, errors.Wrapf(err, "failed to unmarshal change of type %s", tn.TypeName)
+		}
+		changes = append(changes, change)
+	}
+	return changes, nil
+}
+
 
 // GraphQL request/response structures
 type GraphQLRequest struct {
@@ -421,6 +481,7 @@ const getTicketsQuery = `
 						resolution
 						ref
 						submitter {
+							__typename
 							... on User {
 								canonicalName
 								username
@@ -431,6 +492,11 @@ const getTicketsQuery = `
 								externalId
 								externalUrl
 							}
+							... on EmailAddress {
+								canonicalName
+								mailbox
+								name
+							}
 						}
 						labels {
 							id
@@ -439,17 +505,23 @@ const getTicketsQuery = `
 							foregroundColor
 						}
 						assignees {
+							__typename
 							... on User {
 								canonicalName
 								username
 								email
 							}
-						... on ExternalUser {
-							canonicalName
-							externalId
-							externalUrl
+							... on ExternalUser {
+								canonicalName
+								externalId
+								externalUrl
+							}
+							... on EmailAddress {
+								canonicalName
+								mailbox
+								name
+							}
 						}
-					}
 					}
 					cursor
 				}
@@ -470,6 +542,7 @@ const getTicketQuery = `
 			resolution
 			ref
 			submitter {
+				__typename
 				... on User {
 					canonicalName
 					username
@@ -479,6 +552,11 @@ const getTicketQuery = `
 					canonicalName
 					externalId
 					externalUrl
+				}
+				... on EmailAddress {
+					canonicalName
+					mailbox
+					name
 				}
 			}
 			labels {
@@ -488,6 +566,7 @@ const getTicketQuery = `
 				foregroundColor
 			}
 			assignees {
+				__typename
 				... on User {
 					canonicalName
 					username
@@ -498,95 +577,230 @@ const getTicketQuery = `
 					externalId
 					externalUrl
 				}
+				... on EmailAddress {
+					canonicalName
+					mailbox
+					name
+				}
 			}
 		}
 	}
 `
 
 const getEventsQuery = `
-	query GetEvents($ticketId: Int!, $cursor: Cursor) {
-		ticket(id: $ticketId) {
-			events(cursor: $cursor) {
-				results {
-					id
-					created
-					changes {
-						__typename
-						... on Created {
-							eventType
-							author {
-								... on User {
-									canonicalName
-									username
-									email
+	query GetEvents($trackerName: String!, $ticketId: Int!, $cursor: Cursor) {
+		me {
+			tracker(name: $trackerName) {
+				ticket(id: $ticketId) {
+					events(cursor: $cursor) {
+						results {
+							id
+							created
+							changes {
+								__typename
+								... on Created {
+									eventType
+									author {
+										__typename
+										... on User {
+											canonicalName
+											username
+											email
+										}
+									... on ExternalUser {
+											canonicalName
+											externalId
+											externalUrl
+										}
+									... on EmailAddress {
+											canonicalName
+											mailbox
+											name
+										}
 								}
-								... on ExternalUser {
-									canonicalName
-									externalId
-									externalUrl
+								}
+							... on Comment {
+								eventType
+								text
+								authenticity
+								author {
+									__typename
+									... on User {
+										canonicalName
+										username
+										email
+									}
+									... on ExternalUser {
+										canonicalName
+										externalId
+										externalUrl
+									}
+									... on EmailAddress {
+										canonicalName
+										mailbox
+										name
+									}
+								}
+								}
+							... on StatusChange {
+								eventType
+								oldStatus
+								newStatus
+								oldResolution
+								newResolution
+								editor {
+									__typename
+									... on User {
+										canonicalName
+										username
+										email
+									}
+									... on ExternalUser {
+										canonicalName
+										externalId
+										externalUrl
+									}
+									... on EmailAddress {
+										canonicalName
+										mailbox
+										name
+									}
+								}
+								}
+							... on LabelUpdate {
+								eventType
+								label {
+									id
+									name
+									backgroundColor
+									foregroundColor
+								}
+								labeler {
+									__typename
+									... on User {
+										canonicalName
+										username
+										email
+									}
+									... on ExternalUser {
+										canonicalName
+										externalId
+										externalUrl
+									}
+									... on EmailAddress {
+										canonicalName
+										mailbox
+										name
+									}
+								}
+								}
+							... on Assignment {
+								eventType
+								assigner {
+									__typename
+									... on User {
+										canonicalName
+										username
+										email
+									}
+									... on ExternalUser {
+										canonicalName
+										externalId
+										externalUrl
+									}
+									... on EmailAddress {
+										canonicalName
+										mailbox
+										name
+									}
+								}
+								assignee {
+									__typename
+									... on User {
+										canonicalName
+										username
+										email
+									}
+									... on ExternalUser {
+										canonicalName
+										externalId
+										externalUrl
+									}
+									... on EmailAddress {
+										canonicalName
+										mailbox
+										name
+									}
+								}
+							}
+							... on UserMention {
+								eventType
+								author {
+									__typename
+									... on User {
+										canonicalName
+										username
+										email
+									}
+									... on ExternalUser {
+										canonicalName
+										externalId
+										externalUrl
+									}
+									... on EmailAddress {
+										canonicalName
+										mailbox
+										name
+									}
+								}
+								mentioned {
+									__typename
+									... on User {
+										canonicalName
+										username
+										email
+									}
+									... on ExternalUser {
+										canonicalName
+										externalId
+										externalUrl
+									}
+									... on EmailAddress {
+										canonicalName
+										mailbox
+										name
+									}
+								}
+							}
+							... on TicketMention {
+								eventType
+								author {
+									__typename
+									... on User {
+										canonicalName
+										username
+										email
+									}
+									... on ExternalUser {
+										canonicalName
+										externalId
+										externalUrl
+									}
+									... on EmailAddress {
+										canonicalName
+										mailbox
+										name
+									}
+								}
+								mentioned {
+									id
+									subject
 								}
 							}
 						}
-						... on Comment {
-							eventType
-							text
-							authenticity
-							author {
-								... on User {
-									canonicalName
-									username
-									email
-								}
-								... on ExternalUser {
-									canonicalName
-									externalId
-									externalUrl
-								}
-							}
-						}
-						... on StatusChange {
-							eventType
-							oldStatus
-							newStatus
-							oldResolution
-							newResolution
-							editor {
-								... on User {
-									canonicalName
-									username
-									email
-								}
-								... on ExternalUser {
-									canonicalName
-									externalId
-									externalUrl
-								}
-							}
-						}
-						... on LabelUpdate {
-							eventType
-							label {
-								id
-								name
-								backgroundColor
-								foregroundColor
-							}
-							labeler {
-								... on User {
-									canonicalName
-									username
-									email
-								}
-								... on ExternalUser {
-									canonicalName
-									externalId
-									externalUrl
-								}
-							}
-						}
+						cursor
 					}
 				}
-				cursor
 			}
 		}
 	}
@@ -645,7 +859,7 @@ const updateTicketStatusMutation = `
 
 const updateTicketMutation = `
 	mutation UpdateTicket($trackerId: Int!, $ticketId: Int!, $input: UpdateTicketInput!) {
-		updateTicket(trackerId: Int!, ticketId: Int!, input: $input) {
+		updateTicket(trackerId: $trackerId, ticketId: $ticketId, input: $input) {
 			id
 			created
 			updated
@@ -766,7 +980,11 @@ func (c *TodoSClient) executeRequest(ctx context.Context, query string, variable
 	}
 
 	if len(response.Errors) > 0 {
-		return fmt.Errorf("GraphQL errors: %v", response.Errors)
+		var errs []string
+		for _, e := range response.Errors {
+			errs = append(errs, e.Message)
+		}
+		return fmt.Errorf("GraphQL errors: %s", strings.Join(errs, ", "))
 	}
 
 	if err := json.Unmarshal(response.Data, result); err != nil {
@@ -786,8 +1004,8 @@ func (c *TodoSClient) GetTracker(ctx context.Context, name string) (*Tracker, er
 		Me struct {
 			Trackers struct {
 				Results []Tracker `json:"results"`
-			} `json:"trackers"`
-		} `json:"me"`
+			}
+		}
 	}
 
 	err := c.executeRequest(ctx, getTrackerQuery, nil, &result)
@@ -901,8 +1119,8 @@ func (c *TodoSClient) GetTickets(ctx context.Context, trackerName string, cursor
 		Me struct {
 			Tracker struct {
 				Tickets TicketCursor `json:"tickets"`
-			} `json:"tracker"`
-		} `json:"me"`
+			}
+		}
 	}
 
 	variables := map[string]interface{}{
@@ -937,16 +1155,21 @@ func (c *TodoSClient) GetTicket(ctx context.Context, id int) (*Ticket, error) {
 }
 
 // GetEvents fetches events for a ticket with pagination
-func (c *TodoSClient) GetEvents(ctx context.Context, ticketID int, cursor *string) ([]Event, *string, error) {
+func (c *TodoSClient) GetEvents(ctx context.Context, trackerName string, ticketID int, cursor *string) ([]Event, *string, error) {
 	var result struct {
-		Ticket struct {
-			Events EventCursor `json:"events"`
-		} `json:"ticket"`
+		Me struct {
+			Tracker struct {
+				Ticket struct {
+					Events EventCursor `json:"events"`
+				}
+			}
+		}
 	}
 
 	variables := map[string]interface{}{
-		"ticketId": ticketID,
-		"cursor":   cursor,
+		"trackerName": trackerName,
+		"ticketId":    ticketID,
+		"cursor":      cursor,
 	}
 
 	err := c.executeRequest(ctx, getEventsQuery, variables, &result)
@@ -954,7 +1177,7 @@ func (c *TodoSClient) GetEvents(ctx context.Context, ticketID int, cursor *strin
 		return nil, nil, errors.Wrap(err, "failed to fetch events")
 	}
 
-	return result.Ticket.Events.Results, result.Ticket.Events.Cursor, nil
+	return result.Me.Tracker.Ticket.Events.Results, result.Me.Tracker.Ticket.Events.Cursor, nil
 }
 
 // GetLabels fetches labels for a tracker with pagination
@@ -962,7 +1185,7 @@ func (c *TodoSClient) GetLabels(ctx context.Context, trackerID int, cursor *stri
 	var result struct {
 		Tracker struct {
 			Labels LabelCursor `json:"labels"`
-		} `json:"tracker"`
+		}
 	}
 
 	variables := map[string]interface{}{

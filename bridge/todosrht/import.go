@@ -96,7 +96,7 @@ func (ji *todosrhtImporter) ImportAll(ctx context.Context, repo *cache.RepoCache
 
 				var eventCursor *string
 				for {
-					events, nextEventCursor, err := ji.client.GetEvents(ctx, ticket.Id, eventCursor)
+					events, nextEventCursor, err := ji.client.GetEvents(ctx, tracker.Name, ticket.Id, eventCursor)
 					if err != nil {
 						ji.out <- core.NewImportError(fmt.Errorf("failed to get events for ticket %d: %w", ticket.Id, err), b.Id())
 						break
@@ -118,6 +118,8 @@ func (ji *todosrhtImporter) ImportAll(ctx context.Context, repo *cache.RepoCache
 				if b.NeedCommit() {
 					if err := b.Commit(); err != nil {
 						ji.out <- core.NewImportError(fmt.Errorf("failed to commit bug for ticket %d: %w", ticket.Id, err), b.Id())
+					} else {
+						ji.out <- core.NewImportBug(b.Id())
 					}
 				} else {
 					ji.out <- core.NewImportNothing(b.Id(), "no new operations imported")
@@ -138,16 +140,24 @@ func (ji *todosrhtImporter) ImportAll(ctx context.Context, repo *cache.RepoCache
 func (ji *todosrhtImporter) ensurePerson(repo *cache.RepoCache, entities Entity) (*cache.IdentityCache, error) {
 	var canonicalName, username, email, externalId, externalUrl string
 
+	if entities == nil {
+		return nil, fmt.Errorf("entity is nil")
+	}
+
 	// Determine the concrete type of the entity
 	switch e := entities.(type) {
-	case User:
+	case *User:
 		canonicalName = e.CanonicalName
 		username = e.Username
 		email = e.Email
-	case ExternalUser:
+	case *ExternalUser:
 		canonicalName = e.CanonicalName
 		externalId = e.ExternalId
 		externalUrl = e.ExternalUrl
+	case *EmailAddress:
+		canonicalName = e.CanonicalName
+		email = e.Mailbox
+		username = e.Name
 	default:
 		return nil, fmt.Errorf("unknown entity type %T", entities)
 	}
@@ -200,8 +210,7 @@ func (ji *todosrhtImporter) ensurePerson(repo *cache.RepoCache, entities Entity)
 func (ji *todosrhtImporter) ensureIssue(repo *cache.RepoCache, ticket Ticket) (*cache.BugCache, error) {
 	submitter, err := ticket.GetSubmitter()
 	if err != nil {
-		ji.out <- core.NewImportError(fmt.Errorf("failed to parse submitter for ticket %d: %w", ticket.Id, err), "")
-		return nil, err
+		return nil, fmt.Errorf("failed to parse submitter for ticket %d: %w", ticket.Id, err)
 	}
 	author, err := ji.ensurePerson(repo, submitter)
 	if err != nil {
@@ -259,25 +268,47 @@ func (ji *todosrhtImporter) ensureEvent(repo *cache.RepoCache, b *cache.BugCache
 		return err // Real error
 	}
 
-	for _, change := range event.Changes {
+	changes, err := event.GetChanges()
+	if err != nil {
+		return err
+	}
+
+	for _, change := range changes {
 		switch c := change.(type) {
-		case Created:
+		case *Created:
 			// The Created event is handled by ensureIssue when creating the bug itself.
 			// We only need to ensure the author is registered if not already.
-			_, err := ji.ensurePerson(repo, c.Author)
+			authorEntity, err := UnmarshalEntity(c.Author)
+			if err != nil {
+				return err
+			}
+			if authorEntity == nil {
+				// author can be null in some cases, just skip
+				continue
+			}
+			_, err = ji.ensurePerson(repo, authorEntity)
 			if err != nil {
 				return err
 			}
 			// Mark this event ID as processed
-			_, err = b.SetMetadata(b.Snapshot().Operations[0].Id(), map[string]string{
-				metaKeyTodoSourceHutId: fmt.Sprintf("%d", event.Id),
-			})
+			if len(b.Snapshot().Operations) > 0 {
+				_, err = b.SetMetadata(b.Snapshot().Operations[0].Id(), map[string]string{
+					metaKeyTodoSourceHutId: fmt.Sprintf("%d", event.Id),
+				})
+				if err != nil {
+					return err
+				}
+			}
+
+		case *Comment:
+			authorEntity, err := UnmarshalEntity(c.Author)
 			if err != nil {
 				return err
 			}
-
-		case Comment:
-			author, err := ji.ensurePerson(repo, c.Author)
+			if authorEntity == nil {
+				return fmt.Errorf("comment author is nil for event %d", event.Id)
+			}
+			author, err := ji.ensurePerson(repo, authorEntity)
 			if err != nil {
 				return err
 			}
@@ -297,8 +328,15 @@ func (ji *todosrhtImporter) ensureEvent(repo *cache.RepoCache, b *cache.BugCache
 			}
 			ji.out <- core.NewImportComment(b.Id(), commentId)
 
-		case StatusChange:
-			editor, err := ji.ensurePerson(repo, c.Editor)
+		case *StatusChange:
+			editorEntity, err := UnmarshalEntity(c.Editor)
+			if err != nil {
+				return err
+			}
+			if editorEntity == nil {
+				return fmt.Errorf("status change editor is nil for event %d", event.Id)
+			}
+			editor, err := ji.ensurePerson(repo, editorEntity)
 			if err != nil {
 				return err
 			}
@@ -327,8 +365,15 @@ func (ji *todosrhtImporter) ensureEvent(repo *cache.RepoCache, b *cache.BugCache
 			}
 			ji.out <- core.NewImportStatusChange(b.Id(), op.Id())
 
-		case LabelUpdate:
-			labeler, err := ji.ensurePerson(repo, c.Labeler)
+		case *LabelUpdate:
+			labelerEntity, err := UnmarshalEntity(c.Labeler)
+			if err != nil {
+				return err
+			}
+			if labelerEntity == nil {
+				return fmt.Errorf("labeler is nil for event %d", event.Id)
+			}
+			labeler, err := ji.ensurePerson(repo, labelerEntity)
 			if err != nil {
 				return err
 			}
@@ -354,26 +399,66 @@ func (ji *todosrhtImporter) ensureEvent(repo *cache.RepoCache, b *cache.BugCache
 			}
 			ji.out <- core.NewImportLabelChange(b.Id(), op.Id())
 
-		case Assignment:
-			assigner, err := ji.ensurePerson(repo, c.Assigner)
+		case *Assignment:
+			assignerEntity, err := UnmarshalEntity(c.Assigner)
 			if err != nil {
 				return err
 			}
-			assignee, err := ji.ensurePerson(repo, c.Assignee)
+			assigner, err := ji.ensurePerson(repo, assignerEntity)
 			if err != nil {
 				return err
 			}
-			// Note: git-bug doesn't have direct assignment concept
-			// We store this as metadata for now and emit a warning
+			assigneeEntity, err := UnmarshalEntity(c.Assignee)
+			if err != nil {
+				return err
+			}
+			assignee, err := ji.ensurePerson(repo, assigneeEntity)
+			if err != nil {
+				return err
+			}
 			ji.out <- core.NewImportWarning(
 				fmt.Errorf("assignment event: %s assigned %s to ticket (not directly supported in git-bug)",
 					assigner.DisplayName(), assignee.DisplayName()),
 				b.Id(),
 			)
 
-		// Add other event types as needed (UserMention, TicketMention)
-		// For now, we'll ignore them or log a warning if they are not directly
-		// mappable to git-bug operations or are not high priority.
+		case *UserMention:
+			authorEntity, err := UnmarshalEntity(c.Author)
+			if err != nil {
+				return err
+			}
+			author, err := ji.ensurePerson(repo, authorEntity)
+			if err != nil {
+				return err
+			}
+			mentionedEntity, err := UnmarshalEntity(c.Mentioned)
+			if err != nil {
+				return err
+			}
+			mentioned, err := ji.ensurePerson(repo, mentionedEntity)
+			if err != nil {
+				return err
+			}
+			ji.out <- core.NewImportWarning(
+				fmt.Errorf("user mention event: %s mentioned %s (not directly supported in git-bug)",
+					author.DisplayName(), mentioned.DisplayName()),
+				b.Id(),
+			)
+		case *TicketMention:
+			authorEntity, err := UnmarshalEntity(c.Author)
+			if err != nil {
+				return err
+			}
+			author, err := ji.ensurePerson(repo, authorEntity)
+			if err != nil {
+				return err
+			}
+			ji.out <- core.NewImportWarning(
+				fmt.Errorf("ticket mention event: %s mentioned ticket %d (not directly supported in git-bug)",
+					author.DisplayName(), c.Mentioned.Id),
+				b.Id(),
+			)
+
 		default:
 			ji.out <- core.NewImportWarning(
 				fmt.Errorf("unhandled SourceHut event detail type: %T for event %d", c, event.Id),

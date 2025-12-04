@@ -34,6 +34,8 @@ func TestImporter(t *testing.T) {
 	userIdentity.SetMetadata(metaKeyTodoSourceHutLogin, "test-user")
 	err = userIdentity.Commit()
 	require.NoError(t, err)
+	err = backend.SetUserIdentity(userIdentity)
+	require.NoError(t, err)
 
 	submitterIdentity, err := backend.Identities().New("Submitter", "submitter@example.com")
 	require.NoError(t, err)
@@ -55,8 +57,20 @@ func TestImporter(t *testing.T) {
 	}
 
 	t.Run("Import simple ticket with comments", func(t *testing.T) {
-		userEntity := User{Id: 10, CanonicalName: "test-user", Username: "test-user", Email: "test@example.com"}
-		submitterEntity := User{Id: 11, CanonicalName: "submitter", Username: "submitter", Email: "submitter@example.com"}
+		userEntity := struct {
+			User
+			TypeName string `json:"__typename"`
+		}{
+			User:     User{Id: 10, CanonicalName: "test-user", Username: "test-user", Email: "test@example.com"},
+			TypeName: "User",
+		}
+		submitterEntity := struct {
+			User
+			TypeName string `json:"__typename"`
+		}{
+			User:     User{Id: 11, CanonicalName: "submitter", Username: "submitter", Email: "submitter@example.com"},
+			TypeName: "User",
+		}
 
 		// Convert submitter to JSON raw message
 		submitterJSON, err := json.Marshal(submitterEntity)
@@ -79,39 +93,74 @@ func TestImporter(t *testing.T) {
 			}, nil, nil // No more pages
 		}
 
-		mockClient.MockGetEvents = func(ctx context.Context, ticketID int, cursor *string) ([]Event, *string, error) {
+		mockClient.MockGetEvents = func(ctx context.Context, trackerName string, ticketID int, cursor *string) ([]Event, *string, error) {
+			assert.Equal(t, conf[confKeyTrackerName], trackerName)
 			assert.Equal(t, 101, ticketID)
+
+			// Helper to create event changes
+			mustMarshal := func(v interface{}) json.RawMessage {
+				d, err := json.Marshal(v)
+				require.NoError(t, err)
+				return d
+			}
+
+			userRaw, err := json.Marshal(userEntity)
+			require.NoError(t, err)
+			userRawPtr := json.RawMessage(userRaw)
+
+			submitterRaw, err := json.Marshal(submitterEntity)
+			require.NoError(t, err)
+			submitterRawPtr := json.RawMessage(submitterRaw)
+
 			return []Event{
 				{
 					Id:      1,
 					Created: Time(time.Now().Add(-24 * time.Hour)),
-					Changes: []EventDetail{
-						Created{
-							EventTypeVal: EventTypeCreated,
-							Author:       submitterEntity,
-						},
+					Changes: []json.RawMessage{
+						mustMarshal(struct {
+							Created
+							TypeName string `json:"__typename"`
+						}{
+							Created: Created{
+								EventTypeVal: EventTypeCreated,
+								Author:       &submitterRawPtr,
+							},
+							TypeName: "Created",
+						}),
 					},
 				},
 				{
 					Id:      2,
 					Created: Time(time.Now().Add(-23 * time.Hour)),
-					Changes: []EventDetail{
-						Comment{
-							EventTypeVal: EventTypeComment,
-							Author:       userEntity,
-							Text:         "First comment",
-						},
+					Changes: []json.RawMessage{
+						mustMarshal(struct {
+							Comment
+							TypeName string `json:"__typename"`
+						}{
+							Comment: Comment{
+								EventTypeVal: EventTypeComment,
+								Author:       &userRawPtr,
+								Text:         "First comment",
+							},
+							TypeName: "Comment",
+						}),
 					},
 				},
 				{
 					Id:      3,
 					Created: Time(time.Now().Add(-21 * time.Hour)),
-					Changes: []EventDetail{
-						StatusChange{
-							EventTypeVal: EventTypeStatusChange,
-							Editor:       userEntity,
-							NewStatus:    TicketStatusResolved,
-						},
+					Changes: []json.RawMessage{
+						mustMarshal(struct {
+							StatusChange
+							TypeName string `json:"__typename"`
+						}{
+							StatusChange: StatusChange{
+								EventTypeVal: EventTypeStatusChange,
+								Editor:       &userRawPtr,
+								NewStatus:    TicketStatusResolved,
+							},
+							TypeName: "StatusChange",
+						}),
 					},
 				},
 			}, nil, nil // No more pages
@@ -144,8 +193,20 @@ func TestImporter(t *testing.T) {
 	})
 
 	t.Run("Import ticket with label changes", func(t *testing.T) {
-		userEntity := User{Id: 10, CanonicalName: "test-user", Username: "test-user", Email: "test@example.com"}
-		submitterEntity := User{Id: 11, CanonicalName: "submitter", Username: "submitter", Email: "submitter@example.com"}
+		userEntity := struct {
+			User
+			TypeName string `json:"__typename"`
+		}{
+			User:     User{Id: 10, CanonicalName: "test-user", Username: "test-user", Email: "test@example.com"},
+			TypeName: "User",
+		}
+		submitterEntity := struct {
+			User
+			TypeName string `json:"__typename"`
+		}{
+			User:     User{Id: 11, CanonicalName: "submitter", Username: "submitter", Email: "submitter@example.com"},
+			TypeName: "User",
+		}
 
 		// Convert submitter to JSON raw message
 		submitterJSON2, err := json.Marshal(submitterEntity)
@@ -169,28 +230,52 @@ func TestImporter(t *testing.T) {
 				},
 			}, nil, nil
 		}
-		mockClient.MockGetEvents = func(ctx context.Context, ticketID int, cursor *string) ([]Event, *string, error) {
+		mockClient.MockGetEvents = func(ctx context.Context, trackerName string, ticketID int, cursor *string) ([]Event, *string, error) {
+			assert.Equal(t, conf[confKeyTrackerName], trackerName)
+
+			// Helper to create event changes
+			mustMarshal := func(v interface{}) json.RawMessage {
+				d, err := json.Marshal(v)
+				require.NoError(t, err)
+				return d
+			}
+			userRaw, err := json.Marshal(userEntity)
+			require.NoError(t, err)
+			userRawPtr := json.RawMessage(userRaw)
+
 			return []Event{
 				{
 					Id:      4,
 					Created: Time(time.Now().Add(-47 * time.Hour)),
-					Changes: []EventDetail{
-						LabelUpdate{
-							EventTypeVal: EventTypeLabelAdded,
-							Labeler:      userEntity,
-							Label:        Label{Id: 1, Name: "bug"},
-						},
+					Changes: []json.RawMessage{
+						mustMarshal(struct {
+							LabelUpdate
+							TypeName string `json:"__typename"`
+						}{
+							LabelUpdate: LabelUpdate{
+								EventTypeVal: EventTypeLabelAdded,
+								Labeler:      &userRawPtr,
+								Label:        Label{Id: 1, Name: "bug"},
+							},
+							TypeName: "LabelUpdate",
+						}),
 					},
 				},
 				{
 					Id:      5,
 					Created: Time(time.Now().Add(-46 * time.Hour)),
-					Changes: []EventDetail{
-						LabelUpdate{
-							EventTypeVal: EventTypeLabelRemoved,
-							Labeler:      userEntity,
-							Label:        Label{Id: 1, Name: "bug"},
-						},
+					Changes: []json.RawMessage{
+						mustMarshal(struct {
+							LabelUpdate
+							TypeName string `json:"__typename"`
+						}{
+							LabelUpdate: LabelUpdate{
+								EventTypeVal: EventTypeLabelRemoved,
+								Labeler:      &userRawPtr,
+								Label:        Label{Id: 1, Name: "bug"},
+							},
+							TypeName: "LabelUpdate",
+						}),
 					},
 				},
 			}, nil, nil
