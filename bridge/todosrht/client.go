@@ -395,6 +395,17 @@ const getTrackerQuery = `
 	}
 `
 
+const getTrackerByNameQuery = `
+	query GetTrackerByName($name: String!) {
+		tracker(name: $name) {
+			id
+			name
+			description
+			visibility
+		}
+	}
+`
+
 const getTicketsQuery = `
 	query GetTickets($trackerName: String!, $cursor: Cursor) {
 		me {
@@ -662,6 +673,44 @@ const unlabelTicketMutation = `
 	}
 `
 
+const createLabelMutation = `
+	mutation CreateLabel($trackerId: Int!, $name: String!, $foregroundColor: String!, $backgroundColor: String!) {
+		createLabel(trackerId: $trackerId, name: $name, foregroundColor: $foregroundColor, backgroundColor: $backgroundColor) {
+			id
+			name
+			foregroundColor
+			backgroundColor
+		}
+	}
+`
+
+const deleteLabelMutation = `
+	mutation DeleteLabel($id: Int!) {
+		deleteLabel(id: $id) {
+			id
+			name
+		}
+	}
+`
+
+const assignUserMutation = `
+	mutation AssignUser($trackerId: Int!, $ticketId: Int!, $userId: Int!) {
+		assignUser(trackerId: $trackerId, ticketId: $ticketId, userId: $userId) {
+			id
+			created
+		}
+	}
+`
+
+const unassignUserMutation = `
+	mutation UnassignUser($trackerId: Int!, $ticketId: Int!, $userId: Int!) {
+		unassignUser(trackerId: $trackerId, ticketId: $ticketId, userId: $userId) {
+			id
+			created
+		}
+	}
+`
+
 // Input types
 type SubmitTicketInput struct {
 	Subject string `json:"subject"`
@@ -777,7 +826,7 @@ func (c *TodoSClient) TrackerExists(ctx context.Context, name string) (bool, err
 	}
 
 	reqBody := GraphQLRequest{
-		Query: getTrackerQuery,
+		Query: getTrackerByNameQuery,
 		Variables: map[string]interface{}{
 			"name": name,
 		},
@@ -1046,4 +1095,83 @@ func (c *TodoSClient) RemoveLabel(ctx context.Context, trackerID, ticketID, labe
 	}
 
 	return &result.UnlabelTicket, nil
+}
+
+// CreateLabel creates a new label in a tracker
+func (c *TodoSClient) CreateLabel(ctx context.Context, trackerID int, name, foregroundColor, backgroundColor string) (*Label, error) {
+	var result struct {
+		CreateLabel Label `json:"createLabel"`
+	}
+
+	variables := map[string]interface{}{
+		"trackerId":       trackerID,
+		"name":            name,
+		"foregroundColor": foregroundColor,
+		"backgroundColor": backgroundColor,
+	}
+
+	err := c.executeRequest(ctx, createLabelMutation, variables, &result)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create label")
+	}
+
+	return &result.CreateLabel, nil
+}
+
+// DeleteLabel deletes a label from a tracker
+func (c *TodoSClient) DeleteLabel(ctx context.Context, labelID int) (*Label, error) {
+	var result struct {
+		DeleteLabel Label `json:"deleteLabel"`
+	}
+
+	variables := map[string]interface{}{
+		"id": labelID,
+	}
+
+	err := c.executeRequest(ctx, deleteLabelMutation, variables, &result)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to delete label")
+	}
+
+	return &result.DeleteLabel, nil
+}
+
+// AssignUser assigns a user to a ticket
+func (c *TodoSClient) AssignUser(ctx context.Context, trackerID, ticketID, userID int) (*Event, error) {
+	var result struct {
+		AssignUser Event `json:"assignUser"`
+	}
+
+	variables := map[string]interface{}{
+		"trackerId": trackerID,
+		"ticketId":  ticketID,
+		"userId":    userID,
+	}
+
+	err := c.executeRequest(ctx, assignUserMutation, variables, &result)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to assign user")
+	}
+
+	return &result.AssignUser, nil
+}
+
+// UnassignUser unassigns a user from a ticket
+func (c *TodoSClient) UnassignUser(ctx context.Context, trackerID, ticketID, userID int) (*Event, error) {
+	var result struct {
+		UnassignUser Event `json:"unassignUser"`
+	}
+
+	variables := map[string]interface{}{
+		"trackerId": trackerID,
+		"ticketId":  ticketID,
+		"userId":    userID,
+	}
+
+	err := c.executeRequest(ctx, unassignUserMutation, variables, &result)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to unassign user")
+	}
+
+	return &result.UnassignUser, nil
 }
