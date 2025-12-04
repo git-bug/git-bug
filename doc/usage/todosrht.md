@@ -40,7 +40,7 @@ The SourceHut bridge supports the following functionality:
 - **Ticket Creation**: Create new tickets on SourceHut from git-bug
 - **Comment Export**: Export comments as SourceHut comment events
 - **Status Updates**: Export status changes (open/close) to SourceHut
-- **Label Management**: 
+- **Label Management**:
   - Add/remove existing labels
   - **Auto-create missing labels** with default colors
 - **Title Updates**: Export title changes to SourceHut

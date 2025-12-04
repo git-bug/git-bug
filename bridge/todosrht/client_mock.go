@@ -10,7 +10,7 @@ type MockClient struct {
 	MockGetTracker         func(ctx context.Context, name string) (*Tracker, error)
 	MockTrackerExists      func(ctx context.Context, name string) (bool, error)
 	MockGetTickets         func(ctx context.Context, trackerName string, cursor *string) ([]Ticket, *string, error)
-	MockGetEvents          func(ctx context.Context, ticketID int, cursor *string) ([]Event, *string, error)
+	MockGetEvents          func(ctx context.Context, trackerName string, ticketID int, cursor *string) ([]Event, *string, error)
 	MockCreateTicket       func(ctx context.Context, trackerID int, input SubmitTicketInput) (*Ticket, error)
 	MockCreateComment      func(ctx context.Context, trackerID, ticketID int, input SubmitCommentInput) (*Event, error)
 	MockUpdateTicket       func(ctx context.Context, trackerID, ticketID int, input UpdateTicketInput) (*Ticket, error)
@@ -46,9 +46,9 @@ func (m *MockClient) GetTickets(ctx context.Context, trackerName string, cursor 
 	}
 	return nil, nil, fmt.Errorf("GetTickets not implemented")
 }
-func (m *MockClient) GetEvents(ctx context.Context, ticketID int, cursor *string) ([]Event, *string, error) {
+func (m *MockClient) GetEvents(ctx context.Context, trackerName string, ticketID int, cursor *string) ([]Event, *string, error) {
 	if m.MockGetEvents != nil {
-		return m.MockGetEvents(ctx, ticketID, cursor)
+		return m.MockGetEvents(ctx, trackerName, ticketID, cursor)
 	}
 	return nil, nil, fmt.Errorf("GetEvents not implemented")
 }
