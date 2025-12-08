@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1765145032079,
+  "lastUpdate": 1765154238574,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -16322,6 +16322,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 491771,
+            "unit": "allocs/op",
+            "extra": "3 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "waldyrious@gmail.com",
+            "name": "Waldir Pimenta",
+            "username": "waldyrious"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "cf47635eba59e8d6ec70bedbb3dc6cf97af45233",
+          "message": "docs(cli): fix user show command documentation (#1497)\n\nAs pointed out in [this\ncomment](https://github.com/git-bug/git-bug/issues/530#issuecomment-3558997281),\nthe documentation and CLI help incorrectly suggested that the command to\ndisplay a user identity was `git-bug user user show USER_ID`, but when\nthe actual command is `git-bug user show USER_ID`.\n\nThis change fixes the `Use` field in `user_show.go` to use correct `show\n[USER_ID]` form instead of `user show [USER_ID]`, and updates the\ndocumentation and manpages accordingly.",
+          "timestamp": "2025-12-08T00:32:29Z",
+          "tree_id": "372e0f3c57ea8634a67c160d77efcd6652c415bf",
+          "url": "https://github.com/git-bug/git-bug/commit/cf47635eba59e8d6ec70bedbb3dc6cf97af45233"
+        },
+        "date": 1765154237902,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 16741115,
+            "unit": "ns/op\t 1070706 B/op\t   16345 allocs/op",
+            "extra": "105 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 16741115,
+            "unit": "ns/op",
+            "extra": "105 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 1070706,
+            "unit": "B/op",
+            "extra": "105 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 16345,
+            "unit": "allocs/op",
+            "extra": "105 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 75507666,
+            "unit": "ns/op\t 4879280 B/op\t   72980 allocs/op",
+            "extra": "16 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 75507666,
+            "unit": "ns/op",
+            "extra": "16 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 4879280,
+            "unit": "B/op",
+            "extra": "16 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 72980,
+            "unit": "allocs/op",
+            "extra": "16 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 520572157,
+            "unit": "ns/op\t36740309 B/op\t  482849 allocs/op",
+            "extra": "3 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 520572157,
+            "unit": "ns/op",
+            "extra": "3 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 36740309,
+            "unit": "B/op",
+            "extra": "3 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 482849,
             "unit": "allocs/op",
             "extra": "3 times\n4 procs"
           }
