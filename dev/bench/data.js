@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1769533310849,
+  "lastUpdate": 1769533513719,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -16516,6 +16516,102 @@ window.BENCHMARK_DATA = {
             "value": 484034,
             "unit": "allocs/op",
             "extra": "3 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e5820cf1cfccce9feed2a895efac8c5c55a67029",
+          "message": "build(deps-dev): bump js-yaml from 3.14.1 to 3.14.2 in /webui in the npm_and_yarn group across 1 directory (#1498)\n\nBumps the npm_and_yarn group with 1 update in the /webui directory:\n[js-yaml](https://github.com/nodeca/js-yaml).\n\nUpdates `js-yaml` from 3.14.1 to 3.14.2\n<details>\n<summary>Changelog</summary>\n<p><em>Sourced from <a\nhref=\"https://github.com/nodeca/js-yaml/blob/master/CHANGELOG.md\">js-yaml's\nchangelog</a>.</em></p>\n<blockquote>\n<h2>[3.14.2] - 2025-11-15</h2>\n<h3>Security</h3>\n<ul>\n<li>Backported v4.1.1 fix to v3</li>\n</ul>\n<h2>[4.1.1] - 2025-11-12</h2>\n<h3>Security</h3>\n<ul>\n<li>Fix prototype pollution issue in yaml merge (&lt;&lt;)\noperator.</li>\n</ul>\n<h2>[4.1.0] - 2021-04-15</h2>\n<h3>Added</h3>\n<ul>\n<li>Types are now exported as <code>yaml.types.XXX</code>.</li>\n<li>Every type now has <code>options</code> property with original\narguments kept as they were\n(see <code>yaml.types.int.options</code> as an example).</li>\n</ul>\n<h3>Changed</h3>\n<ul>\n<li><code>Schema.extend()</code> now keeps old type order in case of\nconflicts\n(e.g. Schema.extend([ a, b, c ]).extend([ b, a, d ]) is now ordered as\n<code>abcd</code> instead of <code>cbad</code>).</li>\n</ul>\n<h2>[4.0.0] - 2021-01-03</h2>\n<h3>Changed</h3>\n<ul>\n<li>Check <a\nhref=\"https://github.com/nodeca/js-yaml/blob/master/migrate_v3_to_v4.md\">migration\nguide</a> to see details for all breaking changes.</li>\n<li>Breaking: &quot;unsafe&quot; tags <code>!!js/function</code>,\n<code>!!js/regexp</code>, <code>!!js/undefined</code> are\nmoved to <a\nhref=\"https://github.com/nodeca/js-yaml-js-types\">js-yaml-js-types</a>\npackage.</li>\n<li>Breaking: removed <code>safe*</code> functions. Use\n<code>load</code>, <code>loadAll</code>, <code>dump</code>\ninstead which are all now safe by default.</li>\n<li><code>yaml.DEFAULT_SAFE_SCHEMA</code> and\n<code>yaml.DEFAULT_FULL_SCHEMA</code> are removed, use\n<code>yaml.DEFAULT_SCHEMA</code> instead.</li>\n<li><code>yaml.Schema.create(schema, tags)</code> is removed, use\n<code>schema.extend(tags)</code> instead.</li>\n<li><code>!!binary</code> now always mapped to <code>Uint8Array</code>\non load.</li>\n<li>Reduced nesting of <code>/lib</code> folder.</li>\n<li>Parse numbers according to YAML 1.2 instead of YAML 1.1\n(<code>01234</code> is now decimal,\n<code>0o1234</code> is octal, <code>1:23</code> is parsed as string\ninstead of base60).</li>\n<li><code>dump()</code> no longer quotes <code>:</code>, <code>[</code>,\n<code>]</code>, <code>(</code>, <code>)</code> except when necessary, <a\nhref=\"https://redirect.github.com/nodeca/js-yaml/issues/470\">#470</a>,\n<a\nhref=\"https://redirect.github.com/nodeca/js-yaml/issues/557\">#557</a>.</li>\n<li>Line and column in exceptions are now formatted as\n<code>(X:Y)</code> instead of\n<code>at line X, column Y</code> (also present in compact format), <a\nhref=\"https://redirect.github.com/nodeca/js-yaml/issues/332\">#332</a>.</li>\n<li>Code snippet created in exceptions now contains multiple lines with\nline numbers.</li>\n<li><code>dump()</code> now serializes <code>undefined</code> as\n<code>null</code> in collections and removes keys with\n<code>undefined</code> in mappings, <a\nhref=\"https://redirect.github.com/nodeca/js-yaml/issues/571\">#571</a>.</li>\n<li><code>dump()</code> with <code>skipInvalid=true</code> now\nserializes invalid items in collections as null.</li>\n<li>Custom tags starting with <code>!</code> are now dumped as\n<code>!tag</code> instead of <code>!&lt;!tag&gt;</code>, <a\nhref=\"https://redirect.github.com/nodeca/js-yaml/issues/576\">#576</a>.</li>\n<li>Custom tags starting with <code>tag:yaml.org,2002:</code> are now\nshorthanded using <code>!!</code>, <a\nhref=\"https://redirect.github.com/nodeca/js-yaml/issues/258\">#258</a>.</li>\n</ul>\n<h3>Added</h3>\n<ul>\n<li>Added <code>.mjs</code> (es modules) support.</li>\n<li>Added <code>quotingType</code> and <code>forceQuotes</code> options\nfor dumper to configure\nstring literal style, <a\nhref=\"https://redirect.github.com/nodeca/js-yaml/issues/290\">#290</a>,\n<a\nhref=\"https://redirect.github.com/nodeca/js-yaml/issues/529\">#529</a>.</li>\n<li>Added <code>styles: { '!!null': 'empty' }</code> option for dumper\n(serializes <code>{ foo: null }</code> as &quot;<code>foo:\n</code>&quot;), <a\nhref=\"https://redirect.github.com/nodeca/js-yaml/issues/570\">#570</a>.</li>\n</ul>\n<!-- raw HTML omitted -->\n</blockquote>\n<p>... (truncated)</p>\n</details>\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a\nhref=\"https://github.com/nodeca/js-yaml/commit/9963d366dfbde0c69722452bcd40b41e7e4160a0\"><code>9963d36</code></a>\n3.14.2 released</li>\n<li><a\nhref=\"https://github.com/nodeca/js-yaml/commit/10d3c8e70a6888543f5cdb656bb39f73e0ea77c1\"><code>10d3c8e</code></a>\ndist rebuild</li>\n<li><a\nhref=\"https://github.com/nodeca/js-yaml/commit/5278870a17454fe8621dbd8c445c412529525266\"><code>5278870</code></a>\nfix prototype pollution in merge (&lt;&lt;) (<a\nhref=\"https://redirect.github.com/nodeca/js-yaml/issues/731\">#731</a>)</li>\n<li>See full diff in <a\nhref=\"https://github.com/nodeca/js-yaml/compare/3.14.1...3.14.2\">compare\nview</a></li>\n</ul>\n</details>\n<br />\n\n\n[![Dependabot compatibility\nscore](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=js-yaml&package-manager=npm_and_yarn&previous-version=3.14.1&new-version=3.14.2)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)\n\nDependabot will resolve any conflicts with this PR as long as you don't\nalter it yourself. You can also trigger a rebase manually by commenting\n`@dependabot rebase`.\n\n[//]: # (dependabot-automerge-start)\n[//]: # (dependabot-automerge-end)\n\n---\n\n<details>\n<summary>Dependabot commands and options</summary>\n<br />\n\nYou can trigger Dependabot actions by commenting on this PR:\n- `@dependabot rebase` will rebase this PR\n- `@dependabot recreate` will recreate this PR, overwriting any edits\nthat have been made to it\n- `@dependabot merge` will merge this PR after your CI passes on it\n- `@dependabot squash and merge` will squash and merge this PR after\nyour CI passes on it\n- `@dependabot cancel merge` will cancel a previously requested merge\nand block automerging\n- `@dependabot reopen` will reopen this PR if it is closed\n- `@dependabot close` will close this PR and stop Dependabot recreating\nit. You can achieve the same result by closing it manually\n- `@dependabot show <dependency name> ignore conditions` will show all\nof the ignore conditions of the specified dependency\n- `@dependabot ignore <dependency name> major version` will close this\ngroup update PR and stop Dependabot creating any more for the specific\ndependency's major version (unless you unignore this specific\ndependency's major version or upgrade to it yourself)\n- `@dependabot ignore <dependency name> minor version` will close this\ngroup update PR and stop Dependabot creating any more for the specific\ndependency's minor version (unless you unignore this specific\ndependency's minor version or upgrade to it yourself)\n- `@dependabot ignore <dependency name>` will close this group update PR\nand stop Dependabot creating any more for the specific dependency\n(unless you unignore this specific dependency or upgrade to it yourself)\n- `@dependabot unignore <dependency name>` will remove all of the ignore\nconditions of the specified dependency\n- `@dependabot unignore <dependency name> <ignore condition>` will\nremove the ignore condition of the specified dependency and ignore\nconditions\nYou can disable automated security fix PRs for this repo from the\n[Security Alerts\npage](https://github.com/git-bug/git-bug/network/alerts).\n\n</details>\n\nSigned-off-by: dependabot[bot] <support@github.com>\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2026-01-27T17:00:33Z",
+          "tree_id": "bd70f4a91cc0dd5bbae501a3c6c41726e5e3e86a",
+          "url": "https://github.com/git-bug/git-bug/commit/e5820cf1cfccce9feed2a895efac8c5c55a67029"
+        },
+        "date": 1769533512798,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 18130417,
+            "unit": "ns/op\t 1051405 B/op\t   15899 allocs/op",
+            "extra": "66 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 18130417,
+            "unit": "ns/op",
+            "extra": "66 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 1051405,
+            "unit": "B/op",
+            "extra": "66 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 15899,
+            "unit": "allocs/op",
+            "extra": "66 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 76047414,
+            "unit": "ns/op\t 4894360 B/op\t   73064 allocs/op",
+            "extra": "15 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 76047414,
+            "unit": "ns/op",
+            "extra": "15 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 4894360,
+            "unit": "B/op",
+            "extra": "15 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 73064,
+            "unit": "allocs/op",
+            "extra": "15 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 522111266,
+            "unit": "ns/op\t41426296 B/op\t  511194 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 522111266,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 41426296,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 511194,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
           }
         ]
       }
