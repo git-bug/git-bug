@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1765154238574,
+  "lastUpdate": 1769533310849,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -16418,6 +16418,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 482849,
+            "unit": "allocs/op",
+            "extra": "3 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mcepl@cepl.eu",
+            "name": "Matěj Cepl",
+            "username": "mcepl"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": false,
+          "id": "5920f3e6918138f483201b0f1a5738bcba36a1e5",
+          "message": "feat(config): add git-bug.remote for defining the default remote (#1460)\n\nOther way is to have explicit REMOTE argument.\n\n---------\n\nSigned-off-by: Matěj Cepl <mcepl@cepl.eu>\nCo-authored-by: William Ahern <william@25thandClement.com>",
+          "timestamp": "2026-01-27T16:57:12Z",
+          "tree_id": "db8b1a4c8f64458e423cf712b741ee6b71b4b76b",
+          "url": "https://github.com/git-bug/git-bug/commit/5920f3e6918138f483201b0f1a5738bcba36a1e5"
+        },
+        "date": 1769533309601,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 18852102,
+            "unit": "ns/op\t 1302157 B/op\t   20076 allocs/op",
+            "extra": "100 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 18852102,
+            "unit": "ns/op",
+            "extra": "100 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 1302157,
+            "unit": "B/op",
+            "extra": "100 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 20076,
+            "unit": "allocs/op",
+            "extra": "100 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 62743500,
+            "unit": "ns/op\t 4487180 B/op\t   67668 allocs/op",
+            "extra": "19 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 62743500,
+            "unit": "ns/op",
+            "extra": "19 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 4487180,
+            "unit": "B/op",
+            "extra": "19 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 67668,
+            "unit": "allocs/op",
+            "extra": "19 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 440289558,
+            "unit": "ns/op\t36719064 B/op\t  484034 allocs/op",
+            "extra": "3 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 440289558,
+            "unit": "ns/op",
+            "extra": "3 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 36719064,
+            "unit": "B/op",
+            "extra": "3 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 484034,
             "unit": "allocs/op",
             "extra": "3 times\n4 procs"
           }
