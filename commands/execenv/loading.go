@@ -15,7 +15,7 @@ import (
 	"github.com/git-bug/git-bug/util/interrupt"
 )
 
-// LoadRepo is a pre-run function that load the repository for use in a command
+// LoadRepo is a pre-run function that loads the repository for use in a command.
 func LoadRepo(env *Env) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		repoPath, err := getRepoPath(env)
