@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1770531211254,
+  "lastUpdate": 1770835410944,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -16804,6 +16804,102 @@ window.BENCHMARK_DATA = {
             "value": 476303,
             "unit": "allocs/op",
             "extra": "3 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7468b3793fbf1eeef4637d91291494fd8454ae7c",
+          "message": "build(deps): bump github.com/go-git/go-git/v5 from 5.13.0 to 5.16.5 in the go_modules group across 1 directory (#1517)\n\nBumps the go_modules group with 1 update in the / directory:\n[github.com/go-git/go-git/v5](https://github.com/go-git/go-git).\n\nUpdates `github.com/go-git/go-git/v5` from 5.13.0 to 5.16.5\n<details>\n<summary>Release notes</summary>\n<p><em>Sourced from <a\nhref=\"https://github.com/go-git/go-git/releases\">github.com/go-git/go-git/v5's\nreleases</a>.</em></p>\n<blockquote>\n<h2>v5.16.5</h2>\n<h2>What's Changed</h2>\n<ul>\n<li>build: Update module golang.org/x/crypto to v0.45.0 [SECURITY]\n(releases/v5.x) by <a\nhref=\"https://github.com/go-git-renovate\"><code>@​go-git-renovate</code></a>[bot]\nin <a\nhref=\"https://redirect.github.com/go-git/go-git/pull/1744\">go-git/go-git#1744</a></li>\n<li>build: Bump Go test versions to 1.23-1.25 (v5) by <a\nhref=\"https://github.com/pjbgf\"><code>@​pjbgf</code></a> in <a\nhref=\"https://redirect.github.com/go-git/go-git/pull/1746\">go-git/go-git#1746</a></li>\n<li>[v5] git: worktree, Don't delete local untracked files when\nresetting worktree by <a\nhref=\"https://github.com/Ch00k\"><code>@​Ch00k</code></a> in <a\nhref=\"https://redirect.github.com/go-git/go-git/pull/1800\">go-git/go-git#1800</a></li>\n<li>Expand packfile checks by <a\nhref=\"https://github.com/pjbgf\"><code>@​pjbgf</code></a> in <a\nhref=\"https://redirect.github.com/go-git/go-git/pull/1836\">go-git/go-git#1836</a></li>\n</ul>\n<p><strong>Full Changelog</strong>: <a\nhref=\"https://github.com/go-git/go-git/compare/v5.16.4...v5.16.5\">https://github.com/go-git/go-git/compare/v5.16.4...v5.16.5</a></p>\n<h2>v5.16.4</h2>\n<h2>What's Changed</h2>\n<ul>\n<li>backport plumbing: format/idxfile, prevent panic by <a\nhref=\"https://github.com/swills\"><code>@​swills</code></a> in <a\nhref=\"https://redirect.github.com/go-git/go-git/pull/1732\">go-git/go-git#1732</a></li>\n<li>[backport] build: test, Fix build on Windows. by <a\nhref=\"https://github.com/pjbgf\"><code>@​pjbgf</code></a> in <a\nhref=\"https://redirect.github.com/go-git/go-git/pull/1734\">go-git/go-git#1734</a></li>\n<li>build: Update module golang.org/x/net to v0.38.0 [SECURITY]\n(releases/v5.x) by <a\nhref=\"https://github.com/go-git-renovate\"><code>@​go-git-renovate</code></a>[bot]\nin <a\nhref=\"https://redirect.github.com/go-git/go-git/pull/1742\">go-git/go-git#1742</a></li>\n<li>build: Update module github.com/cloudflare/circl to v1.6.1\n[SECURITY] (releases/v5.x) by <a\nhref=\"https://github.com/go-git-renovate\"><code>@​go-git-renovate</code></a>[bot]\nin <a\nhref=\"https://redirect.github.com/go-git/go-git/pull/1741\">go-git/go-git#1741</a></li>\n<li>build: Update module github.com/go-git/go-git/v5 to v5.13.0\n[SECURITY] (releases/v5.x) by <a\nhref=\"https://github.com/go-git-renovate\"><code>@​go-git-renovate</code></a>[bot]\nin <a\nhref=\"https://redirect.github.com/go-git/go-git/pull/1743\">go-git/go-git#1743</a></li>\n</ul>\n<p><strong>Full Changelog</strong>: <a\nhref=\"https://github.com/go-git/go-git/compare/v5.16.3...v5.16.4\">https://github.com/go-git/go-git/compare/v5.16.3...v5.16.4</a></p>\n<h2>v5.16.3</h2>\n<h2>What's Changed</h2>\n<ul>\n<li>internal: Expand regex to fix build [5.x] by <a\nhref=\"https://github.com/baloo\"><code>@​baloo</code></a> in <a\nhref=\"https://redirect.github.com/go-git/go-git/pull/1644\">go-git/go-git#1644</a></li>\n<li>build: raise timeouts for windows CI tests and disable CIFuzz [5.x]\nby <a href=\"https://github.com/baloo\"><code>@​baloo</code></a> in <a\nhref=\"https://redirect.github.com/go-git/go-git/pull/1646\">go-git/go-git#1646</a></li>\n<li>plumbing: support commits extra headers, support jujutsu signed\ncommit [5.x] by <a\nhref=\"https://github.com/baloo\"><code>@​baloo</code></a> in <a\nhref=\"https://redirect.github.com/go-git/go-git/pull/1633\">go-git/go-git#1633</a></li>\n</ul>\n<p><strong>Full Changelog</strong>: <a\nhref=\"https://github.com/go-git/go-git/compare/v5.16.2...v5.16.3\">https://github.com/go-git/go-git/compare/v5.16.2...v5.16.3</a></p>\n<h2>v5.16.2</h2>\n<h2>What's Changed</h2>\n<ul>\n<li>utils: fix diff so subpaths work for sparse checkouts, fixes 1455 to\nreleases/v5.x by <a\nhref=\"https://github.com/kane8n\"><code>@​kane8n</code></a> in <a\nhref=\"https://redirect.github.com/go-git/go-git/pull/1567\">go-git/go-git#1567</a></li>\n</ul>\n<p><strong>Full Changelog</strong>: <a\nhref=\"https://github.com/go-git/go-git/compare/v5.16.1...v5.16.2\">https://github.com/go-git/go-git/compare/v5.16.1...v5.16.2</a></p>\n<h2>v5.16.1</h2>\n<h2>What's Changed</h2>\n<ul>\n<li>utils: merkletrie, Fix diff on sparse-checkout index. Fixes <a\nhref=\"https://redirect.github.com/go-git/go-git/issues/1406\">#1406</a>\nto releases/v5.x by <a\nhref=\"https://github.com/kane8n\"><code>@​kane8n</code></a> in <a\nhref=\"https://redirect.github.com/go-git/go-git/pull/1561\">go-git/go-git#1561</a></li>\n</ul>\n<h2>New Contributors</h2>\n<ul>\n<li><a href=\"https://github.com/kane8n\"><code>@​kane8n</code></a> made\ntheir first contribution in <a\nhref=\"https://redirect.github.com/go-git/go-git/pull/1561\">go-git/go-git#1561</a></li>\n</ul>\n<p><strong>Full Changelog</strong>: <a\nhref=\"https://github.com/go-git/go-git/compare/v5.16.0...v5.16.1\">https://github.com/go-git/go-git/compare/v5.16.0...v5.16.1</a></p>\n<h2>v5.16.0</h2>\n<h2>What's Changed</h2>\n<ul>\n<li>[v5] plumbing: support mTLS for HTTPS protocol by <a\nhref=\"https://github.com/hiddeco\"><code>@​hiddeco</code></a> in <a\nhref=\"https://redirect.github.com/go-git/go-git/pull/1510\">go-git/go-git#1510</a></li>\n<li>v5: plumbing: transport, Reintroduce SetHostKeyCallback. Fix <a\nhref=\"https://redirect.github.com/go-git/go-git/issues/1514\">#1514</a>\nby <a href=\"https://github.com/pjbgf\"><code>@​pjbgf</code></a> in <a\nhref=\"https://redirect.github.com/go-git/go-git/pull/1515\">go-git/go-git#1515</a></li>\n</ul>\n<!-- raw HTML omitted -->\n</blockquote>\n<p>... (truncated)</p>\n</details>\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a\nhref=\"https://github.com/go-git/go-git/commit/48a1ae05eec4fff4dd0343744a00bf8d6a7a0b4b\"><code>48a1ae0</code></a>\nMerge pull request <a\nhref=\"https://redirect.github.com/go-git/go-git/issues/1836\">#1836</a>\nfrom go-git/check-v5</li>\n<li><a\nhref=\"https://github.com/go-git/go-git/commit/42bdf1f9044e2145acaed6ac4dbf1b8d257da5bd\"><code>42bdf1f</code></a>\nstorage: filesystem, Verify idx matches pack file</li>\n<li><a\nhref=\"https://github.com/go-git/go-git/commit/4146a5653f186f90057afecb7e0addd9e623cf19\"><code>4146a56</code></a>\nplumbing: format/idxfile, Verify idxfile's checksum</li>\n<li><a\nhref=\"https://github.com/go-git/go-git/commit/63d78ec080cb176f8cd7bf46ce14f4ba01c1d2e5\"><code>63d78ec</code></a>\nplumbing: format/packfile, Add new ErrMalformedPackFile</li>\n<li><a\nhref=\"https://github.com/go-git/go-git/commit/25f1624754395a0c67839e71b34956c853f2eb3d\"><code>25f1624</code></a>\nMerge pull request <a\nhref=\"https://redirect.github.com/go-git/go-git/issues/1800\">#1800</a>\nfrom Ch00k/no-delete-untracked-v5</li>\n<li><a\nhref=\"https://github.com/go-git/go-git/commit/600fb139079e3c6886fcfeb20021c707e99e29b4\"><code>600fb13</code></a>\ngit: worktree, Don't delete local untracked files when resetting\nworktree</li>\n<li><a\nhref=\"https://github.com/go-git/go-git/commit/390a56941510fdc19276aa298228d61889aad97a\"><code>390a569</code></a>\nMerge pull request <a\nhref=\"https://redirect.github.com/go-git/go-git/issues/1746\">#1746</a>\nfrom pjbgf/bump-go</li>\n<li><a\nhref=\"https://github.com/go-git/go-git/commit/61c8b859ce3366257354695e99d78fc3739b60fb\"><code>61c8b85</code></a>\nbuild: Bump Go test versions to 1.23-1.25 (v5)</li>\n<li><a\nhref=\"https://github.com/go-git/go-git/commit/e5a05ecd4fb91dc5323ec77667346ae94d84c043\"><code>e5a05ec</code></a>\nMerge pull request <a\nhref=\"https://redirect.github.com/go-git/go-git/issues/1744\">#1744</a>\nfrom go-git/renovate/releases/v5.x-go-golang.org-x-c...</li>\n<li><a\nhref=\"https://github.com/go-git/go-git/commit/1495930b098b5e72394ae8ccc2d9396b8aa7e013\"><code>1495930</code></a>\nplumbing: Remove use of non-constant format strings</li>\n<li>Additional commits viewable in <a\nhref=\"https://github.com/go-git/go-git/compare/v5.13.0...v5.16.5\">compare\nview</a></li>\n</ul>\n</details>\n<br />\n\n\n[![Dependabot compatibility\nscore](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=github.com/go-git/go-git/v5&package-manager=go_modules&previous-version=5.13.0&new-version=5.16.5)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)\n\nDependabot will resolve any conflicts with this PR as long as you don't\nalter it yourself. You can also trigger a rebase manually by commenting\n`@dependabot rebase`.\n\n[//]: # (dependabot-automerge-start)\n[//]: # (dependabot-automerge-end)\n\n---\n\n<details>\n<summary>Dependabot commands and options</summary>\n<br />\n\nYou can trigger Dependabot actions by commenting on this PR:\n- `@dependabot rebase` will rebase this PR\n- `@dependabot recreate` will recreate this PR, overwriting any edits\nthat have been made to it\n- `@dependabot show <dependency name> ignore conditions` will show all\nof the ignore conditions of the specified dependency\n- `@dependabot ignore <dependency name> major version` will close this\ngroup update PR and stop Dependabot creating any more for the specific\ndependency's major version (unless you unignore this specific\ndependency's major version or upgrade to it yourself)\n- `@dependabot ignore <dependency name> minor version` will close this\ngroup update PR and stop Dependabot creating any more for the specific\ndependency's minor version (unless you unignore this specific\ndependency's minor version or upgrade to it yourself)\n- `@dependabot ignore <dependency name>` will close this group update PR\nand stop Dependabot creating any more for the specific dependency\n(unless you unignore this specific dependency or upgrade to it yourself)\n- `@dependabot unignore <dependency name>` will remove all of the ignore\nconditions of the specified dependency\n- `@dependabot unignore <dependency name> <ignore condition>` will\nremove the ignore condition of the specified dependency and ignore\nconditions\nYou can disable automated security fix PRs for this repo from the\n[Security Alerts\npage](https://github.com/git-bug/git-bug/network/alerts).\n\n</details>\n\nSigned-off-by: dependabot[bot] <support@github.com>\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2026-02-11T18:38:23Z",
+          "tree_id": "b2d6e36821d900aeeb7a8223ca78b7d37d87cc4b",
+          "url": "https://github.com/git-bug/git-bug/commit/7468b3793fbf1eeef4637d91291494fd8454ae7c"
+        },
+        "date": 1770835409794,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 18090598,
+            "unit": "ns/op\t 1035041 B/op\t   15660 allocs/op",
+            "extra": "60 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 18090598,
+            "unit": "ns/op",
+            "extra": "60 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 1035041,
+            "unit": "B/op",
+            "extra": "60 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 15660,
+            "unit": "allocs/op",
+            "extra": "60 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 103425866,
+            "unit": "ns/op\t 5526675 B/op\t   81984 allocs/op",
+            "extra": "13 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 103425866,
+            "unit": "ns/op",
+            "extra": "13 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 5526675,
+            "unit": "B/op",
+            "extra": "13 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 81984,
+            "unit": "allocs/op",
+            "extra": "13 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 573104992,
+            "unit": "ns/op\t39312924 B/op\t  484509 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 573104992,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 39312924,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 484509,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
           }
         ]
       }
