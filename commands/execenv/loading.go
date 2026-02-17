@@ -1,9 +1,9 @@
 package execenv
 
 import (
+	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/vbauerster/mpb/v8"
@@ -173,14 +173,36 @@ func CacheBuildProgressBar(env *Env, events chan cache.BuildEvent) error {
 	return nil
 }
 
+var errNotDirectory = errors.New("path must be a directory for --git-dir or GIT_DIR")
+
 func getRepoPath(env *Env) (string, error) {
-	if len(env.RepoPath) > 0 {
-		return filepath.Join(env.RepoPath...), nil
+	var path string
+
+	if gitDir := os.Getenv("GIT_DIR"); gitDir != "" {
+		path = gitDir
 	}
 
-	cwd, err := os.Getwd()
-	if err != nil {
-		return "", fmt.Errorf("unable to get the current working directory: %q", err)
+	if path == "" && env.GitDir != "" {
+		path = env.GitDir
 	}
-	return cwd, nil
+
+	if path == "" {
+		wd, err := os.Getwd()
+		if err != nil {
+			return "", fmt.Errorf("unable to get the current working directory: %q", err)
+		}
+
+		path = wd
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		return "", err
+	}
+
+	if !fi.IsDir() {
+		return "", errNotDirectory
+	}
+
+	return path, nil
 }
