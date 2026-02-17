@@ -23,7 +23,8 @@ func TestGetRepoPath(t *testing.T) {
 	})
 
 	t.Run("flag provided", func(t *testing.T) {
-		gitDir := filepath.Join(string(filepath.Separator), "tmp")
+		gitDir, err := os.UserHomeDir()
+		require.NoError(t, err)
 
 		path, err := getRepoPath(&Env{
 			GitDir: gitDir,
@@ -33,7 +34,8 @@ func TestGetRepoPath(t *testing.T) {
 	})
 
 	t.Run("environment variable provided", func(t *testing.T) {
-		gitDir := filepath.Join(string(filepath.Separator), "tmp")
+		gitDir, err := os.UserHomeDir()
+		require.NoError(t, err)
 		t.Setenv("GIT_DIR", gitDir)
 
 		path, err := getRepoPath(&Env{})
@@ -42,17 +44,18 @@ func TestGetRepoPath(t *testing.T) {
 	})
 
 	t.Run("GIT_DIR supercedes --git-dir", func(t *testing.T) {
-		homeDir, err := os.UserHomeDir()
+		cacheDir, err := os.UserCacheDir()
 		require.NoError(t, err)
 
-		tmpDir := filepath.Join(string(filepath.Separator), "tmp")
-		t.Setenv("GIT_DIR", tmpDir)
+		configDir, err := os.UserConfigDir()
+		require.NoError(t, err)
+		t.Setenv("GIT_DIR", configDir)
 
 		path, err := getRepoPath(&Env{
-			GitDir: homeDir,
+			GitDir: cacheDir,
 		})
 		require.NoError(t, err)
-		assert.Equal(t, tmpDir, path)
+		assert.Equal(t, configDir, path)
 
 	})
 
