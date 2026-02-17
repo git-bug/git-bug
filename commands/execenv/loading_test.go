@@ -43,7 +43,7 @@ func TestGetRepoPath(t *testing.T) {
 		assert.Equal(t, gitDir, path)
 	})
 
-	t.Run("GIT_DIR supercedes --git-dir", func(t *testing.T) {
+	t.Run("GIT_DIR supersedes --git-dir", func(t *testing.T) {
 		cacheDir, err := os.UserCacheDir()
 		require.NoError(t, err)
 
