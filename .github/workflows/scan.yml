@@ -3,9 +3,11 @@ name: scan
 
 on:
   push:
-    branches: [master]
+    branches:
+      - trunk
   pull_request:
-    branches: [master]
+    branches:
+      - trunk
   schedule:
     - cron: '0 12 * * 6'
 

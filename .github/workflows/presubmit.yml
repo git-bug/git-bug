@@ -14,7 +14,7 @@ on:
       - checks_requested
   pull_request:
     branches:
-      - master
+      - trunk
 
 concurrency:
   group: ${{ github.ref }}
