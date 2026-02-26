@@ -1,4 +1,4 @@
-#import "../components/fragments.graphql"
+#import "../graphql/fragments.graphql"
 
 fragment Bug on Bug {
   id
@@ -7,6 +7,11 @@ fragment Bug on Bug {
   title
   labels {
     ...Label
+  }
+  assignee {
+    name
+    displayName
+    humanId
   }
   createdAt
   ...authored

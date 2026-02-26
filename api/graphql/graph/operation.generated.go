@@ -333,6 +333,11 @@ func (ec *executionContext) _Operation(ctx context.Context, sel ast.SelectionSet
 			return graphql.Null
 		}
 		return ec._BugSetStatusOperation(ctx, sel, obj)
+	case *bug.SetAssigneeOperation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BugSetAssigneeOperation(ctx, sel, obj)
 	case *bug.LabelChangeOperation:
 		if obj == nil {
 			return graphql.Null

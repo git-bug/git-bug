@@ -815,6 +815,65 @@ func (ec *executionContext) fieldContext_Bug_author(_ context.Context, field gra
 	return fc, nil
 }
 
+func (ec *executionContext) _Bug_assignee(ctx context.Context, field graphql.CollectedField, obj models.BugWrapper) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Bug_assignee(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Assignee()
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(models.IdentityWrapper)
+	fc.Result = res
+	return ec.marshalOIdentity2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Bug_assignee(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Bug",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Identity_id(ctx, field)
+			case "humanId":
+				return ec.fieldContext_Identity_humanId(ctx, field)
+			case "name":
+				return ec.fieldContext_Identity_name(ctx, field)
+			case "email":
+				return ec.fieldContext_Identity_email(ctx, field)
+			case "login":
+				return ec.fieldContext_Identity_login(ctx, field)
+			case "displayName":
+				return ec.fieldContext_Identity_displayName(ctx, field)
+			case "avatarUrl":
+				return ec.fieldContext_Identity_avatarUrl(ctx, field)
+			case "isProtected":
+				return ec.fieldContext_Identity_isProtected(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Identity", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Bug_createdAt(ctx context.Context, field graphql.CollectedField, obj models.BugWrapper) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Bug_createdAt(ctx, field)
 	if err != nil {
@@ -1329,6 +1388,8 @@ func (ec *executionContext) fieldContext_BugConnection_nodes(_ context.Context, 
 				return ec.fieldContext_Bug_labels(ctx, field)
 			case "author":
 				return ec.fieldContext_Bug_author(ctx, field)
+			case "assignee":
+				return ec.fieldContext_Bug_assignee(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Bug_createdAt(ctx, field)
 			case "lastEdit":
@@ -1543,6 +1604,8 @@ func (ec *executionContext) fieldContext_BugEdge_node(_ context.Context, field g
 				return ec.fieldContext_Bug_labels(ctx, field)
 			case "author":
 				return ec.fieldContext_Bug_author(ctx, field)
+			case "assignee":
+				return ec.fieldContext_Bug_assignee(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Bug_createdAt(ctx, field)
 			case "lastEdit":
@@ -1648,6 +1711,8 @@ func (ec *executionContext) _Bug(ctx context.Context, sel ast.SelectionSet, obj 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "assignee":
+			out.Values[i] = ec._Bug_assignee(ctx, field, obj)
 		case "createdAt":
 			out.Values[i] = ec._Bug_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

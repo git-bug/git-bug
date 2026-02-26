@@ -4,6 +4,7 @@ import BugTitleForm from 'src/components/BugTitleForm/BugTitleForm';
 import IfLoggedIn from 'src/components/IfLoggedIn/IfLoggedIn';
 import Label from 'src/components/Label';
 
+import AssigneeMenu from './AssigneeMenu';
 import { BugFragment } from './Bug.generated';
 import CommentForm from './CommentForm';
 import TimelineQuery from './TimelineQuery';
@@ -47,6 +48,9 @@ const useStyles = makeStyles((theme) => ({
   },
   rightSidebarTitle: {
     fontWeight: 'bold',
+  },
+  sidebarSection: {
+    marginBottom: theme.spacing(2),
   },
   labelList: {
     listStyle: 'none',
@@ -95,19 +99,35 @@ function Bug({ bug }: Props) {
           </IfLoggedIn>
         </div>
         <div className={classes.rightSidebar}>
-          <span className={classes.rightSidebarTitle}>
-            <LabelMenu bug={bug} />
-          </span>
-          <ul className={classes.labelList}>
-            {bug.labels.length === 0 && (
-              <span className={classes.noLabel}>None yet</span>
-            )}
-            {bug.labels.map((l) => (
-              <li className={classes.label} key={l.name}>
-                <Label label={l} key={l.name} maxWidth="25ch" />
-              </li>
-            ))}
-          </ul>
+          <div className={classes.sidebarSection}>
+            <span className={classes.rightSidebarTitle}>
+              <IfLoggedIn>
+                {() => <AssigneeMenu bug={bug} />}
+              </IfLoggedIn>
+            </span>
+            <div>
+              {bug.assignee ? (
+                <span>{bug.assignee.displayName || bug.assignee.name}</span>
+              ) : (
+                <span className={classes.noLabel}>None</span>
+              )}
+            </div>
+          </div>
+          <div className={classes.sidebarSection}>
+            <span className={classes.rightSidebarTitle}>
+              <LabelMenu bug={bug} />
+            </span>
+            <ul className={classes.labelList}>
+              {bug.labels.length === 0 && (
+                <span className={classes.noLabel}>None yet</span>
+              )}
+              {bug.labels.map((l) => (
+                <li className={classes.label} key={l.name}>
+                  <Label label={l} key={l.name} maxWidth="25ch" />
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
     </main>

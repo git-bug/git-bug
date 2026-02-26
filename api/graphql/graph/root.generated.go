@@ -26,6 +26,7 @@ type MutationResolver interface {
 	BugStatusOpen(ctx context.Context, input models.BugStatusOpenInput) (*models.BugStatusOpenPayload, error)
 	BugStatusClose(ctx context.Context, input models.BugStatusCloseInput) (*models.BugStatusClosePayload, error)
 	BugSetTitle(ctx context.Context, input models.BugSetTitleInput) (*models.BugSetTitlePayload, error)
+	BugSetAssignee(ctx context.Context, input models.BugSetAssigneeInput) (*models.BugSetAssigneePayload, error)
 }
 type QueryResolver interface {
 	Repository(ctx context.Context, ref *string) (*models.Repository, error)
@@ -200,6 +201,34 @@ func (ec *executionContext) field_Mutation_bugEditComment_argsInput(
 	}
 
 	var zeroVal models.BugEditCommentInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_bugSetAssignee_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_bugSetAssignee_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_bugSetAssignee_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (models.BugSetAssigneeInput, error) {
+	if _, ok := rawArgs["input"]; !ok {
+		var zeroVal models.BugSetAssigneeInput
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNBugSetAssigneeInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugSetAssigneeInput(ctx, tmp)
+	}
+
+	var zeroVal models.BugSetAssigneeInput
 	return zeroVal, nil
 }
 
@@ -924,6 +953,69 @@ func (ec *executionContext) fieldContext_Mutation_bugSetTitle(ctx context.Contex
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_bugSetAssignee(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_bugSetAssignee(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().BugSetAssignee(rctx, fc.Args["input"].(models.BugSetAssigneeInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.BugSetAssigneePayload)
+	fc.Result = res
+	return ec.marshalNBugSetAssigneePayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugSetAssigneePayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_bugSetAssignee(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "clientMutationId":
+				return ec.fieldContext_BugSetAssigneePayload_clientMutationId(ctx, field)
+			case "bug":
+				return ec.fieldContext_BugSetAssigneePayload_bug(ctx, field)
+			case "operation":
+				return ec.fieldContext_BugSetAssigneePayload_operation(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BugSetAssigneePayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_bugSetAssignee_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_repository(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_repository(ctx, field)
 	if err != nil {
@@ -1213,6 +1305,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "bugSetTitle":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_bugSetTitle(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "bugSetAssignee":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_bugSetAssignee(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++

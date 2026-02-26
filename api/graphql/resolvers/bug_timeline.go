@@ -92,3 +92,23 @@ func (bugSetTitleTimelineItem) Date(_ context.Context, obj *bug.SetTitleTimeline
 	t := obj.UnixTime.Time()
 	return &t, nil
 }
+
+var _ graph.BugSetAssigneeTimelineItemResolver = bugSetAssigneeTimelineItem{}
+
+type bugSetAssigneeTimelineItem struct{}
+
+func (bugSetAssigneeTimelineItem) Author(_ context.Context, obj *bug.SetAssigneeTimelineItem) (models.IdentityWrapper, error) {
+	return models.NewLoadedIdentity(obj.Author), nil
+}
+
+func (bugSetAssigneeTimelineItem) Date(_ context.Context, obj *bug.SetAssigneeTimelineItem) (*time.Time, error) {
+	t := obj.UnixTime.Time()
+	return &t, nil
+}
+
+func (bugSetAssigneeTimelineItem) Assignee(_ context.Context, obj *bug.SetAssigneeTimelineItem) (models.IdentityWrapper, error) {
+	if obj.Assignee == nil {
+		return nil, nil
+	}
+	return models.NewLoadedIdentity(obj.Assignee), nil
+}

@@ -43,6 +43,8 @@ type ResolverRoot interface {
 	BugEditCommentOperation() BugEditCommentOperationResolver
 	BugLabelChangeOperation() BugLabelChangeOperationResolver
 	BugLabelChangeTimelineItem() BugLabelChangeTimelineItemResolver
+	BugSetAssigneeOperation() BugSetAssigneeOperationResolver
+	BugSetAssigneeTimelineItem() BugSetAssigneeTimelineItemResolver
 	BugSetStatusOperation() BugSetStatusOperationResolver
 	BugSetStatusTimelineItem() BugSetStatusTimelineItemResolver
 	BugSetTitleOperation() BugSetTitleOperationResolver
@@ -61,6 +63,7 @@ type DirectiveRoot struct {
 type ComplexityRoot struct {
 	Bug struct {
 		Actors       func(childComplexity int, after *string, before *string, first *int, last *int) int
+		Assignee     func(childComplexity int) int
 		Author       func(childComplexity int) int
 		Comments     func(childComplexity int, after *string, before *string, first *int, last *int) int
 		CreatedAt    func(childComplexity int) int
@@ -216,6 +219,26 @@ type ComplexityRoot struct {
 		Removed    func(childComplexity int) int
 	}
 
+	BugSetAssigneeOperation struct {
+		Assignee func(childComplexity int) int
+		Author   func(childComplexity int) int
+		Id       func(childComplexity int) int
+		Time     func(childComplexity int) int
+	}
+
+	BugSetAssigneePayload struct {
+		Bug              func(childComplexity int) int
+		ClientMutationID func(childComplexity int) int
+		Operation        func(childComplexity int) int
+	}
+
+	BugSetAssigneeTimelineItem struct {
+		Assignee   func(childComplexity int) int
+		Author     func(childComplexity int) int
+		CombinedId func(childComplexity int) int
+		Date       func(childComplexity int) int
+	}
+
 	BugSetStatusOperation struct {
 		Author func(childComplexity int) int
 		Id     func(childComplexity int) int
@@ -334,6 +357,7 @@ type ComplexityRoot struct {
 		BugChangeLabels        func(childComplexity int, input *models.BugChangeLabelInput) int
 		BugCreate              func(childComplexity int, input models.BugCreateInput) int
 		BugEditComment         func(childComplexity int, input models.BugEditCommentInput) int
+		BugSetAssignee         func(childComplexity int, input models.BugSetAssigneeInput) int
 		BugSetTitle            func(childComplexity int, input models.BugSetTitleInput) int
 		BugStatusClose         func(childComplexity int, input models.BugStatusCloseInput) int
 		BugStatusOpen          func(childComplexity int, input models.BugStatusOpenInput) int
@@ -403,6 +427,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Bug.Actors(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
+
+	case "Bug.assignee":
+		if e.complexity.Bug.Assignee == nil {
+			break
+		}
+
+		return e.complexity.Bug.Assignee(childComplexity), true
 
 	case "Bug.author":
 		if e.complexity.Bug.Author == nil {
@@ -1096,6 +1127,83 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.BugLabelChangeTimelineItem.Removed(childComplexity), true
 
+	case "BugSetAssigneeOperation.assignee":
+		if e.complexity.BugSetAssigneeOperation.Assignee == nil {
+			break
+		}
+
+		return e.complexity.BugSetAssigneeOperation.Assignee(childComplexity), true
+
+	case "BugSetAssigneeOperation.author":
+		if e.complexity.BugSetAssigneeOperation.Author == nil {
+			break
+		}
+
+		return e.complexity.BugSetAssigneeOperation.Author(childComplexity), true
+
+	case "BugSetAssigneeOperation.id":
+		if e.complexity.BugSetAssigneeOperation.Id == nil {
+			break
+		}
+
+		return e.complexity.BugSetAssigneeOperation.Id(childComplexity), true
+
+	case "BugSetAssigneeOperation.date":
+		if e.complexity.BugSetAssigneeOperation.Time == nil {
+			break
+		}
+
+		return e.complexity.BugSetAssigneeOperation.Time(childComplexity), true
+
+	case "BugSetAssigneePayload.bug":
+		if e.complexity.BugSetAssigneePayload.Bug == nil {
+			break
+		}
+
+		return e.complexity.BugSetAssigneePayload.Bug(childComplexity), true
+
+	case "BugSetAssigneePayload.clientMutationId":
+		if e.complexity.BugSetAssigneePayload.ClientMutationID == nil {
+			break
+		}
+
+		return e.complexity.BugSetAssigneePayload.ClientMutationID(childComplexity), true
+
+	case "BugSetAssigneePayload.operation":
+		if e.complexity.BugSetAssigneePayload.Operation == nil {
+			break
+		}
+
+		return e.complexity.BugSetAssigneePayload.Operation(childComplexity), true
+
+	case "BugSetAssigneeTimelineItem.assignee":
+		if e.complexity.BugSetAssigneeTimelineItem.Assignee == nil {
+			break
+		}
+
+		return e.complexity.BugSetAssigneeTimelineItem.Assignee(childComplexity), true
+
+	case "BugSetAssigneeTimelineItem.author":
+		if e.complexity.BugSetAssigneeTimelineItem.Author == nil {
+			break
+		}
+
+		return e.complexity.BugSetAssigneeTimelineItem.Author(childComplexity), true
+
+	case "BugSetAssigneeTimelineItem.id":
+		if e.complexity.BugSetAssigneeTimelineItem.CombinedId == nil {
+			break
+		}
+
+		return e.complexity.BugSetAssigneeTimelineItem.CombinedId(childComplexity), true
+
+	case "BugSetAssigneeTimelineItem.date":
+		if e.complexity.BugSetAssigneeTimelineItem.Date == nil {
+			break
+		}
+
+		return e.complexity.BugSetAssigneeTimelineItem.Date(childComplexity), true
+
 	case "BugSetStatusOperation.author":
 		if e.complexity.BugSetStatusOperation.Author == nil {
 			break
@@ -1588,6 +1696,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.BugEditComment(childComplexity, args["input"].(models.BugEditCommentInput)), true
 
+	case "Mutation.bugSetAssignee":
+		if e.complexity.Mutation.BugSetAssignee == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_bugSetAssignee_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.BugSetAssignee(childComplexity, args["input"].(models.BugSetAssigneeInput)), true
+
 	case "Mutation.bugSetTitle":
 		if e.complexity.Mutation.BugSetTitle == nil {
 			break
@@ -1794,6 +1914,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputBugChangeLabelInput,
 		ec.unmarshalInputBugCreateInput,
 		ec.unmarshalInputBugEditCommentInput,
+		ec.unmarshalInputBugSetAssigneeInput,
 		ec.unmarshalInputBugSetTitleInput,
 		ec.unmarshalInputBugStatusCloseInput,
 		ec.unmarshalInputBugStatusOpenInput,
@@ -1903,6 +2024,8 @@ var sources = []*ast.Source{
   title: String!
   labels: [Label!]!
   author: Identity!
+  """The user assigned to this bug, if any"""
+  assignee: Identity
   createdAt: Time!
   lastEdit: Time!
 
@@ -2030,6 +2153,8 @@ type BugCommentEdge {
     bugStatusClose(input: BugStatusCloseInput!): BugStatusClosePayload!
     """Change a bug's title"""
     bugSetTitle(input: BugSetTitleInput!): BugSetTitlePayload!
+    """Set a bug's assignee"""
+    bugSetAssignee(input: BugSetAssigneeInput!): BugSetAssigneePayload!
 }
 
 input BugCreateInput {
@@ -2225,6 +2350,26 @@ type BugSetTitlePayload {
     """The resulting operation"""
     operation: BugSetTitleOperation!
 }
+
+input BugSetAssigneeInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The name of the repository. If not set, the default repository is used."""
+    repoRef: String
+    """The bug ID's prefix."""
+    prefix: String!
+    """The assignee's ID prefix. Empty string to unassign."""
+    assignee: String!
+}
+
+type BugSetAssigneePayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The affected bug."""
+    bug: Bug!
+    """The resulting operation"""
+    operation: BugSetAssigneeOperation!
+}
 `, BuiltIn: false},
 	{Name: "../schema/bug_operations.graphql", Input: `type BugCreateOperation implements Operation & Authored
 @goModel(model: "github.com/git-bug/git-bug/entities/bug.CreateOperation") {
@@ -2303,6 +2448,19 @@ type BugLabelChangeOperation implements Operation & Authored
 
     added: [Label!]!
     removed: [Label!]!
+}
+
+type BugSetAssigneeOperation implements Operation & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.SetAssigneeOperation") {
+    """The identifier of the operation"""
+    id: ID!
+    """The author of this object."""
+    author: Identity!
+    """The datetime when this operation was issued."""
+    date: Time! @goField(name: "Time")
+
+    """The assignee ID, empty if unassigned"""
+    assignee: String!
 }
 `, BuiltIn: false},
 	{Name: "../schema/bug_timeline.graphql", Input: `"""An item in the timeline of bug events"""
@@ -2397,6 +2555,17 @@ type BugSetTitleTimelineItem implements BugTimelineItem & Authored
     date: Time!
     title: String!
     was: String!
+}
+
+"""BugSetAssigneeTimelineItem is a BugTimelineItem that represent a change in the assignee of a bug"""
+type BugSetAssigneeTimelineItem implements BugTimelineItem & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.SetAssigneeTimelineItem") {
+    """The identifier of the source operation"""
+    id: CombinedId! @goField(name: "CombinedId")
+    author: Identity!
+    date: Time!
+    """The resolved assignee identity, null if unassigned"""
+    assignee: Identity
 }
 `, BuiltIn: false},
 	{Name: "../schema/directives.graphql", Input: `# Below are directives defined by gqlgen, see https://gqlgen.com/config/

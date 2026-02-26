@@ -27,6 +27,7 @@ type BugExcerpt struct {
 	EditUnixTime      int64
 
 	AuthorId     entity.Id
+	AssigneeId   entity.Id
 	Status       common.Status
 	Labels       []common.Label
 	Title        string
@@ -49,6 +50,11 @@ func NewBugExcerpt(b *BugCache) *BugExcerpt {
 		actorsIds = append(actorsIds, actor.Id())
 	}
 
+	var assigneeId entity.Id
+	if snap.Assignee != nil {
+		assigneeId = snap.Assignee.Id()
+	}
+
 	e := &BugExcerpt{
 		id:                b.Id(),
 		CreateLamportTime: b.CreateLamportTime(),
@@ -56,6 +62,7 @@ func NewBugExcerpt(b *BugCache) *BugExcerpt {
 		CreateUnixTime:    b.FirstOp().Time().Unix(),
 		EditUnixTime:      snap.EditTime().Unix(),
 		AuthorId:          snap.Author.Id(),
+		AssigneeId:        assigneeId,
 		Status:            snap.Status,
 		Labels:            snap.Labels,
 		Actors:            actorsIds,

@@ -15,9 +15,17 @@ type BugSnapshot struct {
 	Labels       []common.Label `json:"labels"`
 	Title        string         `json:"title"`
 	Author       Identity       `json:"author"`
+	Assignee     string         `json:"assignee,omitempty"`
 	Actors       []Identity     `json:"actors"`
 	Participants []Identity     `json:"participants"`
 	Comments     []BugComment   `json:"comments"`
+}
+
+func assigneeStr(snap *bug.Snapshot) string {
+	if snap.Assignee == nil {
+		return ""
+	}
+	return snap.Assignee.Id().String()
 }
 
 func NewBugSnapshot(snap *bug.Snapshot) BugSnapshot {
@@ -30,6 +38,7 @@ func NewBugSnapshot(snap *bug.Snapshot) BugSnapshot {
 		Labels:     snap.Labels,
 		Title:      snap.Title,
 		Author:     NewIdentity(snap.Author),
+		Assignee:   assigneeStr(snap),
 	}
 
 	jsonBug.Actors = make([]Identity, len(snap.Actors))

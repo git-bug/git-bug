@@ -562,6 +562,8 @@ func (ec *executionContext) fieldContext_Repository_bug(ctx context.Context, fie
 				return ec.fieldContext_Bug_labels(ctx, field)
 			case "author":
 				return ec.fieldContext_Bug_author(ctx, field)
+			case "assignee":
+				return ec.fieldContext_Bug_assignee(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Bug_createdAt(ctx, field)
 			case "lastEdit":

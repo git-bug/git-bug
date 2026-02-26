@@ -182,6 +182,14 @@ function FilterToolbar({ query, queryLocation }: Props) {
         Author
       </FilterDropdown>
       <FilterDropdown
+        dropdown={identities}
+        itemActive={(key) => hasValue('assignee', key)}
+        to={(key) => pipe(toggleOrAddParam('assignee', key), loc)(params)}
+        hasFilter
+      >
+        Assignee
+      </FilterDropdown>
+      <FilterDropdown
         dropdown={labels}
         itemActive={(key) => containsValue('label', key)}
         to={(key) => pipe(toggleOrAddParam('label', key), loc)(params)}

@@ -24,6 +24,8 @@ const (
 	ImportEventTitleEdition
 	// Bug's labels changed
 	ImportEventLabelChange
+	// Bug's assignee changed
+	ImportEventAssigneeChange
 	// Nothing happened on a Bug
 	ImportEventNothing
 
@@ -67,6 +69,8 @@ func (er ImportResult) String() string {
 		return fmt.Sprintf("[%s] changed title with op: %s", er.EntityId.Human(), er.OperationId)
 	case ImportEventLabelChange:
 		return fmt.Sprintf("[%s] changed label with op: %s", er.EntityId.Human(), er.OperationId)
+	case ImportEventAssigneeChange:
+		return fmt.Sprintf("[%s] changed assignee with op: %s", er.EntityId.Human(), er.OperationId)
 	case ImportEventIdentity:
 		return fmt.Sprintf("[%s] new identity: %s", er.EntityId.Human(), er.EntityId)
 	case ImportEventNothing:
@@ -160,6 +164,14 @@ func NewImportLabelChange(entityId entity.Id, opId entity.Id) ImportResult {
 		EntityId:    entityId,
 		OperationId: opId,
 		Event:       ImportEventLabelChange,
+	}
+}
+
+func NewImportAssigneeChange(entityId entity.Id, opId entity.Id) ImportResult {
+	return ImportResult{
+		EntityId:    entityId,
+		OperationId: opId,
+		Event:       ImportEventAssigneeChange,
 	}
 }
 

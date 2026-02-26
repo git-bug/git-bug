@@ -183,6 +183,26 @@ type BugEditCommentPayload struct {
 	Operation *bug.EditCommentOperation `json:"operation"`
 }
 
+type BugSetAssigneeInput struct {
+	// A unique identifier for the client performing the mutation.
+	ClientMutationID *string `json:"clientMutationId,omitempty"`
+	// The name of the repository. If not set, the default repository is used.
+	RepoRef *string `json:"repoRef,omitempty"`
+	// The bug ID's prefix.
+	Prefix string `json:"prefix"`
+	// The assignee's ID prefix. Empty string to unassign.
+	Assignee string `json:"assignee"`
+}
+
+type BugSetAssigneePayload struct {
+	// A unique identifier for the client performing the mutation.
+	ClientMutationID *string `json:"clientMutationId,omitempty"`
+	// The affected bug.
+	Bug BugWrapper `json:"bug"`
+	// The resulting operation
+	Operation *bug.SetAssigneeOperation `json:"operation"`
+}
+
 type BugSetTitleInput struct {
 	// A unique identifier for the client performing the mutation.
 	ClientMutationID *string `json:"clientMutationId,omitempty"`

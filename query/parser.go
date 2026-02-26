@@ -39,6 +39,8 @@ func Parse(query string) (*Query, error) {
 				q.Status = append(q.Status, status)
 			case "author":
 				q.Author = append(q.Author, t.value)
+			case "assignee":
+				q.Assignee = append(q.Assignee, t.value)
 			case "actor":
 				q.Actor = append(q.Actor, t.value)
 			case "participant":

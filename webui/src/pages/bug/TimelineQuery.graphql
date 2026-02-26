@@ -3,6 +3,7 @@
 #import "./LabelChangeFragment.graphql"
 #import "./SetTitleFragment.graphql"
 #import "./SetStatusFragment.graphql"
+#import "./SetAssigneeFragment.graphql"
 
 query Timeline($id: String!, $first: Int = 10, $after: String) {
   repository {
@@ -30,6 +31,9 @@ fragment TimelineItem on BugTimelineItem {
   }
   ... on BugSetTitleTimelineItem {
     ...SetTitle
+  }
+  ... on BugSetAssigneeTimelineItem {
+    ...SetAssignee
   }
   ... on BugAddCommentTimelineItem {
     ...AddComment

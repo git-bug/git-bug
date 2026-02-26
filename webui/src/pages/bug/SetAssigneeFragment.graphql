@@ -1,0 +1,10 @@
+#import "../../graphql/fragments.graphql"
+
+fragment SetAssignee on BugSetAssigneeTimelineItem {
+  date
+  ...authored
+  assignee {
+    humanId
+    displayName
+  }
+}

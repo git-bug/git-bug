@@ -9,6 +9,9 @@ fragment BugRow on Bug {
   labels {
     ...Label
   }
+  assignee {
+    displayName
+  }
   comments {
     totalCount
   }

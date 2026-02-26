@@ -32,6 +32,10 @@ func TestParse(t *testing.T) {
 			Filters: Filters{Author: []string{"René Descartes"}},
 		}},
 
+		{"assignee:isaac", &Query{
+			Filters: Filters{Assignee: []string{"isaac"}},
+		}},
+
 		{"actor:bernhard", &Query{
 			Filters: Filters{Actor: []string{"bernhard"}},
 		}},

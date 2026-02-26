@@ -41,6 +41,11 @@ type BugLabelChangeTimelineItemResolver interface {
 	Author(ctx context.Context, obj *bug.LabelChangeTimelineItem) (models.IdentityWrapper, error)
 	Date(ctx context.Context, obj *bug.LabelChangeTimelineItem) (*time.Time, error)
 }
+type BugSetAssigneeTimelineItemResolver interface {
+	Author(ctx context.Context, obj *bug.SetAssigneeTimelineItem) (models.IdentityWrapper, error)
+	Date(ctx context.Context, obj *bug.SetAssigneeTimelineItem) (*time.Time, error)
+	Assignee(ctx context.Context, obj *bug.SetAssigneeTimelineItem) (models.IdentityWrapper, error)
+}
 type BugSetStatusTimelineItemResolver interface {
 	Author(ctx context.Context, obj *bug.SetStatusTimelineItem) (models.IdentityWrapper, error)
 	Date(ctx context.Context, obj *bug.SetStatusTimelineItem) (*time.Time, error)
@@ -1240,6 +1245,215 @@ func (ec *executionContext) fieldContext_BugLabelChangeTimelineItem_removed(_ co
 	return fc, nil
 }
 
+func (ec *executionContext) _BugSetAssigneeTimelineItem_id(ctx context.Context, field graphql.CollectedField, obj *bug.SetAssigneeTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugSetAssigneeTimelineItem_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CombinedId(), nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(entity.CombinedId)
+	fc.Result = res
+	return ec.marshalNCombinedId2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚐCombinedId(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BugSetAssigneeTimelineItem_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BugSetAssigneeTimelineItem",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type CombinedId does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BugSetAssigneeTimelineItem_author(ctx context.Context, field graphql.CollectedField, obj *bug.SetAssigneeTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugSetAssigneeTimelineItem_author(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.BugSetAssigneeTimelineItem().Author(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(models.IdentityWrapper)
+	fc.Result = res
+	return ec.marshalNIdentity2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BugSetAssigneeTimelineItem_author(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BugSetAssigneeTimelineItem",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Identity_id(ctx, field)
+			case "humanId":
+				return ec.fieldContext_Identity_humanId(ctx, field)
+			case "name":
+				return ec.fieldContext_Identity_name(ctx, field)
+			case "email":
+				return ec.fieldContext_Identity_email(ctx, field)
+			case "login":
+				return ec.fieldContext_Identity_login(ctx, field)
+			case "displayName":
+				return ec.fieldContext_Identity_displayName(ctx, field)
+			case "avatarUrl":
+				return ec.fieldContext_Identity_avatarUrl(ctx, field)
+			case "isProtected":
+				return ec.fieldContext_Identity_isProtected(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Identity", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BugSetAssigneeTimelineItem_date(ctx context.Context, field graphql.CollectedField, obj *bug.SetAssigneeTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugSetAssigneeTimelineItem_date(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.BugSetAssigneeTimelineItem().Date(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalNTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BugSetAssigneeTimelineItem_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BugSetAssigneeTimelineItem",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BugSetAssigneeTimelineItem_assignee(ctx context.Context, field graphql.CollectedField, obj *bug.SetAssigneeTimelineItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugSetAssigneeTimelineItem_assignee(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.BugSetAssigneeTimelineItem().Assignee(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(models.IdentityWrapper)
+	fc.Result = res
+	return ec.marshalOIdentity2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BugSetAssigneeTimelineItem_assignee(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BugSetAssigneeTimelineItem",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Identity_id(ctx, field)
+			case "humanId":
+				return ec.fieldContext_Identity_humanId(ctx, field)
+			case "name":
+				return ec.fieldContext_Identity_name(ctx, field)
+			case "email":
+				return ec.fieldContext_Identity_email(ctx, field)
+			case "login":
+				return ec.fieldContext_Identity_login(ctx, field)
+			case "displayName":
+				return ec.fieldContext_Identity_displayName(ctx, field)
+			case "avatarUrl":
+				return ec.fieldContext_Identity_avatarUrl(ctx, field)
+			case "isProtected":
+				return ec.fieldContext_Identity_isProtected(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Identity", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _BugSetStatusTimelineItem_id(ctx context.Context, field graphql.CollectedField, obj *bug.SetStatusTimelineItem) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_BugSetStatusTimelineItem_id(ctx, field)
 	if err != nil {
@@ -1978,6 +2192,13 @@ func (ec *executionContext) _BugTimelineItem(ctx context.Context, sel ast.Select
 			return graphql.Null
 		}
 		return ec._BugSetStatusTimelineItem(ctx, sel, obj)
+	case bug.SetAssigneeTimelineItem:
+		return ec._BugSetAssigneeTimelineItem(ctx, sel, &obj)
+	case *bug.SetAssigneeTimelineItem:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BugSetAssigneeTimelineItem(ctx, sel, obj)
 	case bug.LabelChangeTimelineItem:
 		return ec._BugLabelChangeTimelineItem(ctx, sel, &obj)
 	case *bug.LabelChangeTimelineItem:
@@ -2521,6 +2742,150 @@ func (ec *executionContext) _BugLabelChangeTimelineItem(ctx context.Context, sel
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var bugSetAssigneeTimelineItemImplementors = []string{"BugSetAssigneeTimelineItem", "BugTimelineItem", "Authored"}
+
+func (ec *executionContext) _BugSetAssigneeTimelineItem(ctx context.Context, sel ast.SelectionSet, obj *bug.SetAssigneeTimelineItem) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, bugSetAssigneeTimelineItemImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("BugSetAssigneeTimelineItem")
+		case "id":
+			out.Values[i] = ec._BugSetAssigneeTimelineItem_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "author":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._BugSetAssigneeTimelineItem_author(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "date":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._BugSetAssigneeTimelineItem_date(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "assignee":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._BugSetAssigneeTimelineItem_assignee(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

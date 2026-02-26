@@ -23,6 +23,8 @@ const (
 	ExportEventTitleEdition
 	// Bug's labels have been changed on the remote tracker
 	ExportEventLabelChange
+	// Bug's assignee has been changed on the remote tracker
+	ExportEventAssigneeChange
 
 	// Nothing changed on the bug
 	ExportEventNothing
@@ -62,6 +64,8 @@ func (er ExportResult) String() string {
 		return fmt.Sprintf("[%s] changed title", er.EntityId.Human())
 	case ExportEventLabelChange:
 		return fmt.Sprintf("[%s] changed label", er.EntityId.Human())
+	case ExportEventAssigneeChange:
+		return fmt.Sprintf("[%s] changed assignee", er.EntityId.Human())
 	case ExportEventNothing:
 		if er.EntityId != "" {
 			return fmt.Sprintf("no actions taken on entity %s: %s", er.EntityId, er.Reason)
@@ -141,6 +145,13 @@ func NewExportLabelChange(entityId entity.Id) ExportResult {
 	return ExportResult{
 		EntityId: entityId,
 		Event:    ExportEventLabelChange,
+	}
+}
+
+func NewExportAssigneeChange(entityId entity.Id) ExportResult {
+	return ExportResult{
+		EntityId: entityId,
+		Event:    ExportEventAssigneeChange,
 	}
 }
 

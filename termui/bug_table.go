@@ -291,6 +291,8 @@ func (bt *bugTable) getColumnWidths(maxX int) map[string]int {
 	left -= m["comments"]
 	m["lastEdit"] = 14
 	left -= m["lastEdit"]
+	m["assignee"] = 12
+	left -= m["assignee"]
 
 	m["author"] = minInt(maxInt(left/3, 15), 10+left/8)
 	m["title"] = maxInt(left-m["author"], 10)
@@ -324,20 +326,30 @@ func (bt *bugTable) render(v *gocui.View, maxX int) {
 			panic(err)
 		}
 
+		assigneeTxt := ""
+		if excerpt.AssigneeId != "" {
+			assignee, err := bt.repo.Identities().ResolveExcerpt(excerpt.AssigneeId)
+			if err == nil {
+				assigneeTxt = assignee.DisplayName()
+			}
+		}
+
 		id := text.LeftPadMaxLine(excerpt.Id().Human(), columnWidths["id"], 0)
 		status := text.LeftPadMaxLine(excerpt.Status.String(), columnWidths["status"], 0)
 		labels := text.TruncateMax(labelsTxt.String(), minInt(columnWidths["title"]-2, 10))
 		title := text.LeftPadMaxLine(strings.TrimSpace(excerpt.Title), columnWidths["title"]-text.Len(labels), 0)
 		authorTxt := text.LeftPadMaxLine(author.DisplayName(), columnWidths["author"], 0)
+		assigneeCol := text.LeftPadMaxLine(assigneeTxt, columnWidths["assignee"], 0)
 		comments := text.LeftPadMaxLine(summaryTxt, columnWidths["comments"], 0)
 		lastEdit := text.LeftPadMaxLine(humanize.Time(excerpt.EditTime()), columnWidths["lastEdit"], 1)
 
-		_, _ = fmt.Fprintf(v, "%s %s %s%s %s %s %s\n",
+		_, _ = fmt.Fprintf(v, "%s %s %s%s %s %s %s %s\n",
 			colors.Cyan(id),
 			colors.Yellow(status),
 			title,
 			labels,
 			colors.Magenta(authorTxt),
+			colors.Blue(assigneeCol),
 			comments,
 			lastEdit,
 		)
@@ -353,10 +365,11 @@ func (bt *bugTable) renderHeader(v *gocui.View, maxX int) {
 	status := text.LeftPadMaxLine("STATUS", columnWidths["status"], 0)
 	title := text.LeftPadMaxLine("TITLE", columnWidths["title"], 0)
 	author := text.LeftPadMaxLine("AUTHOR", columnWidths["author"], 0)
+	assignee := text.LeftPadMaxLine("ASSIGNEE", columnWidths["assignee"], 0)
 	comments := text.LeftPadMaxLine("CMT", columnWidths["comments"], 0)
 	lastEdit := text.LeftPadMaxLine("LAST EDIT", columnWidths["lastEdit"], 1)
 
-	_, _ = fmt.Fprintf(v, "%s %s %s %s %s %s\n", id, status, title, author, comments, lastEdit)
+	_, _ = fmt.Fprintf(v, "%s %s %s %s %s %s %s\n", id, status, title, author, assignee, comments, lastEdit)
 }
 
 func (bt *bugTable) renderFooter(v *gocui.View, maxX int) {

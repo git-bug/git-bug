@@ -1,5 +1,7 @@
 package launchpad
 
+// TODO: implement assignee import (see bridge/jira for reference)
+
 import (
 	"context"
 	"fmt"

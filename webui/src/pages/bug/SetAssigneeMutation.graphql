@@ -1,0 +1,12 @@
+mutation SetAssigneeMutation($input: BugSetAssigneeInput!) {
+  bugSetAssignee(input: $input) {
+    bug {
+      id
+      assignee {
+        name
+        displayName
+        humanId
+      }
+    }
+  }
+}

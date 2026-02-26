@@ -30,6 +30,7 @@ var showBugHelp = helpBar{
 	{"e", "Edit"},
 	{"c", "Comment"},
 	{"t", "Change title"},
+	{"a", "Set assignee"},
 }
 
 type showBug struct {
@@ -193,6 +194,12 @@ func (sb *showBug) keybindings(g *gocui.Gui) error {
 	// Edit
 	if err := g.SetKeybinding(showBugView, 'e', gocui.ModNone,
 		sb.edit); err != nil {
+		return err
+	}
+
+	// Assignee
+	if err := g.SetKeybinding(showBugView, 'a', gocui.ModNone,
+		sb.setAssignee); err != nil {
 		return err
 	}
 
@@ -429,6 +436,22 @@ func (sb *showBug) renderSidebar(g *gocui.Gui, sideView *gocui.View) error {
 
 	sb.sideSelectableView = nil
 
+	// Assignee section
+	assigneeStr := "(unassigned)"
+	if snap.Assignee != nil {
+		assigneeStr = snap.Assignee.DisplayName()
+	}
+	assigneeContent := fmt.Sprintf("%s\n\n  %s", colors.Bold("  Assignee"), assigneeStr)
+
+	v, err := sb.createSideView(g, "sideAssignee", x0, y0, maxX, 3)
+	if err != nil {
+		return err
+	}
+	_, _ = fmt.Fprint(v, assigneeContent)
+
+	y0 += 4
+
+	// Labels section
 	labelStr := make([]string, len(snap.Labels))
 	for i, l := range snap.Labels {
 		lc := l.Color()
@@ -441,7 +464,7 @@ func (sb *showBug) renderSidebar(g *gocui.Gui, sideView *gocui.View) error {
 
 	content := fmt.Sprintf("%s\n\n%s", colors.Bold("  Labels"), labels)
 
-	v, err := sb.createSideView(g, "sideLabels", x0, y0, maxX, lines+2)
+	v, err = sb.createSideView(g, "sideLabels", x0, y0, maxX, lines+2)
 	if err != nil {
 		return err
 	}
@@ -621,6 +644,11 @@ func (sb *showBug) comment(g *gocui.Gui, v *gocui.View) error {
 
 func (sb *showBug) setTitle(g *gocui.Gui, v *gocui.View) error {
 	return setTitleWithEditor(sb.bug)
+}
+
+func (sb *showBug) setAssignee(g *gocui.Gui, v *gocui.View) error {
+	ui.assigneeSelect.SetBug(sb.cache, sb.bug)
+	return ui.activateWindow(ui.assigneeSelect)
 }
 
 func (sb *showBug) toggleOpenClose(g *gocui.Gui, v *gocui.View) error {

@@ -172,7 +172,7 @@ func (je *jiraExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, si
 
 				if snapshot.HasAnyActor(allIdentitiesIds...) {
 					// try to export the bug and it associated events
-					err := je.exportBug(ctx, b, out)
+					err := je.exportBug(ctx, repo, b, out)
 					if err != nil {
 						out <- core.NewExportError(errors.Wrap(err, "can't export bug"), id)
 						return
@@ -188,7 +188,7 @@ func (je *jiraExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, si
 }
 
 // exportBug publish bugs and related events
-func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, out chan<- core.ExportResult) error {
+func (je *jiraExporter) exportBug(ctx context.Context, repo *cache.RepoCache, b *cache.BugCache, out chan<- core.ExportResult) error {
 	snapshot := b.Snapshot()
 
 	var bugJiraID string
@@ -409,6 +409,32 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, out ch
 				return err
 			}
 			out <- core.NewExportLabelChange(b.Id())
+			id = bugJiraID
+
+		case *bug.SetAssigneeOperation:
+			var assigneeKey string
+			if opr.Assignee != "" {
+				// Look up the Jira user key from the identity
+				assigneeIdentity, err := repo.Identities().Resolve(opr.Assignee)
+				if err != nil {
+					out <- core.NewExportWarning(
+						errors.Wrap(err, "resolving assignee identity"), b.Id())
+					continue
+				}
+				assigneeKey, _ = assigneeIdentity.ImmutableMetadata()[metaKeyJiraUser]
+				if assigneeKey == "" {
+					out <- core.NewExportWarning(
+						fmt.Errorf("assignee has no jira user key"), b.Id())
+					continue
+				}
+			}
+			exportTime, err = client.UpdateAssignee(bugJiraID, assigneeKey)
+			if err != nil {
+				err := errors.Wrap(err, "updating assignee")
+				out <- core.NewExportWarning(err, b.Id())
+				continue
+			}
+			out <- core.NewExportAssigneeChange(b.Id())
 			id = bugJiraID
 
 		default:

@@ -32,6 +32,23 @@ func AuthorFilter(query string) Filter {
 	}
 }
 
+// AssigneeFilter return a Filter that match a bug assignee
+func AssigneeFilter(query string) Filter {
+	return func(excerpt *BugExcerpt, resolvers entity.Resolvers) bool {
+		if excerpt.AssigneeId == "" {
+			return false
+		}
+		query = strings.ToLower(query)
+
+		assignee, err := entity.Resolve[*IdentityExcerpt](resolvers, excerpt.AssigneeId)
+		if err != nil {
+			panic(err)
+		}
+
+		return assignee.Match(query)
+	}
+}
+
 // MetadataFilter return a Filter that match a bug metadata at creation time
 func MetadataFilter(pair query.StringPair) Filter {
 	return func(excerpt *BugExcerpt, resolvers entity.Resolvers) bool {
@@ -113,6 +130,7 @@ func NoLabelFilter() Filter {
 type Matcher struct {
 	Status      []Filter
 	Author      []Filter
+	Assignee    []Filter
 	Metadata    []Filter
 	Actor       []Filter
 	Participant []Filter
@@ -131,6 +149,9 @@ func compileMatcher(filters query.Filters) *Matcher {
 	}
 	for _, value := range filters.Author {
 		result.Author = append(result.Author, AuthorFilter(value))
+	}
+	for _, value := range filters.Assignee {
+		result.Assignee = append(result.Assignee, AssigneeFilter(value))
 	}
 	for _, value := range filters.Metadata {
 		result.Metadata = append(result.Metadata, MetadataFilter(value))
@@ -161,6 +182,10 @@ func (f *Matcher) Match(excerpt *BugExcerpt, resolvers entity.Resolvers) bool {
 	}
 
 	if match := f.orMatch(f.Author, excerpt, resolvers); !match {
+		return false
+	}
+
+	if match := f.orMatch(f.Assignee, excerpt, resolvers); !match {
 		return false
 	}
 

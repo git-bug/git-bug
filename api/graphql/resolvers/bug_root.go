@@ -57,3 +57,11 @@ func (r bugRootSubResolver) BugSetTitleOperation() graph.BugSetTitleOperationRes
 func (r bugRootSubResolver) BugSetTitleTimelineItem() graph.BugSetTitleTimelineItemResolver {
 	return &bugSetTitleTimelineItem{}
 }
+
+func (bugRootSubResolver) BugSetAssigneeOperation() graph.BugSetAssigneeOperationResolver {
+	return &bugSetAssigneeOperationResolver{}
+}
+
+func (bugRootSubResolver) BugSetAssigneeTimelineItem() graph.BugSetAssigneeTimelineItemResolver {
+	return &bugSetAssigneeTimelineItem{}
+}

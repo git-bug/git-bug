@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/entity/dag"
 )
@@ -18,6 +19,7 @@ const (
 	EditCommentOp
 	NoOpOp
 	SetMetadataOp
+	SetAssigneeOp
 )
 
 // Operation define the interface to fulfill for an edit operation of a Bug
@@ -55,6 +57,20 @@ func operationUnmarshaler(raw json.RawMessage, resolvers entity.Resolvers) (dag.
 		op = &SetStatusOperation{}
 	case SetTitleOp:
 		op = &SetTitleOperation{}
+	case SetAssigneeOp:
+		setAssigneeOp := &SetAssigneeOperation{}
+		if err := json.Unmarshal(raw, setAssigneeOp); err != nil {
+			return nil, err
+		}
+		// Resolve assignee identity if set
+		if setAssigneeOp.Assignee != "" {
+			assignee, err := entity.Resolve[identity.Interface](resolvers, setAssigneeOp.Assignee)
+			if err != nil {
+				return nil, err
+			}
+			setAssigneeOp.assignee = assignee
+		}
+		return setAssigneeOp, nil
 	default:
 		panic(fmt.Sprintf("unknown operation type %v", t.OperationType))
 	}

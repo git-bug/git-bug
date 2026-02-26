@@ -1,5 +1,7 @@
 package gitlab
 
+// TODO: implement assignee import/export (see bridge/jira for reference)
+
 import (
 	"context"
 	"fmt"

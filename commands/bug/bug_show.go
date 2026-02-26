@@ -136,6 +136,13 @@ func showDefaultFormatter(env *execenv.Env, snapshot *bug.Snapshot) error {
 		strings.Join(labels, ", "),
 	)
 
+	// Assignee
+	if snapshot.Assignee != nil {
+		env.Out.Printf("assignee: %s\n", snapshot.Assignee.DisplayName())
+	} else {
+		env.Out.Printf("assignee: (unassigned)\n")
+	}
+
 	// Actors
 	var actors = make([]string, len(snapshot.Actors))
 	for i := range snapshot.Actors {
