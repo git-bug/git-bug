@@ -13,65 +13,65 @@ import (
 	"github.com/git-bug/git-bug/util/timestamp"
 )
 
-type testIdentityMock struct {
+type mockIdentity struct {
 	name  string
 	login string
 	email string
 }
 
-func (m *testIdentityMock) Name() string {
+func (m *mockIdentity) Name() string {
 	return m.name
 }
 
-func (m *testIdentityMock) Login() string {
+func (m *mockIdentity) Login() string {
 	return m.login
 }
 
-func (m *testIdentityMock) Email() string {
+func (m *mockIdentity) Email() string {
 	return m.email
 }
 
-func (m *testIdentityMock) DisplayName() string {
+func (m *mockIdentity) DisplayName() string {
 	return m.name
 }
 
-func (m *testIdentityMock) AvatarUrl() string {
+func (m *mockIdentity) AvatarUrl() string {
 	return ""
 }
 
-func (m *testIdentityMock) Keys() []*Key {
+func (m *mockIdentity) Keys() []*Key {
 	return nil
 }
 
-func (m *testIdentityMock) SigningKey(repo repository.RepoKeyring) (*Key, error) {
+func (m *mockIdentity) SigningKey(repo repository.RepoKeyring) (*Key, error) {
 	return nil, nil
 }
 
-func (m *testIdentityMock) ValidKeysAtTime(clockName string, time lamport.Time) []*Key {
+func (m *mockIdentity) ValidKeysAtTime(clockName string, time lamport.Time) []*Key {
 	return nil
 }
 
-func (m *testIdentityMock) LastModification() timestamp.Timestamp {
+func (m *mockIdentity) LastModification() timestamp.Timestamp {
 	return 0
 }
 
-func (m *testIdentityMock) LastModificationLamports() map[string]lamport.Time {
+func (m *mockIdentity) LastModificationLamports() map[string]lamport.Time {
 	return nil
 }
 
-func (m *testIdentityMock) IsProtected() bool {
+func (m *mockIdentity) IsProtected() bool {
 	return false
 }
 
-func (m *testIdentityMock) Validate() error {
+func (m *mockIdentity) Validate() error {
 	return nil
 }
 
-func (m *testIdentityMock) NeedCommit() bool {
+func (m *mockIdentity) NeedCommit() bool {
 	return false
 }
 
-func (m *testIdentityMock) Id() entity.Id {
+func (m *mockIdentity) Id() entity.Id {
 	return ""
 }
 
@@ -202,7 +202,7 @@ func TestIdentityCommitLoad(t *testing.T) {
 	require.True(t, identitiesEqual(identity, loaded), "loaded identity should equal original (comparing by key fingerprint)")
 
 	// multiple versions
-	testIdentity := &testIdentityMock{name: "René Descartes", email: "rene.descartes@example.com"}
+	testIdentity := &mockIdentity{name: "René Descartes", email: "rene.descartes@example.com"}
 	identity, err = NewIdentityFull(repo, "René Descartes", "rene.descartes@example.com", "", "", []*Key{generatePublicKey(testIdentity)})
 	require.NoError(t, err)
 
@@ -290,7 +290,7 @@ func commitsAreSet(t *testing.T, identity *Identity) {
 
 // Test that the correct crypto keys are returned for a given lamport time
 func TestIdentity_ValidKeysAtTime(t *testing.T) {
-	testIdentity := &testIdentityMock{name: "Test User", email: "test@example.com"}
+	testIdentity := &mockIdentity{name: "Test User", email: "test@example.com"}
 	pubKeyA := generatePublicKey(testIdentity)
 	pubKeyB := generatePublicKey(testIdentity)
 	pubKeyC := generatePublicKey(testIdentity)

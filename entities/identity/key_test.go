@@ -8,32 +8,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
-	"github.com/git-bug/git-bug/util/lamport"
-	"github.com/git-bug/git-bug/util/timestamp"
 )
 
-type mockIdentity struct {
-	name  string
-	login string
-	email string
-}
 
-func (m *mockIdentity) Name() string                                        { return m.name }
-func (m *mockIdentity) Login() string                                      { return m.login }
-func (m *mockIdentity) Email() string                                     { return m.email }
-func (m *mockIdentity) DisplayName() string                               { return m.name }
-func (m *mockIdentity) AvatarUrl() string                                 { return "" }
-func (m *mockIdentity) Keys() []*Key                                      { return nil }
-func (m *mockIdentity) SigningKey(repo repository.RepoKeyring) (*Key, error) { return nil, nil }
-func (m *mockIdentity) ValidKeysAtTime(clockName string, time lamport.Time) []*Key { return nil }
-func (m *mockIdentity) LastModification() timestamp.Timestamp             { return 0 }
-func (m *mockIdentity) LastModificationLamports() map[string]lamport.Time { return nil }
-func (m *mockIdentity) IsProtected() bool                                 { return false }
-func (m *mockIdentity) Validate() error                                   { return nil }
-func (m *mockIdentity) NeedCommit() bool                                  { return false }
-func (m *mockIdentity) Id() entity.Id                                     { return "" }
 
 func TestPublicKeyJSON(t *testing.T) {
 	id := &mockIdentity{name: "John Smith", email: "jsmith@example.com"}
