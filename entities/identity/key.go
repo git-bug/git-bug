@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"strings"
 	"time"
 
@@ -19,43 +18,68 @@ import (
 var errNoPrivateKey = fmt.Errorf("no private key")
 
 type Key struct {
-	public  *packet.PublicKey
-	private *packet.PrivateKey
+	public *packet.PublicKey
+	entity *openpgp.Entity
 }
 
-// GenerateKey generate a key pair (public+private)
+type keyConfig struct {
+	time time.Time
+}
+
+type KeyOption func(*keyConfig)
+
+// WithTime sets a specific time for key generation.
+// Useful for testing to ensure consistent, deterministic keys.
+func WithTime(t time.Time) KeyOption {
+	return func(cfg *keyConfig) {
+		cfg.time = t
+	}
+}
+
+// GenerateKey generate a key pair (public+private) with identity metadata.
 // The type and configuration of the key is determined by the default value in go's OpenPGP.
-func GenerateKey() *Key {
-	entity, err := openpgp.NewEntity("", "", "", &packet.Config{
-		// The armored format doesn't include the creation time, which makes the round-trip data not being fully equal.
-		// We don't care about the creation time so we can set it to the zero value.
+func GenerateKey(id Interface, opts ...KeyOption) *Key {
+	cfg := &keyConfig{
+		time: time.Now(),
+	}
+	for _, opt := range opts {
+		opt(cfg)
+	}
+
+	entity, err := openpgp.NewEntity(id.Name(), id.Login(), id.Email(), &packet.Config{
 		Time: func() time.Time {
-			return time.Time{}
+			return cfg.time
 		},
 	})
 	if err != nil {
 		panic(err)
 	}
+
 	return &Key{
-		public:  entity.PrimaryKey,
-		private: entity.PrivateKey,
+		public: entity.PrimaryKey,
+		entity: entity,
 	}
 }
 
 // generatePublicKey generate only a public key (only useful for testing)
 // See GenerateKey for the details.
-func generatePublicKey() *Key {
-	k := GenerateKey()
-	k.private = nil
+func generatePublicKey(id Interface) *Key {
+	k := GenerateKey(id, WithTime(time.Time{}))
+	// k.entity = nil
+	k.entity.PrivateKey = nil
 	return k
 }
 
 func (k *Key) Public() *packet.PublicKey {
-	return k.public
+	return k.entity.PrimaryKey
+}
+
+func (k *Key) Version() string {
+	return "new"
 }
 
 func (k *Key) Private() *packet.PrivateKey {
-	return k.private
+	return k.entity.PrivateKey
 }
 
 func (k *Key) Validate() error {
@@ -66,8 +90,8 @@ func (k *Key) Validate() error {
 		return fmt.Errorf("public key can't sign")
 	}
 
-	if k.private != nil {
-		if !k.private.CanSign() {
+	if k.entity != nil && k.entity.PrivateKey != nil {
+		if !k.entity.PrivateKey.CanSign() {
 			return fmt.Errorf("private key can't sign")
 		}
 	}
@@ -81,9 +105,9 @@ func (k *Key) Clone() *Key {
 	pub := *k.public
 	clone.public = &pub
 
-	if k.private != nil {
-		priv := *k.private
-		clone.private = &priv
+	if k.entity != nil {
+		entity := *k.entity
+		clone.entity = &entity
 	}
 
 	return clone
@@ -97,7 +121,7 @@ func (k *Key) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	err = k.public.Serialize(w)
+	err = k.entity.Serialize(w)
 	if err != nil {
 		return nil, err
 	}
@@ -109,40 +133,30 @@ func (k *Key) MarshalJSON() ([]byte, error) {
 }
 
 func (k *Key) UnmarshalJSON(data []byte) error {
-	// De-serialize only the public key, in the armored format.
+	// De-serialize the entity using the armored format.
 	var armored string
 	err := json.Unmarshal(data, &armored)
 	if err != nil {
 		return err
 	}
 
-	block, err := armor.Decode(strings.NewReader(armored))
-	if err == io.EOF {
-		return fmt.Errorf("no armored data found")
-	}
+	entities, err := openpgp.ReadArmoredKeyRing(strings.NewReader(armored))
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to read armored key ring")
 	}
 
-	if block.Type != openpgp.PublicKeyType {
-		return fmt.Errorf("invalid key type")
+	if len(entities) != 1 {
+		return fmt.Errorf("exactly one entity should be present - got %d", len(entities))
 	}
 
-	p, err := packet.Read(block.Body)
-	if err != nil {
-		return errors.Wrap(err, "failed to read public key packet")
-	}
+	entity := entities[0]
 
-	public, ok := p.(*packet.PublicKey)
-	if !ok {
-		return errors.New("got no packet.publicKey")
-	}
+	// The armored format (RFC 4880) doesn't preserve key creation timestamps.
+	// We don't care about the creation time, so we reset it to the zero value to ensure consistency.
+	entity.PrimaryKey.CreationTime = time.Time{}
 
-	// The armored format doesn't include the creation time, which makes the round-trip data not being fully equal.
-	// We don't care about the creation time so we can set it to the zero value.
-	public.CreationTime = time.Time{}
-
-	k.public = public
+	k.public = entity.PrimaryKey
+	k.entity = entity
 	return nil
 }
 
@@ -155,40 +169,28 @@ func (k *Key) loadPrivate(repo repository.RepoKeyring) error {
 		return err
 	}
 
-	block, err := armor.Decode(bytes.NewReader(item.Data))
-	if err == io.EOF {
-		return fmt.Errorf("no armored data found")
-	}
+	entities, err := openpgp.ReadArmoredKeyRing(bytes.NewReader(item.Data))
 	if err != nil {
 		return err
 	}
 
-	if block.Type != openpgp.PrivateKeyType {
-		return fmt.Errorf("invalid key type")
+	if len(entities) != 1 {
+		return fmt.Errorf("examtly one entity should be stored - got %d", len(entities))
 	}
 
-	p, err := packet.Read(block.Body)
-	if err != nil {
-		return errors.Wrap(err, "failed to read private key packet")
-	}
+	// The armored format (RFC 4880) doesn't preserve key creation timestamps.
+	// We don't care about the creation time, so we reset it to the zero value to ensure consistency.
+	entities[0].PrivateKey.CreationTime = time.Time{}
+	k.entity = entities[0]
+	k.public = entities[0].PrimaryKey
 
-	private, ok := p.(*packet.PrivateKey)
-	if !ok {
-		return errors.New("got no packet.privateKey")
-	}
-
-	// The armored format doesn't include the creation time, which makes the round-trip data not being fully equal.
-	// We don't care about the creation time so we can set it to the zero value.
-	private.CreationTime = time.Time{}
-
-	k.private = private
 	return nil
 }
 
 // ensurePrivateKey attempt to load the corresponding private key if it is not loaded already.
 // If no private key is found, returns errNoPrivateKey
 func (k *Key) ensurePrivateKey(repo repository.RepoKeyring) error {
-	if k.private != nil {
+	if k.entity != nil && k.entity.PrivateKey != nil {
 		return nil
 	}
 
@@ -201,7 +203,7 @@ func (k *Key) storePrivate(repo repository.RepoKeyring) error {
 	if err != nil {
 		return err
 	}
-	err = k.private.Serialize(w)
+	err = k.entity.SerializePrivate(w, nil)
 	if err != nil {
 		return err
 	}
@@ -211,21 +213,11 @@ func (k *Key) storePrivate(repo repository.RepoKeyring) error {
 	}
 
 	return repo.Keyring().Set(repository.Item{
-		Key:  k.public.KeyIdString(),
+		Key:  k.entity.PrimaryKey.KeyIdString(),
 		Data: buf.Bytes(),
 	})
 }
 
 func (k *Key) PGPEntity() *openpgp.Entity {
-	e := &openpgp.Entity{
-		PrimaryKey: k.public,
-		PrivateKey: k.private,
-		Identities: map[string]*openpgp.Identity{},
-	}
-	// somehow initialize the proper fields with identity, self-signature ...
-	err := e.AddUserId("name", "", "", nil)
-	if err != nil {
-		panic(err)
-	}
-	return e
+	return k.entity
 }

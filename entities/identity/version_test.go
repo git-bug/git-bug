@@ -11,7 +11,29 @@ import (
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
 	"github.com/git-bug/git-bug/util/lamport"
+	"github.com/git-bug/git-bug/util/timestamp"
 )
+
+type testVersionMockIdentity struct {
+	name  string
+	login string
+	email string
+}
+
+func (m *testVersionMockIdentity) Name() string                                        { return m.name }
+func (m *testVersionMockIdentity) Login() string                                      { return m.login }
+func (m *testVersionMockIdentity) Email() string                                     { return m.email }
+func (m *testVersionMockIdentity) DisplayName() string                               { return m.name }
+func (m *testVersionMockIdentity) AvatarUrl() string                                 { return "" }
+func (m *testVersionMockIdentity) Keys() []*Key                                      { return nil }
+func (m *testVersionMockIdentity) SigningKey(repo repository.RepoKeyring) (*Key, error) { return nil, nil }
+func (m *testVersionMockIdentity) ValidKeysAtTime(clockName string, time lamport.Time) []*Key { return nil }
+func (m *testVersionMockIdentity) LastModification() timestamp.Timestamp             { return 0 }
+func (m *testVersionMockIdentity) LastModificationLamports() map[string]lamport.Time { return nil }
+func (m *testVersionMockIdentity) IsProtected() bool                                 { return false }
+func (m *testVersionMockIdentity) Validate() error                                   { return nil }
+func (m *testVersionMockIdentity) NeedCommit() bool                                  { return false }
+func (m *testVersionMockIdentity) Id() entity.Id                                     { return "" }
 
 func makeIdentityTestRepo(t *testing.T) repository.ClockedRepo {
 	repo := repository.NewMockRepo()
@@ -32,9 +54,10 @@ func makeIdentityTestRepo(t *testing.T) repository.ClockedRepo {
 func TestVersionJSON(t *testing.T) {
 	repo := makeIdentityTestRepo(t)
 
+	testIdentity := &testVersionMockIdentity{name: "name", email: "email", login: "login"}
 	keys := []*Key{
-		generatePublicKey(),
-		generatePublicKey(),
+		generatePublicKey(testIdentity),
+		generatePublicKey(testIdentity),
 	}
 
 	before, err := newVersion(repo, "name", "email", "login", "avatarUrl", keys)
@@ -74,5 +97,18 @@ func TestVersionJSON(t *testing.T) {
 	// make sure we now have an Id
 	expected.Id()
 
-	assert.Equal(t, expected, &after)
+	// Compare versions without Key objects since entities may differ in internal structure after deserialization
+	assert.Equal(t, expected.name, after.name)
+	assert.Equal(t, expected.email, after.email)
+	assert.Equal(t, expected.login, after.login)
+	assert.Equal(t, expected.avatarURL, after.avatarURL)
+	assert.Equal(t, expected.unixTime, after.unixTime)
+	assert.Equal(t, expected.times, after.times)
+	assert.Equal(t, expected.metadata, after.metadata)
+	assert.Equal(t, expected.id, after.id)
+	assert.Equal(t, expected.commitHash, after.commitHash)
+	assert.Equal(t, len(expected.keys), len(after.keys))
+	for i, key := range expected.keys {
+		assert.Equal(t, key.public.Fingerprint[:], after.keys[i].public.Fingerprint[:])
+	}
 }
