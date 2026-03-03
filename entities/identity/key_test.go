@@ -11,8 +11,6 @@ import (
 	"github.com/git-bug/git-bug/repository"
 )
 
-
-
 func TestPublicKeyJSON(t *testing.T) {
 	id := &mockIdentity{name: "John Smith", email: "jsmith@example.com"}
 	k := generatePublicKey(id)

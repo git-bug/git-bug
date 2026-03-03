@@ -13,8 +13,6 @@ import (
 	"github.com/git-bug/git-bug/util/lamport"
 )
 
-
-
 func makeIdentityTestRepo(t *testing.T) repository.ClockedRepo {
 	repo := repository.NewMockRepo()
 
@@ -34,7 +32,12 @@ func makeIdentityTestRepo(t *testing.T) repository.ClockedRepo {
 func TestVersionJSON(t *testing.T) {
 	repo := makeIdentityTestRepo(t)
 
-	testIdentity := &mockIdentity{name: "name", email: "email", login: "login"}
+	testIdentity := &mockIdentity{
+		name:  "name",
+		email: "email",
+		login: "login",
+	}
+
 	keys := []*Key{
 		generatePublicKey(testIdentity),
 		generatePublicKey(testIdentity),
