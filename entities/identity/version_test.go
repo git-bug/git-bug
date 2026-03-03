@@ -20,20 +20,61 @@ type testVersionMockIdentity struct {
 	email string
 }
 
-func (m *testVersionMockIdentity) Name() string                                        { return m.name }
-func (m *testVersionMockIdentity) Login() string                                      { return m.login }
-func (m *testVersionMockIdentity) Email() string                                     { return m.email }
-func (m *testVersionMockIdentity) DisplayName() string                               { return m.name }
-func (m *testVersionMockIdentity) AvatarUrl() string                                 { return "" }
-func (m *testVersionMockIdentity) Keys() []*Key                                      { return nil }
-func (m *testVersionMockIdentity) SigningKey(repo repository.RepoKeyring) (*Key, error) { return nil, nil }
-func (m *testVersionMockIdentity) ValidKeysAtTime(clockName string, time lamport.Time) []*Key { return nil }
-func (m *testVersionMockIdentity) LastModification() timestamp.Timestamp             { return 0 }
-func (m *testVersionMockIdentity) LastModificationLamports() map[string]lamport.Time { return nil }
-func (m *testVersionMockIdentity) IsProtected() bool                                 { return false }
-func (m *testVersionMockIdentity) Validate() error                                   { return nil }
-func (m *testVersionMockIdentity) NeedCommit() bool                                  { return false }
-func (m *testVersionMockIdentity) Id() entity.Id                                     { return "" }
+func (m *testVersionMockIdentity) Name() string {
+	return m.name
+}
+
+func (m *testVersionMockIdentity) Login() string {
+	return m.login
+}
+
+func (m *testVersionMockIdentity) Email() string {
+	return m.email
+}
+
+func (m *testVersionMockIdentity) DisplayName() string {
+	return m.name
+}
+
+func (m *testVersionMockIdentity) AvatarUrl() string {
+	return ""
+}
+
+func (m *testVersionMockIdentity) Keys() []*Key {
+	return nil
+}
+
+func (m *testVersionMockIdentity) SigningKey(repo repository.RepoKeyring) (*Key, error) {
+	return nil, nil
+}
+
+func (m *testVersionMockIdentity) ValidKeysAtTime(clockName string, time lamport.Time) []*Key {
+	return nil
+}
+
+func (m *testVersionMockIdentity) LastModification() timestamp.Timestamp {
+	return 0
+}
+
+func (m *testVersionMockIdentity) LastModificationLamports() map[string]lamport.Time {
+	return nil
+}
+
+func (m *testVersionMockIdentity) IsProtected() bool {
+	return false
+}
+
+func (m *testVersionMockIdentity) Validate() error {
+	return nil
+}
+
+func (m *testVersionMockIdentity) NeedCommit() bool {
+	return false
+}
+
+func (m *testVersionMockIdentity) Id() entity.Id {
+	return ""
+}
 
 func makeIdentityTestRepo(t *testing.T) repository.ClockedRepo {
 	repo := repository.NewMockRepo()

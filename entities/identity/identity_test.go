@@ -19,20 +19,61 @@ type testIdentityMock struct {
 	email string
 }
 
-func (m *testIdentityMock) Name() string                                        { return m.name }
-func (m *testIdentityMock) Login() string                                      { return m.login }
-func (m *testIdentityMock) Email() string                                     { return m.email }
-func (m *testIdentityMock) DisplayName() string                               { return m.name }
-func (m *testIdentityMock) AvatarUrl() string                                 { return "" }
-func (m *testIdentityMock) Keys() []*Key                                      { return nil }
-func (m *testIdentityMock) SigningKey(repo repository.RepoKeyring) (*Key, error) { return nil, nil }
-func (m *testIdentityMock) ValidKeysAtTime(clockName string, time lamport.Time) []*Key { return nil }
-func (m *testIdentityMock) LastModification() timestamp.Timestamp             { return 0 }
-func (m *testIdentityMock) LastModificationLamports() map[string]lamport.Time { return nil }
-func (m *testIdentityMock) IsProtected() bool                                 { return false }
-func (m *testIdentityMock) Validate() error                                   { return nil }
-func (m *testIdentityMock) NeedCommit() bool                                  { return false }
-func (m *testIdentityMock) Id() entity.Id                                     { return "" }
+func (m *testIdentityMock) Name() string {
+	return m.name
+}
+
+func (m *testIdentityMock) Login() string {
+	return m.login
+}
+
+func (m *testIdentityMock) Email() string {
+	return m.email
+}
+
+func (m *testIdentityMock) DisplayName() string {
+	return m.name
+}
+
+func (m *testIdentityMock) AvatarUrl() string {
+	return ""
+}
+
+func (m *testIdentityMock) Keys() []*Key {
+	return nil
+}
+
+func (m *testIdentityMock) SigningKey(repo repository.RepoKeyring) (*Key, error) {
+	return nil, nil
+}
+
+func (m *testIdentityMock) ValidKeysAtTime(clockName string, time lamport.Time) []*Key {
+	return nil
+}
+
+func (m *testIdentityMock) LastModification() timestamp.Timestamp {
+	return 0
+}
+
+func (m *testIdentityMock) LastModificationLamports() map[string]lamport.Time {
+	return nil
+}
+
+func (m *testIdentityMock) IsProtected() bool {
+	return false
+}
+
+func (m *testIdentityMock) Validate() error {
+	return nil
+}
+
+func (m *testIdentityMock) NeedCommit() bool {
+	return false
+}
+
+func (m *testIdentityMock) Id() entity.Id {
+	return ""
+}
 
 // identitiesEqual compares two identities by their versions
 func identitiesEqual(left, right *Identity) bool {
