@@ -49,7 +49,7 @@ func TestGitlabImport(t *testing.T) {
 	}{
 		{
 			name: "simple issue",
-			url:  "https://gitlab.com/git-bug/test/-/issues/1",
+			url:  "https://gitlab.com/git-bug/test/-/work_items/1",
 			bug: &bug.Snapshot{
 				Operations: []dag.Operation{
 					bug.NewCreateOp(author, 0, "simple issue", "initial comment", nil),
@@ -60,7 +60,7 @@ func TestGitlabImport(t *testing.T) {
 		},
 		{
 			name: "empty issue",
-			url:  "https://gitlab.com/git-bug/test/-/issues/2",
+			url:  "https://gitlab.com/git-bug/test/-/work_items/2",
 			bug: &bug.Snapshot{
 				Operations: []dag.Operation{
 					bug.NewCreateOp(author, 0, "empty issue", "", nil),
@@ -69,7 +69,7 @@ func TestGitlabImport(t *testing.T) {
 		},
 		{
 			name: "complex issue",
-			url:  "https://gitlab.com/git-bug/test/-/issues/3",
+			url:  "https://gitlab.com/git-bug/test/-/work_items/3",
 			bug: &bug.Snapshot{
 				Operations: []dag.Operation{
 					bug.NewCreateOp(author, 0, "complex issue", "initial comment", nil),
@@ -86,7 +86,7 @@ func TestGitlabImport(t *testing.T) {
 		},
 		{
 			name: "editions",
-			url:  "https://gitlab.com/git-bug/test/-/issues/4",
+			url:  "https://gitlab.com/git-bug/test/-/work_items/4",
 			bug: &bug.Snapshot{
 				Operations: []dag.Operation{
 					bug.NewCreateOp(author, 0, "editions", "initial comment edited", nil),
