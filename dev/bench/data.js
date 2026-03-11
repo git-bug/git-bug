@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1770835410944,
+  "lastUpdate": 1773269798343,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -16900,6 +16900,102 @@ window.BENCHMARK_DATA = {
             "value": 484509,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "870d45bba70c8795290bd3913bec255bbcd734c3",
+          "message": "test: use work_items url for gitlab issues (#1529)\n\nGitlab has made a breaking change in that issues are returned from their\nAPI with the new `work_items` URL schema.\n\nThat is, what used to be:\n\n    https://gitlab.com/:group/:project/-/issues/:id\n\nis now:\n\n    https://gitlab.com/:group/:project/-/work_items/:id\n\nThis caused TestGitlabImport to fail, because we are using the hardcoded\nURL in the test structures to match against issues fetched from the API.\n\nChange-Id: I2aad98118fe4da7c56bdf2a83412ea753e1bbd23",
+          "timestamp": "2026-03-11T22:50:46Z",
+          "tree_id": "5ce37177f3e0a2086aa35db42d967bca47afa40e",
+          "url": "https://github.com/git-bug/git-bug/commit/870d45bba70c8795290bd3913bec255bbcd734c3"
+        },
+        "date": 1773269797610,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 15050343,
+            "unit": "ns/op\t  832969 B/op\t   12840 allocs/op",
+            "extra": "69 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 15050343,
+            "unit": "ns/op",
+            "extra": "69 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 832969,
+            "unit": "B/op",
+            "extra": "69 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 12840,
+            "unit": "allocs/op",
+            "extra": "69 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 82566794,
+            "unit": "ns/op\t 4936724 B/op\t   73754 allocs/op",
+            "extra": "15 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 82566794,
+            "unit": "ns/op",
+            "extra": "15 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 4936724,
+            "unit": "B/op",
+            "extra": "15 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 73754,
+            "unit": "allocs/op",
+            "extra": "15 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 519146838,
+            "unit": "ns/op\t37763901 B/op\t  496322 allocs/op",
+            "extra": "3 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 519146838,
+            "unit": "ns/op",
+            "extra": "3 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 37763901,
+            "unit": "B/op",
+            "extra": "3 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 496322,
+            "unit": "allocs/op",
+            "extra": "3 times\n4 procs"
           }
         ]
       }
