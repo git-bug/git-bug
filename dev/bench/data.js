@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1773269798343,
+  "lastUpdate": 1773270189748,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -16994,6 +16994,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 496322,
+            "unit": "allocs/op",
+            "extra": "3 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "debian@onerussian.com",
+            "name": "Yaroslav Halchenko",
+            "username": "yarikoptic"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "dc800ec3b7ae7fcd37a656902ad27ab7d319b021",
+          "message": "feat: use git-describe for setting the version string (#1522)\n\nThis change uses git-describe to set the version string, which improves\nthe user experience by always showing the most recent tag, with\nadditional git data (such as the delta of a commits between that tag and\nHEAD).\n\nBefore this change, we see the following output:\n\n    git-bug undefined 7468b3793fbf go1.24.9 linux amd64\n\nWith this change, the output becomes:\n\ngit-bug v0.10.1-24-gb957ba2e-dirty b957ba2e5947/dirty go1.24.9 linux\namd64\n\nThe duplicated VCS information does add noise, however, this will be\ndealt with in a future commit.\n\n---------\n\nCo-authored-by: sudoforge <no-reply@sudoforge.com>",
+          "timestamp": "2026-03-11T22:58:04Z",
+          "tree_id": "9389d4596200d724736ede31a185fcf3f0238fa2",
+          "url": "https://github.com/git-bug/git-bug/commit/dc800ec3b7ae7fcd37a656902ad27ab7d319b021"
+        },
+        "date": 1773270188937,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 38647462,
+            "unit": "ns/op\t  983322 B/op\t   14817 allocs/op",
+            "extra": "68 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 38647462,
+            "unit": "ns/op",
+            "extra": "68 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 983322,
+            "unit": "B/op",
+            "extra": "68 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 14817,
+            "unit": "allocs/op",
+            "extra": "68 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 73404244,
+            "unit": "ns/op\t 4689062 B/op\t   69779 allocs/op",
+            "extra": "15 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 73404244,
+            "unit": "ns/op",
+            "extra": "15 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 4689062,
+            "unit": "B/op",
+            "extra": "15 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 69779,
+            "unit": "allocs/op",
+            "extra": "15 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 481297375,
+            "unit": "ns/op\t36395018 B/op\t  474417 allocs/op",
+            "extra": "3 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 481297375,
+            "unit": "ns/op",
+            "extra": "3 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 36395018,
+            "unit": "B/op",
+            "extra": "3 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 474417,
             "unit": "allocs/op",
             "extra": "3 times\n4 procs"
           }
