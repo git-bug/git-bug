@@ -6,7 +6,7 @@ endif
 
 SYSTEM=$(shell nix eval --impure --expr 'builtins.currentSystem' --raw 2>/dev/null || echo '')
 
-TAG:=$(shell git describe --match 'v*' --always HEAD)
+TAG:=$(shell git describe --match 'v*' --always --dirty --broken)
 LDFLAGS:=-X main.version="${TAG}"
 
 all: build
