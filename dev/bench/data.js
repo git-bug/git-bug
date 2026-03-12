@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1773270189748,
+  "lastUpdate": 1773284085711,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -17092,6 +17092,102 @@ window.BENCHMARK_DATA = {
             "value": 474417,
             "unit": "allocs/op",
             "extra": "3 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c098c21145606bb1513c5e46a4f0438f792f8ee8",
+          "message": "ci: remove redundant workflow: mirror (#1530)\n\nThis workflow existed to mirror commits from `trunk` to the old default\nbranch. Official support for maintaining the old default branch ended on\nJanuary 31 2026, and as such, it no longer serves a purpose.\n\nRefs: #1404\nChange-Id: Idd053c299c96958ffb85c3620cdef7ef29a59126",
+          "timestamp": "2026-03-11T19:54:03-07:00",
+          "tree_id": "f28799a2f3690b3d6de46356508a692bdf592636",
+          "url": "https://github.com/git-bug/git-bug/commit/c098c21145606bb1513c5e46a4f0438f792f8ee8"
+        },
+        "date": 1773284085021,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 34354302,
+            "unit": "ns/op\t 1135994 B/op\t   17444 allocs/op",
+            "extra": "85 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 34354302,
+            "unit": "ns/op",
+            "extra": "85 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 1135994,
+            "unit": "B/op",
+            "extra": "85 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 17444,
+            "unit": "allocs/op",
+            "extra": "85 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 76826517,
+            "unit": "ns/op\t 4898095 B/op\t   72939 allocs/op",
+            "extra": "14 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 76826517,
+            "unit": "ns/op",
+            "extra": "14 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 4898095,
+            "unit": "B/op",
+            "extra": "14 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 72939,
+            "unit": "allocs/op",
+            "extra": "14 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 521756968,
+            "unit": "ns/op\t40292392 B/op\t  498536 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 521756968,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 40292392,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 498536,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
           }
         ]
       }
