@@ -24,7 +24,7 @@ To view the full set of changes, including internal developer-centric changes,
 run the following command:
 
 ```
-git log --oneline v0.10.0
+git log --oneline v0.9.0..v0.10.0
 ```
 
 ### Documentation
@@ -40,24 +40,6 @@ git log --oneline v0.10.0
 
 - **BREAKING CHANGE**: **dev-infra**: remove gokart (89b880bd)
 
-## 0.10.0 (2025-05-18)
-
-To view the full set of changes, including internal developer-centric changes,
-run the following command:
-
-```
-git log --oneline v0.9.0..v0.10.0
-```
-
-### Documentation
-
-- **bridge**: correct command used to create a new bridge (9942337b)
-
-### Features
-
-- **web**: simplify header navigation (7e95b169)
-- **web**: remark upgrade + gfm + syntax highlighting (6ee47b96)
-
 ## 0.9.0 (2025-05-12)
 
 This release contains minor improvements and bug fixes.
@@ -71,7 +53,12 @@ git log --oneline v0.8.1..v0.9.0
 
 ### Bug fixes
 
-- **completion**: remove errata from string literal (aa102c91)
+- remove errata from string literal (aa102c91)
+
+### Documentation
+
+- clarify testing activation of the dev shell (d753637e)
+- correct mispelled words (89ff47a4)
 
 ### Features
 
@@ -79,8 +66,9 @@ git log --oneline v0.8.1..v0.9.0
 
 ## 0.8.1 (2025-05-05)
 
-This release contains the culmination of new features, bug fixes, and other
-miscellaneous changes (documentation, tooling) since the last release in 2022.
+This release contains the culmination of new features, bug fixes, and
+other miscellaneous changes (documentation, tooling) since the last
+release in 2022.
 
 To view the full set of changes, including internal developer-centric changes,
 run the following command:
@@ -91,15 +79,15 @@ git log --oneline v0.8.0..v0.8.1
 
 ### Bug fixes
 
+- **#971**: parse submodule .git files instead of erroring (e97df9c8)
+- **972**: use prerelease of GoKart with repaired panic (344438b9)
+- **TestCache**: eliminate hanging Windows tests (ea9b3aa0)
+- **commands**: run tests in ./commands/... without ANSI color (e4707cd8)
+- **commands**: create env.Env once for all Cobra commands (0bddfe1d)
+- **commands**: replace missing import (723b3c41)
 - remove repeated use of the same fmt.Errorf() calls (0cd2f3b4)
-- use prerelease of GoKart with repaired panic (344438b9)
 - keyrings must return keys with entities/identities (de6f5404)
 - resolve Go vulnerabilities (33e3e4b6)
-- (cli): run tests in ./commands/... without ANSI color (e4707cd8)
-- (cli): create env.Env once for all Cobra commands (0bddfe1d)
-- (cli): replace missing import (723b3c41)
-- parse submodule .git files instead of erroring (e97df9c8)
-- openpgp handling to sign/check (429b913d)
 - correct typo: acceps => accepts (76de669d)
 - bump to go v1.22.5 (f79ea38c)
 - add missing `with` property to //.github/workflows:cron.yml (eef62798)
@@ -107,22 +95,23 @@ git log --oneline v0.8.0..v0.8.1
 - move codeql into an independent workflow (1fa858dc)
 - run the presubmit pipeline for PRs (5893f948)
 - correct path for reusable workflow: lifecycle (1dd81071)
-- typos in docs (d499b6e9)
 - set GitLastTag to an empty string when git-describe errors (25f755cb)
 - refactor how gitlab title changes are detected (197eb599)
 - use correct url for gitlab PATs (7b6eb5db)
 - use -0700 when formatting time (edbd105c)
 - checkout repo before setting up go environment (5e8efbae)
-- resolve the remote URI using url.\*.insteadOf (a150cdb0)
+- resolve the remote URI using url.*.insteadOf (a150cdb0)
 
 ### Documentation
 
+- **commands**: try to make cleaned argument use more obvious (3f764397)
 - normalize verb tense and fix typo (8537869a)
 - add a feature matrix (3c1b8fd0)
 - update install, contrib, and usage documentation (96c7a111)
 
 ### Features
 
+- **ci**: support a merge queue (1bde5dff)
 - wrap ErrNoConfigEntry to report missing key (64c18b15)
 - wrap ErrMultipleConfigEntry to report duplicate key (49929c03)
 - upgrade go-git to v5.1.1 (7c4a3b12)
@@ -150,33 +139,32 @@ git log --oneline v0.8.0..v0.8.1
 
 ### Other changes
 
+- **TestCache**: cleanup per PR review (5c45e70a)
+- **TestCache**: remove empty trailing line from function (59684d74)
 - reorg into different packages (acc9a6f3)
 - add a workflow to continuously run benchmarks (c227f2e9)
 - make it work? (c6bb6b9c)
 - cleanup test token when test is done (10851853)
 - proper reduced interface for full-text indexing (60d40d60)
-- return specific error on object not found, accept multiple namespace to
-  push/pull (905c9a90)
+- return specific error on object not found, accept multiple namespace to push/pull (905c9a90)
 - tie up the refactor up to compiling (9b98fc06)
 - generic withSnapshot, some cleanup (d65e8837)
 - fix some bugs after refactor (95911100)
 - tie the last printf in an event to make the core print free (13a7a599)
 - move bug specific input code into commands/bug/input (d5b07f48)
 - simplify cache building events handling (b2795875)
-- generic `select` code, move bug completion in bugcmd (e9209878)
+- generic "select" code, move bug completion in bugcmd (e9209878)
 - don't double build the lamport clocks (c9009b52)
 - remove lint security step as it's crashing (57f328fb)
 - share JSON creation (5844dd0a)
 - fix tests? (70b0c5b8)
 - check error when closing a repo in tests (2664332b)
-- temporary use a fork of go-git due to
-  https://github.com/go-git/go-git/pull/659 (03dcd7ee)
+- temporary use a fork of go-git due to https://github.com/go-git/go-git/pull/659 (03dcd7ee)
 - don't forget to close a file (5bf274e6)
 - add a nice terminal progress bar when building the cache (7df34aa7)
 - move terminal detection to Out, introduce the compagnion In (f011452a)
 - adapt the output of the bug list to the terminal size (9fc8dbf4)
-- remove compact style for `bug`, as the width adaptive default renderer cover
-  that usage (f23a7f07)
+- remove compact style for "bug", as the width adaptive default renderer cover that usage (f23a7f07)
 - different pattern to detect changed flags (3e41812d)
 - code cleanup, fix some edge cases (5238d1dd)
 - add a helper to generate testing regex for CLI output (b66d467a)
@@ -190,13 +178,13 @@ git log --oneline v0.8.0..v0.8.1
 - also teardown cleanly on SIGTERM (42aea2cd)
 - better IsRunning(pid) (4b62a945)
 - fix some cache building progress bar artifact (281d4a64)
-- no `with` means using codespellrc, add more opt out (d8bcd71d)
+- no "with" means using codespellrc, add more opt out (d8bcd71d)
 - regenerate after gqlgen upgrade (31a97380)
 - more ignore (de8d2c13)
 - fix some struct names in comments (ce7fd6fc)
 - remove refs to deprecated io/ioutil (d4f6f273)
 - update go dependencies (f5076359)
-- it is `new` not `configure` command (also was missing \\) (f00e42e7)
+- it is "new" not "configure" command (also was missing \) (f00e42e7)
 - regenerate command completion and documentation (c3ff05f9)
 - make label a common type, in a similar fashion as for status (3a4b8805)
 - properly namespace Bug to make space for other entities (57e71470)
@@ -220,32 +208,28 @@ git log --oneline 0.7.1..v0.8.0
 
 ### Bug fixes
 
-- cache not rebuilding properly (c326007d)
-- github action (87a2638c)
-- ListCommits implementation (27e70af2)
-- go sum rebase artifacts (fb9170e2)
-- merge (1ced77af)
+- **778**: remove extra mutex lock when resolving bug prefix (eda312f9)
+- **808**: replace Windows line terminators (cd1099aa)
+- **808**: simplify handling of Windows line terminations (1a504e05)
+- **808**: remove duplication stderr/stdout set-up (848f7253)
+- **836**: revert to older test harness (870fe693)
+- **850**: remove obsolete test logging (2c2c4491)
+- **850**: merge in CombinedId from 664 (ff1b7448)
+- **850**: normalize Windows line endings -> *nix (0f885d4f)
+- **850**: normalize Windows line endings -> *nix (golden files) (c4a4d457)
+- **884**: scan PRs for insecure practices (2b47003f)
 - issue with toggling the author (248201bc)
 - issue with regex (bff9fa67)
 - issue with keyDown propagation (72fc0ef7)
 - regex issue (41ee97a4)
-- remove extra mutex lock when resolving bug prefix (eda312f9)
-- replace Windows line terminators (cd1099aa)
 - remove only t.Parallel() (da9f95e4)
-- simplify handling of Windows line terminations (1a504e05)
-- remove duplication stderr/stdout set-up (848f7253)
-- revert to older test harness (870fe693)
-- remove obsolete test logging (2c2c4491)
-- merge in CombinedId from 664 (ff1b7448)
-- normalize Windows line endings -> \*nix (0f885d4f)
-- normalize Windows line endings -> \*nix (golden files) (c4a4d457)
 - hide tools versioning behind build tags (1dcdee49)
 - correct name for one of the security phonies (8bd98454)
 - process unused (but assigned) error (fc444915)
-- scan PRs for insecure practices (2b47003f)
 
 ### Documentation
 
+- **847**: add compact to docs and bash for ls command's format flag (d3f2fb0d)
 - fix typos (ff0ff863)
 - generate concurrently (7f87eb86)
 - cleanup query documentation (10a259b6)
@@ -254,11 +238,11 @@ git log --oneline 0.7.1..v0.8.0
 - tiny tweaks (b43a447a)
 - more tiny fixes (c6be0588)
 - more tiny fixes (2ade8fb1)
-- add compact to docs and bash for ls command's format flag (d3f2fb0d)
 - fix incorrect indentation (55a2e8e4)
 
 ### Features
 
+- **836**: updates default ls formatter for TSV output (a5802792)
 - use author to filter the list (54c5b662)
 - add filter by label (31871f29)
 - check if there are labels (7a7e93c9)
@@ -266,7 +250,6 @@ git log --oneline 0.7.1..v0.8.0
 - use predefined filters (f82071a3)
 - Github bridge mutation rate limit (247e1a86)
 - make local storage configurable (b42fae38)
-- updates default ls formatter for TSV output (a5802792)
 - version tools using Go module system (d989f9b6)
 - add security tools (2caade93)
 - add recipes for security analysis (ec739558)
@@ -274,6 +257,8 @@ git log --oneline 0.7.1..v0.8.0
 
 ### Other changes
 
+- **808**: merge in LocalStorage namespace configuration (5982e8fb)
+- **808**: rearrange imports to git-bug convention (941f5b3f)
 - document workflows (685a4fdc)
 - fix image links (e43920bc)
 - better phrasing (a8aecec6)
@@ -286,12 +271,10 @@ git log --oneline 0.7.1..v0.8.0
 - enable Fish completion (78f39c40)
 - Add support to ls dump bug information in specific formats (de5565b5)
 - cleanup and re-generate files (1d06244c)
-- harmonize how time are used, fix some issues in command special formats
-  (aab3a04d)
+- harmonize how time are used, fix some issues in command special formats (aab3a04d)
 - remove tie to Bug, improved and reusable testing (88ad7e60)
 - more tests (939bcd57)
-- render component's children as a function to avoid uncecessary rendering
-  (07d6c6aa)
+- render component's children as a function to avoid uncecessary rendering (07d6c6aa)
 - pack (3aaf7758)
 - refactor to avoid globals (26bd1dd1)
 - open and close the backend in a single place, simplify commands (536c290d)
@@ -301,16 +284,14 @@ git log --oneline 0.7.1..v0.8.0
 - fix segfault with badly loaded backend (71989045)
 - minor code improvements (5c823a70)
 - avoid importing a whole package to check an error (ac7e5086)
-- skip the broken test as `known broken` :( (0590de9f)
+- skip the broken test as "known broken" :( (0590de9f)
 - code cleanup for the rm feature (a62ce78c)
-- cleanup the command's usage to avoid warnings when generating the doc
-  (ae5c0967)
+- cleanup the command's usage to avoid warnings when generating the doc (ae5c0967)
 - fix BugExcerpt's timestamp not properly stored (92a59ece)
 - make the help visually easier to parse (9ce84fc1)
 - help bar background goes all the width (8eb7faf6)
 - fix FreeBSD package name (e374c9da)
-- use sha256 to compute labels color, to use a single hash function in the
-  codebase (47ea66f6)
+- use sha256 to compute labels color, to use a single hash function in the codebase (47ea66f6)
 - fix tests (60466f86)
 - simplify cache eviction (4d678f3e)
 - Remove empty borders around bug table view (6824ecf0)
@@ -379,7 +360,7 @@ git log --oneline 0.7.1..v0.8.0
 - Add target to EditCommentInput (cc7788ad)
 - Regenerate the GraphQL-Server (2a1c7723)
 - fix various config issues around case insentivity (890c014d)
-- only FTS index token \< 100 characters (32958b5c)
+- only FTS index token < 100 characters (32958b5c)
 - test for FTS bub with long description (e9856537)
 - fix no-label filter not properly wired (f7dec7e9)
 - match wikipedia algorithm (44d75879)
@@ -392,7 +373,7 @@ git log --oneline 0.7.1..v0.8.0
 - don't store the id in Bug, match how it's done for Identity (2788c5fc)
 - fix tests (fcf43915)
 - generalize the combined Ids, use 64 length (db707430)
-- fix `comment edit` usage (bb8a214d)
+- fix "comment edit" usage (bb8a214d)
 - add error to signal invalid format (5f6a3914)
 - partially add two new functions to RepoData (5c4e7de0)
 - add embryo of a generic, DAG-enabled entity (9cca74cc)
@@ -447,10 +428,9 @@ git log --oneline 0.7.1..v0.8.0
 - allow to resolve identities when numashalling operations (fd14a076)
 - fix incorrect client creation reusing the same credential (6f112824)
 - add an extensive example (450d7f7a)
-- don't serialize multiple time the author, only once in OperationPack
-  (c5b70d8d)
+- don't serialize multiple time the author, only once in OperationPack (c5b70d8d)
 - use the correct GenBashCompletionV2 instead of the legacy function (f25690db)
-- fix bash completion with `git bug` (edc8b758)
+- fix bash completion with "git bug" (edc8b758)
 - fix incorrect query parsing with quotes escaped by the shell (b9991d84)
 - lots of small ironing (3d534a70)
 - strict Markdown requires empty lines before (and after) lists (33c67027)
@@ -465,19 +445,14 @@ git log --oneline 0.7.1..v0.8.0
 - fix data race when closing event channel (7348fb9e)
 - clean-up commented code (e29f58bf)
 - close index before deleting it on disk (50de0306)
-- merge in LocalStorage namespace configuration (5982e8fb)
-- rearrange imports to git-bug convention (941f5b3f)
-- ensure that the default repo has a non-empty name to make js/apollo happy
-  (295da9c7)
+- ensure that the default repo has a non-empty name to make js/apollo happy (295da9c7)
 - proper base operation for simplified implementation (3d454d9d)
 - fix an issue where Id would be used, then changed due to metadata (d179b8b7)
-- generalized resolvers to resolve any entity time when unmarshalling an
-  operation (45f5f852)
-- have a type for combined ids (45b04351)
+- generalized resolvers to resolve any entity time when unmarshalling an operation (45f5f852)
+- have a type for combined ids, fix https://github.com/MichaelMure/git-bug/issues/653 (45b04351)
 - adapt to CombinedId (6ed4b8b7)
 - add a flag to log handling errors (8d11e620)
-- test op serialisation with the unmarshaller, to allow resolving entities
-  (e1b172aa)
+- test op serialisation with the unmarshaller, to allow resolving entities (e1b172aa)
 - update most of dependencies (c02528b7)
 - put react-scripts and typescript as dev-dependency (49fe8e9f)
 - better PHONY (0eef9391)
@@ -510,15 +485,13 @@ git log --oneline 0.7.0..0.7.1
 - tag bugs with the base URL, tighten the matching (43977668)
 - tighten the import matching (fae3b2e7)
 - tighten the bug matching (a8666bfe)
-- replace the all-in-one query parser by a complete one with AST/lexer/parser
-  (5e4dc87f)
+- replace the all-in-one query parser by a complete one with AST/lexer/parser (5e4dc87f)
 - no need for an ast package (314fcbb2)
 - fix a nil value access (aec81b70)
 - more robust tokenizer (ecde909b)
 - fix a bad login handling in the configurator (38b42bc8)
 - refactor the iterator, fix bugs (f4ca533f)
-- fix iterator (paginate with first index 1) and avoid the trailing API call
-  (903549ca)
+- fix iterator (paginate with first index 1) and avoid the trailing API call (903549ca)
 
 ## 0.7.0 (2020-03-01)
 
@@ -528,13 +501,6 @@ run the following command:
 ```
 git log --oneline 0.6.0..0.7.0
 ```
-
-### Bug fixes
-
-- version not set properly when built on travis (20080aa0)
-- merge (20ca2bc0)
-- tests ? (2e7ac569)
-- usage of newIdentityRaw (d349137e)
 
 ### Documentation
 
@@ -560,8 +526,7 @@ git log --oneline 0.6.0..0.7.0
 - implement filtering (4d97e3a1)
 - implement issue list sort (ead5bad7)
 - add open/closed issues count (adb28885)
-- don't store legacy identities IDs in bug excerpt as they are not reachable.
-  Fix a panic (f093be96)
+- don't store legacy identities IDs in bug excerpt as they are not reachable. Fix a panic (f093be96)
 - better reusable prompt functions (db893494)
 - rework mutation (390b13c9)
 - rework resolving of bugs, identity (da0904d2)
@@ -569,8 +534,7 @@ git log --oneline 0.6.0..0.7.0
 - fix wrong error used (a335725c)
 - hopefully fix tests (bef35d4c)
 - fix 2 uncatched errors (9b1aaa03)
-- use the cache in priority for fast browsing at \< 20ms instead of seconds
-  (81f5c3e0)
+- use the cache in priority for fast browsing at < 20ms instead of seconds (81f5c3e0)
 - add proper locking to avoid concurrent access (b7dc5b8a)
 - many fixes and improvments at the config step (bd7b50bc)
 - update install instruction with go modules (39a31040)
@@ -619,12 +583,10 @@ git log --oneline 0.6.0..0.7.0
 - run linter fix (f9648439)
 - fix bad formatting on Date (1164e341)
 - adjust some margins (f1759ea3)
-- record the login used during the configure and use it as default credential
-  (0cebe1e5)
+- record the login used during the configure and use it as default credential (0cebe1e5)
 - fix label cropped in the label edition window (a322721a)
 - fix bad rendering due to outdated go-runewidth (68acfa51)
-- bring back the login to hold that info from bridges (purely informational)
-  (893de4f5)
+- bring back the login to hold that info from bridges (purely informational) (893de4f5)
 - correct casing for user provided login (fe38af05)
 - fix tests (a90954ae)
 - fix GetRemote to not break when there is no remotes (eeeb932b)
@@ -639,20 +601,11 @@ run the following command:
 git log --oneline 0.5.0..0.6.0
 ```
 
-### Bug fixes
-
-- imported bugs count (458f4da1)
-- tests (bc03a89a)
-- index out of range panic in github configuration (b82ef044)
-- everything following the hash-->id change (612a29b0)
-
 ### Documentation
 
 - update implementation table (03b6afa2)
 - replace images with new ones (21e82d53)
 - update generated documentations (c5824ff1)
-- README: make the feature-list render as list in more Markdown flavors
-  (61d94305)
 
 ### Other changes
 
@@ -679,13 +632,12 @@ git log --oneline 0.5.0..0.6.0
 - Render markdown (356d1b41)
 - refactor how test repo are created/cleaned (c7abac38)
 - add ReadConfigBool and ReadConfigString functions (d564e37b)
-- add flags/config to control the automatic opening in the default browser
-  (8bfc65df)
+- add flags/config to control the automatic opening in the default browser (8bfc65df)
 - fix Bug's Lamport edit time potentially wrong due to rebase (777ccb9c)
 - generate PowerShell command completion (b64587f8)
 - expose the operation when creating a new bug (08c0e18a)
 - change mutations to respect the Relay specification (b2f8572c)
-- consistently use `ref` to fetch a repository (9f4da4ce)
+- consistently use "ref" to fetch a repository (9f4da4ce)
 - fix typo (17cbe457)
 - document the PowerShell completion (aa4464db)
 - github exporter is no longer a planned feature (41a5a7fc)
@@ -694,8 +646,7 @@ git log --oneline 0.5.0..0.6.0
 - fix a missing line break (eef73332)
 - rework how RmConfigs works with git (76db2f42)
 - RmConfigs usage of git version lt 2.18 (fb50d470)
-- don't use the gqlgen command to generate to avoid pulling urfave/cli
-  (14022953)
+- don't use the gqlgen command to generate to avoid pulling urfave/cli (14022953)
 - fix project visibility prompt (c805142f)
 - add github.com/xanzy/go-gitlab vendors (15d12fb6)
 - init new bridge (01c0f644)
@@ -740,15 +691,13 @@ git log --oneline 0.5.0..0.6.0
 - add context.Context to ImportAll and ExportAll signatures (5ca326af)
 - use errgroup.Group instead of sync.WaitGroup (501a9310)
 - silence export and import nothing events (e6931aaf)
-- fix name case sensitivity in retrieving and creating labels using github
-  graphql api (d19b8e1a)
+- fix name case sensitivity in retrieving and creating labels using github graphql api (d19b8e1a)
 - add exporter test cases for label change bug (4a4e238d)
 - add exporter implementation (f1c65a9f)
 - rebase and correct exporter (f1be129d)
 - fix edit comment request and remove label functionalities (514dc30c)
 - improve exporter error handling and label change operations (63e7b086)
-- exporter ignore issues imported from or exported to different projects
-  (22960159)
+- exporter ignore issues imported from or exported to different projects (22960159)
 - remove gitlab url checking before export (c8fdaab5)
 - tweaking (35c6cb6e)
 - fix git version parsing with broken version (91e4a183)
@@ -756,11 +705,11 @@ git log --oneline 0.5.0..0.6.0
 - allow to cancel a cleaner (cb204411)
 - also protect cancel with the mutex (c4accf55)
 - minor cleanup (6a0336e0)
-- add a `tui` alias for `termui` (c7792a5d)
+- add a "tui" alias for "termui" (c7792a5d)
 - enhance flag description (65d7ce7c)
 - add bridge configure completion scripts (77e60ace)
 - recover terminal state in password prompts (be947803)
-- move cleaners to where is called (46f95734)
+- move cleaners to where  is called (46f95734)
 - add tokenStdin field to bridgeParams (f3d8da10)
 - update react-scripts (c56801b7)
 - fix a missing key (0020e608)
@@ -771,9 +720,9 @@ git log --oneline 0.5.0..0.6.0
 - fix minor grammar issues and clarify a bit (26b0a9c9)
 - reference git internals documentation (17e0c032)
 - fix integration tests (8498deaa)
-- iterator now query all label events when NextLabelEvent() i called, and sort
-  them by ID (312bc58c)
+- iterator now query all label events when NextLabelEvent() i called, and sort them by ID (312bc58c)
 - iterator use simple swap (ed774e4e)
+- make the feature-list render as list in more Markdown flavors [fix] (61d94305)
 - try to describe the `OperationPack` format more clearly (98792a02)
 - config interface and implementation rework (ab935674)
 - add ReadTimestamp methods and improve naming (7f177c47)
@@ -798,8 +747,7 @@ git log --oneline 0.5.0..0.6.0
 - add missing error check in export tests (b1a76184)
 - improve iterator readability (bf84a789)
 - migrate to awesome-gocui instead of the old fork I had (cb8236c9)
-- rework the cursor in bugtable to match the rendering before the switch to
-  awesome-gocui (965102f7)
+- rework the cursor in bugtable to match the rendering before the switch to awesome-gocui (965102f7)
 - Implement token functionalities (a6ce5344)
 - comment token functionalities (56551b6a)
 - add bridge token subcommand (9370e129)
@@ -808,12 +756,11 @@ git log --oneline 0.5.0..0.6.0
 - various cleanups (3984919a)
 - use a hash as token identifier instead of the token it self (baefa687)
 - use entity.Id as id type (4dc7b8b0)
-- store token in the global config and replace scopes with create date
-  (bbbf3c6c)
+- store token in the global config and replace scopes with create date (bbbf3c6c)
 - regenerate documentation and fix imports (45653bd3)
 - various improvement on the global token PR (e2445edc)
 - add bridge token show (f8cf3fea)
-- rename `token` into `auth` (e0b15ee7)
+- rename "token" into "auth" (e0b15ee7)
 - update github.com/xanzy/go-gitlab to v0.22.0 (83eb7abd)
 - follow API changes (c1f33db2)
 - fix iterator regression (e3e37fd7)
@@ -843,8 +790,8 @@ git log --oneline 0.5.0..0.6.0
 - move export event handling to the CLI (1a1e313f)
 - fix incorrect last import time on context cancel (8f7f8956)
 - huge refactor to accept multiple kind of credentials (b92adfcb)
-- Correctly cast configs\[configKeyKind\] (58c0e5aa)
-- `user create` only assign the user identity if not set (da6591e4)
+- Correctly cast configs[configKeyKind] (58c0e5aa)
+- "user create" only assign the user identity if not set (da6591e4)
 - support self-hosted GitLab instance (f6b4830c)
 - allow to configure and pull without having set a user first (864d3ed3)
 - add missing baseUrl prompt and options (5cffb5d1)
@@ -868,9 +815,9 @@ git log --oneline 0.4.0..0.5.0
 
 ### Other changes
 
+- **opencollective**: use tiers (090cd808)
 - minor cleaning (5653ae98)
-- fix broken truncate with unicode and use the ellipsis character in
-  LeftPadMaxLine (5e744891)
+- fix broken truncate with unicode and use the ellipsis character in LeftPadMaxLine (5e744891)
 - use the '↵' symbol to save screen space (ab970da4)
 - tighter column in the bug table (9c89cf5b)
 - slightly better error message (a133cdff)
@@ -879,8 +826,7 @@ git log --oneline 0.4.0..0.5.0
 - Add developer-specific information. (c31e7fba)
 - add more explanation about the dev process (63807382)
 - minor cleaning (47b2aa4c)
-- upgrade npm dependencies to fix
-  https://nvd.nist.gov/vuln/detail/CVE-2018-16469 (8fc15a03)
+- upgrade npm dependencies to fix https://nvd.nist.gov/vuln/detail/CVE-2018-16469 (8fc15a03)
 - now that it's possible, split the schema for clarity (0d5bd6b1)
 - hopefuly fix the handling of chinese (f9fc85ac)
 - fix a wrapping bug leading to line longer than they should (261aa617)
@@ -895,11 +841,10 @@ git log --oneline 0.4.0..0.5.0
 - fix handling of wide characters (32b3e263)
 - fix non determinist zsh comp generation (3f694195)
 - show: change for a single valued --field flag (43d0fe5c)
-- use tiers (090cd808)
 - update the date in the generated doc (09692456)
 - output the build info message on stderr to avoid breaking scripts (d380b3c1)
-- Add ls-id \[<prefix>\] command (f70f38c8)
-- Add ls-id \[<prefix>\] command (3c0c13bb)
+- Add ls-id [<prefix>] command (f70f38c8)
+- Add ls-id [<prefix>] command (3c0c13bb)
 - fix unhandled error (0aefae6f)
 - implement the loading from git (06d9c687)
 - add metadata support (3df4f46c)
@@ -926,15 +871,14 @@ git log --oneline 0.4.0..0.5.0
 - fix typo (b59623a8)
 - fix 3 edge-case failures (e100ee9f)
 - simplify some code (268f6175)
-- fix ResolveIdentityImmutableMetadata byt storing metadata in IdentityExcerpt
-  (8bba6d14)
-- add a super-fast `user ls` command (7a80d8f8)
-- add a `user adopt` command to use an existing identity (304a3349)
-- add a `.` at the end of Short commands usage (2fd5f71b)
+- fix ResolveIdentityImmutableMetadata byt storing metadata in IdentityExcerpt (8bba6d14)
+- add a super-fast "user ls" command (7a80d8f8)
+- add a "user adopt" command to use an existing identity (304a3349)
+- add a "." at the end of Short commands usage (2fd5f71b)
 - another round of cleanups (46beb4b8)
-- show the last modification time in `user` (c235d89d)
+- show the last modification time in "user" (c235d89d)
 - better API to access excerpts (bad05a4f)
-- `user ls` also show metadata (f6eb8381)
+- "user ls" also show metadata (f6eb8381)
 - fix potential bug due to var aliasing (b6bed784)
 - `git bug ls` should be faster (43e56692)
 - make the title filter case insensitive (40865451)
@@ -942,10 +886,9 @@ git log --oneline 0.4.0..0.5.0
 - don't make bug actions drive identity actions (a40dcc8a)
 - add basic unit testing (d27e3849)
 - properly push/pull identities and bugs (24d6714d)
-- only return the error (not the function help) when no identity is set
-  (bdf8523d)
-- fix a bad output in `bug comment` (029861fa)
-- display comment's id in `git bug comment` (0a71e6d2)
+- only return the error (not the function help) when no identity is set (bdf8523d)
+- fix a bad output in "bug comment" (029861fa)
+- display comment's id in "git bug comment" (0a71e6d2)
 - Upgrade dependencies (67c84af4)
 - Use Timeline API instead of raw operations (850b9db8)
 - Rework timeline style (22089b5e)
@@ -953,10 +896,9 @@ git log --oneline 0.4.0..0.5.0
 - expose allIdentities, identities and userIdentity in the repo (15c258cd)
 - Fix and match for labels (1d758f9f)
 - add a push/pull test (96987bf6)
-- fix labels no showing properly in `git bug show <id> -f labels` (a64aaacc)
-- add `show --field humanId` (96d356a3)
-- add a --field flag to `git bug user` to display users details individually
-  (5b0a92de)
+- fix labels no showing properly in "git bug show <id> -f labels" (a64aaacc)
+- add "show --field humanId" (96d356a3)
+- add a --field flag to "git bug user" to display users details individually (5b0a92de)
 - make Bug's actors and participants a connection (e027d5ee)
 - fix test indentation (5733178a)
 - expose valid labels (14461060)
@@ -978,11 +920,6 @@ run the following command:
 git log --oneline 0.3.0..0.4.0
 ```
 
-### Bug fixes
-
-- build (a37a5320)
-- js formatting with prettier (e89375f2)
-
 ### Documentation
 
 - update manpages due to change of month (95021a07)
@@ -997,14 +934,14 @@ git log --oneline 0.3.0..0.4.0
 - add `git bug comment add` to add a comment (6cdc6c08)
 - add a title command to display a bug's title (d9f72695)
 - add a title edit command (ae100e0e)
-- make the `commands` command show subcommands as well (b9fc8b66)
-- add a `status` command to show a bug status (a846fb96)
-- migrate the open/close commands under the `status` command (dad61892)
-- make `label` display the current labels (cc086eba)
-- add a `label add` command to add new label to a bug (2965b70f)
-- add a `label rm` command to remove labels from a bug (5eaf9e83)
+- make the "commands" command show subcommands as well (b9fc8b66)
+- add a "status" command to show a bug status (a846fb96)
+- migrate the open/close commands under the "status" command (dad61892)
+- make "label" display the current labels (cc086eba)
+- add a "label add" command to add new label to a bug (2965b70f)
+- add a "label rm" command to remove labels from a bug (5eaf9e83)
 - add a package to handle implicit bug selection (0d5998eb)
-- add a `select` command to select a bug for future implicit use (5f9fd2a2)
+- add a "select" command to select a bug for future implicit use (5f9fd2a2)
 - convert compatible commands to the implicit select mechanism (544b9cc0)
 - readBug returns better errors (84555679)
 - don't ignore error when building the cache (760d0771)
@@ -1012,16 +949,15 @@ git log --oneline 0.3.0..0.4.0
 - explain how to quit (2daf2ddc)
 - relay early the merge events (63d0b8b7)
 - don't stop the process when one merge fail (4c576470)
-- reclassify some merge error as `invalid` instead of hard error (1060acfd)
+- reclassify some merge error as "invalid" instead of hard error (1060acfd)
 - fix a panic on merge invalid (d57e2fdd)
 - ls now accept queries without quote (d71411f9)
 - update favicon with git-bug logo (386cc3d6)
 - workaround for git returning no path when inside a .git dir (8a038538)
-- serve the index.html file by default to deal with the SPA router requirements
-  (7c63417e)
+- serve the index.html file by default to deal with the SPA router requirements (7c63417e)
 - add the beginning of a github importer (1c86a66c)
 - description cleanup (cfce3a99)
-- add a `ls-labels` command that output valid labels (6e447594)
+- add a "ls-labels" command that output valid labels (6e447594)
 - make github 2FA work (6a575fbf)
 - split the Repo interface to avoid abstraction leak in RepoCache (82eaceff)
 - better interfaces, working github configurator (921cd18c)
@@ -1029,21 +965,20 @@ git log --oneline 0.3.0..0.4.0
 - cleanup file name (a122d533)
 - add functions to read/write git config (666586c5)
 - big refactor and cleanup (5e8fb7ec)
-- add the `bridge` and `bridge configure` commands (43bda202)
-- add `bridge rm` (061e83d4)
-- add `bridge pull` (2282cbb5)
+- add the "bridge" and "bridge configure" commands (43bda202)
+- add "bridge rm" (061e83d4)
+- add "bridge pull" (2282cbb5)
 - validate config before use (c86e7231)
 - query most of the data (c4a20762)
 - add the ability to store arbitrary metadata on an operation (a72ea453)
 - add the optional field AvatarUrl to Person (5d7c3a76)
-- add raw edit functions to allow setting up the author, the timestamp and the
-  metadatas (40c6e64e)
+- add raw edit functions to allow setting up the author, the timestamp and the metadatas (40c6e64e)
 - add a target producing a debugger friendly build (25bec8eb)
 - first working github importer (879e147e)
 - add a general test for the handler/resolvers (f9693709)
 - detect when the title is not changed and abort the operation (ac29b825)
 - detect when an edit title doesn't change it and abort the operation (18f5c163)
-- add a `deselect` command to deselect a previously selected bug (04ddeef9)
+- add a "deselect" command to deselect a previously selected bug (04ddeef9)
 - don't forget to treat the error when selecting a bug (86792d78)
 - clear the selected bug when invalid (66f3b37c)
 - better responsive columns in the bug table (5b3a8f01)
@@ -1061,20 +996,18 @@ git log --oneline 0.3.0..0.4.0
 - use a value embedding for OpBase (3402230a)
 - add a test for OpBase metadata (bda9b01b)
 - add a test for operations hash (97d94948)
-- `bridge` don't take arguments (a4be82ca)
+- "bridge" don't take arguments (a4be82ca)
 - also index the first op metadata (be59fe0d)
 - add a new no-op operation to store arbitrary metadata on a bug (de81ed49)
 - also clear the cache after deleting the bugs (aea85f04)
 - custom error for the different error case when loading a bug (f026f61a)
-- in op convenience function, return the new op to be able to set metadata later
-  (6ea6f361)
+- in op convenience function, return the new op to be able to set metadata later (6ea6f361)
 - message can be empty on edit comment (0fe7958a)
 - make sure to invalidate the hash when changing an op's metadata (f18c2d27)
 - working incremental + comment history for the first comment (8ec1dd09)
 - incremental import of comments + editions (892c25aa)
 - incremental import for labels, title edition, status changes (b5025a51)
-- better multi choice prompt to select the target for `bridge configure`
-  (f37155d0)
+- better multi choice prompt to select the target for "bridge configure" (f37155d0)
 - explain better what happen with the user credentials (f4643632)
 - handle the case where no diff is available for a comment edition (558e149b)
 - deal with the deleted user case where github return a null actor (64133ee5)
@@ -1083,11 +1016,9 @@ git log --oneline 0.3.0..0.4.0
 - update packed files (e414a0e3)
 - some cleanup in the label edition code (7275280d)
 - don't load the repo for commands that don't need it (7a511f9a)
-- fix `comment add` flags set on the wrong command (b08e28e6)
-- check the bug id before the user write the message for `comment add`
-  (f67c57c0)
-- unify the processing from editor/file/stdin for `add` and `comment add`
-  (d37ffa6b)
+- fix "comment add" flags set on the wrong command (b08e28e6)
+- check the bug id before the user write the message for "comment add" (f67c57c0)
+- unify the processing from editor/file/stdin for "add" and "comment add" (d37ffa6b)
 - add a new SetMetadataOperation to retroactively tag operations (82701f8c)
 
 ## 0.3.0 (2018-09-13)
@@ -1098,10 +1029,6 @@ run the following command:
 ```
 git log --oneline 0.2.0..0.3.0
 ```
-
-### Bug fixes
-
-- english grammar (30d4bc21)
 
 ### Documentation
 
@@ -1126,10 +1053,8 @@ git log --oneline 0.2.0..0.3.0
 - a bit of styling (fd268767)
 - more styling (94217828)
 - lock the repo with a pid file; automatic cleaning (6d7dc465)
-- introduce WithSnapshot to maintain incrementally and effitiently a snapshot
-  (16f55e3f)
-- add a new BugExerpt that hold a subset of a bug state for efficient sorting
-  and retrieval (e7648996)
+- introduce  WithSnapshot to maintain incrementally and effitiently a snapshot (16f55e3f)
+- add a new BugExerpt that hold a subset of a bug state for efficient sorting and retrieval (e7648996)
 - maintain, write and load from disk bug excerpts (0514edad)
 - add name to web app manifest. (11ad7776)
 - rename RootCache into MultiRepoCache (90a45b4c)
@@ -1146,8 +1071,7 @@ git log --oneline 0.2.0..0.3.0
 - only print once the error (6f1767d1)
 - various cleaning (f136bf6a)
 - clean outdated build tag (265ecd81)
-- refactor the Pull code to have the message formating in the upper layers
-  (61a1173e)
+- refactor the Pull code to have the message formating in the upper layers (61a1173e)
 - refactor to handle bug changes during Pull (6d7e79a2)
 - add a function to parse a status (877f3bc2)
 - add a function to test the matching of a query (13797c3b)
@@ -1157,12 +1081,12 @@ git log --oneline 0.2.0..0.3.0
 - accept a query to sort and filter the list (dd0823dd)
 - add an example of query (71bee1e6)
 - properly parse and clean qualifier with multi word (0dc70533)
-- add the alias `state` for the qualifier `status` (ece9e394)
+- add the alias "state" for the qualifier "status" (ece9e394)
 - doc & cleaning (c8239a99)
 - support expressing a query with flags as well (9bb980e9)
 - ensure that OpBase field are public and properly serialized (2dcd06d1)
 - resolved id by prefix using the cache instead of reading bugs (d1c5015e)
-- use Esc key to quit instead of 'q' to free it for a `query` feature (30e38aab)
+- use Esc key to quit instead of 'q' to free it for a "query" feature (30e38aab)
 - allow to change the bug query (9cbd5b4e)
 - AllBugs now accept a query (7b05983c)
 - change the OperationPack serialization format for Json (60fcfcdc)
@@ -1182,11 +1106,6 @@ run the following command:
 git log --oneline 0.1.0..0.2.0
 ```
 
-### Bug fixes
-
-- some linting trouble (df144e72)
-- tests (1e9f2a9d)
-
 ### Other changes
 
 - revamp the bug list (5edcb6c8)
@@ -1198,7 +1117,7 @@ git log --oneline 0.1.0..0.2.0
 - reorganize the code (2530cee1)
 - rework of the bug page with a timeline (1984d434)
 - display label changes in the timeline + cleaning evrywhere (cf9e83e7)
-- add `was` on SetTitleOperation to store what the title was (a4740937)
+- add "was" on SetTitleOperation to store what the title was (a4740937)
 - display title changes in the timeline (17aa4050)
 - display status change in the timeline (11b79260)
 - pack it (f728a02a)
@@ -1213,3 +1132,93 @@ git log --oneline 0.1.0..0.2.0
 - cleanup (1e8e1af6)
 - pack it (e076931a)
 - create less bugs (eaef3149)
+
+## 0.1.0 (2018-08-12)
+
+To view the full set of changes, including internal developer-centric changes,
+run the following command:
+
+```
+git log --oneline 0.1.0
+```
+
+### Documentation
+
+- complete the model doc now that the code is more stable (28670ff8)
+
+### Other changes
+
+- multiple go version (81e15f07)
+- use a 40 char truncated sha256 hash as ID, 8 char for human reading (fd4fa96c)
+- more explanation of the concept (252cdab8)
+- better output (1e4562e9)
+- explain planned feature (7c5c567e)
+- sort commands by name (451c3b30)
+- add some colors (1332a6ec)
+- add a primitive graphql handler (a2a50f3d)
+- replace the uuid based id with the hash of the first commit (9f04fc2f)
+- Actually get the bugs from the repo (1dd5118e)
+- Add flag to specify which port to listen to (8f0bb154)
+- Split into multiple, smaller components (4901bdad)
+- add `allBugs` to root query (50fd2943)
+- Basic bug list (6d855904)
+- refactor to limit abstraction leak and to have a more reusable code for the UIs (17e2ec8f)
+- fix merge procedure (cbdba927)
+- fix fetch not working (49c90eab)
+- add shortcut functions (7c6f9ef4)
+- add codegov hook (0d649346)
+- directly return a connection, cleaning (c351cfd3)
+- fix marshaling of label (08f03ecf)
+- lazy loading for the bug relay connection (c58aa18a)
+- document hack (f0f92764)
+- show graphql urls (64354c7c)
+- fix knot in the graphql/gqlgen usage (5b70e345)
+- use an interface instead of an union for the operations for easier query (79b3d189)
+- implement a first mutation (3cb0469a)
+- move the mutations to a root Mutation type (e14f1b42)
+- interactive and responsible list of bugs (29bb7364)
+- PgUp & PgDown to pagine the bug list as well (091ac03f)
+- Use the new schema (8a4e373e)
+- rework new and comment command to better use the editor (eb39c5c2)
+- use the editor to create a new bug (87669e0f)
+- add a reusable error popup, use it for badly formated bug creation (6b012b1e)
+- fix a pagination off by one (2f88c28c)
+- add a view to display a bug (c875d40e)
+- simplify the requests with helpers (15f28242)
+- implement the missing mutations (e5a6a71b)
+- some refactoring (e6a64b49)
+- implement addComment and setTitle (ae1ed6c1)
+- show the last edit in a dedicated column (9488467c)
+- add the http handlers for read/write git blob for media in comments (ed8f7eca)
+- add a text wrapping function (5c86164f)
+- more work on the show bug window (ba16fc10)
+- configure cross-compile + deploy on github + codecov (90ccc94a)
+- now I remember why i removed codegov (597b0ea0)
+- store the referenced media in their own git tree under /media, as per the doc I wrote myself (90fb85e0)
+- add a Lamport clock implementation as well as a persistable one (b2f20c9a)
+- update names following the change of section (84131cb5)
+- pack the files only on demand (d2f5e6b9)
+- run the cross compile only when deploying (593891b8)
+- add a Lamport logical clock to be able to sort bugs by creation time and edit time without having to rely on a timestamp (435be2b6)
+- cleanup (ca4c829e)
+- fix graphql queries (b8e9e581)
+- fix an out of bound panic (1017f8c6)
+- add the previous title in the template when editing (ad9e35e3)
+- colors in the bug table (716b859f)
+- selectable bloc (f1fa169c)
+- add the go report card badge (8baa220f)
+- implement scrolling by selecting block in show bug (204ca0a9)
+- implement scrolling with pageUp / pageDown (bf0a855f)
+- support text with color escape sequence (ca31258c)
+- add a version with a left padding (0da2bea1)
+- colors show bug (b6087d7e)
+- commit the bug when quiting the show bug window (5675299c)
+- better padding for show bug (de76b6fa)
+- reset the scroll between show bug window (34eea1f4)
+- display status and label changes in show bug (a0d509bc)
+- fix the instructions being written on in show bug (f7ef5cdb)
+- properly handle color sequence code even inside a word (b96819a8)
+- implement left/right navigation in show bug (f51cc4a3)
+- add and remove labels (53a3d5e1)
+- fix scroll bug (721ed324)
+- implement push/pull (e2f4b027)

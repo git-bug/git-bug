@@ -3,40 +3,76 @@ name: build-and-test
 
 on:
   workflow_call:
+    secrets:
+      github-test-token:
+        required: true
+      github-token-private:
+        required: true
+      github-token-public:
+        required: true
+      gitlab-api-token:
+        required: true
+      gitlab-project-id:
+        required: true
 
 permissions:
   contents: read
 
 jobs:
-  with-go:
+  standard:
     strategy:
       matrix:
-        go-version: [1.25.x]
-        platform: [ubuntu-latest, macos-latest, windows-latest]
+        platform: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.platform }}
     steps:
-      - name: Check out code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-
-      - name: Set up Go ${{ matrix.go-version }}
-        uses: actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b # v5.4.0
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          go-version: ${{ matrix.go-version }}
+          persist-credentials: false
 
-      - name: Build
-        run: make
+      - uses: cachix/install-nix-action@2126ae7fc54c9df00dd18f7f18754393182c73cd # v31.9.1
 
-      - name: Test
-        run: make test
-        env:
-          GITHUB_USER: ${{ env.TEST_USER_GITHUB }}
-          GITHUB_TOKEN: ${{ secrets.TEST_TOKEN_GITHUB }}
-          GITHUB_TOKEN_PRIVATE: ${{ secrets._GITHUB_TOKEN_PRIVATE }}
-          GITHUB_TOKEN_PUBLIC: ${{ secrets._GITHUB_TOKEN_PUBLIC }}
-          GITLAB_API_TOKEN: ${{ secrets.GITLAB_API_TOKEN }}
-          GITLAB_PROJECT_ID: ${{ secrets.GITLAB_PROJECT_ID }}
+      - name: build with nix-build
+        run: |
+          nix-build -A default --argstr version "${{ github.sha }}"
 
-  with-node:
+          echo "### Build details" >> "$GITHUB_STEP_SUMMARY"
+          echo "```" >> "$GITHUB_STEP_SUMMARY"
+          echo "$ file ./result/bin/git-bug" >> "$GITHUB_STEP_SUMMARY"
+          file ./result/bin/git-bug >> "$GITHUB_STEP_SUMMARY"
+          echo
+          echo "$ go version -m ./result/bin/git-bug" >> "$GITHUB_STEP_SUMMARY"
+          nix-shell --run 'go version -m ./result/bin/git-bug' >> "$GITHUB_STEP_SUMMARY"
+
+  # We run this job in order to test the release derivation, to ensure that any
+  # changes to the derivation configuration does not affect the release build
+  release-binaries:
+    strategy:
+      matrix:
+        platform: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - uses: cachix/install-nix-action@2126ae7fc54c9df00dd18f7f18754393182c73cd # v31.9.1
+
+      - name: build with nix-build
+        run: |
+          nix-build -A release --argstr version "${{ github.sha }}"
+
+          echo "### Build details" >> "$GITHUB_STEP_SUMMARY"
+          echo "```" >> "$GITHUB_STEP_SUMMARY"
+          echo "$ file ./result/bin/git-bug" >> "$GITHUB_STEP_SUMMARY"
+          file ./result/bin/git-bug >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_SUMARY"
+          echo "$ ls -sh ./result/bin/git-bug" >> "$GITHUB_STEP_SUMMARY"
+          ls -sh ./result/bin/git-bug >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_SUMMARY"
+          echo "$ nix-shell --run 'go version -m ./result/bin/git-bug'" >> "$GITHUB_STEP_SUMMARY"
+          nix-shell --run 'go version -m ./result/bin/git-bug' >> "$GITHUB_STEP_SUMMARY"
+
+  web-ui:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -52,6 +88,8 @@ jobs:
 
       - name: Check out code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
 
       - uses: DeterminateSystems/nix-installer-action@21a544727d0c62386e78b4befe52d19ad12692e3 # v17
 
@@ -66,16 +104,3 @@ jobs:
       - name: Test
         run: make test
 
-  with-nix:
-    strategy:
-      matrix:
-        platform: [ubuntu-latest, macos-latest]
-    runs-on: ${{ matrix.platform }}
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-
-      - uses: DeterminateSystems/nix-installer-action@21a544727d0c62386e78b4befe52d19ad12692e3 # v17
-
-      - uses: nicknovitski/nix-develop@9be7cfb4b10451d3390a75dc18ad0465bed4932a # v1.2.1
-
-      - run: nix flake check

@@ -1,5 +1,6 @@
 [codespell]
-skip = .git,.venv,*.svg,*/package-lock.json,go.mod,go.sum,./misc/completion/*
+check-hidden = true
+skip = CHANGELOG.md,.direnv/*,.git,*.svg,*/package-lock.json,go.mod,go.sum,misc/completion/*/,webui/node_modules/*
 # ot,fo,te - used as short variable names
 # optionall - OptionAll but codespell is case insensitive
 # testing - TestIn

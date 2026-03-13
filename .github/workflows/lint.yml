@@ -1,0 +1,35 @@
+---
+name: lint
+
+on:
+  workflow_call:
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  check-formatting:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - uses: cachix/install-nix-action@2126ae7fc54c9df00dd18f7f18754393182c73cd # v31.9.1
+
+      - name: Check that files are formatted
+        run: |-
+          if ! nix-build ci --no-out-link -A checks.fmt; then
+            printf "%s\n%s\n\t%s\n\t%s\n%s\n%s\n" \
+              "One or more files are not formatted correctly."
+              "Please run the formatter by changing to the root directory and running one of:"
+              "nix-shell --run treefmt"
+              "nix develop --command treefmt"
+              "Make sure your branch is up to date with trunk; rebase if not."
+              "If you're having trouble, please reach out on matrix at #git-bug-general:matrix.org."
+            exit 1
+          fi

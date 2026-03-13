@@ -29,7 +29,3 @@ generates:
       withComponent: false
       withHOC: false
       withHooks: true
-
-hooks:
-  afterAllFileWrite:
-    - nix fmt
