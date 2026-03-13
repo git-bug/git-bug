@@ -138,6 +138,9 @@ func (s subscription[eventT]) EntityEvent(event cache.EntityEventType, repoName 
 	default:
 		panic(fmt.Sprintf("unknown typename: %s", typename))
 	}
+	if err != nil {
+		return
+	}
 	if s.filter != nil && !s.filter(excerpt) {
 		return
 	}
