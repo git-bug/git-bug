@@ -217,3 +217,26 @@ func (c *BugCache) SetMetadataRaw(author identity.Interface, unixTime int64, tar
 	}
 	return op, c.notifyUpdated()
 }
+
+func (c *BugCache) SetAssignee(assigneeId entity.Id, assignee identity.Interface) (*bug.SetAssigneeOperation, error) {
+	author, err := c.getUserIdentity()
+	if err != nil {
+		return nil, err
+	}
+
+	return c.SetAssigneeRaw(author, time.Now().Unix(), assigneeId, assignee, nil)
+}
+
+func (c *BugCache) SetAssigneeRaw(author identity.Interface, unixTime int64, assigneeId entity.Id, assignee identity.Interface, metadata map[string]string) (*bug.SetAssigneeOperation, error) {
+	c.mu.Lock()
+	op, err := bug.SetAssignee(c.entity, author, unixTime, assigneeId, assignee, metadata)
+	c.mu.Unlock()
+	if err != nil {
+		return nil, err
+	}
+	return op, c.notifyUpdated()
+}
+
+func (c *BugCache) Unassign() (*bug.SetAssigneeOperation, error) {
+	return c.SetAssignee("", nil)
+}

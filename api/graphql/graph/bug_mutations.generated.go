@@ -121,6 +121,8 @@ func (ec *executionContext) fieldContext_BugAddCommentAndClosePayload_bug(_ cont
 				return ec.fieldContext_Bug_labels(ctx, field)
 			case "author":
 				return ec.fieldContext_Bug_author(ctx, field)
+			case "assignee":
+				return ec.fieldContext_Bug_assignee(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Bug_createdAt(ctx, field)
 			case "lastEdit":
@@ -344,6 +346,8 @@ func (ec *executionContext) fieldContext_BugAddCommentAndReopenPayload_bug(_ con
 				return ec.fieldContext_Bug_labels(ctx, field)
 			case "author":
 				return ec.fieldContext_Bug_author(ctx, field)
+			case "assignee":
+				return ec.fieldContext_Bug_assignee(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Bug_createdAt(ctx, field)
 			case "lastEdit":
@@ -567,6 +571,8 @@ func (ec *executionContext) fieldContext_BugAddCommentPayload_bug(_ context.Cont
 				return ec.fieldContext_Bug_labels(ctx, field)
 			case "author":
 				return ec.fieldContext_Bug_author(ctx, field)
+			case "assignee":
+				return ec.fieldContext_Bug_assignee(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Bug_createdAt(ctx, field)
 			case "lastEdit":
@@ -736,6 +742,8 @@ func (ec *executionContext) fieldContext_BugChangeLabelPayload_bug(_ context.Con
 				return ec.fieldContext_Bug_labels(ctx, field)
 			case "author":
 				return ec.fieldContext_Bug_author(ctx, field)
+			case "assignee":
+				return ec.fieldContext_Bug_assignee(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Bug_createdAt(ctx, field)
 			case "lastEdit":
@@ -955,6 +963,8 @@ func (ec *executionContext) fieldContext_BugCreatePayload_bug(_ context.Context,
 				return ec.fieldContext_Bug_labels(ctx, field)
 			case "author":
 				return ec.fieldContext_Bug_author(ctx, field)
+			case "assignee":
+				return ec.fieldContext_Bug_assignee(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Bug_createdAt(ctx, field)
 			case "lastEdit":
@@ -1126,6 +1136,8 @@ func (ec *executionContext) fieldContext_BugEditCommentPayload_bug(_ context.Con
 				return ec.fieldContext_Bug_labels(ctx, field)
 			case "author":
 				return ec.fieldContext_Bug_author(ctx, field)
+			case "assignee":
+				return ec.fieldContext_Bug_assignee(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Bug_createdAt(ctx, field)
 			case "lastEdit":
@@ -1200,6 +1212,175 @@ func (ec *executionContext) fieldContext_BugEditCommentPayload_operation(_ conte
 				return ec.fieldContext_BugEditCommentOperation_files(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type BugEditCommentOperation", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BugSetAssigneePayload_clientMutationId(ctx context.Context, field graphql.CollectedField, obj *models.BugSetAssigneePayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugSetAssigneePayload_clientMutationId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ClientMutationID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BugSetAssigneePayload_clientMutationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BugSetAssigneePayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BugSetAssigneePayload_bug(ctx context.Context, field graphql.CollectedField, obj *models.BugSetAssigneePayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugSetAssigneePayload_bug(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Bug, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(models.BugWrapper)
+	fc.Result = res
+	return ec.marshalNBug2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugWrapper(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BugSetAssigneePayload_bug(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BugSetAssigneePayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Bug_id(ctx, field)
+			case "humanId":
+				return ec.fieldContext_Bug_humanId(ctx, field)
+			case "status":
+				return ec.fieldContext_Bug_status(ctx, field)
+			case "title":
+				return ec.fieldContext_Bug_title(ctx, field)
+			case "labels":
+				return ec.fieldContext_Bug_labels(ctx, field)
+			case "author":
+				return ec.fieldContext_Bug_author(ctx, field)
+			case "assignee":
+				return ec.fieldContext_Bug_assignee(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Bug_createdAt(ctx, field)
+			case "lastEdit":
+				return ec.fieldContext_Bug_lastEdit(ctx, field)
+			case "actors":
+				return ec.fieldContext_Bug_actors(ctx, field)
+			case "participants":
+				return ec.fieldContext_Bug_participants(ctx, field)
+			case "comments":
+				return ec.fieldContext_Bug_comments(ctx, field)
+			case "timeline":
+				return ec.fieldContext_Bug_timeline(ctx, field)
+			case "operations":
+				return ec.fieldContext_Bug_operations(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Bug", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BugSetAssigneePayload_operation(ctx context.Context, field graphql.CollectedField, obj *models.BugSetAssigneePayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BugSetAssigneePayload_operation(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Operation, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*bug.SetAssigneeOperation)
+	fc.Result = res
+	return ec.marshalNBugSetAssigneeOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐSetAssigneeOperation(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BugSetAssigneePayload_operation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BugSetAssigneePayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_BugSetAssigneeOperation_id(ctx, field)
+			case "author":
+				return ec.fieldContext_BugSetAssigneeOperation_author(ctx, field)
+			case "date":
+				return ec.fieldContext_BugSetAssigneeOperation_date(ctx, field)
+			case "assignee":
+				return ec.fieldContext_BugSetAssigneeOperation_assignee(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BugSetAssigneeOperation", field.Name)
 		},
 	}
 	return fc, nil
@@ -1297,6 +1478,8 @@ func (ec *executionContext) fieldContext_BugSetTitlePayload_bug(_ context.Contex
 				return ec.fieldContext_Bug_labels(ctx, field)
 			case "author":
 				return ec.fieldContext_Bug_author(ctx, field)
+			case "assignee":
+				return ec.fieldContext_Bug_assignee(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Bug_createdAt(ctx, field)
 			case "lastEdit":
@@ -1466,6 +1649,8 @@ func (ec *executionContext) fieldContext_BugStatusClosePayload_bug(_ context.Con
 				return ec.fieldContext_Bug_labels(ctx, field)
 			case "author":
 				return ec.fieldContext_Bug_author(ctx, field)
+			case "assignee":
+				return ec.fieldContext_Bug_assignee(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Bug_createdAt(ctx, field)
 			case "lastEdit":
@@ -1633,6 +1818,8 @@ func (ec *executionContext) fieldContext_BugStatusOpenPayload_bug(_ context.Cont
 				return ec.fieldContext_Bug_labels(ctx, field)
 			case "author":
 				return ec.fieldContext_Bug_author(ctx, field)
+			case "assignee":
+				return ec.fieldContext_Bug_assignee(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Bug_createdAt(ctx, field)
 			case "lastEdit":
@@ -2036,6 +2223,54 @@ func (ec *executionContext) unmarshalInputBugEditCommentInput(ctx context.Contex
 				return it, err
 			}
 			it.Files = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputBugSetAssigneeInput(ctx context.Context, obj any) (models.BugSetAssigneeInput, error) {
+	var it models.BugSetAssigneeInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"clientMutationId", "repoRef", "prefix", "assignee"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "clientMutationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clientMutationId"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClientMutationID = data
+		case "repoRef":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("repoRef"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RepoRef = data
+		case "prefix":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("prefix"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Prefix = data
+		case "assignee":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("assignee"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Assignee = data
 		}
 	}
 
@@ -2471,6 +2706,52 @@ func (ec *executionContext) _BugEditCommentPayload(ctx context.Context, sel ast.
 	return out
 }
 
+var bugSetAssigneePayloadImplementors = []string{"BugSetAssigneePayload"}
+
+func (ec *executionContext) _BugSetAssigneePayload(ctx context.Context, sel ast.SelectionSet, obj *models.BugSetAssigneePayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, bugSetAssigneePayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("BugSetAssigneePayload")
+		case "clientMutationId":
+			out.Values[i] = ec._BugSetAssigneePayload_clientMutationId(ctx, field, obj)
+		case "bug":
+			out.Values[i] = ec._BugSetAssigneePayload_bug(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "operation":
+			out.Values[i] = ec._BugSetAssigneePayload_operation(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var bugSetTitlePayloadImplementors = []string{"BugSetTitlePayload"}
 
 func (ec *executionContext) _BugSetTitlePayload(ctx context.Context, sel ast.SelectionSet, obj *models.BugSetTitlePayload) graphql.Marshaler {
@@ -2720,6 +3001,25 @@ func (ec *executionContext) marshalNBugEditCommentPayload2ᚖgithubᚗcomᚋgit�
 		return graphql.Null
 	}
 	return ec._BugEditCommentPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNBugSetAssigneeInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugSetAssigneeInput(ctx context.Context, v any) (models.BugSetAssigneeInput, error) {
+	res, err := ec.unmarshalInputBugSetAssigneeInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNBugSetAssigneePayload2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugSetAssigneePayload(ctx context.Context, sel ast.SelectionSet, v models.BugSetAssigneePayload) graphql.Marshaler {
+	return ec._BugSetAssigneePayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNBugSetAssigneePayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugSetAssigneePayload(ctx context.Context, sel ast.SelectionSet, v *models.BugSetAssigneePayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._BugSetAssigneePayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNBugSetTitleInput2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugSetTitleInput(ctx context.Context, v any) (models.BugSetTitleInput, error) {

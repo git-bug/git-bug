@@ -129,6 +129,7 @@ func (cp *CommentPage) IsLastPage() bool {
 // https://docs.atlassian.com/software/jira/docs/api/REST/8.2.6/#api/2/issue-getIssue
 type IssueFields struct {
 	Creator     User        `json:"creator"`
+	Assignee    *User       `json:"assignee"`
 	Created     Time        `json:"created"`
 	Description string      `json:"description"`
 	Summary     string      `json:"summary"`
@@ -1065,6 +1066,51 @@ func (client *Client) UpdateIssueTitle(issueKeyOrID, title string) (time.Time, e
 	responseTime, err = http.ParseTime(dateHeader[0])
 	if err != nil {
 		return time.Time{}, err
+	}
+
+	return responseTime, nil
+}
+
+// UpdateAssignee changes the "assignee" field of a JIRA issue
+// Pass empty string to unassign
+func (client *Client) UpdateAssignee(issueKeyOrID, assigneeKey string) (time.Time, error) {
+	url := fmt.Sprintf(
+		"%s/rest/api/2/issue/%s", client.serverURL, issueKeyOrID)
+	var responseTime time.Time
+
+	var buffer bytes.Buffer
+	if assigneeKey == "" {
+		_, _ = fmt.Fprintf(&buffer, `{"fields":{"assignee":null}}`)
+	} else {
+		data, err := json.Marshal(assigneeKey)
+		if err != nil {
+			return responseTime, err
+		}
+		_, _ = fmt.Fprintf(&buffer, `{"fields":{"assignee":{"name":%s}}}`, data)
+	}
+
+	data := buffer.Bytes()
+	request, err := http.NewRequest("PUT", url, bytes.NewBuffer(data))
+	if err != nil {
+		return responseTime, err
+	}
+
+	response, err := client.Do(request)
+	if err != nil {
+		return responseTime, fmt.Errorf("performing request %v", err)
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusNoContent {
+		content, _ := io.ReadAll(response.Body)
+		return responseTime, fmt.Errorf(
+			"HTTP response %d, query was %s\n  data: %s\n  response: %s",
+			response.StatusCode, request.URL.String(), data, content)
+	}
+
+	dateHeader, ok := response.Header["Date"]
+	if ok && len(dateHeader) == 1 {
+		responseTime, _ = http.ParseTime(dateHeader[0])
 	}
 
 	return responseTime, nil

@@ -17,6 +17,8 @@ extend type Mutation {
     bugStatusClose(input: BugStatusCloseInput!): BugStatusClosePayload!
     """Change a bug's title"""
     bugSetTitle(input: BugSetTitleInput!): BugSetTitlePayload!
+    """Set a bug's assignee"""
+    bugSetAssignee(input: BugSetAssigneeInput!): BugSetAssigneePayload!
 }
 
 input BugCreateInput {
@@ -211,4 +213,24 @@ type BugSetTitlePayload {
     bug: Bug!
     """The resulting operation"""
     operation: BugSetTitleOperation!
+}
+
+input BugSetAssigneeInput {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The name of the repository. If not set, the default repository is used."""
+    repoRef: String
+    """The bug ID's prefix."""
+    prefix: String!
+    """The assignee's ID prefix. Empty string to unassign."""
+    assignee: String!
+}
+
+type BugSetAssigneePayload {
+    """A unique identifier for the client performing the mutation."""
+    clientMutationId: String
+    """The affected bug."""
+    bug: Bug!
+    """The resulting operation"""
+    operation: BugSetAssigneeOperation!
 }

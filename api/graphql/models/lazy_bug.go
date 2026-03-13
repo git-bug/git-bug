@@ -22,6 +22,7 @@ type BugWrapper interface {
 	Comments() ([]bug.Comment, error)
 	Labels() []common.Label
 	Author() (IdentityWrapper, error)
+	Assignee() (IdentityWrapper, error)
 	Actors() ([]IdentityWrapper, error)
 	Participants() ([]IdentityWrapper, error)
 	CreatedAt() time.Time
@@ -110,6 +111,13 @@ func (lb *lazyBug) Author() (IdentityWrapper, error) {
 	return lb.identity(lb.excerpt.AuthorId)
 }
 
+func (lb *lazyBug) Assignee() (IdentityWrapper, error) {
+	if lb.excerpt.AssigneeId == "" {
+		return nil, nil
+	}
+	return lb.identity(lb.excerpt.AssigneeId)
+}
+
 func (lb *lazyBug) Actors() ([]IdentityWrapper, error) {
 	result := make([]IdentityWrapper, len(lb.excerpt.Actors))
 	for i, actorId := range lb.excerpt.Actors {
@@ -186,6 +194,13 @@ func (l *loadedBug) Labels() []common.Label {
 
 func (l *loadedBug) Author() (IdentityWrapper, error) {
 	return NewLoadedIdentity(l.Snapshot.Author), nil
+}
+
+func (l *loadedBug) Assignee() (IdentityWrapper, error) {
+	if l.Snapshot.Assignee == nil {
+		return nil, nil
+	}
+	return NewLoadedIdentity(l.Snapshot.Assignee), nil
 }
 
 func (l *loadedBug) Actors() ([]IdentityWrapper, error) {

@@ -34,6 +34,7 @@ git bug status:open --by creation "foo bar" baz
 ```
   -s, --status strings        Filter by status. Valid values are [open,closed]
   -a, --author strings        Filter by author
+      --assignee strings      Filter by assignee
   -m, --metadata strings      Filter by metadata. Example: github-url=URL
   -p, --participant strings   Filter by participant
   -A, --actor strings         Filter by actor
@@ -49,6 +50,7 @@ git bug status:open --by creation "foo bar" baz
 ### SEE ALSO
 
 * [git-bug](git-bug.md)	 - A bug tracker embedded in Git
+* [git-bug bug assignee](git-bug_bug_assignee.md)	 - Display the assignee of a bug
 * [git-bug bug comment](git-bug_bug_comment.md)	 - List a bug's comments
 * [git-bug bug deselect](git-bug_bug_deselect.md)	 - Clear the implicitly selected bug
 * [git-bug bug label](git-bug_bug_label.md)	 - Display labels of a bug

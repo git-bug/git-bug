@@ -121,6 +121,9 @@ function BugRow({ bug }: Props) {
             <Date date={bug.createdAt} />
             &nbsp;by&nbsp;
             <Author className={classes.details} author={bug.author} />
+            {bug.assignee && (
+              <>&nbsp;• Assignee: {bug.assignee.displayName}</>
+            )}
           </div>
         </div>
         <span className={classes.commentCountCell}>

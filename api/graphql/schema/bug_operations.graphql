@@ -76,3 +76,16 @@ type BugLabelChangeOperation implements Operation & Authored
     added: [Label!]!
     removed: [Label!]!
 }
+
+type BugSetAssigneeOperation implements Operation & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.SetAssigneeOperation") {
+    """The identifier of the operation"""
+    id: ID!
+    """The author of this object."""
+    author: Identity!
+    """The datetime when this operation was issued."""
+    date: Time! @goField(name: "Time")
+
+    """The assignee ID, empty if unassigned"""
+    assignee: String!
+}

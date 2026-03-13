@@ -35,6 +35,7 @@ type StringPair struct {
 type Filters struct {
 	Status      []common.Status
 	Author      []string
+	Assignee    []string
 	Metadata    []StringPair
 	Actor       []string
 	Participant []string

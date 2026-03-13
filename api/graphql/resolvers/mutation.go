@@ -9,6 +9,7 @@ import (
 	"github.com/git-bug/git-bug/api/graphql/models"
 	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/util/text"
 )
 
@@ -337,6 +338,51 @@ func (r mutationResolver) BugSetTitle(ctx context.Context, input models.BugSetTi
 	}
 
 	return &models.BugSetTitlePayload{
+		ClientMutationID: input.ClientMutationID,
+		Bug:              models.NewLoadedBug(b.Snapshot()),
+		Operation:        op,
+	}, nil
+}
+
+func (r mutationResolver) BugSetAssignee(ctx context.Context, input models.BugSetAssigneeInput) (*models.BugSetAssigneePayload, error) {
+	repo, b, err := r.getBug(input.RepoRef, input.Prefix)
+	if err != nil {
+		return nil, err
+	}
+
+	author, err := auth.UserFromCtx(ctx, repo)
+	if err != nil {
+		return nil, err
+	}
+
+	var assigneeId entity.Id
+	var assignee *cache.IdentityCache
+	if input.Assignee != "" {
+		// Resolve the assignee identity
+		assignee, err = repo.Identities().ResolvePrefix(input.Assignee)
+		if err != nil {
+			return nil, err
+		}
+		assigneeId = assignee.Id()
+	}
+
+	op, err := b.SetAssigneeRaw(
+		author,
+		time.Now().Unix(),
+		assigneeId,
+		assignee,
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	err = b.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.BugSetAssigneePayload{
 		ClientMutationID: input.ClientMutationID,
 		Bug:              models.NewLoadedBug(b.Snapshot()),
 		Operation:        op,

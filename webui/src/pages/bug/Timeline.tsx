@@ -3,6 +3,7 @@ import makeStyles from '@mui/styles/makeStyles';
 import { BugFragment } from './Bug.generated';
 import LabelChange from './LabelChange';
 import Message from './Message';
+import SetAssignee from './SetAssignee';
 import SetStatus from './SetStatus';
 import SetTitle from './SetTitle';
 import { TimelineItemFragment } from './TimelineQuery.generated';
@@ -37,6 +38,8 @@ function Timeline({ bug, ops }: Props) {
             return <SetTitle key={index} op={op} />;
           case 'BugSetStatusTimelineItem':
             return <SetStatus key={index} op={op} />;
+          case 'BugSetAssigneeTimelineItem':
+            return <SetAssignee key={index} op={op} />;
         }
 
         console.warn('unsupported operation type ' + op.__typename);

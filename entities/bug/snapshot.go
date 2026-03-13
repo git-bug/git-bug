@@ -23,6 +23,7 @@ type Snapshot struct {
 	Author       identity.Interface
 	Actors       []identity.Interface
 	Participants []identity.Interface
+	Assignee     identity.Interface // nil means unassigned
 	CreateTime   time.Time
 
 	Timeline []TimelineItem

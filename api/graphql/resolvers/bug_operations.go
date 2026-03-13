@@ -59,3 +59,15 @@ type bugSetTitleOperationResolver struct{}
 func (bugSetTitleOperationResolver) Author(_ context.Context, obj *bug.SetTitleOperation) (models.IdentityWrapper, error) {
 	return models.NewLoadedIdentity(obj.Author()), nil
 }
+
+var _ graph.BugSetAssigneeOperationResolver = bugSetAssigneeOperationResolver{}
+
+type bugSetAssigneeOperationResolver struct{}
+
+func (bugSetAssigneeOperationResolver) Author(_ context.Context, obj *bug.SetAssigneeOperation) (models.IdentityWrapper, error) {
+	return models.NewLoadedIdentity(obj.Author()), nil
+}
+
+func (bugSetAssigneeOperationResolver) Assignee(_ context.Context, obj *bug.SetAssigneeOperation) (string, error) {
+	return obj.Assignee.String(), nil
+}

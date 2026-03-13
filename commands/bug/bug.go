@@ -22,6 +22,7 @@ import (
 type bugOptions struct {
 	statusQuery         []string
 	authorQuery         []string
+	assigneeQuery       []string
 	metadataQuery       []string
 	participantQuery    []string
 	actorQuery          []string
@@ -71,9 +72,12 @@ git bug status:open --by creation "foo bar" baz
 	cmd.RegisterFlagCompletionFunc("status", completion.From([]string{"open", "closed"}))
 	flags.StringSliceVarP(&options.authorQuery, "author", "a", nil,
 		"Filter by author")
+	cmd.RegisterFlagCompletionFunc("author", completion.UserForQuery(env))
+	flags.StringSliceVarP(&options.assigneeQuery, "assignee", "", nil,
+		"Filter by assignee")
+	cmd.RegisterFlagCompletionFunc("assignee", completion.UserForQuery(env))
 	flags.StringSliceVarP(&options.metadataQuery, "metadata", "m", nil,
 		"Filter by metadata. Example: github-url=URL")
-	cmd.RegisterFlagCompletionFunc("author", completion.UserForQuery(env))
 	flags.StringSliceVarP(&options.participantQuery, "participant", "p", nil,
 		"Filter by participant")
 	cmd.RegisterFlagCompletionFunc("participant", completion.UserForQuery(env))
@@ -110,6 +114,7 @@ git bug status:open --by creation "foo bar" baz
 	addCmdWithGroup(newBugDeselectCommand(env), selectGroup)
 	addCmdWithGroup(newBugSelectCommand(env), selectGroup)
 
+	cmd.AddCommand(newBugAssigneeCommand(env))
 	cmd.AddCommand(newBugCommentCommand(env))
 	cmd.AddCommand(newBugLabelCommand(env))
 	cmd.AddCommand(newBugNewCommand(env))
@@ -237,6 +242,14 @@ func bugsDefaultFormatter(env *execenv.Env, excerpts []*cache.BugExcerpt) error 
 			return err
 		}
 
+		var assigneeFmt string
+		if b.AssigneeId != "" {
+			assignee, err := env.Backend.Identities().ResolveExcerpt(b.AssigneeId)
+			if err == nil {
+				assigneeFmt = assignee.DisplayName()
+			}
+		}
+
 		var labelsTxt strings.Builder
 		for _, l := range b.Labels {
 			lc256 := l.Color().Term256()
@@ -258,11 +271,17 @@ func bugsDefaultFormatter(env *execenv.Env, excerpts []*cache.BugExcerpt) error 
 			comments = "  ∞ 💬"
 		}
 
-		env.Out.Printf("%s\t%s\t%s   %s %s\n",
+		assigneeOut := ""
+		if assigneeFmt != "" {
+			assigneeOut = colors.Blue(" → " + text.TruncateMax(assigneeFmt, 15))
+		}
+
+		env.Out.Printf("%s\t%s\t%s   %s%s %s\n",
 			colors.Cyan(b.Id().Human()),
 			colors.Yellow(b.Status),
 			titleFmt+labelsFmt,
 			colors.Magenta(authorFmt),
+			assigneeOut,
 			comments,
 		)
 	}
@@ -366,6 +385,7 @@ func completeQuery(q *query.Query, opts bugOptions) error {
 	}
 
 	q.Author = append(q.Author, opts.authorQuery...)
+	q.Assignee = append(q.Assignee, opts.assigneeQuery...)
 	for _, str := range opts.metadataQuery {
 		tokens := strings.Split(str, "=")
 		if len(tokens) < 2 {

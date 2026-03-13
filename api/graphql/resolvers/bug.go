@@ -182,6 +182,10 @@ func (bugResolver) Participants(_ context.Context, obj models.BugWrapper, after 
 	return connections.Connection(participants, edger, conMaker, input)
 }
 
+func (bugResolver) Assignee(_ context.Context, obj models.BugWrapper) (models.IdentityWrapper, error) {
+	return obj.Assignee()
+}
+
 var _ graph.BugCommentResolver = &commentResolver{}
 
 type commentResolver struct{}

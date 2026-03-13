@@ -252,6 +252,26 @@ func (ji *jiraImporter) ensureIssue(repo *cache.RepoCache, issue Issue) (*cache.
 		}
 
 		ji.out <- core.NewImportBug(b.Id())
+
+		// Set initial assignee if present
+		if issue.Fields.Assignee != nil {
+			assignee, err := ji.ensurePerson(repo, *issue.Fields.Assignee)
+			if err != nil {
+				return nil, err
+			}
+			_, err = b.SetAssigneeRaw(
+				author,
+				issue.Fields.Created.Unix(),
+				assignee.Id(),
+				assignee,
+				map[string]string{
+					metaKeyJiraId: issue.ID + "-assignee",
+				},
+			)
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	return b, nil
@@ -589,6 +609,37 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 
 			ji.out <- core.NewImportCommentEdition(b.Id(), commentId)
 
+		case "assignee":
+			var assigneeId entity.Id
+			var assignee *cache.IdentityCache
+			if item.To != "" {
+				// Resolve the new assignee
+				assignee, err = repo.Identities().ResolveIdentityImmutableMetadata(
+					metaKeyJiraUser, item.To)
+				if err != nil && !entity.IsErrNotFound(err) {
+					return err
+				}
+				if assignee != nil {
+					assigneeId = assignee.Id()
+				}
+			}
+			// If assignee not found or unassigned, assigneeId will be empty
+			op, err := b.SetAssigneeRaw(
+				author,
+				entry.Created.Unix(),
+				assigneeId,
+				assignee,
+				map[string]string{
+					metaKeyJiraId:        entry.ID,
+					metaKeyJiraDerivedId: derivedID,
+				},
+			)
+			if err != nil {
+				return err
+			}
+
+			ji.out <- core.NewImportAssigneeChange(b.Id(), op.Id())
+
 		default:
 			ji.out <- core.NewImportWarning(
 				fmt.Errorf(
@@ -596,7 +647,6 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 		}
 
 		// Other Examples:
-		// "assignee" (jira)
 		// "Attachment" (jira)
 		// "Epic Link" (custom)
 		// "Rank" (custom)

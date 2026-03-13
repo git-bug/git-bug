@@ -91,3 +91,14 @@ type BugSetTitleTimelineItem implements BugTimelineItem & Authored
     title: String!
     was: String!
 }
+
+"""BugSetAssigneeTimelineItem is a BugTimelineItem that represent a change in the assignee of a bug"""
+type BugSetAssigneeTimelineItem implements BugTimelineItem & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.SetAssigneeTimelineItem") {
+    """The identifier of the source operation"""
+    id: CombinedId! @goField(name: "CombinedId")
+    author: Identity!
+    date: Time!
+    """The resolved assignee identity, null if unassigned"""
+    assignee: Identity
+}

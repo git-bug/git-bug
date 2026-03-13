@@ -7,6 +7,8 @@ type Bug implements Authored {
   title: String!
   labels: [Label!]!
   author: Identity!
+  """The user assigned to this bug, if any"""
+  assignee: Identity
   createdAt: Time!
   lastEdit: Time!
 
