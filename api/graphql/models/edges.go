@@ -29,3 +29,8 @@ func (e IdentityEdge) GetCursor() string {
 func (e LabelEdge) GetCursor() string {
 	return e.Cursor
 }
+
+// GetCursor return the cursor entry of an edge
+func (e RepositoryEdge) GetCursor() string {
+	return e.Cursor
+}

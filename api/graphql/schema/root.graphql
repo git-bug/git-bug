@@ -1,6 +1,18 @@
 type Query {
     """Access a repository by reference/name. If no ref is given, the default repository is returned if any."""
     repository(ref: String): Repository
+
+    """List all registered repositories."""
+    repositories(
+      """Returns the elements in the list that come after the specified cursor."""
+      after: String
+      """Returns the elements in the list that come before the specified cursor."""
+      before: String
+      """Returns the first _n_ elements from the list."""
+      first: Int
+      """Returns the last _n_ elements from the list."""
+      last: Int
+    ): RepositoryConnection!
 }
 
 type Mutation # See each entity mutations

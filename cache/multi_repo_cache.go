@@ -69,6 +69,15 @@ func (c *MultiRepoCache) ResolveRepo(name string) (*RepoCache, error) {
 	return r, nil
 }
 
+// AllRepos returns all registered repositories. Order is not guaranteed.
+func (c *MultiRepoCache) AllRepos() []*RepoCache {
+	result := make([]*RepoCache, 0, len(c.repos))
+	for _, r := range c.repos {
+		result = append(result, r)
+	}
+	return result
+}
+
 // RegisterObserver registers an Observer on repo and entity, according to nameFilter and typename.
 // - if nameFilter is empty, the observer is registered on all available repo
 // - if nameFilter is not empty, the observer is registered on the repo with the matching name

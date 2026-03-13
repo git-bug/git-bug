@@ -47,3 +47,15 @@ type Repository {
         last: Int
     ): LabelConnection!
 }
+
+type  RepositoryConnection {
+  edges: [RepositoryEdge!]!
+  nodes: [Repository!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type RepositoryEdge {
+  cursor: String!
+  node: Repository!
+}

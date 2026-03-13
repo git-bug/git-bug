@@ -17,6 +17,7 @@ require (
 	github.com/go-git/go-billy/v5 v5.6.2
 	github.com/go-git/go-git/v5 v5.16.5
 	github.com/gorilla/mux v1.8.1
+	github.com/gorilla/websocket v1.5.3
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/icrowley/fake v0.0.0-20240710202011-f797eb4a99c0
 	github.com/mattn/go-isatty v0.0.20
@@ -32,15 +33,14 @@ require (
 	github.com/vektah/gqlparser/v2 v2.5.26
 	gitlab.com/gitlab-org/api/client-go v0.116.0
 	golang.org/x/crypto v0.45.0
+	golang.org/x/mod v0.29.0
+	golang.org/x/net v0.47.0
 	golang.org/x/oauth2 v0.27.0
 	golang.org/x/sync v0.18.0
 	golang.org/x/sys v0.38.0
+	golang.org/x/term v0.37.0
 	golang.org/x/text v0.31.0
-)
-
-require (
-	golang.org/x/tools/go/packages/packagestest v0.1.1-deprecated // indirect
-	golang.org/x/tools/godoc v0.1.0-deprecated // indirect
+	golang.org/x/vuln v1.1.3
 )
 
 require (
@@ -87,7 +87,6 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/gsterjov/go-libsecret v0.0.0-20161001094733-a6f4afe4910c // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.7 // indirect
@@ -114,13 +113,11 @@ require (
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	go.etcd.io/bbolt v1.4.0 // indirect
-	golang.org/x/mod v0.29.0
-	golang.org/x/net v0.47.0
 	golang.org/x/telemetry v0.0.0-20251008203120-078029d740a8 // indirect
-	golang.org/x/term v0.37.0
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.38.0 // indirect
-	golang.org/x/vuln v1.1.3
+	golang.org/x/tools/go/packages/packagestest v0.1.1-deprecated // indirect
+	golang.org/x/tools/godoc v0.1.0-deprecated // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

@@ -330,5 +330,17 @@ type PageInfo struct {
 type Query struct {
 }
 
+type RepositoryConnection struct {
+	Edges      []*RepositoryEdge `json:"edges"`
+	Nodes      []*Repository     `json:"nodes"`
+	PageInfo   *PageInfo         `json:"pageInfo"`
+	TotalCount int               `json:"totalCount"`
+}
+
+type RepositoryEdge struct {
+	Cursor string      `json:"cursor"`
+	Node   *Repository `json:"node"`
+}
+
 type Subscription struct {
 }

@@ -375,7 +375,8 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Repository func(childComplexity int, ref *string) int
+		Repositories func(childComplexity int, after *string, before *string, first *int, last *int) int
+		Repository   func(childComplexity int, ref *string) int
 	}
 
 	Repository struct {
@@ -386,6 +387,18 @@ type ComplexityRoot struct {
 		Name          func(childComplexity int) int
 		UserIdentity  func(childComplexity int) int
 		ValidLabels   func(childComplexity int, after *string, before *string, first *int, last *int) int
+	}
+
+	RepositoryConnection struct {
+		Edges      func(childComplexity int) int
+		Nodes      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	RepositoryEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 
 	Subscription struct {
@@ -1758,6 +1771,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.PageInfo.StartCursor(childComplexity), true
 
+	case "Query.repositories":
+		if e.complexity.Query.Repositories == nil {
+			break
+		}
+
+		args, err := ec.field_Query_repositories_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Repositories(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
+
 	case "Query.repository":
 		if e.complexity.Query.Repository == nil {
 			break
@@ -1843,6 +1868,48 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Repository.ValidLabels(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
+
+	case "RepositoryConnection.edges":
+		if e.complexity.RepositoryConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.RepositoryConnection.Edges(childComplexity), true
+
+	case "RepositoryConnection.nodes":
+		if e.complexity.RepositoryConnection.Nodes == nil {
+			break
+		}
+
+		return e.complexity.RepositoryConnection.Nodes(childComplexity), true
+
+	case "RepositoryConnection.pageInfo":
+		if e.complexity.RepositoryConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.RepositoryConnection.PageInfo(childComplexity), true
+
+	case "RepositoryConnection.totalCount":
+		if e.complexity.RepositoryConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.RepositoryConnection.TotalCount(childComplexity), true
+
+	case "RepositoryEdge.cursor":
+		if e.complexity.RepositoryEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.RepositoryEdge.Cursor(childComplexity), true
+
+	case "RepositoryEdge.node":
+		if e.complexity.RepositoryEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.RepositoryEdge.Node(childComplexity), true
 
 	case "Subscription.allEvents":
 		if e.complexity.Subscription.AllEvents == nil {
@@ -2679,10 +2746,34 @@ type OperationEdge {
         last: Int
     ): LabelConnection!
 }
+
+type  RepositoryConnection {
+  edges: [RepositoryEdge!]!
+  nodes: [Repository!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type RepositoryEdge {
+  cursor: String!
+  node: Repository!
+}
 `, BuiltIn: false},
 	{Name: "../schema/root.graphql", Input: `type Query {
     """Access a repository by reference/name. If no ref is given, the default repository is returned if any."""
     repository(ref: String): Repository
+
+    """List all registered repositories."""
+    repositories(
+      """Returns the elements in the list that come after the specified cursor."""
+      after: String
+      """Returns the elements in the list that come before the specified cursor."""
+      before: String
+      """Returns the first _n_ elements from the list."""
+      first: Int
+      """Returns the last _n_ elements from the list."""
+      last: Int
+    ): RepositoryConnection!
 }
 
 type Mutation # See each entity mutations
