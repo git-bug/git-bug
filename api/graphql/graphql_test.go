@@ -219,3 +219,36 @@ func TestQueries(t *testing.T) {
 	err := c.Post(query, &resp)
 	assert.NoError(t, err)
 }
+
+func TestBugEventsSubscription(t *testing.T) {
+	repo := repository.CreateGoGitTestRepo(t, false)
+
+	mrc := cache.NewMultiRepoCache()
+	rc, events := mrc.RegisterDefaultRepository(repo)
+	for event := range events {
+		require.NoError(t, event.Err)
+	}
+
+	h := NewHandler(mrc, nil)
+	c := client.New(h)
+
+	sub := c.Websocket(`subscription { bugEvents { type bug { id } } }`)
+	t.Cleanup(func() { _ = sub.Close() })
+
+	rene, err := rc.Identities().New("René Descartes", "rene@descartes.fr")
+	require.NoError(t, err)
+	require.NoError(t, rc.SetUserIdentity(rene))
+
+	b, _, err := rc.Bugs().New("test subscription", "body")
+	require.NoError(t, err)
+
+	var resp struct {
+		BugEvents struct {
+			Type string
+			Bug  struct{ Id string }
+		}
+	}
+	require.NoError(t, sub.Next(&resp))
+	assert.Equal(t, "CREATED", resp.BugEvents.Type)
+	assert.Equal(t, b.Id().String(), resp.BugEvents.Bug.Id)
+}
