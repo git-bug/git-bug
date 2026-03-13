@@ -9,6 +9,7 @@ import (
 	"github.com/git-bug/git-bug/util/lamport"
 )
 
+var _ dag.ReadOnly[dag.Snapshot, dag.Operation] = &CachedEntityBase[dag.Snapshot, dag.Operation]{}
 var _ CacheEntity = &CachedEntityBase[dag.Snapshot, dag.Operation]{}
 
 // CachedEntityBase provide the base function of an entity managed by the cache.
@@ -18,7 +19,7 @@ type CachedEntityBase[SnapT dag.Snapshot, OpT dag.Operation] struct {
 	getUserIdentity getUserIdentityFunc
 
 	mu     sync.RWMutex
-	entity dag.Interface[SnapT, OpT]
+	entity dag.ReadWrite[SnapT, OpT]
 }
 
 func (e *CachedEntityBase[SnapT, OpT]) Id() entity.Id {
@@ -28,7 +29,7 @@ func (e *CachedEntityBase[SnapT, OpT]) Id() entity.Id {
 func (e *CachedEntityBase[SnapT, OpT]) Snapshot() SnapT {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
-	return e.entity.Compile()
+	return e.entity.Snapshot()
 }
 
 func (e *CachedEntityBase[SnapT, OpT]) notifyUpdated() error {
@@ -108,4 +109,8 @@ func (e *CachedEntityBase[SnapT, OpT]) EditLamportTime() lamport.Time {
 
 func (e *CachedEntityBase[SnapT, OpT]) FirstOp() OpT {
 	return e.entity.FirstOp()
+}
+
+func (e *CachedEntityBase[SnapT, OpT]) LastOp() OpT {
+	return e.entity.LastOp()
 }

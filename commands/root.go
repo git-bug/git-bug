@@ -5,8 +5,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/git-bug/git-bug/commands/bridge"
-	"github.com/git-bug/git-bug/commands/bug"
+	boardcmd "github.com/git-bug/git-bug/commands/board"
+	bridgecmd "github.com/git-bug/git-bug/commands/bridge"
+	bugcmd "github.com/git-bug/git-bug/commands/bug"
 	"github.com/git-bug/git-bug/commands/execenv"
 	"github.com/git-bug/git-bug/commands/user"
 )
@@ -56,6 +57,7 @@ the same git remote you are already using to collaborate with other people.
 
 	env := execenv.NewEnv()
 
+	addCmdWithGroup(boardcmd.NewBoardCommand(), entityGroup)
 	addCmdWithGroup(bugcmd.NewBugCommand(env), entityGroup)
 	addCmdWithGroup(usercmd.NewUserCommand(env), entityGroup)
 	addCmdWithGroup(newLabelCommand(env), entityGroup)

@@ -11,7 +11,7 @@ import (
 	"github.com/git-bug/git-bug/repository"
 )
 
-const messageFilename = "BUG_MESSAGE_EDITMSG"
+const messageFilename = "BUG_EDITMSG"
 
 // ErrEmptyMessage is returned when the required message has not been entered
 var ErrEmptyMessage = errors.New("empty message")
@@ -197,7 +197,7 @@ const queryTemplate = `%s
 # - sort:edit, sort:edit-desc, sort:edit-asc
 #
 # Notes
-# 
+#
 # - queries are case insensitive.
 # - you can combine as many qualifiers as you want.
 # - you can use double quotes for multi-word search terms (ex: author:"René Descartes")

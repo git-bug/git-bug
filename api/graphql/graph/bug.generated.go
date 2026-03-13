@@ -615,6 +615,94 @@ func (ec *executionContext) fieldContext_Bug_humanId(_ context.Context, field gr
 	return fc, nil
 }
 
+func (ec *executionContext) _Bug_createdAt(ctx context.Context, field graphql.CollectedField, obj models.BugWrapper) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Bug_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt(), nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Bug_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Bug",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Bug_lastEdit(ctx context.Context, field graphql.CollectedField, obj models.BugWrapper) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Bug_lastEdit(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastEdit(), nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Bug_lastEdit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Bug",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Bug_status(ctx context.Context, field graphql.CollectedField, obj models.BugWrapper) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Bug_status(ctx, field)
 	if err != nil {
@@ -810,94 +898,6 @@ func (ec *executionContext) fieldContext_Bug_author(_ context.Context, field gra
 				return ec.fieldContext_Identity_isProtected(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Identity", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Bug_createdAt(ctx context.Context, field graphql.CollectedField, obj models.BugWrapper) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Bug_createdAt(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CreatedAt(), nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(time.Time)
-	fc.Result = res
-	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Bug_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Bug",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Time does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Bug_lastEdit(ctx context.Context, field graphql.CollectedField, obj models.BugWrapper) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Bug_lastEdit(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.LastEdit(), nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(time.Time)
-	fc.Result = res
-	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Bug_lastEdit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Bug",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Time does not have child fields")
 		},
 	}
 	return fc, nil
@@ -1321,6 +1321,10 @@ func (ec *executionContext) fieldContext_BugConnection_nodes(_ context.Context, 
 				return ec.fieldContext_Bug_id(ctx, field)
 			case "humanId":
 				return ec.fieldContext_Bug_humanId(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Bug_createdAt(ctx, field)
+			case "lastEdit":
+				return ec.fieldContext_Bug_lastEdit(ctx, field)
 			case "status":
 				return ec.fieldContext_Bug_status(ctx, field)
 			case "title":
@@ -1329,10 +1333,6 @@ func (ec *executionContext) fieldContext_BugConnection_nodes(_ context.Context, 
 				return ec.fieldContext_Bug_labels(ctx, field)
 			case "author":
 				return ec.fieldContext_Bug_author(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Bug_createdAt(ctx, field)
-			case "lastEdit":
-				return ec.fieldContext_Bug_lastEdit(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":
@@ -1535,6 +1535,10 @@ func (ec *executionContext) fieldContext_BugEdge_node(_ context.Context, field g
 				return ec.fieldContext_Bug_id(ctx, field)
 			case "humanId":
 				return ec.fieldContext_Bug_humanId(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Bug_createdAt(ctx, field)
+			case "lastEdit":
+				return ec.fieldContext_Bug_lastEdit(ctx, field)
 			case "status":
 				return ec.fieldContext_Bug_status(ctx, field)
 			case "title":
@@ -1543,10 +1547,6 @@ func (ec *executionContext) fieldContext_BugEdge_node(_ context.Context, field g
 				return ec.fieldContext_Bug_labels(ctx, field)
 			case "author":
 				return ec.fieldContext_Bug_author(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Bug_createdAt(ctx, field)
-			case "lastEdit":
-				return ec.fieldContext_Bug_lastEdit(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":
@@ -1628,6 +1628,16 @@ func (ec *executionContext) _Bug(ctx context.Context, sel ast.SelectionSet, obj 
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "createdAt":
+			out.Values[i] = ec._Bug_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "lastEdit":
+			out.Values[i] = ec._Bug_lastEdit(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "status":
 			out.Values[i] = ec._Bug_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -1645,16 +1655,6 @@ func (ec *executionContext) _Bug(ctx context.Context, sel ast.SelectionSet, obj 
 			}
 		case "author":
 			out.Values[i] = ec._Bug_author(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "createdAt":
-			out.Values[i] = ec._Bug_createdAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "lastEdit":
-			out.Values[i] = ec._Bug_lastEdit(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}

@@ -28,7 +28,7 @@ func NewBugCache(b *bug.Bug, repo repository.ClockedRepo, getUserIdentity getUse
 			repo:            repo,
 			entityUpdated:   entityUpdated,
 			getUserIdentity: getUserIdentity,
-			entity:          &withSnapshot[*bug.Snapshot, bug.Operation]{Interface: b},
+			entity:          newWithSnapshot[*bug.Snapshot, bug.Operation](b),
 		},
 	}
 }

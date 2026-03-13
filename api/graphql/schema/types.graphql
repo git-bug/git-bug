@@ -3,7 +3,8 @@ scalar Time
 scalar Hash
 
 """Defines a color by red, green and blue components."""
-type Color {
+type Color
+@goModel(model: "image/color.RGBA") {
     """Red component of the color."""
     R: Int!
     """Green component of the color."""

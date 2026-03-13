@@ -121,11 +121,11 @@ func (l LabelChangeTimelineItem) CombinedId() entity.CombinedId {
 func (l *LabelChangeTimelineItem) IsAuthored() {}
 
 // ChangeLabels is a convenience function to change labels on a bug
-func ChangeLabels(b Interface, author identity.Interface, unixTime int64, add, remove []string, metadata map[string]string) ([]LabelChangeResult, *LabelChangeOperation, error) {
+func ChangeLabels(b ReadWrite, author identity.Interface, unixTime int64, add, remove []string, metadata map[string]string) ([]LabelChangeResult, *LabelChangeOperation, error) {
 	var added, removed []common.Label
 	var results []LabelChangeResult
 
-	snap := b.Compile()
+	snap := b.Snapshot()
 
 	for _, str := range add {
 		label := common.Label(str)
@@ -187,7 +187,7 @@ func ChangeLabels(b Interface, author identity.Interface, unixTime int64, add, r
 // responsible for what you are doing. In the general case, you want to use ChangeLabels instead.
 // The intended use of this function is to allow importers to create legal but unexpected label changes,
 // like removing a label with no information of when it was added before.
-func ForceChangeLabels(b Interface, author identity.Interface, unixTime int64, add, remove []string, metadata map[string]string) (*LabelChangeOperation, error) {
+func ForceChangeLabels(b ReadWrite, author identity.Interface, unixTime int64, add, remove []string, metadata map[string]string) (*LabelChangeOperation, error) {
 	added := make([]common.Label, len(add))
 	for i, str := range add {
 		added[i] = common.Label(str)

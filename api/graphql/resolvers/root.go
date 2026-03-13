@@ -10,6 +10,7 @@ var _ graph.ResolverRoot = &RootResolver{}
 
 type RootResolver struct {
 	*cache.MultiRepoCache
+	boardRootSubResolver
 	bugRootSubResolver
 }
 
@@ -45,6 +46,10 @@ func (RootResolver) Label() graph.LabelResolver {
 
 func (RootResolver) Repository() graph.RepositoryResolver {
 	return &repoResolver{}
+}
+
+func (r RootResolver) Board() graph.BoardResolver {
+	return &boardResolver{}
 }
 
 func (RootResolver) Bug() graph.BugResolver {

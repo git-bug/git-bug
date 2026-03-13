@@ -1,89 +1,96 @@
-type Bug implements Authored {
-  """The identifier for this bug"""
-  id: ID!
-  """The human version (truncated) identifier for this bug"""
-  humanId: String!
-  status: Status!
-  title: String!
-  labels: [Label!]!
-  author: Identity!
-  createdAt: Time!
-  lastEdit: Time!
+type Bug implements Authored
+@goModel(model: "github.com/git-bug/git-bug/api/graphql/models.BugWrapper") {
 
-  """The actors of the bug. Actors are Identity that have interacted with the bug."""
-  actors(
-    """Returns the elements in the list that come after the specified cursor."""
-    after: String
-    """Returns the elements in the list that come before the specified cursor."""
-    before: String
-    """Returns the first _n_ elements from the list."""
-    first: Int
-    """Returns the last _n_ elements from the list."""
-    last: Int
-  ): IdentityConnection!
+    """The identifier for this bug"""
+    id: ID!
+    """The human version (truncated) identifier for this bug"""
+    humanId: String!
 
-  """The participants of the bug. Participants are Identity that have created or
-  added a comment on the bug."""
-  participants(
-    """Returns the elements in the list that come after the specified cursor."""
-    after: String
-    """Returns the elements in the list that come before the specified cursor."""
-    before: String
-    """Returns the first _n_ elements from the list."""
-    first: Int
-    """Returns the last _n_ elements from the list."""
-    last: Int
-  ): IdentityConnection!
+    createdAt: Time!
+    lastEdit: Time!
 
-  comments(
-    """Returns the elements in the list that come after the specified cursor."""
-    after: String
-    """Returns the elements in the list that come before the specified cursor."""
-    before: String
-    """Returns the first _n_ elements from the list."""
-    first: Int
-    """Returns the last _n_ elements from the list."""
-    last: Int
-  ): BugCommentConnection!
+    status: Status!
+    title: String!
+    labels: [Label!]!
+    author: Identity!
 
-  timeline(
-    """Returns the elements in the list that come after the specified cursor."""
-    after: String
-    """Returns the elements in the list that come before the specified cursor."""
-    before: String
-    """Returns the first _n_ elements from the list."""
-    first: Int
-    """Returns the last _n_ elements from the list."""
-    last: Int
-  ): BugTimelineItemConnection!
+    """The actors of the bug. Actors are Identity that have interacted with the bug."""
+    actors(
+        """Returns the elements in the list that come after the specified cursor."""
+        after: String
+        """Returns the elements in the list that come before the specified cursor."""
+        before: String
+        """Returns the first _n_ elements from the list."""
+        first: Int
+        """Returns the last _n_ elements from the list."""
+        last: Int
+    ): IdentityConnection!
 
-  operations(
-    """Returns the elements in the list that come after the specified cursor."""
-    after: String
-    """Returns the elements in the list that come before the specified cursor."""
-    before: String
-    """Returns the first _n_ elements from the list."""
-    first: Int
-    """Returns the last _n_ elements from the list."""
-    last: Int
-  ): OperationConnection!
+    """The participants of the bug. Participants are Identity that have created or
+    added a comment on the bug."""
+    participants(
+        """Returns the elements in the list that come after the specified cursor."""
+        after: String
+        """Returns the elements in the list that come before the specified cursor."""
+        before: String
+        """Returns the first _n_ elements from the list."""
+        first: Int
+        """Returns the last _n_ elements from the list."""
+        last: Int
+    ): IdentityConnection!
+
+    """The comments of the bug. They include the bug's creation comment."""
+    comments(
+        """Returns the elements in the list that come after the specified cursor."""
+        after: String
+        """Returns the elements in the list that come before the specified cursor."""
+        before: String
+        """Returns the first _n_ elements from the list."""
+        first: Int
+        """Returns the last _n_ elements from the list."""
+        last: Int
+    ): BugCommentConnection!
+
+    """The timeline of changes on the bug."""
+    timeline(
+        """Returns the elements in the list that come after the specified cursor."""
+        after: String
+        """Returns the elements in the list that come before the specified cursor."""
+        before: String
+        """Returns the first _n_ elements from the list."""
+        first: Int
+        """Returns the last _n_ elements from the list."""
+        last: Int
+    ): BugTimelineItemConnection!
+
+    """The raw operations on the bug."""
+    operations(
+        """Returns the elements in the list that come after the specified cursor."""
+        after: String
+        """Returns the elements in the list that come before the specified cursor."""
+        before: String
+        """Returns the first _n_ elements from the list."""
+        first: Int
+        """Returns the last _n_ elements from the list."""
+        last: Int
+    ): OperationConnection!
 }
 
 """The connection type for Bug."""
 type BugConnection {
-  """A list of edges."""
-  edges: [BugEdge!]!
-  nodes: [Bug!]!
-  """Information to aid in pagination."""
-  pageInfo: PageInfo!
-  """Identifies the total count of items in the connection."""
-  totalCount: Int!
+    """A list of edges."""
+    edges: [BugEdge!]!
+    nodes: [Bug!]!
+    """Information to aid in pagination."""
+    pageInfo: PageInfo!
+    """Identifies the total count of items in the connection."""
+    totalCount: Int!
 }
 
 """An edge in a connection."""
 type BugEdge {
-  """A cursor for use in pagination."""
-  cursor: String!
-  """The item at the end of the edge."""
-  node: Bug!
+    """A cursor for use in pagination."""
+    cursor: String!
+    """The item at the end of the edge."""
+    node: Bug!
 }

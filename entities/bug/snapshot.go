@@ -16,14 +16,18 @@ var _ dag.Snapshot = &Snapshot{}
 type Snapshot struct {
 	id entity.Id
 
-	Status       common.Status
-	Title        string
-	Comments     []Comment
-	Labels       []common.Label
-	Author       identity.Interface
-	Actors       []identity.Interface
+	CreateTime time.Time
+	Status     common.Status
+	Title      string
+	Comments   []Comment
+	Labels     []common.Label
+
+	// Author is the creator of the bug
+	Author identity.Interface
+	// Actors are all the identities that have interacted with the bug (comments, status ...)
+	Actors []identity.Interface
+	// Participants are all the identities that have created or added a comment on the bug
 	Participants []identity.Interface
-	CreateTime   time.Time
 
 	Timeline []TimelineItem
 
