@@ -137,11 +137,11 @@ func runWebUI(env *execenv.Env, opts webUIOptions) error {
 	quit := make(chan os.Signal, 1)
 
 	// register as handler of the interrupt signal to trigger the teardown
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM, os.Interrupt)
 
 	go func() {
 		<-quit
-		env.Out.Println("WebUI is shutting down...")
+		env.Out.Println("shutting down...")
 
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
@@ -163,7 +163,7 @@ func runWebUI(env *execenv.Env, opts webUIOptions) error {
 	env.Out.Printf("Web UI: %s\n", webUiAddr)
 	env.Out.Printf("Graphql API: http://%s/graphql\n", addr)
 	env.Out.Printf("Graphql Playground: http://%s/playground\n", addr)
-	env.Out.Println("Press Ctrl+c to quit")
+	env.Out.Printf("[ Press Ctrl+c to quit ]\n\n")
 
 	configOpen, err := env.Repo.AnyConfig().ReadBool(webUIOpenConfigKey)
 	if errors.Is(err, repository.ErrNoConfigEntry) {
@@ -176,10 +176,28 @@ func runWebUI(env *execenv.Env, opts webUIOptions) error {
 	shouldOpen := (configOpen && !opts.noOpen) || opts.open
 
 	if shouldOpen {
-		err = open.Run(toOpen)
-		if err != nil {
-			env.Out.Println(err)
-		}
+		go func() {
+			maxAttempts := 3
+			if isUp(toOpen, maxAttempts, 3*time.Second) {
+				err = open.Run(toOpen)
+				if err != nil {
+					env.Out.Println(err)
+					return
+				}
+
+				env.Out.Printf("opened your default browser to url: %s\n", toOpen)
+				return
+			} else {
+				env.Out.Printf(
+					"uh oh! it appears that the http server hasn't started.\n"+
+						"we failed to reach %s after %d attempts, exiting now.\n",
+					toOpen,
+					maxAttempts,
+				)
+				quit <- syscall.SIGQUIT
+				return
+			}
+		}()
 	}
 
 	err = srv.ListenAndServe()
@@ -188,7 +206,30 @@ func runWebUI(env *execenv.Env, opts webUIOptions) error {
 	}
 
 	<-done
-
-	env.Out.Println("WebUI stopped")
 	return nil
+}
+
+func isUp(url string, maxRetries int, initialDelay time.Duration) bool {
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+
+	delay := initialDelay
+
+	for attempt := 1; attempt <= maxRetries+1; attempt++ {
+		resp, err := client.Head(url)
+		if err == nil {
+			resp.Body.Close()
+			if resp.StatusCode >= 200 && resp.StatusCode < 400 {
+				return true
+			}
+		}
+
+		if attempt < maxRetries {
+			time.Sleep(delay)
+			delay *= 2
+		}
+	}
+
+	return false
 }
