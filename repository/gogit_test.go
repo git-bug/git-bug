@@ -89,7 +89,9 @@ func TestGoGit_DetectsSubmodules(t *testing.T) {
 	expected := filepath.Join(goGitRepoDir(t, repo), "/.git")
 
 	d := t.TempDir()
-	err := os.WriteFile(filepath.Join(d, ".git"), []byte(fmt.Sprintf("gitdir: %s", expected)), 0600)
+	rel, err := filepath.Rel(d, expected)
+	require.NoError(t, err)
+	err = os.WriteFile(filepath.Join(d, ".git"), []byte(fmt.Sprintf("gitdir: %s", rel)), 0600)
 	require.NoError(t, err)
 
 	result, err := detectGitPath(d, 0)

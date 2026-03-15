@@ -194,7 +194,10 @@ func detectGitPath(path string, depth int) (string, error) {
 					// This is a submodule parent path link. Strip the prefix, clean the string of whitespace just to
 					// be safe, and return
 					dotContent = strings.TrimSpace(strings.TrimPrefix(dotContent, "gitdir: "))
-					p, err := detectGitPath(dotContent, depth+1)
+					if filepath.IsAbs(dotContent) {
+						return "", fmt.Errorf("security: gitdir path is absolute")
+					}
+					p, err := detectGitPath(filepath.Join(path, dotContent), depth+1)
 					if err != nil {
 						return "", fmt.Errorf(".git gitdir error: %w", err)
 					}
