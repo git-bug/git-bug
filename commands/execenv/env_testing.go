@@ -93,6 +93,7 @@ func newTestEnv(t *testing.T, isTerminal bool) *Env {
 	})
 
 	return &Env{
+		Ctx:     t.Context(),
 		Repo:    repo,
 		Backend: backend,
 		In:      &TestIn{Buffer: &bytes.Buffer{}, forceIsTerminal: isTerminal},

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -34,7 +35,7 @@ func main() {
 		wg.Add(1)
 		go func(name string, f func(*cobra.Command) error) {
 			defer wg.Done()
-			root := commands.NewRootCommand("")
+			root := commands.NewRootCommand(context.Background(), "")
 			err := f(root)
 			if err != nil {
 				fmt.Printf("  - %s: FATAL\n", name)

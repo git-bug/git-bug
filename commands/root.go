@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"context"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -11,7 +12,7 @@ import (
 	"github.com/git-bug/git-bug/commands/user"
 )
 
-func NewRootCommand(version string) *cobra.Command {
+func NewRootCommand(ctx context.Context, version string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   execenv.RootCommandName,
 		Short: "A bug tracker embedded in Git",
@@ -54,7 +55,7 @@ the same git remote you are already using to collaborate with other people.
 		child.GroupID = groupID
 	}
 
-	env := execenv.NewEnv()
+	env := execenv.NewEnv(ctx)
 
 	addCmdWithGroup(bugcmd.NewBugCommand(env), entityGroup)
 	addCmdWithGroup(usercmd.NewUserCommand(env), entityGroup)

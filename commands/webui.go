@@ -5,14 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"net/url"
-	"os"
-	"os/signal"
 	"strconv"
-	"syscall"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -134,27 +130,23 @@ func runWebUI(env *execenv.Env, opts webUIOptions) error {
 	}
 
 	done := make(chan bool)
-	quit := make(chan os.Signal, 1)
-
-	// register as handler of the interrupt signal to trigger the teardown
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM, os.Interrupt)
 
 	go func() {
-		<-quit
+		<-env.Ctx.Done()
 		env.Out.Println("shutting down...")
 
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-		defer cancel()
+		ctxTeardown, cancelTeardown := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancelTeardown()
 
 		srv.SetKeepAlivesEnabled(false)
-		if err := srv.Shutdown(ctx); err != nil {
-			log.Fatalf("Could not gracefully shutdown the WebUI: %v\n", err)
+		if err := srv.Shutdown(ctxTeardown); err != nil {
+			env.Err.Printf("Could not gracefully shutdown the WebUI: %v\n", err)
 		}
 
 		// Teardown
 		err := graphqlHandler.Close()
 		if err != nil {
-			env.Out.Println(err)
+			env.Err.Println(err)
 		}
 
 		close(done)
@@ -163,7 +155,7 @@ func runWebUI(env *execenv.Env, opts webUIOptions) error {
 	env.Out.Printf("Web UI: %s\n", webUiAddr)
 	env.Out.Printf("Graphql API: http://%s/graphql\n", addr)
 	env.Out.Printf("Graphql Playground: http://%s/playground\n", addr)
-	env.Out.Printf("[ Press Ctrl+c to quit ]\n\n")
+	env.Out.Printf("\n[ Press Ctrl+c to quit ]\n\n")
 
 	configOpen, err := env.Repo.AnyConfig().ReadBool(webUIOpenConfigKey)
 	if errors.Is(err, repository.ErrNoConfigEntry) {
@@ -177,26 +169,23 @@ func runWebUI(env *execenv.Env, opts webUIOptions) error {
 
 	if shouldOpen {
 		go func() {
-			maxAttempts := 3
+			const maxAttempts = 3
 			if isUp(toOpen, maxAttempts, 3*time.Second) {
 				err = open.Run(toOpen)
 				if err != nil {
-					env.Out.Println(err)
+					env.Err.Println(err)
 					return
 				}
 
 				env.Out.Printf("opened your default browser to url: %s\n", toOpen)
 				return
-			} else {
-				env.Out.Printf(
-					"uh oh! it appears that the http server hasn't started.\n"+
-						"we failed to reach %s after %d attempts, exiting now.\n",
-					toOpen,
-					maxAttempts,
-				)
-				quit <- syscall.SIGQUIT
-				return
 			}
+
+			env.Err.Printf(
+				"uh oh! it appears that the http server hasn't started.\n"+
+					"we failed to reach %s after %d attempts, exiting now.\n",
+				toOpen, maxAttempts,
+			)
 		}()
 	}
 
@@ -219,7 +208,7 @@ func isUp(url string, maxRetries int, initialDelay time.Duration) bool {
 	for attempt := 1; attempt <= maxRetries; attempt++ {
 		resp, err := client.Head(url)
 		if err == nil {
-			resp.Body.Close()
+			_ = resp.Body.Close()
 			if resp.StatusCode >= 200 && resp.StatusCode < 400 {
 				return true
 			}

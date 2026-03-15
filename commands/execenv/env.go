@@ -1,6 +1,7 @@
 package execenv
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -19,6 +20,7 @@ const gitBugNamespace = "git-bug"
 
 // Env is the environment of a command
 type Env struct {
+	Ctx     context.Context
 	Repo    repository.ClockedRepo
 	Backend *cache.RepoCache
 	In      In
@@ -26,8 +28,9 @@ type Env struct {
 	Err     Out
 }
 
-func NewEnv() *Env {
+func NewEnv(ctx context.Context) *Env {
 	return &Env{
+		Ctx:  ctx,
 		Repo: nil,
 		In:   in{Reader: os.Stdin},
 		Out:  out{Writer: os.Stdout},
