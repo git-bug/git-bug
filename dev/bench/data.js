@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1773539578320,
+  "lastUpdate": 1773540509875,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -17474,6 +17474,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 498108,
+            "unit": "allocs/op",
+            "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "committer": {
+            "email": "no-reply@sudoforge.com",
+            "name": "sudoforge",
+            "username": "sudoforge"
+          },
+          "distinct": true,
+          "id": "ee01eca0699cbf2885783daba9da508fd7bc8c4e",
+          "message": "webui: improve the browser opening sequence (#1537)\n\nThis change refactors the browser opening sequence, adding a healthcheck\n(with exponential backoff) that ensures the http server is running\nbefore opening the browser. This is done in a simple goroutine to allow\nthe main thread to continue (and actually attempt to start the server).\n\nSIGQUIT was added as a supported handler, as this signal is used by\napplications that they are voluntarily quitting, which we do if the\nmaximum number of attempts has been reached without successfully\ndetermining that the http server is up.\n\nAdditional logs are emitted to provide useful context in the event\nof an action (either opening the browser or failing to reach the http\nserver). This will help end users identify what is happening under the\nhood, and determine if there are issues, which will lead to better error\nreports and cooperative debugging.\n\nRefs: #1536\nChange-Id: I2e2a379ed20a6b3c6d95a209b915f71d56408e1a",
+          "timestamp": "2026-03-14T19:06:45-07:00",
+          "tree_id": "56137548055b14e02764d46e508ac475cc0e6bfc",
+          "url": "https://github.com/git-bug/git-bug/commit/ee01eca0699cbf2885783daba9da508fd7bc8c4e"
+        },
+        "date": 1773540508613,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 16882847,
+            "unit": "ns/op\t  840517 B/op\t   12860 allocs/op",
+            "extra": "67 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 16882847,
+            "unit": "ns/op",
+            "extra": "67 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 840517,
+            "unit": "B/op",
+            "extra": "67 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 12860,
+            "unit": "allocs/op",
+            "extra": "67 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 90156667,
+            "unit": "ns/op\t 4781747 B/op\t   70273 allocs/op",
+            "extra": "13 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 90156667,
+            "unit": "ns/op",
+            "extra": "13 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 4781747,
+            "unit": "B/op",
+            "extra": "13 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 70273,
+            "unit": "allocs/op",
+            "extra": "13 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 607965962,
+            "unit": "ns/op\t41224680 B/op\t  503242 allocs/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 607965962,
+            "unit": "ns/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 41224680,
+            "unit": "B/op",
+            "extra": "2 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 503242,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
           }
