@@ -5,10 +5,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/git-bug/git-bug/commands/bridge"
-	"github.com/git-bug/git-bug/commands/bug"
+	bridgecmd "github.com/git-bug/git-bug/commands/bridge"
+	bugcmd "github.com/git-bug/git-bug/commands/bug"
 	"github.com/git-bug/git-bug/commands/execenv"
-	"github.com/git-bug/git-bug/commands/user"
+	usercmd "github.com/git-bug/git-bug/commands/user"
 )
 
 func NewRootCommand(version string) *cobra.Command {
@@ -21,6 +21,10 @@ git-bug use git objects to store the bug tracking separated from the files
 history. As bugs are regular git objects, they can be pushed and pulled from/to
 the same git remote you are already using to collaborate with other people.
 
+By default, git-bug manages bugs and users in the Git repository containing
+the current working directory.  This behavior can be changed using the --git-dir
+flag described below, or by setting the GIT-DIR environment variable, which
+takes precedence over the CLI flag.
 `,
 
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
@@ -55,6 +59,7 @@ the same git remote you are already using to collaborate with other people.
 	}
 
 	env := execenv.NewEnv()
+	cmd.PersistentFlags().StringVar(&env.GitDir, "git-dir", "", `run as if git-bug was started in <path>`)
 
 	addCmdWithGroup(bugcmd.NewBugCommand(env), entityGroup)
 	addCmdWithGroup(usercmd.NewUserCommand(env), entityGroup)

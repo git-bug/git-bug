@@ -24,6 +24,7 @@ type Env struct {
 	In      In
 	Out     Out
 	Err     Out
+	GitDir  string
 }
 
 func NewEnv() *Env {

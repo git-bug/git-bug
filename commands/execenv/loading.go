@@ -1,6 +1,7 @@
 package execenv
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -14,18 +15,18 @@ import (
 	"github.com/git-bug/git-bug/util/interrupt"
 )
 
-// LoadRepo is a pre-run function that load the repository for use in a command
+// LoadRepo is a pre-run function that loads the repository for use in a command.
 func LoadRepo(env *Env) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		cwd, err := os.Getwd()
+		repoPath, err := getRepoPath(env)
 		if err != nil {
-			return fmt.Errorf("unable to get the current working directory: %q", err)
+			return err
 		}
 
 		// Note: we are not loading clocks here because we assume that LoadRepo is only used
 		//  when we don't manipulate entities, or as a child call of LoadBackend which will
 		//  read all clocks anyway.
-		env.Repo, err = repository.OpenGoGitRepo(cwd, gitBugNamespace, nil)
+		env.Repo, err = repository.OpenGoGitRepo(repoPath, gitBugNamespace, nil)
 		if err == repository.ErrNotARepo {
 			return fmt.Errorf("%s must be run from within a git Repo", RootCommandName)
 		}
@@ -170,4 +171,38 @@ func CacheBuildProgressBar(env *Env, events chan cache.BuildEvent) error {
 	}
 
 	return nil
+}
+
+var errNotDirectory = errors.New("path must be a directory for --git-dir or GIT_DIR")
+
+func getRepoPath(env *Env) (string, error) {
+	var path string
+
+	if gitDir := os.Getenv("GIT_DIR"); gitDir != "" {
+		path = gitDir
+	}
+
+	if path == "" && env.GitDir != "" {
+		path = env.GitDir
+	}
+
+	if path == "" {
+		wd, err := os.Getwd()
+		if err != nil {
+			return "", fmt.Errorf("unable to get the current working directory: %q", err)
+		}
+
+		path = wd
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		return "", err
+	}
+
+	if !fi.IsDir() {
+		return "", errNotDirectory
+	}
+
+	return path, nil
 }
