@@ -33,7 +33,7 @@ jobs:
 
       - uses: actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b # v5.4.0
         with:
-          go-version: 1.24.2
+          go-version: 1.25.x
 
       - name: Run benchmark
         run: go test -v ./... -bench=. -run=xxx -benchmem | tee output.txt

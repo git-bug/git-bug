@@ -11,7 +11,7 @@ jobs:
   with-go:
     strategy:
       matrix:
-        go-version: [1.24.2]
+        go-version: [1.25.x]
         platform: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.platform }}
     steps:

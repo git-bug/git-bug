@@ -20,13 +20,7 @@ import (
 	"github.com/git-bug/git-bug/cache"
 )
 
-// Handler is the root GraphQL http handler
-type Handler struct {
-	http.Handler
-	io.Closer
-}
-
-func NewHandler(mrc *cache.MultiRepoCache, errorOut io.Writer) Handler {
+func NewHandler(mrc *cache.MultiRepoCache, errorOut io.Writer) http.Handler {
 	rootResolver := resolvers.NewRootResolver(mrc)
 	config := graph.Config{Resolvers: rootResolver}
 
@@ -54,8 +48,5 @@ func NewHandler(mrc *cache.MultiRepoCache, errorOut io.Writer) Handler {
 		h.Use(&Tracer{Out: errorOut})
 	}
 
-	return Handler{
-		Handler: h,
-		Closer:  rootResolver,
-	}
+	return h
 }

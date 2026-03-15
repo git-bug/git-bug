@@ -30,7 +30,7 @@ import (
 const webUIOpenConfigKey = "git-bug.webui.open"
 
 type webUIOptions struct {
-	host      string
+	bind      string
 	port      int
 	open      bool
 	noOpen    bool
@@ -59,10 +59,10 @@ Available git config:
 	flags := cmd.Flags()
 	flags.SortFlags = false
 
-	flags.StringVar(&options.host, "host", "127.0.0.1", "Network address or hostname to listen to (default to 127.0.0.1)")
+	flags.StringVar(&options.bind, "bind", "127.0.0.1", "Network address to bind to (default to 127.0.0.1)")
+	flags.IntVarP(&options.port, "port", "p", 0, "Port to listen on (default to random available port)")
 	flags.BoolVar(&options.open, "open", false, "Automatically open the web UI in the default browser")
 	flags.BoolVar(&options.noOpen, "no-open", false, "Prevent the automatic opening of the web UI in the default browser")
-	flags.IntVarP(&options.port, "port", "p", 0, "Port to listen to (default to random available port)")
 	flags.BoolVar(&options.readOnly, "read-only", false, "Whether to run the web UI in read-only mode")
 	flags.BoolVar(&options.logErrors, "log-errors", false, "Whether to log errors")
 	flags.StringVarP(&options.query, "query", "q", "", "The query to open in the web UI bug list")
@@ -70,24 +70,8 @@ Available git config:
 	return cmd
 }
 
-func runWebUI(env *execenv.Env, opts webUIOptions) error {
-	if opts.port == 0 {
-		var err error
-		opts.port, err = freeport.GetFreePort()
-		if err != nil {
-			return err
-		}
-	}
-
-	addr := net.JoinHostPort(opts.host, strconv.Itoa(opts.port))
-	webUiAddr := fmt.Sprintf("http://%s", addr)
-	toOpen := webUiAddr
-
-	if len(opts.query) > 0 {
-		// Explicitly set the query parameter instead of going with a default one.
-		toOpen = fmt.Sprintf("%s/?q=%s", webUiAddr, url.QueryEscape(opts.query))
-	}
-
+// setupRoutes builds the router and registers all API and UI routes.
+func setupRoutes(env *execenv.Env, opts webUIOptions) (*mux.Router, func() error, error) {
 	router := mux.NewRouter()
 
 	// If the webUI is not read-only, use an authentication middleware with a
@@ -96,18 +80,15 @@ func runWebUI(env *execenv.Env, opts webUIOptions) error {
 	if !opts.readOnly {
 		author, err := identity.GetUserIdentity(env.Repo)
 		if err != nil {
-			return err
+			return nil, nil, err
 		}
 		router.Use(auth.Middleware(author.Id()))
 	}
 
 	mrc := cache.NewMultiRepoCache()
-
 	_, events := mrc.RegisterDefaultRepository(env.Repo)
-
-	err := execenv.CacheBuildProgressBar(env, events)
-	if err != nil {
-		return err
+	if err := execenv.CacheBuildProgressBar(env, events); err != nil {
+		return nil, nil, err
 	}
 
 	var errOut io.Writer
@@ -117,46 +98,46 @@ func runWebUI(env *execenv.Env, opts webUIOptions) error {
 
 	graphqlHandler := graphql.NewHandler(mrc, errOut)
 
-	// Routes
 	router.Path("/playground").Handler(playground.Handler("git-bug", "/graphql"))
 	router.Path("/graphql").Handler(graphqlHandler)
 	router.Path("/gitfile/{repo}/{hash}").Handler(httpapi.NewGitFileHandler(mrc))
 	router.Path("/upload/{repo}").Methods("POST").Handler(httpapi.NewGitUploadFileHandler(mrc))
 	router.PathPrefix("/").Handler(webui.NewHandler())
 
-	srv := &http.Server{
-		Addr:    addr,
-		Handler: router,
+	return router, mrc.Close, nil
+}
+
+func runWebUI(env *execenv.Env, opts webUIOptions) error {
+	router, closeRoutes, err := setupRoutes(env, opts)
+	if err != nil {
+		return err
 	}
-
-	done := make(chan bool)
-
-	go func() {
-		<-env.Ctx.Done()
-		env.Out.Println("shutting down...")
-
-		ctxTeardown, cancelTeardown := context.WithTimeout(context.Background(), 30*time.Second)
-		defer cancelTeardown()
-
-		srv.SetKeepAlivesEnabled(false)
-		if err := srv.Shutdown(ctxTeardown); err != nil {
-			env.Err.Printf("Could not gracefully shutdown the WebUI: %v\n", err)
-		}
-
-		// Teardown
-		err := graphqlHandler.Close()
-		if err != nil {
+	defer func() {
+		if err := closeRoutes(); err != nil {
 			env.Err.Println(err)
 		}
-
-		close(done)
 	}()
 
-	env.Out.Printf("Web UI: %s\n", webUiAddr)
-	env.Out.Printf("Graphql API: http://%s/graphql\n", addr)
-	env.Out.Printf("Graphql Playground: http://%s/playground\n", addr)
+	if opts.port == 0 {
+		opts.port, err = freeport.GetFreePort()
+		if err != nil {
+			return err
+		}
+	}
+
+	addr := net.JoinHostPort(opts.bind, strconv.Itoa(opts.port))
+	server := &http.Server{Addr: addr, Handler: router}
+	baseURL := "http://" + addr
+
+	env.Out.Printf("Web UI: %s\n", baseURL)
+	env.Out.Printf("Graphql API: %s/graphql\n", baseURL)
+	env.Out.Printf("Graphql Playground: %s/playground\n", baseURL)
 	env.Out.Printf("\n[ Press Ctrl+c to quit ]\n\n")
 
+	toOpen := baseURL
+	if len(opts.query) > 0 {
+		toOpen = fmt.Sprintf("%s/?q=%s", baseURL, url.QueryEscape(opts.query))
+	}
 	configOpen, err := env.Repo.AnyConfig().ReadBool(webUIOpenConfigKey)
 	if errors.Is(err, repository.ErrNoConfigEntry) {
 		// default to true
@@ -164,38 +145,42 @@ func runWebUI(env *execenv.Env, opts webUIOptions) error {
 	} else if err != nil {
 		return err
 	}
-
-	shouldOpen := (configOpen && !opts.noOpen) || opts.open
-
-	if shouldOpen {
-		go func() {
-			const maxAttempts = 3
-			if isUp(toOpen, maxAttempts, 3*time.Second) {
-				err = open.Run(toOpen)
-				if err != nil {
-					env.Err.Println(err)
-					return
-				}
-
-				env.Out.Printf("opened your default browser to url: %s\n", toOpen)
-				return
-			}
-
-			env.Err.Printf(
-				"uh oh! it appears that the http server hasn't started.\n"+
-					"we failed to reach %s after %d attempts, exiting now.\n",
-				toOpen, maxAttempts,
-			)
-		}()
+	if (configOpen && !opts.noOpen) || opts.open {
+		go openWhenUp(env, toOpen)
 	}
 
-	err = srv.ListenAndServe()
-	if err != nil && err != http.ErrServerClosed {
+	go func() {
+		<-env.Ctx.Done()
+		env.Out.Println("shutting down...")
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		server.SetKeepAlivesEnabled(false)
+		if err := server.Shutdown(shutdownCtx); err != nil {
+			env.Err.Printf("Could not gracefully shutdown the HTTP server: %v\n", err)
+		}
+	}()
+
+	if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}
-
-	<-done
 	return nil
+}
+
+func openWhenUp(env *execenv.Env, toOpen string) {
+	const maxAttempts = 3
+	if isUp(toOpen, maxAttempts, 3*time.Second) {
+		if err := open.Run(toOpen); err != nil {
+			env.Err.Println(err)
+			return
+		}
+		env.Out.Printf("opened your default browser to url: %s\n", toOpen)
+		return
+	}
+	env.Err.Printf(
+		"uh oh! it appears that the http server hasn't started.\n"+
+			"we failed to reach %s after %d attempts.\n",
+		toOpen, maxAttempts,
+	)
 }
 
 func isUp(url string, maxRetries int, initialDelay time.Duration) bool {
