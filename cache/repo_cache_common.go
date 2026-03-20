@@ -15,6 +15,14 @@ func (c *RepoCache) Name() string {
 	return c.name
 }
 
+// BrowseRepo returns the underlying access RepoBrowse.
+func (c *RepoCache) BrowseRepo() (repository.RepoBrowse, error) {
+	if repo, ok := c.repo.(repository.RepoBrowse); ok {
+		return repo, nil
+	}
+	return nil, errors.Errorf("repository does not support code browsing")
+}
+
 // LocalConfig give access to the repository scoped configuration
 func (c *RepoCache) LocalConfig() repository.Config {
 	return c.repo.LocalConfig()

@@ -65,3 +65,10 @@ func deArmorSignature(armoredSig io.Reader) (io.Reader, error) {
 	}
 	return block.Body, nil
 }
+
+func must[T any](v T, err error) T {
+	if err != nil {
+		panic(err)
+	}
+	return v
+}

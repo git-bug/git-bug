@@ -4,6 +4,7 @@ package repository
 import (
 	"errors"
 	"io"
+	"time"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/go-git/go-billy/v5"
@@ -28,6 +29,7 @@ type Repo interface {
 	RepoStorage
 	RepoIndex
 	RepoData
+	RepoBrowse
 
 	Close() error
 }
@@ -182,7 +184,7 @@ type RepoData interface {
 	// ListRefs will return a list of Git ref matching the given refspec
 	ListRefs(refPrefix string) ([]string, error)
 
-	// RefExist will check if a reference exist in Git
+	// RefExist will check if a reference exists in Git
 	RefExist(ref string) (bool, error)
 
 	// CopyRef will create a new reference with the same value as another one
@@ -209,11 +211,131 @@ type RepoClock interface {
 	Witness(name string, time lamport.Time) error
 }
 
+// CommitMeta holds the metadata for a single commit, suitable for listing.
+type CommitMeta struct {
+	Hash        Hash
+	ShortHash   string
+	Message     string
+	AuthorName  string
+	AuthorEmail string
+	Date        time.Time
+	Parents     []Hash
+}
+
+// ChangedFile describes a file that was modified in a commit.
+type ChangedFile struct {
+	Path    string
+	OldPath string // non-empty for renames
+	Status  string // "added", "modified", "deleted", "renamed", "copied"
+}
+
+// CommitDetail extends CommitMeta with the full message and the list of
+// changed files (relative to the first parent).
+type CommitDetail struct {
+	CommitMeta
+	FullMessage string
+	Files       []ChangedFile
+}
+
+// DiffLine represents one line in a unified diff hunk.
+type DiffLine struct {
+	Type    string // "context", "added", "deleted"
+	Content string
+	OldLine int
+	NewLine int
+}
+
+// DiffHunk is a contiguous block of changes in a unified diff.
+type DiffHunk struct {
+	OldStart int
+	OldLines int
+	NewStart int
+	NewLines int
+	Lines    []DiffLine
+}
+
+// FileDiff is the diff for a single file in a commit.
+type FileDiff struct {
+	Path     string
+	OldPath  string
+	IsBinary bool
+	IsNew    bool
+	IsDelete bool
+	Hunks    []DiffHunk
+}
+
+// BranchInfo describes a local branch returned by RepoBrowse.Branches.
+type BranchInfo struct {
+	Name      string
+	Hash      Hash // commit hash
+	IsDefault bool // true for the branch HEAD points to
+}
+
+// TagInfo describes a tag returned by RepoBrowse.Tags.
+type TagInfo struct {
+	Name string
+	// Hash is always the target commit hash.  For annotated tags the tag
+	// object is dereferenced; for lightweight tags this is the ref hash.
+	Hash Hash
+}
+
+// RepoBrowse is implemented by repositories that support code-browsing
+// endpoints (file tree, history, diffs). It is an optional interface:
+// callers must type-assert or use cache.RepoCache.BrowseRepo().
+//
+// All methods accepting a ref parameter resolve it in order:
+// refs/heads/<ref>, refs/tags/<ref>, full ref name, raw commit hash.
+type RepoBrowse interface {
+	// Branches returns all local branches (refs/heads/*).
+	// IsDefault marks the branch HEAD points to.
+	// All other ref namespaces — including git-bug's internal refs
+	// (refs/bugs/, refs/identities/, …) — are excluded.
+	Branches() ([]BranchInfo, error)
+
+	// Tags returns all tags (refs/tags/*).
+	// All other ref namespaces are excluded.
+	Tags() ([]TagInfo, error)
+
+	// TreeAtPath returns the entries of the directory at path under ref.
+	// An empty path returns the root tree.
+	// Returns ErrNotFound if ref or path does not exist, or if path
+	// resolves to a blob rather than a tree.
+	// Symlinks appear as entries with ObjectType Symlink; they are not followed.
+	TreeAtPath(ref, path string) ([]TreeEntry, error)
+
+	// BlobAtPath returns the raw content and byte size of the file at path
+	// under ref. Returns ErrNotFound if ref or path does not exist, or if
+	// path resolves to a tree. Symlinks are not followed.
+	// The caller must close the reader.
+	BlobAtPath(ref, path string) (io.ReadCloser, int64, error)
+
+	// CommitLog returns at most limit commits reachable from ref, filtered
+	// to those touching path (empty = unrestricted). after is an exclusive
+	// cursor; pass Hash("") for no cursor. Merge commits appear once,
+	// compared against the first parent only.
+	CommitLog(ref, path string, limit int, after Hash) ([]CommitMeta, error)
+
+	// LastCommitForEntries returns the most recent commit that touched each
+	// name in the directory at path under ref. Entries not resolved within
+	// the implementation's depth limit are silently absent from the result.
+	LastCommitForEntries(ref, path string, names []string) (map[string]CommitMeta, error)
+
+	// CommitDetail returns the full metadata and changed-file list for a
+	// single commit identified by its hash. Diffs against the first parent
+	// only; the initial commit is diffed against the empty tree.
+	CommitDetail(hash Hash) (CommitDetail, error)
+
+	// CommitFileDiff returns the unified diff for a single file in a commit
+	// identified by its hash. Diffs against the first parent only; the
+	// initial commit is diffed against the empty tree.
+	CommitFileDiff(hash Hash, filePath string) (FileDiff, error)
+}
+
 // ClockLoader hold which logical clock need to exist for an entity and
 // how to create them if they don't.
 type ClockLoader struct {
-	// Clocks hold the name of all the clocks this loader deal with.
-	// Those clocks will be checked when the repo load. If not present or broken,
+	// Clocks hold the name of all the clocks this loader deals with.
+	// Those clocks will be checked when the repo loads. If not present or broken,
 	// Witnesser will be used to create them.
 	Clocks []string
 	// Witnesser is a function that will initialize the clocks of a repo
@@ -221,13 +343,13 @@ type ClockLoader struct {
 	Witnesser func(repo ClockedRepo) error
 }
 
-// TestedRepo is an extended ClockedRepo with function for testing only
+// TestedRepo is an extended ClockedRepo with functions for testing only
 type TestedRepo interface {
 	ClockedRepo
 	repoTest
 }
 
-// repoTest give access to test only functions
+// repoTest give access to test-only functions
 type repoTest interface {
 	// AddRemote add a new remote to the repository
 	AddRemote(name string, url string) error

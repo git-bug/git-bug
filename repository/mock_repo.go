@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha1"
 	"fmt"
+	"io"
 	"strings"
 	"sync"
 
@@ -24,7 +25,7 @@ type mockRepo struct {
 	*mockRepoCommon
 	*mockRepoStorage
 	*mockRepoIndex
-	*mockRepoData
+	*mockRepoDataBrowse
 	*mockRepoClock
 	*mockRepoTest
 }
@@ -33,14 +34,14 @@ func (m *mockRepo) Close() error { return nil }
 
 func NewMockRepo() *mockRepo {
 	return &mockRepo{
-		mockRepoConfig:  NewMockRepoConfig(),
-		mockRepoKeyring: NewMockRepoKeyring(),
-		mockRepoCommon:  NewMockRepoCommon(),
-		mockRepoStorage: NewMockRepoStorage(),
-		mockRepoIndex:   newMockRepoIndex(),
-		mockRepoData:    NewMockRepoData(),
-		mockRepoClock:   NewMockRepoClock(),
-		mockRepoTest:    NewMockRepoTest(),
+		mockRepoConfig:     NewMockRepoConfig(),
+		mockRepoKeyring:    NewMockRepoKeyring(),
+		mockRepoCommon:     NewMockRepoCommon(),
+		mockRepoStorage:    NewMockRepoStorage(),
+		mockRepoIndex:      newMockRepoIndex(),
+		mockRepoDataBrowse: newMockRepoDataBrowse(),
+		mockRepoClock:      NewMockRepoClock(),
+		mockRepoTest:       NewMockRepoTest(),
 	}
 }
 
@@ -219,7 +220,7 @@ func (m *mockIndex) Close() error {
 	return nil
 }
 
-var _ RepoData = &mockRepoData{}
+var _ RepoData = &mockRepoDataBrowse{}
 
 type commit struct {
 	treeHash Hash
@@ -227,39 +228,41 @@ type commit struct {
 	sig      string
 }
 
-type mockRepoData struct {
-	blobs   map[Hash][]byte
-	trees   map[Hash]string
-	commits map[Hash]commit
-	refs    map[string]Hash
+type mockRepoDataBrowse struct {
+	blobs         map[Hash][]byte
+	trees         map[Hash]string
+	commits       map[Hash]commit
+	refs          map[string]Hash
+	defaultBranch string
 }
 
-func NewMockRepoData() *mockRepoData {
-	return &mockRepoData{
-		blobs:   make(map[Hash][]byte),
-		trees:   make(map[Hash]string),
-		commits: make(map[Hash]commit),
-		refs:    make(map[string]Hash),
+func newMockRepoDataBrowse() *mockRepoDataBrowse {
+	return &mockRepoDataBrowse{
+		blobs:         make(map[Hash][]byte),
+		trees:         make(map[Hash]string),
+		commits:       make(map[Hash]commit),
+		refs:          make(map[string]Hash),
+		defaultBranch: "main",
 	}
 }
 
-func (r *mockRepoData) FetchRefs(remote string, prefixes ...string) (string, error) {
+func (r *mockRepoDataBrowse) FetchRefs(remote string, prefixes ...string) (string, error) {
 	panic("implement me")
 }
 
 // PushRefs push git refs to a remote
-func (r *mockRepoData) PushRefs(remote string, prefixes ...string) (string, error) {
+func (r *mockRepoDataBrowse) PushRefs(remote string, prefixes ...string) (string, error) {
 	panic("implement me")
 }
 
-func (r *mockRepoData) StoreData(data []byte) (Hash, error) {
+func (r *mockRepoDataBrowse) StoreData(data []byte) (Hash, error) {
 	rawHash := sha1.Sum(data)
 	hash := Hash(fmt.Sprintf("%x", rawHash))
 	r.blobs[hash] = data
 	return hash, nil
 }
 
-func (r *mockRepoData) ReadData(hash Hash) ([]byte, error) {
+func (r *mockRepoDataBrowse) ReadData(hash Hash) ([]byte, error) {
 	data, ok := r.blobs[hash]
 	if !ok {
 		return nil, ErrNotFound
@@ -268,7 +271,7 @@ func (r *mockRepoData) ReadData(hash Hash) ([]byte, error) {
 	return data, nil
 }
 
-func (r *mockRepoData) StoreTree(entries []TreeEntry) (Hash, error) {
+func (r *mockRepoDataBrowse) StoreTree(entries []TreeEntry) (Hash, error) {
 	buffer := prepareTreeEntries(entries)
 	rawHash := sha1.Sum(buffer.Bytes())
 	hash := Hash(fmt.Sprintf("%x", rawHash))
@@ -277,7 +280,7 @@ func (r *mockRepoData) StoreTree(entries []TreeEntry) (Hash, error) {
 	return hash, nil
 }
 
-func (r *mockRepoData) ReadTree(hash Hash) ([]TreeEntry, error) {
+func (r *mockRepoDataBrowse) ReadTree(hash Hash) ([]TreeEntry, error) {
 	var data string
 
 	data, ok := r.trees[hash]
@@ -300,11 +303,11 @@ func (r *mockRepoData) ReadTree(hash Hash) ([]TreeEntry, error) {
 	return readTreeEntries(data)
 }
 
-func (r *mockRepoData) StoreCommit(treeHash Hash, parents ...Hash) (Hash, error) {
+func (r *mockRepoDataBrowse) StoreCommit(treeHash Hash, parents ...Hash) (Hash, error) {
 	return r.StoreSignedCommit(treeHash, nil, parents...)
 }
 
-func (r *mockRepoData) StoreSignedCommit(treeHash Hash, signKey *openpgp.Entity, parents ...Hash) (Hash, error) {
+func (r *mockRepoDataBrowse) StoreSignedCommit(treeHash Hash, signKey *openpgp.Entity, parents ...Hash) (Hash, error) {
 	hasher := sha1.New()
 	hasher.Write([]byte(treeHash))
 	for _, parent := range parents {
@@ -328,7 +331,7 @@ func (r *mockRepoData) StoreSignedCommit(treeHash Hash, signKey *openpgp.Entity,
 	return hash, nil
 }
 
-func (r *mockRepoData) ReadCommit(hash Hash) (Commit, error) {
+func (r *mockRepoDataBrowse) ReadCommit(hash Hash) (Commit, error) {
 	c, ok := r.commits[hash]
 	if !ok {
 		return Commit{}, ErrNotFound
@@ -350,7 +353,7 @@ func (r *mockRepoData) ReadCommit(hash Hash) (Commit, error) {
 	return result, nil
 }
 
-func (r *mockRepoData) ResolveRef(ref string) (Hash, error) {
+func (r *mockRepoDataBrowse) ResolveRef(ref string) (Hash, error) {
 	h, ok := r.refs[ref]
 	if !ok {
 		return "", ErrNotFound
@@ -358,17 +361,17 @@ func (r *mockRepoData) ResolveRef(ref string) (Hash, error) {
 	return h, nil
 }
 
-func (r *mockRepoData) UpdateRef(ref string, hash Hash) error {
+func (r *mockRepoDataBrowse) UpdateRef(ref string, hash Hash) error {
 	r.refs[ref] = hash
 	return nil
 }
 
-func (r *mockRepoData) RemoveRef(ref string) error {
+func (r *mockRepoDataBrowse) RemoveRef(ref string) error {
 	delete(r.refs, ref)
 	return nil
 }
 
-func (r *mockRepoData) ListRefs(refPrefix string) ([]string, error) {
+func (r *mockRepoDataBrowse) ListRefs(refPrefix string) ([]string, error) {
 	var keys []string
 
 	for k := range r.refs {
@@ -380,12 +383,12 @@ func (r *mockRepoData) ListRefs(refPrefix string) ([]string, error) {
 	return keys, nil
 }
 
-func (r *mockRepoData) RefExist(ref string) (bool, error) {
+func (r *mockRepoDataBrowse) RefExist(ref string) (bool, error) {
 	_, exist := r.refs[ref]
 	return exist, nil
 }
 
-func (r *mockRepoData) CopyRef(source string, dest string) error {
+func (r *mockRepoDataBrowse) CopyRef(source string, dest string) error {
 	hash, exist := r.refs[source]
 
 	if !exist {
@@ -396,8 +399,407 @@ func (r *mockRepoData) CopyRef(source string, dest string) error {
 	return nil
 }
 
-func (r *mockRepoData) ListCommits(ref string) ([]Hash, error) {
+func (r *mockRepoDataBrowse) ListCommits(ref string) ([]Hash, error) {
 	return nonNativeListCommits(r, ref)
+}
+
+// resolveRef tries the ref as-is, then with refs/heads/ and refs/tags/ prefixes,
+// then as a raw commit hash.
+func (r *mockRepoDataBrowse) resolveRef(ref string) (Hash, error) {
+	for _, candidate := range []string{ref, "refs/heads/" + ref, "refs/tags/" + ref} {
+		if h, ok := r.refs[candidate]; ok {
+			return h, nil
+		}
+	}
+	if _, ok := r.commits[Hash(ref)]; ok {
+		return Hash(ref), nil
+	}
+	return "", ErrNotFound
+}
+
+// treeEntriesAtHash parses the entries of the tree stored under hash.
+func (r *mockRepoDataBrowse) treeEntriesAtHash(hash Hash) ([]TreeEntry, error) {
+	data, ok := r.trees[hash]
+	if !ok {
+		return nil, ErrNotFound
+	}
+	return readTreeEntries(data)
+}
+
+// treeEntriesAt returns the directory entries at path inside the tree rooted at
+// treeHash. path="" returns root entries. Returns ErrNotFound if path doesn't
+// exist or resolves to a blob rather than a tree.
+func (r *mockRepoDataBrowse) treeEntriesAt(treeHash Hash, path string) ([]TreeEntry, error) {
+	path = strings.Trim(path, "/")
+	if path == "" {
+		return r.treeEntriesAtHash(treeHash)
+	}
+	seg, rest, _ := strings.Cut(path, "/")
+	entries, err := r.treeEntriesAtHash(treeHash)
+	if err != nil {
+		return nil, err
+	}
+	for _, e := range entries {
+		if e.Name != seg || e.ObjectType != Tree {
+			continue
+		}
+		if rest == "" {
+			return r.treeEntriesAtHash(e.Hash)
+		}
+		return r.treeEntriesAt(e.Hash, rest)
+	}
+	return nil, ErrNotFound
+}
+
+// blobHashAt walks the tree to find the blob hash for the file at path.
+func (r *mockRepoDataBrowse) blobHashAt(treeHash Hash, path string) (Hash, error) {
+	path = strings.Trim(path, "/")
+	seg, rest, hasRest := strings.Cut(path, "/")
+	entries, err := r.treeEntriesAtHash(treeHash)
+	if err != nil {
+		return "", err
+	}
+	for _, e := range entries {
+		if e.Name != seg {
+			continue
+		}
+		if !hasRest {
+			return e.Hash, nil
+		}
+		if e.ObjectType != Tree {
+			return "", ErrNotFound
+		}
+		return r.blobHashAt(e.Hash, rest)
+	}
+	return "", ErrNotFound
+}
+
+// diffTrees returns the changed files between two trees, recursing into
+// sub-trees. fromHash=="" means an empty (non-existent) tree.
+func (r *mockRepoDataBrowse) diffTrees(fromHash, toHash Hash, prefix string) []ChangedFile {
+	var fromEntries, toEntries []TreeEntry
+	if fromHash != "" {
+		fromEntries, _ = r.treeEntriesAtHash(fromHash)
+	}
+	if toHash != "" {
+		toEntries, _ = r.treeEntriesAtHash(toHash)
+	}
+
+	fromMap := make(map[string]TreeEntry, len(fromEntries))
+	for _, e := range fromEntries {
+		fromMap[e.Name] = e
+	}
+	toMap := make(map[string]TreeEntry, len(toEntries))
+	for _, e := range toEntries {
+		toMap[e.Name] = e
+	}
+
+	var result []ChangedFile
+	for _, e := range toEntries {
+		path := prefix + e.Name
+		f, existed := fromMap[e.Name]
+		if e.ObjectType == Tree {
+			var sub Hash
+			if existed {
+				sub = f.Hash
+			}
+			result = append(result, r.diffTrees(sub, e.Hash, path+"/")...)
+		} else if !existed {
+			result = append(result, ChangedFile{Path: path, Status: "added"})
+		} else if f.Hash != e.Hash {
+			result = append(result, ChangedFile{Path: path, Status: "modified"})
+		}
+	}
+	for _, f := range fromEntries {
+		if _, exists := toMap[f.Name]; exists {
+			continue
+		}
+		path := prefix + f.Name
+		if f.ObjectType == Tree {
+			result = append(result, r.diffTrees(f.Hash, "", path+"/")...)
+		} else {
+			result = append(result, ChangedFile{Path: path, Status: "deleted"})
+		}
+	}
+	return result
+}
+
+func mockCommitMeta(hash Hash, c commit) CommitMeta {
+	short := string(hash)
+	if len(short) > 8 {
+		short = short[:8]
+	}
+	return CommitMeta{Hash: hash, ShortHash: short, Parents: c.parents}
+}
+
+func (r *mockRepoDataBrowse) Branches() ([]BranchInfo, error) {
+	var branches []BranchInfo
+	for ref, hash := range r.refs {
+		name, ok := strings.CutPrefix(ref, "refs/heads/")
+		if !ok {
+			continue
+		}
+		branches = append(branches, BranchInfo{
+			Name:      name,
+			Hash:      hash,
+			IsDefault: name == r.defaultBranch,
+		})
+	}
+	return branches, nil
+}
+
+func (r *mockRepoDataBrowse) Tags() ([]TagInfo, error) {
+	var tags []TagInfo
+	for ref, hash := range r.refs {
+		name, ok := strings.CutPrefix(ref, "refs/tags/")
+		if !ok {
+			continue
+		}
+		tags = append(tags, TagInfo{Name: name, Hash: hash})
+	}
+	return tags, nil
+}
+
+func (r *mockRepoDataBrowse) TreeAtPath(ref, path string) ([]TreeEntry, error) {
+	startHash, err := r.resolveRef(ref)
+	if err != nil {
+		return nil, ErrNotFound
+	}
+	c, ok := r.commits[startHash]
+	if !ok {
+		return nil, ErrNotFound
+	}
+	return r.treeEntriesAt(c.treeHash, path)
+}
+
+func (r *mockRepoDataBrowse) BlobAtPath(ref, path string) (io.ReadCloser, int64, error) {
+	startHash, err := r.resolveRef(ref)
+	if err != nil {
+		return nil, 0, ErrNotFound
+	}
+	c, ok := r.commits[startHash]
+	if !ok {
+		return nil, 0, ErrNotFound
+	}
+	blobHash, err := r.blobHashAt(c.treeHash, path)
+	if err != nil {
+		return nil, 0, ErrNotFound
+	}
+	data, ok := r.blobs[blobHash]
+	if !ok {
+		return nil, 0, ErrNotFound
+	}
+	return io.NopCloser(bytes.NewReader(data)), int64(len(data)), nil
+}
+
+// CommitLog walks the first-parent chain from ref. Path filtering is not
+// implemented in this mock.
+func (r *mockRepoDataBrowse) CommitLog(ref, _ string, limit int, after Hash) ([]CommitMeta, error) {
+	startHash, err := r.resolveRef(ref)
+	if err != nil {
+		return nil, ErrNotFound
+	}
+	var result []CommitMeta
+	skipping := after != ""
+	current := startHash
+	seen := make(map[Hash]bool)
+	for {
+		if seen[current] {
+			break
+		}
+		seen[current] = true
+		c, ok := r.commits[current]
+		if !ok {
+			break
+		}
+		if skipping {
+			if current == after {
+				skipping = false
+			}
+			if len(c.parents) == 0 {
+				break
+			}
+			current = c.parents[0]
+			continue
+		}
+		result = append(result, mockCommitMeta(current, c))
+		if limit > 0 && len(result) >= limit {
+			break
+		}
+		if len(c.parents) == 0 {
+			break
+		}
+		current = c.parents[0]
+	}
+	return result, nil
+}
+
+func (r *mockRepoDataBrowse) LastCommitForEntries(ref, path string, names []string) (map[string]CommitMeta, error) {
+	startHash, err := r.resolveRef(ref)
+	if err != nil {
+		return nil, ErrNotFound
+	}
+	path = strings.Trim(path, "/")
+	remaining := make(map[string]bool, len(names))
+	for _, n := range names {
+		remaining[n] = true
+	}
+	result := make(map[string]CommitMeta)
+	current := startHash
+	seen := make(map[Hash]bool)
+	for len(remaining) > 0 {
+		if seen[current] {
+			break
+		}
+		seen[current] = true
+		c, ok := r.commits[current]
+		if !ok {
+			break
+		}
+		curEntries, err := r.treeEntriesAt(c.treeHash, path)
+		if err != nil {
+			if len(c.parents) == 0 {
+				break
+			}
+			current = c.parents[0]
+			continue
+		}
+		curMap := make(map[string]Hash, len(curEntries))
+		for _, e := range curEntries {
+			curMap[e.Name] = e.Hash
+		}
+		if len(c.parents) == 0 {
+			for name := range remaining {
+				if _, ok := curMap[name]; ok {
+					result[name] = mockCommitMeta(current, c)
+					delete(remaining, name)
+				}
+			}
+			break
+		}
+		pc, ok := r.commits[c.parents[0]]
+		if !ok {
+			break
+		}
+		parentEntries, _ := r.treeEntriesAt(pc.treeHash, path)
+		parentMap := make(map[string]Hash, len(parentEntries))
+		for _, e := range parentEntries {
+			parentMap[e.Name] = e.Hash
+		}
+		for name := range remaining {
+			cur, curExists := curMap[name]
+			par, parExists := parentMap[name]
+			if curExists && (!parExists || cur != par) {
+				result[name] = mockCommitMeta(current, c)
+				delete(remaining, name)
+			}
+		}
+		current = c.parents[0]
+	}
+	return result, nil
+}
+
+func (r *mockRepoDataBrowse) CommitDetail(hash Hash) (CommitDetail, error) {
+	c, ok := r.commits[hash]
+	if !ok {
+		return CommitDetail{}, ErrNotFound
+	}
+	var fromTreeHash Hash
+	if len(c.parents) > 0 {
+		if parent, ok := r.commits[c.parents[0]]; ok {
+			fromTreeHash = parent.treeHash
+		}
+	}
+	return CommitDetail{
+		CommitMeta: mockCommitMeta(hash, c),
+		Files:      r.diffTrees(fromTreeHash, c.treeHash, ""),
+	}, nil
+}
+
+func (r *mockRepoDataBrowse) CommitFileDiff(hash Hash, filePath string) (FileDiff, error) {
+	c, ok := r.commits[hash]
+	if !ok {
+		return FileDiff{}, ErrNotFound
+	}
+	var fromTreeHash Hash
+	if len(c.parents) > 0 {
+		if parent, ok := r.commits[c.parents[0]]; ok {
+			fromTreeHash = parent.treeHash
+		}
+	}
+	files := r.diffTrees(fromTreeHash, c.treeHash, "")
+	var matched *ChangedFile
+	for i := range files {
+		if files[i].Path == filePath {
+			matched = &files[i]
+			break
+		}
+	}
+	if matched == nil {
+		return FileDiff{}, ErrNotFound
+	}
+	fd := FileDiff{
+		Path:     filePath,
+		IsNew:    matched.Status == "added",
+		IsDelete: matched.Status == "deleted",
+	}
+	var oldContent, newContent []byte
+	if fromTreeHash != "" {
+		if bh, err := r.blobHashAt(fromTreeHash, filePath); err == nil {
+			oldContent = r.blobs[bh]
+		}
+	}
+	if bh, err := r.blobHashAt(c.treeHash, filePath); err == nil {
+		newContent = r.blobs[bh]
+	}
+	fd.Hunks = mockDiffHunks(oldContent, newContent)
+	return fd, nil
+}
+
+// mockDiffHunks produces a single DiffHunk using a prefix/suffix scan.
+func mockDiffHunks(old, new []byte) []DiffHunk {
+	oldLines := splitBlobLines(old)
+	newLines := splitBlobLines(new)
+	i := 0
+	for i < len(oldLines) && i < len(newLines) && oldLines[i] == newLines[i] {
+		i++
+	}
+	j, k := len(oldLines), len(newLines)
+	for j > i && k > i && oldLines[j-1] == newLines[k-1] {
+		j--
+		k--
+	}
+	if j == i && k == i {
+		return nil // no changed region
+	}
+	oldLine, newLine := 1, 1
+	var lines []DiffLine
+	for _, l := range oldLines[:i] {
+		lines = append(lines, DiffLine{Type: "context", Content: l, OldLine: oldLine, NewLine: newLine})
+		oldLine++
+		newLine++
+	}
+	for _, l := range oldLines[i:j] {
+		lines = append(lines, DiffLine{Type: "deleted", Content: l, OldLine: oldLine})
+		oldLine++
+	}
+	for _, l := range newLines[i:k] {
+		lines = append(lines, DiffLine{Type: "added", Content: l, NewLine: newLine})
+		newLine++
+	}
+	for _, l := range oldLines[j:] {
+		lines = append(lines, DiffLine{Type: "context", Content: l, OldLine: oldLine, NewLine: newLine})
+		oldLine++
+		newLine++
+	}
+	return []DiffHunk{{OldStart: 1, OldLines: len(oldLines), NewStart: 1, NewLines: len(newLines), Lines: lines}}
+}
+
+func splitBlobLines(data []byte) []string {
+	if len(data) == 0 {
+		return nil
+	}
+	return strings.Split(strings.TrimRight(string(data), "\n"), "\n")
 }
 
 var _ RepoClock = &mockRepoClock{}

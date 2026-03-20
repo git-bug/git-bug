@@ -15,9 +15,12 @@ type TreeEntry struct {
 type ObjectType int
 
 const (
-	Unknown ObjectType = iota
-	Blob
-	Tree
+	Unknown    ObjectType = iota
+	Blob                  // regular file      (100644)
+	Tree                  // directory         (040000)
+	Executable            // executable file   (100755)
+	Symlink               // symbolic link     (120000)
+	Submodule             // git submodule     (160000)
 )
 
 func ParseTreeEntry(line string) (TreeEntry, error) {
@@ -54,6 +57,12 @@ func (ot ObjectType) Format() string {
 		return "100644 blob"
 	case Tree:
 		return "040000 tree"
+	case Executable:
+		return "100755 blob"
+	case Symlink:
+		return "120000 blob"
+	case Submodule:
+		return "160000 commit"
 	default:
 		panic("Unknown git object type")
 	}
@@ -65,6 +74,12 @@ func ParseObjectType(mode, objType string) (ObjectType, error) {
 		return Blob, nil
 	case mode == "040000" && objType == "tree":
 		return Tree, nil
+	case mode == "100755" && objType == "blob":
+		return Executable, nil
+	case mode == "120000" && objType == "blob":
+		return Symlink, nil
+	case mode == "160000" && objType == "commit":
+		return Submodule, nil
 	default:
 		return Unknown, fmt.Errorf("Unknown git object type %s %s", mode, objType)
 	}
