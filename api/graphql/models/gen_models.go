@@ -3,6 +3,11 @@
 package models
 
 import (
+	"bytes"
+	"fmt"
+	"io"
+	"strconv"
+
 	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entities/common"
@@ -269,6 +274,67 @@ type EntityEvent struct {
 	Entity Entity                `json:"entity,omitempty"`
 }
 
+// The content of a git blob (file).
+type GitBlob struct {
+	// Path of the file relative to the repository root.
+	Path string `json:"path"`
+	// Git object hash. Can be used as a stable cache key or to construct a
+	//     raw download URL.
+	Hash string `json:"hash"`
+	// UTF-8 text content of the file. Null when isBinary is true or when
+	//     the file is too large to be returned inline (see isTruncated).
+	Text *string `json:"text,omitempty"`
+	// Size in bytes.
+	Size int `json:"size"`
+	// True when the file contains null bytes and is treated as binary.
+	//     text will be null.
+	IsBinary bool `json:"isBinary"`
+	// True when the file exceeds the maximum inline size and text has been
+	//     omitted. Use the raw download endpoint to retrieve the full content.
+	IsTruncated bool `json:"isTruncated"`
+}
+
+type GitChangedFileConnection struct {
+	Nodes      []*repository.ChangedFile `json:"nodes"`
+	PageInfo   *PageInfo                 `json:"pageInfo"`
+	TotalCount int                       `json:"totalCount"`
+}
+
+// Paginated list of commits.
+type GitCommitConnection struct {
+	Nodes      []*GitCommitMeta `json:"nodes"`
+	PageInfo   *PageInfo        `json:"pageInfo"`
+	TotalCount int              `json:"totalCount"`
+}
+
+// The last commit that touched each requested entry in a directory.
+type GitLastCommit struct {
+	// Entry name within the directory.
+	Name string `json:"name"`
+	// Most recent commit that modified this entry.
+	Commit *GitCommitMeta `json:"commit"`
+}
+
+// A git branch or tag reference.
+type GitRef struct {
+	// Full reference name, e.g. refs/heads/main or refs/tags/v1.0.
+	Name string `json:"name"`
+	// Short name, e.g. main or v1.0.
+	ShortName string `json:"shortName"`
+	// Whether this reference is a branch or a tag.
+	Type GitRefType `json:"type"`
+	// Commit hash the reference points to.
+	Hash string `json:"hash"`
+	// True for the branch HEAD currently points to.
+	IsDefault bool `json:"isDefault"`
+}
+
+type GitRefConnection struct {
+	Nodes      []*GitRef `json:"nodes"`
+	PageInfo   *PageInfo `json:"pageInfo"`
+	TotalCount int       `json:"totalCount"`
+}
+
 type IdentityConnection struct {
 	Edges      []*IdentityEdge   `json:"edges"`
 	Nodes      []IdentityWrapper `json:"nodes"`
@@ -343,4 +409,251 @@ type RepositoryEdge struct {
 }
 
 type Subscription struct {
+}
+
+// How a file was affected by a commit.
+type GitChangeStatus string
+
+const (
+	// File was created in this commit.
+	GitChangeStatusAdded GitChangeStatus = "ADDED"
+	// File content changed in this commit.
+	GitChangeStatusModified GitChangeStatus = "MODIFIED"
+	// File was removed in this commit.
+	GitChangeStatusDeleted GitChangeStatus = "DELETED"
+	// File was moved or renamed in this commit.
+	GitChangeStatusRenamed GitChangeStatus = "RENAMED"
+)
+
+var AllGitChangeStatus = []GitChangeStatus{
+	GitChangeStatusAdded,
+	GitChangeStatusModified,
+	GitChangeStatusDeleted,
+	GitChangeStatusRenamed,
+}
+
+func (e GitChangeStatus) IsValid() bool {
+	switch e {
+	case GitChangeStatusAdded, GitChangeStatusModified, GitChangeStatusDeleted, GitChangeStatusRenamed:
+		return true
+	}
+	return false
+}
+
+func (e GitChangeStatus) String() string {
+	return string(e)
+}
+
+func (e *GitChangeStatus) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = GitChangeStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid GitChangeStatus", str)
+	}
+	return nil
+}
+
+func (e GitChangeStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *GitChangeStatus) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e GitChangeStatus) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// The role of a line within a unified diff hunk.
+type GitDiffLineType string
+
+const (
+	// An unchanged line present in both old and new versions.
+	GitDiffLineTypeContext GitDiffLineType = "CONTEXT"
+	// A line added in the new version.
+	GitDiffLineTypeAdded GitDiffLineType = "ADDED"
+	// A line removed from the old version.
+	GitDiffLineTypeDeleted GitDiffLineType = "DELETED"
+)
+
+var AllGitDiffLineType = []GitDiffLineType{
+	GitDiffLineTypeContext,
+	GitDiffLineTypeAdded,
+	GitDiffLineTypeDeleted,
+}
+
+func (e GitDiffLineType) IsValid() bool {
+	switch e {
+	case GitDiffLineTypeContext, GitDiffLineTypeAdded, GitDiffLineTypeDeleted:
+		return true
+	}
+	return false
+}
+
+func (e GitDiffLineType) String() string {
+	return string(e)
+}
+
+func (e *GitDiffLineType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = GitDiffLineType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid GitDiffLineType", str)
+	}
+	return nil
+}
+
+func (e GitDiffLineType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *GitDiffLineType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e GitDiffLineType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// The type of object a git tree entry points to.
+type GitObjectType string
+
+const (
+	// A directory.
+	GitObjectTypeTree GitObjectType = "TREE"
+	// A regular or executable file.
+	GitObjectTypeBlob GitObjectType = "BLOB"
+	// A symbolic link.
+	GitObjectTypeSymlink GitObjectType = "SYMLINK"
+	// A git submodule.
+	GitObjectTypeSubmodule GitObjectType = "SUBMODULE"
+)
+
+var AllGitObjectType = []GitObjectType{
+	GitObjectTypeTree,
+	GitObjectTypeBlob,
+	GitObjectTypeSymlink,
+	GitObjectTypeSubmodule,
+}
+
+func (e GitObjectType) IsValid() bool {
+	switch e {
+	case GitObjectTypeTree, GitObjectTypeBlob, GitObjectTypeSymlink, GitObjectTypeSubmodule:
+		return true
+	}
+	return false
+}
+
+func (e GitObjectType) String() string {
+	return string(e)
+}
+
+func (e *GitObjectType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = GitObjectType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid GitObjectType", str)
+	}
+	return nil
+}
+
+func (e GitObjectType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *GitObjectType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e GitObjectType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// The kind of git reference: a branch or a tag.
+type GitRefType string
+
+const (
+	// A local branch (refs/heads/*).
+	GitRefTypeBranch GitRefType = "BRANCH"
+	// An annotated or lightweight tag (refs/tags/*).
+	GitRefTypeTag GitRefType = "TAG"
+)
+
+var AllGitRefType = []GitRefType{
+	GitRefTypeBranch,
+	GitRefTypeTag,
+}
+
+func (e GitRefType) IsValid() bool {
+	switch e {
+	case GitRefTypeBranch, GitRefTypeTag:
+		return true
+	}
+	return false
+}
+
+func (e GitRefType) String() string {
+	return string(e)
+}
+
+func (e *GitRefType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = GitRefType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid GitRefType", str)
+	}
+	return nil
+}
+
+func (e GitRefType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *GitRefType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e GitRefType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
 }

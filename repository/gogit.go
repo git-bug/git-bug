@@ -940,10 +940,6 @@ func (repo *GoGitRepo) Witness(name string, time lamport.Time) error {
 // commitToMeta converts a go-git Commit to a CommitMeta.
 func commitToMeta(c *object.Commit) CommitMeta {
 	h := Hash(c.Hash.String())
-	short := h.String()
-	if len(short) > 8 {
-		short = short[:8]
-	}
 	parents := make([]Hash, len(c.ParentHashes))
 	for i, p := range c.ParentHashes {
 		parents[i] = Hash(p.String())
@@ -954,9 +950,8 @@ func commitToMeta(c *object.Commit) CommitMeta {
 		msg = msg[:idx]
 	}
 	return CommitMeta{
-		Hash:        h,
-		ShortHash:   short,
-		Message:     msg,
+		Hash:    h,
+		Message: msg,
 		AuthorName:  c.Author.Name,
 		AuthorEmail: c.Author.Email,
 		Date:        c.Author.When,
@@ -1432,13 +1427,13 @@ func (repo *GoGitRepo) CommitDetail(hash Hash) (CommitDetail, error) {
 func changedFileFromChange(fromName, toName string) ChangedFile {
 	switch {
 	case fromName == "":
-		return ChangedFile{Path: toName, Status: "added"}
+		return ChangedFile{Path: toName, Status: ChangeStatusAdded}
 	case toName == "":
-		return ChangedFile{Path: fromName, Status: "deleted"}
+		return ChangedFile{Path: fromName, Status: ChangeStatusDeleted}
 	case fromName != toName:
-		return ChangedFile{Path: toName, OldPath: fromName, Status: "renamed"}
+		return ChangedFile{Path: toName, OldPath: fromName, Status: ChangeStatusRenamed}
 	default:
-		return ChangedFile{Path: toName, Status: "modified"}
+		return ChangedFile{Path: toName, Status: ChangeStatusModified}
 	}
 }
 
@@ -1530,7 +1525,7 @@ func (repo *GoGitRepo) CommitFileDiff(hash Hash, filePath string) (FileDiff, err
 // and context grouping.
 func buildDiffHunks(fp fdiff.FilePatch) []DiffHunk {
 	type pendingLine struct {
-		typ     string
+		typ     DiffLineType
 		content string
 		oldLine int
 		newLine int
@@ -1547,18 +1542,18 @@ func buildDiffHunks(fp fdiff.FilePatch) []DiffHunk {
 		switch chunk.Type() {
 		case fdiff.Equal:
 			for _, l := range lines {
-				allLines = append(allLines, pendingLine{"context", l, oldLine, newLine})
+				allLines = append(allLines, pendingLine{DiffLineContext, l, oldLine, newLine})
 				oldLine++
 				newLine++
 			}
 		case fdiff.Add:
 			for _, l := range lines {
-				allLines = append(allLines, pendingLine{"added", l, 0, newLine})
+				allLines = append(allLines, pendingLine{DiffLineAdded, l, 0, newLine})
 				newLine++
 			}
 		case fdiff.Delete:
 			for _, l := range lines {
-				allLines = append(allLines, pendingLine{"deleted", l, oldLine, 0})
+				allLines = append(allLines, pendingLine{DiffLineDeleted, l, oldLine, 0})
 				oldLine++
 			}
 		}
@@ -1573,7 +1568,7 @@ func buildDiffHunks(fp fdiff.FilePatch) []DiffHunk {
 	type span struct{ start, end int }
 	var spans []span
 	for i, l := range allLines {
-		if l.typ == "context" {
+		if l.typ == DiffLineContext {
 			continue
 		}
 		if len(spans) == 0 || i > spans[len(spans)-1].end+1 {

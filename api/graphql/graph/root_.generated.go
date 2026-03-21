@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"sync/atomic"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
@@ -48,6 +49,10 @@ type ResolverRoot interface {
 	BugSetTitleOperation() BugSetTitleOperationResolver
 	BugSetTitleTimelineItem() BugSetTitleTimelineItemResolver
 	Color() ColorResolver
+	GitChangedFile() GitChangedFileResolver
+	GitCommit() GitCommitResolver
+	GitDiffLine() GitDiffLineResolver
+	GitTreeEntry() GitTreeEntryResolver
 	Identity() IdentityResolver
 	Label() LabelResolver
 	Mutation() MutationResolver
@@ -293,6 +298,95 @@ type ComplexityRoot struct {
 		Type   func(childComplexity int) int
 	}
 
+	GitBlob struct {
+		Hash        func(childComplexity int) int
+		IsBinary    func(childComplexity int) int
+		IsTruncated func(childComplexity int) int
+		Path        func(childComplexity int) int
+		Size        func(childComplexity int) int
+		Text        func(childComplexity int) int
+	}
+
+	GitChangedFile struct {
+		OldPath func(childComplexity int) int
+		Path    func(childComplexity int) int
+		Status  func(childComplexity int) int
+	}
+
+	GitChangedFileConnection struct {
+		Nodes      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	GitCommit struct {
+		AuthorEmail func(childComplexity int) int
+		AuthorName  func(childComplexity int) int
+		Date        func(childComplexity int) int
+		Diff        func(childComplexity int, path string) int
+		Files       func(childComplexity int, after *string, before *string, first *int, last *int) int
+		FullMessage func(childComplexity int) int
+		Hash        func(childComplexity int) int
+		Message     func(childComplexity int) int
+		Parents     func(childComplexity int) int
+		ShortHash   func(childComplexity int) int
+	}
+
+	GitCommitConnection struct {
+		Nodes      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	GitDiffHunk struct {
+		Lines    func(childComplexity int) int
+		NewLines func(childComplexity int) int
+		NewStart func(childComplexity int) int
+		OldLines func(childComplexity int) int
+		OldStart func(childComplexity int) int
+	}
+
+	GitDiffLine struct {
+		Content func(childComplexity int) int
+		NewLine func(childComplexity int) int
+		OldLine func(childComplexity int) int
+		Type    func(childComplexity int) int
+	}
+
+	GitFileDiff struct {
+		Hunks    func(childComplexity int) int
+		IsBinary func(childComplexity int) int
+		IsDelete func(childComplexity int) int
+		IsNew    func(childComplexity int) int
+		OldPath  func(childComplexity int) int
+		Path     func(childComplexity int) int
+	}
+
+	GitLastCommit struct {
+		Commit func(childComplexity int) int
+		Name   func(childComplexity int) int
+	}
+
+	GitRef struct {
+		Hash      func(childComplexity int) int
+		IsDefault func(childComplexity int) int
+		Name      func(childComplexity int) int
+		ShortName func(childComplexity int) int
+		Type      func(childComplexity int) int
+	}
+
+	GitRefConnection struct {
+		Nodes      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	GitTreeEntry struct {
+		Hash func(childComplexity int) int
+		Name func(childComplexity int) int
+		Type func(childComplexity int) int
+	}
+
 	Identity struct {
 		AvatarUrl   func(childComplexity int) int
 		DisplayName func(childComplexity int) int
@@ -382,9 +476,15 @@ type ComplexityRoot struct {
 	Repository struct {
 		AllBugs       func(childComplexity int, after *string, before *string, first *int, last *int, query *string) int
 		AllIdentities func(childComplexity int, after *string, before *string, first *int, last *int) int
+		Blob          func(childComplexity int, ref string, path string) int
 		Bug           func(childComplexity int, prefix string) int
+		Commit        func(childComplexity int, hash string) int
+		Commits       func(childComplexity int, after *string, first *int, ref string, path *string, since *time.Time, until *time.Time) int
 		Identity      func(childComplexity int, prefix string) int
+		LastCommits   func(childComplexity int, ref string, path *string, names []string) int
 		Name          func(childComplexity int) int
+		Refs          func(childComplexity int, after *string, before *string, first *int, last *int, typeArg *models.GitRefType) int
+		Tree          func(childComplexity int, ref string, path *string) int
 		UserIdentity  func(childComplexity int) int
 		ValidLabels   func(childComplexity int, after *string, before *string, first *int, last *int) int
 	}
@@ -1411,6 +1511,387 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.EntityEvent.Type(childComplexity), true
 
+	case "GitBlob.hash":
+		if e.complexity.GitBlob.Hash == nil {
+			break
+		}
+
+		return e.complexity.GitBlob.Hash(childComplexity), true
+
+	case "GitBlob.isBinary":
+		if e.complexity.GitBlob.IsBinary == nil {
+			break
+		}
+
+		return e.complexity.GitBlob.IsBinary(childComplexity), true
+
+	case "GitBlob.isTruncated":
+		if e.complexity.GitBlob.IsTruncated == nil {
+			break
+		}
+
+		return e.complexity.GitBlob.IsTruncated(childComplexity), true
+
+	case "GitBlob.path":
+		if e.complexity.GitBlob.Path == nil {
+			break
+		}
+
+		return e.complexity.GitBlob.Path(childComplexity), true
+
+	case "GitBlob.size":
+		if e.complexity.GitBlob.Size == nil {
+			break
+		}
+
+		return e.complexity.GitBlob.Size(childComplexity), true
+
+	case "GitBlob.text":
+		if e.complexity.GitBlob.Text == nil {
+			break
+		}
+
+		return e.complexity.GitBlob.Text(childComplexity), true
+
+	case "GitChangedFile.oldPath":
+		if e.complexity.GitChangedFile.OldPath == nil {
+			break
+		}
+
+		return e.complexity.GitChangedFile.OldPath(childComplexity), true
+
+	case "GitChangedFile.path":
+		if e.complexity.GitChangedFile.Path == nil {
+			break
+		}
+
+		return e.complexity.GitChangedFile.Path(childComplexity), true
+
+	case "GitChangedFile.status":
+		if e.complexity.GitChangedFile.Status == nil {
+			break
+		}
+
+		return e.complexity.GitChangedFile.Status(childComplexity), true
+
+	case "GitChangedFileConnection.nodes":
+		if e.complexity.GitChangedFileConnection.Nodes == nil {
+			break
+		}
+
+		return e.complexity.GitChangedFileConnection.Nodes(childComplexity), true
+
+	case "GitChangedFileConnection.pageInfo":
+		if e.complexity.GitChangedFileConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.GitChangedFileConnection.PageInfo(childComplexity), true
+
+	case "GitChangedFileConnection.totalCount":
+		if e.complexity.GitChangedFileConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.GitChangedFileConnection.TotalCount(childComplexity), true
+
+	case "GitCommit.authorEmail":
+		if e.complexity.GitCommit.AuthorEmail == nil {
+			break
+		}
+
+		return e.complexity.GitCommit.AuthorEmail(childComplexity), true
+
+	case "GitCommit.authorName":
+		if e.complexity.GitCommit.AuthorName == nil {
+			break
+		}
+
+		return e.complexity.GitCommit.AuthorName(childComplexity), true
+
+	case "GitCommit.date":
+		if e.complexity.GitCommit.Date == nil {
+			break
+		}
+
+		return e.complexity.GitCommit.Date(childComplexity), true
+
+	case "GitCommit.diff":
+		if e.complexity.GitCommit.Diff == nil {
+			break
+		}
+
+		args, err := ec.field_GitCommit_diff_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.GitCommit.Diff(childComplexity, args["path"].(string)), true
+
+	case "GitCommit.files":
+		if e.complexity.GitCommit.Files == nil {
+			break
+		}
+
+		args, err := ec.field_GitCommit_files_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.GitCommit.Files(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
+
+	case "GitCommit.fullMessage":
+		if e.complexity.GitCommit.FullMessage == nil {
+			break
+		}
+
+		return e.complexity.GitCommit.FullMessage(childComplexity), true
+
+	case "GitCommit.hash":
+		if e.complexity.GitCommit.Hash == nil {
+			break
+		}
+
+		return e.complexity.GitCommit.Hash(childComplexity), true
+
+	case "GitCommit.message":
+		if e.complexity.GitCommit.Message == nil {
+			break
+		}
+
+		return e.complexity.GitCommit.Message(childComplexity), true
+
+	case "GitCommit.parents":
+		if e.complexity.GitCommit.Parents == nil {
+			break
+		}
+
+		return e.complexity.GitCommit.Parents(childComplexity), true
+
+	case "GitCommit.shortHash":
+		if e.complexity.GitCommit.ShortHash == nil {
+			break
+		}
+
+		return e.complexity.GitCommit.ShortHash(childComplexity), true
+
+	case "GitCommitConnection.nodes":
+		if e.complexity.GitCommitConnection.Nodes == nil {
+			break
+		}
+
+		return e.complexity.GitCommitConnection.Nodes(childComplexity), true
+
+	case "GitCommitConnection.pageInfo":
+		if e.complexity.GitCommitConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.GitCommitConnection.PageInfo(childComplexity), true
+
+	case "GitCommitConnection.totalCount":
+		if e.complexity.GitCommitConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.GitCommitConnection.TotalCount(childComplexity), true
+
+	case "GitDiffHunk.lines":
+		if e.complexity.GitDiffHunk.Lines == nil {
+			break
+		}
+
+		return e.complexity.GitDiffHunk.Lines(childComplexity), true
+
+	case "GitDiffHunk.newLines":
+		if e.complexity.GitDiffHunk.NewLines == nil {
+			break
+		}
+
+		return e.complexity.GitDiffHunk.NewLines(childComplexity), true
+
+	case "GitDiffHunk.newStart":
+		if e.complexity.GitDiffHunk.NewStart == nil {
+			break
+		}
+
+		return e.complexity.GitDiffHunk.NewStart(childComplexity), true
+
+	case "GitDiffHunk.oldLines":
+		if e.complexity.GitDiffHunk.OldLines == nil {
+			break
+		}
+
+		return e.complexity.GitDiffHunk.OldLines(childComplexity), true
+
+	case "GitDiffHunk.oldStart":
+		if e.complexity.GitDiffHunk.OldStart == nil {
+			break
+		}
+
+		return e.complexity.GitDiffHunk.OldStart(childComplexity), true
+
+	case "GitDiffLine.content":
+		if e.complexity.GitDiffLine.Content == nil {
+			break
+		}
+
+		return e.complexity.GitDiffLine.Content(childComplexity), true
+
+	case "GitDiffLine.newLine":
+		if e.complexity.GitDiffLine.NewLine == nil {
+			break
+		}
+
+		return e.complexity.GitDiffLine.NewLine(childComplexity), true
+
+	case "GitDiffLine.oldLine":
+		if e.complexity.GitDiffLine.OldLine == nil {
+			break
+		}
+
+		return e.complexity.GitDiffLine.OldLine(childComplexity), true
+
+	case "GitDiffLine.type":
+		if e.complexity.GitDiffLine.Type == nil {
+			break
+		}
+
+		return e.complexity.GitDiffLine.Type(childComplexity), true
+
+	case "GitFileDiff.hunks":
+		if e.complexity.GitFileDiff.Hunks == nil {
+			break
+		}
+
+		return e.complexity.GitFileDiff.Hunks(childComplexity), true
+
+	case "GitFileDiff.isBinary":
+		if e.complexity.GitFileDiff.IsBinary == nil {
+			break
+		}
+
+		return e.complexity.GitFileDiff.IsBinary(childComplexity), true
+
+	case "GitFileDiff.isDelete":
+		if e.complexity.GitFileDiff.IsDelete == nil {
+			break
+		}
+
+		return e.complexity.GitFileDiff.IsDelete(childComplexity), true
+
+	case "GitFileDiff.isNew":
+		if e.complexity.GitFileDiff.IsNew == nil {
+			break
+		}
+
+		return e.complexity.GitFileDiff.IsNew(childComplexity), true
+
+	case "GitFileDiff.oldPath":
+		if e.complexity.GitFileDiff.OldPath == nil {
+			break
+		}
+
+		return e.complexity.GitFileDiff.OldPath(childComplexity), true
+
+	case "GitFileDiff.path":
+		if e.complexity.GitFileDiff.Path == nil {
+			break
+		}
+
+		return e.complexity.GitFileDiff.Path(childComplexity), true
+
+	case "GitLastCommit.commit":
+		if e.complexity.GitLastCommit.Commit == nil {
+			break
+		}
+
+		return e.complexity.GitLastCommit.Commit(childComplexity), true
+
+	case "GitLastCommit.name":
+		if e.complexity.GitLastCommit.Name == nil {
+			break
+		}
+
+		return e.complexity.GitLastCommit.Name(childComplexity), true
+
+	case "GitRef.hash":
+		if e.complexity.GitRef.Hash == nil {
+			break
+		}
+
+		return e.complexity.GitRef.Hash(childComplexity), true
+
+	case "GitRef.isDefault":
+		if e.complexity.GitRef.IsDefault == nil {
+			break
+		}
+
+		return e.complexity.GitRef.IsDefault(childComplexity), true
+
+	case "GitRef.name":
+		if e.complexity.GitRef.Name == nil {
+			break
+		}
+
+		return e.complexity.GitRef.Name(childComplexity), true
+
+	case "GitRef.shortName":
+		if e.complexity.GitRef.ShortName == nil {
+			break
+		}
+
+		return e.complexity.GitRef.ShortName(childComplexity), true
+
+	case "GitRef.type":
+		if e.complexity.GitRef.Type == nil {
+			break
+		}
+
+		return e.complexity.GitRef.Type(childComplexity), true
+
+	case "GitRefConnection.nodes":
+		if e.complexity.GitRefConnection.Nodes == nil {
+			break
+		}
+
+		return e.complexity.GitRefConnection.Nodes(childComplexity), true
+
+	case "GitRefConnection.pageInfo":
+		if e.complexity.GitRefConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.GitRefConnection.PageInfo(childComplexity), true
+
+	case "GitRefConnection.totalCount":
+		if e.complexity.GitRefConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.GitRefConnection.TotalCount(childComplexity), true
+
+	case "GitTreeEntry.hash":
+		if e.complexity.GitTreeEntry.Hash == nil {
+			break
+		}
+
+		return e.complexity.GitTreeEntry.Hash(childComplexity), true
+
+	case "GitTreeEntry.name":
+		if e.complexity.GitTreeEntry.Name == nil {
+			break
+		}
+
+		return e.complexity.GitTreeEntry.Name(childComplexity), true
+
+	case "GitTreeEntry.type":
+		if e.complexity.GitTreeEntry.Type == nil {
+			break
+		}
+
+		return e.complexity.GitTreeEntry.Type(childComplexity), true
+
 	case "Identity.avatarUrl":
 		if e.complexity.Identity.AvatarUrl == nil {
 			break
@@ -1819,6 +2300,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Repository.AllIdentities(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
 
+	case "Repository.blob":
+		if e.complexity.Repository.Blob == nil {
+			break
+		}
+
+		args, err := ec.field_Repository_blob_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Repository.Blob(childComplexity, args["ref"].(string), args["path"].(string)), true
+
 	case "Repository.bug":
 		if e.complexity.Repository.Bug == nil {
 			break
@@ -1830,6 +2323,30 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Repository.Bug(childComplexity, args["prefix"].(string)), true
+
+	case "Repository.commit":
+		if e.complexity.Repository.Commit == nil {
+			break
+		}
+
+		args, err := ec.field_Repository_commit_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Repository.Commit(childComplexity, args["hash"].(string)), true
+
+	case "Repository.commits":
+		if e.complexity.Repository.Commits == nil {
+			break
+		}
+
+		args, err := ec.field_Repository_commits_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Repository.Commits(childComplexity, args["after"].(*string), args["first"].(*int), args["ref"].(string), args["path"].(*string), args["since"].(*time.Time), args["until"].(*time.Time)), true
 
 	case "Repository.identity":
 		if e.complexity.Repository.Identity == nil {
@@ -1843,12 +2360,48 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Repository.Identity(childComplexity, args["prefix"].(string)), true
 
+	case "Repository.lastCommits":
+		if e.complexity.Repository.LastCommits == nil {
+			break
+		}
+
+		args, err := ec.field_Repository_lastCommits_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Repository.LastCommits(childComplexity, args["ref"].(string), args["path"].(*string), args["names"].([]string)), true
+
 	case "Repository.name":
 		if e.complexity.Repository.Name == nil {
 			break
 		}
 
 		return e.complexity.Repository.Name(childComplexity), true
+
+	case "Repository.refs":
+		if e.complexity.Repository.Refs == nil {
+			break
+		}
+
+		args, err := ec.field_Repository_refs_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Repository.Refs(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int), args["type"].(*models.GitRefType)), true
+
+	case "Repository.tree":
+		if e.complexity.Repository.Tree == nil {
+			break
+		}
+
+		args, err := ec.field_Repository_tree_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Repository.Tree(childComplexity, args["ref"].(string), args["path"].(*string)), true
 
 	case "Repository.userIdentity":
 		if e.complexity.Repository.UserIdentity == nil {
@@ -2602,6 +3155,217 @@ directive @goTag(
     value: String
 ) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 `, BuiltIn: false},
+	{Name: "../schema/git.graphql", Input: `"""A git branch or tag reference."""
+type GitRef {
+    """Full reference name, e.g. refs/heads/main or refs/tags/v1.0."""
+    name: String!
+    """Short name, e.g. main or v1.0."""
+    shortName: String!
+    """Whether this reference is a branch or a tag."""
+    type: GitRefType!
+    """Commit hash the reference points to."""
+    hash: String!
+    """True for the branch HEAD currently points to."""
+    isDefault: Boolean!
+}
+
+"""An entry in a git tree (directory listing)."""
+type GitTreeEntry
+@goModel(model: "github.com/git-bug/git-bug/repository.TreeEntry") {
+    """File or directory name within the parent tree."""
+    name: String!
+    """Whether this entry is a file, directory, symlink, or submodule."""
+    type: GitObjectType!
+    """Git object hash."""
+    hash: String!
+}
+
+"""The content of a git blob (file)."""
+type GitBlob {
+    """Path of the file relative to the repository root."""
+    path: String!
+    """Git object hash. Can be used as a stable cache key or to construct a
+    raw download URL."""
+    hash: String!
+    """UTF-8 text content of the file. Null when isBinary is true or when
+    the file is too large to be returned inline (see isTruncated)."""
+    text: String
+    """Size in bytes."""
+    size: Int!
+    """True when the file contains null bytes and is treated as binary.
+    text will be null."""
+    isBinary: Boolean!
+    """True when the file exceeds the maximum inline size and text has been
+    omitted. Use the raw download endpoint to retrieve the full content."""
+    isTruncated: Boolean!
+}
+
+"""Metadata for a single git commit."""
+type GitCommit
+@goModel(model: "github.com/git-bug/git-bug/api/graphql/models.GitCommitMeta") {
+    """Full SHA-1 commit hash."""
+    hash: String!
+    """Abbreviated commit hash, typically 8 characters."""
+    shortHash: String!
+    """First line of the commit message."""
+    message: String!
+    """Full commit message."""
+    fullMessage: String!
+    """Name of the commit author."""
+    authorName: String!
+    """Email address of the commit author."""
+    authorEmail: String!
+    """Timestamp from the author field (when the change was originally made)."""
+    date: Time!
+    """Hashes of parent commits. Empty for the initial commit."""
+    parents: [String!]!
+    """Files changed relative to the first parent (or the empty tree for the
+    initial commit)."""
+    files(
+        """Returns the elements in the list that come after the specified cursor."""
+        after: String
+        """Returns the elements in the list that come before the specified cursor."""
+        before: String
+        """Returns the first _n_ elements from the list."""
+        first: Int
+        """Returns the last _n_ elements from the list."""
+        last: Int
+    ): GitChangedFileConnection! @goField(forceResolver: true)
+    """Unified diff for a single file in this commit."""
+    diff(path: String!): GitFileDiff @goField(forceResolver: true) #  TODO: use @defer instead
+}
+
+"""The last commit that touched each requested entry in a directory."""
+type GitLastCommit {
+    """Entry name within the directory."""
+    name: String!
+    """Most recent commit that modified this entry."""
+    commit: GitCommit!
+}
+
+# ── connection types ──────────────────────────────────────────────────────────
+
+type GitRefConnection {
+    nodes: [GitRef!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+"""Paginated list of commits."""
+type GitCommitConnection {
+    nodes: [GitCommit!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type GitChangedFileConnection {
+    nodes: [GitChangedFile!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+# ── commit sub-types ──────────────────────────────────────────────────────────
+
+"""A file that was changed in a commit."""
+type GitChangedFile
+@goModel(model: "github.com/git-bug/git-bug/repository.ChangedFile") {
+    """Path of the file in the new version of the commit."""
+    path: String!
+    """Previous path, non-null only for renames."""
+    oldPath: String
+    """How the file was affected by the commit."""
+    status: GitChangeStatus!
+}
+
+"""The diff for a single file in a commit."""
+type GitFileDiff
+@goModel(model: "github.com/git-bug/git-bug/repository.FileDiff") {
+    """Path of the file in the new version."""
+    path: String!
+    """Previous path, non-null only for renames."""
+    oldPath: String
+    """True when the file is binary and no textual diff is available."""
+    isBinary: Boolean!
+    """True when the file was created in this commit."""
+    isNew: Boolean!
+    """True when the file was deleted in this commit."""
+    isDelete: Boolean!
+    """Contiguous blocks of changes. Empty for binary files."""
+    hunks: [GitDiffHunk!]!
+}
+
+"""A contiguous block of changes in a unified diff."""
+type GitDiffHunk
+@goModel(model: "github.com/git-bug/git-bug/repository.DiffHunk") {
+    """Starting line number in the old file."""
+    oldStart: Int!
+    """Number of lines from the old file included in this hunk."""
+    oldLines: Int!
+    """Starting line number in the new file."""
+    newStart: Int!
+    """Number of lines from the new file included in this hunk."""
+    newLines: Int!
+    """Lines in this hunk, including context, additions, and deletions."""
+    lines: [GitDiffLine!]!
+}
+
+"""A single line in a unified diff hunk."""
+type GitDiffLine
+@goModel(model: "github.com/git-bug/git-bug/repository.DiffLine") {
+    """Whether this line is context, an addition, or a deletion."""
+    type: GitDiffLineType!
+    """Raw line content, without the leading +/- prefix."""
+    content: String!
+    """Line number in the old file. 0 for added lines."""
+    oldLine: Int!
+    """Line number in the new file. 0 for deleted lines."""
+    newLine: Int!
+}
+
+# ── enums ─────────────────────────────────────────────────────────────────────
+
+"""The kind of git reference: a branch or a tag."""
+enum GitRefType {
+    """A local branch (refs/heads/*)."""
+    BRANCH
+    """An annotated or lightweight tag (refs/tags/*)."""
+    TAG
+}
+
+"""The type of object a git tree entry points to."""
+enum GitObjectType {
+    """A directory."""
+    TREE
+    """A regular or executable file."""
+    BLOB
+    """A symbolic link."""
+    SYMLINK
+    """A git submodule."""
+    SUBMODULE
+}
+
+"""How a file was affected by a commit."""
+enum GitChangeStatus {
+    """File was created in this commit."""
+    ADDED
+    """File content changed in this commit."""
+    MODIFIED
+    """File was removed in this commit."""
+    DELETED
+    """File was moved or renamed in this commit."""
+    RENAMED
+}
+
+"""The role of a line within a unified diff hunk."""
+enum GitDiffLineType {
+    """An unchanged line present in both old and new versions."""
+    CONTEXT
+    """A line added in the new version."""
+    ADDED
+    """A line removed from the old version."""
+    DELETED
+}
+`, BuiltIn: false},
 	{Name: "../schema/identity.graphql", Input: `"""Represents an identity"""
 type Identity implements Entity {
     """The identifier for this identity"""
@@ -2733,6 +3497,53 @@ type OperationEdge {
 
     """The identity created or selected by the user as its own"""
     userIdentity: Identity
+
+    """All branches and tags, optionally filtered by type."""
+    refs(
+        """Returns the elements in the list that come after the specified cursor."""
+        after: String
+        """Returns the elements in the list that come before the specified cursor."""
+        before: String
+        """Returns the first _n_ elements from the list."""
+        first: Int
+        """Returns the last _n_ elements from the list."""
+        last: Int
+        """Restrict to references of this type."""
+        type: GitRefType
+    ): GitRefConnection!
+
+    """Directory listing at path under ref. An empty path returns the root tree."""
+    tree(ref: String!, path: String): [GitTreeEntry!]!
+
+    """Content of the file at path under ref. Null if the path does not exist
+    or resolves to a tree rather than a blob."""
+    blob(ref: String!, path: String!): GitBlob
+
+    """Paginated commit log reachable from ref, optionally filtered to commits
+    touching path."""
+    commits(
+        """Returns the elements in the list that come after the specified cursor."""
+        after: String
+        """Returns the first _n_ elements from the list (max 100, default 20)."""
+        first: Int
+        """Branch name, tag name, full ref (e.g. refs/heads/main), or commit hash
+        to start the log from."""
+        ref: String!
+        """Restrict to commits that touched this path."""
+        path: String
+        """Restrict to commits authored on or after this timestamp."""
+        since: Time
+        """Restrict to commits authored before or on this timestamp."""
+        until: Time
+    ): GitCommitConnection!
+
+    """A single commit by hash."""
+    commit(hash: String!): GitCommit
+
+    """The most recent commit that touched each of the named entries in the
+    directory at path under ref. Use this to populate last-commit info on a
+    tree listing without blocking the initial tree fetch."""
+    lastCommits(ref: String!, path: String, names: [String!]!): [GitLastCommit!]!
 
     """List of valid labels."""
     validLabels(

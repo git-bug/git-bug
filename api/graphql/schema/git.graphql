@@ -1,0 +1,210 @@
+"""A git branch or tag reference."""
+type GitRef {
+    """Full reference name, e.g. refs/heads/main or refs/tags/v1.0."""
+    name: String!
+    """Short name, e.g. main or v1.0."""
+    shortName: String!
+    """Whether this reference is a branch or a tag."""
+    type: GitRefType!
+    """Commit hash the reference points to."""
+    hash: String!
+    """True for the branch HEAD currently points to."""
+    isDefault: Boolean!
+}
+
+"""An entry in a git tree (directory listing)."""
+type GitTreeEntry
+@goModel(model: "github.com/git-bug/git-bug/repository.TreeEntry") {
+    """File or directory name within the parent tree."""
+    name: String!
+    """Whether this entry is a file, directory, symlink, or submodule."""
+    type: GitObjectType!
+    """Git object hash."""
+    hash: String!
+}
+
+"""The content of a git blob (file)."""
+type GitBlob {
+    """Path of the file relative to the repository root."""
+    path: String!
+    """Git object hash. Can be used as a stable cache key or to construct a
+    raw download URL."""
+    hash: String!
+    """UTF-8 text content of the file. Null when isBinary is true or when
+    the file is too large to be returned inline (see isTruncated)."""
+    text: String
+    """Size in bytes."""
+    size: Int!
+    """True when the file contains null bytes and is treated as binary.
+    text will be null."""
+    isBinary: Boolean!
+    """True when the file exceeds the maximum inline size and text has been
+    omitted. Use the raw download endpoint to retrieve the full content."""
+    isTruncated: Boolean!
+}
+
+"""Metadata for a single git commit."""
+type GitCommit
+@goModel(model: "github.com/git-bug/git-bug/api/graphql/models.GitCommitMeta") {
+    """Full SHA-1 commit hash."""
+    hash: String!
+    """Abbreviated commit hash, typically 8 characters."""
+    shortHash: String!
+    """First line of the commit message."""
+    message: String!
+    """Full commit message."""
+    fullMessage: String!
+    """Name of the commit author."""
+    authorName: String!
+    """Email address of the commit author."""
+    authorEmail: String!
+    """Timestamp from the author field (when the change was originally made)."""
+    date: Time!
+    """Hashes of parent commits. Empty for the initial commit."""
+    parents: [String!]!
+    """Files changed relative to the first parent (or the empty tree for the
+    initial commit)."""
+    files(
+        """Returns the elements in the list that come after the specified cursor."""
+        after: String
+        """Returns the elements in the list that come before the specified cursor."""
+        before: String
+        """Returns the first _n_ elements from the list."""
+        first: Int
+        """Returns the last _n_ elements from the list."""
+        last: Int
+    ): GitChangedFileConnection! @goField(forceResolver: true)
+    """Unified diff for a single file in this commit."""
+    diff(path: String!): GitFileDiff @goField(forceResolver: true) #  TODO: use @defer instead
+}
+
+"""The last commit that touched each requested entry in a directory."""
+type GitLastCommit {
+    """Entry name within the directory."""
+    name: String!
+    """Most recent commit that modified this entry."""
+    commit: GitCommit!
+}
+
+# ── connection types ──────────────────────────────────────────────────────────
+
+type GitRefConnection {
+    nodes: [GitRef!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+"""Paginated list of commits."""
+type GitCommitConnection {
+    nodes: [GitCommit!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type GitChangedFileConnection {
+    nodes: [GitChangedFile!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+# ── commit sub-types ──────────────────────────────────────────────────────────
+
+"""A file that was changed in a commit."""
+type GitChangedFile
+@goModel(model: "github.com/git-bug/git-bug/repository.ChangedFile") {
+    """Path of the file in the new version of the commit."""
+    path: String!
+    """Previous path, non-null only for renames."""
+    oldPath: String
+    """How the file was affected by the commit."""
+    status: GitChangeStatus!
+}
+
+"""The diff for a single file in a commit."""
+type GitFileDiff
+@goModel(model: "github.com/git-bug/git-bug/repository.FileDiff") {
+    """Path of the file in the new version."""
+    path: String!
+    """Previous path, non-null only for renames."""
+    oldPath: String
+    """True when the file is binary and no textual diff is available."""
+    isBinary: Boolean!
+    """True when the file was created in this commit."""
+    isNew: Boolean!
+    """True when the file was deleted in this commit."""
+    isDelete: Boolean!
+    """Contiguous blocks of changes. Empty for binary files."""
+    hunks: [GitDiffHunk!]!
+}
+
+"""A contiguous block of changes in a unified diff."""
+type GitDiffHunk
+@goModel(model: "github.com/git-bug/git-bug/repository.DiffHunk") {
+    """Starting line number in the old file."""
+    oldStart: Int!
+    """Number of lines from the old file included in this hunk."""
+    oldLines: Int!
+    """Starting line number in the new file."""
+    newStart: Int!
+    """Number of lines from the new file included in this hunk."""
+    newLines: Int!
+    """Lines in this hunk, including context, additions, and deletions."""
+    lines: [GitDiffLine!]!
+}
+
+"""A single line in a unified diff hunk."""
+type GitDiffLine
+@goModel(model: "github.com/git-bug/git-bug/repository.DiffLine") {
+    """Whether this line is context, an addition, or a deletion."""
+    type: GitDiffLineType!
+    """Raw line content, without the leading +/- prefix."""
+    content: String!
+    """Line number in the old file. 0 for added lines."""
+    oldLine: Int!
+    """Line number in the new file. 0 for deleted lines."""
+    newLine: Int!
+}
+
+# ── enums ─────────────────────────────────────────────────────────────────────
+
+"""The kind of git reference: a branch or a tag."""
+enum GitRefType {
+    """A local branch (refs/heads/*)."""
+    BRANCH
+    """An annotated or lightweight tag (refs/tags/*)."""
+    TAG
+}
+
+"""The type of object a git tree entry points to."""
+enum GitObjectType {
+    """A directory."""
+    TREE
+    """A regular or executable file."""
+    BLOB
+    """A symbolic link."""
+    SYMLINK
+    """A git submodule."""
+    SUBMODULE
+}
+
+"""How a file was affected by a commit."""
+enum GitChangeStatus {
+    """File was created in this commit."""
+    ADDED
+    """File content changed in this commit."""
+    MODIFIED
+    """File was removed in this commit."""
+    DELETED
+    """File was moved or renamed in this commit."""
+    RENAMED
+}
+
+"""The role of a line within a unified diff hunk."""
+enum GitDiffLineType {
+    """An unchanged line present in both old and new versions."""
+    CONTEXT
+    """A line added in the new version."""
+    ADDED
+    """A line removed from the old version."""
+    DELETED
+}

@@ -505,9 +505,9 @@ func (r *mockRepoDataBrowse) diffTrees(fromHash, toHash Hash, prefix string) []C
 			}
 			result = append(result, r.diffTrees(sub, e.Hash, path+"/")...)
 		} else if !existed {
-			result = append(result, ChangedFile{Path: path, Status: "added"})
+			result = append(result, ChangedFile{Path: path, Status: ChangeStatusAdded})
 		} else if f.Hash != e.Hash {
-			result = append(result, ChangedFile{Path: path, Status: "modified"})
+			result = append(result, ChangedFile{Path: path, Status: ChangeStatusModified})
 		}
 	}
 	for _, f := range fromEntries {
@@ -518,18 +518,14 @@ func (r *mockRepoDataBrowse) diffTrees(fromHash, toHash Hash, prefix string) []C
 		if f.ObjectType == Tree {
 			result = append(result, r.diffTrees(f.Hash, "", path+"/")...)
 		} else {
-			result = append(result, ChangedFile{Path: path, Status: "deleted"})
+			result = append(result, ChangedFile{Path: path, Status: ChangeStatusDeleted})
 		}
 	}
 	return result
 }
 
 func mockCommitMeta(hash Hash, c commit) CommitMeta {
-	short := string(hash)
-	if len(short) > 8 {
-		short = short[:8]
-	}
-	return CommitMeta{Hash: hash, ShortHash: short, Parents: c.parents}
+	return CommitMeta{Hash: hash, Parents: c.parents}
 }
 
 func (r *mockRepoDataBrowse) Branches() ([]BranchInfo, error) {
@@ -740,8 +736,8 @@ func (r *mockRepoDataBrowse) CommitFileDiff(hash Hash, filePath string) (FileDif
 	}
 	fd := FileDiff{
 		Path:     filePath,
-		IsNew:    matched.Status == "added",
-		IsDelete: matched.Status == "deleted",
+		IsNew:    matched.Status == ChangeStatusAdded,
+		IsDelete: matched.Status == ChangeStatusDeleted,
 	}
 	var oldContent, newContent []byte
 	if fromTreeHash != "" {
@@ -775,20 +771,20 @@ func mockDiffHunks(old, new []byte) []DiffHunk {
 	oldLine, newLine := 1, 1
 	var lines []DiffLine
 	for _, l := range oldLines[:i] {
-		lines = append(lines, DiffLine{Type: "context", Content: l, OldLine: oldLine, NewLine: newLine})
+		lines = append(lines, DiffLine{Type: DiffLineContext, Content: l, OldLine: oldLine, NewLine: newLine})
 		oldLine++
 		newLine++
 	}
 	for _, l := range oldLines[i:j] {
-		lines = append(lines, DiffLine{Type: "deleted", Content: l, OldLine: oldLine})
+		lines = append(lines, DiffLine{Type: DiffLineDeleted, Content: l, OldLine: oldLine})
 		oldLine++
 	}
 	for _, l := range newLines[i:k] {
-		lines = append(lines, DiffLine{Type: "added", Content: l, NewLine: newLine})
+		lines = append(lines, DiffLine{Type: DiffLineAdded, Content: l, NewLine: newLine})
 		newLine++
 	}
 	for _, l := range oldLines[j:] {
-		lines = append(lines, DiffLine{Type: "context", Content: l, OldLine: oldLine, NewLine: newLine})
+		lines = append(lines, DiffLine{Type: DiffLineContext, Content: l, OldLine: oldLine, NewLine: newLine})
 		oldLine++
 		newLine++
 	}

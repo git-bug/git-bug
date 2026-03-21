@@ -2,6 +2,14 @@ package connections
 
 import "github.com/git-bug/git-bug/entity"
 
+// CursorEdge is a minimal edge carrying only a cursor. Use it with
+// connections.Connection when the edge type needs no additional fields.
+type CursorEdge struct {
+	Cursor string
+}
+
+func (e CursorEdge) GetCursor() string { return e.Cursor }
+
 // LazyBugEdge is a special relay edge used to implement a lazy loading connection
 type LazyBugEdge struct {
 	Id     entity.Id

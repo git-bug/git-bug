@@ -3,6 +3,7 @@ package models
 
 import (
 	"github.com/git-bug/git-bug/cache"
+	"github.com/git-bug/git-bug/repository"
 )
 
 type ConnectionInput struct {
@@ -13,6 +14,12 @@ type ConnectionInput struct {
 }
 
 type Repository struct {
-	Cache *cache.MultiRepoCache
-	Repo  *cache.RepoCache
+	Repo *cache.RepoCache
+}
+
+// GitCommitMeta is a wrapper around a CommitMeta that includes the Repo,
+// to keep the repo context in sub-resolvers.
+type GitCommitMeta struct {
+	Repo *cache.RepoCache
+	repository.CommitMeta
 }

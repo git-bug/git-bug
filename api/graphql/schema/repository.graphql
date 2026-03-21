@@ -35,6 +35,53 @@ type Repository {
     """The identity created or selected by the user as its own"""
     userIdentity: Identity
 
+    """All branches and tags, optionally filtered by type."""
+    refs(
+        """Returns the elements in the list that come after the specified cursor."""
+        after: String
+        """Returns the elements in the list that come before the specified cursor."""
+        before: String
+        """Returns the first _n_ elements from the list."""
+        first: Int
+        """Returns the last _n_ elements from the list."""
+        last: Int
+        """Restrict to references of this type."""
+        type: GitRefType
+    ): GitRefConnection!
+
+    """Directory listing at path under ref. An empty path returns the root tree."""
+    tree(ref: String!, path: String): [GitTreeEntry!]!
+
+    """Content of the file at path under ref. Null if the path does not exist
+    or resolves to a tree rather than a blob."""
+    blob(ref: String!, path: String!): GitBlob
+
+    """Paginated commit log reachable from ref, optionally filtered to commits
+    touching path."""
+    commits(
+        """Returns the elements in the list that come after the specified cursor."""
+        after: String
+        """Returns the first _n_ elements from the list (max 100, default 20)."""
+        first: Int
+        """Branch name, tag name, full ref (e.g. refs/heads/main), or commit hash
+        to start the log from."""
+        ref: String!
+        """Restrict to commits that touched this path."""
+        path: String
+        """Restrict to commits authored on or after this timestamp."""
+        since: Time
+        """Restrict to commits authored before or on this timestamp."""
+        until: Time
+    ): GitCommitConnection!
+
+    """A single commit by hash."""
+    commit(hash: String!): GitCommit
+
+    """The most recent commit that touched each of the named entries in the
+    directory at path under ref. Use this to populate last-commit info on a
+    tree listing without blocking the initial tree fetch."""
+    lastCommits(ref: String!, path: String, names: [String!]!): [GitLastCommit!]!
+
     """List of valid labels."""
     validLabels(
         """Returns the elements in the list that come after the specified cursor."""

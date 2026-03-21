@@ -1070,6 +1070,18 @@ func (ec *executionContext) fieldContext_Query_repository(ctx context.Context, f
 				return ec.fieldContext_Repository_identity(ctx, field)
 			case "userIdentity":
 				return ec.fieldContext_Repository_userIdentity(ctx, field)
+			case "refs":
+				return ec.fieldContext_Repository_refs(ctx, field)
+			case "tree":
+				return ec.fieldContext_Repository_tree(ctx, field)
+			case "blob":
+				return ec.fieldContext_Repository_blob(ctx, field)
+			case "commits":
+				return ec.fieldContext_Repository_commits(ctx, field)
+			case "commit":
+				return ec.fieldContext_Repository_commit(ctx, field)
+			case "lastCommits":
+				return ec.fieldContext_Repository_lastCommits(ctx, field)
 			case "validLabels":
 				return ec.fieldContext_Repository_validLabels(ctx, field)
 			}

@@ -620,14 +620,14 @@ func RepoBrowseTest(t *testing.T, repo browsable) {
 		for _, f := range detail.Files {
 			filesByPath[f.Path] = f
 		}
-		assert.Equal(t, "modified", filesByPath["main.go"].Status)
-		assert.Equal(t, "added", filesByPath["src/util.go"].Status)
+		assert.Equal(t, ChangeStatusModified, filesByPath["main.go"].Status)
+		assert.Equal(t, ChangeStatusAdded, filesByPath["src/util.go"].Status)
 
 		// initial commit: diffs against empty tree, everything is "added"
 		initDetail, err := repo.CommitDetail(c1)
 		require.NoError(t, err)
 		for _, f := range initDetail.Files {
-			assert.Equal(t, "added", f.Status, "file %s", f.Path)
+			assert.Equal(t, ChangeStatusAdded, f.Status, "file %s", f.Path)
 		}
 
 		// unknown hash
@@ -650,7 +650,7 @@ func RepoBrowseTest(t *testing.T, repo browsable) {
 		var addedContent []string
 		for _, h := range fd.Hunks {
 			for _, l := range h.Lines {
-				if l.Type == "added" {
+				if l.Type == DiffLineAdded {
 					addedContent = append(addedContent, l.Content)
 				}
 			}
