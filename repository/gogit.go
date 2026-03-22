@@ -61,9 +61,10 @@ type GoGitRepo struct {
 	indexes      map[string]Index
 
 	// lastCommitCache caches LastCommitForEntries results keyed by
-	// "<startHash>\x00<path>". Git objects are content-addressed and
-	// immutable, so entries never need invalidation. The LRU bounds memory
-	// to lastCommitCacheSize unique (HEAD, directory) pairs.
+	// "<treeHash>\x00<path>". Git trees are content-addressed and
+	// immutable, so entries never need invalidation and can be shared
+	// across refs that point to the same directory tree. The LRU bounds
+	// memory to lastCommitCacheSize unique (treeHash, directory) pairs.
 	lastCommitCache *lru.Cache[string, map[string]CommitMeta]
 
 	keyring      Keyring
@@ -959,18 +960,36 @@ func commitToMeta(c *object.Commit) CommitMeta {
 	}
 }
 
-// resolveRefToHash resolves a branch/tag name or raw hash to a plumbing.Hash.
+// peelToCommit follows tag objects until it reaches a commit hash.
+// This is necessary for annotated tags, whose ref hash points to a tag object
+// rather than directly to a commit.
+func (repo *GoGitRepo) peelToCommit(h plumbing.Hash) (plumbing.Hash, error) {
+	for {
+		if _, err := repo.r.CommitObject(h); err == nil {
+			return h, nil
+		}
+		tagObj, err := repo.r.TagObject(h)
+		if err != nil {
+			return plumbing.ZeroHash, ErrNotFound
+		}
+		h = tagObj.Target
+	}
+}
+
+// resolveRefToHash resolves a branch/tag name or raw hash to a commit hash.
+// Resolution order: refs/heads/<ref>, refs/tags/<ref>, full ref name, raw commit hash.
+// Annotated tags are peeled to their target commit.
 func (repo *GoGitRepo) resolveRefToHash(ref string) (plumbing.Hash, error) {
 	for _, prefix := range []string{"refs/heads/", "refs/tags/"} {
 		r, err := repo.r.Reference(plumbing.ReferenceName(prefix+ref), true)
 		if err == nil {
-			return r.Hash(), nil
+			return repo.peelToCommit(r.Hash())
 		}
 	}
 	// try as a full ref name
 	r, err := repo.r.Reference(plumbing.ReferenceName(ref), true)
 	if err == nil {
-		return r.Hash(), nil
+		return repo.peelToCommit(r.Hash())
 	}
 	// try as a raw commit hash
 	h := plumbing.NewHash(ref)
@@ -982,26 +1001,36 @@ func (repo *GoGitRepo) resolveRefToHash(ref string) (plumbing.Hash, error) {
 	return plumbing.ZeroHash, ErrNotFound
 }
 
-// defaultBranchName returns the name of the default branch.
-// It checks HEAD first, then init.defaultBranch config, then falls back to "main".
-// Must be called without rMutex held.
+// defaultBranchName returns the short name of the default branch.
 func (repo *GoGitRepo) defaultBranchName() string {
-	// init.defaultBranch is a plain config read, no packfile access.
-	name := "main"
-	if val, err := repo.AnyConfig().ReadString("init.defaultBranch"); err == nil && val != "" {
-		name = val
-	}
-	// HEAD overrides the config value if it points to a branch.
 	repo.rMutex.Lock()
-	head, err := repo.r.Head()
-	repo.rMutex.Unlock()
-	if err == nil && head.Name().IsBranch() {
-		name = head.Name().Short()
+	defer repo.rMutex.Unlock()
+
+	// refs/remotes/origin/HEAD is a symbolic ref set by git clone that points
+	// to the remote's default branch (e.g. refs/remotes/origin/main). It is
+	// the most reliable signal for "what does the upstream consider default".
+	ref, err := repo.r.Reference("refs/remotes/origin/HEAD", false)
+	if err == nil && ref.Type() == plumbing.SymbolicReference {
+		const prefix = "refs/remotes/origin/"
+		if target := ref.Target().String(); strings.HasPrefix(target, prefix) {
+			return strings.TrimPrefix(target, prefix)
+		}
 	}
-	return name
+	// Fall back to well-known names for repos without a configured remote.
+	for _, name := range []string{"main", "master", "trunk", "develop"} {
+		_, err := repo.r.Reference(plumbing.NewBranchReferenceName(name), false)
+		if err == nil {
+			return name
+		}
+	}
+	return ""
 }
 
-// Branches returns all local branches with IsDefault marking the HEAD branch.
+// Branches returns all local branches. IsDefault marks the upstream's default
+// branch, determined in order:
+//  1. refs/remotes/origin/HEAD (set by git clone, reflects the server default)
+//  2. First match among: main, master, trunk, develop
+//  3. No branch marked if none of the above resolve
 func (repo *GoGitRepo) Branches() ([]BranchInfo, error) {
 	defaultBranch := repo.defaultBranchName()
 
@@ -1050,14 +1079,15 @@ func (repo *GoGitRepo) Tags() ([]TagInfo, error) {
 		if !r.Name().IsTag() {
 			return nil
 		}
-		hash := r.Hash()
-		// Dereference annotated tag objects to get the target commit hash.
-		if tagObj, err := repo.r.TagObject(hash); err == nil {
-			hash = tagObj.Target
+		// Peel to the target commit hash, handling arbitrarily nested tag objects.
+		commit, err := repo.peelToCommit(r.Hash())
+		if err != nil {
+			// Skip refs that don't resolve to a commit (shouldn't happen for tags).
+			return nil
 		}
 		tags = append(tags, TagInfo{
 			Name: r.Name().Short(),
-			Hash: Hash(hash.String()),
+			Hash: Hash(commit.String()),
 		})
 		return nil
 	})
@@ -1127,9 +1157,13 @@ func objectTypeFromFileMode(m filemode.FileMode) ObjectType {
 }
 
 // BlobAtPath returns the content, size, and git object hash of the file at
-// path under ref. The content is read fully under rMutex (go-git blob readers
-// use seek-based packfile access), then returned as an in-memory reader so
-// the caller can stream it without holding any locks.
+// path under ref. rMutex is held for the entire function, covering all
+// shared-Scanner access (CommitObject, Tree, File). The returned reader is
+// safe to use without the mutex: small blobs are already materialized into a
+// MemoryObject (bytes.Reader) by the time File() returns; large blobs come
+// back as an FSObject whose Reader() opens its own independent file handle and
+// Scanner and then reads via ReadAt — no shared state is touched after this
+// function returns. Callers must Close the reader.
 func (repo *GoGitRepo) BlobAtPath(ref, path string) (io.ReadCloser, int64, Hash, error) {
 	path = strings.Trim(path, "/")
 	if path == "" {
@@ -1151,23 +1185,16 @@ func (repo *GoGitRepo) BlobAtPath(ref, path string) (io.ReadCloser, int64, Hash,
 	if err != nil {
 		return nil, 0, "", err
 	}
-
 	f, err := tree.File(path)
 	if err != nil {
 		return nil, 0, "", ErrNotFound
 	}
-
 	r, err := f.Reader()
 	if err != nil {
 		return nil, 0, "", err
 	}
-	data, err := io.ReadAll(r)
-	r.Close()
-	if err != nil {
-		return nil, 0, "", err
-	}
 
-	return io.NopCloser(bytes.NewReader(data)), f.Blob.Size, Hash(f.Blob.Hash.String()), nil
+	return r, f.Blob.Size, Hash(f.Blob.Hash.String()), nil
 }
 
 // CommitLog returns at most limit commits reachable from ref, optionally
@@ -1303,12 +1330,13 @@ func (repo *GoGitRepo) LastCommitForEntries(ref, path string, names []string) (m
 		return result, nil
 	}
 
-	// Cache miss: walk history under rMutex.
-	remaining := make(map[string]bool, len(names))
-	for _, n := range names {
-		remaining[n] = true
+	// Cache miss: walk history for ALL entries in this directory so the
+	// cached result is complete and valid for any future name subset.
+	remaining := make(map[string]bool, len(startEntries))
+	for name := range startEntries {
+		remaining[name] = true
 	}
-	result := make(map[string]CommitMeta, len(names))
+	result := make(map[string]CommitMeta, len(remaining))
 
 	repo.rMutex.Lock()
 
@@ -1375,11 +1403,24 @@ func (repo *GoGitRepo) LastCommitForEntries(ref, path string, names []string) (m
 	iter.Close()
 	repo.rMutex.Unlock()
 
-	// Store the full result so future calls with the same (dirTree, path)
-	// but a different ref or name subset are served without a walk.
-	repo.lastCommitCache.Add(cacheKey, result)
+	// Store a defensive copy so that callers cannot mutate cached entries.
+	// The cached map contains all directory entries, not just the requested
+	// names, so future calls for the same directory are fully served from
+	// cache regardless of which names they request.
+	cached := make(map[string]CommitMeta, len(result))
+	for k, v := range result {
+		cached[k] = v
+	}
+	repo.lastCommitCache.Add(cacheKey, cached)
 
-	return result, nil
+	// Return only the entries that were requested.
+	filtered := make(map[string]CommitMeta, len(names))
+	for _, n := range names {
+		if m, ok := result[n]; ok {
+			filtered[n] = m
+		}
+	}
+	return filtered, nil
 }
 
 // CommitDetail returns the full commit metadata and list of changed files.

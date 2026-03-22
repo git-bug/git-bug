@@ -5,9 +5,9 @@ import (
 	"math/rand"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/git-bug/git-bug/util/lamport"
@@ -461,11 +461,11 @@ func RepoBrowseTest(t *testing.T, repo browsable) {
 			byName[b.Name] = b
 		}
 
-		assert.Equal(t, c3, byName["main"].Hash)
-		assert.True(t, byName["main"].IsDefault)
+		require.Equal(t, c3, byName["main"].Hash)
+		require.True(t, byName["main"].IsDefault)
 
-		assert.Equal(t, c2, byName["feature"].Hash)
-		assert.False(t, byName["feature"].IsDefault)
+		require.Equal(t, c2, byName["feature"].Hash)
+		require.False(t, byName["feature"].IsDefault)
 	})
 
 	// ── Tags ──────────────────────────────────────────────────────────────────
@@ -474,8 +474,8 @@ func RepoBrowseTest(t *testing.T, repo browsable) {
 		tags, err := repo.Tags()
 		require.NoError(t, err)
 		require.Len(t, tags, 1)
-		assert.Equal(t, "v1.0", tags[0].Name)
-		assert.Equal(t, c1, tags[0].Hash)
+		require.Equal(t, "v1.0", tags[0].Name)
+		require.Equal(t, c1, tags[0].Hash)
 	})
 
 	// ── TreeAtPath ────────────────────────────────────────────────────────────
@@ -487,9 +487,9 @@ func RepoBrowseTest(t *testing.T, repo browsable) {
 		for _, e := range entries {
 			byName[e.Name] = e
 		}
-		assert.Equal(t, Blob, byName["README.md"].ObjectType)
-		assert.Equal(t, Blob, byName["main.go"].ObjectType)
-		assert.Equal(t, Tree, byName["src"].ObjectType)
+		require.Equal(t, Blob, byName["README.md"].ObjectType)
+		require.Equal(t, Blob, byName["main.go"].ObjectType)
+		require.Equal(t, Tree, byName["src"].ObjectType)
 
 		// subdirectory
 		srcEntries, err := repo.TreeAtPath("main", "src")
@@ -498,14 +498,14 @@ func RepoBrowseTest(t *testing.T, repo browsable) {
 		for _, e := range srcEntries {
 			srcByName[e.Name] = e
 		}
-		assert.Equal(t, Blob, srcByName["lib.go"].ObjectType)
-		assert.Equal(t, Blob, srcByName["util.go"].ObjectType)
+		require.Equal(t, Blob, srcByName["lib.go"].ObjectType)
+		require.Equal(t, Blob, srcByName["util.go"].ObjectType)
 
 		// v1.0 tag (at c1) predates util.go — src only has lib.go
 		v1Src, err := repo.TreeAtPath("v1.0", "src")
 		require.NoError(t, err)
 		require.Len(t, v1Src, 1)
-		assert.Equal(t, "lib.go", v1Src[0].Name)
+		require.Equal(t, "lib.go", v1Src[0].Name)
 
 		// unknown ref
 		_, err = repo.TreeAtPath("nonexistent-ref", "")
@@ -524,9 +524,9 @@ func RepoBrowseTest(t *testing.T, repo browsable) {
 		defer rc.Close()
 		data, err := io.ReadAll(rc)
 		require.NoError(t, err)
-		assert.Equal(t, readmeV3, data)
-		assert.Equal(t, int64(len(readmeV3)), size)
-		assert.NotEmpty(t, hash)
+		require.Equal(t, readmeV3, data)
+		require.Equal(t, int64(len(readmeV3)), size)
+		require.NotEmpty(t, hash)
 
 		// feature branch still has readmeV1
 		rc2, _, _, err := repo.BlobAtPath("feature", "README.md")
@@ -534,7 +534,7 @@ func RepoBrowseTest(t *testing.T, repo browsable) {
 		data2, err := io.ReadAll(rc2)
 		rc2.Close()
 		require.NoError(t, err)
-		assert.Equal(t, readmeV1, data2)
+		require.Equal(t, readmeV1, data2)
 
 		// file in subdirectory
 		rc3, _, _, err := repo.BlobAtPath("main", "src/lib.go")
@@ -542,11 +542,23 @@ func RepoBrowseTest(t *testing.T, repo browsable) {
 		data3, err := io.ReadAll(rc3)
 		rc3.Close()
 		require.NoError(t, err)
-		assert.Equal(t, libV1, data3)
+		require.Equal(t, libV1, data3)
 
 		// path not found
 		_, _, _, err = repo.BlobAtPath("main", "nonexistent.go")
 		require.ErrorIs(t, err, ErrNotFound)
+
+		// hash is stable across calls for the same content
+		rc4, _, hash2, err := repo.BlobAtPath("main", "README.md")
+		require.NoError(t, err)
+		rc4.Close()
+		require.Equal(t, hash, hash2, "blob hash should be stable across calls")
+
+		// different content → different hash
+		rc5, _, hashLib, err := repo.BlobAtPath("main", "src/lib.go")
+		require.NoError(t, err)
+		rc5.Close()
+		require.NotEqual(t, hash, hashLib, "different files should have different hashes")
 	})
 
 	// ── CommitLog ─────────────────────────────────────────────────────────────
@@ -556,29 +568,62 @@ func RepoBrowseTest(t *testing.T, repo browsable) {
 		commits, err := repo.CommitLog("main", "", 10, "", nil, nil)
 		require.NoError(t, err)
 		require.Len(t, commits, 3)
-		assert.Equal(t, c3, commits[0].Hash)
-		assert.Equal(t, c2, commits[1].Hash)
-		assert.Equal(t, c1, commits[2].Hash)
+		require.Equal(t, c3, commits[0].Hash)
+		require.Equal(t, c2, commits[1].Hash)
+		require.Equal(t, c1, commits[2].Hash)
 
 		// limit
 		limited, err := repo.CommitLog("main", "", 2, "", nil, nil)
 		require.NoError(t, err)
 		require.Len(t, limited, 2)
-		assert.Equal(t, c3, limited[0].Hash)
-		assert.Equal(t, c2, limited[1].Hash)
+		require.Equal(t, c3, limited[0].Hash)
+		require.Equal(t, c2, limited[1].Hash)
 
 		// after cursor (exclusive): start after c3 → get c2, c1
 		after, err := repo.CommitLog("main", "", 10, c3, nil, nil)
 		require.NoError(t, err)
 		require.Len(t, after, 2)
-		assert.Equal(t, c2, after[0].Hash)
-		assert.Equal(t, c1, after[1].Hash)
+		require.Equal(t, c2, after[0].Hash)
+		require.Equal(t, c1, after[1].Hash)
 
 		// feature branch only has c1, c2
 		featureLog, err := repo.CommitLog("feature", "", 10, "", nil, nil)
 		require.NoError(t, err)
 		require.Len(t, featureLog, 2)
-		assert.Equal(t, c2, featureLog[0].Hash)
+		require.Equal(t, c2, featureLog[0].Hash)
+
+		// path filtering: only commits that touched the given path
+		// README.md was created in c1 and updated in c3
+		readmeLog, err := repo.CommitLog("main", "README.md", 10, "", nil, nil)
+		require.NoError(t, err)
+		require.Len(t, readmeLog, 2)
+		require.Equal(t, c3, readmeLog[0].Hash)
+		require.Equal(t, c1, readmeLog[1].Hash)
+	})
+
+	t.Run("CommitLog/since-until", func(t *testing.T) {
+		// since = far future → no commits
+		future := time.Now().Add(24 * time.Hour)
+		none, err := repo.CommitLog("main", "", 10, "", &future, nil)
+		require.NoError(t, err)
+		require.Empty(t, none, "since=future should return no commits")
+
+		// until = zero time (long before any real commit) → no commits
+		zero := time.Time{}
+		none2, err := repo.CommitLog("main", "", 10, "", nil, &zero)
+		require.NoError(t, err)
+		require.Empty(t, none2, "until=zero should return no commits")
+
+		// Both bounds open → all commits returned (filtering is a no-op)
+		all, err := repo.CommitLog("main", "", 10, "", nil, nil)
+		require.NoError(t, err)
+		require.Len(t, all, 3, "nil since/until should return all commits")
+
+		// since = far past and until = far future → all commits still returned
+		past := time.Unix(0, 0)
+		all2, err := repo.CommitLog("main", "", 10, "", &past, &future)
+		require.NoError(t, err)
+		require.Len(t, all2, 3, "wide since/until bounds should return all commits")
 	})
 
 	// ── LastCommitForEntries ──────────────────────────────────────────────────
@@ -588,25 +633,47 @@ func RepoBrowseTest(t *testing.T, repo browsable) {
 		require.NoError(t, err)
 
 		// README.md was last changed in c3
-		assert.Equal(t, c3, result["README.md"].Hash)
+		require.Equal(t, c3, result["README.md"].Hash)
 		// main.go was last changed in c2
-		assert.Equal(t, c2, result["main.go"].Hash)
+		require.Equal(t, c2, result["main.go"].Hash)
 		// src tree changed in c2 (util.go added)
-		assert.Equal(t, c2, result["src"].Hash)
+		require.Equal(t, c2, result["src"].Hash)
 
 		// subdirectory: last commits for entries in src/
 		srcResult, err := repo.LastCommitForEntries("main", "src", []string{"lib.go", "util.go"})
 		require.NoError(t, err)
 		// lib.go was added in c1 and never changed
-		assert.Equal(t, c1, srcResult["lib.go"].Hash)
+		require.Equal(t, c1, srcResult["lib.go"].Hash)
 		// util.go was added in c2
-		assert.Equal(t, c2, srcResult["util.go"].Hash)
+		require.Equal(t, c2, srcResult["util.go"].Hash)
 
 		// requesting a name that doesn't exist returns no entry for it
 		partial, err := repo.LastCommitForEntries("main", "", []string{"README.md", "ghost.txt"})
 		require.NoError(t, err)
-		assert.Contains(t, partial, "README.md")
-		assert.NotContains(t, partial, "ghost.txt")
+		require.Contains(t, partial, "README.md")
+		require.NotContains(t, partial, "ghost.txt")
+	})
+
+	t.Run("LastCommitForEntries/cache-subset", func(t *testing.T) {
+		// First call with one name — seeds (or hits) the cache for this directory.
+		r1, err := repo.LastCommitForEntries("main", "", []string{"README.md"})
+		require.NoError(t, err)
+		require.Contains(t, r1, "README.md")
+		require.Equal(t, c3, r1["README.md"].Hash)
+
+		// Second call for the same directory but a different name.
+		// A buggy implementation that caches only the requested subset would
+		// return an empty map here (cache hit, but "main.go" was never stored).
+		r2, err := repo.LastCommitForEntries("main", "", []string{"main.go"})
+		require.NoError(t, err)
+		require.Contains(t, r2, "main.go", "second call with different name should hit correct result, not empty cache")
+		require.Equal(t, c2, r2["main.go"].Hash)
+
+		// Third call requesting both names should also work.
+		r3, err := repo.LastCommitForEntries("main", "", []string{"README.md", "main.go"})
+		require.NoError(t, err)
+		require.Equal(t, c3, r3["README.md"].Hash)
+		require.Equal(t, c2, r3["main.go"].Hash)
 	})
 
 	// ── CommitDetail ──────────────────────────────────────────────────────────
@@ -614,21 +681,21 @@ func RepoBrowseTest(t *testing.T, repo browsable) {
 	t.Run("CommitDetail", func(t *testing.T) {
 		detail, err := repo.CommitDetail(c2)
 		require.NoError(t, err)
-		assert.Equal(t, c2, detail.Hash)
-		assert.Equal(t, []Hash{c1}, detail.Parents)
+		require.Equal(t, c2, detail.Hash)
+		require.Equal(t, []Hash{c1}, detail.Parents)
 
 		filesByPath := make(map[string]ChangedFile)
 		for _, f := range detail.Files {
 			filesByPath[f.Path] = f
 		}
-		assert.Equal(t, ChangeStatusModified, filesByPath["main.go"].Status)
-		assert.Equal(t, ChangeStatusAdded, filesByPath["src/util.go"].Status)
+		require.Equal(t, ChangeStatusModified, filesByPath["main.go"].Status)
+		require.Equal(t, ChangeStatusAdded, filesByPath["src/util.go"].Status)
 
 		// initial commit: diffs against empty tree, everything is "added"
 		initDetail, err := repo.CommitDetail(c1)
 		require.NoError(t, err)
 		for _, f := range initDetail.Files {
-			assert.Equal(t, ChangeStatusAdded, f.Status, "file %s", f.Path)
+			require.Equal(t, ChangeStatusAdded, f.Status, "file %s", f.Path)
 		}
 
 		// unknown hash
@@ -641,10 +708,10 @@ func RepoBrowseTest(t *testing.T, repo browsable) {
 	t.Run("CommitFileDiff", func(t *testing.T) {
 		fd, err := repo.CommitFileDiff(c2, "main.go")
 		require.NoError(t, err)
-		assert.Equal(t, "main.go", fd.Path)
-		assert.False(t, fd.IsBinary)
-		assert.False(t, fd.IsNew)
-		assert.False(t, fd.IsDelete)
+		require.Equal(t, "main.go", fd.Path)
+		require.False(t, fd.IsBinary)
+		require.False(t, fd.IsNew)
+		require.False(t, fd.IsDelete)
 		require.NotEmpty(t, fd.Hunks)
 
 		// find the added lines
@@ -656,13 +723,13 @@ func RepoBrowseTest(t *testing.T, repo browsable) {
 				}
 			}
 		}
-		assert.Contains(t, addedContent, "// updated")
+		require.Contains(t, addedContent, "// updated")
 
 		// new file in initial commit
 		initFD, err := repo.CommitFileDiff(c1, "main.go")
 		require.NoError(t, err)
-		assert.True(t, initFD.IsNew)
-		assert.Equal(t, "main.go", initFD.Path)
+		require.True(t, initFD.IsNew)
+		require.Equal(t, "main.go", initFD.Path)
 
 		// file not in this commit's diff
 		_, err = repo.CommitFileDiff(c3, "main.go")

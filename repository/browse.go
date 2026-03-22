@@ -27,6 +27,8 @@ func (s ChangeStatus) MarshalGQL(w io.Writer) {
 		fmt.Fprint(w, strconv.Quote("DELETED"))
 	case ChangeStatusRenamed:
 		fmt.Fprint(w, strconv.Quote("RENAMED"))
+	default:
+		panic(fmt.Sprintf("unknown ChangeStatus value %q", string(s)))
 	}
 }
 
@@ -67,6 +69,8 @@ func (t DiffLineType) MarshalGQL(w io.Writer) {
 		fmt.Fprint(w, strconv.Quote("ADDED"))
 	case DiffLineDeleted:
 		fmt.Fprint(w, strconv.Quote("DELETED"))
+	default:
+		panic(fmt.Sprintf("unknown DiffLineType value %q", string(t)))
 	}
 }
 

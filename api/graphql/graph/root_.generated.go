@@ -3231,9 +3231,9 @@ type GitCommit
         first: Int
         """Returns the last _n_ elements from the list."""
         last: Int
-    ): GitChangedFileConnection! @goField(forceResolver: true)
+    ): GitChangedFileConnection!
     """Unified diff for a single file in this commit."""
-    diff(path: String!): GitFileDiff @goField(forceResolver: true) #  TODO: use @defer instead
+    diff(path: String!): GitFileDiff
 }
 
 """The last commit that touched each requested entry in a directory."""
@@ -3326,7 +3326,8 @@ type GitDiffLine
 # ── enums ─────────────────────────────────────────────────────────────────────
 
 """The kind of git reference: a branch or a tag."""
-enum GitRefType @goModel(model: "github.com/git-bug/git-bug/api/graphql/models.GitRefType") {
+enum GitRefType
+@goModel(model: "github.com/git-bug/git-bug/api/graphql/models.GitRefType") {
     """A local branch (refs/heads/*)."""
     BRANCH @goEnum(value: "github.com/git-bug/git-bug/api/graphql/models.GitRefTypeBranch")
     """An annotated or lightweight tag (refs/tags/*)."""
@@ -3334,7 +3335,8 @@ enum GitRefType @goModel(model: "github.com/git-bug/git-bug/api/graphql/models.G
 }
 
 """The type of object a git tree entry points to."""
-enum GitObjectType @goModel(model: "github.com/git-bug/git-bug/repository.ObjectType") {
+enum GitObjectType
+@goModel(model: "github.com/git-bug/git-bug/repository.ObjectType") {
     """A directory."""
     TREE
     """A regular or executable file."""
@@ -3346,7 +3348,8 @@ enum GitObjectType @goModel(model: "github.com/git-bug/git-bug/repository.Object
 }
 
 """How a file was affected by a commit."""
-enum GitChangeStatus @goModel(model: "github.com/git-bug/git-bug/repository.ChangeStatus") {
+enum GitChangeStatus
+@goModel(model: "github.com/git-bug/git-bug/repository.ChangeStatus") {
     """File was created in this commit."""
     ADDED
     """File content changed in this commit."""
@@ -3358,7 +3361,8 @@ enum GitChangeStatus @goModel(model: "github.com/git-bug/git-bug/repository.Chan
 }
 
 """The role of a line within a unified diff hunk."""
-enum GitDiffLineType @goModel(model: "github.com/git-bug/git-bug/repository.DiffLineType") {
+enum GitDiffLineType
+@goModel(model: "github.com/git-bug/git-bug/repository.DiffLineType") {
     """An unchanged line present in both old and new versions."""
     CONTEXT
     """A line added in the new version."""

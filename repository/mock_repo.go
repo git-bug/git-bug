@@ -227,6 +227,8 @@ type commit struct {
 	treeHash Hash
 	parents  []Hash
 	sig      string
+	date     time.Time
+	message  string
 }
 
 type mockRepoDataBrowse struct {
@@ -319,6 +321,7 @@ func (r *mockRepoDataBrowse) StoreSignedCommit(treeHash Hash, signKey *openpgp.E
 	c := commit{
 		treeHash: treeHash,
 		parents:  parents,
+		date:     time.Now(),
 	}
 	if signKey != nil {
 		// unlike go-git, we only sign the tree hash for simplicity instead of all the fields (parents ...)
@@ -404,10 +407,10 @@ func (r *mockRepoDataBrowse) ListCommits(ref string) ([]Hash, error) {
 	return nonNativeListCommits(r, ref)
 }
 
-// resolveRef tries the ref as-is, then with refs/heads/ and refs/tags/ prefixes,
-// then as a raw commit hash.
+// resolveRef resolves a ref matching the RepoBrowse contract:
+// refs/heads/<ref>, refs/tags/<ref>, full ref name, raw commit hash.
 func (r *mockRepoDataBrowse) resolveRef(ref string) (Hash, error) {
-	for _, candidate := range []string{ref, "refs/heads/" + ref, "refs/tags/" + ref} {
+	for _, candidate := range []string{"refs/heads/" + ref, "refs/tags/" + ref, ref} {
 		if h, ok := r.refs[candidate]; ok {
 			return h, nil
 		}
@@ -526,7 +529,12 @@ func (r *mockRepoDataBrowse) diffTrees(fromHash, toHash Hash, prefix string) []C
 }
 
 func mockCommitMeta(hash Hash, c commit) CommitMeta {
-	return CommitMeta{Hash: hash, Parents: c.parents}
+	return CommitMeta{
+		Hash:    hash,
+		Parents: c.parents,
+		Date:    c.date,
+		Message: c.message,
+	}
 }
 
 func (r *mockRepoDataBrowse) Branches() ([]BranchInfo, error) {
@@ -589,13 +597,12 @@ func (r *mockRepoDataBrowse) BlobAtPath(ref, path string) (io.ReadCloser, int64,
 	return io.NopCloser(bytes.NewReader(data)), int64(len(data)), blobHash, nil
 }
 
-// CommitLog walks the first-parent chain from ref. Path filtering is not
-// implemented in this mock.
-func (r *mockRepoDataBrowse) CommitLog(ref, _ string, limit int, after Hash, since, until *time.Time) ([]CommitMeta, error) {
+func (r *mockRepoDataBrowse) CommitLog(ref, path string, limit int, after Hash, since, until *time.Time) ([]CommitMeta, error) {
 	startHash, err := r.resolveRef(ref)
 	if err != nil {
 		return nil, ErrNotFound
 	}
+	path = strings.Trim(path, "/")
 	var result []CommitMeta
 	skipping := after != ""
 	current := startHash
@@ -633,6 +640,28 @@ func (r *mockRepoDataBrowse) CommitLog(ref, _ string, limit int, after Hash, sin
 			}
 			current = c.parents[0]
 			continue
+		}
+		if path != "" {
+			var fromTreeHash Hash
+			if len(c.parents) > 0 {
+				if parent, ok := r.commits[c.parents[0]]; ok {
+					fromTreeHash = parent.treeHash
+				}
+			}
+			touched := false
+			for _, f := range r.diffTrees(fromTreeHash, c.treeHash, "") {
+				if f.Path == path || strings.HasPrefix(f.Path, path+"/") {
+					touched = true
+					break
+				}
+			}
+			if !touched {
+				if len(c.parents) == 0 {
+					break
+				}
+				current = c.parents[0]
+				continue
+			}
 		}
 		result = append(result, meta)
 		if limit > 0 && len(result) >= limit {

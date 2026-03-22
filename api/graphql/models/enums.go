@@ -11,16 +11,11 @@ import (
 type GitRefType string
 
 const (
-	// A local branch (refs/heads/*).
+	// GitRefTypeBranch refers to a local branch (refs/heads/*).
 	GitRefTypeBranch GitRefType = "BRANCH"
-	// An annotated or lightweight tag (refs/tags/*).
+	// GitRefTypeTag refers to an annotated or lightweight tag (refs/tags/*).
 	GitRefTypeTag GitRefType = "TAG"
 )
-
-var AllGitRefType = []GitRefType{
-	GitRefTypeBranch,
-	GitRefTypeTag,
-}
 
 func (e GitRefType) IsValid() bool {
 	switch e {

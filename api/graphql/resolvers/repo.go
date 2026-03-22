@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"math"
+	"sort"
 	"time"
 
 	"github.com/git-bug/git-bug/api/auth"
@@ -230,6 +232,14 @@ func (repoResolver) Refs(_ context.Context, obj *models.Repository, after *strin
 		}
 	}
 
+	// Sort by type (branches before tags) then by short name for stable cursors.
+	sort.Slice(refs, func(i, j int) bool {
+		if refs[i].Type != refs[j].Type {
+			return refs[i].Type < refs[j].Type
+		}
+		return refs[i].ShortName < refs[j].ShortName
+	})
+
 	input := models.ConnectionInput{After: after, Before: before, First: first, Last: last}
 	edger := func(r *models.GitRef, offset int) connections.Edge {
 		return connections.CursorEdge{Cursor: connections.OffsetToCursor(offset)}
@@ -271,16 +281,25 @@ func (repoResolver) Blob(_ context.Context, obj *models.Repository, ref string, 
 		return nil, err
 	}
 
+	// Binary detection: same heuristic as git — a null byte anywhere in the
+	// content means binary. Git caps its probe at 8000 bytes; we probe all
+	// bytes read (up to blobTruncateSize+1) before slicing, so a NUL in the
+	// extra byte also triggers the flag. Files whose first blobTruncateSize
+	// bytes are all non-NUL will be reported as text even if the remainder is
+	// binary; this is a documented prefix-based heuristic.
+	isBinary := bytes.IndexByte(data, 0) >= 0
+
 	isTruncated := int64(len(data)) > blobTruncateSize
 	if isTruncated {
 		data = data[:blobTruncateSize]
 	}
 
-	isBinary := bytes.IndexByte(data, 0) >= 0
 	blob := &models.GitBlob{
-		Path:        path,
-		Hash:        string(hash),
-		Size:        int(size),
+		Path: path,
+		Hash: string(hash),
+		// GraphQL Int is 32-bit; clamp to avoid overflow on 32-bit platforms or for
+		// exceptionally large files (which will be truncated anyway).
+		Size:        int(min(size, int64(math.MaxInt32))),
 		IsBinary:    isBinary,
 		IsTruncated: isTruncated,
 	}
@@ -302,10 +321,17 @@ func (repoResolver) Commits(_ context.Context, obj *models.Repository, after *st
 		p = *path
 	}
 
-	limit := 0
+	const defaultFirst = 20
+	const maxFirst = 100
+
+	n := defaultFirst
 	if first != nil {
-		limit = *first + 1 // fetch one extra to detect hasNextPage
+		n = *first
+		if n > maxFirst {
+			n = maxFirst
+		}
 	}
+	limit := n + 1 // fetch one extra to detect hasNextPage
 
 	var afterHash repository.Hash
 	if after != nil {
@@ -318,9 +344,9 @@ func (repoResolver) Commits(_ context.Context, obj *models.Repository, after *st
 	}
 
 	hasNextPage := false
-	if first != nil && len(commits) > *first {
+	if len(commits) > n {
 		hasNextPage = true
-		commits = commits[:*first]
+		commits = commits[:n]
 	}
 
 	nodes := make([]*models.GitCommitMeta, len(commits))
@@ -343,7 +369,7 @@ func (repoResolver) Commits(_ context.Context, obj *models.Repository, after *st
 			StartCursor:     startCursor,
 			EndCursor:       endCursor,
 		},
-		TotalCount: 0, // unknown without full walk
+		TotalCount: len(nodes), // lower bound; exact total unknown without full walk
 	}, nil
 }
 
@@ -366,10 +392,13 @@ func (repoResolver) LastCommits(_ context.Context, obj *models.Repository, ref s
 	if err != nil {
 		return nil, err
 	}
-	result := make([]*models.GitLastCommit, 0, len(byName))
-	for name, meta := range byName {
-		m := meta
-		result = append(result, &models.GitLastCommit{Name: name, Commit: &models.GitCommitMeta{Repo: obj.Repo, CommitMeta: m}})
+	// Iterate over the input names to preserve caller-specified order.
+	result := make([]*models.GitLastCommit, 0, len(names))
+	for _, name := range names {
+		if meta, ok := byName[name]; ok {
+			m := meta
+			result = append(result, &models.GitLastCommit{Name: name, Commit: &models.GitCommitMeta{Repo: obj.Repo, CommitMeta: m}})
+		}
 	}
 	return result, nil
 }

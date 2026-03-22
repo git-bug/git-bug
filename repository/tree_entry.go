@@ -80,6 +80,8 @@ func (ot ObjectType) MarshalGQL(w io.Writer) {
 		fmt.Fprint(w, strconv.Quote("SYMLINK"))
 	case Submodule:
 		fmt.Fprint(w, strconv.Quote("SUBMODULE"))
+	default:
+		panic(fmt.Sprintf("unknown ObjectType value %d", int(ot)))
 	}
 }
 
