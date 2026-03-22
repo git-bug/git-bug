@@ -49,10 +49,7 @@ type ResolverRoot interface {
 	BugSetTitleOperation() BugSetTitleOperationResolver
 	BugSetTitleTimelineItem() BugSetTitleTimelineItemResolver
 	Color() ColorResolver
-	GitChangedFile() GitChangedFileResolver
 	GitCommit() GitCommitResolver
-	GitDiffLine() GitDiffLineResolver
-	GitTreeEntry() GitTreeEntryResolver
 	Identity() IdentityResolver
 	Label() LabelResolver
 	Mutation() MutationResolver
@@ -382,9 +379,9 @@ type ComplexityRoot struct {
 	}
 
 	GitTreeEntry struct {
-		Hash func(childComplexity int) int
-		Name func(childComplexity int) int
-		Type func(childComplexity int) int
+		Hash       func(childComplexity int) int
+		Name       func(childComplexity int) int
+		ObjectType func(childComplexity int) int
 	}
 
 	Identity struct {
@@ -1886,11 +1883,11 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		return e.complexity.GitTreeEntry.Name(childComplexity), true
 
 	case "GitTreeEntry.type":
-		if e.complexity.GitTreeEntry.Type == nil {
+		if e.complexity.GitTreeEntry.ObjectType == nil {
 			break
 		}
 
-		return e.complexity.GitTreeEntry.Type(childComplexity), true
+		return e.complexity.GitTreeEntry.ObjectType(childComplexity), true
 
 	case "Identity.avatarUrl":
 		if e.complexity.Identity.AvatarUrl == nil {
@@ -3154,6 +3151,10 @@ directive @goTag(
     key: String!
     value: String
 ) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+
+directive @goEnum(
+    value: String
+) on ENUM_VALUE
 `, BuiltIn: false},
 	{Name: "../schema/git.graphql", Input: `"""A git branch or tag reference."""
 type GitRef {
@@ -3175,7 +3176,7 @@ type GitTreeEntry
     """File or directory name within the parent tree."""
     name: String!
     """Whether this entry is a file, directory, symlink, or submodule."""
-    type: GitObjectType!
+    type: GitObjectType! @goField(name: "ObjectType")
     """Git object hash."""
     hash: String!
 }
@@ -3325,15 +3326,15 @@ type GitDiffLine
 # ── enums ─────────────────────────────────────────────────────────────────────
 
 """The kind of git reference: a branch or a tag."""
-enum GitRefType {
+enum GitRefType @goModel(model: "github.com/git-bug/git-bug/api/graphql/models.GitRefType") {
     """A local branch (refs/heads/*)."""
-    BRANCH
+    BRANCH @goEnum(value: "github.com/git-bug/git-bug/api/graphql/models.GitRefTypeBranch")
     """An annotated or lightweight tag (refs/tags/*)."""
-    TAG
+    TAG @goEnum(value: "github.com/git-bug/git-bug/api/graphql/models.GitRefTypeTag")
 }
 
 """The type of object a git tree entry points to."""
-enum GitObjectType {
+enum GitObjectType @goModel(model: "github.com/git-bug/git-bug/repository.ObjectType") {
     """A directory."""
     TREE
     """A regular or executable file."""
@@ -3345,7 +3346,7 @@ enum GitObjectType {
 }
 
 """How a file was affected by a commit."""
-enum GitChangeStatus {
+enum GitChangeStatus @goModel(model: "github.com/git-bug/git-bug/repository.ChangeStatus") {
     """File was created in this commit."""
     ADDED
     """File content changed in this commit."""
@@ -3357,7 +3358,7 @@ enum GitChangeStatus {
 }
 
 """The role of a line within a unified diff hunk."""
-enum GitDiffLineType {
+enum GitDiffLineType @goModel(model: "github.com/git-bug/git-bug/repository.DiffLineType") {
     """An unchanged line present in both old and new versions."""
     CONTEXT
     """A line added in the new version."""

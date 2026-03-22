@@ -63,14 +63,3 @@ func (r RootResolver) GitCommit() graph.GitCommitResolver {
 	}
 }
 
-func (RootResolver) GitChangedFile() graph.GitChangedFileResolver {
-	return &gitChangedFileResolver{}
-}
-
-func (RootResolver) GitDiffLine() graph.GitDiffLineResolver {
-	return &gitDiffLineResolver{}
-}
-
-func (RootResolver) GitTreeEntry() graph.GitTreeEntryResolver {
-	return &gitTreeEntryResolver{}
-}

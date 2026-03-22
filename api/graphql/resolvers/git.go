@@ -12,8 +12,6 @@ import (
 
 const blobTruncateSize = 1 << 20 // 1 MiB
 
-// ── gitCommitResolver ────────────────────────────────────────────────────────
-
 var _ graph.GitCommitResolver = &gitCommitResolver{}
 
 type gitCommitResolver struct {
@@ -82,61 +80,4 @@ func (r gitCommitResolver) Diff(_ context.Context, obj *models.GitCommitMeta, pa
 		return nil, err
 	}
 	return &fd, nil
-}
-
-// ── gitChangedFileResolver ───────────────────────────────────────────────────
-
-var _ graph.GitChangedFileResolver = &gitChangedFileResolver{}
-
-type gitChangedFileResolver struct{}
-
-func (gitChangedFileResolver) Status(_ context.Context, obj *repository.ChangedFile) (models.GitChangeStatus, error) {
-	switch obj.Status {
-	case repository.ChangeStatusAdded:
-		return models.GitChangeStatusAdded, nil
-	case repository.ChangeStatusModified:
-		return models.GitChangeStatusModified, nil
-	case repository.ChangeStatusDeleted:
-		return models.GitChangeStatusDeleted, nil
-	case repository.ChangeStatusRenamed:
-		return models.GitChangeStatusRenamed, nil
-	default:
-		return models.GitChangeStatusModified, nil
-	}
-}
-
-// ── gitDiffLineResolver ──────────────────────────────────────────────────────
-
-var _ graph.GitDiffLineResolver = &gitDiffLineResolver{}
-
-type gitDiffLineResolver struct{}
-
-func (gitDiffLineResolver) Type(_ context.Context, obj *repository.DiffLine) (models.GitDiffLineType, error) {
-	switch obj.Type {
-	case repository.DiffLineAdded:
-		return models.GitDiffLineTypeAdded, nil
-	case repository.DiffLineDeleted:
-		return models.GitDiffLineTypeDeleted, nil
-	default:
-		return models.GitDiffLineTypeContext, nil
-	}
-}
-
-// ── gitTreeEntryResolver ─────────────────────────────────────────────────────
-
-var _ graph.GitTreeEntryResolver = &gitTreeEntryResolver{}
-
-type gitTreeEntryResolver struct{}
-
-func (gitTreeEntryResolver) Type(_ context.Context, obj *repository.TreeEntry) (models.GitObjectType, error) {
-	switch obj.ObjectType {
-	case repository.Tree:
-		return models.GitObjectTypeTree, nil
-	case repository.Symlink:
-		return models.GitObjectTypeSymlink, nil
-	case repository.Submodule:
-		return models.GitObjectTypeSubmodule, nil
-	default:
-		return models.GitObjectTypeBlob, nil
-	}
 }

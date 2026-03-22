@@ -19,9 +19,6 @@ import (
 
 // region    ************************** generated!.gotpl **************************
 
-type GitChangedFileResolver interface {
-	Status(ctx context.Context, obj *repository.ChangedFile) (models.GitChangeStatus, error)
-}
 type GitCommitResolver interface {
 	ShortHash(ctx context.Context, obj *models.GitCommitMeta) (string, error)
 
@@ -30,12 +27,6 @@ type GitCommitResolver interface {
 	Parents(ctx context.Context, obj *models.GitCommitMeta) ([]string, error)
 	Files(ctx context.Context, obj *models.GitCommitMeta, after *string, before *string, first *int, last *int) (*models.GitChangedFileConnection, error)
 	Diff(ctx context.Context, obj *models.GitCommitMeta, path string) (*repository.FileDiff, error)
-}
-type GitDiffLineResolver interface {
-	Type(ctx context.Context, obj *repository.DiffLine) (models.GitDiffLineType, error)
-}
-type GitTreeEntryResolver interface {
-	Type(ctx context.Context, obj *repository.TreeEntry) (models.GitObjectType, error)
 }
 
 // endregion ************************** generated!.gotpl **************************
@@ -535,7 +526,7 @@ func (ec *executionContext) _GitChangedFile_status(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.GitChangedFile().Status(rctx, obj)
+		return obj.Status, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -547,17 +538,17 @@ func (ec *executionContext) _GitChangedFile_status(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(models.GitChangeStatus)
+	res := resTmp.(repository.ChangeStatus)
 	fc.Result = res
-	return ec.marshalNGitChangeStatus2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitChangeStatus(ctx, field.Selections, res)
+	return ec.marshalNGitChangeStatus2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐChangeStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_GitChangedFile_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "GitChangedFile",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type GitChangeStatus does not have child fields")
 		},
@@ -1604,7 +1595,7 @@ func (ec *executionContext) _GitDiffLine_type(ctx context.Context, field graphql
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.GitDiffLine().Type(rctx, obj)
+		return obj.Type, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1616,17 +1607,17 @@ func (ec *executionContext) _GitDiffLine_type(ctx context.Context, field graphql
 		}
 		return graphql.Null
 	}
-	res := resTmp.(models.GitDiffLineType)
+	res := resTmp.(repository.DiffLineType)
 	fc.Result = res
-	return ec.marshalNGitDiffLineType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitDiffLineType(ctx, field.Selections, res)
+	return ec.marshalNGitDiffLineType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐDiffLineType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_GitDiffLine_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "GitDiffLine",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type GitDiffLineType does not have child fields")
 		},
@@ -2581,7 +2572,7 @@ func (ec *executionContext) _GitTreeEntry_type(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.GitTreeEntry().Type(rctx, obj)
+		return obj.ObjectType, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2593,17 +2584,17 @@ func (ec *executionContext) _GitTreeEntry_type(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(models.GitObjectType)
+	res := resTmp.(repository.ObjectType)
 	fc.Result = res
-	return ec.marshalNGitObjectType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitObjectType(ctx, field.Selections, res)
+	return ec.marshalNGitObjectType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐObjectType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_GitTreeEntry_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "GitTreeEntry",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type GitObjectType does not have child fields")
 		},
@@ -2742,46 +2733,15 @@ func (ec *executionContext) _GitChangedFile(ctx context.Context, sel ast.Selecti
 		case "path":
 			out.Values[i] = ec._GitChangedFile_path(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "oldPath":
 			out.Values[i] = ec._GitChangedFile_oldPath(ctx, field, obj)
 		case "status":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._GitChangedFile_status(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._GitChangedFile_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
 			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3210,55 +3170,24 @@ func (ec *executionContext) _GitDiffLine(ctx context.Context, sel ast.SelectionS
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("GitDiffLine")
 		case "type":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._GitDiffLine_type(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._GitDiffLine_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
 			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "content":
 			out.Values[i] = ec._GitDiffLine_content(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "oldLine":
 			out.Values[i] = ec._GitDiffLine_oldLine(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "newLine":
 			out.Values[i] = ec._GitDiffLine_newLine(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -3510,48 +3439,17 @@ func (ec *executionContext) _GitTreeEntry(ctx context.Context, sel ast.Selection
 		case "name":
 			out.Values[i] = ec._GitTreeEntry_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "type":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._GitTreeEntry_type(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._GitTreeEntry_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
 			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "hash":
 			out.Values[i] = ec._GitTreeEntry_hash(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -3580,13 +3478,13 @@ func (ec *executionContext) _GitTreeEntry(ctx context.Context, sel ast.Selection
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) unmarshalNGitChangeStatus2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitChangeStatus(ctx context.Context, v any) (models.GitChangeStatus, error) {
-	var res models.GitChangeStatus
+func (ec *executionContext) unmarshalNGitChangeStatus2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐChangeStatus(ctx context.Context, v any) (repository.ChangeStatus, error) {
+	var res repository.ChangeStatus
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNGitChangeStatus2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitChangeStatus(ctx context.Context, sel ast.SelectionSet, v models.GitChangeStatus) graphql.Marshaler {
+func (ec *executionContext) marshalNGitChangeStatus2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐChangeStatus(ctx context.Context, sel ast.SelectionSet, v repository.ChangeStatus) graphql.Marshaler {
 	return v
 }
 
@@ -3822,13 +3720,13 @@ func (ec *executionContext) marshalNGitDiffLine2ᚕgithubᚗcomᚋgitᚑbugᚋgi
 	return ret
 }
 
-func (ec *executionContext) unmarshalNGitDiffLineType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitDiffLineType(ctx context.Context, v any) (models.GitDiffLineType, error) {
-	var res models.GitDiffLineType
+func (ec *executionContext) unmarshalNGitDiffLineType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐDiffLineType(ctx context.Context, v any) (repository.DiffLineType, error) {
+	var res repository.DiffLineType
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNGitDiffLineType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitDiffLineType(ctx context.Context, sel ast.SelectionSet, v models.GitDiffLineType) graphql.Marshaler {
+func (ec *executionContext) marshalNGitDiffLineType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐDiffLineType(ctx context.Context, sel ast.SelectionSet, v repository.DiffLineType) graphql.Marshaler {
 	return v
 }
 
@@ -3886,13 +3784,13 @@ func (ec *executionContext) marshalNGitLastCommit2ᚖgithubᚗcomᚋgitᚑbugᚋ
 	return ec._GitLastCommit(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNGitObjectType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitObjectType(ctx context.Context, v any) (models.GitObjectType, error) {
-	var res models.GitObjectType
+func (ec *executionContext) unmarshalNGitObjectType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐObjectType(ctx context.Context, v any) (repository.ObjectType, error) {
+	var res repository.ObjectType
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNGitObjectType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitObjectType(ctx context.Context, sel ast.SelectionSet, v models.GitObjectType) graphql.Marshaler {
+func (ec *executionContext) marshalNGitObjectType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐObjectType(ctx context.Context, sel ast.SelectionSet, v repository.ObjectType) graphql.Marshaler {
 	return v
 }
 
@@ -3965,14 +3863,32 @@ func (ec *executionContext) marshalNGitRefConnection2ᚖgithubᚗcomᚋgitᚑbug
 }
 
 func (ec *executionContext) unmarshalNGitRefType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitRefType(ctx context.Context, v any) (models.GitRefType, error) {
-	var res models.GitRefType
-	err := res.UnmarshalGQL(v)
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNGitRefType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitRefType[tmp]
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNGitRefType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitRefType(ctx context.Context, sel ast.SelectionSet, v models.GitRefType) graphql.Marshaler {
-	return v
+	_ = sel
+	res := graphql.MarshalString(marshalNGitRefType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitRefType[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
+
+var (
+	unmarshalNGitRefType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitRefType = map[string]models.GitRefType{
+		"BRANCH": models.GitRefTypeBranch,
+		"TAG":    models.GitRefTypeTag,
+	}
+	marshalNGitRefType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitRefType = map[models.GitRefType]string{
+		models.GitRefTypeBranch: "BRANCH",
+		models.GitRefTypeTag:    "TAG",
+	}
+)
 
 func (ec *executionContext) marshalNGitTreeEntry2ᚕᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐTreeEntryᚄ(ctx context.Context, sel ast.SelectionSet, v []*repository.TreeEntry) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
@@ -4053,16 +3969,30 @@ func (ec *executionContext) unmarshalOGitRefType2ᚖgithubᚗcomᚋgitᚑbugᚋg
 	if v == nil {
 		return nil, nil
 	}
-	var res = new(models.GitRefType)
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalOGitRefType2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitRefType[tmp]
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalOGitRefType2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitRefType(ctx context.Context, sel ast.SelectionSet, v *models.GitRefType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return v
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(marshalOGitRefType2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitRefType[*v])
+	return res
 }
+
+var (
+	unmarshalOGitRefType2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitRefType = map[string]models.GitRefType{
+		"BRANCH": models.GitRefTypeBranch,
+		"TAG":    models.GitRefTypeTag,
+	}
+	marshalOGitRefType2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitRefType = map[models.GitRefType]string{
+		models.GitRefTypeBranch: "BRANCH",
+		models.GitRefTypeTag:    "TAG",
+	}
+)
 
 // endregion ***************************** type.gotpl *****************************

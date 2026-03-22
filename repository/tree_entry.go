@@ -3,6 +3,8 @@ package repository
 import (
 	"bytes"
 	"fmt"
+	"io"
+	"strconv"
 	"strings"
 )
 
@@ -66,6 +68,39 @@ func (ot ObjectType) Format() string {
 	default:
 		panic("Unknown git object type")
 	}
+}
+
+func (ot ObjectType) MarshalGQL(w io.Writer) {
+	switch ot {
+	case Tree:
+		fmt.Fprint(w, strconv.Quote("TREE"))
+	case Blob, Executable:
+		fmt.Fprint(w, strconv.Quote("BLOB"))
+	case Symlink:
+		fmt.Fprint(w, strconv.Quote("SYMLINK"))
+	case Submodule:
+		fmt.Fprint(w, strconv.Quote("SUBMODULE"))
+	}
+}
+
+func (ot *ObjectType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+	switch str {
+	case "TREE":
+		*ot = Tree
+	case "BLOB":
+		*ot = Blob
+	case "SYMLINK":
+		*ot = Symlink
+	case "SUBMODULE":
+		*ot = Submodule
+	default:
+		return fmt.Errorf("%q is not a valid ObjectType", str)
+	}
+	return nil
 }
 
 func ParseObjectType(mode, objType string) (ObjectType, error) {

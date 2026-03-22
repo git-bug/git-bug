@@ -18,7 +18,7 @@ type GitTreeEntry
     """File or directory name within the parent tree."""
     name: String!
     """Whether this entry is a file, directory, symlink, or submodule."""
-    type: GitObjectType!
+    type: GitObjectType! @goField(name: "ObjectType")
     """Git object hash."""
     hash: String!
 }
@@ -168,15 +168,17 @@ type GitDiffLine
 # ── enums ─────────────────────────────────────────────────────────────────────
 
 """The kind of git reference: a branch or a tag."""
-enum GitRefType {
+enum GitRefType
+@goModel(model: "github.com/git-bug/git-bug/api/graphql/models.GitRefType") {
     """A local branch (refs/heads/*)."""
-    BRANCH
+    BRANCH @goEnum(value: "github.com/git-bug/git-bug/api/graphql/models.GitRefTypeBranch")
     """An annotated or lightweight tag (refs/tags/*)."""
-    TAG
+    TAG @goEnum(value: "github.com/git-bug/git-bug/api/graphql/models.GitRefTypeTag")
 }
 
 """The type of object a git tree entry points to."""
-enum GitObjectType {
+enum GitObjectType
+@goModel(model: "github.com/git-bug/git-bug/repository.ObjectType") {
     """A directory."""
     TREE
     """A regular or executable file."""
@@ -188,7 +190,8 @@ enum GitObjectType {
 }
 
 """How a file was affected by a commit."""
-enum GitChangeStatus {
+enum GitChangeStatus
+@goModel(model: "github.com/git-bug/git-bug/repository.ChangeStatus") {
     """File was created in this commit."""
     ADDED
     """File content changed in this commit."""
@@ -200,7 +203,8 @@ enum GitChangeStatus {
 }
 
 """The role of a line within a unified diff hunk."""
-enum GitDiffLineType {
+enum GitDiffLineType
+@goModel(model: "github.com/git-bug/git-bug/repository.DiffLineType") {
     """An unchanged line present in both old and new versions."""
     CONTEXT
     """A line added in the new version."""
