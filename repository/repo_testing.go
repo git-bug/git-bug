@@ -519,16 +519,17 @@ func RepoBrowseTest(t *testing.T, repo browsable) {
 	// ── BlobAtPath ────────────────────────────────────────────────────────────
 
 	t.Run("BlobAtPath", func(t *testing.T) {
-		rc, size, err := repo.BlobAtPath("main", "README.md")
+		rc, size, hash, err := repo.BlobAtPath("main", "README.md")
 		require.NoError(t, err)
 		defer rc.Close()
 		data, err := io.ReadAll(rc)
 		require.NoError(t, err)
 		assert.Equal(t, readmeV3, data)
 		assert.Equal(t, int64(len(readmeV3)), size)
+		assert.NotEmpty(t, hash)
 
 		// feature branch still has readmeV1
-		rc2, _, err := repo.BlobAtPath("feature", "README.md")
+		rc2, _, _, err := repo.BlobAtPath("feature", "README.md")
 		require.NoError(t, err)
 		data2, err := io.ReadAll(rc2)
 		rc2.Close()
@@ -536,7 +537,7 @@ func RepoBrowseTest(t *testing.T, repo browsable) {
 		assert.Equal(t, readmeV1, data2)
 
 		// file in subdirectory
-		rc3, _, err := repo.BlobAtPath("main", "src/lib.go")
+		rc3, _, _, err := repo.BlobAtPath("main", "src/lib.go")
 		require.NoError(t, err)
 		data3, err := io.ReadAll(rc3)
 		rc3.Close()
@@ -544,7 +545,7 @@ func RepoBrowseTest(t *testing.T, repo browsable) {
 		assert.Equal(t, libV1, data3)
 
 		// path not found
-		_, _, err = repo.BlobAtPath("main", "nonexistent.go")
+		_, _, _, err = repo.BlobAtPath("main", "nonexistent.go")
 		require.ErrorIs(t, err, ErrNotFound)
 	})
 
@@ -552,7 +553,7 @@ func RepoBrowseTest(t *testing.T, repo browsable) {
 
 	t.Run("CommitLog", func(t *testing.T) {
 		// all commits, newest first
-		commits, err := repo.CommitLog("main", "", 10, "")
+		commits, err := repo.CommitLog("main", "", 10, "", nil, nil)
 		require.NoError(t, err)
 		require.Len(t, commits, 3)
 		assert.Equal(t, c3, commits[0].Hash)
@@ -560,21 +561,21 @@ func RepoBrowseTest(t *testing.T, repo browsable) {
 		assert.Equal(t, c1, commits[2].Hash)
 
 		// limit
-		limited, err := repo.CommitLog("main", "", 2, "")
+		limited, err := repo.CommitLog("main", "", 2, "", nil, nil)
 		require.NoError(t, err)
 		require.Len(t, limited, 2)
 		assert.Equal(t, c3, limited[0].Hash)
 		assert.Equal(t, c2, limited[1].Hash)
 
 		// after cursor (exclusive): start after c3 → get c2, c1
-		after, err := repo.CommitLog("main", "", 10, c3)
+		after, err := repo.CommitLog("main", "", 10, c3, nil, nil)
 		require.NoError(t, err)
 		require.Len(t, after, 2)
 		assert.Equal(t, c2, after[0].Hash)
 		assert.Equal(t, c1, after[1].Hash)
 
 		// feature branch only has c1, c2
-		featureLog, err := repo.CommitLog("feature", "", 10, "")
+		featureLog, err := repo.CommitLog("feature", "", 10, "", nil, nil)
 		require.NoError(t, err)
 		require.Len(t, featureLog, 2)
 		assert.Equal(t, c2, featureLog[0].Hash)

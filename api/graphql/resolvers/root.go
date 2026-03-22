@@ -62,4 +62,3 @@ func (r RootResolver) GitCommit() graph.GitCommitResolver {
 		cache: r.MultiRepoCache,
 	}
 }
-

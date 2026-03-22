@@ -7,6 +7,7 @@ import (
 	"io"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/99designs/keyring"
 	"github.com/ProtonMail/go-crypto/openpgp"
@@ -568,29 +569,29 @@ func (r *mockRepoDataBrowse) TreeAtPath(ref, path string) ([]TreeEntry, error) {
 	return r.treeEntriesAt(c.treeHash, path)
 }
 
-func (r *mockRepoDataBrowse) BlobAtPath(ref, path string) (io.ReadCloser, int64, error) {
+func (r *mockRepoDataBrowse) BlobAtPath(ref, path string) (io.ReadCloser, int64, Hash, error) {
 	startHash, err := r.resolveRef(ref)
 	if err != nil {
-		return nil, 0, ErrNotFound
+		return nil, 0, "", ErrNotFound
 	}
 	c, ok := r.commits[startHash]
 	if !ok {
-		return nil, 0, ErrNotFound
+		return nil, 0, "", ErrNotFound
 	}
 	blobHash, err := r.blobHashAt(c.treeHash, path)
 	if err != nil {
-		return nil, 0, ErrNotFound
+		return nil, 0, "", ErrNotFound
 	}
 	data, ok := r.blobs[blobHash]
 	if !ok {
-		return nil, 0, ErrNotFound
+		return nil, 0, "", ErrNotFound
 	}
-	return io.NopCloser(bytes.NewReader(data)), int64(len(data)), nil
+	return io.NopCloser(bytes.NewReader(data)), int64(len(data)), blobHash, nil
 }
 
 // CommitLog walks the first-parent chain from ref. Path filtering is not
 // implemented in this mock.
-func (r *mockRepoDataBrowse) CommitLog(ref, _ string, limit int, after Hash) ([]CommitMeta, error) {
+func (r *mockRepoDataBrowse) CommitLog(ref, _ string, limit int, after Hash, since, until *time.Time) ([]CommitMeta, error) {
 	startHash, err := r.resolveRef(ref)
 	if err != nil {
 		return nil, ErrNotFound
@@ -618,7 +619,22 @@ func (r *mockRepoDataBrowse) CommitLog(ref, _ string, limit int, after Hash) ([]
 			current = c.parents[0]
 			continue
 		}
-		result = append(result, mockCommitMeta(current, c))
+		meta := mockCommitMeta(current, c)
+		if since != nil && meta.Date.Before(*since) {
+			if len(c.parents) == 0 {
+				break
+			}
+			current = c.parents[0]
+			continue
+		}
+		if until != nil && meta.Date.After(*until) {
+			if len(c.parents) == 0 {
+				break
+			}
+			current = c.parents[0]
+			continue
+		}
+		result = append(result, meta)
 		if limit > 0 && len(result) >= limit {
 			break
 		}

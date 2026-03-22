@@ -4,6 +4,7 @@ package repository
 import (
 	"errors"
 	"io"
+	"time"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/go-git/go-billy/v5"
@@ -210,9 +211,8 @@ type RepoClock interface {
 	Witness(name string, time lamport.Time) error
 }
 
-// RepoBrowse is implemented by repositories that support code-browsing
-// endpoints (file tree, history, diffs). It is an optional interface:
-// callers must type-assert or use cache.RepoCache.BrowseRepo().
+// RepoBrowse is implemented by all Repo implementations and provides
+// code-browsing endpoints (file tree, history, diffs).
 //
 // All methods accepting a ref parameter resolve it in order:
 // refs/heads/<ref>, refs/tags/<ref>, full ref name, raw commit hash.
@@ -234,17 +234,18 @@ type RepoBrowse interface {
 	// Symlinks appear as entries with ObjectType Symlink; they are not followed.
 	TreeAtPath(ref, path string) ([]TreeEntry, error)
 
-	// BlobAtPath returns the raw content and byte size of the file at path
-	// under ref. Returns ErrNotFound if ref or path does not exist, or if
-	// path resolves to a tree. Symlinks are not followed.
+	// BlobAtPath returns the raw content, byte size, and git object hash of
+	// the file at path under ref. Returns ErrNotFound if ref or path does
+	// not exist, or if path resolves to a tree. Symlinks are not followed.
 	// The caller must close the reader.
-	BlobAtPath(ref, path string) (io.ReadCloser, int64, error)
+	BlobAtPath(ref, path string) (io.ReadCloser, int64, Hash, error)
 
 	// CommitLog returns at most limit commits reachable from ref, filtered
 	// to those touching path (empty = unrestricted). after is an exclusive
-	// cursor; pass Hash("") for no cursor. Merge commits appear once,
+	// cursor; pass Hash("") for no cursor. since and until bound the author
+	// date (inclusive); pass nil for no bound. Merge commits appear once,
 	// compared against the first parent only.
-	CommitLog(ref, path string, limit int, after Hash) ([]CommitMeta, error)
+	CommitLog(ref, path string, limit int, after Hash, since, until *time.Time) ([]CommitMeta, error)
 
 	// LastCommitForEntries returns the most recent commit that touched each
 	// name in the directory at path under ref. Entries not resolved within

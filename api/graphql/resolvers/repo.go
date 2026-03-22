@@ -195,10 +195,7 @@ func (repoResolver) ValidLabels(_ context.Context, obj *models.Repository, after
 }
 
 func (repoResolver) Refs(_ context.Context, obj *models.Repository, after *string, before *string, first *int, last *int, typeArg *models.GitRefType) (*models.GitRefConnection, error) {
-	repo, err := obj.Repo.BrowseRepo()
-	if err != nil {
-		return nil, err
-	}
+	repo := obj.Repo.BrowseRepo()
 
 	var refs []*models.GitRef
 
@@ -244,10 +241,7 @@ func (repoResolver) Refs(_ context.Context, obj *models.Repository, after *strin
 }
 
 func (repoResolver) Tree(_ context.Context, obj *models.Repository, ref string, path *string) ([]*repository.TreeEntry, error) {
-	repo, err := obj.Repo.BrowseRepo()
-	if err != nil {
-		return nil, err
-	}
+	repo := obj.Repo.BrowseRepo()
 	p := ""
 	if path != nil {
 		p = *path
@@ -264,11 +258,8 @@ func (repoResolver) Tree(_ context.Context, obj *models.Repository, ref string, 
 }
 
 func (repoResolver) Blob(_ context.Context, obj *models.Repository, ref string, path string) (*models.GitBlob, error) {
-	repo, err := obj.Repo.BrowseRepo()
-	if err != nil {
-		return nil, err
-	}
-	rc, size, err := repo.BlobAtPath(ref, path)
+	repo := obj.Repo.BrowseRepo()
+	rc, size, hash, err := repo.BlobAtPath(ref, path)
 	if err != nil {
 		return nil, err
 	}
@@ -288,7 +279,7 @@ func (repoResolver) Blob(_ context.Context, obj *models.Repository, ref string, 
 	isBinary := bytes.IndexByte(data, 0) >= 0
 	blob := &models.GitBlob{
 		Path:        path,
-		Hash:        "", // hash not available from BlobAtPath
+		Hash:        string(hash),
 		Size:        int(size),
 		IsBinary:    isBinary,
 		IsTruncated: isTruncated,
@@ -304,10 +295,7 @@ func (repoResolver) Commits(_ context.Context, obj *models.Repository, after *st
 	// This is not using the normal relay pagination (connection.Connection()), because that requires having the
 	// full list in memory. Here, go-git does a partial walk only, which is better.
 
-	repo, err := obj.Repo.BrowseRepo()
-	if err != nil {
-		return nil, err
-	}
+	repo := obj.Repo.BrowseRepo()
 
 	p := ""
 	if path != nil {
@@ -324,24 +312,9 @@ func (repoResolver) Commits(_ context.Context, obj *models.Repository, after *st
 		afterHash = repository.Hash(*after)
 	}
 
-	commits, err := repo.CommitLog(ref, p, limit, afterHash)
+	commits, err := repo.CommitLog(ref, p, limit, afterHash, since, until)
 	if err != nil {
 		return nil, err
-	}
-
-	// client-side since/until filtering
-	if since != nil || until != nil {
-		filtered := commits[:0]
-		for _, c := range commits {
-			if since != nil && c.Date.Before(*since) {
-				continue
-			}
-			if until != nil && c.Date.After(*until) {
-				continue
-			}
-			filtered = append(filtered, c)
-		}
-		commits = filtered
 	}
 
 	hasNextPage := false
@@ -375,25 +348,16 @@ func (repoResolver) Commits(_ context.Context, obj *models.Repository, after *st
 }
 
 func (repoResolver) Commit(_ context.Context, obj *models.Repository, hash string) (*models.GitCommitMeta, error) {
-	repo, err := obj.Repo.BrowseRepo()
+	repo := obj.Repo.BrowseRepo()
+	detail, err := repo.CommitDetail(repository.Hash(hash))
 	if err != nil {
 		return nil, err
 	}
-	commits, err := repo.CommitLog(hash, "", 1, "")
-	if err != nil {
-		return nil, err
-	}
-	if len(commits) == 0 {
-		return nil, repository.ErrNotFound
-	}
-	return &models.GitCommitMeta{Repo: obj.Repo, CommitMeta: commits[0]}, nil
+	return &models.GitCommitMeta{Repo: obj.Repo, CommitMeta: detail.CommitMeta}, nil
 }
 
 func (repoResolver) LastCommits(_ context.Context, obj *models.Repository, ref string, path *string, names []string) ([]*models.GitLastCommit, error) {
-	repo, err := obj.Repo.BrowseRepo()
-	if err != nil {
-		return nil, err
-	}
+	repo := obj.Repo.BrowseRepo()
 	p := ""
 	if path != nil {
 		p = *path

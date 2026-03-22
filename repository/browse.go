@@ -101,7 +101,7 @@ type CommitMeta struct {
 // ChangedFile describes a file that was modified in a commit.
 type ChangedFile struct {
 	Path    string
-	OldPath string // non-empty for renames
+	OldPath *string // non-nil for renames
 	Status  ChangeStatus
 }
 
@@ -133,7 +133,7 @@ type DiffHunk struct {
 // FileDiff is the diff for a single file in a commit.
 type FileDiff struct {
 	Path     string
-	OldPath  string
+	OldPath  *string // non-nil for renames
 	IsBinary bool
 	IsNew    bool
 	IsDelete bool

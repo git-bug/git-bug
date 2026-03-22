@@ -27,10 +27,7 @@ func (r gitCommitResolver) ShortHash(_ context.Context, obj *models.GitCommitMet
 }
 
 func (r gitCommitResolver) FullMessage(_ context.Context, obj *models.GitCommitMeta) (string, error) {
-	repo, err := obj.Repo.BrowseRepo()
-	if err != nil {
-		return "", err
-	}
+	repo := obj.Repo.BrowseRepo()
 	detail, err := repo.CommitDetail(obj.Hash)
 	if err != nil {
 		return "", err
@@ -47,10 +44,7 @@ func (r gitCommitResolver) Parents(_ context.Context, obj *models.GitCommitMeta)
 }
 
 func (r gitCommitResolver) Files(_ context.Context, obj *models.GitCommitMeta, after *string, before *string, first *int, last *int) (*models.GitChangedFileConnection, error) {
-	repo, err := obj.Repo.BrowseRepo()
-	if err != nil {
-		return nil, err
-	}
+	repo := obj.Repo.BrowseRepo()
 	detail, err := repo.CommitDetail(obj.Hash)
 	if err != nil {
 		return nil, err
@@ -71,10 +65,7 @@ func (r gitCommitResolver) Files(_ context.Context, obj *models.GitCommitMeta, a
 }
 
 func (r gitCommitResolver) Diff(_ context.Context, obj *models.GitCommitMeta, path string) (*repository.FileDiff, error) {
-	repo, err := obj.Repo.BrowseRepo()
-	if err != nil {
-		return nil, err
-	}
+	repo := obj.Repo.BrowseRepo()
 	fd, err := repo.CommitFileDiff(obj.Hash, path)
 	if err != nil {
 		return nil, err

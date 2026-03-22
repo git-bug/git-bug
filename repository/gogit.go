@@ -950,8 +950,8 @@ func commitToMeta(c *object.Commit) CommitMeta {
 		msg = msg[:idx]
 	}
 	return CommitMeta{
-		Hash:    h,
-		Message: msg,
+		Hash:        h,
+		Message:     msg,
 		AuthorName:  c.Author.Name,
 		AuthorEmail: c.Author.Email,
 		Date:        c.Author.When,
@@ -1126,14 +1126,14 @@ func objectTypeFromFileMode(m filemode.FileMode) ObjectType {
 	}
 }
 
-// BlobAtPath returns the content and size of the file at path under ref.
-// The content is read fully under rMutex (go-git blob readers use seek-based
-// packfile access), then returned as an in-memory reader so the caller can
-// stream it without holding any locks.
-func (repo *GoGitRepo) BlobAtPath(ref, path string) (io.ReadCloser, int64, error) {
+// BlobAtPath returns the content, size, and git object hash of the file at
+// path under ref. The content is read fully under rMutex (go-git blob readers
+// use seek-based packfile access), then returned as an in-memory reader so
+// the caller can stream it without holding any locks.
+func (repo *GoGitRepo) BlobAtPath(ref, path string) (io.ReadCloser, int64, Hash, error) {
 	path = strings.Trim(path, "/")
 	if path == "" {
-		return nil, 0, ErrNotFound
+		return nil, 0, "", ErrNotFound
 	}
 
 	repo.rMutex.Lock()
@@ -1141,38 +1141,39 @@ func (repo *GoGitRepo) BlobAtPath(ref, path string) (io.ReadCloser, int64, error
 
 	startHash, err := repo.resolveRefToHash(ref)
 	if err != nil {
-		return nil, 0, ErrNotFound
+		return nil, 0, "", ErrNotFound
 	}
 	commit, err := repo.r.CommitObject(startHash)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, "", err
 	}
 	tree, err := commit.Tree()
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, "", err
 	}
 
 	f, err := tree.File(path)
 	if err != nil {
-		return nil, 0, ErrNotFound
+		return nil, 0, "", ErrNotFound
 	}
 
 	r, err := f.Reader()
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, "", err
 	}
 	data, err := io.ReadAll(r)
 	r.Close()
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, "", err
 	}
 
-	return io.NopCloser(bytes.NewReader(data)), f.Blob.Size, nil
+	return io.NopCloser(bytes.NewReader(data)), f.Blob.Size, Hash(f.Blob.Hash.String()), nil
 }
 
 // CommitLog returns at most limit commits reachable from ref, optionally
-// filtered to those that touched path, starting after the given cursor hash.
-func (repo *GoGitRepo) CommitLog(ref, path string, limit int, after Hash) ([]CommitMeta, error) {
+// filtered to those that touched path, starting after the given cursor hash,
+// and bounded by the since/until author-date range.
+func (repo *GoGitRepo) CommitLog(ref, path string, limit int, after Hash, since, until *time.Time) ([]CommitMeta, error) {
 	repo.rMutex.Lock()
 	defer repo.rMutex.Unlock()
 
@@ -1217,8 +1218,14 @@ func (repo *GoGitRepo) CommitLog(ref, path string, limit int, after Hash) ([]Com
 			}
 			continue
 		}
+		if since != nil && c.Author.When.Before(*since) {
+			continue
+		}
+		if until != nil && c.Author.When.After(*until) {
+			continue
+		}
 		result = append(result, commitToMeta(c))
-		if len(result) >= limit {
+		if limit > 0 && len(result) >= limit {
 			break
 		}
 	}
@@ -1431,7 +1438,8 @@ func changedFileFromChange(fromName, toName string) ChangedFile {
 	case toName == "":
 		return ChangedFile{Path: fromName, Status: ChangeStatusDeleted}
 	case fromName != toName:
-		return ChangedFile{Path: toName, OldPath: fromName, Status: ChangeStatusRenamed}
+		op := fromName
+		return ChangedFile{Path: toName, OldPath: &op, Status: ChangeStatusRenamed}
 	default:
 		return ChangedFile{Path: toName, Status: ChangeStatusModified}
 	}
@@ -1504,7 +1512,8 @@ func (repo *GoGitRepo) CommitFileDiff(hash Hash, filePath string) (FileDiff, err
 			if fd.Path == "" {
 				fd.Path = from.Name
 			} else if from.Name != fd.Path {
-				fd.OldPath = from.Name
+				op := from.Name
+				fd.OldPath = &op
 			}
 		}
 
