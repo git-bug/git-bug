@@ -26,7 +26,7 @@ func (r rootQueryResolver) Repository(_ context.Context, ref *string) (*models.R
 	}
 
 	if err != nil {
-		return nil, err
+		return nil, nil
 	}
 
 	return &models.Repository{

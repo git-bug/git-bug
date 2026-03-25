@@ -1,5 +1,6 @@
 type Query {
-    """Access a repository by reference/name. If no ref is given, the default repository is returned if any."""
+    """Access a repository by reference/name. If no ref is given, the default repository is returned if any.
+    Returns null if the referenced repository does not exist."""
     repository(ref: String): Repository
 
     """List all registered repositories."""

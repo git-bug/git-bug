@@ -15,6 +15,11 @@ func (c *RepoCache) Name() string {
 	return c.name
 }
 
+// IsDefaultRepo reports whether this is an unnamed (single-repo) repository.
+func (c *RepoCache) IsDefaultRepo() bool {
+	return c.name == defaultRepoName
+}
+
 // BrowseRepo returns the underlying RepoBrowse implementation.
 func (c *RepoCache) BrowseRepo() repository.RepoBrowse {
 	return c.repo

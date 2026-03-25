@@ -1,5 +1,5 @@
 type Repository {
-    """The name of the repository"""
+    """The name of the repository. Null for the default (unnamed) repository in a single-repo setup."""
     name: String
 
     """All the bugs"""
@@ -16,6 +16,7 @@ type Repository {
         query: String
     ): BugConnection!
 
+    """Look up a bug by id prefix. Returns null if no bug matches the prefix."""
     bug(prefix: String!): Bug
 
     """All the identities"""
@@ -30,6 +31,7 @@ type Repository {
         last: Int
     ): IdentityConnection!
 
+    """Look up an identity by id prefix. Returns null if no identity matches the prefix."""
     identity(prefix: String!): Identity
 
     """The identity created or selected by the user as its own"""
@@ -74,7 +76,7 @@ type Repository {
         until: Time
     ): GitCommitConnection!
 
-    """A single commit by hash."""
+    """A single commit by hash. Returns null if the hash does not exist in the repository."""
     commit(hash: String!): GitCommit
 
     """The most recent commit that touched each of the named entries in the

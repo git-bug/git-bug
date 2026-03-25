@@ -3,6 +3,7 @@ package resolvers
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"math"
 	"sort"
@@ -23,6 +24,9 @@ var _ graph.RepositoryResolver = &repoResolver{}
 type repoResolver struct{}
 
 func (repoResolver) Name(_ context.Context, obj *models.Repository) (*string, error) {
+	if obj.Repo.IsDefaultRepo() {
+		return nil, nil
+	}
 	name := obj.Repo.Name()
 	return &name, nil
 }
@@ -93,6 +97,9 @@ func (repoResolver) AllBugs(_ context.Context, obj *models.Repository, after *st
 
 func (repoResolver) Bug(_ context.Context, obj *models.Repository, prefix string) (models.BugWrapper, error) {
 	excerpt, err := obj.Repo.Bugs().ResolveExcerptPrefix(prefix)
+	if entity.IsErrNotFound(err) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -152,6 +159,9 @@ func (repoResolver) AllIdentities(_ context.Context, obj *models.Repository, aft
 
 func (repoResolver) Identity(_ context.Context, obj *models.Repository, prefix string) (models.IdentityWrapper, error) {
 	excerpt, err := obj.Repo.Identities().ResolveExcerptPrefix(prefix)
+	if entity.IsErrNotFound(err) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -270,6 +280,9 @@ func (repoResolver) Tree(_ context.Context, obj *models.Repository, ref string, 
 func (repoResolver) Blob(_ context.Context, obj *models.Repository, ref string, path string) (*models.GitBlob, error) {
 	repo := obj.Repo.BrowseRepo()
 	rc, size, hash, err := repo.BlobAtPath(ref, path)
+	if errors.Is(err, repository.ErrNotFound) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -376,6 +389,9 @@ func (repoResolver) Commits(_ context.Context, obj *models.Repository, after *st
 func (repoResolver) Commit(_ context.Context, obj *models.Repository, hash string) (*models.GitCommitMeta, error) {
 	repo := obj.Repo.BrowseRepo()
 	detail, err := repo.CommitDetail(repository.Hash(hash))
+	if errors.Is(err, repository.ErrNotFound) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}
