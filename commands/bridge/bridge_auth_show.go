@@ -41,7 +41,7 @@ func runBridgeAuthShow(env *execenv.Env, args []string) error {
 
 	switch cred := cred.(type) {
 	case *auth.Token:
-		env.Out.Printf("Value: %s\n", cred.Value)
+		env.Out.Printf("Value: %s\n", "[REDACTED]")
 	}
 
 	env.Out.Println("Metadata:")
