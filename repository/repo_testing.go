@@ -107,7 +107,10 @@ func RepoDataTest(t *testing.T, repo RepoData) {
 	require.NoError(t, err)
 	require.True(t, blobHash1.IsValid())
 
-	blob1Read, err := repo.ReadData(blobHash1)
+	blob1Reader, err := repo.ReadData(blobHash1)
+	require.NoError(t, err)
+	defer func() { require.NoError(t, blob1Reader.Close()) }()
+	blob1Read, err := io.ReadAll(blob1Reader)
 	require.NoError(t, err)
 	require.Equal(t, data, blob1Read)
 

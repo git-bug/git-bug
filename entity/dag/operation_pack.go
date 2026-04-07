@@ -3,6 +3,7 @@ package dag
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
 
@@ -242,7 +243,12 @@ func readOperationPack(def Definition, repo repository.RepoData, resolvers entit
 	for _, entry := range entries {
 		switch {
 		case entry.Name == opsEntryName:
-			data, err := repo.ReadData(entry.Hash)
+			r, err := repo.ReadData(entry.Hash)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to read git blob data")
+			}
+			data, err := io.ReadAll(r)
+			_ = r.Close()
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to read git blob data")
 			}

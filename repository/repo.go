@@ -147,9 +147,10 @@ type RepoData interface {
 	// StoreData will store arbitrary data and return the corresponding hash
 	StoreData(data []byte) (Hash, error)
 
-	// ReadData will attempt to read arbitrary data from the given hash
+	// ReadData returns a reader for arbitrary data associated with the given hash.
 	// Returns ErrNotFound if not found.
-	ReadData(hash Hash) ([]byte, error)
+	// The caller must close the reader.
+	ReadData(hash Hash) (io.ReadCloser, error)
 
 	// StoreTree will store a mapping key-->Hash as a Git tree
 	StoreTree(mapping []TreeEntry) (Hash, error)

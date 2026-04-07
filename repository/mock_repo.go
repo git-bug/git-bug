@@ -265,13 +265,13 @@ func (r *mockRepoDataBrowse) StoreData(data []byte) (Hash, error) {
 	return hash, nil
 }
 
-func (r *mockRepoDataBrowse) ReadData(hash Hash) ([]byte, error) {
+func (r *mockRepoDataBrowse) ReadData(hash Hash) (io.ReadCloser, error) {
 	data, ok := r.blobs[hash]
 	if !ok {
 		return nil, ErrNotFound
 	}
 
-	return data, nil
+	return io.NopCloser(bytes.NewReader(data)), nil
 }
 
 func (r *mockRepoDataBrowse) StoreTree(entries []TreeEntry) (Hash, error) {

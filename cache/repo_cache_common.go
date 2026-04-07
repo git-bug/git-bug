@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"io"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -71,7 +72,7 @@ func (c *RepoCache) LocalStorage() repository.LocalStorage {
 }
 
 // ReadData will attempt to read arbitrary data from the given hash
-func (c *RepoCache) ReadData(hash repository.Hash) ([]byte, error) {
+func (c *RepoCache) ReadData(hash repository.Hash) (io.ReadCloser, error) {
 	return c.repo.ReadData(hash)
 }
 
