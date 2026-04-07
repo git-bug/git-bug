@@ -1,9 +1,9 @@
 package http
 
 import (
-	"bytes"
+	"io"
 	"net/http"
-	"time"
+	"strings"
 
 	"github.com/gorilla/mux"
 
@@ -47,15 +47,42 @@ func (gfh *gitFileHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: this mean that the whole file will be buffered in memory
-	// This can be a problem for big files. There might be a way around
-	// that by implementing a io.ReadSeeker that would read and discard
-	// data when a seek is called.
-	data, err := repo.ReadData(hash)
+	reader, err := repo.ReadData(hash)
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	defer func() {
+		_ = reader.Close()
+	}()
 
-	http.ServeContent(rw, r, "", time.Now(), bytes.NewReader(data))
+	ServeContent(rw, r, reader)
+}
+
+// ServeContent is a somewhat equivalent of http.ServeContent, without support for range request.
+// This is necessary as the repo (and go-git)'s data reader doesn't support Seek().
+func ServeContent(w http.ResponseWriter, r *http.Request, content io.Reader) {
+	if w.Header().Get("Content-Type") == "" {
+		// Sniff the type from the first up to 512 bytes.
+		var buf [512]byte
+		n, err := io.ReadFull(content, buf[:])
+		switch err {
+		case nil:
+			w.Header().Set("Content-Type", http.DetectContentType(buf[:n]))
+			content = io.MultiReader(strings.NewReader(string(buf[:n])), content)
+		case io.ErrUnexpectedEOF, io.EOF:
+			w.Header().Set("Content-Type", http.DetectContentType(buf[:n]))
+			content = strings.NewReader(string(buf[:n]))
+		default:
+			// If sniffing fails unexpectedly, fall back safely.
+			w.Header().Set("Content-Type", "application/octet-stream")
+		}
+	}
+
+	w.WriteHeader(http.StatusOK)
+	if r.Method == http.MethodHead {
+		return
+	}
+
+	_, _ = io.Copy(w, content)
 }

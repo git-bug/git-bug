@@ -87,6 +87,8 @@ func TestGitFileHandlers(t *testing.T) {
 
 	downloadHandler.ServeHTTP(w, r)
 	assert.Equal(t, http.StatusOK, w.Code)
+	// check if content type detection is working
+	assert.Equal(t, w.Header().Get("Content-Type"), "image/png")
 
 	assert.Equal(t, data.Bytes(), w.Body.Bytes())
 }

@@ -550,25 +550,19 @@ func (repo *GoGitRepo) StoreData(data []byte) (Hash, error) {
 }
 
 // ReadData will attempt to read arbitrary data from the given hash
-func (repo *GoGitRepo) ReadData(hash Hash) ([]byte, error) {
+func (repo *GoGitRepo) ReadData(hash Hash) (io.ReadCloser, error) {
 	repo.rMutex.Lock()
 	defer repo.rMutex.Unlock()
 
 	obj, err := repo.r.BlobObject(plumbing.NewHash(hash.String()))
-	if err == plumbing.ErrObjectNotFound {
+	if errors.Is(err, plumbing.ErrObjectNotFound) {
 		return nil, ErrNotFound
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	r, err := obj.Reader()
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO: return a io.Reader instead
-	return io.ReadAll(r)
+	return obj.Reader()
 }
 
 // StoreTree will store a mapping key-->Hash as a Git tree

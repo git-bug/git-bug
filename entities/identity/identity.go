@@ -136,7 +136,8 @@ func read(repo repository.Repo, ref string) (*Identity, error) {
 		}
 
 		var version version
-		err = json.Unmarshal(data, &version)
+		err = json.NewDecoder(data).Decode(&version)
+		_ = data.Close()
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to decode Identity version json %s", hash)
 		}
