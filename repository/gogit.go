@@ -23,6 +23,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	lru "github.com/hashicorp/golang-lru/v2"
 	"golang.org/x/sync/errgroup"
+	"golang.org/x/sync/singleflight"
 	"golang.org/x/sys/execabs"
 
 	"github.com/git-bug/git-bug/util/lamport"
@@ -66,6 +67,9 @@ type GoGitRepo struct {
 	// across refs that point to the same directory tree. The LRU bounds
 	// memory to lastCommitCacheSize unique (treeHash, directory) pairs.
 	lastCommitCache *lru.Cache[string, map[string]CommitMeta]
+	// lastCommitSF deduplicates concurrent walks for the same cache key so
+	// that a cold cache under parallel requests triggers only one history walk.
+	lastCommitSF singleflight.Group
 
 	keyring      Keyring
 	localStorage LocalStorage
@@ -1330,93 +1334,106 @@ func (repo *GoGitRepo) LastCommitForEntries(ref, path string, names []string) (m
 		return result, nil
 	}
 
-	// Cache miss: walk history for ALL entries in this directory so the
-	// cached result is complete and valid for any future name subset.
-	remaining := make(map[string]bool, len(startEntries))
-	for name := range startEntries {
-		remaining[name] = true
-	}
-	result := make(map[string]CommitMeta, len(remaining))
-
-	repo.rMutex.Lock()
-
-	iter, err := repo.r.Log(&gogit.LogOptions{
-		From:  startHash,
-		Order: gogit.LogOrderCommitterTime,
-	})
-	if err != nil {
-		repo.rMutex.Unlock()
-		return nil, err
-	}
-
-	// Seed the parent-reuse cache with the entries we already fetched above
-	// so the first iteration's current-tree read is skipped for free.
-	// In a linear history this halves tree reads for every subsequent step:
-	// the parent fetched at depth D is the current commit at depth D+1.
-	cachedParentHash := startHash
-	cachedParentEntries := startEntries
-
-	for depth := 0; len(remaining) > 0 && depth < lastCommitDepthLimit; depth++ {
-		c, err := iter.Next()
-		if err == io.EOF {
-			break
+	// Cache miss: use singleflight so that concurrent calls for the same
+	// directory share one history walk instead of each doing their own.
+	val, err, _ := repo.lastCommitSF.Do(cacheKey, func() (any, error) {
+		// Re-check inside Do: another goroutine may have populated the cache
+		// between our initial Get and acquiring the singleflight key.
+		if cached, ok := repo.lastCommitCache.Get(cacheKey); ok {
+			return cached, nil
 		}
+
+		remaining := make(map[string]bool, len(startEntries))
+		for name := range startEntries {
+			remaining[name] = true
+		}
+		result := make(map[string]CommitMeta, len(remaining))
+
+		repo.rMutex.Lock()
+
+		iter, err := repo.r.Log(&gogit.LogOptions{
+			From:  startHash,
+			Order: gogit.LogOrderCommitterTime,
+		})
 		if err != nil {
-			iter.Close()
 			repo.rMutex.Unlock()
 			return nil, err
 		}
 
-		var currentEntries map[string]plumbing.Hash
-		if c.Hash == cachedParentHash && cachedParentEntries != nil {
-			currentEntries = cachedParentEntries
-		} else {
-			_, currentEntries, err = treeEntriesAtPath(c, path)
+		// Seed the parent-reuse cache with the entries we already fetched above
+		// so the first iteration's current-tree read is skipped for free.
+		// In a linear history this halves tree reads for every subsequent step:
+		// the parent fetched at depth D is the current commit at depth D+1.
+		cachedParentHash := startHash
+		cachedParentEntries := startEntries
+
+		for depth := 0; len(remaining) > 0 && depth < lastCommitDepthLimit; depth++ {
+			c, err := iter.Next()
+			if err == io.EOF {
+				break
+			}
 			if err != nil {
-				// path may not exist in this commit; treat as empty
-				currentEntries = map[string]plumbing.Hash{}
+				iter.Close()
+				repo.rMutex.Unlock()
+				return nil, err
+			}
+
+			var currentEntries map[string]plumbing.Hash
+			if c.Hash == cachedParentHash && cachedParentEntries != nil {
+				currentEntries = cachedParentEntries
+			} else {
+				_, currentEntries, err = treeEntriesAtPath(c, path)
+				if err != nil {
+					// path may not exist in this commit; treat as empty
+					currentEntries = map[string]plumbing.Hash{}
+				}
+			}
+
+			var parentEntries map[string]plumbing.Hash
+			cachedParentHash = plumbing.ZeroHash
+			cachedParentEntries = nil
+			if len(c.ParentHashes) > 0 {
+				if parent, err := c.Parents().Next(); err == nil {
+					_, parentEntries, _ = treeEntriesAtPath(parent, path)
+					cachedParentHash = c.ParentHashes[0]
+					cachedParentEntries = parentEntries
+				}
+			}
+
+			meta := commitToMeta(c)
+			for name := range remaining {
+				curHash, inCurrent := currentEntries[name]
+				parentHash, inParent := parentEntries[name]
+				if inCurrent != inParent || (inCurrent && curHash != parentHash) {
+					result[name] = meta
+					delete(remaining, name)
+				}
 			}
 		}
 
-		var parentEntries map[string]plumbing.Hash
-		cachedParentHash = plumbing.ZeroHash
-		cachedParentEntries = nil
-		if len(c.ParentHashes) > 0 {
-			if parent, err := c.Parents().Next(); err == nil {
-				_, parentEntries, _ = treeEntriesAtPath(parent, path)
-				cachedParentHash = c.ParentHashes[0]
-				cachedParentEntries = parentEntries
-			}
-		}
+		iter.Close()
+		repo.rMutex.Unlock()
 
-		meta := commitToMeta(c)
-		for name := range remaining {
-			curHash, inCurrent := currentEntries[name]
-			parentHash, inParent := parentEntries[name]
-			if inCurrent != inParent || (inCurrent && curHash != parentHash) {
-				result[name] = meta
-				delete(remaining, name)
-			}
+		// Store a defensive copy so that callers cannot mutate cached entries.
+		// The cached map contains all directory entries, not just the requested
+		// names, so future calls for the same directory are fully served from
+		// cache regardless of which names they request.
+		cached := make(map[string]CommitMeta, len(result))
+		for k, v := range result {
+			cached[k] = v
 		}
+		repo.lastCommitCache.Add(cacheKey, cached)
+		return cached, nil
+	})
+	if err != nil {
+		return nil, err
 	}
-
-	iter.Close()
-	repo.rMutex.Unlock()
-
-	// Store a defensive copy so that callers cannot mutate cached entries.
-	// The cached map contains all directory entries, not just the requested
-	// names, so future calls for the same directory are fully served from
-	// cache regardless of which names they request.
-	cached := make(map[string]CommitMeta, len(result))
-	for k, v := range result {
-		cached[k] = v
-	}
-	repo.lastCommitCache.Add(cacheKey, cached)
 
 	// Return only the entries that were requested.
+	full := val.(map[string]CommitMeta)
 	filtered := make(map[string]CommitMeta, len(names))
 	for _, n := range names {
-		if m, ok := result[n]; ok {
+		if m, ok := full[n]; ok {
 			filtered[n] = m
 		}
 	}

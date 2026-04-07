@@ -260,7 +260,7 @@ func (repoResolver) Refs(_ context.Context, obj *models.Repository, after *strin
 	return connections.Connection(refs, edger, conMaker, input)
 }
 
-func (repoResolver) Tree(_ context.Context, obj *models.Repository, ref string, path *string) ([]*repository.TreeEntry, error) {
+func (repoResolver) Tree(_ context.Context, obj *models.Repository, ref string, path *string) ([]*models.GitTreeEntry, error) {
 	repo := obj.Repo.BrowseRepo()
 	p := ""
 	if path != nil {
@@ -270,9 +270,13 @@ func (repoResolver) Tree(_ context.Context, obj *models.Repository, ref string, 
 	if err != nil {
 		return nil, err
 	}
-	ptrs := make([]*repository.TreeEntry, len(entries))
+	names := make([]string, len(entries))
+	for i, e := range entries {
+		names[i] = e.Name
+	}
+	ptrs := make([]*models.GitTreeEntry, len(entries))
 	for i := range entries {
-		ptrs[i] = &entries[i]
+		ptrs[i] = &models.GitTreeEntry{Repo: obj.Repo, Ref: ref, Path: p, SiblingNames: names, TreeEntry: entries[i]}
 	}
 	return ptrs, nil
 }

@@ -4,6 +4,7 @@ import (
 	"io"
 	"math/rand"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
@@ -601,7 +602,7 @@ func RepoBrowseTest(t *testing.T, repo browsable) {
 		require.Equal(t, c1, readmeLog[1].Hash)
 	})
 
-	t.Run("CommitLog/since-until", func(t *testing.T) {
+	t.Run("CommitLog_since-until", func(t *testing.T) {
 		// since = far future → no commits
 		future := time.Now().Add(24 * time.Hour)
 		none, err := repo.CommitLog("main", "", 10, "", &future, nil)
@@ -654,7 +655,7 @@ func RepoBrowseTest(t *testing.T, repo browsable) {
 		require.NotContains(t, partial, "ghost.txt")
 	})
 
-	t.Run("LastCommitForEntries/cache-subset", func(t *testing.T) {
+	t.Run("LastCommitForEntries_cache-subset", func(t *testing.T) {
 		// First call with one name — seeds (or hits) the cache for this directory.
 		r1, err := repo.LastCommitForEntries("main", "", []string{"README.md"})
 		require.NoError(t, err)
@@ -674,6 +675,34 @@ func RepoBrowseTest(t *testing.T, repo browsable) {
 		require.NoError(t, err)
 		require.Equal(t, c3, r3["README.md"].Hash)
 		require.Equal(t, c2, r3["main.go"].Hash)
+	})
+
+	t.Run("LastCommitForEntries_concurrent", func(t *testing.T) {
+		// Use the "feature" ref so the cache is cold for this key.
+		// This exercises the singleflight path.
+		// The race detector will catch any data races in the cache or walk logic.
+		const workers = 20
+		type result struct {
+			m   map[string]CommitMeta
+			err error
+		}
+		results := make([]result, workers)
+		var wg sync.WaitGroup
+		wg.Add(workers)
+		for i := range workers {
+			go func() {
+				defer wg.Done()
+				m, err := repo.LastCommitForEntries("feature", "", []string{"README.md", "main.go", "src"})
+				results[i] = result{m, err}
+			}()
+		}
+		wg.Wait()
+		for _, r := range results {
+			require.NoError(t, r.err)
+			require.Equal(t, c1, r.m["README.md"].Hash) // feature is at c2, README unchanged since c1
+			require.Equal(t, c2, r.m["main.go"].Hash)
+			require.Equal(t, c2, r.m["src"].Hash)
+		}
 	})
 
 	// ── CommitDetail ──────────────────────────────────────────────────────────

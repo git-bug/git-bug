@@ -14,13 +14,16 @@ type GitRef {
 
 """An entry in a git tree (directory listing)."""
 type GitTreeEntry
-@goModel(model: "github.com/git-bug/git-bug/repository.TreeEntry") {
+@goModel(model: "github.com/git-bug/git-bug/api/graphql/models.GitTreeEntry") {
     """File or directory name within the parent tree."""
     name: String!
     """Whether this entry is a file, directory, symlink, or submodule."""
     type: GitObjectType! @goField(name: "ObjectType")
     """Git object hash."""
     hash: String!
+    """The last git commit that touched this tree entry. Null when the entry
+    cannot be resolved within the history depth limit."""
+    lastCommit: GitCommit
 }
 
 """The content of a git blob (file)."""

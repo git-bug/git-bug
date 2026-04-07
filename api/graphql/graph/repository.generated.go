@@ -13,7 +13,6 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/git-bug/git-bug/api/graphql/models"
-	"github.com/git-bug/git-bug/repository"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -27,7 +26,7 @@ type RepositoryResolver interface {
 	Identity(ctx context.Context, obj *models.Repository, prefix string) (models.IdentityWrapper, error)
 	UserIdentity(ctx context.Context, obj *models.Repository) (models.IdentityWrapper, error)
 	Refs(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int, typeArg *models.GitRefType) (*models.GitRefConnection, error)
-	Tree(ctx context.Context, obj *models.Repository, ref string, path *string) ([]*repository.TreeEntry, error)
+	Tree(ctx context.Context, obj *models.Repository, ref string, path *string) ([]*models.GitTreeEntry, error)
 	Blob(ctx context.Context, obj *models.Repository, ref string, path string) (*models.GitBlob, error)
 	Commits(ctx context.Context, obj *models.Repository, after *string, first *int, ref string, path *string, since *time.Time, until *time.Time) (*models.GitCommitConnection, error)
 	Commit(ctx context.Context, obj *models.Repository, hash string) (*models.GitCommitMeta, error)
@@ -1353,9 +1352,9 @@ func (ec *executionContext) _Repository_tree(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*repository.TreeEntry)
+	res := resTmp.([]*models.GitTreeEntry)
 	fc.Result = res
-	return ec.marshalNGitTreeEntry2ᚕᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐTreeEntryᚄ(ctx, field.Selections, res)
+	return ec.marshalNGitTreeEntry2ᚕᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitTreeEntryᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Repository_tree(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1372,6 +1371,8 @@ func (ec *executionContext) fieldContext_Repository_tree(ctx context.Context, fi
 				return ec.fieldContext_GitTreeEntry_type(ctx, field)
 			case "hash":
 				return ec.fieldContext_GitTreeEntry_hash(ctx, field)
+			case "lastCommit":
+				return ec.fieldContext_GitTreeEntry_lastCommit(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type GitTreeEntry", field.Name)
 		},

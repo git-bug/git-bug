@@ -393,6 +393,27 @@ func TestGitBrowseQueries(t *testing.T) {
 		require.Equal(t, "TREE", byName["src"])
 	})
 
+	t.Run("tree_lastCommit", func(t *testing.T) {
+		var resp struct {
+			Repository struct {
+				Tree []struct {
+					Name       string
+					LastCommit struct{ Hash string }
+				}
+			}
+		}
+		require.NoError(t, c.Post(`query {
+			repository { tree(ref: "main", path: "") { name lastCommit { hash } } }
+		}`, &resp))
+		byName := make(map[string]string)
+		for _, e := range resp.Repository.Tree {
+			byName[e.Name] = e.LastCommit.Hash
+		}
+		require.Equal(t, string(c3), byName["README.md"]) // changed in c3
+		require.Equal(t, string(c2), byName["main.go"])   // changed in c2
+		require.Equal(t, string(c2), byName["src"])       // util.go added in c2
+	})
+
 	// ── commits ───────────────────────────────────────────────────────────────
 
 	t.Run("commits", func(t *testing.T) {

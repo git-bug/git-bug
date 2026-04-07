@@ -28,6 +28,9 @@ type GitCommitResolver interface {
 	Files(ctx context.Context, obj *models.GitCommitMeta, after *string, before *string, first *int, last *int) (*models.GitChangedFileConnection, error)
 	Diff(ctx context.Context, obj *models.GitCommitMeta, path string) (*repository.FileDiff, error)
 }
+type GitTreeEntryResolver interface {
+	LastCommit(ctx context.Context, obj *models.GitTreeEntry) (*models.GitCommitMeta, error)
+}
 
 // endregion ************************** generated!.gotpl **************************
 
@@ -2514,7 +2517,7 @@ func (ec *executionContext) fieldContext_GitRefConnection_totalCount(_ context.C
 	return fc, nil
 }
 
-func (ec *executionContext) _GitTreeEntry_name(ctx context.Context, field graphql.CollectedField, obj *repository.TreeEntry) (ret graphql.Marshaler) {
+func (ec *executionContext) _GitTreeEntry_name(ctx context.Context, field graphql.CollectedField, obj *models.GitTreeEntry) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_GitTreeEntry_name(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2558,7 +2561,7 @@ func (ec *executionContext) fieldContext_GitTreeEntry_name(_ context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _GitTreeEntry_type(ctx context.Context, field graphql.CollectedField, obj *repository.TreeEntry) (ret graphql.Marshaler) {
+func (ec *executionContext) _GitTreeEntry_type(ctx context.Context, field graphql.CollectedField, obj *models.GitTreeEntry) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_GitTreeEntry_type(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2602,7 +2605,7 @@ func (ec *executionContext) fieldContext_GitTreeEntry_type(_ context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _GitTreeEntry_hash(ctx context.Context, field graphql.CollectedField, obj *repository.TreeEntry) (ret graphql.Marshaler) {
+func (ec *executionContext) _GitTreeEntry_hash(ctx context.Context, field graphql.CollectedField, obj *models.GitTreeEntry) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_GitTreeEntry_hash(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2641,6 +2644,69 @@ func (ec *executionContext) fieldContext_GitTreeEntry_hash(_ context.Context, fi
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GitTreeEntry_lastCommit(ctx context.Context, field graphql.CollectedField, obj *models.GitTreeEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GitTreeEntry_lastCommit(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.GitTreeEntry().LastCommit(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*models.GitCommitMeta)
+	fc.Result = res
+	return ec.marshalOGitCommit2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitCommitMeta(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GitTreeEntry_lastCommit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GitTreeEntry",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hash":
+				return ec.fieldContext_GitCommit_hash(ctx, field)
+			case "shortHash":
+				return ec.fieldContext_GitCommit_shortHash(ctx, field)
+			case "message":
+				return ec.fieldContext_GitCommit_message(ctx, field)
+			case "fullMessage":
+				return ec.fieldContext_GitCommit_fullMessage(ctx, field)
+			case "authorName":
+				return ec.fieldContext_GitCommit_authorName(ctx, field)
+			case "authorEmail":
+				return ec.fieldContext_GitCommit_authorEmail(ctx, field)
+			case "date":
+				return ec.fieldContext_GitCommit_date(ctx, field)
+			case "parents":
+				return ec.fieldContext_GitCommit_parents(ctx, field)
+			case "files":
+				return ec.fieldContext_GitCommit_files(ctx, field)
+			case "diff":
+				return ec.fieldContext_GitCommit_diff(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type GitCommit", field.Name)
 		},
 	}
 	return fc, nil
@@ -3427,7 +3493,7 @@ func (ec *executionContext) _GitRefConnection(ctx context.Context, sel ast.Selec
 
 var gitTreeEntryImplementors = []string{"GitTreeEntry"}
 
-func (ec *executionContext) _GitTreeEntry(ctx context.Context, sel ast.SelectionSet, obj *repository.TreeEntry) graphql.Marshaler {
+func (ec *executionContext) _GitTreeEntry(ctx context.Context, sel ast.SelectionSet, obj *models.GitTreeEntry) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, gitTreeEntryImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -3439,18 +3505,51 @@ func (ec *executionContext) _GitTreeEntry(ctx context.Context, sel ast.Selection
 		case "name":
 			out.Values[i] = ec._GitTreeEntry_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "type":
 			out.Values[i] = ec._GitTreeEntry_type(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "hash":
 			out.Values[i] = ec._GitTreeEntry_hash(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "lastCommit":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._GitTreeEntry_lastCommit(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3890,7 +3989,7 @@ var (
 	}
 )
 
-func (ec *executionContext) marshalNGitTreeEntry2ᚕᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐTreeEntryᚄ(ctx context.Context, sel ast.SelectionSet, v []*repository.TreeEntry) graphql.Marshaler {
+func (ec *executionContext) marshalNGitTreeEntry2ᚕᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitTreeEntryᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.GitTreeEntry) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -3914,7 +4013,7 @@ func (ec *executionContext) marshalNGitTreeEntry2ᚕᚖgithubᚗcomᚋgitᚑbug�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNGitTreeEntry2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐTreeEntry(ctx, sel, v[i])
+			ret[i] = ec.marshalNGitTreeEntry2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitTreeEntry(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -3934,7 +4033,7 @@ func (ec *executionContext) marshalNGitTreeEntry2ᚕᚖgithubᚗcomᚋgitᚑbug�
 	return ret
 }
 
-func (ec *executionContext) marshalNGitTreeEntry2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐTreeEntry(ctx context.Context, sel ast.SelectionSet, v *repository.TreeEntry) graphql.Marshaler {
+func (ec *executionContext) marshalNGitTreeEntry2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitTreeEntry(ctx context.Context, sel ast.SelectionSet, v *models.GitTreeEntry) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")

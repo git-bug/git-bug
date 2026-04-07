@@ -50,6 +50,7 @@ type ResolverRoot interface {
 	BugSetTitleTimelineItem() BugSetTitleTimelineItemResolver
 	Color() ColorResolver
 	GitCommit() GitCommitResolver
+	GitTreeEntry() GitTreeEntryResolver
 	Identity() IdentityResolver
 	Label() LabelResolver
 	Mutation() MutationResolver
@@ -380,6 +381,7 @@ type ComplexityRoot struct {
 
 	GitTreeEntry struct {
 		Hash       func(childComplexity int) int
+		LastCommit func(childComplexity int) int
 		Name       func(childComplexity int) int
 		ObjectType func(childComplexity int) int
 	}
@@ -1875,6 +1877,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.GitTreeEntry.Hash(childComplexity), true
 
+	case "GitTreeEntry.lastCommit":
+		if e.complexity.GitTreeEntry.LastCommit == nil {
+			break
+		}
+
+		return e.complexity.GitTreeEntry.LastCommit(childComplexity), true
+
 	case "GitTreeEntry.name":
 		if e.complexity.GitTreeEntry.Name == nil {
 			break
@@ -3172,13 +3181,16 @@ type GitRef {
 
 """An entry in a git tree (directory listing)."""
 type GitTreeEntry
-@goModel(model: "github.com/git-bug/git-bug/repository.TreeEntry") {
+@goModel(model: "github.com/git-bug/git-bug/api/graphql/models.GitTreeEntry") {
     """File or directory name within the parent tree."""
     name: String!
     """Whether this entry is a file, directory, symlink, or submodule."""
     type: GitObjectType! @goField(name: "ObjectType")
     """Git object hash."""
     hash: String!
+    """The last git commit that touched this tree entry. Null when the entry
+    cannot be resolved within the history depth limit."""
+    lastCommit: GitCommit
 }
 
 """The content of a git blob (file)."""
@@ -3467,7 +3479,7 @@ type OperationEdge {
 }
 `, BuiltIn: false},
 	{Name: "../schema/repository.graphql", Input: `type Repository {
-    """The name of the repository"""
+    """The name of the repository. Null for the default (unnamed) repository in a single-repo setup."""
     name: String
 
     """All the bugs"""
@@ -3484,6 +3496,7 @@ type OperationEdge {
         query: String
     ): BugConnection!
 
+    """Look up a bug by id prefix. Returns null if no bug matches the prefix."""
     bug(prefix: String!): Bug
 
     """All the identities"""
@@ -3498,6 +3511,7 @@ type OperationEdge {
         last: Int
     ): IdentityConnection!
 
+    """Look up an identity by id prefix. Returns null if no identity matches the prefix."""
     identity(prefix: String!): Identity
 
     """The identity created or selected by the user as its own"""
@@ -3542,7 +3556,7 @@ type OperationEdge {
         until: Time
     ): GitCommitConnection!
 
-    """A single commit by hash."""
+    """A single commit by hash. Returns null if the hash does not exist in the repository."""
     commit(hash: String!): GitCommit
 
     """The most recent commit that touched each of the named entries in the
@@ -3576,7 +3590,8 @@ type RepositoryEdge {
 }
 `, BuiltIn: false},
 	{Name: "../schema/root.graphql", Input: `type Query {
-    """Access a repository by reference/name. If no ref is given, the default repository is returned if any."""
+    """Access a repository by reference/name. If no ref is given, the default repository is returned if any.
+    Returns null if the referenced repository does not exist."""
     repository(ref: String): Repository
 
     """List all registered repositories."""

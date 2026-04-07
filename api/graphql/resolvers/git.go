@@ -6,7 +6,6 @@ import (
 	"github.com/git-bug/git-bug/api/graphql/connections"
 	"github.com/git-bug/git-bug/api/graphql/graph"
 	"github.com/git-bug/git-bug/api/graphql/models"
-	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/repository"
 )
 
@@ -14,9 +13,7 @@ const blobTruncateSize = 1 << 20 // 1 MiB
 
 var _ graph.GitCommitResolver = &gitCommitResolver{}
 
-type gitCommitResolver struct {
-	cache *cache.MultiRepoCache
-}
+type gitCommitResolver struct{}
 
 func (r gitCommitResolver) ShortHash(_ context.Context, obj *models.GitCommitMeta) (string, error) {
 	s := string(obj.Hash)
@@ -71,4 +68,25 @@ func (r gitCommitResolver) Diff(_ context.Context, obj *models.GitCommitMeta, pa
 		return nil, err
 	}
 	return &fd, nil
+}
+
+var _ graph.GitTreeEntryResolver = &gitTreeEntryResolver{}
+
+type gitTreeEntryResolver struct{}
+
+func (r gitTreeEntryResolver) LastCommit(_ context.Context, obj *models.GitTreeEntry) (*models.GitCommitMeta, error) {
+	repo := obj.Repo.BrowseRepo()
+	// Pass all sibling names so the history walk covers the whole directory,
+	// which is nearly the same cost as walking for a single entry.
+	// Concurrent calls for the same directory are deduplicated by a singleflight
+	// inside LastCommitForEntries; subsequent calls hit the LRU cache.
+	commits, err := repo.LastCommitForEntries(obj.Ref, obj.Path, obj.SiblingNames)
+	if err != nil {
+		return nil, err
+	}
+	meta, ok := commits[obj.Name]
+	if !ok {
+		return nil, nil
+	}
+	return &models.GitCommitMeta{Repo: obj.Repo, CommitMeta: meta}, nil
 }

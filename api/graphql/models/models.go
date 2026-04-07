@@ -23,3 +23,15 @@ type GitCommitMeta struct {
 	Repo *cache.RepoCache
 	repository.CommitMeta
 }
+
+// GitTreeEntry wraps a TreeEntry with the repository context (Repo, Ref, Path)
+// of the resolution to that tree. SiblingNames lists all entries in the same
+// directory so that the first lastCommit resolver call walks history for the whole
+// directory at once; subsequent sibling calls hit the cache.
+type GitTreeEntry struct {
+	Repo         *cache.RepoCache
+	Ref          string
+	Path         string
+	SiblingNames []string
+	repository.TreeEntry
+}
