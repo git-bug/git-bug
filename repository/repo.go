@@ -263,7 +263,8 @@ type RepoBrowse interface {
 	CommitFileDiff(hash Hash, filePath string) (FileDiff, error)
 
 	// Head returns the commit that HEAD currently points to.
-	// Returns ErrNotFound for an empty (unborn) repository.
+	// Returns ErrNotFound if HEAD cannot be resolved to a commit, including
+	// for an empty (unborn) repository.
 	Head() (CommitMeta, error)
 }
 
