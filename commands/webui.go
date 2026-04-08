@@ -96,11 +96,9 @@ func setupRoutes(env *execenv.Env, opts webUIOptions) (*mux.Router, func() error
 		errOut = env.Err
 	}
 
-	graphqlHandler := graphql.NewHandler(mrc, errOut)
-
 	router.Path("/playground").Handler(playground.Handler("git-bug", "/graphql"))
-	router.Path("/graphql").Handler(graphqlHandler)
-	router.Path("/gitfile/{repo}/{hash}").Handler(httpapi.NewGitFileHandler(mrc))
+	router.Path("/graphql").Handler(graphql.NewHandler(mrc, errOut))
+	router.Path("/gitfile/{repo}/{rest:.+}").Handler(httpapi.NewGitFileHandler(mrc))
 	router.Path("/upload/{repo}").Methods("POST").Handler(httpapi.NewGitUploadFileHandler(mrc))
 	router.PathPrefix("/").Handler(webui.NewHandler())
 
