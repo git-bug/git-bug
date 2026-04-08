@@ -367,7 +367,6 @@ type ComplexityRoot struct {
 
 	GitRef struct {
 		Hash      func(childComplexity int) int
-		IsDefault func(childComplexity int) int
 		Name      func(childComplexity int) int
 		ShortName func(childComplexity int) int
 		Type      func(childComplexity int) int
@@ -479,6 +478,7 @@ type ComplexityRoot struct {
 		Bug           func(childComplexity int, prefix string) int
 		Commit        func(childComplexity int, hash string) int
 		Commits       func(childComplexity int, after *string, first *int, ref string, path *string, since *time.Time, until *time.Time) int
+		Head          func(childComplexity int) int
 		Identity      func(childComplexity int, prefix string) int
 		LastCommits   func(childComplexity int, ref string, path *string, names []string) int
 		Name          func(childComplexity int) int
@@ -1821,13 +1821,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.GitRef.Hash(childComplexity), true
 
-	case "GitRef.isDefault":
-		if e.complexity.GitRef.IsDefault == nil {
-			break
-		}
-
-		return e.complexity.GitRef.IsDefault(childComplexity), true
-
 	case "GitRef.name":
 		if e.complexity.GitRef.Name == nil {
 			break
@@ -2353,6 +2346,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Repository.Commits(childComplexity, args["after"].(*string), args["first"].(*int), args["ref"].(string), args["path"].(*string), args["since"].(*time.Time), args["until"].(*time.Time)), true
+
+	case "Repository.head":
+		if e.complexity.Repository.Head == nil {
+			break
+		}
+
+		return e.complexity.Repository.Head(childComplexity), true
 
 	case "Repository.identity":
 		if e.complexity.Repository.Identity == nil {
@@ -3175,8 +3175,6 @@ type GitRef {
     type: GitRefType!
     """Commit hash the reference points to."""
     hash: String!
-    """True for the branch HEAD currently points to."""
-    isDefault: Boolean!
 }
 
 """An entry in a git tree (directory listing)."""
@@ -3563,6 +3561,10 @@ type OperationEdge {
     directory at path under ref. Use this to populate last-commit info on a
     tree listing without blocking the initial tree fetch."""
     lastCommits(ref: String!, path: String, names: [String!]!): [GitLastCommit!]!
+
+    """The currently checked-out commit (branch, tag, hash ...) in the git repository.
+    Null if there is none (bare repo)."""
+    head: GitCommit
 
     """List of valid labels."""
     validLabels(

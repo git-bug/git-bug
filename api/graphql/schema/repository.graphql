@@ -84,6 +84,10 @@ type Repository {
     tree listing without blocking the initial tree fetch."""
     lastCommits(ref: String!, path: String, names: [String!]!): [GitLastCommit!]!
 
+    """The currently checked-out commit (branch, tag, hash ...) in the git repository.
+    Null if there is none (bare repo)."""
+    head: GitCommit
+
     """List of valid labels."""
     validLabels(
         """Returns the elements in the list that come after the specified cursor."""

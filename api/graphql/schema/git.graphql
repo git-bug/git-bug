@@ -8,8 +8,6 @@ type GitRef {
     type: GitRefType!
     """Commit hash the reference points to."""
     hash: String!
-    """True for the branch HEAD currently points to."""
-    isDefault: Boolean!
 }
 
 """An entry in a git tree (directory listing)."""

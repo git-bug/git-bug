@@ -222,7 +222,6 @@ func (repoResolver) Refs(_ context.Context, obj *models.Repository, after *strin
 				ShortName: b.Name,
 				Type:      models.GitRefTypeBranch,
 				Hash:      string(b.Hash),
-				IsDefault: b.IsDefault,
 			})
 		}
 	}
@@ -421,4 +420,15 @@ func (repoResolver) LastCommits(_ context.Context, obj *models.Repository, ref s
 		}
 	}
 	return result, nil
+}
+
+func (repoResolver) Head(_ context.Context, obj *models.Repository) (*models.GitCommitMeta, error) {
+	meta, err := obj.Repo.BrowseRepo().Head()
+	if errors.Is(err, repository.ErrNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &models.GitCommitMeta{Repo: obj.Repo, CommitMeta: meta}, nil
 }

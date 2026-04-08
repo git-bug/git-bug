@@ -219,7 +219,6 @@ type RepoClock interface {
 // refs/heads/<ref>, refs/tags/<ref>, full ref name, raw commit hash.
 type RepoBrowse interface {
 	// Branches returns all local branches (refs/heads/*).
-	// IsDefault marks the branch HEAD points to.
 	// All other ref namespaces — including git-bug's internal refs
 	// (refs/bugs/, refs/identities/, …) — are excluded.
 	Branches() ([]BranchInfo, error)
@@ -262,6 +261,10 @@ type RepoBrowse interface {
 	// identified by its hash. Diffs against the first parent only; the
 	// initial commit is diffed against the empty tree.
 	CommitFileDiff(hash Hash, filePath string) (FileDiff, error)
+
+	// Head returns the commit that HEAD currently points to.
+	// Returns ErrNotFound for an empty (unborn) repository.
+	Head() (CommitMeta, error)
 }
 
 // ClockLoader hold which logical clock need to exist for an entity and

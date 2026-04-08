@@ -1082,6 +1082,8 @@ func (ec *executionContext) fieldContext_Query_repository(ctx context.Context, f
 				return ec.fieldContext_Repository_commit(ctx, field)
 			case "lastCommits":
 				return ec.fieldContext_Repository_lastCommits(ctx, field)
+			case "head":
+				return ec.fieldContext_Repository_head(ctx, field)
 			case "validLabels":
 				return ec.fieldContext_Repository_validLabels(ctx, field)
 			}

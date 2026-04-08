@@ -999,39 +999,8 @@ func (repo *GoGitRepo) resolveRefToHash(ref string) (plumbing.Hash, error) {
 	return plumbing.ZeroHash, ErrNotFound
 }
 
-// defaultBranchName returns the short name of the default branch.
-func (repo *GoGitRepo) defaultBranchName() string {
-	repo.rMutex.Lock()
-	defer repo.rMutex.Unlock()
-
-	// refs/remotes/origin/HEAD is a symbolic ref set by git clone that points
-	// to the remote's default branch (e.g. refs/remotes/origin/main). It is
-	// the most reliable signal for "what does the upstream consider default".
-	ref, err := repo.r.Reference("refs/remotes/origin/HEAD", false)
-	if err == nil && ref.Type() == plumbing.SymbolicReference {
-		const prefix = "refs/remotes/origin/"
-		if target := ref.Target().String(); strings.HasPrefix(target, prefix) {
-			return strings.TrimPrefix(target, prefix)
-		}
-	}
-	// Fall back to well-known names for repos without a configured remote.
-	for _, name := range []string{"main", "master", "trunk", "develop"} {
-		_, err := repo.r.Reference(plumbing.NewBranchReferenceName(name), false)
-		if err == nil {
-			return name
-		}
-	}
-	return ""
-}
-
-// Branches returns all local branches. IsDefault marks the upstream's default
-// branch, determined in order:
-//  1. refs/remotes/origin/HEAD (set by git clone, reflects the server default)
-//  2. First match among: main, master, trunk, develop
-//  3. No branch marked if none of the above resolve
+// Branches returns all local branches (refs/heads/*).
 func (repo *GoGitRepo) Branches() ([]BranchInfo, error) {
-	defaultBranch := repo.defaultBranchName()
-
 	repo.rMutex.Lock()
 	defer repo.rMutex.Unlock()
 
@@ -1046,9 +1015,8 @@ func (repo *GoGitRepo) Branches() ([]BranchInfo, error) {
 			return nil
 		}
 		branches = append(branches, BranchInfo{
-			Name:      r.Name().Short(),
-			Hash:      Hash(r.Hash().String()),
-			IsDefault: r.Name().Short() == defaultBranch,
+			Name: r.Name().Short(),
+			Hash: Hash(r.Hash().String()),
 		})
 		return nil
 	})
@@ -1580,6 +1548,30 @@ func (repo *GoGitRepo) CommitFileDiff(hash Hash, filePath string) (FileDiff, err
 		return fd, nil
 	}
 	return FileDiff{}, ErrNotFound
+}
+
+// Head returns the commit that HEAD currently points to.
+func (repo *GoGitRepo) Head() (CommitMeta, error) {
+	repo.rMutex.Lock()
+	defer repo.rMutex.Unlock()
+
+	ref, err := repo.r.Head()
+	if err == plumbing.ErrReferenceNotFound {
+		return CommitMeta{}, ErrNotFound
+	}
+	if err != nil {
+		return CommitMeta{}, err
+	}
+
+	c, err := repo.r.CommitObject(ref.Hash())
+	if err == plumbing.ErrObjectNotFound {
+		return CommitMeta{}, ErrNotFound
+	}
+	if err != nil {
+		return CommitMeta{}, err
+	}
+
+	return commitToMeta(c), nil
 }
 
 // buildDiffHunks converts a go-git FilePatch into DiffHunks with line numbers

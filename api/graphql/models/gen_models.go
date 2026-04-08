@@ -320,8 +320,6 @@ type GitRef struct {
 	Type GitRefType `json:"type"`
 	// Commit hash the reference points to.
 	Hash string `json:"hash"`
-	// True for the branch HEAD currently points to.
-	IsDefault bool `json:"isDefault"`
 }
 
 type GitRefConnection struct {

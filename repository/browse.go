@@ -146,9 +146,8 @@ type FileDiff struct {
 
 // BranchInfo describes a local branch returned by RepoBrowse.Branches.
 type BranchInfo struct {
-	Name      string
-	Hash      Hash // commit hash
-	IsDefault bool // true for the branch HEAD points to
+	Name string
+	Hash Hash // commit hash
 }
 
 // TagInfo describes a tag returned by RepoBrowse.Tags.

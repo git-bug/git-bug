@@ -232,20 +232,18 @@ type commit struct {
 }
 
 type mockRepoDataBrowse struct {
-	blobs         map[Hash][]byte
-	trees         map[Hash]string
-	commits       map[Hash]commit
-	refs          map[string]Hash
-	defaultBranch string
+	blobs   map[Hash][]byte
+	trees   map[Hash]string
+	commits map[Hash]commit
+	refs    map[string]Hash
 }
 
 func newMockRepoDataBrowse() *mockRepoDataBrowse {
 	return &mockRepoDataBrowse{
-		blobs:         make(map[Hash][]byte),
-		trees:         make(map[Hash]string),
-		commits:       make(map[Hash]commit),
-		refs:          make(map[string]Hash),
-		defaultBranch: "main",
+		blobs:   make(map[Hash][]byte),
+		trees:   make(map[Hash]string),
+		commits: make(map[Hash]commit),
+		refs:    make(map[string]Hash),
 	}
 }
 
@@ -545,9 +543,8 @@ func (r *mockRepoDataBrowse) Branches() ([]BranchInfo, error) {
 			continue
 		}
 		branches = append(branches, BranchInfo{
-			Name:      name,
-			Hash:      hash,
-			IsDefault: name == r.defaultBranch,
+			Name: name,
+			Hash: hash,
 		})
 	}
 	return branches, nil
@@ -795,6 +792,18 @@ func (r *mockRepoDataBrowse) CommitFileDiff(hash Hash, filePath string) (FileDif
 	}
 	fd.Hunks = mockDiffHunks(oldContent, newContent)
 	return fd, nil
+}
+
+func (r *mockRepoDataBrowse) Head() (CommitMeta, error) {
+	hash, ok := r.refs["HEAD"]
+	if !ok {
+		return CommitMeta{}, ErrNotFound
+	}
+	c, ok := r.commits[hash]
+	if !ok {
+		return CommitMeta{}, ErrNotFound
+	}
+	return mockCommitMeta(hash, c), nil
 }
 
 // mockDiffHunks produces a single DiffHunk using a prefix/suffix scan.

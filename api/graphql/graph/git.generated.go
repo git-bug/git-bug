@@ -2319,50 +2319,6 @@ func (ec *executionContext) fieldContext_GitRef_hash(_ context.Context, field gr
 	return fc, nil
 }
 
-func (ec *executionContext) _GitRef_isDefault(ctx context.Context, field graphql.CollectedField, obj *models.GitRef) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_GitRef_isDefault(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.IsDefault, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_GitRef_isDefault(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "GitRef",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _GitRefConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *models.GitRefConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_GitRefConnection_nodes(ctx, field)
 	if err != nil {
@@ -2410,8 +2366,6 @@ func (ec *executionContext) fieldContext_GitRefConnection_nodes(_ context.Contex
 				return ec.fieldContext_GitRef_type(ctx, field)
 			case "hash":
 				return ec.fieldContext_GitRef_hash(ctx, field)
-			case "isDefault":
-				return ec.fieldContext_GitRef_isDefault(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type GitRef", field.Name)
 		},
@@ -3411,11 +3365,6 @@ func (ec *executionContext) _GitRef(ctx context.Context, sel ast.SelectionSet, o
 			}
 		case "hash":
 			out.Values[i] = ec._GitRef_hash(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "isDefault":
-			out.Values[i] = ec._GitRef_isDefault(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

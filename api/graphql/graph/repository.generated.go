@@ -31,6 +31,7 @@ type RepositoryResolver interface {
 	Commits(ctx context.Context, obj *models.Repository, after *string, first *int, ref string, path *string, since *time.Time, until *time.Time) (*models.GitCommitConnection, error)
 	Commit(ctx context.Context, obj *models.Repository, hash string) (*models.GitCommitMeta, error)
 	LastCommits(ctx context.Context, obj *models.Repository, ref string, path *string, names []string) ([]*models.GitLastCommit, error)
+	Head(ctx context.Context, obj *models.Repository) (*models.GitCommitMeta, error)
 	ValidLabels(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int) (*models.LabelConnection, error)
 }
 
@@ -1655,6 +1656,69 @@ func (ec *executionContext) fieldContext_Repository_lastCommits(ctx context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _Repository_head(ctx context.Context, field graphql.CollectedField, obj *models.Repository) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Repository_head(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Repository().Head(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*models.GitCommitMeta)
+	fc.Result = res
+	return ec.marshalOGitCommit2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitCommitMeta(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Repository_head(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Repository",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hash":
+				return ec.fieldContext_GitCommit_hash(ctx, field)
+			case "shortHash":
+				return ec.fieldContext_GitCommit_shortHash(ctx, field)
+			case "message":
+				return ec.fieldContext_GitCommit_message(ctx, field)
+			case "fullMessage":
+				return ec.fieldContext_GitCommit_fullMessage(ctx, field)
+			case "authorName":
+				return ec.fieldContext_GitCommit_authorName(ctx, field)
+			case "authorEmail":
+				return ec.fieldContext_GitCommit_authorEmail(ctx, field)
+			case "date":
+				return ec.fieldContext_GitCommit_date(ctx, field)
+			case "parents":
+				return ec.fieldContext_GitCommit_parents(ctx, field)
+			case "files":
+				return ec.fieldContext_GitCommit_files(ctx, field)
+			case "diff":
+				return ec.fieldContext_GitCommit_diff(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type GitCommit", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Repository_validLabels(ctx context.Context, field graphql.CollectedField, obj *models.Repository) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Repository_validLabels(ctx, field)
 	if err != nil {
@@ -1833,6 +1897,8 @@ func (ec *executionContext) fieldContext_RepositoryConnection_nodes(_ context.Co
 				return ec.fieldContext_Repository_commit(ctx, field)
 			case "lastCommits":
 				return ec.fieldContext_Repository_lastCommits(ctx, field)
+			case "head":
+				return ec.fieldContext_Repository_head(ctx, field)
 			case "validLabels":
 				return ec.fieldContext_Repository_validLabels(ctx, field)
 			}
@@ -2047,6 +2113,8 @@ func (ec *executionContext) fieldContext_RepositoryEdge_node(_ context.Context, 
 				return ec.fieldContext_Repository_commit(ctx, field)
 			case "lastCommits":
 				return ec.fieldContext_Repository_lastCommits(ctx, field)
+			case "head":
+				return ec.fieldContext_Repository_head(ctx, field)
 			case "validLabels":
 				return ec.fieldContext_Repository_validLabels(ctx, field)
 			}
@@ -2470,6 +2538,39 @@ func (ec *executionContext) _Repository(ctx context.Context, sel ast.SelectionSe
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "head":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Repository_head(ctx, field, obj)
 				return res
 			}
 

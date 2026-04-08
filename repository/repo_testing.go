@@ -466,10 +466,7 @@ func RepoBrowseTest(t *testing.T, repo browsable) {
 		}
 
 		require.Equal(t, c3, byName["main"].Hash)
-		require.True(t, byName["main"].IsDefault)
-
 		require.Equal(t, c2, byName["feature"].Hash)
-		require.False(t, byName["feature"].IsDefault)
 	})
 
 	// ── Tags ──────────────────────────────────────────────────────────────────
@@ -770,5 +767,15 @@ func RepoBrowseTest(t *testing.T, repo browsable) {
 		// unknown hash
 		_, err = repo.CommitFileDiff(randomHash(), "main.go")
 		require.ErrorIs(t, err, ErrNotFound)
+	})
+
+	// ── Head ──────────────────────────────────────────────────────────────────
+
+	t.Run("Head", func(t *testing.T) {
+		require.NoError(t, repo.UpdateRef("HEAD", c3))
+
+		meta, err := repo.Head()
+		require.NoError(t, err)
+		require.Equal(t, c3, meta.Hash)
 	})
 }
