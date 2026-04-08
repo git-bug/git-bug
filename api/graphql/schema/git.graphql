@@ -1,5 +1,6 @@
 """A git branch or tag reference."""
-type GitRef {
+type GitRef
+@goModel(model: "github.com/git-bug/git-bug/api/graphql/models.GitRef") {
     """Full reference name, e.g. refs/heads/main or refs/tags/v1.0."""
     name: String!
     """Short name, e.g. main or v1.0."""
@@ -8,6 +9,8 @@ type GitRef {
     type: GitRefType!
     """Commit hash the reference points to."""
     hash: String!
+    """Git commit the reference points to."""
+    commit: GitCommit!
 }
 
 """An entry in a git tree (directory listing)."""
@@ -168,13 +171,15 @@ type GitDiffLine
 
 # ── enums ─────────────────────────────────────────────────────────────────────
 
-"""The kind of git reference: a branch or a tag."""
+"""The kind of git reference: a branch, a tag, or a detached commit."""
 enum GitRefType
-@goModel(model: "github.com/git-bug/git-bug/api/graphql/models.GitRefType") {
+@goModel(model: "github.com/git-bug/git-bug/repository.GitRefType") {
     """A local branch (refs/heads/*)."""
-    BRANCH @goEnum(value: "github.com/git-bug/git-bug/api/graphql/models.GitRefTypeBranch")
+    BRANCH @goEnum(value: "github.com/git-bug/git-bug/repository.GitRefTypeBranch")
     """An annotated or lightweight tag (refs/tags/*)."""
-    TAG @goEnum(value: "github.com/git-bug/git-bug/api/graphql/models.GitRefTypeTag")
+    TAG @goEnum(value: "github.com/git-bug/git-bug/repository.GitRefTypeTag")
+    """A detached HEAD pointing directly at a commit."""
+    COMMIT @goEnum(value: "github.com/git-bug/git-bug/repository.GitRefTypeCommit")
 }
 
 """The type of object a git tree entry points to."""

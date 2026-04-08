@@ -37,7 +37,8 @@ type Repository {
     """The identity created or selected by the user as its own"""
     userIdentity: Identity
 
-    """All branches and tags, optionally filtered by type."""
+    """All branches and tags, optionally filtered by type. BRANCH and TAG are
+    the only accepted filter values; passing COMMIT returns an error."""
     refs(
         """Returns the elements in the list that come after the specified cursor."""
         after: String
@@ -47,7 +48,7 @@ type Repository {
         first: Int
         """Returns the last _n_ elements from the list."""
         last: Int
-        """Restrict to references of this type."""
+        """Restrict to references of this type. Accepts BRANCH or TAG only."""
         type: GitRefType
     ): GitRefConnection!
 
@@ -84,10 +85,10 @@ type Repository {
     tree listing without blocking the initial tree fetch."""
     lastCommits(ref: String!, path: String, names: [String!]!): [GitLastCommit!]!
 
-    """The commit pointed to by HEAD in the git repository.
-    Null if HEAD cannot be resolved to a commit, for example in an empty or unborn
+    """The reference pointed to by HEAD in the git repository.
+    Null if HEAD cannot be resolved, for example in an empty or unborn
     repository, or if HEAD is missing or invalid."""
-    head: GitCommit
+    head: GitRef
 
     """List of valid labels."""
     validLabels(

@@ -265,7 +265,7 @@ type RepoBrowse interface {
 	// Head returns the commit that HEAD currently points to.
 	// Returns ErrNotFound if HEAD cannot be resolved to a commit, including
 	// for an empty (unborn) repository.
-	Head() (CommitMeta, error)
+	Head() (RefMeta, error)
 }
 
 // ClockLoader hold which logical clock need to exist for an entity and

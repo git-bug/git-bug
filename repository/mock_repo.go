@@ -794,16 +794,20 @@ func (r *mockRepoDataBrowse) CommitFileDiff(hash Hash, filePath string) (FileDif
 	return fd, nil
 }
 
-func (r *mockRepoDataBrowse) Head() (CommitMeta, error) {
+func (r *mockRepoDataBrowse) Head() (RefMeta, error) {
 	hash, ok := r.refs["HEAD"]
 	if !ok {
-		return CommitMeta{}, ErrNotFound
+		return RefMeta{}, ErrNotFound
 	}
-	c, ok := r.commits[hash]
-	if !ok {
-		return CommitMeta{}, ErrNotFound
+	if _, ok := r.commits[hash]; !ok {
+		return RefMeta{}, ErrNotFound
 	}
-	return mockCommitMeta(hash, c), nil
+	return RefMeta{
+		Name:      "HEAD",
+		ShortName: "HEAD",
+		Type:      GitRefTypeCommit,
+		Hash:      string(hash),
+	}, nil
 }
 
 // mockDiffHunks produces a single DiffHunk using a prefix/suffix scan.

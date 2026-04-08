@@ -28,6 +28,9 @@ type GitCommitResolver interface {
 	Files(ctx context.Context, obj *models.GitCommitMeta, after *string, before *string, first *int, last *int) (*models.GitChangedFileConnection, error)
 	Diff(ctx context.Context, obj *models.GitCommitMeta, path string) (*repository.FileDiff, error)
 }
+type GitRefResolver interface {
+	Commit(ctx context.Context, obj *models.GitRef) (*models.GitCommitMeta, error)
+}
 type GitTreeEntryResolver interface {
 	LastCommit(ctx context.Context, obj *models.GitTreeEntry) (*models.GitCommitMeta, error)
 }
@@ -2257,9 +2260,9 @@ func (ec *executionContext) _GitRef_type(ctx context.Context, field graphql.Coll
 		}
 		return graphql.Null
 	}
-	res := resTmp.(models.GitRefType)
+	res := resTmp.(repository.GitRefType)
 	fc.Result = res
-	return ec.marshalNGitRefType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitRefType(ctx, field.Selections, res)
+	return ec.marshalNGitRefType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐGitRefType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_GitRef_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2319,6 +2322,72 @@ func (ec *executionContext) fieldContext_GitRef_hash(_ context.Context, field gr
 	return fc, nil
 }
 
+func (ec *executionContext) _GitRef_commit(ctx context.Context, field graphql.CollectedField, obj *models.GitRef) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GitRef_commit(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.GitRef().Commit(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.GitCommitMeta)
+	fc.Result = res
+	return ec.marshalNGitCommit2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitCommitMeta(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GitRef_commit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GitRef",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hash":
+				return ec.fieldContext_GitCommit_hash(ctx, field)
+			case "shortHash":
+				return ec.fieldContext_GitCommit_shortHash(ctx, field)
+			case "message":
+				return ec.fieldContext_GitCommit_message(ctx, field)
+			case "fullMessage":
+				return ec.fieldContext_GitCommit_fullMessage(ctx, field)
+			case "authorName":
+				return ec.fieldContext_GitCommit_authorName(ctx, field)
+			case "authorEmail":
+				return ec.fieldContext_GitCommit_authorEmail(ctx, field)
+			case "date":
+				return ec.fieldContext_GitCommit_date(ctx, field)
+			case "parents":
+				return ec.fieldContext_GitCommit_parents(ctx, field)
+			case "files":
+				return ec.fieldContext_GitCommit_files(ctx, field)
+			case "diff":
+				return ec.fieldContext_GitCommit_diff(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type GitCommit", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _GitRefConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *models.GitRefConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_GitRefConnection_nodes(ctx, field)
 	if err != nil {
@@ -2366,6 +2435,8 @@ func (ec *executionContext) fieldContext_GitRefConnection_nodes(_ context.Contex
 				return ec.fieldContext_GitRef_type(ctx, field)
 			case "hash":
 				return ec.fieldContext_GitRef_hash(ctx, field)
+			case "commit":
+				return ec.fieldContext_GitRef_commit(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type GitRef", field.Name)
 		},
@@ -3351,23 +3422,59 @@ func (ec *executionContext) _GitRef(ctx context.Context, sel ast.SelectionSet, o
 		case "name":
 			out.Values[i] = ec._GitRef_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "shortName":
 			out.Values[i] = ec._GitRef_shortName(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "type":
 			out.Values[i] = ec._GitRef_type(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "hash":
 			out.Values[i] = ec._GitRef_hash(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "commit":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._GitRef_commit(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3602,6 +3709,10 @@ func (ec *executionContext) marshalNGitChangedFileConnection2ᚖgithubᚗcomᚋg
 		return graphql.Null
 	}
 	return ec._GitChangedFileConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNGitCommit2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitCommitMeta(ctx context.Context, sel ast.SelectionSet, v models.GitCommitMeta) graphql.Marshaler {
+	return ec._GitCommit(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNGitCommit2ᚕᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitCommitMetaᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.GitCommitMeta) graphql.Marshaler {
@@ -3910,15 +4021,15 @@ func (ec *executionContext) marshalNGitRefConnection2ᚖgithubᚗcomᚋgitᚑbug
 	return ec._GitRefConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNGitRefType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitRefType(ctx context.Context, v any) (models.GitRefType, error) {
+func (ec *executionContext) unmarshalNGitRefType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐGitRefType(ctx context.Context, v any) (repository.GitRefType, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNGitRefType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitRefType[tmp]
+	res := unmarshalNGitRefType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐGitRefType[tmp]
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNGitRefType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitRefType(ctx context.Context, sel ast.SelectionSet, v models.GitRefType) graphql.Marshaler {
+func (ec *executionContext) marshalNGitRefType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐGitRefType(ctx context.Context, sel ast.SelectionSet, v repository.GitRefType) graphql.Marshaler {
 	_ = sel
-	res := graphql.MarshalString(marshalNGitRefType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitRefType[v])
+	res := graphql.MarshalString(marshalNGitRefType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐGitRefType[v])
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -3928,13 +4039,15 @@ func (ec *executionContext) marshalNGitRefType2githubᚗcomᚋgitᚑbugᚋgitᚑ
 }
 
 var (
-	unmarshalNGitRefType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitRefType = map[string]models.GitRefType{
-		"BRANCH": models.GitRefTypeBranch,
-		"TAG":    models.GitRefTypeTag,
+	unmarshalNGitRefType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐGitRefType = map[string]repository.GitRefType{
+		"BRANCH": repository.GitRefTypeBranch,
+		"TAG":    repository.GitRefTypeTag,
+		"COMMIT": repository.GitRefTypeCommit,
 	}
-	marshalNGitRefType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitRefType = map[models.GitRefType]string{
-		models.GitRefTypeBranch: "BRANCH",
-		models.GitRefTypeTag:    "TAG",
+	marshalNGitRefType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐGitRefType = map[repository.GitRefType]string{
+		repository.GitRefTypeBranch: "BRANCH",
+		repository.GitRefTypeTag:    "TAG",
+		repository.GitRefTypeCommit: "COMMIT",
 	}
 )
 
@@ -4013,33 +4126,42 @@ func (ec *executionContext) marshalOGitFileDiff2ᚖgithubᚗcomᚋgitᚑbugᚋgi
 	return ec._GitFileDiff(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOGitRefType2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitRefType(ctx context.Context, v any) (*models.GitRefType, error) {
+func (ec *executionContext) marshalOGitRef2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitRef(ctx context.Context, sel ast.SelectionSet, v *models.GitRef) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._GitRef(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOGitRefType2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐGitRefType(ctx context.Context, v any) (*repository.GitRefType, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalOGitRefType2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitRefType[tmp]
+	res := unmarshalOGitRefType2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐGitRefType[tmp]
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOGitRefType2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitRefType(ctx context.Context, sel ast.SelectionSet, v *models.GitRefType) graphql.Marshaler {
+func (ec *executionContext) marshalOGitRefType2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐGitRefType(ctx context.Context, sel ast.SelectionSet, v *repository.GitRefType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	_ = sel
 	_ = ctx
-	res := graphql.MarshalString(marshalOGitRefType2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitRefType[*v])
+	res := graphql.MarshalString(marshalOGitRefType2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐGitRefType[*v])
 	return res
 }
 
 var (
-	unmarshalOGitRefType2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitRefType = map[string]models.GitRefType{
-		"BRANCH": models.GitRefTypeBranch,
-		"TAG":    models.GitRefTypeTag,
+	unmarshalOGitRefType2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐGitRefType = map[string]repository.GitRefType{
+		"BRANCH": repository.GitRefTypeBranch,
+		"TAG":    repository.GitRefTypeTag,
+		"COMMIT": repository.GitRefTypeCommit,
 	}
-	marshalOGitRefType2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitRefType = map[models.GitRefType]string{
-		models.GitRefTypeBranch: "BRANCH",
-		models.GitRefTypeTag:    "TAG",
+	marshalOGitRefType2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐGitRefType = map[repository.GitRefType]string{
+		repository.GitRefTypeBranch: "BRANCH",
+		repository.GitRefTypeTag:    "TAG",
+		repository.GitRefTypeCommit: "COMMIT",
 	}
 )
 

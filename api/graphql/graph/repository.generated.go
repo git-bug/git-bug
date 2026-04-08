@@ -13,6 +13,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/git-bug/git-bug/api/graphql/models"
+	"github.com/git-bug/git-bug/repository"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -25,13 +26,13 @@ type RepositoryResolver interface {
 	AllIdentities(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int) (*models.IdentityConnection, error)
 	Identity(ctx context.Context, obj *models.Repository, prefix string) (models.IdentityWrapper, error)
 	UserIdentity(ctx context.Context, obj *models.Repository) (models.IdentityWrapper, error)
-	Refs(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int, typeArg *models.GitRefType) (*models.GitRefConnection, error)
+	Refs(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int, typeArg *repository.GitRefType) (*models.GitRefConnection, error)
 	Tree(ctx context.Context, obj *models.Repository, ref string, path *string) ([]*models.GitTreeEntry, error)
 	Blob(ctx context.Context, obj *models.Repository, ref string, path string) (*models.GitBlob, error)
 	Commits(ctx context.Context, obj *models.Repository, after *string, first *int, ref string, path *string, since *time.Time, until *time.Time) (*models.GitCommitConnection, error)
 	Commit(ctx context.Context, obj *models.Repository, hash string) (*models.GitCommitMeta, error)
 	LastCommits(ctx context.Context, obj *models.Repository, ref string, path *string, names []string) ([]*models.GitLastCommit, error)
-	Head(ctx context.Context, obj *models.Repository) (*models.GitCommitMeta, error)
+	Head(ctx context.Context, obj *models.Repository) (*models.GitRef, error)
 	ValidLabels(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int) (*models.LabelConnection, error)
 }
 
@@ -713,18 +714,18 @@ func (ec *executionContext) field_Repository_refs_argsLast(
 func (ec *executionContext) field_Repository_refs_argsType(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (*models.GitRefType, error) {
+) (*repository.GitRefType, error) {
 	if _, ok := rawArgs["type"]; !ok {
-		var zeroVal *models.GitRefType
+		var zeroVal *repository.GitRefType
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
 	if tmp, ok := rawArgs["type"]; ok {
-		return ec.unmarshalOGitRefType2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitRefType(ctx, tmp)
+		return ec.unmarshalOGitRefType2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐGitRefType(ctx, tmp)
 	}
 
-	var zeroVal *models.GitRefType
+	var zeroVal *repository.GitRefType
 	return zeroVal, nil
 }
 
@@ -1278,7 +1279,7 @@ func (ec *executionContext) _Repository_refs(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Repository().Refs(rctx, obj, fc.Args["after"].(*string), fc.Args["before"].(*string), fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["type"].(*models.GitRefType))
+		return ec.resolvers.Repository().Refs(rctx, obj, fc.Args["after"].(*string), fc.Args["before"].(*string), fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["type"].(*repository.GitRefType))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1679,9 +1680,9 @@ func (ec *executionContext) _Repository_head(ctx context.Context, field graphql.
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*models.GitCommitMeta)
+	res := resTmp.(*models.GitRef)
 	fc.Result = res
-	return ec.marshalOGitCommit2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitCommitMeta(ctx, field.Selections, res)
+	return ec.marshalOGitRef2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitRef(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Repository_head(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1692,28 +1693,18 @@ func (ec *executionContext) fieldContext_Repository_head(_ context.Context, fiel
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "name":
+				return ec.fieldContext_GitRef_name(ctx, field)
+			case "shortName":
+				return ec.fieldContext_GitRef_shortName(ctx, field)
+			case "type":
+				return ec.fieldContext_GitRef_type(ctx, field)
 			case "hash":
-				return ec.fieldContext_GitCommit_hash(ctx, field)
-			case "shortHash":
-				return ec.fieldContext_GitCommit_shortHash(ctx, field)
-			case "message":
-				return ec.fieldContext_GitCommit_message(ctx, field)
-			case "fullMessage":
-				return ec.fieldContext_GitCommit_fullMessage(ctx, field)
-			case "authorName":
-				return ec.fieldContext_GitCommit_authorName(ctx, field)
-			case "authorEmail":
-				return ec.fieldContext_GitCommit_authorEmail(ctx, field)
-			case "date":
-				return ec.fieldContext_GitCommit_date(ctx, field)
-			case "parents":
-				return ec.fieldContext_GitCommit_parents(ctx, field)
-			case "files":
-				return ec.fieldContext_GitCommit_files(ctx, field)
-			case "diff":
-				return ec.fieldContext_GitCommit_diff(ctx, field)
+				return ec.fieldContext_GitRef_hash(ctx, field)
+			case "commit":
+				return ec.fieldContext_GitRef_commit(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type GitCommit", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type GitRef", field.Name)
 		},
 	}
 	return fc, nil

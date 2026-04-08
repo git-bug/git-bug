@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"strconv"
@@ -90,6 +91,69 @@ func (t *DiffLineType) UnmarshalGQL(v any) error {
 		return fmt.Errorf("%q is not a valid DiffLineType", str)
 	}
 	return nil
+}
+
+// GitRefType is the kind of git reference: a branch, a tag, or a detached commit.
+type GitRefType string
+
+const (
+	// GitRefTypeBranch refers to a local branch (refs/heads/*).
+	GitRefTypeBranch GitRefType = "BRANCH"
+	// GitRefTypeTag refers to an annotated or lightweight tag (refs/tags/*).
+	GitRefTypeTag GitRefType = "TAG"
+	// GitRefTypeCommit represents a detached HEAD pointing directly at a commit.
+	GitRefTypeCommit GitRefType = "COMMIT"
+)
+
+func (e GitRefType) IsValid() bool {
+	switch e {
+	case GitRefTypeBranch, GitRefTypeTag, GitRefTypeCommit:
+		return true
+	}
+	return false
+}
+
+func (e GitRefType) String() string { return string(e) }
+
+func (e *GitRefType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+	*e = GitRefType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid GitRefType", str)
+	}
+	return nil
+}
+
+func (e GitRefType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *GitRefType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e GitRefType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type RefMeta struct {
+	// Full reference name, e.g. refs/heads/main or refs/tags/v1.0.
+	Name string `json:"name"`
+	// Short name, e.g. main or v1.0.
+	ShortName string `json:"shortName"`
+	// Whether this reference is a branch or a tag.
+	Type GitRefType `json:"type"`
+	// Commit hash the reference points to.
+	Hash string `json:"hash"`
 }
 
 // CommitMeta holds the metadata for a single commit, suitable for listing.

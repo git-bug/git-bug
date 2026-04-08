@@ -12,6 +12,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
 	"github.com/git-bug/git-bug/api/graphql/models"
+	"github.com/git-bug/git-bug/repository"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -50,6 +51,7 @@ type ResolverRoot interface {
 	BugSetTitleTimelineItem() BugSetTitleTimelineItemResolver
 	Color() ColorResolver
 	GitCommit() GitCommitResolver
+	GitRef() GitRefResolver
 	GitTreeEntry() GitTreeEntryResolver
 	Identity() IdentityResolver
 	Label() LabelResolver
@@ -366,6 +368,7 @@ type ComplexityRoot struct {
 	}
 
 	GitRef struct {
+		Commit    func(childComplexity int) int
 		Hash      func(childComplexity int) int
 		Name      func(childComplexity int) int
 		ShortName func(childComplexity int) int
@@ -482,7 +485,7 @@ type ComplexityRoot struct {
 		Identity      func(childComplexity int, prefix string) int
 		LastCommits   func(childComplexity int, ref string, path *string, names []string) int
 		Name          func(childComplexity int) int
-		Refs          func(childComplexity int, after *string, before *string, first *int, last *int, typeArg *models.GitRefType) int
+		Refs          func(childComplexity int, after *string, before *string, first *int, last *int, typeArg *repository.GitRefType) int
 		Tree          func(childComplexity int, ref string, path *string) int
 		UserIdentity  func(childComplexity int) int
 		ValidLabels   func(childComplexity int, after *string, before *string, first *int, last *int) int
@@ -1814,6 +1817,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.GitLastCommit.Name(childComplexity), true
 
+	case "GitRef.commit":
+		if e.complexity.GitRef.Commit == nil {
+			break
+		}
+
+		return e.complexity.GitRef.Commit(childComplexity), true
+
 	case "GitRef.hash":
 		if e.complexity.GitRef.Hash == nil {
 			break
@@ -2395,7 +2405,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Repository.Refs(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int), args["type"].(*models.GitRefType)), true
+		return e.complexity.Repository.Refs(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int), args["type"].(*repository.GitRefType)), true
 
 	case "Repository.tree":
 		if e.complexity.Repository.Tree == nil {
@@ -3166,7 +3176,8 @@ directive @goEnum(
 ) on ENUM_VALUE
 `, BuiltIn: false},
 	{Name: "../schema/git.graphql", Input: `"""A git branch or tag reference."""
-type GitRef {
+type GitRef
+@goModel(model: "github.com/git-bug/git-bug/api/graphql/models.GitRef") {
     """Full reference name, e.g. refs/heads/main or refs/tags/v1.0."""
     name: String!
     """Short name, e.g. main or v1.0."""
@@ -3175,6 +3186,8 @@ type GitRef {
     type: GitRefType!
     """Commit hash the reference points to."""
     hash: String!
+    """Git commit the reference points to."""
+    commit: GitCommit!
 }
 
 """An entry in a git tree (directory listing)."""
@@ -3335,13 +3348,15 @@ type GitDiffLine
 
 # ── enums ─────────────────────────────────────────────────────────────────────
 
-"""The kind of git reference: a branch or a tag."""
+"""The kind of git reference: a branch, a tag, or a detached commit."""
 enum GitRefType
-@goModel(model: "github.com/git-bug/git-bug/api/graphql/models.GitRefType") {
+@goModel(model: "github.com/git-bug/git-bug/repository.GitRefType") {
     """A local branch (refs/heads/*)."""
-    BRANCH @goEnum(value: "github.com/git-bug/git-bug/api/graphql/models.GitRefTypeBranch")
+    BRANCH @goEnum(value: "github.com/git-bug/git-bug/repository.GitRefTypeBranch")
     """An annotated or lightweight tag (refs/tags/*)."""
-    TAG @goEnum(value: "github.com/git-bug/git-bug/api/graphql/models.GitRefTypeTag")
+    TAG @goEnum(value: "github.com/git-bug/git-bug/repository.GitRefTypeTag")
+    """A detached HEAD pointing directly at a commit."""
+    COMMIT @goEnum(value: "github.com/git-bug/git-bug/repository.GitRefTypeCommit")
 }
 
 """The type of object a git tree entry points to."""
@@ -3515,7 +3530,8 @@ type OperationEdge {
     """The identity created or selected by the user as its own"""
     userIdentity: Identity
 
-    """All branches and tags, optionally filtered by type."""
+    """All branches and tags, optionally filtered by type. BRANCH and TAG are
+    the only accepted filter values; passing COMMIT returns an error."""
     refs(
         """Returns the elements in the list that come after the specified cursor."""
         after: String
@@ -3525,7 +3541,7 @@ type OperationEdge {
         first: Int
         """Returns the last _n_ elements from the list."""
         last: Int
-        """Restrict to references of this type."""
+        """Restrict to references of this type. Accepts BRANCH or TAG only."""
         type: GitRefType
     ): GitRefConnection!
 
@@ -3562,9 +3578,10 @@ type OperationEdge {
     tree listing without blocking the initial tree fetch."""
     lastCommits(ref: String!, path: String, names: [String!]!): [GitLastCommit!]!
 
-    """The currently checked-out commit (branch, tag, hash ...) in the git repository.
-    Null if there is none (bare repo)."""
-    head: GitCommit
+    """The reference pointed to by HEAD in the git repository.
+    Null if HEAD cannot be resolved, for example in an empty or unborn
+    repository, or if HEAD is missing or invalid."""
+    head: GitRef
 
     """List of valid labels."""
     validLabels(

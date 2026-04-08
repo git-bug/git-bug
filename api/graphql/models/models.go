@@ -17,6 +17,13 @@ type Repository struct {
 	Repo *cache.RepoCache
 }
 
+// GitRef is a wrapper around a RefMeta that includes the Repo,
+// to keep the repo context in sub-resolvers.
+type GitRef struct {
+	Repo *cache.RepoCache
+	repository.RefMeta
+}
+
 // GitCommitMeta is a wrapper around a CommitMeta that includes the Repo,
 // to keep the repo context in sub-resolvers.
 type GitCommitMeta struct {

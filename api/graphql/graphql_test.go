@@ -440,6 +440,121 @@ func TestGitBrowseQueries(t *testing.T) {
 		require.Equal(t, string(c2), got.Nodes[1].Hash)
 	})
 
+	// ── refs ─────────────────────────────────────────────────────────────────
+
+	t.Run("refs_all", func(t *testing.T) {
+		var resp struct {
+			Repository struct {
+				Refs struct {
+					TotalCount int
+					Nodes      []struct {
+						Name      string
+						ShortName string
+						Type      string `json:"type"`
+						Hash      string
+					}
+				}
+			}
+		}
+		require.NoError(t, c.Post(`query {
+			repository { refs { totalCount nodes { name shortName type hash } } }
+		}`, &resp))
+		nodes := resp.Repository.Refs.Nodes
+		require.Equal(t, 3, resp.Repository.Refs.TotalCount)
+		byShort := make(map[string]struct {
+			Name string
+			Type string
+			Hash string
+		})
+		for _, n := range nodes {
+			byShort[n.ShortName] = struct {
+				Name string
+				Type string
+				Hash string
+			}{n.Name, n.Type, n.Hash}
+		}
+		require.Equal(t, "refs/heads/feature", byShort["feature"].Name)
+		require.Equal(t, "BRANCH", byShort["feature"].Type)
+		require.Equal(t, string(c2), byShort["feature"].Hash)
+		require.Equal(t, "refs/heads/main", byShort["main"].Name)
+		require.Equal(t, "BRANCH", byShort["main"].Type)
+		require.Equal(t, string(c3), byShort["main"].Hash)
+		require.Equal(t, "refs/tags/v1.0", byShort["v1.0"].Name)
+		require.Equal(t, "TAG", byShort["v1.0"].Type)
+		require.Equal(t, string(c1), byShort["v1.0"].Hash)
+	})
+
+	t.Run("refs_branch_filter", func(t *testing.T) {
+		var resp struct {
+			Repository struct {
+				Refs struct {
+					TotalCount int
+					Nodes      []struct{ ShortName string }
+				}
+			}
+		}
+		require.NoError(t, c.Post(`query {
+			repository { refs(type: BRANCH) { totalCount nodes { shortName } } }
+		}`, &resp))
+		require.Equal(t, 2, resp.Repository.Refs.TotalCount)
+		names := make([]string, len(resp.Repository.Refs.Nodes))
+		for i, n := range resp.Repository.Refs.Nodes {
+			names[i] = n.ShortName
+		}
+		require.ElementsMatch(t, []string{"main", "feature"}, names)
+	})
+
+	t.Run("refs_tag_filter", func(t *testing.T) {
+		var resp struct {
+			Repository struct {
+				Refs struct {
+					TotalCount int
+					Nodes      []struct{ ShortName string }
+				}
+			}
+		}
+		require.NoError(t, c.Post(`query {
+			repository { refs(type: TAG) { totalCount nodes { shortName } } }
+		}`, &resp))
+		require.Equal(t, 1, resp.Repository.Refs.TotalCount)
+		require.Equal(t, "v1.0", resp.Repository.Refs.Nodes[0].ShortName)
+	})
+
+	t.Run("refs_commit_filter_error", func(t *testing.T) {
+		var resp struct {
+			Repository struct{ Refs *struct{ TotalCount int } }
+		}
+		err := c.Post(`query {
+			repository { refs(type: COMMIT) { totalCount } }
+		}`, &resp)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "COMMIT")
+	})
+
+	// ── head ─────────────────────────────────────────────────────────────────
+
+	t.Run("head_detached", func(t *testing.T) {
+		require.NoError(t, repo.UpdateRef("HEAD", c3))
+		var resp struct {
+			Repository struct {
+				Head struct {
+					Name      string
+					ShortName string
+					Type      string `json:"type"`
+					Hash      string
+				}
+			}
+		}
+		require.NoError(t, c.Post(`query {
+			repository { head { name shortName type hash } }
+		}`, &resp))
+		got := resp.Repository.Head
+		require.Equal(t, "HEAD", got.Name)
+		require.Equal(t, "HEAD", got.ShortName)
+		require.Equal(t, "COMMIT", got.Type)
+		require.Equal(t, string(c3), got.Hash)
+	})
+
 	// ── lastCommits ───────────────────────────────────────────────────────────
 
 	t.Run("lastCommits", func(t *testing.T) {

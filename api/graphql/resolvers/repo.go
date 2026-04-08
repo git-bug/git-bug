@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"math"
 	"sort"
@@ -206,37 +207,47 @@ func (repoResolver) ValidLabels(_ context.Context, obj *models.Repository, after
 	return connections.Connection(obj.Repo.Bugs().ValidLabels(), edger, conMaker, input)
 }
 
-func (repoResolver) Refs(_ context.Context, obj *models.Repository, after *string, before *string, first *int, last *int, typeArg *models.GitRefType) (*models.GitRefConnection, error) {
+func (repoResolver) Refs(_ context.Context, obj *models.Repository, after *string, before *string, first *int, last *int, typeArg *repository.GitRefType) (*models.GitRefConnection, error) {
 	repo := obj.Repo.BrowseRepo()
 
 	var refs []*models.GitRef
 
-	if typeArg == nil || *typeArg == models.GitRefTypeBranch {
+	if typeArg != nil && *typeArg == repository.GitRefTypeCommit {
+		return nil, fmt.Errorf("refs: COMMIT is not a valid filter; use BRANCH or TAG")
+	}
+
+	if typeArg == nil || *typeArg == repository.GitRefTypeBranch {
 		branches, err := repo.Branches()
 		if err != nil {
 			return nil, err
 		}
 		for _, b := range branches {
 			refs = append(refs, &models.GitRef{
-				Name:      "refs/heads/" + b.Name,
-				ShortName: b.Name,
-				Type:      models.GitRefTypeBranch,
-				Hash:      string(b.Hash),
+				Repo: obj.Repo,
+				RefMeta: repository.RefMeta{
+					Name:      "refs/heads/" + b.Name,
+					ShortName: b.Name,
+					Type:      repository.GitRefTypeBranch,
+					Hash:      string(b.Hash),
+				},
 			})
 		}
 	}
 
-	if typeArg == nil || *typeArg == models.GitRefTypeTag {
+	if typeArg == nil || *typeArg == repository.GitRefTypeTag {
 		tags, err := repo.Tags()
 		if err != nil {
 			return nil, err
 		}
 		for _, t := range tags {
 			refs = append(refs, &models.GitRef{
-				Name:      "refs/tags/" + t.Name,
-				ShortName: t.Name,
-				Type:      models.GitRefTypeTag,
-				Hash:      string(t.Hash),
+				Repo: obj.Repo,
+				RefMeta: repository.RefMeta{
+					Name:      "refs/tags/" + t.Name,
+					ShortName: t.Name,
+					Type:      repository.GitRefTypeTag,
+					Hash:      string(t.Hash),
+				},
 			})
 		}
 	}
@@ -422,7 +433,7 @@ func (repoResolver) LastCommits(_ context.Context, obj *models.Repository, ref s
 	return result, nil
 }
 
-func (repoResolver) Head(_ context.Context, obj *models.Repository) (*models.GitCommitMeta, error) {
+func (repoResolver) Head(_ context.Context, obj *models.Repository) (*models.GitRef, error) {
 	meta, err := obj.Repo.BrowseRepo().Head()
 	if errors.Is(err, repository.ErrNotFound) {
 		return nil, nil
@@ -430,5 +441,5 @@ func (repoResolver) Head(_ context.Context, obj *models.Repository) (*models.Git
 	if err != nil {
 		return nil, err
 	}
-	return &models.GitCommitMeta{Repo: obj.Repo, CommitMeta: meta}, nil
+	return &models.GitRef{Repo: obj.Repo, RefMeta: meta}, nil
 }

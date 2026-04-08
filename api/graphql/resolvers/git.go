@@ -2,6 +2,7 @@ package resolvers
 
 import (
 	"context"
+	"errors"
 
 	"github.com/git-bug/git-bug/api/graphql/connections"
 	"github.com/git-bug/git-bug/api/graphql/graph"
@@ -89,4 +90,20 @@ func (r gitTreeEntryResolver) LastCommit(_ context.Context, obj *models.GitTreeE
 		return nil, nil
 	}
 	return &models.GitCommitMeta{Repo: obj.Repo, CommitMeta: meta}, nil
+}
+
+var _ graph.GitRefResolver = &gitRefResolver{}
+
+type gitRefResolver struct{}
+
+func (g gitRefResolver) Commit(ctx context.Context, obj *models.GitRef) (*models.GitCommitMeta, error) {
+	repo := obj.Repo.BrowseRepo()
+	detail, err := repo.CommitDetail(repository.Hash(obj.Hash))
+	if errors.Is(err, repository.ErrNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &models.GitCommitMeta{Repo: obj.Repo, CommitMeta: detail.CommitMeta}, nil
 }

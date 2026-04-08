@@ -772,10 +772,21 @@ func RepoBrowseTest(t *testing.T, repo browsable) {
 	// ── Head ──────────────────────────────────────────────────────────────────
 
 	t.Run("Head", func(t *testing.T) {
+		// Detached HEAD: UpdateRef sets HEAD to a bare hash.
 		require.NoError(t, repo.UpdateRef("HEAD", c3))
 
 		meta, err := repo.Head()
 		require.NoError(t, err)
-		require.Equal(t, c3, meta.Hash)
+		require.Equal(t, string(c3), meta.Hash)
+		require.Equal(t, GitRefTypeCommit, meta.Type)
+		// Detached HEAD has no branch/tag name; both name fields should be "HEAD".
+		require.Equal(t, "HEAD", meta.Name)
+		require.Equal(t, "HEAD", meta.ShortName)
+
+		// Moving HEAD to a different commit should be reflected immediately.
+		require.NoError(t, repo.UpdateRef("HEAD", c1))
+		meta2, err := repo.Head()
+		require.NoError(t, err)
+		require.Equal(t, string(c1), meta2.Hash)
 	})
 }

@@ -310,18 +310,6 @@ type GitLastCommit struct {
 	Commit *GitCommitMeta `json:"commit"`
 }
 
-// A git branch or tag reference.
-type GitRef struct {
-	// Full reference name, e.g. refs/heads/main or refs/tags/v1.0.
-	Name string `json:"name"`
-	// Short name, e.g. main or v1.0.
-	ShortName string `json:"shortName"`
-	// Whether this reference is a branch or a tag.
-	Type GitRefType `json:"type"`
-	// Commit hash the reference points to.
-	Hash string `json:"hash"`
-}
-
 type GitRefConnection struct {
 	Nodes      []*GitRef `json:"nodes"`
 	PageInfo   *PageInfo `json:"pageInfo"`

@@ -1550,30 +1550,6 @@ func (repo *GoGitRepo) CommitFileDiff(hash Hash, filePath string) (FileDiff, err
 	return FileDiff{}, ErrNotFound
 }
 
-// Head returns the commit that HEAD currently points to.
-func (repo *GoGitRepo) Head() (CommitMeta, error) {
-	repo.rMutex.Lock()
-	defer repo.rMutex.Unlock()
-
-	ref, err := repo.r.Head()
-	if err == plumbing.ErrReferenceNotFound {
-		return CommitMeta{}, ErrNotFound
-	}
-	if err != nil {
-		return CommitMeta{}, err
-	}
-
-	c, err := repo.r.CommitObject(ref.Hash())
-	if err == plumbing.ErrObjectNotFound {
-		return CommitMeta{}, ErrNotFound
-	}
-	if err != nil {
-		return CommitMeta{}, err
-	}
-
-	return commitToMeta(c), nil
-}
-
 // buildDiffHunks converts a go-git FilePatch into DiffHunks with line numbers
 // and context grouping.
 func buildDiffHunks(fp fdiff.FilePatch) []DiffHunk {
@@ -1672,6 +1648,37 @@ func buildDiffHunks(fp fdiff.FilePatch) []DiffHunk {
 		})
 	}
 	return hunks
+}
+
+// Head returns the ref that HEAD currently points to.
+func (repo *GoGitRepo) Head() (RefMeta, error) {
+	repo.rMutex.Lock()
+	defer repo.rMutex.Unlock()
+
+	ref, err := repo.r.Head()
+	if err == plumbing.ErrReferenceNotFound {
+		return RefMeta{}, ErrNotFound
+	}
+	if err != nil {
+		return RefMeta{}, err
+	}
+
+	var refType GitRefType
+	switch {
+	case ref.Name().IsBranch():
+		refType = GitRefTypeBranch
+	case ref.Name().IsTag():
+		refType = GitRefTypeTag
+	default:
+		refType = GitRefTypeCommit
+	}
+
+	return RefMeta{
+		Name:      ref.Name().String(),
+		ShortName: ref.Name().Short(),
+		Type:      refType,
+		Hash:      ref.Hash().String(),
+	}, nil
 }
 
 // AddRemote add a new remote to the repository

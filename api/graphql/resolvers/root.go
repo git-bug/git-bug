@@ -57,6 +57,10 @@ func (RootResolver) Bug() graph.BugResolver {
 	return &bugResolver{}
 }
 
+func (r RootResolver) GitRef() graph.GitRefResolver {
+	return &gitRefResolver{}
+}
+
 func (r RootResolver) GitCommit() graph.GitCommitResolver {
 	return &gitCommitResolver{}
 }
