@@ -245,15 +245,15 @@ Here is an example configuration with all optional fields set
 
 ## To-Do list
 
-- \[0cf5c71\] Assign git-bug to jira field on import
-- \[8acce9c\] Download and cache workflow representation
-- \[95e3d45\] Implement workflow gui
-- \[c70e22a\] Implement additional query filters for import
-- \[9ecefaa\] Create JIRA mock and add REST unit tests
-- \[67bf520\] Create import/export integration tests
-- \[1121826\] Add unit tests for utilities
-- \[0597088\] Use OS keyring for credentials
-- \[d3e8f79\] Don't count on the `Total` value in paginations
+- [0cf5c71] Assign git-bug to jira field on import
+- [8acce9c] Download and cache workflow representation
+- [95e3d45] Implement workflow gui
+- [c70e22a] Implement additional query filters for import
+- [9ecefaa] Create JIRA mock and add REST unit tests
+- [67bf520] Create import/export integration tests
+- [1121826] Add unit tests for utilities
+- [0597088] Use OS keyring for credentials
+- [d3e8f79] Don't count on the `Total` value in paginations
 
 ## Using CURL to poke at your JIRA's REST API
 
@@ -271,9 +271,8 @@ curl \
   <serverUrl>/rest/auth/1/session
 ```
 
-[!NOTE]
-If you have a json pretty printer installed (`sudo apt install jq`), pipe the
-output through through that to make things more readable:
+[!NOTE] If you have a json pretty printer installed (`sudo apt install jq`),
+pipe the output through through that to make things more readable:
 
 ```
 curl --silent \

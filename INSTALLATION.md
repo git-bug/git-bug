@@ -51,12 +51,8 @@ package manager common to all distributions.
 Below, you'll find a **non-exhaustive** list of commands that use common third
 party tools for installing packages from the AUR.
 
-<details><summary>Using <strong>aurutils</strong></summary>
-<pre>aur sync git-bug-bin && pacman -Syu git-bug-bin</pre>
-</details>
-
-<details><summary>Using <strong>yay</strong></summary>
-<pre>yay -S git-bug-bin</pre>
+<details><summary>Using <strong>pacman</strong></summary>
+<pre>pacman -S git-bug</pre>
 </details>
 
 ### Nixpkgs<a name="nixpkgs"></a>
@@ -79,13 +75,15 @@ environment.systemPackages = with pkgs; [
 </pre>
 </details>
 
-<details><summary>Using <strong>nix profile</strong></summary>
-<pre>nix profile install nixpkgs\#git-bug</pre>
+<details><summary>Temporary installation with <strong>nix shell</strong> (flake)</summary>
+<pre>
+nix shell nixpkgs#git-bug
+</pre>
 </details>
 
-<details><summary>Temporary installation with <strong>nix shell</strong></summary>
+<details><summary>Temporary installation with <strong>nix-shell</strong> (stable)</summary>
 <pre>
-nix shell nixpkgs\#git-bug
+nix-shell -p git-bug
 </pre>
 </details>
 
@@ -123,16 +121,7 @@ You can also build `git-bug` from source, if you wish. You'll need the following
 dependencies:
 
 - `git`
-- `go`
-- `make`
-
-Ensure that the `go` binary directory (`$GOPATH/bin`) is in your `PATH`. It is
-recommended to set this within your shell configuration file(s), such as
-`~/.zprofile` or `~/.bashrc`.
-
-```
-export PATH=$PATH:$(go env GOROOT)/bin:$(go env GOPATH)/bin
-```
+- `nix`
 
 > [!NOTE]
 > The commands below assume you do not want to keep the repository on disk, and
@@ -141,7 +130,7 @@ export PATH=$PATH:$(go env GOROOT)/bin:$(go env GOPATH)/bin
 >
 > As a result, the repository cloned during these steps will not contain the
 > full history. If that is important to you, clone the repository using the
-> method you prefer, check out your preferred revision, and run `make install`.
+> method you prefer.
 
 **First, create a new repository on disk:**
 
@@ -203,13 +192,14 @@ selected:
 git checkout REPLACE-ME
 </pre>
 
-Finally, run the <code>install</code> target from <code>//:Makefile</code>:
+Finally, run the <code>build</code> target from <code>//:Makefile</code>:
 
 <pre>
-make install
+make build
 </pre>
 
-This will build <code>git-bug</code> and place it in your Go binary directory.
+This will build <code>git-bug</code> and place it at `./result/bin/git-bug`.
+Move this binary file to a location in your `PATH`.
 
 </details>
 
@@ -230,13 +220,14 @@ Next, check out the tree you pulled:
 git checkout origin/HEAD
 </pre>
 
-Finally, run the <code>install</code> target from <code>//:Makefile</code>:
+Finally, run the <code>build</code> target from <code>//:Makefile</code>:
 
 <pre>
-make install
+make build
 </pre>
 
-This will build <code>git-bug</code> and place it in your Go binary directory.
+This will build <code>git-bug</code> and place it at `./result/bin/git-bug`.
+Move this binary file to a location in your `PATH`.
 
 </details>
 

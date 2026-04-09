@@ -1,13 +1,18 @@
-git-bug
-!/misc/completion/bash/git-bug
-!/misc/completion/fish/git-bug
-!/misc/completion/powershell/git-bug
-!/misc/completion/zsh/git-bug
-.gitkeep
-dist
-coverage.txt
+# go compiler output file
+/git-bug
+
+# test binaries built with go test -c
+*.test
+
+# code coverage and test artifacts
+*.out
+coverage.*
+*.coverprofile
+profile.cov
+
+# editor configuration
 .idea/
-.git_bak*
+.vscode/
 
 # nix and direnv related tooling
 .envrc
@@ -15,6 +20,6 @@ coverage.txt
 /.direnv/
 !/.envrc
 
-# nix output directory from `nix build` commands
+# symlinks to nix-store output dirs, created by `nix-build`
 /result
-webui2
+/result-*

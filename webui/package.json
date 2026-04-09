@@ -48,12 +48,11 @@
     "typescript": "^4.9.5"
   },
   "scripts": {
-    "start": "npm run generate && react-scripts start",
-    "build": "npm run generate && react-scripts build",
-    "test": "react-scripts test --env=jsdom",
+    "start": "graphql-codegen && react-scripts start",
+    "build": "graphql-codegen && react-scripts build",
+    "test": "graphql-codegen && react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
-    "generate": "graphql-codegen",
-    "lint": "eslint src --ext .ts --ext .tsx --ext .js --ext .jsx --ext .graphql",
+    "lint": "graphql-codegen && eslint src --ext .ts --ext .tsx --ext .js --ext .jsx --ext .graphql",
     "clean": "rimraf src/**.generated.* src/schema.json src/gqlTypes.* src/fragmentTypes.*"
   },
   "proxy": "http://localhost:3001",

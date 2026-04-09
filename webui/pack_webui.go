@@ -28,7 +28,7 @@ func main() {
 	err := vfsgen.Generate(webUIAssets, vfsgen.Options{
 		Filename:     "webui/packed_assets.go",
 		PackageName:  "webui",
-		BuildTags:    "!debugwebui",
+		BuildTags:    "!debug",
 		VariableName: "WebUIAssets",
 	})
 

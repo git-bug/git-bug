@@ -8,12 +8,11 @@ getting started as a contributor to this project.
 
 - [Get the source code](#get-the-source-code)
 - [Software requirements](#software-requirements)
-  - [1.0 | Install nix](#10--install-nix)
-  - [2.0 | Enable `nix-command` and `flakes`](#20--enable-nix-command-and-flakes)
-  - [3.0 | Install and configure `direnv`](#30--install-and-configure-direnv)
-- [4.0 | Post-installation tasks](#40--post-installation-tasks)
-  - [4.1 | Open a new shell](#41--open-a-new-shell)
-  - [4.2 | Test the development shell](#42--test-the-development-shell)
+  - [Install nix](#install-nix)
+  - [Install and configure `direnv`](#install-and-configure-direnv)
+- [3.0 | Post-installation tasks](#30--post-installation-tasks)
+  - [3.1 | Open a new shell](#31--open-a-new-shell)
+  - [3.2 | Test the development shell](#32--test-the-development-shell)
 - [Useful development commands](#useful-development-commands)
 - [Submitting changes](#submitting-changes)
   - [Commit messages are the source of truth](#commit-messages-are-the-source-of-truth)
@@ -30,7 +29,7 @@ Clone this repository to your system in a way you're comfortable with. Below, we
 show a command that clones the repository using SSH, and places it in
 `~/code/git-bug`.
 
-```
+```bash
 git clone git@github.com:git-bug/git-bug ~/code/git-bug
 ```
 
@@ -49,7 +48,7 @@ installed. It is **strongly** encouraged to use `nix` when contributing to
 `git-bug` to remove the "it works on my machine" class of errors, and ensure you
 have a smoother experience passing the CI pipelines (wrt formatting and such).
 
-While you can manually install the [tools and packages we use](./flake.nix) and
+While you can manually install the [tools and packages we use](./shell.nix) and
 hack on this project on your own, you will miss out on the hermeticity and
 standardization that our development shell provides. You may end up fighting
 with failing CI pipelines more often, or have to figure out how to perform
@@ -70,104 +69,79 @@ to install the dependencies for the development shell.
 
 ______________________________________________________________________
 
-### 1.0 | Install nix<a name="10--install-nix"></a>
+### Install nix<a name="install-nix"></a>
 
 To install `nix`, you can follow [the official instructions][install/nix].
 
-We recommend following the instructions for `multi-user mode` where applicable,
-instead of `single-user mode`.
+We recommend following the instructions for `multi-user mode` where applicable.
 
 > [!IMPORTANT]
 > The rest of this document assumes you have successfully installed `nix`.
 
 ______________________________________________________________________
 
-### 2.0 | Enable `nix-command` and `flakes`<a name="20--enable-nix-command-and-flakes"></a>
-
-`nix-command` and `flakes` are two optional configuration properties that we
-depend on in order to provide the development shell. You'll need to make sure
-that these are enabled.
-
-<details>
-<summary><strong>NixOS</strong></summary>
-
-Add the following to your system configuration:
-
-<pre>
-nix.settings.experimental-features = [ "nix-command" "flakes" ];
-</pre>
-
-</details>
-
-<details>
-<summary><strong>Other</strong></summary>
-
-Add the following to `~/.config/nix.conf` or `/etc/nix/nix.conf`:
-
-<pre>
-experimental-features = nix-command flakes
-</pre>
-
-</details>
-
-> [!IMPORTANT]
-> The rest of this document assume you have enabled these options.
-
-______________________________________________________________________
-
-### 3.0 | Install and configure `direnv`<a name="30--install-and-configure-direnv"></a>
+### Install and configure `direnv`<a name="install-and-configure-direnv"></a>
 
 [`direnv`][install/direnv] can be used to automatically activate the development
 shell (using [`//:.envrc`][envrc]). It can be installed either with `nix`, or
 independently.
 
 <details>
-<summary><strong>With nix</strong> <em>(suggested for users new to nix)</em></summary>
+<summary><strong>With nix-env</strong> <em>(suggested for users new to nix)</em></summary>
 
-<pre>
-nix --extra-experimental-options 'flakes nix-command' profile install nixpkgs\#direnv
-</pre>
+```bash
+nix-env -iA direnv
+```
 
 Next, run the following commands to apply the **optional** configuration for
 direnv. Be sure to change references to `~/code/git-bug` if you have cloned the
 repository somewhere else.
 
+> [!NOTE]
+> The above command installs direnv in a non-deterministic way on your host
+> system. To update it, you'll need to run `nix-env -uA direnv`. See
+> `man nix-env-upgrade` for more information, or choose to install `direnv` in
+> another way that is more compatible with the approach you take for your
+> system.
+
 <strong>Create a configuration file for <code>direnv</code></strong>
 
-<pre>touch ~/.config/direnv/direnv.toml</pre>
+```bash
+mkdir -p ~/.config/direnv && touch ~/.config/direnv/direnv.toml
+```
 
 <strong>Disable the warning for shells with longer load times</strong>
 
 _This is optional, but recommended, as it helps reduce visual clutter._
 
-<pre>
-nix run nixpkgs\#dasel -- -r toml -f ~/.config/direnv/direnv.toml \
-  put -t int -v 0 ".global.warn_timeout"
-</pre>
+```bash
+nix-shell -p dasel --run \
+	'dasel -- -r toml -f ~/.config/direnv/direnv.toml put -t int -v 0 ".global.warn_timeout"'
+```
 
 <strong>Disable printing of the environment variables that change</strong>
 
 _This is optional, but recommended, as it helps reduce visual clutter._
 
-<pre>
-nix run nixpkgs\#dasel -- -r toml -f ~/.config/direnv/direnv.toml \
-  put -t bool -v true ".global.hide_env_diff"
-</pre>
+```bash
+nix-shell -p dasel --run \
+	'dasel -- -r toml -f ~/.config/direnv/direnv.toml put -t bool -v true ".global.hide_env_diff"'
+```
 
 <strong>Configure automatic activation of the development shell</strong>
 
 _This is optional, but strongly recommended._
 
-<pre>
-nix run nixpkgs\#dasel -- -r toml -f ~/.config/direnv.toml \
-  put -v "~/code/git-bug/.envrc" ".whitelist.exact[]"
-</pre>
+```bash
+nix-shell -p dasel --run \
+	'dasel -- -r toml -f ~/.config/direnv.toml put -v "~/code/git-bug/.envrc" ".whitelist.exact[]"'
+```
 
 Alternatively, simply run `direnv allow` after moving into the repository for
 the first time.
 
 > **IMPORTANT**<br /> If you choose not to allow the shell to be automatically
-> activated, you will need to type `nix develop` every time you want to activate
+> activated, you will need to type `nix-shell` every time you want to activate
 > it, and this will swap you into bash and change your prompt. You'll have a far
 > better experience allowing `direnv` to automatically manage activation and
 > deactivation.
@@ -175,75 +149,91 @@ the first time.
 <strong>Configure your shell</strong>
 
 This final step is crucial -- be sure to
-[configure your shell][install/direnv/shell] for direnv.
+[configure your shell][install/direnv/shell] for direnv, so that it is loaded
+properly on shell initialization.
 
 </details>
 
 <details>
 <summary><strong>Using <code>home-manager</code></strong></summary>
 
-<pre>
-programs.direnv = {
-  enable = true;
-  nix-direnv.enable = true;
+```nix
+{
+  programs.direnv = {
+    enable = true;
+    nix-direnv.enable = true;
 
-  # one of the following, depending on your shell
-  # enableZshIntegration = true;
-  # enableBashIntegration = true;
-  # enableFishIntegration = true;
-  # enableNushellIntegration = true;
+    # one of the following, depending on your shell
+    # enableZshIntegration = true;
+    # enableBashIntegration = true;
+    # enableFishIntegration = true;
+    # enableNushellIntegration = true;
 
-  config = {
-    hide_env_diff = true;
-    warn_timeout = 0;
+    config = {
+      hide_env_diff = true;
+      warn_timeout = 0;
 
-    whitelist.exact = [ "~/code/git-bug/.envrc" ];
+      whitelist.exact = [ "~/code/git-bug/.envrc" ];
+    };
   };
 }
-</pre>
+```
 
 </details>
 
 ______________________________________________________________________
 
-## 4.0 | Post-installation tasks<a name="40--post-installation-tasks"></a>
+## 3.0 | Post-installation tasks<a name="30--post-installation-tasks"></a>
 
 Congratulations! If you've reached this section of the documentation, chances
 are that you have a working development environment for contributing to this
 repository. Read below for some additional tasks you should complete.
 
-### 4.1 | Open a new shell<a name="41--open-a-new-shell"></a>
+### 3.1 | Open a new shell<a name="31--open-a-new-shell"></a>
 
 In order for the installation to take effect, you will need to open a new shell.
 It is recommended to do this and complete the test (described below) prior to
 closing the shell you ran the installation script in, just in case you run into
 issues and need to refer to any output it provided.
 
-### 4.2 | Test the development shell<a name="42--test-the-development-shell"></a>
+### 3.2 | Test the development shell<a name="32--test-the-development-shell"></a>
 
 To test that the development shell is active, you will need to move to the
 repository's directory. If you installed and properly configured `direnv` for
 automatic activation, the shell should activate upon changing directories.
 
-```
+```bash
 { test -n "$IN_NIX_SHELL" && echo "ACTIVE"; } || echo "INACTIVE"
 ```
 
 If you have activated the development shell, you will see `ACTIVE` printed to
-the console. If you have not, you will see `INACTIVE` printed to the console.
+the console. If you have not, you will see `INACTIVE` printed to the console. If
+you did configure direnv to automatically load the shell, you may need to type
+`direnv allow`. If you chose to not use `direnv`, you will need to manually type
+`nix-shell`.
 
 ______________________________________________________________________
 
 ## Useful development commands<a name="useful-development-commands"></a>
 
-- `make build` - build `git-bug` and output the binary at `./git-bug`
-  - `make build/debug` - build a debugger-friendly binary
-- `make install` - build `git-bug`, and install it to `$GOPATH/bin`
-- `nix fmt` - format everything (configured in [`//:treefmt.nix`][treefmt])
-  - `nix fmt <path...>` to restrict the scope to given directories or files
-  - _see `nix fmt --help` for more information_
-- `nix flake check` to run lint/format checks and all tests defined in
-  `//nix/checks`
+- `make build` - build `git-bug` and output the binary at `./result/bin/git-bug`
+- `make build/debug` - build a debugger-friendly binary build\` for rapid
+  iteration,
+- `nix-build -A default` - build `git-bug` for your platform and output the
+  binary at `./result/bin/git-bug`. You can optionally tag it with a version by
+  adding
+  `--argstr version $(git describe --match 'v*' --always --dirty --broken)`.
+  - add `--arg debug true` to skip the test suite and build a debugger-friendly
+    binary that fetches the web interface from the filesystem, and contains the
+    symbol table and `DWARF` debug info
+  - optionally tag it with a version by adding the following flag:
+    `--argstr version $(git describe --match 'v*' --always --dirty --broken)`
+- `nix-shell --run treefmt` - format everything
+  - `nix-shell --run 'treefmt <path...>'` to restrict the scope to given
+    directories or files
+  - _see `nix-shell --run 'treefmt --help'` for more information_
+- `make check` to run tests and lint/format checks
+- `make format` to format all files
 - `go generate` - generate cli documentation and shell completion files
   - this is automatically executed by many `make` targets, e.g. `make build`
 - `go test ./commands -update` - update golden files used in tests
@@ -290,6 +280,10 @@ subject and body is set as such:
 - The subject is set to the PR title, appended with the PR's number
 - The body is set to the contents of the PR description, otherwise known as the
   first comment in the "Discussion" tab
+
+As such, maintainers may edit your PR title and description (the initial
+comment) before merging. This is to make sure commits that land in `trunk`
+messages have the appropriate context.
 
 ### Draft vs Ready<a name="draft-vs-ready"></a>
 
@@ -352,4 +346,3 @@ ______________________________________________________________________
 [install/direnv/shell]: https://github.com/direnv/direnv/blob/trunk/docs/hook.md
 [install/nix]: https://nix.dev/install-nix
 [issue/1364]: https://github.com/git-bug/git-bug/issues/1364
-[treefmt]: ./treefmt.nix

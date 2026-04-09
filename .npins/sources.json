@@ -1,0 +1,23 @@
+{
+  "pins": {
+    "nixpkgs": {
+      "type": "Channel",
+      "name": "nixpkgs-unstable",
+      "url": "https://releases.nixos.org/nixpkgs/nixpkgs-26.05pre961255.e607cb5360ff/nixexprs.tar.xz",
+      "hash": "sha256-Ki+NJLX77OuKlMVV5rXhQnVyZYGnC1d776lSMrhV9nU="
+    },
+    "treefmt": {
+      "type": "Git",
+      "repository": {
+        "type": "Git",
+        "url": "https://github.com/numtide/treefmt-nix"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "71b125cd05fbfd78cab3e070b73544abe24c5016",
+      "url": null,
+      "hash": "sha256-6E/yhXP7Oy/NbXtf1ktzmU8SdVqJQ09HC/48ebEGBpk="
+    }
+  },
+  "version": 7
+}

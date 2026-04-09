@@ -1,14 +1,15 @@
-{ pkgs, src }:
+{
+  pkgs,
+  src ? ./../..,
+}:
 
-pkgs.runCommand "spelling"
+pkgs.runCommand "check-spelling"
   {
     inherit src;
     nativeBuildInputs = with pkgs; [ codespell ];
     description = "Check for spelling mistakes";
   }
   ''
-    pushd $src
-    codespell --check-hidden */**
-    popd
-    touch $out
+    cd "$src"
+    codespell --disable-colors */** | tee $out
   ''

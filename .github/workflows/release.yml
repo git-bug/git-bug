@@ -14,7 +14,7 @@ permissions:
   contents: read
 
 jobs:
-  build-release:
+  build-and-release:
     runs-on: "ubuntu-latest"
     permissions:
       # unfortunately, this is necessary for creating the release. there is a
@@ -24,31 +24,39 @@ jobs:
       # [0]: https://github.com/orgs/community/discussions/68252
       contents: write
     steps:
-      - name: Check out code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-
-      - name: Set up Go
-        uses: actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b # v5.4.0
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          go-version: 1.25.x
-
-      - name: Build
-        run: make
+          persist-credentials: false
 
       - name: Setup minimal git config
         run: |
-          git config --global user.email "action@github.com"
-          git config --global user.name "GitHub Action"
+          git config --global user.email "bot@git-bug.org"
+          git config --global user.name "git-bug"
 
-      - name: Test
-        run: make test
+      - name: Test with go
+        run: nix-shell --run "go test -v -bench=. ./..."
 
-      - name: Build binaries
-        run: make releases
+      - name: Determine version string
+        id: version-string
+        run: |
+          v=$(git describe --match='v*' --always --dirty --broken)
+          echo "value=${v}" >> "$GITHUB_OUTPUT"
 
-      - uses: marvinpinto/action-automatic-releases@919008cf3f741b179569b7a6fb4d8860689ab7f0 # v1.2.1
+      - name: Build release binaries
+        env:
+          VERSION: ${{ steps.version-string.outputs.value }}
+        run: |
+          nix-build -A release --argstr version "$VERSION"
+
+          # this is the symlink to the native output artifact, built by the
+          # `default` derivation when the host system is linux or macos. because
+          # this job runs on 64-bit linux, we manually rename it so that the
+          # artifact uploaded to the GitHub Release is appropriately named for
+          # end users
+          mv ./result/bin/git-bug ./result/bin/git-bug-linux-amd64
+          echo '- version built: `${VERSION}`' >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
         with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          draft: true
-          prerelease: false
-          files: dist/*
+          files: result/*
+

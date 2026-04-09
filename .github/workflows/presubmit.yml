@@ -24,6 +24,14 @@ permissions:
   contents: read
 
 jobs:
+  lint:
+    uses: ./.github/workflows/lint.yml
+
   build-and-test:
     uses: ./.github/workflows/build-and-test.yml
-    secrets: inherit
+    secrets:
+      github-test-token: ${{ secrets.TEST_TOKEN_GITHUB }}
+      github-token-private: ${{ secrets._GITHUB_TOKEN_PRIVATE }}
+      github-token-public: ${{ secrets._GITHUB_TOKEN_PUBLIC }}
+      gitlab-api-token: ${{ secrets.GITLAB_API_TOKEN }}
+      gitlab-project-id: ${{ secrets.GITLAB_PROJECT_ID }}

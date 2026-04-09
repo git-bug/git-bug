@@ -113,7 +113,7 @@ Instead, we are going to use
 Lamport clock is a simple counter of events. This logical clock gives us a
 partial ordering:
 
-- if L1 \< L2, L1 happened before L2
+- if L1 < L2, L1 happened before L2
 - if L1 > L2, L1 happened after L2
 - if L1 == L2, we can't tell which happened first: it's a concurrent edition
 
@@ -204,7 +204,7 @@ Here is an example of such an ordering:
 We can see that:
 
 - Lamport clocks respect the DAG structure
-- the final `Operation` order is \[A,B,C,D,E,F\], according to those clocks
+- the final `Operation` order is [A,B,C,D,E,F], according to those clocks
 
 When we have concurrent editions, we apply a secondary ordering, based on the
 `OperationPack`'s identifier:
