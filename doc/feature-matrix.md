@@ -148,14 +148,20 @@ PR support (import only):
 | review comments  |   ✅   |   ❌   |  ❌  |    ❌     |
 | export: create   |   ✅   |   ❌   |  ❌  |    ❌     |
 | export: updates  |   🟠   |   ❌   |  ❌  |    ❌     |
+| export: reviews  |   🟠   |   ❌   |  ❌  |    ❌     |
 
 Creating a PR via `git bug bug new --pr` then `git bug push` to a
 GitHub bridge opens the pull-request on GitHub, provided the --head
 branch has already been pushed to the remote. git-bug does not push
 git branches itself. Export of subsequent updates (status, title,
 body, labels, comments) is supported; export of merges is skipped
-because merging requires an actual git merge on GitHub's side, and
-review-authoring export is not in v1.
+because merging requires an actual git merge on GitHub's side.
+
+Review authoring (`git bug bug review add / comment`) works locally
+and exports via `addPullRequestReview` (for the review itself) and
+`addPullRequestReviewComment` (for replies to an existing thread).
+Standalone new review comment threads are not exported in v1 — create
+them inline with the review or via GitHub directly.
 
 ### Exporters
 
