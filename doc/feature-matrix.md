@@ -138,14 +138,17 @@ Board support:
 
 PR support (import only):
 
-|                    | Github | Gitlab | Jira | Launchpad |
-| ------------------ | :----: | :----: | :--: | :-------: |
-| **pull-request**   |   🟠   |   ❌   |  ❌  |    ❌     |
-| comments           |   ✅   |   ❌   |  ❌  |    ❌     |
-| merge state        |   ✅   |   ❌   |  ❌  |    ❌     |
-| draft state        |   ✅   |   ❌   |  ❌  |    ❌     |
-| reviews            |   ❌   |   ❌   |  ❌  |    ❌     |
-| review comments    |   ❌   |   ❌   |  ❌  |    ❌     |
+|                  | Github | Gitlab | Jira | Launchpad |
+| ---------------- | :----: | :----: | :--: | :-------: |
+| **pull-request** |   ✅   |   ❌   |  ❌  |    ❌     |
+| comments         |   ✅   |   ❌   |  ❌  |    ❌     |
+| merge state      |   ✅   |   ❌   |  ❌  |    ❌     |
+| draft state      |   ✅   |   ❌   |  ❌  |    ❌     |
+| reviews          |   ✅   |   ❌   |  ❌  |    ❌     |
+| review comments  |   🟠   |   ❌   |  ❌  |    ❌     |
+
+Review comments are truncated to the first 50 per review in v1 (no
+pagination of `pullRequestReview.comments`).
 
 ### Exporters
 
