@@ -145,10 +145,7 @@ PR support (import only):
 | merge state      |   ✅   |   ❌   |  ❌  |    ❌     |
 | draft state      |   ✅   |   ❌   |  ❌  |    ❌     |
 | reviews          |   ✅   |   ❌   |  ❌  |    ❌     |
-| review comments  |   🟠   |   ❌   |  ❌  |    ❌     |
-
-Review comments are truncated to the first 50 per review in v1 (no
-pagination of `pullRequestReview.comments`).
+| review comments  |   ✅   |   ❌   |  ❌  |    ❌     |
 
 ### Exporters
 
