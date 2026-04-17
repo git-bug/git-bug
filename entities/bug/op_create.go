@@ -3,6 +3,7 @@ package bug
 import (
 	"fmt"
 
+	"github.com/git-bug/git-bug/entities/common"
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/entity/dag"
@@ -14,12 +15,28 @@ import (
 var _ Operation = &CreateOperation{}
 var _ dag.OperationWithFiles = &CreateOperation{}
 
-// CreateOperation define the initial creation of a bug
+// CreateOperation define the initial creation of a bug.
+//
+// When Kind is PRType, BaseRef/HeadRef identify the branches involved and
+// HeadCommit is the commit hash at creation. These fields are empty and
+// unused for plain issues; existing serialized issues predating PR support
+// decode with the zero values (IssueType + empty refs).
+//
+// The Go field is named Kind to avoid shadowing dag.OpBase.Type(). On the
+// wire it serializes as "kind" — the JSON key "type" is already taken by
+// dag.OpBase for the operation-type enum.
 type CreateOperation struct {
 	dag.OpBase
 	Title   string            `json:"title"`
 	Message string            `json:"message"`
 	Files   []repository.Hash `json:"files"`
+
+	Kind       common.Type `json:"kind,omitempty"`
+	BaseRef    string      `json:"base_ref,omitempty"`
+	HeadRef    string      `json:"head_ref,omitempty"`
+	HeadCommit string      `json:"head_commit,omitempty"`
+	// Draft indicates a PR created in draft state. Ignored for issues.
+	Draft bool `json:"draft,omitempty"`
 }
 
 func (op *CreateOperation) Id() entity.Id {
@@ -40,6 +57,16 @@ func (op *CreateOperation) Apply(snapshot *Snapshot) {
 	snapshot.addParticipant(op.Author())
 
 	snapshot.Title = op.Title
+	snapshot.Kind = op.Kind
+
+	if op.Kind == common.PRType {
+		snapshot.BaseRef = op.BaseRef
+		snapshot.HeadRef = op.HeadRef
+		snapshot.HeadCommit = op.HeadCommit
+		if op.Draft {
+			snapshot.Status = common.DraftStatus
+		}
+	}
 
 	comment := Comment{
 		combinedId: entity.CombineIds(snapshot.id, opId),
@@ -80,6 +107,33 @@ func (op *CreateOperation) Validate() error {
 		return fmt.Errorf("message is not fully printable")
 	}
 
+	if err := op.Kind.Validate(); err != nil {
+		return fmt.Errorf("type: %w", err)
+	}
+
+	switch op.Kind {
+	case common.IssueType:
+		if op.BaseRef != "" || op.HeadRef != "" || op.HeadCommit != "" || op.Draft {
+			return fmt.Errorf("issue must not carry PR fields")
+		}
+	case common.PRType:
+		if text.Empty(op.BaseRef) {
+			return fmt.Errorf("pr base_ref is empty")
+		}
+		if text.Empty(op.HeadRef) {
+			return fmt.Errorf("pr head_ref is empty")
+		}
+		if !text.SafeOneLine(op.BaseRef) {
+			return fmt.Errorf("pr base_ref has unsafe characters")
+		}
+		if !text.SafeOneLine(op.HeadRef) {
+			return fmt.Errorf("pr head_ref has unsafe characters")
+		}
+		if !text.SafeOneLine(op.HeadCommit) {
+			return fmt.Errorf("pr head_commit has unsafe characters")
+		}
+	}
+
 	return nil
 }
 
@@ -89,6 +143,22 @@ func NewCreateOp(author identity.Interface, unixTime int64, title, message strin
 		Title:   title,
 		Message: message,
 		Files:   files,
+		Kind:    common.IssueType,
+	}
+}
+
+// NewCreatePROp builds a CreateOperation for a pull-request.
+func NewCreatePROp(author identity.Interface, unixTime int64, title, message, baseRef, headRef, headCommit string, draft bool, files []repository.Hash) *CreateOperation {
+	return &CreateOperation{
+		OpBase:     dag.NewOpBase(CreateOp, author, unixTime),
+		Title:      title,
+		Message:    message,
+		Files:      files,
+		Kind:       common.PRType,
+		BaseRef:    baseRef,
+		HeadRef:    headRef,
+		HeadCommit: headCommit,
+		Draft:      draft,
 	}
 }
 
@@ -104,6 +174,20 @@ func (c *CreateTimelineItem) IsAuthored() {}
 func Create(author identity.Interface, unixTime int64, title, message string, files []repository.Hash, metadata map[string]string) (*Bug, *CreateOperation, error) {
 	b := NewBug()
 	op := NewCreateOp(author, unixTime, title, message, files)
+	for key, val := range metadata {
+		op.SetMetadata(key, val)
+	}
+	if err := op.Validate(); err != nil {
+		return nil, op, err
+	}
+	b.Append(op)
+	return b, op, nil
+}
+
+// CreatePR is a convenience function to create a pull-request.
+func CreatePR(author identity.Interface, unixTime int64, title, message, baseRef, headRef, headCommit string, draft bool, files []repository.Hash, metadata map[string]string) (*Bug, *CreateOperation, error) {
+	b := NewBug()
+	op := NewCreatePROp(author, unixTime, title, message, baseRef, headRef, headCommit, draft, files)
 	for key, val := range metadata {
 		op.SetMetadata(key, val)
 	}

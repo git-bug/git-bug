@@ -16,6 +16,7 @@ var _ dag.Snapshot = &Snapshot{}
 type Snapshot struct {
 	id entity.Id
 
+	Kind         common.Type
 	Status       common.Status
 	Title        string
 	Comments     []Comment
@@ -24,6 +25,16 @@ type Snapshot struct {
 	Actors       []identity.Interface
 	Participants []identity.Interface
 	CreateTime   time.Time
+
+	// PR-only fields, zero-valued when Type == IssueType.
+	// BaseRef and HeadRef are set once on Create and immutable thereafter.
+	// HeadCommit advances via UpdateHeadOperation.
+	// MergeCommit is set by SetStatusOperation when Status becomes MergedStatus.
+	BaseRef     string
+	HeadRef     string
+	HeadCommit  string
+	MergeCommit string
+	Reviews     []Review
 
 	Timeline []TimelineItem
 

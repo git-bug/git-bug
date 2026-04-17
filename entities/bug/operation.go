@@ -18,6 +18,10 @@ const (
 	EditCommentOp
 	NoOpOp
 	SetMetadataOp
+	// PR-only ops. Validation gates these on snapshot.Kind == PRType.
+	UpdateHeadOp
+	AddReviewOp
+	AddReviewCommentOp
 )
 
 // Operation define the interface to fulfill for an edit operation of a Bug
@@ -55,6 +59,12 @@ func operationUnmarshaler(raw json.RawMessage, resolvers entity.Resolvers) (dag.
 		op = &SetStatusOperation{}
 	case SetTitleOp:
 		op = &SetTitleOperation{}
+	case UpdateHeadOp:
+		op = &UpdateHeadOperation{}
+	case AddReviewOp:
+		op = &AddReviewOperation{}
+	case AddReviewCommentOp:
+		op = &AddReviewCommentOperation{}
 	default:
 		panic(fmt.Sprintf("unknown operation type %v", t.OperationType))
 	}
