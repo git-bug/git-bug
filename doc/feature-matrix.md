@@ -146,6 +146,16 @@ PR support (import only):
 | draft state      |   ✅   |   ❌   |  ❌  |    ❌     |
 | reviews          |   ✅   |   ❌   |  ❌  |    ❌     |
 | review comments  |   ✅   |   ❌   |  ❌  |    ❌     |
+| export: create   |   ✅   |   ❌   |  ❌  |    ❌     |
+| export: updates  |   🟠   |   ❌   |  ❌  |    ❌     |
+
+Creating a PR via `git bug bug new --pr` then `git bug push` to a
+GitHub bridge opens the pull-request on GitHub, provided the --head
+branch has already been pushed to the remote. git-bug does not push
+git branches itself. Export of subsequent updates (status, title,
+body, labels, comments) is supported; export of merges is skipped
+because merging requires an actual git merge on GitHub's side, and
+review-authoring export is not in v1.
 
 ### Exporters
 

@@ -247,14 +247,6 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 		bugGithubURL = githubURL
 
 	} else {
-		// For PRs we cannot create a GitHub pull-request from git-bug alone —
-		// GitHub requires an existing head branch on its side, which means
-		// pushing the branch is a prerequisite outside the bridge's scope.
-		if snapshot.Kind == common.PRKind {
-			out <- core.NewExportNothing(b.Id(), "cannot create a new pull-request via export; push the branch and open the PR on GitHub first, then re-import")
-			return
-		}
-
 		// check that we have a token for operation author
 		client, err := ge.getClientForIdentity(author.Id())
 		if err != nil {
@@ -263,12 +255,29 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 			return
 		}
 
-		// create bug
-		id, url, err := ge.createGithubIssue(ctx, client, ge.repositoryID, createOp.Title, createOp.Message)
-		if err != nil {
-			err := errors.Wrap(err, "exporting github issue")
-			out <- core.NewExportError(err, b.Id())
-			return
+		var id, url string
+		if snapshot.Kind == common.PRKind {
+			// createPullRequest requires the head branch to already exist on
+			// GitHub. If the user hasn't pushed it, GitHub returns a clear
+			// error which surfaces through NewExportError.
+			id, url, err = ge.createGithubPullRequest(
+				ctx, client, ge.repositoryID,
+				createOp.Title, createOp.Message,
+				createOp.BaseRef, createOp.HeadRef,
+				createOp.Draft,
+			)
+			if err != nil {
+				err := errors.Wrap(err, "exporting github pull-request")
+				out <- core.NewExportError(err, b.Id())
+				return
+			}
+		} else {
+			id, url, err = ge.createGithubIssue(ctx, client, ge.repositoryID, createOp.Title, createOp.Message)
+			if err != nil {
+				err := errors.Wrap(err, "exporting github issue")
+				out <- core.NewExportError(err, b.Id())
+				return
+			}
 		}
 
 		out <- core.NewExportBug(b.Id())
@@ -707,6 +716,37 @@ func (ge *githubExporter) createGithubIssue(ctx context.Context, gc *rateLimitHa
 
 	issue := m.CreateIssue.Issue
 	return issue.ID, issue.URL, nil
+}
+
+// createGithubPullRequest opens a pull-request against repositoryID. baseRef
+// and headRef are expected in git-bug's normalised form (refs/heads/NAME);
+// GitHub's createPullRequest takes short branch names, so the refs/heads/
+// prefix is stripped. The head branch must already exist on the remote —
+// git-bug does not push branches as part of the bridge.
+func (ge *githubExporter) createGithubPullRequest(ctx context.Context, gc *rateLimitHandlerClient, repositoryID, title, body, baseRef, headRef string, draft bool) (string, string, error) {
+	m := &createPullRequestMutation{}
+	shortRef := func(r string) string {
+		if strings.HasPrefix(r, "refs/heads/") {
+			return r[len("refs/heads/"):]
+		}
+		return r
+	}
+	draftPtr := githubv4.Boolean(draft)
+	input := githubv4.CreatePullRequestInput{
+		RepositoryID: repositoryID,
+		BaseRefName:  githubv4.String(shortRef(baseRef)),
+		HeadRefName:  githubv4.String(shortRef(headRef)),
+		Title:        githubv4.String(title),
+		Body:         (*githubv4.String)(&body),
+		Draft:        &draftPtr,
+	}
+
+	if err := gc.mutate(ctx, m, input, nil, ge.out); err != nil {
+		return "", "", err
+	}
+
+	pr := m.CreatePullRequest.PullRequest
+	return pr.ID, pr.URL, nil
 }
 
 // add a comment to an issue and return its ID

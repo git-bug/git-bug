@@ -51,7 +51,9 @@ func newBugNewCommand(env *execenv.Env) *cobra.Command {
 	flags.BoolVar(&options.nonInteractive, "non-interactive", false, "Do not ask for user input")
 
 	flags.BoolVar(&options.pr, "pr", false,
-		"Create a pull-request instead of a plain issue. Requires --base and --head.")
+		"Create a pull-request instead of a plain issue. Requires --base and --head. "+
+			"If you later `git bug push` to a GitHub bridge, the --head branch must "+
+			"already exist on the remote; git-bug does not push branches.")
 	flags.StringVar(&options.baseRef, "base", "",
 		"For --pr: the base branch the PR targets (e.g. refs/heads/main).")
 	flags.StringVar(&options.headRef, "head", "",
