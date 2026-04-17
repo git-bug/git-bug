@@ -1,6 +1,9 @@
+import CallMergeIcon from '@mui/icons-material/CallMerge';
 import CheckCircleOutline from '@mui/icons-material/CheckCircleOutline';
 import CommentOutlinedIcon from '@mui/icons-material/CommentOutlined';
+import EditIcon from '@mui/icons-material/Edit';
 import ErrorOutline from '@mui/icons-material/ErrorOutline';
+import MergeTypeIcon from '@mui/icons-material/MergeType';
 import TableCell from '@mui/material/TableCell/TableCell';
 import TableRow from '@mui/material/TableRow/TableRow';
 import Tooltip from '@mui/material/Tooltip/Tooltip';
@@ -11,33 +14,60 @@ import { Link } from 'react-router';
 import Author from 'src/components/Author';
 import Date from 'src/components/Date';
 import Label from 'src/components/Label';
-import { Status } from 'src/gqlTypes';
+import { BugKind, Status } from 'src/gqlTypes';
 
 import { BugRowFragment } from './BugRow.generated';
 
-type OpenClosedProps = { className: string };
-const Open = ({ className }: OpenClosedProps) => (
+type IconProps = { className: string };
+
+const Open = ({ className }: IconProps) => (
   <Tooltip title="Open">
     <ErrorOutline htmlColor="#28a745" className={className} />
   </Tooltip>
 );
 
-const Closed = ({ className }: OpenClosedProps) => (
+const Closed = ({ className }: IconProps) => (
   <Tooltip title="Closed">
     <CheckCircleOutline htmlColor="#cb2431" className={className} />
   </Tooltip>
 );
 
-type StatusProps = { className: string; status: Status };
+const Merged = ({ className }: IconProps) => (
+  <Tooltip title="Merged">
+    <CallMergeIcon htmlColor="#8250df" className={className} />
+  </Tooltip>
+);
+
+const Draft = ({ className }: IconProps) => (
+  <Tooltip title="Draft">
+    <EditIcon htmlColor="#6e7681" className={className} />
+  </Tooltip>
+);
+
+type StatusProps = { className: string; status: Status; kind: BugKind };
 const BugStatus: React.FC<StatusProps> = ({
   status,
+  kind,
   className,
 }: StatusProps) => {
   switch (status) {
     case 'OPEN':
+      // For PRs, the open icon is a merge-type glyph to signal "ready to merge"
+      // vs an issue's circle-exclamation.
+      if (kind === 'PR') {
+        return (
+          <Tooltip title="Open (PR)">
+            <MergeTypeIcon htmlColor="#28a745" className={className} />
+          </Tooltip>
+        );
+      }
       return <Open className={className} />;
     case 'CLOSED':
       return <Closed className={className} />;
+    case 'MERGED':
+      return <Merged className={className} />;
+    case 'DRAFT':
+      return <Draft className={className} />;
     default:
       return <p>{'unknown status ' + status}</p>;
   }
@@ -105,7 +135,11 @@ function BugRow({ bug }: Props) {
   return (
     <TableRow hover>
       <TableCell className={classes.cell}>
-        <BugStatus status={bug.status} className={classes.status} />
+        <BugStatus
+          status={bug.status}
+          kind={bug.kind}
+          className={classes.status}
+        />
         <div className={classes.expand}>
           <Link to={'bug/' + bug.id}>
             <div className={classes.bugTitleWrapper}>

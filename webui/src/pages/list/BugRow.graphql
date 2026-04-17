@@ -4,6 +4,7 @@ fragment BugRow on Bug {
   id
   humanId
   title
+  kind
   status
   createdAt
   labels {

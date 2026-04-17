@@ -6,6 +6,8 @@ import Label from 'src/components/Label';
 
 import { BugFragment } from './Bug.generated';
 import CommentForm from './CommentForm';
+import PrInfo from './PrInfo';
+import Reviews from './Reviews';
 import TimelineQuery from './TimelineQuery';
 import LabelMenu from './labels/LabelMenu';
 
@@ -85,7 +87,9 @@ function Bug({ bug }: Props) {
       </div>
       <div className={classes.container}>
         <div className={classes.timeline}>
+          <PrInfo bug={bug} />
           <TimelineQuery bug={bug} />
+          <Reviews bug={bug} />
           <IfLoggedIn>
             {() => (
               <div className={classes.commentForm}>

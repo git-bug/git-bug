@@ -3,11 +3,35 @@
 fragment Bug on Bug {
   id
   humanId
+  kind
   status
   title
   labels {
     ...Label
   }
   createdAt
+  baseRef
+  headRef
+  headCommit
+  mergeCommit
+  reviews {
+    id
+    state
+    body
+    commitHash
+    createdAt
+    ...authored
+    comments {
+      id
+      body
+      path
+      startLine
+      endLine
+      commitHash
+      replyTo
+      createdAt
+      ...authored
+    }
+  }
   ...authored
 }
