@@ -132,6 +132,31 @@ func (c *BugCache) CloseRaw(author identity.Interface, unixTime int64, metadata 
 	return op, c.notifyUpdated()
 }
 
+// Merge marks a PR as merged and records the merge commit hash.
+func (c *BugCache) Merge(mergeCommit string) (*bug.SetStatusOperation, error) {
+	author, err := c.getUserIdentity()
+	if err != nil {
+		return nil, err
+	}
+
+	return c.MergeRaw(author, time.Now().Unix(), mergeCommit, nil)
+}
+
+func (c *BugCache) MergeRaw(author identity.Interface, unixTime int64, mergeCommit string, metadata map[string]string) (*bug.SetStatusOperation, error) {
+	c.mu.Lock()
+	op, err := bug.Merge(c.entity, author, unixTime, mergeCommit, metadata)
+	c.mu.Unlock()
+	if err != nil {
+		return nil, err
+	}
+	return op, c.notifyUpdated()
+}
+
+// MarkReady transitions a draft PR to open (ready-for-review).
+func (c *BugCache) MarkReady() (*bug.SetStatusOperation, error) {
+	return c.Open()
+}
+
 func (c *BugCache) SetTitle(title string) (*bug.SetTitleOperation, error) {
 	author, err := c.getUserIdentity()
 	if err != nil {

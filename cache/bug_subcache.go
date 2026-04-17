@@ -254,3 +254,28 @@ func (c *RepoCacheBug) NewRaw(author identity.Interface, unixTime int64, title s
 
 	return cached, op, nil
 }
+
+// NewPR creates a new pull-request as the current user.
+func (c *RepoCacheBug) NewPR(title, message, baseRef, headRef, headCommit string, draft bool) (*BugCache, *bug.CreateOperation, error) {
+	author, err := c.getUserIdentity()
+	if err != nil {
+		return nil, nil, err
+	}
+	return c.NewPRRaw(author, time.Now().Unix(), title, message, baseRef, headRef, headCommit, draft, nil, nil)
+}
+
+// NewPRRaw creates a pull-request with explicit author, time, files and metadata.
+func (c *RepoCacheBug) NewPRRaw(author identity.Interface, unixTime int64, title, message, baseRef, headRef, headCommit string, draft bool, files []repository.Hash, metadata map[string]string) (*BugCache, *bug.CreateOperation, error) {
+	b, op, err := bug.CreatePR(author, unixTime, title, message, baseRef, headRef, headCommit, draft, files, metadata)
+	if err != nil {
+		return nil, nil, err
+	}
+	if err := b.Commit(c.repo); err != nil {
+		return nil, nil, err
+	}
+	cached, err := c.add(b)
+	if err != nil {
+		return nil, nil, err
+	}
+	return cached, op, nil
+}
