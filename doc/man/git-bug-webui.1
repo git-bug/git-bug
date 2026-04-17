@@ -18,8 +18,12 @@ Available git config:
 
 
 .SH OPTIONS
-\fB--host\fP="127.0.0.1"
-	Network address or hostname to listen to (default to 127.0.0.1)
+\fB--bind\fP="127.0.0.1"
+	Network address to bind to (default to 127.0.0.1)
+
+.PP
+\fB-p\fP, \fB--port\fP=0
+	Port to listen on (default to random available port)
 
 .PP
 \fB--open\fP[=false]
@@ -28,10 +32,6 @@ Available git config:
 .PP
 \fB--no-open\fP[=false]
 	Prevent the automatic opening of the web UI in the default browser
-
-.PP
-\fB-p\fP, \fB--port\fP=0
-	Port to listen to (default to random available port)
 
 .PP
 \fB--read-only\fP[=false]

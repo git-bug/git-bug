@@ -1,0 +1,26 @@
+.nh
+.TH "GIT-BUG" "1" "Apr 2019" "Generated from git-bug's source code" ""
+
+.SH NAME
+git-bug-bug-status-merge - Mark a pull-request as merged
+
+
+.SH SYNOPSIS
+\fBgit-bug bug status merge [BUG_ID] [flags]\fP
+
+
+.SH DESCRIPTION
+Mark a pull-request as merged and record the merge commit hash. Only valid for bugs whose kind is pr.
+
+
+.SH OPTIONS
+\fB-c\fP, \fB--commit\fP=""
+	The merge commit hash. Required.
+
+.PP
+\fB-h\fP, \fB--help\fP[=false]
+	help for merge
+
+
+.SH SEE ALSO
+\fBgit-bug-bug-status(1)\fP

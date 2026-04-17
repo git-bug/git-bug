@@ -30,6 +30,26 @@ Create a new bug
 	Do not ask for user input
 
 .PP
+\fB--pr\fP[=false]
+	Create a pull-request instead of a plain issue. Requires --base and --head. If you later \fBgit bug push\fR to a GitHub bridge, the --head branch must already exist on the remote; git-bug does not push branches.
+
+.PP
+\fB--base\fP=""
+	For --pr: the base branch the PR targets (e.g. refs/heads/main).
+
+.PP
+\fB--head\fP=""
+	For --pr: the head branch the PR proposes to merge.
+
+.PP
+\fB--head-commit\fP=""
+	For --pr: the head commit hash. Defaults to the current HEAD of --head if resolvable.
+
+.PP
+\fB--draft\fP[=false]
+	For --pr: mark the PR as draft (not ready for review).
+
+.PP
 \fB-h\fP, \fB--help\fP[=false]
 	help for new
 
