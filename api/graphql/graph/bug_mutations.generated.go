@@ -137,6 +137,8 @@ func (ec *executionContext) fieldContext_BugAddCommentAndClosePayload_bug(_ cont
 				return ec.fieldContext_Bug_mergeCommit(ctx, field)
 			case "reviews":
 				return ec.fieldContext_Bug_reviews(ctx, field)
+			case "originUrl":
+				return ec.fieldContext_Bug_originUrl(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":
@@ -374,6 +376,8 @@ func (ec *executionContext) fieldContext_BugAddCommentAndReopenPayload_bug(_ con
 				return ec.fieldContext_Bug_mergeCommit(ctx, field)
 			case "reviews":
 				return ec.fieldContext_Bug_reviews(ctx, field)
+			case "originUrl":
+				return ec.fieldContext_Bug_originUrl(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":
@@ -611,6 +615,8 @@ func (ec *executionContext) fieldContext_BugAddCommentPayload_bug(_ context.Cont
 				return ec.fieldContext_Bug_mergeCommit(ctx, field)
 			case "reviews":
 				return ec.fieldContext_Bug_reviews(ctx, field)
+			case "originUrl":
+				return ec.fieldContext_Bug_originUrl(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":
@@ -792,6 +798,8 @@ func (ec *executionContext) fieldContext_BugChangeLabelPayload_bug(_ context.Con
 				return ec.fieldContext_Bug_mergeCommit(ctx, field)
 			case "reviews":
 				return ec.fieldContext_Bug_reviews(ctx, field)
+			case "originUrl":
+				return ec.fieldContext_Bug_originUrl(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":
@@ -1023,6 +1031,8 @@ func (ec *executionContext) fieldContext_BugCreatePayload_bug(_ context.Context,
 				return ec.fieldContext_Bug_mergeCommit(ctx, field)
 			case "reviews":
 				return ec.fieldContext_Bug_reviews(ctx, field)
+			case "originUrl":
+				return ec.fieldContext_Bug_originUrl(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":
@@ -1216,6 +1226,8 @@ func (ec *executionContext) fieldContext_BugEditCommentPayload_bug(_ context.Con
 				return ec.fieldContext_Bug_mergeCommit(ctx, field)
 			case "reviews":
 				return ec.fieldContext_Bug_reviews(ctx, field)
+			case "originUrl":
+				return ec.fieldContext_Bug_originUrl(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":
@@ -1399,6 +1411,8 @@ func (ec *executionContext) fieldContext_BugSetTitlePayload_bug(_ context.Contex
 				return ec.fieldContext_Bug_mergeCommit(ctx, field)
 			case "reviews":
 				return ec.fieldContext_Bug_reviews(ctx, field)
+			case "originUrl":
+				return ec.fieldContext_Bug_originUrl(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":
@@ -1580,6 +1594,8 @@ func (ec *executionContext) fieldContext_BugStatusClosePayload_bug(_ context.Con
 				return ec.fieldContext_Bug_mergeCommit(ctx, field)
 			case "reviews":
 				return ec.fieldContext_Bug_reviews(ctx, field)
+			case "originUrl":
+				return ec.fieldContext_Bug_originUrl(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":
@@ -1761,6 +1777,8 @@ func (ec *executionContext) fieldContext_BugStatusOpenPayload_bug(_ context.Cont
 				return ec.fieldContext_Bug_mergeCommit(ctx, field)
 			case "reviews":
 				return ec.fieldContext_Bug_reviews(ctx, field)
+			case "originUrl":
+				return ec.fieldContext_Bug_originUrl(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":

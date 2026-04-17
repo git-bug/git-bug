@@ -32,6 +32,11 @@ const useStyles = makeStyles((theme) => ({
     ...theme.typography.subtitle1,
     marginLeft: theme.spacing(1),
   },
+  originLink: {
+    ...theme.typography.subtitle1,
+    marginLeft: theme.spacing(1),
+    fontWeight: 500,
+  },
   editButtonContainer: {
     display: 'flex',
     flexDirection: 'row',
@@ -144,10 +149,23 @@ function BugTitleForm({ bug }: Props) {
   }
 
   function readonlyBugTitle() {
+    const originMatch = bug.originUrl?.match(/\/(\d+)(?:[/?#]|$)/);
+    const originNum = originMatch ? parseInt(originMatch[1], 10) : null;
     return (
       <div className={classes.headerTitle}>
         <div>
           <span className={classes.readOnlyTitle}>{bug.title}</span>
+          {originNum != null && bug.originUrl && (
+            <a
+              className={classes.originLink}
+              href={bug.originUrl}
+              target="_blank"
+              rel="noreferrer noopener"
+              title={bug.originUrl}
+            >
+              #{originNum}
+            </a>
+          )}
           <span className={classes.readOnlyId}>{bug.humanId}</span>
         </div>
         <IfLoggedIn>

@@ -1055,6 +1055,8 @@ func (ec *executionContext) fieldContext_Repository_bug(ctx context.Context, fie
 				return ec.fieldContext_Bug_mergeCommit(ctx, field)
 			case "reviews":
 				return ec.fieldContext_Bug_reviews(ctx, field)
+			case "originUrl":
+				return ec.fieldContext_Bug_originUrl(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":

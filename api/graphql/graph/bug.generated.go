@@ -1172,6 +1172,47 @@ func (ec *executionContext) fieldContext_Bug_reviews(_ context.Context, field gr
 	return fc, nil
 }
 
+func (ec *executionContext) _Bug_originUrl(ctx context.Context, field graphql.CollectedField, obj models.BugWrapper) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Bug_originUrl(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.OriginUrl(), nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Bug_originUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Bug",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Bug_actors(ctx context.Context, field graphql.CollectedField, obj models.BugWrapper) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Bug_actors(ctx, field)
 	if err != nil {
@@ -1614,6 +1655,8 @@ func (ec *executionContext) fieldContext_BugConnection_nodes(_ context.Context, 
 				return ec.fieldContext_Bug_mergeCommit(ctx, field)
 			case "reviews":
 				return ec.fieldContext_Bug_reviews(ctx, field)
+			case "originUrl":
+				return ec.fieldContext_Bug_originUrl(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":
@@ -1840,6 +1883,8 @@ func (ec *executionContext) fieldContext_BugEdge_node(_ context.Context, field g
 				return ec.fieldContext_Bug_mergeCommit(ctx, field)
 			case "reviews":
 				return ec.fieldContext_Bug_reviews(ctx, field)
+			case "originUrl":
+				return ec.fieldContext_Bug_originUrl(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":
@@ -1969,6 +2014,8 @@ func (ec *executionContext) _Bug(ctx context.Context, sel ast.SelectionSet, obj 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "originUrl":
+			out.Values[i] = ec._Bug_originUrl(ctx, field, obj)
 		case "actors":
 			field := field
 

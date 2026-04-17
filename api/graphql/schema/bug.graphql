@@ -22,6 +22,9 @@ type Bug implements Authored & Entity {
   mergeCommit: String
   """For pull-requests, the list of reviews recorded against the PR."""
   reviews: [Review!]!
+  """For bugs imported from an external tracker, the URL on that tracker
+  (e.g. https://github.com/OWNER/REPO/issues/123). Null for native bugs."""
+  originUrl: String
 
   """The actors of the bug. Actors are Identity that have interacted with the bug."""
   actors(

@@ -39,6 +39,8 @@ type BugWrapper interface {
 	MergeCommit() *string
 	// Reviews returns the list of PR reviews. Empty for issues.
 	Reviews() ([]bug.Review, error)
+	// OriginUrl returns the external-tracker URL for imported bugs, else nil.
+	OriginUrl() *string
 
 	// IsAuthored is a sign-post method for gqlgen, to mark compliance to an interface.
 	IsAuthored()
@@ -127,6 +129,22 @@ func (lb *lazyBug) Reviews() ([]bug.Review, error) {
 		return nil, err
 	}
 	return lb.snap.Reviews, nil
+}
+
+// originUrlFromMetadata picks the external-tracker URL out of a bug's
+// CreateOp metadata. Bridges write url metadata under a per-target key —
+// github-url, gitlab-url, jira-url, launchpad-url — so we probe each.
+func originUrlFromMetadata(md map[string]string) *string {
+	for _, key := range []string{"github-url", "gitlab-url", "jira-url", "launchpad-url"} {
+		if v, ok := md[key]; ok && v != "" {
+			return &v
+		}
+	}
+	return nil
+}
+
+func (lb *lazyBug) OriginUrl() *string {
+	return originUrlFromMetadata(lb.excerpt.CreateMetadata)
 }
 
 func (lb *lazyBug) Comments() ([]bug.Comment, error) {
@@ -228,6 +246,13 @@ func (l *loadedBug) MergeCommit() *string { return nilIfEmpty(l.Snapshot.MergeCo
 
 func (l *loadedBug) Reviews() ([]bug.Review, error) {
 	return l.Snapshot.Reviews, nil
+}
+
+func (l *loadedBug) OriginUrl() *string {
+	if len(l.Snapshot.Operations) == 0 {
+		return nil
+	}
+	return originUrlFromMetadata(l.Snapshot.Operations[0].AllMetadata())
 }
 
 func (l *loadedBug) Comments() ([]bug.Comment, error) {

@@ -88,6 +88,7 @@ type ComplexityRoot struct {
 		LastEdit     func(childComplexity int) int
 		MergeCommit  func(childComplexity int) int
 		Operations   func(childComplexity int, after *string, before *string, first *int, last *int) int
+		OriginUrl    func(childComplexity int) int
 		Participants func(childComplexity int, after *string, before *string, first *int, last *int) int
 		Reviews      func(childComplexity int) int
 		Status       func(childComplexity int) int
@@ -744,6 +745,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Bug.Operations(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
+
+	case "Bug.originUrl":
+		if e.complexity.Bug.OriginUrl == nil {
+			break
+		}
+
+		return e.complexity.Bug.OriginUrl(childComplexity), true
 
 	case "Bug.participants":
 		if e.complexity.Bug.Participants == nil {
@@ -3271,6 +3279,9 @@ var sources = []*ast.Source{
   mergeCommit: String
   """For pull-requests, the list of reviews recorded against the PR."""
   reviews: [Review!]!
+  """For bugs imported from an external tracker, the URL on that tracker
+  (e.g. https://github.com/OWNER/REPO/issues/123). Null for native bugs."""
+  originUrl: String
 
   """The actors of the bug. Actors are Identity that have interacted with the bug."""
   actors(

@@ -128,10 +128,19 @@ type Props = {
   bug: BugRowFragment;
 };
 
+// originNumber extracts the trailing integer from an external-tracker URL
+// like https://github.com/OWNER/REPO/issues/123 or .../pull/456.
+function originNumber(url?: string | null): number | null {
+  if (!url) return null;
+  const m = url.match(/\/(\d+)(?:[/?#]|$)/);
+  return m ? parseInt(m[1], 10) : null;
+}
+
 function BugRow({ bug }: Props) {
   const classes = useStyles();
   // Subtract 1 from totalCount as 1 comment is the bug description
   const commentCount = bug.comments.totalCount - 1;
+  const upstreamNum = originNumber(bug.originUrl);
   return (
     <TableRow hover>
       <TableCell className={classes.cell}>
@@ -151,6 +160,20 @@ function BugRow({ bug }: Props) {
             </div>
           </Link>
           <div className={classes.details}>
+            {upstreamNum != null && bug.originUrl && (
+              <>
+                <a
+                  href={bug.originUrl}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  onClick={(e) => e.stopPropagation()}
+                  title={bug.originUrl}
+                >
+                  #{upstreamNum}
+                </a>
+                &nbsp;·&nbsp;
+              </>
+            )}
             {bug.humanId} opened&nbsp;
             <Date date={bug.createdAt} />
             &nbsp;by&nbsp;

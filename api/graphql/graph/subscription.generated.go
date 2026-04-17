@@ -254,6 +254,8 @@ func (ec *executionContext) fieldContext_BugEvent_bug(_ context.Context, field g
 				return ec.fieldContext_Bug_mergeCommit(ctx, field)
 			case "reviews":
 				return ec.fieldContext_Bug_reviews(ctx, field)
+			case "originUrl":
+				return ec.fieldContext_Bug_originUrl(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":

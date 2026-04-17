@@ -10,6 +10,7 @@ fragment Bug on Bug {
     ...Label
   }
   createdAt
+  originUrl
   baseRef
   headRef
   headCommit
