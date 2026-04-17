@@ -64,6 +64,18 @@ type prEditQuery struct {
 	} `graphql:"node(id: $gqlNodeId)"`
 }
 
+// prReviewCommentsQuery fetches a page of review comments for a specific
+// PullRequestReview node. Used when a review has more than NumReviewComments
+// comments — we follow the cursor.
+type prReviewCommentsQuery struct {
+	Node struct {
+		Typename          githubv4.String `graphql:"__typename"`
+		PullRequestReview struct {
+			Comments pullRequestReviewCommentConnection `graphql:"comments(first: $reviewCommentFirst, after: $reviewCommentAfter)"`
+		} `graphql:"... on PullRequestReview"`
+	} `graphql:"node(id: $gqlNodeId)"`
+}
+
 type issueEditQuery struct {
 	Node struct {
 		Typename githubv4.String `graphql:"__typename"`

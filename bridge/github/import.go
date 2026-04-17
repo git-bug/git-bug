@@ -469,11 +469,27 @@ func (gi *githubImporter) ensureReview(ctx context.Context, repo *cache.RepoCach
 		gi.out <- core.NewImportReview(b.Id(), op.Id())
 	}
 
-	// Import inline review comments (truncated at NumReviewComments in v1).
+	// Import inline review comments first, then follow cursor for any extras.
 	reviewCombined := entity.CombineIds(b.Id(), reviewOpId)
 	for _, rc := range review.Comments.Nodes {
 		if err := gi.ensureReviewComment(ctx, repo, b, reviewCombined, &rc); err != nil {
 			return err
+		}
+	}
+
+	if review.Comments.PageInfo.HasNextPage {
+		cursor := review.Comments.PageInfo.EndCursor
+		for {
+			nodes, nextCursor, hasNext := gi.mediator.QueryReviewComments(ctx, review.Id, cursor)
+			for i := range nodes {
+				if err := gi.ensureReviewComment(ctx, repo, b, reviewCombined, &nodes[i]); err != nil {
+					return err
+				}
+			}
+			if !hasNext {
+				break
+			}
+			cursor = nextCursor
 		}
 	}
 	return nil

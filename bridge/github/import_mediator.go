@@ -228,6 +228,29 @@ func (mm *importMediator) queryPrTimeline(ctx context.Context, nid githubv4.ID, 
 	return connection, true
 }
 
+// QueryReviewComments fetches a page of review comments for a
+// PullRequestReview node id. Returns (nodes, nextCursor, hasNextPage). An
+// empty cursor argument fetches the first page.
+func (mm *importMediator) QueryReviewComments(ctx context.Context, reviewId githubv4.ID, cursor githubv4.String) ([]pullRequestReviewComment, githubv4.String, bool) {
+	vars := varmap{
+		"gqlNodeId":          reviewId,
+		"reviewCommentFirst": githubv4.Int(NumReviewComments),
+	}
+	if cursor == "" {
+		vars["reviewCommentAfter"] = (*githubv4.String)(nil)
+	} else {
+		vars["reviewCommentAfter"] = cursor
+	}
+
+	query := prReviewCommentsQuery{}
+	if err := mm.gh.queryImport(ctx, &query, vars, mm.importEvents); err != nil {
+		mm.err = err
+		return nil, "", false
+	}
+	c := query.Node.PullRequestReview.Comments
+	return c.Nodes, c.PageInfo.EndCursor, c.PageInfo.HasNextPage
+}
+
 func (mm *importMediator) fillCommentEditsPr(ctx context.Context, item *prTimelineItem) {
 	if item.Typename != "IssueComment" {
 		return

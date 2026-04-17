@@ -110,6 +110,125 @@ func setupPRReviewExpectations(t *testing.T, mock *mocks.Client) {
 	expectUserQuery(t, mock)
 }
 
+// TestGithubPRReviewCommentsPagination covers the case where a review has
+// more inline comments than NumReviewComments. The inline batch reports
+// HasNextPage=true; the importer must follow the cursor via a
+// prReviewCommentsQuery and import the extra comments too.
+func TestGithubPRReviewCommentsPagination(t *testing.T) {
+	clientMock := &mocks.Client{}
+	setupPRReviewPaginationExpectations(t, clientMock)
+	importer := githubImporter{}
+	importer.client = &rateLimitHandlerClient{sc: clientMock}
+
+	repo := repository.CreateGoGitTestRepo(t, false)
+	backend, err := cache.NewRepoCacheNoEvents(repo)
+	require.NoError(t, err)
+	defer backend.Close()
+	interrupt.RegisterCleaner(backend.Close)
+
+	events, err := importer.ImportAll(context.Background(), backend, time.Time{})
+	require.NoError(t, err)
+	for e := range events {
+		require.NoError(t, e.Err)
+	}
+
+	b, err := backend.Bugs().ResolveBugCreateMetadata(metaKeyGithubUrl, "https://github.com/marcus/to-himself/pull/10")
+	require.NoError(t, err)
+	snap := b.Snapshot()
+	require.Len(t, snap.Reviews, 1)
+	// One comment from the inline batch + one from the follow-up page = 2.
+	require.Len(t, snap.Reviews[0].Comments, 2)
+	require.Equal(t, "inline-comment", snap.Reviews[0].Comments[0].Body)
+	require.Equal(t, "paged-comment", snap.Reviews[0].Comments[1].Body)
+}
+
+func setupPRReviewPaginationExpectations(t *testing.T, mock *mocks.Client) {
+	expectEmptyIssueQuery(mock)
+	expectUserQuery(t, mock)
+
+	mock.On("Query", m.Anything, m.AnythingOfType("*github.prTimelineQuery"), m.Anything).Return(nil).Run(
+		func(args m.Arguments) {},
+	).Maybe()
+
+	mock.On("Query", m.Anything, m.AnythingOfType("*github.pullRequestQuery"), m.Anything).Return(nil).Run(
+		func(args m.Arguments) {
+			retVal := args.Get(1).(*pullRequestQuery)
+			retVal.Repository.PullRequests.Nodes = []pullRequestNode{
+				{
+					pullRequest: pullRequest{
+						authorEvent: authorEvent{
+							Id:     "pr-10",
+							Author: &actor{Typename: "User", User: userActor{Name: strPtr("marcus")}},
+						},
+						Title:       "paged pr",
+						Number:      10,
+						Body:        "body 10",
+						Url:         githubv4.URI{URL: &url.URL{Scheme: "https", Host: "github.com", Path: "marcus/to-himself/pull/10"}},
+						BaseRefName: "main",
+						HeadRefName: "feat10",
+						HeadRefOid:  "commit10",
+					},
+					TimelineItems: prTimelineItemsConnection{
+						Nodes: []prTimelineItem{
+							{
+								Typename: "PullRequestReview",
+								PullRequestReview: pullRequestReview{
+									authorEvent: authorEvent{
+										Id:     "rev-big",
+										Author: &actor{Typename: "User", User: userActor{Name: strPtr("reviewer")}},
+									},
+									State:  githubv4.PullRequestReviewStateCommented,
+									Body:   "batch",
+									Commit: &struct{ Oid githubv4.GitObjectID }{Oid: "commit10"},
+									Comments: pullRequestReviewCommentConnection{
+										Nodes: []pullRequestReviewComment{
+											{
+												authorEvent: authorEvent{
+													Id:     "rc-inline",
+													Author: &actor{Typename: "User", User: userActor{Name: strPtr("reviewer")}},
+												},
+												Body:   "inline-comment",
+												Path:   "a.go",
+												Line:   5,
+												Commit: &struct{ Oid githubv4.GitObjectID }{Oid: "commit10"},
+											},
+										},
+										PageInfo: pageInfo{
+											EndCursor:   "cursor-1",
+											HasNextPage: true,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			}
+		},
+	).Once()
+
+	mock.On("Query", m.Anything, m.AnythingOfType("*github.prReviewCommentsQuery"), m.Anything).Return(nil).Run(
+		func(args m.Arguments) {
+			retVal := args.Get(1).(*prReviewCommentsQuery)
+			retVal.Node.PullRequestReview.Comments = pullRequestReviewCommentConnection{
+				Nodes: []pullRequestReviewComment{
+					{
+						authorEvent: authorEvent{
+							Id:     "rc-paged",
+							Author: &actor{Typename: "User", User: userActor{Name: strPtr("reviewer")}},
+						},
+						Body:   "paged-comment",
+						Path:   "b.go",
+						Line:   7,
+						Commit: &struct{ Oid githubv4.GitObjectID }{Oid: "commit10"},
+					},
+				},
+				PageInfo: pageInfo{HasNextPage: false},
+			}
+		},
+	).Once()
+}
+
 func expectPullRequestQueryWithReview(mock *mocks.Client) {
 	mock.On("Query", m.Anything, m.AnythingOfType("*github.prTimelineQuery"), m.Anything).Return(nil).Run(
 		func(args m.Arguments) {},
