@@ -38,6 +38,10 @@ type ResolverRoot interface {
 	Bug() BugResolver
 	BugAddCommentOperation() BugAddCommentOperationResolver
 	BugAddCommentTimelineItem() BugAddCommentTimelineItemResolver
+	BugAddReviewCommentOperation() BugAddReviewCommentOperationResolver
+	BugAddReviewCommentTimelineItem() BugAddReviewCommentTimelineItemResolver
+	BugAddReviewOperation() BugAddReviewOperationResolver
+	BugAddReviewTimelineItem() BugAddReviewTimelineItemResolver
 	BugComment() BugCommentResolver
 	BugCommentHistoryStep() BugCommentHistoryStepResolver
 	BugCreateOperation() BugCreateOperationResolver
@@ -49,6 +53,8 @@ type ResolverRoot interface {
 	BugSetStatusTimelineItem() BugSetStatusTimelineItemResolver
 	BugSetTitleOperation() BugSetTitleOperationResolver
 	BugSetTitleTimelineItem() BugSetTitleTimelineItemResolver
+	BugUpdateHeadOperation() BugUpdateHeadOperationResolver
+	BugUpdateHeadTimelineItem() BugUpdateHeadTimelineItemResolver
 	Color() ColorResolver
 	GitCommit() GitCommitResolver
 	GitRef() GitRefResolver
@@ -58,6 +64,8 @@ type ResolverRoot interface {
 	Mutation() MutationResolver
 	Query() QueryResolver
 	Repository() RepositoryResolver
+	Review() ReviewResolver
+	ReviewComment() ReviewCommentResolver
 	Subscription() SubscriptionResolver
 }
 
@@ -68,14 +76,20 @@ type ComplexityRoot struct {
 	Bug struct {
 		Actors       func(childComplexity int, after *string, before *string, first *int, last *int) int
 		Author       func(childComplexity int) int
+		BaseRef      func(childComplexity int) int
 		Comments     func(childComplexity int, after *string, before *string, first *int, last *int) int
 		CreatedAt    func(childComplexity int) int
+		HeadCommit   func(childComplexity int) int
+		HeadRef      func(childComplexity int) int
 		HumanID      func(childComplexity int) int
 		Id           func(childComplexity int) int
+		Kind         func(childComplexity int) int
 		Labels       func(childComplexity int) int
 		LastEdit     func(childComplexity int) int
+		MergeCommit  func(childComplexity int) int
 		Operations   func(childComplexity int, after *string, before *string, first *int, last *int) int
 		Participants func(childComplexity int, after *string, before *string, first *int, last *int) int
+		Reviews      func(childComplexity int) int
 		Status       func(childComplexity int) int
 		Timeline     func(childComplexity int, after *string, before *string, first *int, last *int) int
 		Title        func(childComplexity int) int
@@ -121,6 +135,50 @@ type ComplexityRoot struct {
 		MessageIsEmpty func(childComplexity int) int
 	}
 
+	BugAddReviewCommentOperation struct {
+		Author     func(childComplexity int) int
+		Body       func(childComplexity int) int
+		CommitHash func(childComplexity int) int
+		EndLine    func(childComplexity int) int
+		Id         func(childComplexity int) int
+		Path       func(childComplexity int) int
+		ReplyTo    func(childComplexity int) int
+		ReviewId   func(childComplexity int) int
+		StartLine  func(childComplexity int) int
+		Time       func(childComplexity int) int
+	}
+
+	BugAddReviewCommentTimelineItem struct {
+		Author     func(childComplexity int) int
+		Body       func(childComplexity int) int
+		CombinedId func(childComplexity int) int
+		CommitHash func(childComplexity int) int
+		EndLine    func(childComplexity int) int
+		Path       func(childComplexity int) int
+		ReplyTo    func(childComplexity int) int
+		ReviewId   func(childComplexity int) int
+		StartLine  func(childComplexity int) int
+		UnixTime   func(childComplexity int) int
+	}
+
+	BugAddReviewOperation struct {
+		Author     func(childComplexity int) int
+		Body       func(childComplexity int) int
+		CommitHash func(childComplexity int) int
+		Id         func(childComplexity int) int
+		State      func(childComplexity int) int
+		Time       func(childComplexity int) int
+	}
+
+	BugAddReviewTimelineItem struct {
+		Author     func(childComplexity int) int
+		Body       func(childComplexity int) int
+		CombinedId func(childComplexity int) int
+		CommitHash func(childComplexity int) int
+		State      func(childComplexity int) int
+		UnixTime   func(childComplexity int) int
+	}
+
 	BugChangeLabelPayload struct {
 		Bug              func(childComplexity int) int
 		ClientMutationID func(childComplexity int) int
@@ -160,12 +218,17 @@ type ComplexityRoot struct {
 	}
 
 	BugCreateOperation struct {
-		Author  func(childComplexity int) int
-		Files   func(childComplexity int) int
-		Id      func(childComplexity int) int
-		Message func(childComplexity int) int
-		Time    func(childComplexity int) int
-		Title   func(childComplexity int) int
+		Author     func(childComplexity int) int
+		BaseRef    func(childComplexity int) int
+		Draft      func(childComplexity int) int
+		Files      func(childComplexity int) int
+		HeadCommit func(childComplexity int) int
+		HeadRef    func(childComplexity int) int
+		Id         func(childComplexity int) int
+		Kind       func(childComplexity int) int
+		Message    func(childComplexity int) int
+		Time       func(childComplexity int) int
+		Title      func(childComplexity int) int
 	}
 
 	BugCreatePayload struct {
@@ -228,17 +291,19 @@ type ComplexityRoot struct {
 	}
 
 	BugSetStatusOperation struct {
-		Author func(childComplexity int) int
-		Id     func(childComplexity int) int
-		Status func(childComplexity int) int
-		Time   func(childComplexity int) int
+		Author      func(childComplexity int) int
+		Id          func(childComplexity int) int
+		MergeCommit func(childComplexity int) int
+		Status      func(childComplexity int) int
+		Time        func(childComplexity int) int
 	}
 
 	BugSetStatusTimelineItem struct {
-		Author     func(childComplexity int) int
-		CombinedId func(childComplexity int) int
-		Date       func(childComplexity int) int
-		Status     func(childComplexity int) int
+		Author      func(childComplexity int) int
+		CombinedId  func(childComplexity int) int
+		Date        func(childComplexity int) int
+		MergeCommit func(childComplexity int) int
+		Status      func(childComplexity int) int
 	}
 
 	BugSetTitleOperation struct {
@@ -285,6 +350,22 @@ type ComplexityRoot struct {
 	BugTimelineItemEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
+	}
+
+	BugUpdateHeadOperation struct {
+		Author         func(childComplexity int) int
+		Id             func(childComplexity int) int
+		NewCommit      func(childComplexity int) int
+		PreviousCommit func(childComplexity int) int
+		Time           func(childComplexity int) int
+	}
+
+	BugUpdateHeadTimelineItem struct {
+		Author         func(childComplexity int) int
+		CombinedId     func(childComplexity int) int
+		NewCommit      func(childComplexity int) int
+		PreviousCommit func(childComplexity int) int
+		UnixTime       func(childComplexity int) int
 	}
 
 	Color struct {
@@ -503,6 +584,28 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	Review struct {
+		Author     func(childComplexity int) int
+		Body       func(childComplexity int) int
+		CombinedId func(childComplexity int) int
+		Comments   func(childComplexity int) int
+		CommitHash func(childComplexity int) int
+		CreatedAt  func(childComplexity int) int
+		State      func(childComplexity int) int
+	}
+
+	ReviewComment struct {
+		Author     func(childComplexity int) int
+		Body       func(childComplexity int) int
+		CombinedId func(childComplexity int) int
+		CommitHash func(childComplexity int) int
+		CreatedAt  func(childComplexity int) int
+		EndLine    func(childComplexity int) int
+		Path       func(childComplexity int) int
+		ReplyTo    func(childComplexity int) int
+		StartLine  func(childComplexity int) int
+	}
+
 	Subscription struct {
 		AllEvents      func(childComplexity int, repoRef *string, typename *string) int
 		BugEvents      func(childComplexity int, repoRef *string) int
@@ -548,6 +651,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Bug.Author(childComplexity), true
 
+	case "Bug.baseRef":
+		if e.complexity.Bug.BaseRef == nil {
+			break
+		}
+
+		return e.complexity.Bug.BaseRef(childComplexity), true
+
 	case "Bug.comments":
 		if e.complexity.Bug.Comments == nil {
 			break
@@ -567,6 +677,20 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Bug.CreatedAt(childComplexity), true
 
+	case "Bug.headCommit":
+		if e.complexity.Bug.HeadCommit == nil {
+			break
+		}
+
+		return e.complexity.Bug.HeadCommit(childComplexity), true
+
+	case "Bug.headRef":
+		if e.complexity.Bug.HeadRef == nil {
+			break
+		}
+
+		return e.complexity.Bug.HeadRef(childComplexity), true
+
 	case "Bug.humanId":
 		if e.complexity.Bug.HumanID == nil {
 			break
@@ -581,6 +705,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Bug.Id(childComplexity), true
 
+	case "Bug.kind":
+		if e.complexity.Bug.Kind == nil {
+			break
+		}
+
+		return e.complexity.Bug.Kind(childComplexity), true
+
 	case "Bug.labels":
 		if e.complexity.Bug.Labels == nil {
 			break
@@ -594,6 +725,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Bug.LastEdit(childComplexity), true
+
+	case "Bug.mergeCommit":
+		if e.complexity.Bug.MergeCommit == nil {
+			break
+		}
+
+		return e.complexity.Bug.MergeCommit(childComplexity), true
 
 	case "Bug.operations":
 		if e.complexity.Bug.Operations == nil {
@@ -618,6 +756,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Bug.Participants(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
+
+	case "Bug.reviews":
+		if e.complexity.Bug.Reviews == nil {
+			break
+		}
+
+		return e.complexity.Bug.Reviews(childComplexity), true
 
 	case "Bug.status":
 		if e.complexity.Bug.Status == nil {
@@ -820,6 +965,230 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.BugAddCommentTimelineItem.MessageIsEmpty(childComplexity), true
 
+	case "BugAddReviewCommentOperation.author":
+		if e.complexity.BugAddReviewCommentOperation.Author == nil {
+			break
+		}
+
+		return e.complexity.BugAddReviewCommentOperation.Author(childComplexity), true
+
+	case "BugAddReviewCommentOperation.body":
+		if e.complexity.BugAddReviewCommentOperation.Body == nil {
+			break
+		}
+
+		return e.complexity.BugAddReviewCommentOperation.Body(childComplexity), true
+
+	case "BugAddReviewCommentOperation.commitHash":
+		if e.complexity.BugAddReviewCommentOperation.CommitHash == nil {
+			break
+		}
+
+		return e.complexity.BugAddReviewCommentOperation.CommitHash(childComplexity), true
+
+	case "BugAddReviewCommentOperation.endLine":
+		if e.complexity.BugAddReviewCommentOperation.EndLine == nil {
+			break
+		}
+
+		return e.complexity.BugAddReviewCommentOperation.EndLine(childComplexity), true
+
+	case "BugAddReviewCommentOperation.id":
+		if e.complexity.BugAddReviewCommentOperation.Id == nil {
+			break
+		}
+
+		return e.complexity.BugAddReviewCommentOperation.Id(childComplexity), true
+
+	case "BugAddReviewCommentOperation.path":
+		if e.complexity.BugAddReviewCommentOperation.Path == nil {
+			break
+		}
+
+		return e.complexity.BugAddReviewCommentOperation.Path(childComplexity), true
+
+	case "BugAddReviewCommentOperation.replyTo":
+		if e.complexity.BugAddReviewCommentOperation.ReplyTo == nil {
+			break
+		}
+
+		return e.complexity.BugAddReviewCommentOperation.ReplyTo(childComplexity), true
+
+	case "BugAddReviewCommentOperation.reviewId":
+		if e.complexity.BugAddReviewCommentOperation.ReviewId == nil {
+			break
+		}
+
+		return e.complexity.BugAddReviewCommentOperation.ReviewId(childComplexity), true
+
+	case "BugAddReviewCommentOperation.startLine":
+		if e.complexity.BugAddReviewCommentOperation.StartLine == nil {
+			break
+		}
+
+		return e.complexity.BugAddReviewCommentOperation.StartLine(childComplexity), true
+
+	case "BugAddReviewCommentOperation.date":
+		if e.complexity.BugAddReviewCommentOperation.Time == nil {
+			break
+		}
+
+		return e.complexity.BugAddReviewCommentOperation.Time(childComplexity), true
+
+	case "BugAddReviewCommentTimelineItem.author":
+		if e.complexity.BugAddReviewCommentTimelineItem.Author == nil {
+			break
+		}
+
+		return e.complexity.BugAddReviewCommentTimelineItem.Author(childComplexity), true
+
+	case "BugAddReviewCommentTimelineItem.body":
+		if e.complexity.BugAddReviewCommentTimelineItem.Body == nil {
+			break
+		}
+
+		return e.complexity.BugAddReviewCommentTimelineItem.Body(childComplexity), true
+
+	case "BugAddReviewCommentTimelineItem.id":
+		if e.complexity.BugAddReviewCommentTimelineItem.CombinedId == nil {
+			break
+		}
+
+		return e.complexity.BugAddReviewCommentTimelineItem.CombinedId(childComplexity), true
+
+	case "BugAddReviewCommentTimelineItem.commitHash":
+		if e.complexity.BugAddReviewCommentTimelineItem.CommitHash == nil {
+			break
+		}
+
+		return e.complexity.BugAddReviewCommentTimelineItem.CommitHash(childComplexity), true
+
+	case "BugAddReviewCommentTimelineItem.endLine":
+		if e.complexity.BugAddReviewCommentTimelineItem.EndLine == nil {
+			break
+		}
+
+		return e.complexity.BugAddReviewCommentTimelineItem.EndLine(childComplexity), true
+
+	case "BugAddReviewCommentTimelineItem.path":
+		if e.complexity.BugAddReviewCommentTimelineItem.Path == nil {
+			break
+		}
+
+		return e.complexity.BugAddReviewCommentTimelineItem.Path(childComplexity), true
+
+	case "BugAddReviewCommentTimelineItem.replyTo":
+		if e.complexity.BugAddReviewCommentTimelineItem.ReplyTo == nil {
+			break
+		}
+
+		return e.complexity.BugAddReviewCommentTimelineItem.ReplyTo(childComplexity), true
+
+	case "BugAddReviewCommentTimelineItem.reviewId":
+		if e.complexity.BugAddReviewCommentTimelineItem.ReviewId == nil {
+			break
+		}
+
+		return e.complexity.BugAddReviewCommentTimelineItem.ReviewId(childComplexity), true
+
+	case "BugAddReviewCommentTimelineItem.startLine":
+		if e.complexity.BugAddReviewCommentTimelineItem.StartLine == nil {
+			break
+		}
+
+		return e.complexity.BugAddReviewCommentTimelineItem.StartLine(childComplexity), true
+
+	case "BugAddReviewCommentTimelineItem.date":
+		if e.complexity.BugAddReviewCommentTimelineItem.UnixTime == nil {
+			break
+		}
+
+		return e.complexity.BugAddReviewCommentTimelineItem.UnixTime(childComplexity), true
+
+	case "BugAddReviewOperation.author":
+		if e.complexity.BugAddReviewOperation.Author == nil {
+			break
+		}
+
+		return e.complexity.BugAddReviewOperation.Author(childComplexity), true
+
+	case "BugAddReviewOperation.body":
+		if e.complexity.BugAddReviewOperation.Body == nil {
+			break
+		}
+
+		return e.complexity.BugAddReviewOperation.Body(childComplexity), true
+
+	case "BugAddReviewOperation.commitHash":
+		if e.complexity.BugAddReviewOperation.CommitHash == nil {
+			break
+		}
+
+		return e.complexity.BugAddReviewOperation.CommitHash(childComplexity), true
+
+	case "BugAddReviewOperation.id":
+		if e.complexity.BugAddReviewOperation.Id == nil {
+			break
+		}
+
+		return e.complexity.BugAddReviewOperation.Id(childComplexity), true
+
+	case "BugAddReviewOperation.state":
+		if e.complexity.BugAddReviewOperation.State == nil {
+			break
+		}
+
+		return e.complexity.BugAddReviewOperation.State(childComplexity), true
+
+	case "BugAddReviewOperation.date":
+		if e.complexity.BugAddReviewOperation.Time == nil {
+			break
+		}
+
+		return e.complexity.BugAddReviewOperation.Time(childComplexity), true
+
+	case "BugAddReviewTimelineItem.author":
+		if e.complexity.BugAddReviewTimelineItem.Author == nil {
+			break
+		}
+
+		return e.complexity.BugAddReviewTimelineItem.Author(childComplexity), true
+
+	case "BugAddReviewTimelineItem.body":
+		if e.complexity.BugAddReviewTimelineItem.Body == nil {
+			break
+		}
+
+		return e.complexity.BugAddReviewTimelineItem.Body(childComplexity), true
+
+	case "BugAddReviewTimelineItem.id":
+		if e.complexity.BugAddReviewTimelineItem.CombinedId == nil {
+			break
+		}
+
+		return e.complexity.BugAddReviewTimelineItem.CombinedId(childComplexity), true
+
+	case "BugAddReviewTimelineItem.commitHash":
+		if e.complexity.BugAddReviewTimelineItem.CommitHash == nil {
+			break
+		}
+
+		return e.complexity.BugAddReviewTimelineItem.CommitHash(childComplexity), true
+
+	case "BugAddReviewTimelineItem.state":
+		if e.complexity.BugAddReviewTimelineItem.State == nil {
+			break
+		}
+
+		return e.complexity.BugAddReviewTimelineItem.State(childComplexity), true
+
+	case "BugAddReviewTimelineItem.date":
+		if e.complexity.BugAddReviewTimelineItem.UnixTime == nil {
+			break
+		}
+
+		return e.complexity.BugAddReviewTimelineItem.UnixTime(childComplexity), true
+
 	case "BugChangeLabelPayload.bug":
 		if e.complexity.BugChangeLabelPayload.Bug == nil {
 			break
@@ -967,6 +1336,20 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.BugCreateOperation.Author(childComplexity), true
 
+	case "BugCreateOperation.baseRef":
+		if e.complexity.BugCreateOperation.BaseRef == nil {
+			break
+		}
+
+		return e.complexity.BugCreateOperation.BaseRef(childComplexity), true
+
+	case "BugCreateOperation.draft":
+		if e.complexity.BugCreateOperation.Draft == nil {
+			break
+		}
+
+		return e.complexity.BugCreateOperation.Draft(childComplexity), true
+
 	case "BugCreateOperation.files":
 		if e.complexity.BugCreateOperation.Files == nil {
 			break
@@ -974,12 +1357,33 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.BugCreateOperation.Files(childComplexity), true
 
+	case "BugCreateOperation.headCommit":
+		if e.complexity.BugCreateOperation.HeadCommit == nil {
+			break
+		}
+
+		return e.complexity.BugCreateOperation.HeadCommit(childComplexity), true
+
+	case "BugCreateOperation.headRef":
+		if e.complexity.BugCreateOperation.HeadRef == nil {
+			break
+		}
+
+		return e.complexity.BugCreateOperation.HeadRef(childComplexity), true
+
 	case "BugCreateOperation.id":
 		if e.complexity.BugCreateOperation.Id == nil {
 			break
 		}
 
 		return e.complexity.BugCreateOperation.Id(childComplexity), true
+
+	case "BugCreateOperation.kind":
+		if e.complexity.BugCreateOperation.Kind == nil {
+			break
+		}
+
+		return e.complexity.BugCreateOperation.Kind(childComplexity), true
 
 	case "BugCreateOperation.message":
 		if e.complexity.BugCreateOperation.Message == nil {
@@ -1261,6 +1665,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.BugSetStatusOperation.Id(childComplexity), true
 
+	case "BugSetStatusOperation.mergeCommit":
+		if e.complexity.BugSetStatusOperation.MergeCommit == nil {
+			break
+		}
+
+		return e.complexity.BugSetStatusOperation.MergeCommit(childComplexity), true
+
 	case "BugSetStatusOperation.status":
 		if e.complexity.BugSetStatusOperation.Status == nil {
 			break
@@ -1295,6 +1706,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.BugSetStatusTimelineItem.Date(childComplexity), true
+
+	case "BugSetStatusTimelineItem.mergeCommit":
+		if e.complexity.BugSetStatusTimelineItem.MergeCommit == nil {
+			break
+		}
+
+		return e.complexity.BugSetStatusTimelineItem.MergeCommit(childComplexity), true
 
 	case "BugSetStatusTimelineItem.status":
 		if e.complexity.BugSetStatusTimelineItem.Status == nil {
@@ -1477,6 +1895,76 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.BugTimelineItemEdge.Node(childComplexity), true
+
+	case "BugUpdateHeadOperation.author":
+		if e.complexity.BugUpdateHeadOperation.Author == nil {
+			break
+		}
+
+		return e.complexity.BugUpdateHeadOperation.Author(childComplexity), true
+
+	case "BugUpdateHeadOperation.id":
+		if e.complexity.BugUpdateHeadOperation.Id == nil {
+			break
+		}
+
+		return e.complexity.BugUpdateHeadOperation.Id(childComplexity), true
+
+	case "BugUpdateHeadOperation.newCommit":
+		if e.complexity.BugUpdateHeadOperation.NewCommit == nil {
+			break
+		}
+
+		return e.complexity.BugUpdateHeadOperation.NewCommit(childComplexity), true
+
+	case "BugUpdateHeadOperation.previousCommit":
+		if e.complexity.BugUpdateHeadOperation.PreviousCommit == nil {
+			break
+		}
+
+		return e.complexity.BugUpdateHeadOperation.PreviousCommit(childComplexity), true
+
+	case "BugUpdateHeadOperation.date":
+		if e.complexity.BugUpdateHeadOperation.Time == nil {
+			break
+		}
+
+		return e.complexity.BugUpdateHeadOperation.Time(childComplexity), true
+
+	case "BugUpdateHeadTimelineItem.author":
+		if e.complexity.BugUpdateHeadTimelineItem.Author == nil {
+			break
+		}
+
+		return e.complexity.BugUpdateHeadTimelineItem.Author(childComplexity), true
+
+	case "BugUpdateHeadTimelineItem.id":
+		if e.complexity.BugUpdateHeadTimelineItem.CombinedId == nil {
+			break
+		}
+
+		return e.complexity.BugUpdateHeadTimelineItem.CombinedId(childComplexity), true
+
+	case "BugUpdateHeadTimelineItem.newCommit":
+		if e.complexity.BugUpdateHeadTimelineItem.NewCommit == nil {
+			break
+		}
+
+		return e.complexity.BugUpdateHeadTimelineItem.NewCommit(childComplexity), true
+
+	case "BugUpdateHeadTimelineItem.previousCommit":
+		if e.complexity.BugUpdateHeadTimelineItem.PreviousCommit == nil {
+			break
+		}
+
+		return e.complexity.BugUpdateHeadTimelineItem.PreviousCommit(childComplexity), true
+
+	case "BugUpdateHeadTimelineItem.date":
+		if e.complexity.BugUpdateHeadTimelineItem.UnixTime == nil {
+			break
+		}
+
+		return e.complexity.BugUpdateHeadTimelineItem.UnixTime(childComplexity), true
 
 	case "Color.B":
 		if e.complexity.Color.B == nil {
@@ -2480,6 +2968,118 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.RepositoryEdge.Node(childComplexity), true
 
+	case "Review.author":
+		if e.complexity.Review.Author == nil {
+			break
+		}
+
+		return e.complexity.Review.Author(childComplexity), true
+
+	case "Review.body":
+		if e.complexity.Review.Body == nil {
+			break
+		}
+
+		return e.complexity.Review.Body(childComplexity), true
+
+	case "Review.id":
+		if e.complexity.Review.CombinedId == nil {
+			break
+		}
+
+		return e.complexity.Review.CombinedId(childComplexity), true
+
+	case "Review.comments":
+		if e.complexity.Review.Comments == nil {
+			break
+		}
+
+		return e.complexity.Review.Comments(childComplexity), true
+
+	case "Review.commitHash":
+		if e.complexity.Review.CommitHash == nil {
+			break
+		}
+
+		return e.complexity.Review.CommitHash(childComplexity), true
+
+	case "Review.createdAt":
+		if e.complexity.Review.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.Review.CreatedAt(childComplexity), true
+
+	case "Review.state":
+		if e.complexity.Review.State == nil {
+			break
+		}
+
+		return e.complexity.Review.State(childComplexity), true
+
+	case "ReviewComment.author":
+		if e.complexity.ReviewComment.Author == nil {
+			break
+		}
+
+		return e.complexity.ReviewComment.Author(childComplexity), true
+
+	case "ReviewComment.body":
+		if e.complexity.ReviewComment.Body == nil {
+			break
+		}
+
+		return e.complexity.ReviewComment.Body(childComplexity), true
+
+	case "ReviewComment.id":
+		if e.complexity.ReviewComment.CombinedId == nil {
+			break
+		}
+
+		return e.complexity.ReviewComment.CombinedId(childComplexity), true
+
+	case "ReviewComment.commitHash":
+		if e.complexity.ReviewComment.CommitHash == nil {
+			break
+		}
+
+		return e.complexity.ReviewComment.CommitHash(childComplexity), true
+
+	case "ReviewComment.createdAt":
+		if e.complexity.ReviewComment.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.ReviewComment.CreatedAt(childComplexity), true
+
+	case "ReviewComment.endLine":
+		if e.complexity.ReviewComment.EndLine == nil {
+			break
+		}
+
+		return e.complexity.ReviewComment.EndLine(childComplexity), true
+
+	case "ReviewComment.path":
+		if e.complexity.ReviewComment.Path == nil {
+			break
+		}
+
+		return e.complexity.ReviewComment.Path(childComplexity), true
+
+	case "ReviewComment.replyTo":
+		if e.complexity.ReviewComment.ReplyTo == nil {
+			break
+		}
+
+		return e.complexity.ReviewComment.ReplyTo(childComplexity), true
+
+	case "ReviewComment.startLine":
+		if e.complexity.ReviewComment.StartLine == nil {
+			break
+		}
+
+		return e.complexity.ReviewComment.StartLine(childComplexity), true
+
 	case "Subscription.allEvents":
 		if e.complexity.Subscription.AllEvents == nil {
 			break
@@ -2652,12 +3252,25 @@ var sources = []*ast.Source{
   id: ID!
   """The human version (truncated) identifier for this bug"""
   humanId: String!
+  """Distinguishes an issue from a pull-request."""
+  kind: BugKind!
   status: Status!
   title: String!
   labels: [Label!]!
   author: Identity!
   createdAt: Time!
   lastEdit: Time!
+
+  """For pull-requests, the base branch the PR targets. Null for issues."""
+  baseRef: String
+  """For pull-requests, the head branch the PR proposes to merge. Null for issues."""
+  headRef: String
+  """For pull-requests, the current tip of the head branch. Null for issues."""
+  headCommit: String
+  """For merged pull-requests, the merge commit hash. Null otherwise."""
+  mergeCommit: String
+  """For pull-requests, the list of reviews recorded against the PR."""
+  reviews: [Review!]!
 
   """The actors of the bug. Actors are Identity that have interacted with the bug."""
   actors(
@@ -2991,6 +3604,16 @@ type BugSetTitlePayload {
     title: String!
     message: String!
     files: [Hash!]!
+    """Issue vs pull-request."""
+    kind: BugKind!
+    """For PRs, the base branch. Empty for issues."""
+    baseRef: String!
+    """For PRs, the head branch. Empty for issues."""
+    headRef: String!
+    """For PRs, the initial head commit. Empty for issues."""
+    headCommit: String!
+    """For PRs, whether the PR was created in draft state."""
+    draft: Boolean!
 }
 
 type BugSetTitleOperation implements Operation & Authored
@@ -3043,6 +3666,44 @@ type BugSetStatusOperation implements Operation & Authored
     date: Time! @goField(name: "Time")
 
     status: Status!
+    """For merge transitions, the merge commit hash. Empty for other status changes."""
+    mergeCommit: String!
+}
+
+type BugUpdateHeadOperation implements Operation & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.UpdateHeadOperation") {
+    id: ID!
+    author: Identity!
+    date: Time! @goField(name: "Time")
+
+    newCommit: String!
+    previousCommit: String!
+}
+
+type BugAddReviewOperation implements Operation & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.AddReviewOperation") {
+    id: ID!
+    author: Identity!
+    date: Time! @goField(name: "Time")
+
+    state: ReviewState!
+    body: String!
+    commitHash: String!
+}
+
+type BugAddReviewCommentOperation implements Operation & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.AddReviewCommentOperation") {
+    id: ID!
+    author: Identity!
+    date: Time! @goField(name: "Time")
+
+    reviewId: ID!
+    body: String!
+    commitHash: String!
+    path: String!
+    startLine: Int!
+    endLine: Int!
+    replyTo: ID
 }
 
 type BugLabelChangeOperation implements Operation & Authored
@@ -3056,6 +3717,39 @@ type BugLabelChangeOperation implements Operation & Authored
 
     added: [Label!]!
     removed: [Label!]!
+}
+`, BuiltIn: false},
+	{Name: "../schema/bug_review.graphql", Input: `"""A PR review: a verdict plus any attached line-anchored comments."""
+type Review implements Authored {
+  """The combined id of the review, prefixed with the PR id."""
+  id: ID! @goField(name: "CombinedId")
+  author: Identity!
+  state: ReviewState!
+  body: String!
+  """The head commit this review was made against (immutable)."""
+  commitHash: String!
+  createdAt: Time! @goField(name: "CreatedAt")
+  """The line-anchored comments attached to this review."""
+  comments: [ReviewComment!]!
+}
+
+"""A line-anchored review comment. Anchors are immutable — a later push
+does not move or invalidate the comment."""
+type ReviewComment implements Authored {
+  id: ID! @goField(name: "CombinedId")
+  author: Identity!
+  body: String!
+  """The commit hash this comment is anchored to."""
+  commitHash: String!
+  """The file path the comment applies to."""
+  path: String!
+  """The first line of the anchor range (1-based)."""
+  startLine: Int!
+  """The last line of the anchor range. Equals startLine for single-line anchors."""
+  endLine: Int!
+  """If this comment is a reply within a thread, the id of the comment it replies to; otherwise null."""
+  replyTo: ID
+  createdAt: Time! @goField(name: "CreatedAt")
 }
 `, BuiltIn: false},
 	{Name: "../schema/bug_timeline.graphql", Input: `"""An item in the timeline of bug events"""
@@ -3139,6 +3833,41 @@ type BugSetStatusTimelineItem implements BugTimelineItem & Authored
     author: Identity!
     date: Time!
     status: Status!
+    """For merge transitions, the merge commit hash. Empty otherwise."""
+    mergeCommit: String!
+}
+
+type BugUpdateHeadTimelineItem implements BugTimelineItem & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.UpdateHeadTimelineItem") {
+    id: CombinedId! @goField(name: "CombinedId")
+    author: Identity!
+    date: Time! @goField(name: "UnixTime")
+    newCommit: String!
+    previousCommit: String!
+}
+
+type BugAddReviewTimelineItem implements BugTimelineItem & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.AddReviewTimelineItem") {
+    id: CombinedId! @goField(name: "CombinedId")
+    author: Identity!
+    date: Time! @goField(name: "UnixTime")
+    state: ReviewState!
+    body: String!
+    commitHash: String!
+}
+
+type BugAddReviewCommentTimelineItem implements BugTimelineItem & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.AddReviewCommentTimelineItem") {
+    id: CombinedId! @goField(name: "CombinedId")
+    author: Identity!
+    date: Time! @goField(name: "UnixTime")
+    reviewId: ID!
+    body: String!
+    commitHash: String!
+    path: String!
+    startLine: Int!
+    endLine: Int!
+    replyTo: ID
 }
 
 """BugLabelChangeTimelineItem is a BugTimelineItem that represent a change in the title of a bug"""
@@ -3631,6 +4360,21 @@ type Mutation # See each entity mutations
 	{Name: "../schema/status.graphql", Input: `enum Status {
     OPEN
     CLOSED
+    MERGED
+    DRAFT
+}
+
+"""Kind distinguishes a plain issue from a pull-request. Defaults to ISSUE."""
+enum BugKind {
+    ISSUE
+    PR
+}
+
+"""ReviewState is the verdict of a pull-request review."""
+enum ReviewState {
+    COMMENTED
+    APPROVED
+    CHANGES_REQUESTED
 }
 `, BuiltIn: false},
 	{Name: "../schema/subscription.graphql", Input: `type Subscription {

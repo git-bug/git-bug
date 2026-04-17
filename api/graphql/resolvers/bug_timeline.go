@@ -92,3 +92,42 @@ func (bugSetTitleTimelineItem) Date(_ context.Context, obj *bug.SetTitleTimeline
 	t := obj.UnixTime.Time()
 	return &t, nil
 }
+
+var _ graph.BugUpdateHeadTimelineItemResolver = bugUpdateHeadTimelineItem{}
+
+type bugUpdateHeadTimelineItem struct{}
+
+func (bugUpdateHeadTimelineItem) Author(_ context.Context, obj *bug.UpdateHeadTimelineItem) (models.IdentityWrapper, error) {
+	return models.NewLoadedIdentity(obj.Author), nil
+}
+
+func (bugUpdateHeadTimelineItem) UnixTime(_ context.Context, obj *bug.UpdateHeadTimelineItem) (*time.Time, error) {
+	t := obj.UnixTime.Time()
+	return &t, nil
+}
+
+var _ graph.BugAddReviewTimelineItemResolver = bugAddReviewTimelineItem{}
+
+type bugAddReviewTimelineItem struct{}
+
+func (bugAddReviewTimelineItem) Author(_ context.Context, obj *bug.AddReviewTimelineItem) (models.IdentityWrapper, error) {
+	return models.NewLoadedIdentity(obj.Author), nil
+}
+
+func (bugAddReviewTimelineItem) UnixTime(_ context.Context, obj *bug.AddReviewTimelineItem) (*time.Time, error) {
+	t := obj.UnixTime.Time()
+	return &t, nil
+}
+
+var _ graph.BugAddReviewCommentTimelineItemResolver = bugAddReviewCommentTimelineItem{}
+
+type bugAddReviewCommentTimelineItem struct{}
+
+func (bugAddReviewCommentTimelineItem) Author(_ context.Context, obj *bug.AddReviewCommentTimelineItem) (models.IdentityWrapper, error) {
+	return models.NewLoadedIdentity(obj.Author), nil
+}
+
+func (bugAddReviewCommentTimelineItem) UnixTime(_ context.Context, obj *bug.AddReviewCommentTimelineItem) (*time.Time, error) {
+	t := obj.UnixTime.Time()
+	return &t, nil
+}

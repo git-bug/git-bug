@@ -1,4 +1,19 @@
 enum Status {
     OPEN
     CLOSED
+    MERGED
+    DRAFT
+}
+
+"""Kind distinguishes a plain issue from a pull-request. Defaults to ISSUE."""
+enum BugKind {
+    ISSUE
+    PR
+}
+
+"""ReviewState is the verdict of a pull-request review."""
+enum ReviewState {
+    COMMENTED
+    APPROVED
+    CHANGES_REQUESTED
 }

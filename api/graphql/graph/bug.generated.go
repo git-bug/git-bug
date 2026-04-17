@@ -13,6 +13,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/git-bug/git-bug/api/graphql/models"
+	"github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entities/common"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -615,6 +616,50 @@ func (ec *executionContext) fieldContext_Bug_humanId(_ context.Context, field gr
 	return fc, nil
 }
 
+func (ec *executionContext) _Bug_kind(ctx context.Context, field graphql.CollectedField, obj models.BugWrapper) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Bug_kind(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Kind(), nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(common.Kind)
+	fc.Result = res
+	return ec.marshalNBugKind2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋcommonᚐKind(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Bug_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Bug",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type BugKind does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Bug_status(ctx context.Context, field graphql.CollectedField, obj models.BugWrapper) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Bug_status(ctx, field)
 	if err != nil {
@@ -898,6 +943,230 @@ func (ec *executionContext) fieldContext_Bug_lastEdit(_ context.Context, field g
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Bug_baseRef(ctx context.Context, field graphql.CollectedField, obj models.BugWrapper) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Bug_baseRef(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BaseRef(), nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Bug_baseRef(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Bug",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Bug_headRef(ctx context.Context, field graphql.CollectedField, obj models.BugWrapper) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Bug_headRef(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.HeadRef(), nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Bug_headRef(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Bug",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Bug_headCommit(ctx context.Context, field graphql.CollectedField, obj models.BugWrapper) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Bug_headCommit(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.HeadCommit(), nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Bug_headCommit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Bug",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Bug_mergeCommit(ctx context.Context, field graphql.CollectedField, obj models.BugWrapper) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Bug_mergeCommit(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MergeCommit(), nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Bug_mergeCommit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Bug",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Bug_reviews(ctx context.Context, field graphql.CollectedField, obj models.BugWrapper) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Bug_reviews(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Reviews()
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]bug.Review)
+	fc.Result = res
+	return ec.marshalNReview2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐReviewᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Bug_reviews(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Bug",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Review_id(ctx, field)
+			case "author":
+				return ec.fieldContext_Review_author(ctx, field)
+			case "state":
+				return ec.fieldContext_Review_state(ctx, field)
+			case "body":
+				return ec.fieldContext_Review_body(ctx, field)
+			case "commitHash":
+				return ec.fieldContext_Review_commitHash(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Review_createdAt(ctx, field)
+			case "comments":
+				return ec.fieldContext_Review_comments(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Review", field.Name)
 		},
 	}
 	return fc, nil
@@ -1321,6 +1590,8 @@ func (ec *executionContext) fieldContext_BugConnection_nodes(_ context.Context, 
 				return ec.fieldContext_Bug_id(ctx, field)
 			case "humanId":
 				return ec.fieldContext_Bug_humanId(ctx, field)
+			case "kind":
+				return ec.fieldContext_Bug_kind(ctx, field)
 			case "status":
 				return ec.fieldContext_Bug_status(ctx, field)
 			case "title":
@@ -1333,6 +1604,16 @@ func (ec *executionContext) fieldContext_BugConnection_nodes(_ context.Context, 
 				return ec.fieldContext_Bug_createdAt(ctx, field)
 			case "lastEdit":
 				return ec.fieldContext_Bug_lastEdit(ctx, field)
+			case "baseRef":
+				return ec.fieldContext_Bug_baseRef(ctx, field)
+			case "headRef":
+				return ec.fieldContext_Bug_headRef(ctx, field)
+			case "headCommit":
+				return ec.fieldContext_Bug_headCommit(ctx, field)
+			case "mergeCommit":
+				return ec.fieldContext_Bug_mergeCommit(ctx, field)
+			case "reviews":
+				return ec.fieldContext_Bug_reviews(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":
@@ -1535,6 +1816,8 @@ func (ec *executionContext) fieldContext_BugEdge_node(_ context.Context, field g
 				return ec.fieldContext_Bug_id(ctx, field)
 			case "humanId":
 				return ec.fieldContext_Bug_humanId(ctx, field)
+			case "kind":
+				return ec.fieldContext_Bug_kind(ctx, field)
 			case "status":
 				return ec.fieldContext_Bug_status(ctx, field)
 			case "title":
@@ -1547,6 +1830,16 @@ func (ec *executionContext) fieldContext_BugEdge_node(_ context.Context, field g
 				return ec.fieldContext_Bug_createdAt(ctx, field)
 			case "lastEdit":
 				return ec.fieldContext_Bug_lastEdit(ctx, field)
+			case "baseRef":
+				return ec.fieldContext_Bug_baseRef(ctx, field)
+			case "headRef":
+				return ec.fieldContext_Bug_headRef(ctx, field)
+			case "headCommit":
+				return ec.fieldContext_Bug_headCommit(ctx, field)
+			case "mergeCommit":
+				return ec.fieldContext_Bug_mergeCommit(ctx, field)
+			case "reviews":
+				return ec.fieldContext_Bug_reviews(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":
@@ -1628,6 +1921,11 @@ func (ec *executionContext) _Bug(ctx context.Context, sel ast.SelectionSet, obj 
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "kind":
+			out.Values[i] = ec._Bug_kind(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "status":
 			out.Values[i] = ec._Bug_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -1655,6 +1953,19 @@ func (ec *executionContext) _Bug(ctx context.Context, sel ast.SelectionSet, obj 
 			}
 		case "lastEdit":
 			out.Values[i] = ec._Bug_lastEdit(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "baseRef":
+			out.Values[i] = ec._Bug_baseRef(ctx, field, obj)
+		case "headRef":
+			out.Values[i] = ec._Bug_headRef(ctx, field, obj)
+		case "headCommit":
+			out.Values[i] = ec._Bug_headCommit(ctx, field, obj)
+		case "mergeCommit":
+			out.Values[i] = ec._Bug_mergeCommit(ctx, field, obj)
+		case "reviews":
+			out.Values[i] = ec._Bug_reviews(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}

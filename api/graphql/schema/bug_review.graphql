@@ -1,0 +1,32 @@
+"""A PR review: a verdict plus any attached line-anchored comments."""
+type Review implements Authored {
+  """The combined id of the review, prefixed with the PR id."""
+  id: ID! @goField(name: "CombinedId")
+  author: Identity!
+  state: ReviewState!
+  body: String!
+  """The head commit this review was made against (immutable)."""
+  commitHash: String!
+  createdAt: Time! @goField(name: "CreatedAt")
+  """The line-anchored comments attached to this review."""
+  comments: [ReviewComment!]!
+}
+
+"""A line-anchored review comment. Anchors are immutable — a later push
+does not move or invalidate the comment."""
+type ReviewComment implements Authored {
+  id: ID! @goField(name: "CombinedId")
+  author: Identity!
+  body: String!
+  """The commit hash this comment is anchored to."""
+  commitHash: String!
+  """The file path the comment applies to."""
+  path: String!
+  """The first line of the anchor range (1-based)."""
+  startLine: Int!
+  """The last line of the anchor range. Equals startLine for single-line anchors."""
+  endLine: Int!
+  """If this comment is a reply within a thread, the id of the comment it replies to; otherwise null."""
+  replyTo: ID
+  createdAt: Time! @goField(name: "CreatedAt")
+}

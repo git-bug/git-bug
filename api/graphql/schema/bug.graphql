@@ -3,12 +3,25 @@ type Bug implements Authored & Entity {
   id: ID!
   """The human version (truncated) identifier for this bug"""
   humanId: String!
+  """Distinguishes an issue from a pull-request."""
+  kind: BugKind!
   status: Status!
   title: String!
   labels: [Label!]!
   author: Identity!
   createdAt: Time!
   lastEdit: Time!
+
+  """For pull-requests, the base branch the PR targets. Null for issues."""
+  baseRef: String
+  """For pull-requests, the head branch the PR proposes to merge. Null for issues."""
+  headRef: String
+  """For pull-requests, the current tip of the head branch. Null for issues."""
+  headCommit: String
+  """For merged pull-requests, the merge commit hash. Null otherwise."""
+  mergeCommit: String
+  """For pull-requests, the list of reviews recorded against the PR."""
+  reviews: [Review!]!
 
   """The actors of the bug. Actors are Identity that have interacted with the bug."""
   actors(

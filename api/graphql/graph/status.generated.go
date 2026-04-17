@@ -6,6 +6,7 @@ import (
 	"context"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entities/common"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -39,6 +40,26 @@ import (
 // endregion **************************** object.gotpl ****************************
 
 // region    ***************************** type.gotpl *****************************
+
+func (ec *executionContext) unmarshalNBugKind2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋcommonᚐKind(ctx context.Context, v any) (common.Kind, error) {
+	var res common.Kind
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNBugKind2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋcommonᚐKind(ctx context.Context, sel ast.SelectionSet, v common.Kind) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalNReviewState2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐReviewState(ctx context.Context, v any) (bug.ReviewState, error) {
+	var res bug.ReviewState
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNReviewState2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐReviewState(ctx context.Context, sel ast.SelectionSet, v bug.ReviewState) graphql.Marshaler {
+	return v
+}
 
 func (ec *executionContext) unmarshalNStatus2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋcommonᚐStatus(ctx context.Context, v any) (common.Status, error) {
 	var res common.Status

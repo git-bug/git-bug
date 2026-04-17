@@ -57,3 +57,35 @@ func (r bugRootSubResolver) BugSetTitleOperation() graph.BugSetTitleOperationRes
 func (r bugRootSubResolver) BugSetTitleTimelineItem() graph.BugSetTitleTimelineItemResolver {
 	return &bugSetTitleTimelineItem{}
 }
+
+func (bugRootSubResolver) BugUpdateHeadOperation() graph.BugUpdateHeadOperationResolver {
+	return &bugUpdateHeadOperationResolver{}
+}
+
+func (bugRootSubResolver) BugUpdateHeadTimelineItem() graph.BugUpdateHeadTimelineItemResolver {
+	return &bugUpdateHeadTimelineItem{}
+}
+
+func (bugRootSubResolver) BugAddReviewOperation() graph.BugAddReviewOperationResolver {
+	return &bugAddReviewOperationResolver{}
+}
+
+func (bugRootSubResolver) BugAddReviewTimelineItem() graph.BugAddReviewTimelineItemResolver {
+	return &bugAddReviewTimelineItem{}
+}
+
+func (bugRootSubResolver) BugAddReviewCommentOperation() graph.BugAddReviewCommentOperationResolver {
+	return &bugAddReviewCommentOperationResolver{}
+}
+
+func (bugRootSubResolver) BugAddReviewCommentTimelineItem() graph.BugAddReviewCommentTimelineItemResolver {
+	return &bugAddReviewCommentTimelineItem{}
+}
+
+func (bugRootSubResolver) Review() graph.ReviewResolver {
+	return &reviewResolver{}
+}
+
+func (bugRootSubResolver) ReviewComment() graph.ReviewCommentResolver {
+	return &reviewCommentResolver{}
+}
