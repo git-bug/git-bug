@@ -247,6 +247,14 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 		bugGithubURL = githubURL
 
 	} else {
+		// For PRs we cannot create a GitHub pull-request from git-bug alone —
+		// GitHub requires an existing head branch on its side, which means
+		// pushing the branch is a prerequisite outside the bridge's scope.
+		if snapshot.Kind == common.PRKind {
+			out <- core.NewExportNothing(b.Id(), "cannot create a new pull-request via export; push the branch and open the PR on GitHub first, then re-import")
+			return
+		}
+
 		// check that we have a token for operation author
 		client, err := ge.getClientForIdentity(author.Id())
 		if err != nil {
@@ -327,8 +335,14 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 			if op.Target == createOp.Id() {
 
 				// case bug creation operation: we need to edit the Github issue
-				if err := ge.updateGithubIssueBody(ctx, client, bugGithubID, op.Message); err != nil {
-					err := errors.Wrap(err, "editing issue")
+				var editErr error
+				if snapshot.Kind == common.PRKind {
+					editErr = ge.updateGithubPullRequestBody(ctx, client, bugGithubID, op.Message)
+				} else {
+					editErr = ge.updateGithubIssueBody(ctx, client, bugGithubID, op.Message)
+				}
+				if editErr != nil {
+					err := errors.Wrap(editErr, "editing issue")
 					out <- core.NewExportError(err, b.Id())
 					return
 				}
@@ -361,8 +375,32 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 			}
 
 		case *bug.SetStatusOperation:
-			if err := ge.updateGithubIssueStatus(ctx, client, bugGithubID, op.Status); err != nil {
-				err := errors.Wrap(err, "editing status")
+			// MergedStatus cannot be materialised via API: marking a PR merged
+			// on GitHub requires an actual merge of the branch, which is out
+			// of scope for the bridge. Skip with a warning.
+			if op.Status == common.MergedStatus {
+				out <- core.NewExportNothing(b.Id(), "cannot export Merge via API; merge the PR on GitHub directly")
+				id = bugGithubID
+				url = bugGithubURL
+				break
+			}
+			// DraftStatus has no direct mapping on a plain issue; for PRs we
+			// use updatePullRequest with convertPullRequestToDraft via a
+			// separate mutation. v1: skip with warning.
+			if op.Status == common.DraftStatus {
+				out <- core.NewExportNothing(b.Id(), "cannot export DraftStatus transition via API in v1")
+				id = bugGithubID
+				url = bugGithubURL
+				break
+			}
+			var statusErr error
+			if snapshot.Kind == common.PRKind {
+				statusErr = ge.updateGithubPullRequestStatus(ctx, client, bugGithubID, op.Status)
+			} else {
+				statusErr = ge.updateGithubIssueStatus(ctx, client, bugGithubID, op.Status)
+			}
+			if statusErr != nil {
+				err := errors.Wrap(statusErr, "editing status")
 				out <- core.NewExportError(err, b.Id())
 				return
 			}
@@ -373,14 +411,27 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 			url = bugGithubURL
 
 		case *bug.SetTitleOperation:
-			if err := ge.updateGithubIssueTitle(ctx, client, bugGithubID, op.Title); err != nil {
-				err := errors.Wrap(err, "editing title")
+			var titleErr error
+			if snapshot.Kind == common.PRKind {
+				titleErr = ge.updateGithubPullRequestTitle(ctx, client, bugGithubID, op.Title)
+			} else {
+				titleErr = ge.updateGithubIssueTitle(ctx, client, bugGithubID, op.Title)
+			}
+			if titleErr != nil {
+				err := errors.Wrap(titleErr, "editing title")
 				out <- core.NewExportError(err, b.Id())
 				return
 			}
 
 			out <- core.NewExportTitleEdition(b.Id())
 
+			id = bugGithubID
+			url = bugGithubURL
+
+		case *bug.UpdateHeadOperation, *bug.AddReviewOperation, *bug.AddReviewCommentOperation:
+			// PR-only ops that don't have a direct REST/GraphQL write path in
+			// v1. Mark as skipped so we don't block subsequent exports.
+			out <- core.NewExportNothing(b.Id(), fmt.Sprintf("skipping %T in v1 export", op))
 			id = bugGithubID
 			url = bugGithubURL
 
@@ -741,6 +792,45 @@ func (ge *githubExporter) updateGithubIssueTitle(ctx context.Context, gc *rateLi
 	}
 
 	return nil
+}
+
+// updateGithubPullRequestStatus mirrors updateGithubIssueStatus but targets
+// PullRequest. Callers must guard MergedStatus / DraftStatus upstream; only
+// OpenStatus / ClosedStatus are supported here.
+func (ge *githubExporter) updateGithubPullRequestStatus(ctx context.Context, gc *rateLimitHandlerClient, id string, status common.Status) error {
+	m := &updatePullRequestMutation{}
+	var state githubv4.PullRequestUpdateState
+	switch status {
+	case common.OpenStatus:
+		state = githubv4.PullRequestUpdateStateOpen
+	case common.ClosedStatus:
+		state = githubv4.PullRequestUpdateStateClosed
+	default:
+		return fmt.Errorf("cannot export pull-request status %s via updatePullRequest", status)
+	}
+	input := githubv4.UpdatePullRequestInput{
+		PullRequestID: id,
+		State:         &state,
+	}
+	return gc.mutate(ctx, m, input, nil, ge.out)
+}
+
+func (ge *githubExporter) updateGithubPullRequestBody(ctx context.Context, gc *rateLimitHandlerClient, id, body string) error {
+	m := &updatePullRequestMutation{}
+	input := githubv4.UpdatePullRequestInput{
+		PullRequestID: id,
+		Body:          (*githubv4.String)(&body),
+	}
+	return gc.mutate(ctx, m, input, nil, ge.out)
+}
+
+func (ge *githubExporter) updateGithubPullRequestTitle(ctx context.Context, gc *rateLimitHandlerClient, id, title string) error {
+	m := &updatePullRequestMutation{}
+	input := githubv4.UpdatePullRequestInput{
+		PullRequestID: id,
+		Title:         (*githubv4.String)(&title),
+	}
+	return gc.mutate(ctx, m, input, nil, ge.out)
 }
 
 // update github issue labels
