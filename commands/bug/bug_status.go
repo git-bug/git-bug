@@ -19,6 +19,8 @@ func newBugStatusCommand(env *execenv.Env) *cobra.Command {
 
 	cmd.AddCommand(newBugStatusCloseCommand(env))
 	cmd.AddCommand(newBugStatusOpenCommand(env))
+	cmd.AddCommand(newBugStatusMergeCommand(env))
+	cmd.AddCommand(newBugStatusReadyCommand(env))
 
 	return cmd
 }
