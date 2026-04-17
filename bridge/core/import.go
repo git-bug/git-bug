@@ -27,6 +27,11 @@ const (
 	// Nothing happened on a Bug
 	ImportEventNothing
 
+	// PR review has been created
+	ImportEventReview
+	// PR review comment has been created
+	ImportEventReviewComment
+
 	// Identity has been created
 	ImportEventIdentity
 
@@ -67,6 +72,10 @@ func (er ImportResult) String() string {
 		return fmt.Sprintf("[%s] changed title with op: %s", er.EntityId.Human(), er.OperationId)
 	case ImportEventLabelChange:
 		return fmt.Sprintf("[%s] changed label with op: %s", er.EntityId.Human(), er.OperationId)
+	case ImportEventReview:
+		return fmt.Sprintf("[%s] new review: %s", er.EntityId.Human(), er.OperationId)
+	case ImportEventReviewComment:
+		return fmt.Sprintf("[%s] new review comment: %s", er.EntityId.Human(), er.ComponentId)
 	case ImportEventIdentity:
 		return fmt.Sprintf("[%s] new identity: %s", er.EntityId.Human(), er.EntityId)
 	case ImportEventNothing:
@@ -168,6 +177,22 @@ func NewImportTitleEdition(entityId entity.Id, opId entity.Id) ImportResult {
 		EntityId:    entityId,
 		OperationId: opId,
 		Event:       ImportEventTitleEdition,
+	}
+}
+
+func NewImportReview(entityId entity.Id, opId entity.Id) ImportResult {
+	return ImportResult{
+		EntityId:    entityId,
+		OperationId: opId,
+		Event:       ImportEventReview,
+	}
+}
+
+func NewImportReviewComment(entityId entity.Id, commentId entity.CombinedId) ImportResult {
+	return ImportResult{
+		EntityId:    entityId,
+		ComponentId: commentId,
+		Event:       ImportEventReviewComment,
 	}
 }
 

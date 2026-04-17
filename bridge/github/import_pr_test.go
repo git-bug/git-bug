@@ -69,6 +69,110 @@ func TestGithubPRImport(t *testing.T) {
 	require.Equal(t, "", cSnap.MergeCommit)
 }
 
+func TestGithubPRReviewImport(t *testing.T) {
+	clientMock := &mocks.Client{}
+	setupPRReviewExpectations(t, clientMock)
+	importer := githubImporter{}
+	importer.client = &rateLimitHandlerClient{sc: clientMock}
+
+	repo := repository.CreateGoGitTestRepo(t, false)
+	backend, err := cache.NewRepoCacheNoEvents(repo)
+	require.NoError(t, err)
+	defer backend.Close()
+	interrupt.RegisterCleaner(backend.Close)
+
+	events, err := importer.ImportAll(context.Background(), backend, time.Time{})
+	require.NoError(t, err)
+	for e := range events {
+		require.NoError(t, e.Err)
+	}
+
+	require.Len(t, backend.Bugs().AllIds(), 1)
+	b, err := backend.Bugs().ResolveBugCreateMetadata(metaKeyGithubUrl, "https://github.com/marcus/to-himself/pull/9")
+	require.NoError(t, err)
+	snap := b.Snapshot()
+	require.Equal(t, common.PRKind, snap.Kind)
+	require.Len(t, snap.Reviews, 1)
+	require.Equal(t, bug.ReviewApproved, snap.Reviews[0].State)
+	require.Equal(t, "LGTM", snap.Reviews[0].Body)
+	require.Equal(t, "revcommit", snap.Reviews[0].CommitHash)
+	require.Len(t, snap.Reviews[0].Comments, 1)
+	rc := snap.Reviews[0].Comments[0]
+	require.Equal(t, "nit: naming", rc.Body)
+	require.Equal(t, "foo.go", rc.Path)
+	require.Equal(t, 42, rc.StartLine)
+	require.Equal(t, 42, rc.EndLine)
+}
+
+func setupPRReviewExpectations(t *testing.T, mock *mocks.Client) {
+	expectEmptyIssueQuery(mock)
+	expectPullRequestQueryWithReview(mock)
+	expectUserQuery(t, mock)
+}
+
+func expectPullRequestQueryWithReview(mock *mocks.Client) {
+	mock.On("Query", m.Anything, m.AnythingOfType("*github.prTimelineQuery"), m.Anything).Return(nil).Run(
+		func(args m.Arguments) {},
+	).Maybe()
+
+	mock.On("Query", m.Anything, m.AnythingOfType("*github.pullRequestQuery"), m.Anything).Return(nil).Run(
+		func(args m.Arguments) {
+			retVal := args.Get(1).(*pullRequestQuery)
+
+			startLine := githubv4.Int(42)
+			_ = startLine // unused for single-line comments: GitHub sets Line=42, StartLine=nil.
+
+			retVal.Repository.PullRequests.Nodes = []pullRequestNode{
+				{
+					pullRequest: pullRequest{
+						authorEvent: authorEvent{
+							Id:     "pr-9",
+							Author: &actor{Typename: "User", User: userActor{Name: strPtr("marcus")}},
+						},
+						Title:       "reviewed pr",
+						Number:      9,
+						Body:        "body 9",
+						Url:         githubv4.URI{URL: &url.URL{Scheme: "https", Host: "github.com", Path: "marcus/to-himself/pull/9"}},
+						BaseRefName: "main",
+						HeadRefName: "feat9",
+						HeadRefOid:  "prcommit9",
+					},
+					TimelineItems: prTimelineItemsConnection{
+						Nodes: []prTimelineItem{
+							{
+								Typename: "PullRequestReview",
+								PullRequestReview: pullRequestReview{
+									authorEvent: authorEvent{
+										Id:     "rev-1",
+										Author: &actor{Typename: "User", User: userActor{Name: strPtr("reviewer")}},
+									},
+									State: githubv4.PullRequestReviewStateApproved,
+									Body:  "LGTM",
+									Commit: &struct{ Oid githubv4.GitObjectID }{Oid: "revcommit"},
+									Comments: pullRequestReviewCommentConnection{
+										Nodes: []pullRequestReviewComment{
+											{
+												authorEvent: authorEvent{
+													Id:     "rc-1",
+													Author: &actor{Typename: "User", User: userActor{Name: strPtr("reviewer")}},
+												},
+												Body:   "nit: naming",
+												Path:   "foo.go",
+												Line:   42,
+												Commit: &struct{ Oid githubv4.GitObjectID }{Oid: "revcommit"},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			}
+		},
+	).Once()
+}
+
 func setupPRExpectations(t *testing.T, mock *mocks.Client) {
 	// No issues — the first pass returns nothing so we go straight to PRs.
 	expectEmptyIssueQuery(mock)

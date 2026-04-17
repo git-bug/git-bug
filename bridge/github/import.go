@@ -10,6 +10,7 @@ import (
 	"github.com/git-bug/git-bug/bridge/core"
 	"github.com/git-bug/git-bug/bridge/core/auth"
 	"github.com/git-bug/git-bug/cache"
+	"github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/util/text"
 )
@@ -419,8 +420,147 @@ func (gi *githubImporter) ensurePrTimelineItem(ctx context.Context, repo *cache.
 		// git-bug doesn't have a SetDraft op; converting back to draft is rare
 		// on GitHub and carries no new information for v1. Skip silently.
 		return nil
+
+	case "PullRequestReview":
+		return gi.ensureReview(ctx, repo, b, &item.PullRequestReview)
 	}
 	return nil
+}
+
+// ensureReview creates an AddReviewOperation and any nested
+// AddReviewCommentOperations for a GitHub PullRequestReview.
+func (gi *githubImporter) ensureReview(ctx context.Context, repo *cache.RepoCache, b *cache.BugCache, review *pullRequestReview) error {
+	id := parseId(review.Id)
+
+	author, err := gi.ensurePerson(ctx, repo, review.Author)
+	if err != nil {
+		return err
+	}
+
+	reviewOpId, err := b.ResolveOperationWithMetadata(metaKeyGithubId, id)
+	if err != nil && err != cache.ErrNoMatchingOp {
+		return err
+	}
+
+	var commitHash string
+	if review.Commit != nil {
+		commitHash = string(review.Commit.Oid)
+	}
+	if commitHash == "" {
+		// Reviews must anchor to a commit; skip if GitHub returns nil (unusual
+		// but possible for very old or deleted branches).
+		return nil
+	}
+
+	if err == cache.ErrNoMatchingOp {
+		state := mapReviewState(review.State)
+		op, newErr := b.AddReviewRaw(
+			author,
+			review.CreatedAt.Unix(),
+			state,
+			text.Cleanup(string(review.Body)),
+			commitHash,
+			map[string]string{metaKeyGithubId: id},
+		)
+		if newErr != nil {
+			return newErr
+		}
+		reviewOpId = op.Id()
+		gi.out <- core.NewImportReview(b.Id(), op.Id())
+	}
+
+	// Import inline review comments (truncated at NumReviewComments in v1).
+	reviewCombined := entity.CombineIds(b.Id(), reviewOpId)
+	for _, rc := range review.Comments.Nodes {
+		if err := gi.ensureReviewComment(ctx, repo, b, reviewCombined, &rc); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (gi *githubImporter) ensureReviewComment(ctx context.Context, repo *cache.RepoCache, b *cache.BugCache, reviewId entity.CombinedId, c *pullRequestReviewComment) error {
+	id := parseId(c.Id)
+	if _, err := b.ResolveOperationWithMetadata(metaKeyGithubId, id); err == nil {
+		return nil
+	} else if err != cache.ErrNoMatchingOp {
+		return err
+	}
+
+	author, err := gi.ensurePerson(ctx, repo, c.Author)
+	if err != nil {
+		return err
+	}
+
+	var commitHash string
+	if c.Commit != nil {
+		commitHash = string(c.Commit.Oid)
+	}
+	if commitHash == "" {
+		// Review comments must anchor to a commit. GitHub sometimes returns
+		// outdated / null commits for deleted branches; skip those.
+		return nil
+	}
+
+	startLine := int(c.Line)
+	if c.StartLine != nil {
+		startLine = int(*c.StartLine)
+	}
+	endLine := int(c.Line)
+	if startLine <= 0 {
+		// GitHub returns line=0 for outdated review comments (anchored to a
+		// position that no longer exists in the current diff). Skip silently.
+		return nil
+	}
+	if endLine < startLine {
+		endLine = startLine
+	}
+
+	var replyTo entity.CombinedId
+	if c.ReplyTo != nil {
+		// The parent review-comment's git-bug combined id, if we've already
+		// imported it. We look it up by GitHub id.
+		parentOpId, lookupErr := b.ResolveOperationWithMetadata(metaKeyGithubId, parseId(c.ReplyTo.Id))
+		if lookupErr == nil {
+			replyTo = entity.CombineIds(b.Id(), parentOpId)
+		}
+		// If parent isn't imported (truncated / deleted), fall back to a
+		// top-level comment.
+	}
+
+	commentId, _, err := b.AddReviewCommentRaw(
+		author,
+		c.CreatedAt.Unix(),
+		reviewId,
+		text.Cleanup(string(c.Body)),
+		commitHash,
+		string(c.Path),
+		startLine,
+		endLine,
+		replyTo,
+		map[string]string{metaKeyGithubId: id},
+	)
+	if err != nil {
+		return err
+	}
+	gi.out <- core.NewImportReviewComment(b.Id(), commentId)
+	return nil
+}
+
+// mapReviewState translates GitHub's PullRequestReviewState into git-bug's
+// ReviewState.
+func mapReviewState(s githubv4.PullRequestReviewState) bug.ReviewState {
+	switch s {
+	case githubv4.PullRequestReviewStateApproved:
+		return bug.ReviewApproved
+	case githubv4.PullRequestReviewStateChangesRequested:
+		return bug.ReviewChangesRequested
+	default:
+		// PENDING / COMMENTED / DISMISSED all map to "commented" for now;
+		// PENDING reviews shouldn't reach the import (GitHub only exposes
+		// submitted reviews), DISMISSED is a state change after submission.
+		return bug.ReviewCommented
+	}
 }
 
 func (gi *githubImporter) ensureTimelineItem(ctx context.Context, repo *cache.RepoCache, b *cache.BugCache, item *timelineItem) error {

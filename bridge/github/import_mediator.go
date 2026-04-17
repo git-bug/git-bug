@@ -10,10 +10,11 @@ import (
 const (
 	// These values influence how fast the github graphql rate limit is exhausted.
 
-	NumIssues        = 40
-	NumIssueEdits    = 100
-	NumTimelineItems = 100
-	NumCommentEdits  = 100
+	NumIssues         = 40
+	NumIssueEdits     = 100
+	NumTimelineItems  = 100
+	NumCommentEdits   = 100
+	NumReviewComments = 50
 
 	ChanCapacity = 128
 )
@@ -127,15 +128,10 @@ func (mm *importMediator) fillImportEvents(ctx context.Context) {
 }
 
 func (mm *importMediator) queryPullRequest(ctx context.Context, cursor githubv4.String) (*pullRequestConnection, bool) {
-	// Reuse the issue vars — they share the same page-size / edit / timeline knobs.
-	vars := newIssueVars(mm.owner, mm.project, mm.since)
-	if cursor == "" {
-		vars["issueAfter"] = (*githubv4.String)(nil)
-	} else {
+	vars := newPRVars(mm.owner, mm.project)
+	if cursor != "" {
 		vars["issueAfter"] = cursor
 	}
-	// GitHub's pullRequests connection doesn't accept a since filter, so drop it.
-	delete(vars, "issueSince")
 
 	query := pullRequestQuery{}
 	if err := mm.gh.queryImport(ctx, &query, vars, mm.importEvents); err != nil {
@@ -214,6 +210,7 @@ func (mm *importMediator) fillPrTimelineEvents(ctx context.Context, prNode *pull
 func (mm *importMediator) queryPrTimeline(ctx context.Context, nid githubv4.ID, cursor githubv4.String) (*prTimelineItemsConnection, bool) {
 	vars := newTimelineVars()
 	vars["gqlNodeId"] = nid
+	vars["reviewCommentFirst"] = githubv4.Int(NumReviewComments)
 	if cursor == "" {
 		vars["timelineAfter"] = (*githubv4.String)(nil)
 	} else {
@@ -442,6 +439,25 @@ func newIssueVars(owner, project string, since time.Time) varmap {
 	}
 }
 
+// newPRVars returns the variable set for PR-root queries. It mirrors
+// newIssueVars but drops the issue-only filter and adds the variable
+// required by nested pullRequestReview.comments.
+func newPRVars(owner, project string) varmap {
+	return varmap{
+		"owner":              githubv4.String(owner),
+		"name":               githubv4.String(project),
+		"issueFirst":         githubv4.Int(NumIssues),
+		"issueAfter":         (*githubv4.String)(nil),
+		"issueEditLast":      githubv4.Int(NumIssueEdits),
+		"issueEditBefore":   (*githubv4.String)(nil),
+		"timelineFirst":      githubv4.Int(NumTimelineItems),
+		"timelineAfter":      (*githubv4.String)(nil),
+		"commentEditLast":    githubv4.Int(NumCommentEdits),
+		"commentEditBefore":  (*githubv4.String)(nil),
+		"reviewCommentFirst": githubv4.Int(NumReviewComments),
+	}
+}
+
 func newIssueEditVars() varmap {
 	return varmap{
 		"issueEditLast": githubv4.Int(NumIssueEdits),
@@ -450,9 +466,10 @@ func newIssueEditVars() varmap {
 
 func newTimelineVars() varmap {
 	return varmap{
-		"timelineFirst":     githubv4.Int(NumTimelineItems),
-		"commentEditLast":   githubv4.Int(NumCommentEdits),
-		"commentEditBefore": (*githubv4.String)(nil),
+		"timelineFirst":      githubv4.Int(NumTimelineItems),
+		"commentEditLast":    githubv4.Int(NumCommentEdits),
+		"commentEditBefore":  (*githubv4.String)(nil),
+		"reviewCommentFirst": githubv4.Int(NumReviewComments),
 	}
 }
 

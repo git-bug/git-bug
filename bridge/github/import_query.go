@@ -150,17 +150,18 @@ type prTimelineItemsConnection struct {
 }
 
 // prTimelineItem covers both the issue-compatible timeline events and
-// the PR-specific ones (merged, converted-to-draft, ready-for-review).
+// the PR-specific ones (merged, converted-to-draft, ready-for-review,
+// reviews).
 type prTimelineItem struct {
 	Typename githubv4.String `graphql:"__typename"`
 
 	// Issue-shared events
-	IssueComment      issueComment      `graphql:"... on IssueComment"`
-	LabeledEvent      labeledEvent      `graphql:"... on LabeledEvent"`
-	UnlabeledEvent    unlabeledEvent    `graphql:"... on UnlabeledEvent"`
+	IssueComment      issueComment         `graphql:"... on IssueComment"`
+	LabeledEvent      labeledEvent         `graphql:"... on LabeledEvent"`
+	UnlabeledEvent    unlabeledEvent       `graphql:"... on UnlabeledEvent"`
 	ClosedEvent       struct{ actorEvent } `graphql:"... on ClosedEvent"`
 	ReopenedEvent     struct{ actorEvent } `graphql:"... on ReopenedEvent"`
-	RenamedTitleEvent renamedTitleEvent `graphql:"... on RenamedTitleEvent"`
+	RenamedTitleEvent renamedTitleEvent    `graphql:"... on RenamedTitleEvent"`
 
 	// PR-only events
 	MergedEvent struct {
@@ -175,6 +176,39 @@ type prTimelineItem struct {
 	ConvertToDraftEvent struct {
 		actorEvent
 	} `graphql:"... on ConvertToDraftEvent"`
+	PullRequestReview pullRequestReview `graphql:"... on PullRequestReview"`
+}
+
+// pullRequestReview mirrors GitHub's PullRequestReview node. We fetch the
+// first NumReviewComments review comments inline; PRs with more get truncated
+// in v1 (pagination can be added later).
+type pullRequestReview struct {
+	authorEvent
+	State  githubv4.PullRequestReviewState
+	Body   githubv4.String
+	Commit *struct {
+		Oid githubv4.GitObjectID
+	}
+	Comments pullRequestReviewCommentConnection `graphql:"comments(first: $reviewCommentFirst)"`
+}
+
+type pullRequestReviewCommentConnection struct {
+	Nodes    []pullRequestReviewComment
+	PageInfo pageInfo
+}
+
+type pullRequestReviewComment struct {
+	authorEvent
+	Body       githubv4.String
+	Path       githubv4.String
+	StartLine  *githubv4.Int
+	Line       githubv4.Int
+	Commit     *struct {
+		Oid githubv4.GitObjectID
+	}
+	ReplyTo *struct {
+		Id githubv4.ID
+	}
 }
 
 type timelineItemsConnection struct {
