@@ -15,7 +15,7 @@ var _ Operation = &UpdateHeadOperation{}
 
 // UpdateHeadOperation records that a PR's head branch advanced to a new commit.
 // Typical triggers: a push to the source branch, a force-push, or a rebase.
-// Valid only when the bug's Kind is PRType.
+// Valid only when the bug's Kind is PRKind.
 type UpdateHeadOperation struct {
 	dag.OpBase
 	// NewCommit is the new tip hash of the head branch.
@@ -30,7 +30,7 @@ func (op *UpdateHeadOperation) Id() entity.Id {
 }
 
 func (op *UpdateHeadOperation) Apply(snapshot *Snapshot) {
-	if snapshot.Kind != common.PRType {
+	if snapshot.Kind != common.PRKind {
 		// Defence in depth: Validate rejects this, but Apply is called from
 		// Compile which doesn't re-validate — stay idempotent and skip.
 		return
@@ -84,10 +84,10 @@ func (u *UpdateHeadTimelineItem) CombinedId() entity.CombinedId { return u.combi
 func (u *UpdateHeadTimelineItem) IsAuthored()                   {}
 
 // UpdateHead is a convenience function that advances the head commit of a PR.
-// The bug must have been created as a PR (Kind == PRType); otherwise returns an error.
+// The bug must have been created as a PR (Kind == PRKind); otherwise returns an error.
 func UpdateHead(b Interface, author identity.Interface, unixTime int64, newCommit string, metadata map[string]string) (*UpdateHeadOperation, error) {
 	create, ok := b.FirstOp().(*CreateOperation)
-	if !ok || create.Kind != common.PRType {
+	if !ok || create.Kind != common.PRKind {
 		return nil, fmt.Errorf("UpdateHead: bug is not a pull-request")
 	}
 

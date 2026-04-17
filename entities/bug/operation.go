@@ -18,7 +18,7 @@ const (
 	EditCommentOp
 	NoOpOp
 	SetMetadataOp
-	// PR-only ops. Validation gates these on snapshot.Kind == PRType.
+	// PR-only ops. Validation gates these on snapshot.Kind == PRKind.
 	UpdateHeadOp
 	AddReviewOp
 	AddReviewCommentOp

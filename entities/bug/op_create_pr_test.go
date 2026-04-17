@@ -22,10 +22,10 @@ func TestCreatePR(t *testing.T) {
 	b, op, err := CreatePR(rene, time.Now().Unix(), "new feature", "body",
 		"refs/heads/main", "refs/heads/feat", "abc123", false, nil, nil)
 	require.NoError(t, err)
-	require.Equal(t, common.PRType, op.Kind)
+	require.Equal(t, common.PRKind, op.Kind)
 
 	snap := b.Compile()
-	require.Equal(t, common.PRType, snap.Kind)
+	require.Equal(t, common.PRKind, snap.Kind)
 	require.Equal(t, common.OpenStatus, snap.Status)
 	require.Equal(t, "refs/heads/main", snap.BaseRef)
 	require.Equal(t, "refs/heads/feat", snap.HeadRef)
@@ -112,7 +112,7 @@ func TestExistingIssueDeserializesAsIssue(t *testing.T) {
 	// Zero-value Kind means existing serialized bugs (written before PR
 	// support landed) still deserialize correctly as issues.
 	var op CreateOperation
-	require.Equal(t, common.IssueType, op.Kind)
+	require.Equal(t, common.IssueKind, op.Kind)
 }
 
 // Entity wrapper types used by dag package must implement entity.Resolved.

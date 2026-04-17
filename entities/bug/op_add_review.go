@@ -15,7 +15,7 @@ var _ Operation = &AddReviewOperation{}
 
 // AddReviewOperation records a PR review: an approval, changes-requested, or
 // plain commented verdict at a specific head commit.
-// Valid only when the bug's Kind is PRType.
+// Valid only when the bug's Kind is PRKind.
 type AddReviewOperation struct {
 	dag.OpBase
 	State      ReviewState `json:"state"`
@@ -28,7 +28,7 @@ func (op *AddReviewOperation) Id() entity.Id {
 }
 
 func (op *AddReviewOperation) Apply(snapshot *Snapshot) {
-	if snapshot.Kind != common.PRType {
+	if snapshot.Kind != common.PRKind {
 		return
 	}
 	snapshot.addActor(op.Author())
@@ -99,7 +99,7 @@ func (a *AddReviewTimelineItem) IsAuthored()                   {}
 // AddReview is a convenience function that appends a review to a PR.
 func AddReview(b Interface, author identity.Interface, unixTime int64, state ReviewState, body, commitHash string, metadata map[string]string) (entity.CombinedId, *AddReviewOperation, error) {
 	create, ok := b.FirstOp().(*CreateOperation)
-	if !ok || create.Kind != common.PRType {
+	if !ok || create.Kind != common.PRKind {
 		return entity.UnsetCombinedId, nil, fmt.Errorf("AddReview: bug is not a pull-request")
 	}
 

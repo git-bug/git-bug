@@ -27,7 +27,7 @@ type BugExcerpt struct {
 	EditUnixTime      int64
 
 	AuthorId     entity.Id
-	Kind         common.Type
+	Kind         common.Kind
 	Status       common.Status
 	Labels       []common.Label
 	Title        string
@@ -35,7 +35,7 @@ type BugExcerpt struct {
 	Actors       []entity.Id
 	Participants []entity.Id
 
-	// PR-only, zero-valued when Kind == IssueType.
+	// PR-only, zero-valued when Kind == IssueKind.
 	BaseRef     string
 	HeadRef     string
 	HeadCommit  string

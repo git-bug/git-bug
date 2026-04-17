@@ -32,13 +32,13 @@ func TestParse(t *testing.T) {
 		}},
 
 		{"kind:pr", &Query{
-			Filters: Filters{Kind: []common.Type{common.PRType}},
+			Filters: Filters{Kind: []common.Kind{common.PRKind}},
 		}},
 		{"kind:issue", &Query{
-			Filters: Filters{Kind: []common.Type{common.IssueType}},
+			Filters: Filters{Kind: []common.Kind{common.IssueKind}},
 		}},
 		{"type:pr", &Query{
-			Filters: Filters{Kind: []common.Type{common.PRType}},
+			Filters: Filters{Kind: []common.Kind{common.PRKind}},
 		}},
 		{"kind:nonsense", nil},
 

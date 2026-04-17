@@ -17,10 +17,10 @@ var _ dag.OperationWithFiles = &CreateOperation{}
 
 // CreateOperation define the initial creation of a bug.
 //
-// When Kind is PRType, BaseRef/HeadRef identify the branches involved and
+// When Kind is PRKind, BaseRef/HeadRef identify the branches involved and
 // HeadCommit is the commit hash at creation. These fields are empty and
 // unused for plain issues; existing serialized issues predating PR support
-// decode with the zero values (IssueType + empty refs).
+// decode with the zero values (IssueKind + empty refs).
 //
 // The Go field is named Kind to avoid shadowing dag.OpBase.Type(). On the
 // wire it serializes as "kind" — the JSON key "type" is already taken by
@@ -31,7 +31,7 @@ type CreateOperation struct {
 	Message string            `json:"message"`
 	Files   []repository.Hash `json:"files"`
 
-	Kind       common.Type `json:"kind,omitempty"`
+	Kind       common.Kind `json:"kind,omitempty"`
 	BaseRef    string      `json:"base_ref,omitempty"`
 	HeadRef    string      `json:"head_ref,omitempty"`
 	HeadCommit string      `json:"head_commit,omitempty"`
@@ -59,7 +59,7 @@ func (op *CreateOperation) Apply(snapshot *Snapshot) {
 	snapshot.Title = op.Title
 	snapshot.Kind = op.Kind
 
-	if op.Kind == common.PRType {
+	if op.Kind == common.PRKind {
 		snapshot.BaseRef = op.BaseRef
 		snapshot.HeadRef = op.HeadRef
 		snapshot.HeadCommit = op.HeadCommit
@@ -112,11 +112,11 @@ func (op *CreateOperation) Validate() error {
 	}
 
 	switch op.Kind {
-	case common.IssueType:
+	case common.IssueKind:
 		if op.BaseRef != "" || op.HeadRef != "" || op.HeadCommit != "" || op.Draft {
 			return fmt.Errorf("issue must not carry PR fields")
 		}
-	case common.PRType:
+	case common.PRKind:
 		if text.Empty(op.BaseRef) {
 			return fmt.Errorf("pr base_ref is empty")
 		}
@@ -143,7 +143,7 @@ func NewCreateOp(author identity.Interface, unixTime int64, title, message strin
 		Title:   title,
 		Message: message,
 		Files:   files,
-		Kind:    common.IssueType,
+		Kind:    common.IssueKind,
 	}
 }
 
@@ -154,7 +154,7 @@ func NewCreatePROp(author identity.Interface, unixTime int64, title, message, ba
 		Title:      title,
 		Message:    message,
 		Files:      files,
-		Kind:       common.PRType,
+		Kind:       common.PRKind,
 		BaseRef:    baseRef,
 		HeadRef:    headRef,
 		HeadCommit: headCommit,

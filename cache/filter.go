@@ -19,7 +19,7 @@ func StatusFilter(status common.Status) Filter {
 }
 
 // KindFilter return a Filter that matches a bug kind (issue vs pr).
-func KindFilter(kind common.Type) Filter {
+func KindFilter(kind common.Kind) Filter {
 	return func(excerpt *BugExcerpt, resolvers entity.Resolvers) bool {
 		return excerpt.Kind == kind
 	}

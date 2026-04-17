@@ -7,70 +7,73 @@ import (
 	"strings"
 )
 
-// Type distinguishes the kind of bug entity: a plain issue or a pull-request.
-// The zero value is IssueType so pre-existing bugs deserialize correctly
+// Kind distinguishes the kind of bug entity: a plain issue or a pull-request.
+// The zero value is IssueKind so pre-existing bugs deserialize correctly
 // without a migration.
-type Type int
+//
+// This type is named Kind (not Type) to avoid gqlgen's autobind picking it
+// up as the target for GraphQL's introspection `__Type`.
+type Kind int
 
 const (
-	IssueType Type = iota
-	PRType
+	IssueKind Kind = iota
+	PRKind
 )
 
-func (t Type) String() string {
-	switch t {
-	case IssueType:
+func (k Kind) String() string {
+	switch k {
+	case IssueKind:
 		return "issue"
-	case PRType:
+	case PRKind:
 		return "pr"
 	default:
-		return "unknown type"
+		return "unknown kind"
 	}
 }
 
-func TypeFromString(str string) (Type, error) {
+func KindFromString(str string) (Kind, error) {
 	switch strings.ToLower(strings.TrimSpace(str)) {
 	case "issue", "bug":
-		return IssueType, nil
+		return IssueKind, nil
 	case "pr", "pull-request", "pullrequest":
-		return PRType, nil
+		return PRKind, nil
 	default:
-		return 0, fmt.Errorf("unknown type %q", str)
+		return 0, fmt.Errorf("unknown kind %q", str)
 	}
 }
 
-func (t Type) Validate() error {
-	switch t {
-	case IssueType, PRType:
+func (k Kind) Validate() error {
+	switch k {
+	case IssueKind, PRKind:
 		return nil
 	default:
-		return fmt.Errorf("invalid type")
+		return fmt.Errorf("invalid kind")
 	}
 }
 
-func (t Type) MarshalGQL(w io.Writer) {
-	switch t {
-	case IssueType:
+func (k Kind) MarshalGQL(w io.Writer) {
+	switch k {
+	case IssueKind:
 		_, _ = w.Write([]byte(strconv.Quote("ISSUE")))
-	case PRType:
+	case PRKind:
 		_, _ = w.Write([]byte(strconv.Quote("PR")))
 	default:
 		panic("missing case")
 	}
 }
 
-func (t *Type) UnmarshalGQL(v interface{}) error {
+func (k *Kind) UnmarshalGQL(v interface{}) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
 	}
 	switch str {
 	case "ISSUE":
-		*t = IssueType
+		*k = IssueKind
 	case "PR":
-		*t = PRType
+		*k = PRKind
 	default:
-		return fmt.Errorf("%s is not a valid Type", str)
+		return fmt.Errorf("%s is not a valid Kind", str)
 	}
 	return nil
 }

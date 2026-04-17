@@ -18,7 +18,7 @@ var _ Operation = &AddReviewCommentOperation{}
 // Anchors (CommitHash + Path + StartLine..EndLine) are immutable: later pushes
 // to the branch do not move or invalidate these comments. When ReplyTo is set,
 // this comment is a reply within a review thread rather than a new root.
-// Valid only when the bug's Kind is PRType.
+// Valid only when the bug's Kind is PRKind.
 type AddReviewCommentOperation struct {
 	dag.OpBase
 	// ReviewId is the combined id of the AddReviewOperation this comment attaches to.
@@ -37,7 +37,7 @@ func (op *AddReviewCommentOperation) Id() entity.Id {
 }
 
 func (op *AddReviewCommentOperation) Apply(snapshot *Snapshot) {
-	if snapshot.Kind != common.PRType {
+	if snapshot.Kind != common.PRKind {
 		return
 	}
 	snapshot.addActor(op.Author())
@@ -145,7 +145,7 @@ func (a *AddReviewCommentTimelineItem) IsAuthored()                   {}
 // AddReviewComment appends a line-anchored review comment to a PR.
 func AddReviewComment(b Interface, author identity.Interface, unixTime int64, reviewId entity.CombinedId, body, commitHash, path string, startLine, endLine int, replyTo entity.CombinedId, metadata map[string]string) (entity.CombinedId, *AddReviewCommentOperation, error) {
 	create, ok := b.FirstOp().(*CreateOperation)
-	if !ok || create.Kind != common.PRType {
+	if !ok || create.Kind != common.PRKind {
 		return entity.UnsetCombinedId, nil, fmt.Errorf("AddReviewComment: bug is not a pull-request")
 	}
 

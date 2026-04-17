@@ -7,63 +7,63 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestTypeZeroValueIsIssue(t *testing.T) {
-	// Backward compat: pre-existing bugs with no recorded Type must deserialize
-	// as IssueType (the Go zero value for int).
-	var zero Type
-	require.Equal(t, IssueType, zero)
+func TestKindZeroValueIsIssue(t *testing.T) {
+	// Backward compat: pre-existing bugs with no recorded Kind must deserialize
+	// as IssueKind (the Go zero value for int).
+	var zero Kind
+	require.Equal(t, IssueKind, zero)
 	require.NoError(t, zero.Validate())
 }
 
-func TestTypeRoundTrip(t *testing.T) {
-	for _, ty := range []Type{IssueType, PRType} {
-		parsed, err := TypeFromString(ty.String())
+func TestKindRoundTrip(t *testing.T) {
+	for _, k := range []Kind{IssueKind, PRKind} {
+		parsed, err := KindFromString(k.String())
 		require.NoError(t, err)
-		require.Equal(t, ty, parsed)
+		require.Equal(t, k, parsed)
 	}
 }
 
-func TestTypeFromStringAccepts(t *testing.T) {
-	cases := map[string]Type{
-		"issue":        IssueType,
-		"ISSUE":        IssueType,
-		"  issue  ":    IssueType,
-		"bug":          IssueType,
-		"pr":           PRType,
-		"PR":           PRType,
-		"pull-request": PRType,
-		"pullrequest":  PRType,
+func TestKindFromStringAccepts(t *testing.T) {
+	cases := map[string]Kind{
+		"issue":        IssueKind,
+		"ISSUE":        IssueKind,
+		"  issue  ":    IssueKind,
+		"bug":          IssueKind,
+		"pr":           PRKind,
+		"PR":           PRKind,
+		"pull-request": PRKind,
+		"pullrequest":  PRKind,
 	}
 	for in, want := range cases {
-		got, err := TypeFromString(in)
+		got, err := KindFromString(in)
 		require.NoError(t, err, in)
 		require.Equal(t, want, got, in)
 	}
 }
 
-func TestTypeFromStringRejectsUnknown(t *testing.T) {
-	_, err := TypeFromString("discussion")
+func TestKindFromStringRejectsUnknown(t *testing.T) {
+	_, err := KindFromString("discussion")
 	require.Error(t, err)
 }
 
-func TestTypeValidate(t *testing.T) {
-	require.NoError(t, IssueType.Validate())
-	require.NoError(t, PRType.Validate())
-	require.Error(t, Type(99).Validate())
+func TestKindValidate(t *testing.T) {
+	require.NoError(t, IssueKind.Validate())
+	require.NoError(t, PRKind.Validate())
+	require.Error(t, Kind(99).Validate())
 }
 
-func TestTypeGQLRoundTrip(t *testing.T) {
-	cases := map[Type]string{
-		IssueType: `"ISSUE"`,
-		PRType:    `"PR"`,
+func TestKindGQLRoundTrip(t *testing.T) {
+	cases := map[Kind]string{
+		IssueKind: `"ISSUE"`,
+		PRKind:    `"PR"`,
 	}
-	for ty, want := range cases {
+	for k, want := range cases {
 		var buf bytes.Buffer
-		ty.MarshalGQL(&buf)
+		k.MarshalGQL(&buf)
 		require.Equal(t, want, buf.String())
 
-		var decoded Type
+		var decoded Kind
 		require.NoError(t, decoded.UnmarshalGQL(want[1:len(want)-1]))
-		require.Equal(t, ty, decoded)
+		require.Equal(t, k, decoded)
 	}
 }

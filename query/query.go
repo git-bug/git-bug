@@ -33,7 +33,7 @@ type StringPair struct {
 
 // Filters is a collection of Filter that implement a complex filter
 type Filters struct {
-	Kind        []common.Type
+	Kind        []common.Kind
 	Status      []common.Status
 	Author      []string
 	Metadata    []StringPair

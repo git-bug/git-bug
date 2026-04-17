@@ -17,6 +17,7 @@ import (
 type BugWrapper interface {
 	Id() entity.Id
 	LastEdit() time.Time
+	Kind() common.Kind
 	Status() common.Status
 	Title() string
 	Comments() ([]bug.Comment, error)
@@ -27,6 +28,17 @@ type BugWrapper interface {
 	CreatedAt() time.Time
 	Timeline() ([]bug.TimelineItem, error)
 	Operations() ([]dag.Operation, error)
+
+	// BaseRef returns the PR's base branch, or nil for issues.
+	BaseRef() *string
+	// HeadRef returns the PR's head branch, or nil for issues.
+	HeadRef() *string
+	// HeadCommit returns the PR's current head commit hash, or nil for issues.
+	HeadCommit() *string
+	// MergeCommit returns the merge commit hash for merged PRs, else nil.
+	MergeCommit() *string
+	// Reviews returns the list of PR reviews. Empty for issues.
+	Reviews() ([]bug.Review, error)
 
 	// IsAuthored is a sign-post method for gqlgen, to mark compliance to an interface.
 	IsAuthored()
@@ -86,12 +98,35 @@ func (lb *lazyBug) LastEdit() time.Time {
 	return lb.excerpt.EditTime()
 }
 
+func (lb *lazyBug) Kind() common.Kind {
+	return lb.excerpt.Kind
+}
+
 func (lb *lazyBug) Status() common.Status {
 	return lb.excerpt.Status
 }
 
 func (lb *lazyBug) Title() string {
 	return lb.excerpt.Title
+}
+
+func nilIfEmpty(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
+}
+
+func (lb *lazyBug) BaseRef() *string     { return nilIfEmpty(lb.excerpt.BaseRef) }
+func (lb *lazyBug) HeadRef() *string     { return nilIfEmpty(lb.excerpt.HeadRef) }
+func (lb *lazyBug) HeadCommit() *string  { return nilIfEmpty(lb.excerpt.HeadCommit) }
+func (lb *lazyBug) MergeCommit() *string { return nilIfEmpty(lb.excerpt.MergeCommit) }
+
+func (lb *lazyBug) Reviews() ([]bug.Review, error) {
+	if err := lb.load(); err != nil {
+		return nil, err
+	}
+	return lb.snap.Reviews, nil
 }
 
 func (lb *lazyBug) Comments() ([]bug.Comment, error) {
@@ -174,12 +209,25 @@ func (l *loadedBug) LastEdit() time.Time {
 	return l.Snapshot.EditTime()
 }
 
+func (l *loadedBug) Kind() common.Kind {
+	return l.Snapshot.Kind
+}
+
 func (l *loadedBug) Status() common.Status {
 	return l.Snapshot.Status
 }
 
 func (l *loadedBug) Title() string {
 	return l.Snapshot.Title
+}
+
+func (l *loadedBug) BaseRef() *string     { return nilIfEmpty(l.Snapshot.BaseRef) }
+func (l *loadedBug) HeadRef() *string     { return nilIfEmpty(l.Snapshot.HeadRef) }
+func (l *loadedBug) HeadCommit() *string  { return nilIfEmpty(l.Snapshot.HeadCommit) }
+func (l *loadedBug) MergeCommit() *string { return nilIfEmpty(l.Snapshot.MergeCommit) }
+
+func (l *loadedBug) Reviews() ([]bug.Review, error) {
+	return l.Snapshot.Reviews, nil
 }
 
 func (l *loadedBug) Comments() ([]bug.Comment, error) {
