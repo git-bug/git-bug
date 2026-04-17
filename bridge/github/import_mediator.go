@@ -105,6 +105,155 @@ func (mm *importMediator) fillImportEvents(ctx context.Context) {
 		}
 		issues, hasIssues = mm.queryIssue(ctx, issues.PageInfo.EndCursor)
 	}
+
+	// Second pass: pull-requests. GitHub's PR stream is disjoint from issues
+	// (they share the repo's number sequence but `issues` never returns PRs).
+	prs, hasPRs := mm.queryPullRequest(ctx, initialCursor)
+	for hasPRs {
+		for _, node := range prs.Nodes {
+			select {
+			case <-ctx.Done():
+				return
+			case mm.importEvents <- PrEvent{node.pullRequest}:
+			}
+			mm.fillPrEditEvents(ctx, &node)
+			mm.fillPrTimelineEvents(ctx, &node)
+		}
+		if !prs.PageInfo.HasNextPage {
+			break
+		}
+		prs, hasPRs = mm.queryPullRequest(ctx, prs.PageInfo.EndCursor)
+	}
+}
+
+func (mm *importMediator) queryPullRequest(ctx context.Context, cursor githubv4.String) (*pullRequestConnection, bool) {
+	// Reuse the issue vars — they share the same page-size / edit / timeline knobs.
+	vars := newIssueVars(mm.owner, mm.project, mm.since)
+	if cursor == "" {
+		vars["issueAfter"] = (*githubv4.String)(nil)
+	} else {
+		vars["issueAfter"] = cursor
+	}
+	// GitHub's pullRequests connection doesn't accept a since filter, so drop it.
+	delete(vars, "issueSince")
+
+	query := pullRequestQuery{}
+	if err := mm.gh.queryImport(ctx, &query, vars, mm.importEvents); err != nil {
+		mm.err = err
+		return nil, false
+	}
+	connection := &query.Repository.PullRequests
+	if len(connection.Nodes) <= 0 {
+		return nil, false
+	}
+	return connection, true
+}
+
+func (mm *importMediator) fillPrEditEvents(ctx context.Context, prNode *pullRequestNode) {
+	edits := &prNode.UserContentEdits
+	hasEdits := true
+	for hasEdits {
+		for edit := range reverse(edits.Nodes) {
+			if edit.Diff == nil || string(*edit.Diff) == "" {
+				continue
+			}
+			select {
+			case <-ctx.Done():
+				return
+			case mm.importEvents <- PrEditEvent{prId: prNode.pullRequest.Id, userContentEdit: edit}:
+			}
+		}
+		if !edits.PageInfo.HasPreviousPage {
+			break
+		}
+		edits, hasEdits = mm.queryPrEdits(ctx, prNode.pullRequest.Id, edits.PageInfo.EndCursor)
+	}
+}
+
+func (mm *importMediator) queryPrEdits(ctx context.Context, nid githubv4.ID, cursor githubv4.String) (*userContentEditConnection, bool) {
+	vars := newIssueEditVars()
+	vars["gqlNodeId"] = nid
+	if cursor == "" {
+		vars["issueEditBefore"] = (*githubv4.String)(nil)
+	} else {
+		vars["issueEditBefore"] = cursor
+	}
+	query := prEditQuery{}
+	if err := mm.gh.queryImport(ctx, &query, vars, mm.importEvents); err != nil {
+		mm.err = err
+		return nil, false
+	}
+	connection := &query.Node.PullRequest.UserContentEdits
+	if len(connection.Nodes) <= 0 {
+		return nil, false
+	}
+	return connection, true
+}
+
+func (mm *importMediator) fillPrTimelineEvents(ctx context.Context, prNode *pullRequestNode) {
+	items := &prNode.TimelineItems
+	hasItems := true
+	for hasItems {
+		for _, item := range items.Nodes {
+			select {
+			case <-ctx.Done():
+				return
+			case mm.importEvents <- PrTimelineEvent{prId: prNode.pullRequest.Id, prTimelineItem: item}:
+			}
+			if item.Typename == "IssueComment" {
+				mm.fillCommentEditsPr(ctx, &item)
+			}
+		}
+		if !items.PageInfo.HasNextPage {
+			break
+		}
+		items, hasItems = mm.queryPrTimeline(ctx, prNode.pullRequest.Id, items.PageInfo.EndCursor)
+	}
+}
+
+func (mm *importMediator) queryPrTimeline(ctx context.Context, nid githubv4.ID, cursor githubv4.String) (*prTimelineItemsConnection, bool) {
+	vars := newTimelineVars()
+	vars["gqlNodeId"] = nid
+	if cursor == "" {
+		vars["timelineAfter"] = (*githubv4.String)(nil)
+	} else {
+		vars["timelineAfter"] = cursor
+	}
+	query := prTimelineQuery{}
+	if err := mm.gh.queryImport(ctx, &query, vars, mm.importEvents); err != nil {
+		mm.err = err
+		return nil, false
+	}
+	connection := &query.Node.PullRequest.TimelineItems
+	if len(connection.Nodes) <= 0 {
+		return nil, false
+	}
+	return connection, true
+}
+
+func (mm *importMediator) fillCommentEditsPr(ctx context.Context, item *prTimelineItem) {
+	if item.Typename != "IssueComment" {
+		return
+	}
+	comment := &item.IssueComment
+	edits := &comment.UserContentEdits
+	hasEdits := true
+	for hasEdits {
+		for edit := range reverse(edits.Nodes) {
+			if edit.Diff == nil || string(*edit.Diff) == "" {
+				continue
+			}
+			select {
+			case <-ctx.Done():
+				return
+			case mm.importEvents <- CommentEditEvent{commentId: comment.Id, userContentEdit: edit}:
+			}
+		}
+		if !edits.PageInfo.HasPreviousPage {
+			break
+		}
+		edits, hasEdits = mm.queryCommentEdits(ctx, comment.Id, edits.PageInfo.EndCursor)
+	}
 }
 
 func (mm *importMediator) fillIssueEditEvents(ctx context.Context, issueNode *issueNode) {

@@ -80,7 +80,18 @@ func setupExpectations(t *testing.T, mock *mocks.Client) {
 	expectIssueQuery1(mock)
 	expectIssueQuery2(mock)
 	expectIssueQuery3(mock)
+	// The second pass over PRs: return empty so this fixture remains a
+	// pure-issue scenario. PR import is exercised in dedicated PR tests.
+	expectEmptyPullRequestQuery(mock)
 	expectUserQuery(t, mock)
+}
+
+func expectEmptyPullRequestQuery(mock *mocks.Client) {
+	mock.On("Query", m.Anything, m.AnythingOfType("*github.pullRequestQuery"), m.Anything).Return(nil).Run(
+		func(args m.Arguments) {
+			// empty — no PRs
+		},
+	)
 }
 
 func rateLimitingError(mock *mocks.Client) {

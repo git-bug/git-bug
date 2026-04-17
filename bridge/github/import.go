@@ -132,6 +132,42 @@ func (gi *githubImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 					out <- core.NewImportError(err, "")
 					return
 				}
+			case PrEvent:
+				if err = gi.commit(currBug, out); err != nil {
+					out <- core.NewImportError(err, "")
+					return
+				}
+				switch next := nextEvent.(type) {
+				case PrEditEvent:
+					nextEvent = nil
+					currBug, err = gi.ensurePR(ctx, repo, &event.pullRequest, &next.userContentEdit)
+				default:
+					currBug, err = gi.ensurePR(ctx, repo, &event.pullRequest, nil)
+				}
+				if err != nil {
+					err := fmt.Errorf("pr creation: %v", err)
+					out <- core.NewImportError(err, "")
+					return
+				}
+			case PrEditEvent:
+				err = gi.ensureIssueEdit(ctx, repo, currBug, event.prId, &event.userContentEdit)
+				if err != nil {
+					err = fmt.Errorf("pr edit: %v", err)
+					out <- core.NewImportError(err, "")
+					return
+				}
+			case PrTimelineEvent:
+				if next, ok := nextEvent.(CommentEditEvent); ok && event.Typename == "IssueComment" {
+					nextEvent = nil
+					err = gi.ensureComment(ctx, repo, currBug, &event.IssueComment, &next.userContentEdit)
+				} else {
+					err = gi.ensurePrTimelineItem(ctx, repo, currBug, &event.prTimelineItem)
+				}
+				if err != nil {
+					err = fmt.Errorf("pr timeline item: %v", err)
+					out <- core.NewImportError(err, "")
+					return
+				}
 			default:
 				panic("Unknown event type")
 			}
@@ -234,6 +270,157 @@ func (gi *githubImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache
 
 func (gi *githubImporter) ensureIssueEdit(ctx context.Context, repo *cache.RepoCache, bug *cache.BugCache, ghIssueId githubv4.ID, edit *userContentEdit) error {
 	return gi.ensureCommentEdit(ctx, repo, bug, ghIssueId, edit)
+}
+
+func (gi *githubImporter) ensurePR(ctx context.Context, repo *cache.RepoCache, pr *pullRequest, prEdit *userContentEdit) (*cache.BugCache, error) {
+	author, err := gi.ensurePerson(ctx, repo, pr.Author)
+	if err != nil {
+		return nil, err
+	}
+
+	// resolve bug
+	b, err := repo.Bugs().ResolveMatcher(func(excerpt *cache.BugExcerpt) bool {
+		return excerpt.CreateMetadata[metaKeyGithubUrl] == pr.Url.String() &&
+			excerpt.CreateMetadata[metaKeyGithubId] == parseId(pr.Id)
+	})
+	if err == nil {
+		return b, nil
+	}
+	if !entity.IsErrNotFound(err) {
+		return nil, err
+	}
+
+	title := text.CleanupOneLine(string(pr.Title))
+	if text.Empty(title) {
+		title = EmptyTitlePlaceholder
+	}
+
+	var textInput string
+	if prEdit != nil {
+		textInput = string(*prEdit.Diff)
+	} else {
+		textInput = string(pr.Body)
+	}
+
+	baseRef := "refs/heads/" + string(pr.BaseRefName)
+	headRef := "refs/heads/" + string(pr.HeadRefName)
+	headCommit := string(pr.HeadRefOid)
+
+	b, _, err = repo.Bugs().NewPRRaw(
+		author,
+		pr.CreatedAt.Unix(),
+		text.CleanupOneLine(title),
+		text.Cleanup(textInput),
+		baseRef,
+		headRef,
+		headCommit,
+		bool(pr.IsDraft),
+		nil,
+		map[string]string{
+			core.MetaKeyOrigin: target,
+			metaKeyGithubId:    parseId(pr.Id),
+			metaKeyGithubUrl:   pr.Url.String(),
+		})
+	if err != nil {
+		return nil, err
+	}
+
+	// If merged or closed at import time, record the terminal state.
+	if bool(pr.Merged) && pr.MergeCommit != nil {
+		_, err := b.MergeRaw(author, pr.CreatedAt.Unix(), string(pr.MergeCommit.Oid), nil)
+		if err != nil {
+			return nil, err
+		}
+	} else if bool(pr.Closed) && !bool(pr.Merged) {
+		_, err := b.CloseRaw(author, pr.CreatedAt.Unix(), nil)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	gi.out <- core.NewImportBug(b.Id())
+	return b, nil
+}
+
+// ensurePrTimelineItem handles a PR timeline event: issue-shared items reuse
+// the issue handlers; PR-only items (MergedEvent, ReadyForReviewEvent,
+// ConvertToDraftEvent) get dedicated handling.
+func (gi *githubImporter) ensurePrTimelineItem(ctx context.Context, repo *cache.RepoCache, b *cache.BugCache, item *prTimelineItem) error {
+	switch item.Typename {
+	case "IssueComment", "LabeledEvent", "UnlabeledEvent", "ClosedEvent", "ReopenedEvent", "RenamedTitleEvent":
+		// Forward to the issue timeline handler via a shim. These events share
+		// the same payload on issues and PRs in GitHub's data model.
+		ti := timelineItem{
+			Typename:          item.Typename,
+			IssueComment:      item.IssueComment,
+			LabeledEvent:      item.LabeledEvent,
+			UnlabeledEvent:    item.UnlabeledEvent,
+			ClosedEvent:       item.ClosedEvent,
+			ReopenedEvent:     item.ReopenedEvent,
+			RenamedTitleEvent: item.RenamedTitleEvent,
+		}
+		return gi.ensureTimelineItem(ctx, repo, b, &ti)
+
+	case "MergedEvent":
+		id := parseId(item.MergedEvent.Id)
+		if _, err := b.ResolveOperationWithMetadata(metaKeyGithubId, id); err == nil {
+			return nil
+		} else if err != cache.ErrNoMatchingOp {
+			return err
+		}
+		author, err := gi.ensurePerson(ctx, repo, item.MergedEvent.Actor)
+		if err != nil {
+			return err
+		}
+		commitHash := ""
+		if item.MergedEvent.Commit != nil {
+			commitHash = string(item.MergedEvent.Commit.Oid)
+		}
+		if commitHash == "" {
+			// Merge commit missing is unusual but possible; skip to avoid
+			// creating an invalid operation (Merge validates commit != "").
+			return nil
+		}
+		op, err := b.MergeRaw(
+			author,
+			item.MergedEvent.CreatedAt.Unix(),
+			commitHash,
+			map[string]string{metaKeyGithubId: id},
+		)
+		if err != nil {
+			return err
+		}
+		gi.out <- core.NewImportStatusChange(b.Id(), op.Id())
+		return nil
+
+	case "ReadyForReviewEvent":
+		id := parseId(item.ReadyForReviewEvent.Id)
+		if _, err := b.ResolveOperationWithMetadata(metaKeyGithubId, id); err == nil {
+			return nil
+		} else if err != cache.ErrNoMatchingOp {
+			return err
+		}
+		author, err := gi.ensurePerson(ctx, repo, item.ReadyForReviewEvent.Actor)
+		if err != nil {
+			return err
+		}
+		op, err := b.OpenRaw(
+			author,
+			item.ReadyForReviewEvent.CreatedAt.Unix(),
+			map[string]string{metaKeyGithubId: id},
+		)
+		if err != nil {
+			return err
+		}
+		gi.out <- core.NewImportStatusChange(b.Id(), op.Id())
+		return nil
+
+	case "ConvertToDraftEvent":
+		// git-bug doesn't have a SetDraft op; converting back to draft is rare
+		// on GitHub and carries no new information for v1. Skip silently.
+		return nil
+	}
+	return nil
 }
 
 func (gi *githubImporter) ensureTimelineItem(ctx context.Context, repo *cache.RepoCache, b *cache.BugCache, item *timelineItem) error {

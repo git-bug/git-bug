@@ -40,6 +40,30 @@ type issueQuery struct {
 	} `graphql:"repository(owner: $owner, name: $name)"`
 }
 
+type pullRequestQuery struct {
+	Repository struct {
+		PullRequests pullRequestConnection `graphql:"pullRequests(first: $issueFirst, after: $issueAfter, orderBy: {field: CREATED_AT, direction: ASC})"`
+	} `graphql:"repository(owner: $owner, name: $name)"`
+}
+
+type prTimelineQuery struct {
+	Node struct {
+		Typename    githubv4.String `graphql:"__typename"`
+		PullRequest struct {
+			TimelineItems prTimelineItemsConnection `graphql:"timelineItems(first: $timelineFirst, after: $timelineAfter)"`
+		} `graphql:"... on PullRequest"`
+	} `graphql:"node(id: $gqlNodeId)"`
+}
+
+type prEditQuery struct {
+	Node struct {
+		Typename    githubv4.String `graphql:"__typename"`
+		PullRequest struct {
+			UserContentEdits userContentEditConnection `graphql:"userContentEdits(last: $issueEditLast, before: $issueEditBefore)"`
+		} `graphql:"... on PullRequest"`
+	} `graphql:"node(id: $gqlNodeId)"`
+}
+
 type issueEditQuery struct {
 	Node struct {
 		Typename githubv4.String `graphql:"__typename"`
@@ -90,6 +114,67 @@ type issue struct {
 	Number githubv4.Int
 	Body   githubv4.String
 	Url    githubv4.URI
+}
+
+type pullRequestConnection struct {
+	Nodes    []pullRequestNode
+	PageInfo pageInfo
+}
+
+type pullRequestNode struct {
+	pullRequest
+	UserContentEdits userContentEditConnection `graphql:"userContentEdits(last: $issueEditLast, before: $issueEditBefore)"`
+	TimelineItems    prTimelineItemsConnection `graphql:"timelineItems(first: $timelineFirst, after: $timelineAfter)"`
+}
+
+type pullRequest struct {
+	authorEvent
+	Title        githubv4.String
+	Number       githubv4.Int
+	Body         githubv4.String
+	Url          githubv4.URI
+	IsDraft      githubv4.Boolean
+	BaseRefName  githubv4.String
+	HeadRefName  githubv4.String
+	HeadRefOid   githubv4.GitObjectID
+	Merged       githubv4.Boolean
+	MergeCommit  *struct {
+		Oid githubv4.GitObjectID
+	}
+	Closed githubv4.Boolean
+}
+
+type prTimelineItemsConnection struct {
+	Nodes    []prTimelineItem
+	PageInfo pageInfo
+}
+
+// prTimelineItem covers both the issue-compatible timeline events and
+// the PR-specific ones (merged, converted-to-draft, ready-for-review).
+type prTimelineItem struct {
+	Typename githubv4.String `graphql:"__typename"`
+
+	// Issue-shared events
+	IssueComment      issueComment      `graphql:"... on IssueComment"`
+	LabeledEvent      labeledEvent      `graphql:"... on LabeledEvent"`
+	UnlabeledEvent    unlabeledEvent    `graphql:"... on UnlabeledEvent"`
+	ClosedEvent       struct{ actorEvent } `graphql:"... on ClosedEvent"`
+	ReopenedEvent     struct{ actorEvent } `graphql:"... on ReopenedEvent"`
+	RenamedTitleEvent renamedTitleEvent `graphql:"... on RenamedTitleEvent"`
+
+	// PR-only events
+	MergedEvent struct {
+		actorEvent
+		Commit *struct {
+			Oid githubv4.GitObjectID
+		}
+	} `graphql:"... on MergedEvent"`
+	ReadyForReviewEvent struct {
+		actorEvent
+	} `graphql:"... on ReadyForReviewEvent"`
+	ConvertToDraftEvent struct {
+		actorEvent
+	} `graphql:"... on ConvertToDraftEvent"`
 }
 
 type timelineItemsConnection struct {
