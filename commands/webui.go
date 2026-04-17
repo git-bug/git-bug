@@ -8,7 +8,10 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -20,6 +23,7 @@ import (
 	"github.com/git-bug/git-bug/api/auth"
 	"github.com/git-bug/git-bug/api/graphql"
 	httpapi "github.com/git-bug/git-bug/api/http"
+	"github.com/git-bug/git-bug/api/repoctx"
 	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/commands/execenv"
 	"github.com/git-bug/git-bug/entities/identity"
@@ -37,6 +41,12 @@ type webUIOptions struct {
 	readOnly  bool
 	logErrors bool
 	query     string
+	// Multi-repo mode: register each path given to --repo (repeatable), or
+	// scan --root for repos matching <root>/*/*/ (owner/name). When more than
+	// one repo is registered, read-only is forced (auth currently needs one
+	// user identity, which is per-repo).
+	repos []string
+	root  string
 }
 
 func newWebUICommand(env *execenv.Env) *cobra.Command {
@@ -66,6 +76,10 @@ Available git config:
 	flags.BoolVar(&options.readOnly, "read-only", false, "Whether to run the web UI in read-only mode")
 	flags.BoolVar(&options.logErrors, "log-errors", false, "Whether to log errors")
 	flags.StringVarP(&options.query, "query", "q", "", "The query to open in the web UI bug list")
+	flags.StringSliceVar(&options.repos, "repo", nil,
+		"Additional repository path to serve (repeatable). The repo name is derived from its parent directory (e.g. /a/b/myorg/myrepo -> myorg/myrepo).")
+	flags.StringVar(&options.root, "root", "",
+		"Scan this directory for <org>/<repo>/.git siblings and register each as a repo. Multi-repo mode forces --read-only.")
 
 	return cmd
 }
@@ -74,9 +88,22 @@ Available git config:
 func setupRoutes(env *execenv.Env, opts webUIOptions) (*mux.Router, func() error, error) {
 	router := mux.NewRouter()
 
-	// If the webUI is not read-only, use an authentication middleware with a
-	// fixed identity: the default user of the repo
-	// TODO: support dynamic authentication with OAuth
+	mrc := cache.NewMultiRepoCache()
+
+	// Discover repos for multi-repo mode.
+	extraRepos, err := discoverExtraRepos(opts)
+	if err != nil {
+		return nil, nil, err
+	}
+	multi := len(extraRepos) > 0
+
+	if multi && !opts.readOnly {
+		// Authoring across many repos needs per-repo identity selection which
+		// the current auth middleware doesn't support. Force read-only.
+		env.Err.Println("multi-repo mode: forcing --read-only (per-repo identity not yet supported)")
+		opts.readOnly = true
+	}
+
 	if !opts.readOnly {
 		author, err := identity.GetUserIdentity(env.Repo)
 		if err != nil {
@@ -85,16 +112,58 @@ func setupRoutes(env *execenv.Env, opts webUIOptions) (*mux.Router, func() error
 		router.Use(auth.Middleware(author.Id()))
 	}
 
-	mrc := cache.NewMultiRepoCache()
-	_, events := mrc.RegisterDefaultRepository(env.Repo)
-	if err := execenv.CacheBuildProgressBar(env, events); err != nil {
+	// In multi-repo mode, register the cwd repo under its derived org/repo
+	// name so it appears in the landing list alongside the scanned siblings.
+	// In single-repo mode, keep the existing RegisterDefaultRepository
+	// behaviour — no name, served at /.
+	cwdPath, err := os.Getwd()
+	if err != nil {
 		return nil, nil, err
+	}
+	cwdAbs, _ := filepath.Abs(cwdPath)
+
+	var cwdName string
+	if multi {
+		cwdName = filepath.Base(filepath.Dir(cwdAbs)) + "/" + filepath.Base(cwdAbs)
+		env.Out.Printf("  + %s (cwd)\n", cwdName)
+		_, events := mrc.RegisterRepository(env.Repo, cwdName)
+		if err := execenv.CacheBuildProgressBar(env, events); err != nil {
+			return nil, nil, err
+		}
+	} else {
+		_, events := mrc.RegisterDefaultRepository(env.Repo)
+		if err := execenv.CacheBuildProgressBar(env, events); err != nil {
+			return nil, nil, err
+		}
+	}
+
+	// Register each extra repo by its derived name. Skip the cwd path if it
+	// showed up in the --root scan — the RepoCache lockfile would clash.
+	for _, er := range extraRepos {
+		if er.path == cwdAbs {
+			continue
+		}
+		r, err := repository.OpenGoGitRepo(er.path, "git-bug", nil)
+		if err != nil {
+			env.Err.Printf("skipping %s: %v\n", er.path, err)
+			continue
+		}
+		env.Out.Printf("  + %s\n", er.name)
+		_, events := mrc.RegisterRepository(r, er.name)
+		if err := execenv.CacheBuildProgressBar(env, events); err != nil {
+			return nil, nil, err
+		}
 	}
 
 	var errOut io.Writer
 	if opts.logErrors {
 		errOut = env.Err
 	}
+
+	// Header middleware: when X-Repo-Name is set on an incoming request, the
+	// rootQueryResolver.Repository fallback uses it to resolve the default
+	// repo instead of erroring on "not unique".
+	router.Use(repoNameHeaderMiddleware())
 
 	router.Path("/playground").Handler(playground.Handler("git-bug", "/graphql"))
 	router.Path("/graphql").Handler(graphql.NewHandler(mrc, errOut))
@@ -103,6 +172,86 @@ func setupRoutes(env *execenv.Env, opts webUIOptions) (*mux.Router, func() error
 	router.PathPrefix("/").Handler(webui.NewHandler())
 
 	return router, mrc.Close, nil
+}
+
+// extraRepo is a (name, path) pair discovered for multi-repo mode.
+type extraRepo struct {
+	name string
+	path string
+}
+
+// discoverExtraRepos resolves --repo and --root flags into a list of repos to
+// register beyond the cwd repo. A repo is only included if it has a git-bug
+// namespace present (refs/bugs/*).
+func discoverExtraRepos(opts webUIOptions) ([]extraRepo, error) {
+	var out []extraRepo
+	seen := make(map[string]bool)
+
+	add := func(path string) {
+		abs, err := filepath.Abs(path)
+		if err != nil || seen[abs] {
+			return
+		}
+		seen[abs] = true
+		// Skip hidden dirs at either the org or repo level — ".github",
+		// ".DS_Store", ".hidden-org", etc. never contain a user-facing repo.
+		if strings.HasPrefix(filepath.Base(abs), ".") ||
+			strings.HasPrefix(filepath.Base(filepath.Dir(abs)), ".") {
+			return
+		}
+		if !hasGitBugData(abs) {
+			return
+		}
+		// Name is the parent-dir-basename + basename (<owner>/<repo>).
+		name := filepath.Base(filepath.Dir(abs)) + "/" + filepath.Base(abs)
+		out = append(out, extraRepo{name: name, path: abs})
+	}
+
+	for _, p := range opts.repos {
+		add(p)
+	}
+	if opts.root != "" {
+		matches, err := filepath.Glob(filepath.Join(opts.root, "*", "*"))
+		if err != nil {
+			return nil, err
+		}
+		for _, m := range matches {
+			if info, statErr := os.Stat(m); statErr == nil && info.IsDir() {
+				add(m)
+			}
+		}
+	}
+	return out, nil
+}
+
+// hasGitBugData reports whether the repo at path has any git-bug refs. Used
+// to skip sibling dirs that happen to be git repos but aren't synced.
+func hasGitBugData(path string) bool {
+	for _, p := range []string{
+		filepath.Join(path, ".git", "refs", "bugs"),
+		filepath.Join(path, ".git", "packed-refs"),
+	} {
+		if _, err := os.Stat(p); err == nil {
+			return true
+		}
+	}
+	return false
+}
+
+// repoNameHeaderMiddleware extracts X-Repo-Name from incoming HTTP requests
+// and stashes it in the request context so the GraphQL layer can use it as
+// the default repo when no explicit ref is supplied.
+func repoNameHeaderMiddleware() mux.MiddlewareFunc {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			name := r.Header.Get("X-Repo-Name")
+			if name != "" {
+				ctx := repoctx.WithName(r.Context(), name)
+				r = r.WithContext(ctx)
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
 }
 
 func runWebUI(env *execenv.Env, opts webUIOptions) error {

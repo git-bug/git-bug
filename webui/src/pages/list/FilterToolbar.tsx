@@ -1,10 +1,12 @@
 import { pipe } from '@arrows/composition';
+import BugReportOutlinedIcon from '@mui/icons-material/BugReportOutlined';
+import CallMergeIcon from '@mui/icons-material/CallMerge';
 import CheckCircleOutline from '@mui/icons-material/CheckCircleOutline';
 import ErrorOutline from '@mui/icons-material/ErrorOutline';
 import Toolbar from '@mui/material/Toolbar';
 import makeStyles from '@mui/styles/makeStyles';
 import * as React from 'react';
-import { Location } from 'react-router';
+import { Location, useParams } from 'react-router';
 
 import {
   Filter,
@@ -31,6 +33,14 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+function safeDecode(s: string): string {
+  try {
+    return decodeURIComponent(s);
+  } catch {
+    return s;
+  }
+}
+
 // This prepends the filter text with a count
 type CountingFilterProps = {
   query: string; // the query used as a source to count the number of element
@@ -38,8 +48,10 @@ type CountingFilterProps = {
 } & FilterProps;
 
 function CountingFilter({ query, children, ...props }: CountingFilterProps) {
+  const { repoName } = useParams<{ repoName: string }>();
+  const repoRef = repoName ? safeDecode(repoName) : null;
   const { data, loading, error } = useBugCountQuery({
-    variables: { query },
+    variables: { query, repoRef },
   });
 
   let prefix;
@@ -73,8 +85,14 @@ type Props = {
 function FilterToolbar({ query, queryLocation }: Props) {
   const classes = useStyles();
   const params: Query = parse(query);
-  const { data: identitiesData } = useListIdentitiesQuery();
-  const { data: labelsData } = useListLabelsQuery();
+  const { repoName } = useParams<{ repoName: string }>();
+  const repoRef = repoName ? safeDecode(repoName) : null;
+  const { data: identitiesData } = useListIdentitiesQuery({
+    variables: { repoRef },
+  });
+  const { data: labelsData } = useListLabelsQuery({
+    variables: { repoRef },
+  });
 
   let identities: any = [];
   let labels: any = [];
@@ -167,6 +185,22 @@ function FilterToolbar({ query, queryLocation }: Props) {
         icon={CheckCircleOutline}
       >
         closed
+      </CountingFilter>
+      <CountingFilter
+        active={hasValue('kind', 'issue')}
+        query={pipe(replaceParam('kind', 'issue'), stringify)(params)}
+        to={pipe(toggleParam('kind', 'issue'), loc)(params)}
+        icon={BugReportOutlinedIcon}
+      >
+        issues
+      </CountingFilter>
+      <CountingFilter
+        active={hasValue('kind', 'pr')}
+        query={pipe(replaceParam('kind', 'pr'), stringify)(params)}
+        to={pipe(toggleParam('kind', 'pr'), loc)(params)}
+        icon={CallMergeIcon}
+      >
+        PRs
       </CountingFilter>
       <div className={classes.spacer} />
       {/*

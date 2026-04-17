@@ -6,6 +6,7 @@ import (
 	"github.com/git-bug/git-bug/api/graphql/connections"
 	"github.com/git-bug/git-bug/api/graphql/graph"
 	"github.com/git-bug/git-bug/api/graphql/models"
+	"github.com/git-bug/git-bug/api/repoctx"
 	"github.com/git-bug/git-bug/cache"
 )
 
@@ -15,14 +16,23 @@ type rootQueryResolver struct {
 	cache *cache.MultiRepoCache
 }
 
-func (r rootQueryResolver) Repository(_ context.Context, ref *string) (*models.Repository, error) {
+// Repository resolves a repository by explicit ref, or (in multi-repo mode)
+// falls back to the name carried in the request context (set from the
+// X-Repo-Name HTTP header by the webui middleware). Unchanged for single-
+// repo mode: ref==nil and only one repo registered still returns it.
+func (r rootQueryResolver) Repository(ctx context.Context, ref *string) (*models.Repository, error) {
 	var repo *cache.RepoCache
 	var err error
 
-	if ref == nil {
-		repo, err = r.cache.DefaultRepo()
-	} else {
+	switch {
+	case ref != nil:
 		repo, err = r.cache.ResolveRepo(*ref)
+	default:
+		if name := repoctx.Name(ctx); name != "" {
+			repo, err = r.cache.ResolveRepo(name)
+		} else {
+			repo, err = r.cache.DefaultRepo()
+		}
 	}
 
 	if err != nil {

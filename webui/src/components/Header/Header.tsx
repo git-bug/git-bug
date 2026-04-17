@@ -8,6 +8,8 @@ import CurrentIdentity from '../Identity/CurrentIdentity';
 import CurrentRepository from '../Identity/CurrentRepository';
 import { LightSwitch } from '../Themer';
 
+import RepoPicker from './RepoPicker';
+
 const useStyles = makeStyles((theme) => ({
   offset: {
     ...theme.mixins.toolbar,
@@ -47,6 +49,7 @@ function Header() {
             <img src="/logo.svg" className={classes.logo} alt="git-bug logo" />
             <CurrentRepository default="git-bug" />
           </Link>
+          <RepoPicker />
           <div className={classes.filler} />
           <LightSwitch className={classes.lightSwitch} />
           <CurrentIdentity />

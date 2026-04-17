@@ -3,6 +3,7 @@ package repository
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"unicode/utf8"
@@ -23,7 +24,19 @@ type bleveIndex struct {
 func openBleveIndex(path string) (*bleveIndex, error) {
 	index, err := bleve.Open(path)
 	if err != nil {
-		// likely we have no index yet, we make one.
+		// bleve.Open returns an error for three distinct cases:
+		//   a) no index yet (path missing or empty) — we just build one
+		//   b) path contains an index in a format this bleve can't read
+		//      (kvstore migration, moltdb -> boltdb, old boltdb -> scorch, ...)
+		//   c) path exists but is corrupt
+		// For (b) and (c), the index_meta.json is typically present and we
+		// need to wipe the stale content before bleve.New will succeed — it
+		// refuses with "cannot create new index, path already exists".
+		if hasStaleBleveData(path) {
+			if rmErr := os.RemoveAll(path); rmErr != nil {
+				return nil, fmt.Errorf("bleve: removing stale index at %s: %w (open: %v)", path, rmErr, err)
+			}
+		}
 		b := &bleveIndex{path: path}
 		return b, b.makeIndex()
 	}
@@ -47,6 +60,16 @@ func openBleveIndex(path string) (*bleveIndex, error) {
 	}
 
 	return &bleveIndex{path: path, index: index}, nil
+}
+
+// hasStaleBleveData reports whether path looks like a bleve index dir that
+// this process can't open (presence of index_meta.json without the matching
+// store). This is the canonical trigger for a "wipe and rebuild" path.
+func hasStaleBleveData(path string) bool {
+	if _, err := os.Stat(filepath.Join(path, "index_meta.json")); err == nil {
+		return true
+	}
+	return false
 }
 
 func (b *bleveIndex) makeIndex() error {

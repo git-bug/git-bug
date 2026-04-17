@@ -4,8 +4,13 @@
 #import "./SetTitleFragment.graphql"
 #import "./SetStatusFragment.graphql"
 
-query Timeline($id: String!, $first: Int = 10, $after: String) {
-  repository {
+query Timeline(
+  $id: String!
+  $first: Int = 10
+  $after: String
+  $repoRef: String
+) {
+  repository(ref: $repoRef) {
     name
     bug(prefix: $id) {
       timeline(first: $first, after: $after) {
