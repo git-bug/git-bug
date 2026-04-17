@@ -36,6 +36,24 @@ type createPullRequestMutation struct {
 	} `graphql:"createPullRequest(input:$input)"`
 }
 
+type addPullRequestReviewMutation struct {
+	AddPullRequestReview struct {
+		PullRequestReview struct {
+			ID  string `graphql:"id"`
+			URL string `graphql:"url"`
+		}
+	} `graphql:"addPullRequestReview(input:$input)"`
+}
+
+type addPullRequestReviewCommentMutation struct {
+	AddPullRequestReviewComment struct {
+		Comment struct {
+			ID  string `graphql:"id"`
+			URL string `graphql:"url"`
+		}
+	} `graphql:"addPullRequestReviewComment(input:$input)"`
+}
+
 type addCommentToIssueMutation struct {
 	AddComment struct {
 		CommentEdge struct {

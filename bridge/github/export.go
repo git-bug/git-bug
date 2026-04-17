@@ -437,12 +437,49 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 			id = bugGithubID
 			url = bugGithubURL
 
-		case *bug.UpdateHeadOperation, *bug.AddReviewOperation, *bug.AddReviewCommentOperation:
-			// PR-only ops that don't have a direct REST/GraphQL write path in
-			// v1. Mark as skipped so we don't block subsequent exports.
-			out <- core.NewExportNothing(b.Id(), fmt.Sprintf("skipping %T in v1 export", op))
+		case *bug.UpdateHeadOperation:
+			// UpdateHead reflects a git push to the PR's head branch. The bridge
+			// doesn't push branches itself; the user's `git push` to the remote
+			// is the authoritative action. Skip this op on export.
+			out <- core.NewExportNothing(b.Id(), "UpdateHead is not exported; push the branch with git directly")
 			id = bugGithubID
 			url = bugGithubURL
+
+		case *bug.AddReviewOperation:
+			id, url, err = ge.createGithubReview(ctx, client, bugGithubID, op.State, op.Body, op.CommitHash)
+			if err != nil {
+				err := errors.Wrap(err, "creating review")
+				out <- core.NewExportError(err, b.Id())
+				return
+			}
+			out <- core.NewExportReview(b.Id(), op.Id())
+
+		case *bug.AddReviewCommentOperation:
+			// Only reply-comments to an existing exported review comment export
+			// standalone. New threads must be bundled with the parent review at
+			// creation time — a look-ahead bundle is not in v1.
+			if op.ReplyTo == "" {
+				out <- core.NewExportNothing(b.Id(), "standalone review comments (non-replies) are not exported in v1; create them alongside the review")
+				id = bugGithubID
+				url = bugGithubURL
+				break
+			}
+			// Look up the parent comment's GitHub id via the reply-to CombinedId.
+			_, parentOpId := entity.SeparateIds(op.ReplyTo.String())
+			parentGithubID, known := ge.cachedOperationIDs[entity.Id(parentOpId)]
+			if !known {
+				out <- core.NewExportNothing(b.Id(), "reply parent not exported; skipping review comment")
+				id = bugGithubID
+				url = bugGithubURL
+				break
+			}
+			id, url, err = ge.addGithubReviewCommentReply(ctx, client, parentGithubID, op.Body)
+			if err != nil {
+				err := errors.Wrap(err, "adding review reply")
+				out <- core.NewExportError(err, b.Id())
+				return
+			}
+			out <- core.NewExportReviewComment(b.Id())
 
 		case *bug.LabelChangeOperation:
 			if err := ge.updateGithubIssueLabels(ctx, client, bugGithubID, op.Added, op.Removed); err != nil {
@@ -716,6 +753,58 @@ func (ge *githubExporter) createGithubIssue(ctx context.Context, gc *rateLimitHa
 
 	issue := m.CreateIssue.Issue
 	return issue.ID, issue.URL, nil
+}
+
+// createGithubReview submits a PR review (approve / request-changes /
+// comment) against bugGithubID at the given commit. No inline thread
+// comments in v1 — callers must issue those separately.
+func (ge *githubExporter) createGithubReview(ctx context.Context, gc *rateLimitHandlerClient, bugGithubID string, state bug.ReviewState, body, commitHash string) (string, string, error) {
+	m := &addPullRequestReviewMutation{}
+	event := mapReviewStateToGithubEvent(state)
+
+	input := githubv4.AddPullRequestReviewInput{
+		PullRequestID: bugGithubID,
+		Body:          (*githubv4.String)(&body),
+		Event:         &event,
+	}
+	if commitHash != "" {
+		oid := githubv4.GitObjectID(commitHash)
+		input.CommitOID = &oid
+	}
+
+	if err := gc.mutate(ctx, m, input, nil, ge.out); err != nil {
+		return "", "", err
+	}
+	r := m.AddPullRequestReview.PullRequestReview
+	return r.ID, r.URL, nil
+}
+
+// addGithubReviewCommentReply posts a reply to an existing review comment.
+// inReplyToID must be the GitHub node id of the parent comment.
+func (ge *githubExporter) addGithubReviewCommentReply(ctx context.Context, gc *rateLimitHandlerClient, inReplyToID, body string) (string, string, error) {
+	m := &addPullRequestReviewCommentMutation{}
+	parentId := githubv4.ID(inReplyToID)
+	bodyStr := githubv4.String(body)
+	input := githubv4.AddPullRequestReviewCommentInput{
+		InReplyTo: &parentId,
+		Body:      &bodyStr,
+	}
+	if err := gc.mutate(ctx, m, input, nil, ge.out); err != nil {
+		return "", "", err
+	}
+	c := m.AddPullRequestReviewComment.Comment
+	return c.ID, c.URL, nil
+}
+
+func mapReviewStateToGithubEvent(s bug.ReviewState) githubv4.PullRequestReviewEvent {
+	switch s {
+	case bug.ReviewApproved:
+		return githubv4.PullRequestReviewEventApprove
+	case bug.ReviewChangesRequested:
+		return githubv4.PullRequestReviewEventRequestChanges
+	default:
+		return githubv4.PullRequestReviewEventComment
+	}
 }
 
 // createGithubPullRequest opens a pull-request against repositoryID. baseRef

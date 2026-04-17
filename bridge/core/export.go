@@ -23,6 +23,10 @@ const (
 	ExportEventTitleEdition
 	// Bug's labels have been changed on the remote tracker
 	ExportEventLabelChange
+	// A PR review has been posted to the remote tracker
+	ExportEventReview
+	// A PR review comment has been posted to the remote tracker
+	ExportEventReviewComment
 
 	// Nothing changed on the bug
 	ExportEventNothing
@@ -62,6 +66,10 @@ func (er ExportResult) String() string {
 		return fmt.Sprintf("[%s] changed title", er.EntityId.Human())
 	case ExportEventLabelChange:
 		return fmt.Sprintf("[%s] changed label", er.EntityId.Human())
+	case ExportEventReview:
+		return fmt.Sprintf("[%s] new review", er.EntityId.Human())
+	case ExportEventReviewComment:
+		return fmt.Sprintf("[%s] new review comment", er.EntityId.Human())
 	case ExportEventNothing:
 		if er.EntityId != "" {
 			return fmt.Sprintf("no actions taken on entity %s: %s", er.EntityId, er.Reason)
@@ -148,6 +156,21 @@ func NewExportTitleEdition(entityId entity.Id) ExportResult {
 	return ExportResult{
 		EntityId: entityId,
 		Event:    ExportEventTitleEdition,
+	}
+}
+
+func NewExportReview(entityId entity.Id, opId entity.Id) ExportResult {
+	// OperationId not part of the struct today; reuse EntityId for display.
+	return ExportResult{
+		EntityId: entityId,
+		Event:    ExportEventReview,
+	}
+}
+
+func NewExportReviewComment(entityId entity.Id) ExportResult {
+	return ExportResult{
+		EntityId: entityId,
+		Event:    ExportEventReviewComment,
 	}
 }
 

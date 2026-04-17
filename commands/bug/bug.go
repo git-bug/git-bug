@@ -113,6 +113,7 @@ git bug status:open --by creation "foo bar" baz
 	cmd.AddCommand(newBugCommentCommand(env))
 	cmd.AddCommand(newBugLabelCommand(env))
 	cmd.AddCommand(newBugNewCommand(env))
+	cmd.AddCommand(newBugReviewCommand(env))
 	cmd.AddCommand(newBugRmCommand(env))
 	cmd.AddCommand(newBugShowCommand(env))
 	cmd.AddCommand(newBugStatusCommand(env))
