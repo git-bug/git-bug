@@ -6,14 +6,13 @@ import KeyboardArrowLeft from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRight from '@mui/icons-material/KeyboardArrowRight';
 import { Button, FormControl, Menu, MenuItem } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
-import InputBase from '@mui/material/InputBase';
 import Paper from '@mui/material/Paper';
 import Skeleton from '@mui/material/Skeleton';
 import { Theme } from '@mui/material/styles';
 import makeStyles from '@mui/styles/makeStyles';
 import * as React from 'react';
-import { useState, useEffect, useRef } from 'react';
-import { useLocation, useNavigate, useParams, Link } from 'react-router';
+import { useState, useRef } from 'react';
+import { useLocation, useParams, Link } from 'react-router';
 
 import { useCurrentIdentityQuery } from '../../components/Identity/CurrentIdentity.generated';
 import IfLoggedIn from 'src/components/IfLoggedIn/IfLoggedIn';
@@ -193,24 +192,13 @@ const Error: React.FC<ErrorProps> = ({ error }: ErrorProps) => {
 
 function ListQuery() {
   const location = useLocation();
-  const navigate = useNavigate();
   const params = new URLSearchParams(location.search);
   const query = params.has('q') ? params.get('q') || '' : 'status:open';
 
-  const [input, setInput] = useState(query);
   const [filterMenuIsOpen, setFilterMenuIsOpen] = useState(false);
   const filterButtonRef = useRef<HTMLButtonElement>(null);
 
-  const classes = useStyles({ searching: !!input });
-
-  // TODO is this the right way to do it?
-  const lastQuery = useRef<string | null>(null);
-  useEffect(() => {
-    if (query !== lastQuery.current) {
-      setInput(query);
-    }
-    lastQuery.current = query;
-  }, [query, input, lastQuery]);
+  const classes = useStyles({});
 
   const num = (param: string | null) => (param ? parseInt(param) : null);
   const page = {
@@ -313,11 +301,6 @@ function ListQuery() {
     }
   }
 
-  const formSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    navigate(queryLocation(input));
-  };
-
   const {
     loading: ciqLoading,
     error: ciqError,
@@ -343,7 +326,7 @@ function ListQuery() {
   return (
     <Paper className={classes.main}>
       <header className={classes.header}>
-        <form className={classes.form} onSubmit={formSubmit}>
+        <div className={classes.form}>
           <FormControl>
             <Button
               aria-haspopup="true"
@@ -380,20 +363,7 @@ function ListQuery() {
               )}
             </Menu>
           </FormControl>
-          <InputBase
-            id="issuefilter"
-            placeholder="Filter"
-            value={input}
-            onInput={(e: any) => setInput(e.target.value)}
-            classes={{
-              root: classes.search,
-              focused: classes.searchFocused,
-            }}
-          />
-          <button type="submit" hidden>
-            Search
-          </button>
-        </form>
+        </div>
         <IfLoggedIn>
           {() => (
             <Button

@@ -42,6 +42,12 @@ type Filters struct {
 	Label       []string
 	Title       []string
 	NoLabel     bool
+	// Repo and Org are repo-level selectors used by the multi-repo search
+	// page; they are no-ops inside a single-repo query (the repo scope is
+	// already determined). Values are matched case-insensitively as exact
+	// strings on the repo name's "<org>/<name>" form.
+	Repo []string
+	Org  []string
 }
 
 type OrderBy int

@@ -53,6 +53,10 @@ func Parse(query string) (*Query, error) {
 				q.Label = append(q.Label, t.value)
 			case "title":
 				q.Title = append(q.Title, t.value)
+			case "repo":
+				q.Repo = append(q.Repo, t.value)
+			case "org":
+				q.Org = append(q.Org, t.value)
 			case "no":
 				switch t.value {
 				case "label":

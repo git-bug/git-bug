@@ -1,0 +1,19 @@
+query SearchAll($query: String!) {
+  repositories {
+    nodes {
+      name
+      allBugs(query: $query, first: 20) {
+        totalCount
+        nodes {
+          id
+          humanId
+          title
+          kind
+          status
+          createdAt
+          originUrl
+        }
+      }
+    }
+  }
+}

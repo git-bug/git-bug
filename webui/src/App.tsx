@@ -10,6 +10,7 @@ import ListPage from './pages/list';
 import NewBugPage from './pages/new/NewBugPage';
 import NotFoundPage from './pages/notfound/NotFoundPage';
 import ReposLanding from './pages/repos/ReposLanding';
+import SearchPage from './pages/search/SearchPage';
 
 // IS_MULTI_REPO_QUERY decides which component lives at "/". When the server
 // hosts more than one repo, "/" is a landing page listing them; in single-
@@ -60,6 +61,9 @@ export default function App() {
               </RepoContextBinder>
             }
           />
+
+          {/* Global search across all registered repositories. */}
+          <Route path="/search" element={<SearchPage />} />
 
           {/* Single-repo routes (unchanged behaviour) + root that adapts. */}
           <Route path="/" element={<RootRoute />} />

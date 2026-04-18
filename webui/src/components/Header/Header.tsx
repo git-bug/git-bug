@@ -8,6 +8,7 @@ import CurrentIdentity from '../Identity/CurrentIdentity';
 import CurrentRepository from '../Identity/CurrentRepository';
 import { LightSwitch } from '../Themer';
 
+import GlobalSearch from './GlobalSearch';
 import RepoPicker from './RepoPicker';
 
 const useStyles = makeStyles((theme) => ({
@@ -50,6 +51,7 @@ function Header() {
             <CurrentRepository default="git-bug" />
           </Link>
           <RepoPicker />
+          <GlobalSearch />
           <div className={classes.filler} />
           <LightSwitch className={classes.lightSwitch} />
           <CurrentIdentity />
