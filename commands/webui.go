@@ -169,6 +169,7 @@ func setupRoutes(env *execenv.Env, opts webUIOptions) (*mux.Router, func() error
 	router.Path("/graphql").Handler(graphql.NewHandler(mrc, errOut))
 	router.Path("/gitfile/{repo}/{rest:.+}").Handler(httpapi.NewGitFileHandler(mrc))
 	router.Path("/upload/{repo}").Methods("POST").Handler(httpapi.NewGitUploadFileHandler(mrc))
+	router.Path("/sync").Handler(httpapi.NewSyncHandler(mrc))
 	router.PathPrefix("/").Handler(webui.NewHandler())
 
 	return router, mrc.Close, nil

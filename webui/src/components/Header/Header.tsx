@@ -10,6 +10,7 @@ import { LightSwitch } from '../Themer';
 
 import GlobalSearch from './GlobalSearch';
 import RepoPicker from './RepoPicker';
+import SyncButton from './SyncButton';
 
 const useStyles = makeStyles((theme) => ({
   offset: {
@@ -53,6 +54,7 @@ function Header() {
           <RepoPicker />
           <GlobalSearch />
           <div className={classes.filler} />
+          <SyncButton />
           <LightSwitch className={classes.lightSwitch} />
           <CurrentIdentity />
         </Toolbar>
