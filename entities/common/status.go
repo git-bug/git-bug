@@ -13,6 +13,8 @@ const (
 	_ Status = iota
 	OpenStatus
 	ClosedStatus
+	MergedStatus
+	DraftStatus
 )
 
 func (s Status) String() string {
@@ -21,6 +23,10 @@ func (s Status) String() string {
 		return "open"
 	case ClosedStatus:
 		return "closed"
+	case MergedStatus:
+		return "merged"
+	case DraftStatus:
+		return "draft"
 	default:
 		return "unknown status"
 	}
@@ -32,6 +38,10 @@ func (s Status) Action() string {
 		return "opened"
 	case ClosedStatus:
 		return "closed"
+	case MergedStatus:
+		return "merged"
+	case DraftStatus:
+		return "marked as draft"
 	default:
 		return "unknown status"
 	}
@@ -45,17 +55,22 @@ func StatusFromString(str string) (Status, error) {
 		return OpenStatus, nil
 	case "closed":
 		return ClosedStatus, nil
+	case "merged":
+		return MergedStatus, nil
+	case "draft":
+		return DraftStatus, nil
 	default:
 		return 0, fmt.Errorf("unknown status")
 	}
 }
 
 func (s Status) Validate() error {
-	if s != OpenStatus && s != ClosedStatus {
+	switch s {
+	case OpenStatus, ClosedStatus, MergedStatus, DraftStatus:
+		return nil
+	default:
 		return fmt.Errorf("invalid")
 	}
-
-	return nil
 }
 
 func (s Status) MarshalGQL(w io.Writer) {
@@ -64,6 +79,10 @@ func (s Status) MarshalGQL(w io.Writer) {
 		_, _ = w.Write([]byte(strconv.Quote("OPEN")))
 	case ClosedStatus:
 		_, _ = w.Write([]byte(strconv.Quote("CLOSED")))
+	case MergedStatus:
+		_, _ = w.Write([]byte(strconv.Quote("MERGED")))
+	case DraftStatus:
+		_, _ = w.Write([]byte(strconv.Quote("DRAFT")))
 	default:
 		panic("missing case")
 	}
@@ -79,6 +98,10 @@ func (s *Status) UnmarshalGQL(v interface{}) error {
 		*s = OpenStatus
 	case "CLOSED":
 		*s = ClosedStatus
+	case "MERGED":
+		*s = MergedStatus
+	case "DRAFT":
+		*s = DraftStatus
 	default:
 		return fmt.Errorf("%s is not a valid Status", str)
 	}

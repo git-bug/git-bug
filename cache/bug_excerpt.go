@@ -27,12 +27,20 @@ type BugExcerpt struct {
 	EditUnixTime      int64
 
 	AuthorId     entity.Id
+	Kind         common.Kind
 	Status       common.Status
 	Labels       []common.Label
 	Title        string
 	LenComments  int
 	Actors       []entity.Id
 	Participants []entity.Id
+
+	// PR-only, zero-valued when Kind == IssueKind.
+	BaseRef     string
+	HeadRef     string
+	HeadCommit  string
+	MergeCommit string
+	LenReviews  int
 
 	CreateMetadata map[string]string
 }
@@ -56,12 +64,18 @@ func NewBugExcerpt(b *BugCache) *BugExcerpt {
 		CreateUnixTime:    b.FirstOp().Time().Unix(),
 		EditUnixTime:      snap.EditTime().Unix(),
 		AuthorId:          snap.Author.Id(),
+		Kind:              snap.Kind,
 		Status:            snap.Status,
 		Labels:            snap.Labels,
 		Actors:            actorsIds,
 		Participants:      participantsIds,
 		Title:             snap.Title,
 		LenComments:       len(snap.Comments),
+		BaseRef:           snap.BaseRef,
+		HeadRef:           snap.HeadRef,
+		HeadCommit:        snap.HeadCommit,
+		MergeCommit:       snap.MergeCommit,
+		LenReviews:        len(snap.Reviews),
 		CreateMetadata:    b.FirstOp().AllMetadata(),
 	}
 

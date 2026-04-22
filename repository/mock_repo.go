@@ -247,6 +247,10 @@ func newMockRepoDataBrowse() *mockRepoDataBrowse {
 	}
 }
 
+func (r *mockRepoDataBrowse) FetchRefSpecs(remote string, specs []string) (string, error) {
+	return "", nil
+}
+
 func (r *mockRepoDataBrowse) FetchRefs(remote string, prefixes ...string) (string, error) {
 	panic("implement me")
 }
@@ -808,6 +812,17 @@ func (r *mockRepoDataBrowse) Head() (RefMeta, error) {
 		Type:      GitRefTypeCommit,
 		Hash:      string(hash),
 	}, nil
+}
+
+// CommitsAhead is not wired through the mock yet — the PR-browse handlers
+// operate on real gogit repos in practice. Tests that need it can extend.
+func (r *mockRepoDataBrowse) CommitsAhead(baseRef, headRef string, limit int) ([]CommitMeta, error) {
+	return nil, nil
+}
+
+// DiffBetween is likewise unimplemented in the mock.
+func (r *mockRepoDataBrowse) DiffBetween(baseRef, headRef string) ([]FileDiff, error) {
+	return nil, nil
 }
 
 // mockDiffHunks produces a single DiffHunk using a prefix/suffix scan.

@@ -323,6 +323,11 @@ func (ec *executionContext) _Operation(ctx context.Context, sel ast.SelectionSet
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
+	case *bug.UpdateHeadOperation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BugUpdateHeadOperation(ctx, sel, obj)
 	case *bug.SetTitleOperation:
 		if obj == nil {
 			return graphql.Null
@@ -348,6 +353,16 @@ func (ec *executionContext) _Operation(ctx context.Context, sel ast.SelectionSet
 			return graphql.Null
 		}
 		return ec._BugCreateOperation(ctx, sel, obj)
+	case *bug.AddReviewOperation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BugAddReviewOperation(ctx, sel, obj)
+	case *bug.AddReviewCommentOperation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BugAddReviewCommentOperation(ctx, sel, obj)
 	case *bug.AddCommentOperation:
 		if obj == nil {
 			return graphql.Null

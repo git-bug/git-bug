@@ -4,8 +4,10 @@ fragment BugRow on Bug {
   id
   humanId
   title
+  kind
   status
   createdAt
+  originUrl
   labels {
     ...Label
   }

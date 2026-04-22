@@ -18,6 +18,13 @@ func StatusFilter(status common.Status) Filter {
 	}
 }
 
+// KindFilter return a Filter that matches a bug kind (issue vs pr).
+func KindFilter(kind common.Kind) Filter {
+	return func(excerpt *BugExcerpt, resolvers entity.Resolvers) bool {
+		return excerpt.Kind == kind
+	}
+}
+
 // AuthorFilter return a Filter that matches a bug author
 func AuthorFilter(query string) Filter {
 	return func(excerpt *BugExcerpt, resolvers entity.Resolvers) bool {
@@ -111,6 +118,7 @@ func NoLabelFilter() Filter {
 
 // Matcher is a collection of Filter that implement a complex filter
 type Matcher struct {
+	Kind        []Filter
 	Status      []Filter
 	Author      []Filter
 	Metadata    []Filter
@@ -126,6 +134,9 @@ type Matcher struct {
 func compileMatcher(filters query.Filters) *Matcher {
 	result := &Matcher{}
 
+	for _, value := range filters.Kind {
+		result.Kind = append(result.Kind, KindFilter(value))
+	}
 	for _, value := range filters.Status {
 		result.Status = append(result.Status, StatusFilter(value))
 	}
@@ -156,6 +167,10 @@ func compileMatcher(filters query.Filters) *Matcher {
 
 // Match check if a bug matches the set of filters
 func (f *Matcher) Match(excerpt *BugExcerpt, resolvers entity.Resolvers) bool {
+	if match := f.orMatch(f.Kind, excerpt, resolvers); !match {
+		return false
+	}
+
 	if match := f.orMatch(f.Status, excerpt, resolvers); !match {
 		return false
 	}

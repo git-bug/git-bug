@@ -2,18 +2,49 @@ package github
 
 import (
 	"context"
+	"log"
+	"os"
+	"sync/atomic"
 	"time"
 
 	"github.com/shurcooL/githubv4"
 )
 
+// Set GITBUG_GITHUB_RATELIMIT_LOG=1 to have each top-level GraphQL query log
+// its cost and remaining budget to stderr. Off by default so normal runs are
+// quiet; invaluable when diagnosing rate-limit starvation.
+var logRateLimit = os.Getenv("GITBUG_GITHUB_RATELIMIT_LOG") == "1"
+
+// Most recent budget observation across all mediators — purely for debug.
+var lastRateLimit atomic.Value // stores rateLimit
+
+func noteRateLimit(queryName, owner, project string, rl rateLimit) {
+	lastRateLimit.Store(rl)
+	if !logRateLimit {
+		return
+	}
+	log.Printf(
+		"github.graphql %s/%s %s: cost=%d remaining=%d/%d resetsAt=%s",
+		owner, project, queryName, int(rl.Cost), int(rl.Remaining), int(rl.Limit),
+		rl.ResetAt.Format(time.RFC3339),
+	)
+}
+
+// LastRateLimit returns the most recent rateLimit observed across any
+// bridge sync (zero value if we've never successfully queried yet).
+func LastRateLimit() (cost, remaining, limit int, resetAt time.Time) {
+	v, _ := lastRateLimit.Load().(rateLimit)
+	return int(v.Cost), int(v.Remaining), int(v.Limit), v.ResetAt.Time
+}
+
 const (
 	// These values influence how fast the github graphql rate limit is exhausted.
 
-	NumIssues        = 40
-	NumIssueEdits    = 100
-	NumTimelineItems = 100
-	NumCommentEdits  = 100
+	NumIssues         = 40
+	NumIssueEdits     = 100
+	NumTimelineItems  = 100
+	NumCommentEdits   = 100
+	NumReviewComments = 50
 
 	ChanCapacity = 128
 )
@@ -104,6 +135,184 @@ func (mm *importMediator) fillImportEvents(ctx context.Context) {
 			break
 		}
 		issues, hasIssues = mm.queryIssue(ctx, issues.PageInfo.EndCursor)
+	}
+
+	// Second pass: pull-requests. GitHub's PR stream is disjoint from issues
+	// (they share the repo's number sequence but `issues` never returns PRs).
+	// Sorted UPDATED_AT DESC so we can stop paginating the instant we see a
+	// PR older than `since`: catchup syncs with nothing new cost 1 point.
+	prs, hasPRs := mm.queryPullRequest(ctx, initialCursor)
+prPages:
+	for hasPRs {
+		for _, node := range prs.Nodes {
+			// Because the page is sorted newest-updated first, the first PR
+			// older than `since` means every subsequent PR on this page and
+			// all following pages is also older → bail on the whole scan.
+			if !mm.since.IsZero() && node.UpdatedAt.Before(mm.since) {
+				break prPages
+			}
+			select {
+			case <-ctx.Done():
+				return
+			case mm.importEvents <- PrEvent{node.pullRequest}:
+			}
+			mm.fillPrEditEvents(ctx, &node)
+			mm.fillPrTimelineEvents(ctx, &node)
+		}
+		if !prs.PageInfo.HasNextPage {
+			break
+		}
+		prs, hasPRs = mm.queryPullRequest(ctx, prs.PageInfo.EndCursor)
+	}
+}
+
+func (mm *importMediator) queryPullRequest(ctx context.Context, cursor githubv4.String) (*pullRequestConnection, bool) {
+	vars := newPRVars(mm.owner, mm.project)
+	if cursor != "" {
+		vars["issueAfter"] = cursor
+	}
+
+	query := pullRequestQuery{}
+	if err := mm.gh.queryImport(ctx, &query, vars, mm.importEvents); err != nil {
+		mm.err = err
+		return nil, false
+	}
+	noteRateLimit("pullRequests", mm.owner, mm.project, query.RateLimit)
+	connection := &query.Repository.PullRequests
+	if len(connection.Nodes) <= 0 {
+		return nil, false
+	}
+	return connection, true
+}
+
+func (mm *importMediator) fillPrEditEvents(ctx context.Context, prNode *pullRequestNode) {
+	edits := &prNode.UserContentEdits
+	hasEdits := true
+	for hasEdits {
+		for edit := range reverse(edits.Nodes) {
+			if edit.Diff == nil || string(*edit.Diff) == "" {
+				continue
+			}
+			select {
+			case <-ctx.Done():
+				return
+			case mm.importEvents <- PrEditEvent{prId: prNode.pullRequest.Id, userContentEdit: edit}:
+			}
+		}
+		if !edits.PageInfo.HasPreviousPage {
+			break
+		}
+		edits, hasEdits = mm.queryPrEdits(ctx, prNode.pullRequest.Id, edits.PageInfo.EndCursor)
+	}
+}
+
+func (mm *importMediator) queryPrEdits(ctx context.Context, nid githubv4.ID, cursor githubv4.String) (*userContentEditConnection, bool) {
+	vars := newIssueEditVars()
+	vars["gqlNodeId"] = nid
+	if cursor == "" {
+		vars["issueEditBefore"] = (*githubv4.String)(nil)
+	} else {
+		vars["issueEditBefore"] = cursor
+	}
+	query := prEditQuery{}
+	if err := mm.gh.queryImport(ctx, &query, vars, mm.importEvents); err != nil {
+		mm.err = err
+		return nil, false
+	}
+	connection := &query.Node.PullRequest.UserContentEdits
+	if len(connection.Nodes) <= 0 {
+		return nil, false
+	}
+	return connection, true
+}
+
+func (mm *importMediator) fillPrTimelineEvents(ctx context.Context, prNode *pullRequestNode) {
+	items := &prNode.TimelineItems
+	hasItems := true
+	for hasItems {
+		for _, item := range items.Nodes {
+			select {
+			case <-ctx.Done():
+				return
+			case mm.importEvents <- PrTimelineEvent{prId: prNode.pullRequest.Id, prTimelineItem: item}:
+			}
+			if item.Typename == "IssueComment" {
+				mm.fillCommentEditsPr(ctx, &item)
+			}
+		}
+		if !items.PageInfo.HasNextPage {
+			break
+		}
+		items, hasItems = mm.queryPrTimeline(ctx, prNode.pullRequest.Id, items.PageInfo.EndCursor)
+	}
+}
+
+func (mm *importMediator) queryPrTimeline(ctx context.Context, nid githubv4.ID, cursor githubv4.String) (*prTimelineItemsConnection, bool) {
+	vars := newTimelineVars()
+	vars["gqlNodeId"] = nid
+	vars["reviewCommentFirst"] = githubv4.Int(NumReviewComments)
+	if cursor == "" {
+		vars["timelineAfter"] = (*githubv4.String)(nil)
+	} else {
+		vars["timelineAfter"] = cursor
+	}
+	query := prTimelineQuery{}
+	if err := mm.gh.queryImport(ctx, &query, vars, mm.importEvents); err != nil {
+		mm.err = err
+		return nil, false
+	}
+	connection := &query.Node.PullRequest.TimelineItems
+	if len(connection.Nodes) <= 0 {
+		return nil, false
+	}
+	return connection, true
+}
+
+// QueryReviewComments fetches a page of review comments for a
+// PullRequestReview node id. Returns (nodes, nextCursor, hasNextPage). An
+// empty cursor argument fetches the first page.
+func (mm *importMediator) QueryReviewComments(ctx context.Context, reviewId githubv4.ID, cursor githubv4.String) ([]pullRequestReviewComment, githubv4.String, bool) {
+	vars := varmap{
+		"gqlNodeId":          reviewId,
+		"reviewCommentFirst": githubv4.Int(NumReviewComments),
+	}
+	if cursor == "" {
+		vars["reviewCommentAfter"] = (*githubv4.String)(nil)
+	} else {
+		vars["reviewCommentAfter"] = cursor
+	}
+
+	query := prReviewCommentsQuery{}
+	if err := mm.gh.queryImport(ctx, &query, vars, mm.importEvents); err != nil {
+		mm.err = err
+		return nil, "", false
+	}
+	c := query.Node.PullRequestReview.Comments
+	return c.Nodes, c.PageInfo.EndCursor, c.PageInfo.HasNextPage
+}
+
+func (mm *importMediator) fillCommentEditsPr(ctx context.Context, item *prTimelineItem) {
+	if item.Typename != "IssueComment" {
+		return
+	}
+	comment := &item.IssueComment
+	edits := &comment.UserContentEdits
+	hasEdits := true
+	for hasEdits {
+		for edit := range reverse(edits.Nodes) {
+			if edit.Diff == nil || string(*edit.Diff) == "" {
+				continue
+			}
+			select {
+			case <-ctx.Done():
+				return
+			case mm.importEvents <- CommentEditEvent{commentId: comment.Id, userContentEdit: edit}:
+			}
+		}
+		if !edits.PageInfo.HasPreviousPage {
+			break
+		}
+		edits, hasEdits = mm.queryCommentEdits(ctx, comment.Id, edits.PageInfo.EndCursor)
 	}
 }
 
@@ -257,6 +466,7 @@ func (mm *importMediator) queryIssue(ctx context.Context, cursor githubv4.String
 		mm.err = err
 		return nil, false
 	}
+	noteRateLimit("issues", mm.owner, mm.project, query.RateLimit)
 	connection := &query.Repository.Issues
 	if len(connection.Nodes) <= 0 {
 		return nil, false
@@ -293,6 +503,25 @@ func newIssueVars(owner, project string, since time.Time) varmap {
 	}
 }
 
+// newPRVars returns the variable set for PR-root queries. It mirrors
+// newIssueVars but drops the issue-only filter and adds the variable
+// required by nested pullRequestReview.comments.
+func newPRVars(owner, project string) varmap {
+	return varmap{
+		"owner":              githubv4.String(owner),
+		"name":               githubv4.String(project),
+		"issueFirst":         githubv4.Int(NumIssues),
+		"issueAfter":         (*githubv4.String)(nil),
+		"issueEditLast":      githubv4.Int(NumIssueEdits),
+		"issueEditBefore":   (*githubv4.String)(nil),
+		"timelineFirst":      githubv4.Int(NumTimelineItems),
+		"timelineAfter":      (*githubv4.String)(nil),
+		"commentEditLast":    githubv4.Int(NumCommentEdits),
+		"commentEditBefore":  (*githubv4.String)(nil),
+		"reviewCommentFirst": githubv4.Int(NumReviewComments),
+	}
+}
+
 func newIssueEditVars() varmap {
 	return varmap{
 		"issueEditLast": githubv4.Int(NumIssueEdits),
@@ -301,9 +530,10 @@ func newIssueEditVars() varmap {
 
 func newTimelineVars() varmap {
 	return varmap{
-		"timelineFirst":     githubv4.Int(NumTimelineItems),
-		"commentEditLast":   githubv4.Int(NumCommentEdits),
-		"commentEditBefore": (*githubv4.String)(nil),
+		"timelineFirst":      githubv4.Int(NumTimelineItems),
+		"commentEditLast":    githubv4.Int(NumCommentEdits),
+		"commentEditBefore":  (*githubv4.String)(nil),
+		"reviewCommentFirst": githubv4.Int(NumReviewComments),
 	}
 }
 

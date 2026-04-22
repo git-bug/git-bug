@@ -1,5 +1,5 @@
-query ListLabels {
-  repository {
+query ListLabels($repoRef: String) {
+  repository(ref: $repoRef) {
     name
     validLabels {
       nodes {

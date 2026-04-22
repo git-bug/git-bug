@@ -25,9 +25,15 @@ const Author = ({ author, ...props }: Props) => {
   );
 };
 
+// Backend util/text.ValidUrl already restricts avatarUrl to http(s), but
+// re-check in the UI: stored data might predate that validation, and a
+// defensive scheme filter here is cheap insurance against data:/javascript:
+// URLs being passed to an <img src>.
+const isSafeHttpUrl = (u?: string | null) => !!u && /^https?:\/\//i.test(u);
+
 export const Avatar = ({ author, ...props }: Props) => {
-  if (author.avatarUrl) {
-    return <MAvatar src={author.avatarUrl} {...props} />;
+  if (isSafeHttpUrl(author.avatarUrl)) {
+    return <MAvatar src={author.avatarUrl!} {...props} />;
   }
 
   return <MAvatar {...props}>{author.displayName[0]}</MAvatar>;

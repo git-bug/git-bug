@@ -1031,6 +1031,8 @@ func (ec *executionContext) fieldContext_Repository_bug(ctx context.Context, fie
 				return ec.fieldContext_Bug_id(ctx, field)
 			case "humanId":
 				return ec.fieldContext_Bug_humanId(ctx, field)
+			case "kind":
+				return ec.fieldContext_Bug_kind(ctx, field)
 			case "status":
 				return ec.fieldContext_Bug_status(ctx, field)
 			case "title":
@@ -1043,6 +1045,18 @@ func (ec *executionContext) fieldContext_Repository_bug(ctx context.Context, fie
 				return ec.fieldContext_Bug_createdAt(ctx, field)
 			case "lastEdit":
 				return ec.fieldContext_Bug_lastEdit(ctx, field)
+			case "baseRef":
+				return ec.fieldContext_Bug_baseRef(ctx, field)
+			case "headRef":
+				return ec.fieldContext_Bug_headRef(ctx, field)
+			case "headCommit":
+				return ec.fieldContext_Bug_headCommit(ctx, field)
+			case "mergeCommit":
+				return ec.fieldContext_Bug_mergeCommit(ctx, field)
+			case "reviews":
+				return ec.fieldContext_Bug_reviews(ctx, field)
+			case "originUrl":
+				return ec.fieldContext_Bug_originUrl(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":

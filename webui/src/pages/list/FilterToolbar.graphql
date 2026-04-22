@@ -1,5 +1,5 @@
-query BugCount($query: String) {
-  repository {
+query BugCount($query: String, $repoRef: String) {
+  repository(ref: $repoRef) {
     name
     bugs: allBugs(query: $query) {
       totalCount

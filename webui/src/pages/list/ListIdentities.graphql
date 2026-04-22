@@ -1,5 +1,5 @@
-query ListIdentities {
-  repository {
+query ListIdentities($repoRef: String) {
+  repository(ref: $repoRef) {
     name
     allIdentities {
       nodes {

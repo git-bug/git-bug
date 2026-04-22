@@ -27,3 +27,7 @@ models:
     model: github.com/git-bug/git-bug/api/graphql/models.IdentityWrapper
   Bug:
     model: github.com/git-bug/git-bug/api/graphql/models.BugWrapper
+  BugKind:
+    model: github.com/git-bug/git-bug/entities/common.Kind
+  ReviewState:
+    model: github.com/git-bug/git-bug/entities/bug.ReviewState

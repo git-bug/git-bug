@@ -132,6 +132,76 @@ func (c *BugCache) CloseRaw(author identity.Interface, unixTime int64, metadata 
 	return op, c.notifyUpdated()
 }
 
+// Merge marks a PR as merged and records the merge commit hash.
+func (c *BugCache) Merge(mergeCommit string) (*bug.SetStatusOperation, error) {
+	author, err := c.getUserIdentity()
+	if err != nil {
+		return nil, err
+	}
+
+	return c.MergeRaw(author, time.Now().Unix(), mergeCommit, nil)
+}
+
+func (c *BugCache) MergeRaw(author identity.Interface, unixTime int64, mergeCommit string, metadata map[string]string) (*bug.SetStatusOperation, error) {
+	c.mu.Lock()
+	op, err := bug.Merge(c.entity, author, unixTime, mergeCommit, metadata)
+	c.mu.Unlock()
+	if err != nil {
+		return nil, err
+	}
+	return op, c.notifyUpdated()
+}
+
+// MarkReady transitions a draft PR to open (ready-for-review).
+func (c *BugCache) MarkReady() (*bug.SetStatusOperation, error) {
+	return c.Open()
+}
+
+// AddReview appends a review verdict to a PR as the current user.
+func (c *BugCache) AddReview(state bug.ReviewState, body, commitHash string) (entity.CombinedId, *bug.AddReviewOperation, error) {
+	author, err := c.getUserIdentity()
+	if err != nil {
+		return entity.UnsetCombinedId, nil, err
+	}
+	return c.AddReviewRawWithId(author, time.Now().Unix(), state, body, commitHash, nil)
+}
+
+// AddReviewRaw is an import-friendly convenience that returns only the
+// operation. Callers that need the combined id should use AddReviewRawWithId.
+func (c *BugCache) AddReviewRaw(author identity.Interface, unixTime int64, state bug.ReviewState, body, commitHash string, metadata map[string]string) (*bug.AddReviewOperation, error) {
+	_, op, err := c.AddReviewRawWithId(author, unixTime, state, body, commitHash, metadata)
+	return op, err
+}
+
+func (c *BugCache) AddReviewRawWithId(author identity.Interface, unixTime int64, state bug.ReviewState, body, commitHash string, metadata map[string]string) (entity.CombinedId, *bug.AddReviewOperation, error) {
+	c.mu.Lock()
+	id, op, err := bug.AddReview(c.entity, author, unixTime, state, body, commitHash, metadata)
+	c.mu.Unlock()
+	if err != nil {
+		return entity.UnsetCombinedId, nil, err
+	}
+	return id, op, c.notifyUpdated()
+}
+
+// AddReviewComment attaches a line-anchored comment to a review on a PR.
+func (c *BugCache) AddReviewComment(reviewId entity.CombinedId, body, commitHash, path string, startLine, endLine int, replyTo entity.CombinedId) (entity.CombinedId, *bug.AddReviewCommentOperation, error) {
+	author, err := c.getUserIdentity()
+	if err != nil {
+		return entity.UnsetCombinedId, nil, err
+	}
+	return c.AddReviewCommentRaw(author, time.Now().Unix(), reviewId, body, commitHash, path, startLine, endLine, replyTo, nil)
+}
+
+func (c *BugCache) AddReviewCommentRaw(author identity.Interface, unixTime int64, reviewId entity.CombinedId, body, commitHash, path string, startLine, endLine int, replyTo entity.CombinedId, metadata map[string]string) (entity.CombinedId, *bug.AddReviewCommentOperation, error) {
+	c.mu.Lock()
+	commentId, op, err := bug.AddReviewComment(c.entity, author, unixTime, reviewId, body, commitHash, path, startLine, endLine, replyTo, metadata)
+	c.mu.Unlock()
+	if err != nil {
+		return entity.UnsetCombinedId, nil, err
+	}
+	return commentId, op, c.notifyUpdated()
+}
+
 func (c *BugCache) SetTitle(title string) (*bug.SetTitleOperation, error) {
 	author, err := c.getUserIdentity()
 	if err != nil {

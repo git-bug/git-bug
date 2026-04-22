@@ -9,6 +9,7 @@ import makeStyles from '@mui/styles/makeStyles';
 import withStyles from '@mui/styles/withStyles';
 import * as React from 'react';
 import { useEffect, useRef, useState } from 'react';
+import { useParams } from 'react-router';
 
 import { Color } from '../../../gqlTypes';
 import {
@@ -216,8 +217,18 @@ function FilterDropdown({
 type Props = {
   bug: BugFragment;
 };
+function safeDecode(s: string): string {
+  try {
+    return decodeURIComponent(s);
+  } catch {
+    return s;
+  }
+}
+
 function LabelMenu({ bug }: Props) {
-  const { data: labelsData } = useListLabelsQuery();
+  const { repoName } = useParams<{ repoName: string }>();
+  const repoRef = repoName ? safeDecode(repoName) : null;
+  const { data: labelsData } = useListLabelsQuery({ variables: { repoRef } });
   const [bugLabelNames, setBugLabelNames] = useState(
     bug.labels.map((l) => l.name)
   );

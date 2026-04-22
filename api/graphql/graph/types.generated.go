@@ -359,6 +359,16 @@ func (ec *executionContext) _Authored(ctx context.Context, sel ast.SelectionSet,
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
+	case *bug.UpdateHeadTimelineItem:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BugUpdateHeadTimelineItem(ctx, sel, obj)
+	case *bug.UpdateHeadOperation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BugUpdateHeadOperation(ctx, sel, obj)
 	case *bug.SetTitleTimelineItem:
 		if obj == nil {
 			return graphql.Null
@@ -404,6 +414,26 @@ func (ec *executionContext) _Authored(ctx context.Context, sel ast.SelectionSet,
 			return graphql.Null
 		}
 		return ec._BugCreateOperation(ctx, sel, obj)
+	case *bug.AddReviewTimelineItem:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BugAddReviewTimelineItem(ctx, sel, obj)
+	case *bug.AddReviewOperation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BugAddReviewOperation(ctx, sel, obj)
+	case *bug.AddReviewCommentTimelineItem:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BugAddReviewCommentTimelineItem(ctx, sel, obj)
+	case *bug.AddReviewCommentOperation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BugAddReviewCommentOperation(ctx, sel, obj)
 	case *bug.AddCommentTimelineItem:
 		if obj == nil {
 			return graphql.Null
@@ -419,6 +449,20 @@ func (ec *executionContext) _Authored(ctx context.Context, sel ast.SelectionSet,
 			return graphql.Null
 		}
 		return ec._Bug(ctx, sel, obj)
+	case bug.ReviewComment:
+		return ec._ReviewComment(ctx, sel, &obj)
+	case *bug.ReviewComment:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ReviewComment(ctx, sel, obj)
+	case bug.Review:
+		return ec._Review(ctx, sel, &obj)
+	case *bug.Review:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Review(ctx, sel, obj)
 	case bug.Comment:
 		return ec._BugComment(ctx, sel, &obj)
 	case *bug.Comment:

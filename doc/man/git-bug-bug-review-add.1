@@ -1,0 +1,53 @@
+.nh
+.TH "GIT-BUG" "1" "Apr 2019" "Generated from git-bug's source code" ""
+
+.SH NAME
+git-bug-bug-review-add - Record a review on a pull-request
+
+
+.SH SYNOPSIS
+\fBgit-bug bug review add [BUG_ID] [flags]\fP
+
+
+.SH DESCRIPTION
+Record a review verdict (approve, request-changes, or comment) on a
+pull-request. Exactly one of --approve / --request-changes / --comment must
+be supplied. By default the review is anchored to the PR's current head
+commit; override with --commit.
+
+
+.SH OPTIONS
+\fB--approve\fP[=false]
+	Approve the pull-request
+
+.PP
+\fB--request-changes\fP[=false]
+	Request changes on the pull-request
+
+.PP
+\fB--comment\fP[=false]
+	Leave a comment-only review (no verdict)
+
+.PP
+\fB-m\fP, \fB--message\fP=""
+	Review body
+
+.PP
+\fB-F\fP, \fB--file\fP=""
+	Take the review body from the given file (- for stdin)
+
+.PP
+\fB--commit\fP=""
+	Commit hash the review is anchored to (defaults to the PR's head commit)
+
+.PP
+\fB--non-interactive\fP[=false]
+	Do not ask for user input
+
+.PP
+\fB-h\fP, \fB--help\fP[=false]
+	help for add
+
+
+.SH SEE ALSO
+\fBgit-bug-bug-review(1)\fP

@@ -24,6 +24,23 @@ func TestParse(t *testing.T) {
 			Filters: Filters{Status: []common.Status{common.ClosedStatus}},
 		}},
 		{"status:unknown", nil},
+		{"status:merged", &Query{
+			Filters: Filters{Status: []common.Status{common.MergedStatus}},
+		}},
+		{"status:draft", &Query{
+			Filters: Filters{Status: []common.Status{common.DraftStatus}},
+		}},
+
+		{"kind:pr", &Query{
+			Filters: Filters{Kind: []common.Kind{common.PRKind}},
+		}},
+		{"kind:issue", &Query{
+			Filters: Filters{Kind: []common.Kind{common.IssueKind}},
+		}},
+		{"type:pr", &Query{
+			Filters: Filters{Kind: []common.Kind{common.PRKind}},
+		}},
+		{"kind:nonsense", nil},
 
 		{"author:rene", &Query{
 			Filters: Filters{Author: []string{"rene"}},

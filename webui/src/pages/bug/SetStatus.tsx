@@ -24,9 +24,12 @@ type Props = {
 
 function SetStatus({ op }: Props) {
   const classes = useStyles();
-  const status = { [Status.Open]: 'reopened', [Status.Closed]: 'closed' }[
-    op.status
-  ];
+  const status = {
+    [Status.Open]: 'reopened',
+    [Status.Closed]: 'closed',
+    [Status.Merged]: 'merged',
+    [Status.Draft]: 'marked as draft',
+  }[op.status];
 
   return (
     <Typography className={classes.main}>

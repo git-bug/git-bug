@@ -255,12 +255,29 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 			return
 		}
 
-		// create bug
-		id, url, err := ge.createGithubIssue(ctx, client, ge.repositoryID, createOp.Title, createOp.Message)
-		if err != nil {
-			err := errors.Wrap(err, "exporting github issue")
-			out <- core.NewExportError(err, b.Id())
-			return
+		var id, url string
+		if snapshot.Kind == common.PRKind {
+			// createPullRequest requires the head branch to already exist on
+			// GitHub. If the user hasn't pushed it, GitHub returns a clear
+			// error which surfaces through NewExportError.
+			id, url, err = ge.createGithubPullRequest(
+				ctx, client, ge.repositoryID,
+				createOp.Title, createOp.Message,
+				createOp.BaseRef, createOp.HeadRef,
+				createOp.Draft,
+			)
+			if err != nil {
+				err := errors.Wrap(err, "exporting github pull-request")
+				out <- core.NewExportError(err, b.Id())
+				return
+			}
+		} else {
+			id, url, err = ge.createGithubIssue(ctx, client, ge.repositoryID, createOp.Title, createOp.Message)
+			if err != nil {
+				err := errors.Wrap(err, "exporting github issue")
+				out <- core.NewExportError(err, b.Id())
+				return
+			}
 		}
 
 		out <- core.NewExportBug(b.Id())
@@ -327,8 +344,14 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 			if op.Target == createOp.Id() {
 
 				// case bug creation operation: we need to edit the Github issue
-				if err := ge.updateGithubIssueBody(ctx, client, bugGithubID, op.Message); err != nil {
-					err := errors.Wrap(err, "editing issue")
+				var editErr error
+				if snapshot.Kind == common.PRKind {
+					editErr = ge.updateGithubPullRequestBody(ctx, client, bugGithubID, op.Message)
+				} else {
+					editErr = ge.updateGithubIssueBody(ctx, client, bugGithubID, op.Message)
+				}
+				if editErr != nil {
+					err := errors.Wrap(editErr, "editing issue")
 					out <- core.NewExportError(err, b.Id())
 					return
 				}
@@ -361,8 +384,32 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 			}
 
 		case *bug.SetStatusOperation:
-			if err := ge.updateGithubIssueStatus(ctx, client, bugGithubID, op.Status); err != nil {
-				err := errors.Wrap(err, "editing status")
+			// MergedStatus cannot be materialised via API: marking a PR merged
+			// on GitHub requires an actual merge of the branch, which is out
+			// of scope for the bridge. Skip with a warning.
+			if op.Status == common.MergedStatus {
+				out <- core.NewExportNothing(b.Id(), "cannot export Merge via API; merge the PR on GitHub directly")
+				id = bugGithubID
+				url = bugGithubURL
+				break
+			}
+			// DraftStatus has no direct mapping on a plain issue; for PRs we
+			// use updatePullRequest with convertPullRequestToDraft via a
+			// separate mutation. v1: skip with warning.
+			if op.Status == common.DraftStatus {
+				out <- core.NewExportNothing(b.Id(), "cannot export DraftStatus transition via API in v1")
+				id = bugGithubID
+				url = bugGithubURL
+				break
+			}
+			var statusErr error
+			if snapshot.Kind == common.PRKind {
+				statusErr = ge.updateGithubPullRequestStatus(ctx, client, bugGithubID, op.Status)
+			} else {
+				statusErr = ge.updateGithubIssueStatus(ctx, client, bugGithubID, op.Status)
+			}
+			if statusErr != nil {
+				err := errors.Wrap(statusErr, "editing status")
 				out <- core.NewExportError(err, b.Id())
 				return
 			}
@@ -373,8 +420,14 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 			url = bugGithubURL
 
 		case *bug.SetTitleOperation:
-			if err := ge.updateGithubIssueTitle(ctx, client, bugGithubID, op.Title); err != nil {
-				err := errors.Wrap(err, "editing title")
+			var titleErr error
+			if snapshot.Kind == common.PRKind {
+				titleErr = ge.updateGithubPullRequestTitle(ctx, client, bugGithubID, op.Title)
+			} else {
+				titleErr = ge.updateGithubIssueTitle(ctx, client, bugGithubID, op.Title)
+			}
+			if titleErr != nil {
+				err := errors.Wrap(titleErr, "editing title")
 				out <- core.NewExportError(err, b.Id())
 				return
 			}
@@ -383,6 +436,50 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 
 			id = bugGithubID
 			url = bugGithubURL
+
+		case *bug.UpdateHeadOperation:
+			// UpdateHead reflects a git push to the PR's head branch. The bridge
+			// doesn't push branches itself; the user's `git push` to the remote
+			// is the authoritative action. Skip this op on export.
+			out <- core.NewExportNothing(b.Id(), "UpdateHead is not exported; push the branch with git directly")
+			id = bugGithubID
+			url = bugGithubURL
+
+		case *bug.AddReviewOperation:
+			id, url, err = ge.createGithubReview(ctx, client, bugGithubID, op.State, op.Body, op.CommitHash)
+			if err != nil {
+				err := errors.Wrap(err, "creating review")
+				out <- core.NewExportError(err, b.Id())
+				return
+			}
+			out <- core.NewExportReview(b.Id(), op.Id())
+
+		case *bug.AddReviewCommentOperation:
+			// Only reply-comments to an existing exported review comment export
+			// standalone. New threads must be bundled with the parent review at
+			// creation time — a look-ahead bundle is not in v1.
+			if op.ReplyTo == "" {
+				out <- core.NewExportNothing(b.Id(), "standalone review comments (non-replies) are not exported in v1; create them alongside the review")
+				id = bugGithubID
+				url = bugGithubURL
+				break
+			}
+			// Look up the parent comment's GitHub id via the reply-to CombinedId.
+			_, parentOpId := entity.SeparateIds(op.ReplyTo.String())
+			parentGithubID, known := ge.cachedOperationIDs[entity.Id(parentOpId)]
+			if !known {
+				out <- core.NewExportNothing(b.Id(), "reply parent not exported; skipping review comment")
+				id = bugGithubID
+				url = bugGithubURL
+				break
+			}
+			id, url, err = ge.addGithubReviewCommentReply(ctx, client, parentGithubID, op.Body)
+			if err != nil {
+				err := errors.Wrap(err, "adding review reply")
+				out <- core.NewExportError(err, b.Id())
+				return
+			}
+			out <- core.NewExportReviewComment(b.Id())
 
 		case *bug.LabelChangeOperation:
 			if err := ge.updateGithubIssueLabels(ctx, client, bugGithubID, op.Added, op.Removed); err != nil {
@@ -658,6 +755,89 @@ func (ge *githubExporter) createGithubIssue(ctx context.Context, gc *rateLimitHa
 	return issue.ID, issue.URL, nil
 }
 
+// createGithubReview submits a PR review (approve / request-changes /
+// comment) against bugGithubID at the given commit. No inline thread
+// comments in v1 — callers must issue those separately.
+func (ge *githubExporter) createGithubReview(ctx context.Context, gc *rateLimitHandlerClient, bugGithubID string, state bug.ReviewState, body, commitHash string) (string, string, error) {
+	m := &addPullRequestReviewMutation{}
+	event := mapReviewStateToGithubEvent(state)
+
+	input := githubv4.AddPullRequestReviewInput{
+		PullRequestID: bugGithubID,
+		Body:          (*githubv4.String)(&body),
+		Event:         &event,
+	}
+	if commitHash != "" {
+		oid := githubv4.GitObjectID(commitHash)
+		input.CommitOID = &oid
+	}
+
+	if err := gc.mutate(ctx, m, input, nil, ge.out); err != nil {
+		return "", "", err
+	}
+	r := m.AddPullRequestReview.PullRequestReview
+	return r.ID, r.URL, nil
+}
+
+// addGithubReviewCommentReply posts a reply to an existing review comment.
+// inReplyToID must be the GitHub node id of the parent comment.
+func (ge *githubExporter) addGithubReviewCommentReply(ctx context.Context, gc *rateLimitHandlerClient, inReplyToID, body string) (string, string, error) {
+	m := &addPullRequestReviewCommentMutation{}
+	parentId := githubv4.ID(inReplyToID)
+	bodyStr := githubv4.String(body)
+	input := githubv4.AddPullRequestReviewCommentInput{
+		InReplyTo: &parentId,
+		Body:      &bodyStr,
+	}
+	if err := gc.mutate(ctx, m, input, nil, ge.out); err != nil {
+		return "", "", err
+	}
+	c := m.AddPullRequestReviewComment.Comment
+	return c.ID, c.URL, nil
+}
+
+func mapReviewStateToGithubEvent(s bug.ReviewState) githubv4.PullRequestReviewEvent {
+	switch s {
+	case bug.ReviewApproved:
+		return githubv4.PullRequestReviewEventApprove
+	case bug.ReviewChangesRequested:
+		return githubv4.PullRequestReviewEventRequestChanges
+	default:
+		return githubv4.PullRequestReviewEventComment
+	}
+}
+
+// createGithubPullRequest opens a pull-request against repositoryID. baseRef
+// and headRef are expected in git-bug's normalised form (refs/heads/NAME);
+// GitHub's createPullRequest takes short branch names, so the refs/heads/
+// prefix is stripped. The head branch must already exist on the remote —
+// git-bug does not push branches as part of the bridge.
+func (ge *githubExporter) createGithubPullRequest(ctx context.Context, gc *rateLimitHandlerClient, repositoryID, title, body, baseRef, headRef string, draft bool) (string, string, error) {
+	m := &createPullRequestMutation{}
+	shortRef := func(r string) string {
+		if strings.HasPrefix(r, "refs/heads/") {
+			return r[len("refs/heads/"):]
+		}
+		return r
+	}
+	draftPtr := githubv4.Boolean(draft)
+	input := githubv4.CreatePullRequestInput{
+		RepositoryID: repositoryID,
+		BaseRefName:  githubv4.String(shortRef(baseRef)),
+		HeadRefName:  githubv4.String(shortRef(headRef)),
+		Title:        githubv4.String(title),
+		Body:         (*githubv4.String)(&body),
+		Draft:        &draftPtr,
+	}
+
+	if err := gc.mutate(ctx, m, input, nil, ge.out); err != nil {
+		return "", "", err
+	}
+
+	pr := m.CreatePullRequest.PullRequest
+	return pr.ID, pr.URL, nil
+}
+
 // add a comment to an issue and return its ID
 func (ge *githubExporter) addCommentGithubIssue(ctx context.Context, gc *rateLimitHandlerClient, subjectID string, body string) (string, string, error) {
 	m := &addCommentToIssueMutation{}
@@ -741,6 +921,45 @@ func (ge *githubExporter) updateGithubIssueTitle(ctx context.Context, gc *rateLi
 	}
 
 	return nil
+}
+
+// updateGithubPullRequestStatus mirrors updateGithubIssueStatus but targets
+// PullRequest. Callers must guard MergedStatus / DraftStatus upstream; only
+// OpenStatus / ClosedStatus are supported here.
+func (ge *githubExporter) updateGithubPullRequestStatus(ctx context.Context, gc *rateLimitHandlerClient, id string, status common.Status) error {
+	m := &updatePullRequestMutation{}
+	var state githubv4.PullRequestUpdateState
+	switch status {
+	case common.OpenStatus:
+		state = githubv4.PullRequestUpdateStateOpen
+	case common.ClosedStatus:
+		state = githubv4.PullRequestUpdateStateClosed
+	default:
+		return fmt.Errorf("cannot export pull-request status %s via updatePullRequest", status)
+	}
+	input := githubv4.UpdatePullRequestInput{
+		PullRequestID: id,
+		State:         &state,
+	}
+	return gc.mutate(ctx, m, input, nil, ge.out)
+}
+
+func (ge *githubExporter) updateGithubPullRequestBody(ctx context.Context, gc *rateLimitHandlerClient, id, body string) error {
+	m := &updatePullRequestMutation{}
+	input := githubv4.UpdatePullRequestInput{
+		PullRequestID: id,
+		Body:          (*githubv4.String)(&body),
+	}
+	return gc.mutate(ctx, m, input, nil, ge.out)
+}
+
+func (ge *githubExporter) updateGithubPullRequestTitle(ctx context.Context, gc *rateLimitHandlerClient, id, title string) error {
+	m := &updatePullRequestMutation{}
+	input := githubv4.UpdatePullRequestInput{
+		PullRequestID: id,
+		Title:         (*githubv4.String)(&title),
+	}
+	return gc.mutate(ctx, m, input, nil, ge.out)
 }
 
 // update github issue labels

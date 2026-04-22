@@ -59,3 +59,27 @@ type bugSetTitleOperationResolver struct{}
 func (bugSetTitleOperationResolver) Author(_ context.Context, obj *bug.SetTitleOperation) (models.IdentityWrapper, error) {
 	return models.NewLoadedIdentity(obj.Author()), nil
 }
+
+var _ graph.BugUpdateHeadOperationResolver = bugUpdateHeadOperationResolver{}
+
+type bugUpdateHeadOperationResolver struct{}
+
+func (bugUpdateHeadOperationResolver) Author(_ context.Context, obj *bug.UpdateHeadOperation) (models.IdentityWrapper, error) {
+	return models.NewLoadedIdentity(obj.Author()), nil
+}
+
+var _ graph.BugAddReviewOperationResolver = bugAddReviewOperationResolver{}
+
+type bugAddReviewOperationResolver struct{}
+
+func (bugAddReviewOperationResolver) Author(_ context.Context, obj *bug.AddReviewOperation) (models.IdentityWrapper, error) {
+	return models.NewLoadedIdentity(obj.Author()), nil
+}
+
+var _ graph.BugAddReviewCommentOperationResolver = bugAddReviewCommentOperationResolver{}
+
+type bugAddReviewCommentOperationResolver struct{}
+
+func (bugAddReviewCommentOperationResolver) Author(_ context.Context, obj *bug.AddReviewCommentOperation) (models.IdentityWrapper, error) {
+	return models.NewLoadedIdentity(obj.Author()), nil
+}

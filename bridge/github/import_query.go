@@ -3,11 +3,18 @@ package github
 import "github.com/shurcooL/githubv4"
 
 type rateLimitQuery struct {
-	RateLimit struct {
-		ResetAt githubv4.DateTime
-		//Limit     githubv4.Int
-		//Remaining githubv4.Int
-	}
+	RateLimit rateLimit
+}
+
+// rateLimit mirrors GitHub's RateLimit object. Embed this in any top-level
+// query struct to piggyback cost/remaining/reset info on a query we'd make
+// anyway — it's free to request and invaluable for diagnosing rate-limit
+// starvation.
+type rateLimit struct {
+	Cost      githubv4.Int
+	Remaining githubv4.Int
+	Limit     githubv4.Int
+	ResetAt   githubv4.DateTime
 }
 
 type userQuery struct {
@@ -38,6 +45,48 @@ type issueQuery struct {
 	Repository struct {
 		Issues issueConnection `graphql:"issues(first: $issueFirst, after: $issueAfter, orderBy: {field: CREATED_AT, direction: ASC}, filterBy: {since: $issueSince})"`
 	} `graphql:"repository(owner: $owner, name: $name)"`
+	RateLimit rateLimit
+}
+
+// Pull requests are sorted by UPDATED_AT DESC so catchup syncs can break out
+// of pagination as soon as they see a PR older than `since` — GitHub's
+// pullRequests connection has no filterBy, so this ordering is the only way
+// to avoid walking the entire PR history on every sync.
+type pullRequestQuery struct {
+	Repository struct {
+		PullRequests pullRequestConnection `graphql:"pullRequests(first: $issueFirst, after: $issueAfter, orderBy: {field: UPDATED_AT, direction: DESC})"`
+	} `graphql:"repository(owner: $owner, name: $name)"`
+	RateLimit rateLimit
+}
+
+type prTimelineQuery struct {
+	Node struct {
+		Typename    githubv4.String `graphql:"__typename"`
+		PullRequest struct {
+			TimelineItems prTimelineItemsConnection `graphql:"timelineItems(first: $timelineFirst, after: $timelineAfter)"`
+		} `graphql:"... on PullRequest"`
+	} `graphql:"node(id: $gqlNodeId)"`
+}
+
+type prEditQuery struct {
+	Node struct {
+		Typename    githubv4.String `graphql:"__typename"`
+		PullRequest struct {
+			UserContentEdits userContentEditConnection `graphql:"userContentEdits(last: $issueEditLast, before: $issueEditBefore)"`
+		} `graphql:"... on PullRequest"`
+	} `graphql:"node(id: $gqlNodeId)"`
+}
+
+// prReviewCommentsQuery fetches a page of review comments for a specific
+// PullRequestReview node. Used when a review has more than NumReviewComments
+// comments — we follow the cursor.
+type prReviewCommentsQuery struct {
+	Node struct {
+		Typename          githubv4.String `graphql:"__typename"`
+		PullRequestReview struct {
+			Comments pullRequestReviewCommentConnection `graphql:"comments(first: $reviewCommentFirst, after: $reviewCommentAfter)"`
+		} `graphql:"... on PullRequestReview"`
+	} `graphql:"node(id: $gqlNodeId)"`
 }
 
 type issueEditQuery struct {
@@ -90,6 +139,102 @@ type issue struct {
 	Number githubv4.Int
 	Body   githubv4.String
 	Url    githubv4.URI
+}
+
+type pullRequestConnection struct {
+	Nodes    []pullRequestNode
+	PageInfo pageInfo
+}
+
+type pullRequestNode struct {
+	pullRequest
+	UserContentEdits userContentEditConnection `graphql:"userContentEdits(last: $issueEditLast, before: $issueEditBefore)"`
+	TimelineItems    prTimelineItemsConnection `graphql:"timelineItems(first: $timelineFirst, after: $timelineAfter)"`
+}
+
+type pullRequest struct {
+	authorEvent
+	Title        githubv4.String
+	Number       githubv4.Int
+	Body         githubv4.String
+	Url          githubv4.URI
+	IsDraft      githubv4.Boolean
+	BaseRefName  githubv4.String
+	HeadRefName  githubv4.String
+	HeadRefOid   githubv4.GitObjectID
+	Merged       githubv4.Boolean
+	MergeCommit  *struct {
+		Oid githubv4.GitObjectID
+	}
+	Closed    githubv4.Boolean
+	UpdatedAt githubv4.DateTime
+}
+
+type prTimelineItemsConnection struct {
+	Nodes    []prTimelineItem
+	PageInfo pageInfo
+}
+
+// prTimelineItem covers both the issue-compatible timeline events and
+// the PR-specific ones (merged, converted-to-draft, ready-for-review,
+// reviews).
+type prTimelineItem struct {
+	Typename githubv4.String `graphql:"__typename"`
+
+	// Issue-shared events
+	IssueComment      issueComment         `graphql:"... on IssueComment"`
+	LabeledEvent      labeledEvent         `graphql:"... on LabeledEvent"`
+	UnlabeledEvent    unlabeledEvent       `graphql:"... on UnlabeledEvent"`
+	ClosedEvent       struct{ actorEvent } `graphql:"... on ClosedEvent"`
+	ReopenedEvent     struct{ actorEvent } `graphql:"... on ReopenedEvent"`
+	RenamedTitleEvent renamedTitleEvent    `graphql:"... on RenamedTitleEvent"`
+
+	// PR-only events
+	MergedEvent struct {
+		actorEvent
+		Commit *struct {
+			Oid githubv4.GitObjectID
+		}
+	} `graphql:"... on MergedEvent"`
+	ReadyForReviewEvent struct {
+		actorEvent
+	} `graphql:"... on ReadyForReviewEvent"`
+	ConvertToDraftEvent struct {
+		actorEvent
+	} `graphql:"... on ConvertToDraftEvent"`
+	PullRequestReview pullRequestReview `graphql:"... on PullRequestReview"`
+}
+
+// pullRequestReview mirrors GitHub's PullRequestReview node. We fetch the
+// first NumReviewComments review comments inline; PRs with more get truncated
+// in v1 (pagination can be added later).
+type pullRequestReview struct {
+	authorEvent
+	State  githubv4.PullRequestReviewState
+	Body   githubv4.String
+	Commit *struct {
+		Oid githubv4.GitObjectID
+	}
+	Comments pullRequestReviewCommentConnection `graphql:"comments(first: $reviewCommentFirst)"`
+}
+
+type pullRequestReviewCommentConnection struct {
+	Nodes    []pullRequestReviewComment
+	PageInfo pageInfo
+}
+
+type pullRequestReviewComment struct {
+	authorEvent
+	Body       githubv4.String
+	Path       githubv4.String
+	StartLine  *githubv4.Int
+	Line       githubv4.Int
+	Commit     *struct {
+		Oid githubv4.GitObjectID
+	}
+	ReplyTo *struct {
+		Id githubv4.ID
+	}
 }
 
 type timelineItemsConnection struct {

@@ -6,8 +6,9 @@ query ListBugs(
   $after: String
   $before: String
   $query: String
+  $repoRef: String
 ) {
-  repository {
+  repository(ref: $repoRef) {
     name
     bugs: allBugs(
       first: $first

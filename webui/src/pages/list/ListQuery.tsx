@@ -6,14 +6,13 @@ import KeyboardArrowLeft from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRight from '@mui/icons-material/KeyboardArrowRight';
 import { Button, FormControl, Menu, MenuItem } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
-import InputBase from '@mui/material/InputBase';
 import Paper from '@mui/material/Paper';
 import Skeleton from '@mui/material/Skeleton';
 import { Theme } from '@mui/material/styles';
 import makeStyles from '@mui/styles/makeStyles';
 import * as React from 'react';
-import { useState, useEffect, useRef } from 'react';
-import { useLocation, useNavigate, Link } from 'react-router';
+import { useState, useRef } from 'react';
+import { useLocation, useParams, Link } from 'react-router';
 
 import { useCurrentIdentityQuery } from '../../components/Identity/CurrentIdentity.generated';
 import IfLoggedIn from 'src/components/IfLoggedIn/IfLoggedIn';
@@ -129,6 +128,14 @@ function editParams(
   return cloned;
 }
 
+function safeDecode(s: string): string {
+  try {
+    return decodeURIComponent(s);
+  } catch {
+    return s;
+  }
+}
+
 // TODO: factor this out
 type PlaceholderProps = { count: number };
 const Placeholder: React.FC<PlaceholderProps> = ({
@@ -185,24 +192,15 @@ const Error: React.FC<ErrorProps> = ({ error }: ErrorProps) => {
 
 function ListQuery() {
   const location = useLocation();
-  const navigate = useNavigate();
   const params = new URLSearchParams(location.search);
-  const query = params.has('q') ? params.get('q') || '' : 'status:open';
+  const query = params.has('q')
+    ? params.get('q') || ''
+    : 'kind:issue status:open status:draft';
 
-  const [input, setInput] = useState(query);
   const [filterMenuIsOpen, setFilterMenuIsOpen] = useState(false);
   const filterButtonRef = useRef<HTMLButtonElement>(null);
 
-  const classes = useStyles({ searching: !!input });
-
-  // TODO is this the right way to do it?
-  const lastQuery = useRef<string | null>(null);
-  useEffect(() => {
-    if (query !== lastQuery.current) {
-      setInput(query);
-    }
-    lastQuery.current = query;
-  }, [query, input, lastQuery]);
+  const classes = useStyles({});
 
   const num = (param: string | null) => (param ? parseInt(param) : null);
   const page = {
@@ -219,11 +217,24 @@ function ListQuery() {
 
   const perPage = (page.first || page.last || 10).toString();
 
+  // repoName comes from /r/:repoName/* — when present, it's passed as
+  // $repoRef so Apollo keys its cache per repo (avoiding cross-repo stale
+  // reads) and the server resolves the target repo explicitly rather than
+  // via the X-Repo-Name header.
+  const { repoName } = useParams<{ repoName: string }>();
+  const repoRef = repoName ? safeDecode(repoName) : null;
+
   const { loading, error, data } = useListBugsQuery({
     variables: {
       ...page,
       query,
+      repoRef,
     },
+    // cache-and-network: show cache immediately but always also issue a
+    // network request so status toggles / query edits always end up with
+    // fresh data even if the previous variables hit cache.
+    fetchPolicy: 'cache-and-network',
+    notifyOnNetworkStatusChange: true,
   });
 
   let nextPage = null;
@@ -274,10 +285,14 @@ function ListQuery() {
   });
 
   let content;
-  if (loading) {
-    content = <Placeholder count={10} />;
-  } else if (error) {
+  // With fetchPolicy cache-and-network, `loading` is true whenever a
+  // network request is in flight even if we already have (stale) cached
+  // data. Only show the Placeholder when we have nothing to show at all,
+  // so toggling filters shows the old list briefly instead of a skeleton.
+  if (error) {
     content = <Error error={error} />;
+  } else if (loading && !data?.repository) {
+    content = <Placeholder count={10} />;
   } else if (data?.repository) {
     const bugs = data.repository.bugs;
 
@@ -288,20 +303,18 @@ function ListQuery() {
     }
   }
 
-  const formSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    navigate(queryLocation(input));
-  };
-
   const {
     loading: ciqLoading,
     error: ciqError,
     data: ciqData,
   } = useCurrentIdentityQuery();
-  if (ciqError || ciqLoading || !ciqData?.repository?.userIdentity) {
+  // Don't bail on missing user identity: in multi-repo read-only mode there
+  // is no logged-in user but the list still needs to render. Only skip while
+  // the query is in flight or errored.
+  if (ciqError || ciqLoading) {
     return null;
   }
-  const user = ciqData.repository.userIdentity;
+  const user = ciqData?.repository?.userIdentity;
 
   const loc = pipe(stringify, queryLocation);
   const qparams: Query = parse(query);
@@ -315,7 +328,7 @@ function ListQuery() {
   return (
     <Paper className={classes.main}>
       <header className={classes.header}>
-        <form className={classes.form} onSubmit={formSubmit}>
+        <div className={classes.form}>
           <FormControl>
             <Button
               aria-haspopup="true"
@@ -337,33 +350,22 @@ function ListQuery() {
                 horizontal: 'left',
               }}
             >
-              <MenuItem
-                component={Link}
-                to={pipe(
-                  replaceParam('author', user.displayName),
-                  replaceParam('sort', 'creation'),
-                  loc
-                )(qparams)}
-                onClick={() => setFilterMenuIsOpen(false)}
-              >
-                Your newest issues
-              </MenuItem>
+              {user && (
+                <MenuItem
+                  component={Link}
+                  to={pipe(
+                    replaceParam('author', user.displayName),
+                    replaceParam('sort', 'creation'),
+                    loc
+                  )(qparams)}
+                  onClick={() => setFilterMenuIsOpen(false)}
+                >
+                  Your newest issues
+                </MenuItem>
+              )}
             </Menu>
           </FormControl>
-          <InputBase
-            id="issuefilter"
-            placeholder="Filter"
-            value={input}
-            onInput={(e: any) => setInput(e.target.value)}
-            classes={{
-              root: classes.search,
-              focused: classes.searchFocused,
-            }}
-          />
-          <button type="submit" hidden>
-            Search
-          </button>
-        </form>
+        </div>
         <IfLoggedIn>
           {() => (
             <Button

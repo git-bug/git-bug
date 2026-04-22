@@ -31,6 +31,12 @@ func Parse(query string) (*Query, error) {
 
 		case tokenKindKV:
 			switch t.qualifier {
+			case "kind", "type":
+				kind, err := common.KindFromString(t.value)
+				if err != nil {
+					return nil, err
+				}
+				q.Kind = append(q.Kind, kind)
 			case "status", "state":
 				status, err := common.StatusFromString(t.value)
 				if err != nil {
@@ -47,6 +53,10 @@ func Parse(query string) (*Query, error) {
 				q.Label = append(q.Label, t.value)
 			case "title":
 				q.Title = append(q.Title, t.value)
+			case "repo":
+				q.Repo = append(q.Repo, t.value)
+			case "org":
+				q.Org = append(q.Org, t.value)
 			case "no":
 				switch t.value {
 				case "label":

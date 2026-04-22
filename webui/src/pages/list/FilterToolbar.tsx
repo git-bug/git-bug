@@ -1,10 +1,12 @@
 import { pipe } from '@arrows/composition';
+import BugReportOutlinedIcon from '@mui/icons-material/BugReportOutlined';
+import CallMergeIcon from '@mui/icons-material/CallMerge';
 import CheckCircleOutline from '@mui/icons-material/CheckCircleOutline';
 import ErrorOutline from '@mui/icons-material/ErrorOutline';
 import Toolbar from '@mui/material/Toolbar';
 import makeStyles from '@mui/styles/makeStyles';
 import * as React from 'react';
-import { Location } from 'react-router';
+import { Location, useParams } from 'react-router';
 
 import {
   Filter,
@@ -29,7 +31,23 @@ const useStyles = makeStyles((theme) => ({
   spacer: {
     flex: 1,
   },
+  // Vertical rule separating the kind selector (Issues/PRs) from the
+  // status/sort filters. Sits flush with the toolbar's text height.
+  separator: {
+    width: 1,
+    alignSelf: 'stretch',
+    backgroundColor: theme.palette.divider,
+    margin: theme.spacing(1, 1.5),
+  },
 }));
+
+function safeDecode(s: string): string {
+  try {
+    return decodeURIComponent(s);
+  } catch {
+    return s;
+  }
+}
 
 // This prepends the filter text with a count
 type CountingFilterProps = {
@@ -38,8 +56,10 @@ type CountingFilterProps = {
 } & FilterProps;
 
 function CountingFilter({ query, children, ...props }: CountingFilterProps) {
+  const { repoName } = useParams<{ repoName: string }>();
+  const repoRef = repoName ? safeDecode(repoName) : null;
   const { data, loading, error } = useBugCountQuery({
-    variables: { query },
+    variables: { query, repoRef },
   });
 
   let prefix;
@@ -73,8 +93,14 @@ type Props = {
 function FilterToolbar({ query, queryLocation }: Props) {
   const classes = useStyles();
   const params: Query = parse(query);
-  const { data: identitiesData } = useListIdentitiesQuery();
-  const { data: labelsData } = useListLabelsQuery();
+  const { repoName } = useParams<{ repoName: string }>();
+  const repoRef = repoName ? safeDecode(repoName) : null;
+  const { data: identitiesData } = useListIdentitiesQuery({
+    variables: { repoRef },
+  });
+  const { data: labelsData } = useListLabelsQuery({
+    variables: { repoRef },
+  });
 
   let identities: any = [];
   let labels: any = [];
@@ -115,6 +141,26 @@ function FilterToolbar({ query, queryLocation }: Props) {
       ...params,
       [key]: [value],
     });
+  // Set a key to a specific OR-list of values, e.g. status=[open,draft].
+  // Used for the "open" / "closed" chips which cover multiple underlying
+  // statuses (GitHub's Open tab includes drafts; Closed includes merged).
+  const replaceParamMulti =
+    (key: string, values: string[]) =>
+    (params: Query): Query => ({
+      ...params,
+      [key]: values,
+    });
+  // Treat the chip as active if the filter contains ANY of the given
+  // values for the key. "open" lights up whether the user has status:open,
+  // status:draft, or both.
+  const hasAnyValue = (key: string, values: string[]): boolean =>
+    hasKey(key) && values.some((v) => params[key].includes(v));
+  const toggleParamMulti =
+    (key: string, values: string[]) =>
+    (params: Query): Query => ({
+      ...params,
+      [key]: hasAnyValue(key, values) ? [] : values,
+    });
   const toggleParam =
     (key: string, value: string) =>
     (params: Query): Query => ({
@@ -142,28 +188,51 @@ function FilterToolbar({ query, queryLocation }: Props) {
       [key]: [],
     });
 
+  // The kind selector is a radio group — one and only one of Issues/PRs is
+  // "current" at any time. Default to Issues when kind isn't pinned.
+  const currentKind: 'issue' | 'pr' = hasValue('kind', 'pr') ? 'pr' : 'issue';
+
   return (
     <Toolbar className={classes.toolbar}>
       <CountingFilter
-        active={hasValue('status', 'open')}
+        active={currentKind === 'issue'}
+        query={pipe(replaceParam('kind', 'issue'), stringify)(params)}
+        to={pipe(replaceParam('kind', 'issue'), loc)(params)}
+        icon={BugReportOutlinedIcon}
+      >
+        issues
+      </CountingFilter>
+      <CountingFilter
+        active={currentKind === 'pr'}
+        query={pipe(replaceParam('kind', 'pr'), stringify)(params)}
+        to={pipe(replaceParam('kind', 'pr'), loc)(params)}
+        icon={CallMergeIcon}
+      >
+        PRs
+      </CountingFilter>
+      <div className={classes.separator} />
+      <CountingFilter
+        active={hasAnyValue('status', ['open', 'draft'])}
         query={pipe(
-          replaceParam('status', 'open'),
+          replaceParam('kind', currentKind),
+          replaceParamMulti('status', ['open', 'draft']),
           clearParam('sort'),
           stringify
         )(params)}
-        to={pipe(toggleParam('status', 'open'), loc)(params)}
+        to={pipe(replaceParamMulti('status', ['open', 'draft']), loc)(params)}
         icon={ErrorOutline}
       >
         open
       </CountingFilter>
       <CountingFilter
-        active={hasValue('status', 'closed')}
+        active={hasAnyValue('status', ['closed', 'merged'])}
         query={pipe(
-          replaceParam('status', 'closed'),
+          replaceParam('kind', currentKind),
+          replaceParamMulti('status', ['closed', 'merged']),
           clearParam('sort'),
           stringify
         )(params)}
-        to={pipe(toggleParam('status', 'closed'), loc)(params)}
+        to={pipe(replaceParamMulti('status', ['closed', 'merged']), loc)(params)}
         icon={CheckCircleOutline}
       >
         closed

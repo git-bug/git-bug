@@ -32,6 +32,11 @@ const useStyles = makeStyles((theme) => ({
     ...theme.typography.subtitle1,
     marginLeft: theme.spacing(1),
   },
+  originLink: {
+    ...theme.typography.subtitle1,
+    marginLeft: theme.spacing(1),
+    fontWeight: 500,
+  },
   editButtonContainer: {
     display: 'flex',
     flexDirection: 'row',
@@ -144,10 +149,29 @@ function BugTitleForm({ bug }: Props) {
   }
 
   function readonlyBugTitle() {
+    // originUrl is stored verbatim from imports. Only render it as a
+    // clickable link when it's an http(s) URL — block javascript:/data:
+    // to prevent XSS if a crafted local op sneaks in a hostile scheme.
+    const isSafeHttpUrl = (u?: string | null) =>
+      !!u && /^https?:\/\//i.test(u);
+    const originMatch = bug.originUrl?.match(/\/(\d+)(?:[/?#]|$)/);
+    const originNum = originMatch ? parseInt(originMatch[1], 10) : null;
+    const safeOrigin = isSafeHttpUrl(bug.originUrl) ? bug.originUrl : null;
     return (
       <div className={classes.headerTitle}>
         <div>
           <span className={classes.readOnlyTitle}>{bug.title}</span>
+          {originNum != null && safeOrigin && (
+            <a
+              className={classes.originLink}
+              href={safeOrigin}
+              target="_blank"
+              rel="noreferrer noopener"
+              title={safeOrigin}
+            >
+              #{originNum}
+            </a>
+          )}
           <span className={classes.readOnlyId}>{bug.humanId}</span>
         </div>
         <IfLoggedIn>

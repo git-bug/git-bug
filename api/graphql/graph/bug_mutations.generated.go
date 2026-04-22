@@ -113,6 +113,8 @@ func (ec *executionContext) fieldContext_BugAddCommentAndClosePayload_bug(_ cont
 				return ec.fieldContext_Bug_id(ctx, field)
 			case "humanId":
 				return ec.fieldContext_Bug_humanId(ctx, field)
+			case "kind":
+				return ec.fieldContext_Bug_kind(ctx, field)
 			case "status":
 				return ec.fieldContext_Bug_status(ctx, field)
 			case "title":
@@ -125,6 +127,18 @@ func (ec *executionContext) fieldContext_BugAddCommentAndClosePayload_bug(_ cont
 				return ec.fieldContext_Bug_createdAt(ctx, field)
 			case "lastEdit":
 				return ec.fieldContext_Bug_lastEdit(ctx, field)
+			case "baseRef":
+				return ec.fieldContext_Bug_baseRef(ctx, field)
+			case "headRef":
+				return ec.fieldContext_Bug_headRef(ctx, field)
+			case "headCommit":
+				return ec.fieldContext_Bug_headCommit(ctx, field)
+			case "mergeCommit":
+				return ec.fieldContext_Bug_mergeCommit(ctx, field)
+			case "reviews":
+				return ec.fieldContext_Bug_reviews(ctx, field)
+			case "originUrl":
+				return ec.fieldContext_Bug_originUrl(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":
@@ -245,6 +259,8 @@ func (ec *executionContext) fieldContext_BugAddCommentAndClosePayload_statusOper
 				return ec.fieldContext_BugSetStatusOperation_date(ctx, field)
 			case "status":
 				return ec.fieldContext_BugSetStatusOperation_status(ctx, field)
+			case "mergeCommit":
+				return ec.fieldContext_BugSetStatusOperation_mergeCommit(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type BugSetStatusOperation", field.Name)
 		},
@@ -336,6 +352,8 @@ func (ec *executionContext) fieldContext_BugAddCommentAndReopenPayload_bug(_ con
 				return ec.fieldContext_Bug_id(ctx, field)
 			case "humanId":
 				return ec.fieldContext_Bug_humanId(ctx, field)
+			case "kind":
+				return ec.fieldContext_Bug_kind(ctx, field)
 			case "status":
 				return ec.fieldContext_Bug_status(ctx, field)
 			case "title":
@@ -348,6 +366,18 @@ func (ec *executionContext) fieldContext_BugAddCommentAndReopenPayload_bug(_ con
 				return ec.fieldContext_Bug_createdAt(ctx, field)
 			case "lastEdit":
 				return ec.fieldContext_Bug_lastEdit(ctx, field)
+			case "baseRef":
+				return ec.fieldContext_Bug_baseRef(ctx, field)
+			case "headRef":
+				return ec.fieldContext_Bug_headRef(ctx, field)
+			case "headCommit":
+				return ec.fieldContext_Bug_headCommit(ctx, field)
+			case "mergeCommit":
+				return ec.fieldContext_Bug_mergeCommit(ctx, field)
+			case "reviews":
+				return ec.fieldContext_Bug_reviews(ctx, field)
+			case "originUrl":
+				return ec.fieldContext_Bug_originUrl(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":
@@ -468,6 +498,8 @@ func (ec *executionContext) fieldContext_BugAddCommentAndReopenPayload_statusOpe
 				return ec.fieldContext_BugSetStatusOperation_date(ctx, field)
 			case "status":
 				return ec.fieldContext_BugSetStatusOperation_status(ctx, field)
+			case "mergeCommit":
+				return ec.fieldContext_BugSetStatusOperation_mergeCommit(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type BugSetStatusOperation", field.Name)
 		},
@@ -559,6 +591,8 @@ func (ec *executionContext) fieldContext_BugAddCommentPayload_bug(_ context.Cont
 				return ec.fieldContext_Bug_id(ctx, field)
 			case "humanId":
 				return ec.fieldContext_Bug_humanId(ctx, field)
+			case "kind":
+				return ec.fieldContext_Bug_kind(ctx, field)
 			case "status":
 				return ec.fieldContext_Bug_status(ctx, field)
 			case "title":
@@ -571,6 +605,18 @@ func (ec *executionContext) fieldContext_BugAddCommentPayload_bug(_ context.Cont
 				return ec.fieldContext_Bug_createdAt(ctx, field)
 			case "lastEdit":
 				return ec.fieldContext_Bug_lastEdit(ctx, field)
+			case "baseRef":
+				return ec.fieldContext_Bug_baseRef(ctx, field)
+			case "headRef":
+				return ec.fieldContext_Bug_headRef(ctx, field)
+			case "headCommit":
+				return ec.fieldContext_Bug_headCommit(ctx, field)
+			case "mergeCommit":
+				return ec.fieldContext_Bug_mergeCommit(ctx, field)
+			case "reviews":
+				return ec.fieldContext_Bug_reviews(ctx, field)
+			case "originUrl":
+				return ec.fieldContext_Bug_originUrl(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":
@@ -728,6 +774,8 @@ func (ec *executionContext) fieldContext_BugChangeLabelPayload_bug(_ context.Con
 				return ec.fieldContext_Bug_id(ctx, field)
 			case "humanId":
 				return ec.fieldContext_Bug_humanId(ctx, field)
+			case "kind":
+				return ec.fieldContext_Bug_kind(ctx, field)
 			case "status":
 				return ec.fieldContext_Bug_status(ctx, field)
 			case "title":
@@ -740,6 +788,18 @@ func (ec *executionContext) fieldContext_BugChangeLabelPayload_bug(_ context.Con
 				return ec.fieldContext_Bug_createdAt(ctx, field)
 			case "lastEdit":
 				return ec.fieldContext_Bug_lastEdit(ctx, field)
+			case "baseRef":
+				return ec.fieldContext_Bug_baseRef(ctx, field)
+			case "headRef":
+				return ec.fieldContext_Bug_headRef(ctx, field)
+			case "headCommit":
+				return ec.fieldContext_Bug_headCommit(ctx, field)
+			case "mergeCommit":
+				return ec.fieldContext_Bug_mergeCommit(ctx, field)
+			case "reviews":
+				return ec.fieldContext_Bug_reviews(ctx, field)
+			case "originUrl":
+				return ec.fieldContext_Bug_originUrl(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":
@@ -947,6 +1007,8 @@ func (ec *executionContext) fieldContext_BugCreatePayload_bug(_ context.Context,
 				return ec.fieldContext_Bug_id(ctx, field)
 			case "humanId":
 				return ec.fieldContext_Bug_humanId(ctx, field)
+			case "kind":
+				return ec.fieldContext_Bug_kind(ctx, field)
 			case "status":
 				return ec.fieldContext_Bug_status(ctx, field)
 			case "title":
@@ -959,6 +1021,18 @@ func (ec *executionContext) fieldContext_BugCreatePayload_bug(_ context.Context,
 				return ec.fieldContext_Bug_createdAt(ctx, field)
 			case "lastEdit":
 				return ec.fieldContext_Bug_lastEdit(ctx, field)
+			case "baseRef":
+				return ec.fieldContext_Bug_baseRef(ctx, field)
+			case "headRef":
+				return ec.fieldContext_Bug_headRef(ctx, field)
+			case "headCommit":
+				return ec.fieldContext_Bug_headCommit(ctx, field)
+			case "mergeCommit":
+				return ec.fieldContext_Bug_mergeCommit(ctx, field)
+			case "reviews":
+				return ec.fieldContext_Bug_reviews(ctx, field)
+			case "originUrl":
+				return ec.fieldContext_Bug_originUrl(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":
@@ -1027,6 +1101,16 @@ func (ec *executionContext) fieldContext_BugCreatePayload_operation(_ context.Co
 				return ec.fieldContext_BugCreateOperation_message(ctx, field)
 			case "files":
 				return ec.fieldContext_BugCreateOperation_files(ctx, field)
+			case "kind":
+				return ec.fieldContext_BugCreateOperation_kind(ctx, field)
+			case "baseRef":
+				return ec.fieldContext_BugCreateOperation_baseRef(ctx, field)
+			case "headRef":
+				return ec.fieldContext_BugCreateOperation_headRef(ctx, field)
+			case "headCommit":
+				return ec.fieldContext_BugCreateOperation_headCommit(ctx, field)
+			case "draft":
+				return ec.fieldContext_BugCreateOperation_draft(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type BugCreateOperation", field.Name)
 		},
@@ -1118,6 +1202,8 @@ func (ec *executionContext) fieldContext_BugEditCommentPayload_bug(_ context.Con
 				return ec.fieldContext_Bug_id(ctx, field)
 			case "humanId":
 				return ec.fieldContext_Bug_humanId(ctx, field)
+			case "kind":
+				return ec.fieldContext_Bug_kind(ctx, field)
 			case "status":
 				return ec.fieldContext_Bug_status(ctx, field)
 			case "title":
@@ -1130,6 +1216,18 @@ func (ec *executionContext) fieldContext_BugEditCommentPayload_bug(_ context.Con
 				return ec.fieldContext_Bug_createdAt(ctx, field)
 			case "lastEdit":
 				return ec.fieldContext_Bug_lastEdit(ctx, field)
+			case "baseRef":
+				return ec.fieldContext_Bug_baseRef(ctx, field)
+			case "headRef":
+				return ec.fieldContext_Bug_headRef(ctx, field)
+			case "headCommit":
+				return ec.fieldContext_Bug_headCommit(ctx, field)
+			case "mergeCommit":
+				return ec.fieldContext_Bug_mergeCommit(ctx, field)
+			case "reviews":
+				return ec.fieldContext_Bug_reviews(ctx, field)
+			case "originUrl":
+				return ec.fieldContext_Bug_originUrl(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":
@@ -1289,6 +1387,8 @@ func (ec *executionContext) fieldContext_BugSetTitlePayload_bug(_ context.Contex
 				return ec.fieldContext_Bug_id(ctx, field)
 			case "humanId":
 				return ec.fieldContext_Bug_humanId(ctx, field)
+			case "kind":
+				return ec.fieldContext_Bug_kind(ctx, field)
 			case "status":
 				return ec.fieldContext_Bug_status(ctx, field)
 			case "title":
@@ -1301,6 +1401,18 @@ func (ec *executionContext) fieldContext_BugSetTitlePayload_bug(_ context.Contex
 				return ec.fieldContext_Bug_createdAt(ctx, field)
 			case "lastEdit":
 				return ec.fieldContext_Bug_lastEdit(ctx, field)
+			case "baseRef":
+				return ec.fieldContext_Bug_baseRef(ctx, field)
+			case "headRef":
+				return ec.fieldContext_Bug_headRef(ctx, field)
+			case "headCommit":
+				return ec.fieldContext_Bug_headCommit(ctx, field)
+			case "mergeCommit":
+				return ec.fieldContext_Bug_mergeCommit(ctx, field)
+			case "reviews":
+				return ec.fieldContext_Bug_reviews(ctx, field)
+			case "originUrl":
+				return ec.fieldContext_Bug_originUrl(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":
@@ -1458,6 +1570,8 @@ func (ec *executionContext) fieldContext_BugStatusClosePayload_bug(_ context.Con
 				return ec.fieldContext_Bug_id(ctx, field)
 			case "humanId":
 				return ec.fieldContext_Bug_humanId(ctx, field)
+			case "kind":
+				return ec.fieldContext_Bug_kind(ctx, field)
 			case "status":
 				return ec.fieldContext_Bug_status(ctx, field)
 			case "title":
@@ -1470,6 +1584,18 @@ func (ec *executionContext) fieldContext_BugStatusClosePayload_bug(_ context.Con
 				return ec.fieldContext_Bug_createdAt(ctx, field)
 			case "lastEdit":
 				return ec.fieldContext_Bug_lastEdit(ctx, field)
+			case "baseRef":
+				return ec.fieldContext_Bug_baseRef(ctx, field)
+			case "headRef":
+				return ec.fieldContext_Bug_headRef(ctx, field)
+			case "headCommit":
+				return ec.fieldContext_Bug_headCommit(ctx, field)
+			case "mergeCommit":
+				return ec.fieldContext_Bug_mergeCommit(ctx, field)
+			case "reviews":
+				return ec.fieldContext_Bug_reviews(ctx, field)
+			case "originUrl":
+				return ec.fieldContext_Bug_originUrl(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":
@@ -1534,6 +1660,8 @@ func (ec *executionContext) fieldContext_BugStatusClosePayload_operation(_ conte
 				return ec.fieldContext_BugSetStatusOperation_date(ctx, field)
 			case "status":
 				return ec.fieldContext_BugSetStatusOperation_status(ctx, field)
+			case "mergeCommit":
+				return ec.fieldContext_BugSetStatusOperation_mergeCommit(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type BugSetStatusOperation", field.Name)
 		},
@@ -1625,6 +1753,8 @@ func (ec *executionContext) fieldContext_BugStatusOpenPayload_bug(_ context.Cont
 				return ec.fieldContext_Bug_id(ctx, field)
 			case "humanId":
 				return ec.fieldContext_Bug_humanId(ctx, field)
+			case "kind":
+				return ec.fieldContext_Bug_kind(ctx, field)
 			case "status":
 				return ec.fieldContext_Bug_status(ctx, field)
 			case "title":
@@ -1637,6 +1767,18 @@ func (ec *executionContext) fieldContext_BugStatusOpenPayload_bug(_ context.Cont
 				return ec.fieldContext_Bug_createdAt(ctx, field)
 			case "lastEdit":
 				return ec.fieldContext_Bug_lastEdit(ctx, field)
+			case "baseRef":
+				return ec.fieldContext_Bug_baseRef(ctx, field)
+			case "headRef":
+				return ec.fieldContext_Bug_headRef(ctx, field)
+			case "headCommit":
+				return ec.fieldContext_Bug_headCommit(ctx, field)
+			case "mergeCommit":
+				return ec.fieldContext_Bug_mergeCommit(ctx, field)
+			case "reviews":
+				return ec.fieldContext_Bug_reviews(ctx, field)
+			case "originUrl":
+				return ec.fieldContext_Bug_originUrl(ctx, field)
 			case "actors":
 				return ec.fieldContext_Bug_actors(ctx, field)
 			case "participants":
@@ -1701,6 +1843,8 @@ func (ec *executionContext) fieldContext_BugStatusOpenPayload_operation(_ contex
 				return ec.fieldContext_BugSetStatusOperation_date(ctx, field)
 			case "status":
 				return ec.fieldContext_BugSetStatusOperation_status(ctx, field)
+			case "mergeCommit":
+				return ec.fieldContext_BugSetStatusOperation_mergeCommit(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type BugSetStatusOperation", field.Name)
 		},

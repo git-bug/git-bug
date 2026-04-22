@@ -32,6 +32,26 @@ type TimelineEvent struct {
 
 func (TimelineEvent) isImportEvent() {}
 
+type PrEvent struct {
+	pullRequest
+}
+
+func (PrEvent) isImportEvent() {}
+
+type PrEditEvent struct {
+	prId githubv4.ID
+	userContentEdit
+}
+
+func (PrEditEvent) isImportEvent() {}
+
+type PrTimelineEvent struct {
+	prId githubv4.ID
+	prTimelineItem
+}
+
+func (PrTimelineEvent) isImportEvent() {}
+
 type CommentEditEvent struct {
 	commentId githubv4.ID
 	userContentEdit

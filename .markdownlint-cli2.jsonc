@@ -1,0 +1,25 @@
+{
+  // Inherit rules from the user's global config when present (key names here
+  // override for this repository). The `doc/md/` directory is populated by
+  // the cobra documentation generator (`go generate`), which emits tabs in
+  // "SEE ALSO" tables and fenced code blocks without a language — neither
+  // is something we want to hand-edit every time docs regenerate.
+  "config": {
+    "MD013": false, // allow long lines
+    "MD033": false, // allow inline HTML
+    "MD041": false, // allow files without top-level heading
+    "MD034": false, // allow bare URLs
+    "MD018": false  // we use tags with no space before hash for changelog.
+  },
+  "overrides": [
+    {
+      "files": ["doc/md/**/*.md"],
+      "config": {
+        // Cobra-generated markdown. See comment above.
+        "MD010": false, // hard tabs in SEE ALSO tables
+        "MD040": false, // fenced code blocks without language
+        "MD012": false  // double blank lines occasionally emitted
+      }
+    }
+  ]
+}

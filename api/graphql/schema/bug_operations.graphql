@@ -10,6 +10,16 @@ type BugCreateOperation implements Operation & Authored
     title: String!
     message: String!
     files: [Hash!]!
+    """Issue vs pull-request."""
+    kind: BugKind!
+    """For PRs, the base branch. Empty for issues."""
+    baseRef: String!
+    """For PRs, the head branch. Empty for issues."""
+    headRef: String!
+    """For PRs, the initial head commit. Empty for issues."""
+    headCommit: String!
+    """For PRs, whether the PR was created in draft state."""
+    draft: Boolean!
 }
 
 type BugSetTitleOperation implements Operation & Authored
@@ -62,6 +72,44 @@ type BugSetStatusOperation implements Operation & Authored
     date: Time! @goField(name: "Time")
 
     status: Status!
+    """For merge transitions, the merge commit hash. Empty for other status changes."""
+    mergeCommit: String!
+}
+
+type BugUpdateHeadOperation implements Operation & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.UpdateHeadOperation") {
+    id: ID!
+    author: Identity!
+    date: Time! @goField(name: "Time")
+
+    newCommit: String!
+    previousCommit: String!
+}
+
+type BugAddReviewOperation implements Operation & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.AddReviewOperation") {
+    id: ID!
+    author: Identity!
+    date: Time! @goField(name: "Time")
+
+    state: ReviewState!
+    body: String!
+    commitHash: String!
+}
+
+type BugAddReviewCommentOperation implements Operation & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.AddReviewCommentOperation") {
+    id: ID!
+    author: Identity!
+    date: Time! @goField(name: "Time")
+
+    reviewId: ID!
+    body: String!
+    commitHash: String!
+    path: String!
+    startLine: Int!
+    endLine: Int!
+    replyTo: ID
 }
 
 type BugLabelChangeOperation implements Operation & Authored

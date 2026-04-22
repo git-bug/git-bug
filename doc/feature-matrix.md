@@ -41,8 +41,29 @@ The most high level overview of what kind of entities are supported and where.
 | Identities     |  ✅  | ✅  |   ✅   |  ✅   |
 | Bug            |  ✅  | ✅  |   ✅   |  ✅   |
 | Board          |  🟠  | 🟠  |   ❌   |  ❌   |
-| Pull-request   |  ❌  | ❌  |   ❌   |  ❌   |
+| Pull-request   |  🟠  | 🟠  |   ❌   |  🟠   |
 | Project Config |  ❌  | ❌  |   ❌   |  ❌   |
+
+Pull-request support is implemented as a `Kind` variant of the Bug
+entity, matching GitHub's own model (PRs share the issue number
+sequence and data shape). Plain issues remain `Kind=Issue`; PRs get
+`Kind=PR` with extra fields (`BaseRef`, `HeadRef`, `HeadCommit`,
+`MergeCommit`, reviews) and three PR-only operations
+(`UpdateHead`, `AddReview`, `AddReviewComment`).
+
+v1 CLI surface:
+
+- `git bug new --pr --base REF --head REF [--head-commit HASH] [--draft]`
+- `git bug status merge BUG_ID --commit HASH`
+- `git bug status ready BUG_ID` (draft -> open)
+- `git bug kind:pr` / `kind:issue` filters
+
+v1 GraphQL: `Bug.kind`, `Bug.baseRef / headRef / headCommit / mergeCommit`,
+`Bug.reviews`, plus matching operation and timeline types.
+
+v1 GitHub bridge: read-only import of PRs (title, body, comments,
+labels, merge / close / draft transitions). Review threads and the
+exporter are not in v1.
 
 More specific features across the board.
 
@@ -52,7 +73,7 @@ More specific features across the board.
 | Fast indexing      |  ✅  | ✅  |   ✅   |  ✅   |
 | Markdown rendering | N/A  | ❌  |   ❌   |  ✅   |
 
-#### Identities
+### Identities
 
 |                         | Core | CLI | TermUI | WebUI |
 | ----------------------- | :--: | :-: | :----: | :---: |
@@ -62,7 +83,7 @@ More specific features across the board.
 | Identity adoption       |  ✅  | ✅  |   ❌   |  ❌   |
 | Identity protection     |  🟠  | ❌  |   ❌   |  ❌   |
 
-#### Bugs
+### Bugs
 
 |                   | Core | CLI | TermUI | WebUI |
 | ----------------- | :--: | :-: | :----: | :---: |
@@ -114,6 +135,33 @@ Board support:
 |           | Github | Gitlab | Jira | Launchpad |
 | --------- | :----: | :----: | :--: | :-------: |
 | **board** |   ❌   |   ❌   |  ❌  |    ❌     |
+
+PR support (import only):
+
+|                  | Github | Gitlab | Jira | Launchpad |
+| ---------------- | :----: | :----: | :--: | :-------: |
+| **pull-request** |   ✅   |   ❌   |  ❌  |    ❌     |
+| comments         |   ✅   |   ❌   |  ❌  |    ❌     |
+| merge state      |   ✅   |   ❌   |  ❌  |    ❌     |
+| draft state      |   ✅   |   ❌   |  ❌  |    ❌     |
+| reviews          |   ✅   |   ❌   |  ❌  |    ❌     |
+| review comments  |   ✅   |   ❌   |  ❌  |    ❌     |
+| export: create   |   ✅   |   ❌   |  ❌  |    ❌     |
+| export: updates  |   🟠   |   ❌   |  ❌  |    ❌     |
+| export: reviews  |   🟠   |   ❌   |  ❌  |    ❌     |
+
+Creating a PR via `git bug bug new --pr` then `git bug push` to a
+GitHub bridge opens the pull-request on GitHub, provided the --head
+branch has already been pushed to the remote. git-bug does not push
+git branches itself. Export of subsequent updates (status, title,
+body, labels, comments) is supported; export of merges is skipped
+because merging requires an actual git merge on GitHub's side.
+
+Review authoring (`git bug bug review add / comment`) works locally
+and exports via `addPullRequestReview` (for the review itself) and
+`addPullRequestReviewComment` (for replies to an existing thread).
+Standalone new review comment threads are not exported in v1 — create
+them inline with the review or via GitHub directly.
 
 ### Exporters
 

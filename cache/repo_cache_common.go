@@ -93,6 +93,12 @@ func (c *RepoCache) Fetch(remote string) (string, error) {
 	return c.repo.FetchRefs(remote, prefixes...)
 }
 
+// FetchRefSpecs is the escape hatch for non-prefix refspecs (see the
+// RepoData docstring for why it exists).
+func (c *RepoCache) FetchRefSpecs(remote string, specs []string) (string, error) {
+	return c.repo.FetchRefSpecs(remote, specs)
+}
+
 // RemoveAll deletes all entities from the cache and the disk.
 func (c *RepoCache) RemoveAll() error {
 	var errWait multierr.ErrWaitGroup

@@ -79,6 +79,41 @@ type BugSetStatusTimelineItem implements BugTimelineItem & Authored
     author: Identity!
     date: Time!
     status: Status!
+    """For merge transitions, the merge commit hash. Empty otherwise."""
+    mergeCommit: String!
+}
+
+type BugUpdateHeadTimelineItem implements BugTimelineItem & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.UpdateHeadTimelineItem") {
+    id: CombinedId! @goField(name: "CombinedId")
+    author: Identity!
+    date: Time! @goField(name: "UnixTime")
+    newCommit: String!
+    previousCommit: String!
+}
+
+type BugAddReviewTimelineItem implements BugTimelineItem & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.AddReviewTimelineItem") {
+    id: CombinedId! @goField(name: "CombinedId")
+    author: Identity!
+    date: Time! @goField(name: "UnixTime")
+    state: ReviewState!
+    body: String!
+    commitHash: String!
+}
+
+type BugAddReviewCommentTimelineItem implements BugTimelineItem & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/bug.AddReviewCommentTimelineItem") {
+    id: CombinedId! @goField(name: "CombinedId")
+    author: Identity!
+    date: Time! @goField(name: "UnixTime")
+    reviewId: ID!
+    body: String!
+    commitHash: String!
+    path: String!
+    startLine: Int!
+    endLine: Int!
+    replyTo: ID
 }
 
 """BugLabelChangeTimelineItem is a BugTimelineItem that represent a change in the title of a bug"""

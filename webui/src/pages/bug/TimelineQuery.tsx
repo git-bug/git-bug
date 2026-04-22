@@ -1,4 +1,5 @@
 import CircularProgress from '@mui/material/CircularProgress';
+import { useParams } from 'react-router';
 
 import { BugFragment } from './Bug.generated';
 import Timeline from './Timeline';
@@ -8,11 +9,22 @@ type Props = {
   bug: BugFragment;
 };
 
+function safeDecode(s: string): string {
+  try {
+    return decodeURIComponent(s);
+  } catch {
+    return s;
+  }
+}
+
 const TimelineQuery = ({ bug }: Props) => {
+  const { repoName } = useParams<{ repoName: string }>();
+  const repoRef = repoName ? safeDecode(repoName) : null;
   const { loading, error, data } = useTimelineQuery({
     variables: {
       id: bug.id,
       first: 100,
+      repoRef,
     },
   });
 
