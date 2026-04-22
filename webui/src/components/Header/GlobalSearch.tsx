@@ -336,7 +336,7 @@ function derivedValue(
   if (repoName && location.pathname.startsWith('/r/')) {
     const base = baseRepoName(repoName);
     const prefix = `repo:${base}`;
-    if (!q) return `${prefix} status:open`;
+    if (!q) return `${prefix} kind:issue status:open status:draft`;
     if (q.includes(prefix)) return q;
     return `${prefix} ${q}`;
   }

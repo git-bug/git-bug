@@ -2,6 +2,9 @@ package bug
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
+	"unicode"
 
 	"github.com/git-bug/git-bug/entities/common"
 	"github.com/git-bug/git-bug/entities/identity"
@@ -11,6 +14,51 @@ import (
 	"github.com/git-bug/git-bug/util/text"
 	"github.com/git-bug/git-bug/util/timestamp"
 )
+
+// SHA-1 (40) or SHA-256 (64) lowercase hex. Accepts either so the format
+// is future-proof for git's SHA-256 transition.
+var gitHashRe = regexp.MustCompile(`^[0-9a-f]{40}([0-9a-f]{24})?$`)
+
+// validBranchRef reports whether s is a full ref path of the form
+// "refs/heads/<name>" where <name> obeys git's check-ref-format rules.
+// Used to gate BaseRef / HeadRef on PR ops so attacker-controlled branch
+// names can't later be passed to git as crafted refs (e.g. ".." traversal,
+// "@{" reflog syntax, refs/bugs collisions).
+func validBranchRef(s string) bool {
+	const prefix = "refs/heads/"
+	if !strings.HasPrefix(s, prefix) {
+		return false
+	}
+	name := s[len(prefix):]
+	if name == "" || name == "@" {
+		return false
+	}
+	if strings.HasPrefix(name, "/") || strings.HasSuffix(name, "/") ||
+		strings.HasPrefix(name, ".") || strings.HasSuffix(name, ".") ||
+		strings.HasSuffix(name, ".lock") {
+		return false
+	}
+	if strings.Contains(name, "..") || strings.Contains(name, "//") ||
+		strings.Contains(name, "@{") {
+		return false
+	}
+	// Each slash-separated component must not start with a dot.
+	for _, comp := range strings.Split(name, "/") {
+		if strings.HasPrefix(comp, ".") {
+			return false
+		}
+	}
+	for _, r := range name {
+		if unicode.IsControl(r) {
+			return false
+		}
+		switch r {
+		case ' ', '~', '^', ':', '?', '*', '[', '\\', '\x7f':
+			return false
+		}
+	}
+	return true
+}
 
 var _ Operation = &CreateOperation{}
 var _ dag.OperationWithFiles = &CreateOperation{}
@@ -123,14 +171,14 @@ func (op *CreateOperation) Validate() error {
 		if text.Empty(op.HeadRef) {
 			return fmt.Errorf("pr head_ref is empty")
 		}
-		if !text.SafeOneLine(op.BaseRef) {
-			return fmt.Errorf("pr base_ref has unsafe characters")
+		if !validBranchRef(op.BaseRef) {
+			return fmt.Errorf("pr base_ref must be a valid refs/heads/<name>")
 		}
-		if !text.SafeOneLine(op.HeadRef) {
-			return fmt.Errorf("pr head_ref has unsafe characters")
+		if !validBranchRef(op.HeadRef) {
+			return fmt.Errorf("pr head_ref must be a valid refs/heads/<name>")
 		}
-		if !text.SafeOneLine(op.HeadCommit) {
-			return fmt.Errorf("pr head_commit has unsafe characters")
+		if op.HeadCommit != "" && !gitHashRe.MatchString(op.HeadCommit) {
+			return fmt.Errorf("pr head_commit is not a lowercase hex git hash")
 		}
 	}
 

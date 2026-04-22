@@ -136,6 +136,12 @@ type RepoData interface {
 	// The equivalent git refspec would be "refs/foo/*:refs/remotes/<remote>/foo/*"
 	FetchRefs(remote string, prefixes ...string) (string, error)
 
+	// FetchRefSpecs fetches caller-chosen refspecs from a remote. Needed
+	// for GitHub-specific paths like "refs/pull/<n>/head:refs/remotes/
+	// origin/pr/<n>" that don't fit the prefix template FetchRefs uses.
+	// Returns the human-readable git output for logging.
+	FetchRefSpecs(remote string, refSpecs []string) (string, error)
+
 	// PushRefs push git refs matching a directory prefix to a remote
 	// Ex: prefix="foo" will push any local refs matching "refs/foo/*" to the remote.
 	// The equivalent git refspec would be "refs/foo/*:refs/foo/*"
@@ -266,6 +272,22 @@ type RepoBrowse interface {
 	// Returns ErrNotFound if HEAD cannot be resolved to a commit, including
 	// for an empty (unborn) repository.
 	Head() (RefMeta, error)
+
+	// CommitsAhead returns the commits reachable from headRef but not from
+	// baseRef, newest first — i.e. the commits a pull-request adds on top
+	// of its base branch. limit caps the result; 0 means unbounded. An
+	// empty baseRef falls back to first-parent ancestry only.
+	//
+	// Returns ErrNotFound if either ref fails to resolve.
+	CommitsAhead(baseRef, headRef string, limit int) ([]CommitMeta, error)
+
+	// DiffBetween returns the file-level diff of baseRef vs headRef, i.e.
+	// the combined effect of every commit that headRef adds on top of
+	// baseRef. Paths are reported once even when they were touched by
+	// multiple commits — the diff is between the two endpoint trees.
+	//
+	// Returns ErrNotFound if either ref fails to resolve.
+	DiffBetween(baseRef, headRef string) ([]FileDiff, error)
 }
 
 // ClockLoader hold which logical clock need to exist for an entity and

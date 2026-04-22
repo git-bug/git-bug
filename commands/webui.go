@@ -170,6 +170,11 @@ func setupRoutes(env *execenv.Env, opts webUIOptions) (*mux.Router, func() error
 	router.Path("/gitfile/{repo}/{rest:.+}").Handler(httpapi.NewGitFileHandler(mrc))
 	router.Path("/upload/{repo}").Methods("POST").Handler(httpapi.NewGitUploadFileHandler(mrc))
 	router.Path("/sync").Handler(httpapi.NewSyncHandler(mrc))
+	router.Path("/checks/{repo:.+}/{sha:[0-9a-f]{40,64}}").Handler(httpapi.NewChecksHandler(mrc))
+	// PR inspection: {action} is "commits" or "diff"; base/head are query params
+	// (they can contain slashes — e.g. refs/heads/feature/foo — so they don't
+	// fit cleanly in the path template).
+	router.Path("/pr/{repo:.+}/{action:commits|diff}").Handler(httpapi.NewPRHandler(mrc))
 	router.PathPrefix("/").Handler(webui.NewHandler())
 
 	return router, mrc.Close, nil
@@ -212,14 +217,31 @@ func discoverExtraRepos(opts webUIOptions) ([]extraRepo, error) {
 		add(p)
 	}
 	if opts.root != "" {
+		rootAbs, err := filepath.Abs(opts.root)
+		if err != nil {
+			return nil, err
+		}
 		matches, err := filepath.Glob(filepath.Join(opts.root, "*", "*"))
 		if err != nil {
 			return nil, err
 		}
 		for _, m := range matches {
-			if info, statErr := os.Stat(m); statErr == nil && info.IsDir() {
-				add(m)
+			// Lstat so we see symlinks as symlinks (not their targets).
+			// Reject any path that is a symlink, or whose resolved path
+			// escapes --root. This stops an attacker with write access
+			// under --root from linking in an arbitrary git-bug store.
+			info, statErr := os.Lstat(m)
+			if statErr != nil || !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
+				continue
 			}
+			resolved, err := filepath.EvalSymlinks(m)
+			if err != nil {
+				continue
+			}
+			if !strings.HasPrefix(resolved+string(filepath.Separator), rootAbs+string(filepath.Separator)) {
+				continue
+			}
+			add(m)
 		}
 	}
 	return out, nil

@@ -2,6 +2,7 @@ package bug
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/git-bug/git-bug/entities/common"
 	"github.com/git-bug/git-bug/entities/identity"
@@ -95,14 +96,23 @@ func (op *AddReviewCommentOperation) Validate() error {
 	if text.Empty(op.CommitHash) {
 		return fmt.Errorf("commit_hash is empty")
 	}
-	if !text.SafeOneLine(op.CommitHash) {
-		return fmt.Errorf("commit_hash has unsafe characters")
+	if !gitHashRe.MatchString(op.CommitHash) {
+		return fmt.Errorf("commit_hash is not a lowercase hex git hash")
 	}
 	if text.Empty(op.Path) {
 		return fmt.Errorf("path is empty")
 	}
 	if !text.SafeOneLine(op.Path) {
 		return fmt.Errorf("path has unsafe characters")
+	}
+	// Defence in depth: file paths from external sources should never escape
+	// the repo root. Reject absolute paths, Windows-drive prefixes, any ..
+	// segment, and backslashes (Windows separators or git-quoted bytes).
+	if strings.HasPrefix(op.Path, "/") ||
+		strings.Contains(op.Path, "\\") ||
+		strings.Contains(op.Path, "..") ||
+		(len(op.Path) >= 2 && op.Path[1] == ':') {
+		return fmt.Errorf("path must be a repo-relative POSIX path")
 	}
 	if op.StartLine <= 0 {
 		return fmt.Errorf("start_line must be positive")

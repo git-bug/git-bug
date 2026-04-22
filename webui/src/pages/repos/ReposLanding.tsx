@@ -89,7 +89,7 @@ export default function ReposLanding() {
         .map((r) => (
           <Link
             key={r.name}
-            to={`/r/${encodeURIComponent(r.name || '')}/?q=status:open`}
+            to={`/r/${encodeURIComponent(r.name || '')}/?q=kind:issue status:open status:draft`}
             className={classes.row}
             style={{ textDecoration: 'none' }}
           >

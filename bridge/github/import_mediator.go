@@ -2,10 +2,40 @@ package github
 
 import (
 	"context"
+	"log"
+	"os"
+	"sync/atomic"
 	"time"
 
 	"github.com/shurcooL/githubv4"
 )
+
+// Set GITBUG_GITHUB_RATELIMIT_LOG=1 to have each top-level GraphQL query log
+// its cost and remaining budget to stderr. Off by default so normal runs are
+// quiet; invaluable when diagnosing rate-limit starvation.
+var logRateLimit = os.Getenv("GITBUG_GITHUB_RATELIMIT_LOG") == "1"
+
+// Most recent budget observation across all mediators — purely for debug.
+var lastRateLimit atomic.Value // stores rateLimit
+
+func noteRateLimit(queryName, owner, project string, rl rateLimit) {
+	lastRateLimit.Store(rl)
+	if !logRateLimit {
+		return
+	}
+	log.Printf(
+		"github.graphql %s/%s %s: cost=%d remaining=%d/%d resetsAt=%s",
+		owner, project, queryName, int(rl.Cost), int(rl.Remaining), int(rl.Limit),
+		rl.ResetAt.Format(time.RFC3339),
+	)
+}
+
+// LastRateLimit returns the most recent rateLimit observed across any
+// bridge sync (zero value if we've never successfully queried yet).
+func LastRateLimit() (cost, remaining, limit int, resetAt time.Time) {
+	v, _ := lastRateLimit.Load().(rateLimit)
+	return int(v.Cost), int(v.Remaining), int(v.Limit), v.ResetAt.Time
+}
 
 const (
 	// These values influence how fast the github graphql rate limit is exhausted.
@@ -109,9 +139,18 @@ func (mm *importMediator) fillImportEvents(ctx context.Context) {
 
 	// Second pass: pull-requests. GitHub's PR stream is disjoint from issues
 	// (they share the repo's number sequence but `issues` never returns PRs).
+	// Sorted UPDATED_AT DESC so we can stop paginating the instant we see a
+	// PR older than `since`: catchup syncs with nothing new cost 1 point.
 	prs, hasPRs := mm.queryPullRequest(ctx, initialCursor)
+prPages:
 	for hasPRs {
 		for _, node := range prs.Nodes {
+			// Because the page is sorted newest-updated first, the first PR
+			// older than `since` means every subsequent PR on this page and
+			// all following pages is also older → bail on the whole scan.
+			if !mm.since.IsZero() && node.UpdatedAt.Before(mm.since) {
+				break prPages
+			}
 			select {
 			case <-ctx.Done():
 				return
@@ -138,6 +177,7 @@ func (mm *importMediator) queryPullRequest(ctx context.Context, cursor githubv4.
 		mm.err = err
 		return nil, false
 	}
+	noteRateLimit("pullRequests", mm.owner, mm.project, query.RateLimit)
 	connection := &query.Repository.PullRequests
 	if len(connection.Nodes) <= 0 {
 		return nil, false
@@ -426,6 +466,7 @@ func (mm *importMediator) queryIssue(ctx context.Context, cursor githubv4.String
 		mm.err = err
 		return nil, false
 	}
+	noteRateLimit("issues", mm.owner, mm.project, query.RateLimit)
 	connection := &query.Repository.Issues
 	if len(connection.Nodes) <= 0 {
 		return nil, false

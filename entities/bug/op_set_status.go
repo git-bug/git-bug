@@ -59,6 +59,9 @@ func (op *SetStatusOperation) Validate() error {
 		if op.MergeCommit == "" {
 			return errors.New("merge requires merge_commit")
 		}
+		if !gitHashRe.MatchString(op.MergeCommit) {
+			return errors.New("merge_commit is not a lowercase hex git hash")
+		}
 	} else if op.MergeCommit != "" {
 		return errors.New("merge_commit only valid when status=merged")
 	}

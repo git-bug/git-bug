@@ -85,7 +85,9 @@ export default function RepoPicker() {
             selected={n === repoName}
             onClick={() => {
               setAnchor(null);
-              navigate(`/r/${encodeURIComponent(n)}/?q=status:open`);
+              navigate(
+                `/r/${encodeURIComponent(n)}/?q=kind:issue status:open status:draft`
+              );
             }}
           >
             {n}

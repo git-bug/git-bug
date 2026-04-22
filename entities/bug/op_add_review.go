@@ -69,8 +69,8 @@ func (op *AddReviewOperation) Validate() error {
 	if text.Empty(op.CommitHash) {
 		return fmt.Errorf("commit_hash is empty")
 	}
-	if !text.SafeOneLine(op.CommitHash) {
-		return fmt.Errorf("commit_hash has unsafe characters")
+	if !gitHashRe.MatchString(op.CommitHash) {
+		return fmt.Errorf("commit_hash is not a lowercase hex git hash")
 	}
 	return nil
 }

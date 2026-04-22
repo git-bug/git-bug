@@ -50,8 +50,8 @@ func TestGithubPRImport(t *testing.T) {
 	require.Equal(t, common.MergedStatus, mSnap.Status)
 	require.Equal(t, "refs/heads/main", mSnap.BaseRef)
 	require.Equal(t, "refs/heads/feat1", mSnap.HeadRef)
-	require.Equal(t, "aaa111", mSnap.HeadCommit)
-	require.Equal(t, "mergecommit1", mSnap.MergeCommit)
+	require.Equal(t, "a000000000000000000000000000000000000001", mSnap.HeadCommit)
+	require.Equal(t, "a000000000000000000000000000000000000fff", mSnap.MergeCommit)
 	// First op is CreatePR.
 	require.Equal(t, common.PRKind, mSnap.Operations[0].(*bug.CreateOperation).Kind)
 
@@ -95,7 +95,7 @@ func TestGithubPRReviewImport(t *testing.T) {
 	require.Len(t, snap.Reviews, 1)
 	require.Equal(t, bug.ReviewApproved, snap.Reviews[0].State)
 	require.Equal(t, "LGTM", snap.Reviews[0].Body)
-	require.Equal(t, "revcommit", snap.Reviews[0].CommitHash)
+	require.Equal(t, "d000000000000000000000000000000000000009", snap.Reviews[0].CommitHash)
 	require.Len(t, snap.Reviews[0].Comments, 1)
 	rc := snap.Reviews[0].Comments[0]
 	require.Equal(t, "nit: naming", rc.Body)
@@ -166,7 +166,7 @@ func setupPRReviewPaginationExpectations(t *testing.T, mock *mocks.Client) {
 						Url:         githubv4.URI{URL: &url.URL{Scheme: "https", Host: "github.com", Path: "marcus/to-himself/pull/10"}},
 						BaseRefName: "main",
 						HeadRefName: "feat10",
-						HeadRefOid:  "commit10",
+						HeadRefOid:  "e000000000000000000000000000000000000010",
 					},
 					TimelineItems: prTimelineItemsConnection{
 						Nodes: []prTimelineItem{
@@ -179,7 +179,7 @@ func setupPRReviewPaginationExpectations(t *testing.T, mock *mocks.Client) {
 									},
 									State:  githubv4.PullRequestReviewStateCommented,
 									Body:   "batch",
-									Commit: &struct{ Oid githubv4.GitObjectID }{Oid: "commit10"},
+									Commit: &struct{ Oid githubv4.GitObjectID }{Oid: "e000000000000000000000000000000000000010"},
 									Comments: pullRequestReviewCommentConnection{
 										Nodes: []pullRequestReviewComment{
 											{
@@ -190,7 +190,7 @@ func setupPRReviewPaginationExpectations(t *testing.T, mock *mocks.Client) {
 												Body:   "inline-comment",
 												Path:   "a.go",
 												Line:   5,
-												Commit: &struct{ Oid githubv4.GitObjectID }{Oid: "commit10"},
+												Commit: &struct{ Oid githubv4.GitObjectID }{Oid: "e000000000000000000000000000000000000010"},
 											},
 										},
 										PageInfo: pageInfo{
@@ -220,7 +220,7 @@ func setupPRReviewPaginationExpectations(t *testing.T, mock *mocks.Client) {
 						Body:   "paged-comment",
 						Path:   "b.go",
 						Line:   7,
-						Commit: &struct{ Oid githubv4.GitObjectID }{Oid: "commit10"},
+						Commit: &struct{ Oid githubv4.GitObjectID }{Oid: "e000000000000000000000000000000000000010"},
 					},
 				},
 				PageInfo: pageInfo{HasNextPage: false},
@@ -254,7 +254,7 @@ func expectPullRequestQueryWithReview(mock *mocks.Client) {
 						Url:         githubv4.URI{URL: &url.URL{Scheme: "https", Host: "github.com", Path: "marcus/to-himself/pull/9"}},
 						BaseRefName: "main",
 						HeadRefName: "feat9",
-						HeadRefOid:  "prcommit9",
+						HeadRefOid:  "e000000000000000000000000000000000000009",
 					},
 					TimelineItems: prTimelineItemsConnection{
 						Nodes: []prTimelineItem{
@@ -267,7 +267,7 @@ func expectPullRequestQueryWithReview(mock *mocks.Client) {
 									},
 									State: githubv4.PullRequestReviewStateApproved,
 									Body:  "LGTM",
-									Commit: &struct{ Oid githubv4.GitObjectID }{Oid: "revcommit"},
+									Commit: &struct{ Oid githubv4.GitObjectID }{Oid: "d000000000000000000000000000000000000009"},
 									Comments: pullRequestReviewCommentConnection{
 										Nodes: []pullRequestReviewComment{
 											{
@@ -278,7 +278,7 @@ func expectPullRequestQueryWithReview(mock *mocks.Client) {
 												Body:   "nit: naming",
 												Path:   "foo.go",
 												Line:   42,
-												Commit: &struct{ Oid githubv4.GitObjectID }{Oid: "revcommit"},
+												Commit: &struct{ Oid githubv4.GitObjectID }{Oid: "d000000000000000000000000000000000000009"},
 											},
 										},
 									},
@@ -337,11 +337,11 @@ func expectPullRequestQuery(mock *mocks.Client) {
 						}},
 						BaseRefName: "main",
 						HeadRefName: "feat1",
-						HeadRefOid:  "aaa111",
+						HeadRefOid:  "a000000000000000000000000000000000000001",
 						Merged:      true,
 						MergeCommit: &struct {
 							Oid githubv4.GitObjectID
-						}{Oid: "mergecommit1"},
+						}{Oid: "a000000000000000000000000000000000000fff"},
 						Closed: true,
 					},
 				},
@@ -357,7 +357,7 @@ func expectPullRequestQuery(mock *mocks.Client) {
 						Url:         githubv4.URI{URL: &url.URL{Scheme: "https", Host: "github.com", Path: "marcus/to-himself/pull/2"}},
 						BaseRefName: "main",
 						HeadRefName: "feat2",
-						HeadRefOid:  "bbb222",
+						HeadRefOid:  "b000000000000000000000000000000000000002",
 						IsDraft:     true,
 					},
 				},
@@ -373,7 +373,7 @@ func expectPullRequestQuery(mock *mocks.Client) {
 						Url:         githubv4.URI{URL: &url.URL{Scheme: "https", Host: "github.com", Path: "marcus/to-himself/pull/3"}},
 						BaseRefName: "main",
 						HeadRefName: "feat3",
-						HeadRefOid:  "ccc333",
+						HeadRefOid:  "c000000000000000000000000000000000000003",
 						Closed:      true,
 					},
 				},

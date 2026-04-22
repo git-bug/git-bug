@@ -55,11 +55,11 @@ func (op *UpdateHeadOperation) Validate() error {
 	if text.Empty(op.NewCommit) {
 		return fmt.Errorf("new_commit is empty")
 	}
-	if !text.SafeOneLine(op.NewCommit) {
-		return fmt.Errorf("new_commit has unsafe characters")
+	if !gitHashRe.MatchString(op.NewCommit) {
+		return fmt.Errorf("new_commit is not a lowercase hex git hash")
 	}
-	if !text.SafeOneLine(op.PreviousCommit) {
-		return fmt.Errorf("previous_commit has unsafe characters")
+	if op.PreviousCommit != "" && !gitHashRe.MatchString(op.PreviousCommit) {
+		return fmt.Errorf("previous_commit is not a lowercase hex git hash")
 	}
 	return nil
 }

@@ -131,7 +131,7 @@ export default function SearchPage() {
   // Pass only the non-scope portion of the query to the server; the scope
   // is applied client-side after the response is back.
   const { data, loading, error } = useSearchAllQuery({
-    variables: { query: scope.rest || 'status:open' },
+    variables: { query: scope.rest || 'status:open status:draft' },
     // We want up-to-date results every time since these are cross-repo
     // fan-out; cache-and-network gives immediate stale + fresh update.
     fetchPolicy: 'cache-and-network',
@@ -182,7 +182,7 @@ export default function SearchPage() {
           <div className={classes.repoHeader}>
             <Link
               to={`/r/${encodeURIComponent(repo.name!)}/?q=${encodeURIComponent(
-                scope.rest || 'status:open'
+                scope.rest || 'status:open status:draft'
               )}`}
               className={classes.repoName}
             >
@@ -196,7 +196,7 @@ export default function SearchPage() {
               <Link
                 to={`/r/${encodeURIComponent(
                   repo.name!
-                )}/?q=${encodeURIComponent(scope.rest || 'status:open')}`}
+                )}/?q=${encodeURIComponent(scope.rest || 'status:open status:draft')}`}
                 className={classes.count}
               >
                 (view all →)

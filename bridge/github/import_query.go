@@ -3,11 +3,18 @@ package github
 import "github.com/shurcooL/githubv4"
 
 type rateLimitQuery struct {
-	RateLimit struct {
-		ResetAt githubv4.DateTime
-		//Limit     githubv4.Int
-		//Remaining githubv4.Int
-	}
+	RateLimit rateLimit
+}
+
+// rateLimit mirrors GitHub's RateLimit object. Embed this in any top-level
+// query struct to piggyback cost/remaining/reset info on a query we'd make
+// anyway — it's free to request and invaluable for diagnosing rate-limit
+// starvation.
+type rateLimit struct {
+	Cost      githubv4.Int
+	Remaining githubv4.Int
+	Limit     githubv4.Int
+	ResetAt   githubv4.DateTime
 }
 
 type userQuery struct {
@@ -38,12 +45,18 @@ type issueQuery struct {
 	Repository struct {
 		Issues issueConnection `graphql:"issues(first: $issueFirst, after: $issueAfter, orderBy: {field: CREATED_AT, direction: ASC}, filterBy: {since: $issueSince})"`
 	} `graphql:"repository(owner: $owner, name: $name)"`
+	RateLimit rateLimit
 }
 
+// Pull requests are sorted by UPDATED_AT DESC so catchup syncs can break out
+// of pagination as soon as they see a PR older than `since` — GitHub's
+// pullRequests connection has no filterBy, so this ordering is the only way
+// to avoid walking the entire PR history on every sync.
 type pullRequestQuery struct {
 	Repository struct {
-		PullRequests pullRequestConnection `graphql:"pullRequests(first: $issueFirst, after: $issueAfter, orderBy: {field: CREATED_AT, direction: ASC})"`
+		PullRequests pullRequestConnection `graphql:"pullRequests(first: $issueFirst, after: $issueAfter, orderBy: {field: UPDATED_AT, direction: DESC})"`
 	} `graphql:"repository(owner: $owner, name: $name)"`
+	RateLimit rateLimit
 }
 
 type prTimelineQuery struct {
@@ -153,7 +166,8 @@ type pullRequest struct {
 	MergeCommit  *struct {
 		Oid githubv4.GitObjectID
 	}
-	Closed githubv4.Boolean
+	Closed    githubv4.Boolean
+	UpdatedAt githubv4.DateTime
 }
 
 type prTimelineItemsConnection struct {

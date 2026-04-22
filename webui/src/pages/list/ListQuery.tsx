@@ -193,7 +193,9 @@ const Error: React.FC<ErrorProps> = ({ error }: ErrorProps) => {
 function ListQuery() {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
-  const query = params.has('q') ? params.get('q') || '' : 'status:open';
+  const query = params.has('q')
+    ? params.get('q') || ''
+    : 'kind:issue status:open status:draft';
 
   const [filterMenuIsOpen, setFilterMenuIsOpen] = useState(false);
   const filterButtonRef = useRef<HTMLButtonElement>(null);

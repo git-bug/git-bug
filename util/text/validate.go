@@ -45,12 +45,22 @@ func SafeOneLine(s string) bool {
 	return true
 }
 
-// ValidUrl will tell if the string contains what seems to be a valid URL
+// ValidUrl reports whether the string is a well-formed URL using a web-safe
+// scheme. Only http and https are accepted — javascript:, data:, file: and
+// similar are rejected because the string may later be rendered into an
+// <a href> or <img src> in the web UI, where those schemes enable XSS or
+// leak local files.
 func ValidUrl(s string) bool {
 	if strings.Contains(s, "\n") {
 		return false
 	}
-
-	_, err := url.ParseRequestURI(s)
-	return err == nil
+	u, err := url.ParseRequestURI(s)
+	if err != nil {
+		return false
+	}
+	switch strings.ToLower(u.Scheme) {
+	case "http", "https":
+		return true
+	}
+	return false
 }

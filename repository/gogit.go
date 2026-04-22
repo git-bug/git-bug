@@ -21,6 +21,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	fdiff "github.com/go-git/go-git/v5/plumbing/format/diff"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v5/plumbing/storer"
 	lru "github.com/hashicorp/golang-lru/v2"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/singleflight"
@@ -401,33 +402,37 @@ func (repo *GoGitRepo) GetIndex(name string) (Index, error) {
 // Ex: prefix="foo" will fetch any remote refs matching "refs/foo/*" locally.
 // The equivalent git refspec would be "refs/foo/*:refs/remotes/<remote>/foo/*"
 func (repo *GoGitRepo) FetchRefs(remote string, prefixes ...string) (string, error) {
-	refSpecs := make([]config.RefSpec, len(prefixes))
-
+	specs := make([]string, len(prefixes))
 	for i, prefix := range prefixes {
-		refSpecs[i] = config.RefSpec(fmt.Sprintf("refs/%s/*:refs/remotes/%s/%s/*", prefix, remote, prefix))
+		specs[i] = fmt.Sprintf("refs/%s/*:refs/remotes/%s/%s/*", prefix, remote, prefix)
 	}
+	return repo.FetchRefSpecs(remote, specs)
+}
 
-	buf := bytes.NewBuffer(nil)
-
-	remoteUrl, err := repo.resolveRemote(remote, true)
+// FetchRefSpecs fetches caller-chosen refspecs from a remote. Used for
+// GitHub's "refs/pull/<n>/head" mapping (which doesn't fit the prefix
+// shape FetchRefs expects) and for pre-warming PR tips into local
+// origin/pr/<n> refs so the PR browser can resolve them.
+//
+// Implementation note: we shell out to the system `git` binary rather
+// than using gogit's Fetch because SSH auth with agent/keys/system
+// config is the common case for mirrored repos, and gogit's native
+// SSH implementation is finicky enough that it fails where the system
+// git succeeds. The system git will transparently use ssh-agent, the
+// user's ~/.ssh config, and any credential helpers — exactly what you
+// want.
+func (repo *GoGitRepo) FetchRefSpecs(remote string, specs []string) (string, error) {
+	if len(specs) == 0 {
+		return "", nil
+	}
+	args := append([]string{"-C", repo.path, "fetch", "--no-tags", remote}, specs...)
+	cmd := execabs.Command("git", args...)
+	// Capture both streams; git prints progress on stderr.
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("git fetch failed: %w: %s", err, strings.TrimSpace(string(out)))
 	}
-
-	err = repo.r.Fetch(&gogit.FetchOptions{
-		RemoteName: remote,
-		RemoteURL:  remoteUrl,
-		RefSpecs:   refSpecs,
-		Progress:   buf,
-	})
-	if err == gogit.NoErrAlreadyUpToDate {
-		return "already up-to-date", nil
-	}
-	if err != nil {
-		return "", err
-	}
-
-	return buf.String(), nil
+	return strings.TrimSpace(string(out)), nil
 }
 
 // resolveRemote returns the URI for a given remote
@@ -975,21 +980,65 @@ func (repo *GoGitRepo) peelToCommit(h plumbing.Hash) (plumbing.Hash, error) {
 }
 
 // resolveRefToHash resolves a branch/tag name or raw hash to a commit hash.
-// Resolution order: refs/heads/<ref>, refs/tags/<ref>, full ref name, raw commit hash.
-// Annotated tags are peeled to their target commit.
+// Resolution order:
+//
+//	refs/heads/<ref>, refs/tags/<ref>, refs/remotes/origin/<ref> (and
+//	refs/remotes/<remote>/<ref> for any configured remote), full ref
+//	name, raw commit hash.
+//
+// The remote fallback matters for read-only mirrors (the multi-repo
+// webui use-case): most "branches" only live as `origin/<name>` since
+// we never check anything out locally. Annotated tags are peeled to
+// their target commit.
+//
+// Callers that need to accept a caller-supplied `refs/heads/<name>`
+// pass it through; we strip the prefix before trying remotes.
 func (repo *GoGitRepo) resolveRefToHash(ref string) (plumbing.Hash, error) {
+	// Full ref (e.g. "refs/heads/main", "refs/remotes/origin/main") wins
+	// if it resolves directly — callers passing the canonical form get
+	// the fastest path.
+	if r, err := repo.r.Reference(plumbing.ReferenceName(ref), true); err == nil {
+		return repo.peelToCommit(r.Hash())
+	}
+
+	// Short-form resolution: strip any known top-level prefix the caller
+	// supplied (refs/heads/, refs/tags/) before searching other spaces.
+	short := ref
+	for _, p := range []string{"refs/heads/", "refs/tags/"} {
+		if strings.HasPrefix(short, p) {
+			short = strings.TrimPrefix(short, p)
+			break
+		}
+	}
+
 	for _, prefix := range []string{"refs/heads/", "refs/tags/"} {
-		r, err := repo.r.Reference(plumbing.ReferenceName(prefix+ref), true)
-		if err == nil {
+		if r, err := repo.r.Reference(plumbing.ReferenceName(prefix+short), true); err == nil {
 			return repo.peelToCommit(r.Hash())
 		}
 	}
-	// try as a full ref name
-	r, err := repo.r.Reference(plumbing.ReferenceName(ref), true)
-	if err == nil {
-		return repo.peelToCommit(r.Hash())
+
+	// Remote-tracking fallback. Try origin first (the overwhelmingly
+	// common case for mirrored repos), then any other configured remote
+	// so `refs/heads/main` resolves to `refs/remotes/upstream/main` when
+	// the user has added an upstream.
+	candidates := []string{"origin"}
+	if remotes, err := repo.r.Remotes(); err == nil {
+		for _, rem := range remotes {
+			if name := rem.Config().Name; name != "" && name != "origin" {
+				candidates = append(candidates, name)
+			}
+		}
 	}
-	// try as a raw commit hash
+	for _, rem := range candidates {
+		full := "refs/remotes/" + rem + "/" + short
+		if r, err := repo.r.Reference(plumbing.ReferenceName(full), true); err == nil {
+			return repo.peelToCommit(r.Hash())
+		}
+	}
+
+	// Raw commit hash. NewHash will accept any valid-shaped hex; we
+	// still require the object to be present locally, otherwise we'd
+	// silently succeed for fork PRs we haven't fetched.
 	h := plumbing.NewHash(ref)
 	if h != plumbing.ZeroHash {
 		if _, err := repo.r.CommitObject(h); err == nil {
@@ -1708,4 +1757,160 @@ func (repo *GoGitRepo) EraseFromDisk() error {
 
 	// fmt.Println("Cleaning repo:", path)
 	return os.RemoveAll(path)
+}
+
+// CommitsAhead returns the commits reachable from headRef but not baseRef,
+// newest first. We resolve both ends to commits, compute the merge-base,
+// and walk the head-side of the history up to (but not including) the
+// merge-base. For a typical PR this is a short linear chain, but the
+// implementation handles merge commits in the head history too: we walk
+// a normal first-parent-extended DFS from head, stopping at any commit
+// reachable from base.
+func (repo *GoGitRepo) CommitsAhead(baseRef, headRef string, limit int) ([]CommitMeta, error) {
+	repo.rMutex.Lock()
+	defer repo.rMutex.Unlock()
+
+	headHash, err := repo.resolveRefToHash(headRef)
+	if err != nil {
+		return nil, err
+	}
+	baseHash, err := repo.resolveRefToHash(baseRef)
+	if err != nil {
+		return nil, err
+	}
+
+	baseCommit, err := repo.r.CommitObject(baseHash)
+	if err != nil {
+		return nil, err
+	}
+
+	// Build a set of commit hashes reachable from base so we can stop
+	// the traversal at merge-base without relying on gogit's MergeBase
+	// semantics (which returns multiple bases on criss-cross merges).
+	// For a reasonably-fresh base branch this set is small; we cap it
+	// at 20000 to keep memory bounded.
+	baseReach := make(map[plumbing.Hash]struct{}, 4096)
+	iter := object.NewCommitPreorderIter(baseCommit, nil, nil)
+	const baseReachCap = 20000
+	err = iter.ForEach(func(c *object.Commit) error {
+		baseReach[c.Hash] = struct{}{}
+		if len(baseReach) >= baseReachCap {
+			return storer.ErrStop
+		}
+		return nil
+	})
+	if err != nil && err != storer.ErrStop {
+		return nil, err
+	}
+
+	// Walk from head in committer-date order, skipping anything reachable
+	// from base. This gives us exactly the commits the PR adds.
+	result := []CommitMeta{}
+	logIter, err := repo.r.Log(&gogit.LogOptions{
+		From:  headHash,
+		Order: gogit.LogOrderCommitterTime,
+	})
+	if err != nil {
+		return nil, err
+	}
+	defer logIter.Close()
+
+	for {
+		c, err := logIter.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		if _, inBase := baseReach[c.Hash]; inBase {
+			// We've hit merge-base territory — anything further back is
+			// already on the base branch, so we're done.
+			break
+		}
+		result = append(result, commitToMeta(c))
+		if limit > 0 && len(result) >= limit {
+			break
+		}
+	}
+	return result, nil
+}
+
+// DiffBetween computes the file-level diff from baseRef's tree to
+// headRef's tree — a single summary of every change the PR introduces,
+// independent of how many commits it took to get there. For each
+// differing path we try to emit hunks; binary files and large diffs
+// are represented structurally but without line-level content.
+func (repo *GoGitRepo) DiffBetween(baseRef, headRef string) ([]FileDiff, error) {
+	repo.rMutex.Lock()
+	defer repo.rMutex.Unlock()
+
+	headHash, err := repo.resolveRefToHash(headRef)
+	if err != nil {
+		return nil, err
+	}
+	baseHash, err := repo.resolveRefToHash(baseRef)
+	if err != nil {
+		return nil, err
+	}
+
+	headCommit, err := repo.r.CommitObject(headHash)
+	if err != nil {
+		return nil, err
+	}
+	baseCommit, err := repo.r.CommitObject(baseHash)
+	if err != nil {
+		return nil, err
+	}
+
+	toTree, err := headCommit.Tree()
+	if err != nil {
+		return nil, err
+	}
+	fromTree, err := baseCommit.Tree()
+	if err != nil {
+		return nil, err
+	}
+
+	changes, err := object.DiffTree(fromTree, toTree)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]FileDiff, 0, len(changes))
+	for _, ch := range changes {
+		from, to, err := ch.Files()
+		if err != nil {
+			return nil, err
+		}
+		patch, err := ch.Patch()
+		if err != nil {
+			return nil, err
+		}
+		fd := FileDiff{
+			IsNew:    from == nil,
+			IsDelete: to == nil,
+		}
+		if to != nil {
+			fd.Path = to.Name
+		}
+		if from != nil {
+			if fd.Path == "" {
+				fd.Path = from.Name
+			} else if from.Name != fd.Path {
+				op := from.Name
+				fd.OldPath = &op
+			}
+		}
+		fps := patch.FilePatches()
+		if len(fps) > 0 {
+			fp := fps[0]
+			fd.IsBinary = fp.IsBinary()
+			if !fd.IsBinary {
+				fd.Hunks = buildDiffHunks(fp)
+			}
+		}
+		out = append(out, fd)
+	}
+	return out, nil
 }

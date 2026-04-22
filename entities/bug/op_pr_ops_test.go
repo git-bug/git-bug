@@ -18,25 +18,25 @@ func newTestPR(t *testing.T) (*Bug, identity.Interface) {
 	rene, err := identity.NewIdentity(repo, "René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
 	b, _, err := CreatePR(rene, time.Now().Unix(), "t", "b",
-		"refs/heads/main", "refs/heads/feat", "aaa111", false, nil, nil)
+		"refs/heads/main", "refs/heads/feat", "0000000000000000000000000000000000000001", false, nil, nil)
 	require.NoError(t, err)
 	return b, rene
 }
 
 func TestUpdateHead(t *testing.T) {
 	b, rene := newTestPR(t)
-	op, err := UpdateHead(b, rene, time.Now().Unix(), "bbb222", nil)
+	op, err := UpdateHead(b, rene, time.Now().Unix(), "0000000000000000000000000000000000000002", nil)
 	require.NoError(t, err)
-	require.Equal(t, "aaa111", op.PreviousCommit)
-	require.Equal(t, "bbb222", op.NewCommit)
+	require.Equal(t, "0000000000000000000000000000000000000001", op.PreviousCommit)
+	require.Equal(t, "0000000000000000000000000000000000000002", op.NewCommit)
 
 	snap := b.Compile()
-	require.Equal(t, "bbb222", snap.HeadCommit)
+	require.Equal(t, "0000000000000000000000000000000000000002", snap.HeadCommit)
 
 	// Next update uses the most recent head as previous.
-	op2, err := UpdateHead(b, rene, time.Now().Unix(), "ccc333", nil)
+	op2, err := UpdateHead(b, rene, time.Now().Unix(), "0000000000000000000000000000000000000003", nil)
 	require.NoError(t, err)
-	require.Equal(t, "bbb222", op2.PreviousCommit)
+	require.Equal(t, "0000000000000000000000000000000000000002", op2.PreviousCommit)
 }
 
 func TestUpdateHeadRejectsIssue(t *testing.T) {
@@ -51,7 +51,7 @@ func TestUpdateHeadRejectsIssue(t *testing.T) {
 
 func TestAddReview(t *testing.T) {
 	b, rene := newTestPR(t)
-	id, op, err := AddReview(b, rene, time.Now().Unix(), ReviewApproved, "LGTM", "aaa111", nil)
+	id, op, err := AddReview(b, rene, time.Now().Unix(), ReviewApproved, "LGTM", "0000000000000000000000000000000000000001", nil)
 	require.NoError(t, err)
 	require.NotEqual(t, entity.UnsetCombinedId, id)
 	require.Equal(t, ReviewApproved, op.State)
@@ -59,16 +59,16 @@ func TestAddReview(t *testing.T) {
 	snap := b.Compile()
 	require.Len(t, snap.Reviews, 1)
 	require.Equal(t, ReviewApproved, snap.Reviews[0].State)
-	require.Equal(t, "aaa111", snap.Reviews[0].CommitHash)
+	require.Equal(t, "0000000000000000000000000000000000000001", snap.Reviews[0].CommitHash)
 }
 
 func TestAddReviewComment(t *testing.T) {
 	b, rene := newTestPR(t)
-	reviewId, _, err := AddReview(b, rene, time.Now().Unix(), ReviewCommented, "", "aaa111", nil)
+	reviewId, _, err := AddReview(b, rene, time.Now().Unix(), ReviewCommented, "", "0000000000000000000000000000000000000001", nil)
 	require.NoError(t, err)
 
 	commentId, _, err := AddReviewComment(b, rene, time.Now().Unix(), reviewId,
-		"nit: typo", "aaa111", "foo.go", 10, 12, "", nil)
+		"nit: typo", "0000000000000000000000000000000000000001", "foo.go", 10, 12, "", nil)
 	require.NoError(t, err)
 	require.NotEqual(t, entity.UnsetCombinedId, commentId)
 
@@ -82,16 +82,16 @@ func TestAddReviewComment(t *testing.T) {
 
 func TestAddReviewCommentValidation(t *testing.T) {
 	b, rene := newTestPR(t)
-	reviewId, _, err := AddReview(b, rene, time.Now().Unix(), ReviewCommented, "", "aaa111", nil)
+	reviewId, _, err := AddReview(b, rene, time.Now().Unix(), ReviewCommented, "", "0000000000000000000000000000000000000001", nil)
 	require.NoError(t, err)
 
-	_, _, err = AddReviewComment(b, rene, time.Now().Unix(), reviewId, "x", "aaa111", "foo.go", 0, 0, "", nil)
+	_, _, err = AddReviewComment(b, rene, time.Now().Unix(), reviewId, "x", "0000000000000000000000000000000000000001", "foo.go", 0, 0, "", nil)
 	require.ErrorContains(t, err, "start_line must be positive")
 
-	_, _, err = AddReviewComment(b, rene, time.Now().Unix(), reviewId, "x", "aaa111", "foo.go", 10, 5, "", nil)
+	_, _, err = AddReviewComment(b, rene, time.Now().Unix(), reviewId, "x", "0000000000000000000000000000000000000001", "foo.go", 10, 5, "", nil)
 	require.ErrorContains(t, err, "precedes start_line")
 
-	_, _, err = AddReviewComment(b, rene, time.Now().Unix(), "", "x", "aaa111", "foo.go", 1, 0, "", nil)
+	_, _, err = AddReviewComment(b, rene, time.Now().Unix(), "", "x", "0000000000000000000000000000000000000001", "foo.go", 1, 0, "", nil)
 	require.ErrorContains(t, err, "review_id is empty")
 }
 
@@ -110,12 +110,16 @@ func TestPROpsRejectIssue(t *testing.T) {
 
 func TestPROpsSerialize(t *testing.T) {
 	dag.SerializeRoundTripTest(t, operationUnmarshaler, func(author identity.Interface, unixTime int64) (*UpdateHeadOperation, entity.Resolvers) {
-		return NewUpdateHeadOp(author, unixTime, "new123", "old456"), nil
+		return NewUpdateHeadOp(author, unixTime,
+			"0000000000000000000000000000000000000002",
+			"0000000000000000000000000000000000000001"), nil
 	})
 	dag.SerializeRoundTripTest(t, operationUnmarshaler, func(author identity.Interface, unixTime int64) (*AddReviewOperation, entity.Resolvers) {
-		return NewAddReviewOp(author, unixTime, ReviewApproved, "LGTM", "commit1"), nil
+		return NewAddReviewOp(author, unixTime, ReviewApproved, "LGTM",
+			"0000000000000000000000000000000000000001"), nil
 	})
 	dag.SerializeRoundTripTest(t, operationUnmarshaler, func(author identity.Interface, unixTime int64) (*AddReviewCommentOperation, entity.Resolvers) {
-		return NewAddReviewCommentOp(author, unixTime, "review-id", "body", "commit1", "foo.go", 10, 12, "reply-target"), nil
+		return NewAddReviewCommentOp(author, unixTime, "review-id", "body",
+			"0000000000000000000000000000000000000001", "foo.go", 10, 12, "reply-target"), nil
 	})
 }
