@@ -45,12 +45,20 @@ func MetadataFilter(pair query.StringPair) Filter {
 // LabelFilter return a Filter that matches a label
 func LabelFilter(label string) Filter {
 	return func(excerpt *BugExcerpt, resolvers entity.Resolvers) bool {
+		var invResult = (len(label) > 1 && label[0] == '!')
+		var findLabel string
+		if invResult {
+			findLabel = label[1:]
+		} else {
+			findLabel = label
+		}
+
 		for _, l := range excerpt.Labels {
-			if string(l) == label {
-				return true
+			if string(l) == findLabel {
+				return !invResult
 			}
 		}
-		return false
+		return invResult
 	}
 }
 
