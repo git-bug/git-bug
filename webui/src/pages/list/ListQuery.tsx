@@ -298,7 +298,7 @@ function ListQuery() {
     error: ciqError,
     data: ciqData,
   } = useCurrentIdentityQuery();
-  if (ciqError || ciqLoading || !ciqData?.repository?.userIdentity) {
+  if (ciqError || ciqLoading) {
     return null;
   }
 
