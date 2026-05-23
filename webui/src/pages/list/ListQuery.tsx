@@ -301,7 +301,6 @@ function ListQuery() {
   if (ciqError || ciqLoading || !ciqData?.repository?.userIdentity) {
     return null;
   }
-  const user = ciqData.repository.userIdentity;
 
   const loc = pipe(stringify, queryLocation);
   const qparams: Query = parse(query);
@@ -337,17 +336,21 @@ function ListQuery() {
                 horizontal: 'left',
               }}
             >
-              <MenuItem
-                component={Link}
-                to={pipe(
-                  replaceParam('author', user.displayName),
-                  replaceParam('sort', 'creation'),
-                  loc
-                )(qparams)}
-                onClick={() => setFilterMenuIsOpen(false)}
-              >
-                Your newest issues
-              </MenuItem>
+              <IfLoggedIn>
+                {() => (
+                  <MenuItem
+                    component={Link}
+                    to={pipe(
+                      replaceParam('author', ciqData?.repository?.userIdentity?.displayName ?? ""),
+                      replaceParam('sort', 'creation'),
+                      loc
+                    )(qparams)}
+                    onClick={() => setFilterMenuIsOpen(false)}
+                  >
+                    Your newest issues
+                  </MenuItem>
+                )}
+              </IfLoggedIn>
             </Menu>
           </FormControl>
           <InputBase
