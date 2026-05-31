@@ -1,5 +1,7 @@
+import clsx from 'clsx';
 import type { Root as HastRoot } from 'hast';
 import type { Root as MdRoot } from 'mdast';
+import { fromMarkdown, Options } from 'mdast-util-from-markdown';
 import { useEffect, useState } from 'react';
 import * as React from 'react';
 import * as production from 'react/jsx-runtime';
@@ -14,9 +16,10 @@ import remarkGfm from 'remark-gfm';
 import remarkParse from 'remark-parse';
 import remarkRehype from 'remark-rehype';
 import type { Options as RemarkRehypeOptions } from 'remark-rehype';
+import { retext } from 'retext';
+import retextEmoji from 'retext-emoji';
 import { unified } from 'unified';
 import type { Plugin, Processor } from 'unified';
-import { Node as UnistNode } from 'unified/lib';
 
 import { ThemeContext } from '../Themer';
 
@@ -25,12 +28,11 @@ import BlockQuoteTag from './BlockQuoteTag';
 import ImageTag from './ImageTag';
 import PreTag from './PreTag';
 
-type Props = { markdown: string };
-
 // @lygaret 2025/05/16
 // type inference for some of this doesn't work, but the pipeline is fine
 // this might get better when we upgrade typescript
 
+type RetextPlugin = Plugin<any[], string, string>;
 type RemarkPlugin = Plugin<[], MdRoot, HastRoot>;
 type RemarkRehypePlugin = Plugin<RemarkRehypeOptions[], MdRoot, HastRoot>;
 type RehypePlugin<Options extends unknown[] = []> = Plugin<
@@ -39,43 +41,51 @@ type RehypePlugin<Options extends unknown[] = []> = Plugin<
   HastRoot
 >;
 
-const markdownPipeline: Processor<
-  UnistNode,
-  undefined,
-  undefined,
-  HastRoot,
-  React.JSX.Element
-> = unified()
-  .use(remarkParse)
-  .use(remarkGemoji as unknown as RemarkPlugin)
-  .use(remarkBreaks as unknown as RemarkPlugin)
-  .use(remarkGfm)
-  .use(remarkRehype as unknown as RemarkRehypePlugin, {
-    allowDangerousHtml: true,
-  })
-  .use(rehypeSanitize as unknown as RehypePlugin)
-  .use(rehypeHighlight as unknown as RehypePlugin<RehypeHighlightOpts[]>, {
-    detect: true,
-    subset: ['text'],
-  })
-  .use(rehypeReact, {
-    ...production,
-    components: {
-      a: AnchorTag,
-      blockquote: BlockQuoteTag,
-      img: ImageTag,
-      pre: PreTag,
-    },
-  });
+const pipelines: Record<'title' | 'comment', Processor<any, any, any, any, any>> = {
+  title: retext()
+    .use(retextEmoji as unknown as RetextPlugin, { convert: 'encode' }),
 
-const Content: React.FC<Props> = ({ markdown }: Props) => {
+  comment: unified()
+    .use(remarkParse)
+    .use(remarkGemoji as unknown as RemarkPlugin)
+    .use(remarkBreaks as unknown as RemarkPlugin)
+    .use(remarkGfm)
+    .use(remarkRehype as unknown as RemarkRehypePlugin, {
+      allowDangerousHtml: true,
+    })
+    .use(rehypeSanitize as unknown as RehypePlugin)
+    .use(rehypeHighlight as unknown as RehypePlugin<RehypeHighlightOpts[]>, {
+      detect: true,
+      subset: ['text'],
+    })
+    .use(rehypeReact, {
+      ...production,
+      components: {
+        a: AnchorTag,
+        blockquote: BlockQuoteTag,
+        img: ImageTag,
+        pre: PreTag,
+      },
+    })
+};
+
+type Props = { 
+  className?: string,
+  markdown: string,
+  inline?: boolean,
+  pipeline?: keyof typeof pipelines
+};
+
+const Content: React.FC<Props> = ({ markdown, pipeline, inline, className }: Props) => {
   const theme = React.useContext(ThemeContext);
   const [content, setContent] = useState(<></>);
 
   useEffect(() => {
-    markdownPipeline
+    pipelines[pipeline ?? 'comment']
       .process(markdown)
-      .then((file) => setContent(file.result))
+      .then((file) => {
+        setContent(file.result ?? <>{file.value}</>)
+      })
       .catch((err: any) => {
         setContent(
           <>
@@ -86,11 +96,11 @@ const Content: React.FC<Props> = ({ markdown }: Props) => {
       });
   }, [markdown]);
 
-  return (
-    <div className={'highlight-theme'} data-theme={theme.mode}>
-      {content}
-    </div>
-  );
+  return inline
+    ? <span className={className}>{content}</span>
+    : <div className={clsx('highlight-theme', className)} data-theme={theme.mode}>
+        {content}
+      </div>;
 };
 
 export default Content;

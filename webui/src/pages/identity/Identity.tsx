@@ -13,9 +13,12 @@ import { useGetUserStatisticQuery } from './GetUserStatistic.generated';
 
 const useStyles = makeStyles((theme) => ({
   main: {
-    maxWidth: 1000,
-    margin: 'auto',
-    marginTop: theme.spacing(3),
+    maxWidth: `min(${theme.breakpoints.values.md}px, calc(100% - ${theme.spacing(8)}))`,
+    margin: theme.spacing(4, 'auto'),
+    [theme.breakpoints.down('md')]: {
+      maxWidth: '100%',
+      margin: 0,
+    },
   },
   content: {
     padding: theme.spacing(0.5, 2, 2, 2),
@@ -66,7 +69,7 @@ const Identity = ({ identity }: Props) => {
     <main className={classes.main}>
       <Paper elevation={3} className={classes.content}>
         <Grid spacing={2} container direction="row">
-          <Grid xs={12} sm={4} className={classes.heading} item>
+          <Grid xs={12} md={4} className={classes.heading} item>
             <Avatar
               src={user?.avatarUrl ? user.avatarUrl : undefined}
               className={classes.large}
@@ -74,7 +77,7 @@ const Identity = ({ identity }: Props) => {
               {user?.displayName.charAt(0).toUpperCase()}
             </Avatar>
           </Grid>
-          <Grid xs={12} sm={4} item>
+          <Grid xs={12} md={4} item>
             <section>
               <h1 className={classes.header}>{user?.name}</h1>
               <Typography variant="subtitle1">
@@ -108,7 +111,7 @@ const Identity = ({ identity }: Props) => {
               )}
             </section>
           </Grid>
-          <Grid xs={12} sm={4} item>
+          <Grid xs={12} md={4} item>
             <section>
               <h1 className={classes.header}>Statistics</h1>
               <Link

@@ -4,7 +4,6 @@ import BackToListButton from '../../components/BackToListButton';
 
 const useStyles = makeStyles((theme) => ({
   main: {
-    maxWidth: 1000,
     margin: 'auto',
     marginTop: theme.spacing(10),
   },
