@@ -4,7 +4,7 @@ import (
 	"context"
 	"strconv"
 
-	"code.gitea.io/sdk/gitea"
+	gitea "gitea.dev/sdk"
 )
 
 type issueIterator struct {
@@ -46,9 +46,9 @@ func (ii *issueIterator) getNext(ctx context.Context, conf config) (bool, error)
 
 	ctx, cancel := context.WithTimeout(ctx, conf.timeout)
 	defer cancel()
-	conf.gc.SetContext(ctx)
 
 	issues, resp, err := conf.gc.ListRepoIssues(
+		ctx,
 		conf.owner,
 		conf.project,
 		gitea.ListIssueOption{

@@ -3,7 +3,7 @@ package iterator
 import (
 	"context"
 
-	"code.gitea.io/sdk/gitea"
+	gitea "gitea.dev/sdk"
 )
 
 type commentIterator struct {
@@ -46,9 +46,9 @@ func (ci *commentIterator) getNext(ctx context.Context, conf config) (bool, erro
 
 	ctx, cancel := context.WithTimeout(ctx, conf.timeout)
 	defer cancel()
-	conf.gc.SetContext(ctx)
 
 	comments, _, err := conf.gc.ListIssueComments(
+		ctx,
 		conf.owner,
 		conf.project,
 		ci.issue,
