@@ -3,7 +3,7 @@ package iterator
 import (
 	"context"
 
-	"code.gitea.io/sdk/gitea"
+	gitea "gitea.dev/sdk"
 )
 
 type labelIterator struct {
@@ -46,9 +46,9 @@ func (li *labelIterator) getNext(ctx context.Context, conf config) (bool, error)
 
 	ctx, cancel := context.WithTimeout(ctx, conf.timeout)
 	defer cancel()
-	conf.gc.SetContext(ctx)
 
 	labels, _, err := conf.gc.GetIssueLabels(
+		ctx,
 		conf.owner,
 		conf.project,
 		li.issue,

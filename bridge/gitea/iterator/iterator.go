@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"code.gitea.io/sdk/gitea"
+	gitea "gitea.dev/sdk"
 )
 
 type Iterator struct {
