@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	"code.gitea.io/sdk/gitea"
+	gitea "gitea.dev/sdk"
 	"github.com/pkg/errors"
 
 	"github.com/git-bug/git-bug/bridge/core"
@@ -297,9 +297,8 @@ func validateUsername(baseURL, username string) (bool, error) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 	defer cancel()
-	client.SetContext(ctx)
 
-	_, _, err = client.GetUserInfo(username)
+	_, _, err = client.GetUserInfo(ctx, username)
 	if err != nil {
 		return false, errors.Wrap(err, "user not found")
 	}
@@ -315,9 +314,8 @@ func validateProject(baseURL, owner, project string, token *auth.Token) (bool, e
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 	defer cancel()
-	client.SetContext(ctx)
 
-	_, _, err = client.GetRepo(owner, project)
+	_, _, err = client.GetRepo(ctx, owner, project)
 	if err != nil {
 		return false, errors.Wrap(err, "wrong token scope or non-existent project")
 	}
@@ -333,9 +331,8 @@ func getLoginFromToken(baseURL string, token *auth.Token) (string, error) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 	defer cancel()
-	client.SetContext(ctx)
 
-	user, _, err := client.GetMyUserInfo()
+	user, _, err := client.GetMyUserInfo(ctx)
 	if err != nil {
 		return "", err
 	}

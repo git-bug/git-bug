@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"code.gitea.io/sdk/gitea"
+	"gitea.dev/sdk"
 
 	"github.com/git-bug/git-bug/bridge/core"
 	"github.com/git-bug/git-bug/bridge/core/auth"
@@ -161,9 +161,8 @@ func (gi *giteaImporter) ensurePerson(repo *cache.RepoCache, loginName string) (
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 	defer cancel()
-	gi.client.SetContext(ctx)
 
-	user, _, err := gi.client.GetUserInfo(loginName)
+	user, _, err := gi.client.GetUserInfo(ctx, loginName)
 	if err != nil {
 		if err.Error() == "404 Not Found" {
 			user.FullName = loginName
