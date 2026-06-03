@@ -3,6 +3,7 @@ package gitea
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"path"
 	"regexp"
 	"sort"
@@ -19,7 +20,7 @@ import (
 )
 
 var (
-	ErrBadProjectURL = errors.New("bad project url")
+        ErrBadProjectURL = errors.New("bad project url")
 )
 
 func (g *Gitea) ValidParams() map[string]interface{} {
@@ -237,19 +238,35 @@ func promptURL(repo repository.RepoCommon) (string, string, string, error) {
 	return splitURL(url)
 }
 
-func splitURL(url string) (baseURL, owner, project string, err error) {
-	cleanURL := strings.TrimSuffix(url, ".git")
-
-	re := regexp.MustCompile(`(.*)/([a-zA-Z0-9\-_.]+)/([a-zA-Z0-9\-_.]+)$`)
-
-	res := re.FindStringSubmatch(cleanURL)
-	if res == nil {
-		return "", "", "", ErrBadProjectURL
+func splitURL(rawUrl string) (baseURL, owner, project string, err error) {
+	parsedURL, err := url.Parse(rawUrl)
+	// url.Parse basically never returns an error.
+	// Check its work.
+	if err == nil && parsedURL.Scheme == "" {
+		err = ErrBadProjectURL
 	}
 
-	baseURL = res[1]
-	owner = res[2]
-	project = res[3]
+	if err != nil {
+		// This might be a `git@` SCP URL.
+		scp := regexp.MustCompile(`^[^@]+@([^:]+):([^/]+)/(.+?)(?:\.git)?$`)
+		if m := scp.FindStringSubmatch(rawUrl); m != nil {
+			err = nil
+			var host string
+			host, owner, project = m[1], m[2], m[3]
+			baseURL = "https://" + host + "/"
+			return
+		}
+
+		return "", "", "", err
+	}
+
+	path := strings.Split(parsedURL.Path, "/")
+	owner = path[1]
+	project = strings.TrimSuffix(path[2], ".git")
+
+	parsedURL.Path = "/"
+	parsedURL.Scheme = "https"
+	baseURL = parsedURL.String()
 	return
 }
 

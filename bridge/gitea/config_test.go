@@ -87,7 +87,7 @@ func TestSplitURL(t *testing.T) {
 		{
 			name: "bad url",
 			args: args{
-				url: "https://gite.com/git-bug/git-bug.git",
+				url: "xxx",
 			},
 			want: want{
 				err: ErrBadProjectURL,
@@ -98,10 +98,10 @@ func TestSplitURL(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			baseURL, owner, project, err := splitURL(tt.args.url)
-			assert.Equal(t, tt.want.err, err)
-			assert.Equal(t, tt.want.baseURL, baseURL)
-			assert.Equal(t, tt.want.owner, owner)
-			assert.Equal(t, tt.want.project, project)
+			assert.Equal(t, tt.want.err, err, tt.args.url)
+			assert.Equal(t, tt.want.baseURL, baseURL, tt.args.url)
+			assert.Equal(t, tt.want.owner, owner, tt.args.url)
+			assert.Equal(t, tt.want.project, project, tt.args.url)
 		})
 	}
 }
