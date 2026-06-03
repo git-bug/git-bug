@@ -6,13 +6,14 @@ import (
 	"strconv"
 	"time"
 
-	"gitea.dev/sdk"
+	gitea "gitea.dev/sdk"
 
 	"github.com/git-bug/git-bug/bridge/core"
 	"github.com/git-bug/git-bug/bridge/core/auth"
 	"github.com/git-bug/git-bug/bridge/gitea/iterator"
 	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/repository"
 	"github.com/git-bug/git-bug/util/text"
 )
 
@@ -78,9 +79,27 @@ func (gi *giteaImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, s
 			}
 
 			// Loop over all comments
+			for gi.iterator.NextComment() {
+				comment := gi.iterator.CommentValue()
+				author, err := gi.ensurePerson(repo, comment.Poster.UserName)
+				if err != nil {
+					err := fmt.Errorf("comment creation: %v", err)
+					out <- core.NewImportError(err, "")
+					return
+				}
+				b.AddCommentRaw(
+					author,
+					comment.Created.Unix(),
+					comment.Body,
+					// TODO: add attachments
+					make([]repository.Hash, 0),
+					// TODO: add author ID and comment ID
+					// otherwise each comment will get duplicated
+					make(map[string]string),
+				)
+			}
 
 			// Loop over all label events
-
 			if !b.NeedCommit() {
 				out <- core.NewImportNothing(b.Id(), "no imported operation")
 			} else if err := b.Commit(); err != nil {
