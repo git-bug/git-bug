@@ -13,6 +13,7 @@ const (
 	target = "gitea"
 
 	metaKeyGiteaID      = "gitea-id"
+	metaKeyGiteaCommentID = "gitea-comment-id"
 	metaKeyGiteaLogin   = "gitea-login"
 	metaKeyGiteaOwner   = "gitea-owner"
 	metaKeyGiteaProject = "gitea-project"
