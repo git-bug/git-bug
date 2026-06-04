@@ -46,6 +46,10 @@ type FakeAPI struct {
 	// RepoNotFound makes the repo endpoint return 404.
 	RepoNotFound bool
 
+	// RepoErrStatus, if non-zero, makes the repo endpoint return that HTTP
+	// status (e.g. 500). Takes precedence over RepoNotFound.
+	RepoErrStatus int
+
 	// IssueRequests accumulates every request made to the issues endpoint.
 	// Inspect after running to verify query parameters such as `since`.
 	IssueRequests []*http.Request
@@ -184,6 +188,10 @@ func (fa *FakeAPI) NewServer(t *testing.T) *httptest.Server {
 	mux.HandleFunc(repoPath, func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != repoPath {
 			http.NotFound(w, r)
+			return
+		}
+		if fa.RepoErrStatus != 0 {
+			http.Error(w, http.StatusText(fa.RepoErrStatus), fa.RepoErrStatus)
 			return
 		}
 		if fa.RepoNotFound {
