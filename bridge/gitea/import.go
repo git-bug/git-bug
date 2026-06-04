@@ -82,23 +82,6 @@ func (gi *giteaImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, s
 
 			// Loop over all comments
 			for gi.iterator.NextComment() {
-				comment := gi.iterator.CommentValue()
-				author, err := gi.ensurePerson(repo, comment.Poster)
-				if err != nil {
-					err := fmt.Errorf("comment creation: %v", err)
-					out <- core.NewImportError(err, "")
-					return
-				}
-				b.AddCommentRaw(
-					author,
-					comment.Created.Unix(),
-					comment.Body,
-					// TODO: add attachments
-					make([]repository.Hash, 0),
-					// TODO: add author ID and comment ID
-					// otherwise each comment will get duplicated
-					make(map[string]string),
-				)
 			}
 
 			// Loop over all label events
@@ -118,6 +101,38 @@ func (gi *giteaImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, s
 	}()
 
 	return out, nil
+}
+
+func (gi *giteaImporter) importComment(repo *cache.RepoCache, bug *cache.BugCache, comment *gitea.Comment) {
+	commentID := strconv.FormatInt(comment.ID, 10)
+
+	// Check if we've already imported this comment.
+	// This isn't as slow as it looks, we're only iterating events on the current issue.
+	for _, op := range bug.Snapshot().Operations {
+		id, ok := op.GetMetadata(metaKeyGiteaCommentID)
+		if ok && id == commentID {
+			return
+		}
+	}
+
+	author, err := gi.ensurePerson(repo, comment.Poster)
+	if err != nil {
+		err := fmt.Errorf("comment creation: %v", err)
+		gi.out <- core.NewImportError(err, "")
+		return
+	}
+
+	metadata := map[string]string{metaKeyGiteaCommentID: commentID}
+	bug.AddCommentRaw(
+		author,
+		comment.Created.Unix(),
+		comment.Body,
+		// TODO: add attachments
+		make([]repository.Hash, 0),
+		// TODO: add author ID and comment ID
+		// otherwise each comment will get duplicated
+		metadata,
+	)
 }
 
 func (gi *giteaImporter) ensureIssue(repo *cache.RepoCache, issue *gitea.Issue) (*cache.BugCache, error) {
