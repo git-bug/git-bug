@@ -27,6 +27,11 @@ type FakeAPI struct {
 
 	Labels []*gitea.Label
 
+	// CommentsByIssue/LabelsByIssue, if set, override the singular Comments/Labels
+	// fields and let tests configure per-issue responses (keyed by Issue.Index).
+	CommentsByIssue map[int64][]*gitea.Comment
+	LabelsByIssue   map[int64][]*gitea.Label
+
 	// NotFoundUsers is a list of usernames that return 404 from userGet.
 	NotFoundUsers []string
 
@@ -46,6 +51,53 @@ func writeJSON(w http.ResponseWriter, v any) {
 	_ = json.NewEncoder(w).Encode(v)
 }
 
+func parsePagination(r *http.Request) (page, limit int) {
+	page, limit = 1, 10
+	if p := r.URL.Query().Get("page"); p != "" {
+		if n, err := strconv.Atoi(p); err == nil && n > 0 {
+			page = n
+		}
+	}
+	if l := r.URL.Query().Get("limit"); l != "" {
+		if n, err := strconv.Atoi(l); err == nil && n > 0 {
+			limit = n
+		}
+	}
+	return
+}
+
+func pageSlice(page, limit, total int) (start, end int) {
+	start = (page - 1) * limit
+	end = start + limit
+	if start > total {
+		start = total
+	}
+	if end > total {
+		end = total
+	}
+	return
+}
+
+func (fa *FakeAPI) commentsFor(idx int64) []*gitea.Comment {
+	if c, ok := fa.CommentsByIssue[idx]; ok {
+		return c
+	}
+	if idx == 1 {
+		return fa.Comments
+	}
+	return nil
+}
+
+func (fa *FakeAPI) labelsFor(idx int64) []*gitea.Label {
+	if l, ok := fa.LabelsByIssue[idx]; ok {
+		return l
+	}
+	if idx == 1 {
+		return fa.Labels
+	}
+	return nil
+}
+
 // NewServer starts an httptest.Server backed by this FakeAPI and registers
 // a cleanup to close it when t finishes.
 func (fa *FakeAPI) NewServer(t *testing.T) *httptest.Server {
@@ -53,25 +105,12 @@ func (fa *FakeAPI) NewServer(t *testing.T) *httptest.Server {
 	mux := http.NewServeMux()
 
 	issuesPath := fmt.Sprintf("/api/v1/repos/%s/%s/issues", fa.Owner, fa.Project)
-	commentsPath := fmt.Sprintf("/api/v1/repos/%s/%s/issues/1/comments", fa.Owner, fa.Project)
-	labelsPath := fmt.Sprintf("/api/v1/repos/%s/%s/issues/1/labels", fa.Owner, fa.Project)
+	issuesPrefix := issuesPath + "/"
 
 	// https://codeberg.org/api/swagger#/issue/issueListIssues
 	mux.HandleFunc(issuesPath, func(w http.ResponseWriter, r *http.Request) {
 		fa.IssueRequests = append(fa.IssueRequests, r)
-
-		page := 1
-		if p := r.URL.Query().Get("page"); p != "" {
-			if n, err := strconv.Atoi(p); err == nil && n > 0 {
-				page = n
-			}
-		}
-		limit := 10
-		if l := r.URL.Query().Get("limit"); l != "" {
-			if n, err := strconv.Atoi(l); err == nil && n > 0 {
-				limit = n
-			}
-		}
+		page, limit := parsePagination(r)
 
 		if fa.IssueErrPage > 0 && page == fa.IssueErrPage {
 			http.Error(w, "simulated server error", http.StatusInternalServerError)
@@ -82,76 +121,49 @@ func (fa *FakeAPI) NewServer(t *testing.T) *httptest.Server {
 		// see https://codeberg.org/forgejo/forgejo/issues/12931
 		w.Header().Set("X-Total-Count", strconv.Itoa(len(fa.Issues)))
 
-		start := (page - 1) * limit
-		end := start + limit
-		if start > len(fa.Issues) {
-			start = len(fa.Issues)
-		}
-		if end > len(fa.Issues) {
-			end = len(fa.Issues)
-		}
+		start, end := pageSlice(page, limit, len(fa.Issues))
 		writeJSON(w, fa.Issues[start:end])
 	})
 
-	// https://codeberg.org/api/swagger#/issue/issueGetComments
-	mux.HandleFunc(commentsPath, func(w http.ResponseWriter, r *http.Request) {
-		fa.CommentRequests = append(fa.CommentRequests, r)
-		page := 1
-		if p := r.URL.Query().Get("page"); p != "" {
-			if n, err := strconv.Atoi(p); err == nil && n > 0 {
-				page = n
-			}
+	// Sub-paths under /issues/{index}/ — comments and labels are dispatched
+	// here so tests can configure responses per-issue.
+	mux.HandleFunc(issuesPrefix, func(w http.ResponseWriter, r *http.Request) {
+		rest := strings.TrimPrefix(r.URL.Path, issuesPrefix)
+		parts := strings.SplitN(rest, "/", 2)
+		if len(parts) < 2 {
+			http.NotFound(w, r)
+			return
 		}
-		limit := 10
-		if l := r.URL.Query().Get("limit"); l != "" {
-			if n, err := strconv.Atoi(l); err == nil && n > 0 {
-				limit = n
-			}
-		}
-
-		if fa.CommentErrPage > 0 && page == fa.CommentErrPage {
-			http.Error(w, "simulated server error", http.StatusInternalServerError)
+		idx, err := strconv.ParseInt(parts[0], 10, 64)
+		if err != nil {
+			http.NotFound(w, r)
 			return
 		}
 
-		start := (page - 1) * limit
-		end := start + limit
-		if end > len(fa.Comments) {
-			end = len(fa.Comments)
-		}
+		page, limit := parsePagination(r)
 
-		writeJSON(w, fa.Comments[start:end])
-	})
-
-	// https://codeberg.org/api/swagger#/issue/issueGetLabels
-	mux.HandleFunc(labelsPath, func(w http.ResponseWriter, r *http.Request) {
-		page := 1
-		if p := r.URL.Query().Get("page"); p != "" {
-			if n, err := strconv.Atoi(p); err == nil && n > 0 {
-				page = n
+		switch parts[1] {
+		case "comments":
+			fa.CommentRequests = append(fa.CommentRequests, r)
+			if fa.CommentErrPage > 0 && page == fa.CommentErrPage {
+				http.Error(w, "simulated server error", http.StatusInternalServerError)
+				return
 			}
-		}
-		limit := 10
-		if l := r.URL.Query().Get("limit"); l != "" {
-			if n, err := strconv.Atoi(l); err == nil && n > 0 {
-				limit = n
+			comments := fa.commentsFor(idx)
+			w.Header().Set("X-Total-Count", strconv.Itoa(len(comments)))
+			start, end := pageSlice(page, limit, len(comments))
+			writeJSON(w, comments[start:end])
+		case "labels":
+			if fa.LabelErrPage > 0 && page == fa.LabelErrPage {
+				http.Error(w, "simulated server error", http.StatusInternalServerError)
+				return
 			}
+			labels := fa.labelsFor(idx)
+			start, end := pageSlice(page, limit, len(labels))
+			writeJSON(w, labels[start:end])
+		default:
+			http.NotFound(w, r)
 		}
-
-		if fa.LabelErrPage > 0 && page == fa.LabelErrPage {
-			http.Error(w, "simulated server error", http.StatusInternalServerError)
-			return
-		}
-
-		start := (page - 1) * limit
-		end := start + limit
-		if start > len(fa.Labels) {
-			start = len(fa.Labels)
-		}
-		if end > len(fa.Labels) {
-			end = len(fa.Labels)
-		}
-		writeJSON(w, fa.Labels[start:end])
 	})
 
 	// https://codeberg.org/api/swagger#/miscellaneous/getVersion
