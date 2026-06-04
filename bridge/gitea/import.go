@@ -12,7 +12,6 @@ import (
 	"github.com/git-bug/git-bug/bridge/core/auth"
 	"github.com/git-bug/git-bug/bridge/gitea/iterator"
 	"github.com/git-bug/git-bug/cache"
-	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
 	"github.com/git-bug/git-bug/util/text"
@@ -84,12 +83,7 @@ func (gi *giteaImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, s
 			// Loop over all comments
 			for gi.iterator.NextComment() {
 				comment := gi.iterator.CommentValue()
-				var author identity.Interface
-				if comment.Poster == nil {
-					author, err = deletedIdentity(repo)
-				} else {
-					author, err = gi.ensurePerson(repo, comment.Poster.UserName)
-				}
+				author, err := gi.ensurePerson(repo, comment.Poster)
 				if err != nil {
 					err := fmt.Errorf("comment creation: %v", err)
 					out <- core.NewImportError(err, "")
@@ -127,8 +121,7 @@ func (gi *giteaImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, s
 }
 
 func (gi *giteaImporter) ensureIssue(repo *cache.RepoCache, issue *gitea.Issue) (*cache.BugCache, error) {
-	// ensure issue author
-	author, err := gi.ensurePerson(repo, issue.Poster.UserName)
+	author, err := gi.ensurePerson(repo, issue.Poster)
 	if err != nil {
 		return nil, err
 	}
@@ -176,25 +169,28 @@ func (gi *giteaImporter) ensureIssue(repo *cache.RepoCache, issue *gitea.Issue) 
 	return b, nil
 }
 
-func (gi *giteaImporter) ensurePerson(repo *cache.RepoCache, loginName string) (*cache.IdentityCache, error) {
-	// Look first in the cache
-	i, err := repo.Identities().ResolveIdentityImmutableMetadata(metaKeyGiteaLogin, loginName)
-	if err == nil {
-		return i, nil
+func (gi *giteaImporter) ensurePerson(repo *cache.RepoCache, poster *gitea.User) (*cache.IdentityCache, error) {
+	if poster == nil {
+		return deletedIdentity(repo)
 	}
-	if entity.IsErrMultipleMatch(err) {
-		return nil, err
+
+	username := poster.UserName
+
+	// Look first in the cache
+	i, err := getCachedIdentity(repo, username)
+	if i != nil || err != nil {
+		return i, err
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 	defer cancel()
 
-	user, _, err := gi.client.GetUserInfo(ctx, loginName)
+	user, _, err := gi.client.GetUserInfo(ctx, username)
 	if err != nil {
 		if err.Error() == "404 Not Found" {
-			user.FullName = loginName
-			user.UserName = loginName
-			user.Email = loginName + "@fake-email.com"
+			user.FullName = username
+			user.UserName = username
+			user.Email = ""
 			user.AvatarURL = ""
 		} else {
 			return nil, err
@@ -220,8 +216,21 @@ func (gi *giteaImporter) ensurePerson(repo *cache.RepoCache, loginName string) (
 	return i, nil
 }
 
+func getCachedIdentity(repo *cache.RepoCache, loginName string) (*cache.IdentityCache, error) {
+	i, err := repo.Identities().ResolveIdentityImmutableMetadata(metaKeyGiteaLogin, loginName)
+	if entity.IsErrNotFound(err) {
+		return nil, nil
+	}
+	return i, err
+}
+
 func deletedIdentity(repo *cache.RepoCache) (*cache.IdentityCache, error) {
 	login := "@deleted-user"
+
+	i, err := getCachedIdentity(repo, login)
+	if i != nil || err != nil {
+		return i, err
+	}
 	return repo.Identities().NewRaw(
 		"Ghost",
 		"ghost@example.com",
