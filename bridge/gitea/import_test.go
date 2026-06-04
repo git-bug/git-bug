@@ -107,8 +107,9 @@ func TestImportNilPoster(t *testing.T) {
 	gi, backend := setupImporter(t, srv.URL)
 
 	results := runImport(t, gi, backend)
-
-	assert.NotEmpty(t, collectErrors(results), "expected ImportError for null Poster comment, not panic")
+	assert.Empty(t, collectErrors(results), "should resolve to a ghost identity")
+	_, err := backend.Identities().ResolveIdentityImmutableMetadata(metaKeyGiteaLogin, "@deleted-user")
+	assert.NoError(t, err, "expected a ghost identity to be created for deleted user")
 }
 
 // TestImportIdempotentComments documents finding #2: AddCommentRaw is called with
