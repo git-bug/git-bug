@@ -320,7 +320,8 @@ func TestImportIdentityReuseAcrossIssues(t *testing.T) {
 
 // TestImportSecondRunEmitsNothing verifies that re-importing an unchanged repo
 // emits ImportEventNothing for the existing bug, signaling no-op rather than
-// silently producing no result.
+// silently producing no result. On failure, dumps the operations the second
+// run unexpectedly added so the duplication source is visible.
 func TestImportSecondRunEmitsNothing(t *testing.T) {
 	srv := (&giteatest.FakeAPI{
 		Owner:    "owner",
@@ -332,8 +333,25 @@ func TestImportSecondRunEmitsNothing(t *testing.T) {
 	gi, backend := setupImporter(t, srv.URL)
 	_ = runImport(t, gi, backend)
 
+	bugIds := backend.Bugs().AllIds()
+	require.Len(t, bugIds, 1)
+	bug, err := backend.Bugs().Resolve(bugIds[0])
+	require.NoError(t, err)
+	opsBefore := len(bug.Snapshot().Operations)
+
 	gi2 := setupImporterOnExistingBackend(t, srv.URL, backend)
 	results2 := runImport(t, gi2, backend)
+
+	bug, err = backend.Bugs().Resolve(bugIds[0])
+	require.NoError(t, err)
+	opsAfter := bug.Snapshot().Operations
+	if len(opsAfter) > opsBefore {
+		for i, op := range opsAfter[opsBefore:] {
+			t.Logf("unexpected op #%d added on second run: %T %+v", i+1, op, op)
+		}
+	}
+	assert.Equal(t, opsBefore, len(opsAfter),
+		"second import on unchanged repo should add no operations (finding #2: AddCommentRaw with empty metadata can't dedupe)")
 
 	nothing := 0
 	for _, r := range results2 {
