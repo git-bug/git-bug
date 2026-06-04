@@ -34,6 +34,11 @@ type FakeAPI struct {
 	IssueRequests []*http.Request
 }
 
+func writeJSON(w http.ResponseWriter, v any) {
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(v)
+}
+
 // NewServer starts an httptest.Server backed by this FakeAPI and registers
 // a cleanup to close it when t finishes.
 func (fa *FakeAPI) NewServer(t *testing.T) *httptest.Server {
@@ -49,8 +54,7 @@ func (fa *FakeAPI) NewServer(t *testing.T) *httptest.Server {
 		// X-Total-Count is stable but undocumented;
 		// see https://codeberg.org/forgejo/forgejo/issues/12931
 		w.Header().Set("X-Total-Count", strconv.Itoa(len(fa.Issues)))
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(fa.Issues)
+		writeJSON(w, fa.Issues)
 	})
 
 	// https://codeberg.org/api/swagger#/issue/issueGetComments
@@ -79,14 +83,12 @@ func (fa *FakeAPI) NewServer(t *testing.T) *httptest.Server {
 			end = len(fa.Comments)
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(fa.Comments[start:end])
+		writeJSON(w, fa.Comments[start:end])
 	})
 
 	// https://codeberg.org/api/swagger#/miscellaneous/getVersion
 	mux.HandleFunc("/api/v1/version", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(w, `{"version":"1.24.0"}`)
+		writeJSON(w, map[string]string{"version": "1.24.0"})
 	})
 
 	// https://codeberg.org/api/swagger#/repository/repoGet
@@ -100,9 +102,7 @@ func (fa *FakeAPI) NewServer(t *testing.T) *httptest.Server {
 			http.Error(w, "not found", http.StatusNotFound)
 			return
 		}
-		repo := &gitea.Repository{Name: fa.Project, Owner: &gitea.User{UserName: fa.Owner}}
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(repo)
+		writeJSON(w, &gitea.Repository{Name: fa.Project, Owner: &gitea.User{UserName: fa.Owner}})
 	})
 
 	// https://codeberg.org/api/swagger#/user/userGet
@@ -114,9 +114,7 @@ func (fa *FakeAPI) NewServer(t *testing.T) *httptest.Server {
 				return
 			}
 		}
-		u := &gitea.User{UserName: login, FullName: login, Email: login + "@example.com"}
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(u)
+		writeJSON(w, &gitea.User{UserName: login, FullName: login, Email: login + "@example.com"})
 	})
 
 	srv := httptest.NewServer(mux)
