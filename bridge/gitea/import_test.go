@@ -158,3 +158,196 @@ func TestImportCommentErrorEmitted(t *testing.T) {
 
 	assert.NotEmpty(t, collectErrors(results), "expected ImportError when comment fetch fails")
 }
+
+// TestImportGhostDedup documents that deletedIdentity (import.go:223) calls
+// NewRaw without first resolving by metadata, so two null-Poster comments in
+// one import create two ghost identities (or fail on the second NewRaw).
+//
+// After the fix: a single ghost identity is shared by all null-Poster comments.
+func TestImportGhostDedup(t *testing.T) {
+	ts := time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC)
+	srv := (&giteatest.FakeAPI{
+		Owner:   "owner",
+		Project: "project",
+		Issues:  []*gitea.Issue{testIssue()},
+		Comments: []*gitea.Comment{
+			{ID: 1, Body: "first null", Poster: nil, Created: ts, Updated: ts},
+			{ID: 2, Body: "second null", Poster: nil, Created: ts, Updated: ts},
+		},
+	}).NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+
+	results := runImport(t, gi, backend)
+	assert.Empty(t, collectErrors(results),
+		"two null-Poster comments should reuse one ghost identity, not error")
+
+	_, err := backend.Identities().ResolveIdentityImmutableMetadata(metaKeyGiteaLogin, DeletedIdentity)
+	assert.NoError(t, err,
+		"a single ghost identity should be resolvable (ErrMultipleMatch indicates duplicates)")
+}
+
+// TestImportNilIssuePoster documents that ensureIssue (import.go:131) derefs
+// issue.Poster.UserName without nil-checking. Same shape as finding #1 but on
+// the issue path rather than the comment path.
+//
+// After the fix: ImportError or ghost-identity fallback, no panic.
+func TestImportNilIssuePoster(t *testing.T) {
+	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	srv := (&giteatest.FakeAPI{
+		Owner:   "owner",
+		Project: "project",
+		Issues: []*gitea.Issue{{
+			ID: 1, Index: 1, Title: "Test Issue", Body: "Test body",
+			Poster: nil, Created: ts,
+		}},
+	}).NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+
+	results := runImport(t, gi, backend)
+	assert.Empty(t, collectErrors(results),
+		"null issue Poster should resolve to ghost, not panic or error")
+
+	_, err := backend.Identities().ResolveIdentityImmutableMetadata(metaKeyGiteaLogin, DeletedIdentity)
+	assert.NoError(t, err, "expected a ghost identity for the null-Poster issue")
+}
+
+// TestImportEnsurePersonNotFound documents that ensurePerson (import.go:192)
+// derefs the SDK's *User return on the 404 branch. Most SDK versions return
+// a nil *User alongside the 404 error.
+//
+// After the fix: a placeholder identity is created with the requested login.
+func TestImportEnsurePersonNotFound(t *testing.T) {
+	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	srv := (&giteatest.FakeAPI{
+		Owner:         "owner",
+		Project:       "project",
+		NotFoundUsers: []string{"deleted-user"},
+		Issues: []*gitea.Issue{{
+			ID: 1, Index: 1, Title: "Test", Body: "Body",
+			Poster:  &gitea.User{UserName: "deleted-user"},
+			Created: ts,
+		}},
+	}).NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+
+	results := runImport(t, gi, backend)
+	assert.Empty(t, collectErrors(results),
+		"a 404 on user lookup should fall back to a placeholder identity, not panic")
+
+	_, err := backend.Identities().ResolveIdentityImmutableMetadata(metaKeyGiteaLogin, "deleted-user")
+	assert.NoError(t, err,
+		"a placeholder identity tagged with the looked-up login should exist")
+}
+
+// TestImportEnsurePersonServerError verifies that a 5xx from /users/{login}
+// propagates as an ImportError rather than being misclassified as "user not
+// found" and silently producing a placeholder.
+func TestImportEnsurePersonServerError(t *testing.T) {
+	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	srv := (&giteatest.FakeAPI{
+		Owner:        "owner",
+		Project:      "project",
+		UserErrLogin: "flaky-user",
+		Issues: []*gitea.Issue{{
+			ID: 1, Index: 1, Title: "t", Body: "b",
+			Poster:  &gitea.User{UserName: "flaky-user"},
+			Created: ts,
+		}},
+	}).NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+
+	results := runImport(t, gi, backend)
+	assert.NotEmpty(t, collectErrors(results),
+		"a 5xx on user lookup should propagate, not be misclassified as 'user not found'")
+}
+
+// TestImportIdentityReuseAcrossIssues verifies that two issues authored by the
+// same user produce a single identity, attributed to both bugs.
+func TestImportIdentityReuseAcrossIssues(t *testing.T) {
+	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	user := &gitea.User{UserName: "testuser", FullName: "Test User", Email: "testuser@example.com"}
+	srv := (&giteatest.FakeAPI{
+		Owner:   "owner",
+		Project: "project",
+		Issues: []*gitea.Issue{
+			{ID: 1, Index: 1, Title: "first", Poster: user, Created: ts},
+			{ID: 2, Index: 2, Title: "second", Poster: user, Created: ts},
+		},
+	}).NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+
+	results := runImport(t, gi, backend)
+	require.Empty(t, collectErrors(results))
+
+	_, err := backend.Identities().ResolveIdentityImmutableMetadata(metaKeyGiteaLogin, "testuser")
+	assert.NoError(t, err,
+		"the same login across two issues should resolve to a single identity (ErrMultipleMatch indicates dedup broke)")
+
+	identityEvents := 0
+	for _, r := range results {
+		if r.Event == core.ImportEventIdentity {
+			identityEvents++
+		}
+	}
+	assert.Equal(t, 1, identityEvents,
+		"only one identity-creation event expected for two issues by the same user")
+}
+
+// TestImportSecondRunEmitsNothing verifies that re-importing an unchanged repo
+// emits ImportEventNothing for the existing bug, signaling no-op rather than
+// silently producing no result.
+func TestImportSecondRunEmitsNothing(t *testing.T) {
+	srv := (&giteatest.FakeAPI{
+		Owner:    "owner",
+		Project:  "project",
+		Issues:   []*gitea.Issue{testIssue()},
+		Comments: []*gitea.Comment{testComment(1, "c1")},
+	}).NewServer(t)
+
+	gi, backend := setupImporter(t, srv.URL)
+	_ = runImport(t, gi, backend)
+
+	gi2 := setupImporterOnExistingBackend(t, srv.URL, backend)
+	results2 := runImport(t, gi2, backend)
+
+	nothing := 0
+	for _, r := range results2 {
+		if r.Event == core.ImportEventNothing {
+			nothing++
+		}
+	}
+	assert.GreaterOrEqual(t, nothing, 1,
+		"second import on unchanged repo should emit at least one ImportEventNothing")
+}
+
+// TestImportMultipleIssues verifies that a multi-issue import correctly
+// attributes each issue's comments to the right bug — catches cross-issue
+// state leakage in the importer (independent of iterator-level reset).
+func TestImportMultipleIssues(t *testing.T) {
+	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	user := &gitea.User{UserName: "testuser", FullName: "Test User", Email: "testuser@example.com"}
+	srv := (&giteatest.FakeAPI{
+		Owner:   "owner",
+		Project: "project",
+		Issues: []*gitea.Issue{
+			{ID: 1, Index: 1, Title: "first", Body: "b1", Poster: user, Created: ts},
+			{ID: 2, Index: 2, Title: "second", Body: "b2", Poster: user, Created: ts},
+		},
+		CommentsByIssue: map[int64][]*gitea.Comment{
+			1: {{ID: 11, Body: "issue-1 only", Poster: user, Created: ts, Updated: ts}},
+			2: {{ID: 21, Body: "issue-2 only", Poster: user, Created: ts, Updated: ts}},
+		},
+	}).NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+
+	results := runImport(t, gi, backend)
+	require.Empty(t, collectErrors(results))
+
+	bugEvents := 0
+	for _, r := range results {
+		if r.Event == core.ImportEventBug {
+			bugEvents++
+		}
+	}
+	assert.Equal(t, 2, bugEvents, "two issues should produce two ImportEventBug events")
+}

@@ -35,6 +35,9 @@ type FakeAPI struct {
 	// NotFoundUsers is a list of usernames that return 404 from userGet.
 	NotFoundUsers []string
 
+	// UserErrLogin, if set, makes the user endpoint return 500 for that login.
+	UserErrLogin string
+
 	// RepoNotFound makes the repo endpoint return 404.
 	RepoNotFound bool
 
@@ -188,6 +191,10 @@ func (fa *FakeAPI) NewServer(t *testing.T) *httptest.Server {
 	// https://codeberg.org/api/swagger#/user/userGet
 	mux.HandleFunc("/api/v1/users/", func(w http.ResponseWriter, r *http.Request) {
 		login := strings.TrimPrefix(r.URL.Path, "/api/v1/users/")
+		if fa.UserErrLogin != "" && login == fa.UserErrLogin {
+			http.Error(w, "simulated server error", http.StatusInternalServerError)
+			return
+		}
 		for _, notFound := range fa.NotFoundUsers {
 			if notFound == login {
 				http.Error(w, "not found", http.StatusNotFound)
