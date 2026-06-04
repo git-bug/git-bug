@@ -38,6 +38,11 @@ type FakeAPI struct {
 	// UserErrLogin, if set, makes the user endpoint return 500 for that login.
 	UserErrLogin string
 
+	// UserNetworkErrLogin, if set, makes the user endpoint abort the
+	// connection without writing a response when that login is requested.
+	// Simulates a network-level failure where the client gets (nil, err).
+	UserNetworkErrLogin string
+
 	// RepoNotFound makes the repo endpoint return 404.
 	RepoNotFound bool
 
@@ -191,6 +196,11 @@ func (fa *FakeAPI) NewServer(t *testing.T) *httptest.Server {
 	// https://codeberg.org/api/swagger#/user/userGet
 	mux.HandleFunc("/api/v1/users/", func(w http.ResponseWriter, r *http.Request) {
 		login := strings.TrimPrefix(r.URL.Path, "/api/v1/users/")
+		if fa.UserNetworkErrLogin != "" && login == fa.UserNetworkErrLogin {
+			// Abort the response without writing anything; the client sees
+			// an EOF and returns (nil, err) — no *Response to inspect.
+			panic(http.ErrAbortHandler)
+		}
 		if fa.UserErrLogin != "" && login == fa.UserErrLogin {
 			http.Error(w, "simulated server error", http.StatusInternalServerError)
 			return
