@@ -37,10 +37,7 @@ func TestCommentIteratorPaginates(t *testing.T) {
 	}
 	srv := fa.NewServer(t)
 
-	client, err := gitea.NewClient(srv.URL, gitea.SetToken("test"), gitea.SetGiteaVersion("1.24.0"))
-	require.NoError(t, err)
-
-	iter := NewIterator(context.Background(), client, capacity, fa.Owner, fa.Project, 5*time.Second, time.Time{})
+	iter := NewIterator(context.Background(), newTestClient(t, srv.URL), capacity, fa.Owner, fa.Project, 5*time.Second, time.Time{})
 	require.True(t, iter.NextIssue())
 
 	var got []*gitea.Comment

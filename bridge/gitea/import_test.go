@@ -16,6 +16,19 @@ import (
 	"github.com/git-bug/git-bug/repository"
 )
 
+func setupImporterOnExistingBackend(t *testing.T, serverURL string, backend *cache.RepoCache) *giteaImporter {
+	t.Helper()
+	gi := &giteaImporter{}
+	err := gi.Init(context.Background(), backend, core.Configuration{
+		confKeyBaseURL:      serverURL,
+		confKeyOwner:        "owner",
+		confKeyProject:      "project",
+		confKeyDefaultLogin: "testuser",
+	})
+	require.NoError(t, err)
+	return gi
+}
+
 func setupImporter(t *testing.T, serverURL string) (*giteaImporter, *cache.RepoCache) {
 	t.Helper()
 	repo := repository.CreateGoGitTestRepo(t, false)
@@ -30,29 +43,17 @@ func setupImporter(t *testing.T, serverURL string) (*giteaImporter, *cache.RepoC
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = backend.Close() })
 
-	gi := &giteaImporter{}
-	err = gi.Init(context.Background(), backend, core.Configuration{
-		confKeyBaseURL:      serverURL,
-		confKeyOwner:        "owner",
-		confKeyProject:      "project",
-		confKeyDefaultLogin: "testuser",
-	})
-	require.NoError(t, err)
-
-	return gi, backend
+	return setupImporterOnExistingBackend(t, serverURL, backend), backend
 }
 
-func setupImporterOnExistingBackend(t *testing.T, serverURL string, backend *cache.RepoCache) *giteaImporter {
-	t.Helper()
-	gi := &giteaImporter{}
-	err := gi.Init(context.Background(), backend, core.Configuration{
-		confKeyBaseURL:      serverURL,
-		confKeyOwner:        "owner",
-		confKeyProject:      "project",
-		confKeyDefaultLogin: "testuser",
-	})
-	require.NoError(t, err)
-	return gi
+func collectErrors(results []core.ImportResult) []error {
+	var errs []error
+	for _, r := range results {
+		if r.Err != nil {
+			errs = append(errs, r.Err)
+		}
+	}
+	return errs
 }
 
 func runImport(t *testing.T, gi *giteaImporter, backend *cache.RepoCache) []core.ImportResult {
@@ -107,13 +108,7 @@ func TestImportNilPoster(t *testing.T) {
 
 	results := runImport(t, gi, backend)
 
-	var errs []error
-	for _, r := range results {
-		if r.Err != nil {
-			errs = append(errs, r.Err)
-		}
-	}
-	assert.NotEmpty(t, errs, "expected ImportError for null Poster comment, not panic")
+	assert.NotEmpty(t, collectErrors(results), "expected ImportError for null Poster comment, not panic")
 }
 
 // TestImportIdempotentComments documents finding #2: AddCommentRaw is called with
@@ -160,11 +155,5 @@ func TestImportCommentErrorEmitted(t *testing.T) {
 
 	results := runImport(t, gi, backend)
 
-	var errs []error
-	for _, r := range results {
-		if r.Err != nil {
-			errs = append(errs, r.Err)
-		}
-	}
-	assert.NotEmpty(t, errs, "expected ImportError when comment fetch fails")
+	assert.NotEmpty(t, collectErrors(results), "expected ImportError when comment fetch fails")
 }

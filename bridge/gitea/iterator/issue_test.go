@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	gitea "gitea.dev/sdk"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -21,11 +20,8 @@ func TestIssueIteratorPassesSince(t *testing.T) {
 	fa := &giteatest.FakeAPI{Owner: "owner", Project: "repo"}
 	srv := fa.NewServer(t)
 
-	client, err := gitea.NewClient(srv.URL, gitea.SetToken("test"), gitea.SetGiteaVersion("1.24.0"))
-	require.NoError(t, err)
-
 	since := time.Date(2023, 6, 1, 12, 0, 0, 0, time.UTC)
-	iter := NewIterator(context.Background(), client, 10, fa.Owner, fa.Project, 5*time.Second, since)
+	iter := NewIterator(context.Background(), newTestClient(t, srv.URL), 10, fa.Owner, fa.Project, 5*time.Second, since)
 	iter.NextIssue()
 	require.NoError(t, iter.Error())
 
