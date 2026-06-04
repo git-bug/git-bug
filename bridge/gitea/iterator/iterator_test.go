@@ -30,6 +30,25 @@ func TestStickyError(t *testing.T) {
 		"no further API calls should be made after a sticky error")
 }
 
+// TestIteratorResetState pins the initial state for page iterators.
+func TestIteratorResetState(t *testing.T) {
+	iter := newPageIterator[gitea.Issue](func(context.Context, config, *gitea.Issue, int) ([]*gitea.Issue, bool, error) {
+		return nil, false, nil
+	})
+
+	iter.page = 42
+	iter.lastPage = true
+	iter.index = 7
+	iter.cache = []*gitea.Issue{{ID: 1}}
+
+	iter.Reset()
+
+	assert.Equal(t, 1, iter.page)
+	assert.False(t, iter.lastPage)
+	assert.Equal(t, -1, iter.index)
+	assert.Nil(t, iter.cache)
+}
+
 // TestContextCancellationShortCircuits verifies that a canceled context
 // causes NextIssue to return false without setting Error (cancellation is
 // not a failure to surface).

@@ -85,6 +85,35 @@ func TestCommentIteratorStopsOnPartialPage(t *testing.T) {
 		"a partial last page should end pagination; no extra empty request needed")
 }
 
+// TestIteratorNoTrailingCommentCall verifies exact-capacity comment pages do
+// not require a trailing empty request to terminate.
+func TestIteratorNoTrailingCommentCall(t *testing.T) {
+	const capacity = 2
+	ts := time.Now()
+	fa := &giteatest.FakeAPI{
+		Owner:   "owner",
+		Project: "repo",
+		Issues: []*gitea.Issue{{
+			ID: 1, Index: 1, Title: "t",
+			Poster: &gitea.User{UserName: "u"}, Created: ts,
+		}},
+		Comments: []*gitea.Comment{
+			{ID: 1, Body: "c1", Poster: &gitea.User{UserName: "u"}, Created: ts, Updated: ts},
+			{ID: 2, Body: "c2", Poster: &gitea.User{UserName: "u"}, Created: ts, Updated: ts},
+		},
+	}
+	srv := fa.NewServer(t)
+
+	iter := NewIterator(context.Background(), newTestClient(t, srv.URL), capacity, fa.Owner, fa.Project, 5*time.Second, time.Time{})
+	require.True(t, iter.NextIssue())
+	for iter.NextComment() {
+	}
+	require.NoError(t, iter.Error())
+
+	assert.Len(t, fa.CommentRequests, 1,
+		"exactly capacity comments should not trigger a trailing empty comment request")
+}
+
 // TestCommentIteratorPassesSince documents that fetchComments ignores
 // conf.since. An incremental import filters issues by `since` but re-fetches
 // every comment on every matched issue, which is wasteful and inconsistent.
