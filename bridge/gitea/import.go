@@ -185,16 +185,14 @@ func (gi *giteaImporter) ensurePerson(repo *cache.RepoCache, poster *gitea.User)
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 	defer cancel()
 
-	user, _, err := gi.client.GetUserInfo(ctx, username)
-	if err != nil {
-		if err.Error() == "404 Not Found" {
-			user.FullName = username
-			user.UserName = username
-			user.Email = ""
-			user.AvatarURL = ""
-		} else {
-			return nil, err
-		}
+	user, resp, err := gi.client.Users.GetUserInfo(ctx, username)
+	if resp.StatusCode == 404 {
+		user.FullName = username
+		user.UserName = username
+		user.Email = ""
+		user.AvatarURL = ""
+	} else if err != nil {
+		return nil, err
 	}
 
 	i, err = repo.Identities().NewRaw(
