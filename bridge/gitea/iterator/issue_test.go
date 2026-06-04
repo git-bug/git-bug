@@ -12,11 +12,6 @@ import (
 	"github.com/git-bug/git-bug/bridge/gitea/giteatest"
 )
 
-// TestIssueIteratorPassesSince documents finding #7: the since value stored in
-// conf is never forwarded to ListRepoIssues, so every import fetches all issues
-// regardless of the requested cutoff.
-//
-// After the fix: the `since` query parameter should appear in the API request.
 func TestIssueIteratorPassesSince(t *testing.T) {
 	fa := &giteatest.FakeAPI{Owner: "owner", Project: "repo"}
 	srv := fa.NewServer(t)
@@ -37,7 +32,6 @@ func TestIssueIteratorPassesSince(t *testing.T) {
 	assert.Equal(t, since.UTC(), parsed.UTC())
 }
 
-// TestIteratorStartsAtPage1 pins Gitea's 1-based pagination contract.
 func TestIteratorStartsAtPage1(t *testing.T) {
 	fa := &giteatest.FakeAPI{Owner: "owner", Project: "repo"}
 	srv := fa.NewServer(t)
@@ -50,8 +44,6 @@ func TestIteratorStartsAtPage1(t *testing.T) {
 	assert.Equal(t, "1", fa.IssueRequests[0].URL.Query().Get("page"))
 }
 
-// TestIteratorNoTrailingIssueCall verifies exact-capacity issue pages stop at
-// X-Total-Count instead of probing one more empty page.
 func TestIteratorNoTrailingIssueCall(t *testing.T) {
 	const capacity = 2
 	ts := time.Now()
@@ -73,8 +65,6 @@ func TestIteratorNoTrailingIssueCall(t *testing.T) {
 		"exactly capacity issues should not trigger a trailing empty issue request")
 }
 
-// TestIteratorRespectsXTotalCount verifies a partial first page, as determined
-// by X-Total-Count, does not trigger an extra request.
 func TestIteratorRespectsXTotalCount(t *testing.T) {
 	const capacity = 10
 	ts := time.Now()
@@ -95,8 +85,6 @@ func TestIteratorRespectsXTotalCount(t *testing.T) {
 		"X-Total-Count=3 with capacity=10 should stop after the first issue request")
 }
 
-// TestIteratorMultiPageStopsAtTotal verifies the iterator stops exactly on
-// the page containing X-Total-Count's final item.
 func TestIteratorMultiPageStopsAtTotal(t *testing.T) {
 	const capacity = 10
 	ts := time.Now()
@@ -120,8 +108,6 @@ func TestIteratorMultiPageStopsAtTotal(t *testing.T) {
 		"25 issues at capacity 10 should make exactly 3 issue requests")
 }
 
-// TestIssueIteratorPaginates verifies that fetchIssues walks past the first
-// page when X-Total-Count indicates more issues remain.
 func TestIssueIteratorPaginates(t *testing.T) {
 	const capacity = 2
 	ts := time.Now()
@@ -144,8 +130,6 @@ func TestIssueIteratorPaginates(t *testing.T) {
 	assert.Len(t, got, len(fa.Issues))
 }
 
-// TestIssueIteratorEmptyRepo verifies that NextIssue on a repo with zero
-// issues returns false with no error and without panicking on IssueValue.
 func TestIssueIteratorEmptyRepo(t *testing.T) {
 	fa := &giteatest.FakeAPI{Owner: "owner", Project: "repo"}
 	srv := fa.NewServer(t)
@@ -157,8 +141,6 @@ func TestIssueIteratorEmptyRepo(t *testing.T) {
 	assert.NoError(t, iter.Error())
 }
 
-// TestIssueIteratorFiltersToIssues verifies that the issues request asks for
-// type=issues, excluding pull requests from the import stream.
 func TestIssueIteratorFiltersToIssues(t *testing.T) {
 	fa := &giteatest.FakeAPI{Owner: "owner", Project: "repo"}
 	srv := fa.NewServer(t)
@@ -189,8 +171,6 @@ func TestIssueIteratorHandlesNetworkError(t *testing.T) {
 	assert.Error(t, iter.Error())
 }
 
-// TestIssueIteratorReturnsAPIError verifies that a 500 from the issues
-// endpoint surfaces through Error() rather than panicking on a nil response.
 func TestIssueIteratorReturnsAPIError(t *testing.T) {
 	fa := &giteatest.FakeAPI{Owner: "owner", Project: "repo", IssueErrPage: 1}
 	srv := fa.NewServer(t)

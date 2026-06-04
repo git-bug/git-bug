@@ -12,8 +12,6 @@ import (
 	"github.com/git-bug/git-bug/bridge/gitea/giteatest"
 )
 
-// TestStickyError verifies that once an API error is recorded, subsequent
-// NextX calls short-circuit (return false) without further API calls.
 func TestStickyError(t *testing.T) {
 	fa := &giteatest.FakeAPI{Owner: "owner", Project: "repo", IssueErrPage: 1}
 	srv := fa.NewServer(t)
@@ -30,7 +28,6 @@ func TestStickyError(t *testing.T) {
 		"no further API calls should be made after a sticky error")
 }
 
-// TestIteratorResetState pins the initial state for page iterators.
 func TestIteratorResetState(t *testing.T) {
 	iter := newPageIterator[gitea.Issue](func(context.Context, config, *gitea.Issue, int) ([]*gitea.Issue, bool, error) {
 		return nil, false, nil
@@ -49,9 +46,6 @@ func TestIteratorResetState(t *testing.T) {
 	assert.Nil(t, iter.cache)
 }
 
-// TestContextCancellationShortCircuits verifies that a canceled context
-// causes NextIssue to return false without setting Error (cancellation is
-// not a failure to surface).
 func TestContextCancellationShortCircuits(t *testing.T) {
 	ts := time.Now()
 	fa := &giteatest.FakeAPI{

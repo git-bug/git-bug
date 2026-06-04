@@ -12,11 +12,6 @@ import (
 	"github.com/git-bug/git-bug/bridge/gitea/giteatest"
 )
 
-// TestCommentIteratorPaginates documents finding #4: lastPage is set to true
-// unconditionally after the first successful API call, so comments beyond the
-// first page are silently dropped.
-//
-// After the fix: all pages should be iterated.
 func TestCommentIteratorPaginates(t *testing.T) {
 	const capacity = 2
 	ts := time.Now()
@@ -51,12 +46,6 @@ func TestCommentIteratorPaginates(t *testing.T) {
 		len(fa.Comments))
 }
 
-// TestCommentIteratorStopsOnPartialPage documents that a partial page
-// (len < capacity) implies no more pages — the iterator should not issue an
-// extra empty request to confirm. Current heuristic uses `len(items) != 0`,
-// which costs one wasted request per issue.
-//
-// After the fix: 3 comments at capacity 2 → 2 requests (page 1 full, page 2 partial → done).
 func TestCommentIteratorStopsOnPartialPage(t *testing.T) {
 	const capacity = 2
 	ts := time.Now()
@@ -81,12 +70,12 @@ func TestCommentIteratorStopsOnPartialPage(t *testing.T) {
 	}
 	require.NoError(t, iter.Error())
 
+	// A partial page proves the listing is exhausted; probing one more empty
+	// page costs one wasted request per issue.
 	assert.Len(t, fa.CommentRequests, 2,
 		"a partial last page should end pagination; no extra empty request needed")
 }
 
-// TestIteratorNoTrailingCommentCall verifies exact-capacity comment pages do
-// not require a trailing empty request to terminate.
 func TestIteratorNoTrailingCommentCall(t *testing.T) {
 	const capacity = 2
 	ts := time.Now()
@@ -114,11 +103,6 @@ func TestIteratorNoTrailingCommentCall(t *testing.T) {
 		"exactly capacity comments should not trigger a trailing empty comment request")
 }
 
-// TestCommentIteratorPassesSince documents that fetchComments ignores
-// conf.since. An incremental import filters issues by `since` but re-fetches
-// every comment on every matched issue, which is wasteful and inconsistent.
-//
-// After the fix: the `since` query parameter should appear in the API request.
 func TestCommentIteratorPassesSince(t *testing.T) {
 	ts := time.Now()
 	fa := &giteatest.FakeAPI{
@@ -148,9 +132,6 @@ func TestCommentIteratorPassesSince(t *testing.T) {
 	assert.Equal(t, since.UTC(), parsed.UTC())
 }
 
-// TestCommentIteratorResetsBetweenIssues verifies that advancing to a new
-// issue invalidates the comment cache so comments for issue N+1 aren't
-// returned when CommentValue is queried under issue N's scope.
 func TestCommentIteratorResetsBetweenIssues(t *testing.T) {
 	ts := time.Now()
 	fa := &giteatest.FakeAPI{
