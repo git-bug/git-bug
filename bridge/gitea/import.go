@@ -73,37 +73,54 @@ func (gi *giteaImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, s
 			issue := gi.iterator.IssueValue()
 
 			// create issue
-			b, err := gi.ensureIssue(repo, issue)
+			b, err := gi.ensureIssue(ctx, repo, issue)
 			if err != nil {
-				err := fmt.Errorf("issue creation: %v", err)
-				out <- core.NewImportError(err, "")
+				gi.reportError(ctx, err, "issue creation")
 				return
 			}
 
 			// Loop over all comments
 			for gi.iterator.NextComment() {
+				if err = gi.iterator.Error(); err != nil {
+					gi.reportError(ctx, err, "comment creation")
+					return
+				}
 			}
 
 			// Loop over all label events
+
+			// Update issue title and description
+
 			if !b.NeedCommit() {
-				out <- core.NewImportNothing(b.Id(), "no imported operation")
+				gi.sendImportResult(ctx, core.NewImportNothing(b.Id(), "no imported operation"))
 			} else if err := b.Commit(); err != nil {
 				// commit bug state
-				err := fmt.Errorf("bug commit: %v", err)
-				out <- core.NewImportError(err, "")
+				gi.reportError(ctx, err, "bug commit")
 				return
 			}
 		}
 
 		if err := gi.iterator.Error(); err != nil {
-			out <- core.NewImportError(err, "")
+			gi.reportError(ctx, err, "fetching issues")
 		}
 	}()
 
 	return out, nil
 }
 
-func (gi *giteaImporter) importComment(repo *cache.RepoCache, bug *cache.BugCache, comment *gitea.Comment) {
+func (gi *giteaImporter) reportError(ctx context.Context, err error, when string) {
+	gi.sendImportResult(ctx, core.NewImportError(fmt.Errorf("%s: %v", when, err), ""))
+}
+
+func (gi *giteaImporter) sendImportResult(ctx context.Context, result core.ImportResult) {
+	select {
+	case gi.out <- result:
+	// Handle cancellation.
+	case <- ctx.Done():
+	}
+}
+
+func (gi *giteaImporter) importComment(ctx context.Context, repo *cache.RepoCache, bug *cache.BugCache, comment *gitea.Comment) {
 	commentID := strconv.FormatInt(comment.ID, 10)
 
 	// Check if we've already imported this comment.
@@ -115,10 +132,9 @@ func (gi *giteaImporter) importComment(repo *cache.RepoCache, bug *cache.BugCach
 		}
 	}
 
-	author, err := gi.ensurePerson(repo, comment.Poster)
+	author, err := gi.ensurePerson(ctx, repo, comment.Poster)
 	if err != nil {
-		err := fmt.Errorf("comment creation: %v", err)
-		gi.out <- core.NewImportError(err, "")
+		gi.reportError(ctx, err, "comment creation")
 		return
 	}
 
@@ -135,8 +151,8 @@ func (gi *giteaImporter) importComment(repo *cache.RepoCache, bug *cache.BugCach
 	)
 }
 
-func (gi *giteaImporter) ensureIssue(repo *cache.RepoCache, issue *gitea.Issue) (*cache.BugCache, error) {
-	author, err := gi.ensurePerson(repo, issue.Poster)
+func (gi *giteaImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache, issue *gitea.Issue) (*cache.BugCache, error) {
+	author, err := gi.ensurePerson(ctx, repo, issue.Poster)
 	if err != nil {
 		return nil, err
 	}
@@ -178,15 +194,14 @@ func (gi *giteaImporter) ensureIssue(repo *cache.RepoCache, issue *gitea.Issue) 
 		return nil, err
 	}
 
-	// importing a new bug
-	gi.out <- core.NewImportBug(b.Id())
+	gi.sendImportResult(ctx, core.NewImportBug(b.Id()))
 
 	return b, nil
 }
 
-func (gi *giteaImporter) ensurePerson(repo *cache.RepoCache, poster *gitea.User) (*cache.IdentityCache, error) {
+func (gi *giteaImporter) ensurePerson(ctx context.Context, repo *cache.RepoCache, poster *gitea.User) (*cache.IdentityCache, error) {
 	if poster == nil {
-		return gi.deletedIdentity(repo)
+		return gi.deletedIdentity(ctx, repo)
 	}
 
 	username := poster.UserName
@@ -222,7 +237,7 @@ func (gi *giteaImporter) ensurePerson(repo *cache.RepoCache, poster *gitea.User)
 		return nil, err
 	}
 
-	gi.out <- core.NewImportIdentity(i.Id())
+	gi.sendImportResult(ctx, core.NewImportIdentity(i.Id()))
 	return i, nil
 }
 
@@ -234,7 +249,7 @@ func getCachedIdentity(repo *cache.RepoCache, loginName string) (*cache.Identity
 	return i, err
 }
 
-func (gi *giteaImporter) deletedIdentity(repo *cache.RepoCache) (*cache.IdentityCache, error) {
+func (gi *giteaImporter) deletedIdentity(ctx context.Context, repo *cache.RepoCache) (*cache.IdentityCache, error) {
 	i, err := getCachedIdentity(repo, DeletedIdentity)
 	if i != nil || err != nil {
 		return i, err
@@ -253,6 +268,6 @@ func (gi *giteaImporter) deletedIdentity(repo *cache.RepoCache) (*cache.Identity
 	if err != nil {
 		return nil, err
 	}
-	gi.out <- core.NewImportIdentity(i.Id())
+	gi.sendImportResult(ctx, core.NewImportIdentity(i.Id()))
 	return i, nil
 }
