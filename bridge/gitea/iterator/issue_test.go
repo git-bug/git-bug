@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	gitea "gitea.dev/sdk"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -34,4 +35,42 @@ func TestIssueIteratorPassesSince(t *testing.T) {
 	parsed, err := time.Parse(time.RFC3339, capturedSince)
 	require.NoError(t, err, "since value %q should be valid RFC3339", capturedSince)
 	assert.Equal(t, since.UTC(), parsed.UTC())
+}
+
+// TestIssueIteratorPaginates verifies that fetchIssues walks past the first
+// page when X-Total-Count indicates more issues remain.
+func TestIssueIteratorPaginates(t *testing.T) {
+	const capacity = 2
+	ts := time.Now()
+	fa := &giteatest.FakeAPI{Owner: "owner", Project: "repo"}
+	for i := int64(1); i <= 5; i++ {
+		fa.Issues = append(fa.Issues, &gitea.Issue{
+			ID: i, Index: i, Title: "t",
+			Poster: &gitea.User{UserName: "u"}, Created: ts,
+		})
+	}
+	srv := fa.NewServer(t)
+
+	iter := NewIterator(context.Background(), newTestClient(t, srv.URL), capacity, fa.Owner, fa.Project, 5*time.Second, time.Time{})
+
+	var got []*gitea.Issue
+	for iter.NextIssue() {
+		got = append(got, iter.IssueValue())
+	}
+	require.NoError(t, iter.Error())
+	assert.Len(t, got, len(fa.Issues))
+}
+
+// TestIssueIteratorReturnsAPIError verifies that a 500 from the issues
+// endpoint surfaces through Error() rather than panicking on a nil response.
+func TestIssueIteratorReturnsAPIError(t *testing.T) {
+	fa := &giteatest.FakeAPI{Owner: "owner", Project: "repo", IssueErrPage: 1}
+	srv := fa.NewServer(t)
+
+	iter := NewIterator(context.Background(), newTestClient(t, srv.URL), 10, fa.Owner, fa.Project, 5*time.Second, time.Time{})
+
+	require.NotPanics(t, func() {
+		assert.False(t, iter.NextIssue())
+	})
+	assert.Error(t, iter.Error())
 }
