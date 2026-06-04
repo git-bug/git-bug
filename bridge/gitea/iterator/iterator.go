@@ -71,21 +71,7 @@ func (i *Iterator) Error() error {
 }
 
 func (i *Iterator) NextIssue() bool {
-	if i.err != nil {
-		return false
-	}
-
-	if i.ctx.Err() != nil {
-		return false
-	}
-
-	more, err := i.issue.Next(i.ctx, i.conf)
-	if err != nil {
-		i.err = err
-		return false
-	}
-
-	if !more {
+	if !i.advance(i.issue) {
 		return false
 	}
 
@@ -102,21 +88,7 @@ func (i *Iterator) IssueValue() *gitea.Issue {
 }
 
 func (i *Iterator) NextComment() bool {
-	if i.err != nil {
-		return false
-	}
-
-	if i.ctx.Err() != nil {
-		return false
-	}
-
-	more, err := i.comment.Next(i.ctx, i.conf)
-	if err != nil {
-		i.err = err
-		return false
-	}
-
-	return more
+	return i.advance(i.comment)
 }
 
 func (i *Iterator) CommentValue() *gitea.Comment {
@@ -124,6 +96,19 @@ func (i *Iterator) CommentValue() *gitea.Comment {
 }
 
 func (i *Iterator) NextLabel() bool {
+	return i.advance(i.label)
+}
+
+func (i *Iterator) LabelValue() *gitea.Label {
+	return i.label.Value()
+}
+
+type subIterator interface {
+	Next(ctx context.Context, conf config) (bool, error)
+}
+
+
+func (i *Iterator) advance(listing subIterator) bool {
 	if i.err != nil {
 		return false
 	}
@@ -132,15 +117,11 @@ func (i *Iterator) NextLabel() bool {
 		return false
 	}
 
-	more, err := i.label.Next(i.ctx, i.conf)
+	more, err := listing.Next(i.ctx, i.conf)
 	if err != nil {
 		i.err = err
 		return false
 	}
 
 	return more
-}
-
-func (i *Iterator) LabelValue() *gitea.Label {
-	return i.label.Value()
 }
