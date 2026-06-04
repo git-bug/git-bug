@@ -17,7 +17,19 @@ func CreateGoGitTestRepo(t testing.TB, bare bool) TestedRepo {
 	t.Helper()
 
 	dir := t.TempDir()
+	repo := CreateGoGitTestRepoAtDir(dir, bare)
 
+	t.Cleanup(func() {
+		err := repo.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	})
+
+	return repo
+}
+
+func CreateGoGitTestRepoAtDir(dir string, bare bool) TestedRepo {
 	var creator func(string, string) (*GoGitRepo, error)
 
 	if bare {
@@ -30,13 +42,6 @@ func CreateGoGitTestRepo(t testing.TB, bare bool) TestedRepo {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	t.Cleanup(func() {
-		err := repo.Close()
-		if err != nil {
-			log.Println(err)
-		}
-	})
 
 	config := repo.LocalConfig()
 	if err := config.StoreString("user.name", "testuser"); err != nil {

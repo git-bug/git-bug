@@ -245,6 +245,16 @@ func (fa *FakeAPI) removeIssueLabel(index int64, identifier string) bool {
 // a cleanup to close it when t finishes.
 func (fa *FakeAPI) NewServer(t *testing.T) *httptest.Server {
 	t.Helper()
+	return fa.NewServerFor(t)
+}
+
+type testLike interface {
+	Helper()
+	Cleanup(func())
+}
+
+func (fa *FakeAPI) NewServerFor(t testLike) *httptest.Server {
+	t.Helper()
 	fa.initSequences()
 	mux := http.NewServeMux()
 
