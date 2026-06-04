@@ -102,6 +102,21 @@ func onlyBug(t *testing.T, backend *cache.RepoCache) *cache.BugCache {
 	return b
 }
 
+func onlyImportedGiteaBug(t *testing.T, backend *cache.RepoCache) *cache.BugCache {
+	t.Helper()
+	var matches []*cache.BugCache
+	for _, id := range backend.Bugs().AllIds() {
+		b, err := backend.Bugs().Resolve(id)
+		require.NoError(t, err)
+		origin, ok := b.Snapshot().GetCreateMetadata(core.MetaKeyOrigin)
+		if ok && origin == target {
+			matches = append(matches, b)
+		}
+	}
+	require.Len(t, matches, 1)
+	return matches[0]
+}
+
 func countStatusOps(b *cache.BugCache) int {
 	count := 0
 	for _, op := range b.Snapshot().Operations {
@@ -255,6 +270,8 @@ func TestImportBugMetadataKeysExact(t *testing.T) {
 		assert.Equal(t, expected, got, "wrong value for create metadata key %s", key)
 	}
 	assertCreateMetadata(core.MetaKeyOrigin, target)
+	assert.Equal(t, "gitea", target,
+		"changing the Gitea target literal orphans existing bugs from the bridge")
 	assertCreateMetadata(metaKeyGiteaID, "1")
 	assertCreateMetadata(metaKeyGiteaOwner, "owner")
 	assertCreateMetadata(metaKeyGiteaProject, "project")
@@ -412,6 +429,89 @@ func TestImportLabelCaseInsensitive(t *testing.T) {
 
 	assert.Equal(t, []common.Label{common.Label("bug")}, onlyBug(t, backend).Snapshot().Labels,
 		"label import should case-fold against existing local labels instead of adding Bug beside bug")
+}
+
+// TestImportLabelRenameByNameReconcilesImportedBug pins git-bug's name-based
+// label model: when the remote issue's current label names change, the
+// imported bug should match those names without trying to preserve a remote
+// label identity that git-bug cannot represent globally.
+func TestImportLabelRenameByNameReconcilesImportedBug(t *testing.T) {
+	fa := &giteatest.FakeAPI{
+		Owner:   "owner",
+		Project: "project",
+		Issues:  []*gitea.Issue{testIssue()},
+		Labels:  []*gitea.Label{{ID: 1, Name: "bug"}},
+	}
+	srv := fa.NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+
+	_ = runImport(t, gi, backend)
+
+	fa.Labels = []*gitea.Label{{ID: 1, Name: "kind/bug"}}
+	_ = runImport(t, setupImporterOnExistingBackend(t, srv.URL, backend), backend)
+
+	assert.Equal(t, []common.Label{common.Label("kind/bug")}, onlyBug(t, backend).Snapshot().Labels,
+		"remote label rename should reconcile the imported bug to the current upstream label names")
+}
+
+// TestImportLabelReconcileScopedToImportedBug verifies label reconciliation is
+// scoped to the Gitea-imported bug. Matching label names on manual bugs or
+// other forges are not global labels and must not be rewritten.
+func TestImportLabelReconcileScopedToImportedBug(t *testing.T) {
+	fa := &giteatest.FakeAPI{
+		Owner:   "owner",
+		Project: "project",
+		Issues:  []*gitea.Issue{testIssue()},
+		Labels:  []*gitea.Label{{ID: 1, Name: "bug"}},
+	}
+	srv := fa.NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+
+	_ = runImport(t, gi, backend)
+
+	manualAuthor, err := backend.Identities().NewRaw(
+		"Manual User",
+		"manual@example.com",
+		"manual-user",
+		"",
+		nil,
+		nil,
+	)
+	require.NoError(t, err)
+	manualBug, _, err := backend.Bugs().NewRaw(
+		manualAuthor,
+		time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC).Unix(),
+		"manual bug",
+		"manual body",
+		nil,
+		nil,
+	)
+	require.NoError(t, err)
+	_, _, err = manualBug.ChangeLabelsRaw(manualAuthor, time.Date(2023, 1, 3, 1, 0, 0, 0, time.UTC).Unix(), []string{"bug"}, nil, nil)
+	require.NoError(t, err)
+
+	otherForgeBug, _, err := backend.Bugs().NewRaw(
+		manualAuthor,
+		time.Date(2023, 1, 4, 0, 0, 0, 0, time.UTC).Unix(),
+		"other forge bug",
+		"other body",
+		nil,
+		map[string]string{core.MetaKeyOrigin: "github"},
+	)
+	require.NoError(t, err)
+	_, _, err = otherForgeBug.ChangeLabelsRaw(manualAuthor, time.Date(2023, 1, 4, 1, 0, 0, 0, time.UTC).Unix(), []string{"bug"}, nil, nil)
+	require.NoError(t, err)
+
+	fa.Labels = []*gitea.Label{{ID: 1, Name: "kind/bug"}}
+	_ = runImport(t, setupImporterOnExistingBackend(t, srv.URL, backend), backend)
+
+	importedBug := onlyImportedGiteaBug(t, backend)
+	assert.Equal(t, []common.Label{common.Label("kind/bug")}, importedBug.Snapshot().Labels,
+		"imported Gitea bug should reconcile to current upstream label names")
+	assert.Equal(t, []common.Label{common.Label("bug")}, manualBug.Snapshot().Labels,
+		"manual bug labels should not be rewritten by Gitea label reconciliation")
+	assert.Equal(t, []common.Label{common.Label("bug")}, otherForgeBug.Snapshot().Labels,
+		"bugs imported from other forges should not be rewritten by Gitea label reconciliation")
 }
 
 // TestImportTitleChangeViaTypedComment is skipped until the SDK exposes
@@ -684,6 +784,35 @@ func TestImportCommentErrorEmitted(t *testing.T) {
 	results := runImport(t, gi, backend)
 
 	assert.NotEmpty(t, collectErrors(results), "expected ImportError when comment fetch fails")
+}
+
+// TestImportStopsOnCommentError pins the current fail-fast behavior when the
+// comment iterator fails for an issue: later issues are not imported after the
+// iterator records the comment error.
+func TestImportStopsOnCommentError(t *testing.T) {
+	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	user := &gitea.User{UserName: "testuser", FullName: "Test User", Email: "u@example.com"}
+	srv := (&giteatest.FakeAPI{
+		Owner:          "owner",
+		Project:        "project",
+		CommentErrPage: 1,
+		Issues: []*gitea.Issue{
+			{ID: 1, Index: 1, Title: "first", Body: "b1", Poster: user, Created: ts},
+			{ID: 2, Index: 2, Title: "second should not import", Body: "b2", Poster: user, Created: ts},
+		},
+		CommentsByIssue: map[int64][]*gitea.Comment{
+			1: {{ID: 11, Body: "comment fetch fails before this matters", Poster: user, Created: ts, Updated: ts}},
+			2: {{ID: 21, Body: "should not be fetched", Poster: user, Created: ts, Updated: ts}},
+		},
+	}).NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+
+	results := runImport(t, gi, backend)
+
+	require.NotEmpty(t, collectErrors(results),
+		"comment fetch failure on issue #1 should surface as an ImportError")
+	assert.Len(t, backend.Bugs().AllIds(), 1,
+		"current behavior: import stops after a comment iterator error; issue #2 is never imported")
 }
 
 // TestImportGhostDedup documents that deletedIdentity (import.go:223) calls
@@ -1184,34 +1313,6 @@ func TestImportCommentAttributedToCommentPoster(t *testing.T) {
 		"issue body should be attributed to the issue's Poster")
 	assert.Equal(t, "comment-author", snap.Comments[1].Author.Login(),
 		"comment should be attributed to the comment's Poster, not the issue's")
-}
-
-// TestImportBugCarriesOriginMetadata verifies that imported bugs are tagged
-// with MetaKeyOrigin = "gitea". `git-bug bridge pull` discovers bugs to refresh
-// by this key; a regression in the literal value would silently break sync.
-func TestImportBugCarriesOriginMetadata(t *testing.T) {
-	srv := (&giteatest.FakeAPI{
-		Owner:   "owner",
-		Project: "project",
-		Issues:  []*gitea.Issue{testIssue()},
-	}).NewServer(t)
-	gi, backend := setupImporter(t, srv.URL)
-
-	results := runImport(t, gi, backend)
-	require.Empty(t, collectErrors(results))
-
-	bugIds := backend.Bugs().AllIds()
-	require.Len(t, bugIds, 1)
-	b, err := backend.Bugs().Resolve(bugIds[0])
-	require.NoError(t, err)
-	snap := b.Snapshot()
-
-	origin, ok := snap.GetCreateMetadata(core.MetaKeyOrigin)
-	require.True(t, ok, "imported bug must carry %s metadata", core.MetaKeyOrigin)
-	assert.Equal(t, target, origin,
-		"origin metadata must equal the gitea target constant (used by `bridge pull` to find bugs to refresh)")
-	assert.Equal(t, "gitea", origin,
-		"target constant should remain the literal string \"gitea\" — changing it orphans existing bugs from the bridge")
 }
 
 // TestImportIdentityCarriesLoginAndProfile verifies that a newly-created
