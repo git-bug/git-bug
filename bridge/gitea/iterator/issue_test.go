@@ -61,6 +61,51 @@ func TestIssueIteratorPaginates(t *testing.T) {
 	assert.Len(t, got, len(fa.Issues))
 }
 
+// TestIssueIteratorEmptyRepo verifies that NextIssue on a repo with zero
+// issues returns false with no error and without panicking on IssueValue.
+func TestIssueIteratorEmptyRepo(t *testing.T) {
+	fa := &giteatest.FakeAPI{Owner: "owner", Project: "repo"}
+	srv := fa.NewServer(t)
+
+	iter := NewIterator(context.Background(), newTestClient(t, srv.URL), 10, fa.Owner, fa.Project, 5*time.Second, time.Time{})
+	require.NotPanics(t, func() {
+		assert.False(t, iter.NextIssue())
+	})
+	assert.NoError(t, iter.Error())
+}
+
+// TestIssueIteratorFiltersToIssues verifies that the issues request asks for
+// type=issues, excluding pull requests from the import stream.
+func TestIssueIteratorFiltersToIssues(t *testing.T) {
+	fa := &giteatest.FakeAPI{Owner: "owner", Project: "repo"}
+	srv := fa.NewServer(t)
+
+	iter := NewIterator(context.Background(), newTestClient(t, srv.URL), 10, fa.Owner, fa.Project, 5*time.Second, time.Time{})
+	iter.NextIssue()
+	require.NoError(t, iter.Error())
+
+	require.Len(t, fa.IssueRequests, 1)
+	assert.Equal(t, "issues", fa.IssueRequests[0].URL.Query().Get("type"),
+		"issue iterator should request type=issues to exclude pull requests")
+}
+
+// TestIssueIteratorHandlesNetworkError verifies the iterator survives a
+// network-level failure (connection refused), where the SDK returns a nil
+// *Response alongside the error. fetchIssues must not deref resp.Header.
+func TestIssueIteratorHandlesNetworkError(t *testing.T) {
+	fa := &giteatest.FakeAPI{Owner: "owner", Project: "repo"}
+	srv := fa.NewServer(t)
+	url := srv.URL
+	srv.Close() // force connection refused on next request
+
+	iter := NewIterator(context.Background(), newTestClient(t, url), 10, fa.Owner, fa.Project, 5*time.Second, time.Time{})
+
+	require.NotPanics(t, func() {
+		assert.False(t, iter.NextIssue())
+	})
+	assert.Error(t, iter.Error())
+}
+
 // TestIssueIteratorReturnsAPIError verifies that a 500 from the issues
 // endpoint surfaces through Error() rather than panicking on a nil response.
 func TestIssueIteratorReturnsAPIError(t *testing.T) {
