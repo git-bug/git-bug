@@ -12,6 +12,7 @@ import (
 	"github.com/git-bug/git-bug/bridge/core/auth"
 	"github.com/git-bug/git-bug/bridge/gitea/iterator"
 	"github.com/git-bug/git-bug/cache"
+	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
 	"github.com/git-bug/git-bug/util/text"
@@ -30,6 +31,8 @@ type giteaImporter struct {
 	// send only channel
 	out chan<- core.ImportResult
 }
+
+const DeletedIdentity = "@deleted-user"
 
 func (gi *giteaImporter) Init(_ context.Context, repo *cache.RepoCache, conf core.Configuration) error {
 	gi.conf = conf
@@ -81,7 +84,12 @@ func (gi *giteaImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, s
 			// Loop over all comments
 			for gi.iterator.NextComment() {
 				comment := gi.iterator.CommentValue()
-				author, err := gi.ensurePerson(repo, comment.Poster.UserName)
+				var author identity.Interface
+				if comment.Poster == nil {
+					author, err = deletedIdentity(repo)
+				} else {
+					author, err = gi.ensurePerson(repo, comment.Poster.UserName)
+				}
 				if err != nil {
 					err := fmt.Errorf("comment creation: %v", err)
 					out <- core.NewImportError(err, "")
@@ -210,4 +218,19 @@ func (gi *giteaImporter) ensurePerson(repo *cache.RepoCache, loginName string) (
 
 	gi.out <- core.NewImportIdentity(i.Id())
 	return i, nil
+}
+
+func deletedIdentity(repo *cache.RepoCache) (*cache.IdentityCache, error) {
+	login := "@deleted-user"
+	return repo.Identities().NewRaw(
+		"Ghost",
+		"ghost@example.com",
+		login,
+		"",
+		nil,
+		map[string]string{
+			// because Gitea
+			metaKeyGiteaLogin: login,
+		},
+	)
 }
