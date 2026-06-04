@@ -239,6 +239,31 @@ func TestImportEnsurePersonNotFound(t *testing.T) {
 		"a placeholder identity tagged with the looked-up login should exist")
 }
 
+// TestImportEnsurePersonNetworkError verifies that a network-level failure
+// during user lookup (no *Response object) is surfaced as an ImportError
+// rather than panicking on a nil resp.StatusCode dereference.
+func TestImportEnsurePersonNetworkError(t *testing.T) {
+	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	srv := (&giteatest.FakeAPI{
+		Owner:               "owner",
+		Project:             "project",
+		UserNetworkErrLogin: "dropped-user",
+		Issues: []*gitea.Issue{{
+			ID: 1, Index: 1, Title: "t", Body: "b",
+			Poster:  &gitea.User{UserName: "dropped-user"},
+			Created: ts,
+		}},
+	}).NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+
+	var results []core.ImportResult
+	require.NotPanics(t, func() {
+		results = runImport(t, gi, backend)
+	}, "a network-level user-lookup failure must not panic on nil resp")
+	assert.NotEmpty(t, collectErrors(results),
+		"a network-level user-lookup failure should surface as ImportError")
+}
+
 // TestImportEnsurePersonServerError verifies that a 5xx from /users/{login}
 // propagates as an ImportError rather than being misclassified as "user not
 // found" and silently producing a placeholder.

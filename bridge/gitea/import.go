@@ -17,7 +17,7 @@ import (
 	"github.com/git-bug/git-bug/util/text"
 )
 
-// giteaImporter implement the Importer interface
+// implements the Importer interface
 type giteaImporter struct {
 	conf core.Configuration
 
@@ -171,7 +171,7 @@ func (gi *giteaImporter) ensureIssue(repo *cache.RepoCache, issue *gitea.Issue) 
 
 func (gi *giteaImporter) ensurePerson(repo *cache.RepoCache, poster *gitea.User) (*cache.IdentityCache, error) {
 	if poster == nil {
-		return deletedIdentity(repo)
+		return gi.deletedIdentity(repo)
 	}
 
 	username := poster.UserName
@@ -186,11 +186,8 @@ func (gi *giteaImporter) ensurePerson(repo *cache.RepoCache, poster *gitea.User)
 	defer cancel()
 
 	user, resp, err := gi.client.Users.GetUserInfo(ctx, username)
-	if resp.StatusCode == 404 {
-		user.FullName = username
-		user.UserName = username
-		user.Email = ""
-		user.AvatarURL = ""
+	if resp != nil && resp.StatusCode == 404 {
+		user = &gitea.User { FullName: username, UserName: username }
 	} else if err != nil {
 		return nil, err
 	}
@@ -222,22 +219,25 @@ func getCachedIdentity(repo *cache.RepoCache, loginName string) (*cache.Identity
 	return i, err
 }
 
-func deletedIdentity(repo *cache.RepoCache) (*cache.IdentityCache, error) {
-	login := "@deleted-user"
-
-	i, err := getCachedIdentity(repo, login)
+func (gi *giteaImporter) deletedIdentity(repo *cache.RepoCache) (*cache.IdentityCache, error) {
+	i, err := getCachedIdentity(repo, DeletedIdentity)
 	if i != nil || err != nil {
 		return i, err
 	}
-	return repo.Identities().NewRaw(
+	i, err = repo.Identities().NewRaw(
 		"Ghost",
 		"ghost@example.com",
-		login,
+		DeletedIdentity,
 		"",
 		nil,
 		map[string]string{
 			// because Gitea
-			metaKeyGiteaLogin: login,
+			metaKeyGiteaLogin: DeletedIdentity,
 		},
 	)
+	if err != nil {
+		return nil, err
+	}
+	gi.out <- core.NewImportIdentity(i.Id())
+	return i, nil
 }
