@@ -12,8 +12,6 @@ import (
 	"github.com/git-bug/git-bug/bridge/gitea/giteatest"
 )
 
-// TestLabelIteratorReturnsAPIError verifies that a 500 from the labels
-// endpoint surfaces through Error() rather than panicking.
 func TestLabelIteratorReturnsAPIError(t *testing.T) {
 	ts := time.Now()
 	fa := &giteatest.FakeAPI{
@@ -36,8 +34,6 @@ func TestLabelIteratorReturnsAPIError(t *testing.T) {
 	assert.Error(t, iter.Error())
 }
 
-// TestLabelIteratorReturnsLabels verifies the happy path: labels configured
-// on the fake flow through LabelValue.
 func TestLabelIteratorReturnsLabels(t *testing.T) {
 	ts := time.Now()
 	fa := &giteatest.FakeAPI{

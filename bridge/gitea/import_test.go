@@ -148,8 +148,6 @@ func testComment(id int64, body string) *gitea.Comment {
 	}
 }
 
-// TestImportTitleZeroWidthSpace pins the empty-title fallback needed for
-// upstream issues whose title is only U+200B.
 func TestImportTitleZeroWidthSpace(t *testing.T) {
 	issue := testIssue()
 	issue.Title = "\u200b"
@@ -167,7 +165,6 @@ func TestImportTitleZeroWidthSpace(t *testing.T) {
 	assert.NotEmpty(t, b.Snapshot().Title)
 }
 
-// TestImportTitleAllWhitespace pins the same fallback for visible whitespace.
 func TestImportTitleAllWhitespace(t *testing.T) {
 	issue := testIssue()
 	issue.Title = "   "
@@ -185,8 +182,6 @@ func TestImportTitleAllWhitespace(t *testing.T) {
 	assert.NotEmpty(t, b.Snapshot().Title)
 }
 
-// TestImportTitleEmbeddedControlChars pins CleanupOneLine behavior at the
-// bridge boundary: controls are stripped before Create validation.
 func TestImportTitleEmbeddedControlChars(t *testing.T) {
 	issue := testIssue()
 	issue.Title = "hello\x00world"
@@ -203,9 +198,6 @@ func TestImportTitleEmbeddedControlChars(t *testing.T) {
 	assert.Equal(t, "helloworld", b.Snapshot().Title)
 }
 
-// TestImportStatusChangeIdempotent pins the re-import contract for future
-// status import: one upstream close should produce one SetStatus op, even
-// when imported repeatedly.
 func TestImportStatusChangeIdempotent(t *testing.T) {
 	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
 	issue := &gitea.Issue{
@@ -229,8 +221,6 @@ func TestImportStatusChangeIdempotent(t *testing.T) {
 		"re-importing the same upstream state change should not duplicate SetStatus operations")
 }
 
-// TestImportTitleChangeIdempotent pins the re-import contract for future title
-// import: one upstream edit should produce one SetTitle op.
 func TestImportTitleChangeIdempotent(t *testing.T) {
 	issue := testIssue()
 	issue.Title = "original"
@@ -249,8 +239,6 @@ func TestImportTitleChangeIdempotent(t *testing.T) {
 		"re-importing the same upstream title change should not duplicate SetTitle operations")
 }
 
-// TestImportBugMetadataKeysExact catches metadata key/value swaps that broader
-// dedup tests can miss.
 func TestImportBugMetadataKeysExact(t *testing.T) {
 	srv := (&giteatest.FakeAPI{
 		Owner:   "owner",
@@ -278,8 +266,6 @@ func TestImportBugMetadataKeysExact(t *testing.T) {
 	assertCreateMetadata(metaKeyGiteaBaseURL, srv.URL)
 }
 
-// TestImportThenExportThenImportNoDup pins the push-then-pull round-trip
-// contract before the Gitea exporter exists.
 func TestImportThenExportThenImportNoDup(t *testing.T) {
 	exporter := (&Gitea{}).NewExporter()
 	if exporter == nil {
@@ -289,8 +275,6 @@ func TestImportThenExportThenImportNoDup(t *testing.T) {
 	t.Fatal("TODO: create a local bug, export it to Gitea, then import and assert len(AllIds()) == 1")
 }
 
-// TestImportMatchesByAllFiveMetadataKeys verifies the importer only reuses an
-// existing bug when origin, gitea id, base URL, owner, and project all match.
 func TestImportMatchesByAllFiveMetadataKeys(t *testing.T) {
 	testCases := []struct {
 		name     string
@@ -407,8 +391,6 @@ func TestImportMatchesByAllFiveMetadataKeys(t *testing.T) {
 	}
 }
 
-// TestImportLabelCaseInsensitive pins the expected label matching policy for
-// the future label importer: upstream "Bug" should match local "bug".
 func TestImportLabelCaseInsensitive(t *testing.T) {
 	fa := &giteatest.FakeAPI{
 		Owner:   "owner",
@@ -514,20 +496,14 @@ func TestImportLabelReconcileScopedToImportedBug(t *testing.T) {
 		"bugs imported from other forges should not be rewritten by Gitea label reconciliation")
 }
 
-// TestImportTitleChangeViaTypedComment is skipped until the SDK exposes
-// Gitea's typed system-comment fields on gitea.Comment.
 func TestImportTitleChangeViaTypedComment(t *testing.T) {
 	t.Skip("gitea.dev/sdk@v1.1.0 Comment lacks Type/OldTitle/NewTitle fields; add this pin when the SDK is upgraded")
 }
 
-// TestImportStateChangeViaTypedComment is skipped until the SDK exposes
-// Gitea's typed system-comment fields on gitea.Comment.
 func TestImportStateChangeViaTypedComment(t *testing.T) {
 	t.Skip("gitea.dev/sdk@v1.1.0 Comment lacks Type fields for close/reopen system comments; add this pin when the SDK is upgraded")
 }
 
-// TestImportTitleUnsafeAfterCleanup pins that validation failures at the
-// bridge boundary are reported as ImportErrors that name the offending field.
 func TestImportTitleUnsafeAfterCleanup(t *testing.T) {
 	issue := testIssue()
 	issue.Title = "\x1b"
@@ -548,8 +524,6 @@ func TestImportTitleUnsafeAfterCleanup(t *testing.T) {
 		"invalid title import must not leave a half-created bug")
 }
 
-// TestImportBodyControlCharacters pins body cleanup for control characters
-// that are invalid in git-bug comments.
 func TestImportBodyControlCharacters(t *testing.T) {
 	issue := testIssue()
 	issue.Body = "a\x00b\x1fc\n\tok"
@@ -567,9 +541,6 @@ func TestImportBodyControlCharacters(t *testing.T) {
 	assert.Equal(t, "abc\n\tok", snap.Comments[0].Message)
 }
 
-// TestImportVeryLongTitle pins that pathological title size is handled
-// deliberately: either a clean ImportError or a complete bug, never a panic
-// or half-created cache entry.
 func TestImportVeryLongTitle(t *testing.T) {
 	issue := testIssue()
 	issue.Title = strings.Repeat("t", 10*1024)
@@ -594,8 +565,6 @@ func TestImportVeryLongTitle(t *testing.T) {
 		"successful long-title import should commit exactly one bug")
 }
 
-// TestImportSinceSentOnIssuesRequest verifies ImportAll forwards its since
-// argument to the issue listing request.
 func TestImportSinceSentOnIssuesRequest(t *testing.T) {
 	fa := &giteatest.FakeAPI{
 		Owner:   "owner",
@@ -615,8 +584,6 @@ func TestImportSinceSentOnIssuesRequest(t *testing.T) {
 	assert.Equal(t, since, parsed.UTC())
 }
 
-// TestImportSinceSentOnCommentsRequest verifies ImportAll forwards since to
-// comment listing too.
 func TestImportSinceSentOnCommentsRequest(t *testing.T) {
 	fa := &giteatest.FakeAPI{
 		Owner:    "owner",
@@ -637,9 +604,6 @@ func TestImportSinceSentOnCommentsRequest(t *testing.T) {
 	assert.Equal(t, since, parsed.UTC())
 }
 
-// TestImportSinceSecondRunMovesForward pins both halves of incremental import:
-// the second cutoff is sent, and unchanged already-imported items do not add
-// operations.
 func TestImportSinceSecondRunMovesForward(t *testing.T) {
 	fa := &giteatest.FakeAPI{
 		Owner:   "owner",
@@ -664,8 +628,6 @@ func TestImportSinceSecondRunMovesForward(t *testing.T) {
 		"incremental re-import of unchanged items should not add operations")
 }
 
-// TestImportErrorCarriesBugID verifies errors after bug creation identify the
-// bug they occurred on, so progress output can point to the affected entity.
 func TestImportErrorCarriesBugID(t *testing.T) {
 	comment := testComment(1, "bad author")
 	comment.Poster = &gitea.User{UserName: "flaky-commenter"}
@@ -693,8 +655,6 @@ func TestImportErrorCarriesBugID(t *testing.T) {
 		"ImportError after bug creation should carry the affected bug id")
 }
 
-// TestImportSkipsUserAPIWhenCached pins the metadata-keyed identity cache
-// lookup before user API calls.
 func TestImportSkipsUserAPIWhenCached(t *testing.T) {
 	user := &gitea.User{UserName: "alice", FullName: "Alice", Email: "alice@example.com"}
 	fa := &giteatest.FakeAPI{
@@ -716,11 +676,6 @@ func TestImportSkipsUserAPIWhenCached(t *testing.T) {
 		"cached identity for alice should avoid another /users/alice request")
 }
 
-// TestImportNilPoster documents finding #1: comment.Poster is a *User pointer and
-// is never nil-checked before dereferencing .UserName. A deleted or bot user can
-// return "user": null from the API, which panics the import goroutine.
-//
-// After the fix: ImportError should be emitted instead of panicking.
 func TestImportNilPoster(t *testing.T) {
 	ts := time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC)
 	srv := (&giteatest.FakeAPI{
@@ -739,11 +694,6 @@ func TestImportNilPoster(t *testing.T) {
 	assert.NoError(t, err, "expected a ghost identity to be created for deleted user")
 }
 
-// TestImportIdempotentComments documents finding #2: AddCommentRaw is called with
-// an empty metadata map, so no remote comment ID is stored. Running ImportAll a
-// second time re-adds every comment, duplicating them in the local bug.
-//
-// After the fix: second import should produce no new operations.
 func TestImportIdempotentComments(t *testing.T) {
 	srv := (&giteatest.FakeAPI{
 		Owner:    "owner",
@@ -767,10 +717,6 @@ func TestImportIdempotentComments(t *testing.T) {
 	}
 }
 
-// TestImportCommentErrorEmitted documents finding #3: when the comment iterator
-// encounters an API error, the current issue is committed in a partial state
-// before the error reaches the caller. An ImportError should be emitted and the
-// partial bug should not be silently committed as complete.
 func TestImportCommentErrorEmitted(t *testing.T) {
 	srv := (&giteatest.FakeAPI{
 		Owner:          "owner",
@@ -783,12 +729,11 @@ func TestImportCommentErrorEmitted(t *testing.T) {
 
 	results := runImport(t, gi, backend)
 
+	// A comment-listing failure must not be hidden behind a successful partial
+	// issue import.
 	assert.NotEmpty(t, collectErrors(results), "expected ImportError when comment fetch fails")
 }
 
-// TestImportStopsOnCommentError pins the current fail-fast behavior when the
-// comment iterator fails for an issue: later issues are not imported after the
-// iterator records the comment error.
 func TestImportStopsOnCommentError(t *testing.T) {
 	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
 	user := &gitea.User{UserName: "testuser", FullName: "Test User", Email: "u@example.com"}
@@ -809,17 +754,14 @@ func TestImportStopsOnCommentError(t *testing.T) {
 
 	results := runImport(t, gi, backend)
 
+	// This pins the current fail-fast behavior for comment iterator errors.
+	// If Gitea import switches to continue-on-error, update this expectation.
 	require.NotEmpty(t, collectErrors(results),
 		"comment fetch failure on issue #1 should surface as an ImportError")
 	assert.Len(t, backend.Bugs().AllIds(), 1,
 		"current behavior: import stops after a comment iterator error; issue #2 is never imported")
 }
 
-// TestImportGhostDedup documents that deletedIdentity (import.go:223) calls
-// NewRaw without first resolving by metadata, so two null-Poster comments in
-// one import create two ghost identities (or fail on the second NewRaw).
-//
-// After the fix: a single ghost identity is shared by all null-Poster comments.
 func TestImportGhostDedup(t *testing.T) {
 	ts := time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC)
 	srv := (&giteatest.FakeAPI{
@@ -842,11 +784,6 @@ func TestImportGhostDedup(t *testing.T) {
 		"a single ghost identity should be resolvable (ErrMultipleMatch indicates duplicates)")
 }
 
-// TestImportNilIssuePoster documents that ensureIssue (import.go:131) derefs
-// issue.Poster.UserName without nil-checking. Same shape as finding #1 but on
-// the issue path rather than the comment path.
-//
-// After the fix: ImportError or ghost-identity fallback, no panic.
 func TestImportNilIssuePoster(t *testing.T) {
 	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
 	srv := (&giteatest.FakeAPI{
@@ -867,11 +804,6 @@ func TestImportNilIssuePoster(t *testing.T) {
 	assert.NoError(t, err, "expected a ghost identity for the null-Poster issue")
 }
 
-// TestImportEnsurePersonNotFound documents that ensurePerson (import.go:192)
-// derefs the SDK's *User return on the 404 branch. Most SDK versions return
-// a nil *User alongside the 404 error.
-//
-// After the fix: a placeholder identity is created with the requested login.
 func TestImportEnsurePersonNotFound(t *testing.T) {
 	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
 	srv := (&giteatest.FakeAPI{
@@ -886,6 +818,8 @@ func TestImportEnsurePersonNotFound(t *testing.T) {
 	}).NewServer(t)
 	gi, backend := setupImporter(t, srv.URL)
 
+	// Some SDK versions return a nil *User with a 404 response; the importer
+	// should still create a placeholder identity for the requested login.
 	results := runImport(t, gi, backend)
 	assert.Empty(t, collectErrors(results),
 		"a 404 on user lookup should fall back to a placeholder identity, not panic")
@@ -895,9 +829,6 @@ func TestImportEnsurePersonNotFound(t *testing.T) {
 		"a placeholder identity tagged with the looked-up login should exist")
 }
 
-// TestImportEnsurePersonNetworkError verifies that a network-level failure
-// during user lookup (no *Response object) is surfaced as an ImportError
-// rather than panicking on a nil resp.StatusCode dereference.
 func TestImportEnsurePersonNetworkError(t *testing.T) {
 	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
 	srv := (&giteatest.FakeAPI{
@@ -920,9 +851,6 @@ func TestImportEnsurePersonNetworkError(t *testing.T) {
 		"a network-level user-lookup failure should surface as ImportError")
 }
 
-// TestImportEnsurePersonServerError verifies that a 5xx from /users/{login}
-// propagates as an ImportError rather than being misclassified as "user not
-// found" and silently producing a placeholder.
 func TestImportEnsurePersonServerError(t *testing.T) {
 	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
 	srv := (&giteatest.FakeAPI{
@@ -942,8 +870,6 @@ func TestImportEnsurePersonServerError(t *testing.T) {
 		"a 5xx on user lookup should propagate, not be misclassified as 'user not found'")
 }
 
-// TestImportIdentityReuseAcrossIssues verifies that two issues authored by the
-// same user produce a single identity, attributed to both bugs.
 func TestImportIdentityReuseAcrossIssues(t *testing.T) {
 	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
 	user := &gitea.User{UserName: "testuser", FullName: "Test User", Email: "testuser@example.com"}
@@ -974,10 +900,6 @@ func TestImportIdentityReuseAcrossIssues(t *testing.T) {
 		"only one identity-creation event expected for two issues by the same user")
 }
 
-// TestImportSecondRunEmitsNothing verifies that re-importing an unchanged repo
-// emits ImportEventNothing for the existing bug, signaling no-op rather than
-// silently producing no result. On failure, dumps the operations the second
-// run unexpectedly added so the duplication source is visible.
 func TestImportSecondRunEmitsNothing(t *testing.T) {
 	srv := (&giteatest.FakeAPI{
 		Owner:    "owner",
@@ -1063,10 +985,6 @@ func TestImportNegativeDedupAcrossRepos(t *testing.T) {
 		"issue #1 from two distinct forges should produce two bugs, not be deduped together")
 }
 
-// TestImportPropagatesIssueTitleUpdates verifies that re-importing an issue
-// whose title/body changed upstream propagates the change to the local bug.
-// ensureIssue currently returns the existing bug without checking for edits,
-// so this test pins a behavior gap.
 func TestImportPropagatesIssueTitleUpdates(t *testing.T) {
 	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
 	issue := &gitea.Issue{
@@ -1100,10 +1018,6 @@ func TestImportPropagatesIssueTitleUpdates(t *testing.T) {
 		"body change should propagate on re-import")
 }
 
-// TestImportPropagatesCommentEdits verifies that a comment whose body is
-// edited upstream propagates the new body to the local bug on re-import.
-// The importer doesn't currently compare comment bodies, so this is a
-// feature-gap test (will fail until ensureComment-style update logic lands).
 func TestImportPropagatesCommentEdits(t *testing.T) {
 	ts := time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC)
 	comment := &gitea.Comment{
@@ -1149,9 +1063,6 @@ func TestImportPropagatesCommentEdits(t *testing.T) {
 		"comment edit should propagate on re-import (Updated > Created should trigger EditComment)")
 }
 
-// TestImportPropagatesStatusChanges verifies that an issue closed upstream
-// between two imports causes the local bug to be closed. The importer
-// currently never inspects issue.State or calls Open/Close.
 func TestImportPropagatesStatusChanges(t *testing.T) {
 	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
 	issue := &gitea.Issue{
@@ -1181,9 +1092,6 @@ func TestImportPropagatesStatusChanges(t *testing.T) {
 		"upstream state=closed should set local bug status to closed on re-import")
 }
 
-// TestImportLabels verifies that labels on a Gitea issue end up as labels on
-// the local bug. The TODO at import.go:104 ("Loop over all label events") is
-// unimplemented; NextLabel() is never called, so this currently fails.
 func TestImportLabels(t *testing.T) {
 	fa := &giteatest.FakeAPI{
 		Owner:   "owner",
@@ -1210,9 +1118,6 @@ func TestImportLabels(t *testing.T) {
 		"issue labels should be imported as bug labels (TODO at import.go:104 unimplemented)")
 }
 
-// TestImportCommentAttachments verifies that a comment's attachments end up
-// as Files on the local comment. The importer currently passes an empty Files
-// slice (TODO at import.go:96–97), so attachments are silently dropped.
 func TestImportCommentAttachments(t *testing.T) {
 	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
 	fa := &giteatest.FakeAPI{
@@ -1244,9 +1149,6 @@ func TestImportCommentAttachments(t *testing.T) {
 		"comment attachments should be imported as Files (TODO at import.go:96–97)")
 }
 
-// TestImportMultipleIssues verifies that a multi-issue import correctly
-// attributes each issue's comments to the right bug — catches cross-issue
-// state leakage in the importer (independent of iterator-level reset).
 func TestImportMultipleIssues(t *testing.T) {
 	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
 	user := &gitea.User{UserName: "testuser", FullName: "Test User", Email: "testuser@example.com"}
@@ -1276,12 +1178,6 @@ func TestImportMultipleIssues(t *testing.T) {
 	assert.Equal(t, 2, bugEvents, "two issues should produce two ImportEventBug events")
 }
 
-// TestImportCommentAttributedToCommentPoster verifies that a comment's author
-// is the comment's Poster, not the issue's Poster, when they differ. This is
-// the same identity-attribution shape edit support will need (editor != author).
-// Fails today because of the empty comment loop in import.go:84 (importComment
-// is defined but never called) — same regression TestImportPropagatesCommentEdits
-// documents, surfaced from a different angle.
 func TestImportCommentAttributedToCommentPoster(t *testing.T) {
 	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
 	issuePoster := &gitea.User{UserName: "issue-author", FullName: "Issue Author", Email: "ia@example.com"}
@@ -1354,9 +1250,6 @@ func TestImportIdentityCarriesLoginAndProfile(t *testing.T) {
 		"identity Email should come from the user endpoint")
 }
 
-// TestImportInitNoToken verifies that Init returns ErrMissingIdentityToken when
-// the auth store has no token matching baseURL+login. The error path at
-// import.go:50 is only hit when auth.List finds nothing.
 func TestImportInitNoToken(t *testing.T) {
 	repo := repository.CreateGoGitTestRepo(t, false)
 	backend, err := cache.NewRepoCacheNoEvents(repo)
@@ -1374,12 +1267,6 @@ func TestImportInitNoToken(t *testing.T) {
 		"Init with no stored token should return ErrMissingIdentityToken")
 }
 
-// TestImportRepoNotFound verifies that a 404 from the issues endpoint (the
-// shape Gitea returns when the repo doesn't exist or the token can't see it)
-// surfaces through the import results rather than producing a silent empty
-// import. FakeAPI's RepoNotFound flag returns 404 from the repo endpoint;
-// the iterator's first issue fetch will see the same condition via the issues
-// path returning no handler match.
 func TestImportRepoNotFound(t *testing.T) {
 	srv := (&giteatest.FakeAPI{
 		Owner:        "wrong-owner",
@@ -1387,7 +1274,6 @@ func TestImportRepoNotFound(t *testing.T) {
 		RepoNotFound: true,
 	}).NewServer(t)
 
-	// Configure the importer to ask for a repo that the FakeAPI doesn't serve.
 	repo := repository.CreateGoGitTestRepo(t, false)
 	token := auth.NewToken(target, "test-token")
 	token.SetMetadata(auth.MetaKeyLogin, "testuser")
@@ -1399,6 +1285,7 @@ func TestImportRepoNotFound(t *testing.T) {
 	t.Cleanup(func() { _ = backend.Close() })
 
 	gi := &giteaImporter{}
+	// Ask for a repo the fake server intentionally does not register.
 	require.NoError(t, gi.Init(context.Background(), backend, core.Configuration{
 		confKeyBaseURL:      srv.URL,
 		confKeyOwner:        "ghost-owner", // not registered with the mux
@@ -1454,24 +1341,6 @@ func importerGoroutineLive() bool {
 	return strings.Contains(stacks, "bridge/gitea.(*giteaImporter).ImportAll")
 }
 
-// TestImportCancelLeaksGoroutine pins the goroutine-leak contract gap: when
-// the consumer stops draining and cancels ctx, the producer goroutine should
-// exit promptly. Today it doesn't — every `out <- X` in import.go is a bare
-// channel send, not a select on ctx.Done. If the producer is blocked on a
-// send when cancel fires, it stays blocked until the process exits.
-//
-// The fix (not made here) is a send helper:
-//
-//	func (gi *giteaImporter) send(ctx context.Context, r core.ImportResult) {
-//	    select { case gi.out <- r: case <-ctx.Done(): }
-//	}
-//
-// and replacing every bare `out <-` with `gi.send(ctx, ...)`.
-//
-// The test sets up enough issues that the producer will reach a send-block
-// state quickly, reads one event to confirm the producer is alive, cancels
-// the context, stops reading, then polls for the importer goroutine to
-// disappear. Fails today; will pass once sends become ctx-aware.
 func TestImportCancelLeaksGoroutine(t *testing.T) {
 	const issueCount = 20
 	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -1490,8 +1359,8 @@ func TestImportCancelLeaksGoroutine(t *testing.T) {
 	require.NoError(t, err)
 
 	// Read one event to ensure the producer goroutine has actually started
-	// and reached a send. Anything emitted by the import is fine here — for
-	// the first issue, ImportEventIdentity comes before ImportEventBug.
+	// and reached a send. Anything emitted by the import is fine here; for the
+	// first issue, ImportEventIdentity comes before ImportEventBug.
 	select {
 	case <-ch:
 	case <-time.After(2 * time.Second):
@@ -1514,11 +1383,6 @@ func TestImportCancelLeaksGoroutine(t *testing.T) {
 		"`out <-` doesn't respect ctx.Done(); add a select-based send helper to fix")
 }
 
-// TestImportClosesOutputChannel verifies that ImportAll closes the returned
-// channel when work finishes. Every other test relies on this implicitly via
-// `for r := range ch` — without `defer close(gi.out)` at import.go:69, every
-// test in this file would hang. This makes the contract explicit so a future
-// refactor that drops the defer fails here, not by deadlocking the suite.
 func TestImportClosesOutputChannel(t *testing.T) {
 	srv := (&giteatest.FakeAPI{
 		Owner:   "owner",
@@ -1530,6 +1394,8 @@ func TestImportClosesOutputChannel(t *testing.T) {
 	ch, err := gi.ImportAll(context.Background(), backend, time.Time{})
 	require.NoError(t, err)
 
+	// Most importer tests range over this channel; make the close contract
+	// explicit so a refactor fails here instead of deadlocking the suite.
 	for range ch {
 	}
 

@@ -152,18 +152,13 @@ func TestValidateProject(t *testing.T) {
 	}
 }
 
-// TestValidateProjectServerError verifies that a 5xx from the repo endpoint
-// surfaces as (false, non-nil error) rather than being collapsed into the
-// "project not found" outcome silently. The current implementation wraps every
-// non-nil error with the message "wrong token scope or non-existent project",
-// which is misleading on a 500 — this test pins the structural shape (error
-// surfaces) without asserting the misleading message, so a future fix that
-// distinguishes the two cases won't break the test.
 func TestValidateProjectServerError(t *testing.T) {
 	token := auth.NewToken(target, "test-token")
 	fa := &giteatest.FakeAPI{Owner: "owner", Project: "repo", RepoErrStatus: 500}
 	srv := fa.NewServer(t)
 
+	// The current error text is misleading for 5xx responses, so assert only
+	// that the server error is not accepted as a valid project.
 	ok, err := validateProject(srv.URL, fa.Owner, fa.Project, token)
 	assert.False(t, ok, "a 500 from the repo endpoint must not be reported as a valid project")
 	assert.Error(t, err, "a 500 from the repo endpoint must surface as a non-nil error")
