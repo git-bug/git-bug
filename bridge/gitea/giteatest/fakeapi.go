@@ -56,6 +56,9 @@ type FakeAPI struct {
 
 	// CommentRequests accumulates every request made to the comments endpoint.
 	CommentRequests []*http.Request
+
+	// UserRequests accumulates every request made to the users endpoint.
+	UserRequests []*http.Request
 }
 
 func writeJSON(w http.ResponseWriter, v any) {
@@ -203,6 +206,7 @@ func (fa *FakeAPI) NewServer(t *testing.T) *httptest.Server {
 
 	// https://codeberg.org/api/swagger#/user/userGet
 	mux.HandleFunc("/api/v1/users/", func(w http.ResponseWriter, r *http.Request) {
+		fa.UserRequests = append(fa.UserRequests, r)
 		login := strings.TrimPrefix(r.URL.Path, "/api/v1/users/")
 		if fa.UserNetworkErrLogin != "" && login == fa.UserNetworkErrLogin {
 			// Abort the response without writing anything; the client sees

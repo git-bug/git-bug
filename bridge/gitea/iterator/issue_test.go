@@ -37,6 +37,89 @@ func TestIssueIteratorPassesSince(t *testing.T) {
 	assert.Equal(t, since.UTC(), parsed.UTC())
 }
 
+// TestIteratorStartsAtPage1 pins Gitea's 1-based pagination contract.
+func TestIteratorStartsAtPage1(t *testing.T) {
+	fa := &giteatest.FakeAPI{Owner: "owner", Project: "repo"}
+	srv := fa.NewServer(t)
+
+	iter := NewIterator(context.Background(), newTestClient(t, srv.URL), 10, fa.Owner, fa.Project, 5*time.Second, time.Time{})
+	iter.NextIssue()
+	require.NoError(t, iter.Error())
+
+	require.Len(t, fa.IssueRequests, 1)
+	assert.Equal(t, "1", fa.IssueRequests[0].URL.Query().Get("page"))
+}
+
+// TestIteratorNoTrailingIssueCall verifies exact-capacity issue pages stop at
+// X-Total-Count instead of probing one more empty page.
+func TestIteratorNoTrailingIssueCall(t *testing.T) {
+	const capacity = 2
+	ts := time.Now()
+	fa := &giteatest.FakeAPI{
+		Owner:   "owner",
+		Project: "repo",
+		Issues: []*gitea.Issue{
+			{ID: 1, Index: 1, Title: "one", Poster: &gitea.User{UserName: "u"}, Created: ts},
+			{ID: 2, Index: 2, Title: "two", Poster: &gitea.User{UserName: "u"}, Created: ts},
+		},
+	}
+	srv := fa.NewServer(t)
+
+	iter := NewIterator(context.Background(), newTestClient(t, srv.URL), capacity, fa.Owner, fa.Project, 5*time.Second, time.Time{})
+	for iter.NextIssue() {
+	}
+	require.NoError(t, iter.Error())
+	assert.Len(t, fa.IssueRequests, 1,
+		"exactly capacity issues should not trigger a trailing empty issue request")
+}
+
+// TestIteratorRespectsXTotalCount verifies a partial first page, as determined
+// by X-Total-Count, does not trigger an extra request.
+func TestIteratorRespectsXTotalCount(t *testing.T) {
+	const capacity = 10
+	ts := time.Now()
+	fa := &giteatest.FakeAPI{Owner: "owner", Project: "repo"}
+	for i := int64(1); i <= 3; i++ {
+		fa.Issues = append(fa.Issues, &gitea.Issue{
+			ID: i, Index: i, Title: "t",
+			Poster: &gitea.User{UserName: "u"}, Created: ts,
+		})
+	}
+	srv := fa.NewServer(t)
+
+	iter := NewIterator(context.Background(), newTestClient(t, srv.URL), capacity, fa.Owner, fa.Project, 5*time.Second, time.Time{})
+	for iter.NextIssue() {
+	}
+	require.NoError(t, iter.Error())
+	assert.Len(t, fa.IssueRequests, 1,
+		"X-Total-Count=3 with capacity=10 should stop after the first issue request")
+}
+
+// TestIteratorMultiPageStopsAtTotal verifies the iterator stops exactly on
+// the page containing X-Total-Count's final item.
+func TestIteratorMultiPageStopsAtTotal(t *testing.T) {
+	const capacity = 10
+	ts := time.Now()
+	fa := &giteatest.FakeAPI{Owner: "owner", Project: "repo"}
+	for i := int64(1); i <= 25; i++ {
+		fa.Issues = append(fa.Issues, &gitea.Issue{
+			ID: i, Index: i, Title: "t",
+			Poster: &gitea.User{UserName: "u"}, Created: ts,
+		})
+	}
+	srv := fa.NewServer(t)
+
+	iter := NewIterator(context.Background(), newTestClient(t, srv.URL), capacity, fa.Owner, fa.Project, 5*time.Second, time.Time{})
+	var got []*gitea.Issue
+	for iter.NextIssue() {
+		got = append(got, iter.IssueValue())
+	}
+	require.NoError(t, iter.Error())
+	assert.Len(t, got, 25)
+	assert.Len(t, fa.IssueRequests, 3,
+		"25 issues at capacity 10 should make exactly 3 issue requests")
+}
+
 // TestIssueIteratorPaginates verifies that fetchIssues walks past the first
 // page when X-Total-Count indicates more issues remain.
 func TestIssueIteratorPaginates(t *testing.T) {

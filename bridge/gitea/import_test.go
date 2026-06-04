@@ -15,6 +15,7 @@ import (
 	"github.com/git-bug/git-bug/bridge/core/auth"
 	"github.com/git-bug/git-bug/bridge/gitea/giteatest"
 	"github.com/git-bug/git-bug/cache"
+	bugpkg "github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entities/common"
 	"github.com/git-bug/git-bug/repository"
 )
@@ -70,6 +71,17 @@ func runImport(t *testing.T, gi *giteaImporter, backend *cache.RepoCache) []core
 	return results
 }
 
+func runImportSince(t *testing.T, gi *giteaImporter, backend *cache.RepoCache, since time.Time) []core.ImportResult {
+	t.Helper()
+	ch, err := gi.ImportAll(context.Background(), backend, since)
+	require.NoError(t, err)
+	var results []core.ImportResult
+	for r := range ch {
+		results = append(results, r)
+	}
+	return results
+}
+
 func testIssue() *gitea.Issue {
 	return &gitea.Issue{
 		ID:      1,
@@ -81,6 +93,35 @@ func testIssue() *gitea.Issue {
 	}
 }
 
+func onlyBug(t *testing.T, backend *cache.RepoCache) *cache.BugCache {
+	t.Helper()
+	bugIds := backend.Bugs().AllIds()
+	require.Len(t, bugIds, 1)
+	b, err := backend.Bugs().Resolve(bugIds[0])
+	require.NoError(t, err)
+	return b
+}
+
+func countStatusOps(b *cache.BugCache) int {
+	count := 0
+	for _, op := range b.Snapshot().Operations {
+		if _, ok := op.(*bugpkg.SetStatusOperation); ok {
+			count++
+		}
+	}
+	return count
+}
+
+func countTitleOps(b *cache.BugCache) int {
+	count := 0
+	for _, op := range b.Snapshot().Operations {
+		if _, ok := op.(*bugpkg.SetTitleOperation); ok {
+			count++
+		}
+	}
+	return count
+}
+
 func testComment(id int64, body string) *gitea.Comment {
 	ts := time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC)
 	return &gitea.Comment{
@@ -90,6 +131,489 @@ func testComment(id int64, body string) *gitea.Comment {
 		Created: ts,
 		Updated: ts,
 	}
+}
+
+// TestImportTitleZeroWidthSpace pins the empty-title fallback needed for
+// upstream issues whose title is only U+200B.
+func TestImportTitleZeroWidthSpace(t *testing.T) {
+	issue := testIssue()
+	issue.Title = "\u200b"
+	srv := (&giteatest.FakeAPI{
+		Owner: "owner", Project: "project",
+		Issues: []*gitea.Issue{issue},
+	}).NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+
+	results := runImport(t, gi, backend)
+	assert.Empty(t, collectErrors(results),
+		"zero-width-only titles should fall back to a non-empty placeholder, not fail import")
+
+	b := onlyBug(t, backend)
+	assert.NotEmpty(t, b.Snapshot().Title)
+}
+
+// TestImportTitleAllWhitespace pins the same fallback for visible whitespace.
+func TestImportTitleAllWhitespace(t *testing.T) {
+	issue := testIssue()
+	issue.Title = "   "
+	srv := (&giteatest.FakeAPI{
+		Owner: "owner", Project: "project",
+		Issues: []*gitea.Issue{issue},
+	}).NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+
+	results := runImport(t, gi, backend)
+	assert.Empty(t, collectErrors(results),
+		"all-whitespace titles should fall back to a non-empty placeholder, not fail import")
+
+	b := onlyBug(t, backend)
+	assert.NotEmpty(t, b.Snapshot().Title)
+}
+
+// TestImportTitleEmbeddedControlChars pins CleanupOneLine behavior at the
+// bridge boundary: controls are stripped before Create validation.
+func TestImportTitleEmbeddedControlChars(t *testing.T) {
+	issue := testIssue()
+	issue.Title = "hello\x00world"
+	srv := (&giteatest.FakeAPI{
+		Owner: "owner", Project: "project",
+		Issues: []*gitea.Issue{issue},
+	}).NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+
+	results := runImport(t, gi, backend)
+	require.Empty(t, collectErrors(results))
+
+	b := onlyBug(t, backend)
+	assert.Equal(t, "helloworld", b.Snapshot().Title)
+}
+
+// TestImportStatusChangeIdempotent pins the re-import contract for future
+// status import: one upstream close should produce one SetStatus op, even
+// when imported repeatedly.
+func TestImportStatusChangeIdempotent(t *testing.T) {
+	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	issue := &gitea.Issue{
+		ID: 1, Index: 1, Title: "t", Body: "b",
+		State:   gitea.StateOpen,
+		Poster:  &gitea.User{UserName: "testuser", FullName: "Test User", Email: "u@example.com"},
+		Created: ts,
+	}
+	fa := &giteatest.FakeAPI{Owner: "owner", Project: "project", Issues: []*gitea.Issue{issue}}
+	srv := fa.NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+	_ = runImport(t, gi, backend)
+
+	issue.State = gitea.StateClosed
+	_ = runImport(t, setupImporterOnExistingBackend(t, srv.URL, backend), backend)
+	_ = runImport(t, setupImporterOnExistingBackend(t, srv.URL, backend), backend)
+
+	b := onlyBug(t, backend)
+	assert.Equal(t, common.ClosedStatus, b.Snapshot().Status)
+	assert.Equal(t, 1, countStatusOps(b),
+		"re-importing the same upstream state change should not duplicate SetStatus operations")
+}
+
+// TestImportTitleChangeIdempotent pins the re-import contract for future title
+// import: one upstream edit should produce one SetTitle op.
+func TestImportTitleChangeIdempotent(t *testing.T) {
+	issue := testIssue()
+	issue.Title = "original"
+	fa := &giteatest.FakeAPI{Owner: "owner", Project: "project", Issues: []*gitea.Issue{issue}}
+	srv := fa.NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+	_ = runImport(t, gi, backend)
+
+	issue.Title = "updated"
+	_ = runImport(t, setupImporterOnExistingBackend(t, srv.URL, backend), backend)
+	_ = runImport(t, setupImporterOnExistingBackend(t, srv.URL, backend), backend)
+
+	b := onlyBug(t, backend)
+	assert.Equal(t, "updated", b.Snapshot().Title)
+	assert.Equal(t, 1, countTitleOps(b),
+		"re-importing the same upstream title change should not duplicate SetTitle operations")
+}
+
+// TestImportBugMetadataKeysExact catches metadata key/value swaps that broader
+// dedup tests can miss.
+func TestImportBugMetadataKeysExact(t *testing.T) {
+	srv := (&giteatest.FakeAPI{
+		Owner:   "owner",
+		Project: "project",
+		Issues:  []*gitea.Issue{testIssue()},
+	}).NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+
+	results := runImport(t, gi, backend)
+	require.Empty(t, collectErrors(results))
+
+	snap := onlyBug(t, backend).Snapshot()
+	assertCreateMetadata := func(key, expected string) {
+		t.Helper()
+		got, ok := snap.GetCreateMetadata(key)
+		require.True(t, ok, "missing create metadata key %s", key)
+		assert.Equal(t, expected, got, "wrong value for create metadata key %s", key)
+	}
+	assertCreateMetadata(core.MetaKeyOrigin, target)
+	assertCreateMetadata(metaKeyGiteaID, "1")
+	assertCreateMetadata(metaKeyGiteaOwner, "owner")
+	assertCreateMetadata(metaKeyGiteaProject, "project")
+	assertCreateMetadata(metaKeyGiteaBaseURL, srv.URL)
+}
+
+// TestImportThenExportThenImportNoDup pins the push-then-pull round-trip
+// contract before the Gitea exporter exists.
+func TestImportThenExportThenImportNoDup(t *testing.T) {
+	exporter := (&Gitea{}).NewExporter()
+	if exporter == nil {
+		t.Skip("Gitea exporter is not wired yet; enable this round-trip pin when NewExporter returns a real exporter")
+	}
+
+	t.Fatal("TODO: create a local bug, export it to Gitea, then import and assert len(AllIds()) == 1")
+}
+
+// TestImportMatchesByAllFiveMetadataKeys verifies the importer only reuses an
+// existing bug when origin, gitea id, base URL, owner, and project all match.
+func TestImportMatchesByAllFiveMetadataKeys(t *testing.T) {
+	testCases := []struct {
+		name     string
+		metadata map[string]string
+		wantBugs int
+	}{
+		{
+			name: "all keys match",
+			metadata: map[string]string{
+				core.MetaKeyOrigin:  target,
+				metaKeyGiteaID:      "1",
+				metaKeyGiteaOwner:   "owner",
+				metaKeyGiteaProject: "project",
+			},
+			wantBugs: 1,
+		},
+		{
+			name: "different origin",
+			metadata: map[string]string{
+				core.MetaKeyOrigin:  "github",
+				metaKeyGiteaID:      "1",
+				metaKeyGiteaOwner:   "owner",
+				metaKeyGiteaProject: "project",
+			},
+			wantBugs: 2,
+		},
+		{
+			name: "different gitea id",
+			metadata: map[string]string{
+				core.MetaKeyOrigin:  target,
+				metaKeyGiteaID:      "2",
+				metaKeyGiteaOwner:   "owner",
+				metaKeyGiteaProject: "project",
+			},
+			wantBugs: 2,
+		},
+		{
+			name: "different base url",
+			metadata: map[string]string{
+				core.MetaKeyOrigin:  target,
+				metaKeyGiteaID:      "1",
+				metaKeyGiteaOwner:   "owner",
+				metaKeyGiteaProject: "project",
+				metaKeyGiteaBaseURL: "https://elsewhere.invalid",
+			},
+			wantBugs: 2,
+		},
+		{
+			name: "different owner",
+			metadata: map[string]string{
+				core.MetaKeyOrigin:  target,
+				metaKeyGiteaID:      "1",
+				metaKeyGiteaOwner:   "other-owner",
+				metaKeyGiteaProject: "project",
+			},
+			wantBugs: 2,
+		},
+		{
+			name: "different project",
+			metadata: map[string]string{
+				core.MetaKeyOrigin:  target,
+				metaKeyGiteaID:      "1",
+				metaKeyGiteaOwner:   "owner",
+				metaKeyGiteaProject: "other-project",
+			},
+			wantBugs: 2,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			srv := (&giteatest.FakeAPI{
+				Owner:   "owner",
+				Project: "project",
+				Issues:  []*gitea.Issue{testIssue()},
+			}).NewServer(t)
+			gi, backend := setupImporter(t, srv.URL)
+
+			metadata := map[string]string{
+				core.MetaKeyOrigin:  tc.metadata[core.MetaKeyOrigin],
+				metaKeyGiteaID:      tc.metadata[metaKeyGiteaID],
+				metaKeyGiteaOwner:   tc.metadata[metaKeyGiteaOwner],
+				metaKeyGiteaProject: tc.metadata[metaKeyGiteaProject],
+				metaKeyGiteaBaseURL: srv.URL,
+			}
+			if baseURL, ok := tc.metadata[metaKeyGiteaBaseURL]; ok {
+				metadata[metaKeyGiteaBaseURL] = baseURL
+			}
+
+			author, err := backend.Identities().NewRaw(
+				"Existing User",
+				"existing@example.com",
+				"existing-user",
+				"",
+				nil,
+				map[string]string{metaKeyGiteaLogin: "existing-user"},
+			)
+			require.NoError(t, err)
+			_, _, err = backend.Bugs().NewRaw(
+				author,
+				time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC).Unix(),
+				"existing issue",
+				"existing body",
+				nil,
+				metadata,
+			)
+			require.NoError(t, err)
+
+			results := runImport(t, gi, backend)
+			require.Empty(t, collectErrors(results))
+			assert.Len(t, backend.Bugs().AllIds(), tc.wantBugs,
+				"matcher should only reuse the existing bug when all five metadata keys match")
+		})
+	}
+}
+
+// TestImportLabelCaseInsensitive pins the expected label matching policy for
+// the future label importer: upstream "Bug" should match local "bug".
+func TestImportLabelCaseInsensitive(t *testing.T) {
+	fa := &giteatest.FakeAPI{
+		Owner:   "owner",
+		Project: "project",
+		Issues:  []*gitea.Issue{testIssue()},
+	}
+	srv := fa.NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+	_ = runImport(t, gi, backend)
+
+	b := onlyBug(t, backend)
+	author := b.Snapshot().Author
+	_, _, err := b.ChangeLabelsRaw(author, time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC).Unix(), []string{"bug"}, nil, nil)
+	require.NoError(t, err)
+
+	fa.Labels = []*gitea.Label{{ID: 1, Name: "Bug"}}
+	_ = runImport(t, setupImporterOnExistingBackend(t, srv.URL, backend), backend)
+
+	assert.Equal(t, []common.Label{common.Label("bug")}, onlyBug(t, backend).Snapshot().Labels,
+		"label import should case-fold against existing local labels instead of adding Bug beside bug")
+}
+
+// TestImportTitleChangeViaTypedComment is skipped until the SDK exposes
+// Gitea's typed system-comment fields on gitea.Comment.
+func TestImportTitleChangeViaTypedComment(t *testing.T) {
+	t.Skip("gitea.dev/sdk@v1.1.0 Comment lacks Type/OldTitle/NewTitle fields; add this pin when the SDK is upgraded")
+}
+
+// TestImportStateChangeViaTypedComment is skipped until the SDK exposes
+// Gitea's typed system-comment fields on gitea.Comment.
+func TestImportStateChangeViaTypedComment(t *testing.T) {
+	t.Skip("gitea.dev/sdk@v1.1.0 Comment lacks Type fields for close/reopen system comments; add this pin when the SDK is upgraded")
+}
+
+// TestImportTitleUnsafeAfterCleanup pins that validation failures at the
+// bridge boundary are reported as ImportErrors that name the offending field.
+func TestImportTitleUnsafeAfterCleanup(t *testing.T) {
+	issue := testIssue()
+	issue.Title = "\x1b"
+	srv := (&giteatest.FakeAPI{
+		Owner: "owner", Project: "project",
+		Issues: []*gitea.Issue{issue},
+	}).NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+
+	var results []core.ImportResult
+	require.NotPanics(t, func() {
+		results = runImport(t, gi, backend)
+	})
+	errs := collectErrors(results)
+	require.NotEmpty(t, errs)
+	assert.Contains(t, errs[0].Error(), "title")
+	assert.Empty(t, backend.Bugs().AllIds(),
+		"invalid title import must not leave a half-created bug")
+}
+
+// TestImportBodyControlCharacters pins body cleanup for control characters
+// that are invalid in git-bug comments.
+func TestImportBodyControlCharacters(t *testing.T) {
+	issue := testIssue()
+	issue.Body = "a\x00b\x1fc\n\tok"
+	srv := (&giteatest.FakeAPI{
+		Owner: "owner", Project: "project",
+		Issues: []*gitea.Issue{issue},
+	}).NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+
+	results := runImport(t, gi, backend)
+	require.Empty(t, collectErrors(results))
+
+	snap := onlyBug(t, backend).Snapshot()
+	require.NotEmpty(t, snap.Comments)
+	assert.Equal(t, "abc\n\tok", snap.Comments[0].Message)
+}
+
+// TestImportVeryLongTitle pins that pathological title size is handled
+// deliberately: either a clean ImportError or a complete bug, never a panic
+// or half-created cache entry.
+func TestImportVeryLongTitle(t *testing.T) {
+	issue := testIssue()
+	issue.Title = strings.Repeat("t", 10*1024)
+	srv := (&giteatest.FakeAPI{
+		Owner: "owner", Project: "project",
+		Issues: []*gitea.Issue{issue},
+	}).NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+
+	var results []core.ImportResult
+	require.NotPanics(t, func() {
+		results = runImport(t, gi, backend)
+	})
+
+	errs := collectErrors(results)
+	if len(errs) > 0 {
+		assert.Empty(t, backend.Bugs().AllIds(),
+			"failed long-title import should not leave a half-created bug")
+		return
+	}
+	assert.Len(t, backend.Bugs().AllIds(), 1,
+		"successful long-title import should commit exactly one bug")
+}
+
+// TestImportSinceSentOnIssuesRequest verifies ImportAll forwards its since
+// argument to the issue listing request.
+func TestImportSinceSentOnIssuesRequest(t *testing.T) {
+	fa := &giteatest.FakeAPI{
+		Owner:   "owner",
+		Project: "project",
+		Issues:  []*gitea.Issue{testIssue()},
+	}
+	srv := fa.NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+
+	since := time.Date(2023, 6, 1, 12, 0, 0, 0, time.UTC)
+	_ = runImportSince(t, gi, backend, since)
+
+	require.NotEmpty(t, fa.IssueRequests)
+	got := fa.IssueRequests[0].URL.Query().Get("since")
+	parsed, err := time.Parse(time.RFC3339, got)
+	require.NoError(t, err)
+	assert.Equal(t, since, parsed.UTC())
+}
+
+// TestImportSinceSentOnCommentsRequest verifies ImportAll forwards since to
+// comment listing too.
+func TestImportSinceSentOnCommentsRequest(t *testing.T) {
+	fa := &giteatest.FakeAPI{
+		Owner:    "owner",
+		Project:  "project",
+		Issues:   []*gitea.Issue{testIssue()},
+		Comments: []*gitea.Comment{testComment(1, "comment")},
+	}
+	srv := fa.NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+
+	since := time.Date(2023, 6, 1, 12, 0, 0, 0, time.UTC)
+	_ = runImportSince(t, gi, backend, since)
+
+	require.NotEmpty(t, fa.CommentRequests)
+	got := fa.CommentRequests[0].URL.Query().Get("since")
+	parsed, err := time.Parse(time.RFC3339, got)
+	require.NoError(t, err)
+	assert.Equal(t, since, parsed.UTC())
+}
+
+// TestImportSinceSecondRunMovesForward pins both halves of incremental import:
+// the second cutoff is sent, and unchanged already-imported items do not add
+// operations.
+func TestImportSinceSecondRunMovesForward(t *testing.T) {
+	fa := &giteatest.FakeAPI{
+		Owner:   "owner",
+		Project: "project",
+		Issues:  []*gitea.Issue{testIssue()},
+	}
+	srv := fa.NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+
+	_ = runImport(t, gi, backend)
+	b := onlyBug(t, backend)
+	opsBefore := len(b.Snapshot().Operations)
+
+	since := time.Date(2023, 6, 1, 12, 0, 0, 0, time.UTC)
+	_ = runImportSince(t, setupImporterOnExistingBackend(t, srv.URL, backend), backend, since)
+
+	got := fa.IssueRequests[len(fa.IssueRequests)-1].URL.Query().Get("since")
+	parsed, err := time.Parse(time.RFC3339, got)
+	require.NoError(t, err)
+	assert.Equal(t, since, parsed.UTC())
+	assert.Equal(t, opsBefore, len(onlyBug(t, backend).Snapshot().Operations),
+		"incremental re-import of unchanged items should not add operations")
+}
+
+// TestImportErrorCarriesBugID verifies errors after bug creation identify the
+// bug they occurred on, so progress output can point to the affected entity.
+func TestImportErrorCarriesBugID(t *testing.T) {
+	comment := testComment(1, "bad author")
+	comment.Poster = &gitea.User{UserName: "flaky-commenter"}
+	srv := (&giteatest.FakeAPI{
+		Owner:        "owner",
+		Project:      "project",
+		Issues:       []*gitea.Issue{testIssue()},
+		Comments:     []*gitea.Comment{comment},
+		UserErrLogin: "flaky-commenter",
+	}).NewServer(t)
+
+	gi, backend := setupImporter(t, srv.URL)
+	results := runImport(t, gi, backend)
+
+	b := onlyBug(t, backend)
+	var errorResult *core.ImportResult
+	for i := range results {
+		if results[i].Err != nil {
+			errorResult = &results[i]
+			break
+		}
+	}
+	require.NotNil(t, errorResult, "comment author lookup failure should emit an ImportError")
+	assert.Equal(t, b.Id(), errorResult.EntityId,
+		"ImportError after bug creation should carry the affected bug id")
+}
+
+// TestImportSkipsUserAPIWhenCached pins the metadata-keyed identity cache
+// lookup before user API calls.
+func TestImportSkipsUserAPIWhenCached(t *testing.T) {
+	user := &gitea.User{UserName: "alice", FullName: "Alice", Email: "alice@example.com"}
+	fa := &giteatest.FakeAPI{
+		Owner:   "owner",
+		Project: "project",
+		Issues:  []*gitea.Issue{{ID: 1, Index: 1, Title: "first", Body: "b", Poster: user, Created: time.Now()}},
+	}
+	srv := fa.NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+	_ = runImport(t, gi, backend)
+
+	firstCount := len(fa.UserRequests)
+	require.Equal(t, 1, firstCount)
+
+	fa.Issues = []*gitea.Issue{{ID: 2, Index: 2, Title: "second", Body: "b", Poster: user, Created: time.Now()}}
+	_ = runImport(t, setupImporterOnExistingBackend(t, srv.URL, backend), backend)
+
+	assert.Equal(t, firstCount, len(fa.UserRequests),
+		"cached identity for alice should avoid another /users/alice request")
 }
 
 // TestImportNilPoster documents finding #1: comment.Poster is a *User pointer and
@@ -375,7 +899,7 @@ func TestImportNegativeDedupAcrossRepos(t *testing.T) {
 	mkIssue := func(title string) *gitea.Issue {
 		return &gitea.Issue{
 			ID: 1, Index: 1, Title: title, Body: "b",
-			Poster: &gitea.User{UserName: "testuser", FullName: "Test User", Email: "u@example.com"},
+			Poster:  &gitea.User{UserName: "testuser", FullName: "Test User", Email: "u@example.com"},
 			Created: ts,
 		}
 	}
