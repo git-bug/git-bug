@@ -573,6 +573,7 @@ func (fa *FakeAPI) handleIssueTimeline(w http.ResponseWriter, r *http.Request, i
 		for _, label := range fa.labelsFor(idx) {
 			events = append(events, &gitea.TimelineComment{
 				Type:   "label",
+				Body:   "1", // Forgejo: "1" = added, "" = removed
 				Label:  []*gitea.Label{label},
 				Poster: poster,
 			})

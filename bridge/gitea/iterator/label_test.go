@@ -22,7 +22,7 @@ func TestLabelIteratorErrorOnMissingTotalCountHeader(t *testing.T) {
 			Poster: &gitea.User{UserName: "u"}, Created: ts,
 		}},
 		TimelineByIssue: map[int64][]*gitea.TimelineComment{
-			1: {{ID: 1, Type: "label", Created: ts, Label: []*gitea.Label{{ID: 1, Name: "bug"}}}},
+			1: {{ID: 1, Type: "label", Body: "1", Created: ts, Label: []*gitea.Label{{ID: 1, Name: "bug"}}}},
 		},
 		TimelineOmitTotalCount: true,
 	}
@@ -84,8 +84,8 @@ func TestLabelIteratorRespectsSince(t *testing.T) {
 		// Timeline events with timestamps (what the iterator should use).
 		TimelineByIssue: map[int64][]*gitea.TimelineComment{
 			1: {
-				{ID: 1, Type: "label", Created: before, Label: []*gitea.Label{{ID: 1, Name: "old-label"}}},
-				{ID: 2, Type: "label", Created: after, Label: []*gitea.Label{{ID: 2, Name: "new-label"}}},
+				{ID: 1, Type: "label", Body: "1", Created: before, Label: []*gitea.Label{{ID: 1, Name: "old-label"}}},
+				{ID: 2, Type: "label", Body: "1", Created: after, Label: []*gitea.Label{{ID: 2, Name: "new-label"}}},
 			},
 		},
 	}
@@ -112,7 +112,7 @@ func TestLabelIteratorOneRequestPerIssue(t *testing.T) {
 			{ID: 2, Index: 2, Title: "second", Poster: &gitea.User{UserName: "u"}, Created: ts},
 		},
 		TimelineByIssue: map[int64][]*gitea.TimelineComment{
-			1: {{ID: 1, Type: "label", Created: ts, Label: []*gitea.Label{{ID: 1, Name: "bug"}}}},
+			1: {{ID: 1, Type: "label", Body: "1", Created: ts, Label: []*gitea.Label{{ID: 1, Name: "bug"}}}},
 			2: {{ID: 2, Type: "label", Created: ts, Label: []*gitea.Label{{ID: 2, Name: "enhancement"}}}},
 		},
 	}
@@ -149,7 +149,7 @@ func TestLabelIteratorSkipsNonLabelEvents(t *testing.T) {
 				{ID: 1, Type: "comment", Created: ts},
 				{ID: 2, Type: "comment", Created: ts},
 				// Page 2: the label event
-				{ID: 3, Type: "label", Created: ts, Label: []*gitea.Label{{ID: 1, Name: "bug"}}},
+				{ID: 3, Type: "label", Body: "1", Created: ts, Label: []*gitea.Label{{ID: 1, Name: "bug"}}},
 			},
 		},
 	}
@@ -168,6 +168,36 @@ func TestLabelIteratorSkipsNonLabelEvents(t *testing.T) {
 	assert.Equal(t, []string{"bug"}, names, "label event on page 2 should not be missed when page 1 has only non-label events")
 }
 
+func TestLabelIteratorDistinguishesAddFromRemove(t *testing.T) {
+	ts := time.Now()
+	fa := &giteatest.FakeAPI{
+		Owner:   "owner",
+		Project: "repo",
+		Issues: []*gitea.Issue{{
+			ID: 1, Index: 1, Title: "t",
+			Poster: &gitea.User{UserName: "u"}, Created: ts,
+		}},
+		TimelineByIssue: map[int64][]*gitea.TimelineComment{
+			1: {
+				// Forgejo: Body="1" means added, Body="" means removed; type is "label" for both.
+				{ID: 1, Type: "label", Body: "1", Created: ts, Label: []*gitea.Label{{ID: 1, Name: "bug"}}},
+				{ID: 2, Type: "label", Body: "", Created: ts, Label: []*gitea.Label{{ID: 1, Name: "bug"}}},
+			},
+		},
+	}
+	srv := fa.NewServer(t)
+
+	iter := NewIterator(context.Background(), newTestClient(t, srv.URL), 10, fa.Owner, fa.Project, 5*time.Second, time.Time{})
+	require.True(t, iter.NextIssue())
+
+	require.True(t, iter.NextLabel())
+	assert.Equal(t, LabelAdded, iter.LabelValue().Kind, "Body=1 should be LabelAdded")
+	require.True(t, iter.NextLabel())
+	assert.Equal(t, LabelRemoved, iter.LabelValue().Kind, "Body=empty should be LabelRemoved")
+	assert.False(t, iter.NextLabel())
+	require.NoError(t, iter.Error())
+}
+
 func TestLabelIteratorReturnsLabels(t *testing.T) {
 	ts := time.Now()
 	fa := &giteatest.FakeAPI{
@@ -179,8 +209,8 @@ func TestLabelIteratorReturnsLabels(t *testing.T) {
 		}},
 		TimelineByIssue: map[int64][]*gitea.TimelineComment{
 			1: {
-				{ID: 1, Type: "label", Created: ts, Label: []*gitea.Label{{ID: 1, Name: "bug"}}},
-				{ID: 2, Type: "label", Created: ts, Label: []*gitea.Label{{ID: 2, Name: "enhancement"}}},
+				{ID: 1, Type: "label", Body: "1", Created: ts, Label: []*gitea.Label{{ID: 1, Name: "bug"}}},
+				{ID: 2, Type: "label", Body: "1", Created: ts, Label: []*gitea.Label{{ID: 2, Name: "enhancement"}}},
 			},
 		},
 	}
