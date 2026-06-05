@@ -15,6 +15,7 @@ import (
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
 	"github.com/git-bug/git-bug/util/text"
+	"github.com/pkg/errors"
 )
 
 // implements the Importer interface
@@ -85,28 +86,16 @@ func (gi *giteaImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, s
 				return
 			}
 
-			// Loop over all comments
-			// TODO: make this a goroutine so we can import issues and comments in parallel?
+			// Loop over all events
+			// TODO: make this a goroutine so we can import issues and events in parallel?
 			// The Github/Gitlab backends already do this. But maybe that's premature
 			// optimization.
-			for gi.iterator.NextComment() {
-				if err = gi.iterator.Error(); err != nil {
-					gi.reportError(ctx, err, "fetch comments")
-					return
-				}
-				if err = gi.importComment(ctx, repo, b, gi.iterator.CommentValue()); err != nil {
-					gi.reportError(ctx, err, "comment creation")
-					return;
-				}
-			}
-
-			// Loop over all label events
-			for gi.iterator.NextLabel() {
+			for gi.iterator.NextEvent() {
 				if err = gi.iterator.Error(); err != nil {
 					gi.reportError(ctx, err, "fetch labels")
 					return
 				}
-				if err = gi.importLabel(ctx, repo, b, gi.iterator.LabelValue()); err != nil {
+				if err = gi.importEvent(ctx, repo, b, gi.iterator.EventValue()); err != nil {
 					gi.reportError(ctx, err, "update label")
 					return
 				}
@@ -144,10 +133,26 @@ func (gi *giteaImporter) sendImportResult(ctx context.Context, result core.Impor
 }
 
 func (gi *giteaImporter) updateIssue(ctx context.Context, repo *cache.RepoCache, bug *cache.BugCache, issue *gitea.Issue) error {
+	switch issue.State {
+	case gitea.StateOpen:
+		// b.OpenRaw()
+	case gitea.StateClosed:
+		// b.CloseRaw()
+	}
 	return nil
 }
 
-func (gi *giteaImporter) importComment(ctx context.Context, repo *cache.RepoCache, bug *cache.BugCache, comment *gitea.Comment) error {
+func (gi *giteaImporter) importEvent(ctx context.Context, repo *cache.RepoCache, bug *cache.BugCache, event iterator.TimelineEvent) error {
+	switch e := event.(type) {
+	case *iterator.LabelEvent:
+		return gi.importLabel(ctx, repo, bug, e)
+	case *iterator.CommentEvent:
+		return gi.importComment(ctx, repo, bug, e)
+	}
+	return errors.New("bruh wat")
+}
+
+func (gi *giteaImporter) importComment(ctx context.Context, repo *cache.RepoCache, bug *cache.BugCache, comment *iterator.CommentEvent) error {
 	commentID := strconv.FormatInt(comment.ID, 10)
 
 	// Check if we've already imported this comment.

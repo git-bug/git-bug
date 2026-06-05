@@ -21,14 +21,8 @@ type Iterator struct {
 	// sticky error
 	err error
 
-	// issues iterator
 	issue *pageIterator[gitea.Issue]
-
-	// comments iterator
-	comment *pageIterator[gitea.Comment]
-
-	// labels iterator
-	label *pageIterator[LabelEvent]
+	timeline *pageIterator[TimelineEvent]
 }
 
 type config struct {
@@ -63,12 +57,28 @@ type pageIterator[T any] struct {
 	fetch fetchPage[T]
 }
 
-type LabelEventKind int
+// Currently not used: milestone, assignees, ref_issue
+type TimelineEvent interface{ sealed() }
 
-const (
-    LabelAdded LabelEventKind = iota
-    LabelRemoved
-)
+type CommentEvent struct {
+	ID int64;
+	Body string;
+	Poster *gitea.User;
+	Created, Updated time.Time;
+}
+func (*CommentEvent) sealed () {}
+
+type RenameEvent struct {
+}
+func (*RenameEvent) sealed () {}
+
+type ReopenEvent struct {
+}
+func (*ReopenEvent) sealed () {}
+
+type CloseEvent struct {
+}
+func (*CloseEvent) sealed () {}
 
 type LabelEvent struct {
 	Label *gitea.Label;
@@ -77,6 +87,14 @@ type LabelEvent struct {
 	ID int;
 	Kind LabelEventKind;
 }
+func (*LabelEvent) sealed () {}
+
+type LabelEventKind int
+
+const (
+    LabelAdded LabelEventKind = iota
+    LabelRemoved
+)
 
 func NewIterator(ctx context.Context, client *gitea.Client, capacity int, owner, project string, timeout time.Duration, since time.Time) *Iterator {
 	return &Iterator{
@@ -89,9 +107,8 @@ func NewIterator(ctx context.Context, client *gitea.Client, capacity int, owner,
 			project:  project,
 			capacity: capacity,
 		},
-		comment: newPageIterator[gitea.Comment](fetchComments),
 		issue: newPageIterator[gitea.Issue](fetchIssues),
-		label: newPageIterator[LabelEvent](fetchLabels),
+		timeline: newPageIterator[TimelineEvent](fetchTimeline),
 	}
 }
 
@@ -113,8 +130,7 @@ func (i *Iterator) NextIssue() bool {
 	}
 
 	if more {
-		i.comment.Reset()
-		i.label.Reset()
+		i.timeline.Reset()
 	}
 
 	return more
@@ -125,28 +141,16 @@ func (i *Iterator) IssueValue() *gitea.Issue {
 	return i.issue.Value()
 }
 
-// Returns `nil` if there are no more comments on the current issue.
-// Panics if you haven't called NextIssue at least once.
-// Call `Iterator.Error()` to determine if there was an error or just no more comments.
-func (i *Iterator) NextComment() bool {
-	return i.advance(i.comment, i.IssueValue())
-}
-
-// Panics if you haven't called NextIssue at least once.
-func (i *Iterator) CommentValue() *gitea.Comment {
-	return i.comment.Value()
-}
-
 // Returns `nil` if there are no more labels on the current issue.
 // Panics if you haven't called NextIssue at least once.
 // Call `Iterator.Error()` to determine if there was an error or just no more comments.
-func (i *Iterator) NextLabel() bool {
-	return i.advance(i.label, i.IssueValue())
+func (i *Iterator) NextEvent() bool {
+	return i.advance(i.timeline, i.IssueValue())
 }
 
 // Panics if you haven't called NextIssue at least once.
-func (i *Iterator) LabelValue() *LabelEvent {
-	return i.label.Value()
+func (i *Iterator) EventValue() TimelineEvent {
+	return *i.timeline.Value()
 }
 
 type subIterator interface {
@@ -255,8 +259,8 @@ func fetchIssues(ctx context.Context, conf config, _ *gitea.Issue, page int) ([]
 	return issues, !lastPage, err
 }
 
-func fetchComments(ctx context.Context, conf config, issue *gitea.Issue, page int) ([]*gitea.Comment, bool, error) {
-	comments, resp, err := conf.gc.Issues.ListIssueComments(
+func fetchTimeline(ctx context.Context, conf config, issue *gitea.Issue, page int) ([]*TimelineEvent, bool, error) {
+	rawEvents, resp, err := conf.gc.Issues.ListIssueTimeline(
 		ctx,
 		conf.owner,
 		conf.project,
@@ -272,46 +276,45 @@ func fetchComments(ctx context.Context, conf config, issue *gitea.Issue, page in
 	if err != nil {
 		return nil, true, err
 	}
-	lastPage, err := reachedTotalCount(resp, conf, page, len(comments))
-	return comments, !lastPage, err
-}
-
-func fetchLabels(ctx context.Context, conf config, issue *gitea.Issue, page int) ([]*LabelEvent, bool, error) {
-	events, resp, err := conf.gc.Issues.ListIssueTimeline(
-		ctx,
-		conf.owner,
-		conf.project,
-		issue.Index,
-		gitea.ListIssueCommentOptions{
-			ListOptions: gitea.ListOptions{
-				Page:     page,
-				PageSize: conf.capacity,
-			},
-			Since: conf.since,
-		},
-	)
-	if err != nil {
-		return nil, true, err
-	}
-	lastPage, err := reachedTotalCount(resp, conf, page, len(events))
+	lastPage, err := reachedTotalCount(resp, conf, page, len(rawEvents))
 	if err != nil {
 		return nil, true, err
 	}
 
-	labels := make([]*LabelEvent, 0)
-	for _, event := range events {
-		var kind LabelEventKind
-		switch event.Type {
+	events := make([]*TimelineEvent, 0, len(rawEvents))
+	for _, rawEvent := range rawEvents {
+		var event TimelineEvent
+		switch rawEvent.Type {
+			case "comment":
+				event = &CommentEvent{
+					Body: rawEvent.Body,
+					// FIXME: Forgejo's API doesn't expose whether someone besides the author
+					// edited this comment.
+					Poster: rawEvent.Poster,
+					// We need both of those to be able to distinguish new comments from
+					// edits. We also have a policy decision to make: what to do if we see
+					// an edit but never the original. We leave that up to the import
+					// module.
+					Created: rawEvent.Created,
+					Updated: rawEvent.Updated,
+				}
 			case "label":
-				kind = LabelAdded
-			case "unlabel":
-				kind = LabelRemoved
+				var kind LabelEventKind
+				if rawEvent.Body == "1" {
+					kind = LabelAdded
+				} else {
+					kind = LabelRemoved
+				}
+				event = &LabelEvent{Kind: kind, Label: rawEvent.Label, Poster: rawEvent.Poster}
+			case "close":
+			case "reopen":
+			case "rename":
 			default:
 				continue
 		}
-		labels = append(labels, &LabelEvent{Kind: kind, Label: event.Label, Poster: event.Poster})
+		events = append(events, &event)
 	}
-	return labels, !lastPage, err
+	return events, !lastPage, err
 }
 
 // Returns whether this is the last page.

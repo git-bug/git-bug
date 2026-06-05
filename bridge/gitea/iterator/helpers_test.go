@@ -13,3 +13,17 @@ func newTestClient(t *testing.T, serverURL string) *gitea.Client {
 	require.NoError(t, err)
 	return client
 }
+
+// nextLabel advances iter to the next LabelEvent, skipping other event types.
+func nextLabel(iter *Iterator) bool {
+	for iter.NextEvent() {
+		if _, ok := iter.EventValue().(*LabelEvent); ok {
+			return true
+		}
+	}
+	return false
+}
+
+func labelValue(iter *Iterator) *LabelEvent {
+	return iter.EventValue().(*LabelEvent)
+}
