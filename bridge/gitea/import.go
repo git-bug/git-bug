@@ -94,10 +94,13 @@ func (gi *giteaImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, s
 			// Loop over all label events
 			for gi.iterator.NextLabel() {
 				if err = gi.iterator.Error(); err != nil {
-					gi.reportError(ctx, err, "comment creation")
+					gi.reportError(ctx, err, "fetch labels")
 					return
 				}
-				// gi.importLabel(ctx, repo, b, gi.iterator.CommentValue())
+				if err = gi.importLabel(ctx, repo, b, gi.iterator.LabelValue()); err != nil {
+					gi.reportError(ctx, err, "update label")
+					return
+				}
 			}
 
 			// Update issue title and description
@@ -159,6 +162,33 @@ func (gi *giteaImporter) importComment(ctx context.Context, repo *cache.RepoCach
 		make([]repository.Hash, 0),
 		metadata,
 	)
+}
+
+func (gi *giteaImporter) importLabel(ctx context.Context, repo *cache.RepoCache, bug *cache.BugCache, event *iterator.LabelEvent) error {
+	labelID := strconv.FormatInt(event.Label.ID, 10)
+	author, err := gi.ensurePerson(ctx, repo, event.Poster)
+	if err != nil {
+		return err
+	}
+
+	var added, removed []string
+	switch event.Kind {
+	case iterator.LabelAdded:
+		added = []string{event.Label.Name}
+	case iterator.LabelRemoved:
+		removed = []string{event.Label.Name}
+	}
+
+	_, err = bug.ForceChangeLabelsRaw(
+		author,
+		event.UpdatedAt.Unix(),
+		added,
+		removed,
+		map[string]string{
+			metaKeyGiteaID: labelID,
+		},
+	)
+	return err
 }
 
 func (gi *giteaImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache, issue *gitea.Issue) (*cache.BugCache, error) {

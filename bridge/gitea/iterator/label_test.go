@@ -96,7 +96,7 @@ func TestLabelIteratorRespectsSince(t *testing.T) {
 
 	var names []string
 	for iter.NextLabel() {
-		names = append(names, iter.LabelValue().label.Name)
+		names = append(names, iter.LabelValue().Label.Name)
 	}
 	require.NoError(t, iter.Error())
 	assert.Equal(t, []string{"new-label"}, names, "label events before since should be excluded")
@@ -160,7 +160,7 @@ func TestLabelIteratorSkipsNonLabelEvents(t *testing.T) {
 
 	var names []string
 	for iter.NextLabel() {
-		names = append(names, iter.LabelValue().label.Name)
+		names = append(names, iter.LabelValue().Label.Name)
 	}
 	require.NoError(t, iter.Error())
 	require.GreaterOrEqual(t, len(fa.TimelineRequests), 2,
@@ -191,7 +191,7 @@ func TestLabelIteratorReturnsLabels(t *testing.T) {
 
 	var names []string
 	for iter.NextLabel() {
-		names = append(names, iter.LabelValue().label.Name)
+		names = append(names, iter.LabelValue().Label.Name)
 	}
 	require.NoError(t, iter.Error())
 	assert.Equal(t, []string{"bug", "enhancement"}, names)
