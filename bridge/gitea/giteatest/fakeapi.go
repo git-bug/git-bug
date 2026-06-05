@@ -82,6 +82,8 @@ func writeJSON(w http.ResponseWriter, v any) {
 	_ = json.NewEncoder(w).Encode(v)
 }
 
+
+
 func parsePagination(r *http.Request) (page, limit int) {
 	page, limit = 1, 10
 	if p := r.URL.Query().Get("page"); p != "" {
@@ -574,7 +576,7 @@ func (fa *FakeAPI) handleIssueTimeline(w http.ResponseWriter, r *http.Request, i
 			events = append(events, &gitea.TimelineComment{
 				Type:   "label",
 				Body:   "1", // Forgejo: "1" = added, "" = removed
-				Label:  []*gitea.Label{label},
+				Label:  label,
 				Poster: poster,
 			})
 		}

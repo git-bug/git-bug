@@ -309,9 +309,7 @@ func fetchLabels(ctx context.Context, conf config, issue *gitea.Issue, page int)
 			default:
 				continue
 		}
-		for _, label := range event.Label {
-			labels = append(labels, &LabelEvent{Kind: kind, Label: label, Poster: event.Poster})
-		}
+		labels = append(labels, &LabelEvent{Kind: kind, Label: event.Label, Poster: event.Poster})
 	}
 	return labels, !lastPage, err
 }
