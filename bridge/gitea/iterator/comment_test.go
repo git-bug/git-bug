@@ -12,6 +12,28 @@ import (
 	"github.com/git-bug/git-bug/bridge/gitea/giteatest"
 )
 
+func TestCommentIteratorReturnsAPIError(t *testing.T) {
+	ts := time.Now()
+	fa := &giteatest.FakeAPI{
+		Owner:          "owner",
+		Project:        "repo",
+		CommentErrPage: 1,
+		Issues: []*gitea.Issue{{
+			ID: 1, Index: 1, Title: "t",
+			Poster: &gitea.User{UserName: "u"}, Created: ts,
+		}},
+	}
+	srv := fa.NewServer(t)
+
+	iter := NewIterator(context.Background(), newTestClient(t, srv.URL), 10, fa.Owner, fa.Project, 5*time.Second, time.Time{})
+	require.True(t, iter.NextIssue())
+
+	require.NotPanics(t, func() {
+		assert.False(t, iter.NextComment())
+	})
+	assert.Error(t, iter.Error())
+}
+
 func TestCommentIteratorPaginates(t *testing.T) {
 	const capacity = 2
 	ts := time.Now()
@@ -110,7 +132,7 @@ func TestCommentIteratorPassesSince(t *testing.T) {
 		Project: "repo",
 		Issues: []*gitea.Issue{{
 			ID: 1, Index: 1, Title: "t",
-			Poster: &gitea.User{UserName: "u"}, Created: ts,
+			Poster: &gitea.User{UserName: "u"}, Created: ts, Updated: ts,
 		}},
 	}
 	srv := fa.NewServer(t)
