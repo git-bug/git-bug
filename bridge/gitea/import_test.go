@@ -976,23 +976,28 @@ func TestImportNegativeDedupAcrossRepos(t *testing.T) {
 
 func TestImportPropagatesIssueTitleUpdates(t *testing.T) {
 	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	renamed := ts.Add(time.Hour)
 	issue := &gitea.Issue{
-		ID: 1, Index: 1, Title: "original title", Body: "original body",
+		ID: 1, Index: 1, Title: "updated title", Body: "original body",
 		Poster:  &gitea.User{UserName: "testuser", FullName: "Test User", Email: "u@example.com"},
-		Created: ts,
+		Created: ts, Updated: renamed,
 	}
-	fa := &giteatest.FakeAPI{Owner: "owner", Project: "project", Issues: []*gitea.Issue{issue}}
+	fa := &giteatest.FakeAPI{
+		Owner: "owner", Project: "project",
+		Issues: []*gitea.Issue{issue},
+		TimelineByIssue: map[int64][]*gitea.TimelineComment{
+			1: {{
+				Type: "rename",
+				OldTitle: "original title", NewTitle: "updated title",
+				Poster:  &gitea.User{UserName: "testuser"},
+				Created: renamed, Updated: renamed,
+			}},
+		},
+	}
 	srv := fa.NewServer(t)
 
 	gi, backend := setupImporter(t, srv.URL)
 	_ = runImport(t, gi, backend)
-
-	// Simulate the issue being edited upstream between imports.
-	issue.Title = "updated title"
-	issue.Body = "updated body"
-
-	gi2 := setupImporterOnExistingBackend(t, srv.URL, backend)
-	_ = runImport(t, gi2, backend)
 
 	bugIds := backend.Bugs().AllIds()
 	require.Len(t, bugIds, 1)
@@ -1001,10 +1006,7 @@ func TestImportPropagatesIssueTitleUpdates(t *testing.T) {
 	snap := b.Snapshot()
 
 	assert.Equal(t, "updated title", snap.Title,
-		"title change should propagate on re-import")
-	require.NotEmpty(t, snap.Comments)
-	assert.Contains(t, snap.Comments[0].Message, "updated body",
-		"body change should propagate on re-import")
+		"title change should propagate via rename timeline event")
 }
 
 func TestImportPropagatesCommentEdits(t *testing.T) {

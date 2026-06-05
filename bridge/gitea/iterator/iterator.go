@@ -69,6 +69,9 @@ type CommentEvent struct {
 func (*CommentEvent) sealed () {}
 
 type RenameEvent struct {
+	NewName string;
+	Poster *gitea.User;
+	Updated time.Time;
 }
 func (*RenameEvent) sealed () {}
 
@@ -309,6 +312,7 @@ func fetchTimeline(ctx context.Context, conf config, issue *gitea.Issue, page in
 			case "close":
 			case "reopen":
 			case "rename":
+				event = &RenameEvent{NewName: rawEvent.Body, Poster: rawEvent.Poster}
 			default:
 				continue
 		}
