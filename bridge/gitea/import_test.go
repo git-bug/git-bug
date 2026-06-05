@@ -1092,6 +1092,32 @@ func TestImportPropagatesStatusChanges(t *testing.T) {
 		"upstream state=closed should set local bug status to closed on re-import")
 }
 
+func TestImportReopenPropagates(t *testing.T) {
+	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	issue := &gitea.Issue{
+		ID: 1, Index: 1, Title: "t", Body: "b",
+		State:   gitea.StateOpen,
+		Poster:  &gitea.User{UserName: "testuser", FullName: "Test User", Email: "u@example.com"},
+		Created: ts,
+	}
+	fa := &giteatest.FakeAPI{Owner: "owner", Project: "project", Issues: []*gitea.Issue{issue}}
+	srv := fa.NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+	_ = runImport(t, gi, backend)
+
+	issue.State = gitea.StateClosed
+	issue.Closed = &ts
+	_ = runImport(t, setupImporterOnExistingBackend(t, srv.URL, backend), backend)
+	require.Equal(t, common.ClosedStatus, onlyBug(t, backend).Snapshot().Status,
+		"prerequisite: upstream close must be applied before testing reopen")
+
+	issue.State = gitea.StateOpen
+	issue.Closed = nil
+	_ = runImport(t, setupImporterOnExistingBackend(t, srv.URL, backend), backend)
+	assert.Equal(t, common.OpenStatus, onlyBug(t, backend).Snapshot().Status,
+		"upstream reopen should set local bug status back to open")
+}
+
 func TestImportLabels(t *testing.T) {
 	fa := &giteatest.FakeAPI{
 		Owner:   "owner",
@@ -1116,6 +1142,137 @@ func TestImportLabels(t *testing.T) {
 	}
 	assert.ElementsMatch(t, []string{"bug", "good-first-issue"}, names,
 		"issue labels should be imported as bug labels (TODO at import.go:104 unimplemented)")
+}
+
+func TestImportLabelRemovalPropagates(t *testing.T) {
+	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	user := &gitea.User{UserName: "testuser", FullName: "Test User", Email: "u@example.com"}
+	fa := &giteatest.FakeAPI{
+		Owner:   "owner",
+		Project: "project",
+		Issues:  []*gitea.Issue{testIssue()},
+		// Forgejo: Body="1" added, Body="" removed; both use type "label".
+		TimelineByIssue: map[int64][]*gitea.TimelineComment{
+			1: {
+				{ID: 1, Type: "label", Body: "1", Created: ts, Label: []*gitea.Label{{ID: 1, Name: "bug"}}, Poster: user},
+				{ID: 2, Type: "label", Body: "", Created: ts.Add(time.Hour), Label: []*gitea.Label{{ID: 1, Name: "bug"}}, Poster: user},
+			},
+		},
+	}
+	srv := fa.NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+	_ = runImport(t, gi, backend)
+
+	assert.Empty(t, onlyBug(t, backend).Snapshot().Labels,
+		"label removed upstream should not appear on imported bug")
+}
+
+func TestImportIdempotentLabels(t *testing.T) {
+	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	user := &gitea.User{UserName: "testuser", FullName: "Test User", Email: "u@example.com"}
+	fa := &giteatest.FakeAPI{
+		Owner:   "owner",
+		Project: "project",
+		Issues:  []*gitea.Issue{testIssue()},
+		TimelineByIssue: map[int64][]*gitea.TimelineComment{
+			1: {{ID: 1, Type: "label", Body: "1", Created: ts, Label: []*gitea.Label{{ID: 1, Name: "bug"}}, Poster: user}},
+		},
+	}
+	srv := fa.NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+	_ = runImport(t, gi, backend)
+	_ = runImport(t, setupImporterOnExistingBackend(t, srv.URL, backend), backend)
+
+	labelOps := 0
+	for _, op := range onlyBug(t, backend).Snapshot().Operations {
+		if _, ok := op.(*bugpkg.LabelChangeOperation); ok {
+			labelOps++
+		}
+	}
+	assert.Equal(t, 1, labelOps, "re-importing the same label event should not duplicate LabelChangeOperations")
+}
+
+func TestImportLabelAttributedToLabelPoster(t *testing.T) {
+	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	issueAuthor := &gitea.User{UserName: "alice", FullName: "Alice", Email: "alice@example.com"}
+	labeler := &gitea.User{UserName: "bob", FullName: "Bob", Email: "bob@example.com"}
+	issue := &gitea.Issue{
+		ID: 1, Index: 1, Title: "t", Body: "b",
+		Poster: issueAuthor, Created: ts,
+	}
+	fa := &giteatest.FakeAPI{
+		Owner:   "owner",
+		Project: "project",
+		Issues:  []*gitea.Issue{issue},
+		TimelineByIssue: map[int64][]*gitea.TimelineComment{
+			1: {{ID: 1, Type: "label", Body: "1", Created: ts, Label: []*gitea.Label{{ID: 1, Name: "bug"}}, Poster: labeler}},
+		},
+	}
+	srv := fa.NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+	_ = runImport(t, gi, backend)
+
+	for _, op := range onlyBug(t, backend).Snapshot().Operations {
+		if lc, ok := op.(*bugpkg.LabelChangeOperation); ok {
+			assert.Equal(t, "bob", lc.Author().Login(),
+				"LabelChangeOperation should be attributed to the label event poster, not the issue author")
+			return
+		}
+	}
+	t.Error("no LabelChangeOperation found")
+}
+
+func TestImportSinceSentOnTimelineRequest(t *testing.T) {
+	since := time.Date(2023, 6, 1, 12, 0, 0, 0, time.UTC)
+	issue := testIssue()
+	issue.Updated = since.Add(time.Hour) // must be after since or the issue is filtered out
+	fa := &giteatest.FakeAPI{
+		Owner:   "owner",
+		Project: "project",
+		Issues:  []*gitea.Issue{issue},
+	}
+	srv := fa.NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+
+	_ = runImportSince(t, gi, backend, since)
+
+	require.NotEmpty(t, fa.TimelineRequests)
+	got := fa.TimelineRequests[0].URL.Query().Get("since")
+	parsed, err := time.Parse(time.RFC3339, got)
+	require.NoError(t, err)
+	assert.Equal(t, since, parsed.UTC())
+}
+
+func TestImportStatusClosedAttributedToCloser(t *testing.T) {
+	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	author := &gitea.User{UserName: "alice", FullName: "Alice", Email: "alice@example.com"}
+	closer := &gitea.User{UserName: "bob", FullName: "Bob", Email: "bob@example.com"}
+	issue := &gitea.Issue{
+		ID: 1, Index: 1, Title: "t", Body: "b",
+		State: gitea.StateClosed, Poster: author,
+		Created: ts, Closed: &ts,
+	}
+	fa := &giteatest.FakeAPI{
+		Owner:   "owner",
+		Project: "project",
+		Issues:  []*gitea.Issue{issue},
+		TimelineByIssue: map[int64][]*gitea.TimelineComment{
+			1: {{ID: 1, Type: "close", Created: ts, Poster: closer}},
+		},
+	}
+	srv := fa.NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+	_ = runImport(t, gi, backend)
+
+	b := onlyBug(t, backend)
+	for _, op := range b.Snapshot().Operations {
+		if setStatus, ok := op.(*bugpkg.SetStatusOperation); ok {
+			assert.Equal(t, "bob", setStatus.Author().Login(),
+				"SetStatus op should be attributed to the closer, not the issue author")
+			return
+		}
+	}
+	t.Error("no SetStatusOperation found — status import is not yet implemented")
 }
 
 func TestImportCommentAttachments(t *testing.T) {
