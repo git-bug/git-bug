@@ -15,9 +15,9 @@ import (
 func TestCommentIteratorReturnsAPIError(t *testing.T) {
 	ts := time.Now()
 	fa := &giteatest.FakeAPI{
-		Owner:          "owner",
-		Project:        "repo",
-		CommentErrPage: 1,
+		Owner:           "owner",
+		Project:         "repo",
+		TimelineErrPage: 1,
 		Issues: []*gitea.Issue{{
 			ID: 1, Index: 1, Title: "t",
 			Poster: &gitea.User{UserName: "u"}, Created: ts,
@@ -29,7 +29,7 @@ func TestCommentIteratorReturnsAPIError(t *testing.T) {
 	require.True(t, iter.NextIssue())
 
 	require.NotPanics(t, func() {
-		assert.False(t, iter.NextComment())
+		assert.False(t, iter.NextEvent())
 	})
 	assert.Error(t, iter.Error())
 }
@@ -45,11 +45,13 @@ func TestCommentIteratorPaginates(t *testing.T) {
 			Poster:  &gitea.User{UserName: "u"},
 			Created: ts,
 		}},
-		Comments: []*gitea.Comment{
-			{ID: 1, Body: "c1", Poster: &gitea.User{UserName: "u"}, Created: ts, Updated: ts},
-			{ID: 2, Body: "c2", Poster: &gitea.User{UserName: "u"}, Created: ts, Updated: ts},
-			{ID: 3, Body: "c3", Poster: &gitea.User{UserName: "u"}, Created: ts, Updated: ts},
-			{ID: 4, Body: "c4", Poster: &gitea.User{UserName: "u"}, Created: ts, Updated: ts},
+		TimelineByIssue: map[int64][]*gitea.TimelineComment{
+			1: {
+				{ID: 1, Type: "comment", Body: "c1", Poster: &gitea.User{UserName: "u"}, Created: ts, Updated: ts},
+				{ID: 2, Type: "comment", Body: "c2", Poster: &gitea.User{UserName: "u"}, Created: ts, Updated: ts},
+				{ID: 3, Type: "comment", Body: "c3", Poster: &gitea.User{UserName: "u"}, Created: ts, Updated: ts},
+				{ID: 4, Type: "comment", Body: "c4", Poster: &gitea.User{UserName: "u"}, Created: ts, Updated: ts},
+			},
 		},
 	}
 	srv := fa.NewServer(t)
@@ -57,15 +59,17 @@ func TestCommentIteratorPaginates(t *testing.T) {
 	iter := NewIterator(context.Background(), newTestClient(t, srv.URL), capacity, fa.Owner, fa.Project, 5*time.Second, time.Time{})
 	require.True(t, iter.NextIssue())
 
-	var got []*gitea.Comment
-	for iter.NextComment() {
-		got = append(got, iter.CommentValue())
+	var got []*CommentEvent
+	for iter.NextEvent() {
+		if e, ok := iter.EventValue().(*CommentEvent); ok {
+			got = append(got, e)
+		}
 	}
 	require.NoError(t, iter.Error())
 
-	assert.Len(t, got, len(fa.Comments),
+	assert.Len(t, got, len(fa.TimelineByIssue[1]),
 		"all %d comments should be returned across pages (finding #4: lastPage set too early truncates at page 1)",
-		len(fa.Comments))
+		len(fa.TimelineByIssue[1]))
 }
 
 func TestCommentIteratorStopsOnPartialPage(t *testing.T) {
@@ -78,23 +82,25 @@ func TestCommentIteratorStopsOnPartialPage(t *testing.T) {
 			ID: 1, Index: 1, Title: "t",
 			Poster: &gitea.User{UserName: "u"}, Created: ts,
 		}},
-		Comments: []*gitea.Comment{
-			{ID: 1, Body: "c1", Poster: &gitea.User{UserName: "u"}, Created: ts, Updated: ts},
-			{ID: 2, Body: "c2", Poster: &gitea.User{UserName: "u"}, Created: ts, Updated: ts},
-			{ID: 3, Body: "c3", Poster: &gitea.User{UserName: "u"}, Created: ts, Updated: ts},
+		TimelineByIssue: map[int64][]*gitea.TimelineComment{
+			1: {
+				{ID: 1, Type: "comment", Body: "c1", Poster: &gitea.User{UserName: "u"}, Created: ts, Updated: ts},
+				{ID: 2, Type: "comment", Body: "c2", Poster: &gitea.User{UserName: "u"}, Created: ts, Updated: ts},
+				{ID: 3, Type: "comment", Body: "c3", Poster: &gitea.User{UserName: "u"}, Created: ts, Updated: ts},
+			},
 		},
 	}
 	srv := fa.NewServer(t)
 
 	iter := NewIterator(context.Background(), newTestClient(t, srv.URL), capacity, fa.Owner, fa.Project, 5*time.Second, time.Time{})
 	require.True(t, iter.NextIssue())
-	for iter.NextComment() {
+	for iter.NextEvent() {
 	}
 	require.NoError(t, iter.Error())
 
 	// A partial page proves the listing is exhausted; probing one more empty
 	// page costs one wasted request per issue.
-	assert.Len(t, fa.CommentRequests, 2,
+	assert.Len(t, fa.TimelineRequests, 2,
 		"a partial last page should end pagination; no extra empty request needed")
 }
 
@@ -108,21 +114,23 @@ func TestIteratorNoTrailingCommentCall(t *testing.T) {
 			ID: 1, Index: 1, Title: "t",
 			Poster: &gitea.User{UserName: "u"}, Created: ts,
 		}},
-		Comments: []*gitea.Comment{
-			{ID: 1, Body: "c1", Poster: &gitea.User{UserName: "u"}, Created: ts, Updated: ts},
-			{ID: 2, Body: "c2", Poster: &gitea.User{UserName: "u"}, Created: ts, Updated: ts},
+		TimelineByIssue: map[int64][]*gitea.TimelineComment{
+			1: {
+				{ID: 1, Type: "comment", Body: "c1", Poster: &gitea.User{UserName: "u"}, Created: ts, Updated: ts},
+				{ID: 2, Type: "comment", Body: "c2", Poster: &gitea.User{UserName: "u"}, Created: ts, Updated: ts},
+			},
 		},
 	}
 	srv := fa.NewServer(t)
 
 	iter := NewIterator(context.Background(), newTestClient(t, srv.URL), capacity, fa.Owner, fa.Project, 5*time.Second, time.Time{})
 	require.True(t, iter.NextIssue())
-	for iter.NextComment() {
+	for iter.NextEvent() {
 	}
 	require.NoError(t, iter.Error())
 
-	assert.Len(t, fa.CommentRequests, 1,
-		"exactly capacity comments should not trigger a trailing empty comment request")
+	assert.Len(t, fa.TimelineRequests, 1,
+		"exactly capacity comments should not trigger a trailing empty timeline request")
 }
 
 func TestCommentIteratorPassesSince(t *testing.T) {
@@ -140,14 +148,14 @@ func TestCommentIteratorPassesSince(t *testing.T) {
 	since := time.Date(2023, 6, 1, 12, 0, 0, 0, time.UTC)
 	iter := NewIterator(context.Background(), newTestClient(t, srv.URL), 10, fa.Owner, fa.Project, 5*time.Second, since)
 	require.True(t, iter.NextIssue())
-	iter.NextComment()
+	iter.NextEvent()
 	require.NoError(t, iter.Error())
 
-	require.Len(t, fa.CommentRequests, 1)
-	capturedSince := fa.CommentRequests[0].URL.Query().Get("since")
+	require.Len(t, fa.TimelineRequests, 1)
+	capturedSince := fa.TimelineRequests[0].URL.Query().Get("since")
 
 	assert.NotEmpty(t, capturedSince,
-		"since parameter should be forwarded to ListIssueComments")
+		"since parameter should be forwarded to timeline endpoint")
 
 	parsed, err := time.Parse(time.RFC3339, capturedSince)
 	require.NoError(t, err, "since value %q should be valid RFC3339", capturedSince)
@@ -167,9 +175,11 @@ func TestCommentIteratorRespectsSince(t *testing.T) {
 			ID: 1, Index: 1, Title: "t",
 			Poster: &gitea.User{UserName: "u"}, Created: ts, Updated: ts,
 		}},
-		Comments: []*gitea.Comment{
-			{ID: 1, Body: "old", Poster: &gitea.User{UserName: "u"}, Created: before, Updated: before},
-			{ID: 2, Body: "new", Poster: &gitea.User{UserName: "u"}, Created: after, Updated: after},
+		TimelineByIssue: map[int64][]*gitea.TimelineComment{
+			1: {
+				{ID: 1, Type: "comment", Body: "old", Poster: &gitea.User{UserName: "u"}, Created: before, Updated: before},
+				{ID: 2, Type: "comment", Body: "new", Poster: &gitea.User{UserName: "u"}, Created: after, Updated: after},
+			},
 		},
 	}
 	srv := fa.NewServer(t)
@@ -178,8 +188,10 @@ func TestCommentIteratorRespectsSince(t *testing.T) {
 	require.True(t, iter.NextIssue())
 
 	var bodies []string
-	for iter.NextComment() {
-		bodies = append(bodies, iter.CommentValue().Body)
+	for iter.NextEvent() {
+		if e, ok := iter.EventValue().(*CommentEvent); ok {
+			bodies = append(bodies, e.Body)
+		}
 	}
 	require.NoError(t, iter.Error())
 	assert.Equal(t, []string{"new"}, bodies, "iterator should skip comments updated before since")
@@ -194,9 +206,9 @@ func TestCommentIteratorResetsBetweenIssues(t *testing.T) {
 			{ID: 1, Index: 1, Title: "first", Poster: &gitea.User{UserName: "u"}, Created: ts},
 			{ID: 2, Index: 2, Title: "second", Poster: &gitea.User{UserName: "u"}, Created: ts},
 		},
-		CommentsByIssue: map[int64][]*gitea.Comment{
-			1: {{ID: 11, Body: "issue-1-a", Poster: &gitea.User{UserName: "u"}, Created: ts, Updated: ts}},
-			2: {{ID: 21, Body: "issue-2-a", Poster: &gitea.User{UserName: "u"}, Created: ts, Updated: ts}},
+		TimelineByIssue: map[int64][]*gitea.TimelineComment{
+			1: {{ID: 11, Type: "comment", Body: "issue-1-a", Poster: &gitea.User{UserName: "u"}, Created: ts, Updated: ts}},
+			2: {{ID: 21, Type: "comment", Body: "issue-2-a", Poster: &gitea.User{UserName: "u"}, Created: ts, Updated: ts}},
 		},
 	}
 	srv := fa.NewServer(t)
@@ -206,8 +218,10 @@ func TestCommentIteratorResetsBetweenIssues(t *testing.T) {
 	gotByIssue := map[int64][]string{}
 	for iter.NextIssue() {
 		idx := iter.IssueValue().Index
-		for iter.NextComment() {
-			gotByIssue[idx] = append(gotByIssue[idx], iter.CommentValue().Body)
+		for iter.NextEvent() {
+			if e, ok := iter.EventValue().(*CommentEvent); ok {
+				gotByIssue[idx] = append(gotByIssue[idx], e.Body)
+			}
 		}
 	}
 	require.NoError(t, iter.Error())
