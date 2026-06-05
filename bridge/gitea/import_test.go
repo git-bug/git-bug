@@ -1328,6 +1328,74 @@ func TestImportStopsAfterIssueError(t *testing.T) {
 		"current behavior: import bails on the first ensureIssue failure; issue #2 is never reached")
 }
 
+func TestImportIssueIteratorErrorEmitted(t *testing.T) {
+	srv := (&giteatest.FakeAPI{
+		Owner:        "owner",
+		Project:      "project",
+		Issues:       []*gitea.Issue{testIssue()},
+		IssueErrPage: 1,
+	}).NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+
+	results := runImport(t, gi, backend)
+	assert.NotEmpty(t, collectErrors(results), "expected ImportError when issue fetch fails")
+}
+
+func TestImportStopsOnIssueIteratorError(t *testing.T) {
+	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	user := &gitea.User{UserName: "testuser", FullName: "Test User", Email: "u@example.com"}
+	srv := (&giteatest.FakeAPI{
+		Owner:        "owner",
+		Project:      "project",
+		IssueErrPage: 1,
+		Issues: []*gitea.Issue{
+			{ID: 1, Index: 1, Title: "first", Body: "b", Poster: user, Created: ts},
+			{ID: 2, Index: 2, Title: "second should not import", Body: "b", Poster: user, Created: ts},
+		},
+	}).NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+
+	results := runImport(t, gi, backend)
+	require.NotEmpty(t, collectErrors(results),
+		"issue fetch failure should surface as an ImportError")
+	assert.Empty(t, backend.Bugs().AllIds(),
+		"current behavior: import stops when the issue iterator errors; no issues imported")
+}
+
+func TestImportLabelIteratorErrorEmitted(t *testing.T) {
+	srv := (&giteatest.FakeAPI{
+		Owner:           "owner",
+		Project:         "project",
+		Issues:          []*gitea.Issue{testIssue()},
+		TimelineErrPage: 1,
+	}).NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+
+	results := runImport(t, gi, backend)
+	assert.NotEmpty(t, collectErrors(results), "expected ImportError when label/timeline fetch fails")
+}
+
+func TestImportStopsOnLabelIteratorError(t *testing.T) {
+	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	user := &gitea.User{UserName: "testuser", FullName: "Test User", Email: "u@example.com"}
+	srv := (&giteatest.FakeAPI{
+		Owner:           "owner",
+		Project:         "project",
+		TimelineErrPage: 1,
+		Issues: []*gitea.Issue{
+			{ID: 1, Index: 1, Title: "first", Body: "b", Poster: user, Created: ts},
+			{ID: 2, Index: 2, Title: "second should not import", Body: "b", Poster: user, Created: ts},
+		},
+	}).NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+
+	results := runImport(t, gi, backend)
+	require.NotEmpty(t, collectErrors(results),
+		"label/timeline fetch failure on issue #1 should surface as an ImportError")
+	assert.Len(t, backend.Bugs().AllIds(), 1,
+		"current behavior: import stops after a label iterator error; issue #2 is never imported")
+}
+
 // importerGoroutineLive returns true if any goroutine's stack mentions the
 // gitea importer's ImportAll closure. Used by TestImportCancelLeaksGoroutine
 // to detect a producer goroutine that's blocked on `out <-` after the
