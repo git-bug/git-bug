@@ -201,19 +201,22 @@ func TestImportTitleEmbeddedControlChars(t *testing.T) {
 
 func TestImportStatusChangeIdempotent(t *testing.T) {
 	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	closed := ts.Add(time.Hour)
+	closer := &gitea.User{UserName: "testuser", FullName: "Test User", Email: "u@example.com"}
 	issue := &gitea.Issue{
 		ID: 1, Index: 1, Title: "t", Body: "b",
-		State:   gitea.StateOpen,
-		Poster:  &gitea.User{UserName: "testuser", FullName: "Test User", Email: "u@example.com"},
-		Created: ts,
+		State: gitea.StateClosed, Poster: closer, Created: ts, Updated: closed,
 	}
-	fa := &giteatest.FakeAPI{Owner: "owner", Project: "project", Issues: []*gitea.Issue{issue}}
+	fa := &giteatest.FakeAPI{
+		Owner: "owner", Project: "project",
+		Issues: []*gitea.Issue{issue},
+		TimelineByIssue: map[int64][]*gitea.TimelineComment{
+			1: {{Type: "close", Poster: closer, Created: closed, Updated: closed}},
+		},
+	}
 	srv := fa.NewServer(t)
 	gi, backend := setupImporter(t, srv.URL)
 	_ = runImport(t, gi, backend)
-
-	issue.State = gitea.StateClosed
-	_ = runImport(t, setupImporterOnExistingBackend(t, srv.URL, backend), backend)
 	_ = runImport(t, setupImporterOnExistingBackend(t, srv.URL, backend), backend)
 
 	b := onlyBug(t, backend)
@@ -223,15 +226,23 @@ func TestImportStatusChangeIdempotent(t *testing.T) {
 }
 
 func TestImportTitleChangeIdempotent(t *testing.T) {
-	issue := testIssue()
-	issue.Title = "original"
-	fa := &giteatest.FakeAPI{Owner: "owner", Project: "project", Issues: []*gitea.Issue{issue}}
+	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	renamed := ts.Add(time.Hour)
+	poster := &gitea.User{UserName: "testuser", FullName: "Test User", Email: "u@example.com"}
+	issue := &gitea.Issue{
+		ID: 1, Index: 1, Title: "updated", Body: "b",
+		State: gitea.StateOpen, Poster: poster, Created: ts, Updated: renamed,
+	}
+	fa := &giteatest.FakeAPI{
+		Owner: "owner", Project: "project",
+		Issues: []*gitea.Issue{issue},
+		TimelineByIssue: map[int64][]*gitea.TimelineComment{
+			1: {{Type: "rename", OldTitle: "original", NewTitle: "updated", Poster: poster, Created: renamed, Updated: renamed}},
+		},
+	}
 	srv := fa.NewServer(t)
 	gi, backend := setupImporter(t, srv.URL)
 	_ = runImport(t, gi, backend)
-
-	issue.Title = "updated"
-	_ = runImport(t, setupImporterOnExistingBackend(t, srv.URL, backend), backend)
 	_ = runImport(t, setupImporterOnExistingBackend(t, srv.URL, backend), backend)
 
 	b := onlyBug(t, backend)
@@ -1058,20 +1069,29 @@ func TestImportPropagatesCommentEdits(t *testing.T) {
 
 func TestImportPropagatesStatusChanges(t *testing.T) {
 	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	closed := ts.Add(24 * time.Hour)
+	closer := &gitea.User{UserName: "testuser", FullName: "Test User", Email: "u@example.com"}
 	issue := &gitea.Issue{
 		ID: 1, Index: 1, Title: "t", Body: "b",
 		State:   gitea.StateOpen,
-		Poster:  &gitea.User{UserName: "testuser", FullName: "Test User", Email: "u@example.com"},
+		Poster:  closer,
 		Created: ts,
 	}
-	fa := &giteatest.FakeAPI{Owner: "owner", Project: "project", Issues: []*gitea.Issue{issue}}
+	fa := &giteatest.FakeAPI{
+		Owner: "owner", Project: "project",
+		Issues:          []*gitea.Issue{issue},
+		TimelineByIssue: map[int64][]*gitea.TimelineComment{},
+	}
 	srv := fa.NewServer(t)
 
 	gi, backend := setupImporter(t, srv.URL)
 	_ = runImport(t, gi, backend)
 
-	// Simulate the issue being closed upstream.
+	// Simulate the issue being closed upstream via a close timeline event.
 	issue.State = gitea.StateClosed
+	fa.TimelineByIssue[1] = []*gitea.TimelineComment{
+		{Type: "close", Poster: closer, Created: closed, Updated: closed},
+	}
 
 	gi2 := setupImporterOnExistingBackend(t, srv.URL, backend)
 	_ = runImport(t, gi2, backend)
@@ -1087,25 +1107,38 @@ func TestImportPropagatesStatusChanges(t *testing.T) {
 
 func TestImportReopenPropagates(t *testing.T) {
 	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	closed := ts.Add(24 * time.Hour)
+	reopened := ts.Add(48 * time.Hour)
+	actor := &gitea.User{UserName: "testuser", FullName: "Test User", Email: "u@example.com"}
 	issue := &gitea.Issue{
 		ID: 1, Index: 1, Title: "t", Body: "b",
 		State:   gitea.StateOpen,
-		Poster:  &gitea.User{UserName: "testuser", FullName: "Test User", Email: "u@example.com"},
+		Poster:  actor,
 		Created: ts,
 	}
-	fa := &giteatest.FakeAPI{Owner: "owner", Project: "project", Issues: []*gitea.Issue{issue}}
+	fa := &giteatest.FakeAPI{
+		Owner: "owner", Project: "project",
+		Issues:          []*gitea.Issue{issue},
+		TimelineByIssue: map[int64][]*gitea.TimelineComment{},
+	}
 	srv := fa.NewServer(t)
 	gi, backend := setupImporter(t, srv.URL)
 	_ = runImport(t, gi, backend)
 
+	// Simulate close upstream.
 	issue.State = gitea.StateClosed
-	issue.Closed = &ts
+	fa.TimelineByIssue[1] = []*gitea.TimelineComment{
+		{Type: "close", Poster: actor, Created: closed, Updated: closed},
+	}
 	_ = runImport(t, setupImporterOnExistingBackend(t, srv.URL, backend), backend)
 	require.Equal(t, common.ClosedStatus, onlyBug(t, backend).Snapshot().Status,
 		"prerequisite: upstream close must be applied before testing reopen")
 
+	// Simulate reopen upstream.
 	issue.State = gitea.StateOpen
-	issue.Closed = nil
+	fa.TimelineByIssue[1] = append(fa.TimelineByIssue[1],
+		&gitea.TimelineComment{Type: "reopen", Poster: actor, Created: reopened, Updated: reopened},
+	)
 	_ = runImport(t, setupImporterOnExistingBackend(t, srv.URL, backend), backend)
 	assert.Equal(t, common.OpenStatus, onlyBug(t, backend).Snapshot().Status,
 		"upstream reopen should set local bug status back to open")
