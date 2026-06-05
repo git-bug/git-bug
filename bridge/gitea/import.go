@@ -85,10 +85,13 @@ func (gi *giteaImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, s
 			// optimization.
 			for gi.iterator.NextComment() {
 				if err = gi.iterator.Error(); err != nil {
-					gi.reportError(ctx, err, "comment creation")
+					gi.reportError(ctx, err, "fetch comments")
 					return
 				}
-				gi.importComment(ctx, repo, b, gi.iterator.CommentValue())
+				if err = gi.importComment(ctx, repo, b, gi.iterator.CommentValue()); err != nil {
+					gi.reportError(ctx, err, "comment creation")
+					return;
+				}
 			}
 
 			// Loop over all label events
@@ -134,7 +137,7 @@ func (gi *giteaImporter) sendImportResult(ctx context.Context, result core.Impor
 	}
 }
 
-func (gi *giteaImporter) importComment(ctx context.Context, repo *cache.RepoCache, bug *cache.BugCache, comment *gitea.Comment) {
+func (gi *giteaImporter) importComment(ctx context.Context, repo *cache.RepoCache, bug *cache.BugCache, comment *gitea.Comment) error {
 	commentID := strconv.FormatInt(comment.ID, 10)
 
 	// Check if we've already imported this comment.
@@ -142,19 +145,18 @@ func (gi *giteaImporter) importComment(ctx context.Context, repo *cache.RepoCach
 	for _, op := range bug.Snapshot().Operations {
 		id, ok := op.GetMetadata(metaKeyGiteaCommentID)
 		if ok && id == commentID {
-			return
+			return nil
 		}
 	}
 
 	author, err := gi.ensurePerson(ctx, repo, comment.Poster)
 	if err != nil {
-		gi.reportError(ctx, err, "comment creation")
-		return
+		return err
 	}
 
 	// Needed for deduplication.
 	metadata := map[string]string{metaKeyGiteaCommentID: commentID}
-	bug.AddCommentRaw(
+	_, _, err = bug.AddCommentRaw(
 		author,
 		comment.Created.Unix(),
 		comment.Body,
@@ -162,6 +164,7 @@ func (gi *giteaImporter) importComment(ctx context.Context, repo *cache.RepoCach
 		make([]repository.Hash, 0),
 		metadata,
 	)
+	return err
 }
 
 func (gi *giteaImporter) importLabel(ctx context.Context, repo *cache.RepoCache, bug *cache.BugCache, event *iterator.LabelEvent) error {
