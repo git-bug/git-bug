@@ -120,3 +120,5 @@ require (
 	google.golang.org/protobuf v1.36.12 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
+
+replace gitea.dev/sdk => ../go-sdk
