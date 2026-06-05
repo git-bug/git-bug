@@ -32,7 +32,7 @@ func TestLabelIteratorErrorOnMissingTotalCountHeader(t *testing.T) {
 	require.True(t, iter.NextIssue())
 
 	require.NotPanics(t, func() {
-		assert.False(t, iter.NextLabel())
+		assert.False(t, iter.NextEvent())
 	})
 	assert.Error(t, iter.Error())
 }
@@ -54,7 +54,7 @@ func TestLabelIteratorReturnsAPIError(t *testing.T) {
 	require.True(t, iter.NextIssue())
 
 	require.NotPanics(t, func() {
-		assert.False(t, iter.NextLabel())
+		assert.False(t, iter.NextEvent())
 	})
 	assert.Error(t, iter.Error())
 }
@@ -95,8 +95,8 @@ func TestLabelIteratorRespectsSince(t *testing.T) {
 	require.True(t, iter.NextIssue())
 
 	var names []string
-	for iter.NextLabel() {
-		names = append(names, iter.LabelValue().Label.Name)
+	for nextLabel(iter) {
+		names = append(names, labelValue(iter).Label.Name)
 	}
 	require.NoError(t, iter.Error())
 	assert.Equal(t, []string{"new-label"}, names, "label events before since should be excluded")
@@ -120,7 +120,7 @@ func TestLabelIteratorOneRequestPerIssue(t *testing.T) {
 
 	iter := NewIterator(context.Background(), newTestClient(t, srv.URL), 10, fa.Owner, fa.Project, 5*time.Second, time.Time{})
 	for iter.NextIssue() {
-		for iter.NextLabel() {
+		for iter.NextEvent() {
 		}
 	}
 	require.NoError(t, iter.Error())
@@ -159,8 +159,8 @@ func TestLabelIteratorSkipsNonLabelEvents(t *testing.T) {
 	require.True(t, iter.NextIssue())
 
 	var names []string
-	for iter.NextLabel() {
-		names = append(names, iter.LabelValue().Label.Name)
+	for nextLabel(iter) {
+		names = append(names, labelValue(iter).Label.Name)
 	}
 	require.NoError(t, iter.Error())
 	require.GreaterOrEqual(t, len(fa.TimelineRequests), 2,
@@ -190,11 +190,11 @@ func TestLabelIteratorDistinguishesAddFromRemove(t *testing.T) {
 	iter := NewIterator(context.Background(), newTestClient(t, srv.URL), 10, fa.Owner, fa.Project, 5*time.Second, time.Time{})
 	require.True(t, iter.NextIssue())
 
-	require.True(t, iter.NextLabel())
-	assert.Equal(t, LabelAdded, iter.LabelValue().Kind, "Body=1 should be LabelAdded")
-	require.True(t, iter.NextLabel())
-	assert.Equal(t, LabelRemoved, iter.LabelValue().Kind, "Body=empty should be LabelRemoved")
-	assert.False(t, iter.NextLabel())
+	require.True(t, iter.NextEvent())
+	assert.Equal(t, LabelAdded, iter.EventValue().(*LabelEvent).Kind, "Body=1 should be LabelAdded")
+	require.True(t, iter.NextEvent())
+	assert.Equal(t, LabelRemoved, iter.EventValue().(*LabelEvent).Kind, "Body=empty should be LabelRemoved")
+	assert.False(t, iter.NextEvent())
 	require.NoError(t, iter.Error())
 }
 
@@ -220,8 +220,8 @@ func TestLabelIteratorReturnsLabels(t *testing.T) {
 	require.True(t, iter.NextIssue())
 
 	var names []string
-	for iter.NextLabel() {
-		names = append(names, iter.LabelValue().Label.Name)
+	for nextLabel(iter) {
+		names = append(names, labelValue(iter).Label.Name)
 	}
 	require.NoError(t, iter.Error())
 	assert.Equal(t, []string{"bug", "enhancement"}, names)
