@@ -23,8 +23,8 @@ type FakeAPI struct {
 	Issues         []*gitea.Issue
 	Comments       []*gitea.Comment
 	CommentErrPage int // page number that returns 500; 0 = never
-	IssueErrPage   int // page number that returns 500 on issues endpoint; 0 = never
-	LabelErrPage   int // page number that returns 500 on labels endpoint; 0 = never
+	IssueErrPage    int // page number that returns 500 on issues endpoint; 0 = never
+	TimelineErrPage int // page number that returns 500 on timeline endpoint; 0 = never
 
 	Labels     []*gitea.Label
 	RepoLabels []*gitea.Label
@@ -58,6 +58,15 @@ type FakeAPI struct {
 
 	// CommentRequests accumulates every request made to the comments endpoint.
 	CommentRequests []*http.Request
+
+	// TimelineRequests accumulates every request made to the issue timeline endpoint.
+	TimelineRequests []*http.Request
+
+	// TimelineByIssue, if set, provides per-issue timeline events (keyed by Issue.Index).
+	TimelineByIssue map[int64][]*gitea.TimelineComment
+
+	// TimelineOmitTotalCount suppresses the X-Total-Count header on timeline responses.
+	TimelineOmitTotalCount bool
 
 	// UserRequests accumulates every request made to the users endpoint.
 	UserRequests []*http.Request
@@ -388,6 +397,8 @@ func (fa *FakeAPI) handleIssueSubresource(issuesPrefix string) http.HandlerFunc 
 			fa.handleIssueComments(w, r, idx)
 		case "labels":
 			fa.handleIssueLabels(w, r, idx)
+		case "timeline":
+			fa.handleIssueTimeline(w, r, idx)
 		default:
 			if strings.HasPrefix(parts[1], "labels/") && r.Method == http.MethodDelete {
 				identifier := strings.TrimPrefix(parts[1], "labels/")
@@ -541,11 +552,52 @@ func (fa *FakeAPI) handleIssueLabels(w http.ResponseWriter, r *http.Request, idx
 	case http.MethodDelete:
 		fa.setIssueLabels(idx, nil)
 		w.WriteHeader(http.StatusNoContent)
-	case http.MethodGet:
-		fa.listIssueLabels(w, r, idx)
 	default:
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 	}
+}
+
+func (fa *FakeAPI) handleIssueTimeline(w http.ResponseWriter, r *http.Request, idx int64) {
+	fa.TimelineRequests = append(fa.TimelineRequests, r)
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	events := fa.TimelineByIssue[idx]
+	if events == nil {
+		issue, _ := fa.findIssue(idx)
+		var poster *gitea.User
+		if issue != nil {
+			poster = issue.Poster
+		}
+		for _, label := range fa.labelsFor(idx) {
+			events = append(events, &gitea.TimelineComment{
+				Type:   "label",
+				Label:  []*gitea.Label{label},
+				Poster: poster,
+			})
+		}
+	}
+	since := parseSince(r)
+	if !since.IsZero() {
+		filtered := events[:0:0]
+		for _, e := range events {
+			if !e.Created.Before(since) {
+				filtered = append(filtered, e)
+			}
+		}
+		events = filtered
+	}
+	page, limit := parsePagination(r)
+	if fa.TimelineErrPage > 0 && page == fa.TimelineErrPage {
+		http.Error(w, "injected timeline error", http.StatusInternalServerError)
+		return
+	}
+	start, end := pageSlice(page, limit, len(events))
+	if !fa.TimelineOmitTotalCount {
+		w.Header().Set("X-Total-Count", strconv.Itoa(len(events)))
+	}
+	writeJSON(w, events[start:end])
 }
 
 func (fa *FakeAPI) addIssueLabels(w http.ResponseWriter, r *http.Request, idx int64) {
@@ -566,16 +618,6 @@ func (fa *FakeAPI) replaceIssueLabels(w http.ResponseWriter, r *http.Request, id
 	writeJSON(w, labels)
 }
 
-func (fa *FakeAPI) listIssueLabels(w http.ResponseWriter, r *http.Request, idx int64) {
-	page, limit := parsePagination(r)
-	if fa.LabelErrPage > 0 && page == fa.LabelErrPage {
-		http.Error(w, "simulated server error", http.StatusInternalServerError)
-		return
-	}
-	labels := fa.labelsFor(idx)
-	start, end := pageSlice(page, limit, len(labels))
-	writeJSON(w, labels[start:end])
-}
 
 func (fa *FakeAPI) handleRepoLabels(labelsPath string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
