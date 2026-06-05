@@ -72,10 +72,16 @@ func (gi *giteaImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, s
 		for gi.iterator.NextIssue() {
 			issue := gi.iterator.IssueValue()
 
-			// create issue
+			// create a record to point to
 			b, err := gi.ensureIssue(ctx, repo, issue)
 			if err != nil {
 				gi.reportError(ctx, err, "issue creation")
+				return
+			}
+
+			// update status/title/body
+			if err = gi.updateIssue(ctx, repo, b, issue); err != nil {
+				gi.reportError(ctx, err, "issue update")
 				return
 			}
 
@@ -135,6 +141,10 @@ func (gi *giteaImporter) sendImportResult(ctx context.Context, result core.Impor
 	// Handle cancellation.
 	case <- ctx.Done():
 	}
+}
+
+func (gi *giteaImporter) updateIssue(ctx context.Context, repo *cache.RepoCache, bug *cache.BugCache, issue *gitea.Issue) error {
+	return nil
 }
 
 func (gi *giteaImporter) importComment(ctx context.Context, repo *cache.RepoCache, bug *cache.BugCache, comment *gitea.Comment) error {
