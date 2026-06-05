@@ -325,6 +325,18 @@ func (fa *FakeAPI) createIssue(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, issue)
 }
 
+func parseSince(r *http.Request) time.Time {
+	s := r.URL.Query().Get("since")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC3339, s)
+	if err != nil {
+		return time.Time{}
+	}
+	return t
+}
+
 func (fa *FakeAPI) listIssues(w http.ResponseWriter, r *http.Request) {
 	page, limit := parsePagination(r)
 	if fa.IssueErrPage > 0 && page == fa.IssueErrPage {
@@ -332,12 +344,24 @@ func (fa *FakeAPI) listIssues(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	since := parseSince(r)
+	issues := fa.Issues
+	if !since.IsZero() {
+		filtered := issues[:0:0]
+		for _, issue := range issues {
+			if !issue.Updated.Before(since) {
+				filtered = append(filtered, issue)
+			}
+		}
+		issues = filtered
+	}
+
 	// X-Total-Count is stable but undocumented;
 	// see https://codeberg.org/forgejo/forgejo/issues/12931
-	w.Header().Set("X-Total-Count", strconv.Itoa(len(fa.Issues)))
+	w.Header().Set("X-Total-Count", strconv.Itoa(len(issues)))
 
-	start, end := pageSlice(page, limit, len(fa.Issues))
-	writeJSON(w, fa.Issues[start:end])
+	start, end := pageSlice(page, limit, len(issues))
+	writeJSON(w, issues[start:end])
 }
 
 func (fa *FakeAPI) handleIssueSubresource(issuesPrefix string) http.HandlerFunc {
@@ -493,6 +517,16 @@ func (fa *FakeAPI) listIssueComments(w http.ResponseWriter, r *http.Request, idx
 		return
 	}
 	comments := fa.commentsFor(idx)
+	since := parseSince(r)
+	if !since.IsZero() {
+		filtered := comments[:0:0]
+		for _, c := range comments {
+			if !c.Updated.Before(since) {
+				filtered = append(filtered, c)
+			}
+		}
+		comments = filtered
+	}
 	w.Header().Set("X-Total-Count", strconv.Itoa(len(comments)))
 	start, end := pageSlice(page, limit, len(comments))
 	writeJSON(w, comments[start:end])

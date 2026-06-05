@@ -171,6 +171,31 @@ func TestIssueIteratorHandlesNetworkError(t *testing.T) {
 	assert.Error(t, iter.Error())
 }
 
+func TestIssueIteratorRespectsSince(t *testing.T) {
+	since := time.Date(2023, 6, 1, 0, 0, 0, 0, time.UTC)
+	before := since.Add(-24 * time.Hour)
+	after := since.Add(24 * time.Hour)
+
+	fa := &giteatest.FakeAPI{
+		Owner:   "owner",
+		Project: "repo",
+		Issues: []*gitea.Issue{
+			{ID: 1, Index: 1, Title: "old", Poster: &gitea.User{UserName: "u"}, Created: before, Updated: before},
+			{ID: 2, Index: 2, Title: "new", Poster: &gitea.User{UserName: "u"}, Created: after, Updated: after},
+		},
+	}
+	srv := fa.NewServer(t)
+
+	iter := NewIterator(context.Background(), newTestClient(t, srv.URL), 10, fa.Owner, fa.Project, 5*time.Second, since)
+
+	var titles []string
+	for iter.NextIssue() {
+		titles = append(titles, iter.IssueValue().Title)
+	}
+	require.NoError(t, iter.Error())
+	assert.Equal(t, []string{"new"}, titles, "iterator should skip issues updated before since")
+}
+
 func TestIssueIteratorReturnsAPIError(t *testing.T) {
 	fa := &giteatest.FakeAPI{Owner: "owner", Project: "repo", IssueErrPage: 1}
 	srv := fa.NewServer(t)
