@@ -144,5 +144,3 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	pgregory.net/rapid v1.3.0 // indirect
 )
-
-replace gitea.dev/sdk => ../go-sdk
