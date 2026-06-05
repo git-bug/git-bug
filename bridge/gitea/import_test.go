@@ -1154,8 +1154,8 @@ func TestImportLabelRemovalPropagates(t *testing.T) {
 		// Forgejo: Body="1" added, Body="" removed; both use type "label".
 		TimelineByIssue: map[int64][]*gitea.TimelineComment{
 			1: {
-				{ID: 1, Type: "label", Body: "1", Created: ts, Label: []*gitea.Label{{ID: 1, Name: "bug"}}, Poster: user},
-				{ID: 2, Type: "label", Body: "", Created: ts.Add(time.Hour), Label: []*gitea.Label{{ID: 1, Name: "bug"}}, Poster: user},
+				{ID: 1, Type: "label", Body: "1", Created: ts, Label: &gitea.Label{ID: 1, Name: "bug"}, Poster: user},
+				{ID: 2, Type: "label", Body: "", Created: ts.Add(time.Hour), Label: &gitea.Label{ID: 1, Name: "bug"}, Poster: user},
 			},
 		},
 	}
@@ -1175,7 +1175,7 @@ func TestImportIdempotentLabels(t *testing.T) {
 		Project: "project",
 		Issues:  []*gitea.Issue{testIssue()},
 		TimelineByIssue: map[int64][]*gitea.TimelineComment{
-			1: {{ID: 1, Type: "label", Body: "1", Created: ts, Label: []*gitea.Label{{ID: 1, Name: "bug"}}, Poster: user}},
+			1: {{ID: 1, Type: "label", Body: "1", Created: ts, Label: &gitea.Label{ID: 1, Name: "bug"}, Poster: user}},
 		},
 	}
 	srv := fa.NewServer(t)
@@ -1205,7 +1205,7 @@ func TestImportLabelAttributedToLabelPoster(t *testing.T) {
 		Project: "project",
 		Issues:  []*gitea.Issue{issue},
 		TimelineByIssue: map[int64][]*gitea.TimelineComment{
-			1: {{ID: 1, Type: "label", Body: "1", Created: ts, Label: []*gitea.Label{{ID: 1, Name: "bug"}}, Poster: labeler}},
+			1: {{ID: 1, Type: "label", Body: "1", Created: ts, Label: &gitea.Label{ID: 1, Name: "bug"}, Poster: labeler}},
 		},
 	}
 	srv := fa.NewServer(t)
