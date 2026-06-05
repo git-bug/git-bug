@@ -80,14 +80,25 @@ func (gi *giteaImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, s
 			}
 
 			// Loop over all comments
+			// TODO: make this a goroutine so we can import issues and comments in parallel?
+			// The Github/Gitlab backends already do this. But maybe that's premature
+			// optimization.
 			for gi.iterator.NextComment() {
 				if err = gi.iterator.Error(); err != nil {
 					gi.reportError(ctx, err, "comment creation")
 					return
 				}
+				gi.importComment(ctx, repo, b, gi.iterator.CommentValue())
 			}
 
 			// Loop over all label events
+			for gi.iterator.NextLabel() {
+				if err = gi.iterator.Error(); err != nil {
+					gi.reportError(ctx, err, "comment creation")
+					return
+				}
+				// gi.importLabel(ctx, repo, b, gi.iterator.CommentValue())
+			}
 
 			// Update issue title and description
 
@@ -138,6 +149,7 @@ func (gi *giteaImporter) importComment(ctx context.Context, repo *cache.RepoCach
 		return
 	}
 
+	// Needed for deduplication.
 	metadata := map[string]string{metaKeyGiteaCommentID: commentID}
 	bug.AddCommentRaw(
 		author,
@@ -145,8 +157,6 @@ func (gi *giteaImporter) importComment(ctx context.Context, repo *cache.RepoCach
 		comment.Body,
 		// TODO: add attachments
 		make([]repository.Hash, 0),
-		// TODO: add author ID and comment ID
-		// otherwise each comment will get duplicated
 		metadata,
 	)
 }
