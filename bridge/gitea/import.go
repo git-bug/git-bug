@@ -13,6 +13,7 @@ import (
 	"github.com/git-bug/git-bug/bridge/gitea/iterator"
 	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/entity/dag"
 	"github.com/git-bug/git-bug/repository"
 	"github.com/git-bug/git-bug/util/text"
 	"github.com/pkg/errors"
@@ -152,30 +153,60 @@ func (gi *giteaImporter) importEvent(ctx context.Context, repo *cache.RepoCache,
 	return errors.New("bruh wat")
 }
 
-func (gi *giteaImporter) importComment(ctx context.Context, repo *cache.RepoCache, bug *cache.BugCache, comment *iterator.CommentEvent) error {
-	commentID := strconv.FormatInt(comment.ID, 10)
-
-	// Check if we've already imported this comment.
-	// This isn't as slow as it looks, we're only iterating events on the current issue.
-	for _, op := range bug.Snapshot().Operations {
-		id, ok := op.GetMetadata(metaKeyGiteaCommentID)
-		if ok && id == commentID {
-			return nil
-		}
-	}
-
-	author, err := gi.ensurePerson(ctx, repo, comment.Poster)
+func (gi *giteaImporter) importComment(ctx context.Context, repo *cache.RepoCache, bug *cache.BugCache, remoteComment *iterator.CommentEvent) error {
+	author, err := gi.ensurePerson(ctx, repo, remoteComment.Poster)
 	if err != nil {
 		return err
 	}
 
 	// Needed for deduplication.
-	metadata := map[string]string{metaKeyGiteaCommentID: commentID}
+	giteaId := strconv.FormatInt(remoteComment.ID, 10)
+	metadata := map[string]string{metaKeyGiteaCommentID: giteaId}
+
+	// Check if we've already imported this comment.
+	// This isn't as slow as it looks, we're only iterating events on the current issue.
+	var existingId string;
+	var op dag.Operation
+	for _, op := range bug.Snapshot().Operations {
+		var ok bool
+		existingId, ok = op.GetMetadata(metaKeyGiteaCommentID)
+		if ok && giteaId == existingId {
+			break
+		}
+	}
+
+	// Check if we're creating a new comment or just updating an existing one.
+	// Forgejo doesn't have an API for this unfortunately, so we're stuck with comparing
+	// the body text. Note this means we might miss intermediate edits.
+	if op != nil {
+		localComment, err := bug.Snapshot().SearchCommentByOpId(op.Id())
+		if err != nil {
+			return err
+		}
+		if localComment != nil {
+			panic("found bug by metadata, but not by op ID?")
+		}
+
+		if localComment.Message == remoteComment.Body {
+			return nil
+		}
+
+		_, err = bug.EditCommentRaw(
+			author,
+			remoteComment.Updated.Unix(),
+			localComment.CombinedId(),
+			remoteComment.Body,
+			metadata,
+		)
+
+		return err
+	}
+
 	_, _, err = bug.AddCommentRaw(
 		author,
-		comment.Created.Unix(),
-		comment.Body,
-		// TODO: add attachments
+		remoteComment.Created.Unix(),
+		remoteComment.Body,
+		// NOTE: attachments are not supported (none of the either backends support them either)
 		make([]repository.Hash, 0),
 		metadata,
 	)

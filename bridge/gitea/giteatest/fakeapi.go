@@ -20,19 +20,16 @@ type FakeAPI struct {
 	Owner   string
 	Project string
 
-	Issues         []*gitea.Issue
-	Comments       []*gitea.Comment
-	CommentErrPage int // page number that returns 500; 0 = never
+	Issues          []*gitea.Issue
 	IssueErrPage    int // page number that returns 500 on issues endpoint; 0 = never
 	TimelineErrPage int // page number that returns 500 on timeline endpoint; 0 = never
 
 	Labels     []*gitea.Label
 	RepoLabels []*gitea.Label
 
-	// CommentsByIssue/LabelsByIssue, if set, override the singular Comments/Labels
-	// fields and let tests configure per-issue responses (keyed by Issue.Index).
-	CommentsByIssue map[int64][]*gitea.Comment
-	LabelsByIssue   map[int64][]*gitea.Label
+	// LabelsByIssue, if set, overrides the singular Labels field and lets
+	// tests configure per-issue responses (keyed by Issue.Index).
+	LabelsByIssue map[int64][]*gitea.Label
 
 	// NotFoundUsers is a list of usernames that return 404 from userGet.
 	NotFoundUsers []string
@@ -56,9 +53,6 @@ type FakeAPI struct {
 	// Inspect after running to verify query parameters such as `since`.
 	IssueRequests []*http.Request
 
-	// CommentRequests accumulates every request made to the comments endpoint.
-	CommentRequests []*http.Request
-
 	// TimelineRequests accumulates every request made to the issue timeline endpoint.
 	TimelineRequests []*http.Request
 
@@ -73,7 +67,6 @@ type FakeAPI struct {
 
 	nextIssueID    int64
 	nextIssueIndex int64
-	nextCommentID  int64
 	nextLabelID    int64
 }
 
@@ -111,16 +104,6 @@ func pageSlice(page, limit, total int) (start, end int) {
 	return
 }
 
-func (fa *FakeAPI) commentsFor(idx int64) []*gitea.Comment {
-	if c, ok := fa.CommentsByIssue[idx]; ok {
-		return c
-	}
-	if idx == 1 {
-		return fa.Comments
-	}
-	return nil
-}
-
 func (fa *FakeAPI) labelsFor(idx int64) []*gitea.Label {
 	if l, ok := fa.LabelsByIssue[idx]; ok {
 		return l
@@ -147,18 +130,6 @@ func (fa *FakeAPI) initSequences() {
 		}
 		if issue.Index > fa.nextIssueIndex {
 			fa.nextIssueIndex = issue.Index
-		}
-	}
-	for _, comment := range fa.Comments {
-		if comment.ID > fa.nextCommentID {
-			fa.nextCommentID = comment.ID
-		}
-	}
-	for _, comments := range fa.CommentsByIssue {
-		for _, comment := range comments {
-			if comment.ID > fa.nextCommentID {
-				fa.nextCommentID = comment.ID
-			}
 		}
 	}
 	for _, label := range append(append([]*gitea.Label{}, fa.RepoLabels...), fa.Labels...) {
@@ -378,11 +349,6 @@ func (fa *FakeAPI) listIssues(w http.ResponseWriter, r *http.Request) {
 func (fa *FakeAPI) handleIssueSubresource(issuesPrefix string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rest := strings.TrimPrefix(r.URL.Path, issuesPrefix)
-		if strings.HasPrefix(rest, "comments/") {
-			fa.handleIssueCommentByID(w, r, strings.TrimPrefix(rest, "comments/"))
-			return
-		}
-
 		parts := strings.SplitN(rest, "/", 2)
 		idx, err := strconv.ParseInt(parts[0], 10, 64)
 		if err != nil {
@@ -395,8 +361,6 @@ func (fa *FakeAPI) handleIssueSubresource(issuesPrefix string) http.HandlerFunc 
 		}
 
 		switch parts[1] {
-		case "comments":
-			fa.handleIssueComments(w, r, idx)
 		case "labels":
 			fa.handleIssueLabels(w, r, idx)
 		case "timeline":
@@ -412,46 +376,6 @@ func (fa *FakeAPI) handleIssueSubresource(issuesPrefix string) http.HandlerFunc 
 			http.NotFound(w, r)
 		}
 	}
-}
-
-func (fa *FakeAPI) handleIssueCommentByID(w http.ResponseWriter, r *http.Request, rawID string) {
-	commentID, err := strconv.ParseInt(rawID, 10, 64)
-	if err != nil {
-		http.NotFound(w, r)
-		return
-	}
-	if r.Method != http.MethodPatch {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-	opt, ok := decodeJSON[gitea.EditIssueCommentOption](w, r)
-	if !ok {
-		return
-	}
-	comment, ok := fa.findComment(commentID)
-	if !ok {
-		http.NotFound(w, r)
-		return
-	}
-	comment.Body = opt.Body
-	comment.Updated = time.Now().UTC()
-	writeJSON(w, comment)
-}
-
-func (fa *FakeAPI) findComment(id int64) (*gitea.Comment, bool) {
-	for _, comments := range fa.CommentsByIssue {
-		for _, comment := range comments {
-			if comment.ID == id {
-				return comment, true
-			}
-		}
-	}
-	for _, comment := range fa.Comments {
-		if comment.ID == id {
-			return comment, true
-		}
-	}
-	return nil, false
 }
 
 func (fa *FakeAPI) handleIssueByIndex(w http.ResponseWriter, r *http.Request, idx int64) {
@@ -485,64 +409,6 @@ func (fa *FakeAPI) handleIssueByIndex(w http.ResponseWriter, r *http.Request, id
 	}
 	issue.Updated = time.Now().UTC()
 	writeJSON(w, issue)
-}
-
-func (fa *FakeAPI) handleIssueComments(w http.ResponseWriter, r *http.Request, idx int64) {
-	switch r.Method {
-	case http.MethodPost:
-		fa.createIssueComment(w, r, idx)
-	case http.MethodGet:
-		fa.listIssueComments(w, r, idx)
-	default:
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-	}
-}
-
-func (fa *FakeAPI) createIssueComment(w http.ResponseWriter, r *http.Request, idx int64) {
-	opt, ok := decodeJSON[gitea.CreateIssueCommentOption](w, r)
-	if !ok {
-		return
-	}
-	fa.nextCommentID++
-	now := time.Now().UTC()
-	comment := &gitea.Comment{
-		ID:      fa.nextCommentID,
-		Body:    opt.Body,
-		Poster:  &gitea.User{UserName: "testuser"},
-		Created: now,
-		Updated: now,
-	}
-	if fa.CommentsByIssue == nil {
-		fa.CommentsByIssue = map[int64][]*gitea.Comment{}
-	}
-	fa.CommentsByIssue[idx] = append(fa.commentsFor(idx), comment)
-	if idx == 1 {
-		fa.Comments = fa.CommentsByIssue[idx]
-	}
-	writeJSON(w, comment)
-}
-
-func (fa *FakeAPI) listIssueComments(w http.ResponseWriter, r *http.Request, idx int64) {
-	fa.CommentRequests = append(fa.CommentRequests, r)
-	page, limit := parsePagination(r)
-	if fa.CommentErrPage > 0 && page == fa.CommentErrPage {
-		http.Error(w, "simulated server error", http.StatusInternalServerError)
-		return
-	}
-	comments := fa.commentsFor(idx)
-	since := parseSince(r)
-	if !since.IsZero() {
-		filtered := comments[:0:0]
-		for _, c := range comments {
-			if !c.Updated.Before(since) {
-				filtered = append(filtered, c)
-			}
-		}
-		comments = filtered
-	}
-	w.Header().Set("X-Total-Count", strconv.Itoa(len(comments)))
-	start, end := pageSlice(page, limit, len(comments))
-	writeJSON(w, comments[start:end])
 }
 
 func (fa *FakeAPI) handleIssueLabels(w http.ResponseWriter, r *http.Request, idx int64) {
