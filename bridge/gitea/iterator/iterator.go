@@ -71,8 +71,11 @@ const (
 )
 
 type LabelEvent struct {
-	label *gitea.Label;
-	kind LabelEventKind;
+	Label *gitea.Label;
+	Poster *gitea.User;
+	UpdatedAt time.Time;
+	ID int;
+	Kind LabelEventKind;
 }
 
 func NewIterator(ctx context.Context, client *gitea.Client, capacity int, owner, project string, timeout time.Duration, since time.Time) *Iterator {
@@ -307,7 +310,7 @@ func fetchLabels(ctx context.Context, conf config, issue *gitea.Issue, page int)
 				continue
 		}
 		for _, label := range event.Label {
-			labels = append(labels, &LabelEvent{kind: kind, label: label})
+			labels = append(labels, &LabelEvent{Kind: kind, Label: label, Poster: event.Poster})
 		}
 	}
 	return labels, !lastPage, err
