@@ -132,6 +132,37 @@ func TestCommentIteratorPassesSince(t *testing.T) {
 	assert.Equal(t, since.UTC(), parsed.UTC())
 }
 
+func TestCommentIteratorRespectsSince(t *testing.T) {
+	since := time.Date(2023, 6, 1, 0, 0, 0, 0, time.UTC)
+	before := since.Add(-24 * time.Hour)
+	after := since.Add(24 * time.Hour)
+
+	ts := time.Now()
+	fa := &giteatest.FakeAPI{
+		Owner:   "owner",
+		Project: "repo",
+		Issues: []*gitea.Issue{{
+			ID: 1, Index: 1, Title: "t",
+			Poster: &gitea.User{UserName: "u"}, Created: ts, Updated: ts,
+		}},
+		Comments: []*gitea.Comment{
+			{ID: 1, Body: "old", Poster: &gitea.User{UserName: "u"}, Created: before, Updated: before},
+			{ID: 2, Body: "new", Poster: &gitea.User{UserName: "u"}, Created: after, Updated: after},
+		},
+	}
+	srv := fa.NewServer(t)
+
+	iter := NewIterator(context.Background(), newTestClient(t, srv.URL), 10, fa.Owner, fa.Project, 5*time.Second, since)
+	require.True(t, iter.NextIssue())
+
+	var bodies []string
+	for iter.NextComment() {
+		bodies = append(bodies, iter.CommentValue().Body)
+	}
+	require.NoError(t, iter.Error())
+	assert.Equal(t, []string{"new"}, bodies, "iterator should skip comments updated before since")
+}
+
 func TestCommentIteratorResetsBetweenIssues(t *testing.T) {
 	ts := time.Now()
 	fa := &giteatest.FakeAPI{
