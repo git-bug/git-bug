@@ -167,7 +167,7 @@ func (gi *giteaImporter) importComment(ctx context.Context, repo *cache.RepoCach
 	// This isn't as slow as it looks, we're only iterating events on the current issue.
 	var existingId string;
 	var op dag.Operation
-	for _, op := range bug.Snapshot().Operations {
+	for _, op = range bug.Snapshot().Operations {
 		var ok bool
 		existingId, ok = op.GetMetadata(metaKeyGiteaCommentID)
 		if ok && giteaId == existingId {
@@ -183,7 +183,7 @@ func (gi *giteaImporter) importComment(ctx context.Context, repo *cache.RepoCach
 		if err != nil {
 			return err
 		}
-		if localComment != nil {
+		if localComment == nil {
 			panic("found bug by metadata, but not by op ID?")
 		}
 
