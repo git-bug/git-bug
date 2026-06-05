@@ -310,7 +310,9 @@ func fetchTimeline(ctx context.Context, conf config, issue *gitea.Issue, page in
 				}
 				event = &LabelEvent{Kind: kind, Label: rawEvent.Label, Poster: rawEvent.Poster}
 			case "close":
+				panic("todo")
 			case "reopen":
+				panic("todo")
 			case "rename":
 				event = &RenameEvent{NewName: rawEvent.Body, Poster: rawEvent.Poster}
 			default:
