@@ -2,6 +2,7 @@ package iterator
 
 import (
 	"context"
+	"errors"
 	"strconv"
 	"time"
 
@@ -27,7 +28,7 @@ type Iterator struct {
 	comment *pageIterator[gitea.Comment]
 
 	// labels iterator
-	label *pageIterator[gitea.Label]
+	label *pageIterator[LabelEvent]
 }
 
 type config struct {
@@ -62,6 +63,18 @@ type pageIterator[T any] struct {
 	fetch fetchPage[T]
 }
 
+type LabelEventKind int
+
+const (
+    LabelAdded LabelEventKind = iota
+    LabelRemoved
+)
+
+type LabelEvent struct {
+	label *gitea.Label;
+	kind LabelEventKind;
+}
+
 func NewIterator(ctx context.Context, client *gitea.Client, capacity int, owner, project string, timeout time.Duration, since time.Time) *Iterator {
 	return &Iterator{
 		ctx: ctx,
@@ -75,7 +88,7 @@ func NewIterator(ctx context.Context, client *gitea.Client, capacity int, owner,
 		},
 		comment: newPageIterator[gitea.Comment](fetchComments),
 		issue: newPageIterator[gitea.Issue](fetchIssues),
-		label: newPageIterator[gitea.Label](fetchLabels),
+		label: newPageIterator[LabelEvent](fetchLabels),
 	}
 }
 
@@ -129,7 +142,7 @@ func (i *Iterator) NextLabel() bool {
 }
 
 // Panics if you haven't called NextIssue at least once.
-func (i *Iterator) LabelValue() *gitea.Label {
+func (i *Iterator) LabelValue() *LabelEvent {
 	return i.label.Value()
 }
 
@@ -183,24 +196,31 @@ func (iter *pageIterator[T]) getNext(ctx context.Context, conf config, issue *gi
 	ctx, cancel := context.WithTimeout(ctx, conf.timeout)
 	defer cancel()
 
-	items, more, err := iter.fetch(ctx, conf, issue, iter.page)
+	// Fetchers can have an internal filter, such as for labels.
+	// Allow that, and trust `more`, but run the loop until we get at least one item.
+	more := true
+	for more {
+		var items []*T
+		var err error
+		items, more, err = iter.fetch(ctx, conf, issue, iter.page)
 
-	if err != nil {
-		iter.Reset()
-		return false, err
+		if err != nil {
+			iter.Reset()
+			return false, err
+		}
+
+		iter.cache = items
+		iter.index = 0
+		iter.page++
+
+		iter.lastPage = !more
+
+		if len(iter.cache) != 0 {
+			break
+		}
 	}
 
-	iter.lastPage = !more
-
-	if len(items) == 0 {
-		return false, nil
-	}
-
-	iter.cache = items
-	iter.index = 0
-	iter.page++
-
-	return true, nil
+	return len(iter.cache) != 0, nil
 }
 
 func (iter *pageIterator[T]) Reset() {
@@ -210,8 +230,7 @@ func (iter *pageIterator[T]) Reset() {
 	iter.cache = nil
 }
 
-func fetchIssues(ctx context.Context, conf config, _ *gitea.Issue, page int) (issues []*gitea.Issue, more bool, err error) {
-	more = true
+func fetchIssues(ctx context.Context, conf config, _ *gitea.Issue, page int) ([]*gitea.Issue, bool, error) {
 	issues, resp, err := conf.gc.Issues.ListRepoIssues(
 		ctx,
 		conf.owner,
@@ -227,19 +246,14 @@ func fetchIssues(ctx context.Context, conf config, _ *gitea.Issue, page int) (is
 		},
 	)
 	if err != nil {
-		return
+		return nil, true, err
 	}
-
-	total, err := strconv.Atoi(resp.Header.Get("X-Total-Count"))
-	if err != nil && (len(issues) == 0 || total <= page*conf.capacity) {
-		more = false
-	}
-
-	return
+	lastPage, err := reachedTotalCount(resp, conf, page, len(issues))
+	return issues, !lastPage, err
 }
 
 func fetchComments(ctx context.Context, conf config, issue *gitea.Issue, page int) ([]*gitea.Comment, bool, error) {
-	comments, _, err := conf.gc.Issues.ListIssueComments(
+	comments, resp, err := conf.gc.Issues.ListIssueComments(
 		ctx,
 		conf.owner,
 		conf.project,
@@ -252,18 +266,62 @@ func fetchComments(ctx context.Context, conf config, issue *gitea.Issue, page in
 			Since: conf.since,
 		},
 	)
-	more := len(comments) == conf.capacity
-	return comments, more, err
+	if err != nil {
+		return nil, true, err
+	}
+	lastPage, err := reachedTotalCount(resp, conf, page, len(comments))
+	return comments, !lastPage, err
 }
 
-func fetchLabels(ctx context.Context, conf config, issue *gitea.Issue, page int) ([]*gitea.Label, bool, error) {
-	labels, _, err := conf.gc.Issues.GetIssueLabels(
+func fetchLabels(ctx context.Context, conf config, issue *gitea.Issue, page int) ([]*LabelEvent, bool, error) {
+	events, resp, err := conf.gc.Issues.ListIssueTimeline(
 		ctx,
 		conf.owner,
 		conf.project,
 		issue.Index,
-		// Labels are always returned as a single giant body, with no pagination.
-		gitea.ListLabelsOptions{},
+		gitea.ListIssueCommentOptions{
+			ListOptions: gitea.ListOptions{
+				Page:     page,
+				PageSize: conf.capacity,
+			},
+			Since: conf.since,
+		},
 	)
-	return labels, false, err
+	if err != nil {
+		return nil, true, err
+	}
+	lastPage, err := reachedTotalCount(resp, conf, page, len(events))
+	if err != nil {
+		return nil, true, err
+	}
+
+	labels := make([]*LabelEvent, 0)
+	for _, event := range events {
+		var kind LabelEventKind
+		switch event.Type {
+			case "label":
+				kind = LabelAdded
+			case "unlabel":
+				kind = LabelRemoved
+			default:
+				continue
+		}
+		for _, label := range event.Label {
+			labels = append(labels, &LabelEvent{kind: kind, label: label})
+		}
+	}
+	return labels, !lastPage, err
+}
+
+// Returns whether this is the last page.
+func reachedTotalCount(resp *gitea.Response, conf config, page, items_len int) (bool, error) {
+	header := resp.Header.Get("X-Total-Count")
+	if header == "" {
+		return false, errors.New("Missing X-Total-Count header")
+	}
+	total, err := strconv.Atoi(header)
+	if err != nil {
+		return false, err
+	}
+	return total <= page*conf.capacity, nil
 }
