@@ -149,6 +149,8 @@ func (gi *giteaImporter) importEvent(ctx context.Context, repo *cache.RepoCache,
 		return gi.importLabel(ctx, repo, bug, e)
 	case *iterator.CommentEvent:
 		return gi.importComment(ctx, repo, bug, e)
+	case *iterator.RenameEvent:
+		return gi.importRename(ctx, repo, bug, e)
 	}
 	return errors.New("bruh wat")
 }
@@ -236,6 +238,21 @@ func (gi *giteaImporter) importLabel(ctx context.Context, repo *cache.RepoCache,
 		map[string]string{
 			metaKeyGiteaID: labelID,
 		},
+	)
+	return err
+}
+
+func (gi *giteaImporter) importRename(ctx context.Context, repo *cache.RepoCache, bug *cache.BugCache, rename *iterator.RenameEvent) error {
+	author, err := gi.ensurePerson(ctx, repo, rename.Poster)
+	if err != nil {
+		return err
+	}
+
+	_, err = bug.SetTitleRaw(
+		author,
+		rename.Updated.Unix(),
+		rename.NewName,
+		make(map[string]string),
 	)
 	return err
 }
