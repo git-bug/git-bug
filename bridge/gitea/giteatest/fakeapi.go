@@ -583,7 +583,12 @@ func (fa *FakeAPI) handleIssueTimeline(w http.ResponseWriter, r *http.Request, i
 	if !since.IsZero() {
 		filtered := events[:0:0]
 		for _, e := range events {
-			if !e.Created.Before(since) {
+			// Forgejo filters timeline by updated_unix, not created_unix.
+			ts := e.Updated
+			if ts.IsZero() {
+				ts = e.Created
+			}
+			if !ts.Before(since) {
 				filtered = append(filtered, e)
 			}
 		}
@@ -625,6 +630,7 @@ func (fa *FakeAPI) handleRepoLabels(labelsPath string) http.HandlerFunc {
 		switch r.Method {
 		case http.MethodGet:
 			page, limit := parsePagination(r)
+			w.Header().Set("X-Total-Count", strconv.Itoa(len(fa.RepoLabels)))
 			start, end := pageSlice(page, limit, len(fa.RepoLabels))
 			writeJSON(w, fa.RepoLabels[start:end])
 		case http.MethodPost:
