@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781467030108,
+  "lastUpdate": 1781467329410,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -18724,6 +18724,102 @@ window.BENCHMARK_DATA = {
             "value": 489066,
             "unit": "allocs/op",
             "extra": "2 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1486be211845a252f1425905dff9720d4e87afee",
+          "message": "Merge pull request #1573 from nijotz/webui-fix-readme-paths\n\nwebui: fix stale webui2 paths",
+          "timestamp": "2026-06-14T19:56:56Z",
+          "tree_id": "48c53c4fed329f34eb6651a0722349c379620e5f",
+          "url": "https://github.com/git-bug/git-bug/commit/1486be211845a252f1425905dff9720d4e87afee"
+        },
+        "date": 1781467328311,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 16763864,
+            "unit": "ns/op\t 1216588 B/op\t   18983 allocs/op",
+            "extra": "61 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 16763864,
+            "unit": "ns/op",
+            "extra": "61 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 1216588,
+            "unit": "B/op",
+            "extra": "61 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 18983,
+            "unit": "allocs/op",
+            "extra": "61 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 66290363,
+            "unit": "ns/op\t 5081400 B/op\t   76140 allocs/op",
+            "extra": "16 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 66290363,
+            "unit": "ns/op",
+            "extra": "16 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 5081400,
+            "unit": "B/op",
+            "extra": "16 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 76140,
+            "unit": "allocs/op",
+            "extra": "16 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 431889012,
+            "unit": "ns/op\t37620765 B/op\t  497425 allocs/op",
+            "extra": "3 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 431889012,
+            "unit": "ns/op",
+            "extra": "3 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 37620765,
+            "unit": "B/op",
+            "extra": "3 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 497425,
+            "unit": "allocs/op",
+            "extra": "3 times\n4 procs"
           }
         ]
       }
