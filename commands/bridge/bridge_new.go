@@ -84,6 +84,14 @@ git bug bridge new \
     --name=default \
     --target=gitlab \
     --url=https://github.com/example-org/example-repo \
+    --token=$TOKEN
+
+# For todo.sr.ht
+git bug bridge new \
+    --name=default \
+    --target=todosrht \
+    --url=https://todo.sr.ht/~owner/tracker-name \
+    --login=your-username \
     --token=$TOKEN`,
 		PreRunE: execenv.LoadBackend(env),
 		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {

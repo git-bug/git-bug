@@ -47,6 +47,7 @@ We support a number of bridges:
 - GitHub
 - GitLab
 - Launchpad
+- SourceHut
 
 _For a full list of the features enabled for each bridge, see the
 [feature matrix][docs/feature-matrix]._
