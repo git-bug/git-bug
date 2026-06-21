@@ -37,18 +37,18 @@ func TestIdentityCommitLoad(t *testing.T) {
 
 	// multiple versions
 
-	identity, err = NewIdentityFull(repo, "René Descartes", "rene.descartes@example.com", "", "", []*Key{generatePublicKey()})
+	identity, err = NewIdentityFull(repo, "René Descartes", "rene.descartes@example.com", "", "", []*Key{newTestKey(t)})
 	require.NoError(t, err)
 
 	idBeforeCommit = identity.Id()
 
 	err = identity.Mutate(repo, func(orig *Mutator) {
-		orig.Keys = []*Key{generatePublicKey()}
+		orig.Keys = []*Key{newTestKey(t)}
 	})
 	require.NoError(t, err)
 
 	err = identity.Mutate(repo, func(orig *Mutator) {
-		orig.Keys = []*Key{generatePublicKey()}
+		orig.Keys = []*Key{newTestKey(t)}
 	})
 	require.NoError(t, err)
 
@@ -71,13 +71,13 @@ func TestIdentityCommitLoad(t *testing.T) {
 
 	err = identity.Mutate(repo, func(orig *Mutator) {
 		orig.Email = "rene@descartes.com"
-		orig.Keys = []*Key{generatePublicKey()}
+		orig.Keys = []*Key{newTestKey(t)}
 	})
 	require.NoError(t, err)
 
 	err = identity.Mutate(repo, func(orig *Mutator) {
 		orig.Email = "rene@descartes.com"
-		orig.Keys = []*Key{generatePublicKey(), generatePublicKey()}
+		orig.Keys = []*Key{newTestKey(t), newTestKey(t)}
 	})
 	require.NoError(t, err)
 
@@ -124,11 +124,11 @@ func commitsAreSet(t *testing.T, identity *Identity) {
 
 // Test that the correct crypto keys are returned for a given lamport time
 func TestIdentity_ValidKeysAtTime(t *testing.T) {
-	pubKeyA := generatePublicKey()
-	pubKeyB := generatePublicKey()
-	pubKeyC := generatePublicKey()
-	pubKeyD := generatePublicKey()
-	pubKeyE := generatePublicKey()
+	pubKeyA := newTestKey(t)
+	pubKeyB := newTestKey(t)
+	pubKeyC := newTestKey(t)
+	pubKeyD := newTestKey(t)
+	pubKeyE := newTestKey(t)
 
 	identity := Identity{
 		versions: []*version{

@@ -33,8 +33,8 @@ func TestVersionJSON(t *testing.T) {
 	repo := makeIdentityTestRepo(t)
 
 	keys := []*Key{
-		generatePublicKey(),
-		generatePublicKey(),
+		newTestKey(t),
+		newTestKey(t),
 	}
 
 	before, err := newVersion(repo, "name", "email", "login", "avatarUrl", keys)

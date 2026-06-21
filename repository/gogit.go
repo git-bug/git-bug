@@ -13,7 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/go-git/go-billy/v5/osfs"
 	gogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
@@ -668,9 +667,9 @@ func (repo *GoGitRepo) StoreCommit(treeHash Hash, parents ...Hash) (Hash, error)
 	return repo.StoreSignedCommit(treeHash, nil, parents...)
 }
 
-// StoreSignedCommit will store a Git commit with the given Git tree. If signKey is not nil, the commit
-// will be signed accordingly.
-func (repo *GoGitRepo) StoreSignedCommit(treeHash Hash, signKey *openpgp.Entity, parents ...Hash) (Hash, error) {
+// StoreSignedCommit will store a Git commit with the given Git tree. If signer is not nil, the commit
+// will be signed.
+func (repo *GoGitRepo) StoreSignedCommit(treeHash Hash, signer Signer, parents ...Hash) (Hash, error) {
 	cfg, err := repo.r.Config()
 	if err != nil {
 		return "", err
@@ -696,8 +695,7 @@ func (repo *GoGitRepo) StoreSignedCommit(treeHash Hash, signKey *openpgp.Entity,
 	}
 
 	// Compute the signature if needed
-	if signKey != nil {
-		// first get the serialized commit
+	if signer != nil {
 		encoded := &plumbing.MemoryObject{}
 		if err := commit.Encode(encoded); err != nil {
 			return "", err
@@ -706,13 +704,15 @@ func (repo *GoGitRepo) StoreSignedCommit(treeHash Hash, signKey *openpgp.Entity,
 		if err != nil {
 			return "", err
 		}
-
-		// sign the data
-		var sig bytes.Buffer
-		if err := openpgp.ArmoredDetachSign(&sig, signKey, r, nil); err != nil {
+		payload, err := io.ReadAll(r)
+		if err != nil {
 			return "", err
 		}
-		commit.PGPSignature = sig.String()
+		sig, err := signer.Sign(payload)
+		if err != nil {
+			return "", err
+		}
+		commit.PGPSignature = string(sig)
 	}
 
 	obj := repo.r.Storer.NewEncodedObject()
@@ -825,24 +825,20 @@ func (repo *GoGitRepo) ReadCommit(hash Hash) (Commit, error) {
 	}
 
 	if commit.PGPSignature != "" {
-		// I can't find a way to just remove the signature when reading the encoded commit so we need to
-		// re-encode the commit without signature.
-
+		// Re-encode without the signature header to reconstruct the signed payload.
 		encoded := &plumbing.MemoryObject{}
-		err := commit.EncodeWithoutSignature(encoded)
+		if err := commit.EncodeWithoutSignature(encoded); err != nil {
+			return Commit{}, err
+		}
+		r, err := encoded.Reader()
 		if err != nil {
 			return Commit{}, err
 		}
-
-		result.SignedData, err = encoded.Reader()
+		result.SignedData, err = io.ReadAll(r)
 		if err != nil {
 			return Commit{}, err
 		}
-
-		result.Signature, err = deArmorSignature(strings.NewReader(commit.PGPSignature))
-		if err != nil {
-			return Commit{}, err
-		}
+		result.Signature = []byte(commit.PGPSignature)
 	}
 
 	return result, nil

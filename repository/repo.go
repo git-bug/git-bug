@@ -6,7 +6,6 @@ import (
 	"io"
 	"time"
 
-	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/go-git/go-billy/v5"
 
 	"github.com/git-bug/git-bug/util/lamport"
@@ -123,10 +122,10 @@ type Index interface {
 
 type Commit struct {
 	Hash       Hash
-	Parents    []Hash    // hashes of the parents, if any
-	TreeHash   Hash      // hash of the git Tree
-	SignedData io.Reader // if signed, reader for the signed data (likely, the serialized commit)
-	Signature  io.Reader // if signed, reader for the (non-armored) signature
+	Parents    []Hash // hashes of the parents, if any
+	TreeHash   Hash   // hash of the git Tree
+	SignedData []byte // if signed, the serialized commit data without the signature header
+	Signature  []byte // if signed, the armored signature (PGP or SSHSIG)
 }
 
 // RepoData give access to the git data storage
@@ -163,9 +162,9 @@ type RepoData interface {
 	// StoreCommit will store a Git commit with the given Git tree
 	StoreCommit(treeHash Hash, parents ...Hash) (Hash, error)
 
-	// StoreSignedCommit will store a Git commit with the given Git tree. If signKey is not nil, the commit
-	// will be signed accordingly.
-	StoreSignedCommit(treeHash Hash, signKey *openpgp.Entity, parents ...Hash) (Hash, error)
+	// StoreSignedCommit will store a Git commit with the given Git tree. If signer is not nil, the commit
+	// will be signed.
+	StoreSignedCommit(treeHash Hash, signer Signer, parents ...Hash) (Hash, error)
 
 	// ReadCommit read a Git commit and returns some of its characteristic
 	// Returns ErrNotFound if not found.

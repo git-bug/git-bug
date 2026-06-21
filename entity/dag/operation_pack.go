@@ -1,6 +1,7 @@
 package dag
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/pkg/errors"
+	"golang.org/x/crypto/ssh"
 
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
@@ -151,18 +153,16 @@ func (opp *operationPack) Write(def Definition, repo repository.Repo, parentComm
 		return "", err
 	}
 
-	// Write a Git commit referencing the tree, with the previous commit as parent
-	// If we have keys, sign.
+	// Write a Git commit referencing the tree, with the previous commit as parent.
 	var commitHash repository.Hash
 
-	// Sign the commit if we have a key
-	signingKey, err := opp.Author.SigningKey(repo)
+	signer, err := opp.Author.Signer()
 	if err != nil {
 		return "", err
 	}
 
-	if signingKey != nil {
-		commitHash, err = repo.StoreSignedCommit(treeHash, signingKey.PGPEntity(), parentCommit...)
+	if signer != nil {
+		commitHash, err = repo.StoreSignedCommit(treeHash, signer, parentCommit...)
 	} else {
 		commitHash, err = repo.StoreCommit(treeHash, parentCommit...)
 	}
@@ -277,15 +277,39 @@ func readOperationPack(def Definition, repo repository.RepoData, resolvers entit
 	// Verify signature if we expect one
 	keys := author.ValidKeysAtTime(fmt.Sprintf(editClockPattern, def.Namespace), editTime)
 	if len(keys) > 0 {
-		// this is a *very* convoluted and inefficient way to make OpenPGP accept to check a signature, but anything
-		// else goes against the grain and make it very unhappy.
-		keyring := openpgp.EntityList{}
-		for _, key := range keys {
-			keyring = append(keyring, key.PGPEntity())
+		if len(commit.Signature) == 0 {
+			return nil, fmt.Errorf("identity has keys but commit is unsigned")
 		}
-		_, err = openpgp.CheckDetachedSignature(keyring, commit.SignedData, commit.Signature, nil)
-		if err != nil {
-			return nil, fmt.Errorf("signature failure: %v", err)
+		if repository.IsSSHSignature(commit.Signature) {
+			var sshPubKeys []ssh.PublicKey
+			for _, key := range keys {
+				pub, err := key.SSHPublicKey()
+				if err == nil {
+					sshPubKeys = append(sshPubKeys, pub)
+				}
+			}
+			if len(sshPubKeys) == 0 {
+				return nil, fmt.Errorf("commit is SSH-signed but identity has no SSH keys at this lamport time")
+			}
+			if err := repository.VerifySSHSIG(sshPubKeys, commit.SignedData, commit.Signature); err != nil {
+				return nil, fmt.Errorf("signature failure: %v", err)
+			}
+		} else {
+			// PGP signature
+			keyring := openpgp.EntityList{}
+			for _, key := range keys {
+				if key.PGPEntity() == "" {
+					continue
+				}
+				entities, err := openpgp.ReadArmoredKeyRing(strings.NewReader(key.PGPEntity()))
+				if err == nil {
+					keyring = append(keyring, entities...)
+				}
+			}
+			_, err = openpgp.CheckArmoredDetachedSignature(keyring, bytes.NewReader(commit.SignedData), bytes.NewReader(commit.Signature), nil)
+			if err != nil {
+				return nil, fmt.Errorf("signature failure: %v", err)
+			}
 		}
 	}
 
