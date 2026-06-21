@@ -3,10 +3,9 @@ package identity
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
-
-	"github.com/pkg/errors"
 
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
@@ -103,7 +102,7 @@ func read(repo repository.Repo, ref string) (*Identity, error) {
 	id := entity.RefToId(ref)
 
 	if err := id.Validate(); err != nil {
-		return nil, errors.Wrap(err, "invalid ref")
+		return nil, fmt.Errorf("invalid ref: %w", err)
 	}
 
 	hashes, err := repo.ListCommits(ref)
@@ -119,7 +118,7 @@ func read(repo repository.Repo, ref string) (*Identity, error) {
 	for _, hash := range hashes {
 		entries, err := repo.ReadTree(hash)
 		if err != nil {
-			return nil, errors.Wrap(err, "can't list git tree entries")
+			return nil, fmt.Errorf("can't list git tree entries: %w", err)
 		}
 		if len(entries) != 1 {
 			return nil, fmt.Errorf("invalid identity data at hash %s", hash)
@@ -132,14 +131,14 @@ func read(repo repository.Repo, ref string) (*Identity, error) {
 
 		data, err := repo.ReadData(entry.Hash)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to read git blob data")
+			return nil, fmt.Errorf("failed to read git blob data: %w", err)
 		}
 
 		var version version
 		err = json.NewDecoder(data).Decode(&version)
 		_ = data.Close()
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to decode Identity version json %s", hash)
+			return nil, fmt.Errorf("failed to decode Identity version json %s: %w", hash, err)
 		}
 
 		// tag the version with the commit hash
@@ -269,7 +268,7 @@ func (i *Identity) Commit(repo repository.ClockedRepo) error {
 	}
 
 	if err := i.Validate(); err != nil {
-		return errors.Wrap(err, "can't commit an identity with invalid data")
+		return fmt.Errorf("can't commit an identity with invalid data: %w", err)
 	}
 
 	var lastCommit repository.Hash
@@ -471,20 +470,30 @@ func (i *Identity) Keys() []*Key {
 	return i.lastVersion().keys
 }
 
-// SigningKey return the key that should be used to sign new messages. If no key is available, return nil.
-func (i *Identity) SigningKey(repo repository.RepoKeyring) (*Key, error) {
+// Signer returns a Signer for the first usable signing key, probing each key for
+// availability (loaded in the SSH agent, present in the gpg keyring ...).
+// Returns nil, nil if the identity has no keys.
+// Returns an error if keys exist but none is usable: an identity with keys must
+// sign, as readers reject unsigned operations from it.
+func (i *Identity) Signer() (repository.Signer, error) {
 	keys := i.Keys()
+	if len(keys) == 0 {
+		return nil, nil
+	}
+	var errs []error
 	for _, key := range keys {
-		err := key.ensurePrivateKey(repo)
-		if err == errNoPrivateKey {
+		s, err := key.Signer()
+		if err != nil {
+			errs = append(errs, err)
 			continue
 		}
-		if err != nil {
-			return nil, err
+		if err := s.Available(); err != nil {
+			errs = append(errs, err)
+			continue
 		}
-		return key, nil
+		return s, nil
 	}
-	return nil, nil
+	return nil, fmt.Errorf("no usable signing key: %w", errors.Join(errs...))
 }
 
 // ValidKeysAtTime return the set of keys valid at a given lamport time

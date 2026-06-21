@@ -33,8 +33,8 @@ func TestVersionJSON(t *testing.T) {
 	repo := makeIdentityTestRepo(t)
 
 	keys := []*Key{
-		generatePublicKey(),
-		generatePublicKey(),
+		newTestKey(t),
+		newTestKey(t),
 	}
 
 	before, err := newVersion(repo, "name", "email", "login", "avatarUrl", keys)
@@ -75,4 +75,23 @@ func TestVersionJSON(t *testing.T) {
 	expected.Id()
 
 	assert.Equal(t, expected, &after)
+}
+
+// Format v2 identities still load, but their pub_keys are ignored: the v2 key
+// mechanism was never functional and no identity in the wild has keys.
+func TestVersionJSONFormatV2KeysIgnored(t *testing.T) {
+	v2JSON := []byte(`{
+		"version": 2,
+		"times": {"bugs-create": 1},
+		"unix_time": 1609459200,
+		"name": "Alice",
+		"email": "alice@example.com",
+		"pub_keys": ["-----BEGIN PGP PUBLIC KEY BLOCK-----\n...\n-----END PGP PUBLIC KEY BLOCK-----"],
+		"nonce": "AAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+	}`)
+
+	var v version
+	require.NoError(t, json.Unmarshal(v2JSON, &v))
+	require.Equal(t, "Alice", v.name)
+	require.Empty(t, v.keys)
 }

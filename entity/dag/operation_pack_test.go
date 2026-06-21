@@ -1,10 +1,14 @@
 package dag
 
 import (
-	"math/rand"
+	"crypto/ed25519"
+	"crypto/rand"
+	mathrand "math/rand"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/agent"
 
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
@@ -51,8 +55,11 @@ func TestOperationPackSignedReadWrite(t *testing.T) {
 	} {
 		repo, author, _, resolver, def := maker()
 
-		err := author.(*identity.Identity).Mutate(repo, func(orig *identity.Mutator) {
-			orig.Keys = append(orig.Keys, identity.GenerateKey())
+		testKey, err := newTestKey()
+		require.NoError(t, err)
+
+		err = author.(*identity.Identity).Mutate(repo, func(orig *identity.Mutator) {
+			orig.Keys = append(orig.Keys, testKey)
 		})
 		require.NoError(t, err)
 
@@ -151,7 +158,31 @@ func randomData() []byte {
 	var letterRunes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	b := make([]byte, 32)
 	for i := range b {
-		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+		b[i] = letterRunes[mathrand.Intn(len(letterRunes))]
 	}
 	return b
+}
+
+// newTestKey creates an in-memory Ed25519 signing key backed by an in-process SSH
+// agent so no real SSH_AUTH_SOCK is required.
+func newTestKey() (*identity.Key, error) {
+	pub, priv, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		return nil, err
+	}
+	sshPub, err := ssh.NewPublicKey(pub)
+	if err != nil {
+		return nil, err
+	}
+	ag := agent.NewKeyring().(agent.ExtendedAgent)
+	if err := ag.Add(agent.AddedKey{PrivateKey: priv}); err != nil {
+		return nil, err
+	}
+	signer := repository.NewSSHAgentSignerWithAgent(sshPub, ag)
+	k, err := identity.NewSSHKey(sshPub)
+	if err != nil {
+		return nil, err
+	}
+	// NewKeyWithSigner injects a signer so Signer() works without a real SSH agent.
+	return identity.NewKeyWithSigner(k.PublicKeyMultibase(), identity.KeyOriginSSH, signer), nil
 }

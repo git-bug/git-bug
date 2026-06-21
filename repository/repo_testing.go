@@ -1,15 +1,18 @@
 package repository
 
 import (
+	"crypto/ed25519"
+	"crypto/rand"
 	"io"
-	"math/rand"
+	mathrand "math/rand"
 	"os"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/agent"
 
 	"github.com/git-bug/git-bug/util/lamport"
 )
@@ -92,7 +95,7 @@ func randomHash() Hash {
 	var letterRunes = "abcdef0123456789"
 	b := make([]byte, idLengthSHA256)
 	for i := range b {
-		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+		b[i] = letterRunes[mathrand.Intn(len(letterRunes))]
 	}
 	return Hash(b)
 }
@@ -256,36 +259,41 @@ func RepoDataSignatureTest(t *testing.T, repo RepoData) {
 	})
 	require.NoError(t, err)
 
-	pgpEntity1, err := openpgp.NewEntity("", "", "", nil)
+	pub1, priv1, err := ed25519.GenerateKey(rand.Reader)
 	require.NoError(t, err)
-	keyring1 := openpgp.EntityList{pgpEntity1}
-
-	pgpEntity2, err := openpgp.NewEntity("", "", "", nil)
+	sshPub1, err := ssh.NewPublicKey(pub1)
 	require.NoError(t, err)
-	keyring2 := openpgp.EntityList{pgpEntity2}
+	ag1 := agent.NewKeyring().(agent.ExtendedAgent)
+	require.NoError(t, ag1.Add(agent.AddedKey{PrivateKey: priv1}))
+	signer1 := NewSSHAgentSignerWithAgent(sshPub1, ag1)
 
-	commitHash1, err := repo.StoreSignedCommit(treeHash, pgpEntity1)
+	pub2, _, err := ed25519.GenerateKey(rand.Reader)
+	require.NoError(t, err)
+	sshPub2, err := ssh.NewPublicKey(pub2)
+	require.NoError(t, err)
+
+	commitHash1, err := repo.StoreSignedCommit(treeHash, signer1)
 	require.NoError(t, err)
 
 	commit1, err := repo.ReadCommit(commitHash1)
 	require.NoError(t, err)
 
-	_, err = openpgp.CheckDetachedSignature(keyring1, commit1.SignedData, commit1.Signature, nil)
+	err = VerifySSHSIG([]ssh.PublicKey{sshPub1}, commit1.SignedData, commit1.Signature)
 	require.NoError(t, err)
 
-	_, err = openpgp.CheckDetachedSignature(keyring2, commit1.SignedData, commit1.Signature, nil)
+	err = VerifySSHSIG([]ssh.PublicKey{sshPub2}, commit1.SignedData, commit1.Signature)
 	require.Error(t, err)
 
-	commitHash2, err := repo.StoreSignedCommit(treeHash, pgpEntity1, commitHash1)
+	commitHash2, err := repo.StoreSignedCommit(treeHash, signer1, commitHash1)
 	require.NoError(t, err)
 
 	commit2, err := repo.ReadCommit(commitHash2)
 	require.NoError(t, err)
 
-	_, err = openpgp.CheckDetachedSignature(keyring1, commit2.SignedData, commit2.Signature, nil)
+	err = VerifySSHSIG([]ssh.PublicKey{sshPub1}, commit2.SignedData, commit2.Signature)
 	require.NoError(t, err)
 
-	_, err = openpgp.CheckDetachedSignature(keyring2, commit2.SignedData, commit2.Signature, nil)
+	err = VerifySSHSIG([]ssh.PublicKey{sshPub2}, commit2.SignedData, commit2.Signature)
 	require.Error(t, err)
 }
 
@@ -366,7 +374,7 @@ func randomData() []byte {
 	var letterRunes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	b := make([]byte, 32)
 	for i := range b {
-		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+		b[i] = letterRunes[mathrand.Intn(len(letterRunes))]
 	}
 	return b
 }
