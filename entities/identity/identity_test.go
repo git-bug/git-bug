@@ -1,6 +1,7 @@
 package identity
 
 import (
+	"bytes"
 	"encoding/json"
 	"testing"
 
@@ -9,7 +10,172 @@ import (
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
 	"github.com/git-bug/git-bug/util/lamport"
+	"github.com/git-bug/git-bug/util/timestamp"
 )
+
+type mockIdentity struct {
+	name  string
+	login string
+	email string
+}
+
+func (m *mockIdentity) Name() string {
+	return m.name
+}
+
+func (m *mockIdentity) Login() string {
+	return m.login
+}
+
+func (m *mockIdentity) Email() string {
+	return m.email
+}
+
+func (m *mockIdentity) DisplayName() string {
+	return m.name
+}
+
+func (m *mockIdentity) AvatarUrl() string {
+	return ""
+}
+
+func (m *mockIdentity) Keys() []*Key {
+	return nil
+}
+
+func (m *mockIdentity) SigningKey(repo repository.RepoKeyring) (*Key, error) {
+	return nil, nil
+}
+
+func (m *mockIdentity) ValidKeysAtTime(clockName string, time lamport.Time) []*Key {
+	return nil
+}
+
+func (m *mockIdentity) LastModification() timestamp.Timestamp {
+	return 0
+}
+
+func (m *mockIdentity) LastModificationLamports() map[string]lamport.Time {
+	return nil
+}
+
+func (m *mockIdentity) IsProtected() bool {
+	return false
+}
+
+func (m *mockIdentity) Validate() error {
+	return nil
+}
+
+func (m *mockIdentity) NeedCommit() bool {
+	return false
+}
+
+func (m *mockIdentity) Id() entity.Id {
+	return ""
+}
+
+// identitiesEqual compares two identities by their versions
+func identitiesEqual(left, right *Identity) bool {
+	if left == nil && right == nil {
+		return true
+	}
+	if left == nil || right == nil {
+		return false
+	}
+
+	if len(left.versions) != len(right.versions) {
+		return false
+	}
+
+	for i, lv := range left.versions {
+		rv := right.versions[i]
+		if !versionsEqual(lv, rv) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// versionsEqual compares two versions, comparing keys by their public key fingerprints
+func versionsEqual(left, right *version) bool {
+	if left == nil && right == nil {
+		return true
+	}
+	if left == nil || right == nil {
+		return false
+	}
+
+	// Compare basic fields
+	if left.name != right.name || left.email != right.email ||
+		left.login != right.login || left.avatarURL != right.avatarURL ||
+		left.unixTime != right.unixTime {
+		return false
+	}
+
+	// Compare times
+	if len(left.times) != len(right.times) {
+		return false
+	}
+	for k, tv := range left.times {
+		ov, ok := right.times[k]
+		if !ok || tv != ov {
+			return false
+		}
+	}
+
+	// Compare keys by fingerprint
+	if len(left.keys) != len(right.keys) {
+		return false
+	}
+	for i, k := range left.keys {
+		if !keysEqual(k, right.keys[i]) {
+			return false
+		}
+	}
+
+	// Compare nonce
+	if len(left.nonce) != len(right.nonce) {
+		return false
+	}
+	for i, n := range left.nonce {
+		if n != right.nonce[i] {
+			return false
+		}
+	}
+
+	// Compare metadata
+	if len(left.metadata) != len(right.metadata) {
+		return false
+	}
+	for k, vm := range left.metadata {
+		om, ok := right.metadata[k]
+		if !ok || vm != om {
+			return false
+		}
+	}
+
+	// Don't compare id and commitHash as they're derived fields
+	return true
+}
+
+// keysEqual compares two keys by their public key fingerprint
+func keysEqual(left, right *Key) bool {
+	if left == nil && right == nil {
+		return true
+	}
+	if left == nil || right == nil {
+		return false
+	}
+	if left.public == nil && right.public == nil {
+		return true
+	}
+	if left.public == nil || right.public == nil {
+		return false
+	}
+	return bytes.Equal(left.public.Fingerprint[:], right.public.Fingerprint[:])
+}
 
 // Test the commit and load of an Identity with multiple versions
 func TestIdentityCommitLoad(t *testing.T) {
@@ -33,22 +199,22 @@ func TestIdentityCommitLoad(t *testing.T) {
 	loaded, err := ReadLocal(repo, identity.Id())
 	require.NoError(t, err)
 	commitsAreSet(t, loaded)
-	require.Equal(t, identity, loaded)
+	require.True(t, identitiesEqual(identity, loaded), "loaded identity should equal original (comparing by key fingerprint)")
 
 	// multiple versions
-
-	identity, err = NewIdentityFull(repo, "René Descartes", "rene.descartes@example.com", "", "", []*Key{generatePublicKey()})
+	testIdentity := &mockIdentity{name: "René Descartes", email: "rene.descartes@example.com"}
+	identity, err = NewIdentityFull(repo, "René Descartes", "rene.descartes@example.com", "", "", []*Key{generatePublicKey(testIdentity)})
 	require.NoError(t, err)
 
 	idBeforeCommit = identity.Id()
 
 	err = identity.Mutate(repo, func(orig *Mutator) {
-		orig.Keys = []*Key{generatePublicKey()}
+		orig.Keys = []*Key{generatePublicKey(testIdentity)}
 	})
 	require.NoError(t, err)
 
 	err = identity.Mutate(repo, func(orig *Mutator) {
-		orig.Keys = []*Key{generatePublicKey()}
+		orig.Keys = []*Key{generatePublicKey(testIdentity)}
 	})
 	require.NoError(t, err)
 
@@ -65,19 +231,19 @@ func TestIdentityCommitLoad(t *testing.T) {
 	loaded, err = ReadLocal(repo, identity.Id())
 	require.NoError(t, err)
 	commitsAreSet(t, loaded)
-	require.Equal(t, identity, loaded)
+	require.True(t, identitiesEqual(identity, loaded), "loaded identity should equal original (comparing by key fingerprint)")
 
 	// add more version
 
 	err = identity.Mutate(repo, func(orig *Mutator) {
 		orig.Email = "rene@descartes.com"
-		orig.Keys = []*Key{generatePublicKey()}
+		orig.Keys = []*Key{generatePublicKey(testIdentity)}
 	})
 	require.NoError(t, err)
 
 	err = identity.Mutate(repo, func(orig *Mutator) {
 		orig.Email = "rene@descartes.com"
-		orig.Keys = []*Key{generatePublicKey(), generatePublicKey()}
+		orig.Keys = []*Key{generatePublicKey(testIdentity), generatePublicKey(testIdentity)}
 	})
 	require.NoError(t, err)
 
@@ -92,7 +258,7 @@ func TestIdentityCommitLoad(t *testing.T) {
 	loaded, err = ReadLocal(repo, identity.Id())
 	require.NoError(t, err)
 	commitsAreSet(t, loaded)
-	require.Equal(t, identity, loaded)
+	require.True(t, identitiesEqual(identity, loaded), "loaded identity should equal original (comparing by key fingerprint)")
 }
 
 func TestIdentityMutate(t *testing.T) {
@@ -124,11 +290,12 @@ func commitsAreSet(t *testing.T, identity *Identity) {
 
 // Test that the correct crypto keys are returned for a given lamport time
 func TestIdentity_ValidKeysAtTime(t *testing.T) {
-	pubKeyA := generatePublicKey()
-	pubKeyB := generatePublicKey()
-	pubKeyC := generatePublicKey()
-	pubKeyD := generatePublicKey()
-	pubKeyE := generatePublicKey()
+	testIdentity := &mockIdentity{name: "Test User", email: "test@example.com"}
+	pubKeyA := generatePublicKey(testIdentity)
+	pubKeyB := generatePublicKey(testIdentity)
+	pubKeyC := generatePublicKey(testIdentity)
+	pubKeyD := generatePublicKey(testIdentity)
+	pubKeyE := generatePublicKey(testIdentity)
 
 	identity := Identity{
 		versions: []*version{

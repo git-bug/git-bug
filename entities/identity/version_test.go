@@ -32,9 +32,15 @@ func makeIdentityTestRepo(t *testing.T) repository.ClockedRepo {
 func TestVersionJSON(t *testing.T) {
 	repo := makeIdentityTestRepo(t)
 
+	testIdentity := &mockIdentity{
+		name:  "name",
+		email: "email",
+		login: "login",
+	}
+
 	keys := []*Key{
-		generatePublicKey(),
-		generatePublicKey(),
+		generatePublicKey(testIdentity),
+		generatePublicKey(testIdentity),
 	}
 
 	before, err := newVersion(repo, "name", "email", "login", "avatarUrl", keys)
@@ -74,5 +80,18 @@ func TestVersionJSON(t *testing.T) {
 	// make sure we now have an Id
 	expected.Id()
 
-	assert.Equal(t, expected, &after)
+	// Compare versions without Key objects since entities may differ in internal structure after deserialization
+	assert.Equal(t, expected.name, after.name)
+	assert.Equal(t, expected.email, after.email)
+	assert.Equal(t, expected.login, after.login)
+	assert.Equal(t, expected.avatarURL, after.avatarURL)
+	assert.Equal(t, expected.unixTime, after.unixTime)
+	assert.Equal(t, expected.times, after.times)
+	assert.Equal(t, expected.metadata, after.metadata)
+	assert.Equal(t, expected.id, after.id)
+	assert.Equal(t, expected.commitHash, after.commitHash)
+	assert.Equal(t, len(expected.keys), len(after.keys))
+	for i, key := range expected.keys {
+		assert.Equal(t, key.public.Fingerprint[:], after.keys[i].public.Fingerprint[:])
+	}
 }

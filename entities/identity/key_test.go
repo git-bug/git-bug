@@ -4,6 +4,7 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -11,7 +12,8 @@ import (
 )
 
 func TestPublicKeyJSON(t *testing.T) {
-	k := generatePublicKey()
+	id := &mockIdentity{name: "John Smith", email: "jsmith@example.com"}
+	k := generatePublicKey(id)
 
 	dataJSON, err := json.Marshal(k)
 	require.NoError(t, err)
@@ -20,14 +22,16 @@ func TestPublicKeyJSON(t *testing.T) {
 	err = json.Unmarshal(dataJSON, &read)
 	require.NoError(t, err)
 
-	require.Equal(t, k, &read)
+	// Compare public keys since entities may differ in internal structure after deserialization
+	require.Equal(t, k.public.Fingerprint[:], read.public.Fingerprint[:])
 }
 
 func TestStoreLoad(t *testing.T) {
 	repo := repository.NewMockRepoKeyring()
 
 	// public + private
-	k := GenerateKey()
+	id := &mockIdentity{name: "John Smith", email: "jsmith@example.com"}
+	k := GenerateKey(id, WithTime(time.Time{}))
 
 	// Store
 
@@ -48,11 +52,11 @@ func TestStoreLoad(t *testing.T) {
 
 	require.Equal(t, k.public, read.public)
 
-	require.IsType(t, (*rsa.PrivateKey)(nil), k.private.PrivateKey)
+	require.IsType(t, (*rsa.PrivateKey)(nil), k.entity.PrivateKey.PrivateKey)
 
 	// See https://github.com/golang/crypto/pull/175
-	rsaPriv := read.private.PrivateKey.(*rsa.PrivateKey)
+	rsaPriv := read.entity.PrivateKey.PrivateKey.(*rsa.PrivateKey)
 	rsaPriv.Primes[0], rsaPriv.Primes[1] = rsaPriv.Primes[1], rsaPriv.Primes[0]
 
-	require.True(t, k.private.PrivateKey.(*rsa.PrivateKey).Equal(read.private.PrivateKey))
+	require.True(t, k.entity.PrivateKey.PrivateKey.(*rsa.PrivateKey).Equal(read.entity.PrivateKey.PrivateKey))
 }
