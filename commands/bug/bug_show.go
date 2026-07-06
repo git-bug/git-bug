@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/commands/cmdjson"
 	"github.com/git-bug/git-bug/commands/completion"
 	"github.com/git-bug/git-bug/commands/execenv"
@@ -23,7 +24,7 @@ func newBugShowCommand(env *execenv.Env) *cobra.Command {
 	options := bugShowOptions{}
 
 	cmd := &cobra.Command{
-		Use:     "show [BUG_ID]",
+		Use:     "show [BUG_ID...]",
 		Short:   "Display the details of a bug",
 		PreRunE: execenv.LoadBackend(env),
 		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
@@ -47,6 +48,31 @@ func newBugShowCommand(env *execenv.Env) *cobra.Command {
 }
 
 func runBugShow(env *execenv.Env, opts bugShowOptions, args []string) error {
+	if len(args) > 1 {
+		if opts.fields != "" {
+			return errors.New("multiple bug ids are not supported with --field")
+		}
+		if opts.format != "json" {
+			return errors.New("multiple bug ids are only supported with --format=json")
+		}
+
+		bugs, err := resolveExplicitBugs(env, args)
+		if err != nil {
+			return err
+		}
+
+		snaps := make([]*bug.Snapshot, len(bugs))
+		for i, b := range bugs {
+			snap := b.Snapshot()
+			if len(snap.Comments) == 0 {
+				return errors.New("invalid bug: no comment")
+			}
+			snaps[i] = snap
+		}
+
+		return showJsonMultiFormatter(env, snaps)
+	}
+
 	b, _, err := ResolveSelected(env.Backend, args)
 	if err != nil {
 		return err
@@ -107,6 +133,18 @@ func runBugShow(env *execenv.Env, opts bugShowOptions, args []string) error {
 	default:
 		return fmt.Errorf("unknown format %s", opts.format)
 	}
+}
+
+func resolveExplicitBugs(env *execenv.Env, args []string) ([]*cache.BugCache, error) {
+	bugs := make([]*cache.BugCache, len(args))
+	for i, arg := range args {
+		b, err := env.Backend.Bugs().ResolvePrefix(arg)
+		if err != nil {
+			return nil, err
+		}
+		bugs[i] = b
+	}
+	return bugs, nil
 }
 
 func showDefaultFormatter(env *execenv.Env, snapshot *bug.Snapshot) error {
@@ -187,6 +225,14 @@ func showDefaultFormatter(env *execenv.Env, snapshot *bug.Snapshot) error {
 func showJsonFormatter(env *execenv.Env, snap *bug.Snapshot) error {
 	jsonBug := cmdjson.NewBugSnapshot(snap)
 	return env.Out.PrintJSON(jsonBug)
+}
+
+func showJsonMultiFormatter(env *execenv.Env, snaps []*bug.Snapshot) error {
+	jsonBugs := make([]cmdjson.BugSnapshot, len(snaps))
+	for i, snap := range snaps {
+		jsonBugs[i] = cmdjson.NewBugSnapshot(snap)
+	}
+	return env.Out.PrintJSON(jsonBugs)
 }
 
 func showOrgModeFormatter(env *execenv.Env, snapshot *bug.Snapshot) error {
