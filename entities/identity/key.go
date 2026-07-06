@@ -1,19 +1,40 @@
 package identity
 
 import (
-	"crypto/ecdsa"
-	"crypto/ed25519"
-	"crypto/elliptic"
-	cryptorsa "crypto/rsa"
-	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"strings"
 
+	didcrypto "github.com/MetaMask/go-did-it/crypto"
+	died25519 "github.com/MetaMask/go-did-it/crypto/ed25519"
+	"github.com/MetaMask/go-did-it/crypto/p256"
+	"github.com/MetaMask/go-did-it/crypto/p384"
+	"github.com/MetaMask/go-did-it/crypto/p521"
+	didrsa "github.com/MetaMask/go-did-it/crypto/rsa"
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"golang.org/x/crypto/ssh"
 
 	"github.com/git-bug/git-bug/repository"
+)
+
+// keySet is the allowlist of key algorithms git-bug accepts in identities.
+//
+// The criterion is: algorithms that git's two signing paths (SSH agent, gpg) can
+// actually produce and verify signatures with.
+//   - ed25519: the modern default for both SSH and GPG keys.
+//   - P-256/384/521: the ecdsa-sha2-nistp* SSH key types and ECDSA GPG keys.
+//   - RSA: still the majority of GPG keys and many older SSH keys, restricted to
+//     the modulus sizes ssh-keygen and gpg actually generate. 2048 remains the
+//     industry floor; anything smaller is weak, anything else is exotic.
+//
+// Notably excluded: x25519 (key exchange only, cannot sign) and secp256k1
+// (no SSH or GPG counterpart).
+var keySet = didcrypto.NewKeySet(
+	died25519.KeyType(),
+	p256.KeyType(),
+	p384.KeyType(),
+	p521.KeyType(),
+	didrsa.KeyType(2048, 3072, 4096),
 )
 
 // KeyOrigin identifies where a Key was sourced from, determining which signer to use.
@@ -180,93 +201,43 @@ func sshPubKeyToMultibase(pub ssh.PublicKey) (string, error) {
 	if !ok {
 		return "", fmt.Errorf("unsupported SSH key type: does not implement CryptoPublicKey")
 	}
-	switch k := cp.CryptoPublicKey().(type) {
-	case ed25519.PublicKey:
-		return pubkeyMultibaseEncode(multibaseCodeEd25519, k), nil
-	case *ecdsa.PublicKey:
-		return ecdsaPubKeyToMultibase(k)
-	case *cryptorsa.PublicKey:
-		der, err := x509.MarshalPKIXPublicKey(k)
-		if err != nil {
-			return "", err
-		}
-		return pubkeyMultibaseEncode(multibaseCodeRSA, der), nil
-	default:
-		return "", fmt.Errorf("unsupported SSH key algorithm: %T", k)
+	k, err := keySet.WrapPublicKey(cp.CryptoPublicKey())
+	if err != nil {
+		return "", err
 	}
+	return k.ToPublicKeyMultibase(), nil
 }
 
 // multibaseToSSHPublicKey converts a publicKeyMultibase string back to an ssh.PublicKey.
 func multibaseToSSHPublicKey(mb string) (ssh.PublicKey, error) {
-	code, keyBytes, err := pubkeyMultibaseDecode(mb)
+	pub, err := keySet.PublicKeyFromMultibase(mb)
 	if err != nil {
 		return nil, err
 	}
-	switch code {
-	case multibaseCodeEd25519:
-		return ssh.NewPublicKey(ed25519.PublicKey(keyBytes))
-	case multibaseCodeP256:
-		x, y := elliptic.UnmarshalCompressed(elliptic.P256(), keyBytes)
-		if x == nil {
-			return nil, fmt.Errorf("invalid P-256 public key bytes")
-		}
-		return ssh.NewPublicKey(&ecdsa.PublicKey{Curve: elliptic.P256(), X: x, Y: y})
-	case multibaseCodeP384:
-		x, y := elliptic.UnmarshalCompressed(elliptic.P384(), keyBytes)
-		if x == nil {
-			return nil, fmt.Errorf("invalid P-384 public key bytes")
-		}
-		return ssh.NewPublicKey(&ecdsa.PublicKey{Curve: elliptic.P384(), X: x, Y: y})
-	case multibaseCodeP521:
-		x, y := elliptic.UnmarshalCompressed(elliptic.P521(), keyBytes)
-		if x == nil {
-			return nil, fmt.Errorf("invalid P-521 public key bytes")
-		}
-		return ssh.NewPublicKey(&ecdsa.PublicKey{Curve: elliptic.P521(), X: x, Y: y})
-	case multibaseCodeRSA:
-		key, err := x509.ParsePKIXPublicKey(keyBytes)
-		if err != nil {
-			return nil, err
-		}
-		return ssh.NewPublicKey(key)
+	switch k := pub.(type) {
+	case died25519.PublicKey:
+		return ssh.NewPublicKey(k.Unwrap())
+	case *p256.PublicKey:
+		return ssh.NewPublicKey(k.Unwrap())
+	case *p384.PublicKey:
+		return ssh.NewPublicKey(k.Unwrap())
+	case *p521.PublicKey:
+		return ssh.NewPublicKey(k.Unwrap())
+	case *didrsa.PublicKey:
+		return ssh.NewPublicKey(k.Unwrap())
 	default:
-		return nil, fmt.Errorf("unsupported publicKeyMultibase algorithm: 0x%x", code)
+		return nil, fmt.Errorf("unsupported publicKeyMultibase key type: %T", k)
 	}
 }
 
 // pgpPubKeyToMultibase extracts the primary public key from a GPG entity and
 // converts it to a publicKeyMultibase string.
 func pgpPubKeyToMultibase(entity *openpgp.Entity) (string, error) {
-	switch k := entity.PrimaryKey.PublicKey.(type) {
-	case ed25519.PublicKey:
-		return pubkeyMultibaseEncode(multibaseCodeEd25519, k), nil
-	case *ecdsa.PublicKey:
-		return ecdsaPubKeyToMultibase(k)
-	case *cryptorsa.PublicKey:
-		der, err := x509.MarshalPKIXPublicKey(k)
-		if err != nil {
-			return "", err
-		}
-		return pubkeyMultibaseEncode(multibaseCodeRSA, der), nil
-	default:
-		return "", fmt.Errorf("unsupported GPG key algorithm: %T", k)
+	k, err := keySet.WrapPublicKey(entity.PrimaryKey.PublicKey)
+	if err != nil {
+		return "", err
 	}
-}
-
-// ecdsaPubKeyToMultibase converts an *ecdsa.PublicKey to a publicKeyMultibase string.
-func ecdsaPubKeyToMultibase(k *ecdsa.PublicKey) (string, error) {
-	var code uint64
-	switch k.Curve {
-	case elliptic.P256():
-		code = multibaseCodeP256
-	case elliptic.P384():
-		code = multibaseCodeP384
-	case elliptic.P521():
-		code = multibaseCodeP521
-	default:
-		return "", fmt.Errorf("unsupported ECDSA curve: %s", k.Curve.Params().Name)
-	}
-	return pubkeyMultibaseEncode(code, elliptic.MarshalCompressed(k.Curve, k.X, k.Y)), nil
+	return k.ToPublicKeyMultibase(), nil
 }
 
 // gpgFingerprint parses the stored pgpEntity and returns the primary key fingerprint

@@ -16,7 +16,9 @@ import (
 
 // 1: original format
 // 2: Identity Ids are generated from the first version serialized data instead of from the first git
-//    commit + Identity hold multiple lamport clocks from other entities, instead of just bug edit
+//
+//	commit + Identity hold multiple lamport clocks from other entities, instead of just bug edit
+//
 // 3: Keys use publicKeyMultibase format (W3C DID) instead of armored PGP public key
 const formatVersion = 3
 

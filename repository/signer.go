@@ -147,7 +147,7 @@ func VerifySSHSIG(pubKeys []ssh.PublicKey, signedData, armoredSSHSIG []byte) err
 		return fmt.Errorf("parse SSHSIG: %w", err)
 	}
 
-	// PROTOCOL.sshsig requires the verifier to check the namespace: without this,
+	// The SSHSIG spec requires the verifier to check the namespace: without this,
 	// a signature the key owner made for any other purpose would verify here.
 	if namespace != sshsigNamespace {
 		return fmt.Errorf("SSHSIG namespace %q, expected %q", namespace, sshsigNamespace)
@@ -175,14 +175,18 @@ func IsSSHSignature(signature []byte) bool {
 	return bytes.HasPrefix(bytes.TrimSpace(signature), []byte("-----BEGIN SSH SIGNATURE-----"))
 }
 
-// ---- SSHSIG binary format (PROTOCOL.sshsig) ----
+// ---- SSHSIG binary format ----
+//
+// SSHSIG is the detached signature format produced by `ssh-keygen -Y sign` and used
+// by git for SSH-signed commits (gpg.format=ssh). It is specified in the OpenSSH
+// source tree: https://github.com/openssh/openssh-portable/blob/master/PROTOCOL.sshsig
 
 const sshsigMagic = "SSHSIG"
 const sshsigNamespace = "git"
 const sshsigHashAlgo = "sha512"
 const sshsigVersion = uint32(1)
 
-// sshsigSignedData builds the blob that the SSH key actually signs, per PROTOCOL.sshsig.
+// sshsigSignedData builds the blob that the SSH key actually signs, per the SSHSIG spec.
 func sshsigSignedData(namespace string, payload []byte) []byte {
 	h := sha512.Sum512(payload)
 
