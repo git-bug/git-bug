@@ -1,231 +1,257 @@
 package identity
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"strings"
-	"time"
 
+	didcrypto "github.com/MetaMask/go-did-it/crypto"
+	died25519 "github.com/MetaMask/go-did-it/crypto/ed25519"
+	"github.com/MetaMask/go-did-it/crypto/p256"
+	"github.com/MetaMask/go-did-it/crypto/p384"
+	"github.com/MetaMask/go-did-it/crypto/p521"
+	didrsa "github.com/MetaMask/go-did-it/crypto/rsa"
 	"github.com/ProtonMail/go-crypto/openpgp"
-	"github.com/ProtonMail/go-crypto/openpgp/armor"
-	"github.com/ProtonMail/go-crypto/openpgp/packet"
-	"github.com/pkg/errors"
+	"golang.org/x/crypto/ssh"
 
 	"github.com/git-bug/git-bug/repository"
 )
 
-var errNoPrivateKey = fmt.Errorf("no private key")
+// keySet is the allowlist of key algorithms git-bug accepts in identities.
+//
+// The criterion is: algorithms that git's two signing paths (SSH agent, gpg) can
+// actually produce and verify signatures with.
+//   - ed25519: the modern default for both SSH and GPG keys.
+//   - P-256/384/521: the ecdsa-sha2-nistp* SSH key types and ECDSA GPG keys.
+//   - RSA: still the majority of GPG keys and many older SSH keys, restricted to
+//     the modulus sizes ssh-keygen and gpg actually generate. 2048 remains the
+//     industry floor; anything smaller is weak, anything else is exotic.
+//
+// Notably excluded: x25519 (key exchange only, cannot sign) and secp256k1
+// (no SSH or GPG counterpart).
+var keySet = didcrypto.NewKeySet(
+	died25519.KeyType(),
+	p256.KeyType(),
+	p384.KeyType(),
+	p521.KeyType(),
+	didrsa.KeyType(2048, 3072, 4096),
+)
 
+// KeyOrigin identifies where a Key was sourced from, determining which signer to use.
+type KeyOrigin string
+
+const (
+	KeyOriginSSH KeyOrigin = "ssh"
+	KeyOriginGPG KeyOrigin = "gpg"
+)
+
+// Key holds a public key in W3C DID publicKeyMultibase format.
+// GPG-origin keys also store the full armored entity for verification and export.
+// The private-key material is never stored — signing always delegates to the SSH
+// agent or gpg subprocess.
 type Key struct {
-	public  *packet.PublicKey
-	private *packet.PrivateKey
+	publicKeyMultibase string
+	pgpEntity          string // non-empty only for KeyOriginGPG
+	origin             KeyOrigin
+	signer             repository.Signer // non-nil only when set via NewKeyWithSigner (tests)
 }
 
-// GenerateKey generate a key pair (public+private)
-// The type and configuration of the key is determined by the default value in go's OpenPGP.
-func GenerateKey() *Key {
-	entity, err := openpgp.NewEntity("", "", "", &packet.Config{
-		// The armored format doesn't include the creation time, which makes the round-trip data not being fully equal.
-		// We don't care about the creation time so we can set it to the zero value.
-		Time: func() time.Time {
-			return time.Time{}
-		},
-	})
+// NewSSHKey creates a Key from an SSH public key.
+func NewSSHKey(pub ssh.PublicKey) (*Key, error) {
+	multibase, err := sshPubKeyToMultibase(pub)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	return &Key{
-		public:  entity.PrimaryKey,
-		private: entity.PrivateKey,
+		publicKeyMultibase: multibase,
+		origin:             KeyOriginSSH,
+	}, nil
+}
+
+// NewGPGKey creates a Key from a full armored GPG entity.
+// Only the primary key's public material is extracted to produce the multibase.
+func NewGPGKey(armoredEntity string) (*Key, error) {
+	entities, err := openpgp.ReadArmoredKeyRing(strings.NewReader(armoredEntity))
+	if err != nil {
+		return nil, fmt.Errorf("parse armored GPG entity: %w", err)
+	}
+	if len(entities) == 0 {
+		return nil, fmt.Errorf("no GPG entities found in armored input")
+	}
+	entity := entities[0]
+
+	multibase, err := pgpPubKeyToMultibase(entity)
+	if err != nil {
+		return nil, err
+	}
+	return &Key{
+		publicKeyMultibase: multibase,
+		pgpEntity:          armoredEntity,
+		origin:             KeyOriginGPG,
+	}, nil
+}
+
+// NewKeyWithSigner creates a Key with an injected signer — intended for tests
+// so the real SSH agent or GPG subprocess is not required.
+func NewKeyWithSigner(multibase string, origin KeyOrigin, s repository.Signer) *Key {
+	return &Key{
+		publicKeyMultibase: multibase,
+		origin:             origin,
+		signer:             s,
 	}
 }
 
-// generatePublicKey generate only a public key (only useful for testing)
-// See GenerateKey for the details.
-func generatePublicKey() *Key {
-	k := GenerateKey()
-	k.private = nil
-	return k
+// PublicKeyMultibase returns the public key encoded as a W3C DID publicKeyMultibase string.
+func (k *Key) PublicKeyMultibase() string {
+	return k.publicKeyMultibase
 }
 
-func (k *Key) Public() *packet.PublicKey {
-	return k.public
+// PGPEntity returns the stored armored GPG entity, or empty string for SSH-origin keys.
+func (k *Key) PGPEntity() string {
+	return k.pgpEntity
 }
 
-func (k *Key) Private() *packet.PrivateKey {
-	return k.private
+// Origin returns the key origin (ssh or gpg).
+func (k *Key) Origin() KeyOrigin {
+	return k.origin
+}
+
+// Signer returns the signer for this key.
+// The injected test signer (if any) takes precedence; otherwise one is built from
+// the key origin (SSH agent for SSH keys, gpg subprocess for GPG keys).
+func (k *Key) Signer() (repository.Signer, error) {
+	if k.signer != nil {
+		return k.signer, nil
+	}
+	switch k.origin {
+	case KeyOriginSSH:
+		sshPub, err := multibaseToSSHPublicKey(k.publicKeyMultibase)
+		if err != nil {
+			return nil, err
+		}
+		return repository.NewSSHAgentSigner(sshPub), nil
+	case KeyOriginGPG:
+		fp, err := k.gpgFingerprint()
+		if err != nil {
+			return nil, err
+		}
+		return repository.NewGPGSigner(fp), nil
+	}
+	return nil, fmt.Errorf("unknown key origin: %q", k.origin)
+}
+
+// SSHPublicKey converts the stored multibase back to an ssh.PublicKey.
+// Used during signature verification.
+func (k *Key) SSHPublicKey() (ssh.PublicKey, error) {
+	return multibaseToSSHPublicKey(k.publicKeyMultibase)
 }
 
 func (k *Key) Validate() error {
-	if k.public == nil {
-		return fmt.Errorf("nil public key")
+	if k.publicKeyMultibase == "" {
+		return fmt.Errorf("missing public key multibase")
 	}
-	if !k.public.CanSign() {
-		return fmt.Errorf("public key can't sign")
+	if k.origin == "" {
+		return fmt.Errorf("missing key origin")
 	}
-
-	if k.private != nil {
-		if !k.private.CanSign() {
-			return fmt.Errorf("private key can't sign")
-		}
+	if k.origin == KeyOriginGPG && k.pgpEntity == "" {
+		return fmt.Errorf("GPG-origin key is missing the pgp entity")
 	}
-
 	return nil
 }
 
 func (k *Key) Clone() *Key {
-	clone := &Key{}
-
-	pub := *k.public
-	clone.public = &pub
-
-	if k.private != nil {
-		priv := *k.private
-		clone.private = &priv
+	return &Key{
+		publicKeyMultibase: k.publicKeyMultibase,
+		pgpEntity:          k.pgpEntity,
+		origin:             k.origin,
+		signer:             k.signer,
 	}
+}
 
-	return clone
+type keyJSON struct {
+	PublicKeyMultibase string    `json:"pub_key_multibase"`
+	PGPEntity          string    `json:"pgp_entity,omitempty"`
+	Origin             KeyOrigin `json:"origin"`
 }
 
 func (k *Key) MarshalJSON() ([]byte, error) {
-	// Serialize only the public key, in the armored format.
-	var buf bytes.Buffer
-	w, err := armor.Encode(&buf, openpgp.PublicKeyType, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	err = k.public.Serialize(w)
-	if err != nil {
-		return nil, err
-	}
-	err = w.Close()
-	if err != nil {
-		return nil, err
-	}
-	return json.Marshal(buf.String())
-}
-
-func (k *Key) UnmarshalJSON(data []byte) error {
-	// De-serialize only the public key, in the armored format.
-	var armored string
-	err := json.Unmarshal(data, &armored)
-	if err != nil {
-		return err
-	}
-
-	block, err := armor.Decode(strings.NewReader(armored))
-	if err == io.EOF {
-		return fmt.Errorf("no armored data found")
-	}
-	if err != nil {
-		return err
-	}
-
-	if block.Type != openpgp.PublicKeyType {
-		return fmt.Errorf("invalid key type")
-	}
-
-	p, err := packet.Read(block.Body)
-	if err != nil {
-		return errors.Wrap(err, "failed to read public key packet")
-	}
-
-	public, ok := p.(*packet.PublicKey)
-	if !ok {
-		return errors.New("got no packet.publicKey")
-	}
-
-	// The armored format doesn't include the creation time, which makes the round-trip data not being fully equal.
-	// We don't care about the creation time so we can set it to the zero value.
-	public.CreationTime = time.Time{}
-
-	k.public = public
-	return nil
-}
-
-func (k *Key) loadPrivate(repo repository.RepoKeyring) error {
-	item, err := repo.Keyring().Get(k.public.KeyIdString())
-	if err == repository.ErrKeyringKeyNotFound {
-		return errNoPrivateKey
-	}
-	if err != nil {
-		return err
-	}
-
-	block, err := armor.Decode(bytes.NewReader(item.Data))
-	if err == io.EOF {
-		return fmt.Errorf("no armored data found")
-	}
-	if err != nil {
-		return err
-	}
-
-	if block.Type != openpgp.PrivateKeyType {
-		return fmt.Errorf("invalid key type")
-	}
-
-	p, err := packet.Read(block.Body)
-	if err != nil {
-		return errors.Wrap(err, "failed to read private key packet")
-	}
-
-	private, ok := p.(*packet.PrivateKey)
-	if !ok {
-		return errors.New("got no packet.privateKey")
-	}
-
-	// The armored format doesn't include the creation time, which makes the round-trip data not being fully equal.
-	// We don't care about the creation time so we can set it to the zero value.
-	private.CreationTime = time.Time{}
-
-	k.private = private
-	return nil
-}
-
-// ensurePrivateKey attempt to load the corresponding private key if it is not loaded already.
-// If no private key is found, returns errNoPrivateKey
-func (k *Key) ensurePrivateKey(repo repository.RepoKeyring) error {
-	if k.private != nil {
-		return nil
-	}
-
-	return k.loadPrivate(repo)
-}
-
-func (k *Key) storePrivate(repo repository.RepoKeyring) error {
-	var buf bytes.Buffer
-	w, err := armor.Encode(&buf, openpgp.PrivateKeyType, nil)
-	if err != nil {
-		return err
-	}
-	err = k.private.Serialize(w)
-	if err != nil {
-		return err
-	}
-	err = w.Close()
-	if err != nil {
-		return err
-	}
-
-	return repo.Keyring().Set(repository.Item{
-		Key:  k.public.KeyIdString(),
-		Data: buf.Bytes(),
+	return json.Marshal(keyJSON{
+		PublicKeyMultibase: k.publicKeyMultibase,
+		PGPEntity:          k.pgpEntity,
+		Origin:             k.origin,
 	})
 }
 
-func (k *Key) PGPEntity() *openpgp.Entity {
-	e := &openpgp.Entity{
-		PrimaryKey: k.public,
-		PrivateKey: k.private,
-		Identities: map[string]*openpgp.Identity{},
+func (k *Key) UnmarshalJSON(data []byte) error {
+	var aux keyJSON
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
 	}
-	// somehow initialize the proper fields with identity, self-signature ...
-	err := e.AddUserId("name", "", "", nil)
+	k.publicKeyMultibase = aux.PublicKeyMultibase
+	k.pgpEntity = aux.PGPEntity
+	k.origin = aux.Origin
+	return nil
+}
+
+// ---- internal helpers ----
+
+// sshPubKeyToMultibase converts an ssh.PublicKey to a publicKeyMultibase string.
+func sshPubKeyToMultibase(pub ssh.PublicKey) (string, error) {
+	cp, ok := pub.(ssh.CryptoPublicKey)
+	if !ok {
+		return "", fmt.Errorf("unsupported SSH key type: does not implement CryptoPublicKey")
+	}
+	k, err := keySet.WrapPublicKey(cp.CryptoPublicKey())
 	if err != nil {
-		panic(err)
+		return "", err
 	}
-	return e
+	return k.ToPublicKeyMultibase(), nil
+}
+
+// multibaseToSSHPublicKey converts a publicKeyMultibase string back to an ssh.PublicKey.
+func multibaseToSSHPublicKey(mb string) (ssh.PublicKey, error) {
+	pub, err := keySet.PublicKeyFromMultibase(mb)
+	if err != nil {
+		return nil, err
+	}
+	switch k := pub.(type) {
+	case died25519.PublicKey:
+		return ssh.NewPublicKey(k.Unwrap())
+	case *p256.PublicKey:
+		return ssh.NewPublicKey(k.Unwrap())
+	case *p384.PublicKey:
+		return ssh.NewPublicKey(k.Unwrap())
+	case *p521.PublicKey:
+		return ssh.NewPublicKey(k.Unwrap())
+	case *didrsa.PublicKey:
+		return ssh.NewPublicKey(k.Unwrap())
+	default:
+		return nil, fmt.Errorf("unsupported publicKeyMultibase key type: %T", k)
+	}
+}
+
+// pgpPubKeyToMultibase extracts the primary public key from a GPG entity and
+// converts it to a publicKeyMultibase string.
+func pgpPubKeyToMultibase(entity *openpgp.Entity) (string, error) {
+	k, err := keySet.WrapPublicKey(entity.PrimaryKey.PublicKey)
+	if err != nil {
+		return "", err
+	}
+	return k.ToPublicKeyMultibase(), nil
+}
+
+// gpgFingerprint parses the stored pgpEntity and returns the primary key fingerprint
+// as a hex string, suitable for passing to gpg -u.
+func (k *Key) gpgFingerprint() (string, error) {
+	if k.pgpEntity == "" {
+		return "", fmt.Errorf("no GPG entity stored for this key")
+	}
+	entities, err := openpgp.ReadArmoredKeyRing(strings.NewReader(k.pgpEntity))
+	if err != nil {
+		return "", fmt.Errorf("parse stored GPG entity: %w", err)
+	}
+	if len(entities) == 0 {
+		return "", fmt.Errorf("no GPG entities found in stored pgpEntity")
+	}
+	return fmt.Sprintf("%X", entities[0].PrimaryKey.Fingerprint), nil
 }

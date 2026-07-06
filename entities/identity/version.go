@@ -16,8 +16,11 @@ import (
 
 // 1: original format
 // 2: Identity Ids are generated from the first version serialized data instead of from the first git
-// commit + Identity hold multiple lamport clocks from other entities, instead of just bug edit
-const formatVersion = 2
+//
+//	commit + Identity hold multiple lamport clocks from other entities, instead of just bug edit
+//
+// 3: Keys use publicKeyMultibase format (W3C DID) instead of armored PGP public key
+const formatVersion = 3
 
 // version is a complete set of information about an Identity at a point in time.
 type version struct {
@@ -85,7 +88,7 @@ type versionJSON struct {
 	Email     string                  `json:"email,omitempty"`
 	Login     string                  `json:"login,omitempty"`
 	AvatarUrl string                  `json:"avatar_url,omitempty"`
-	Keys      []*Key                  `json:"pub_keys,omitempty"`
+	Keys      []json.RawMessage       `json:"pub_keys,omitempty"`
 	Nonce     []byte                  `json:"nonce"`
 	Metadata  map[string]string       `json:"metadata,omitempty"`
 }
@@ -137,6 +140,14 @@ func (v *version) Clone() *version {
 }
 
 func (v *version) MarshalJSON() ([]byte, error) {
+	var rawKeys []json.RawMessage
+	for _, k := range v.keys {
+		b, err := json.Marshal(k)
+		if err != nil {
+			return nil, err
+		}
+		rawKeys = append(rawKeys, b)
+	}
 	return json.Marshal(versionJSON{
 		FormatVersion: formatVersion,
 		Times:         v.times,
@@ -145,7 +156,7 @@ func (v *version) MarshalJSON() ([]byte, error) {
 		Email:         v.email,
 		Login:         v.login,
 		AvatarUrl:     v.avatarURL,
-		Keys:          v.keys,
+		Keys:          rawKeys,
 		Nonce:         v.nonce,
 		Metadata:      v.metadata,
 	})
@@ -158,10 +169,6 @@ func (v *version) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if aux.FormatVersion != formatVersion {
-		return entity.NewErrInvalidFormat(aux.FormatVersion, formatVersion)
-	}
-
 	v.id = entity.DeriveId(data)
 	v.times = aux.Times
 	v.unixTime = aux.UnixTime
@@ -169,9 +176,26 @@ func (v *version) UnmarshalJSON(data []byte) error {
 	v.email = aux.Email
 	v.login = aux.Login
 	v.avatarURL = aux.AvatarUrl
-	v.keys = aux.Keys
 	v.nonce = aux.Nonce
 	v.metadata = aux.Metadata
+
+	switch aux.FormatVersion {
+	case 2:
+		// In v2, pub_keys elements were JSON strings containing armored PGP public keys,
+		// but that mechanism was never functional: no key ever got attached to an identity
+		// in practice, and the serialized form (a bare key packet without user ids) is not
+		// even accepted by openpgp.ReadArmoredKeyRing. Ignore them.
+	case 3:
+		for _, raw := range aux.Keys {
+			var k Key
+			if err := json.Unmarshal(raw, &k); err != nil {
+				return err
+			}
+			v.keys = append(v.keys, &k)
+		}
+	default:
+		return entity.NewErrInvalidFormat(aux.FormatVersion, formatVersion)
+	}
 
 	return nil
 }
