@@ -3,11 +3,13 @@ package github
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"os"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/shurcooL/githubv4"
 	"github.com/stretchr/testify/require"
 
 	"github.com/git-bug/git-bug/bridge/core"
@@ -239,4 +241,56 @@ func TestGithubImporter(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGithubImporterDeduplicatesCommentByURL(t *testing.T) {
+	repo := repository.CreateGoGitTestRepo(t, false)
+
+	backend, err := cache.NewRepoCacheNoEvents(repo)
+	require.NoError(t, err)
+	defer backend.Close()
+
+	author, err := backend.Identities().New("test identity", "test@test.org")
+	require.NoError(t, err)
+	author.SetMetadata(metaKeyGithubLogin, "identity-test")
+	require.NoError(t, author.Commit())
+	require.NoError(t, backend.SetUserIdentity(author))
+
+	b, _, err := backend.Bugs().NewRaw(author, 1, "issue", "initial comment", nil, map[string]string{
+		metaKeyGithubId:  "github-issue-id",
+		metaKeyGithubUrl: "https://github.com/git-bug/git-bug/issues/1",
+	})
+	require.NoError(t, err)
+
+	commentURL := "https://github.com/git-bug/git-bug/issues/1#issuecomment-1"
+	_, _, err = b.AddCommentRaw(author, 2, "already exported comment", nil, map[string]string{
+		metaKeyGithubId:  "old-github-comment-id",
+		metaKeyGithubUrl: commentURL,
+	})
+	require.NoError(t, err)
+
+	before := b.Snapshot().Operations
+	importer := githubImporter{out: make(chan core.ImportResult, 1)}
+	err = importer.ensureComment(context.Background(), backend, b, &issueComment{
+		authorEvent: authorEvent{
+			Id:        githubv4.ID("new-github-comment-id"),
+			CreatedAt: githubv4.DateTime{Time: time.Unix(0, 0)},
+			Author: &actor{
+				Typename:  githubv4.String("User"),
+				Login:     githubv4.String("identity-test"),
+				AvatarUrl: githubv4.String(""),
+			},
+		},
+		Body: githubv4.String("already exported comment"),
+		Url:  githubv4.URI{URL: mustParseURL(t, commentURL)},
+	}, nil)
+	require.NoError(t, err)
+	require.Len(t, b.Snapshot().Operations, len(before))
+}
+
+func mustParseURL(t *testing.T, raw string) *url.URL {
+	t.Helper()
+	u, err := url.Parse(raw)
+	require.NoError(t, err)
+	return u
 }

@@ -452,6 +452,9 @@ func (gi *githubImporter) ensureComment(ctx context.Context, repo *cache.RepoCac
 	}
 
 	_, err = b.ResolveOperationWithMetadata(metaKeyGithubId, parseId(comment.Id))
+	if err == cache.ErrNoMatchingOp && comment.Url.String() != "" {
+		_, err = b.ResolveOperationWithMetadata(metaKeyGithubUrl, comment.Url.String())
+	}
 	if err == nil {
 		return nil
 	}
